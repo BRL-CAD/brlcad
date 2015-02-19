@@ -1797,7 +1797,7 @@ ON_Intersect(const ON_Curve *curveA,
 			boundary[3] = ON_Line(point1, point4);
 			for (int j = 0; j < 4; j++) {
 			    double t1, t2;
-			    if (ON_IntersectLineLine(line, boundary[j], &t1, &t2, ON_ZERO_TOLERANCE, true)) {
+			    if (ON_IntersectLineLine(line, boundary[j], &t1, &t2, isect_tol, true)) {
 				int k;
 				for (k = 0; k < line_t.Count(); k++) {
 				    // Check duplication
@@ -3106,6 +3106,72 @@ join_continuous_ppair_to_polyline(ON_SimpleArray<int> *polyline, const PointPair
 }
 
 
+// Make a transverse or tangent ssx curve event from matching 3d and surface
+// A/B curves.
+HIDDEN int
+set_ssx_event_from_curves(
+    ON_SSX_EVENT &event,
+    ON_Curve *c3d,
+    ON_Curve *uvA,
+    ON_Curve *uvB,
+    const ON_Surface *surfA,
+    const ON_Surface *surfB)
+{
+    int status = 0;
+
+    event.m_curve3d = c3d;
+    event.m_curveA = uvA;
+    event.m_curveB = uvB;
+
+    // Normalize the curves, so that their domains are the same,
+    // which is required by ON_SSX_EVENT::IsValid().
+    event.m_curve3d->SetDomain(ON_Interval(0.0, 1.0));
+    event.m_curveA->SetDomain(ON_Interval(0.0, 1.0));
+    event.m_curveB->SetDomain(ON_Interval(0.0, 1.0));
+
+    // If the surfA and surfB normals of all points are
+    // parallel, the intersection is considered tangent.
+    bool is_tangent = true;
+    int count = std::min(event.m_curveA->SpanCount(), event.m_curveB->SpanCount());
+    for (int j = 0; j <= count; ++j) {
+	ON_3dVector normalA, normalB;
+	ON_3dPoint pointA = event.m_curveA->PointAt((double)j / count);
+	ON_3dPoint pointB = event.m_curveB->PointAt((double)j / count);
+	if (!(surfA->EvNormal(pointA.x, pointA.y, normalA) &&
+	      surfB->EvNormal(pointB.x, pointB.y, normalB) &&
+	      normalA.IsParallelTo(normalB)))
+	{
+	    is_tangent = false;
+	    break;
+	}
+    }
+    if (is_tangent) {
+	// For ssx_tangent events, the 3d curve direction may
+	// not agree with SurfaceNormalA x SurfaceNormalB
+	// (See opennurbs/opennurbs_x.h).
+	ON_3dVector direction = event.m_curve3d->TangentAt(0);
+	ON_3dVector SurfaceNormalA = surfA->NormalAt(
+	    event.m_curveA->PointAtStart().x,
+	    event.m_curveA->PointAtStart().y);
+	ON_3dVector SurfaceNormalB = surfB->NormalAt(
+	    event.m_curveB->PointAtStart().x,
+	    event.m_curveB->PointAtStart().y);
+	if (ON_DotProduct(direction, ON_CrossProduct(SurfaceNormalB, SurfaceNormalA)) < 0) {
+	    if (!(event.m_curve3d->Reverse() &&
+		  event.m_curveA->Reverse() &&
+		  event.m_curveB->Reverse()))
+	    {
+		status = 1;
+	    }
+	}
+	event.m_type = ON_SSX_EVENT::ssx_tangent;
+    } else {
+	event.m_type = ON_SSX_EVENT::ssx_transverse;
+    }
+
+    return status;
+}
+
 // Algorithm Overview
 //
 // 1) Find overlap intersections (regions where the two surfaces are
@@ -3443,33 +3509,62 @@ ON_Intersect(const ON_Surface *surfA,
 	    continue;
 	}
 	if (!start_linked[i] || !end_linked[i]) {
-	    delete overlaps[i];
+	    if (surfA->IsPlanar() && surfB->IsPlanar()) {
+		ON_SSX_EVENT event;
+
+		int ret = set_ssx_event_from_curves(event,
+			overlaps[i]->m_curve3d, overlaps[i]->m_curveA,
+			overlaps[i]->m_curveB, surfA, surfB);
+
+		if (ret != 0) {
+		    bu_log("warning: reverse failed. The direction of %d "
+			    "might be wrong.\n", x.Count() - original_count);
+		}
+
+		x.Append(event);
+
+		// set the curves to NULL so they aren't deleted by
+		// ~ON_SSX_EVENT()
+		event.m_curve3d = event.m_curveA = event.m_curveB = NULL;
+	    } else {
+		delete overlaps[i];
+	    }
 	    overlaps[i] = NULL;
 	}
     }
 
+    // create overlap events
+    ON_SimpleArray<Overlapevent> overlap_events;
     for (int i = 0; i < overlaps.Count(); i++) {
 	if (!is_valid_overlap(overlaps[i])) {
 	    continue;
 	}
 
 	for (int j = 0; j <= overlaps.Count(); j++) {
-	    if (overlaps[i]->m_curve3d->IsClosed() && overlaps[i]->m_curveA->IsClosed() && overlaps[i]->m_curveB->IsClosed()) {
+	    if (overlaps[i]->m_curve3d->IsClosed() &&
+		overlaps[i]->m_curveA->IsClosed()  &&
+		overlaps[i]->m_curveB->IsClosed())
+	    {
 		// i-th curve is a closed loop, completely bounding an overlap region
 		ON_SSX_EVENT event;
 		event.m_curve3d = curve_fitting(overlaps[i]->m_curve3d, fitting_tol);
 		event.m_curveA = curve_fitting(overlaps[i]->m_curveA, fitting_tolA);
 		event.m_curveB = curve_fitting(overlaps[i]->m_curveB, fitting_tolB);
 		event.m_type = ON_SSX_EVENT::ssx_overlap;
+
 		// normalize the curves
 		event.m_curve3d->SetDomain(ON_Interval(0.0, 1.0));
 		event.m_curveA->SetDomain(ON_Interval(0.0, 1.0));
 		event.m_curveB->SetDomain(ON_Interval(0.0, 1.0));
+
 		x.Append(event);
-		// Set the curves to NULL in case they are deleted by
+		overlap_events.Append(Overlapevent(x.Last()));
+
+		// Set the curves to NULL so they aren't deleted by
 		// ~ON_SSX_EVENT() or ~ON_CurveArray().
 		event.m_curve3d = event.m_curveA = event.m_curveB = NULL;
 		overlaps[i]->SetCurvesToNull();
+
 		delete overlaps[i];
 		overlaps[i] = NULL;
 		break;
@@ -3508,31 +3603,25 @@ ON_Intersect(const ON_Surface *surfA,
 	}
     }
 
-    // generate Overlapevents
-    ON_SimpleArray<Overlapevent> overlap_events;
-    for (int i = original_count; i < x.Count(); i++) {
-	overlap_events.Append(Overlapevent(&x[i]));
-    }
-
-    for (int i = original_count; i < x.Count(); i++) {
+    for (int i = 0; i < overlap_events.Count(); ++i) {
 	// The overlap region should be to the LEFT of that *m_curveA*.
 	// (see opennurbs/opennurbs_x.h)
 
 	// find a point with a single tangent
-	double start_t = x[i].m_curveA->Domain().Mid();
-	if (!x[i].m_curveA->IsContinuous(ON::G1_continuous, start_t)) {
+	double start_t = overlap_events[i].m_event->m_curveA->Domain().Mid();
+	if (!overlap_events[i].m_event->m_curveA->IsContinuous(ON::G1_continuous, start_t)) {
 	    // if mid point doesn't work, try a couple other points
 	    // TODO: what happens if none of them work?
-	    start_t = x[i].m_curveA->Domain().NormalizedParameterAt(1.0 / 3.0);
-	    if (!x[i].m_curveA->IsContinuous(ON::G1_continuous, start_t)) {
-		start_t = x[i].m_curveA->Domain().NormalizedParameterAt(2.0 / 3.0);
+	    start_t = overlap_events[i].m_event->m_curveA->Domain().NormalizedParameterAt(1.0 / 3.0);
+	    if (!overlap_events[i].m_event->m_curveA->IsContinuous(ON::G1_continuous, start_t)) {
+		start_t = overlap_events[i].m_event->m_curveA->Domain().NormalizedParameterAt(2.0 / 3.0);
 	    }
 	}
 
-	ON_3dPoint start_ptA = x[i].m_curveA->PointAt(start_t);
+	ON_3dPoint start_ptA = overlap_events[i].m_event->m_curveA->PointAt(start_t);
 	ON_3dVector normA = ON_CrossProduct(ON_3dVector::ZAxis,
-					    x[i].m_curveA->TangentAt(start_t));
-	double line_len = 1.0 + x[i].m_curveA->BoundingBox().Diagonal().Length();
+					    overlap_events[i].m_event->m_curveA->TangentAt(start_t));
+	double line_len = 1.0 + overlap_events[i].m_event->m_curveA->BoundingBox().Diagonal().Length();
 
 	// get a line that should be extending left, through the loop
 	ON_3dPoint left_ptA = start_ptA + normA * line_len;
@@ -3547,14 +3636,14 @@ ON_Intersect(const ON_Surface *surfA,
 	// otherwise we've got them backwards
 	// TODO: seems like this should really be an even/odd test
 	ON_SimpleArray<ON_X_EVENT> inside_events, outside_events;
-	ON_Intersect(&inside_lineA, x[i].m_curveA, inside_events, isect_tol);
-	ON_Intersect(&outside_lineA, x[i].m_curveA, outside_events, isect_tol);
+	ON_Intersect(&inside_lineA, overlap_events[i].m_event->m_curveA, inside_events, isect_tol);
+	ON_Intersect(&outside_lineA, overlap_events[i].m_event->m_curveA, outside_events, isect_tol);
 	std::vector<double> line_t;
 	if (inside_events.Count() != 2 && outside_events.Count() == 2) {
 	    // the direction of the curve should be opposite
-	    x[i].m_curve3d->Reverse();
-	    x[i].m_curveA->Reverse();
-	    x[i].m_curveB->Reverse();
+	    overlap_events[i].m_event->m_curve3d->Reverse();
+	    overlap_events[i].m_event->m_curveA->Reverse();
+	    overlap_events[i].m_event->m_curveB->Reverse();
 	    inside_lineA = outside_lineA;
 	    line_t.push_back(outside_events[0].m_a[0]);
 	    line_t.push_back(outside_events[1].m_a[0]);
@@ -3577,7 +3666,7 @@ ON_Intersect(const ON_Surface *surfA,
 		continue;
 	    }
 	    ON_SimpleArray<ON_X_EVENT> x_event;
-	    ON_Intersect(&inside_lineA, x[j].m_curveA, x_event, isect_tol);
+	    ON_Intersect(&inside_lineA, overlap_events[j].m_event->m_curveA, x_event, isect_tol);
 	    for (int k = 0; k < x_event.Count(); k++) {
 		line_t.push_back(x_event[k].m_a[0]);
 	    }
@@ -3600,9 +3689,9 @@ ON_Intersect(const ON_Surface *surfA,
 	ON_ClassArray<ON_PX_EVENT> px_event;
 	if (!ON_Intersect(test_pt, *surfB, px_event, overlap_tol, 0, 0, treeB)) {
 	    // the test point is not overlapped
-	    x[i].m_curve3d->Reverse();
-	    x[i].m_curveA->Reverse();
-	    x[i].m_curveB->Reverse();
+	    overlap_events[i].m_event->m_curve3d->Reverse();
+	    overlap_events[i].m_event->m_curveA->Reverse();
+	    overlap_events[i].m_event->m_curveB->Reverse();
 	    overlap_events[i].m_type = Overlapevent::inner;
 	} else {
 	    // the test point inside that region is an overlap point
@@ -3623,10 +3712,11 @@ ON_Intersect(const ON_Surface *surfA,
     }
 
     if (DEBUG_BREP_INTERSECT) {
+	bu_log("%d overlaps.\n", overlaps.Count());
 	bu_log("%d overlap events.\n", overlap_events.Count());
     }
 
-    if (surfA->IsPlanar() && surfB->IsPlanar() && overlap_events.Count()) {
+    if (surfA->IsPlanar() && surfB->IsPlanar() && overlaps.Count()) {
 	return x.Count() - original_count;
     }
 
@@ -4062,60 +4152,23 @@ ON_Intersect(const ON_Surface *surfA,
     bu_free(startpt, "int");
     bu_free(endpt, "int");
 
-    // generate ON_SSX_EVENTs
+    // generate transverse and tangent ON_SSX_EVENTs (overlap events
+    // handled above)
     for (int i = 0; i < intersect3d.Count(); i++) {
 	ON_SSX_EVENT event;
-	event.m_curve3d = intersect3d[i];
-	event.m_curveA = intersect_uvA[i];
-	event.m_curveB = intersect_uvB[i];
-	// Normalize the curves, so that their domains are the same,
-	// which is required by ON_SSX_EVENT::IsValid().
-	event.m_curve3d->SetDomain(ON_Interval(0.0, 1.0));
-	event.m_curveA->SetDomain(ON_Interval(0.0, 1.0));
-	event.m_curveB->SetDomain(ON_Interval(0.0, 1.0));
-	// If the surfA and surfB normals of all points are
-	// parallel, the intersection is considered tangent.
-	bool is_tangent = true;
-	int count = std::min(event.m_curveA->SpanCount(), event.m_curveB->SpanCount());
-	for (int j = 0; j <= count; ++j) {
-	    ON_3dVector normalA, normalB;
-	    ON_3dPoint pointA = event.m_curveA->PointAt((double)j / count);
-	    ON_3dPoint pointB = event.m_curveB->PointAt((double)j / count);
-	    if (!(surfA->EvNormal(pointA.x, pointA.y, normalA) &&
-		  surfB->EvNormal(pointB.x, pointB.y, normalB) &&
-		  normalA.IsParallelTo(normalB)))
-	    {
-		is_tangent = false;
-		break;
-	    }
+
+       	int ret = set_ssx_event_from_curves(event, intersect3d[i],
+		intersect_uvA[i], intersect_uvB[i], surfA, surfB);
+
+	if (ret != 0) {
+	    bu_log("warning: reverse failed. The direction of %d might be "
+		    "wrong.\n", x.Count() - original_count);
 	}
-	if (is_tangent) {
-	    // For ssx_tangent events, the 3d curve direction may
-	    // not agree with SurfaceNormalA x SurfaceNormalB
-	    // (See opennurbs/opennurbs_x.h).
-	    ON_3dVector direction = event.m_curve3d->TangentAt(0);
-	    ON_3dVector SurfaceNormalA = surfA->NormalAt(
-		event.m_curveA->PointAtStart().x,
-		event.m_curveA->PointAtStart().y);
-	    ON_3dVector SurfaceNormalB = surfB->NormalAt(
-		event.m_curveB->PointAtStart().x,
-		event.m_curveB->PointAtStart().y);
-	    if (ON_DotProduct(direction, ON_CrossProduct(SurfaceNormalB, SurfaceNormalA)) < 0) {
-		if (!(event.m_curve3d->Reverse() &&
-		      event.m_curveA->Reverse() &&
-		      event.m_curveB->Reverse()))
-		{
-		    bu_log("warning: reverse failed. The direction of %d might be wrong.\n",
-			   x.Count() - original_count);
-		}
-	    }
-	    event.m_type = ON_SSX_EVENT::ssx_tangent;
-	} else {
-	    event.m_type = ON_SSX_EVENT::ssx_transverse;
-	}
-	// ssx_overlap is handled above
+
 	x.Append(event);
-	// set the curves to NULL in case they are deleted by ~ON_SSX_EVENT()
+
+	// set the curves to NULL so they aren't deleted by
+	// ~ON_SSX_EVENT()
 	event.m_curve3d = event.m_curveA = event.m_curveB = NULL;
     }
 
