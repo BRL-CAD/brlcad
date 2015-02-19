@@ -6,6 +6,8 @@
 #include "bu/log.h"
 #include "bu/str.h"
 #include "bu/malloc.h"
+#include "bn/plane_calc.h"
+#include "bn/tol.h"
 #include "shape_recognition.h"
 
 int
@@ -836,6 +838,35 @@ cylinder_csg(struct subbrep_object_data *data, fastf_t cyl_tol)
 		    std::cout << "  hypotenuse: " << hypotenuse << "\n";
 		    std::cout << "  opposite: " << sin(angle) * hypotenuse << "\n";
 		} else {
+
+		    // First order of business - find the intersection between the axis and the capping
+		    // plane
+		    point_t intersect_pt;
+		    fastf_t dist;
+		    point_t axis_pt;
+		    vect_t axis_dir;
+		    plane_t plane_eqn;
+		    struct bn_tol intersect_tol = {BN_TOL_MAGIC, BN_TOL_DIST, BN_TOL_DIST * BN_TOL_DIST, 1e-6, 1.0 - 1e-6 };
+		    VMOVE(axis_pt, cylinder.circle.Center());
+		    VMOVE(axis_dir, cylinder.Axis());
+		    VUNITIZE(axis_dir);
+		    plane_eqn[0] = cyl_planes[0].plane_equation.x;
+		    plane_eqn[1] = cyl_planes[0].plane_equation.y;
+		    plane_eqn[2] = cyl_planes[0].plane_equation.z;
+		    plane_eqn[3] = cyl_planes[0].plane_equation.d;
+
+		    if (bn_isect_line3_plane(&dist, axis_pt, axis_dir, plane_eqn, &intersect_tol) < 0) {
+			plane_eqn[0] = -1 * cyl_planes[0].plane_equation.x;
+			plane_eqn[1] = -1 * cyl_planes[0].plane_equation.y;
+			plane_eqn[2] = -1 * cyl_planes[0].plane_equation.z;
+			(void)bn_isect_line3_plane(&dist, axis_pt, axis_dir, plane_eqn, &intersect_tol);
+		    }
+
+		    VSCALE(axis_dir, axis_dir, dist);
+		    VADD2(intersect_pt, axis_pt, axis_dir);
+
+		    std::cout << "Intersect point 1: " << intersect_pt[0] << "," << intersect_pt[1] << "," << intersect_pt[2] << "\n";
+
 		    std::pair<std::multimap<int, int>::iterator, std::multimap<int, int>::iterator> pe_ret;
 		    std::set<int> p1_verts;
 		    std::cout << "plane 1:\n";
@@ -853,6 +884,8 @@ cylinder_csg(struct subbrep_object_data *data, fastf_t cyl_tol)
 			std::cout << "p1 edge " << edge_index << "\n";
 			// TODO - assemble set of vertices into p1_verts
 		    }
+
+
 		    std::set<int> p2_verts;
 		    std::cout << "plane 2:\n";
 		    std::cout << "  plane normal: " << pout(cyl_planes[1].Normal()) << "\n";
@@ -869,6 +902,26 @@ cylinder_csg(struct subbrep_object_data *data, fastf_t cyl_tol)
 			std::cout << "p2 edge " << edge_index << "\n";
 			// TODO - assemble set of vertices into p2_verts
 		    }
+
+		    VMOVE(axis_dir, cylinder.Axis());
+		    VUNITIZE(axis_dir);
+		    plane_eqn[0] = cyl_planes[1].plane_equation.x;
+		    plane_eqn[1] = cyl_planes[1].plane_equation.y;
+		    plane_eqn[2] = cyl_planes[1].plane_equation.z;
+		    plane_eqn[3] = cyl_planes[1].plane_equation.d;
+
+		    if (bn_isect_line3_plane(&dist, axis_pt, axis_dir, plane_eqn, &intersect_tol) < 0) {
+			plane_eqn[0] = -1 * cyl_planes[1].plane_equation.x;
+			plane_eqn[1] = -1 * cyl_planes[1].plane_equation.y;
+			plane_eqn[2] = -1 * cyl_planes[1].plane_equation.z;
+			(void)bn_isect_line3_plane(&dist, axis_pt, axis_dir, plane_eqn, &intersect_tol);
+		    }
+
+		    VSCALE(axis_dir, axis_dir, dist);
+		    VADD2(intersect_pt, axis_pt, axis_dir);
+
+		    std::cout << "Intersect point 2: " << intersect_pt[0] << "," << intersect_pt[1] << "," << intersect_pt[2] << "\n";
+
 
 		    // TODO - find the greatest distance between the two sets of vertices - that,
 		    // plus the two opposite distances, is the cylinder height.
