@@ -160,7 +160,7 @@ BU_EXPORT extern int bu_strncasecmp(const char *string1, const char *string2, si
  * except for the ones listed after the circumflex.  For example,
  * "^abc" matches any character except 'a', 'b', or 'c'.
  *
- * Backslash escape sequences are not allowed (e.g., \t or \x01) as
+ * Backslash escape sequences are not allowed (e.g., \\t or \\x01) as
  * '\' will be matched literally.
  *
  * A range expression consists of two characters separated by a hyphen

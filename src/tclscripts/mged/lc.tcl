@@ -27,10 +27,10 @@
 # Option '-d' specifies to list only regions with duplicate 'region_id'.
 #
 # Option '-s' is the same as '-d' except some duplicates will not be
-# reported (i.e. skipped). Skipped duplicates will be those within the
+# reported (i.e. will be skipped). Skipped duplicates will be those within the
 # specified group, that have the same parent, 'material_id' and 'los'.
 #
-# Option '-r' remove regions from the list in which their parent is
+# Option '-r' removes regions from the list in which their parent is
 # a region and the region is subtracted within the parent. The '-r'
 # option can be combined with any other option.
 #
@@ -60,7 +60,7 @@ proc lc {args} {
     set sort_column_flag_cnt 0
 
     if { [llength $args] == 0 } {
-	puts stdout "Usage: \[-d|-s|-r\] \[-z\] \[-0|-1|-2|-3|-4|-5\] \[-f {FileName}\] {GroupName}"
+	puts stdout "Usage: \[-d|-s\] \[-r\] \[-z\] \[-0|-1|-2|-3|-4|-5\] \[-f {FileName}\] {GroupName}"
 	return
     }
 

@@ -1,4 +1,5 @@
 add_subdirectory(bu)
+add_subdirectory(bn)
 add_subdirectory(dm)
 add_subdirectory(rt)
 add_subdirectory(fb)
@@ -32,6 +33,8 @@ set(public_hdrs
   fbserv_obj.h
   fft.h
   gcv.h
+  gcv_api.h
+  gcv_util.h
   icv.h
   libtermio.h
   light.h

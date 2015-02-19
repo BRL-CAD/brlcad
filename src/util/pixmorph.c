@@ -354,7 +354,7 @@ get_args(int argc, char **argv, char **picAnamep, char **picBnamep, char **lines
     *autosizep = 1;
     *widthp = *heightp = 0;
 
-    while ((c = bu_getopt(argc, argv, "w:n:")) != -1) {
+    while ((c = bu_getopt(argc, argv, "w:n:h?")) != -1) {
 	switch (c) {
 	    case 'w':
 		*widthp = atol(bu_optarg);

@@ -123,7 +123,7 @@ $ fast4-g <emphasis remap='I'>sample.fastgen4 sample.g</emphasis>
 <refsect1 xml:id='see_also'><title>SEE ALSO</title>
 <para><citerefentry><refentrytitle>rpatch</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>patch-g</refentrytitle><manvolnum>1</manvolnum></citerefentry>
 <!-- .br -->
-<emphasis remap='I'>FASTGEN 4.1 User's Manual,</emphasis>
+<emphasis remap='I'>FASTGEN 4.1 User's Manual</emphasis>,
 XRESV Tech Note 94-01,
 Hugh Griffis and Maty Lentz,
 April 1994</para>

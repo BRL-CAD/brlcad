@@ -1005,22 +1005,16 @@ f_type(struct db_plan_t *plan, struct db_node_t *db_node, struct db_i *dbip, str
     if (dp->d_flags & RT_DIR_COMB) {
 	if (dp->d_flags & RT_DIR_REGION) {
 	    if ((!bu_fnmatch(plan->type_data, "r", 0)) || (!bu_fnmatch(plan->type_data, "reg", 0))  || (!bu_fnmatch(plan->type_data, "region", 0))) {
-		return 1;
-	    } else {
-		db_node->matched_filters = 0;
-		return 0;
+		type_match = 1;
 	    }
 	}
 	if ((!bu_fnmatch(plan->type_data, "c", 0)) || (!bu_fnmatch(plan->type_data, "comb", 0)) || (!bu_fnmatch(plan->type_data, "combination", 0))) {
-	    return 1;
-	} else {
-	    db_node->matched_filters = 0;
-	    return 0;
+	    type_match = 1;
 	}
+	goto return_label;
     } else {
 	if ((!bu_fnmatch(plan->type_data, "r", 0)) || (!bu_fnmatch(plan->type_data, "reg", 0))  || (!bu_fnmatch(plan->type_data, "region", 0)) || (!bu_fnmatch(plan->type_data, "c", 0)) || (!bu_fnmatch(plan->type_data, "comb", 0)) || (!bu_fnmatch(plan->type_data, "combination", 0))) {
-	    db_node->matched_filters = 0;
-	    return 0;
+	    goto return_label;
 	}
 
     }
@@ -1078,6 +1072,8 @@ f_type(struct db_plan_t *plan, struct db_node_t *db_node, struct db_i *dbip, str
     }
 
     rt_db_free_internal(&intern);
+
+return_label:
 
     if (!type_match) db_node->matched_filters = 0;
     return type_match;

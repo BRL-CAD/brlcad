@@ -94,9 +94,16 @@ include_directories(
   ${OPENNURBS_INCLUDE_DIR}
   )
 
-add_definitions(
-  "-DBRLCAD_COREINTERFACE_EXPORT=__declspec(dllexport)"
+if(MSVC)
+  add_definitions(
+    "-DBRLCAD_COREINTERFACE_EXPORT=__declspec(dllexport)"
   )
+
+  set(COREINTERFACE_MSVC_LIBRARIES
+    Ws2_32
+    Psapi
+  )
+endif(MSVC)
 
 add_library(brlcad SHARED
   ${BRLCAD_SOURCES}
@@ -118,8 +125,7 @@ target_link_libraries(brlcad
   p2t_static
   zlib-static
   openNURBS-static
-  Ws2_32
-  Psapi
+  ${COREINTERFACE_MSVC_LIBRARIES}
   )
 
 set_property(TARGET brlcad PROPERTY LINK_INTERFACE_LIBRARIES "")

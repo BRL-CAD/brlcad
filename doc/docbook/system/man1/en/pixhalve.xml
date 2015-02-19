@@ -39,9 +39,9 @@ The
 <option>-w</option>
 and
 <option>-n</option>
-flags specify the input file width and number of scan lines in pixels.
-They can both be set to the same value via
-<option>-s.</option>
+flags specify the input file width and number of scan lines in pixels;
+they can be set to the same value via
+<option>-s</option>.
 Defaults of 512 are assumed for unspecified dimensions.</para>
 
 <para>The

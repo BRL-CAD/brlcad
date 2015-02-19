@@ -7,6 +7,7 @@
 #include <vector>
 #include <iostream>
 #include <fstream>
+#include <algorithm>
 
 #include "vmath.h"
 #include "raytrace.h"
@@ -16,10 +17,291 @@
 #include "brep.h"
 #include "../libbrep/shape_recognition.h"
 
+
+struct model *
+brep_to_nmg(struct subbrep_object_data *data, struct rt_wdb *wdbp, struct wmember *wcomb)
+{
+    struct bu_vls prim_name = BU_VLS_INIT_ZERO;
+    bu_vls_sprintf(&prim_name, "nmg_%s.s", bu_vls_addr(data->key));
+    std::set<int> b_verts;
+    std::vector<int> b_verts_array;
+    std::map<int, int> b_verts_to_verts;
+    struct model *m = nmg_mm();
+    struct nmgregion *r = nmg_mrsv(m);
+    struct shell *s = BU_LIST_FIRST(shell, &(r)->s_hd);
+    struct faceuse **fu;         /* array of faceuses */
+    struct vertex **verts;       /* Array of pointers to vertex structs */
+    struct vertex ***loop_verts; /* Array of pointers to vertex structs to pass to nmg_cmface */
+
+    struct bn_tol nmg_tol = {BN_TOL_MAGIC, BN_TOL_DIST, BN_TOL_DIST * BN_TOL_DIST, 1e-6, 1.0 - 1e-6 };
+
+    int point_cnt = 0;
+    int face_cnt = 0;
+    int max_edge_cnt = 0;
+
+    // One loop to a face, and the object data has the set of loops that make
+    // up this object.
+    for (int s_it = 0; s_it < data->loops_cnt; s_it++) {
+	const ON_BrepLoop *b_loop = &(data->brep->m_L[data->loops[s_it]]);
+	const ON_BrepFace *b_face = b_loop->Face();
+	face_cnt++;
+	if (b_loop->m_ti.Count() > max_edge_cnt) max_edge_cnt = b_loop->m_ti.Count();
+	for (int ti = 0; ti < b_loop->m_ti.Count(); ti++) {
+	    const ON_BrepTrim *trim = &(b_face->Brep()->m_T[b_loop->m_ti[ti]]);
+	    const ON_BrepEdge *edge = &(b_face->Brep()->m_E[trim->m_ei]);
+	    if (b_verts.find(edge->Vertex(0)->m_vertex_index) == b_verts.end()) {
+		b_verts.insert(edge->Vertex(0)->m_vertex_index);
+		b_verts_array.push_back(edge->Vertex(0)->m_vertex_index);
+		b_verts_to_verts[edge->Vertex(0)->m_vertex_index] = b_verts_array.size()-1;
+	    }
+	    if (b_verts.find(edge->Vertex(1)->m_vertex_index) == b_verts.end()) {
+		b_verts.insert(edge->Vertex(1)->m_vertex_index);
+		b_verts_array.push_back(edge->Vertex(1)->m_vertex_index);
+		b_verts_to_verts[edge->Vertex(1)->m_vertex_index] = b_verts_array.size()-1;
+	    }
+	}
+    }
+
+    point_cnt = b_verts.size();
+
+    verts = (struct vertex **)bu_calloc(point_cnt, sizeof(struct vertex *), "brep_to_nmg: verts");
+    loop_verts = (struct vertex ***) bu_calloc(max_edge_cnt, sizeof(struct vertex **), "brep_to_nmg: loop_verts");
+    fu = (struct faceuse **) bu_calloc(face_cnt, sizeof(struct faceuse *), "brep_to_nmg: fu");
+
+    // Make the faces
+    int face_count = 0;
+    for (int s_it = 0; s_it < data->loops_cnt; s_it++) {
+	int loop_length = 0;
+	const ON_BrepLoop *b_loop = &(data->brep->m_L[data->loops[s_it]]);
+	const ON_BrepFace *b_face = b_loop->Face();
+	for (int ti = 0; ti < b_loop->m_ti.Count(); ti++) {
+	    const ON_BrepTrim *trim = &(b_face->Brep()->m_T[b_loop->m_ti[ti]]);
+	    const ON_BrepEdge *edge = &(b_face->Brep()->m_E[trim->m_ei]);
+	    if (trim->m_bRev3d) {
+		loop_verts[loop_length] = &(verts[b_verts_to_verts[edge->Vertex(0)->m_vertex_index]]);
+	    } else {
+		loop_verts[loop_length] = &(verts[b_verts_to_verts[edge->Vertex(1)->m_vertex_index]]);
+	    }
+	    loop_length++;
+	}
+	fu[face_count] = nmg_cmface(s, loop_verts, loop_length);
+	face_count++;
+    }
+
+    for (int p = 0; p < point_cnt; p++) {
+	ON_3dPoint pt = data->brep->m_V[b_verts_array[p]].Point();
+	point_t nmg_pt;
+	nmg_pt[0] = pt.x;
+	nmg_pt[1] = pt.y;
+	nmg_pt[2] = pt.z;
+	nmg_vertex_gv(verts[p], pt);
+    }
+
+    for (int f = 0; f < face_cnt; f++) {
+	nmg_fu_planeeqn(fu[f], &nmg_tol);
+    }
+
+    nmg_fix_normals(s, &nmg_tol);
+    (void)nmg_mark_edges_real(&s->l.magic);
+    /* Compute "geometry" for region and shell */
+    nmg_region_a(r, &nmg_tol);
+
+    /* Create the nmg primitive */
+    mk_nmg(wdbp, bu_vls_addr(&prim_name), m);
+    if (wcomb) (void)mk_addmember(bu_vls_addr(&prim_name), &((*wcomb).l), NULL, WMOP_UNION);
+
+    bu_vls_free(&prim_name);
+
+    return m;
+}
+
+int
+subbrep_to_csg_arb8(struct subbrep_object_data *data, struct rt_wdb *wdbp, struct wmember *wcomb)
+{
+    struct csg_object_params *params = data->params;
+    if (data->type == ARB8) {
+	struct bu_vls prim_name = BU_VLS_INIT_ZERO;
+	bu_vls_sprintf(&prim_name, "arb8_%s.s", bu_vls_addr(data->key));
+
+	mk_arb8(wdbp, bu_vls_addr(&prim_name), (const fastf_t *)params->p);
+	//std::cout << bu_vls_addr(&prim_name) << ": " << params->bool_op << "\n";
+	if (wcomb) (void)mk_addmember(bu_vls_addr(&prim_name), &((*wcomb).l), NULL, db_str2op(&(params->bool_op)));
+	bu_vls_free(&prim_name);
+	return 1;
+    } else {
+	return 0;
+    }
+}
+int
+subbrep_to_csg_planar(struct subbrep_object_data *data, struct rt_wdb *wdbp, struct wmember *wcomb)
+{
+    if (data->type == PLANAR_VOLUME) {
+	// BRL-CAD's arbn primitive does not support concave shapes, and we want to use
+	// simpler primitives than the generic nmg if the opportunity arises.  A heuristic
+	// along the following lines may help:
+	//
+	// Step 1.  Check the number of vertices.  If the number is small enough that the
+	//          volume might conceivably be expressed by an arb4-arb8, try that first.
+	//
+	// Step 2.  If the arb4-arb8 test fails, do the convex hull and see if all points
+	//          are used by the hull.  If so, the shape is convex and may be expressed
+	//          as an arbn.
+	//
+	// Step 3.  If the arbn test fails, construct sets of contiguous concave faces using
+	//          the set of edges with one or more vertices not in the convex hull.  If
+	//          those shapes are all convex, construct an arbn tree (or use simpler arb
+	//          shapes if the subtractions may be so expressed).
+	//
+	// Step 4.  If the subtraction volumes in Step 3 are still not convex, cut our losses
+	//          and proceed to the nmg primitive.  It may conceivably be worth some
+	//          additional searches to spot convex subsets of shapes that can be more
+	//          simply represented, but that is not particularly simple to do well
+	//          and should wait until it is clear we would get a benefit from it.  Look
+	//          at the arbn tessellation routine for a guide on how to set up the
+	//          nmg - that's the most general of the arb* primitives and should be
+	//          relatively close to what is needed here.
+	(void)brep_to_nmg(data, wdbp, wcomb);
+	return 1;
+    } else {
+	return 0;
+    }
+}
+
+int
+subbrep_to_csg_cylinder(struct subbrep_object_data *data, struct rt_wdb *wdbp, struct wmember *wcomb)
+{
+    struct csg_object_params *params = data->params;
+    if (data->type == CYLINDER) {
+	struct bu_vls prim_name = BU_VLS_INIT_ZERO;
+	bu_vls_sprintf(&prim_name, "rcc_%s.s", bu_vls_addr(data->key));
+
+	mk_rcc(wdbp, bu_vls_addr(&prim_name), params->origin, params->hv, params->radius);
+	//std::cout << bu_vls_addr(&prim_name) << ": " << params->bool_op << "\n";
+	if (wcomb) (void)mk_addmember(bu_vls_addr(&prim_name), &((*wcomb).l), NULL, db_str2op(&(params->bool_op)));
+	bu_vls_free(&prim_name);
+	return 1;
+    }
+    return 0;
+}
+
+int
+subbrep_to_csg_conic(struct subbrep_object_data *data, struct rt_wdb *wdbp, struct wmember *wcomb)
+{
+    struct csg_object_params *params = data->params;
+    if (data->type == CONE) {
+	struct bu_vls prim_name = BU_VLS_INIT_ZERO;
+	bu_vls_sprintf(&prim_name, "trc_%s.s", bu_vls_addr(data->key));
+
+	mk_cone(wdbp, bu_vls_addr(&prim_name), params->origin, params->hv, params->height, params->radius, params->r2);
+	//std::cout << bu_vls_addr(&prim_name) << ": " << params->bool_op << "\n";
+	if (wcomb) (void)mk_addmember(bu_vls_addr(&prim_name), &((*wcomb).l), NULL, db_str2op(&(params->bool_op)));
+	bu_vls_free(&prim_name);
+	return 1;
+    }
+    return 0;
+}
+
+int
+subbrep_to_csg_sphere(struct subbrep_object_data *data, struct rt_wdb *wdbp, struct wmember *wcomb)
+{
+    struct csg_object_params *params = data->params;
+    if (data->type == SPHERE) {
+	struct bu_vls prim_name = BU_VLS_INIT_ZERO;
+	bu_vls_sprintf(&prim_name, "sphere_%s.s", bu_vls_addr(data->key));
+
+	mk_sph(wdbp, bu_vls_addr(&prim_name), params->origin, params->radius);
+	//std::cout << bu_vls_addr(&prim_name) << ": " << params->bool_op << "\n";
+	if (wcomb) (void)mk_addmember(bu_vls_addr(&prim_name), &((*wcomb).l), NULL, db_str2op(&(params->bool_op)));
+	bu_vls_free(&prim_name);
+	return 1;
+    }
+    return 0;
+}
+
+
+void
+process_params(struct subbrep_object_data *data, struct rt_wdb *wdbp, struct wmember *wcomb)
+{
+    switch (data->type) {
+	case ARB8:
+	    subbrep_to_csg_arb8(data, wdbp, wcomb);
+	    break;
+	case PLANAR_VOLUME:
+	    subbrep_to_csg_planar(data, wdbp, wcomb);
+	    break;
+	case CYLINDER:
+	    subbrep_to_csg_cylinder(data, wdbp, wcomb);
+	    break;
+	case CONE:
+	    subbrep_to_csg_conic(data, wdbp, wcomb);
+	    break;
+	case SPHERE:
+	    subbrep_to_csg_sphere(data, wdbp, wcomb);
+	    break;
+	case ELLIPSOID:
+	    break;
+	case TORUS:
+	    break;
+	default:
+	    break;
+    }
+}
+
+
+int
+make_shapes(struct subbrep_object_data *data, struct rt_wdb *wdbp, struct wmember *pcomb)
+{
+    //std::cout << "Making shape for " << bu_vls_addr(data->key) << "\n";
+    if (data->planar_obj && data->planar_obj->local_brep) {
+	struct bu_vls brep_name = BU_VLS_INIT_ZERO;
+	bu_vls_sprintf(&brep_name, "planar_%s.s", bu_vls_addr(data->key));
+	mk_brep(wdbp, bu_vls_addr(&brep_name), data->planar_obj->local_brep);
+	bu_vls_free(&brep_name);
+    }
+    if (data->type == BREP) {
+	if (data->local_brep) {
+	    struct bu_vls brep_name = BU_VLS_INIT_ZERO;
+	    bu_vls_sprintf(&brep_name, "brep_%s.s", bu_vls_addr(data->key));
+	    mk_brep(wdbp, bu_vls_addr(&brep_name), data->local_brep);
+	    // TODO - not always union
+	    if (pcomb) (void)mk_addmember(bu_vls_addr(&brep_name), &(pcomb->l), NULL, WMOP_UNION);
+	    bu_vls_free(&brep_name);
+	} else {
+	    bu_log("Warning - mk_brep called but data->local_brep is empty\n");
+	}
+    } else {
+	if (data->type == COMB) {
+	    struct wmember wcomb;
+	    struct bu_vls comb_name = BU_VLS_INIT_ZERO;
+	    struct bu_vls member_name = BU_VLS_INIT_ZERO;
+	    bu_vls_sprintf(&comb_name, "comb_%s.c", bu_vls_addr(data->key));
+	    BU_LIST_INIT(&wcomb.l);
+	    //bu_log("make comb %s\n", bu_vls_addr(data->key));
+	    for (unsigned int i = 0; i < BU_PTBL_LEN(data->children); i++){
+		struct subbrep_object_data *cdata = (struct subbrep_object_data *)BU_PTBL_GET(data->children,i);
+		//std::cout << "Making child shape(" << cdata->type << "):\n";
+		make_shapes(cdata, wdbp, &wcomb);
+		subbrep_object_free(cdata);
+	    }
+	    mk_lcomb(wdbp, bu_vls_addr(&comb_name), &wcomb, 0, NULL, NULL, NULL, 0);
+	    // TODO - not always union
+	    if (pcomb) (void)mk_addmember(bu_vls_addr(&comb_name), &(pcomb->l), NULL, WMOP_UNION);
+
+	    bu_vls_free(&member_name);
+	    bu_vls_free(&comb_name);
+	} else {
+	    //std::cout << "type: " << data->type << "\n";
+	    process_params(data, wdbp, pcomb);
+	}
+    }
+    return 0;
+}
+
 int
 main(int argc, char *argv[])
 {
     struct db_i *dbip;
+    struct rt_wdb *wdbp;
     struct directory *dp;
     struct rt_db_internal intern;
     struct rt_brep_internal *brep_ip = NULL;
@@ -32,6 +314,8 @@ main(int argc, char *argv[])
     if (dbip == DBI_NULL) {
 	bu_exit(1, "ERROR: Unable to read from %s\n", argv[1]);
     }
+
+    wdbp = wdb_dbopen(dbip, RT_WDB_TYPE_DB_DISK);
 
     if (db_dirbuild(dbip) < 0)
 	bu_exit(1, "ERROR: Unable to read from %s\n", argv[1]);
@@ -55,123 +339,26 @@ main(int argc, char *argv[])
     RT_BREP_CK_MAGIC(brep_ip);
 
     ON_Brep *brep = brep_ip->brep;
+    struct wmember pcomb;
+    struct bu_vls comb_name = BU_VLS_INIT_ZERO;
+    bu_vls_sprintf(&comb_name, "%s_csg.c", dp->d_namep);
+    BU_LIST_INIT(&pcomb.l);
 
-#if 0
-    for (int i = 0; i < brep->m_C3.Count(); i++) {
-	int curve_type = (int)GetCurveType(brep->m_C3[i]);
-	if (curve_type != 1 && curve_type != 6)
-	std::cout << "Curve type: " << GetCurveType(brep->m_C3[i]) << "\n";
+    struct bu_ptbl *subbreps = find_subbreps(brep);
+    for (unsigned int i = 0; i < BU_PTBL_LEN(subbreps); i++){
+	struct subbrep_object_data *obj = (struct subbrep_object_data *)BU_PTBL_GET(subbreps, i);
+	//print_subbrep_object(obj, "");
+	// first, make the comb (or, if we have a brep, make that)
+	(void)make_shapes(obj, wdbp, &pcomb);
+	subbrep_object_free(obj);
+	BU_PUT(obj, struct subbrep_object_data);
     }
+    bu_ptbl_free(subbreps);
+    BU_PUT(subbreps, struct bu_ptbl);
+    // TODO - probably should be region
+    mk_lcomb(wdbp, bu_vls_addr(&comb_name), &pcomb, 0, NULL, NULL, NULL, 0);
 
-    for (int i = 0; i < brep->m_S.Count(); i++) {
-	int surface_type = (int)GetSurfaceType(brep->m_S[i]);
-	if (surface_type != 1 && surface_type != 6)
-	std::cout << "Surface type: " << GetSurfaceType(brep->m_S[i]) << "\n";
-    }
-#endif
-#if 0
-    for (int i = 0; i < brep->m_F.Count(); i++) {
-	ON_BrepFace *face = &(brep->m_F[i]);
-	ON_Surface *temp_surface = (ON_Surface *)face->SurfaceOf();
-	int surface_type = (int)GetSurfaceType(temp_surface);
-	std::cout << "Surface type: " << surface_type << "\n";
-	for (int li = 0; li < face->LoopCount(); li++) {
-	    bool innerLoop = (li > 0) ? true : false;
-	    ON_BrepLoop* loop = face->Loop(li);
-	    for (int ti = 0; ti < loop->m_ti.Count(); ti++) {
-		ON_BrepTrim& trim = face->Brep()->m_T[loop->m_ti[ti]];
-		ON_BrepEdge& edge = face->Brep()->m_E[trim.m_ei];
-		//const ON_Curve* trimCurve = trim.TrimCurveOf();
-		const ON_Curve* edgeCurve = edge.EdgeCurveOf();
-		int curve_type = (int)GetCurveType((ON_Curve *)edgeCurve);
-		if (innerLoop) {
-		std::cout << "  Inner Curve type: " << curve_type << "\n";
-		} else {
-		std::cout << "  Outer Curve type: " << curve_type << "\n";
-		}
-	    }
-	}
-    }
-#endif
-
-    std::map<int, std::set<int> > face_sets;
-    std::map<int, std::set<int> > loop_sets;
-
-    for (int i = 0; i < brep->m_F.Count(); i++) {
-	std::queue<int> local_loops;
-	std::set<int> processed_loops;
-	ON_BrepFace *face = &(brep->m_F[i]);
-	face_sets[i].insert(i);
-	local_loops.push(face->OuterLoop()->m_loop_index);
-	processed_loops.insert(face->OuterLoop()->m_loop_index);
-	std::cout << "Face " << i <<  " outer loop " << face->OuterLoop()->m_loop_index << "\n";
-	while(!local_loops.empty()) {
-	    loop_sets[i].insert(local_loops.front());
-	    ON_BrepLoop* loop = &(brep->m_L[local_loops.front()]);
-	    local_loops.pop();
-	    for (int ti = 0; ti < loop->m_ti.Count(); ti++) {
-		ON_BrepTrim& trim = face->Brep()->m_T[loop->m_ti[ti]];
-		ON_BrepEdge& edge = face->Brep()->m_E[trim.m_ei];
-		if (edge.TrimCount() > 1) {
-		    for (int j = 0; j < edge.TrimCount(); j++) {
-			if (edge.m_ti[j] != ti && edge.Trim(j)->FaceIndexOf()!= -1) {
-			    face_sets[i].insert(edge.Trim(j)->FaceIndexOf());
-			    if (processed_loops.find(edge.Trim(j)->Loop()->m_loop_index) == processed_loops.end()) {
-				local_loops.push(edge.Trim(j)->Loop()->m_loop_index);
-				processed_loops.insert(edge.Trim(j)->Loop()->m_loop_index);
-				std::cout << "Face " << i <<  " network pulls in loop " << edge.Trim(j)->Loop()->m_loop_index << " in face " << edge.Trim(j)->FaceIndexOf() << "\n";
-			    }
-			}
-		    }
-		}
-	    }
-	}
-    }
-    for (int i = 0; i < brep->m_F.Count(); i++) {
-	std::set<int>::iterator s_it;
-	std::set<int>::iterator s_it2;
-	ON_BrepFace *face = &(brep->m_F[i]);
-	std::cout << "Face set for face " << i << ": ";
-	for (s_it = face_sets[i].begin(); s_it != face_sets[i].end(); s_it++) {
-	    std::cout << (int)(*s_it);
-	    s_it2 = s_it;
-	    s_it2++;
-	    if (s_it2 != face_sets[i].end()) std::cout << ",";
-	}
-	std::cout << "\n";
-	for (s_it = face_sets[i].begin(); s_it != face_sets[i].end(); s_it++) {
-	    ON_BrepFace *used_face = &(brep->m_F[(*s_it)]);
-	    ON_Surface *temp_surface = (ON_Surface *)used_face->SurfaceOf();
-	    int surface_type = (int)GetSurfaceType(temp_surface);
-	    std::cout << "Face " << (*s_it) << " surface type: " << surface_type << "\n";
-	}
-	std::set<int> curve_set;
-	std::set<int>::iterator c_it;
-	for (s_it = loop_sets[i].begin(); s_it != loop_sets[i].end(); s_it++) {
-	    ON_BrepLoop* loop = &(brep->m_L[(*s_it)]);
-	    for (int ti = 0; ti < loop->m_ti.Count(); ti++) {
-		ON_BrepTrim& trim = face->Brep()->m_T[loop->m_ti[ti]];
-		ON_BrepEdge& edge = face->Brep()->m_E[trim.m_ei];
-		if (edge.TrimCount() > 1) {
-		    for (int j = 0; j < edge.TrimCount(); j++) {
-			if (edge.m_ti[j] != ti) {
-			    curve_set.insert(edge.EdgeCurveIndexOf());
-			    //const ON_Curve* edgeCurve = edge.EdgeCurveOf();
-			    //int curve_type = (int)GetCurveType((ON_Curve *)edgeCurve);
-			    //std::cout << "Loop " << (*s_it) << " curve type: " << curve_type << "\n";
-			}
-		    }
-		}
-	    }
-	}
-	for (c_it = curve_set.begin(); c_it != curve_set.end(); c_it++) {
-	    int curve_type = (int)GetCurveType((ON_Curve *)(brep->m_C3[(*c_it)]));
-	    std::cout << "Curve " << (*c_it) << " type: " << curve_type << "\n";
-	}
-	std::cout << "\n";
-    }
-
-
+    db_close(dbip);
 
     return 0;
 }

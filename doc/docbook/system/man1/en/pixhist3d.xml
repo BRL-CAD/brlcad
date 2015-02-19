@@ -23,7 +23,7 @@
 
 
 <refsect1 xml:id='description'><title>DESCRIPTION</title>
-<para><emphasis remap='I'>Pixhist3d</emphasis>
+<para><command>pixhist3d</command>
 builds up a count of color frequencies in the RGB color space and
 then displays three orthographic views of this color space.
 An RGB color cube with red, green, and blue values from 0 to 255
@@ -34,13 +34,10 @@ perpendicular to that face.  These frequencies are scaled so that the
 maximum value is full white, and any non-zero scaled count less than
 30 is displayed at intensity 30 so as to be visible.</para>
 
-<para>The faces are:
-<!-- .br -->
-Lower left: red vertical, green horizontal
-<!-- .br -->
-Upper left: blue vertical, green horizontal
-<!-- .br -->
-Lower right: red vertical, blue horizontal</para>
+<para>The faces are:</para>
+<para>Lower left: red vertical, green horizontal</para>
+<para>Upper left: blue vertical, green horizontal</para>
+<para>Lower right: red vertical, blue horizontal</para>
 
 <para>The environment
 variable

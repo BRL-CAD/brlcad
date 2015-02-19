@@ -21,7 +21,7 @@
 /**  @defgroup parallel  Parallel Processing */
 /**   @defgroup thread Multithreading */
 
-/** @file parallel.h
+/** @file include/bu/parallel.h
  *
  */
 #ifndef BU_PARALLEL_H
@@ -82,7 +82,7 @@ BU_EXPORT extern int bu_parallel_id(void);
  */
 
 /**
- * terminate a given process.
+ * terminate a given process and any children.
  *
  * returns truthfully whether the process could be killed.
  */

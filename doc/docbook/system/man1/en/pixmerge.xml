@@ -41,9 +41,8 @@ the output is determined by a formula involving the first
 (background) stream.
 This routine operates on a pixel-by-pixel basis, and thus
 is independent of the resolution of the image.
-More sophisticated processing can be performed by the
-<emphasis remap='I'>pixmatte</emphasis>
-program.</para>
+More sophisticated processing can be performed by
+<command>pixmatte</command> .</para>
 
 <para>The formula can be any combination of
 <option>-g</option>

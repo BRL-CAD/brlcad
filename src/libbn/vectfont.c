@@ -52,36 +52,16 @@
 #include "vmath.h"
 #include "plot3.h"
 #include "vectfont.h"
+#include "bu/malloc.h"
 
 #define NUM_SYMBOLS	8
 
-int *tp_cindex[256];	/* index to stroke tokens */
+static int *tp_cindex[256];	/* index to stroke tokens */
 
-
-void
-tp_setup(void)
-{
-    register int *p;	/* pointer to stroke table */
-    register int i;
-
-    p = tp_ctable;		/* pointer to stroke list */
-
-    /* Store start addrs of each stroke list */
-    for (i = 040 - NUM_SYMBOLS; i < 128; i++)  {
-	tp_cindex[i+128] = tp_cindex[i] = p;
-	while ((*p++) != LAST);
-    }
-    for (i = 1; i <= NUM_SYMBOLS; i++)  {
-	tp_cindex[i+128] = tp_cindex[i] = tp_cindex[040-NUM_SYMBOLS-1+i];
-    }
-    for (i = NUM_SYMBOLS + 1; i < 040; i++)  {
-	tp_cindex[i+128] = tp_cindex[i] = tp_cindex['?'];
-    }
-}
 
 /*	tables for markers	*/
 
-int tp_ctable[] = {
+static int tp_ctable[] = {
 
 /*	+	*/
     drk(0, 5),
@@ -1098,6 +1078,36 @@ int tp_ctable[] = {
     brt(0, 2),
     LAST
 };
+
+void
+tp_setup(void)
+{
+    register int *p;	/* pointer to stroke table */
+    register int i;
+
+    p = tp_ctable;		/* pointer to stroke list */
+
+    /* Store start addrs of each stroke list */
+    for (i = 040 - NUM_SYMBOLS; i < 128; i++)  {
+	tp_cindex[i+128] = tp_cindex[i] = p;
+	while ((*p++) != LAST);
+    }
+    for (i = 1; i <= NUM_SYMBOLS; i++)  {
+	tp_cindex[i+128] = tp_cindex[i] = tp_cindex[040-NUM_SYMBOLS-1+i];
+    }
+    for (i = NUM_SYMBOLS + 1; i < 040; i++)  {
+	tp_cindex[i+128] = tp_cindex[i] = tp_cindex['?'];
+    }
+}
+
+int *
+tp_getchar(const unsigned char *c)
+{
+    if (tp_cindex[040] == 0) { tp_setup(); }
+    return tp_cindex[*c];
+}
+
+
 
 /*
  * Local Variables:

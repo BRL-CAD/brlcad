@@ -20,7 +20,10 @@
 #include "common.h"
 #include <stdlib.h>
 
-#include "bn.h"
+#include "vmath.h"
+#include "bn/plane_struct.h"
+#include "bn/plane_calc.h"
+#include "bn/tol.h"
 
 int
 coplanar_2d_coord_sys(point_t *origin_pnt, vect_t *u_axis, vect_t *v_axis, const point_t *points_3d, int n)

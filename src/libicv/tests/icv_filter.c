@@ -54,7 +54,7 @@ void usage()
 {
     int i;
 
-    bu_log("[-h] [-s squaresize] [-w width] [-n height] \n\
+    bu_log("[-s squaresize] [-w width] [-n height] \n\
 	    [-f lo|la|hi|hg|vg|b]\n\
 	    [-b -p -d -m] \n\
 	    [-o out_file] [file] > [out_file]\n");
@@ -127,7 +127,6 @@ int main(int argc, char* argv[])
 	    case 'm' :
 		format = ICV_IMAGE_PPM;
 		break;
-	    case 'h':
 	    default:
 		usage();
 		return 1;

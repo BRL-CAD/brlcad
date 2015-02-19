@@ -11,6 +11,7 @@ set(LIBBN_SOURCES
   axis.c
   complex.c
   chull.c
+  chull3d.cpp
   clip.c
   font.c
   globals.c
@@ -49,15 +50,12 @@ set(LIBBN_SOURCES
 BRLCAD_ADDLIB(libbn "${LIBBN_SOURCES}" libbu)
 SET_TARGET_PROPERTIES(libbn PROPERTIES VERSION 20.0.1 SOVERSION 20)
 
-BRLCAD_ADDEXEC(bntester bntester.c "libbu;libbn" NO_INSTALL)
 
 add_subdirectory(tests)
 
 CMAKEFILES(
   README
   bn_private.h
-  bntester.dat
-  chull3d.c
   )
 
 # Local Variables:

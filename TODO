@@ -18,7 +18,8 @@ tasks as they are completed.
 THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 -------------------------------------------------
 
-+ merge rel8, minmax.grep @ clip.c
+* make sure rt -I interactive mode still works... looks like code for
+  it was removed.
 
 * fix iges exporter (spaces after commas)
 
@@ -54,6 +55,24 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
+
+* air regions (aircode > 0) are removed/skipped during prep, but there
+  is no message to the user that this has occurred.  this can result
+  in unexpected behavior (bad usability) if/when air regions are the
+  only geometry being displayed (or are a substantial portion of the
+  current display.  prep needs to return a catalog so summary
+  reporting can be facilitated (of all objects, successful or not).
+
+* look into whether db_dirbuild should call db_update_nref
+
+* evaluate replacing libfft with the KISS FFT library (BSD).  similar
+  to Priit Laes' work a couple years ago (see brlcad-devel mailing
+  list, he converted our tools to FFTW but license was not
+  compatible), we need to replace and test performance via dfft.
+
+* update the rt* manual pages to note that they can all write out to
+  various image formats like png just by specifying an output file
+  extension.
 
 * implement a means to store per object, face, and vertex information
   on BoT mesh geometry.  useful for per-face/vertex shading as well as
@@ -420,9 +439,6 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
 
 * replicate the GTK+ ISST interface in TCL
 
-* Archer GUI needs to remember the last size of the command
-  window when it is in detached (2 window) mode
-
 * fix nurbs_ssi and nurbs_tester unit tests
 
 * get rid of the -P#processors user option (except rt* tools) common
@@ -672,10 +688,6 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
 * release dm X get_color() memory
 
 * update g-xxx_facets to use libgcv
-
-* add distribution test for making sure the source code conventions
-  for function replacements are being respected (e.g., bu_strcmp()
-  instead of strcmp()).
 
 * make sure 'preview' works, particularly the 'tree' subcommand.
 
@@ -1005,6 +1017,10 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
 * add geometry example of building 238
 
 * Mac OS X SGI dial knobs support
+  - Note that we might do better here to focus on the 3Dconnexion
+    space navigator mouse, which is a lot more commonly available
+    nowadays...  spacenav.sourceforge.net is something to bear in
+    mind in this context.
 
 * ability to "unpush" objects, translating them to a new position and
   applying the correct matrix (using either bounding box or center of
@@ -1357,6 +1373,29 @@ ATTRIBUTES
 NEW OBJECTS
 -----------
 
+* datum objects.  implement support for datum points, axes, planes,
+  and coordinate systems.  Nominal prioritized task decomposition with
+  time estimates:
+
+  2 day - stub in datum object into librt with sub-object types
+  1 day - implement typein support for datum axes
+  1 day - implement matrix pushing / verify rt_generic_xform()
+  1 day - implement listing / text / plot callbacks
+  1 day - implement adjust support for datum axes
+  1 day - update in.xml documentation on typein interface
+  2 day - add datum axis creation to archer GUI
+  2 day - implement datum axis option panel in archer GUI
+  2 day - implement datum axis mouse editing in archer GUI
+  3 day - write up documentation on datums (with example)
+  1 day - serialization+typein support for datum planes
+  1 day - serialization+typein support for datum point sets
+  1 day - serialization+typein support for datum coordinate systems
+  3 day - callbacks for planes, point sets, and coordinate systems
+  2 day - add datum plane to archer
+  2 day - add datum point sets to archer
+  2 day - add datum coordinate systems to archer
+  1 day - update in.xml documentation on typein
+
 * annotation primitive.  specifically a means to create an object in
   the database that can optionally be associated with another object
   and/or position(s) that a label refers to.  there are various styles
@@ -1632,14 +1671,10 @@ missing on Windows due to needing lex.
 CONVERTERS
 ----------
 
-* implement 3dm-g support for ON_InstanceRef entities.  These are
-  instances of existing geometry that have prescribed referencing edit
-  behavior and can have their own matrices.  Basically, they're combs
-  that should sometimes reference copies of geometry and sometimes not
-  (there's a flag).  unveiled via sf bug report 3575774 where the
-  geometry export from solidworks was predominantly references
-  resulting in a load of geometry missing after import and objects in
-  the wrong position.
+* investigate the asset import library (assimp.sf.net) to see whether
+  we can replace a lot (but probably not all) of our bot-centric
+  importers/exports (ply, obj, stl, etc.) with the assimp library
+  to save us the time/effort of supporting those parser ourselves.
 
 * make the converters export all top-level objects by default
 
@@ -1681,9 +1716,6 @@ CONVERTERS
 
 * implement a g-sat (Solidworks) exporter and sat-g importer
   http://local.wasp.uwa.edu.au/~pbourke/dataformats/sat/sat.pdf
-
-* implement a g-ply exporter
-  http://en.wikipedia.org/wiki/PLY_(file_format)
 
 * implement a g-json exporter
   http://www.json.org/

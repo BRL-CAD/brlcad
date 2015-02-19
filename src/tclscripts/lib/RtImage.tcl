@@ -114,13 +114,7 @@ proc rtimage {rtimage_dict} {
 	#
 	# Run rt to generate the color insert
 	#
-	catch {eval exec $cmd >& $_log_file &} curr_pid
-	if { !($_pid_filename == "/dev/null") && !($_pid_filename == "NUL") } {
-	   set chan [open $_pid_filename w]
-	   puts $chan $curr_pid
-	   close $chan
-	}
-	::pid_wait $curr_pid
+	catch {eval exec $cmd >& $_log_file} curr_pid
 
 	# Look for color objects that also get edges
 	if {[llength $_edge_objects] && [llength $_ecolor] == 3} {
@@ -172,13 +166,7 @@ proc rtimage {rtimage_dict} {
 		#
 		# Run rtedge to generate the full-color with edges
 		#
-		catch {eval exec $cmd >& $_log_file &} curr_pid
-	        if { !($_pid_filename == "/dev/null") && !($_pid_filename == "NUL") } {
-	   	   set chan [open $_pid_filename w]
-	   	   puts $chan $curr_pid
-	   	   close $chan
-	        }
-	        ::pid_wait $curr_pid
+		catch {eval exec $cmd >& $_log_file} curr_pid
 	    }
 	}
 
@@ -216,14 +204,7 @@ proc rtimage {rtimage_dict} {
 	#
 	# Run rt to generate the full-color version of the ghost image
 	#
-	catch {eval exec $cmd >& $_log_file &} curr_pid
-	if { !($_pid_filename == "/dev/null") && !($_pid_filename == "NUL") } {
-	    set chan [open $_pid_filename w]
-	   puts $chan $curr_pid
-	   close $chan
-	}
-
-	::pid_wait $curr_pid
+	catch {eval exec $cmd >& $_log_file} curr_pid
 
 	set cmd [list [file join $binpath rt] -w $_w -n $_n \
 		     -o $tgfci \
@@ -244,13 +225,7 @@ proc rtimage {rtimage_dict} {
 	#
 	# Run rt to generate the full-color version of the occlude_objects (i.e. color and ghost)
 	#
-	catch {eval exec $cmd >& $_log_file &} curr_pid
-	if { !($_pid_filename == "/dev/null") && !($_pid_filename == "NUL") } {
-	   set chan [open $_pid_filename w]
-	   puts $chan $curr_pid
-	   close $chan
-	}
-	::pid_wait $curr_pid
+	catch {eval exec $cmd >& $_log_file} curr_pid
 
 	#
 	# Convert to ghost image
@@ -316,14 +291,7 @@ proc rtimage {rtimage_dict} {
 	#
 	# Run rtedge to generate the full-color version of the ghost image
 	#
-	catch {eval exec $cmd >& $_log_file &} curr_pid
-	if { !($_pid_filename == "/dev/null") && !($_pid_filename == "NUL") } {
-	   set chan [open $_pid_filename w]
-	   puts $chan $curr_pid
-	   close $chan
-	}
-
-	::pid_wait $curr_pid
+	catch {eval exec $cmd >& $_log_file} curr_pid
     }
 
     catch {file delete -force $tgi}
@@ -334,7 +302,11 @@ proc rtimage {rtimage_dict} {
     catch {file delete -force $tbw}
     catch {file delete -force $tmod}
     catch {file delete -force $tbwpix}
+
+#end proc rtimage
 }
+
+#end namespace cadwidgets
 }
 
 

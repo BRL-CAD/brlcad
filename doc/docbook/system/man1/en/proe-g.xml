@@ -31,7 +31,7 @@
 
 
 <refsect1 xml:id='description'><title>DESCRIPTION</title>
-<para><emphasis remap='I'>proe-g</emphasis>
+<para><command>proe-g</command>
 converts the specified
 <emphasis remap='I'>file.brl</emphasis>
 to a BRL-CAD
@@ -91,7 +91,7 @@ or by sourcing the file during an MGED session.</para>
 
 <refsect1 xml:id='example'><title>EXAMPLE</title>
 <synopsis>
-$ <emphasis remap='I'>proe-g sample.brl sample.g</emphasis>
+$ proe-g <emphasis remap='I'>sample.brl sample.g</emphasis>
 </synopsis>
 </refsect1>
 

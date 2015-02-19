@@ -17,7 +17,8 @@
 <refsynopsisdiv xml:id='synopsis'>
 <cmdsynopsis>
   <command>tabinterp</command>
-    <arg choice='plain'><replaceable>&gt;table.final</replaceable></arg>
+    <arg choice='plain'>&gt;</arg>
+    <arg choice='plain'><replaceable>table.final</replaceable></arg>
 </cmdsynopsis>
 </refsynopsisdiv>
 
@@ -39,11 +40,11 @@ which has one line for each time step.</para>
 <emphasis remap='I'>tables.</emphasis>
 Each table is arranged so that every row (line) represents the
 state of some set of parameters at a given
-<emphasis remap='I'>time.</emphasis>
+<emphasis remap='I'>time</emphasis>.
 Each column of the table represents a single parameter, or data
-<emphasis remap='I'>channel,</emphasis>
+<emphasis remap='I'>channel</emphasis>,
 with the left-most column always representing
-<emphasis remap='I'>time.</emphasis></para>
+<emphasis remap='I'>time</emphasis>.</para>
 
 <para>The first task in preparing to use
 <citerefentry><refentrytitle>tabinterp</refentrytitle><manvolnum>1</manvolnum></citerefentry>
@@ -119,9 +120,15 @@ to process data values from time 1 second to 7.3 seconds, producing
 command has been given, it is necessary to associate an interpolator
 procedure or a "value generator" command with each output channel.
 The available interpolator procedures are:
-<emphasis remap='B'>step, linear, spline, cspline,</emphasis> and <emphasis remap='B'>quat</emphasis>.
+<emphasis remap='B'>step</emphasis>,
+<emphasis remap='B'>linear</emphasis>,
+<emphasis remap='B'>spline</emphasis>,
+<emphasis remap='B'>cspline</emphasis>, and
+<emphasis remap='B'>quat</emphasis>.
 The available value generator commands are:
-<emphasis remap='B'>rate, accel,</emphasis> and <emphasis remap='B'>next</emphasis>.
+<emphasis remap='B'>rate</emphasis>,
+<emphasis remap='B'>accel</emphasis>, and
+<emphasis remap='B'>next</emphasis>.
 The interpolator procedures are selected by giving commands of this form:</para>
 
 <para>   interp type chan_num(s);</para>

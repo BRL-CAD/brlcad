@@ -28,6 +28,12 @@ set(LIBBREP_SOURCES
   px_event.cpp
   PullbackCurve.cpp
   shape_recognition.cpp
+  shape_recognition_cone.cpp
+  shape_recognition_cylinder.cpp
+  shape_recognition_planar.cpp
+  shape_recognition_sphere.cpp
+  shape_recognition_torus.cpp
+  shape_recognition_util.cpp
   ssx_event.cpp
   Subcurve.cpp
   Subsurface.cpp

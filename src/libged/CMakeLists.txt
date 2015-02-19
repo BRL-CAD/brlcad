@@ -252,8 +252,10 @@ set(LIBGED_SOURCES
   showmats.c
   simulate/collision.cpp
   simulate/physics_world.cpp
-  simulate/simulate.cpp
-  simulate/simrt.c
+  simulate/rt_instance.cpp
+  simulate/interface.cpp
+  simulate/simulation.cpp
+  simulate/world_object.cpp
   size.c
   slew.c
   solids_on_ray.c
@@ -337,7 +339,9 @@ set(ged_ignore_files
   qray.h
   simulate/collision.hpp
   simulate/physics_world.hpp
-  simulate/simrt.h
+  simulate/rt_instance.hpp
+  simulate/simulation.hpp
+  simulate/world_object.hpp
   osg.cpp
   )
 CMAKEFILES(${ged_ignore_files})

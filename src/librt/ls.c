@@ -54,11 +54,11 @@ dp_eval_flags(struct directory *dp, int flags)
     return (flag_eval) ? 0 : 1;
 }
 
-int
+size_t
 db_ls(const struct db_i *dbip, int flags, const char *pattern, struct directory ***dpv)
 {
-    int i;
-    int objcount = 0;
+    size_t i;
+    size_t objcount = 0;
     struct directory *dp;
 
     RT_CK_DBI(dbip);
@@ -134,7 +134,7 @@ db_dpv_to_argv(struct directory **dpv)
 	argv = (char **)bu_malloc(sizeof(char *) * (dpv_cnt + 1), "char pointer array");
 	dpv_cnt = 0;
 	dp = dpv[0];
-	while (dpv) {
+	while (dpv[dpv_cnt]) {
 	    argv[dpv_cnt] = dpv[dpv_cnt]->d_namep;
 	    dpv_cnt++;
 	}

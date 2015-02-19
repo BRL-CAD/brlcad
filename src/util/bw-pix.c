@@ -62,8 +62,7 @@ get_args(int argc, char **argv)
             case 'n' :
                iny = atoi(bu_optarg);
                break;
-	    case 'h':
-	    default:		/* '?' */
+	    default:		/* '?' 'h' */
 		return 0;
 	}
     }

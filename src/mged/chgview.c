@@ -921,7 +921,7 @@ f_ill(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *a
 
     bu_optind = 1;
 
-    while ((c = bu_getopt(argc, nargv, "ei:n")) != -1) {
+    while ((c = bu_getopt(argc, nargv, "ei:nh?")) != -1) {
 	switch (c) {
 	    case 'e':
 		exact = 1;
@@ -942,7 +942,7 @@ f_ill(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *a
 		}
 		break;
 	    default:
-	    case 'h': {
+	    {
 		bu_vls_printf(&vls, "help ill");
 		Tcl_Eval(interp, bu_vls_addr(&vls));
 		bu_vls_free(&vls);

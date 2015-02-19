@@ -29,12 +29,6 @@
 #include "gcv.h"
 
 
-/* FIXME: this be a dumb hack to avoid void* conversion */
-struct gcv_data {
-    void (*func)(struct nmgregion *, const struct db_full_path *, int, int, float [3]);
-};
-
-
 union tree *
 _gcv_cleanup(int state, union tree *tp)
 {
@@ -69,15 +63,14 @@ gcv_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, unio
     int empty_model = 0;
     int NMG_debug_state = 0;
 
-    void (*write_region)(struct nmgregion *, const struct db_full_path *, int, int, float [3]);
+    struct gcv_region_end_data *data = (struct gcv_region_end_data *)client_data;
 
     if (!tsp || !curtree || !pathp || !client_data) {
 	bu_log("INTERNAL ERROR: gcv_region_end missing parameters\n");
 	return TREE_NULL;
     }
 
-    write_region = ((struct gcv_data *)client_data)->func;
-    if (!write_region) {
+    if (!data->write_region) {
 	bu_log("INTERNAL ERROR: gcv_region_end missing conversion callback function\n");
 	return TREE_NULL;
     }
@@ -201,7 +194,7 @@ gcv_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, unio
     } else {
 
 	/* Write the region out */
-	write_region(r, pathp, tsp->ts_regionid, tsp->ts_gmater, tsp->ts_mater.ma_color);
+	data->write_region(r, pathp, tsp->ts_regionid, tsp->ts_gmater, tsp->ts_mater.ma_color, data->client_data);
 
     } BU_UNSETJUMP; /* Relinquish bomb protection */
 

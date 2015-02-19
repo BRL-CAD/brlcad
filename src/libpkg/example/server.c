@@ -220,7 +220,8 @@ main(int argc, char *argv[]) {
     }
 
     /* process the command-line arguments after the application name */
-    while ((c = bu_getopt(argc, argv, "p:P:hH")) != -1) {
+    while ((c = bu_getopt(argc, argv, "p:P:hH?")) != -1) {
+	if (bu_optopt == '?') c='h';
 	switch (c) {
 	    case 'p':
 	    case 'P':

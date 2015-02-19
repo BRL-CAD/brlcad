@@ -71,16 +71,6 @@ const char *binu_types[] = {
     "binary(64bit_int)"
 };
 
-/**
- * Number of bytes used for each value of DB5HDR_WIDTHCODE_*
- */
-const int db5_enc_len[4] = {
-    1,
-    2,
-    4,
-    8
-};
-
 /* see table.c for primitive object function table definition */
 extern const struct rt_functab OBJ[];
 

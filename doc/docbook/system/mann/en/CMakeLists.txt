@@ -30,6 +30,7 @@ set(docbook_mann_EN
   bb.xml
   bev.xml
   bo.xml
+  bot.xml
   bolt.xml
   bot_condense.xml
   bot_decimate.xml

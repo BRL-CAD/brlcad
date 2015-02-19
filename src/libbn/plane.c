@@ -36,7 +36,10 @@
 #include "bu/debug.h"
 #include "bu/log.h"
 #include "vmath.h"
-#include "bn.h"
+#include "bn/mat.h"
+#include "bn/plane_struct.h"
+#include "bn/plane_calc.h"
+#include "bn/tol.h"
 
 #define UNIT_SQ_TOL 1.0e-13
 

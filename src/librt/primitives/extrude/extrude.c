@@ -1363,6 +1363,17 @@ rt_extrude_curve(struct curvature *cvp, struct hit *hitp, struct soltab *stp)
     }
 }
 
+void
+rt_extrude_uv(struct application *ap, struct soltab *stp, register struct hit *hitp, register struct uvcoord *uvp)
+{
+    if (ap) RT_CK_APPLICATION(ap);
+    if (stp) RT_CK_SOLTAB(stp);
+
+    uvp->uv_u = hitp->hit_vpriv[X];
+    uvp->uv_v = hitp->hit_vpriv[Y];
+    uvp->uv_du = 0;
+    uvp->uv_dv = 0;
+}
 
 void
 rt_extrude_free(struct soltab *stp)

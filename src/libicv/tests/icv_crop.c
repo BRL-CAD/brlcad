@@ -9,7 +9,7 @@
 
 void usage()
 {
-    bu_log("[-h] [squaresize] [-w width] [-n height] [-W out_width ] [-N out_height] \n\
+    bu_log("[-s squaresize] [-w width] [-n height] [-W out_width ] [-N out_height] \n\
 		    [-b -p -d -m] \n\
 			[-S out_squaresize] [-o out_file] [file] \n");
 
@@ -72,20 +72,18 @@ int main(int argc, char* argv[])
 		case 'm' :
 			format = ICV_IMAGE_PPM;
 			break;
-		case 'h':
-		default:
+		default: /* 'h' '?' */
 			usage();
 			return 1;
 
 	    }
     }
 
-    if (bu_optind < argc) {
-	in_file = argv[bu_optind];
-    } else {
+    if (bu_optind >= argc) {
 	usage();
 	return 1;
     }
+    in_file = argv[bu_optind];
 
     bu_log("\t          (ulx,uly)         (urx,ury)\n\
 	    \t           __________________\n\

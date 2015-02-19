@@ -1276,7 +1276,34 @@ brep_curve_info(struct brep_specific* bs, struct bu_vls *vls, int ci)
     return 0;
 }
 
+int
+brep_loop_info(struct brep_specific* bs, struct bu_vls *vls, int li)
+{
+    ON_Brep* brep = bs->brep;
+    ON_wString wstr;
+    ON_TextLog dump(wstr);
+    if (brep == NULL) {
+	return -1;
+    }
+    if (!brep->IsValid(&dump)) {
+	bu_log("brep is NOT valid");
+    }
 
+    if (!((li >= 0) && (li < brep->m_L.Count())))
+	return 0;
+    const ON_BrepLoop &loop = brep->m_L[li];
+    dump.Print("loop[%d] on face %d with %d trims\n", li, loop.m_fi, loop.TrimCount());
+    if (loop.TrimCount() > 0) {
+	dump.Print("trims: ");
+	for (int i = 0; i < loop.TrimCount() - 1; ++i) {
+	    dump.Print("%d,", loop.m_ti[i]);
+	}
+	dump.Print("%d\n", loop.m_ti[loop.TrimCount() - 1]);
+    }
+    ON_String ss = wstr;
+    bu_vls_printf(vls, "%s\n", ss.Array());
+    return 0;
+}
 
 int
 brep_edge_info(struct brep_specific* bs, struct bu_vls *vls, int ei)
@@ -1740,6 +1767,39 @@ brep_trim_plot(struct bu_vls *vls, struct brep_specific* bs, struct rt_brep_inte
     return 0;
 }
 
+int
+brep_loop_plot(struct bu_vls *vls, struct brep_specific* bs, struct rt_brep_internal*, struct bn_vlblock *vbp, int index, int plotres, bool dim3d)
+{
+    ON_wString wstr;
+    ON_TextLog ll(wstr);
+
+    ON_Brep* brep = bs->brep;
+    if (brep == NULL) {
+	return -1;
+    }
+    if (!brep->IsValid(&ll)) {
+	bu_log("brep is NOT valid");
+    }
+
+    if (index == -1) {
+	for (int i = 0; i < brep->m_L.Count(); i++) {
+	    ON_BrepLoop* loop = &(brep->m_L[i]);
+	    for (int ti = 0; ti < loop->m_ti.Count(); ti++) {
+		ON_BrepTrim& trim = brep->m_T[loop->m_ti[ti]];
+		plottrim(trim, vbp, plotres, dim3d);
+	    }
+	}
+    } else if (index < brep->m_L.Count()) {
+	ON_BrepLoop* loop = &(brep->m_L[index]);
+	for (int ti = 0; ti < loop->m_ti.Count(); ti++) {
+	    ON_BrepTrim& trim = brep->m_T[loop->m_ti[ti]];
+	    plottrim(trim, vbp, plotres, dim3d);
+	}
+    }
+
+    bu_vls_printf(vls, ON_String(wstr).Array());
+    return 0;
+}
 
 int
 brep_surface_cv_plot(struct bu_vls *vls, struct brep_specific* bs, struct rt_brep_internal*, struct bn_vlblock *vbp, int index)
@@ -2411,6 +2471,7 @@ info_usage(struct bu_vls *vls)
     bu_vls_printf(vls, "\tinfo S [index] or S [index-index] - return information for specific BREP 'surface'\n");
     bu_vls_printf(vls, "\tinfo F [index] or F [index-index]- return information for specific BREP 'face'\n");
     bu_vls_printf(vls, "\tinfo T [index] or T [index-index]- return information for specific BREP 'trim'\n");
+    bu_vls_printf(vls, "\tinfo L [index] or L [index-index]- return information for specific BREP 'loop'\n");
     bu_vls_printf(vls, "\tinfo E [index] or E [index-index]- return information for specific BREP 'edge'\n");
     bu_vls_printf(vls, "\tinfo TB [index] or TB [index-index]- return information for specific BREP 'piecewise bezier trim'\n");
     bu_vls_printf(vls, "\tinfo SB [index] or SB [index-index]- return information for specific BREP 'piecewise bezier surface'\n");
@@ -2438,6 +2499,8 @@ plot_usage(struct bu_vls *vls)
     bu_vls_printf(vls, "\tplot TBB [index] or TBB [index-index]- plot specific BREP 'trimleafs'\n");
     bu_vls_printf(vls, "\tplot TBB2d [index] or TBB2d [index-index]- plot specific BREP 'trimleafs in 2d'\n");
     bu_vls_printf(vls, "\tplot E [index] or E [index-index]- plot specific BREP 'edge3d'\n");
+    bu_vls_printf(vls, "\tplot L [index] or L [index-index]- plot specific BREP 'loop'\n");
+    bu_vls_printf(vls, "\tplot L2d [index] or L2d [index-index]- plot specific BREP 'loops in 2d'\n");
     bu_vls_printf(vls, "\tplot SCV [index] or SCV [index-index]- plot specific BREP 'nurbs control net'\n");
 }
 
@@ -2806,8 +2869,8 @@ brep_command(struct bu_vls *vls, const char *solid_name, const struct rt_tess_to
 	} else if (argc == 5) {
 	    const char *part = argv[3];
 	    const char *strindex = argv[4];
-	    int startindex = -1;
-	    int endindex = -1;
+	    std::set<int> elements;
+	    std::set<int>::iterator e_it;
 	    if (BU_STR_EQUAL(strindex, "all")) {
 		ON_Brep *brep = bs->brep;
 		if (BU_STR_EQUAL(part, "S")) {
@@ -2825,6 +2888,10 @@ brep_command(struct bu_vls *vls, const char *solid_name, const struct rt_tess_to
 		} else if (BU_STR_EQUAL(part, "E")) {
 		    for (int i = 0; i < brep->m_E.Count(); ++i) {
 			ret = brep_edge_info(bs, vls, i);
+		    }
+		} else if (BU_STR_EQUAL(part, "L")) {
+		    for (int i = 0; i < brep->m_L.Count(); ++i) {
+			ret = brep_loop_info(bs, vls, i);
 		    }
 		} else if (BU_STR_EQUAL(part, "SB")) {
 		    for (int i = 0; i < brep->m_S.Count(); ++i) {
@@ -2844,7 +2911,10 @@ brep_command(struct bu_vls *vls, const char *solid_name, const struct rt_tess_to
 	    } else {
 		ON_Brep *brep = bs->brep;
 		const char *dash = strchr(strindex, '-');
+		const char *comma = strchr(strindex, ',');
 		if (dash) {
+		    int startindex = -1;
+		    int endindex = -1;
 		    struct bu_vls tmpstr = BU_VLS_INIT_ZERO;
 		    bu_vls_strcpy(&tmpstr, strindex);
 		    bu_vls_trunc(&tmpstr, dash - strindex);
@@ -2852,44 +2922,65 @@ brep_command(struct bu_vls *vls, const char *solid_name, const struct rt_tess_to
 		    bu_vls_strcpy(&tmpstr, ++dash);
 		    endindex = atoi(bu_vls_addr(&tmpstr));
 		    bu_vls_free(&tmpstr);
+		    for (int elem = startindex; elem <= endindex; elem++) {
+			elements.insert(elem);
+		    }
+		} else if (comma) {
+		    struct bu_vls tmpstr = BU_VLS_INIT_ZERO;
+		    bu_vls_strcpy(&tmpstr, strindex);
+		    while (strlen(bu_vls_addr(&tmpstr)) > 0) {
+			struct bu_vls tmpstr2 = BU_VLS_INIT_ZERO;
+			int idx = 0;
+			bu_vls_strcpy(&tmpstr2, bu_vls_addr(&tmpstr));
+			bu_vls_trunc(&tmpstr2, comma - bu_vls_addr(&tmpstr));
+			idx = atoi(bu_vls_addr(&tmpstr2));
+			bu_vls_free(&tmpstr2);
+			elements.insert(idx);
+			int stp = 0;
+			while (idx >= 10) {
+			    int idx2 = idx / 10;
+			    idx = idx2;
+			    stp++;
+			}
+			bu_vls_nibble(&tmpstr, stp+2);
+			comma = strchr(bu_vls_addr(&tmpstr), ',');
+		    }
+		    bu_vls_free(&tmpstr);
 		} else {
-		    startindex = atoi(strindex);
-		    endindex = startindex;
+		    int idx = atoi(strindex);
+		    elements.insert(idx);
 		}
 		if (BU_STR_EQUAL(part, "S")) {
-		    int S_count = brep->m_S.Count() - 1 ? endindex : brep->m_S.Count() - 1 < endindex;
-		    for (int i = startindex; i <= S_count; ++i) {
-			ret = brep_surface_info(bs, vls, i);
+		    for (e_it = elements.begin(); e_it != elements.end(); e_it++) {
+			if (*e_it < brep->m_S.Count()) ret = brep_surface_info(bs, vls, (*e_it));
 		    }
 		} else if (BU_STR_EQUAL(part, "F")) {
-		    int F_count = brep->m_F.Count() - 1 ? endindex : brep->m_F.Count() - 1 < endindex;
-		    for (int i = startindex; i <= F_count; ++i) {
-			ret = brep_face_info(bs, vls, i);
+		    for (e_it = elements.begin(); e_it != elements.end(); e_it++) {
+			if (*e_it < brep->m_F.Count()) ret = brep_face_info(bs, vls, (*e_it));
 		    }
 		} else if (BU_STR_EQUAL(part, "T")) {
-		    int T_count = brep->m_T.Count() - 1 ? endindex : brep->m_T.Count() - 1 < endindex;
-		    for (int i = startindex; i <= T_count; ++i) {
-			ret = brep_trim_info(bs, vls, i);
+		    for (e_it = elements.begin(); e_it != elements.end(); e_it++) {
+			if (*e_it < brep->m_T.Count()) ret = brep_trim_info(bs, vls, (*e_it));
 		    }
 		} else if (BU_STR_EQUAL(part, "E")) {
-		    int E_count = brep->m_E.Count() - 1 ? endindex : brep->m_E.Count() - 1 < endindex;
-		    for (int i = startindex; i <= E_count; ++i) {
-			ret = brep_edge_info(bs, vls, i);
+		    for (e_it = elements.begin(); e_it != elements.end(); e_it++) {
+			if (*e_it < brep->m_E.Count()) ret = brep_edge_info(bs, vls, (*e_it));
+		    }
+		} else if (BU_STR_EQUAL(part, "L")) {
+		    for (e_it = elements.begin(); e_it != elements.end(); e_it++) {
+			if (*e_it < brep->m_L.Count()) ret = brep_loop_info(bs, vls, (*e_it));
 		    }
 		} else if (BU_STR_EQUAL(part, "SB")) {
-		    int S_count = brep->m_S.Count() - 1 ? endindex : brep->m_S.Count() - 1 < endindex;
-		    for (int i = startindex; i <= S_count; ++i) {
-			ret = brep_surface_bezier_info(bs, vls, i);
+		    for (e_it = elements.begin(); e_it != elements.end(); e_it++) {
+			if (*e_it < brep->m_S.Count()) ret = brep_surface_bezier_info(bs, vls, (*e_it));
 		    }
 		} else if (BU_STR_EQUAL(part, "TB")) {
-		    int T_count = brep->m_T.Count() - 1 ? endindex : brep->m_T.Count() - 1 < endindex;
-		    for (int i = startindex; i <= T_count; ++i) {
-			ret = brep_trim_bezier_info(bs, vls, i);
+		    for (e_it = elements.begin(); e_it != elements.end(); e_it++) {
+			if (*e_it < brep->m_T.Count()) ret = brep_trim_bezier_info(bs, vls, (*e_it));
 		    }
 		} else if (BU_STR_EQUAL(part, "C")) {
-		    int C_count = brep->m_C3.Count() - 1 ? endindex : brep->m_C3.Count() - 1 < endindex;
-		    for (int i = startindex; i <= C_count; ++i) {
-			ret = brep_curve_info(bs, vls, i);
+		    for (e_it = elements.begin(); e_it != elements.end(); e_it++) {
+			if (*e_it < brep->m_C3.Count()) ret = brep_curve_info(bs, vls, (*e_it));
 		    }
 		}
 	    }
@@ -2899,10 +2990,10 @@ brep_command(struct bu_vls *vls, const char *solid_name, const struct rt_tess_to
 	    plot_usage(vls);
 	} else if (argc >= 4) {
 	    const char *part = argv[3];
-	    int startindex = -1;
-	    int endindex = -1;
 	    int numpoints = -1;
 	    int plotres = 100;
+	    std::set<int> elements;
+	    std::set<int>::iterator e_it;
 	    if (argc == 6) {
 		const char *strres = argv[5];
 		plotres = numpoints = atoi(strres);
@@ -2910,12 +3001,48 @@ brep_command(struct bu_vls *vls, const char *solid_name, const struct rt_tess_to
 	    if (argc >= 5) {
 		const char *str = argv[4];
 		if (BU_STR_EQUAL(str, "all")) {
-		    startindex = endindex = -1;
+		    ON_Brep *brep = bs->brep;
+		    if (BU_STR_EQUAL(part, "S")) {
+			for (int i = 0; i < brep->m_S.Count(); ++i) {
+			    elements.insert(i);
+			}
+		    } else if (BU_STR_EQUAL(part, "F")) {
+			for (int i = 0; i < brep->m_F.Count(); ++i) {
+			    elements.insert(i);
+			}
+		    } else if (BU_STR_EQUAL(part, "T")) {
+			for (int i = 0; i < brep->m_T.Count(); ++i) {
+			    elements.insert(i);
+			}
+		    } else if (BU_STR_EQUAL(part, "E")) {
+			for (int i = 0; i < brep->m_E.Count(); ++i) {
+			    elements.insert(i);
+			}
+		    } else if (BU_STR_EQUAL(part, "L")) {
+			for (int i = 0; i < brep->m_L.Count(); ++i) {
+			    elements.insert(i);
+			}
+		    } else if (BU_STR_EQUAL(part, "SB")) {
+			for (int i = 0; i < brep->m_S.Count(); ++i) {
+			    elements.insert(i);
+			}
+		    } else if (BU_STR_EQUAL(part, "TB")) {
+			for (int i = 0; i < brep->m_T.Count(); ++i) {
+			    elements.insert(i);
+			}
+		    } else if (BU_STR_EQUAL(part, "C")) {
+			for (int i = 0; i < brep->m_C3.Count(); ++i) {
+			    elements.insert(i);
+			}
+		    }
 		} else if (BU_STR_EQUAL(str, "?")) {
 		    plot_usage(vls);
 		} else {
 		    const char *dash = strchr(str, '-');
+		    const char *comma = strchr(str, ',');
 		    if (dash) {
+			int startindex = -1;
+			int endindex = -1;
 			struct bu_vls tmpstr = BU_VLS_INIT_ZERO;
 			bu_vls_strcpy(&tmpstr, str);
 			bu_vls_trunc(&tmpstr, dash - str);
@@ -2923,16 +3050,40 @@ brep_command(struct bu_vls *vls, const char *solid_name, const struct rt_tess_to
 			bu_vls_strcpy(&tmpstr, ++dash);
 			endindex = atoi(bu_vls_addr(&tmpstr));
 			bu_vls_free(&tmpstr);
+			for (int elem = startindex; elem <= endindex; elem++) {
+			    elements.insert(elem);
+			}
+		    } else if (comma) {
+			struct bu_vls tmpstr = BU_VLS_INIT_ZERO;
+			bu_vls_strcpy(&tmpstr, str);
+			while (strlen(bu_vls_addr(&tmpstr)) > 0) {
+			    struct bu_vls tmpstr2 = BU_VLS_INIT_ZERO;
+			    int idx = 0;
+			    bu_vls_strcpy(&tmpstr2, bu_vls_addr(&tmpstr));
+			    bu_vls_trunc(&tmpstr2, comma - bu_vls_addr(&tmpstr));
+			    idx = atoi(bu_vls_addr(&tmpstr2));
+			    bu_vls_free(&tmpstr2);
+			    elements.insert(idx);
+			    int stp = 0;
+			    while (idx >= 10) {
+				int idx2 = idx / 10;
+				idx = idx2;
+				stp++;
+			    }
+			    bu_vls_nibble(&tmpstr, stp+2);
+			    comma = strchr(bu_vls_addr(&tmpstr), ',');
+			}
+			bu_vls_free(&tmpstr);
 		    } else {
-			startindex = atoi(str);
-			endindex = startindex;
+			int idx = atoi(str);
+			elements.insert(idx);
 		    }
 		}
 	    }
 	    if (BU_STR_EQUAL(part, "S")) {
 		snprintf(commtag, 64, "_BC_S_");
-		for (int i = startindex; i <= endindex; i++) {
-		    ret = brep_surface_plot(vls, bs, bi, vbp, i, plotres);
+		for (e_it = elements.begin(); e_it != elements.end(); e_it++) {
+		    ret = brep_surface_plot(vls, bs, bi, vbp, (*e_it), plotres);
 		}
 	    } else if (BU_STR_EQUAL(part, "Suv")) {
 		double u = 0.0;
@@ -2945,8 +3096,8 @@ brep_command(struct bu_vls *vls, const char *solid_name, const struct rt_tess_to
 		    v = atof(vstr);
 		}
 		snprintf(commtag, 64, "_BC_Suv_");
-		for (int i = startindex; i <= endindex; i++) {
-		    ret = brep_surface_uv_plot(vls, bs, bi, vbp, i, u, v);
+		for (e_it = elements.begin(); e_it != elements.end(); e_it++) {
+		    ret = brep_surface_uv_plot(vls, bs, bi, vbp, (*e_it), u, v);
 		}
 	    } else if (BU_STR_EQUAL(part, "UV")) {
 		ON_Interval u;
@@ -2963,116 +3114,126 @@ brep_command(struct bu_vls *vls, const char *solid_name, const struct rt_tess_to
 		    v.m_t[1] = atof(v2str);
 		}
 		snprintf(commtag, 64, "_BC_UV_");
-		for (int i = startindex; i <= endindex; i++) {
-		    ret = brep_surface_uv_plot(vls, bs, bi, vbp, i, u, v);
+		for (e_it = elements.begin(); e_it != elements.end(); e_it++) {
+		    ret = brep_surface_uv_plot(vls, bs, bi, vbp, (*e_it), u, v);
 		}
 	    } else if (BU_STR_EQUAL(part, "I")) {
 		snprintf(commtag, 64, "_BC_I_");
-		for (int i = startindex; i <= endindex; i++) {
-		    ret = brep_isosurface_plot(vls, bs, bi, vbp, i, plotres);
+		for (e_it = elements.begin(); e_it != elements.end(); e_it++) {
+		    ret = brep_isosurface_plot(vls, bs, bi, vbp, (*e_it), plotres);
 		}
 	    } else if (BU_STR_EQUAL(part, "SN")) {
 		snprintf(commtag, 64, "_BC_SN_");
-		for (int i = startindex; i <= endindex; i++) {
-		    ret = brep_surface_normal_plot(vls, bs, bi, vbp, i,
+		for (e_it = elements.begin(); e_it != elements.end(); e_it++) {
+		    ret = brep_surface_normal_plot(vls, bs, bi, vbp, (*e_it),
 						   plotres);
 		}
 	    } else if (BU_STR_EQUAL(part, "KN2d")) {
 		snprintf(commtag, 64, "_BC_KN2d_");
-		for (int i = startindex; i <= endindex; i++) {
-		    ret = brep_surface_knot_plot(vls, bs, bi, vbp, i, false);
+		for (e_it = elements.begin(); e_it != elements.end(); e_it++) {
+		    ret = brep_surface_knot_plot(vls, bs, bi, vbp, (*e_it), false);
 		}
 	    } else if (BU_STR_EQUAL(part, "KN")) {
 		snprintf(commtag, 64, "_BC_KN_");
-		for (int i = startindex; i <= endindex; i++) {
-		    ret = brep_surface_knot_plot(vls, bs, bi, vbp, i, true);
+		for (e_it = elements.begin(); e_it != elements.end(); e_it++) {
+		    ret = brep_surface_knot_plot(vls, bs, bi, vbp, (*e_it), true);
 		}
 	    } else if (BU_STR_EQUAL(part, "F")) {
 		snprintf(commtag, 64, "_BC_F_");
-		for (int i = startindex; i <= endindex; i++) {
-		    ret = brep_facetrim_plot(vls, bs, bi, vbp, i, plotres,
+		for (e_it = elements.begin(); e_it != elements.end(); e_it++) {
+		    ret = brep_facetrim_plot(vls, bs, bi, vbp, (*e_it), plotres,
 					     true);
 		}
 	    } else if (BU_STR_EQUAL(part, "F2d")) {
 		snprintf(commtag, 64, "_BC_F2d_");
-		for (int i = startindex; i <= endindex; i++) {
-		    ret = brep_facetrim_plot(vls, bs, bi, vbp, i, plotres,
+		for (e_it = elements.begin(); e_it != elements.end(); e_it++) {
+		    ret = brep_facetrim_plot(vls, bs, bi, vbp, (*e_it), plotres,
 					     false);
 		}
 	    } else if (BU_STR_EQUAL(part, "FCDT")) {
 		snprintf(commtag, 64, "_BC_FCDT_");
-		for (int i = startindex; i <= endindex; i++) {
-		    ret = brep_facecdt_plot(vls, solid_name, ttol, tol, bs, bi, vbp, i, 0);
+		for (e_it = elements.begin(); e_it != elements.end(); e_it++) {
+		    ret = brep_facecdt_plot(vls, solid_name, ttol, tol, bs, bi, vbp, (*e_it), 0);
 		}
 	    } else if (BU_STR_EQUAL(part, "FCDTw")) {
 		snprintf(commtag, 64, "_BC_FCDT_");
-		for (int i = startindex; i <= endindex; i++) {
-		    ret = brep_facecdt_plot(vls, solid_name, ttol, tol, bs, bi, vbp, i, 1, numpoints);
+		for (e_it = elements.begin(); e_it != elements.end(); e_it++) {
+		    ret = brep_facecdt_plot(vls, solid_name, ttol, tol, bs, bi, vbp, (*e_it), 1, numpoints);
 		}
 	    } else if (BU_STR_EQUAL(part, "FCDT2d")) {
 		snprintf(commtag, 64, "_BC_FCDT2d_");
-		for (int i = startindex; i <= endindex; i++) {
-		    ret = brep_facecdt_plot(vls, solid_name, ttol, tol, bs, bi, vbp, i, 2);
+		for (e_it = elements.begin(); e_it != elements.end(); e_it++) {
+		    ret = brep_facecdt_plot(vls, solid_name, ttol, tol, bs, bi, vbp, (*e_it), 2);
 		}
 	    } else if (BU_STR_EQUAL(part, "FCDTm2d")) {
 		snprintf(commtag, 64, "_BC_FCDTm2d_");
-		for (int i = startindex; i <= endindex; i++) {
-		    ret = brep_facecdt_plot(vls, solid_name, ttol, tol, bs, bi, vbp, i, 3, numpoints);
+		for (e_it = elements.begin(); e_it != elements.end(); e_it++) {
+		    ret = brep_facecdt_plot(vls, solid_name, ttol, tol, bs, bi, vbp, (*e_it), 3, numpoints);
 		}
 	    } else if (BU_STR_EQUAL(part, "FCDTp2d")) {
 		snprintf(commtag, 64, "_BC_FCDTp2d_");
-		for (int i = startindex; i <= endindex; i++) {
-		    ret = brep_facecdt_plot(vls, solid_name, ttol, tol, bs, bi, vbp, i, 4, numpoints);
+		for (e_it = elements.begin(); e_it != elements.end(); e_it++) {
+		    ret = brep_facecdt_plot(vls, solid_name, ttol, tol, bs, bi, vbp, (*e_it), 4, numpoints);
 		}
 	    } else if (BU_STR_EQUAL(part, "SBB")) {
 		snprintf(commtag, 64, "_BC_SBB_");
-		for (int i = startindex; i <= endindex; i++) {
-		    ret = brep_surfaceleafs_plot(vls, bs, bi, vbp, true, i,
+		for (e_it = elements.begin(); e_it != elements.end(); e_it++) {
+		    ret = brep_surfaceleafs_plot(vls, bs, bi, vbp, true, (*e_it),
 						 plotres);
 		}
 	    } else if (BU_STR_EQUAL(part, "SBB2d")) {
 		snprintf(commtag, 64, "_BC_SBB2d_");
-		for (int i = startindex; i <= endindex; i++) {
-		    ret = brep_surfaceleafs_plot(vls, bs, bi, vbp, false, i,
+		for (e_it = elements.begin(); e_it != elements.end(); e_it++) {
+		    ret = brep_surfaceleafs_plot(vls, bs, bi, vbp, false, (*e_it),
 						 plotres);
 		}
 	    } else if (BU_STR_EQUAL(part, "TD")) {
 		snprintf(commtag, 64, "_BC_TD_");
-		for (int i = startindex; i <= endindex; i++) {
-		    ret = brep_trim_direction_plot(vls, bs, bi, vbp, i,
+		for (e_it = elements.begin(); e_it != elements.end(); e_it++) {
+		    ret = brep_trim_direction_plot(vls, bs, bi, vbp, (*e_it),
 						   plotres);
 		}
 	    } else if (BU_STR_EQUAL(part, "T")) {
 		snprintf(commtag, 64, "_BC_T_");
-		for (int i = startindex; i <= endindex; i++) {
-		    ret = brep_trim_plot(vls, bs, bi, vbp, i, plotres, true);
+		for (e_it = elements.begin(); e_it != elements.end(); e_it++) {
+		    ret = brep_trim_plot(vls, bs, bi, vbp, (*e_it), plotres, true);
 		}
 	    } else if (BU_STR_EQUAL(part, "T2d")) {
 		snprintf(commtag, 64, "_BC_T2d_");
-		for (int i = startindex; i <= endindex; i++) {
-		    ret = brep_trim_plot(vls, bs, bi, vbp, i, plotres, false);
+		for (e_it = elements.begin(); e_it != elements.end(); e_it++) {
+		    ret = brep_trim_plot(vls, bs, bi, vbp, (*e_it), plotres, false);
+		}
+	    } else if (BU_STR_EQUAL(part, "L")) {
+		snprintf(commtag, 64, "_BC_L_");
+		for (e_it = elements.begin(); e_it != elements.end(); e_it++) {
+		    ret = brep_loop_plot(vls, bs, bi, vbp, (*e_it), plotres, true);
+		}
+	    } else if (BU_STR_EQUAL(part, "L2d")) {
+		snprintf(commtag, 64, "_BC_L2d_");
+		for (e_it = elements.begin(); e_it != elements.end(); e_it++) {
+		    ret = brep_loop_plot(vls, bs, bi, vbp, (*e_it), plotres, false);
 		}
 	    } else if (BU_STR_EQUAL(part, "TBB")) {
 		snprintf(commtag, 64, "_BC_TBB_");
-		for (int i = startindex; i <= endindex; i++) {
-		    ret = brep_trimleafs_plot(vls, bs, bi, vbp, true, i,
+		for (e_it = elements.begin(); e_it != elements.end(); e_it++) {
+		    ret = brep_trimleafs_plot(vls, bs, bi, vbp, true, (*e_it),
 					      plotres);
 		}
 	    } else if (BU_STR_EQUAL(part, "TBB2d")) {
 		snprintf(commtag, 64, "_BC_TBB2d_");
-		for (int i = startindex; i <= endindex; i++) {
-		    ret = brep_trimleafs_plot(vls, bs, bi, vbp, false, i,
+		for (e_it = elements.begin(); e_it != elements.end(); e_it++) {
+		    ret = brep_trimleafs_plot(vls, bs, bi, vbp, false, (*e_it),
 					      plotres);
 		}
 	    } else if (BU_STR_EQUAL(part, "E")) {
 		snprintf(commtag, 64, "_BC_E_");
-		for (int i = startindex; i <= endindex; i++) {
-		    ret = brep_edge3d_plot(vls, bs, bi, vbp, i, plotres);
+		for (e_it = elements.begin(); e_it != elements.end(); e_it++) {
+		    ret = brep_edge3d_plot(vls, bs, bi, vbp, (*e_it), plotres);
 		}
 	    } else if (BU_STR_EQUAL(part, "SCV")) {
 		snprintf(commtag, 64, "_BC_SCV_");
-		for (int i = startindex; i <= endindex; ++i) {
-		    ret = brep_surface_cv_plot(vls, bs, bi, vbp, i);
+		for (e_it = elements.begin(); e_it != elements.end(); e_it++) {
+		    ret = brep_surface_cv_plot(vls, bs, bi, vbp, (*e_it));
 		}
 	    }
 	}

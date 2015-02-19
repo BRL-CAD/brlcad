@@ -36,7 +36,7 @@
 void usage()
 {
     bu_log("\
-	    [-h] [ -O +|-|/|* ]\n\
+	    [ -O +|-|/|* ]\n\
 	    [-b -p -d -m] \n\
 	    [-o out_file]  file_1 file_2 > [out_file]\n");
 
@@ -84,29 +84,24 @@ int main(int argc, char* argv[])
 	    case 'm' :
 		format = ICV_IMAGE_PPM;
 		break;
-	    case 'h':
 	    default:
 		usage();
 		return 1;
 
 	}
     }
-    if (bu_optind <= argc) {
-	in_file1 = argv[bu_optind];
-	bu_optind++;
-    }
-    else {
+    if (bu_optind > argc) {
 	usage();
 	return 1;
     }
+    in_file1 = argv[bu_optind];
+    bu_optind++;
 
-    if (bu_optind <= argc) {
-	in_file2 = argv[bu_optind];
-    }
-    else {
+    if (bu_optind > argc) {
 	usage();
 	return 1;
     }
+    in_file2 = argv[bu_optind];
 
     bif1 = icv_read(in_file1, format, inx, iny);
     bif2 = icv_read(in_file2, format, inx, iny);

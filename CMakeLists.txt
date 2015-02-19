@@ -121,13 +121,23 @@ file(APPEND ${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/CMakeOutput.log "${CMAKE_COMM
 # Minimum required version of CMake
 cmake_minimum_required(VERSION 2.8.4)
 if(COMMAND CMAKE_POLICY)
+  # libraries linked via full path don't introduce linker search paths
   CMAKE_POLICY(SET CMP0003 NEW)
-  CMAKE_POLICY(SET CMP0007 OLD)
+
+  # list command doesn't ignore empty elements
+  CMAKE_POLICY(SET CMP0007 NEW)
+
+  # prefer files in CMAKE_MODULE_PATH over the cmake module dir
   CMAKE_POLICY(SET CMP0017 OLD)
+
+  # allow relative paths in INCLUDE_DIRECTORIES
+  CMAKE_POLICY(SET CMP0021 OLD)
+
   if ("${CMAKE_VERSION}" VERSION_GREATER 2.99)
     CMAKE_POLICY(SET CMP0026 OLD)
     CMAKE_POLICY(SET CMP0042 OLD)
   endif ("${CMAKE_VERSION}" VERSION_GREATER 2.99)
+
   if ("${CMAKE_VERSION}" VERSION_GREATER 3.0.9)
     CMAKE_POLICY(SET CMP0046 NEW)
     CMAKE_POLICY(SET CMP0053 OLD)
@@ -503,12 +513,23 @@ if(NOT BRLCAD_IS_SUBBUILD)
     # Huh?  No j flag if we can't get a processor count
     set(JFLAG)
   endif(NOT N EQUAL 0)
-  add_custom_target(check COMMAND ${CMAKE_CTEST_COMMAND} -LE Regression -E ^regress- ${JFLAG})
+  if(${CMAKE_VERSION} VERSION_GREATER 2.99)
+    add_custom_target(check COMMAND ${CMAKE_CTEST_COMMAND} -C $<CONFIG> -LE Regression -E ^regress- ${JFLAG})
+  else(${CMAKE_VERSION} VERSION_GREATER 2.99)
+    add_custom_target(check COMMAND ${CMAKE_CTEST_COMMAND} -C $<CONFIGURATION> -LE Regression -E ^regress- ${JFLAG})
+  endif(${CMAKE_VERSION} VERSION_GREATER 2.99)
+  set_target_properties(check PROPERTIES FOLDER "BRL-CAD Unit Tests")
   function(add_test test_name test_prog)
     _add_test(${test_name} ${test_prog} ${ARGN})
-    if (NOT "${test_name}" MATCHES ^regress- AND NOT "${test_prog}" MATCHES ^regress-)
-      add_dependencies(check ${test_prog})
-    endif (NOT "${test_name}" MATCHES ^regress- AND NOT "${test_prog}" MATCHES ^regress-)
+    if (NOT "${test_name}" STREQUAL "NAME")
+      if (NOT "${test_name}" MATCHES ^regress- AND NOT "${test_prog}" MATCHES ^regress-)
+	add_dependencies(check ${test_prog})
+      endif (NOT "${test_name}" MATCHES ^regress- AND NOT "${test_prog}" MATCHES ^regress-)
+    else (NOT "${test_name}" STREQUAL "NAME")
+      if (NOT "${ARGV1}" MATCHES ^regress- AND NOT "${ARGV3}" MATCHES ^regress-)
+	add_dependencies(check ${ARGV3})
+      endif (NOT "${ARGV1}" MATCHES ^regress- AND NOT "${ARGV3}" MATCHES ^regress-)
+    endif (NOT "${test_name}" STREQUAL "NAME")
   endfunction(add_test)
 endif(NOT BRLCAD_IS_SUBBUILD)
 
@@ -1984,6 +2005,7 @@ BRLCAD_FUNCTION_EXISTS(getloadavg HAVE_GETLOADAVG)
 BRLCAD_FUNCTION_EXISTS(getopt_long HAVE_GETOPT_LONG)
 BRLCAD_FUNCTION_EXISTS(getprogname HAVE_GETPROGNAME) # bsd
 BRLCAD_FUNCTION_EXISTS(htonll HAVE_HTONLL)
+BRLCAD_FUNCTION_EXISTS(logb HAVE_LOGB REQUIRED_LIBS ${M_LIBRARY})
 BRLCAD_FUNCTION_EXISTS(lrand48 HAVE_LRAND48)
 BRLCAD_FUNCTION_EXISTS(memset HAVE_MEMSET)
 BRLCAD_FUNCTION_EXISTS(mkstemp HAVE_MKSTEMP)
@@ -2273,6 +2295,11 @@ add_subdirectory(src/other)
 # Now put back the BRL-CAD flags
 RESTORE_CACHED_BUILD_FLAGS(_BRLCAD)
 
+# Restore BRL-CAD configurations, if necessary
+if(CMAKE_CONFIGURATION_TYPES AND NOT "${CMAKE_CONFIGURATION_TYPES}" STREQUAL "Debug;Release")
+  set(CMAKE_CONFIGURATION_TYPES "Debug;Release" CACHE STRING "Allowed BRL-CAD configuration types" FORCE)
+endif(CMAKE_CONFIGURATION_TYPES AND NOT "${CMAKE_CONFIGURATION_TYPES}" STREQUAL "Debug;Release")
+
 # *******************************************************************
 if(NOT EXISTS ${CMAKE_BINARY_DIR}/CMakeCache.txt.prev)
   message("***********************************************************")
@@ -2297,7 +2324,7 @@ endforeach(req_var ${CMAKE_REQUIRED_FLAG_VARS})
 # Enable CTest Testing support - this is done after src/other is
 # added to avoid incorporating src/other CTests into BRL-CAD's own
 # testing.  TODO - probably should control this with an option.
-ENABLE_TESTING()
+INCLUDE(CTest)
 
 # We've done the toplevel configure steps, now add the subdirectories
 macro(verbose_add_subdirectory root dir)
@@ -2747,6 +2774,7 @@ if(NOT BRLCAD_IS_SUBBUILD)
     TODO
     configure
     CMakeLists.txt
+    CTestConfig.cmake
     )
   CMAKEFILES(${toplevel_ignore_files})
 

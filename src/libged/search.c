@@ -231,6 +231,7 @@ ged_search(struct ged *gedp, int argc, const char *argv_orig[])
      * any further than the max possible option count */
     bu_optind = 1;
     while ((bu_optind < (optcnt + 1)) && ((c = bu_getopt(argc, (char * const *)argv_orig, "?aQhv")) != -1)) {
+	if (bu_optopt == '?') c='h';
 	switch (c) {
 	    case 'a':
 		aflag = 1;
@@ -246,7 +247,6 @@ ged_search(struct ged *gedp, int argc, const char *argv_orig[])
 		flags |= DB_SEARCH_QUIET;
 		break;
 	    case 'h':
-	    case '?':
 		want_help = 1;
 		break;
 	    default:
