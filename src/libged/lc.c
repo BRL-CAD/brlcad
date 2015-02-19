@@ -136,7 +136,7 @@ ged_lc(struct ged *gedp, int argc, const char *argv[])
     int orig_argc;
     const char **orig_argv;
 
-    static const char *usage = "[-d|-s|-r] [-z] [-0|-1|-2|-3|-4|-5] [-f {FileName}] {GroupName}";
+    static const char *usage = "[-d|-s] [-r] [-z] [-0|-1|-2|-3|-4|-5] [-f {FileName}] {GroupName}";
 
     int c;
     int error_cnt = 0;
