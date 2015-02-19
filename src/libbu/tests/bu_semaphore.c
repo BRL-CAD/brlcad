@@ -106,6 +106,15 @@ parallel_test(size_t ncpu, size_t reps)
     args.reps = reps;
     args.counter = &counter;
 
+    /* By default, bu_parallel() refuses to create more threads than
+     * there are CPUs on the host system.  Setting the
+     * BU_DEBUG_PARALLEL flag makes bu_debug() create the specified
+     * number of threads even if the host system doesn't have that
+     * many actual CPUs.  This permits multithreaded testing on
+     * systems with fewer than necessary (e.g. 1) cores.
+     */
+    bu_debug |= BU_DEBUG_PARALLEL;
+
     bu_parallel(increment_thread, ncpu, &args);
 
     if (counter != expected) {

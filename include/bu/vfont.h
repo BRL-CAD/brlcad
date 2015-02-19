@@ -20,7 +20,7 @@
 
 /** @addtogroup vfont */
 /** @{ */
-/** @file vfont.h
+/** @file include/bu/vfont.h
  *
  * This header file describes the in-memory format used by the BRL-CAD
  * Package routines for manipulating fonts stored in the Berkeley

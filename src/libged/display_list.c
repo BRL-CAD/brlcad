@@ -1262,7 +1262,7 @@ dl_zap(struct bu_list *hdlp, struct db_i *dbip, void (*callback)(unsigned int, i
     struct directory *dp;
 
     while (BU_LIST_WHILE(gdlp, display_list, hdlp)) {
-	if (callback != GED_FREE_VLIST_CALLBACK_PTR_NULL)
+	if (callback != GED_FREE_VLIST_CALLBACK_PTR_NULL && BU_LIST_NON_EMPTY(&gdlp->dl_headSolid))
 	    (*callback)(BU_LIST_FIRST(solid, &gdlp->dl_headSolid)->s_dlist,
 		    BU_LIST_LAST(solid, &gdlp->dl_headSolid)->s_dlist -
 		    BU_LIST_FIRST(solid, &gdlp->dl_headSolid)->s_dlist + 1);
@@ -2203,8 +2203,8 @@ dl_print_schain(struct bu_list *hdlp, struct db_i *dbip, int lvl, int vlcmds, st
 
 		    for (i = 0; i < nused; i++, cmd++, pt++) {
 			bu_vls_printf(vls, "  %s (%g, %g, %g)\n",
-				rt_vlist_cmd_descriptions[*cmd],
-				V3ARGS(*pt));
+				      rt_vlist_get_cmd_description(*cmd),
+				      V3ARGS(*pt));
 		    }
 		}
 

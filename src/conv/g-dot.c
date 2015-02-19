@@ -41,7 +41,7 @@
 #include "raytrace.h"
 #include "ged.h"
 
-const char *usage_fmt = "Usage: %s [-o output.dot] input.g [object1 ...]\n";
+const char *usage = "[-o output.dot] input.g [object1 ...]\n";
 
 struct output {
     FILE *outfp;
@@ -191,9 +191,9 @@ dot_footer(FILE *outfp)
 
 
 static void
-help(const char *argv0)
+help(const char *progname)
 {
-    bu_log(usage_fmt, argv0);
+    bu_log("Usage: %s %s", progname, usage);
     bu_log("\n\t-o output.dot   (optional) name of output Graphviz .dot file");
     bu_log("\n\tinput.g         name of input BRL-CAD .g database");
     bu_log("\n\tobject1 ...     (optional) name of object(s) to export from .g file\n");

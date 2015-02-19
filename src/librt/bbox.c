@@ -361,7 +361,7 @@ rt_traverse_tree(struct rt_i *rtip, const union tree *tp, fastf_t *tree_min, fas
 		    if (intern.idb_minor_type == ID_COMBINATION) {
 			combp = (struct rt_comb_internal *)intern.idb_ptr;
 		    } else {
-			/* if its not a comb, then something else is cooking */
+			/* if it's not a comb, then something else is cooking */
 			bu_log("rt_traverse_tree: WARNING : rt_db_lookup_internal(%s) got the internal form of a \
 							primitive when it should not, the bounds may not be correct", tp->tr_l.tl_name);
 			return -1;
@@ -466,7 +466,7 @@ rt_bound_internal(struct db_i *dbip, struct directory *dp,
     VMOVE(rpp_min, tree_min);
     VMOVE(rpp_max, tree_max);
 
-    /* Check if the model bounds look correct e.g. if they are all 0, then its not correct */
+    /* Check if the model bounds look correct e.g. if they are all 0, then it's not correct */
     if ((NEAR_ZERO(rpp_min[0], SMALL_FASTF) || rpp_min[0] <= -INFINITY || rpp_min[0] >= INFINITY) &&
 	(NEAR_ZERO(rpp_min[1], SMALL_FASTF) || rpp_min[1] <= -INFINITY || rpp_min[1] >= INFINITY) &&
 	(NEAR_ZERO(rpp_min[2], SMALL_FASTF) || rpp_min[2] <= -INFINITY || rpp_min[2] >= INFINITY) &&

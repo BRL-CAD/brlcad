@@ -697,7 +697,7 @@ nmg_class_pt_s(const fastf_t *pt, const struct shell *s, const int in_or_out_onl
 		    nmg_class = NMG_CLASS_AonBanti;
 		    goto out;
 		}
-		/* Point is OUTside face, its undecided. */
+		/* Point is OUTside face, it's undecided. */
 	    }
 
 	    /* Mark this face as having been processed */

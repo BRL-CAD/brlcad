@@ -53,7 +53,7 @@ get_args(int argc, char **argv)
 {
     int c;
 
-    while ((c = bu_getopt(argc, argv, "ds:w:#:")) != -1) {
+    while ((c = bu_getopt(argc, argv, "ds:w:#:h?")) != -1) {
 	switch (c) {
 	    case 'd':
 		doubleit = 1;
@@ -69,7 +69,7 @@ get_args(int argc, char **argv)
 		file_width = atoi(bu_optarg);
 		break;
 
-	    default:		/* '?' */
+	    default:		/* '?' 'h' */
 		return 0;
 	}
     }

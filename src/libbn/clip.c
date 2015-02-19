@@ -27,7 +27,8 @@
 #include "bu/log.h"
 #include "bu/str.h"
 #include "vmath.h"
-#include "bn.h"
+#include "bn/adc.h"
+#include "bn/clip.h"
 
 /* XXX need to test more thoroughly
    #define ANGLE_EPSILON 0.0001

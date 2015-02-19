@@ -33,6 +33,22 @@
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 ###
+
+# The string UNINITIALIZED is appended to variable values
+# supplied on the command line - this is a problem for the
+# case where the variable has not been set before, since it
+# appears to go straight into the cache and probably should
+# trigger a diff, but there doesn't seem to be any way to
+# recognize it was already set when CMake is re-run.  Also,
+# repeated CMake runs with the same value still trigger the
+# rebuilding if the "new" value is different from the original
+# one written to the cachem file.  Even when the value hasn't
+# been changed from the original setting, the "current" value
+# of the UNINITIALIZED variable does not have the cache
+# prefix.  Until we can find a way to recognize and handle
+# this situation, don't let the UNINITIALIZED values be a
+# reason for triggering a header update.
+
 macro(DIFF_CACHE_FILE)
   set(CACHE_FILE "")
   set(INCREMENT_COUNT_FILE 0)
@@ -56,7 +72,7 @@ macro(DIFF_CACHE_FILE)
 	      set(val " ")
 	    endif("${val}" STREQUAL "' '")
 	  endif(val)
-	  if(NOT ${line} MATCHES ":INTERNAL")
+	  if(NOT ${line} MATCHES ":INTERNAL" AND NOT ${line} MATCHES ":UNINITIALIZED")
 	    string(REPLACE ";" "semicolon" currvar "${${var}}")
 	    if(NOT "${currvar}" STREQUAL "${val}")
 	      #message("Found difference: ${var}")
@@ -64,7 +80,7 @@ macro(DIFF_CACHE_FILE)
 	      #message("Current: \"${${var}}\"")
 	      set(INCREMENT_COUNT_FILE 1)
 	    endif(NOT "${currvar}" STREQUAL "${val}")
-	  endif(NOT ${line} MATCHES ":INTERNAL")
+	  endif(NOT ${line} MATCHES ":INTERNAL" AND NOT ${line} MATCHES ":UNINITIALIZED")
 	endif(NOT ${line} MATCHES "^//")
       endif(NOT ${line} MATCHES "^#")
     endforeach(line ${ENT})

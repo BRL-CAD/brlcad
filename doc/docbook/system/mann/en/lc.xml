@@ -42,7 +42,7 @@
 <refsection xml:id="description"><title>DESCRIPTION</title>
  <para>The 'lc' command lists a set of codes (i.e. attributes) of
  regions within a group/combination. Listed in columns are the
- following 'region_id', 'material_id', 'los', 'region name',
+ following: 'region_id', 'material_id', 'los', 'region name',
  'region parent'. If a value is unset, it is reported as '--'.</para>
 </refsection>
 
@@ -61,7 +61,7 @@
       <listitem>
 	<para>
 	  Same as '-d' except some duplicates will not be reported
-	  (i.e. skipped). Skipped duplicates will be those within the
+	  (i.e. will be skipped). Skipped duplicates will be those within the
 	  specified group, that have the same parent, 'material_id' and
 	  'los'.
 	</para>

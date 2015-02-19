@@ -19,7 +19,7 @@
  */
 /** @file mged/mged.c
  *
- * Mainline portion of the Multiple-display Graphics EDitor (MGED)
+ * Main logic of the Multiple-display Graphics EDitor (MGED)
  *
  */
 
@@ -1073,6 +1073,7 @@ main(int argc, char *argv[])
 
     bu_optind = 1;
     while ((c = bu_getopt(argc, argv, "a:d:hbicorx:X:v?")) != -1) {
+	if (bu_optopt == '?') c='h';
 	switch (c) {
 	    case 'a':
 		attach = bu_optarg;
@@ -1114,9 +1115,8 @@ main(int argc, char *argv[])
 		old_mged_gui = 0;
 		break;
 	    default:
-		bu_log("Unrecognized option (%c)\n", c);
+		bu_log("Unrecognized option (%c)\n", bu_optopt);
 		/* Fall through to help */
-	    case '?':
 	    case 'h':
 		bu_exit(1, "Usage:  %s [-a attach] [-b] [-c] [-d display] [-h|?] [-r] [-x#] [-X#] [-v] [database [command]]\n", argv[0]);
 	}
@@ -1272,7 +1272,9 @@ main(int argc, char *argv[])
     dm_set_null(dmp);
     bu_vls_init(tkName);
     bu_vls_init(dName);
-    bu_vls_strcpy(dm_get_pathname(dmp), "nu");
+    if (dm_get_pathname(dmp)) {
+	bu_vls_strcpy(dm_get_pathname(dmp), "nu");
+    }
     bu_vls_strcpy(tkName, "nu");
 
     BU_ALLOC(rubber_band, struct _rubber_band);

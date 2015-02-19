@@ -61,7 +61,9 @@
 #include "rtgeom.h"
 
 
-#include "./rt/defines.h"
+#include "rt/defines.h"
+#include "rt/db_fullpath.h"
+
 
 __BEGIN_DECLS
 
@@ -204,7 +206,6 @@ struct rt_db_internal {
     }
 #define RT_CK_DB_INTERNAL(_p) BU_CKMAG(_p, RT_DB_INTERNAL_MAGIC, "rt_db_internal")
 
-#include "rt/db_fullpath.h"
 
 /**
  * All necessary information about a ray.
@@ -1406,7 +1407,7 @@ struct rt_piecelist {
 /* Used to set globals declared in bot.c */
 #define RT_DEFAULT_MINPIECES		32
 #define RT_DEFAULT_TRIS_PER_PIECE	4
-#define RT_DEFAULT_MINTIE		0	/* disabled by default */
+#define RT_DEFAULT_MINTIE		0	/* TODO: find the best value */
 
 /**
  * Per-CPU statistics and resources.
@@ -1889,6 +1890,9 @@ struct command_tab {
 
 /**
  * Used by MGED for labeling vertices of a solid.
+ *
+ * TODO - eventually this should fade into a general annotation
+ * framework
  */
 struct rt_point_labels {
     char str[8];
@@ -2622,6 +2626,52 @@ RT_EXPORT extern int rt_gen_circular_grid(struct xrays *ray_bundle,
 					  fastf_t radius,
 					  const fastf_t *up_vector,
 					  fastf_t gridsize);
+
+/**
+ * Make a bundle of rays around a main ray in the shape of a cone,
+ * using a uniform rectangular grid; theta is the angle of divergence
+ * of the cone, and rays_per_radius is the number of rays that lie on
+ * any given radius of the cone.
+ *
+ * center_ray.r_dir must have unit length.
+ */
+RT_EXPORT extern int rt_gen_conic(struct xrays *rays,
+				  const struct xray *center_ray,
+				  fastf_t theta,
+				  vect_t up_vector,
+				  int rays_per_radius);
+
+/**
+ * Make a bundle of rays around a main ray in the shape of a frustum
+ * as a uniform rectangular grid.  a_vec and b_vec are the directions
+ * for up and right, respectively; a_theta and b_theta are the angles
+ * of divergence in the directions of a_vec and b_vec respectively.
+ * This is useful for creating a grid of rays for perspective
+ * rendering.
+ */
+RT_EXPORT extern int rt_gen_frustum(struct xrays *rays,
+				    const struct xray *center_ray,
+				    const vect_t a_vec,
+				    const vect_t b_vec,
+				    const fastf_t a_theta,
+				    const fastf_t b_theta,
+				    const fastf_t a_num,
+				    const fastf_t b_num);
+
+/**
+ * Make a bundle of orthogonal rays around a center ray as a uniform
+ * rectangular grid.  a_vec and b_vec are the directions for up and
+ * right, respectively; their magnitudes determine the extent of the
+ * grid (the grid extends from -a_vec to a_vec in the up-direction and
+ * from -b_vec to b_vec in the right direction).  da and db are the
+ * offset between rays in the a and b directions respectively.
+ */
+RT_EXPORT extern int rt_gen_rect(struct xrays *rays,
+				 const struct xray *center_ray,
+				 const vect_t a_vec,
+				 const vect_t b_vec,
+				 const fastf_t da,
+				 const fastf_t db);
 
 /* Shoot a ray */
 /**
@@ -4577,28 +4627,13 @@ RT_EXPORT extern void db_update_nref(struct db_i *dbip,
 
 
 /**
- * DEPRECATED: Use bu_fnmatch() instead of this function.
+ * DEPRECATED: Use db_ls() instead of this function.
  *
- * If string matches pattern, return 1, else return 0
- *
- * special characters:
- *	*	Matches any string including the null string.
- *	?	Matches any single character.
- *	[...]	Matches any one of the characters enclosed.
- *	-	May be used inside brackets to specify range
- *		(i.e. str[1-58] matches str1, str2, ... str5, str8)
- *	\	Escapes special characters.
- */
-DEPRECATED RT_EXPORT extern int db_regexp_match(const char *pattern,
-						const char *string);
-
-
-/**
  * Appends a list of all database matches to the given vls, or the
  * pattern itself if no matches are found.  Returns the number of
  * matches.
  */
-RT_EXPORT extern int db_regexp_match_all(struct bu_vls *dest,
+DEPRECATED RT_EXPORT extern int db_regexp_match_all(struct bu_vls *dest,
 					 struct db_i *dbip,
 					 const char *pattern);
 
@@ -4606,7 +4641,9 @@ RT_EXPORT extern int db_regexp_match_all(struct bu_vls *dest,
 /**
  * db_ls takes a database instance pointer and assembles a directory
  * pointer array of objects in the database according to a set of
- * flags.
+ * flags.  An optional pattern can be supplied for match filtering
+ * via globbing rules (see bu_fnmatch).  If pattern is NULL, filtering
+ * is performed using only the flags.
  *
  * The caller is responsible for freeing the array.
  *
@@ -4614,9 +4651,6 @@ RT_EXPORT extern int db_regexp_match_all(struct bu_vls *dest,
  * integer count of objects in dpv
  * struct directory ** array of objects in dpv via argument
  *
- * WARNING: THIS FUNCTION IS STILL IN DEVELOPMENT - IT IS NOT YET
- * ASSUMED THAT THIS IS ITS FINAL FORM - DO NOT DEPEND ON IT REMAINING
- * THE SAME UNTIL THIS WARNING IS REMOVED
  */
 #define DB_LS_PRIM         0x1    /* filter for primitives (solids)*/
 #define DB_LS_COMB         0x2    /* filter for combinations */
@@ -4624,9 +4658,13 @@ RT_EXPORT extern int db_regexp_match_all(struct bu_vls *dest,
 #define DB_LS_HIDDEN       0x8    /* include hidden objects in results */
 #define DB_LS_NON_GEOM     0x10   /* filter for non-geometry objects */
 #define DB_LS_TOPS         0x20   /* filter for objects un-referenced by other objects */
-RT_EXPORT extern int db_ls(const struct db_i *dbip,
-		           int flags,
-			   struct directory ***dpv);
+/* TODO - implement this flag
+#define DB_LS_REGEX	   0x40*/ /* interpret pattern using regex rules, instead of
+				     globbing rules (default) */
+RT_EXPORT extern size_t db_ls(const struct db_i *dbip,
+			      int flags,
+			      const char *pattern,
+			      struct directory ***dpv);
 
 /**
  * convert an argv list of names to a directory pointer array.
@@ -5013,19 +5051,6 @@ RT_EXPORT extern int db_walk_tree(struct db_i *dbip,
 							    struct rt_db_internal * /*ip*/,
 							    void *client_data),
 				  void *client_data);
-
-/**
- * Returns -
- * 1 OK, path matrix written into 'mat'.
- * 0 FAIL
- *
- * Called in librt/db_tree.c, mged/dodraw.c, and mged/animedit.c
- */
-RT_EXPORT extern int db_path_to_mat(struct db_i		*dbip,
-				    struct db_full_path	*pathp,
-				    mat_t			mat,		/* result */
-				    int			depth,		/* number of arcs */
-				    struct resource		*resp);
 
 /**
  * 'arc' may be a null pointer, signifying an identity matrix.
@@ -5657,6 +5682,11 @@ RT_EXPORT extern struct bu_list *rt_vlblock_find(struct bn_vlblock *vbp,
  *			Generic BN_VLIST routines			*
  *									*
  ************************************************************************/
+
+/**
+ * Returns the description of a vlist cmd.
+ */
+RT_EXPORT extern const char *rt_vlist_get_cmd_description(int cmd);
 
 /**
  * Validate an bn_vlist chain for having reasonable values inside.
@@ -6664,6 +6694,8 @@ RT_EXPORT extern int Rt_Init(Tcl_Interp *interp);
 
 /**
  * Take a db_full_path and append it to the TCL result string.
+ *
+ * NOT moving to db_fullpath.h because it is evil Tcl_Interp api
  */
 RT_EXPORT extern void db_full_path_appendresult(Tcl_Interp *interp,
 						const struct db_full_path *pp);
@@ -7821,7 +7853,6 @@ RT_EXPORT extern fastf_t rt_cline_radius;
 /* TODO - these global variables need to be rolled in to the rt_i structure */
 RT_EXPORT extern size_t rt_bot_minpieces;
 RT_EXPORT extern size_t rt_bot_tri_per_piece;
-RT_EXPORT extern size_t rt_bot_mintie;
 RT_EXPORT extern int rt_bot_sort_faces(struct rt_bot_internal *bot,
 				       size_t tris_per_piece);
 RT_EXPORT extern int rt_bot_decimate(struct rt_bot_internal *bot,
@@ -7840,7 +7871,6 @@ RT_EXPORT extern int rt_bot_decimate(struct rt_bot_internal *bot,
  * initialize ts_dbip before use.
  */
 RT_EXPORT extern const struct db_tree_state rt_initial_tree_state;
-RT_EXPORT extern const char *rt_vlist_cmd_descriptions[];
 
 
 /** @file librt/vers.c

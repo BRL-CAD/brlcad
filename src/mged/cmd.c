@@ -996,6 +996,9 @@ backslash_specials(struct bu_vls *dest, struct bu_vls *src)
 /**
  * This routine is called to perform wildcard expansion and character
  * quoting on the given vls (typically input from the keyboard.)
+ *
+ * TODO: this and ged_glob share a good bit of logic - can ged_glob
+ * be used, and if not can the common logic be expressed in some API?
  */
 void
 mged_compat(struct bu_vls *dest, struct bu_vls *src, int use_first)
@@ -1062,9 +1065,24 @@ mged_compat(struct bu_vls *dest, struct bu_vls *src, int use_first)
 	 */
 
 	if (regexp) {
+	    register int i, num;
+	    register struct directory *dp;
 	    bu_vls_trunc(&temp, 0);
-	    if (db_regexp_match_all(&temp, dbip,
-				    bu_vls_addr(&word)) == 0) {
+	    for (i = num = 0; i < RT_DBNHASH; i++) {
+		for (dp = dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
+		    if (bu_fnmatch(bu_vls_addr(&word), dp->d_namep, 0) != 0)
+			continue;
+		    if (num == 0)
+			bu_vls_strcat(&temp, dp->d_namep);
+		    else {
+			bu_vls_strcat(&temp, " ");
+			bu_vls_strcat(&temp, dp->d_namep);
+		    }
+		    ++num;
+		}
+	    }
+
+	    if (num == 0) {
 		debackslash(&temp, &word);
 		backslash_specials(dest, &temp);
 	    } else
@@ -1493,9 +1511,11 @@ f_tie(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, const ch
 	for (BU_LIST_FOR (clp, cmd_list, &head_cmd_list.l)) {
 	    bu_vls_trunc(&vls, 0);
 	    if (clp->cl_tie) {
-		bu_vls_printf(&vls, "%s %s", bu_vls_addr(&clp->cl_name),
-			      bu_vls_addr(dm_get_pathname(clp->cl_tie->dml_dmp)));
-		Tcl_AppendElement(interpreter, bu_vls_addr(&vls));
+		if (dm_get_pathname(dmp)) {
+		    bu_vls_printf(&vls, "%s %s", bu_vls_addr(&clp->cl_name),
+			    bu_vls_addr(dm_get_pathname(clp->cl_tie->dml_dmp)));
+		    Tcl_AppendElement(interpreter, bu_vls_addr(&vls));
+		}
 	    } else {
 		bu_vls_printf(&vls, "%s {}", bu_vls_addr(&clp->cl_name));
 		Tcl_AppendElement(interpreter, bu_vls_addr(&vls));
@@ -1504,9 +1524,11 @@ f_tie(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, const ch
 
 	bu_vls_trunc(&vls, 0);
 	if (clp->cl_tie) {
-	    bu_vls_printf(&vls, "%s %s", bu_vls_addr(&clp->cl_name),
-			  bu_vls_addr(dm_get_pathname(clp->cl_tie->dml_dmp)));
-	    Tcl_AppendElement(interpreter, bu_vls_addr(&vls));
+	    if (dm_get_pathname(dmp)) {
+		bu_vls_printf(&vls, "%s %s", bu_vls_addr(&clp->cl_name),
+			bu_vls_addr(dm_get_pathname(clp->cl_tie->dml_dmp)));
+		Tcl_AppendElement(interpreter, bu_vls_addr(&vls));
+	    }
 	} else {
 	    bu_vls_printf(&vls, "%s {}", bu_vls_addr(&clp->cl_name));
 	    Tcl_AppendElement(interpreter, bu_vls_addr(&vls));
@@ -1553,11 +1575,13 @@ f_tie(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, const ch
 
     /* print out the display manager that we're tied to */
     if (argc == 2) {
-	if (clp->cl_tie)
-	    Tcl_AppendElement(interpreter, bu_vls_addr(dm_get_pathname(clp->cl_tie->dml_dmp)));
-	else
+	if (clp->cl_tie) {
+	    if (dm_get_pathname(dmp)) {
+		Tcl_AppendElement(interpreter, bu_vls_addr(dm_get_pathname(clp->cl_tie->dml_dmp)));
+	    }
+	} else {
 	    Tcl_AppendElement(interpreter, "");
-
+	}
 	bu_vls_free(&vls);
 	return TCL_OK;
     }
@@ -1568,7 +1592,7 @@ f_tie(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, const ch
 	bu_vls_strcpy(&vls, argv[2]);
 
     FOR_ALL_DISPLAYS(dlp, &head_dm_list.l)
-	if (!bu_vls_strcmp(&vls, dm_get_pathname(dlp->dml_dmp)))
+	if (dm_get_pathname(dlp->dml_dmp) && !bu_vls_strcmp(&vls, dm_get_pathname(dlp->dml_dmp)))
 	    break;
 
     if (dlp == &head_dm_list) {
@@ -1717,13 +1741,15 @@ f_winset(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, const
 
     /* print pathname of drawing window with primary focus */
     if (argc == 1) {
-	Tcl_AppendResult(interpreter, bu_vls_addr(dm_get_pathname(dmp)), (char *)NULL);
+	if (dm_get_pathname(dmp)) {
+	    Tcl_AppendResult(interpreter, bu_vls_addr(dm_get_pathname(dmp)), (char *)NULL);
+	}
 	return TCL_OK;
     }
 
     /* change primary focus to window argv[1] */
     FOR_ALL_DISPLAYS(p, &head_dm_list.l) {
-	if (BU_STR_EQUAL(argv[1], bu_vls_addr(dm_get_pathname(p->dml_dmp)))) {
+	if (dm_get_pathname(p->dml_dmp) && BU_STR_EQUAL(argv[1], bu_vls_addr(dm_get_pathname(p->dml_dmp)))) {
 	    curr_dm_list = p;
 
 	    if (curr_dm_list->dml_tie)

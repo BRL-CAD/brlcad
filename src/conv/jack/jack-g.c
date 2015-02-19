@@ -21,6 +21,16 @@
  *
  * Program to convert JACK Psurf file into a BRL-CAD NMG object.
  *
+ * Jack, originally from the University of Pennsylvania's Computer
+ * Graphics Research Laboratory, is a package used for human figure
+ * animation and ergonomic analysis.
+ *
+ * This converter was written prior to JACK becoming a commercial
+ * product in 1996, but it should be compatible with the more modern
+ * Tecnomatix Jack version distributed by Siemens (maintainers of the
+ * NX and Parasolid CAD software).  It reportedly still supports JACK
+ * 5.1 JT files.
+ *
  */
 
 #include "common.h"
@@ -48,7 +58,7 @@ struct vlist {
 
 static struct bn_tol	tol;
 
-static const char usage[] = "Usage: %s [-r region] [-g group] [jack_db] [brlcad_db]\n";
+static const char *usage = "[-r region] [-g group] [jack_db] [brlcad_db]\n";
 
 extern fastf_t nmg_loop_plane_area(const struct loopuse *lu, plane_t pl);
 
@@ -56,6 +66,11 @@ int	psurf_to_nmg(struct model *m, FILE *fp, char *jfile);
 int	create_brlcad_db(struct rt_wdb *fpout, struct model *m, char *reg_name, char *grp_name);
 void	jack_to_brlcad(FILE *fpin, struct rt_wdb *fpout, char *reg_name, char *grp_name, char *jfile);
 
+static void
+print_usage(const char *progname)
+{
+    bu_exit(1, "Usage: %s %s", progname, usage);
+}
 
 int
 main(int argc, char **argv)
@@ -80,7 +95,7 @@ main(int argc, char **argv)
 		reg_name = bu_optarg;
 		break;
 	    default:
-		bu_exit(1, usage, argv[0]);
+		print_usage(argv[0]);
 		break;
 	}
     }
@@ -100,7 +115,7 @@ main(int argc, char **argv)
     /* Get BRL-CAD output data base name. */
     bu_optind++;
     if (bu_optind >= argc) {
-	bu_exit(1, usage, argv[0]);
+	print_usage(argv[0]);
     }
     bfile = argv[bu_optind];
     if ((fpout = wdb_fopen(bfile)) == NULL) {

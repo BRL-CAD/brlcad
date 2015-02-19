@@ -146,10 +146,10 @@
 #include <stdio.h>
 #include <string.h>
 
+#include "vmath.h"
 #include "bu/log.h"
 #include "bu/malloc.h"
-#include "vmath.h"
-#include "bn.h"
+#include "bn/wavelet.h"
 
 /**
  * This source file uses C-style "templates" where functions specific

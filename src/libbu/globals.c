@@ -42,14 +42,6 @@
 long bu_n_malloc = 0;
 
 /**
- * number of calls to bu_free().
- *
- * used by rt.
- * not semaphore-protected and is thus only an estimate.
- */
-long bu_n_free = 0;
-
-/**
  * number of calls to bu_realloc().
  *
  * used by rt.

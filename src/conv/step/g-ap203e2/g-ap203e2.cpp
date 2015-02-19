@@ -120,7 +120,7 @@ main(int argc, char *argv[])
     if (convert_tops_list) {
 	/* Need db_update_nref for DB_LS_TOPS to work */
 	db_update_nref(dbip, &rt_uniresource);
-	path_cnt = db_ls(dbip, DB_LS_TOPS, &paths);
+	path_cnt = db_ls(dbip, DB_LS_TOPS, NULL, &paths);
 	if (!path_cnt) {
 	    std::cerr << "ERROR: no objects found in .g file" << "\n" << std::endl;
 	    delete dotg;

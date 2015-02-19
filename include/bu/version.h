@@ -18,7 +18,7 @@
  * information.
  */
 
-/** @file version.h
+/** @file bu/version.h
  *
  */
 #ifndef BU_VERSION_H

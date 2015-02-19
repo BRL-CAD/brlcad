@@ -157,13 +157,28 @@ ged_glob(struct ged *gedp, int argc, const char *argv[])
 	   it to the database. */
 
 	if (regexp) {
+	    register int i, num;
+	    register struct directory *dp;
 	    /* No database to match against, so return. */
 	    if (gedp->ged_wdbp == RT_WDB_NULL || gedp->ged_wdbp->dbip == DBI_NULL)
 		return GED_OK;
 
 	    bu_vls_trunc(&temp, 0);
-	    if (db_regexp_match_all(&temp, gedp->ged_wdbp->dbip,
-				    bu_vls_addr(&word)) == 0) {
+	    for (i = num = 0; i < RT_DBNHASH; i++) {
+		for (dp = gedp->ged_wdbp->dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
+		    if (bu_fnmatch(bu_vls_addr(&word), dp->d_namep, 0) != 0)
+			continue;
+		    if (num == 0)
+			bu_vls_strcat(&temp, dp->d_namep);
+		    else {
+			bu_vls_strcat(&temp, " ");
+			bu_vls_strcat(&temp, dp->d_namep);
+		    }
+		    ++num;
+		}
+	    }
+
+	    if (num == 0) {
 		debackslash(&temp, &word);
 		backslash(gedp->ged_result_str, &temp);
 	    } else

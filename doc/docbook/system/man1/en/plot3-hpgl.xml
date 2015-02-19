@@ -17,9 +17,9 @@
 <refsynopsisdiv xml:id='synopsis'>
 <cmdsynopsis>
   <command>plot3-hpgl</command>
-    <arg choice='plain'><replaceable>&lt;</replaceable></arg>
+    <arg choice='plain'>&lt;</arg>
     <arg choice='plain'><replaceable>unix_plot</replaceable></arg>
-    <arg choice='plain'><replaceable>&gt;</replaceable></arg>
+    <arg choice='plain'>&gt;</arg>
     <arg choice='plain'><replaceable>hpgl_cmds</replaceable></arg>
 </cmdsynopsis>
 </refsynopsisdiv>

@@ -50,7 +50,6 @@ __BEGIN_DECLS
  */
 
 BU_EXPORT extern long bu_n_malloc;
-BU_EXPORT extern long bu_n_free;
 BU_EXPORT extern long bu_n_realloc;
 
 /**

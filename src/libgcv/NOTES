@@ -47,9 +47,48 @@ the following formats: OBJ, STL, VRML, FASTGEN4, and BRL-CAD.
 
 The library includes support for a number of implicit and explicit
 geometry representation types including Bags o' Triangles (triangle
-mesh geometry), n-Manifold polgyonal meshes, volumetric data, NURBS,
+mesh geometry), n-Manifold polygonal meshes, volumetric data, NURBS,
 and implicit primitives with constructive solid geometry (CSG) Boolean
 operations.
+
+Multipass processing.  First check if all geometry records can be
+processed, e.g., whether a given geometry subtree or a particular
+geometry object will convert given a prescribed request.  This is to
+catch errors earlier in the pipeline.  Lossy or context-sensitive
+translations, e.g., exporting an infinite halfspace to polygonal
+format, are example considerations.
+
+Normalization.  Whether a prescribed output format supports a
+hierarchy and/or matrices or is modeled far from floating-point origin
+can influence conversion results.  Supporting normalization is not a
+priority, but may influence design options.
+
+
+PLAN OF ATTACK
+==============
+
+  1) move just the STL code without making any improvements or refactoring, get it under the API.
+  2) that will undoubtedly require API adjusting.  adjust.
+  3) get gcv command reading/writing stl files via libgcv.
+  4) implement a brl-cad import/export plugin for v4/v5 binary, hook into libgcv.
+  5) again, adjust and modify the API as needed here, checkpoint status.
+  6) ensure gcv command recognizes stl and .g without requiring knowledge of them.
+  7) test that g-to-stl is working and stl-to-g is working.
+  8) migrate obj support into gcv (redundancies and all).
+  9) implement general testing framework to evaluate all possible input/output combinations.
+ 10) test g-to-obj, obj-to-g, stl-to-obj, obj-to-stl, and report status.
+ 11) migrate fast4 import support.
+ 12) migrate vrml export support.
+ 13) test fast4-to-g, fast4-to-obj, fast4-to-stl, fast4-to-vrml, g-to-vrml, stl-to-vrml, obj-to-vrml.
+ 14) evaluate refactoring/consolidation of polygonal mesh logic in all formats.
+ 15) ensure gcv documentation is accurate and up-to-date (doxygen comments in the header).
+  *) eliminate globals
+  *) create a libgcv plugin template
+  *) fast4 export
+  *) vrml import
+  *) create a stand-alone basic application runtime toolkit (BAR = libbu+libbn)
+  *) update build system so GCV can be separated from the build tree stand-alone with BAR
+  *) make gcv convert multithreaded
 
 
 NEW FORMATS

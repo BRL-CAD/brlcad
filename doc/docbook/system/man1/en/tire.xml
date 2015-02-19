@@ -99,7 +99,7 @@
       <term><option>-D rim diameter #</option></term>
       <listitem>
 	<para>
-	  Specify the diameter of the rim (a.k.a the steel wheel) in inches. This
+	  Specify the diameter of the rim (a.k.a. the steel wheel) in inches. This
 	  option overrides the -d option if used together, or the default if used
 	  alone.  Can be used with the -W and -R flags.  Unlike the -d flag, allows
 	  floating point input for more precise definition of rim diameter.

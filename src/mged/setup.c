@@ -28,7 +28,6 @@
 /* system headers */
 #include <stdlib.h>
 #include <tcl.h>
-#include <itcl.h>
 #include <string.h>
 
 /* common headers */
@@ -40,6 +39,9 @@
 /* local headers */
 #include "./mged.h"
 #include "./cmd.h"
+
+/* avoid including itcl.h due to their usage of internal headers */
+extern int Itcl_Init(Tcl_Interp *);
 
 
 /* catch auto-formatting errors in this file.  be careful as there are
@@ -194,6 +196,7 @@ static struct cmdtab mged_cmdtab[] = {
     {"l", cmd_ged_info_wrapper, ged_list},
     {"l_muves", f_l_muves, GED_FUNC_PTR_NULL},
     {"labelvert", f_labelvert, GED_FUNC_PTR_NULL},
+    {"lc", cmd_ged_plain_wrapper, ged_lc},
     {"left", f_bv_left, GED_FUNC_PTR_NULL},
     {"listeval", cmd_ged_plain_wrapper, ged_pathsum},
     {"lm", cmd_lm, GED_FUNC_PTR_NULL},

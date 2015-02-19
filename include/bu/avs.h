@@ -152,7 +152,6 @@ typedef struct bu_attribute_value_set bu_avs_t;
      || (const void *)(_p) < (_avsp)->readonly_min \
      || (const void *)(_p) > (_avsp)->readonly_max)
 
-/** @} */
 
 /**
  * Initialize avs with storage for len entries.

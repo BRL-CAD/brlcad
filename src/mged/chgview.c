@@ -882,8 +882,9 @@ f_ill(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *a
     int nmatch;
     int c;
     int ri = 0;
-    int nm_pieces;
+    size_t nm_pieces;
     int illum_only = 0;
+    int exact = 0;
     char **path_piece = 0;
     char *mged_basename;
     char *sname;
@@ -897,7 +898,7 @@ f_ill(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *a
 
     CHECK_DBI_NULL;
 
-    if (argc < 2 || 5 < argc) {
+    if (argc < 2 || 6 < argc) {
 	bu_vls_printf(&vls, "help ill");
 	Tcl_Eval(interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
@@ -920,8 +921,11 @@ f_ill(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *a
 
     bu_optind = 1;
 
-    while ((c = bu_getopt(argc, nargv, "i:n")) != -1) {
+    while ((c = bu_getopt(argc, nargv, "ei:nh?")) != -1) {
 	switch (c) {
+	    case 'e':
+		exact = 1;
+		break;
 	    case 'n':
 		illum_only = 1;
 		break;
@@ -938,7 +942,7 @@ f_ill(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *a
 		}
 		break;
 	    default:
-	    case 'h': {
+	    {
 		bu_vls_printf(&vls, "help ill");
 		Tcl_Eval(interp, bu_vls_addr(&vls));
 		bu_vls_free(&vls);
@@ -1008,6 +1012,9 @@ f_ill(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *a
 
 	FOR_ALL_SOLIDS(sp, &gdlp->dl_headSolid) {
 	    int a_new_match;
+
+	    if (exact && nm_pieces != sp->s_fullpath.fp_len)
+		continue;
 
 	    /* XXX Could this make use of db_full_path_subset()? */
 	    if (nmatch == 0 || nmatch != ri) {

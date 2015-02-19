@@ -156,7 +156,7 @@ main(int argc, char **argv)
 
     rle_dflt_hdr.rle_file = infp;
     if (rle_get_setup(&rle_dflt_hdr) < 0) {
-	fprintf(stderr, "rle-fb: Error reading setup information\n");
+	fprintf(stderr, "rle-fb:  Error reading setup information\n");
 	bu_exit(1, NULL);
     }
 
@@ -246,7 +246,7 @@ main(int argc, char **argv)
 	rle_dflt_hdr.ymin > screen_height ||
 	rle_dflt_hdr.ymax < 0) {
 	fprintf(stderr,
-		"rle-fb:  Warning:  RLE image rectangle entirely off screen\n");
+		"rle-fb:  Warning: RLE image rectangle entirely off screen\n");
 	goto done;
     }
 
@@ -283,7 +283,7 @@ main(int argc, char **argv)
 		cmap.cm_blue[i] <<= 8;
 	    }
 	    fprintf(stderr,
-		    "rle-fb: correcting for old style colormap\n");
+		    "rle-fb:  correcting for old style colormap\n");
 	}
     }
     if (rle_dflt_hdr.ncmap > 0 && !crunch)

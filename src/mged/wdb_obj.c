@@ -2424,7 +2424,23 @@ wdb_match_cmd(struct rt_wdb *wdbp,
 
     bu_vls_init(&matches);
     for (++argv; *argv != NULL; ++argv) {
-	if (db_regexp_match_all(&matches, wdbp->dbip, *argv) > 0)
+	register int i, num;
+	register struct directory *dp;
+	for (i = num = 0; i < RT_DBNHASH; i++) {
+	    for (dp = wdbp->dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
+		if (bu_fnmatch(*argv, dp->d_namep, 0) != 0)
+		    continue;
+		if (num == 0)
+		    bu_vls_strcat(&matches, dp->d_namep);
+		else {
+		    bu_vls_strcat(&matches, " ");
+		    bu_vls_strcat(&matches, dp->d_namep);
+		}
+		++num;
+	    }
+	}
+
+	if (num > 0)
 	    bu_vls_strcat(&matches, " ");
     }
     bu_vls_trimspace(&matches);
@@ -3064,8 +3080,8 @@ wdb_rt_gettrees_cmd(struct rt_wdb *wdbp,
 {
     struct rt_i *rtip;
     struct application *ap;
-    struct resource resp = RT_RESOURCE_INIT_ZERO;
     const char *newprocname;
+    static struct resource resp = RT_RESOURCE_INIT_ZERO;
 
     RT_CK_WDB(wdbp);
     RT_CK_DBI(wdbp->dbip);
@@ -3127,6 +3143,7 @@ wdb_rt_gettrees_cmd(struct rt_wdb *wdbp,
      * which in this case would trash rt_uniresource.
      * Once on the rti_resources list, rt_clean() will clean 'em up.
      */
+    rt_init_resource(&resp, 0, rtip);
     BU_ASSERT_PTR(BU_PTBL_GET(&rtip->rti_resources, 0), !=, NULL);
 
     BU_ALLOC(ap, struct application);

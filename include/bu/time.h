@@ -44,6 +44,10 @@ __BEGIN_DECLS
  */
 BU_EXPORT extern int64_t bu_gettime(void);
 
+
+/** @file libbu/date-time.c
+ * A libbu version of utctime.
+ */
 /**
  * Evaluate the time_t input as UTC time in ISO format.
  *

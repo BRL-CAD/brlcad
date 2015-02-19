@@ -2817,10 +2817,12 @@ get_file_name(char *str)
 	bu_free((void *)dir, "get_file_name: directory string");
     }
 
-    bu_vls_printf(&cmd,
-		  "getFile %s %s {{{All Files} {*}}} {Get File}",
-		  bu_vls_addr(dm_get_pathname(dmp)),
-		  bu_vls_addr(&varname_vls));
+    if (dm_get_pathname(dmp)) {
+	bu_vls_printf(&cmd,
+		"getFile %s %s {{{All Files} {*}}} {Get File}",
+		bu_vls_addr(dm_get_pathname(dmp)),
+		bu_vls_addr(&varname_vls));
+    }
     bu_vls_free(&varname_vls);
 
     if (Tcl_Eval(INTERP, bu_vls_addr(&cmd))) {
@@ -4208,17 +4210,19 @@ sedit(void)
 		    (struct rt_bot_internal *)es_int.idb_ptr;
 		const char *radio_result;
 		char mode[10];
-		int ret_tcl;
+		int ret_tcl = TCL_ERROR;
 		int old_mode;
 
 		RT_BOT_CK_MAGIC(bot);
 		old_mode = bot->mode;
 		sprintf(mode, " %d", old_mode - 1);
-		ret_tcl = Tcl_VarEval(INTERP, "cad_radio", " .bot_mode_radio ",
-				      bu_vls_addr(dm_get_pathname(dmp)), " _bot_mode_result",
-				      " \"BOT Mode\"", "  \"Select the desired mode\"", mode,
-				      " { surface volume plate plate/nocosine }",
-				      " { \"In surface mode, each triangle represents part of a zero thickness surface and no volume is enclosed\" \"In volume mode, the triangles are expected to enclose a volume and that volume becomes the solid\" \"In plate mode, each triangle represents a plate with a specified thickness\" \"In plate/nocosine mode, each triangle represents a plate with a specified thickness, but the LOS thickness reported by the raytracer is independent of obliquity angle\" } ", (char *)NULL);
+		if (dm_get_pathname(dmp)) {
+		    ret_tcl = Tcl_VarEval(INTERP, "cad_radio", " .bot_mode_radio ",
+			    bu_vls_addr(dm_get_pathname(dmp)), " _bot_mode_result",
+			    " \"BOT Mode\"", "  \"Select the desired mode\"", mode,
+			    " { surface volume plate plate/nocosine }",
+			    " { \"In surface mode, each triangle represents part of a zero thickness surface and no volume is enclosed\" \"In volume mode, the triangles are expected to enclose a volume and that volume becomes the solid\" \"In plate mode, each triangle represents a plate with a specified thickness\" \"In plate/nocosine mode, each triangle represents a plate with a specified thickness, but the LOS thickness reported by the raytracer is independent of obliquity angle\" } ", (char *)NULL);
+		}
 		if (ret_tcl != TCL_OK) {
 		    Tcl_AppendResult(INTERP, "Mode selection failed!\n", (char *)NULL);
 		    break;
@@ -4248,15 +4252,17 @@ sedit(void)
 		    (struct rt_bot_internal *)es_int.idb_ptr;
 		const char *radio_result;
 		char orient[10];
-		int ret_tcl;
+		int ret_tcl = TCL_ERROR;
 
 		RT_BOT_CK_MAGIC(bot);
 		sprintf(orient, " %d", bot->orientation - 1);
-		ret_tcl = Tcl_VarEval(INTERP, "cad_radio", " .bot_orient_radio ",
-				      bu_vls_addr(dm_get_pathname(dmp)), " _bot_orient_result",
-				      " \"BOT Face Orientation\"", "  \"Select the desired orientation\"", orient,
-				      " { none right-hand-rule left-hand-rule }",
-				      " { \"No orientation means that there is no particular order for the vertices of the triangles\" \"right-hand-rule means that the vertices of each triangle are ordered such that the right-hand-rule produces an outward pointing normal\"  \"left-hand-rule means that the vertices of each triangle are ordered such that the left-hand-rule produces an outward pointing normal\" } ", (char *)NULL);
+		if (dm_get_pathname(dmp)) {
+		    ret_tcl = Tcl_VarEval(INTERP, "cad_radio", " .bot_orient_radio ",
+			    bu_vls_addr(dm_get_pathname(dmp)), " _bot_orient_result",
+			    " \"BOT Face Orientation\"", "  \"Select the desired orientation\"", orient,
+			    " { none right-hand-rule left-hand-rule }",
+			    " { \"No orientation means that there is no particular order for the vertices of the triangles\" \"right-hand-rule means that the vertices of each triangle are ordered such that the right-hand-rule produces an outward pointing normal\"  \"left-hand-rule means that the vertices of each triangle are ordered such that the left-hand-rule produces an outward pointing normal\" } ", (char *)NULL);
+		}
 		if (ret_tcl != TCL_OK) {
 		    Tcl_AppendResult(INTERP, "Face orientation selection failed!\n", (char *)NULL);
 		    break;
@@ -4324,7 +4330,7 @@ sedit(void)
 	    break;
 	case ECMD_BOT_FLAGS:
 	    {
-		int ret_tcl;
+		int ret_tcl = TCL_ERROR;
 		const char *dialog_result;
 		char cur_settings[11];
 		struct rt_bot_internal *bot =
@@ -4341,17 +4347,19 @@ sedit(void)
 		    cur_settings[5] = '1';
 		}
 
-		ret_tcl = Tcl_VarEval(INTERP,
-				      "cad_list_buts",
-				      " .bot_list_flags ",
-				      bu_vls_addr(dm_get_pathname(dmp)),
-				      " _bot_flags_result ",
-				      cur_settings,
-				      " \"BOT Flags\"",
-				      " \"Select the desired flags\"",
-				      " { {Use vertex normals} {Use single precision ray-tracing} }",
-				      " { {This selection indicates that surface normals at hit points should be interpolated from vertex normals} {This selection indicates that the prepped form of the BOT triangles should use single precision to save memory} } ",
-				      (char *)NULL);
+		if (dm_get_pathname(dmp)) {
+		    ret_tcl = Tcl_VarEval(INTERP,
+			    "cad_list_buts",
+			    " .bot_list_flags ",
+			    bu_vls_addr(dm_get_pathname(dmp)),
+			    " _bot_flags_result ",
+			    cur_settings,
+			    " \"BOT Flags\"",
+			    " \"Select the desired flags\"",
+			    " { {Use vertex normals} {Use single precision ray-tracing} }",
+			    " { {This selection indicates that surface normals at hit points should be interpolated from vertex normals} {This selection indicates that the prepped form of the BOT triangles should use single precision to save memory} } ",
+			    (char *)NULL);
+		}
 		if (ret_tcl != TCL_OK) {
 		    bu_log("ERROR: cad_list_buts: %s\n", Tcl_GetStringResult(INTERP));
 		    break;
@@ -4377,7 +4385,7 @@ sedit(void)
 		char fmode[10];
 		const char *radio_result;
 		size_t face_no;
-		int ret_tcl;
+		int ret_tcl = TCL_ERROR;
 
 		RT_BOT_CK_MAGIC(bot);
 
@@ -4422,12 +4430,14 @@ sedit(void)
 		else
 		    sprintf(fmode, " %d", BU_BITTEST(bot->face_mode, 0)?1:0);
 
-		ret_tcl = Tcl_VarEval(INTERP, "cad_radio", " .bot_fmode_radio ", bu_vls_addr(dm_get_pathname(dmp)),
-				      " _bot_fmode_result ", "\"BOT Face Mode\"",
-				      " \"Select the desired face mode\"", fmode,
-				      " { {Thickness centered about hit point} {Thickness appended to hit point} }",
-				      " { {This selection will place the plate thickness centered about the hit point} {This selection will place the plate thickness rayward of the hit point} } ",
-				      (char *)NULL);
+		if (dm_get_pathname(dmp)) {
+		    ret_tcl = Tcl_VarEval(INTERP, "cad_radio", " .bot_fmode_radio ", bu_vls_addr(dm_get_pathname(dmp)),
+			    " _bot_fmode_result ", "\"BOT Face Mode\"",
+			    " \"Select the desired face mode\"", fmode,
+			    " { {Thickness centered about hit point} {Thickness appended to hit point} }",
+			    " { {This selection will place the plate thickness centered about the hit point} {This selection will place the plate thickness rayward of the hit point} } ",
+			    (char *)NULL);
+		}
 		if (ret_tcl != TCL_OK) {
 		    bu_log("ERROR: cad_radio: %s\n", Tcl_GetStringResult(INTERP));
 		    break;

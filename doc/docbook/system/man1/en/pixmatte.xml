@@ -24,7 +24,7 @@
     <arg choice='plain'><replaceable>in2</replaceable></arg>
     <arg choice='plain'><replaceable>true_out</replaceable></arg>
     <arg choice='plain'><replaceable>false_out</replaceable></arg>
-    <arg choice='plain'><replaceable>&gt;</replaceable></arg>
+    <arg choice='plain'>&gt;</arg>
     <arg choice='plain'><replaceable>output</replaceable></arg>
 </cmdsynopsis>
 </refsynopsisdiv>

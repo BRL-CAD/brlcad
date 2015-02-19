@@ -6,17 +6,11 @@ set(MGED_INCLUDE_DIRS
   ${WDB_INCLUDE_DIRS}
   ${DM_INCLUDE_DIRS}
   ${BU_INCLUDE_DIRS}
+  ${SYSV_INCLUDE_DIRS}
+  ${TK_INCLUDE_PATH}
+  ${TCL_INCLUDE_PATH}
   ${TERMIO_INCLUDE_DIRS}
   ${CMAKE_CURRENT_SOURCE_DIR}
-  )
-
-# Until we figure out how to properly use package require,
-# we need the internal Tcl headers
-set(MGED_INCLUDE_DIRS ${MGED_INCLUDE_DIRS}
-  ${CMAKE_SOURCE_DIR}/src/other/tcl/generic
-  ${CMAKE_SOURCE_DIR}/src/other/tcl/unix
-  ${CMAKE_SOURCE_DIR}/src/other/incrTcl/itcl/generic
-  ${CMAKE_SOURCE_DIR}/src/other/incrTcl/itk/generic
   )
 
 # process.h in points dir makes Windows unhappy,
@@ -90,9 +84,9 @@ set(MGED_SOURCES
   )
 
 if(NOT WIN32)
-  BRLCAD_ADDEXEC(mged "${MGED_SOURCES}" "libtclcad;libged;libwdb;libdm;libtermio;${MGED_EXTRA_LIBS};${ITCL_LIBRARY};${ITK_LIBRARY}")
+  BRLCAD_ADDEXEC(mged "${MGED_SOURCES}" "libtclcad;libged;libwdb;libdm;libsysv;libtermio;${MGED_EXTRA_LIBS};${ITCL_LIBRARY};${ITK_LIBRARY}")
 else(NOT WIN32)
-  BRLCAD_ADDEXEC(mged "${MGED_SOURCES}" "libtclcad;libged;libwdb;libdm;${ITCL_LIBRARY};${ITK_LIBRARY};ws2_32.lib;opengl32.lib")
+  BRLCAD_ADDEXEC(mged "${MGED_SOURCES}" "libtclcad;libged;libwdb;libdm;libsysv;${ITCL_LIBRARY};${ITK_LIBRARY};ws2_32.lib;opengl32.lib")
 endif(NOT WIN32)
 if(${ITCL_LIBRARY} MATCHES "itcl")
   ADD_DEPENDENCIES(mged itcl)

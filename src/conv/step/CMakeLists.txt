@@ -66,7 +66,7 @@ macro(GENERATE_SCHEMA_INPUTS SCHEMA_FILE TARGET_SUFFIX)
   configure_file(${BRLCAD_CMAKE_DIR}/md5_compiletest.cmake.in
     ${SCHEMA_OUT_DIR}/md5_${SCHEMA_NAME}_test.cmake @ONLY)
   add_custom_command(OUTPUT ${EXPRESS_OUTPUT} ${SCHEMA_OUT_DIR}/step_express_${SCHEMA_NAME}.done
-    COMMAND ${EXP2CXX_EXEC} ARGS ${SCHEMA_FILE}
+    COMMAND ${EXP2CXX_EXEC} ARGS ${SCHEMA_FILE} > ${SCHEMA_OUT_DIR}/step_express_${SCHEMA_NAME}.log 2>&1
     COMMAND ${CMAKE_COMMAND} -P ${SCHEMA_OUT_DIR}/md5_${SCHEMA_NAME}_test.cmake
     DEPENDS ${SCHEMA_FILE} ${EXP2CXX_EXECUTABLE_TARGET}
     WORKING_DIRECTORY ${SCHEMA_OUT_DIR}
@@ -76,7 +76,11 @@ macro(GENERATE_SCHEMA_INPUTS SCHEMA_FILE TARGET_SUFFIX)
     DEPENDS ${EXPRESS_OUTPUT} ${SCHEMA_OUT_DIR}/step_express_${SCHEMA_NAME}.done)
   set_target_properties(step-express-${SCHEMA_NAME}-${TARGET_SUFFIX} PROPERTIES FOLDER "Compilation Utilities")
 
-  set(clean_files ${EXPRESS_OUTPUT} ${SCHEMA_OUT_DIR}/step_express_${SCHEMA_NAME}.done)
+  set(clean_files
+    ${EXPRESS_OUTPUT}
+    ${SCHEMA_OUT_DIR}/step_express_${SCHEMA_NAME}.done
+    ${SCHEMA_OUT_DIR}/step_express_${SCHEMA_NAME}.log
+    )
   set_property(DIRECTORY APPEND PROPERTY ADDITIONAL_MAKE_CLEAN_FILES "${clean_files}")
 endmacro(GENERATE_SCHEMA_INPUTS SCHEMA_FILE)
 
@@ -104,6 +108,11 @@ if(BRLCAD_ENABLE_AP242)
   add_subdirectory(g-ap242)
 endif(BRLCAD_ENABLE_AP242)
 
+# IFC work is experimental
+if(BRLCAD_ENABLE_IFC)
+  add_subdirectory(ifc-g)
+endif(BRLCAD_ENABLE_IFC)
+
 CMAKEFILES(
   AP_Common.h
   BRLCADWrapper.h
@@ -118,6 +127,7 @@ CMAKEFILES(
   g-ap203e2
   g-ap214
   g-ap242
+  ifc-g
   )
 
 DISTCLEAN(${SCHEMA_OUT_DIR}/make_schema)

@@ -19,10 +19,10 @@
   <command>pix-alias</command>
     <arg choice='opt'>-s <replaceable>squaresize</replaceable></arg>
     <arg choice='opt'>-w <replaceable>file_width</replaceable></arg>
-    <arg choice='opt'>-nfile_height </arg>
-    <arg choice='plain'><replaceable>&lt;</replaceable></arg>
+    <arg choice='opt'>-n <replaceable>file_height</replaceable></arg>
+    <arg choice='plain'>&lt;</arg>
     <arg choice='plain'><replaceable>BRLpixfile</replaceable></arg>
-    <arg choice='plain'><replaceable>&gt;</replaceable></arg>
+    <arg choice='plain'>&gt;</arg>
     <arg choice='plain'><replaceable>ALIASpixfile</replaceable></arg>
 </cmdsynopsis>
 </refsynopsisdiv>
@@ -30,8 +30,8 @@
 
 <refsect1 xml:id='description'><title>DESCRIPTION</title>
 <para><command>pix-alias</command>
-converts the
-<emphasis remap='I'>brl pix(5)</emphasis>
+converts the (BRL)
+<emphasis remap='I'>pix(5)</emphasis>
 format file on the standard input to an
 <emphasis remap='I'>Alias pix</emphasis>
 format file on the standard output.</para>
@@ -50,13 +50,6 @@ scanlines tall</para>
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term><option>-s </option><replaceable>squaresize</replaceable></term>
-  <listitem>
-<para>sets both the width and the height for the input to be
-<emphasis remap='I'>squaresize</emphasis></para>
-  </listitem>
-  </varlistentry>
-  <varlistentry>
   <term><option>-w </option><replaceable>file_width</replaceable></term>
   <listitem>
 <para>tells
@@ -64,7 +57,13 @@ scanlines tall</para>
 that the input is
 <emphasis remap='I'>file_width</emphasis>
 pixels wide</para>
-
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-s </option><replaceable>squaresize</replaceable></term>
+  <listitem>
+<para>sets both the width and the height for the input to be
+<emphasis remap='I'>squaresize</emphasis></para>
   </listitem>
   </varlistentry>
 </variablelist>

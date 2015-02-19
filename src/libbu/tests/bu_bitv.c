@@ -772,6 +772,43 @@ test_bu_binstr_to_hexstr(int argc, char **argv)
     return test_results;
 }
 
+
+static int
+test_bu_binstr_to_hexstr_empty_input(int argc, char **argv)
+{
+    /*         argv[1]    ""                    argv[2]
+     * inputs: <func num> <input binary string> <expected hex string>
+     */
+    int test_results = CTEST_FAIL;
+    const char *input = "";
+    const char *expected;
+    struct bu_vls v = BU_VLS_INIT_ZERO;
+
+    if (argc < 3)
+	bu_exit(1, "ERROR: input format: function_num function_test_args [%s]\n", argv[0]);
+
+    expected = argv[2];
+
+    bu_binstr_to_hexstr(input, &v);
+
+    if (BU_STR_EQUAL(expected, bu_vls_cstr(&v))) {
+	test_results = CTEST_PASS;
+	printf("\nbu_binstr_to_hexstr PASSED");
+    } else {
+	test_results = CTEST_FAIL;
+	printf("\nbu_binstr_to_hexstr FAILED");
+    }
+
+    printf("\n  Input:    '%s'", input);
+    printf("\n  Output:   '%s'", bu_vls_cstr(&v));
+    printf("\n  Expected: '%s'", expected);
+
+    bu_vls_free(&v);
+
+    return test_results;
+}
+
+
 static int
 test_bu_hexstr_to_binstr(int argc, char **argv)
 {
@@ -861,6 +898,8 @@ main(int argc, char **argv)
 	    break;
         case 13:
 	    return test_bu_binstr_to_hexstr(argc, argv);
+	case 14:
+	    return test_bu_binstr_to_hexstr_empty_input(argc, argv);
 	    break;
 
     }

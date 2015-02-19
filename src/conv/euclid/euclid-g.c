@@ -73,8 +73,17 @@ struct bu_ptbl groups[11];
 
 static int polysolids;
 static int debug;
-static const char usage[] = "Usage: %s [-vpn] [-i euclid_db] [-o brlcad_db] [-d tolerance] [-xX lvl]\n\t\t(-p indicates write as polysolids; -n negates this)\n ";
+static const char *usage =
+    "[-vpn] [-i euclid_db] [-o brlcad_db] [-d tolerance] [-xX lvl]\n"
+    "\t\t(-p indicates write as polysolids; -n negates this)\n";
+
 static struct bn_tol tol;
+
+static void
+print_usage(const char *progname)
+{
+    bu_exit(1, "Usage: %s %s", progname, usage);
+}
 
 void
 Find_loop_crack(struct shell *s)
@@ -146,7 +155,7 @@ main(int argc, char **argv)
     tol.para = 1 - tol.perp;
 
     if (argc == 1) {
-	bu_log(usage, argv[0]);
+	bu_log("%s %s", argv[0], usage);
 	bu_log("       Program continues running (waiting for standard input):\n");
     }
     /* Get command line arguments. */
@@ -183,7 +192,7 @@ main(int argc, char **argv)
 		sscanf(bu_optarg, "%x", (unsigned int *)&RTG.NMG_debug);
 		break;
 	    default:
-		bu_exit(1, usage, argv[0]);
+		print_usage(argv[0]);
 		break;
 	}
     }

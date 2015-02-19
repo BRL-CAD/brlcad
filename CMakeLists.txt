@@ -121,13 +121,28 @@ file(APPEND ${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/CMakeOutput.log "${CMAKE_COMM
 # Minimum required version of CMake
 cmake_minimum_required(VERSION 2.8.4)
 if(COMMAND CMAKE_POLICY)
+  # libraries linked via full path don't introduce linker search paths
   CMAKE_POLICY(SET CMP0003 NEW)
-  CMAKE_POLICY(SET CMP0007 OLD)
+
+  # list command doesn't ignore empty elements
+  CMAKE_POLICY(SET CMP0007 NEW)
+
+  # prefer files in CMAKE_MODULE_PATH over the cmake module dir
   CMAKE_POLICY(SET CMP0017 OLD)
+
+  # allow relative paths in INCLUDE_DIRECTORIES
+  CMAKE_POLICY(SET CMP0021 OLD)
+
   if ("${CMAKE_VERSION}" VERSION_GREATER 2.99)
     CMAKE_POLICY(SET CMP0026 OLD)
     CMAKE_POLICY(SET CMP0042 OLD)
   endif ("${CMAKE_VERSION}" VERSION_GREATER 2.99)
+
+  if ("${CMAKE_VERSION}" VERSION_GREATER 3.0.9)
+    CMAKE_POLICY(SET CMP0046 NEW)
+    CMAKE_POLICY(SET CMP0053 OLD)
+    CMAKE_POLICY(SET CMP0054 NEW)
+  endif ("${CMAKE_VERSION}" VERSION_GREATER 3.0.9)
 endif(COMMAND CMAKE_POLICY)
 
 # set CMake project name
@@ -394,7 +409,15 @@ if(NOT BRLCAD_IS_SUBBUILD)
     if(${name} MATCHES "^lib*")
       set_target_properties(${name} PROPERTIES PREFIX "")
     endif(${name} MATCHES "^lib*")
-    set_property(GLOBAL APPEND PROPERTY CMAKE_LIBRARY_TARGET_LIST ${name})
+    set(add_lib_to_list 1)
+    foreach(libarg ${ARGN})
+      if("${libarg}" STREQUAL "INTERFACE")
+	set(add_lib_to_list 0)
+      endif("${libarg}" STREQUAL "INTERFACE")
+    endforeach(libarg ${ARGN})
+    if (add_lib_to_list)
+      set_property(GLOBAL APPEND PROPERTY CMAKE_LIBRARY_TARGET_LIST ${name})
+    endif (add_lib_to_list)
   endfunction(add_library)
 
   # Override and wrap add_executable
@@ -475,6 +498,39 @@ if(NOT BRLCAD_IS_SUBBUILD)
     string(REPLACE ";" ": " msg "${ARGV}")
     file(APPEND ${BRLCAD_BINARY_DIR}/CMakeFiles/CMakeOutput.log "${msg}\n")
   endfunction(message)
+endif(NOT BRLCAD_IS_SUBBUILD)
+
+# To support "make check" (which will build the required targets for testing
+# in the style of GNU Autotools, we define a "check" target per
+# http://www.cmake.org/Wiki/CMakeEmulateMakeCheck and have add_test
+# automatically assemble its targets into the check dependency list.
+if(NOT BRLCAD_IS_SUBBUILD)
+  include(ProcessorCount)
+  ProcessorCount(N)
+  if(NOT N EQUAL 0)
+    set(JFLAG "-j${N}")
+  else(NOT N EQUAL 0)
+    # Huh?  No j flag if we can't get a processor count
+    set(JFLAG)
+  endif(NOT N EQUAL 0)
+  if(${CMAKE_VERSION} VERSION_GREATER 2.99)
+    add_custom_target(check COMMAND ${CMAKE_CTEST_COMMAND} -C $<CONFIG> -LE Regression -E ^regress- ${JFLAG})
+  else(${CMAKE_VERSION} VERSION_GREATER 2.99)
+    add_custom_target(check COMMAND ${CMAKE_CTEST_COMMAND} -C $<CONFIGURATION> -LE Regression -E ^regress- ${JFLAG})
+  endif(${CMAKE_VERSION} VERSION_GREATER 2.99)
+  set_target_properties(check PROPERTIES FOLDER "BRL-CAD Unit Tests")
+  function(add_test test_name test_prog)
+    _add_test(${test_name} ${test_prog} ${ARGN})
+    if (NOT "${test_name}" STREQUAL "NAME")
+      if (NOT "${test_name}" MATCHES ^regress- AND NOT "${test_prog}" MATCHES ^regress-)
+	add_dependencies(check ${test_prog})
+      endif (NOT "${test_name}" MATCHES ^regress- AND NOT "${test_prog}" MATCHES ^regress-)
+    else (NOT "${test_name}" STREQUAL "NAME")
+      if (NOT "${ARGV1}" MATCHES ^regress- AND NOT "${ARGV3}" MATCHES ^regress-)
+	add_dependencies(check ${ARGV3})
+      endif (NOT "${ARGV1}" MATCHES ^regress- AND NOT "${ARGV3}" MATCHES ^regress-)
+    endif (NOT "${test_name}" STREQUAL "NAME")
+  endfunction(add_test)
 endif(NOT BRLCAD_IS_SUBBUILD)
 
 #---------------------------------------------------------------------
@@ -703,6 +759,8 @@ CONFIG_H_APPEND(BRLCAD "#define BRLCAD_VERSION_MAJOR ${BRLCAD_VERSION_MAJOR}\n")
 CONFIG_H_APPEND(BRLCAD "#define BRLCAD_VERSION_MINOR ${BRLCAD_VERSION_MINOR}\n")
 CONFIG_H_APPEND(BRLCAD "#define BRLCAD_VERSION_PATCH ${BRLCAD_VERSION_PATCH}\n")
 
+# Let programs know what the executable suffix is on this platform, if any
+CONFIG_H_APPEND(BRLCAD "#define EXECUTABLE_SUFFIX \"${CMAKE_EXECUTABLE_SUFFIX}\"\n")
 
 #----------------------------------------------------------------------
 # Decide whether to do a 32 or a 64 bit build.
@@ -1931,6 +1989,7 @@ endif(NOT EXISTS ${CMAKE_BINARY_DIR}/CMakeCache.txt.prev)
 BRLCAD_ALLOCA()
 
 BRLCAD_FUNCTION_EXISTS(XQueryExtension HAVE_XQUERYEXTENSION)
+BRLCAD_FUNCTION_EXISTS(_putenv_s HAVE__PUTENV_S)
 BRLCAD_FUNCTION_EXISTS(alarm HAVE_ALARM)
 BRLCAD_FUNCTION_EXISTS(dlopen HAVE_DLOPEN)
 BRLCAD_FUNCTION_EXISTS(drand48 HAVE_DRAND48)
@@ -1938,12 +1997,14 @@ BRLCAD_FUNCTION_EXISTS(fchmod HAVE_FCHMOD)
 BRLCAD_FUNCTION_EXISTS(fsync HAVE_FSYNC)
 BRLCAD_FUNCTION_EXISTS(getcwd HAVE_GETCWD)
 BRLCAD_FUNCTION_EXISTS(getegid HAVE_GETEGID)
+BRLCAD_FUNCTION_EXISTS(getenv_s HAVE_GETENV_S)
 BRLCAD_FUNCTION_EXISTS(geteuid HAVE_GETEUID)
 BRLCAD_FUNCTION_EXISTS(gethostname HAVE_GETHOSTNAME)
 BRLCAD_FUNCTION_EXISTS(getloadavg HAVE_GETLOADAVG)
 BRLCAD_FUNCTION_EXISTS(getopt_long HAVE_GETOPT_LONG)
 BRLCAD_FUNCTION_EXISTS(getprogname HAVE_GETPROGNAME) # bsd
 BRLCAD_FUNCTION_EXISTS(htonll HAVE_HTONLL)
+BRLCAD_FUNCTION_EXISTS(logb HAVE_LOGB REQUIRED_LIBS ${M_LIBRARY})
 BRLCAD_FUNCTION_EXISTS(lrand48 HAVE_LRAND48)
 BRLCAD_FUNCTION_EXISTS(memset HAVE_MEMSET)
 BRLCAD_FUNCTION_EXISTS(mkstemp HAVE_MKSTEMP)
@@ -2233,6 +2294,11 @@ add_subdirectory(src/other)
 # Now put back the BRL-CAD flags
 RESTORE_CACHED_BUILD_FLAGS(_BRLCAD)
 
+# Restore BRL-CAD configurations, if necessary
+if(CMAKE_CONFIGURATION_TYPES AND NOT "${CMAKE_CONFIGURATION_TYPES}" STREQUAL "Debug;Release")
+  set(CMAKE_CONFIGURATION_TYPES "Debug;Release" CACHE STRING "Allowed BRL-CAD configuration types" FORCE)
+endif(CMAKE_CONFIGURATION_TYPES AND NOT "${CMAKE_CONFIGURATION_TYPES}" STREQUAL "Debug;Release")
+
 # *******************************************************************
 if(NOT EXISTS ${CMAKE_BINARY_DIR}/CMakeCache.txt.prev)
   message("***********************************************************")
@@ -2257,7 +2323,7 @@ endforeach(req_var ${CMAKE_REQUIRED_FLAG_VARS})
 # Enable CTest Testing support - this is done after src/other is
 # added to avoid incorporating src/other CTests into BRL-CAD's own
 # testing.  TODO - probably should control this with an option.
-ENABLE_TESTING()
+INCLUDE(CTest)
 
 # We've done the toplevel configure steps, now add the subdirectories
 macro(verbose_add_subdirectory root dir)
@@ -2515,16 +2581,10 @@ if(NOT BRLCAD_IS_SUBBUILD)
     list(REMOVE_DUPLICATES CMAKE_EXTERNAL_TARGET_LIST)
   endif(CMAKE_EXTERNAL_TARGET_LIST)
   foreach(libtarget ${CMAKE_LIBRARY_TARGET_LIST})
-    #TODO - can this locate test be replaced with if(TARGET ${libtarget}) ?
-    if(NOT CMAKE_BUILD_TYPE)
-      get_target_property(target_location ${libtarget} LOCATION)
-    else(NOT CMAKE_BUILD_TYPE)
-      get_target_property(target_location ${libtarget} LOCATION_${CMAKE_BUILD_TYPE})
-    endif(NOT CMAKE_BUILD_TYPE)
-    if(target_location)
+    if(TARGET ${libtarget})
       add_dependencies(${libtarget} timestamp)
       add_dependencies(buildtimedelta ${libtarget})
-    endif(target_location)
+    endif(TARGET ${libtarget})
   endforeach(libtarget ${CMAKE_LIBRARY_TARGET_LIST})
   foreach(exectarget ${CMAKE_EXEC_TARGET_LIST})
     if(NOT CMAKE_BUILD_TYPE)
@@ -2713,6 +2773,7 @@ if(NOT BRLCAD_IS_SUBBUILD)
     TODO
     configure
     CMakeLists.txt
+    CTestConfig.cmake
     )
   CMAKEFILES(${toplevel_ignore_files})
 

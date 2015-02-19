@@ -21,14 +21,14 @@
     <arg choice='plain'><replaceable>x2</replaceable></arg>
     <arg choice='plain'><replaceable>y2</replaceable></arg>
     <arg choice='opt'><arg choice='plain'><replaceable>r</replaceable></arg><arg choice='plain'><replaceable>g</replaceable></arg><arg choice='plain'><replaceable>b</replaceable></arg></arg>
-    <arg choice='opt'><arg choice='plain'><replaceable>&lt;</replaceable></arg><arg choice='plain'><replaceable>unix_plot</replaceable></arg></arg>
+    <arg choice='opt'><arg choice='plain'>&lt;</arg><arg choice='plain'><replaceable>unix_plot</replaceable></arg></arg>
 </cmdsynopsis>
 <para>&gt; unix_plot.</para>
 </refsynopsisdiv>
 
 
 <refsect1 xml:id='description'><title>DESCRIPTION</title>
-<para><emphasis remap='I'>Plot3line2</emphasis>
+<para><command>plot3line2</command>
 outputs a UnixPlot command to draw a line in the XY plane from
 the point
 (<emphasis remap='B'>x1 y1</emphasis>)
@@ -57,7 +57,7 @@ from shell commands.</para>
 </refsect1>
 
 <refsect1 xml:id='see_also'><title>SEE ALSO</title>
-<para><citerefentry><refentrytitle>plot3color</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>plot3-plot3</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>plot3</refentrytitle><manvolnum>5</manvolnum></citerefentry>.</para>
+<para><citerefentry><refentrytitle>plot3color</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>plot3-plot3</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>plot3</refentrytitle><manvolnum>5</manvolnum></citerefentry></para>
 
 </refsect1>
 

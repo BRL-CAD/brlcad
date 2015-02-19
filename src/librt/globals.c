@@ -71,16 +71,6 @@ const char *binu_types[] = {
     "binary(64bit_int)"
 };
 
-/**
- * Number of bytes used for each value of DB5HDR_WIDTHCODE_*
- */
-const int db5_enc_len[4] = {
-    1,
-    2,
-    4,
-    8
-};
-
 /* see table.c for primitive object function table definition */
 extern const struct rt_functab OBJ[];
 
@@ -93,34 +83,9 @@ fastf_t rt_cline_radius = (fastf_t)-1.0;
 size_t rt_bot_minpieces = RT_DEFAULT_MINPIECES;
 
 /**
- * minimum number of bot for TIE
- */
-size_t rt_bot_mintie = RT_DEFAULT_MINTIE;
-
-/**
  * minimum triangles per piece
  */
 size_t rt_bot_tri_per_piece = RT_DEFAULT_TRIS_PER_PIECE;
-
-/**
- * rt vlist command descriptions
- */
-const char *rt_vlist_cmd_descriptions[] = {
-    "line move ",
-    "line draw ",
-    "poly start",
-    "poly move ",
-    "poly draw ",
-    "poly end  ",
-    "poly vnorm",
-    "tri start",
-    "tri move",
-    "tri draw",
-    "tri end",
-    "tri vnorm",
-    "point draw",
-    "**unknown*"
-};
 
 const struct db_tree_state rt_initial_tree_state = {
     RT_DBTS_MAGIC,		/* magic */

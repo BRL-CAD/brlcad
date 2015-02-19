@@ -25,7 +25,7 @@
 
 #include "bu/log.h"
 #include "vmath.h"
-#include "bn.h"
+#include "bn/anim.h"
 #include "anim.h"
 
 

@@ -8,6 +8,7 @@ BRLCAD_LIB_INCLUDE_DIRS(sysv SYSV_INCLUDE_DIRS "")
 
 set(LIBSYSV_SOURCES
   memset.c
+  setenv.c
   strchr.c
   strdup.c
   strsep.c
@@ -15,12 +16,6 @@ set(LIBSYSV_SOURCES
   tcl.c
   )
 
-add_definitions(
-  -DHAVE_MEMSET
-  -DHAVE_STRCHR
-  -DHAVE_STRDUP
-  -DHAVE_STRTOK
-  )
 if(HAVE_C_WUNUSED_CONST_VARIABLE)
   add_definitions(-DHAVE_WUNUSED_CONST_VARIABLE)
 endif(HAVE_C_WUNUSED_CONST_VARIABLE)

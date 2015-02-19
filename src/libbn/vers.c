@@ -25,7 +25,7 @@
 
 #include "common.h"
 
-#include "bn.h"
+#include "bn/version.h"
 #include "brlcad_ident.h"
 
 

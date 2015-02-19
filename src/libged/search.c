@@ -231,6 +231,7 @@ ged_search(struct ged *gedp, int argc, const char *argv_orig[])
      * any further than the max possible option count */
     bu_optind = 1;
     while ((bu_optind < (optcnt + 1)) && ((c = bu_getopt(argc, (char * const *)argv_orig, "?aQhv")) != -1)) {
+	if (bu_optopt == '?') c='h';
 	switch (c) {
 	    case 'a':
 		aflag = 1;
@@ -246,7 +247,6 @@ ged_search(struct ged *gedp, int argc, const char *argv_orig[])
 		flags |= DB_SEARCH_QUIET;
 		break;
 	    case 'h':
-	    case '?':
 		want_help = 1;
 		break;
 	    default:
@@ -309,10 +309,10 @@ ged_search(struct ged *gedp, int argc, const char *argv_orig[])
 		    return (wflag) ? GED_OK : GED_ERROR;
 		}
 		if (!is_specific) {
-		    if (!is_flat && !aflag && !flat_only) new_search->path_cnt = db_ls(gedp->ged_wdbp->dbip, DB_LS_TOPS, &(new_search->paths));
-		    if (!is_flat && aflag && !flat_only) new_search->path_cnt = db_ls(gedp->ged_wdbp->dbip, DB_LS_TOPS | DB_LS_HIDDEN, &(new_search->paths));
-		    if (is_flat && !aflag && !flat_only) new_search->path_cnt = db_ls(gedp->ged_wdbp->dbip, 0, &(new_search->paths));
-		    if (is_flat && aflag && !flat_only) new_search->path_cnt = db_ls(gedp->ged_wdbp->dbip, DB_LS_HIDDEN, &(new_search->paths));
+		    if (!is_flat && !aflag && !flat_only) new_search->path_cnt = db_ls(gedp->ged_wdbp->dbip, DB_LS_TOPS, NULL, &(new_search->paths));
+		    if (!is_flat && aflag && !flat_only) new_search->path_cnt = db_ls(gedp->ged_wdbp->dbip, DB_LS_TOPS | DB_LS_HIDDEN, NULL, &(new_search->paths));
+		    if (is_flat && !aflag && !flat_only) new_search->path_cnt = db_ls(gedp->ged_wdbp->dbip, 0, NULL, &(new_search->paths));
+		    if (is_flat && aflag && !flat_only) new_search->path_cnt = db_ls(gedp->ged_wdbp->dbip, DB_LS_HIDDEN, NULL, &(new_search->paths));
 		} else {
 		    /* _ged_search_characterize_path verified that the db_lookup will succeed */
 		    struct directory *local_dp = db_lookup(gedp->ged_wdbp->dbip, bu_vls_addr(&argvls), LOOKUP_QUIET);
@@ -335,8 +335,8 @@ ged_search(struct ged *gedp, int argc, const char *argv_orig[])
 		    /* We have a plan but not path - in that case, do a non-full-path tops search */
 		    struct ged_search *new_search;
 		    BU_ALLOC(new_search, struct ged_search);
-		    if (!aflag) new_search->path_cnt = db_ls(gedp->ged_wdbp->dbip, DB_LS_TOPS, &(new_search->paths));
-		    if (aflag) new_search->path_cnt = db_ls(gedp->ged_wdbp->dbip, DB_LS_TOPS | DB_LS_HIDDEN, &(new_search->paths));
+		    if (!aflag) new_search->path_cnt = db_ls(gedp->ged_wdbp->dbip, DB_LS_TOPS, NULL, &(new_search->paths));
+		    if (aflag) new_search->path_cnt = db_ls(gedp->ged_wdbp->dbip, DB_LS_TOPS | DB_LS_HIDDEN, NULL, &(new_search->paths));
 		    new_search->search_type = 1;
 		    bu_ptbl_ins(search_set, (long *)new_search);
 		}

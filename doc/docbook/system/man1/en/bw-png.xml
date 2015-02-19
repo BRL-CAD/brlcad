@@ -22,7 +22,7 @@
     <arg choice='opt'>-wfile_width </arg>
     <arg choice='opt'>-nfile_height </arg>
     <arg choice='opt'><replaceable>BRLbwfile</replaceable></arg>
-    <arg choice='plain'><replaceable>&gt;</replaceable></arg>
+    <arg choice='plain'>&gt;</arg>
     <arg choice='plain'><replaceable>PNG_file</replaceable></arg>
 </cmdsynopsis>
 </refsynopsisdiv>

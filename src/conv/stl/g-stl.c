@@ -55,12 +55,16 @@
 }
 
 
-static char usage[] = "Usage: %s [-bvi8] [-xX lvl] [-P num_cpus] [-a abs_tess_tol] [-r rel_tess_tol] [-n norm_tess_tol] [-D dist_calc_tol] [-o output_file_name.stl | -m directory_name] brlcad_db.g object(s)\n";
+static char usage[] = "[-bvi8] [-xX lvl] [-a abs_tess_tol] [-r rel_tess_tol] [-n norm_tess_tol] [-D dist_calc_tol] [-o output_file_name.stl | -m directory_name] brlcad_db.g object(s)\n";
 
+static void
+print_usage(const char *progname)
+{
+    bu_exit(1, "Usage: %s %s", progname, usage);
+}
 
 static int verbose;
 static int NMG_debug;			/* saved arg of -X, for longjmp handling */
-static int ncpu = 1;			/* Number of processors */
 static int binary = 0;			/* Default output is ASCII */
 static char *output_file = NULL;	/* output filename */
 static char *output_directory = NULL;	/* directory name to hold output files */
@@ -93,7 +97,7 @@ lswap(unsigned int *v)
 
 
 static void
-nmg_to_stl(struct nmgregion *r, const struct db_full_path *pathp, int UNUSED(region_id), int UNUSED(material_id), float UNUSED(color[3]))
+nmg_to_stl(struct nmgregion *r, const struct db_full_path *pathp, int UNUSED(region_id), int UNUSED(material_id), float UNUSED(color[3]), void *UNUSED(client_data))
 {
     struct model *m;
     struct shell *s;
@@ -296,11 +300,7 @@ nmg_to_stl(struct nmgregion *r, const struct db_full_path *pathp, int UNUSED(reg
 }
 
 
-/* FIXME: this be a dumb hack to avoid void* conversion */
-struct gcv_data {
-    void (*func)(struct nmgregion *, const struct db_full_path *, int, int, float [3]);
-};
-static struct gcv_data gcvwriter = {nmg_to_stl};
+static struct gcv_region_end_data gcvwriter = {nmg_to_stl, NULL};
 
 
 int
@@ -341,7 +341,7 @@ main(int argc, char *argv[])
     BU_LIST_INIT(&RTG.rtg_vlfree);	/* for vlist macros */
 
     /* Get command line arguments. */
-    while ((c = bu_getopt(argc, argv, "a:b8m:n:o:r:vx:D:P:X:ih?")) != -1) {
+    while ((c = bu_getopt(argc, argv, "a:b8m:n:o:r:vx:D:X:ih?")) != -1) {
 	switch (c) {
 	    case 'a':		/* Absolute tolerance. */
 		ttol.abs = atof(bu_optarg);
@@ -369,9 +369,6 @@ main(int argc, char *argv[])
 	    case 'v':
 		verbose++;
 		break;
-	    case 'P':
-		ncpu = atoi(bu_optarg);
-		break;
 	    case 'x':
 		sscanf(bu_optarg, "%x", (unsigned int *)&RTG.debug);
 		break;
@@ -388,7 +385,7 @@ main(int argc, char *argv[])
 		inches = 1;
 		break;
 	    default:
-		bu_exit(1, usage, argv[0]);
+		print_usage(argv[0]);
 	}
     }
 
@@ -399,7 +396,7 @@ main(int argc, char *argv[])
     if (missingg)
 	bu_log("%s: missing .g file and object(s)\n",argv[0]);
     if (mutex || missingg)
-	bu_exit(1, usage, argv[0]);
+	print_usage(argv[0]);
 
     if (!output_file && !output_directory) {
 	if (binary) {
@@ -472,7 +469,7 @@ main(int argc, char *argv[])
 
     /* Walk indicated tree(s).  Each region will be output separately */
     (void) db_walk_tree(dbip, argc-1, (const char **)(argv+1),
-			1,			/* ncpu */
+			1,
 			&tree_state,
 			0,			/* take all regions */
 			use_mc?gcv_region_end_mc:gcv_region_end,
