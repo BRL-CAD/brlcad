@@ -204,6 +204,7 @@ ged_lc(struct ged *gedp, int argc, const char *argv[])
 		break;
 	    case 'z':
 		descending_sort_flag = 1;
+		break;
 	    default:
 		unrecognized_flag_cnt++;
 	}
