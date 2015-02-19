@@ -175,7 +175,10 @@ subbrep_to_csg_cylinder(struct subbrep_object_data *data, struct rt_wdb *wdbp, s
 	struct bu_vls prim_name = BU_VLS_INIT_ZERO;
 	bu_vls_sprintf(&prim_name, "rcc_%s.s", bu_vls_addr(data->key));
 
-	mk_rcc(wdbp, bu_vls_addr(&prim_name), params->origin, params->hv, params->radius);
+	int ret = mk_rcc(wdbp, bu_vls_addr(&prim_name), params->origin, params->hv, params->radius);
+	if (ret) {
+	    std::cout << "problem making " << bu_vls_addr(&prim_name) << "\n";
+	}
 	//std::cout << bu_vls_addr(&prim_name) << ": " << params->bool_op << "\n";
 	if (wcomb) (void)mk_addmember(bu_vls_addr(&prim_name), &((*wcomb).l), NULL, db_str2op(&(params->bool_op)));
 	bu_vls_free(&prim_name);
