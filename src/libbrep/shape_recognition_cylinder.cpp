@@ -865,15 +865,6 @@ cylinder_csg(struct subbrep_object_data *data, fastf_t cyl_tol)
 		    std::cout << "Intersect point 1: " << intersect_pt[0] << "," << intersect_pt[1] << "," << intersect_pt[2] << "\n";
 		    ON_3dPoint ip1(intersect_pt[0], intersect_pt[1], intersect_pt[2]);
 
-		    double angle = acos(ON_DotProduct(cylinder.Axis(), cyl_planes[0].Normal()));
-		    double diameter = cylinder.circle.Radius();
-		    double hypotenuse_1 = diameter / ON_DotProduct(cylinder.Axis(), cyl_planes[0].Normal());
-		    double ext1_length = fabs(sin(angle) * hypotenuse_1);
-		    angle = acos(ON_DotProduct(cylinder.Axis(), cyl_planes[1].Normal()));
-		    diameter = cylinder.circle.Radius();
-		    double hypotenuse_2 = diameter / ON_DotProduct(cylinder.Axis(), cyl_planes[1].Normal());
-		    double ext2_length = fabs(sin(angle) * hypotenuse_2);
-
 		    VMOVE(axis_dir, cylinder.Axis());
 		    VUNITIZE(axis_dir);
 		    plane_eqn[0] = cyl_planes[1].plane_equation.x;
@@ -894,20 +885,7 @@ cylinder_csg(struct subbrep_object_data *data, fastf_t cyl_tol)
 		    std::cout << "Intersect point 2: " << intersect_pt[0] << "," << intersect_pt[1] << "," << intersect_pt[2] << "\n";
 		    ON_3dPoint ip2(intersect_pt[0], intersect_pt[1], intersect_pt[2]);
 
-
-		    ON_3dVector ext_dir_1 =  ip1 - ip2;
-		    ON_3dVector ext_dir_2 =  ip2 - ip1;
-		    ext_dir_1.Unitize();
-		    ext_dir_2.Unitize();
-		    ext_dir_1 = ext_dir_1 * ext1_length/2;
-		    ext_dir_2 = ext_dir_2 * ext2_length/2;
-
-		    ON_3dPoint cp1 = ip1 + ext_dir_1;
-		    std::cout << "CP1: " << pout(cp1) << "\n";
-		    ON_3dPoint cp2 = ip2 + ext_dir_2;
-		    std::cout << "CP2: " << pout(cp2) << "\n";
-
-		    // First, define the cylinder.
+		    // Define the cylinder.
 		    struct subbrep_object_data *cyl_obj;
 		    BU_GET(cyl_obj, struct subbrep_object_data);
 		    subbrep_object_init(cyl_obj, data->brep);
@@ -936,8 +914,8 @@ cylinder_csg(struct subbrep_object_data *data, fastf_t cyl_tol)
 
 		    // cylinder - positive object in this sub-comb
 		    cyl_obj->params->bool_op = 'u';
-		    VMOVE(cyl_obj->params->origin, cp1);
-		    ON_3dVector hvect = cp2 - cp1;
+		    VMOVE(cyl_obj->params->origin, ip1);
+		    ON_3dVector hvect = ip2 - ip1;
 		    cyl_obj->params->hv[0] = hvect.x;
 		    cyl_obj->params->hv[1] = hvect.y;
 		    cyl_obj->params->hv[2] = hvect.z;
@@ -945,7 +923,23 @@ cylinder_csg(struct subbrep_object_data *data, fastf_t cyl_tol)
 
 		    bu_ptbl_ins(data->children, (long *)cyl_obj);
 
+		    // Create an OpenNURBS cylinder from the final cyl data
+		    // so we can use it to guide the arb creation.
+		    ON_Plane fplane(ip1, hvect);
+		    ON_Circle fcirc(fplane, cylinder.circle.Radius());
+		    ON_Cylinder fcyl(fcirc, hvect.Length());
 
+		    ON_Plane cap1(ip1, cyl_planes[0].Normal());
+		    if(ON_DotProduct(cap1.Normal(), hvect) > 0) cap1.Flip();
+		    ON_Plane cap2(ip2, cyl_planes[1].Normal());
+		    if(ON_DotProduct(cap2.Normal(), hvect) < 0) cap2.Flip();
+
+#if 0
+		    ON_3dPoint cp1 = ip1 + ext_dir_1;
+		    std::cout << "CP1: " << pout(cp1) << "\n";
+		    ON_3dPoint cp2 = ip2 + ext_dir_2;
+		    std::cout << "CP2: " << pout(cp2) << "\n";
+#endif
 		    // The normal of the two end cap planes, when projected
 		    // onto the axis plane, "points" the way towards the lowest
 		    // point of the arb.  To form the arb, the cylinder face is
@@ -955,57 +949,105 @@ cylinder_csg(struct subbrep_object_data *data, fastf_t cyl_tol)
 		    // then the last two are made by dropping vectors down the
 		    // cylinder axis from the two square points on the "low"
 		    // side
-		    ON_Xform cyl_proj;
-		    cyl_proj.PlanarProjection(cylinder.circle.Plane());
-		    ON_3dVector v1 = cylinder.circle.Plane().Normal();
-		    double dotp = ON_DotProduct(v1, cyl_planes[0].Normal());
-		    if (dotp < 0) v1 = -1 * v1;
-		    v1.Transform(cyl_proj);
-		    v1.Unitize();
-		    ON_3dVector v2 = ON_CrossProduct(cyl_planes[0].Normal(), v1);
-		    v1 = v1 * hypotenuse_1;
-		    v2 = v2 * cylinder.circle.Radius();
+		    {
+			// Cap 1
+			cap1.Flip();
+			double angle = acos(ON_DotProduct(fplane.Normal(), cap1.Normal()));
+			double diameter = fcyl.circle.Radius();
+			double hypotenuse = diameter / ON_DotProduct(fplane.Normal(), cap1.Normal());
+			double ext_length = fabs(sin(angle) * hypotenuse);
+			ON_3dVector ext_dir = hvect;
+			ext_dir.Unitize();
+			ext_dir = ext_dir * ext_length;
+			cap1.Flip();
 
-		    ON_3dPoint arb1 = ip1 + v1 - v2;
-		    ON_3dPoint arb4 = ip1 + v1 + v2;
-		    ON_3dPoint arb5 = ip1 - v1 - v2;
-		    ON_3dPoint arb6 = ip1 - v1 + v2;
+			ON_Xform cyl_proj;
+			cyl_proj.PlanarProjection(fplane);
+			ON_3dVector v1 = cap1.Normal();
+			v1.Transform(cyl_proj);
+			v1.Unitize();
+			ON_3dVector v2 = ON_CrossProduct(-1*fplane.Normal(), v1);
+			v1 = v1 * fcyl.circle.Radius();
+			v2 = v2 * fcyl.circle.Radius();
 
-		    angle = acos(ON_DotProduct(cylinder.Axis(), cyl_planes[0].Normal()));
-		    diameter = cylinder.circle.Radius() * 2;
-		    hypotenuse_1 = diameter / ON_DotProduct(cylinder.Axis(), cyl_planes[0].Normal());
-		    ext1_length = fabs(sin(angle) * hypotenuse_1);
-		    angle = acos(ON_DotProduct(cylinder.Axis(), cyl_planes[1].Normal()));
-		    diameter = cylinder.circle.Radius() * 2;
-		    hypotenuse_2 = diameter / ON_DotProduct(cylinder.Axis(), cyl_planes[1].Normal());
-		    ext2_length = fabs(sin(angle) * hypotenuse_2);
-		    ext_dir_1.Unitize();
-		    ext_dir_2.Unitize();
-		    ext_dir_1 = ext_dir_1 * ext1_length;
-		    ext_dir_2 = ext_dir_2 * ext2_length;
-		    ON_3dPoint arb2 = arb1 + ext_dir_1;
-		    ON_3dPoint arb3 = arb4 + ext_dir_1;
+			ON_3dPoint arb2 = ip1 + v1 - v2;
+			ON_3dPoint arb3 = ip1 + v1 + v2;
+			ON_3dPoint arb5 = ip1 - v2;
+			ON_3dPoint arb6 = ip1 + v2;
 
-		    struct subbrep_object_data *arb_obj_1;
-		    BU_GET(arb_obj_1, struct subbrep_object_data);
-		    subbrep_object_init(arb_obj_1, data->brep);
-		    bu_vls_sprintf(arb_obj_1->key, "%s_arb6_1", key.c_str());
-		    arb_obj_1->type = ARB6;
+			ON_3dPoint arb1 = arb2 + ext_dir;
+			ON_3dPoint arb4 = arb3 + ext_dir;
 
-		    ON_SimpleArray<ON_3dPoint> arb_points(6);
-		    arb_points[0] = arb1;
-		    arb_points[1] = arb2;
-		    arb_points[2] = arb3;
-		    arb_points[3] = arb4;
-		    arb_points[4] = arb5;
-		    arb_points[5] = arb6;
-		    arb_obj_1->params->bool_op = '-';
-		    arb_obj_1->params->arb_type = 8;
-		    for (int j = 0; j < 6; j++) {
-			VMOVE(arb_obj_1->params->p[j], arb_points[j]);
+			struct subbrep_object_data *arb_obj_1;
+			BU_GET(arb_obj_1, struct subbrep_object_data);
+			subbrep_object_init(arb_obj_1, data->brep);
+			bu_vls_sprintf(arb_obj_1->key, "%s_cap_1", key.c_str());
+			arb_obj_1->type = ARB6;
+
+			ON_SimpleArray<ON_3dPoint> arb_points(6);
+			arb_points[0] = arb1;
+			arb_points[1] = arb2;
+			arb_points[2] = arb3;
+			arb_points[3] = arb4;
+			arb_points[4] = arb5;
+			arb_points[5] = arb6;
+			arb_obj_1->params->bool_op = '-';
+			arb_obj_1->params->arb_type = 8;
+			for (int j = 0; j < 6; j++) {
+			    VMOVE(arb_obj_1->params->p[j], arb_points[j]);
+			}
+
+			bu_ptbl_ins(data->children, (long *)arb_obj_1);
+		    }
+		    {
+			// Cap 2
+			double angle = acos(ON_DotProduct(fplane.Normal(), cap2.Normal()));
+			double diameter = fcyl.circle.Radius();
+			double hypotenuse = diameter / ON_DotProduct(fplane.Normal(), cap2.Normal());
+			double ext_length = fabs(sin(angle) * hypotenuse);
+			ON_3dVector ext_dir = -hvect;
+			ext_dir.Unitize();
+			ext_dir = ext_dir * ext_length;
+
+			ON_Xform cyl_proj;
+			cyl_proj.PlanarProjection(fplane);
+			ON_3dVector v1 = cap2.Normal();
+			v1.Transform(cyl_proj);
+			v1.Unitize();
+			ON_3dVector v2 = ON_CrossProduct(fplane.Normal(), v1);
+			v1 = v1 * fcyl.circle.Radius();
+			v2 = v2 * fcyl.circle.Radius();
+
+			ON_3dPoint arb2 = ip2 + v1 - v2;
+			ON_3dPoint arb3 = ip2 + v1 + v2;
+			ON_3dPoint arb5 = ip2 - v2;
+			ON_3dPoint arb6 = ip2 + v2;
+
+			ON_3dPoint arb1 = arb2 + ext_dir;
+			ON_3dPoint arb4 = arb3 + ext_dir;
+
+			struct subbrep_object_data *arb_obj_2;
+			BU_GET(arb_obj_2, struct subbrep_object_data);
+			subbrep_object_init(arb_obj_2, data->brep);
+			bu_vls_sprintf(arb_obj_2->key, "%s_cap_2", key.c_str());
+			arb_obj_2->type = ARB6;
+
+			ON_SimpleArray<ON_3dPoint> arb_points(6);
+			arb_points[0] = arb1;
+			arb_points[1] = arb2;
+			arb_points[2] = arb3;
+			arb_points[3] = arb4;
+			arb_points[4] = arb5;
+			arb_points[5] = arb6;
+			arb_obj_2->params->bool_op = '-';
+			arb_obj_2->params->arb_type = 8;
+			for (int j = 0; j < 6; j++) {
+			    VMOVE(arb_obj_2->params->p[j], arb_points[j]);
+			}
+
+			bu_ptbl_ins(data->children, (long *)arb_obj_2);
 		    }
 
-		    bu_ptbl_ins(data->children, (long *)arb_obj_1);
 
 		}
 
