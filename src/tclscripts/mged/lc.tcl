@@ -120,6 +120,10 @@ proc lc {args} {
 	    set file_name $arg
 	    continue
 	}
+	if { $arg <= -0 && $arg >= -5 } {
+	    set sort_column [expr abs($arg)]
+	    continue
+	}
 	if { $arg == "-f" } {
 	    set file_name_flag_cnt 1
 	    continue
@@ -138,10 +142,6 @@ proc lc {args} {
 	}
 	if { $arg == "-z" } {
 	    set descending_sort_flag_cnt 1
-	    continue
-	}
-	if { $arg <= -0 && $arg >= -5 } {
-	    set sort_column [expr abs($arg)]
 	    continue
 	}
 	set group_name_set 1
