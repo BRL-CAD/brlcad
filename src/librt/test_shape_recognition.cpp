@@ -116,6 +116,24 @@ brep_to_nmg(struct subbrep_object_data *data, struct rt_wdb *wdbp, struct wmembe
 }
 
 int
+subbrep_to_csg_arb6(struct subbrep_object_data *data, struct rt_wdb *wdbp, struct wmember *wcomb)
+{
+    struct csg_object_params *params = data->params;
+    if (data->type == ARB6) {
+	struct bu_vls prim_name = BU_VLS_INIT_ZERO;
+	bu_vls_sprintf(&prim_name, "arb6_%s.s", bu_vls_addr(data->key));
+
+	mk_arb6(wdbp, bu_vls_addr(&prim_name), (const fastf_t *)params->p);
+	//std::cout << bu_vls_addr(&prim_name) << ": " << params->bool_op << "\n";
+	if (wcomb) (void)mk_addmember(bu_vls_addr(&prim_name), &((*wcomb).l), NULL, db_str2op(&(params->bool_op)));
+	bu_vls_free(&prim_name);
+	return 1;
+    } else {
+	return 0;
+    }
+}
+
+int
 subbrep_to_csg_arb8(struct subbrep_object_data *data, struct rt_wdb *wdbp, struct wmember *wcomb)
 {
     struct csg_object_params *params = data->params;
@@ -132,6 +150,7 @@ subbrep_to_csg_arb8(struct subbrep_object_data *data, struct rt_wdb *wdbp, struc
 	return 0;
     }
 }
+
 int
 subbrep_to_csg_planar(struct subbrep_object_data *data, struct rt_wdb *wdbp, struct wmember *wcomb)
 {
@@ -226,6 +245,9 @@ void
 process_params(struct subbrep_object_data *data, struct rt_wdb *wdbp, struct wmember *wcomb)
 {
     switch (data->type) {
+	case ARB6:
+	    subbrep_to_csg_arb6(data, wdbp, wcomb);
+	    break;
 	case ARB8:
 	    subbrep_to_csg_arb8(data, wdbp, wcomb);
 	    break;
