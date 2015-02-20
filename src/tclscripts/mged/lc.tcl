@@ -124,13 +124,13 @@ proc lc {args} {
 	    set file_name_flag_cnt 1
 	    continue
 	}
-	if { $arg == "-d" } {
-	    set find_duplicates_flag_cnt 1
-	    continue
-	}
 	if { $arg == "-s" } {
 	    set find_duplicates_flag_cnt 1
 	    set skip_special_duplicates_flag_cnt 1
+	    continue
+	}
+	if { $arg == "-d" } {
+	    set find_duplicates_flag_cnt 1
 	    continue
 	}
 	if { $arg == "-r" } {

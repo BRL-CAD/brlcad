@@ -192,12 +192,12 @@ ged_lc(struct ged *gedp, int argc, const char *argv[])
 		file_name_flag_cnt++;
 		file_name = bu_optarg;
 		break;
+	    case 's':
+		skip_special_duplicates_flag = 1;
+	    /* deliberately fall through, because find_duplicates_flag
+             * is also to be set to 1 */
 	    case 'd':
 		find_duplicates_flag = 1;
-		break;
-	    case 's':
-		find_duplicates_flag = 1;
-		skip_special_duplicates_flag = 1;
 		break;
 	    case 'r':
 		skip_subtracted_regions_flag = 1;
