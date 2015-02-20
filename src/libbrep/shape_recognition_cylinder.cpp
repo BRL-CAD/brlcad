@@ -970,27 +970,20 @@ cylinder_csg(struct subbrep_object_data *data, fastf_t cyl_tol)
 			v1 = v1 * fcyl.circle.Radius();
 			v2 = v2 * fcyl.circle.Radius();
 
-			ON_3dPoint arb2 = ip1 + v1 - v2;
-			ON_3dPoint arb3 = ip1 + v1 + v2;
-			ON_3dPoint arb5 = ip1 - v2;
-			ON_3dPoint arb6 = ip1 + v2;
+			ON_SimpleArray<ON_3dPoint> arb_points(6);
+			arb_points[1] = ip1 + v1 - v2;
+			arb_points[2] = ip1 + v1 + v2;
+			arb_points[4] = ip1 - v2;
+			arb_points[5] = ip1 + v2;
 
-			ON_3dPoint arb1 = arb2 + ext_dir;
-			ON_3dPoint arb4 = arb3 + ext_dir;
+			arb_points[0] = arb_points[1] + ext_dir;
+			arb_points[3] = arb_points[2] + ext_dir;
 
 			struct subbrep_object_data *arb_obj_1;
 			BU_GET(arb_obj_1, struct subbrep_object_data);
 			subbrep_object_init(arb_obj_1, data->brep);
 			bu_vls_sprintf(arb_obj_1->key, "%s_cap_1", key.c_str());
 			arb_obj_1->type = ARB6;
-
-			ON_SimpleArray<ON_3dPoint> arb_points(6);
-			arb_points[0] = arb1;
-			arb_points[1] = arb2;
-			arb_points[2] = arb3;
-			arb_points[3] = arb4;
-			arb_points[4] = arb5;
-			arb_points[5] = arb6;
 			arb_obj_1->params->bool_op = '-';
 			arb_obj_1->params->arb_type = 8;
 			for (int j = 0; j < 6; j++) {
@@ -1018,27 +1011,20 @@ cylinder_csg(struct subbrep_object_data *data, fastf_t cyl_tol)
 			v1 = v1 * fcyl.circle.Radius();
 			v2 = v2 * fcyl.circle.Radius();
 
-			ON_3dPoint arb2 = ip2 + v1 - v2;
-			ON_3dPoint arb3 = ip2 + v1 + v2;
-			ON_3dPoint arb5 = ip2 - v2;
-			ON_3dPoint arb6 = ip2 + v2;
+			ON_SimpleArray<ON_3dPoint> arb_points(6);
+			arb_points[1] = ip2 + v1 - v2;
+			arb_points[2] = ip2 + v1 + v2;
+			arb_points[4] = ip2 - v2;
+			arb_points[5] = ip2 + v2;
 
-			ON_3dPoint arb1 = arb2 + ext_dir;
-			ON_3dPoint arb4 = arb3 + ext_dir;
+			arb_points[0] = arb_points[1] + ext_dir;
+			arb_points[3] = arb_points[2] + ext_dir;
 
 			struct subbrep_object_data *arb_obj_2;
 			BU_GET(arb_obj_2, struct subbrep_object_data);
 			subbrep_object_init(arb_obj_2, data->brep);
 			bu_vls_sprintf(arb_obj_2->key, "%s_cap_2", key.c_str());
 			arb_obj_2->type = ARB6;
-
-			ON_SimpleArray<ON_3dPoint> arb_points(6);
-			arb_points[0] = arb1;
-			arb_points[1] = arb2;
-			arb_points[2] = arb3;
-			arb_points[3] = arb4;
-			arb_points[4] = arb5;
-			arb_points[5] = arb6;
 			arb_obj_2->params->bool_op = '-';
 			arb_obj_2->params->arb_type = 8;
 			for (int j = 0; j < 6; j++) {
