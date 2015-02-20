@@ -194,8 +194,7 @@ ged_lc(struct ged *gedp, int argc, const char *argv[])
 		break;
 	    case 's':
 		skip_special_duplicates_flag = 1;
-	    /* deliberately fall through, because find_duplicates_flag
-             * is also to be set to 1 */
+		/* FALLTHROUGH */
 	    case 'd':
 		find_duplicates_flag = 1;
 		break;
