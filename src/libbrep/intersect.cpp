@@ -38,7 +38,7 @@
 #include "brep_except.h"
 
 // Whether to output the debug messages about b-rep intersections.
-#define DEBUG_BREP_INTERSECT 0
+static int DEBUG_BREP_INTERSECT = 0;
 
 // The maximal depth for subdivision - trade-off between accuracy and
 // performance.
@@ -1082,10 +1082,13 @@ tolerance_2d_from_3d(
     const ON_Interval *curve_domain)
 {
     double tol_2d = tol_3d;
-    double bbox_diagonal_len = root->m_curve->BoundingBox().Diagonal().Length();
-    if (!ON_NearZero(bbox_diagonal_len)) {
+
+    double approx_len_3d = root->m_curve->BoundingBox().Diagonal().Length();
+    if (!ON_NearZero(approx_len_3d)) {
 	const ON_Interval dom = curve_domain ? *curve_domain : curve->Domain();
-	tol_2d = tol_3d / (bbox_diagonal_len * dom.Length());
+	double approx_len_2d = dom.Length();
+
+	tol_2d = tol_3d * (approx_len_2d / approx_len_3d);
     }
     return tol_2d;
 }
@@ -1588,15 +1591,13 @@ tolerance_2d_from_3d(
 {
     double tol_2d = tol_3d;
 
-    const ON_Interval surf_udom = surf_udomain ? *surf_udomain : surf->Domain(0);
-    const ON_Interval surf_vdom = surf_vdomain ? *surf_vdomain : surf->Domain(1);
-    double surf_ulen = surf_udom.Length();
-    double surf_vlen = surf_vdom.Length();
-    double uv_diagonal_len = ON_2dVector(surf_ulen, surf_vlen).Length();
+    double diagonal_3d = root->m_surf->BoundingBox().Diagonal().Length();
+    if (!ON_NearZero(diagonal_3d)) {
+	double surf_ulen = surf_udomain ? surf_udomain->Length() : surf->Domain(0).Length();
+	double surf_vlen = surf_vdomain ? surf_vdomain->Length() : surf->Domain(1).Length();
+	double diagonal_2d = ON_2dVector(surf_ulen, surf_vlen).Length();
 
-    double bbox_diagonal_len = root->m_surf->BoundingBox().Diagonal().Length();
-    if (!ON_NearZero(bbox_diagonal_len)) {
-	tol_2d = tol_3d / (bbox_diagonal_len * uv_diagonal_len);
+	tol_2d = (tol_3d * diagonal_2d) / diagonal_3d;
     }
     return tol_2d;
 }
@@ -1674,22 +1675,21 @@ ON_Intersect(const ON_Curve *curveA,
     }
 
     // adjust the tolerance from 3D scale to respective 2D scales
-    double t_tol = isect_tol;
+    double t_tol = tolerance_2d_from_3d(isect_tol, rootA, curveA,
+	    curveA_domain);
+
     double u_tol = isect_tol;
+    double diagonal_3d = rootB->m_surf->BoundingBox().Diagonal().Length();
+    if (!ON_NearZero(diagonal_3d)) {
+	double diagonal_2d =
+	    surfaceB_udomain ? surfaceB_udomain->Length() : surfaceB->Domain(0).Length();
+	u_tol = isect_tol * (diagonal_2d / diagonal_3d);
+    }
     double v_tol = isect_tol;
-    double l = rootA->m_curve->BoundingBox().Diagonal().Length();
-    double dl = curveA_domain ? curveA_domain->Length() : curveA->Domain().Length();
-    if (!ON_NearZero(l)) {
-	t_tol = isect_tol / l * dl;
-    }
-    l = rootB->m_surf->BoundingBox().Diagonal().Length();
-    dl = surfaceB_udomain ? surfaceB_udomain->Length() : surfaceB->Domain(0).Length();
-    if (!ON_NearZero(l)) {
-	u_tol = isect_tol / l * dl;
-    }
-    dl = surfaceB_vdomain ? surfaceB_vdomain->Length() : surfaceB->Domain(1).Length();
-    if (!ON_NearZero(l)) {
-	v_tol = isect_tol / l * dl;
+    if (!ON_NearZero(diagonal_3d)) {
+	double diagonal_2d =
+	    surfaceB_vdomain ? surfaceB_vdomain->Length() : surfaceB->Domain(1).Length();
+	v_tol = isect_tol * (diagonal_2d / diagonal_3d);
     }
 
     typedef std::vector<std::pair<Subcurve *, Subsurface *> > NodePairs;
