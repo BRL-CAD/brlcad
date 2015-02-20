@@ -923,23 +923,26 @@ cylinder_csg(struct subbrep_object_data *data, fastf_t cyl_tol)
 		    std::cout << "Intersect point 2: " << intersect_pt[0] << "," << intersect_pt[1] << "," << intersect_pt[2] << "\n";
 
 
-		    // TODO - find the greatest distance between the two sets of vertices - that,
-		    // plus the two opposite distances, is the cylinder height.
-		}
-
-		// Will probably need to intersect the cylinder axis with each cap plane
-		// to construct vectors for the arbs...
-		for (int i = 0; i < cyl_planes.Count(); i++) {
-		    ON_Plane p1 = cyl_planes[i];
-		    // Intersect axis with this plane (look into bn_isect_line3_plane) and assemble
-		    // a set of on-axis points from all the planes.  The greatest distance
-		    // between any two of them will be the base height for the cylinder, added
-		    // to on the top and bottom by the largest of the "opposite" calculations.
-		    // Once we have calculated the plane/axis intersection points and decided on
-		    // a final cylinder axis vector, make sure the planes all point "outward"
-		    // from the final shape by checking their normals against the vector of
-		    // the cylinder and which face (bottom or top) they are closest to at their
-		    // axis intersection.
+		    // TODO - find the midpoint between the two intersection
+		    // points, and construct the vectors using the midpoint as
+		    // the starting point.  The normals of the two end cap
+		    // planes will have positive dot products with these two
+		    // vectors, just as the arb faces that will do the subtractions
+		    // will have negative dot products.  Add to each of these
+		    // vectors an additional vector in the same direction
+		    // scaled to the opposite distance associated with the end
+		    // cap plane, and we have the base and height points for
+		    // the cylinder.
+		    //
+		    // The normal of the two end cap planes, when projected
+		    // onto the axis plane, "points" the way towards the lowest
+		    // point of the arb.  To form the arb, the cylinder face is
+		    // bound by a square in the plane of the face where the
+		    // pointing vector points to the middle of one of the
+		    // edges.  This square provides 4 of the 6 arb points, and
+		    // then the last two are made by dropping vectors down the
+		    // cylinder axis from the two square points on the "low"
+		    // side
 		}
 
 		return 1;
