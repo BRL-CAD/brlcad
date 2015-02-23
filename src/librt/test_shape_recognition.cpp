@@ -17,7 +17,7 @@
 #include "brep.h"
 #include "../libbrep/shape_recognition.h"
 
-
+#if 0
 struct model *
 brep_to_nmg(struct subbrep_object_data *data, struct rt_wdb *wdbp, struct wmember *wcomb)
 {
@@ -64,6 +64,8 @@ brep_to_nmg(struct subbrep_object_data *data, struct rt_wdb *wdbp, struct wmembe
 
     point_cnt = b_verts.size();
 
+    if (point_cnt == 0) return NULL;
+
     verts = (struct vertex **)bu_calloc(point_cnt, sizeof(struct vertex *), "brep_to_nmg: verts");
     loop_verts = (struct vertex ***) bu_calloc(max_edge_cnt, sizeof(struct vertex **), "brep_to_nmg: loop_verts");
     fu = (struct faceuse **) bu_calloc(face_cnt, sizeof(struct faceuse *), "brep_to_nmg: fu");
@@ -73,6 +75,105 @@ brep_to_nmg(struct subbrep_object_data *data, struct rt_wdb *wdbp, struct wmembe
     for (int s_it = 0; s_it < data->loops_cnt; s_it++) {
 	int loop_length = 0;
 	const ON_BrepLoop *b_loop = &(data->brep->m_L[data->loops[s_it]]);
+	const ON_BrepFace *b_face = b_loop->Face();
+	for (int ti = 0; ti < b_loop->m_ti.Count(); ti++) {
+	    const ON_BrepTrim *trim = &(b_face->Brep()->m_T[b_loop->m_ti[ti]]);
+	    const ON_BrepEdge *edge = &(b_face->Brep()->m_E[trim->m_ei]);
+	    if (trim->m_bRev3d) {
+		loop_verts[loop_length] = &(verts[b_verts_to_verts[edge->Vertex(0)->m_vertex_index]]);
+	    } else {
+		loop_verts[loop_length] = &(verts[b_verts_to_verts[edge->Vertex(1)->m_vertex_index]]);
+	    }
+	    loop_length++;
+	}
+	fu[face_count] = nmg_cmface(s, loop_verts, loop_length);
+	face_count++;
+    }
+
+    for (int p = 0; p < point_cnt; p++) {
+	ON_3dPoint pt = data->brep->m_V[b_verts_array[p]].Point();
+	point_t nmg_pt;
+	nmg_pt[0] = pt.x;
+	nmg_pt[1] = pt.y;
+	nmg_pt[2] = pt.z;
+	nmg_vertex_gv(verts[p], pt);
+    }
+
+    for (int f = 0; f < face_cnt; f++) {
+	nmg_fu_planeeqn(fu[f], &nmg_tol);
+    }
+
+    nmg_fix_normals(s, &nmg_tol);
+    (void)nmg_mark_edges_real(&s->l.magic);
+    /* Compute "geometry" for region and shell */
+    nmg_region_a(r, &nmg_tol);
+
+    /* Create the nmg primitive */
+    mk_nmg(wdbp, bu_vls_addr(&prim_name), m);
+    if (wcomb) (void)mk_addmember(bu_vls_addr(&prim_name), &((*wcomb).l), NULL, WMOP_UNION);
+
+    bu_vls_free(&prim_name);
+
+    return m;
+}
+#endif
+struct model *
+brep_to_nmg(struct subbrep_object_data *data, struct rt_wdb *wdbp, struct wmember *wcomb)
+{
+    struct bu_vls prim_name = BU_VLS_INIT_ZERO;
+    bu_vls_sprintf(&prim_name, "nmg_%s.s", bu_vls_addr(data->key));
+    std::set<int> b_verts;
+    std::vector<int> b_verts_array;
+    std::map<int, int> b_verts_to_verts;
+    struct model *m = nmg_mm();
+    struct nmgregion *r = nmg_mrsv(m);
+    struct shell *s = BU_LIST_FIRST(shell, &(r)->s_hd);
+    struct faceuse **fu;         /* array of faceuses */
+    struct vertex **verts;       /* Array of pointers to vertex structs */
+    struct vertex ***loop_verts; /* Array of pointers to vertex structs to pass to nmg_cmface */
+
+    struct bn_tol nmg_tol = {BN_TOL_MAGIC, BN_TOL_DIST, BN_TOL_DIST * BN_TOL_DIST, 1e-6, 1.0 - 1e-6 };
+
+    int point_cnt = 0;
+    int face_cnt = 0;
+    int max_edge_cnt = 0;
+
+    // One loop to a face, and the object data has the set of loops that make
+    // up this object.
+    for (int s_it = 0; s_it < data->brep->m_L.Count(); s_it++) {
+	const ON_BrepLoop *b_loop = &(data->brep->m_L[s_it]);
+	const ON_BrepFace *b_face = b_loop->Face();
+	face_cnt++;
+	if (b_loop->m_ti.Count() > max_edge_cnt) max_edge_cnt = b_loop->m_ti.Count();
+	for (int ti = 0; ti < b_loop->m_ti.Count(); ti++) {
+	    const ON_BrepTrim *trim = &(b_face->Brep()->m_T[b_loop->m_ti[ti]]);
+	    const ON_BrepEdge *edge = &(b_face->Brep()->m_E[trim->m_ei]);
+	    if (b_verts.find(edge->Vertex(0)->m_vertex_index) == b_verts.end()) {
+		b_verts.insert(edge->Vertex(0)->m_vertex_index);
+		b_verts_array.push_back(edge->Vertex(0)->m_vertex_index);
+		b_verts_to_verts[edge->Vertex(0)->m_vertex_index] = b_verts_array.size()-1;
+	    }
+	    if (b_verts.find(edge->Vertex(1)->m_vertex_index) == b_verts.end()) {
+		b_verts.insert(edge->Vertex(1)->m_vertex_index);
+		b_verts_array.push_back(edge->Vertex(1)->m_vertex_index);
+		b_verts_to_verts[edge->Vertex(1)->m_vertex_index] = b_verts_array.size()-1;
+	    }
+	}
+    }
+
+    point_cnt = b_verts.size();
+
+    if (point_cnt == 0) return NULL;
+
+    verts = (struct vertex **)bu_calloc(point_cnt, sizeof(struct vertex *), "brep_to_nmg: verts");
+    loop_verts = (struct vertex ***) bu_calloc(max_edge_cnt, sizeof(struct vertex **), "brep_to_nmg: loop_verts");
+    fu = (struct faceuse **) bu_calloc(face_cnt, sizeof(struct faceuse *), "brep_to_nmg: fu");
+
+    // Make the faces
+    int face_count = 0;
+    for (int s_it = 0; s_it < data->brep->m_L.Count(); s_it++) {
+	int loop_length = 0;
+	const ON_BrepLoop *b_loop = &(data->brep->m_L[s_it]);
 	const ON_BrepFace *b_face = b_loop->Face();
 	for (int ti = 0; ti < b_loop->m_ti.Count(); ti++) {
 	    const ON_BrepTrim *trim = &(b_face->Brep()->m_T[b_loop->m_ti[ti]]);
@@ -180,6 +281,12 @@ subbrep_to_csg_planar(struct subbrep_object_data *data, struct rt_wdb *wdbp, str
 	//          nmg - that's the most general of the arb* primitives and should be
 	//          relatively close to what is needed here.
 	(void)brep_to_nmg(data, wdbp, wcomb);
+	struct csg_object_params *params = data->params;
+	struct bu_vls prim_name = BU_VLS_INIT_ZERO;
+	bu_vls_sprintf(&prim_name, "nmg_%s.s", bu_vls_addr(data->key));
+	//std::cout << bu_vls_addr(&prim_name) << ": " << params->bool_op << "\n";
+	if (wcomb) (void)mk_addmember(bu_vls_addr(&prim_name), &((*wcomb).l), NULL, db_str2op(&(params->bool_op)));
+	bu_vls_free(&prim_name);
 	return 1;
     } else {
 	return 0;
@@ -277,12 +384,12 @@ int
 make_shapes(struct subbrep_object_data *data, struct rt_wdb *wdbp, struct wmember *pcomb)
 {
     //std::cout << "Making shape for " << bu_vls_addr(data->key) << "\n";
-    if (data->planar_obj && data->planar_obj->local_brep) {
+    /*if (data->planar_obj && data->planar_obj->local_brep) {
 	struct bu_vls brep_name = BU_VLS_INIT_ZERO;
 	bu_vls_sprintf(&brep_name, "planar_%s.s", bu_vls_addr(data->key));
 	mk_brep(wdbp, bu_vls_addr(&brep_name), data->planar_obj->local_brep);
 	bu_vls_free(&brep_name);
-    }
+    }*/
     if (data->type == BREP) {
 	if (data->local_brep) {
 	    struct bu_vls brep_name = BU_VLS_INIT_ZERO;
@@ -301,6 +408,9 @@ make_shapes(struct subbrep_object_data *data, struct rt_wdb *wdbp, struct wmembe
 	    struct bu_vls member_name = BU_VLS_INIT_ZERO;
 	    bu_vls_sprintf(&comb_name, "comb_%s.c", bu_vls_addr(data->key));
 	    BU_LIST_INIT(&wcomb.l);
+	    if (data->planar_obj) {
+		process_params(data->planar_obj, wdbp, pcomb);
+	    }
 	    //bu_log("make comb %s\n", bu_vls_addr(data->key));
 	    for (unsigned int i = 0; i < BU_PTBL_LEN(data->children); i++){
 		struct subbrep_object_data *cdata = (struct subbrep_object_data *)BU_PTBL_GET(data->children,i);

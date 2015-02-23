@@ -33,8 +33,10 @@ subbrep_planar_init(struct subbrep_object_data *sdata)
     if (data->planar_obj) return;
     BU_GET(data->planar_obj, struct subbrep_object_data);
     subbrep_object_init(data->planar_obj, data->brep);
-    bu_vls_sprintf(data->planar_obj->key, "%s_planar", bu_vls_addr(data->key));
+    bu_vls_sprintf(data->planar_obj->key, "%s", bu_vls_addr(data->key));
+    data->planar_obj->type = PLANAR_VOLUME;
 
+    std::cout << "subplanar_init: " << bu_vls_addr(data->key) << "\n";
 
     data->planar_obj->local_brep = ON_Brep::New();
     std::map<int, int> face_map;
@@ -55,24 +57,26 @@ subbrep_planar_init(struct subbrep_object_data *sdata)
 
     for (int i = 0; i < data->edges_cnt; i++) {
         int c3i;
+	int new_edge_curve = 0;
         const ON_BrepEdge *old_edge = &(data->brep->m_E[data->edges[i]]);
         //std::cout << "old edge: " << old_edge->Vertex(0)->m_vertex_index << "," << old_edge->Vertex(1)->m_vertex_index << "\n";
 
         // Get the 3D curves from the edges
         if (c3_map.find(old_edge->EdgeCurveIndexOf()) == c3_map.end()) {
             ON_Curve *nc = old_edge->EdgeCurveOf()->Duplicate();
-	    // Don't continue unless the edge is linear
             ON_Curve *tc = old_edge->EdgeCurveOf()->Duplicate();
 	    if (tc->IsLinear()) {
 		c3i = data->planar_obj->local_brep->AddEdgeCurve(nc);
 		c3_map[old_edge->EdgeCurveIndexOf()] = c3i;
 	    } else {
-		continue;
+		ON_Curve *c3 = new ON_LineCurve(old_edge->Vertex(0)->Point(), old_edge->Vertex(1)->Point());
+		c3i = data->planar_obj->local_brep->AddEdgeCurve(c3);
+		c3_map[old_edge->EdgeCurveIndexOf()] = c3i;
+		new_edge_curve = 1;
 	    }
         } else {
             c3i = c3_map[old_edge->EdgeCurveIndexOf()];
-        }
-
+	}
 
 
         // Get the vertices from the edges
@@ -100,10 +104,10 @@ subbrep_planar_init(struct subbrep_object_data *sdata)
             ON_BrepTrim *old_trim = old_edge->Trim(j);
             if (faces.find(old_trim->Face()->m_face_index) != faces.end()) {
                 if (c2_map.find(old_trim->TrimCurveIndexOf()) == c2_map.end()) {
-                    ON_Curve *nc = old_trim->TrimCurveOf()->Duplicate();
-                    int c2i = data->planar_obj->local_brep->AddTrimCurve(nc);
-                    c2_map[old_trim->TrimCurveIndexOf()] = c2i;
-                    //std::cout << "c2i: " << c2i << "\n";
+		    ON_Curve *nc = old_trim->TrimCurveOf()->Duplicate();
+		    int c2i = data->planar_obj->local_brep->AddTrimCurve(nc);
+		    c2_map[old_trim->TrimCurveIndexOf()] = c2i;
+		    //std::cout << "c2i: " << c2i << "\n";
                 }
             }
         }
@@ -120,6 +124,7 @@ subbrep_planar_init(struct subbrep_object_data *sdata)
 			surface_map[old_trim->Face()->SurfaceIndexOf()] = nsid;
 			ON_BrepFace &new_face = data->planar_obj->local_brep->NewFace(nsid);
 			face_map[old_trim->Face()->m_face_index] = new_face.m_face_index;
+			std::cout << "old face " << old_trim->Face()->m_face_index << " is now " << new_face.m_face_index << "\n";
 			if (fil.find(old_trim->Face()->m_face_index) != fil.end()) {
 			    data->planar_obj->local_brep->FlipFace(new_face);
 			}
@@ -154,12 +159,28 @@ subbrep_planar_init(struct subbrep_object_data *sdata)
             const ON_BrepTrim *old_trim = old_loop->Trim(j);
             ON_BrepEdge *o_edge = old_trim->Edge();
             if (o_edge) {
-                ON_BrepEdge &n_edge = data->planar_obj->local_brep->m_E[edge_map[o_edge->m_edge_index]];
-                ON_BrepTrim &nt = data->planar_obj->local_brep->NewTrim(n_edge, old_trim->m_bRev3d, new_loop, c2_map[old_trim->TrimCurveIndexOf()]);
-                nt.m_tolerance[0] = old_trim->m_tolerance[0];
-                nt.m_tolerance[1] = old_trim->m_tolerance[1];
-                nt.m_iso = old_trim->m_iso;
-            } else {
+		ON_BrepEdge &n_edge = data->planar_obj->local_brep->m_E[edge_map[o_edge->m_edge_index]];
+		ON_Curve *ec = o_edge->EdgeCurveOf()->Duplicate();
+		if (ec->IsLinear()) {
+		    ON_BrepTrim &nt = data->planar_obj->local_brep->NewTrim(n_edge, old_trim->m_bRev3d, new_loop, c2_map[old_trim->TrimCurveIndexOf()]);
+		    nt.m_tolerance[0] = old_trim->m_tolerance[0];
+		    nt.m_tolerance[1] = old_trim->m_tolerance[1];
+		    nt.m_iso = old_trim->m_iso;
+		} else {
+		    /* If the original edge was non-linear, we need to add the 2d curve here */
+		    ON_Curve *c2_orig = old_trim->TrimCurveOf()->Duplicate();
+		    ON_3dPoint p1 = c2_orig->PointAt(c2_orig->Domain().Min());
+		    ON_3dPoint p2 = c2_orig->PointAt(c2_orig->Domain().Max());
+		    ON_Curve *c2 = new ON_LineCurve(p1, p2);
+		    c2->ChangeDimension(2);
+		    int c2i = data->planar_obj->local_brep->AddTrimCurve(c2);
+		    ON_BrepTrim &nt = data->planar_obj->local_brep->NewTrim(n_edge, old_trim->m_bRev3d, new_loop, c2i);
+		    nt.m_tolerance[0] = old_trim->m_tolerance[0];
+		    nt.m_tolerance[1] = old_trim->m_tolerance[1];
+		    nt.m_iso = old_trim->m_iso;
+		}
+		delete ec;
+	    } else {
                 /* If we didn't have an edge originally, we need to add the 2d curve here */
                 if (c2_map.find(old_trim->TrimCurveIndexOf()) == c2_map.end()) {
                     ON_Curve *nc = old_trim->TrimCurveOf()->Duplicate();
@@ -183,6 +204,9 @@ subbrep_planar_init(struct subbrep_object_data *sdata)
 
     // Need to preserve the vertex map for this, since we're not done building up the brep
     map_to_array(&(data->planar_obj->planar_obj_vert_map), &(data->planar_obj->planar_obj_vert_cnt), &vertex_map);
+
+    data->planar_obj->local_brep->SetTrimTypeFlags(true);
+
 }
 
 bool
@@ -231,144 +255,22 @@ end_of_trims_match(ON_Brep *brep, ON_BrepLoop *loop, int lti)
     return valid;
 }
 
-bool
-rebuild_loop(ON_Brep *brep, ON_BrepLoop *old_loop)
-{
-    ON_BoundingBox loop_pbox, cbox;
-    const ON_BrepTrim& seed_trim = brep->m_T[old_loop->m_ti[0]];
-    ON_BrepEdge *previous_edge = seed_trim.Edge();
-    ON_BrepEdge *cedge = seed_trim.Edge();
-    ON_BrepVertex *v_second = seed_trim.Vertex(1);
-    ON_BrepVertex *v_last = seed_trim.Vertex(0);
-    ON_BrepFace *face = old_loop->Face();
-    ON_Surface *ts = old_loop->Face()->SurfaceOf()->Duplicate();
-    ON_Plane face_plane;
-    ON_Xform proj_to_plane;
-    int mating_edge_found = 1;
-    if (!ts->IsPlanar(&face_plane, BREP_PLANAR_TOL)) return false;
-
-    brep->DeleteLoop(brep->m_L[old_loop->m_loop_index], false);
-    ON_BrepLoop& loop = brep->NewLoop(ON_BrepLoop::outer, brep->m_F[face->m_face_index]);
-
-    std::cout << "seed edge: " << cedge->m_edge_index << "\n";
-
-    std::set<int> used_edges;
-
-    used_edges.insert(cedge->m_edge_index);
-
-    while (v_second != v_last && mating_edge_found == 1) {
-	ON_3dPoint p = v_second->Point();
-	mating_edge_found = 0;
-	for (int i = 0; i < brep->m_E.Count(); i++) {
-	    cedge = &(brep->m_E[i]);
-	    if (used_edges.find(cedge->m_edge_index) == used_edges.end()) {
-		ON_Curve *ec = cedge->EdgeCurveOf()->Duplicate();
-		if (ec->IsLinear()) {
-		    ON_BrepVertex *v_start = cedge->Vertex(0);
-		    ON_BrepVertex *v_end = cedge->Vertex(1);
-		    ON_3dPoint p1 = v_start->Point();
-		    ON_3dPoint p2 = v_end->Point();
-		    if (p1.DistanceTo(p) < 0.01 || p2.DistanceTo(p) < 0.01) {
-			double d1 = fabs(face_plane.DistanceTo(v_start->Point()));
-			double d2 = fabs(face_plane.DistanceTo(v_end->Point()));
-			//std::cout << "candidate edge " << cedge->m_edge_index << ": " << d1 << "," << d2 << "\n";
-			// if edge is on plane, continue
-			if (d1 < 0.01 && d2 < 0.01) {
-			    bool bRev3d = false;
-			    std::cout << "found mating edge: " << cedge->m_edge_index << "\n";
-			    mating_edge_found = 1;
-			    used_edges.insert(cedge->m_edge_index);
-			    const ON_Curve *c3;
-			    if (p1.DistanceTo(p) < 0.01) {
-				c3 = new ON_LineCurve(p1, p2);
-			    } else {
-				bRev3d = true;
-				c3 = new ON_LineCurve(p2, p1);
-			    }
-			    ON_NurbsCurve *c2 = new ON_NurbsCurve();
-			    c3->GetNurbForm(*c2);
-			    c2->Transform(proj_to_plane);
-			    c2->GetBoundingBox(cbox);
-			    c2->ChangeDimension(2);
-			    c2->MakePiecewiseBezier(2);
-			    int c2i = brep->AddTrimCurve(c2);
-			    ON_BrepTrim &trim = brep->NewTrim(brep->m_E[cedge->m_edge_index], bRev3d, loop, c2i);
-			    trim.m_type = ON_BrepTrim::mated;
-			    trim.m_tolerance[0] = 0.0;
-			    trim.m_tolerance[1] = 0.0;
-			    loop_pbox.Union(cbox);
-
-			    // Once the new curve is made (if necessary) and assigned to
-			    // the loop, update the vert appropriately (may be start or
-			    // end depending)
-			    if (p1.DistanceTo(p) < 0.01) {
-				v_second = v_end;
-			    } else {
-				v_second = v_start;
-			    }
-			    delete ec;
-			    break;
-			}
-		    }
-		}
-		delete ec;
-	    }
-	}
-	previous_edge = cedge;
-	if (!mating_edge_found) {
-	    std::cout << "no mating edge found\n";
-	    return false;
-	}
-    }
-
-    ON_PlaneSurface *fs = new ON_PlaneSurface(face_plane);
-
-    fs->SetDomain(0, loop.m_pbox.m_min.x, loop.m_pbox.m_max.x );
-    fs->SetDomain(1, loop.m_pbox.m_min.y, loop.m_pbox.m_max.y );
-    fs->SetExtents(0,fs->Domain(0));
-    fs->SetExtents(1,fs->Domain(1));
-    const int si = brep->AddSurface(fs);
-
-    face->m_si = si;
-
-    brep->SetTrimIsoFlags(brep->m_F[face->m_face_index]);
-    brep->SetTrimTypeFlags(true);
-
-    if (brep->LoopDirection(brep->m_L[loop.m_loop_index]) != 1) brep->FlipLoop(brep->m_L[loop.m_loop_index]);
-
-
-
-    return true;
-
-}
-
 void
 subbrep_planar_close_obj(struct subbrep_object_data *data)
 {
     struct subbrep_object_data *pdata = data->planar_obj;
-    for (int i = 0; i < pdata->local_brep->m_F.Count(); i++) {
-	ON_BrepFace &face = pdata->local_brep->m_F[i];
-	for (int j = 0; j < face.LoopCount(); j++) {
-	    ON_BrepLoop *loop = face.Loop(j);
-	    bool valid = true;
-	    for (int lti = 0; lti < loop->m_ti.Count(); lti++) {
-		if (!end_of_trims_match(pdata->local_brep, loop, lti)) {
-		    valid = rebuild_loop(pdata->local_brep, loop);
-		}
-	    }
-	    if (!valid) {
-		std::cout << "invalid loop " << loop->m_loop_index << " in planar object " << bu_vls_addr(data->key) << " face " << i << "\n";
-	    }
-	}
 
-	// TODO - if we pass the above test, make sure all edges have two faces to identify any missing
-	// faces in the arb
+    pdata->local_brep->Compact();
+    pdata->local_brep->SetTrimIsoFlags();
+    pdata->local_brep->SetTrimTypeFlags(true);
 
-    }
+    pdata->brep = pdata->local_brep;
+    pdata->params->bool_op = 'u'; // TODO - not always union?
+
 }
 
 int subbrep_add_planar_face(struct subbrep_object_data *data, ON_Plane *pcyl,
-       	ON_SimpleArray<const ON_BrepVertex *> *vert_loop)
+       	ON_SimpleArray<const ON_BrepVertex *> *vert_loop, int neg_surf)
 {
     // We use the planar_obj's local_brep to store new faces.  The planar local
     // brep contains the relevant linear and planar components from its parent
@@ -410,7 +312,7 @@ int subbrep_add_planar_face(struct subbrep_object_data *data, ON_Plane *pcyl,
     ON_PlaneSurface *s = new ON_PlaneSurface(loop_plane);
     const int si = pdata->local_brep->AddSurface(s);
 
-    double flip = ON_DotProduct(loop_plane.Normal(), pcyl->Normal());
+    double flip = ON_DotProduct(loop_plane.Normal(), pcyl->Normal()) * neg_surf;
 
     for (int i = 0; i < vert_loop->Count(); i++) {
 	int vind1, vind2;
@@ -477,7 +379,13 @@ int subbrep_add_planar_face(struct subbrep_object_data *data, ON_Plane *pcyl,
 	int c2i = pdata->local_brep->AddTrimCurve(c2);
 	ON_BrepEdge &edge = pdata->local_brep->m_E[edges.at(i)];
 	ON_BrepTrim &trim = pdata->local_brep->NewTrim(edge, false, loop, c2i);
-	trim.m_type = ON_BrepTrim::mated;
+	std::cout << "edge with new trim: " << edge.m_edge_index << "\n";
+	std::cout << "edge trim count: " << edge.TrimCount() << "\n";
+	if (edge.TrimCount() == 1) {
+	    trim.m_type = ON_BrepTrim::boundary;
+	} else {
+	    trim.m_type = ON_BrepTrim::mated;
+	}
 	trim.m_tolerance[0] = 0.0;
 	trim.m_tolerance[1] = 0.0;
     }
@@ -489,9 +397,9 @@ int subbrep_add_planar_face(struct subbrep_object_data *data, ON_Plane *pcyl,
     s->SetExtents(1,s->Domain(1));
 
     // need to update trim m_iso flags because we changed surface shape
+    if (flip < 0) pdata->local_brep->FlipFace(face);
     pdata->local_brep->SetTrimIsoFlags(face);
     pdata->local_brep->SetTrimTypeFlags(true);
-    if (flip < 0) pdata->local_brep->FlipFace(face);
 }
 
 

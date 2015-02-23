@@ -725,7 +725,7 @@ cylinder_csg(struct subbrep_object_data *data, fastf_t cyl_tol)
 		    vert_loop.Append(v2);
 		    vert_loop.Append(v3);
 		    vert_loop.Append(v4);
-		    subbrep_add_planar_face(data->parent, &pcyl, &vert_loop);
+		    subbrep_add_planar_face(data->parent, &pcyl, &vert_loop, negative);
 		}
 	    }
 
@@ -1144,7 +1144,7 @@ cylinder_csg(struct subbrep_object_data *data, fastf_t cyl_tol)
 				vert_loop.Append(v2);
 				vert_loop.Append(v3);
 				vert_loop.Append(v4);
-				subbrep_add_planar_face(data->parent, &pcyl, &vert_loop);
+				subbrep_add_planar_face(data->parent, &pcyl, &vert_loop, negative);
 			    }
 			}
 

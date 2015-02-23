@@ -251,7 +251,7 @@ sphere_csg(struct subbrep_object_data *data, fastf_t sph_tol)
 		subbrep_planar_init(data);
 	    }
 	    std::cout << "add sph plane\n";
-	    subbrep_add_planar_face(data->parent, &back_plane, &sph_verts);
+	    subbrep_add_planar_face(data->parent, &back_plane, &sph_verts, negative);
 	}
 
 	// The planes each define an arb8 (4 all together) that carve the
