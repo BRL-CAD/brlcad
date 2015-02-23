@@ -246,11 +246,12 @@ ged_lc(struct ged *gedp, int argc, const char *argv[])
 
     if (file_name) {
 	char *norm_name;
+	norm_name = bu_realpath(file_name, NULL);
 	if (file_name[0] == '-') {
 	    bu_vls_printf(gedp->ged_result_str, "Error: File name can not start with '-'.\n");
 	    error_cnt++;
 	} else if (bu_file_exists(file_name, NULL)) {
-	    bu_vls_printf(gedp->ged_result_str, "Error: File '$norm_name' already exists.\n");
+	    bu_vls_printf(gedp->ged_result_str, "Error: Output file %s already exists.\n",norm_name);
 	    error_cnt++;
 	} else {
 	    outfile = fopen(file_name, "w");
@@ -259,7 +260,6 @@ ged_lc(struct ged *gedp, int argc, const char *argv[])
 		error_cnt++;
 	    }
 	}
-	norm_name = bu_realpath(file_name, NULL);
 	bu_vls_printf(gedp->ged_result_str, "Output filename: %s\n", norm_name);
 	bu_free(norm_name, "ged_lc");
 	output = bu_vls_vlsinit();
