@@ -314,6 +314,10 @@ int subbrep_add_planar_face(struct subbrep_object_data *data, ON_Plane *pcyl,
 
     double flip = ON_DotProduct(loop_plane.Normal(), pcyl->Normal()) * neg_surf;
 
+    if(BU_STR_EQUAL(bu_vls_addr(data->key), "17_27_80_81_82_83")) {
+	bu_log("processing targeted test\n");
+    }
+
     for (int i = 0; i < vert_loop->Count(); i++) {
 	int vind1, vind2;
 	const ON_BrepVertex *v1, *v2;
@@ -327,15 +331,33 @@ int subbrep_add_planar_face(struct subbrep_object_data *data, ON_Plane *pcyl,
 	vind2 = vert_map[v2->m_vertex_index];
 	ON_BrepVertex &new_v1 = pdata->local_brep->m_V[vind1];
 	ON_BrepVertex &new_v2 = pdata->local_brep->m_V[vind2];
+	ON_3dPoint np1 = new_v1.Point();
+	ON_3dPoint np2 = new_v2.Point();
 
+
+    if(BU_STR_EQUAL(bu_vls_addr(data->key), "17_27_80_81_82_83")) {
+	std::cout << "\n\nv1(" << vind1 << "): " << pout(new_v1.Point()) << "\n";
+	std::cout << "v2(" << vind2 << "): " << pout(new_v2.Point()) << "\n\n\n";
+    }
 	// Because we may have already created a needed edge only in the new
 	// Brep with a previous face, we have to check all the edges in the new
 	// structure for a vertex match.
-	ON_BrepEdge *new_edgep;
 	int edge_found = 0;
 	for (int j = 0; j < pdata->local_brep->m_E.Count(); j++) {
+    if(BU_STR_EQUAL(bu_vls_addr(data->key), "17_27_80_81_82_83")) {
+	std::cout << "checking edge " << j << "\n";
+    }
 	    int ev1 = pdata->local_brep->m_E[j].Vertex(0)->m_vertex_index;
 	    int ev2 = pdata->local_brep->m_E[j].Vertex(1)->m_vertex_index;
+
+	    ON_3dPoint pv1 = pdata->local_brep->m_E[j].Vertex(0)->Point();
+	    ON_3dPoint pv2 = pdata->local_brep->m_E[j].Vertex(1)->Point();
+
+	    if(BU_STR_EQUAL(bu_vls_addr(data->key), "17_27_80_81_82_83")) {
+		std::cout << "e1(" << ev1 << "): " << pout(pdata->local_brep->m_E[j].Vertex(0)->Point()) << "\n";
+		std::cout << "e2(" << ev2 << "): " << pout(pdata->local_brep->m_E[j].Vertex(1)->Point()) << "\n";
+	    }
+
 	    if ((ev1 == vind1) && (ev2 == vind2)) {
 		edges.push_back(pdata->local_brep->m_E[j].m_edge_index);
 		edge_found = 1;
@@ -351,6 +373,11 @@ int subbrep_add_planar_face(struct subbrep_object_data *data, ON_Plane *pcyl,
 		curves_2d.Append(c2);
 		loop_pbox.Union(cbox);
 		break;
+	    } else {
+		if (((np1.DistanceTo(pv1) < 0.01) && (np2.DistanceTo(pv2) < 0.01)) ||
+			((np2.DistanceTo(pv1) < 0.01) && (np1.DistanceTo(pv2) < 0.01))) {
+		    std::cout << "Verts don't match but points do - how'd that happen??\n";
+		}
 	    }
 	}
 	if (!edge_found) {
@@ -379,13 +406,13 @@ int subbrep_add_planar_face(struct subbrep_object_data *data, ON_Plane *pcyl,
 	int c2i = pdata->local_brep->AddTrimCurve(c2);
 	ON_BrepEdge &edge = pdata->local_brep->m_E[edges.at(i)];
 	ON_BrepTrim &trim = pdata->local_brep->NewTrim(edge, false, loop, c2i);
+    if(BU_STR_EQUAL(bu_vls_addr(data->key), "17_27_80_81_82_83")) {
 	std::cout << "edge with new trim: " << edge.m_edge_index << "\n";
-	std::cout << "edge trim count: " << edge.TrimCount() << "\n";
 	if (edge.TrimCount() == 1) {
-	    trim.m_type = ON_BrepTrim::boundary;
-	} else {
-	    trim.m_type = ON_BrepTrim::mated;
+	    std::cout << "Urk - why do we not have a matching trim for edge " << edge.m_edge_index << "?\n";
 	}
+    }
+       	trim.m_type = ON_BrepTrim::mated;
 	trim.m_tolerance[0] = 0.0;
 	trim.m_tolerance[1] = 0.0;
     }
