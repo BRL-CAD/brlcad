@@ -185,6 +185,123 @@ subbrep_planar_init(struct subbrep_object_data *sdata)
     map_to_array(&(data->planar_obj->planar_obj_vert_map), &(data->planar_obj->planar_obj_vert_cnt), &vertex_map);
 }
 
+bool
+end_of_trims_match(ON_Brep *brep, ON_BrepLoop *loop, int lti)
+{
+    bool valid = true;
+    int ci0, ci1, next_lti;
+    ON_3dPoint P0, P1;
+    const ON_Curve *pC0, *pC1;
+    const ON_Surface *surf = loop->Face()->SurfaceOf();
+    double urange = surf->Domain(0)[1] - surf->Domain(0)[0];
+    double vrange = surf->Domain(1)[1] - surf->Domain(1)[0];
+    // end-of-trims matching test from opennurbs_brep.cpp
+    const ON_BrepTrim& trim0 = brep->m_T[loop->m_ti[lti]];
+    next_lti = (lti+1)%loop->TrimCount();
+    const ON_BrepTrim& trim1 = brep->m_T[loop->m_ti[next_lti]];
+    ON_Interval trim0_domain = trim0.Domain();
+    ON_Interval trim1_domain = trim1.Domain();
+    ci0 = trim0.m_c2i;
+    ci1 = trim1.m_c2i;
+    pC0 = brep->m_C2[ci0];
+    pC1 = brep->m_C2[ci1];
+    P0 = pC0->PointAt( trim0_domain[1] ); // end of this 2d trim
+    P1 = pC1->PointAt( trim1_domain[0] ); // start of next 2d trim
+    if ( !(P0-P1).IsTiny() )
+    {
+	// 16 September 2003 Dale Lear - RR 11319
+	//    Added relative tol check so cases with huge
+	//    coordinate values that agreed to 10 places
+	//    didn't get flagged as bad.
+	//double xtol = (fabs(P0.x) + fabs(P1.x))*1.0e-10;
+	//double ytol = (fabs(P0.y) + fabs(P1.y))*1.0e-10;
+	//
+	// Oct 12 2009 Rather than using the above check, BRL-CAD uses
+	// relative uv size
+	double xtol = (urange) * trim0.m_tolerance[0];
+	double ytol = (vrange) * trim0.m_tolerance[1];
+	if ( xtol < ON_ZERO_TOLERANCE )
+	    xtol = ON_ZERO_TOLERANCE;
+	if ( ytol < ON_ZERO_TOLERANCE )
+	    ytol = ON_ZERO_TOLERANCE;
+	double dx = fabs(P0.x-P1.x);
+	double dy = fabs(P0.y-P1.y);
+	if ( dx > xtol || dy > ytol ) valid = false;
+    }
+    return valid;
+}
+
+bool
+rebuild_loop(ON_Brep *brep, ON_BrepLoop *loop)
+{
+    const ON_BrepTrim& seed_trim = brep->m_T[loop->m_ti[0]];
+    ON_BrepEdge *previous_edge = seed_trim.Edge();
+    ON_BrepEdge *cedge = seed_trim.Edge();
+    ON_BrepVertex *v_second = seed_trim.Vertex(1);
+    ON_BrepVertex *v_last = seed_trim.Vertex(0);
+    ON_Surface *ts = loop->Face()->SurfaceOf()->Duplicate();
+    ON_Plane face_plane;
+    int mating_edge_found = 1;
+    if (!ts->IsPlanar(&face_plane, BREP_PLANAR_TOL)) return false;
+
+    std::cout << "seed edge: " << cedge->m_edge_index << "\n";
+
+    std::set<int> used_edges;
+
+    used_edges.insert(cedge->m_edge_index);
+
+    while (v_second != v_last && mating_edge_found == 1) {
+	ON_3dPoint p = v_second->Point();
+	mating_edge_found = 0;
+	for (int i = 0; i < brep->m_E.Count(); i++) {
+	    cedge = &(brep->m_E[i]);
+	    if (used_edges.find(cedge->m_edge_index) == used_edges.end()) {
+		ON_Curve *ec = cedge->EdgeCurveOf()->Duplicate();
+		if (ec->IsLinear()) {
+		    ON_BrepVertex *v_start = cedge->Vertex(0);
+		    ON_BrepVertex *v_end = cedge->Vertex(1);
+		    ON_3dPoint p1 = v_start->Point();
+		    ON_3dPoint p2 = v_end->Point();
+		    if (p1.DistanceTo(p) < 0.01 || p2.DistanceTo(p) < 0.01) {
+			double d1 = fabs(face_plane.DistanceTo(v_start->Point()));
+			double d2 = fabs(face_plane.DistanceTo(v_end->Point()));
+			//std::cout << "candidate edge " << cedge->m_edge_index << ": " << d1 << "," << d2 << "\n";
+			// if edge is on plane, continue
+			if (d1 < 0.01 && d2 < 0.01) {
+			    std::cout << "found mating edge: " << cedge->m_edge_index << "\n";
+			    mating_edge_found = 1;
+			    used_edges.insert(cedge->m_edge_index);
+			    // sort out which vert points will construct the right 3d curve
+			    // to project into 2d space.  Do the projection, then see if an
+			    // existing curve matches what we've found.  If so, use it, if
+			    // not create it.
+			    if (p1.DistanceTo(p) < 0.01) {
+			    } else {
+			    }
+
+			    // Once the new curve is made (if necessary) and assigned to
+			    // the loop, update the vert appropriately (may be start or
+			    // end depending)
+			    if (p1.DistanceTo(p) < 0.01) {
+				v_second = v_end;
+			    } else {
+				v_second = v_start;
+			    }
+			    delete ec;
+			    break;
+			}
+		    }
+		}
+		delete ec;
+	    }
+	}
+	previous_edge = cedge;
+	if (!mating_edge_found) std::cout << "no mating edge found\n";
+    }
+
+    return false;
+}
+
 void
 subbrep_planar_close_obj(struct subbrep_object_data *data)
 {
@@ -193,48 +310,10 @@ subbrep_planar_close_obj(struct subbrep_object_data *data)
 	ON_BrepFace &face = pdata->local_brep->m_F[i];
 	for (int j = 0; j < face.LoopCount(); j++) {
 	    ON_BrepLoop *loop = face.Loop(j);
-	    const ON_Surface *surf = loop->Face()->SurfaceOf();
-	    double urange = surf->Domain(0)[1] - surf->Domain(0)[0];
-	    double vrange = surf->Domain(1)[1] - surf->Domain(1)[0];
-	    int valid = 1;
+	    bool valid = true;
 	    for (int lti = 0; lti < loop->m_ti.Count(); lti++) {
-		int ci0, ci1, next_lti;
-		ON_3dPoint P0, P1;
-		const ON_Curve *pC0, *pC1;
-		for ( lti = 0; lti < loop->TrimCount(); lti++ ) {
-		    // end-of-trims matching test from opennurbs_brep.cpp
-		    const ON_BrepTrim& trim0 = pdata->local_brep->m_T[loop->m_ti[lti]];
-		    next_lti = (lti+1)%loop->TrimCount();
-		    const ON_BrepTrim& trim1 = pdata->local_brep->m_T[loop->m_ti[next_lti]];
-		    ON_Interval trim0_domain = trim0.Domain();
-		    ON_Interval trim1_domain = trim1.Domain();
-		    ci0 = trim0.m_c2i;
-		    ci1 = trim1.m_c2i;
-		    pC0 = pdata->local_brep->m_C2[ci0];
-		    pC1 = pdata->local_brep->m_C2[ci1];
-		    P0 = pC0->PointAt( trim0_domain[1] ); // end of this 2d trim
-		    P1 = pC1->PointAt( trim1_domain[0] ); // start of next 2d trim
-		    if ( !(P0-P1).IsTiny() )
-		    {
-			// 16 September 2003 Dale Lear - RR 11319
-			//    Added relative tol check so cases with huge
-			//    coordinate values that agreed to 10 places
-			//    didn't get flagged as bad.
-			//double xtol = (fabs(P0.x) + fabs(P1.x))*1.0e-10;
-			//double ytol = (fabs(P0.y) + fabs(P1.y))*1.0e-10;
-			//
-			// Oct 12 2009 Rather than using the above check, BRL-CAD uses
-			// relative uv size
-			double xtol = (urange) * trim0.m_tolerance[0];
-			double ytol = (vrange) * trim0.m_tolerance[1];
-			if ( xtol < ON_ZERO_TOLERANCE )
-			    xtol = ON_ZERO_TOLERANCE;
-			if ( ytol < ON_ZERO_TOLERANCE )
-			    ytol = ON_ZERO_TOLERANCE;
-			double dx = fabs(P0.x-P1.x);
-			double dy = fabs(P0.y-P1.y);
-			if ( dx > xtol || dy > ytol ) valid = 0;
-		    }
+		if (!end_of_trims_match(pdata->local_brep, loop, lti)) {
+		    valid = rebuild_loop(pdata->local_brep, loop);
 		}
 	    }
 	    if (!valid) {
