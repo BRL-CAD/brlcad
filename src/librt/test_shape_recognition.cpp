@@ -116,10 +116,60 @@ subbrep_to_nmg(struct subbrep_object_data *data, struct rt_wdb *wdbp, struct wme
     return m;
 }
 
+#define ptout(p)  p.x << " " << p.y << " " << p.z
+
 struct model *
 brep_to_nmg(struct subbrep_object_data *data, struct rt_wdb *wdbp, struct wmember *wcomb)
 {
     struct bu_vls prim_name = BU_VLS_INIT_ZERO;
+
+    /* For debugging, triangulate each face and write it out as a bot */
+    for (int s_it = 0; s_it < data->brep->m_F.Count(); s_it++) {
+	int loop_length = 0;
+	const ON_BrepFace *b_face = &(data->brep->m_F[s_it]);
+	const ON_BrepLoop *b_loop = b_face->OuterLoop();
+	point_t *verts = (point_t *)bu_calloc(b_loop->m_ti.Count()+1, sizeof(point_t), "bot verts");
+	point2d_t *verts2d = (point2d_t *)bu_calloc(b_loop->m_ti.Count()+1, sizeof(point2d_t), "bot 2d verts");
+	for (int ti = 0; ti < b_loop->m_ti.Count(); ti++) {
+	    const ON_BrepTrim *trim = &(b_face->Brep()->m_T[b_loop->m_ti[ti]]);
+	    const ON_BrepEdge *edge = &(b_face->Brep()->m_E[trim->m_ei]);
+	    const ON_Curve *trim_curve = trim->TrimCurveOf();
+	    ON_2dPoint cp = trim_curve->PointAt(trim_curve->Domain().Max());
+	    V2SET(verts2d[ti], cp.x, cp.y);
+	    if (ti == 0) {
+		ON_2dPoint cp1 = trim_curve->PointAt(trim_curve->Domain().Min());
+		V2SET(verts2d[b_loop->m_ti.Count()], cp1.x, cp1.y);
+		VMOVE(verts[b_loop->m_ti.Count()], edge->Vertex(0)->Point());
+	    }
+	    if (trim->m_bRev3d) {
+		VMOVE(verts[ti], edge->Vertex(0)->Point());
+		if (BU_STR_EQUAL(bu_vls_addr(data->key), "0_1_2_3_4_5_6_7_8_9_10_11_12_13_14_15_16_17_18_19")) {
+		    ON_3dPoint pt = edge->Vertex(0)->Point();
+		    std::cout << "face " << s_it << " point " << ptout(pt) << "\n";
+		}
+	    } else {
+		VMOVE(verts[ti], edge->Vertex(1)->Point());
+		if (BU_STR_EQUAL(bu_vls_addr(data->key), "0_1_2_3_4_5_6_7_8_9_10_11_12_13_14_15_16_17_18_19")) {
+		    ON_3dPoint pt = edge->Vertex(1)->Point();
+		    std::cout << "face " << s_it << " point " << pout(pt) << "\n";
+		}
+
+	    }
+	}
+	int num_faces;
+	int *faces;
+//	if (BU_STR_EQUAL(bu_vls_addr(data->key), "0_1_2_3_4_5_6_7_8_9_10_11_12_13_14_15_16_17_18_19")) {
+	    if (!bn_polygon_triangulate(&faces, &num_faces, (const point2d_t *)verts2d, b_loop->m_ti.Count())) {
+		bu_vls_sprintf(&prim_name, "bot_%s_face_%d.s", bu_vls_addr(data->key), b_face->m_face_index);
+		if (faces) 
+		    mk_bot(wdbp, bu_vls_addr(&prim_name), RT_BOT_SOLID, RT_BOT_UNORIENTED, 0, b_loop->m_ti.Count(), num_faces, (fastf_t *)verts, faces, (fastf_t *)NULL, (struct bu_bitv *)NULL);
+	    } else {
+		std::cout << "bot build failed for face " << b_face->m_face_index << "\n";
+	    }
+//	}
+    }
+
+
     bu_vls_sprintf(&prim_name, "nmg_%s.s", bu_vls_addr(data->key));
     std::set<int> b_verts;
     std::vector<int> b_verts_array;
