@@ -56,15 +56,15 @@ subbrep_planar_init(struct subbrep_object_data *sdata)
     array_to_set(&loops, data->loops, data->loops_cnt);
 
     for (int i = 0; i < data->edges_cnt; i++) {
-        int c3i;
+	int c3i;
 	int new_edge_curve = 0;
-        const ON_BrepEdge *old_edge = &(data->brep->m_E[data->edges[i]]);
-        //std::cout << "old edge: " << old_edge->Vertex(0)->m_vertex_index << "," << old_edge->Vertex(1)->m_vertex_index << "\n";
+	const ON_BrepEdge *old_edge = &(data->brep->m_E[data->edges[i]]);
+	//std::cout << "old edge: " << old_edge->Vertex(0)->m_vertex_index << "," << old_edge->Vertex(1)->m_vertex_index << "\n";
 
-        // Get the 3D curves from the edges
-        if (c3_map.find(old_edge->EdgeCurveIndexOf()) == c3_map.end()) {
-            ON_Curve *nc = old_edge->EdgeCurveOf()->Duplicate();
-            ON_Curve *tc = old_edge->EdgeCurveOf()->Duplicate();
+	// Get the 3D curves from the edges
+	if (c3_map.find(old_edge->EdgeCurveIndexOf()) == c3_map.end()) {
+	    ON_Curve *nc = old_edge->EdgeCurveOf()->Duplicate();
+	    ON_Curve *tc = old_edge->EdgeCurveOf()->Duplicate();
 	    if (tc->IsLinear()) {
 		c3i = data->planar_obj->local_brep->AddEdgeCurve(nc);
 		c3_map[old_edge->EdgeCurveIndexOf()] = c3i;
@@ -74,91 +74,90 @@ subbrep_planar_init(struct subbrep_object_data *sdata)
 		c3_map[old_edge->EdgeCurveIndexOf()] = c3i;
 		new_edge_curve = 1;
 	    }
-        } else {
-            c3i = c3_map[old_edge->EdgeCurveIndexOf()];
+	} else {
+	    c3i = c3_map[old_edge->EdgeCurveIndexOf()];
 	}
 
 
-        // Get the vertices from the edges
-        int v0i, v1i;
-        if (vertex_map.find(old_edge->Vertex(0)->m_vertex_index) == vertex_map.end()) {
-            ON_BrepVertex& newv0 = data->planar_obj->local_brep->NewVertex(old_edge->Vertex(0)->Point(), old_edge->Vertex(0)->m_tolerance);
-            v0i = newv0.m_vertex_index;
-            vertex_map[old_edge->Vertex(0)->m_vertex_index] = v0i;
-        } else {
-            v0i = vertex_map[old_edge->Vertex(0)->m_vertex_index];
-        }
-        if (vertex_map.find(old_edge->Vertex(1)->m_vertex_index) == vertex_map.end()) {
-            ON_BrepVertex& newv1 = data->planar_obj->local_brep->NewVertex(old_edge->Vertex(1)->Point(), old_edge->Vertex(1)->m_tolerance);
-            v1i = newv1.m_vertex_index;
-            vertex_map[old_edge->Vertex(1)->m_vertex_index] = v1i;
-        } else {
-            v1i = vertex_map[old_edge->Vertex(1)->m_vertex_index];
-        }
-        ON_BrepEdge& new_edge = data->planar_obj->local_brep->NewEdge(data->planar_obj->local_brep->m_V[v0i], data->planar_obj->local_brep->m_V[v1i], c3i, NULL ,0);
-        edge_map[old_edge->m_edge_index] = new_edge.m_edge_index;
-        //std::cout << "new edge: " << v0i << "," << v1i << "\n";
+	// Get the vertices from the edges
+	int v0i, v1i;
+	if (vertex_map.find(old_edge->Vertex(0)->m_vertex_index) == vertex_map.end()) {
+	    ON_BrepVertex& newv0 = data->planar_obj->local_brep->NewVertex(old_edge->Vertex(0)->Point(), old_edge->Vertex(0)->m_tolerance);
+	    v0i = newv0.m_vertex_index;
+	    vertex_map[old_edge->Vertex(0)->m_vertex_index] = v0i;
+	} else {
+	    v0i = vertex_map[old_edge->Vertex(0)->m_vertex_index];
+	}
+	if (vertex_map.find(old_edge->Vertex(1)->m_vertex_index) == vertex_map.end()) {
+	    ON_BrepVertex& newv1 = data->planar_obj->local_brep->NewVertex(old_edge->Vertex(1)->Point(), old_edge->Vertex(1)->m_tolerance);
+	    v1i = newv1.m_vertex_index;
+	    vertex_map[old_edge->Vertex(1)->m_vertex_index] = v1i;
+	} else {
+	    v1i = vertex_map[old_edge->Vertex(1)->m_vertex_index];
+	}
+	ON_BrepEdge& new_edge = data->planar_obj->local_brep->NewEdge(data->planar_obj->local_brep->m_V[v0i], data->planar_obj->local_brep->m_V[v1i], c3i, NULL ,0);
+	edge_map[old_edge->m_edge_index] = new_edge.m_edge_index;
 
-        // Get the 2D curves from the trims
-        for (int j = 0; j < old_edge->TrimCount(); j++) {
-            ON_BrepTrim *old_trim = old_edge->Trim(j);
-            if (faces.find(old_trim->Face()->m_face_index) != faces.end()) {
-                if (c2_map.find(old_trim->TrimCurveIndexOf()) == c2_map.end()) {
+	// Get the 2D curves from the trims
+	for (int j = 0; j < old_edge->TrimCount(); j++) {
+	    ON_BrepTrim *old_trim = old_edge->Trim(j);
+	    if (faces.find(old_trim->Face()->m_face_index) != faces.end()) {
+		if (c2_map.find(old_trim->TrimCurveIndexOf()) == c2_map.end()) {
 		    ON_Curve *nc = old_trim->TrimCurveOf()->Duplicate();
 		    int c2i = data->planar_obj->local_brep->AddTrimCurve(nc);
 		    c2_map[old_trim->TrimCurveIndexOf()] = c2i;
 		    //std::cout << "c2i: " << c2i << "\n";
-                }
-            }
-        }
+		}
+	    }
+	}
 
-        // Get the faces and surfaces from the trims
-        for (int j = 0; j < old_edge->TrimCount(); j++) {
-            ON_BrepTrim *old_trim = old_edge->Trim(j);
-            if (face_map.find(old_trim->Face()->m_face_index) == face_map.end()) {
-                if (faces.find(old_trim->Face()->m_face_index) != faces.end()) {
-                    ON_Surface *ns = old_trim->Face()->SurfaceOf()->Duplicate();
-                    ON_Surface *ts = old_trim->Face()->SurfaceOf()->Duplicate();
+	// Get the faces and surfaces from the trims
+	for (int j = 0; j < old_edge->TrimCount(); j++) {
+	    ON_BrepTrim *old_trim = old_edge->Trim(j);
+	    if (face_map.find(old_trim->Face()->m_face_index) == face_map.end()) {
+		if (faces.find(old_trim->Face()->m_face_index) != faces.end()) {
+		    ON_Surface *ns = old_trim->Face()->SurfaceOf()->Duplicate();
+		    ON_Surface *ts = old_trim->Face()->SurfaceOf()->Duplicate();
 		    if (ts->IsPlanar(NULL, BREP_PLANAR_TOL)) {
 			int nsid = data->planar_obj->local_brep->AddSurface(ns);
 			surface_map[old_trim->Face()->SurfaceIndexOf()] = nsid;
 			ON_BrepFace &new_face = data->planar_obj->local_brep->NewFace(nsid);
 			face_map[old_trim->Face()->m_face_index] = new_face.m_face_index;
-			std::cout << "old face " << old_trim->Face()->m_face_index << " is now " << new_face.m_face_index << "\n";
+			//std::cout << "old face " << old_trim->Face()->m_face_index << " is now " << new_face.m_face_index << "\n";
 			if (fil.find(old_trim->Face()->m_face_index) != fil.end()) {
 			    data->planar_obj->local_brep->FlipFace(new_face);
 			}
 		    }
-                }
-            }
-        }
+		}
+	    }
+	}
 
-        // Get the loops from the trims
-        for (int j = 0; j < old_edge->TrimCount(); j++) {
-            ON_BrepTrim *old_trim = old_edge->Trim(j);
-            ON_BrepLoop *old_loop = old_trim->Loop();
-            if (face_map.find(old_trim->Face()->m_face_index) != face_map.end()) {
-                if (loops.find(old_loop->m_loop_index) != loops.end()) {
-                    if (loop_map.find(old_loop->m_loop_index) == loop_map.end()) {
-                        // After the initial breakout, all loops in any given subbrep are outer loops,
-                        // whatever they were in the original brep.
-                        ON_BrepLoop &nl = data->planar_obj->local_brep->NewLoop(ON_BrepLoop::outer, data->planar_obj->local_brep->m_F[face_map[old_loop->m_fi]]);
-                        loop_map[old_loop->m_loop_index] = nl.m_loop_index;
-                    }
-                }
-            }
-        }
+	// Get the loops from the trims
+	for (int j = 0; j < old_edge->TrimCount(); j++) {
+	    ON_BrepTrim *old_trim = old_edge->Trim(j);
+	    ON_BrepLoop *old_loop = old_trim->Loop();
+	    if (face_map.find(old_trim->Face()->m_face_index) != face_map.end()) {
+		if (loops.find(old_loop->m_loop_index) != loops.end()) {
+		    if (loop_map.find(old_loop->m_loop_index) == loop_map.end()) {
+			// After the initial breakout, all loops in any given subbrep are outer loops,
+			// whatever they were in the original brep.
+			ON_BrepLoop &nl = data->planar_obj->local_brep->NewLoop(ON_BrepLoop::outer, data->planar_obj->local_brep->m_F[face_map[old_loop->m_fi]]);
+			loop_map[old_loop->m_loop_index] = nl.m_loop_index;
+		    }
+		}
+	    }
+	}
     }
 
     // Now, create new trims using the old loop definitions and the maps
     std::map<int, int>::iterator loop_it;
     for (loop_it = loop_map.begin(); loop_it != loop_map.end(); loop_it++) {
-        const ON_BrepLoop *old_loop = &(data->brep->m_L[(*loop_it).first]);
-        ON_BrepLoop &new_loop = data->planar_obj->local_brep->m_L[(*loop_it).second];
-        for (int j = 0; j < old_loop->TrimCount(); j++) {
-            const ON_BrepTrim *old_trim = old_loop->Trim(j);
-            ON_BrepEdge *o_edge = old_trim->Edge();
-            if (o_edge) {
+	const ON_BrepLoop *old_loop = &(data->brep->m_L[(*loop_it).first]);
+	ON_BrepLoop &new_loop = data->planar_obj->local_brep->m_L[(*loop_it).second];
+	for (int j = 0; j < old_loop->TrimCount(); j++) {
+	    const ON_BrepTrim *old_trim = old_loop->Trim(j);
+	    ON_BrepEdge *o_edge = old_trim->Edge();
+	    if (o_edge) {
 		ON_BrepEdge &n_edge = data->planar_obj->local_brep->m_E[edge_map[o_edge->m_edge_index]];
 		ON_Curve *ec = o_edge->EdgeCurveOf()->Duplicate();
 		if (ec->IsLinear()) {
@@ -181,25 +180,25 @@ subbrep_planar_init(struct subbrep_object_data *sdata)
 		}
 		delete ec;
 	    } else {
-                /* If we didn't have an edge originally, we need to add the 2d curve here */
-                if (c2_map.find(old_trim->TrimCurveIndexOf()) == c2_map.end()) {
-                    ON_Curve *nc = old_trim->TrimCurveOf()->Duplicate();
-                    int c2i = data->planar_obj->local_brep->AddTrimCurve(nc);
-                    c2_map[old_trim->TrimCurveIndexOf()] = c2i;
-                }
-                if (vertex_map.find(old_trim->Vertex(0)->m_vertex_index) == vertex_map.end()) {
-                    ON_BrepVertex& newvs = data->planar_obj->local_brep->NewVertex(old_trim->Vertex(0)->Point(), old_trim->Vertex(0)->m_tolerance);
+		/* If we didn't have an edge originally, we need to add the 2d curve here */
+		if (c2_map.find(old_trim->TrimCurveIndexOf()) == c2_map.end()) {
+		    ON_Curve *nc = old_trim->TrimCurveOf()->Duplicate();
+		    int c2i = data->planar_obj->local_brep->AddTrimCurve(nc);
+		    c2_map[old_trim->TrimCurveIndexOf()] = c2i;
+		}
+		if (vertex_map.find(old_trim->Vertex(0)->m_vertex_index) == vertex_map.end()) {
+		    ON_BrepVertex& newvs = data->planar_obj->local_brep->NewVertex(old_trim->Vertex(0)->Point(), old_trim->Vertex(0)->m_tolerance);
 		    vertex_map[old_trim->Vertex(0)->m_vertex_index] = newvs.m_vertex_index;
-                    ON_BrepTrim &nt = data->planar_obj->local_brep->NewSingularTrim(newvs, new_loop, old_trim->m_iso, c2_map[old_trim->TrimCurveIndexOf()]);
-                    nt.m_tolerance[0] = old_trim->m_tolerance[0];
-                    nt.m_tolerance[1] = old_trim->m_tolerance[1];
-                } else {
-                    ON_BrepTrim &nt = data->planar_obj->local_brep->NewSingularTrim(data->planar_obj->local_brep->m_V[vertex_map[old_trim->Vertex(0)->m_vertex_index]], new_loop, old_trim->m_iso, c2_map[old_trim->TrimCurveIndexOf()]);
-                    nt.m_tolerance[0] = old_trim->m_tolerance[0];
-                    nt.m_tolerance[1] = old_trim->m_tolerance[1];
-                }
-            }
-        }
+		    ON_BrepTrim &nt = data->planar_obj->local_brep->NewSingularTrim(newvs, new_loop, old_trim->m_iso, c2_map[old_trim->TrimCurveIndexOf()]);
+		    nt.m_tolerance[0] = old_trim->m_tolerance[0];
+		    nt.m_tolerance[1] = old_trim->m_tolerance[1];
+		} else {
+		    ON_BrepTrim &nt = data->planar_obj->local_brep->NewSingularTrim(data->planar_obj->local_brep->m_V[vertex_map[old_trim->Vertex(0)->m_vertex_index]], new_loop, old_trim->m_iso, c2_map[old_trim->TrimCurveIndexOf()]);
+		    nt.m_tolerance[0] = old_trim->m_tolerance[0];
+		    nt.m_tolerance[1] = old_trim->m_tolerance[1];
+		}
+	    }
+	}
     }
 
     // Need to preserve the vertex map for this, since we're not done building up the brep
@@ -270,7 +269,7 @@ subbrep_planar_close_obj(struct subbrep_object_data *data)
 }
 
 int subbrep_add_planar_face(struct subbrep_object_data *data, ON_Plane *pcyl,
-       	ON_SimpleArray<const ON_BrepVertex *> *vert_loop, int neg_surf)
+	ON_SimpleArray<const ON_BrepVertex *> *vert_loop, int neg_surf)
 {
     // We use the planar_obj's local_brep to store new faces.  The planar local
     // brep contains the relevant linear and planar components from its parent
@@ -281,6 +280,7 @@ int subbrep_add_planar_face(struct subbrep_object_data *data, ON_Plane *pcyl,
     struct subbrep_object_data *pdata = data->planar_obj;
     std::vector<int> edges;
     ON_SimpleArray<ON_Curve *> curves_2d;
+    ON_SimpleArray<bool> reversed;
     std::map<int, int> vert_map;
     array_to_map(&vert_map, pdata->planar_obj_vert_map, pdata->planar_obj_vert_cnt);
 
@@ -290,7 +290,7 @@ int subbrep_add_planar_face(struct subbrep_object_data *data, ON_Plane *pcyl,
     ON_Plane loop_plane(p1, p2, p3);
     ON_BoundingBox loop_pbox, cbox;
 
-      // get 2d trim curves
+    // get 2d trim curves
     ON_Xform proj_to_plane;
     proj_to_plane[0][0] = loop_plane.xaxis.x;
     proj_to_plane[0][1] = loop_plane.xaxis.y;
@@ -314,10 +314,6 @@ int subbrep_add_planar_face(struct subbrep_object_data *data, ON_Plane *pcyl,
 
     double flip = ON_DotProduct(loop_plane.Normal(), pcyl->Normal()) * neg_surf;
 
-    if(BU_STR_EQUAL(bu_vls_addr(data->key), "17_27_80_81_82_83")) {
-	bu_log("processing targeted test\n");
-    }
-
     for (int i = 0; i < vert_loop->Count(); i++) {
 	int vind1, vind2;
 	const ON_BrepVertex *v1, *v2;
@@ -334,33 +330,22 @@ int subbrep_add_planar_face(struct subbrep_object_data *data, ON_Plane *pcyl,
 	ON_3dPoint np1 = new_v1.Point();
 	ON_3dPoint np2 = new_v2.Point();
 
-
-    if(BU_STR_EQUAL(bu_vls_addr(data->key), "17_27_80_81_82_83")) {
-	std::cout << "\n\nv1(" << vind1 << "): " << pout(new_v1.Point()) << "\n";
-	std::cout << "v2(" << vind2 << "): " << pout(new_v2.Point()) << "\n\n\n";
-    }
 	// Because we may have already created a needed edge only in the new
 	// Brep with a previous face, we have to check all the edges in the new
 	// structure for a vertex match.
 	int edge_found = 0;
 	for (int j = 0; j < pdata->local_brep->m_E.Count(); j++) {
-    if(BU_STR_EQUAL(bu_vls_addr(data->key), "17_27_80_81_82_83")) {
-	std::cout << "checking edge " << j << "\n";
-    }
 	    int ev1 = pdata->local_brep->m_E[j].Vertex(0)->m_vertex_index;
 	    int ev2 = pdata->local_brep->m_E[j].Vertex(1)->m_vertex_index;
 
 	    ON_3dPoint pv1 = pdata->local_brep->m_E[j].Vertex(0)->Point();
 	    ON_3dPoint pv2 = pdata->local_brep->m_E[j].Vertex(1)->Point();
 
-	    if(BU_STR_EQUAL(bu_vls_addr(data->key), "17_27_80_81_82_83")) {
-		std::cout << "e1(" << ev1 << "): " << pout(pdata->local_brep->m_E[j].Vertex(0)->Point()) << "\n";
-		std::cout << "e2(" << ev2 << "): " << pout(pdata->local_brep->m_E[j].Vertex(1)->Point()) << "\n";
-	    }
-
 	    if ((ev1 == vind1) && (ev2 == vind2)) {
 		edges.push_back(pdata->local_brep->m_E[j].m_edge_index);
 		edge_found = 1;
+
+		reversed.Append(false);
 
 		// Get 2D curve from this edge's 3D curve
 		const ON_Curve *c3 = pdata->local_brep->m_E[j].EdgeCurveOf();
@@ -373,11 +358,23 @@ int subbrep_add_planar_face(struct subbrep_object_data *data, ON_Plane *pcyl,
 		curves_2d.Append(c2);
 		loop_pbox.Union(cbox);
 		break;
-	    } else {
-		if (((np1.DistanceTo(pv1) < 0.01) && (np2.DistanceTo(pv2) < 0.01)) ||
-			((np2.DistanceTo(pv1) < 0.01) && (np1.DistanceTo(pv2) < 0.01))) {
-		    std::cout << "Verts don't match but points do - how'd that happen??\n";
-		}
+	    }
+	    if ((ev2 == vind1) && (ev1 == vind2)) {
+		edges.push_back(pdata->local_brep->m_E[j].m_edge_index);
+		edge_found = 1;
+		reversed.Append(true);
+
+		// Get 2D curve from this edge's points 
+		ON_Curve *c3 = new ON_LineCurve(pv2, pv1);
+		ON_NurbsCurve *c2 = new ON_NurbsCurve();
+		c3->GetNurbForm(*c2);
+		c2->Transform(proj_to_plane);
+		c2->GetBoundingBox(cbox);
+		c2->ChangeDimension(2);
+		c2->MakePiecewiseBezier(2);
+		curves_2d.Append(c2);
+		loop_pbox.Union(cbox);
+		break;
 	    }
 	}
 	if (!edge_found) {
@@ -405,14 +402,8 @@ int subbrep_add_planar_face(struct subbrep_object_data *data, ON_Plane *pcyl,
 	ON_NurbsCurve *c2 = (ON_NurbsCurve *)curves_2d[i];
 	int c2i = pdata->local_brep->AddTrimCurve(c2);
 	ON_BrepEdge &edge = pdata->local_brep->m_E[edges.at(i)];
-	ON_BrepTrim &trim = pdata->local_brep->NewTrim(edge, false, loop, c2i);
-    if(BU_STR_EQUAL(bu_vls_addr(data->key), "17_27_80_81_82_83")) {
-	std::cout << "edge with new trim: " << edge.m_edge_index << "\n";
-	if (edge.TrimCount() == 1) {
-	    std::cout << "Urk - why do we not have a matching trim for edge " << edge.m_edge_index << "?\n";
-	}
-    }
-       	trim.m_type = ON_BrepTrim::mated;
+	ON_BrepTrim &trim = pdata->local_brep->NewTrim(edge, reversed[i], loop, c2i);
+	trim.m_type = ON_BrepTrim::mated;
 	trim.m_tolerance[0] = 0.0;
 	trim.m_tolerance[1] = 0.0;
     }
@@ -461,7 +452,7 @@ int subbrep_add_planar_face(struct subbrep_object_data *data, ON_Plane *pcyl,
 
 // Returns 1 if point set forms a convex polyhedron, 0 if the point set
 // forms a degenerate chull, and -1 if the point set is concave
-int
+    int
 convex_point_set(struct subbrep_object_data *data, std::set<int> *verts)
 {
     // Use chull3d to find the set of vertices that are on the convex
@@ -474,7 +465,7 @@ convex_point_set(struct subbrep_object_data *data, std::set<int> *verts)
  * is convex, 0 if unsuccessful and vertex set's chull is degenerate (i.e. the
  * planar component of this CSG shape contributes no positive volume),  and -1
  * if unsuccessful and point set is neither degenerate nor convex */
-int
+    int
 point_set_is_arb4(struct subbrep_object_data *data, std::set<int> *verts)
 {
     int is_convex = convex_point_set(data, verts);
@@ -484,7 +475,7 @@ point_set_is_arb4(struct subbrep_object_data *data, std::set<int> *verts)
     }
     return 0;
 }
-int
+    int
 point_set_is_arb5(struct subbrep_object_data *data, std::set<int> *verts)
 {
     int is_convex = convex_point_set(data, verts);
@@ -495,7 +486,7 @@ point_set_is_arb5(struct subbrep_object_data *data, std::set<int> *verts)
     // TODO - arb5 test
     return 0;
 }
-int
+    int
 point_set_is_arb6(struct subbrep_object_data *data, std::set<int> *verts)
 {
     int is_convex = convex_point_set(data, verts);
@@ -506,7 +497,7 @@ point_set_is_arb6(struct subbrep_object_data *data, std::set<int> *verts)
     // TODO - arb6 test
     return 0;
 }
-int
+    int
 point_set_is_arb7(struct subbrep_object_data *data, std::set<int> *verts)
 {
     int is_convex = convex_point_set(data, verts);
@@ -517,7 +508,7 @@ point_set_is_arb7(struct subbrep_object_data *data, std::set<int> *verts)
     // TODO - arb7 test
     return 0;
 }
-int
+    int
 point_set_is_arb8(struct subbrep_object_data *data, std::set<int> *verts)
 {
     int is_convex = convex_point_set(data, verts);
@@ -533,7 +524,7 @@ point_set_is_arb8(struct subbrep_object_data *data, std::set<int> *verts)
  * make sure the normal is in the correct direction, find the center point of
  * the verts and the center point of the face verts to construct a vector which
  * can be used in a dot product test with the face normal.*/
-int
+    int
 point_set_is_arbn(struct subbrep_object_data *data, std::set<int> *faces, std::set<int> *verts, int do_test)
 {
     int is_convex;
@@ -551,7 +542,7 @@ point_set_is_arbn(struct subbrep_object_data *data, std::set<int> *faces, std::s
 // In the worst case, make a brep for later conversion into an nmg.
 // The other possibility here is an arbn csg tree, but that needs
 // more thought...
-int
+    int
 subbrep_make_planar_brep(struct subbrep_object_data *data)
 {
     // TODO - check for self intersections in the candidate shape, and handle
@@ -559,7 +550,7 @@ subbrep_make_planar_brep(struct subbrep_object_data *data)
     return 0;
 }
 
-int
+    int
 planar_switch(int ret, struct subbrep_object_data *data, std::set<int> *faces, std::set<int> *verts)
 {
     switch (ret) {
@@ -580,7 +571,7 @@ planar_switch(int ret, struct subbrep_object_data *data, std::set<int> *faces, s
 }
 
 
-int
+    int
 subbrep_make_planar(struct subbrep_object_data *data)
 {
     // First step is to count vertices, using the edges

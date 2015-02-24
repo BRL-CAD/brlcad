@@ -560,10 +560,6 @@ cylinder_csg(struct subbrep_object_data *data, fastf_t cyl_tol)
 	    bu_vls_sprintf(cyl_obj->key, "%s", key.c_str());
 	    cyl_obj->type = CYLINDER;
 
-	    if (BU_STR_EQUAL(bu_vls_addr(cyl_obj->key), "10")) {
-		std::cout << bu_vls_addr(cyl_obj->key) << "\n";
-	    }
-
 	    // Flag the cyl/arb comb according to the negative or positive status of the
 	    // cylinder surface.  Whether the comb is actually subtracted from the
 	    // global object or unioned into a comb lower down the tree (or vice versa)

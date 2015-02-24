@@ -17,9 +17,8 @@
 #include "brep.h"
 #include "../libbrep/shape_recognition.h"
 
-#if 0
 struct model *
-brep_to_nmg(struct subbrep_object_data *data, struct rt_wdb *wdbp, struct wmember *wcomb)
+subbrep_to_nmg(struct subbrep_object_data *data, struct rt_wdb *wdbp, struct wmember *wcomb)
 {
     struct bu_vls prim_name = BU_VLS_INIT_ZERO;
     bu_vls_sprintf(&prim_name, "nmg_%s.s", bu_vls_addr(data->key));
@@ -116,7 +115,7 @@ brep_to_nmg(struct subbrep_object_data *data, struct rt_wdb *wdbp, struct wmembe
 
     return m;
 }
-#endif
+
 struct model *
 brep_to_nmg(struct subbrep_object_data *data, struct rt_wdb *wdbp, struct wmember *wcomb)
 {
@@ -163,7 +162,10 @@ brep_to_nmg(struct subbrep_object_data *data, struct rt_wdb *wdbp, struct wmembe
 
     point_cnt = b_verts.size();
 
-    if (point_cnt == 0) return NULL;
+    if (point_cnt == 0) {
+	std::cout << "Huh?? didn't find any points??\n";
+	return NULL;
+    }
 
     verts = (struct vertex **)bu_calloc(point_cnt, sizeof(struct vertex *), "brep_to_nmg: verts");
     loop_verts = (struct vertex ***) bu_calloc(max_edge_cnt, sizeof(struct vertex **), "brep_to_nmg: loop_verts");
@@ -384,12 +386,12 @@ int
 make_shapes(struct subbrep_object_data *data, struct rt_wdb *wdbp, struct wmember *pcomb)
 {
     //std::cout << "Making shape for " << bu_vls_addr(data->key) << "\n";
-    /*if (data->planar_obj && data->planar_obj->local_brep) {
+    if (data->planar_obj && data->planar_obj->local_brep) {
 	struct bu_vls brep_name = BU_VLS_INIT_ZERO;
 	bu_vls_sprintf(&brep_name, "planar_%s.s", bu_vls_addr(data->key));
 	mk_brep(wdbp, bu_vls_addr(&brep_name), data->planar_obj->local_brep);
 	bu_vls_free(&brep_name);
-    }*/
+    }
     if (data->type == BREP) {
 	if (data->local_brep) {
 	    struct bu_vls brep_name = BU_VLS_INIT_ZERO;
