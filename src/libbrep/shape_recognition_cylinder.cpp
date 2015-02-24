@@ -1032,7 +1032,7 @@ cylinder_csg(struct subbrep_object_data *data, fastf_t cyl_tol)
 
 		    {
 
-			// back face arb8 
+			// back face arb8
 			struct subbrep_object_data *arb_obj_3;
 			BU_GET(arb_obj_3, struct subbrep_object_data);
 			subbrep_object_init(arb_obj_3, data->brep);
