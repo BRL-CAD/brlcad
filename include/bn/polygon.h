@@ -111,10 +111,10 @@ BN_EXPORT extern int bn_polygon_sort_ccw(size_t npts, point_t *pts, plane_t cmp)
  * http://www.ecse.rpi.edu/Homepages/wrf/Research/Short_Notes/pnpoly.html
  * for more details and the implementation file polygon.c for license info.
  *
- * @param[in] npts Number of points, pts contains
- * @param pts Array of point_ts, building a convex polygon. Duplicated points
+ * @param[in] npts Number of points pts contains
+ * @param[in] pts Array of points, building a convex polygon. Duplicated points
  * aren't allowed. The points in the array will be sorted counter-clockwise.
- * @param[in] cmp Plane equation of the polygon
+ * @param[in] test_pt Point to test.
  *
  * @return 0 if point is outside polygon
  * @return 1 if point is inside polygon
