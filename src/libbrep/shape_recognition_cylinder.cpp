@@ -1161,23 +1161,57 @@ cylinder_csg(struct subbrep_object_data *data, fastf_t cyl_tol)
 			// to add enough extra length to clear the cylinder, which
 			// means the full radius length is almost always overkill.
 			ON_SimpleArray<ON_3dPoint> arb_points(8);
+
+			ON_3dVector axis = ip2 - ip1;
+			ON_3dVector e1 = v2->Point() - v1->Point(); // radius
+			ON_3dVector e2 = v3->Point() - v2->Point(); // axis
+			ON_3dVector e3 = v4->Point() - v3->Point(); // radius
+			ON_3dVector e4 = v1->Point() - v4->Point(); // axis
+
+			std::cout << "Cyl axis length: " << axis.Length() << "\n";
+			std::cout << "Cyl radius: " << fcyl.circle.Radius() << "\n";
+			std::cout << "E1 length: " << e1.Length() << "\n";
+			std::cout << "E2 length: " << e2.Length() << "\n";
+			std::cout << "E3 length: " << e3.Length() << "\n";
+			std::cout << "E4 length: " << e4.Length() << "\n";
+
 			arb_points[0] = v1->Point();
 			arb_points[1] = v2->Point();
 			arb_points[2] = v3->Point();
 			arb_points[3] = v4->Point();
-			vv1.Unitize();
-			vv1 = vv1 * fcyl.circle.Radius();
-			arb_points[0] = arb_points[0] + vv1;
-			arb_points[1] = arb_points[1] - vv1;
-			arb_points[2] = arb_points[2] - vv1;
-			arb_points[3] = arb_points[3] + vv1;
-			ON_3dVector hpad = arb_points[2] - arb_points[1];
-			hpad.Unitize();
-			hpad = hpad * (fcyl.Axis().Length() * 0.01);
-			arb_points[0] = arb_points[0] - hpad;
-			arb_points[1] = arb_points[1] - hpad;
-			arb_points[2] = arb_points[2] + hpad;
-			arb_points[3] = arb_points[3] + hpad;
+			double axis_length = axis.Length() + axis.Length() * 0.05;
+
+			if (e2.Length() < axis_length) {
+			    ON_3dVector a1 = e2;
+			    a1.Unitize();
+			    a1 = a1 * (axis_length - e2.Length())/2;
+			    arb_points[1] = arb_points[1] - a1;
+			    arb_points[2] = arb_points[2] + a1;
+			}
+
+			if (e4.Length() < axis_length) {
+			    ON_3dVector a1 = e4;
+			    a1.Unitize();
+			    a1 = a1 * (axis_length - e2.Length())/2;
+			    arb_points[3] = arb_points[3] - a1;
+			    arb_points[0] = arb_points[0] + a1;
+			}
+
+			if (e1.Length() < fcyl.circle.Radius() * 2) {
+			    ON_3dVector a1 = e1;
+			    a1.Unitize();
+			    a1 = a1 * fcyl.circle.Radius();
+			    arb_points[0] = arb_points[0] - a1;
+			    arb_points[1] = arb_points[1] + a1;
+			}
+
+			if (e3.Length() < fcyl.circle.Radius() * 2) {
+			    ON_3dVector a1 = e3;
+			    a1.Unitize();
+			    a1 = a1 * fcyl.circle.Radius();
+			    arb_points[2] = arb_points[2] - a1;
+			    arb_points[3] = arb_points[3] + a1;
+			}
 
 			// Once the final 1,2,3,4 points have been determined, use
 			// the pcyl normal direction and the cylinder radius to
