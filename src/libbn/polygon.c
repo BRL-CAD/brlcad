@@ -18,10 +18,13 @@
  * information.
  */
 
+#include "bu/log.h"
+#include "bu/malloc.h"
 #include "bu/sort.h"
 #include "bn/polygon.h"
 #include "bn/plane_struct.h"
 #include "bn/plane_calc.h"
+#include "./bn_private.h"
 
 
 int
@@ -221,7 +224,8 @@ bn_polygon_sort_ccw(size_t npts, point_t *pts, plane_t cmp)
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
  * OTHER DEALINGS IN THE SOFTWARE.
  */
-int bn_pt_in_polygon(size_t nvert, const point2d_t *pnts, const point2d_t *test)
+int
+bn_pt_in_polygon(size_t nvert, const point2d_t *pnts, const point2d_t *test)
 {
     size_t i = 0;
     size_t j = 0;
@@ -233,6 +237,229 @@ int bn_pt_in_polygon(size_t nvert, const point2d_t *pnts, const point2d_t *test)
     }
     return c;
 }
+
+/* Translation to libbn data types of the polypartition triangulation code
+ * from https://code.google.com/p/polypartition/
+ *
+ * The below copyright applies to just the function bn_polygon_triangulate,
+ * the supporting fuctions ported from polypartition, and associated data
+ * types, not the whole of polygon.c
+ *
+ * Copyright (C) 2011 by Ivan Fratric
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+ * THE SOFTWARE.
+ */
+
+typedef struct PartitionVertex pv_t;
+
+struct PartitionVertex {
+    int isActive;
+    int isConvex;
+    int isEar;
+
+    int p;  /* Index into pts array */
+    double angle;
+    pv_t *previous;
+    pv_t *next;
+};
+
+HIDDEN void
+partition_normalize(point2d_t *p) {
+    point2d_t r;
+    double n = sqrt((*p)[0]*(*p)[0] + (*p)[1]*(*p)[1]);
+    if(!NEAR_ZERO(n,SMALL_FASTF)) {
+	/*r = p/n;*/
+	V2MOVE(r,(*p));
+	V2SCALE(r, r, 1/n);
+    } else {
+	V2SETALL(r, 0);
+    }
+    V2MOVE((*p), r);
+}
+
+
+HIDDEN int
+partition_isconvex(const point2d_t p1, const point2d_t p2, const point2d_t p3) {
+    double angle;
+    double dot, m1, m2; 
+    vect_t v1, v2;
+    V2SUB2(v1, p1, p2);
+    V2SUB2(v2, p3, p2);
+    dot = V2DOT(v1, v2);
+    m1 = MAGNITUDE2(v1);
+    m2 = MAGNITUDE2(v2);
+    angle = acos(dot/(m1 * m2));
+    if (angle < M_PI) return 1;
+    else return 0;
+}
+
+HIDDEN int
+partition_isinside(const point2d_t *p1, const point2d_t *p2, const point2d_t *p3, const point2d_t *p) {
+    if (partition_isconvex(*p1, *p, *p2)) return 0;
+    if (partition_isconvex(*p2, *p, *p3)) return 0;
+    if (partition_isconvex(*p3, *p, *p1)) return 0;
+    return 1;
+}
+
+HIDDEN void
+triangulate_updatevertex(pv_t *v, pv_t *vertices, const point2d_t *pts, size_t numvertices) {
+    size_t i;
+    pv_t *v1,*v3;
+    point2d_t vec1,vec3;
+
+    v1 = v->previous;
+    v3 = v->next;
+
+    v->isConvex = partition_isconvex(pts[v1->p],pts[v->p],pts[v3->p]);
+
+    /* vec1 = Normalize(v1->p - v->p);*/
+    V2SUB2(vec1, pts[v1->p], pts[v->p]);
+    partition_normalize(&vec1);
+
+    /* vec3 = Normalize(v3->p - v->p); */
+    V2SUB2(vec3, pts[v3->p], pts[v->p]);
+    partition_normalize(&vec3);
+
+    v->angle = vec1[0]*vec3[0] + vec1[1]*vec3[1];
+
+    if(v->isConvex) {
+	v->isEar = 1;
+	for(i = 0; i < numvertices; i++) {
+	    if(NEAR_ZERO(pts[vertices[i].p][0] - pts[v->p][0], SMALL_FASTF) && NEAR_ZERO(pts[vertices[i].p][1] - pts[v->p][1], SMALL_FASTF)) continue;
+	    if(NEAR_ZERO(pts[vertices[i].p][0] - pts[v1->p][0], SMALL_FASTF) && NEAR_ZERO(pts[vertices[i].p][1] - pts[v1->p][1], SMALL_FASTF)) continue;
+	    if(NEAR_ZERO(pts[vertices[i].p][0] - pts[v3->p][0], SMALL_FASTF) && NEAR_ZERO(pts[vertices[i].p][1] - pts[v3->p][1], SMALL_FASTF)) continue;
+	    if(partition_isinside((const point2d_t *)&(pts[v1->p]),(const point2d_t *)&(pts[v->p]),(const point2d_t *)&(pts[v3->p]),(const point2d_t *)&(pts[vertices[i].p]))) {
+		v->isEar = 0;
+		break;
+	    }
+	}
+    } else {
+	v->isEar = 0;
+    }
+}
+
+int
+bn_polygon_triangulate(int **faces, int *num_faces, const point2d_t *pts, size_t npts)
+{
+    pv_t *vertices;
+    pv_t *ear;
+    int fp;
+    int *local_faces;
+    /*TPPLPoly triangle;*/
+    size_t i,j;
+    int earfound;
+    int offset = 0;
+    int face_cnt = 0;
+
+    int active_vert_cnt = 0;
+
+    if(npts < 3) return 1;
+    if (!faces || !num_faces || !pts) return 1;
+
+    if(npts == 3) {
+	(*num_faces) = 1;
+	(*faces) = (int *)bu_calloc(3, sizeof(int), "face");
+	(*faces)[0] = 0;
+	(*faces)[1] = 1;
+	(*faces)[2] = 2;
+
+	return 0;
+    }
+
+    local_faces = (int *)bu_calloc(3*3*npts, sizeof(int), "triangles");
+    vertices = (pv_t *)bu_calloc(npts, sizeof(pv_t), "vertices");
+    for(i=0;i<npts;i++) {
+	vertices[i].isActive = 1;
+	active_vert_cnt++;
+	vertices[i].p = i;
+	if(i==(npts-1)) vertices[i].next=&(vertices[0]);
+	else vertices[i].next=&(vertices[i+1]);
+	if(i==0) vertices[i].previous = &(vertices[npts-1]);
+	else vertices[i].previous = &(vertices[i-1]);
+    }
+    for(i = 0; i < npts; i++) {
+	triangulate_updatevertex(&vertices[i],vertices,pts,npts);
+    }
+
+    for(i = 0; i < npts - 3; i++) {
+	earfound = 0;
+	/* find the most extruded ear */
+	for(j=0;j<npts;j++) {
+	    if(!vertices[j].isActive) continue;
+	    if(!vertices[j].isEar) continue;
+	    if(!earfound) {
+		earfound = 1;
+		ear = &(vertices[j]);
+	    } else {
+		if(vertices[j].angle > ear->angle) {
+		    ear = &(vertices[j]);
+		}
+	    }
+	}
+	if(!earfound) {
+	    bu_free(vertices, "free vertices");
+	    return 0;
+	}
+
+	/*triangles->push_back(triangle);*/
+	local_faces[offset+0] = ear->previous->p;
+	local_faces[offset+1] = ear->p;
+	local_faces[offset+2] = ear->next->p;
+	offset = offset + 3;
+	face_cnt++;
+
+	ear->isActive = 0;
+	ear->previous->next = ear->next;
+	ear->next->previous = ear->previous;
+
+	if(i==npts-4) break;
+
+	triangulate_updatevertex(ear->previous,vertices,pts,npts);
+	triangulate_updatevertex(ear->next,vertices,pts,npts);
+    }
+    for(i = 0; i < npts; i++) {
+	if(vertices[i].isActive) {
+	    /*triangle.Triangle(vertices[i].previous->p,vertices[i].p,vertices[i].next->p);*/
+	    /* triangles->push_back(triangle);*/
+	    local_faces[offset+0] = vertices[i].previous->p;
+	    local_faces[offset+1] = vertices[i].p;
+	    local_faces[offset+2] = vertices[i].next->p;
+	    offset = offset + 3;
+	    vertices[i].isActive = 0;
+	    face_cnt++;
+	    break;
+	}
+    }
+
+    (*num_faces) = face_cnt;
+    (*faces) = (int *)bu_calloc(face_cnt*3, sizeof(int), "final faces array");
+    for (fp = 0; fp < face_cnt; fp++) {
+	(*faces)[fp*3] = local_faces[fp*3];
+	(*faces)[fp*3+1] = local_faces[fp*3+1];
+	(*faces)[fp*3+2] = local_faces[fp*3+2];
+    }
+    bu_free(local_faces, "free local faces array");
+    bu_free(vertices, "free vertices");
+
+    return 0;
+}
+
 
 /*
  * Local Variables:
