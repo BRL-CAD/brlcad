@@ -1167,48 +1167,57 @@ cylinder_csg(struct subbrep_object_data *data, fastf_t cyl_tol)
 			ON_3dVector e2 = v3->Point() - v2->Point(); // axis
 			ON_3dVector e3 = v4->Point() - v3->Point(); // radius
 			ON_3dVector e4 = v1->Point() - v4->Point(); // axis
-
-			std::cout << "Cyl axis length: " << axis.Length() << "\n";
-			std::cout << "Cyl radius: " << fcyl.circle.Radius() << "\n";
-			std::cout << "E1 length: " << e1.Length() << "\n";
-			std::cout << "E2 length: " << e2.Length() << "\n";
-			std::cout << "E3 length: " << e3.Length() << "\n";
-			std::cout << "E4 length: " << e4.Length() << "\n";
-
+			double e1_len = fabs(e1.Length());
+			double e2_len = fabs(e2.Length());
+			double e3_len = fabs(e3.Length());
+			double e4_len = fabs(e4.Length());
+			double circ_rad = fabs(fcyl.circle.Radius()) + fabs(fcyl.circle.Radius()) * 0.05;
+			double axis_length = fabs(axis.Length()) + fabs(axis.Length()) * 0.05;
 			arb_points[0] = v1->Point();
 			arb_points[1] = v2->Point();
 			arb_points[2] = v3->Point();
 			arb_points[3] = v4->Point();
-			double axis_length = axis.Length() + axis.Length() * 0.05;
 
-			if (e2.Length() < axis_length) {
+			if (e2_len < axis_length) {
 			    ON_3dVector a1 = e2;
 			    a1.Unitize();
-			    a1 = a1 * (axis_length - e2.Length())/2;
-			    arb_points[1] = arb_points[1] - a1;
-			    arb_points[2] = arb_points[2] + a1;
+			    a1 = a1 * (axis_length - e2_len)/2;
+			    if (ON_DotProduct(a1,e2) < 0) {
+				arb_points[1] = arb_points[1] + a1;
+				arb_points[2] = arb_points[2] - a1;
+			    } else {
+				arb_points[1] = arb_points[1] - a1;
+				arb_points[2] = arb_points[2] + a1;
+			    }
+			    ON_3dVector e4tmp = arb_points[2] - arb_points[1];
 			}
 
-			if (e4.Length() < axis_length) {
+			if (e4_len < axis_length) {
 			    ON_3dVector a1 = e4;
 			    a1.Unitize();
-			    a1 = a1 * (axis_length - e2.Length())/2;
-			    arb_points[3] = arb_points[3] - a1;
-			    arb_points[0] = arb_points[0] + a1;
+			    a1 = a1 * (axis_length - e4_len)/2;
+			    if (ON_DotProduct(a1,e4) < 0) {
+				arb_points[3] = arb_points[3] + a1;
+				arb_points[0] = arb_points[0] - a1;
+			    } else {
+				arb_points[3] = arb_points[3] - a1;
+				arb_points[0] = arb_points[0] + a1;
+			    }
+			    ON_3dVector e4tmp = arb_points[3] - arb_points[0];
 			}
 
-			if (e1.Length() < fcyl.circle.Radius() * 2) {
+			if (e1_len < circ_rad * 2) {
 			    ON_3dVector a1 = e1;
 			    a1.Unitize();
-			    a1 = a1 * fcyl.circle.Radius();
+			    a1 = a1 * circ_rad;
 			    arb_points[0] = arb_points[0] - a1;
 			    arb_points[1] = arb_points[1] + a1;
 			}
 
-			if (e3.Length() < fcyl.circle.Radius() * 2) {
+			if (e3_len < circ_rad * 2) {
 			    ON_3dVector a1 = e3;
 			    a1.Unitize();
-			    a1 = a1 * fcyl.circle.Radius();
+			    a1 = a1 * circ_rad;
 			    arb_points[2] = arb_points[2] - a1;
 			    arb_points[3] = arb_points[3] + a1;
 			}
