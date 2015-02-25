@@ -84,7 +84,8 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
 * improve performance of these commands that seem to have exponential
   cost: bot_split, killtree
 
-* translate lc command to libged
+* translate lc command to libged (discovered in Feb. 2015 to have already
+  been done -- need information regarding when this was done and committed).
 
 * Integrate ADRT into Archer as a visualization mode.
 
@@ -95,14 +96,14 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
 * create a catalog of all possible entity types.  including distinct
   parameterizations with sufficient variety that conveys the object's
   parameterization options (e.g. ell as sphere, flat disc, long spike,
-  etc).  this is necessarily defined per object type and possibly
+  etc.).  this is necessarily defined per object type and possibly
   programmable.  see src/proc-db/csgbrep.cpp for a basic start.
 
 * create a catalog of all possible/distinct/useful shader settings.
   see regress/shaders.sh for a basic start.
 
 * high-performance VOL for medical data visualization.  consider
-  leveraging OpenVDB, PCL, Paraview/VTK, etc
+  leveraging OpenVDB, PCL, Paraview/VTK, etc.
 
 * multi-region VOL objects.  this basically will either introduce a
   notion of data-reuse where multiple regions reference the same VOL
@@ -170,7 +171,7 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
   (ways of reducing the geometry complexity with or without
   introducing 3D changes.  provides different stages of compilation
   (e.g., similar to preprocessing, compilation, AST reduction,
-  optimization, encoding transformation, etc).  name ideas: bcg, cg
+  optimization, encoding transformation, etc.).  name ideas: bcg, cg
 
 * geometry debugger.  low-level geometry database tool with minimal/no
   run-time dependencies on our own libraries.  the idea is a tool that
@@ -1608,7 +1609,7 @@ NEW OBJECTS
 
   care will need to be taken to avoid bad behavior when presented with
   a malformed procedure (e.g., an infinite loop, fork bomb, syntax
-  error, thrashing condition, etc).
+  error, thrashing condition, etc.).
 
 * spheroid (quadratic) - special performance case of ell
 
