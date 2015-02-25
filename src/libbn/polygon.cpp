@@ -1,4 +1,4 @@
-/*                     P O L Y G O N . C
+/*                     P O L Y G O N . C P P
  * BRL-CAD
  *
  * Copyright (c) 2013-2014 United States Government as represented by
@@ -18,6 +18,7 @@
  * information.
  */
 
+extern "C" {
 #include "bu/log.h"
 #include "bu/malloc.h"
 #include "bu/sort.h"
@@ -27,6 +28,7 @@
 #include "./bn_private.h"
 
 #include "plot3.h"
+}
 
 int
 bn_polygon_area(fastf_t *area, size_t npts, const point_t *pts)
