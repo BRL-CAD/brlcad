@@ -48,7 +48,7 @@
 
 set lc_done_flush 0
 
-proc lc {args} {
+proc lc2 {args} {
     global lc_done_flush
     set name_cnt 0
     set error_cnt 0
