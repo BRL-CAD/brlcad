@@ -364,7 +364,7 @@ int subbrep_add_planar_face(struct subbrep_object_data *data, ON_Plane *pcyl,
 		edge_found = 1;
 		reversed.Append(true);
 
-		// Get 2D curve from this edge's points 
+		// Get 2D curve from this edge's points
 		ON_Curve *c3 = new ON_LineCurve(pv2, pv1);
 		ON_NurbsCurve *c2 = new ON_NurbsCurve();
 		c3->GetNurbForm(*c2);
