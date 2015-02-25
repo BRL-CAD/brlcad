@@ -311,10 +311,11 @@ partition_isconvex(const point2d_t p1, const point2d_t p2, const point2d_t p3) {
 
 HIDDEN int
 partition_isinside(const point2d_t *p1, const point2d_t *p2, const point2d_t *p3, const point2d_t *p) {
-    if (partition_isconvex(*p1, *p, *p2)) return 0;
-    if (partition_isconvex(*p2, *p, *p3)) return 0;
-    if (partition_isconvex(*p3, *p, *p1)) return 0;
-    return 1;
+    point2d_t points[3];
+    V2MOVE(points[0], *p1);
+    V2MOVE(points[1], *p2);
+    V2MOVE(points[2], *p3);
+    return bn_pt_in_polygon(3, (const point2d_t *)points, p);
 }
 
 HIDDEN void
@@ -341,10 +342,16 @@ triangulate_updatevertex(pv_t *v, pv_t *vertices, const point2d_t *pts, size_t n
     if(v->isConvex) {
 	v->isEar = 1;
 	for(i = 0; i < numvertices; i++) {
+	    if (vertices[i].p == v->p) continue;
+	    if (vertices[i].p == v1->p) continue;
+	    if (vertices[i].p == v3->p) continue;
+#if 0
 	    if(NEAR_ZERO(pts[vertices[i].p][0] - pts[v->p][0], SMALL_FASTF) && NEAR_ZERO(pts[vertices[i].p][1] - pts[v->p][1], SMALL_FASTF)) continue;
 	    if(NEAR_ZERO(pts[vertices[i].p][0] - pts[v1->p][0], SMALL_FASTF) && NEAR_ZERO(pts[vertices[i].p][1] - pts[v1->p][1], SMALL_FASTF)) continue;
 	    if(NEAR_ZERO(pts[vertices[i].p][0] - pts[v3->p][0], SMALL_FASTF) && NEAR_ZERO(pts[vertices[i].p][1] - pts[v3->p][1], SMALL_FASTF)) continue;
+#endif
 	    if(partition_isinside((const point2d_t *)&(pts[v1->p]),(const point2d_t *)&(pts[v->p]),(const point2d_t *)&(pts[v3->p]),(const point2d_t *)&(pts[vertices[i].p]))) {
+		bu_log("isinside failed: %d\n", i);
 		v->isEar = 0;
 		break;
 	    }
@@ -414,7 +421,8 @@ bn_polygon_triangulate(int **faces, int *num_faces, const point2d_t *pts, size_t
 	}
 	if(!earfound) {
 	    bu_free(vertices, "free vertices");
-	    return 0;
+	    bu_log("no ears found\n");
+	    return 1;
 	}
 
 	/*triangles->push_back(triangle);*/
@@ -460,6 +468,24 @@ bn_polygon_triangulate(int **faces, int *num_faces, const point2d_t *pts, size_t
     return 0;
 }
 
+int
+bn_3d_polygon_triangulate(int **faces, int *num_faces, const point_t *pts, size_t n)
+{
+    int ret = 0;
+    point_t origin_pnt;
+    vect_t u_axis, v_axis;
+    point2d_t *points_tmp = (point2d_t *)bu_calloc(n + 1, sizeof(point2d_t), "points_2d");
+
+    ret += coplanar_2d_coord_sys(&origin_pnt, &u_axis, &v_axis, pts, n);
+    ret += coplanar_3d_to_2d(&points_tmp, (const point_t *)&origin_pnt, (const vect_t *)&u_axis, (const vect_t *)&v_axis, pts, n);
+
+    if (ret) return 1;
+
+    ret = bn_polygon_triangulate(faces, num_faces, (const point2d_t *)points_tmp, n);
+
+    bu_free(points_tmp, "free temp points\n");
+    return ret;
+}
 
 /*
  * Local Variables:

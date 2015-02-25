@@ -146,6 +146,9 @@ BN_EXPORT extern int bn_pt_in_polygon(size_t npts, const point2d_t *pts, const p
  */
 BN_EXPORT extern int bn_polygon_triangulate(int **faces, int *num_faces, const point2d_t *pts, size_t npts);
 
+BN_EXPORT extern int bn_3d_polygon_triangulate(int **faces, int *num_faces, const point_t *pts, size_t n);
+
+
 __END_DECLS
 
 #endif  /* BN_POLYGON_H */
