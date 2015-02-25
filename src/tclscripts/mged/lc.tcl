@@ -24,11 +24,12 @@
 # 'region_id', 'material_id', 'los', 'region name', 'region parent'.
 # If a value is unset, it is reported as '--'.
 #
-# Option '-d' specifies to list only regions with duplicate 'region_id'.
+# Option '-d' specifies to list only one region with each 'region_id'.
 #
-# Option '-s' is the same as '-d' except some duplicates will not be
-# reported (i.e. will be skipped). Skipped duplicates will be those within the
-# specified group, that have the same parent, 'material_id' and 'los'.
+# Option '-s' specifies to list only one region with each combination of 'region_id',
+# 'material_id' and 'los'.  In addition to the output of '-d', it lists
+# those cases where 'region_id' is the same but 'material_id' and/or
+# 'los' are different.
 #
 # Option '-r' removes regions from the list in which their parent is
 # a region and the region is subtracted within the parent. The '-r'
