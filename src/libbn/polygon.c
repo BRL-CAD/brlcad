@@ -26,6 +26,7 @@
 #include "bn/plane_calc.h"
 #include "./bn_private.h"
 
+#include "plot3.h"
 
 int
 bn_polygon_area(fastf_t *area, size_t npts, const point_t *pts)
@@ -420,6 +421,22 @@ bn_polygon_triangulate(int **faces, int *num_faces, const point2d_t *pts, size_t
 	    }
 	}
 	if(!earfound) {
+	    FILE *plot_file = fopen("bn_poly_tri.pl", "w");
+	    int have_start = 0;
+	    int start_vert = 0;
+	    for(j=0;j<npts;j++) {
+		if(!vertices[j].isActive) continue;
+		if (!have_start) {
+		    pd_3move(plot_file, pts[vertices[j].p][0], pts[vertices[j].p][1], 0);
+		    have_start = 1;
+		    start_vert = j;
+		} else {
+		    pd_3cont(plot_file, pts[vertices[j].p][0], pts[vertices[j].p][1], 0);
+		}
+	    }
+	    pd_3cont(plot_file, pts[vertices[start_vert].p][0], pts[vertices[start_vert].p][1], 0);
+	    fclose(plot_file);
+
 	    bu_free(vertices, "free vertices");
 	    bu_log("no ears found\n");
 	    return 1;
@@ -464,7 +481,6 @@ bn_polygon_triangulate(int **faces, int *num_faces, const point2d_t *pts, size_t
     }
     bu_free(local_faces, "free local faces array");
     bu_free(vertices, "free vertices");
-
     return 0;
 }
 
