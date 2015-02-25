@@ -802,7 +802,7 @@ cylinder_csg(struct subbrep_object_data *data, fastf_t cyl_tol)
 		// both end caps need subtracting, plus an arb to remove part of the
 		// cylinder body.
 		data->type = COMB;
-		std::cout << "Minus one or more end-cap arbs and body arb\n";
+		//std::cout << "Minus one or more end-cap arbs and body arb\n";
 
 		// If an end capping plane's normal is parallel to the cylinder axis,
 		// no arb is needed for that cap and that face will form the base of
@@ -858,7 +858,7 @@ cylinder_csg(struct subbrep_object_data *data, fastf_t cyl_tol)
 		    VSCALE(axis_dir, axis_dir, dist);
 		    VADD2(intersect_pt, axis_pt, axis_dir);
 
-		    std::cout << "Intersect point 1: " << intersect_pt[0] << "," << intersect_pt[1] << "," << intersect_pt[2] << "\n";
+		    //std::cout << "Intersect point 1: " << intersect_pt[0] << "," << intersect_pt[1] << "," << intersect_pt[2] << "\n";
 		    ON_3dPoint ip1(intersect_pt[0], intersect_pt[1], intersect_pt[2]);
 
 		    VMOVE(axis_dir, cylinder.Axis());
@@ -878,7 +878,7 @@ cylinder_csg(struct subbrep_object_data *data, fastf_t cyl_tol)
 		    VSCALE(axis_dir, axis_dir, dist);
 		    VADD2(intersect_pt, axis_pt, axis_dir);
 
-		    std::cout << "Intersect point 2: " << intersect_pt[0] << "," << intersect_pt[1] << "," << intersect_pt[2] << "\n";
+		    //std::cout << "Intersect point 2: " << intersect_pt[0] << "," << intersect_pt[1] << "," << intersect_pt[2] << "\n";
 		    ON_3dPoint ip2(intersect_pt[0], intersect_pt[1], intersect_pt[2]);
 
 		    // Define the cylinder.
@@ -1050,13 +1050,13 @@ cylinder_csg(struct subbrep_object_data *data, fastf_t cyl_tol)
 			    ON_3dPoint p = data->brep->m_V[*s_it].Point();
 			    double d1 = fabs(cap1.DistanceTo(p));
 			    double d2 = fabs(cap2.DistanceTo(p));
-			    std::cout << "d1: " << d1 << "\n";
-			    std::cout << "d2: " << d2 << "\n";
+			    //std::cout << "d1: " << d1 << "\n";
+			    //std::cout << "d2: " << d2 << "\n";
 			    if (d1 < d2) {
-				std::cout << "bottom point: " << *s_it << "\n";
+				//std::cout << "bottom point: " << *s_it << "\n";
 				bottom_pnts.Append(&(data->brep->m_V[*s_it]));
 			    } else {
-				std::cout << "top point: " << *s_it << "\n";
+				//std::cout << "top point: " << *s_it << "\n";
 				top_pnts.Append(&(data->brep->m_V[*s_it]));
 			    }
 			}
