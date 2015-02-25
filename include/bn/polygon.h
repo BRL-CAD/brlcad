@@ -121,33 +121,6 @@ BN_EXPORT extern int bn_polygon_sort_ccw(size_t npts, point_t *pts, plane_t cmp)
  */
 BN_EXPORT extern int bn_pt_in_polygon(size_t npts, const point2d_t *pts, const point2d_t *test_pt);
 
-/**
- * @brief
- * Triangulate a 2D polygon.
- *
- * This routine generates a triangulation of the input polygon.  There are assumed to be no holes
- * in the triangulation area.  No points are added as part of this triangulation process - the
- * result uses only those points in the original polygon, and hence only the face information is
- * created as output.
- *
- * Based on polypartition code - see https://code.google.com/p/polypartition/ and the file polygon.c
- * for license details.
- *
- * TODO - support both monotone polygons (fast) and ear clipping (slower, better triangles)
- *
- * @param[out] faces Set of faces in the triangulation, stored as integer indices to the pts.  The first three indices are the vertices of the first face, the second three define the second face, and so forth.
- * @param[out] num_faces Number of faces created
- * @param[in] npts Number of points pts contains
- * @param[in] pts Array of points defining a polygon. Duplicated points
- * aren't allowed. The points in the array will be sorted counter-clockwise.
- *
- * @return 0 if triangulation is successful
- * @return 1 if triangulation is unsuccessful
- */
-BN_EXPORT extern int bn_polygon_triangulate(int **faces, int *num_faces, const point2d_t *pts, size_t npts);
-
-BN_EXPORT extern int bn_3d_polygon_triangulate(int **faces, int *num_faces, const point_t *pts, size_t n);
-
 
 __END_DECLS
 

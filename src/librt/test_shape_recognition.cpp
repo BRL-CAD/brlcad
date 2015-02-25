@@ -122,11 +122,11 @@ struct model *
 brep_to_nmg(struct subbrep_object_data *data, struct rt_wdb *wdbp, struct wmember *wcomb)
 {
     struct bu_vls prim_name = BU_VLS_INIT_ZERO;
-
+#if 0
     /* For debugging, triangulate each face and write it out as a bot */
     for (int s_it = 0; s_it < data->brep->m_F.Count(); s_it++) {
 	if (BU_STR_EQUAL(bu_vls_addr(data->key), "17_24_25_26_27_28_29_30_39_40_41_42_43_44_45_46_47_48_49_50_51_52_53_54_55_56_57_58_59_60_61_62_63_64_65_66_67_68_69_70_71_72_73_74_75_84_85_86_87_88_89_90_95_96_97_98_99_100")) {
-	    //if (s_it == 15) {
+	    if (s_it == 0) {
 		int loop_length = 0;
 		const ON_BrepFace *b_face = &(data->brep->m_F[s_it]);
 		const ON_BrepLoop *b_loop = b_face->OuterLoop();
@@ -137,6 +137,7 @@ brep_to_nmg(struct subbrep_object_data *data, struct rt_wdb *wdbp, struct wmembe
 		    const ON_BrepEdge *edge = &(b_face->Brep()->m_E[trim->m_ei]);
 		    const ON_Curve *trim_curve = trim->TrimCurveOf();
 		    ON_2dPoint cp = trim_curve->PointAt(trim_curve->Domain().Max());
+		    std::cout << "2D point(" << ti << "): " << cp.x << " " << cp.y << " 0\n";
 		    V2MOVE(verts2d[ti], cp);
 		    if (trim->m_bRev3d) {
 			VMOVE(verts[ti], edge->Vertex(0)->Point());
@@ -162,11 +163,10 @@ brep_to_nmg(struct subbrep_object_data *data, struct rt_wdb *wdbp, struct wmembe
 		} else {
 		    std::cout << "bot build failed (1) for face " << b_face->m_face_index << "\n";
 		}
-	    //}
+	    }
 	}
     }
-
-
+#endif
     bu_vls_sprintf(&prim_name, "nmg_%s.s", bu_vls_addr(data->key));
     std::set<int> b_verts;
     std::vector<int> b_verts_array;

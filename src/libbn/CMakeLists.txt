@@ -25,7 +25,7 @@ set(LIBBN_SOURCES
   plane.c
   plot3.c
   poly.c
-  polygon.cpp
+  polygon.c
   qmath.c
   rand.c
   randmt.c
