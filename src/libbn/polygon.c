@@ -239,6 +239,18 @@ bn_pt_in_polygon(size_t nvert, const point2d_t *pnts, const point2d_t *test)
 }
 
 
+/**
+ * Implementation of Ear Clipping Polygon Triangulation
+ *
+ * Based off of David Eberly's documentation of the algorithm in Triangulation
+ * by Ear Clipping, section 2.
+ * http://www.geometrictools.com/Documentation/TriangulationByEarClipping.pdf
+ *
+ * Helpful reference implementations included
+ * https://code.google.com/p/polypartition/ and
+ * http://www.geometrictools.com/GTEngine/Include/GteTriangulateEC.h
+ */
+
 
 typedef struct pt_vertex_ref pt_vr;
 
@@ -312,22 +324,21 @@ struct pt_lists {
     vert->isEar = 0; \
 }
 
+#define PT_ADD_TRI(ear) { \
+    struct pt_vertex *p = PT_NEXT(ear); \
+    struct pt_vertex *n = PT_PREV(ear); \
+    local_faces[offset+0] = p->index; \
+    local_faces[offset+1] = ear->index; \
+    local_faces[offset+2] = n->index; \
+    offset = offset + 3; \
+    face_cnt++; \
+}
+
 #define PT_NEXT(v) BU_LIST_PNEXT_CIRC(pt_vertex, &(v->l))
 #define PT_PREV(v) BU_LIST_PPREV_CIRC(pt_vertex, &(v->l))
 
 #define PT_NEXT_REF(v) BU_LIST_PNEXT_CIRC(pt_vertex_ref, &(v->l))
 #define PT_PREV_REF(v) BU_LIST_PPREV_CIRC(pt_vertex_ref, &(v->l))
-/*
-double
-pt_angle(struct pt_vertex *p, struct pt_vertex *n, struct pt_vertex *v, const point2d_t *pts) {
-    point2d_t v1, v2;
-    V2SUB2(v1, pts[p->index], pts[v->index]);
-    V2SUB2(v2, pts[n->index], pts[v->index]);
-    V2UNITIZE(v1);
-    V2UNITIZE(v2);
-    return fabs(v1[0]*v2[0] + v1[1]*v2[1]);
-}
-*/
 
 HIDDEN int
 is_inside(const point2d_t p1, const point2d_t p2, const point2d_t p3, const point2d_t *test) {
@@ -454,16 +465,6 @@ remove_ear(struct pt_vertex *ear, struct pt_lists *lists, const point2d_t *pts)
     }
 
     return;
-}
-
-#define PT_ADD_TRI(ear) { \
-    struct pt_vertex *p = PT_NEXT(ear); \
-    struct pt_vertex *n = PT_PREV(ear); \
-    local_faces[offset+0] = p->index; \
-    local_faces[offset+1] = ear->index; \
-    local_faces[offset+2] = n->index; \
-    offset = offset + 3; \
-    face_cnt++; \
 }
 
 int bn_polygon_triangulate(int **faces, int *num_faces, const point2d_t *pts, size_t npts)
