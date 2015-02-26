@@ -258,6 +258,13 @@ struct pt_vertex_ref {
     struct pt_vertex *v;
 };
 
+struct pt_lists {
+    struct pt_vertex *vertex_list;
+    struct pt_vertex_ref *convex_list;
+    struct pt_vertex_ref *reflex_list;
+    struct pt_vertex_ref *ear_list;
+};
+
 #define PT_ADD_CONVEX_VREF(_list, vert) {\
     struct pt_vertex_ref *n_ref; \
     BU_GET(n_ref, struct pt_vertex_ref); \
@@ -395,34 +402,66 @@ pt_v_put(struct pt_vertex *v)
 }
 
 HIDDEN void
-remove_ear(struct pt_vertex *ear)
+remove_ear(struct pt_vertex *ear, struct pt_lists *lists, const point2d_t *pts)
 {
-    struct pt_vertex *p;
-    struct pt_vertex *n;
+    struct pt_vertex *vp;
+    struct pt_vertex *vn;
     if (!ear) return;
 
     /* First, make a note of the two vertices whose status might change */
-    p = PT_NEXT(ear);
-    n = PT_PREV(ear);
+    vp = PT_NEXT(ear);
+    vn = PT_PREV(ear);
 
     /* Remove the ear vertex */
     bu_log("remove: %d\n", ear->index);
     pt_v_put(ear);
 
     /* Update the status of the two neighbor points */
-    if (p->isEar) {
-	/* Verify ear is still an ear */
-    }
-    if (!p->isConvex) {
+    if (vp->isConvex) {
+	/* Check ear status */
+	struct pt_vertex *p = PT_NEXT(vp);
+	struct pt_vertex *n = PT_PREV(vp);
+	vp->isEar = is_ear(vp->index, p->index, n->index, lists->reflex_list, pts);
+	bu_log("is Ear(%d): %d\n", vp->index, vp->isEar);
+    } else {
+	struct pt_vertex *p = PT_NEXT(vp);
+	struct pt_vertex *n = PT_PREV(vp);
 	/* Check if it became convex */
+	vp->isConvex = is_convex(pts[vp->index], pts[p->index], pts[n->index]);
+	if (vp->isConvex) bu_log("pt became convex: %d\n", vp->index);
 	/* Check if it became an ear */
+	if (vp->isConvex) {
+	    PT_DEQUEUE_REFLEX_VREF(lists->reflex_list, vp);
+	    PT_ADD_CONVEX_VREF(lists->convex_list, vp);
+	    vp->isEar = is_ear(vp->index, p->index, n->index, lists->reflex_list, pts);
+	    if (vp->isEar) {
+		bu_log("pt became ear: %d\n", vp->index);
+		PT_ADD_EAR_VREF(lists->ear_list, vp, pts);
+	    }
+	}
     }
-    if (n->isEar) {
-	/* Verify ear is still an ear */
-    }
-    if (!n->isConvex) {
+    if (vn->isConvex) {
+	struct pt_vertex *p = PT_NEXT(vn);
+	struct pt_vertex *n = PT_PREV(vn);
+	vn->isEar = is_ear(vn->index, p->index, n->index, lists->reflex_list, pts);
+	bu_log("is Ear(%d): %d\n", vn->index, vn->isEar);
+
+    } else {
+	struct pt_vertex *p = PT_NEXT(vn);
+	struct pt_vertex *n = PT_PREV(vn);
 	/* Check if it became convex */
+	vn->isConvex = is_convex(pts[vn->index], pts[p->index], pts[n->index]);
+	if (vn->isConvex) bu_log("pt became convex: %d\n", vn->index);
 	/* Check if it became an ear */
+	if (vn->isConvex) {
+	    PT_DEQUEUE_REFLEX_VREF(lists->reflex_list, vn);
+	    PT_ADD_CONVEX_VREF(lists->convex_list, vn);
+	    vn->isEar = is_ear(vn->index, p->index, n->index, lists->reflex_list, pts);
+	    if (vn->isEar) {
+		bu_log("pt became ear: %d\n", vn->index);
+		PT_ADD_EAR_VREF(lists->ear_list, vn, pts);
+	    }
+	}
     }
 
     return;
@@ -433,31 +472,39 @@ int bn_polygon_triangulate(int **faces, int *num_faces, const point2d_t *pts, si
     size_t i = 0;
     fastf_t max_angle = 0.0;
     size_t seed_vert = -1;
+    struct pt_lists *lists = NULL;
     struct pt_vertex *v = NULL;
-    struct pt_vertex *vertex_list = NULL;
     struct pt_vertex_ref *vref = NULL;
-    struct pt_vertex_ref *ear_list = NULL;
-    struct pt_vertex_ref *reflex_list = NULL;
+    struct pt_vertex *vertex_list = NULL;
     struct pt_vertex_ref *convex_list = NULL;
+    struct pt_vertex_ref *reflex_list = NULL;
+    struct pt_vertex_ref *ear_list = NULL;
 
+    BU_GET(lists, struct pt_lists);
     if(npts < 3) return 1;
     if (!faces || !num_faces || !pts) return 1;
 
-    BU_GET(vertex_list, struct pt_vertex);
-    BU_LIST_INIT(&(vertex_list->l));
-    vertex_list->index = -1;
+    BU_GET(lists->vertex_list, struct pt_vertex);
+    BU_LIST_INIT(&(lists->vertex_list->l));
+    lists->vertex_list->index = -1;
 
-    BU_GET(ear_list, struct pt_vertex_ref);
-    BU_LIST_INIT(&(ear_list->l));
-    ear_list->v = NULL;
+    BU_GET(lists->ear_list, struct pt_vertex_ref);
+    BU_LIST_INIT(&(lists->ear_list->l));
+    lists->ear_list->v = NULL;
 
-    BU_GET(reflex_list, struct pt_vertex_ref);
-    BU_LIST_INIT(&(reflex_list->l));
-    reflex_list->v = NULL;
+    BU_GET(lists->reflex_list, struct pt_vertex_ref);
+    BU_LIST_INIT(&(lists->reflex_list->l));
+    lists->reflex_list->v = NULL;
 
-    BU_GET(convex_list, struct pt_vertex_ref);
-    BU_LIST_INIT(&(convex_list->l));
-    convex_list->v = NULL;
+    BU_GET(lists->convex_list, struct pt_vertex_ref);
+    BU_LIST_INIT(&(lists->convex_list->l));
+    lists->convex_list->v = NULL;
+
+    vertex_list = lists->vertex_list;
+    convex_list = lists->convex_list;
+    reflex_list = lists->reflex_list;
+    ear_list = lists->ear_list;
+
 
     /* Iniitalize vertex list. */
     for (i = 0; i < npts; i++) {
@@ -521,7 +568,7 @@ int bn_polygon_triangulate(int **faces, int *num_faces, const point2d_t *pts, si
 	struct pt_vertex *one_vert = PT_NEXT(vertex_list);
 	struct pt_vertex *four_vert = PT_NEXT(PT_NEXT(PT_NEXT(one_vert)));
 	while(one_vert->index != four_vert->index) {
-	    remove_ear(one_vert);
+	    remove_ear(one_vert, lists, pts);
 	    one_vert = PT_NEXT(vertex_list);
 	    four_vert = PT_NEXT(PT_NEXT(PT_NEXT(one_vert)));
 	}
@@ -530,6 +577,14 @@ int bn_polygon_triangulate(int **faces, int *num_faces, const point2d_t *pts, si
     for (BU_LIST_FOR_BACKWARDS(v, pt_vertex, &(vertex_list->l))){
 	bu_log("final contents vert: %d\n", v->index);
     }
+
+    /* TODO- make sure these lists are empty before sweeping up */
+
+    BU_PUT(ear_list, struct pt_vertex_ref);
+    BU_PUT(reflex_list, struct pt_vertex_ref);
+    BU_PUT(convex_list, struct pt_vertex_ref);
+    BU_PUT(vertex_list, struct pt_vertex);
+    BU_PUT(lists, struct pt_lists);
 
     return 0;
 }
