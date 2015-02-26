@@ -18,6 +18,9 @@
  * information.
  */
 
+#include "bu/list.h"
+#include "bu/log.h"
+#include "bu/malloc.h"
 #include "bu/sort.h"
 #include "bn/polygon.h"
 #include "bn/plane_struct.h"
@@ -221,7 +224,8 @@ bn_polygon_sort_ccw(size_t npts, point_t *pts, plane_t cmp)
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
  * OTHER DEALINGS IN THE SOFTWARE.
  */
-int bn_pt_in_polygon(size_t nvert, const point2d_t *pnts, const point2d_t *test)
+int
+bn_pt_in_polygon(size_t nvert, const point2d_t *pnts, const point2d_t *test)
 {
     size_t i = 0;
     size_t j = 0;
@@ -233,6 +237,115 @@ int bn_pt_in_polygon(size_t nvert, const point2d_t *pnts, const point2d_t *test)
     }
     return c;
 }
+
+#if 0
+
+HIDDEN int
+is_ear(const point2d_t p1, const point2d_t p2, const point2d_t p3, const point2d_t *pts, size_t npts) {
+    size_t i = 0;
+    int ear = 1;
+    point2d_t tri[3];
+    V2MOVE(tri[0], p1);
+    V2MOVE(tri[1], p2);
+    V2MOVE(tri[2], p3);
+    for (i = 0; i < npts; i++) {
+	if (V2EQUAL(pts[i], p1) || V2EQUAL(pts[i], p2) || V2EQUAL(pts[i], p3)) continue;
+	if (bn_pt_in_polygon(3, (const point2d_t *)tri, &(pts[i]))) {
+	    ear = 0;
+	    break;
+	}
+    }
+    return ear;
+}
+
+/* Use the convexity test from polypartition */
+HIDDEN int
+is_convex(const point2d_t test, const point2d_t p1, const point2d_t p2) {
+
+    double testval;
+    testval = (p2[1]-p1[1])*(test[0]-p1[0])-(p2[0]-p1[0])*(test[1]-p1[1]);
+    return (testval > 0) ? 1 : 0;
+}
+
+
+struct pt_vertex {
+    struct bu_list l;
+    int index;
+    int isConvex;
+    int isEar;
+    fastf_t angle;
+};
+
+void
+pt_vertex_init(struct pt_vertex *v)
+{
+    v->index = -1;
+    v->isConvex = -1;
+    v->isEar = -1;
+    v->angle = -1;
+}
+
+int bn_polygon_triangulate(int **faces, int *num_faces, const point2d_t *pts, size_t npts)
+{
+    size_t i = 0;
+    fastf_t max_angle = 0.0;
+    size_t seed_vert = -1;
+    struct pt_vertex *v = NULL;
+    struct pt_vertex *vertex_list = NULL;
+
+    if(npts < 3) return 1;
+    if (!faces || !num_faces || !pts) return 1;
+
+    BU_GET(vertex_list, struct pt_vertex);
+    BU_LIST_INIT(&(vertex_list->l));
+    vertex_list->index = -1;
+
+    /* Iniitalize list */
+    for (i = 0; i < npts; i++) {
+	struct pt_vertex *new_vertex;
+	BU_GET(new_vertex, struct pt_vertex);
+	pt_vertex_init(new_vertex);
+	new_vertex->index = i;
+	BU_LIST_PUSH(&(vertex_list->l), &(new_vertex->l));
+    }
+
+    /* Point ordering ends up opposite to that of the points, so everything is
+     * backwards */
+    for (BU_LIST_FOR_BACKWARDS(v, pt_vertex, &(vertex_list->l)))
+    {
+	struct pt_vertex *prev = BU_LIST_PNEXT_CIRC(pt_vertex, &v->l);
+	struct pt_vertex *next = BU_LIST_PPREV_CIRC(pt_vertex, &v->l);
+	bu_log("v[%d]: %f %f 0\n", v->index, pts[v->index][0], pts[v->index][1]);
+	bu_log("vprev[%d]: %f %f 0\n", prev->index, pts[prev->index][0], pts[prev->index][1]);
+	bu_log("vnext[%d]: %f %f 0\n", next->index, pts[next->index][0], pts[next->index][1]);
+	v->isConvex = is_convex(pts[v->index], pts[prev->index], pts[next->index]);
+	bu_log("is convex: %d\n", v->isConvex);
+	if (v->isConvex) {
+	    point2d_t v1, v2;
+	    v->isEar = is_ear(pts[v->index], pts[prev->index], pts[next->index], pts, npts);
+	    V2SUB2(v1, pts[prev->index], pts[v->index]);
+	    V2SUB2(v2, pts[next->index], pts[v->index]);
+	    V2UNITIZE(v1);
+	    V2UNITIZE(v2);
+	    v->angle = fabs(v1[0]*v2[0] + v1[1]*v2[1]);
+	    if (v->angle > max_angle) {
+		seed_vert = v->index;
+		max_angle = v->angle;
+	    }
+	} else {
+	    v->isEar = 0;
+	    v->angle = 0;
+	}
+	bu_log("is ear: %d\n", v->isEar);
+	bu_log("angle: %f\n\n", v->angle);
+    }
+
+    bu_log("seed vert: %d\n", seed_vert);
+
+    return 0;
+}
+
+#endif
 
 /*
  * Local Variables:
