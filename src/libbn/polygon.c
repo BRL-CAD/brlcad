@@ -320,6 +320,9 @@ struct pt_lists {
 #define PT_NEXT(v) BU_LIST_PNEXT_CIRC(pt_vertex, &(v->l))
 #define PT_PREV(v) BU_LIST_PPREV_CIRC(pt_vertex, &(v->l))
 
+#define PT_NEXT_REF(v) BU_LIST_PNEXT_CIRC(pt_vertex_ref, &(v->l))
+#define PT_PREV_REF(v) BU_LIST_PPREV_CIRC(pt_vertex_ref, &(v->l))
+
 double
 pt_angle(struct pt_vertex *p, struct pt_vertex *n, struct pt_vertex *v, const point2d_t *pts) {
     point2d_t v1, v2;
@@ -568,7 +571,8 @@ int bn_polygon_triangulate(int **faces, int *num_faces, const point2d_t *pts, si
 	struct pt_vertex *one_vert = PT_NEXT(vertex_list);
 	struct pt_vertex *four_vert = PT_NEXT(PT_NEXT(PT_NEXT(one_vert)));
 	while(one_vert->index != four_vert->index) {
-	    remove_ear(one_vert, lists, pts);
+	    struct pt_vertex_ref *ear_ref = PT_NEXT_REF(lists->ear_list);
+	    remove_ear(ear_ref->v, lists, pts);
 	    one_vert = PT_NEXT(vertex_list);
 	    four_vert = PT_NEXT(PT_NEXT(PT_NEXT(one_vert)));
 	}
