@@ -273,15 +273,14 @@ is_inside(const point2d_t p1, const point2d_t p2, const point2d_t p3, const poin
 
 
 HIDDEN int
-is_ear(const point2d_t p, const point2d_t p_prev, const point2d_t p_next, struct pt_vertex_ref *reflex_list, const point2d_t *pts)
+is_ear(int p_ind, int p_prev_ind, int p_next_ind, struct pt_vertex_ref *reflex_list, const point2d_t *pts)
 {
     int ear = 1;
     struct pt_vertex_ref *vref = NULL;
     for (BU_LIST_FOR_BACKWARDS(vref, pt_vertex_ref, &(reflex_list->l))) {
-	point2d_t ref_pt;
-	V2MOVE(ref_pt, pts[vref->v->index]);
-	if (V2EQUAL(ref_pt, p) || V2EQUAL(ref_pt, p_prev) || V2EQUAL(ref_pt, p_next)) continue;
-	if (is_inside(p, p_prev, p_next, (const point2d_t *)&ref_pt)) {
+	int vrind = vref->v->index;
+	if (vrind == p_ind || vrind == p_prev_ind || vrind == p_next_ind) continue;
+	if (is_inside(pts[p_ind], pts[p_prev_ind], pts[p_next_ind], (const point2d_t *)&pts[vrind])) {
 	    ear = 0;
 	    break;
 	}
@@ -374,7 +373,7 @@ int bn_polygon_triangulate(int **faces, int *num_faces, const point2d_t *pts, si
     {
 	struct pt_vertex *p = BU_LIST_PNEXT_CIRC(pt_vertex, &vref->v->l);
 	struct pt_vertex *n = BU_LIST_PPREV_CIRC(pt_vertex, &vref->v->l);
-	vref->v->isEar = is_ear(pts[vref->v->index], pts[p->index], pts[n->index], reflex_list, pts);
+	vref->v->isEar = is_ear(vref->v->index, p->index, n->index, reflex_list, pts);
 	if (vref->v->isEar) {
 	    point2d_t v1, v2;
 	    PT_ADD_VREF(ear_list, vref->v);
