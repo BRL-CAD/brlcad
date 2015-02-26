@@ -24,14 +24,13 @@
 # 'region_id', 'material_id', 'los', 'region name', 'region parent'.
 # If a value is unset, it is reported as '--'.
 #
-# Option '-d' specifies to list only one region with each 'region_id'.
+# Option '-d' specifies to list only regions with duplicate 'region_id'.
 #
-# Option '-s' specifies to list only one region with each combination of 'region_id',
-# 'material_id' and 'los'.  In addition to the output of '-d', it lists
-# those cases where 'region_id' is the same but 'material_id' and/or
-# 'los' are different.
+# Option '-s' is the same as '-d' except some duplicates will not be
+# reported (i.e. skipped). Skipped duplicates will be those within the
+# specified group, that have the same parent, 'material_id' and 'los'.
 #
-# Option '-r' removes regions from the list in which their parent is
+# Option '-r' remove regions from the list in which their parent is
 # a region and the region is subtracted within the parent. The '-r'
 # option can be combined with any other option.
 #
@@ -61,7 +60,7 @@ proc lc2 {args} {
     set sort_column_flag_cnt 0
 
     if { [llength $args] == 0 } {
-	puts stdout "Usage: \[-d|-s\] \[-r\] \[-z\] \[-0|-1|-2|-3|-4|-5\] \[-f {FileName}\] {GroupName}"
+	puts stdout "Usage: \[-d|-s|-r\] \[-z\] \[-0|-1|-2|-3|-4|-5\] \[-f {FileName}\] {GroupName}"
 	return
     }
 
@@ -121,20 +120,17 @@ proc lc2 {args} {
 	    set file_name $arg
 	    continue
 	}
-	if { $arg <= -0 && $arg >= -5 } {
-	    set sort_column [expr abs($arg)]
-	    continue
-	}
 	if { $arg == "-f" } {
 	    set file_name_flag_cnt 1
 	    continue
 	}
-	if { $arg == "-d" || $arg == "-s"} {
+	if { $arg == "-d" } {
 	    set find_duplicates_flag_cnt 1
-
-	    if { $arg == "-s" } {
-		set skip_special_duplicates_flag_cnt 1
-	    }
+	    continue
+	}
+	if { $arg == "-s" } {
+	    set find_duplicates_flag_cnt 1
+	    set skip_special_duplicates_flag_cnt 1
 	    continue
 	}
 	if { $arg == "-r" } {
@@ -143,6 +139,10 @@ proc lc2 {args} {
 	}
 	if { $arg == "-z" } {
 	    set descending_sort_flag_cnt 1
+	    continue
+	}
+	if { $arg <= -0 && $arg >= -5 } {
+	    set sort_column [expr abs($arg)]
 	    continue
 	}
 	set group_name_set 1
@@ -398,7 +398,7 @@ proc lc2 {args} {
     } else {
 	# convert columns from 1-5 to 0-4
 	set sort_column [expr ($sort_column - 1)]
-
+	
 	if { $descending_sort_flag_cnt == 1 } {
 	    set lines2 [lsort -dictionary -decreasing -index $sort_column $lines2]
 	} else {
