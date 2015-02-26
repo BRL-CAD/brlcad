@@ -261,6 +261,15 @@ struct pt_vertex_ref {
 	BU_LIST_PUSH(&(_list->l), &(n_ref->l)); \
 }
 
+#define PT_ANGLE(angle, p, n, v) {\
+    point2d_t v1, v2; \
+    V2SUB2(v1, pts[p->index], pts[v->index]); \
+    V2SUB2(v2, pts[n->index], pts[v->index]); \
+    V2UNITIZE(v1); \
+    V2UNITIZE(v2); \
+    angle = fabs(v1[0]*v2[0] + v1[1]*v2[1]); \
+}
+
 
 HIDDEN int
 is_inside(const point2d_t p1, const point2d_t p2, const point2d_t p3, const point2d_t *test) {
@@ -354,11 +363,6 @@ int bn_polygon_triangulate(int **faces, int *num_faces, const point2d_t *pts, si
     {
 	struct pt_vertex *prev = BU_LIST_PNEXT_CIRC(pt_vertex, &v->l);
 	struct pt_vertex *next = BU_LIST_PPREV_CIRC(pt_vertex, &v->l);
-#if 0
-	bu_log("v[%d]: %f %f 0\n", v->index, pts[v->index][0], pts[v->index][1]);
-	bu_log("vprev[%d]: %f %f 0\n", prev->index, pts[prev->index][0], pts[prev->index][1]);
-	bu_log("vnext[%d]: %f %f 0\n", next->index, pts[next->index][0], pts[next->index][1]);
-#endif
 	v->isConvex = is_convex(pts[v->index], pts[prev->index], pts[next->index]);
 	if (v->isConvex) {
 	    PT_ADD_VREF(convex_list, v);
@@ -373,15 +377,15 @@ int bn_polygon_triangulate(int **faces, int *num_faces, const point2d_t *pts, si
     {
 	struct pt_vertex *p = BU_LIST_PNEXT_CIRC(pt_vertex, &vref->v->l);
 	struct pt_vertex *n = BU_LIST_PPREV_CIRC(pt_vertex, &vref->v->l);
+#if 0
+	bu_log("v[%d]: %f %f 0\n", vref->v->index, pts[vref->v->index][0], pts[vref->v->index][1]);
+	bu_log("vprev[%d]: %f %f 0\n", p->index, pts[p->index][0], pts[p->index][1]);
+	bu_log("vnext[%d]: %f %f 0\n", n->index, pts[n->index][0], pts[n->index][1]);
+#endif
 	vref->v->isEar = is_ear(vref->v->index, p->index, n->index, reflex_list, pts);
 	if (vref->v->isEar) {
-	    point2d_t v1, v2;
 	    PT_ADD_VREF(ear_list, vref->v);
-	    V2SUB2(v1, pts[p->index], pts[vref->v->index]);
-	    V2SUB2(v2, pts[n->index], pts[vref->v->index]);
-	    V2UNITIZE(v1);
-	    V2UNITIZE(v2);
-	    vref->v->angle = fabs(v1[0]*v2[0] + v1[1]*v2[1]);
+	    PT_ANGLE(vref->v->angle, p, n, vref->v)
 	    if (vref->v->angle > max_angle) {
 		seed_vert = vref->v->index;
 		max_angle = vref->v->angle;
