@@ -22,22 +22,48 @@
 void
 brep_to_bot(struct subbrep_object_data *data, struct rt_wdb *wdbp)
 {
-    std::cout << "bot build for brep " << bu_vls_addr(data->key) << "\n";
     /* Triangulate faces and write out as a bot */
     struct bu_vls prim_name = BU_VLS_INIT_ZERO;
     int all_faces_cnt = 0;
+    int face_error = 0;
+    int *final_faces = NULL;
+
+    // Accumulate faces in a std::vector, since we don't know how many we're going to get
+    std::vector<int> all_faces;
+
+    /* Set up an inital comprehensive vertex array that will be used in
+     * the final BoT build - all face definitions will ultimately index
+     * into this array */
     point_t *all_verts = (point_t *)bu_calloc(data->brep->m_V.Count(), sizeof(point_t), "bot verts");
     for (int vi = 0; vi < data->brep->m_V.Count(); vi++) {
 	VMOVE(all_verts[vi], data->brep->m_V[vi].Point());
     }
-    std::vector<int> all_faces;
+
+    // Iterate over all faces in the brep.  TODO - should probably protect this with some planar checks...
     for (int s_it = 0; s_it < data->brep->m_F.Count(); s_it++) {
-	int loop_length = 0;
+	int num_faces;
+	int *faces;
 	const ON_BrepFace *b_face = &(data->brep->m_F[s_it]);
+
+	/* There should be only an outer loop by this point in the process */
+	/* TODO - should probably check that as an error-out condition... */
 	const ON_BrepLoop *b_loop = b_face->OuterLoop();
-	point_t *verts = (point_t *)bu_calloc(b_loop->m_ti.Count(), sizeof(point_t), "bot verts");
+
+	/* We need to build a 2D vertex list for the triangulation, and as long
+	 * as we make sure the vertex mapping accounts for flipped trims in 3D,
+	 * the point indices returned for the 2D triangulation will correspond
+	 * to the correct 3D points without any additional work.  In essence,
+	 * we use the fact that the BRep gives us a ready-made 2D point
+	 * parameterization to same some work.*/
 	point2d_t *verts2d = (point2d_t *)bu_calloc(b_loop->m_ti.Count(), sizeof(point2d_t), "bot verts");
+
+	/* The triangulation will use only the points in the temporay verts2d
+	 * array and return with faces indexed accordingly, so we need a map to
+	 * translate them back to our final vert array */
 	std::map<int, int> local_to_verts;
+
+	/* Now the fun begins.  If we have an outer loop that isn't CCW, we
+	 * need to assemble our verts2d polygon backwards */
 	if (data->brep->LoopDirection(data->local_brep->m_L[b_loop->m_loop_index]) != 1) {
 	    for (int ti = 0; ti < b_loop->m_ti.Count(); ti++) {
 		int ti_rev = b_loop->m_ti.Count() - 1 - ti;
@@ -47,14 +73,11 @@ brep_to_bot(struct subbrep_object_data *data, struct rt_wdb *wdbp)
 		ON_2dPoint cp = trim_curve->PointAt(trim_curve->Domain().Min());
 		V2MOVE(verts2d[ti], cp);
 		if (trim->m_bRev3d) {
-		    VMOVE(verts[ti], edge->Vertex(1)->Point());
 		    local_to_verts[ti] = edge->Vertex(1)->m_vertex_index;
 		} else {
-		    VMOVE(verts[ti], edge->Vertex(0)->Point());
 		    local_to_verts[ti] = edge->Vertex(0)->m_vertex_index;
 		}
 	    }
-
 	} else {
 	    for (int ti = 0; ti < b_loop->m_ti.Count(); ti++) {
 		const ON_BrepTrim *trim = &(b_face->Brep()->m_T[b_loop->m_ti[ti]]);
@@ -63,23 +86,24 @@ brep_to_bot(struct subbrep_object_data *data, struct rt_wdb *wdbp)
 		ON_2dPoint cp = trim_curve->PointAt(trim_curve->Domain().Max());
 		V2MOVE(verts2d[ti], cp);
 		if (trim->m_bRev3d) {
-		    VMOVE(verts[ti], edge->Vertex(0)->Point());
 		    local_to_verts[ti] = edge->Vertex(0)->m_vertex_index;
 		} else {
-		    VMOVE(verts[ti], edge->Vertex(1)->Point());
 		    local_to_verts[ti] = edge->Vertex(1)->m_vertex_index;
 		}
 	    }
 	}
-	int num_faces;
-	int *faces;
-	//std::cout << "bot build for face " << b_face->m_face_index << "...\n";
-	//if (b_face->m_bRev) std::cout << "(face is flipped)\n";
-	int face_error = bn_polygon_triangulate(&faces, &num_faces, (const point2d_t *)verts2d, b_loop->m_ti.Count());
+
+	/* The real work - triangulate the 2D polygon to find out triangles for
+	 * this particular B-Rep face */
+	face_error = bn_polygon_triangulate(&faces, &num_faces, (const point2d_t *)verts2d, b_loop->m_ti.Count());
 	if (face_error || !faces) {
 	    std::cout << "bot build failed for face " << b_face->m_face_index << "\n";
+	    bu_free(verts2d, "free tmp 2d vertex array");
+	    bu_free(all_verts, "free top level vertex array");
 	    return;
 	} else {
+	    /* We aren't done with the reversing fun - if the face is reversed, we need
+	     * to flip our triangles as well */
 	    if (b_face->m_bRev) {
 		for (int f_ind = 0; f_ind < num_faces; f_ind++) {
 		    int itmp = faces[f_ind * 3 + 2];
@@ -87,22 +111,31 @@ brep_to_bot(struct subbrep_object_data *data, struct rt_wdb *wdbp)
 		    faces[f_ind * 3 + 1] = itmp;
 		}
 	    }
+	    /* Now that we have our faces, map them from the local vertex
+	     * indices to the global ones and insert the faces into the
+	     * all_faces array */
 	    for (int f_ind = 0; f_ind < num_faces*3; f_ind++) {
 		all_faces.push_back(local_to_verts[faces[f_ind]]);
 	    }
 	    all_faces_cnt += num_faces;
+	    bu_free(verts2d, "free tmp 2d vertex array");
 	}
-#if 0
+
+	/* Uncomment this code to create per-face bots for debugging purposes */
+	/*
 	bu_vls_sprintf(&prim_name, "bot_%s_face_%d.s", bu_vls_addr(data->key), b_face->m_face_index);
 	if (mk_bot(wdbp, bu_vls_addr(&prim_name), RT_BOT_SOLID, RT_BOT_UNORIENTED, 0, b_loop->m_ti.Count(), num_faces, (fastf_t *)verts, faces, (fastf_t *)NULL, (struct bu_bitv *)NULL)) {
 	    std::cout << "mk_bot failed for face " << b_face->m_face_index << "\n";
-	}
-#endif
+	}*/
     }
-    int *final_faces = (int *)bu_calloc(all_faces_cnt * 3, sizeof(int), "final bot verts");
-    for (size_t i = 0; i < all_faces_cnt*3; i++) {
+
+    /* Now we can build the final faces array for mk_bot */
+    final_faces = (int *)bu_calloc(all_faces_cnt * 3, sizeof(int), "final bot verts");
+    for (int i = 0; i < all_faces_cnt*3; i++) {
 	final_faces[i] = all_faces[i];
     }
+
+    /* Make the bot, using the data key for a unique name */
     bu_vls_sprintf(&prim_name, "bot_%s.s", bu_vls_addr(data->key));
     if (mk_bot(wdbp, bu_vls_addr(&prim_name), RT_BOT_SOLID, RT_BOT_UNORIENTED, 0, data->brep->m_V.Count(), all_faces_cnt, (fastf_t *)all_verts, final_faces, (fastf_t *)NULL, (struct bu_bitv *)NULL)) {
 	std::cout << "mk_bot failed for overall bot\n";
