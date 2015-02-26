@@ -44,7 +44,6 @@ set(mged_TCLSCRIPTS
   icreate.tcl
   illum.tcl
   lc.tcl
-  lc2.tcl
   lgt_mat.tcl
   list.tcl
   lodconfig.tcl
