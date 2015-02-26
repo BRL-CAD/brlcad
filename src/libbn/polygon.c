@@ -609,7 +609,7 @@ cleanup:
     BU_PUT(vertex_list, struct pt_vertex);
     BU_PUT(lists, struct pt_lists);
 
-    return 0;
+    return ret;
 }
 
 
