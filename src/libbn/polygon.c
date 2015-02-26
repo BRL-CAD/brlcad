@@ -238,7 +238,6 @@ bn_pt_in_polygon(size_t nvert, const point2d_t *pnts, const point2d_t *test)
     return c;
 }
 
-#if 0
 
 HIDDEN int
 is_ear(const point2d_t p1, const point2d_t p2, const point2d_t p3, const point2d_t *pts, size_t npts) {
@@ -276,7 +275,19 @@ struct pt_vertex {
     fastf_t angle;
 };
 
-void
+struct pt_vertex_ref {
+    struct bu_list l;
+    struct pt_vertex *v;
+};
+
+#define PT_ADD_VREF(_list, vert) {\
+	struct pt_vertex_ref *n_ref; \
+	BU_GET(n_ref, struct pt_vertex_ref); \
+	n_ref->v = vert; \
+	BU_LIST_PUSH(&(_list->l), &(n_ref->l)); \
+}
+
+HIDDEN void
 pt_vertex_init(struct pt_vertex *v)
 {
     v->index = -1;
@@ -292,6 +303,10 @@ int bn_polygon_triangulate(int **faces, int *num_faces, const point2d_t *pts, si
     size_t seed_vert = -1;
     struct pt_vertex *v = NULL;
     struct pt_vertex *vertex_list = NULL;
+    struct pt_vertex_ref *vref = NULL;
+    struct pt_vertex_ref *ear_list = NULL;
+    struct pt_vertex_ref *reflex_list = NULL;
+    struct pt_vertex_ref *convex_list = NULL;
 
     if(npts < 3) return 1;
     if (!faces || !num_faces || !pts) return 1;
@@ -300,7 +315,19 @@ int bn_polygon_triangulate(int **faces, int *num_faces, const point2d_t *pts, si
     BU_LIST_INIT(&(vertex_list->l));
     vertex_list->index = -1;
 
-    /* Iniitalize list */
+    BU_GET(ear_list, struct pt_vertex_ref);
+    BU_LIST_INIT(&(ear_list->l));
+    ear_list->v = NULL;
+
+    BU_GET(reflex_list, struct pt_vertex_ref);
+    BU_LIST_INIT(&(reflex_list->l));
+    reflex_list->v = NULL;
+
+    BU_GET(convex_list, struct pt_vertex_ref);
+    BU_LIST_INIT(&(convex_list->l));
+    convex_list->v = NULL;
+
+    /* Iniitalize vertex list. */
     for (i = 0; i < npts; i++) {
 	struct pt_vertex *new_vertex;
 	BU_GET(new_vertex, struct pt_vertex);
@@ -309,8 +336,8 @@ int bn_polygon_triangulate(int **faces, int *num_faces, const point2d_t *pts, si
 	BU_LIST_PUSH(&(vertex_list->l), &(new_vertex->l));
     }
 
-    /* Point ordering ends up opposite to that of the points, so everything is
-     * backwards */
+    /* Point ordering ends up opposite to that of the points in the array, so
+     * everything is backwards */
     for (BU_LIST_FOR_BACKWARDS(v, pt_vertex, &(vertex_list->l)))
     {
 	struct pt_vertex *prev = BU_LIST_PNEXT_CIRC(pt_vertex, &v->l);
@@ -319,33 +346,47 @@ int bn_polygon_triangulate(int **faces, int *num_faces, const point2d_t *pts, si
 	bu_log("vprev[%d]: %f %f 0\n", prev->index, pts[prev->index][0], pts[prev->index][1]);
 	bu_log("vnext[%d]: %f %f 0\n", next->index, pts[next->index][0], pts[next->index][1]);
 	v->isConvex = is_convex(pts[v->index], pts[prev->index], pts[next->index]);
-	bu_log("is convex: %d\n", v->isConvex);
 	if (v->isConvex) {
 	    point2d_t v1, v2;
+	    PT_ADD_VREF(convex_list, v);
 	    v->isEar = is_ear(pts[v->index], pts[prev->index], pts[next->index], pts, npts);
-	    V2SUB2(v1, pts[prev->index], pts[v->index]);
-	    V2SUB2(v2, pts[next->index], pts[v->index]);
-	    V2UNITIZE(v1);
-	    V2UNITIZE(v2);
-	    v->angle = fabs(v1[0]*v2[0] + v1[1]*v2[1]);
-	    if (v->angle > max_angle) {
-		seed_vert = v->index;
-		max_angle = v->angle;
+	    if (v->isEar) {
+		PT_ADD_VREF(ear_list, v);
+		V2SUB2(v1, pts[prev->index], pts[v->index]);
+		V2SUB2(v2, pts[next->index], pts[v->index]);
+		V2UNITIZE(v1);
+		V2UNITIZE(v2);
+		v->angle = fabs(v1[0]*v2[0] + v1[1]*v2[1]);
+		if (v->angle > max_angle) {
+		    seed_vert = v->index;
+		    max_angle = v->angle;
+		}
+	    } else {
+		v->angle = 0;
 	    }
 	} else {
 	    v->isEar = 0;
 	    v->angle = 0;
+	    PT_ADD_VREF(reflex_list, v);
 	}
-	bu_log("is ear: %d\n", v->isEar);
-	bu_log("angle: %f\n\n", v->angle);
+	/*bu_log("is ear: %d\n", v->isEar);*/
+	/*bu_log("angle: %f\n\n", v->angle);*/
     }
 
+    for (BU_LIST_FOR_BACKWARDS(vref, pt_vertex_ref, &(convex_list->l))){
+	bu_log("convex vert: %d\n", vref->v->index);
+    }
+    for (BU_LIST_FOR_BACKWARDS(vref, pt_vertex_ref, &(reflex_list->l))){
+	bu_log("reflex vert: %d\n", vref->v->index);
+    }
+    for (BU_LIST_FOR_BACKWARDS(vref, pt_vertex_ref, &(ear_list->l))){
+	bu_log("ear vert: %d\n", vref->v->index);
+    }
     bu_log("seed vert: %d\n", seed_vert);
 
     return 0;
 }
 
-#endif
 
 /*
  * Local Variables:
