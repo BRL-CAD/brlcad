@@ -407,6 +407,28 @@ int bn_polygon_triangulate(int **faces, int *num_faces, const point2d_t *pts, si
     }
     bu_log("seed vert: %d\n", seed_vert);
 
+
+    /* We know what we need to begin - remove ears, build triangles and update accordingly */
+    {
+    struct pt_vertex *one_vert = BU_LIST_PNEXT_CIRC(pt_vertex, &(vertex_list->l));
+    struct pt_vertex *three_vert = BU_LIST_PNEXT_CIRC(pt_vertex, BU_LIST_PNEXT_CIRC(pt_vertex, BU_LIST_PNEXT_CIRC(pt_vertex, &(one_vert->l))));
+    bu_log("one vert: %d\n", one_vert->index);
+    bu_log("four vert: %d\n", three_vert->index);
+    while(one_vert->index != three_vert->index) {
+	BU_LIST_DEQUEUE(&(one_vert->l));
+	BU_PUT(one_vert, struct pt_vertex);
+	one_vert = BU_LIST_PNEXT_CIRC(pt_vertex, &(vertex_list->l));
+	three_vert = BU_LIST_PNEXT_CIRC(pt_vertex, BU_LIST_PNEXT_CIRC(pt_vertex, BU_LIST_PNEXT_CIRC(pt_vertex, &(one_vert->l))));
+	bu_log("one vert: %d\n", one_vert->index);
+	bu_log("four vert: %d\n", three_vert->index);
+    }
+    }
+
+
+    for (BU_LIST_FOR_BACKWARDS(v, pt_vertex, &(vertex_list->l))){
+	bu_log("final contents vert: %d\n", v->index);
+    }
+
     return 0;
 }
 
