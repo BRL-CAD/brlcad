@@ -239,32 +239,6 @@ bn_pt_in_polygon(size_t nvert, const point2d_t *pnts, const point2d_t *test)
 }
 
 
-HIDDEN int
-is_ear(const point2d_t p1, const point2d_t p2, const point2d_t p3, const point2d_t *pts, size_t npts) {
-    size_t i = 0;
-    int ear = 1;
-    point2d_t tri[3];
-    V2MOVE(tri[0], p1);
-    V2MOVE(tri[1], p2);
-    V2MOVE(tri[2], p3);
-    for (i = 0; i < npts; i++) {
-	if (V2EQUAL(pts[i], p1) || V2EQUAL(pts[i], p2) || V2EQUAL(pts[i], p3)) continue;
-	if (bn_pt_in_polygon(3, (const point2d_t *)tri, &(pts[i]))) {
-	    ear = 0;
-	    break;
-	}
-    }
-    return ear;
-}
-
-/* Use the convexity test from polypartition */
-HIDDEN int
-is_convex(const point2d_t test, const point2d_t p1, const point2d_t p2) {
-
-    double testval;
-    testval = (p2[1]-p1[1])*(test[0]-p1[0])-(p2[0]-p1[0])*(test[1]-p1[1]);
-    return (testval > 0) ? 1 : 0;
-}
 
 
 struct pt_vertex {
@@ -285,6 +259,43 @@ struct pt_vertex_ref {
 	BU_GET(n_ref, struct pt_vertex_ref); \
 	n_ref->v = vert; \
 	BU_LIST_PUSH(&(_list->l), &(n_ref->l)); \
+}
+
+
+HIDDEN int
+is_inside(const point2d_t p1, const point2d_t p2, const point2d_t p3, const point2d_t *test) {
+    point2d_t tri[3];
+    V2MOVE(tri[0], p1);
+    V2MOVE(tri[1], p2);
+    V2MOVE(tri[2], p3);
+    return bn_pt_in_polygon(3, (const point2d_t *)tri, test);
+}
+
+
+HIDDEN int
+is_ear(const point2d_t p, const point2d_t p_prev, const point2d_t p_next, struct pt_vertex_ref *reflex_list, const point2d_t *pts)
+{
+    int ear = 1;
+    struct pt_vertex_ref *vref = NULL;
+    for (BU_LIST_FOR_BACKWARDS(vref, pt_vertex_ref, &(reflex_list->l))) {
+	point2d_t ref_pt;
+	V2MOVE(ref_pt, pts[vref->v->index]);
+	if (V2EQUAL(ref_pt, p) || V2EQUAL(ref_pt, p_prev) || V2EQUAL(ref_pt, p_next)) continue;
+	if (is_inside(p, p_prev, p_next, (const point2d_t *)&ref_pt)) {
+	    ear = 0;
+	    break;
+	}
+    }
+    return ear;
+}
+
+/* Use the convexity test from polypartition */
+HIDDEN int
+is_convex(const point2d_t test, const point2d_t p1, const point2d_t p2) {
+
+    double testval;
+    testval = (p2[1]-p1[1])*(test[0]-p1[0])-(p2[0]-p1[0])*(test[1]-p1[1]);
+    return (testval > 0) ? 1 : 0;
 }
 
 HIDDEN void
@@ -347,31 +358,40 @@ int bn_polygon_triangulate(int **faces, int *num_faces, const point2d_t *pts, si
 	bu_log("vnext[%d]: %f %f 0\n", next->index, pts[next->index][0], pts[next->index][1]);
 	v->isConvex = is_convex(pts[v->index], pts[prev->index], pts[next->index]);
 	if (v->isConvex) {
-	    point2d_t v1, v2;
 	    PT_ADD_VREF(convex_list, v);
-	    v->isEar = is_ear(pts[v->index], pts[prev->index], pts[next->index], pts, npts);
-	    if (v->isEar) {
-		PT_ADD_VREF(ear_list, v);
-		V2SUB2(v1, pts[prev->index], pts[v->index]);
-		V2SUB2(v2, pts[next->index], pts[v->index]);
-		V2UNITIZE(v1);
-		V2UNITIZE(v2);
-		v->angle = fabs(v1[0]*v2[0] + v1[1]*v2[1]);
-		if (v->angle > max_angle) {
-		    seed_vert = v->index;
-		    max_angle = v->angle;
-		}
-	    } else {
-		v->angle = 0;
-	    }
 	} else {
 	    v->isEar = 0;
 	    v->angle = 0;
 	    PT_ADD_VREF(reflex_list, v);
 	}
-	/*bu_log("is ear: %d\n", v->isEar);*/
-	/*bu_log("angle: %f\n\n", v->angle);*/
     }
+    /* Now that we know which are the convex and reflex verts, find the ears */
+    for (BU_LIST_FOR_BACKWARDS(vref, pt_vertex_ref, &(convex_list->l)))
+    {
+	struct pt_vertex *prev = BU_LIST_PNEXT_CIRC(pt_vertex, &vref->v->l);
+	struct pt_vertex *next = BU_LIST_PPREV_CIRC(pt_vertex, &vref->v->l);
+	point2d_t p, p_prev, p_next;
+	V2MOVE(p, pts[vref->v->index]);
+	V2MOVE(p_prev, pts[prev->index]);
+	V2MOVE(p_next, pts[next->index]);
+	vref->v->isEar = is_ear(p, p_prev, p_next, reflex_list, pts);
+	if (vref->v->isEar) {
+	    point2d_t v1, v2;
+	    PT_ADD_VREF(ear_list, vref->v);
+	    V2SUB2(v1, pts[prev->index], pts[vref->v->index]);
+	    V2SUB2(v2, pts[next->index], pts[vref->v->index]);
+	    V2UNITIZE(v1);
+	    V2UNITIZE(v2);
+	    vref->v->angle = fabs(v1[0]*v2[0] + v1[1]*v2[1]);
+	    if (vref->v->angle > max_angle) {
+		seed_vert = vref->v->index;
+		max_angle = vref->v->angle;
+	    }
+	} else {
+	    vref->v->angle = 0;
+	}
+    }
+
 
     for (BU_LIST_FOR_BACKWARDS(vref, pt_vertex_ref, &(convex_list->l))){
 	bu_log("convex vert: %d\n", vref->v->index);
