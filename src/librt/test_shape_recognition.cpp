@@ -122,11 +122,10 @@ struct model *
 brep_to_nmg(struct subbrep_object_data *data, struct rt_wdb *wdbp, struct wmember *wcomb)
 {
     struct bu_vls prim_name = BU_VLS_INIT_ZERO;
-#if 0
+#if 1
     /* For debugging, triangulate each face and write it out as a bot */
     for (int s_it = 0; s_it < data->brep->m_F.Count(); s_it++) {
 	if (BU_STR_EQUAL(bu_vls_addr(data->key), "17_24_25_26_27_28_29_30_39_40_41_42_43_44_45_46_47_48_49_50_51_52_53_54_55_56_57_58_59_60_61_62_63_64_65_66_67_68_69_70_71_72_73_74_75_84_85_86_87_88_89_90_95_96_97_98_99_100")) {
-	    if (s_it == 0) {
 		int loop_length = 0;
 		const ON_BrepFace *b_face = &(data->brep->m_F[s_it]);
 		const ON_BrepLoop *b_loop = b_face->OuterLoop();
@@ -137,7 +136,7 @@ brep_to_nmg(struct subbrep_object_data *data, struct rt_wdb *wdbp, struct wmembe
 		    const ON_BrepEdge *edge = &(b_face->Brep()->m_E[trim->m_ei]);
 		    const ON_Curve *trim_curve = trim->TrimCurveOf();
 		    ON_2dPoint cp = trim_curve->PointAt(trim_curve->Domain().Max());
-		    std::cout << "2D point(" << ti << "): " << cp.x << " " << cp.y << " 0\n";
+		    //std::cout << "2D point(" << ti << "): " << cp.x << " " << cp.y << " 0\n";
 		    V2MOVE(verts2d[ti], cp);
 		    if (trim->m_bRev3d) {
 			VMOVE(verts[ti], edge->Vertex(0)->Point());
@@ -154,6 +153,14 @@ brep_to_nmg(struct subbrep_object_data *data, struct rt_wdb *wdbp, struct wmembe
 		if (!bn_polygon_triangulate(&faces, &num_faces, (const point2d_t *)verts2d, b_loop->m_ti.Count())) {
 		    bu_vls_sprintf(&prim_name, "bot_%s_face_%d.s", bu_vls_addr(data->key), b_face->m_face_index);
 		    if (faces) {
+			if (b_face->m_bRev) {
+			    std::cout << "flipped face!\n";
+			    for (int f_ind = 0; f_ind < num_faces; f_ind++) {
+				int itmp = faces[f_ind * 3 + 2];
+				faces[f_ind * 3 + 2] = faces[f_ind * 3 + 1];
+				faces[f_ind * 3 + 1] = itmp;
+			    }
+			}
 			if (mk_bot(wdbp, bu_vls_addr(&prim_name), RT_BOT_SOLID, RT_BOT_UNORIENTED, 0, b_loop->m_ti.Count(), num_faces, (fastf_t *)verts, faces, (fastf_t *)NULL, (struct bu_bitv *)NULL)) {
 			    std::cout << "mk_bot failed for face " << b_face->m_face_index << "\n";
 			}
@@ -165,7 +172,6 @@ brep_to_nmg(struct subbrep_object_data *data, struct rt_wdb *wdbp, struct wmembe
 		}
 	    }
 	}
-    }
 #endif
     bu_vls_sprintf(&prim_name, "nmg_%s.s", bu_vls_addr(data->key));
     std::set<int> b_verts;
