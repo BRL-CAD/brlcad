@@ -242,6 +242,8 @@ bn_pt_in_polygon(size_t nvert, const point2d_t *pnts, const point2d_t *test)
 /**
  * Implementation of Ear Clipping Polygon Triangulation
  *
+ * Input polygon points must be in a CCW direction.
+ *
  * Based off of David Eberly's documentation of the algorithm in Triangulation
  * by Ear Clipping, section 2.
  * http://www.geometrictools.com/Documentation/TriangulationByEarClipping.pdf
@@ -472,6 +474,7 @@ int bn_polygon_triangulate(int **faces, int *num_faces, const point2d_t *pts, si
     size_t i = 0;
     size_t face_cnt = 0;
     int offset = 0;
+    int ret = 0;
     int *local_faces;
     struct pt_lists *lists = NULL;
     struct pt_vertex *v = NULL;
@@ -538,6 +541,12 @@ int bn_polygon_triangulate(int **faces, int *num_faces, const point2d_t *pts, si
 	if (vref->v->isEar) PT_ADD_EAR_VREF(ear_list, vref->v, pts);
     }
 
+    /* If we didn't find any ears, something is wrong - possibly non CCW inputs */
+    if (BU_LIST_IS_EMPTY(&(lists->ear_list->l))) {
+	ret = 1;
+	goto cleanup;
+    }
+
     /* We know what we need to begin - remove ears, build triangles and update accordingly */
     {
 	struct pt_vertex *one_vert = PT_NEXT(vertex_list);
@@ -567,8 +576,9 @@ int bn_polygon_triangulate(int **faces, int *num_faces, const point2d_t *pts, si
 	(*faces)[i*3+1] = local_faces[i*3+1];
 	(*faces)[i*3+2] = local_faces[i*3+2];
     }
-    bu_free(local_faces, "free local faces array");
 
+cleanup:
+    bu_free(local_faces, "free local faces array");
 
     /* Make sure the lists are empty */
 
