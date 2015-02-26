@@ -17,258 +17,96 @@
 #include "brep.h"
 #include "../libbrep/shape_recognition.h"
 
-struct model *
-subbrep_to_nmg(struct subbrep_object_data *data, struct rt_wdb *wdbp, struct wmember *wcomb)
-{
-    struct bu_vls prim_name = BU_VLS_INIT_ZERO;
-    bu_vls_sprintf(&prim_name, "nmg_%s.s", bu_vls_addr(data->key));
-    std::set<int> b_verts;
-    std::vector<int> b_verts_array;
-    std::map<int, int> b_verts_to_verts;
-    struct model *m = nmg_mm();
-    struct nmgregion *r = nmg_mrsv(m);
-    struct shell *s = BU_LIST_FIRST(shell, &(r)->s_hd);
-    struct faceuse **fu;         /* array of faceuses */
-    struct vertex **verts;       /* Array of pointers to vertex structs */
-    struct vertex ***loop_verts; /* Array of pointers to vertex structs to pass to nmg_cmface */
-
-    struct bn_tol nmg_tol = {BN_TOL_MAGIC, BN_TOL_DIST, BN_TOL_DIST * BN_TOL_DIST, 1e-6, 1.0 - 1e-6 };
-
-    int point_cnt = 0;
-    int face_cnt = 0;
-    int max_edge_cnt = 0;
-
-    // One loop to a face, and the object data has the set of loops that make
-    // up this object.
-    for (int s_it = 0; s_it < data->loops_cnt; s_it++) {
-	const ON_BrepLoop *b_loop = &(data->brep->m_L[data->loops[s_it]]);
-	const ON_BrepFace *b_face = b_loop->Face();
-	face_cnt++;
-	if (b_loop->m_ti.Count() > max_edge_cnt) max_edge_cnt = b_loop->m_ti.Count();
-	for (int ti = 0; ti < b_loop->m_ti.Count(); ti++) {
-	    const ON_BrepTrim *trim = &(b_face->Brep()->m_T[b_loop->m_ti[ti]]);
-	    const ON_BrepEdge *edge = &(b_face->Brep()->m_E[trim->m_ei]);
-	    if (b_verts.find(edge->Vertex(0)->m_vertex_index) == b_verts.end()) {
-		b_verts.insert(edge->Vertex(0)->m_vertex_index);
-		b_verts_array.push_back(edge->Vertex(0)->m_vertex_index);
-		b_verts_to_verts[edge->Vertex(0)->m_vertex_index] = b_verts_array.size()-1;
-	    }
-	    if (b_verts.find(edge->Vertex(1)->m_vertex_index) == b_verts.end()) {
-		b_verts.insert(edge->Vertex(1)->m_vertex_index);
-		b_verts_array.push_back(edge->Vertex(1)->m_vertex_index);
-		b_verts_to_verts[edge->Vertex(1)->m_vertex_index] = b_verts_array.size()-1;
-	    }
-	}
-    }
-
-    point_cnt = b_verts.size();
-
-    if (point_cnt == 0) return NULL;
-
-    verts = (struct vertex **)bu_calloc(point_cnt, sizeof(struct vertex *), "brep_to_nmg: verts");
-    loop_verts = (struct vertex ***) bu_calloc(max_edge_cnt, sizeof(struct vertex **), "brep_to_nmg: loop_verts");
-    fu = (struct faceuse **) bu_calloc(face_cnt, sizeof(struct faceuse *), "brep_to_nmg: fu");
-
-    // Make the faces
-    int face_count = 0;
-    for (int s_it = 0; s_it < data->loops_cnt; s_it++) {
-	int loop_length = 0;
-	const ON_BrepLoop *b_loop = &(data->brep->m_L[data->loops[s_it]]);
-	const ON_BrepFace *b_face = b_loop->Face();
-	for (int ti = 0; ti < b_loop->m_ti.Count(); ti++) {
-	    const ON_BrepTrim *trim = &(b_face->Brep()->m_T[b_loop->m_ti[ti]]);
-	    const ON_BrepEdge *edge = &(b_face->Brep()->m_E[trim->m_ei]);
-	    if (trim->m_bRev3d) {
-		loop_verts[loop_length] = &(verts[b_verts_to_verts[edge->Vertex(0)->m_vertex_index]]);
-	    } else {
-		loop_verts[loop_length] = &(verts[b_verts_to_verts[edge->Vertex(1)->m_vertex_index]]);
-	    }
-	    loop_length++;
-	}
-	fu[face_count] = nmg_cmface(s, loop_verts, loop_length);
-	face_count++;
-    }
-
-    for (int p = 0; p < point_cnt; p++) {
-	ON_3dPoint pt = data->brep->m_V[b_verts_array[p]].Point();
-	point_t nmg_pt;
-	nmg_pt[0] = pt.x;
-	nmg_pt[1] = pt.y;
-	nmg_pt[2] = pt.z;
-	nmg_vertex_gv(verts[p], pt);
-    }
-
-    for (int f = 0; f < face_cnt; f++) {
-	nmg_fu_planeeqn(fu[f], &nmg_tol);
-    }
-
-    nmg_fix_normals(s, &nmg_tol);
-    (void)nmg_mark_edges_real(&s->l.magic);
-    /* Compute "geometry" for region and shell */
-    nmg_region_a(r, &nmg_tol);
-
-    /* Create the nmg primitive */
-    mk_nmg(wdbp, bu_vls_addr(&prim_name), m);
-    if (wcomb) (void)mk_addmember(bu_vls_addr(&prim_name), &((*wcomb).l), NULL, WMOP_UNION);
-
-    bu_vls_free(&prim_name);
-
-    return m;
-}
-
 #define ptout(p)  p.x << " " << p.y << " " << p.z
 
-struct model *
-brep_to_nmg(struct subbrep_object_data *data, struct rt_wdb *wdbp, struct wmember *wcomb)
+void
+brep_to_bot(struct subbrep_object_data *data, struct rt_wdb *wdbp)
 {
+    std::cout << "bot build for brep " << bu_vls_addr(data->key) << "\n";
+    /* Triangulate faces and write out as a bot */
     struct bu_vls prim_name = BU_VLS_INIT_ZERO;
-#if 1
-    /* For debugging, triangulate each face and write it out as a bot */
+    int all_faces_cnt = 0;
+    point_t *all_verts = (point_t *)bu_calloc(data->brep->m_V.Count(), sizeof(point_t), "bot verts");
+    for (int vi = 0; vi < data->brep->m_V.Count(); vi++) {
+	VMOVE(all_verts[vi], data->brep->m_V[vi].Point());
+    }
+    std::vector<int> all_faces;
     for (int s_it = 0; s_it < data->brep->m_F.Count(); s_it++) {
-	if (BU_STR_EQUAL(bu_vls_addr(data->key), "17_24_25_26_27_28_29_30_39_40_41_42_43_44_45_46_47_48_49_50_51_52_53_54_55_56_57_58_59_60_61_62_63_64_65_66_67_68_69_70_71_72_73_74_75_84_85_86_87_88_89_90_95_96_97_98_99_100")) {
-		int loop_length = 0;
-		const ON_BrepFace *b_face = &(data->brep->m_F[s_it]);
-		const ON_BrepLoop *b_loop = b_face->OuterLoop();
-		point_t *verts = (point_t *)bu_calloc(b_loop->m_ti.Count(), sizeof(point_t), "bot verts");
-		point2d_t *verts2d = (point2d_t *)bu_calloc(b_loop->m_ti.Count(), sizeof(point2d_t), "bot verts");
-		for (int ti = 0; ti < b_loop->m_ti.Count(); ti++) {
-		    const ON_BrepTrim *trim = &(b_face->Brep()->m_T[b_loop->m_ti[ti]]);
-		    const ON_BrepEdge *edge = &(b_face->Brep()->m_E[trim->m_ei]);
-		    const ON_Curve *trim_curve = trim->TrimCurveOf();
-		    ON_2dPoint cp = trim_curve->PointAt(trim_curve->Domain().Max());
-		    //std::cout << "2D point(" << ti << "): " << cp.x << " " << cp.y << " 0\n";
-		    V2MOVE(verts2d[ti], cp);
-		    if (trim->m_bRev3d) {
-			VMOVE(verts[ti], edge->Vertex(0)->Point());
-			//std::cout << "3d vert " << ti << ": " << ptout(edge->Vertex(0)->Point()) << "\n";
-
-		    } else {
-			VMOVE(verts[ti], edge->Vertex(1)->Point());
-			//std::cout << "3d vert " << ti << ": " << ptout(edge->Vertex(1)->Point()) << "\n";
-		    }
-		}
-		int num_faces;
-		int *faces;
-		//if (!bn_3d_polygon_triangulate(&faces, &num_faces, (const point_t *)verts, b_loop->m_ti.Count())) {
-		if (!bn_polygon_triangulate(&faces, &num_faces, (const point2d_t *)verts2d, b_loop->m_ti.Count())) {
-		    bu_vls_sprintf(&prim_name, "bot_%s_face_%d.s", bu_vls_addr(data->key), b_face->m_face_index);
-		    if (faces) {
-			if (b_face->m_bRev) {
-			    std::cout << "flipped face!\n";
-			    for (int f_ind = 0; f_ind < num_faces; f_ind++) {
-				int itmp = faces[f_ind * 3 + 2];
-				faces[f_ind * 3 + 2] = faces[f_ind * 3 + 1];
-				faces[f_ind * 3 + 1] = itmp;
-			    }
-			}
-			if (mk_bot(wdbp, bu_vls_addr(&prim_name), RT_BOT_SOLID, RT_BOT_UNORIENTED, 0, b_loop->m_ti.Count(), num_faces, (fastf_t *)verts, faces, (fastf_t *)NULL, (struct bu_bitv *)NULL)) {
-			    std::cout << "mk_bot failed for face " << b_face->m_face_index << "\n";
-			}
-		    } else {
-			std::cout << "bot build failed (2) for face " << b_face->m_face_index << "\n";
-		    }
+	int loop_length = 0;
+	const ON_BrepFace *b_face = &(data->brep->m_F[s_it]);
+	const ON_BrepLoop *b_loop = b_face->OuterLoop();
+	point_t *verts = (point_t *)bu_calloc(b_loop->m_ti.Count(), sizeof(point_t), "bot verts");
+	point2d_t *verts2d = (point2d_t *)bu_calloc(b_loop->m_ti.Count(), sizeof(point2d_t), "bot verts");
+	std::map<int, int> local_to_verts;
+	if (data->brep->LoopDirection(data->local_brep->m_L[b_loop->m_loop_index]) != 1) {
+	    for (int ti = 0; ti < b_loop->m_ti.Count(); ti++) {
+		int ti_rev = b_loop->m_ti.Count() - 1 - ti;
+		const ON_BrepTrim *trim = &(b_face->Brep()->m_T[b_loop->m_ti[ti_rev]]);
+		const ON_BrepEdge *edge = &(b_face->Brep()->m_E[trim->m_ei]);
+		const ON_Curve *trim_curve = trim->TrimCurveOf();
+		ON_2dPoint cp = trim_curve->PointAt(trim_curve->Domain().Min());
+		V2MOVE(verts2d[ti], cp);
+		if (trim->m_bRev3d) {
+		    VMOVE(verts[ti], edge->Vertex(1)->Point());
+		    local_to_verts[ti] = edge->Vertex(1)->m_vertex_index;
 		} else {
-		    std::cout << "bot build failed (1) for face " << b_face->m_face_index << "\n";
+		    VMOVE(verts[ti], edge->Vertex(0)->Point());
+		    local_to_verts[ti] = edge->Vertex(0)->m_vertex_index;
 		}
 	    }
+
+	} else {
+	    for (int ti = 0; ti < b_loop->m_ti.Count(); ti++) {
+		const ON_BrepTrim *trim = &(b_face->Brep()->m_T[b_loop->m_ti[ti]]);
+		const ON_BrepEdge *edge = &(b_face->Brep()->m_E[trim->m_ei]);
+		const ON_Curve *trim_curve = trim->TrimCurveOf();
+		ON_2dPoint cp = trim_curve->PointAt(trim_curve->Domain().Max());
+		V2MOVE(verts2d[ti], cp);
+		if (trim->m_bRev3d) {
+		    VMOVE(verts[ti], edge->Vertex(0)->Point());
+		    local_to_verts[ti] = edge->Vertex(0)->m_vertex_index;
+		} else {
+		    VMOVE(verts[ti], edge->Vertex(1)->Point());
+		    local_to_verts[ti] = edge->Vertex(1)->m_vertex_index;
+		}
+	    }
+	}
+	int num_faces;
+	int *faces;
+	//std::cout << "bot build for face " << b_face->m_face_index << "...\n";
+	//if (b_face->m_bRev) std::cout << "(face is flipped)\n";
+	int face_error = bn_polygon_triangulate(&faces, &num_faces, (const point2d_t *)verts2d, b_loop->m_ti.Count());
+	if (face_error || !faces) {
+	    std::cout << "bot build failed for face " << b_face->m_face_index << "\n";
+	    return;
+	} else {
+	    if (b_face->m_bRev) {
+		for (int f_ind = 0; f_ind < num_faces; f_ind++) {
+		    int itmp = faces[f_ind * 3 + 2];
+		    faces[f_ind * 3 + 2] = faces[f_ind * 3 + 1];
+		    faces[f_ind * 3 + 1] = itmp;
+		}
+	    }
+	    for (int f_ind = 0; f_ind < num_faces*3; f_ind++) {
+		all_faces.push_back(local_to_verts[faces[f_ind]]);
+	    }
+	    all_faces_cnt += num_faces;
+	}
+#if 0
+	bu_vls_sprintf(&prim_name, "bot_%s_face_%d.s", bu_vls_addr(data->key), b_face->m_face_index);
+	if (mk_bot(wdbp, bu_vls_addr(&prim_name), RT_BOT_SOLID, RT_BOT_UNORIENTED, 0, b_loop->m_ti.Count(), num_faces, (fastf_t *)verts, faces, (fastf_t *)NULL, (struct bu_bitv *)NULL)) {
+	    std::cout << "mk_bot failed for face " << b_face->m_face_index << "\n";
 	}
 #endif
-    bu_vls_sprintf(&prim_name, "nmg_%s.s", bu_vls_addr(data->key));
-    std::set<int> b_verts;
-    std::vector<int> b_verts_array;
-    std::map<int, int> b_verts_to_verts;
-    struct model *m = nmg_mm();
-    struct nmgregion *r = nmg_mrsv(m);
-    struct shell *s = BU_LIST_FIRST(shell, &(r)->s_hd);
-    struct faceuse **fu;         /* array of faceuses */
-    struct vertex **verts;       /* Array of pointers to vertex structs */
-    struct vertex ***loop_verts; /* Array of pointers to vertex structs to pass to nmg_cmface */
-
-    struct bn_tol nmg_tol = {BN_TOL_MAGIC, BN_TOL_DIST, BN_TOL_DIST * BN_TOL_DIST, 1e-6, 1.0 - 1e-6 };
-
-    int point_cnt = 0;
-    int face_cnt = 0;
-    int max_edge_cnt = 0;
-
-    // One loop to a face, and the object data has the set of loops that make
-    // up this object.
-    for (int s_it = 0; s_it < data->brep->m_L.Count(); s_it++) {
-	const ON_BrepLoop *b_loop = &(data->brep->m_L[s_it]);
-	const ON_BrepFace *b_face = b_loop->Face();
-	face_cnt++;
-	if (b_loop->m_ti.Count() > max_edge_cnt) max_edge_cnt = b_loop->m_ti.Count();
-	for (int ti = 0; ti < b_loop->m_ti.Count(); ti++) {
-	    const ON_BrepTrim *trim = &(b_face->Brep()->m_T[b_loop->m_ti[ti]]);
-	    const ON_BrepEdge *edge = &(b_face->Brep()->m_E[trim->m_ei]);
-	    if (b_verts.find(edge->Vertex(0)->m_vertex_index) == b_verts.end()) {
-		b_verts.insert(edge->Vertex(0)->m_vertex_index);
-		b_verts_array.push_back(edge->Vertex(0)->m_vertex_index);
-		b_verts_to_verts[edge->Vertex(0)->m_vertex_index] = b_verts_array.size()-1;
-	    }
-	    if (b_verts.find(edge->Vertex(1)->m_vertex_index) == b_verts.end()) {
-		b_verts.insert(edge->Vertex(1)->m_vertex_index);
-		b_verts_array.push_back(edge->Vertex(1)->m_vertex_index);
-		b_verts_to_verts[edge->Vertex(1)->m_vertex_index] = b_verts_array.size()-1;
-	    }
-	}
     }
-
-    point_cnt = b_verts.size();
-
-    if (point_cnt == 0) {
-	std::cout << "Huh?? didn't find any points??\n";
-	return NULL;
+    int *final_faces = (int *)bu_calloc(all_faces_cnt * 3, sizeof(int), "final bot verts");
+    for (size_t i = 0; i < all_faces_cnt*3; i++) {
+	final_faces[i] = all_faces[i];
     }
-
-    verts = (struct vertex **)bu_calloc(point_cnt, sizeof(struct vertex *), "brep_to_nmg: verts");
-    loop_verts = (struct vertex ***) bu_calloc(max_edge_cnt, sizeof(struct vertex **), "brep_to_nmg: loop_verts");
-    fu = (struct faceuse **) bu_calloc(face_cnt, sizeof(struct faceuse *), "brep_to_nmg: fu");
-
-    // Make the faces
-    int face_count = 0;
-    for (int s_it = 0; s_it < data->brep->m_L.Count(); s_it++) {
-	int loop_length = 0;
-	const ON_BrepLoop *b_loop = &(data->brep->m_L[s_it]);
-	const ON_BrepFace *b_face = b_loop->Face();
-	for (int ti = 0; ti < b_loop->m_ti.Count(); ti++) {
-	    const ON_BrepTrim *trim = &(b_face->Brep()->m_T[b_loop->m_ti[ti]]);
-	    const ON_BrepEdge *edge = &(b_face->Brep()->m_E[trim->m_ei]);
-	    if (trim->m_bRev3d) {
-		loop_verts[loop_length] = &(verts[b_verts_to_verts[edge->Vertex(0)->m_vertex_index]]);
-	    } else {
-		loop_verts[loop_length] = &(verts[b_verts_to_verts[edge->Vertex(1)->m_vertex_index]]);
-	    }
-	    loop_length++;
-	}
-	fu[face_count] = nmg_cmface(s, loop_verts, loop_length);
-	face_count++;
+    bu_vls_sprintf(&prim_name, "bot_%s.s", bu_vls_addr(data->key));
+    if (mk_bot(wdbp, bu_vls_addr(&prim_name), RT_BOT_SOLID, RT_BOT_UNORIENTED, 0, data->brep->m_V.Count(), all_faces_cnt, (fastf_t *)all_verts, final_faces, (fastf_t *)NULL, (struct bu_bitv *)NULL)) {
+	std::cout << "mk_bot failed for overall bot\n";
     }
-
-    for (int p = 0; p < point_cnt; p++) {
-	ON_3dPoint pt = data->brep->m_V[b_verts_array[p]].Point();
-	point_t nmg_pt;
-	nmg_pt[0] = pt.x;
-	nmg_pt[1] = pt.y;
-	nmg_pt[2] = pt.z;
-	nmg_vertex_gv(verts[p], pt);
-    }
-
-    for (int f = 0; f < face_cnt; f++) {
-	nmg_fu_planeeqn(fu[f], &nmg_tol);
-    }
-
-    nmg_fix_normals(s, &nmg_tol);
-    (void)nmg_mark_edges_real(&s->l.magic);
-    /* Compute "geometry" for region and shell */
-    nmg_region_a(r, &nmg_tol);
-
-    /* Create the nmg primitive */
-    mk_nmg(wdbp, bu_vls_addr(&prim_name), m);
-    if (wcomb) (void)mk_addmember(bu_vls_addr(&prim_name), &((*wcomb).l), NULL, WMOP_UNION);
-
-    bu_vls_free(&prim_name);
-
-    return m;
 }
 
 int
@@ -335,10 +173,10 @@ subbrep_to_csg_planar(struct subbrep_object_data *data, struct rt_wdb *wdbp, str
 	//          at the arbn tessellation routine for a guide on how to set up the
 	//          nmg - that's the most general of the arb* primitives and should be
 	//          relatively close to what is needed here.
-	(void)brep_to_nmg(data, wdbp, wcomb);
+	(void)brep_to_bot(data, wdbp);
 	struct csg_object_params *params = data->params;
 	struct bu_vls prim_name = BU_VLS_INIT_ZERO;
-	bu_vls_sprintf(&prim_name, "nmg_%s.s", bu_vls_addr(data->key));
+	bu_vls_sprintf(&prim_name, "bot_%s.s", bu_vls_addr(data->key));
 	//std::cout << bu_vls_addr(&prim_name) << ": " << params->bool_op << "\n";
 	if (wcomb) (void)mk_addmember(bu_vls_addr(&prim_name), &((*wcomb).l), NULL, db_str2op(&(params->bool_op)));
 	bu_vls_free(&prim_name);
