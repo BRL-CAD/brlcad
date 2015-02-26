@@ -259,36 +259,68 @@ struct pt_vertex_ref {
 };
 
 #define PT_ADD_CONVEX_VREF(_list, vert) {\
-	struct pt_vertex_ref *n_ref; \
-	BU_GET(n_ref, struct pt_vertex_ref); \
-	n_ref->v = vert; \
-	BU_LIST_PUSH(&(_list->l), &(n_ref->l)); \
-        v->convex_ref = n_ref; \
+    struct pt_vertex_ref *n_ref; \
+    BU_GET(n_ref, struct pt_vertex_ref); \
+    n_ref->v = vert; \
+    BU_LIST_PUSH(&(_list->l), &(n_ref->l)); \
+    vert->convex_ref = n_ref; \
+    vert->isConvex = 1; \
 }
 
 #define PT_ADD_REFLEX_VREF(_list, vert) {\
-	struct pt_vertex_ref *n_ref; \
-	BU_GET(n_ref, struct pt_vertex_ref); \
-	n_ref->v = vert; \
-	BU_LIST_PUSH(&(_list->l), &(n_ref->l)); \
-        v->reflex_ref = n_ref; \
+    struct pt_vertex_ref *n_ref; \
+    BU_GET(n_ref, struct pt_vertex_ref); \
+    n_ref->v = vert; \
+    BU_LIST_PUSH(&(_list->l), &(n_ref->l)); \
+    vert->reflex_ref = n_ref; \
+    vert->isConvex = 0; \
 }
 
-#define PT_ADD_EAR_VREF(_list, vert) {\
-	struct pt_vertex_ref *n_ref; \
-	BU_GET(n_ref, struct pt_vertex_ref); \
-	n_ref->v = vert; \
-	BU_LIST_PUSH(&(_list->l), &(n_ref->l)); \
-        v->ear_ref = n_ref; \
+#define PT_ADD_EAR_VREF(_list, vert, pts) {\
+    struct pt_vertex_ref *n_ref; \
+    BU_GET(n_ref, struct pt_vertex_ref); \
+    n_ref->v = vert; \
+    BU_LIST_PUSH(&(_list->l), &(n_ref->l)); \
+    vert->ear_ref = n_ref; \
+    vert->angle = pt_angle(p, n, vert, pts); \
+    vert->isConvex = 1; \
+    vert->isEar = 1; \
 }
 
-#define PT_ANGLE(angle, p, n, v) {\
-    point2d_t v1, v2; \
-    V2SUB2(v1, pts[p->index], pts[v->index]); \
-    V2SUB2(v2, pts[n->index], pts[v->index]); \
-    V2UNITIZE(v1); \
-    V2UNITIZE(v2); \
-    angle = fabs(v1[0]*v2[0] + v1[1]*v2[1]); \
+#define PT_DEQUEUE_CONVEX_VREF(_list, vert) {\
+    BU_LIST_DEQUEUE(&(vert->convex_ref->l)); \
+    BU_PUT(vert->convex_ref, struct pt_vertex_ref); \
+    vert->convex_ref = NULL; \
+    vert->angle = 0; \
+    vert->isConvex = 0; \
+}
+
+#define PT_DEQUEUE_REFLEX_VREF(_list, vert) {\
+    BU_LIST_DEQUEUE(&(vert->reflex_ref->l)); \
+    BU_PUT(vert->reflex_ref, struct pt_vertex_ref); \
+    vert->reflex_ref = NULL; \
+    vert->angle = 0; \
+}
+
+#define PT_DEQUEUE_EAR_VREF(_list, vert) {\
+    BU_LIST_DEQUEUE(&(vert->ear_ref->l)); \
+    BU_PUT(vert->ear_ref, struct pt_vertex_ref); \
+    vert->ear_ref = NULL; \
+    vert->angle = 0; \
+    vert->isEar = 0; \
+}
+
+#define PT_NEXT(v) BU_LIST_PNEXT_CIRC(pt_vertex, &(v->l))
+#define PT_PREV(v) BU_LIST_PPREV_CIRC(pt_vertex, &(v->l))
+
+double
+pt_angle(struct pt_vertex *p, struct pt_vertex *n, struct pt_vertex *v, const point2d_t *pts) {
+    point2d_t v1, v2;
+    V2SUB2(v1, pts[p->index], pts[v->index]);
+    V2SUB2(v2, pts[n->index], pts[v->index]);
+    V2UNITIZE(v1);
+    V2UNITIZE(v2);
+    return fabs(v1[0]*v2[0] + v1[1]*v2[1]);
 }
 
 
@@ -345,12 +377,21 @@ pt_v_get(struct bu_list *l, int i)
 HIDDEN void
 pt_v_put(struct pt_vertex *v)
 {
-    if (v->convex_ref) BU_LIST_DEQUEUE(&(v->convex_ref->l));
-    if (v->reflex_ref) BU_LIST_DEQUEUE(&(v->reflex_ref->l));
-    if (v->ear_ref) BU_LIST_DEQUEUE(&(v->ear_ref->l));
+    if (v->convex_ref) {
+	BU_LIST_DEQUEUE(&(v->convex_ref->l));
+	BU_PUT(v->convex_ref, struct pt_vertex_ref);
+    }
+    if (v->reflex_ref) {
+	bu_log("Warning - trying to remove a reflex point! %d\n", v->index);
+	BU_LIST_DEQUEUE(&(v->reflex_ref->l));
+	BU_PUT(v->reflex_ref, struct pt_vertex_ref);
+    }
+    if (v->ear_ref) {
+	BU_LIST_DEQUEUE(&(v->ear_ref->l));
+	BU_PUT(v->ear_ref, struct pt_vertex_ref);
+    }
     BU_LIST_DEQUEUE(&(v->l));
     BU_PUT(v, struct pt_vertex);
-    /* TODO - remove from reference lists */
 }
 
 HIDDEN void
@@ -361,11 +402,29 @@ remove_ear(struct pt_vertex *ear)
     if (!ear) return;
 
     /* First, make a note of the two vertices whose status might change */
-    p = BU_LIST_PNEXT_CIRC(pt_vertex, &ear->l);
-    n = BU_LIST_PPREV_CIRC(pt_vertex, &ear->l);
+    p = PT_NEXT(ear);
+    n = PT_PREV(ear);
 
+    /* Remove the ear vertex */
     bu_log("remove: %d\n", ear->index);
     pt_v_put(ear);
+
+    /* Update the status of the two neighbor points */
+    if (p->isEar) {
+	/* Verify ear is still an ear */
+    }
+    if (!p->isConvex) {
+	/* Check if it became convex */
+	/* Check if it became an ear */
+    }
+    if (n->isEar) {
+	/* Verify ear is still an ear */
+    }
+    if (!n->isConvex) {
+	/* Check if it became convex */
+	/* Check if it became an ear */
+    }
+
     return;
 }
 
@@ -411,8 +470,8 @@ int bn_polygon_triangulate(int **faces, int *num_faces, const point2d_t *pts, si
     /* Find the initial convex and reflex point sets */
     for (BU_LIST_FOR_BACKWARDS(v, pt_vertex, &(vertex_list->l)))
     {
-	struct pt_vertex *prev = BU_LIST_PNEXT_CIRC(pt_vertex, &v->l);
-	struct pt_vertex *next = BU_LIST_PPREV_CIRC(pt_vertex, &v->l);
+	struct pt_vertex *prev = PT_NEXT(v);
+	struct pt_vertex *next = PT_PREV(v);
 	v->isConvex = is_convex(pts[v->index], pts[prev->index], pts[next->index]);
 	if (v->isConvex) {
 	    PT_ADD_CONVEX_VREF(convex_list, v);
@@ -425,8 +484,8 @@ int bn_polygon_triangulate(int **faces, int *num_faces, const point2d_t *pts, si
     /* Now that we know which are the convex and reflex verts, find the initial ears */
     for (BU_LIST_FOR_BACKWARDS(vref, pt_vertex_ref, &(convex_list->l)))
     {
-	struct pt_vertex *p = BU_LIST_PNEXT_CIRC(pt_vertex, &vref->v->l);
-	struct pt_vertex *n = BU_LIST_PPREV_CIRC(pt_vertex, &vref->v->l);
+	struct pt_vertex *p = PT_NEXT(vref->v);
+	struct pt_vertex *n = PT_PREV(vref->v);
 #if 0
 	bu_log("v[%d]: %f %f 0\n", vref->v->index, pts[vref->v->index][0], pts[vref->v->index][1]);
 	bu_log("vprev[%d]: %f %f 0\n", p->index, pts[p->index][0], pts[p->index][1]);
@@ -434,8 +493,7 @@ int bn_polygon_triangulate(int **faces, int *num_faces, const point2d_t *pts, si
 #endif
 	vref->v->isEar = is_ear(vref->v->index, p->index, n->index, reflex_list, pts);
 	if (vref->v->isEar) {
-	    PT_ADD_EAR_VREF(ear_list, vref->v);
-	    PT_ANGLE(vref->v->angle, p, n, vref->v)
+	    PT_ADD_EAR_VREF(ear_list, vref->v, pts);
 	    if (vref->v->angle > max_angle) {
 		seed_vert = vref->v->index;
 		max_angle = vref->v->angle;
@@ -460,14 +518,12 @@ int bn_polygon_triangulate(int **faces, int *num_faces, const point2d_t *pts, si
 
     /* We know what we need to begin - remove ears, build triangles and update accordingly */
     {
-	struct pt_vertex *one_vert = BU_LIST_PNEXT_CIRC(pt_vertex, &(vertex_list->l));
-	struct pt_vertex *four_vert = BU_LIST_PNEXT_CIRC(pt_vertex, BU_LIST_PNEXT_CIRC(pt_vertex, BU_LIST_PNEXT_CIRC(pt_vertex, &(one_vert->l))));
-	bu_log("one vert: %d\n", one_vert->index);
-	bu_log("four vert: %d\n", four_vert->index);
+	struct pt_vertex *one_vert = PT_NEXT(vertex_list);
+	struct pt_vertex *four_vert = PT_NEXT(PT_NEXT(PT_NEXT(one_vert)));
 	while(one_vert->index != four_vert->index) {
 	    remove_ear(one_vert);
-	    one_vert = BU_LIST_PNEXT_CIRC(pt_vertex, &(vertex_list->l));
-	    four_vert = BU_LIST_PNEXT_CIRC(pt_vertex, BU_LIST_PNEXT_CIRC(pt_vertex, BU_LIST_PNEXT_CIRC(pt_vertex, &(one_vert->l))));
+	    one_vert = PT_NEXT(vertex_list);
+	    four_vert = PT_NEXT(PT_NEXT(PT_NEXT(one_vert)));
 	}
     }
 
