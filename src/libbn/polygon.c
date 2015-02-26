@@ -509,7 +509,7 @@ int bn_polygon_triangulate(int **faces, int *num_faces, const point2d_t *pts, si
     ear_list = lists->ear_list;
 
 
-    /* Iniitalize vertex list. */
+    /* Initialize vertex list. */
     for (i = 0; i < npts; i++) {
 	pt_v_get(&(vertex_list->l), i);
     }
