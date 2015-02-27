@@ -555,8 +555,8 @@ int bn_polygon_triangulate(int **faces, int *num_faces, const point2d_t *pts, si
 	struct pt_vertex *one_vert = PT_NEXT(vertex_list);
 	struct pt_vertex *four_vert = PT_NEXT(PT_NEXT(PT_NEXT(one_vert)));
 	while(one_vert->index != four_vert->index) {
-	    /* For reasons that are not immediately clear, PT_PREV_REF works in
-	     * the line below but PT_NEXT_REF does not */
+	    /* The next line needs to use PT_PREV_REF so point traversal
+	     * happens in the correct order - PT_NEXT_REF doesn't work. */
 	    struct pt_vertex_ref *ear_ref = PT_PREV_REF(lists->ear_list);
 	    PT_ADD_TRI(ear_ref->v);
 	    remove_ear(ear_ref->v, lists, pts);
