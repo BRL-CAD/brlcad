@@ -31,7 +31,7 @@ brep_to_bot(struct subbrep_object_data *data, struct rt_wdb *wdbp)
     // Accumulate faces in a std::vector, since we don't know how many we're going to get
     std::vector<int> all_faces;
 
-    /* Set up an inital comprehensive vertex array that will be used in
+    /* Set up an initial comprehensive vertex array that will be used in
      * the final BoT build - all face definitions will ultimately index
      * into this array */
     point_t *all_verts = (point_t *)bu_calloc(data->brep->m_V.Count(), sizeof(point_t), "bot verts");
@@ -57,7 +57,7 @@ brep_to_bot(struct subbrep_object_data *data, struct rt_wdb *wdbp)
 	 * parameterization to same some work.*/
 	point2d_t *verts2d = (point2d_t *)bu_calloc(b_loop->m_ti.Count(), sizeof(point2d_t), "bot verts");
 
-	/* The triangulation will use only the points in the temporay verts2d
+	/* The triangulation will use only the points in the temporary verts2d
 	 * array and return with faces indexed accordingly, so we need a map to
 	 * translate them back to our final vert array */
 	std::map<int, int> local_to_verts;

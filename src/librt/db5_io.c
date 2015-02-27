@@ -930,7 +930,7 @@ rt_db_external5_to_internal5(
 	    return -1;
     }
 
-    /* ip has already been initialized, and should not be re-inited */
+    /* ip has already been initialized, and should not be re-initialized */
     ret = -1;
     if (id == ID_BINUNIF) {
 	/* FIXME: binunif export needs to write out minor_type so

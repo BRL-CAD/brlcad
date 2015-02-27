@@ -30,7 +30,7 @@
 # reported (i.e. skipped). Skipped duplicates will be those within the
 # specified group, that have the same parent, 'material_id' and 'los'.
 #
-# Option '-r' remove regions from the list in which their parent is
+# Option '-r' removes regions from the list in which their parent is
 # a region and the region is subtracted within the parent. The '-r'
 # option can be combined with any other option.
 #
@@ -398,7 +398,7 @@ proc lc2 {args} {
     } else {
 	# convert columns from 1-5 to 0-4
 	set sort_column [expr ($sort_column - 1)]
-	
+
 	if { $descending_sort_flag_cnt == 1 } {
 	    set lines2 [lsort -dictionary -decreasing -index $sort_column $lines2]
 	} else {

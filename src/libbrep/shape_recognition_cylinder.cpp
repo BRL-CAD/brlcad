@@ -194,7 +194,7 @@ subbrep_is_cylinder(struct subbrep_object_data *data, fastf_t cyl_tol)
 
     ON_3dVector hvect(set2_c.Center() - set1_c.Center());
 
-    // Flag the cylinger according to the negative or positive status of the
+    // Flag the cylinder according to the negative or positive status of the
     // cylinder surface.  Whether it is actually subtracted from the
     // global object or unioned into a comb lower down the tree (or vice versa)
     // is determined later.
