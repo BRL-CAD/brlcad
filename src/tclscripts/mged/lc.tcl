@@ -60,7 +60,7 @@ proc lc2 {args} {
     set sort_column_flag_cnt 0
 
     if { [llength $args] == 0 } {
-	puts stdout "Usage: \[-d|-s] [-r\] \[-z\] \[-0|-1|-2|-3|-4|-5\] \[-f {FileName}\] {GroupName}"
+	puts stdout "Usage: \[-d|-s\] \[-r\] \[-z\] \[-0|-1|-2|-3|-4|-5\] \[-f {FileName}\] {GroupName}"
 	return
     }
 
