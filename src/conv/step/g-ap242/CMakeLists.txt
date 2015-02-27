@@ -5,7 +5,7 @@ include_directories(
   ${CMAKE_CURRENT_SOURCE_DIR}/../g-step
   )
 
-set(STEP_SCHEMA_FILE ${CMAKE_CURRENT_SOURCE_DIR}/ap242.exp)
+set(STEP_SCHEMA_FILE ${CMAKE_CURRENT_SOURCE_DIR}/../../other/stepcode/data/ap242/ap242e1.exp)
 add_definitions(-DAP242)
 
 GENERATE_SCHEMA_INPUTS(${STEP_SCHEMA_FILE} gap242)
