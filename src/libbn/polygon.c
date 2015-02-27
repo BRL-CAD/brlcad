@@ -544,6 +544,9 @@ int bn_polygon_triangulate(int **faces, int *num_faces, const point2d_t *pts, si
     /* If we didn't find any ears, something is wrong - possibly non CCW inputs */
     if (BU_LIST_IS_EMPTY(&(lists->ear_list->l))) {
 	ret = 1;
+	if (BU_LIST_IS_EMPTY(&(lists->convex_list->l)) && !BU_LIST_IS_EMPTY(&(lists->vertex_list->l))) {
+	    bu_log("No convex points were found - this probably indicates the points are not in CCW order\n");
+	}
 	goto cleanup;
     }
 
