@@ -213,6 +213,7 @@ subbrep_object_init(struct subbrep_object_data *obj, const ON_Brep *brep)
     BU_GET(obj->children, struct bu_ptbl);
     BU_GET(obj->params, struct csg_object_params);
     obj->params->planes = NULL;
+    obj->params->bool_op = 'u';
     obj->planar_obj = NULL;
     bu_vls_init(obj->key);
     bu_ptbl_init(obj->children, 8, "children table");

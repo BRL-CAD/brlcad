@@ -10,6 +10,33 @@
 #include "bn/tol.h"
 #include "shape_recognition.h"
 
+/* Return -1 if the cylinder face is pointing in toward the cylinder axis,
+ * 1 if it is pointing out, and 0 if there is some other problem */
+int
+negative_cylinder(struct subbrep_object_data *data, int face_index, double cyl_tol) {
+    int ret = 0;
+    const ON_Surface *surf = data->brep->m_F[face_index].SurfaceOf();
+    ON_Cylinder cylinder;
+    ON_Surface *cs = surf->Duplicate();
+    cs->IsCylinder(&cylinder, cyl_tol);
+    delete cs;
+
+    ON_3dPoint pnt;
+    ON_3dVector normal;
+    double u = surf->Domain(0).Mid();
+    double v = surf->Domain(1).Mid();
+    if (!surf->EvNormal(u, v, pnt, normal)) return 0;
+    ON_3dPoint axis_pnt = cylinder.circle.Center();
+
+    ON_3dVector axis_vect = pnt - axis_pnt;
+    double dotp = ON_DotProduct(axis_vect, normal);
+
+    if (NEAR_ZERO(dotp, 0.000001)) return 0;
+    ret = (dotp < 0) ? -1 : 1;
+    if (data->brep->m_F[face_index].m_bRev) ret = -1 * ret;
+    return ret;
+}
+
 int
 subbrep_is_cylinder(struct subbrep_object_data *data, fastf_t cyl_tol)
 {
@@ -167,7 +194,22 @@ subbrep_is_cylinder(struct subbrep_object_data *data, fastf_t cyl_tol)
 
     ON_3dVector hvect(set2_c.Center() - set1_c.Center());
 
-    data->params->bool_op= 'u';  // TODO - not always union
+    // Flag the cylinger according to the negative or positive status of the
+    // cylinder surface.  Whether it is actually subtracted from the
+    // global object or unioned into a comb lower down the tree (or vice versa)
+    // is determined later.
+    int negative = negative_cylinder(data, *cylindrical_surfaces.begin(), cyl_tol);
+
+    bu_log("full cylinder negative test: %d\n", negative);
+    // TODO - the surface negative test may not be enough on its own - needs
+    // more thought
+    if (negative == -1) {
+	data->params->bool_op = '-';
+    }
+    if (negative == 1) {
+	data->params->bool_op = 'u';
+    }
+
     data->params->origin[0] = set1_c.Center().x;
     data->params->origin[1] = set1_c.Center().y;
     data->params->origin[2] = set1_c.Center().z;
@@ -230,32 +272,6 @@ cylindrical_planar_vertices(struct subbrep_object_data *data, int face_index)
     }
     return 0;
 }
-
-/* Return -1 if the cylinder face is pointing in toward the cylinder axis,
- * 1 if it is pointing out, and 0 if there is some other problem */
-int
-negative_cylinder(struct subbrep_object_data *data, int face_index, double cyl_tol) {
-    const ON_Surface *surf = data->brep->m_F[face_index].SurfaceOf();
-    ON_Cylinder cylinder;
-    ON_Surface *cs = surf->Duplicate();
-    cs->IsCylinder(&cylinder, cyl_tol);
-    delete cs;
-
-    ON_3dPoint pnt;
-    ON_3dVector normal;
-    double u = surf->Domain(0).Mid();
-    double v = surf->Domain(1).Mid();
-    if (!surf->EvNormal(u, v, pnt, normal)) return 0;
-    ON_3dPoint axis_pnt = cylinder.circle.Center();
-
-    ON_3dVector axis_vect = pnt - axis_pnt;
-    double dotp = ON_DotProduct(axis_vect, normal);
-
-    if (NEAR_ZERO(dotp, 0.000001)) return 0;
-    if (dotp < 0) return 1;
-    return -1;
-}
-
 
 int
 cylinder_csg(struct subbrep_object_data *data, fastf_t cyl_tol)
@@ -528,11 +544,25 @@ cylinder_csg(struct subbrep_object_data *data, fastf_t cyl_tol)
 
 	ON_3dVector hvect(set2_c.Center() - set1_c.Center());
 
+	// Flag the cyl/arb comb according to the negative or positive status of the
+	// cylinder surface.  Whether the comb is actually subtracted from the
+	// global object or unioned into a comb lower down the tree (or vice versa)
+	// is determined later.
+	int negative = negative_cylinder(data, *cylindrical_surfaces.begin(), cyl_tol);
+
+
 	if (corner_verts.size() == 0) {
 	    //std::cout << "Full cylinder\n";
 	    data->type = CYLINDER;
 
-	    data->params->bool_op = 'u'; // TODO - not always union
+	    // TODO - the surface negative test may not be enough on its own - needs
+	    // more thought
+	    if (negative == -1) {
+		data->params->bool_op = '-';
+	    }
+	    if (negative == 1) {
+		data->params->bool_op = 'u';
+	    }
 	    data->params->origin[0] = set1_c.Center().x;
 	    data->params->origin[1] = set1_c.Center().y;
 	    data->params->origin[2] = set1_c.Center().z;
@@ -560,11 +590,7 @@ cylinder_csg(struct subbrep_object_data *data, fastf_t cyl_tol)
 	    bu_vls_sprintf(cyl_obj->key, "%s", key.c_str());
 	    cyl_obj->type = CYLINDER;
 
-	    // Flag the cyl/arb comb according to the negative or positive status of the
-	    // cylinder surface.  Whether the comb is actually subtracted from the
-	    // global object or unioned into a comb lower down the tree (or vice versa)
-	    // is determined later.
-	    int negative = negative_cylinder(data, *cylindrical_surfaces.begin(), cyl_tol);
+	    bu_log("partial cyl negative: %d\n", negative);
 
 	    switch (negative) {
 		case -1:
