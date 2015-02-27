@@ -60,7 +60,7 @@ proc lc2 {args} {
     set sort_column_flag_cnt 0
 
     if { [llength $args] == 0 } {
-	puts stdout "Usage: \[-d|-s|-r\] \[-z\] \[-0|-1|-2|-3|-4|-5\] \[-f {FileName}\] {GroupName}"
+	puts stdout "Usage: \[-d|-s] [-r\] \[-z\] \[-0|-1|-2|-3|-4|-5\] \[-f {FileName}\] {GroupName}"
 	return
     }
 
@@ -120,12 +120,12 @@ proc lc2 {args} {
 	    set file_name $arg
 	    continue
 	}
-	if { $arg == "-f" } {
-	    set file_name_flag_cnt 1
+	if { $arg <= -0 && $arg >= -5 } {
+	    set sort_column [expr abs($arg)]
 	    continue
 	}
-	if { $arg == "-d" } {
-	    set find_duplicates_flag_cnt 1
+	if { $arg == "-f" } {
+	    set file_name_flag_cnt 1
 	    continue
 	}
 	if { $arg == "-d" || $arg == "-s"} {
@@ -142,10 +142,6 @@ proc lc2 {args} {
 	}
 	if { $arg == "-z" } {
 	    set descending_sort_flag_cnt 1
-	    continue
-	}
-	if { $arg <= -0 && $arg >= -5 } {
-	    set sort_column [expr abs($arg)]
 	    continue
 	}
 	set group_name_set 1
