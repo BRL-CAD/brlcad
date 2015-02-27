@@ -128,9 +128,12 @@ proc lc2 {args} {
 	    set find_duplicates_flag_cnt 1
 	    continue
 	}
-	if { $arg == "-s" } {
+	if { $arg == "-d" || $arg == "-s"} {
 	    set find_duplicates_flag_cnt 1
-	    set skip_special_duplicates_flag_cnt 1
+
+	    if { $arg == "-s" } {
+		set skip_special_duplicates_flag_cnt 1
+	    }
 	    continue
 	}
 	if { $arg == "-r" } {
