@@ -169,6 +169,38 @@ is_toplevel(const ON_Layer &layer)
 }
 
 
+// ONX_Model::Audit() fails to repair UUID issues on some platforms
+// because ON_CreateUuid() is not implemented.
+// This function repairs nil and duplicate UUIDs.
+static void
+repair_model_uuids(ONX_Model &model)
+{
+    std::set<ON_UUID, conv3dm::UuidCompare> uuids;
+    uuids.insert(ROOT_UUID);
+
+    for (int i = 0; i < model.m_idef_table.Count(); ++i) {
+	ON_UUID &idef_uuid = model.m_idef_table[i].m_uuid;
+
+	while (!uuids.insert(idef_uuid).second)
+	    idef_uuid = generate_uuid();
+    }
+
+    for (int i = 0; i < model.m_object_table.Count(); ++i) {
+	ON_UUID &object_uuid = model.m_object_table[i].m_attributes.m_uuid;
+
+	while (!uuids.insert(object_uuid).second)
+	    object_uuid = generate_uuid();
+    }
+
+    for (int i = 0; i < model.m_layer_table.Count(); ++i) {
+	ON_UUID &layer_uuid = model.m_layer_table[i].m_layer_id;
+
+	while (!uuids.insert(layer_uuid).second)
+	    layer_uuid = generate_uuid();
+    }
+}
+
+
 static const char *
 get_object_suffix(const ON_Object &object)
 {
@@ -299,21 +331,11 @@ namespace conv3dm
 {
 
 
-bool RhinoConverter::UuidCompare::operator()(const ON_UUID &left,
-	const ON_UUID &right) const
+inline bool
+UuidCompare::operator()(const ON_UUID &left,
+			const ON_UUID &right) const
 {
-#define COMPARE(a, b) do { if ((a) != (b)) return (a) < (b); } while (false)
-
-    COMPARE(left.Data1, right.Data1);
-    COMPARE(left.Data2, right.Data2);
-    COMPARE(left.Data3, right.Data3);
-
-    for (int i = 0; i < 8; ++i)
-	COMPARE(left.Data4[i], right.Data4[i]);
-
-#undef COMPARE
-
-    return false;
+    return ON_UuidCompare(&left, &right) == -1;
 }
 
 
@@ -430,7 +452,7 @@ RhinoConverter::ObjectManager::get_name(const ON_UUID &uuid) const
 }
 
 
-inline const std::set<ON_UUID, RhinoConverter::UuidCompare> &
+inline const std::set<ON_UUID, UuidCompare> &
 RhinoConverter::ObjectManager::get_members(const ON_UUID &uuid) const
 {
     return m_obj_map.at(uuid).m_members;
@@ -557,22 +579,27 @@ RhinoConverter::write_model(const std::string &path, bool use_uuidnames,
 void
 RhinoConverter::clean_model()
 {
-    if (!m_model.Audit(false, NULL, &m_log, NULL))
+    m_model.Polish(); // fill in defaults
+
+    int repair_count = 0;
+    int num_problems = m_model.Audit(true, &repair_count, &m_log, NULL);
+
+    if (!num_problems)
 	return;
 
     m_log.Print("WARNING: Model is NOT valid. Attempting repairs.\n");
 
-    m_model.Polish(); // fill in defaults
+    // repair remaining UUID issues
+    if (num_problems != repair_count) {
+	repair_model_uuids(m_model);
+	num_problems = m_model.Audit(true, &repair_count, NULL, NULL);
+    }
 
-    int repair_count = 0;
-    int num_problems = m_model.Audit(true, &repair_count, NULL, NULL); // repair
-
-    m_log.Print("Repaired %d of %d problems.\n", repair_count, num_problems);
-
-    if (!m_model.Audit(false, NULL, &m_log, NULL))
+    if (num_problems != repair_count) {
+	m_log.Print("Remaining problems:\n");
+	m_model.Audit(false, NULL, &m_log, NULL);
+    } else
 	m_log.Print("Repair successful; model is now valid.\n");
-    else
-	m_log.Print("WARNING: Repair unsuccessful; model is still NOT valid.\n");
 }
 
 

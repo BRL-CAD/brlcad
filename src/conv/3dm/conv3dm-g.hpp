@@ -40,6 +40,11 @@ namespace conv3dm
 {
 
 
+struct UuidCompare {
+    bool operator()(const ON_UUID &left, const ON_UUID &right) const;
+};
+
+
 class RhinoConverter
 {
 public:
@@ -55,10 +60,6 @@ public:
 
 private:
     class Color;
-
-    struct UuidCompare {
-	bool operator()(const ON_UUID &left, const ON_UUID &right) const;
-    };
 
 
     class ObjectManager
