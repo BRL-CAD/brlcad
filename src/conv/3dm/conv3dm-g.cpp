@@ -386,7 +386,7 @@ inline RhinoConverter::ObjectManager::ObjectManager() :
 
 void
 RhinoConverter::ObjectManager::add(bool use_uuid, const ON_UUID &uuid,
-				   const std::string &prefix, const char * suffix)
+				   const std::string &prefix, const char *suffix)
 {
     ModelObject object;
 
@@ -557,7 +557,7 @@ RhinoConverter::write_model(const std::string &path, bool use_uuidnames,
 void
 RhinoConverter::clean_model()
 {
-    if (m_model.IsValid(&m_log))
+    if (!m_model.Audit(false, NULL, &m_log, NULL))
 	return;
 
     m_log.Print("WARNING: Model is NOT valid. Attempting repairs.\n");
@@ -565,18 +565,14 @@ RhinoConverter::clean_model()
     m_model.Polish(); // fill in defaults
 
     int repair_count = 0;
-    ON_SimpleArray<int> warnings;
-    m_model.Audit(true, &repair_count, &m_log, &warnings); // repair
+    int num_problems = m_model.Audit(true, &repair_count, NULL, NULL); // repair
 
-    m_log.Print("Repaired %d objects.\n", repair_count);
+    m_log.Print("Repaired %d of %d problems.\n", repair_count, num_problems);
 
-    for (int i = 0; i < warnings.Count(); ++i)
-	m_log.Print("WARNING: %s\n", warnings[i]);
-
-    if (m_model.IsValid(&m_log))
-	m_log.Print("Repair successful, model is now valid.\n");
+    if (!m_model.Audit(false, NULL, &m_log, NULL))
+	m_log.Print("Repair successful; model is now valid.\n");
     else
-	m_log.Print("WARNING: Repair unsuccessful, model is still NOT valid.\n");
+	m_log.Print("WARNING: Repair unsuccessful; model is still NOT valid.\n");
 }
 
 
