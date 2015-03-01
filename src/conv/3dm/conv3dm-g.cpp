@@ -418,7 +418,7 @@ RhinoConverter::ObjectManager::add(bool use_uuid, const ON_UUID &uuid,
 	object.m_name = unique_name(prefix, suffix);
 
     if (!m_obj_map.insert(std::make_pair(uuid, object)).second)
-	throw std::invalid_argument("uuid in use");
+	throw std::invalid_argument("duplicate uuid");
 }
 
 
@@ -427,7 +427,7 @@ RhinoConverter::ObjectManager::register_member(
     const ON_UUID &parent_uuid, const ON_UUID &member_uuid)
 {
     if (!m_obj_map[parent_uuid].m_members.insert(member_uuid).second)
-	throw std::invalid_argument("member uuid already in use");
+	throw std::invalid_argument("duplicate member uuid");
 }
 
 
@@ -596,7 +596,7 @@ RhinoConverter::clean_model()
     }
 
     if (num_problems != repair_count) {
-	m_log.Print("Remaining problems:\n");
+	m_log.Print("Repair failed. Remaining problems:\n");
 	m_model.Audit(false, NULL, &m_log, NULL);
     } else
 	m_log.Print("Repair successful; model is now valid.\n");
