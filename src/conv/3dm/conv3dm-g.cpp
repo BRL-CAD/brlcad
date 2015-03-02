@@ -1051,7 +1051,9 @@ RhinoConverter::create_all_objects()
 	    create_object(object, object_attrs);
 	    ++num_created;
 	} else {
-	    m_log.Print("Skipping object of type %s\n", object.ClassId()->ClassName());
+	    m_log.Print("Skipping object of type %s. Name: '%s'\n",
+			object.ClassId()->ClassName(),
+			w2string(object_attrs.m_name).c_str());
 
 	    if (m_verbose_mode) {
 		object.Dump(m_log);
