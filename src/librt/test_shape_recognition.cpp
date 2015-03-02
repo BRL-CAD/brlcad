@@ -307,9 +307,12 @@ process_params(struct subbrep_object_data *data, struct rt_wdb *wdbp, struct wme
 
 
 int
-make_shapes(struct subbrep_object_data *data, struct rt_wdb *wdbp, struct wmember *pcomb)
+make_shapes(struct subbrep_object_data *data, struct rt_wdb *wdbp, struct wmember *pcomb, int depth)
 {
-    //std::cout << "Making shape for " << bu_vls_addr(data->key) << "\n";
+    struct bu_vls spacer = BU_VLS_INIT_ZERO;
+    for (int i = 0; i < depth; i++)
+	bu_vls_printf(&spacer, " ");
+    std::cout << bu_vls_addr(&spacer) << "Making shape for " << bu_vls_addr(data->key) << "\n";
     if (data->planar_obj && data->planar_obj->local_brep) {
 	struct bu_vls brep_name = BU_VLS_INIT_ZERO;
 	bu_vls_sprintf(&brep_name, "planar_%s.s", bu_vls_addr(data->key));
@@ -321,8 +324,8 @@ make_shapes(struct subbrep_object_data *data, struct rt_wdb *wdbp, struct wmembe
 	    struct bu_vls brep_name = BU_VLS_INIT_ZERO;
 	    bu_vls_sprintf(&brep_name, "brep_%s.s", bu_vls_addr(data->key));
 	    mk_brep(wdbp, bu_vls_addr(&brep_name), data->local_brep);
-	    // TODO - not always union
-	    if (pcomb) (void)mk_addmember(bu_vls_addr(&brep_name), &(pcomb->l), NULL, WMOP_UNION);
+	    // TODO - almost certainly need to do more work to get correct booleans
+	    if (pcomb) (void)mk_addmember(bu_vls_addr(&brep_name), &(pcomb->l), NULL, db_str2op(&(data->params->bool_op)));
 	    bu_vls_free(&brep_name);
 	} else {
 	    bu_log("Warning - mk_brep called but data->local_brep is empty\n");
@@ -335,23 +338,25 @@ make_shapes(struct subbrep_object_data *data, struct rt_wdb *wdbp, struct wmembe
 	    bu_vls_sprintf(&comb_name, "comb_%s.c", bu_vls_addr(data->key));
 	    BU_LIST_INIT(&wcomb.l);
 	    if (data->planar_obj) {
-		process_params(data->planar_obj, wdbp, pcomb);
+	    bu_log("%smake planar obj %s\n", bu_vls_addr(&spacer), bu_vls_addr(data->key));
+		process_params(data->planar_obj, wdbp, &wcomb);
 	    }
-	    //bu_log("make comb %s\n", bu_vls_addr(data->key));
+	    bu_log("make comb %s\n", bu_vls_addr(data->key));
 	    for (unsigned int i = 0; i < BU_PTBL_LEN(data->children); i++){
 		struct subbrep_object_data *cdata = (struct subbrep_object_data *)BU_PTBL_GET(data->children,i);
-		//std::cout << "Making child shape(" << cdata->type << "):\n";
-		make_shapes(cdata, wdbp, &wcomb);
+		std::cout << bu_vls_addr(&spacer) << "Making child shape " << bu_vls_addr(cdata->key) << " (" << cdata->type << "):\n";
+		make_shapes(cdata, wdbp, &wcomb, depth+1);
 		subbrep_object_free(cdata);
 	    }
 	    mk_lcomb(wdbp, bu_vls_addr(&comb_name), &wcomb, 0, NULL, NULL, NULL, 0);
-	    // TODO - not always union
-	    if (pcomb) (void)mk_addmember(bu_vls_addr(&comb_name), &(pcomb->l), NULL, WMOP_UNION);
+	    // TODO - almost certainly need to do more work to get correct booleans
+	    if (pcomb) (void)mk_addmember(bu_vls_addr(&comb_name), &(pcomb->l), NULL, db_str2op(&(data->params->bool_op)));
 
 	    bu_vls_free(&member_name);
 	    bu_vls_free(&comb_name);
 	} else {
 	    //std::cout << "type: " << data->type << "\n";
+	    bu_log("%smake solid %s\n", bu_vls_addr(&spacer), bu_vls_addr(data->key));
 	    process_params(data, wdbp, pcomb);
 	}
     }
@@ -410,7 +415,7 @@ main(int argc, char *argv[])
 	struct subbrep_object_data *obj = (struct subbrep_object_data *)BU_PTBL_GET(subbreps, i);
 	//print_subbrep_object(obj, "");
 	// first, make the comb (or, if we have a brep, make that)
-	(void)make_shapes(obj, wdbp, &pcomb);
+	(void)make_shapes(obj, wdbp, &pcomb, 0);
 	subbrep_object_free(obj);
 	BU_PUT(obj, struct subbrep_object_data);
     }
