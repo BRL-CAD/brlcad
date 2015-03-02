@@ -592,6 +592,10 @@ cylinder_csg(struct subbrep_object_data *data, fastf_t cyl_tol)
 
 	    bu_log("partial cyl negative: %d\n", negative);
 
+	    bu_log("parent boolean: %c\n", data->parent->params->bool_op);
+
+	    if (data->parent->params->bool_op == '-') negative = -1 * negative;
+
 	    switch (negative) {
 		case -1:
 		    data->params->bool_op = '-';
@@ -920,6 +924,10 @@ cylinder_csg(struct subbrep_object_data *data, fastf_t cyl_tol)
 		    // global object or unioned into a comb lower down the tree (or vice versa)
 		    // is determined later.
 		    int negative = negative_cylinder(data, *cylindrical_surfaces.begin(), cyl_tol);
+
+		    bu_log("parent boolean: %c\n", data->parent->params->bool_op);
+
+		    if (data->parent->params->bool_op == '-') negative = -1 * negative;
 
 		    switch (negative) {
 			case -1:

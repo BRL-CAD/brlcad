@@ -312,7 +312,7 @@ make_shapes(struct subbrep_object_data *data, struct rt_wdb *wdbp, struct wmembe
     struct bu_vls spacer = BU_VLS_INIT_ZERO;
     for (int i = 0; i < depth; i++)
 	bu_vls_printf(&spacer, " ");
-    std::cout << bu_vls_addr(&spacer) << "Making shape for " << bu_vls_addr(data->key) << "\n";
+    //std::cout << bu_vls_addr(&spacer) << "Making shape for " << bu_vls_addr(data->key) << "\n";
     if (data->planar_obj && data->planar_obj->local_brep) {
 	struct bu_vls brep_name = BU_VLS_INIT_ZERO;
 	bu_vls_sprintf(&brep_name, "planar_%s.s", bu_vls_addr(data->key));
@@ -338,17 +338,18 @@ make_shapes(struct subbrep_object_data *data, struct rt_wdb *wdbp, struct wmembe
 	    bu_vls_sprintf(&comb_name, "comb_%s.c", bu_vls_addr(data->key));
 	    BU_LIST_INIT(&wcomb.l);
 	    if (data->planar_obj) {
-	    bu_log("%smake planar obj %s\n", bu_vls_addr(&spacer), bu_vls_addr(data->key));
+	    //bu_log("%smake planar obj %s\n", bu_vls_addr(&spacer), bu_vls_addr(data->key));
 		process_params(data->planar_obj, wdbp, &wcomb);
 	    }
-	    bu_log("make comb %s\n", bu_vls_addr(data->key));
+	    //bu_log("make comb %s\n", bu_vls_addr(data->key));
 	    for (unsigned int i = 0; i < BU_PTBL_LEN(data->children); i++){
 		struct subbrep_object_data *cdata = (struct subbrep_object_data *)BU_PTBL_GET(data->children,i);
-		std::cout << bu_vls_addr(&spacer) << "Making child shape " << bu_vls_addr(cdata->key) << " (" << cdata->type << "):\n";
+		//std::cout << bu_vls_addr(&spacer) << "Making child shape " << bu_vls_addr(cdata->key) << " (" << cdata->type << "):\n";
 		make_shapes(cdata, wdbp, &wcomb, depth+1);
 		subbrep_object_free(cdata);
 	    }
 	    mk_lcomb(wdbp, bu_vls_addr(&comb_name), &wcomb, 0, NULL, NULL, NULL, 0);
+
 	    // TODO - almost certainly need to do more work to get correct booleans
 	    if (pcomb) (void)mk_addmember(bu_vls_addr(&comb_name), &(pcomb->l), NULL, db_str2op(&(data->params->bool_op)));
 
@@ -356,7 +357,7 @@ make_shapes(struct subbrep_object_data *data, struct rt_wdb *wdbp, struct wmembe
 	    bu_vls_free(&comb_name);
 	} else {
 	    //std::cout << "type: " << data->type << "\n";
-	    bu_log("%smake solid %s\n", bu_vls_addr(&spacer), bu_vls_addr(data->key));
+	    //bu_log("%smake solid %s\n", bu_vls_addr(&spacer), bu_vls_addr(data->key));
 	    process_params(data, wdbp, pcomb);
 	}
     }

@@ -6,6 +6,7 @@
 #include "bu/log.h"
 #include "bu/str.h"
 #include "bu/malloc.h"
+#include "brep.h"
 #include "shape_recognition.h"
 
 curve_t
@@ -213,7 +214,7 @@ subbrep_object_init(struct subbrep_object_data *obj, const ON_Brep *brep)
     BU_GET(obj->children, struct bu_ptbl);
     BU_GET(obj->params, struct csg_object_params);
     obj->params->planes = NULL;
-    obj->params->bool_op = 'u';
+    obj->params->bool_op = '\0';
     obj->planar_obj = NULL;
     bu_vls_init(obj->key);
     bu_ptbl_init(obj->children, 8, "children table");
@@ -398,7 +399,73 @@ print_subbrep_object(struct subbrep_object_data *data, const char *offset)
     bu_vls_free(&log);
 }
 
+/* This routine is used when there is uncertainty about whether a
+ * particular solid or combination is to be subtracted or unioned
+ * into a parent.  For planar on planar cases, the check is whether every
+ * vertex of the candidate solid is either on or one of above/below
+ * the shared face plane.  If some vertices are above and some
+ * are below, the candidate solid is self intersecting and must be
+ * further subdivided.
+ *
+ * For non-planar situations, we're probably looking at a surface
+ * surface intersection test.  A possible test short of that might
+ * be vertices of bounding boxes, but that will result in situations
+ * reporting subdivision necessity when there isn't any unless we
+ * follow up with a more rigorous test.  This needs more thought. */
+int
+subbrep_determine_boolean(struct subbrep_object_data *data)
+{
+   std::cout << "Faces to check: " << data->fil_cnt << "\n";
+   int pos_cnt = 0;
+   int neg_cnt = 0;
 
+   for (int i = 0; i < data->fil_cnt; i++) {
+       // Get face with inner loop
+       const ON_BrepFace *face = &(data->brep->m_F[data->fil[i]]);
+       const ON_Surface *surf = face->SurfaceOf();
+       surface_t stype = GetSurfaceType(surf, NULL);
+       ON_Plane face_plane;
+       if (stype == SURFACE_PLANE) {
+	   ON_Surface *ts = surf->Duplicate();
+	   (void)ts->IsPlanar(&face_plane, BREP_PLANAR_TOL);
+	   delete ts;
+       }
+       std::set<int> verts;
+       for (int j = 0; j < data->edges_cnt; j++) {
+	   verts.insert(data->brep->m_E[data->edges[j]].Vertex(0)->m_vertex_index);
+	   verts.insert(data->brep->m_E[data->edges[j]].Vertex(1)->m_vertex_index);
+       }
+       for (std::set<int>::iterator s_it = verts.begin(); s_it != verts.end(); s_it++) {
+	   // For each vertex in the subbrep, determine
+	   // if it is above, below or on the face
+	   if (stype == SURFACE_PLANE) {
+	       ON_3dPoint p = data->brep->m_V[*s_it].Point();
+	       double distance = face_plane.DistanceTo(p);
+	       std::cout << "distance: " << distance << "\n";
+	       if (distance > BREP_PLANAR_TOL) pos_cnt++;
+	       if (distance < -1*BREP_PLANAR_TOL) neg_cnt++;
+	   } else {
+	       // TODO - this doesn't seem to work...
+	       double current_distance = 0;
+	       ON_3dPoint p = data->brep->m_V[*s_it].Point();
+	       ON_3dPoint p3d;
+	       ON_2dPoint p2d;
+	       if (surface_GetClosestPoint3dFirstOrder(surf,p,p2d,p3d,current_distance)) {
+		   if (current_distance > 0.001) pos_cnt++;
+	       } else {
+		   neg_cnt++;
+	       }
+	   }
+       }
+   }
+
+   // Determine what we have.  If we have both pos and neg counts > 0,
+   // the proposed brep needs to be broken down further.  all pos
+   // counts is a union, all neg counts is a subtraction
+   if (pos_cnt && neg_cnt) return 0;
+   if (pos_cnt) return 1;
+   if (neg_cnt) return -1;
+}
 
 // Local Variables:
 // tab-width: 8

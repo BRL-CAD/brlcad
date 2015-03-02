@@ -126,6 +126,9 @@ int subbrep_split(struct subbrep_object_data *data);
 int subbrep_make_brep(struct subbrep_object_data *data);
 int subbrep_make_planar(struct subbrep_object_data *data);
 
+int subbrep_determine_boolean(struct subbrep_object_data *data);
+
+
 // Functions for defining a simplified planar subvolume
 void subbrep_planar_init(struct subbrep_object_data *data);
 void subbrep_planar_close_obj(struct subbrep_object_data *data);
