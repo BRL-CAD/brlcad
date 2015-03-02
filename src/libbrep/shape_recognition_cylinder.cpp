@@ -555,14 +555,23 @@ cylinder_csg(struct subbrep_object_data *data, fastf_t cyl_tol)
 	    //std::cout << "Full cylinder\n";
 	    data->type = CYLINDER;
 
-	    // TODO - the surface negative test may not be enough on its own - needs
-	    // more thought
-	    if (negative == -1) {
-		data->params->bool_op = '-';
+	    bu_log("parent boolean: %c\n", data->parent->params->bool_op);
+
+	    if (data->parent->params->bool_op == '-') negative = -1 * negative;
+
+	    switch (negative) {
+		case -1:
+		    data->params->bool_op = '-';
+		    break;
+		case 1:
+		    data->params->bool_op = 'u';
+		    break;
+		default:
+		    std::cout << "Could not determine cylinder status???????\n";
+		    data->params->bool_op = 'u';
+		    break;
 	    }
-	    if (negative == 1) {
-		data->params->bool_op = 'u';
-	    }
+
 	    data->params->origin[0] = set1_c.Center().x;
 	    data->params->origin[1] = set1_c.Center().y;
 	    data->params->origin[2] = set1_c.Center().z;

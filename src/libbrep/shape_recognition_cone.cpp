@@ -8,6 +8,33 @@
 #include "bu/malloc.h"
 #include "shape_recognition.h"
 
+/* Return -1 if the cone face is pointing in toward the axis,
+ * 1 if it is pointing out, and 0 if there is some other problem */
+int
+negative_cone(struct subbrep_object_data *data, int face_index, double cone_tol) {
+    int ret = 0;
+    const ON_Surface *surf = data->brep->m_F[face_index].SurfaceOf();
+    ON_Cone cone;
+    ON_Surface *cs = surf->Duplicate();
+    cs->IsCone(&cone, cone_tol);
+    delete cs;
+
+    ON_3dPoint pnt;
+    ON_3dVector normal;
+    double u = surf->Domain(0).Mid();
+    double v = surf->Domain(1).Mid();
+    if (!surf->EvNormal(u, v, pnt, normal)) return 0;
+    ON_3dPoint base_pnt = cone.BasePoint();
+
+    ON_3dVector base_vect = pnt - base_pnt;
+    double dotp = ON_DotProduct(base_vect, normal);
+
+    if (NEAR_ZERO(dotp, 0.000001)) return 0;
+    ret = (dotp < 0) ? -1 : 1;
+    if (data->brep->m_F[face_index].m_bRev) ret = -1 * ret;
+    return ret;
+}
+
 
 int
 subbrep_is_cone(struct subbrep_object_data *data, fastf_t cone_tol)
@@ -115,7 +142,25 @@ subbrep_is_cone(struct subbrep_object_data *data, fastf_t cone_tol)
 
     ON_3dVector hvect(cone.ApexPoint() - cone.BasePoint());
 
-    data->params->bool_op = 'u';  //TODO - not always a union - need to determine positive/negative
+    int negative = negative_cone(data, *conic_surfaces.begin(), cone_tol);
+    bu_log("conic negative: %d\n", negative);
+    bu_log("parent boolean: %c\n", data->parent->params->bool_op);
+
+    if (data->parent->params->bool_op == '-') negative = -1 * negative;
+
+    switch (negative) {
+	case -1:
+	    data->params->bool_op = '-';
+	    break;
+	case 1:
+	    data->params->bool_op = 'u';
+	    break;
+	default:
+	    std::cout << "Could not determine cone status???????\n";
+	    data->params->bool_op = 'u';
+	    break;
+    }
+
     data->params->origin[0] = cone.BasePoint().x;
     data->params->origin[1] = cone.BasePoint().y;
     data->params->origin[2] = cone.BasePoint().z;
@@ -224,7 +269,26 @@ cone_csg(struct subbrep_object_data *data, fastf_t cone_tol)
 	ON_3dPoint closest_to_base = set1_c.Plane().ClosestPointTo(cone.BasePoint());
 	struct csg_object_params * obj;
         BU_GET(obj, struct csg_object_params);
-	data->params->bool_op = 'u';  //TODO - not always a union - need to determine positive/negative
+
+	int negative = negative_cone(data, *conic_surfaces.begin(), cone_tol);
+	bu_log("conic negative: %d\n", negative);
+	bu_log("parent boolean: %c\n", data->parent->params->bool_op);
+
+	if (data->parent->params->bool_op == '-') negative = -1 * negative;
+
+	switch (negative) {
+	    case -1:
+		data->params->bool_op = '-';
+		break;
+	    case 1:
+		data->params->bool_op = 'u';
+		break;
+	    default:
+		std::cout << "Could not determine cone status???????\n";
+		data->params->bool_op = 'u';
+		break;
+	}
+
 	data->params->origin[0] = closest_to_base.x;
 	data->params->origin[1] = closest_to_base.y;
 	data->params->origin[2] = closest_to_base.z;
