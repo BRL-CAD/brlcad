@@ -23,7 +23,7 @@
       geometry information, and the resulting standard (ISO 10303: Industrial automation systems
       and integration -- Product data representation and exchange) is extremely large.  Consequently,
       the standard is subdivided into <emphasis remap="I">parts</emphasis>, which are referred to
-      individually as ISO 10303-xxx where xxx is the part number.  Because of the large scope, 
+      individually as ISO 10303-xxx where xxx is the part number.  Because of the large scope,
       there is a numbering convention used to represent more focused sub-scopes in order to make locating
       specific types of information simpler:
       <table>
@@ -72,7 +72,7 @@
 	</tgroup>
       </table>
       The lowest level parts that define STEP in a practical sense are <link xlink:href="http://www.iso.org/iso/iso_catalogue/catalogue_tc/catalogue_detail.htm?csnumber=38047">ISO 10303-011</link>, <link xlink:href="http://www.iso.org/iso/iso_catalogue/catalogue_tc/catalogue_detail.htm?csnumber=33713">ISO 10303-21</link>, and <link xlink:href="http://www.iso.org/iso/iso_catalogue/catalogue_tc/catalogue_detail.htm?csnumber=25097"> ISO 10303-022</link>.  10303-011 defines
-      the EXPRESS language, which is in turn the language in which application protocol schemas are written.  10303-21 
+      the EXPRESS language, which is in turn the language in which application protocol schemas are written.  10303-21
       defines a clear text encoding of the STEP exchange structure - files using this schema are referred to as "STEP"
       or "Part 21" files.
       10303-022 defines a Standard Data Access Interface (SDAI) which is used to automatically generate practical
@@ -87,16 +87,16 @@
     </para>
     <para>
       Within that context, the primary components of interest for practical data import and
-      export are the Appliation Protocols (AP) that focus on shape models and assembly
+      export are the Application Protocols (AP) that focus on shape models and assembly
       structure (among other things.)  The first such protocol was AP203 - "Configuration-controlled design".
       As experience using the standard in real world applications accumulated, new revisions and new application protocols
       were developed.  Today, the following protocols exist:
-      <table> 
+      <table>
 	<title>Application Protocols relating to Shape Modeling and Assembly Structure</title>
 	<tgroup cols="3">
 	  <thead>
 	    <row>
-	      <entry>Application Protocl</entry>
+	      <entry>Application Protocol</entry>
 	      <entry>Title</entry>
 	      <entry>Notes</entry>
 	    </row>
@@ -110,7 +110,7 @@
 	    <row>
 	      <entry>AP203e2</entry>
 	      <entry> <link xlink:href="http://www.iso.org/iso/iso_catalogue/catalogue_tc/catalogue_detail.htm?csnumber=44305">Configuration controlled 3D designs of mechanical parts and assemblies</link></entry>
-	      <entry>Most recent version is 10303-203:2011.  Revises <link xlink:href="http://www.iso.org/iso/home/store/catalogue_ics/catalogue_detail_ics.htm?csnumber=39522">10303-203:2005</link>, which is listed as a modular version that is harmoonized with ISO 10303-2014.</entry>
+	      <entry>Most recent version is 10303-203:2011.  Revises <link xlink:href="http://www.iso.org/iso/home/store/catalogue_ics/catalogue_detail_ics.htm?csnumber=39522">10303-203:2005</link>, which is listed as a modular version that is harmonized with ISO 10303-2014.</entry>
 	    </row>
 	    <row>
 	      <entry>AP214</entry>
@@ -128,11 +128,11 @@
     </para>
     <para>
       AP203e2 is sufficiently different from AP203 that practically speaking it merits
-      being called out as its own distinct protocol, but in the nominclature of the ISO
+      being called out as its own distinct protocol, but in the nomenclature of the ISO
       standards it is still considered a revision to AP203.
     </para>
     <para>
-      These protocols are the portion of ISO 10303 that address the problem domain previously handled by the Initial Graphics Exchange Specification (<citerefentry><refentrytitle>IGES</refentrytitle><manvolnum>5</manvolnum></citerefentry>).  In a computer aided design context where transfer of "STEP files" is being discussed, those files will most likely correspond to one of the previous protocols.  
+      These protocols are the portion of ISO 10303 that address the problem domain previously handled by the Initial Graphics Exchange Specification (<citerefentry><refentrytitle>IGES</refentrytitle><manvolnum>5</manvolnum></citerefentry>).  In a computer aided design context where transfer of "STEP files" is being discussed, those files will most likely correspond to one of the previous protocols.
     </para>
 
     <para>
@@ -154,7 +154,7 @@
       PDM Implementer Forum, <link xlink:href="http://www.steptools.com/support/stdev_docs/express/pdm/pdmug_release4_3.pdf">Usage Guide for the STEP PDM Schema V1.2 Release 4.3</link>, January 2002.
     </para>
     <para>
-      CAx Implementor Forum Recommended Practices: <link xlink:href="https://www.cax-if.org/joint_testing_info.html#recpracs"></link>
+      CAx Implementer Forum Recommended Practices: <link xlink:href="https://www.cax-if.org/joint_testing_info.html#recpracs"></link>
     </para>
 
   </refsect1>
