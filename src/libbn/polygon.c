@@ -190,6 +190,22 @@ bn_3d_polygon_sort_ccw(size_t npts, point_t *pts, plane_t cmp)
     return 0;
 }
 
+int
+bn_polygon_clockwise(size_t npts, const point2d_t *pts)
+{
+    size_t i;
+    int sum = 0;
+    for (i = 0; i < npts; i++) {
+	if (i + 1 == npts) {
+	    sum += (pts[0][0] - pts[i][0]) * (pts[0][1] + pts[i][1]);
+	} else {
+	    sum += (pts[i][0] - pts[i+1][0]) * (pts[i][1] + pts[i+1][1]);
+	}
+    }
+    bu_log("sum: %d\n", sum);
+    if (sum == 0) return 0;
+    return (sum > 0) ? 1 : -1;
+}
 
 /*
  * Translation to libbn data types of Franklin's point-in-polygon test.
@@ -483,6 +499,12 @@ int bn_polygon_triangulate(int **faces, int *num_faces, const point2d_t *pts, si
     struct pt_vertex_ref *convex_list = NULL;
     struct pt_vertex_ref *reflex_list = NULL;
     struct pt_vertex_ref *ear_list = NULL;
+    int ccw = bn_polygon_clockwise(npts, pts);
+
+    if (ccw != -1) {
+	bu_log("Warning - non-CCW point loop!\n");
+    }
+
 
     BU_GET(lists, struct pt_lists);
     if(npts < 3) return 1;

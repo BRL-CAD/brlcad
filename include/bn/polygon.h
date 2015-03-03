@@ -43,16 +43,34 @@ __BEGIN_DECLS
 
 /**
  * @brief
- * Test whether a point is inside a 2D polygon
+ * test whether a polygon is clockwise (CW) or counter clockwise (CCW)
  *
- * Franklin's test for point inclusion within a polygon - see
- * http://www.ecse.rpi.edu/Homepages/wrf/Research/Short_Notes/pnpoly.html
+ * Determine if a set of points forming a polygon are in clockwise
+ * or counter-clockwise order (see http://stackoverflow.com/a/1165943)
+ *
+ * @param[in] npts number of points pts contains
+ * @param[in] pts array of points, building a convex polygon. duplicated points
+ * aren't allowed. the points in the array will be sorted counter-clockwise.
+ *
+ * @return -1 if polygon is counter-clockwise
+ * @return 1 if polygon is clockwise
+ * @return 0 if the test failed
+ */
+BN_EXPORT extern int bn_polygon_clockwise(size_t npts, const point2d_t *pts);
+
+
+/**
+ * @brief
+ * test whether a point is inside a 2d polygon
+ *
+ * franklin's test for point inclusion within a polygon - see
+ * http://www.ecse.rpi.edu/homepages/wrf/research/short_notes/pnpoly.html
  * for more details and the implementation file polygon.c for license info.
  *
- * @param[in] npts Number of points pts contains
- * @param[in] pts Array of points, building a convex polygon. Duplicated points
- * aren't allowed. The points in the array will be sorted counter-clockwise.
- * @param[in] test_pt Point to test.
+ * @param[in] npts number of points pts contains
+ * @param[in] pts array of points, building a convex polygon. duplicated points
+ * aren't allowed. the points in the array will be sorted counter-clockwise.
+ * @param[in] test_pt point to test.
  *
  * @return 0 if point is outside polygon
  * @return 1 if point is inside polygon
