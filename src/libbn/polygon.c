@@ -199,7 +199,7 @@ bn_polygon_clockwise(size_t npts, const point2d_t *pts)
 	if (i + 1 == npts) {
 	    sum += (pts[0][0] - pts[i][0]) * (pts[0][1] + pts[i][1]);
 	} else {
-	    sum += (pts[i][0] - pts[i+1][0]) * (pts[i][1] + pts[i+1][1]);
+	    sum += (pts[i+1][0] - pts[i][0]) * (pts[i+1][1] + pts[i][1]);
 	}
     }
     bu_log("sum: %d\n", sum);
