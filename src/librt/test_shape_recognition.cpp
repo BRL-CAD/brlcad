@@ -124,9 +124,10 @@ brep_to_bot(struct subbrep_object_data *data, struct rt_wdb *wdbp)
 	/* Uncomment this code to create per-face bots for debugging purposes */
 	/*
 	bu_vls_sprintf(&prim_name, "bot_%s_face_%d.s", bu_vls_addr(data->key), b_face->m_face_index);
-	if (mk_bot(wdbp, bu_vls_addr(&prim_name), RT_BOT_SOLID, RT_BOT_UNORIENTED, 0, b_loop->m_ti.Count(), num_faces, (fastf_t *)verts, faces, (fastf_t *)NULL, (struct bu_bitv *)NULL)) {
+	if (mk_bot(wdbp, bu_vls_addr(&prim_name), RT_BOT_SOLID, RT_BOT_UNORIENTED, 0, b_loop->m_ti.Count(), num_faces, (fastf_t *)verts2d, faces, (fastf_t *)NULL, (struct bu_bitv *)NULL)) {
 	    std::cout << "mk_bot failed for face " << b_face->m_face_index << "\n";
-	}*/
+	}
+	*/
     }
 
     /* Now we can build the final faces array for mk_bot */
