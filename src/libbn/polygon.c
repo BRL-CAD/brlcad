@@ -580,6 +580,11 @@ int bn_polygon_triangulate(int **faces, int *num_faces, const point2d_t *pts, si
 	    /* The next line needs to use PT_PREV_REF so point traversal
 	     * happens in the correct order - PT_NEXT_REF doesn't work. */
 	    struct pt_vertex_ref *ear_ref = PT_PREV_REF(lists->ear_list);
+	    if (!ear_ref || !ear_ref->v) {
+		bu_log("ear list error!\n");
+		ret = 1;
+		goto cleanup;
+	    }
 	    PT_ADD_TRI(ear_ref->v);
 	    remove_ear(ear_ref->v, lists, pts);
 	    one_vert = PT_NEXT(vertex_list);
