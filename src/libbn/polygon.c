@@ -28,7 +28,7 @@
 
 
 int
-bn_polygon_area(fastf_t *area, size_t npts, const point_t *pts)
+bn_3d_polygon_area(fastf_t *area, size_t npts, const point_t *pts)
 {
     size_t i;
     vect_t v1, v2, tmp, tot = VINIT_ZERO;
@@ -72,7 +72,7 @@ bn_polygon_area(fastf_t *area, size_t npts, const point_t *pts)
 
 
 int
-bn_polygon_centroid(point_t *cent, size_t npts, const point_t *pts)
+bn_3d_polygon_centroid(point_t *cent, size_t npts, const point_t *pts)
 {
     size_t i;
     fastf_t x_0 = 0.0;
@@ -137,7 +137,7 @@ bn_polygon_centroid(point_t *cent, size_t npts, const point_t *pts)
 
 
 int
-bn_polygon_mk_pts_planes(size_t *npts, point_t **pts, size_t neqs, const plane_t *eqs)
+bn_3d_polygon_mk_pts_planes(size_t *npts, point_t **pts, size_t neqs, const plane_t *eqs)
 {
     size_t i, j, k, l;
     if (!npts || !pts || neqs < 4 || !eqs)
@@ -173,7 +173,7 @@ bn_polygon_mk_pts_planes(size_t *npts, point_t **pts, size_t neqs, const plane_t
 
 
 HIDDEN int
-sort_ccw(const void *x, const void *y, void *cmp)
+sort_ccw_3d(const void *x, const void *y, void *cmp)
 {
     vect_t tmp;
     VCROSS(tmp, ((fastf_t *)x), ((fastf_t *)y));
@@ -182,11 +182,11 @@ sort_ccw(const void *x, const void *y, void *cmp)
 
 
 int
-bn_polygon_sort_ccw(size_t npts, point_t *pts, plane_t cmp)
+bn_3d_polygon_sort_ccw(size_t npts, point_t *pts, plane_t cmp)
 {
     if (!pts || npts < 3)
 	return 1;
-    bu_sort(pts, npts, sizeof(point_t), sort_ccw, &cmp);
+    bu_sort(pts, npts, sizeof(point_t), sort_ccw_3d, &cmp);
     return 0;
 }
 
