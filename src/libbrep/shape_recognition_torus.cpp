@@ -82,8 +82,8 @@ negative_torus(struct subbrep_object_data *data, int face_index, double torus_to
 
     if (NEAR_ZERO(dotp, 0.000001)) return 0;
     if (dotp < 0) return 1;
-    return -1;
 #endif
+    return -1;
 }
 
 
