@@ -1302,7 +1302,7 @@ static struct to_cmdtab to_cmds[] = {
     {"rtweight", "[args]", TO_UNLIMITED, to_view_func, ged_rt},
     {"rtwizard", "[args]", TO_UNLIMITED, to_view_func, ged_rtwizard},
     {"savekey",	"filename", 3, to_view_func, ged_savekey},
-    {"saveview",	"filename", 3, to_view_func, ged_saveview},
+    {"saveview", (char *)0, TO_UNLIMITED, to_view_func, ged_saveview},
     {"sca",	"sf", 3, to_view_func_plus, ged_scale},
     {"scale_mode",	"x y", TO_UNLIMITED, to_scale_mode, GED_FUNC_PTR_NULL},
     {"screen2model",	"x y", TO_UNLIMITED, to_screen2model, GED_FUNC_PTR_NULL},
