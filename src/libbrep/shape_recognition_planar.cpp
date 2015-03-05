@@ -268,8 +268,9 @@ subbrep_planar_close_obj(struct subbrep_object_data *data)
 
 }
 
-int subbrep_add_planar_face(struct subbrep_object_data *data, ON_Plane *pcyl,
-	ON_SimpleArray<const ON_BrepVertex *> *vert_loop, int neg_surf)
+void
+subbrep_add_planar_face(struct subbrep_object_data *data, ON_Plane *pcyl,
+			ON_SimpleArray<const ON_BrepVertex *> *vert_loop, int neg_surf)
 {
     // We use the planar_obj's local_brep to store new faces.  The planar local
     // brep contains the relevant linear and planar components from its parent
