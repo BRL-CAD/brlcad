@@ -443,9 +443,17 @@ remove_ear(struct pt_vertex *ear, struct pt_lists *lists, const point2d_t *pts)
     /* Update the status of the two neighbor points */
     if (vp->isConvex) {
 	/* Check ear status */
+	int prev_ear_status = vp->isEar;
 	struct pt_vertex *p = PT_NEXT(vp);
 	struct pt_vertex *n = PT_PREV(vp);
 	vp->isEar = is_ear(vp->index, p->index, n->index, lists->reflex_list, pts);
+	if (prev_ear_status != vp->isEar) {
+	    if (vp->isEar) {
+		PT_ADD_EAR_VREF(lists->ear_list, vp, pts);
+	    } else {
+		PT_DEQUEUE_EAR_VREF(lists->ear_list, vp);
+	    }
+	}
     } else {
 	struct pt_vertex *p = PT_NEXT(vp);
 	struct pt_vertex *n = PT_PREV(vp);
@@ -462,9 +470,17 @@ remove_ear(struct pt_vertex *ear, struct pt_lists *lists, const point2d_t *pts)
 	}
     }
     if (vn->isConvex) {
+	int prev_ear_status = vn->isEar;
 	struct pt_vertex *p = PT_NEXT(vn);
 	struct pt_vertex *n = PT_PREV(vn);
 	vn->isEar = is_ear(vn->index, p->index, n->index, lists->reflex_list, pts);
+	if (prev_ear_status != vn->isEar) {
+	    if (vn->isEar) {
+		PT_ADD_EAR_VREF(lists->ear_list, vn, pts);
+	    } else {
+		PT_DEQUEUE_EAR_VREF(lists->ear_list, vn);
+	    }
+	}
     } else {
 	struct pt_vertex *p = PT_NEXT(vn);
 	struct pt_vertex *n = PT_PREV(vn);
@@ -562,12 +578,9 @@ int bn_polygon_triangulate(int **faces, int *num_faces, const point2d_t *pts, si
 	if (vref->v->isEar) PT_ADD_EAR_VREF(ear_list, vref->v, pts);
     }
 
-    /* If we didn't find any ears, something is wrong - possibly non CCW inputs */
+    /* If we didn't find any ears, something is wrong */
     if (BU_LIST_IS_EMPTY(&(lists->ear_list->l))) {
 	ret = 1;
-	if (BU_LIST_IS_EMPTY(&(lists->convex_list->l)) && !BU_LIST_IS_EMPTY(&(lists->vertex_list->l))) {
-	    bu_log("No convex points were found - this probably indicates the points are not in CCW order\n");
-	}
 	goto cleanup;
     }
 
