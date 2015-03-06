@@ -18,6 +18,7 @@
  * information.
  */
 
+#include "limits.h" /* for INT_MAX */
 #include "bu/list.h"
 #include "bu/log.h"
 #include "bu/malloc.h"
@@ -276,6 +277,7 @@ struct pt_vertex {
     int index;
     int isConvex;
     int isEar;
+    double angle;
     pt_vr *convex_ref;
     pt_vr *reflex_ref;
     pt_vr *ear_ref;
@@ -392,6 +394,22 @@ is_convex(const point2d_t test, const point2d_t p1, const point2d_t p2) {
     return (testval > 0) ? 1 : 0;
 }
 
+/* 2D angle */
+HIDDEN double 
+pt_angle(const point2d_t test, const point2d_t p1, const point2d_t p2) {
+
+    double dot, det;
+    vect_t v1;
+    vect_t v2;
+    V2MOVE(v1, p1);
+    V2MOVE(v2, p2);
+    V2SUB2(v1, v1, test);
+    V2SUB2(v2, v2, test);
+    dot = v1[0]*v2[0] + v1[1]*v2[1];
+    det = v1[0]*v2[1] - v1[1]*v2[0];
+    return -1*atan2(det, dot) * 180/M_PI;
+}
+
 HIDDEN void
 pt_v_get(struct bu_list *l, int i)
 {
@@ -446,6 +464,7 @@ remove_ear(struct pt_vertex *ear, struct pt_lists *lists, const point2d_t *pts)
 	int prev_ear_status = vp->isEar;
 	struct pt_vertex *p = PT_NEXT(vp);
 	struct pt_vertex *n = PT_PREV(vp);
+	vp->angle = pt_angle(pts[vp->index], pts[p->index], pts[n->index]);
 	vp->isEar = is_ear(vp->index, p->index, n->index, lists->reflex_list, pts);
 	if (prev_ear_status != vp->isEar) {
 	    if (vp->isEar) {
@@ -461,6 +480,7 @@ remove_ear(struct pt_vertex *ear, struct pt_lists *lists, const point2d_t *pts)
 	vp->isConvex = is_convex(pts[vp->index], pts[p->index], pts[n->index]);
 	/* Check if it became an ear */
 	if (vp->isConvex) {
+	    vp->angle = pt_angle(pts[vp->index], pts[p->index], pts[n->index]);
 	    PT_DEQUEUE_REFLEX_VREF(lists->reflex_list, vp);
 	    PT_ADD_CONVEX_VREF(lists->convex_list, vp);
 	    vp->isEar = is_ear(vp->index, p->index, n->index, lists->reflex_list, pts);
@@ -473,6 +493,7 @@ remove_ear(struct pt_vertex *ear, struct pt_lists *lists, const point2d_t *pts)
 	int prev_ear_status = vn->isEar;
 	struct pt_vertex *p = PT_NEXT(vn);
 	struct pt_vertex *n = PT_PREV(vn);
+	vn->angle = pt_angle(pts[vn->index], pts[p->index], pts[n->index]);
 	vn->isEar = is_ear(vn->index, p->index, n->index, lists->reflex_list, pts);
 	if (prev_ear_status != vn->isEar) {
 	    if (vn->isEar) {
@@ -488,6 +509,7 @@ remove_ear(struct pt_vertex *ear, struct pt_lists *lists, const point2d_t *pts)
 	vn->isConvex = is_convex(pts[vn->index], pts[p->index], pts[n->index]);
 	/* Check if it became an ear */
 	if (vn->isConvex) {
+	    vn->angle = pt_angle(pts[vn->index], pts[p->index], pts[n->index]);
 	    PT_DEQUEUE_REFLEX_VREF(lists->reflex_list, vn);
 	    PT_ADD_CONVEX_VREF(lists->convex_list, vn);
 	    vn->isEar = is_ear(vn->index, p->index, n->index, lists->reflex_list, pts);
@@ -563,8 +585,10 @@ int bn_polygon_triangulate(int **faces, int *num_faces, const point2d_t *pts, si
 	struct pt_vertex *next = PT_PREV(v);
 	v->isConvex = is_convex(pts[v->index], pts[prev->index], pts[next->index]);
 	if (v->isConvex) {
+	    v->angle = pt_angle(pts[v->index], pts[prev->index], pts[next->index]);
 	    PT_ADD_CONVEX_VREF(convex_list, v);
 	} else {
+	    v->angle = 0;
 	    v->isEar = 0;
 	    PT_ADD_REFLEX_VREF(reflex_list, v);
 	}
@@ -589,9 +613,14 @@ int bn_polygon_triangulate(int **faces, int *num_faces, const point2d_t *pts, si
 	struct pt_vertex *one_vert = PT_NEXT(vertex_list);
 	struct pt_vertex *four_vert = PT_NEXT(PT_NEXT(PT_NEXT(one_vert)));
 	while(one_vert->index != four_vert->index) {
-	    /* The next line needs to use PT_PREV_REF so point traversal
-	     * happens in the correct order - PT_NEXT_REF doesn't work. */
-	    struct pt_vertex_ref *ear_ref = PT_PREV_REF(lists->ear_list);
+	    struct pt_vertex_ref *ear_ref;
+	    int min_angle = INT_MAX;
+	    for (BU_LIST_FOR_BACKWARDS(vref, pt_vertex_ref, &(ear_list->l))){
+		if (vref->v->angle < min_angle && vref->v) {
+		    min_angle = vref->v->angle;
+		    ear_ref = vref;
+		}
+	    }
 	    if (!ear_ref || !ear_ref->v) {
 		bu_log("ear list error!\n");
 		ret = 1;
