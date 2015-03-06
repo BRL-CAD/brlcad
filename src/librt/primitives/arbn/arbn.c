@@ -21,8 +21,10 @@
 /** @{ */
 /** @file primitives/arbn/arbn.c
  *
- * Intersect a ray with an Arbitrary Regular Polyhedron with an
- * arbitrary number of faces.
+ * This implements polyhedron with an arbitrary number of faces.  The
+ * polyhedron is defined by a set four or more plane equations.  The
+ * volume must be convex and is defined as the intersection of all the
+ * halfspaces prescribed by the plane equations.
  *
  */
 
