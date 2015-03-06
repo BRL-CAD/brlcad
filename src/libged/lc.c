@@ -76,14 +76,33 @@ sort_regions(const void *a, const void *b, void *arg)
     struct region_record *r1 = (struct region_record *)a;
     struct region_record *r2 = (struct region_record *)b;
     int *sort_type = (int *)arg;
+    int temp1,temp2;
 
     switch (*sort_type) {
 	case 1:
-	    return bu_strcmp(r1->region_id, r2->region_id);
+	    temp1=atoi(r1->region_id);
+	    temp2=atoi(r2->region_id);
+	    if ( temp1 > temp2 )
+    		return 1;
+	    if ( temp1 == temp2 )
+		return 0;
+	    return -1;
 	case 2:
-	    return bu_strcmp(r1->material_id, r2->material_id);
+	    temp1=atoi(r1->material_id);
+	    temp2=atoi(r2->material_id);
+	    if ( temp1 > temp2 )
+    		return 1;
+	    if ( temp1 == temp2 )
+		return 0;
+	    return -1;
 	case 3:
-	    return bu_strcmp(r1->los, r2->los);
+	    temp1=atoi(r1->los);
+	    temp2=atoi(r2->los);
+	    if ( temp1 > temp2 )
+    		return 1;
+	    if ( temp1 == temp2 )
+		return 0;
+	    return -1;
 	case 4:
 	    return bu_strcmp(r1->obj_name, r2->obj_name);
 	case 5:
