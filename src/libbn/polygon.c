@@ -395,7 +395,7 @@ is_convex(const point2d_t test, const point2d_t p1, const point2d_t p2) {
 }
 
 /* 2D angle */
-HIDDEN double 
+HIDDEN double
 pt_angle(const point2d_t test, const point2d_t p1, const point2d_t p2) {
 
     double dot, det;
