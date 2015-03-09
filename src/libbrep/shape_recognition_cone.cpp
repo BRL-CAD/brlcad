@@ -301,6 +301,8 @@ cone_csg(struct subbrep_object_data *data, fastf_t cone_tol)
 	if (data->params->height < 0) data->params->height = data->params->height * -1;
 
     } else {
+	ON_3dPoint base = set1_c.Center();
+	ON_3dVector hvect = set2_c.Center() - set1_c.Center();
 
 	int *corner_verts_array = NULL;
 	ON_Plane pcyl;
@@ -314,41 +316,82 @@ cone_csg(struct subbrep_object_data *data, fastf_t cone_tol)
 	    bu_log("Found partial TGC!\n");
 	}
 
-	ON_3dPoint base = set1_c.Center();
-	ON_3dVector hvect = set2_c.Center() - set1_c.Center();
-	struct csg_object_params * obj;
-        BU_GET(obj, struct csg_object_params);
+	if (corner_verts_cnt == 0) {
+	    // Full TGC cone
+	    struct csg_object_params * obj;
+	    BU_GET(obj, struct csg_object_params);
+	    data->type = CONE;
 
-	int negative = negative_cone(data, *conic_surfaces.begin(), cone_tol);
-	bu_log("conic negative: %d\n", negative);
-	bu_log("parent boolean: %c\n", data->parent->params->bool_op);
+	    int negative = negative_cone(data, *conic_surfaces.begin(), cone_tol);
+	    bu_log("conic negative: %d\n", negative);
+	    bu_log("parent boolean: %c\n", data->parent->params->bool_op);
 
-	if (data->parent->params->bool_op == '-') negative = -1 * negative;
+	    if (data->parent->params->bool_op == '-') negative = -1 * negative;
 
-	switch (negative) {
-	    case -1:
-		data->params->bool_op = '-';
-		break;
-	    case 1:
-		data->params->bool_op = 'u';
-		break;
-	    default:
-		std::cout << "Could not determine cone status???????\n";
-		data->params->bool_op = 'u';
-		break;
+	    switch (negative) {
+		case -1:
+		    data->params->bool_op = '-';
+		    break;
+		case 1:
+		    data->params->bool_op = 'u';
+		    break;
+		default:
+		    std::cout << "Could not determine cone status???????\n";
+		    data->params->bool_op = 'u';
+		    break;
+	    }
+
+	    data->params->origin[0] = base.x;
+	    data->params->origin[1] = base.y;
+	    data->params->origin[2] = base.z;
+	    data->params->hv[0] = hvect.x;
+	    data->params->hv[1] = hvect.y;
+	    data->params->hv[2] = hvect.z;
+	    data->params->radius = set1_c.Radius();
+	    data->params->r2 = set2_c.Radius();
+	    data->params->height = set1_c.Center().DistanceTo(set2_c.Center());
+	    if (data->params->height < 0) data->params->height = data->params->height * -1;
+	} else {
+	    // Have corners, need arb
+	    data->type = COMB;
+	    int negative = negative_cone(data, *conic_surfaces.begin(), cone_tol);
+	    bu_log("conic negative: %d\n", negative);
+	    bu_log("parent boolean: %c\n", data->parent->params->bool_op);
+
+	    if (data->parent->params->bool_op == '-') negative = -1 * negative;
+
+	    switch (negative) {
+		case -1:
+		    data->params->bool_op = '-';
+		    break;
+		case 1:
+		    data->params->bool_op = 'u';
+		    break;
+		default:
+		    std::cout << "Could not determine cone status???????\n";
+		    data->params->bool_op = 'u';
+		    break;
+	    }
+
+	    struct subbrep_object_data *cone_obj;
+	    BU_GET(cone_obj, struct subbrep_object_data);
+	    subbrep_object_init(cone_obj, data->brep);
+	    std::string key = face_set_key(conic_surfaces);
+	    bu_vls_sprintf(cone_obj->key, "%s", key.c_str());
+	    cone_obj->type = CONE;
+
+	    cone_obj->params->origin[0] = base.x;
+	    cone_obj->params->origin[1] = base.y;
+	    cone_obj->params->origin[2] = base.z;
+	    cone_obj->params->hv[0] = hvect.x;
+	    cone_obj->params->hv[1] = hvect.y;
+	    cone_obj->params->hv[2] = hvect.z;
+	    cone_obj->params->radius = set1_c.Radius();
+	    cone_obj->params->r2 = set2_c.Radius();
+	    cone_obj->params->height = set1_c.Center().DistanceTo(set2_c.Center());
+
+	    bu_ptbl_ins(data->children, (long *)cone_obj);
 	}
-
-	data->params->origin[0] = base.x;
-	data->params->origin[1] = base.y;
-	data->params->origin[2] = base.z;
-	data->params->hv[0] = hvect.x;
-	data->params->hv[1] = hvect.y;
-	data->params->hv[2] = hvect.z;
-	data->params->radius = set1_c.Radius();
-	data->params->r2 = set2_c.Radius();
-	data->params->height = set1_c.Center().DistanceTo(set2_c.Center());
-	if (data->params->height < 0) data->params->height = data->params->height * -1;
-
     }
     return 0;
 }
