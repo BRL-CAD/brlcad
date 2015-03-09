@@ -12,7 +12,7 @@
 #define BREP_ELLIPSOIDAL_TOL 0.05
 #define BREP_TOROIDAL_TOL 0.05
 
-#define pout(p)  p.x << "," << p.y << "," << p.z
+#define pout(p)  p.x << " " << p.y << " " << p.z
 
 typedef enum {
     CURVE_POINT = 0,

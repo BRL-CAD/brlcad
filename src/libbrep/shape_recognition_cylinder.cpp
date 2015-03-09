@@ -1091,8 +1091,8 @@ cylinder_csg(struct subbrep_object_data *data, fastf_t cyl_tol)
 			ON_SimpleArray<const ON_BrepVertex *> top_pnts(2);
 			for (s_it = corner_verts.begin(); s_it != corner_verts.end(); s_it++) {
 			    ON_3dPoint p = data->brep->m_V[*s_it].Point();
-			    double d1 = fabs(cap1.DistanceTo(p));
-			    double d2 = fabs(cap2.DistanceTo(p));
+			    double d1 = fabs(cyl_planes[0].DistanceTo(p));
+			    double d2 = fabs(cyl_planes[1].DistanceTo(p));
 			    //std::cout << "d1: " << d1 << "\n";
 			    //std::cout << "d2: " << d2 << "\n";
 			    if (d1 < d2) {
