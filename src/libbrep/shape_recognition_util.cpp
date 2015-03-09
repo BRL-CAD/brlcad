@@ -465,6 +465,116 @@ subbrep_determine_boolean(struct subbrep_object_data *data)
    if (neg_cnt) return -1;
 }
 
+/* Find corners that can be used to construct a planar face
+ *
+ * Collect all of the vertices in the data that are connected
+ * to one and only one non-linear edge in the set.
+ *
+ * Failure cases are:
+ *
+ * More than four vertices that are mated with exactly one
+ * non-linear edge in the data set
+ * Four vertices meeting previous criteria that are non-planar
+ * Any vertex on a linear edge that is not coplanar with the
+ * plane described by the vertices meeting the above criteria
+ *
+ * return -1 if failed, number of corner verts if successful
+ */
+int
+subbrep_find_corners(struct subbrep_object_data *data, int **corner_verts_array, ON_Plane *pcyl)
+{
+    std::set<int> candidate_verts;
+    std::set<int> corner_verts;
+    std::set<int> linear_verts;
+    std::set<int>::iterator v_it, e_it;
+    std::set<int> edges;
+    if (!data || !corner_verts_array || !pcyl) return -1;
+    array_to_set(&edges, data->edges, data->edges_cnt);
+    // collect all candidate vertices
+    for (int i = 0; i < data->edges_cnt; i++) {
+	int ei = data->edges[i];
+	const ON_BrepEdge *edge = &(data->brep->m_E[ei]);
+	candidate_verts.insert(edge->Vertex(0)->m_vertex_index);
+	candidate_verts.insert(edge->Vertex(1)->m_vertex_index);
+    }
+    for (v_it = candidate_verts.begin(); v_it != candidate_verts.end(); v_it++) {
+        const ON_BrepVertex *vert = &(data->brep->m_V[*v_it]);
+        int curve_cnt = 0;
+        int line_cnt = 0;
+        for (int i = 0; i < vert->m_ei.Count(); i++) {
+            int ei = vert->m_ei[i];
+            const ON_BrepEdge *edge = &(data->brep->m_E[ei]);
+            if (edges.find(edge->m_edge_index) != edges.end()) {
+                ON_Curve *ecv = edge->EdgeCurveOf()->Duplicate();
+                if (ecv->IsLinear()) {
+                    line_cnt++;
+                } else {
+                    curve_cnt++;
+                }
+                delete ecv;
+            }
+        }
+        if (curve_cnt == 1) {
+            corner_verts.insert(*v_it);
+            //std::cout << "found corner vert: " << *v_it << "\n";
+        }
+        if (line_cnt > 1 && curve_cnt == 0) {
+            linear_verts.insert(*v_it);
+            std::cout << "found linear vert: " << *v_it << "\n";
+        }
+    }
+
+    // First, check corner count
+    if (corner_verts.size() > 4) {
+        std::cout << "more than 4 corners - complex\n";
+        return -1;
+    }
+    if (corner_verts.size() == 0) return 0;
+    // Second, create the candidate face plane.  Verify coplanar status of points if we've got 4.
+    std::set<int>::iterator s_it = corner_verts.begin();
+    ON_3dPoint p1 = data->brep->m_V[*s_it].Point();
+    s_it++;
+    ON_3dPoint p2 = data->brep->m_V[*s_it].Point();
+    s_it++;
+    ON_3dPoint p3 = data->brep->m_V[*s_it].Point();
+    ON_Plane tmp_plane(p1, p2, p3);
+    if (corner_verts.size() == 4) {
+        s_it++;
+        ON_3dPoint p4 = data->brep->m_V[*s_it].Point();
+        if (tmp_plane.DistanceTo(p4) > BREP_PLANAR_TOL) {
+            std::cout << "planar tol fail\n";
+            return -1;
+        } else {
+            (*pcyl) = tmp_plane;
+        }
+    } else {
+        // TODO - If we have less than four corner points and no additional curve planes, we
+        // must have a face subtraction that tapers to a point at the edge of the
+        // cylinder.  Pull the linear edges from the two corner points to find the third point -
+        // this is a situation where a simpler arb (arb6?) is adequate to make the subtraction.
+	(*pcyl) = tmp_plane;
+    }
+
+    // Third, if we had vertices with only linear edges, check to make sure they are in fact
+    // on the candidate plane for the face (if not, we've got something more complex going on).
+    if (linear_verts.size() > 0) {
+        std::set<int>::iterator ls_it;
+        for (ls_it = linear_verts.begin(); ls_it != linear_verts.end(); ls_it++) {
+            ON_3dPoint pnt = data->brep->m_V[*ls_it].Point();
+            if ((*pcyl).DistanceTo(pnt) > BREP_PLANAR_TOL) {
+                std::cout << "stray verts fail\n";
+                return -1;
+            }
+        }
+    }
+
+    // If we've made it here, package up the verts and return
+    int verts_cnt = 0;
+    if (corner_verts.size() > 0)
+	set_to_array(corner_verts_array, &verts_cnt, &corner_verts);
+    return verts_cnt;
+}
+
 // Local Variables:
 // tab-width: 8
 // mode: C++

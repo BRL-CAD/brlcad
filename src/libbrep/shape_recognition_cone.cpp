@@ -302,6 +302,18 @@ cone_csg(struct subbrep_object_data *data, fastf_t cone_tol)
 
     } else {
 
+	int *corner_verts_array = NULL;
+	ON_Plane pcyl;
+	std::set<int> corner_verts; /* verts with one nonlinear edge */
+	int corner_verts_cnt = subbrep_find_corners(data, &corner_verts_array, &pcyl);
+
+	if (corner_verts_cnt == -1) return 0;
+	if (corner_verts_cnt > 0) {
+	    array_to_set(&corner_verts, corner_verts_array, corner_verts_cnt);
+	    bu_free(corner_verts_array, "free tmp array");
+	    bu_log("Found partial TGC!\n");
+	}
+
 	ON_3dPoint base = set1_c.Center();
 	ON_3dVector hvect = set2_c.Center() - set1_c.Center();
 	struct csg_object_params * obj;

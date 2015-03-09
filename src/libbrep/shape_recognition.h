@@ -158,6 +158,10 @@ void array_to_set(std::set<int> *set, int *array, int array_cnt);
 void map_to_array(int **array, int *array_cnt, std::map<int,int> *map);
 void array_to_map(std::map<int,int> *map, int *array, int array_cnt);
 
+int
+subbrep_find_corners(struct subbrep_object_data *data, int **corner_verts_array, ON_Plane *pcyl);
+
+
 #endif /* SHAPE_RECOGNITION_H */
 
 // Local Variables:
