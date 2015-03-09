@@ -575,6 +575,43 @@ subbrep_find_corners(struct subbrep_object_data *data, int **corner_verts_array,
     return verts_cnt;
 }
 
+/* Return 1 if determination fails, else return 0 and top_pnts and bottom_pnts */
+int
+subbrep_top_bottom_pnts(struct subbrep_object_data *data, std::set<int> *corner_verts, ON_Plane *top_plane, ON_Plane *bottom_plane, ON_SimpleArray<const ON_BrepVertex *> *top_pnts, ON_SimpleArray<const ON_BrepVertex *> *bottom_pnts)
+{
+    double offset = 0.0;
+    double pdist = INT_MAX;
+    ON_SimpleArray<const ON_BrepVertex *> corner_pnts(4);
+    std::set<int>::iterator s_it;
+    /* Get a sense of how far off the planes the vertices are, and how
+     * far it is from one plane to the other */
+    for (s_it = corner_verts->begin(); s_it != corner_verts->end(); s_it++) {
+	ON_3dPoint p = data->brep->m_V[*s_it].Point();
+	corner_pnts.Append(&(data->brep->m_V[*s_it]));
+	double d1 = fabs(bottom_plane->DistanceTo(p));
+	double d2 = fabs(top_plane->DistanceTo(p));
+	double d = (d1 > d2) ? d2 : d1;
+	if (d > offset) offset = d;
+	double dp = (d1 > d2) ? d1 : d2;
+	if (dp < pdist) pdist = dp;
+    }
+    for (int p = 0; p < corner_pnts.Count(); p++) {
+	double poffset1 = bottom_plane->DistanceTo(corner_pnts[p]->Point());
+	double poffset2 = top_plane->DistanceTo(corner_pnts[p]->Point());
+	int identified = 0;
+	if (NEAR_ZERO(poffset1, 0.01 * pdist + offset)) {
+	    bottom_pnts->Append(corner_pnts[p]);
+	    identified = 1;
+	}
+	if (NEAR_ZERO(poffset2, 0.01 * pdist + offset)) {
+	    top_pnts->Append(corner_pnts[p]);
+	    identified = 1;
+	}
+	if (!identified) return 1;
+    }
+    return 0;
+}
+
 // Local Variables:
 // tab-width: 8
 // mode: C++

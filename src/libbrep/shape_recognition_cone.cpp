@@ -271,8 +271,6 @@ cone_csg(struct subbrep_object_data *data, fastf_t cone_tol)
         BU_GET(obj, struct csg_object_params);
 
 	int negative = negative_cone(data, *conic_surfaces.begin(), cone_tol);
-	bu_log("conic negative: %d\n", negative);
-	bu_log("parent boolean: %c\n", data->parent->params->bool_op);
 
 	if (data->parent->params->bool_op == '-') negative = -1 * negative;
 
@@ -336,7 +334,6 @@ cone_csg(struct subbrep_object_data *data, fastf_t cone_tol)
 		    data->params->bool_op = 'u';
 		    break;
 		default:
-		    std::cout << "Could not determine cone status???????\n";
 		    data->params->bool_op = 'u';
 		    break;
 	    }
@@ -355,8 +352,6 @@ cone_csg(struct subbrep_object_data *data, fastf_t cone_tol)
 	    // Have corners, need arb
 	    data->type = COMB;
 	    int negative = negative_cone(data, *conic_surfaces.begin(), cone_tol);
-	    bu_log("conic negative: %d\n", negative);
-	    bu_log("parent boolean: %c\n", data->parent->params->bool_op);
 
 	    if (data->parent->params->bool_op == '-') negative = -1 * negative;
 
@@ -380,6 +375,8 @@ cone_csg(struct subbrep_object_data *data, fastf_t cone_tol)
 	    bu_vls_sprintf(cone_obj->key, "%s", key.c_str());
 	    cone_obj->type = CONE;
 
+	    // cone - positive object in this sub-comb
+	    cone_obj->params->bool_op = 'u';
 	    cone_obj->params->origin[0] = base.x;
 	    cone_obj->params->origin[1] = base.y;
 	    cone_obj->params->origin[2] = base.z;
@@ -391,6 +388,8 @@ cone_csg(struct subbrep_object_data *data, fastf_t cone_tol)
 	    cone_obj->params->height = set1_c.Center().DistanceTo(set2_c.Center());
 
 	    bu_ptbl_ins(data->children, (long *)cone_obj);
+
+
 	}
     }
     return 0;

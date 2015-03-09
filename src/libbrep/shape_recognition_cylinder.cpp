@@ -576,24 +576,13 @@ cylinder_csg(struct subbrep_object_data *data, fastf_t cyl_tol)
 
 
 	    // First, find the two points closest to the set1_c and set2_c planes
-	    double offset = 0.0;
-	    std::set<int>::iterator s_it;
-	    ON_SimpleArray<const ON_BrepVertex *> corner_pnts(4);
 	    ON_SimpleArray<const ON_BrepVertex *> bottom_pnts(2);
 	    ON_SimpleArray<const ON_BrepVertex *> top_pnts(2);
-	    for (s_it = corner_verts.begin(); s_it != corner_verts.end(); s_it++) {
-		ON_3dPoint p = data->brep->m_V[*s_it].Point();
-		corner_pnts.Append(&(data->brep->m_V[*s_it]));
-		double d = set1_c.Plane().DistanceTo(p);
-		if (d > offset) offset = d;
-	    }
-	    for (int p = 0; p < corner_pnts.Count(); p++) {
-		double poffset = set1_c.Plane().DistanceTo(corner_pnts[p]->Point());
-		if (!NEAR_ZERO(poffset - offset, 0.01) && poffset < offset) {
-		    bottom_pnts.Append(corner_pnts[p]);
-		} else {
-		    top_pnts.Append(corner_pnts[p]);
-		}
+	    ON_Plane b_plane = set1_c.Plane();
+	    ON_Plane t_plane = set2_c.Plane();
+	    if (subbrep_top_bottom_pnts(data, &corner_verts, &t_plane, &b_plane, &top_pnts, &bottom_pnts)) {
+		std::cout << "Point top/bottom sorting failed\n";
+		return 0;
 	    }
 
 	    // Second, select a point from an arc edge not on the subtraction
