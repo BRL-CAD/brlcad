@@ -415,7 +415,6 @@ print_subbrep_object(struct subbrep_object_data *data, const char *offset)
 int
 subbrep_determine_boolean(struct subbrep_object_data *data)
 {
-   std::cout << "Faces to check: " << data->fil_cnt << "\n";
    int pos_cnt = 0;
    int neg_cnt = 0;
 
@@ -441,7 +440,6 @@ subbrep_determine_boolean(struct subbrep_object_data *data)
 	   if (stype == SURFACE_PLANE) {
 	       ON_3dPoint p = data->brep->m_V[*s_it].Point();
 	       double distance = face_plane.DistanceTo(p);
-	       std::cout << "distance: " << distance << "\n";
 	       if (distance > BREP_PLANAR_TOL) pos_cnt++;
 	       if (distance < -1*BREP_PLANAR_TOL) neg_cnt++;
 	   } else {
