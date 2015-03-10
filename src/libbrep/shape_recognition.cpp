@@ -113,18 +113,15 @@ find_subbreps(const ON_Brep *brep)
 	    if (new_obj->fil_cnt > 0) {
 		int bool_op = subbrep_determine_boolean(new_obj);
 		if (bool_op == -1) {
-		    std::cout << bu_vls_addr(new_obj->key) << " is subtracted\n";
 		    new_obj->params->bool_op = '-';
 		}
 		if (bool_op == 1) {
-		    std::cout << bu_vls_addr(new_obj->key) << " is unioned\n";
 		    new_obj->params->bool_op = 'u';
 		}
 		if (bool_op == 0) {
 		    std::cout << "Error - ambiguous result for boolean test - need to subdivide shape.\n";
 		}
 	    } else {
-		std::cout << bu_vls_addr(new_obj->key) << " is unioned\n";
 		new_obj->params->bool_op = 'u';
 	    }
 
@@ -165,8 +162,6 @@ find_subbreps(const ON_Brep *brep)
     std::multimap<const char *, long *> ps;
     for (unsigned int i = 0; i < BU_PTBL_LEN(subbreps); i++) {
 	struct subbrep_object_data *obj = (struct subbrep_object_data *)BU_PTBL_GET(subbreps, i);
-	std::cout << "Checking " << bu_vls_addr(obj->key) << "\n";
-	std::cout << "  op is: " << obj->params->bool_op << "\n";
 	if (obj->params->bool_op == '-') {
 	    int found_parent = 0;
 	    for (unsigned int j = 0; j < BU_PTBL_LEN(subbreps); j++) {
@@ -176,7 +171,6 @@ find_subbreps(const ON_Brep *brep)
 			if (pobj->fol[l] == obj->fil[k]) {
 			    found_parent = 1;
 			    ps.insert(std::make_pair(bu_vls_addr(pobj->key), (long *)obj));
-			    bu_log("%s is the parent of %s\n", bu_vls_addr(pobj->key), bu_vls_addr(obj->key));
 			    break;
 			}
 			if (found_parent) break;
@@ -198,10 +192,8 @@ find_subbreps(const ON_Brep *brep)
 	    std::pair <std::multimap<const char *, long *>::iterator, std::multimap<const char *, long *>::iterator > ret;
 	    ret = ps.equal_range(bu_vls_addr(obj->key));
 	    bu_ptbl_ins(subbreps_tree, (long *)obj);
-	    std::cout << "unioning " << bu_vls_addr(obj->key) << "\n";
 	    for (std::multimap<const char *, long *>::iterator it = ret.first; it != ret.second; it++) {
 		struct subbrep_object_data *sub_obj = (struct subbrep_object_data *)it->second;
-		std::cout << "subtracting " << bu_vls_addr(sub_obj->key) << " from " << bu_vls_addr(obj->key) << "\n";
 		bu_ptbl_ins(subbreps_tree, (long *)sub_obj);
 	    }
 	}

@@ -221,10 +221,7 @@ sphere_csg(struct subbrep_object_data *data, fastf_t sph_tol)
 	// is determined later.
 	int negative = negative_sphere(data, *spherical_surfaces.begin(), sph_tol);
 
-	bu_log("parent boolean: %c\n", data->parent->params->bool_op);
-
 	if (data->parent->params->bool_op == '-') negative = -1 * negative;
-
 
 	switch (negative) {
 	    case -1:
@@ -255,7 +252,6 @@ sphere_csg(struct subbrep_object_data *data, fastf_t sph_tol)
 	    if (!data->parent->planar_obj) {
 		subbrep_planar_init(data);
 	    }
-	    std::cout << "add sph plane\n";
 	    subbrep_add_planar_face(data->parent, &back_plane, &sph_verts, negative);
 	}
 
@@ -337,7 +333,7 @@ sphere_csg(struct subbrep_object_data *data, fastf_t sph_tol)
 
 	}
 
-	return 0;
+	return 1;
     }
 
     if (verts.size() >= 3) {
