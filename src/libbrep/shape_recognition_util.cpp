@@ -6,6 +6,7 @@
 #include "bu/log.h"
 #include "bu/str.h"
 #include "bu/malloc.h"
+#include "brep.h"
 #include "shape_recognition.h"
 
 curve_t
@@ -213,6 +214,7 @@ subbrep_object_init(struct subbrep_object_data *obj, const ON_Brep *brep)
     BU_GET(obj->children, struct bu_ptbl);
     BU_GET(obj->params, struct csg_object_params);
     obj->params->planes = NULL;
+    obj->params->bool_op = '\0';
     obj->planar_obj = NULL;
     bu_vls_init(obj->key);
     bu_ptbl_init(obj->children, 8, "children table");
@@ -330,41 +332,6 @@ array_to_map(std::map<int,int> *map, int *array, int array_cnt)
     }
 }
 
-
-// Remove degenerate edge sets. A degenerate edge set is defined as two
-// linear segments having the same two vertices.  (To be sure, we should probably
-// check curve directions in loops in some fashion...)
-void
-subbrep_remove_degenerate_edges(struct subbrep_object_data *data, std::set<int> *edges){
-    std::set<int> degenerate;
-    std::set<int>::iterator e_it;
-    for (e_it = edges->begin(); e_it != edges->end(); e_it++) {
-	if (degenerate.find(*e_it) == degenerate.end()) {
-	    ON_Curve *ec1 = data->brep->m_E[*e_it].EdgeCurveOf()->Duplicate();
-	    if (ec1->IsLinear()) {
-		for (int j = 0; j < data->edges_cnt; j++) {
-		    int f_ind = data->edges[j];
-		    ON_Curve *ec2 = data->brep->m_E[f_ind].EdgeCurveOf()->Duplicate();
-		    if (ec2->IsLinear()) {
-			if ((data->brep->m_E[*e_it].Vertex(0)->Point() == data->brep->m_E[f_ind].Vertex(0)->Point() && data->brep->m_E[*e_it].Vertex(1)->Point() == data->brep->m_E[f_ind].Vertex(1)->Point()) ||
-				(data->brep->m_E[*e_it].Vertex(1)->Point() == data->brep->m_E[f_ind].Vertex(0)->Point() && data->brep->m_E[*e_it].Vertex(0)->Point() == data->brep->m_E[f_ind].Vertex(1)->Point()))
-			{
-			    degenerate.insert(*e_it);
-			    degenerate.insert(f_ind);
-			    break;
-			}
-		    }
-		}
-	    }
-	}
-    }
-    for (e_it = degenerate.begin(); e_it != degenerate.end(); e_it++) {
-	//std::cout << "erasing " << *e_it << "\n";
-	edges->erase(*e_it);
-    }
-}
-
-
 void
 print_subbrep_object(struct subbrep_object_data *data, const char *offset)
 {
@@ -432,7 +399,220 @@ print_subbrep_object(struct subbrep_object_data *data, const char *offset)
     bu_vls_free(&log);
 }
 
+/* This routine is used when there is uncertainty about whether a
+ * particular solid or combination is to be subtracted or unioned
+ * into a parent.  For planar on planar cases, the check is whether every
+ * vertex of the candidate solid is either on or one of above/below
+ * the shared face plane.  If some vertices are above and some
+ * are below, the candidate solid is self intersecting and must be
+ * further subdivided.
+ *
+ * For non-planar situations, we're probably looking at a surface
+ * surface intersection test.  A possible test short of that might
+ * be vertices of bounding boxes, but that will result in situations
+ * reporting subdivision necessity when there isn't any unless we
+ * follow up with a more rigorous test.  This needs more thought. */
+int
+subbrep_determine_boolean(struct subbrep_object_data *data)
+{
+   int pos_cnt = 0;
+   int neg_cnt = 0;
 
+   if (data->fil_cnt == 0) return 1;
+
+   for (int i = 0; i < data->fil_cnt; i++) {
+       // Get face with inner loop
+       const ON_BrepFace *face = &(data->brep->m_F[data->fil[i]]);
+       const ON_Surface *surf = face->SurfaceOf();
+       surface_t stype = GetSurfaceType(surf, NULL);
+       ON_Plane face_plane;
+       if (stype == SURFACE_PLANE) {
+	   ON_Surface *ts = surf->Duplicate();
+	   (void)ts->IsPlanar(&face_plane, BREP_PLANAR_TOL);
+	   delete ts;
+       }
+       std::set<int> verts;
+       for (int j = 0; j < data->edges_cnt; j++) {
+	   verts.insert(data->brep->m_E[data->edges[j]].Vertex(0)->m_vertex_index);
+	   verts.insert(data->brep->m_E[data->edges[j]].Vertex(1)->m_vertex_index);
+       }
+       for (std::set<int>::iterator s_it = verts.begin(); s_it != verts.end(); s_it++) {
+	   // For each vertex in the subbrep, determine
+	   // if it is above, below or on the face
+	   if (stype == SURFACE_PLANE) {
+	       ON_3dPoint p = data->brep->m_V[*s_it].Point();
+	       double distance = face_plane.DistanceTo(p);
+	       if (distance > BREP_PLANAR_TOL) pos_cnt++;
+	       if (distance < -1*BREP_PLANAR_TOL) neg_cnt++;
+	   } else {
+	       // TODO - this doesn't seem to work...
+	       double current_distance = 0;
+	       ON_3dPoint p = data->brep->m_V[*s_it].Point();
+	       ON_3dPoint p3d;
+	       ON_2dPoint p2d;
+	       if (surface_GetClosestPoint3dFirstOrder(surf,p,p2d,p3d,current_distance)) {
+		   if (current_distance > 0.001) pos_cnt++;
+	       } else {
+		   neg_cnt++;
+	       }
+	   }
+       }
+   }
+
+   // Determine what we have.  If we have both pos and neg counts > 0,
+   // the proposed brep needs to be broken down further.  all pos
+   // counts is a union, all neg counts is a subtraction
+   if (pos_cnt && neg_cnt) return 0;
+   if (pos_cnt) return 1;
+   if (neg_cnt) return -1;
+}
+
+/* Find corners that can be used to construct a planar face
+ *
+ * Collect all of the vertices in the data that are connected
+ * to one and only one non-linear edge in the set.
+ *
+ * Failure cases are:
+ *
+ * More than four vertices that are mated with exactly one
+ * non-linear edge in the data set
+ * Four vertices meeting previous criteria that are non-planar
+ * Any vertex on a linear edge that is not coplanar with the
+ * plane described by the vertices meeting the above criteria
+ *
+ * return -1 if failed, number of corner verts if successful
+ */
+int
+subbrep_find_corners(struct subbrep_object_data *data, int **corner_verts_array, ON_Plane *pcyl)
+{
+    std::set<int> candidate_verts;
+    std::set<int> corner_verts;
+    std::set<int> linear_verts;
+    std::set<int>::iterator v_it, e_it;
+    std::set<int> edges;
+    if (!data || !corner_verts_array || !pcyl) return -1;
+    array_to_set(&edges, data->edges, data->edges_cnt);
+    // collect all candidate vertices
+    for (int i = 0; i < data->edges_cnt; i++) {
+	int ei = data->edges[i];
+	const ON_BrepEdge *edge = &(data->brep->m_E[ei]);
+	candidate_verts.insert(edge->Vertex(0)->m_vertex_index);
+	candidate_verts.insert(edge->Vertex(1)->m_vertex_index);
+    }
+    for (v_it = candidate_verts.begin(); v_it != candidate_verts.end(); v_it++) {
+        const ON_BrepVertex *vert = &(data->brep->m_V[*v_it]);
+        int curve_cnt = 0;
+        int line_cnt = 0;
+        for (int i = 0; i < vert->m_ei.Count(); i++) {
+            int ei = vert->m_ei[i];
+            const ON_BrepEdge *edge = &(data->brep->m_E[ei]);
+            if (edges.find(edge->m_edge_index) != edges.end()) {
+                ON_Curve *ecv = edge->EdgeCurveOf()->Duplicate();
+                if (ecv->IsLinear()) {
+                    line_cnt++;
+                } else {
+                    curve_cnt++;
+                }
+                delete ecv;
+            }
+        }
+        if (curve_cnt == 1) {
+            corner_verts.insert(*v_it);
+            //std::cout << "found corner vert: " << *v_it << "\n";
+        }
+        if (line_cnt > 1 && curve_cnt == 0) {
+            linear_verts.insert(*v_it);
+            std::cout << "found linear vert: " << *v_it << "\n";
+        }
+    }
+
+    // First, check corner count
+    if (corner_verts.size() > 4) {
+        std::cout << "more than 4 corners - complex\n";
+        return -1;
+    }
+    if (corner_verts.size() == 0) return 0;
+    // Second, create the candidate face plane.  Verify coplanar status of points if we've got 4.
+    std::set<int>::iterator s_it = corner_verts.begin();
+    ON_3dPoint p1 = data->brep->m_V[*s_it].Point();
+    s_it++;
+    ON_3dPoint p2 = data->brep->m_V[*s_it].Point();
+    s_it++;
+    ON_3dPoint p3 = data->brep->m_V[*s_it].Point();
+    ON_Plane tmp_plane(p1, p2, p3);
+    if (corner_verts.size() == 4) {
+        s_it++;
+        ON_3dPoint p4 = data->brep->m_V[*s_it].Point();
+        if (tmp_plane.DistanceTo(p4) > BREP_PLANAR_TOL) {
+            std::cout << "planar tol fail\n";
+            return -1;
+        } else {
+            (*pcyl) = tmp_plane;
+        }
+    } else {
+        // TODO - If we have less than four corner points and no additional curve planes, we
+        // must have a face subtraction that tapers to a point at the edge of the
+        // cylinder.  Pull the linear edges from the two corner points to find the third point -
+        // this is a situation where a simpler arb (arb6?) is adequate to make the subtraction.
+	(*pcyl) = tmp_plane;
+    }
+
+    // Third, if we had vertices with only linear edges, check to make sure they are in fact
+    // on the candidate plane for the face (if not, we've got something more complex going on).
+    if (linear_verts.size() > 0) {
+        std::set<int>::iterator ls_it;
+        for (ls_it = linear_verts.begin(); ls_it != linear_verts.end(); ls_it++) {
+            ON_3dPoint pnt = data->brep->m_V[*ls_it].Point();
+            if ((*pcyl).DistanceTo(pnt) > BREP_PLANAR_TOL) {
+                std::cout << "stray verts fail\n";
+                return -1;
+            }
+        }
+    }
+
+    // If we've made it here, package up the verts and return
+    int verts_cnt = 0;
+    if (corner_verts.size() > 0)
+	set_to_array(corner_verts_array, &verts_cnt, &corner_verts);
+    return verts_cnt;
+}
+
+/* Return 1 if determination fails, else return 0 and top_pnts and bottom_pnts */
+int
+subbrep_top_bottom_pnts(struct subbrep_object_data *data, std::set<int> *corner_verts, ON_Plane *top_plane, ON_Plane *bottom_plane, ON_SimpleArray<const ON_BrepVertex *> *top_pnts, ON_SimpleArray<const ON_BrepVertex *> *bottom_pnts)
+{
+    double offset = 0.0;
+    double pdist = INT_MAX;
+    ON_SimpleArray<const ON_BrepVertex *> corner_pnts(4);
+    std::set<int>::iterator s_it;
+    /* Get a sense of how far off the planes the vertices are, and how
+     * far it is from one plane to the other */
+    for (s_it = corner_verts->begin(); s_it != corner_verts->end(); s_it++) {
+	ON_3dPoint p = data->brep->m_V[*s_it].Point();
+	corner_pnts.Append(&(data->brep->m_V[*s_it]));
+	double d1 = fabs(bottom_plane->DistanceTo(p));
+	double d2 = fabs(top_plane->DistanceTo(p));
+	double d = (d1 > d2) ? d2 : d1;
+	if (d > offset) offset = d;
+	double dp = (d1 > d2) ? d1 : d2;
+	if (dp < pdist) pdist = dp;
+    }
+    for (int p = 0; p < corner_pnts.Count(); p++) {
+	double poffset1 = bottom_plane->DistanceTo(corner_pnts[p]->Point());
+	double poffset2 = top_plane->DistanceTo(corner_pnts[p]->Point());
+	int identified = 0;
+	if (NEAR_ZERO(poffset1, 0.01 * pdist + offset)) {
+	    bottom_pnts->Append(corner_pnts[p]);
+	    identified = 1;
+	}
+	if (NEAR_ZERO(poffset2, 0.01 * pdist + offset)) {
+	    top_pnts->Append(corner_pnts[p]);
+	    identified = 1;
+	}
+	if (!identified) return 1;
+    }
+    return 0;
+}
 
 // Local Variables:
 // tab-width: 8

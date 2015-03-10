@@ -1545,61 +1545,6 @@ void  convex_hull( vec_point_2d  & in, vec_point_2d  & out )
         assert( in[ ind ] != NULL );
     }
 
-#if 1
-    int  size;
-
-    size = in.size();
-    sort( in.begin() + 1, in.end(), comp );
-    remove_consecutive_dup( in );
-    out.push_back( in[ in.size() - 1 ] );
-    out.push_back( in[ 0 ] );
-
-    // perform the graham scan
-    ind = 1;
-    int  last;
-
-    while ( ind < (int)in.size() ) {
-        if  ( out[ out.size() -1 ]->equal_real( *( in[ ind ] ) ) ) {
-            ind++;
-            continue;
-        }
-        last = out.size();
-        assert( last > 1 );
-
-        if ( Left( *(out[ last - 2 ]),
-                   *(out[ last - 1 ]),
-                   *(in[ ind ]) ) ) {
-            if  ( ! out[ last - 1 ]->equal( *( in[ ind ] ) ) )
-                out.push_back( in[ ind ] );
-            ind++;
-        } else {
-            if  ( out.size() < 3 ) {
-                dump( out );
-                printf( "Input:\n" );
-                dump( in );
-                printf( "ind: %d\n", ind );
-                fflush( stdout );
-                assert( out.size() > 2 );
-            }
-
-            out.pop_back();
-        }
-    }
-
-    // we pushed in[ in.size() -1 ] twice in the output
-    out.pop_back();
-#ifdef _THIS_LOCKS_MGED_
-    std::vector<point2d_ptr>::iterator it;
-    for(it = out.begin(); it != out.end(); it++){
-	    std::cout << "point: " << (*it)->x << "," << (*it)->y << "\n";
-    }
-#endif
-    //verify_convex_hull( in, out );
-#endif
-
-
-#if 0
-
     // Copyright 2001 softSurfer, 2012 Dan Sunday
     // This code may be freely used and modified for any purpose
     // providing that this copyright notice is included with it.
@@ -1624,10 +1569,10 @@ void  convex_hull( vec_point_2d  & in, vec_point_2d  & out )
         if (in[i]->x != xmin) break;
     minmax = i-1;
     if (minmax == n-1) {       // degenerate case: all x-coords == xmin
-        out[++top] = in[minmin];
+        out.push_back(in[minmin]);
         if (in[minmax]->y != in[minmin]->y) // a  nontrivial segment
-            out[++top] =  in[minmax];
-        out[++top] = in[minmin];            // add polygon endpoint
+            out.push_back(in[minmax]);
+        out.push_back(in[minmin]);
         return;
     }
 
@@ -1639,7 +1584,7 @@ void  convex_hull( vec_point_2d  & in, vec_point_2d  & out )
     maxmin = i+1;
 
     // Compute the lower hull on the stack H
-    out[++top] = in[minmin];      // push  minmin point onto stack
+    out.push_back(in[minmin]); ++top; // push  minmin point onto stack
     i = minmax;
     while (++i <= maxmin)
     {
@@ -1652,36 +1597,42 @@ void  convex_hull( vec_point_2d  & in, vec_point_2d  & out )
             // test if  in[i] is left of the line at the stack top
             if (isLeft(  *out[top-1], *out[top], *in[i]) > 0)
                  break;         // in[i] is a new hull  vertex
-            else
-                 top--;         // pop top point off  stack
+            else {
+                 --top;
+                 out.pop_back();         // pop top point off  stack
+            }
         }
-        out[++top] = in[i];        // push in[i] onto stack
+        ++top;
+        out.push_back(in[i]);        // push in[i] onto stack
     }
     // Next, compute the upper hull on the stack out above  the bottom hull
     if (maxmax != maxmin)      // if  distinct xmax points
-         out[++top] = in[maxmax];  // push maxmax point onto stack
-    bot = top;                  // the bottom point of the upper hull stack
+        out.push_back(in[maxmax]);  // push maxmax point onto stack
+    bot = top;               // the bottom point of the upper hull stack
     i = maxmin;
-    while (--i >= minmax)
+    while (--i > minmax)
     {
         // the upper line joins in[maxmax]  with in[minmax]
         if (isLeft( *in[maxmax], *in[minmax], *in[i])  >= 0 && i > minmax)
             continue;           // ignore in[i] below or on the upper line
 
-            out.pop_back();
+
         while (top > bot)     // at least 2 points on the upper stack
         {
-            // test if  in[i] is left of the line at the stack top
-            if (isLeft( *out[top-1], *out[top], *in[i]) > 0)
-                 break;         // in[i] is a new hull  vertex
-            else
-                 top--;         // pop top point off  stack
+             // test if  in[i] is left of the line at the stack top
+             if (isLeft( *out[top-1], *out[top], *in[i]) > 0) {
+                  break;         // in[i] is a new hull  vertex
+             } else {
+                  --top;
+                  out.pop_back();         // pop top point off  stack
+             }
         }
-        out[++top] = in[i];        // push in[i] onto stack
+        ++top;
+        out.push_back(in[i]);        // push in[i] onto stack
     }
     if (minmax != minmin)
-        out[++top] = in[minmin];  // push  joining endpoint onto stack
-
+        out.push_back(in[minmin]);  // push  joining endpoint onto stack
+#ifdef _THIS_LOCKS_MGED_
     std::vector<point2d_ptr>::iterator it;
     for(it = out.begin(); it != out.end(); it++){
 	    std::cout << "point: " << (*it)->x << "," << (*it)->y << "\n";

@@ -34,15 +34,15 @@
   <refsection xml:id="description"><title>DESCRIPTION</title>
 
     <para>
-      <application>MGED</application>, a.k.a the "Multi-Device Geometry Editor" is the
+      <application>MGED</application>, a.k.a. the "Multi-Device Geometry Editor", is the
       central interaction environment for the BRL-CAD package.  It offers both command line
       and menu driven interactions, as well as wireframe displays and integrated raytracing
       capabilities.  It is the primary tool for BRL-CAD geometry creation and interactive
       manipulation.
     </para>
     <para>
-      <application>MGED</application>'s history traces back to the earlier "GED" (a.k.a "Geometry
-      Editor",) and much of GED's functionality is preserved in <application>MGED</application>.
+      <application>MGED</application>'s history traces back to the earlier "GED" (a.k.a. "Geometry
+      Editor"), and much of GED's functionality is preserved in <application>MGED</application>.
       A full description of MGED's abilities is beyond the scope of this document -
       the reader is referred to Volumes II and III of the BRL-CAD Tutorial Series, available
       at http://brlcad.org, for a more comprehensive introduction.  This document will deal
@@ -172,10 +172,10 @@
 
   <para>Often it is convenient to generate a series of <application>MGED</application> commands
        outside <application>MGED</application> and then submit the command list to
-       <application>MGED</application>  which will
+       <application>MGED</application>,  which will
        react as if each command were being manually entered within it.
        Simply create a file (say, "cmds.txt") with each line being a desired command, and then
-       have <application>MGED</application> execute the list.  At the normal shell prompt execute</para>
+       have <application>MGED</application> execute the list.  At the normal shell prompt, execute</para>
 
       <programlisting>
 $ mged -c tgm.g &lt; cmds.txt
@@ -189,7 +189,7 @@ $ mged -c tgm.g &lt; cmds.txt
 
     <para>
       <application>MGED</application> database names conventionally end with
-      <markup>.g</markup>.
+      <markup>.g</markup> .
     </para>
 
     <para>

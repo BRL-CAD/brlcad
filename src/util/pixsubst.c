@@ -39,10 +39,9 @@ main(int argc, char **argv)
     size_t ret;
 
     if (argc != 4 && argc != 7) {
-	bu_log("Usage:\n");
-	bu_log("\t%s [R_in G_in B_in] R_out G_out B_out < pix_in > pix_out\n", argv[0]);
-	bu_log("\t\tRGB_in is changed to RGB_out\n");
-	bu_log("\t\tif RGB_in is not provided, the first pixel input is used\n");
+	bu_log("Usage: %s [R_in G_in B_in] R_out G_out B_out < pix_in > pix_out\n", argv[0]);
+	bu_log("\t\tRGB_in is changed to RGB_out .\n");
+	bu_log("\t\tIf RGB_in is not provided, the first pixel input is used.\n");
 	bu_exit(1, NULL);
     }
 

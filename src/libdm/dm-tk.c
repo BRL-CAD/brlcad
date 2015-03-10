@@ -55,7 +55,6 @@
 
 #include "vmath.h"
 #include "bn.h"
-#include "raytrace.h"
 #include "dm.h"
 #include "dm-tk.h"
 #include "dm-X.h"

@@ -12,6 +12,8 @@
 #define BREP_ELLIPSOIDAL_TOL 0.05
 #define BREP_TOROIDAL_TOL 0.05
 
+#define pout(p)  p.x << " " << p.y << " " << p.z
+
 typedef enum {
     CURVE_POINT = 0,
     CURVE_LINE,
@@ -124,17 +126,17 @@ int subbrep_split(struct subbrep_object_data *data);
 int subbrep_make_brep(struct subbrep_object_data *data);
 int subbrep_make_planar(struct subbrep_object_data *data);
 
+int subbrep_determine_boolean(struct subbrep_object_data *data);
+
+
 // Functions for defining a simplified planar subvolume
 void subbrep_planar_init(struct subbrep_object_data *data);
 void subbrep_planar_close_obj(struct subbrep_object_data *data);
-int subbrep_add_planar_face(struct subbrep_object_data *data, ON_Plane *pcyl, ON_SimpleArray<const ON_BrepVertex *> *vert_loop);
+void subbrep_add_planar_face(struct subbrep_object_data *data, ON_Plane *pcyl, ON_SimpleArray<const ON_BrepVertex *> *vert_loop, int neg_surf);
 
 struct bu_ptbl *find_subbreps(const ON_Brep *brep);
 void print_subbrep_object(struct subbrep_object_data *data, const char *offset);
 volume_t subbrep_shape_recognize(struct subbrep_object_data *data);
-
-void
-subbrep_remove_degenerate_edges(struct subbrep_object_data *data, std::set<int> *edges);
 
 int subbrep_is_planar(struct subbrep_object_data *data);
 
@@ -145,12 +147,19 @@ int cylinder_csg(struct subbrep_object_data *data, fastf_t cyl_tol);
 int subbrep_is_cone(struct subbrep_object_data *data, fastf_t cone_tol);
 int cone_csg(struct subbrep_object_data *data, fastf_t cone_tol);
 
+int sphere_csg(struct subbrep_object_data *data, fastf_t cone_tol);
+
+int torus_csg(struct subbrep_object_data *data, fastf_t cone_tol);
+
 std::string face_set_key(std::set<int> fset);
 surface_t highest_order_face(struct subbrep_object_data *data);
 void set_to_array(int **array, int *array_cnt, std::set<int> *set);
 void array_to_set(std::set<int> *set, int *array, int array_cnt);
 void map_to_array(int **array, int *array_cnt, std::map<int,int> *map);
 void array_to_map(std::map<int,int> *map, int *array, int array_cnt);
+
+int subbrep_find_corners(struct subbrep_object_data *data, int **corner_verts_array, ON_Plane *pcyl);
+int subbrep_top_bottom_pnts(struct subbrep_object_data *data, std::set<int> *corner_verts, ON_Plane *top_plane, ON_Plane *bottom_plane, ON_SimpleArray<const ON_BrepVertex *> *top_pnts, ON_SimpleArray<const ON_BrepVertex *> *bottom_pnts);
 
 #endif /* SHAPE_RECOGNITION_H */
 

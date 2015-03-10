@@ -17,102 +17,148 @@
 #include "brep.h"
 #include "../libbrep/shape_recognition.h"
 
+#define ptout(p)  p.x << " " << p.y << " " << p.z
 
-struct model *
-brep_to_nmg(struct subbrep_object_data *data, struct rt_wdb *wdbp, struct wmember *wcomb)
+void
+brep_to_bot(struct subbrep_object_data *data, struct rt_wdb *wdbp)
 {
+    /* Triangulate faces and write out as a bot */
     struct bu_vls prim_name = BU_VLS_INIT_ZERO;
-    bu_vls_sprintf(&prim_name, "nmg_%s.s", bu_vls_addr(data->key));
-    std::set<int> b_verts;
-    std::vector<int> b_verts_array;
-    std::map<int, int> b_verts_to_verts;
-    struct model *m = nmg_mm();
-    struct nmgregion *r = nmg_mrsv(m);
-    struct shell *s = BU_LIST_FIRST(shell, &(r)->s_hd);
-    struct faceuse **fu;         /* array of faceuses */
-    struct vertex **verts;       /* Array of pointers to vertex structs */
-    struct vertex ***loop_verts; /* Array of pointers to vertex structs to pass to nmg_cmface */
+    int all_faces_cnt = 0;
+    int face_error = 0;
+    int *final_faces = NULL;
 
-    struct bn_tol nmg_tol = {BN_TOL_MAGIC, BN_TOL_DIST, BN_TOL_DIST * BN_TOL_DIST, 1e-6, 1.0 - 1e-6 };
+    // Accumulate faces in a std::vector, since we don't know how many we're going to get
+    std::vector<int> all_faces;
 
-    int point_cnt = 0;
-    int face_cnt = 0;
-    int max_edge_cnt = 0;
+    /* Set up an initial comprehensive vertex array that will be used in
+     * the final BoT build - all face definitions will ultimately index
+     * into this array */
+    point_t *all_verts = (point_t *)bu_calloc(data->brep->m_V.Count(), sizeof(point_t), "bot verts");
+    for (int vi = 0; vi < data->brep->m_V.Count(); vi++) {
+	VMOVE(all_verts[vi], data->brep->m_V[vi].Point());
+    }
 
-    // One loop to a face, and the object data has the set of loops that make
-    // up this object.
-    for (int s_it = 0; s_it < data->loops_cnt; s_it++) {
-	const ON_BrepLoop *b_loop = &(data->brep->m_L[data->loops[s_it]]);
-	const ON_BrepFace *b_face = b_loop->Face();
-	face_cnt++;
-	if (b_loop->m_ti.Count() > max_edge_cnt) max_edge_cnt = b_loop->m_ti.Count();
-	for (int ti = 0; ti < b_loop->m_ti.Count(); ti++) {
-	    const ON_BrepTrim *trim = &(b_face->Brep()->m_T[b_loop->m_ti[ti]]);
-	    const ON_BrepEdge *edge = &(b_face->Brep()->m_E[trim->m_ei]);
-	    if (b_verts.find(edge->Vertex(0)->m_vertex_index) == b_verts.end()) {
-		b_verts.insert(edge->Vertex(0)->m_vertex_index);
-		b_verts_array.push_back(edge->Vertex(0)->m_vertex_index);
-		b_verts_to_verts[edge->Vertex(0)->m_vertex_index] = b_verts_array.size()-1;
+    // Iterate over all faces in the brep.  TODO - should probably protect this with some planar checks...
+    for (int s_it = 0; s_it < data->brep->m_F.Count(); s_it++) {
+	int num_faces;
+	int *faces;
+	const ON_BrepFace *b_face = &(data->brep->m_F[s_it]);
+
+	/* There should be only an outer loop by this point in the process */
+	/* TODO - should probably check that as an error-out condition... */
+	const ON_BrepLoop *b_loop = b_face->OuterLoop();
+
+	/* We need to build a 2D vertex list for the triangulation, and as long
+	 * as we make sure the vertex mapping accounts for flipped trims in 3D,
+	 * the point indices returned for the 2D triangulation will correspond
+	 * to the correct 3D points without any additional work.  In essence,
+	 * we use the fact that the BRep gives us a ready-made 2D point
+	 * parameterization to same some work.*/
+	point2d_t *verts2d = (point2d_t *)bu_calloc(b_loop->m_ti.Count(), sizeof(point2d_t), "bot verts");
+
+	/* The triangulation will use only the points in the temporary verts2d
+	 * array and return with faces indexed accordingly, so we need a map to
+	 * translate them back to our final vert array */
+	std::map<int, int> local_to_verts;
+
+	/* Now the fun begins.  If we have an outer loop that isn't CCW, we
+	 * need to assemble our verts2d polygon backwards */
+	if (data->brep->LoopDirection(data->local_brep->m_L[b_loop->m_loop_index]) != 1) {
+	    for (int ti = 0; ti < b_loop->m_ti.Count(); ti++) {
+		int ti_rev = b_loop->m_ti.Count() - 1 - ti;
+		const ON_BrepTrim *trim = &(b_face->Brep()->m_T[b_loop->m_ti[ti_rev]]);
+		const ON_BrepEdge *edge = &(b_face->Brep()->m_E[trim->m_ei]);
+		const ON_Curve *trim_curve = trim->TrimCurveOf();
+		ON_2dPoint cp = trim_curve->PointAt(trim_curve->Domain().Min());
+		V2MOVE(verts2d[ti], cp);
+		if (trim->m_bRev3d) {
+		    local_to_verts[ti] = edge->Vertex(1)->m_vertex_index;
+		} else {
+		    local_to_verts[ti] = edge->Vertex(0)->m_vertex_index;
+		}
 	    }
-	    if (b_verts.find(edge->Vertex(1)->m_vertex_index) == b_verts.end()) {
-		b_verts.insert(edge->Vertex(1)->m_vertex_index);
-		b_verts_array.push_back(edge->Vertex(1)->m_vertex_index);
-		b_verts_to_verts[edge->Vertex(1)->m_vertex_index] = b_verts_array.size()-1;
+	} else {
+	    for (int ti = 0; ti < b_loop->m_ti.Count(); ti++) {
+		const ON_BrepTrim *trim = &(b_face->Brep()->m_T[b_loop->m_ti[ti]]);
+		const ON_BrepEdge *edge = &(b_face->Brep()->m_E[trim->m_ei]);
+		const ON_Curve *trim_curve = trim->TrimCurveOf();
+		ON_2dPoint cp = trim_curve->PointAt(trim_curve->Domain().Max());
+		V2MOVE(verts2d[ti], cp);
+		if (trim->m_bRev3d) {
+		    local_to_verts[ti] = edge->Vertex(0)->m_vertex_index;
+		} else {
+		    local_to_verts[ti] = edge->Vertex(1)->m_vertex_index;
+		}
 	    }
 	}
-    }
 
-    point_cnt = b_verts.size();
-
-    verts = (struct vertex **)bu_calloc(point_cnt, sizeof(struct vertex *), "brep_to_nmg: verts");
-    loop_verts = (struct vertex ***) bu_calloc(max_edge_cnt, sizeof(struct vertex **), "brep_to_nmg: loop_verts");
-    fu = (struct faceuse **) bu_calloc(face_cnt, sizeof(struct faceuse *), "brep_to_nmg: fu");
-
-    // Make the faces
-    int face_count = 0;
-    for (int s_it = 0; s_it < data->loops_cnt; s_it++) {
-	int loop_length = 0;
-	const ON_BrepLoop *b_loop = &(data->brep->m_L[data->loops[s_it]]);
-	const ON_BrepFace *b_face = b_loop->Face();
-	for (int ti = 0; ti < b_loop->m_ti.Count(); ti++) {
-	    const ON_BrepTrim *trim = &(b_face->Brep()->m_T[b_loop->m_ti[ti]]);
-	    const ON_BrepEdge *edge = &(b_face->Brep()->m_E[trim->m_ei]);
-	    if (trim->m_bRev3d) {
-		loop_verts[loop_length] = &(verts[b_verts_to_verts[edge->Vertex(0)->m_vertex_index]]);
-	    } else {
-		loop_verts[loop_length] = &(verts[b_verts_to_verts[edge->Vertex(1)->m_vertex_index]]);
+	/* The real work - triangulate the 2D polygon to find out triangles for
+	 * this particular B-Rep face */
+	face_error = bn_polygon_triangulate(&faces, &num_faces, (const point2d_t *)verts2d, b_loop->m_ti.Count());
+	if (face_error || !faces) {
+	    std::cout << "bot build failed for face " << b_face->m_face_index << "\n";
+	    bu_free(verts2d, "free tmp 2d vertex array");
+	    bu_free(all_verts, "free top level vertex array");
+	    return;
+	} else {
+	    /* We aren't done with the reversing fun - if the face is reversed, we need
+	     * to flip our triangles as well */
+	    if (b_face->m_bRev) {
+		for (int f_ind = 0; f_ind < num_faces; f_ind++) {
+		    int itmp = faces[f_ind * 3 + 2];
+		    faces[f_ind * 3 + 2] = faces[f_ind * 3 + 1];
+		    faces[f_ind * 3 + 1] = itmp;
+		}
 	    }
-	    loop_length++;
+	    /* Now that we have our faces, map them from the local vertex
+	     * indices to the global ones and insert the faces into the
+	     * all_faces array */
+	    for (int f_ind = 0; f_ind < num_faces*3; f_ind++) {
+		all_faces.push_back(local_to_verts[faces[f_ind]]);
+	    }
+	    all_faces_cnt += num_faces;
+	    bu_free(verts2d, "free tmp 2d vertex array");
 	}
-	fu[face_count] = nmg_cmface(s, loop_verts, loop_length);
-	face_count++;
+
+	/* Uncomment this code to create per-face bots for debugging purposes */
+	/*
+	bu_vls_sprintf(&prim_name, "bot_%s_face_%d.s", bu_vls_addr(data->key), b_face->m_face_index);
+	if (mk_bot(wdbp, bu_vls_addr(&prim_name), RT_BOT_SOLID, RT_BOT_UNORIENTED, 0, b_loop->m_ti.Count(), num_faces, (fastf_t *)verts2d, faces, (fastf_t *)NULL, (struct bu_bitv *)NULL)) {
+	    std::cout << "mk_bot failed for face " << b_face->m_face_index << "\n";
+	}
+	*/
     }
 
-    for (int p = 0; p < point_cnt; p++) {
-	ON_3dPoint pt = data->brep->m_V[b_verts_array[p]].Point();
-	point_t nmg_pt;
-	nmg_pt[0] = pt.x;
-	nmg_pt[1] = pt.y;
-	nmg_pt[2] = pt.z;
-	nmg_vertex_gv(verts[p], pt);
+    /* Now we can build the final faces array for mk_bot */
+    final_faces = (int *)bu_calloc(all_faces_cnt * 3, sizeof(int), "final bot verts");
+    for (int i = 0; i < all_faces_cnt*3; i++) {
+	final_faces[i] = all_faces[i];
     }
 
-    for (int f = 0; f < face_cnt; f++) {
-	nmg_fu_planeeqn(fu[f], &nmg_tol);
+    /* Make the bot, using the data key for a unique name */
+    bu_vls_sprintf(&prim_name, "bot_%s.s", bu_vls_addr(data->key));
+    if (mk_bot(wdbp, bu_vls_addr(&prim_name), RT_BOT_SOLID, RT_BOT_UNORIENTED, 0, data->brep->m_V.Count(), all_faces_cnt, (fastf_t *)all_verts, final_faces, (fastf_t *)NULL, (struct bu_bitv *)NULL)) {
+	std::cout << "mk_bot failed for overall bot\n";
     }
+}
 
-    nmg_fix_normals(s, &nmg_tol);
-    (void)nmg_mark_edges_real(&s->l.magic);
-    /* Compute "geometry" for region and shell */
-    nmg_region_a(r, &nmg_tol);
+int
+subbrep_to_csg_arb6(struct subbrep_object_data *data, struct rt_wdb *wdbp, struct wmember *wcomb)
+{
+    struct csg_object_params *params = data->params;
+    if (data->type == ARB6) {
+	struct bu_vls prim_name = BU_VLS_INIT_ZERO;
+	bu_vls_sprintf(&prim_name, "arb6_%s.s", bu_vls_addr(data->key));
 
-    /* Create the nmg primitive */
-    mk_nmg(wdbp, bu_vls_addr(&prim_name), m);
-    if (wcomb) (void)mk_addmember(bu_vls_addr(&prim_name), &((*wcomb).l), NULL, WMOP_UNION);
-
-    bu_vls_free(&prim_name);
-
-    return m;
+	mk_arb6(wdbp, bu_vls_addr(&prim_name), (const fastf_t *)params->p);
+	//std::cout << bu_vls_addr(&prim_name) << ": " << params->bool_op << "\n";
+	if (wcomb) (void)mk_addmember(bu_vls_addr(&prim_name), &((*wcomb).l), NULL, db_str2op(&(params->bool_op)));
+	bu_vls_free(&prim_name);
+	return 1;
+    } else {
+	return 0;
+    }
 }
 
 int
@@ -132,6 +178,7 @@ subbrep_to_csg_arb8(struct subbrep_object_data *data, struct rt_wdb *wdbp, struc
 	return 0;
     }
 }
+
 int
 subbrep_to_csg_planar(struct subbrep_object_data *data, struct rt_wdb *wdbp, struct wmember *wcomb)
 {
@@ -160,7 +207,13 @@ subbrep_to_csg_planar(struct subbrep_object_data *data, struct rt_wdb *wdbp, str
 	//          at the arbn tessellation routine for a guide on how to set up the
 	//          nmg - that's the most general of the arb* primitives and should be
 	//          relatively close to what is needed here.
-	(void)brep_to_nmg(data, wdbp, wcomb);
+	(void)brep_to_bot(data, wdbp);
+	struct csg_object_params *params = data->params;
+	struct bu_vls prim_name = BU_VLS_INIT_ZERO;
+	bu_vls_sprintf(&prim_name, "bot_%s.s", bu_vls_addr(data->key));
+	//std::cout << bu_vls_addr(&prim_name) << ": " << params->bool_op << "\n";
+	if (wcomb) (void)mk_addmember(bu_vls_addr(&prim_name), &((*wcomb).l), NULL, db_str2op(&(params->bool_op)));
+	bu_vls_free(&prim_name);
 	return 1;
     } else {
 	return 0;
@@ -175,7 +228,10 @@ subbrep_to_csg_cylinder(struct subbrep_object_data *data, struct rt_wdb *wdbp, s
 	struct bu_vls prim_name = BU_VLS_INIT_ZERO;
 	bu_vls_sprintf(&prim_name, "rcc_%s.s", bu_vls_addr(data->key));
 
-	mk_rcc(wdbp, bu_vls_addr(&prim_name), params->origin, params->hv, params->radius);
+	int ret = mk_rcc(wdbp, bu_vls_addr(&prim_name), params->origin, params->hv, params->radius);
+	if (ret) {
+	    std::cout << "problem making " << bu_vls_addr(&prim_name) << "\n";
+	}
 	//std::cout << bu_vls_addr(&prim_name) << ": " << params->bool_op << "\n";
 	if (wcomb) (void)mk_addmember(bu_vls_addr(&prim_name), &((*wcomb).l), NULL, db_str2op(&(params->bool_op)));
 	bu_vls_free(&prim_name);
@@ -201,11 +257,31 @@ subbrep_to_csg_conic(struct subbrep_object_data *data, struct rt_wdb *wdbp, stru
     return 0;
 }
 
+int
+subbrep_to_csg_sphere(struct subbrep_object_data *data, struct rt_wdb *wdbp, struct wmember *wcomb)
+{
+    struct csg_object_params *params = data->params;
+    if (data->type == SPHERE) {
+	struct bu_vls prim_name = BU_VLS_INIT_ZERO;
+	bu_vls_sprintf(&prim_name, "sphere_%s.s", bu_vls_addr(data->key));
+
+	mk_sph(wdbp, bu_vls_addr(&prim_name), params->origin, params->radius);
+	//std::cout << bu_vls_addr(&prim_name) << ": " << params->bool_op << "\n";
+	if (wcomb) (void)mk_addmember(bu_vls_addr(&prim_name), &((*wcomb).l), NULL, db_str2op(&(params->bool_op)));
+	bu_vls_free(&prim_name);
+	return 1;
+    }
+    return 0;
+}
+
 
 void
 process_params(struct subbrep_object_data *data, struct rt_wdb *wdbp, struct wmember *wcomb)
 {
     switch (data->type) {
+	case ARB6:
+	    subbrep_to_csg_arb6(data, wdbp, wcomb);
+	    break;
 	case ARB8:
 	    subbrep_to_csg_arb8(data, wdbp, wcomb);
 	    break;
@@ -219,6 +295,7 @@ process_params(struct subbrep_object_data *data, struct rt_wdb *wdbp, struct wme
 	    subbrep_to_csg_conic(data, wdbp, wcomb);
 	    break;
 	case SPHERE:
+	    subbrep_to_csg_sphere(data, wdbp, wcomb);
 	    break;
 	case ELLIPSOID:
 	    break;
@@ -231,16 +308,27 @@ process_params(struct subbrep_object_data *data, struct rt_wdb *wdbp, struct wme
 
 
 int
-make_shapes(struct subbrep_object_data *data, struct rt_wdb *wdbp, struct wmember *pcomb)
+make_shapes(struct subbrep_object_data *data, struct rt_wdb *wdbp, struct wmember *pcomb, int depth)
 {
-    //std::cout << "Making shape for " << bu_vls_addr(data->key) << "\n";
+    struct bu_vls spacer = BU_VLS_INIT_ZERO;
+    for (int i = 0; i < depth; i++)
+	bu_vls_printf(&spacer, " ");
+    //std::cout << bu_vls_addr(&spacer) << "Making shape for " << bu_vls_addr(data->key) << "\n";
+#if 0
+    if (data->planar_obj && data->planar_obj->local_brep) {
+	struct bu_vls brep_name = BU_VLS_INIT_ZERO;
+	bu_vls_sprintf(&brep_name, "planar_%s.s", bu_vls_addr(data->key));
+	mk_brep(wdbp, bu_vls_addr(&brep_name), data->planar_obj->local_brep);
+	bu_vls_free(&brep_name);
+    }
+#endif
     if (data->type == BREP) {
 	if (data->local_brep) {
 	    struct bu_vls brep_name = BU_VLS_INIT_ZERO;
 	    bu_vls_sprintf(&brep_name, "brep_%s.s", bu_vls_addr(data->key));
 	    mk_brep(wdbp, bu_vls_addr(&brep_name), data->local_brep);
-	    // TODO - not always union
-	    if (pcomb) (void)mk_addmember(bu_vls_addr(&brep_name), &(pcomb->l), NULL, WMOP_UNION);
+	    // TODO - almost certainly need to do more work to get correct booleans
+	    if (pcomb) (void)mk_addmember(bu_vls_addr(&brep_name), &(pcomb->l), NULL, db_str2op(&(data->params->bool_op)));
 	    bu_vls_free(&brep_name);
 	} else {
 	    bu_log("Warning - mk_brep called but data->local_brep is empty\n");
@@ -252,21 +340,27 @@ make_shapes(struct subbrep_object_data *data, struct rt_wdb *wdbp, struct wmembe
 	    struct bu_vls member_name = BU_VLS_INIT_ZERO;
 	    bu_vls_sprintf(&comb_name, "comb_%s.c", bu_vls_addr(data->key));
 	    BU_LIST_INIT(&wcomb.l);
+	    if (data->planar_obj) {
+	    //bu_log("%smake planar obj %s\n", bu_vls_addr(&spacer), bu_vls_addr(data->key));
+		process_params(data->planar_obj, wdbp, &wcomb);
+	    }
 	    //bu_log("make comb %s\n", bu_vls_addr(data->key));
 	    for (unsigned int i = 0; i < BU_PTBL_LEN(data->children); i++){
 		struct subbrep_object_data *cdata = (struct subbrep_object_data *)BU_PTBL_GET(data->children,i);
-		//std::cout << "Making child shape(" << cdata->type << "):\n";
-		make_shapes(cdata, wdbp, &wcomb);
+		//std::cout << bu_vls_addr(&spacer) << "Making child shape " << bu_vls_addr(cdata->key) << " (" << cdata->type << "):\n";
+		make_shapes(cdata, wdbp, &wcomb, depth+1);
 		subbrep_object_free(cdata);
 	    }
 	    mk_lcomb(wdbp, bu_vls_addr(&comb_name), &wcomb, 0, NULL, NULL, NULL, 0);
-	    // TODO - not always union
-	    if (pcomb) (void)mk_addmember(bu_vls_addr(&comb_name), &(pcomb->l), NULL, WMOP_UNION);
+
+	    // TODO - almost certainly need to do more work to get correct booleans
+	    if (pcomb) (void)mk_addmember(bu_vls_addr(&comb_name), &(pcomb->l), NULL, db_str2op(&(data->params->bool_op)));
 
 	    bu_vls_free(&member_name);
 	    bu_vls_free(&comb_name);
 	} else {
 	    //std::cout << "type: " << data->type << "\n";
+	    //bu_log("%smake solid %s\n", bu_vls_addr(&spacer), bu_vls_addr(data->key));
 	    process_params(data, wdbp, pcomb);
 	}
     }
@@ -325,7 +419,7 @@ main(int argc, char *argv[])
 	struct subbrep_object_data *obj = (struct subbrep_object_data *)BU_PTBL_GET(subbreps, i);
 	//print_subbrep_object(obj, "");
 	// first, make the comb (or, if we have a brep, make that)
-	(void)make_shapes(obj, wdbp, &pcomb);
+	(void)make_shapes(obj, wdbp, &pcomb, 0);
 	subbrep_object_free(obj);
 	BU_PUT(obj, struct subbrep_object_data);
     }

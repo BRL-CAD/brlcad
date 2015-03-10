@@ -22,10 +22,10 @@
 
 /* system headers */
 #include <signal.h>
+#include "bio.h"
 #ifndef HAVE_KILL
 #  include <TlHelp32.h>
 #endif
-#include "bio.h"
 
 /* bu headers */
 #include "bu/parallel.h"

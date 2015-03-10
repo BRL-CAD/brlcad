@@ -219,7 +219,7 @@ lollipop/
     </para>
 
     <para> Before beginning the editing process, the
-    <command>l</command> command (a.k.a the "list" command) can be used to view both the
+    <command>l</command> command (a.k.a. the "list" command) can be used to view both the
     combination and its component primitives:
     <note>
       <para>Note that the list command uses the lower case letter L (l) and

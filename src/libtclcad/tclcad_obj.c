@@ -949,6 +949,7 @@ HIDDEN void to_dm_get_display_image(struct ged *gedp, unsigned char **idata);
 HIDDEN void to_fbs_callback();
 HIDDEN int to_open_fbs(struct ged_dm_view *gdvp, Tcl_Interp *interp);
 
+HIDDEN void to_create_vlist_callback_solid(struct solid *gdlp);
 HIDDEN void to_create_vlist_callback(struct display_list *gdlp);
 HIDDEN void to_free_vlist_callback(unsigned int dlist, int range);
 HIDDEN void to_refresh_all_views(struct tclcad_obj *top);
@@ -1308,7 +1309,7 @@ static struct to_cmdtab to_cmds[] = {
     {"rtweight", "[args]", TO_UNLIMITED, to_view_func, ged_rt},
     {"rtwizard", "[args]", TO_UNLIMITED, to_view_func, ged_rtwizard},
     {"savekey",	"filename", 3, to_view_func, ged_savekey},
-    {"saveview",	"filename", 3, to_view_func, ged_saveview},
+    {"saveview", (char *)0, TO_UNLIMITED, to_view_func, ged_saveview},
     {"sca",	"sf", 3, to_view_func_plus, ged_scale},
     {"scale_mode",	"x y", TO_UNLIMITED, to_scale_mode, GED_FUNC_PTR_NULL},
     {"screen2model",	"x y", TO_UNLIMITED, to_screen2model, GED_FUNC_PTR_NULL},
@@ -1691,6 +1692,7 @@ Usage: go_open\n\
 
     top->to_gop->go_gedp->ged_output_handler = to_output_handler;
     top->to_gop->go_gedp->ged_refresh_handler = to_refresh_handler;
+    top->to_gop->go_gedp->ged_create_vlist_solid_callback = to_create_vlist_callback_solid;
     top->to_gop->go_gedp->ged_create_vlist_callback = to_create_vlist_callback;
     top->to_gop->go_gedp->ged_free_vlist_callback = to_free_vlist_callback;
 

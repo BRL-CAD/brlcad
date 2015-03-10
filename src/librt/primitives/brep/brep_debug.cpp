@@ -1293,13 +1293,12 @@ brep_loop_info(struct brep_specific* bs, struct bu_vls *vls, int li)
 	return 0;
     const ON_BrepLoop &loop = brep->m_L[li];
     dump.Print("loop[%d] on face %d with %d trims\n", li, loop.m_fi, loop.TrimCount());
-    if (loop.TrimCount() > 0) {
-	dump.Print("trims: ");
-	for (int i = 0; i < loop.TrimCount() - 1; ++i) {
-	    dump.Print("%d,", loop.m_ti[i]);
-	}
-	dump.Print("%d\n", loop.m_ti[loop.TrimCount() - 1]);
+    dump.Print("trims: ");
+    for (int i = 0; i < loop.TrimCount() - 1; ++i) {
+	dump.Print("%d,", loop.m_ti[i]);
     }
+    dump.Print("%d\n", loop.m_ti[loop.TrimCount() - 1]);
+
     ON_String ss = wstr;
     bu_vls_printf(vls, "%s\n", ss.Array());
     return 0;

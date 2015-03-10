@@ -2493,24 +2493,20 @@ ON_2dPoint
 UnwrapUVPoint(const ON_Surface *surf,const ON_2dPoint &pt, double tol)
 {
     ON_2dPoint p = pt;
+
     for (int i=0; i<2; i++) {
       if (!surf->IsClosed(i))
         continue;
-      while (p[i] < surf->Domain(i).m_t[0] - tol) {
-	  double length = surf->Domain(i).Length();
-	  if (i<=0) {
-	      p.x = p.x + length;
-	  } else {
-	      p.y = p.y + length;
-	  }
-      }
-      while (p[i] >= surf->Domain(i).m_t[1] + tol) {
-	  double length = surf->Domain(i).Length();
-	  if (i<=0) {
-	      p.x = p.x - length;
-	  } else {
-	      p.y = p.y - length;
-	  }
+      double length = surf->Domain(i).Length();
+      double dom_min = surf->Domain(i).Min() - ON_ZERO_TOLERANCE;
+      double dom_max = surf->Domain(i).Max() + ON_ZERO_TOLERANCE;
+
+      if (p[i] < surf->Domain(i).m_t[0] - tol) {
+	  int domains_away = (int)(((dom_min - p[i]) / length) + 1.0);
+	  p[i] += length*domains_away;
+      } else if (p[i] >= surf->Domain(i).m_t[1] + tol) {
+	  int domains_away = (int)(((p[i] - dom_max) / length) + 1.0);
+	  p[i] -= length * domains_away;
       }
     }
 
@@ -2581,12 +2577,12 @@ ConsecutivePointsCrossClosedSeam(const ON_Surface *surf,const ON_2dPoint &pt,con
      * if one of the points is at a seam then not crossing
      */
     int dir =0;
-    ON_2dPoint unwrapped_pt = UnwrapUVPoint(surf,pt);
-    ON_2dPoint unwrapped_prev_pt = UnwrapUVPoint(surf,prev_pt);
 
     if (!IsAtSeam(surf,dir,pt,tol) && !IsAtSeam(surf,dir,prev_pt,tol)) {
 	udir = vdir = 0;
 	if (surf->IsClosed(0)) {
+	    ON_2dPoint unwrapped_pt = UnwrapUVPoint(surf,pt);
+	    ON_2dPoint unwrapped_prev_pt = UnwrapUVPoint(surf,prev_pt);
 	    double delta=unwrapped_pt.x-unwrapped_prev_pt.x;
 	    if (fabs(delta) > surf->Domain(0).Length()/2.0) {
 		if (delta < 0.0) {
@@ -2601,6 +2597,8 @@ ConsecutivePointsCrossClosedSeam(const ON_Surface *surf,const ON_2dPoint &pt,con
     dir = 1;
     if (!IsAtSeam(surf,dir,pt,tol) && !IsAtSeam(surf,dir,prev_pt,tol)) {
 	if (surf->IsClosed(1)) {
+	    ON_2dPoint unwrapped_pt = UnwrapUVPoint(surf,pt);
+	    ON_2dPoint unwrapped_prev_pt = UnwrapUVPoint(surf,prev_pt);
 	    double delta=unwrapped_pt.y-unwrapped_prev_pt.y;
 	    if (fabs(delta) > surf->Domain(1).Length()/2.0) {
 		if (delta < 0.0) {

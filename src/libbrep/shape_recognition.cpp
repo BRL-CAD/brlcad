@@ -2,6 +2,7 @@
 
 #include <set>
 #include <map>
+#include <string>
 
 #include "bu/log.h"
 #include "bu/str.h"
@@ -30,7 +31,6 @@
 // positive and negative volume.  Probably convex/concave testing is what
 // will be needed to resolve this.
 
-
 struct bu_ptbl *
 find_subbreps(const ON_Brep *brep)
 {
@@ -43,6 +43,9 @@ find_subbreps(const ON_Brep *brep)
      * subset has not already been seen, add it to the brep's set of
      * subbreps */
     for (int i = 0; i < brep->m_F.Count(); i++) {
+	if (i >= 26 && i <= 30) {
+	    std::cout << "Considering face " << i << "\n";
+	}
 	std::string key;
 	std::set<int> faces;
 	std::set<int> loops;
@@ -90,6 +93,9 @@ find_subbreps(const ON_Brep *brep)
 	    }
 	}
 	key = face_set_key(faces);
+	if (i >= 26 && i <= 30) {
+	    std::cout << "key built: " << key << "\n";
+	}
 
 	/* If we haven't seen this particular subset before, add it */
 	if (subbrep_keys.find(key) == subbrep_keys.end()) {
@@ -109,6 +115,23 @@ find_subbreps(const ON_Brep *brep)
 	    new_obj->is_island = 1;
 	    new_obj->parent = NULL;
 
+	    // Determine if this subset is being added to or taken from the parent.
+	    if (new_obj->fil_cnt > 0) {
+		int bool_op = subbrep_determine_boolean(new_obj);
+		if (bool_op == -1) {
+		    new_obj->params->bool_op = '-';
+		}
+		if (bool_op == 1) {
+		    new_obj->params->bool_op = 'u';
+		}
+		if (bool_op == 0) {
+		    std::cout << "Error - ambiguous result for boolean test - need to subdivide shape.\n";
+		}
+	    } else {
+		new_obj->params->bool_op = 'u';
+	    }
+
+	    (void)subbrep_make_brep(new_obj);
 	    surface_t hof = highest_order_face(new_obj);
 	    if (hof >= SURFACE_GENERAL) {
 		new_obj->type = BREP;
@@ -136,7 +159,63 @@ find_subbreps(const ON_Brep *brep)
 	}
     }
 
-    return subbreps;
+    // Now that we have the subbreps (or their substructures) and their boolean status we need to
+    // construct the top level tree. Each object will be one of two things - a top level
+    // object unioned into the global comb, or a top level object subtracted from one of the other
+    // top level objects.  We need to build a map of subtractions - for each subtracted object,
+    // find via its shared edges/faces the parent subbrep it is subtracted from.
+    //
+    struct bu_ptbl *subbreps_tree;
+    std::multimap<const char *, long *> ps;
+    std::map<const char *, long *> parents;
+    for (unsigned int i = 0; i < BU_PTBL_LEN(subbreps); i++) {
+	struct subbrep_object_data *obj = (struct subbrep_object_data *)BU_PTBL_GET(subbreps, i);
+	if (BU_STR_EQUAL(bu_vls_addr(obj->key), "25_26_27_28_29_30_31_32_33_171_419_420_421_422"))
+	    std::cout << "Considering " << bu_vls_addr(obj->key) << "\n";
+	if (obj->params->bool_op == '-') {
+	    int found_parent = 0;
+	    for (unsigned int j = 0; j < BU_PTBL_LEN(subbreps); j++) {
+		struct subbrep_object_data *pobj = (struct subbrep_object_data *)BU_PTBL_GET(subbreps, j);
+		for (int k = 0; k < obj->fil_cnt; k++) {
+		    for (int l = 0; l < pobj->fol_cnt; l++) {
+			if (pobj->fol[l] == obj->fil[k]) {
+			    found_parent = 1;
+			    ps.insert(std::make_pair(bu_vls_addr(pobj->key), (long *)obj));
+			    parents[bu_vls_addr(obj->key)] = (long *)pobj;
+			    if (BU_STR_EQUAL(bu_vls_addr(obj->key), "25_26_27_28_29_30_31_32_33_171_419_420_421_422")){
+				std::cout << "Found parent " << bu_vls_addr(pobj->key) << "\n";
+				std::cout << "parent bool " << pobj->params->bool_op << "\n";
+				std::cout << "urk - problem - a subtraction from a subtraction probably means the two should be unioned into a comb and the comb subtracted...\n";
+			    }
+			    break;
+			}
+			if (found_parent) break;
+		    }
+		    if (found_parent) break;
+		}
+		if (found_parent) break;
+	    }
+	    if (!found_parent) {
+		std::cout << "\n\nError - subtracted object " << bu_vls_addr(obj->key) << "\n\n\n";
+	    }
+	}
+    }
+    BU_GET(subbreps_tree, struct bu_ptbl);
+    bu_ptbl_init(subbreps_tree, 8, "subbrep tree table");
+    for (unsigned int i = 0; i < BU_PTBL_LEN(subbreps); i++) {
+	struct subbrep_object_data *obj = (struct subbrep_object_data *)BU_PTBL_GET(subbreps, i);
+	if (obj->params->bool_op == 'u') {
+	    std::pair <std::multimap<const char *, long *>::iterator, std::multimap<const char *, long *>::iterator > ret;
+	    ret = ps.equal_range(bu_vls_addr(obj->key));
+	    bu_ptbl_ins(subbreps_tree, (long *)obj);
+	    for (std::multimap<const char *, long *>::iterator it = ret.first; it != ret.second; it++) {
+		struct subbrep_object_data *sub_obj = (struct subbrep_object_data *)it->second;
+		bu_ptbl_ins(subbreps_tree, (long *)sub_obj);
+	    }
+	}
+    }
+    bu_ptbl_free(subbreps);
+    return subbreps_tree;
 }
 
 
@@ -262,7 +341,7 @@ subbrep_split(struct subbrep_object_data *data)
     //if (BU_STR_EQUAL(bu_vls_addr(data->key), "325_326_441_527_528")) {
     //	std::cout << "looking at 325_326_441_527_528\n";
     //}
-
+    int csg_fail = 0;
     std::set<int> processed_faces;
     std::set<std::string> subbrep_keys;
     /* For each face, identify the candidate solid type.  If that
@@ -351,21 +430,37 @@ subbrep_split(struct subbrep_object_data *data)
 	    new_obj->type = filters->type;
 	    switch (new_obj->type) {
 		case CYLINDER:
-		    (void)cylinder_csg(new_obj, BREP_CYLINDRICAL_TOL);
+		    if (!cylinder_csg(new_obj, BREP_CYLINDRICAL_TOL)) {
+			bu_log("cylinder csg failure: %s\n", key.c_str());
+			csg_fail++;
+		    }
 		    break;
 		case CONE:
-		    (void)cone_csg(new_obj, BREP_CONIC_TOL);
+		    if (!cone_csg(new_obj, BREP_CONIC_TOL)) {
+			bu_log("cone csg failure: %s\n", key.c_str());
+			csg_fail++;
+		    }
 		    break;
 		case SPHERE:
-		    bu_log("process partial sphere\n");
+		    if (!sphere_csg(new_obj, BREP_SPHERICAL_TOL)) {
+			bu_log("sphere csg failure: %s\n", key.c_str());
+			csg_fail++;
+		    }
 		    break;
 		case ELLIPSOID:
-		    bu_log("process partial ellipsoid\n");
+		    bu_log("TODO: process partial ellipsoid\n");
+		    /* TODO - Until we properly handle these shapes, this is a failure case */
+		    csg_fail++;
 		    break;
 		case TORUS:
-		    bu_log("process partial torus\n");
+		    if (!torus_csg(new_obj, BREP_TOROIDAL_TOL)) {
+			bu_log("torus csg failure: %s\n", key.c_str());
+			csg_fail++;
+		    }
 		    break;
 		default:
+		    /* Unknown object type - can't convert to csg */
+		    csg_fail++;
 		    break;
 	    }
 
@@ -374,12 +469,20 @@ subbrep_split(struct subbrep_object_data *data)
 	filter_obj_free(filters);
 	BU_PUT(filters, struct filter_obj);
     }
-    if (subbrep_keys.size() == 0) {
-	data->type = BREP;
-	return 0;
+    if (subbrep_keys.size() == 0 || csg_fail > 0) {
+	goto csg_abort;
     }
     data->type = COMB;
     return 1;
+csg_abort:
+    /* Clear children - we found something we can't handle, so there will be no
+     * CSG conversion of this subbrep */
+    data->type = BREP;
+    for (unsigned int i = 0; i < BU_PTBL_LEN(data->children); i++) {
+	struct subbrep_object_data *cdata = (struct subbrep_object_data *)BU_PTBL_GET(data->children,i);
+	subbrep_object_free(cdata);
+    }
+    return 0;
 }
 
 int
@@ -599,6 +702,15 @@ subbrep_make_brep(struct subbrep_object_data *data)
 
     data->local_brep->ShrinkSurfaces();
     data->local_brep->CullUnusedSurfaces();
+
+    /* If we're a subtraction, the B-Rep will be inside out */
+    if (data->params->bool_op == '-') {
+	for (int l = 0; l < data->local_brep->m_F.Count(); l++) {
+	    ON_BrepFace &face = data->local_brep->m_F[l];
+	    data->local_brep->FlipFace(face);
+	}
+    }
+
 
     std::cout << "new brep done: " << bu_vls_addr(data->key) << "\n";
 

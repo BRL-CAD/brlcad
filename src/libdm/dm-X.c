@@ -58,7 +58,6 @@
 #include "vmath.h"
 #include "bu/endian.h"
 #include "bn.h"
-#include "raytrace.h"
 #include "dm.h"
 #include "dm-X.h"
 #include "dm-Null.h"

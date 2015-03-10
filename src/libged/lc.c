@@ -76,14 +76,33 @@ sort_regions(const void *a, const void *b, void *arg)
     struct region_record *r1 = (struct region_record *)a;
     struct region_record *r2 = (struct region_record *)b;
     int *sort_type = (int *)arg;
+    int temp1,temp2;
 
     switch (*sort_type) {
 	case 1:
-	    return bu_strcmp(r1->region_id, r2->region_id);
+	    temp1=atoi(r1->region_id);
+	    temp2=atoi(r2->region_id);
+	    if ( temp1 > temp2 )
+    		return 1;
+	    if ( temp1 == temp2 )
+		return 0;
+	    return -1;
 	case 2:
-	    return bu_strcmp(r1->material_id, r2->material_id);
+	    temp1=atoi(r1->material_id);
+	    temp2=atoi(r2->material_id);
+	    if ( temp1 > temp2 )
+    		return 1;
+	    if ( temp1 == temp2 )
+		return 0;
+	    return -1;
 	case 3:
-	    return bu_strcmp(r1->los, r2->los);
+	    temp1=atoi(r1->los);
+	    temp2=atoi(r2->los);
+	    if ( temp1 > temp2 )
+    		return 1;
+	    if ( temp1 == temp2 )
+		return 0;
+	    return -1;
 	case 4:
 	    return bu_strcmp(r1->obj_name, r2->obj_name);
 	case 5:
@@ -136,7 +155,7 @@ ged_lc(struct ged *gedp, int argc, const char *argv[])
     int orig_argc;
     const char **orig_argv;
 
-    static const char *usage = "[-d|-s|-r] [-z] [-0|-1|-2|-3|-4|-5] [-f {FileName}] {GroupName}";
+    static const char *usage = "[-d|-s] [-r] [-z] [-0|-1|-2|-3|-4|-5] [-f {FileName}] {GroupName}";
 
     int c;
     int error_cnt = 0;
@@ -192,18 +211,18 @@ ged_lc(struct ged *gedp, int argc, const char *argv[])
 		file_name_flag_cnt++;
 		file_name = bu_optarg;
 		break;
+	    case 's':
+		skip_special_duplicates_flag = 1;
+		/* FALLTHROUGH */
 	    case 'd':
 		find_duplicates_flag = 1;
-		break;
-	    case 's':
-		find_duplicates_flag = 1;
-		skip_special_duplicates_flag = 1;
 		break;
 	    case 'r':
 		skip_subtracted_regions_flag = 1;
 		break;
 	    case 'z':
 		descending_sort_flag = 1;
+		break;
 	    default:
 		unrecognized_flag_cnt++;
 	}
@@ -246,11 +265,12 @@ ged_lc(struct ged *gedp, int argc, const char *argv[])
 
     if (file_name) {
 	char *norm_name;
+	norm_name = bu_realpath(file_name, NULL);
 	if (file_name[0] == '-') {
 	    bu_vls_printf(gedp->ged_result_str, "Error: File name can not start with '-'.\n");
 	    error_cnt++;
 	} else if (bu_file_exists(file_name, NULL)) {
-	    bu_vls_printf(gedp->ged_result_str, "Error: File '$norm_name' already exists.\n");
+	    bu_vls_printf(gedp->ged_result_str, "Error: Output file %s already exists.\n",norm_name);
 	    error_cnt++;
 	} else {
 	    outfile = fopen(file_name, "w");
@@ -259,7 +279,6 @@ ged_lc(struct ged *gedp, int argc, const char *argv[])
 		error_cnt++;
 	    }
 	}
-	norm_name = bu_realpath(file_name, NULL);
 	bu_vls_printf(gedp->ged_result_str, "Output filename: %s\n", norm_name);
 	bu_free(norm_name, "ged_lc");
 	output = bu_vls_vlsinit();

@@ -56,6 +56,13 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
 
+* air regions (aircode > 0) are removed/skipped during prep, but there
+  is no message to the user that this has occurred.  this can result
+  in unexpected behavior (bad usability) if/when air regions are the
+  only geometry being displayed (or are a substantial portion of the
+  current display.  prep needs to return a catalog so summary
+  reporting can be facilitated (of all objects, successful or not).
+
 * look into whether db_dirbuild should call db_update_nref
 
 * evaluate replacing libfft with the KISS FFT library (BSD).  similar
@@ -77,7 +84,8 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
 * improve performance of these commands that seem to have exponential
   cost: bot_split, killtree
 
-* translate lc command to libged
+* translate lc command to libged (discovered in Feb. 2015 to have already
+  been done -- need information regarding when this was done and committed).
 
 * Integrate ADRT into Archer as a visualization mode.
 
@@ -88,14 +96,14 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
 * create a catalog of all possible entity types.  including distinct
   parameterizations with sufficient variety that conveys the object's
   parameterization options (e.g. ell as sphere, flat disc, long spike,
-  etc).  this is necessarily defined per object type and possibly
+  etc.).  this is necessarily defined per object type and possibly
   programmable.  see src/proc-db/csgbrep.cpp for a basic start.
 
 * create a catalog of all possible/distinct/useful shader settings.
   see regress/shaders.sh for a basic start.
 
 * high-performance VOL for medical data visualization.  consider
-  leveraging OpenVDB, PCL, Paraview/VTK, etc
+  leveraging OpenVDB, PCL, Paraview/VTK, etc.
 
 * multi-region VOL objects.  this basically will either introduce a
   notion of data-reuse where multiple regions reference the same VOL
@@ -163,7 +171,7 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
   (ways of reducing the geometry complexity with or without
   introducing 3D changes.  provides different stages of compilation
   (e.g., similar to preprocessing, compilation, AST reduction,
-  optimization, encoding transformation, etc).  name ideas: bcg, cg
+  optimization, encoding transformation, etc.).  name ideas: bcg, cg
 
 * geometry debugger.  low-level geometry database tool with minimal/no
   run-time dependencies on our own libraries.  the idea is a tool that
@@ -432,9 +440,6 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
 
 * replicate the GTK+ ISST interface in TCL
 
-* Archer GUI needs to remember the last size of the command
-  window when it is in detached (2 window) mode
-
 * fix nurbs_ssi and nurbs_tester unit tests
 
 * get rid of the -P#processors user option (except rt* tools) common
@@ -684,10 +689,6 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
 * release dm X get_color() memory
 
 * update g-xxx_facets to use libgcv
-
-* add distribution test for making sure the source code conventions
-  for function replacements are being respected (e.g., bu_strcmp()
-  instead of strcmp()).
 
 * make sure 'preview' works, particularly the 'tree' subcommand.
 
@@ -1017,6 +1018,10 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
 * add geometry example of building 238
 
 * Mac OS X SGI dial knobs support
+  - Note that we might do better here to focus on the 3Dconnexion
+    space navigator mouse, which is a lot more commonly available
+    nowadays...  spacenav.sourceforge.net is something to bear in
+    mind in this context.
 
 * ability to "unpush" objects, translating them to a new position and
   applying the correct matrix (using either bounding box or center of
@@ -1604,7 +1609,7 @@ NEW OBJECTS
 
   care will need to be taken to avoid bad behavior when presented with
   a malformed procedure (e.g., an infinite loop, fork bomb, syntax
-  error, thrashing condition, etc).
+  error, thrashing condition, etc.).
 
 * spheroid (quadratic) - special performance case of ell
 
@@ -1667,14 +1672,10 @@ missing on Windows due to needing lex.
 CONVERTERS
 ----------
 
-* implement 3dm-g support for ON_InstanceRef entities.  These are
-  instances of existing geometry that have prescribed referencing edit
-  behavior and can have their own matrices.  Basically, they're combs
-  that should sometimes reference copies of geometry and sometimes not
-  (there's a flag).  unveiled via sf bug report 3575774 where the
-  geometry export from solidworks was predominantly references
-  resulting in a load of geometry missing after import and objects in
-  the wrong position.
+* investigate the asset import library (assimp.sf.net) to see whether
+  we can replace a lot (but probably not all) of our bot-centric
+  importers/exports (ply, obj, stl, etc.) with the assimp library
+  to save us the time/effort of supporting those parser ourselves.
 
 * make the converters export all top-level objects by default
 
@@ -1716,9 +1717,6 @@ CONVERTERS
 
 * implement a g-sat (Solidworks) exporter and sat-g importer
   http://local.wasp.uwa.edu.au/~pbourke/dataformats/sat/sat.pdf
-
-* implement a g-ply exporter
-  http://en.wikipedia.org/wiki/PLY_(file_format)
 
 * implement a g-json exporter
   http://www.json.org/
