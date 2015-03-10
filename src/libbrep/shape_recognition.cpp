@@ -695,6 +695,15 @@ subbrep_make_brep(struct subbrep_object_data *data)
     data->local_brep->ShrinkSurfaces();
     data->local_brep->CullUnusedSurfaces();
 
+    /* If we're a subtraction, the B-Rep will be inside out */
+    if (data->params->bool_op == '-') {
+	for (int l = 0; l < data->local_brep->m_F.Count(); l++) {
+	    ON_BrepFace &face = data->local_brep->m_F[l];
+	    data->local_brep->FlipFace(face);
+	}
+    }
+
+
     std::cout << "new brep done: " << bu_vls_addr(data->key) << "\n";
 
     return 1;
