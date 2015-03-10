@@ -43,6 +43,9 @@ find_subbreps(const ON_Brep *brep)
      * subset has not already been seen, add it to the brep's set of
      * subbreps */
     for (int i = 0; i < brep->m_F.Count(); i++) {
+	if (i >= 26 && i <= 30) {
+	    std::cout << "Considering face " << i << "\n";
+	}
 	std::string key;
 	std::set<int> faces;
 	std::set<int> loops;
@@ -90,6 +93,9 @@ find_subbreps(const ON_Brep *brep)
 	    }
 	}
 	key = face_set_key(faces);
+	if (i >= 26 && i <= 30) {
+	    std::cout << "key built: " << key << "\n";
+	}
 
 	/* If we haven't seen this particular subset before, add it */
 	if (subbrep_keys.find(key) == subbrep_keys.end()) {
@@ -125,6 +131,7 @@ find_subbreps(const ON_Brep *brep)
 		new_obj->params->bool_op = 'u';
 	    }
 
+	    (void)subbrep_make_brep(new_obj);
 	    surface_t hof = highest_order_face(new_obj);
 	    if (hof >= SURFACE_GENERAL) {
 		new_obj->type = BREP;
@@ -160,8 +167,11 @@ find_subbreps(const ON_Brep *brep)
     //
     struct bu_ptbl *subbreps_tree;
     std::multimap<const char *, long *> ps;
+    std::map<const char *, long *> parents;
     for (unsigned int i = 0; i < BU_PTBL_LEN(subbreps); i++) {
 	struct subbrep_object_data *obj = (struct subbrep_object_data *)BU_PTBL_GET(subbreps, i);
+	if (BU_STR_EQUAL(bu_vls_addr(obj->key), "25_26_27_28_29_30_31_32_33_171_419_420_421_422"))
+	    std::cout << "Considering " << bu_vls_addr(obj->key) << "\n";
 	if (obj->params->bool_op == '-') {
 	    int found_parent = 0;
 	    for (unsigned int j = 0; j < BU_PTBL_LEN(subbreps); j++) {
@@ -171,6 +181,12 @@ find_subbreps(const ON_Brep *brep)
 			if (pobj->fol[l] == obj->fil[k]) {
 			    found_parent = 1;
 			    ps.insert(std::make_pair(bu_vls_addr(pobj->key), (long *)obj));
+			    parents[bu_vls_addr(obj->key)] = (long *)pobj;
+			    if (BU_STR_EQUAL(bu_vls_addr(obj->key), "25_26_27_28_29_30_31_32_33_171_419_420_421_422")){
+				std::cout << "Found parent " << bu_vls_addr(pobj->key) << "\n";
+				std::cout << "parent bool " << pobj->params->bool_op << "\n";
+				std::cout << "urk - problem - a subtraction from a subtraction probably means the two should be unioned into a comb and the comb subtracted...\n";
+			    }
 			    break;
 			}
 			if (found_parent) break;
@@ -180,7 +196,7 @@ find_subbreps(const ON_Brep *brep)
 		if (found_parent) break;
 	    }
 	    if (!found_parent) {
-		std::cout << "Error - subtracted object " << bu_vls_addr(obj->key) << "\n";
+		std::cout << "\n\nError - subtracted object " << bu_vls_addr(obj->key) << "\n\n\n";
 	    }
 	}
     }
