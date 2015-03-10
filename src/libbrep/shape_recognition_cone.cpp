@@ -143,8 +143,6 @@ subbrep_is_cone(struct subbrep_object_data *data, fastf_t cone_tol)
     ON_3dVector hvect(cone.ApexPoint() - cone.BasePoint());
 
     int negative = negative_cone(data, *conic_surfaces.begin(), cone_tol);
-    bu_log("conic negative: %d\n", negative);
-    bu_log("parent boolean: %c\n", data->parent->params->bool_op);
 
     if (data->parent->params->bool_op == '-') negative = -1 * negative;
 
@@ -297,7 +295,7 @@ cone_csg(struct subbrep_object_data *data, fastf_t cone_tol)
 	data->params->r2 = 0.000001;
 	data->params->height = set1_c.Plane().DistanceTo(cone.ApexPoint());
 	if (data->params->height < 0) data->params->height = data->params->height * -1;
-
+	return 1;
     } else {
 	ON_3dPoint base = set1_c.Center();
 	ON_3dVector hvect = set2_c.Center() - set1_c.Center();
@@ -321,8 +319,6 @@ cone_csg(struct subbrep_object_data *data, fastf_t cone_tol)
 	    data->type = CONE;
 
 	    int negative = negative_cone(data, *conic_surfaces.begin(), cone_tol);
-	    bu_log("conic negative: %d\n", negative);
-	    bu_log("parent boolean: %c\n", data->parent->params->bool_op);
 
 	    if (data->parent->params->bool_op == '-') negative = -1 * negative;
 
@@ -348,6 +344,8 @@ cone_csg(struct subbrep_object_data *data, fastf_t cone_tol)
 	    data->params->r2 = set2_c.Radius();
 	    data->params->height = set1_c.Center().DistanceTo(set2_c.Center());
 	    if (data->params->height < 0) data->params->height = data->params->height * -1;
+
+	    return 1;
 	} else {
 	    // Have corners, need arb
 	    data->type = COMB;

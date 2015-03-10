@@ -200,7 +200,7 @@ subbrep_is_cylinder(struct subbrep_object_data *data, fastf_t cyl_tol)
     // is determined later.
     int negative = negative_cylinder(data, *cylindrical_surfaces.begin(), cyl_tol);
 
-    bu_log("full cylinder negative test: %d\n", negative);
+    //bu_log("full cylinder negative test: %d\n", negative);
     // TODO - the surface negative test may not be enough on its own - needs
     // more thought
     if (negative == -1) {
@@ -473,8 +473,6 @@ cylinder_csg(struct subbrep_object_data *data, fastf_t cyl_tol)
 	    //std::cout << "Full cylinder\n";
 	    data->type = CYLINDER;
 
-	    bu_log("parent boolean: %c\n", data->parent->params->bool_op);
-
 	    if (data->parent->params->bool_op == '-') negative = -1 * negative;
 
 	    switch (negative) {
@@ -516,10 +514,6 @@ cylinder_csg(struct subbrep_object_data *data, fastf_t cyl_tol)
 	    std::string key = face_set_key(cylindrical_surfaces);
 	    bu_vls_sprintf(cyl_obj->key, "%s", key.c_str());
 	    cyl_obj->type = CYLINDER;
-
-	    bu_log("partial cyl negative: %d\n", negative);
-
-	    bu_log("parent boolean: %c\n", data->parent->params->bool_op);
 
 	    if (data->parent->params->bool_op == '-') negative = -1 * negative;
 
@@ -840,8 +834,6 @@ cylinder_csg(struct subbrep_object_data *data, fastf_t cyl_tol)
 		    // global object or unioned into a comb lower down the tree (or vice versa)
 		    // is determined later.
 		    int negative = negative_cylinder(data, *cylindrical_surfaces.begin(), cyl_tol);
-
-		    bu_log("parent boolean: %c\n", data->parent->params->bool_op);
 
 		    if (data->parent->params->bool_op == '-') negative = -1 * negative;
 

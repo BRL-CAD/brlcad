@@ -572,7 +572,7 @@ planar_switch(int ret, struct subbrep_object_data *data, std::set<int> *faces, s
 }
 
 
-    int
+int
 subbrep_make_planar(struct subbrep_object_data *data)
 {
     // First step is to count vertices, using the edges

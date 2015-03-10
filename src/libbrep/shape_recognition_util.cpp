@@ -418,6 +418,8 @@ subbrep_determine_boolean(struct subbrep_object_data *data)
    int pos_cnt = 0;
    int neg_cnt = 0;
 
+   if (data->fil_cnt == 0) return 1;
+
    for (int i = 0; i < data->fil_cnt; i++) {
        // Get face with inner loop
        const ON_BrepFace *face = &(data->brep->m_F[data->fil[i]]);

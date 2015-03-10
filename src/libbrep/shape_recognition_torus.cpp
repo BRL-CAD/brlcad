@@ -93,17 +93,17 @@ torus_csg(struct subbrep_object_data *data, fastf_t torus_tol)
     std::set<int> planar_surfaces;
     std::set<int> toridal_surfaces;
     std::set<int>::iterator f_it;
-    std::cout << "processing toridal surface: \n";
+    //std::cout << "processing toridal surface: \n";
     for (int i = 0; i < data->faces_cnt; i++) {
 	int f_ind = data->faces[i];
         int surface_type = (int)GetSurfaceType(data->brep->m_F[f_ind].SurfaceOf(), NULL);
         switch (surface_type) {
             case SURFACE_PLANE:
-		std::cout << "planar face " << f_ind << "\n";
+		//std::cout << "planar face " << f_ind << "\n";
                 planar_surfaces.insert(f_ind);
                 break;
             case SURFACE_TORUS:
-		std::cout << "torus face " << f_ind << "\n";
+		//std::cout << "torus face " << f_ind << "\n";
                 toridal_surfaces.insert(f_ind);
 		break;
             default:
@@ -149,25 +149,25 @@ torus_csg(struct subbrep_object_data *data, fastf_t torus_tol)
 	    ON_3dVector ep_normal = torus.plane.Normal();
 	    // TODO - define a sensible constant for this...
 	    if (ep_normal.IsParallelTo(torus_normal, 0.01)) {
-		std::cout << "major edge: " << ei << "\n";
+		//std::cout << "major edge: " << ei << "\n";
 		major_circle_edges.insert(ei);
 		categorized = 1;
 	    }
 	    // TODO - define a sensible constant for this...
 	    if (ep_normal.IsPerpendicularTo(torus_normal, 0.01)) {
-		std::cout << "minor edge: " << ei << "\n";
+		//std::cout << "minor edge: " << ei << "\n";
 		minor_circle_edges.insert(ei);
 		categorized = 1;
 	    }
 	    if (!categorized) {
-		std::cout << "Edge " << ei << " is neither parallel nor perpendicular to torus - can't handle yet\n";
+		//std::cout << "Edge " << ei << " is neither parallel nor perpendicular to torus - can't handle yet\n";
 		return 0;
 	    }
 
 	} else {
 	    // We've got non-arc edges in a toridal situation - not ready
 	    // to handle this case yet.
-	    std::cout << "Edge " << ei << " is not an arc - can't handle yet\n";
+	    //std::cout << "Edge " << ei << " is not an arc - can't handle yet\n";
 	    delete ecv;
 	    return 0;
 	}

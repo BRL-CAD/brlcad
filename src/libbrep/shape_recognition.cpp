@@ -31,7 +31,6 @@
 // positive and negative volume.  Probably convex/concave testing is what
 // will be needed to resolve this.
 
-
 struct bu_ptbl *
 find_subbreps(const ON_Brep *brep)
 {
@@ -156,7 +155,59 @@ find_subbreps(const ON_Brep *brep)
 	}
     }
 
-    return subbreps;
+    // Now that we have the subbreps (or their substructures) and their boolean status we need to
+    // construct the top level tree. Each object will be one of two things - a top level
+    // object unioned into the global comb, or a top level object subtracted from one of the other
+    // top level objects.  We need to build a map of subtractions - for each subtracted object,
+    // find via its shared edges/faces the parent subbrep it is subtracted from.
+    //
+    struct bu_ptbl *subbreps_tree;
+    std::multimap<const char *, long *> ps;
+    for (unsigned int i = 0; i < BU_PTBL_LEN(subbreps); i++) {
+	struct subbrep_object_data *obj = (struct subbrep_object_data *)BU_PTBL_GET(subbreps, i);
+	std::cout << "Checking " << bu_vls_addr(obj->key) << "\n";
+	std::cout << "  op is: " << obj->params->bool_op << "\n";
+	if (obj->params->bool_op == '-') {
+	    int found_parent = 0;
+	    for (unsigned int j = 0; j < BU_PTBL_LEN(subbreps); j++) {
+		struct subbrep_object_data *pobj = (struct subbrep_object_data *)BU_PTBL_GET(subbreps, j);
+		for (int k = 0; k < obj->fil_cnt; k++) {
+		    for (int l = 0; l < pobj->fol_cnt; l++) {
+			if (pobj->fol[l] == obj->fil[k]) {
+			    found_parent = 1;
+			    ps.insert(std::make_pair(bu_vls_addr(pobj->key), (long *)obj));
+			    bu_log("%s is the parent of %s\n", bu_vls_addr(pobj->key), bu_vls_addr(obj->key));
+			    break;
+			}
+			if (found_parent) break;
+		    }
+		    if (found_parent) break;
+		}
+		if (found_parent) break;
+	    }
+	    if (!found_parent) {
+		std::cout << "Error - subtracted object " << bu_vls_addr(obj->key) << "\n";
+	    }
+	}
+    }
+    BU_GET(subbreps_tree, struct bu_ptbl);
+    bu_ptbl_init(subbreps_tree, 8, "subbrep tree table");
+    for (unsigned int i = 0; i < BU_PTBL_LEN(subbreps); i++) {
+	struct subbrep_object_data *obj = (struct subbrep_object_data *)BU_PTBL_GET(subbreps, i);
+	if (obj->params->bool_op == 'u') {
+	    std::pair <std::multimap<const char *, long *>::iterator, std::multimap<const char *, long *>::iterator > ret;
+	    ret = ps.equal_range(bu_vls_addr(obj->key));
+	    bu_ptbl_ins(subbreps_tree, (long *)obj);
+	    std::cout << "unioning " << bu_vls_addr(obj->key) << "\n";
+	    for (std::multimap<const char *, long *>::iterator it = ret.first; it != ret.second; it++) {
+		struct subbrep_object_data *sub_obj = (struct subbrep_object_data *)it->second;
+		std::cout << "subtracting " << bu_vls_addr(sub_obj->key) << " from " << bu_vls_addr(obj->key) << "\n";
+		bu_ptbl_ins(subbreps_tree, (long *)sub_obj);
+	    }
+	}
+    }
+    bu_ptbl_free(subbreps);
+    return subbreps_tree;
 }
 
 
@@ -282,7 +333,7 @@ subbrep_split(struct subbrep_object_data *data)
     //if (BU_STR_EQUAL(bu_vls_addr(data->key), "325_326_441_527_528")) {
     //	std::cout << "looking at 325_326_441_527_528\n";
     //}
-
+    int csg_fail = 0;
     std::set<int> processed_faces;
     std::set<std::string> subbrep_keys;
     /* For each face, identify the candidate solid type.  If that
@@ -371,21 +422,37 @@ subbrep_split(struct subbrep_object_data *data)
 	    new_obj->type = filters->type;
 	    switch (new_obj->type) {
 		case CYLINDER:
-		    (void)cylinder_csg(new_obj, BREP_CYLINDRICAL_TOL);
+		    if (!cylinder_csg(new_obj, BREP_CYLINDRICAL_TOL)) {
+			bu_log("cylinder csg failure: %s\n", key.c_str());
+			csg_fail++;
+		    }
 		    break;
 		case CONE:
-		    (void)cone_csg(new_obj, BREP_CONIC_TOL);
+		    if (!cone_csg(new_obj, BREP_CONIC_TOL)) {
+			bu_log("cone csg failure: %s\n", key.c_str());
+			csg_fail++;
+		    }
 		    break;
 		case SPHERE:
-		    (void)sphere_csg(new_obj, BREP_SPHERICAL_TOL);
+		    if (!sphere_csg(new_obj, BREP_SPHERICAL_TOL)) {
+			bu_log("sphere csg failure: %s\n", key.c_str());
+			csg_fail++;
+		    }
 		    break;
 		case ELLIPSOID:
-		    bu_log("process partial ellipsoid\n");
+		    bu_log("TODO: process partial ellipsoid\n");
+		    /* TODO - Until we properly handle these shapes, this is a failure case */
+		    csg_fail++;
 		    break;
 		case TORUS:
-		    (void)torus_csg(new_obj, BREP_TOROIDAL_TOL);
+		    if (!torus_csg(new_obj, BREP_TOROIDAL_TOL)) {
+			bu_log("torus csg failure: %s\n", key.c_str());
+			csg_fail++;
+		    }
 		    break;
 		default:
+		    /* Unknown object type - can't convert to csg */
+		    csg_fail++;
 		    break;
 	    }
 
@@ -394,12 +461,20 @@ subbrep_split(struct subbrep_object_data *data)
 	filter_obj_free(filters);
 	BU_PUT(filters, struct filter_obj);
     }
-    if (subbrep_keys.size() == 0) {
-	data->type = BREP;
-	return 0;
+    if (subbrep_keys.size() == 0 || csg_fail > 0) {
+	goto csg_abort;
     }
     data->type = COMB;
     return 1;
+csg_abort:
+    /* Clear children - we found something we can't handle, so there will be no
+     * CSG conversion of this subbrep */
+    data->type = BREP;
+    for (unsigned int i = 0; i < BU_PTBL_LEN(data->children); i++) {
+	struct subbrep_object_data *cdata = (struct subbrep_object_data *)BU_PTBL_GET(data->children,i);
+	subbrep_object_free(cdata);
+    }
+    return 0;
 }
 
 int
