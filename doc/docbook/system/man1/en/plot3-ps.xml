@@ -18,10 +18,10 @@
 <cmdsynopsis>
   <command>plot3-ps</command>
     <arg choice='opt'>-ec </arg>
-    <arg choice='opt'>-s <replaceable>square_output_size</replaceable></arg>
-    <arg choice='opt'>-w <replaceable>output_width</replaceable></arg>
-    <arg choice='opt'>-n <replaceable>output_height</replaceable></arg>
-    <arg choice='plain'>&lt;</arg>
+    <arg choice='opt'>-s|S <replaceable>square_output_size</replaceable></arg>
+    <arg choice='opt'>-w|W <replaceable>output_width</replaceable></arg>
+    <arg choice='opt'>-n|N <replaceable>output_height</replaceable></arg>
+    <arg choice='opt'>&lt;</arg>
     <arg choice='plain'><replaceable>unix_plot</replaceable></arg>
 </cmdsynopsis>
 </refsynopsisdiv>
@@ -35,13 +35,21 @@ This is especially useful for creating figures for inclusion in TeX
 documents.
 The
 <option>-e</option>
-option will produce and encapsulated PostScript file. The
+option will produce an encapsulated PostScript file. The
+<option>-c</option>
+option causes the output to be centered on an 8.5 x 11 inch page. The
 <option>-s</option>
 ,
 <option>-w</option>
 , and
 <option>-n</option>
-options specify the size of the output image in inches (ignored when used with the
+options (alternatively
+<option>-S</option>
+,
+<option>-W</option>
+, and
+<option>-N</option>)
+specify the size of the output image in inches (ignored when used with the
 <option>-e</option>
 option).</para>
 
