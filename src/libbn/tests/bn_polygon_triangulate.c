@@ -40,6 +40,7 @@ int
 main(int UNUSED(argc), const char **UNUSED(argv))
 {
     {
+	size_t num_points = 0;
 	int num_faces = 0;
 	int *faces = NULL;
 
@@ -90,16 +91,18 @@ main(int UNUSED(argc), const char **UNUSED(argv))
 	V2SET(points[42], 2807.83, 2022.83);
 	V2SET(points[43], 2807.83, 2372.83);
 
-	if (bn_polygon_triangulate(&faces, &num_faces, (const point2d_t *)points, 44)) {
+	num_points = sizeof(points) / sizeof(point2d_t);
+	if (bn_polygon_triangulate(&faces, &num_faces, (const point2d_t *)points, num_points)) {
 	    return 1;
 	}
     }
     {
+	size_t num_points = 0;
 	int num_faces = 0;
 	int *faces = NULL;
 
-	/* 13 point polygon derived from NIST MBE PMI sample 3 shape */
-	point2d_t points[13] = {{0}};
+	/* 14 point polygon derived from NIST MBE PMI sample 3 shape */
+	point2d_t points[14] = {{0}};
 	V2SET(points[0], 801.392008, 748.924528);
 	V2SET(points[1], 801.392008, 729.874528);
 	V2SET(points[2], 1164.916808, 729.874528);
@@ -115,7 +118,8 @@ main(int UNUSED(argc), const char **UNUSED(argv))
 	V2SET(points[12], 840.914408, 761.624528);
 	V2SET(points[13], 814.092008, 761.624528);
 
-	if (bn_polygon_triangulate(&faces, &num_faces, (const point2d_t *)points, 13)) {
+	num_points = sizeof(points) / sizeof(point2d_t);
+	if (bn_polygon_triangulate(&faces, &num_faces, (const point2d_t *)points, num_points)) {
 	    return 1;
 	}
     }
