@@ -43,9 +43,6 @@ find_subbreps(const ON_Brep *brep)
      * subset has not already been seen, add it to the brep's set of
      * subbreps */
     for (int i = 0; i < brep->m_F.Count(); i++) {
-	if (i >= 26 && i <= 30) {
-	    std::cout << "Considering face " << i << "\n";
-	}
 	std::string key;
 	std::set<int> faces;
 	std::set<int> loops;
@@ -93,9 +90,6 @@ find_subbreps(const ON_Brep *brep)
 	    }
 	}
 	key = face_set_key(faces);
-	if (i >= 26 && i <= 30) {
-	    std::cout << "key built: " << key << "\n";
-	}
 
 	/* If we haven't seen this particular subset before, add it */
 	if (subbrep_keys.find(key) == subbrep_keys.end()) {
@@ -131,7 +125,6 @@ find_subbreps(const ON_Brep *brep)
 		new_obj->params->bool_op = 'u';
 	    }
 
-	    (void)subbrep_make_brep(new_obj);
 	    surface_t hof = highest_order_face(new_obj);
 	    if (hof >= SURFACE_GENERAL) {
 		new_obj->type = BREP;
@@ -171,10 +164,8 @@ subbrep_assemble_boolean_tree(std::multimap<const char *, long *> *ps, struct bu
     ret = ps->equal_range(bu_vls_addr(obj->key));
     for (std::multimap<const char *, long *>::iterator it = ret.first; it != ret.second; it++) {
 	const struct subbrep_object_data *sub_obj = (const struct subbrep_object_data *)it->second;
-	bu_log("  sub_obj: %s\n", bu_vls_addr(sub_obj->key));
 	if (sub_obj) {
 	    bu_ptbl_ins(subbreps_tree, (long *)sub_obj);
-	    std::cout << "array len: " << BU_PTBL_LEN(subbreps_tree) << "\n";
 	    subbrep_assemble_boolean_tree(ps, subbreps_tree, sub_obj);
 	}
     }
@@ -193,6 +184,17 @@ find_top_level_hierarchy(struct bu_ptbl *subbreps)
     std::multimap<const char *, long *> ps;
     for (unsigned int i = 0; i < BU_PTBL_LEN(subbreps); i++) {
 	struct subbrep_object_data *obj = (struct subbrep_object_data *)BU_PTBL_GET(subbreps, i);
+	// If we can find a top union, things are easier.  Can we rely on this 100%?  Need to
+	// think about it - maybe yes... if so, all subbreps can be categorized.  Subbreps that
+	// share a face with the toplevel union can be characterized, and if any of those immediate
+	// mating subbreps have their own subbreps its a trigger to form a comb.  Any subbrep that
+	// shares a face with the comb will have to subtract the whole comb, unless we do some sort
+	// of bounding box based subset identification...  Probably necessary to keep the booleans
+	// reasonable.  nist 2 is a good test case for this...
+	if (obj->fil_cnt == 0) {
+	    std::cout << "Top union found: " << bu_vls_addr(obj->key) << "\n";
+	}
+
 	if (obj->params->bool_op == '-') {
 	    int found_parent = 0;
 	    for (unsigned int j = 0; j < BU_PTBL_LEN(subbreps); j++) {
@@ -221,7 +223,6 @@ find_top_level_hierarchy(struct bu_ptbl *subbreps)
 	struct subbrep_object_data *obj = (struct subbrep_object_data *)BU_PTBL_GET(subbreps, i);
 	if (obj->params->bool_op == 'u') {
 	    bu_ptbl_ins(subbreps_tree, (long *)obj);
-	    bu_log("obj: %s\n", bu_vls_addr(obj->key));
 	    subbrep_assemble_boolean_tree(&ps, subbreps_tree, obj);
 	}
     }

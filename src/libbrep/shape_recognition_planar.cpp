@@ -36,8 +36,6 @@ subbrep_planar_init(struct subbrep_object_data *sdata)
     bu_vls_sprintf(data->planar_obj->key, "%s", bu_vls_addr(data->key));
     data->planar_obj->type = PLANAR_VOLUME;
 
-    std::cout << "subplanar_init: " << bu_vls_addr(data->key) << "\n";
-
     data->planar_obj->local_brep = ON_Brep::New();
     std::map<int, int> face_map;
     std::map<int, int> surface_map;
