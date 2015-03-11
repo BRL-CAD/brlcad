@@ -159,19 +159,40 @@ find_subbreps(const ON_Brep *brep)
 	}
     }
 
+    return subbreps;
+}
+
+
+// assistant function for find_top_level_hierarchy
+void
+subbrep_assemble_boolean_tree(std::multimap<const char *, long *> *ps, struct bu_ptbl *subbreps_tree, const struct subbrep_object_data *obj)
+{
+    std::pair <std::multimap<const char *, long *>::iterator, std::multimap<const char *, long *>::iterator > ret;
+    ret = ps->equal_range(bu_vls_addr(obj->key));
+    for (std::multimap<const char *, long *>::iterator it = ret.first; it != ret.second; it++) {
+	const struct subbrep_object_data *sub_obj = (const struct subbrep_object_data *)it->second;
+	bu_log("  sub_obj: %s\n", bu_vls_addr(sub_obj->key));
+	if (sub_obj) {
+	    bu_ptbl_ins(subbreps_tree, (long *)sub_obj);
+	    std::cout << "array len: " << BU_PTBL_LEN(subbreps_tree) << "\n";
+	    subbrep_assemble_boolean_tree(ps, subbreps_tree, sub_obj);
+	}
+    }
+}
+
+// TODO - this approach is insufficient/incorrect.  Need to assemble subtracted subbreps into
+// combs and subtract those as a unit - this approach doesn't correctly subtract everything
+// from objects that need the subtractions.
+struct bu_ptbl *
+find_top_level_hierarchy(struct bu_ptbl *subbreps)
+{
     // Now that we have the subbreps (or their substructures) and their boolean status we need to
-    // construct the top level tree. Each object will be one of two things - a top level
-    // object unioned into the global comb, or a top level object subtracted from one of the other
-    // top level objects.  We need to build a map of subtractions - for each subtracted object,
-    // find via its shared edges/faces the parent subbrep it is subtracted from.
-    //
+    // construct the top level tree.
+
     struct bu_ptbl *subbreps_tree;
     std::multimap<const char *, long *> ps;
-    std::map<const char *, long *> parents;
     for (unsigned int i = 0; i < BU_PTBL_LEN(subbreps); i++) {
 	struct subbrep_object_data *obj = (struct subbrep_object_data *)BU_PTBL_GET(subbreps, i);
-	if (BU_STR_EQUAL(bu_vls_addr(obj->key), "25_26_27_28_29_30_31_32_33_171_419_420_421_422"))
-	    std::cout << "Considering " << bu_vls_addr(obj->key) << "\n";
 	if (obj->params->bool_op == '-') {
 	    int found_parent = 0;
 	    for (unsigned int j = 0; j < BU_PTBL_LEN(subbreps); j++) {
@@ -181,12 +202,6 @@ find_subbreps(const ON_Brep *brep)
 			if (pobj->fol[l] == obj->fil[k]) {
 			    found_parent = 1;
 			    ps.insert(std::make_pair(bu_vls_addr(pobj->key), (long *)obj));
-			    parents[bu_vls_addr(obj->key)] = (long *)pobj;
-			    if (BU_STR_EQUAL(bu_vls_addr(obj->key), "25_26_27_28_29_30_31_32_33_171_419_420_421_422")){
-				std::cout << "Found parent " << bu_vls_addr(pobj->key) << "\n";
-				std::cout << "parent bool " << pobj->params->bool_op << "\n";
-				std::cout << "urk - problem - a subtraction from a subtraction probably means the two should be unioned into a comb and the comb subtracted...\n";
-			    }
 			    break;
 			}
 			if (found_parent) break;
@@ -205,19 +220,13 @@ find_subbreps(const ON_Brep *brep)
     for (unsigned int i = 0; i < BU_PTBL_LEN(subbreps); i++) {
 	struct subbrep_object_data *obj = (struct subbrep_object_data *)BU_PTBL_GET(subbreps, i);
 	if (obj->params->bool_op == 'u') {
-	    std::pair <std::multimap<const char *, long *>::iterator, std::multimap<const char *, long *>::iterator > ret;
-	    ret = ps.equal_range(bu_vls_addr(obj->key));
 	    bu_ptbl_ins(subbreps_tree, (long *)obj);
-	    for (std::multimap<const char *, long *>::iterator it = ret.first; it != ret.second; it++) {
-		struct subbrep_object_data *sub_obj = (struct subbrep_object_data *)it->second;
-		bu_ptbl_ins(subbreps_tree, (long *)sub_obj);
-	    }
+	    bu_log("obj: %s\n", bu_vls_addr(obj->key));
+	    subbrep_assemble_boolean_tree(&ps, subbreps_tree, obj);
 	}
     }
-    bu_ptbl_free(subbreps);
     return subbreps_tree;
 }
-
 
 void
 set_filter_obj(const ON_Surface *surface, struct filter_obj *obj)
