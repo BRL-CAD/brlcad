@@ -32,6 +32,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include "bio.h"
 
 #include "bu/log.h"
 #include "bu/str.h"
@@ -42,6 +43,10 @@
 #define geti(x) { (x) = getchar(); (x) |= (short)(getchar()<<8); }
 #define getb(x)	((x) = getchar())
 
+void printusage (const char *name)
+{
+	bu_exit(1, "Usage: %s < infile > outfile\n", name);
+}
 
 int
 main(int argc, char **argv)
@@ -51,7 +56,11 @@ main(int argc, char **argv)
     int c, i, x, y, x1, x2, y1, y2, r, g, b;
 
     if (argc != 1) {
-	bu_exit(1, "Usage: %s < infile > outfile\n", argv[0]);
+	printusage(argv[0]);
+    }
+
+    if (isatty(fileno(stdin)) || isatty(fileno(stdout))) {
+	printusage(argv[0]);
     }
 
     getb(c);
