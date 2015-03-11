@@ -613,7 +613,7 @@ int bn_polygon_triangulate(int **faces, int *num_faces, const point2d_t *pts, si
 	struct pt_vertex *one_vert = PT_NEXT(vertex_list);
 	struct pt_vertex *four_vert = PT_NEXT(PT_NEXT(PT_NEXT(one_vert)));
 	while(one_vert->index != four_vert->index) {
-	    struct pt_vertex_ref *ear_ref;
+	    struct pt_vertex_ref *ear_ref = NULL;
 	    int min_angle = INT_MAX;
 	    for (BU_LIST_FOR_BACKWARDS(vref, pt_vertex_ref, &(ear_list->l))){
 		if (vref->v->angle < min_angle && vref->v) {
