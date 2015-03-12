@@ -259,6 +259,7 @@ subbrep_bbox(struct subbrep_object_data *obj)
 	ON_Interval v(min.y, max.y);
 	surface_GetBoundingBox(face->SurfaceOf(), u, v, *(obj->bbox), true);
     }
+    obj->bbox_set = 1;
 }
 
 void
