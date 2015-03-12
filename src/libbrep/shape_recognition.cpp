@@ -238,7 +238,7 @@ find_top_level_hierarchy(struct bu_ptbl *subbreps)
 			// This is a make-or-break step of the algorithm - if we cannot determine whether
 			// a subbrep is added or subtracted, the whole B-Rep conversion process fails.
 			//
-			// TODO - In theory a partial convertion might still be achieved by re-inserting the
+			// TODO - In theory a partial conversion might still be achieved by re-inserting the
 			// problem subbrep back into the parent B-Rep and proceeding with the rest, but
 			// we are not currently set up for that - as of right now, a single failure on
 			// this level of logic results in a completely failed csg conversion.
