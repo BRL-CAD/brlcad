@@ -3424,7 +3424,7 @@ get_face_intersection_curves(
 	std::set<int> *unused = i < face_count1 ? &unused1 : &unused2;
 	std::set<int> *intact = i < face_count1 ? &finalform1 : &finalform2;
 	int curr_index = i < face_count1 ? i : i - face_count1;
-	if (face.BoundingBox().MinimumDistanceTo(brep->BoundingBox()) > ON_ZERO_TOLERANCE) {
+	if (face.BoundingBox().MinimumDistanceTo(brep->BoundingBox()) > INTERSECTION_TOL) {
 	    switch (operation) {
 	    case BOOLEAN_UNION:
 		intact->insert(curr_index);
@@ -3462,8 +3462,8 @@ get_face_intersection_curves(
 		if (unused2.find(j) == unused2.end() &&  finalform2.find(j) == finalform2.end()) {
 		    // If the two faces don't interact according to their bounding boxes,
 		    // they won't be a source of events - otherwise, they must be checked.
-		    fastf_t disjoint = brep1->m_F[i].BoundingBox().MinimumDistanceTo(brep2->m_F[j].BoundingBox());
-		    if (!(disjoint > ON_ZERO_TOLERANCE)) {
+		    fastf_t face_dist = brep1->m_F[i].BoundingBox().MinimumDistanceTo(brep2->m_F[j].BoundingBox());
+		    if (face_dist <= INTERSECTION_TOL) {
 			intersection_candidates.insert(std::pair<int, int>(i, j));
 		    }
 		}
