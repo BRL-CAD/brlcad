@@ -464,13 +464,30 @@ main(int argc, char *argv[])
 	//BU_PUT(obj, struct subbrep_object_data);
     }
 
+    struct wmember *ccomb = NULL;
+    struct bu_vls obj_comb_name = BU_VLS_INIT_ZERO;
     for (unsigned int i = 0; i < BU_PTBL_LEN(subbreps_tree); i++){
 	struct subbrep_object_data *obj = (struct subbrep_object_data *)BU_PTBL_GET(subbreps_tree, i);
 	struct bu_vls obj_name = BU_VLS_INIT_ZERO;
 	subbrep_obj_name(obj, &obj_name);
+	if (obj->params->bool_op == 'u') {
+	    if (ccomb) {
+		mk_lcomb(wdbp, bu_vls_addr(&obj_comb_name), ccomb, 0, NULL, NULL, NULL, 0);
+		BU_PUT(ccomb, struct wmember);
+	    }
+	    BU_GET(ccomb, struct wmember);
+	    BU_LIST_INIT(&ccomb->l);
+	    bu_vls_sprintf(&obj_comb_name, "comb_%s.c", bu_vls_addr(obj->key));
+	    (void)mk_addmember(bu_vls_addr(&obj_comb_name), &(pcomb.l), NULL, db_str2op(&(obj->params->bool_op)));
+	    (void)mk_addmember(bu_vls_addr(&obj_name), &((*ccomb).l), NULL, db_str2op(&(obj->params->bool_op)));
+	} else {
+	    (void)mk_addmember(bu_vls_addr(&obj_name), &((*ccomb).l), NULL, db_str2op(&(obj->params->bool_op)));
+	}
 	//std::cout << bu_vls_addr(&obj_name) << ": " << obj->params->bool_op << "\n";
-	(void)mk_addmember(bu_vls_addr(&obj_name), &(pcomb.l), NULL, db_str2op(&(obj->params->bool_op)));
+	//(void)mk_addmember(bu_vls_addr(&obj_name), &(pcomb.l), NULL, db_str2op(&(obj->params->bool_op)));
+	bu_vls_free(&obj_name);
     }
+    bu_vls_free(&obj_comb_name);
 
     // Free memory
     for (unsigned int i = 0; i < BU_PTBL_LEN(subbreps); i++){
