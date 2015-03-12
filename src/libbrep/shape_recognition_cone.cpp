@@ -140,9 +140,26 @@ subbrep_is_cone(struct subbrep_object_data *data, fastf_t cone_tol)
 
     data->type = CONE;
 
-    ON_3dVector hvect(cone.ApexPoint() - cone.BasePoint());
-
     data->negative_shape = negative_cone(data, *conic_surfaces.begin(), cone_tol);
+
+
+    ON_3dPoint center_bottom = cone.BasePoint();
+    ON_3dPoint center_top = cone.ApexPoint();
+
+    // If we've got a negative cylinder, bump the center points out
+    // very slightly
+    if (data->negative_shape == -1) {
+	ON_3dVector cvector(center_top - center_bottom);
+	double len = cvector.Length();
+	cvector.Unitize();
+	cvector = cvector * (len * 0.001);
+
+	center_top = center_top + cvector;
+	center_bottom = center_bottom - cvector;
+    }
+
+    ON_3dVector hvect(center_top - center_bottom);
+
 
     data->params->bool_op = (data->negative_shape == -1) ? '-' : 'u';
     data->params->origin[0] = cone.BasePoint().x;

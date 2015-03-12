@@ -192,13 +192,29 @@ subbrep_is_cylinder(struct subbrep_object_data *data, fastf_t cyl_tol)
     struct csg_object_params * obj;
     BU_GET(obj, struct csg_object_params);
 
-    ON_3dVector hvect(set2_c.Center() - set1_c.Center());
+    ON_3dPoint center_bottom = set1_c.Center();
+    ON_3dPoint center_top = set2_c.Center();
 
     // Flag the cylinder according to the negative or positive status of the
     // cylinder surface.  Whether it is actually subtracted from the
     // global object or unioned into a comb lower down the tree (or vice versa)
     // is determined later.
     data->negative_shape = negative_cylinder(data, *cylindrical_surfaces.begin(), cyl_tol);
+
+    // If we've got a negative cylinder, bump the center points out very slightly
+    // to avoid problems with raytracing - without this, NIST 2 sometimes shows
+    // a half-circle of shading in what should be a subtraction.
+    if (data->negative_shape == -1) {
+	ON_3dVector cvector(center_top - center_bottom);
+	double len = cvector.Length();
+	cvector.Unitize();
+	cvector = cvector * (len * 0.001);
+
+	center_top = center_top + cvector;
+	center_bottom = center_bottom - cvector;
+    }
+
+    ON_3dVector hvect(center_top - center_bottom);
 
     data->params->bool_op = (data->negative_shape == -1) ? '-' : 'u';
     data->params->origin[0] = set1_c.Center().x;
