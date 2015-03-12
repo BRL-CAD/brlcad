@@ -211,14 +211,6 @@ find_top_level_hierarchy(struct bu_ptbl *subbreps)
 	// Will have to do minimal bbox and possibly convex hull testing, may even grow to SSI.
 	// We need to know if subtraction volumes intrude on union volumes, and there is no way
 	// to know that short of testing.
-	//
-	// Only have to worry about testing fil faces in unions against subtracted objects, assuming
-	// original B-Rep is non-self-intersecting.  fil surfaces are new outer faces in new brep
-	// objects, and only in those faces is there a possibility of new object intersections.
-	//
-	// NEEDED:  better organization of negative/positive testing and assignment
-	//          robust convex hull/minimum bounding arb logic - GeometricTools port
-	//          arb/arb intersection testing - collision detection perhaps?
 	if (obj->fil_cnt == 0) {
 	    std::cout << "Top union found: " << bu_vls_addr(obj->key) << "\n";
 	}
