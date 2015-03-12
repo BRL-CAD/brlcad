@@ -2518,10 +2518,29 @@ newton_ssi(double &uA, double &vA, double &uB, double &vB, const ON_Surface *sur
     return (pointA.DistanceTo(pointB) < isect_tol) && !isnan(uA) && !isnan(vA) && !isnan(uB) & !isnan(vB);
 }
 
+// if curve end is greater than tol distance from pt, append a linear
+// segment to the curve so it extends to the pt
+HIDDEN void
+extend_curve_end_to_pt(ON_Curve *&curve, ON_3dPoint pt, double tol)
+{
+    ON_NurbsCurve *nc = curve->NurbsCurve();
+    if (nc->PointAtEnd().DistanceTo(pt) > tol) {
+	ON_LineCurve line_bridge(nc->PointAtEnd(), pt);
+
+	ON_NurbsCurve bridge;
+	if (line_bridge.GetNurbForm(bridge)) {
+	    nc->Append(bridge);
+	}
+	delete curve;
+	curve = nc;
+    }
+}
 
 HIDDEN ON_Curve *
 link_curves(ON_Curve *&c1, ON_Curve *&c2)
 {
+    extend_curve_end_to_pt(c1, c2->PointAtEnd(), ON_ZERO_TOLERANCE);
+
     ON_NurbsCurve *nc1 = c1->NurbsCurve();
     ON_NurbsCurve *nc2 = c2->NurbsCurve();
     if (nc1 && nc2) {
@@ -2540,6 +2559,16 @@ link_curves(ON_Curve *&c1, ON_Curve *&c2)
     return NULL;
 }
 
+// if curve start and end are within tolerance, append a linear
+// segment to the curve to close it completely so it passes
+// IsClosed() tests
+HIDDEN void
+fill_gap_if_closed(ON_Curve *&curve, double tol)
+{
+    if (curve->PointAtStart().DistanceTo(curve->PointAtEnd()) <= tol) {
+	extend_curve_end_to_pt(curve, curve->PointAtStart(), ON_ZERO_TOLERANCE);
+    }
+}
 
 struct OverlapSegment {
     ON_Curve *m_curve3d, *m_curveA, *m_curveB;
@@ -3862,6 +3891,9 @@ ON_Intersect(const ON_Surface *surfA,
 		delete overlaps[j];
 		overlaps[j] = NULL;
 	    }
+	    fill_gap_if_closed(overlaps[i]->m_curve3d, isect_tol);
+	    fill_gap_if_closed(overlaps[i]->m_curveA, isect_tolA);
+	    fill_gap_if_closed(overlaps[i]->m_curveB, isect_tolB);
 	}
     }
 
