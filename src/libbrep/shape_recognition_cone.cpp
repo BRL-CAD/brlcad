@@ -142,23 +142,9 @@ subbrep_is_cone(struct subbrep_object_data *data, fastf_t cone_tol)
 
     ON_3dVector hvect(cone.ApexPoint() - cone.BasePoint());
 
-    int negative = negative_cone(data, *conic_surfaces.begin(), cone_tol);
+    data->negative_shape = negative_cone(data, *conic_surfaces.begin(), cone_tol);
 
-    if (data->parent->params->bool_op == '-') negative = -1 * negative;
-
-    switch (negative) {
-	case -1:
-	    data->params->bool_op = '-';
-	    break;
-	case 1:
-	    data->params->bool_op = 'u';
-	    break;
-	default:
-	    std::cout << "Could not determine cone status???????\n";
-	    data->params->bool_op = 'u';
-	    break;
-    }
-
+    data->params->bool_op = (data->negative_shape == -1) ? '-' : 'u';
     data->params->origin[0] = cone.BasePoint().x;
     data->params->origin[1] = cone.BasePoint().y;
     data->params->origin[2] = cone.BasePoint().z;
@@ -268,23 +254,9 @@ cone_csg(struct subbrep_object_data *data, fastf_t cone_tol)
 	struct csg_object_params * obj;
         BU_GET(obj, struct csg_object_params);
 
-	int negative = negative_cone(data, *conic_surfaces.begin(), cone_tol);
+	data->negative_shape = negative_cone(data, *conic_surfaces.begin(), cone_tol);
 
-	if (data->parent->params->bool_op == '-') negative = -1 * negative;
-
-	switch (negative) {
-	    case -1:
-		data->params->bool_op = '-';
-		break;
-	    case 1:
-		data->params->bool_op = 'u';
-		break;
-	    default:
-		std::cout << "Could not determine cone status???????\n";
-		data->params->bool_op = 'u';
-		break;
-	}
-
+	data->params->bool_op = (data->negative_shape == -1) ? '-' : 'u';
 	data->params->origin[0] = closest_to_base.x;
 	data->params->origin[1] = closest_to_base.y;
 	data->params->origin[2] = closest_to_base.z;
@@ -318,22 +290,9 @@ cone_csg(struct subbrep_object_data *data, fastf_t cone_tol)
 	    BU_GET(obj, struct csg_object_params);
 	    data->type = CONE;
 
-	    int negative = negative_cone(data, *conic_surfaces.begin(), cone_tol);
+	    data->negative_shape = negative_cone(data, *conic_surfaces.begin(), cone_tol);
 
-	    if (data->parent->params->bool_op == '-') negative = -1 * negative;
-
-	    switch (negative) {
-		case -1:
-		    data->params->bool_op = '-';
-		    break;
-		case 1:
-		    data->params->bool_op = 'u';
-		    break;
-		default:
-		    data->params->bool_op = 'u';
-		    break;
-	    }
-
+	    data->params->bool_op = (data->negative_shape == -1) ? '-' : 'u';
 	    data->params->origin[0] = base.x;
 	    data->params->origin[1] = base.y;
 	    data->params->origin[2] = base.z;
@@ -349,22 +308,8 @@ cone_csg(struct subbrep_object_data *data, fastf_t cone_tol)
 	} else {
 	    // Have corners, need arb
 	    data->type = COMB;
-	    int negative = negative_cone(data, *conic_surfaces.begin(), cone_tol);
-
-	    if (data->parent->params->bool_op == '-') negative = -1 * negative;
-
-	    switch (negative) {
-		case -1:
-		    data->params->bool_op = '-';
-		    break;
-		case 1:
-		    data->params->bool_op = 'u';
-		    break;
-		default:
-		    std::cout << "Could not determine cone status???????\n";
-		    data->params->bool_op = 'u';
-		    break;
-	    }
+	    data->negative_shape = negative_cone(data, *conic_surfaces.begin(), cone_tol);
+	    data->params->bool_op = (data->negative_shape == -1) ? '-' : 'u';
 
 	    struct subbrep_object_data *cone_obj;
 	    BU_GET(cone_obj, struct subbrep_object_data);
@@ -505,7 +450,7 @@ cone_csg(struct subbrep_object_data *data, fastf_t cone_tol)
                     vert_loop.Append(v2);
                     vert_loop.Append(v3);
                     vert_loop.Append(v4);
-                    subbrep_add_planar_face(data->parent, &pcone, &vert_loop, negative);
+                    subbrep_add_planar_face(data->parent, &pcone, &vert_loop, data->negative_shape);
                 }
             }
 

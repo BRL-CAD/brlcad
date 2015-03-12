@@ -117,6 +117,15 @@ struct subbrep_object_data {
     subbrep_object_data *parent;
     struct bu_ptbl *children;
     int is_island;
+    /* Irrespective of the broader context, is the shape
+     * itself negative?  This is not meaningful for general
+     * combs, but individual shapes like cylinders and spheres
+     * (even when they are "trimmed down" by other CSG primitives
+     * are "negative" if their normals point inward.
+     * -1 = negative
+     *  1 = positive
+     *  0 = unknown/unset */
+    int negative_shape;
 };
 
 void subbrep_object_init(struct subbrep_object_data *obj, const ON_Brep *brep);

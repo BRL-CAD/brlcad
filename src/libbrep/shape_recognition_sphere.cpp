@@ -219,22 +219,8 @@ sphere_csg(struct subbrep_object_data *data, fastf_t sph_tol)
 	// sphere surface.  Whether the comb is actually subtracted from the
 	// global object or unioned into a comb lower down the tree (or vice versa)
 	// is determined later.
-	int negative = negative_sphere(data, *spherical_surfaces.begin(), sph_tol);
-
-	if (data->parent->params->bool_op == '-') negative = -1 * negative;
-
-	switch (negative) {
-	    case -1:
-		data->params->bool_op = '-';
-		break;
-	    case 1:
-		data->params->bool_op = 'u';
-		break;
-	    default:
-		std::cout << "Could not determine sphere status???????\n";
-		data->params->bool_op = 'u';
-		break;
-	}
+	data->negative_shape = negative_sphere(data, *spherical_surfaces.begin(), sph_tol);
+	data->params->bool_op = (data->negative_shape == -1) ? '-' : 'u';
 
 	// Add the sphere - unioned top level for this sub-comb
 	sph_obj->params->bool_op = 'u';
@@ -252,7 +238,7 @@ sphere_csg(struct subbrep_object_data *data, fastf_t sph_tol)
 	    if (!data->parent->planar_obj) {
 		subbrep_planar_init(data);
 	    }
-	    subbrep_add_planar_face(data->parent, &back_plane, &sph_verts, negative);
+	    subbrep_add_planar_face(data->parent, &back_plane, &sph_verts, data->negative_shape);
 	}
 
 	// The planes each define an arb8 (4 all together) that carve the

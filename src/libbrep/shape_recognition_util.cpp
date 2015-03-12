@@ -223,6 +223,7 @@ subbrep_object_init(struct subbrep_object_data *obj, const ON_Brep *brep)
     obj->local_brep = NULL;
     obj->type = BREP;
     obj->is_island = 0;
+    obj->negative_shape = 0;
 }
 
 void
@@ -462,9 +463,10 @@ subbrep_determine_boolean(struct subbrep_object_data *data)
    // Determine what we have.  If we have both pos and neg counts > 0,
    // the proposed brep needs to be broken down further.  all pos
    // counts is a union, all neg counts is a subtraction
-   if (pos_cnt && neg_cnt) return 0;
+   if (pos_cnt && neg_cnt) return -2;
    if (pos_cnt) return 1;
    if (neg_cnt) return -1;
+   if (!pos_cnt && !neg_cnt) return 2;
 }
 
 /* Find corners that can be used to construct a planar face

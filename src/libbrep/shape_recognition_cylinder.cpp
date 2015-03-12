@@ -198,18 +198,9 @@ subbrep_is_cylinder(struct subbrep_object_data *data, fastf_t cyl_tol)
     // cylinder surface.  Whether it is actually subtracted from the
     // global object or unioned into a comb lower down the tree (or vice versa)
     // is determined later.
-    int negative = negative_cylinder(data, *cylindrical_surfaces.begin(), cyl_tol);
+    data->negative_shape = negative_cylinder(data, *cylindrical_surfaces.begin(), cyl_tol);
 
-    //bu_log("full cylinder negative test: %d\n", negative);
-    // TODO - the surface negative test may not be enough on its own - needs
-    // more thought
-    if (negative == -1) {
-	data->params->bool_op = '-';
-    }
-    if (negative == 1) {
-	data->params->bool_op = 'u';
-    }
-
+    data->params->bool_op = (data->negative_shape == -1) ? '-' : 'u';
     data->params->origin[0] = set1_c.Center().x;
     data->params->origin[1] = set1_c.Center().y;
     data->params->origin[2] = set1_c.Center().z;
@@ -466,27 +457,13 @@ cylinder_csg(struct subbrep_object_data *data, fastf_t cyl_tol)
 	// cylinder surface.  Whether the comb is actually subtracted from the
 	// global object or unioned into a comb lower down the tree (or vice versa)
 	// is determined later.
-	int negative = negative_cylinder(data, *cylindrical_surfaces.begin(), cyl_tol);
+	data->negative_shape = negative_cylinder(data, *cylindrical_surfaces.begin(), cyl_tol);
+	data->params->bool_op = (data->negative_shape == -1) ? '-' : 'u';
 
 
 	if (corner_verts.size() == 0) {
 	    //std::cout << "Full cylinder\n";
 	    data->type = CYLINDER;
-
-	    if (data->parent->params->bool_op == '-') negative = -1 * negative;
-
-	    switch (negative) {
-		case -1:
-		    data->params->bool_op = '-';
-		    break;
-		case 1:
-		    data->params->bool_op = 'u';
-		    break;
-		default:
-		    std::cout << "Could not determine cylinder status???????\n";
-		    data->params->bool_op = 'u';
-		    break;
-	    }
 
 	    data->params->origin[0] = set1_c.Center().x;
 	    data->params->origin[1] = set1_c.Center().y;
@@ -514,21 +491,6 @@ cylinder_csg(struct subbrep_object_data *data, fastf_t cyl_tol)
 	    std::string key = face_set_key(cylindrical_surfaces);
 	    bu_vls_sprintf(cyl_obj->key, "%s", key.c_str());
 	    cyl_obj->type = CYLINDER;
-
-	    if (data->parent->params->bool_op == '-') negative = -1 * negative;
-
-	    switch (negative) {
-		case -1:
-		    data->params->bool_op = '-';
-		    break;
-		case 1:
-		    data->params->bool_op = 'u';
-		    break;
-		default:
-		    std::cout << "Could not determine cylinder status???????\n";
-		    data->params->bool_op = 'u';
-		    break;
-	    }
 
 	    // cylinder - positive object in this sub-comb
 	    cyl_obj->params->bool_op = 'u';
@@ -661,7 +623,7 @@ cylinder_csg(struct subbrep_object_data *data, fastf_t cyl_tol)
 		    vert_loop.Append(v2);
 		    vert_loop.Append(v3);
 		    vert_loop.Append(v4);
-		    subbrep_add_planar_face(data->parent, &pcyl, &vert_loop, negative);
+		    subbrep_add_planar_face(data->parent, &pcyl, &vert_loop, data->negative_shape);
 		}
 	    }
 
@@ -833,22 +795,8 @@ cylinder_csg(struct subbrep_object_data *data, fastf_t cyl_tol)
 		    // cylinder surface.  Whether the comb is actually subtracted from the
 		    // global object or unioned into a comb lower down the tree (or vice versa)
 		    // is determined later.
-		    int negative = negative_cylinder(data, *cylindrical_surfaces.begin(), cyl_tol);
-
-		    if (data->parent->params->bool_op == '-') negative = -1 * negative;
-
-		    switch (negative) {
-			case -1:
-			    data->params->bool_op = '-';
-			    break;
-			case 1:
-			    data->params->bool_op = 'u';
-			    break;
-			default:
-			    std::cout << "Could not determine cylinder status???????\n";
-			    data->params->bool_op = 'u';
-			    break;
-		    }
+		    data->negative_shape = negative_cylinder(data, *cylindrical_surfaces.begin(), cyl_tol);
+		    data->params->bool_op = (data->negative_shape == -1) ? '-' : 'u';
 
 		    // cylinder - positive object in this sub-comb
 		    cyl_obj->params->bool_op = 'u';
@@ -1082,7 +1030,7 @@ cylinder_csg(struct subbrep_object_data *data, fastf_t cyl_tol)
 				vert_loop.Append(v2);
 				vert_loop.Append(v3);
 				vert_loop.Append(v4);
-				subbrep_add_planar_face(data->parent, &pcyl, &vert_loop, negative);
+				subbrep_add_planar_face(data->parent, &pcyl, &vert_loop, data->negative_shape);
 			    }
 			}
 

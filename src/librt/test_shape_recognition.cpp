@@ -366,6 +366,7 @@ make_shapes(struct subbrep_object_data *data, struct rt_wdb *wdbp, struct wmembe
 	    subbrep_obj_name(data, &brep_name);
 	    mk_brep(wdbp, bu_vls_addr(&brep_name), data->local_brep);
 	    // TODO - almost certainly need to do more work to get correct booleans
+	    //std::cout << bu_vls_addr(&brep_name) << ": " << data->params->bool_op << "\n";
 	    if (pcomb) (void)mk_addmember(bu_vls_addr(&brep_name), &(pcomb->l), NULL, db_str2op(&(data->params->bool_op)));
 	    bu_vls_free(&brep_name);
 	} else {
@@ -392,6 +393,7 @@ make_shapes(struct subbrep_object_data *data, struct rt_wdb *wdbp, struct wmembe
 	    mk_lcomb(wdbp, bu_vls_addr(&comb_name), &wcomb, 0, NULL, NULL, NULL, 0);
 
 	    // TODO - almost certainly need to do more work to get correct booleans
+	    //std::cout << bu_vls_addr(&comb_name) << ": " << data->params->bool_op << "\n";
 	    if (pcomb) (void)mk_addmember(bu_vls_addr(&comb_name), &(pcomb->l), NULL, db_str2op(&(data->params->bool_op)));
 
 	    bu_vls_free(&member_name);
@@ -453,6 +455,7 @@ main(int argc, char *argv[])
     BU_LIST_INIT(&pcomb.l);
 
     struct bu_ptbl *subbreps = find_subbreps(brep);
+    struct bu_ptbl *subbreps_tree = find_top_level_hierarchy(subbreps);
     for (unsigned int i = 0; i < BU_PTBL_LEN(subbreps); i++){
 	struct subbrep_object_data *obj = (struct subbrep_object_data *)BU_PTBL_GET(subbreps, i);
 	//print_subbrep_object(obj, "");
@@ -461,12 +464,11 @@ main(int argc, char *argv[])
 	//BU_PUT(obj, struct subbrep_object_data);
     }
 
-    struct bu_ptbl *subbreps_tree = find_top_level_hierarchy(subbreps);
     for (unsigned int i = 0; i < BU_PTBL_LEN(subbreps_tree); i++){
 	struct subbrep_object_data *obj = (struct subbrep_object_data *)BU_PTBL_GET(subbreps_tree, i);
-	std::cout << "Key: " << bu_vls_addr(obj->key) << "\n";
 	struct bu_vls obj_name = BU_VLS_INIT_ZERO;
 	subbrep_obj_name(obj, &obj_name);
+	//std::cout << bu_vls_addr(&obj_name) << ": " << obj->params->bool_op << "\n";
 	(void)mk_addmember(bu_vls_addr(&obj_name), &(pcomb.l), NULL, db_str2op(&(obj->params->bool_op)));
     }
 

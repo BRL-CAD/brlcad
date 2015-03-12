@@ -108,7 +108,7 @@ find_subbreps(const ON_Brep *brep)
 	    // by the edge network.
 	    new_obj->is_island = 1;
 	    new_obj->parent = NULL;
-
+#if 0
 	    // Determine if this subset is being added to or taken from the parent.
 	    if (new_obj->fil_cnt > 0) {
 		int bool_op = subbrep_determine_boolean(new_obj);
@@ -124,7 +124,7 @@ find_subbreps(const ON_Brep *brep)
 	    } else {
 		new_obj->params->bool_op = 'u';
 	    }
-
+#endif
 	    surface_t hof = highest_order_face(new_obj);
 	    if (hof >= SURFACE_GENERAL) {
 		new_obj->type = BREP;
@@ -153,22 +153,6 @@ find_subbreps(const ON_Brep *brep)
     }
 
     return subbreps;
-}
-
-
-// assistant function for find_top_level_hierarchy
-void
-subbrep_assemble_boolean_tree(std::multimap<const char *, long *> *ps, struct bu_ptbl *subbreps_tree, const struct subbrep_object_data *obj)
-{
-    std::pair <std::multimap<const char *, long *>::iterator, std::multimap<const char *, long *>::iterator > ret;
-    ret = ps->equal_range(bu_vls_addr(obj->key));
-    for (std::multimap<const char *, long *>::iterator it = ret.first; it != ret.second; it++) {
-	const struct subbrep_object_data *sub_obj = (const struct subbrep_object_data *)it->second;
-	if (sub_obj) {
-	    bu_ptbl_ins(subbreps_tree, (long *)sub_obj);
-	    subbrep_assemble_boolean_tree(ps, subbreps_tree, sub_obj);
-	}
-    }
 }
 
 /* This is the critical point at which we take a pile of shapes and actually reconstruct a
@@ -205,14 +189,13 @@ find_top_level_hierarchy(struct bu_ptbl *subbreps)
 
     std::set<long *> subbrep_set;
     std::set<long *> subbrep_seed_set;
-    std::set<long *> toplevel_unions;
+    std::set<long *> unions;
+    std::set<long *> subtractions;
     std::set<long *>::iterator sb_it, sb_it2;
     std::map<long *, std::set<long *> > subbrep_subobjs;
+    std::map<long *, std::set<long *> > subbrep_ignoreobjs;
     struct bu_ptbl *subbreps_tree;
-    BU_GET(subbreps_tree, struct bu_ptbl);
-    bu_ptbl_init(subbreps_tree, 8, "subbrep tree table");
 
-    std::multimap<const char *, long *> ps;
     for (unsigned int i = 0; i < BU_PTBL_LEN(subbreps); i++) {
 	subbrep_set.insert(BU_PTBL_GET(subbreps, i));
     }
@@ -221,17 +204,18 @@ find_top_level_hierarchy(struct bu_ptbl *subbreps)
     for (sb_it = subbrep_set.begin(); sb_it != subbrep_set.end(); sb_it++) {
 	struct subbrep_object_data *obj = (struct subbrep_object_data *)*sb_it;
 	if (obj->fil_cnt == 0) {
-	    std::cout << "Top union found: " << bu_vls_addr(obj->key) << "\n";
-	    toplevel_unions.insert((long *)obj);
+	    //std::cout << "Top union found: " << bu_vls_addr(obj->key) << "\n";
+	    obj->params->bool_op = 'u';
+	    unions.insert((long *)obj);
 	    subbrep_set.erase((long *)obj);
 	}
     }
 
-    subbrep_seed_set = toplevel_unions;
+    subbrep_seed_set = unions;
 
     int iterate = 1;
     while (subbrep_seed_set.size() > 0) {
-	std::cout << "iterate: " << iterate << "\n";
+	//std::cout << "iterate: " << iterate << "\n";
 	std::set<long *> subbrep_seed_set_2;
 	std::set<long *> subbrep_set_b;
 	for (sb_it = subbrep_seed_set.begin(); sb_it != subbrep_seed_set.end(); sb_it++) {
@@ -243,13 +227,96 @@ find_top_level_hierarchy(struct bu_ptbl *subbreps)
 		struct subbrep_object_data *cobj = (struct subbrep_object_data *)*sb_it2;
 		for (int i = 0; i < cobj->fil_cnt; i++) {
 		    if (tu_fol.find(cobj->fil[i]) != tu_fol.end()) {
-			std::cout << "Object " << bu_vls_addr(cobj->key) << " connected to " << bu_vls_addr(tu->key) << "\n";
-			subbrep_subobjs[*sb_it].insert(*sb_it2);
+			struct subbrep_object_data *up;
+			//std::cout << "Object " << bu_vls_addr(cobj->key) << " connected to " << bu_vls_addr(tu->key) << "\n";
 			subbrep_seed_set_2.insert(*sb_it2);
 			subbrep_set_b.erase(*sb_it2);
-			// TODO - determine boolean relationship to parent here, and use parent boolean
+			// Determine boolean relationship to parent here, and use parent boolean
 			// to decide this object's (cobj) status.  If tu is negative and cobj is unioned
 			// relative to tu, then cobj is also negative.
+
+			// This is a make-or-break step of the algorithm - if we cannot determine whether
+			// a subbrep is added or subtracted, the whole B-Rep conversion process fails.
+			//
+			// TODO - In theory a partial convertion might still be achieved by re-inserting the
+			// problem subbrep back into the parent B-Rep and proceeding with the rest, but
+			// we are not currently set up for that - as of right now, a single failure on
+			// this level of logic results in a completely failed csg conversion.
+
+			int bool_test = 0;
+			int already_flipped = 0;
+			if (cobj->params->bool_op == '\0') {
+			    /* First, check the boolean relationship to the parent solid */
+			    cobj->parent = tu;
+			    bool_test = subbrep_determine_boolean(cobj);
+			    //std::cout << "Initial boolean test for " << bu_vls_addr(cobj->key) << ": " << bool_test << "\n";
+			    switch (bool_test) {
+				case -2:
+				    std::cout << "Game over - self intersecting shape reported with subbrep " << bu_vls_addr(cobj->key) << ".\n";
+				    std::cout << "Until breakdown logic for this situation is available, this is a conversion stopper.\n";
+				    return NULL;
+				case -1:
+				    /* Determination made relative to parent shape - take parent status into account */
+				    if (cobj->parent->params->bool_op == '-') bool_test = -1 * bool_test;
+				case 1:
+				    /* Determination made relative to parent shape - take parent status into account */
+				    if (cobj->parent->params->bool_op == '-') bool_test = -1 * bool_test;
+				    break;
+				case 2:
+				    /* Test relative to parent inconclusive - fall back on surface test, if available */
+				    if (cobj->negative_shape == -1) bool_test = -1;
+				    if (cobj->negative_shape == 1) bool_test = 1;
+			    }
+			} else {
+			    //std::cout << "Boolean status of " << bu_vls_addr(cobj->key) << " already determined\n";
+			    bool_test = (cobj->params->bool_op == '-') ? -1 : 1;
+			    already_flipped = 1;
+			}
+
+			switch (bool_test) {
+			    case -1:
+				cobj->params->bool_op = '-';
+				subtractions.insert((long *)cobj);
+				subbrep_subobjs[*sb_it].insert((long *)cobj);
+				break;
+			    case 1:
+				cobj->params->bool_op = 'u';
+				unions.insert((long *)cobj);
+				/* We've got a union - any subtractions that are parents of this
+				 * object go in its ignore list */
+				up = cobj->parent;
+				while (up) {
+				    if (up->params->bool_op == '-') subbrep_ignoreobjs[(long *)cobj].insert((long *)up);
+				    up = up->parent;
+				}
+				break;
+			    default:
+				std::cout << "Boolean status of " << bu_vls_addr(cobj->key) << " could not be determined - conversion failure\n";
+				return NULL;
+				break;
+			}
+
+			// If the parent ended up subtracted, we need to propagate the change down the
+			// children of this subbrep.
+			if (bool_test == -1 && !already_flipped) {
+			    for (unsigned int j = 0; j < BU_PTBL_LEN(cobj->children); j++){
+				struct subbrep_object_data *cdata = (struct subbrep_object_data *)BU_PTBL_GET(cobj->children,j);
+				if (cdata && cdata->params) {
+				    cdata->params->bool_op = (cdata->params->bool_op == '-') ? 'u' : '-';
+				} else {
+				    std::cout << "Child without params??: " << bu_vls_addr(cdata->key) << ", parent: " << bu_vls_addr(cobj->key) << "\n";
+				}
+			    }
+
+			    /* If we're a B-Rep and a subtraction, the B-Rep will be inside out */
+			    if (cobj->type == BREP && cobj->params->bool_op == '-') {
+				for (int l = 0; l < cobj->local_brep->m_F.Count(); l++) {
+				    ON_BrepFace &face = cobj->local_brep->m_F[l];
+				    cobj->local_brep->FlipFace(face);
+				}
+			    }
+			}
+			//std::cout << "Boolean status of " << bu_vls_addr(cobj->key) << ": " << cobj->params->bool_op << "\n";
 		    }
 		}
 	    }
@@ -261,37 +328,27 @@ find_top_level_hierarchy(struct bu_ptbl *subbreps)
 	iterate++;
     }
 
-#if 0
-	if (obj->params->bool_op == '-') {
-	    int found_parent = 0;
-	    for (unsigned int j = 0; j < BU_PTBL_LEN(subbreps); j++) {
-		struct subbrep_object_data *pobj = (struct subbrep_object_data *)BU_PTBL_GET(subbreps, j);
-		for (int k = 0; k < obj->fil_cnt; k++) {
-		    for (int l = 0; l < pobj->fol_cnt; l++) {
-			if (pobj->fol[l] == obj->fil[k]) {
-			    found_parent = 1;
-			    ps.insert(std::make_pair(bu_vls_addr(pobj->key), (long *)obj));
-			    break;
-			}
-			if (found_parent) break;
-		    }
-		    if (found_parent) break;
-		}
-		if (found_parent) break;
-	    }
-	    if (!found_parent) {
-		std::cout << "\n\nError - subtracted object " << bu_vls_addr(obj->key) << "\n\n\n";
-	    }
+    BU_GET(subbreps_tree, struct bu_ptbl);
+    bu_ptbl_init(subbreps_tree, 8, "subbrep tree table");
+
+    for (sb_it = unions.begin(); sb_it != unions.end(); sb_it++) {
+	struct subbrep_object_data *pobj = (struct subbrep_object_data *)(*sb_it);
+	bu_ptbl_ins(subbreps_tree, (long *)pobj);
+	std::set<long *> topological_subtractions = subbrep_subobjs[(long *)pobj];
+	std::set<long *> local_subtraction_queue = subtractions;
+	for (sb_it2 = topological_subtractions.begin(); sb_it2 != topological_subtractions.end(); sb_it2++) {
+	    bu_ptbl_ins(subbreps_tree, *sb_it2);
+	    local_subtraction_queue.erase(*sb_it2);
 	}
-    }
-   for (unsigned int i = 0; i < BU_PTBL_LEN(subbreps); i++) {
-	struct subbrep_object_data *obj = (struct subbrep_object_data *)BU_PTBL_GET(subbreps, i);
-	if (obj->params->bool_op == 'u') {
-	    bu_ptbl_ins(subbreps_tree, (long *)obj);
-	    subbrep_assemble_boolean_tree(&ps, subbreps_tree, obj);
+	std::set<long *> ignore_queue = subbrep_ignoreobjs[(long *)pobj];
+	for (sb_it2 = ignore_queue.begin(); sb_it2 != ignore_queue.end(); sb_it2++) {
+	    local_subtraction_queue.erase(*sb_it2);
 	}
+	// Now, whatever is left in the local subtraction queue has to be ruled out based on volumetric
+	// intersection testing.
+	//
+	// TODO - bounding box fun.
     }
-#endif
     return subbreps_tree;
 }
 
@@ -778,15 +835,6 @@ subbrep_make_brep(struct subbrep_object_data *data)
 
     data->local_brep->ShrinkSurfaces();
     data->local_brep->CullUnusedSurfaces();
-
-    /* If we're a subtraction, the B-Rep will be inside out */
-    if (data->params->bool_op == '-') {
-	for (int l = 0; l < data->local_brep->m_F.Count(); l++) {
-	    ON_BrepFace &face = data->local_brep->m_F[l];
-	    data->local_brep->FlipFace(face);
-	}
-    }
-
 
     std::cout << "new brep done: " << bu_vls_addr(data->key) << "\n";
 
