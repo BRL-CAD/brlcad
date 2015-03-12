@@ -344,10 +344,26 @@ find_top_level_hierarchy(struct bu_ptbl *subbreps)
 	for (sb_it2 = ignore_queue.begin(); sb_it2 != ignore_queue.end(); sb_it2++) {
 	    local_subtraction_queue.erase(*sb_it2);
 	}
+
 	// Now, whatever is left in the local subtraction queue has to be ruled out based on volumetric
 	// intersection testing.
-	//
-	// TODO - bounding box fun.
+	
+	// Construct bounding box for pobj
+	if (!pobj->bbox_set) subbrep_bbox(pobj);
+	// Iterate over the queue
+	for (sb_it2 = local_subtraction_queue.begin(); sb_it2 != local_subtraction_queue.end(); sb_it2++) {
+	    struct subbrep_object_data *sobj = (struct subbrep_object_data *)(*sb_it2);
+	    //std::cout << "Checking subbrep " << bu_vls_addr(sobj->key) << "\n";
+	    // Construct bounding box for sobj
+	    if (!sobj->bbox_set) subbrep_bbox(sobj);
+	    ON_BoundingBox isect;
+	    bool bbi = isect.Intersection(*pobj->bbox, *sobj->bbox);
+	    bool bbc = pobj->bbox->Includes(*sobj->bbox);
+	    if (bbi || bbc) {
+		std::cout << " Found intersecting subbrep " << bu_vls_addr(sobj->key) << " under " << bu_vls_addr(pobj->key) << "\n";
+		bu_ptbl_ins(subbreps_tree, *sb_it2);
+	    }
+	}
     }
     return subbreps_tree;
 }

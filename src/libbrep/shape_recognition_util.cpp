@@ -207,6 +207,61 @@ subbrep_shape_recognize(struct subbrep_object_data *data)
 }
 
 void
+ON_MinMaxInit(ON_3dPoint *min, ON_3dPoint *max)
+{
+    min->x = ON_DBL_MAX;
+    min->y = ON_DBL_MAX;
+    min->z = ON_DBL_MAX;
+    max->x = -ON_DBL_MAX;
+    max->y = -ON_DBL_MAX;
+    max->z = -ON_DBL_MAX;
+}
+
+void
+subbrep_bbox(struct subbrep_object_data *obj)
+{
+    for (int i = 0; i < obj->fol_cnt; i++) {
+	ON_3dPoint min, max;
+	ON_MinMaxInit(&min, &max);
+	const ON_BrepFace *face = &(obj->brep->m_F[obj->fol[i]]);
+	// Bounding interfals of outer loop
+	for (int ti = 0; ti < face->OuterLoop()->TrimCount(); ti++) {
+	    ON_BrepTrim *trim = face->OuterLoop()->Trim(ti);
+	    trim->GetBoundingBox(min, max, true);
+	}
+	ON_Interval u(min.x, max.x);
+	ON_Interval v(min.y, max.y);
+	surface_GetBoundingBox(face->SurfaceOf(), u, v, *(obj->bbox), true);
+    }
+    std::set<int> loops;
+    array_to_set(&loops, obj->loops, obj->loops_cnt);
+    for (int i = 0; i < obj->fil_cnt; i++) {
+	ON_3dPoint min, max;
+	ON_MinMaxInit(&min, &max);
+	const ON_BrepFace *face = &(obj->brep->m_F[obj->fil[i]]);
+	int loop_ind = -1;
+	for (int li = 0; li < face->LoopCount(); li++) {
+	    int loop_index = face->Loop(li)->m_loop_index;
+	    if (loops.find(loop_index) != loops.end()) {
+		loop_ind = loop_index;
+		break;
+	    }
+	}
+	if (loop_ind == -1) {
+	    std::cout << "Error - could not find fil loop!\n";
+	}
+	const ON_BrepLoop *loop= &(obj->brep->m_L[loop_ind]);
+	for (int ti = 0; ti < loop->TrimCount(); ti++) {
+	    ON_BrepTrim *trim = loop->Trim(ti);
+	    trim->GetBoundingBox(min, max, true);
+	}
+	ON_Interval u(min.x, max.x);
+	ON_Interval v(min.y, max.y);
+	surface_GetBoundingBox(face->SurfaceOf(), u, v, *(obj->bbox), true);
+    }
+}
+
+void
 subbrep_object_init(struct subbrep_object_data *obj, const ON_Brep *brep)
 {
     if (!obj) return;
@@ -224,6 +279,9 @@ subbrep_object_init(struct subbrep_object_data *obj, const ON_Brep *brep)
     obj->type = BREP;
     obj->is_island = 0;
     obj->negative_shape = 0;
+    obj->bbox = new ON_BoundingBox();
+    ON_MinMaxInit(&(obj->bbox->m_min), &(obj->bbox->m_max));
+    obj->bbox_set = 0;
 }
 
 void
