@@ -171,9 +171,25 @@ subbrep_assemble_boolean_tree(std::multimap<const char *, long *> *ps, struct bu
     }
 }
 
-// TODO - this approach is insufficient/incorrect.  Need to assemble subtracted subbreps into
-// combs and subtract those as a unit - this approach doesn't correctly subtract everything
-// from objects that need the subtractions.
+/* This is the critical point at which we take a pile of shapes and actually reconstruct a
+ * valid boolean tree.  The stages are as follows:
+ *
+ * 1.  Identify the top level union objects (they will have no fil faces in their structure).
+ * 2.  Using the fil faces, build up a queue of subbreps that are topologically connected
+ *     by a loop to the top level union objects.
+ * 3.  Determine the boolean status of the 2nd layer of objects.
+ * 4.  For each sub-object, if that object in turn has fil faces, queue up those objects and goto 3.
+ * 5.  Continue iterating until all objects have a boolean operation assigned.
+ * 6.  For each unioned object, build a set of all subtraction objects (topologically connected or not.)
+ * 7.  add the union pointer to the subbreps_tree, and then add all all topologically connected subtractions
+ *     and remove them from the local set.
+ * 8.  For the remaining (non-topologically linked) subtractions, get a bounding box and see if it overlaps
+ *     with the bounding box of the union object in question.  If yes, add the pointer to subbreps_tree.
+ *     If not, no action is needed.  Once evaluated, remove the subtraction pointer from the set.
+ *
+ * Initially the test will be axis aligned bounding boxes, but ideally we should use oriented bounding boxes
+ * or even tighter tests.
+ */
 struct bu_ptbl *
 find_top_level_hierarchy(struct bu_ptbl *subbreps)
 {
@@ -191,6 +207,18 @@ find_top_level_hierarchy(struct bu_ptbl *subbreps)
 	// shares a face with the comb will have to subtract the whole comb, unless we do some sort
 	// of bounding box based subset identification...  Probably necessary to keep the booleans
 	// reasonable.  nist 2 is a good test case for this...
+	//
+	// Will have to do minimal bbox and possibly convex hull testing, may even grow to SSI.
+	// We need to know if subtraction volumes intrude on union volumes, and there is no way
+	// to know that short of testing.
+	//
+	// Only have to worry about testing fil faces in unions against subtracted objects, assuming
+	// original B-Rep is non-self-intersecting.  fil surfaces are new outer faces in new brep
+	// objects, and only in those faces is there a possibility of new object intersections.
+	//
+	// NEEDED:  better organization of negative/positive testing and assignment
+	//          robust convex hull/minimum bounding arb logic - GeometricTools port
+	//          arb/arb intersection testing - collision detection perhaps?
 	if (obj->fil_cnt == 0) {
 	    std::cout << "Top union found: " << bu_vls_addr(obj->key) << "\n";
 	}
