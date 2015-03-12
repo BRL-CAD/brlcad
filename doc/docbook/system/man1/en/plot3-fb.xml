@@ -23,7 +23,8 @@
     <arg choice="opt" rep="norepeat">-S|s <replaceable>squaresize</replaceable></arg>
     <arg choice="opt" rep="norepeat">-W|w <replaceable>width</replaceable></arg>
     <arg choice="opt" rep="norepeat">-N|n <replaceable>height</replaceable></arg>
-    <arg choice="opt" rep="norepeat"><replaceable>file.plot3</replaceable></arg>
+    <arg choice="opt" rep="norepeat">&lt;</arg>
+    <arg choice='plain'><replaceable>file.plot3</replaceable></arg>
 </cmdsynopsis>
 </refsynopsisdiv>
 
