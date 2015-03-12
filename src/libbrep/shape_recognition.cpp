@@ -188,7 +188,14 @@ subbrep_assemble_boolean_tree(std::multimap<const char *, long *> *ps, struct bu
  *     If not, no action is needed.  Once evaluated, remove the subtraction pointer from the set.
  *
  * Initially the test will be axis aligned bounding boxes, but ideally we should use oriented bounding boxes
- * or even tighter tests.
+ * or even tighter tests.  There's a catch here - a positive object overall may be within the bounding box
+ * of a subtracting object (like a positive cone at the bottom of a negative cylinder).  First guess at a rule - subtractions
+ * may propagate back up the topological tree to unions above the subtraction or in other isolated topological
+ * trees, but never to unions below the subtraction
+ * object itself.  Which means we'll need an above/below test for union objects relative to a given
+ * subtraction object, or an "ignore" list for unions which overrides any bbox tests - that list would include the
+ * parent subtraction, that subtraction's parent if it is a subtraction, and so on up to the top level union.  Nested
+ * unions and subtractions mean we'll have to go all the way up that particular chain...
  */
 struct bu_ptbl *
 find_top_level_hierarchy(struct bu_ptbl *subbreps)
@@ -196,25 +203,65 @@ find_top_level_hierarchy(struct bu_ptbl *subbreps)
     // Now that we have the subbreps (or their substructures) and their boolean status we need to
     // construct the top level tree.
 
+    std::set<long *> subbrep_set;
+    std::set<long *> subbrep_seed_set;
+    std::set<long *> toplevel_unions;
+    std::set<long *>::iterator sb_it, sb_it2;
+    std::map<long *, std::set<long *> > subbrep_subobjs;
     struct bu_ptbl *subbreps_tree;
+    BU_GET(subbreps_tree, struct bu_ptbl);
+    bu_ptbl_init(subbreps_tree, 8, "subbrep tree table");
+
     std::multimap<const char *, long *> ps;
     for (unsigned int i = 0; i < BU_PTBL_LEN(subbreps); i++) {
-	struct subbrep_object_data *obj = (struct subbrep_object_data *)BU_PTBL_GET(subbreps, i);
-	// If we can find a top union, things are easier.  Can we rely on this 100%?  Need to
-	// think about it - maybe yes... if so, all subbreps can be categorized.  Subbreps that
-	// share a face with the toplevel union can be characterized, and if any of those immediate
-	// mating subbreps have their own subbreps its a trigger to form a comb.  Any subbrep that
-	// shares a face with the comb will have to subtract the whole comb, unless we do some sort
-	// of bounding box based subset identification...  Probably necessary to keep the booleans
-	// reasonable.  nist 2 is a good test case for this...
-	//
-	// Will have to do minimal bbox and possibly convex hull testing, may even grow to SSI.
-	// We need to know if subtraction volumes intrude on union volumes, and there is no way
-	// to know that short of testing.
+	subbrep_set.insert(BU_PTBL_GET(subbreps, i));
+    }
+
+    /* Separate out top level unions */
+    for (sb_it = subbrep_set.begin(); sb_it != subbrep_set.end(); sb_it++) {
+	struct subbrep_object_data *obj = (struct subbrep_object_data *)*sb_it;
 	if (obj->fil_cnt == 0) {
 	    std::cout << "Top union found: " << bu_vls_addr(obj->key) << "\n";
+	    toplevel_unions.insert((long *)obj);
+	    subbrep_set.erase((long *)obj);
 	}
+    }
 
+    subbrep_seed_set = toplevel_unions;
+
+    int iterate = 1;
+    while (subbrep_seed_set.size() > 0) {
+	std::cout << "iterate: " << iterate << "\n";
+	std::set<long *> subbrep_seed_set_2;
+	std::set<long *> subbrep_set_b;
+	for (sb_it = subbrep_seed_set.begin(); sb_it != subbrep_seed_set.end(); sb_it++) {
+	    std::set<int> tu_fol;
+	    struct subbrep_object_data *tu = (struct subbrep_object_data *)*sb_it;
+	    array_to_set(&tu_fol, tu->fol, tu->fol_cnt);
+	    subbrep_set_b = subbrep_set;
+	    for (sb_it2 = subbrep_set.begin(); sb_it2 != subbrep_set.end(); sb_it2++) {
+		struct subbrep_object_data *cobj = (struct subbrep_object_data *)*sb_it2;
+		for (int i = 0; i < cobj->fil_cnt; i++) {
+		    if (tu_fol.find(cobj->fil[i]) != tu_fol.end()) {
+			std::cout << "Object " << bu_vls_addr(cobj->key) << " connected to " << bu_vls_addr(tu->key) << "\n";
+			subbrep_subobjs[*sb_it].insert(*sb_it2);
+			subbrep_seed_set_2.insert(*sb_it2);
+			subbrep_set_b.erase(*sb_it2);
+			// TODO - determine boolean relationship to parent here, and use parent boolean
+			// to decide this object's (cobj) status.  If tu is negative and cobj is unioned
+			// relative to tu, then cobj is also negative.
+		    }
+		}
+	    }
+	}
+	subbrep_seed_set.clear();
+	subbrep_seed_set = subbrep_seed_set_2;
+	subbrep_set.clear();
+	subbrep_set = subbrep_set_b;
+	iterate++;
+    }
+
+#if 0
 	if (obj->params->bool_op == '-') {
 	    int found_parent = 0;
 	    for (unsigned int j = 0; j < BU_PTBL_LEN(subbreps); j++) {
@@ -237,15 +284,14 @@ find_top_level_hierarchy(struct bu_ptbl *subbreps)
 	    }
 	}
     }
-    BU_GET(subbreps_tree, struct bu_ptbl);
-    bu_ptbl_init(subbreps_tree, 8, "subbrep tree table");
-    for (unsigned int i = 0; i < BU_PTBL_LEN(subbreps); i++) {
+   for (unsigned int i = 0; i < BU_PTBL_LEN(subbreps); i++) {
 	struct subbrep_object_data *obj = (struct subbrep_object_data *)BU_PTBL_GET(subbreps, i);
 	if (obj->params->bool_op == 'u') {
 	    bu_ptbl_ins(subbreps_tree, (long *)obj);
 	    subbrep_assemble_boolean_tree(&ps, subbreps_tree, obj);
 	}
     }
+#endif
     return subbreps_tree;
 }
 
