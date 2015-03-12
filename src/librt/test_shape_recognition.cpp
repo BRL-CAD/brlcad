@@ -477,7 +477,7 @@ main(int argc, char *argv[])
 	    }
 	    BU_GET(ccomb, struct wmember);
 	    BU_LIST_INIT(&ccomb->l);
-	    bu_vls_sprintf(&obj_comb_name, "comb_%s.c", bu_vls_addr(obj->key));
+	    bu_vls_sprintf(&obj_comb_name, "c_%s.c", bu_vls_addr(obj->key));
 	    (void)mk_addmember(bu_vls_addr(&obj_comb_name), &(pcomb.l), NULL, db_str2op(&(obj->params->bool_op)));
 	    (void)mk_addmember(bu_vls_addr(&obj_name), &((*ccomb).l), NULL, db_str2op(&(obj->params->bool_op)));
 	} else {
@@ -487,6 +487,10 @@ main(int argc, char *argv[])
 	//(void)mk_addmember(bu_vls_addr(&obj_name), &(pcomb.l), NULL, db_str2op(&(obj->params->bool_op)));
 	bu_vls_free(&obj_name);
     }
+    /* Make the last comb */
+    mk_lcomb(wdbp, bu_vls_addr(&obj_comb_name), ccomb, 0, NULL, NULL, NULL, 0);
+    BU_PUT(ccomb, struct wmember);
+
     bu_vls_free(&obj_comb_name);
 
     // Free memory
