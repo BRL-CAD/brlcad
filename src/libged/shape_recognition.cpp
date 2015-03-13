@@ -444,7 +444,9 @@ _ged_brep_to_csg(struct ged *gedp, const char *dp_name)
     }
 
     struct wmember *ccomb = NULL;
+    struct wmember *scomb = NULL;
     struct bu_vls obj_comb_name = BU_VLS_INIT_ZERO;
+    struct bu_vls sub_comb_name = BU_VLS_INIT_ZERO;
     for (unsigned int i = 0; i < BU_PTBL_LEN(subbreps_tree); i++){
 	struct subbrep_object_data *obj = (struct subbrep_object_data *)BU_PTBL_GET(subbreps_tree, i);
 	struct bu_vls obj_name = BU_VLS_INIT_ZERO;
@@ -453,14 +455,27 @@ _ged_brep_to_csg(struct ged *gedp, const char *dp_name)
 	    if (ccomb) {
 		mk_lcomb(wdbp, bu_vls_addr(&obj_comb_name), ccomb, 0, NULL, NULL, NULL, 0);
 		BU_PUT(ccomb, struct wmember);
+		if (scomb) {
+		    mk_lcomb(wdbp, bu_vls_addr(&sub_comb_name), scomb, 0, NULL, NULL, NULL, 0);
+		    BU_PUT(scomb, struct wmember);
+		    scomb = NULL;
+		}
 	    }
 	    BU_GET(ccomb, struct wmember);
 	    BU_LIST_INIT(&ccomb->l);
 	    bu_vls_sprintf(&obj_comb_name, "c_%s.c", bu_vls_addr(obj->key));
+	    bu_vls_sprintf(&sub_comb_name, "s_%s.c", bu_vls_addr(obj->key));
 	    (void)mk_addmember(bu_vls_addr(&obj_comb_name), &(pcomb.l), NULL, db_str2op(&(obj->params->bool_op)));
 	    (void)mk_addmember(bu_vls_addr(&obj_name), &((*ccomb).l), NULL, db_str2op(&(obj->params->bool_op)));
 	} else {
-	    (void)mk_addmember(bu_vls_addr(&obj_name), &((*ccomb).l), NULL, db_str2op(&(obj->params->bool_op)));
+	    char un = 'u';
+	    if (!scomb) {
+		BU_GET(scomb, struct wmember);
+		BU_LIST_INIT(&scomb->l);
+		(void)mk_addmember(bu_vls_addr(&sub_comb_name), &((*ccomb).l), NULL, db_str2op(&(obj->params->bool_op)));
+	    }
+	    //(void)mk_addmember(bu_vls_addr(&obj_name), &((*scomb).l), NULL, db_str2op(&(obj->params->bool_op)));
+	    (void)mk_addmember(bu_vls_addr(&obj_name), &((*scomb).l), NULL, db_str2op((const char *)&un));
 	}
 	//std::cout << bu_vls_addr(&obj_name) << ": " << obj->params->bool_op << "\n";
 	//(void)mk_addmember(bu_vls_addr(&obj_name), &(pcomb.l), NULL, db_str2op(&(obj->params->bool_op)));
@@ -469,6 +484,10 @@ _ged_brep_to_csg(struct ged *gedp, const char *dp_name)
     /* Make the last comb */
     mk_lcomb(wdbp, bu_vls_addr(&obj_comb_name), ccomb, 0, NULL, NULL, NULL, 0);
     BU_PUT(ccomb, struct wmember);
+    if (scomb) {
+	mk_lcomb(wdbp, bu_vls_addr(&sub_comb_name), scomb, 0, NULL, NULL, NULL, 0);
+	BU_PUT(scomb, struct wmember);
+    }
 
     bu_vls_free(&obj_comb_name);
 
