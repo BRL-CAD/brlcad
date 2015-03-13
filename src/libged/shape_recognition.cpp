@@ -64,12 +64,21 @@ brep_to_bot(struct subbrep_object_data *data, struct rt_wdb *wdbp)
     int face_error = 0;
     int *final_faces = NULL;
 
+    if (!data->local_brep) {
+	bu_log("No valid local brep?? bot %s failed\n", bu_vls_addr(data->key));
+	return;
+    }
+
     // Accumulate faces in a std::vector, since we don't know how many we're going to get
     std::vector<int> all_faces;
 
     /* Set up an initial comprehensive vertex array that will be used in
      * the final BoT build - all face definitions will ultimately index
      * into this array */
+    if (data->local_brep->m_V.Count() == 0) {
+	bu_log("No verts in brep?? bot %s failed\n", bu_vls_addr(data->key));
+	return;
+    }
     point_t *all_verts = (point_t *)bu_calloc(data->local_brep->m_V.Count(), sizeof(point_t), "bot verts");
     for (int vi = 0; vi < data->local_brep->m_V.Count(); vi++) {
 	VMOVE(all_verts[vi], data->local_brep->m_V[vi].Point());
@@ -91,6 +100,12 @@ brep_to_bot(struct subbrep_object_data *data, struct rt_wdb *wdbp)
 	 * to the correct 3D points without any additional work.  In essence,
 	 * we use the fact that the BRep gives us a ready-made 2D point
 	 * parameterization to same some work.*/
+
+	if (!b_loop->m_ti.Count() == 0) {
+	    bu_log("No trims in outer loop?? bot %s failed\n", bu_vls_addr(data->key));
+	    return;
+	}
+
 	point2d_t *verts2d = (point2d_t *)bu_calloc(b_loop->m_ti.Count(), sizeof(point2d_t), "bot verts");
 
 	/* The triangulation will use only the points in the temporary verts2d
