@@ -25,10 +25,8 @@ subbrep_is_planar(struct subbrep_object_data *data)
 
 
 void
-subbrep_planar_init(struct subbrep_object_data *sdata)
+subbrep_planar_init(struct subbrep_object_data *data)
 {
-    struct subbrep_object_data *data = sdata->parent;
-
     if (!data) return;
     if (data->planar_obj) return;
     BU_GET(data->planar_obj, struct subbrep_object_data);

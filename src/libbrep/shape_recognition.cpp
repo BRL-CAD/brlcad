@@ -114,20 +114,30 @@ find_subbreps(const ON_Brep *brep)
 		(void)subbrep_make_brep(new_obj);
 		std::cout << "general surface present: " << bu_vls_addr(new_obj->key) << "\n";
 	    } else {
+		int split = 0;
 		volume_t vtype = subbrep_shape_recognize(new_obj);
-		if (vtype == BREP) {
-		    int split = subbrep_split(new_obj);
-		    if (!split) {
-			(void)subbrep_make_brep(new_obj);
-			std::cout << "split unsuccessful: " << bu_vls_addr(new_obj->key) << "\n";
-		    } else {
-			// If we did successfully split the brep, do some post-split
-			// clean-up
-			new_obj->type = COMB;
-			if (new_obj->planar_obj) {
-			    subbrep_planar_close_obj(new_obj);
+		switch (vtype) {
+		    case BREP:
+			split = subbrep_split(new_obj);
+			if (!split) {
+			    (void)subbrep_make_brep(new_obj);
+			    std::cout << "split unsuccessful: " << bu_vls_addr(new_obj->key) << "\n";
+			} else {
+			    // If we did successfully split the brep, do some post-split
+			    // clean-up
+			    new_obj->type = COMB;
+			    if (new_obj->planar_obj) {
+				subbrep_planar_close_obj(new_obj);
+			    }
 			}
-		    }
+			break;
+		    case PLANAR_VOLUME:
+			subbrep_planar_init(new_obj);
+			subbrep_planar_close_obj(new_obj);
+			new_obj->local_brep = new_obj->planar_obj->local_brep;
+			break;
+		    default:
+			break;
 		}
 	    }
 

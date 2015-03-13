@@ -70,16 +70,16 @@ brep_to_bot(struct subbrep_object_data *data, struct rt_wdb *wdbp)
     /* Set up an initial comprehensive vertex array that will be used in
      * the final BoT build - all face definitions will ultimately index
      * into this array */
-    point_t *all_verts = (point_t *)bu_calloc(data->brep->m_V.Count(), sizeof(point_t), "bot verts");
-    for (int vi = 0; vi < data->brep->m_V.Count(); vi++) {
-	VMOVE(all_verts[vi], data->brep->m_V[vi].Point());
+    point_t *all_verts = (point_t *)bu_calloc(data->local_brep->m_V.Count(), sizeof(point_t), "bot verts");
+    for (int vi = 0; vi < data->local_brep->m_V.Count(); vi++) {
+	VMOVE(all_verts[vi], data->local_brep->m_V[vi].Point());
     }
 
     // Iterate over all faces in the brep.  TODO - should probably protect this with some planar checks...
-    for (int s_it = 0; s_it < data->brep->m_F.Count(); s_it++) {
+    for (int s_it = 0; s_it < data->local_brep->m_F.Count(); s_it++) {
 	int num_faces;
 	int *faces;
-	const ON_BrepFace *b_face = &(data->brep->m_F[s_it]);
+	const ON_BrepFace *b_face = &(data->local_brep->m_F[s_it]);
 
 	/* There should be only an outer loop by this point in the process */
 	/* TODO - should probably check that as an error-out condition... */
@@ -100,7 +100,7 @@ brep_to_bot(struct subbrep_object_data *data, struct rt_wdb *wdbp)
 
 	/* Now the fun begins.  If we have an outer loop that isn't CCW, we
 	 * need to assemble our verts2d polygon backwards */
-	if (data->brep->LoopDirection(data->brep->m_L[b_loop->m_loop_index]) != 1) {
+	if (data->local_brep->LoopDirection(data->local_brep->m_L[b_loop->m_loop_index]) != 1) {
 	    for (int ti = 0; ti < b_loop->m_ti.Count(); ti++) {
 		int ti_rev = b_loop->m_ti.Count() - 1 - ti;
 		const ON_BrepTrim *trim = &(b_face->Brep()->m_T[b_loop->m_ti[ti_rev]]);
@@ -243,6 +243,10 @@ subbrep_to_csg_planar(struct subbrep_object_data *data, struct rt_wdb *wdbp, str
 	//          at the arbn tessellation routine for a guide on how to set up the
 	//          nmg - that's the most general of the arb* primitives and should be
 	//          relatively close to what is needed here.
+	if (!data->local_brep) {
+	    bu_log("error - no local brep built for %s\n", bu_vls_addr(data->key));
+	    return 0;
+	}
 	(void)brep_to_bot(data, wdbp);
 	struct csg_object_params *params = data->params;
 	struct bu_vls prim_name = BU_VLS_INIT_ZERO;

@@ -236,7 +236,7 @@ sphere_csg(struct subbrep_object_data *data, fastf_t sph_tol)
 	// the parent planer brep, if there is one.
 	if (!data->is_island && data->parent) {
 	    if (!data->parent->planar_obj) {
-		subbrep_planar_init(data);
+		subbrep_planar_init(data->parent);
 	    }
 	    subbrep_add_planar_face(data->parent, &back_plane, &sph_verts, data->negative_shape);
 	}

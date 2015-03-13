@@ -321,6 +321,7 @@ subbrep_object_free(struct subbrep_object_data *obj)
     if (obj->params && obj->params->planes) bu_free(obj->params->planes, "csg planes");
     if (obj->params) BU_PUT(obj->params, struct csg_object_params);
     obj->params = NULL;
+    if (obj->planar_obj && (obj->local_brep == obj->planar_obj->local_brep)) obj->local_brep = NULL;
     if (obj->planar_obj) {
 	subbrep_object_free(obj->planar_obj);
 	BU_PUT(obj->planar_obj, struct subbrep_object_data);
@@ -349,9 +350,12 @@ subbrep_object_free(struct subbrep_object_data *obj)
     obj->fil = NULL;
     if (obj->planar_obj_vert_map) bu_free(obj->planar_obj_vert_map, "obj fil");
     obj->planar_obj_vert_map = NULL;
-    obj->parent = NULL;
+    if (obj->planar_obj && (obj->local_brep == obj->planar_obj->local_brep)) obj->local_brep = NULL;
+    if (obj->parent && (obj->parent->local_brep == obj->local_brep)) obj->parent->local_brep = NULL;
     if (obj->local_brep) delete obj->local_brep;
     obj->local_brep = NULL;
+
+    obj->parent = NULL;
 }
 
 
