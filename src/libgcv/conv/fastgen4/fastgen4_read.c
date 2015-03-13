@@ -1,4 +1,4 @@
-/*                       F A S T 4 - G . C
+/*                 F A S T G E N 4 _ R E A D . C
  * BRL-CAD
  *
  * Copyright (c) 1994-2014 United States Government as represented by

@@ -1,4 +1,4 @@
-/*                         G - O B J . C
+/*                     O B J _ W R I T E . C
  * BRL-CAD
  *
  * Copyright (c) 1996-2014 United States Government as represented by
@@ -18,10 +18,10 @@
  * information.
  *
  */
-/** @file conv/g-obj.c
+/** @file obj_write.c
  *
- * Program to convert a BRL-CAD model (in a .g file) to a Wavefront
- * '.obj' file by calling on the NMG booleans.
+ * Program to write a BRL-CAD model to a Wavefront '.obj' file
+ * by calling on the NMG booleans.
  *
  */
 

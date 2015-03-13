@@ -1,4 +1,4 @@
-/*                     O B J - G . C
+/*                      O B J _ R E A D . C
  * BRL-CAD
  *
  * Copyright (c) 2010-2014 United States Government as represented by
@@ -17,12 +17,10 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/**
+/** @file obj_read.c
  *
  * This is a program to convert a WaveFront Object file to a BRL-CAD
  * database file.
- *
- * Usage: obj-g -u mm input.obj output.g
  *
  * Recommended Improvements (not already listed in function comments):
  * - Support obj file texture vertices and materials
