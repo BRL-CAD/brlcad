@@ -5103,6 +5103,10 @@ rt_brep_process_selection(
 int rt_brep_valid(struct rt_db_internal *ip, struct bu_vls *log)
 {
     RT_CK_DB_INTERNAL(ip);
+    if (ip->idb_type != ID_BREP) {
+	if (log) bu_vls_printf(log, "Object is not a brep.\n");
+	return 0;
+    }
     struct rt_brep_internal *bi = (struct rt_brep_internal *)ip->idb_ptr;
     ON_wString s;
     ON_TextLog dump(s);
