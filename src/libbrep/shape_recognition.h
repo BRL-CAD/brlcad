@@ -175,6 +175,8 @@ void array_to_map(std::map<int,int> *map, int *array, int array_cnt);
 int subbrep_find_corners(struct subbrep_object_data *data, int **corner_verts_array, ON_Plane *pcyl);
 int subbrep_top_bottom_pnts(struct subbrep_object_data *data, std::set<int> *corner_verts, ON_Plane *top_plane, ON_Plane *bottom_plane, ON_SimpleArray<const ON_BrepVertex *> *top_pnts, ON_SimpleArray<const ON_BrepVertex *> *bottom_pnts);
 
+ON_3dPoint ON_LinePlaneIntersect(ON_Line &line, ON_Plane &plane);
+
 #endif /* SHAPE_RECOGNITION_H */
 
 // Local Variables:

@@ -9,6 +9,35 @@
 #include "brep.h"
 #include "shape_recognition.h"
 
+ON_3dPoint
+ON_LinePlaneIntersect(ON_Line &line, ON_Plane &plane)
+{
+    ON_3dPoint result;
+    result.x = ON_DBL_MAX;
+    result.y = ON_DBL_MAX;
+    result.z = ON_DBL_MAX;
+    ON_3dVector n = plane.Normal();
+    ON_3dVector l = line.Direction();
+    ON_3dPoint l0 = line.PointAt(0.5);
+    ON_3dPoint p0 = plane.Origin();
+
+    ON_3dVector p0l0 = p0 - l0;
+    double p0l0n = ON_DotProduct(p0l0, n);
+    double ln = ON_DotProduct(l, n);
+    if (NEAR_ZERO(ln, 0.000001) && NEAR_ZERO(p0l0n, 0.000001)) {
+	result.x = -ON_DBL_MAX;
+	result.y = -ON_DBL_MAX;
+	result.z = -ON_DBL_MAX;
+	return result;
+    }
+    if (NEAR_ZERO(ln, 0.000001)) return result;
+
+    double d = p0l0n/ln;
+
+    result = d*l + l0;
+    return result;
+}
+
 curve_t
 GetCurveType(ON_Curve *curve)
 {

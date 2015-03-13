@@ -80,8 +80,8 @@ negative_sphere(struct subbrep_object_data *data, int face_index, double sph_tol
     double dotp = ON_DotProduct(vect, normal);
 
     if (NEAR_ZERO(dotp, 0.000001)) return 0;
-    if (dotp < 0) return 1;
-    return -1;
+    if (dotp < 0) return -1;
+    return 1;
 }
 
 
@@ -253,8 +253,8 @@ sphere_csg(struct subbrep_object_data *data, fastf_t sph_tol)
 	    ON_3dVector y = back_plane.Yaxis();
 	    x.Unitize();
 	    y.Unitize();
-	    x = x * 1.05 * sph.Radius();
-	    y = y * 1.05 * sph.Radius();
+	    x = x * 1.5 * sph.Radius();
+	    y = y * 1.5 * sph.Radius();
 	    arb1_points[0] = bpc - x - y;
 	    arb1_points[1] = bpc + x - y;
 	    arb1_points[2] = bpc + x + y;
@@ -290,8 +290,8 @@ sphere_csg(struct subbrep_object_data *data, fastf_t sph_tol)
 	    ON_3dPoint ecenter = edge_centers[i];
 	    ex.Unitize();
 	    ey.Unitize();
-	    ex = ex * 1.05 * sph.Radius();
-	    ey = ey * 1.05 * sph.Radius();
+	    ex = ex * 1.5 * sph.Radius();
+	    ey = ey * 1.5 * sph.Radius();
 	    arb_points[0] = ecenter - ex - ey;
 	    arb_points[1] = ecenter + ex - ey;
 	    arb_points[2] = ecenter + ex + ey;

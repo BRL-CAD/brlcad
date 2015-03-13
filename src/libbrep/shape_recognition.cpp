@@ -304,7 +304,7 @@ find_top_level_hierarchy(struct bu_ptbl *subbreps)
 				if (cdata && cdata->params) {
 				    cdata->params->bool_op = (cdata->params->bool_op == '-') ? 'u' : '-';
 				} else {
-				    std::cout << "Child without params??: " << bu_vls_addr(cdata->key) << ", parent: " << bu_vls_addr(cobj->key) << "\n";
+				    //std::cout << "Child without params??: " << bu_vls_addr(cdata->key) << ", parent: " << bu_vls_addr(cobj->key) << "\n";
 				}
 			    }
 
@@ -360,7 +360,7 @@ find_top_level_hierarchy(struct bu_ptbl *subbreps)
 	    bool bbi = isect.Intersection(*pobj->bbox, *sobj->bbox);
 	    bool bbc = pobj->bbox->Includes(*sobj->bbox);
 	    if (bbi || bbc) {
-		std::cout << " Found intersecting subbrep " << bu_vls_addr(sobj->key) << " under " << bu_vls_addr(pobj->key) << "\n";
+		//std::cout << " Found intersecting subbrep " << bu_vls_addr(sobj->key) << " under " << bu_vls_addr(pobj->key) << "\n";
 		bu_ptbl_ins(subbreps_tree, *sb_it2);
 	    }
 	}
