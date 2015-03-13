@@ -201,6 +201,7 @@ ged_brep(struct ged *gedp, int argc, const char *argv[])
     if (argc < 2) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s\n\t%s\n", argv[0], usage);
 	bu_vls_printf(gedp->ged_result_str, "commands:\n");
+	bu_vls_printf(gedp->ged_result_str, "\tvalid          - report on validity of specific BREP\n");
 	bu_vls_printf(gedp->ged_result_str, "\tinfo           - return count information for specific BREP\n");
 	bu_vls_printf(gedp->ged_result_str, "\tinfo S [index] - return information for specific BREP 'surface'\n");
 	bu_vls_printf(gedp->ged_result_str, "\tinfo F [index] - return information for specific BREP 'face'\n");
@@ -240,6 +241,11 @@ ged_brep(struct ged *gedp, int argc, const char *argv[])
 
     RT_CK_DB_INTERNAL(&intern);
     bi = (struct rt_brep_internal*)intern.idb_ptr;
+
+    if (BU_STR_EQUAL(argv[2], "valid")) {
+	int valid = rt_brep_valid(&intern, gedp->ged_result_str);
+	return (valid) ? GED_OK : GED_ERROR;
+    }
 
     if (BU_STR_EQUAL(argv[2], "intersect")) {
 	/* handle surface-surface intersection */

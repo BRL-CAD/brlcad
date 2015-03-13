@@ -471,6 +471,7 @@ _ged_brep_to_csg(struct ged *gedp, const char *dp_name)
 	struct bu_vls obj_name = BU_VLS_INIT_ZERO;
 	subbrep_obj_name(obj, &obj_name);
 	if (obj->params->bool_op == 'u') {
+	    //print_subbrep_object(obj, "");
 	    if (ccomb) {
 		mk_lcomb(wdbp, bu_vls_addr(&obj_comb_name), ccomb, 0, NULL, NULL, NULL, 0);
 		BU_PUT(ccomb, struct wmember);
@@ -493,7 +494,7 @@ _ged_brep_to_csg(struct ged *gedp, const char *dp_name)
 		BU_LIST_INIT(&scomb->l);
 		(void)mk_addmember(bu_vls_addr(&sub_comb_name), &((*ccomb).l), NULL, db_str2op(&(obj->params->bool_op)));
 	    }
-	    //(void)mk_addmember(bu_vls_addr(&obj_name), &((*scomb).l), NULL, db_str2op(&(obj->params->bool_op)));
+	    //print_subbrep_object(obj, "  ");
 	    (void)mk_addmember(bu_vls_addr(&obj_name), &((*scomb).l), NULL, db_str2op((const char *)&un));
 	}
 	//std::cout << bu_vls_addr(&obj_name) << ": " << obj->params->bool_op << "\n";
