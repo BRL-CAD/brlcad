@@ -19,7 +19,7 @@
 
 #define ptout(p)  p.x << " " << p.y << " " << p.z
 
-void
+HIDDEN void
 subbrep_obj_name(struct subbrep_object_data *data, struct bu_vls *name)
 {
     if (!data || !name) return;
@@ -58,7 +58,7 @@ subbrep_obj_name(struct subbrep_object_data *data, struct bu_vls *name)
 }
 
 
-void
+HIDDEN void
 brep_to_bot(struct subbrep_object_data *data, struct rt_wdb *wdbp)
 {
     /* Triangulate faces and write out as a bot */
@@ -200,7 +200,7 @@ subbrep_to_csg_arb6(struct subbrep_object_data *data, struct rt_wdb *wdbp, struc
     }
 }
 
-int
+HIDDEN int
 subbrep_to_csg_arb8(struct subbrep_object_data *data, struct rt_wdb *wdbp, struct wmember *wcomb)
 {
     struct csg_object_params *params = data->params;
@@ -218,7 +218,7 @@ subbrep_to_csg_arb8(struct subbrep_object_data *data, struct rt_wdb *wdbp, struc
     }
 }
 
-int
+HIDDEN int
 subbrep_to_csg_planar(struct subbrep_object_data *data, struct rt_wdb *wdbp, struct wmember *wcomb)
 {
     if (data->type == PLANAR_VOLUME) {
@@ -259,7 +259,7 @@ subbrep_to_csg_planar(struct subbrep_object_data *data, struct rt_wdb *wdbp, str
     }
 }
 
-int
+HIDDEN int
 subbrep_to_csg_cylinder(struct subbrep_object_data *data, struct rt_wdb *wdbp, struct wmember *wcomb)
 {
     struct csg_object_params *params = data->params;
@@ -279,7 +279,7 @@ subbrep_to_csg_cylinder(struct subbrep_object_data *data, struct rt_wdb *wdbp, s
     return 0;
 }
 
-int
+HIDDEN int
 subbrep_to_csg_conic(struct subbrep_object_data *data, struct rt_wdb *wdbp, struct wmember *wcomb)
 {
     struct csg_object_params *params = data->params;
@@ -296,7 +296,7 @@ subbrep_to_csg_conic(struct subbrep_object_data *data, struct rt_wdb *wdbp, stru
     return 0;
 }
 
-int
+HIDDEN int
 subbrep_to_csg_sphere(struct subbrep_object_data *data, struct rt_wdb *wdbp, struct wmember *wcomb)
 {
     struct csg_object_params *params = data->params;
@@ -313,7 +313,7 @@ subbrep_to_csg_sphere(struct subbrep_object_data *data, struct rt_wdb *wdbp, str
     return 0;
 }
 
-void
+HIDDEN void
 process_params(struct subbrep_object_data *data, struct rt_wdb *wdbp, struct wmember *wcomb)
 {
     switch (data->type) {
@@ -345,7 +345,7 @@ process_params(struct subbrep_object_data *data, struct rt_wdb *wdbp, struct wme
 }
 
 
-int
+HIDDEN int
 make_shapes(struct subbrep_object_data *data, struct rt_wdb *wdbp, struct wmember *pcomb, int depth)
 {
     struct bu_vls spacer = BU_VLS_INIT_ZERO;
