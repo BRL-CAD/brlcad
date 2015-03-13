@@ -1,4 +1,4 @@
-/*                      S T L _ R E A D . C
+/*                         S T L - G . C
  * BRL-CAD
  *
  * Copyright (c) 2002-2014 United States Government as represented by
@@ -18,9 +18,9 @@
  * information.
  *
  */
-/** @file stl_read.c
+/** @file stl-g.c
  *
- * Convert Stereolithography format files into a BRL-CAD database.
+ * Convert Stereolithography format files to BRL-CAD .g binary format
  *
  * Note that binary STL format use a little-endian byte ordering where
  * bytes at lower addresses have lower significance.
@@ -46,12 +46,10 @@
 #include "raytrace.h"
 #include "wdb.h"
 
-#include "../../plugin.h"
-
-
 static struct vert_root *tree_root;
 static struct wmember all_head;
-static const char *input_file;	/* name of the input file */
+static char *input_file;	/* name of the input file */
+static char *brlcad_file;	/* name of output file */
 static char *forced_name=NULL;	/* name specified on command line */
 static int solid_count=0;	/* count of solids converted */
 static struct bn_tol tol;	/* Tolerance structure */
@@ -72,6 +70,24 @@ static int bot_fcurr=0;		/* current bot face */
 #define BOT_FBLOCK 128
 
 #define MAX_LINE_SIZE 512
+
+
+static void
+usage(const char *argv0)
+{
+    bu_log("Usage: %s [-db] [-t tolerance] [-N forced_name] [-i initial_ident] [-I constant_ident] [-m material_code] [-c units_str] [-x rt_debug_flag] input.stl output.g\n", argv0);
+    bu_log("	where input.stl is a STereoLithography file\n");
+    bu_log("	and output.g is the name of a BRL-CAD database file to receive the conversion.\n");
+    bu_log("	The -d option prints additional debugging information.\n");
+    bu_log("	The -b option specifies that the input file is in the binary STL format (default is ASCII). \n");
+    bu_log("	The -t option specifies the minimum distance between two distinct vertices (mm).\n");
+    bu_log("	The -N option specifies a name to use for the object.\n");
+    bu_log("	The -i option sets the initial region ident number (default is 1000).\n");
+    bu_log("	The -I option sets the ident number that will be assigned to all regions (conflicts with -i).\n");
+    bu_log("	The -m option sets the integer material code for all the parts (default is 1).\n");
+    bu_log("	The -c option specifies the units used in the STL file (units_str may be \"in\", \"ft\", ... default is \"mm\"\n");
+    bu_log("	The -x option specifies an RT debug flags (see raytrace.h).\n");
+}
 
 
 void
@@ -538,10 +554,9 @@ Convert_input()
 
 
 int
-gcv_stl_read(const char *path, struct rt_wdb *wdbp, const struct gcv_opts *UNUSED(opts))
+main(int argc, char *argv[])
 {
-    fd_out = wdbp;
-    input_file = path;
+    int c;
 
     tol.magic = BN_TOL_MAGIC;
 
@@ -557,9 +572,82 @@ gcv_stl_read(const char *path, struct rt_wdb *wdbp, const struct gcv_opts *UNUSE
 
     conv_factor = 1.0;	/* default */
 
-    if ((fd_in=fopen(path, "rb")) == NULL) {
-	bu_log("Cannot open input file (%s)\n", path);
-	perror("stl_read");
+    if (argc < 2) {
+	usage(argv[0]);
+	bu_exit(1, NULL);
+    }
+
+    /* Get command line arguments. */
+    /* Don't need to account for -h and -? ("default" takes care of them).  */
+    while ((c = bu_getopt(argc, argv, "bt:i:I:m:dx:N:c:")) != -1) {
+	double tmp;
+
+	switch (c) {
+	    case 'b':	/* binary format */
+		binary = 1;
+		break;
+	    case 't':	/* tolerance */
+		tmp = atof(bu_optarg);
+		if (tmp <= 0.0) {
+		    bu_log("Tolerance must be greater then zero, using default (%g)\n",
+			   tol.dist);
+		    break;
+		}
+		tol.dist = tmp;
+		tol.dist_sq = tmp * tmp;
+		break;
+	    case 'c':	/* convert from units */
+		conv_factor = bu_units_conversion(bu_optarg);
+		if (ZERO(conv_factor)) {
+		    bu_log("Illegal units: (%s)\n", bu_optarg);
+		    bu_exit(EXIT_FAILURE, "Illegal units!\n");
+		}
+		else
+		    bu_log("Converting units from %s to mm (conversion factor is %g)\n", bu_optarg, conv_factor);
+		break;
+	    case 'N':	/* force a name on this object */
+		forced_name = bu_optarg;
+		break;
+	    case 'i':
+		id_no = atoi(bu_optarg);
+		break;
+	    case  'I':
+		const_id = atoi(bu_optarg);
+		if (const_id < 0) {
+		    bu_log("Illegal value for '-I' option, must be zero or greater!\n");
+		    usage(argv[0]);
+		    bu_exit(EXIT_FAILURE, "Illegal value for option '-I'\n");
+		}
+		break;
+	    case 'm':
+		mat_code = atoi(bu_optarg);
+		break;
+	    case 'd':
+		debug = 1;
+		break;
+	    case 'x':
+		sscanf(bu_optarg, "%x", (unsigned int *)&RTG.debug);
+		bu_printb("librt RT_G_DEBUG", RT_G_DEBUG, DEBUG_FORMAT);
+		bu_log("\n");
+		break;
+	    default:
+		usage(argv[0]);
+		bu_exit(1, NULL);
+		break;
+	}
+    }
+
+    input_file = argv[bu_optind];
+    if ((fd_in=fopen(input_file, "rb")) == NULL) {
+	bu_log("Cannot open input file (%s)\n", input_file);
+	perror(argv[0]);
+	bu_exit(1, NULL);
+    }
+    bu_optind++;
+    brlcad_file = argv[bu_optind];
+    if ((fd_out=wdb_fopen(brlcad_file)) == NULL) {
+	bu_log("Cannot open BRL-CAD file (%s)\n", brlcad_file);
+	perror(argv[0]);
 	bu_exit(1, NULL);
     }
 
@@ -577,17 +665,10 @@ gcv_stl_read(const char *path, struct rt_wdb *wdbp, const struct gcv_opts *UNUSE
 
     fclose(fd_in);
 
-    return 1;
+    wdb_close(fd_out);
+
+    return 0;
 }
-
-
-static const struct gcv_converter converters[] = {
-    {"stl", gcv_stl_read, NULL},
-    {NULL, NULL, NULL}
-};
-
-const struct gcv_plugin_info gcv_plugin_conv_stl_read = {converters};
-
 
 /*
  * Local Variables:
