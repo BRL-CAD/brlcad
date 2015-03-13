@@ -3060,7 +3060,7 @@ process_b_mode_option(struct ga_t *ga,
 		      int face_test_type)    /* TEST_ALL, TEST_NUM_VERT */
 {
     if (fuse_vertices) {
-        (void)fuse_vertex(ga, gfi, conv_factor, tol, FUSE_VERT, FUSE_EQUAL);
+	(void)fuse_vertex(ga, gfi, conv_factor, tol, FUSE_VERT, FUSE_EQUAL);
     }
 
     (void)retest_grouping_faces(ga, gfi, conv_factor, face_test_type, tol);

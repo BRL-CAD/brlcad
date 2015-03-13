@@ -338,7 +338,7 @@ gcv_stl_write(const char *path, struct db_i *vdbip, const struct gcv_opts *UNUSE
     mutex = (output_file && output_directory);
     if (mutex) {
 	bu_log("%s: output file and output directory are mutually exclusive\n", "stl_write");
-        return 0;
+	return 0;
     }
 
     if (!output_file && !output_directory) {
