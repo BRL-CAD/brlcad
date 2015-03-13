@@ -755,6 +755,9 @@ cylinder_csg(struct subbrep_object_data *data, fastf_t cyl_tol)
 		    ON_3dPoint ip1 = ON_LinePlaneIntersect(line, cyl_planes[0]);
 		    ON_3dPoint ip2 = ON_LinePlaneIntersect(line, cyl_planes[1]);
 
+		    if (ip1.x > ON_DBL_MAX - SMALL_FASTF || ip1.x < -ON_DBL_MAX + SMALL_FASTF) return 1;
+		    if (ip2.x > ON_DBL_MAX - SMALL_FASTF || ip2.x < -ON_DBL_MAX + SMALL_FASTF) return 1;
+
 		    // Define the cylinder.
 		    struct subbrep_object_data *cyl_obj;
 		    BU_GET(cyl_obj, struct subbrep_object_data);
