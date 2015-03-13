@@ -64,7 +64,75 @@
 #include "obj_parser.h"
 #include "tri_face.h"
 
-#include "../../plugin.h"
+static void
+usage(const char *argv0)
+{
+
+    bu_log("Usage: %s [options] input.obj output.g\n\n", argv0);
+
+    bu_log("  -c\t\tContinue processing on nmg-bomb. Conversion will fall-back to\n"
+	   "\t\tnative bot mode if a fatal error occurs when using the nmg or\n"
+	   "\t\tbot via nmg modes.\n"
+	);
+
+    bu_log("  -d\t\tOutput debug info to standard error.\n"
+	);
+
+    bu_log("  -f\t\tFuse vertices that are close enough to be considered the\n"
+	   "\t\tsame. Can make the solidity detection more reliable, but\n"
+	   "\t\tmay significantly increase processing time during import.\n"
+	  );
+
+    bu_log("  -g grouping\tSelect which OBJ face grouping is used to create BRL-CAD\n"
+	   "\t\tprimitives:\n"
+	   "\t\t\tg = group (default)\n"
+	   "\t\t\tm = material\n"
+	   "\t\t\tn = none\n"
+	   "\t\t\to = object\n"
+	   "\t\t\tt = texture\n"
+	);
+
+    bu_log("  -H plate_thickness\n"
+	   "\t\tThickness (mm) used when a bot is not a closed volume and it's\n"
+	   "\t\tconverted as a plate or plate-nocos bot.\n"
+	   "  -i\t\tIgnore the normals defined in the input file when using native\n"
+	   "\t\tbot conversion mode.\n"
+	   "  -m mode\tSelect the conversion mode:\n"
+	   "\t\t\tb = native bot (default)\n"
+	   "\t\t\tn = nmg\n"
+	   "\t\t\tv = bot via nmg\n"
+	);
+
+    bu_log("  -o type\tSelect the type used for bots that aren't closed volumes:\n"
+	   "\t\t\tn = plate nocos\n"
+	   "\t\t\tp = plate\n"
+	   "\t\t\ts = surface (default)\n"
+	   "  -p\t\tCreates a plot/overlay (.plot3) file of open edges for bots that\n"
+	   "\t\taren't closed volumes. <bot_name>.plot3 will be created in the\n"
+	   "\t\tcurrent directory and will overwrite any existing file with the\n"
+	   "\t\tsame name.\n"
+	   "  -r orient\tSelect the bot orientation mode:\n"
+	   "\t\t\t1 = unoriented (default)\n"
+	   "\t\t\t2 = ccw\n"
+	   "\t\t\t3 = cw\n"
+	);
+
+    bu_log("  -t distance_tolerance\n"
+	   "\t\tDistance tolerance (mm); default is %lf. Two vertices are\n"
+	   "\t\tconsidered to be the same if they are within this distance of\n"
+	   "\t\teach other. You should not change this value without setting\n"
+	   "\t\tthe raytracer tolerance to match it.\n",BN_TOL_DIST);
+    bu_log("  -u units\tSelect units for the obj file: (m|cm|mm|ft|in). Default is m.\n"
+	   "\t\tYou can also provide a custom conversion factor from file units\n"
+	   "\t\tto mm.\n"
+	);
+
+    bu_log("  -v\t\tOutput verbose user info to standard error. Each occurrence of this option\n"
+	   "\t\tin the option list increases the verbosity level (two levels currently).\n"
+	   "  -x flag\tSpecify rt debug flag bits (see raytrace.h).\n"
+	   "  -X flag\tSpecify nmg debug flag bits (see nmg.h).\n"
+	);
+}
 
 
 /* global definition */
@@ -3149,17 +3217,22 @@ process_nv_mode_option(struct ga_t *ga,
 
 
 int
-gcv_obj_read(const char *path, struct rt_wdb *wdbp, const struct gcv_opts *UNUSED(options))
+main(int argc, char **argv)
 {
+    char *prog = *argv;
+    struct bu_vls input_file_name = BU_VLS_INIT_ZERO;  /* input file name */
+    struct bu_vls brlcad_file_name = BU_VLS_INIT_ZERO; /* output file name */
     struct rt_wdb *fd_out;	     /* Resulting BRL-CAD file */
     int ret_val = 0;
     FILE *my_stream;
     struct ga_t ga;
     struct gfi_t *gfi = (struct gfi_t *)NULL; /* grouping face indices */
     size_t i = 0;
+    int c;
     const char *parse_messages = (char *)0;
     int parse_err = 0;
     int face_type_idx = 0;
+    double dist_tmp = 0.0;
     struct bn_tol tol_struct;
     struct bn_tol *tol;
     int cont_on_nmg_bomb_flag = 0;
@@ -3187,7 +3260,7 @@ gcv_obj_read(const char *path, struct rt_wdb *wdbp, const struct gcv_opts *UNUSE
     char bot_orientation = RT_BOT_UNORIENTED;
     int fuse_vertices = 0;
 
-    bu_setprogname("obj-g");
+    bu_setprogname(argv[0]);
 
     /* set default conv factor */
     str2mm("m", &conv_factor);
@@ -3207,6 +3280,172 @@ gcv_obj_read(const char *path, struct rt_wdb *wdbp, const struct gcv_opts *UNUSE
     tol->perp = 1e-6;
     tol->para = 1 - tol->perp;
 
+    if (argc < 2) {
+	bu_vls_free(&input_file_name);
+	bu_vls_free(&brlcad_file_name);
+	usage(argv[0]);
+	bu_exit(1, NULL);
+    }
+
+    while ((c = bu_getopt(argc, argv, "cpidfx:X:vt:H:m:u:g:o:r:h?")) != -1) {
+	switch (c) {
+	    case 'c': /* continue processing on nmg bomb */
+		cont_on_nmg_bomb_flag = 1;
+		break;
+	    case 'p': /* create plot files for open edges */
+		plot_mode = PLOT_ON;
+		break;
+	    case 'i': /* ignore normals if provided in obj file */
+		normal_mode = IGNR_NORM;
+		break;
+	    case 'd':
+		/* turn on local debugging, displays additional information of
+		 * developer interest on stderr
+		 */
+		debug = 1;
+		break;
+	    case 'x': /* set librt debug level */
+		sscanf(bu_optarg, "%x", (unsigned int *)&RTG.debug);
+		bu_printb("librt RT_G_DEBUG", RT_G_DEBUG, DEBUG_FORMAT);
+		bu_log("\n");
+		break;
+	    case 'X': /* set nmg debug level */
+		sscanf(bu_optarg, "%x", (unsigned int *)&RTG.NMG_debug);
+		NMG_debug = RTG.NMG_debug;
+		bu_printb("librt RTG.NMG_debug", RTG.NMG_debug,
+			  NMG_DEBUG_FORMAT);
+		bu_log("\n");
+		break;
+	    case 'v': /* displays additional information of user interest */
+		verbose++;
+		break;
+	    case 'f': /* vertex fusing is very expensive; disabled by default */
+		fuse_vertices = 1;
+		break;
+	    case 't': /* distance tolerance in mm units */
+		dist_tmp = (double)atof(bu_optarg);
+		if (dist_tmp <= 0.0) {
+		    bu_log("Distance tolerance must be greater then zero.\n");
+		    bu_vls_free(&input_file_name);
+		    bu_vls_free(&brlcad_file_name);
+		    bu_exit(EXIT_FAILURE, "Type '%s' for usage.\n", argv[0]);
+		}
+		tol->dist = dist_tmp;
+		tol->dist_sq = tol->dist * tol->dist;
+		break;
+	    case 'H': /* plate-mode-bot thickness in mm units */
+		bot_thickness = (fastf_t)atof(bu_optarg);
+		user_bot_thickness_flag = 1;
+		break;
+	    case 'm': /* output mode */
+		switch (bu_optarg[0]) {
+		    case 'b': /* native bot */
+			mode_option = bu_optarg[0];
+			break;
+		    case 'n': /* nmg */
+			nmg_output_mode = OUT_NMG;
+			mode_option = bu_optarg[0];
+			break;
+		    case 'v': /* bot via nmg */
+			nmg_output_mode = OUT_VBOT;
+			mode_option = bu_optarg[0];
+			break;
+		    default:
+			bu_log("Invalid mode option '%c'.\n", bu_optarg[0]);
+			bu_vls_free(&input_file_name);
+			bu_vls_free(&brlcad_file_name);
+			bu_exit(EXIT_FAILURE, "Type '%s' for usage.\n",
+				argv[0]);
+			break;
+		}
+		break;
+	    case 'u': /* units */
+		if (str2mm(bu_optarg, &conv_factor)) {
+		    bu_vls_free(&input_file_name);
+		    bu_vls_free(&brlcad_file_name);
+		    bu_exit(EXIT_FAILURE, "Type '%s' for usage.\n", argv[0]);
+		}
+		break;
+	    case 'g': /* face grouping */
+		switch (bu_optarg[0]) {
+		    case 'g': /* group grouping */
+		    case 'o': /* object grouping */
+		    case 'm': /* material grouping */
+		    case 't': /* texture grouping */
+		    case 'n': /* no grouping */
+			grouping_option = bu_optarg[0];
+			break;
+		    default:
+			bu_log("Invalid grouping option '%c'.\n", bu_optarg[0]);
+			bu_vls_free(&input_file_name);
+			bu_vls_free(&brlcad_file_name);
+			bu_exit(EXIT_FAILURE, "Type '%s' for usage.\n",
+				argv[0]);
+			break;
+		}
+		break;
+	    case 'o': /* open surface output bot type */
+		switch (bu_optarg[0]) {
+		    case 's': /* surface bot */
+			open_bot_output_mode = RT_BOT_SURFACE;
+			break;
+		    case 'p': /* plate bot */
+			open_bot_output_mode = RT_BOT_PLATE;
+			break;
+		    case 'n': /* plate bot nocos */
+			open_bot_output_mode = RT_BOT_PLATE_NOCOS;
+			break;
+		    default:
+			bu_log("Invalid open surface 'native-bot' output bot "
+			       "type '%c'.\n", bu_optarg[0]);
+			bu_vls_free(&input_file_name);
+			bu_vls_free(&brlcad_file_name);
+			bu_exit(EXIT_FAILURE, "Type '%s' for usage.\n",
+				argv[0]);
+			break;
+		}
+		break;
+	    case 'r':
+		switch (bu_optarg[0]) {
+		    case '1':
+			bot_orientation = RT_BOT_UNORIENTED;
+			break;
+		    case '2':
+			bot_orientation = RT_BOT_CCW;
+			break;
+		    case '3':
+			bot_orientation = RT_BOT_CW;
+			break;
+		    default:
+			bu_log("Invalid bot orientation type '%c'.\n",
+				bu_optarg[0]);
+			bu_vls_free(&input_file_name);
+			bu_vls_free(&brlcad_file_name);
+			bu_exit(EXIT_FAILURE, "Type '%s' for usage.\n",
+				argv[0]);
+		}
+		break;
+	    default:
+/*		bu_log("Invalid option '%c'.\n", c); */
+/* The above is believed to be redundant, and anyway should be off if 'h' or '?' was used. */
+		bu_vls_free(&input_file_name);
+		bu_vls_free(&brlcad_file_name);
+		bu_exit(EXIT_FAILURE, "Type '%s' for usage.\n", argv[0]);
+		break;
+	}
+    }
+
+    if (argc - bu_optind != 2) {
+	bu_vls_free(&input_file_name);
+	bu_vls_free(&brlcad_file_name);
+	bu_exit(EXIT_FAILURE, "Invalid number of arguments.\nType '%s' for "
+		"usage.\n", argv[0]);
+    }
+
+    bu_vls_sprintf(&input_file_name, "%s", argv[bu_optind]);
+    bu_optind++;
+    bu_vls_sprintf(&brlcad_file_name, "%s", argv[bu_optind]);
+
     /* if plate bots were selected as the open bot output type but the
      * user did not specify plate bot thickness, abort since thickness
      * is required
@@ -3215,7 +3454,9 @@ gcv_obj_read(const char *path, struct rt_wdb *wdbp, const struct gcv_opts *UNUSE
 				       || (open_bot_output_mode == RT_BOT_PLATE_NOCOS)))
     {
 	bu_log("'plate_thickness' was not specified but is required\n");
-	bu_exit(EXIT_FAILURE, "Type '%s' for usage.\n", "obj-g");
+	bu_vls_free(&input_file_name);
+	bu_vls_free(&brlcad_file_name);
+	bu_exit(EXIT_FAILURE, "Type '%s' for usage.\n", argv[0]);
     }
 
     /* initialize ga structure */
@@ -3313,15 +3554,24 @@ gcv_obj_read(const char *path, struct rt_wdb *wdbp, const struct gcv_opts *UNUSE
 	bu_log("\tDebug messages disabled\n");
     }
 
-    bu_log("\tInput file name (%s)\n", path);
+    bu_log("\tInput file name (%s)\n", bu_vls_addr(&input_file_name));
+    bu_log("\tOutput file name (%s)\n\n", bu_vls_addr(&brlcad_file_name));
 
-    if ((my_stream = fopen(path, "r")) == NULL) {
-	bu_log("Cannot open input file (%s)\n", path);
-	perror("obj-g");
-	return 0;
+    if ((my_stream = fopen(bu_vls_addr(&input_file_name), "r")) == NULL) {
+	bu_log("Cannot open input file (%s)\n", bu_vls_addr(&input_file_name));
+	perror(prog);
+	bu_vls_free(&input_file_name);
+	bu_vls_free(&brlcad_file_name);
+	return EXIT_FAILURE;
     }
 
-    fd_out = wdbp;
+    if ((fd_out = wdb_fopen(bu_vls_addr(&brlcad_file_name))) == NULL) {
+	bu_log("Cannot create new BRL-CAD file (%s)\n", bu_vls_addr(&brlcad_file_name));
+	perror(prog);
+	bu_vls_free(&input_file_name);
+	bu_vls_free(&brlcad_file_name);
+	bu_exit(1, NULL);
+    }
 
     if ((ret_val = obj_parser_create(&ga.parser)) != 0) {
 	if (ret_val == ENOMEM) {
@@ -3340,8 +3590,10 @@ gcv_obj_read(const char *path, struct rt_wdb *wdbp, const struct gcv_opts *UNUSE
 	    bu_log("Unable to close file.\n");
 	}
 
-	perror("obj-g");
-	return 0;
+	perror(prog);
+	bu_vls_free(&input_file_name);
+	bu_vls_free(&brlcad_file_name);
+	return EXIT_FAILURE;
     }
 
     if ((parse_err = obj_fparse(my_stream, ga.parser, &ga.contents)) != 0) {
@@ -3366,7 +3618,9 @@ gcv_obj_read(const char *path, struct rt_wdb *wdbp, const struct gcv_opts *UNUSE
 	    bu_log("Unable to close file.\n");
 	}
 
-	return 0;
+	bu_vls_free(&input_file_name);
+	bu_vls_free(&brlcad_file_name);
+	return EXIT_FAILURE;
     }
 
     collect_global_obj_file_attributes(&ga);
@@ -3646,8 +3900,10 @@ gcv_obj_read(const char *path, struct rt_wdb *wdbp, const struct gcv_opts *UNUSE
     }
     if (fclose(my_stream) != 0) {
 	bu_log("Unable to close file.\n");
-	perror("pbj-g");
-	return 0;
+	perror(prog);
+	bu_vls_free(&input_file_name);
+	bu_vls_free(&brlcad_file_name);
+	return EXIT_FAILURE;
     }
 
     wdb_close(fd_out);
@@ -3663,16 +3919,10 @@ gcv_obj_read(const char *path, struct rt_wdb *wdbp, const struct gcv_opts *UNUSE
 
     bu_log("End time %s", asctime(localtime(&overall_end_time)));
 
-    return 1;
+    bu_vls_free(&input_file_name);
+    bu_vls_free(&brlcad_file_name);
+    return 0;
 }
-
-
-static const struct gcv_converter converters[] = {
-    {"obj", gcv_obj_read, NULL},
-    {NULL, NULL, NULL}
-};
-
-const struct gcv_plugin_info gcv_plugin_conv_obj_read = {converters};
 
 
 /*
