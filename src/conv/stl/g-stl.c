@@ -1,4 +1,4 @@
-/*                     S T L _ W R I T E . C
+/*                         G - S T L . C
  * BRL-CAD
  *
  * Copyright (c) 2003-2014 United States Government as represented by
@@ -18,9 +18,9 @@
  * information.
  *
  */
-/** @file stl_write.c
+/** @file g-stl.c
  *
- * Program to convert a BRL-CAD model to an STL file by
+ * Program to convert a BRL-CAD model (in a .g file) to an STL file by
  * calling on the NMG booleans.  Based on g-acad.c.
  *
  */
@@ -46,8 +46,6 @@
 #include "raytrace.h"
 #include "gcv.h"
 
-#include "../../plugin.h"
-
 
 #define V3ARGSIN(a)       (a)[X]/25.4, (a)[Y]/25.4, (a)[Z]/25.4
 #define VSETIN(a, b) {\
@@ -57,9 +55,18 @@
 }
 
 
+static char usage[] = "[-bvi8] [-xX lvl] [-a abs_tess_tol] [-r rel_tess_tol] [-n norm_tess_tol] [-D dist_calc_tol] [-o output_file_name.stl | -m directory_name] brlcad_db.g object(s)\n";
+
+static void
+print_usage(const char *progname)
+{
+    bu_exit(1, "Usage: %s %s", progname, usage);
+}
+
 static int verbose;
+static int NMG_debug;			/* saved arg of -X, for longjmp handling */
 static int binary = 0;			/* Default output is ASCII */
-static const char *output_file = NULL;	/* output filename */
+static char *output_file = NULL;	/* output filename */
 static char *output_directory = NULL;	/* directory name to hold output files */
 static FILE *fp;			/* Output file pointer */
 static int bfd;				/* Output binary file descriptor */
@@ -78,7 +85,7 @@ static size_t tot_polygons = 0;
 
 
 /* Byte swaps a four byte value */
-static void
+void
 lswap(unsigned int *v)
 {
     unsigned int r;
@@ -297,17 +304,15 @@ static struct gcv_region_end_data gcvwriter = {nmg_to_stl, NULL};
 
 
 int
-gcv_stl_write(const char *path, struct db_i *vdbip, const struct gcv_opts *UNUSED(options))
+main(int argc, char *argv[])
 {
-    size_t num_objects;
-    char **object_names;
+    int c;
     double percent;
+    int i;
     int ret;
     int use_mc = 0;
     int mutex;
-
-    output_file = path;
-    dbip = vdbip;
+    int missingg;
 
     bu_setlinebuf(stderr);
 
@@ -335,15 +340,67 @@ gcv_stl_write(const char *path, struct db_i *vdbip, const struct gcv_opts *UNUSE
     the_model = nmg_mm();
     BU_LIST_INIT(&RTG.rtg_vlfree);	/* for vlist macros */
 
-    mutex = (output_file && output_directory);
-    if (mutex) {
-	bu_log("%s: output file and output directory are mutually exclusive\n", "stl_write");
-        return 0;
+    /* Get command line arguments. */
+    while ((c = bu_getopt(argc, argv, "a:b8m:n:o:r:vx:D:X:ih?")) != -1) {
+	switch (c) {
+	    case 'a':		/* Absolute tolerance. */
+		ttol.abs = atof(bu_optarg);
+		ttol.rel = 0.0;
+		break;
+	    case 'b':		/* Binary output file */
+		binary=1;
+		break;
+	    case 'n':		/* Surface normal tolerance. */
+		ttol.norm = atof(bu_optarg);
+		ttol.rel = 0.0;
+		break;
+	    case '8':
+		use_mc = 1;
+		break;
+	    case 'o':		/* Output file name. */
+		output_file = bu_optarg;
+		break;
+	    case 'm':
+		output_directory = bu_optarg;
+		break;
+	    case 'r':		/* Relative tolerance. */
+		ttol.rel = atof(bu_optarg);
+		break;
+	    case 'v':
+		verbose++;
+		break;
+	    case 'x':
+		sscanf(bu_optarg, "%x", (unsigned int *)&RTG.debug);
+		break;
+	    case 'D':
+		tol.dist = atof(bu_optarg);
+		tol.dist_sq = tol.dist * tol.dist;
+		rt_pr_tol(&tol);
+		break;
+	    case 'X':
+		sscanf(bu_optarg, "%x", (unsigned int *)&RTG.NMG_debug);
+		NMG_debug = RTG.NMG_debug;
+		break;
+	    case 'i':
+		inches = 1;
+		break;
+	    default:
+		print_usage(argv[0]);
+	}
     }
+
+    mutex = (output_file && output_directory);
+    missingg = (bu_optind+1 >= argc);
+    if (mutex)
+	bu_log("%s: options \"-o\" and \"-m\" are mutually exclusive\n",argv[0]);
+    if (missingg)
+	bu_log("%s: missing .g file and object(s)\n",argv[0]);
+    if (mutex || missingg)
+	print_usage(argv[0]);
 
     if (!output_file && !output_directory) {
 	if (binary) {
-	    bu_exit(1, "%s: Can't output binary to stdout\n", "stl_write");
+	    bu_exit(1, "%s: Can't output binary to stdout\n",argv[0]);
 	}
 	fp = stdout;
     } else if (output_file) {
@@ -351,24 +408,38 @@ gcv_stl_write(const char *path, struct db_i *vdbip, const struct gcv_opts *UNUSE
 	    /* Open ASCII output file */
 	    if ((fp=fopen(output_file, "wb+")) == NULL)
 	    {
-		perror("stl_write");
-		bu_exit(1, "%s: Cannot open ASCII output file (%s) for writing\n", "stl_write",output_file);
+		perror(argv[0]);
+		bu_exit(1, "%s: Cannot open ASCII output file (%s) for writing\n",argv[0],output_file);
 	    }
 	} else {
 	    /* Open binary output file */
 	    if ((bfd=open(output_file, O_WRONLY|O_CREAT|O_TRUNC|O_BINARY, S_IRUSR|S_IWUSR|S_IRGRP|S_IROTH)) < 0)
 	    {
-		perror("stl_write");
-		bu_exit(1, "%s: Cannot open binary output file (%s) for writing\n", "stl_write",output_file);
+		perror(argv[0]);
+		bu_exit(1, "%s: Cannot open binary output file (%s) for writing\n",argv[0],output_file);
 	    }
 	}
+    }
+
+    /* Open brl-cad database */
+    argc -= bu_optind;
+    argv += bu_optind;
+    if ((dbip = db_open(argv[0], DB_OPEN_READONLY)) == DBI_NULL) {
+	perror(argv[0]);
+	bu_exit(1, "Unable to open geometry database file (%s)\n", argv[0]);
+    }
+    if (db_dirbuild(dbip)) {
+	bu_exit(1, "ERROR: db_dirbuild failed\n");
     }
 
     BN_CK_TOL(tree_state.ts_tol);
     RT_CK_TESS_TOL(tree_state.ts_ttol);
 
     if (verbose) {
-	bu_log("Model: %s\n", "stl_write");
+	bu_log("Model: %s\n", argv[0]);
+	bu_log("Objects:");
+	for (i=1; i<argc; i++)
+	    bu_log(" %s", argv[i]);
 	bu_log("\nTessellation tolerances:\n\tabs = %g mm\n\trel = %g\n\tnorm = %g\n",
 	       tree_state.ts_ttol->abs, tree_state.ts_ttol->rel, tree_state.ts_ttol->norm);
 	bu_log("Calculational tolerances:\n\tdist = %g mm perp = %g\n",
@@ -396,23 +467,14 @@ gcv_stl_write(const char *path, struct db_i *vdbip, const struct gcv_opts *UNUSE
 	    perror("write");
     }
 
-    /* get toplevel objects */
-    {
-	struct directory **results;
-	db_update_nref(dbip, &rt_uniresource);
-	num_objects = db_ls(dbip, DB_LS_TOPS, NULL, &results);
-	object_names = db_dpv_to_argv(results);
-	bu_free(results, "tops");
-    }
     /* Walk indicated tree(s).  Each region will be output separately */
-    (void) db_walk_tree(dbip, num_objects, (const char **)object_names,
+    (void) db_walk_tree(dbip, argc-1, (const char **)(argv+1),
 			1,
 			&tree_state,
 			0,			/* take all regions */
 			use_mc?gcv_region_end_mc:gcv_region_end,
 			use_mc?NULL:nmg_booltree_leaf_tess,
 			(void *)&gcvwriter);
-    bu_free(object_names, "object_names");
 
     percent = 0;
     if (regions_tried>0) {
@@ -454,17 +516,10 @@ gcv_stl_write(const char *path, struct db_i *vdbip, const struct gcv_opts *UNUSE
     /* Release dynamic storage */
     nmg_km(the_model);
     rt_vlist_cleanup();
+    db_close(dbip);
 
-    return 1;
+    return 0;
 }
-
-
-static const struct gcv_converter converters[] = {
-    {"stl", NULL, gcv_stl_write},
-    {NULL, NULL, NULL}
-};
-
-const struct gcv_plugin_info gcv_plugin_conv_stl_write = {converters};
 
 
 /*

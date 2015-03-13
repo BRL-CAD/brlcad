@@ -1,4 +1,4 @@
-/*                     O B J _ W R I T E . C
+/*                         G - O B J . C
  * BRL-CAD
  *
  * Copyright (c) 1996-2014 United States Government as represented by
@@ -18,9 +18,9 @@
  * information.
  *
  */
-/** @file obj_write.c
+/** @file conv/g-obj.c
  *
- * Program to write a BRL-CAD model to a Wavefront
+ * Program to convert a BRL-CAD model (in a .g file) to a Wavefront
  * '.obj' file by calling on the NMG booleans.
  *
  */
@@ -41,13 +41,20 @@
 #include "rtgeom.h"
 #include "raytrace.h"
 
-#include "../../plugin.h"
-
 
 #define V3ARGSIN(a)       (a)[X]/25.4, (a)[Y]/25.4, (a)[Z]/25.4
 
 extern union tree *do_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, void *client_data);
 
+static char usage[] =
+"[-m][-v][-i][-u][-xX lvl][-a abs_tess_tol][-r rel_tess_tol][-n norm_tess_tol][-P #_of_CPUs]\n"
+"[-e error_file_name ][-D dist_calc_tol][-o output_file_name ] brlcad_db.g object(s)\n";
+
+static void
+print_usage(const char *progname)
+{
+    bu_exit(1, "Usage: %s %s", progname, usage);
+}
 
 static long vert_offset=0;
 static long norm_offset=0;
@@ -62,6 +69,8 @@ static int usemtl=0;	/* flag to include 'usemtl' statements with a
 			 * los is 100
 			 * GIFT material is 32
 			 */
+static int ncpu = 1;	/* Number of processors */
+static char *output_file = NULL;	/* output filename */
 static char *error_file = NULL;		/* error filename */
 static FILE *fp;			/* Output file pointer */
 static FILE *fpe;			/* Error file pointer */
@@ -78,15 +87,12 @@ static int regions_written = 0;
 static int inches = 0;
 
 int
-gcv_obj_write(const char *path, struct db_i *vdbip, const struct gcv_opts *UNUSED(options))
+main(int argc, char **argv)
 {
+    int c;
     double percent;
-    size_t num_objects;
-    char **object_names;
 
-    dbip = vdbip;
-
-    bu_setprogname("obj_write");
+    bu_setprogname(argv[0]);
     bu_setlinebuf(stderr);
 
     tree_state = rt_initial_tree_state;	/* struct copy */
@@ -110,10 +116,69 @@ gcv_obj_write(const char *path, struct db_i *vdbip, const struct gcv_opts *UNUSE
     the_model = nmg_mm();
     BU_LIST_INIT(&RTG.rtg_vlfree);	/* for vlist macros */
 
-    /* Open output file */
-    if ((fp=fopen(path, "wb+")) == NULL) {
-	perror("obj_write");
-	bu_exit(1, "Cannot open output file (%s) for writing\n", path);
+    /* Get command line arguments. */
+    while ((c = bu_getopt(argc, argv, "mua:n:o:r:vx:D:P:X:e:ih?")) != -1) {
+	switch (c) {
+	    case 'm':		/* include 'usemtl' statements */
+		usemtl = 1;
+		break;
+	    case 'u':		/* Include vertexuse normals */
+		do_normals = 1;
+		break;
+	    case 'a':		/* Absolute tolerance. */
+		ttol.abs = atof(bu_optarg);
+		ttol.rel = 0.0;
+		break;
+	    case 'n':		/* Surface normal tolerance. */
+		ttol.norm = atof(bu_optarg);
+		ttol.rel = 0.0;
+		break;
+	    case 'o':		/* Output file name. */
+		output_file = bu_optarg;
+		break;
+	    case 'r':		/* Relative tolerance. */
+		ttol.rel = atof(bu_optarg);
+		break;
+	    case 'v':
+		verbose = 1;
+		break;
+	    case 'P':
+		ncpu = atoi(bu_optarg);
+		break;
+	    case 'x':
+		sscanf(bu_optarg, "%x", (unsigned int *)&RTG.debug);
+		break;
+	    case 'D':
+		tol.dist = atof(bu_optarg);
+		tol.dist_sq = tol.dist * tol.dist;
+		rt_pr_tol(&tol);
+		break;
+	    case 'X':
+		sscanf(bu_optarg, "%x", (unsigned int *)&RTG.NMG_debug);
+		NMG_debug = RTG.NMG_debug;
+		break;
+	    case 'e':		/* Error file name. */
+		error_file = bu_optarg;
+		break;
+	    case 'i':
+		inches = 1;
+		break;
+	    default:
+		print_usage(argv[0]);
+	}
+    }
+
+    if (bu_optind+1 >= argc)
+	print_usage(argv[0]);
+
+    if (!output_file)
+	fp = stdout;
+    else {
+	/* Open output file */
+	if ((fp=fopen(output_file, "wb+")) == NULL) {
+	    perror(argv[0]);
+	    bu_exit(1, "Cannot open output file (%s) for writing\n", output_file);
+	}
     }
 
     /* Open g-obj error log file */
@@ -121,9 +186,19 @@ gcv_obj_write(const char *path, struct db_i *vdbip, const struct gcv_opts *UNUSE
 	fpe = stderr;
 	setmode(fileno(fpe), O_BINARY);
     } else if ((fpe=fopen(error_file, "wb")) == NULL) {
-	perror("obj_write");
+	perror(argv[0]);
 	bu_exit(1, "Cannot open output file (%s) for writing\n", error_file);
     }
+
+    /* Open BRL-CAD database */
+    argc -= bu_optind;
+    argv += bu_optind;
+    if ((dbip = db_open(argv[0], DB_OPEN_READONLY)) == DBI_NULL) {
+	perror(argv[0]);
+	bu_exit(1, "Unable to open geometry database file (%s)\n", argv[0]);
+    }
+    if (db_dirbuild(dbip))
+	bu_exit(1, "db_dirbuild failed\n");
 
     BN_CK_TOL(tree_state.ts_tol);
     RT_CK_TESS_TOL(tree_state.ts_ttol);
@@ -134,25 +209,20 @@ gcv_obj_write(const char *path, struct db_i *vdbip, const struct gcv_opts *UNUSE
     else
 	fprintf(fp, "# BRL-CAD generated Wavefront OBJ file (Units mm)\n");
 
-    fprintf(fp, "# BRL-CAD model: %s\n# BRL_CAD objects:", "obj_write");
+    fprintf(fp, "# BRL-CAD model: %s\n# BRL_CAD objects:", argv[0]);
 
-    /* get toplevel objects */
-    {
-	struct directory **results;
-	db_update_nref(dbip, &rt_uniresource);
-	num_objects = db_ls(dbip, DB_LS_TOPS, NULL, &results);
-	object_names = db_dpv_to_argv(results);
-	bu_free(results, "tops");
-    }
+    for (c=1; c<argc; c++)
+	fprintf(fp, " %s", argv[c]);
+    fprintf(fp, "\n");
+
     /* Walk indicated tree(s).  Each region will be output separately */
-    (void) db_walk_tree(dbip, num_objects, (const char **)object_names,
+    (void) db_walk_tree(dbip, argc-1, (const char **)(argv+1),
 			1,			/* ncpu */
 			&tree_state,
 			0,			/* take all regions */
 			do_region_end,
 			nmg_booltree_leaf_tess,
 			(void *)NULL);	/* in librt/nmg_bool.c */
-    bu_free(object_names, "object_names");
 
     if (regions_tried>0) {
 	percent = ((double)regions_converted * 100.0) / regions_tried;
@@ -168,17 +238,10 @@ gcv_obj_write(const char *path, struct db_i *vdbip, const struct gcv_opts *UNUSE
     /* Release dynamic storage */
     nmg_km(the_model);
     rt_vlist_cleanup();
+    db_close(dbip);
 
-    return 1;
+    return 0;
 }
-
-
-static const struct gcv_converter converters[] = {
-    {"obj", NULL, gcv_obj_write},
-    {NULL, NULL, NULL}
-};
-
-const struct gcv_plugin_info gcv_plugin_conv_obj_write = {converters};
 
 
 static void

@@ -359,7 +359,7 @@ Convert_part_ascii(char line[MAX_LINE_SIZE])
 }
 
 /* Byte swaps a 4-byte val */
-void lswap(unsigned int *v)
+static void lswap(unsigned int *v)
 {
     unsigned int r;
 
@@ -538,7 +538,7 @@ Convert_input()
 
 
 int
-gcv_stl_read(const char *path, struct rt_wdb *wdbp, const struct gcv_opts *UNUSED(opts))
+gcv_stl_read(const char *path, struct rt_wdb *wdbp, const struct gcv_opts *UNUSED(options))
 {
     fd_out = wdbp;
     input_file = path;
