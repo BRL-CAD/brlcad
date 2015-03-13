@@ -347,7 +347,7 @@ find_top_level_hierarchy(struct bu_ptbl *subbreps)
 
 	// Now, whatever is left in the local subtraction queue has to be ruled out based on volumetric
 	// intersection testing.
-	
+
 	// Construct bounding box for pobj
 	if (!pobj->bbox_set) subbrep_bbox(pobj);
 	// Iterate over the queue

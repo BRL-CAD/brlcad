@@ -253,7 +253,7 @@ subbrep_bbox(struct subbrep_object_data *obj)
 	ON_3dPoint min, max;
 	ON_MinMaxInit(&min, &max);
 	const ON_BrepFace *face = &(obj->brep->m_F[obj->fol[i]]);
-	// Bounding interfals of outer loop
+	// Bounding intervals of outer loop
 	for (int ti = 0; ti < face->OuterLoop()->TrimCount(); ti++) {
 	    ON_BrepTrim *trim = face->OuterLoop()->Trim(ti);
 	    trim->GetBoundingBox(min, max, true);
