@@ -100,7 +100,7 @@ brep_to_bot(struct subbrep_object_data *data, struct rt_wdb *wdbp)
 
 	/* Now the fun begins.  If we have an outer loop that isn't CCW, we
 	 * need to assemble our verts2d polygon backwards */
-	if (data->brep->LoopDirection(data->local_brep->m_L[b_loop->m_loop_index]) != 1) {
+	if (data->brep->LoopDirection(data->brep->m_L[b_loop->m_loop_index]) != 1) {
 	    for (int ti = 0; ti < b_loop->m_ti.Count(); ti++) {
 		int ti_rev = b_loop->m_ti.Count() - 1 - ti;
 		const ON_BrepTrim *trim = &(b_face->Brep()->m_T[b_loop->m_ti[ti_rev]]);
