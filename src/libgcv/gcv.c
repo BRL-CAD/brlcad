@@ -95,22 +95,15 @@ gcv_execute(struct gcv_context *cxt, const struct gcv_filter *filter)
 					     filter->options);
     } else if (filter->type == GCV_CONVERSION_WRITE) {
 	int ret;
-	struct db_i *temp_dbip = db_create_inmem();
-
-	if (db_dump(temp_dbip->dbi_wdbp, cxt->db_instance)) {
-	    bu_log("db_dump() failed\n");
-	    db_close(temp_dbip);
-	    return -1;
-	}
 
 	if (!filter->converter || !filter->converter->writer_fn) {
 	    bu_log("Filter has no writer\n");
-	    db_close(temp_dbip);
 	    return -1;
 	}
 
-	ret = filter->converter->writer_fn(filter->name, temp_dbip, filter->options);
-	db_close(temp_dbip);
+	cxt->db_instance->dbi_read_only = 1;
+	ret = filter->converter->writer_fn(filter->name, cxt->db_instance, filter->options);
+	cxt->db_instance->dbi_read_only = 0;
 
 	return !ret;
     }
