@@ -3648,7 +3648,6 @@ gcv_obj_read(const char *path, struct rt_wdb *wdbp, const struct gcv_opts *UNUSE
 	return 0;
     }
 
-    wdb_close(fd_out);
     rt_clean_resource_complete(NULL, &rt_uniresource);
 
     (void)time(&overall_end_time);
