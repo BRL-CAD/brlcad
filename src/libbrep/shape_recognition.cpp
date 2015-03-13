@@ -108,23 +108,6 @@ find_subbreps(const ON_Brep *brep)
 	    // by the edge network.
 	    new_obj->is_island = 1;
 	    new_obj->parent = NULL;
-#if 0
-	    // Determine if this subset is being added to or taken from the parent.
-	    if (new_obj->fil_cnt > 0) {
-		int bool_op = subbrep_determine_boolean(new_obj);
-		if (bool_op == -1) {
-		    new_obj->params->bool_op = '-';
-		}
-		if (bool_op == 1) {
-		    new_obj->params->bool_op = 'u';
-		}
-		if (bool_op == 0) {
-		    std::cout << "Error - ambiguous result for boolean test - need to subdivide shape.\n";
-		}
-	    } else {
-		new_obj->params->bool_op = 'u';
-	    }
-#endif
 	    surface_t hof = highest_order_face(new_obj);
 	    if (hof >= SURFACE_GENERAL) {
 		new_obj->type = BREP;
