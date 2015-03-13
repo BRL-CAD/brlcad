@@ -299,6 +299,7 @@ ged_brep(struct ged *gedp, int argc, const char *argv[])
 
     if (BU_STR_EQUAL(argv[2], "csg")) {
 	/* Call csg conversion routine */
+	return _ged_brep_to_csg(gedp, argv[1]);
     }
 
     /* make sure arg isn't --no-evaluate */

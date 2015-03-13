@@ -249,6 +249,7 @@ set(LIBGED_SOURCES
   shaded_mode.c
   shader.c
   shells.c
+  shape_recognition.cpp
   showmats.c
   simulate/collision.cpp
   simulate/physics_world.cpp
@@ -337,7 +338,6 @@ set(ged_ignore_files
   ged_private.h
   joint.h
   qray.h
-  shape_recognition.cpp
   simulate/collision.hpp
   simulate/physics_world.hpp
   simulate/rt_instance.hpp

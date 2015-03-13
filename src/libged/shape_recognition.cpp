@@ -10,11 +10,8 @@
 #include <algorithm>
 
 #include "vmath.h"
-#include "raytrace.h"
 #include "wdb.h"
-#include "plot3.h"
-#include "opennurbs.h"
-#include "brep.h"
+#include "ged.h"
 #include "../libbrep/shape_recognition.h"
 
 #define ptout(p)  p.x << " " << p.y << " " << p.z
@@ -407,42 +404,27 @@ make_shapes(struct subbrep_object_data *data, struct rt_wdb *wdbp, struct wmembe
     return 0;
 }
 
-int
-main(int argc, char *argv[])
+extern "C" int
+_ged_brep_to_csg(struct ged *gedp, const char *dp_name)
 {
-    struct db_i *dbip;
-    struct rt_wdb *wdbp;
-    struct directory *dp;
     struct rt_db_internal intern;
     struct rt_brep_internal *brep_ip = NULL;
 
-    if (argc != 3) {
-	bu_exit(1, "Usage: %s file.g object", argv[0]);
-    }
+    struct rt_wdb *wdbp = gedp->ged_wdbp;
 
-    dbip = db_open(argv[1], DB_OPEN_READWRITE);
-    if (dbip == DBI_NULL) {
-	bu_exit(1, "ERROR: Unable to read from %s\n", argv[1]);
-    }
-
-    wdbp = wdb_dbopen(dbip, RT_WDB_TYPE_DB_DISK);
-
-    if (db_dirbuild(dbip) < 0)
-	bu_exit(1, "ERROR: Unable to read from %s\n", argv[1]);
-
-    dp = db_lookup(dbip, argv[2], LOOKUP_QUIET);
+    struct directory *dp = db_lookup(wdbp->dbip, dp_name, LOOKUP_QUIET);
     if (dp == RT_DIR_NULL) {
-	bu_exit(1, "ERROR: Unable to look up object %s\n", argv[2]);
+	return GED_ERROR;
     }
 
     RT_DB_INTERNAL_INIT(&intern)
 
-    if (rt_db_get_internal(&intern, dp, dbip, NULL, &rt_uniresource) < 0) {
-        bu_exit(1, "ERROR: Unable to get internal representation of %s\n", argv[2]);
+    if (rt_db_get_internal(&intern, dp, wdbp->dbip, NULL, &rt_uniresource) < 0) {
+	return GED_ERROR;
     }
 
     if (intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_BREP) {
-	bu_exit(1, "ERROR: object %s does not appear to be of type BRep\n", argv[2]);
+	return GED_ERROR;
     } else {
 	brep_ip = (struct rt_brep_internal *)intern.idb_ptr;
     }
@@ -451,17 +433,14 @@ main(int argc, char *argv[])
     ON_Brep *brep = brep_ip->brep;
     struct wmember pcomb;
     struct bu_vls comb_name = BU_VLS_INIT_ZERO;
-    bu_vls_sprintf(&comb_name, "%s_csg.c", dp->d_namep);
+    bu_vls_sprintf(&comb_name, "%s_csg", dp->d_namep);
     BU_LIST_INIT(&pcomb.l);
 
     struct bu_ptbl *subbreps = find_subbreps(brep);
     struct bu_ptbl *subbreps_tree = find_top_level_hierarchy(subbreps);
     for (unsigned int i = 0; i < BU_PTBL_LEN(subbreps); i++){
 	struct subbrep_object_data *obj = (struct subbrep_object_data *)BU_PTBL_GET(subbreps, i);
-	//print_subbrep_object(obj, "");
 	(void)make_shapes(obj, wdbp, NULL, 0);
-	//subbrep_object_free(obj);
-	//BU_PUT(obj, struct subbrep_object_data);
     }
 
     struct wmember *ccomb = NULL;
@@ -511,9 +490,7 @@ main(int argc, char *argv[])
     // TODO - probably should be region
     mk_lcomb(wdbp, bu_vls_addr(&comb_name), &pcomb, 0, NULL, NULL, NULL, 0);
 
-    db_close(dbip);
-
-    return 0;
+    return GED_OK;
 }
 
 // Local Variables:

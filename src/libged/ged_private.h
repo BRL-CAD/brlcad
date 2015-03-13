@@ -524,6 +524,8 @@ extern int _ged_results_init(struct ged_results *results);
  */
 extern int _ged_results_add(struct ged_results *results, const char *result_string);
 
+extern int _ged_brep_to_csg(struct ged *gedp, const char *obj_name);
+
 __END_DECLS
 
 #endif /* LIBGED_GED_PRIVATE_H */
