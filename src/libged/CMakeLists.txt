@@ -337,6 +337,7 @@ set(ged_ignore_files
   ged_private.h
   joint.h
   qray.h
+  shape_recognition.cpp
   simulate/collision.hpp
   simulate/physics_world.hpp
   simulate/rt_instance.hpp

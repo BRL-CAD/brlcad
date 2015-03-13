@@ -186,7 +186,7 @@ ged_brep(struct ged *gedp, int argc, const char *argv[])
     char commtag[64];
     char namebuf[64];
     int i, j, real_flag, valid_command, ret;
-    const char *commands[] = {"info", "plot", "translate", "intersect", "u", "i", "-"};
+    const char *commands[] = {"info", "plot", "translate", "intersect", "csg", "u", "i", "-"};
     int num_commands = (int)(sizeof(commands) / sizeof(const char *));
     db_op_t op = DB_OP_NULL;
 
@@ -201,16 +201,17 @@ ged_brep(struct ged *gedp, int argc, const char *argv[])
     if (argc < 2) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s\n\t%s\n", argv[0], usage);
 	bu_vls_printf(gedp->ged_result_str, "commands:\n");
-	bu_vls_printf(gedp->ged_result_str, "\tinfo - return count information for specific BREP\n");
+	bu_vls_printf(gedp->ged_result_str, "\tinfo           - return count information for specific BREP\n");
 	bu_vls_printf(gedp->ged_result_str, "\tinfo S [index] - return information for specific BREP 'surface'\n");
 	bu_vls_printf(gedp->ged_result_str, "\tinfo F [index] - return information for specific BREP 'face'\n");
-	bu_vls_printf(gedp->ged_result_str, "\tplot - plot entire BREP\n");
+	bu_vls_printf(gedp->ged_result_str, "\tplot           - plot entire BREP\n");
 	bu_vls_printf(gedp->ged_result_str, "\tplot S [index] - plot specific BREP 'surface'\n");
 	bu_vls_printf(gedp->ged_result_str, "\tplot F [index] - plot specific BREP 'face'\n");
+	bu_vls_printf(gedp->ged_result_str, "\tcsg            - convert BREP to implicit primitive CSG tree\n");
 	bu_vls_printf(gedp->ged_result_str, "\ttranslate SCV index i j dx dy dz - translate a surface control vertex\n");
 	bu_vls_printf(gedp->ged_result_str, "\tintersect <obj2> <i> <j> [PP|PC|PS|CC|CS|SS] - BREP intersections\n");
-	bu_vls_printf(gedp->ged_result_str, "\tu|i|- <obj2> <output> - BREP boolean evaluations\n");
-	bu_vls_printf(gedp->ged_result_str, "\t[brepname] - convert the non-BREP object to BREP form\n");
+	bu_vls_printf(gedp->ged_result_str, "\tu|i|- <obj2> <output>     - BREP boolean evaluations\n");
+	bu_vls_printf(gedp->ged_result_str, "\t[brepname]                - convert the non-BREP object to BREP form\n");
 	bu_vls_printf(gedp->ged_result_str, "\t --no-evaluation [suffix] - convert non-BREP comb to unevaluated BREP form\n");
 	return GED_HELP;
     }
@@ -294,6 +295,10 @@ ged_brep(struct ged *gedp, int argc, const char *argv[])
 	rt_db_free_internal(&intern);
 	rt_db_free_internal(&intern2);
 	return GED_OK;
+    }
+
+    if (BU_STR_EQUAL(argv[2], "csg")) {
+	/* Call csg conversion routine */
     }
 
     /* make sure arg isn't --no-evaluate */
