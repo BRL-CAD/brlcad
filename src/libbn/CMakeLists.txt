@@ -35,6 +35,7 @@ set(LIBBN_SOURCES
   tabdata.c
   tcl.c
   tplot.c
+  tri_ray.c
   tri_tri.c
   ulp.c
   util.c
