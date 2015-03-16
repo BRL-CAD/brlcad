@@ -6,7 +6,141 @@
 #include "bu/log.h"
 #include "bu/str.h"
 #include "bu/malloc.h"
+#include "bn/polygon.h"
 #include "shape_recognition.h"
+
+
+int
+subbrep_polygon_tri(ON_Brep *brep, const point_t *all_verts, int loop_ind, int **ffaces)
+{
+    // Accumulate faces in a std::vector, since we don't know how many we're going to get
+    std::vector<int> all_faces;
+
+    int num_faces;
+    int *faces;
+
+    const ON_BrepLoop *b_loop = &(brep->m_L[loop_ind]);
+    const ON_BrepFace *b_face = b_loop->Face();
+
+    if (!ffaces) return 0;
+
+    /* We need to build a 2D vertex list for the triangulation, and as long
+     * as we make sure the vertex mapping accounts for flipped trims in 3D,
+     * the point indices returned for the 2D triangulation will correspond
+     * to the correct 3D points without any additional work.  In essence,
+     * we use the fact that the BRep gives us a ready-made 2D point
+     * parameterization to same some work.*/
+
+    if (b_loop->m_ti.Count() == 0) {
+	return 0;
+    }
+
+    point2d_t *verts2d = (point2d_t *)bu_calloc(b_loop->m_ti.Count(), sizeof(point2d_t), "bot verts");
+
+    /* The triangulation will use only the points in the temporary verts2d
+     * array and return with faces indexed accordingly, so we need a map to
+     * translate them back to our final vert array */
+    std::map<int, int> local_to_verts;
+
+    /* Now the fun begins.  If we have an outer loop that isn't CCW, we
+     * need to assemble our verts2d polygon backwards */
+    if (brep->LoopDirection(brep->m_L[b_loop->m_loop_index]) != 1) {
+	for (int ti = 0; ti < b_loop->m_ti.Count(); ti++) {
+	    int ti_rev = b_loop->m_ti.Count() - 1 - ti;
+	    const ON_BrepTrim *trim = &(b_face->Brep()->m_T[b_loop->m_ti[ti_rev]]);
+	    const ON_BrepEdge *edge = &(b_face->Brep()->m_E[trim->m_ei]);
+	    const ON_Curve *trim_curve = trim->TrimCurveOf();
+	    ON_2dPoint cp = trim_curve->PointAt(trim_curve->Domain().Min());
+	    V2MOVE(verts2d[ti], cp);
+	    if (trim->m_bRev3d) {
+		local_to_verts[ti] = edge->Vertex(1)->m_vertex_index;
+	    } else {
+		local_to_verts[ti] = edge->Vertex(0)->m_vertex_index;
+	    }
+	}
+    } else {
+	for (int ti = 0; ti < b_loop->m_ti.Count(); ti++) {
+	    const ON_BrepTrim *trim = &(b_face->Brep()->m_T[b_loop->m_ti[ti]]);
+	    const ON_BrepEdge *edge = &(b_face->Brep()->m_E[trim->m_ei]);
+	    const ON_Curve *trim_curve = trim->TrimCurveOf();
+	    ON_2dPoint cp = trim_curve->PointAt(trim_curve->Domain().Max());
+	    V2MOVE(verts2d[ti], cp);
+	    if (trim->m_bRev3d) {
+		local_to_verts[ti] = edge->Vertex(0)->m_vertex_index;
+	    } else {
+		local_to_verts[ti] = edge->Vertex(1)->m_vertex_index;
+	    }
+	}
+    }
+
+    /* The real work - triangulate the 2D polygon to find out triangles for
+     * this particular B-Rep face */
+    int face_error = bn_polygon_triangulate(&faces, &num_faces, (const point2d_t *)verts2d, b_loop->m_ti.Count());
+    if (face_error || !faces) {
+	std::cout << "bot build failed for face " << b_face->m_face_index << "\n";
+	bu_free(verts2d, "free tmp 2d vertex array");
+	return 0;
+    } else {
+	/* We aren't done with the reversing fun - if the face is reversed, we need
+	 * to flip our triangles as well */
+	if (b_face->m_bRev) {
+	    for (int f_ind = 0; f_ind < num_faces; f_ind++) {
+		int itmp = faces[f_ind * 3 + 2];
+		faces[f_ind * 3 + 2] = faces[f_ind * 3 + 1];
+		faces[f_ind * 3 + 1] = itmp;
+	    }
+	}
+	/* Now that we have our faces, map them from the local vertex
+	 * indices to the global ones and insert the faces into the
+	 * all_faces array */
+	for (int f_ind = 0; f_ind < num_faces*3; f_ind++) {
+	    all_faces.push_back(local_to_verts[faces[f_ind]]);
+	}
+	bu_free(verts2d, "free tmp 2d vertex array");
+    }
+
+    /* Now we can build the final faces array */
+    (*ffaces) = (int *)bu_calloc(num_faces * 3, sizeof(int), "final bot verts");
+    for (int i = 0; i < num_faces*3; i++) {
+	(*ffaces)[i] = all_faces[i];
+    }
+
+    return num_faces;
+}
+
+
+
+
+/* 
+ * Unfortunately, the only way to be sure of this appears to be to do a ray
+ * test.  We will assume that determing the positive/negative status of one
+ * face is sufficient - i.e., we will not check for flipped normals on faces.
+ *
+ * 1.  Iterate over the loops, and construct polygons.  Flip as needed per
+ *     reversed faces.
+   2.  Triangulate those polygons, and accumulate the triangulations
+   3.  Construct a ray with a point outside the bounding box and
+ *     a point on one of the faces (try to make sure the face normal is not
+ *     close to perpendicular relative to the constructed ray.)  Intersect this
+ *     ray with all triangles in the BoT (unless BoTs regularly appear that are
+ *     *far* larger than expected here, it's not worth building acceleration
+ *     structures for a one time, one ray conversion process.
+ * 4.  Count the intersections, and determine whether to test for an angle
+ *     between the face normal and the ray of >ON_PI or <ON_PI.
+ * 5.  Do the test as determined by #4.
+ */
+int
+negative_polygon(struct subbrep_object_data *data)
+{
+    /* This will get reused for all faces, so make it once */
+    point_t *all_verts = (point_t *)bu_calloc(data->brep->m_V.Count(), sizeof(point_t), "bot verts");
+    for (int vi = 0; vi < data->brep->m_V.Count(); vi++) {
+        VMOVE(all_verts[vi], data->brep->m_V[vi].Point());
+    }
+
+    bu_free(all_verts, "free top level vertex array");
+    return -1;
+}
 
 
 int
@@ -19,6 +153,9 @@ subbrep_is_planar(struct subbrep_object_data *data)
 	if (GetSurfaceType(data->brep->m_F[data->faces[i]].SurfaceOf(), NULL) != SURFACE_PLANE) return 0;
     }
     data->type = PLANAR_VOLUME;
+
+    (void)negative_polygon(data);
+
     return 1;
 }
 
@@ -260,8 +397,9 @@ subbrep_planar_close_obj(struct subbrep_object_data *data)
     pdata->local_brep->SetTrimTypeFlags(true);
 
     pdata->brep = pdata->local_brep;
-    pdata->params->bool_op = 'u'; // TODO - not always union?
-
+    /* By this point, if it's not already determined to
+     * be negative, the volume is positive */
+    if (pdata->params->bool_op != '-') pdata->params->bool_op = 'u';
 }
 
 void
@@ -575,7 +713,7 @@ subbrep_make_planar(struct subbrep_object_data *data)
     std::set<int> subbrep_verts;
     std::set<int> faces;
     for (int i = 0; i < data->edges_cnt; i++) {
-	const ON_BrepEdge *edge = &(data->brep->m_E[i]);
+	const ON_BrepEdge *edge = &(data->brep->m_E[data->edges[i]]);
 	subbrep_verts.insert(edge->Vertex(0)->m_vertex_index);
 	subbrep_verts.insert(edge->Vertex(1)->m_vertex_index);
     }

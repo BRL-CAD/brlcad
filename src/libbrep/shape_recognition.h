@@ -177,6 +177,8 @@ int subbrep_top_bottom_pnts(struct subbrep_object_data *data, std::set<int> *cor
 
 ON_3dPoint ON_LinePlaneIntersect(ON_Line &line, ON_Plane &plane);
 
+int subbrep_polygon_tri(ON_Brep *brep, const point_t *all_verts, int loop_ind, int **ffaces);
+
 #endif /* SHAPE_RECOGNITION_H */
 
 // Local Variables:
