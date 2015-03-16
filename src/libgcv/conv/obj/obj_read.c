@@ -3146,7 +3146,7 @@ process_nv_mode_option(struct ga_t *ga,
 }
 
 
-int
+HIDDEN int
 gcv_obj_read(const char *path, struct rt_wdb *wdbp, const struct gcv_opts *UNUSED(options))
 {
     struct rt_wdb *fd_out;	     /* Resulting BRL-CAD file */

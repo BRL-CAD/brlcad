@@ -2716,7 +2716,7 @@ read_fast4_colors(char *color_file)
 }
 
 
-int
+HIDDEN int
 gcv_fastgen4_read(const char *path, struct rt_wdb *wdbp, const struct gcv_opts *UNUSED(options))
 {
     char *plot_file = NULL;

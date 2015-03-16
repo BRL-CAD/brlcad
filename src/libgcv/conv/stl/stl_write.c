@@ -296,7 +296,7 @@ nmg_to_stl(struct nmgregion *r, const struct db_full_path *pathp, int UNUSED(reg
 static struct gcv_region_end_data gcvwriter = {nmg_to_stl, NULL};
 
 
-int
+HIDDEN int
 gcv_stl_write(const char *path, struct db_i *vdbip, const struct gcv_opts *UNUSED(options))
 {
     size_t num_objects;

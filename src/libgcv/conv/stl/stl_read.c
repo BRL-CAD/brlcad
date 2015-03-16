@@ -74,7 +74,7 @@ static int bot_fcurr=0;		/* current bot face */
 #define MAX_LINE_SIZE 512
 
 
-void
+HIDDEN void
 Add_face(int face[3])
 {
     if (!bot_faces) {
@@ -90,7 +90,7 @@ Add_face(int face[3])
     bot_fcurr++;
 }
 
-void
+HIDDEN void
 mk_unique_brlcad_name(struct bu_vls *name)
 {
     char *c;
@@ -504,7 +504,7 @@ Convert_part_binary()
 }
 
 
-static void
+HIDDEN static void
 Convert_input()
 {
     char line[ MAX_LINE_SIZE ];
@@ -537,7 +537,7 @@ Convert_input()
 }
 
 
-int
+HIDDEN int
 gcv_stl_read(const char *path, struct rt_wdb *wdbp, const struct gcv_opts *UNUSED(options))
 {
     fd_out = wdbp;

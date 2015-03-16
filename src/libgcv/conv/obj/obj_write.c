@@ -77,7 +77,7 @@ static int regions_converted = 0;
 static int regions_written = 0;
 static int inches = 0;
 
-int
+HIDDEN int
 gcv_obj_write(const char *path, struct db_i *vdbip, const struct gcv_opts *UNUSED(options))
 {
     double percent;

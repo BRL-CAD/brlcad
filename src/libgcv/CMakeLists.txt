@@ -54,6 +54,7 @@ list(APPEND LIBGCV_SOURCES
   setup.cpp
   conv/brlcad.c
   conv/fastgen4/fastgen4_read.c
+  conv/fastgen4/fastgen4_write.cpp
   conv/obj/obj_write.c
   conv/stl/stl_read.c
   conv/stl/stl_write.c
