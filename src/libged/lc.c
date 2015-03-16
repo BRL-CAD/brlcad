@@ -250,11 +250,10 @@ ged_lc(struct ged *gedp, int argc, const char *argv[])
     } else if (argc < 2) {
 	if (file_name_flag_cnt && !file_name) {
 	    bu_vls_printf(gedp->ged_result_str, "Error: Group name and file name not specified\n");
-	    error_cnt++;
 	} else {
 	    bu_vls_printf(gedp->ged_result_str, "Error: Group name not specified.\n");
-	    error_cnt++;
 	}
+        error_cnt++;
     } else if (argc + unrecognized_flag_cnt > 2) {
 	bu_vls_printf(gedp->ged_result_str, "Error: More than one group name was specified.\n");
 	error_cnt++;
