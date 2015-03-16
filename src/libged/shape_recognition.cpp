@@ -101,7 +101,7 @@ brep_to_bot(struct subbrep_object_data *data, struct rt_wdb *wdbp, struct bu_vls
 	 * we use the fact that the BRep gives us a ready-made 2D point
 	 * parameterization to same some work.*/
 
-	if (!b_loop->m_ti.Count() == 0) {
+	if (b_loop->m_ti.Count() == 0) {
 	    bu_log("No trims in outer loop?? bot %s failed\n", bu_vls_addr(data->key));
 	    return;
 	}
