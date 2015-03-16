@@ -459,7 +459,7 @@ cone_csg(struct subbrep_object_data *data, fastf_t cone_tol)
                     // do it again,  but the first shape to make the need clear has
                     // to trigger the build.
                     if (!data->parent->planar_obj) {
-                        subbrep_planar_init(data);
+                        subbrep_planar_init(data->parent);
                     }
                     // Now, add the new face
                     ON_SimpleArray<const ON_BrepVertex *> vert_loop(4);
