@@ -94,7 +94,7 @@ find_subbreps(const ON_Brep *brep)
 	/* If we haven't seen this particular subset before, add it */
 	if (subbrep_keys.find(key) == subbrep_keys.end()) {
 	    subbrep_keys.insert(key);
-	    struct subbrep_object_data *new_obj;
+	    struct subbrep_object_data *new_obj = NULL;
 	    BU_GET(new_obj, struct subbrep_object_data);
 	    subbrep_object_init(new_obj, brep);
 	    bu_vls_sprintf(new_obj->key, "%s", key.c_str());
@@ -197,10 +197,17 @@ find_top_level_hierarchy(struct bu_ptbl *subbreps)
     for (sb_it = subbrep_set.begin(); sb_it != subbrep_set.end(); sb_it++) {
 	struct subbrep_object_data *obj = (struct subbrep_object_data *)*sb_it;
 	if (obj->fil_cnt == 0) {
-	    //std::cout << "Top union found: " << bu_vls_addr(obj->key) << "\n";
-	    obj->params->bool_op = 'u';
-	    unions.insert((long *)obj);
-	    subbrep_set.erase((long *)obj);
+	    if (!(obj->params->bool_op == '-')) {
+		//std::cout << "Top union found: " << bu_vls_addr(obj->key) << "\n";
+		obj->params->bool_op = 'u';
+		unions.insert((long *)obj);
+		subbrep_set.erase((long *)obj);
+	    } else {
+		if (obj->params->bool_op == '-') {
+		    //std::cout << "zero fils, but a negative shape - " << bu_vls_addr(obj->key) << " added to subtractions\n";
+		    subtractions.insert((long *)obj);
+		}
+	    }
 	}
     }
 
