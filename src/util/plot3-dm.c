@@ -128,7 +128,7 @@ get_args(int argc, char **argv)
 {
     int c;
 
-    while ((c = bu_getopt(argc, argv, "t:")) != -1) {
+    while ((c = bu_getopt(argc, argv, "t:h?")) != -1) {
 	switch (c) {
 	    case 't':
 		switch (*bu_optarg) {
@@ -143,7 +143,7 @@ get_args(int argc, char **argv)
 			break;
 		}
 		break;
-	    default:		/* '?' */
+	    default:		/* 'h' '?' */
 		return 0;
 	}
     }
