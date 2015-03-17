@@ -387,6 +387,17 @@ convert_primitive(db_tree_state *tree_state, const db_full_path *path,
 	    break;
 	}
 
+	case ID_ARB8: {
+	    const rt_arb_internal &arb = *static_cast<rt_arb_internal *>(internal->idb_ptr);
+	    Section section(writer, name, 0, true);
+
+	    for (int i = 0; i < 8; ++i)
+		section.add_grid_point(arb.pt[i][0], arb.pt[i][1], arb.pt[i][2]);
+
+	    std::size_t points[] = {1, 2, 3, 4, 5, 6, 7, 8};
+	    section.add_hexahedron(points);
+	}
+
 	case ID_BOT: {
 	    const rt_bot_internal &bot = *static_cast<rt_bot_internal *>(internal->idb_ptr);
 	    write_bot(writer, bot);
