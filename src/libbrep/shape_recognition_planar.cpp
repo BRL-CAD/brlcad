@@ -7,11 +7,12 @@
 #include "bu/str.h"
 #include "bu/malloc.h"
 #include "bn/polygon.h"
+#include "bn/tri_ray.h"
 #include "shape_recognition.h"
 
 
 int
-subbrep_polygon_tri(ON_Brep *brep, const point_t *all_verts, int loop_ind, int **ffaces)
+subbrep_polygon_tri(const ON_Brep *brep, const point_t *all_verts, int loop_ind, int **ffaces)
 {
     // Accumulate faces in a std::vector, since we don't know how many we're going to get
     std::vector<int> all_faces;
@@ -108,11 +109,8 @@ subbrep_polygon_tri(ON_Brep *brep, const point_t *all_verts, int loop_ind, int *
     return num_faces;
 }
 
-
-
-
-/* 
- * Unfortunately, the only way to be sure of this appears to be to do a ray
+/*
+ * To determine if a polyhedron is inside or outside, we do a ray-based
  * test.  We will assume that determing the positive/negative status of one
  * face is sufficient - i.e., we will not check for flipped normals on faces.
  *
@@ -132,14 +130,113 @@ subbrep_polygon_tri(ON_Brep *brep, const point_t *all_verts, int loop_ind, int *
 int
 negative_polygon(struct subbrep_object_data *data)
 {
+    int io_state = 0;
+    int all_faces_cnt = 0;
+    std::vector<int> all_faces;
+    int *final_faces = NULL;
+    std::set<int> fol_faces;
+
     /* This will get reused for all faces, so make it once */
     point_t *all_verts = (point_t *)bu_calloc(data->brep->m_V.Count(), sizeof(point_t), "bot verts");
     for (int vi = 0; vi < data->brep->m_V.Count(); vi++) {
         VMOVE(all_verts[vi], data->brep->m_V[vi].Point());
     }
 
+    array_to_set(&fol_faces, data->fol, data->fol_cnt);
+
+    // Check each face to see if it is fil or fol - the first fol face, stash its
+    // normal - don't even need the triangle face normal, we can just use the face's normal and
+    // a point from the center of one of the fol triangles on that particular face.
+    ON_3dPoint hit_point;
+    ON_3dVector triangle_normal;
+    int have_hit_pnt = 0;
+
+    /* Get triangles from the faces */
+    ON_BoundingBox vert_bbox;
+    ON_MinMaxInit(&vert_bbox.m_min, &vert_bbox.m_max);
+    for (int i = 0; i < data->loops_cnt; i++) {
+	const ON_BrepLoop *b_loop = &(data->brep->m_L[data->loops[i]]);
+	int *ffaces = NULL;
+	int num_faces = subbrep_polygon_tri(data->brep, all_verts, b_loop->m_loop_index, &ffaces);
+	if (!have_hit_pnt) {
+	    const ON_BrepFace *b_face = b_loop->Face();
+	    if (fol_faces.find(b_face->m_face_index) != fol_faces.end()) {
+		ON_3dPoint p1 = data->brep->m_V[ffaces[0]].Point();
+		ON_3dPoint p2 = data->brep->m_V[ffaces[1]].Point();
+		ON_3dPoint p3 = data->brep->m_V[ffaces[2]].Point();
+		ON_Plane fp;
+		ON_Surface *ts = b_face->SurfaceOf()->Duplicate();
+		(void)ts->IsPlanar(&fp, BREP_PLANAR_TOL);
+		delete ts;
+		triangle_normal = fp.Normal();
+		if (b_face->m_bRev) triangle_normal = triangle_normal * -1;
+		hit_point = (p1 + p2 + p3) / 3;
+		have_hit_pnt = 1;
+	    }
+	}
+
+	for (int f_ind = 0; f_ind < num_faces*3; f_ind++) {
+	    all_faces.push_back(ffaces[f_ind]);
+	    vert_bbox.Set(data->brep->m_V[ffaces[f_ind]].Point(), true);
+	}
+	if (ffaces) bu_free(ffaces, "free polygon face array");
+	all_faces_cnt += num_faces;
+
+    }
+
+    /* Now we can build the final faces array */
+    final_faces = (int *)bu_calloc(all_faces_cnt * 3, sizeof(int), "final bot verts");
+    for (int i = 0; i < all_faces_cnt*3; i++) {
+	final_faces[i] = all_faces[i];
+    }
+
+    // Scale bounding box to make sure corners are away from the volume
+    vert_bbox.m_min = vert_bbox.m_min * 1.1;
+    vert_bbox.m_max = vert_bbox.m_max * 1.1;
+
+    // Pick a ray direction
+    ON_3dVector rdir;
+    ON_3dPoint box_corners[8];
+    vert_bbox.GetCorners(box_corners);
+    int have_dir = 0;
+    int corner = 0;
+    double dotp;
+    while (!have_dir && corner < 8) {
+	rdir = box_corners[corner] - hit_point;
+	dotp = ON_DotProduct(triangle_normal, rdir);
+	(NEAR_ZERO(dotp, 0.01)) ? corner++ : have_dir = 1;
+    }
+    if (!have_dir) {
+	bu_log("Error: NONE of the corners worked??\n");
+	return 0;
+    }
+    point_t origin, dir;
+    VMOVE(origin, hit_point);
+    VMOVE(dir, rdir);
+
+    // Test the ray against the triangle set
+    int hit_cnt = 0;
+    point_t p1, p2, p3;
+    for (int i = 0; i < all_faces_cnt; i++) {
+	VMOVE(p1, all_verts[all_faces[i*3+0]]);
+	VMOVE(p2, all_verts[all_faces[i*3+1]]);
+	VMOVE(p3, all_verts[all_faces[i*3+2]]);
+	hit_cnt += bn_ray_tri_isect(origin, dir, p1, p2, p3, NULL);
+    }
+    bu_log("hit count: %d\n", hit_cnt);
+
+    // Final inside/outside determination
+    if (hit_cnt % 2) {
+	io_state = (dotp < 0) ? -1 : 1;
+    } else {
+	io_state = (dotp > 0) ? -1 : 1;
+    }
+
+    bu_log("inside out state: %d\n", io_state);
+
     bu_free(all_verts, "free top level vertex array");
-    return -1;
+    bu_free(final_faces, "free face array");
+    return io_state;
 }
 
 
@@ -154,7 +251,7 @@ subbrep_is_planar(struct subbrep_object_data *data)
     }
     data->type = PLANAR_VOLUME;
 
-    (void)negative_polygon(data);
+    if (negative_polygon(data) == -1) data->params->bool_op = '-';
 
     return 1;
 }

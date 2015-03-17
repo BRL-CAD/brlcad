@@ -53,6 +53,11 @@ find_subbreps(const ON_Brep *brep)
 	std::set<int> processed_loops;
 	std::set<int>::iterator s_it;
 
+	// TODO - need to watch for an edge that has two general surfaces associated
+	// with it.  That situation is too problematic for us to handle even as a
+	// breakdown into subbreps, and if we see it we need to bail.  Ensuring reliable
+	// inside/outside testing under those conditions is extremely difficult.
+	// Maybe even something to do as an initial test.
 	const ON_BrepFace *face = &(brep->m_F[i]);
 	faces.insert(i);
 	fol.insert(i);

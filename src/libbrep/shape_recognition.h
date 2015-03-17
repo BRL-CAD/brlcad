@@ -176,8 +176,10 @@ int subbrep_find_corners(struct subbrep_object_data *data, int **corner_verts_ar
 int subbrep_top_bottom_pnts(struct subbrep_object_data *data, std::set<int> *corner_verts, ON_Plane *top_plane, ON_Plane *bottom_plane, ON_SimpleArray<const ON_BrepVertex *> *top_pnts, ON_SimpleArray<const ON_BrepVertex *> *bottom_pnts);
 
 ON_3dPoint ON_LinePlaneIntersect(ON_Line &line, ON_Plane &plane);
+void ON_MinMaxInit(ON_3dPoint *min, ON_3dPoint *max);
 
-int subbrep_polygon_tri(ON_Brep *brep, const point_t *all_verts, int loop_ind, int **ffaces);
+
+int subbrep_polygon_tri(const ON_Brep *brep, const point_t *all_verts, int loop_ind, int **ffaces);
 
 #endif /* SHAPE_RECOGNITION_H */
 
