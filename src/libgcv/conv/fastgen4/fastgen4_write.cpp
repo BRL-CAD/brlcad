@@ -149,17 +149,20 @@ public:
 
     std::size_t add_grid_point(double x, double y, double z);
 
-    void add_sphere(std::size_t material_id, std::size_t g1, double thickness,
-		    double radius);
+    void add_sphere(std::size_t g1, double thickness, double radius);
 
-    void add_line(std::size_t material_id, std::size_t g1, std::size_t g2,
-		  double thickness, double radius);
+    void add_cone(std::size_t g1, std::size_t g2, double ro1, double ro2,
+		  double ri1, double ri2);
 
-    void add_triangle(std::size_t material_id, std::size_t g1, std::size_t g2,
-		      std::size_t g3, double thickness, bool grid_centered = false);
+    void add_line(std::size_t g1, std::size_t g2, double thickness, double radius);
 
-    void add_quad(std::size_t material_id, std::size_t g1, std::size_t g2,
-		  std::size_t g3, std::size_t g4, double thickness, bool grid_centered = false);
+    void add_triangle(std::size_t g1, std::size_t g2, std::size_t g3,
+		      double thickness, bool grid_centered = false);
+
+    void add_quad(std::size_t g1, std::size_t g2, std::size_t g3, std::size_t g4,
+		  double thickness, bool grid_centered = false);
+
+    void add_hexahedron(const std::size_t *g);
 
 
 private:
@@ -210,20 +213,36 @@ Section::add_grid_point(double x, double y, double z)
 
 
 void
-Section::add_sphere(std::size_t material_id, std::size_t g1, double thickness,
-		    double radius)
+Section::add_sphere(std::size_t g1, double thickness, double radius)
 {
     if (thickness <= 0.0 || radius <= 0.0)
 	throw std::invalid_argument("invalid value");
 
-    FastgenWriter::Record(m_writer) << "CSPHERE" << m_next_element_id++ <<
-				    material_id << g1 << "" << "" << "" << thickness << radius;
+    FastgenWriter::Record(m_writer) << "CSPHERE" << m_next_element_id++ << 0 << g1
+				    << "" << "" << "" << thickness << radius;
 }
 
 
 void
-Section::add_line(std::size_t material_id, std::size_t g1, std::size_t g2,
-		  double thickness, double radius)
+Section::add_cone(std::size_t g1, std::size_t g2, double ro1, double ro2,
+		  double ri1, double ri2)
+{
+    if (g1 == g2 || g1 >= m_next_grid_id || g2 >= m_next_grid_id)
+	throw std::invalid_argument("invalid grid id");
+
+    if (ri1 <= 0.0 || ri2 <= 0.0 || ro1 <= ri2 || ro2 <= ri2)
+	throw std::invalid_argument("invalid radius");
+
+    FastgenWriter::Record(m_writer) << "CCONE2" << m_next_element_id << 0 << g1 <<
+				    g2 << "" << "" << "" << ro1 << m_next_element_id;
+    FastgenWriter::Record(m_writer) << m_next_element_id << ro2 << ri1 << ri2;
+    ++m_next_element_id;
+}
+
+
+void
+Section::add_line(std::size_t g1, std::size_t g2, double thickness,
+		  double radius)
 {
     if (thickness <= 0.0 || radius <= 0.0)
 	throw std::invalid_argument("invalid value");
@@ -231,14 +250,14 @@ Section::add_line(std::size_t material_id, std::size_t g1, std::size_t g2,
     if (g1 == g2 || g1 >= m_next_grid_id || g2 >= m_next_grid_id)
 	throw std::invalid_argument("invalid grid id");
 
-    FastgenWriter::Record(m_writer) << "CLINE" << m_next_element_id++ << material_id
-				    << g1 << g2 << thickness << radius;
+    FastgenWriter::Record(m_writer) << "CLINE" << m_next_element_id++ << 0 << g1 <<
+				    g2 << thickness << radius;
 }
 
 
 void
-Section::add_triangle(std::size_t material_id, std::size_t g1, std::size_t g2,
-		      std::size_t g3, double thickness, bool grid_centered)
+Section::add_triangle(std::size_t g1, std::size_t g2, std::size_t g3,
+		      double thickness, bool grid_centered)
 {
     if (thickness <= 0.0)
 	throw std::invalid_argument("invalid thickness");
@@ -249,14 +268,14 @@ Section::add_triangle(std::size_t material_id, std::size_t g1, std::size_t g2,
     if (g1 >= m_next_grid_id || g2 >= m_next_grid_id || g3 >= m_next_grid_id)
 	throw std::invalid_argument("invalid grid id");
 
-    FastgenWriter::Record(m_writer) << "CTRI" << m_next_element_id++ << material_id
-				    << g1 << g2 << g3 << thickness << (grid_centered ? 1 : 2);
+    FastgenWriter::Record(m_writer) << "CTRI" << m_next_element_id++ << 0 << g1 <<
+				    g2 << g3 << thickness << (grid_centered ? 1 : 2);
 }
 
 
 void
-Section::add_quad(std::size_t material_id, std::size_t g1, std::size_t g2,
-		  std::size_t g3, std::size_t g4, double thickness, bool grid_centered)
+Section::add_quad(std::size_t g1, std::size_t g2, std::size_t g3,
+		  std::size_t g4, double thickness, bool grid_centered)
 {
     if (thickness <= 0.0)
 	throw std::invalid_argument("invalid thickness");
@@ -268,9 +287,59 @@ Section::add_quad(std::size_t material_id, std::size_t g1, std::size_t g2,
 	|| g4 >= m_next_grid_id)
 	throw std::invalid_argument("invalid grid id");
 
-    FastgenWriter::Record(m_writer) << "CQUAD" << m_next_element_id++ << material_id
-				    <<
-				    g1 << g2 << g3 << g4 << thickness << (grid_centered ? 1 : 2);
+    FastgenWriter::Record(m_writer) << "CQUAD" << m_next_element_id++ << 0 << g1 <<
+				    g2 << g3 << g4 << thickness << (grid_centered ? 1 : 2);
+}
+
+
+void
+Section::add_hexahedron(const std::size_t *g)
+{
+    for (int i = 0; i < 8; ++i) {
+	if (g[i] >= m_next_grid_id)
+	    throw std::invalid_argument("invalid grid id");
+
+	for (int j = i + 1; j < 8; ++j)
+	    if (g[i] == g[j])
+		throw std::invalid_argument("repeated grid id");
+    }
+
+    FastgenWriter::Record record1(m_writer);
+    record1 << "CHEX2" << m_next_element_id << 0;
+
+    for (int i = 0; i < 6; ++i)
+	record1 << g[i];
+
+    record1 << m_next_element_id;
+    FastgenWriter::Record(m_writer) << m_next_element_id << g[6] << g[7];
+    ++m_next_element_id;
+}
+
+
+HIDDEN void
+write_bot(FastgenWriter &writer, const rt_bot_internal &bot)
+{
+    Section section(writer, "bot", 0, bot.mode == RT_BOT_SOLID);
+
+    for (std::size_t i = 0; i < bot.num_vertices; ++i) {
+	const fastf_t * const vertex = &bot.vertices[i * 3];
+	section.add_grid_point(vertex[0], vertex[1], vertex[2]);
+    }
+
+    for (std::size_t i = 0; i < bot.num_faces; ++i) {
+	double thickness = 1.0;
+	bool grid_centered = false;
+
+	if (bot.mode == RT_BOT_PLATE) {
+	    if (bot.thickness) thickness = bot.thickness[i];
+
+	    if (bot.face_mode) grid_centered = !BU_BITTEST(bot.face_mode, i);
+	}
+
+	const int * const face = &bot.faces[i * 3];
+	section.add_triangle(face[0] + 1, face[1] + 1, face[2] + 1, thickness,
+			     grid_centered);
+    }
 }
 
 
@@ -312,10 +381,15 @@ convert_primitive(db_tree_state *tree_state, const db_full_path *path,
 	case ID_ELL:
 	case ID_SPH: {
 	    const rt_ell_internal &ell = *static_cast<rt_ell_internal *>(internal->idb_ptr);
-	    Section section(writer, name, 0, false);
-	    std::size_t id = section.add_grid_point(ell.v[0], ell.v[1], ell.v[2]);
-	    section.add_sphere(0, id, 1.0, ell.a[0]);
+	    Section section(writer, name, 0, true);
+	    std::size_t center = section.add_grid_point(ell.v[0], ell.v[1], ell.v[2]);
+	    section.add_sphere(center, 1.0, ell.a[0]);
 	    break;
+	}
+
+	case ID_BOT: {
+	    const rt_bot_internal &bot = *static_cast<rt_bot_internal *>(internal->idb_ptr);
+	    write_bot(writer, bot);
 	}
 
 	default:
