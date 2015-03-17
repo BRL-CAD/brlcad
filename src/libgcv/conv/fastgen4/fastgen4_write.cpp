@@ -304,13 +304,16 @@ Section::add_hexahedron(const std::size_t *g)
 		throw std::invalid_argument("repeated grid id");
     }
 
-    FastgenWriter::Record record1(m_writer);
-    record1 << "CHEX2" << m_next_element_id << 0;
+    {
+	FastgenWriter::Record record1(m_writer);
+	record1 << "CHEX2" << m_next_element_id << 0;
 
-    for (int i = 0; i < 6; ++i)
-	record1 << g[i];
+	for (int i = 0; i < 6; ++i)
+	    record1 << g[i];
 
-    record1 << m_next_element_id;
+	record1 << m_next_element_id;
+    }
+
     FastgenWriter::Record(m_writer) << m_next_element_id << g[6] << g[7];
     ++m_next_element_id;
 }
@@ -394,13 +397,15 @@ convert_primitive(db_tree_state *tree_state, const db_full_path *path,
 	    for (int i = 0; i < 8; ++i)
 		section.add_grid_point(arb.pt[i][0], arb.pt[i][1], arb.pt[i][2]);
 
-	    std::size_t points[] = {1, 2, 3, 4, 5, 6, 7, 8};
+	    const std::size_t points[] = {1, 2, 3, 4, 5, 6, 7, 8};
 	    section.add_hexahedron(points);
+	    break;
 	}
 
 	case ID_BOT: {
 	    const rt_bot_internal &bot = *static_cast<rt_bot_internal *>(internal->idb_ptr);
 	    write_bot(writer, bot);
+	    break;
 	}
 
 	default:
