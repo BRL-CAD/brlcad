@@ -54,9 +54,7 @@ private:
     static const std::size_t MAX_GROUPS = 50;
     static const std::size_t MAX_COMPONENTS = 999;
 
-    static void check_ids(std::size_t group_id, std::size_t component_id);
-
-    std::size_t m_num_sections;
+    std::size_t m_next_section_id;
     bool m_record_open;
     std::ofstream m_ostream;
 };
@@ -121,19 +119,8 @@ FastgenWriter::Record::text(const std::string &value)
 }
 
 
-void
-FastgenWriter::check_ids(std::size_t group_id, std::size_t component_id)
-{
-    if (group_id + 1 > MAX_GROUPS)
-	throw std::invalid_argument("invalid group id");
-
-    if (component_id + 1 > MAX_COMPONENTS)
-	throw std::invalid_argument("invalid component id");
-}
-
-
 FastgenWriter::FastgenWriter(const std::string &path) :
-    m_num_sections(0),
+    m_next_section_id(1),
     m_record_open(false),
     m_ostream(path.c_str(), std::ofstream::out)
 {
@@ -157,9 +144,8 @@ FastgenWriter::write_comment(const std::string &value)
 class Section
 {
 public:
-    Section(FastgenWriter &writer, const std::string &name, unsigned work_unit_code,
-	    int logistics_control_number, std::size_t group_id, bool volume_mode,
-	    unsigned char space_code = 6);
+    Section(FastgenWriter &writer, const std::string &name, std::size_t group_id,
+	    bool volume_mode);
 
     std::size_t add_grid_point(double x, double y, double z);
 
@@ -181,52 +167,45 @@ private:
     static const std::size_t MAX_HOLES = 40000;
     static const std::size_t MAX_WALLS = 40000;
 
-    std::size_t m_num_grid_points;
-    std::size_t m_num_elements;
+    std::size_t m_next_grid_id;
+    std::size_t m_next_element_id;
     FastgenWriter &m_writer;
 };
 
 
 Section::Section(FastgenWriter &writer, const std::string &name,
-		 unsigned work_unit_code, int logistics_control_number, std::size_t group_id,
-		 bool volume_mode, unsigned char space_code) :
-    m_num_grid_points(0),
-    m_num_elements(0),
+		 std::size_t group_id, bool volume_mode) :
+    m_next_grid_id(1),
+    m_next_element_id(1),
     m_writer(writer)
 {
-    FastgenWriter::check_ids(group_id, m_writer.m_num_sections + 1);
-
-    if (work_unit_code < 11 || work_unit_code > 99 || space_code > 6)
-	throw std::invalid_argument("invalid value");
+    if (group_id > FastgenWriter::MAX_GROUPS
+	|| m_writer.m_next_section_id > FastgenWriter::MAX_COMPONENTS)
+	throw std::invalid_argument("invalid id");
 
     {
 	FastgenWriter::Record record(m_writer);
-	record << "$NAME" << group_id << m_writer.m_num_sections << work_unit_code <<
-	       logistics_control_number;
+	record << "$NAME" << group_id << m_writer.m_next_section_id;
+	record << "" << "" << "" << "";
 	record.text(name);
     }
 
-    FastgenWriter::Record record(m_writer);
-    record << "SECTION" << group_id << m_writer.m_num_sections <<
-	   (volume_mode ? 2 : 1);
-
-    if (space_code != 6)
-	record << space_code;
-
-    ++m_writer.m_num_sections;
+    FastgenWriter::Record(m_writer)
+	    << "SECTION" << group_id << m_writer.m_next_section_id << (volume_mode ? 2 : 1);
+    ++m_writer.m_next_section_id;
 }
 
 
 std::size_t
 Section::add_grid_point(double x, double y, double z)
 {
-    if (m_num_grid_points >= MAX_GRID_POINTS)
+    if (m_next_grid_id > MAX_GRID_POINTS)
 	throw std::length_error("maximum GRID records");
 
     FastgenWriter::Record record(m_writer);
-    record << "GRID" << m_num_grid_points << "";
+    record << "GRID" << m_next_grid_id << "";
     record << x << y << z;
-    return m_num_grid_points++;
+    return m_next_grid_id++;
 }
 
 
@@ -234,11 +213,11 @@ void
 Section::add_sphere(std::size_t material_id, std::size_t g1, double thickness,
 		    double radius)
 {
-    if (thickness < 0.0 || radius <= 0.0)
+    if (thickness <= 0.0 || radius <= 0.0)
 	throw std::invalid_argument("invalid value");
 
-    FastgenWriter::Record(m_writer) << "CSPHERE" << m_num_elements++ << material_id
-				    << g1 << thickness << radius;
+    FastgenWriter::Record(m_writer) << "CSPHERE" << m_next_element_id++ <<
+				    material_id << g1 << "" << "" << "" << thickness << radius;
 }
 
 
@@ -246,14 +225,14 @@ void
 Section::add_line(std::size_t material_id, std::size_t g1, std::size_t g2,
 		  double thickness, double radius)
 {
-    if (thickness < 0.0 || radius <= 0.0)
+    if (thickness <= 0.0 || radius <= 0.0)
 	throw std::invalid_argument("invalid value");
 
-    if (g1 == g2 || g1 >= m_num_grid_points || g2 >= m_num_grid_points)
+    if (g1 == g2 || g1 >= m_next_grid_id || g2 >= m_next_grid_id)
 	throw std::invalid_argument("invalid grid id");
 
-    FastgenWriter::Record(m_writer) << "CLINE" << m_num_elements++ << material_id <<
-				    g1 << g2 << thickness << radius;
+    FastgenWriter::Record(m_writer) << "CLINE" << m_next_element_id++ << material_id
+				    << g1 << g2 << thickness << radius;
 }
 
 
@@ -261,18 +240,17 @@ void
 Section::add_triangle(std::size_t material_id, std::size_t g1, std::size_t g2,
 		      std::size_t g3, double thickness, bool grid_centered)
 {
-    if (thickness < 0.0)
+    if (thickness <= 0.0)
 	throw std::invalid_argument("invalid thickness");
 
     if (g1 == g2 || g1 == g3 || g2 == g3)
 	throw std::invalid_argument("invalid grid id");
 
-    if (g1 >= m_num_grid_points || g2 >= m_num_grid_points
-	|| g3 >= m_num_grid_points)
+    if (g1 >= m_next_grid_id || g2 >= m_next_grid_id || g3 >= m_next_grid_id)
 	throw std::invalid_argument("invalid grid id");
 
-    FastgenWriter::Record(m_writer) << "CTRI" << m_num_elements++ << material_id <<
-				    g1 << g2 << g3 << thickness << (grid_centered ? 1 : 2);
+    FastgenWriter::Record(m_writer) << "CTRI" << m_next_element_id++ << material_id
+				    << g1 << g2 << g3 << thickness << (grid_centered ? 1 : 2);
 }
 
 
@@ -280,18 +258,41 @@ void
 Section::add_quad(std::size_t material_id, std::size_t g1, std::size_t g2,
 		  std::size_t g3, std::size_t g4, double thickness, bool grid_centered)
 {
-    if (thickness < 0.0)
+    if (thickness <= 0.0)
 	throw std::invalid_argument("invalid thickness");
 
     if (g1 == g2 || g1 == g3 || g1 == g4 || g2 == g3 || g2 == g4 || g3 == g4)
 	throw std::invalid_argument("repeated grid id");
 
-    if (g1 >= m_num_grid_points || g2 >= m_num_grid_points
-	|| g3 >= m_num_grid_points || g4 >= m_num_grid_points)
+    if (g1 >= m_next_grid_id || g2 >= m_next_grid_id || g3 >= m_next_grid_id
+	|| g4 >= m_next_grid_id)
 	throw std::invalid_argument("invalid grid id");
 
-    FastgenWriter::Record(m_writer) << "CQUAD" << m_num_elements++ << material_id <<
+    FastgenWriter::Record(m_writer) << "CQUAD" << m_next_element_id++ << material_id
+				    <<
 				    g1 << g2 << g3 << g4 << thickness << (grid_centered ? 1 : 2);
+}
+
+
+HIDDEN int
+convert_region_start(db_tree_state *tree_state, const db_full_path *path,
+		     const rt_comb_internal *UNUSED(comb), void *UNUSED(client_data))
+{
+    RT_CK_DBTS(tree_state);
+
+    char *name = db_path_to_string(path);
+    bu_free(name, "name");
+
+    return 0;
+}
+
+
+HIDDEN tree *
+convert_region_end(db_tree_state *tree_state, const db_full_path *UNUSED(path),
+		   tree *cur_tree, void *UNUSED(client_data))
+{
+    RT_CK_DBTS(tree_state);
+    return cur_tree;
 }
 
 
@@ -299,19 +300,21 @@ HIDDEN tree *
 convert_primitive(db_tree_state *tree_state, const db_full_path *path,
 		  rt_db_internal *internal, void *client_data)
 {
-    FastgenWriter &writer = *static_cast<FastgenWriter *>(client_data);
-
     RT_CK_DBTS(tree_state);
 
     if (internal->idb_major_type != DB5_MAJORTYPE_BRLCAD)
 	return NULL;
 
+    FastgenWriter &writer = *static_cast<FastgenWriter *>(client_data);
+    char *name = db_path_to_string(path);
+
     switch (internal->idb_type) {
 	case ID_ELL:
 	case ID_SPH: {
-	    Section section(writer, "sphere1", 11, 0, 0, 0, true);
-	    std::size_t g1 = section.add_grid_point(0.0, 0.0, 0.0);
-	    section.add_sphere(0, g1, 1.0, 10.0);
+	    const rt_ell_internal &ell = *static_cast<rt_ell_internal *>(internal->idb_ptr);
+	    Section section(writer, name, 0, false);
+	    std::size_t id = section.add_grid_point(ell.v[0], ell.v[1], ell.v[2]);
+	    section.add_sphere(0, id, 1.0, ell.a[0]);
 	    break;
 	}
 
@@ -320,6 +323,7 @@ convert_primitive(db_tree_state *tree_state, const db_full_path *path,
 	    break;
     }
 
+    bu_free(name, "name");
     return NULL;
 }
 
