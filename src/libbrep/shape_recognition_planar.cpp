@@ -111,7 +111,7 @@ subbrep_polygon_tri(const ON_Brep *brep, const point_t *all_verts, int loop_ind,
 
 /*
  * To determine if a polyhedron is inside or outside, we do a ray-based
- * test.  We will assume that determing the positive/negative status of one
+ * test.  We will assume that determining the positive/negative status of one
  * face is sufficient - i.e., we will not check for flipped normals on faces.
  *
  * 1.  Iterate over the loops, and construct polygons.  Flip as needed per

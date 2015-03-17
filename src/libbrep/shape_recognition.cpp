@@ -209,7 +209,7 @@ find_top_level_hierarchy(struct bu_ptbl *subbreps)
 		subbrep_set.erase((long *)obj);
 	    } else {
 		if (obj->params->bool_op == '-') {
-		    //std::cout << "zero fils, but a negative shape - " << bu_vls_addr(obj->key) << " added to subtractions\n";
+		    //std::cout << "zero fills, but a negative shape - " << bu_vls_addr(obj->key) << " added to subtractions\n";
 		    subtractions.insert((long *)obj);
 		}
 	    }
