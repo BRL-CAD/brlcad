@@ -395,25 +395,16 @@ ell_is_sphere(const rt_ell_internal &ell)
 }
 
 
-HIDDEN int
-convert_region_start(db_tree_state *tree_state, const db_full_path *path,
-		     const rt_comb_internal *UNUSED(comb), void *UNUSED(client_data))
+HIDDEN void
+write_nmg_region(nmgregion *nmg_region, const db_full_path *path, int region_id,
+		 int material_id, float color[3], void *client_data)
 {
-    RT_CK_DBTS(tree_state);
-
-    char *name = db_path_to_string(path);
-    bu_free(name, "name");
-
-    return 0;
-}
-
-
-HIDDEN tree *
-convert_region_end(db_tree_state *tree_state, const db_full_path *UNUSED(path),
-		   tree *cur_tree, void *UNUSED(client_data))
-{
-    RT_CK_DBTS(tree_state);
-    return cur_tree;
+    (void)nmg_region;
+    (void)path;
+    (void)region_id;
+    (void)material_id;
+    (void)color;
+    (void)client_data;
 }
 
 
@@ -426,7 +417,11 @@ convert_primitive(db_tree_state *tree_state, const db_full_path *path,
     if (internal->idb_major_type != DB5_MAJORTYPE_BRLCAD)
 	return NULL;
 
-    FastgenWriter &writer = *static_cast<FastgenWriter *>(client_data);
+    gcv_region_end_data &region_end_data = *static_cast<gcv_region_end_data *>
+					   (client_data);
+    FastgenWriter &writer = *static_cast<FastgenWriter *>
+			    (region_end_data.client_data);
+
     char *name = db_path_to_string(path);
 
     switch (internal->idb_type) {
@@ -464,9 +459,8 @@ convert_primitive(db_tree_state *tree_state, const db_full_path *path,
 	    break;
 	}
 
-    tesselate:
-    default: // handle any primitives that can't be directly expressed in fg4
-	    bu_log("skipping object '%s'\n", db_path_to_string(path));
+	default: // handle any primitives that can't be directly expressed in fg4
+	tesselate:
 	    break;
     }
 
@@ -495,9 +489,19 @@ extern "C" {
 	    char **object_names = db_dpv_to_argv(results);
 	    bu_free(results, "tops");
 
-	    db_walk_tree(dbip, num_objects, const_cast<const char **>(object_names), 1,
-			 &rt_initial_tree_state, NULL, NULL, convert_primitive, &writer);
+	    const bn_tol tol = {BN_TOL_MAGIC, 5e-4, 5e-4 * 5e-4, 1e-6, 1 - 1e-6};
+	    const rt_tess_tol ttol = {RT_TESS_TOL_MAGIC, 0.0, 0.01, 0.0};
+	    model *vmodel = nmg_mm();
+	    db_tree_state initial_tree_state = rt_initial_tree_state;
+	    initial_tree_state.ts_tol = &tol;
+	    initial_tree_state.ts_ttol = &ttol;
+	    initial_tree_state.ts_m = &vmodel;
 
+	    gcv_region_end_data region_end_data = {write_nmg_region, &writer};
+	    db_walk_tree(dbip, num_objects, const_cast<const char **>(object_names), 1,
+			 &initial_tree_state, NULL, gcv_region_end, convert_primitive, &region_end_data);
+
+	    nmg_km(vmodel);
 	    bu_free(object_names, "object_names");
 	}
 
