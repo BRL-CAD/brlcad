@@ -346,6 +346,55 @@ write_bot(FastgenWriter &writer, const rt_bot_internal &bot)
 }
 
 
+HIDDEN bool
+ell_is_sphere(const rt_ell_internal &ell)
+{
+    // based on rt_sph_prep()
+
+    fastf_t magsq_a, magsq_b, magsq_c;
+    vect_t Au, Bu, Cu; // A, B, C with unit length
+    fastf_t f;
+
+    // Validate that |A| > 0, |B| > 0, |C| > 0
+    magsq_a = MAGSQ(ell.a);
+    magsq_b = MAGSQ(ell.b);
+    magsq_c = MAGSQ(ell.c);
+
+    if (ZERO(magsq_a) || ZERO(magsq_b) || ZERO(magsq_c))
+	return false;
+
+    // Validate that |A|, |B|, and |C| are nearly equal
+    if (!EQUAL(magsq_a, magsq_b) || !EQUAL(magsq_a, magsq_c))
+	return false;
+
+    // Create unit length versions of A, B, C
+    f = 1.0 / sqrt(magsq_a);
+    VSCALE(Au, ell.a, f);
+    f = 1.0 / sqrt(magsq_b);
+    VSCALE(Bu, ell.b, f);
+    f = 1.0 / sqrt(magsq_c);
+    VSCALE(Cu, ell.c, f);
+
+    // Validate that A.B == 0, B.C == 0, A.C == 0 (check dir only)
+    f = VDOT(Au, Bu);
+
+    if (!ZERO(f))
+	return false;
+
+    f = VDOT(Bu, Cu);
+
+    if (!ZERO(f))
+	return false;
+
+    f = VDOT(Au, Cu);
+
+    if (!ZERO(f))
+	return false;
+
+    return true;
+}
+
+
 HIDDEN int
 convert_region_start(db_tree_state *tree_state, const db_full_path *path,
 		     const rt_comb_internal *UNUSED(comb), void *UNUSED(client_data))
@@ -384,6 +433,11 @@ convert_primitive(db_tree_state *tree_state, const db_full_path *path,
 	case ID_ELL:
 	case ID_SPH: {
 	    const rt_ell_internal &ell = *static_cast<rt_ell_internal *>(internal->idb_ptr);
+	    RT_ELL_CK_MAGIC(&ell);
+
+	    if (internal->idb_type != ID_SPH && !ell_is_sphere(ell))
+		goto tesselate;
+
 	    Section section(writer, name, 0, true);
 	    std::size_t center = section.add_grid_point(ell.v[0], ell.v[1], ell.v[2]);
 	    section.add_sphere(center, 1.0, ell.a[0]);
@@ -392,6 +446,7 @@ convert_primitive(db_tree_state *tree_state, const db_full_path *path,
 
 	case ID_ARB8: {
 	    const rt_arb_internal &arb = *static_cast<rt_arb_internal *>(internal->idb_ptr);
+	    RT_ARB_CK_MAGIC(&arb);
 	    Section section(writer, name, 0, true);
 
 	    for (int i = 0; i < 8; ++i)
@@ -404,11 +459,13 @@ convert_primitive(db_tree_state *tree_state, const db_full_path *path,
 
 	case ID_BOT: {
 	    const rt_bot_internal &bot = *static_cast<rt_bot_internal *>(internal->idb_ptr);
+	    RT_BOT_CK_MAGIC(&bot);
 	    write_bot(writer, bot);
 	    break;
 	}
 
-	default:
+    tesselate:
+    default: // handle any primitives that can't be directly expressed in fg4
 	    bu_log("skipping object '%s'\n", db_path_to_string(path));
 	    break;
     }
