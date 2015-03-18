@@ -124,7 +124,7 @@ FastgenWriter::Record::operator<<(const T &value)
 FastgenWriter::Record &
 FastgenWriter::Record::operator<<(fastf_t value)
 {
-
+    // TODO: check that truncated value != 0.0, where zero is forbidden
     std::ostringstream sstream;
     sstream << std::showpoint << value;
     return operator<<(sstream.str().substr(0, FIELD_WIDTH));
@@ -146,7 +146,7 @@ FastgenWriter::FastgenWriter(const std::string &path) :
 {
     m_ostream.exceptions(std::ofstream::failbit | std::ofstream::badbit);
 
-    for (std::size_t i = 0; i < MAX_GROUP_ID + 1; ++i)
+    for (std::size_t i = 0; i <= MAX_GROUP_ID; ++i)
 	m_next_section_id[i] = 1;
 }
 
@@ -277,7 +277,7 @@ Section::add_cone(std::size_t g1, std::size_t g2, fastf_t ro1, fastf_t ro2,
     if (g1 == g2 || !g1 || !g2 || g1 >= m_next_grid_id || g2 >= m_next_grid_id)
 	throw std::invalid_argument("invalid grid id");
 
-    if (ri1 <= 0.0 || ri2 <= 0.0 || ro1 <= ri2 || ro2 <= ri2)
+    if (ri1 < 0.0 || ri2 < 0.0 || ro1 < ri2 || ro2 < ri2)
 	throw std::invalid_argument("invalid radius");
 
     FastgenWriter::Record(m_writer) << "CCONE2" << m_next_element_id << 0 << g1 <<
@@ -474,6 +474,32 @@ ell_is_sphere(const rt_ell_internal &ell)
 }
 
 
+HIDDEN bool
+tgc_is_ccone(const rt_tgc_internal &tgc)
+{
+    {
+	vect_t a_norm, b_norm, c_norm, d_norm;
+	VMOVE(a_norm, tgc.a);
+	VMOVE(b_norm, tgc.b);
+	VMOVE(c_norm, tgc.c);
+	VMOVE(d_norm, tgc.d);
+	VUNITIZE(a_norm);
+	VUNITIZE(b_norm);
+	VUNITIZE(c_norm);
+	VUNITIZE(d_norm);
+
+	if (!VEQUAL(a_norm, c_norm) || !VEQUAL(b_norm, d_norm))
+	    return false;
+    }
+
+    if (!ZERO(VDOT(tgc.a, tgc.h)) || !ZERO(VDOT(tgc.b, tgc.h))
+	|| !ZERO(VDOT(tgc.a, tgc.b)))
+	return false;
+
+    return true;
+}
+
+
 HIDDEN tree *
 convert_primitive(db_tree_state *tree_state, const db_full_path *path,
 		  rt_db_internal *internal, void *client_data)
@@ -515,14 +541,27 @@ convert_primitive(db_tree_state *tree_state, const db_full_path *path,
 		goto tessellate;
 
 	    Section section(writer, name, true);
-	    std::size_t center = section.add_grid_point(ell.v[0], ell.v[1], ell.v[2]);
-	    section.add_sphere(center, 1.0, MAGNITUDE(ell.a));
+	    section.add_grid_point(ell.v[0], ell.v[1], ell.v[2]);
+	    section.add_sphere(1, 1.0, MAGNITUDE(ell.a));
 	    break;
 	}
 
 	case ID_TGC:
-	case ID_REC:
-	    goto tessellate;
+	case ID_REC: {
+	    const rt_tgc_internal &tgc = *static_cast<rt_tgc_internal *>(internal->idb_ptr);
+	    RT_TGC_CK_MAGIC(&tgc);
+
+	    if (!tgc_is_ccone(tgc))
+		goto tessellate;
+
+	    Section section(writer, name, true);
+	    point_t v2;
+	    VADD2(v2, tgc.v, tgc.h);
+	    section.add_grid_point(tgc.v[0], tgc.v[1], tgc.v[2]);
+	    section.add_grid_point(v2[0], v2[1], v2[2]);
+	    section.add_cone(1, 2, MAGNITUDE(tgc.a), MAGNITUDE(tgc.b), 0.0, 0.0);
+	    break;
+	}
 
 	case ID_ARB8: {
 	    const rt_arb_internal &arb = *static_cast<rt_arb_internal *>(internal->idb_ptr);
