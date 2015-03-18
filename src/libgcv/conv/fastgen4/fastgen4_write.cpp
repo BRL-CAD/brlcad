@@ -147,25 +147,24 @@ public:
     Section(FastgenWriter &writer, const std::string &name, std::size_t group_id,
 	    bool volume_mode);
 
-    std::size_t add_grid_point(double x, double y, double z);
+    std::size_t add_grid_point(fastf_t x, fastf_t y, fastf_t z);
 
-    void add_sphere(std::size_t g1, double thickness, double radius);
+    void add_sphere(std::size_t g1, fastf_t thickness, fastf_t radius);
 
-    void add_cone(std::size_t g1, std::size_t g2, double ro1, double ro2,
-		  double ri1, double ri2);
+    void add_cone(std::size_t g1, std::size_t g2, fastf_t ro1, fastf_t ro2,
+		  fastf_t ri1, fastf_t ri2);
 
-    void add_line(std::size_t g1, std::size_t g2, double thickness, double radius);
+    void add_line(std::size_t g1, std::size_t g2, fastf_t thickness,
+		  fastf_t radius);
 
     void add_triangle(std::size_t g1, std::size_t g2, std::size_t g3,
-		      double thickness, bool grid_centered = false);
-
-    void add_quad(std::size_t g1, std::size_t g2, std::size_t g3, std::size_t g4,
-		  double thickness, bool grid_centered = false);
+		      fastf_t thickness, bool grid_centered = false);
 
     void add_hexahedron(const std::size_t *g);
 
 
 private:
+    static const fastf_t INCHES_PER_MM;
     static const std::size_t MAX_GRID_POINTS = 50000;
     static const std::size_t MAX_HOLES = 40000;
     static const std::size_t MAX_WALLS = 40000;
@@ -174,6 +173,9 @@ private:
     std::size_t m_next_element_id;
     FastgenWriter &m_writer;
 };
+
+
+const fastf_t Section::INCHES_PER_MM = 1.0 / 25.4;
 
 
 Section::Section(FastgenWriter &writer, const std::string &name,
@@ -200,8 +202,12 @@ Section::Section(FastgenWriter &writer, const std::string &name,
 
 
 std::size_t
-Section::add_grid_point(double x, double y, double z)
+Section::add_grid_point(fastf_t x, fastf_t y, fastf_t z)
 {
+    x *= INCHES_PER_MM;
+    y *= INCHES_PER_MM;
+    z *= INCHES_PER_MM;
+
     if (m_next_grid_id > MAX_GRID_POINTS)
 	throw std::length_error("maximum GRID records");
 
@@ -213,8 +219,11 @@ Section::add_grid_point(double x, double y, double z)
 
 
 void
-Section::add_sphere(std::size_t g1, double thickness, double radius)
+Section::add_sphere(std::size_t g1, fastf_t thickness, fastf_t radius)
 {
+    thickness *= INCHES_PER_MM;
+    radius *= INCHES_PER_MM;
+
     if (thickness <= 0.0 || radius <= 0.0)
 	throw std::invalid_argument("invalid value");
 
@@ -224,9 +233,14 @@ Section::add_sphere(std::size_t g1, double thickness, double radius)
 
 
 void
-Section::add_cone(std::size_t g1, std::size_t g2, double ro1, double ro2,
-		  double ri1, double ri2)
+Section::add_cone(std::size_t g1, std::size_t g2, fastf_t ro1, fastf_t ro2,
+		  fastf_t ri1, fastf_t ri2)
 {
+    ro1 *= INCHES_PER_MM;
+    ro2 *= INCHES_PER_MM;
+    ri1 *= INCHES_PER_MM;
+    ri2 *= INCHES_PER_MM;
+
     if (g1 == g2 || g1 >= m_next_grid_id || g2 >= m_next_grid_id)
 	throw std::invalid_argument("invalid grid id");
 
@@ -241,9 +255,12 @@ Section::add_cone(std::size_t g1, std::size_t g2, double ro1, double ro2,
 
 
 void
-Section::add_line(std::size_t g1, std::size_t g2, double thickness,
-		  double radius)
+Section::add_line(std::size_t g1, std::size_t g2, fastf_t thickness,
+		  fastf_t radius)
 {
+    thickness *= INCHES_PER_MM;
+    radius *= INCHES_PER_MM;
+
     if (thickness <= 0.0 || radius <= 0.0)
 	throw std::invalid_argument("invalid value");
 
@@ -251,14 +268,16 @@ Section::add_line(std::size_t g1, std::size_t g2, double thickness,
 	throw std::invalid_argument("invalid grid id");
 
     FastgenWriter::Record(m_writer) << "CLINE" << m_next_element_id++ << 0 << g1 <<
-				    g2 << thickness << radius;
+				    g2 << "" << "" << thickness << radius;
 }
 
 
 void
 Section::add_triangle(std::size_t g1, std::size_t g2, std::size_t g3,
-		      double thickness, bool grid_centered)
+		      fastf_t thickness, bool grid_centered)
 {
+    thickness *= INCHES_PER_MM;
+
     if (thickness <= 0.0)
 	throw std::invalid_argument("invalid thickness");
 
@@ -270,25 +289,6 @@ Section::add_triangle(std::size_t g1, std::size_t g2, std::size_t g3,
 
     FastgenWriter::Record(m_writer) << "CTRI" << m_next_element_id++ << 0 << g1 <<
 				    g2 << g3 << thickness << (grid_centered ? 1 : 2);
-}
-
-
-void
-Section::add_quad(std::size_t g1, std::size_t g2, std::size_t g3,
-		  std::size_t g4, double thickness, bool grid_centered)
-{
-    if (thickness <= 0.0)
-	throw std::invalid_argument("invalid thickness");
-
-    if (g1 == g2 || g1 == g3 || g1 == g4 || g2 == g3 || g2 == g4 || g3 == g4)
-	throw std::invalid_argument("repeated grid id");
-
-    if (g1 >= m_next_grid_id || g2 >= m_next_grid_id || g3 >= m_next_grid_id
-	|| g4 >= m_next_grid_id)
-	throw std::invalid_argument("invalid grid id");
-
-    FastgenWriter::Record(m_writer) << "CQUAD" << m_next_element_id++ << 0 << g1 <<
-				    g2 << g3 << g4 << thickness << (grid_centered ? 1 : 2);
 }
 
 
@@ -330,7 +330,7 @@ write_bot(FastgenWriter &writer, const rt_bot_internal &bot)
     }
 
     for (std::size_t i = 0; i < bot.num_faces; ++i) {
-	double thickness = 1.0;
+	fastf_t thickness = 1.0;
 	bool grid_centered = false;
 
 	if (bot.mode == RT_BOT_PLATE) {
@@ -342,6 +342,41 @@ write_bot(FastgenWriter &writer, const rt_bot_internal &bot)
 	const int * const face = &bot.faces[i * 3];
 	section.add_triangle(face[0] + 1, face[1] + 1, face[2] + 1, thickness,
 			     grid_centered);
+    }
+}
+
+
+static const bn_tol tol = {BN_TOL_MAGIC, 5e-4, 5e-4 * 5e-4, 1e-6, 1 - 1e-6};
+
+
+HIDDEN void
+write_nmg_region(nmgregion *nmg_region, const db_full_path *UNUSED(path),
+		 int UNUSED(region_id), int UNUSED(material_id), float UNUSED(color[3]),
+		 void *client_data)
+{
+    NMG_CK_REGION(nmg_region);
+    NMG_CK_MODEL(nmg_region->m_p);
+    //RT_CK_FULL_PATH(path);
+
+    FastgenWriter &writer = *static_cast<FastgenWriter *>(client_data);
+
+    nmg_triangulate_model(nmg_region->m_p, &tol);
+    shell *vshell;
+
+    for (BU_LIST_FOR(vshell, shell, &nmg_region->s_hd)) {
+	NMG_CK_SHELL(vshell);
+
+	rt_bot_internal *bot = nmg_bot(vshell, &tol);
+	write_bot(writer, *bot);
+
+	// fill in an rt_db_internal with our new bot so we can free it
+	rt_db_internal internal;
+	RT_DB_INTERNAL_INIT(&internal);
+	internal.idb_major_type = DB5_MAJORTYPE_BRLCAD;
+	internal.idb_minor_type = ID_BOT;
+	internal.idb_meth = &OBJ[ID_BOT];
+	internal.idb_ptr = bot;
+	internal.idb_meth->ft_ifree(&internal);
     }
 }
 
@@ -395,41 +430,6 @@ ell_is_sphere(const rt_ell_internal &ell)
 }
 
 
-static const bn_tol tol = {BN_TOL_MAGIC, 5e-4, 5e-4 * 5e-4, 1e-6, 1 - 1e-6};
-
-
-HIDDEN void
-write_nmg_region(nmgregion *nmg_region, const db_full_path *UNUSED(path),
-		 int UNUSED(region_id), int UNUSED(material_id), float UNUSED(color[3]),
-		 void *client_data)
-{
-    NMG_CK_REGION(nmg_region);
-    NMG_CK_MODEL(nmg_region->m_p);
-    //RT_CK_FULL_PATH(path);
-
-    FastgenWriter &writer = *static_cast<FastgenWriter *>(client_data);
-
-    nmg_triangulate_model(nmg_region->m_p, &tol);
-    shell *vshell;
-
-    for (BU_LIST_FOR(vshell, shell, &nmg_region->s_hd)) {
-	NMG_CK_SHELL(vshell);
-
-	rt_bot_internal *bot = nmg_bot(vshell, &tol);
-	write_bot(writer, *bot);
-
-	// fill in a db_internal with our new bot so we can free it
-	rt_db_internal internal;
-	RT_DB_INTERNAL_INIT(&internal);
-	internal.idb_major_type = DB5_MAJORTYPE_BRLCAD;
-	internal.idb_minor_type = ID_BOT;
-	internal.idb_meth = &OBJ[ID_BOT];
-	internal.idb_ptr = bot;
-	internal.idb_meth->ft_ifree(&internal);
-    }
-}
-
-
 HIDDEN tree *
 convert_primitive(db_tree_state *tree_state, const db_full_path *path,
 		  rt_db_internal *internal, void *client_data)
@@ -448,19 +448,35 @@ convert_primitive(db_tree_state *tree_state, const db_full_path *path,
     char *name = db_path_to_string(path);
 
     switch (internal->idb_type) {
+	case ID_CLINE: {
+	    const rt_cline_internal &cline = *static_cast<rt_cline_internal *>
+					     (internal->idb_ptr);
+	    RT_CLINE_CK_MAGIC(&cline);
+
+	    Section section(writer, name, 0, true);
+	    section.add_grid_point(cline.v[0], cline.v[1], cline.v[2]);
+	    section.add_grid_point(cline.h[0], cline.h[1], cline.h[2]);
+	    section.add_line(1, 2, cline.thickness, cline.radius);
+	    break;
+	}
+
 	case ID_ELL:
 	case ID_SPH: {
 	    const rt_ell_internal &ell = *static_cast<rt_ell_internal *>(internal->idb_ptr);
 	    RT_ELL_CK_MAGIC(&ell);
 
 	    if (internal->idb_type != ID_SPH && !ell_is_sphere(ell))
-		goto tesselate;
+		goto tessellate;
 
 	    Section section(writer, name, 0, true);
 	    std::size_t center = section.add_grid_point(ell.v[0], ell.v[1], ell.v[2]);
-	    section.add_sphere(center, 1.0, ell.a[0]);
+	    section.add_sphere(center, 1.0, MAGNITUDE(ell.a));
 	    break;
 	}
+
+	case ID_TGC:
+	case ID_REC:
+	    goto tessellate;
 
 	case ID_ARB8: {
 	    const rt_arb_internal &arb = *static_cast<rt_arb_internal *>(internal->idb_ptr);
@@ -483,7 +499,7 @@ convert_primitive(db_tree_state *tree_state, const db_full_path *path,
 	}
 
 	default: // handle any primitives that can't be directly expressed in fg4
-	tesselate:
+	tessellate:
 	    bu_free(name, "name");
 	    return nmg_booltree_leaf_tess(tree_state, path, internal, client_data);
     }
@@ -504,7 +520,7 @@ extern "C" {
 		       const struct gcv_opts *UNUSED(options))
     {
 	FastgenWriter writer(path);
-	writer.write_comment("g -> fastgen4 conversion");
+	writer.write_comment(" g -> fastgen4 conversion");
 
 	{
 	    directory **results;
