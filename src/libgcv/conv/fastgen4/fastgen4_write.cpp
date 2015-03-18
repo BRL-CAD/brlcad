@@ -52,10 +52,10 @@ private:
 
     class Record;
 
-    static const std::size_t MAX_GROUPS = 50;
-    static const std::size_t MAX_COMPONENTS = 999;
+    static const std::size_t MAX_GROUP_ID = 49;
+    static const std::size_t MAX_SECTION_ID = 999;
 
-    std::size_t m_next_section_id;
+    std::size_t m_next_section_id[MAX_GROUP_ID + 1];
     bool m_record_open;
     std::ofstream m_ostream;
 };
@@ -141,11 +141,13 @@ FastgenWriter::Record::text(const std::string &value)
 
 
 FastgenWriter::FastgenWriter(const std::string &path) :
-    m_next_section_id(1),
     m_record_open(false),
     m_ostream(path.c_str(), std::ofstream::out)
 {
     m_ostream.exceptions(std::ofstream::failbit | std::ofstream::badbit);
+
+    for (std::size_t i = 0; i < MAX_GROUP_ID + 1; ++i)
+	m_next_section_id[i] = 1;
 }
 
 
@@ -165,8 +167,7 @@ FastgenWriter::write_comment(const std::string &value)
 class Section
 {
 public:
-    Section(FastgenWriter &writer, const std::string &name, std::size_t group_id,
-	    bool volume_mode);
+    Section(FastgenWriter &writer, const std::string &name, bool volume_mode);
 
     std::size_t add_grid_point(fastf_t x, fastf_t y, fastf_t z);
 
@@ -201,26 +202,32 @@ const fastf_t Section::INCHES_PER_MM = 1.0 / 25.4;
 
 
 Section::Section(FastgenWriter &writer, const std::string &name,
-		 std::size_t group_id, bool volume_mode) :
+		 bool volume_mode) :
     m_next_grid_id(1),
     m_next_element_id(1),
     m_volume_mode(volume_mode),
     m_writer(writer)
 {
-    if (group_id > FastgenWriter::MAX_GROUPS
-	|| m_writer.m_next_section_id > FastgenWriter::MAX_COMPONENTS)
-	throw std::invalid_argument("invalid id");
+    std::size_t group_id = 0;
+
+    while (group_id <= FastgenWriter::MAX_GROUP_ID
+	   && m_writer.m_next_section_id[group_id] > FastgenWriter::MAX_SECTION_ID)
+	++group_id;
+
+    if (group_id > FastgenWriter::MAX_GROUP_ID)
+	throw std::range_error("group_id exceeds limit");
 
     {
 	FastgenWriter::Record record(m_writer);
-	record << "$NAME" << group_id << m_writer.m_next_section_id;
+	record << "$NAME" << group_id << m_writer.m_next_section_id[group_id];
 	record << "" << "" << "" << "";
 	record.text(name);
     }
 
     FastgenWriter::Record(m_writer) << "SECTION" << group_id
-				    << m_writer.m_next_section_id << (m_volume_mode ? 2 : 1);
-    ++m_writer.m_next_section_id;
+				    << m_writer.m_next_section_id[group_id] << (m_volume_mode ? 2 : 1);
+
+    ++m_writer.m_next_section_id[group_id];
 }
 
 
@@ -353,7 +360,7 @@ HIDDEN void
 write_bot(FastgenWriter &writer, const std::string &name,
 	  const rt_bot_internal &bot)
 {
-    Section section(writer, name, 0, bot.mode == RT_BOT_SOLID);
+    Section section(writer, name, bot.mode == RT_BOT_SOLID);
 
     for (std::size_t i = 0; i < bot.num_vertices; ++i) {
 	const fastf_t * const vertex = &bot.vertices[i * 3];
@@ -490,7 +497,7 @@ convert_primitive(db_tree_state *tree_state, const db_full_path *path,
 					     (internal->idb_ptr);
 	    RT_CLINE_CK_MAGIC(&cline);
 
-	    Section section(writer, name, 0, true);
+	    Section section(writer, name, true);
 	    point_t v2;
 	    VADD2(v2, cline.v, cline.h);
 	    section.add_grid_point(cline.v[0], cline.v[1], cline.v[2]);
@@ -507,7 +514,7 @@ convert_primitive(db_tree_state *tree_state, const db_full_path *path,
 	    if (internal->idb_type != ID_SPH && !ell_is_sphere(ell))
 		goto tessellate;
 
-	    Section section(writer, name, 0, true);
+	    Section section(writer, name, true);
 	    std::size_t center = section.add_grid_point(ell.v[0], ell.v[1], ell.v[2]);
 	    section.add_sphere(center, 1.0, MAGNITUDE(ell.a));
 	    break;
@@ -520,7 +527,7 @@ convert_primitive(db_tree_state *tree_state, const db_full_path *path,
 	case ID_ARB8: {
 	    const rt_arb_internal &arb = *static_cast<rt_arb_internal *>(internal->idb_ptr);
 	    RT_ARB_CK_MAGIC(&arb);
-	    Section section(writer, name, 0, true);
+	    Section section(writer, name, true);
 
 	    for (int i = 0; i < 8; ++i)
 		section.add_grid_point(arb.pt[i][0], arb.pt[i][1], arb.pt[i][2]);
