@@ -1093,6 +1093,69 @@ tolerance_2d_from_3d(
     return tol_2d;
 }
 
+static double
+minimum_distance(const ON_Line &lineA, const ON_Line &lineB, double isect_tol)
+{
+    double min_dist = lineA.MinimumDistanceTo(lineB);
+
+    if (min_dist >= isect_tol) {
+	// min_dist may not be accurate if endpoints are collinear
+	double d1 = lineA.from.DistanceTo(lineB.from);
+	double d2 = lineA.from.DistanceTo(lineB.to);
+	double d3 = lineA.to.DistanceTo(lineB.from);
+	double d4 = lineA.to.DistanceTo(lineB.to);
+
+	min_dist = std::min(min_dist, std::min(d1, std::min(d2,
+			std::min(d3, d4))));
+    }
+    return min_dist;
+}
+
+// For two lines known to be parallel and within distance tolerance,
+// find the point/overlap intersection parameters.
+//
+// Returns 1 for point intersection, 2 for overlap intersection.
+// For overlaps, parameters are set to be increasing from a1 to a2 and
+// b1 to b2.
+static int
+intersect_overlapping_lines(
+    double &t_a1,
+    double &t_a2,
+    double &t_b1,
+    double &t_b2,
+    const ON_Line &lineA,
+    const ON_Line &lineB,
+    double tol_2d)
+{
+    // curves lie on the same line, may be single
+    // point intersection or overlap
+    lineA.ClosestPointTo(lineB.from, &t_a1);
+    lineA.ClosestPointTo(lineB.to, &t_a2);
+    lineB.ClosestPointTo(lineA.from, &t_b1);
+    lineB.ClosestPointTo(lineA.to, &t_b2);
+
+    // Since ClosestPointTo treats the lines as
+    // infinite, t values aren't necessarily in [0.0, 1.0].
+    CLAMP(t_a1, 0.0, 1.0);
+    CLAMP(t_a2, 0.0, 1.0);
+    CLAMP(t_b1, 0.0, 1.0);
+    CLAMP(t_b2, 0.0, 1.0);
+
+    // t values may not be increasing if lines have
+    // opposite directions.
+    if (t_a1 > t_a2) {
+	std::swap(t_a1, t_a2);
+    }
+    if (t_b1 > t_b2) {
+	std::swap(t_b1, t_b2);
+    }
+
+    if (ON_NearZero(t_a2 - t_a1, tol_2d)) {
+	// point intersection
+	return 1;
+    }
+    return 2;
+}
 
 int
 ON_Intersect(const ON_Curve *curveA,
@@ -1239,45 +1302,14 @@ ON_Intersect(const ON_Curve *curveA,
 	    ON_Line lineA(curveA->PointAt(i->first->m_t.Min()), curveA->PointAt(i->first->m_t.Max()));
 	    ON_Line lineB(curveB->PointAt(i->second->m_t.Min()), curveB->PointAt(i->second->m_t.Max()));
 	    if (lineA.Direction().IsParallelTo(lineB.Direction())) {
-		double min_dist = lineA.MinimumDistanceTo(lineB);
-
-		if (min_dist >= isect_tol) {
-		    // min_dist may not be accurate if endpoints are collinear
-		    double d1 = lineA.from.DistanceTo(lineB.from);
-		    double d2 = lineA.from.DistanceTo(lineB.to);
-		    double d3 = lineA.to.DistanceTo(lineB.from);
-		    double d4 = lineA.to.DistanceTo(lineB.to);
-
-		    min_dist = std::min(min_dist, std::min(d1, std::min(d2,
-				    std::min(d3, d4))));
-		}
+		double min_dist = minimum_distance(lineA, lineB, isect_tol);
 
 		if (min_dist < isect_tol) {
-		    // curves lie on the same line, may be single
-		    // point intersection or overlap
 		    double t_a1, t_a2, t_b1, t_b2;
-		    lineA.ClosestPointTo(lineB.from, &t_a1);
-		    lineA.ClosestPointTo(lineB.to, &t_a2);
-		    lineB.ClosestPointTo(lineA.from, &t_b1);
-		    lineB.ClosestPointTo(lineA.to, &t_b2);
+		    int ret = intersect_overlapping_lines(
+			    t_a1, t_a2, t_b1, t_b2, lineA, lineB, t1_tol);
 
-		    // Since ClosestPointTo treats the lines as
-		    // infinite, t values aren't necessarily in [0.0, 1.0].
-		    CLAMP(t_a1, 0.0, 1.0);
-		    CLAMP(t_a2, 0.0, 1.0);
-		    CLAMP(t_b1, 0.0, 1.0);
-		    CLAMP(t_b2, 0.0, 1.0);
-
-		    // t values may not be increasing if lines have
-		    // opposite directions.
-		    if (t_a1 > t_a2) {
-			std::swap(t_a1, t_a2);
-		    }
-		    if (t_b1 > t_b2) {
-			std::swap(t_b1, t_b2);
-		    }
-
-		    if (ON_NearZero(t_a2 - t_a1, t1_tol)) {
+		    if (ret == 1) {
 			// point intersection
 			XEventProxy event(ON_X_EVENT::ccx_point);
 			event.SetAPoint(lineA.PointAt(t_a1));
@@ -1285,7 +1317,7 @@ ON_Intersect(const ON_Curve *curveA,
 			event.SetACurveParameter(i->first->m_t.ParameterAt(t_a1));
 			event.SetBCurveParameter(i->second->m_t.ParameterAt(t_b1));
 			tmp_x.Append(event.Event());
-		    } else {
+		    } else if (ret == 2) {
 			// overlap intersection
 			XEventProxy event(ON_X_EVENT::ccx_overlap);
 			event.SetAPoints(lineA.PointAt(t_a1), lineA.PointAt(t_a2));
@@ -1602,6 +1634,33 @@ tolerance_2d_from_3d(
     return tol_2d;
 }
 
+static void
+boundary_t_to_uv(
+    double &surf_u,
+    double &surf_v,
+    const Subsurface *surf,
+    int boundary_index,
+    double boundary_t)
+{
+    switch (boundary_index) {
+	case 0:
+	    surf_u = surf->m_u.Min();
+	    surf_v = surf->m_v.ParameterAt(boundary_t);
+	    break;
+	case 1:
+	    surf_u = surf->m_u.ParameterAt(boundary_t);
+	    surf_v = surf->m_v.Max();
+	    break;
+	case 2:
+	    surf_u = surf->m_u.Max();
+	    surf_v = surf->m_v.ParameterAt(boundary_t);
+	    break;
+	case 3:
+	    surf_u = surf->m_u.ParameterAt(boundary_t);
+	    surf_v = surf->m_v.Min();
+	    break;
+    }
+}
 
 int
 ON_Intersect(const ON_Curve *curveA,
@@ -1766,9 +1825,65 @@ ON_Intersect(const ON_Curve *curveA,
 
 			ON_X_EVENT event;
 
+			ON_Line boundary[4];
+			ON_SimpleArray<double> line_t, boundary_t;
+			ON_SimpleArray<int> boundary_index;
+			boundary[0] = ON_Line(point1, point2);
+			boundary[1] = ON_Line(point2, point3);
+			boundary[2] = ON_Line(point4, point3);
+			boundary[3] = ON_Line(point1, point4);
+
+			int intersections = 0;
+
+			// first, if the line overlaps any of the boundaries
+			// then that is the one and only intersection
+			for (int j = 0; j < 4; j++) {
+			    if (line.Direction().IsParallelTo(boundary[j].Direction())) {
+				double min_dist = minimum_distance(line, boundary[j], isect_tol);
+
+				if (min_dist < isect_tol) {
+				    double t_a1, t_a2, t_b1, t_b2;
+				    int ret = intersect_overlapping_lines(
+					    t_a1, t_a2, t_b1, t_b2, line,
+					    boundary[j], t_tol);
+
+				    event.m_type = ON_X_EVENT::csx_point;
+				    event.m_A[0] = line.PointAt(t_a1);
+				    event.m_B[0] = boundary[j].PointAt(t_b1);
+
+				    event.m_a[0] = i->first->m_t.ParameterAt(t_a1);
+				    boundary_t_to_uv(event.m_b[0],
+						     event.m_b[1],
+						     i->second, j, t_b1);
+
+				    if (ret == 2) {
+					event.m_type = ON_X_EVENT::csx_overlap;
+					event.m_A[1] = line.PointAt(t_a2);
+					event.m_B[1] = boundary[j].PointAt(t_b2);
+
+					event.m_a[1] = i->first->m_t.ParameterAt(t_a2);
+					boundary_t_to_uv(event.m_b[2],
+							 event.m_b[3],
+							 i->second, j, t_b2);
+				    }
+				    tmp_x.Append(event);
+				    ++intersections;
+				    break;
+				}
+			    }
+			}
+
+			if (intersections > 0) {
+			    continue;
+			}
+
+			// having ruled out a boundary overlap, there
+			// must be one intersection point inside the
+			// boundary of the surface, and another either
+			// inside or on the boundary
+			//
 			// first we check the endpoints of the line segment (PSI)
 			ON_ClassArray<ON_PX_EVENT> px_event1, px_event2;
-			int intersections = 0;
 			if (ON_Intersect(line.from, *surfaceB, px_event1, isect_tol, 0, 0, treeB)) {
 			    event.m_A[intersections] = line.from;
 			    event.m_B[intersections] = px_event1[0].m_B;
@@ -1788,13 +1903,6 @@ ON_Intersect(const ON_Curve *curveA,
 
 			// then we check the intersection of the line segment
 			// and the boundaries of the surface (CCI)
-			ON_Line boundary[4];
-			ON_SimpleArray<double> line_t, boundary_t;
-			ON_SimpleArray<int> boundary_index;
-			boundary[0] = ON_Line(point1, point2);
-			boundary[1] = ON_Line(point2, point3);
-			boundary[2] = ON_Line(point4, point3);
-			boundary[3] = ON_Line(point1, point4);
 			for (int j = 0; j < 4; j++) {
 			    double t1, t2;
 			    if (ON_IntersectLineLine(line, boundary[j], &t1, &t2, isect_tol, true)) {
@@ -1826,24 +1934,9 @@ ON_Intersect(const ON_Curve *curveA,
 
 			    // convert from the boxes' domain to the whole surface's domain
 			    double surf_u = 0.0, surf_v = 0.0;
-			    switch (boundary_index[j]) {
-				case 0:
-				    surf_u = i->second->m_u.Min();
-				    surf_v = i->second->m_v.ParameterAt(boundary_t[j]);
-				    break;
-				case 1:
-				    surf_u = i->second->m_u.ParameterAt(boundary_t[j]);
-				    surf_v = i->second->m_v.Max();
-				    break;
-				case 2:
-				    surf_u = i->second->m_u.Max();
-				    surf_v = i->second->m_v.ParameterAt(boundary_t[j]);
-				    break;
-				case 3:
-				    surf_u = i->second->m_u.ParameterAt(boundary_t[j]);
-				    surf_v = i->second->m_v.Min();
-				    break;
-			    }
+			    boundary_t_to_uv(surf_u, surf_v, i->second,
+				    boundary_index[j], boundary_t[j]);
+
 			    event.m_A[intersections] = line_pt;
 			    event.m_B[intersections] = surfaceB->PointAt(surf_u, surf_v);
 			    event.m_a[intersections] = i->first->m_t.ParameterAt(line_t[j]);
