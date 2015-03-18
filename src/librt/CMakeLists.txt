@@ -95,8 +95,6 @@ set(LIBRT_SOURCES
   primitives/bot/btgf.c
   primitives/brep/brep.cpp
   primitives/brep/brep_debug.cpp
-  primitives/brep/brep_plot.cpp
-  primitives/brep/csg_to_brep.cpp
   primitives/bspline/bspline.cpp
   primitives/bspline/bspline_mirror.c
   primitives/bspline/nurb_basis.c
