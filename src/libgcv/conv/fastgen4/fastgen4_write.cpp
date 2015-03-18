@@ -345,9 +345,10 @@ Section::add_hexahedron(const std::size_t *g)
 
 
 HIDDEN void
-write_bot(FastgenWriter &writer, const rt_bot_internal &bot)
+write_bot(FastgenWriter &writer, const std::string &name,
+	  const rt_bot_internal &bot)
 {
-    Section section(writer, "bot", 0, bot.mode == RT_BOT_SOLID);
+    Section section(writer, name, 0, bot.mode == RT_BOT_SOLID);
 
     for (std::size_t i = 0; i < bot.num_vertices; ++i) {
 	const fastf_t * const vertex = &bot.vertices[i * 3];
@@ -375,13 +376,13 @@ static const bn_tol tol = {BN_TOL_MAGIC, 5e-4, 5e-4 * 5e-4, 1e-6, 1 - 1e-6};
 
 
 HIDDEN void
-write_nmg_region(nmgregion *nmg_region, const db_full_path *UNUSED(path),
+write_nmg_region(nmgregion *nmg_region, const db_full_path *path,
 		 int UNUSED(region_id), int UNUSED(material_id), float UNUSED(color[3]),
 		 void *client_data)
 {
     NMG_CK_REGION(nmg_region);
     NMG_CK_MODEL(nmg_region->m_p);
-    //RT_CK_FULL_PATH(path);
+    RT_CK_FULL_PATH(path);
 
     FastgenWriter &writer = *static_cast<FastgenWriter *>(client_data);
 
@@ -392,7 +393,9 @@ write_nmg_region(nmgregion *nmg_region, const db_full_path *UNUSED(path),
 	NMG_CK_SHELL(vshell);
 
 	rt_bot_internal *bot = nmg_bot(vshell, &tol);
-	write_bot(writer, *bot);
+	char *name = db_path_to_string(path);
+	write_bot(writer, name, *bot);
+	bu_free(name, "name");
 
 	// fill in an rt_db_internal with our new bot so we can free it
 	rt_db_internal internal;
@@ -519,7 +522,7 @@ convert_primitive(db_tree_state *tree_state, const db_full_path *path,
 	case ID_BOT: {
 	    const rt_bot_internal &bot = *static_cast<rt_bot_internal *>(internal->idb_ptr);
 	    RT_BOT_CK_MAGIC(&bot);
-	    write_bot(writer, bot);
+	    write_bot(writer, name, bot);
 	    break;
 	}
 
