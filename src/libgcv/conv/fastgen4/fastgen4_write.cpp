@@ -232,6 +232,9 @@ Section::add_grid_point(fastf_t x, fastf_t y, fastf_t z)
     if (m_next_grid_id > MAX_GRID_POINTS)
 	throw std::length_error("maximum GRID records");
 
+    if (m_next_element_id != 1)
+	throw std::logic_error("add_grid_point() called after adding elements");
+
     FastgenWriter::Record record(m_writer);
     record << "GRID" << m_next_grid_id << "";
     record << x << y << z;
@@ -262,7 +265,7 @@ Section::add_cone(std::size_t g1, std::size_t g2, fastf_t ro1, fastf_t ro2,
     ri1 *= INCHES_PER_MM;
     ri2 *= INCHES_PER_MM;
 
-    if (g1 == g2 || g1 >= m_next_grid_id || g2 >= m_next_grid_id)
+    if (g1 == g2 || !g1 || !g2 || g1 >= m_next_grid_id || g2 >= m_next_grid_id)
 	throw std::invalid_argument("invalid grid id");
 
     if (ri1 <= 0.0 || ri2 <= 0.0 || ro1 <= ri2 || ro2 <= ri2)
@@ -285,7 +288,7 @@ Section::add_line(std::size_t g1, std::size_t g2, fastf_t thickness,
     if (thickness <= 0.0 || radius <= 0.0)
 	throw std::invalid_argument("invalid value");
 
-    if (g1 == g2 || g1 >= m_next_grid_id || g2 >= m_next_grid_id)
+    if (g1 == g2 || !g1 || !g2 || g1 >= m_next_grid_id || g2 >= m_next_grid_id)
 	throw std::invalid_argument("invalid grid id");
 
     FastgenWriter::Record(m_writer) << "CLINE" << m_next_element_id++ << 0 << g1 <<
@@ -305,7 +308,8 @@ Section::add_triangle(std::size_t g1, std::size_t g2, std::size_t g3,
     if (g1 == g2 || g1 == g3 || g2 == g3)
 	throw std::invalid_argument("invalid grid id");
 
-    if (g1 >= m_next_grid_id || g2 >= m_next_grid_id || g3 >= m_next_grid_id)
+    if (!g1 || !g2 || !g3 || g1 >= m_next_grid_id || g2 >= m_next_grid_id
+	|| g3 >= m_next_grid_id)
 	throw std::invalid_argument("invalid grid id");
 
     FastgenWriter::Record(m_writer) << "CTRI" << m_next_element_id++ << 0 << g1 <<
@@ -317,7 +321,7 @@ void
 Section::add_hexahedron(const std::size_t *g)
 {
     for (int i = 0; i < 8; ++i) {
-	if (g[i] >= m_next_grid_id)
+	if (!g[i] || g[i] >= m_next_grid_id)
 	    throw std::invalid_argument("invalid grid id");
 
 	for (int j = i + 1; j < 8; ++j)
