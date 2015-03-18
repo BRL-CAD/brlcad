@@ -482,8 +482,10 @@ convert_primitive(db_tree_state *tree_state, const db_full_path *path,
 	    RT_CLINE_CK_MAGIC(&cline);
 
 	    Section section(writer, name, 0, true);
+	    point_t v2;
+	    VADD2(v2, cline.v, cline.h);
 	    section.add_grid_point(cline.v[0], cline.v[1], cline.v[2]);
-	    section.add_grid_point(cline.h[0], cline.h[1], cline.h[2]);
+	    section.add_grid_point(v2[0], v2[1], v2[2]);
 	    section.add_line(1, 2, cline.thickness, cline.radius);
 	    break;
 	}
