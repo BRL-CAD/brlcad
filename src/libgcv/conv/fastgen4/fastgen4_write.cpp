@@ -395,16 +395,38 @@ ell_is_sphere(const rt_ell_internal &ell)
 }
 
 
+static const bn_tol tol = {BN_TOL_MAGIC, 5e-4, 5e-4 * 5e-4, 1e-6, 1 - 1e-6};
+
+
 HIDDEN void
-write_nmg_region(nmgregion *nmg_region, const db_full_path *path, int region_id,
-		 int material_id, float color[3], void *client_data)
+write_nmg_region(nmgregion *nmg_region, const db_full_path *UNUSED(path),
+		 int UNUSED(region_id), int UNUSED(material_id), float UNUSED(color[3]),
+		 void *client_data)
 {
-    (void)nmg_region;
-    (void)path;
-    (void)region_id;
-    (void)material_id;
-    (void)color;
-    (void)client_data;
+    NMG_CK_REGION(nmg_region);
+    NMG_CK_MODEL(nmg_region->m_p);
+    //RT_CK_FULL_PATH(path);
+
+    FastgenWriter &writer = *static_cast<FastgenWriter *>(client_data);
+
+    nmg_triangulate_model(nmg_region->m_p, &tol);
+    shell *vshell;
+
+    for (BU_LIST_FOR(vshell, shell, &nmg_region->s_hd)) {
+	NMG_CK_SHELL(vshell);
+
+	rt_bot_internal *bot = nmg_bot(vshell, &tol);
+	write_bot(writer, *bot);
+
+	// fill in a db_internal with our new bot so we can free it
+	rt_db_internal internal;
+	RT_DB_INTERNAL_INIT(&internal);
+	internal.idb_major_type = DB5_MAJORTYPE_BRLCAD;
+	internal.idb_minor_type = ID_BOT;
+	internal.idb_meth = &OBJ[ID_BOT];
+	internal.idb_ptr = bot;
+	internal.idb_meth->ft_ifree(&internal);
+    }
 }
 
 
@@ -413,6 +435,7 @@ convert_primitive(db_tree_state *tree_state, const db_full_path *path,
 		  rt_db_internal *internal, void *client_data)
 {
     RT_CK_DBTS(tree_state);
+    RT_CK_FULL_PATH(path);
 
     if (internal->idb_major_type != DB5_MAJORTYPE_BRLCAD)
 	return NULL;
@@ -461,7 +484,8 @@ convert_primitive(db_tree_state *tree_state, const db_full_path *path,
 
 	default: // handle any primitives that can't be directly expressed in fg4
 	tesselate:
-	    break;
+	    bu_free(name, "name");
+	    return nmg_booltree_leaf_tess(tree_state, path, internal, client_data);
     }
 
     bu_free(name, "name");
@@ -489,7 +513,6 @@ extern "C" {
 	    char **object_names = db_dpv_to_argv(results);
 	    bu_free(results, "tops");
 
-	    const bn_tol tol = {BN_TOL_MAGIC, 5e-4, 5e-4 * 5e-4, 1e-6, 1 - 1e-6};
 	    const rt_tess_tol ttol = {RT_TESS_TOL_MAGIC, 0.0, 0.01, 0.0};
 	    model *vmodel = nmg_mm();
 	    db_tree_state initial_tree_state = rt_initial_tree_state;
