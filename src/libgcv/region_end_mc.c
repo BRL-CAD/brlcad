@@ -137,7 +137,12 @@ gcv_region_end_mc(struct db_tree_state *tsp, const struct db_full_path *pathp, u
     if (empty_model)
 	return _gcv_cleanup(NMG_debug_state, tp);
 
-    if (BU_SETJUMP) {
+    if (!BU_SETJUMP) {
+	/* try */
+	/* Write the region out */
+	data->write_region(r, pathp, tsp->ts_regionid, tsp->ts_gmater, tsp->ts_mater.ma_color, data->client_data);
+    } else {
+	/* catch */
 	/* Error, bail out */
 	char *sofar;
 
@@ -162,9 +167,6 @@ gcv_region_end_mc(struct db_tree_state *tsp, const struct db_full_path *pathp, u
 	nmg_kr(r);
 
 	return _gcv_cleanup(NMG_debug_state, tp);
-    } else {
-	/* Write the region out */
-	data->write_region(r, pathp, tsp->ts_regionid, tsp->ts_gmater, tsp->ts_mater.ma_color, data->client_data);
 
     } BU_UNSETJUMP; /* Relinquish bomb protection */
 
