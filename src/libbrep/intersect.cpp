@@ -2789,7 +2789,7 @@ struct OverlapIsocurve {
     double overlap_t[2];
     ON_2dPoint overlap_uv[2];
 
-    OverlapIsocurve(KnotIsocurveSource iso_src, const ON_Curve *iso_curve, 
+    OverlapIsocurve(KnotIsocurveSource iso_src, const ON_Curve *iso_curve,
 	    double ol_start, double ol_end)
 	: src(iso_src), curve(iso_curve)
     {
@@ -3198,7 +3198,7 @@ HIDDEN std::vector<double>
 get_knots(const ON_Surface *surf, int dir)
 {
     int knot_count = surf->SpanCount(dir) + 1;
- 
+
     double *surf_knots = new double[knot_count];
     surf->GetSpanVector(dir, surf_knots);
 
@@ -3381,7 +3381,7 @@ set_ssx_event_from_curves(
 // surfaces are formed completely from the isocurves at the surfaces'
 // Bezier knots. More narrowly, the subcurves of said isocurves which
 // overlap the opposing surface contain all subcurves needed to bound
-// the overlap regions. 
+// the overlap regions.
 //
 // 1. See ON_NurbsSurface::ConvertSpanToBezier().
 // 2. Theorem 3 in
