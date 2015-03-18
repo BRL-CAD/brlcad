@@ -28,6 +28,7 @@
 
 #include <fstream>
 #include <iomanip>
+#include <sstream>
 #include <stdexcept>
 
 #include "../../plugin.h"
@@ -67,6 +68,7 @@ public:
     ~Record();
 
     template <typename T> Record &operator<<(const T &value);
+    Record &operator<<(fastf_t value);
     Record &text(const std::string &value);
 
 
@@ -104,9 +106,28 @@ FastgenWriter::Record::operator<<(const T &value)
     if (++m_width > RECORD_WIDTH)
 	throw std::logic_error("invalid record width");
 
-    m_writer.m_ostream << std::left << std::setw(FIELD_WIDTH) << std::showpoint;
-    m_writer.m_ostream << value;
+    std::ostringstream sstream;
+
+    if (!(sstream << value))
+	throw std::invalid_argument("failed to convert value");
+
+    const std::string str_val = sstream.str();
+
+    if (str_val.size() > FIELD_WIDTH)
+	throw std::invalid_argument("length exceeds field width");
+
+    m_writer.m_ostream << std::left << std::setw(FIELD_WIDTH) << str_val;
     return *this;
+}
+
+
+FastgenWriter::Record &
+FastgenWriter::Record::operator<<(fastf_t value)
+{
+
+    std::ostringstream sstream;
+    sstream << std::showpoint << value;
+    return operator<<(sstream.str().substr(0, FIELD_WIDTH));
 }
 
 
@@ -498,7 +519,7 @@ convert_primitive(db_tree_state *tree_state, const db_full_path *path,
 	    break;
 	}
 
-	default: // handle any primitives that can't be directly expressed in fg4
+	default:
 	tessellate:
 	    bu_free(name, "name");
 	    return nmg_booltree_leaf_tess(tree_state, path, internal, client_data);
@@ -520,6 +541,7 @@ extern "C" {
 		       const struct gcv_opts *UNUSED(options))
     {
 	FastgenWriter writer(path);
+	writer.write_comment(std::string(" ") + dbip->dbi_title);
 	writer.write_comment(" g -> fastgen4 conversion");
 
 	{
