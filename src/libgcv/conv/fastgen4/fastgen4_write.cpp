@@ -192,6 +192,7 @@ private:
 
     std::size_t m_next_grid_id;
     std::size_t m_next_element_id;
+    bool m_volume_mode;
     FastgenWriter &m_writer;
 };
 
@@ -203,6 +204,7 @@ Section::Section(FastgenWriter &writer, const std::string &name,
 		 std::size_t group_id, bool volume_mode) :
     m_next_grid_id(1),
     m_next_element_id(1),
+    m_volume_mode(volume_mode),
     m_writer(writer)
 {
     if (group_id > FastgenWriter::MAX_GROUPS
@@ -216,8 +218,8 @@ Section::Section(FastgenWriter &writer, const std::string &name,
 	record.text(name);
     }
 
-    FastgenWriter::Record(m_writer)
-	    << "SECTION" << group_id << m_writer.m_next_section_id << (volume_mode ? 2 : 1);
+    FastgenWriter::Record(m_writer) << "SECTION" << group_id
+				    << m_writer.m_next_section_id << (m_volume_mode ? 2 : 1);
     ++m_writer.m_next_section_id;
 }
 
@@ -285,8 +287,11 @@ Section::add_line(std::size_t g1, std::size_t g2, fastf_t thickness,
     thickness *= INCHES_PER_MM;
     radius *= INCHES_PER_MM;
 
-    if (thickness <= 0.0 || radius <= 0.0)
-	throw std::invalid_argument("invalid value");
+    if ((!m_volume_mode && thickness <= 0.0) || thickness < 0.0)
+	throw std::invalid_argument("invalid thickness");
+
+    if (radius <= 0.0)
+	throw std::invalid_argument("invalid radius");
 
     if (g1 == g2 || !g1 || !g2 || g1 >= m_next_grid_id || g2 >= m_next_grid_id)
 	throw std::invalid_argument("invalid grid id");
@@ -360,9 +365,13 @@ write_bot(FastgenWriter &writer, const std::string &name,
 	bool grid_centered = false;
 
 	if (bot.mode == RT_BOT_PLATE) {
-	    if (bot.thickness) thickness = bot.thickness[i];
+	    // fg4 does not allow zero thickness, so set a
+	    // very small thickness if that is the case
+	    if (bot.thickness)
+		thickness = !ZERO(bot.thickness[i]) ? bot.thickness[i] : 1e-6;
 
-	    if (bot.face_mode) grid_centered = !BU_BITTEST(bot.face_mode, i);
+	    if (bot.face_mode)
+		grid_centered = !BU_BITTEST(bot.face_mode, i);
 	}
 
 	const int * const face = &bot.faces[i * 3];
