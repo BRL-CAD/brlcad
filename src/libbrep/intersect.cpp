@@ -2650,7 +2650,8 @@ is_pt_in_surf_overlap(
     ON_2dPoint surf1_pt,
     const ON_Surface *surf1,
     const ON_Surface *surf2,
-    Subsurface *surf2_tree)
+    Subsurface *surf2_tree,
+    double isect_tol)
 {
     if (!surf1->Domain(0).Includes(surf1_pt.x) ||
 	!surf1->Domain(1).Includes(surf1_pt.y))
@@ -2661,7 +2662,7 @@ is_pt_in_surf_overlap(
     ON_ClassArray<ON_PX_EVENT> px_event;
 
     surf1_pt_intersects_surf2 = ON_Intersect(surf1->PointAt(surf1_pt.x, surf1_pt.y),
-					     *surf2, px_event, 1.0e-5, 0, 0, surf2_tree);
+					     *surf2, px_event, isect_tol, 0, 0, surf2_tree);
 
     if (surf1_pt_intersects_surf2) {
 	surfs_parallel_at_pt = surf1->NormalAt(surf1_pt.x, surf1_pt.y).IsParallelTo(
@@ -2813,9 +2814,11 @@ isocurve_surface_overlap_location(
     OverlapIsocurve iso,
     const ON_Surface *surf1,
     const ON_Surface *surf2,
-    Subsurface *surf2_tree)
+    Subsurface *surf2_tree,
+    double isect_tol,
+    double isect_tol1)
 {
-    double test_distance = 0.01;
+    double test_distance = 2.0 * isect_tol1;
 
     // TODO: more sample points
     double midpt = (iso.overlap_t[0] + iso.overlap_t[1]) * 0.5;
@@ -2830,8 +2833,8 @@ isocurve_surface_overlap_location(
     bool in1, in2;
     ON_ClassArray<ON_PX_EVENT> px_event1, px_event2;
 
-    in1 = is_pt_in_surf_overlap(test_pt1, surf1, surf2, surf2_tree);
-    in2 = is_pt_in_surf_overlap(test_pt2, surf1, surf2, surf2_tree);
+    in1 = is_pt_in_surf_overlap(test_pt1, surf1, surf2, surf2_tree, isect_tol);
+    in2 = is_pt_in_surf_overlap(test_pt2, surf1, surf2, surf2_tree, isect_tol);
 
     if (in1 && in2) {
 	return INSIDE_OVERLAP;
@@ -2847,7 +2850,9 @@ is_curve_on_overlap_boundary(
     OverlapIsocurve iso,
     const ON_Surface *surf1,
     const ON_Surface *surf2,
-    Subsurface *surf2_tree)
+    Subsurface *surf2_tree,
+    double isect_tol,
+    double isect_tol1)
 {
     bool ret = false;
 
@@ -2859,7 +2864,7 @@ is_curve_on_overlap_boundary(
 	ret = true;
 	if (closed_at_iso || (!at_first_knot && !at_last_knot)) {
 	    int location = isocurve_surface_overlap_location(iso, surf1,
-		    surf2, surf2_tree);
+		    surf2, surf2_tree, isect_tol, isect_tol1);
 
 	    ret = (location == ON_OVERLAP_BOUNDARY);
 	}
@@ -3032,7 +3037,7 @@ split_overlaps_at_intersections(
 		continue;
 	    }
 	    bool isvalid = false, isreversed = false;
-	    double test_distance = 0.01;
+	    double test_distance = 2.0 * isect_tolA;
 	    // TODO: more sample points
 	    ON_2dPoint uv1, uv2;
 	    uv1 = uv2 = subcurveA->PointAt(subcurveA->Domain().Mid());
@@ -3040,8 +3045,8 @@ split_overlaps_at_intersections(
 	    normal.Unitize();
 	    uv1 -= normal * test_distance;	// left
 	    uv2 += normal * test_distance;	// right
-	    bool in1 = is_pt_in_surf_overlap(uv1, surfA, surfB, treeB);
-	    bool in2 = is_pt_in_surf_overlap(uv2, surfA, surfB, treeB);
+	    bool in1 = is_pt_in_surf_overlap(uv1, surfA, surfB, treeB, isect_tol);
+	    bool in2 = is_pt_in_surf_overlap(uv2, surfA, surfB, treeB, isect_tol);
 	    if (in1 && !in2) {
 		isvalid = true;
 	    } else if (!in1 && in2) {
@@ -3397,6 +3402,8 @@ find_overlap_boundary_curves(
 	Subsurface *treeA,
 	Subsurface *treeB,
 	double isect_tol,
+	double isect_tolA,
+	double isect_tolB,
 	double overlap_tol)
 {
     for (int i = 0; i < 4; i++) {
@@ -3406,6 +3413,7 @@ find_overlap_boundary_curves(
 
 	const ON_Surface *surf1 = is_surfA_iso ? surfA : surfB;
 	const ON_Surface *surf2 = is_surfA_iso ? surfB : surfA;
+	double isect_tol1 = is_surfA_iso ? isect_tolA : isect_tolB;
 	Subsurface *tree2 = is_surfA_iso ? treeB : treeA;
 
 	ON_2dPointArray &isocurve1_2d = is_surfA_iso ? isocurveA_2d :
@@ -3442,8 +3450,8 @@ find_overlap_boundary_curves(
 		    isocurve1_2d.Append(iso.overlap_uv[1]);
 
 		    bool curve_on_overlap_boundary =
-			is_curve_on_overlap_boundary(iso, surf1, surf2,
-				tree2);
+			is_curve_on_overlap_boundary(iso, surf1, surf2, tree2,
+				isect_tol, isect_tol1);
 
 		    if (curve_on_overlap_boundary) {
 			append_overlap_segments(overlaps, iso, overlap2d[k],
@@ -3608,7 +3616,8 @@ ON_Intersect(const ON_Surface *surfA,
 
     ON_SimpleArray<OverlapSegment *> overlaps;
     find_overlap_boundary_curves(overlaps, tmp_curvept, tmp_curve_uvA,
-	    tmp_curve_uvB, surfA, surfB, treeA, treeB, isect_tol, overlap_tol);
+	    tmp_curve_uvB, surfA, surfB, treeA, treeB, isect_tol, isect_tolA,
+	    isect_tolB, overlap_tol);
     split_overlaps_at_intersections(overlaps, surfA, surfB, treeA, treeB,
 				    isect_tol, isect_tolA, isect_tolB);
 
