@@ -221,7 +221,7 @@ negative_polygon(struct subbrep_object_data *data)
 	VMOVE(p1, all_verts[all_faces[i*3+0]]);
 	VMOVE(p2, all_verts[all_faces[i*3+1]]);
 	VMOVE(p3, all_verts[all_faces[i*3+2]]);
-	hit_cnt += bn_ray_tri_isect(origin, dir, p1, p2, p3, NULL);
+	hit_cnt += bn_isect_tri_ray(origin, dir, p1, p2, p3, NULL);
     }
     bu_log("hit count: %d\n", hit_cnt);
 

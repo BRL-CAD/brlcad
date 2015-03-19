@@ -43,7 +43,7 @@
 
 __BEGIN_DECLS
 
-BN_EXPORT extern int bn_ray_tri_isect(const point_t orig,
+BN_EXPORT extern int bn_isect_tri_ray(const point_t orig,
 				      const point_t dir,
 				      const point_t vert0,
 				      const point_t vert1,
