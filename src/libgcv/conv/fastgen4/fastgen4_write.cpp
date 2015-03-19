@@ -485,8 +485,24 @@ tgc_is_ccone(const rt_tgc_internal &tgc)
     if (VZERO(tgc.a) || VZERO(tgc.b))
 	return false;
 
-    if (!ZERO(VDOT(tgc.h, tgc.a)) || !ZERO(VDOT(tgc.h, tgc.b)))
+    if (!ZERO(VDOT(tgc.h, tgc.a)) || !ZERO(VDOT(tgc.h, tgc.b))
+	|| !ZERO(VDOT(tgc.a, tgc.b)))
 	return false;
+
+    {
+	vect_t a_norm, b_norm, c_norm, d_norm;
+	VMOVE(a_norm, tgc.a);
+	VMOVE(b_norm, tgc.b);
+	VMOVE(c_norm, tgc.c);
+	VMOVE(d_norm, tgc.d);
+	VUNITIZE(a_norm);
+	VUNITIZE(b_norm);
+	VUNITIZE(c_norm);
+	VUNITIZE(d_norm);
+
+	if (!VEQUAL(a_norm, c_norm) || !VEQUAL(b_norm, d_norm))
+	    return false;
+    }
 
     return true;
 }
