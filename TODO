@@ -56,6 +56,11 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
 
+* analyze output that can characterize how much error or any other
+  issues identified in a given object.  this is primarily intended for
+  bot, nmg, and brep nurbs models, to report the amount of spatial
+  error (gaps) detected for non-solid geometry.
+
 * air regions (aircode > 0) are removed/skipped during prep, but there
   is no message to the user that this has occurred.  this can result
   in unexpected behavior (bad usability) if/when air regions are the
