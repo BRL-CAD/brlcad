@@ -279,7 +279,7 @@ Section::add_cone(std::size_t g1, std::size_t g2, fastf_t ro1, fastf_t ro2,
     if (g1 == g2 || !g1 || !g2 || g1 >= m_next_grid_id || g2 >= m_next_grid_id)
 	throw std::invalid_argument("invalid grid id");
 
-    if (ri1 < 0.0 || ri2 < 0.0 || ro1 < ri2 || ro2 < ri2)
+    if (ri1 < 0.0 || ri2 < 0.0 || ri1 >= ro1 || ri2 >= ro2)
 	throw std::invalid_argument("invalid radius");
 
     FastgenWriter::Record(m_writer) << "CCONE2" << m_next_element_id << 0 << g1 <<
@@ -366,7 +366,7 @@ write_bot(FastgenWriter &writer, const std::string &name,
 
     for (std::size_t i = 0; i < bot.num_vertices; ++i) {
 	const fastf_t * const vertex = &bot.vertices[i * 3];
-	section.add_grid_point(vertex[0], vertex[1], vertex[2]);
+	section.add_grid_point(V3ARGS(vertex));
     }
 
     for (std::size_t i = 0; i < bot.num_faces; ++i) {
@@ -485,8 +485,7 @@ tgc_is_ccone(const rt_tgc_internal &tgc)
     if (VZERO(tgc.a) || VZERO(tgc.b))
 	return false;
 
-    if (!ZERO(VDOT(tgc.h, tgc.a)) || !ZERO(VDOT(tgc.h, tgc.b))
-	|| !ZERO(VDOT(tgc.a, tgc.b)))
+    if (!ZERO(VDOT(tgc.h, tgc.a)) || !ZERO(VDOT(tgc.h, tgc.b)))
 	return false;
 
     {
@@ -514,6 +513,7 @@ convert_primitive(db_tree_state *tree_state, const db_full_path *path,
 {
     RT_CK_DBTS(tree_state);
     RT_CK_FULL_PATH(path);
+    RT_CK_DB_INTERNAL(internal);
 
     if (internal->idb_major_type != DB5_MAJORTYPE_BRLCAD)
 	return NULL;
@@ -534,8 +534,8 @@ convert_primitive(db_tree_state *tree_state, const db_full_path *path,
 	    Section section(writer, name, true);
 	    point_t v2;
 	    VADD2(v2, cline.v, cline.h);
-	    section.add_grid_point(cline.v[0], cline.v[1], cline.v[2]);
-	    section.add_grid_point(v2[0], v2[1], v2[2]);
+	    section.add_grid_point(V3ARGS(cline.v));
+	    section.add_grid_point(V3ARGS(v2));
 	    section.add_line(1, 2, cline.thickness, cline.radius);
 	    break;
 	}
@@ -549,7 +549,7 @@ convert_primitive(db_tree_state *tree_state, const db_full_path *path,
 		goto tessellate;
 
 	    Section section(writer, name, true);
-	    section.add_grid_point(ell.v[0], ell.v[1], ell.v[2]);
+	    section.add_grid_point(V3ARGS(ell.v));
 	    section.add_sphere(1, 1.0, MAGNITUDE(ell.a));
 	    break;
 	}
@@ -565,8 +565,8 @@ convert_primitive(db_tree_state *tree_state, const db_full_path *path,
 	    Section section(writer, name, true);
 	    point_t v2;
 	    VADD2(v2, tgc.v, tgc.h);
-	    section.add_grid_point(tgc.v[0], tgc.v[1], tgc.v[2]);
-	    section.add_grid_point(v2[0], v2[1], v2[2]);
+	    section.add_grid_point(V3ARGS(tgc.v));
+	    section.add_grid_point(V3ARGS(v2));
 	    section.add_cone(1, 2, MAGNITUDE(tgc.a), MAGNITUDE(tgc.b), 0.0, 0.0);
 	    break;
 	}
@@ -598,7 +598,12 @@ convert_primitive(db_tree_state *tree_state, const db_full_path *path,
     }
 
     bu_free(name, "name");
-    return NULL;
+
+    // remove this solid from the tree
+    tree *result;
+    RT_GET_TREE(result, tree_state->ts_resp);
+    result->tr_op = OP_NOP;
+    return result;
 }
 
 
