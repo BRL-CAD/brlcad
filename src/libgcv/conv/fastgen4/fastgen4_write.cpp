@@ -406,7 +406,6 @@ write_nmg_region(nmgregion *nmg_region, const db_full_path *path,
 
     char *name = db_path_to_string(path);
 
-    nmg_triangulate_model(nmg_region->m_p, &tol);
     shell *vshell;
 
     for (BU_LIST_FOR(vshell, shell, &nmg_region->s_hd)) {
@@ -478,26 +477,15 @@ ell_is_sphere(const rt_ell_internal &ell)
 }
 
 
+// Determines whether a tgc can be represented by a CCONE2 object.
+// Assumes that tgc is a valid rt_tgc_internal.
 HIDDEN bool
 tgc_is_ccone(const rt_tgc_internal &tgc)
 {
-    {
-	vect_t a_norm, b_norm, c_norm, d_norm;
-	VMOVE(a_norm, tgc.a);
-	VMOVE(b_norm, tgc.b);
-	VMOVE(c_norm, tgc.c);
-	VMOVE(d_norm, tgc.d);
-	VUNITIZE(a_norm);
-	VUNITIZE(b_norm);
-	VUNITIZE(c_norm);
-	VUNITIZE(d_norm);
+    if (VZERO(tgc.a) || VZERO(tgc.b))
+	return false;
 
-	if (!VEQUAL(a_norm, c_norm) || !VEQUAL(b_norm, d_norm))
-	    return false;
-    }
-
-    if (!ZERO(VDOT(tgc.h, tgc.a)) || !ZERO(VDOT(tgc.h, tgc.b))
-	|| !ZERO(VDOT(tgc.a, tgc.b)))
+    if (!ZERO(VDOT(tgc.h, tgc.a)) || !ZERO(VDOT(tgc.h, tgc.b)))
 	return false;
 
     return true;
@@ -555,7 +543,7 @@ convert_primitive(db_tree_state *tree_state, const db_full_path *path,
 	    const rt_tgc_internal &tgc = *static_cast<rt_tgc_internal *>(internal->idb_ptr);
 	    RT_TGC_CK_MAGIC(&tgc);
 
-	    if (!tgc_is_ccone(tgc))
+	    if (internal->idb_type != ID_REC && !tgc_is_ccone(tgc))
 		goto tessellate;
 
 	    Section section(writer, name, true);
