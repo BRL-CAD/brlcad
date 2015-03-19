@@ -421,13 +421,14 @@ brep_to_csg(struct ged *gedp, struct directory *dp)
 	bu_vls_free(&obj_name);
     }
     /* Make the last comb */
-    mk_lcomb(wdbp, bu_vls_addr(&obj_comb_name), ccomb, 0, NULL, NULL, NULL, 0);
-    BU_PUT(ccomb, struct wmember);
-    if (scomb) {
-	mk_lcomb(wdbp, bu_vls_addr(&sub_comb_name), scomb, 0, NULL, NULL, NULL, 0);
-	BU_PUT(scomb, struct wmember);
+    if (ccomb) {
+	mk_lcomb(wdbp, bu_vls_addr(&obj_comb_name), ccomb, 0, NULL, NULL, NULL, 0);
+	BU_PUT(ccomb, struct wmember);
+	if (scomb) {
+	    mk_lcomb(wdbp, bu_vls_addr(&sub_comb_name), scomb, 0, NULL, NULL, NULL, 0);
+	    BU_PUT(scomb, struct wmember);
+	}
     }
-
     bu_vls_free(&obj_comb_name);
 
     // Free memory
@@ -451,9 +452,89 @@ brep_to_csg(struct ged *gedp, struct directory *dp)
     return 0;
 }
 
+int comb_to_csg(struct ged *gedp, struct directory *dp);
+
 int
-brep_csg_conversion_tree(const struct db_i *UNUSED(dbip), const union tree *UNUSED(oldtree), union tree *UNUSED(newtree), struct rt_wdb *UNUSED(wdbp))
+brep_csg_conversion_tree(struct ged *gedp, const union tree *oldtree, union tree *newtree)
 {
+    int ret = 0;
+    *newtree = *oldtree;
+    struct rt_comb_internal *comb = NULL;
+    switch (oldtree->tr_op) {
+	case OP_UNION:
+	case OP_INTERSECT:
+	case OP_SUBTRACT:
+	case OP_XOR:
+	    /* convert right */
+	    bu_log("convert right\n");
+	    comb = new rt_comb_internal;
+	    newtree->tr_b.tb_right = new tree;
+	    RT_TREE_INIT(newtree->tr_b.tb_right);
+	    ret = brep_csg_conversion_tree(gedp, oldtree->tr_b.tb_right, newtree->tr_b.tb_right);
+#if 0
+	    if (ret) {
+		delete newtree->tr_b.tb_right;
+		break;
+	    }
+#endif
+	    /* fall through */
+	case OP_NOT:
+	case OP_GUARD:
+	case OP_XNOP:
+	    /* convert left */
+	    bu_log("convert left\n");
+	    BU_ALLOC(newtree->tr_b.tb_left, union tree);
+	    RT_TREE_INIT(newtree->tr_b.tb_left);
+	    ret = brep_csg_conversion_tree(gedp, oldtree->tr_b.tb_left, newtree->tr_b.tb_left);
+#if 0
+	    if (!ret) {
+		comb->tree = newtree;
+	    } else {
+		delete newtree->tr_b.tb_left;
+		delete newtree->tr_b.tb_right;
+	    }
+#endif
+	    break;
+	case OP_DB_LEAF:
+	    struct bu_vls tmpname = BU_VLS_INIT_ZERO;
+	    char *oldname = oldtree->tr_l.tl_name;
+	    bu_vls_sprintf(&tmpname, "csg_%s", oldname);
+	    newtree->tr_l.tl_name = (char*)bu_malloc(strlen(bu_vls_addr(&tmpname))+1, "char");
+	    bu_log("have leaf: %s\n", oldtree->tr_l.tl_name);
+	    bu_log("checking for: %s\n", bu_vls_addr(&tmpname));
+	    if (db_lookup(gedp->ged_wdbp->dbip, bu_vls_addr(&tmpname), LOOKUP_QUIET) == RT_DIR_NULL) {
+		struct directory *dir = db_lookup(gedp->ged_wdbp->dbip, oldname, LOOKUP_QUIET);
+
+		if (dir != RT_DIR_NULL) {
+		    if (dir->d_flags & RT_DIR_COMB) {
+			ret = comb_to_csg(gedp, dir);
+			if (ret) {
+			    bu_vls_free(&tmpname);
+			    break;
+			}
+			bu_strlcpy(newtree->tr_l.tl_name, bu_vls_addr(&tmpname), strlen(bu_vls_addr(&tmpname))+1);
+			bu_vls_free(&tmpname);
+			break;
+		    }
+		    // It's a primitive. If it's a b-rep object, convert it. Otherwise,
+		    // just duplicate it. Might need better error codes from brep_to_csg for this...
+		    if (brep_to_csg(gedp, dir)) {
+			bu_log("non brep solid %s.\n", bu_vls_addr(&tmpname));
+		    } else {
+			bu_log("processed brep %s.\n", bu_vls_addr(&tmpname));
+		    }
+		} else {
+		    bu_log("Cannot find %s.\n", oldname);
+		    newtree = NULL;
+		    ret = -1;
+		}
+	    } else {
+		bu_log("%s already exists.\n", bu_vls_addr(&tmpname));
+		bu_strlcpy(newtree->tr_l.tl_name, bu_vls_addr(&tmpname), strlen(bu_vls_addr(&tmpname))+1);
+	    }
+	    bu_vls_free(&tmpname);
+	    break;
+    }
     return 1;
 }
 
@@ -492,7 +573,7 @@ comb_to_csg(struct ged *gedp, struct directory *dp)
 
     union tree *newtree = new_internal->tree;
 
-    int ret = brep_csg_conversion_tree(wdbp->dbip, oldtree, newtree, wdbp);
+    int ret = brep_csg_conversion_tree(gedp, oldtree, newtree);
     if (!ret) {
 	ret = wdb_export(wdbp, bu_vls_addr(&comb_name), (void *)new_internal, ID_COMBINATION, 1);
     } else {
