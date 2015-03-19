@@ -160,14 +160,14 @@ FastgenWriter::~FastgenWriter()
 void
 FastgenWriter::write_comment(const std::string &value)
 {
-    (Record(*this) << "$COMMENT").text(value);
+    (Record(*this) << "$COMMENT").text(" ").text(value);
 }
 
 
 class Section
 {
 public:
-    Section(FastgenWriter &writer, const std::string &name, bool volume_mode);
+    Section(FastgenWriter &writer, std::string name, bool volume_mode);
 
     std::size_t add_grid_point(fastf_t x, fastf_t y, fastf_t z);
 
@@ -187,6 +187,7 @@ public:
 
 private:
     static const fastf_t INCHES_PER_MM;
+    static const std::size_t MAX_NAME_SIZE = 25;
     static const std::size_t MAX_GRID_POINTS = 50000;
     static const std::size_t MAX_HOLES = 40000;
     static const std::size_t MAX_WALLS = 40000;
@@ -201,8 +202,7 @@ private:
 const fastf_t Section::INCHES_PER_MM = 1.0 / 25.4;
 
 
-Section::Section(FastgenWriter &writer, const std::string &name,
-		 bool volume_mode) :
+Section::Section(FastgenWriter &writer, std::string name, bool volume_mode) :
     m_next_grid_id(1),
     m_next_element_id(1),
     m_volume_mode(volume_mode),
@@ -213,6 +213,11 @@ Section::Section(FastgenWriter &writer, const std::string &name,
     while (m_writer.m_next_section_id[group_id] > FastgenWriter::MAX_SECTION_ID)
 	if (++group_id > FastgenWriter::MAX_GROUP_ID)
 	    throw std::range_error("group_id exceeds limit");
+
+    if (name.size() > MAX_NAME_SIZE) {
+	m_writer.write_comment(name);
+	name = "..." + name.substr(name.size() - MAX_NAME_SIZE + 3);
+    }
 
     {
 	FastgenWriter::Record record(m_writer);
@@ -333,7 +338,7 @@ Section::add_hexahedron(const std::size_t *g)
 	if (!g[i] || g[i] >= m_next_grid_id)
 	    throw std::invalid_argument("invalid grid id");
 
-	for (int j = i + 1; j < 9; ++j)
+	for (int j = i + 1; j <= 8; ++j)
 	    if (g[i] == g[j])
 		throw std::invalid_argument("repeated grid id");
     }
@@ -399,6 +404,8 @@ write_nmg_region(nmgregion *nmg_region, const db_full_path *path,
 
     FastgenWriter &writer = *static_cast<FastgenWriter *>(client_data);
 
+    char *name = db_path_to_string(path);
+
     nmg_triangulate_model(nmg_region->m_p, &tol);
     shell *vshell;
 
@@ -406,9 +413,7 @@ write_nmg_region(nmgregion *nmg_region, const db_full_path *path,
 	NMG_CK_SHELL(vshell);
 
 	rt_bot_internal *bot = nmg_bot(vshell, &tol);
-	char *name = db_path_to_string(path);
 	write_bot(writer, name, *bot);
-	bu_free(name, "name");
 
 	// fill in an rt_db_internal with our new bot so we can free it
 	rt_db_internal internal;
@@ -419,6 +424,8 @@ write_nmg_region(nmgregion *nmg_region, const db_full_path *path,
 	internal.idb_ptr = bot;
 	internal.idb_meth->ft_ifree(&internal);
     }
+
+    bu_free(name, "name");
 }
 
 
@@ -489,7 +496,7 @@ tgc_is_ccone(const rt_tgc_internal &tgc)
 	    return false;
     }
 
-    if (!ZERO(VDOT(tgc.a, tgc.h)) || !ZERO(VDOT(tgc.b, tgc.h))
+    if (!ZERO(VDOT(tgc.h, tgc.a)) || !ZERO(VDOT(tgc.h, tgc.b))
 	|| !ZERO(VDOT(tgc.a, tgc.b)))
 	return false;
 
@@ -602,8 +609,8 @@ extern "C" {
 		       const struct gcv_opts *UNUSED(options))
     {
 	FastgenWriter writer(path);
-	writer.write_comment(std::string(" ") + dbip->dbi_title);
-	writer.write_comment(" g -> fastgen4 conversion");
+	writer.write_comment(dbip->dbi_title);
+	writer.write_comment("g -> fastgen4 conversion");
 
 	{
 	    directory **results;
