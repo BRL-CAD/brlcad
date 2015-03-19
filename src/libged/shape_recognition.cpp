@@ -340,28 +340,22 @@ make_shapes(struct subbrep_object_data *data, struct rt_wdb *wdbp, struct bu_vls
     return 0;
 }
 
-extern "C" int
-_ged_brep_to_csg(struct ged *gedp, const char *dp_name)
+int
+brep_to_csg(struct ged *gedp, struct directory *dp)
 {
     struct rt_db_internal intern;
     struct rt_brep_internal *brep_ip = NULL;
 
     struct rt_wdb *wdbp = gedp->ged_wdbp;
 
-    struct directory *dp = db_lookup(wdbp->dbip, dp_name, LOOKUP_QUIET);
-    if (dp == RT_DIR_NULL) {
-	return GED_ERROR;
-    }
-
     RT_DB_INTERNAL_INIT(&intern)
 
     if (rt_db_get_internal(&intern, dp, wdbp->dbip, NULL, &rt_uniresource) < 0) {
-	return GED_ERROR;
+	return 1;
     }
 
-
     if (intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_BREP) {
-	return GED_ERROR;
+	return 1;
     } else {
 	brep_ip = (struct rt_brep_internal *)intern.idb_ptr;
     }
@@ -369,7 +363,7 @@ _ged_brep_to_csg(struct ged *gedp, const char *dp_name)
 
     if (!rt_brep_valid(&intern, NULL)) {
 	bu_vls_printf(gedp->ged_result_str, "%s is not a valid B-Rep - aborting\n", dp->d_namep);
-	return GED_ERROR;
+	return 1;
     }
 
     ON_Brep *brep = brep_ip->brep;
@@ -453,7 +447,73 @@ _ged_brep_to_csg(struct ged *gedp, const char *dp_name)
     // TODO - probably should be region
     mk_lcomb(wdbp, bu_vls_addr(&comb_name), &pcomb, 0, NULL, NULL, NULL, 0);
 
-    return GED_OK;
+    return 0;
+}
+
+int
+brep_csg_conversion_tree(const struct db_i *UNUSED(dbip), const union tree *UNUSED(oldtree), union tree *UNUSED(newtree), struct rt_wdb *UNUSED(wdbp))
+{
+    return 1;
+}
+
+int
+comb_to_csg(struct ged *gedp, struct directory *dp)
+{
+    struct rt_db_internal intern;
+    struct rt_comb_internal *comb_internal = NULL;
+    struct rt_wdb *wdbp = gedp->ged_wdbp;
+    struct bu_vls comb_name = BU_VLS_INIT_ZERO;
+    bu_vls_sprintf(&comb_name, "csg_%s", dp->d_namep);
+
+    RT_DB_INTERNAL_INIT(&intern)
+
+    if (rt_db_get_internal(&intern, dp, wdbp->dbip, NULL, &rt_uniresource) < 0) {
+	return 1;
+    }
+
+    RT_CK_COMB(intern.idb_ptr);
+    comb_internal = (struct rt_comb_internal *)intern.idb_ptr;
+
+    if (comb_internal->tree == NULL) {
+	// Empty tree
+	int ret = wdb_export(wdbp, bu_vls_addr(&comb_name), comb_internal, ID_COMBINATION, 1);
+	return ret;
+    }
+
+    RT_CK_TREE(comb_internal->tree);
+    union tree *oldtree = comb_internal->tree;
+    struct rt_comb_internal *new_internal;
+
+    BU_ALLOC(new_internal, struct rt_comb_internal);
+    *new_internal = *comb_internal;
+    BU_ALLOC(new_internal->tree, union tree);
+    RT_TREE_INIT(new_internal->tree);
+
+    union tree *newtree = new_internal->tree;
+
+    int ret = brep_csg_conversion_tree(wdbp->dbip, oldtree, newtree, wdbp);
+    if (!ret) {
+	ret = wdb_export(wdbp, bu_vls_addr(&comb_name), (void *)new_internal, ID_COMBINATION, 1);
+    } else {
+	bu_free(new_internal->tree, "tree");
+	bu_free(new_internal, "rt_comb_internal");
+    }
+
+    return ret;
+}
+
+extern "C" int
+_ged_brep_to_csg(struct ged *gedp, const char *dp_name)
+{
+    struct rt_wdb *wdbp = gedp->ged_wdbp;
+    struct directory *dp = db_lookup(wdbp->dbip, dp_name, LOOKUP_QUIET);
+    if (dp == RT_DIR_NULL) return GED_ERROR;
+
+    if (dp->d_flags & RT_DIR_COMB) {
+	return comb_to_csg(gedp, dp) ? GED_ERROR : GED_OK;
+    } else {
+	return brep_to_csg(gedp, dp) ? GED_ERROR : GED_OK;
+    }
 }
 
 // Local Variables:
