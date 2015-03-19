@@ -210,12 +210,9 @@ Section::Section(FastgenWriter &writer, const std::string &name,
 {
     std::size_t group_id = 0;
 
-    while (group_id <= FastgenWriter::MAX_GROUP_ID
-	   && m_writer.m_next_section_id[group_id] > FastgenWriter::MAX_SECTION_ID)
-	++group_id;
-
-    if (group_id > FastgenWriter::MAX_GROUP_ID)
-	throw std::range_error("group_id exceeds limit");
+    while (m_writer.m_next_section_id[group_id] > FastgenWriter::MAX_SECTION_ID)
+	if (++group_id > FastgenWriter::MAX_GROUP_ID)
+	    throw std::range_error("group_id exceeds limit");
 
     {
 	FastgenWriter::Record record(m_writer);
@@ -336,7 +333,7 @@ Section::add_hexahedron(const std::size_t *g)
 	if (!g[i] || g[i] >= m_next_grid_id)
 	    throw std::invalid_argument("invalid grid id");
 
-	for (int j = i + 1; j < 8; ++j)
+	for (int j = i + 1; j < 9; ++j)
 	    if (g[i] == g[j])
 		throw std::invalid_argument("repeated grid id");
     }
