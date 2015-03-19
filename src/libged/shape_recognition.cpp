@@ -355,6 +355,7 @@ brep_to_csg(struct ged *gedp, struct directory *dp)
     }
 
     if (intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_BREP) {
+	bu_vls_printf(gedp->ged_result_str, "%s is not a B-Rep - aborting\n", dp->d_namep);
 	return 1;
     } else {
 	brep_ip = (struct rt_brep_internal *)intern.idb_ptr;
