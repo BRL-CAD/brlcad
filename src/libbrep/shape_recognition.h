@@ -96,6 +96,8 @@ struct csg_object_params {
 
 struct subbrep_object_data {
     struct bu_vls *key;
+    struct bu_vls *name_root;
+    int *obj_cnt;
     int *faces;
     int *loops;
     int *edges;

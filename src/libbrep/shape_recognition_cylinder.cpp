@@ -300,6 +300,9 @@ cylinder_csg(struct subbrep_object_data *data, fastf_t cyl_tol)
         }
     }
     data->params->bool_op = 'u'; // Initialize to union
+    if (BU_STR_EQUAL(bu_vls_addr(data->key), "21_89_102")) {
+	bu_log("key found\n");
+    }
 
     // Check for multiple cylinders.  Can handle this, but for now punt.
     ON_Cylinder cylinder;
@@ -487,6 +490,10 @@ cylinder_csg(struct subbrep_object_data *data, fastf_t cyl_tol)
 	    data->params->hv[2] = hvect.z;
 	    data->params->radius = set1_c.Radius();
 
+	    data->obj_cnt = data->parent->obj_cnt;
+	    (*data->obj_cnt)++;
+	    bu_vls_sprintf(data->name_root, "%s_%d_cyl", bu_vls_addr(data->parent->name_root), *(data->obj_cnt));
+
 	    // If there are faces in the planar volume data matching a planar
 	    // face associated with this cylinder, remove them - a full cylinder
 	    // subshape will not contribute a planar face.
@@ -499,11 +506,18 @@ cylinder_csg(struct subbrep_object_data *data, fastf_t cyl_tol)
 	    // We have parallel faces and corners - we need to use an arb.
 	    data->type = COMB;
 
+	    data->obj_cnt = data->parent->obj_cnt;
+	    (*data->obj_cnt)++;
+	    bu_vls_sprintf(data->name_root, "%s_%d_comb", bu_vls_addr(data->parent->name_root), *(data->obj_cnt));
+
 	    struct subbrep_object_data *cyl_obj;
 	    BU_GET(cyl_obj, struct subbrep_object_data);
 	    subbrep_object_init(cyl_obj, data->brep);
 	    std::string key = face_set_key(cylindrical_surfaces);
 	    bu_vls_sprintf(cyl_obj->key, "%s", key.c_str());
+	    cyl_obj->obj_cnt = data->parent->obj_cnt;
+	    (*cyl_obj->obj_cnt)++;
+	    bu_vls_sprintf(cyl_obj->name_root, "%s_%d_cyl", bu_vls_addr(data->parent->name_root), *(cyl_obj->obj_cnt));
 	    cyl_obj->type = CYLINDER;
 
 	    // cylinder - positive object in this sub-comb
@@ -542,6 +556,9 @@ cylinder_csg(struct subbrep_object_data *data, fastf_t cyl_tol)
 	    BU_GET(arb_obj, struct subbrep_object_data);
 	    subbrep_object_init(arb_obj, data->brep);
 	    bu_vls_sprintf(arb_obj->key, "%s_arb8", key.c_str());
+	    arb_obj->obj_cnt = data->parent->obj_cnt;
+	    (*arb_obj->obj_cnt)++;
+	    bu_vls_sprintf(arb_obj->name_root, "%s_%d_arb8", bu_vls_addr(data->parent->name_root), *(arb_obj->obj_cnt));
 	    arb_obj->type = ARB8;
 
 
@@ -711,6 +728,11 @@ cylinder_csg(struct subbrep_object_data *data, fastf_t cyl_tol)
 		// We have non parallel faces and no corners - at least one and possible
 		// both end caps need subtracting, but no other subtractions are needed.
 		data->type = COMB;
+		data->obj_cnt = data->parent->obj_cnt;
+		(*data->obj_cnt)++;
+		bu_vls_sprintf(data->name_root, "%s_%d_comb", bu_vls_addr(data->parent->name_root), *(data->obj_cnt));
+
+
 		std::cout << "TODO: Minus one or more end-cap arbs\n";
 		return 1;
 	    } else {
@@ -718,6 +740,13 @@ cylinder_csg(struct subbrep_object_data *data, fastf_t cyl_tol)
 		// both end caps need subtracting, plus an arb to remove part of the
 		// cylinder body.
 		data->type = COMB;
+
+		data->obj_cnt = data->parent->obj_cnt;
+		(*data->obj_cnt)++;
+		bu_vls_sprintf(data->name_root, "%s_%d_comb", bu_vls_addr(data->parent->name_root), *(data->obj_cnt));
+
+
+
 		//std::cout << "Minus one or more end-cap arbs and body arb\n";
 
 		// If an end capping plane's normal is parallel to the cylinder axis,
@@ -748,6 +777,11 @@ cylinder_csg(struct subbrep_object_data *data, fastf_t cyl_tol)
 		} else {
 
 		    data->type = COMB;
+		    data->obj_cnt = data->parent->obj_cnt;
+		    (*data->obj_cnt)++;
+		    bu_vls_sprintf(data->name_root, "%s_%d_comb", bu_vls_addr(data->parent->name_root), *(data->obj_cnt));
+
+
 		    // First order of business - find the intersection between the axis and the capping
 		    // plane
 
@@ -764,6 +798,9 @@ cylinder_csg(struct subbrep_object_data *data, fastf_t cyl_tol)
 		    subbrep_object_init(cyl_obj, data->brep);
 		    std::string key = face_set_key(cylindrical_surfaces);
 		    bu_vls_sprintf(cyl_obj->key, "%s", key.c_str());
+		    cyl_obj->obj_cnt = data->parent->obj_cnt;
+		    (*cyl_obj->obj_cnt)++;
+		    bu_vls_sprintf(cyl_obj->name_root, "%s_%d_cyl", bu_vls_addr(data->parent->name_root), *(cyl_obj->obj_cnt));
 		    cyl_obj->type = CYLINDER;
 
 		    // Flag the cyl/arb comb according to the negative or positive status of the
@@ -844,6 +881,9 @@ cylinder_csg(struct subbrep_object_data *data, fastf_t cyl_tol)
 			BU_GET(arb_obj_1, struct subbrep_object_data);
 			subbrep_object_init(arb_obj_1, data->brep);
 			bu_vls_sprintf(arb_obj_1->key, "%s_cap_1", key.c_str());
+			arb_obj_1->obj_cnt = data->parent->obj_cnt;
+			(*arb_obj_1->obj_cnt)++;
+			bu_vls_sprintf(arb_obj_1->name_root, "%s_%d_cap_1", bu_vls_addr(data->parent->name_root), *(arb_obj_1->obj_cnt));
 			arb_obj_1->type = ARB6;
 			arb_obj_1->params->bool_op = '-';
 			arb_obj_1->params->arb_type = 8;
@@ -885,6 +925,9 @@ cylinder_csg(struct subbrep_object_data *data, fastf_t cyl_tol)
 			BU_GET(arb_obj_2, struct subbrep_object_data);
 			subbrep_object_init(arb_obj_2, data->brep);
 			bu_vls_sprintf(arb_obj_2->key, "%s_cap_2", key.c_str());
+			arb_obj_2->obj_cnt = data->parent->obj_cnt;
+			(*arb_obj_2->obj_cnt)++;
+			bu_vls_sprintf(arb_obj_2->name_root, "%s_cap_2", bu_vls_addr(data->parent->name_root), *(arb_obj_2->obj_cnt));
 			arb_obj_2->type = ARB6;
 			arb_obj_2->params->bool_op = '-';
 			arb_obj_2->params->arb_type = 8;
@@ -902,6 +945,9 @@ cylinder_csg(struct subbrep_object_data *data, fastf_t cyl_tol)
 			BU_GET(arb_obj_3, struct subbrep_object_data);
 			subbrep_object_init(arb_obj_3, data->brep);
 			bu_vls_sprintf(arb_obj_3->key, "%s_back_face", key.c_str());
+			arb_obj_3->obj_cnt = data->parent->obj_cnt;
+			(*arb_obj_3->obj_cnt)++;
+			bu_vls_sprintf(arb_obj_3->name_root, "%s_back_face", bu_vls_addr(data->parent->name_root), *(arb_obj_3->obj_cnt));
 			arb_obj_3->type = ARB8;
 
 

@@ -301,6 +301,9 @@ subbrep_planar_init(struct subbrep_object_data *data)
     BU_GET(data->planar_obj, struct subbrep_object_data);
     subbrep_object_init(data->planar_obj, data->brep);
     bu_vls_sprintf(data->planar_obj->key, "%s", bu_vls_addr(data->key));
+    data->planar_obj->obj_cnt = data->obj_cnt;
+    (*data->obj_cnt)++;
+    bu_vls_sprintf(data->planar_obj->name_root, "%s_%d", bu_vls_addr(data->name_root), *(data->obj_cnt));
     data->planar_obj->type = PLANAR_VOLUME;
 
     data->planar_obj->local_brep = ON_Brep::New();

@@ -39,6 +39,8 @@ find_subbreps(const ON_Brep *brep)
     BU_GET(subbreps, struct bu_ptbl);
     bu_ptbl_init(subbreps, 8, "subbrep table");
 
+    int obj_cnt = 0;
+
     /* For each face, build the topologically connected subset.  If that
      * subset has not already been seen, add it to the brep's set of
      * subbreps */
@@ -102,7 +104,10 @@ find_subbreps(const ON_Brep *brep)
 	    struct subbrep_object_data *new_obj = NULL;
 	    BU_GET(new_obj, struct subbrep_object_data);
 	    subbrep_object_init(new_obj, brep);
+	    new_obj->obj_cnt = &obj_cnt;
+	    obj_cnt++;
 	    bu_vls_sprintf(new_obj->key, "%s", key.c_str());
+	    bu_vls_sprintf(new_obj->name_root, "%d", obj_cnt);
 	    set_to_array(&(new_obj->faces), &(new_obj->faces_cnt), &faces);
 	    set_to_array(&(new_obj->loops), &(new_obj->loops_cnt), &loops);
 	    set_to_array(&(new_obj->edges), &(new_obj->edges_cnt), &edges);
@@ -148,8 +153,25 @@ find_subbreps(const ON_Brep *brep)
 
 	    bu_ptbl_ins(subbreps, (long *)new_obj);
 	}
+	if (obj_cnt > 1500) goto bail;
     }
 
+    return subbreps;
+
+bail:
+    bu_log("brep converted to more than 1500 implicits (%d) - not a good CSG candidate\n", obj_cnt);
+    // Free memory
+    for (unsigned int i = 0; i < BU_PTBL_LEN(subbreps); i++){
+	struct subbrep_object_data *obj = (struct subbrep_object_data *)BU_PTBL_GET(subbreps, i);
+	for (unsigned int j = 0; j < BU_PTBL_LEN(obj->children); j++){
+	    struct subbrep_object_data *cdata = (struct subbrep_object_data *)BU_PTBL_GET(obj->children,j);
+	    subbrep_object_free(cdata);
+	}
+	subbrep_object_free(obj);
+	BU_PUT(obj, struct subbrep_object_data);
+    }
+    bu_ptbl_free(subbreps);
+    bu_ptbl_init(subbreps, 8, "subbrep table");
     return subbreps;
 }
 

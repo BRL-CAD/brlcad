@@ -265,6 +265,10 @@ cone_csg(struct subbrep_object_data *data, fastf_t cone_tol)
     if (!arc2_circle_set) {
 	//std::cout << "True cone!\n";
 	data->type = CONE;
+	data->obj_cnt = data->parent->obj_cnt;
+	(*data->obj_cnt)++;
+	bu_vls_sprintf(data->name_root, "%s_%d_cone", bu_vls_addr(data->parent->name_root), *(data->obj_cnt));
+
 
 	ON_3dVector hvect(cone.ApexPoint() - cone.BasePoint());
 	ON_3dPoint closest_to_base = set1_c.Plane().ClosestPointTo(cone.BasePoint());
@@ -306,6 +310,9 @@ cone_csg(struct subbrep_object_data *data, fastf_t cone_tol)
 	    struct csg_object_params * obj;
 	    BU_GET(obj, struct csg_object_params);
 	    data->type = CONE;
+	    data->obj_cnt = data->parent->obj_cnt;
+	    (*data->obj_cnt)++;
+	    bu_vls_sprintf(data->name_root, "%s_%d_cone", bu_vls_addr(data->parent->name_root), *(data->obj_cnt));
 
 	    data->negative_shape = negative_cone(data, *conic_surfaces.begin(), cone_tol);
 
@@ -325,6 +332,10 @@ cone_csg(struct subbrep_object_data *data, fastf_t cone_tol)
 	} else {
 	    // Have corners, need arb
 	    data->type = COMB;
+	    data->obj_cnt = data->parent->obj_cnt;
+	    (*data->obj_cnt)++;
+	    bu_vls_sprintf(data->name_root, "%s_%d_comb", bu_vls_addr(data->parent->name_root), *(data->obj_cnt));
+
 	    data->negative_shape = negative_cone(data, *conic_surfaces.begin(), cone_tol);
 	    data->params->bool_op = (data->negative_shape == -1) ? '-' : 'u';
 
@@ -333,6 +344,10 @@ cone_csg(struct subbrep_object_data *data, fastf_t cone_tol)
 	    subbrep_object_init(cone_obj, data->brep);
 	    std::string key = face_set_key(conic_surfaces);
 	    bu_vls_sprintf(cone_obj->key, "%s", key.c_str());
+	    cone_obj->obj_cnt = data->parent->obj_cnt;
+	    (*cone_obj->obj_cnt)++;
+	    bu_log("obj_cnt: %d\n", *(cone_obj->obj_cnt));
+	    bu_vls_sprintf(cone_obj->name_root, "%s_%d_cone", bu_vls_addr(data->parent->name_root), *(cone_obj->obj_cnt));
 	    cone_obj->type = CONE;
 
 	    // cone - positive object in this sub-comb
@@ -373,6 +388,9 @@ cone_csg(struct subbrep_object_data *data, fastf_t cone_tol)
             BU_GET(arb_obj, struct subbrep_object_data);
             subbrep_object_init(arb_obj, data->brep);
             bu_vls_sprintf(arb_obj->key, "%s_arb8", key.c_str());
+	    arb_obj->obj_cnt = data->parent->obj_cnt;
+	    (*arb_obj->obj_cnt)++;
+	    bu_vls_sprintf(arb_obj->name_root, "%s_%d_arb8", bu_vls_addr(data->parent->name_root), *(arb_obj->obj_cnt));
             arb_obj->type = ARB8;
 
 

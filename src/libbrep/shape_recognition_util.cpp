@@ -296,12 +296,14 @@ subbrep_object_init(struct subbrep_object_data *obj, const ON_Brep *brep)
 {
     if (!obj) return;
     BU_GET(obj->key, struct bu_vls);
+    BU_GET(obj->name_root, struct bu_vls);
     BU_GET(obj->children, struct bu_ptbl);
     BU_GET(obj->params, struct csg_object_params);
     obj->params->planes = NULL;
     obj->params->bool_op = '\0';
     obj->planar_obj = NULL;
     bu_vls_init(obj->key);
+    bu_vls_init(obj->name_root);
     bu_ptbl_init(obj->children, 8, "children table");
     obj->parent = NULL;
     obj->brep = brep;
@@ -312,6 +314,7 @@ subbrep_object_init(struct subbrep_object_data *obj, const ON_Brep *brep)
     obj->bbox = new ON_BoundingBox();
     ON_MinMaxInit(&(obj->bbox->m_min), &(obj->bbox->m_max));
     obj->bbox_set = 0;
+    obj->obj_cnt = NULL;
 }
 
 void
@@ -327,7 +330,14 @@ subbrep_object_free(struct subbrep_object_data *obj)
 	BU_PUT(obj->planar_obj, struct subbrep_object_data);
     }
     obj->planar_obj = NULL;
-    bu_vls_free(obj->key);
+    if (obj->key) {
+	bu_vls_free(obj->key);
+	BU_PUT(obj->key, struct bu_vls);
+    }
+    if (obj->name_root) {
+	bu_vls_free(obj->name_root);
+	BU_PUT(obj->name_root, struct bu_vls);
+    }
     if (obj->children) {
 	for (unsigned int i = 0; i < BU_PTBL_LEN(obj->children); i++){
 	    struct subbrep_object_data *cobj = (struct subbrep_object_data *)BU_PTBL_GET(obj->children, i);
