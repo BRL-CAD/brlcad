@@ -148,7 +148,7 @@ negative_polygon(struct subbrep_object_data *data)
     // Check each face to see if it is fil or fol - the first fol face, stash its
     // normal - don't even need the triangle face normal, we can just use the face's normal and
     // a point from the center of one of the fol triangles on that particular face.
-    ON_3dPoint hit_point;
+    ON_3dPoint origin_pnt;
     ON_3dVector triangle_normal;
     int have_hit_pnt = 0;
 
@@ -171,7 +171,7 @@ negative_polygon(struct subbrep_object_data *data)
 		delete ts;
 		triangle_normal = fp.Normal();
 		if (b_face->m_bRev) triangle_normal = triangle_normal * -1;
-		hit_point = (p1 + p2 + p3) / 3;
+		origin_pnt = (p1 + p2 + p3) / 3;
 		have_hit_pnt = 1;
 	    }
 	}
@@ -203,7 +203,7 @@ negative_polygon(struct subbrep_object_data *data)
     int corner = 0;
     double dotp;
     while (!have_dir && corner < 8) {
-	rdir = box_corners[corner] - hit_point;
+	rdir = box_corners[corner] - origin_pnt;
 	dotp = ON_DotProduct(triangle_normal, rdir);
 	(NEAR_ZERO(dotp, 0.01)) ? corner++ : have_dir = 1;
     }
@@ -212,12 +212,12 @@ negative_polygon(struct subbrep_object_data *data)
 	return 0;
     }
     point_t origin, dir;
-    VMOVE(origin, hit_point);
+    VMOVE(origin, origin_pnt);
     VMOVE(dir, rdir);
 
     std::cout << "working: " << bu_vls_addr(data->key) << "\n";
     bu_log("in origin.s sph %f %f %f 1\n", origin[0], origin[1], origin[2]);
-    bu_log("in triangle_normal.s rcc %f %f %f %f %f %f 1 \n", hit_point[0], hit_point[1], hit_point[2], triangle_normal[0], triangle_normal[1], triangle_normal[2]);
+    bu_log("in triangle_normal.s rcc %f %f %f %f %f %f 1 \n", origin_pnt.x, origin_pnt.y, origin_pnt.z, triangle_normal.x, triangle_normal.y, triangle_normal.z);
     bu_log("in ray.s rcc %f %f %f %f %f %f 1 \n", origin[0], origin[1], origin[2], dir[0], dir[1], dir[2]);
 
     // Test the ray against the triangle set
@@ -241,56 +241,27 @@ negative_polygon(struct subbrep_object_data *data)
 	onp3.y = p3[1];
 	onp3.z = p3[2];
 	ON_Plane fplane(onp1, onp2, onp3);
-#if 0
-	std::cout << "p1: " << pout(onp1) << "\n";
-	std::cout << "p2: " << pout(onp2) << "\n";
-	std::cout << "p3: " << pout(onp3) << "\n";
-	bu_log("in p1.s sph %f %f %f 0.5\n", p1[0], p1[1], p1[2]);
-	bu_log("in p2.s sph %f %f %f 0.5\n", p2[0], p2[1], p2[2]);
-	bu_log("in p3.s sph %f %f %f 0.5\n", p3[0], p3[1], p3[2]);
-#endif
 	int is_hit = bn_isect_tri_ray(origin, dir, p1, p2, p3, &isect);
-#if 0
-	if (is_hit) {
-	    // Project into the face plane and use bn_pt_in_polygon to
-	    // handle edge cases
-	    ON_2dPoint pnt2d;
-	    hit_cnt++;
-	    VMOVE(hit_pnt, isect);
-	    fplane.ClosestPointTo(onp1, &pnt2d.x, &pnt2d.y);
-	    V2MOVE(pts2d[0], pnt2d);
-	    //std::cout << "p2d 1: " << pts2d[0][0] << "," << pts2d[0][1] << "\n";
-	    fplane.ClosestPointTo(onp2, &pnt2d.x, &pnt2d.y);
-	    V2MOVE(pts2d[1], pnt2d);
-	    //std::cout << "p2d 2: " << pts2d[1][0] << "," << pts2d[1][1] << "\n";
-	    fplane.ClosestPointTo(onp3, &pnt2d.x, &pnt2d.y);
-	    V2MOVE(pts2d[2], pnt2d);
-	    //std::cout << "p2d 3: " << pts2d[2][0] << "," << pts2d[2][1] << "\n";
-	    fplane.ClosestPointTo(hit_pnt, &pnt2d.x, &pnt2d.y);
-	    V2MOVE(test_pt, pnt2d);
-	    if (!bn_pt_in_polygon(3, (const point2d_t *)pts2d, &test_pt)) {
-		bu_log("pnt in poly hit failed?");
-		is_hit = 0;
-	    }
-	}
-#endif
+	VMOVE(hit_pnt, isect);
+	// Don't count the point on the ray origin
+	if (hit_pnt.DistanceTo(origin_pnt) < 0.0001) is_hit = 0;
 	if (is_hit) {
 	    //bu_log("in hit_cnt%d.s sph %f %f %f 0.1\n", hit_pnts.Count()+1, isect[0], isect[1], isect[2]);
 	    hit_pnts.Append(hit_pnt);
 	}
     }
     hit_cnt = hit_pnts.Count();
-    bu_log("hit count: %d\n", hit_cnt);
-    bu_log("dotp : %f\n", dotp);
+    //bu_log("hit count: %d\n", hit_cnt);
+    //bu_log("dotp : %f\n", dotp);
 
     // Final inside/outside determination
     if (hit_cnt % 2) {
-	io_state = (dotp < 0) ? -1 : 1;
-    } else {
 	io_state = (dotp > 0) ? -1 : 1;
+    } else {
+	io_state = (dotp < 0) ? -1 : 1;
     }
 
-    bu_log("inside out state: %d\n", io_state);
+    //bu_log("inside out state: %d\n", io_state);
 
     bu_free(all_verts, "free top level vertex array");
     bu_free(final_faces, "free face array");

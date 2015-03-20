@@ -201,6 +201,7 @@ find_top_level_hierarchy(struct bu_ptbl *subbreps)
     /* Separate out top level unions */
     for (sb_it = subbrep_set.begin(); sb_it != subbrep_set.end(); sb_it++) {
 	struct subbrep_object_data *obj = (struct subbrep_object_data *)*sb_it;
+	std::cout << bu_vls_addr(obj->key) << " bool: " << obj->params->bool_op << "\n";
 	if (obj->fil_cnt == 0) {
 	    if (!(obj->params->bool_op == '-')) {
 		std::cout << "Top union found: " << bu_vls_addr(obj->key) << "\n";
@@ -254,7 +255,7 @@ find_top_level_hierarchy(struct bu_ptbl *subbreps)
 			    /* First, check the boolean relationship to the parent solid */
 			    cobj->parent = tu;
 			    bool_test = subbrep_determine_boolean(cobj);
-			    //std::cout << "Initial boolean test for " << bu_vls_addr(cobj->key) << ": " << bool_test << "\n";
+			    std::cout << "Initial boolean test for " << bu_vls_addr(cobj->key) << ": " << bool_test << "\n";
 			    switch (bool_test) {
 				case -2:
 				    std::cout << "Game over - self intersecting shape reported with subbrep " << bu_vls_addr(cobj->key) << ".\n";
