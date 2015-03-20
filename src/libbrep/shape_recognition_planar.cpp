@@ -127,6 +127,7 @@ subbrep_polygon_tri(const ON_Brep *brep, const point_t *all_verts, int loop_ind,
  *     between the face normal and the ray of >ON_PI or <ON_PI.
  * 5.  Do the test as determined by #4.
  */
+
 int
 negative_polygon(struct subbrep_object_data *data)
 {
@@ -214,16 +215,73 @@ negative_polygon(struct subbrep_object_data *data)
     VMOVE(origin, hit_point);
     VMOVE(dir, rdir);
 
+    std::cout << "working: " << bu_vls_addr(data->key) << "\n";
+    bu_log("in origin.s sph %f %f %f 1\n", origin[0], origin[1], origin[2]);
+    bu_log("in triangle_normal.s rcc %f %f %f %f %f %f 1 \n", hit_point[0], hit_point[1], hit_point[2], triangle_normal[0], triangle_normal[1], triangle_normal[2]);
+    bu_log("in ray.s rcc %f %f %f %f %f %f 1 \n", origin[0], origin[1], origin[2], dir[0], dir[1], dir[2]);
+
     // Test the ray against the triangle set
     int hit_cnt = 0;
-    point_t p1, p2, p3;
+    point_t p1, p2, p3, isect;
+    point2d_t pts2d[3];
+    point2d_t test_pt;
+    ON_3dPointArray hit_pnts;
     for (int i = 0; i < all_faces_cnt; i++) {
+	ON_3dPoint onp1, onp2, onp3, hit_pnt;
 	VMOVE(p1, all_verts[all_faces[i*3+0]]);
 	VMOVE(p2, all_verts[all_faces[i*3+1]]);
 	VMOVE(p3, all_verts[all_faces[i*3+2]]);
-	hit_cnt += bn_isect_tri_ray(origin, dir, p1, p2, p3, NULL);
+	onp1.x = p1[0];
+	onp1.y = p1[1];
+	onp1.z = p1[2];
+	onp2.x = p2[0];
+	onp2.y = p2[1];
+	onp2.z = p2[2];
+	onp3.x = p3[0];
+	onp3.y = p3[1];
+	onp3.z = p3[2];
+	ON_Plane fplane(onp1, onp2, onp3);
+#if 0
+	std::cout << "p1: " << pout(onp1) << "\n";
+	std::cout << "p2: " << pout(onp2) << "\n";
+	std::cout << "p3: " << pout(onp3) << "\n";
+	bu_log("in p1.s sph %f %f %f 0.5\n", p1[0], p1[1], p1[2]);
+	bu_log("in p2.s sph %f %f %f 0.5\n", p2[0], p2[1], p2[2]);
+	bu_log("in p3.s sph %f %f %f 0.5\n", p3[0], p3[1], p3[2]);
+#endif
+	int is_hit = bn_isect_tri_ray(origin, dir, p1, p2, p3, &isect);
+#if 0
+	if (is_hit) {
+	    // Project into the face plane and use bn_pt_in_polygon to
+	    // handle edge cases
+	    ON_2dPoint pnt2d;
+	    hit_cnt++;
+	    VMOVE(hit_pnt, isect);
+	    fplane.ClosestPointTo(onp1, &pnt2d.x, &pnt2d.y);
+	    V2MOVE(pts2d[0], pnt2d);
+	    //std::cout << "p2d 1: " << pts2d[0][0] << "," << pts2d[0][1] << "\n";
+	    fplane.ClosestPointTo(onp2, &pnt2d.x, &pnt2d.y);
+	    V2MOVE(pts2d[1], pnt2d);
+	    //std::cout << "p2d 2: " << pts2d[1][0] << "," << pts2d[1][1] << "\n";
+	    fplane.ClosestPointTo(onp3, &pnt2d.x, &pnt2d.y);
+	    V2MOVE(pts2d[2], pnt2d);
+	    //std::cout << "p2d 3: " << pts2d[2][0] << "," << pts2d[2][1] << "\n";
+	    fplane.ClosestPointTo(hit_pnt, &pnt2d.x, &pnt2d.y);
+	    V2MOVE(test_pt, pnt2d);
+	    if (!bn_pt_in_polygon(3, (const point2d_t *)pts2d, &test_pt)) {
+		bu_log("pnt in poly hit failed?");
+		is_hit = 0;
+	    }
+	}
+#endif
+	if (is_hit) {
+	    //bu_log("in hit_cnt%d.s sph %f %f %f 0.1\n", hit_pnts.Count()+1, isect[0], isect[1], isect[2]);
+	    hit_pnts.Append(hit_pnt);
+	}
     }
+    hit_cnt = hit_pnts.Count();
     bu_log("hit count: %d\n", hit_cnt);
+    bu_log("dotp : %f\n", dotp);
 
     // Final inside/outside determination
     if (hit_cnt % 2) {

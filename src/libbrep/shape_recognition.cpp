@@ -203,13 +203,13 @@ find_top_level_hierarchy(struct bu_ptbl *subbreps)
 	struct subbrep_object_data *obj = (struct subbrep_object_data *)*sb_it;
 	if (obj->fil_cnt == 0) {
 	    if (!(obj->params->bool_op == '-')) {
-		//std::cout << "Top union found: " << bu_vls_addr(obj->key) << "\n";
+		std::cout << "Top union found: " << bu_vls_addr(obj->key) << "\n";
 		obj->params->bool_op = 'u';
 		unions.insert((long *)obj);
 		subbrep_set.erase((long *)obj);
 	    } else {
 		if (obj->params->bool_op == '-') {
-		    //std::cout << "zero fills, but a negative shape - " << bu_vls_addr(obj->key) << " added to subtractions\n";
+		    std::cout << "zero fills, but a negative shape - " << bu_vls_addr(obj->key) << " added to subtractions\n";
 		    subtractions.insert((long *)obj);
 		}
 	    }
