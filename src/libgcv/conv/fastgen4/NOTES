@@ -6,3 +6,4 @@ Boolean operations:
     - Unions on primitives may be representable using the WALL record.
     - If an fg4 primitive has a facetized object subtracted from it, the facetized object will currently not be output (tree appears empty).
     - HOLE records do not (appear to) propagate up to other HOLE/WALL records
+    - Objects subtracted using HOLE records must be completely enclosed within the containing object.
