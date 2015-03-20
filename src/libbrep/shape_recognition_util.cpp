@@ -709,6 +709,9 @@ subbrep_top_bottom_pnts(struct subbrep_object_data *data, std::set<int> *corner_
 	}
 	if (!identified) return 1;
     }
+    // TODO - probably doesn't always have to be 2 and 2...
+    if (bottom_pnts->Count() < 2) return 1;
+    if (top_pnts->Count() < 2) return 1;
     return 0;
 }
 

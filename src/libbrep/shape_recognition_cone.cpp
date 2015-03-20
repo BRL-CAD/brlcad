@@ -377,8 +377,8 @@ cone_csg(struct subbrep_object_data *data, fastf_t cone_tol)
 
 
             // First, find the two points closest to the set1_c and set2_c planes
-            ON_SimpleArray<const ON_BrepVertex *> bottom_pnts(2);
-            ON_SimpleArray<const ON_BrepVertex *> top_pnts(2);
+            ON_SimpleArray<const ON_BrepVertex *> bottom_pnts;
+            ON_SimpleArray<const ON_BrepVertex *> top_pnts;
             ON_Plane b_plane = set1_c.Plane();
             ON_Plane t_plane = set2_c.Plane();
             if (subbrep_top_bottom_pnts(data, &corner_verts, &t_plane, &b_plane, &top_pnts, &bottom_pnts)) {
