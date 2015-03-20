@@ -159,7 +159,7 @@ FastgenWriter::Record::non_zero(fastf_t value)
 
     std::string result = sstream.str().substr(0, FIELD_WIDTH);
 
-    if (result.find_first_of("123456789") == std::string::npos) {
+    if (result.find_first_not_of("-0.") == std::string::npos) {
 	result = "0.0";
 	result.append(FIELD_WIDTH - result.size() - 1, '0');
 	result.push_back('1');
@@ -481,37 +481,6 @@ write_nmg_region(nmgregion *nmg_region, const db_full_path *path,
 }
 
 
-HIDDEN void
-write_booltree(FastgenWriter &writer, const tree &vtree)
-{
-    switch (vtree.tr_op) {
-	case OP_NOP:
-	case OP_NMG_TESS:
-	    // a solid that has been converted into an fg4 primitive,
-	    // and no boolean-op handling necessary
-	    return;
-
-	case OP_UNION:
-	case OP_INTERSECT:
-	case OP_SUBTRACT:
-	    break;
-
-	default:
-	    throw std::invalid_argument("invalid op");
-    }
-
-    if (!vtree.tr_b.tb_left || !vtree.tr_b.tb_right)
-	throw std::invalid_argument("NULL tree");
-
-    RT_CK_TREE(vtree.tr_b.tb_left);
-    RT_CK_TREE(vtree.tr_b.tb_right);
-
-    // boolean op. first process leaves
-    write_booltree(writer, *vtree.tr_b.tb_left);
-    write_booltree(writer, *vtree.tr_b.tb_right);
-}
-
-
 HIDDEN bool
 ell_is_sphere(const rt_ell_internal &ell)
 {
@@ -688,27 +657,6 @@ convert_primitive(db_tree_state *tree_state, const db_full_path *path,
 }
 
 
-HIDDEN tree *
-convert_region_end(db_tree_state *tree_state, const db_full_path *path,
-		   tree *vtree, void *client_data)
-{
-    RT_CK_DBTS(tree_state);
-    RT_CK_FULL_PATH(path);
-    RT_CK_TREE(vtree);
-
-    gcv_region_end_data &region_end_data = *static_cast<gcv_region_end_data *>
-					   (client_data);
-    FastgenWriter &writer = *static_cast<FastgenWriter *>
-			    (region_end_data.client_data);
-
-    if (vtree->tr_op == OP_NMG_TESS || true) // tessellated
-	return gcv_region_end(tree_state, path, vtree, client_data);
-
-    write_booltree(writer, *vtree);
-    return vtree;
-}
-
-
 }
 
 
@@ -742,8 +690,7 @@ extern "C" {
 
 	    try {
 		db_walk_tree(dbip, num_objects, const_cast<const char **>(object_names.ptr), 1,
-			     &initial_tree_state, NULL, convert_region_end, convert_primitive,
-			     &region_end_data);
+			     &initial_tree_state, NULL, gcv_region_end, convert_primitive, &region_end_data);
 	    } catch (...) {
 		nmg_km(vmodel);
 		throw;
