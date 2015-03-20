@@ -38,6 +38,25 @@ namespace
 {
 
 
+template <typename T>
+struct AutoFreePtr {
+    AutoFreePtr(T *vptr) : ptr(vptr) {}
+
+    ~AutoFreePtr()
+    {
+	if (ptr) bu_free(ptr, "AutoFreePtr");
+    }
+
+
+    T * const ptr;
+
+
+private:
+    AutoFreePtr(const AutoFreePtr &source);
+    AutoFreePtr &operator=(const AutoFreePtr &source);
+};
+
+
 class FastgenWriter
 {
 public:
@@ -69,6 +88,7 @@ public:
 
     template <typename T> Record &operator<<(const T &value);
     Record &operator<<(fastf_t value);
+    Record &non_zero(fastf_t value);
     Record &text(const std::string &value);
 
 
@@ -124,10 +144,28 @@ FastgenWriter::Record::operator<<(const T &value)
 FastgenWriter::Record &
 FastgenWriter::Record::operator<<(fastf_t value)
 {
-    // TODO: check that truncated value != 0.0, where zero is forbidden
     std::ostringstream sstream;
     sstream << std::showpoint << value;
     return operator<<(sstream.str().substr(0, FIELD_WIDTH));
+}
+
+
+// ensure that the truncated value != 0.0
+FastgenWriter::Record &
+FastgenWriter::Record::non_zero(fastf_t value)
+{
+    std::ostringstream sstream;
+    sstream << std::showpoint << value;
+
+    std::string result = sstream.str().substr(0, FIELD_WIDTH);
+
+    if (result.find_first_of("123456789") == std::string::npos) {
+	result = "0.0";
+	result.append(FIELD_WIDTH - result.size() - 1, '0');
+	result.push_back('1');
+    }
+
+    return operator<<(result);
 }
 
 
@@ -262,8 +300,9 @@ Section::add_sphere(std::size_t g1, fastf_t thickness, fastf_t radius)
     if (thickness <= 0.0 || radius <= 0.0)
 	throw std::invalid_argument("invalid value");
 
-    FastgenWriter::Record(m_writer) << "CSPHERE" << m_next_element_id++ << 0 << g1
-				    << "" << "" << "" << thickness << radius;
+    FastgenWriter::Record record(m_writer);
+    record << "CSPHERE" << m_next_element_id++ << 0 << g1 << "" << "" << "";
+    record.non_zero(thickness).non_zero(radius);
 }
 
 
@@ -305,8 +344,15 @@ Section::add_line(std::size_t g1, std::size_t g2, fastf_t thickness,
     if (g1 == g2 || !g1 || !g2 || g1 >= m_next_grid_id || g2 >= m_next_grid_id)
 	throw std::invalid_argument("invalid grid id");
 
-    FastgenWriter::Record(m_writer) << "CLINE" << m_next_element_id++ << 0 << g1 <<
-				    g2 << "" << "" << thickness << radius;
+    FastgenWriter::Record record(m_writer);
+    record << "CLINE" << m_next_element_id++ << 0 << g1 << g2 << "" << "";
+
+    if (m_volume_mode)
+	record << thickness;
+    else
+	record.non_zero(thickness);
+
+    record << radius;
 }
 
 
@@ -326,8 +372,10 @@ Section::add_triangle(std::size_t g1, std::size_t g2, std::size_t g3,
 	|| g3 >= m_next_grid_id)
 	throw std::invalid_argument("invalid grid id");
 
-    FastgenWriter::Record(m_writer) << "CTRI" << m_next_element_id++ << 0 << g1 <<
-				    g2 << g3 << thickness << (grid_centered ? 1 : 2);
+    FastgenWriter::Record record(m_writer);
+    record << "CTRI" << m_next_element_id++ << 0 << g1 << g2 << g3;
+    record.non_zero(thickness);
+    record << (grid_centered ? 1 : 2);
 }
 
 
@@ -404,7 +452,7 @@ write_nmg_region(nmgregion *nmg_region, const db_full_path *path,
 
     FastgenWriter &writer = *static_cast<FastgenWriter *>(client_data);
 
-    char *name = db_path_to_string(path);
+    AutoFreePtr<char> name(db_path_to_string(path));
 
     shell *vshell;
 
@@ -412,7 +460,6 @@ write_nmg_region(nmgregion *nmg_region, const db_full_path *path,
 	NMG_CK_SHELL(vshell);
 
 	rt_bot_internal *bot = nmg_bot(vshell, &tol);
-	write_bot(writer, name, *bot);
 
 	// fill in an rt_db_internal with our new bot so we can free it
 	rt_db_internal internal;
@@ -421,10 +468,16 @@ write_nmg_region(nmgregion *nmg_region, const db_full_path *path,
 	internal.idb_minor_type = ID_BOT;
 	internal.idb_meth = &OBJ[ID_BOT];
 	internal.idb_ptr = bot;
+
+	try {
+	    write_bot(writer, name.ptr, *bot);
+	} catch (...) {
+	    internal.idb_meth->ft_ifree(&internal);
+	    throw;
+	}
+
 	internal.idb_meth->ft_ifree(&internal);
     }
-
-    bu_free(name, "name");
 }
 
 
@@ -554,7 +607,7 @@ convert_primitive(db_tree_state *tree_state, const db_full_path *path,
     FastgenWriter &writer = *static_cast<FastgenWriter *>
 			    (region_end_data.client_data);
 
-    char *name = db_path_to_string(path);
+    AutoFreePtr<char> name(db_path_to_string(path));
 
     switch (internal->idb_type) {
 	case ID_CLINE: {
@@ -562,7 +615,7 @@ convert_primitive(db_tree_state *tree_state, const db_full_path *path,
 					     (internal->idb_ptr);
 	    RT_CLINE_CK_MAGIC(&cline);
 
-	    Section section(writer, name, true);
+	    Section section(writer, name.ptr, true);
 	    point_t v2;
 	    VADD2(v2, cline.v, cline.h);
 	    section.add_grid_point(V3ARGS(cline.v));
@@ -579,7 +632,7 @@ convert_primitive(db_tree_state *tree_state, const db_full_path *path,
 	    if (internal->idb_type != ID_SPH && !ell_is_sphere(ell))
 		goto tessellate;
 
-	    Section section(writer, name, true);
+	    Section section(writer, name.ptr, true);
 	    section.add_grid_point(V3ARGS(ell.v));
 	    section.add_sphere(1, 1.0, MAGNITUDE(ell.a));
 	    break;
@@ -593,7 +646,7 @@ convert_primitive(db_tree_state *tree_state, const db_full_path *path,
 	    if (internal->idb_type != ID_REC && !tgc_is_ccone(tgc))
 		goto tessellate;
 
-	    Section section(writer, name, true);
+	    Section section(writer, name.ptr, true);
 	    point_t v2;
 	    VADD2(v2, tgc.v, tgc.h);
 	    section.add_grid_point(V3ARGS(tgc.v));
@@ -605,10 +658,10 @@ convert_primitive(db_tree_state *tree_state, const db_full_path *path,
 	case ID_ARB8: {
 	    const rt_arb_internal &arb = *static_cast<rt_arb_internal *>(internal->idb_ptr);
 	    RT_ARB_CK_MAGIC(&arb);
-	    Section section(writer, name, true);
+	    Section section(writer, name.ptr, true);
 
 	    for (int i = 0; i < 8; ++i)
-		section.add_grid_point(arb.pt[i][0], arb.pt[i][1], arb.pt[i][2]);
+		section.add_grid_point(V3ARGS(arb.pt[i]));
 
 	    const std::size_t points[] = {1, 2, 3, 4, 5, 6, 7, 8};
 	    section.add_hexahedron(points);
@@ -618,17 +671,14 @@ convert_primitive(db_tree_state *tree_state, const db_full_path *path,
 	case ID_BOT: {
 	    const rt_bot_internal &bot = *static_cast<rt_bot_internal *>(internal->idb_ptr);
 	    RT_BOT_CK_MAGIC(&bot);
-	    write_bot(writer, name, bot);
+	    write_bot(writer, name.ptr, bot);
 	    break;
 	}
 
 	default:
 	tessellate:
-	    bu_free(name, "name");
 	    return nmg_booltree_leaf_tess(tree_state, path, internal, client_data);
     }
-
-    bu_free(name, "name");
 
     // remove this solid from the tree
     tree *result;
@@ -674,26 +724,32 @@ extern "C" {
 	writer.write_comment("g -> fastgen4 conversion");
 
 	{
-	    directory **results;
-	    db_update_nref(dbip, &rt_uniresource);
-	    std::size_t num_objects = db_ls(dbip, DB_LS_TOPS, NULL, &results);
-	    char **object_names = db_dpv_to_argv(results);
-	    bu_free(results, "tops");
-
+	    model *vmodel;
 	    const rt_tess_tol ttol = {RT_TESS_TOL_MAGIC, 0.0, 0.01, 0.0};
-	    model *vmodel = nmg_mm();
 	    db_tree_state initial_tree_state = rt_initial_tree_state;
 	    initial_tree_state.ts_tol = &tol;
 	    initial_tree_state.ts_ttol = &ttol;
 	    initial_tree_state.ts_m = &vmodel;
 
+	    db_update_nref(dbip, &rt_uniresource);
+	    directory **results;
+	    std::size_t num_objects = db_ls(dbip, DB_LS_TOPS, NULL, &results);
+	    AutoFreePtr<char *> object_names(db_dpv_to_argv(results));
+	    bu_free(results, "tops");
+
+	    vmodel = nmg_mm();
 	    gcv_region_end_data region_end_data = {write_nmg_region, &writer};
-	    db_walk_tree(dbip, num_objects, const_cast<const char **>(object_names), 1,
-			 &initial_tree_state, NULL, convert_region_end, convert_primitive,
-			 &region_end_data);
+
+	    try {
+		db_walk_tree(dbip, num_objects, const_cast<const char **>(object_names.ptr), 1,
+			     &initial_tree_state, NULL, convert_region_end, convert_primitive,
+			     &region_end_data);
+	    } catch (...) {
+		nmg_km(vmodel);
+		throw;
+	    }
 
 	    nmg_km(vmodel);
-	    bu_free(object_names, "object_names");
 	}
 
 
