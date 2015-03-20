@@ -422,10 +422,10 @@ write_bot(FastgenWriter &writer, const std::string &name,
 	bool grid_centered = false;
 
 	if (bot.mode == RT_BOT_PLATE) {
-	    // fg4 does not allow zero thickness, so set a
-	    // very small thickness if that is the case
+	    // fg4 does not allow zero thickness
+	    // set a very small thickness if face thickness is zero
 	    if (bot.thickness)
-		thickness = !ZERO(bot.thickness[i]) ? bot.thickness[i] : 1e-6;
+		thickness = !ZERO(bot.thickness[i]) ? bot.thickness[i] : 2 * SMALL_FASTF;
 
 	    if (bot.face_mode)
 		grid_centered = !BU_BITTEST(bot.face_mode, i);
@@ -649,7 +649,6 @@ convert_primitive(db_tree_state *tree_state, const db_full_path *path,
 	    return nmg_booltree_leaf_tess(tree_state, path, internal, client_data);
     }
 
-    // remove this solid from the tree
     tree *result;
     RT_GET_TREE(result, tree_state->ts_resp);
     result->tr_op = OP_NOP;
@@ -667,6 +666,8 @@ extern "C" {
     gcv_fastgen4_write(const char *path, struct db_i *dbip,
 		       const struct gcv_opts *UNUSED(options))
     {
+	const bool convert_primitives = false;
+
 	FastgenWriter writer(path);
 	writer.write_comment(dbip->dbi_title);
 	writer.write_comment("g -> fastgen4 conversion");
@@ -690,7 +691,9 @@ extern "C" {
 
 	    try {
 		db_walk_tree(dbip, num_objects, const_cast<const char **>(object_names.ptr), 1,
-			     &initial_tree_state, NULL, gcv_region_end, convert_primitive, &region_end_data);
+			     &initial_tree_state, NULL, gcv_region_end,
+			     convert_primitives ? convert_primitive : nmg_booltree_leaf_tess,
+			     &region_end_data);
 	    } catch (...) {
 		nmg_km(vmodel);
 		throw;
