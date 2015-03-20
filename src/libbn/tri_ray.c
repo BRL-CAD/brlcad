@@ -63,9 +63,13 @@ int bn_isect_tri_ray(const point_t orig, const point_t dir,
     if (v < 0.0 || u + v > 1.0)
 	return 0;
 
+    /* calculate point, ray intersects triangle */
+    t = VDOT(edge2, qvec) * inv_det;
+
+    /* This is a ray, not a line - if t is negative, it's a miss */
+    if (t < 0) return 0;
+
     if (isect) {
-	/* calculate point, ray intersects triangle */
-	t = VDOT(edge2, qvec) * inv_det;
 	VSCALE(D, dir, t);
 	VADD2((*isect), orig, D);
     }
