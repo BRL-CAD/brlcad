@@ -340,6 +340,12 @@ make_shapes(struct subbrep_object_data *data, struct rt_wdb *wdbp, struct bu_vls
     return 0;
 }
 
+/* return codes:
+ * -1 get internal failure
+ *  0 success
+ *  1 not a brep
+ *  2 not a valid brep
+ */
 int
 brep_to_csg(struct ged *gedp, struct directory *dp)
 {
@@ -351,7 +357,7 @@ brep_to_csg(struct ged *gedp, struct directory *dp)
     RT_DB_INTERNAL_INIT(&intern)
 
     if (rt_db_get_internal(&intern, dp, wdbp->dbip, NULL, &rt_uniresource) < 0) {
-	return 1;
+	return -1;
     }
 
     if (intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_BREP) {
@@ -364,7 +370,7 @@ brep_to_csg(struct ged *gedp, struct directory *dp)
 
     if (!rt_brep_valid(&intern, NULL)) {
 	bu_vls_printf(gedp->ged_result_str, "%s is not a valid B-Rep - aborting\n", dp->d_namep);
-	return 1;
+	return 2;
     }
 
     ON_Brep *brep = brep_ip->brep;
@@ -518,11 +524,26 @@ brep_csg_conversion_tree(struct ged *gedp, const union tree *oldtree, union tree
 		    }
 		    // It's a primitive. If it's a b-rep object, convert it. Otherwise,
 		    // just duplicate it. Might need better error codes from brep_to_csg for this...
-		    if (brep_to_csg(gedp, dir)) {
-			bu_log("non brep solid %s.\n", bu_vls_addr(&tmpname));
-		    } else {
-			bu_log("processed brep %s.\n", bu_vls_addr(&tmpname));
+		    int brep_c = brep_to_csg(gedp, dir);
+		    int need_break = 0;
+		    switch (brep_c) {
+			case 0:
+			    bu_log("processed brep %s.\n", bu_vls_addr(&tmpname));
+			    bu_strlcpy(newtree->tr_l.tl_name, bu_vls_addr(&tmpname), strlen(bu_vls_addr(&tmpname))+1);
+			    break;
+			case 1:
+			    bu_log("non brep solid %s.\n", bu_vls_addr(&tmpname));
+			    bu_strlcpy(newtree->tr_l.tl_name, oldname, strlen(oldname)+1);
+			    break;
+			case 2:
+			    bu_log("skipped invalid brep %s.\n", bu_vls_addr(&tmpname));
+			    bu_strlcpy(newtree->tr_l.tl_name, oldname, strlen(oldname)+1);
+			default:
+			    bu_vls_free(&tmpname);
+			    need_break = 1;
+			    break;
 		    }
+		    if (need_break) break;
 		} else {
 		    bu_log("Cannot find %s.\n", oldname);
 		    newtree = NULL;
@@ -550,7 +571,7 @@ comb_to_csg(struct ged *gedp, struct directory *dp)
     RT_DB_INTERNAL_INIT(&intern)
 
     if (rt_db_get_internal(&intern, dp, wdbp->dbip, NULL, &rt_uniresource) < 0) {
-	return 1;
+	return -1;
     }
 
     RT_CK_COMB(intern.idb_ptr);
@@ -558,8 +579,8 @@ comb_to_csg(struct ged *gedp, struct directory *dp)
 
     if (comb_internal->tree == NULL) {
 	// Empty tree
-	int ret = wdb_export(wdbp, bu_vls_addr(&comb_name), comb_internal, ID_COMBINATION, 1);
-	return ret;
+	(void)wdb_export(wdbp, bu_vls_addr(&comb_name), comb_internal, ID_COMBINATION, 1);
+	return 0;
     }
 
     RT_CK_TREE(comb_internal->tree);
@@ -573,15 +594,10 @@ comb_to_csg(struct ged *gedp, struct directory *dp)
 
     union tree *newtree = new_internal->tree;
 
-    int ret = brep_csg_conversion_tree(gedp, oldtree, newtree);
-    if (!ret) {
-	ret = wdb_export(wdbp, bu_vls_addr(&comb_name), (void *)new_internal, ID_COMBINATION, 1);
-    } else {
-	bu_free(new_internal->tree, "tree");
-	bu_free(new_internal, "rt_comb_internal");
-    }
+    (void)brep_csg_conversion_tree(gedp, oldtree, newtree);
+    (void)wdb_export(wdbp, bu_vls_addr(&comb_name), (void *)new_internal, ID_COMBINATION, 1);
 
-    return ret;
+    return 0;
 }
 
 extern "C" int
