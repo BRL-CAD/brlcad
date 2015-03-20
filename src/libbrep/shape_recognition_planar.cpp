@@ -246,13 +246,19 @@ negative_polygon(struct subbrep_object_data *data)
 	// Don't count the point on the ray origin
 	if (hit_pnt.DistanceTo(origin_pnt) < 0.0001) is_hit = 0;
 	if (is_hit) {
-	    //bu_log("in hit_cnt%d.s sph %f %f %f 0.1\n", hit_pnts.Count()+1, isect[0], isect[1], isect[2]);
-	    hit_pnts.Append(hit_pnt);
+	    // No double-counting 
+	    for (int j = 0; j < hit_pnts.Count(); j++) {
+		if (hit_pnts[j].DistanceTo(hit_pnt) < 0.001) is_hit = 0;
+	    }
+	    if (is_hit) {
+		bu_log("in hit_cnt%d.s sph %f %f %f 0.1\n", hit_pnts.Count()+1, isect[0], isect[1], isect[2]);
+		hit_pnts.Append(hit_pnt);
+	    }
 	}
     }
     hit_cnt = hit_pnts.Count();
-    //bu_log("hit count: %d\n", hit_cnt);
-    //bu_log("dotp : %f\n", dotp);
+    bu_log("hit count: %d\n", hit_cnt);
+    bu_log("dotp : %f\n", dotp);
 
     // Final inside/outside determination
     if (hit_cnt % 2) {
@@ -261,7 +267,7 @@ negative_polygon(struct subbrep_object_data *data)
 	io_state = (dotp < 0) ? -1 : 1;
     }
 
-    //bu_log("inside out state: %d\n", io_state);
+    bu_log("inside out state: %d\n", io_state);
 
     bu_free(all_verts, "free top level vertex array");
     bu_free(final_faces, "free face array");
