@@ -145,7 +145,7 @@ FastgenWriter::Record &
 FastgenWriter::Record::operator<<(fastf_t value)
 {
     std::ostringstream sstream;
-    sstream << std::showpoint << value;
+    sstream << std::fixed << std::showpoint << value;
     return operator<<(sstream.str().substr(0, FIELD_WIDTH));
 }
 
@@ -155,7 +155,7 @@ FastgenWriter::Record &
 FastgenWriter::Record::non_zero(fastf_t value)
 {
     std::ostringstream sstream;
-    sstream << std::showpoint << value;
+    sstream << std::fixed << std::showpoint << value;
 
     std::string result = sstream.str().substr(0, FIELD_WIDTH);
 
@@ -438,7 +438,7 @@ write_bot(FastgenWriter &writer, const std::string &name,
 }
 
 
-static const bn_tol tol = {BN_TOL_MAGIC, 5e-4, 5e-4 * 5e-4, 1e-6, 1 - 1e-6};
+static const bn_tol tol = {BN_TOL_MAGIC, BN_TOL_DIST, BN_TOL_DIST * BN_TOL_DIST, 1e-6, 1 - 1e-6};
 
 
 HIDDEN void
@@ -666,6 +666,8 @@ extern "C" {
     gcv_fastgen4_write(const char *path, struct db_i *dbip,
 		       const struct gcv_opts *UNUSED(options))
     {
+	// Set to true to directly translate any primitives that can be represented by fg4.
+	// Due to limitations with the fg4 format, boolean operations can not be represented.
 	const bool convert_primitives = false;
 
 	FastgenWriter writer(path);
