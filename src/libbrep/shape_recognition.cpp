@@ -260,17 +260,13 @@ find_top_level_hierarchy(struct bu_ptbl *subbreps)
 				    std::cout << "Game over - self intersecting shape reported with subbrep " << bu_vls_addr(cobj->key) << ".\n";
 				    std::cout << "Until breakdown logic for this situation is available, this is a conversion stopper.\n";
 				    return NULL;
-				case -1:
-				    /* Determination made relative to parent shape - take parent status into account */
-				    if (cobj->parent->params->bool_op == '-') bool_test = -1 * bool_test;
-				case 1:
-				    /* Determination made relative to parent shape - take parent status into account */
-				    if (cobj->parent->params->bool_op == '-') bool_test = -1 * bool_test;
-				    break;
 				case 2:
 				    /* Test relative to parent inconclusive - fall back on surface test, if available */
 				    if (cobj->negative_shape == -1) bool_test = -1;
 				    if (cobj->negative_shape == 1) bool_test = 1;
+				    break;
+				default:
+				    break;
 			    }
 			} else {
 			    //std::cout << "Boolean status of " << bu_vls_addr(cobj->key) << " already determined\n";
@@ -742,7 +738,9 @@ subbrep_make_brep(struct subbrep_object_data *data)
 		    if (fil.find(old_trim->Face()->m_face_index) != fil.end()) {
 			data->local_brep->FlipFace(new_face);
 		    }
-
+		    if (old_trim->Face()->m_bRev) {
+			data->local_brep->FlipFace(new_face);
+		    }
 		}
 	    }
 	}
