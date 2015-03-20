@@ -523,6 +523,7 @@ subbrep_determine_boolean(struct subbrep_object_data *data)
 	   ON_Surface *ts = surf->Duplicate();
 	   (void)ts->IsPlanar(&face_plane, BREP_PLANAR_TOL);
 	   delete ts;
+	   if (face->m_bRev) face_plane.Flip();
        }
        std::set<int> verts;
        for (int j = 0; j < data->edges_cnt; j++) {
@@ -539,6 +540,9 @@ subbrep_determine_boolean(struct subbrep_object_data *data)
 	       if (distance < -1*BREP_PLANAR_TOL) neg_cnt++;
 	   } else {
 	       // TODO - this doesn't seem to work...
+	       if (face->m_bRev) {
+		   // do something...
+	       }
 	       double current_distance = 0;
 	       ON_3dPoint p = data->brep->m_V[*s_it].Point();
 	       ON_3dPoint p3d;
