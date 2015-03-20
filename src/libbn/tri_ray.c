@@ -30,7 +30,7 @@ int bn_isect_tri_ray(const point_t orig, const point_t dir,
 	const point_t vert0, const point_t vert1, const point_t vert2,
 	point_t *isect)
 {
-    point_t edge1, edge2, tvec, pvec, qvec;
+    point_t edge1, edge2, tvec, pvec, qvec, D;
     fastf_t det,inv_det, u, v, t;
 
     /* find vectors for two edges sharing vert0 */
@@ -63,10 +63,12 @@ int bn_isect_tri_ray(const point_t orig, const point_t dir,
     if (v < 0.0 || u + v > 1.0)
 	return 0;
 
-    /* calculate t, ray intersects triangle */
-    t = VDOT(edge2, qvec) * inv_det;
-
-    if (isect) VSET((*isect), u, v, t);
+    if (isect) {
+	/* calculate point, ray intersects triangle */
+	t = VDOT(edge2, qvec) * inv_det;
+	VSCALE(D, dir, t);
+	VADD2((*isect), orig, D);
+    }
 
     return 1;
 }
