@@ -369,7 +369,7 @@ brep_to_csg(struct ged *gedp, struct directory *dp)
 	brep_ip = (struct rt_brep_internal *)intern.idb_ptr;
     }
     RT_BREP_CK_MAGIC(brep_ip);
-#if 0
+#if 1
     if (!rt_brep_valid(&intern, NULL)) {
 	bu_vls_printf(gedp->ged_result_str, "%s is not a valid B-Rep - aborting\n", dp->d_namep);
 	return 2;
