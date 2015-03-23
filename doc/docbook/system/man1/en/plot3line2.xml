@@ -43,7 +43,8 @@ then feed the output of this through
 If an optional
 [<emphasis remap='I'>r g b</emphasis>]
 is given, where
-<emphasis remap='I'>r, g,</emphasis>
+<emphasis remap='I'>r</emphasis>,
+<emphasis remap='I'>g</emphasis>,
 and
 <emphasis remap='I'>b</emphasis>
 are values from 0 to 255 representing Red, Green, and Blue color values,
