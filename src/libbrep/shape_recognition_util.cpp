@@ -277,7 +277,7 @@ subbrep_bbox(struct subbrep_object_data *obj)
 	    }
 	}
 	if (loop_ind == -1) {
-	    std::cout << "Error - could not find fil loop!\n";
+	    bu_log("Error - could not find fil loop!\n");
 	}
 	const ON_BrepLoop *loop= &(obj->brep->m_L[loop_ind]);
 	for (int ti = 0; ti < loop->TrimCount(); ti++) {
@@ -630,13 +630,13 @@ subbrep_find_corners(struct subbrep_object_data *data, int **corner_verts_array,
         }
         if (line_cnt > 1 && curve_cnt == 0) {
             linear_verts.insert(*v_it);
-            std::cout << "found linear vert: " << *v_it << "\n";
+            //std::cout << "found linear vert: " << *v_it << "\n";
         }
     }
 
     // First, check corner count
     if (corner_verts.size() > 4) {
-        std::cout << "more than 4 corners - complex\n";
+        //std::cout << "more than 4 corners - complex\n";
         return -1;
     }
     if (corner_verts.size() == 0) return 0;
@@ -652,7 +652,7 @@ subbrep_find_corners(struct subbrep_object_data *data, int **corner_verts_array,
         s_it++;
         ON_3dPoint p4 = data->brep->m_V[*s_it].Point();
         if (tmp_plane.DistanceTo(p4) > BREP_PLANAR_TOL) {
-            std::cout << "planar tol fail\n";
+            //std::cout << "planar tol fail\n";
             return -1;
         } else {
             (*pcyl) = tmp_plane;
@@ -672,7 +672,7 @@ subbrep_find_corners(struct subbrep_object_data *data, int **corner_verts_array,
         for (ls_it = linear_verts.begin(); ls_it != linear_verts.end(); ls_it++) {
             ON_3dPoint pnt = data->brep->m_V[*ls_it].Point();
             if ((*pcyl).DistanceTo(pnt) > BREP_PLANAR_TOL) {
-                std::cout << "stray verts fail\n";
+                //std::cout << "stray verts fail\n";
                 return -1;
             }
         }

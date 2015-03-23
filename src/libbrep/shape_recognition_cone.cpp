@@ -87,8 +87,8 @@ subbrep_is_cone(struct subbrep_object_data *data, fastf_t cone_tol)
     // are not it isn't fatal, but we need to add a subtracting tgc and return a comb
     // to handle this situation so for now for simplicity require the perpendicular condition
     if (p1.Normal().IsParallelTo(cone.Axis(), 0.01) == 0) {
-        std::cout << "p1 Normal: " << p1.Normal().x << "," << p1.Normal().y << "," << p1.Normal().z << "\n";
-        std::cout << "cone axis: " << cone.Axis().x << "," << cone.Axis().y << "," << cone.Axis().z << "\n";
+        //std::cout << "p1 Normal: " << p1.Normal().x << "," << p1.Normal().y << "," << p1.Normal().z << "\n";
+        //std::cout << "cone axis: " << cone.Axis().x << "," << cone.Axis().y << "," << cone.Axis().z << "\n";
         return 0;
     }
 
@@ -130,7 +130,7 @@ subbrep_is_cone(struct subbrep_object_data *data, fastf_t cone_tol)
                 circle = circ;
             }
             if (!NEAR_ZERO(circ.Center().DistanceTo(circle.Center()), 0.01)){
-                std::cout << "found extra circle - no go\n";
+                bu_log("found extra circle in %s - no go\n", bu_vls_addr(data->key));
 		delete ecurve;
                 return 0;
             }
@@ -255,7 +255,7 @@ cone_csg(struct subbrep_object_data *data, fastf_t cone_tol)
 		    }
 		}
 		if (!assigned) {
-		    std::cout << "found extra circle - no go\n";
+		    bu_log("found extra circle in %s - no go\n", bu_vls_addr(data->key));
 		    return 0;
 		}
 	    }
@@ -400,7 +400,7 @@ cone_csg(struct subbrep_object_data *data, fastf_t cone_tol)
             ON_Plane b_plane = set1_c.Plane();
             ON_Plane t_plane = set2_c.Plane();
             if (subbrep_top_bottom_pnts(data, &corner_verts, &t_plane, &b_plane, &top_pnts, &bottom_pnts)) {
-                std::cout << "Point top/bottom sorting failed\n";
+                bu_log("Point top/bottom sorting failed: %s\n", bu_vls_addr(arb_obj->key));
                 return 0;
             }
 

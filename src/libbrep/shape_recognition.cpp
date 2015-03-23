@@ -122,7 +122,7 @@ find_subbreps(const ON_Brep *brep)
 	    if (hof >= SURFACE_GENERAL) {
 		new_obj->type = BREP;
 		(void)subbrep_make_brep(new_obj);
-		std::cout << "general surface present: " << bu_vls_addr(new_obj->key) << "\n";
+		bu_log("general surface present: %s\n", bu_vls_addr(new_obj->key));
 	    } else {
 		int split = 0;
 		volume_t vtype = subbrep_shape_recognize(new_obj);
@@ -131,7 +131,7 @@ find_subbreps(const ON_Brep *brep)
 			split = subbrep_split(new_obj);
 			if (!split) {
 			    (void)subbrep_make_brep(new_obj);
-			    std::cout << "split unsuccessful: " << bu_vls_addr(new_obj->key) << "\n";
+			    bu_log("split unsuccessful: %s\n", bu_vls_addr(new_obj->key));
 			} else {
 			    // If we did successfully split the brep, do some post-split
 			    // clean-up
@@ -153,13 +153,13 @@ find_subbreps(const ON_Brep *brep)
 
 	    bu_ptbl_ins(subbreps, (long *)new_obj);
 	}
-	if (obj_cnt > 1500) goto bail;
+	if (obj_cnt > CSG_BREP_MAX_OBJS) goto bail;
     }
 
     return subbreps;
 
 bail:
-    bu_log("brep converted to more than 1500 implicits (%d) - not a good CSG candidate\n", obj_cnt);
+    bu_log("brep converted to more than %d implicits (%d) - not a good CSG candidate\n", CSG_BREP_MAX_OBJS, obj_cnt);
     // Free memory
     for (unsigned int i = 0; i < BU_PTBL_LEN(subbreps); i++){
 	struct subbrep_object_data *obj = (struct subbrep_object_data *)BU_PTBL_GET(subbreps, i);
@@ -223,16 +223,16 @@ find_top_level_hierarchy(struct bu_ptbl *subbreps)
     /* Separate out top level unions */
     for (sb_it = subbrep_set.begin(); sb_it != subbrep_set.end(); sb_it++) {
 	struct subbrep_object_data *obj = (struct subbrep_object_data *)*sb_it;
-	std::cout << bu_vls_addr(obj->key) << " bool: " << obj->params->bool_op << "\n";
+	//std::cout << bu_vls_addr(obj->key) << " bool: " << obj->params->bool_op << "\n";
 	if (obj->fil_cnt == 0) {
 	    if (!(obj->params->bool_op == '-')) {
-		std::cout << "Top union found: " << bu_vls_addr(obj->key) << "\n";
+		//std::cout << "Top union found: " << bu_vls_addr(obj->key) << "\n";
 		obj->params->bool_op = 'u';
 		unions.insert((long *)obj);
 		subbrep_set.erase((long *)obj);
 	    } else {
 		if (obj->params->bool_op == '-') {
-		    std::cout << "zero fills, but a negative shape - " << bu_vls_addr(obj->key) << " added to subtractions\n";
+		    //std::cout << "zero fills, but a negative shape - " << bu_vls_addr(obj->key) << " added to subtractions\n";
 		    subtractions.insert((long *)obj);
 		}
 	    }
@@ -277,11 +277,11 @@ find_top_level_hierarchy(struct bu_ptbl *subbreps)
 			    /* First, check the boolean relationship to the parent solid */
 			    cobj->parent = tu;
 			    bool_test = subbrep_determine_boolean(cobj);
-			    std::cout << "Initial boolean test for " << bu_vls_addr(cobj->key) << ": " << bool_test << "\n";
+			    //std::cout << "Initial boolean test for " << bu_vls_addr(cobj->key) << ": " << bool_test << "\n";
 			    switch (bool_test) {
 				case -2:
-				    std::cout << "Game over - self intersecting shape reported with subbrep " << bu_vls_addr(cobj->key) << ".\n";
-				    std::cout << "Until breakdown logic for this situation is available, this is a conversion stopper.\n";
+				    bu_log("Game over - self intersecting shape reported with subbrep %s\n", bu_vls_addr(cobj->key));
+				    bu_log("Until breakdown logic for this situation is available, this is a conversion stopper.\n");
 				    return NULL;
 				case 2:
 				    /* Test relative to parent inconclusive - fall back on surface test, if available */
@@ -315,7 +315,7 @@ find_top_level_hierarchy(struct bu_ptbl *subbreps)
 				}
 				break;
 			    default:
-				std::cout << "Boolean status of " << bu_vls_addr(cobj->key) << " could not be determined - conversion failure\n";
+				bu_log("Boolean status of %s could not be determined - conversion failure\n", bu_vls_addr(cobj->key));;
 				return NULL;
 				break;
 			}
@@ -878,55 +878,9 @@ subbrep_make_brep(struct subbrep_object_data *data)
     data->local_brep->ShrinkSurfaces();
     data->local_brep->CullUnusedSurfaces();
 
-    std::cout << "new brep done: " << bu_vls_addr(data->key) << "\n";
+    //std::cout << "new brep done: " << bu_vls_addr(data->key) << "\n";
 
     return 1;
-}
-
-int
-subbreps_boolean_tree(struct bu_ptbl *subbreps)
-{
-    struct subbrep_object_data *top_union = NULL;
-    /* The toplevel unioned object in the tree will be the one with no faces
-     * that have only inner loops in the object loop network */
-    for (unsigned int i = 0; i < BU_PTBL_LEN(subbreps); i++){
-	struct subbrep_object_data *obj = (struct subbrep_object_data *)BU_PTBL_GET(subbreps, i);
-	if (obj->fil_cnt == 0) {
-	    top_union = obj;
-	} else {
-	    bu_log("Error - multiple objects appear to qualify as the first union object\n");
-	    return 0;
-	}
-    }
-    if (!top_union) {
-	bu_log("Error - no object qualifies as the first union object\n");
-	return 0;
-    }
-    /* Once the top level is identified, all other objects are parented to that object.
-     * Technically they are not children of that object but of the toplevel comb */
-    for (unsigned int i = 0; i < BU_PTBL_LEN(subbreps); i++){
-	struct subbrep_object_data *obj = (struct subbrep_object_data *)BU_PTBL_GET(subbreps, i);
-	if (obj != top_union) obj->parent = top_union;
-    }
-
-    /* For each child object, we need to ascertain whether the object is subtracted from the
-     * top object or unioned to it. The general test for this is to raytrace the original BRep
-     * through the child volume in question, and determine from the raytrace results whether
-     * the volume adds to or takes away from the solidity along that shotline.  This is a
-     * relatively expensive test, so if we have simpler shapes that let us do other tests
-     * let's try those first. */
-
-    /* Once we know whether the local shape is a subtraction or addition, we can decide for the
-     * individual shapes in the combination whether they are subtractions or unions locally.
-     * For example, if a cylinder is subtracted from the toplevel nmg, and a cone is
-     * in turn subtracted from that cylinder (in other words, the cone shape contributes volume to the
-     * final shape) the cone is subtracted from the local comb containing the cylinder and the cone, which
-     * is in turn subtracted from the toplevel nmg.  Likewise, if the cylinder had been unioned to the nmg
-     * to add volume and the cone had also added volume to the final shape (i.e. it's surface normals point
-     * outward from the cone) then the code would be unioned with the cylinder in the local comb, and the
-     * local comb would be unioned into the toplevel. */
-
-    return 0;
 }
 
 // Local Variables:

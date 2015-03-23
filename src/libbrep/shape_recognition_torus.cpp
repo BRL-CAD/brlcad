@@ -107,7 +107,7 @@ torus_csg(struct subbrep_object_data *data, fastf_t torus_tol)
                 toridal_surfaces.insert(f_ind);
 		break;
             default:
-		std::cout << "what???\n";
+		bu_log("what???\n");
                 return 0;
                 break;
         }

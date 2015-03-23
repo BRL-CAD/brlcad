@@ -336,7 +336,7 @@ sphere_csg(struct subbrep_object_data *data, fastf_t sph_tol)
     }
 
     if (verts.size() >= 3) {
-	std::cout << "Complex situation.\n";
+	bu_log("Complex sphere situation.\n");
 	return 0;
     }
 

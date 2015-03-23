@@ -178,7 +178,7 @@ subbrep_is_cylinder(struct subbrep_object_data *data, fastf_t cyl_tol)
                 }
             }
             if (!assigned) {
-                std::cout << "found extra circle - no go\n";
+                bu_log("found extra circle in %s - no go\n", bu_vls_addr(data->key));
 		delete ec;
                 return 0;
             }
@@ -294,7 +294,7 @@ cylinder_csg(struct subbrep_object_data *data, fastf_t cyl_tol)
                 cylindrical_surfaces.insert(f_ind);
                 break;
             default:
-		std::cout << "what???\n";
+		bu_log("what???\n");
                 return 0;
                 break;
         }
@@ -319,7 +319,7 @@ cylinder_csg(struct subbrep_object_data *data, fastf_t cyl_tol)
 	delete fcs;
 	//std::cout << "cyl_count: " << cyl_count << "\n";
 	if (f_cylinder.circle.Center().DistanceTo(cylinder.circle.Center()) > cyl_tol) {
-	    std::cout << "\n\nMultiple cylinders found\n\n";
+	    bu_log("Multiple cylinders found in %s - no go\n", bu_vls_addr(data->key));
 	    return 0;
 	}
     }
@@ -336,7 +336,7 @@ cylinder_csg(struct subbrep_object_data *data, fastf_t cyl_tol)
 	    ON_Plane eplane;
 	    ON_Curve *ecv2 = edge->EdgeCurveOf()->Duplicate();
 	    if (!ecv2->IsPlanar(&eplane, cyl_tol)) {
-		std::cout << "nonplanar edge in cylinder" << "\n";
+		bu_log("Nonplanar edge in cylinder (%s) - no go\n", bu_vls_addr(data->key));
 		delete ecv;
 		delete ecv2;
 		return 0;
@@ -454,10 +454,10 @@ cylinder_csg(struct subbrep_object_data *data, fastf_t cyl_tol)
 			}
 		    }
 		    if (!assigned) {
-			std::cout << "found extra circle - no go: " << bu_vls_addr(data->key) << "\n";
-			std::cout << "center 1 " << set1_c.Center().x << " " << set1_c.Center().y << " " << set1_c.Center().z << "\n";
-			std::cout << "center 2 " << set2_c.Center().x << " " << set2_c.Center().y << " " << set2_c.Center().z << "\n";
-			std::cout << "circ " << circ.Center().x << " " << circ.Center().y << " " << circ.Center().z << "\n";
+			bu_log("found extra circle in %s - no go\n", bu_vls_addr(data->key));
+			//std::cout << "center 1 " << set1_c.Center().x << " " << set1_c.Center().y << " " << set1_c.Center().z << "\n";
+			//std::cout << "center 2 " << set2_c.Center().x << " " << set2_c.Center().y << " " << set2_c.Center().z << "\n";
+			//std::cout << "circ " << circ.Center().x << " " << circ.Center().y << " " << circ.Center().z << "\n";
 			delete ecv;
 			delete ecv2;
 			return 0;
@@ -568,7 +568,7 @@ cylinder_csg(struct subbrep_object_data *data, fastf_t cyl_tol)
 	    ON_Plane b_plane = set1_c.Plane();
 	    ON_Plane t_plane = set2_c.Plane();
 	    if (subbrep_top_bottom_pnts(data, &corner_verts, &t_plane, &b_plane, &top_pnts, &bottom_pnts)) {
-		std::cout << "Point top/bottom sorting failed\n";
+		bu_log("Point top/bottom sorting failed in %s - no go\n", bu_vls_addr(arb_obj->key));
 		return 0;
 	    }
 
@@ -733,7 +733,7 @@ cylinder_csg(struct subbrep_object_data *data, fastf_t cyl_tol)
 		bu_vls_sprintf(data->name_root, "%s_%d_comb", bu_vls_addr(data->parent->name_root), *(data->obj_cnt));
 
 
-		std::cout << "TODO: Minus one or more end-cap arbs\n";
+		bu_log("TODO: Minus one or more end-cap arbs\n");
 		return 1;
 	    } else {
 		// We have non parallel faces and corners - at least one and possible
@@ -766,14 +766,14 @@ cylinder_csg(struct subbrep_object_data *data, fastf_t cyl_tol)
 			base_plane = cyl_planes[1];
 			tilted_plane = cyl_planes[0];
 		    }
-		    std::cout << "plane normal: " << pout(tilted_plane.Normal()) << "\n";
+		    //std::cout << "plane normal: " << pout(tilted_plane.Normal()) << "\n";
 		    double angle = acos(ON_DotProduct(cylinder.Axis(), tilted_plane.Normal()));
-		    std::cout << "  dihedral angle: " << angle * ON_RADIANS_TO_DEGREES << "\n";
+		    //std::cout << "  dihedral angle: " << angle * ON_RADIANS_TO_DEGREES << "\n";
 		    double diameter = cylinder.circle.Radius() * 2;
-		    std::cout << "  diameter: " << diameter << "\n";
+		    //std::cout << "  diameter: " << diameter << "\n";
 		    double hypotenuse = diameter / ON_DotProduct(cylinder.Axis(), tilted_plane.Normal());
-		    std::cout << "  hypotenuse: " << hypotenuse << "\n";
-		    std::cout << "  opposite: " << sin(angle) * hypotenuse << "\n";
+		    //std::cout << "  hypotenuse: " << hypotenuse << "\n";
+		    //std::cout << "  opposite: " << sin(angle) * hypotenuse << "\n";
 		} else {
 
 		    data->type = COMB;
@@ -1156,7 +1156,7 @@ cylinder_csg(struct subbrep_object_data *data, fastf_t cyl_tol)
 		return 1;
 	    }
 	} else {
-	    std::cout << "More than two capping planes (count is " << cyl_planes.Count() << ") - currently unhandled\n";
+	    bu_log("More than two capping planes (count is %d) - currently unhandled\n", cyl_planes.Count());
 	    // Flag the cyl/arb comb according to the negative or positive status of the
 	    // cylinder surface.  Whether the comb is actually subtracted from the
 	    // global object or unioned into a comb lower down the tree (or vice versa)
