@@ -106,6 +106,7 @@ find_subbreps(const ON_Brep *brep)
 	    subbrep_object_init(new_obj, brep);
 	    new_obj->obj_cnt = &obj_cnt;
 	    obj_cnt++;
+	    if (obj_cnt > CSG_BREP_MAX_OBJS) goto bail;
 	    bu_vls_sprintf(new_obj->key, "%s", key.c_str());
 	    bu_vls_sprintf(new_obj->name_root, "%d", obj_cnt);
 	    set_to_array(&(new_obj->faces), &(new_obj->faces_cnt), &faces);
@@ -130,6 +131,7 @@ find_subbreps(const ON_Brep *brep)
 		    case BREP:
 			split = subbrep_split(new_obj);
 			if (!split) {
+			    if (obj_cnt > CSG_BREP_MAX_OBJS) goto bail; 
 			    (void)subbrep_make_brep(new_obj);
 			    bu_log("split unsuccessful: %s\n", bu_vls_addr(new_obj->key));
 			} else {
@@ -153,13 +155,12 @@ find_subbreps(const ON_Brep *brep)
 
 	    bu_ptbl_ins(subbreps, (long *)new_obj);
 	}
-	if (obj_cnt > CSG_BREP_MAX_OBJS) goto bail;
     }
 
     return subbreps;
 
 bail:
-    bu_log("brep converted to more than %d implicits (%d) - not a good CSG candidate\n", CSG_BREP_MAX_OBJS, obj_cnt);
+    bu_log("brep converted to more than %d implicits - not a good CSG candidate\n", CSG_BREP_MAX_OBJS, obj_cnt);
     // Free memory
     for (unsigned int i = 0; i < BU_PTBL_LEN(subbreps); i++){
 	struct subbrep_object_data *obj = (struct subbrep_object_data *)BU_PTBL_GET(subbreps, i);
@@ -641,6 +642,7 @@ subbrep_split(struct subbrep_object_data *data)
 	}
 	filter_obj_free(filters);
 	BU_PUT(filters, struct filter_obj);
+	if ((*data->obj_cnt) > CSG_BREP_MAX_OBJS) goto csg_abort;
     }
     if (subbrep_keys.size() == 0 || csg_fail > 0) {
 	goto csg_abort;
