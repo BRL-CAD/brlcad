@@ -159,6 +159,10 @@ negative_polygon(struct subbrep_object_data *data)
 	const ON_BrepLoop *b_loop = &(data->brep->m_L[data->loops[i]]);
 	int *ffaces = NULL;
 	int num_faces = subbrep_polygon_tri(data->brep, all_verts, b_loop->m_loop_index, &ffaces);
+	if (!num_faces) {
+	    bu_log("Error - triangulation failed for loop %d!\n", b_loop->m_loop_index);
+	    return 0;
+	}
 	if (!have_hit_pnt) {
 	    const ON_BrepFace *b_face = b_loop->Face();
 	    if (fol_faces.find(b_face->m_face_index) != fol_faces.end()) {
