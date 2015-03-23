@@ -380,6 +380,10 @@ brep_build_bvh(struct brep_specific* bs)
 
     ON_BrepFaceArray& faces = brep->m_F;
     size_t faceCount = faces.Count();
+    if (faceCount == 0) {
+	bu_log("Empty Brep");
+	return -1;
+    }
 
     struct brep_build_bvh_parallel bbbp;
     bbbp.bs = bs;
