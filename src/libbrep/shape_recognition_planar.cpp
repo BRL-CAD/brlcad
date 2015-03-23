@@ -250,7 +250,7 @@ negative_polygon(struct subbrep_object_data *data)
 	// Don't count the point on the ray origin
 	if (hit_pnt.DistanceTo(origin_pnt) < 0.0001) is_hit = 0;
 	if (is_hit) {
-	    // No double-counting 
+	    // No double-counting
 	    for (int j = 0; j < hit_pnts.Count(); j++) {
 		if (hit_pnts[j].DistanceTo(hit_pnt) < 0.001) is_hit = 0;
 	    }
