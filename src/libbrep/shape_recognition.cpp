@@ -131,7 +131,7 @@ find_subbreps(const ON_Brep *brep)
 		    case BREP:
 			split = subbrep_split(new_obj);
 			if (!split) {
-			    if (obj_cnt > CSG_BREP_MAX_OBJS) goto bail; 
+			    if (obj_cnt > CSG_BREP_MAX_OBJS) goto bail;
 			    (void)subbrep_make_brep(new_obj);
 			    bu_log("split unsuccessful: %s\n", bu_vls_addr(new_obj->key));
 			} else {
