@@ -473,7 +473,6 @@ brep_csg_conversion_tree(struct ged *gedp, const union tree *oldtree, union tree
 {
     int ret = 0;
     *newtree = *oldtree;
-    struct rt_comb_internal *comb = NULL;
     switch (oldtree->tr_op) {
 	case OP_UNION:
 	case OP_INTERSECT:
@@ -481,7 +480,6 @@ brep_csg_conversion_tree(struct ged *gedp, const union tree *oldtree, union tree
 	case OP_XOR:
 	    /* convert right */
 	    bu_log("convert right\n");
-	    comb = new rt_comb_internal;
 	    newtree->tr_b.tb_right = new tree;
 	    RT_TREE_INIT(newtree->tr_b.tb_right);
 	    ret = brep_csg_conversion_tree(gedp, oldtree->tr_b.tb_right, newtree->tr_b.tb_right);
@@ -501,9 +499,7 @@ brep_csg_conversion_tree(struct ged *gedp, const union tree *oldtree, union tree
 	    RT_TREE_INIT(newtree->tr_b.tb_left);
 	    ret = brep_csg_conversion_tree(gedp, oldtree->tr_b.tb_left, newtree->tr_b.tb_left);
 #if 0
-	    if (!ret) {
-		comb->tree = newtree;
-	    } else {
+	    if (ret) {
 		delete newtree->tr_b.tb_left;
 		delete newtree->tr_b.tb_right;
 	    }
