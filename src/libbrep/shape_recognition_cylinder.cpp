@@ -35,6 +35,69 @@ negative_cylinder(struct subbrep_object_data *data, int face_index, double cyl_t
     return ret;
 }
 
+// Sort the curved edges into one of two circles.
+int
+categorize_arc_edges(ON_Circle *set1_c, ON_Circle *set2_c,
+	struct subbrep_object_data *data, std::set<int> *active_edges, double cyl_tol)
+{
+    if (!set1_c || !set2_c || !data || !active_edges) return 0;
+    std::set<int>::iterator e_it;
+    std::set<int> arc_set_1, arc_set_2;
+    double max_height = 0.0;
+    const ON_BrepEdge *edge = &(data->brep->m_E[*(active_edges->begin())]);
+    ON_Curve *sc = edge->EdgeCurveOf()->Duplicate();
+    ON_Arc arc;
+    (void)sc->IsArc(NULL, &arc, cyl_tol);
+    delete sc;
+    (*set1_c) = ON_Circle(arc.StartPoint(), arc.MidPoint(), arc.EndPoint());
+
+    // Find the arc edge furthest from the set1_c arc - this will define the
+    // "opposite circle" for the cylinder
+    for (e_it = active_edges->begin(); e_it != active_edges->end(); e_it++) {
+        const ON_BrepEdge *cedge = &(data->brep->m_E[*e_it]);
+	if (edge != cedge) {
+	    ON_Curve *ec = cedge->EdgeCurveOf()->Duplicate();
+	    if (ec->IsArc(NULL, &arc, cyl_tol)) {
+		ON_Circle circ(arc.StartPoint(), arc.MidPoint(), arc.EndPoint());
+		if (fabs(circ.Center().DistanceTo(set1_c->Center())) > max_height) {
+		    max_height = fabs(circ.Center().DistanceTo(set1_c->Center()));
+		    (*set2_c) = circ;
+		}
+	    }
+	    delete ec;
+	}
+    }
+
+    // For each arc, assign it to one or the other of the cylinder planes.  If
+    // we find one we can't categorize within tolerance, game over.
+    for (e_it = active_edges->begin(); e_it != active_edges->end(); e_it++) {
+        const ON_BrepEdge *cedge = &(data->brep->m_E[*e_it]);
+	ON_Curve *ec = cedge->EdgeCurveOf()->Duplicate();
+	if (ec->IsArc(NULL, &arc, cyl_tol)) {
+	    ON_Circle circ(arc.StartPoint(), arc.MidPoint(), arc.EndPoint());
+	    double d1 = fabs(circ.Center().DistanceTo(set1_c->Center()));
+	    double d2 = fabs(circ.Center().DistanceTo(set2_c->Center()));
+	    if (!NEAR_ZERO(d1, cyl_tol) && !NEAR_ZERO(d2, cyl_tol)) {
+		bu_log("found extra circle in %s - no go\n", bu_vls_addr(data->key));
+		delete ec;
+		return 0;
+	    }
+	    if (d1 > d2) {
+		arc_set_1.insert(*e_it);
+	    } else {
+		arc_set_2.insert(*e_it);
+	    }
+	}
+	delete ec;
+    }
+
+    // TODO - should probably average the centers of the arc set arcs to get better
+    // values for the cylinder.
+
+    return 1;
+}
+
+
 int
 subbrep_is_cylinder(struct subbrep_object_data *data, fastf_t cyl_tol)
 {
@@ -142,54 +205,9 @@ subbrep_is_cylinder(struct subbrep_object_data *data, fastf_t cyl_tol)
     // loops because we are assuming that in the input Brep; any curve except
     // arc curves that survived the degeneracy test has already resulted in an
     // earlier rejection.
-    std::set<int> arc_set_1, arc_set_2;
-    double max_height = 0.0;
-    ON_Circle set2_c;
-    int arc2_circle_set = 0;
-    const ON_BrepEdge *edge = &(data->brep->m_E[*(active_edges.begin())]);
-    ON_Curve *sc = edge->EdgeCurveOf()->Duplicate();
-    ON_Arc arc;
-    (void)sc->IsArc(NULL, &arc, cyl_tol);
-    delete sc;
-    ON_Circle set1_c(arc.StartPoint(), arc.MidPoint(), arc.EndPoint());
-
-    // Find the arc edge furthest from the set1_c arc - this will define the
-    // "opposite circle" for the cylinder
-    for (e_it = active_edges.begin(); e_it != active_edges.end(); e_it++) {
-        const ON_BrepEdge *cedge = &(data->brep->m_E[*e_it]);
-	if (edge != cedge) {
-	    ON_Curve *ec = cedge->EdgeCurveOf()->Duplicate();
-	    if (ec->IsArc(NULL, &arc, cyl_tol)) {
-		ON_Circle circ(arc.StartPoint(), arc.MidPoint(), arc.EndPoint());
-		if (fabs(circ.Center().DistanceTo(set1_c.Center())) > max_height) {
-		    max_height = fabs(circ.Center().DistanceTo(set1_c.Center()));
-		    set2_c = circ;
-		}
-	    }
-	    delete ec;
-	}
-    }
-
-    // For each arc, assign it to one or the other of the cylinder planes
-    for (e_it = active_edges.begin(); e_it != active_edges.end(); e_it++) {
-        const ON_BrepEdge *cedge = &(data->brep->m_E[*e_it]);
-	ON_Curve *ec = cedge->EdgeCurveOf()->Duplicate();
-	if (ec->IsArc(NULL, &arc, cyl_tol)) {
-	    ON_Circle circ(arc.StartPoint(), arc.MidPoint(), arc.EndPoint());
-	    double d1 = fabs(circ.Center().DistanceTo(set1_c.Center()));
-	    double d2 = fabs(circ.Center().DistanceTo(set2_c.Center()));
-	    if (!NEAR_ZERO(d1, cyl_tol) && !NEAR_ZERO(d2, cyl_tol)) {
-		bu_log("found extra circle in %s - no go\n", bu_vls_addr(data->key));
-		delete ec;
-		return 0;
-	    }
-	    if (d1 > d2) {
-		arc_set_1.insert(*e_it);
-	    } else {
-		arc_set_2.insert(*e_it);
-	    }
-	}
-	delete ec;
+    ON_Circle set1_c, set2_c;
+    if (!categorize_arc_edges(&set1_c, &set2_c, data, &active_edges, cyl_tol)) {
+	return 0;
     }
 
     // TODO - should probably average the centers of the arc set arcs to get better
