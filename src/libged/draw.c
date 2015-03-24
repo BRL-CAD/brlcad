@@ -702,6 +702,12 @@ _ged_drawtrees(struct ged *gedp, int argc, const char *argv[], int kind, struct 
 
     }
 
+    if (!argc) {
+	bu_vls_printf(gedp->ged_result_str, "Please specify one or more objects to be drawn.\n");
+	--drawtrees_depth;
+	return -1;
+    }
+
     switch (kind) {
 	default:
 	    bu_vls_printf(gedp->ged_result_str, "ERROR, bad kind\n");
