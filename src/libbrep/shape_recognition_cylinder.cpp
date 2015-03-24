@@ -91,8 +91,39 @@ categorize_arc_edges(ON_Circle *set1_c, ON_Circle *set2_c,
 	delete ec;
     }
 
-    // TODO - should probably average the centers of the arc set arcs to get better
+    // Average the centers of the arc set arcs to get better
     // values for the cylinder.
+    double avg_radius = 0.0;
+    ON_3dPoint avg_center = ON_3dPoint(0.0, 0.0, 0.0);
+    int cnt = arc_set_1.size();
+    for (e_it = arc_set_1.begin(); e_it != arc_set_1.end(); e_it++) {
+	const ON_BrepEdge *cedge = &(data->brep->m_E[*e_it]);
+	ON_Curve *ec = cedge->EdgeCurveOf()->Duplicate();
+	(void)ec->IsArc(NULL, &arc, cyl_tol);
+	ON_Circle circ(arc.StartPoint(), arc.MidPoint(), arc.EndPoint());
+	avg_radius += circ.Radius();
+	avg_center = avg_center + circ.Center();
+	delete ec;
+    }
+    avg_radius = avg_radius/cnt;
+    avg_center = avg_center/cnt;
+    (*set1_c) = ON_Circle(avg_center, avg_radius);
+
+    avg_radius = 0.0;
+    avg_center = ON_3dPoint(0.0, 0.0, 0.0);
+    cnt = arc_set_2.size();
+    for (e_it = arc_set_2.begin(); e_it != arc_set_2.end(); e_it++) {
+	const ON_BrepEdge *cedge = &(data->brep->m_E[*e_it]);
+	ON_Curve *ec = cedge->EdgeCurveOf()->Duplicate();
+	(void)ec->IsArc(NULL, &arc, cyl_tol);
+	ON_Circle circ(arc.StartPoint(), arc.MidPoint(), arc.EndPoint());
+	avg_radius += circ.Radius();
+	avg_center = avg_center + circ.Center();
+	delete ec;
+    }
+    avg_radius = avg_radius/cnt;
+    avg_center = avg_center/cnt;
+    (*set2_c) = ON_Circle(avg_center, avg_radius);
 
     return 1;
 }
