@@ -416,6 +416,14 @@ set_filter_obj(const ON_Surface *surface, struct filter_obj *obj)
     if (obj->stype == SURFACE_TORUS) obj->type = TORUS;
 }
 
+// TODO - the below idea of grouping surfaces is only practial for partital objects
+// when we have the ability to extract the "fully contained" vertices in these subsets
+// from the parent solids (for example, if two cylindrical faces are subtracted from
+// a parent planar volume, the vertices that are shared only by the cylindrical
+// surfaces need to be removed from consideration when the parent planar solid is
+// defined.  Currently that's not the case, so each non-planar face has to be considered
+// in isolation at the moment.  This isn't optimial and needs to be improved, but it
+// will require a methodology for identifying and removing the vertices as outlined above.
 int
 apply_filter_obj(const ON_Surface *surf, int UNUSED(loop_index), struct filter_obj *obj)
 {
@@ -427,24 +435,24 @@ apply_filter_obj(const ON_Surface *surf, int UNUSED(loop_index), struct filter_o
     std::set<int> allowed;
 
     if (obj->type == CYLINDER) {
-	allowed.insert(SURFACE_CYLINDRICAL_SECTION);
-	allowed.insert(SURFACE_CYLINDER);
+//	allowed.insert(SURFACE_CYLINDRICAL_SECTION);
+//	allowed.insert(SURFACE_CYLINDER);
 	allowed.insert(SURFACE_PLANE);
     }
 
     if (obj->type == CONE) {
-	allowed.insert(SURFACE_CONE);
+//	allowed.insert(SURFACE_CONE);
 	allowed.insert(SURFACE_PLANE);
     }
 
     if (obj->type == SPHERE) {
-	allowed.insert(SURFACE_SPHERICAL_SECTION);
-	allowed.insert(SURFACE_SPHERE);
+//	allowed.insert(SURFACE_SPHERICAL_SECTION);
+//	allowed.insert(SURFACE_SPHERE);
 	allowed.insert(SURFACE_PLANE);
     }
 
     if (obj->type == TORUS) {
-	allowed.insert(SURFACE_TORUS);
+//	allowed.insert(SURFACE_TORUS);
 	allowed.insert(SURFACE_PLANE);
     }
 
