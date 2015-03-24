@@ -52,6 +52,7 @@ subbrep_polygon_tri(const ON_Brep *brep, const point_t *all_verts, int loop_ind,
 	    const ON_BrepEdge *edge = &(b_face->Brep()->m_E[trim->m_ei]);
 	    const ON_Curve *trim_curve = trim->TrimCurveOf();
 	    ON_2dPoint cp = trim_curve->PointAt(trim_curve->Domain().Min());
+	    ON_2dPoint cp_max = trim_curve->PointAt(trim_curve->Domain().Max());
 	    V2MOVE(verts2d[ti], cp);
 	    if (trim->m_bRev3d) {
 		local_to_verts[ti] = edge->Vertex(1)->m_vertex_index;
@@ -73,6 +74,13 @@ subbrep_polygon_tri(const ON_Brep *brep, const point_t *all_verts, int loop_ind,
 	    }
 	}
     }
+
+#if 0
+    if (!bn_polygon_clockwise(b_loop->m_ti.Count(), verts2d)) {
+	bu_log("degenerate loop %d for face %d - no go\n", b_loop->m_loop_index, b_face->m_face_index);
+	//return 0;
+    }
+#endif
 
     /* The real work - triangulate the 2D polygon to find out triangles for
      * this particular B-Rep face */
@@ -255,14 +263,14 @@ negative_polygon(struct subbrep_object_data *data)
 		if (hit_pnts[j].DistanceTo(hit_pnt) < 0.001) is_hit = 0;
 	    }
 	    if (is_hit) {
-		bu_log("in hit_cnt%d.s sph %f %f %f 0.1\n", hit_pnts.Count()+1, isect[0], isect[1], isect[2]);
+		//bu_log("in hit_cnt%d.s sph %f %f %f 0.1\n", hit_pnts.Count()+1, isect[0], isect[1], isect[2]);
 		hit_pnts.Append(hit_pnt);
 	    }
 	}
     }
     hit_cnt = hit_pnts.Count();
-    bu_log("hit count: %d\n", hit_cnt);
-    bu_log("dotp : %f\n", dotp);
+    //bu_log("hit count: %d\n", hit_cnt);
+    //bu_log("dotp : %f\n", dotp);
 
     // Final inside/outside determination
     if (hit_cnt % 2) {
@@ -271,7 +279,7 @@ negative_polygon(struct subbrep_object_data *data)
 	io_state = (dotp < 0) ? -1 : 1;
     }
 
-    bu_log("inside out state: %d\n", io_state);
+    //bu_log("inside out state: %d\n", io_state);
 
     bu_free(all_verts, "free top level vertex array");
     bu_free(final_faces, "free face array");
@@ -286,7 +294,8 @@ subbrep_is_planar(struct subbrep_object_data *data)
     // Check surfaces.  If a surface is anything other than a plane the verdict is no.
     // If all surfaces are planes, then the verdict is yes.
     for (i = 0; i < data->faces_cnt; i++) {
-	if (GetSurfaceType(data->brep->m_F[data->faces[i]].SurfaceOf(), NULL) != SURFACE_PLANE) return 0;
+	surface_t stype = GetSurfaceType(data->brep->m_F[data->faces[i]].SurfaceOf(), NULL);
+	if (stype != SURFACE_PLANE) return 0;
     }
     data->type = PLANAR_VOLUME;
 

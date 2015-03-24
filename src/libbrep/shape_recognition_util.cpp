@@ -73,6 +73,9 @@ GetSurfaceType(const ON_Surface *in_surface, struct filter_obj *obj)
 {
     surface_t ret = SURFACE_GENERAL;
     ON_Surface *surface = in_surface->Duplicate();
+    // Make things a bit larger so small surfaces can be identified
+    ON_Xform sf(1000);
+    surface->Transform(sf);
     if (obj) {
 	filter_obj_init(obj);
 	if (surface->IsPlanar(obj->plane, BREP_PLANAR_TOL)) {
