@@ -91,7 +91,7 @@ flag is used.</para>
 flags takes a quoted string of 6 floating point numbers,
 which are immediately output as a "space" command,
 and which override any "space" commands found in the input file
-or which are computed by</para>
+or which are computed by (what?).</para>
 
 <para>The
 <option>-v</option>
