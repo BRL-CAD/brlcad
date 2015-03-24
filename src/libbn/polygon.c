@@ -195,7 +195,7 @@ int
 bn_polygon_clockwise(size_t npts, const point2d_t *pts)
 {
     size_t i;
-    int sum = 0;
+    double sum = 0;
     for (i = 0; i < npts; i++) {
 	if (i + 1 == npts) {
 	    sum += (pts[0][0] - pts[i][0]) * (pts[0][1] + pts[i][1]);
@@ -203,7 +203,7 @@ bn_polygon_clockwise(size_t npts, const point2d_t *pts)
 	    sum += (pts[i+1][0] - pts[i][0]) * (pts[i+1][1] + pts[i][1]);
 	}
     }
-    if (sum == 0) return 0;
+    if (NEAR_ZERO(sum, SMALL_FASTF)) return 0;
     return (sum > 0) ? 1 : -1;
 }
 
