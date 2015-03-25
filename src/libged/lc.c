@@ -82,22 +82,15 @@ sort_regions(const void *a, const void *b, void *arg)
 	case 1:
 	    temp1=atoi(r1->region_id);
 	    temp2=atoi(r2->region_id);
-	    if ( temp1 > temp2 )
-    		return 1;
-	    if ( temp1 == temp2 )
-		return 0;
-	    return -1;
+	    goto continue_run;
 	case 2:
 	    temp1=atoi(r1->material_id);
 	    temp2=atoi(r2->material_id);
-	    if ( temp1 > temp2 )
-    		return 1;
-	    if ( temp1 == temp2 )
-		return 0;
-	    return -1;
+	    goto continue_run;
 	case 3:
 	    temp1=atoi(r1->los);
 	    temp2=atoi(r2->los);
+continue_run:
 	    if ( temp1 > temp2 )
     		return 1;
 	    if ( temp1 == temp2 )
@@ -385,9 +378,11 @@ ged_lc(struct ged *gedp, int argc, const char *argv[])
 		  los_len_max, "LOS",
 		  obj_len_max,  "REGION",
 		  "PARENT");
-    start = 0; end = BU_PTBL_LEN(&results2); incr = 1;
+    end = BU_PTBL_LEN(&results2);
     if (descending_sort_flag) {
 	start = end - 1; end = -1; incr = -1;
+    } else {
+	start = 0; incr = 1;
     }
     for (i = start; i != end; i += incr) {
 	if (regions[i].ignore) { continue; }
