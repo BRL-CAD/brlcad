@@ -735,8 +735,8 @@ rt_joint_process_selection(
     angle /= MAGNITUDE(js->start) * MAGNITUDE(end);
     angle = acos(angle);
 
-    /* we're calculating the primitve/member matrix, so we need the
-     * rotation from the perspective of the primitve
+    /* we're calculating the primitive/member matrix, so we need the
+     * rotation from the perspective of the primitive
      */
     bn_mat_arb_rot(rmat, center, cross, angle);
 
