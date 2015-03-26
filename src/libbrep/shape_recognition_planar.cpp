@@ -362,6 +362,10 @@ subbrep_planar_init(struct subbrep_object_data *data)
     std::set<int> faces;
     std::set<int> fil;
     std::set<int> loops;
+    std::set<int> skip_verts;
+    std::set<int> skip_edges;
+    std::set<int> keep_verts;
+    std::set<int> partial_edges;
     std::set<int> isolated_trims;  // collect 2D trims whose parent loops aren't fully included here
     array_to_set(&faces, data->faces, data->faces_cnt);
     array_to_set(&fil, data->fil, data->fil_cnt);
@@ -372,6 +376,44 @@ subbrep_planar_init(struct subbrep_object_data *data)
 	int new_edge_curve = 0;
 	const ON_BrepEdge *old_edge = &(data->brep->m_E[data->edges[i]]);
 	//std::cout << "old edge: " << old_edge->Vertex(0)->m_vertex_index << "," << old_edge->Vertex(1)->m_vertex_index << "\n";
+
+	// See if the vertices from this edge play a role in the planar volume
+	int use_edge = 2;
+	for (int vi = 0; vi < 2; vi++) {
+	    int vert_test = -1;
+	    int vert_ind = old_edge->Vertex(vi)->m_vertex_index;
+	    if (skip_verts.find(vert_ind) != skip_verts.end()) {
+		vert_test = 1;
+	    }
+	    if (vert_test == -1 && keep_verts.find(vert_ind) != keep_verts.end()) {
+		vert_test = 0;
+	    }
+	    if (vert_test == -1) {
+		vert_test = characterize_vert(data, old_edge->Vertex(vi));
+		if (vert_test) {
+		    skip_verts.insert(vert_ind);
+		    ON_3dPoint vp = old_edge->Vertex(vi)->Point();
+		    bu_log("vert %d (%f %f %f): %d\n", vert_ind, vp.x, vp.y, vp.z, vert_test);
+		} else {
+		    keep_verts.insert(vert_ind);
+		}
+	    }
+	    if (vert_test == 1) {
+		use_edge--;
+	    }
+	}
+
+	if (use_edge == 0) {
+	    bu_log("skipping edge %d - both verts are skips\n", old_edge->m_edge_index);
+	    skip_edges.insert(old_edge->m_edge_index);
+	    continue;
+	}
+
+	if (use_edge == 1) {
+	    bu_log("One of the verts for edge %d is a skip.\n", old_edge->m_edge_index);
+	    partial_edges.insert(old_edge->m_edge_index);
+	    continue;
+	}
 
 	// Get the 3D curves from the edges
 	if (c3_map.find(old_edge->EdgeCurveIndexOf()) == c3_map.end()) {
@@ -402,9 +444,6 @@ subbrep_planar_init(struct subbrep_object_data *data)
 		v[vi] = vertex_map[old_edge->Vertex(vi)->m_vertex_index];
 	    }
 	    ON_3dPoint vp = old_edge->Vertex(vi)->Point();
-	    bu_log("vert %d (%f %f %f): ", old_edge->Vertex(vi)->m_vertex_index, vp.x, vp.y, vp.z);
-	    int vert_test = characterize_vert(data, old_edge->Vertex(vi));
-	    bu_log("   test: %d\n", vert_test);
 	}
 
 	ON_BrepEdge& new_edge = data->planar_obj->local_brep->NewEdge(data->planar_obj->local_brep->m_V[v[0]], data->planar_obj->local_brep->m_V[v[1]], c3i, NULL ,0);
@@ -463,35 +502,14 @@ subbrep_planar_init(struct subbrep_object_data *data)
 
     // Now, create new trims using the old loop definitions and the maps
     std::map<int, int>::iterator loop_it;
+    std::set<int> evaluated;
     for (loop_it = loop_map.begin(); loop_it != loop_map.end(); loop_it++) {
 	const ON_BrepLoop *old_loop = &(data->brep->m_L[(*loop_it).first]);
 	ON_BrepLoop &new_loop = data->planar_obj->local_brep->m_L[(*loop_it).second];
 	for (int j = 0; j < old_loop->TrimCount(); j++) {
 	    const ON_BrepTrim *old_trim = old_loop->Trim(j);
 	    ON_BrepEdge *o_edge = old_trim->Edge();
-	    if (o_edge) {
-		ON_BrepEdge &n_edge = data->planar_obj->local_brep->m_E[edge_map[o_edge->m_edge_index]];
-		ON_Curve *ec = o_edge->EdgeCurveOf()->Duplicate();
-		if (ec->IsLinear()) {
-		    ON_BrepTrim &nt = data->planar_obj->local_brep->NewTrim(n_edge, old_trim->m_bRev3d, new_loop, c2_map[old_trim->TrimCurveIndexOf()]);
-		    nt.m_tolerance[0] = old_trim->m_tolerance[0];
-		    nt.m_tolerance[1] = old_trim->m_tolerance[1];
-		    nt.m_iso = old_trim->m_iso;
-		} else {
-		    /* If the original edge was non-linear, we need to add the 2d curve here */
-		    ON_Curve *c2_orig = old_trim->TrimCurveOf()->Duplicate();
-		    ON_3dPoint p1 = c2_orig->PointAt(c2_orig->Domain().Min());
-		    ON_3dPoint p2 = c2_orig->PointAt(c2_orig->Domain().Max());
-		    ON_Curve *c2 = new ON_LineCurve(p1, p2);
-		    c2->ChangeDimension(2);
-		    int c2i = data->planar_obj->local_brep->AddTrimCurve(c2);
-		    ON_BrepTrim &nt = data->planar_obj->local_brep->NewTrim(n_edge, old_trim->m_bRev3d, new_loop, c2i);
-		    nt.m_tolerance[0] = old_trim->m_tolerance[0];
-		    nt.m_tolerance[1] = old_trim->m_tolerance[1];
-		    nt.m_iso = old_trim->m_iso;
-		}
-		delete ec;
-	    } else {
+	    if (!o_edge) {
 		/* If we didn't have an edge originally, we need to add the 2d curve here */
 		if (c2_map.find(old_trim->TrimCurveIndexOf()) == c2_map.end()) {
 		    ON_Curve *nc = old_trim->TrimCurveOf()->Duplicate();
@@ -509,6 +527,129 @@ subbrep_planar_init(struct subbrep_object_data *data)
 		    nt.m_tolerance[0] = old_trim->m_tolerance[0];
 		    nt.m_tolerance[1] = old_trim->m_tolerance[1];
 		}
+		continue;
+	    }
+
+	    if (evaluated.find(o_edge->m_edge_index) != evaluated.end()) {
+		bu_log("edge %d already handled, continuing...\n", o_edge->m_edge_index);
+		continue;
+	    }
+
+	    // Don't use a trim connected to an edge we are skipping
+	    if (skip_edges.find(o_edge->m_edge_index) != skip_edges.end()) {
+		bu_log("edge %d is skipped, continuing...\n", o_edge->m_edge_index);
+		evaluated.insert(o_edge->m_edge_index);
+		continue;
+	    }
+
+	    int is_partial = 0;
+	    if (partial_edges.find(o_edge->m_edge_index) != partial_edges.end()) is_partial = 1;
+
+	    if (!is_partial) {
+		ON_BrepEdge &n_edge = data->planar_obj->local_brep->m_E[edge_map[o_edge->m_edge_index]];
+		ON_Curve *ec = o_edge->EdgeCurveOf()->Duplicate();
+		if (ec->IsLinear()) {
+		    ON_BrepTrim &nt = data->planar_obj->local_brep->NewTrim(n_edge, old_trim->m_bRev3d, new_loop, c2_map[old_trim->TrimCurveIndexOf()]);
+		    nt.m_tolerance[0] = old_trim->m_tolerance[0];
+		    nt.m_tolerance[1] = old_trim->m_tolerance[1];
+		    nt.m_iso = old_trim->m_iso;
+		} else {
+		    // Wasn't linear, but wasn't partial either - replace with a line
+		    ON_Curve *c2_orig = old_trim->TrimCurveOf()->Duplicate();
+		    ON_3dPoint p1 = c2_orig->PointAt(c2_orig->Domain().Min());
+		    ON_3dPoint p2 = c2_orig->PointAt(c2_orig->Domain().Max());
+		    ON_Curve *c2 = new ON_LineCurve(p1, p2);
+		    c2->ChangeDimension(2);
+		    int c2i = data->planar_obj->local_brep->AddTrimCurve(c2);
+		    ON_BrepTrim &nt = data->planar_obj->local_brep->NewTrim(n_edge, old_trim->m_bRev3d, new_loop, c2i);
+		    nt.m_tolerance[0] = old_trim->m_tolerance[0];
+		    nt.m_tolerance[1] = old_trim->m_tolerance[1];
+		    nt.m_iso = old_trim->m_iso;
+		    delete c2_orig;
+		}
+		delete ec;
+	    } else {
+		// Partial edge - let the fun begin
+		ON_3dPoint p1, p2;
+		ON_BrepEdge *next_edge;
+		bu_log("working a partial edge: %d\n", o_edge->m_edge_index);
+		int v[2];
+		v[0] = o_edge->Vertex(0)->m_vertex_index;
+		v[1] = o_edge->Vertex(1)->m_vertex_index;
+		// figure out which trim point we can use, the min or max
+		int pos1 = 0;
+		if (skip_verts.find(v[0]) != skip_verts.end()) {
+		    pos1 = 1;
+		}
+		int j_next = j;
+		ON_Curve *c2_orig = old_trim->TrimCurveOf()->Duplicate();
+		ON_Curve *c2_next = NULL;
+		int walk_dir = 1;
+		// bump the loop iterator to get passed any skipped edges to
+		// the next partial
+		while (!c2_next) {
+		    (walk_dir == 1) ? j_next++ : j_next--;
+		    if (j_next == old_loop->TrimCount() && walk_dir == 1) {
+			j_next = 0;
+		    }
+		    if (j_next == 0 && walk_dir == -1) {
+			j_next = old_loop->TrimCount() - 1;
+		    }
+		    const ON_BrepTrim *next_trim = old_loop->Trim(j_next);
+		    next_edge = next_trim->Edge();
+		    if (skip_edges.find(next_edge->m_edge_index) == skip_edges.end()) {
+			if (partial_edges.find(next_edge->m_edge_index) != partial_edges.end()) {
+			    bu_log("found next partial edge %d\n", next_edge->m_edge_index);
+			    evaluated.insert(next_edge->m_edge_index);
+			    c2_next = next_trim->TrimCurveOf()->Duplicate();
+			} else {
+			    bu_log("partial edge %d followed by non-partial %d, need to go the other way\n", o_edge->m_edge_index, next_edge->m_edge_index);	
+			    j_next--;
+			    walk_dir = -1;
+			}
+		    } else {
+			bu_log("skipping fully ignored edge %d\n", next_edge->m_edge_index);
+			evaluated.insert(next_edge->m_edge_index);
+		    }
+		}
+		int v2[2];
+		v2[0] = next_edge->Vertex(0)->m_vertex_index;
+		v2[1] = next_edge->Vertex(1)->m_vertex_index;
+		// figure out which trim point we can use, the min or max
+		int pos2 = 0;
+		if (skip_verts.find(v2[0]) != skip_verts.end()) {
+		    pos2 = 1;
+		}
+
+		// New Edge curve
+		int vmapped[2];
+		if (vertex_map.find(o_edge->Vertex(pos1)->m_vertex_index) == vertex_map.end()) {
+		    ON_BrepVertex& newvvi = data->planar_obj->local_brep->NewVertex(o_edge->Vertex(pos1)->Point(), o_edge->Vertex(pos1)->m_tolerance);
+		    vertex_map[o_edge->Vertex(pos1)->m_vertex_index] = newvvi.m_vertex_index;
+		}
+		if (vertex_map.find(next_edge->Vertex(pos2)->m_vertex_index) == vertex_map.end()) {
+		    ON_BrepVertex& newvvi = data->planar_obj->local_brep->NewVertex(next_edge->Vertex(pos2)->Point(), next_edge->Vertex(pos2)->m_tolerance);
+		    vertex_map[next_edge->Vertex(pos2)->m_vertex_index] = newvvi.m_vertex_index;
+		}
+		vmapped[0] = vertex_map[o_edge->Vertex(pos1)->m_vertex_index];
+		vmapped[1] = vertex_map[next_edge->Vertex(pos2)->m_vertex_index];
+		ON_Curve *c3 = new ON_LineCurve(o_edge->Vertex(pos1)->Point(), next_edge->Vertex(pos2)->Point());
+		int c3i = data->planar_obj->local_brep->AddEdgeCurve(c3);
+		ON_BrepEdge& new_edge = data->planar_obj->local_brep->NewEdge(data->planar_obj->local_brep->m_V[vmapped[0]], data->planar_obj->local_brep->m_V[vmapped[1]], c3i, NULL ,0);
+
+		p1 = c2_orig->PointAt(c2_orig->Domain().Min());
+		p2 = c2_next->PointAt(c2_orig->Domain().Max());
+		std::cout << "p1: " << pout(p1) << "\n";
+		std::cout << "p2: " << pout(p2) << "\n";
+		ON_Curve *c2 = new ON_LineCurve(p1, p2);
+		c2->ChangeDimension(2);
+		int c2i = data->planar_obj->local_brep->AddTrimCurve(c2);
+		ON_BrepTrim &nt = data->planar_obj->local_brep->NewTrim(new_edge, false, new_loop, c2i);
+		nt.m_tolerance[0] = old_trim->m_tolerance[0];
+		nt.m_tolerance[1] = old_trim->m_tolerance[1];
+		nt.m_iso = old_trim->m_iso;
+		delete c2_orig;
+		delete c2_next;
 	    }
 	}
     }
