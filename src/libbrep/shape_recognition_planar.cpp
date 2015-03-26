@@ -621,6 +621,10 @@ subbrep_planar_init(struct subbrep_object_data *data)
 		    pos2 = 1;
 		}
 
+
+		// TODO - if walk_dir is -1, need to flip things around (I think...) the verts and trim points
+		// will be swapped compared to a forward walk
+
 		// New Edge curve
 		int vmapped[2];
 		if (vertex_map.find(o_edge->Vertex(pos1)->m_vertex_index) == vertex_map.end()) {
