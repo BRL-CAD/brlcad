@@ -3769,6 +3769,30 @@ to_data_polygons(struct ged *gedp,
 	goto bad;
     }
 
+    if (BU_STR_EQUAL(argv[2], "moveall")) {
+	if (argc == 3) {
+	    bu_vls_printf(gedp->ged_result_str, "%d", gdpsp->gdps_moveAll);
+	    return GED_OK;
+	}
+
+	if (argc == 4) {
+	    int i;
+
+	    if (bu_sscanf(argv[3], "%d", &i) != 1)
+		goto bad;
+
+	    if (i)
+		gdpsp->gdps_moveAll = 1;
+	    else
+		gdpsp->gdps_moveAll = 0;
+
+	    to_refresh_view(gdvp);
+	    return GED_OK;
+	}
+
+	goto bad;
+    }
+
     /* Usage: poly_color i [r g b]
      *
      * Set/get the color of polygon i.
@@ -4516,7 +4540,7 @@ to_data_move(struct ged *gedp,
 	    k >= gdpsp->gdps_polygons.gp_polygon[i].gp_contour[j].gpc_num_points)
 	    return GED_OK;
 
-	/* This section is for moving the entire contour */
+	/* This section is for moving more than a single point on a contour */
 	if (gdvp->gdv_view->gv_mode == TCLCAD_DATA_MOVE_OBJECT_MODE) {
 	    point_t old_mpoint, new_mpoint;
 	    vect_t diff;
@@ -4529,13 +4553,28 @@ to_data_move(struct ged *gedp,
 	    MAT4X3PNT(new_mpoint, gdvp->gdv_view->gv_view2model, vpoint);
 	    VSUB2(diff, new_mpoint, old_mpoint);
 
-	    for (k = 0; k < gdpsp->gdps_polygons.gp_polygon[i].gp_contour[j].gpc_num_points; ++k) {
-		VADD2(gdpsp->gdps_polygons.gp_polygon[i].gp_contour[j].gpc_point[k],
-		      gdpsp->gdps_polygons.gp_polygon[i].gp_contour[j].gpc_point[k],
-		      diff);
+	    /* Move all polygons and all their respective contours. */
+	    if (gdpsp->gdps_moveAll) {
+		size_t p, c;
+		for (p = 0; p < gdpsp->gdps_polygons.gp_num_polygons; ++p) {
+		    for (c = 0; c < gdpsp->gdps_polygons.gp_polygon[p].gp_num_contours; ++c) {
+			for (k = 0; k < gdpsp->gdps_polygons.gp_polygon[p].gp_contour[c].gpc_num_points; ++k) {
+			    VADD2(gdpsp->gdps_polygons.gp_polygon[p].gp_contour[c].gpc_point[k],
+				  gdpsp->gdps_polygons.gp_polygon[p].gp_contour[c].gpc_point[k],
+				  diff);
+			}
+		    }
+		}
+	    } else {
+		/* Move only the contour. */
+		for (k = 0; k < gdpsp->gdps_polygons.gp_polygon[i].gp_contour[j].gpc_num_points; ++k) {
+		    VADD2(gdpsp->gdps_polygons.gp_polygon[i].gp_contour[j].gpc_point[k],
+			  gdpsp->gdps_polygons.gp_polygon[i].gp_contour[j].gpc_point[k],
+			  diff);
+		}
 	    }
 	} else {
-	    /* This section is for moving a single point in the contour */
+	    /* This section is for moving a single point on a contour */
 	    MAT4X3PNT(vpoint, gdvp->gdv_view->gv_model2view, gdpsp->gdps_polygons.gp_polygon[i].gp_contour[j].gpc_point[k]);
 	    vpoint[X] = vx;
 	    vpoint[Y] = vy;
