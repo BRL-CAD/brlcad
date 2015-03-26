@@ -228,7 +228,7 @@ private:
     static const std::size_t MAX_NAME_SIZE = 25;
     static const std::size_t MAX_GRID_POINTS = 50000;
     /* static const std::size_t MAX_HOLES = 40000; */
-    static const std::size_t MAX_WALLS = 40000;
+    /* static const std::size_t MAX_WALLS = 40000; */
 
     std::size_t m_next_grid_id;
     std::size_t m_next_element_id;
