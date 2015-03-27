@@ -439,8 +439,8 @@ write_bot(FastgenWriter &writer, const std::string &name,
 
 
 struct ConversionData {
-    const bn_tol &m_tol;
     FastgenWriter &m_writer;
+    const bn_tol &m_tol;
 };
 
 
@@ -474,9 +474,10 @@ write_nmg_region(nmgregion *nmg_region, const db_full_path *path,
 
 	try {
 	    write_bot(data.m_writer, name.ptr, *bot);
-	} catch (...) {
-	    internal.idb_meth->ft_ifree(&internal);
-	    throw;
+	} catch (const std::runtime_error &e) {
+	    bu_log("FAILURE: write_bot() failed on object '%s': %s\n", name.ptr, e.what());
+	} catch (const std::logic_error &e) {
+	    bu_log("FAILURE: write_bot() failed on object '%s': %s\n", name.ptr, e.what());
 	}
 
 	internal.idb_meth->ft_ifree(&internal);
@@ -563,9 +564,87 @@ tgc_is_ccone(const rt_tgc_internal &tgc)
 }
 
 
+HIDDEN bool
+convert_primitive(ConversionData &data, const rt_db_internal &internal,
+		  const std::string &name)
+{
+    switch (internal.idb_type) {
+	case ID_CLINE: {
+	    const rt_cline_internal &cline = *static_cast<rt_cline_internal *>
+					     (internal.idb_ptr);
+	    RT_CLINE_CK_MAGIC(&cline);
+
+	    Section section(data.m_writer, name, true);
+	    point_t v2;
+	    VADD2(v2, cline.v, cline.h);
+	    section.add_grid_point(V3ARGS(cline.v));
+	    section.add_grid_point(V3ARGS(v2));
+	    section.add_line(1, 2, cline.thickness, cline.radius);
+	    break;
+	}
+
+	case ID_ELL:
+	case ID_SPH: {
+	    const rt_ell_internal &ell = *static_cast<rt_ell_internal *>(internal.idb_ptr);
+	    RT_ELL_CK_MAGIC(&ell);
+
+	    if (internal.idb_type != ID_SPH && !ell_is_sphere(ell))
+		return false;
+
+	    Section section(data.m_writer, name, true);
+	    section.add_grid_point(V3ARGS(ell.v));
+	    section.add_sphere(1, 1.0, MAGNITUDE(ell.a));
+	    break;
+	}
+
+	case ID_TGC:
+	case ID_REC: {
+	    const rt_tgc_internal &tgc = *static_cast<rt_tgc_internal *>(internal.idb_ptr);
+	    RT_TGC_CK_MAGIC(&tgc);
+
+	    if (internal.idb_type != ID_REC && !tgc_is_ccone(tgc))
+		return false;
+
+	    Section section(data.m_writer, name, true);
+	    point_t v2;
+	    VADD2(v2, tgc.v, tgc.h);
+	    section.add_grid_point(V3ARGS(tgc.v));
+	    section.add_grid_point(V3ARGS(v2));
+	    section.add_cone(1, 2, MAGNITUDE(tgc.a), MAGNITUDE(tgc.b), 0.0, 0.0);
+	    break;
+	}
+
+	case ID_ARB8: {
+	    const rt_arb_internal &arb = *static_cast<rt_arb_internal *>(internal.idb_ptr);
+	    RT_ARB_CK_MAGIC(&arb);
+	    Section section(data.m_writer, name, true);
+
+	    for (int i = 0; i < 8; ++i)
+		section.add_grid_point(V3ARGS(arb.pt[i]));
+
+	    const std::size_t points[] = {1, 2, 3, 4, 5, 6, 7, 8};
+	    section.add_hexahedron(points);
+	    break;
+	}
+
+	case ID_BOT: {
+	    const rt_bot_internal &bot = *static_cast<rt_bot_internal *>(internal.idb_ptr);
+	    RT_BOT_CK_MAGIC(&bot);
+	    write_bot(data.m_writer, name, bot);
+	    break;
+	}
+
+	default:
+	    return false;
+    }
+
+    return true;
+}
+
+
 HIDDEN tree *
-convert_primitive(db_tree_state *tree_state, const db_full_path *path,
-		  rt_db_internal *internal, void *client_data)
+convert_leaf(db_tree_state *tree_state, const db_full_path *path,
+	     rt_db_internal *internal, void *client_data)
 {
     RT_CK_DBTS(tree_state);
     RT_CK_FULL_PATH(path);
@@ -582,76 +661,20 @@ convert_primitive(db_tree_state *tree_state, const db_full_path *path,
 
     AutoFreePtr<char> name(db_path_to_string(path));
 
-    switch (internal->idb_type) {
-	case ID_CLINE: {
-	    const rt_cline_internal &cline = *static_cast<rt_cline_internal *>
-					     (internal->idb_ptr);
-	    RT_CLINE_CK_MAGIC(&cline);
+    bool converted = false;
 
-	    Section section(data.m_writer, name.ptr, true);
-	    point_t v2;
-	    VADD2(v2, cline.v, cline.h);
-	    section.add_grid_point(V3ARGS(cline.v));
-	    section.add_grid_point(V3ARGS(v2));
-	    section.add_line(1, 2, cline.thickness, cline.radius);
-	    break;
-	}
-
-	case ID_ELL:
-	case ID_SPH: {
-	    const rt_ell_internal &ell = *static_cast<rt_ell_internal *>(internal->idb_ptr);
-	    RT_ELL_CK_MAGIC(&ell);
-
-	    if (internal->idb_type != ID_SPH && !ell_is_sphere(ell))
-		goto tessellate;
-
-	    Section section(data.m_writer, name.ptr, true);
-	    section.add_grid_point(V3ARGS(ell.v));
-	    section.add_sphere(1, 1.0, MAGNITUDE(ell.a));
-	    break;
-	}
-
-	case ID_TGC:
-	case ID_REC: {
-	    const rt_tgc_internal &tgc = *static_cast<rt_tgc_internal *>(internal->idb_ptr);
-	    RT_TGC_CK_MAGIC(&tgc);
-
-	    if (internal->idb_type != ID_REC && !tgc_is_ccone(tgc))
-		goto tessellate;
-
-	    Section section(data.m_writer, name.ptr, true);
-	    point_t v2;
-	    VADD2(v2, tgc.v, tgc.h);
-	    section.add_grid_point(V3ARGS(tgc.v));
-	    section.add_grid_point(V3ARGS(v2));
-	    section.add_cone(1, 2, MAGNITUDE(tgc.a), MAGNITUDE(tgc.b), 0.0, 0.0);
-	    break;
-	}
-
-	case ID_ARB8: {
-	    const rt_arb_internal &arb = *static_cast<rt_arb_internal *>(internal->idb_ptr);
-	    RT_ARB_CK_MAGIC(&arb);
-	    Section section(data.m_writer, name.ptr, true);
-
-	    for (int i = 0; i < 8; ++i)
-		section.add_grid_point(V3ARGS(arb.pt[i]));
-
-	    const std::size_t points[] = {1, 2, 3, 4, 5, 6, 7, 8};
-	    section.add_hexahedron(points);
-	    break;
-	}
-
-	case ID_BOT: {
-	    const rt_bot_internal &bot = *static_cast<rt_bot_internal *>(internal->idb_ptr);
-	    RT_BOT_CK_MAGIC(&bot);
-	    write_bot(data.m_writer, name.ptr, bot);
-	    break;
-	}
-
-	default:
-	tessellate:
-	    return nmg_booltree_leaf_tess(tree_state, path, internal, client_data);
+    try {
+	converted = convert_primitive(data, *internal, name.ptr);
+    } catch (const std::runtime_error &e) {
+	bu_log("FAILURE: convert_primitive() failed on object '%s': %s\n", name.ptr,
+	       e.what());
+    } catch (const std::logic_error &e) {
+	bu_log("FAILURE: convert_primitive() failed on object '%s': %s\n", name.ptr,
+	       e.what());
     }
+
+    if (!converted)
+	return nmg_booltree_leaf_tess(tree_state, path, internal, client_data);
 
     tree *result;
     RT_GET_TREE(result, tree_state->ts_resp);
@@ -693,21 +716,12 @@ extern "C" {
 	    AutoFreePtr<char *> object_names(db_dpv_to_argv(results));
 	    bu_free(results, "tops");
 
-	    vmodel = nmg_mm();
-
-	    ConversionData conv_data = {tol, writer};
+	    ConversionData conv_data = {writer, tol};
 	    gcv_region_end_data region_end_data = {write_nmg_region, &conv_data};
-
-	    try {
-		db_walk_tree(dbip, num_objects, const_cast<const char **>(object_names.ptr), 1,
-			     &initial_tree_state, NULL, gcv_region_end,
-			     convert_primitives ? convert_primitive : nmg_booltree_leaf_tess,
-			     &region_end_data);
-	    } catch (...) {
-		nmg_km(vmodel);
-		throw;
-	    }
-
+	    vmodel = nmg_mm();
+	    db_walk_tree(dbip, num_objects, const_cast<const char **>(object_names.ptr), 1,
+			 &initial_tree_state, NULL, gcv_region_end,
+			 convert_primitives ? convert_leaf : nmg_booltree_leaf_tess, &region_end_data);
 	    nmg_km(vmodel);
 	}
 
