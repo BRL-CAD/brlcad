@@ -438,7 +438,10 @@ write_bot(FastgenWriter &writer, const std::string &name,
 }
 
 
-static const bn_tol tol = {BN_TOL_MAGIC, BN_TOL_DIST, BN_TOL_DIST * BN_TOL_DIST, 1e-6, 1 - 1e-6};
+struct ConversionData {
+    const bn_tol &m_tol;
+    FastgenWriter &m_writer;
+};
 
 
 HIDDEN void
@@ -450,7 +453,7 @@ write_nmg_region(nmgregion *nmg_region, const db_full_path *path,
     NMG_CK_MODEL(nmg_region->m_p);
     RT_CK_FULL_PATH(path);
 
-    FastgenWriter &writer = *static_cast<FastgenWriter *>(client_data);
+    ConversionData &data = *static_cast<ConversionData *>(client_data);
 
     AutoFreePtr<char> name(db_path_to_string(path));
 
@@ -459,7 +462,7 @@ write_nmg_region(nmgregion *nmg_region, const db_full_path *path,
     for (BU_LIST_FOR(vshell, shell, &nmg_region->s_hd)) {
 	NMG_CK_SHELL(vshell);
 
-	rt_bot_internal *bot = nmg_bot(vshell, &tol);
+	rt_bot_internal *bot = nmg_bot(vshell, &data.m_tol);
 
 	// fill in an rt_db_internal with our new bot so we can free it
 	rt_db_internal internal;
@@ -470,7 +473,7 @@ write_nmg_region(nmgregion *nmg_region, const db_full_path *path,
 	internal.idb_ptr = bot;
 
 	try {
-	    write_bot(writer, name.ptr, *bot);
+	    write_bot(data.m_writer, name.ptr, *bot);
 	} catch (...) {
 	    internal.idb_meth->ft_ifree(&internal);
 	    throw;
@@ -573,8 +576,9 @@ convert_primitive(db_tree_state *tree_state, const db_full_path *path,
 
     gcv_region_end_data &region_end_data = *static_cast<gcv_region_end_data *>
 					   (client_data);
-    FastgenWriter &writer = *static_cast<FastgenWriter *>
-			    (region_end_data.client_data);
+
+    ConversionData &data = *static_cast<ConversionData *>
+			   (region_end_data.client_data);
 
     AutoFreePtr<char> name(db_path_to_string(path));
 
@@ -584,7 +588,7 @@ convert_primitive(db_tree_state *tree_state, const db_full_path *path,
 					     (internal->idb_ptr);
 	    RT_CLINE_CK_MAGIC(&cline);
 
-	    Section section(writer, name.ptr, true);
+	    Section section(data.m_writer, name.ptr, true);
 	    point_t v2;
 	    VADD2(v2, cline.v, cline.h);
 	    section.add_grid_point(V3ARGS(cline.v));
@@ -601,7 +605,7 @@ convert_primitive(db_tree_state *tree_state, const db_full_path *path,
 	    if (internal->idb_type != ID_SPH && !ell_is_sphere(ell))
 		goto tessellate;
 
-	    Section section(writer, name.ptr, true);
+	    Section section(data.m_writer, name.ptr, true);
 	    section.add_grid_point(V3ARGS(ell.v));
 	    section.add_sphere(1, 1.0, MAGNITUDE(ell.a));
 	    break;
@@ -615,7 +619,7 @@ convert_primitive(db_tree_state *tree_state, const db_full_path *path,
 	    if (internal->idb_type != ID_REC && !tgc_is_ccone(tgc))
 		goto tessellate;
 
-	    Section section(writer, name.ptr, true);
+	    Section section(data.m_writer, name.ptr, true);
 	    point_t v2;
 	    VADD2(v2, tgc.v, tgc.h);
 	    section.add_grid_point(V3ARGS(tgc.v));
@@ -627,7 +631,7 @@ convert_primitive(db_tree_state *tree_state, const db_full_path *path,
 	case ID_ARB8: {
 	    const rt_arb_internal &arb = *static_cast<rt_arb_internal *>(internal->idb_ptr);
 	    RT_ARB_CK_MAGIC(&arb);
-	    Section section(writer, name.ptr, true);
+	    Section section(data.m_writer, name.ptr, true);
 
 	    for (int i = 0; i < 8; ++i)
 		section.add_grid_point(V3ARGS(arb.pt[i]));
@@ -640,7 +644,7 @@ convert_primitive(db_tree_state *tree_state, const db_full_path *path,
 	case ID_BOT: {
 	    const rt_bot_internal &bot = *static_cast<rt_bot_internal *>(internal->idb_ptr);
 	    RT_BOT_CK_MAGIC(&bot);
-	    write_bot(writer, name.ptr, bot);
+	    write_bot(data.m_writer, name.ptr, bot);
 	    break;
 	}
 
@@ -675,8 +679,9 @@ extern "C" {
 	writer.write_comment("g -> fastgen4 conversion");
 
 	{
-	    model *vmodel;
 	    const rt_tess_tol ttol = {RT_TESS_TOL_MAGIC, 0.0, 0.01, 0.0};
+	    const bn_tol tol = {BN_TOL_MAGIC, BN_TOL_DIST, BN_TOL_DIST * BN_TOL_DIST, 1e-6, 1 - 1e-6};
+	    model *vmodel;
 	    db_tree_state initial_tree_state = rt_initial_tree_state;
 	    initial_tree_state.ts_tol = &tol;
 	    initial_tree_state.ts_ttol = &ttol;
@@ -689,7 +694,9 @@ extern "C" {
 	    bu_free(results, "tops");
 
 	    vmodel = nmg_mm();
-	    gcv_region_end_data region_end_data = {write_nmg_region, &writer};
+
+	    ConversionData conv_data = {tol, writer};
+	    gcv_region_end_data region_end_data = {write_nmg_region, &conv_data};
 
 	    try {
 		db_walk_tree(dbip, num_objects, const_cast<const char **>(object_names.ptr), 1,
