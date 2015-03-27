@@ -313,7 +313,7 @@ make_shapes(struct subbrep_object_data *data, struct rt_wdb *wdbp, struct bu_vls
 	    struct bu_vls member_name = BU_VLS_INIT_ZERO;
 	    subbrep_obj_name(data, name_root, &comb_name);
 	    BU_LIST_INIT(&wcomb.l);
-	    if (data->planar_obj) {
+	    if (data->planar_obj && data->planar_obj->negative_shape != -1) {
 	    //bu_log("%smake planar obj %s\n", bu_vls_addr(&spacer), bu_vls_addr(data->name_root));
 		process_params(data->planar_obj, wdbp, name_root, &wcomb);
 	    }
@@ -324,6 +324,11 @@ make_shapes(struct subbrep_object_data *data, struct rt_wdb *wdbp, struct bu_vls
 		make_shapes(cdata, wdbp, name_root, &wcomb, depth+1);
 		subbrep_object_free(cdata);
 	    }
+	    if (data->planar_obj && data->planar_obj->negative_shape == -1) {
+	    //bu_log("%smake planar obj %s\n", bu_vls_addr(&spacer), bu_vls_addr(data->name_root));
+		process_params(data->planar_obj, wdbp, name_root, &wcomb);
+	    }
+
 	    mk_lcomb(wdbp, bu_vls_addr(&comb_name), &wcomb, 0, NULL, NULL, NULL, 0);
 
 	    // TODO - almost certainly need to do more work to get correct booleans
