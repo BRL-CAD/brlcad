@@ -433,7 +433,6 @@ subbrep_planar_init(struct subbrep_object_data *data)
 	    }
 	    if (vert_test == -1) {
 		vert_test = characterize_vert(data, old_edge->Vertex(vi));
-		bu_log("vert_test(%d): %d\n", old_edge->Vertex(vi)->m_vertex_index, vert_test);
 		if (vert_test) {
 		    skip_verts.insert(vert_ind);
 		    ON_3dPoint vp = old_edge->Vertex(vi)->Point();
@@ -711,6 +710,103 @@ subbrep_planar_init(struct subbrep_object_data *data)
 		delete c2_next;
 	    }
 	}
+    }
+
+    // If there is a possibility of a negative volume for the planar solid, do a test.
+    // The only way to get a negative planar solid in this context is if that solid is
+    // "inside" a non-planar shape (it would be "part of" the parent shape if it were
+    // planar and it would be a separate shape altogether if it were not topologically
+    // connected.  So we take one partial edge, find its associated non-planar faces,
+    // and collect all the partial and skipped edges from that face and any non-planar
+    // faces associated with the other partial/skipped edges.
+    if (partial_edges.size() > 0) {
+	std::queue<int> connected_faces;
+	std::set<int> relevant_edges;
+	std::set<int>::iterator re_it;
+	std::set<int> efaces;
+	std::set<int>::iterator f_it;
+	std::set<int> found_faces;
+	const ON_BrepEdge *seed_edge = &(data->brep->m_E[*partial_edges.begin()]);
+	for (int j = 0; j < seed_edge->TrimCount(); j++) {
+	    ON_BrepTrim *trim = seed_edge->Trim(j);
+	    efaces.insert(trim->Face()->m_face_index);
+	}
+	for(f_it = efaces.begin(); f_it != efaces.end(); f_it++) {
+	    surface_t stype = GetSurfaceType(data->brep->m_F[*f_it].SurfaceOf(), NULL);
+	    if (stype != SURFACE_PLANE) {
+		connected_faces.push(data->brep->m_F[*f_it].m_face_index);
+	    }
+	}
+	while (!connected_faces.empty()) {
+	    int face_index = connected_faces.front();
+	    connected_faces.pop();
+	    std::set<int> local_edges;
+	    std::set<int>::iterator le_it;
+	    found_faces.insert(face_index);
+	    const ON_BrepFace *face = &(data->brep->m_F[face_index]);
+	    const ON_BrepLoop *loop = NULL;
+	    // Find the loop in this face that is associated with this subbrep
+	    for (int i = 0; i < face->LoopCount(); i++) {
+		int loop_ind = face->Loop(i)->m_loop_index;
+		if (loops.find(loop_ind) != loops.end()) {
+		    loop = &(data->brep->m_L[loop_ind]);
+		    break;
+		}
+	    }
+	    // Collect the edges that are partial or skipped
+	    for (int i = 0; i < loop->TrimCount(); i++) {
+		const ON_BrepTrim *trim = loop->Trim(i);
+		ON_BrepEdge *edge = trim->Edge();
+		if (edge) {
+		    if (partial_edges.find(edge->m_edge_index) != partial_edges.end()) {
+			relevant_edges.insert(edge->m_edge_index);
+			local_edges.insert(edge->m_edge_index);
+		    }
+		    if (skip_edges.find(edge->m_edge_index) != skip_edges.end()) {
+			relevant_edges.insert(edge->m_edge_index);
+			local_edges.insert(edge->m_edge_index);
+		    }
+		}
+	    }
+	    // For each collected partial/skipped edge, add any faces not already
+	    // found to the queue.
+	    for (le_it = local_edges.begin(); le_it != local_edges.end(); le_it++) {
+		const ON_BrepEdge *edge = &(data->brep->m_E[*le_it]);
+		for (int j = 0; j < edge->TrimCount(); j++) {
+		    ON_BrepTrim *trim = edge->Trim(j);
+		    if (found_faces.find(trim->Face()->m_face_index) == found_faces.end()) {
+			found_faces.insert(trim->Face()->m_face_index);
+			connected_faces.push(trim->Face()->m_face_index);
+		    }
+		}
+	    }
+	}
+	// Build two bounding boxes - one with the new verts in planar_obj, and the other with
+	// the edges found above.
+	ON_BoundingBox pbb, ebb;
+	ON_MinMaxInit(&pbb.m_min, &pbb.m_max);
+	ON_MinMaxInit(&ebb.m_min, &ebb.m_max);
+	for (int i = 0; i < data->planar_obj->local_brep->m_V.Count(); i++) {
+	    const ON_BrepVertex *v = &(data->planar_obj->local_brep->m_V[i]);
+	    pbb.Set(v->Point(), true);
+	}
+	for (re_it = relevant_edges.begin(); re_it != relevant_edges.end(); re_it++) {
+	    const ON_BrepEdge *e = &(data->brep->m_E[*re_it]);
+	    ON_BoundingBox cbb = e->EdgeCurveOf()->BoundingBox();
+	    ebb.Set(cbb.m_min, true);
+	    ebb.Set(cbb.m_max, true);
+	}
+	//std::cout << "in pbb.s rpp " << pout(pbb.m_min) << " " << pout(pbb.m_max) << "\n";
+	//std::cout << "in ebb.s rpp " << pout(ebb.m_min) << " " << pout(ebb.m_max) << "\n";
+
+	if (ebb.Includes(pbb)) {
+	    bu_log("negative volume\n");
+	    data->planar_obj->negative_shape = -1;
+	} else {
+	    bu_log("positive volume\n");
+	    data->planar_obj->negative_shape = 1;
+	}
+	data->planar_obj->params->bool_op = (data->planar_obj->negative_shape == -1) ? '-' : 'u';
     }
 
     // Need to preserve the vertex map for this, since we're not done building up the brep
