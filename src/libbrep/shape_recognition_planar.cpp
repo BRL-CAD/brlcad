@@ -719,6 +719,17 @@ subbrep_planar_init(struct subbrep_object_data *data)
     // connected.  So we take one partial edge, find its associated non-planar faces,
     // and collect all the partial and skipped edges from that face and any non-planar
     // faces associated with the other partial/skipped edges.
+    //
+    // TODO - We still have an unhandled possibility here - the self-intersecting
+    // planar_obj.  For example:
+    //
+    //           *                *
+    //       *       *        *       *
+    //     *     *      *   *    *      *
+    //    *     * *      * *    * *      *
+    //   *     *   *           *   *      *
+    //   * *  *     * * * * * *     *  *  *
+    //
     if (partial_edges.size() > 0) {
 	std::queue<int> connected_faces;
 	std::set<int> relevant_edges;
