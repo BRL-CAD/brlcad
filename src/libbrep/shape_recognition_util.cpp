@@ -80,30 +80,35 @@ GetSurfaceType(const ON_Surface *in_surface, struct filter_obj *obj)
 	filter_obj_init(obj);
 	if (surface->IsPlanar(obj->plane, BREP_PLANAR_TOL)) {
 	    ret = SURFACE_PLANE;
+	    obj->stype = SURFACE_PLANE;
 	    goto st_done;
 	}
 	delete surface;
 	surface = in_surface->Duplicate();
 	if (surface->IsSphere(obj->sphere , BREP_SPHERICAL_TOL)) {
 	    ret = SURFACE_SPHERE;
+	    obj->stype = SURFACE_SPHERE;
 	    goto st_done;
 	}
 	delete surface;
 	surface = in_surface->Duplicate();
 	if (surface->IsCylinder(obj->cylinder , BREP_CYLINDRICAL_TOL)) {
 	    ret = SURFACE_CYLINDER;
+	    obj->stype = SURFACE_CYLINDER;
 	    goto st_done;
 	}
 	delete surface;
 	surface = in_surface->Duplicate();
 	if (surface->IsCone(obj->cone, BREP_CONIC_TOL)) {
 	    ret = SURFACE_CONE;
+	    obj->stype = SURFACE_CONE;
 	    goto st_done;
 	}
 	delete surface;
 	surface = in_surface->Duplicate();
 	if (surface->IsTorus(obj->torus, BREP_TOROIDAL_TOL)) {
 	    ret = SURFACE_TORUS;
+	    obj->stype = SURFACE_TORUS;
 	    goto st_done;
 	}
     } else {
@@ -227,6 +232,42 @@ filter_obj_free(struct filter_obj *obj)
     delete obj->cylinder;
     delete obj->cone;
     delete obj->torus;
+}
+
+int
+filter_objs_equal(struct filter_obj *obj1, struct filter_obj *obj2)
+{
+    ON_Line l1;
+    ON_3dPoint p1, p2;
+    double d1, d2; 
+    int ret = 0;
+    if (obj1->stype != obj2->stype) return 0;
+    switch (obj1->stype) {
+	case SURFACE_PLANE:
+	    break;
+	case SURFACE_CYLINDRICAL_SECTION:
+	case SURFACE_CYLINDER:
+	    if (NEAR_ZERO(obj1->cylinder->circle.Radius() - obj2->cylinder->circle.Radius(), 0.001)) {
+		l1 = ON_Line(obj1->cylinder->Center(), obj1->cylinder->Center() + obj1->cylinder->Axis());
+		d1 = l1.DistanceTo(obj2->cylinder->Center());
+		d2 = l1.DistanceTo(obj2->cylinder->Center() + obj2->cylinder->Axis());
+		if (NEAR_ZERO(d1, 0.001) && NEAR_ZERO(d2, 0.001)) ret = 1;
+	    }
+	    break;
+	case SURFACE_CONE:
+	    break;
+	case SURFACE_SPHERICAL_SECTION:
+	case SURFACE_SPHERE:
+	    break;
+	case SURFACE_ELLIPSOIDAL_SECTION:
+	case SURFACE_ELLIPSOID:
+	    break;
+	case SURFACE_TORUS:
+	    break;
+	default:
+	    break;
+    }
+    return ret;
 }
 
 volume_t

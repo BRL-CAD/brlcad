@@ -304,37 +304,80 @@ subbrep_is_planar(struct subbrep_object_data *data)
     return 1;
 }
 
+// Criteria:
+//
+// 1.  A linear edge associated with a planar face == 0
+// 2.  All linear edges associated with non-planar faces are part
+//     of the same CSG shape AND all non-linear edges' non-planar faces
+//     are also part of that same CSG shape = 1
+// 3.  If not 2, 0
 int
 characterize_vert(struct subbrep_object_data *data, const ON_BrepVertex *v)
 {
     int non_linear_edge_cnt = 0;
     int linear_edge_both_faces_nonplanar_cnt = 0;
+    std::set<int> non_planar_faces;
+    std::set<int>::iterator f_it;
+    std::set<struct filter_obj *> fobjs;
+    std::set<struct filter_obj *>::iterator fo_it;
+    struct filter_obj *control = NULL;
 
     for (int i = 0; i < v->m_ei.Count(); i++) {
 	std::set<int> efaces;
-	std::set<int>::iterator f_it;
 	const ON_BrepEdge *edge = &(data->brep->m_E[v->m_ei[i]]);
 	ON_Curve *tc = edge->EdgeCurveOf()->Duplicate();
-	if (tc->IsLinear()) {
-	    // Get the faces associated with the edge
-	    for (int j = 0; j < edge->TrimCount(); j++) {
-		ON_BrepTrim *trim = edge->Trim(j);
-		efaces.insert(trim->Face()->m_face_index);
+	int is_linear = tc->IsLinear();
+	delete tc;
+	// Get the faces associated with the edge
+	for (int j = 0; j < edge->TrimCount(); j++) {
+	    ON_BrepTrim *trim = edge->Trim(j);
+	    efaces.insert(trim->Face()->m_face_index);
+	}
+	for(f_it = efaces.begin(); f_it != efaces.end(); f_it++) {
+	    struct filter_obj *new_obj;
+	    BU_GET(new_obj, struct filter_obj);
+	    surface_t stype = GetSurfaceType(data->brep->m_F[*f_it].SurfaceOf(), new_obj);
+	    if (stype == SURFACE_PLANE) {
+		filter_obj_free(new_obj);
+		BU_PUT(new_obj, struct filter_obj);
+		if (is_linear) {
+		    for (fo_it = fobjs.begin(); fo_it != fobjs.end(); fo_it++) {
+			struct filter_obj *obj = (struct filter_obj *)(*fo_it);
+			filter_obj_free(obj);
+			BU_PUT(obj, struct filter_obj);
+		    }
+		    return 0;
+		}
+	    } else {
+		if (!control) {
+		    control = new_obj;
+		} else {
+		    fobjs.insert(new_obj);
+		}
 	    }
-	    int planar_face_cnt = 0;
-	    for(f_it = efaces.begin(); f_it != efaces.end(); f_it++) {
-		surface_t stype = GetSurfaceType(data->brep->m_F[*f_it].SurfaceOf(), NULL);
-		if (stype == SURFACE_PLANE) planar_face_cnt++;
-	    }
-	    if (planar_face_cnt == 0) linear_edge_both_faces_nonplanar_cnt++;
-	} else {
-	    non_linear_edge_cnt++;
 	}
     }
 
-    if (non_linear_edge_cnt + linear_edge_both_faces_nonplanar_cnt == v->m_ei.Count()) return 1;
+    // Can this happen?
+    if (fobjs.size() == 0) {
+	if (control) {
+	    filter_obj_free(control);
+	    BU_PUT(control, struct filter_obj);
+	}
+	return 0;
+    }
 
-    return 0;
+    int equal = 1;
+    for(fo_it = fobjs.begin(); fo_it != fobjs.end(); fo_it++) {
+	if (equal && !filter_objs_equal(*fo_it, control)) equal = 0;
+	struct filter_obj *obj = (struct filter_obj *)(*fo_it);
+	filter_obj_free(obj);
+	BU_PUT(obj, struct filter_obj);
+    }
+    filter_obj_free(control);
+    BU_PUT(control, struct filter_obj);
+
+    return equal;
 }
 
 void
@@ -390,6 +433,7 @@ subbrep_planar_init(struct subbrep_object_data *data)
 	    }
 	    if (vert_test == -1) {
 		vert_test = characterize_vert(data, old_edge->Vertex(vi));
+		bu_log("vert_test(%d): %d\n", old_edge->Vertex(vi)->m_vertex_index, vert_test);
 		if (vert_test) {
 		    skip_verts.insert(vert_ind);
 		    ON_3dPoint vp = old_edge->Vertex(vi)->Point();

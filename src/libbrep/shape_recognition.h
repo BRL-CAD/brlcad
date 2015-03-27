@@ -185,6 +185,8 @@ void ON_MinMaxInit(ON_3dPoint *min, ON_3dPoint *max);
 
 int subbrep_polygon_tri(const ON_Brep *brep, const point_t *all_verts, int loop_ind, int **ffaces);
 
+int filter_objs_equal(struct filter_obj *obj1, struct filter_obj *obj2);
+
 #endif /* SHAPE_RECOGNITION_H */
 
 // Local Variables:
