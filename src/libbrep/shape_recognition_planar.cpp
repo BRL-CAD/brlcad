@@ -603,7 +603,7 @@ subbrep_planar_init(struct subbrep_object_data *data)
 			    evaluated.insert(next_edge->m_edge_index);
 			    c2_next = next_trim->TrimCurveOf()->Duplicate();
 			} else {
-			    bu_log("partial edge %d followed by non-partial %d, need to go the other way\n", o_edge->m_edge_index, next_edge->m_edge_index);	
+			    bu_log("partial edge %d followed by non-partial %d, need to go the other way\n", o_edge->m_edge_index, next_edge->m_edge_index);
 			    j_next--;
 			    walk_dir = -1;
 			}
