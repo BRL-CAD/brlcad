@@ -621,11 +621,6 @@ subbrep_planar_init(struct subbrep_object_data *data)
 		    pos2 = 1;
 		}
 
-
-		// TODO - if walk_dir is -1, need to flip things around (I think...) the verts and trim points
-		// will be swapped compared to a forward walk
-
-		// New Edge curve
 		int vmapped[2];
 		if (vertex_map.find(o_edge->Vertex(pos1)->m_vertex_index) == vertex_map.end()) {
 		    ON_BrepVertex& newvvi = data->planar_obj->local_brep->NewVertex(o_edge->Vertex(pos1)->Point(), o_edge->Vertex(pos1)->m_tolerance);
@@ -635,14 +630,30 @@ subbrep_planar_init(struct subbrep_object_data *data)
 		    ON_BrepVertex& newvvi = data->planar_obj->local_brep->NewVertex(next_edge->Vertex(pos2)->Point(), next_edge->Vertex(pos2)->m_tolerance);
 		    vertex_map[next_edge->Vertex(pos2)->m_vertex_index] = newvvi.m_vertex_index;
 		}
-		vmapped[0] = vertex_map[o_edge->Vertex(pos1)->m_vertex_index];
-		vmapped[1] = vertex_map[next_edge->Vertex(pos2)->m_vertex_index];
+
+		// If walk_dir is -1, need to flip things around (I think...) the verts and trim points
+		// will be swapped compared to a forward walk
+		if (walk_dir == -1) {
+		    vmapped[1] = vertex_map[o_edge->Vertex(pos1)->m_vertex_index];
+		    vmapped[0] = vertex_map[next_edge->Vertex(pos2)->m_vertex_index];
+		} else {
+		    vmapped[0] = vertex_map[o_edge->Vertex(pos1)->m_vertex_index];
+		    vmapped[1] = vertex_map[next_edge->Vertex(pos2)->m_vertex_index];
+		}
+
+		// New Edge curve
 		ON_Curve *c3 = new ON_LineCurve(o_edge->Vertex(pos1)->Point(), next_edge->Vertex(pos2)->Point());
 		int c3i = data->planar_obj->local_brep->AddEdgeCurve(c3);
 		ON_BrepEdge& new_edge = data->planar_obj->local_brep->NewEdge(data->planar_obj->local_brep->m_V[vmapped[0]], data->planar_obj->local_brep->m_V[vmapped[1]], c3i, NULL ,0);
 
-		p1 = c2_orig->PointAt(c2_orig->Domain().Min());
-		p2 = c2_next->PointAt(c2_orig->Domain().Max());
+		// Again, flip if walk_dir is -1
+		if (walk_dir == -1) {
+		    p2 = c2_orig->PointAt(c2_orig->Domain().Min());
+		    p1 = c2_next->PointAt(c2_orig->Domain().Max());
+		} else {
+		    p1 = c2_orig->PointAt(c2_orig->Domain().Min());
+		    p2 = c2_next->PointAt(c2_orig->Domain().Max());
+		}
 		std::cout << "p1: " << pout(p1) << "\n";
 		std::cout << "p2: " << pout(p2) << "\n";
 		ON_Curve *c2 = new ON_LineCurve(p1, p2);
