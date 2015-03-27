@@ -630,18 +630,26 @@ cylinder_csg(struct subbrep_object_data *data, fastf_t cyl_tol)
 		return 0;
 	    }
 
-	    // Second, select a point from an arc edge not on the subtraction
-	    // plane, construct a vector from the circle center to that point,
+	    // Second, iterate over all the arc edges in a set and select
+	    // select the furthest midpoint from the plane.
+	    // Using that point, construct a vector from the circle center to that point,
 	    // and determine if the pcyl plane direction is already in the opposite
 	    // direction or needs to be reversed.
-	    const ON_BrepEdge *edge = &(data->brep->m_E[*arc_set_1.begin()]);
-	    ON_Arc arc;
-	    ON_Curve *ecv = edge->EdgeCurveOf()->Duplicate();
-	    (void)ecv->IsArc(NULL, &arc, cyl_tol);
-	    delete ecv;
+	    std::set<int>::iterator as_it;
 	    ON_3dPoint center = set1_c.Center();
-	    ON_3dPoint midpt = arc.MidPoint();
-
+	    ON_3dPoint midpt;
+	    double dist = 0.0;
+	    for (as_it = arc_set_1.begin(); as_it != arc_set_1.end(); as_it++) {
+		const ON_BrepEdge *edge = &(data->brep->m_E[*as_it]);
+		ON_Arc arc;
+		ON_Curve *ecv = edge->EdgeCurveOf()->Duplicate();
+		(void)ecv->IsArc(NULL, &arc, cyl_tol);
+		delete ecv;
+		if (fabs(pcyl.DistanceTo(arc.MidPoint())) > dist) {
+		    midpt = arc.MidPoint();
+		    dist = fabs(pcyl.DistanceTo(arc.MidPoint()));
+		}
+	    }
 
 	    ON_3dVector invec = center - midpt;
 	    double dotp = ON_DotProduct(invec, pcyl.Normal());
@@ -757,7 +765,9 @@ cylinder_csg(struct subbrep_object_data *data, fastf_t cyl_tol)
 	    // the pcyl normal direction and the cylinder radius to
 	    // construct the remaining arb points.
 	    ON_3dPoint p5, p6, p7, p8;
-	    ON_3dVector arb_side = pcyl.Normal() * 2*set1_c.Radius();
+	    // Try to trim the arb back using dist
+	    double arb_len = (2*set1_c.Radius() - dist*0.95);
+	    ON_3dVector arb_side = pcyl.Normal() * arb_len;
 	    arb_points[4] = arb_points[0] + arb_side;
 	    arb_points[5] = arb_points[1] + arb_side;
 	    arb_points[6] = arb_points[2] + arb_side;
