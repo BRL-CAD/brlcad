@@ -632,14 +632,15 @@ subbrep_planar_init(struct subbrep_object_data *data)
 		// the next partial
 		while (!c2_next) {
 		    (walk_dir == 1) ? j_next++ : j_next--;
-		    if (j_next == old_loop->TrimCount() && walk_dir == 1) {
+		    if (j_next == old_loop->TrimCount()) {
 			j_next = 0;
 		    }
-		    if (j_next == 0 && walk_dir == -1) {
+		    if (j_next == -1) {
 			j_next = old_loop->TrimCount() - 1;
 		    }
 		    const ON_BrepTrim *next_trim = old_loop->Trim(j_next);
 		    next_edge = next_trim->Edge();
+		    if (!next_edge) continue;
 		    if (skip_edges.find(next_edge->m_edge_index) == skip_edges.end()) {
 			if (partial_edges.find(next_edge->m_edge_index) != partial_edges.end()) {
 			    bu_log("found next partial edge %d\n", next_edge->m_edge_index);
