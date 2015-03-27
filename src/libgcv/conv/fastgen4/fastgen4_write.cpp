@@ -227,8 +227,6 @@ private:
     static const fastf_t INCHES_PER_MM;
     static const std::size_t MAX_NAME_SIZE = 25;
     static const std::size_t MAX_GRID_POINTS = 50000;
-    /* static const std::size_t MAX_HOLES = 40000; */
-    /* static const std::size_t MAX_WALLS = 40000; */
 
     std::size_t m_next_grid_id;
     std::size_t m_next_element_id;
@@ -438,53 +436,6 @@ write_bot(FastgenWriter &writer, const std::string &name,
 }
 
 
-struct ConversionData {
-    FastgenWriter &m_writer;
-    const bn_tol &m_tol;
-};
-
-
-HIDDEN void
-write_nmg_region(nmgregion *nmg_region, const db_full_path *path,
-		 int UNUSED(region_id), int UNUSED(material_id), float UNUSED(color[3]),
-		 void *client_data)
-{
-    NMG_CK_REGION(nmg_region);
-    NMG_CK_MODEL(nmg_region->m_p);
-    RT_CK_FULL_PATH(path);
-
-    ConversionData &data = *static_cast<ConversionData *>(client_data);
-
-    AutoFreePtr<char> name(db_path_to_string(path));
-
-    shell *vshell;
-
-    for (BU_LIST_FOR(vshell, shell, &nmg_region->s_hd)) {
-	NMG_CK_SHELL(vshell);
-
-	rt_bot_internal *bot = nmg_bot(vshell, &data.m_tol);
-
-	// fill in an rt_db_internal with our new bot so we can free it
-	rt_db_internal internal;
-	RT_DB_INTERNAL_INIT(&internal);
-	internal.idb_major_type = DB5_MAJORTYPE_BRLCAD;
-	internal.idb_minor_type = ID_BOT;
-	internal.idb_meth = &OBJ[ID_BOT];
-	internal.idb_ptr = bot;
-
-	try {
-	    write_bot(data.m_writer, name.ptr, *bot);
-	} catch (const std::runtime_error &e) {
-	    bu_log("FAILURE: write_bot() failed on object '%s': %s\n", name.ptr, e.what());
-	} catch (const std::logic_error &e) {
-	    bu_log("FAILURE: write_bot() failed on object '%s': %s\n", name.ptr, e.what());
-	}
-
-	internal.idb_meth->ft_ifree(&internal);
-    }
-}
-
-
 HIDDEN bool
 ell_is_sphere(const rt_ell_internal &ell)
 {
@@ -562,6 +513,12 @@ tgc_is_ccone(const rt_tgc_internal &tgc)
 
     return true;
 }
+
+
+struct ConversionData {
+    FastgenWriter &m_writer;
+    const bn_tol &m_tol;
+};
 
 
 HIDDEN bool
@@ -642,6 +599,47 @@ convert_primitive(ConversionData &data, const rt_db_internal &internal,
 }
 
 
+HIDDEN void
+write_nmg_region(nmgregion *nmg_region, const db_full_path *path,
+		 int UNUSED(region_id), int UNUSED(material_id), float UNUSED(color[3]),
+		 void *client_data)
+{
+    NMG_CK_REGION(nmg_region);
+    NMG_CK_MODEL(nmg_region->m_p);
+    RT_CK_FULL_PATH(path);
+
+    ConversionData &data = *static_cast<ConversionData *>(client_data);
+
+    AutoFreePtr<char> name(db_path_to_string(path));
+
+    shell *vshell;
+
+    for (BU_LIST_FOR(vshell, shell, &nmg_region->s_hd)) {
+	NMG_CK_SHELL(vshell);
+
+	rt_bot_internal *bot = nmg_bot(vshell, &data.m_tol);
+
+	// fill in an rt_db_internal with our new bot so we can free it
+	rt_db_internal internal;
+	RT_DB_INTERNAL_INIT(&internal);
+	internal.idb_major_type = DB5_MAJORTYPE_BRLCAD;
+	internal.idb_minor_type = ID_BOT;
+	internal.idb_meth = &OBJ[ID_BOT];
+	internal.idb_ptr = bot;
+
+	try {
+	    write_bot(data.m_writer, name.ptr, *bot);
+	} catch (const std::runtime_error &e) {
+	    bu_log("FAILURE: write_bot() failed on object '%s': %s\n", name.ptr, e.what());
+	} catch (const std::logic_error &e) {
+	    bu_log("FAILURE: write_bot() failed on object '%s': %s\n", name.ptr, e.what());
+	}
+
+	internal.idb_meth->ft_ifree(&internal);
+    }
+}
+
+
 HIDDEN tree *
 convert_leaf(db_tree_state *tree_state, const db_full_path *path,
 	     rt_db_internal *internal, void *client_data)
@@ -650,17 +648,15 @@ convert_leaf(db_tree_state *tree_state, const db_full_path *path,
     RT_CK_FULL_PATH(path);
     RT_CK_DB_INTERNAL(internal);
 
-    if (internal->idb_major_type != DB5_MAJORTYPE_BRLCAD)
-	return NULL;
-
     gcv_region_end_data &region_end_data = *static_cast<gcv_region_end_data *>
 					   (client_data);
-
     ConversionData &data = *static_cast<ConversionData *>
 			   (region_end_data.client_data);
 
-    AutoFreePtr<char> name(db_path_to_string(path));
+    if (internal->idb_major_type != DB5_MAJORTYPE_BRLCAD)
+	return NULL;
 
+    AutoFreePtr<char> name(db_path_to_string(path));
     bool converted = false;
 
     try {
@@ -701,9 +697,11 @@ extern "C" {
 	writer.write_comment(dbip->dbi_title);
 	writer.write_comment("g -> fastgen4 conversion");
 
+	const rt_tess_tol ttol = {RT_TESS_TOL_MAGIC, 0.0, 0.01, 0.0};
+	const bn_tol tol = {BN_TOL_MAGIC, BN_TOL_DIST, BN_TOL_DIST * BN_TOL_DIST, 1e-6, 1 - 1e-6};
+	ConversionData conv_data = {writer, tol};
+
 	{
-	    const rt_tess_tol ttol = {RT_TESS_TOL_MAGIC, 0.0, 0.01, 0.0};
-	    const bn_tol tol = {BN_TOL_MAGIC, BN_TOL_DIST, BN_TOL_DIST * BN_TOL_DIST, 1e-6, 1 - 1e-6};
 	    model *vmodel;
 	    db_tree_state initial_tree_state = rt_initial_tree_state;
 	    initial_tree_state.ts_tol = &tol;
@@ -716,7 +714,6 @@ extern "C" {
 	    AutoFreePtr<char *> object_names(db_dpv_to_argv(results));
 	    bu_free(results, "tops");
 
-	    ConversionData conv_data = {writer, tol};
 	    gcv_region_end_data region_end_data = {write_nmg_region, &conv_data};
 	    vmodel = nmg_mm();
 	    db_walk_tree(dbip, num_objects, const_cast<const char **>(object_names.ptr), 1,
