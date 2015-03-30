@@ -89,6 +89,9 @@ BN_EXPORT extern int bn_pt_in_polygon(size_t npts, const point2d_t *pts, const p
  * counter-clockwise 2D points.  If interior "hole" polygons are present, they must
  * be passed in via the holes_array and be ordered clockwise.
  *
+ * If no holes are present, caller should pass NULL for holes_array and holes_npts,
+ * and 0 for nholes.
+ *
  * No points are added as part of this triangulation process - the result uses
  * only those points in the original polygon, and hence only the face
  * information is created as output.
