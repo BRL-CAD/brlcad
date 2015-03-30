@@ -84,7 +84,7 @@ subbrep_polygon_tri(const ON_Brep *brep, const point_t *all_verts, int loop_ind,
 
     /* The real work - triangulate the 2D polygon to find out triangles for
      * this particular B-Rep face */
-    int face_error = bn_polygon_triangulate(&faces, &num_faces, (const point2d_t *)verts2d, b_loop->m_ti.Count());
+    int face_error = bn_polygon_triangulate(&faces, &num_faces, (const point2d_t *)verts2d, b_loop->m_ti.Count(), NULL, NULL, 0);
     if (face_error || !faces) {
 	bu_log("bot build failed for face %d - no go\n", b_face->m_face_index);
 	bu_free(verts2d, "free tmp 2d vertex array");
@@ -292,7 +292,8 @@ subbrep_is_planar(struct subbrep_object_data *data)
 {
     int i = 0;
     // Check surfaces.  If a surface is anything other than a plane the verdict is no.
-    // If all surfaces are planes, then the verdict is yes.
+    // If any face has more than one loop, the verdict is no.
+    // If all surfaces are planes and the faces have only outer loops, then the verdict is yes.
     for (i = 0; i < data->faces_cnt; i++) {
 	surface_t stype = GetSurfaceType(data->brep->m_F[data->faces[i]].SurfaceOf(), NULL);
 	if (stype != SURFACE_PLANE) return 0;

@@ -85,8 +85,9 @@ BN_EXPORT extern int bn_pt_in_polygon(size_t npts, const point2d_t *pts, const p
  * documented in David Eberly's Triangulation by Ear Clipping, section 2:
  * http://www.geometrictools.com/Documentation/TriangulationByEarClipping.pdf
  *
- * The input polygon cannot have holes and must be provided as an array of
- * counter-clockwise 2D points.
+ * The primary input polygon cannot have holes and must be provided as an array of
+ * counter-clockwise 2D points.  If interior "hole" polygons are present, they must
+ * be passed in via the holes_array and be ordered clockwise.
  *
  * No points are added as part of this triangulation process - the result uses
  * only those points in the original polygon, and hence only the face
@@ -101,7 +102,8 @@ BN_EXPORT extern int bn_pt_in_polygon(size_t npts, const point2d_t *pts, const p
  * @return 0 if triangulation is successful
  * @return 1 if triangulation is unsuccessful
  */
-BN_EXPORT extern int bn_polygon_triangulate(int **faces, int *num_faces, const point2d_t *pts, size_t npts);
+BN_EXPORT extern int bn_polygon_triangulate(int **faces, int *num_faces, const point2d_t *pts, size_t npts,
+	const point2d_t **holes_array, const size_t *holes_npts, const size_t nholes);
 
 
 /*********************************************************

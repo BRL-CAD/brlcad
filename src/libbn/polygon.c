@@ -522,7 +522,8 @@ remove_ear(struct pt_vertex *ear, struct pt_lists *lists, const point2d_t *pts)
     return;
 }
 
-int bn_polygon_triangulate(int **faces, int *num_faces, const point2d_t *pts, size_t npts)
+int bn_polygon_triangulate(int **faces, int *num_faces, const point2d_t *pts, const size_t npts,
+	                   const point2d_t **holes_array, const size_t *holes_npts, const size_t nholes)
 {
     size_t i = 0;
     size_t face_cnt = 0;
@@ -544,8 +545,12 @@ int bn_polygon_triangulate(int **faces, int *num_faces, const point2d_t *pts, si
 
 
     BU_GET(lists, struct pt_lists);
-    if(npts < 3) return 1;
+    if (npts < 3) return 1;
     if (!faces || !num_faces || !pts) return 1;
+
+    if (nholes > 0) {
+	if (!holes_array || !holes_npts) return 1;
+    }
 
     BU_GET(lists->vertex_list, struct pt_vertex);
     BU_LIST_INIT(&(lists->vertex_list->l));
@@ -593,6 +598,12 @@ int bn_polygon_triangulate(int **faces, int *num_faces, const point2d_t *pts, si
 	    PT_ADD_REFLEX_VREF(reflex_list, v);
 	}
     }
+
+    /* TODO - If we have holes, we need to incorporate them into the polygon */
+    if (nholes > 0) {
+	bu_log("TODO - handle holes!\n");
+    }
+
     /* Now that we know which are the convex and reflex verts, find the initial ears */
     for (BU_LIST_FOR_BACKWARDS(vref, pt_vertex_ref, &(convex_list->l)))
     {
