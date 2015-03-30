@@ -546,6 +546,137 @@ remove_ear(struct pt_vertex *ear, struct pt_lists *lists, const point2d_t *pts)
     return;
 }
 
+HIDDEN int
+in_cone(int p1, int p2, int p3, int p, const point2d_t *pts)
+{
+    int convex = is_convex(pts[p1], pts[p2], pts[p3]);
+    if (convex) {
+	if (!is_convex(pts[p1], pts[p2], pts[p])) return 0;
+	if (!is_convex(pts[p2], pts[p3], pts[p])) return 0;
+	return 1;
+    } else {
+	if (is_convex(pts[p1], pts[p2], pts[p])) return 1;
+	if (is_convex(pts[p2], pts[p3], pts[p])) return 1;
+	return 0;
+    }
+}
+
+HIDDEN int
+hpnt_intersects(int hp, int pp, int p1, int p2, const point2d_t *pts)
+{
+    point2d_t p11, p12, p21, p22;
+    point2d_t v1ort,v2ort,v;
+    double dot11,dot12,dot21,dot22;
+
+    V2MOVE(p11, pts[hp]);
+    V2MOVE(p12, pts[pp]);
+    V2MOVE(p21, pts[p1]);
+    V2MOVE(p22, pts[p2]);
+
+    if(NEAR_ZERO(p11[0] - p21[0], SMALL_FASTF) && NEAR_ZERO(p11[1] - p21[1], SMALL_FASTF)) return 0;
+    if(NEAR_ZERO(p11[0] - p22[0], SMALL_FASTF) && NEAR_ZERO(p11[1] - p22[1], SMALL_FASTF)) return 0;
+    if(NEAR_ZERO(p12[0] - p21[0], SMALL_FASTF) && NEAR_ZERO(p12[1] - p21[1], SMALL_FASTF)) return 0;
+    if(NEAR_ZERO(p12[0] - p22[0], SMALL_FASTF) && NEAR_ZERO(p12[1] - p22[1], SMALL_FASTF)) return 0;
+
+    v1ort[0] = p12[1]-p11[1];
+    v1ort[1] = p11[0]-p12[0];
+
+    v2ort[0] = p22[1]-p21[1];
+    v2ort[1] = p21[0]-p22[0];
+
+    /*v = p21-p11;*/
+    V2SUB2(v, p21, p11);
+    dot21 = v[0]*v1ort[0] + v[1]*v1ort[1];
+    /*v = p22-p11;*/
+    V2SUB2(v, p22, p11);
+    dot22 = v[0]*v1ort[0] + v[1]*v1ort[1];
+
+    /*v = p11-p21;*/
+    V2SUB2(v, p11, p21);
+    dot11 = v[0]*v2ort[0] + v[1]*v2ort[1];
+    /*v = p12-p21;*/
+    V2SUB2(v, p12, p21);
+    dot12 = v[0]*v2ort[0] + v[1]*v2ort[1];
+
+    if(dot11*dot12>0) return 0;
+    if(dot21*dot22>0) return 0;
+
+    return 1;
+}
+
+HIDDEN int
+remove_hole(int **poly, const size_t poly_npts, const int *hole, const size_t hole_npts, const point2d_t *pts)
+{
+    size_t iter, iter2, polypoint, bestpolypoint, polypointindex, i, i2;
+    int holepoint = -1;
+    int point_found = 0;
+    int point_visible = 0;
+    size_t poly_pnt_cnt = poly_npts + hole_npts + 2;
+    int *new_poly;
+    double hole_largest_x = -DBL_MAX;
+    for (iter = 0; iter < hole_npts; iter++) {
+	if (pts[hole[iter]][0] > hole_largest_x) {
+	    hole_largest_x = pts[hole[iter]][0];
+	    holepoint = iter;
+	}
+    }
+    for (iter = 0; iter < poly_npts; iter++) {
+	int p1, p2;
+	if (pts[(*poly)[iter]][0] < hole_largest_x) continue;
+	p1 = (iter+poly_npts-1)%(poly_npts);
+	p2 = (iter+1)%(poly_npts);
+	if (!in_cone(p1, iter, p2, holepoint, pts)) continue;
+	polypoint = iter;
+	if (point_found) {
+	    vect_t v1, v2;
+	    V2SUB2(v1, pts[polypoint], pts[holepoint]);
+	    V2SUB2(v2, pts[bestpolypoint], pts[holepoint]);
+	    V2UNITIZE(v1);
+	    V2UNITIZE(v2);
+	    if (v2[0] > v1[0]) continue;
+	}
+	point_visible = 1;
+	for (iter2 = 0; iter2 < poly_npts; iter2++) {
+	    int p2_1, p2_2;
+	    p2_1 = iter2;
+	    p2_2 = (iter2+1)%(poly_npts);
+	    if (hpnt_intersects(holepoint, polypoint, p2_1, p2_2, pts)) {
+		point_visible = 0;
+		break;
+	    }    
+	}
+	if (point_visible) {
+	    point_found = 1;
+	    bestpolypoint = polypoint;
+	    polypointindex = iter;
+	}
+    }
+
+    if (!point_found) return 0;
+    new_poly = (int *)bu_calloc(poly_pnt_cnt, sizeof(int), "local poly ind array");
+
+    i2 = 0;
+    for (i = 0; i <= polypointindex; i++) {
+	new_poly[i2] = (*poly)[i];
+	i2++;
+    }
+
+    for (i = 0; i <=hole_npts ; i++) {
+	new_poly[i2] = hole[(i+holepoint)%hole_npts];
+	i2++;
+    }
+
+    for (i = polypointindex; i < poly_npts; i++) {
+	new_poly[i2] = (*poly)[i];
+	i2++;
+    }
+
+    bu_free((*poly), "free old poly");
+    (*poly) = new_poly;
+
+    return poly_pnt_cnt;
+}
+
 int bn_nested_polygon_triangulate(int **faces, int *num_faces,
 	const int *poly, const size_t poly_pnts,
 	const int **holes_array, const size_t *holes_npts, const size_t nholes,
@@ -563,7 +694,16 @@ int bn_nested_polygon_triangulate(int **faces, int *num_faces,
     struct pt_vertex_ref *convex_list = NULL;
     struct pt_vertex_ref *reflex_list = NULL;
     struct pt_vertex_ref *ear_list = NULL;
+    size_t poly_pnt_cnt = poly_pnts;
+    const int *local_poly = NULL;
     int ccw = bn_polygon_clockwise(npts, pts);
+
+    if (nholes == 0) {
+    } else {
+	for (i = 0; i < nholes; i++) {
+	    poly_pnt_cnt += holes_npts[i] + 2;
+	}
+    }
 
     if (ccw != -1) {
 	bu_log("Warning - non-CCW point loop!\n");
@@ -601,10 +741,51 @@ int bn_nested_polygon_triangulate(int **faces, int *num_faces,
 
     local_faces = (int *)bu_calloc(3*3*npts, sizeof(int), "triangles");
 
-    /* Initialize vertex list. */
-    for (i = 0; i < poly_pnts; i++) {
-	pt_v_get(&(vertex_list->l), poly[i]);
+    /* If we have holes, we need to incorporate them into the polygon */
+    if (nholes > 0) {
+	/* Bookkeeping */
+	size_t handled_hole_cnt = 0;
+	int *handled_holes = (int *)bu_calloc(nholes, sizeof(int), "hole status array");
+
+	/* polygon size will change - start with input polygon */
+	local_poly = (int *)bu_calloc(poly_pnts, sizeof(int), "local poly ind array");
+	for (i = 0; i < (size_t)poly_pnts; i++) ((int *)local_poly)[i] = i;
+
+	/* Loop over and remove all holes */
+	while (handled_hole_cnt < nholes) {
+	    size_t ch, ph;
+	    /* find the unhandled hole point with the largest x */
+	    double hole_largest_x = -DBL_MAX;
+	    int xp = -1;
+	    for (ch = 0; ch < nholes; ch++) {
+		if (!handled_holes[ch]) {
+		    for (ph = 0; ph < holes_npts[ch]; ph++) {
+			if (pts[holes_array[ch][ph]][0] > hole_largest_x) {
+			    hole_largest_x = pts[holes_array[ch][ph]][0];
+			    xp = ch;
+			}
+		    }
+		}
+	    }
+	    /* Identified the next hole - process it */
+	    poly_pnt_cnt = remove_hole((int **)&local_poly, poly_pnt_cnt, holes_array[xp], holes_npts[xp], pts);
+	    handled_holes[xp] = 1;
+	    if (!poly_pnt_cnt) {
+		bu_log("Error removing hole\n");
+		if (local_poly) bu_free((int *)local_poly, "free tmp array");
+		return 1;
+	    }
+	}
+	bu_free(handled_holes, "done with array");
+    } else {
+	local_poly = poly;
     }
+
+    /* Initialize vertex list. */
+    for (i = 0; i < poly_pnt_cnt; i++) {
+	pt_v_get(&(vertex_list->l), local_poly[i]);
+    }
+    if (local_poly != poly) bu_free((int *)local_poly, "done with local_poly array");
 
     /* Point ordering ends up opposite to that of the points in the array, so
      * everything is backwards */
@@ -623,11 +804,6 @@ int bn_nested_polygon_triangulate(int **faces, int *num_faces,
 	    v->isEar = 0;
 	    PT_ADD_REFLEX_VREF(reflex_list, v);
 	}
-    }
-
-    /* TODO - If we have holes, we need to incorporate them into the polygon */
-    if (nholes > 0) {
-	bu_log("TODO - handle holes!\n");
     }
 
     /* Now that we know which are the convex and reflex verts, find the initial ears */
