@@ -39,10 +39,13 @@
 int
 main(int UNUSED(argc), const char **UNUSED(argv))
 {
+    int ret;
+    size_t i;
     {
 	size_t num_points = 0;
 	int num_faces = 0;
 	int *faces = NULL;
+	int *verts_ind;
 
 	/* 44 point polygon derived from NIST MBE PMI sample 1 shape */
 	point2d_t points[44] = {{0}};
@@ -92,7 +95,11 @@ main(int UNUSED(argc), const char **UNUSED(argv))
 	V2SET(points[43], 2807.83, 2372.83);
 
 	num_points = sizeof(points) / sizeof(point2d_t);
-	if (bn_polygon_triangulate(&faces, &num_faces, (const point2d_t *)points, num_points, NULL, NULL, 0)) {
+	verts_ind = (int *)bu_calloc(num_points, sizeof(int), "bot vert indicies");
+	for (i = 0; i < num_points; i++) verts_ind[i] = i;
+	ret = bn_polygon_triangulate(&faces, &num_faces, verts_ind, num_points, NULL, NULL, 0, (const point2d_t *)points, num_points);
+	bu_free(verts_ind, "free verts");
+	if (ret) {
 	    return 1;
 	}
     }
@@ -100,6 +107,7 @@ main(int UNUSED(argc), const char **UNUSED(argv))
 	size_t num_points = 0;
 	int num_faces = 0;
 	int *faces = NULL;
+	int *verts_ind;
 
 	/* 14 point polygon derived from NIST MBE PMI sample 3 shape */
 	point2d_t points[14] = {{0}};
@@ -119,7 +127,11 @@ main(int UNUSED(argc), const char **UNUSED(argv))
 	V2SET(points[13], 814.092008, 761.624528);
 
 	num_points = sizeof(points) / sizeof(point2d_t);
-	if (bn_polygon_triangulate(&faces, &num_faces, (const point2d_t *)points, num_points, NULL, NULL, 0)) {
+	verts_ind = (int *)bu_calloc(num_points, sizeof(int), "bot vert indicies");
+	for (i = 0; i < num_points; i++) verts_ind[i] = i;
+	ret = bn_polygon_triangulate(&faces, &num_faces, verts_ind, num_points, NULL, NULL, 0, (const point2d_t *)points, num_points);
+	bu_free(verts_ind, "free verts");
+	if (ret) {
 	    return 1;
 	}
     }

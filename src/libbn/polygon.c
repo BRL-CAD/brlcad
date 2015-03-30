@@ -267,6 +267,30 @@ bn_pt_in_polygon(size_t nvert, const point2d_t *pnts, const point2d_t *test)
  * Helpful reference implementations included
  * https://code.google.com/p/polypartition/ and
  * http://www.geometrictools.com/GTEngine/Include/GteTriangulateEC.h
+ *
+ * A couple of functions are direct translations from polypartition, which
+ * is licensed as follows:
+ *
+ * Copyright (C) 2011 by Ivan Fratric
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+ * THE SOFTWARE.
+ *
  */
 
 
@@ -522,8 +546,10 @@ remove_ear(struct pt_vertex *ear, struct pt_lists *lists, const point2d_t *pts)
     return;
 }
 
-int bn_polygon_triangulate(int **faces, int *num_faces, const point2d_t *pts, const size_t npts,
-	                   const point2d_t **holes_array, const size_t *holes_npts, const size_t nholes)
+int bn_polygon_triangulate(int **faces, int *num_faces,
+	const int *poly, const size_t poly_pnts,
+	const int **holes_array, const size_t *holes_npts, const size_t nholes,
+	const point2d_t *pts, const size_t npts)
 {
     size_t i = 0;
     size_t face_cnt = 0;
@@ -545,8 +571,8 @@ int bn_polygon_triangulate(int **faces, int *num_faces, const point2d_t *pts, co
 
 
     BU_GET(lists, struct pt_lists);
-    if (npts < 3) return 1;
-    if (!faces || !num_faces || !pts) return 1;
+    if (npts < 3 || poly_pnts < 3) return 1;
+    if (!faces || !num_faces || !pts || !poly) return 1;
 
     if (nholes > 0) {
 	if (!holes_array || !holes_npts) return 1;
@@ -576,8 +602,8 @@ int bn_polygon_triangulate(int **faces, int *num_faces, const point2d_t *pts, co
     local_faces = (int *)bu_calloc(3*3*npts, sizeof(int), "triangles");
 
     /* Initialize vertex list. */
-    for (i = 0; i < npts; i++) {
-	pt_v_get(&(vertex_list->l), i);
+    for (i = 0; i < poly_pnts; i++) {
+	pt_v_get(&(vertex_list->l), poly[i]);
     }
 
     /* Point ordering ends up opposite to that of the points in the array, so
