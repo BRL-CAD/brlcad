@@ -158,7 +158,7 @@ ged_lc(struct ged *gedp, int argc, const char *argv[])
 
     const char *group_name;
 
-    size_t i = 0;
+    size_t i,j;
     struct bu_ptbl results1 = BU_PTBL_INIT_ZERO;
     struct bu_ptbl results2 = BU_PTBL_INIT_ZERO;
     char *path;
@@ -310,25 +310,26 @@ ged_lc(struct ged *gedp, int argc, const char *argv[])
 	struct directory *dp_curr_dir = DB_FULL_PATH_CUR_DIR(entry);
 	struct bu_attribute_value_set avs;
 
-	regions[i].ignore = 0;
+    	j = BU_PTBL_LEN(&results2) - i - 1 ;
+	regions[j].ignore = 0;
 
 	bu_avs_init_empty(&avs);
 	db5_get_attributes(gedp->ged_wdbp->dbip, &avs, dp_curr_dir);
 
-	regions[i].region_id = get_attr(&avs, "region_id");
-	V_MAX(region_id_len_max, strlen(regions[i].region_id));
-	regions[i].material_id = get_attr(&avs, "material_id");
-	V_MAX(material_id_len_max, strlen(regions[i].material_id));
-	regions[i].los = get_attr(&avs, "los");
-	V_MAX(los_len_max, strlen(regions[i].los));
-	regions[i].obj_name = dp_curr_dir->d_namep;
-	V_MAX(obj_len_max, strlen(regions[i].obj_name));
+	regions[j].region_id = get_attr(&avs, "region_id");
+	V_MAX(region_id_len_max, strlen(regions[j].region_id));
+	regions[j].material_id = get_attr(&avs, "material_id");
+	V_MAX(material_id_len_max, strlen(regions[j].material_id));
+	regions[j].los = get_attr(&avs, "los");
+	V_MAX(los_len_max, strlen(regions[j].los));
+	regions[j].obj_name = dp_curr_dir->d_namep;
+	V_MAX(obj_len_max, strlen(regions[j].obj_name));
 
 	if (entry->fp_len > 1) {
 	    struct directory *dp_parent = DB_FULL_PATH_GET(entry, entry->fp_len - 2);
-	    regions[i].obj_parent = dp_parent->d_namep;
+	    regions[j].obj_parent = dp_parent->d_namep;
 	} else {
-	    regions[i].obj_parent = "--";
+	    regions[j].obj_parent = "--";
 	}
     }
 
