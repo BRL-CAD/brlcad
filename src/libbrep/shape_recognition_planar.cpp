@@ -84,10 +84,7 @@ subbrep_polygon_tri(const ON_Brep *brep, const point_t *all_verts, int loop_ind,
 
     /* The real work - triangulate the 2D polygon to find out triangles for
      * this particular B-Rep face */
-    int *verts_ind = (int *)bu_calloc(b_loop->m_ti.Count(), sizeof(int), "bot vert indicies");
-    for (int vind = 0; vind < b_loop->m_ti.Count(); vind++) verts_ind[vind] = vind;
-    int face_error = bn_polygon_triangulate(&faces, &num_faces, verts_ind, b_loop->m_ti.Count(), NULL, NULL, 0, (const point2d_t *)verts2d, b_loop->m_ti.Count());
-    bu_free(verts_ind, "free indices");
+    int face_error = bn_polygon_triangulate(&faces, &num_faces, (const point2d_t *)verts2d, b_loop->m_ti.Count());
     if (face_error || !faces) {
 	bu_log("bot build failed for face %d - no go\n", b_face->m_face_index);
 	bu_free(verts2d, "free tmp 2d vertex array");

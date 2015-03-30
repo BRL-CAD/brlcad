@@ -546,7 +546,7 @@ remove_ear(struct pt_vertex *ear, struct pt_lists *lists, const point2d_t *pts)
     return;
 }
 
-int bn_polygon_triangulate(int **faces, int *num_faces,
+int bn_nested_polygon_triangulate(int **faces, int *num_faces,
 	const int *poly, const size_t poly_pnts,
 	const int **holes_array, const size_t *holes_npts, const size_t nholes,
 	const point2d_t *pts, const size_t npts)
@@ -717,6 +717,17 @@ cleanup:
     BU_PUT(vertex_list, struct pt_vertex);
     BU_PUT(lists, struct pt_lists);
 
+    return ret;
+}
+
+int bn_polygon_triangulate(int **faces, int *num_faces, const point2d_t *pts, const size_t npts)
+{
+    int ret;
+    size_t i;
+    int *verts_ind = (int *)bu_calloc(npts, sizeof(int), "vert indicies");
+    for (i = 0; i < npts; i++) verts_ind[i] = i;
+    ret = bn_nested_polygon_triangulate(faces, num_faces, verts_ind, npts, NULL, NULL, 0, pts, npts);
+    bu_free(verts_ind, "free verts");
     return ret;
 }
 

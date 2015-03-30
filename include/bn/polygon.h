@@ -79,9 +79,9 @@ BN_EXPORT extern int bn_pt_in_polygon(size_t npts, const point2d_t *pts, const p
 
 /**
  * @brief
- * Triangulate a 2D polygon.
+ * Triangulate a 2D polygon with holes.
  *
- * This routine generates a triangulation of the input polygon using the method
+ * These routines generates a triangulation of the input polygon using the method
  * documented in David Eberly's Triangulation by Ear Clipping, section 2:
  * http://www.geometrictools.com/Documentation/TriangulationByEarClipping.pdf
  *
@@ -90,7 +90,7 @@ BN_EXPORT extern int bn_pt_in_polygon(size_t npts, const point2d_t *pts, const p
  * be passed in via the holes_array and their indicies be ordered clockwise.
  *
  * If no holes are present, caller should pass NULL for holes_array and holes_npts,
- * and 0 for nholes.
+ * and 0 for nholes, or use bn_polygon_triangulate instead.
  *
  * No points are added as part of this triangulation process - the result uses
  * only those points in the original polygon, and hence only the face
@@ -98,17 +98,46 @@ BN_EXPORT extern int bn_pt_in_polygon(size_t npts, const point2d_t *pts, const p
  *
  * @param[out] faces Set of faces in the triangulation, stored as integer indices to the pts.  The first three indices are the vertices of the first face, the second three define the second face, and so forth.
  * @param[out] num_faces Number of faces created
- * @param[in] npts Number of points pts contains
+ * @param[in] poly Non-hole polygon, defined as a CCW array of indicies into the pts array.
+ * @param[in] poly_npts Number of points in non-hole polygon
+ * @param[in] holes_array Array of hole polygons, each defined as a CW array of indicies into the pts array.
+ * @param[in] holes_npts Array of counts of points in hole polygons
+ * @param[in] nholes Number of hole polygons contained in holes_array
  * @param[in] pts Array of points defining a polygon. Duplicated points
- * aren't allowed. The points in the array will be sorted counter-clockwise.
+ * @param[in] npts Number of points pts contains
  *
  * @return 0 if triangulation is successful
  * @return 1 if triangulation is unsuccessful
  */
-BN_EXPORT extern int bn_polygon_triangulate(int **faces, int *num_faces,
-	const int *poly, const size_t poly_pnts,
+BN_EXPORT extern int bn_nested_polygon_triangulate(int **faces, int *num_faces,
+	const int *poly, const size_t poly_npts,
        	const int **holes_array, const size_t *holes_npts, const size_t nholes,
        	const point2d_t *pts, const size_t npts);
+
+/**
+ * @brief
+ * Triangulate a 2D polygon without holes.
+ *
+ * The polygon cannot have holes and must be provided as an array of
+ * counter-clockwise 2D points.
+ *
+ * No points are added as part of this triangulation process - the result uses
+ * only those points in the original polygon, and hence only the face
+ * information is created as output.
+ *
+ * The same fundamental routines are used here as in the bn_nested_polygon_triangulate
+ * logic - this is a convenience function to simplify calling the routine when
+ * specification of hole polygons is not needed.
+ *
+ * @param[out] faces Set of faces in the triangulation, stored as integer indices to the pts.  The first three indices are the vertices of the first face, the second three define the second face, and so forth.
+ * @param[out] num_faces Number of faces created
+ * @param[in] pts Array of points defining a polygon. Duplicated points
+ * @param[in] npts Number of points pts contains
+ *
+ * @return 0 if triangulation is successful
+ * @return 1 if triangulation is unsuccessful
+ */
+BN_EXPORT extern int bn_polygon_triangulate(int **faces, int *num_faces, const point2d_t *pts, const size_t npts);
 
 
 /*********************************************************
