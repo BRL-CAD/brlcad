@@ -14270,13 +14270,21 @@ go_dm_draw_lines(dm *dmp, struct bview_data_line_state *gdlsp)
 			     (_gdpsp)->gdps_polygons.gp_polygon[_i].gp_color[2], \
 			     1, 1.0);					\
 	\
-	/* set the linewidth and linestyle for polygon i */ \
-	(void)dm_set_line_attr((_dmp), \
-			       (_gdpsp)->gdps_polygons.gp_polygon[_i].gp_line_width, \
-			       (_gdpsp)->gdps_polygons.gp_polygon[_i].gp_line_style); \
-	\
 	for (_j = 0; _j < (_gdpsp)->gdps_polygons.gp_polygon[_i].gp_num_contours; ++_j) { \
 	    size_t _last = (_gdpsp)->gdps_polygons.gp_polygon[_i].gp_contour[_j].gpc_num_points-1; \
+	    int _line_style; \
+	    \
+	    /* always draw holes using segmented lines */ \
+	    if ((_gdpsp)->gdps_polygons.gp_polygon[_i].gp_hole[_j]) { \
+		_line_style = 1; \
+	    } else { \
+		_line_style = (_gdpsp)->gdps_polygons.gp_polygon[_i].gp_line_style; \
+	    } \
+	    \
+	    /* set the linewidth and linestyle for polygon i, contour j */	\
+	    (void)dm_set_line_attr((_dmp), \
+				   (_gdpsp)->gdps_polygons.gp_polygon[_i].gp_line_width, \
+				   _line_style); \
 	    \
 	    (void)dm_draw_lines_3d((_dmp),				\
 				   (_gdpsp)->gdps_polygons.gp_polygon[_i].gp_contour[_j].gpc_num_points, \
