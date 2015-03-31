@@ -239,7 +239,7 @@ filter_objs_equal(struct filter_obj *obj1, struct filter_obj *obj2)
 {
     ON_Line l1;
     ON_3dPoint p1, p2;
-    double d1, d2; 
+    double d1, d2;
     int ret = 0;
     if (obj1->stype != obj2->stype) return 0;
     switch (obj1->stype) {

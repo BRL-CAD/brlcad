@@ -104,7 +104,7 @@ subbrep_polygon_tri(const ON_Brep *brep, const point_t *all_verts, int *loops, i
 	 * this particular B-Rep face */
 	face_error = bn_polygon_triangulate(&faces, &num_faces, (const point2d_t *)verts2d, b_loop->m_ti.Count());
     } else {
-	size_t poly_npts, nholes, total_pnts;	
+	size_t poly_npts, nholes, total_pnts;
 	int *poly;
 	int **holes_array;
 	size_t *holes_npts;
@@ -119,7 +119,7 @@ subbrep_polygon_tri(const ON_Brep *brep, const point_t *all_verts, int *loops, i
 	total_pnts = poly_npts;
 	for (int i = 1; i < loop_cnt; i++) {
 	    const ON_BrepLoop *b_loop = &(brep->m_L[loops[0]]);
-	    holes_npts[i-1] = b_loop->m_ti.Count(); 
+	    holes_npts[i-1] = b_loop->m_ti.Count();
 	    total_pnts += holes_npts[i];
 	}
 	verts2d = (point2d_t *)bu_calloc(total_pnts, sizeof(point2d_t), "bot verts");
