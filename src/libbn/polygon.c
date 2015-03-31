@@ -549,6 +549,13 @@ remove_ear(struct pt_vertex *ear, struct pt_lists *lists, const point2d_t *pts)
 HIDDEN int
 in_cone(int p1, int p2, int p3, int p, const point2d_t *pts)
 {
+    point2d_t pnt1, pnt2, pnt3, test_pnt;
+    V2MOVE(pnt1, pts[p1]);
+    V2MOVE(pnt2, pts[p2]);
+    V2MOVE(pnt3, pts[p3]);
+    V2MOVE(test_pnt, pts[p]);
+    return is_inside(pnt1, pnt2, pnt3, (const point2d_t *)&test_pnt);
+#if 0
     int convex = is_convex(pts[p1], pts[p2], pts[p3]);
     if (convex) {
 	if (!is_convex(pts[p1], pts[p2], pts[p])) return 0;
@@ -559,6 +566,7 @@ in_cone(int p1, int p2, int p3, int p, const point2d_t *pts)
 	if (is_convex(pts[p2], pts[p3], pts[p])) return 1;
 	return 0;
     }
+#endif
 }
 
 HIDDEN int
@@ -614,19 +622,32 @@ remove_hole(int **poly, const size_t poly_npts, const int *hole, const size_t ho
     size_t poly_pnt_cnt = poly_npts + hole_npts + 2;
     int *new_poly;
     double hole_largest_x = -DBL_MAX;
+    for (iter = 0; iter < poly_npts; iter++) {
+	bu_log("poly pnt[%d](%d): %f, %f\n", iter, (*poly)[iter], pts[(*poly)[iter]][0], pts[(*poly)[iter]][1]);
+    }
+    for (iter = 0; iter < hole_npts; iter++) {
+	bu_log("hole pnt[%d](%d): %f, %f\n", iter, hole[iter], pts[hole[iter]][0], pts[hole[iter]][1]);
+    }
     for (iter = 0; iter < hole_npts; iter++) {
 	if (pts[hole[iter]][0] > hole_largest_x) {
 	    hole_largest_x = pts[hole[iter]][0];
-	    holepoint = iter;
+	    holepoint = hole[iter];
 	}
     }
+    bu_log("hole_largest_x: %f\n", hole_largest_x);
+    bu_log("hole point: %f %f\n", pts[holepoint][0], pts[holepoint][1]);
     for (iter = 0; iter < poly_npts; iter++) {
 	int p1, p2;
-	if (pts[(*poly)[iter]][0] < hole_largest_x) continue;
-	p1 = (iter+poly_npts-1)%(poly_npts);
-	p2 = (iter+1)%(poly_npts);
-	if (!in_cone(p1, iter, p2, holepoint, pts)) continue;
-	polypoint = iter;
+	polypoint = (*poly)[iter];
+	bu_log("pts[%d][0]: %f\n", polypoint, pts[polypoint][0]);
+	if (pts[polypoint][0] < hole_largest_x) continue;
+	p1 = (*poly)[(iter+poly_npts-1)%(poly_npts)];
+	p2 = (*poly)[(iter+1)%(poly_npts)];
+	bu_log(" pts[%d]: %f,%f\n", p1, pts[p1][0], pts[p1][1]);
+	bu_log(" pts[%d]: %f,%f\n", polypoint, pts[polypoint][0], pts[polypoint][1]);
+	bu_log(" pts[%d]: %f,%f\n", p2, pts[p2][0], pts[p2][1]);
+	if (!in_cone(p1, polypoint, p2, holepoint, pts)) continue;
+	bu_log("past in-cone test\n");
 	if (point_found) {
 	    vect_t v1, v2;
 	    V2SUB2(v1, pts[polypoint], pts[holepoint]);
@@ -638,14 +659,16 @@ remove_hole(int **poly, const size_t poly_npts, const int *hole, const size_t ho
 	point_visible = 1;
 	for (iter2 = 0; iter2 < poly_npts; iter2++) {
 	    int p2_1, p2_2;
-	    p2_1 = iter2;
-	    p2_2 = (iter2+1)%(poly_npts);
+	    p2_1 = (*poly)[iter2];
+	    p2_2 = (*poly)[(iter2+1)%(poly_npts)];
 	    if (hpnt_intersects(holepoint, polypoint, p2_1, p2_2, pts)) {
+		bu_log("point not visible\n");
 		point_visible = 0;
 		break;
 	    }
 	}
 	if (point_visible) {
+	    bu_log("point found: %d\n", polypoint);
 	    point_found = 1;
 	    bestpolypoint = polypoint;
 	    polypointindex = iter;
@@ -669,6 +692,9 @@ remove_hole(int **poly, const size_t poly_npts, const int *hole, const size_t ho
     for (i = polypointindex; i < poly_npts; i++) {
 	new_poly[i2] = (*poly)[i];
 	i2++;
+    }
+    for (iter = 0; iter < poly_pnt_cnt; iter++) {
+	bu_log("new poly pnt[%d](%d): %f, %f\n", iter, new_poly[iter], pts[new_poly[iter]][0], pts[new_poly[iter]][1]);
     }
 
     bu_free((*poly), "free old poly");
@@ -762,6 +788,7 @@ int bn_nested_polygon_triangulate(int **faces, int *num_faces,
 	    /* Identified the next hole - process it */
 	    poly_pnt_cnt = remove_hole((int **)&local_poly, poly_pnt_cnt, holes_array[xp], holes_npts[xp], pts);
 	    handled_holes[xp] = 1;
+	    handled_hole_cnt++;
 	    if (!poly_pnt_cnt) {
 		bu_log("Error removing hole\n");
 		if (local_poly) bu_free((int *)local_poly, "free tmp array");

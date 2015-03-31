@@ -92,7 +92,6 @@ brep_to_bot(struct subbrep_object_data *data, struct rt_wdb *wdbp, struct bu_vls
 	int *loop_inds = (int *)bu_calloc(b_face->LoopCount(), sizeof(int), "loop index array");
 	const ON_BrepLoop *b_oloop = b_face->OuterLoop();
 	loop_inds[0] = b_oloop->m_loop_index;
-	bu_log("Loop count: %d\n", b_face->LoopCount());
 	for (int j = 1; j < b_face->LoopCount(); j++) {
 	    const ON_BrepLoop *b_loop = b_face->Loop(j);
 	    if (b_loop != b_oloop) loop_inds[j] = b_loop->m_loop_index;
@@ -292,7 +291,7 @@ make_shapes(struct subbrep_object_data *data, struct rt_wdb *wdbp, struct bu_vls
     for (int i = 0; i < depth; i++)
 	bu_vls_printf(&spacer, " ");
     //std::cout << bu_vls_addr(&spacer) << "Making shape for " << bu_vls_addr(data->name_root) << "\n";
-#if 0
+#if 1
     if (data->planar_obj && data->planar_obj->local_brep) {
 	struct bu_vls brep_name = BU_VLS_INIT_ZERO;
 	bu_vls_sprintf(&brep_name, "planar_%s.s", bu_vls_addr(data->name_root));

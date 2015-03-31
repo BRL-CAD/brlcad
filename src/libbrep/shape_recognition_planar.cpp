@@ -109,6 +109,7 @@ subbrep_polygon_tri(const ON_Brep *brep, const point_t *all_verts, int *loops, i
 	int **holes_array;
 	size_t *holes_npts;
 	const ON_BrepLoop *b_oloop = &(brep->m_L[loops[0]]);
+	b_face = b_oloop->Face();
 	poly_npts = b_oloop->m_ti.Count();
 	poly = (int *)bu_calloc(poly_npts, sizeof(int), "outer polygon array");
 
@@ -137,7 +138,6 @@ subbrep_polygon_tri(const ON_Brep *brep, const point_t *all_verts, int *loops, i
 	face_error = bn_nested_polygon_triangulate(&faces, &num_faces, poly, poly_npts, (const int **)holes_array, holes_npts, nholes, (const point2d_t *)verts2d, total_pnts);
 
 	// TODO - free a lot of memory...
-	return 0;
     }
 
 
