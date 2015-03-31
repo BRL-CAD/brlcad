@@ -183,7 +183,7 @@ ON_3dPoint ON_LinePlaneIntersect(ON_Line &line, ON_Plane &plane);
 void ON_MinMaxInit(ON_3dPoint *min, ON_3dPoint *max);
 
 
-int subbrep_polygon_tri(const ON_Brep *brep, const point_t *all_verts, int loop_ind, int **ffaces);
+int subbrep_polygon_tri(const ON_Brep *brep, const point_t *all_verts, int *loops, int loop_cnt, int **ffaces);
 
 int filter_objs_equal(struct filter_obj *obj1, struct filter_obj *obj2);
 

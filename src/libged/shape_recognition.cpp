@@ -88,11 +88,17 @@ brep_to_bot(struct subbrep_object_data *data, struct rt_wdb *wdbp, struct bu_vls
     // Iterate over all faces in the brep.  TODO - should probably protect this with some planar checks...
     for (int s_it = 0; s_it < data->local_brep->m_F.Count(); s_it++) {
 	const ON_BrepFace *b_face = &(data->local_brep->m_F[s_it]);
-	/* There should be only an outer loop by this point in the process */
-	/* TODO - should probably check that as an error-out condition... */
-	const ON_BrepLoop *b_loop = b_face->OuterLoop();
+	/* If we've got multiple loops - rare but not impossible - handle it */
+	int *loop_inds = (int *)bu_calloc(b_face->LoopCount(), sizeof(int), "loop index array");
+	const ON_BrepLoop *b_oloop = b_face->OuterLoop();
+	loop_inds[0] = b_oloop->m_loop_index;
+	bu_log("Loop count: %d\n", b_face->LoopCount());
+	for (int j = 1; j < b_face->LoopCount(); j++) {
+	    const ON_BrepLoop *b_loop = b_face->OuterLoop();
+	    if (b_loop != b_oloop) loop_inds[j] = b_loop->m_loop_index;
+	}
 	int *ffaces = NULL;
-	int num_faces = subbrep_polygon_tri(data->local_brep, all_verts, b_loop->m_loop_index, &ffaces);
+	int num_faces = subbrep_polygon_tri(data->local_brep, all_verts, loop_inds, b_face->LoopCount(), &ffaces);
 	for (int f_ind = 0; f_ind < num_faces*3; f_ind++) {
 	    all_faces.push_back(ffaces[f_ind]);
 	}

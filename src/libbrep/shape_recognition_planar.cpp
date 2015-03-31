@@ -10,81 +10,101 @@
 #include "bn/tri_ray.h"
 #include "shape_recognition.h"
 
+HIDDEN void
+verts_assemble(point2d_t *verts2d, int *index, std::map<int, int> *local_to_verts, const ON_Brep *brep, const ON_BrepLoop *b_loop, int dir)
+{
+    if (!verts2d || !brep || !b_loop) return;
+
+    /* Now the fun begins.  If we have an outer loop that isn't CCW or an inner loop
+     * that isn't CW, we need to assemble our verts2d polygon backwards */
+    if (brep->LoopDirection(brep->m_L[b_loop->m_loop_index]) != dir) {
+	for (int ti = 0; ti < b_loop->m_ti.Count(); ti++) {
+	    int ti_rev = b_loop->m_ti.Count() - 1 - ti;
+	    const ON_BrepTrim *trim = &(brep->m_T[b_loop->m_ti[ti_rev]]);
+	    const ON_BrepEdge *edge = &(brep->m_E[trim->m_ei]);
+	    const ON_Curve *trim_curve = trim->TrimCurveOf();
+	    ON_2dPoint cp = trim_curve->PointAt(trim_curve->Domain().Min());
+	    ON_2dPoint cp_max = trim_curve->PointAt(trim_curve->Domain().Max());
+	    V2MOVE(verts2d[ti], cp);
+	    if (trim->m_bRev3d) {
+		(*local_to_verts)[ti] = edge->Vertex(1)->m_vertex_index;
+	    } else {
+		(*local_to_verts)[ti] = edge->Vertex(0)->m_vertex_index;
+	    }
+	    if (index) index[ti] = (*local_to_verts)[ti];
+	}
+    } else {
+	for (int ti = 0; ti < b_loop->m_ti.Count(); ti++) {
+	    const ON_BrepTrim *trim = &(brep->m_T[b_loop->m_ti[ti]]);
+	    const ON_BrepEdge *edge = &(brep->m_E[trim->m_ei]);
+	    const ON_Curve *trim_curve = trim->TrimCurveOf();
+	    ON_2dPoint cp = trim_curve->PointAt(trim_curve->Domain().Max());
+	    V2MOVE(verts2d[ti], cp);
+	    if (trim->m_bRev3d) {
+		(*local_to_verts)[ti] = edge->Vertex(0)->m_vertex_index;
+	    } else {
+		(*local_to_verts)[ti] = edge->Vertex(1)->m_vertex_index;
+	    }
+	    if (index) index[ti] = (*local_to_verts)[ti];
+	}
+    }
+
+}
 
 int
-subbrep_polygon_tri(const ON_Brep *brep, const point_t *all_verts, int loop_ind, int **ffaces)
+subbrep_polygon_tri(const ON_Brep *brep, const point_t *all_verts, int *loops, int loop_cnt, int **ffaces)
 {
     // Accumulate faces in a std::vector, since we don't know how many we're going to get
     std::vector<int> all_faces;
 
     int num_faces;
     int *faces;
-
-    const ON_BrepLoop *b_loop = &(brep->m_L[loop_ind]);
-    const ON_BrepFace *b_face = b_loop->Face();
-
-    if (!ffaces) return 0;
-
-    /* We need to build a 2D vertex list for the triangulation, and as long
-     * as we make sure the vertex mapping accounts for flipped trims in 3D,
-     * the point indices returned for the 2D triangulation will correspond
-     * to the correct 3D points without any additional work.  In essence,
-     * we use the fact that the BRep gives us a ready-made 2D point
-     * parameterization to same some work.*/
-
-    if (b_loop->m_ti.Count() == 0) {
-	return 0;
-    }
-
-    point2d_t *verts2d = (point2d_t *)bu_calloc(b_loop->m_ti.Count(), sizeof(point2d_t), "bot verts");
+    int face_error;
+    const ON_BrepFace *b_face = NULL;
+    point2d_t *verts2d = NULL;
 
     /* The triangulation will use only the points in the temporary verts2d
      * array and return with faces indexed accordingly, so we need a map to
      * translate them back to our final vert array */
     std::map<int, int> local_to_verts;
 
-    /* Now the fun begins.  If we have an outer loop that isn't CCW, we
-     * need to assemble our verts2d polygon backwards */
-    if (brep->LoopDirection(brep->m_L[b_loop->m_loop_index]) != 1) {
-	for (int ti = 0; ti < b_loop->m_ti.Count(); ti++) {
-	    int ti_rev = b_loop->m_ti.Count() - 1 - ti;
-	    const ON_BrepTrim *trim = &(b_face->Brep()->m_T[b_loop->m_ti[ti_rev]]);
-	    const ON_BrepEdge *edge = &(b_face->Brep()->m_E[trim->m_ei]);
-	    const ON_Curve *trim_curve = trim->TrimCurveOf();
-	    ON_2dPoint cp = trim_curve->PointAt(trim_curve->Domain().Min());
-	    ON_2dPoint cp_max = trim_curve->PointAt(trim_curve->Domain().Max());
-	    V2MOVE(verts2d[ti], cp);
-	    if (trim->m_bRev3d) {
-		local_to_verts[ti] = edge->Vertex(1)->m_vertex_index;
-	    } else {
-		local_to_verts[ti] = edge->Vertex(0)->m_vertex_index;
-	    }
+    if (loop_cnt == 1) {
+	const ON_BrepLoop *b_loop = &(brep->m_L[loops[0]]);
+	b_face = b_loop->Face();
+
+	if (!ffaces) return 0;
+
+	/* We need to build a 2D vertex list for the triangulation, and as long
+	 * as we make sure the vertex mapping accounts for flipped trims in 3D,
+	 * the point indices returned for the 2D triangulation will correspond
+	 * to the correct 3D points without any additional work.  In essence,
+	 * we use the fact that the BRep gives us a ready-made 2D point
+	 * parameterization to same some work.*/
+
+	if (b_loop->m_ti.Count() == 0) {
+	    return 0;
 	}
-    } else {
-	for (int ti = 0; ti < b_loop->m_ti.Count(); ti++) {
-	    const ON_BrepTrim *trim = &(b_face->Brep()->m_T[b_loop->m_ti[ti]]);
-	    const ON_BrepEdge *edge = &(b_face->Brep()->m_E[trim->m_ei]);
-	    const ON_Curve *trim_curve = trim->TrimCurveOf();
-	    ON_2dPoint cp = trim_curve->PointAt(trim_curve->Domain().Max());
-	    V2MOVE(verts2d[ti], cp);
-	    if (trim->m_bRev3d) {
-		local_to_verts[ti] = edge->Vertex(0)->m_vertex_index;
-	    } else {
-		local_to_verts[ti] = edge->Vertex(1)->m_vertex_index;
-	    }
-	}
-    }
+
+	verts2d = (point2d_t *)bu_calloc(b_loop->m_ti.Count(), sizeof(point2d_t), "bot verts");
+
+	verts_assemble(verts2d, NULL, &local_to_verts, brep, b_loop, 1);
 
 #if 0
-    if (!bn_polygon_clockwise(b_loop->m_ti.Count(), verts2d)) {
-	bu_log("degenerate loop %d for face %d - no go\n", b_loop->m_loop_index, b_face->m_face_index);
-	//return 0;
-    }
+	if (!bn_polygon_clockwise(b_loop->m_ti.Count(), verts2d)) {
+	    bu_log("degenerate loop %d for face %d - no go\n", b_loop->m_loop_index, b_face->m_face_index);
+	    //return 0;
+	}
 #endif
 
-    /* The real work - triangulate the 2D polygon to find out triangles for
-     * this particular B-Rep face */
-    int face_error = bn_polygon_triangulate(&faces, &num_faces, (const point2d_t *)verts2d, b_loop->m_ti.Count());
+	/* The real work - triangulate the 2D polygon to find out triangles for
+	 * this particular B-Rep face */
+	face_error = bn_polygon_triangulate(&faces, &num_faces, (const point2d_t *)verts2d, b_loop->m_ti.Count());
+    } else {
+	bu_log("TODO - multi loop\n");
+	return 0;
+    }
+
+
     if (face_error || !faces) {
 	bu_log("bot build failed for face %d - no go\n", b_face->m_face_index);
 	bu_free(verts2d, "free tmp 2d vertex array");
@@ -166,7 +186,7 @@ negative_polygon(struct subbrep_object_data *data)
     for (int i = 0; i < data->loops_cnt; i++) {
 	const ON_BrepLoop *b_loop = &(data->brep->m_L[data->loops[i]]);
 	int *ffaces = NULL;
-	int num_faces = subbrep_polygon_tri(data->brep, all_verts, b_loop->m_loop_index, &ffaces);
+	int num_faces = subbrep_polygon_tri(data->brep, all_verts, (int *)&(b_loop->m_loop_index), 1, &ffaces);
 	if (!num_faces) {
 	    bu_log("Error - triangulation failed for loop %d!\n", b_loop->m_loop_index);
 	    return 0;
