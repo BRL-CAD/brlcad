@@ -11,7 +11,7 @@
 #include "shape_recognition.h"
 
 HIDDEN void
-verts_assemble(point2d_t *verts2d, int *index, std::map<int, int> *local_to_verts, const ON_Brep *brep, const ON_BrepLoop *b_loop, int dir)
+verts_assemble(point2d_t *verts2d, int *index, std::map<int, int> *local_to_verts, const ON_Brep *brep, const ON_BrepLoop *b_loop, int dir, int verts_offset)
 {
     if (!verts2d || !brep || !b_loop) return;
 
@@ -25,13 +25,13 @@ verts_assemble(point2d_t *verts2d, int *index, std::map<int, int> *local_to_vert
 	    const ON_Curve *trim_curve = trim->TrimCurveOf();
 	    ON_2dPoint cp = trim_curve->PointAt(trim_curve->Domain().Min());
 	    ON_2dPoint cp_max = trim_curve->PointAt(trim_curve->Domain().Max());
-	    V2MOVE(verts2d[ti], cp);
+	    V2MOVE(verts2d[ti+verts_offset], cp);
 	    if (trim->m_bRev3d) {
-		(*local_to_verts)[ti] = edge->Vertex(1)->m_vertex_index;
+		(*local_to_verts)[ti+verts_offset] = edge->Vertex(1)->m_vertex_index;
 	    } else {
-		(*local_to_verts)[ti] = edge->Vertex(0)->m_vertex_index;
+		(*local_to_verts)[ti+verts_offset] = edge->Vertex(0)->m_vertex_index;
 	    }
-	    if (index) index[ti] = (*local_to_verts)[ti];
+	    if (index) index[ti] = (*local_to_verts)[ti+verts_offset];
 	}
     } else {
 	for (int ti = 0; ti < b_loop->m_ti.Count(); ti++) {
@@ -39,13 +39,13 @@ verts_assemble(point2d_t *verts2d, int *index, std::map<int, int> *local_to_vert
 	    const ON_BrepEdge *edge = &(brep->m_E[trim->m_ei]);
 	    const ON_Curve *trim_curve = trim->TrimCurveOf();
 	    ON_2dPoint cp = trim_curve->PointAt(trim_curve->Domain().Max());
-	    V2MOVE(verts2d[ti], cp);
+	    V2MOVE(verts2d[ti+verts_offset], cp);
 	    if (trim->m_bRev3d) {
-		(*local_to_verts)[ti] = edge->Vertex(0)->m_vertex_index;
+		(*local_to_verts)[ti+verts_offset] = edge->Vertex(0)->m_vertex_index;
 	    } else {
-		(*local_to_verts)[ti] = edge->Vertex(1)->m_vertex_index;
+		(*local_to_verts)[ti+verts_offset] = edge->Vertex(1)->m_vertex_index;
 	    }
-	    if (index) index[ti] = (*local_to_verts)[ti];
+	    if (index) index[ti] = (*local_to_verts)[ti+verts_offset];
 	}
     }
 
@@ -68,6 +68,10 @@ subbrep_polygon_tri(const ON_Brep *brep, const point_t *all_verts, int *loops, i
      * translate them back to our final vert array */
     std::map<int, int> local_to_verts;
 
+    /* Sanity check */
+    if (loop_cnt < 1 || !brep || !all_verts || !loops || !ffaces) return 0;
+
+    /* Only one loop is easier */
     if (loop_cnt == 1) {
 	const ON_BrepLoop *b_loop = &(brep->m_L[loops[0]]);
 	b_face = b_loop->Face();
@@ -87,7 +91,7 @@ subbrep_polygon_tri(const ON_Brep *brep, const point_t *all_verts, int *loops, i
 
 	verts2d = (point2d_t *)bu_calloc(b_loop->m_ti.Count(), sizeof(point2d_t), "bot verts");
 
-	verts_assemble(verts2d, NULL, &local_to_verts, brep, b_loop, 1);
+	verts_assemble(verts2d, NULL, &local_to_verts, brep, b_loop, 1, 0);
 
 #if 0
 	if (!bn_polygon_clockwise(b_loop->m_ti.Count(), verts2d)) {
@@ -100,7 +104,39 @@ subbrep_polygon_tri(const ON_Brep *brep, const point_t *all_verts, int *loops, i
 	 * this particular B-Rep face */
 	face_error = bn_polygon_triangulate(&faces, &num_faces, (const point2d_t *)verts2d, b_loop->m_ti.Count());
     } else {
+	size_t poly_npts, nholes, total_pnts;	
+	int *poly;
+	int **holes_array;
+	size_t *holes_npts;
+	const ON_BrepLoop *b_oloop = &(brep->m_L[loops[0]]);
+	poly_npts = b_oloop->m_ti.Count();
+	poly = (int *)bu_calloc(poly_npts, sizeof(int), "outer polygon array");
+
+	nholes = loop_cnt - 1;
+	holes_npts = (size_t *)bu_calloc(nholes, sizeof(size_t), "hole size array");
+	holes_array = (int **)bu_calloc(nholes, sizeof(int *), "holes array");
+
+	total_pnts = poly_npts;
+	for (int i = 1; i < loop_cnt; i++) {
+	    const ON_BrepLoop *b_loop = &(brep->m_L[loops[0]]);
+	    holes_npts[i-1] = b_loop->m_ti.Count(); 
+	    total_pnts += holes_npts[i];
+	}
+	verts2d = (point2d_t *)bu_calloc(total_pnts, sizeof(point2d_t), "bot verts");
+
+	verts_assemble(verts2d, poly, &local_to_verts, brep, b_oloop, 1, 0);
+	int offset = poly_npts;
+	for (int i = 1; i < loop_cnt; i++) {
+	    const ON_BrepLoop *b_loop = &(brep->m_L[loops[i]]);
+	    holes_array[i-1] = (int *)bu_calloc(b_loop->m_ti.Count(), sizeof(int), "hole array");
+	    verts_assemble(verts2d, holes_array[i-1], &local_to_verts, brep, b_loop, -1, offset);
+	    offset += b_loop->m_ti.Count();
+	}
+
 	bu_log("TODO - multi loop\n");
+	face_error = bn_nested_polygon_triangulate(&faces, &num_faces, poly, poly_npts, (const int **)holes_array, holes_npts, nholes, (const point2d_t *)verts2d, total_pnts);
+
+	// TODO - free a lot of memory...
 	return 0;
     }
 
