@@ -31,7 +31,7 @@ verts_assemble(point2d_t *verts2d, int *index, std::map<int, int> *local_to_vert
 	    } else {
 		(*local_to_verts)[ti+verts_offset] = edge->Vertex(0)->m_vertex_index;
 	    }
-	    if (index) index[ti] = (*local_to_verts)[ti+verts_offset];
+	    if (index) index[ti] = ti+verts_offset;
 	}
     } else {
 	for (int ti = 0; ti < b_loop->m_ti.Count(); ti++) {
@@ -45,7 +45,7 @@ verts_assemble(point2d_t *verts2d, int *index, std::map<int, int> *local_to_vert
 	    } else {
 		(*local_to_verts)[ti+verts_offset] = edge->Vertex(1)->m_vertex_index;
 	    }
-	    if (index) index[ti] = (*local_to_verts)[ti+verts_offset];
+	    if (index) index[ti] = ti+verts_offset;
 	}
     }
 
