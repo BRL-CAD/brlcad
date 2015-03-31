@@ -151,6 +151,8 @@ set(LIBRT_SOURCES
   primitives/half/half_mirror.c
   primitives/hf/hf.c
   primitives/hf/hf_brep.cpp
+  primitives/hrt/hrt.c
+  primitives/hrt/hrt_mirror.c
   primitives/hyp/hyp.c
   primitives/hyp/hyp_brep.cpp
   primitives/hyp/hyp_mirror.c
@@ -248,7 +250,6 @@ set(LIBRT_SOURCES
   primitives/vol/vol.c
   primitives/vol/vol_brep.cpp
   primitives/vol/vol_mirror.c
-  primitives/hrt/hrt.c
   regionfix.c
   roots.c
   search.c
