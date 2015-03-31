@@ -73,6 +73,7 @@ subbrep_polygon_tri(const ON_Brep *brep, const point_t *all_verts, int *loops, i
 
     /* Only one loop is easier */
     if (loop_cnt == 1) {
+
 	const ON_BrepLoop *b_loop = &(brep->m_L[loops[0]]);
 	b_face = b_loop->Face();
 
@@ -103,28 +104,41 @@ subbrep_polygon_tri(const ON_Brep *brep, const point_t *all_verts, int *loops, i
 	/* The real work - triangulate the 2D polygon to find out triangles for
 	 * this particular B-Rep face */
 	face_error = bn_polygon_triangulate(&faces, &num_faces, (const point2d_t *)verts2d, b_loop->m_ti.Count());
+
     } else {
+
+	/* We've got multiple loops - more complex setup since we need to define a polygon
+	 * with holes */
 	size_t poly_npts, nholes, total_pnts;
 	int *poly;
 	int **holes_array;
 	size_t *holes_npts;
 	const ON_BrepLoop *b_oloop = &(brep->m_L[loops[0]]);
 	b_face = b_oloop->Face();
+
+	/* Set up the "parent" polygon's index based definition */
 	poly_npts = b_oloop->m_ti.Count();
 	poly = (int *)bu_calloc(poly_npts, sizeof(int), "outer polygon array");
 
+	/* Set up the holes */
 	nholes = loop_cnt - 1;
 	holes_npts = (size_t *)bu_calloc(nholes, sizeof(size_t), "hole size array");
 	holes_array = (int **)bu_calloc(nholes, sizeof(int *), "holes array");
 
+	/* Get a total point count and initialize the holes_npts array.  We
+	 * don't need to account for double-counting introduced by hole elimination
+	 * here, since we re-use the same points rather than adding new ones */
 	total_pnts = poly_npts;
 	for (int i = 1; i < loop_cnt; i++) {
 	    const ON_BrepLoop *b_loop = &(brep->m_L[loops[i]]);
 	    holes_npts[i-1] = b_loop->m_ti.Count();
 	    total_pnts += holes_npts[i-1];
 	}
+
+	/* Now we know how many points we're dealing with */
 	verts2d = (point2d_t *)bu_calloc(total_pnts, sizeof(point2d_t), "bot verts");
 
+	/* Use the loop definitions to assemble the final input arrays */
 	verts_assemble(verts2d, poly, &local_to_verts, brep, b_oloop, 1, 0);
 	int offset = poly_npts;
 	for (int i = 1; i < loop_cnt; i++) {
@@ -134,10 +148,18 @@ subbrep_polygon_tri(const ON_Brep *brep, const point_t *all_verts, int *loops, i
 	    offset += b_loop->m_ti.Count();
 	}
 
-	bu_log("TODO - multi loop\n");
+	/* The real work - triangulate the 2D polygon to find out triangles for
+	 * this particular B-Rep face */
 	face_error = bn_nested_polygon_triangulate(&faces, &num_faces, poly, poly_npts, (const int **)holes_array, holes_npts, nholes, (const point2d_t *)verts2d, total_pnts);
 
-	// TODO - free a lot of memory...
+	// We have the triangles now, so free up memory...
+	for (int i = 1; i < loop_cnt; i++) {
+	    bu_free(holes_array[i-1], "free hole array");
+	}
+	bu_free(holes_array, "free holes array cnts");
+	bu_free(holes_npts, "free array holding hole array cnts");
+	bu_free(poly, "free polygon index array");
+
     }
 
 
