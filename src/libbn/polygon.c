@@ -698,17 +698,9 @@ int bn_nested_polygon_triangulate(int **faces, int *num_faces,
     const int *local_poly = NULL;
     int ccw = bn_polygon_clockwise(npts, pts);
 
-    if (nholes == 0) {
-    } else {
-	for (i = 0; i < nholes; i++) {
-	    poly_pnt_cnt += holes_npts[i] + 2;
-	}
-    }
-
     if (ccw != -1) {
 	bu_log("Warning - non-CCW point loop!\n");
     }
-
 
     BU_GET(lists, struct pt_lists);
     if (npts < 3 || poly_pnts < 3) return 1;
@@ -749,7 +741,7 @@ int bn_nested_polygon_triangulate(int **faces, int *num_faces,
 
 	/* polygon size will change - start with input polygon */
 	local_poly = (int *)bu_calloc(poly_pnts, sizeof(int), "local poly ind array");
-	for (i = 0; i < (size_t)poly_pnts; i++) ((int *)local_poly)[i] = i;
+	for (i = 0; i < (size_t)poly_pnts; i++) ((int *)local_poly)[i] = poly[i];
 
 	/* Loop over and remove all holes */
 	while (handled_hole_cnt < nholes) {

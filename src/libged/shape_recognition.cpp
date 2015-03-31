@@ -94,7 +94,7 @@ brep_to_bot(struct subbrep_object_data *data, struct rt_wdb *wdbp, struct bu_vls
 	loop_inds[0] = b_oloop->m_loop_index;
 	bu_log("Loop count: %d\n", b_face->LoopCount());
 	for (int j = 1; j < b_face->LoopCount(); j++) {
-	    const ON_BrepLoop *b_loop = b_face->OuterLoop();
+	    const ON_BrepLoop *b_loop = b_face->Loop(j);
 	    if (b_loop != b_oloop) loop_inds[j] = b_loop->m_loop_index;
 	}
 	int *ffaces = NULL;

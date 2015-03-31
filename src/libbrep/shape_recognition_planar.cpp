@@ -118,9 +118,9 @@ subbrep_polygon_tri(const ON_Brep *brep, const point_t *all_verts, int *loops, i
 
 	total_pnts = poly_npts;
 	for (int i = 1; i < loop_cnt; i++) {
-	    const ON_BrepLoop *b_loop = &(brep->m_L[loops[0]]);
+	    const ON_BrepLoop *b_loop = &(brep->m_L[loops[i]]);
 	    holes_npts[i-1] = b_loop->m_ti.Count();
-	    total_pnts += holes_npts[i];
+	    total_pnts += holes_npts[i-1];
 	}
 	verts2d = (point2d_t *)bu_calloc(total_pnts, sizeof(point2d_t), "bot verts");
 
@@ -470,6 +470,9 @@ subbrep_planar_init(struct subbrep_object_data *data)
     array_to_set(&faces, data->faces, data->faces_cnt);
     array_to_set(&fil, data->fil, data->fil_cnt);
     array_to_set(&loops, data->loops, data->loops_cnt);
+    std::map<int, std::set<int> > face_loops;
+    std::map<int, std::set<int> >::iterator fl_it;
+    std::set<int>::iterator l_it;
 
     for (int i = 0; i < data->edges_cnt; i++) {
 	int c3i;
@@ -590,11 +593,38 @@ subbrep_planar_init(struct subbrep_object_data *data)
 	    if (face_map.find(old_trim->Face()->m_face_index) != face_map.end()) {
 		if (loops.find(old_loop->m_loop_index) != loops.end()) {
 		    if (loop_map.find(old_loop->m_loop_index) == loop_map.end()) {
-			// After the initial breakout, all loops in any given subbrep are outer loops,
-			// whatever they were in the original brep.
-			ON_BrepLoop &nl = data->planar_obj->local_brep->NewLoop(ON_BrepLoop::outer, data->planar_obj->local_brep->m_F[face_map[old_loop->m_fi]]);
-			loop_map[old_loop->m_loop_index] = nl.m_loop_index;
+			face_loops[old_trim->Face()->m_face_index].insert(old_loop->m_loop_index);
 		    }
+		}
+	    }
+	}
+    }
+    for (fl_it = face_loops.begin(); fl_it != face_loops.end(); fl_it++) {
+	int loop_cnt = fl_it->second.size();
+	if (loop_cnt == 1) {
+	    // If we have only one loop on a face it's an outer loop,
+	    // whatever it was in the original brep.
+	    const ON_BrepLoop *old_loop = &(data->brep->m_L[*(fl_it->second.begin())]);
+	    ON_BrepLoop &nl = data->planar_obj->local_brep->NewLoop(ON_BrepLoop::outer, data->planar_obj->local_brep->m_F[face_map[fl_it->first]]);
+	    loop_map[old_loop->m_loop_index] = nl.m_loop_index;
+	} else {
+	    bu_log("loop_cnt: %d\n", loop_cnt);
+	    // If we ended up with multiple loops, one of them should be an outer loop
+	    // and the rest inner loops
+	    // Get the outer loop first
+	    for (l_it = fl_it->second.begin(); l_it != fl_it->second.end(); l_it++) {
+		const ON_BrepLoop *old_loop = &(data->brep->m_L[*l_it]);
+		if (data->brep->LoopDirection(data->brep->m_L[*l_it]) == 1) {
+		    ON_BrepLoop &nl = data->planar_obj->local_brep->NewLoop(ON_BrepLoop::outer, data->planar_obj->local_brep->m_F[face_map[fl_it->first]]);
+		    loop_map[old_loop->m_loop_index] = nl.m_loop_index;
+		}
+	    }
+	    // Now get the inner loops;
+	    for (l_it = fl_it->second.begin(); l_it != fl_it->second.end(); l_it++) {
+		const ON_BrepLoop *old_loop = &(data->brep->m_L[*l_it]);
+		if (data->brep->LoopDirection(data->brep->m_L[*l_it]) != 1) {
+		    ON_BrepLoop &nl = data->planar_obj->local_brep->NewLoop(ON_BrepLoop::inner, data->planar_obj->local_brep->m_F[face_map[fl_it->first]]);
+		    loop_map[old_loop->m_loop_index] = nl.m_loop_index;
 		}
 	    }
 	}
