@@ -643,7 +643,7 @@ remove_hole(int **poly, const size_t poly_npts, const int *hole, const size_t ho
 	    if (hpnt_intersects(holepoint, polypoint, p2_1, p2_2, pts)) {
 		point_visible = 0;
 		break;
-	    }    
+	    }
 	}
 	if (point_visible) {
 	    point_found = 1;
