@@ -564,50 +564,112 @@ remove_ear(struct pt_vertex *ear, struct pt_lists *lists, const point2d_t *pts)
 HIDDEN int
 remove_hole(int **poly, const size_t poly_npts, const int *hole, const size_t hole_npts, const point2d_t *pts)
 {
-    size_t iter, iter2, polypoint, polypointindex, i, i2;
+    size_t iter, itrpt, polypointindex, i, i2;
     int holepoint = -1;
     int point_found = 0;
-    int clean = 0;
+    fastf_t dist[2];
+    double min_dist = DBL_MAX;
     size_t poly_pnt_cnt = poly_npts + hole_npts + 2;
     int *new_poly;
+    double poly_largest_x = -DBL_MAX;
     double hole_largest_x = -DBL_MAX;
+    point2d_t hpnt, ep, e1, e2, isect;
+    vect_t hdir;
+    struct bn_tol ltol = {BN_TOL_MAGIC, BN_TOL_DIST, BN_TOL_DIST * BN_TOL_DIST, 1e-6, 1.0 - 1e-6 };
+    for (iter = 0; iter < poly_npts; iter++) {
+	if (pts[(*poly)[iter]][0] > poly_largest_x) {
+	    poly_largest_x = pts[(*poly)[iter]][0];
+	}
+    }
     for (iter = 0; iter < hole_npts; iter++) {
 	if (pts[hole[iter]][0] > hole_largest_x) {
 	    hole_largest_x = pts[hole[iter]][0];
 	    holepoint = hole[iter];
 	}
     }
+    V2MOVE(hpnt, pts[holepoint]);
+
+    /* Find the outer polygon edge with a horizontal line intersect closest
+     * to the maximum x value hole point */
+    V2SET(hdir, (poly_largest_x - hole_largest_x)*1.1, hpnt[1]);
     for (iter = 0; iter < poly_npts; iter++) {
-	point2d_t pnt1, pnt2, pnt3, test_pnt;
-	size_t pnext;
-	polypoint = (*poly)[iter];
-	if (pts[polypoint][0] < hole_largest_x) continue;
-	pnext = (*poly)[(iter+1)%(poly_npts)];
-	V2MOVE(pnt1, pts[polypoint]);
-	V2MOVE(pnt2, pts[holepoint]);
-	V2MOVE(pnt3, pts[pnext]);
-#if 0
-	bu_log(" pts[%d]: %f,%f\n", polypoint, pts[polypoint][0], pts[polypoint][1]);
-	bu_log(" hole point: %f %f\n", pts[holepoint][0], pts[holepoint][1]);
-	bu_log(" pts[%d]: %f,%f\n", pnext, pts[pnext][0], pts[pnext][1]);
-#endif
-	for (iter2 = 0; iter2 < poly_npts; iter2++) {
-	    size_t currpoly = (*poly)[iter2];
-	    clean = 1;
-	    if (pts[currpoly][0] < hole_largest_x) continue;
-	    if (currpoly == polypoint) continue;
-	    if (currpoly == pnext) continue;
-	    V2MOVE(test_pnt, pts[currpoly]);
-	    if (is_inside(pnt1, pnt2, pnt3, (const point2d_t *)&test_pnt)) clean = 0;
-	}
-	if (clean) {
-	    polypointindex = iter;
-	    point_found = 1;
-	    break;
+	point2d_t tmp1, tmp2;
+	vect_t tmpdir;
+	V2MOVE(tmp1, pts[(*poly)[iter]]);
+	V2MOVE(tmp2, pts[(*poly)[(iter+1)%(poly_npts)]]);
+	V2SUB2(tmpdir, tmp2, tmp1);
+	if (bn_isect_lseg2_lseg2(dist, hpnt, hdir, tmp1, tmpdir, &ltol) == 1) {
+	    if (dist[0] < min_dist) {
+		V2MOVE(e1, tmp1);
+		V2MOVE(e2, tmp2);
+		V2SET(isect, hpnt[0] + hdir[0]*dist[0], hpnt[1]);
+		min_dist = dist[0];
+		itrpt = iter;
+	    }
 	}
     }
+    /* Check for near-exact vertex intersections */
+    if(V2NEAR_EQUAL(e1, isect, 1e-6)) {
+	polypointindex = itrpt;
+	point_found = 1;
+    }
+    if(V2NEAR_EQUAL(e2, isect, 1e-6)) {
+	polypointindex = (itrpt+1)%(poly_npts);
+	point_found = 1;
+    }
 
-    if (!point_found) return 0;
+    /* Check for points inside the triangle hpnt/ep/isect */
+    if (!point_found) {
+	point2d_t interior_pt;
+	int have_interior_pt = 0;
+	double angle = DBL_MAX - 1;
+	min_dist = DBL_MAX;
+	if (e1[0] > e2[0]) {
+	    V2MOVE(ep, e1);
+	} else {
+	    V2MOVE(ep, e2);
+	    itrpt = (itrpt+1)%(poly_npts);
+	}
+	for (iter = 0; iter < poly_npts; iter++) {
+	    point2d_t test_pt;
+	    V2MOVE(test_pt, pts[(*poly)[iter]]);
+	    if (iter == itrpt) continue;
+	    if (test_pt[0] < hole_largest_x) continue;
+	    if (is_inside(hpnt, ep, isect, (const point2d_t *)&test_pt)) {
+		vect_t ih;
+		double tang;
+		V2SUB2(ih, test_pt, hpnt);
+		have_interior_pt = 1;
+		tang = acos(V2DOT(ih, hdir));
+		/* if we've got interior points, we want the lowest angle */
+		if (NEAR_ZERO(angle - DBL_MAX - 1, 0.001)) {
+		    angle = tang;
+		    V2MOVE(interior_pt, pts[(*poly)[iter]]);
+		    polypointindex = iter;
+		    continue;
+		}
+		/* If the angle doesn't differentiate, go with distance */
+		if (NEAR_ZERO(tang - angle, 1e-6)) {
+		    if (DIST_PT2_PT2_SQ(test_pt, hpnt) < min_dist) {
+			V2MOVE(interior_pt, pts[(*poly)[iter]]);
+			polypointindex = iter;
+		    }
+		    continue;
+		}
+		if (tang < angle) {
+		    V2MOVE(interior_pt, pts[(*poly)[iter]]);
+		    polypointindex = iter;
+		}
+	    }
+	}
+
+	/* If none of the points ended up in the interior, go with ep */
+	if (!have_interior_pt) {
+	    polypointindex = itrpt;
+	}
+
+    }
+
     new_poly = (int *)bu_calloc(poly_pnt_cnt, sizeof(int), "local poly ind array");
 
     i2 = 0;
