@@ -724,11 +724,6 @@ int bn_nested_polygon_triangulate(int **faces, int *num_faces, point2d_t **out_p
     struct pt_vertex_ref *ear_list = NULL;
     size_t poly_pnt_cnt = poly_pnts;
     const int *local_poly = NULL;
-    int ccw = bn_polygon_clockwise(npts, pts);
-
-    if (ccw != -1) {
-	bu_log("Warning - non-CCW point loop!\n");
-    }
 
     BU_GET(lists, struct pt_lists);
     if (npts < 3 || poly_pnts < 3) return 1;
@@ -925,6 +920,13 @@ int bn_polygon_triangulate(int **faces, int *num_faces, point2d_t **out_pts, int
     int ret;
     size_t i;
     int *verts_ind = NULL;
+
+    int ccw = bn_polygon_clockwise(npts, pts);
+
+    if (ccw != -1) {
+	bu_log("Warning - non-CCW point loop!\n");
+    }
+
     if (type == DELAUNAY && (!out_pts || !num_outpts)) return 1;
     verts_ind = (int *)bu_calloc(npts, sizeof(int), "vert indicies");
     for (i = 0; i < npts; i++) verts_ind[i] = i;
