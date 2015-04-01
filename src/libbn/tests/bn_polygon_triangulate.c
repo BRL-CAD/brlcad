@@ -35,6 +35,12 @@
 #include "bn.h"
 #include "plot3.h"
 
+/* TODO - the examples below are run, but no check is made to determine
+ * if the faces generated are actually correct.*/
+
+/* TODO - need to take args so we can run tests individually */
+
+/* TODO - need some more stressful tests, particularly for hole removal */
 
 int
 main(int UNUSED(argc), const char **UNUSED(argv))
