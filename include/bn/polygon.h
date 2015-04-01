@@ -78,16 +78,32 @@ BN_EXPORT extern int bn_polygon_clockwise(size_t npts, const point2d_t *pts);
 BN_EXPORT extern int bn_pt_in_polygon(size_t npts, const point2d_t *pts, const point2d_t *test_pt);
 
 /**
- * @brief
- * Triangulate a 2D polygon with holes.
+ * Triangulation is the process of finding a set of triangles that as a set cover
+ * the same total surface area as a polygon.  There are many algorithms for this
+ * operation, which have various trade-offs in speed and output quality.
  *
- * These routines generates a triangulation of the input polygon using the method
+ * Ear clipping is implemented here in a manner similar to the method
  * documented in David Eberly's Triangulation by Ear Clipping, section 2:
  * http://www.geometrictools.com/Documentation/TriangulationByEarClipping.pdf
  *
- * The primary input polygon cannot have holes and must be provided as an array of
- * counter-clockwise indices to 2D points.  If interior "hole" polygons are present, they must
- * be passed in via the holes_array and their indicies be ordered clockwise.
+ */
+
+typedef enum {
+    EAR_CLIPPING = 0,
+    MONOTONE,
+    HERTEL_MEHLHORN,
+    KEIL_SNOEYINK,
+    DELAUNAY
+} triangulation_t;
+
+/**
+ * @brief
+ * Triangulate a 2D polygon with holes.
+ *
+ * The primary polygon definiton must be provided as an array of
+ * counter-clockwise indices to 2D points.  If interior "hole" polygons are
+ * present, they must be passed in via the holes_array and their indicies be
+ * ordered clockwise.
  *
  * If no holes are present, caller should pass NULL for holes_array and holes_npts,
  * and 0 for nholes, or use bn_polygon_triangulate instead.
@@ -98,6 +114,8 @@ BN_EXPORT extern int bn_pt_in_polygon(size_t npts, const point2d_t *pts, const p
  *
  * @param[out] faces Set of faces in the triangulation, stored as integer indices to the pts.  The first three indices are the vertices of the first face, the second three define the second face, and so forth.
  * @param[out] num_faces Number of faces created
+ * @param[out] output points used by faces set, if an algorithm was selected that generates new points
+ * @param[out] num_outpts number of output points, if an algorithm was selected that generates new points
  * @param[in] poly Non-hole polygon, defined as a CCW array of indicies into the pts array.
  * @param[in] poly_npts Number of points in non-hole polygon
  * @param[in] holes_array Array of hole polygons, each defined as a CW array of indicies into the pts array.
@@ -109,10 +127,10 @@ BN_EXPORT extern int bn_pt_in_polygon(size_t npts, const point2d_t *pts, const p
  * @return 0 if triangulation is successful
  * @return 1 if triangulation is unsuccessful
  */
-BN_EXPORT extern int bn_nested_polygon_triangulate(int **faces, int *num_faces,
+BN_EXPORT extern int bn_nested_polygon_triangulate(int **faces, int *num_faces, point2d_t **out_pts, int *num_outpts,
 	const int *poly, const size_t poly_npts,
        	const int **holes_array, const size_t *holes_npts, const size_t nholes,
-       	const point2d_t *pts, const size_t npts);
+       	const point2d_t *pts, const size_t npts, triangulation_t type);
 
 /**
  * @brief
@@ -131,13 +149,16 @@ BN_EXPORT extern int bn_nested_polygon_triangulate(int **faces, int *num_faces,
  *
  * @param[out] faces Set of faces in the triangulation, stored as integer indices to the pts.  The first three indices are the vertices of the first face, the second three define the second face, and so forth.
  * @param[out] num_faces Number of faces created
+ * @param[out] output points used by faces set, if an algorithm was selected that generates new points
+ * @param[out] num_outpts number of output points, if an algorithm was selected that generates new points
  * @param[in] pts Array of points defining a polygon. Duplicated points
  * @param[in] npts Number of points pts contains
  *
  * @return 0 if triangulation is successful
  * @return 1 if triangulation is unsuccessful
  */
-BN_EXPORT extern int bn_polygon_triangulate(int **faces, int *num_faces, const point2d_t *pts, const size_t npts);
+BN_EXPORT extern int bn_polygon_triangulate(int **faces, int *num_faces, point2d_t **out_pts, int *num_outpts,
+	const point2d_t *pts, const size_t npts, triangulation_t type);
 
 
 /*********************************************************

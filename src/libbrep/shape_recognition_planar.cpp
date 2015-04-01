@@ -103,7 +103,7 @@ subbrep_polygon_tri(const ON_Brep *brep, const point_t *all_verts, int *loops, i
 
 	/* The real work - triangulate the 2D polygon to find out triangles for
 	 * this particular B-Rep face */
-	face_error = bn_polygon_triangulate(&faces, &num_faces, (const point2d_t *)verts2d, b_loop->m_ti.Count());
+	face_error = bn_polygon_triangulate(&faces, &num_faces, NULL, NULL, (const point2d_t *)verts2d, b_loop->m_ti.Count(), EAR_CLIPPING);
 
     } else {
 
@@ -150,7 +150,7 @@ subbrep_polygon_tri(const ON_Brep *brep, const point_t *all_verts, int *loops, i
 
 	/* The real work - triangulate the 2D polygon to find out triangles for
 	 * this particular B-Rep face */
-	face_error = bn_nested_polygon_triangulate(&faces, &num_faces, poly, poly_npts, (const int **)holes_array, holes_npts, nholes, (const point2d_t *)verts2d, total_pnts);
+	face_error = bn_nested_polygon_triangulate(&faces, &num_faces, NULL, NULL, poly, poly_npts, (const int **)holes_array, holes_npts, nholes, (const point2d_t *)verts2d, total_pnts, EAR_CLIPPING);
 
 	// We have the triangles now, so free up memory...
 	for (int i = 1; i < loop_cnt; i++) {
