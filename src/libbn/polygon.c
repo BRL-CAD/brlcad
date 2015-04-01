@@ -192,15 +192,15 @@ bn_3d_polygon_sort_ccw(size_t npts, point_t *pts, plane_t cmp)
 }
 
 int
-bn_polygon_clockwise(size_t npts, const point2d_t *pts)
+bn_polygon_clockwise(size_t npts, const point2d_t *pts, const int *pt_order)
 {
     size_t i;
     double sum = 0;
     for (i = 0; i < npts; i++) {
 	if (i + 1 == npts) {
-	    sum += (pts[0][0] - pts[i][0]) * (pts[0][1] + pts[i][1]);
+	    sum += (pts[pt_order[0]][0] - pts[pt_order[i]][0]) * (pts[pt_order[0]][1] + pts[pt_order[i]][1]);
 	} else {
-	    sum += (pts[i+1][0] - pts[i][0]) * (pts[i+1][1] + pts[i][1]);
+	    sum += (pts[pt_order[i+1]][0] - pts[pt_order[i]][0]) * (pts[pt_order[i+1]][1] + pts[pt_order[i]][1]);
 	}
     }
     if (NEAR_ZERO(sum, SMALL_FASTF)) return 0;
@@ -714,6 +714,7 @@ int bn_nested_polygon_triangulate(int **faces, int *num_faces, point2d_t **out_p
     size_t face_cnt = 0;
     int offset = 0;
     int ret = 0;
+    int ccw = 0;
     int *local_faces;
     struct pt_lists *lists = NULL;
     struct pt_vertex *v = NULL;
@@ -734,6 +735,13 @@ int bn_nested_polygon_triangulate(int **faces, int *num_faces, point2d_t **out_p
     }
 
     if (type == DELAUNAY && (!out_pts || !num_outpts)) return 1;
+
+    ccw = bn_polygon_clockwise(poly_pnts, pts, poly);
+
+    if (ccw != -1) {
+	bu_log("Warning - non-CCW point loop!\n");
+    }
+
 
     BU_GET(lists->vertex_list, struct pt_vertex);
     BU_LIST_INIT(&(lists->vertex_list->l));
@@ -920,12 +928,6 @@ int bn_polygon_triangulate(int **faces, int *num_faces, point2d_t **out_pts, int
     int ret;
     size_t i;
     int *verts_ind = NULL;
-
-    int ccw = bn_polygon_clockwise(npts, pts);
-
-    if (ccw != -1) {
-	bu_log("Warning - non-CCW point loop!\n");
-    }
 
     if (type == DELAUNAY && (!out_pts || !num_outpts)) return 1;
     verts_ind = (int *)bu_calloc(npts, sizeof(int), "vert indicies");
