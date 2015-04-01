@@ -546,6 +546,8 @@ remove_ear(struct pt_vertex *ear, struct pt_lists *lists, const point2d_t *pts)
     return;
 }
 
+/* TODO - I'm pretty sure this is incorrect/won't work generally.  Need to
+ * set up some test cases and rethink this */
 HIDDEN int
 in_cone(int p1, int p2, int p3, int p, const point2d_t *pts)
 {
