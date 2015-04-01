@@ -561,134 +561,49 @@ remove_ear(struct pt_vertex *ear, struct pt_lists *lists, const point2d_t *pts)
     return;
 }
 
-/* TODO - I'm pretty sure this is incorrect/won't work generally.  Need to
- * set up some test cases and rethink this */
-HIDDEN int
-in_cone(int p1, int p2, int p3, int p, const point2d_t *pts)
-{
-    point2d_t pnt1, pnt2, pnt3, test_pnt;
-    V2MOVE(pnt1, pts[p1]);
-    V2MOVE(pnt2, pts[p2]);
-    V2MOVE(pnt3, pts[p3]);
-    V2MOVE(test_pnt, pts[p]);
-    return is_inside(pnt1, pnt2, pnt3, (const point2d_t *)&test_pnt);
-#if 0
-    int convex = is_convex(pts[p1], pts[p2], pts[p3]);
-    if (convex) {
-	if (!is_convex(pts[p1], pts[p2], pts[p])) return 0;
-	if (!is_convex(pts[p2], pts[p3], pts[p])) return 0;
-	return 1;
-    } else {
-	if (is_convex(pts[p1], pts[p2], pts[p])) return 1;
-	if (is_convex(pts[p2], pts[p3], pts[p])) return 1;
-	return 0;
-    }
-#endif
-}
-
-HIDDEN int
-hpnt_intersects(int hp, int pp, int p1, int p2, const point2d_t *pts)
-{
-    point2d_t p11, p12, p21, p22;
-    point2d_t v1ort,v2ort,v;
-    double dot11,dot12,dot21,dot22;
-
-    V2MOVE(p11, pts[hp]);
-    V2MOVE(p12, pts[pp]);
-    V2MOVE(p21, pts[p1]);
-    V2MOVE(p22, pts[p2]);
-
-    if(NEAR_ZERO(p11[0] - p21[0], SMALL_FASTF) && NEAR_ZERO(p11[1] - p21[1], SMALL_FASTF)) return 0;
-    if(NEAR_ZERO(p11[0] - p22[0], SMALL_FASTF) && NEAR_ZERO(p11[1] - p22[1], SMALL_FASTF)) return 0;
-    if(NEAR_ZERO(p12[0] - p21[0], SMALL_FASTF) && NEAR_ZERO(p12[1] - p21[1], SMALL_FASTF)) return 0;
-    if(NEAR_ZERO(p12[0] - p22[0], SMALL_FASTF) && NEAR_ZERO(p12[1] - p22[1], SMALL_FASTF)) return 0;
-
-    v1ort[0] = p12[1]-p11[1];
-    v1ort[1] = p11[0]-p12[0];
-
-    v2ort[0] = p22[1]-p21[1];
-    v2ort[1] = p21[0]-p22[0];
-
-    /*v = p21-p11;*/
-    V2SUB2(v, p21, p11);
-    dot21 = v[0]*v1ort[0] + v[1]*v1ort[1];
-    /*v = p22-p11;*/
-    V2SUB2(v, p22, p11);
-    dot22 = v[0]*v1ort[0] + v[1]*v1ort[1];
-
-    /*v = p11-p21;*/
-    V2SUB2(v, p11, p21);
-    dot11 = v[0]*v2ort[0] + v[1]*v2ort[1];
-    /*v = p12-p21;*/
-    V2SUB2(v, p12, p21);
-    dot12 = v[0]*v2ort[0] + v[1]*v2ort[1];
-
-    if(dot11*dot12>0) return 0;
-    if(dot21*dot22>0) return 0;
-
-    return 1;
-}
-
 HIDDEN int
 remove_hole(int **poly, const size_t poly_npts, const int *hole, const size_t hole_npts, const point2d_t *pts)
 {
-    size_t iter, iter2, polypoint, bestpolypoint, polypointindex, i, i2;
+    size_t iter, iter2, polypoint, polypointindex, i, i2;
     int holepoint = -1;
     int point_found = 0;
-    int point_visible = 0;
+    int clean = 0;
     size_t poly_pnt_cnt = poly_npts + hole_npts + 2;
     int *new_poly;
     double hole_largest_x = -DBL_MAX;
-    for (iter = 0; iter < poly_npts; iter++) {
-	bu_log("poly pnt[%d](%d): %f, %f\n", iter, (*poly)[iter], pts[(*poly)[iter]][0], pts[(*poly)[iter]][1]);
-    }
-    for (iter = 0; iter < hole_npts; iter++) {
-	bu_log("hole pnt[%d](%d): %f, %f\n", iter, hole[iter], pts[hole[iter]][0], pts[hole[iter]][1]);
-    }
     for (iter = 0; iter < hole_npts; iter++) {
 	if (pts[hole[iter]][0] > hole_largest_x) {
 	    hole_largest_x = pts[hole[iter]][0];
 	    holepoint = hole[iter];
 	}
     }
-    bu_log("hole_largest_x: %f\n", hole_largest_x);
-    bu_log("hole point: %f %f\n", pts[holepoint][0], pts[holepoint][1]);
     for (iter = 0; iter < poly_npts; iter++) {
-	int p1, p2;
+	point2d_t pnt1, pnt2, pnt3, test_pnt;
+	size_t pnext;
 	polypoint = (*poly)[iter];
-	bu_log("pts[%d][0]: %f\n", polypoint, pts[polypoint][0]);
 	if (pts[polypoint][0] < hole_largest_x) continue;
-	p1 = (*poly)[(iter+poly_npts-1)%(poly_npts)];
-	p2 = (*poly)[(iter+1)%(poly_npts)];
-	bu_log(" pts[%d]: %f,%f\n", p1, pts[p1][0], pts[p1][1]);
+	pnext = (*poly)[(iter+1)%(poly_npts)];
+	V2MOVE(pnt1, pts[polypoint]);
+	V2MOVE(pnt2, pts[holepoint]);
+	V2MOVE(pnt3, pts[pnext]);
+#if 0
 	bu_log(" pts[%d]: %f,%f\n", polypoint, pts[polypoint][0], pts[polypoint][1]);
-	bu_log(" pts[%d]: %f,%f\n", p2, pts[p2][0], pts[p2][1]);
-	if (!in_cone(p1, polypoint, p2, holepoint, pts)) continue;
-	bu_log("past in-cone test\n");
-	if (point_found) {
-	    vect_t v1, v2;
-	    V2SUB2(v1, pts[polypoint], pts[holepoint]);
-	    V2SUB2(v2, pts[bestpolypoint], pts[holepoint]);
-	    V2UNITIZE(v1);
-	    V2UNITIZE(v2);
-	    if (v2[0] > v1[0]) continue;
-	}
-	point_visible = 1;
+	bu_log(" hole point: %f %f\n", pts[holepoint][0], pts[holepoint][1]);
+	bu_log(" pts[%d]: %f,%f\n", pnext, pts[pnext][0], pts[pnext][1]);
+#endif
 	for (iter2 = 0; iter2 < poly_npts; iter2++) {
-	    int p2_1, p2_2;
-	    p2_1 = (*poly)[iter2];
-	    p2_2 = (*poly)[(iter2+1)%(poly_npts)];
-	    if (hpnt_intersects(holepoint, polypoint, p2_1, p2_2, pts)) {
-		bu_log("point not visible\n");
-		point_visible = 0;
-		break;
-	    }
+	    size_t currpoly = (*poly)[iter2];
+	    clean = 1;
+	    if (pts[currpoly][0] < hole_largest_x) continue;
+	    if (currpoly == polypoint) continue;
+	    if (currpoly == pnext) continue;
+	    V2MOVE(test_pnt, pts[currpoly]);
+	    if (is_inside(pnt1, pnt2, pnt3, (const point2d_t *)&test_pnt)) clean = 0;
 	}
-	if (point_visible) {
-	    bu_log("point found: %d\n", polypoint);
-	    point_found = 1;
-	    bestpolypoint = polypoint;
+	if (clean) {
 	    polypointindex = iter;
+	    point_found = 1;
+	    break;
 	}
     }
 
@@ -710,9 +625,11 @@ remove_hole(int **poly, const size_t poly_npts, const int *hole, const size_t ho
 	new_poly[i2] = (*poly)[i];
 	i2++;
     }
+#if 0
     for (iter = 0; iter < poly_pnt_cnt; iter++) {
 	bu_log("new poly pnt[%d](%d): %f, %f\n", iter, new_poly[iter], pts[new_poly[iter]][0], pts[new_poly[iter]][1]);
     }
+#endif
 
     bu_free((*poly), "free old poly");
     (*poly) = new_poly;
