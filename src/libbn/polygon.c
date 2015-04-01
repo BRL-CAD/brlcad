@@ -192,10 +192,22 @@ bn_3d_polygon_sort_ccw(size_t npts, point_t *pts, plane_t cmp)
 }
 
 int
-bn_polygon_clockwise(size_t npts, const point2d_t *pts, const int *pt_order)
+bn_polygon_clockwise(size_t npts, const point2d_t *pts, const int *pt_indices)
 {
     size_t i;
     double sum = 0;
+    const int *pt_order = NULL;
+    int *tmp_pt_order = NULL;
+    /* If no array of indicies into pts is supplied, construct a
+     * temporary version based on the point order in the array */
+    if (pt_indices) pt_order = pt_indices;
+    if (!pt_order) {
+	tmp_pt_order = (int *)bu_calloc(npts, sizeof(size_t), "temp ordering array");
+	for (i = 0; i < npts; i++) tmp_pt_order[i] = i;
+	pt_order = (const int *)tmp_pt_order;
+    }
+
+    /* Conduct the actual CCW test */
     for (i = 0; i < npts; i++) {
 	if (i + 1 == npts) {
 	    sum += (pts[pt_order[0]][0] - pts[pt_order[i]][0]) * (pts[pt_order[0]][1] + pts[pt_order[i]][1]);
@@ -203,6 +215,9 @@ bn_polygon_clockwise(size_t npts, const point2d_t *pts, const int *pt_order)
 	    sum += (pts[pt_order[i+1]][0] - pts[pt_order[i]][0]) * (pts[pt_order[i+1]][1] + pts[pt_order[i]][1]);
 	}
     }
+
+    /* clean up and evaluate results */
+    if (tmp_pt_order) bu_free(tmp_pt_order, "free tmp_pt_order");
     if (NEAR_ZERO(sum, SMALL_FASTF)) return 0;
     return (sum > 0) ? 1 : -1;
 }

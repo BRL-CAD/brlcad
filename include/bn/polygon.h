@@ -53,6 +53,8 @@ __BEGIN_DECLS
  * @param[in] pt_indices index values into pts array building a convex polygon. duplicated points
  * aren't allowed.
  *
+ * If pt_indices is NULL, the first npts points in pts will be checked in array order.
+ *
  * @return -1 if polygon is counter-clockwise
  * @return 1 if polygon is clockwise
  * @return 0 if the test failed
