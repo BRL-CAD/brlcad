@@ -108,10 +108,6 @@ typedef enum {
  * If no holes are present, caller should pass NULL for holes_array and holes_npts,
  * and 0 for nholes, or use bn_polygon_triangulate instead.
  *
- * No points are added as part of this triangulation process - the result uses
- * only those points in the original polygon, and hence only the face
- * information is created as output.
- *
  * @param[out] faces Set of faces in the triangulation, stored as integer indices to the pts.  The first three indices are the vertices of the first face, the second three define the second face, and so forth.
  * @param[out] num_faces Number of faces created
  * @param[out] output points used by faces set, if an algorithm was selected that generates new points
