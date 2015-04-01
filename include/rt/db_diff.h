@@ -26,6 +26,10 @@
 #ifndef RT_DB_DIFF_H
 #define RT_DB_DIFF_H
 
+#include "common.h"
+
+__BEGIN_DECLS
+
 /**
  * DIFF bit flags to select various types of results
  */
@@ -229,6 +233,8 @@ db_diff3(const struct db_i *dbip_left,
 	const struct bn_tol *diff_tol,
 	db_compare_criteria_t flags,
 	struct bu_ptbl *diff3_results);
+
+__END_DECLS
 
 #endif /*RT_DB_DIFF_H*/
 

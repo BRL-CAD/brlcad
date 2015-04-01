@@ -25,6 +25,10 @@
 #ifndef RT_DB_FULLPATH_H
 #define RT_DB_FULLPATH_H
 
+#include "common.h"
+
+__BEGIN_DECLS
+
 /* struct resource requires db_fullpath as part of its definition -
  * so long as that is true, typedef to avoid circular definition
  * problem */
@@ -208,6 +212,7 @@ RT_EXPORT extern int db_path_to_mat(struct db_i *dbip,
 				    int depth, /* number of arcs */
 				    struct resource *resp);
 
+__END_DECLS
 
 #endif /*RT_DB_FULLPATH_H*/
 

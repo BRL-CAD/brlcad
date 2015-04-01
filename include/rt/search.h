@@ -34,6 +34,7 @@
 
 #include "rt/defines.h"
 
+__BEGIN_DECLS
 
 /**
  * @brief Search for objects in a geometry database using filters
@@ -145,6 +146,7 @@ DEPRECATED RT_EXPORT extern struct bu_ptbl *db_search_unique_objects(void *searc
 								     struct db_full_path_list *path_list,
 								     struct db_i *dbip);
 
+__END_DECLS
 
 #endif /* RT_SEARCH_H*/
 /** @} */
