@@ -93,7 +93,7 @@ main(int UNUSED(argc), const char **UNUSED(argv))
 	V2SET(points[43], 2807.83, 2372.83);
 
 	num_points = sizeof(points) / sizeof(point2d_t);
-	ret = bn_polygon_triangulate(&faces, &num_faces, (const point2d_t *)points, num_points);
+	ret = bn_polygon_triangulate(&faces, &num_faces, NULL, NULL, (const point2d_t *)points, num_points, EAR_CLIPPING);
 	if (ret) {
 	    return 1;
 	}
@@ -121,7 +121,7 @@ main(int UNUSED(argc), const char **UNUSED(argv))
 	V2SET(points[13], 814.092008, 761.624528);
 
 	num_points = sizeof(points) / sizeof(point2d_t);
-	ret = bn_polygon_triangulate(&faces, &num_faces, (const point2d_t *)points, num_points);
+	ret = bn_polygon_triangulate(&faces, &num_faces, NULL, NULL, (const point2d_t *)points, num_points, EAR_CLIPPING);
 	if (ret) {
 	    return 1;
 	}
