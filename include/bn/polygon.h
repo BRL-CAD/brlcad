@@ -103,9 +103,9 @@ typedef enum {
  * @brief
  * Triangulate a 2D polygon with holes.
  *
- * The primary polygon definiton must be provided as an array of
+ * The primary polygon definition must be provided as an array of
  * counter-clockwise indices to 2D points.  If interior "hole" polygons are
- * present, they must be passed in via the holes_array and their indicies be
+ * present, they must be passed in via the holes_array and their indices be
  * ordered clockwise.
  *
  * If no holes are present, caller should pass NULL for holes_array and holes_npts,
@@ -115,9 +115,9 @@ typedef enum {
  * @param[out] num_faces Number of faces created
  * @param[out] output points used by faces set, if an algorithm was selected that generates new points
  * @param[out] num_outpts number of output points, if an algorithm was selected that generates new points
- * @param[in] poly Non-hole polygon, defined as a CCW array of indicies into the pts array.
+ * @param[in] poly Non-hole polygon, defined as a CCW array of indices into the pts array.
  * @param[in] poly_npts Number of points in non-hole polygon
- * @param[in] holes_array Array of hole polygons, each defined as a CW array of indicies into the pts array.
+ * @param[in] holes_array Array of hole polygons, each defined as a CW array of indices into the pts array.
  * @param[in] holes_npts Array of counts of points in hole polygons
  * @param[in] nholes Number of hole polygons contained in holes_array
  * @param[in] pts Array of points defining a polygon. Duplicated points

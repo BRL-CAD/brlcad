@@ -862,7 +862,7 @@ int bn_polygon_triangulate(int **faces, int *num_faces, point2d_t **out_pts, int
     int *verts_ind = NULL;
 
     if (type == DELAUNAY && (!out_pts || !num_outpts)) return 1;
-    verts_ind = (int *)bu_calloc(npts, sizeof(int), "vert indicies");
+    verts_ind = (int *)bu_calloc(npts, sizeof(int), "vert indices");
     for (i = 0; i < npts; i++) verts_ind[i] = i;
     ret = bn_nested_polygon_triangulate(faces, num_faces, out_pts, num_outpts, verts_ind, npts, NULL, NULL, 0, pts, npts, type);
     bu_free(verts_ind, "free verts");
