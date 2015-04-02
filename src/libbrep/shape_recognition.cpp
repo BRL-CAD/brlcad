@@ -189,7 +189,9 @@ bail:
  * 7.  add the union pointer to the subbreps_tree, and then add all all topologically connected subtractions
  *     and remove them from the local set.
  * 8.  For the remaining (non-topologically linked) subtractions, get a bounding box and see if it overlaps
- *     with the bounding box of the union object in question.  If yes, add the pointer to subbreps_tree.
+ *     with the bounding box of the union object in question.  If yes, add the pointer to subbreps_tree, unless
+ *     the union object's bbox is fully contained by the subtraction bbox - the latter implies that the subtraction
+ *     completely eliminates the union object, which is not how B-Reps work.
  *     If not, no action is needed.  Once evaluated, remove the subtraction pointer from the set.
  *
  * Initially the test will be axis aligned bounding boxes, but ideally we should use oriented bounding boxes
@@ -373,6 +375,10 @@ find_top_level_hierarchy(struct bu_ptbl *subbreps)
 	// Now, whatever is left in the local subtraction queue has to be ruled out based on volumetric
 	// intersection testing.
 
+	if (BU_STR_EQUAL(bu_vls_addr(pobj->key), "18_42_46_50")) {
+	    bu_log("handle it!\n");
+	}
+
 	// Construct bounding box for pobj
 	if (!pobj->bbox_set) subbrep_bbox(pobj);
 	// Iterate over the queue
@@ -384,7 +390,8 @@ find_top_level_hierarchy(struct bu_ptbl *subbreps)
 	    ON_BoundingBox isect;
 	    bool bbi = isect.Intersection(*pobj->bbox, *sobj->bbox);
 	    bool bbc = pobj->bbox->Includes(*sobj->bbox);
-	    if (bbi || bbc) {
+	    bool bcb = sobj->bbox->Includes(*pobj->bbox);
+	    if (!bcb && (bbi || bbc)) {
 		//std::cout << " Found intersecting subbrep " << bu_vls_addr(sobj->key) << " under " << bu_vls_addr(pobj->key) << "\n";
 		bu_ptbl_ins(subbreps_tree, *sb_it2);
 	    }
