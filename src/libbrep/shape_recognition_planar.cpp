@@ -930,6 +930,14 @@ subbrep_planar_init(struct subbrep_object_data *data)
 	data->planar_obj->params->bool_op = (data->planar_obj->negative_shape == -1) ? '-' : 'u';
     }
 
+    if (data->planar_obj->local_brep->m_F.Count() < 4) {
+	bu_log("face count < 4 (%d) - not a viable solid\n", data->planar_obj->local_brep->m_F.Count());
+	subbrep_object_free(data->planar_obj);
+	BU_PUT(data->planar_obj, struct subbrep_object_data);
+	data->planar_obj = NULL;
+	return;
+    }
+
     // Need to preserve the vertex map for this, since we're not done building up the brep
     map_to_array(&(data->planar_obj->planar_obj_vert_map), &(data->planar_obj->planar_obj_vert_cnt), &vertex_map);
 

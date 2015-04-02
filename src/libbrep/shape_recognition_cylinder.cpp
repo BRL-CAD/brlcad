@@ -715,12 +715,14 @@ cylinder_csg(struct subbrep_object_data *data, fastf_t cyl_tol)
 			subbrep_planar_init(data->parent);
 		    }
 		    // Now, add the new face
-		    ON_SimpleArray<const ON_BrepVertex *> vert_loop(4);
-		    vert_loop.Append(v1);
-		    vert_loop.Append(v2);
-		    vert_loop.Append(v3);
-		    vert_loop.Append(v4);
-		    subbrep_add_planar_face(data->parent, &pcyl, &vert_loop, data->negative_shape);
+		    if (data->parent->planar_obj) {
+			ON_SimpleArray<const ON_BrepVertex *> vert_loop(4);
+			vert_loop.Append(v1);
+			vert_loop.Append(v2);
+			vert_loop.Append(v3);
+			vert_loop.Append(v4);
+			subbrep_add_planar_face(data->parent, &pcyl, &vert_loop, data->negative_shape);
+		    }
 		}
 	    }
 
@@ -1114,12 +1116,14 @@ cylinder_csg(struct subbrep_object_data *data, fastf_t cyl_tol)
 				    subbrep_planar_init(data->parent);
 				}
 				// Now, add the new face
-				ON_SimpleArray<const ON_BrepVertex *> vert_loop(4);
-				vert_loop.Append(v1);
-				vert_loop.Append(v2);
-				vert_loop.Append(v3);
-				vert_loop.Append(v4);
-				subbrep_add_planar_face(data->parent, &pcyl, &vert_loop, data->negative_shape);
+				if (data->parent->planar_obj) {
+				    ON_SimpleArray<const ON_BrepVertex *> vert_loop(4);
+				    vert_loop.Append(v1);
+				    vert_loop.Append(v2);
+				    vert_loop.Append(v3);
+				    vert_loop.Append(v4);
+				    subbrep_add_planar_face(data->parent, &pcyl, &vert_loop, data->negative_shape);
+				}
 			    }
 			}
 
