@@ -480,14 +480,12 @@ cone_csg(struct subbrep_object_data *data, fastf_t cone_tol)
                         subbrep_planar_init(data->parent);
                     }
                     // Now, add the new face
-		    if (data->parent->planar_obj) {
-			ON_SimpleArray<const ON_BrepVertex *> vert_loop(4);
-			vert_loop.Append(v1);
-			vert_loop.Append(v2);
-			vert_loop.Append(v3);
-			vert_loop.Append(v4);
-			subbrep_add_planar_face(data->parent, &pcone, &vert_loop, data->negative_shape);
-		    }
+                    ON_SimpleArray<const ON_BrepVertex *> vert_loop(4);
+                    vert_loop.Append(v1);
+                    vert_loop.Append(v2);
+                    vert_loop.Append(v3);
+                    vert_loop.Append(v4);
+                    subbrep_add_planar_face(data->parent, &pcone, &vert_loop, data->negative_shape);
                 }
             }
 
