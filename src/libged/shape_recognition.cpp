@@ -57,7 +57,7 @@ subbrep_obj_name(struct subbrep_object_data *data, struct bu_vls *name_root, str
 }
 
 
-HIDDEN void
+HIDDEN int
 brep_to_bot(struct subbrep_object_data *data, struct rt_wdb *wdbp, struct bu_vls *name_root)
 {
     /* Triangulate faces and write out as a bot */
@@ -67,7 +67,7 @@ brep_to_bot(struct subbrep_object_data *data, struct rt_wdb *wdbp, struct bu_vls
 
     if (!data->local_brep) {
 	bu_log("No valid local brep?? bot %s failed\n", bu_vls_addr(data->name_root));
-	return;
+	return 0;
     }
 
     // Accumulate faces in a std::vector, since we don't know how many we're going to get
@@ -78,7 +78,7 @@ brep_to_bot(struct subbrep_object_data *data, struct rt_wdb *wdbp, struct bu_vls
      * into this array */
     if (data->local_brep->m_V.Count() == 0) {
 	bu_log("No verts in brep?? bot %s failed\n", bu_vls_addr(data->name_root));
-	return;
+	return 0;
     }
     point_t *all_verts = (point_t *)bu_calloc(data->local_brep->m_V.Count(), sizeof(point_t), "bot verts");
     for (int vi = 0; vi < data->local_brep->m_V.Count(); vi++) {
@@ -86,6 +86,7 @@ brep_to_bot(struct subbrep_object_data *data, struct rt_wdb *wdbp, struct bu_vls
     }
 
     // Iterate over all faces in the brep.  TODO - should probably protect this with some planar checks...
+    int contributing_faces = 0;
     for (int s_it = 0; s_it < data->local_brep->m_F.Count(); s_it++) {
 	const ON_BrepFace *b_face = &(data->local_brep->m_F[s_it]);
 	/* If we've got multiple loops - rare but not impossible - handle it */
@@ -98,11 +99,17 @@ brep_to_bot(struct subbrep_object_data *data, struct rt_wdb *wdbp, struct bu_vls
 	}
 	int *ffaces = NULL;
 	int num_faces = subbrep_polygon_tri(data->local_brep, all_verts, loop_inds, b_face->LoopCount(), &ffaces);
+	if (num_faces > 0) contributing_faces++;
 	for (int f_ind = 0; f_ind < num_faces*3; f_ind++) {
 	    all_faces.push_back(ffaces[f_ind]);
 	}
 	if (ffaces) bu_free(ffaces, "free polygon face array");
 	all_faces_cnt += num_faces;
+    }
+
+    if (contributing_faces < 4) {
+	bu_free(all_verts, "all_verts");
+	return 0;
     }
 
     /* Now we can build the final faces array for mk_bot */
@@ -116,6 +123,7 @@ brep_to_bot(struct subbrep_object_data *data, struct rt_wdb *wdbp, struct bu_vls
     if (mk_bot(wdbp, bu_vls_addr(&prim_name), RT_BOT_SOLID, RT_BOT_UNORIENTED, 0, data->brep->m_V.Count(), all_faces_cnt, (fastf_t *)all_verts, final_faces, (fastf_t *)NULL, (struct bu_bitv *)NULL)) {
 	std::cout << "mk_bot failed for overall bot\n";
     }
+    return 1;
 }
 
 int
@@ -186,7 +194,7 @@ subbrep_to_csg_planar(struct subbrep_object_data *data, struct rt_wdb *wdbp, str
 	    bu_log("error - no local brep built for %s\n", bu_vls_addr(data->name_root));
 	    return 0;
 	}
-	(void)brep_to_bot(data, wdbp, name_root);
+	if (!brep_to_bot(data, wdbp, name_root)) return 0;
 	struct csg_object_params *params = data->params;
 	struct bu_vls prim_name = BU_VLS_INIT_ZERO;
 	subbrep_obj_name(data, name_root, &prim_name);
