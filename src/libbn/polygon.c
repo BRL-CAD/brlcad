@@ -198,7 +198,7 @@ bn_polygon_clockwise(size_t npts, const point2d_t *pts, const int *pt_indices)
     double sum = 0;
     const int *pt_order = NULL;
     int *tmp_pt_order = NULL;
-    /* If no array of indicies into pts is supplied, construct a
+    /* If no array of indices into pts is supplied, construct a
      * temporary version based on the point order in the array */
     if (pt_indices) pt_order = pt_indices;
     if (!pt_order) {
