@@ -34,7 +34,9 @@ converts a
 <emphasis remap='I'>BRL BW(5)</emphasis>
 format file to a
 <emphasis remap='I'>PNG</emphasis>
-format file on the standard output. The PNG file created will be a Gray scale file with a bit-depth of 8 and a file gamma of 1.0.</para>
+format file on the standard output. The PNG file created will be
+a Gray scale
+file with a bit-depth of 8 and a file gamma of 1.0.</para>
 </refsect1>
 
 <refsect1 xml:id='options'><title>OPTIONS</title>
@@ -63,7 +65,6 @@ scanlines tall</para>
 that the input is
 <emphasis remap='I'>file_width</emphasis>
 pixels wide</para>
-
   </listitem>
   </varlistentry>
   <varlistentry>
@@ -84,7 +85,6 @@ pixels wide</para>
 <refsect1 xml:id='copyright'><title>COPYRIGHT</title>
 <para>This software is Copyright (c) 1998-2014 by the United States
 Government as represented by U.S. Army Research Laboratory.</para>
-
 </refsect1>
 
 <refsect1 xml:id='bug_reports'><title>BUG REPORTS</title>

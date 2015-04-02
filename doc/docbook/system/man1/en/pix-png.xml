@@ -35,9 +35,9 @@ converts a
 <emphasis remap='I'>BRL PIX(5)</emphasis>
 format file to a
 <emphasis remap='I'>PNG</emphasis>
-(Portable Network Graphics) format file on the standard output. The
-PNG file created will be an RGB file with a bit-depth of 8 and a file
-gamma of 1.0.</para>
+format file on the standard output. The PNG file created will be
+an RGB
+file with a bit-depth of 8 and a file gamma of 1.0.</para>
 
 <para>PIX image files do not contain information about their size.  The size
 of the input PIX image file must be specified if the dimensions are
