@@ -48,6 +48,7 @@ set(LIBGCV_SOURCES
   region_end_mc.c
   tri_intersect.c
   bot_solidity.c
+  screened_poisson.cpp
   )
 
 list(APPEND LIBGCV_SOURCES
@@ -78,6 +79,8 @@ if(CPP_DLL_DEFINES)
   SET_PROPERTY(TARGET test_bottess APPEND PROPERTY COMPILE_DEFINITIONS "BOTTESS_DLL_IMPORTS")
 endif(CPP_DLL_DEFINES)
 add_test(NAME bottess_test COMMAND test_bottess)
+
+BRLCAD_ADDEXEC(test_screened_poisson test_screened_poisson.cpp "libgcv" NO_INSTALL)
 
 CMAKEFILES(NOTES gcv_private.h plugin.h soup.h tri_intersect.h bot_solidity.h)
 DISTCLEAN(${CMAKE_CURRENT_BINARY_DIR}/CTestTestfile.cmake)
