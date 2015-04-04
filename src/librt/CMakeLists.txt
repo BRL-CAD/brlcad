@@ -151,6 +151,8 @@ set(LIBRT_SOURCES
   primitives/half/half_mirror.c
   primitives/hf/hf.c
   primitives/hf/hf_brep.cpp
+  primitives/hrt/hrt.c
+  primitives/hrt/hrt_mirror.c
   primitives/hyp/hyp.c
   primitives/hyp/hyp_brep.cpp
   primitives/hyp/hyp_mirror.c
@@ -248,7 +250,6 @@ set(LIBRT_SOURCES
   primitives/vol/vol.c
   primitives/vol/vol_brep.cpp
   primitives/vol/vol_mirror.c
-  primitives/hrt/hrt.c
   regionfix.c
   roots.c
   search.c
@@ -271,7 +272,6 @@ set(librt_ignored_files
   test_nurbsfit.cpp
   test_bot2nurbs.cpp
   test_root3-subd.cpp
-  test_shape_recognition.cpp
   subd_test_bot.asc
   prcomb.c
   primitives/bot/btg.h
@@ -334,9 +334,6 @@ endif(CPP_DLL_DEFINES)
 #BRLCAD_ADDEXEC(test_nurbsfit test_nurbsfit.cpp "librt;libwdb;libbrep;libbu" NO_STRICT NO_INSTALL)
 #BRLCAD_ADDEXEC(test_root3-subd test_root3-subd.cpp "librt;libwdb;libbrep;libbu" NO_STRICT NO_INSTALL)
 #BRLCAD_ADDEXEC(test_surfacetree test_surfacetree.cpp "librt;libwdb;libbrep;libbu" NO_STRICT NO_INSTALL)
-if(DEFINED TEST_SHAPE_RECOGNITION)
- BRLCAD_ADDEXEC(test_shape_recognition test_shape_recognition.cpp "librt;libwdb;libbrep;libbu" NO_STRICT NO_INSTALL)
-endif(DEFINED TEST_SHAPE_RECOGNITION)
 
 add_subdirectory(tests)
 

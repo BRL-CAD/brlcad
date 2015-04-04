@@ -249,6 +249,7 @@ set(LIBGED_SOURCES
   shaded_mode.c
   shader.c
   shells.c
+  shape_recognition.cpp
   showmats.c
   simulate/collision.cpp
   simulate/physics_world.cpp

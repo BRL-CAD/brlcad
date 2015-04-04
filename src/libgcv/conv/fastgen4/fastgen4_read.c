@@ -1,4 +1,4 @@
-/*                       F A S T 4 - G . C
+/*                 F A S T G E N 4 _ R E A D . C
  * BRL-CAD
  *
  * Copyright (c) 1994-2014 United States Government as represented by
@@ -2716,7 +2716,7 @@ read_fast4_colors(char *color_file)
 }
 
 
-int
+HIDDEN int
 gcv_fastgen4_read(const char *path, struct rt_wdb *wdbp, const struct gcv_opts *UNUSED(options))
 {
     char *plot_file = NULL;
@@ -2820,7 +2820,7 @@ gcv_fastgen4_read(const char *path, struct rt_wdb *wdbp, const struct gcv_opts *
 
 
 static const struct gcv_converter converters[] = {
-    {"fastgen4", gcv_fastgen4_read, NULL},
+    {"fg4", gcv_fastgen4_read, NULL},
     {NULL, NULL, NULL}
 };
 

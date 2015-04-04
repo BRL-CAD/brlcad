@@ -629,6 +629,30 @@ rt_joint_find_selections(
     return selection_set;
 }
 
+HIDDEN void
+db_path_to_inverse_mat(struct db_i *dbip, const struct db_full_path *fpath, mat_t inverse_mat)
+{
+    size_t i;
+
+    MAT_IDN(inverse_mat);
+
+    for (i = 1; i <= fpath->fp_len; ++i) {
+	struct db_full_path sub_path = *fpath;
+	mat_t sub_mat, new_mat, new_mat_inv, comp;
+
+	sub_path.fp_len = i;
+	db_path_to_mat(dbip, &sub_path, sub_mat, 0, NULL);
+
+	/* isolate to just the mat of the leaf directory */
+	bn_mat_mul(new_mat, inverse_mat, sub_mat);
+
+	/* apply inverse to previous inverse mat */
+	bn_mat_inverse(new_mat_inv, new_mat);
+	bn_mat_mul(comp, new_mat_inv, inverse_mat);
+	MAT_COPY(inverse_mat, comp);
+    }
+}
+
 int
 rt_joint_process_selection(
     struct rt_db_internal *ip,
@@ -638,12 +662,14 @@ rt_joint_process_selection(
 {
     struct joint_selection *js;
     struct rt_joint_internal *jip;
-    mat_t pmat;
-    vect_t delta, end, cross;
+    mat_t rmat;
+    mat_t path_inv_mat;
+    vect_t center, delta, end, cross, tmp;
     fastf_t angle;
     struct rt_db_internal path_ip;
     struct directory *dp;
     struct db_full_path fpath;
+    struct db_full_path mat_fpath;
     /*int ret;*/
 
     if (op->type == RT_SELECTION_NOP) {
@@ -671,15 +697,6 @@ rt_joint_process_selection(
 	return 0;
     }
 
-    VADD2(end, js->start, delta);
-
-    angle = VDOT(js->start, end);
-    angle /= MAGNITUDE(js->start) * MAGNITUDE(end);
-    angle = acos(angle);
-
-    VCROSS(cross, js->start, end);
-    VUNITIZE(cross);
-
     /* get solid or parent comb directory */
     /*ret =*/ (void)db_string_to_path(&fpath, dbip, bu_vls_cstr(&jip->reference_path_1));
     if (fpath.fp_len < 1) {
@@ -695,17 +712,42 @@ rt_joint_process_selection(
 	return 0;
     }
 
+    /* get mat to reverse the path transformation */
+    mat_fpath = fpath;
+    /*DB_FULL_PATH_POP(&mat_fpath);*/
+    db_path_to_inverse_mat(dbip, &mat_fpath, path_inv_mat);
+
+    /* transform joint position to be relative to target mat */
+    /*MAT4X3MAT(center, jip->location, path_inv_mat);*/
+    VMOVE(center, jip->location);
+
+    /* we'll rotate about the vector perpendicular to the delta vector, again,
+     * made relative to target mat
+     */
+    VADD2(end, js->start, delta);
+    VCROSS(tmp, js->start, end);
+
+    MAT4X3VEC(cross, path_inv_mat, tmp);
+    VUNITIZE(cross);
+
+    /* find the angle of rotation */
+    angle = VDOT(js->start, end);
+    angle /= MAGNITUDE(js->start) * MAGNITUDE(end);
+    angle = acos(angle);
+
+    /* we're calculating the primitive/member matrix, so we need the
+     * rotation from the perspective of the primitive
+     */
+    bn_mat_arb_rot(rmat, center, cross, angle);
+
     /* modify solid matrix or parent comb's member matrix */
     if (fpath.fp_len > 1) {
 	char *member_name = DB_FULL_PATH_CUR_DIR(&fpath)->d_namep;
 	struct rt_comb_internal *comb_ip;
 	union tree *comb_tree, *member;
-	mat_t idn, path_mat, combined_mat;
-	vect_t rot_dir;
+	mat_t combined_mat;
 
-	MAT_IDN(idn);
-
-	rt_db_get_internal(&path_ip, dp, dbip, idn, NULL);
+	rt_db_get_internal(&path_ip, dp, dbip, NULL, NULL);
 	comb_ip = (struct rt_comb_internal *)path_ip.idb_ptr;
 	comb_tree = comb_ip->tree;
 
@@ -721,14 +763,10 @@ rt_joint_process_selection(
 	    MAT_IDN(*new_mat);
 	    member->tr_l.tl_mat = (matp_t)new_mat;
 	}
-	db_path_to_mat(dbip, &fpath, path_mat, 0, NULL);
-	VEC3X4MAT(rot_dir, cross, path_mat);
-	bn_mat_arb_rot(pmat, jip->location, rot_dir, angle);
-	bn_mat_mul(combined_mat, member->tr_l.tl_mat, pmat);
+	bn_mat_mul(combined_mat, member->tr_l.tl_mat, rmat);
 	MAT_COPY(member->tr_l.tl_mat, combined_mat);
     } else {
-	bn_mat_arb_rot(pmat, jip->location, cross, angle);
-	rt_db_get_internal(&path_ip, dp, dbip, pmat, NULL);
+	rt_db_get_internal(&path_ip, dp, dbip, rmat, NULL);
     }
 
     /* write changes */

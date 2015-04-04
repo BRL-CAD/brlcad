@@ -6522,6 +6522,8 @@ RT_EXPORT extern int rt_brep_plot_poly(struct bu_list		*vhead,
 				      const struct rt_tess_tol	*ttol,
 				      const struct bn_tol	*tol,
 				      const struct rt_view_info *info);
+/* BREP validity test */
+RT_EXPORT extern int rt_brep_valid(struct rt_db_internal *ip, struct bu_vls *log);
 
 /* From nmg_tri.c */
 RT_EXPORT extern void nmg_triangulate_shell(struct shell *s,

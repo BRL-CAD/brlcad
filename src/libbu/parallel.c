@@ -392,9 +392,14 @@ parallel_wait_for_slot(int throttle, struct parallel_info *parent, size_t max_th
     size_t threads = max_threads;
 
     while (1) {
+	if (parent->started < parent->finished) {
+	    bu_log("Warning - parent->started (%d) is less than parent->finished (%d)\n", parent->started, parent->finished);
+	    return;
+	}
 	threads = parent->started - parent->finished;
 
-	/* bu_log("threads=%d (start %d - done %d)\n", threads, parent->started, parent->finished); */
+	/*bu_log("threads=%d (start %d - done %d)\n", threads, parent->started, parent->finished);
+	bu_log("max_threads=%d, throttle: %d\n", max_threads, throttle);*/
 
 	if (threads < max_threads || !throttle) {
 	    return;

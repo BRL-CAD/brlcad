@@ -5,6 +5,8 @@
 #ifndef SHAPE_RECOGNITION_H
 #define SHAPE_RECOGNITION_H
 
+#define CSG_BREP_MAX_OBJS 1500
+
 #define BREP_PLANAR_TOL 0.05
 #define BREP_CYLINDRICAL_TOL 0.05
 #define BREP_CONIC_TOL 0.05
@@ -12,7 +14,7 @@
 #define BREP_ELLIPSOIDAL_TOL 0.05
 #define BREP_TOROIDAL_TOL 0.05
 
-#define pout(p)  p.x << "," << p.y << "," << p.z
+#define pout(p)  p.x << " " << p.y << " " << p.z
 
 typedef enum {
     CURVE_POINT = 0,
@@ -96,6 +98,8 @@ struct csg_object_params {
 
 struct subbrep_object_data {
     struct bu_vls *key;
+    struct bu_vls *name_root;
+    int *obj_cnt;
     int *faces;
     int *loops;
     int *edges;
@@ -117,6 +121,17 @@ struct subbrep_object_data {
     subbrep_object_data *parent;
     struct bu_ptbl *children;
     int is_island;
+    /* Irrespective of the broader context, is the shape
+     * itself negative?  This is not meaningful for general
+     * combs, but individual shapes like cylinders and spheres
+     * (even when they are "trimmed down" by other CSG primitives
+     * are "negative" if their normals point inward.
+     * -1 = negative
+     *  1 = positive
+     *  0 = unknown/unset */
+    int negative_shape;
+    ON_BoundingBox *bbox;
+    int bbox_set;
 };
 
 void subbrep_object_init(struct subbrep_object_data *obj, const ON_Brep *brep);
@@ -126,12 +141,18 @@ int subbrep_split(struct subbrep_object_data *data);
 int subbrep_make_brep(struct subbrep_object_data *data);
 int subbrep_make_planar(struct subbrep_object_data *data);
 
+int subbrep_determine_boolean(struct subbrep_object_data *data);
+
+
 // Functions for defining a simplified planar subvolume
 void subbrep_planar_init(struct subbrep_object_data *data);
 void subbrep_planar_close_obj(struct subbrep_object_data *data);
-int subbrep_add_planar_face(struct subbrep_object_data *data, ON_Plane *pcyl, ON_SimpleArray<const ON_BrepVertex *> *vert_loop);
+void subbrep_add_planar_face(struct subbrep_object_data *data, ON_Plane *pcyl, ON_SimpleArray<const ON_BrepVertex *> *vert_loop, int neg_surf);
+
+void subbrep_bbox(struct subbrep_object_data *obj);
 
 struct bu_ptbl *find_subbreps(const ON_Brep *brep);
+struct bu_ptbl *find_top_level_hierarchy(struct bu_ptbl *subbreps);
 void print_subbrep_object(struct subbrep_object_data *data, const char *offset);
 volume_t subbrep_shape_recognize(struct subbrep_object_data *data);
 
@@ -154,6 +175,17 @@ void set_to_array(int **array, int *array_cnt, std::set<int> *set);
 void array_to_set(std::set<int> *set, int *array, int array_cnt);
 void map_to_array(int **array, int *array_cnt, std::map<int,int> *map);
 void array_to_map(std::map<int,int> *map, int *array, int array_cnt);
+
+int subbrep_find_corners(struct subbrep_object_data *data, int **corner_verts_array, ON_Plane *pcyl);
+int subbrep_top_bottom_pnts(struct subbrep_object_data *data, std::set<int> *corner_verts, ON_Plane *top_plane, ON_Plane *bottom_plane, ON_SimpleArray<const ON_BrepVertex *> *top_pnts, ON_SimpleArray<const ON_BrepVertex *> *bottom_pnts);
+
+ON_3dPoint ON_LinePlaneIntersect(ON_Line &line, ON_Plane &plane);
+void ON_MinMaxInit(ON_3dPoint *min, ON_3dPoint *max);
+
+
+int subbrep_polygon_tri(const ON_Brep *brep, const point_t *all_verts, int *loops, int loop_cnt, int **ffaces);
+
+int filter_objs_equal(struct filter_obj *obj1, struct filter_obj *obj2);
 
 #endif /* SHAPE_RECOGNITION_H */
 

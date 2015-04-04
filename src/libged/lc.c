@@ -76,14 +76,26 @@ sort_regions(const void *a, const void *b, void *arg)
     struct region_record *r1 = (struct region_record *)a;
     struct region_record *r2 = (struct region_record *)b;
     int *sort_type = (int *)arg;
+    int temp1,temp2;
 
     switch (*sort_type) {
 	case 1:
-	    return bu_strcmp(r1->region_id, r2->region_id);
+	    temp1=atoi(r1->region_id);
+	    temp2=atoi(r2->region_id);
+	    goto continue_run;
 	case 2:
-	    return bu_strcmp(r1->material_id, r2->material_id);
+	    temp1=atoi(r1->material_id);
+	    temp2=atoi(r2->material_id);
+	    goto continue_run;
 	case 3:
-	    return bu_strcmp(r1->los, r2->los);
+	    temp1=atoi(r1->los);
+	    temp2=atoi(r2->los);
+continue_run:
+	    if ( temp1 > temp2 )
+    		return 1;
+	    if ( temp1 == temp2 )
+		return 0;
+	    return -1;
 	case 4:
 	    return bu_strcmp(r1->obj_name, r2->obj_name);
 	case 5:
@@ -136,7 +148,7 @@ ged_lc(struct ged *gedp, int argc, const char *argv[])
     int orig_argc;
     const char **orig_argv;
 
-    static const char *usage = "[-d|-s|-r] [-z] [-0|-1|-2|-3|-4|-5] [-f {FileName}] {GroupName}";
+    static const char *usage = "[-d|-s] [-r] [-z] [-0|-1|-2|-3|-4|-5] [-f {FileName}] {GroupName}";
 
     int c;
     int error_cnt = 0;
@@ -146,7 +158,7 @@ ged_lc(struct ged *gedp, int argc, const char *argv[])
 
     const char *group_name;
 
-    size_t i = 0;
+    size_t i,j;
     struct bu_ptbl results1 = BU_PTBL_INIT_ZERO;
     struct bu_ptbl results2 = BU_PTBL_INIT_ZERO;
     char *path;
@@ -192,18 +204,18 @@ ged_lc(struct ged *gedp, int argc, const char *argv[])
 		file_name_flag_cnt++;
 		file_name = bu_optarg;
 		break;
+	    case 's':
+		skip_special_duplicates_flag = 1;
+		/* FALLTHROUGH */
 	    case 'd':
 		find_duplicates_flag = 1;
-		break;
-	    case 's':
-		find_duplicates_flag = 1;
-		skip_special_duplicates_flag = 1;
 		break;
 	    case 'r':
 		skip_subtracted_regions_flag = 1;
 		break;
 	    case 'z':
 		descending_sort_flag = 1;
+		break;
 	    default:
 		unrecognized_flag_cnt++;
 	}
@@ -231,11 +243,10 @@ ged_lc(struct ged *gedp, int argc, const char *argv[])
     } else if (argc < 2) {
 	if (file_name_flag_cnt && !file_name) {
 	    bu_vls_printf(gedp->ged_result_str, "Error: Group name and file name not specified\n");
-	    error_cnt++;
 	} else {
 	    bu_vls_printf(gedp->ged_result_str, "Error: Group name not specified.\n");
-	    error_cnt++;
 	}
+        error_cnt++;
     } else if (argc + unrecognized_flag_cnt > 2) {
 	bu_vls_printf(gedp->ged_result_str, "Error: More than one group name was specified.\n");
 	error_cnt++;
@@ -246,11 +257,12 @@ ged_lc(struct ged *gedp, int argc, const char *argv[])
 
     if (file_name) {
 	char *norm_name;
+	norm_name = bu_realpath(file_name, NULL);
 	if (file_name[0] == '-') {
 	    bu_vls_printf(gedp->ged_result_str, "Error: File name can not start with '-'.\n");
 	    error_cnt++;
 	} else if (bu_file_exists(file_name, NULL)) {
-	    bu_vls_printf(gedp->ged_result_str, "Error: File '$norm_name' already exists.\n");
+	    bu_vls_printf(gedp->ged_result_str, "Error: Output file %s already exists.\n",norm_name);
 	    error_cnt++;
 	} else {
 	    outfile = fopen(file_name, "w");
@@ -259,7 +271,6 @@ ged_lc(struct ged *gedp, int argc, const char *argv[])
 		error_cnt++;
 	    }
 	}
-	norm_name = bu_realpath(file_name, NULL);
 	bu_vls_printf(gedp->ged_result_str, "Output filename: %s\n", norm_name);
 	bu_free(norm_name, "ged_lc");
 	output = bu_vls_vlsinit();
@@ -299,25 +310,26 @@ ged_lc(struct ged *gedp, int argc, const char *argv[])
 	struct directory *dp_curr_dir = DB_FULL_PATH_CUR_DIR(entry);
 	struct bu_attribute_value_set avs;
 
-	regions[i].ignore = 0;
+    	j = BU_PTBL_LEN(&results2) - i - 1 ;
+	regions[j].ignore = 0;
 
 	bu_avs_init_empty(&avs);
 	db5_get_attributes(gedp->ged_wdbp->dbip, &avs, dp_curr_dir);
 
-	regions[i].region_id = get_attr(&avs, "region_id");
-	V_MAX(region_id_len_max, strlen(regions[i].region_id));
-	regions[i].material_id = get_attr(&avs, "material_id");
-	V_MAX(material_id_len_max, strlen(regions[i].material_id));
-	regions[i].los = get_attr(&avs, "los");
-	V_MAX(los_len_max, strlen(regions[i].los));
-	regions[i].obj_name = dp_curr_dir->d_namep;
-	V_MAX(obj_len_max, strlen(regions[i].obj_name));
+	regions[j].region_id = get_attr(&avs, "region_id");
+	V_MAX(region_id_len_max, strlen(regions[j].region_id));
+	regions[j].material_id = get_attr(&avs, "material_id");
+	V_MAX(material_id_len_max, strlen(regions[j].material_id));
+	regions[j].los = get_attr(&avs, "los");
+	V_MAX(los_len_max, strlen(regions[j].los));
+	regions[j].obj_name = dp_curr_dir->d_namep;
+	V_MAX(obj_len_max, strlen(regions[j].obj_name));
 
 	if (entry->fp_len > 1) {
 	    struct directory *dp_parent = DB_FULL_PATH_GET(entry, entry->fp_len - 2);
-	    regions[i].obj_parent = dp_parent->d_namep;
+	    regions[j].obj_parent = dp_parent->d_namep;
 	} else {
-	    regions[i].obj_parent = "--";
+	    regions[j].obj_parent = "--";
 	}
     }
 
@@ -367,9 +379,11 @@ ged_lc(struct ged *gedp, int argc, const char *argv[])
 		  los_len_max, "LOS",
 		  obj_len_max,  "REGION",
 		  "PARENT");
-    start = 0; end = BU_PTBL_LEN(&results2); incr = 1;
+    end = BU_PTBL_LEN(&results2);
     if (descending_sort_flag) {
 	start = end - 1; end = -1; incr = -1;
+    } else {
+	start = 0; incr = 1;
     }
     for (i = start; i != end; i += incr) {
 	if (regions[i].ignore) { continue; }

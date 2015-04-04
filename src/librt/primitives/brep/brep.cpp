@@ -98,6 +98,7 @@ int rt_brep_params(struct pc_pc_set *, const struct rt_db_internal *ip);
 RT_EXPORT extern int rt_brep_boolean(struct rt_db_internal *out, const struct rt_db_internal *ip1, const struct rt_db_internal *ip2, db_op_t operation);
 struct rt_selection_set *rt_brep_find_selections(const struct rt_db_internal *ip, const struct rt_selection_query *query);
 int rt_brep_process_selection(struct rt_db_internal *ip, const struct rt_selection *selection, const struct rt_selection_operation *op);
+int rt_brep_valid(struct rt_db_internal *ip, struct bu_vls *log);
 #ifdef __cplusplus
 }
 #endif
@@ -379,6 +380,10 @@ brep_build_bvh(struct brep_specific* bs)
 
     ON_BrepFaceArray& faces = brep->m_F;
     size_t faceCount = faces.Count();
+    if (faceCount == 0) {
+	bu_log("Empty Brep");
+	return -1;
+    }
 
     struct brep_build_bvh_parallel bbbp;
     bbbp.bs = bs;
@@ -5096,6 +5101,31 @@ rt_brep_process_selection(
 	}
     }
 
+    return 0;
+}
+
+int rt_brep_valid(struct rt_db_internal *ip, struct bu_vls *log)
+{
+    RT_CK_DB_INTERNAL(ip);
+    if (ip->idb_type != ID_BREP) {
+	if (log) bu_vls_printf(log, "Object is not a brep.\n");
+	return 0;
+    }
+    struct rt_brep_internal *bi = (struct rt_brep_internal *)ip->idb_ptr;
+    ON_wString s;
+    ON_TextLog dump(s);
+    if (bi == NULL || bi->brep == NULL) {
+	if (log) bu_vls_printf(log, "Error: No ON_Brep object present.\n");
+	return 0;
+    }
+    if (!bi->brep->IsValid(&dump)) {
+	ON_String ss = s;
+	if (log) bu_vls_printf(log, "%s\nbrep NOT valid\n", ss.Array());
+	return 0;
+    } else {
+	if (log) bu_vls_printf(log, "\nbrep is valid\n");
+	return 1;
+    }
     return 0;
 }
 

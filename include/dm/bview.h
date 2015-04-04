@@ -182,6 +182,7 @@ typedef struct {
 
 typedef struct {
     int                 gdps_draw;
+    int                 gdps_moveAll;
     int                 gdps_color[3];
     int                 gdps_line_width;        /* in pixels */
     int                 gdps_line_style;
@@ -196,7 +197,7 @@ typedef struct {
     mat_t               gdps_rotation;
     mat_t               gdps_view2model;
     mat_t               gdps_model2view;
-    bview_polygons        gdps_polygons;
+    bview_polygons      gdps_polygons;
     fastf_t             gdps_data_vZ;
 } bview_data_polygon_state;
 

@@ -568,7 +568,7 @@ get_args(int argc, char **argv)
 	    case 'n':
 		Nscanlines = atoi(bu_optarg);
 		break;
-	    default:		/* '?' */
+	    default:		/* 'h' '?' */
 		return 0;
 	}
     }
@@ -598,7 +598,7 @@ get_args(int argc, char **argv)
 
 static char usage[] = "\
 Usage: plot3-fb [-d -O|o -i] [-t thickness] [-F framebuffer]\n\
-	[-S|s squaresize] [-W|w width] [-N|n height] [file.plot3]\n";
+	[-S|s squaresize] [-W|w width] [-N|n height] [<] file.plot3\n";
 
 
 /*

@@ -30,6 +30,8 @@
 #include "common.h"
 #include "bu/defines.h"
 
+__BEGIN_DECLS
+
 /** @addtogroup endian */
 /** @{ */
 /** @file libbu/endian.c
@@ -51,6 +53,8 @@ typedef enum {
 BU_EXPORT extern bu_endian_t bu_byteorder(void);
 
 /** @} */
+
+__END_DECLS
 
 #endif  /* BU_ENDIAN_H */
 

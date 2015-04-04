@@ -45,7 +45,7 @@ option turns on <emphasis remap='I'>verbose</emphasis> mode, and each command is
 Occasionally useful for debugging Tektronix emulator problems,
 but is very verbose.</para>
 
-<para>To send a Unix-plot to an Imagen printer, this command can be used:</para>
+<para>To send a UnixPlot to an Imagen printer, this command can be used:</para>
 
 <literallayout remap='.nf'>
 plot3-tek &lt; file.plot3 | ipr -Ltektronix -q im101

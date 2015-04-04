@@ -1,4 +1,4 @@
-/*                         G - O B J . C
+/*                     O B J _ W R I T E . C
  * BRL-CAD
  *
  * Copyright (c) 1996-2014 United States Government as represented by
@@ -18,9 +18,9 @@
  * information.
  *
  */
-/** @file conv/g-obj.c
+/** @file obj_write.c
  *
- * Program to convert a BRL-CAD model (in a .g file) to a Wavefront
+ * Program to write a BRL-CAD model to a Wavefront
  * '.obj' file by calling on the NMG booleans.
  *
  */
@@ -40,20 +40,21 @@
 #include "nmg.h"
 #include "rtgeom.h"
 #include "raytrace.h"
+
 #include "../../plugin.h"
 
 
 #define V3ARGSIN(a)       (a)[X]/25.4, (a)[Y]/25.4, (a)[Z]/25.4
 
-extern union tree *do_region_end(struct db_tree_state *tsp,
-					 const struct db_full_path *pathp, union tree *curtree, void *client_data);
+extern union tree *do_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, void *client_data);
 
-static long vert_offset = 0;
-static long norm_offset = 0;
-static int do_normals = 0;
+
+static long vert_offset=0;
+static long norm_offset=0;
+static int do_normals=0;
 static int NMG_debug;	/* saved arg of -X, for longjmp handling */
-static int verbose = 0;
-static int usemtl = 0;	/* flag to include 'usemtl' statements with a
+static int verbose=0;
+static int usemtl=0;	/* flag to include 'usemtl' statements with a
 			 * code for GIFT materials:
 			 *
 			 * usemtl 0_100_32
@@ -61,7 +62,6 @@ static int usemtl = 0;	/* flag to include 'usemtl' statements with a
 			 * los is 100
 			 * GIFT material is 32
 			 */
-static const char *output_file = NULL;	/* output filename */
 static char *error_file = NULL;		/* error filename */
 static FILE *fp;			/* Output file pointer */
 static FILE *fpe;			/* Error file pointer */
@@ -77,16 +77,17 @@ static int regions_converted = 0;
 static int regions_written = 0;
 static int inches = 0;
 
-static int
-gcv_obj_write(const char *path, struct db_i *vdbip,
-	      const struct gcv_opts *UNUSED(options))
+HIDDEN int
+gcv_obj_write(const char *path, struct db_i *vdbip, const struct gcv_opts *UNUSED(options))
 {
     double percent;
-    size_t num_objects = 0;
-    char **object_names = NULL;
+    size_t num_objects;
+    char **object_names;
 
-    output_file = path;
     dbip = vdbip;
+
+    bu_setprogname("obj_write");
+    bu_setlinebuf(stderr);
 
     tree_state = rt_initial_tree_state;	/* struct copy */
     tree_state.ts_tol = &tol;
@@ -109,25 +110,19 @@ gcv_obj_write(const char *path, struct db_i *vdbip,
     the_model = nmg_mm();
     BU_LIST_INIT(&RTG.rtg_vlfree);	/* for vlist macros */
 
-    if (!output_file)
-	fp = stdout;
-    else {
-	/* Open output file */
-	if ((fp = fopen(output_file, "wb+")) == NULL) {
-	    perror("obj-g");
-	    bu_log("Cannot open output file (%s) for writing\n", output_file);
-	    return 0;
-	}
+    /* Open output file */
+    if ((fp=fopen(path, "wb+")) == NULL) {
+	perror("obj_write");
+	bu_exit(1, "Cannot open output file (%s) for writing\n", path);
     }
 
     /* Open g-obj error log file */
     if (!error_file) {
 	fpe = stderr;
 	setmode(fileno(fpe), O_BINARY);
-    } else if ((fpe = fopen(error_file, "wb")) == NULL) {
-	perror("g-obj");
-	bu_log("Cannot open output file (%s) for writing\n", error_file);
-	return 0;
+    } else if ((fpe=fopen(error_file, "wb")) == NULL) {
+	perror("obj_write");
+	bu_exit(1, "Cannot open output file (%s) for writing\n", error_file);
     }
 
     BN_CK_TOL(tree_state.ts_tol);
@@ -139,8 +134,7 @@ gcv_obj_write(const char *path, struct db_i *vdbip,
     else
 	fprintf(fp, "# BRL-CAD generated Wavefront OBJ file (Units mm)\n");
 
-    fprintf(fp, "# BRL-CAD model: %s\n# BRL_CAD objects:", "obj-g");
-    fprintf(fp, "\n");
+    fprintf(fp, "# BRL-CAD model: %s\n# BRL_CAD objects:", "obj_write");
 
     /* get toplevel objects */
     {
@@ -150,7 +144,6 @@ gcv_obj_write(const char *path, struct db_i *vdbip,
 	object_names = db_dpv_to_argv(results);
 	bu_free(results, "tops");
     }
-
     /* Walk indicated tree(s).  Each region will be output separately */
     (void) db_walk_tree(dbip, num_objects, (const char **)object_names,
 			1,			/* ncpu */
@@ -159,10 +152,9 @@ gcv_obj_write(const char *path, struct db_i *vdbip,
 			do_region_end,
 			nmg_booltree_leaf_tess,
 			(void *)NULL);	/* in librt/nmg_bool.c */
-
     bu_free(object_names, "object_names");
 
-    if (regions_tried > 0) {
+    if (regions_tried>0) {
 	percent = ((double)regions_converted * 100.0) / regions_tried;
 	printf("Tried %d regions, %d converted to NMG's successfully.  %g%%\n",
 	       regions_tried, regions_converted, percent);
@@ -189,9 +181,8 @@ static const struct gcv_converter converters[] = {
 const struct gcv_plugin_info gcv_plugin_conv_obj_write = {converters};
 
 
-static int
-nmg_to_obj(struct nmgregion *r, const struct db_full_path *pathp,
-	   int UNUSED(region_id), int aircode, int los, int material_id)
+static void
+nmg_to_obj(struct nmgregion *r, const struct db_full_path *pathp, int UNUSED(region_id), int aircode, int los, int material_id)
 {
     struct model *m;
     struct shell *s;
@@ -218,7 +209,7 @@ nmg_to_obj(struct nmgregion *r, const struct db_full_path *pathp,
     nmg_vertex_tabulate(&verts, &r->l.magic);
 
     /* Get number of vertices */
-    numverts = BU_PTBL_END(&verts);
+    numverts = BU_PTBL_END (&verts);
 
     /* get list of vertexuse normals */
     if (do_normals)
@@ -227,7 +218,7 @@ nmg_to_obj(struct nmgregion *r, const struct db_full_path *pathp,
     /* BEGIN CHECK SECTION */
     /* Check vertices */
 
-    for (i = 0; i < numverts; i++) {
+    for (i=0; i<numverts; i++) {
 	v = (struct vertex *)BU_PTBL_GET(&verts, i);
 	NMG_CK_VERTEX(v);
     }
@@ -248,7 +239,7 @@ nmg_to_obj(struct nmgregion *r, const struct db_full_path *pathp,
 
 	    for (BU_LIST_FOR(lu, loopuse, &fu->lu_hd)) {
 		struct edgeuse *eu;
-		int vert_count = 0;
+		int vert_count=0;
 
 		NMG_CK_LOOPUSE(lu);
 
@@ -265,25 +256,20 @@ nmg_to_obj(struct nmgregion *r, const struct db_full_path *pathp,
 
 		    vert_count++;
 		    loc = bu_ptbl_locate(&verts, (long *)v);
-
 		    if (loc < 0) {
 			bu_ptbl_free(&verts);
 			bu_free(region_name, "region name");
 			bu_log("Vertex from eu %p is not in nmgregion %p\n", (void *)eu, (void *)r);
-			bu_log("ERROR: Can't find vertex in list!");
-			return 0;
+			bu_exit(1, "ERROR: Can't find vertex in list!");
 		    }
 		}
-
 		if (vert_count > 3) {
 		    bu_ptbl_free(&verts);
 		    bu_free(region_name, "region name");
 		    bu_log("lu %p has %d vertices!\n", (void *)lu, vert_count);
-		    bu_log("ERROR: LU is not a triangle\n");
-		    return 0;
+		    bu_exit(1, "ERROR: LU is not a triangle\n");
 		} else if (vert_count < 3)
 		    continue;
-
 		numtri++;
 	    }
 	}
@@ -296,17 +282,14 @@ nmg_to_obj(struct nmgregion *r, const struct db_full_path *pathp,
 	fprintf(fp, "usemtl %d_%d_%d\n", aircode, los, material_id);
 
     fprintf(fp, "g %s", pathp->fp_names[0]->d_namep);
-
-    for (i = 1; i < pathp->fp_len; i++)
+    for (i=1; i<pathp->fp_len; i++)
 	fprintf(fp, "/%s", pathp->fp_names[i]->d_namep);
-
     fprintf(fp, "\n");
 
     /* Write vertices */
-    for (i = 0; i < numverts; i++) {
+    for (i=0; i<numverts; i++) {
 	v = (struct vertex *)BU_PTBL_GET(&verts, i);
 	NMG_CK_VERTEX(v);
-
 	if (inches)
 	    fprintf(fp, "v %f %f %f\n", V3ARGSIN(v->vg_p->coord));
 	else
@@ -315,12 +298,11 @@ nmg_to_obj(struct nmgregion *r, const struct db_full_path *pathp,
 
     /* Write vertexuse normals */
     if (do_normals) {
-	for (i = 0; i < BU_PTBL_LEN(&norms); i++) {
+	for (i=0; i<BU_PTBL_LEN(&norms); i++) {
 	    struct vertexuse_a_plane *va;
 
 	    va = (struct vertexuse_a_plane *)BU_PTBL_GET(&norms, i);
 	    NMG_CK_VERTEXUSE_A_PLANE(va);
-
 	    if (inches)
 		fprintf(fp, "vn %f %f %f\n", V3ARGSIN(va->N));
 	    else
@@ -344,8 +326,8 @@ nmg_to_obj(struct nmgregion *r, const struct db_full_path *pathp,
 
 	    for (BU_LIST_FOR(lu, loopuse, &fu->lu_hd)) {
 		struct edgeuse *eu;
-		int vert_count = 0;
-		int use_normals = 1;
+		int vert_count=0;
+		int use_normals=1;
 
 		NMG_CK_LOOPUSE(lu);
 
@@ -384,22 +366,20 @@ nmg_to_obj(struct nmgregion *r, const struct db_full_path *pathp,
 
 		    vert_count++;
 		    loc = bu_ptbl_locate(&verts, (long *)v);
-
 		    if (loc < 0) {
 			bu_ptbl_free(&verts);
 			bu_log("Vertex from eu %p is not in nmgregion %p\n", (void *)eu, (void *)r);
 			bu_free(region_name, "region name");
-			bu_log("Can't find vertex in list!\n");
-			return 0;
+			bu_exit(1, "Can't find vertex in list!\n");
 		    }
 
 		    if (use_normals) {
 			int j;
 
 			j = bu_ptbl_locate(&norms, (long *)eu->vu_p->a.magic_p);
-			fprintf(fp, " %ld//%ld", loc + 1 + vert_offset, j + 1 + norm_offset);
+			fprintf(fp, " %ld//%ld", loc+1+vert_offset, j+1+norm_offset);
 		    } else
-			fprintf(fp, " %ld", loc + 1 + vert_offset);
+			fprintf(fp, " %ld", loc+1+vert_offset);
 		}
 
 		fprintf(fp, "\n");
@@ -408,44 +388,34 @@ nmg_to_obj(struct nmgregion *r, const struct db_full_path *pathp,
 		    bu_ptbl_free(&verts);
 		    bu_free(region_name, "region name");
 		    bu_log("lu %p has %d vertices!\n", (void *)lu, vert_count);
-		    bu_log("ERROR: LU is not a triangle\n");
-		    return 0;
+		    bu_exit(1, "ERROR: LU is not a triangle\n");
 		}
 	    }
 	}
     }
-
     /*	regions_converted++;
-    printf("Processed region %s\n", region_name);
-    printf("Regions attempted = %d Regions done = %d\n", regions_tried, regions_converted);
-    fflush(stdout);
+	printf("Processed region %s\n", region_name);
+	printf("Regions attempted = %d Regions done = %d\n", regions_tried, regions_converted);
+	fflush(stdout);
     */
     vert_offset += numverts;
     bu_ptbl_free(&verts);
-
     if (do_normals) {
 	norm_offset += BU_PTBL_END(&norms);
 	bu_ptbl_free(&norms);
     }
-
     bu_free(region_name, "region name");
-    return 1;
 }
 
 
-static int
-process_triangulation(struct nmgregion *r, const struct db_full_path *pathp,
-		      struct db_tree_state *tsp)
+static void
+process_triangulation(struct nmgregion *r, const struct db_full_path *pathp, struct db_tree_state *tsp)
 {
-    int success = 1;
-
     if (!BU_SETJUMP) {
 	/* try */
 
 	/* Write the region to the TANKILL file */
-	if (!nmg_to_obj(r, pathp, tsp->ts_regionid, tsp->ts_aircode, tsp->ts_los, tsp->ts_gmater)) {
-	    success = 0;
-	}
+	nmg_to_obj(r, pathp, tsp->ts_regionid, tsp->ts_aircode, tsp->ts_los, tsp->ts_gmater);
 
     } else {
 	/* catch */
@@ -473,17 +443,12 @@ process_triangulation(struct nmgregion *r, const struct db_full_path *pathp,
 
 	/* Now, make a new, clean model structure for next pass. */
 	*tsp->ts_m = nmg_mm();
-    }
-
-    BU_UNSETJUMP;
-
-    return success;
+    }  BU_UNSETJUMP;
 }
 
 
 static union tree *
-	process_boolean(union tree *curtree, struct db_tree_state *tsp,
-			const struct db_full_path *pathp)
+process_boolean(union tree *curtree, struct db_tree_state *tsp, const struct db_full_path *pathp)
 {
     union tree *ret_tree = TREE_NULL;
 
@@ -522,9 +487,7 @@ static union tree *
 	bu_free(name, "db_path_to_string");
 	/* Now, make a new, clean model structure for next pass. */
 	*tsp->ts_m = nmg_mm();
-    }
-
-    BU_UNSETJUMP;/* Relinquish the protection */
+    } BU_UNSETJUMP;/* Relinquish the protection */
 
     return ret_tree;
 }
@@ -536,10 +499,8 @@ static union tree *
  * This routine must be prepared to run in parallel.
  */
 union tree *
-	do_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp,
-		      union tree *curtree, void *UNUSED(client_data))
+do_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, void *UNUSED(client_data))
 {
-    int success = 1;
     union tree *ret_tree;
     struct bu_list vhead;
     struct nmgregion *r;
@@ -552,11 +513,11 @@ union tree *
 
     BU_LIST_INIT(&vhead);
 
-    if (RT_G_DEBUG & DEBUG_TREEWALK || verbose) {
+    if (RT_G_DEBUG&DEBUG_TREEWALK || verbose) {
 	char *sofar = db_path_to_string(pathp);
 	bu_log("\ndo_region_end(%d %d%%) %s\n",
 	       regions_tried,
-	       regions_tried > 0 ? (regions_converted * 100) / regions_tried : 0,
+	       regions_tried>0 ? (regions_converted * 100) / regions_tried : 0,
 	       sofar);
 	bu_free(sofar, "path string");
     }
@@ -577,24 +538,21 @@ union tree *
 
     if (r != 0) {
 	struct shell *s;
-	int empty_region = 0;
-	int empty_model = 0;
+	int empty_region=0;
+	int empty_model=0;
 
 	/* Kill cracks */
 	s = BU_LIST_FIRST(shell, &r->s_hd);
-
 	while (BU_LIST_NOT_HEAD(&s->l, &r->s_hd)) {
 	    struct shell *next_s;
 
 	    next_s = BU_LIST_PNEXT(shell, &s->l);
-
 	    if (nmg_kill_cracks(s)) {
 		if (nmg_ks(s)) {
 		    empty_region = 1;
 		    break;
 		}
 	    }
-
 	    s = next_s;
 	}
 
@@ -604,11 +562,9 @@ union tree *
 	}
 
 	if (!empty_region && !empty_model) {
-	    if (!process_triangulation(r, pathp, tsp)) {
-		success = 0;
-	    } else {
-		regions_written++;
-	    }
+	    process_triangulation(r, pathp, tsp);
+
+	    regions_written++;
 
 	    BU_UNSETJUMP;
 	}
@@ -627,11 +583,7 @@ union tree *
 
     db_free_tree(curtree, &rt_uniresource);		/* Does an nmg_kr() */
 
-    if (!success) {
-	return TREE_NULL;
-    }
-
-    if (regions_tried > 0) {
+    if (regions_tried>0) {
 	float npercent;
 	float tpercent;
 

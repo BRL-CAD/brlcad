@@ -96,6 +96,54 @@ BN_EXPORT extern int bn_3d_coplanar_obr(point_t *center,
 			       const point_t *points_3d,
 			       int pnt_cnt);
 
+/**
+ *@brief
+ * Find the minimum oriented bounding rectangular cuboid
+ * for a set of 3D points.  Returns 0 on success.
+ *
+ * TODO - the GeometricTools engine has an implementation
+ * of the stack needed to do this - want to look not only
+ * at their MinimumVolumeBox3 implementation but the supporting
+ * convex hull 3d routines to see if they're an improvement
+ * on the Clarkson implementation.  Also want to check their
+ * obb/obb intersection test (GteIntrOrientedBox3OrientedBox3.h)
+ *
+ * http://www.geometrictools.com/GTEngine/Include/GteMinimumVolumeBox3.h
+ *
+ * The points in the output array are arranged as seen
+ * in the figure below, with the integer number at each
+ * vertex position corresponding to the pnts array index
+ * n-1 (for example, the first point, labeled 1 below,
+ * would be pnts[0].)
+ *
+ * \verbatim
+ *            8
+ *         *  |   *
+ *      *     |       *
+ *  4         |           7
+ *  |    *    |        *  |
+ *  |         *     *     |
+ *  |         |  3        |
+ *  |         |  |        |
+ *  |         5  |        |
+ *  |       *    |*       |
+ *  |   *        |    *   |
+ *  1            |        6
+ *      *        |     *
+ *           *   |  *
+ *               2
+ * \endverbatim
+ *
+ *
+ * @param[out] pnts     eight points of oriented bounding box
+ * @param points_3d	array of coplanar 3D points
+ * @param pnt_cnt	number of points in pnts array
+ */
+BN_EXPORT extern int bn_3d_obb(point_t **pnts,
+			       const point_t *points_3d,
+			       int pnt_cnt);
+
+
 __END_DECLS
 
 #endif  /* BN_OBR_H */
