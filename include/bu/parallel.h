@@ -153,6 +153,39 @@ BU_EXPORT extern size_t bu_avail_cpus(void);
  *
  * This function will not return control until all invocations of the
  * subroutine are finished.
+ *
+ * In following is a working stand-alone example demonstrating how to
+ * call the bu_parallel() interface.
+
+@code
+void shoot_cells_in_series(int width, int height) {
+  int i, j;
+  for (i=0; i<height; i++)
+    for (j=0; j<width; j++)
+      printf("Shooting cell (%d, %d) on CPU %d\n", i, j, bu_parallel_id());
+}
+
+void shoot_row_per_thread(int cpu, void *mydata) {
+  int i, j, width;
+  width = *(int *)mydata;
+  for (i=0; i<width; i++)
+    printf("Shooting cell (%d, %d) on CPU %d\n", i, cpu, bu_parallel_id());
+}
+
+void shoot_cells_in_parallel(int width, int height) {
+  bu_parallel(shoot_row_per_thread, height, &width);
+  // we don't reach here until all threads complete
+}
+
+int main(int ac, char *av[]) {
+  int width = 4, height = 4;
+  printf("\nShooting cells one at a time, 4x4 grid:\n");
+  shoot_cells_in_series(width, height);
+  printf("\nShooting cells in parallel with 4 threads, one per row:\n");
+  shoot_cells_in_parallel(width, height);
+  return 0;
+}
+@endcode
  */
 BU_EXPORT extern void bu_parallel(void (*func)(int func_ncpu, void *func_data), int ncpu, void *data);
 
