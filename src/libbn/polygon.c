@@ -620,7 +620,6 @@ remove_hole(int **poly, const size_t poly_npts, const int *hole, const size_t ho
 
     /* Check for points inside the triangle hpnt/ep/isect */
     if (!point_found) {
-	point2d_t interior_pt;
 	int have_interior_pt = 0;
 	double angle = DBL_MAX - 1;
 	min_dist = DBL_MAX;
@@ -644,20 +643,17 @@ remove_hole(int **poly, const size_t poly_npts, const int *hole, const size_t ho
 		/* if we've got interior points, we want the lowest angle */
 		if (NEAR_ZERO(angle - DBL_MAX - 1, 0.001)) {
 		    angle = tang;
-		    V2MOVE(interior_pt, pts[(*poly)[iter]]);
 		    polypointindex = iter;
 		    continue;
 		}
 		/* If the angle doesn't differentiate, go with distance */
 		if (NEAR_ZERO(tang - angle, 1e-6)) {
 		    if (DIST_PT2_PT2_SQ(test_pt, hpnt) < min_dist) {
-			V2MOVE(interior_pt, pts[(*poly)[iter]]);
 			polypointindex = iter;
 		    }
 		    continue;
 		}
 		if (tang < angle) {
-		    V2MOVE(interior_pt, pts[(*poly)[iter]]);
 		    polypointindex = iter;
 		}
 	    }
