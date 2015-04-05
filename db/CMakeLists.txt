@@ -72,6 +72,7 @@ else(CMAKE_CONFIGURATION_TYPES)
   file(MAKE_DIRECTORY ${CMAKE_BINARY_DIR}/${DATA_DIR}/db)
 endif(CMAKE_CONFIGURATION_TYPES)
 
+add_subdirectory(comgeom)
 add_subdirectory(nist)
 add_subdirectory(faa)
 
