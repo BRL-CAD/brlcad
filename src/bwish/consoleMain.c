@@ -11,6 +11,9 @@
 #include "bio.h"
 #include <locale.h>
 
+#include "bu.h"
+
+
 /*
  * The following #if block allows you to change the AppInit function by
  * using a #define of TCL_LOCAL_APPINIT instead of rewriting this entire
