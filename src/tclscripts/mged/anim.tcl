@@ -3438,6 +3438,7 @@ proc sketch_sort_entry1 { entry list nentry } {
 
 proc sketch_sort { sortp outfile list } {
     global mged_sketch_sort_temp mged_sketch_tab_path
+    global tcl_platform
 
     if { [info commands $sortp.fa] != "" } {
 	tk_dialog ._sketch_msg {Script already sorting} \
