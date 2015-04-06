@@ -106,17 +106,6 @@ nxt_spc(char *cp)
 
 
 int
-ngran(int nfloat)
-{
-    int gran;
-    /* Round up */
-    gran = nfloat + ((sizeof(union record)-1) / sizeof(float));
-    gran = (gran * sizeof(float)) / sizeof(union record);
-    return gran;
-}
-
-
-int
 incr_ars_pt(void)
 {
     int ret=0;

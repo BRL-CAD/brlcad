@@ -207,22 +207,6 @@ add_triangle(int v[3])
 
 
 void
-List_assem(struct obj_info *assem)
-{
-    size_t i;
-
-    if (assem->obj_type != ASSEMBLY_TYPE) {
-	bu_log("ERROR: List_assem called for non-assembly\n");
-    }
-    bu_log("Assembly: %s (id=%d)\n", assem->obj_name, assem->obj_id);
-    bu_log("\t%zu members\n", assem->part_count);
-    for (i=0; i<assem->part_count; i++) {
-	bu_log("\t\ty %s\n", assem->members[i]->obj_name);
-    }
-}
-
-
-void
 Usage(void)
 {
     bu_log("Usage: %s [-i starting_ident] [-t tolerance] [-l name_length_limit] [-n part_number_to_name_list] [-v] input_facets_file output_brlcad_file.g\n", progname);
