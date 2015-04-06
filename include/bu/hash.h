@@ -159,8 +159,7 @@ typedef struct bu_hash_record bu_hash_record_t;
 /**
  * the hashing function
  */
-BU_EXPORT extern unsigned long bu_hash(const unsigned char *str,
-				       int len);
+BU_EXPORT extern unsigned long bu_hash(const unsigned char *str, size_t len);
 
 /**
  * Create an empty hash table
