@@ -264,7 +264,7 @@ get_line(void)
 	if (len < 0) goto out; /* eof or error */
 	if (len == 0) continue;
 	bu_vls_trimspace(&buffer);
-	len = bu_vls_strlen(&buffer);
+	len = (int)bu_vls_strlen(&buffer);
 	if (len == 0) continue;
 	done = 1;
     }

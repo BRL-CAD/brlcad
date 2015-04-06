@@ -213,7 +213,7 @@ void remove_whitespace(char *input_string)
 {
     char *idx = NULL;
     int idx2 = 0;
-    int input_string_length = 0;
+    size_t input_string_length = 0;
     char *firstp = NULL;
     char *lastp = NULL;
     int found_start = 0;

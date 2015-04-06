@@ -1509,7 +1509,7 @@ gettclblock(struct bu_vls *line, FILE *fp)
 		escapedcr = 0;
 	    }
 	}
-	ret = bu_vls_strlen(line);
+	ret = (int)bu_vls_strlen(line);
     }
     bu_vls_free(&tmp);
 
@@ -1550,8 +1550,8 @@ main(int argc, char *argv[])
 
     while (isComment) {
 	char *str;
-	int charIndex;
-	int len;
+	size_t charIndex;
+	size_t len;
 	bu_vls_trunc(&line, 0);
 	if (bu_vls_gets(&line, ifp) < 0) {
 	    fclose(ifp); ifp = NULL;

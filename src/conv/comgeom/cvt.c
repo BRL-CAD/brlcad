@@ -60,7 +60,7 @@ int verbose = 0;	/* verbose = print a message on every item read */
 char name_it[16];	/* stores argv if it exists and appends it
 			   to each name generated.*/
 
-int cur_col = 0;
+size_t cur_col = 0;
 
 FILE *infp;
 struct rt_wdb *outfp;		/* Output file descriptor */
