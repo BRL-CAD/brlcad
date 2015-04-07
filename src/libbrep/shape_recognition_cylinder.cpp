@@ -835,11 +835,11 @@ cylinder_csg(struct subbrep_object_data *data, fastf_t cyl_tol)
 			tilted_plane = cyl_planes[0];
 		    }
 		    //std::cout << "plane normal: " << pout(tilted_plane.Normal()) << "\n";
-		    double angle = acos(ON_DotProduct(cylinder.Axis(), tilted_plane.Normal()));
+		    //double angle = acos(ON_DotProduct(cylinder.Axis(), tilted_plane.Normal()));
 		    //std::cout << "  dihedral angle: " << angle * ON_RADIANS_TO_DEGREES << "\n";
-		    double diameter = cylinder.circle.Radius() * 2;
+		    //double diameter = cylinder.circle.Radius() * 2;
 		    //std::cout << "  diameter: " << diameter << "\n";
-		    double hypotenuse = diameter / ON_DotProduct(cylinder.Axis(), tilted_plane.Normal());
+		    //double hypotenuse = diameter / ON_DotProduct(cylinder.Axis(), tilted_plane.Normal());
 		    //std::cout << "  hypotenuse: " << hypotenuse << "\n";
 		    //std::cout << "  opposite: " << sin(angle) * hypotenuse << "\n";
 		} else {
@@ -1020,7 +1020,6 @@ cylinder_csg(struct subbrep_object_data *data, fastf_t cyl_tol)
 
 
 			// First, find the two points closest to the cap1 and cap2 planes
-			double offset = 0.0;
 			std::set<int>::iterator s_it;
 			ON_SimpleArray<const ON_BrepVertex *> corner_pnts(4);
 			ON_SimpleArray<const ON_BrepVertex *> bottom_pnts(2);
@@ -1168,7 +1167,6 @@ cylinder_csg(struct subbrep_object_data *data, fastf_t cyl_tol)
 				arb_points[1] = arb_points[1] - a1;
 				arb_points[2] = arb_points[2] + a1;
 			    }
-			    ON_3dVector e4tmp = arb_points[2] - arb_points[1];
 			}
 
 			if (e4_len < axis_length) {
@@ -1182,7 +1180,6 @@ cylinder_csg(struct subbrep_object_data *data, fastf_t cyl_tol)
 				arb_points[3] = arb_points[3] - a1;
 				arb_points[0] = arb_points[0] + a1;
 			    }
-			    ON_3dVector e4tmp = arb_points[3] - arb_points[0];
 			}
 
 			if (e1_len < circ_rad * 2) {
@@ -1233,6 +1230,8 @@ cylinder_csg(struct subbrep_object_data *data, fastf_t cyl_tol)
 	    data->params->bool_op = (data->negative_shape == -1) ? '-' : 'u';
 	}
     }
+
+    return -1;
 }
 
 // Local Variables:
