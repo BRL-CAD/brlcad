@@ -87,8 +87,8 @@ swapfunc(char *a, char *b, int n, int swaptype)
 #define SWAP(a, b)				\
     if (swaptype == 0) {			\
         long t = *(long *)(a);			\
-        *(long *)(a) = *(long *)(b);    \
-        *(long *)(b) = t;               \
+        *(long *)(a) = *(long *)(b);		\
+        *(long *)(b) = t;			\
     } else 					\
         swapfunc(a, b, sizememb, swaptype)
 
@@ -111,7 +111,7 @@ bu_sort(void *array, size_t nummemb, size_t sizememb, int (*compare)(const void 
 {
     char *pa, *pb, *pc, *pd, *pl, *pm, *pn;
     int cmp_result;
-    int swaptype;
+    int swaptype = 0;
     size_t d, r;
     size_t swap_cnt;
 
@@ -188,3 +188,13 @@ bu_sort(void *array, size_t nummemb, size_t sizememb, int (*compare)(const void 
         goto loop;
     }
 }
+
+/*
+ * Local Variables:
+ * tab-width: 8
+ * mode: C
+ * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */
