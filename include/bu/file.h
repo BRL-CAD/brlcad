@@ -460,13 +460,13 @@ BU_EXPORT extern size_t bu_argv_from_string(char *argv[],
  * This call presumes the array has been allocated with bu_dup_argv()
  * or bu_argv_from_path().
  */
-BU_EXPORT extern void bu_free_argv(int argc, char *argv[]);
+BU_EXPORT extern void bu_free_argv(size_t argc, char *argv[]);
 
 /**
  * free up to argc elements of memory allocated to an array without
  * free'ing the array itself.
  */
-BU_EXPORT extern void bu_free_array(int argc, char *argv[], const char *str);
+BU_EXPORT extern void bu_free_array(size_t argc, char *argv[], const char *str);
 
 /**
  * Dynamically duplicate an argv array and all elements in the array
@@ -476,7 +476,7 @@ BU_EXPORT extern void bu_free_array(int argc, char *argv[], const char *str);
  * returned including all elements in the array by calling bu_free()
  * or bu_free_argv().
  */
-BU_EXPORT extern char **bu_dup_argv(int argc, const char *argv[]);
+BU_EXPORT extern char **bu_dup_argv(size_t argc, const char *argv[]);
 
 /**
  * Combine two argv arrays into one new (duplicated) argv array.
@@ -488,7 +488,7 @@ BU_EXPORT extern char **bu_dup_argv(int argc, const char *argv[]);
  * the insert argument is the position where the insertArgv array
  * elements will be merged with the specified argv array.
  */
-BU_EXPORT extern char **bu_dupinsert_argv(int insert, int insertArgc, const char *insertArgv[], int argc, const char *argv[]);
+BU_EXPORT extern char **bu_dupinsert_argv(int insert, size_t insertArgc, const char *insertArgv[], size_t argc, const char *argv[]);
 
 /**
  * Generate an argv array from a path

@@ -162,9 +162,9 @@ bu_argv_from_string(char *argv[], size_t lim, char *lp)
 
 
 void
-bu_free_argv(int argc, char *argv[])
+bu_free_argv(size_t argc, char *argv[])
 {
-    register int i;
+    register size_t i;
 
     if (UNLIKELY(!argv || argc <= 0)) {
 	return;
@@ -183,9 +183,9 @@ bu_free_argv(int argc, char *argv[])
 
 
 void
-bu_free_array(int argc, char *argv[], const char *str)
+bu_free_array(size_t argc, char *argv[], const char *str)
 {
-    int count = 0;
+    size_t count = 0;
 
     if (UNLIKELY(!argv || argc <= 0)) {
 	return;
@@ -204,15 +204,15 @@ bu_free_array(int argc, char *argv[], const char *str)
 
 
 char **
-bu_dup_argv(int argc, const char *argv[])
+bu_dup_argv(size_t argc, const char *argv[])
 {
-    register int i;
+    register size_t i;
     char **av;
 
     if (UNLIKELY(argc < 1))
 	return (char **)0;
 
-    av = (char **)bu_calloc((unsigned int)argc+1, sizeof(char *), "bu_copy_argv");
+    av = (char **)bu_calloc(argc+1, sizeof(char *), "bu_copy_argv");
     for (i = 0; i < argc; ++i)
 	av[i] = bu_strdup(argv[i]);
     av[i] = (char *)0;
@@ -222,17 +222,17 @@ bu_dup_argv(int argc, const char *argv[])
 
 
 char **
-bu_dupinsert_argv(int insert, int insertArgc, const char *insertArgv[], int argc, const char *argv[])
+bu_dupinsert_argv(int insert, size_t insertArgc, const char *insertArgv[], size_t argc, const char *argv[])
 {
-    register int i, j;
-    int ac = argc + insertArgc + 1;
+    register size_t i, j;
+    size_t ac = argc + insertArgc + 1;
     char **av;
 
     /* Nothing to insert */
     if (insertArgc < 1)
 	return bu_dup_argv(argc, argv);
 
-    av = (char **)bu_calloc((unsigned int)ac, sizeof(char *), "bu_insert_argv");
+    av = (char **)bu_calloc(ac, sizeof(char *), "bu_insert_argv");
 
     if (insert <= 0) {			    	/* prepend */
 	for (i = 0; i < insertArgc; ++i)
@@ -240,14 +240,14 @@ bu_dupinsert_argv(int insert, int insertArgc, const char *insertArgv[], int argc
 
 	for (j = 0; j < argc; ++i, ++j)
 	    av[i] = bu_strdup(argv[j]);
-    } else if (argc <= insert) {		/* append */
+    } else if (argc <= (size_t)insert) {	/* append */
 	for (i = 0; i < argc; ++i)
 	    av[i] = bu_strdup(argv[i]);
 
 	for (j = 0; j < insertArgc; ++i, ++j)
 	    av[i] = bu_strdup(insertArgv[j]);
     } else {					/* insert */
-	for (i = 0; i < insert; ++i)
+	for (i = 0; i < (size_t)insert; ++i)
 	    av[i] = bu_strdup(argv[i]);
 
 	for (j = 0; j < insertArgc; ++i, ++j)
