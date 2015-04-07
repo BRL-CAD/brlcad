@@ -1034,7 +1034,7 @@ proc_region(char *name1)
 {
     char tmpname[NAMESIZE*2];
     int chkroot;
-    int i;
+    size_t i;
     int cc;
     static int reg_count=0;
     static int mir_count=0;

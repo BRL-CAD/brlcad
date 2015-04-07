@@ -111,7 +111,7 @@ mk_unique_brlcad_name(struct bu_vls *name)
 {
     char *c;
     int count=0;
-    int len;
+    size_t len;
 
     c = bu_vls_addr(name);
 

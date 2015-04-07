@@ -48,9 +48,9 @@ void addTriangle
 (
     int*    faces,
     size_t& num_faces,
-    int     a,
-    int     b,
-    int     c
+    size_t a,
+    size_t b,
+    size_t c
 ) {
     // is it a triangle?
     if ((a == b) || (b == c) || (c == a))
@@ -58,37 +58,37 @@ void addTriangle
 
     // search for duplicate triangle
     for (size_t i = 0; i < num_faces; ++i) {
-	if (faces[i * 3] == a) {
-	    if (faces[i * 3 + 1] == b) {
-		if (faces[i * 3 + 2] == c)
+	if (faces[i * 3] == (int)a) {
+	    if (faces[i * 3 + 1] == (int)b) {
+		if (faces[i * 3 + 2] == (int)c)
 		    return;
-	    } else if (faces[i * 3 + 1] == c) {
-		if (faces[i * 3 + 2] == b)
-		    return;
-	    }
-	} else if (faces[i * 3] == b) {
-	    if (faces[i * 3 + 1] == a) {
-		if (faces[i * 3 + 2] == c)
-		    return;
-	    } else if (faces[i * 3 + 1] == c) {
-		if (faces[i * 3 + 2] == a)
+	    } else if (faces[i * 3 + 1] == (int)c) {
+		if (faces[i * 3 + 2] == (int)b)
 		    return;
 	    }
-	} else if (faces[i * 3] == c) {
-	    if (faces[i * 3 + 1] == b) {
-		if (faces[i * 3 + 2] == a)
+	} else if (faces[i * 3] == (int)b) {
+	    if (faces[i * 3 + 1] == (int)a) {
+		if (faces[i * 3 + 2] == (int)c)
 		    return;
-	    } else if (faces[i * 3 + 1] == a) {
-		if (faces[i * 3 + 2] == b)
+	    } else if (faces[i * 3 + 1] == (int)c) {
+		if (faces[i * 3 + 2] == (int)a)
+		    return;
+	    }
+	} else if (faces[i * 3] == (int)c) {
+	    if (faces[i * 3 + 1] == (int)b) {
+		if (faces[i * 3 + 2] == (int)a)
+		    return;
+	    } else if (faces[i * 3 + 1] == (int)a) {
+		if (faces[i * 3 + 2] == (int)b)
 		    return;
 	    }
 	}
     }
 
     // add a new triangle
-    faces[num_faces * 3]     = a;
-    faces[num_faces * 3 + 1] = b;
-    faces[num_faces * 3 + 2] = c;
+    faces[num_faces * 3 + 0] = (int)a;
+    faces[num_faces * 3 + 1] = (int)b;
+    faces[num_faces * 3 + 2] = (int)c;
 
     ++num_faces;
 }
@@ -337,8 +337,8 @@ void writeRingModeBox
     // bot parameters
     // vertices
     size_t num_vertices = 0;
-    int outer_i[MAX_NPTS];
-    int inner_i[MAX_NPTS];
+    size_t outer_i[MAX_NPTS];
+    size_t inner_i[MAX_NPTS];
     fastf_t vertices[MAX_NPTS * 3];
 
     for (size_t i3 = 0; i3 < form.npts; ++i3) {
@@ -585,3 +585,12 @@ void writeArb8
     if (form.s_compnr >= 1000)
 	excludeFromRegion(form.s_compnr, name);
 }
+
+// Local Variables:
+// tab-width: 8
+// mode: C++
+// c-basic-offset: 4
+// indent-tabs-mode: t
+// c-file-style: "stroustrup"
+// End:
+// ex: shiftwidth=4 tabstop=8

@@ -136,8 +136,8 @@ char *
 Build_unique_name(char *name)
 {
     struct name_conv_list *ptr;
-    int name_len;
-    int tries=0;
+    size_t name_len;
+    size_t tries=0;
 
     name_len = strlen(name);
     bu_vls_strcpy(&ret_name, name);
@@ -148,7 +148,7 @@ Build_unique_name(char *name)
 	    /* this name already exists, build a new one */
 	    ++tries;
 	    bu_vls_trunc(&ret_name, name_len);
-	    bu_vls_printf(&ret_name, "_%d", tries);
+	    bu_vls_printf(&ret_name, "_%ld", (long)tries);
 
 	    ptr = name_root;
 	}
@@ -631,7 +631,7 @@ Convert_part(char *line)
 	/* build a name from the file name */
 	char tmp_str[512];
 	char *ptr;
-	int len, suff_len;
+	size_t len, suff_len;
 
 	obj_count++;
 	obj = obj_count;

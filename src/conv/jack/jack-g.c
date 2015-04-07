@@ -78,7 +78,7 @@ main(int argc, char **argv)
     char		*base, *bfile, *grp_name, *jfile, *reg_name;
     FILE		*fpin;
     struct rt_wdb	*fpout = NULL;
-    int		doti;
+    size_t doti;
     int	c;
 
     grp_name = reg_name = NULL;
@@ -136,10 +136,14 @@ main(int argc, char **argv)
 	    base = argv[1];
 	reg_name = (char *)bu_malloc(sizeof(base)+1, "reg_name");
 	bu_strlcpy(reg_name, base, sizeof(base)+1);
+
 	/* Ignore .pss extension if it's there. */
-	doti = strlen(reg_name) - 4;
-	if (doti > 0 && BU_STR_EQUAL(".pss", reg_name+doti))
-	    reg_name[doti] = '\0';
+	doti = strlen(reg_name);
+	if (doti > 4) {
+	    doti -= 4;
+	    if (BU_STR_EQUAL(".pss", reg_name+doti))
+		reg_name[doti] = '\0';
+	}
     }
 
     jack_to_brlcad(fpin, fpout, reg_name, grp_name, jfile);

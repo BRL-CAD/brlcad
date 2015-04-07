@@ -56,8 +56,8 @@ print_usage(const char *progname)
     bu_exit(1, "Usage: %s %s", progname, usage);
 }
 
-static long vert_offset=0;
-static long norm_offset=0;
+static off_t vert_offset=0;
+static off_t norm_offset=0;
 static int do_normals=0;
 static int NMG_debug;	/* saved arg of -X, for longjmp handling */
 static int verbose=0;
@@ -272,7 +272,7 @@ nmg_to_obj(struct nmgregion *r, const struct db_full_path *pathp, int UNUSED(reg
     nmg_vertex_tabulate(&verts, &r->l.magic);
 
     /* Get number of vertices */
-    numverts = BU_PTBL_END (&verts);
+    numverts = BU_PTBL_END(&verts);
 
     /* get list of vertexuse normals */
     if (do_normals)
@@ -440,9 +440,9 @@ nmg_to_obj(struct nmgregion *r, const struct db_full_path *pathp, int UNUSED(reg
 			int j;
 
 			j = bu_ptbl_locate(&norms, (long *)eu->vu_p->a.magic_p);
-			fprintf(fp, " %ld//%ld", loc+1+vert_offset, j+1+norm_offset);
+			fprintf(fp, " %ld//%ld", loc+1+(long)vert_offset, j+1+(long)norm_offset);
 		    } else
-			fprintf(fp, " %ld", loc+1+vert_offset);
+			fprintf(fp, " %ld", loc+1+(long)vert_offset);
 		}
 
 		fprintf(fp, "\n");

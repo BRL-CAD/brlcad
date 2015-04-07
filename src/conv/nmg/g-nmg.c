@@ -282,9 +282,9 @@ csg_comb_func(struct db_i *db, struct directory *dp, void *UNUSED(ptr))
     struct rt_db_internal intern;
     struct rt_comb_internal *comb;
     struct rt_tree_array *tree_list;
-    int node_count;
-    int actual_count;
-    int i;
+    size_t node_count;
+    size_t actual_count;
+    size_t i;
     struct wmember headp;
     struct wmember *wm;
     unsigned char *color;
@@ -351,7 +351,7 @@ csg_comb_func(struct db_i *db, struct directory *dp, void *UNUSED(ptr))
 						       sizeof(struct rt_tree_array), "tree list");
 	actual_count = (struct rt_tree_array *)db_flatten_tree(tree_list,
 								comb->tree, OP_UNION, 0, &rt_uniresource) - tree_list;
-	BU_ASSERT_LONG(actual_count, ==, node_count);
+	BU_ASSERT_SIZE_T(actual_count, ==, node_count);
     }
     else {
 	tree_list = (struct rt_tree_array *)NULL;

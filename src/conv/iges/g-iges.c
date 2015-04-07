@@ -712,7 +712,7 @@ csg_comb_func(struct db_i *dbip, struct directory *dp, void *UNUSED(ptr))
     struct rt_db_internal intern;
     struct rt_comb_internal *comb;
     struct iges_properties props;
-    int comb_len;
+    size_t comb_len;
     size_t i;
     int dependent = 1;
     int *de_pointers;
@@ -758,7 +758,7 @@ csg_comb_func(struct db_i *dbip, struct directory *dp, void *UNUSED(ptr))
     comb_form = 0;
 
     de_pointer_number = 0;
-    if (get_de_pointers(comb->tree, dp, comb_len, de_pointers)) {
+    if (get_de_pointers(comb->tree, dp, (int)comb_len, de_pointers)) {
 	bu_log("Error in combination %s\n", dp->d_namep);
 	bu_free((char *)de_pointers, "csg_comb_func de_pointers");
 	rt_db_free_internal(&intern);
@@ -778,7 +778,7 @@ csg_comb_func(struct db_i *dbip, struct directory *dp, void *UNUSED(ptr))
     props.color[2] = 0;
     get_props(&props, comb);
 
-    dp->d_uses = (-comb_to_iges(comb, comb_len, dependent, &props, de_pointers, fp_dir, fp_param));
+    dp->d_uses = (-comb_to_iges(comb, (int)comb_len, dependent, &props, de_pointers, fp_dir, fp_param));
 
     if (!dp->d_uses) {
 	comb_error++;
