@@ -76,7 +76,7 @@ vect_t		left_eye_delta;
 int		report_progress;	/* !0 = user wants progress report */
 extern int	incr_mode;		/* !0 for incremental resolution */
 extern size_t	incr_nlevel;		/* number of levels */
-extern int	npsw;			/* number of worker PSWs to run */
+extern size_t	npsw;			/* number of worker PSWs to run */
 /***** end variables shared with worker() *****/
 
 /***** variables shared with do.c *****/
@@ -251,10 +251,12 @@ int main(int argc, const char **argv)
     npsw = 1;			/* force serial */
 #endif
 
-    if (npsw < 0) {
-	/* Negative number means "all but" npsw */
-	npsw = bu_avail_cpus() + npsw;
-    }
+    /* parsing the user value needs separation from the set value,
+     * probably handled better during global elimination. --CSM */
+/*     if (npsw < 0) { */
+/* 	/\* Negative number means "all but" npsw *\/ */
+/* 	npsw = bu_avail_cpus() + npsw; */
+/*     } */
 
 
     /* allow debug builds to go higher than the max */
@@ -267,7 +269,7 @@ int main(int argc, const char **argv)
     if (npsw > 1) {
 	RTG.rtg_parallel = 1;
 	if (rt_verbosity & VERBOSE_MULTICPU)
-	    fprintf(stderr, "Planning to run with %d processors\n", npsw );
+	    fprintf(stderr, "Planning to run with %lu processors\n", (unsigned long)npsw );
     } else {
 	RTG.rtg_parallel = 0;
     }
