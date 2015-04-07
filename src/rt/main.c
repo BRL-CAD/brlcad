@@ -76,7 +76,7 @@ vect_t		left_eye_delta;
 int		report_progress;	/* !0 = user wants progress report */
 extern int	incr_mode;		/* !0 for incremental resolution */
 extern size_t	incr_nlevel;		/* number of levels */
-extern size_t	npsw;			/* number of worker PSWs to run */
+
 /***** end variables shared with worker() *****/
 
 /***** variables shared with do.c *****/
@@ -235,9 +235,9 @@ int main(int argc, const char **argv)
 	size_t x = height;
 	if (x < width) x = width;
 	incr_nlevel = 1;
-	while ((size_t)(1 << incr_nlevel) < x )
+	while ((size_t)(1ULL << incr_nlevel) < x )
 	    incr_nlevel++;
-	height = width = 1 << incr_nlevel;
+	height = width = 1ULL << incr_nlevel;
 	if (rt_verbosity & VERBOSE_INCREMENTAL)
 	    fprintf(stderr,
 		    "incremental resolution, nlevels = %lu, width=%lu\n",
@@ -384,8 +384,10 @@ int main(int argc, const char **argv)
 
 	bu_semaphore_acquire(BU_SEM_SYSCALL);
 	/* If fb came out smaller than requested, do less work */
-	if ((size_t)fb_getwidth(fbp) < width)  width = fb_getwidth(fbp);
-	if ((size_t)fb_getheight(fbp) < height) height = fb_getheight(fbp);
+	if ((size_t)fb_getwidth(fbp) < width)
+	    width = fb_getwidth(fbp);
+	if ((size_t)fb_getheight(fbp) < height)
+	    height = fb_getheight(fbp);
 
 	/* If the fb is lots bigger (>= 2X), zoom up & center */
 	if (width > 0 && height > 0) {
