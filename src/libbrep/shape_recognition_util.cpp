@@ -617,6 +617,8 @@ subbrep_determine_boolean(struct subbrep_object_data *data)
    if (pos_cnt) return 1;
    if (neg_cnt) return -1;
    if (!pos_cnt && !neg_cnt) return 2;
+
+   return -1;
 }
 
 /* Find corners that can be used to construct a planar face
