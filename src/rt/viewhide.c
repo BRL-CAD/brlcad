@@ -64,7 +64,6 @@ struct cell {
 };
 
 extern size_t	width;			/* # of pixels in X; picture width */
-extern int	npsw;			/* number of worker PSWs to run */
 
 fastf_t		pit_depth;		/* min. distance for drawing pits/mountains */
 fastf_t		maxangle;		/* value of the cosine of the angle bet. surface normals that triggers shading */

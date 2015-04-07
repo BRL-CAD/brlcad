@@ -65,8 +65,6 @@ void part_compact(register struct application *ap, register struct partition *Pa
 extern fastf_t gift_grid_rounding;
 extern point_t viewbase_model;
 
-extern int npsw;			/* number of worker PSWs to run */
-
 extern int rpt_overlap;
 
 extern struct bu_vls ray_data_file;	/* file name for ray data output (declared in do.c) */

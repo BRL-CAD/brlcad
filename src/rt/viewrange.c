@@ -50,7 +50,6 @@ struct cell {
 };
 
 extern size_t   width;			/* # of pixels in X; picture width */
-extern int	npsw;			/* number of worker PSWs to run */
 float		max_dist;
 struct cell	*cellp;
 

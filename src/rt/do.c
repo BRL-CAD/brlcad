@@ -638,7 +638,7 @@ do_frame(int framenumber)
     /* Process -b and ??? options now, for this frame */
     if (pix_start == -1) {
 	pix_start = 0;
-	pix_end = height * width - 1;
+	pix_end = (int)(height * width - 1);
     }
     if (string_pix_start) {
 	int xx, yy;
@@ -650,7 +650,7 @@ do_frame(int framenumber)
 	yy = atoi(cp);
 	bu_log("only pixel %d %d\n", xx, yy);
 	if (xx * yy >= 0) {
-	    pix_start = yy * width + xx;
+	    pix_start = (int)(yy * width + xx);
 	    pix_end = pix_start;
 	}
     }
@@ -664,7 +664,7 @@ do_frame(int framenumber)
 	yy = atoi(cp);
 	bu_log("ending pixel %d %d\n", xx, yy);
 	if (xx * yy >= 0) {
-	    pix_end = yy * width + xx;
+	    pix_end = (int)(yy * width + xx);
 	}
     }
 
@@ -842,8 +842,8 @@ do_frame(int framenumber)
      * CPU time, regardless of the number of CPUs.
      */
     if (npsw > 1) {
-	int avail_cpus;
-	int ncpus;
+	size_t avail_cpus;
+	size_t ncpus;
 
 	avail_cpus = bu_avail_cpus();
 	if (npsw > avail_cpus) {
@@ -1009,7 +1009,7 @@ void
 res_pr(void)
 {
     register struct resource *res;
-    register int i;
+    register size_t i;
 
     bu_log("\nResource use summary, by processor:\n");
     res = &resource[0];

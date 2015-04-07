@@ -43,8 +43,6 @@
 #include "./ext.h"
 
 
-extern int npsw;			/* number of worker PSWs to run */
-
 extern int rpt_overlap;
 
 /* from opt.c */

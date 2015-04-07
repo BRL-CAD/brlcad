@@ -473,18 +473,19 @@ view_init(struct application *ap, char *file, char *UNUSED(obj), int minus_o, in
      */
     if (bu_vls_strlen(&occlusion_objects) != 0) {
 	struct db_i *dbip;
-	int nObjs;
+	size_t nObjs;
+	int split_argc;
 	const char **objs;
-	int i;
+	size_t i;
 
 	bu_log("rtedge: loading occlusion geometry from %s.\n", file);
 
-	if (Tcl_SplitList(NULL, bu_vls_addr(&occlusion_objects), &nObjs,
-			  &objs) == TCL_ERROR) {
+	if (Tcl_SplitList(NULL, bu_vls_addr(&occlusion_objects), &split_argc, &objs) == TCL_ERROR) {
 	    bu_log("rtedge: occlusion list = %s\n",
 		   bu_vls_addr(&occlusion_objects));
 	    bu_exit(EXIT_FAILURE, "rtedge: could not parse occlusion objects list.\n");
 	}
+	nObjs = split_argc;
 
 	for (i=0; i<nObjs; ++i) {
 	    bu_log("rtedge: occlusion object %d = %s\n", i, objs[i]);
@@ -619,7 +620,7 @@ view_init(struct application *ap, char *file, char *UNUSED(obj), int minus_o, in
 void
 view_2init(struct application *UNUSED(ap), char *UNUSED(framename))
 {
-    int i;
+    size_t i;
 
     /*
      * Per_processor_chuck specifies the number of pixels rendered per
