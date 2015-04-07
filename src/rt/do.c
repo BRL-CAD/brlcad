@@ -823,7 +823,7 @@ do_frame(int framenumber)
 
 	/* Reset values to full size, for next frame (if any) */
 	pix_start = 0;
-	pix_end = height*width - 1;
+	pix_end = (int)(height*width - 1);
     }
     utime = rt_get_timer(&times, &wallclock);
 
