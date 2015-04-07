@@ -428,9 +428,9 @@ BN_EXPORT extern void bn_tabdata_freq_shift(struct bn_tabdata *out,
  *@brief
  *  Returns number of sample points between 'low' and 'hi', inclusive.
  */
-BN_EXPORT extern int bn_table_interval_num_samples(const struct bn_table *tabp,
-						   double low,
-						   double hi);
+BN_EXPORT extern size_t bn_table_interval_num_samples(const struct bn_table *tabp,
+						      double low,
+						      double hi);
 
 /*
  *@brief
@@ -438,9 +438,9 @@ BN_EXPORT extern int bn_table_interval_num_samples(const struct bn_table *tabp,
  *  Don't bother freeing the tiny bit of storage at the end of the array.
  *  Returns number of points removed.
  */
-BN_EXPORT extern int bn_table_delete_sample_pts(struct bn_table *tabp,
-						unsigned int i,
-						unsigned int j);
+BN_EXPORT extern size_t bn_table_delete_sample_pts(struct bn_table *tabp,
+						   size_t i,
+						   size_t j);
 
 /*
  *@brief

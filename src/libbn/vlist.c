@@ -33,7 +33,7 @@
 int
 bn_vlist_cmd_cnt(struct bn_vlist *vlist)
 {
-    int num_commands;
+    size_t num_commands;
     struct bn_vlist *vp;
 
     if (UNLIKELY(vlist == NULL)) {
@@ -51,8 +51,8 @@ bn_vlist_cmd_cnt(struct bn_vlist *vlist)
 int
 bn_vlist_bbox(struct bn_vlist *vp, point_t *bmin, point_t *bmax)
 {
-    int i;
-    int nused = vp->nused;
+    size_t i;
+    size_t nused = vp->nused;
     int *cmd = vp->cmd;
     point_t *pt = vp->pt;
 

@@ -73,7 +73,7 @@ compare_result(char *expected_buf, FILE *result_fd)
 }
 
 /* Checks the result length and closes the result fd */
-int
+static size_t
 check_result_len(FILE *result_fd)
 {
     size_t ret;

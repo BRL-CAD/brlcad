@@ -45,8 +45,8 @@ parse_case(char *buf_p, int *i, long *l, fastf_t *d, unsigned long *u, char *fmt
     int l_idx = 0;
     int d_idx = 0;
     int u_idx = 1; /* start index at 1 since function number is stored at 0 */
-    int idx;
-    int fmt_str_len;
+    size_t idx;
+    size_t fmt_str_len;
     char *endp;
     long int l_tmp;
 
@@ -154,7 +154,7 @@ main(int argc, char **argv)
     char buf[BUFSIZ];
     FILE *fp_in = NULL;
     char *endp = NULL;
-    int string_length;
+    size_t string_length;
     int argv_idx;
     int c;
     char dt_fmt[50];  /* data type format string */
