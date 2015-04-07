@@ -244,7 +244,8 @@ static int
 _rangematch(const char *pattern, char test, int flags, char **newp)
 {
     size_t s;
-    int negate, ok, incpattern;
+    int negate, ok;
+    size_t incpattern;
     char c, c2;
     /*
      * A bracket expression starting with an unquoted circumflex

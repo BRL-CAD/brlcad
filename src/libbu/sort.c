@@ -90,9 +90,9 @@ swapfunc(char *a, char *b, int n, int swaptype)
         *(long *)(a) = *(long *)(b);		\
         *(long *)(b) = t;			\
     } else 					\
-        swapfunc(a, b, sizememb, swaptype)
+        swapfunc((char *)a, (char *)b, sizememb, swaptype)
 
-#define VECSWAP(a, b, n) if ((n) > 0) swapfunc(a, b, n, swaptype)
+#define VECSWAP(a, b, n) if ((n) > 0) swapfunc((char *)a, (char *)b, n, swaptype)
 
 #define CMP(t, x, y) (compare((t), (x), (y)))
 

@@ -201,7 +201,7 @@ bu_vls_trunc(struct bu_vls *vp, int len)
 
     if (len < 0) {
 	/* now an absolute length */
-	len = vp->vls_len + len;
+	len = (int)vp->vls_len + len;
     }
     if (vp->vls_len <= (size_t)len)
 	return;
@@ -572,7 +572,7 @@ bu_vls_write(int fd, const struct bu_vls *vp)
 	return;
 
     bu_semaphore_acquire(BU_SEM_SYSCALL);
-    status = write(fd, vp->vls_str + vp->vls_offset, vp->vls_len);
+    status = write(fd, vp->vls_str + vp->vls_offset, (size_t)vp->vls_len);
     bu_semaphore_release(BU_SEM_SYSCALL);
 
     if (UNLIKELY(status < 0 || (size_t)status != vp->vls_len)) {
@@ -620,8 +620,8 @@ bu_vls_read(struct bu_vls *vp, int fd)
 int
 bu_vls_gets(struct bu_vls *vp, FILE *fp)
 {
-    int startlen;
-    int endlen;
+    size_t startlen;
+    size_t endlen;
     int done;
     char *bufp;
     char buffer[BUFSIZ+1] = {0};

@@ -404,7 +404,7 @@ BU_EXPORT extern int bu_sscanf(const char *src, const char *fmt, ...) _BU_ATTR_S
  * @param[out] ... Pointers to fastf_t for storing scanned values (optional)
  *
  */
-BU_EXPORT extern int bu_scan_fastf_t(int *c, const char *src, const char *delim, int n, ...);
+BU_EXPORT extern int bu_scan_fastf_t(int *c, const char *src, const char *delim, size_t n, ...);
 
 /** @file libbu/dirname.c
  *
