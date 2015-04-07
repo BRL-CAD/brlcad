@@ -191,21 +191,26 @@ __BEGIN_DECLS
  * However, we do not assume or rely on IEEE 754 floating point.
  */
 #ifndef INFINITY
-#  if defined(HUGE_VAL)
+#  if defined(DBL_MAX)
+#    define INFINITY ((fastf_t)DBL_MAX)
+#  elif defined(HUGE_VAL)
 #    define INFINITY ((fastf_t)HUGE_VAL)
-#  elif defined(HUGE_VALF)
-#    define INFINITY ((fastf_t)HUGE_VALF)
-#  elif defined(HUGE)
-#    define INFINITY ((fastf_t)HUGE)
 #  elif defined(MAXDOUBLE)
 #    define INFINITY ((fastf_t)MAXDOUBLE)
+#  elif defined(HUGE)
+#    define INFINITY ((fastf_t)HUGE)
+/* fall back to a single-precision limit */
+#  elif defined(FLT_MAX)
+#    define INFINITY ((fastf_t)FLT_MAX)
+#  elif defined(HUGE_VALF)
+#    define INFINITY ((fastf_t)HUGE_VALF)
 #  elif defined(MAXFLOAT)
 #    define INFINITY ((fastf_t)MAXFLOAT)
 #  else
-     /* all else fails, just pick something big slightly over 32-bit
-      * single-precision floating point that has worked well before.
+     /* all else fails, just pick something big slightly under the
+      * 32-bit single-precision floating point limit for IEEE 754.
       */
-#    define INFINITY ((fastf_t)1.0e40)
+#    define INFINITY ((fastf_t)1.0e38)
 #  endif
 #endif
 
