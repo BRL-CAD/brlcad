@@ -187,7 +187,7 @@ int main(int ac, char *av[]) {
 }
 @endcode
  */
-BU_EXPORT extern void bu_parallel(void (*func)(int func_ncpu, void *func_data), int ncpu, void *data);
+BU_EXPORT extern void bu_parallel(void (*func)(int func_cpu_id, void *func_data), size_t ncpu, void *data);
 
 
 /** @file libbu/semaphore.c
