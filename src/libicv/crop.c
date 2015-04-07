@@ -29,24 +29,18 @@
 #include "icv.h"
 
 int
-icv_rect(icv_image_t *img, int xorig, int yorig, int xnum, int ynum)
+icv_rect(icv_image_t *img, size_t xorig, size_t yorig, size_t xnum, size_t ynum)
 {
-    int row;
+    size_t row;
     double *p, *in_data, *out_data;
-    int widthstep_in, widthstep_out, bytes_row; /**<  */
+    size_t widthstep_in, widthstep_out, bytes_row; /**<  */
 
     ICV_IMAGE_VAL_INT(img);
 
-    if (xorig < 0)
-	xorig = 0;
-
-    if (yorig < 0)
-	yorig = 0;
-
-    if (xnum <= 0)
+    if (xnum < 1)
 	bu_exit(1, "icv_rect : ERROR: Horizontal Cut Size\n");
 
-    if (ynum <= 0)
+    if (ynum < 1)
 	bu_exit(1, "icv_rect : ERROR: Vertical Cut Size\n");
 
     if (xorig+xnum > img->width)
@@ -78,11 +72,11 @@ icv_rect(icv_image_t *img, int xorig, int yorig, int xnum, int ynum)
 }
 
 int
-icv_crop(icv_image_t *img, int ulx, int uly, int urx, int ury, int lrx, int lry, int llx, int lly, unsigned int ynum, unsigned int xnum)
+icv_crop(icv_image_t *img, size_t ulx, size_t uly, size_t urx, size_t ury, size_t lrx, size_t lry, size_t llx, size_t lly, size_t ynum, size_t xnum)
 {
     float x_1, y_1, x_2, y_2;
     size_t row, col;
-    int  x, y;
+    size_t  x, y;
     double *data, *p, *q;
 
     ICV_IMAGE_VAL_INT(img);

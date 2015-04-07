@@ -45,19 +45,19 @@ extern FILE *fdopen(int, const char *);
 #define WRMODE S_IRUSR|S_IRGRP|S_IROTH
 
 /* defined in encoding.c */
-extern double *uchar2double(unsigned char *data, long int size);
+extern double *uchar2double(unsigned char *data, size_t size);
 extern unsigned char *data2uchar(const icv_image_t *bif);
 
 /* defined in bw.c */
 extern int bw_write(icv_image_t *bif, const char *filename);
-extern icv_image_t *bw_read(const char *filename, int width, int height);
+extern icv_image_t *bw_read(const char *filename, size_t width, size_t height);
 
 /* defined in pix.c */
 extern int pix_write(icv_image_t *bif, const char *filename);
-extern icv_image_t *pix_read(const char* filename, int width, int height);
+extern icv_image_t *pix_read(const char* filename, size_t width, size_t height);
 
 /* defined in dpix.c */
-extern icv_image_t *dpix_read(const char* filename, int width, int height);
+extern icv_image_t *dpix_read(const char* filename, size_t width, size_t height);
 extern int dpix_write(icv_image_t *bif, const char *filename);
 
 /* defined in ppm.c */
@@ -112,7 +112,7 @@ png_write(icv_image_t *bif, const char *filename)
 {
     png_structp png_ptr = NULL;
     png_infop info_ptr = NULL;
-    int i = 0;
+    size_t i = 0;
     int png_color_type = PNG_COLOR_TYPE_RGB;
     unsigned char *data;
     FILE *fh;
@@ -145,8 +145,10 @@ png_write(icv_image_t *bif, const char *filename)
 		 PNG_INTERLACE_NONE, PNG_COMPRESSION_TYPE_DEFAULT,
 		 PNG_FILTER_TYPE_DEFAULT);
     png_write_info(png_ptr, info_ptr);
-    for (i = bif->height-1; i >= 0; --i)
+    for (i = bif->height-1; i > 0; --i) {
 	png_write_row(png_ptr, (png_bytep) (data + bif->width*bif->channels*i));
+    }
+    png_write_row(png_ptr, (png_bytep) (data + 0));
     png_write_end(png_ptr, info_ptr);
 
     png_destroy_write_struct(&png_ptr, &info_ptr);
@@ -159,7 +161,7 @@ png_write(icv_image_t *bif, const char *filename)
 /* begin public functions */
 
 icv_image_t *
-icv_read(const char *filename, int format, int width, int height)
+icv_read(const char *filename, ICV_IMAGE_FORMAT format, size_t width, size_t height)
 {
     if (format == ICV_IMAGE_AUTO) {
 	/* do some voodoo with the file magic or something... */
@@ -216,7 +218,7 @@ icv_write(icv_image_t *bif, const char *filename, ICV_IMAGE_FORMAT format)
 
 
 int
-icv_writeline(icv_image_t *bif, int y, void *data, ICV_DATA type)
+icv_writeline(icv_image_t *bif, size_t y, void *data, ICV_DATA type)
 {
     double *dst;
     size_t width_size;
@@ -227,7 +229,7 @@ icv_writeline(icv_image_t *bif, int y, void *data, ICV_DATA type)
 
     ICV_IMAGE_VAL_INT(bif);
 
-    if (y > bif->height || y < 0)
+    if (y > bif->height)
         return -1;
 
     width_size = (size_t) bif->width*bif->channels;
@@ -249,16 +251,16 @@ icv_writeline(icv_image_t *bif, int y, void *data, ICV_DATA type)
 
 
 int
-icv_writepixel(icv_image_t *bif, int x, int y, double *data)
+icv_writepixel(icv_image_t *bif, size_t x, size_t y, double *data)
 {
     double *dst;
 
     ICV_IMAGE_VAL_INT(bif);
 
-    if (x > bif->width || x < 0)
+    if (x > bif->width)
         return -1;
 
-    if (y > bif->height || y < 0)
+    if (y > bif->height)
         return -1;
 
     if (data == NULL)
@@ -273,7 +275,7 @@ icv_writepixel(icv_image_t *bif, int x, int y, double *data)
 
 
 icv_image_t *
-icv_create(int width, int height, ICV_COLOR_SPACE color_space)
+icv_create(size_t width, size_t height, ICV_COLOR_SPACE color_space)
 {
     icv_image_t *bif;
     BU_ALLOC(bif, struct icv_image);
@@ -304,7 +306,7 @@ icv_image_t *
 icv_zero(icv_image_t *bif)
 {
     double *data;
-    long size, i;
+    size_t size, i;
 
     ICV_IMAGE_VAL_PTR(bif);
 
