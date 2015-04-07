@@ -35,7 +35,7 @@ in ADA073408 table
 14   RCC  -211.4558 -209.5308 50.8002   0.0000    196.8508  0.0000    1PUSH R IN
           3.8100    0.0000    0.0000    0.0000    0.0000    0.0000    1PUSH R IN
 15   ARB8 -202.5658 -152.4006 0.0000    -202.5658 -182.8807 0.0000    1DIVIDER  
-          -202.5658 -182.8807 30.4601   -202.5658 -152.4006 30.4801   10IVIDER  
+          -202.5658 -182.8807 30.4601   -202.5658 -152.4006 30.4801   1DIVIDER  
           -197.4858 -152.4006 0.0000    -197.4658 -182.8807 0.0000    1DIVIDER  
           -197.4856 -182.8807 30.4801   -197.4858 -152.4006 30.4801   1DIVIDER  
 16   ARB8 -197.4858 -152.4006 0.0000    -197.4858 -182.8807 0.0000    1AIR EXH  
@@ -504,7 +504,7 @@ in ADA073408 table
 253  RPP  -431.9846 457.0189  -306.5792 -269.2715 -359.0863 -281.3620 RIGHT SKID
 254  RPP  -431.9846 -406.5845 -300.6254 -275.2253 -281.3620 250.5161  RTSIDFRAME
 255  RPP  -431.9846 457.0189  -300.6254 -275.2253 250.5161  275.9162  RTSIDFRAME
-256  RPP  431.6186  457.0189  -300.6254 -275.2253 -281.3620 250.5161  RTSIDFRAHE
+256  RPP  431.6186  457.0189  -300.6254 -275.2253 -281.3620 250.5161  RTSIDFRAME
 257  RCC  -406.5845 -287.9254 -116.5865 636.2033  0.0000    0.0000    RTSIDFRAME
           12.7001   0.0000    0.0000    0.0000    0.0000    0.0000    RTSIDFRAME
 258  RPP  -431.9846 457.0189  269.2715  306.5792  -359.0863 -281.3620 LEFT SKID 
@@ -799,7 +799,7 @@ in ADA073408 table
   249    249    0      0      0      0      0      0      0      0      CRADLE AIR
   250    250    0      0      0      0      0      0      0      0      ENGSUPPORT
   251    251    0      0      0      0      0      0      0      0      ENGSUPPORT
-  252    252    0      0      0      0      0      0      0      0      ENGSUPPORT
+  252    252    0      0      0      0      0      0      0      0      GENSUPPORT
   253    253    -278   -279   -280   -281   0      0      0      0      RIGHT SKID
   254    254    0      0      0      0      0      0      0      0      RTSIDFRAME
   255    255    0      0      0      0      0      0      0      0      RTSIDFRAME
@@ -807,7 +807,7 @@ in ADA073408 table
   257    257    0      0      0      0      0      0      0      0      RTSIDFRAME
   258    258    -278   -279   -280   -261   0      0      0      0      LEFT SKID 
   259    259    0      0      0      0      0      0      0      0      LTSIDFRAME
-  260    260    0      0      0      0      0      0      0      0      LTSIDFRAHE
+  260    260    0      0      0      0      0      0      0      0      LTSIDFRAME
   261    261    0      0      0      0      0      0      0      0      LTSIDFRAME
   262    262    0      0      0      0      0      0      0      0      LTSIDFRAME
   263    263    0      0      0      0      0      0      0      0      FCROSFRAME
@@ -831,7 +831,7 @@ in ADA073408 table
   281    281    0      0      0      0      0      0      0      0      REAR PIAIR
   282    282    -161   0      0      0      0      0      0      0      FUEL      
 -1
-1    1    0    3    100  CRANSKSHAFT                                 
+1    1    0    3    100  CRANKSHAFT                                  
 2    2    0    3    100  CAMSHAFT                                    
 3    3    0    3    100  1C-ROD CRANKSHAFT                           
 4    4    0    3    100  1C-ROD PISTON                               
@@ -923,7 +923,7 @@ in ADA073408 table
 90   0    5    0    0    4SPR AIR EXH                                
 91   91   0    3    100  4VAL SPR IN                                 
 92   0    5    0    0    4SPR AIR IN                                 
-93   93   0    5    100  AIRFLIT                                     
+93   93   0    5    100  AIRFILT                                     
 94   0    5    0    0    AIRFILT AIR                                 
 95   95   0    5    12   AF-CARB P                                   
 96   96   0    5    12   AF-CARB P                                   
@@ -978,7 +978,7 @@ in ADA073408 table
 145  145  0    7    40   MAG-IPTS C                                  
 146  146  0    7    40   MAG-IPTS C                                  
 147  147  0    5    50   IGNIT PTS                                   
-148  148  0    5    25   OIL FITER                                   
+148  148  0    5    25   OIL FILTER                                  
 149  149  0    5    20   OILF-PUM P                                  
 150  150  0    5    20   OILF-PUM P                                  
 151  151  0    7    20   GOV OILL P                                  
@@ -1081,7 +1081,7 @@ in ADA073408 table
 248  248  0    5    100  CRADLE                                      
 249  0    5    0    0    CRADLE AIR                                  
 250  250  0    5    100  ENGSUPPORT                                  
-251  251  0    5    100  ENGSUPFORT                                  
+251  251  0    5    100  ENGSUPPORT                                  
 252  252  0    5    100  GENSUPPORT                                  
 253  253  0    5    40   RIGHT SKID                                  
 254  254  0    5    20   RTSIDFRAME                                  
@@ -1099,7 +1099,7 @@ in ADA073408 table
 266  266  0    18   80   RRSHOCKABS                                  
 267  267  0    18   60   LFSHOCKABS                                  
 268  268  0    18   80   LRSHOCKABS                                  
-269  269  0    5    100  RIGHTCCVER                                  
+269  269  0    5    100  RIGHTCOVER                                  
 270  0    5    0    0    RT COV AIR                                  
 271  271  0    5    100  RTSIDE COV                                  
 272  272  0    5    100  LEFT COVER                                  
