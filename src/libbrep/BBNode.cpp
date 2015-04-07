@@ -178,7 +178,7 @@ BBNode::getLeavesBoundingPoint(const ON_3dPoint &pt, std::list<BBNode *> &out)
     }
 }
 
-int
+bool
 BBNode::isTrimmed(const ON_2dPoint &uv, BRNode **closest, double &closesttrim, double within_distance_tol) const
 {
     BRNode *br;
@@ -189,7 +189,7 @@ BBNode::isTrimmed(const ON_2dPoint &uv, BRNode **closest, double &closesttrim, d
 	getTrimsAbove(uv, trims);
 
 	if (trims.empty()) {
-	    return 1;
+	    return true;
 	} else { /* find closest BB */
 	    std::list<BRNode *>::iterator i;
 	    BRNode *vclosest = NULL;
@@ -267,7 +267,7 @@ BBNode::isTrimmed(const ON_2dPoint &uv, BRNode **closest, double &closesttrim, d
 			*closest = uclosest;
 		    }
 		}
-		return 1;
+		return true;
 	    } else {
 		closesttrim = currHeight;
 		if ((verticalTrim) && (vdist < closesttrim)) {
@@ -287,9 +287,9 @@ BBNode::isTrimmed(const ON_2dPoint &uv, BRNode **closest, double &closesttrim, d
 	}
     } else {
 	if (m_trimmed) {
-	    return 1;
+	    return true;
 	} else {
-	    return 0;
+	    return false;
 	}
     }
 }

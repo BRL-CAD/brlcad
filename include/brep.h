@@ -350,7 +350,7 @@ public:
     fastf_t getCurveEstimateOfV(fastf_t u, fastf_t tol) const;
     fastf_t getCurveEstimateOfU(fastf_t v, fastf_t tol) const;
 
-    int isTrimmed(const ON_2dPoint &uv, double &trimdist) const;
+    bool isTrimmed(const ON_2dPoint &uv, double &trimdist) const;
     bool doTrimming() const;
 
 private:
@@ -657,7 +657,7 @@ public:
     ON_2dPoint getClosestPointEstimate(const ON_3dPoint &pt);
     ON_2dPoint getClosestPointEstimate(const ON_3dPoint &pt, ON_Interval &u, ON_Interval &v);
     int getLeavesBoundingPoint(const ON_3dPoint &pt, std::list<BBNode *> &out);
-    int isTrimmed(const ON_2dPoint &uv, BRNode **closest, double &closesttrim, double within_distance_tol) const;
+    bool isTrimmed(const ON_2dPoint &uv, BRNode **closest, double &closesttrim, double within_distance_tol) const;
     bool doTrimming() const;
 
     void getTrimsAbove(const ON_2dPoint &uv, std::list<BRNode *> &out_leaves) const;

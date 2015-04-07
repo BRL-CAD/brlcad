@@ -70,7 +70,7 @@ BRNode::closer(const ON_3dPoint &pt, BRNode *left, BRNode *right)
     }
 }
 
-int
+bool
 BRNode::isTrimmed(const ON_2dPoint &uv, double &trimdist) const
 {
     point_t bmin, bmax;
@@ -81,25 +81,25 @@ BRNode::isTrimmed(const ON_2dPoint &uv, double &trimdist) const
 	trimdist = v - uv[Y];
 	if (uv[Y] <= v) {
 	    if (m_XIncreasing) {
-		return 1;
+		return true;
 	    } else {
-		return 0;
+		return false;
 	    }
 	} else if (uv[Y] > v) {
 	    if (!m_XIncreasing) {
-		return 1;
+		return true;
 	    } else {
-		return 0;
+		return false;
 	    }
 	} else {
-	    return 1;
+	    return true;
 	}
     } else {
 	trimdist = -1.0;
 	if (m_trimmed) {
-	    return 1;
+	    return true;
 	} else {
-	    return 0;
+	    return false;
 	}
     }
 }
