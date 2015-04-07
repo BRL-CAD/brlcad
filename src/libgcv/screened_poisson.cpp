@@ -83,77 +83,119 @@ ignore_miss(struct application *app)
     return 0;
 }
 
+struct rt_parallel_container {
+    struct rt_i *rtip;
+    struct resource *resp;
+    struct bu_vls *logs;
+    int ray_dir;
+    int ncpus;
+    fastf_t delta;
+};
+
+void
+_rt_gen_worker(int cpu, void *ptr)
+{
+    int i, j;
+    struct application ap;
+    struct rt_parallel_container *state = (struct rt_parallel_container *)ptr;
+    point_t min, max;
+    int ymin, ymax;
+    int dir1, dir2, dir3;
+    fastf_t d[3];
+    int n[3];
+    RT_APPLICATION_INIT(&ap);
+    ap.a_rt_i = state->rtip;
+    ap.a_hit = add_hit_pnts;
+    ap.a_miss = ignore_miss;
+    ap.a_onehit = 0;
+    ap.a_logoverlap = rt_silent_logoverlap;
+    ap.a_resource = &state->resp[cpu];
+    ap.a_uptr = (void *)(&state->logs[cpu]);
+
+    /* get min and max points of bounding box */
+    VMOVE(min, state->rtip->mdl_min);
+    VMOVE(max, state->rtip->mdl_max);
+
+    /* Make sure we've got at least 10 steps in all 3 dimensions,
+     * regardless of delta */
+    for (i = 0; i < 3; i++) {
+	n[i] = (max[i] - min[i])/state->delta;
+	if(n[i] < 10) n[i] = 10;
+	d[i] = (max[i] - min[i])/n[i];
+    }
+
+    dir1 = state->ray_dir;
+    dir2 = (state->ray_dir+1)%3;
+    dir3 = (state->ray_dir+2)%3;
+
+    if (state->ncpus == 1) {
+	ymin = 0;
+	ymax = n[dir3];
+    } else {
+	ymin = n[dir3]/state->ncpus * (cpu - 1) + 1;
+	ymax = n[dir3]/state->ncpus * (cpu);
+	if (cpu == 1) ymin = 0;
+	if (cpu == state->ncpus) ymax = n[dir3];
+    }
+
+    ap.a_ray.r_dir[state->ray_dir] = -1;
+    ap.a_ray.r_dir[dir2] = 0;
+    ap.a_ray.r_dir[dir3] = 0;
+    VMOVE(ap.a_ray.r_pt, min);
+    ap.a_ray.r_pt[state->ray_dir] = max[state->ray_dir] + 100;
+
+    for (i = 0; i < n[dir2]; i++) {
+	ap.a_ray.r_pt[dir3] = min[dir3] + d[dir3] * ymin;
+	for (j = ymin; j < ymax; j++) {
+	    rt_shootray(&ap);
+	    ap.a_ray.r_pt[dir3] += d[dir3];
+	}
+	ap.a_ray.r_pt[dir2] += d[dir2];
+    }
+}
+
+
 HIDDEN int
 _rt_generate_points(struct bu_ptbl *hit_pnts, struct db_i *dbip, const char *obj, const char *file, fastf_t delta)
 {
-    int i, j;
-    int dir1, dir2, dir3;
-    point_t min, max;
-    fastf_t d[3];
-    int n[3];
-    struct application *app;
-    struct resource *resp;
-    struct rt_i *rtip;
+    int i, dir1;
+    int ncpus = bu_avail_cpus();
+    struct rt_parallel_container *state;
     struct bu_vls vlsstr;
     bu_vls_init(&vlsstr);
 
     if (!hit_pnts || !dbip || !obj) return -1;
 
-    rtip = rt_new_rti(dbip);
-    BU_ALLOC(resp, struct resource);
-    rt_init_resource(resp, 0, rtip);
+    BU_GET(state, struct rt_parallel_container);
 
-    if (rt_gettree(rtip, obj) < 0) return -1;
+    state->rtip = rt_new_rti(dbip);
 
-    BU_GET(app, struct application);
-    RT_APPLICATION_INIT(app);
-    app->a_onehit = 0;
-    app->a_logoverlap = rt_silent_logoverlap;
-    app->a_hit = add_hit_pnts;
-    app->a_miss = ignore_miss;
-    app->a_resource = resp;
-    app->a_rt_i = rtip;
-    //app->a_uptr = (void *)hit_pnts;
-    app->a_uptr = (void *)(&vlsstr);
+    if (rt_gettree(state->rtip, obj) < 0) return -1;
+    rt_prep_parallel(state->rtip, 1);
 
-    rt_prep_parallel(rtip, 1);
+    state->resp = (struct resource *)bu_calloc(2*ncpus, sizeof(struct resource), "resources");
+    for (i = 0; i < 2*ncpus; i++) {
+	rt_init_resource(&(state->resp[i]), i, state->rtip);
+    }
 
-    /* get min and max points of bounding box */
-    VMOVE(min, rtip->mdl_min);
-    VMOVE(max, rtip->mdl_max);
-
-    /* Make sure we've got at least 10 steps in all 3 dimensions,
-     * regardless of delta */
-    for (i = 0; i < 3; i++) {
-	n[i] = (max[i] - min[i])/delta;
-	if(n[i] < 10) n[i] = 10;
-	d[i] = (max[i] - min[i])/n[i];
+    state->logs = (struct bu_vls *)bu_calloc(2*ncpus, sizeof(struct bu_vls), "resources");
+    for (i = 0; i < 2*ncpus; i++) {
+	bu_vls_init(&(state->logs[i]));
     }
 
     for (dir1 = 0; dir1 < 3; dir1++) {
-	dir2 = (dir1+1)%3;
-	dir3 = (dir1+2)%3;
-	app->a_ray.r_dir[dir1] = -1;
-	app->a_ray.r_dir[dir2] = 0;
-	app->a_ray.r_dir[dir3] = 0;
-	VMOVE(app->a_ray.r_pt, min);
-	app->a_ray.r_pt[dir1] = max[dir1] + 100;
-	for (i = 0; i < n[dir2]; i++) {
-	    //bu_log("pnt %f %f %f\n", app->a_ray.r_pt[0], app->a_ray.r_pt[1], app->a_ray.r_pt[2]);
-	    app->a_ray.r_pt[dir3] = min[dir3];
-	    for (j = 0; j < n[dir3]; j++) {
-		rt_shootray(app);
-		app->a_ray.r_pt[dir3] += d[dir3];
-	    }
-	    app->a_ray.r_pt[dir2] += d[dir2];
-	}
+	state->ray_dir = dir1;
+	state->ncpus = ncpus;
+	state->delta = delta;
+	bu_parallel(_rt_gen_worker, ncpus, (void *)state);
     }
 
     FILE *fp = fopen(file, "w");
-    fprintf(fp, "%s", bu_vls_addr(&vlsstr));
+    for (i = 0; i < 2*ncpus; i++) {
+	if (bu_vls_strlen(&(state->logs[i])) > 0)
+	    fprintf(fp, "%s", bu_vls_addr(&(state->logs[i])));
+    }
     fclose(fp);
-    BU_PUT(resp, struct resource);
-    BU_PUT(app, struct application);
     return 0;
 }
 
