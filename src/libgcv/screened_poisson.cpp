@@ -198,7 +198,7 @@ add_hit_pnts(struct application *app, struct partition *partH, struct seg *UNUSE
 	    }
 	}
 
-        
+
 	VJOIN1(npt->in.p, app->a_ray.r_pt, pp->pt_inhit->hit_dist, app->a_ray.r_dir);
 	RT_HIT_NORMAL(npt->in.n, pp->pt_inhit, stp, &(app->a_ray), pp->pt_inflip);
 	npt->in.is_set = 1;
