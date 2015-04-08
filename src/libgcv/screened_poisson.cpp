@@ -22,21 +22,45 @@
  * Brief description
  *
  */
-
 extern "C" {
 #include "vmath.h"
 #include "raytrace.h"
 #include "gcv_private.h"
 }
+
 #if 0
-#include "MyTime.h"
+#if defined(__GNUC__) && (__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 6)) && !defined(__clang__)
+#  pragma GCC diagnostic push
+#endif
+#if defined(__clang__)
+#  pragma clang diagnostic push
+#endif
+#if defined(__GNUC__) && (__GNUC__ == 4 && __GNUC_MINOR__ >= 3) && !defined(__clang__)
+#  pragma GCC diagnostic ignored "-Wshadow"
+#  pragma GCC diagnostic ignored "-Wfloat-equal"
+#  pragma GCC diagnostic ignored "-Wunused-variable"
+#endif
+#if defined(__clang__)
+#  pragma clang diagnostic ignored "-Wshadow"
+#  pragma clang diagnostic ignored "-Wfloat-equal"
+#  pragma clang diagnostic ignored "-Wunused-variable"
+#endif
 #include "MarchingCubes.h"
 #include "Octree.h"
 #include "SparseMatrix.h"
 #include "PPolynomial.h"
 #include "MemoryUsage.h"
-#include "MultiGridOctreeData.h"
+#include "PointStream.h"
+#include "Factor.cpp"
+#include "Geometry.cpp"
+#include "MarchingCubes.cpp"
+#if defined(__GNUC__) && (__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 6)) && !defined(__clang__)
+#  pragma GCC diagnostic pop
 #endif
+#if defined(__clang__)
+#  pragma clang diagnostic pop
+#endif
+
 
 #define DEFAULT_FULL_DEPTH 5
 struct gcvpnt {
@@ -56,71 +80,97 @@ struct gcv_point_container {
     int capacity;
 };
 
-#if 0
-class GCVPointStream : public PoinStream< double >
+template< class Real >
+class GCVPointStream : public PointStream< Real >
 {
-    struct gcvpnt *gcvpnts;
+    struct gcvpnt **gcvpnts;
     int curr_ind;
+    int pnt_cnt;
     public:
-    GCVPointStream( struct gcvpnt *pnts );
+    GCVPointStream( struct gcvpnt **pnts, int cnt );
     ~GCVPointStream( void );
     void reset( void );
     bool nextPoint( Point3D< Real >& p , Point3D< Real >& n );
 
-}
+};
 
-GCVPointStream< double >::GCVPointStream( struct gcvpnt *pnts )
+template< class Real >
+GCVPointStream< Real >::GCVPointStream( struct gcvpnt **pnts, int cnt)
 {
     gcvpnts = pnts;
-    curr_int = 0;
+    curr_ind = 0;
+    pnt_cnt = cnt;
 }
-
-GCVPointStream< double >::~GCVPointStream( void )
+template< class Real >
+GCVPointStream< Real >::~GCVPointStream( void )
 {
 }
-
-void GCVPointStream< double >::reset( void ) { curr_ind = 0; }
-bool GCVPointStream< double >::nextPoint( Point3D< double >& p , Point3D< double >& n )
+template< class Real >
+void GCVPointStream< Real >::reset( void ) { curr_ind = 0; }
+template< class Real >
+bool GCVPointStream< Real >::nextPoint( Point3D< Real >& p , Point3D< Real >& n )
 {
-    while (gcvpnts[curr_ind] && !gcvpnts[curr_ind].is_set) curr_ind++;
-    if (!gcvpnts[curr_ind]) return false;
-    p[0] = gcvpnts[curr_ind].p[0] , p[1] = gcvpnts[curr_ind].p[1] , p[2] = gcvpnts[curr_ind].p[2];
-    n[0] = gcvpnts[curr_ind].n[0] , n[1] = gcvpnts[curr_ind].n[1] , n[2] = gcvpnts[curr_ind].n[2];
+    while (curr_ind < pnt_cnt && !gcvpnts[curr_ind]) curr_ind++;
+    if (curr_ind == pnt_cnt) return false;
+    p[0] = gcvpnts[curr_ind]->p[0] , p[1] = gcvpnts[curr_ind]->p[1] , p[2] = gcvpnts[curr_ind]->p[2];
+    n[0] = gcvpnts[curr_ind]->n[0] , n[1] = gcvpnts[curr_ind]->n[1] , n[2] = gcvpnts[curr_ind]->n[2];
     curr_ind++;
     return true;
 }
 
-
+template< class Real >
 class PossRecVertex
 {
     public:
 	const static int Components=3;
-	static PossRecProperty Properties[];
 
-	Point3D< double > point;
+	Point3D< Real > point;
 
 	PossRecVertex( void ) { ; }
-	PossRecVertex( Point3D< double > p ) { point=p; }
+	PossRecVertex( Point3D< Real > p ) { point=p; }
 	PossRecVertex operator + ( PossRecVertex p ) const { return PossRecVertex( point+p.point ); }
 	PossRecVertex operator - ( PossRecVertex p ) const { return PossRecVertex( point-p.point ); }
-	template< class _double > PossRecVertex operator * ( _double s ) const { return PossRecVertex( point*s ); }
-	template< class _double > PossRecVertex operator / ( _double s ) const { return PossRecVertex( point/s ); }
+	template< class _Real > PossRecVertex operator * ( _Real s ) const { return PossRecVertex( point*s ); }
+	template< class _Real > PossRecVertex operator / ( _Real s ) const { return PossRecVertex( point/s ); }
 	PossRecVertex& operator += ( PossRecVertex p ) { point += p.point ; return *this; }
 	PossRecVertex& operator -= ( PossRecVertex p ) { point -= p.point ; return *this; }
-	template< class _double > PossRecVertex& operator *= ( _double s ) { point *= s ; return *this; }
-	template< class _double > PossRecVertex& operator /= ( _double s ) { point /= s ; return *this; }
+	template< class _Real > PossRecVertex& operator *= ( _Real s ) { point *= s ; return *this; }
+	template< class _Real > PossRecVertex& operator /= ( _Real s ) { point /= s ; return *this; }
 };
-PossRecVertex< double > operator * ( XForm4x4< _double > xForm , PossRecVertex< double > v ) { return PossRecVertex< double >( xForm * v.point ); }
-PossRecProperty PossRecVertex< double >::Properties[]=
-{
-    { _strdup( "x" ) , PossRecType< double >() , PossRecType< double >() , int( offsetof( PossRecVertex , point.coords[0] ) ) , 0 , 0 , 0 , 0 },
-    { _strdup( "y" ) , PossRecType< double >() , PossRecType< double >() , int( offsetof( PossRecVertex , point.coords[1] ) ) , 0 , 0 , 0 , 0 },
-    { _strdup( "z" ) , PossRecType< double >() , PossRecType< double >() , int( offsetof( PossRecVertex , point.coords[2] ) ) , 0 , 0 , 0 , 0 }
-};
+template< class Real, class _Real >
+PossRecVertex< Real > operator * ( XForm4x4< _Real > xForm , PossRecVertex< Real > v ) { return PossRecVertex< Real >( xForm * v.point ); }
+
+template< class Real >
+void SetIsoVertexValue( PossRecVertex< float >& vertex , Real value ){ ; }
 
 
+#if defined(__GNUC__) && (__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 6)) && !defined(__clang__)
+#  pragma GCC diagnostic push
+#endif
+#if defined(__clang__)
+#  pragma clang diagnostic push
+#endif
+#if defined(__GNUC__) && (__GNUC__ == 4 && __GNUC_MINOR__ >= 3) && !defined(__clang__)
+#  pragma GCC diagnostic ignored "-Wshadow"
+#  pragma GCC diagnostic ignored "-Wfloat-equal"
+#  pragma GCC diagnostic ignored "-Wunused-variable"
+#endif
+#if defined(__clang__)
+#  pragma clang diagnostic ignored "-Wshadow"
+#  pragma clang diagnostic ignored "-Wfloat-equal"
+#  pragma clang diagnostic ignored "-Wunused-variable"
+#endif
+#include "MultiGridOctreeData.h"
+#if defined(__GNUC__) && (__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 6)) && !defined(__clang__)
+#  pragma GCC diagnostic pop
+#endif
+#if defined(__clang__)
+#  pragma clang diagnostic pop
+#endif
+
+#if 1
 int
-PoissonBuild(struct gcv)
+PoissonBuild(struct gcvpnt **gcvpnts, int cnt)
 {
     XForm4x4< double > xForm;
     xForm = XForm4x4< double >::Identity();
@@ -128,12 +178,12 @@ PoissonBuild(struct gcv)
     tree.threads = bu_avail_cpus();
     OctNode< TreeNodeData >::SetAllocator( MEMORY_ALLOCATOR_BLOCK_SIZE );
     double maxMemoryUsage;
-    typename Octree< double >::PointInfo* pointInfo = new typename Octree< double >::PointInfo();
-    typename Octree< double >::NormalInfo* normalInfo = new typename Octree< double >::NormalInfo();
+    Octree< double >::PointInfo* pointInfo = new Octree< double >::PointInfo();
+    Octree< double >::NormalInfo* normalInfo = new Octree< double >::NormalInfo();
     std::vector< double >* kernelDensityWeights = new std::vector< double >();
     std::vector< double >* centerWeights = new std::vector< double >();
-    PointStream< float >* pointStream = new GCVPointStream< float >();
-    int pointCount = tree.template SetTree< float >( pointStream , 0 , 8 , DEFAULT_FULL_DEPTH , 6 , 1.0 , 1.1, 0 , 0 , 4.0 , 1 , *pointInfo , *normalInfo , *kernelDensityWeights , *centerWeights , 1 , xForm , 0 );
+    PointStream< float >* pointStream = new GCVPointStream< float >( gcvpnts, cnt );
+    int pointCount = tree.SetTree< float >( pointStream , 0 , 8 , DEFAULT_FULL_DEPTH , 6 , 1.0 , 1.1, 0 , 0 , 4.0 , 1 , *pointInfo , *normalInfo , *kernelDensityWeights , *centerWeights , 1 , xForm , 0 );
     delete kernelDensityWeights;
     kernelDensityWeights = NULL;
     Pointer( double ) constraints = tree.SetLaplacianConstraints( *normalInfo );
@@ -141,7 +191,7 @@ PoissonBuild(struct gcv)
     Pointer( double ) solution = tree.SolveSystem( *pointInfo , constraints , 0 , 8 , 8 , 0 , float(1e-3) );
     delete pointInfo;
     FreePointer(constraints);
-    CoredFileMeshData< PossRecVertex > mesh;
+    CoredFileMeshData< PossRecVertex <float> > mesh;
     double isoValue = tree.GetIsoValue( solution , *centerWeights );
     tree.GetMCIsoSurface( NullPointer< double >() , solution , isoValue , mesh , true , 1 , 0 );
 /* mesh to BRL-CAD triangles */
@@ -337,26 +387,47 @@ _rt_generate_points(struct bu_ptbl *hit_pnts, struct db_i *dbip, const char *obj
 	bu_parallel(_rt_gen_worker, ncpus, (void *)state);
     }
     struct bu_vls log = BU_VLS_INIT_ZERO;
+
+    int out_cnt = 0;
     for (i = 0; i < ncpus+1; i++) {
 	bu_log("%d, pnt_cnt: %d\n", i, state->npts[i].pnt_cnt);
 	for (j = 0; j < state->npts[i].pnt_cnt; j++) {
 	    struct npoints *npt = &(state->npts[i].pts[j]);
-	    if (npt->in.is_set)
-		bu_vls_printf(&log, "%f %f %f %f %f %f\n", npt->in.p[0], npt->in.p[1], npt->in.p[2], npt->in.n[0], npt->in.n[1], npt->in.n[2]);
-	    if (npt->out.is_set)
-		bu_vls_printf(&log, "%f %f %f %f %f %f\n", npt->out.p[0], npt->out.p[1], npt->out.p[2], npt->out.n[0], npt->out.n[1], npt->out.n[2]);
+	    if (npt->in.is_set) out_cnt++;
+	    if (npt->out.is_set) out_cnt++;
 	}
     }
+
+    struct gcvpnt **gcvpnts = (struct gcvpnt **)bu_calloc(out_cnt, sizeof(struct gcvpnt *), "output array");
+    int curr_ind = 0;
+    for (i = 0; i < ncpus+1; i++) {
+	for (j = 0; j < state->npts[i].pnt_cnt; j++) {
+	    struct npoints *npt = &(state->npts[i].pts[j]);
+	    if (npt->in.is_set) {
+		gcvpnts[curr_ind] = &(npt->in);
+		curr_ind++;
+	    }
+	    if (npt->out.is_set) {
+		gcvpnts[curr_ind] = &(npt->out);
+		curr_ind++;
+	    }
+	}
+    }
+
+    (void)PoissonBuild(gcvpnts, out_cnt);
+
     FILE *fp = fopen(file, "w");
     fprintf(fp, "%s", bu_vls_addr(&log));
     fclose(fp);
     return 0;
 }
+#endif
 
 extern "C" void
 gcv_generate_mesh(int **faces, int *num_faces, point_t **points, int *num_pnts,
 	struct db_i *dbip, const char *obj, const char *file, fastf_t delta)
 {
+#if 0
     fastf_t d = delta;
     struct bu_ptbl *hit_pnts;
     if (!faces || !num_faces || !points || !num_pnts) return;
@@ -369,8 +440,8 @@ gcv_generate_mesh(int **faces, int *num_faces, point_t **points, int *num_pnts,
 	(*num_pnts) = 0;
 	return;
     }
+#endif
 }
-
 // Local Variables:
 // tab-width: 8
 // mode: C++
