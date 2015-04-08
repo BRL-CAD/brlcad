@@ -44,7 +44,7 @@ const struct gcv_converter *gcv_converter_find(const char *path, enum gcv_conver
  * change signature */
 void
 gcv_generate_mesh(int **faces, int *num_faces, point_t **points, int *num_pnts,
-	                struct db_i *dbip, const char *obj, const char *file, fastf_t delta);
+	                struct db_i *dbip, const char *obj, fastf_t delta);
 
 __END_DECLS
 

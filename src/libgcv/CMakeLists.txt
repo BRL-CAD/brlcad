@@ -1,5 +1,6 @@
 include_directories(
   ${CMAKE_CURRENT_SOURCE_DIR}/wfobj
+  ${CMAKE_CURRENT_SOURCE_DIR}/poissonrecon
   ${CMAKE_CURRENT_BINARY_DIR}
   )
 
@@ -68,7 +69,7 @@ list(APPEND LIBGCV_SOURCES
   ${CMAKE_CURRENT_BINARY_DIR}/obj_rules.cpp
   )
 
-BRLCAD_ADDLIB(libgcv "${LIBGCV_SOURCES}" "librt;libwdb;libbu")
+BRLCAD_ADDLIB(libgcv "${LIBGCV_SOURCES}" "librt;libwdb;libbu" NO_STRICT_CXX)
 SET_TARGET_PROPERTIES(libgcv PROPERTIES VERSION 20.0.1 SOVERSION 20)
 
 BRLCAD_ADDEXEC(gcv gcv.c libgcv)
@@ -82,7 +83,17 @@ add_test(NAME bottess_test COMMAND test_bottess)
 
 BRLCAD_ADDEXEC(test_screened_poisson test_screened_poisson.cpp "libgcv" NO_INSTALL)
 
-CMAKEFILES(NOTES gcv_private.h plugin.h soup.h tri_intersect.h bot_solidity.h)
+set(GCV_IGNORE_FILES
+  NOTES
+  gcv_private.h
+  plugin.h
+  soup.h
+  tri_intersect.h
+  bot_solidity.h
+  poissonrecon
+  )
+CMAKEFILES(${GCV_IGNORE_FILES})
+
 DISTCLEAN(${CMAKE_CURRENT_BINARY_DIR}/CTestTestfile.cmake)
 DISTCLEAN(${CMAKE_CURRENT_BINARY_DIR}/wfobj/CTestTestfile.cmake)
 

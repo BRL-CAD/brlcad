@@ -30,6 +30,7 @@
 
 #include "vmath.h"
 #include "raytrace.h"
+#include "wdb.h"
 #include "gcv_private.h"
 
 int
@@ -37,11 +38,13 @@ main(int argc, char *argv[])
 {
     struct db_i *dbip;
     struct directory *dp;
+    struct rt_wdb *wdbp;
     struct rt_db_internal intern;
+    struct bu_vls bot_name = BU_VLS_INIT_ZERO;
     int tol;
 
-    if (argc != 5) {
-	bu_exit(1, "Usage: %s file.g object outfile tol(inter number of mm)", argv[0]);
+    if (argc != 4) {
+	bu_exit(1, "Usage: %s file.g object tol(inter number of mm)", argv[0]);
     }
 
     dbip = db_open(argv[1], DB_OPEN_READWRITE);
@@ -57,7 +60,12 @@ main(int argc, char *argv[])
 	bu_exit(1, "ERROR: Unable to look up object %s\n", argv[2]);
     }
 
-    tol = atoi(argv[4]);
+    wdbp = wdb_dbopen(dbip, RT_WDB_TYPE_DB_DISK);
+    if (wdbp == RT_WDB_NULL) {
+	bu_exit(1, "ERROR: wdb open failed\n");
+    }
+
+    tol = atoi(argv[3]);
 
     RT_DB_INTERNAL_INIT(&intern)
     if (rt_db_get_internal(&intern, dp, dbip, NULL, &rt_uniresource) < 0) {
@@ -67,7 +75,14 @@ main(int argc, char *argv[])
     int *faces;
     point_t *points;
     int num_faces, num_pnts;
-    gcv_generate_mesh(&faces, &num_faces, &points, &num_pnts, dbip, dp->d_namep, argv[3], tol);
+    gcv_generate_mesh(&faces, &num_faces, &points, &num_pnts, dbip, dp->d_namep, tol);
+
+    bu_vls_printf(&bot_name, "%s.bot", dp->d_namep);
+    if (mk_bot(wdbp, bu_vls_addr(&bot_name), RT_BOT_SOLID, RT_BOT_UNORIENTED, 0, num_pnts, num_faces, (fastf_t *)points, faces, (fastf_t *)NULL, (struct bu_bitv *)NULL)) {
+	bu_log("mk_bot failed\n");
+    }
+
+
 
     return 0;
 }
