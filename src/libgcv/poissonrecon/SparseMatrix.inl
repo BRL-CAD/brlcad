@@ -1341,3 +1341,4 @@ void SparseSymmetricMatrix< T >::getDiagonal( Vector< T2 >& diagonal , int threa
 		diagonal[i] = d * T2(2);
 	}
 }
+
