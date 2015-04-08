@@ -159,8 +159,8 @@ void SetIsoVertexValue( PossRecVertex< float >& vertex , Real value ){ ; }
 #  pragma clang diagnostic ignored "-Wfloat-equal"
 #  pragma clang diagnostic ignored "-Wunused-variable"
 #endif
-void DumpOutput( const char* format , ... ) {};
-void DumpOutput2( char* str , const char* format , ... ) {};
+void DumpOutput( const char* format , ... ) {}
+void DumpOutput2( char* str , const char* format , ... ) {}
 #include "MultiGridOctreeData.h"
 #if defined(__GNUC__) && (__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 6)) && !defined(__clang__)
 #  pragma GCC diagnostic pop
