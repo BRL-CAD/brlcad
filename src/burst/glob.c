@@ -145,27 +145,27 @@ fastf_t zaxis[3] = { 0.0, 0.0, 1.0 };
 fastf_t negzaxis[3] = { 0.0, 0.0, -1.0 };
 
 int co;			/* columns of text displayable on video screen */
-int devwid;		/* width in pixels of frame buffer window */
-int devhgt;		/* height in pixels of frame buffer window */
+size_t devwid;		/* width in pixels of frame buffer window */
+size_t devhgt;		/* height in pixels of frame buffer window */
 int firemode = FM_DFLT;	/* mode of specifying shots */
-int gridsz = 512;
-int gridxfin;
-int gridyfin;
-int gridxorg;
-int gridyorg;
-int gridwidth;		/* Grid width in cells. */
-int gridheight;		/* Grid height in cells. */
+size_t gridsz = 512;
+size_t gridxfin;
+size_t gridyfin;
+size_t gridxorg;
+size_t gridyorg;
+size_t gridwidth;		/* Grid width in cells. */
+size_t gridheight;		/* Grid height in cells. */
 int li;			/* lines of text displayable on video screen */
-int nbarriers = DFL_BARRIERS;
+size_t nbarriers = DFL_BARRIERS;
 /* no. of barriers allowed to critical comp */
-int noverlaps = 0;	/* no. of overlaps encountered in this view */
-int nprocessors;	/* no. of processors running concurrently */
-int nriplevels = DFL_RIPLEVELS;
+size_t noverlaps = 0;	/* no. of overlaps encountered in this view */
+size_t nprocessors;	/* no. of processors running concurrently */
+size_t nriplevels = DFL_RIPLEVELS;
 /* no. of levels of ripping (0 = no ripping) */
-int nspallrays = DFL_NRAYS;
+size_t nspallrays = DFL_NRAYS;
 /* no. of spall rays at each burst point */
 int units = DFL_UNITS;	/* target units (default is millimeters) */
-int zoom = 1;		/* magnification factor on frame buffer */
+size_t zoom = 1;		/* magnification factor on frame buffer */
 
 struct rt_i *rtip = RTI_NULL; /* model specific access from librt */
 

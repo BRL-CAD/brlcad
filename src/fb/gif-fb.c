@@ -95,16 +95,16 @@ static char *gif_file = NULL;	/* GIF file name */
 static FILE *gfp = NULL;		/* GIF input stream handle */
 static char *fb_file = NULL;	/* frame buffer name */
 static fb *fbp = FB_NULL;	/* frame buffer handle */
-static int ht;			/* virtual frame buffer height */
-static int width, height;		/* overall "screen" size */
-static int write_width;		/* used width of screen, <= width */
-static int left, top, right, bottom;	/* image boundary */
+static size_t ht;			/* virtual frame buffer height */
+static size_t width, height;		/* overall "screen" size */
+static size_t write_width;		/* used width of screen, <= width */
+static size_t left, top, right, bottom;	/* image boundary */
 static bool_t M_bit;			/* set if color map provided */
 static bool_t I_bit;			/* set if image interlaced */
-static int cr;			/* # bits of color resolution */
+static size_t cr;			/* # bits of color resolution */
 static int cr_mask;		/* mask to strip all but high cr bits */
-static int g_pixel;		/* global # bits/pixel in image */
-static int pixel;			/* local # bits/pixel in image */
+static size_t g_pixel;		/* global # bits/pixel in image */
+static size_t pixel;			/* local # bits/pixel in image */
 static int background;		/* color index of screen background */
 static size_t entries;		/* # of global color map entries */
 static RGBpixel *g_cmap;		/* bu_malloc()ed global color map */
@@ -155,9 +155,9 @@ Skip(void)					/* skip over raster data */
   let the LZW decompression drive pixel writing than vice versa.
 */
 
-static int start_row[5] = { 0, 4, 2, 1, 0 };
-static int step[5] = { 8, 8, 4, 2, 1 };
-static int row, col;			/* current pixel coordinates */
+static size_t start_row[5] = { 0, 4, 2, 1, 0 };
+static size_t step[5] = { 8, 8, 4, 2, 1 };
+static size_t row, col;			/* current pixel coordinates */
 static int pass;			/* current pass */
 static int stop;			/* final pass + 1 */
 static unsigned char *pixbuf = NULL;	/* bu_malloc()ed scan line buffer */
@@ -212,10 +212,10 @@ PutPixel(int value)
   explicit stack to expand the strings.
 */
 
-static int code_size;		/* initial LZW chunk size, in bits */
-static int chunk_size;		/* current LZW chunk size, in bits */
+static size_t code_size;	/* initial LZW chunk size, in bits */
+static size_t chunk_size;	/* current LZW chunk size, in bits */
 static int chunk_mask;		/* bit mask for extracting chunks */
-static int compress_code;		/* first compression code value */
+static int compress_code;	/* first compression code value */
 static int k;			/* extension character */
 static struct
 {
@@ -224,9 +224,9 @@ static struct
 }	table[1 << 12];		/* big enough for 12-bit codes */
 /* Unlike the example in Welch's paper, our table contains no atomic values. */
 
-static int bytecnt;		/* # of bytes remaining in block */
+static size_t bytecnt;		/* # of bytes remaining in block */
 static int rem_bits;		/* data bits left over from last call */
-static int bits_on_hand;		/* # of bits left over from last call */
+static size_t bits_on_hand;		/* # of bits left over from last call */
 
 
 static int
@@ -327,8 +327,10 @@ LZW(void)
     int eoi_code;	/* end of LZW stream */
     int clear_code;	/* table reset code */
 
-    if ((code_size = getc(gfp)) == EOF)
+    c = getc(gfp);
+    if (c == EOF)
 	Fatal(fbp, "Error reading code size");
+    code_size = c;
 
     if (code_size < pixel)
 	Message("Warning: initial code size smaller than colormap");
@@ -671,8 +673,8 @@ main(int argc, char **argv)
     }
 
     {
-	int wt = fb_getwidth(fbp);
-	int zoom;
+	size_t wt = fb_getwidth(fbp);
+	size_t zoom;
 
 	ht = fb_getheight(fbp);
 
@@ -709,7 +711,7 @@ main(int argc, char **argv)
 
     /* Fill scanline buffer with background color too */
     {
-	int i;
+	size_t i;
 	for (i=0; i < width; i++) {
 	    COPYRGB(&pixbuf[i*3], g_cmap[background]);
 	}
@@ -800,9 +802,7 @@ main(int argc, char **argv)
 		    Message(I_bit ? "interlaced" : "sequential");
 		}
 
-		if (left < 0 || right > width || left >= right
-		    || top < 0 || bottom > height || top >= bottom)
-		{
+		if (right > width || left >= right || bottom > height || top >= bottom) {
 		    Fatal(fbp, "Absurd image (%d, %d, %d, %d)", left, top, right, bottom);
 		}
 	    }

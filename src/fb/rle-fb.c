@@ -48,10 +48,10 @@ static unsigned char *scan_buf;		/* single scanline buffer */
 static ColorMap cmap;
 
 static char *framebuffer = (char *)0;
-static int screen_width = 0;
-static int screen_height = 0;
-static int scr_xoff = 0;
-static int scr_yoff = 0;
+static size_t screen_width = 0;
+static size_t screen_height = 0;
+static off_t scr_xoff = 0;
+static off_t scr_yoff = 0;
 
 static int crunch = 0;
 static int overlay = 0;
@@ -142,10 +142,10 @@ main(int argc, char **argv)
 {
     fb *fbp;
     int i;
-    int file_width;		/* unclipped width of rectangle */
-    int file_skiplen;		/* # of pixels to skip on l.h.s. */
-    int screen_xbase;		/* screen X of l.h.s. of rectangle */
-    int screen_xlen;		/* clipped len of rectangle */
+    size_t file_width;		/* unclipped width of rectangle */
+    size_t file_skiplen;		/* # of pixels to skip on l.h.s. */
+    off_t screen_xbase;		/* screen X of l.h.s. of rectangle */
+    size_t screen_xlen;		/* clipped len of rectangle */
     int ncolors;
 
     infp = stdin;
@@ -229,10 +229,10 @@ main(int argc, char **argv)
 	screen_height = fb_getheight(fbp);
 
     /* Discard any scanlines which exceed screen height */
-    V_MIN(rle_dflt_hdr.ymax, screen_height-1);
+    V_MIN(rle_dflt_hdr.ymax, (int)(screen_height-1));
 
     /* Clip left edge */
-    screen_xlen = rle_dflt_hdr.xmax + 1;
+    screen_xlen = (size_t)rle_dflt_hdr.xmax + 1;
     file_skiplen = 0;
     if (screen_xbase < 0) {
 	file_skiplen = -screen_xbase;
@@ -243,7 +243,7 @@ main(int argc, char **argv)
     if (screen_xbase + screen_xlen > screen_width)
 	screen_xlen = screen_width - screen_xbase;
     if (screen_xlen <= 0 ||
-	rle_dflt_hdr.ymin > screen_height ||
+	(size_t)rle_dflt_hdr.ymin > screen_height ||
 	rle_dflt_hdr.ymax < 0) {
 	fprintf(stderr,
 		"rle-fb:  Warning: RLE image rectangle entirely off screen\n");
@@ -300,7 +300,7 @@ main(int argc, char **argv)
 	rle_pixel *rp = &(rows[0][file_skiplen]);
 	rle_pixel *gp = &(rows[1][file_skiplen]);
 	rle_pixel *bp = &(rows[2][file_skiplen]);
-	int j;
+	size_t j;
 
 	if (overlay) {
 	    fb_read(fbp, screen_xbase, i, scan_buf, screen_xlen);
@@ -331,7 +331,7 @@ main(int argc, char **argv)
 		*pp++ = cmap.cm_blue[*bp++]>>8;
 	    }
 	}
-	if (fb_write(fbp, screen_xbase, i, scan_buf, screen_xlen) != screen_xlen) break;
+	if (fb_write(fbp, screen_xbase, i, scan_buf, screen_xlen) != (int)screen_xlen) break;
     }
 done:
     fb_close(fbp);

@@ -51,14 +51,14 @@ int doKeyPad(void);
 #define MaxYPan (fb_getheight(fbp)-1)
 #define MinPan (0)
 
-static int PanFactor;			/* Speed with which to pan.	*/
-static int xPan, yPan;			/* Pan Location.		*/
-static int xZoom, yZoom;		/* Zoom Factor.			*/
-static int new_xPan, new_yPan;
-static int new_xZoom, new_yZoom;
+static size_t PanFactor;			/* Speed with which to pan.	*/
+static size_t xPan, yPan;			/* Pan Location.		*/
+static size_t xZoom, yZoom;		/* Zoom Factor.			*/
+static size_t new_xPan, new_yPan;
+static size_t new_xZoom, new_yZoom;
 
-static int scr_width = 512;		/* screen size */
-static int scr_height = 512;
+static size_t scr_width = 512;		/* screen size */
+static size_t scr_height = 512;
 static int toggle_pan = 0;		/* Reverse sense of pan commands? */
 static char *framebuffer = NULL;
 static fb *fbp;
@@ -125,8 +125,8 @@ main(int argc, char **argv)
 	    }
 	}
 	(void) fprintf(stdout,
-		       "Center Pixel: %4d %4d   Zoom: %2d %2d   %s\r",
-		       xPan, yPan, xZoom, yZoom,
+		       "Center Pixel: %4lu %4lu   Zoom: %2lu %2lu   %s\r",
+		       (unsigned long)xPan, (unsigned long)yPan, (unsigned long)xZoom, (unsigned long)yZoom,
 		       toggle_pan ? "Pan: image "
 		       : "Pan: window");
 	(void) fflush(stdout);

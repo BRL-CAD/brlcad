@@ -462,11 +462,14 @@ f_Script(char **args)
 static int
 f_SetFbSize(char **args)
 {
+    int scan = 0;
+
     if (args != NULL && args[1] != NULL) {
-	if (sscanf(args[1], "%d", &fb_size) != 1) {
+	if (sscanf(args[1], "%d", &scan) != 1) {
 	    force_fbsz = FALSE;
 	    return -1;
 	}
+	fb_size = scan;
 	force_fbsz = fb_size > 0 ? TRUE : FALSE;
     } else {
 	(void) sprintf(prompt, "Set frame buffer size ? [y|n](%c) ",
@@ -476,12 +479,14 @@ f_SetFbSize(char **args)
 	    force_fbsz = input_ln[0] != 'n';
 	if (force_fbsz) {
 	    (void) sprintf(prompt,
-			   "Frame buffer size ? (%d) ", fb_size);
+			   "Frame buffer size ? (%lu) ", (unsigned long)fb_size);
 	    if (get_Input(input_ln, MAX_LN, prompt) != NULL
-		&& sscanf(input_ln, "%d", &fb_size) != 1
+		&& sscanf(input_ln, "%d", &scan) != 1
 		) {
 		force_fbsz = FALSE;
 		return -1;
+	    } else {
+		fb_size = scan;
 	    }
 	}
     }
@@ -655,22 +660,27 @@ f_Grid_Roll(char **args)
 static int
 f_Anti_Aliasing(char **args)
 {
+    int scan;
+
     if (args == NULL || args[1] == NULL
-	|| sscanf(args[1], "%d", &aperture_sz) != 1
+	|| sscanf(args[1], "%d", &scan) != 1
 	)
     {
 	if (tty) {
 	    (void) sprintf(prompt,
-			   "Anti-aliasing factor ? (%d) ",
-			   aperture_sz
+			   "Anti-aliasing factor ? (%lu) ",
+			   (unsigned long)aperture_sz
 		);
 	    if (get_Input(input_ln, MAX_LN, prompt) != NULL
-		&& sscanf(input_ln, "%d", &aperture_sz) != 1
+		&& sscanf(input_ln, "%d", &scan) != 1
 		)
 		return -1;
-	} else
+	} else {
 	    return -1;
-    }
+	}
+     }
+    aperture_sz = scan;
+
     if (aperture_sz > 1) {
 	anti_aliasing = TRUE;
 	sample_sz = aperture_sz * aperture_sz;
@@ -757,14 +767,14 @@ pt_Select(int x, int y, int *xp, int *yp, int *originp)
     if (*originp) {
 	*xp = x;
 	*yp = y;
-	(void) sprintf(args[1], "%d", x - x_fb_origin);
-	(void) sprintf(args[2], "%d", grid_x_fin);
+	(void) sprintf(args[1], "%lu", (unsigned long)x - x_fb_origin);
+	(void) sprintf(args[2], "%lu", (unsigned long)grid_x_fin);
 	(void) f_Grid_X_Pos(args);
-	(void) sprintf(args[1], "%d", y - y_fb_origin);
-	(void) sprintf(args[2], "%d", grid_y_fin);
+	(void) sprintf(args[1], "%lu", (unsigned long)y - y_fb_origin);
+	(void) sprintf(args[2], "%lu", (unsigned long)grid_y_fin);
 	(void) f_Grid_Y_Pos(args);
     } else {
-	int x_fin, y_fin;
+	size_t x_fin, y_fin;
 	x_fin = x - x_fb_origin;
 	y_fin = y - y_fb_origin;
 	if (x_fin < grid_x_org) {
@@ -773,11 +783,11 @@ pt_Select(int x, int y, int *xp, int *yp, int *originp)
 	if (y_fin < grid_y_org) {
 	    Swap_Integers(y_fin, grid_y_org);
 	}
-	(void) sprintf(args[1], "%d", grid_x_org);
-	(void) sprintf(args[2], "%d", x_fin);
+	(void) sprintf(args[1], "%lu", (unsigned long)grid_x_org);
+	(void) sprintf(args[2], "%lu", (unsigned long)x_fin);
 	(void) f_Grid_X_Pos(args);
-	(void) sprintf(args[1], "%d", grid_y_org);
-	(void) sprintf(args[2], "%d", y_fin);
+	(void) sprintf(args[1], "%lu", (unsigned long)grid_y_org);
+	(void) sprintf(args[2], "%lu", (unsigned long)y_fin);
 	(void) f_Grid_Y_Pos(args);
     }
     Toggle(*originp);
@@ -815,7 +825,7 @@ setGridSize()
     char *ar[3];
     ar[1] = "0";
     ar[2] = buf;
-    (void) sprintf(ar[2], "%d", grid_sz-1);
+    (void) sprintf(ar[2], "%lu", (unsigned long)grid_sz-1);
     (void) f_Grid_X_Pos(ar);
     (void) f_Grid_Y_Pos(ar);
     return;
@@ -945,7 +955,7 @@ f_Cursor_Module()
 			y--;
 		    break;
 		case UP :
-		    if (y < grid_sz - 1)
+		    if ((size_t)y < grid_sz - 1)
 			y++;
 		    break;
 		case LEFT :
@@ -953,7 +963,7 @@ f_Cursor_Module()
 			x--;
 		    break;
 		case RIGHT :
-		    if (x < grid_sz - 1)
+		    if ((size_t)x < grid_sz - 1)
 			x++;
 		    break;
 		case JDOWN :
@@ -962,7 +972,7 @@ f_Cursor_Module()
 		    break;
 		case JUP :
 		    y += JUMP;
-		    V_MIN(y, grid_sz - 1);
+		    V_MIN(y, (int)grid_sz - 1);
 		    break;
 		case JLEFT :
 		    x -= JUMP;
@@ -970,7 +980,7 @@ f_Cursor_Module()
 		    break;
 		case JRIGHT :
 		    x += JUMP;
-		    V_MIN(x, grid_sz - 1);
+		    V_MIN(x, (int)grid_sz - 1);
 		    break;
 		case CENTER :
 		    cx = x;
@@ -1103,7 +1113,7 @@ f_Cursor_Module()
 				    ar[0] = "G";
 				    ar[1] = buf;
 				    ar[2] = NULL;
-				    (void) sprintf(ar[1], "%d", grid_sz);
+				    (void) sprintf(ar[1], "%lu", (unsigned long)grid_sz);
 				    (void) f_GridConfig(ar);
 				}
 		    reset_Tty(0);
@@ -1157,23 +1167,28 @@ exit_cm :	;
 static int
 f_Display_Origin(char **args)
 {
+    int scanx, scany;
     if (args == NULL ||
-	args[1] == NULL || sscanf(args[1], "%d", &x_fb_origin) != 1
-	|| args[2] == NULL || sscanf(args[2], "%d", &y_fb_origin) != 1
+	args[1] == NULL || sscanf(args[1], "%d", &scanx) != 1
+	|| args[2] == NULL || sscanf(args[2], "%d", &scany) != 1
 	)
     {
 	if (tty) {
 	    (void) sprintf(prompt,
 			   "Image offset ? [x y](%d %d) ",
-			   x_fb_origin, y_fb_origin
+			   scanx, scany
 		);
 	    if (get_Input(input_ln, MAX_LN, prompt) != NULL
-		&& sscanf(input_ln, "%d %d", &x_fb_origin, &y_fb_origin) != 2
+		&& sscanf(input_ln, "%d %d", &scanx, &scany) != 2
 		)
 		return -1;
 	} else
 	    return -1;
     }
+
+    x_fb_origin = scanx;
+    y_fb_origin = scany;
+
     return 1;
 }
 
@@ -1206,7 +1221,7 @@ f_Animate()
 	(void) signal(SIGINT, abort_RT);
 	for (frame_no = 0; ! user_interrupt; frame_no++) {
 	    fb *movie_fbiop;
-	    int y;
+	    size_t y;
 	    if (frame_no == noframes)
 		frame_no = 0;
 	    (void) sprintf(suffixptr, ".%04d", frame_no);
@@ -1264,12 +1279,14 @@ static int
 f_GridConfig(char **args)
 {
     double scan;
+    int gscan = 0;
 
     if (args != NULL && args[1] != NULL && args[2] == NULL) {
 	/* Old style 'G' command for upward compatibility of
 	   'lgt' scripts. */
-	if (sscanf(args[1], "%d", &grid_sz) != 1)
+	if (sscanf(args[1], "%d", &gscan) != 1)
 	    return -1;
+	grid_sz = gscan;
 	force_cellsz = FALSE;
 	type_grid = GT_RPP_CENTERED;
     } else
@@ -1287,10 +1304,11 @@ f_GridConfig(char **args)
 		}
 		cell_sz = scan; /* double to fastf_t */
 	    } else
-		if (sscanf(args[1], "%d", &grid_sz) != 1) {
+		if (sscanf(args[1], "%d", &gscan) != 1) {
 		    bu_log("Can't read grid size!\n");
 		    return -1;
 		}
+	    grid_sz = gscan;
 	    if (sscanf(args[3], "%d", &type_grid) != 1) {
 		bu_log("Can't read grid type!\n");
 		return -1;
@@ -1320,11 +1338,12 @@ f_GridConfig(char **args)
 			return -1;
 		    }
 		} else {
-		    (void) sprintf(prompt, "Grid size ? (%d) ", grid_sz);
+		    (void) sprintf(prompt, "Grid size ? (%lu) ", (unsigned long)grid_sz);
 		    if (get_Input(input_ln, MAX_LN, prompt) != NULL
-			&& sscanf(input_ln, "%d", &grid_sz) != 1
+			&& sscanf(input_ln, "%d", &gscan) != 1
 			)
 			return -1;
+		    grid_sz = gscan;
 		}
 		(void) sprintf(prompt,
 			       "Center image WRT model centroid ? [y|n](%c) ",
@@ -1355,7 +1374,7 @@ f_GridConfig(char **args)
 static int
 f_Wrt_Fb(char **args)
 {
-    int y;
+    size_t y;
     static char save_fb_file[MAX_LN] = { 0 };
     fb *save_fbiop;
     if (args != NULL && args[1] != NULL)
@@ -1417,7 +1436,7 @@ f_Wrt_Fb(char **args)
 static int
 f_Rd_Fb(char **args)
 {
-    int y;
+    size_t y;
     static char save_fb_file[MAX_LN] = { 0 };
     fb *save_fbiop;
     if (args != NULL && args[1] != NULL)
@@ -1842,17 +1861,19 @@ error_exit :
 static int
 f_Max_Bounce(char **args)
 {
+    int scan = 0;
+
     if (ir_mapping) {
 	bu_log("Multiple bounces disallowed during IR mapping.\n");
 	return -1;
     }
     if (args == NULL) {
 	(void) sprintf(prompt,
-		       "Maximum ray bounces ? (%d) ",
-		       max_bounce
+		       "Maximum ray bounces ? (%lu) ",
+		       (unsigned long)max_bounce
 	    );
 	if (get_Input(input_ln, MAX_LN, prompt) != NULL
-	    && sscanf(input_ln, "%d", &max_bounce) != 1
+	    && sscanf(input_ln, "%d", &scan) != 1
 	    )
 	{
 	    bu_log("f_Max_Bounce: Illegal input (%s)\n",
@@ -1860,9 +1881,13 @@ f_Max_Bounce(char **args)
 		);
 	    return -1;
 	}
-    } else
-	if (args[1] == NULL || sscanf(args[1], "%d", &max_bounce) != 1)
+    } else {
+	if (args[1] == NULL || sscanf(args[1], "%d", &scan) != 1)
 	    return -1;
+    }
+
+    max_bounce = scan;
+
     return 1;
 }
 
@@ -1982,8 +2007,8 @@ f_Tracking_Cursor(char **args)
 static int
 f_Parallel(char **args)
 {
-    int maxpsw = bu_avail_cpus();
-    CLAMP(maxpsw, 0, MAX_PSW);
+    int scan;
+    size_t maxpsw = bu_avail_cpus();
 
     if (maxpsw == 1) {
 	RTG.rtg_parallel = 0;
@@ -1991,18 +2016,18 @@ f_Parallel(char **args)
     }
 
     if (args == NULL) {
-	sprintf(prompt, "Number of parallel processors ? [1 to %d](%d) ", maxpsw, npsw);
+
+	sprintf(prompt, "Number of parallel processors ? [1 to %lu](%lu) ", (unsigned long)maxpsw, (unsigned long)npsw);
 
 	if (get_Input(input_ln, MAX_LN, prompt) == NULL)
 	    return -1; /* input error */
-	if (sscanf(input_ln, "%d", &npsw) != 1)
+	if (sscanf(input_ln, "%d", &scan) != 1)
 	    return -1; /* input error */
     } else {
-	if (args[1] == NULL || sscanf(args[1], "%d", &npsw) != 1)
+	if (args[1] == NULL || sscanf(args[1], "%d", &scan) != 1)
 	    return -1; /* input error */
     }
-
-    npsw = npsw > maxpsw ? maxpsw : npsw;
+    npsw = scan > (int)maxpsw ? maxpsw : scan;
     if (npsw > 1)
 	RTG.rtg_parallel = 1;
     else
@@ -2756,22 +2781,24 @@ f_Redraw()
 int
 f_Grid_X_Pos(char **args)
 {
+    int scanxorg, scanxfin;
+
     if (args != NULL && args[1] != NULL && args[2] != NULL
-	&& (sscanf(args[1], "%d", &grid_x_org) != 1
-	    || sscanf(args[2], "%d", &grid_x_fin) != 1
+	&& (sscanf(args[1], "%d", &scanxorg) != 1
+	    || sscanf(args[2], "%d", &scanxfin) != 1
 	    )
 	)
     {
 	bu_log("f_Grid_X_Pos : Illegal input.\n");
 	return -1;
-    } else
+    } else {
 	if (args == NULL) {
 	    (void) sprintf(prompt,
-			   "Horizontal grid indices ? [begin end](%d %d) ",
-			   grid_x_org, grid_x_fin
+			   "Horizontal grid indices ? [begin end](%lu %lu) ",
+			   (unsigned long)grid_x_org, (unsigned long)grid_x_fin
 		);
 	    if (get_Input(input_ln, MAX_LN, prompt) != NULL
-		&& sscanf(input_ln, "%d %d", &grid_x_org, &grid_x_fin)
+		&& sscanf(input_ln, "%d %d", &scanxorg, &scanxfin)
 		!= 2
 		)
 	    {
@@ -2779,10 +2806,15 @@ f_Grid_X_Pos(char **args)
 		return -1;
 	    }
 	}
+    }
+
+    grid_x_org = scanxorg;
+    grid_x_fin = scanxfin;
+
     if (tty) {
-	(void) sprintf(scratchbuf, " [%04d-", grid_x_org);
+	(void) sprintf(scratchbuf, " [%04lu-", grid_x_org);
 	bu_strlcpy(GRID_PIX_PTR, scratchbuf, strlen(scratchbuf));
-	(void) sprintf(scratchbuf, "%04d, ", grid_x_fin);
+	(void) sprintf(scratchbuf, "%04lu, ", grid_x_fin);
 	bu_strlcpy(GRID_SIZ_PTR, scratchbuf, strlen(scratchbuf));
     }
     grid_x_cur = grid_x_org;
@@ -2794,22 +2826,24 @@ f_Grid_X_Pos(char **args)
 int
 f_Grid_Y_Pos(char **args)
 {
+    int scanyorg, scanyfin;
+
     if (args != NULL && args[1] != NULL && args[2] != NULL
-	&& (sscanf(args[1], "%d", &grid_y_org) != 1
-	    || sscanf(args[2], "%d", &grid_y_fin) != 1
+	&& (sscanf(args[1], "%d", &scanyorg) != 1
+	    || sscanf(args[2], "%d", &scanyfin) != 1
 	    )
 	)
     {
 	bu_log("f_Grid_Y_Pos : Illegal input.\n");
 	return -1;
-    } else
+    } else {
 	if (args == NULL) {
 	    (void) sprintf(prompt,
-			   "Vertical grid indices ? [begin end](%d %d) ",
-			   grid_y_org, grid_y_fin
+			   "Vertical grid indices ? [begin end](%lu %lu) ",
+			   (unsigned long)grid_y_org, (unsigned long)grid_y_fin
 		);
 	    if (get_Input(input_ln, MAX_LN, prompt) != NULL
-		&& sscanf(input_ln, "%d %d", &grid_y_org, &grid_y_fin)
+		&& sscanf(input_ln, "%d %d", &scanyorg, &scanyfin)
 		!= 2
 		)
 	    {
@@ -2817,10 +2851,15 @@ f_Grid_Y_Pos(char **args)
 		return -1;
 	    }
 	}
+    }
+
+    grid_y_org = scanyorg;
+    grid_y_fin = scanyfin;
+
     if (tty) {
-	(void) sprintf(scratchbuf, "%04d-", grid_y_org);
+	(void) sprintf(scratchbuf, "%04lu-", grid_y_org);
 	bu_strlcpy(GRID_SCN_PTR, scratchbuf, strlen(scratchbuf));
-	(void) sprintf(scratchbuf, "%04d:", grid_y_fin);
+	(void) sprintf(scratchbuf, "%04lu:", grid_y_fin);
 	bu_strlcpy(GRID_FIN_PTR, scratchbuf, strlen(scratchbuf));
     }
     grid_y_cur = grid_y_org;
@@ -3004,7 +3043,7 @@ static fastf_t neg_z_axis[3] = { 0.0, 0.0, -1.0 };
 int
 setup_Lgts(int frame)
 {
-    int i;
+    size_t i;
     struct soltab *eye_stp = NULL;  /* Initialize to shut up the */
     struct soltab *grid_stp = NULL; /* stupid Cray compiler. */
     prnt_Event("Setting up light sources...");
@@ -3252,6 +3291,7 @@ make_Script(char *file)
 {
     FILE *run_fp;
     char **obj_p = objects;
+
     if (file != NULL)
 	bu_strlcpy(script_file, file, MAX_LN);
     else
@@ -3284,13 +3324,13 @@ make_Script(char *file)
 		   "# This script created with 'w' command of 'lgt'.\n"
 	);
     (void) fprintf(run_fp,
-		   "exec %s -f%g -x\"%d %d\" -y\"%d %d\"",
+		   "exec %s -f%g -x\"%lu %lu\" -y\"%lu %lu\"",
 		   prog_id,
 		   grid_dist,
-		   grid_x_org,
-		   grid_x_fin,
-		   grid_y_org,
-		   grid_y_fin
+		   (unsigned long)grid_x_org,
+		   (unsigned long)grid_x_fin,
+		   (unsigned long)grid_y_org,
+		   (unsigned long)grid_y_fin
 	);
     if (save_view_flag)
 	(void) fprintf(run_fp, " -j%s", svkey_file);
@@ -3303,12 +3343,12 @@ make_Script(char *file)
     if (err_file[0] != '\0' && !BU_STR_EQUAL(err_file, "/dev/tty"))
 	(void) fprintf(run_fp,	" -O%s", err_file);
     if (aperture_sz > 1)
-	(void) fprintf(run_fp,	" -A%d", aperture_sz);
+	(void) fprintf(run_fp,	" -A%lu", (unsigned long)aperture_sz);
     if (x_fb_origin != 0 || y_fb_origin != 0)
-	(void) fprintf(run_fp,	" -D\"%d %d\"",
-		       x_fb_origin, y_fb_origin);
+	(void) fprintf(run_fp,	" -D\"%lu %lu\"",
+		       (unsigned long)x_fb_origin, (unsigned long)y_fb_origin);
     if (max_bounce)
-	(void) fprintf(run_fp,	" -K%d", max_bounce);
+	(void) fprintf(run_fp,	" -K%lu", (unsigned long)max_bounce);
     if (!ZERO(grid_roll))
 	(void) fprintf(run_fp,	" -a%g", grid_roll*RAD2DEG);
     if (background[0] || background[1] || background[2])
@@ -3331,7 +3371,7 @@ make_Script(char *file)
     if (! shadowing)
 	(void) fprintf(run_fp, " -z%d", shadowing);
     if (force_fbsz)
-	(void) fprintf(run_fp, " -T%d", fb_size);
+	(void) fprintf(run_fp, " -T%lu", (unsigned long)fb_size);
 
     if (!ZERO(x_grid_offset) || !ZERO(y_grid_offset))
 	(void) fprintf(run_fp,	" -t\"%g %g\"", x_grid_offset, y_grid_offset);

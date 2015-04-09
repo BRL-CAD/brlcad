@@ -106,10 +106,10 @@ __BEGIN_DECLS
 FB_EXPORT fb *fb_get();
 FB_EXPORT void  fb_put(fb *ifp);
 FB_EXPORT extern char *fb_gettype(fb *ifp);
-FB_EXPORT extern int fb_get_max_width(fb *ifp);
-FB_EXPORT extern int fb_get_max_height(fb *ifp);
-FB_EXPORT extern int fb_getwidth(fb *ifp);
-FB_EXPORT extern int fb_getheight(fb *ifp);
+FB_EXPORT extern size_t fb_get_max_width(fb *ifp);
+FB_EXPORT extern size_t fb_get_max_height(fb *ifp);
+FB_EXPORT extern size_t fb_getwidth(fb *ifp);
+FB_EXPORT extern size_t fb_getheight(fb *ifp);
 FB_EXPORT extern int fb_poll(fb *ifp);
 /* Returns in microseconds the maximum recommended amount of time to linger
  * before polling for updates for a specific framebuffer instance (can be
@@ -119,44 +119,44 @@ FB_EXPORT extern long fb_poll_rate(fb *ifp);
 FB_EXPORT extern int fb_help(fb *ifp);
 FB_EXPORT extern int fb_free(fb *ifp);
 FB_EXPORT extern int fb_clear(fb *ifp, unsigned char *pp);
-FB_EXPORT extern ssize_t fb_read(fb *ifp, int x, int y, unsigned char *pp, size_t count);
-FB_EXPORT extern ssize_t fb_write(fb *ifp, int x, int y, const unsigned char *pp, size_t count);
+FB_EXPORT extern ssize_t fb_read(fb *ifp, size_t x, size_t y, unsigned char *pp, size_t count);
+FB_EXPORT extern ssize_t fb_write(fb *ifp, size_t x, size_t y, const unsigned char *pp, size_t count);
 FB_EXPORT extern int fb_rmap(fb *ifp, ColorMap *cmap);
 FB_EXPORT extern int fb_wmap(fb *ifp, const ColorMap *cmap);
-FB_EXPORT extern int fb_view(fb *ifp, int xcenter, int ycenter, int xzoom, int yzoom);
-FB_EXPORT extern int fb_getview(fb *ifp, int *xcenter, int *ycenter, int *xzoom, int *yzoom);
-FB_EXPORT extern int fb_setcursor(fb *ifp, const unsigned char *bits, int xb, int yb, int xo, int yo);
-FB_EXPORT extern int fb_cursor(fb *ifp, int mode, int x, int y);
-FB_EXPORT extern int fb_getcursor(fb *ifp, int *mode, int *x, int *y);
-FB_EXPORT extern int fb_readrect(fb *ifp, int xmin, int ymin, int width, int height, unsigned char *pp);
-FB_EXPORT extern int fb_writerect(fb *ifp, int xmin, int ymin, int width, int height, const unsigned char *pp);
-FB_EXPORT extern int fb_bwreadrect(fb *ifp, int xmin, int ymin, int width, int height, unsigned char *pp);
-FB_EXPORT extern int fb_bwwriterect(fb *ifp, int xmin, int ymin, int width, int height, const unsigned char *pp);
+FB_EXPORT extern int fb_view(fb *ifp, size_t xcenter, size_t ycenter, size_t xzoom, size_t yzoom);
+FB_EXPORT extern int fb_getview(fb *ifp, size_t *xcenter, size_t *ycenter, size_t *xzoom, size_t *yzoom);
+FB_EXPORT extern int fb_setcursor(fb *ifp, const unsigned char *bits, size_t xb, size_t yb, size_t xo, size_t yo);
+FB_EXPORT extern int fb_cursor(fb *ifp, int mode, size_t x, size_t y);
+FB_EXPORT extern int fb_getcursor(fb *ifp, int *mode, size_t *x, size_t *y);
+FB_EXPORT extern int fb_readrect(fb *ifp, size_t xmin, size_t ymin, size_t width, size_t height, unsigned char *pp);
+FB_EXPORT extern int fb_writerect(fb *ifp, size_t xmin, size_t ymin, size_t width, size_t height, const unsigned char *pp);
+FB_EXPORT extern int fb_bwreadrect(fb *ifp, size_t xmin, size_t ymin, size_t width, size_t height, unsigned char *pp);
+FB_EXPORT extern int fb_bwwriterect(fb *ifp, size_t xmin, size_t ymin, size_t width, size_t height, const unsigned char *pp);
 
-FB_EXPORT extern fb *fb_open(const char *file, int _width, int _height);
+FB_EXPORT extern fb *fb_open(const char *file, size_t _width, size_t _height);
 FB_EXPORT extern int fb_close(fb *ifp);
 FB_EXPORT extern int fb_close_existing(fb *ifp);
 FB_EXPORT extern int fb_genhelp(void);
 FB_EXPORT extern int fb_ioinit(fb *ifp);
-FB_EXPORT extern int fb_seek(fb *ifp, int x, int y);
-FB_EXPORT extern int fb_tell(fb *ifp, int *xp, int *yp);
+FB_EXPORT extern int fb_seek(fb *ifp, size_t x, size_t y);
+FB_EXPORT extern int fb_tell(fb *ifp, size_t *xp, size_t *yp);
 FB_EXPORT extern int fb_rpixel(fb *ifp, unsigned char *pp);
 FB_EXPORT extern int fb_wpixel(fb *ifp, unsigned char *pp);
 FB_EXPORT extern int fb_flush(fb *ifp);
-FB_EXPORT extern int fb_configure_window(fb *, int, int);
-FB_EXPORT extern int fb_refresh(fb *ifp, int x, int y, int w, int h);
+FB_EXPORT extern int fb_configure_window(fb *, size_t w, size_t h);
+FB_EXPORT extern int fb_refresh(fb *ifp, size_t x, size_t y, size_t w, size_t h);
 #if !defined(_WIN32) || defined(__CYGWIN__)
 FB_EXPORT extern void fb_log(const char *fmt, ...) _BU_ATTR_PRINTF12;
 #endif
 FB_EXPORT extern int fb_null(fb *ifp);
-FB_EXPORT extern int fb_null_setcursor(fb *ifp, const unsigned char *bits, int xbits, int ybits, int xorig, int yorig);
+FB_EXPORT extern int fb_null_setcursor(fb *ifp, const unsigned char *bits, size_t xbits, size_t ybits, size_t xorig, size_t yorig);
 
 /* utility functions */
-FB_EXPORT extern int fb_common_file_size(size_t *widthp, size_t *heightp, const char *filename, int pixel_size);
+FB_EXPORT extern int fb_common_file_size(size_t *widthp, size_t *heightp, const char *filename, size_t pixel_size);
 FB_EXPORT extern int fb_common_image_size(size_t *widthp, size_t *heightp, size_t npixels);
 FB_EXPORT extern int fb_common_name_size(size_t *widthp, size_t *heightp, const char *name);
-FB_EXPORT extern int fb_write_fp(fb *ifp, FILE *fp, int req_width, int req_height, int crunch, int inverse, struct bu_vls *result);
-FB_EXPORT extern int fb_read_fd(fb *ifp, int fd,  int file_width, int file_height, int file_xoff, int file_yoff, int scr_width, int scr_height, int scr_xoff, int scr_yoff, int fileinput, char *file_name, int one_line_only, int multiple_lines, int autosize, int inverse, int clear, int zoom, struct bu_vls *result);
+FB_EXPORT extern int fb_write_fp(fb *ifp, FILE *fp, size_t req_width, size_t req_height, int crunch, int inverse, struct bu_vls *result);
+FB_EXPORT extern int fb_read_fd(fb *ifp, int fd, size_t file_width, size_t file_height, off_t file_xoff, off_t file_yoff, size_t scr_width, size_t scr_height, off_t scr_xoff, off_t scr_yoff, int fileinput, char *file_name, int one_line_only, int multiple_lines, int autosize, int inverse, int clear, int zoom, struct bu_vls *result);
 
 FB_EXPORT extern void fb_set_interface(fb *ifp, const char *interface_type);
 FB_EXPORT extern void fb_set_name(fb *ifp, const char *name);
@@ -176,14 +176,14 @@ FB_EXPORT extern void fb_make_linear_cmap(ColorMap *cmap);
 struct fb_platform_specific {uint32_t magic; void *data;};
 FB_EXPORT extern struct fb_platform_specific *fb_get_platform_specific(uint32_t magic);
 FB_EXPORT extern void fb_put_platform_specific(struct fb_platform_specific *fb_p);
-FB_EXPORT extern fb *fb_open_existing(const char *file, int _width, int _height, struct fb_platform_specific *fb_p);
+FB_EXPORT extern fb *fb_open_existing(const char *file, size_t _width, size_t _height, struct fb_platform_specific *fb_p);
 
 /* backward compatibility hacks */
 FB_EXPORT extern int fb_reset(fb *ifp);
-FB_EXPORT extern int fb_viewport(fb *ifp, int left, int top, int right, int bottom);
-FB_EXPORT extern int fb_window(fb *ifp, int xcenter, int ycenter);
-FB_EXPORT extern int fb_zoom(fb *ifp, int xzoom, int yzoom);
-FB_EXPORT extern int fb_scursor(fb *ifp, int mode, int x, int y);
+FB_EXPORT extern int fb_viewport(fb *ifp, size_t left, size_t top, size_t right, size_t bottom);
+FB_EXPORT extern int fb_window(fb *ifp, size_t xcenter, size_t ycenter);
+FB_EXPORT extern int fb_zoom(fb *ifp, size_t xzoom, size_t yzoom);
+FB_EXPORT extern int fb_scursor(fb *ifp, int mode, size_t x, size_t y);
 
 /*
  * Copy one RGB pixel to another.

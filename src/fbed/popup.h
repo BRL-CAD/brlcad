@@ -29,8 +29,8 @@
 
 typedef struct
 {
-    int p_x;
-    int p_y;
+    size_t p_x;
+    size_t p_y;
 }
 Point;
 
@@ -50,10 +50,12 @@ typedef struct
 
 typedef struct
 {
-    int wid, hgt;
-    int n_segs, seg_hgt;
-    int max_chars, char_base;
-    int on_flag, cmap_base;
+    size_t wid, hgt;
+    size_t n_segs, seg_hgt;
+    size_t max_chars;
+    int char_base;
+    int on_flag;
+    int cmap_base;
     int last_pick;
     Rect2D rect;
     RGBpixel *outlines, *touching, *selected;
@@ -67,8 +69,8 @@ Menu;
 typedef struct
 {
     RGBpixel  *n_buf;
-    int n_wid;
-    int n_hgt;
+    size_t n_wid;
+    size_t n_hgt;
 }
 Panel;
 

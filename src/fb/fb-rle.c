@@ -57,12 +57,12 @@ static int crunch;
 
 static int background[3];	/* default background is black */
 
-static int screen_width;
-static int screen_height;
-static int file_width;
-static int file_height;
-static int screen_xoff;
-static int screen_yoff;
+static size_t screen_width;
+static size_t screen_height;
+static size_t file_width;
+static size_t file_height;
+static off_t screen_xoff;
+static off_t screen_yoff;
 
 static char *framebuffer;
 
@@ -159,7 +159,7 @@ main(int argc, char **argv)
 {
     fb *fbp;
     unsigned char *scan_buf;
-    int y;
+    size_t y;
     int cm_save_needed;
 
     outrle.rle_file = stdout;
@@ -278,8 +278,8 @@ main(int argc, char **argv)
 	if (fb_read(fbp, screen_xoff, y+screen_yoff, scan_buf,
 		    file_width) == -1) {
 	    (void) fprintf(stderr,
-			   "fb-rle: read of %d pixels on line %d failed!\n",
-			   file_width, y+screen_yoff);
+			   "fb-rle: read of %lu pixels on line %llu failed!\n",
+			   (unsigned long)file_width, (unsigned long long)y+screen_yoff);
 	    bu_exit(1, NULL);
 	}
 
@@ -292,7 +292,7 @@ main(int argc, char **argv)
 	    rle_pixel *rp = rows[0];
 	    rle_pixel *gp = rows[1];
 	    rle_pixel *bp = rows[2];
-	    int i;
+	    size_t i;
 
 	    for (i=0; i<file_width; i++) {
 		*rp++ = *pp++;

@@ -202,12 +202,12 @@ read_IR(FILE *fp)
 	}
 	for (rx = 0; rx < IR_DATA_WID; rx += ir_aperture) {
 	    int fah;
-	    int sum = 0;
-	    int i;
+	    size_t sum = 0;
+	    size_t i;
 	    int lgtindex;
 	    RGBpixel *pixel;
 	    for (i = 0; i < ir_aperture; i++) {
-		int j;
+		size_t j;
 		for (j = 0; j < ir_aperture; j++) {
 		    if (get_IR(rx+j, ry+i, &fah, fp))
 			sum += fah < ir_min ? ir_min : fah;

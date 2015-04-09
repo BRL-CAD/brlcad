@@ -1270,9 +1270,9 @@ MmaxBarriers(HmItem *itemp)
     };
     Input *ip = input;
     GetVar(nbarriers, ip, 1);
-    (void) snprintf(scrbuf, LNBUFSZ, "%s\t\t%d",
+    (void) snprintf(scrbuf, LNBUFSZ, "%s\t\t%lu",
 		    itemp != NULL ? itemp->text : cmdname,
-		    nbarriers);
+		    (unsigned long)nbarriers);
     logCmd(scrbuf);
     return;
 }
@@ -1287,9 +1287,9 @@ MmaxSpallRays(HmItem *itemp)
     };
     Input *ip = input;
     GetVar(nspallrays, ip, 1);
-    (void) snprintf(scrbuf, LNBUFSZ, "%s\t\t%d",
+    (void) snprintf(scrbuf, LNBUFSZ, "%s\t\t%lu",
 		    itemp != NULL ? itemp->text : cmdname,
-		    nspallrays);
+		    (unsigned long)nspallrays);
     logCmd(scrbuf);
     return;
 }

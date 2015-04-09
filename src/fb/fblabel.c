@@ -231,7 +231,7 @@ do_char(struct vfont *vfp, struct vfont_dispatch *vdp, int x, int y)
 void
 do_line(struct vfont *vfp, char *line)
 {
-    int currx;
+    size_t currx;
     int char_id;
     size_t char_count;
     size_t len = strlen(line);
@@ -249,7 +249,8 @@ do_line(struct vfont *vfp, char *line)
 	vdp = &vfp->vf_dispatch[char_id];
 	width = vdp->vd_left + vdp->vd_right;
 	height = vdp->vd_up + vdp->vd_down;
-	if (debug) fprintf(stderr, "%c w=%2d h=%2d, currx=%d\n", char_id, width, height, currx);
+	if (debug)
+	    fprintf(stderr, "%c w=%2lu h=%2lu, currx=%lu\n", char_id, (unsigned long)width, (unsigned long)height, (unsigned long)currx);
 
 	/*
 	 * pace characters are frequently not represented in the font

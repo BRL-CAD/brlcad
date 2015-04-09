@@ -42,7 +42,7 @@ lgt_Print_Db(int id)
     Lgt_Source *entry;
     int stop;
     int lines =	(PROMPT_LINE-TOP_SCROLL_WIN);
-    if (id >= lgt_db_size)
+    if (id >= (int)lgt_db_size)
 	return 0;
     else
 	if (id < 0) {
@@ -160,7 +160,7 @@ lgt_Edit_Db_Entry(int id)
     int red, grn, blu;
     if (id < 0 || id >= MAX_LGTS)
 	return -1;
-    V_MAX(lgt_db_size, id+1);
+    V_MAX(lgt_db_size, (size_t)(id+1));
     entry = &lgts[id];
     (void) snprintf(editprompt, MAX_LN, "light source name ? (%s) ", entry->name);
     if (get_Input(input_buf, MAX_LN, editprompt) != NULL)

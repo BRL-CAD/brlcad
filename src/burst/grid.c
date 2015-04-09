@@ -206,8 +206,8 @@ f_BurstHit(struct application *ap, struct partition *pt_headp, struct seg *UNUSE
 {
     Pt_Queue *qshield = PT_Q_NULL;
     struct partition *cpp, *spp;
-    int nbar;
-    int ncrit = 0;
+    size_t nbar;
+    size_t ncrit = 0;
 #ifdef VDEBUG
     prntDbgPartitions(ap, pt_headp, "f_BurstHit: initial partitions");
 #endif

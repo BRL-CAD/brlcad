@@ -44,14 +44,14 @@
 
 #define BUFFSIZ 200
 static int bitx(char *bitstring, int posn);
-static void do_char(int c, int xpos, int ypos);
+static void do_char(int c, size_t xpos, size_t ypos);
 
 void
-do_line(int xpos, int ypos, char *line)
+do_line(size_t xpos, size_t ypos, char *line)
 {
-    int currx;
-    int char_count, char_id;
-    int len = strlen(line);
+    size_t currx;
+    size_t char_count, char_id;
+    size_t len = strlen(line);
     if (font.ffdes == NULL) {
 	bu_log("ERROR: do_line() called before get_font().\n");
 	return;
@@ -97,15 +97,15 @@ do_line(int xpos, int ypos, char *line)
   to be in the correct position.
 */
 static void
-do_char(int c, int xpos, int ypos)
+do_char(int c, size_t xpos, size_t ypos)
 {
     int up = font.dir[c].up / ir_aperture;
     int left = font.dir[c].left / ir_aperture;
     static char bitbuf[BUFFSIZ][BUFFSIZ];
     static RGBpixel pixel;
-    int h, i, j;
-    int k, x;
-    for (k = 0; k < font.height; k++) {
+    size_t h, i, j;
+    size_t k, x;
+    for (k = 0; k < (size_t)font.height; k++) {
 	/* Read row, rounding width up to nearest byte value. */
 	if (fread(bitbuf[k], (size_t)font.width/8+(font.width % 8 == 0 ? 0 : 1), 1, font.ffdes) != 1) {
 	    bu_log("\"%s\" (%d) read of character from font failed.\n",
@@ -114,10 +114,10 @@ do_char(int c, int xpos, int ypos)
 	    return;
 	}
     }
-    for (k = 0; k < font.height; k += ir_aperture, ypos--) {
+    for (k = 0; k < (size_t)font.height; k += ir_aperture, ypos--) {
 	x = xpos - left;
-	for (j = 0; j < font.width; j += ir_aperture, x++) {
-	    int sum;
+	for (j = 0; j < (size_t)font.width; j += ir_aperture, x++) {
+	    size_t sum;
 	    fastf_t weight;
 	    /* The bitx routine extracts the bit value.
 	       Can't just use the j-th bit because

@@ -146,22 +146,22 @@ fb_ioinit(register fb *ifp)
 
 
 int
-fb_seek(register fb *ifp, int x, int y)
+fb_seek(register fb *ifp, size_t x, size_t y)
 {
-    long pixelnum;
-    long pagepixel;
+    size_t pixelnum;
+    size_t pagepixel;
 
     if (ifp->if_debug & FB_DEBUG_BIO) {
 	fb_log("fb_seek(%p, %d, %d)\n",
 	       (void *)ifp, x, y);
     }
 
-    if (x < 0 || y < 0 || x >= ifp->if_width || y >= ifp->if_height) {
-	fb_log("fb_seek: illegal address <%d, %d>.\n", x, y);
+    if (x >= ifp->if_width || y >= ifp->if_height || ifp->if_pno < 0) {
+	fb_log("fb_seek: illegal address <%lu, %lu> page <%d>.\n", (unsigned long)x, (unsigned long)y, ifp->if_pno);
 	return -1;
     }
-    pixelnum = ((long) y * (long) ifp->if_width) + x;
-    pagepixel = (long) ifp->if_pno * ifp->if_ppixels;
+    pixelnum = (y * ifp->if_width) + x;
+    pagepixel = (size_t)ifp->if_pno * ifp->if_ppixels;
     if (pixelnum < pagepixel || pixelnum >= (pagepixel + ifp->if_ppixels)) {
 	if (ifp->if_pdirty)
 	    if (_fb_pgout(ifp) == - 1)
@@ -178,13 +178,13 @@ fb_seek(register fb *ifp, int x, int y)
 
 
 int
-fb_tell(register fb *ifp, int *xp, int *yp)
+fb_tell(register fb *ifp, size_t *xp, size_t *yp)
 {
-    *yp = (int) (ifp->if_pixcur / ifp->if_width);
-    *xp = (int) (ifp->if_pixcur % ifp->if_width);
+    *yp = ifp->if_pixcur / ifp->if_width;
+    *xp = ifp->if_pixcur % ifp->if_width;
 
     if (ifp->if_debug & FB_DEBUG_BIO) {
-	fb_log("fb_tell(%p, %p, %p) => (%4d, %4d)\n",
+	fb_log("fb_tell(%p, %p, %p) => (%4lu, %4lu)\n",
 	       (void *)ifp, (void *)xp, (void *)yp, *xp, *yp);
     }
 

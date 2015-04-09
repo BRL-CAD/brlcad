@@ -44,8 +44,8 @@ FILE *outfp;
 
 static int crunch = 0;		/* Color map crunch? */
 static int inverse = 0;		/* Draw upside-down */
-int screen_height;			/* input height */
-int screen_width;			/* input width */
+size_t screen_height;			/* input height */
+size_t screen_width;			/* input width */
 
 /* in cmap-crunch.c */
 extern void cmap_crunch(RGBpixel (*scan_buf), int pixel_ct, ColorMap *colormap);
@@ -110,11 +110,11 @@ int
 main(int argc, char **argv)
 {
     fb *fbp;
-    int y;
+    size_t y;
 
     unsigned char *scanline;	/* 1 scanline pixel buffer */
-    int scanbytes;		/* # of bytes of scanline */
-    int scanpix;		/* # of pixels of scanline */
+    size_t scanbytes;		/* # of bytes of scanline */
+    size_t scanpix;		/* # of pixels of scanline */
     ColorMap cmap;		/* libfb color map */
 
     char usage[] = "\
@@ -134,7 +134,7 @@ Usage: fb-pix [-i -c] [-F framebuffer]\n\
     scanbytes = scanpix * sizeof(RGBpixel);
     if ((scanline = (unsigned char *)malloc(scanbytes)) == RGBPIXEL_NULL) {
 	fprintf(stderr,
-		"fb-pix:  malloc(%d) failure\n", scanbytes);
+		"fb-pix:  malloc(%lu) failure\n", (unsigned long)scanbytes);
 	bu_exit(2, NULL);
     }
 
@@ -166,8 +166,8 @@ Usage: fb-pix [-i -c] [-F framebuffer]\n\
 	}
     } else {
 	/* Inverse -- read top to bottom */
-	for (y = screen_height-1; y >= 0; y--) {
-	    fb_read(fbp, 0, y, scanline, screen_width);
+	for (y = screen_height; y > 0; y--) {
+	    fb_read(fbp, 0, y-1, scanline, screen_width);
 	    if (crunch)
 		cmap_crunch((RGBpixel *)scanline, scanpix, &cmap);
 	    if (fwrite((char *)scanline, scanbytes, 1, outfp) != 1) {

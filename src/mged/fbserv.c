@@ -142,7 +142,8 @@ fbserv_existing_client_handler(ClientData clientData, int UNUSED(mask))
 	if (clients[i].c_fd == 0)
 	    continue;
 
-	if ((npp = pkg_process(clients[i].c_pkg)) < 0)
+	npp = pkg_process(clients[i].c_pkg);
+	if (npp < 0)
 	    bu_log("pkg_process error encountered (1)\n");
 
 	if (npp > 0)
@@ -574,7 +575,7 @@ rfbclear(struct pkg_conn *pcp, char *buf)
 void
 rfbread(struct pkg_conn *pcp, char *buf)
 {
-    int x, y;
+    size_t x, y;
     size_t num;
     int ret;
     static unsigned char *scanbuf = NULL;
@@ -614,7 +615,7 @@ rfbread(struct pkg_conn *pcp, char *buf)
 void
 rfbwrite(struct pkg_conn *pcp, char *buf)
 {
-    int x, y, num;
+    size_t x, y, num;
     char rbuf[NET_LONG_LEN+1];
     int ret;
     int type;
@@ -641,8 +642,8 @@ rfbwrite(struct pkg_conn *pcp, char *buf)
 void
 rfbreadrect(struct pkg_conn *pcp, char *buf)
 {
-    int xmin, ymin;
-    int width, height;
+    size_t xmin, ymin;
+    size_t width, height;
     size_t num;
     int ret;
     static unsigned char *scanbuf = NULL;
@@ -684,8 +685,8 @@ rfbreadrect(struct pkg_conn *pcp, char *buf)
 void
 rfbwriterect(struct pkg_conn *pcp, char *buf)
 {
-    int x, y;
-    int width, height;
+    size_t x, y;
+    size_t width, height;
     char rbuf[NET_LONG_LEN+1];
     int ret;
     int type;
@@ -715,12 +716,12 @@ rfbwriterect(struct pkg_conn *pcp, char *buf)
 void
 rfbbwreadrect(struct pkg_conn *pcp, char *buf)
 {
-    int xmin, ymin;
-    int width, height;
-    int num;
+    size_t xmin, ymin;
+    size_t width, height;
+    size_t num;
     int ret;
     static unsigned char *scanbuf = NULL;
-    static int buflen = 0;
+    static size_t buflen = 0;
 
     if (buf == NULL) {
 	bu_log("rfbbwreadrect: null buffer\n");
@@ -758,8 +759,8 @@ rfbbwreadrect(struct pkg_conn *pcp, char *buf)
 void
 rfbbwwriterect(struct pkg_conn *pcp, char *buf)
 {
-    int x, y;
-    int width, height;
+    size_t x, y;
+    size_t width, height;
     char rbuf[NET_LONG_LEN+1];
     int ret;
     int type;
@@ -789,7 +790,8 @@ rfbbwwriterect(struct pkg_conn *pcp, char *buf)
 void
 rfbcursor(struct pkg_conn *pcp, char *buf)
 {
-    int mode, x, y;
+    int mode;
+    size_t x, y;
     char rbuf[NET_LONG_LEN+1];
 
     if (buf == NULL) {
@@ -811,7 +813,8 @@ void
 rfbgetcursor(struct pkg_conn *pcp, char *buf)
 {
     int ret;
-    int mode, x, y;
+    int mode;
+    size_t x, y;
     char rbuf[4*NET_LONG_LEN+1];
 
     ret = fb_getcursor(fbp, &mode, &x, &y);
@@ -829,8 +832,8 @@ rfbsetcursor(struct pkg_conn *pcp, char *buf)
 {
     char rbuf[NET_LONG_LEN+1];
     int ret;
-    int xbits, ybits;
-    int xorig, yorig;
+    size_t xbits, ybits;
+    size_t xorig, yorig;
 
     if (buf == NULL) {
 	bu_log("rfbreadrect: null buffer\n");
@@ -857,7 +860,8 @@ rfbsetcursor(struct pkg_conn *pcp, char *buf)
 void
 rfbscursor(struct pkg_conn *pcp, char *buf)
 {
-    int mode, x, y;
+    int mode;
+    size_t x, y;
     char rbuf[NET_LONG_LEN+1];
 
     if (buf == NULL) {
@@ -879,7 +883,7 @@ rfbscursor(struct pkg_conn *pcp, char *buf)
 void
 rfbwindow(struct pkg_conn *pcp, char *buf)
 {
-    int x, y;
+    size_t x, y;
     char rbuf[NET_LONG_LEN+1];
 
     if (buf == NULL) {
@@ -900,7 +904,7 @@ rfbwindow(struct pkg_conn *pcp, char *buf)
 void
 rfbzoom(struct pkg_conn *pcp, char *buf)
 {
-    int x, y;
+    size_t x, y;
     char rbuf[NET_LONG_LEN+1];
 
     if (buf == NULL) {
@@ -921,7 +925,7 @@ void
 rfbview(struct pkg_conn *pcp, char *buf)
 {
     int ret;
-    int xcenter, ycenter, xzoom, yzoom;
+    size_t xcenter, ycenter, xzoom, yzoom;
     char rbuf[NET_LONG_LEN+1];
 
     if (buf == NULL) {
@@ -945,7 +949,7 @@ void
 rfbgetview(struct pkg_conn *pcp, char *buf)
 {
     int ret;
-    int xcenter, ycenter, xzoom, yzoom;
+    size_t xcenter, ycenter, xzoom, yzoom;
     char rbuf[5*NET_LONG_LEN+1];
 
     ret = fb_getview(fbp, &xcenter, &ycenter, &xzoom, &yzoom);

@@ -45,7 +45,7 @@
 
 
 HIDDEN int
-dsk_open(fb *ifp, const char *file, int width, int height)
+dsk_open(fb *ifp, const char *file, size_t width, size_t height)
 {
     static char zero = 0;
 
@@ -112,7 +112,7 @@ dsk_put_fbps(struct fb_platform_specific *UNUSED(fbps))
 }
 
 HIDDEN int
-dsk_open_existing(fb *UNUSED(ifp), int UNUSED(width), int UNUSED(height), struct fb_platform_specific *UNUSED(fb_p))
+dsk_open_existing(fb *UNUSED(ifp), size_t UNUSED(width), size_t UNUSED(height), struct fb_platform_specific *UNUSED(fb_p))
 {
         return 0;
 }
@@ -124,13 +124,13 @@ dsk_close_existing(fb *UNUSED(ifp))
 }
 
 HIDDEN int
-dsk_configure_window(fb *UNUSED(ifp), int UNUSED(width), int UNUSED(height))
+dsk_configure_window(fb *UNUSED(ifp), size_t UNUSED(width), size_t UNUSED(height))
 {
         return 0;
 }
 
 HIDDEN int
-dsk_refresh(fb *UNUSED(ifp), int UNUSED(x), int UNUSED(y), int UNUSED(w), int UNUSED(h))
+dsk_refresh(fb *UNUSED(ifp), size_t UNUSED(x), size_t UNUSED(y), size_t UNUSED(w), size_t UNUSED(h))
 {
         return 0;
 }
@@ -206,7 +206,7 @@ dsk_clear(fb *ifp, unsigned char *bgpp)
 
 
 HIDDEN ssize_t
-dsk_read(fb *ifp, int x, int y, unsigned char *pixelp, size_t count)
+dsk_read(fb *ifp, size_t x, size_t y, unsigned char *pixelp, size_t count)
 {
     size_t bytes = count * sizeof(RGBpixel);
     size_t todo;
@@ -254,7 +254,7 @@ dsk_read(fb *ifp, int x, int y, unsigned char *pixelp, size_t count)
 
 
 HIDDEN ssize_t
-dsk_write(fb *ifp, int x, int y, const unsigned char *pixelp, size_t count)
+dsk_write(fb *ifp, size_t x, size_t y, const unsigned char *pixelp, size_t count)
 {
     register ssize_t bytes = count * sizeof(RGBpixel);
     ssize_t todo;

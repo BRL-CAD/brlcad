@@ -149,8 +149,8 @@ struct frame {
     char *fr_filename;	/* name of output file */
     int fr_tempfile;	/* if !0, output file is temporary */
     /* options */
-    int fr_width;	/* frame width (pixels) */
-    int fr_height;	/* frame height (pixels) */
+    size_t fr_width;	/* frame width (pixels) */
+    size_t fr_height;	/* frame height (pixels) */
     struct bu_list fr_todo;	/* work still to be done */
     /* Timings */
     struct timeval fr_start;	/* start time */
@@ -168,7 +168,7 @@ struct servers {
     struct pkg_conn *sr_pc;		/* PKC_NULL means slot not in use */
     struct bu_list sr_work;
     struct ihost *sr_host;	/* description of this host */
-    int sr_lump;	/* # lines to send at once */
+    size_t sr_lump;	/* # lines to send at once */
     int sr_state;	/* Server state, SRST_xxx */
 #define SRST_UNUSED		0	/* unused slot */
 #define SRST_NEW		1	/* connected, awaiting vers check */
@@ -195,16 +195,16 @@ struct servers {
     double sr_s_sq_cpu;	/* sum of cpu times squared */
     double sr_s_sq_pix;	/* sum of pixels squared */
     double sr_s_sq_e;	/* sum of all elapsed seconds squared */
-    int sr_nsamp;	/* number of samples summed over */
+    size_t sr_nsamp;	/* number of samples summed over */
     double sr_prep_cpu;	/* sum of cpu time for preps */
     double sr_l_percent;	/* last: percent of CPU */
 } servers[MAXSERVERS];
 
 
 fb *fbp = FB_NULL;		/* Current framebuffer ptr */
-int cur_fbwidth;		/* current fb width */
-int fbwidth;			/* fb width - S command */
-int fbheight;			/* fb height - S command */
+size_t cur_fbwidth;		/* current fb width */
+size_t fbwidth;			/* fb width - S command */
+size_t fbheight;			/* fb height - S command */
 
 int running = 0;		/* actually working on it */
 int detached = 0;		/* continue after EOF */
@@ -508,7 +508,7 @@ interactive_cmd(FILE *fp)
 {
     char buf[BUFSIZ];
     char *pos;
-    int i;
+    size_t i;
 
     pos = buf;
 
@@ -731,13 +731,13 @@ tvdiff(struct timeval *t1, struct timeval *t0)
 
 
 static void
-build_start_cmd(const int argc, const char **argv, const int startc)
+build_start_cmd(const int argc, const char **argv, const size_t startc)
 {
     char *cp;
-    int i;
-    int len;
+    size_t i;
+    size_t len;
 
-    if (startc+2 > argc) {
+    if (startc+2 > (size_t)argc) {
 	bu_log("build_start_cmd:  need file and at least one object\n");
 	file_fullname[0] = '\0';
 	return;
@@ -754,7 +754,7 @@ build_start_cmd(const int argc, const char **argv, const int startc)
 
     /* Build new object_list[] string */
     cp = object_list;
-    for (i=startc+1; i < argc; i++) {
+    for (i=startc+1; i < (size_t)argc; i++) {
 	if (i > startc+1)  *cp++ = ' ';
 	len = strlen(argv[i]);
 	memcpy(cp, argv[i], len);
@@ -781,8 +781,8 @@ prep_frame(struct frame *fr)
     fr->fr_height = height;
 
     bu_vls_trunc(&fr->fr_cmd, 0);	/* Start fresh */
-    sprintf(buf, "opt -w%d -n%d -H%d -p%g -U%d -J%x -A%g -l%d -E%g -x%x -X%x -T%e/%e",
-	    fr->fr_width, fr->fr_height,
+    sprintf(buf, "opt -w%lu -n%lu -H%d -p%g -U%d -J%x -A%g -l%d -E%g -x%x -X%x -T%e/%e",
+	    (unsigned long)fr->fr_width, (unsigned long)fr->fr_height,
 	    hypersample, rt_perspective,
 	    use_air, jitter,
 	    AmbientIntensity, lightmodel,
@@ -825,7 +825,7 @@ prep_frame(struct frame *fr)
 static int
 read_matrix(FILE *fp, struct frame *fr)
 {
-    int i;
+    size_t i;
     char number[128];
     char cmd[128];
 
@@ -1202,12 +1202,12 @@ size_display(struct frame *fr)
 static void
 repaint_fb(struct frame *fr)
 {
-    int y;
+    size_t y;
     unsigned char *line;
     int nby;
     FILE *fp;
-    int w;
-    int cnt;
+    size_t w;
+    size_t cnt;
 
     if (fbp == FB_NULL) return;
     CHECK_FRAME(fr);
@@ -1259,11 +1259,11 @@ pr_list(struct bu_list *lhp)
  * Returns the number of servers that are ready (or busy) with
  * computing frames.
  */
-static int
+static size_t
 number_of_ready_servers(void)
 {
     struct servers *sp;
-    int count = 0;
+    size_t count = 0;
 
     for (sp = &servers[0]; sp < &servers[MAXSERVERS]; sp++) {
 	if (sp->sr_pc == PKC_NULL) continue;
@@ -1284,10 +1284,10 @@ number_of_ready_servers(void)
  * handle the LOG messages, starting new servers, writing
  * results to the disk and/or framebuffer, etc.
  */
-static int
+static size_t
 assignment_time(void)
 {
-    int sec;
+    size_t sec;
 
     sec = 2 * number_of_ready_servers();
     if (sec < MIN_ASSIGNMENT_TIME)
@@ -1299,11 +1299,11 @@ assignment_time(void)
 /*
  * Report number of assignments that a server has
  */
-static int
+static size_t
 server_q_len(struct servers *sp)
 {
     struct list *lp;
-    int count;
+    size_t count;
 
     count = 0;
     for (BU_LIST_FOR(lp, list, &sp->sr_work)) {
@@ -1572,8 +1572,8 @@ task_server(struct servers *sp, struct frame *fr, struct timeval *nowp)
 {
     struct list *lp;
     int a, b;
-    int lump;
-    int maxlump;
+    size_t lump;
+    size_t maxlump;
 
     if (sp->sr_pc == PKC_NULL) return 0;
 
@@ -1672,7 +1672,8 @@ task_server(struct servers *sp, struct frame *fr, struct timeval *nowp)
 	lump = fr->fr_width * 2;	/* 2 scanlines at a whack */
     } else {
 	/* Limit growth in assignment size to 2X each assignment */
-	if (lump > 2*sp->sr_lump) lump = 2*sp->sr_lump;
+	if (lump > 2*sp->sr_lump)
+	    lump = 2*sp->sr_lump;
     }
     /* Provide some bounds checking */
     if (lump < 32) lump = 32;
@@ -2401,8 +2402,8 @@ cd_stat(const int UNUSED(argc), const char **UNUSED(argv))
 	if (sp->sr_state != SRST_READY) {
 	    state = state_to_string(sp->sr_state);
 	} else {
-	    sprintf(buf, "Running%d",
-		    server_q_len(sp));
+	    sprintf(buf, "Running%lu",
+		    (unsigned long)server_q_len(sp));
 	    state = buf;
 	}
 	bu_log("  %8s %5d %7g %7g %5d %s\n",
@@ -3215,8 +3216,7 @@ ph_pixels(struct pkg_conn *pc, char *buf)
 	goto out;
     }
 
-    if (info.li_startpix < 0 ||
-	info.li_endpix >= fr->fr_width*fr->fr_height) {
+    if ((size_t)info.li_endpix >= fr->fr_width*fr->fr_height) {
 	bu_log("pixel numbers out of range\n");
 	drop_server(sp, "pixel out of range");
 	goto out;

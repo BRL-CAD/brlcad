@@ -42,10 +42,10 @@
  * particular display does not handle it.
  */
 int
-fb_sim_readrect(fb *ifp, int xmin, int ymin, int width, int height, unsigned char *pp)
+fb_sim_readrect(fb *ifp, size_t xmin, size_t ymin, size_t width, size_t height, unsigned char *pp)
 {
-    register int y;
-    register int tot;
+    register size_t y;
+    register size_t tot;
     int got;
 
     tot = 0;
@@ -56,7 +56,7 @@ fb_sim_readrect(fb *ifp, int xmin, int ymin, int width, int height, unsigned cha
 	    break;
 	}
 	tot += got;
-	if (got != width) {
+	if ((size_t)got != width) {
 	    fb_log("fb_sim_readrect() y=%d, read of %d got %d pixels, aborting\n",
 		   y, width, got);
 	    break;
@@ -75,10 +75,10 @@ fb_sim_readrect(fb *ifp, int xmin, int ymin, int width, int height, unsigned cha
  * Clipping to the screen may reduce the total if caller was sloppy.
  */
 int
-fb_sim_writerect(fb *ifp, int xmin, int ymin, int width, int height, const unsigned char *pp)
+fb_sim_writerect(fb *ifp, size_t xmin, size_t ymin, size_t width, size_t height, const unsigned char *pp)
 {
-    register int y;
-    register int tot;
+    register size_t y;
+    register size_t tot;
     int got;
     size_t xlen;
 
@@ -99,10 +99,10 @@ fb_sim_writerect(fb *ifp, int xmin, int ymin, int width, int height, const unsig
 
 #define SIMBUF_SIZE (24*1024)
 int
-fb_sim_bwreadrect(fb *ifp, int xmin, int ymin, int width, int height, unsigned char *pp)
+fb_sim_bwreadrect(fb *ifp, size_t xmin, size_t ymin, size_t width, size_t height, unsigned char *pp)
 {
-    register int y;
-    register int tot;
+    register size_t y;
+    register size_t tot;
     int got;
     unsigned char buf[SIMBUF_SIZE*3];
 
@@ -113,7 +113,7 @@ fb_sim_bwreadrect(fb *ifp, int xmin, int ymin, int width, int height, unsigned c
 
     tot = 0;
     for (y=ymin; y < ymin+height; y++) {
-	register int x;
+	register size_t x;
 
 	got = fb_read(ifp, xmin, y, buf, (size_t)width);
 
@@ -122,17 +122,17 @@ fb_sim_bwreadrect(fb *ifp, int xmin, int ymin, int width, int height, unsigned c
 	    *pp++ = buf[x*3+GRN];
 
 	tot += got;
-	if (got != width) break;
+	if ((size_t)got != width) break;
     }
     return tot;
 }
 
 
 int
-fb_sim_bwwriterect(fb *ifp, int xmin, int ymin, int width, int height, const unsigned char *pp)
+fb_sim_bwwriterect(fb *ifp, size_t xmin, size_t ymin, size_t width, size_t height, const unsigned char *pp)
 {
-    register int y;
-    register int tot;
+    register size_t y;
+    register size_t tot;
     int got;
     size_t xlen;
     unsigned char buf[SIMBUF_SIZE];
@@ -148,7 +148,7 @@ fb_sim_bwwriterect(fb *ifp, int xmin, int ymin, int width, int height, const uns
 
     tot = 0;
     for (y=ymin; y < ymin+height; y++) {
-	register int x;
+	register size_t x;
 	register unsigned char *bp;
 
 	/* Copy monochrome (b&w) intensity into all three chans */

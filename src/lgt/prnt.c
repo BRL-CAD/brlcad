@@ -194,22 +194,22 @@ prnt_Status(void)
     bu_strlcpy(BUFFERED_PTR, scratchbuf, strlen(scratchbuf));
     sprintf(scratchbuf, "0x%06x", RT_G_DEBUG);
     bu_strlcpy(DEBUGGER_PTR, scratchbuf, strlen(scratchbuf));
-    sprintf(scratchbuf, "%-2d", max_bounce);
+    sprintf(scratchbuf, "%-2lu", (unsigned long)max_bounce);
     bu_strlcpy(MAX_BOUN_PTR, scratchbuf, strlen(scratchbuf));
     snprintf(scratchbuf, TEMPLATE_COLS+1, " LGT");
     bu_strlcpy(PROGRAM_NM_PTR, scratchbuf, strlen(scratchbuf));
     snprintf(scratchbuf, TEMPLATE_COLS+1, " %s ",
 	     ged_file == NULL ? "(null)" : ged_file);
     bu_strlcpy(F_GED_DB_PTR, scratchbuf, FMIN(strlen(scratchbuf), 26));
-    sprintf(scratchbuf, " [%04d-", grid_x_org);
+    sprintf(scratchbuf, " [%04lu-", (unsigned long)grid_x_org);
     bu_strlcpy(GRID_PIX_PTR, scratchbuf, strlen(scratchbuf));
-    sprintf(scratchbuf, "%04d, ", grid_x_fin);
+    sprintf(scratchbuf, "%04lu, ", (unsigned long)grid_x_fin);
     bu_strlcpy(GRID_SIZ_PTR, scratchbuf, strlen(scratchbuf));
-    sprintf(scratchbuf, "%04d-", grid_y_org);
+    sprintf(scratchbuf, "%04lu-", (unsigned long)grid_y_org);
     bu_strlcpy(GRID_SCN_PTR, scratchbuf, strlen(scratchbuf));
-    sprintf(scratchbuf, "%04d:", grid_y_fin);
+    sprintf(scratchbuf, "%04lu:", (unsigned long)grid_y_fin);
     bu_strlcpy(GRID_FIN_PTR, scratchbuf, strlen(scratchbuf));
-    sprintf(scratchbuf, "%04d] ", frame_no);
+    sprintf(scratchbuf, "%04lu] ", (unsigned long)frame_no);
     bu_strlcpy(FRAME_NO_PTR, scratchbuf, strlen(scratchbuf));
     update_Screen();
     return;

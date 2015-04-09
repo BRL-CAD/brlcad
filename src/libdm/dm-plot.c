@@ -184,8 +184,8 @@ plot_drawVList(dm *dmp, struct bn_vlist *vp)
 	delta = SQRT_SMALL_FASTF;
 
     for (BU_LIST_FOR(tvp, bn_vlist, &vp->l)) {
-	int i;
-	int nused = tvp->nused;
+	size_t i;
+	size_t nused = tvp->nused;
 	int *cmd = tvp->cmd;
 	point_t *pt = tvp->pt;
 	for (i = 0; i < nused; i++, cmd++, pt++) {
