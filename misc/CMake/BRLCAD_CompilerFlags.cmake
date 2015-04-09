@@ -100,6 +100,10 @@ if(BRLCAD_ENABLE_COMPILER_WARNINGS OR BRLCAD_ENABLE_STRICT)
   CHECK_C_FLAG(pedantic)
   CHECK_CXX_FLAG(pedantic)
 
+  #Added to make llvm happy on FreeBSD, but a good idea anyway
+  CHECK_C_FLAG(pedantic-errors)
+  #CHECK_CXX_FLAG(pedantic-errors)  #This line makes poissonrecon break, so disable for now
+
   # this catches a lot, it's good
   CHECK_C_FLAG(Wall)
   CHECK_CXX_FLAG(Wall)
