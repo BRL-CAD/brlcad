@@ -84,8 +84,8 @@ HIDDEN int wgl_nwindows = 0; 	/* number of open windows */
 
 
 fb *saveifp;
-int titleBarHeight = 0;
-int borderWidth = 0;
+size_t titleBarHeight = 0;
+size_t borderWidth = 0;
 
 /*
  * Structure of color map in shared memory region.  Has exactly the
@@ -114,14 +114,14 @@ struct wgl_pixel {
 
 /* Clipping structure for zoom/pan operations */
 struct wgl_clip {
-    int xpixmin;	/* view clipping planes clipped to pixel memory space*/
-    int xpixmax;
-    int ypixmin;
-    int ypixmax;
-    int xscrmin;	/* view clipping planes */
-    int xscrmax;
-    int yscrmin;
-    int yscrmax;
+    size_t xpixmin;	/* view clipping planes clipped to pixel memory space*/
+    size_t xpixmax;
+    size_t ypixmin;
+    size_t ypixmax;
+    size_t xscrmin;	/* view clipping planes */
+    size_t xscrmax;
+    size_t yscrmin;
+    size_t yscrmax;
     double oleft;	/* glOrtho parameters */
     double oright;
     double otop;
@@ -136,7 +136,7 @@ struct sgiinfo {
     short mi_curs_on;
     short mi_cmap_flag;		/* enabled when there is a non-linear map in memory */
     int mi_shmid;
-    int mi_memwidth;		/* width of scanline in if_mem */
+    size_t mi_memwidth;		/* width of scanline in if_mem */
     short mi_xoff;		/* X viewport offset, rel. window*/
     short mi_yoff;		/* Y viewport offset, rel. window*/
     int mi_pid;			/* for multi-cpu check */
@@ -159,11 +159,11 @@ struct wglinfo {
     short front_flag;		/* front buffer being used (b-mode) */
     short copy_flag;		/* pan and zoom copied from backbuffer */
     short soft_cmap_flag;	/* use software colormapping */
-    int cmap_size;		/* hardware colormap size */
-    int win_width;		/* actual window width */
-    int win_height;		/* actual window height */
-    int vp_width;		/* actual viewport width */
-    int vp_height;		/* actual viewport height */
+    size_t cmap_size;		/* hardware colormap size */
+    size_t win_width;		/* actual window width */
+    size_t win_height;		/* actual window height */
+    size_t vp_width;		/* actual viewport width */
+    size_t vp_height;		/* actual viewport height */
     struct wgl_clip clip;	/* current view clipping */
     Window cursor;
     PIXELFORMATDESCRIPTOR *vip;	/* pointer to info on current visual */
@@ -295,9 +295,9 @@ HIDDEN struct modeflags {
 HIDDEN int
 wgl_getmem(fb *ifp)
 {
-    int pixsize;
-    int size;
-    int i;
+    size_t pixsize;
+    size_t size;
+    size_t i;
     char *sp;
     int new = 0;
 
@@ -357,10 +357,10 @@ sigkid(int UNUSED(pid))
  * rectangle of the frame buffer
  */
 HIDDEN void
-wgl_xmit_scanlines(fb *ifp, int ybase, int nlines, int xbase, int npix)
+wgl_xmit_scanlines(fb *ifp, size_t ybase, size_t nlines, size_t xbase, size_t npix)
 {
-    int y;
-    int n;
+    size_t y;
+    size_t n;
     int sw_cmap;	/* !0 => needs software color map */
     struct wgl_clip *clp;
 
@@ -442,7 +442,7 @@ wgl_xmit_scanlines(fb *ifp, int ybase, int nlines, int xbase, int npix)
 
     if (sw_cmap) {
 	/* Software colormap each line as it's transmitted */
-	int x;
+	size_t x;
 	struct wgl_pixel *wglp;
 	struct wgl_pixel *op;
 
@@ -509,16 +509,11 @@ MainWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	    break;
 	case WM_MBUTTONUP:
 	    {
-		int x, y;
+		size_t x, y;
 		struct wgl_pixel *wglp;
 
 		x = GET_X_LPARAM(lParam);
 		y = saveifp->if_height - GET_Y_LPARAM(lParam) - 1;
-
-		if (x < 0 || y < 0) {
-		    fb_log("No RGB (outside image viewport)\n");
-		    break;
-		}
 
 		wglp = (struct wgl_pixel *)&saveifp->if_mem[
 		    (y*SGI(saveifp)->mi_memwidth)*
@@ -544,7 +539,7 @@ MainWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 
 HIDDEN int
-wgl_open(fb *ifp, const char *file, int width, int height)
+wgl_open(fb *ifp, const char *file, size_t width, size_t height)
 {
     static char title[128];
     int mode,  ret;
@@ -768,8 +763,8 @@ _wgl_open_existing(fb *ifp,
 		   Colormap cmap,
 		   PIXELFORMATDESCRIPTOR *vip,
 		   HDC hdc,
-		   int width,
-		   int height,
+		   size_t width,
+		   size_t height,
 		   HGLRC glxc,
 		   int double_buffer,
 		   int soft_cmap)
@@ -839,7 +834,7 @@ _wgl_open_existing(fb *ifp,
 
 
 int
-wgl_open_existing(fb *ifp, int width, int height, struct fb_platform_specific *fb_p)
+wgl_open_existing(fb *ifp, size_t width, size_t height, struct fb_platform_specific *fb_p)
 {
     struct wgl_fb_info *wgl_internal = (struct wgl_fb_info *)fb_p->data;
     BU_CKMAG(fb_p, FB_WGL_MAGIC, "wgl framebuffer");
@@ -1027,7 +1022,7 @@ wgl_clear(fb *ifp, unsigned char *pp)
     struct wgl_pixel bg;
     struct wgl_pixel *wglp;
     int cnt;
-    int y;
+    size_t y;
 
     if (CJDEBUG) printf("entering wgl_clear\n");
 
@@ -1095,7 +1090,7 @@ wgl_clear(fb *ifp, unsigned char *pp)
 
 
 HIDDEN int
-wgl_view(fb *ifp, int xcenter, int ycenter, int xzoom, int yzoom)
+wgl_view(fb *ifp, size_t xcenter, size_t ycenter, size_t xzoom, size_t yzoom)
 {
     struct wgl_clip *clp;
 
@@ -1166,7 +1161,7 @@ wgl_view(fb *ifp, int xcenter, int ycenter, int xzoom, int yzoom)
 
 
 HIDDEN int
-wgl_getview(fb *ifp, int *xcenter, int *ycenter, int *xzoom, int *yzoom)
+wgl_getview(fb *ifp, size_t *xcenter, size_t *ycenter, size_t *xzoom, size_t *yzoom)
 {
     if (CJDEBUG) printf("entering wgl_getview\n");
 
@@ -1183,7 +1178,7 @@ wgl_getview(fb *ifp, int *xcenter, int *ycenter, int *xzoom, int *yzoom)
  * read count pixels into pixelp starting at x, y
  */
 HIDDEN int
-wgl_read(fb *ifp, int x, int y, unsigned char *pixelp, size_t count)
+wgl_read(fb *ifp, size_t x, size_t y, unsigned char *pixelp, size_t count)
 {
     size_t n;
     size_t scan_count;	/* # pix on this scanline */
@@ -1236,15 +1231,15 @@ wgl_read(fb *ifp, int x, int y, unsigned char *pixelp, size_t count)
  * write count pixels from pixelp starting at xstart, ystart
  */
 HIDDEN int
-wgl_write(fb *ifp, int xstart, int ystart, const unsigned char *pixelp, size_t count)
+wgl_write(fb *ifp, size_t xstart, size_t ystart, const unsigned char *pixelp, size_t count)
 {
     size_t scan_count;	/* # pix on this scanline */
     size_t pix_count;	/* # pixels to send */
     unsigned char *cp;
     int ret;
-    int ybase;
-    int x;
-    int y;
+    size_t ybase;
+    size_t x;
+    size_t y;
 
     if (CJDEBUG) printf("entering wgl_write\n");
 
@@ -1264,7 +1259,7 @@ wgl_write(fb *ifp, int xstart, int ystart, const unsigned char *pixelp, size_t c
     cp = (unsigned char *)(pixelp);
 
     while (pix_count) {
-	unsigned int n;
+	unsigned size_t n;
 	struct wgl_pixel *wglp;
 
 	if (y >= ifp->if_height)
@@ -1365,14 +1360,14 @@ wgl_write(fb *ifp, int xstart, int ystart, const unsigned char *pixelp, size_t c
  */
 HIDDEN int
 wgl_writerect(fb *ifp,
-	      int xmin,
-	      int ymin,
-	      int width,
-	      int height,
+	      size_t xmin,
+	      size_t ymin,
+	      size_t width,
+	      size_t height,
 	      const unsigned char *pp)
 {
-    int x;
-    int y;
+    size_t x;
+    size_t y;
     unsigned char *cp;
     struct wgl_pixel *wglp;
 
@@ -1434,14 +1429,14 @@ wgl_writerect(fb *ifp,
  */
 HIDDEN int
 wgl_bwwriterect(fb *ifp,
-		int xmin,
-		int ymin,
-		int width,
-		int height,
+		size_t xmin,
+		size_t ymin,
+		size_t width,
+		size_t height,
 		const unsigned char *pp)
 {
-    int x;
-    int y;
+    size_t x;
+    size_t y;
     unsigned char *cp;
     struct wgl_pixel *wglp;
 
@@ -1634,7 +1629,7 @@ wgl_setcursor(fb *ifp,
 
 
 HIDDEN int
-wgl_cursor(fb *ifp, int mode, int x, int y)
+wgl_cursor(fb *ifp, int mode, size_t x, size_t y)
 {
     return 0;
 }
@@ -1861,7 +1856,7 @@ expose_callback(fb *ifp, int eventPtr)
 
 
 int
-wgl_configureWindow(fb *ifp, int width, int height)
+wgl_configureWindow(fb *ifp, size_t width, size_t height)
 {
     if (width == WGL(ifp)->win_width &&
 	height == WGL(ifp)->win_height)
@@ -2039,10 +2034,10 @@ wgl_choose_visual(fb *ifp)
 
 int
 wgl_refresh(fb *ifp,
-	    int x,
-	    int y,
-	    int w,
-	    int h)
+	    size_t x,
+	    size_t y,
+	    size_t w,
+	    size_t h)
 {
     int mm;
     struct wgl_clip *clp;
