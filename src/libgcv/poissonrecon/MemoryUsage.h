@@ -186,7 +186,7 @@ class MemoryInfo
     task_t task = MACH_PORT_NULL;
 
     if (task_for_pid(current_task(), getpid(), &task) != KERN_SUCCESS)
-        bu_bomb();
+      exit(); /* FIXME: do something more intelligent than quit the application */
     getres(task, &rss, &vs);
     return rss;
   }
