@@ -28,7 +28,7 @@ DAMAGE.
 
 #ifndef MY_TIME_INCLUDED
 #define MY_TIME_INCLUDED
-
+#include "common.h"
 #include <string.h>
 #include <sys/timeb.h>
 #ifndef WIN32

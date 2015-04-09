@@ -26,7 +26,7 @@ ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF S
 DAMAGE.
 */
 
-
+#include "common.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -34,15 +34,11 @@ DAMAGE.
 #include "CmdLineParser.h"
 
 
-#ifdef WIN32
-int strcasecmp(char* c1,char* c2){return _stricmp(c1,c2);}
-#endif
-
 cmdLineReadable::cmdLineReadable(const char* name)
 {
 	set=false;
 	this->name=new char[strlen(name)+1];
-	strcpy(this->name,name);
+	bu_strlcpy(this->name,name,strlen(name)+1);
 }
 cmdLineReadable::~cmdLineReadable(void)
 {
@@ -107,7 +103,7 @@ int cmdLineString::read(char** argv,int argc){
 	if(argc>0)
 	{
 		value=new char[strlen(argv[0])+1];
-		strcpy(value,argv[0]);
+		bu_strlcpy(value,argv[0],strlen(argv[0])+1);
 		set=true;
 		return 1;
 	}
@@ -144,7 +140,7 @@ int cmdLineStrings::read(char** argv,int argc)
 		for(int i=0;i<Dim;i++)
 		{
 			values[i]=new char[strlen(argv[i])+1];
-			strcpy(values[i],argv[i]);
+			bu_strlcpy(values[i],argv[i],strlen(argv[i])+1);
 		}
 		set=true;
 		return Dim;
@@ -169,14 +165,14 @@ char* GetFileExtension(char* fileName){
 
 	fileNameCopy=new char[strlen(fileName)+1];
 	assert(fileNameCopy);
-	strcpy(fileNameCopy,fileName);
+	bu_strlcpy(fileNameCopy,fileName,strlen(fileName)+1);
 	temp=strtok(fileNameCopy,".");
 	while(temp!=NULL)
 	{
 		if(ext!=NULL){delete[] ext;}
 		ext=new char[strlen(temp)+1];
 		assert(ext);
-		strcpy(ext,temp);
+		bu_strlcpy(ext,temp,strlen(temp)+1);
 		temp=strtok(NULL,".");
 	}
 	delete[] fileNameCopy;
@@ -189,13 +185,13 @@ char* GetLocalFileName(char* fileName){
 
 	fileNameCopy=new char[strlen(fileName)+1];
 	assert(fileNameCopy);
-	strcpy(fileNameCopy,fileName);
+	bu_strlcpy(fileNameCopy,fileName,strlen(fileName)+1);
 	temp=strtok(fileNameCopy,"\\");
 	while(temp!=NULL){
 		if(name!=NULL){delete[] name;}
 		name=new char[strlen(temp)+1];
 		assert(name);
-		strcpy(name,temp);
+		bu_strlcpy(name,temp,strlen(temp)+1);
 		temp=strtok(NULL,"\\");
 	}
 	delete[] fileNameCopy;
@@ -211,7 +207,7 @@ void cmdLineParse(int argc, char **argv,int num,cmdLineReadable** readable,int d
 		{
 			for(i=0;i<num;i++)
 			{
-				if (!strcmp(&argv[0][2],readable[i]->name))
+				if (!bu_strcmp(&argv[0][2],readable[i]->name))
 				{
 					argv++, argc--;
 					j=readable[i]->read(argv,argc);
@@ -271,7 +267,7 @@ char** ReadWords(const char* fileName,int& cnt)
 			fclose(fp);
 			return NULL;
 		}
-		strcpy(names[cnt],temp);
+		bu_strlcpy(names[cnt],temp,strlen(temp)+1);
 		cnt++;
 	}
 	fclose(fp);

@@ -1,5 +1,6 @@
 #ifndef HASH_INCLUDED
 #define HASH_INCLUDED
+#include "common.h"
 #ifdef WIN32
 #include <hash_map>
 using stdext::hash_map;

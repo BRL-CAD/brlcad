@@ -29,6 +29,7 @@ DAMAGE.
 //////////////////////
 // Polynomial Roots //
 //////////////////////
+#include "common.h"
 #include <math.h>
 #include "Factor.h"
 int Factor(double a1,double a0,double roots[1][2],double EPS){

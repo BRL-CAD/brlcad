@@ -28,7 +28,7 @@ DAMAGE.
 
 #ifndef ARRAY_INCLUDED
 #define ARRAY_INCLUDED
-
+#include "common.h"
 #include <vector>
 
 #define ARRAY_DEBUG 0

@@ -26,6 +26,7 @@ ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF S
 DAMAGE.
 */
 
+#include "common.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
@@ -338,8 +339,8 @@ int Execute( int argc , char* argv[] )
 	std::vector< Real >* centerWeights = new std::vector< Real >();
 	PointStream< float >* pointStream;
 	char* ext = GetFileExtension( In.value );
-	if     ( !strcasecmp( ext , "bnpts" ) ) pointStream = new BinaryPointStream< float >( In.value );
-	else if( !strcasecmp( ext , "ply"   ) ) pointStream = new    PLYPointStream< float >( In.value );
+	if     ( !bu_strcasecmp( ext , "bnpts" ) ) pointStream = new BinaryPointStream< float >( In.value );
+	else if( !bu_strcasecmp( ext , "ply"   ) ) pointStream = new    PLYPointStream< float >( In.value );
 	else                                    pointStream = new  ASCIIPointStream< float >( In.value );
 	delete[] ext;
 	int pointCount = tree.template SetTree< float >( pointStream , MinDepth.value , Depth.value , FullDepth.value , kernelDepth , Real(SamplesPerNode.value) , Scale.value , Confidence.set , NormalWeights.set , PointWeight.value , AdaptiveExponent.value , *pointInfo , *normalInfo , *kernelDensityWeights , *centerWeights , BoundaryType.value , xForm , Complete.set );

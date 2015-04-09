@@ -46,10 +46,10 @@ BufferedReadWriteFile::BufferedReadWriteFile( char* fileName , int bufferSize )
 {
 	_bufferIndex = 0;
 	_bufferSize = bufferSize;
-	if( fileName ) strcpy( _fileName , fileName ) , tempFile = false , _fp = fopen( _fileName , "w+b" );
+	if( fileName ) bu_strlcpy( _fileName , fileName , 1024 ) , tempFile = false , _fp = fopen( _fileName , "w+b" );
 	else
 	{
-		strcpy( _fileName , "PR_XXXXXX" );
+		bu_strlcpy( _fileName , "PR_XXXXXX" , 1024);
 #ifdef _WIN32
 		_mktemp( _fileName );
 		_fp = fopen( _fileName , "w+b" );
@@ -65,7 +65,7 @@ BufferedReadWriteFile::~BufferedReadWriteFile( void )
 {
 	free( _buffer );
 	fclose( _fp );
-	if( tempFile ) remove( _fileName );
+	if( tempFile ) bu_file_delete( _fileName );
 }
 void BufferedReadWriteFile::reset( void )
 {

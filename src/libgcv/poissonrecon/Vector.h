@@ -28,7 +28,7 @@ DAMAGE.
 
 #ifndef __VECTOR_HPP
 #define __VECTOR_HPP
-
+#include "common.h"
 
 #define Assert assert
 #include <assert.h>

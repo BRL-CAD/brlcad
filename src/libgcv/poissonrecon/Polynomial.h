@@ -28,7 +28,7 @@ DAMAGE.
 
 #ifndef POLYNOMIAL_INCLUDED
 #define POLYNOMIAL_INCLUDED
-
+#include "common.h"
 #include <vector>
 
 template< int Degree >
