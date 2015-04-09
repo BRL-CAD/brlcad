@@ -22,11 +22,11 @@
  * Brief description
  *
  */
-extern "C" {
+#include "common.h"
+
 #include "vmath.h"
 #include "raytrace.h"
 #include "gcv_private.h"
-}
 
 #if defined(__GNUC__) && (__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 6)) && !defined(__clang__)
 #  pragma GCC diagnostic push
