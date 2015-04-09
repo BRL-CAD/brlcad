@@ -958,7 +958,7 @@ int Octree< Real >::SetMatrixRow( const PointInfo& pointInfo , const typename Tr
 	}
 	return count;
 }
-// if( scatter ) normals come from the center ndoe
+// if( scatter ) normals come from the center node
 // else          normals come from the neighbors
 template< class Real >
 void Octree< Real >::SetDivergenceStencil( int depth , const typename BSplineData< 2 >::Integrator& integrator , Stencil< Point3D< double > , 5 >& stencil , bool scatter ) const

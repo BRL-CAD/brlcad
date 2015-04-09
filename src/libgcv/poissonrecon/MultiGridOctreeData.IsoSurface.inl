@@ -803,7 +803,7 @@ int Octree< Real >::SetIsoSurface( int depth , int offset , const SliceValues< V
 		{
 			edges.clear();
 			unsigned char mcIndex = ( bValues.mcIndices[ i - bValues.sliceData.nodeOffset ] ) | ( fValues.mcIndices[ i - fValues.sliceData.nodeOffset ]<<4 );
-			// [WARNING] Just because the node looks empty doesn't mean it doesn't get eges from finer neighbors
+			// [WARNING] Just because the node looks empty doesn't mean it doesn't get edges from finer neighbors
 			{
 				// Gather the edges from the faces (with the correct orientation)
 				for( int f=0 ; f<Cube::FACES ; f++ )
