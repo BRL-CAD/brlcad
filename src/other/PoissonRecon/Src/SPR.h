@@ -85,8 +85,8 @@ struct spr_options {
 #define SPR_OPTIONS_DEFAULT_INIT { NULL, NULL, NULL, NULL, 0, 0, 8, 0, 6, 1, 8, -1, 5, 0, 8, 1, 1, 1.0, 1.1, 0.001, 4.0 }
 
 SPR_EXPORT extern int
-spr_surface_build(int **faces, int *num_faces, double *points, int *num_pnts,
-		struct cvertex **verts, int cnt, struct spr_options *opts);
+spr_surface_build(int **faces, int *num_faces, double **points, int *num_pnts,
+		const struct cvertex **verts, int cnt, struct spr_options *opts);
 
 __END_DECLS
 

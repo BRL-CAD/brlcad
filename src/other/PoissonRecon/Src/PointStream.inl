@@ -27,7 +27,7 @@ DAMAGE.
 */
 
 template< class Real >
-CVertexPointStream< Real >::CVertexPointStream( size_t pointCount , struct cvertex **points ){ _points = points , _pointCount = pointCount , _current = 0; }
+CVertexPointStream< Real >::CVertexPointStream( size_t pointCount , const struct cvertex **points ){ _points = points , _pointCount = pointCount , _current = 0; }
 template< class Real >
 CVertexPointStream< Real >::~CVertexPointStream( void ){ ; }
 template< class Real >

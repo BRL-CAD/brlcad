@@ -47,7 +47,7 @@ class CVertexPointStream : public PointStream< Real >
 	size_t _pointCount;
 	size_t _current;
 public:
-	CVertexPointStream( size_t pointCount , struct cvertex **points );
+	CVertexPointStream( size_t pointCount , const struct cvertex **points );
 	~CVertexPointStream( void );
 	void reset( void );
 	bool nextPoint( Point3D< Real >& p , Point3D< Real >& n );
