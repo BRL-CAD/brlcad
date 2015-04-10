@@ -410,13 +410,13 @@ ogl_xmit_scanlines(register fb *ifp, int ybase, int nlines, int xbase, int npix)
 					  CLIP_XTRA);
 
 	    /* Blank out area right of image */
-	    if (clp->xscrmax >= ifp->if_width) glRecti(ifp->if_width - CLIP_XTRA,
+	    if (clp->xscrmax >= (int)ifp->if_width) glRecti(ifp->if_width - CLIP_XTRA,
 						       clp->yscrmin - CLIP_XTRA,
 						       clp->xscrmax + CLIP_XTRA,
 						       clp->yscrmax + CLIP_XTRA);
 
 	    /* Blank out area above image */
-	    if (clp->yscrmax >= ifp->if_height) glRecti(clp->xscrmin - CLIP_XTRA,
+	    if (clp->yscrmax >= (int)ifp->if_height) glRecti(clp->xscrmin - CLIP_XTRA,
 							ifp->if_height- CLIP_XTRA,
 							clp->xscrmax + CLIP_XTRA,
 							clp->yscrmax + CLIP_XTRA);
@@ -672,10 +672,10 @@ ogl_clipper(register fb *ifp)
 	    clp->ypixmax = OGL(ifp)->vp_height-1;
 	}
     } else {
-	if (clp->xpixmax > ifp->if_width-1) {
+	if (clp->xpixmax > (int)(ifp->if_width-1)) {
 	    clp->xpixmax = ifp->if_width-1;
 	}
-	if (clp->ypixmax > ifp->if_height-1) {
+	if (clp->ypixmax > (int)(ifp->if_height-1)) {
 	    clp->ypixmax = ifp->if_height-1;
 	}
     }
@@ -738,10 +738,10 @@ expose_callback(fb *ifp)
 	/* Set normal viewport size to minimum of actual window
 	 * size and requested framebuffer size
 	 */
-	OGL(ifp)->vp_width = (OGL(ifp)->win_width < ifp->if_width) ?
-	    OGL(ifp)->win_width : ifp->if_width;
-	OGL(ifp)->vp_height = (OGL(ifp)->win_height < ifp->if_height) ?
-	    OGL(ifp)->win_height : ifp->if_height;
+	OGL(ifp)->vp_width = (OGL(ifp)->win_width < (int)ifp->if_width) ?
+	    OGL(ifp)->win_width : (int)ifp->if_width;
+	OGL(ifp)->vp_height = (OGL(ifp)->win_height < (int)ifp->if_height) ?
+	    OGL(ifp)->win_height : (int)ifp->if_height;
 	ifp->if_xcenter = OGL(ifp)->vp_width/2;
 	ifp->if_ycenter = OGL(ifp)->vp_height/2;
 
@@ -760,8 +760,8 @@ expose_callback(fb *ifp)
 	glOrtho(clp->oleft, clp->oright, clp->obottom, clp->otop,
 		-1.0, 1.0);
 	glPixelZoom((float) ifp->if_xzoom, (float) ifp->if_yzoom);
-    } else if ((OGL(ifp)->win_width > ifp->if_width) ||
-	       (OGL(ifp)->win_height > ifp->if_height)) {
+    } else if ((OGL(ifp)->win_width > (int)ifp->if_width) ||
+	       (OGL(ifp)->win_height > (int)ifp->if_height)) {
 	/* clear whole buffer if window larger than framebuffer */
 	if (OGL(ifp)->copy_flag && !OGL(ifp)->front_flag) {
 	    glDrawBuffer(GL_FRONT);
@@ -811,10 +811,10 @@ expose_callback(fb *ifp)
 
 
 int
-ogl_configureWindow(fb *ifp, int width, int height)
+ogl_configureWindow(fb *ifp, size_t width, size_t height)
 {
-    if (width == OGL(ifp)->win_width &&
-	height == OGL(ifp)->win_height)
+    if ((int)width == OGL(ifp)->win_width &&
+	(int)height == OGL(ifp)->win_height)
 	return 1;
 
     ifp->if_width = ifp->if_max_width = width;
@@ -1066,7 +1066,7 @@ is_linear_cmap(register fb *ifp)
 
 
 HIDDEN int
-fb_ogl_open(fb *ifp, const char *file, int width, int height)
+fb_ogl_open(fb *ifp, const char *file, size_t width, size_t height)
 {
     static char title[128];
     int mode, i, direct;
@@ -1341,7 +1341,7 @@ fb_ogl_open(fb *ifp, const char *file, int width, int height)
 
 
 int
-_ogl_open_existing(fb *ifp, Display *dpy, Window win, Colormap cmap, XVisualInfo *vip, int width, int height, GLXContext glxc, int double_buffer, int soft_cmap)
+_ogl_open_existing(fb *ifp, Display *dpy, Window win, Colormap cmap, XVisualInfo *vip, size_t width, size_t height, GLXContext glxc, int double_buffer, int soft_cmap)
 {
 
     /*XXX for now use private memory */
@@ -1428,7 +1428,7 @@ ogl_put_fbps(struct fb_platform_specific *fbps)
 }
 
 HIDDEN int
-ogl_open_existing(fb *ifp, int width, int height, struct fb_platform_specific *fb_p)
+ogl_open_existing(fb *ifp, size_t width, size_t height, struct fb_platform_specific *fb_p)
 {
     struct ogl_fb_info *ogl_internal = (struct ogl_fb_info *)fb_p->data;
     BU_CKMAG(fb_p, FB_OGL_MAGIC, "ogl framebuffer");
@@ -1646,7 +1646,7 @@ ogl_clear(fb *ifp, unsigned char *pp)
     }
 
     /* Flood rectangle in shared memory */
-    for (y = 0; y < ifp->if_height; y++) {
+    for (y = 0; y < (int)ifp->if_height; y++) {
 	oglp = (struct ogl_pixel *)&ifp->if_mem[
 	    (y*SGI(ifp)->mi_memwidth+0)*sizeof(struct ogl_pixel) ];
 	for (cnt = ifp->if_width-1; cnt >= 0; cnt--) {
@@ -1696,7 +1696,7 @@ ogl_clear(fb *ifp, unsigned char *pp)
 
 
 HIDDEN int
-ogl_view(fb *ifp, int xcenter, int ycenter, int xzoom, int yzoom)
+ogl_view(fb *ifp, size_t xcenter, size_t ycenter, size_t xzoom, size_t yzoom)
 {
     struct ogl_clip *clp;
 
@@ -1708,9 +1708,9 @@ ogl_view(fb *ifp, int xcenter, int ycenter, int xzoom, int yzoom)
 	&& ifp->if_xzoom == xzoom && ifp->if_yzoom == yzoom)
 	return 0;
 
-    if (xcenter < 0 || xcenter >= ifp->if_width)
+    if (xcenter >= ifp->if_width)
 	return -1;
-    if (ycenter < 0 || ycenter >= ifp->if_height)
+    if (ycenter >= ifp->if_height)
 	return -1;
     if (xzoom >= ifp->if_width || yzoom >= ifp->if_height)
 	return -1;
@@ -1768,7 +1768,7 @@ ogl_view(fb *ifp, int xcenter, int ycenter, int xzoom, int yzoom)
 
 
 HIDDEN int
-ogl_getview(fb *ifp, int *xcenter, int *ycenter, int *xzoom, int *yzoom)
+ogl_getview(fb *ifp, size_t *xcenter, size_t *ycenter, size_t *xzoom, size_t *yzoom)
 {
     if (CJDEBUG) printf("entering ogl_getview\n");
 
@@ -1783,7 +1783,7 @@ ogl_getview(fb *ifp, int *xcenter, int *ycenter, int *xzoom, int *yzoom)
 
 /* read count pixels into pixelp starting at x, y */
 HIDDEN ssize_t
-ogl_read(fb *ifp, int x, int y, unsigned char *pixelp, size_t count)
+ogl_read(fb *ifp, size_t x, size_t y, unsigned char *pixelp, size_t count)
 {
     size_t n;
     size_t scan_count;	/* # pix on this scanline */
@@ -1793,8 +1793,7 @@ ogl_read(fb *ifp, int x, int y, unsigned char *pixelp, size_t count)
 
     if (CJDEBUG) printf("entering ogl_read\n");
 
-    if (x < 0 || x >= ifp->if_width ||
-	y < 0 || y >= ifp->if_height)
+    if (x >= ifp->if_width || y >= ifp->if_height)
 	return -1;
 
     ret = 0;
@@ -1834,7 +1833,7 @@ ogl_read(fb *ifp, int x, int y, unsigned char *pixelp, size_t count)
 
 /* write count pixels from pixelp starting at xstart, ystart */
 HIDDEN ssize_t
-ogl_write(fb *ifp, int xstart, int ystart, const unsigned char *pixelp, size_t count)
+ogl_write(fb *ifp, size_t xstart, size_t ystart, const unsigned char *pixelp, size_t count)
 {
     size_t scan_count;	/* # pix on this scanline */
     register unsigned char *cp;
@@ -1854,8 +1853,7 @@ ogl_write(fb *ifp, int xstart, int ystart, const unsigned char *pixelp, size_t c
     x = xstart;
     ybase = y = ystart;
 
-    if (x < 0 || x >= ifp->if_width ||
-	y < 0 || y >= ifp->if_height)
+    if (x >= (int)ifp->if_width || y >= (int)ifp->if_height)
 	return -1;
 
     ret = 0;
@@ -1865,7 +1863,7 @@ ogl_write(fb *ifp, int xstart, int ystart, const unsigned char *pixelp, size_t c
 	size_t n;
 	register struct ogl_pixel *oglp;
 
-	if (y >= ifp->if_height)
+	if (y >= (int)ifp->if_height)
 	    break;
 
 	if (pix_count >= (size_t)(ifp->if_width-x))
@@ -1911,7 +1909,7 @@ ogl_write(fb *ifp, int xstart, int ystart, const unsigned char *pixelp, size_t c
 	ret += scan_count;
 	pix_count -= scan_count;
 	x = 0;
-	if (++y >= ifp->if_height)
+	if (++y >= (int)ifp->if_height)
 	    break;
     }
 
@@ -1963,7 +1961,7 @@ ogl_write(fb *ifp, int xstart, int ystart, const unsigned char *pixelp, size_t c
  * separately.
  */
 HIDDEN int
-ogl_writerect(fb *ifp, int xmin, int ymin, int width, int height, const unsigned char *pp)
+ogl_writerect(fb *ifp, size_t xmin, size_t ymin, size_t width, size_t height, const unsigned char *pp)
 {
     register int x;
     register int y;
@@ -1975,15 +1973,14 @@ ogl_writerect(fb *ifp, int xmin, int ymin, int width, int height, const unsigned
 
     if (width <= 0 || height <= 0)
 	return 0;  /* do nothing */
-    if (xmin < 0 || xmin+width > ifp->if_width ||
-	ymin < 0 || ymin+height > ifp->if_height)
+    if (xmin+width > ifp->if_width || ymin+height > ifp->if_height)
 	return -1; /* no can do */
 
     cp = (unsigned char *)(pp);
-    for (y = ymin; y < ymin+height; y++) {
+    for (y = ymin; y < (int)(ymin+height); y++) {
 	oglp = (struct ogl_pixel *)&ifp->if_mem[
 	    (y*SGI(ifp)->mi_memwidth+xmin)*sizeof(struct ogl_pixel) ];
-	for (x = xmin; x < xmin+width; x++) {
+	for (x = xmin; x < (int)(xmin+width); x++) {
 	    /* alpha channel is always zero */
 	    oglp->red   = cp[RED];
 	    oglp->green = cp[GRN];
@@ -2027,7 +2024,7 @@ ogl_writerect(fb *ifp, int xmin, int ymin, int width, int height, const unsigned
  * separately.
  */
 HIDDEN int
-ogl_bwwriterect(fb *ifp, int xmin, int ymin, int width, int height, const unsigned char *pp)
+ogl_bwwriterect(fb *ifp, size_t xmin, size_t ymin, size_t width, size_t height, const unsigned char *pp)
 {
     register int x;
     register int y;
@@ -2037,17 +2034,14 @@ ogl_bwwriterect(fb *ifp, int xmin, int ymin, int width, int height, const unsign
     if (CJDEBUG) printf("entering ogl_bwwriterect\n");
 
 
-    if (width <= 0 || height <= 0)
-	return 0;  /* do nothing */
-    if (xmin < 0 || xmin+width > ifp->if_width ||
-	ymin < 0 || ymin+height > ifp->if_height)
+    if (xmin+width > ifp->if_width || ymin+height > ifp->if_height)
 	return -1; /* no can do */
 
     cp = (unsigned char *)(pp);
-    for (y = ymin; y < ymin+height; y++) {
+    for (y = ymin; y < (int)(ymin+height); y++) {
 	oglp = (struct ogl_pixel *)&ifp->if_mem[
 	    (y*SGI(ifp)->mi_memwidth+xmin)*sizeof(struct ogl_pixel) ];
-	for (x = xmin; x < xmin+width; x++) {
+	for (x = xmin; x < (int)(xmin+width); x++) {
 	    register int val;
 	    /* alpha channel is always zero */
 	    oglp->red   = (val = *cp++);
@@ -2227,7 +2221,7 @@ ogl_help(fb *ifp)
 
 
 HIDDEN int
-ogl_setcursor(fb *ifp, const unsigned char *UNUSED(bits), int UNUSED(xbits), int UNUSED(ybits), int UNUSED(xorig), int UNUSED(yorig))
+ogl_setcursor(fb *ifp, const unsigned char *UNUSED(bits), size_t UNUSED(xbits), size_t UNUSED(ybits), size_t UNUSED(xorig), size_t UNUSED(yorig))
 {
     FB_CK_FB(ifp);
 
@@ -2236,7 +2230,7 @@ ogl_setcursor(fb *ifp, const unsigned char *UNUSED(bits), int UNUSED(xbits), int
 
 
 HIDDEN int
-ogl_cursor(fb *ifp, int mode, int x, int y)
+ogl_cursor(fb *ifp, int mode, size_t x, size_t y)
 {
     if (mode) {
 	register int xx, xy;
@@ -2299,21 +2293,10 @@ ogl_cursor(fb *ifp, int mode, int x, int y)
 
 
 int
-ogl_refresh(fb *ifp, int x, int y, int w, int h)
+ogl_refresh(fb *ifp, size_t x, size_t y, size_t w, size_t h)
 {
     int mm;
     struct ogl_clip *clp;
-
-    if (w < 0) {
-	w = -w;
-	x -= w;
-    }
-
-    if (h < 0) {
-	h = -h;
-	y -= h;
-    }
-
 
     glGetIntegerv(GL_MATRIX_MODE, &mm);
     glMatrixMode(GL_PROJECTION);

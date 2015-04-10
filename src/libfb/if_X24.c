@@ -139,8 +139,8 @@ struct xinfo {
 
     /* The following values are in Image Pixels */
 
-    int xi_iwidth;	/* Width of user's whole image */
-    int xi_iheight;	/* Height of user's whole image */
+    size_t xi_iwidth;	/* Width of user's whole image */
+    size_t xi_iheight;	/* Height of user's whole image */
 
     int xi_ilf;		/* Image coordinate of LLHC image */
     int xi_ibt;		/* pixel */
@@ -149,13 +149,13 @@ struct xinfo {
 
     /* The following values are in X Pixels */
 
-    int xi_ilf_w;	/* Width of leftmost image pixels */
-    int xi_irt_w;	/* Width of rightmost image pixels */
-    int xi_ibt_h;	/* Height of bottommost image pixels */
-    int xi_itp_h;	/* Height of topmost image pixels */
+    size_t xi_ilf_w;	/* Width of leftmost image pixels */
+    size_t xi_irt_w;	/* Width of rightmost image pixels */
+    size_t xi_ibt_h;	/* Height of bottommost image pixels */
+    size_t xi_itp_h;	/* Height of topmost image pixels */
 
-    int xi_xwidth;	/* Width of X window */
-    int xi_xheight;	/* Height of X window */
+    size_t xi_xwidth;	/* Width of X window */
+    size_t xi_xheight;	/* Height of X window */
 
     int xi_xlf;		/* X-coord of leftmost pixels */
     int xi_xrt;		/* X-coord of rightmost pixels */
@@ -2936,17 +2936,17 @@ X24_handle_event(fb *ifp, XEvent *event)
 				break;
 			    }
 
-			    if (x < xi->xi_ilf_w)
+			    if (x < (int)xi->xi_ilf_w)
 				ix = xi->xi_ilf;
 			    else
 				ix = xi->xi_ilf + (x - xi->xi_ilf_w + ifp->if_xzoom - 1) / ifp->if_xzoom;
 
-			    if (sy < xi->xi_ibt_h)
+			    if (sy < (int)xi->xi_ibt_h)
 				isy = xi->xi_ibt;
 			    else
 				isy = xi->xi_ibt + (sy - xi->xi_ibt_h + ifp->if_yzoom - 1) / ifp->if_yzoom;
 
-			    if (ix >= xi->xi_iwidth || isy >= xi->xi_iheight) {
+			    if (ix >= (int)xi->xi_iwidth || isy >= (int)xi->xi_iheight) {
 				fb_log("No RGB (outside image) 2\n");
 				break;
 			    }
@@ -2967,8 +2967,8 @@ X24_handle_event(fb *ifp, XEvent *event)
 	    {
 		XConfigureEvent *conf = (XConfigureEvent *)event;
 
-		if (conf->width == xi->xi_xwidth &&
-		    conf->height == xi->xi_xheight)
+		if (conf->width == (int)xi->xi_xwidth &&
+		    conf->height == (int)xi->xi_xheight)
 		    return;
 
 		X24_configureWindow(ifp, conf->width, conf->height);
@@ -3098,10 +3098,6 @@ X24_read(fb *ifp, size_t x, size_t y, unsigned char *pixelp, size_t count)
     size_t maxcount;
     FB_CK_FB(ifp);
 
-    /* check origin bounds */
-    if (x < 0 || x >= xi->xi_iwidth || y < 0 || y >= xi->xi_iheight)
-	return -1;
-
     /* clip read length */
     maxcount = xi->xi_iwidth * (xi->xi_iheight - y) - x;
     if (count > maxcount)
@@ -3119,10 +3115,6 @@ X24_write(fb *ifp, size_t x, size_t y, const unsigned char *pixelp, size_t count
     size_t maxcount;
 
     FB_CK_FB(ifp);
-
-    /* Check origin bounds */
-    if (x < 0 || x >= xi->xi_iwidth || y < 0 || y >= xi->xi_iheight)
-	return -1;
 
     /* Clip write length */
     maxcount = xi->xi_iwidth * (xi->xi_iheight - y) - x;
@@ -3163,11 +3155,10 @@ X24_view(fb *ifp, size_t xcenter, size_t ycenter, size_t xzoom, size_t yzoom)
 	&& ifp->if_xzoom == xcenter && ifp->if_yzoom == ycenter)
 	return 0;
     /* check bounds */
-    if (xcenter < 0 || xcenter >= xi->xi_iwidth
-	|| ycenter < 0 || ycenter >= xi->xi_iheight)
+    if (xcenter >= xi->xi_iwidth || ycenter >= xi->xi_iheight)
 	return -1;
-    if (xzoom <= 0 || xzoom >= xi->xi_iwidth/2
-	|| yzoom <= 0 || yzoom >= xi->xi_iheight/2)
+    if (xzoom == 0 || xzoom >= xi->xi_iwidth/2
+	|| yzoom == 0 || yzoom >= xi->xi_iheight/2)
 	return -1;
 
     ifp->if_xcenter = xcenter;
@@ -3281,10 +3272,6 @@ X24_readrect(fb *ifp, size_t xmin, size_t ymin, size_t width, size_t height, uns
 
     /* Clip arguments */
 
-    if (xmin < 0)
-	xmin = 0;
-    if (ymin < 0)
-	ymin = 0;
     if (xmin + width > xi->xi_iwidth)
 	width = xi->xi_iwidth - xmin;
     if (ymin + height > xi->xi_iheight)
@@ -3324,10 +3311,6 @@ X24_writerect(fb *ifp, size_t xmin, size_t ymin, size_t width, size_t height, co
 
     /* Clip arguments */
 
-    if (xmin < 0)
-	xmin = 0;
-    if (ymin < 0)
-	ymin = 0;
     if (xmin + width > xi->xi_iwidth)
 	width = xi->xi_iwidth - xmin;
     if (ymin + height > xi->xi_iheight)
@@ -3469,16 +3452,6 @@ X24_help(fb *ifp)
 int
 X24_refresh(fb *ifp, size_t x, size_t y, size_t w, size_t h)
 {
-    if (w < 0) {
-	w = -w;
-	x -= w;
-    }
-
-    if (h < 0) {
-	h = -h;
-	y -= h;
-    }
-
     X24_blit(ifp, x, y, w, h, BLIT_DISP);
 
     return 0;
