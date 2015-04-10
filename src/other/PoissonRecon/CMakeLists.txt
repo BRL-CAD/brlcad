@@ -72,14 +72,14 @@ if(SPR_ENABLE_OPENMP)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
 endif(SPR_ENABLE_OPENMP)
 
-#set(libPoissonRecon_srcs
-#  Src/Factor.cpp
-#  Src/Geometry.cpp
-#  Src/MarchingCubes.cpp
-#  )
+set(libSPR_srcs
+  Src/Factor.cpp
+  Src/Geometry.cpp
+  Src/MarchingCubes.cpp
+  Src/SPR.cpp
+  )
 
-#add_library(libPoissonRecon ${libPoissonRecon_srcs})
-#target_link_libraries(libPoissonRecon 
+add_library(libSPR ${libSPR_srcs})
 
 if(NOT DEFINED SPR_ENABLE_EXAMPLES)
   set(SPR_ENABLE_EXAMPLES ON)

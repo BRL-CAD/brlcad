@@ -29,6 +29,7 @@ DAMAGE.
 #ifndef POINT_STREAM_INCLUDED
 #define POINT_STREAM_INCLUDED
 #include "Ply.h"
+#include "cvertex.h"
 
 template< class Real >
 class PointStream
@@ -37,11 +38,6 @@ public:
 	virtual ~PointStream( void ){}
 	virtual void reset( void ) = 0;
 	virtual bool nextPoint( Point3D< Real >& p , Point3D< Real >& n ) = 0;
-};
-
-struct cvertex {
-	double p[3];
-	double n[3];
 };
 
 template< class Real >
