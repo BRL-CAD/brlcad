@@ -686,7 +686,19 @@ THIRD_PARTY(openNURBS OPENNURBS openNURBS opennurbs_DESCRIPTION ALIASES
 SetTargetFolder(openNURBS "Third Party Libraries")
 SetTargetFolder(openNURBS-static "Third Party Libraries")
 
-# STEPcode 
+# Screened Poisson Reconstruction Library
+set(poissonrecon_ALIASES ENABLE_OPENNURBS)
+set(poissonrecon_DESCRIPTION "
+Option for enabling and disabling compilation of the PoissonRecon library
+provided with BRL-CAD's source code.  Default is AUTO, responsive to
+the toplevel BRLCAD_BUNDLED_LIBS option and testing first for a system
+version if BRLCAD_BUNDLED_LIBS is also AUTO.
+")
+THIRD_PARTY(PoissonRecon SPR PoissonRecon poissonrecon_DESCRIPTION ALIASES
+  ${poissonrecon_ALIASES} FLAGS NOSYS)
+SetTargetFolder(PoissonRecon "Third Party Libraries")
+
+# STEPcode
 # Need Lemon/Perplex to build STEP - conditionalize
 
 # Set some options for the SCL build

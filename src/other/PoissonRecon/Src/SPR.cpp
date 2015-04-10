@@ -45,8 +45,8 @@ DAMAGE.
 #ifdef _OPENMP
 #include "omp.h"
 #endif // _OPENMP
-void DumpOutput( const char* format , ... );
-void DumpOutput2( char* str , const char* format , ... );
+void DumpOutput( const char* format , ... ) {};
+void DumpOutput2( char* str , const char* format , ... ) {};
 #include "MultiGridOctreeData.h"
 
 

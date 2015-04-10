@@ -178,6 +178,10 @@ do
                                   shift;;
      --disable-opennurbs)                options="$options -DBRLCAD_OPENNURBS=SYSTEM";
                                   shift;;
+     --enable-opennurbs)                options="$options -DBRLCAD_SPR=BUNDLED";
+                                  shift;;
+     --disable-opennurbs)                options="$options -DBRLCAD_SPR=SYSTEM";
+                                  shift;;
      --enable-scl)                options="$options -DBRLCAD_SC=BUNDLED";
                                   shift;;
      --disable-scl)                options="$options -DBRLCAD_SC=SYSTEM";

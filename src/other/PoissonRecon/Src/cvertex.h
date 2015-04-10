@@ -44,6 +44,7 @@ __BEGIN_DECLS
 struct cvertex {
 	double p[3];
 	double n[3];
+	int is_set;
 };
 
 __END_DECLS

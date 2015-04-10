@@ -27,39 +27,7 @@
 #include "vmath.h"
 #include "raytrace.h"
 #include "gcv_private.h"
-
-#if defined(__GNUC__) && (__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 6)) && !defined(__clang__)
-#  pragma GCC diagnostic push
-#endif
-#if defined(__clang__)
-#  pragma clang diagnostic push
-#endif
-#if defined(__GNUC__) && (__GNUC__ == 4 && __GNUC_MINOR__ >= 3) && !defined(__clang__)
-#  pragma GCC diagnostic ignored "-Wshadow"
-#  pragma GCC diagnostic ignored "-Wfloat-equal"
-#  pragma GCC diagnostic ignored "-Wunused-variable"
-#endif
-#if defined(__clang__)
-#  pragma clang diagnostic ignored "-Wshadow"
-#  pragma clang diagnostic ignored "-Wfloat-equal"
-#  pragma clang diagnostic ignored "-Wunused-variable"
-#endif
-#include "MarchingCubes.h"
-#include "Octree.h"
-#include "SparseMatrix.h"
-#include "PPolynomial.h"
-#include "MemoryUsage.h"
-#include "PointStream.h"
-#include "Factor.cpp"
-#include "Geometry.cpp"
-#include "MarchingCubes.cpp"
-#if defined(__GNUC__) && (__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 6)) && !defined(__clang__)
-#  pragma GCC diagnostic pop
-#endif
-#if defined(__clang__)
-#  pragma clang diagnostic pop
-#endif
-
+#include "../other/PoissonRecon/Src/SPR.h"
 
 #define DEFAULT_FULL_DEPTH 5
 struct gcvpnt {
@@ -78,153 +46,6 @@ struct gcv_point_container {
     int pnt_cnt;
     int capacity;
 };
-
-template< class Real >
-class GCVPointStream : public PointStream< Real >
-{
-    struct gcvpnt **gcvpnts;
-    int curr_ind;
-    int pnt_cnt;
-    public:
-    GCVPointStream( struct gcvpnt **pnts, int cnt );
-    ~GCVPointStream( void );
-    void reset( void );
-    bool nextPoint( Point3D< Real >& p , Point3D< Real >& n );
-
-};
-
-template< class Real >
-GCVPointStream< Real >::GCVPointStream( struct gcvpnt **pnts, int cnt)
-{
-    gcvpnts = pnts;
-    curr_ind = 0;
-    pnt_cnt = cnt;
-}
-template< class Real >
-GCVPointStream< Real >::~GCVPointStream( void )
-{
-}
-template< class Real >
-void GCVPointStream< Real >::reset( void ) { curr_ind = 0; }
-template< class Real >
-bool GCVPointStream< Real >::nextPoint( Point3D< Real >& p , Point3D< Real >& n )
-{
-    while (curr_ind < pnt_cnt && !gcvpnts[curr_ind]) curr_ind++;
-    if (curr_ind == pnt_cnt) return false;
-    p[0] = gcvpnts[curr_ind]->p[0] , p[1] = gcvpnts[curr_ind]->p[1] , p[2] = gcvpnts[curr_ind]->p[2];
-    n[0] = gcvpnts[curr_ind]->n[0] , n[1] = gcvpnts[curr_ind]->n[1] , n[2] = gcvpnts[curr_ind]->n[2];
-    curr_ind++;
-    return true;
-}
-
-template< class Real >
-class PossRecVertex
-{
-    public:
-	const static int Components=3;
-
-	Point3D< Real > point;
-
-	PossRecVertex( void ) { ; }
-	PossRecVertex( Point3D< Real > p ) { point=p; }
-	PossRecVertex operator + ( PossRecVertex p ) const { return PossRecVertex( point+p.point ); }
-	PossRecVertex operator - ( PossRecVertex p ) const { return PossRecVertex( point-p.point ); }
-	template< class _Real > PossRecVertex operator * ( _Real s ) const { return PossRecVertex( point*s ); }
-	template< class _Real > PossRecVertex operator / ( _Real s ) const { return PossRecVertex( point/s ); }
-	PossRecVertex& operator += ( PossRecVertex p ) { point += p.point ; return *this; }
-	PossRecVertex& operator -= ( PossRecVertex p ) { point -= p.point ; return *this; }
-	template< class _Real > PossRecVertex& operator *= ( _Real s ) { point *= s ; return *this; }
-	template< class _Real > PossRecVertex& operator /= ( _Real s ) { point /= s ; return *this; }
-};
-template< class Real, class _Real >
-PossRecVertex< Real > operator * ( XForm4x4< _Real > xForm , PossRecVertex< Real > v ) { return PossRecVertex< Real >( xForm * v.point ); }
-
-template< class Real >
-void SetIsoVertexValue( PossRecVertex< float >& vertex , Real value ){ ; }
-
-
-#if defined(__GNUC__) && (__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 6)) && !defined(__clang__)
-#  pragma GCC diagnostic push
-#endif
-#if defined(__clang__)
-#  pragma clang diagnostic push
-#endif
-#if defined(__GNUC__) && (__GNUC__ == 4 && __GNUC_MINOR__ >= 3) && !defined(__clang__)
-#  pragma GCC diagnostic ignored "-Wshadow"
-#  pragma GCC diagnostic ignored "-Wfloat-equal"
-#  pragma GCC diagnostic ignored "-Wunused-variable"
-#endif
-#if defined(__clang__)
-#  pragma clang diagnostic ignored "-Wshadow"
-#  pragma clang diagnostic ignored "-Wfloat-equal"
-#  pragma clang diagnostic ignored "-Wunused-variable"
-#endif
-void DumpOutput( const char* format , ... ) {}
-void DumpOutput2( char* str , const char* format , ... ) {}
-#include "MultiGridOctreeData.h"
-#if defined(__GNUC__) && (__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 6)) && !defined(__clang__)
-#  pragma GCC diagnostic pop
-#endif
-#if defined(__clang__)
-#  pragma clang diagnostic pop
-#endif
-
-int
-PoissonBuild(int **faces, int *num_faces, point_t **points, int *num_pnts, struct gcvpnt **gcvpnts, int cnt)
-{
-    XForm4x4< double > xForm;
-    xForm = XForm4x4< double >::Identity();
-    Octree< double > tree;
-    tree.threads = bu_avail_cpus();
-    OctNode< TreeNodeData >::SetAllocator( MEMORY_ALLOCATOR_BLOCK_SIZE );
-    double maxMemoryUsage;
-    Octree< double >::PointInfo* pointInfo = new Octree< double >::PointInfo();
-    Octree< double >::NormalInfo* normalInfo = new Octree< double >::NormalInfo();
-    std::vector< double >* kernelDensityWeights = new std::vector< double >();
-    std::vector< double >* centerWeights = new std::vector< double >();
-    PointStream< float >* pointStream = new GCVPointStream< float >( gcvpnts, cnt );
-    int pointCount = tree.SetTree< float >( pointStream , 0 , 8 , DEFAULT_FULL_DEPTH , 6 , 1.0 , 1.1, 0 , 0 , 4.0 , 1 , *pointInfo , *normalInfo , *kernelDensityWeights , *centerWeights , 1 , xForm , 0 );
-    delete kernelDensityWeights;
-    kernelDensityWeights = NULL;
-    Pointer( double ) constraints = tree.SetLaplacianConstraints( *normalInfo );
-    delete normalInfo;
-    Pointer( double ) solution = tree.SolveSystem( *pointInfo , constraints , 0 , 8 , 8 , 0 , float(1e-3) );
-    delete pointInfo;
-    FreePointer(constraints);
-    CoredFileMeshData< PossRecVertex <float> > mesh;
-    double isoValue = tree.GetIsoValue( solution , *centerWeights );
-    tree.GetMCIsoSurface( NullPointer< double >() , solution , isoValue , mesh , true , 1 , 0 );
-    /* mesh to BRL-CAD triangles */
-    (*num_pnts) = int(mesh.outOfCorePointCount()+mesh.inCorePoints.size());
-    (*num_faces) = mesh.polygonCount();
-    (*points) = (point_t *)bu_calloc((*num_pnts) + 1, sizeof(point_t), "final points array");
-    (*faces) = (int *)bu_calloc(3*3*(*num_faces) + 1, sizeof(point_t), "final points array");
-    bu_log("Point cnt: %d\n", *num_pnts);
-    bu_log("Face cnt: %d\n", *num_faces);
-    int pnt_ind = 0;
-    mesh.resetIterator();
-    for (int i = 0 ; i < int(mesh.inCorePoints.size()); i++) {
-	PossRecVertex<float> vertex = mesh.inCorePoints[i];
-	VSET((*points)[pnt_ind], vertex.point[0], vertex.point[1], vertex.point[2]);
-	//bu_log("pt: %f, %f, %f\n", (*points)[pnt_ind][0], (*points)[pnt_ind][1], (*points)[pnt_ind][2]);
-	pnt_ind++;
-    }
-    for (int i = 0 ; i < mesh.outOfCorePointCount(); i++) {
-	PossRecVertex<float> vertex;
-	mesh.nextOutOfCorePoint(vertex);
-	VSET((*points)[pnt_ind], vertex.point[0], vertex.point[1], vertex.point[2]);
-	//bu_log("pt: %f, %f, %f\n", (*points)[pnt_ind][0], (*points)[pnt_ind][1], (*points)[pnt_ind][2]);
-	pnt_ind++;
-    }
-    std::vector< CoredVertexIndex > polygon;
-    for (int i = 0; i < (*num_faces); i++) {
-	mesh.nextPolygon(polygon);
-	(*faces)[i*3] = (polygon[0].inCore) ? polygon[0].idx : polygon[0].idx + int(mesh.inCorePoints.size());
-	(*faces)[i*3+1] = (polygon[1].inCore) ? polygon[1].idx : polygon[1].idx + int(mesh.inCorePoints.size());
-	(*faces)[i*3+2] = (polygon[2].inCore) ? polygon[2].idx : polygon[2].idx + int(mesh.inCorePoints.size());
-	//bu_log("face: %d, %d, %d\n", (*faces)[i*3], (*faces)[i*3+1], (*faces)[i*3+2]);
-    }
-}
 
 struct rt_parallel_container {
     struct rt_i *rtip;
@@ -442,7 +263,8 @@ _rt_generate_points(int **faces, int *num_faces, point_t **points, int *num_pnts
 	}
     }
 
-    (void)PoissonBuild(faces, num_faces, points, num_pnts, gcvpnts, out_cnt);
+    struct spr_options opts = SPR_OPTIONS_DEFAULT_INIT;
+    (void)spr_surface_build(faces, num_faces, (double **)points, num_pnts, (const struct cvertex **)gcvpnts, out_cnt, &opts);
 
     return 0;
 }
