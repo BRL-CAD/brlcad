@@ -32,7 +32,7 @@
 
 #ifndef __PLY_H__
 #define __PLY_H__
-#include "common.h"
+
 #ifndef WIN32
 #define _strdup strdup
 #endif

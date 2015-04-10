@@ -28,7 +28,7 @@ DAMAGE.
 
 #ifndef MEMORY_USAGE_INCLUDED
 #define MEMORY_USAGE_INCLUDED
-#include "common.h"
+
 #ifdef WIN32
 
 #include <Windows.h>
@@ -186,7 +186,7 @@ class MemoryInfo
     task_t task = MACH_PORT_NULL;
 
     if (task_for_pid(current_task(), getpid(), &task) != KERN_SUCCESS)
-        bu_bomb();
+        abort();
     getres(task, &rss, &vs);
     return rss;
   }

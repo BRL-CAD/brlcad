@@ -28,7 +28,6 @@ DAMAGE.
 
 #ifndef P_POLYNOMIAL_INCLUDED
 #define P_POLYNOMIAL_INCLUDED
-#include "common.h"
 #include <vector>
 #include "Polynomial.h"
 

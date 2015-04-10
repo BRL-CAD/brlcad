@@ -28,10 +28,13 @@ DAMAGE.
 
 #ifndef CMD_LINE_PARSER_INCLUDED
 #define CMD_LINE_PARSER_INCLUDED
-#include "common.h"
 #include <stdarg.h>
 #include <string.h>
 
+
+#ifdef WIN32
+int strcasecmp(char* c1,char* c2);
+#endif
 
 class cmdLineReadable{
 public:

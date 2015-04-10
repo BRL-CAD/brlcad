@@ -28,7 +28,6 @@ DAMAGE.
 
 #ifndef MARCHING_CUBES_INCLUDED
 #define MARCHING_CUBES_INCLUDED
-#include "common.h"
 #include <vector>
 #include "Geometry.h"
 
