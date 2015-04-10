@@ -79,8 +79,6 @@ if(CPP_DLL_DEFINES)
 endif(CPP_DLL_DEFINES)
 add_test(NAME bottess_test COMMAND test_bottess)
 
-#BRLCAD_ADDEXEC(test_screened_poisson test_screened_poisson.cpp "libgcv" NO_INSTALL)
-
 set(GCV_IGNORE_FILES
   NOTES
   gcv_private.h
