@@ -282,7 +282,8 @@ main(int argc, char *argv[])
     if (slashpos) ply_file = slashpos + 1;
 
     bu_vls_sprintf(&bot_name, "%s", ply_file);
-    bu_vls_trunc(&bot_name, -1 * strlen(periodpos));
+    if (periodpos)
+	bu_vls_trunc(&bot_name, -1 * strlen(periodpos));
     bu_vls_printf(&bot_name, ".bot");
     bu_vls_sprintf(&region_name, "%s.r", bu_vls_addr(&bot_name));
 
