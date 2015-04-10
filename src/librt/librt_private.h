@@ -171,6 +171,13 @@ extern int cyclic_path(const struct db_full_path *fp, const char *name);
  */
 extern int tcl_list_to_avs(const char *tcl_list, struct bu_attribute_value_set *avs, int offset);
 
+/* WARNING - The function below is *HIGHLY* experimental and will certainly
+ * change signature */
+void
+rt_generate_mesh(int **faces, int *num_faces, point_t **points, int *num_pnts,
+	                        struct db_i *dbip, const char *obj, fastf_t delta);
+
+
 __END_DECLS
 
 #endif /* LIBRT_LIBRT_PRIVATE_H */

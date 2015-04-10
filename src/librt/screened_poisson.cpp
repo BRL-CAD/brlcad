@@ -234,7 +234,6 @@ _rt_generate_points(int **faces, int *num_faces, point_t **points, int *num_pnts
 	state->delta = delta;
 	bu_parallel(_rt_gen_worker, ncpus, (void *)state);
     }
-    struct bu_vls log = BU_VLS_INIT_ZERO;
 
     int out_cnt = 0;
     for (i = 0; i < ncpus+1; i++) {
