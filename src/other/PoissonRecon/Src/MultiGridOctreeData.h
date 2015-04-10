@@ -281,7 +281,7 @@ protected:
 	void UpdateConstraintsFromFiner( const typename BSplineData< 2 >::Integrator& integrator , int depth , const SortedTreeNodes& sNodes , ConstPointer( Real ) fineSolution , Pointer( Real ) coarseConstraints ) const;
 	// Evaluate the points @(depth) using coefficients @(depth-1)
 	void SetPointValuesFromCoarser( PointInfo& pointInfo , int depth , const SortedTreeNodes& sNodes , ConstPointer( Real ) coarseCoefficients );
-	// Evalutes the solution @(depth) at the points @(depth-1) and updates the met constraints @(depth-1)
+	// Evaluates the solution @(depth) at the points @(depth-1) and updates the met constraints @(depth-1)
 	void SetPointConstraintsFromFiner( const PointInfo& pointInfo , int depth , const SortedTreeNodes& sNodes , ConstPointer( Real )  finerCoefficients , Pointer( Real ) metConstraints) const;
 	Real _WeightedCoarserFunctionValue( const _PointData& pointData , const typename TreeOctNode::NeighborKey3& neighborKey3 , const TreeOctNode* node , ConstPointer( Real ) coarseCoefficients ) const;
 	Real _WeightedFinerFunctionValue  ( const _PointData& pointData , const typename TreeOctNode::NeighborKey3& neighborKey3 , const TreeOctNode* node , ConstPointer( Real )  finerCoefficients ) const;

@@ -2003,7 +2003,7 @@ typename OctNode< NodeData >::ConstNeighbors3& OctNode< NodeData >::ConstNeighbo
 
 			ConstNeighbors3& temp=getNeighbors( node->parent , minDepth );
 
-			//  Set the syblings
+			//  Set the siblings
 			for( i=0 ; i<2 ; i++ ) for( j=0 ; j<2 ; j++ ) for( k=0 ; k<2 ; k++ )
 				neighbors[d].neighbors[x2+i][y2+j][z2+k] = node->parent->children + Cube::CornerIndex(i,j,k);
 
@@ -2122,7 +2122,7 @@ typename OctNode< NodeData >::Neighbors5& OctNode< NodeData >::NeighborKey5::get
 			int fx1 = x1*3 , fy1 = y1*3 , fz1 = z1*3;
 			int fx2 = x2*4 , fy2 = y2*4 , fz2 = z2*4;
 
-			//  Set the syblings
+			//  Set the siblings
 			for( i=0 ; i<2 ; i++ ) for( j=0 ; j<2 ; j++ ) for( k=0 ; k<2 ; k++ )
 				n.neighbors[fx0+i][fy0+j][fz0+k] = node->parent->children + Cube::CornerIndex( i , j , k );
 

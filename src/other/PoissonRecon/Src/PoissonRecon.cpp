@@ -171,8 +171,8 @@ void ShowUsage(char* ex)
 	printf( "Usage: %s\n" , ex );
 	printf( "\t --%s  <input points>\n" , In.name );
 
-	printf( "\t[--%s <ouput triangle mesh>]\n" , Out.name );
-	printf( "\t[--%s <ouput voxel grid>]\n" , VoxelGrid.name );
+	printf( "\t[--%s <output triangle mesh>]\n" , Out.name );
+	printf( "\t[--%s <output voxel grid>]\n" , VoxelGrid.name );
 
 	printf( "\t[--%s <maximum reconstruction depth>=%d]\n" , Depth.name , Depth.value );
 	printf( "\t\t Running at depth d corresponds to solving on a 2^d x 2^d x 2^d\n" );

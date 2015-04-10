@@ -207,7 +207,7 @@ void FunctionData<Degree,Real>::setDotTables( const int& flags )
 #if BOUNDARY_CONDITIONS
 				if( flags &  D_DOT_FLAG )  dDotTable[idx] =  dDotProduct( c1 , w1 , c2 , w2 , boundary1 , boundary2 );
 				if( flags & D2_DOT_FLAG ) d2DotTable[idx] = d2DotProduct( c1 , w1 , c2 , w2 , boundary1 , boundary2 );
-#else // !BOUNDARY_CONDTIONS
+#else // !BOUNDARY_CONDITIONS
 				if( flags &  D_DOT_FLAG )  dDotTable[idx] =  dDotProduct(c1,w1,c2,w2);
 				if( flags & D2_DOT_FLAG ) d2DotTable[idx] = d2DotProduct(c1,w1,c2,w2);
 #endif // BOUNDARY_CONDITIONS

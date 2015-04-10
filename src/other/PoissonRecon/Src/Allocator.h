@@ -125,7 +125,7 @@ public:
 		}
 	}
 
-	/** This method initiallizes the constructor and the blockSize variable specifies the
+	/** This method initializes the constructor and the blockSize variable specifies the
 	  * the number of objects that should be pre-allocated at a time. */
 	void set( int blockSize)
 	{
