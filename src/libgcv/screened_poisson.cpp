@@ -26,22 +26,21 @@
 
 #include "vmath.h"
 #include "raytrace.h"
-#include "gcv_private.h"
 #include "../other/PoissonRecon/Src/SPR.h"
 
 #define DEFAULT_FULL_DEPTH 5
-struct gcvpnt {
+struct rt_vert {
     point_t p;
     vect_t n;
     int is_set;
 };
 
 struct npoints {
-    struct gcvpnt in;
-    struct gcvpnt out;
+    struct rt_vert in;
+    struct rt_vert out;
 };
 
-struct gcv_point_container {
+struct rt_point_container {
     struct npoints *pts;
     int pnt_cnt;
     int capacity;
@@ -51,7 +50,7 @@ struct rt_parallel_container {
     struct rt_i *rtip;
     struct resource *resp;
     struct bu_vls *logs;
-    struct gcv_point_container *npts;
+    struct rt_point_container *npts;
     int ray_dir;
     int ncpus;
     fastf_t delta;
@@ -66,7 +65,7 @@ add_hit_pnts(struct application *app, struct partition *partH, struct seg *UNUSE
     struct soltab *stp;
     /*point_t hit_pnt;
     vect_t hit_normal;*/
-    struct gcv_point_container *c = (struct gcv_point_container *)(app->a_uptr);
+    struct rt_point_container *c = (struct rt_point_container *)(app->a_uptr);
     struct npoints *npt;
 
     if (c->pnt_cnt > c->capacity-1) {
@@ -212,7 +211,7 @@ _rt_generate_points(int **faces, int *num_faces, point_t **points, int *num_pnts
 	rt_init_resource(&(state->resp[i]), i, state->rtip);
     }
 
-    state->npts = (struct gcv_point_container *)bu_calloc(ncpus+1, sizeof(struct gcv_point_container), "point container arrays");
+    state->npts = (struct rt_point_container *)bu_calloc(ncpus+1, sizeof(struct rt_point_container), "point container arrays");
     int n[3];
     VMOVE(min, state->rtip->mdl_min);
     VMOVE(max, state->rtip->mdl_max);
@@ -247,30 +246,30 @@ _rt_generate_points(int **faces, int *num_faces, point_t **points, int *num_pnts
 	}
     }
 
-    struct gcvpnt **gcvpnts = (struct gcvpnt **)bu_calloc(out_cnt, sizeof(struct gcvpnt *), "output array");
+    struct rt_vert **rt_verts = (struct rt_vert **)bu_calloc(out_cnt, sizeof(struct rt_vert *), "output array");
     int curr_ind = 0;
     for (i = 0; i < ncpus+1; i++) {
 	for (j = 0; j < state->npts[i].pnt_cnt; j++) {
 	    struct npoints *npt = &(state->npts[i].pts[j]);
 	    if (npt->in.is_set) {
-		gcvpnts[curr_ind] = &(npt->in);
+		rt_verts[curr_ind] = &(npt->in);
 		curr_ind++;
 	    }
 	    if (npt->out.is_set) {
-		gcvpnts[curr_ind] = &(npt->out);
+		rt_verts[curr_ind] = &(npt->out);
 		curr_ind++;
 	    }
 	}
     }
 
     struct spr_options opts = SPR_OPTIONS_DEFAULT_INIT;
-    (void)spr_surface_build(faces, num_faces, (double **)points, num_pnts, (const struct cvertex **)gcvpnts, out_cnt, &opts);
+    (void)spr_surface_build(faces, num_faces, (double **)points, num_pnts, (const struct cvertex **)rt_verts, out_cnt, &opts);
 
     return 0;
 }
 
 extern "C" void
-gcv_generate_mesh(int **faces, int *num_faces, point_t **points, int *num_pnts,
+rt_generate_mesh(int **faces, int *num_faces, point_t **points, int *num_pnts,
 	struct db_i *dbip, const char *obj, fastf_t delta)
 {
     fastf_t d = delta;
