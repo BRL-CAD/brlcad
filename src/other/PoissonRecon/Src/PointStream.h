@@ -39,6 +39,24 @@ public:
 	virtual bool nextPoint( Point3D< Real >& p , Point3D< Real >& n ) = 0;
 };
 
+struct cvertex {
+	double p[3];
+	double n[3];
+};
+
+template< class Real >
+class CVertexPointStream : public PointStream< Real >
+{
+	const struct cvertex **_points;
+	size_t _pointCount;
+	size_t _current;
+public:
+	CVertexPointStream( size_t pointCount , struct cvertex **points );
+	~CVertexPointStream( void );
+	void reset( void );
+	bool nextPoint( Point3D< Real >& p , Point3D< Real >& n );
+};
+
 template< class Real >
 class MemoryPointStream : public PointStream< Real >
 {

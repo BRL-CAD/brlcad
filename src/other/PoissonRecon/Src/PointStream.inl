@@ -27,6 +27,23 @@ DAMAGE.
 */
 
 template< class Real >
+CVertexPointStream< Real >::CVertexPointStream( size_t pointCount , struct cvertex **points ){ _points = points , _pointCount = pointCount , _current = 0; }
+template< class Real >
+CVertexPointStream< Real >::~CVertexPointStream( void ){ ; }
+template< class Real >
+void CVertexPointStream< Real >::reset( void ) { _current=0; }
+template< class Real >
+bool CVertexPointStream< Real >::nextPoint( Point3D< Real >& p , Point3D< Real >& n )
+{
+	while (_current < _pointCount && !_points[_current]) _current++;
+	if( _current>=_pointCount ) return false;
+	p[0] = _points[_current]->p[0] , p[1] = _points[_current]->p[1] , p[2] = _points[_current]->p[2];
+	n[0] = _points[_current]->n[0] , n[1] = _points[_current]->n[1] , n[2] = _points[_current]->n[2];
+	_current++;
+	return true;
+}
+
+template< class Real >
 MemoryPointStream< Real >::MemoryPointStream( size_t pointCount , std::pair< Point3D< Real > , Point3D< Real > >* points ){ _points = points , _pointCount = pointCount , _current = 0; }
 template< class Real >
 MemoryPointStream< Real >::~MemoryPointStream( void ){ ; }
