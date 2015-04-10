@@ -1,6 +1,5 @@
 include_directories(
   ${CMAKE_CURRENT_SOURCE_DIR}/wfobj
-  ${CMAKE_CURRENT_SOURCE_DIR}/poissonrecon
   ${CMAKE_CURRENT_BINARY_DIR}
   )
 
@@ -90,7 +89,6 @@ set(GCV_IGNORE_FILES
   soup.h
   tri_intersect.h
   bot_solidity.h
-  poissonrecon
   )
 CMAKEFILES(${GCV_IGNORE_FILES})
 
