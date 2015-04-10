@@ -1648,7 +1648,7 @@ void OctNode< NodeData >::NeighborKey3::setNeighbors( OctNode< NodeData >* node 
 	else
 	{
 		int c = int( node - node->parent->children );
-		const OctNode< NodeData >::Neighbors3& _neighbors = setNeighbors( node->parent );
+		const Neighbors3& _neighbors = setNeighbors( node->parent );
 		switch( c )
 		{
 		case 0:
@@ -1751,7 +1751,7 @@ void OctNode< NodeData >::NeighborKey3::getNeighbors( OctNode< NodeData >* node 
 	else
 	{
 		int c = int( node - node->parent->children );
-		const OctNode< NodeData >::Neighbors3& _neighbors = getNeighbors( node->parent );
+		const Neighbors3& _neighbors = getNeighbors( node->parent );
 		OctNode< NodeData >* const * _nodes = &_neighbors.neighbors[0][0][0];
 		const OctNode< NodeData >* const * _node;
 		const OctNode< NodeData >* __node;
@@ -1830,7 +1830,7 @@ void OctNode< NodeData >::ConstNeighborKey3::getNeighbors( const OctNode< NodeDa
 	else
 	{
 		int c = int( node - node->parent->children );
-		const OctNode< NodeData >::ConstNeighbors3& _neighbors = getNeighbors( node->parent );
+		const ConstNeighbors3& _neighbors = getNeighbors( node->parent );
 		switch( c )
 		{
 		case 0:
