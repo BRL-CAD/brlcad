@@ -118,25 +118,25 @@ fastf_t view_size;		/* fabsolute grid size from MGED view.	*/
 fastf_t cell_sz = 0.0;		/* Cell size of grid in target coords.	*/
 
 int anti_aliasing = false;	/* Anti-aliasing thru over-sampling.	*/
-size_t aperture_sz = 1;		/* Size of window for over-sampling.	*/
+int aperture_sz = 1;		/* Size of window for over-sampling.	*/
 int background[3];		/* Background as RGB values.		*/
 int co;				/* Number of columns on screen/layer.	*/
 int fatal_error = false;	/* Fatal error, must abort raytrace.	*/
-size_t fb_size;			/* Size of frame buffer.		*/
+int fb_size;			/* Size of frame buffer.		*/
 int force_cellsz = false;	/* If (true) cell_sz drives resolution.	*/
 int force_fbsz = false;		/* If (true) fb_size used.		*/
 int force_viewsz = false;	/* If (true) view_size is set manually.	*/
 int frame_no = 0;		/* Current frame being processed.	*/
 int grid_position = false;	/* Did user set distance yet.		*/
-size_t grid_sz = 32;		/* Default resolution 32x32 pixels.	*/
-size_t grid_x_org = 0;		/* Grid x position to begin raytracing.	*/
-size_t grid_x_fin = 32;		/* Grid x position to end raytracing.	*/
-size_t grid_x_cur = 0; 		/* Grid x current position.		*/
-size_t grid_y_cur = 0; 		/* Grid y current position.		*/
-size_t grid_y_org = 0;		/* Grid y position to begin raytracing.	*/
-size_t grid_y_fin = 32;		/* Grid y position to end raytracing.	*/
+int grid_sz = 32;		/* Default resolution 32x32 pixels.	*/
+int grid_x_org = 0;		/* Grid x position to begin raytracing.	*/
+int grid_x_fin = 32;		/* Grid x position to end raytracing.	*/
+int grid_x_cur = 0; 		/* Grid x current position.		*/
+int grid_y_cur = 0; 		/* Grid y current position.		*/
+int grid_y_org = 0;		/* Grid y position to begin raytracing.	*/
+int grid_y_fin = 32;		/* Grid y position to end raytracing.	*/
 int hiddenln_draw = false;	/* Generate hidden-line drawing.	*/
-size_t ir_aperture;		/* Size of window IR data over-sampling.*/
+int ir_aperture;		/* Size of window IR data over-sampling.*/
 int ir_noise = 2;		/* Threshold for subdivision of octree.	*/
 int ir_min = ABSOLUTE_ZERO;	/* IR input temperature ranges.		*/
 int ir_max = ABSOLUTE_ZERO;
@@ -145,10 +145,10 @@ int ir_doing_paint = false;	/* Is user doing above mapping.		*/
 int ir_offset = false;		/* Has user specified auto mapping.	*/
 int ir_mapx, ir_mapy;		/* Auto mapping offsets for above.	*/
 int ir_mapping = IR_OFF;	/* IR mapping.				*/
-size_t lgt_db_size = 0;		/* Current size of light data base.	*/
+int lgt_db_size = 0;		/* Current size of light data base.	*/
 int li;				/* Number of lines in window.		*/
-size_t max_bounce = 0;		/* Recursion level for raytracer.	*/
-size_t npsw = 1;			/* Number of worker PSWs to run.	*/
+int max_bounce = 0;		/* Recursion level for raytracer.	*/
+int npsw = 1;			/* Number of worker PSWs to run.	*/
 int pix_buffered = B_LINE;	/* Scan line buffering is default.	*/
 int query_region = false;	/* If (true) spit out region info.	*/
 int report_overlaps = true;	/* If (false) shut-up about overlaps.	*/
@@ -159,8 +159,8 @@ int tracking_cursor=false;	/* Cursor is on by default.		*/
 int tty;			/* Is input attached to a terminal.	*/
 int type_grid = GT_RPP_CENTERED;
 int user_interrupt = false;	/* User-level interrupt of raytrace.	*/
-size_t x_fb_origin = 0;		/* Display origin left-most pixel.	*/
-size_t y_fb_origin = 0;		/* Display origin top-most pixel.	*/
+int x_fb_origin = 0;		/* Display origin left-most pixel.	*/
+int y_fb_origin = 0;		/* Display origin top-most pixel.	*/
 struct resource resource[MAX_PSW]; /* Memory resources.			*/
 struct rt_i *rt_ip;		/* Globals from RT library.		*/
 

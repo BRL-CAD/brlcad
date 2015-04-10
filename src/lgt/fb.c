@@ -31,10 +31,9 @@
 #include "./lgt.h"
 #include "./extern.h"
 #include "./screen.h"
-
-
-size_t zoom;	/* Current zoom factor of frame buffer.		*/
-
+int zoom;	/* Current zoom factor of frame buffer.		*/
+int fb_Setup(char *file, int size);
+void fb_Zoom_Window(void);
 
 int
 fb_Setup(char *file, int size)

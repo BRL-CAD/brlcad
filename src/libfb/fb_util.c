@@ -40,7 +40,7 @@
  * storing this information into the fb structure.
  */
 int
-fb_sim_view(fb *ifp, size_t xcenter, size_t ycenter, size_t xzoom, size_t yzoom)
+fb_sim_view(fb *ifp, int xcenter, int ycenter, int xzoom, int yzoom)
 {
     FB_CK_FB(ifp);
 
@@ -58,7 +58,7 @@ fb_sim_view(fb *ifp, size_t xcenter, size_t ycenter, size_t xzoom, size_t yzoom)
  * reading this information from the fb structure.
  */
 int
-fb_sim_getview(fb *ifp, size_t *xcenter, size_t *ycenter, size_t *xzoom, size_t *yzoom)
+fb_sim_getview(fb *ifp, int *xcenter, int *ycenter, int *xzoom, int *yzoom)
 {
     FB_CK_FB(ifp);
 
@@ -76,7 +76,7 @@ fb_sim_getview(fb *ifp, size_t *xcenter, size_t *ycenter, size_t *xzoom, size_t 
  * storing this information into the fb structure.
  */
 int
-fb_sim_cursor(fb *ifp, int mode, size_t x, size_t y)
+fb_sim_cursor(fb *ifp, int mode, int x, int y)
 {
     FB_CK_FB(ifp);
 
@@ -93,7 +93,7 @@ fb_sim_cursor(fb *ifp, int mode, size_t x, size_t y)
  * reading this information from the fb structure.
  */
 int
-fb_sim_getcursor(fb *ifp, int *mode, size_t *x, size_t *y)
+fb_sim_getcursor(fb *ifp, int *mode, int *x, int *y)
 {
     FB_CK_FB(ifp);
 
@@ -119,7 +119,7 @@ fb_reset(fb *ifp)
 
 
 int
-fb_viewport(fb *ifp, size_t UNUSED(left), size_t UNUSED(top), size_t UNUSED(right), size_t UNUSED(bottom))
+fb_viewport(fb *ifp, int UNUSED(left), int UNUSED(top), int UNUSED(right), int UNUSED(bottom))
 {
     if (ifp) {
 	FB_CK_FB(ifp);
@@ -130,10 +130,10 @@ fb_viewport(fb *ifp, size_t UNUSED(left), size_t UNUSED(top), size_t UNUSED(righ
 
 
 int
-fb_window(fb *ifp, size_t x, size_t y)
+fb_window(fb *ifp, int x, int y)
 {
-    size_t xcenter, ycenter;
-    size_t xzoom, yzoom;
+    int xcenter, ycenter;
+    int xzoom, yzoom;
 
     if (ifp) {
       FB_CK_FB(ifp);
@@ -148,10 +148,10 @@ fb_window(fb *ifp, size_t x, size_t y)
 
 
 int
-fb_zoom(fb *ifp, size_t x, size_t y)
+fb_zoom(fb *ifp, int x, int y)
 {
-    size_t xcenter, ycenter;
-    size_t xzoom, yzoom;
+    int xcenter, ycenter;
+    int xzoom, yzoom;
 
     if (ifp) {
       FB_CK_FB(ifp);
@@ -167,7 +167,7 @@ fb_zoom(fb *ifp, size_t x, size_t y)
 
 
 int
-fb_scursor(fb *ifp, int UNUSED(mode), size_t UNUSED(x), size_t UNUSED(y))
+fb_scursor(fb *ifp, int UNUSED(mode), int UNUSED(x), int UNUSED(y))
 {
     if (ifp) {
 	FB_CK_FB(ifp);

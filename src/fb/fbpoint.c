@@ -38,11 +38,11 @@
 
 fb *fbp;
 
-size_t JumpSpeed;		/* # pixels skiped with fast commands. */
+int JumpSpeed;		/* # pixels skiped with fast commands. */
 
 RGBpixel curPix; 		/* Current pixel value */
-off_t curX, curY;		/* current position */
-size_t oldX, oldY;		/* previous position */
+int curX, curY;		/* current position */
+int oldX, oldY;		/* previous position */
 
 int Run = 1;		/* Tells when to stop the main loop */
 
@@ -138,7 +138,7 @@ SimpleInput(void)	/* ==== get keyboard input.	*/
 int
 main(int argc, char **argv)
 {
-    size_t width, height;
+    int width, height;
 
     setbuf(stderr, (char *)malloc(BUFSIZ));
     width = height = 512;
@@ -204,18 +204,18 @@ main(int argc, char **argv)
     clr_Echo(0);
 
     while (Run) {
-	CLAMP(curX, 0, (off_t)(fb_getwidth(fbp)-1));
-	CLAMP(curY, 0, (off_t)(fb_getheight(fbp)-1));
+	CLAMP(curX, 0, fb_getwidth(fbp)-1);
+	CLAMP(curY, 0, fb_getheight(fbp)-1);
 
-	if (oldX != (size_t)curX || oldY != (size_t)curY) {
+	if (oldX != curX || oldY != curY) {
 	    /* get pixel value, move cursor */
 	    fb_read(fbp, curX, curY, curPix, 1);
 	    fb_cursor(fbp, 1, curX, curY);
 	    oldX = curX;
 	    oldY = curY;
 	}
-	fprintf(stderr, "xy=(%4lu, %4lu)  [%3d, %3d, %3d]      \r",
-		(unsigned long)curX, (unsigned long)curY, curPix[RED], curPix[GRN], curPix[BLU]);
+	fprintf(stderr, "xy=(%4d, %4d)  [%3d, %3d, %3d]      \r",
+		curX, curY, curPix[RED], curPix[GRN], curPix[BLU]);
 	fflush(stderr);
 
 	SimpleInput();			/* read and do keyboard */
@@ -230,11 +230,11 @@ main(int argc, char **argv)
 
     /* write final location on stdout */
     if (xflag != 0 && yflag == 0)
-	printf("%s%lu\n", xprefix, (unsigned long)curX);
+	printf("%s%d\n", xprefix, curX);
     else if (yflag != 0 && xflag == 0)
-	printf("%s%lu\n", yprefix, (unsigned long)curY);
+	printf("%s%d\n", yprefix, curY);
     else
-	printf("%s%lu %s%lu\n", xprefix, (unsigned long)curX, yprefix, (unsigned long)curY);
+	printf("%s%d %s%d\n", xprefix, curX, yprefix, curY);
 
     fb_close(fbp);
     return 0;

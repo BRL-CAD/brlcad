@@ -91,7 +91,7 @@ paintGridFb()
 	COPYRGB(&pixbuf[fx-fxbeg][0], &pixgrid[0]);
     for (fy = fybeg; fy <= fyfin; fy++)
 	(void) fb_write(fbiop, fxbeg, fy, (unsigned char *)pixbuf, fgridwid);
-    for (fy = 0; (size_t)fy < devwid; fy++)
+    for (fy = 0; fy < devwid; fy++)
 	(void) fb_write(fbiop, fxorg, fy, pixaxis, 1);
 
     /* draw horizontal lines */
@@ -99,7 +99,7 @@ paintGridFb()
 	for (fy = fybeg; fy <= fyfin; fy += zoom)
 	    (void) fb_write(fbiop,
 			    fxbeg, fy, pixgrid, fgridwid);
-    for (fx = 0; (size_t)fx < devwid; fx++)
+    for (fx = 0; fx < devwid; fx++)
 	COPYRGB(&pixbuf[fx][0], pixaxis);
     (void) fb_write(fbiop, 0, fyorg, (unsigned char *)pixbuf, devwid);
     return;

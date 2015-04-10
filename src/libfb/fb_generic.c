@@ -143,7 +143,7 @@ fb_put_platform_specific(struct fb_platform_specific *fb_p)
 }
 
 fb *
-fb_open_existing(const char *file, size_t width, size_t height, struct fb_platform_specific *fb_p)
+fb_open_existing(const char *file, int width, int height, struct fb_platform_specific *fb_p)
 {
     fb *ifp = (fb *) calloc(sizeof(fb), 1);
     fb_set_interface(ifp, file);
@@ -153,16 +153,16 @@ fb_open_existing(const char *file, size_t width, size_t height, struct fb_platfo
 }
 
 int
-fb_refresh(fb *ifp, size_t x, size_t y, size_t w, size_t h)
+fb_refresh(fb *ifp, int x, int y, int w, int h)
 {
     return ifp->if_refresh(ifp, x, y, w, h);
 }
 
 int
-fb_configure_window(fb *ifp, size_t width, size_t height)
+fb_configure_window(fb *ifp, int width, int height)
 {
     /* unknown/unset framebuffer */
-    if (!ifp || !ifp->if_configure_window) {
+    if (!ifp || !ifp->if_configure_window || width < 0 || height < 0) {
 	return 0;
     }
     return ifp->if_configure_window(ifp, width, height);
@@ -228,20 +228,20 @@ char *fb_gettype(fb *ifp)
     return ifp->if_type;
 }
 
-size_t fb_getwidth(fb *ifp)
+int fb_getwidth(fb *ifp)
 {
     return ifp->if_width;
 }
-size_t fb_getheight(fb *ifp)
+int fb_getheight(fb *ifp)
 {
     return ifp->if_height;
 }
 
-size_t fb_get_max_width(fb *ifp)
+int fb_get_max_width(fb *ifp)
 {
     return ifp->if_max_width;
 }
-size_t fb_get_max_height(fb *ifp)
+int fb_get_max_height(fb *ifp)
 {
     return ifp->if_max_height;
 }
@@ -269,11 +269,11 @@ int fb_clear(fb *ifp, unsigned char *pp)
 {
     return (*ifp->if_clear)(ifp, pp);
 }
-ssize_t fb_read(fb *ifp, size_t x, size_t y, unsigned char *pp, size_t count)
+ssize_t fb_read(fb *ifp, int x, int y, unsigned char *pp, size_t count)
 {
     return (*ifp->if_read)(ifp, x, y, pp, count);
 }
-ssize_t fb_write(fb *ifp, size_t x, size_t y, const unsigned char *pp, size_t count)
+ssize_t fb_write(fb *ifp, int x, int y, const unsigned char *pp, size_t count)
 {
     return (*ifp->if_write)(ifp, x, y, pp, count);
 }
@@ -285,39 +285,39 @@ int fb_wmap(fb *ifp, const ColorMap *cmap)
 {
     return (*ifp->if_wmap)(ifp, cmap);
 }
-int fb_view(fb *ifp, size_t xcenter, size_t ycenter, size_t xzoom, size_t yzoom)
+int fb_view(fb *ifp, int xcenter, int ycenter, int xzoom, int yzoom)
 {
     return (*ifp->if_view)(ifp, xcenter, ycenter, xzoom, yzoom);
 }
-int fb_getview(fb *ifp, size_t *xcenter, size_t *ycenter, size_t *xzoom, size_t *yzoom)
+int fb_getview(fb *ifp, int *xcenter, int *ycenter, int *xzoom, int *yzoom)
 {
     return (*ifp->if_getview)(ifp, xcenter, ycenter, xzoom, yzoom);
 }
-int fb_setcursor(fb *ifp, const unsigned char *bits, size_t xb, size_t yb, size_t xo, size_t yo)
+int fb_setcursor(fb *ifp, const unsigned char *bits, int xb, int yb, int xo, int yo)
 {
     return (*ifp->if_setcursor)(ifp, bits, xb, yb, xo, yo);
 }
-int fb_cursor(fb *ifp, int mode, size_t x, size_t y)
+int fb_cursor(fb *ifp, int mode, int x, int y)
 {
     return (*ifp->if_cursor)(ifp, mode, x, y);
 }
-int fb_getcursor(fb *ifp, int *mode, size_t *x, size_t *y)
+int fb_getcursor(fb *ifp, int *mode, int *x, int *y)
 {
     return (*ifp->if_getcursor)(ifp, mode, x, y);
 }
-int fb_readrect(fb *ifp, size_t xmin, size_t ymin, size_t width, size_t height, unsigned char *pp)
+int fb_readrect(fb *ifp, int xmin, int ymin, int width, int height, unsigned char *pp)
 {
     return (*ifp->if_readrect)(ifp, xmin, ymin, width, height, pp);
 }
-int fb_writerect(fb *ifp, size_t xmin, size_t ymin, size_t width, size_t height, const unsigned char *pp)
+int fb_writerect(fb *ifp, int xmin, int ymin, int width, int height, const unsigned char *pp)
 {
     return (*ifp->if_writerect)(ifp, xmin, ymin, width, height, pp);
 }
-int fb_bwreadrect(fb *ifp, size_t xmin, size_t ymin, size_t width, size_t height, unsigned char *pp)
+int fb_bwreadrect(fb *ifp, int xmin, int ymin, int width, int height, unsigned char *pp)
 {
     return (*ifp->if_bwreadrect)(ifp, xmin, ymin, width, height, pp);
 }
-int fb_bwwriterect(fb *ifp, size_t xmin, size_t ymin, size_t width, size_t height, const unsigned char *pp)
+int fb_bwwriterect(fb *ifp, int xmin, int ymin, int width, int height, const unsigned char *pp)
 {
     return (*ifp->if_bwwriterect)(ifp, xmin, ymin, width, height, pp);
 }
@@ -369,7 +369,7 @@ int fb_null(fb *ifp)
 /**
  * Used by if_*.c routines that don't have programmable cursor patterns.
  */
-int fb_null_setcursor(fb *ifp, const unsigned char *UNUSED(bits), size_t UNUSED(xbits), size_t UNUSED(ybits), size_t UNUSED(xorig), size_t UNUSED(yorig))
+int fb_null_setcursor(fb *ifp, const unsigned char *UNUSED(bits), int UNUSED(xbits), int UNUSED(ybits), int UNUSED(xorig), int UNUSED(yorig))
 {
     if (ifp) {
 	FB_CK_FB(ifp);
@@ -381,13 +381,14 @@ int fb_null_setcursor(fb *ifp, const unsigned char *UNUSED(bits), size_t UNUSED(
 
 
 fb *
-fb_open(const char *file, size_t width, size_t height)
+fb_open(const char *file, int width, int height)
 {
     register fb *ifp;
-    size_t i;
-    int ret;
+    int i;
 
-    /* intentionally not bu_calloc() due to shared semaphores */
+    if (width < 0 || height < 0)
+	return FB_NULL;
+
     ifp = (fb *) calloc(sizeof(fb), 1);
     if (ifp == FB_NULL) {
 	Malloc_Bomb(sizeof(fb));
@@ -461,9 +462,9 @@ found_interface:
     /* Mark OK by filling in magic number */
     ifp->if_magic = FB_MAGIC;
 
-    ret = (*ifp->if_open)(ifp, file, width, height);
-    if (ret <= -1) {
-	fb_log("fb_open: can't open device \"%s\", ret=%d.\n", file, i);
+    if ((i=(*ifp->if_open)(ifp, file, width, height)) <= -1) {
+	fb_log("fb_open: can't open device \"%s\", ret=%d.\n",
+	       file, i);
 	ifp->if_magic = 0;		/* sanity */
 	free((void *) ifp->if_name);
 	free((void *) ifp);
@@ -476,13 +477,13 @@ found_interface:
 int
 fb_close(fb *ifp)
 {
-    int ret;
+    int i;
 
     FB_CK_FB(ifp);
     fb_flush(ifp);
-    ret = (*ifp->if_close)(ifp);
-    if (ret <= -1) {
-	fb_log("fb_close: can not close device \"%s\", ret=%d.\n", ifp->if_name, ret);
+    if ((i=(*ifp->if_close)(ifp)) <= -1) {
+	fb_log("fb_close: can not close device \"%s\", ret=%d.\n",
+	       ifp->if_name, i);
 	return -1;
     }
     if (ifp->if_pbase != PIXEL_NULL)
@@ -524,7 +525,7 @@ fb_close_existing(fb *ifp)
 int
 fb_genhelp(void)
 {
-    size_t i;
+    int i;
 
     i = 0;
     while (_if_list[i] != (fb *)NULL) {
@@ -582,7 +583,7 @@ fb_make_linear_cmap(register ColorMap *cmap)
 }
 
 static void
-fb_cmap_crunch(RGBpixel (*scan_buf), size_t pixel_ct, ColorMap *cmap)
+fb_cmap_crunch(RGBpixel (*scan_buf), int pixel_ct, ColorMap *cmap)
 {
     unsigned short	*rp = cmap->cm_red;
     unsigned short	*gp = cmap->cm_green;
@@ -597,11 +598,11 @@ fb_cmap_crunch(RGBpixel (*scan_buf), size_t pixel_ct, ColorMap *cmap)
 }
 
 int
-fb_write_fp(fb *ifp, FILE *fp, size_t req_width, size_t req_height, int crunch, int inverse, struct bu_vls *result)
+fb_write_fp(fb *ifp, FILE *fp, int req_width, int req_height, int crunch, int inverse, struct bu_vls *result)
 {
     unsigned char *scanline;	/* 1 scanline pixel buffer */
-    size_t scanbytes;		/* # of bytes of scanline */
-    size_t scanpix;		/* # of pixels of scanline */
+    int scanbytes;		/* # of bytes of scanline */
+    int scanpix;		/* # of pixels of scanline */
     ColorMap cmap;		/* libfb color map */
 
     scanpix = req_width;
@@ -625,7 +626,7 @@ fb_write_fp(fb *ifp, FILE *fp, size_t req_width, size_t req_height, int crunch, 
     }
 
     if (!inverse) {
-	size_t y;
+	int y;
 
 	/* Regular -- read bottom to top */
 	for (y=0; y < req_height; y++) {
@@ -638,11 +639,10 @@ fb_write_fp(fb *ifp, FILE *fp, size_t req_width, size_t req_height, int crunch, 
 	    }
 	}
     } else {
-	size_t y;
+	int y;
 
 	/* Inverse -- read top to bottom */
-	y = req_height-1;
-	while (1) {
+	for (y = req_height-1; y >= 0; y--) {
 	    fb_read(ifp, 0, y, scanline, req_width);
 	    if (crunch)
 		fb_cmap_crunch((RGBpixel *)scanline, scanpix, &cmap);
@@ -650,9 +650,6 @@ fb_write_fp(fb *ifp, FILE *fp, size_t req_width, size_t req_height, int crunch, 
 		perror("fwrite");
 		break;
 	    }
-	    if (y == 0)
-		break;
-	    y--;
 	}
     }
 
@@ -664,10 +661,9 @@ fb_write_fp(fb *ifp, FILE *fp, size_t req_width, size_t req_height, int crunch, 
  * Throw bytes away.  Use reads into scanline buffer if a pipe, else seek.
  */
 static int
-fb_skip_bytes(int fd, size_t num, int fileinput, size_t scanbytes, unsigned char *scanline)
+fb_skip_bytes(int fd, off_t num, int fileinput, int scanbytes, unsigned char *scanline)
 {
-    int n;
-    size_t tries;
+    int n, tries;
 
     if (fileinput) {
 	(void)lseek(fd, num, 1);
@@ -687,14 +683,13 @@ fb_skip_bytes(int fd, size_t num, int fileinput, size_t scanbytes, unsigned char
 
 
 int
-fb_read_fd(fb *ifp, int fd, size_t file_width, size_t file_height, off_t file_xoff, off_t file_yoff, size_t scr_width, size_t scr_height, off_t scr_xoff, off_t scr_yoff, int fileinput, char *file_name, int one_line_only, int multiple_lines, int autosize, int inverse, int clear, int zoom, struct bu_vls *UNUSED(result))
+fb_read_fd(fb *ifp, int fd, int file_width, int file_height, int file_xoff, int file_yoff, int scr_width, int scr_height, int scr_xoff, int scr_yoff, int fileinput, char *file_name, int one_line_only, int multiple_lines, int autosize, int inverse, int clear, int zoom, struct bu_vls *UNUSED(result))
 {
-    off_t y;
-    size_t xout, yout, n, xstart, xskip;
-    int m;
+    int y;
+    int xout, yout, n, m, xstart, xskip;
     unsigned char *scanline;	/* 1 scanline pixel buffer */
-    size_t scanbytes;		/* # of bytes of scanline */
-    size_t scanpix;		/* # of pixels of scanline */
+    int scanbytes;		/* # of bytes of scanline */
+    int scanpix;		/* # of pixels of scanline */
 
     /* autosize input? */
     if (fileinput && autosize) {
@@ -728,24 +723,28 @@ fb_read_fd(fb *ifp, int fd, size_t file_width, size_t file_height, off_t file_xo
 	xstart = scr_xoff;
     }
 
-    if (xout > file_width-file_xoff)
-	xout = file_width-file_xoff;
+    if (xout < 0)
+	bu_exit(0, NULL);			/* off screen */
+    if ((size_t)xout > (size_t)(file_width-file_xoff))
+	xout = (file_width-file_xoff);
     scanpix = xout;				/* # pixels on scanline */
 
     if (inverse)
 	scr_yoff = (-scr_yoff);
 
     yout = scr_height - scr_yoff;
-    if (yout > file_height-file_yoff)
-	yout = file_height-file_yoff;
+    if (yout < 0)
+	bu_exit(0, NULL);			/* off screen */
+    if ((size_t)yout > (size_t)(file_height-file_yoff))
+	yout = (file_height-file_yoff);
 
     /* Only in the simplest case use multi-line writes */
     if (!one_line_only
 	&& multiple_lines > 0
 	&& !inverse
 	&& !zoom
-	&& xout == file_width
-	&& file_width <= scr_width)
+	&& (size_t)xout == (size_t)file_width
+	&& (size_t)file_width <= (size_t)scr_width)
     {
 	scanpix *= multiple_lines;
     }
@@ -753,8 +752,8 @@ fb_read_fd(fb *ifp, int fd, size_t file_width, size_t file_height, off_t file_xo
     scanbytes = scanpix * sizeof(RGBpixel);
     if ((scanline = (unsigned char *)malloc(scanbytes)) == RGBPIXEL_NULL) {
 	fprintf(stderr,
-		"pix-fb:  malloc(%lu) failure for scanline buffer\n",
-		(unsigned long)scanbytes);
+		"pix-fb:  malloc(%d) failure for scanline buffer\n",
+		scanbytes);
 	bu_exit(2, NULL);
     }
 
@@ -763,10 +762,9 @@ fb_read_fd(fb *ifp, int fd, size_t file_width, size_t file_height, off_t file_xo
     }
     if (zoom) {
 	/* Zoom in, and center the display.  Use square zoom. */
-	size_t zoomit;
+	int zoomit;
 	zoomit = scr_width/xout;
-	if (scr_height/yout < zoomit)
-	    zoomit = scr_height/yout;
+	if (scr_height/yout < zoomit) zoomit = scr_height/yout;
 	if (inverse) {
 	    fb_view(ifp,
 		    scr_xoff+xout/2, scr_height-1-(scr_yoff+yout/2),
@@ -778,13 +776,12 @@ fb_read_fd(fb *ifp, int fd, size_t file_width, size_t file_height, off_t file_xo
 	}
     }
 
-    if (file_yoff != 0)
-	fb_skip_bytes(fd, (off_t)file_yoff*(off_t)file_width*sizeof(RGBpixel), fileinput, scanbytes, scanline);
+    if (file_yoff != 0) fb_skip_bytes(fd, (off_t)file_yoff*(off_t)file_width*sizeof(RGBpixel), fileinput, scanbytes, scanline);
 
     if (multiple_lines) {
 	/* Bottom to top with multi-line reads & writes */
-	size_t height;
-	for (y = scr_yoff; y < (off_t)(scr_yoff + yout); y += multiple_lines) {
+	unsigned long height;
+	for (y = scr_yoff; y < scr_yoff + yout; y += multiple_lines) {
 	    n = bu_mread(fd, (char *)scanline, scanbytes);
 	    if (n <= 0) break;
 	    height = multiple_lines;
@@ -793,24 +790,23 @@ fb_read_fd(fb *ifp, int fd, size_t file_width, size_t file_height, off_t file_xo
 		if (height <= 0) break;
 	    }
 	    /* Don't over-write */
-	    if (y + height > scr_yoff + yout)
+	    if ((size_t)(y + height) > (size_t)(scr_yoff + yout))
 		height = scr_yoff + yout - y;
-	    if (height <= 0)
-		break;
+	    if (height <= 0) break;
 	    m = fb_writerect(ifp, scr_xoff, y,
 			     file_width, height,
 			     scanline);
 	    if ((size_t)m != file_width*height) {
 		fprintf(stderr,
-			"pix-fb: fb_writerect(x=%lld, y=%d, w=%lu, h=%lu) failure, ret=%d, s/b=%lu\n",
-			scr_xoff, (int)y,
-			(unsigned long)file_width, (unsigned long)height, m, (unsigned long)scanbytes);
+			"pix-fb: fb_writerect(x=%d, y=%d, w=%lu, h=%lu) failure, ret=%d, s/b=%d\n",
+			scr_xoff, y,
+			(unsigned long)file_width, height, m, scanbytes);
 	    }
 	}
     } else if (!inverse) {
 	/* Normal way -- bottom to top */
-	for (y = scr_yoff; y < (off_t)(scr_yoff + yout); y++) {
-	    if (y < 0 || (size_t)y > scr_height) {
+	for (y = scr_yoff; y < scr_yoff + yout; y++) {
+	    if (y < 0 || y > scr_height) {
 		fb_skip_bytes(fd, (off_t)file_width*sizeof(RGBpixel), fileinput, scanbytes, scanline);
 		continue;
 	    }
@@ -819,21 +815,20 @@ fb_read_fd(fb *ifp, int fd, size_t file_width, size_t file_height, off_t file_xo
 	    n = bu_mread(fd, (char *)scanline, scanbytes);
 	    if (n <= 0) break;
 	    m = fb_write(ifp, xstart, y, scanline, xout);
-	    if ((size_t)m != xout) {
+	    if (m != xout) {
 		fprintf(stderr,
-			"pix-fb: fb_write(x=%d, y=%d, npix=%lu) ret=%d, s/b=%lu\n",
-			(int)scr_xoff, (int)y, (unsigned long)xout,
-			m, (unsigned long)xout);
+			"pix-fb: fb_write(x=%d, y=%d, npix=%d) ret=%d, s/b=%d\n",
+			scr_xoff, y, xout,
+			m, xout);
 	    }
 	    /* slop at the end of the line? */
-	    if (file_xoff+xskip+scanpix < file_width)
+	    if ((size_t)file_xoff+xskip+scanpix < (size_t)file_width)
 		fb_skip_bytes(fd, (off_t)(file_width-file_xoff-xskip-scanpix)*sizeof(RGBpixel), fileinput, scanbytes, scanline);
 	}
     } else {
 	/* Inverse -- top to bottom */
-	y = scr_height-1-scr_yoff;
-	while ((size_t)y >= scr_height-scr_yoff-yout) {
-	    if (y < 0 || (size_t)y >= scr_height) {
+	for (y = scr_height-1-scr_yoff; y >= scr_height-scr_yoff-yout; y--) {
+	    if (y < 0 || y >= scr_height) {
 		fb_skip_bytes(fd, (off_t)file_width*sizeof(RGBpixel), fileinput, scanbytes, scanline);
 		continue;
 	    }
@@ -842,19 +837,15 @@ fb_read_fd(fb *ifp, int fd, size_t file_width, size_t file_height, off_t file_xo
 	    n = bu_mread(fd, (char *)scanline, scanbytes);
 	    if (n <= 0) break;
 	    m = fb_write(ifp, xstart, y, scanline, xout);
-	    if ((size_t)m != xout) {
+	    if (m != xout) {
 		fprintf(stderr,
-			"pix-fb: fb_write(x=%d, y=%lu, npix=%lu) ret=%d, s/b=%lu\n",
-			(int)scr_xoff, (unsigned long)y, (unsigned long)xout,
-			m, (unsigned long)xout);
+			"pix-fb: fb_write(x=%d, y=%d, npix=%d) ret=%d, s/b=%d\n",
+			scr_xoff, y, xout,
+			m, xout);
 	    }
 	    /* slop at the end of the line? */
-	    if (file_xoff+xskip+scanpix < file_width)
+	    if ((size_t)file_xoff+xskip+scanpix < (size_t)file_width)
 		fb_skip_bytes(fd, (off_t)(file_width-file_xoff-xskip-scanpix)*sizeof(RGBpixel), fileinput, scanbytes, scanline);
-
-	    if (y==0)
-		break;
-	    y--;
 	}
     }
     free(scanline);

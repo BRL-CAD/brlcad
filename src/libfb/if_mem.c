@@ -75,7 +75,7 @@ static struct modeflags {
 
 
 HIDDEN int
-mem_open(fb *ifp, const char *file, size_t width, size_t height)
+mem_open(fb *ifp, const char *file, int width, int height)
 {
     int mode;
     const char *cp;
@@ -172,7 +172,7 @@ mem_open(fb *ifp, const char *file, size_t width, size_t height)
 	got = fb_readrect(MI(ifp)->fbp, 0, 0,
 			  ifp->if_width, ifp->if_height,
 			  (unsigned char *)MI(ifp)->mem);
-	if ((size_t)got != ifp->if_width * ifp->if_height) {
+	if (got != ifp->if_width * ifp->if_height) {
 	    fb_log("if_mem:  WARNING: pre-read of %d only got %d, your image is truncated.\n",
 		   ifp->if_width * ifp->if_height, got);
 	}
@@ -200,7 +200,7 @@ mem_put_fbps(struct fb_platform_specific *UNUSED(fbps))
 }
 
 HIDDEN int
-mem_open_existing(fb *UNUSED(ifp), size_t UNUSED(width), size_t UNUSED(height), struct fb_platform_specific *UNUSED(fb_p))
+mem_open_existing(fb *UNUSED(ifp), int UNUSED(width), int UNUSED(height), struct fb_platform_specific *UNUSED(fb_p))
 {
         return 0;
 }
@@ -212,13 +212,13 @@ mem_close_existing(fb *UNUSED(ifp))
 }
 
 HIDDEN int
-mem_configure_window(fb *UNUSED(ifp), size_t UNUSED(width), size_t UNUSED(height))
+mem_configure_window(fb *UNUSED(ifp), int UNUSED(width), int UNUSED(height))
 {
         return 0;
 }
 
 HIDDEN int
-mem_refresh(fb *UNUSED(ifp), size_t UNUSED(x), size_t UNUSED(y), size_t UNUSED(w), size_t UNUSED(h))
+mem_refresh(fb *UNUSED(ifp), int UNUSED(x), int UNUSED(y), int UNUSED(w), int UNUSED(h))
 {
         return 0;
 }
@@ -251,7 +251,7 @@ HIDDEN int
 mem_clear(fb *ifp, unsigned char *pp)
 {
     RGBpixel v;
-    register size_t n;
+    register int n;
     register unsigned char *cp;
 
     if (pp == RGBPIXEL_NULL) {
@@ -264,7 +264,7 @@ mem_clear(fb *ifp, unsigned char *pp)
 
     cp = MI(ifp)->mem;
     if (v[RED] == v[GRN] && v[RED] == v[BLU]) {
-	size_t bytes = ifp->if_width*ifp->if_height*3;
+	int bytes = ifp->if_width*ifp->if_height*3;
 	if (v[RED] == 0)
 	    memset((char *)cp, 0, bytes);	/* all black */
 	else
@@ -286,11 +286,11 @@ mem_clear(fb *ifp, unsigned char *pp)
 
 
 HIDDEN ssize_t
-mem_read(fb *ifp, size_t x, size_t y, unsigned char *pixelp, size_t count)
+mem_read(fb *ifp, int x, int y, unsigned char *pixelp, size_t count)
 {
     size_t pixels_to_end;
 
-    if (x >= ifp->if_width || y >= ifp->if_height)
+    if (x < 0 || x >= ifp->if_width || y < 0 || y >= ifp->if_height)
 	return -1;
 
     /* make sure we don't run off the end of the buffer */
@@ -305,11 +305,11 @@ mem_read(fb *ifp, size_t x, size_t y, unsigned char *pixelp, size_t count)
 
 
 HIDDEN ssize_t
-mem_write(fb *ifp, size_t x, size_t y, const unsigned char *pixelp, size_t count)
+mem_write(fb *ifp, int x, int y, const unsigned char *pixelp, size_t count)
 {
     size_t pixels_to_end;
 
-    if (x >= ifp->if_width || y >= ifp->if_height)
+    if (x < 0 || x >= ifp->if_width || y < 0 || y >= ifp->if_height)
 	return -1;
 
     /* make sure we don't run off the end of the buffer */
@@ -355,7 +355,7 @@ mem_wmap(fb *ifp, const ColorMap *cmp)
 
 
 HIDDEN int
-mem_view(fb *ifp, size_t xcenter, size_t ycenter, size_t xzoom, size_t yzoom)
+mem_view(fb *ifp, int xcenter, int ycenter, int xzoom, int yzoom)
 {
     fb_sim_view(ifp, xcenter, ycenter, xzoom, yzoom);
     if (MI(ifp)->write_thru) {
@@ -367,7 +367,7 @@ mem_view(fb *ifp, size_t xcenter, size_t ycenter, size_t xzoom, size_t yzoom)
 
 
 HIDDEN int
-mem_getview(fb *ifp, size_t *xcenter, size_t *ycenter, size_t *xzoom, size_t *yzoom)
+mem_getview(fb *ifp, int *xcenter, int *ycenter, int *xzoom, int *yzoom)
 {
     if (MI(ifp)->write_thru) {
 	return fb_getview(MI(ifp)->fbp, xcenter, ycenter,
@@ -379,7 +379,7 @@ mem_getview(fb *ifp, size_t *xcenter, size_t *ycenter, size_t *xzoom, size_t *yz
 
 
 HIDDEN int
-mem_setcursor(fb *ifp, const unsigned char *bits, size_t xbits, size_t ybits, size_t xorig, size_t yorig)
+mem_setcursor(fb *ifp, const unsigned char *bits, int xbits, int ybits, int xorig, int yorig)
 {
     if (MI(ifp)->write_thru) {
 	return fb_setcursor(MI(ifp)->fbp,
@@ -390,7 +390,7 @@ mem_setcursor(fb *ifp, const unsigned char *bits, size_t xbits, size_t ybits, si
 
 
 HIDDEN int
-mem_cursor(fb *ifp, int mode, size_t x, size_t y)
+mem_cursor(fb *ifp, int mode, int x, int y)
 {
     fb_sim_cursor(ifp, mode, x, y);
     if (MI(ifp)->write_thru) {
@@ -401,7 +401,7 @@ mem_cursor(fb *ifp, int mode, size_t x, size_t y)
 
 
 HIDDEN int
-mem_getcursor(fb *ifp, int *mode, size_t *x, size_t *y)
+mem_getcursor(fb *ifp, int *mode, int *x, int *y)
 {
     if (MI(ifp)->write_thru) {
 	return fb_getcursor(MI(ifp)->fbp, mode, x, y);

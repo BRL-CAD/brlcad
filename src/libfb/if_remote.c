@@ -108,7 +108,7 @@ numeric(const char *s)
  * Return -1 on error, else 0.
  */
 static int
-parse_file(const char *file, char *host, int *portp, char *device, size_t length)
+parse_file(const char *file, char *host, int *portp, char *device, int length)
 /* input file spec */
 /* host part */
 /* port number */
@@ -210,7 +210,7 @@ rem_log(const char *msg)
  * then the devname (or NULL if default).
  */
 HIDDEN int
-rem_open(register fb *ifp, const char *file, size_t width, size_t height)
+rem_open(register fb *ifp, const char *file, int width, int height)
 {
     size_t i;
     struct pkg_conn *pc;
@@ -301,7 +301,7 @@ rem_put_fbps(struct fb_platform_specific *UNUSED(fbps))
 }
 
 HIDDEN int
-rem_open_existing(fb *UNUSED(ifp), size_t UNUSED(width), size_t UNUSED(height), struct fb_platform_specific *UNUSED(fb_p))
+rem_open_existing(fb *UNUSED(ifp), int UNUSED(width), int UNUSED(height), struct fb_platform_specific *UNUSED(fb_p))
 {
         return 0;
 }
@@ -313,13 +313,13 @@ rem_close_existing(fb *UNUSED(ifp))
 }
 
 HIDDEN int
-rem_configure_window(fb *UNUSED(ifp), size_t UNUSED(width), size_t UNUSED(height))
+rem_configure_window(fb *UNUSED(ifp), int UNUSED(width), int UNUSED(height))
 {
         return 0;
 }
 
 HIDDEN int
-rem_refresh(fb *UNUSED(ifp), size_t UNUSED(x), size_t UNUSED(y), size_t UNUSED(w), size_t UNUSED(h))
+rem_refresh(fb *UNUSED(ifp), int UNUSED(x), int UNUSED(y), int UNUSED(w), int UNUSED(h))
 {
         return 0;
 }
@@ -390,7 +390,7 @@ rem_clear(fb *ifp, unsigned char *bgpp)
  * Send as longs:  x, y, num
  */
 HIDDEN ssize_t
-rem_read(register fb *ifp, size_t x, size_t y, unsigned char *pixelp, size_t num)
+rem_read(register fb *ifp, int x, int y, unsigned char *pixelp, size_t num)
 {
     ssize_t ret;
     unsigned char buf[3*NET_LONG_LEN+1];
@@ -407,8 +407,8 @@ rem_read(register fb *ifp, size_t x, size_t y, unsigned char *pixelp, size_t num
     /* Get response;  0 len means failure */
     ret = pkg_waitfor(MSG_RETURN, (char *)pixelp, num*sizeof(RGBpixel), PCP(ifp));
     if (ret <= 0) {
-	fb_log("rem_read: read %lu at <%lu, %lu> failed, ret=%ld.\n",
-	       (unsigned long)num, (unsigned long)x, (unsigned long)y, ret);
+	fb_log("rem_read: read %lu at <%d, %d> failed, ret=%ld.\n",
+	       num, x, y, ret);
 	return -3;
     }
     return ret/sizeof(RGBpixel);
@@ -419,7 +419,7 @@ rem_read(register fb *ifp, size_t x, size_t y, unsigned char *pixelp, size_t num
  * As longs, x, y, num
  */
 HIDDEN ssize_t
-rem_write(register fb *ifp, size_t x, size_t y, const unsigned char *pixelp, size_t num)
+rem_write(register fb *ifp, int x, int y, const unsigned char *pixelp, size_t num)
 {
     ssize_t ret;
     unsigned char buf[3*NET_LONG_LEN+1];
@@ -443,9 +443,9 @@ rem_write(register fb *ifp, size_t x, size_t y, const unsigned char *pixelp, siz
 
 
 HIDDEN int
-rem_readrect(fb *ifp, size_t xmin, size_t ymin, size_t width, size_t height, unsigned char *pp)
+rem_readrect(fb *ifp, int xmin, int ymin, int width, int height, unsigned char *pp)
 {
-    size_t num;
+    int num;
     int ret;
     unsigned char buf[4*NET_LONG_LEN+1];
 
@@ -464,8 +464,8 @@ rem_readrect(fb *ifp, size_t xmin, size_t ymin, size_t width, size_t height, uns
     ret = pkg_waitfor (MSG_RETURN, (char *)pp,
 		       num*sizeof(RGBpixel), PCP(ifp));
     if (ret <= 0) {
-	fb_log("rem_rectread: read %lu at <%lu, %lu> failed, ret=%d.\n",
-	       (unsigned long)num, (unsigned long)xmin, (unsigned long)ymin, ret);
+	fb_log("rem_rectread: read %d at <%d, %d> failed, ret=%d.\n",
+	       num, xmin, ymin, ret);
 	return -3;
     }
     return ret/sizeof(RGBpixel);
@@ -473,9 +473,9 @@ rem_readrect(fb *ifp, size_t xmin, size_t ymin, size_t width, size_t height, uns
 
 
 HIDDEN int
-rem_writerect(fb *ifp, size_t xmin, size_t ymin, size_t width, size_t height, const unsigned char *pp)
+rem_writerect(fb *ifp, int xmin, int ymin, int width, int height, const unsigned char *pp)
 {
-    size_t num;
+    int num;
     int ret;
     unsigned char buf[4*NET_LONG_LEN+1];
 
@@ -504,9 +504,9 @@ rem_writerect(fb *ifp, size_t xmin, size_t ymin, size_t width, size_t height, co
  * Issue:  Determining if other end has support for this yet.
  */
 HIDDEN int
-rem_bwreadrect(fb *ifp, size_t xmin, size_t ymin, size_t width, size_t height, unsigned char *pp)
+rem_bwreadrect(fb *ifp, int xmin, int ymin, int width, int height, unsigned char *pp)
 {
-    size_t num;
+    int num;
     int ret;
     unsigned char buf[4*NET_LONG_LEN+1];
 
@@ -524,8 +524,8 @@ rem_bwreadrect(fb *ifp, size_t xmin, size_t ymin, size_t width, size_t height, u
     /* Get response;  0 len means failure */
     ret = pkg_waitfor (MSG_RETURN, (char *)pp, num, PCP(ifp));
     if (ret <= 0) {
-	fb_log("rem_bwrectread: read %lu at <%lu, %lu> failed, ret=%d.\n",
-	       (unsigned long)num, (unsigned long)xmin, (unsigned long)ymin, ret);
+	fb_log("rem_bwrectread: read %d at <%d, %d> failed, ret=%d.\n",
+	       num, xmin, ymin, ret);
 	return -3;
     }
     return ret;
@@ -533,9 +533,9 @@ rem_bwreadrect(fb *ifp, size_t xmin, size_t ymin, size_t width, size_t height, u
 
 
 HIDDEN int
-rem_bwwriterect(fb *ifp, size_t xmin, size_t ymin, size_t width, size_t height, const unsigned char *pp)
+rem_bwwriterect(fb *ifp, int xmin, int ymin, int width, int height, const unsigned char *pp)
 {
-    size_t num;
+    int num;
     int ret;
     unsigned char buf[4*NET_LONG_LEN+1];
 
@@ -564,7 +564,7 @@ rem_bwwriterect(fb *ifp, size_t xmin, size_t ymin, size_t width, size_t height, 
  * 32-bit longs: mode, x, y
  */
 HIDDEN int
-rem_cursor(fb *ifp, int mode, size_t x, size_t y)
+rem_cursor(fb *ifp, int mode, int x, int y)
 {
     unsigned char buf[3*NET_LONG_LEN+1];
 
@@ -581,7 +581,7 @@ rem_cursor(fb *ifp, int mode, size_t x, size_t y)
 
 
 HIDDEN int
-rem_getcursor(fb *ifp, int *mode, size_t *x, size_t *y)
+rem_getcursor(fb *ifp, int *mode, int *x, int *y)
 {
     unsigned char buf[4*NET_LONG_LEN+1];
 
@@ -609,7 +609,7 @@ rem_getcursor(fb *ifp, int *mode, size_t *x, size_t *y)
  * Do not confuse this routine with the old fb_scursor() call.
  */
 HIDDEN int
-rem_setcursor(fb *ifp, const unsigned char *bits, size_t xbits, size_t ybits, size_t xorig, size_t yorig)
+rem_setcursor(fb *ifp, const unsigned char *bits, int xbits, int ybits, int xorig, int yorig)
 {
     unsigned char buf[4*NET_LONG_LEN+1];
     int ret;
@@ -638,7 +638,7 @@ rem_setcursor(fb *ifp, const unsigned char *bits, size_t xbits, size_t ybits, si
 
 
 HIDDEN int
-rem_view(fb *ifp, size_t xcenter, size_t ycenter, size_t xzoom, size_t yzoom)
+rem_view(fb *ifp, int xcenter, int ycenter, int xzoom, int yzoom)
 {
     unsigned char buf[4*NET_LONG_LEN+1];
 
@@ -656,7 +656,7 @@ rem_view(fb *ifp, size_t xcenter, size_t ycenter, size_t xzoom, size_t yzoom)
 
 
 HIDDEN int
-rem_getview(fb *ifp, size_t *xcenter, size_t *ycenter, size_t *xzoom, size_t *yzoom)
+rem_getview(fb *ifp, int *xcenter, int *ycenter, int *xzoom, int *yzoom)
 {
     unsigned char buf[5*NET_LONG_LEN+1];
 

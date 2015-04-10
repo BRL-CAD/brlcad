@@ -139,8 +139,8 @@ struct xinfo {
 
     /* The following values are in Image Pixels */
 
-    size_t xi_iwidth;	/* Width of user's whole image */
-    size_t xi_iheight;	/* Height of user's whole image */
+    int xi_iwidth;	/* Width of user's whole image */
+    int xi_iheight;	/* Height of user's whole image */
 
     int xi_ilf;		/* Image coordinate of LLHC image */
     int xi_ibt;		/* pixel */
@@ -149,13 +149,13 @@ struct xinfo {
 
     /* The following values are in X Pixels */
 
-    size_t xi_ilf_w;	/* Width of leftmost image pixels */
-    size_t xi_irt_w;	/* Width of rightmost image pixels */
-    size_t xi_ibt_h;	/* Height of bottommost image pixels */
-    size_t xi_itp_h;	/* Height of topmost image pixels */
+    int xi_ilf_w;	/* Width of leftmost image pixels */
+    int xi_irt_w;	/* Width of rightmost image pixels */
+    int xi_ibt_h;	/* Height of bottommost image pixels */
+    int xi_itp_h;	/* Height of topmost image pixels */
 
-    size_t xi_xwidth;	/* Width of X window */
-    size_t xi_xheight;	/* Height of X window */
+    int xi_xwidth;	/* Width of X window */
+    int xi_xheight;	/* Height of X window */
 
     int xi_xlf;		/* X-coord of leftmost pixels */
     int xi_xrt;		/* X-coord of rightmost pixels */
@@ -2414,7 +2414,7 @@ X24_destroy(struct xinfo *xi)
 
 
 HIDDEN int
-X24_open(fb *ifp, const char *file, size_t width, size_t height)
+X24_open(fb *ifp, const char *file, int width, int height)
 {
     struct xinfo *xi;
 
@@ -2544,7 +2544,7 @@ X24_open(fb *ifp, const char *file, size_t width, size_t height)
 }
 
 int
-X24_configureWindow(fb *ifp, size_t width, size_t height)
+X24_configureWindow(fb *ifp, int width, int height)
 {
     struct xinfo *xi = XI(ifp);
     XRectangle rect;
@@ -2663,7 +2663,7 @@ X24_configureWindow(fb *ifp, size_t width, size_t height)
 
 
 int
-_X24_open_existing(fb *ifp, Display *dpy, Window win, Window cwinp, Colormap cmap, XVisualInfo *vip, size_t width, size_t height, GC gc)
+_X24_open_existing(fb *ifp, Display *dpy, Window win, Window cwinp, Colormap cmap, XVisualInfo *vip, int width, int height, GC gc)
 {
     struct xinfo *xi;
     int getmem_stat;
@@ -2851,7 +2851,7 @@ X24_put_fbps(struct fb_platform_specific *fbps)
 }
 
 HIDDEN int
-X24_open_existing(fb *ifp, size_t width, size_t height, struct fb_platform_specific *fb_p)
+X24_open_existing(fb *ifp, int width, int height, struct fb_platform_specific *fb_p)
 {
     struct X24_fb_info *x24_internal = (struct X24_fb_info *)fb_p->data;
     BU_CKMAG(fb_p, FB_X24_MAGIC, "X24 framebuffer");
@@ -2936,17 +2936,17 @@ X24_handle_event(fb *ifp, XEvent *event)
 				break;
 			    }
 
-			    if (x < (int)xi->xi_ilf_w)
+			    if (x < xi->xi_ilf_w)
 				ix = xi->xi_ilf;
 			    else
 				ix = xi->xi_ilf + (x - xi->xi_ilf_w + ifp->if_xzoom - 1) / ifp->if_xzoom;
 
-			    if (sy < (int)xi->xi_ibt_h)
+			    if (sy < xi->xi_ibt_h)
 				isy = xi->xi_ibt;
 			    else
 				isy = xi->xi_ibt + (sy - xi->xi_ibt_h + ifp->if_yzoom - 1) / ifp->if_yzoom;
 
-			    if (ix >= (int)xi->xi_iwidth || isy >= (int)xi->xi_iheight) {
+			    if (ix >= xi->xi_iwidth || isy >= xi->xi_iheight) {
 				fb_log("No RGB (outside image) 2\n");
 				break;
 			    }
@@ -2967,8 +2967,8 @@ X24_handle_event(fb *ifp, XEvent *event)
 	    {
 		XConfigureEvent *conf = (XConfigureEvent *)event;
 
-		if (conf->width == (int)xi->xi_xwidth &&
-		    conf->height == (int)xi->xi_xheight)
+		if (conf->width == xi->xi_xwidth &&
+		    conf->height == xi->xi_xheight)
 		    return;
 
 		X24_configureWindow(ifp, conf->width, conf->height);
@@ -3092,11 +3092,15 @@ X24_clear(fb *ifp, unsigned char *pp)
 
 
 HIDDEN ssize_t
-X24_read(fb *ifp, size_t x, size_t y, unsigned char *pixelp, size_t count)
+X24_read(fb *ifp, int x, int y, unsigned char *pixelp, size_t count)
 {
     struct xinfo *xi = XI(ifp);
     size_t maxcount;
     FB_CK_FB(ifp);
+
+    /* check origin bounds */
+    if (x < 0 || x >= xi->xi_iwidth || y < 0 || y >= xi->xi_iheight)
+	return -1;
 
     /* clip read length */
     maxcount = xi->xi_iwidth * (xi->xi_iheight - y) - x;
@@ -3109,12 +3113,16 @@ X24_read(fb *ifp, size_t x, size_t y, unsigned char *pixelp, size_t count)
 
 
 HIDDEN ssize_t
-X24_write(fb *ifp, size_t x, size_t y, const unsigned char *pixelp, size_t count)
+X24_write(fb *ifp, int x, int y, const unsigned char *pixelp, size_t count)
 {
     struct xinfo *xi = XI(ifp);
     size_t maxcount;
 
     FB_CK_FB(ifp);
+
+    /* Check origin bounds */
+    if (x < 0 || x >= xi->xi_iwidth || y < 0 || y >= xi->xi_iheight)
+	return -1;
 
     /* Clip write length */
     maxcount = xi->xi_iwidth * (xi->xi_iheight - y) - x;
@@ -3145,7 +3153,7 @@ X24_write(fb *ifp, size_t x, size_t y, const unsigned char *pixelp, size_t count
 
 
 HIDDEN int
-X24_view(fb *ifp, size_t xcenter, size_t ycenter, size_t xzoom, size_t yzoom)
+X24_view(fb *ifp, int xcenter, int ycenter, int xzoom, int yzoom)
 {
     struct xinfo *xi = XI(ifp);
     FB_CK_FB(ifp);
@@ -3155,10 +3163,11 @@ X24_view(fb *ifp, size_t xcenter, size_t ycenter, size_t xzoom, size_t yzoom)
 	&& ifp->if_xzoom == xcenter && ifp->if_yzoom == ycenter)
 	return 0;
     /* check bounds */
-    if (xcenter >= xi->xi_iwidth || ycenter >= xi->xi_iheight)
+    if (xcenter < 0 || xcenter >= xi->xi_iwidth
+	|| ycenter < 0 || ycenter >= xi->xi_iheight)
 	return -1;
-    if (xzoom == 0 || xzoom >= xi->xi_iwidth/2
-	|| yzoom == 0 || yzoom >= xi->xi_iheight/2)
+    if (xzoom <= 0 || xzoom >= xi->xi_iwidth/2
+	|| yzoom <= 0 || yzoom >= xi->xi_iheight/2)
 	return -1;
 
     ifp->if_xcenter = xcenter;
@@ -3175,7 +3184,7 @@ X24_view(fb *ifp, size_t xcenter, size_t ycenter, size_t xzoom, size_t yzoom)
 
 
 HIDDEN int
-X24_getview(fb *ifp, size_t *xcenter, size_t *ycenter, size_t *xzoom, size_t *yzoom)
+X24_getview(fb *ifp, int *xcenter, int *ycenter, int *xzoom, int *yzoom)
 {
 
     *xcenter = ifp->if_xcenter;
@@ -3189,7 +3198,7 @@ X24_getview(fb *ifp, size_t *xcenter, size_t *ycenter, size_t *xzoom, size_t *yz
 
 /*ARGSUSED*/
 HIDDEN int
-X24_setcursor(fb *ifp, const unsigned char *UNUSED(bits), size_t UNUSED(xbits), size_t UNUSED(ybits), size_t UNUSED(xorig), size_t UNUSED(yorig))
+X24_setcursor(fb *ifp, const unsigned char *UNUSED(bits), int UNUSED(xbits), int UNUSED(ybits), int UNUSED(xorig), int UNUSED(yorig))
 {
     FB_CK_FB(ifp);
 
@@ -3198,7 +3207,7 @@ X24_setcursor(fb *ifp, const unsigned char *UNUSED(bits), size_t UNUSED(xbits), 
 
 
 HIDDEN int
-X24_cursor(fb *ifp, int mode, size_t x, size_t y)
+X24_cursor(fb *ifp, int mode, int x, int y)
 {
     struct xinfo *xi = XI(ifp);
 
@@ -3256,7 +3265,7 @@ X24_cursor(fb *ifp, int mode, size_t x, size_t y)
 
 
 HIDDEN int
-X24_getcursor(fb *ifp, int *mode, size_t *x, size_t *y)
+X24_getcursor(fb *ifp, int *mode, int *x, int *y)
 {
     fb_sim_getcursor(ifp, mode, x, y);
 
@@ -3265,13 +3274,17 @@ X24_getcursor(fb *ifp, int *mode, size_t *x, size_t *y)
 
 
 HIDDEN int
-X24_readrect(fb *ifp, size_t xmin, size_t ymin, size_t width, size_t height, unsigned char *pp)
+X24_readrect(fb *ifp, int xmin, int ymin, int width, int height, unsigned char *pp)
 {
     struct xinfo *xi = XI(ifp);
     FB_CK_FB(ifp);
 
     /* Clip arguments */
 
+    if (xmin < 0)
+	xmin = 0;
+    if (ymin < 0)
+	ymin = 0;
     if (xmin + width > xi->xi_iwidth)
 	width = xi->xi_iwidth - xmin;
     if (ymin + height > xi->xi_iheight)
@@ -3304,13 +3317,17 @@ X24_readrect(fb *ifp, size_t xmin, size_t ymin, size_t width, size_t height, uns
 
 
 HIDDEN int
-X24_writerect(fb *ifp, size_t xmin, size_t ymin, size_t width, size_t height, const unsigned char *pp)
+X24_writerect(fb *ifp, int xmin, int ymin, int width, int height, const unsigned char *pp)
 {
     struct xinfo *xi = XI(ifp);
     FB_CK_FB(ifp);
 
     /* Clip arguments */
 
+    if (xmin < 0)
+	xmin = 0;
+    if (ymin < 0)
+	ymin = 0;
     if (xmin + width > xi->xi_iwidth)
 	width = xi->xi_iwidth - xmin;
     if (ymin + height > xi->xi_iheight)
@@ -3450,8 +3467,18 @@ X24_help(fb *ifp)
 
 
 int
-X24_refresh(fb *ifp, size_t x, size_t y, size_t w, size_t h)
+X24_refresh(fb *ifp, int x, int y, int w, int h)
 {
+    if (w < 0) {
+	w = -w;
+	x -= w;
+    }
+
+    if (h < 0) {
+	h = -h;
+	y -= h;
+    }
+
     X24_blit(ifp, x, y, w, h, BLIT_DISP);
 
     return 0;

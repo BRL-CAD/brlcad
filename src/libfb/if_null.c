@@ -38,7 +38,7 @@
 
 
 HIDDEN int
-null_open(fb *ifp, const char *UNUSED(file), size_t width, size_t height)
+null_open(fb *ifp, const char *UNUSED(file), int width, int height)
 {
     FB_CK_FB(ifp);
 
@@ -64,7 +64,7 @@ null_put_fbps(struct fb_platform_specific *UNUSED(fbps))
 }
 
 HIDDEN int
-null_open_existing(fb *UNUSED(ifp), size_t UNUSED(width), size_t UNUSED(height), struct fb_platform_specific *UNUSED(fb_p))
+null_open_existing(fb *UNUSED(ifp), int UNUSED(width), int UNUSED(height), struct fb_platform_specific *UNUSED(fb_p))
 {
         return 0;
 }
@@ -76,13 +76,13 @@ null_close_existing(fb *UNUSED(ifp))
 }
 
 HIDDEN int
-null_configure_window(fb *UNUSED(ifp), size_t UNUSED(width), size_t UNUSED(height))
+null_configure_window(fb *UNUSED(ifp), int UNUSED(width), int UNUSED(height))
 {
         return 0;
 }
 
 HIDDEN int
-null_refresh(fb *UNUSED(ifp), size_t UNUSED(x), size_t UNUSED(y), size_t UNUSED(w), size_t UNUSED(h))
+null_refresh(fb *UNUSED(ifp), int UNUSED(x), int UNUSED(y), int UNUSED(w), int UNUSED(h))
 {
         return 0;
 }
@@ -106,7 +106,7 @@ null_clear(fb *ifp, unsigned char *UNUSED(pp))
 
 
 HIDDEN ssize_t
-null_read(fb *ifp, size_t UNUSED(x), size_t UNUSED(y), unsigned char *UNUSED(pixelp), size_t count)
+null_read(fb *ifp, int UNUSED(x), int UNUSED(y), unsigned char *UNUSED(pixelp), size_t count)
 {
     FB_CK_FB(ifp);
 
@@ -115,7 +115,7 @@ null_read(fb *ifp, size_t UNUSED(x), size_t UNUSED(y), unsigned char *UNUSED(pix
 
 
 HIDDEN ssize_t
-null_write(fb *ifp, size_t UNUSED(x), size_t UNUSED(y), const unsigned char *UNUSED(pixelp), size_t count)
+null_write(fb *ifp, int UNUSED(x), int UNUSED(y), const unsigned char *UNUSED(pixelp), size_t count)
 {
     FB_CK_FB(ifp);
 
@@ -142,7 +142,7 @@ null_wmap(fb *ifp, const ColorMap *UNUSED(cmp))
 
 
 HIDDEN int
-null_view(fb *ifp, size_t UNUSED(xcenter), size_t UNUSED(ycenter), size_t UNUSED(xzoom), size_t UNUSED(yzoom))
+null_view(fb *ifp, int UNUSED(xcenter), int UNUSED(ycenter), int UNUSED(xzoom), int UNUSED(yzoom))
 {
     FB_CK_FB(ifp);
 
@@ -152,7 +152,7 @@ null_view(fb *ifp, size_t UNUSED(xcenter), size_t UNUSED(ycenter), size_t UNUSED
 
 
 HIDDEN int
-null_getview(fb *ifp, size_t *UNUSED(xcenter), size_t *UNUSED(ycenter), size_t *UNUSED(xzoom), size_t *UNUSED(yzoom))
+null_getview(fb *ifp, int *UNUSED(xcenter), int *UNUSED(ycenter), int *UNUSED(xzoom), int *UNUSED(yzoom))
 {
     FB_CK_FB(ifp);
 
@@ -162,7 +162,7 @@ null_getview(fb *ifp, size_t *UNUSED(xcenter), size_t *UNUSED(ycenter), size_t *
 
 
 HIDDEN int
-null_setcursor(fb *ifp, const unsigned char *UNUSED(bits), size_t UNUSED(xbits), size_t UNUSED(ybits), size_t UNUSED(xorig), size_t UNUSED(yorig))
+null_setcursor(fb *ifp, const unsigned char *UNUSED(bits), int UNUSED(xbits), int UNUSED(ybits), int UNUSED(xorig), int UNUSED(yorig))
 {
     FB_CK_FB(ifp);
 
@@ -171,7 +171,7 @@ null_setcursor(fb *ifp, const unsigned char *UNUSED(bits), size_t UNUSED(xbits),
 
 
 HIDDEN int
-null_cursor(fb *ifp, int UNUSED(mode), size_t UNUSED(x), size_t UNUSED(y))
+null_cursor(fb *ifp, int UNUSED(mode), int UNUSED(x), int UNUSED(y))
 {
     FB_CK_FB(ifp);
 
@@ -181,7 +181,7 @@ null_cursor(fb *ifp, int UNUSED(mode), size_t UNUSED(x), size_t UNUSED(y))
 
 
 HIDDEN int
-null_getcursor(fb *ifp, int *UNUSED(mode), size_t *UNUSED(x), size_t *UNUSED(y))
+null_getcursor(fb *ifp, int *UNUSED(mode), int *UNUSED(x), int *UNUSED(y))
 {
     FB_CK_FB(ifp);
 
@@ -191,7 +191,7 @@ null_getcursor(fb *ifp, int *UNUSED(mode), size_t *UNUSED(x), size_t *UNUSED(y))
 
 
 HIDDEN int
-null_readrect(fb *ifp, size_t UNUSED(xmin), size_t UNUSED(ymin), size_t width, size_t height, unsigned char *UNUSED(pp))
+null_readrect(fb *ifp, int UNUSED(xmin), int UNUSED(ymin), int width, int height, unsigned char *UNUSED(pp))
 {
     FB_CK_FB(ifp);
 
@@ -200,7 +200,7 @@ null_readrect(fb *ifp, size_t UNUSED(xmin), size_t UNUSED(ymin), size_t width, s
 
 
 HIDDEN int
-null_writerect(fb *ifp, size_t UNUSED(xmin), size_t UNUSED(ymin), size_t width, size_t height, const unsigned char *UNUSED(pp))
+null_writerect(fb *ifp, int UNUSED(xmin), int UNUSED(ymin), int width, int height, const unsigned char *UNUSED(pp))
 {
     FB_CK_FB(ifp);
 

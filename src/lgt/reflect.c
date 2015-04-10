@@ -117,7 +117,7 @@ static int hits_lit;
 /* Local communication with render_Scan(). */
 static int curr_scan;	  /* current scan line number */
 static int last_scan;	  /* last scan */
-static size_t a_gridsz;  /* grid size taking anti-aliasing into account */
+static int a_gridsz;	  /* grid size taking anti-aliasing into account */
 static fastf_t a_cellsz;  /* cell size taking anti-aliasing into account */
 static fastf_t grid_dh[3], grid_dv[3];
 static struct application ag;	/* global application structure */
@@ -420,7 +420,9 @@ render_Scan(int cpu, void *UNUSED(data))
 	    a.a_x *= aperture_sz;
 	    a.a_y *= aperture_sz;
 	}
-	for (; !user_interrupt && (size_t)a.a_y < (com+1) * aperture_sz;
+	for (;
+	     ! user_interrupt
+		 &&	a.a_y < (com+1) * aperture_sz;
 	     view_eol(&a, (RGBpixel *) scanbuf), a.a_y++
 	    ) {
 	    view_bol(&a);
@@ -431,7 +433,7 @@ render_Scan(int cpu, void *UNUSED(data))
 	    VSCALE(grid_x_inc, grid_dh, (fastf_t)(-a_gridsz/2)+a.a_x);
 	    for (;
 		 ! user_interrupt
-		     &&	(size_t)a.a_x < (grid_x_fin+1) * aperture_sz;
+		     &&	a.a_x < (grid_x_fin+1) * aperture_sz;
 		 view_pix(&a, scanbuf, aliasbuf), a.a_x++
 		) {
 		fastf_t aim_pt[3];
@@ -712,7 +714,7 @@ f_Model(struct application *ap, struct partition *pt_headp, struct seg *UNUSED(u
 
     {
 	/* See if we hit a light source. */
-	size_t i;
+	int i;
 	for (i = 1;
 	     i < lgt_db_size && stp != lgts[i].stp;
 	     i++
@@ -830,7 +832,7 @@ f_Model(struct application *ap, struct partition *pt_headp, struct seg *UNUSED(u
     {
 	/* Compute contribution from this surface. */
 	fastf_t f;
-	size_t i;
+	int i;
 	fastf_t view_dir[3];
 
 	/* Calculate view direction. */
@@ -861,7 +863,7 @@ f_Model(struct application *ap, struct partition *pt_headp, struct seg *UNUSED(u
        and transparency.  The level of recursion is stored in
        'a_level' and is controlled via the variable 'max_bounce'.
     */
-    if ((size_t)ap->a_level + 1 <= max_bounce) {
+    if (ap->a_level + 1 <= max_bounce) {
 	ap->a_user = material_id;
 	if (entry->reflectivity > 0.0) {
 	    fastf_t mirror_coefs[3];
@@ -1163,7 +1165,7 @@ inside_ray :
     }
 
     /* Calculate refraction at exit. */
-    if ((size_t)ap_ref.a_level <= max_bounce) {
+    if (ap_ref.a_level <= max_bounce) {
 	/* Reversed exit normal in a_uvec. */
 	if (! refract(ap_ref.a_ray.r_dir,
 		      ap_ref.a_uvec,
@@ -1215,8 +1217,7 @@ exiting_ray :
 static int
 f_Backgr(struct application *ap)
 {
-    size_t i;
-
+    int i;
     /* Base-line color is same as background. */
     VMOVE(ap->a_color, bg_coefs);
 
@@ -1719,8 +1720,8 @@ hi_Obliq(RGBpixel (*pix))
 static void
 hl_Postprocess(void)
 {
-    size_t yc; /* frame buffer space indices */
-    size_t xi, yi; /* bitmap/array space indices */
+    int yc; /* frame buffer space indices */
+    int xi, yi; /* bitmap/array space indices */
     unsigned int maxdist = (cell_sz*ARCTAN_87)+2;
     prnt_Event("Making hidden-line drawing...");
     /* Build bitmap from normal, region and distance maps. */
@@ -1778,7 +1779,7 @@ hl_Postprocess(void)
 	    if (anti_aliasing) {
 		/* NOTE: the 3030 compiler barfs on
 		   HL_TSTBIT if we use registers here. */
-		size_t rxa, rya, rxn, ryn;
+		int rxa, rya, rxn, ryn;
 		/* Anti-aliasing, map square matrix to pixel.
 		   If one bit is ON, turn pixel ON. */
 		for (rya = 0, ryn = yi*aperture_sz;
@@ -1810,11 +1811,11 @@ static void
 view_pix(struct application *ap, RGBpixel (*scanbuf), vect_t (*aliasbuf))
 {
     RGBpixel pixel;
-    size_t x;
-    size_t y;
+    int x;
+    int y;
     if (RT_G_DEBUG && tty) {
 	bu_semaphore_acquire(BU_SEM_SYSCALL);
-	(void) sprintf(GRID_PIX_PTR, " [%04lu-", ap->a_x/aperture_sz);
+	(void) sprintf(GRID_PIX_PTR, " [%04d-", ap->a_x/aperture_sz);
 	prnt_Timer((char *) NULL);
 	IDLE_MOVE();
 	(void) fflush(stdout);
@@ -1824,8 +1825,8 @@ view_pix(struct application *ap, RGBpixel (*scanbuf), vect_t (*aliasbuf))
 	return;
 
     if (anti_aliasing) {
-	size_t xmod = ap->a_x % aperture_sz;
-	size_t ymod = ap->a_y % aperture_sz;
+	int xmod = ap->a_x % aperture_sz;
+	int ymod = ap->a_y % aperture_sz;
 	vectp_t aliasp;
 	/* translate to image coords */
 	x = ap->a_x / aperture_sz;
@@ -1854,6 +1855,9 @@ view_pix(struct application *ap, RGBpixel (*scanbuf), vect_t (*aliasbuf))
     /* Translate grid coordinates to frame buffer coords. */
     x = ap->a_x/aperture_sz + x_fb_origin;
     y = ap->a_y/aperture_sz + y_fb_origin;
+    /* Image translation can necessitate clipping. */
+    if (x < 0 || y < 0)
+	goto failed;
 
     /* Clip relative intensity on each gun to range 0.0 to 1.0;
        then scale to RGB values. */
@@ -1896,6 +1900,9 @@ view_pix(struct application *ap, RGBpixel (*scanbuf), vect_t (*aliasbuf))
 	    return;
     }
 failed:
+#ifdef DEBUG
+    bu_log("Write failed to pixel <%d, %d>.\n", x, y);
+#endif
     return;
 }
 
@@ -1906,8 +1913,8 @@ failed:
 static void
 view_bol(struct application *ap)
 {
-    size_t x = grid_x_org + x_fb_origin;
-    size_t y = ap->a_y/aperture_sz + y_fb_origin;
+    int x = grid_x_org + x_fb_origin;
+    int y = ap->a_y/aperture_sz + y_fb_origin;
     if (tracking_cursor) {
 	bu_semaphore_acquire(RT_SEM_STATS);
 	(void) fb_cursor(fbiop, 1, x, y);
@@ -1915,8 +1922,8 @@ view_bol(struct application *ap)
     }
     if (tty) {
 	bu_semaphore_acquire(RT_SEM_STATS);
-	(void) sprintf(GRID_SCN_PTR, "%04lu-", (unsigned long)ap->a_y/aperture_sz);
-	(void) sprintf(GRID_PIX_PTR, " [%04lu-", (unsigned long)ap->a_x/aperture_sz);
+	(void) sprintf(GRID_SCN_PTR, "%04d-", ap->a_y/aperture_sz);
+	(void) sprintf(GRID_PIX_PTR, " [%04d-", ap->a_x/aperture_sz);
 	update_Screen();
 	bu_semaphore_release(RT_SEM_STATS);
     }
@@ -1954,7 +1961,7 @@ view_eol(struct application *ap, RGBpixel (*scanbuf))
     } else {
 	char grid_y[5];
 	bu_semaphore_acquire(RT_SEM_STATS);
-	(void) sprintf(grid_y, "%04lu", (unsigned long)ap->a_y/aperture_sz);
+	(void) sprintf(grid_y, "%04d", ap->a_y/aperture_sz);
 	prnt_Timer(grid_y);
 	bu_semaphore_release(RT_SEM_STATS);
     }

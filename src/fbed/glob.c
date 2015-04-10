@@ -41,7 +41,7 @@ Point windo_anchor; /* Saved "windo_center". */
 Try		*try_rootp = (Try *) NULL;
 char cread_buf[MACROBUFSZ] = { 0 }, *cptr = cread_buf;
 char macro_buf[MACROBUFSZ] = { 0 }, *macro_ptr = macro_buf;
-size_t brush_sz = 0;
+int brush_sz = 0;
 int gain = 1;
 int pad_flag = false;
 int remembering = false;

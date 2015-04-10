@@ -609,15 +609,14 @@ void
 fbs_rfbgetcursor(struct pkg_conn *pcp, char *buf)
 {
     int ret;
-    int mode;
-    size_t x, y;
+    int mode, x, y;
     char rbuf[4*NET_LONG_LEN+1];
 
     ret = fb_getcursor(curr_fbp, &mode, &x, &y);
     (void)pkg_plong(&rbuf[0*NET_LONG_LEN], ret);
     (void)pkg_plong(&rbuf[1*NET_LONG_LEN], mode);
-    (void)pkg_plong(&rbuf[2*NET_LONG_LEN], (long)x);
-    (void)pkg_plong(&rbuf[3*NET_LONG_LEN], (long)y);
+    (void)pkg_plong(&rbuf[2*NET_LONG_LEN], x);
+    (void)pkg_plong(&rbuf[3*NET_LONG_LEN], y);
     pkg_send(MSG_RETURN, rbuf, 4*NET_LONG_LEN, pcp);
 
     if (buf) {
@@ -748,15 +747,15 @@ void
 fbs_rfbgetview(struct pkg_conn *pcp, char *buf)
 {
     int ret;
-    size_t xcenter, ycenter, xzoom, yzoom;
+    int xcenter, ycenter, xzoom, yzoom;
     char rbuf[5*NET_LONG_LEN+1];
 
     ret = fb_getview(curr_fbp, &xcenter, &ycenter, &xzoom, &yzoom);
     (void)pkg_plong(&rbuf[0*NET_LONG_LEN], ret);
-    (void)pkg_plong(&rbuf[1*NET_LONG_LEN], (long)xcenter);
-    (void)pkg_plong(&rbuf[2*NET_LONG_LEN], (long)ycenter);
-    (void)pkg_plong(&rbuf[3*NET_LONG_LEN], (long)xzoom);
-    (void)pkg_plong(&rbuf[4*NET_LONG_LEN], (long)yzoom);
+    (void)pkg_plong(&rbuf[1*NET_LONG_LEN], xcenter);
+    (void)pkg_plong(&rbuf[2*NET_LONG_LEN], ycenter);
+    (void)pkg_plong(&rbuf[3*NET_LONG_LEN], xzoom);
+    (void)pkg_plong(&rbuf[4*NET_LONG_LEN], yzoom);
     pkg_send(MSG_RETURN, rbuf, 5*NET_LONG_LEN, pcp);
 
     if (buf) {

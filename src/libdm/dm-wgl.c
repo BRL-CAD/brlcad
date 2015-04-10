@@ -970,8 +970,8 @@ wgl_drawVListHiddenLine(dm *dmp, register struct bn_vlist *vp)
     /* Viewing region is from -1.0 to +1.0 */
     first = 1;
     for (BU_LIST_FOR(tvp, bn_vlist, &vp->l)) {
-	size_t i;
-	size_t nused = tvp->nused;
+	register int	i;
+	register int	nused = tvp->nused;
 	register int	*cmd = tvp->cmd;
 	register point_t *pt = tvp->pt;
 	GLdouble glpt[3];
@@ -1041,8 +1041,8 @@ wgl_drawVListHiddenLine(dm *dmp, register struct bn_vlist *vp)
     /* Viewing region is from -1.0 to +1.0 */
     first = 1;
     for (BU_LIST_FOR(tvp, bn_vlist, &vp->l)) {
-	size_t i;
-	size_t nused = tvp->nused;
+	register int	i;
+	register int	nused = tvp->nused;
 	register int	*cmd = tvp->cmd;
 	register point_t *pt = tvp->pt;
 	GLdouble glpt[3];
@@ -1132,8 +1132,8 @@ wgl_drawVList(dm *dmp, struct bn_vlist *vp)
     /* Viewing region is from -1.0 to +1.0 */
     first = 1;
     for (BU_LIST_FOR(tvp, bn_vlist, &vp->l)) {
-	size_t i;
-	size_t nused = tvp->nused;
+	register int	i;
+	register int	nused = tvp->nused;
 	register int	*cmd = tvp->cmd;
 	register point_t *pt = tvp->pt;
 	GLdouble glpt[3];

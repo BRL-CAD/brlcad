@@ -42,8 +42,8 @@
 
 static char *framebuffer = NULL;
 static fb *fbp;
-static size_t scr_width = 0;		/* use default size */
-static size_t scr_height = 0;
+static int scr_width = 0;		/* use default size */
+static int scr_height = 0;
 static int clear_and_reset = 0;
 
 #define u_char unsigned char
@@ -108,7 +108,7 @@ main(int argc, char **argv)
 	(void)fb_view(fbp, scr_width/2, scr_height/2, 1, 1);
     } else {
 	ColorMap cmap;
-	size_t xcent, ycent, xzoom, yzoom;
+	int xcent, ycent, xzoom, yzoom;
 	if (fb_rmap(fbp, &cmap) >= 0) {
 	    if (!fb_is_linear_cmap(&cmap)) {
 		fprintf(stderr, "fbclear: NOTE: non-linear colormap in effect.  -c flag loads linear colormap.\n");

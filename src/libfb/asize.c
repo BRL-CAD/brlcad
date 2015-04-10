@@ -83,7 +83,7 @@ struct sizes fb_common_sizes[] = {
  *	1	width and height returned
  */
 int
-fb_common_file_size(size_t *widthp, size_t *heightp, const char *filename, size_t pixel_size)
+fb_common_file_size(size_t *widthp, size_t *heightp, const char *filename, int pixel_size)
 /* pointer to returned width */
 /* pointer to returned height */
 /* image file to stat */
@@ -95,7 +95,7 @@ fb_common_file_size(size_t *widthp, size_t *heightp, const char *filename, size_
 
     *widthp = *heightp = 0;		/* sanity */
 
-    if (pixel_size == 0) {
+    if (pixel_size <= 0) {
 	return 0;
     }
 
@@ -117,7 +117,7 @@ fb_common_file_size(size_t *widthp, size_t *heightp, const char *filename, size_
     if (stat(filename, &sbuf) < 0)
 	return	0;
 
-    size = sbuf.st_size / pixel_size;
+    size = (size_t)(sbuf.st_size / pixel_size);
 
     return fb_common_image_size(widthp, heightp, size);
 }

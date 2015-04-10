@@ -43,14 +43,14 @@
 
 
 /* in cmap-crunch.c */
-extern void cmap_crunch(RGBpixel (*scan_buf), size_t pixel_ct, ColorMap *colormap);
+extern void cmap_crunch(RGBpixel (*scan_buf), int pixel_ct, ColorMap *colormap);
 
 
 static int crunch = 0;		/* Color map crunch? */
 static int inverse = 0;		/* Draw upside-down */
-static size_t pixbytes = 3;	/* Default is 3 bytes/pixel */
-size_t screen_height;		/* input height */
-size_t screen_width;		/* input width */
+static int pixbytes = 3;	/* Default is 3 bytes/pixel */
+int screen_height;		/* input height */
+int screen_width;		/* input width */
 
 double out_gamma = -1.0;	/* Gamma the image was created at */
 char *framebuffer = NULL;
@@ -123,12 +123,12 @@ int
 main(int argc, char **argv)
 {
     static unsigned char *scanline;	/* scanline pixel buffers */
-    static size_t scanbytes;		/* # of bytes of scanline */
-    static size_t scanpix;			/* # of pixels of scanline */
+    static int scanbytes;		/* # of bytes of scanline */
+    static int scanpix;			/* # of pixels of scanline */
     static ColorMap cmap;		/* libfb color map */
 
     fb *fbp;
-    size_t y;
+    int y;
     int got;
     png_structp png_p;
     png_infop info_p;
@@ -198,9 +198,9 @@ Usage: fb-png [-i -c] [-# nbytes/pixel] [-F framebuffer] [-g gamma]\n\
 	    else
 		got = fb_bwreadrect(fbp, 0, y, screen_width, 1, scanline);
 
-	    if ((size_t)got != screen_width) {
-		bu_log("fb-png: Read of scanline %lu returned %d, expected %lu, aborting.\n",
-		       (unsigned long)y, got, (unsigned long)screen_width);
+	    if (got != screen_width) {
+		bu_log("fb-png: Read of scanline %d returned %d, expected %d, aborting.\n",
+		       y, got, screen_width);
 		break;
 	    }
 	    if (crunch)
@@ -209,15 +209,15 @@ Usage: fb-png [-i -c] [-# nbytes/pixel] [-F framebuffer] [-g gamma]\n\
 	}
     } else {
 	/* Read top to bottom */
-	for (y = screen_height; y > 0; y--) {
+	for (y = screen_height-1; y >= 0; y--) {
 	    if (pixbytes == 3)
-		got = fb_read(fbp, 0, y-1, scanline, screen_width);
+		got = fb_read(fbp, 0, y, scanline, screen_width);
 	    else
-		got = fb_bwreadrect(fbp, 0, y-1, screen_width, 1, scanline);
+		got = fb_bwreadrect(fbp, 0, y, screen_width, 1, scanline);
 
-	    if ((size_t)got != screen_width) {
-		bu_log("fb-png: Read of scanline %lu returned %d, expected %lu, aborting.\n",
-		       (unsigned long)y-1, got, (unsigned long)screen_width);
+	    if (got != screen_width) {
+		bu_log("fb-png: Read of scanline %d returned %d, expected %d, aborting.\n",
+		       y, got, screen_width);
 		break;
 	    }
 	    if (crunch)

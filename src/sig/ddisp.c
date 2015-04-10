@@ -40,11 +40,10 @@
 
 
 static void
-lineout(fb *fbp, double *dat, size_t n)
+lineout(fb *fbp, double *dat, int n)
 {
-    static size_t y = 0;
-    size_t i;
-    int value;
+    static int y = 0;
+    int i, value;
     RGBpixel lbuf[1024*4];
 
     if (n > fb_getwidth(fbp)) n = fb_getwidth(fbp);
@@ -68,9 +67,9 @@ lineout(fb *fbp, double *dat, size_t n)
  * +/- 1.0 in, becomes +/- 128 from center Y.
  */
 static void
-disp_inten(fb *fbp, double *buf, size_t size)
+disp_inten(fb *fbp, double *buf, int size)
 {
-    size_t x, y;
+    int x, y;
     RGBpixel color;
 
 /* color.red = color.green = color.blue = 255;*/
@@ -95,7 +94,7 @@ disp_inten(fb *fbp, double *buf, size_t size)
  * +/- 1.0 in, becomes +/- 128 from center Y.
  */
 static void
-disp_bars(fb *fbp, double *buf, size_t size)
+disp_bars(fb *fbp, double *buf, int size)
 {
     int x, y;
     RGBpixel color;
@@ -104,7 +103,7 @@ disp_bars(fb *fbp, double *buf, size_t size)
 
     if (size > fb_getwidth(fbp)) size = fb_getwidth(fbp);
 
-    for (x = 0; (size_t)x < size; x++) {
+    for (x = 0; x < size; x++) {
 	if (buf[x] > 1.0) {
 	    y = 128;
 	} else if (buf[x] < -1.0) {
@@ -141,12 +140,11 @@ main(int argc, char **argv)
     fb *fbp = NULL;
     double buf[MAXPTS];
 
-    size_t n;
-    int ret, L;
+    int n, L;
     int Clear = 0;
     int pause_time = 0;
     int mode = 0;
-    size_t fbsize = 512;
+    int fbsize = 512;
 
     if (isatty(fileno(stdin))) {
 	bu_exit(1, "%s", usage);
@@ -181,9 +179,9 @@ main(int argc, char **argv)
 
     L = (argc > 1) ? atoi(argv[1]) : 512;
 
-    while ((ret = fread(buf, sizeof(*buf), L, stdin)) > 0) {
+    while ((n = fread(buf, sizeof(*buf), L, stdin)) > 0) {
 	/* XXX - width hack */
-	if ((size_t)ret > fb_getwidth(fbp))
+	if (n > fb_getwidth(fbp))
 	    n = fb_getwidth(fbp);
 
 	if (Clear)

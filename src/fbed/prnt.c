@@ -80,10 +80,10 @@ prnt_Status(void)
     STRIDE_MOVE();
     (void)printf("%4d", gain);
     BRUSH_SIZE_MOVE();
-    (void)printf("%4lu", (unsigned long)brush_sz);
+    (void)printf("%4d", brush_sz);
     CURSOR_POS_MOVE();
     (void)SetStandout();
-    (void)printf(" line [%4lu] column [%4lu] ", (unsigned long)cursor_pos.p_y, (unsigned long)cursor_pos.p_x);
+    (void)printf(" line [%4d] column [%4d] ", cursor_pos.p_y, cursor_pos.p_x);
     (void)ClrStandout();
     PROMPT_MOVE();
     (void)fflush(stdout);

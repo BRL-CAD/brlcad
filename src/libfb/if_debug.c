@@ -37,20 +37,20 @@
 #include "fb.h"
 
 HIDDEN int
-deb_open(fb *ifp, const char *file, size_t width, size_t height)
+deb_open(fb *ifp, const char *file, int width, int height)
 {
     FB_CK_FB(ifp);
     if (file == (char *)NULL)
-	fb_log("fb_open(%p, NULL, %lu, %lu)\n",
-	       (void *)ifp, (unsigned long)width, (unsigned long)height);
+	fb_log("fb_open(%p, NULL, %d, %d)\n",
+	       (void *)ifp, width, height);
     else
-	fb_log("fb_open(%p, \"%s\", %lu, %lu)\n",
-	       (void *)ifp, file, (unsigned long)width, (unsigned long)height);
+	fb_log("fb_open(%p, \"%s\", %d, %d)\n",
+	       (void *)ifp, file, width, height);
 
     /* check for default size */
-    if (width == 0)
+    if (width <= 0)
 	width = ifp->if_width;
-    if (height == 0)
+    if (height <= 0)
 	height = ifp->if_height;
 
     /* set debug bit vector */
@@ -84,7 +84,7 @@ deb_put_fbps(struct fb_platform_specific *UNUSED(fbps))
 }
 
 HIDDEN int
-deb_open_existing(fb *UNUSED(ifp), size_t UNUSED(width), size_t UNUSED(height), struct fb_platform_specific *UNUSED(fb_p))
+deb_open_existing(fb *UNUSED(ifp), int UNUSED(width), int UNUSED(height), struct fb_platform_specific *UNUSED(fb_p))
 {
         return 0;
 }
@@ -104,13 +104,13 @@ deb_close(fb *ifp)
 }
 
 HIDDEN int
-deb_configure_window(fb *UNUSED(ifp), size_t UNUSED(width), size_t UNUSED(height))
+deb_configure_window(fb *UNUSED(ifp), int UNUSED(width), int UNUSED(height))
 {
     return 0;
 }
 
 HIDDEN int
-deb_refresh(fb *UNUSED(ifp), size_t UNUSED(x), size_t UNUSED(y), size_t UNUSED(w), size_t UNUSED(h))
+deb_refresh(fb *UNUSED(ifp), int UNUSED(x), int UNUSED(y), int UNUSED(w), int UNUSED(h))
 {
     return 0;
 }
@@ -131,7 +131,7 @@ deb_clear(fb *ifp, unsigned char *pp)
 
 
 HIDDEN ssize_t
-deb_read(fb *ifp, size_t x, size_t y, unsigned char *pixelp, size_t count)
+deb_read(fb *ifp, int x, int y, unsigned char *pixelp, size_t count)
 {
     FB_CK_FB(ifp);
     fb_log("fb_read(%p, %4d, %4d, %p, %lu)\n",
@@ -142,7 +142,7 @@ deb_read(fb *ifp, size_t x, size_t y, unsigned char *pixelp, size_t count)
 
 
 HIDDEN ssize_t
-deb_write(fb *ifp, size_t x, size_t y, const unsigned char *pixelp, size_t count)
+deb_write(fb *ifp, int x, int y, const unsigned char *pixelp, size_t count)
 {
     size_t i;
 
@@ -207,7 +207,7 @@ deb_wmap(fb *ifp, const ColorMap *cmp)
 
 
 HIDDEN int
-deb_view(fb *ifp, size_t xcenter, size_t ycenter, size_t xzoom, size_t yzoom)
+deb_view(fb *ifp, int xcenter, int ycenter, int xzoom, int yzoom)
 {
     FB_CK_FB(ifp);
     fb_log("fb_view(%p, %4d, %4d, %4d, %4d)\n",
@@ -218,7 +218,7 @@ deb_view(fb *ifp, size_t xcenter, size_t ycenter, size_t xzoom, size_t yzoom)
 
 
 HIDDEN int
-deb_getview(fb *ifp, size_t *xcenter, size_t *ycenter, size_t *xzoom, size_t *yzoom)
+deb_getview(fb *ifp, int *xcenter, int *ycenter, int *xzoom, int *yzoom)
 {
     FB_CK_FB(ifp);
     fb_log("fb_getview(%p, %p, %p, %p, %p)\n",
@@ -231,7 +231,7 @@ deb_getview(fb *ifp, size_t *xcenter, size_t *ycenter, size_t *xzoom, size_t *yz
 
 
 HIDDEN int
-deb_setcursor(fb *ifp, const unsigned char *bits, size_t xbits, size_t ybits, size_t xorig, size_t yorig)
+deb_setcursor(fb *ifp, const unsigned char *bits, int xbits, int ybits, int xorig, int yorig)
 {
     FB_CK_FB(ifp);
     fb_log("fb_setcursor(%p, %p, %d, %d, %d, %d)\n",
@@ -241,7 +241,7 @@ deb_setcursor(fb *ifp, const unsigned char *bits, size_t xbits, size_t ybits, si
 
 
 HIDDEN int
-deb_cursor(fb *ifp, int mode, size_t x, size_t y)
+deb_cursor(fb *ifp, int mode, int x, int y)
 {
     fb_log("fb_cursor(%p, %d, %4d, %4d)\n",
 	   (void *)ifp, mode, x, y);
@@ -251,56 +251,56 @@ deb_cursor(fb *ifp, int mode, size_t x, size_t y)
 
 
 HIDDEN int
-deb_getcursor(fb *ifp, int *mode, size_t *x, size_t *y)
+deb_getcursor(fb *ifp, int *mode, int *x, int *y)
 {
     FB_CK_FB(ifp);
     fb_log("fb_getcursor(%p, %p, %p, %p)\n",
 	   (void *)ifp, (void *)mode, (void *)x, (void *)y);
     fb_sim_getcursor(ifp, mode, x, y);
-    fb_log(" <= %d %lu %lu\n", *mode, (unsigned long)*x, (unsigned long)*y);
+    fb_log(" <= %d %d %d\n", *mode, *x, *y);
     return 0;
 }
 
 
 HIDDEN int
-deb_readrect(fb *ifp, size_t xmin, size_t ymin, size_t width, size_t height, unsigned char *pp)
+deb_readrect(fb *ifp, int xmin, int ymin, int width, int height, unsigned char *pp)
 {
     FB_CK_FB(ifp);
-    fb_log("fb_readrect(%p, (%4lu, %4lu), %4lu, %4lu, %p)\n",
-	   (void *)ifp, (unsigned long)xmin, (unsigned long)ymin, (unsigned long)width, (unsigned long)height,
+    fb_log("fb_readrect(%p, (%4d, %4d), %4d, %4d, %p)\n",
+	   (void *)ifp, xmin, ymin, width, height,
 	   (void *)pp);
     return width*height;
 }
 
 
 HIDDEN int
-deb_writerect(fb *ifp, size_t xmin, size_t ymin, size_t width, size_t height, const unsigned char *pp)
+deb_writerect(fb *ifp, int xmin, int ymin, int width, int height, const unsigned char *pp)
 {
     FB_CK_FB(ifp);
-    fb_log("fb_writerect(%p, %4lu, %4lu, %4lu, %4lu, %p)\n",
-	   (void *)ifp, (unsigned long)xmin, (unsigned long)ymin, (unsigned long)width, (unsigned long)height,
+    fb_log("fb_writerect(%p, %4d, %4d, %4d, %4d, %p)\n",
+	   (void *)ifp, xmin, ymin, width, height,
 	   (void *)pp);
     return width*height;
 }
 
 
 HIDDEN int
-deb_bwreadrect(fb *ifp, size_t xmin, size_t ymin, size_t width, size_t height, unsigned char *pp)
+deb_bwreadrect(fb *ifp, int xmin, int ymin, int width, int height, unsigned char *pp)
 {
     FB_CK_FB(ifp);
-    fb_log("fb_bwreadrect(%p, (%4lu, %4lu), %4lu, %4lu, %p)\n",
-	   (void *)ifp, (unsigned long)xmin, (unsigned long)ymin, (unsigned long)width, (unsigned long)height,
+    fb_log("fb_bwreadrect(%p, (%4d, %4d), %4d, %4d, %p)\n",
+	   (void *)ifp, xmin, ymin, width, height,
 	   (void *)pp);
     return width*height;
 }
 
 
 HIDDEN int
-deb_bwwriterect(fb *ifp, size_t xmin, size_t ymin, size_t width, size_t height, const unsigned char *pp)
+deb_bwwriterect(fb *ifp, int xmin, int ymin, int width, int height, const unsigned char *pp)
 {
     FB_CK_FB(ifp);
-    fb_log("fb_bwwriterect(%p, %4lu, %4lu, %4lu, %4lu, %p)\n",
-	   (void *)ifp, (unsigned long)xmin, (unsigned long)ymin, (unsigned long)width, (unsigned long)height,
+    fb_log("fb_bwwriterect(%p, %4d, %4d, %4d, %4d, %p)\n",
+	   (void *)ifp, xmin, ymin, width, height,
 	   (void *)pp);
     return width*height;
 }

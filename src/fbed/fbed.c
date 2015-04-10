@@ -50,8 +50,8 @@
 #endif
 
 static struct {
-    size_t xbits, ybits;
-    size_t xorig, yorig;
+    int xbits, ybits;
+    int xorig, yorig;
     unsigned char bits[16*2];
 } cursor = {
     16, 16,
@@ -59,7 +59,7 @@ static struct {
 #include "./cursorbits.h"
 };
 
-#define JUMP		(size_t)(40/zoom_factor)
+#define JUMP		(40/zoom_factor)
 #define CLR_LEN		12
 #define PROMPT_LEN	MAX_LN
 
@@ -101,8 +101,8 @@ AproxPixel(RGBpixel a, RGBpixel b, int t)
 static Panel panel;	      /* Current panel. */
 static Point bitpad;
 static Rect2D current;     /* Current saved rectangle. */
-static size_t step;	      /* Current step size. */
-static size_t size_viewport;
+static int step;	      /* Current step size. */
+static int size_viewport;
 static int last_key;
 static int pointpicked;
 static int tolerance = 0;
@@ -119,7 +119,7 @@ HIDDEN int pars_Argv(int argc, char **argv);
 HIDDEN int push_Macro(char *buf);
 HIDDEN void general_Handler(int sig);
 HIDDEN void init_Try(void);
-HIDDEN void fb_Paint(size_t x0, size_t y0, size_t x1, size_t y1, RGBpixel (*color));
+HIDDEN void fb_Paint(int x0, int y0, int x1, int y1, RGBpixel (*color));
 HIDDEN void fb_Wind(void);
 HIDDEN void get_Point(char *msg, Point *pointp);
 HIDDEN void clip_Rect2D(Rect2D *rectp);
@@ -329,7 +329,7 @@ static Func_Tab	*bindings[DEL+1];
 static Func_Tab	*macro_entry = FT_NULL; /* Last keyboard macro defined. */
 
 fb *fbp;				/* Current framebuffer */
-static size_t cur_width = 512;
+static int cur_width = 512;
 
 int
 main(int argc, char **argv)
@@ -431,7 +431,7 @@ main(int argc, char **argv)
 HIDDEN int
 drawRect2D(Rect2D *rectp, unsigned char *pixelp)
 {
-    size_t x, y;
+    int x, y;
     y = rectp->r_origin.p_y;
     x = rectp->r_origin.p_x;
     for (; x < rectp->r_corner.p_x; x++)
@@ -452,12 +452,12 @@ drawRect2D(Rect2D *rectp, unsigned char *pixelp)
 HIDDEN void
 fillRect2D(Rect2D *rectp, RGBpixel (*pixelp))
 {
-    size_t btm = rectp->r_origin.p_y;
-    size_t top = rectp->r_corner.p_y;
-    size_t rgt = rectp->r_corner.p_x;
-    size_t lft = rectp->r_origin.p_x;
+    int btm = rectp->r_origin.p_y;
+    int top = rectp->r_corner.p_y;
+    int rgt = rectp->r_corner.p_x;
+    int lft = rectp->r_origin.p_x;
     for (; btm <= top; btm++) {
-	size_t x = lft;
+	int x = lft;
 	(void)fb_seek(fbp, x, btm);
 	for (; x <= rgt; x++)
 	    fb_wpixel(fbp, *pixelp);
@@ -469,8 +469,8 @@ HIDDEN int
 paintNonBorder(unsigned char *borderpix, Point *pt)
 {
     RGBpixel currentpix;
-    if (pt->p_x > fb_getwidth(fbp)
-	|| pt->p_y > fb_getheight(fbp)) {
+    if (pt->p_x < 0 || pt->p_x > fb_getwidth(fbp)
+	|| pt->p_y < 0 || pt->p_y > fb_getheight(fbp)) {
 	return false; /* outside frame buffer memory */
     }
     if (fb_read(fbp, pt->p_x, pt->p_y, (unsigned char *) currentpix, 1) == -1)
@@ -493,8 +493,8 @@ HIDDEN int
 paintSolidRegion(unsigned char *regionpix, Point *pt)
 {
     RGBpixel currentpix;
-    if (pt->p_x > fb_getwidth(fbp)
-	|| pt->p_y > fb_getheight(fbp))
+    if (pt->p_x < 0 || pt->p_x > fb_getwidth(fbp)
+	|| pt->p_y < 0 || pt->p_y > fb_getheight(fbp))
 	return false; /* outside frame buffer memory */
     if (fb_read(fbp, pt->p_x, pt->p_y, (unsigned char *) currentpix, 1) == -1)
 	return false; /* read error */
@@ -565,8 +565,8 @@ init_Try(void)
 HIDDEN int
 push_Macro(char *buf)
 {
-    size_t curlen = strlen(cptr);
-    size_t buflen = strlen(buf);
+    int curlen = strlen(cptr);
+    int buflen = strlen(buf);
     if (curlen + buflen > MACROBUFSZ - 1) {
 	fb_log("Macro buffer would overflow.\n");
 	return 0;
@@ -578,7 +578,7 @@ push_Macro(char *buf)
 }
 
 void
-do_Key_Cmd(int key, size_t n)
+do_Key_Cmd(int key, int n)
 {
     last_key = key;
     if (*cptr == NUL) {
@@ -645,8 +645,8 @@ f_Tolerance()
 HIDDEN int
 f_ChngRegionColor()
 {
-    static off_t xoff1[] = { 0, 1,  0, -1 };
-    static off_t yoff1[] = { 1, 0, -1,  0 };
+    static int xoff1[] = { 0, 1,  0, -1 };
+    static int yoff1[] = { 1, 0, -1,  0 };
     RGBpixel currentpix;
     Point pivot;
     PtStack *regionsp = NULL;
@@ -660,8 +660,8 @@ f_ChngRegionColor()
     if (! paintSolidRegion(currentpix, &cursor_pos))
 	return 0;
     while (popPoint(&pivot, &regionsp)) {
-	size_t i;
-	size_t length = sizeof(xoff1)/sizeof(int);
+	int i;
+	int length = sizeof(xoff1)/sizeof(int);
 	for (i = 0; i < length; i++) {
 	    Point neighbor;
 	    neighbor.p_x = pivot.p_x + xoff1[i];
@@ -676,8 +676,8 @@ f_ChngRegionColor()
 HIDDEN int
 f_FillRegion()
 {
-    static off_t xoff1[] = { 0, 1,  0, -1 };
-    static off_t yoff1[] = { 1, 0, -1,  0 };
+    static int xoff1[] = { 0, 1,  0, -1 };
+    static int yoff1[] = { 1, 0, -1,  0 };
     static char buffer[CLR_LEN];
     RGBpixel borderpix = {0, 0, 0};
     Point pivot;
@@ -689,8 +689,8 @@ f_FillRegion()
     if (!paintNonBorder(borderpix, &cursor_pos))
 	return 0;
     while (popPoint(&pivot, &regionsp)) {
-	size_t i;
-	size_t length = sizeof(xoff1)/sizeof(int);
+	int i;
+	int length = sizeof(xoff1)/sizeof(int);
 	for (i = 0; i < length; i++) {
 	    Point neighbor;
 	    neighbor.p_x = pivot.p_x + xoff1[i];
@@ -893,11 +893,11 @@ f_Inc_Brush_Size() /* Increment brush size. */
 HIDDEN int
 f_Menu() /* Print menu. */
 {
-    size_t lines = (PROMPT_LINE-BOTTOM_STATUS_AREA)-1;
+    int lines = (PROMPT_LINE-BOTTOM_STATUS_AREA)-1;
     int done = false;
     int key;
     for (key = NUL; key <= DEL && ! done;) {
-	size_t j;
+	int j;
 	for (j = 0; key <= DEL && j < lines; key++) {
 	    if (bindings[key]->f_func != f_Nop) {
 		prnt_Scroll(	" '%s'\t%s",
@@ -955,7 +955,7 @@ f_Dec_Step_Size() /* Decrement gain on move operations. */
 HIDDEN int
 f_Inc_Step_Size() /* Increment gain on move operations. */
 {
-    if (gain < (int)size_viewport)
+    if (gain < size_viewport)
 	gain++;
     return 1;
 }
@@ -1120,7 +1120,7 @@ HIDDEN int
 f_Crunch_Image() /* Average image to half its size. */
 {
     char answer[2];
-    size_t x, y;
+    int x, y;
     RGBpixel *p1, *p2;
     if (!get_Input(answer, 2, "Crunch image [n=no] ? "))
 	return 0;
@@ -1166,7 +1166,7 @@ f_DrawLine()
     int xsign;
     int ysign;
     int error;
-    size_t x;
+    int x;
     int de;
     int xmajor;
 
@@ -1206,9 +1206,9 @@ f_DrawLine()
 
     error = majdelta / 2 - mindelta; /* Initial DDA error. */
     de = majdelta - mindelta;
-    for (x = lineseg.r_origin.p_x+1; x < lineseg.r_corner.p_x;) {
+    for (x = lineseg.r_origin.p_x; x <= lineseg.r_corner.p_x;) {
 	(void)fb_write(fbp,
-		       x-1, lineseg.r_origin.p_y,
+		       x, lineseg.r_origin.p_y,
 		       (unsigned char *) paint,
 		       1);
 	if (majdelta-- == 0) /* Done! */
@@ -1741,7 +1741,7 @@ f_Rd_Fb() /* Read frame buffer image from file. */
     (void)fb_cursor(fbp, 0, 0, 0);	/* off */
     reposition_cursor = true;
     {
-	size_t y;
+	int y;
 	unsigned char *scanbuf;
 	if ((scanbuf = (unsigned char *)malloc((size_t)fb_getwidth(imp)*3)) == RGBPIXEL_NULL) {
 	    fb_log(	"malloc failure\n");
@@ -1779,7 +1779,7 @@ f_String() /* Place label on picture. */
 HIDDEN int
 f_Put_Pixel() /* Put pixel. */
 {
-    size_t rectwid = brush_sz / 2;
+    int rectwid = brush_sz / 2;
     /* If brush size is 2 or more, fill rectangle. */
     if (rectwid == 0) {
 	/* Avoid overhead if only writing one pixel. */
@@ -1810,12 +1810,8 @@ f_Set_X_Pos() /* Move cursor's X location (image space). */
 	int decrement;
 	if (sscanf(x_str+1, "%d", &decrement) == 1)
 	    cursor_pos.p_x -= decrement;
-    } else {			/* absolute move */
-	int pos;
-	(void)sscanf(x_str, "%d", &pos);
-	if (pos >= 0)
-	    cursor_pos.p_x = (size_t)pos;
-    }
+    } else			/* absolute move */
+	(void)sscanf(x_str, "%d", &cursor_pos.p_x);
     CLAMP(cursor_pos.p_x, 0, fb_getwidth(fbp));
     reposition_cursor = true;
     return 1;
@@ -1838,12 +1834,8 @@ f_Set_Y_Pos() /* Move cursor's Y location (image space). */
 	int decrement;
 	if (sscanf(y_str+1, "%d", &decrement) == 1)
 	    cursor_pos.p_y -= decrement;
-    } else {
-	int pos;
-	(void)sscanf(y_str, "%d", &pos);
-	if (pos >= 0)
-	    cursor_pos.p_y = pos;
-    }
+    } else
+	(void)sscanf(y_str, "%d", &cursor_pos.p_y);
     CLAMP(cursor_pos.p_y, 0, fb_getheight(fbp));
     reposition_cursor = true;
     return 1;
@@ -1912,7 +1904,7 @@ fb_Wind(void)
 
 
 HIDDEN void
-fb_Paint(size_t x_0, size_t y_0, size_t x_1, size_t y_1, RGBpixel (*color))
+fb_Paint(int x_0, int y_0, int x_1, int y_1, RGBpixel (*color))
 {
     Rect2D clipped_rect;
     clipped_rect.r_origin.p_x = x_0;
@@ -2049,10 +2041,10 @@ fb_Get_Pixel(unsigned char *pixel)
 RGBpixel *
 get_Fb_Panel(Rect2D *rectp)
 {
-    size_t top;
-    size_t rectwid;
-    size_t recthgt;
-    size_t btm, lft, rgt;
+    int top;
+    int rectwid;
+    int recthgt;
+    int btm, lft, rgt;
     RGBpixel *rgbpanel;
     unsigned	u;
     lft = rectp->r_origin.p_x;
@@ -2075,7 +2067,7 @@ get_Fb_Panel(Rect2D *rectp)
 		__FILE__, __LINE__,
 		u, rectwid, recthgt);
     } else {
-	size_t y = btm;
+	int y = btm;
 	RGBpixel *pixelp = rgbpanel;
 	for (; y <= top; y++, pixelp += rectwid) {
 	    if (fb_read(fbp, lft, y, (unsigned char *)pixelp, rectwid) == -1) {
@@ -2092,8 +2084,8 @@ get_Fb_Panel(Rect2D *rectp)
 HIDDEN void
 put_Fb_Panel(Rect2D *rectp, RGBpixel *rgbpanel)
 {
-    size_t top, rectwid, y;
-    size_t lft, rgt, btm;
+    int top, rectwid, y;
+    int lft, rgt, btm;
     rectwid = rectp->r_corner.p_x - rectp->r_origin.p_x + 1;
     clip_Rect2D(rectp);
     lft = rectp->r_origin.p_x;
@@ -2178,7 +2170,7 @@ get_Rect2D(char *name, Rect2D *rectp)
 HIDDEN void
 fix_Rect2D(Rect2D *rectp)
 {
-    size_t i;
+    int i;
     if (rectp->r_origin.p_x > rectp->r_corner.p_x) {
 	i = rectp->r_origin.p_x;
 	rectp->r_origin.p_x = rectp->r_corner.p_x;
@@ -2196,7 +2188,9 @@ fix_Rect2D(Rect2D *rectp)
 HIDDEN void
 clip_Rect2D(Rect2D *rectp)
 {
+    rectp->r_origin.p_x = rectp->r_origin.p_x < 0 ? 0 : rectp->r_origin.p_x;
     rectp->r_corner.p_x = rectp->r_corner.p_x >= fb_getwidth(fbp) ? fb_getwidth(fbp) - 1 : rectp->r_corner.p_x;
+    rectp->r_origin.p_y = rectp->r_origin.p_y < 0 ? 0 : rectp->r_origin.p_y;
     rectp->r_corner.p_y = rectp->r_corner.p_y >= fb_getheight(fbp) ? fb_getheight(fbp) - 1 : rectp->r_corner.p_y;
     return;
 }

@@ -43,20 +43,19 @@
   char.c - routines for displaying a string on a frame buffer.
 */
 extern void fudge_Pixel();
-extern void fill_buf(size_t wid, int *buf), clear_buf(size_t wid, int *buf);
-extern void squash(int *buf0, int *buf1, int *buf2, float *ret_buf, size_t n);
+extern void fill_buf(int wid, int *buf), clear_buf(int wid, int *buf);
+extern void squash(int *buf0, int *buf1, int *buf2, float *ret_buf, int n);
 
-HIDDEN void do_Char(int c, size_t xpos, size_t ypos, int odd);
-void menu_char(int x_adjust, size_t menu_wid, int odd, unsigned char *menu_border);
+HIDDEN void do_Char(int c, int xpos, int ypos, int odd);
+void menu_char(int x_adjust, int menu_wid, int odd, unsigned char *menu_border);
 
 void
-do_line(size_t xpos, size_t ypos, const char* line, RGBpixel (*menu_border))
+do_line(int xpos, int ypos, const char* line, RGBpixel (*menu_border))
     /* Menu outline color, if NULL, do filtering. */
 {
-    size_t    currx;
-    size_t    char_count;
-    int char_id;
-    size_t len = strlen(line);
+    int    currx;
+    int    char_count, char_id;
+    int len = strlen(line);
 #if DEBUG_STRINGS
     fb_log("do_line: xpos=%d ypos=%d line=\"%s\" menu_border=0x%x\n",
 	    xpos, ypos, line, (int) menu_border);
@@ -113,11 +112,11 @@ do_line(size_t xpos, size_t ypos, const char* line, RGBpixel (*menu_border))
 /* Shared by do_Char() and menu_char(). */
 static int filterbuf[FONTBUFSZ][FONTBUFSZ];
 HIDDEN void
-do_Char(int c, size_t xpos, size_t ypos, int odd)
+do_Char(int c, int xpos, int ypos, int odd)
 {
-    size_t i, j;
-    size_t base;
-    size_t totwid = font.width;
+    int i, j;
+    int base;
+    int totwid = font.width;
     int down;
     static float resbuf[FONTBUFSZ];
     static RGBpixel fbline[FONTBUFSZ];
@@ -131,7 +130,7 @@ do_Char(int c, size_t xpos, size_t ypos, int odd)
 	clear_buf (totwid, filterbuf[i]);
     for (i = font.height + 1; i >= 2; i--)
 	fill_buf (font.width, filterbuf[i]);
-    for (i = font.height + 2; i < (size_t)font.height + 4; i++)
+    for (i = font.height + 2; i < font.height + 4; i++)
 	clear_buf (totwid, filterbuf[i]);
 
     (void)SignedChar(font.dir[c].up);
@@ -176,22 +175,22 @@ do_Char(int c, size_t xpos, size_t ypos, int odd)
 
 
 void
-menu_char(int x_adjust, size_t menu_wid, int odd, unsigned char *menu_border)
+menu_char(int x_adjust, int menu_wid, int odd, unsigned char *menu_border)
 {
-    size_t i, j, k;
-    size_t embold = 1;
-    size_t base;
-    size_t totwid = font.width;
+    int i, j, k;
+    int embold = 1;
+    int base;
+    int totwid = font.width;
     /* Read in the character bit map, with two blank lines on each end. */
     for (i = 0; i < 2; i++)
 	clear_buf (totwid, filterbuf[i]);
     for (i = font.height + 1; i >= 2; i--)
 	fill_buf (font.width, filterbuf[i]);
-    for (i = font.height + 2; i < (size_t)font.height + 4; i++)
+    for (i = font.height + 2; i < font.height + 4; i++)
 	clear_buf (totwid, filterbuf[i]);
 
     for (k = 0; k < embold; k++)
-	for (i = 2; i < (size_t)font.height + 2; i++)
+	for (i = 2; i < font.height+2; i++)
 	    for (j= totwid + 1; j >= 2; j--)
 		filterbuf[i][j+1] |= filterbuf[i][j];
 
@@ -215,7 +214,7 @@ menu_char(int x_adjust, size_t menu_wid, int odd, unsigned char *menu_border)
 	Extract a bit field from a bit string.
 */
 int
-bitx(char *bitstring, size_t posn)
+bitx(char *bitstring, int posn)
 {
     for (; posn >= 8; posn -= 8, bitstring++)
 	;

@@ -82,7 +82,7 @@ fb_server_got_unknown(struct pkg_conn *pcp, char *buf)
 static void
 fb_server_fb_open(struct pkg_conn *pcp, char *buf)
 {
-    size_t height, width;
+    int height, width;
     char rbuf[5*NET_LONG_LEN+1];
     int want;
 
@@ -206,7 +206,7 @@ fb_server_fb_clear(struct pkg_conn *pcp, char *buf)
 static void
 fb_server_fb_read(struct pkg_conn *pcp, char *buf)
 {
-    size_t x, y;
+    int x, y;
     size_t num;
     int ret;
     static unsigned char *scanbuf = NULL;
@@ -249,7 +249,7 @@ fb_server_fb_read(struct pkg_conn *pcp, char *buf)
 static void
 fb_server_fb_write(struct pkg_conn *pcp, char *buf)
 {
-    size_t x, y, num;
+    int x, y, num;
     char rbuf[NET_LONG_LEN+1];
     int ret;
     int type;
@@ -274,8 +274,8 @@ fb_server_fb_write(struct pkg_conn *pcp, char *buf)
 static void
 fb_server_fb_readrect(struct pkg_conn *pcp, char *buf)
 {
-    size_t xmin, ymin;
-    size_t width, height;
+    int xmin, ymin;
+    int width, height;
     size_t num;
     int ret;
     static unsigned char *scanbuf = NULL;
@@ -319,8 +319,8 @@ fb_server_fb_readrect(struct pkg_conn *pcp, char *buf)
 static void
 fb_server_fb_writerect(struct pkg_conn *pcp, char *buf)
 {
-    size_t x, y;
-    size_t width, height;
+    int x, y;
+    int width, height;
     char rbuf[NET_LONG_LEN+1];
     int ret;
     int type;
@@ -348,8 +348,8 @@ fb_server_fb_writerect(struct pkg_conn *pcp, char *buf)
 static void
 fb_server_fb_bwreadrect(struct pkg_conn *pcp, char *buf)
 {
-    size_t xmin, ymin;
-    size_t width, height;
+    int xmin, ymin;
+    int width, height;
     size_t num;
     int ret;
     static unsigned char *scanbuf = NULL;
@@ -393,8 +393,8 @@ fb_server_fb_bwreadrect(struct pkg_conn *pcp, char *buf)
 static void
 fb_server_fb_bwwriterect(struct pkg_conn *pcp, char *buf)
 {
-    size_t x, y;
-    size_t width, height;
+    int x, y;
+    int width, height;
     char rbuf[NET_LONG_LEN+1];
     int ret;
     int type;
@@ -426,8 +426,7 @@ fb_server_fb_bwwriterect(struct pkg_conn *pcp, char *buf)
 static void
 fb_server_fb_cursor(struct pkg_conn *pcp, char *buf)
 {
-    int mode;
-    size_t x, y;
+    int mode, x, y;
     char rbuf[NET_LONG_LEN+1];
 
     if (buf == NULL) return;
@@ -447,8 +446,7 @@ static void
 fb_server_fb_getcursor(struct pkg_conn *pcp, char *buf)
 {
     int ret;
-    int mode;
-    size_t x, y;
+    int mode, x, y;
     char rbuf[4*NET_LONG_LEN+1];
 
     if (pcp == PKC_NULL) return;
@@ -468,8 +466,8 @@ fb_server_fb_setcursor(struct pkg_conn *pcp, char *buf)
 {
     char rbuf[NET_LONG_LEN+1];
     int ret;
-    size_t xbits, ybits;
-    size_t xorig, yorig;
+    int xbits, ybits;
+    int xorig, yorig;
 
     if (buf == NULL) return;
     if (pcp == PKC_NULL) return;
@@ -496,8 +494,7 @@ fb_server_fb_setcursor(struct pkg_conn *pcp, char *buf)
 static void
 fb_server_fb_scursor(struct pkg_conn *pcp, char *buf)
 {
-    int mode;
-    size_t x, y;
+    int mode, x, y;
     char rbuf[NET_LONG_LEN+1];
 
     if (buf == NULL) return;
@@ -519,7 +516,7 @@ fb_server_fb_scursor(struct pkg_conn *pcp, char *buf)
 static void
 fb_server_fb_window(struct pkg_conn *pcp, char *buf)
 {
-    size_t x, y;
+    int x, y;
     char rbuf[NET_LONG_LEN+1];
 
     if (buf == NULL) return;
@@ -540,7 +537,7 @@ fb_server_fb_window(struct pkg_conn *pcp, char *buf)
 static void
 fb_server_fb_zoom(struct pkg_conn *pcp, char *buf)
 {
-    size_t x, y;
+    int x, y;
     char rbuf[NET_LONG_LEN+1];
 
     if (buf == NULL) return;
@@ -559,7 +556,7 @@ static void
 fb_server_fb_view(struct pkg_conn *pcp, char *buf)
 {
     int ret;
-    size_t xcenter, ycenter, xzoom, yzoom;
+    int xcenter, ycenter, xzoom, yzoom;
     char rbuf[NET_LONG_LEN+1];
 
     if (buf == NULL) return;
@@ -581,7 +578,7 @@ static void
 fb_server_fb_getview(struct pkg_conn *pcp, char *buf)
 {
     int ret;
-    size_t xcenter, ycenter, xzoom, yzoom;
+    int xcenter, ycenter, xzoom, yzoom;
     char rbuf[5*NET_LONG_LEN+1];
 
     if (pcp == PKC_NULL) return;

@@ -44,8 +44,8 @@
 
 typedef struct
 {
-    size_t p_x;
-    size_t p_y;
+    int p_x;
+    int p_y;
 }
 Point;
 
@@ -59,8 +59,8 @@ Rect2D;
 typedef struct
 {
     RGBpixel *n_buf;
-    size_t n_wid;
-    size_t n_hgt;
+    int n_wid;
+    int n_hgt;
 }
 Panel;
 
@@ -74,7 +74,7 @@ extern Point windo_anchor;
 extern Try *try_rootp;
 extern char cread_buf[MACROBUFSZ], *cptr;
 extern char macro_buf[MACROBUFSZ], *macro_ptr;
-extern size_t brush_sz;
+extern int brush_sz;
 extern int gain;
 extern int pad_flag;
 extern int remembering;
@@ -91,7 +91,7 @@ extern Func_Tab	*get_Func_Name(char* inbuf, size_t bufsz, const char* msg);
 extern RGBpixel *get_Fb_Panel(Rect2D *rectp);
 extern char *char_To_String(int i);
 extern int add_Try(Func_Tab* ftbl, const char* name, Try** trypp);
-extern int bitx(char *bitstring, size_t posn);
+extern int bitx(char *bitstring, int posn);
 extern int getpos(Point *pos);
 extern int get_Input(char* inbuf, size_t bufsz, const char* msg);
 extern void fb_Get_Pixel(unsigned char *pixel);
@@ -103,13 +103,13 @@ extern void prnt_Scroll( const char * fmt, ... );
 extern void prnt_Debug( const char *fmt, ... );
 extern void prnt_Event( const char *fmt, ... );
 extern void prnt_Rect2D(const char *str, Rect2D *rectp);
-extern void do_Key_Cmd(int key, size_t n);
+extern void do_Key_Cmd(int key, int n);
 extern void prnt_Prompt(const char *msg);
 extern int empty(int fd);
 extern int get_Char(void);
 extern int get_Mouse_Pos(Point *pointp);
 extern int exec_Shell(char **args);
-extern void do_line(size_t xpos, size_t ypos, const char *line, RGBpixel (*menu_border));
+extern void do_line(int xpos, int ypos, const char *line, RGBpixel (*menu_border));
 extern int pad_open(int n);
 extern void pad_close(void);
 

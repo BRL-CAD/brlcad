@@ -47,7 +47,7 @@
 
 
 /* defined in libfb/tcl.c */
-extern int fb_refresh(fb *ifp, size_t x, size_t y, size_t w, size_t h);
+extern int fb_refresh(fb *ifp, int x, int y, int w, int h);
 
 
 #define FBO_CONSTRAIN(_v, _a, _b)		\
@@ -65,15 +65,25 @@ static struct fb_obj HeadFBObj;			/* head of display manager object list */
 
 
 HIDDEN int
-fbo_coords_ok(fb *fbp, size_t x, size_t y)
+fbo_coords_ok(fb *fbp, int x, int y)
 {
-    size_t width;
-    size_t height;
-    size_t errors;
+    int width;
+    int height;
+    int errors;
     width = fb_getwidth(fbp);
     height = fb_getheight(fbp);
 
     errors = 0;
+
+    if (x < 0) {
+	bu_log("fbo_coords_ok: Error!: X value < 0\n");
+	++errors;
+    }
+
+    if (y < 0) {
+	bu_log("fbo_coords_ok: Error!: Y value < 0\n");
+	++errors;
+    }
 
     if (x > width - 1) {
 	bu_log("fbo_coords_ok: Error!: X value too large\n");
@@ -247,7 +257,7 @@ fbo_getcursor_tcl(void *clientData, int argc, const char **argv)
     struct fb_obj *fbop = (struct fb_obj *)clientData;
     int status;
     int mode;
-    size_t x, y;
+    int x, y;
     struct bu_vls vls = BU_VLS_INIT_ZERO;
 
     if (argc != 2
@@ -259,7 +269,7 @@ fbo_getcursor_tcl(void *clientData, int argc, const char **argv)
 
     status = fb_getcursor(fbop->fbo_fbs.fbs_fbp, &mode, &x, &y);
     if (status == 0) {
-	bu_vls_printf(&vls, "%d %lu %lu", mode, (unsigned long)x, (unsigned long)y);
+	bu_vls_printf(&vls, "%d %d %d", mode, x, y);
 	Tcl_AppendResult(fbop->fbo_interp, bu_vls_addr(&vls), (char *)NULL);
 	bu_vls_free(&vls);
 

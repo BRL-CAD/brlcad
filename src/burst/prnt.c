@@ -708,13 +708,13 @@ prntFiringCoords(fastf_t *vec)
 
 
 void
-prntGridOffsets(size_t x, size_t y)
+prntGridOffsets(int x, int y)
 {
     if (! tty)
 	return;
     (void) ScMvCursor(GRID_X, GRID_Y);
-    (void) printf("[%4lu:%4lu, %4lu:%4lu]",
-		  (unsigned long)x, (unsigned long)gridxfin, (unsigned long)y, (unsigned long)gridyfin
+    (void) printf("[% 4d:% 4d, % 4d:% 4d]",
+		  x, gridxfin, y, gridyfin
 	);
     (void) fflush(stdout);
     return;
