@@ -8,14 +8,14 @@ are permitted provided that the following conditions are met:
 Redistributions of source code must retain the above copyright notice, this list of
 conditions and the following disclaimer. Redistributions in binary form must reproduce
 the above copyright notice, this list of conditions and the following disclaimer
-in the documentation and/or other materials provided with the distribution. 
+in the documentation and/or other materials provided with the distribution.
 
 Neither the name of the Johns Hopkins University nor the names of its contributors
 may be used to endorse or promote products derived from this software without specific
-prior written permission. 
+prior written permission.
 
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY
-EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO THE IMPLIED WARRANTIES 
+EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO THE IMPLIED WARRANTIES
 OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT
 SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED
@@ -395,7 +395,7 @@ void SparseSymmetricMatrix<T>::Multiply( const Vector<T2>& In , Vector<T2>& Out 
 	{
 		T2 dcTerm = 0;
 #pragma omp parallel for num_threads( threads ) reduction ( + : dcTerm )
-		for( int t=0 ; t<threads ; t++ ) 
+		for( int t=0 ; t<threads ; t++ )
 		{
 			T2* out = OutScratch[t];
 			memset( out , 0 , sizeof( T2 ) * dim );
@@ -429,7 +429,7 @@ void SparseSymmetricMatrix<T>::Multiply( const Vector<T2>& In , Vector<T2>& Out 
 	else
 	{
 #pragma omp parallel for num_threads( threads )
-		for( int t=0 ; t<threads ; t++ ) 
+		for( int t=0 ; t<threads ; t++ )
 		{
 			T2* out = OutScratch[t];
 			memset( out , 0 , sizeof( T2 ) * dim );
@@ -471,7 +471,7 @@ void SparseSymmetricMatrix<T>::Multiply( const Vector<T2>& In , Vector<T2>& Out 
 	for( int t=0 ; t<threads ; t++ )
 		for( int i=0 ; i<dim ; i++ ) OutScratch[t][i] = T2(0);
 #pragma omp parallel for num_threads( threads )
-	for( int t=0 ; t<threads ; t++ ) 
+	for( int t=0 ; t<threads ; t++ )
 	{
 		T2* out = OutScratch[t];
 		for( int i=bounds[t] ; i<bounds[t+1] ; i++ )
@@ -1095,7 +1095,7 @@ SetOMPParallel                                                              \
 		}                                                                   \
 	}
 #endif // ZERO_TESTING_JACOBI
-	
+
 	if( forward ) for( int j=0 ; j<mcIndices.size()  ; j++ ){ sum += int( mcIndices[j].size() ) ; ITERATE( mcIndices[j] ); }
 	else for( int j=int( mcIndices.size() )-1 ; j>=0 ; j-- ){ sum += int( mcIndices[j].size() ) ; ITERATE( mcIndices[j] ); }
 #undef ITERATE
@@ -1151,7 +1151,7 @@ int SparseMatrix<T>::SolveGS( const std::vector< std::vector< int > >& mcIndices
 					T2 _b = b[jj+offset];
 					for( e=start ; e!=end ; e++ ) _b -= x[ e->N ] * e->Value;
 					x[jj+offset] = _b / diagonal;
-				}                                   
+				}
 			}
 		}
 	}

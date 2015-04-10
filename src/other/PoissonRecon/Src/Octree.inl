@@ -8,14 +8,14 @@ are permitted provided that the following conditions are met:
 Redistributions of source code must retain the above copyright notice, this list of
 conditions and the following disclaimer. Redistributions in binary form must reproduce
 the above copyright notice, this list of conditions and the following disclaimer
-in the documentation and/or other materials provided with the distribution. 
+in the documentation and/or other materials provided with the distribution.
 
 Neither the name of the Johns Hopkins University nor the names of its contributors
 may be used to endorse or promote products derived from this software without specific
-prior written permission. 
+prior written permission.
 
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY
-EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO THE IMPLIED WARRANTIES 
+EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO THE IMPLIED WARRANTIES
 OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT
 SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED
@@ -1242,7 +1242,7 @@ bool OctNode< NodeData >::NeighborKey3::getChildNeighbors( Point3D< Real > p , i
 	i=x1<<1;
 	if( neighbors[d].neighbors[i][1][1] && neighbors[d].neighbors[i][1][1]->children )
 		for( j=0 ; j<2 ; j++ ) for( k=0 ; k<2 ; k++ ) childNeighbors.neighbors[i][y2+j][z2+k] = &neighbors[d].neighbors[i][1][1]->children[Cube::CornerIndex(x2,j,k)];
-	else 
+	else
 		for( j=0 ; j<2 ; j++ ) for( k=0 ; k<2 ; k++ ) childNeighbors.neighbors[i][y2+j][z2+k] = NULL;
 	j=y1<<1;
 	if( neighbors[d].neighbors[1][j][1] && neighbors[d].neighbors[1][j][1]->children )
@@ -2338,7 +2338,7 @@ int OctNode< NodeData >::read(FILE* fp){
 template< class NodeData >
 int OctNode< NodeData >::width(int maxDepth) const {
 	int d=depth();
-	return 1<<(maxDepth-d); 
+	return 1<<(maxDepth-d);
 }
 template< class NodeData >
 void OctNode< NodeData >::centerIndex(int maxDepth,int index[DIMENSION]) const

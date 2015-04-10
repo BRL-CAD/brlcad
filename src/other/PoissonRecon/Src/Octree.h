@@ -8,14 +8,14 @@ are permitted provided that the following conditions are met:
 Redistributions of source code must retain the above copyright notice, this list of
 conditions and the following disclaimer. Redistributions in binary form must reproduce
 the above copyright notice, this list of conditions and the following disclaimer
-in the documentation and/or other materials provided with the distribution. 
+in the documentation and/or other materials provided with the distribution.
 
 Neither the name of the Johns Hopkins University nor the names of its contributors
 may be used to endorse or promote products derived from this software without specific
-prior written permission. 
+prior written permission.
 
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY
-EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO THE IMPLIED WARRANTIES 
+EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO THE IMPLIED WARRANTIES
 OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT
 SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED
@@ -92,7 +92,7 @@ public:
 	~OctNode(void);
 	int initChildren( void );
 
-	void depthAndOffset( int& depth , int offset[DIMENSION] ) const; 
+	void depthAndOffset( int& depth , int offset[DIMENSION] ) const;
 	void centerIndex( int index[DIMENSION] ) const;
 	int depth( void ) const;
 	static inline void DepthAndOffset( const long long& index , int& depth , int offset[DIMENSION] );
@@ -134,7 +134,7 @@ public:
 	void processNodeCorners(OctNode* node,NodeAdjacencyFunction* F,int cIndex,int processCurrent=1);
 	template<class NodeAdjacencyFunction>
 	void processNodeNodes(OctNode* node,NodeAdjacencyFunction* F,int processCurrent=1);
-	
+
 	template<class NodeAdjacencyFunction>
 	static void ProcessNodeAdjacentNodes(int maxDepth,OctNode* node1,int width1,OctNode* node2,int width2,NodeAdjacencyFunction* F,int processCurrent=1);
 	template<class NodeAdjacencyFunction>
@@ -256,7 +256,7 @@ public:
 
 		void set( int depth );
 		template< class Real > Neighbors3& setNeighbors( OctNode* root , Point3D< Real > p , int d );
-		template< class Real > Neighbors3& getNeighbors( OctNode* root , Point3D< Real > p , int d );		
+		template< class Real > Neighbors3& getNeighbors( OctNode* root , Point3D< Real > p , int d );
 		Neighbors3& setNeighbors( OctNode* node , bool flags[3][3][3] );
 		Neighbors3& setNeighbors( OctNode* node );
 		Neighbors3& getNeighbors( OctNode* node );

@@ -8,14 +8,14 @@ are permitted provided that the following conditions are met:
 Redistributions of source code must retain the above copyright notice, this list of
 conditions and the following disclaimer. Redistributions in binary form must reproduce
 the above copyright notice, this list of conditions and the following disclaimer
-in the documentation and/or other materials provided with the distribution. 
+in the documentation and/or other materials provided with the distribution.
 
 Neither the name of the Johns Hopkins University nor the names of its contributors
 may be used to endorse or promote products derived from this software without specific
-prior written permission. 
+prior written permission.
 
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY
-EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO THE IMPLIED WARRANTIES 
+EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO THE IMPLIED WARRANTIES
 OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT
 SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED
@@ -397,7 +397,7 @@ bool Octree< Real >::_InBounds( Point3D< Real > p ) const
 }
 template< class Real >
 template< class PointReal >
-int Octree< Real >::SetTree( PointStream< PointReal >* pointStream , int minDepth , int maxDepth , int fullDepth , 
+int Octree< Real >::SetTree( PointStream< PointReal >* pointStream , int minDepth , int maxDepth , int fullDepth ,
 							int splatDepth , Real samplesPerNode , Real scaleFactor ,
 							bool useConfidence , bool useNormalWeights , Real constraintWeight , int adaptiveExponent ,
 							PointInfo& pointInfo , NormalInfo& normalInfo , std::vector< Real >& kernelDensityWeights , std::vector< Real >& centerWeights ,
@@ -743,7 +743,7 @@ double Octree< Real >::GetDivergence1( const typename BSplineData< 2 >::Integrat
 {
 	return Point3D< double >::Dot( GetDivergence1( integrator , d , off1 , off2 , childParent ) , normal1 );
 }
-template< class Real > 
+template< class Real >
 double Octree< Real >::GetDivergence2( const typename BSplineData< 2 >::Integrator& integrator , int d , const int off1[] , const int off2[] , bool childParent , const Point3D< Real >& normal2 ) const
 {
 	return Point3D< double >::Dot( GetDivergence2( integrator , d , off1 , off2 , childParent ) , normal2 );
@@ -759,7 +759,7 @@ Point3D< double > Octree< Real >::GetDivergence1( const typename BSplineData< 2 
 	};
 #if GRADIENT_DOMAIN_SOLUTION
 	// Take the dot-product of the vector-field with the gradient of the basis function
-	double vd[] = 
+	double vd[] =
 	{
 		integrator.dot( d , off1[0] , off2[0] , false , true , childParent ) ,
 		integrator.dot( d , off1[1] , off2[1] , false , true , childParent ) ,
@@ -768,7 +768,7 @@ Point3D< double > Octree< Real >::GetDivergence1( const typename BSplineData< 2 
 	return  Point3D< double >( vd[0]*vv[1]*vv[2] , vv[0]*vd[1]*vv[2] , vv[0]*vv[1]*vd[2] );
 #else // !GRADIENT_DOMAIN_SOLUTION
 	// Take the dot-product of the divergence of the vector-field with the basis function
-	double dv[] = 
+	double dv[] =
 	{
 		integrator.dot( d , off1[0] , off2[0] , true , false , childParent ) ,
 		integrator.dot( d , off1[1] , off2[1] , true , false , childParent ) ,
@@ -777,7 +777,7 @@ Point3D< double > Octree< Real >::GetDivergence1( const typename BSplineData< 2 
 	return  -Point3D< double >( dv[0]*vv[1]*vv[2] , vv[0]*dv[1]*vv[2] , vv[0]*vv[1]*dv[2] );
 #endif // GRADIENT_DOMAIN_SOLUTION
 }
-template< class Real > 
+template< class Real >
 Point3D< double > Octree< Real >::GetDivergence2( const typename BSplineData< 2 >::Integrator& integrator , int d , const int off1[] , const int off2[] , bool childParent ) const
 {
 	double vv[] =
@@ -788,7 +788,7 @@ Point3D< double > Octree< Real >::GetDivergence2( const typename BSplineData< 2 
 	};
 #if GRADIENT_DOMAIN_SOLUTION
 	// Take the dot-product of the vector-field with the gradient of the basis function
-	double dv[] = 
+	double dv[] =
 	{
 		integrator.dot( d , off1[0] , off2[0] , true , false , childParent ) ,
 		integrator.dot( d , off1[1] , off2[1] , true , false , childParent ) ,
@@ -797,7 +797,7 @@ Point3D< double > Octree< Real >::GetDivergence2( const typename BSplineData< 2 
 	return  Point3D< double >( dv[0]*vv[1]*vv[2] , vv[0]*dv[1]*vv[2] , vv[0]*vv[1]*dv[2] );
 #else // !GRADIENT_DOMAIN_SOLUTION
 	// Take the dot-product of the divergence of the vector-field with the basis function
-	double vd[] = 
+	double vd[] =
 	{
 		integrator.dot( d , off1[0] , off2[0] , false , true , childParent ) ,
 		integrator.dot( d , off1[1] , off2[1] , false , true , childParent ) ,
@@ -1282,10 +1282,10 @@ void Octree< Real >::UpdateConstraintsFromCoarser( const PointInfo& pointInfo , 
 				const _PointData& pData = points[ pointInfo.pointIndex( neighbors5.neighbors[x][y][z] ) ];
 				Real weightedPointValue = pData.weightedCoarserValue;
 				Point3D< Real > p = pData.position;
-				constraint += 
+				constraint +=
 					_fData.baseBSplines[idx[0]][x-1]( p[0] ) *
 					_fData.baseBSplines[idx[1]][y-1]( p[1] ) *
-					_fData.baseBSplines[idx[2]][z-1]( p[2] ) * 
+					_fData.baseBSplines[idx[2]][z-1]( p[2] ) *
 					weightedPointValue;
 			}
 		constraints[ node->nodeData.nodeIndex ] -= Real( constraint );
@@ -1515,7 +1515,7 @@ void Octree< Real >::SetPointConstraintsFromFiner( const PointInfo& pointInfo , 
 							Real(
 							_fData.baseBSplines[idx[0]+x][2-x]( p[0] ) *
 							_fData.baseBSplines[idx[1]+y][2-y]( p[1] ) *
-							_fData.baseBSplines[idx[2]+z][2-z]( p[2] ) * 
+							_fData.baseBSplines[idx[2]+z][2-z]( p[2] ) *
 							finerPointValue
 							);
 					}
@@ -1555,7 +1555,7 @@ Real Octree< Real >::_WeightedFinerFunctionValue( const _PointData& pointData , 
 	{
 		const TreeOctNode* basisNode = childNeighbors.neighbors[j][k][l];
 		if( basisNode && basisNode->nodeData.nodeIndex>=0 )
-			pointValue += 
+			pointValue +=
 			_fData.baseBSplines[ idx[0]+j ][2-j]( p[0] ) *
 			_fData.baseBSplines[ idx[1]+k ][2-k]( p[1] ) *
 			_fData.baseBSplines[ idx[2]+l ][2-l]( p[2] ) *
@@ -1999,7 +1999,7 @@ Pointer( Real ) Octree< Real >::SetLaplacianConstraints( const NormalInfo& norma
 	// splatted normals and compute the dot-product of the
 	// divergence of the normal field with all the basis functions.
 	// Within the same depth: set directly as a gather
-	// Coarser depths 
+	// Coarser depths
 	typename BSplineData< 2 >::Integrator integrator;
 	_fData.setIntegrator( integrator , _boundaryType==0 );
 	int maxDepth = _sNodes.maxDepth-1;
@@ -2532,7 +2532,7 @@ Pointer( Real ) Octree< Real >::Evaluate( ConstPointer( Real ) coefficients , in
 			if( !(  end[i]&1) )   end[i]--;
 			if( _boundaryType==0 )
 			{
-				// (start[i]-1)>>1 >=   res/2 
+				// (start[i]-1)>>1 >=   res/2
 				// (  end[i]-1)<<1 <  3*res/2
 				start[i] = std::max< int >( start[i] ,   res+1 );
 				end  [i] = std::min< int >( end  [i] , 3*res-1 );

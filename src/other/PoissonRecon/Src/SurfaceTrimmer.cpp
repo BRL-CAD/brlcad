@@ -8,14 +8,14 @@ are permitted provided that the following conditions are met:
 Redistributions of source code must retain the above copyright notice, this list of
 conditions and the following disclaimer. Redistributions in binary form must reproduce
 the above copyright notice, this list of conditions and the following disclaimer
-in the documentation and/or other materials provided with the distribution. 
+in the documentation and/or other materials provided with the distribution.
 
 Neither the name of the Johns Hopkins University nor the names of its contributors
 may be used to endorse or promote products derived from this software without specific
-prior written permission. 
+prior written permission.
 
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY
-EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO THE IMPLIED WARRANTIES 
+EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO THE IMPLIED WARRANTIES
 OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT
 SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED
@@ -26,6 +26,7 @@ ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF S
 DAMAGE.
 */
 
+#include "common.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <float.h>
@@ -131,7 +132,7 @@ template< class Real >
 void SplitPolygon
 	(
 	const std::vector< int >& polygon ,
-	std::vector< PlyValueVertex< Real > >& vertices , 
+	std::vector< PlyValueVertex< Real > >& vertices ,
 	std::vector< std::vector< int > >* ltPolygons , std::vector< std::vector< int > >* gtPolygons ,
 	std::vector< bool >* ltFlags , std::vector< bool >* gtFlags ,
 	hash_map< long long , int >& vertexTable ,
@@ -335,7 +336,7 @@ int main( int argc , char* argv[] )
 	else           for( int i=0 ; i<Smooth.value ; i++ ) SmoothValues( vertices , polygons );
 #else
 	for( int i=0 ; i<Smooth.value ; i++ ) SmoothValues( vertices , polygons );
-#endif 
+#endif
 	min = max = vertices[0].value;
 	for( size_t i=0 ; i<vertices.size() ; i++ ) min = std::min< float >( min , vertices[i].value ) , max = std::max< float >( max , vertices[i].value );
 	printf( "Value Range: [%f,%f]\n" , min , max );
