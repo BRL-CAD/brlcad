@@ -687,7 +687,7 @@ SetTargetFolder(openNURBS "Third Party Libraries")
 SetTargetFolder(openNURBS-static "Third Party Libraries")
 
 # Screened Poisson Reconstruction Library
-set(poissonrecon_ALIASES ENABLE_OPENNURBS)
+set(poissonrecon_ALIASES ENABLE_SPR)
 set(poissonrecon_DESCRIPTION "
 Option for enabling and disabling compilation of the PoissonRecon library
 provided with BRL-CAD's source code.  Default is AUTO, responsive to
