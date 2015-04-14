@@ -286,7 +286,7 @@ icv_create(size_t width, size_t height, ICV_COLOR_SPACE color_space)
     bif->magic = ICV_IMAGE_MAGIC;
     switch (color_space) {
 	case ICV_COLOR_SPACE_RGB :
-	    /* Add all the other three channel images here (eg. HSV, YCbCr etc.) */
+	    /* Add all the other three channel images here (e.g. HSV, YCbCr, etc.) */
 	    bif->data = (double *) bu_malloc(bif->height*bif->width*3*sizeof(double), "Image Data");
 	    bif->channels = 3;
 	    break;
