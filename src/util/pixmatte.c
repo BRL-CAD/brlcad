@@ -74,12 +74,12 @@ static long false_cnt = 0;
 
 
 static const char usage_msg[] = "\
-Usage: pixmatte [-w bytes_wide] {-g -l -e -n -a}\n\
+Usage: pixmatte [-w width_in_bytes] {-g -l -e -n -a}\n\
 	in1 in2 true_out false_out > output\n\
 \n\
 where each of the 4 streams is either a file name, a constant of the\n\
 form =r/g/b with each byte specified in decimal, or '-' for stdin.\n\
-The default width is 3 bytes, suitable for processing .pix files.\n\
+The default width_in_bytes is 3 bytes, suitable for processing .pix files.\n\
 ";
 
 
