@@ -93,7 +93,7 @@ file format.  A width of 1 is used for processing
 files.  It is unclear if other widths are useful.</para>
 
 <para>A constant value is specified instead of a filename
-if the first character of the file name is a equal sign '='.
+if the first character of what would be the filename is an equal sign (=).
 The value is specified as a slash separated string of
 <emphasis remap='B'>width</emphasis>
 decimal numbers, with no separating white space.</para>
@@ -113,10 +113,10 @@ all those less than or equal to it with 200/0/200, use:</para>
 
 <para>To keep all foreground pixels which are not equal to 63/0/127,
 and to replace those which are equal with a generated background from
-stdin, use the following commands.
-This can be useful when compositing an
+stdin, use the following commands
+(can be useful when compositing an
 <citerefentry><refentrytitle>rt</refentrytitle><manvolnum>1</manvolnum></citerefentry>
-generated image on top of a nicer background.</para>
+generated image on top of a nicer background):</para>
 
 <para>      pixbackgnd -t0 160 200 |
 <!-- .br -->
