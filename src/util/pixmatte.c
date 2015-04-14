@@ -170,10 +170,9 @@ get_args(int argc, char **argv)
 		break;
 	    case 'w':
 		c = atoi(bu_optarg);
-		if (c >= 1 && c < EL_WIDTH)
-		    width = c;
-		else
+		if (c < 1 || c >= EL_WIDTH)
 		    usage("Illegal width specified\n", 1);
+		width = c;
 		break;
 	    default:		/* '?' 'h' */
 		usage("", 1);
