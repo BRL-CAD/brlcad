@@ -63,9 +63,14 @@ is independent of the resolution of the image.</para>
 (in1 equal to in2),
 <option>-n</option>
 (in1 not equal to in2).
-For example,
+For example:
 <option>-ge</option>
-specifies in1 greater than or equal to in2.</para>
+specifies in1 greater than or equal to in2;
+<option>-le</option>
+is true when in1 is lexically less than or equal to in2,
+that is, when all bytes of the in1 element are less than
+or equal to the bytes of the in2 element.
+</para>
 
 <para>The
 <option>-a</option>
@@ -78,11 +83,7 @@ to match dithered backgrounds.
 Approximate equality exists when all bytes in the elements
 match to within plus or minus one.</para>
 
-<para>For example,
-<option>-le</option>
-is true when in1 is lexically less than or equal to in2,
-that is, when all bytes of the in1 element are less than
-or equal to the bytes of the in2 element.
+<para>
 The
 <option>-w#</option>
 flag specifies the width (in bytes) of each element;  the default is
