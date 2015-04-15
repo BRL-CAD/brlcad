@@ -67,7 +67,7 @@ static char *obuf;		/* output buffer */
 #define GT 4
 #define NE 8
 #define APPROX 16
-static int wanted;		/* LT|EQ|GT conditions */
+static int wanted = 0;		/* LT|EQ|GT conditions */
 
 static long true_cnt = 0;
 static long false_cnt = 0;
