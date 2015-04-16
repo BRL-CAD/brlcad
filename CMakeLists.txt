@@ -1112,6 +1112,16 @@ if(BRLCAD_ENABLE_OPENCL)
   endif(NOT OPENCL_FOUND)
 endif(BRLCAD_ENABLE_OPENCL)
 
+# Enable features requiring Embree
+option(BRLCAD_ENABLE_EMBREE "Enable features requiring Embree raytracer" ON)
+if(BRLCAD_ENABLE_EMBREE)
+  find_package(EMBREE)
+  if(NOT EMBREE_FOUND)
+    message("Embree support enablement requested, but Embree is not found - disabling")
+    set(BRLCAD_ENABLE_EMBREE OFF)
+  endif(NOT EMBREE_FOUND)
+endif(BRLCAD_ENABLE_EMBREE)
+
 #----------------------------------------------------------------------
 # The following are fine-grained options for enabling/disabling compiler
 # and source code definition settings.  Typically these are set to
