@@ -42,7 +42,7 @@ images,
 outputs a stream of the same number of data elements.
 The value of the output stream is determined element-by-element,
 by comparing the
-first (foreground) input stream with the
+first (foreground) input stream with
 the second (background, or matte) input stream.
 If the formula holds true, the element from the
 true-output stream is written,
