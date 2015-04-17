@@ -148,6 +148,12 @@ while(${current_level} LESS ${HIGHEST_TARGET_LEVEL})
   endforeach(subdir ${level_${current_level}_dirs})
 endwhile(${current_level} LESS ${HIGHEST_TARGET_LEVEL})
 
+if("${HIGHEST_TARGET_LEVEL}" GREATER 2 AND BRLCAD_ENABLE_EMBREE)
+  verbose_add_subdirectory(src ert)
+else("${HIGHEST_TARGET_LEVEL}" GREATER 2 AND BRLCAD_ENABLE_EMBREE)
+  CMAKEFILES(ert)
+endif("${HIGHEST_TARGET_LEVEL}" GREATER 2 AND BRLCAD_ENABLE_EMBREE)
+
 # This corresponds roughly to the libbrlcad definition in
 # the autotools build.  It needs CMake 2.8.8 plus changes
 # to the BRLCAD_ADDLIB macro to define OBJECT add_library
