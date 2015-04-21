@@ -380,9 +380,8 @@ To visualize the exact position taken by the aim point
 in the example (output channels 3, 4, 5), a UNIX-plot file
 of that trajectory can be created with:</para>
 
-<para>   cut -f5,6,7 table.final | xyz-plot3 &gt; aim.plot3
-<!-- .br -->
-   cut -f1,5,6,7 table.final | txyz-plot3 &gt; aim.plot3</para>
+<para>   cut -f5,6,7 table.final | xyz-plot3 &gt; aim.plot3</para>
+<para>   cut -f1,5,6,7 table.final | xyz-plot3 &gt; aim.plot3</para>
 
 <para>Similarly, the position of the main object can be viewed with</para>
 
@@ -433,7 +432,7 @@ few gems of data buried in the heaps of "printout".</para>
 </refsect1>
 
 <refsect1 xml:id='see_also'><title>SEE ALSO</title>
-<para><citerefentry><refentrytitle>tabsub</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>xyz-plot3</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>txyz-plot3</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>cut</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>paste</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>rt</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>mged</refentrytitle><manvolnum>1</manvolnum></citerefentry></para>
+<para><citerefentry><refentrytitle>tabsub</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>xyz-plot3</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>cut</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>paste</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>rt</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>mged</refentrytitle><manvolnum>1</manvolnum></citerefentry></para>
 </refsect1>
 
 <refsect1 xml:id='bugs'><title>BUGS</title>
