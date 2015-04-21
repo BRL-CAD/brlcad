@@ -68,6 +68,9 @@
 #include <string.h>
 #include <stdio.h>
 
+#include <embree2/rtcore.h>
+#include <embree2/rtcore_ray.h>
+
 #include "vmath.h"		/* vector math macros */
 #include "raytrace.h"		/* librt interface definitions */
 
