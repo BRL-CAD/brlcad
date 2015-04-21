@@ -109,7 +109,7 @@ bhit(struct application *ap, struct partition *PartHeadp, struct seg *UNUSED(seg
     point_t pt;
 
     /* will contain normal vector where ray enters geometry */
-     vect_t inormal;
+    vect_t inormal;
 
     /* will contain normal vector where ray exits geometry */
     vect_t onormal;
