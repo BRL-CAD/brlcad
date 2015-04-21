@@ -1,4 +1,4 @@
-/*                         E R T . C
+/*                      E R T . C X X
  * BRL-CAD
  *
  * Copyright (c) 2004-2014 United States Government as represented by
@@ -68,12 +68,13 @@
 #include <string.h>
 #include <stdio.h>
 
-#include <embree2/rtcore.h>
-#include <embree2/rtcore_ray.h>
-
+extern "C" {
 #include "vmath.h"		/* vector math macros */
 #include "raytrace.h"		/* librt interface definitions */
+}
 
+#include <embree2/rtcore.h>
+#include <embree2/rtcore_ray.h>
 
 /**
  * rt_shootray() was told to call this on a hit.
@@ -88,7 +89,7 @@
  * The 'segs' segment list is unused in this example.
  */
 int
-hit(struct application *ap, struct partition *PartHeadp, struct seg *UNUSED(segs))
+bhit(struct application *ap, struct partition *PartHeadp, struct seg *UNUSED(segs))
 {
     /* iterating over partitions, this will keep track of the current
      * partition we're working on.
@@ -307,7 +308,7 @@ main(int argc, char **argv)
     VPRINT("Dir", ap.a_ray.r_dir);
 
     /* This is what callback to perform on a hit. */
-    ap.a_hit = hit;
+    ap.a_hit = bhit;
 
     /* This is what callback to perform on a miss. */
     ap.a_miss = miss;
