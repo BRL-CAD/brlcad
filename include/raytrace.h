@@ -2610,7 +2610,7 @@ struct rt_pattern_params {
     vect_t *n_vec;
     int n;
     fastf_t *pn;
-}
+};
 
 /**
  * Make a bundle of rays around a main ray using a uniform rectangular
