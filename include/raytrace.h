@@ -2599,6 +2599,19 @@ RT_EXPORT extern void rt_default_logoverlap(struct application *ap,
  * used to feed a bundle set of rays to rt_shootrays()
  */
 
+/* TODO - try parameter struct to consolidate public rt_gen_* API
+ * into rt_pattern and a type enum */
+struct rt_pattern_params {
+    struct xray *center_ray;
+    vect_t a_vec;
+    vect_t b_vec;
+    fastf_t p1;
+    int vn;
+    vect_t *n_vec;
+    int n;
+    fastf_t *pn;
+}
+
 /**
  * Make a bundle of rays around a main ray using a uniform rectangular
  * grid pattern with an elliptical extent.
