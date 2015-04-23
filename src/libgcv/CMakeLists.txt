@@ -81,6 +81,7 @@ add_test(NAME bottess_test COMMAND test_bottess)
 
 set(GCV_IGNORE_FILES
   NOTES
+  conv/fastgen4/NOTES
   gcv_private.h
   plugin.h
   soup.h
