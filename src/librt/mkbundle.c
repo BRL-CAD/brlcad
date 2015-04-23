@@ -300,6 +300,38 @@ int rt_gen_rect(struct xrays *rays, const struct xray *center_ray,
     return count;
 }
 
+
+int
+rt_pattern(struct rt_pattern_data *UNUSED(data), rt_pattern_t UNUSED(type))
+{
+#if 0
+    switch (type) {
+	case RT_RECT_GRID:
+	    return rt_gen_rect(data->rays, data->center_ray, data->a_vec, data->b_vec, data->p1, data->p2);
+	    break;
+	case RT_FRUSTUM:
+	    if (data->pn != 4 || !data->n_p) return -1;
+	    return rt_gen_frustum(data->rays, data->center_ray, data->a_vec, data->b_vec, data->n_p[0], data->n_p[1], data->n_p[2], data->n_p[3]);
+	    break;
+	case RT_CIRCULAR_GRID:
+	    return rt_gen_circular_grid(data->rays, data->center_ray, data->a_vec, data->b_vec, data->p1, data->p2);
+	    break;
+	case RT_CONIC:
+	    return rt_gen_conic(data->rays, data->center_ray, data->a_vec, data->b_vec, data->p1, data->p2);
+	    break;
+	case RT_ELLIPTICAL_GRID:
+	    return rt_gen_elliptical_grid(data->rays, data->center_ray, data->a_vec, data->b_vec, data->p1, data->p2);
+	    break;
+	default:
+	    bu_log("Error - unknown pattern type %d\n", type);
+	    return -1;
+	    break;
+    }
+#endif
+    return -1;
+}
+
+
 /*
  * Local Variables:
  * mode: C

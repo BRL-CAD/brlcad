@@ -2599,18 +2599,126 @@ RT_EXPORT extern void rt_default_logoverlap(struct application *ap,
  * used to feed a bundle set of rays to rt_shootrays()
  */
 
-/* TODO - try parameter struct to consolidate public rt_gen_* API
- * into rt_pattern and a type enum */
-struct rt_pattern_params {
+/**
+ * Make a bundle of rays around a main ray using a generator
+ *
+ * If data is NULL, return -1
+ *
+ * If the data in the rt_pattern_data struct does not meet the requirements
+ * of the specified pattern, return -2
+ *
+ * If data->rays is NULL, return the number of rays that would have
+ * been generated.
+ *
+ * If data->rays is not NULL and ray_cnt does not match the number of rays
+ * that will be generated, return -3.
+ *
+ * If data->rays is not NULL and ray_cnt matches the number of rays
+ * that will be generated, assign rays to the rays output.
+ *
+ *
+ * Pattern data for each pattern type:
+ *
+ *   * all lenghts are in mm
+ *   * center_ray.r_dir must have unit length, if
+ *   * parameter data arrays are necessary they are the responsibility of
+ *     the calling function)
+ *
+ *   RT_RECT_GRID:
+ *      Make a bundle of orthogonal rays around a center ray as a uniform
+ *      rectangular grid.  Grid extents are from -a_vec to a_vec and -b_vec
+ *      to b_vec.
+ *      Params:
+ *         center_ray
+ *         a_vec       Direction for up
+ *         b_vec       Direction for right
+ *         p1          offset between rays in the a direction
+ *         p2          offset between rays in the b direction
+ *   RT_FRUSTUM:
+ *      Make a bundle of rays around a main ray in the shape of a frustum
+ *      as a uniform rectangular grid.
+ *      Params:
+ *         center_ray
+ *         a_vec       Direction for up
+ *         b_vec       Direction for right
+ *         p_n = 4     Number of parameters
+ *         n_p[0]      angle of divergence in the direction of a_vec
+ *         n_p[1]      angle of divergence in the direction of b_vec
+ *         n_p[2]      a_num
+ *         n_p[3]      b_num
+ *
+ *   RT_CIRCULAR_GRID:
+ *      Make a bundle of rays around a main ray using a uniform rectangular
+ *      grid pattern with a circular extent.
+ *      Params:
+ *         center_ray
+ *         a_vec       Direction for up
+ *         p1          grid size
+ *         p2          Radius
+ *
+ *   RT_CONIC:
+ *      Make a bundle of rays around a main ray in the shape of a cone,
+ *      using a uniform rectangular grid.
+ *      Params:
+ *         center_ray
+ *         a_vec       Direction for up
+ *         p1          angle of divergence of the cone
+ *         p2          number of rays that line on each radial ring of the cone
+ *
+ *   RT_ELLIPTICAL_GRID:
+ *      Make a bundle of rays around a main ray using a uniform rectangular
+ *      grid pattern with an elliptical extent.
+ *      Params:
+ *         center_ray
+ *         a_vec       Direction for up
+ *         b_vec       Direction for right
+ *         p1          grid size
+ *
+ * The following is an example:
+@code
+int ray_cnt = 0;
+struct rt_pattern_data data = RT_PATTERN_DATA_INIT;
+VSET(data.a_vec, 0, 0, 1);
+data.p1 = 0.1
+data.p2 = 10
+ray_cnt = rt_pattern(&data, RT_CIRCULAR_GRID);
+if (ray_cnt > 0) {
+    data.ray_cnt = ray_cnt;
+    data.rays = (struct xrays *)bu_calloc(ray_cnt, sizeof(struct xrays), "ray container");
+    if (ray_cnt != rt_pattern(&data, RT_CIRCULAR_GRID)) {
+	bu_exit(1, "error in ray assignment");
+    }
+    do_something_with_rays(data.rays);
+    bu_free(data.rays);
+}
+@endcode
+ */
+typedef enum {
+    RT_RECT_GRID = 0,
+    RT_FRUSTUM,
+    RT_CIRCULAR_GRID,
+    RT_CONIC,
+    RT_ELLIPTICAL_GRID
+} rt_pattern_t;
+
+struct rt_pattern_data {
+    /* output - TODO this should really be an array of fastf_t numbers... */
+    struct xrays *rays;
+    /* inputs */
+    int ray_cnt;
     struct xray *center_ray;
     vect_t a_vec;
     vect_t b_vec;
     fastf_t p1;
+    fastf_t p2;
     int vn;
     vect_t *n_vec;
-    int n;
-    fastf_t *pn;
+    int pn;
+    fastf_t *n_p;
 };
+#define RT_PATTERN_DATA_INIT {NULL, 0, NULL, {0, 0, 0}, {0, 0, 0}, 0.0, 0.0, 0, NULL, 0, NULL}
+
+RT_EXPORT extern int rt_pattern(struct rt_pattern_data *data, rt_pattern_t type);
 
 /**
  * Make a bundle of rays around a main ray using a uniform rectangular
