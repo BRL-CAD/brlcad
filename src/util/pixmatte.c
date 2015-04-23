@@ -72,6 +72,7 @@ static int wanted = 0;		/* LT|EQ|GT conditions */
 static long true_cnt = 0;
 static long false_cnt = 0;
 
+static int twoconstants;
 
 static const char usage_msg[] = "\
 Usage: pixmatte [-w width_in_bytes] {-g -l -e -n -a}\n\
@@ -193,6 +194,13 @@ get_args(int argc, char **argv)
 	    usage((char *)NULL, 1);
     }
 
+/* If both of the 1st 2 input streams were "=...", this is accounted
+ * for in true value of "twoconstants", and the program will later
+ * stop when it has created 512x512 file (otherwise, we get stuck
+ * in loop).
+ */
+    twoconstants = (fp[0] == NULL && fp[1] == NULL);
+
     if (argc > bu_optind)
 	bu_log("pixmatte: excess argument(s) ignored\n");
 
@@ -202,6 +210,8 @@ get_args(int argc, char **argv)
 int
 main(int argc, char **argv)
 {
+
+    int chunkcount = 0;
 
     get_args(argc, argv);
 
@@ -247,6 +257,10 @@ main(int argc, char **argv)
 	unsigned char *ebuf;		/* end ptr in buf[0] */
 	size_t len;
 	int i;
+
+    	chunkcount++;
+	if ( chunkcount == 9 && twoconstants )
+	    bu_exit (1, NULL);
 
 	len = CHUNK;
 	for (i=0; i<NFILES; i++) {
