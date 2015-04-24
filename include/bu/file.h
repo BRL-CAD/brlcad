@@ -148,12 +148,11 @@ typedef enum {
     PATH_FILENAME,
     PATH_ROOT_FILENAME,
     PATH_DIRECTORY
-} file_component_t;
+} path_component_t;
 
-BU_EXPORT extern int bu_file_path_component(struct bu_vls *component,
-	                                    const char *path,
-	                                    file_component_t type);
-
+BU_EXPORT extern int bu_path_component(struct bu_vls *component,
+	                               const char *path,
+	                               path_component_t type);
 
 
 #if 0

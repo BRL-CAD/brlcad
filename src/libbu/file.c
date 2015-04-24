@@ -357,7 +357,7 @@ bu_ftell(FILE *stream)
 }
 
 int
-bu_file_path_component(struct bu_vls *component, const char *path, file_component_t type)
+bu_path_component(struct bu_vls *component, const char *path, path_component_t type)
 {
     int len = 0;
     int ret = 0;
