@@ -196,9 +196,9 @@ if (BUILD_FRAMEWORK)
 endif ()
 
 add_library(freetype
-  ${PUBLIC_HEADERS}
-  ${PUBLIC_CONFIG_HEADERS}
-  ${PRIVATE_HEADERS}
+ #${PUBLIC_HEADERS}
+ #${PUBLIC_CONFIG_HEADERS}
+ #${PRIVATE_HEADERS}
   ${BASE_SRCS}
 )
 
@@ -248,6 +248,6 @@ set(CPACK_GENERATOR TGZ)
 include(CPack)
 
 # add make dist target
-add_custom_target(dist COMMAND ${CMAKE_MAKE_PROGRAM} package_source)
+#add_custom_target(dist COMMAND ${CMAKE_MAKE_PROGRAM} package_source)
 
 # eof
