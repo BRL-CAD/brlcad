@@ -134,60 +134,40 @@ bu_basename(char *basename, const char *path)
 }
 
 
-
-/* TODO - should be using bu_dirname, as well as bu_basename */
 int
 bu_path_component(struct bu_vls *component, const char *path, path_component_t type)
 {
-    int len = 0;
     int ret = 0;
     char *basename = NULL;
-    char *dirname = NULL;
-    char *dirname_free = NULL;
     char *basename_free = NULL;
+    char *dirname = NULL;
     char *period_pos = NULL;
-    char *p1, *p2, *last_dir_sep;
     struct bu_vls working_path = BU_VLS_INIT_ZERO;
 
     if (UNLIKELY(!path) || UNLIKELY(strlen(path)) == 0) goto cleanup;
 
-    len = strlen(path);
-    basename = (char *)bu_calloc(strlen(path) + 2, sizeof(char), "basename");
-    dirname = (char *)bu_calloc(strlen(path) + 1, sizeof(char), "dirname");
-    dirname_free = dirname;
-    basename_free = basename;
+    if (type != PATH_DIRECTORY) {
+	/* get the base name */
+	basename = (char *)bu_calloc(strlen(path) + 2, sizeof(char), "basename");
+	bu_basename(basename, path);
+
+	/* Make sure we can manipulate the results and
+	 * still properly free memory */
+	basename_free = basename;
+    }
 
     switch (type) {
 	case PATH_DIRECTORY:
 	    /* get the directory */
-	    bu_strlcpy(dirname, path, strlen(path)+1);
-	    /* Remove excess leading directory separators */
-	    while (strlen(dirname) > 1 && ((dirname[0] == BU_DIR_SEPARATOR || dirname[0] == '/')) && ((dirname[1] == BU_DIR_SEPARATOR || dirname[1] == '/'))) {
-		dirname++;
-	    }
-	    p1 = strrchr(dirname, BU_DIR_SEPARATOR);
-	    p2 = strrchr(dirname, '/');
-	    if (p1 && p2) {
-		last_dir_sep = (strlen(p1) > strlen(p2)) ? p2 : p1;
-	    } else {
-		last_dir_sep = (p1) ? p1 : p2;
-	    }
-	    len = strlen(dirname) - strlen(last_dir_sep) - 1;
-	    /* Remove trailing separators */
-	    while (len > 1 && (path[len] == BU_DIR_SEPARATOR || path[len] == '/'))
-		len--;
-	    if (last_dir_sep == NULL) {
-		bu_vls_free(&working_path);
-		return 0;
-	    }
-	    bu_vls_strncpy(&working_path, dirname, len+1);
-	    ret = 1;
-	    if (component) {
-		bu_vls_sprintf(component, "%s", bu_vls_addr(&working_path));
+	    dirname = bu_dirname(path);
+	    if (!(!dirname || strlen(dirname) == 0)) {
+		ret = 1;
+		if (component) {
+		    bu_vls_sprintf(component, "%s", dirname);
+		}
 	    }
 	    break;
 	case PATH_FILENAME:
-	    /* get the base name */
 	    bu_basename(basename, path);
 	    if (strlen(basename) > 0) {
 		ret = 1;
@@ -225,10 +205,12 @@ bu_path_component(struct bu_vls *component, const char *path, path_component_t t
 
 cleanup:
     if (basename_free) bu_free(basename_free, "basename");
-    if (dirname_free) bu_free(dirname_free, "dirname");
+    if (dirname) bu_free(dirname, "dirname");
     bu_vls_free(&working_path);
     return ret;
 }
+
+
 
 char **
 bu_argv_from_path(const char *path, int *ac)
