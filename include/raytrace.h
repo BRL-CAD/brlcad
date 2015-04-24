@@ -2619,10 +2619,10 @@ RT_EXPORT extern void rt_default_logoverlap(struct application *ap,
  *
  * Pattern data for each pattern type:
  *
- *   * all lenghts are in mm
+ *   * all lengths are in mm;
  *   * center_ray.r_dir must have unit length, if
  *   * parameter data arrays are necessary they are the responsibility of
- *     the calling function)
+ *     the calling function
  *
  *   RT_RECT_GRID:
  *      Make a bundle of orthogonal rays around a center ray as a uniform
