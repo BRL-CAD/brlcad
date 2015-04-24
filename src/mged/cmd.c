@@ -47,6 +47,7 @@
 
 #include "vmath.h"
 #include "bu/getopt.h"
+#include "bu/path.h"
 #include "bn.h"
 #include "rtgeom.h"
 #include "tclcad.h"

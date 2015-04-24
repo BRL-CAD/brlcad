@@ -17,7 +17,6 @@ set(LIBBU_SOURCES
   b64.c
   backtrace.c
   badmagic.c
-  basename.c
   bitv.c
   bomb.c
   booleanize.c
@@ -29,7 +28,6 @@ set(LIBBU_SOURCES
   crashreport.c
   ctype.c
   dirent.c
-  dirname.c
   date-time.c
   dlfcn.c
   encode.c
@@ -62,6 +60,7 @@ set(LIBBU_SOURCES
   observer.c
   parallel.c
   parse.c
+  path.c
   printb.c
   process.c
   progname.c

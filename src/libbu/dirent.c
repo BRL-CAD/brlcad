@@ -26,6 +26,7 @@
 #include <sys/types.h>
 
 #include "bu/file.h"
+#include "bu/path.h"
 #include "bu/malloc.h"
 #include "bu/str.h"
 #include "uce-dirent.h"

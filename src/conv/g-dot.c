@@ -36,6 +36,7 @@
 
 /* interface headers */
 #include "bu/getopt.h"
+#include "bu/path.h"
 #include "bu/str.h"
 #include "brlcad_version.h"
 #include "raytrace.h"

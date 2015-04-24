@@ -129,32 +129,6 @@ BU_EXPORT extern int bu_file_symbolic(const char *path);
 BU_EXPORT extern int bu_file_delete(const char *path);
 
 
-/**
- * Attempts to extract a component from a file path.
- * Supported components are:
- *
- * PATH_DIRECTORY       Directory without the last name.
- * PATH_FILENAME        Name after last directory separator in path
- * PATH_FILE_EXTENSION  File extension of PATH_FILENAME
- * PATH_ROOT_FILENAME   PATH_FILENAME without PATH_FILE_EXTENSION
- *
- * returns 0 if the specified component was not found, 1
- * if it was.  If the bu_vls pointer component is not NULL,
- * the component will be written to the vls.
- */
-
-typedef enum {
-    PATH_FILE_EXTENSION,
-    PATH_FILENAME,
-    PATH_ROOT_FILENAME,
-    PATH_DIRECTORY
-} path_component_t;
-
-BU_EXPORT extern int bu_path_component(struct bu_vls *component,
-	                               const char *path,
-	                               path_component_t type);
-
-
 #if 0
 /**
  * TODO - currently unimplemented
@@ -184,41 +158,7 @@ BU_EXPORT extern int bu_path_component(struct bu_vls *component,
  */
 BU_EXPORT extern size_t bu_file_glob(const char *pattern, char ***matches);
 
-/**
- * TODO - currently unimplemented
- *
- * Call canonicalization routines to both expand and validate
- * a path name.
- *
- * returns a pointer to the canonical path.  Caller must free
- * the path.
- */
-BU_EXPORT extern char * bu_file_path_canonicalize(const char *path);
 #endif
-
-/** @file libbu/fnmatch.c
- *
- */
-
-#define BU_FNMATCH_NOESCAPE    0x01 /**< bu_fnmatch() flag.  Backslash escaping. */
-#define BU_FNMATCH_PATHNAME    0x02 /**< bu_fnmatch() flag.  Slash must be matched by slash. */
-#define BU_FNMATCH_PERIOD      0x04 /**< bu_fnmatch() flag.  Period must be matched by period. */
-#define BU_FNMATCH_LEADING_DIR 0x08 /**< bu_fnmatch() flag.  Ignore `/<tail>` after Imatch. */
-#define BU_FNMATCH_CASEFOLD    0x10 /**< bu_fnmatch() flag.  Case-insensitive searching. */
-
-/**
- * bu_fnmatch() return value when no match is found (0 if found)
- */
-#define BU_FNMATCH_NOMATCH 1       /* Match failed. */
-
-/**
- * Function fnmatch() as specified in POSIX 1003.2-1992, section B.6.
- * Compares a string filename or pathname to a pattern.
- *
- * Returns 0 if a match is found or BU_FNMATCH_NOMATCH otherwise.
- *
- */
-BU_EXPORT extern int bu_fnmatch(const char *pattern, const char *pathname, int flags);
 
 
 /** @file libbu/dirent.c
@@ -253,6 +193,20 @@ BU_EXPORT extern size_t bu_dir_list(const char *path, const char *pattern, char 
  * at least MAXPATHLEN characters.
  */
 BU_EXPORT extern char * bu_realpath(const char *path, char *resolved_path);
+
+/**
+ * TODO - is this bu_realpath?
+ *
+ * Call canonicalization routines to both expand and validate
+ * a path name.
+ *
+ * returns a pointer to the canonical path.  Caller must free
+ * the path.
+ */
+/*BU_EXPORT extern char * bu_path_canonicalize(const char *path);*/
+
+
+
 
 /** @file libbu/progname.c
  *

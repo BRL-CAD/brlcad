@@ -32,6 +32,7 @@
 #include "bu/file.h"
 #include "bu/log.h"
 #include "bu/malloc.h"
+#include "bu/path.h"
 #include "bu/str.h"
 #include "bu/vls.h"
 #include "sysv.h"

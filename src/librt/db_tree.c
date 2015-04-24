@@ -35,6 +35,7 @@
 
 
 #include "bu/parallel.h"
+#include "bu/path.h"
 #include "vmath.h"
 #include "bn.h"
 #include "nmg.h"

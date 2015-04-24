@@ -59,7 +59,7 @@
 #include <string.h>
 #include "bio.h"
 
-#include "bu/file.h"
+#include "bu/path.h"
 #include "bu/log.h"
 #include "bu/str.h"
 #include "bu/vls.h"

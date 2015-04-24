@@ -63,6 +63,7 @@
 #include "./bu/debug.h"
 #include "./bu/endian.h"
 #include "./bu/file.h"
+#include "./bu/path.h"
 #include "./bu/getopt.h"
 #include "./bu/hash.h"
 #include "./bu/hist.h"

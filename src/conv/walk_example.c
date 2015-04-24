@@ -40,6 +40,7 @@
 
 #include "vmath.h"
 #include "bu/getopt.h"
+#include "bu/path.h"
 #include "bu/str.h"
 #include "nmg.h"
 #include "rtgeom.h"

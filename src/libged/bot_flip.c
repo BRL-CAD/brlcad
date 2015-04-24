@@ -29,6 +29,7 @@
 #include <ctype.h>
 #include <string.h>
 
+#include "bu/path.h"
 #include "rtgeom.h"
 
 #include "./ged_private.h"

@@ -45,6 +45,7 @@
 
 #include "bn.h"
 #include "bu/cmd.h"
+#include "bu/path.h"
 #include "bu/units.h"
 #include "vmath.h"
 #include "db.h"

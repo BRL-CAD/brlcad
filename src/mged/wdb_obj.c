@@ -43,6 +43,7 @@
 
 #include "bu/cmd.h"
 #include "bu/getopt.h"
+#include "bu/path.h"
 #include "bu/sort.h"
 #include "bu/units.h"
 #include "bn.h"

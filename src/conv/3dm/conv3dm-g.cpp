@@ -39,6 +39,7 @@
 
 /* implementation headers */
 #include "bu/getopt.h"
+#include "bu/path.h"
 #include "icv.h"
 #include "vmath.h"
 #include "../../libgcv/bot_solidity.h"
