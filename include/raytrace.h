@@ -8007,6 +8007,14 @@ RT_EXPORT extern const struct db_tree_state rt_initial_tree_state;
  */
 RT_EXPORT extern const char *rt_version(void);
 
+
+/* WARNING - The function below is *HIGHLY* experimental and will certainly
+ * change */
+RT_EXPORT void
+rt_generate_mesh(int **faces, int *num_faces, point_t **points, int *num_pnts,
+	                        struct db_i *dbip, const char *obj, fastf_t delta);
+
+
 __END_DECLS
 
 #endif /* RAYTRACE_H */

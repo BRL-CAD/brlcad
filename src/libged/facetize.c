@@ -32,7 +32,6 @@
 #include "rtgeom.h"
 #include "raytrace.h"
 
-#include "../librt/librt_private.h" /* for rt_generate_mesh */
 #include "./ged_private.h"
 
 
