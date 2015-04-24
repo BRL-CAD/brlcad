@@ -40,6 +40,7 @@
 #include "bu/debug.h"
 #include "bu/file.h"
 #include "bu/log.h"
+#include "bu/malloc.h"
 #include "bu/str.h"
 
 #ifndef R_OK
@@ -352,6 +353,100 @@ bu_ftell(FILE *stream)
     ret = ftell(stream);
 #endif
 
+    return ret;
+}
+
+int
+bu_file_path_component(struct bu_vls *component, const char *path, file_component_t type)
+{
+    int len = 0;
+    int ret = 0;
+    char *basename = NULL;
+    char *dirname = NULL;
+    char *dirname_free = NULL;
+    char *basename_free = NULL;
+    char *period_pos = NULL;
+    char *p1, *p2, *last_dir_sep;
+    struct bu_vls working_path = BU_VLS_INIT_ZERO;
+
+    if (UNLIKELY(!path) || UNLIKELY(strlen(path)) == 0) goto cleanup;
+
+    len = strlen(path);
+    basename = (char *)bu_calloc(strlen(path) + 2, sizeof(char), "basename");
+    dirname = (char *)bu_calloc(strlen(path) + 1, sizeof(char), "dirname");
+    dirname_free = dirname;
+    basename_free = basename;
+
+    switch (type) {
+	case PATH_DIRECTORY:
+	    /* get the directory */
+	    bu_strlcpy(dirname, path, strlen(path)+1);
+	    /* Remove excess leading directory separators */
+	    while (strlen(dirname) > 1 && ((dirname[0] == BU_DIR_SEPARATOR || dirname[0] == '/')) && ((dirname[1] == BU_DIR_SEPARATOR || dirname[1] == '/'))) {
+		dirname++;
+	    }
+	    p1 = strrchr(dirname, BU_DIR_SEPARATOR);
+	    p2 = strrchr(dirname, '/');
+	    if (p1 && p2) {
+		last_dir_sep = (strlen(p1) > strlen(p2)) ? p2 : p1;
+	    } else {
+		last_dir_sep = (p1) ? p1 : p2;
+	    }
+	    len = strlen(dirname) - strlen(last_dir_sep) - 1;
+	    /* Remove trailing separators */
+	    while (len > 1 && (path[len] == BU_DIR_SEPARATOR || path[len] == '/'))
+		len--;
+	    if (last_dir_sep == NULL) {
+		bu_vls_free(&working_path);
+		return 0;
+	    }
+	    bu_vls_strncpy(&working_path, dirname, len+1);
+	    ret = 1;
+	    if (component) {
+		bu_vls_sprintf(component, "%s", bu_vls_addr(&working_path));
+	    }
+	    break;
+	case PATH_FILENAME:
+	    /* get the base name */
+	    bu_basename(basename, path);
+	    if (strlen(basename) > 0) {
+		ret = 1;
+		if (component) {
+		    bu_vls_sprintf(component, "%s", basename);
+		}
+	    }
+	    break;
+	case PATH_ROOT_FILENAME:
+	    /* get the base name */
+	    bu_basename(basename, path);
+	    if (strlen(basename) > 0) {
+		ret = 1;
+		period_pos = strrchr(basename, '.');
+		bu_vls_sprintf(component, "%s", basename);
+		bu_vls_trunc(component, -1 * strlen(period_pos));
+	    }
+	    break;
+	case PATH_FILE_EXTENSION:
+	    /* get the base name */
+	    bu_basename(basename, path);
+	    if (strlen(basename) > 0) {
+		period_pos = strrchr(basename, '.');
+		if (period_pos && strlen(period_pos) > 1) {
+		    ret = 1;
+		    if (component) {
+			bu_vls_strncpy(component, period_pos, strlen(period_pos)+1);
+			bu_vls_nibble(component, 1);
+		    }
+		}
+	    }
+	default:
+	    break;
+    }
+
+cleanup:
+    if (basename_free) bu_free(basename_free, "basename");
+    if (dirname_free) bu_free(dirname_free, "dirname");
+    bu_vls_free(&working_path);
     return ret;
 }
 

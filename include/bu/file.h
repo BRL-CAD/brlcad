@@ -40,6 +40,7 @@
 
 #include "bu/defines.h"
 #include "bu/magic.h"
+#include "bu/vls.h"
 
 __BEGIN_DECLS
 
@@ -126,6 +127,34 @@ BU_EXPORT extern int bu_file_symbolic(const char *path);
  * returns truthfully if the specified file was deleted.
  */
 BU_EXPORT extern int bu_file_delete(const char *path);
+
+
+/**
+ * Attempts to extract a component from a file path.
+ * Supported components are:
+ *
+ * PATH_DIRECTORY       Directory without the last name.
+ * PATH_FILENAME        Name after last directory separator in path
+ * PATH_FILE_EXTENSION  File extension of PATH_FILENAME
+ * PATH_ROOT_FILENAME   PATH_FILENAME without PATH_FILE_EXTENSION
+ *
+ * returns 0 if the specified component was not found, 1
+ * if it was.  If the bu_vls pointer component is not NULL,
+ * the component will be written to the vls.
+ */
+
+typedef enum {
+    PATH_FILE_EXTENSION,
+    PATH_FILENAME,
+    PATH_ROOT_FILENAME,
+    PATH_DIRECTORY
+} file_component_t;
+
+BU_EXPORT extern int bu_file_path_component(struct bu_vls *component,
+	                                    const char *path,
+	                                    file_component_t type);
+
+
 
 #if 0
 /**
