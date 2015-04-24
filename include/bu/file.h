@@ -127,7 +127,10 @@ BU_EXPORT extern int bu_file_symbolic(const char *path);
  */
 BU_EXPORT extern int bu_file_delete(const char *path);
 
+#if 0
 /**
+ * TODO - currently unimplemented
+ *
  * matches a filepath pattern to directory entries.  if non-NULL,
  * matching paths are dynamically allocated, stored into the provided
  * 'matches' array, and followed by a terminating NULL entry.
@@ -154,6 +157,8 @@ BU_EXPORT extern int bu_file_delete(const char *path);
 BU_EXPORT extern size_t bu_file_glob(const char *pattern, char ***matches);
 
 /**
+ * TODO - currently unimplemented
+ *
  * Call canonicalization routines to both expand and validate
  * a path name.
  *
@@ -161,6 +166,7 @@ BU_EXPORT extern size_t bu_file_glob(const char *pattern, char ***matches);
  * the path.
  */
 BU_EXPORT extern char * bu_file_path_canonicalize(const char *path);
+#endif
 
 /** @file libbu/fnmatch.c
  *
