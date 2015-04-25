@@ -47,6 +47,15 @@ __BEGIN_DECLS
 /** @file libbu/path.c */
 
 /**
+ * Support routines for working with path strings, both
+ * filesystem paths and .g database hierarchy paths
+ *
+ * Routines in this header have no knowledge of the
+ * file system, beyond an awareness of the path separator
+ * in use in the working operating system environment.
+ */
+
+/**
  * Given a string containing a hierarchical path, return a dynamic
  * string to the parent path.
  *
@@ -119,16 +128,6 @@ BU_EXPORT extern char *bu_dirname(const char *path);
  */
 BU_EXPORT extern void bu_basename(char *basename, const char *path);
 
-
-/**
- *
- * Support routines for working with path strings, both
- * filesystem paths and .g database hierarchy paths
- *
- * Routines in this header have no knowledge of the
- * file system, beyond an awareness of the path separator
- * in use in the working operating system environment.
- */
 
 /**
  * Attempts to extract a component from a file path.
