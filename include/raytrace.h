@@ -3642,20 +3642,6 @@ RT_EXPORT extern struct animate *db_parse_1anim(struct db_i *dbip,
  */
 RT_EXPORT extern void db_free_1anim(struct animate *anp);
 
-/* db_path.c */
-
-/**
- * Normalize a BRL-CAD path according to rules used for realpath, but
- * without filesystem (or database object) validation.
- *
- * @return
- * A STATIC buffer is returned.  It is the caller's responsibility to
- * call bu_strdup() or make other provisions to save the returned
- * string, before calling again.
- */
-RT_EXPORT extern const char *db_normalize(const char *path);
-
-
 /* search.c */
 
 #include "./rt/search.h"

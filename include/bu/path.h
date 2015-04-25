@@ -128,6 +128,16 @@ BU_EXPORT extern char *bu_dirname(const char *path);
  */
 BU_EXPORT extern void bu_basename(char *basename, const char *path);
 
+/**
+ * Normalize a path according to rules used for realpath, but
+ * without filesystem (or database object) validation.
+ *
+ * @return
+ * A STATIC buffer is returned.  It is the caller's responsibility to
+ * call bu_strdup() or make other provisions to save the returned
+ * string, before calling again.
+ */
+BU_EXPORT extern const char *bu_normalize(const char *path);
 
 /**
  * Attempts to extract a component from a file path.
