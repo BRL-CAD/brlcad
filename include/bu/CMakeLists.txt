@@ -34,6 +34,7 @@ set(bu_headers
 install(FILES ${bu_headers} DESTINATION ${INCLUDE_DIR}/brlcad/bu)
 
 CMAKEFILES(${bu_headers})
+CMAKEFILES(mime.types mime_cad.types)
 
 # Local Variables:
 # tab-width: 8

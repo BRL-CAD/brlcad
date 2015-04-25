@@ -40,6 +40,7 @@
 
 #include "bu/defines.h"
 #include "bu/magic.h"
+#include "bu/mime.h"
 #include "bu/vls.h"
 
 __BEGIN_DECLS
@@ -159,6 +160,18 @@ BU_EXPORT extern int bu_file_delete(const char *path);
 BU_EXPORT extern size_t bu_file_glob(const char *pattern, char ***matches);
 
 #endif
+
+
+/**
+ * Use the file extension to attempt to determine the media type
+ * of the file within the specified context.
+ *
+ * returns -1 if no match was found, or an integer if a result
+ * was found.  It is the responsibility of the caller to cast
+ * the return int to the correct mime_CONTEXT_t type.
+ */
+BU_EXPORT extern int bu_file_mime(const char *ext, mime_context_t context);
+
 
 
 /** @file libbu/dirent.c

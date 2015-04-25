@@ -30,6 +30,7 @@
 
 #include "bio.h"
 #include "bu/log.h"
+#include "bu/mime.h"
 #include "bu/getopt.h"
 #include "bu/str.h"
 #include "icv.h"
@@ -58,7 +59,7 @@ int main(int argc, char* argv[])
     int inx=0, iny=0;
     int outx=0, outy=0;
     icv_image_t *bif;
-    ICV_IMAGE_FORMAT format=ICV_IMAGE_AUTO;
+    mime_image_t format=MIME_IMAGE_AUTO;
     ICV_RESIZE_METHOD method = ICV_RESIZE_NINTERP;
 
     if (argc<2) {
@@ -100,16 +101,16 @@ int main(int argc, char* argv[])
 		}
 	    break;
 	    case 'b':
-		format = ICV_IMAGE_BW;
+		format = MIME_IMAGE_BW;
 		break;
 	    case 'p':
-		format = ICV_IMAGE_PIX;
+		format = MIME_IMAGE_PIX;
 		break;
 	    case 'd':
-		format = ICV_IMAGE_DPIX;
+		format = MIME_IMAGE_DPIX;
 		break;
 	    case 'm':
-		format = ICV_IMAGE_PPM;
+		format = MIME_IMAGE_PPM;
 		break;
 	    default:
 		usage();

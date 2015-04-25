@@ -10,6 +10,22 @@ set(BU_LOCAL_INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR})
 
 BRLCAD_LIB_INCLUDE_DIRS(bu BU_INCLUDE_DIRS BU_LOCAL_INCLUDE_DIRS)
 
+set(MIME_C_FILE ${CMAKE_CURRENT_BINARY_DIR}/mime.c)
+set(MIME_H_FILE ${BRLCAD_BINARY_DIR}/${INCLUDE_DIR}/bu/mime.h)
+
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/mime.cmake.in ${CMAKE_CURRENT_BINARY_DIR}/mime.cmake @ONLY)
+
+add_custom_command(
+  OUTPUT ${MIME_C_FILE} ${MIME_H_FILE}
+  COMMAND ${CMAKE_COMMAND} -E make_directory ${BRLCAD_BINARY_DIR}/${INCLUDE_DIR}/bu
+  COMMAND ${CMAKE_COMMAND} -P ${CMAKE_CURRENT_BINARY_DIR}/mime.cmake
+  DEPENDS
+  ${CMAKE_CURRENT_BINARY_DIR}/mime.cmake
+  ${BRLCAD_SOURCE_DIR}/include/bu/mime.types
+  ${BRLCAD_SOURCE_DIR}/include/bu/mime_cad.types
+  )
+add_custom_target(bu_mime_types DEPENDS ${MIME_C_FILE} ${MIME_H_FILE})
+
 set(LIBBU_SOURCES
   affinity.c
   argv.c
@@ -56,6 +72,7 @@ set(LIBBU_SOURCES
   magic.c
   malloc.c
   mappedfile.c
+  ${MIME_C_FILE}
   mread.c
   observer.c
   parallel.c
@@ -98,6 +115,7 @@ set(LIBBU_SOURCES
   )
 
 BRLCAD_ADDLIB(libbu "${LIBBU_SOURCES}" "${CMAKE_THREAD_LIBS_INIT};${TCL_LIBRARY};${WINSOCK_LIB};${PSAPI_LIB};${M_LIBRARY};y2038")
+add_dependencies(libbu bu_mime_types)
 set_target_properties(libbu PROPERTIES VERSION 20.0.1 SOVERSION 20)
 get_directory_property(BRLCAD_TCL_BUILD DIRECTORY ${BRLCAD_SOURCE_DIR}/src/other DEFINITION BRLCAD_TCL_BUILD)
 if("${BRLCAD_TCL_BUILD}" STREQUAL "ON")
@@ -110,11 +128,14 @@ endif(CPP_DLL_DEFINES)
 BRLCAD_ADDDATA(fix.6r vfont)
 BRLCAD_ADDDATA(nonie.r.12 vfont)
 
+install(FILES ${MIME_H_FILE} DESTINATION ${INCLUDE_DIR}/brlcad/bu)
+
 add_subdirectory(tests)
 add_subdirectory(y2038)
 
 set(bu_ignore_files
   bu_internals.h
+  mime.cmake.in
   parallel.h
   rb_internals.h
   uce-dirent.h

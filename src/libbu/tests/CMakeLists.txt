@@ -36,9 +36,9 @@ add_test(NAME bu_basename_p__p__p_                               COMMAND tester_
 add_test(NAME bu_basename_sp__sp__sp_                            COMMAND tester_bu_basename "   ")
 
 
-###############################
+##########################################
 #      bu_file_path_component testing    #
-###############################
+##########################################
 BRLCAD_ADDEXEC(tester_bu_path_component    bu_path_component.c    libbu NO_INSTALL)
 add_test(NAME bu_path_component_null                       COMMAND tester_bu_path_component) # tests NULL
 add_test(NAME bu_path_component_empty                      COMMAND tester_bu_path_component 0) # tests empty
@@ -46,6 +46,15 @@ add_test(NAME bu_path_component_sl_usr_sl_dir_sl_file_0    COMMAND tester_bu_pat
 add_test(NAME bu_path_component_sl_usr_sl_dir_sl_file_1    COMMAND tester_bu_path_component "/usr/dir/file.ext" "file.ext" 1)
 add_test(NAME bu_path_component_sl_usr_sl_dir_sl_file_2    COMMAND tester_bu_path_component "/usr/dir/file.ext" "file" 2)
 add_test(NAME bu_path_component_sl_usr_sl_dir_sl_file_3    COMMAND tester_bu_path_component "/usr/dir/file.ext" "/usr/dir" 3)
+
+
+################################
+#      bu_file_mime testing    #
+################################
+BRLCAD_ADDEXEC(tester_bu_file_mime    bu_file_mime.c    libbu NO_INSTALL)
+add_test(NAME bu_file_mime_dxf   COMMAND tester_bu_file_mime dxf 5 1) # tests dxf extension in model context
+add_test(NAME bu_file_mime_stp   COMMAND tester_bu_file_mime stp 5 7) # tests stp extension in model context
+add_test(NAME bu_file_mime_png   COMMAND tester_bu_file_mime png 3 14) # tests png extension in image context
 
 #
 #  ************ bitv.c tests *************

@@ -40,6 +40,7 @@
 
 #include "bu/getopt.h"
 #include "bu/debug.h"
+#include "bu/mime.h"
 #include "bu/vls.h"
 #include "vmath.h"
 #include "raytrace.h"
@@ -893,7 +894,7 @@ do_frame(int framenumber)
 	       wallclock, ((double)(rtip->rti_nrays))/wallclock);
     }
     if (bif != NULL) {
-	icv_write(bif, framename, ICV_IMAGE_AUTO);
+	icv_write(bif, framename, MIME_IMAGE_AUTO);
 	icv_destroy(bif);
 	bif = NULL;
     }
