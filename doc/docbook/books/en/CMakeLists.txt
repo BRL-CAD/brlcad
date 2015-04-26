@@ -50,24 +50,6 @@ set(docbook_books_EN_IMAGES
   images/v4-image009.jpg
   images/v4-image010.jpg
   images/v4-image011.jpg
-  images/Lee_tux.gif
-  images/animtbl.gif
-  images/dagtbl.gif
-  images/ell.mpg
-  images/ell_sm.gif
-  images/ell_ssm.gif
-  images/equation.gif
-  images/film.gif
-  images/fn.gif
-  images/matrix.gif
-  images/moss.mpg
-  images/moss_sm.gif
-  images/moss_ssm.gif
-  images/trans.gif
-  images/transboth.gif
-  images/transboth_sm.gif
-  images/v_eqn1.gif
-  images/v_eqn2.gif
   )
 ADD_DOC(docbook_books_EN_IMAGES html/books/en/images)
 
@@ -79,7 +61,6 @@ set(docbook_books_EN
   shader.xml
   libbu.xml
   libdm.xml
-  animation_tutorial.xml
   )
 DOCBOOK_TO_HTML(book docbook_books_EN html/books/en docbook_books_EN_IMAGES_cp)
 
