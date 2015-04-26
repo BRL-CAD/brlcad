@@ -1149,8 +1149,8 @@ ON_Intersect(const ON_3dPoint &pointA,
  * An overload of ON_Intersect for point-curve intersection.
  * Intersect pointA with curveB.
  *
- * @param pointA [in]
- * @param pointB [in]
+ * @param pointA [in] pointA
+ * @param curveB [in] curveB
  * @param x [out] Intersection events are appended to this array.
  * @param tolerance [in] If the input intersection_tolerance <= 0.0,
  *     then 0.001 is used.
@@ -1284,8 +1284,8 @@ ON_Intersect(const ON_Curve *curveA,
  * An overload of ON_Intersect for surface-surface intersection.
  * Intersect surfaceA with surfaceB.
  *
- * @param surfaceA [in]
- * @param surfaceB [in]
+ * @param surfA [in]
+ * @param surfB [in]
  * @param x [out] Intersection events are appended to this array.
  * @param intersection_tolerance [in] If the input
  *     intersection_tolerance <= 0.0, then 0.001 is used.
@@ -1348,7 +1348,8 @@ ON_Boolean(ON_Brep *brepO, const ON_Brep *brepA, const ON_Brep *brepB, op_type o
  * Get the curve segment between param a and param b
  *
  * @param in [in] the curve to split
- * @param a, b [in] either of them can be the larger one
+ * @param a  [in] either a or b can be the larger one
+ * @param b  [in] either a or b can be the larger one
  *
  * @return the result curve segment. NULL for error.
  */
@@ -1356,11 +1357,12 @@ extern BREP_EXPORT ON_Curve *
 sub_curve(const ON_Curve *in, double a, double b);
 
 /**
- * Get the sub-surface whose u \in [a,b] or v \in [a, b]
+ * Get the sub-surface whose u in [a,b] or v in [a, b]
  *
  * @param in [in] the surface to split
  * @param dir [in] 0: u-split, 1: v-split
- * @param a, b [in] either of them can be the larger one
+ * @param a [in] either a or b can be the larger one
+ * @param b [in] either a or b can be the larger one
  *
  * @return the result sub-surface. NULL for error.
  */
