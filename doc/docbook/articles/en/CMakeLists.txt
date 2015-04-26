@@ -10,6 +10,7 @@ set(docbook_articles_EN
   oed.xml
   pipes.xml
   projection_shader.xml
+  shader.xml
   tire.xml
   )
 

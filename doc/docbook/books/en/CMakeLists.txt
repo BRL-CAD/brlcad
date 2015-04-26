@@ -58,9 +58,6 @@ set(docbook_books_EN
   BRL-CAD_Tutorial_Series-VolumeII.xml
   BRL-CAD_Tutorial_Series-VolumeIII.xml
   BRL-CAD_Tutorial_Series-VolumeIV.xml
-  shader.xml
-  libbu.xml
-  libdm.xml
   )
 DOCBOOK_TO_HTML(book docbook_books_EN html/books/en docbook_books_EN_IMAGES_cp)
 
