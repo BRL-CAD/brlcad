@@ -180,12 +180,12 @@ region_start(struct db_tree_state *tsp,
 /**
  * @brief This is called when all sub-elements of a region have been processed by leaf_func.
  *
- *      @param tsp
- *      @param pathp
- *      @param curtree
+ * @param tsp     tree state
+ * @param pathp   db path
+ * @param curtree current tree
  *
- *      @return TREE_NULL if data in curtree was "stolen", otherwise db_walk_tree will
- *      clean up the data in the union tree * that is returned
+ * @return TREE_NULL if data in curtree was "stolen", otherwise db_walk_tree will
+ * clean up the data in the union tree * that is returned
  *
  * If it wants to retain the data in curtree it can by returning TREE_NULL.  Otherwise
  * db_walk_tree will clean up the data in the union tree * that is returned.

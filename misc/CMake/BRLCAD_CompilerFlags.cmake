@@ -163,6 +163,11 @@ if(BRLCAD_ENABLE_COMPILER_WARNINGS OR BRLCAD_ENABLE_STRICT)
   # this is for X11 headers, they use variadic macros
   CHECK_C_FLAG(Wno-variadic-macros)
   CHECK_CXX_FLAG(Wno-variadic-macros)
+
+  # this is used to check Doxygen syntax
+  CHECK_C_FLAG(Wdocumentation)
+  CHECK_CXX_FLAG(Wdocumentation)
+
 endif(BRLCAD_ENABLE_COMPILER_WARNINGS OR BRLCAD_ENABLE_STRICT)
 
 if(BRLCAD_ENABLE_COVERAGE)
