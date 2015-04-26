@@ -363,11 +363,12 @@ BN_EXPORT extern int bn_lseg3_lseg3_parallel(const point_t sg1pt1, const point_t
  * @return 1	intersection found  (pdist and qdist returned) (see below)
  *
  * @param	p0	point 1
- * @param	pdir_i 	direction 1
+ * @param	u       direction 1
  * @param	q0	point 2
- * @param	qdir_i 	direction 2
- * @param tol	tolerance values
- * @param[out]	pdist, qdist (distances to intersection) (see below)
+ * @param	v       direction 2
+ * @param       tol	tolerance values
+ * @param[out]	s       (distances to intersection) (see below)
+ * @param[out]  t       (distances to intersection) (see below)
  *
  *		When return = 1, pdist is the distance along line p0->p1 to the
  *		intersect with line q0->q1. If the intersect is along p0->p1 but

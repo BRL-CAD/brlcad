@@ -69,17 +69,13 @@ __BEGIN_DECLS
  */
 
 /**
- *@brief
- *
- *  Convert Matrix to Quaternion.
+ *@brief  Convert Matrix to Quaternion.
  */
 BN_EXPORT extern void quat_mat2quat(quat_t quat,
 				    const mat_t mat);
 
 /**
- *@brief
- *
- *  Convert Quaternion to Matrix.
+ *@brief  Convert Quaternion to Matrix.
  *
  * NB: This only works for UNIT quaternions.  We may get imaginary results
  *   otherwise.  We should normalize first (still yields same rotation).
@@ -88,18 +84,16 @@ BN_EXPORT extern void quat_quat2mat(mat_t mat,
 				    const quat_t quat);
 
 /**
- *@brief
- *
- * Gives the euclidean distance between two quaternions.
- *
+ *@brief Gives the euclidean distance between two quaternions.
  */
 BN_EXPORT extern double quat_distance(const quat_t q1,
 				      const quat_t q2);
 
 /**
  *@brief
- * Gives the quaternion point representing twice the rotation
+ *   Gives the quaternion point representing twice the rotation
  *   from q1 to q2.
+ *
  *   Needed for patching Bezier curves together.
  *   A rather poor name admittedly.
  */
@@ -108,8 +102,8 @@ BN_EXPORT extern void quat_double(quat_t qout,
 				  const quat_t q2);
 
 /**
- *@brief
- * Gives the bisector of quaternions q1 and q2.
+ *@brief Gives the bisector of quaternions q1 and q2.
+ *
  * (Could be done with quat_slerp and factor 0.5)
  * [I believe they must be unit quaternions this to work]
  */

@@ -137,7 +137,7 @@ double tp_ipow (double x, int n)
  *   tp_fixsc(x, npts, size, xs, xmin, xmax, dx)
  *   where
  *
- * @param	x[]	the data array to be scaled
+ * @param	x	the data array to be scaled
  * @param	npts	the number of elements in x[]
  * @param	size	the length into which x[] is supposed to be fitted
  * 			(in inches)
