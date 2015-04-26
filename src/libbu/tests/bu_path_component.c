@@ -66,7 +66,7 @@ main(int argc, char *argv[])
 {
     /* If we don't have any args at all, test NULL */
     if (argc == 1) {
-	compare(NULL, NULL, 0);
+	compare(NULL, NULL, PATH_FILE_EXTENSION);
     }
     if (argc == 2) {
 	printf("Testing empty path handling\n");
