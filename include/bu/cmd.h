@@ -94,10 +94,9 @@ BU_EXPORT extern int bu_cmd(const struct bu_cmdtab *cmds, int argc, const char *
 
 /** @file cmdhist.c
  *
- * @brief
  * Routines for maintaining a command history
- *
  */
+
 /**
  * @brief
  * Prints out the command history.
