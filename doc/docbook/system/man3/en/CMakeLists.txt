@@ -21,7 +21,7 @@ if(BRLCAD_EXTRADOCS_PDF_MAN)
   DOCBOOK_TO_PDF(man3 docbook_man3_EN pdf/man3/en "")
 endif(BRLCAD_EXTRADOCS_PDF_MAN)
 
-CMAKEFILES(libbu.xml libdm.xml)
+CMAKEFILES(libbu.xml libdm.xml TODO)
 
 # Local Variables:
 # tab-width: 8
