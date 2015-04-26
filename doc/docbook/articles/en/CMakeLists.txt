@@ -4,13 +4,13 @@ set(docbook_articles_EN
   animation_tutorial.xml
   build_pattern.xml
   build_region.xml
+  camo_shader.xml
   ebm_primitive.xml
   mgedrc.xml
   nirt.xml
   oed.xml
   pipes.xml
   projection_shader.xml
-  shader.xml
   tire.xml
   )
 
