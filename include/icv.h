@@ -156,8 +156,8 @@ ICV_EXPORT extern icv_image_t *icv_create(size_t width, size_t height, ICV_COLOR
  * @param bif ICV struct where data is to be written
  * @param y Index of the line at which data is to be written. 0 for
  * the first line
- * @data Line Data to be written
- * @type Type of data, e.g., uint8 data specify ICV_DATA_UCHAR or 1
+ * @param data Line Data to be written
+ * @param type Type of data, e.g., uint8 data specify ICV_DATA_UCHAR or 1
  * @return on success 0, on failure -1
  */
 ICV_EXPORT int icv_writeline(icv_image_t *bif, size_t y, void *data, ICV_DATA type);
@@ -170,7 +170,7 @@ ICV_EXPORT int icv_writeline(icv_image_t *bif, size_t y, void *data, ICV_DATA ty
  * @param x x-dir coordinate of the pixel
  * @param y y-dir coordinate of the pixel. (0,0) coordinate is taken
  * as bottom left
- * @data Data to be written
+ * @param data Data to be written
  * @return on success 0, on failure -1
  */
 ICV_EXPORT int icv_writepixel(icv_image_t *bif, size_t x, size_t y, double *data);
@@ -202,11 +202,11 @@ ICV_EXPORT extern int icv_write(icv_image_t *bif, const char*filename, mime_imag
  * size = total bytes read
  *
  * @param filename File to read
- * @param hint_format Probable format of the file, typically
+ * @param format Probable format of the file, typically
  * ICV_IMAGE_AUTO
- * @param hint_width Width when passed as parameter from calling
+ * @param width Width when passed as parameter from calling
  * program.
- * @param hint_height Height when passed as parameter from calling
+ * @param height Height when passed as parameter from calling
  * program.
  * @return A newly allocated struct holding the loaded image info.
  */
@@ -214,7 +214,7 @@ ICV_EXPORT extern icv_image_t *icv_read(const char *filename, mime_image_t forma
 
 /**
  * This function zeroes all the data entries of an image
- * @param img Image Structure
+ * @param bif Image Structure
  */
 ICV_EXPORT extern icv_image_t *icv_zero(icv_image_t *bif);
 
