@@ -578,9 +578,9 @@ remove_hole(int **poly, const size_t poly_npts, const int *hole, const size_t ho
     point2d_t hpnt, ep, e1, e2, isect;
     vect_t hdir;
     struct bn_tol ltol = {BN_TOL_MAGIC, BN_TOL_DIST, BN_TOL_DIST * BN_TOL_DIST, 1e-6, 1.0 - 1e-6 };
-    VSETALL(e1,0);
-    VSETALL(e2,0);
-    VSETALL(isect,0);
+    V2SETALL(e1,0);
+    V2SETALL(e2,0);
+    V2SETALL(isect,0);
     for (iter = 0; iter < poly_npts; iter++) {
 	if (pts[(*poly)[iter]][0] > poly_largest_x) {
 	    poly_largest_x = pts[(*poly)[iter]][0];
