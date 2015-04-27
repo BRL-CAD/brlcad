@@ -759,6 +759,7 @@ do_frame(int framenumber)
 
 	/* Ordinary case for creating output file */
 	if (outfp == NULL) {
+#ifndef RT_TXT_OUTPUT
 	    /* FIXME: in the case of rtxray, this is wrong.  it writes
 	     * out a bw image so depth should be just 1, not 3.
 	     */
@@ -769,6 +770,14 @@ do_frame(int framenumber)
 		if (matflag) return 0;	/* OK */
 		return -1;			/* Bad */
 	    }
+#else
+	    outfp = fopen(framename, "w");
+	    if (outfp == NULL) {
+		perror(framename);
+		if (matflag) return 0;	/* OK */
+		return -1;			/* Bad */
+	    }
+#endif
 	}
 
 	if (rt_verbosity & VERBOSE_OUTPUTFILE)
