@@ -41,6 +41,7 @@ compare(const char *input, const char *expected_str, path_component_t type)
     if (expected_str && !found) {
 	bu_log("%24s -> %24s (should be: %s) [FAIL]\n", input, bu_vls_addr(&component), expected_str);
 	bu_vls_free(&component);
+	bu_exit(EXIT_FAILURE, "");
 	return;
     }
     if (!expected_str && !found) {
@@ -64,57 +65,53 @@ compare(const char *input, const char *expected_str, path_component_t type)
 int
 main(int argc, char *argv[])
 {
+    const char *control = NULL;
+    int intarg = 0;
+
     /* If we don't have any args at all, test NULL */
     if (argc == 1) {
 	compare(NULL, NULL, PATH_FILE_EXTENSION);
     }
+
     if (argc == 2) {
 	printf("Testing empty path handling\n");
 	compare("", NULL, PATH_FILE_EXTENSION);
     }
+
     /* If we have an input and a number, do the empty test */
     if (argc == 3) {
-	int intarg = atoi(argv[2]);
-	printf("Testing path \"%s\", component %d\n", argv[1], intarg);
-	switch (intarg) {
-	    case 0:
-		compare(argv[1], NULL, PATH_FILE_EXTENSION);
-		break;
-	    case 1:
-		compare(argv[1], NULL, PATH_FILENAME);
-		break;
-	    case 2:
-		compare(argv[1], NULL, PATH_ROOT_FILENAME);
-		break;
-	    case 3:
-		compare(argv[1], NULL, PATH_DIRECTORY);
-		break;
-	    default:
-		bu_log("Error - unknown component\n");
-		break;
-	}
+	intarg = atoi(argv[2]);
     }
+
     /* If we have a standard to test against, use it */
     if (argc == 4) {
-	int intarg = atoi(argv[3]);
-	printf("Testing path \"%s\", component %d\n", argv[1], intarg);
-	switch (intarg) {
-	    case 0:
-		compare(argv[1], argv[2], PATH_FILE_EXTENSION);
-		break;
-	    case 1:
-		compare(argv[1], argv[2], PATH_FILENAME);
-		break;
-	    case 2:
-		compare(argv[1], argv[2], PATH_ROOT_FILENAME);
-		break;
-	    case 3:
-		compare(argv[1], argv[2], PATH_DIRECTORY);
-		break;
-	    default:
-		bu_log("Error - unknown component\n");
-		break;
-	}
+	intarg = atoi(argv[3]);
+	control = argv[2];
+    }
+
+    printf("Testing path \"%s\", component %d\n", argv[1], intarg);
+    switch (intarg) {
+	case 0:
+	    compare(argv[1], control, PATH_FILE_EXTENSION);
+	    break;
+	case 1:
+	    compare(argv[1], control, PATH_FILENAME);
+	    break;
+	case 2:
+	    compare(argv[1], control, PATH_ROOT_FILENAME);
+	    break;
+	case 3:
+	    compare(argv[1], control, PATH_DIRECTORY);
+	    break;
+	case 4:
+	    compare(argv[1], control, PATH_PROTOCOL);
+	    break;
+	case 5:
+	    compare(argv[1], control, PATH_ADDRESS);
+	    break;
+	default:
+	    bu_log("Error - unknown component\n");
+	    break;
     }
 
     return 0;

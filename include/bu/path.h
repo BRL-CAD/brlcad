@@ -147,6 +147,18 @@ BU_EXPORT extern const char *bu_normalize(const char *path);
  * PATH_FILENAME        Name after last directory separator in path
  * PATH_FILE_EXTENSION  File extension of PATH_FILENAME
  * PATH_ROOT_FILENAME   PATH_FILENAME without PATH_FILE_EXTENSION
+ * PATH_PROTOCOL        If the path has a ':' character, return the string before the first ':'
+ * PATH_ADDRESS         If the path has a ':' character, return the string after the first ':'
+ *
+ * Both PATH_PROTOCOL and PATH_ADDRESS will return 0 if there
+ * is not at least one ':' character in the path.  The path
+ * protocol is useful for obtaining driver letters in DOS style
+ * paths, or formats in Imagemagick style format prefix specifiers:
+ *
+ * bu_path_component(*out, "C:/some/file/path", PATH_PROTOCOL) -> "C"
+ * bu_path_component(*out, "C:/some/file/path", PATH_ADDRESS) -> "/some/file/path"
+ * bu_path_component(*out, "png:/some/image/file ", PATH_PROTOCOL) -> "png"
+ * bu_path_component(*out, "png:/some/image/file ", PATH_ADDRESS) -> "/some/image/file"
  *
  * returns 0 if the specified component was not found, 1
  * if it was.  If the bu_vls pointer component is not NULL,
@@ -157,7 +169,9 @@ typedef enum {
     PATH_FILE_EXTENSION,
     PATH_FILENAME,
     PATH_ROOT_FILENAME,
-    PATH_DIRECTORY
+    PATH_DIRECTORY,
+    PATH_PROTOCOL,
+    PATH_ADDRESS
 } path_component_t;
 
 BU_EXPORT extern int bu_path_component(struct bu_vls *component,

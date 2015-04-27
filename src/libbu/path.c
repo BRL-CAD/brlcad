@@ -139,26 +139,15 @@ bu_path_component(struct bu_vls *component, const char *path, path_component_t t
 {
     int ret = 0;
     char *basename = NULL;
-    char *basename_free = NULL;
     char *dirname = NULL;
     char *period_pos = NULL;
+    char *colon_pos = NULL;
     struct bu_vls working_path = BU_VLS_INIT_ZERO;
 
     if (UNLIKELY(!path) || UNLIKELY(strlen(path)) == 0) goto cleanup;
 
-    if (type != PATH_DIRECTORY) {
-	/* get the base name */
-	basename = (char *)bu_calloc(strlen(path) + 2, sizeof(char), "basename");
-	bu_basename(basename, path);
-
-	/* Make sure we can manipulate the results and
-	 * still properly free memory */
-	basename_free = basename;
-    }
-
     switch (type) {
 	case PATH_DIRECTORY:
-	    /* get the directory */
 	    dirname = bu_dirname(path);
 	    if (!(!dirname || strlen(dirname) == 0)) {
 		ret = 1;
@@ -168,6 +157,7 @@ bu_path_component(struct bu_vls *component, const char *path, path_component_t t
 	    }
 	    break;
 	case PATH_FILENAME:
+	    basename = (char *)bu_calloc(strlen(path) + 2, sizeof(char), "basename");
 	    bu_basename(basename, path);
 	    if (strlen(basename) > 0) {
 		ret = 1;
@@ -177,17 +167,19 @@ bu_path_component(struct bu_vls *component, const char *path, path_component_t t
 	    }
 	    break;
 	case PATH_ROOT_FILENAME:
-	    /* get the base name */
+	    basename = (char *)bu_calloc(strlen(path) + 2, sizeof(char), "basename");
 	    bu_basename(basename, path);
 	    if (strlen(basename) > 0) {
 		ret = 1;
-		period_pos = strrchr(basename, '.');
-		bu_vls_sprintf(component, "%s", basename);
-		bu_vls_trunc(component, -1 * strlen(period_pos));
+		if (component) {
+		    period_pos = strrchr(basename, '.');
+		    bu_vls_sprintf(component, "%s", basename);
+		    bu_vls_trunc(component, -1 * strlen(period_pos));
+		}
 	    }
 	    break;
 	case PATH_FILE_EXTENSION:
-	    /* get the base name */
+	    basename = (char *)bu_calloc(strlen(path) + 2, sizeof(char), "basename");
 	    bu_basename(basename, path);
 	    if (strlen(basename) > 0) {
 		period_pos = strrchr(basename, '.');
@@ -199,12 +191,39 @@ bu_path_component(struct bu_vls *component, const char *path, path_component_t t
 		    }
 		}
 	    }
+	    break;
+	case PATH_PROTOCOL:
+	    colon_pos = strchr(path, ':');
+	    if (colon_pos) {
+		bu_vls_sprintf(&working_path, "%s", path);
+		bu_vls_trunc(&working_path, -1 * strlen(colon_pos));
+		if (bu_vls_strlen(&working_path) > 0) {
+		    ret = 1;
+		    if (component) {
+			bu_vls_sprintf(component, "%s", bu_vls_addr(&working_path));
+		    }
+		}
+	    }
+	    break;
+	case PATH_ADDRESS:
+	    colon_pos = strchr(path, ':');
+	    if (colon_pos) {
+		bu_vls_sprintf(&working_path, "%s", path);
+		bu_vls_nibble(&working_path, strlen(path) - strlen(colon_pos) + 1);
+		if (bu_vls_strlen(&working_path) > 0) {
+		    ret = 1;
+		    if (component) {
+			bu_vls_sprintf(component, "%s", bu_vls_addr(&working_path));
+		    }
+		}
+	    }
+	    break;
 	default:
 	    break;
     }
 
 cleanup:
-    if (basename_free) bu_free(basename_free, "basename");
+    if (basename) bu_free(basename, "basename");
     if (dirname) bu_free(dirname, "dirname");
     bu_vls_free(&working_path);
     return ret;

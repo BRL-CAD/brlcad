@@ -46,6 +46,10 @@ add_test(NAME bu_path_component_sl_usr_sl_dir_sl_file_0    COMMAND tester_bu_pat
 add_test(NAME bu_path_component_sl_usr_sl_dir_sl_file_1    COMMAND tester_bu_path_component "/usr/dir/file.ext" "file.ext" 1)
 add_test(NAME bu_path_component_sl_usr_sl_dir_sl_file_2    COMMAND tester_bu_path_component "/usr/dir/file.ext" "file" 2)
 add_test(NAME bu_path_component_sl_usr_sl_dir_sl_file_3    COMMAND tester_bu_path_component "/usr/dir/file.ext" "/usr/dir" 3)
+add_test(NAME bu_path_component_C_dir1_dir2_name_ext_4     COMMAND tester_bu_path_component "C:/dir1/dir2/name.ext" "C" 4)
+add_test(NAME bu_path_component_C_dir1_dir2_name_ext_5     COMMAND tester_bu_path_component "C:/dir1/dir2/name.ext" "/dir1/dir2/name.ext" 5)
+add_test(NAME bu_path_component_png:dir/file.ext_4         COMMAND tester_bu_path_component "png:dir/file.ext" "png" 4)
+add_test(NAME bu_path_component_png:dir/file.ext_5         COMMAND tester_bu_path_component "png:dir/file.ext" "dir/file.ext" 5)
 
 
 ################################
