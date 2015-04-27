@@ -1368,6 +1368,71 @@ sub_curve(const ON_Curve *in, double a, double b);
  */
 extern BREP_EXPORT ON_Surface *
 sub_surface(const ON_Surface *in, int dir, double a, double b);
+
+/* Shape recognition functions - HIGHLY EXPERIMENTAL,
+ * DO NOT RELY ON */
+
+/* Structure for holding parameters corresponding
+ * to a csg primitive.  Not all parameters will be
+ * used for all primitives - the structure includes
+ * enough data slots to describe any primitive that may
+ * be matched by the shape recognition logic */
+struct csg_object_params {
+    char bool_op; /* Boolean operator - u = union (default), - = subtraction, + = intersection */
+    point_t origin;
+    vect_t hv;
+    fastf_t radius;
+    fastf_t r2;
+    fastf_t height;
+    int arb_type;
+    point_t p[8];
+    plane_t *planes;
+};
+
+struct subbrep_object_data {
+    struct bu_vls *key;
+    struct bu_vls *name_root;
+    int *obj_cnt;
+    int *faces;
+    int *loops;
+    int *edges;
+    int *fol; /* Faces with outer loops in object loop network */
+    int *fil; /* Faces with only inner loops in object loop network */
+    int faces_cnt;
+    int loops_cnt;
+    int edges_cnt;
+    int fol_cnt;
+    int fil_cnt;
+
+    const ON_Brep *brep;
+    ON_Brep *local_brep;
+    int type;
+    csg_object_params *params;
+    subbrep_object_data *planar_obj;
+    int planar_obj_vert_cnt;
+    int *planar_obj_vert_map;
+    subbrep_object_data *parent;
+    struct bu_ptbl *children;
+    int is_island;
+    /* Irrespective of the broader context, is the shape
+     * itself negative?  This is not meaningful for general
+     * combs, but individual shapes like cylinders and spheres
+     * (even when they are "trimmed down" by other CSG primitives
+     * are "negative" if their normals point inward.
+     * -1 = negative
+     *  1 = positive
+     *  0 = unknown/unset */
+    int negative_shape;
+    ON_BoundingBox *bbox;
+    int bbox_set;
+};
+
+extern BREP_EXPORT void subbrep_object_free(struct subbrep_object_data *obj);
+extern BREP_EXPORT struct bu_ptbl *find_subbreps(const ON_Brep *brep);
+extern BREP_EXPORT struct bu_ptbl *find_top_level_hierarchy(struct bu_ptbl *subbreps);
+extern BREP_EXPORT int subbrep_polygon_tri(const ON_Brep *brep, const point_t *all_verts, int *loops, int loop_cnt, int **ffaces);
+
+
 } /* extern C++ */
 #endif
 
