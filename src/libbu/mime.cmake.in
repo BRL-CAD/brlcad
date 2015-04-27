@@ -13,6 +13,7 @@ file(APPEND ${mime_h_file} "__BEGIN_DECLS\n")
 file(WRITE ${mime_c_file} "/* Functions for mapping file extensions to mime type. Automatically\n * generated from mime.types and mime_cad.types.\n * Do not edit these files directly - apply updates to include/bu source files. */\n\n")
 file(APPEND ${mime_c_file} "#include \"common.h\"\n")
 file(APPEND ${mime_c_file} "#include \"bu/mime.h\"\n")
+file(APPEND ${mime_c_file} "#include \"bu/file.h\"\n")
 file(APPEND ${mime_c_file} "#include \"bu/str.h\"\n")
 
 set(MIME_TYPES "${MIME_TYPES}\n${CAD_TYPES}")
