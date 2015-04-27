@@ -7,6 +7,7 @@ macro(ADD_COMGEOM_V5_G_TARGET comgeom_model folder)
   set(output_file ${bin_root}/${DATA_DIR}/db/${comgeom_model_root}.g)
   add_custom_command(
     OUTPUT ${output_file}
+    COMMAND ${CMAKE_COMMAND} -E remove ${output_file}
     COMMAND comgeom-g -v 5 ${CMAKE_CURRENT_SOURCE_DIR}/${comgeom_model} ${output_file}
     DEPENDS comgeom-g ${CMAKE_CURRENT_SOURCE_DIR}/${comgeom_model}
   )
