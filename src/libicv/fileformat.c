@@ -28,9 +28,11 @@
 #include "bio.h"
 
 #include "bu/str.h"
+#include "bu/file.h"
 #include "bu/log.h"
 #include "bu/malloc.h"
 #include "bu/mime.h"
+#include "bu/path.h"
 #include "bn.h"
 #include "vmath.h"
 #include "icv.h"
@@ -107,6 +109,64 @@ icv_guess_file_format(const char *filename, char *trimmedname)
     /* defaulting to PIX */
     return MIME_IMAGE_PIX;
 }
+
+mime_image_t
+icv_image_type(const char *path)
+{
+    int type_int = 0;
+    mime_image_t type = MIME_IMAGE_UNKNOWN;
+    struct bu_vls tmp = BU_VLS_INIT_ZERO;
+
+    if (UNLIKELY(!path) || UNLIKELY(strlen(path) == 0)) return MIME_IMAGE_UNKNOWN;
+
+    /* See if we have a protocol prefix */
+    if (!bu_path_component(&tmp, path, PATH_PROTOCOL)) {
+	/* No prefix - try extension */
+	if (bu_path_component(&tmp , path, PATH_FILE_EXTENSION)) {
+	    type_int = bu_file_mime(bu_vls_addr(&tmp), MIME_IMAGE);
+	    type = (mime_image_t)type_int;
+	}
+    } else {
+	/* See if the prefix specifies an image type */
+	type_int = bu_file_mime(bu_vls_addr(&tmp), MIME_IMAGE);
+	type = (mime_image_t)type_int;
+	if (type == MIME_IMAGE_UNKNOWN) {
+	    /* Prefix didn't map to an image - try extension */
+	    if (bu_path_component(&tmp , path, PATH_FILE_EXTENSION)) {
+		type_int = bu_file_mime(bu_vls_addr(&tmp), MIME_IMAGE);
+		type = (mime_image_t)type_int;
+	    }
+	}
+    }
+    bu_vls_free(&tmp);
+    return type;
+}
+
+int
+icv_file_name(struct bu_vls *filename, const char *path)
+{
+    if (UNLIKELY(!filename) || UNLIKELY(!path) || UNLIKELY(strlen(path) == 0)) return 1;
+
+    /* See if we have a protocol prefix */
+    if (!bu_path_component(filename, path, PATH_PROTOCOL)) {
+	/* No prefix - if we still have a leading ":" char we want just the address */
+	if (!bu_path_component(filename, path, PATH_ADDRESS)) {
+	    bu_vls_sprintf(filename, "%s", path);
+	}
+	return 0;
+    } else {
+	/* Have prefix - if it's an image prefix strip it, otherwise leave it */
+	if (bu_file_mime(bu_vls_addr(filename), MIME_IMAGE) != (int)MIME_IMAGE_UNKNOWN) {
+	    return !bu_path_component(filename, path, PATH_ADDRESS);
+	} else {
+	    bu_vls_sprintf(filename, "%s", path);
+	    return 0;
+	}
+    }
+    /* Shouldn't get here */
+    return 1;
+}
+
 
 HIDDEN int
 png_write(icv_image_t *bif, const char *filename)

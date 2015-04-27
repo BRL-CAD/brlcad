@@ -30,6 +30,7 @@
 #include <stddef.h> /* for size_t */
 
 #include "bu/mime.h"
+#include "bu/vls.h"
 
 __BEGIN_DECLS
 
@@ -128,12 +129,45 @@ typedef struct icv_image icv_image_t;
 /**
  * Finds the Image format based on heuristics depending on the file
  * name.
+ *
+ * TODO - can we deprecated this in favor of the two functions below?
+ *
  * @param filename Filename of the image whose format is to be  know
  * @param trimmedname Buffer for storing filename after removing
  * extensions
  * @return File Format
  */
 ICV_EXPORT extern mime_image_t icv_guess_file_format(const char *filename, char *trimmedname);
+
+/**
+ * Finds the image format based on the following heuristics:
+ *
+ * 1.  Looks for a format header in the style of Imagemagick:
+ *
+ *     png:/dir/file.gif -> png image
+ *
+ * 2.  If #1 fails, check the file extension
+ *
+ *     /dir/file.jpg -> jpeg image
+ *
+ * 3.  If neither of those methods finds a known image format,
+ *     return MIME_IMAGE_UNKNOWN
+ *
+ * @param path path of the image whose format is to be know
+ * @return image file format mime type
+ */
+ICV_EXPORT extern mime_image_t icv_image_type(const char *path);
+
+/**
+ * Extract the image file name from the path string, stripping the
+ * image format header if present.
+ *
+ * @param      path 	Path of the image, which may or may not include a format header
+ * @param[out] filename Path with any format header removed.
+ * @return 0 if filename found, 1 if no filename found
+ */
+ICV_EXPORT extern int icv_file_name(struct bu_vls *filename, const char *path);
+
 
 /**
  * This function allocates memory for an image and returns the
