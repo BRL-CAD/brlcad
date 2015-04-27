@@ -19,6 +19,7 @@ set(bu_headers
   mapped_file.h
   parallel.h
   parse.h
+  path.h
   ptbl.h
   rb.h
   simd.h
