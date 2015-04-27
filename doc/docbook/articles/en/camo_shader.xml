@@ -20,7 +20,7 @@ The fractal noise function produces a pseudo- random number in the range [-1.0 .
      <entry>Noise Value</entry>
 	<entry>Object Color</entry>
       </row>
-</thead>      
+</thead>
 <tbody>
 <row>
         <entry>nv &#60; thresh1 </entry>        <entry>color 1</entry>
@@ -37,7 +37,7 @@ and nv &#60; thresh2</entry>
     </tbody>
 </tgroup>
 </table>
-</para> 
+</para>
  <para>
 The fractal pattern has infinite resolution. As a result, the borders of the color splashes never become pixelated, no mater how close the eyepoint is to the surface.
 </para>
@@ -60,7 +60,7 @@ The fractal pattern has infinite resolution. As a result, the borders of the col
      <entry spanname='hspan'>Noise Parameters</entry>
 
 </row>
-</thead>      
+</thead>
 <tbody>
 <row>
      <entry>lacunarity</entry>

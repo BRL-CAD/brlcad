@@ -97,27 +97,27 @@ The following sequence creates a command history object, adds commands and trave
 </para>
 <para>
   <programlisting>
-cwish> ch_open ch 
-ch 
-cwish> ch add "cmd1" 
-cwish> ch add "cmd2" 
-cwish> ch prev 
-cmd2 
-cwish> ch prev 
-cmd1 
-cwish> ch curr 
-cmd1 
-cwish> ch add "cmd3" 
-cwish> ch prev 
-cmd3 
-cwish> ch prev 
-cmd2 
-cwish> ch next 
-cmd3 
-cwish> ch next 
-cwish> ch history 
-cmd1 
-cmd2 
+cwish> ch_open ch
+ch
+cwish> ch add "cmd1"
+cwish> ch add "cmd2"
+cwish> ch prev
+cmd2
+cwish> ch prev
+cmd1
+cwish> ch curr
+cmd1
+cwish> ch add "cmd3"
+cwish> ch prev
+cmd3
+cwish> ch prev
+cmd2
+cwish> ch next
+cmd3
+cwish> ch next
+cwish> ch history
+cmd1
+cmd2
 cmd3
 </programlisting>
     </para>

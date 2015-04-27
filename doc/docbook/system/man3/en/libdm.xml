@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <book xmlns="http://docbook.org/ns/docbook" version="5.0">
-  <info>  
+  <info>
     <title>LIBDM </title>
     <author>
       <personname>
@@ -14,7 +14,7 @@
     <email>mulferts@austin.dsccc.com</email>
   </address>
       </affiliation>
-    </author> 
+    </author>
 </info>
 <chapter>
   <title>
@@ -53,7 +53,7 @@ The following DM (display manager) types are supported:
             <row>
         <entry>plot</entry>
         <entry>unix plot file</entry>
-      </row>      
+      </row>
 </tbody>
 </tgroup>
 </table>
@@ -163,7 +163,7 @@ The following DM (display manager) types are supported:
               /* load the display manager with mat --- not using stereo */
     (void)DM_LOADMATRIX(dmp, mat, 0);
 </programlisting>
-      
+
       </para>
 <para>
 <emphasis>int</emphasis><emphasis role="bold"> DM_DRAW_STRING_2D</emphasis><emphasis> ( struct dm *dmp, char *str, int x, int y, int size, int use_aspect )</emphasis>
@@ -265,7 +265,7 @@ The following DM (display manager) types are supported:
     <programlisting>
           /* set the display manager up to draw fat dashed lines */
     (void)DM_SET_LINE_ATTR(dmp, 10, 1);
-      
+
     </programlisting>
   </para>
   <para>
@@ -425,7 +425,7 @@ The following DM (display manager) types are supported:
        <emphasis> int</emphasis><emphasis role="bold"> dm_processOptions</emphasis><emphasis>(struct dm *dmp, struct bu_vls *vls, int argc, char *argv[])</emphasis>
       </para>
       <para>
-       <emphasis> dm_processOptions </emphasis> is used primarily by LIBDM's display manager open routines to process options. The table below lists the available options. Note - the application would not typically call processOptions. The application would instead build the desired options into the argv list that is supplied to the call to DM_OPEN. 
+       <emphasis> dm_processOptions </emphasis> is used primarily by LIBDM's display manager open routines to process options. The table below lists the available options. Note - the application would not typically call processOptions. The application would instead build the desired options into the argv list that is supplied to the call to DM_OPEN.
       </para>
       <para>
           <table frame='all'>
@@ -713,7 +713,7 @@ pathName</emphasis><emphasis role="bold"> drawEnd
 <para>
 End the drawing sequence. This will cause the graphics pipe to be flushed.
 </para>
-<para> 
+<para>
   <emphasis>
 pathName drawGeom</emphasis><emphasis role="bold"> geo_obj(s)
 </emphasis>
@@ -753,7 +753,7 @@ pathName</emphasis><emphasis role="bold"> drawString str x y size use_aspect</em
 Draw the 2D string starting at position (x, y). The x and y coordinates are expected to be in the range [-1, 1]. The size is currently ignored. The use_aspect flag indicates whether or not to use the aspect ratio to modify the starting position.
 </para>
 <para>
-  <emphasis> 
+  <emphasis>
 pathName</emphasis><emphasis role="bold"> drawVList vlp</emphasis>
 
 </para>
@@ -769,7 +769,7 @@ pathName</emphasis><emphasis role="bold"> fg ["r g b"]
 Set/get the foreground color. The rgb components are expected to be integers between 0 and 255.
 </para>
 <para>
-  <emphasis> 
+  <emphasis>
 pathName</emphasis><emphasis role="bold"> flush
  </emphasis>
  </para>
@@ -915,16 +915,16 @@ Set/get zclipping mode. 0 indicates zclipping is off, while 1 indicates zclippin
 <para>
 <programlisting>
 The following sequence creates a display manager object and draws two yellow lines that connect the opposite corners of the window.
-cwish> dm_open .d X -t 0 -s 400 
-.d 
-cwish> pack .d -expand yes -fill both 
-cwish> .d drawBegin 
-cwish> .d fg "255 255 0" 
-cwish> .d drawLine -1 1 1 -1 
-cwish> .d drawLine -1 -1 1 1 
+cwish> dm_open .d X -t 0 -s 400
+.d
+cwish> pack .d -expand yes -fill both
+cwish> .d drawBegin
+cwish> .d fg "255 255 0"
+cwish> .d drawLine -1 1 1 -1
+cwish> .d drawLine -1 -1 1 1
 cwish> .d drawEnd
 </programlisting>
 </para>
 </section>
 </chapter>
-</book> 
+</book>
