@@ -70,7 +70,7 @@ list(APPEND LIBGCV_SOURCES
 BRLCAD_ADDLIB(libgcv "${LIBGCV_SOURCES}" "librt;libwdb;libbu" NO_STRICT_CXX)
 SET_TARGET_PROPERTIES(libgcv PROPERTIES VERSION 20.0.1 SOVERSION 20)
 
-BRLCAD_ADDEXEC(gcv gcv.c libgcv)
+BRLCAD_ADDEXEC(gcv_test gcv_test.c libgcv NO_INSTALL)
 
 enable_testing()
 BRLCAD_ADDEXEC(test_bottess test_bottess.c libgcv NO_INSTALL)
