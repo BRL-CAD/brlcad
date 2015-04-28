@@ -194,7 +194,8 @@ FMMspline(struct fortran_array *x, struct fortran_array *y, struct fortran_array
  * Compute the value of the interpolating polynomial thru x- and
  * y-arrays at the x-value of u, using Lagrange's equation.
  *
- * @param[in] x, y Tables of coordinates
+ * @param[in] x Tables of coordinates
+ * @param[in] y Tables of coordinates
  * @param[in] u value of x-coordinate for interpolation
  */
 static double
@@ -354,7 +355,8 @@ TableLookup(struct fortran_array *x, struct fortran_array *y, int order, fastf_t
  * ax and bx are the lift and right endpoints of the interval, tol is
  * the desired interval of uncertainty.
  *
- * @param[in] ax, bx left and right endpoints of interval
+ * @param[in] ax left endpoint of interval
+ * @param[in] bx right endpoint of interval
  * @param[in] tol desired interval of uncertainty
  */
 static fastf_t

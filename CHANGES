@@ -1026,3 +1026,5 @@ s/(#[[:space:]]*include[[:space:]]+["<])bin\.h/\1bnetwork.h/g
         rename bselect.h and bin.h public headers to be more declaratively named [7.25]
 s/db5_enc_len[(.*)]/DB5_ENC_LEN(\1)/g
 	replaced db5_enc_len[] global array with DB5_ENC_LEN() macro [7.25]
+s/db_normalize/bu_normalize/g
+	move the path normalization routine to libbu [7.25]

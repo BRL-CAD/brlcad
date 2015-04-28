@@ -30,6 +30,7 @@
 
 #include <string.h>
 
+#include "bu/path.h"
 #include "vmath.h"
 #include "raytrace.h"
 

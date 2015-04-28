@@ -29,6 +29,9 @@
 #include "common.h"
 #include <stddef.h> /* for size_t */
 
+#include "bu/mime.h"
+#include "bu/vls.h"
+
 __BEGIN_DECLS
 
 #ifndef ICV_EXPORT
@@ -46,25 +49,6 @@ __BEGIN_DECLS
 /** @addtogroup image */
 /** @ingroup data */
 /** @{ */
-
-typedef enum {
-    ICV_IMAGE_AUTO,
-    ICV_IMAGE_PIX,
-    ICV_IMAGE_BW,
-    ICV_IMAGE_DPIX,
-    ICV_IMAGE_ALIAS,
-    ICV_IMAGE_BMP,
-    ICV_IMAGE_CI,
-    ICV_IMAGE_ORLE,
-    ICV_IMAGE_PNG,
-    ICV_IMAGE_PPM,
-    ICV_IMAGE_PS,
-    ICV_IMAGE_RLE,
-    ICV_IMAGE_SPM,
-    ICV_IMAGE_SUN,
-    ICV_IMAGE_YUV,
-    ICV_IMAGE_UNKNOWN
-} ICV_IMAGE_FORMAT;
 
 typedef enum {
     ICV_COLOR_SPACE_RGB,
@@ -145,12 +129,45 @@ typedef struct icv_image icv_image_t;
 /**
  * Finds the Image format based on heuristics depending on the file
  * name.
+ *
+ * TODO - can we deprecated this in favor of the two functions below?
+ *
  * @param filename Filename of the image whose format is to be  know
  * @param trimmedname Buffer for storing filename after removing
  * extensions
  * @return File Format
  */
-ICV_EXPORT extern ICV_IMAGE_FORMAT icv_guess_file_format(const char *filename, char *trimmedname);
+ICV_EXPORT extern mime_image_t icv_guess_file_format(const char *filename, char *trimmedname);
+
+/**
+ * Finds the image format based on the following heuristics:
+ *
+ * 1.  Looks for a format header in the style of Imagemagick:
+ *
+ *     png:/dir/file.gif -> png image
+ *
+ * 2.  If #1 fails, check the file extension
+ *
+ *     /dir/file.jpg -> jpeg image
+ *
+ * 3.  If neither of those methods finds a known image format,
+ *     return MIME_IMAGE_UNKNOWN
+ *
+ * @param path path of the image whose format is to be know
+ * @return image file format mime type
+ */
+ICV_EXPORT extern mime_image_t icv_image_type(const char *path);
+
+/**
+ * Extract the image file name from the path string, stripping the
+ * image format header if present.
+ *
+ * @param      path 	Path of the image, which may or may not include a format header
+ * @param[out] filename Path with any format header removed.
+ * @return 0 if filename found, 1 if no filename found
+ */
+ICV_EXPORT extern int icv_file_name(struct bu_vls *filename, const char *path);
+
 
 /**
  * This function allocates memory for an image and returns the
@@ -173,8 +190,8 @@ ICV_EXPORT extern icv_image_t *icv_create(size_t width, size_t height, ICV_COLOR
  * @param bif ICV struct where data is to be written
  * @param y Index of the line at which data is to be written. 0 for
  * the first line
- * @data Line Data to be written
- * @type Type of data, e.g., uint8 data specify ICV_DATA_UCHAR or 1
+ * @param data Line Data to be written
+ * @param type Type of data, e.g., uint8 data specify ICV_DATA_UCHAR or 1
  * @return on success 0, on failure -1
  */
 ICV_EXPORT int icv_writeline(icv_image_t *bif, size_t y, void *data, ICV_DATA type);
@@ -187,7 +204,7 @@ ICV_EXPORT int icv_writeline(icv_image_t *bif, size_t y, void *data, ICV_DATA ty
  * @param x x-dir coordinate of the pixel
  * @param y y-dir coordinate of the pixel. (0,0) coordinate is taken
  * as bottom left
- * @data Data to be written
+ * @param data Data to be written
  * @return on success 0, on failure -1
  */
 ICV_EXPORT int icv_writepixel(icv_image_t *bif, size_t x, size_t y, double *data);
@@ -202,7 +219,7 @@ ICV_EXPORT int icv_writepixel(icv_image_t *bif, size_t x, size_t y, double *data
  * @param format Specific format of the file to be written.
  * @return on success 0, on failure -1 with log messages.
  */
-ICV_EXPORT extern int icv_write(icv_image_t *bif, const char*filename, ICV_IMAGE_FORMAT format);
+ICV_EXPORT extern int icv_write(icv_image_t *bif, const char*filename, mime_image_t format);
 
 /**
  * Load a file into an ICV struct. For most formats, this will be
@@ -219,19 +236,19 @@ ICV_EXPORT extern int icv_write(icv_image_t *bif, const char*filename, ICV_IMAGE
  * size = total bytes read
  *
  * @param filename File to read
- * @param hint_format Probable format of the file, typically
+ * @param format Probable format of the file, typically
  * ICV_IMAGE_AUTO
- * @param hint_width Width when passed as parameter from calling
+ * @param width Width when passed as parameter from calling
  * program.
- * @param hint_height Height when passed as parameter from calling
+ * @param height Height when passed as parameter from calling
  * program.
  * @return A newly allocated struct holding the loaded image info.
  */
-ICV_EXPORT extern icv_image_t *icv_read(const char *filename, ICV_IMAGE_FORMAT format, size_t width, size_t height);
+ICV_EXPORT extern icv_image_t *icv_read(const char *filename, mime_image_t format, size_t width, size_t height);
 
 /**
  * This function zeroes all the data entries of an image
- * @param img Image Structure
+ * @param bif Image Structure
  */
 ICV_EXPORT extern icv_image_t *icv_zero(icv_image_t *bif);
 

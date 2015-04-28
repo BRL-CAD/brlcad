@@ -115,6 +115,7 @@ set(LIBGED_SOURCES
   get_solid_kp.c
   get_type.c
   glob.c
+  gdiff.c
   gqa.c
   grid.c
   grid2model_lu.c

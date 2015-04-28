@@ -37,6 +37,7 @@
 #include "bu/log.h"
 #include "bu/malloc.h"
 #include "bu/parallel.h"
+#include "bu/path.h"
 #include "bu/str.h"
 
 /* internal storage for bu_getprogname/bu_setprogname */

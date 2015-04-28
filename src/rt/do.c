@@ -40,6 +40,7 @@
 
 #include "bu/getopt.h"
 #include "bu/debug.h"
+#include "bu/mime.h"
 #include "bu/vls.h"
 #include "vmath.h"
 #include "raytrace.h"
@@ -758,6 +759,7 @@ do_frame(int framenumber)
 
 	/* Ordinary case for creating output file */
 	if (outfp == NULL) {
+#ifndef RT_TXT_OUTPUT
 	    /* FIXME: in the case of rtxray, this is wrong.  it writes
 	     * out a bw image so depth should be just 1, not 3.
 	     */
@@ -768,6 +770,14 @@ do_frame(int framenumber)
 		if (matflag) return 0;	/* OK */
 		return -1;			/* Bad */
 	    }
+#else
+	    outfp = fopen(framename, "w");
+	    if (outfp == NULL) {
+		perror(framename);
+		if (matflag) return 0;	/* OK */
+		return -1;			/* Bad */
+	    }
+#endif
 	}
 
 	if (rt_verbosity & VERBOSE_OUTPUTFILE)
@@ -893,7 +903,7 @@ do_frame(int framenumber)
 	       wallclock, ((double)(rtip->rti_nrays))/wallclock);
     }
     if (bif != NULL) {
-	icv_write(bif, framename, ICV_IMAGE_AUTO);
+	icv_write(bif, framename, MIME_IMAGE_AUTO);
 	icv_destroy(bif);
 	bif = NULL;
     }

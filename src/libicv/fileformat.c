@@ -28,8 +28,11 @@
 #include "bio.h"
 
 #include "bu/str.h"
+#include "bu/file.h"
 #include "bu/log.h"
 #include "bu/malloc.h"
+#include "bu/mime.h"
+#include "bu/path.h"
 #include "bn.h"
 #include "vmath.h"
 #include "icv.h"
@@ -78,11 +81,11 @@ extern icv_image_t* ppm_read(const char *filename);
  * return the string as as return type (making the int type be an int*
  * argument instead that gets set).
  */
-ICV_IMAGE_FORMAT
+mime_image_t
 icv_guess_file_format(const char *filename, char *trimmedname)
 {
     /* look for the FMT: header */
-#define CMP(name) if (!bu_strncmp(filename, #name":", strlen(#name))) {bu_strlcpy(trimmedname, filename+strlen(#name)+1, BUFSIZ);return ICV_IMAGE_##name; }
+#define CMP(name) if (!bu_strncmp(filename, #name":", strlen(#name))) {bu_strlcpy(trimmedname, filename+strlen(#name)+1, BUFSIZ);return MIME_IMAGE_##name; }
     CMP(PIX);
     CMP(PNG);
     CMP(PPM);
@@ -95,7 +98,7 @@ icv_guess_file_format(const char *filename, char *trimmedname)
     bu_strlcpy(trimmedname, filename, BUFSIZ);
 
     /* and guess based on extension */
-#define CMP(name, ext) if (!bu_strncmp(filename+strlen(filename)-strlen(#name)-1, "."#ext, strlen(#name)+1)) return ICV_IMAGE_##name;
+#define CMP(name, ext) if (!bu_strncmp(filename+strlen(filename)-strlen(#name)-1, "."#ext, strlen(#name)+1)) return MIME_IMAGE_##name;
     CMP(PIX, pix);
     CMP(PNG, png);
     CMP(PPM, ppm);
@@ -104,8 +107,66 @@ icv_guess_file_format(const char *filename, char *trimmedname)
     CMP(DPIX, dpix);
 #undef CMP
     /* defaulting to PIX */
-    return ICV_IMAGE_UNKNOWN;
+    return MIME_IMAGE_PIX;
 }
+
+mime_image_t
+icv_image_type(const char *path)
+{
+    int type_int = 0;
+    mime_image_t type = MIME_IMAGE_UNKNOWN;
+    struct bu_vls tmp = BU_VLS_INIT_ZERO;
+
+    if (UNLIKELY(!path) || UNLIKELY(strlen(path) == 0)) return MIME_IMAGE_UNKNOWN;
+
+    /* See if we have a protocol prefix */
+    if (!bu_path_component(&tmp, path, PATH_PROTOCOL)) {
+	/* No prefix - try extension */
+	if (bu_path_component(&tmp , path, PATH_FILE_EXTENSION)) {
+	    type_int = bu_file_mime(bu_vls_addr(&tmp), MIME_IMAGE);
+	    type = (mime_image_t)type_int;
+	}
+    } else {
+	/* See if the prefix specifies an image type */
+	type_int = bu_file_mime(bu_vls_addr(&tmp), MIME_IMAGE);
+	type = (mime_image_t)type_int;
+	if (type == MIME_IMAGE_UNKNOWN) {
+	    /* Prefix didn't map to an image - try extension */
+	    if (bu_path_component(&tmp , path, PATH_FILE_EXTENSION)) {
+		type_int = bu_file_mime(bu_vls_addr(&tmp), MIME_IMAGE);
+		type = (mime_image_t)type_int;
+	    }
+	}
+    }
+    bu_vls_free(&tmp);
+    return type;
+}
+
+int
+icv_file_name(struct bu_vls *filename, const char *path)
+{
+    if (UNLIKELY(!filename) || UNLIKELY(!path) || UNLIKELY(strlen(path) == 0)) return 1;
+
+    /* See if we have a protocol prefix */
+    if (!bu_path_component(filename, path, PATH_PROTOCOL)) {
+	/* No prefix - if we still have a leading ":" char we want just the address */
+	if (!bu_path_component(filename, path, PATH_ADDRESS)) {
+	    bu_vls_sprintf(filename, "%s", path);
+	}
+	return 0;
+    } else {
+	/* Have prefix - if it's an image prefix strip it, otherwise leave it */
+	if (bu_file_mime(bu_vls_addr(filename), MIME_IMAGE) != (int)MIME_IMAGE_UNKNOWN) {
+	    return !bu_path_component(filename, path, PATH_ADDRESS);
+	} else {
+	    bu_vls_sprintf(filename, "%s", path);
+	    return 0;
+	}
+    }
+    /* Shouldn't get here */
+    return 1;
+}
+
 
 HIDDEN int
 png_write(icv_image_t *bif, const char *filename)
@@ -161,21 +222,21 @@ png_write(icv_image_t *bif, const char *filename)
 /* begin public functions */
 
 icv_image_t *
-icv_read(const char *filename, ICV_IMAGE_FORMAT format, size_t width, size_t height)
+icv_read(const char *filename, mime_image_t format, size_t width, size_t height)
 {
-    if (format == ICV_IMAGE_AUTO) {
+    if (format == MIME_IMAGE_AUTO) {
 	/* do some voodoo with the file magic or something... */
-	format = ICV_IMAGE_PIX;
+	format = MIME_IMAGE_PIX;
     }
 
     switch (format) {
-	case ICV_IMAGE_PIX:
+	case MIME_IMAGE_PIX:
 	    return pix_read(filename, width, height);
-	case ICV_IMAGE_BW :
+	case MIME_IMAGE_BW :
 	    return bw_read(filename, width, height);
-	case ICV_IMAGE_DPIX :
+	case MIME_IMAGE_DPIX :
 	    return dpix_read(filename, width, height);
-	case ICV_IMAGE_PPM :
+	case MIME_IMAGE_PPM :
 	    return ppm_read(filename);
 	default:
 	    bu_log("icv_read not implemented for this format\n");
@@ -185,29 +246,29 @@ icv_read(const char *filename, ICV_IMAGE_FORMAT format, size_t width, size_t hei
 
 
 int
-icv_write(icv_image_t *bif, const char *filename, ICV_IMAGE_FORMAT format)
+icv_write(icv_image_t *bif, const char *filename, mime_image_t format)
 {
     /* FIXME: should not be introducing fixed size buffers */
     char buf[BUFSIZ] = {0};
 
-    if (format == ICV_IMAGE_AUTO) {
-	format = (ICV_IMAGE_FORMAT)icv_guess_file_format(filename, buf);
+    if (format == MIME_IMAGE_AUTO) {
+	format = icv_guess_file_format(filename, buf);
     }
 
     ICV_IMAGE_VAL_INT(bif);
 
     switch (format) {
-	/* case ICV_IMAGE_BMP:
+	/* case MIME_IMAGE_BMP:
 	   return bmp_write(bif, filename); */
-	case ICV_IMAGE_PPM:
+	case MIME_IMAGE_PPM:
 	    return ppm_write(bif, filename);
-	case ICV_IMAGE_PNG:
+	case MIME_IMAGE_PNG:
 	    return png_write(bif, filename);
-	case ICV_IMAGE_PIX:
+	case MIME_IMAGE_PIX:
 	    return pix_write(bif, filename);
-	case ICV_IMAGE_BW:
+	case MIME_IMAGE_BW:
 	    return bw_write(bif, filename);
-	case ICV_IMAGE_DPIX :
+	case MIME_IMAGE_DPIX :
 	    return dpix_write(bif, filename);
 	default:
 	    bu_log("Unrecognized format.  Outputting in PIX format.\n");

@@ -142,7 +142,7 @@ main(int UNUSED(argc), const char **UNUSED(argv))
 	int **hole_array = (int **)bu_calloc(1, sizeof(int *), "hole_array");
 	size_t hole_cnt = 4;
 
-	point2d_t points[14] = {{0}};
+	point2d_t points[16] = {{0}};
 	V2SET(points[0], 2, -3);
 	V2SET(points[1], 3, -2);
 	V2SET(points[2], 4, -1.5);

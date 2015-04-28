@@ -111,7 +111,7 @@ ninterp(icv_image_t* bif, size_t out_width, size_t out_height)
     size_t i, j;
     size_t x, y;
     size_t widthstep;
-    double *in_r, *in_c; /*<< Pointer to row and col of input buffers*/
+    double *in_r, *in_c; /* Pointer to row and col of input buffers */
     double *out_data, *out_p;
     xstep = (double)(bif->width-1) / (double)(out_width) - 1.0e-06;
     ystep = (double)(bif->height-1) / (double)(out_height) - 1.0e-06;
@@ -159,7 +159,7 @@ binterp(icv_image_t *bif, size_t out_width, size_t out_height)
     double x, y, dx, dy, mid1, mid2;
     double xstep, ystep;
     double *out_data, *out_p;
-    double *upp_r, *low_r; /*<< upper and lower row */
+    double *upp_r, *low_r; /* upper and lower row */
     double *upp_c, *low_c;
     size_t widthstep;
 

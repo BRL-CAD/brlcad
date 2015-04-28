@@ -93,7 +93,7 @@ BN_EXPORT int bn_2d_chull(point2d_t** hull, const point2d_t* points_2d, int n);
  *    contains the bounding hull expressed in the 3D coordinate space of the
  *    original points.
  *
- * @param[out]	hull_3d convex hull array vertices using 3-space coordinates in ccw orientation (max is n)
+ * @param[out]	hull convex hull array vertices using 3-space coordinates in ccw orientation (max is n)
  * @param	points_3d The input points for which a convex hull will be built
  * @param	n the number of points in the input set
  * @return the number of points in the output hull array
@@ -113,7 +113,7 @@ BN_EXPORT int bn_3d_coplanar_chull(point_t** hull, const point_t* points_3d, int
  * @param[out]  vertices the set of vertices used by the convex hull.
  * @param[out]  num_vertices the number of vertices in the convex hull.
  * @param	input_points_3d The input points for which a convex hull will be built
- * @param	num_input_points the number of points in the input set
+ * @param	num_input_pnts the number of points in the input set
  * @return dimension of output (3 is three dimensional faces and hulls, 2 is a polygon hull in a plane, etc.)
  *
  * This routine is based off of Ken Clarkson's hull program from

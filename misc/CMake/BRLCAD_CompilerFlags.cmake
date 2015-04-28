@@ -96,7 +96,7 @@ endif(${BRLCAD_OPTIMIZED_BUILD} MATCHES "OFF" AND BRLCAD_FLAGS_DEBUG)
 if(BRLCAD_ENABLE_COMPILER_WARNINGS OR BRLCAD_ENABLE_STRICT)
   # also of interest:
   # -Wunreachable-code -Wmissing-declarations -Wmissing-prototypes -Wstrict-prototypes -ansi
-  # -Wformat=2 (after bu_fopen_uniq() is obsolete) -Wdocumentation (for Doxygen comments)
+  # -Wformat=2 (after bu_fopen_uniq() is obsolete)
   CHECK_C_FLAG(pedantic)
   CHECK_CXX_FLAG(pedantic)
 
@@ -163,6 +163,11 @@ if(BRLCAD_ENABLE_COMPILER_WARNINGS OR BRLCAD_ENABLE_STRICT)
   # this is for X11 headers, they use variadic macros
   CHECK_C_FLAG(Wno-variadic-macros)
   CHECK_CXX_FLAG(Wno-variadic-macros)
+
+  # this is used to check Doxygen comment syntax
+  CHECK_C_FLAG(Wdocumentation)
+  CHECK_CXX_FLAG(Wdocumentation)
+
 endif(BRLCAD_ENABLE_COMPILER_WARNINGS OR BRLCAD_ENABLE_STRICT)
 
 if(BRLCAD_ENABLE_COVERAGE)

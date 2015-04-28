@@ -31,6 +31,7 @@
 
 #include "bu/getopt.h"
 #include "bu/log.h"
+#include "bu/mime.h"
 #include "icv.h"
 
 
@@ -102,11 +103,11 @@ main(int argc, char **argv)
     setmode(fileno(stdout), O_BINARY);
     setmode(fileno(stderr), O_BINARY);
 
-    img = icv_read(in_file, ICV_IMAGE_BW, inx, iny);
+    img = icv_read(in_file, MIME_IMAGE_BW, inx, iny);
     if (img == NULL)
 	return 1;
     icv_gray2rgb(img);
-    icv_write(img, out_file, ICV_IMAGE_PIX);
+    icv_write(img, out_file, MIME_IMAGE_PIX);
     icv_destroy(img);
     return 0;
 }

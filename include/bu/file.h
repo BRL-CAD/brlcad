@@ -40,6 +40,8 @@
 
 #include "bu/defines.h"
 #include "bu/magic.h"
+#include "bu/mime.h"
+#include "bu/vls.h"
 
 __BEGIN_DECLS
 
@@ -127,7 +129,11 @@ BU_EXPORT extern int bu_file_symbolic(const char *path);
  */
 BU_EXPORT extern int bu_file_delete(const char *path);
 
+
+#if 0
 /**
+ * TODO - currently unimplemented
+ *
  * matches a filepath pattern to directory entries.  if non-NULL,
  * matching paths are dynamically allocated, stored into the provided
  * 'matches' array, and followed by a terminating NULL entry.
@@ -153,38 +159,19 @@ BU_EXPORT extern int bu_file_delete(const char *path);
  */
 BU_EXPORT extern size_t bu_file_glob(const char *pattern, char ***matches);
 
-/**
- * Call canonicalization routines to both expand and validate
- * a path name.
- *
- * returns a pointer to the canonical path.  Caller must free
- * the path.
- */
-BU_EXPORT extern char * bu_file_path_canonicalize(const char *path);
+#endif
 
-/** @file libbu/fnmatch.c
- *
- */
-
-#define BU_FNMATCH_NOESCAPE    0x01 /**< bu_fnmatch() flag.  Backslash escaping. */
-#define BU_FNMATCH_PATHNAME    0x02 /**< bu_fnmatch() flag.  Slash must be matched by slash. */
-#define BU_FNMATCH_PERIOD      0x04 /**< bu_fnmatch() flag.  Period must be matched by period. */
-#define BU_FNMATCH_LEADING_DIR 0x08 /**< bu_fnmatch() flag.  Ignore `/<tail>` after Imatch. */
-#define BU_FNMATCH_CASEFOLD    0x10 /**< bu_fnmatch() flag.  Case-insensitive searching. */
 
 /**
- * bu_fnmatch() return value when no match is found (0 if found)
+ * Use the file extension to attempt to determine the media type
+ * of the file within the specified context.
+ *
+ * returns -1 if no match was found, or an integer if a result
+ * was found.  It is the responsibility of the caller to cast
+ * the return int to the correct mime_CONTEXT_t type.
  */
-#define BU_FNMATCH_NOMATCH 1       /* Match failed. */
+BU_EXPORT extern int bu_file_mime(const char *ext, mime_context_t context);
 
-/**
- * Function fnmatch() as specified in POSIX 1003.2-1992, section B.6.
- * Compares a string filename or pathname to a pattern.
- *
- * Returns 0 if a match is found or BU_FNMATCH_NOMATCH otherwise.
- *
- */
-BU_EXPORT extern int bu_fnmatch(const char *pattern, const char *pathname, int flags);
 
 
 /** @file libbu/dirent.c
@@ -219,6 +206,20 @@ BU_EXPORT extern size_t bu_dir_list(const char *path, const char *pattern, char 
  * at least MAXPATHLEN characters.
  */
 BU_EXPORT extern char * bu_realpath(const char *path, char *resolved_path);
+
+/**
+ * TODO - is this bu_realpath?
+ *
+ * Call canonicalization routines to both expand and validate
+ * a path name.
+ *
+ * returns a pointer to the canonical path.  Caller must free
+ * the path.
+ */
+/*BU_EXPORT extern char * bu_path_canonicalize(const char *path);*/
+
+
+
 
 /** @file libbu/progname.c
  *

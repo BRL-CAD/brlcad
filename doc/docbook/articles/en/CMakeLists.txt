@@ -1,8 +1,10 @@
 set(docbook_articles_EN
   TEMPLATE.xml
   about.xml
+  animation_tutorial.xml
   build_pattern.xml
   build_region.xml
+  camo_shader.xml
   ebm_primitive.xml
   mgedrc.xml
   nirt.xml
@@ -101,6 +103,24 @@ set(docbook_articles_EN_IMAGES
   images/tire_fig12.png
   images/tire_fig13.png
   images/tire_fig14.png
+  images/Lee_tux.gif
+  images/animtbl.gif
+  images/dagtbl.gif
+  images/ell.mpg
+  images/ell_sm.gif
+  images/ell_ssm.gif
+  images/equation.gif
+  images/film.gif
+  images/fn.gif
+  images/matrix.gif
+  images/moss.mpg
+  images/moss_sm.gif
+  images/moss_ssm.gif
+  images/trans.gif
+  images/transboth.gif
+  images/transboth_sm.gif
+  images/v_eqn1.gif
+  images/v_eqn2.gif
   )
 ADD_DOC(docbook_articles_EN_IMAGES html/articles/en/images)
 

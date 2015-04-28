@@ -113,7 +113,7 @@ typedef enum {
  *
  * @param[out] faces Set of faces in the triangulation, stored as integer indices to the pts.  The first three indices are the vertices of the first face, the second three define the second face, and so forth.
  * @param[out] num_faces Number of faces created
- * @param[out] output points used by faces set, if an algorithm was selected that generates new points
+ * @param[out] out_pts  output points used by faces set, if an algorithm was selected that generates new points
  * @param[out] num_outpts number of output points, if an algorithm was selected that generates new points
  * @param[in] poly Non-hole polygon, defined as a CCW array of indices into the pts array.
  * @param[in] poly_npts Number of points in non-hole polygon
@@ -148,7 +148,7 @@ BN_EXPORT extern int bn_nested_polygon_triangulate(int **faces, int *num_faces, 
  *
  * @param[out] faces Set of faces in the triangulation, stored as integer indices to the pts.  The first three indices are the vertices of the first face, the second three define the second face, and so forth.
  * @param[out] num_faces Number of faces created
- * @param[out] output points used by faces set, if an algorithm was selected that generates new points
+ * @param[out] out_pts output points used by faces set, if an algorithm was selected that generates new points
  * @param[out] num_outpts number of output points, if an algorithm was selected that generates new points
  * @param[in] pts Array of points defining a polygon. Duplicated points
  * @param[in] npts Number of points pts contains

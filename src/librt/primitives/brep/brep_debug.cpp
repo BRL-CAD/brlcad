@@ -1709,13 +1709,13 @@ plot_nurbs_cv(struct bn_vlblock *vbp, int ucount, int vcount, ON_NurbsSurface *n
     fastf_t pt1[3], pt2[3];
     int i, j, k, temp;
     for (k = 0; k < 2; k++) {
-	/*< two times i loop */
+	/* two times i loop */
 
 	for (i = 0; i < ucount; ++i) {
 	    if (k == 1)
-		ns->GetCV(0, i, cp);	   /*< i < ucount */
+		ns->GetCV(0, i, cp);	   /* i < ucount */
 	    else
-		ns->GetCV(i, 0, cp);       /*< i < vcount */
+		ns->GetCV(i, 0, cp);       /* i < vcount */
 
 	    VMOVE(pt1, cp);
 	    for (j = 0; j < vcount; ++j) {

@@ -79,6 +79,10 @@ set(libSPR_srcs
   Src/SPR.cpp
   )
 
+if(MSVC)
+  add_definitions("-DSPR_DLL_EXPORTS")
+endif(MSVC)
+
 IF(BUILD_SHARED_LIBS)
   add_library(libSPR SHARED ${libSPR_srcs})
   install(TARGETS libSPR

@@ -40,6 +40,7 @@
 
 #include "vmath.h"
 #include "bu/getopt.h"
+#include "bu/path.h"
 #include "bu/str.h"
 #include "nmg.h"
 #include "rtgeom.h"
@@ -63,7 +64,6 @@ int verbose = 0;
  *	@brief tell user how to invoke this program, then exit
  *      @param name the name of the running program (argv[0])
  *	@param str a pointer to a null-terminated character string
- *	@return never returns
  */
 void usage(const char *name, const char *str)
 {
@@ -136,11 +136,11 @@ region_start(struct db_tree_state *UNUSED(tsp),
 /**
  * @brief This is called when all sub-elements of a region have been processed by leaf_func.
  *
- *	@param pathp
- *	@param curtree
+ * @param pathp   db path
+ * @param curtree current tree
  *
- *	@return TREE_NULL if data in curtree was "stolen", otherwise db_walk_tree will
- *	clean up the data in the union tree * that is returned
+ * @return TREE_NULL if data in curtree was "stolen", otherwise db_walk_tree will
+ * clean up the data in the union tree * that is returned
  *
  * If it wants to retain the data in curtree it can by returning TREE_NULL.  Otherwise
  * db_walk_tree will clean up the data in the union tree * that is returned.
@@ -230,7 +230,7 @@ leaf_func (struct db_tree_state *UNUSED(tsp),
  */
 int main(int ac, char *av[])
 {
-    /** @struct rt_i
+    /**
      * This structure contains some global state information for librt
      */
     struct rt_i *rtip;

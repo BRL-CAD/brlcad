@@ -29,6 +29,7 @@
 
 #include "bio.h"
 
+#include "bu/path.h"
 #include "vmath.h"
 #include "db.h"
 #include "rtgeom.h"

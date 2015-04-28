@@ -186,12 +186,12 @@ struct bn_vlblock {
  *
  * 'scale' is the width, in mm, of one character.
  *
- * @param vhead
+ * @param vhead   vhead
  * @param free_hd source of free vlists
  * @param string  string of chars to be plotted
- * @param origin	 lower left corner of 1st char
- * @param rot	 Transform matrix (WARNING: may xlate)
- * @param scale    scale factor to change 1x1 char sz
+ * @param origin  lower left corner of 1st char
+ * @param rot	  Transform matrix (WARNING: may xlate)
+ * @param scale   scale factor to change 1x1 char sz
  *
  */
 BN_EXPORT extern void bn_vlist_3string(struct bu_list *vhead,
@@ -207,7 +207,7 @@ BN_EXPORT extern void bn_vlist_3string(struct bu_list *vhead,
  * A simpler interface, for those cases where the text lies in the X-Y
  * plane.
  *
- * @param vhead
+ * @param vhead		vhead
  * @param free_hd	source of free vlists
  * @param string	string of chars to be plotted
  * @param x		lower left corner of 1st char
