@@ -300,11 +300,12 @@ main(int argc, char **argv)
 
 	    if (wanted == NE) {
 		for (ep = ap+width; ap < ep;) {
-		    if (*ap++ != *bp++)
-			goto success;
+		    if (*ap++ == *bp++)
+			goto fail;
 		}
-		goto fail;
-	    } else if (wanted & APPROX) {
+		goto success;
+	    }
+	    if (wanted & APPROX) {
 		if (wanted & NE) {
 		    /* Want not even approx equal */
 		    for (ep = ap+width; ap < ep;) {
