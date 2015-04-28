@@ -206,7 +206,7 @@ BU_EXPORT extern const char *bu_file_mime_str(int t, mime_context_t context);
  * was found.  It is the responsibility of the caller to cast
  * the return int to the correct mime_CONTEXT_t type.
  */
-BU_EXPORT extern int bu_file_mime_int(const char *ext, mime_context_t context);
+BU_EXPORT extern int bu_file_mime_int(const char *str);
 
 
 
