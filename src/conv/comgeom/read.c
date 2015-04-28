@@ -47,22 +47,12 @@ get_line(char *cp, int buflen, char *title)
     int c;
     int count = buflen;
 
-    while ((c = fgetc(infp)) == '\n') /* Skip blank lines.		*/
-	;
-    while (c != EOF && c != '\n') {
-	*cp++ = c;
-	count--;
-	if (count <= 0) {
-	    printf("get_line(x%lx, %d) input record overflows buffer for %s\n",
-		   (unsigned long)cp, buflen, title);
-	    break;
-	}
-	c = fgetc(infp);
-    }
-    if (c == EOF)
-	return EOF;
-    while (count-- > 0)
-	*cp++ = 0;
+    struct bu_vls str = BU_VLS_INIT_ZERO;
+    c = bu_vls_gets(&str, infp);
+    count = bu_strlcpy(cp, bu_vls_addr(&str), buflen);
+    if (c > buflen)
+	printf("get_line(x%lx, %d) input record overflows buffer for %s\n",
+		(unsigned long)cp, buflen, title);
     return c;
 }
 
