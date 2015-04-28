@@ -15,8 +15,6 @@ on-going issues.
 Recent Bugs
 -----------
 
-* comgeom-g does not appear to be working properly on Windows
-
 * pixborder doesn't account for an edge case where the right edge of
   an image is expected to be colored (except for one pixel on the top
   edge).  Example:
