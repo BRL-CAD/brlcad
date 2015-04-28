@@ -31,6 +31,8 @@ set(CONV_INCLUDE_DIRS
   )
 BRLCAD_INCLUDE_DIRS(CONV_INCLUDE_DIRS)
 
+BRLCAD_ADDEXEC(gcv gcv.c "libgcv;libbu;${M_LIBRARY}" NO_INSTALL)
+
 BRLCAD_ADDEXEC(asc2dsp asc/asc2dsp.c libbu)
 
 BRLCAD_ADDEXEC(asc2g asc/asc2g.c "libtclcad;libged;libwdb;librt;libbu;${WINSOCK_LIB};${M_LIBRARY}")
