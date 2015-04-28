@@ -16,15 +16,17 @@ set(MIME_H_FILE ${BRLCAD_BINARY_DIR}/${INCLUDE_DIR}/bu/mime.h)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/mime.cmake.in ${CMAKE_CURRENT_BINARY_DIR}/mime.cmake @ONLY)
 
 add_custom_command(
-  OUTPUT ${MIME_C_FILE} ${MIME_H_FILE}
+  OUTPUT ${MIME_C_FILE} ${MIME_H_FILE} ${CMAKE_CURRENT_BINARY_DIR}/mime.sentinel
   COMMAND ${CMAKE_COMMAND} -E make_directory ${BRLCAD_BINARY_DIR}/${INCLUDE_DIR}/bu
+  COMMAND ${CMAKE_COMMAND} -E remove ${CMAKE_CURRENT_BINARY_DIR}/mime.sentinel
   COMMAND ${CMAKE_COMMAND} -P ${CMAKE_CURRENT_BINARY_DIR}/mime.cmake
+  COMMAND ${CMAKE_COMMAND} -E touch ${CMAKE_CURRENT_BINARY_DIR}/mime.sentinel
   DEPENDS
   ${CMAKE_CURRENT_BINARY_DIR}/mime.cmake
   ${BRLCAD_SOURCE_DIR}/include/bu/mime.types
   ${BRLCAD_SOURCE_DIR}/include/bu/mime_cad.types
   )
-add_custom_target(bu_mime_types DEPENDS ${MIME_C_FILE} ${MIME_H_FILE})
+add_custom_target(bu_mime_types DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/mime.sentinel)
 
 set(LIBBU_SOURCES
   affinity.c
