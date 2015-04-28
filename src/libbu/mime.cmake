@@ -1,20 +1,59 @@
-set(mime_h_file "@MIME_H_FILE@")
-set(mime_c_file "@MIME_C_FILE@")
+#                      M I M E . C M A K E
+# BRL-CAD
+#
+# Copyright (c) 2015 United States Government as represented by
+# the U.S. Army Research Laboratory.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions
+# are met:
+#
+# 1. Redistributions of source code must retain the above copyright
+# notice, this list of conditions and the following disclaimer.
+#
+# 2. Redistributions in binary form must reproduce the above
+# copyright notice, this list of conditions and the following
+# disclaimer in the documentation and/or other materials provided
+# with the distribution.
+#
+# 3. The name of the author may not be used to endorse or promote
+# products derived from this software without specific prior written
+# permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS
+# OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+# WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+# ARE DISCLAIMED. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY
+# DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+# DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
+# GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+# INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+# WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+# NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+# SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+#
+###
+#
+# Generate libbu's mime type enums and C functions from text inputs
+#
 
-file(READ @BRLCAD_SOURCE_DIR@/@INCLUDE_DIR@/bu/mime.types MIME_TYPES)
-file(READ @BRLCAD_SOURCE_DIR@/@INCLUDE_DIR@/bu/mime_cad.types CAD_TYPES)
+set(mime_h_file_tmp ${CMAKE_CURRENT_BINARY_DIR}/mime.h.tmp)
+set(mime_c_file_tmp ${CMAKE_CURRENT_BINARY_DIR}/mime.c.tmp)
+
+file(READ ${BRLCAD_SOURCE_DIR}/${INCLUDE_DIR}/bu/mime.types MIME_TYPES)
+file(READ ${BRLCAD_SOURCE_DIR}/${INCLUDE_DIR}/bu/mime_cad.types CAD_TYPES)
 set(h_contents "/* Mime type mappings automatically generated from mime.types\n * and mime_cad.types.\n * Do not edit these files directly - apply updates to include/bu source files. */\n\n")
-set(h_contents "${h_contents}\n#ifndef BU_MIME_H\n")
-set(h_contents "${h_contents}\n#define BU_MIME_H\n")
+set(h_contents "${h_contents}#ifndef BU_MIME_H\n")
+set(h_contents "${h_contents}#define BU_MIME_H\n")
 set(h_contents "${h_contents}\n#include \"common.h\"\n")
-set(h_contents "${h_contents}\n#include \"bu/defines.h\"\n")
+set(h_contents "${h_contents}#include \"bu/defines.h\"\n")
 set(h_contents "${h_contents}\n__BEGIN_DECLS\n")
 
-file(WRITE ${mime_c_file} "/* Functions for mapping file extensions to mime type. Automatically\n * generated from mime.types and mime_cad.types.\n * Do not edit these files directly - apply updates to include/bu source files. */\n\n")
+set(c_contents "/* Functions for mapping file extensions to mime type. Automatically\n * generated from mime.types and mime_cad.types.\n * Do not edit these files directly - apply updates to include/bu source files. */\n\n")
 set(c_contents "${c_contents}\n#include \"common.h\"\n")
-set(c_contents "${c_contents}\n#include \"bu/mime.h\"\n")
-set(c_contents "${c_contents}\n#include \"bu/file.h\"\n")
-set(c_contents "${c_contents}\n#include \"bu/str.h\"\n")
+set(c_contents "${c_contents}#include \"bu/mime.h\"\n")
+set(c_contents "${c_contents}#include \"bu/file.h\"\n")
+set(c_contents "${c_contents}#include \"bu/str.h\"\n")
 
 set(MIME_TYPES "${MIME_TYPES}\n${CAD_TYPES}")
 string(REGEX REPLACE "\r?\n" ";" TYPES "${MIME_TYPES}")
@@ -118,8 +157,11 @@ set(mcstr "${mcstr}    return -1;\n")
 set(mcstr "${mcstr}}\n")
 set(c_contents "${c_contents}\n${mcstr}")
 
-file(WRITE ${mime_h_file} "${h_contents}")
-file(WRITE ${mime_c_file} "${c_contents}")
+file(WRITE ${mime_h_file_tmp} "${h_contents}")
+file(WRITE ${mime_c_file_tmp} "${c_contents}")
+
+execute_process(COMMAND ${CMAKE_COMMAND} -E copy_if_different ${mime_h_file_tmp} ${MIME_H_FILE})
+execute_process(COMMAND ${CMAKE_COMMAND} -E copy_if_different ${mime_c_file_tmp} ${MIME_C_FILE})
 
 # Local Variables:
 # tab-width: 8
