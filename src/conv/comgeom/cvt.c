@@ -364,6 +364,7 @@ main(int argc, char **argv)
 void
 col_pr(char *str)
 {
+    if (!str) return;
     printf("%s", str);
     cur_col += strlen(str);
     while (cur_col < 78 && ((cur_col%10) > 0)) {
