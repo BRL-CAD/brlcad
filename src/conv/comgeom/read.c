@@ -71,10 +71,10 @@ int
 getint(char *cp, int start, size_t len)
 {
     struct bu_vls vls = BU_VLS_INIT_ZERO;
-    int result;
+    int result = 0;
 
     bu_vls_strncpy(&vls, cp+start, len);
-    result = atoi(vls.vls_str);
+    result = atoi(bu_vls_addr(&vls));
     bu_vls_free(&vls);
 
     return result;
@@ -85,10 +85,10 @@ double
 getdouble(char *cp, int start, size_t len)
 {
     struct bu_vls vls = BU_VLS_INIT_ZERO;
-    double result;
+    double result = 0.0;
 
     bu_vls_strncpy(&vls, cp+start, len);
-    result = atof(vls.vls_str);
+    result = atof(bu_vls_addr(&vls));
     bu_vls_free(&vls);
 
     return result;
