@@ -167,7 +167,9 @@ get_args(int argc, char **argv)
 		break;
 	    case 'a':
 		wanted |= APPROX;
-		/* Formula not seen */
+		/* This does NOT count as a formula, so seen_formula
+                 * is left unchanged.
+                 */
 		break;
 	    case 'w':
 		c = atoi(bu_optarg);
@@ -181,9 +183,10 @@ get_args(int argc, char **argv)
 	}
     }
 
-    if (!seen_formula)
+    if (!seen_formula){
+    	if (argc == 1) usage("", 1);
 	usage("No formula specified\n", 1);
-
+    }
 
     if (bu_optind+NFILES > argc)
 	usage("insufficient number of input/output channels\n", 1);
@@ -250,6 +253,16 @@ main(int argc, char **argv)
 	bu_exit (3, "pixmatte: obuf malloc failure\n");
     }
 
+/* If "<>" is detected (in "wanted"), we change to "!=" because it's the same.
+ */
+    if ( (wanted & LT) && (wanted & GT)) {
+    	wanted |= NE;
+    	wanted ^= LT;
+    	wanted ^= GT;
+    }
+/* But we do NOT exit the program if we find both NE and EQ.
+ */
+
     while (1) {
 	unsigned char *cb0, *cb1;	/* current input buf ptrs */
 	unsigned char *cb2, *cb3;
@@ -298,7 +311,7 @@ main(int argc, char **argv)
 	    else
 		bp = &f_const[1][0];
 
-	    if (wanted == NE) {
+	    if ((wanted & NE) && !(wanted & APPROX)) {
 		for (ep = ap+width; ap < ep;) {
 		    if (*ap++ == *bp++)
 			goto fail;
