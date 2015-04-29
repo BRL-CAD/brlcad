@@ -73,6 +73,8 @@ set(misc_ignore_files
   flawfinder
   jove.emacs
   macosx
+  mime.types
+  mime_cad.types
   nsis
   wix
   svn2git

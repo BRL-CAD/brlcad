@@ -14,8 +14,8 @@ BRLCAD_LIB_INCLUDE_DIRS(bu BU_INCLUDE_DIRS BU_LOCAL_INCLUDE_DIRS)
 # Use configure_file to make copies of the mime input files,
 # so CMake will get notified for the need for a re-configure
 # if they are edited.
-configure_file(${BRLCAD_SOURCE_DIR}/${INCLUDE_DIR}/bu/mime.types ${CMAKE_CURRENT_BINARY_DIR}/tmp COPYONLY)
-configure_file(${BRLCAD_SOURCE_DIR}/${INCLUDE_DIR}/bu/mime_cad.types ${CMAKE_CURRENT_BINARY_DIR}/tmp COPYONLY)
+configure_file(${BRLCAD_SOURCE_DIR}/misc/mime.types ${CMAKE_CURRENT_BINARY_DIR}/tmp COPYONLY)
+configure_file(${BRLCAD_SOURCE_DIR}/misc/mime_cad.types ${CMAKE_CURRENT_BINARY_DIR}/tmp COPYONLY)
 execute_process(COMMAND ${CMAKE_COMMAND} -E remove ${CMAKE_CURRENT_BINARY_DIR}/tmp)
 
 # Set locations for final mime C and header files

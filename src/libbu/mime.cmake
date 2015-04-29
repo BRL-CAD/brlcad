@@ -40,8 +40,8 @@
 set(mime_h_file_tmp ${CMAKE_CURRENT_BINARY_DIR}/mime.h.tmp)
 set(mime_c_file_tmp ${CMAKE_CURRENT_BINARY_DIR}/mime.c.tmp)
 
-file(READ ${BRLCAD_SOURCE_DIR}/${INCLUDE_DIR}/bu/mime.types MIME_TYPES)
-file(READ ${BRLCAD_SOURCE_DIR}/${INCLUDE_DIR}/bu/mime_cad.types CAD_TYPES)
+file(READ ${BRLCAD_SOURCE_DIR}/misc/mime.types MIME_TYPES)
+file(READ ${BRLCAD_SOURCE_DIR}/misc/mime_cad.types CAD_TYPES)
 set(h_contents "/* Mime type mappings automatically generated from mime.types\n * and mime_cad.types.\n * Do not edit these files directly - apply updates to include/bu source files. */\n\n")
 set(h_contents "${h_contents}#ifndef BU_MIME_H\n")
 set(h_contents "${h_contents}#define BU_MIME_H\n")
