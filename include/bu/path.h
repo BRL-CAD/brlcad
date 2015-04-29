@@ -18,8 +18,15 @@
  * information.
  */
 
-/**  @defgroup io Input/Output */
-/**   @defgroup path Path Processing */
+/** @defgroup io Input/Output */
+/** @defgroup path Path Processing
+ *
+ *  Functionality for processing operating system and geometry database path
+ *  strings.  The functions in this module will not check for the presence or
+ *  absence of objects on disk or in a geometry database - they operate
+ *  only on the the path string itself.  Any validation of the path
+ *  is the responsibility of the caller.
+ */
 
 /** @file path.h
  *
@@ -194,15 +201,10 @@ BU_EXPORT extern char **bu_argv_from_path(const char *path, int *ac);
 #define BU_FNMATCH_CASEFOLD    0x10 /**< bu_fnmatch() flag.  Case-insensitive searching. */
 
 /**
- * bu_fnmatch() return value when no match is found (0 if found)
- */
-#define BU_FNMATCH_NOMATCH 1       /* Match failed. */
-
-/**
  * Function fnmatch() as specified in POSIX 1003.2-1992, section B.6.
  * Compares a string filename or pathname to a pattern.
  *
- * Returns 0 if a match is found or BU_FNMATCH_NOMATCH otherwise.
+ * Returns 0 if a match is found or 1 otherwise.
  *
  */
 BU_EXPORT extern int bu_fnmatch(const char *pattern, const char *pathname, int flags);
