@@ -260,8 +260,13 @@ main(int argc, char **argv)
     	wanted ^= LT;
     	wanted ^= GT;
     }
-/* But we do NOT exit the program if we find both NE and EQ.
+/* If NE is detected, then there is no point also having either LT or GT.
  */
+    else if ( (wanted & NE) ){
+    	if (wanted & LT) wanted ^=LT;
+    	else
+    	if (wanted & GT) wanted ^=GT;
+    }
 
     while (1) {
 	unsigned char *cb0, *cb1;	/* current input buf ptrs */
@@ -311,12 +316,17 @@ main(int argc, char **argv)
 	    else
 		bp = &f_const[1][0];
 
-	    if ((wanted & NE) && !(wanted & APPROX)) {
-		for (ep = ap+width; ap < ep;) {
-		    if (*ap++ == *bp++)
-			goto fail;
+	    if (wanted & NE) {
+/* If both NE and EQ are detected, all elements yield true result,
+ * and don't care about APPROX usage.
+ */
+	    	if (wanted & EQ) goto success;
+		if (!(wanted & APPROX)) {
+		    for (ep = ap+width; ap < ep;) {
+			if (*ap++ == *bp++) goto fail;
+		    }
+		    goto success;
 		}
-		goto success;
 	    }
 	    if (wanted & APPROX) {
 		if (wanted & NE) {
