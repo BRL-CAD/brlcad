@@ -88,10 +88,6 @@ __BEGIN_DECLS
  *
  * This routine will return "." if other valid results are not available
  * but should never return NULL.
- *
- * TODO - need to do better with Windows - they can use either back slash
- * or forward slash in paths, so BU_DIR_SEPARATOR isn't enough.  By the same
- * token, back slash is also used as a quote.  How do we handle this?
  */
 BU_EXPORT extern char *bu_dirname(const char *path);
 
@@ -129,10 +125,6 @@ BU_EXPORT extern char *bu_dirname(const char *path);
  * @n   a/b             b
  * @n   a/              a
  * @n   ///             /
- *
- * TODO - need to do better with Windows - they can use either back slash
- * or forward slash in paths, so BU_DIR_SEPARATOR isn't enough.  By the same
- * token, back slash is also used as a quote.  How do we handle this?
  */
 BU_EXPORT extern void bu_basename(char *basename, const char *path);
 
@@ -144,10 +136,6 @@ BU_EXPORT extern void bu_basename(char *basename, const char *path);
  * A STATIC buffer is returned.  It is the caller's responsibility to
  * call bu_strdup() or make other provisions to save the returned
  * string, before calling again.
- *
- * TODO - need to do better with Windows - they can use either back slash
- * or forward slash in paths, so BU_DIR_SEPARATOR isn't enough.  By the same
- * token, back slash is also used as a quote.  How do we handle this?
  */
 BU_EXPORT extern const char *bu_normalize(const char *path);
 
@@ -159,12 +147,18 @@ BU_EXPORT extern const char *bu_normalize(const char *path);
  * PATH_FILENAME        Name after last directory separator in path
  * PATH_FILE_EXTENSION  File extension of PATH_FILENAME
  * PATH_ROOT_FILENAME   PATH_FILENAME without PATH_FILE_EXTENSION
+ * PATH_PROTOCOL        If the path has a ':' character, return the string before the first ':'
+ * PATH_ADDRESS         If the path has a ':' character, return the string after the first ':'
  *
+ * Both PATH_PROTOCOL and PATH_ADDRESS will return 0 if there
+ * is not at least one ':' character in the path.  The path
+ * protocol is useful for obtaining driver letters in DOS style
+ * paths, or formats in Imagemagick style format prefix specifiers:
+ *
+ * bu_path_component(*out, "C:/some/file/path", PATH_PROTOCOL) -> "C"
+ * bu_path_component(*out, "C:/some/file/path", PATH_ADDRESS) -> "/some/file/path"
  * bu_path_component(*out, "png:/some/image/file ", PATH_PROTOCOL) -> "png"
  * bu_path_component(*out, "png:/some/image/file ", PATH_ADDRESS) -> "/some/image/file"
- *
- * TODO -figure out how to reconcile quoting with back slash and the Windows
- * ability to use either forward or back slash for directories
  *
  * returns 0 if the specified component was not found, 1
  * if it was.  If the bu_vls pointer component is not NULL,
