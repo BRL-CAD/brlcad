@@ -332,12 +332,17 @@ main(int argc, char **argv)
 		if (wanted & NE) {
 		    /* Want not even approx equal */
 		    for (ep = ap+width; ap < ep;) {
-			if ((i= *ap++ - *bp++) < -1 ||
-			    i > 1)
-			    goto success;
+			if ((i= *ap++ - *bp++) >= -1 &&
+			    i <= 1)
+			    goto fail;
 		    }
-		    goto fail;
-		} else {
+		    goto success;
+		}
+	    	/* Look for use of EQ; cannot get here with LT and GT both
+	    	 * in use, because if both LT and GT were detected, they
+	    	 * would have been turned off and replaced with NE.
+	    	 */
+		if (wanted & EQ) {
 		    /* Want approx equal */
 		    for (ep = ap+width; ap < ep;) {
 			if ((i= *ap++ - *bp++) < -1 ||
