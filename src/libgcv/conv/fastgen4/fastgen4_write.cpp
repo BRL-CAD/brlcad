@@ -295,7 +295,7 @@ Section::add_sphere(std::size_t g1, fastf_t thickness, fastf_t radius)
     thickness *= INCHES_PER_MM;
     radius *= INCHES_PER_MM;
 
-    if (thickness <= 0.0 || radius <= 0.0)
+    if (!g1 || g1 >= m_next_grid_id || thickness <= 0.0 || radius <= 0.0)
 	throw std::invalid_argument("invalid value");
 
     FastgenWriter::Record record(m_writer);
@@ -333,14 +333,14 @@ Section::add_line(std::size_t g1, std::size_t g2, fastf_t thickness,
     thickness *= INCHES_PER_MM;
     radius *= INCHES_PER_MM;
 
+    if (g1 == g2 || !g1 || !g2 || g1 >= m_next_grid_id || g2 >= m_next_grid_id)
+	throw std::invalid_argument("invalid grid id");
+
     if ((!m_volume_mode && thickness <= 0.0) || thickness < 0.0)
 	throw std::invalid_argument("invalid thickness");
 
     if (radius <= 0.0)
 	throw std::invalid_argument("invalid radius");
-
-    if (g1 == g2 || !g1 || !g2 || g1 >= m_next_grid_id || g2 >= m_next_grid_id)
-	throw std::invalid_argument("invalid grid id");
 
     FastgenWriter::Record record(m_writer);
     record << "CLINE" << m_next_element_id++ << 0 << g1 << g2 << "" << "";
@@ -360,15 +360,15 @@ Section::add_triangle(std::size_t g1, std::size_t g2, std::size_t g3,
 {
     thickness *= INCHES_PER_MM;
 
-    if (thickness <= 0.0)
-	throw std::invalid_argument("invalid thickness");
-
     if (g1 == g2 || g1 == g3 || g2 == g3)
 	throw std::invalid_argument("invalid grid id");
 
     if (!g1 || !g2 || !g3 || g1 >= m_next_grid_id || g2 >= m_next_grid_id
 	|| g3 >= m_next_grid_id)
 	throw std::invalid_argument("invalid grid id");
+
+    if (thickness <= 0.0)
+	throw std::invalid_argument("invalid thickness");
 
     FastgenWriter::Record record(m_writer);
     record << "CTRI" << m_next_element_id++ << 0 << g1 << g2 << g3;
@@ -384,7 +384,7 @@ Section::add_hexahedron(const std::size_t *g)
 	if (!g[i] || g[i] >= m_next_grid_id)
 	    throw std::invalid_argument("invalid grid id");
 
-	for (int j = i + 1; j <= 8; ++j)
+	for (int j = i + 1; j < 8; ++j)
 	    if (g[i] == g[j])
 		throw std::invalid_argument("repeated grid id");
     }
