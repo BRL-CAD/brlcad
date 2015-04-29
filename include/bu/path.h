@@ -141,11 +141,7 @@ BU_EXPORT extern void bu_basename(char *basename, const char *path);
  * A STATIC buffer is returned.  It is the caller's responsibility to
  * call bu_strdup() or make other provisions to save the returned
  * string, before calling again.
- *
- * TODO - need to do better with Windows - they can use either back slash
- * or forward slash in paths, so BU_DIR_SEPARATOR isn't enough.  By the same
- * token, back slash is also used as a quote.  How do we handle this?
- */
+  */
 BU_EXPORT extern const char *bu_normalize(const char *path);
 
 /**
