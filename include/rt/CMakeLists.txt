@@ -2,10 +2,16 @@ set(rt_headers
   arb_edit.h
   db_diff.h
   db_fullpath.h
+  db_internal.h
+  debug.h
   defines.h
+  hit.h
   op.h
   pattern.h
   search.h
+  seg.h
+  soltab.h
+  tol.h
   xray.h
   )
 
