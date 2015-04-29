@@ -2505,7 +2505,7 @@ RT_EXPORT extern void rt_boolweave(struct seg *out_hd,
  * If a_onehit != 0, the ray is traced through a_onehit hit points.
  * (Recall that each partition has 2 hit points, entry and exit).
  * Thus, if a_onehit is odd, the value of pt_outhit.hit_dist in the
- * last partition may be incorrect; this should not mater because the
+ * last partition may be incorrect; this should not matter because the
  * application specifically said it only wanted pt_inhit there.  This
  * is most commonly seen when a_onehit = 1, which is useful for
  * lighting models.  Not having to correctly determine the exit point
