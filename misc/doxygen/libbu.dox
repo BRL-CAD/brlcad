@@ -52,7 +52,7 @@
 /** @ingroup io */
 /**   @defgroup debug Debugging */
 /** @ingroup io */
-/**   @defgroup file Path Processing */
+/**   @defgroup path Path Processing */
 /** @ingroup io */
 /**   @defgroup log Logging */
 /** @ingroup io */
