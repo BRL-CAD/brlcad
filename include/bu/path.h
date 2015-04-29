@@ -188,11 +188,9 @@ BU_EXPORT extern int bu_path_component(struct bu_vls *component,
 BU_EXPORT extern char **bu_argv_from_path(const char *path, int *ac);
 
 
-
 /** @file libbu/fnmatch.c
  *
  */
-
 #define BU_FNMATCH_NOESCAPE    0x01 /**< bu_fnmatch() flag.  Backslash escaping. */
 #define BU_FNMATCH_PATHNAME    0x02 /**< bu_fnmatch() flag.  Slash must be matched by slash. */
 #define BU_FNMATCH_PERIOD      0x04 /**< bu_fnmatch() flag.  Period must be matched by period. */
@@ -213,80 +211,6 @@ BU_EXPORT extern char **bu_argv_from_path(const char *path, int *ac);
  */
 BU_EXPORT extern int bu_fnmatch(const char *pattern, const char *pathname, int flags);
 
-
-
-/*################################*/
-/* BRL-CAD specific path routines */
-/*################################*/
-
-
-/**@file libbu/brlcad_path.c
- *
- * Report the relative paths being used to hold BRL-CAD applications,
- * libraries, and data.
- *
- * Recognized keys include:
- *
- *   bin     - Directory containing binary applications
- *   lib     - Directory containing libraries
- *   include - Directory containing headers
- *   data    - Directory containing shared data
- *   share   - Directory containing shared data
- *   doc     - Directory containing documentation
- *   man     - Directory containing Unix man pages
- *
- * @return
- * A STATIC buffer is returned.  It is the caller's responsibility to
- * call bu_strdup() or make other provisions to save the returned
- * string, before calling again.
- */
-
-/**
- * @brief
- * A support routine to provide the executable code with the path
- * to where the BRL-CAD programs and libraries are installed.
- *
- */
-BU_EXPORT extern const char *bu_brlcad_dir(const char *dirkey, int fail_quietly);
-
-/**
- * Locate where the BRL-CAD applications and libraries are installed.
- *
- * The BRL-CAD root is searched for in the following order of
- * precedence by testing for the rhs existence if provided or the
- * directory existence otherwise:
- *
- *   BRLCAD_ROOT environment variable if set
- *   BRLCAD_ROOT compile-time path
- *   run-time path identification
- *   /usr/brlcad static path
- *   current directory
- *
- * @return
- * A STATIC buffer is returned.  It is the caller's responsibility to
- * call bu_strdup() or make other provisions to save the returned
- * string, before calling again.
- */
-BU_EXPORT extern const char *bu_brlcad_root(const char *rhs, int fail_quietly);
-
-/**
- * Locate where the BRL-CAD data resources are installed.
- *
- * The BRL-CAD data resources are searched for in the following order
- * of precedence by testing for the existence of rhs if provided or
- * the directory existence otherwise:
- *
- *   BRLCAD_DATA environment variable if set
- *   BRLCAD_DATA compile-time path
- *   bu_brlcad_root/DATA_DIR path
- *   bu_brlcad_root/share path
- *   current directory
- *
- * A STATIC buffer is returned.  It is the caller's responsibility to
- * call bu_strdup() or make other provisions to save the returned
- * string, before calling again.
- */
-BU_EXPORT extern const char *bu_brlcad_data(const char *rhs, int fail_quietly);
 
 
 /** @} */
