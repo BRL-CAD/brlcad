@@ -153,15 +153,16 @@ BU_EXPORT extern const char *bu_normalize(const char *path);
 
 /**
  * Attempts to extract a component from a file path.
- * Supported components are:
+ * Supported components are illustrated below with the
+ * example path:
  *
- * PATH_DIRECTORY       Directory without the last name.
- * PATH_FILENAME        Name after last directory separator in path
- * PATH_FILE_EXTENSION  File extension of PATH_FILENAME
- * PATH_ROOT_FILENAME   PATH_FILENAME without PATH_FILE_EXTENSION
+ * /dir1/dir2/file.ext
  *
- * bu_path_component(*out, "png:/some/image/file ", PATH_PROTOCOL) -> "png"
- * bu_path_component(*out, "png:/some/image/file ", PATH_ADDRESS) -> "/some/image/file"
+ * PATH_DIRNAME         /dir1/dir2
+ * PATH_DIRNAME_CORE    /dir1/dir2/file
+ * PATH_BASENAME        file.ext
+ * PATH_BASENAME_CORE   file
+ * PATH_EXTENSION       ext
  *
  * TODO -figure out how to reconcile quoting with back slash and the Windows
  * ability to use either forward or back slash for directories
@@ -172,12 +173,11 @@ BU_EXPORT extern const char *bu_normalize(const char *path);
  */
 
 typedef enum {
-    PATH_FILE_EXTENSION,
-    PATH_FILENAME,
-    PATH_ROOT_FILENAME,
-    PATH_DIRECTORY,
-    PATH_PROTOCOL,
-    PATH_ADDRESS
+    PATH_DIRNAME,
+    PATH_DIRNAME_CORE,
+    PATH_BASENAME,
+    PATH_BASENAME_CORE,
+    PATH_EXTENSION
 } path_component_t;
 
 BU_EXPORT extern int bu_path_component(struct bu_vls *component,

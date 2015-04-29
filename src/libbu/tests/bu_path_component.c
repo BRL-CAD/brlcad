@@ -70,12 +70,14 @@ main(int argc, char *argv[])
 
     /* If we don't have any args at all, test NULL */
     if (argc == 1) {
-	compare(NULL, NULL, PATH_FILE_EXTENSION);
+	compare(NULL, NULL, PATH_DIRNAME);
+	return 0;
     }
 
     if (argc == 2) {
 	printf("Testing empty path handling\n");
-	compare("", NULL, PATH_FILE_EXTENSION);
+	compare("", NULL, PATH_DIRNAME);
+	return 0;
     }
 
     /* If we have an input and a number, do the empty test */
@@ -92,22 +94,19 @@ main(int argc, char *argv[])
     printf("Testing path \"%s\", component %d\n", argv[1], intarg);
     switch (intarg) {
 	case 0:
-	    compare(argv[1], control, PATH_FILE_EXTENSION);
+	    compare(argv[1], control, PATH_DIRNAME);
 	    break;
 	case 1:
-	    compare(argv[1], control, PATH_FILENAME);
+	    compare(argv[1], control, PATH_DIRNAME_CORE);
 	    break;
 	case 2:
-	    compare(argv[1], control, PATH_ROOT_FILENAME);
+	    compare(argv[1], control, PATH_BASENAME);
 	    break;
 	case 3:
-	    compare(argv[1], control, PATH_DIRECTORY);
+	    compare(argv[1], control, PATH_BASENAME_CORE);
 	    break;
 	case 4:
-	    compare(argv[1], control, PATH_PROTOCOL);
-	    break;
-	case 5:
-	    compare(argv[1], control, PATH_ADDRESS);
+	    compare(argv[1], control, PATH_EXTENSION);
 	    break;
 	default:
 	    bu_log("Error - unknown component\n");

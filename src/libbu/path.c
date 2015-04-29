@@ -141,13 +141,12 @@ bu_path_component(struct bu_vls *component, const char *path, path_component_t t
     char *basename = NULL;
     char *dirname = NULL;
     char *period_pos = NULL;
-    char *colon_pos = NULL;
     struct bu_vls working_path = BU_VLS_INIT_ZERO;
 
     if (UNLIKELY(!path) || UNLIKELY(strlen(path)) == 0) goto cleanup;
 
     switch (type) {
-	case PATH_DIRECTORY:
+	case PATH_DIRNAME:
 	    dirname = bu_dirname(path);
 	    if (!(!dirname || strlen(dirname) == 0)) {
 		ret = 1;
@@ -156,7 +155,16 @@ bu_path_component(struct bu_vls *component, const char *path, path_component_t t
 		}
 	    }
 	    break;
-	case PATH_FILENAME:
+	case PATH_DIRNAME_CORE:
+	    ret = 1;
+	    if (component) {
+		period_pos = strrchr(path, '.');
+		bu_vls_sprintf(component, "%s", path);
+		if (period_pos && strlen(period_pos) > 0)
+		    bu_vls_trunc(component, -1 * strlen(period_pos));
+	    }
+	    break;
+	case PATH_BASENAME:
 	    basename = (char *)bu_calloc(strlen(path) + 2, sizeof(char), "basename");
 	    bu_basename(basename, path);
 	    if (strlen(basename) > 0) {
@@ -166,7 +174,7 @@ bu_path_component(struct bu_vls *component, const char *path, path_component_t t
 		}
 	    }
 	    break;
-	case PATH_ROOT_FILENAME:
+	case PATH_BASENAME_CORE:
 	    basename = (char *)bu_calloc(strlen(path) + 2, sizeof(char), "basename");
 	    bu_basename(basename, path);
 	    if (strlen(basename) > 0) {
@@ -178,7 +186,7 @@ bu_path_component(struct bu_vls *component, const char *path, path_component_t t
 		}
 	    }
 	    break;
-	case PATH_FILE_EXTENSION:
+	case PATH_EXTENSION:
 	    basename = (char *)bu_calloc(strlen(path) + 2, sizeof(char), "basename");
 	    bu_basename(basename, path);
 	    if (strlen(basename) > 0) {
@@ -188,32 +196,6 @@ bu_path_component(struct bu_vls *component, const char *path, path_component_t t
 		    if (component) {
 			bu_vls_strncpy(component, period_pos, strlen(period_pos)+1);
 			bu_vls_nibble(component, 1);
-		    }
-		}
-	    }
-	    break;
-	case PATH_PROTOCOL:
-	    colon_pos = strchr(path, ':');
-	    if (colon_pos) {
-		bu_vls_sprintf(&working_path, "%s", path);
-		bu_vls_trunc(&working_path, -1 * strlen(colon_pos));
-		if (bu_vls_strlen(&working_path) > 0) {
-		    ret = 1;
-		    if (component) {
-			bu_vls_sprintf(component, "%s", bu_vls_addr(&working_path));
-		    }
-		}
-	    }
-	    break;
-	case PATH_ADDRESS:
-	    colon_pos = strchr(path, ':');
-	    if (colon_pos) {
-		bu_vls_sprintf(&working_path, "%s", path);
-		bu_vls_nibble(&working_path, strlen(path) - strlen(colon_pos) + 1);
-		if (bu_vls_strlen(&working_path) > 0) {
-		    ret = 1;
-		    if (component) {
-			bu_vls_sprintf(component, "%s", bu_vls_addr(&working_path));
 		    }
 		}
 	    }
