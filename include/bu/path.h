@@ -88,10 +88,6 @@ __BEGIN_DECLS
  *
  * This routine will return "." if other valid results are not available
  * but should never return NULL.
- *
- * TODO - need to do better with Windows - they can use either back slash
- * or forward slash in paths, so BU_DIR_SEPARATOR isn't enough.  By the same
- * token, back slash is also used as a quote.  How do we handle this?
  */
 BU_EXPORT extern char *bu_dirname(const char *path);
 
@@ -129,10 +125,6 @@ BU_EXPORT extern char *bu_dirname(const char *path);
  * @n   a/b             b
  * @n   a/              a
  * @n   ///             /
- *
- * TODO - need to do better with Windows - they can use either back slash
- * or forward slash in paths, so BU_DIR_SEPARATOR isn't enough.  By the same
- * token, back slash is also used as a quote.  How do we handle this?
  */
 BU_EXPORT extern void bu_basename(char *basename, const char *path);
 
@@ -163,9 +155,6 @@ BU_EXPORT extern const char *bu_normalize(const char *path);
  * PATH_BASENAME        file.ext
  * PATH_BASENAME_CORE   file
  * PATH_EXTENSION       ext
- *
- * TODO -figure out how to reconcile quoting with back slash and the Windows
- * ability to use either forward or back slash for directories
  *
  * returns 0 if the specified component was not found, 1
  * if it was.  If the bu_vls pointer component is not NULL,
