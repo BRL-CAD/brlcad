@@ -73,18 +73,20 @@ __BEGIN_DECLS
  *
  * Examples of strings returned:
  *
- *      /usr/dir/file   /usr/dir
- * @n   /usr/dir/       /usr
- * @n   /usr/file       /usr
- * @n   /usr/           /
- * @n   /usr            /
- * @n   /               /
- * @n   .               .
- * @n   ..              .
- * @n   usr             .
- * @n   a/b             a
- * @n   a/              .
- * @n   ../a/b          ../a
+ * Input String  | Output String
+ * ------------- | -------------
+ * /usr/dir/file | /usr/dir
+ * /usr/dir/     | /usr
+ * /usr/file     | /usr
+ * /usr/         | /
+ * /usr          | /
+ * /             | /
+ * .             | .
+ * ..            | .
+ * usr           | .
+ * a/b           | a
+ * a/            | .
+ * ../a/b        | ../a
  *
  * This routine will return "." if other valid results are not available
  * but should never return NULL.
@@ -114,17 +116,20 @@ BU_EXPORT extern char *bu_dirname(const char *path);
  *
  * Examples of strings returned:
  *
- *      /usr/dir/file   file
- * @n   /usr/dir/       dir
- * @n   /usr/           usr
- * @n   /usr            usr
- * @n   /               /
- * @n   .               .
- * @n   ..              ..
- * @n   usr             usr
- * @n   a/b             b
- * @n   a/              a
- * @n   ///             /
+ * Input String  | Output String
+ * ------------- | -------------
+ * /usr/dir/file | file
+ * /usr/dir/     | dir
+ * /usr/         | usr
+ * /usr          | usr
+ * /             | /
+ * .             | .
+ * ..            | ..
+ * usr           | usr
+ * a/b           | b
+ * a/            | a
+ * ///           | /
+ *
  */
 BU_EXPORT extern void bu_basename(char *basename, const char *path);
 
@@ -144,30 +149,27 @@ BU_EXPORT extern void bu_basename(char *basename, const char *path);
 BU_EXPORT extern const char *bu_normalize(const char *path);
 
 /**
- * Attempts to extract a component from a file path.
- * Supported components are illustrated below with the
- * example path:
+ * Components of a path recognized by libbu, identified below in the
+ * context of the example path:
  *
- * /dir1/dir2/file.ext
- *
- * PATH_DIRNAME         /dir1/dir2
- * PATH_DIRNAME_CORE    /dir1/dir2/file
- * PATH_BASENAME        file.ext
- * PATH_BASENAME_CORE   file
- * PATH_EXTENSION       ext
+ *     /dir1/dir2/file.ext
+ */
+typedef enum {
+    PATH_DIRNAME = 0,   /*!< /dir1/dir2 */
+    PATH_DIRNAME_CORE,  /*!< /dir1/dir2/file */
+    PATH_BASENAME,      /*!< file.ext */
+    PATH_BASENAME_CORE, /*!< file */
+    PATH_EXTENSION      /*!< ext */
+} path_component_t;
+
+
+/**
+ * Attempt to extract a component from a file path.
  *
  * returns 0 if the specified component was not found, 1
  * if it was.  If the bu_vls pointer component is not NULL,
  * the component will be written to the vls.
  */
-
-typedef enum {
-    PATH_DIRNAME,
-    PATH_DIRNAME_CORE,
-    PATH_BASENAME,
-    PATH_BASENAME_CORE,
-    PATH_EXTENSION
-} path_component_t;
 
 BU_EXPORT extern int bu_path_component(struct bu_vls *component,
 	                               const char *path,
