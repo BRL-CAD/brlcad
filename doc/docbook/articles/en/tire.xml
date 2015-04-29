@@ -8,7 +8,7 @@
   <section><info><title>Overview</title></info>
 
     <para>
-      Traditionally, <link  xlink:href="http://brlcad.org">BRL-CAD</link> tire models have been created using a
+      Traditionally, <link xlink:href="http://brlcad.org">BRL-CAD</link> tire models have been created using a
       single cylinder, a torus intersected with a cylinder, or in some cases additional combinations of these
       primitives.  While these approximations are often sufficient for analytical purposes the resulting model
       is typically a poor visual match to the real tire when raytracing.  Creating more complex models to better
