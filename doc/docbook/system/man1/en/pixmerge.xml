@@ -58,16 +58,18 @@ For example,
 selects a foreground pixel when it
 is lexically less than or equal to the background pixel,
 that is, when all bytes of the foreground pixel are less than
-or equal to the background pixel.
-The
+or equal to the background pixel.</para>
+
+<para>The
 <option>-w#</option>
 flag specifies the width (in bytes) of each "pixel";  the default is
 3, <emphasis remap='I'>i.e.</emphasis>
 <citerefentry><refentrytitle>pix</refentrytitle><manvolnum>5</manvolnum></citerefentry>
 file format.  A width of 1 is used for processing
 <citerefentry><refentrytitle>bw</refentrytitle><manvolnum>5</manvolnum></citerefentry>
-files.  It is unclear if other widths are useful.
-If the
+files.  It is unclear if other widths are useful.</para>
+
+<para>If the
 <option>-C r/g/b</option>
 option is specified, then the constant color specified by r/g/b
 is used in place of the appropriate background pixel values.
