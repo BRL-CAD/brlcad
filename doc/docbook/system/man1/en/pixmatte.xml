@@ -56,7 +56,7 @@ is independent of the resolution of the image.</para>
 
 <para>A constant value is specified instead of a filename
 if the first character of what would be the filename is an equal sign (=).
-The value is specified as a slash separated string of
+The value is specified as a slash-separated string of
 <replaceable>bytes_wide</replaceable>
 decimal numbers, with no separating white space.
 If in1 and in2 are both specified as constant values, the output file will be 512 x 512.
