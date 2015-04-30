@@ -53,7 +53,7 @@ static FILE *f2;
 static int wanted;			/* LT|EQ|GT conditions to pick fb */
 
 static int seen_const;
-static int seen_formula;
+static int seen_formula = 0;
 
 static int width = 3;
 static unsigned char pconst[32];
