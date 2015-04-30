@@ -57,6 +57,25 @@ struct xrays
     struct xray ray;
 };
 
+/**
+ * This structure is intended to describe the area and/or volume
+ * represented by a ray.  In the case of the "rt" program it
+ * represents the extent in model coordinates of the prism behind the
+ * pixel being rendered.
+ *
+ * The r_pt values of the rays indicate the dimensions and location in
+ * model space of the ray origin (usually the pixel to be rendered).
+ * The r_dir vectors indicate the edges (and thus the shape) of the
+ * prism which is formed from the projection of the pixel into space.
+ */
+#define CORNER_PTS 4
+struct pixel_ext {
+    uint32_t magic;
+    struct xray corner[CORNER_PTS];
+};
+/* This should have had an RT_ prefix */
+#define BU_CK_PIXEL_EXT(_p) BU_CKMAG(_p, PIXEL_EXT_MAGIC, "struct pixel_ext")
+
 
 __END_DECLS
 

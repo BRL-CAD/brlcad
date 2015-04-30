@@ -142,25 +142,6 @@ struct rt_reprep_obj_list {
 
 
 /**
- * This structure is intended to describe the area and/or volume
- * represented by a ray.  In the case of the "rt" program it
- * represents the extent in model coordinates of the prism behind the
- * pixel being rendered.
- *
- * The r_pt values of the rays indicate the dimensions and location in
- * model space of the ray origin (usually the pixel to be rendered).
- * The r_dir vectors indicate the edges (and thus the shape) of the
- * prism which is formed from the projection of the pixel into space.
- */
-#define CORNER_PTS 4
-struct pixel_ext {
-    uint32_t magic;
-    struct xray	corner[CORNER_PTS];
-};
-/* This should have had an RT_ prefix */
-#define BU_CK_PIXEL_EXT(_p) BU_CKMAG(_p, PIXEL_EXT_MAGIC, "struct pixel_ext")
-
-/**
  * This structure is the only parameter to rt_shootray().  The entire
  * structure should be zeroed (e.g. by memset) before it is used the
  * first time.
@@ -4052,26 +4033,7 @@ RT_EXPORT extern int rt_find_paths(struct db_i *dbip,
 				   struct bu_ptbl *paths,
 				   struct resource *resp);
 
-/**
- * initialize a memory resource structure for use during ray tracing.
- *
- * a given resource structure is prepared for use and marked as the
- * resource for a given thread of execution (indicated by 'cpu_num').
- * if an 'rtip' ray tracing instance pointer is provided, the resource
- * structure will be stored within so that it's available to threads
- * of execution during parallel ray tracing.
- *
- * This routine should initialize all the same resources that
- * rt_clean_resource() releases.  It shouldn't (but currently does for
- * ptbl) allocate any dynamic memory, just init pointers & lists.
- */
-RT_EXPORT extern void rt_init_resource(struct resource *resp, int cpu_num, struct rt_i *rtip);
 
-
-RT_EXPORT extern void rt_clean_resource(struct rt_i *rtip,
-					struct resource *resp);
-RT_EXPORT extern void rt_clean_resource_complete(struct rt_i *rtip,
-						 struct resource *resp);
 RT_EXPORT extern int rt_unprep(struct rt_i *rtip,
 			       struct rt_reprep_obj_list *objs,
 			       struct resource *resp);
