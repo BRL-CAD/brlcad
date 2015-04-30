@@ -74,12 +74,6 @@ __BEGIN_DECLS
 
 #include "rt/debug.h"
 
-/**
- * FIXME: These should probably be vmath macros
- */
-#define	RT_BADNUM(n)	(!((n) >= -INFINITY && (n) <= INFINITY))
-#define RT_BADVEC(v)	(RT_BADNUM((v)[X]) || RT_BADNUM((v)[Y]) || RT_BADNUM((v)[Z]))
-
 #include "rt/tol.h"
 
 #include "rt/db_internal.h"
@@ -110,15 +104,7 @@ __BEGIN_DECLS
 
 #include "rt/tree.h"
 
-
-/* FIXME: this is a dubious define that should be removed */
-#define RT_MAXLINE		10240
-
 #include "rt/wdb.h"
-
-
-#define RT_MINVIEWSIZE 0.0001
-#define RT_MINVIEWSCALE 0.00005
 
 #include "rt/anim.h"
 
@@ -235,67 +221,11 @@ struct rt_point_labels {
 };
 
 
-/**
- * Used by rpc.c, ehy.c, epa.c, eto.c and rhc.c to contain
- * forward-linked lists of points.
- */
-struct rt_pt_node {
-    point_t p;			/**< @brief  a point */
-    struct rt_pt_node *next;	/**< @brief  ptr to next pt */
-};
-
-
 #include "rt/view.h"
 
 #include "rt/functab.h"
 
-/**
- * Internal to shoot.c and bundle.c
- */
-struct rt_shootray_status {
-    fastf_t		dist_corr;	/**< @brief  correction distance */
-    fastf_t		odist_corr;
-    fastf_t		box_start;
-    fastf_t		obox_start;
-    fastf_t		box_end;
-    fastf_t		obox_end;
-    fastf_t		model_start;
-    fastf_t		model_end;
-    struct xray		newray;		/**< @brief  closer ray start */
-    struct application *ap;
-    struct resource *	resp;
-    vect_t		inv_dir;      /**< @brief  inverses of ap->a_ray.r_dir */
-    vect_t		abs_inv_dir;  /**< @brief  absolute values of inv_dir */
-    int			rstep[3];     /**< @brief  -/0/+ dir of ray in axis */
-    const union cutter *lastcut, *lastcell;
-    const union cutter *curcut;
-    point_t		curmin, curmax;
-    int			igrid[3];     /**< @brief  integer cell coordinates */
-    vect_t		tv;	      /**< @brief  next t intercept values */
-    int			out_axis;     /**< @brief  axis ray will leave through */
-    struct rt_shootray_status *old_status;
-    int			box_num;	/**< @brief  which cell along ray */
-};
-
-
-#define NUGRID_T_SETUP(_ax, _cval, _cno) \
-    if (ssp->rstep[_ax] > 0) { \
-	ssp->tv[_ax] = t0 + (nu_axis[_ax][_cno].nu_epos - _cval) * \
-	    ssp->inv_dir[_ax]; \
-    } else if (ssp->rstep[_ax] < 0) { \
-	ssp->tv[_ax] = t0 + (nu_axis[_ax][_cno].nu_spos - _cval) * \
-	    ssp->inv_dir[_ax]; \
-    } else { \
-	ssp->tv[_ax] = INFINITY; \
-    }
-#define NUGRID_T_ADV(_ax, _cno) \
-    if (ssp->rstep[_ax] != 0) { \
-	ssp->tv[_ax] += nu_axis[_ax][_cno].nu_width * \
-	    ssp->abs_inv_dir[_ax]; \
-    }
-
-#define BACKING_DIST	(-2.0)		/**< @brief  mm to look behind start point */
-#define OFFSET_DIST	0.01		/**< @brief  mm to advance point into box */
+#include "rt/private.h"
 
 /*********************************************************************************
  *	The following section is an exact copy of what was previously "nmg_rt.h" *

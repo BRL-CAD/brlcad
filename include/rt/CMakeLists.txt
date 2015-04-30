@@ -17,6 +17,7 @@ set(rt_headers
   op.h
   pattern.h
   piece.h
+  private.h
   ray_partition.h
   region.h
   resource.h

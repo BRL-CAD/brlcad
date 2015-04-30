@@ -33,6 +33,9 @@
 
 __BEGIN_DECLS
 
+#define RT_MINVIEWSIZE 0.0001
+#define RT_MINVIEWSCALE 0.00005
+
 /**
  * Normally, librt doesn't have a concept of a "display" of the
  * geometry.  However for at least the plotting routines, view

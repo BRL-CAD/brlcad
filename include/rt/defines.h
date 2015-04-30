@@ -168,6 +168,17 @@
 #define RT_SEM_LAST     (RT_SEM_MODEL+1)
 
 
+#define BACKING_DIST    (-2.0)          /**< @brief  mm to look behind start point */
+#define OFFSET_DIST     0.01            /**< @brief  mm to advance point into box */
+
+/**
+ * FIXME: These should probably be vmath macros
+ */
+#define RT_BADNUM(n)    (!((n) >= -INFINITY && (n) <= INFINITY))
+#define RT_BADVEC(v)    (RT_BADNUM((v)[X]) || RT_BADNUM((v)[Y]) || RT_BADNUM((v)[Z]))
+
+/* FIXME: this is a dubious define that should be removed */
+#define RT_MAXLINE              10240
 
 
 /*
