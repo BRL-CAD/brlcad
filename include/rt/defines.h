@@ -139,6 +139,37 @@
 #define RT_DEFAULT_TRIS_PER_PIECE       4
 #define RT_DEFAULT_MINTIE               0       /* TODO: find the best value */
 
+
+/* Normally set when in production mode, setting the RT_G_DEBUG define
+ * to 0 will allow chucks of code to poof away at compile time (since
+ * they are truth-functionally constant (false)) This can boost
+ * raytrace performance considerably (~10%).
+ */
+#ifdef NO_DEBUG_CHECKING
+#  define RT_G_DEBUG 0
+#else
+#  define RT_G_DEBUG RTG.debug
+#endif
+
+/**
+ * Definition of global parallel-processing semaphores.
+ *
+ * res_syscall is now   BU_SEM_SYSCALL
+ */
+#define RT_SEM_TREE0    (BU_SEM_LAST)
+#define RT_SEM_TREE1    (RT_SEM_TREE0+1)
+#define RT_SEM_TREE2    (RT_SEM_TREE1+1)
+#define RT_SEM_TREE3    (RT_SEM_TREE2+1)
+#define RT_SEM_WORKER   (RT_SEM_TREE3+1)
+#define RT_SEM_STATS    (RT_SEM_WORKER+1)
+#define RT_SEM_RESULTS  (RT_SEM_STATS+1)
+#define RT_SEM_MODEL    (RT_SEM_RESULTS+1)
+
+#define RT_SEM_LAST     (RT_SEM_MODEL+1)
+
+
+
+
 /*
  * Local Variables:
  * tab-width: 8

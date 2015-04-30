@@ -1,5 +1,6 @@
 set(rt_headers
   anim.h
+  application.h
   arb_edit.h
   db_diff.h
   db_fullpath.h
@@ -8,6 +9,7 @@ set(rt_headers
   debug.h
   defines.h
   directory.h
+  functab.h
   hit.h
   mater.h
   mem.h
@@ -18,12 +20,14 @@ set(rt_headers
   ray_partition.h
   region.h
   resource.h
+  rt_instance.h
   search.h
   seg.h
   soltab.h
   space_partition.h
   tol.h
   tree.h
+  view.h
   wdb.h
   xray.h
   )

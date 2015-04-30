@@ -1,0 +1,163 @@
+/*                    R T _ I N S T A N C E . H
+ * BRL-CAD
+ *
+ * Copyright (c) 1993-2015 United States Government as represented by
+ * the U.S. Army Research Laboratory.
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public License
+ * version 2.1 as published by the Free Software Foundation.
+ *
+ * This library is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this file; see the file named COPYING for more
+ * information.
+ */
+/** @file rt/rt_instance.h
+ *
+ */
+
+#ifndef RT_RT_INSTANCE_H
+#define RT_RT_INSTANCE_H
+
+#include "common.h"
+#include "vmath.h"
+#include "bu/list.h"
+#include "bu/hist.h"
+#include "bu/ptbl.h"
+#include "bn/tol.h"
+#include "rt/defines.h"
+#include "rt/db_instance.h"
+#include "rt/region.h"
+#include "rt/space_partition.h" /* cutter */
+#include "rt/soltab.h"
+#include "rt/tol.h"
+
+__BEGIN_DECLS
+
+/**
+ * This structure keeps track of almost everything for ray-tracing
+ * support: Regions, primitives, model bounding box, statistics.
+ *
+ * Definitions for librt which are specific to the particular model
+ * being processed, one copy for each model.  Initially, a pointer to
+ * this is returned from rt_dirbuild().
+ *
+ * During gettree processing, the most time consuming step is
+ * searching the list of existing solids to see if a new solid is
+ * actually an identical instance of a previous solid.  Therefore, the
+ * list has been divided into several lists.  The same macros & hash
+ * value that accesses the dbi_Head[] array are used here.  The hash
+ * value is computed by db_dirhash().
+ */
+struct rt_i {
+    uint32_t            rti_magic;      /**< @brief  magic # for integrity check */
+    /* THESE ITEMS ARE AVAILABLE FOR APPLICATIONS TO READ & MODIFY */
+    int                 useair;         /**< @brief  1="air" regions are retained while prepping */
+    int                 rti_save_overlaps; /**< @brief  1=fill in pt_overlap_reg, change boolweave behavior */
+    int                 rti_dont_instance; /**< @brief  1=Don't compress instances of solids into 1 while prepping */
+    int                 rti_hasty_prep; /**< @brief  1=hasty prep, slower ray-trace */
+    int                 rti_nlights;    /**< @brief  number of light sources */
+    int                 rti_prismtrace; /**< @brief  add support for pixel prism trace */
+    char *              rti_region_fix_file; /**< @brief  rt_regionfix() file or NULL */
+    int                 rti_space_partition;  /**< @brief  space partitioning method */
+    int                 rti_nugrid_dimlimit;  /**< @brief  limit on nugrid dimensions */
+    struct bn_tol       rti_tol;        /**< @brief  Math tolerances for this model */
+    struct rt_tess_tol  rti_ttol;       /**< @brief  Tessellation tolerance defaults */
+    fastf_t             rti_max_beam_radius; /**< @brief  Max threat radius for FASTGEN cline solid */
+    /* THESE ITEMS ARE AVAILABLE FOR APPLICATIONS TO READ */
+    point_t             mdl_min;        /**< @brief  min corner of model bounding RPP */
+    point_t             mdl_max;        /**< @brief  max corner of model bounding RPP */
+    point_t             rti_pmin;       /**< @brief  for plotting, min RPP */
+    point_t             rti_pmax;       /**< @brief  for plotting, max RPP */
+    double              rti_radius;     /**< @brief  radius of model bounding sphere */
+    struct db_i *       rti_dbip;       /**< @brief  prt to Database instance struct */
+    /* THESE ITEMS SHOULD BE CONSIDERED OPAQUE, AND SUBJECT TO CHANGE */
+    int                 needprep;       /**< @brief  needs rt_prep */
+    struct region **    Regions;        /**< @brief  ptrs to regions [reg_bit] */
+    struct bu_list      HeadRegion;     /**< @brief  ptr of list of regions in model */
+    void *              Orca_hash_tbl;  /**< @brief  Hash table in matrices for ORCA */
+    struct bu_ptbl      delete_regs;    /**< @brief  list of region pointers to delete after light_init() */
+    /* Ray-tracing statistics */
+    size_t              nregions;       /**< @brief  total # of regions participating */
+    size_t              nsolids;        /**< @brief  total # of solids participating */
+    size_t              rti_nrays;      /**< @brief  # calls to rt_shootray() */
+    size_t              nmiss_model;    /**< @brief  rays missed model RPP */
+    size_t              nshots;         /**< @brief  # of calls to ft_shot() */
+    size_t              nmiss;          /**< @brief  solid ft_shot() returned a miss */
+    size_t              nhits;          /**< @brief  solid ft_shot() returned a hit */
+    size_t              nmiss_tree;     /**< @brief  shots missed sub-tree RPP */
+    size_t              nmiss_solid;    /**< @brief  shots missed solid RPP */
+    size_t              ndup;           /**< @brief  duplicate shots at a given solid */
+    size_t              nempty_cells;   /**< @brief  number of empty NUgrid cells */
+    union cutter        rti_CutHead;    /**< @brief  Head of cut tree */
+    union cutter        rti_inf_box;    /**< @brief  List of infinite solids */
+    union cutter *      rti_CutFree;    /**< @brief  cut Freelist */
+    struct bu_ptbl      rti_busy_cutter_nodes; /**< @brief  List of "cutter" mallocs */
+    struct bu_ptbl      rti_cuts_waiting;
+    int                 rti_cut_maxlen; /**< @brief  max len RPP list in 1 cut bin */
+    int                 rti_ncut_by_type[CUT_MAXIMUM+1];        /**< @brief  number of cuts by type */
+    int                 rti_cut_totobj; /**< @brief  # objs in all bins, total */
+    int                 rti_cut_maxdepth;/**< @brief  max depth of cut tree */
+    struct soltab **    rti_sol_by_type[ID_MAX_SOLID+1];
+    int                 rti_nsol_by_type[ID_MAX_SOLID+1];
+    int                 rti_maxsol_by_type;
+    int                 rti_air_discards;/**< @brief  # of air regions discarded */
+    struct bu_hist      rti_hist_cellsize; /**< @brief  occupancy of cut cells */
+    struct bu_hist      rti_hist_cell_pieces; /**< @brief  solid pieces per cell */
+    struct bu_hist      rti_hist_cutdepth; /**< @brief  depth of cut tree */
+    struct soltab **    rti_Solids;     /**< @brief  ptrs to soltab [st_bit] */
+    struct bu_list      rti_solidheads[RT_DBNHASH]; /**< @brief  active solid lists */
+    struct bu_ptbl      rti_resources;  /**< @brief  list of 'struct resource's encountered */
+    double              rti_nu_gfactor; /**< @brief  constant in numcells computation */
+    size_t              rti_cutlen;     /**< @brief  goal for # solids per boxnode */
+    size_t              rti_cutdepth;   /**< @brief  goal for depth of NUBSPT cut tree */
+    /* Parameters required for rt_submodel */
+    char *              rti_treetop;    /**< @brief  bu_strduped, for rt_submodel rti's only */
+    size_t              rti_uses;       /**< @brief  for rt_submodel */
+    /* Parameters for accelerating "pieces" of solids */
+    size_t              rti_nsolids_with_pieces; /**< @brief  # solids using pieces */
+    /* Parameters for dynamic geometry */
+    int                 rti_add_to_new_solids_list;
+    struct bu_ptbl      rti_new_solids;
+};
+
+
+#define RTI_NULL        ((struct rt_i *)0)
+
+#define RT_CHECK_RTI(_p) BU_CKMAG(_p, RTI_MAGIC, "struct rt_i")
+#define RT_CK_RTI(_p) RT_CHECK_RTI(_p)
+
+/**
+ * Macros to painlessly visit all the active solids.  Serving suggestion:
+ *
+ * RT_VISIT_ALL_SOLTABS_START(stp, rtip) {
+ *      rt_pr_soltab(stp);
+ * } RT_VISIT_ALL_SOLTABS_END
+ */
+#define RT_VISIT_ALL_SOLTABS_START(_s, _rti) { \
+            register struct bu_list *_head = &((_rti)->rti_solidheads[0]); \
+            for (; _head < &((_rti)->rti_solidheads[RT_DBNHASH]); _head++) \
+                for (BU_LIST_FOR(_s, soltab, _head)) {
+
+#define RT_VISIT_ALL_SOLTABS_END        } }
+
+
+
+__END_DECLS
+
+#endif /* RT_RT_INSTANCE_H */
+
+/*
+ * Local Variables:
+ * tab-width: 8
+ * mode: C
+ * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */
