@@ -26,6 +26,7 @@
 
 #include "common.h"
 #include "vmath.h"
+#include "rt/defines.h"
 #include "rt/soltab.h"
 
 __BEGIN_DECLS
@@ -89,6 +90,14 @@ union cutter {
 
 
 #define CUTTER_NULL     ((union cutter *)0)
+
+/**
+ * Print out a cut tree.
+ *
+ * lvl is recursion level.
+ */
+RT_EXPORT extern void rt_pr_cut(const union cutter *cutp,
+	                                int lvl);
 
 
 __END_DECLS

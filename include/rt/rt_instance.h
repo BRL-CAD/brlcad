@@ -291,7 +291,6 @@ int rt_plot_solid(
 	const struct soltab *stp,
 	struct resource     *resp);
 
-/** @} */
 /* Release storage assoc with rt_i */
 RT_EXPORT extern void rt_clean(struct rt_i *rtip);
 RT_EXPORT extern int rt_del_regtree(struct rt_i *rtip,
@@ -299,6 +298,36 @@ RT_EXPORT extern int rt_del_regtree(struct rt_i *rtip,
 	struct resource *resp);
 /* Check in-memory data structures */
 RT_EXPORT extern void rt_ck(struct rt_i *rtip);
+
+/* Print value of tree for a partition */
+RT_EXPORT extern void rt_pr_tree_val(const union tree *tp,
+	                             const struct partition *partp,
+				     int pr_name, int lvl);
+/* Print a partition */
+RT_EXPORT extern void rt_pr_pt(const struct rt_i *rtip,
+	                       const struct partition *pp);
+
+/**
+ * Go through all the solids in the model, given the model mins and
+ * maxes, and generate a cutting tree.  A strategy better than
+ * incrementally cutting each solid is to build a box node which
+ * contains everything in the model, and optimize it.
+ *
+ * This is the main entry point into space partitioning from
+ * rt_prep().
+ */
+RT_EXPORT extern void rt_cut_it(struct rt_i *rtip,
+                                int ncpu);
+
+/* free a cut tree */
+/**
+ * Free a whole cut tree below the indicated node.  The strategy we
+ * use here is to free everything BELOW the given node, so as not to
+ * clobber rti_CutHead !
+ */
+RT_EXPORT extern void rt_fr_cut(struct rt_i *rtip,
+                                union cutter *cutp);
+
 
 __END_DECLS
 

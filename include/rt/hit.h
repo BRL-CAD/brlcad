@@ -27,6 +27,7 @@
 #include "common.h"
 #include "vmath.h"
 #include "bu/magic.h"
+#include "rt/defines.h"
 #include "rt/xray.h"
 
 __BEGIN_DECLS
@@ -150,6 +151,10 @@ struct uvcoord {
 
 /* A more powerful interface would be: */
 /* RT_GET_UVCOORD(_uvp, _partition, inhit/outhit flag, ap) */
+
+/* Print a bit vector */
+RT_EXPORT extern void rt_pr_hit(const char *str,
+	                        const struct hit *hitp);
 
 
 __END_DECLS

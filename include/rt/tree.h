@@ -30,6 +30,7 @@
 #include "bu/magic.h"
 #include "bu/malloc.h"
 #include "bn/tol.h"
+#include "rt/defines.h"
 #include "rt/db_instance.h"
 #include "rt/directory.h"
 #include "rt/mater.h"
@@ -242,6 +243,9 @@ struct rt_tree_array
 
 #define TREE_LIST_NULL  ((struct tree_list *)0)
 
+/* Print an expr tree */
+RT_EXPORT extern void rt_pr_tree(const union tree *tp,
+	                         int lvl);
 
 __END_DECLS
 

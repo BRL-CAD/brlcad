@@ -30,6 +30,7 @@
 #include "rt/defines.h"
 #include "rt/application.h"
 #include "rt/ray_partition.h"
+#include "rt/region.h"
 
 __BEGIN_DECLS
 
@@ -81,6 +82,27 @@ RT_EXPORT extern void rt_default_logoverlap(struct application *ap,
                                             const struct bu_ptbl *regiontable,
                                             const struct partition *InputHdp);
 
+/**
+ * XXX This routine seems to free things more than once.  For a
+ * temporary measure, don't free things.
+ */
+RT_EXPORT extern void rt_rebuild_overlaps(struct partition      *PartHdp,
+	                                  struct application    *ap,
+	                                  int rebuild_fastgen_plates_only);
+
+/**
+ * Default handler for overlaps in rt_boolfinal().
+ *
+ * Returns -
+ * 0 to eliminate partition with overlap entirely
+ * 1 to retain partition in output list, claimed by reg1
+ * 2 to retain partition in output list, claimed by reg2
+ */
+RT_EXPORT extern int    rt_defoverlap(struct application *ap,
+                                      struct partition *pp,
+                                      struct region *reg1,
+                                      struct region *reg2,
+                                      struct partition *pheadp);
 
 __END_DECLS
 

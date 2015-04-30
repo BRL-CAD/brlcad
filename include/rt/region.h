@@ -29,6 +29,7 @@
 #include "bu/avs.h"
 #include "bu/list.h"
 #include "bu/magic.h"
+#include "rt/defines.h"
 #include "rt/mater.h"
 
 __BEGIN_DECLS
@@ -62,6 +63,8 @@ struct region {
 #define REGION_NULL     ((struct region *)0)
 #define RT_CK_REGION(_p) BU_CKMAG(_p, RT_REGION_MAGIC, "struct region")
 
+/* Print a region */
+RT_EXPORT extern void rt_pr_region(const struct region *rp);
 
 __END_DECLS
 

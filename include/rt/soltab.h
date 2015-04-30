@@ -96,7 +96,11 @@ struct soltab {
  * rt_gettrees()
  * rt_kill_deal_solid_refs()
  */
-RT_EXPORT extern void rt_free_soltab(struct soltab   *stp);
+RT_EXPORT extern void rt_free_soltab(struct soltab *stp);
+
+/* Print a soltab */
+RT_EXPORT extern void rt_pr_soltab(const struct soltab *stp);
+
 
 __END_DECLS
 

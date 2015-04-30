@@ -26,6 +26,8 @@
 
 #include "common.h"
 #include "vmath.h"
+#include "bu/ptbl.h"
+#include "rt/defines.h"
 
 __BEGIN_DECLS
 
@@ -141,6 +143,12 @@ struct partition_bundle {
     struct partition_list *list;
     struct application  *ap;
 };
+
+
+/**
+ * Return the length of a partition linked list.
+ */
+RT_EXPORT extern int rt_partition_len(const struct partition *partheadp);
 
 
 __END_DECLS
