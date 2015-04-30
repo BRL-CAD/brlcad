@@ -134,6 +134,10 @@
 #define RT_DBHASH(sum)  ((size_t)(sum) & ((RT_DBNHASH)-1))
 #endif
 
+/* Used to set globals declared in bot.c */
+#define RT_DEFAULT_MINPIECES            32
+#define RT_DEFAULT_TRIS_PER_PIECE       4
+#define RT_DEFAULT_MINTIE               0       /* TODO: find the best value */
 
 /*
  * Local Variables:

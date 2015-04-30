@@ -29,10 +29,7 @@
 
 __BEGIN_DECLS
 
-/* struct resource requires db_fullpath as part of its definition -
- * so long as that is true, typedef to avoid circular definition
- * problem */
-typedef struct resource struct_resource;
+struct resource; /* forward declaration */
 
 /**
  * For collecting paths through the database tree.

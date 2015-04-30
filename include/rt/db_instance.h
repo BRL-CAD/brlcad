@@ -31,11 +31,11 @@
 #include "bu/ptbl.h"
 #include "rt/mem.h"
 #include "rt/directory.h"
+#include "rt/anim.h"
 
 __BEGIN_DECLS
 
-struct animate;
-struct rt_wdb;
+struct rt_wdb; /* forward declaration */
 
 /**
  * One of these structures is used to describe each separate instance

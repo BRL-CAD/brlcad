@@ -33,7 +33,7 @@
 
 __BEGIN_DECLS
 
-union tree;
+union tree; /* forward declaration */
 
 /**
  * The region structure.

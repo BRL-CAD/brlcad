@@ -42,8 +42,8 @@ struct bound_rpp {
     point_t max;
 };
 
-struct rt_functab;
-struct directory;
+struct rt_functab;  /* forward declaration */
+struct directory;   /* forward declaration */
 
 /**
  * Internal information used to keep track of solids in the model.

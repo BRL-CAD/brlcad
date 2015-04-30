@@ -31,7 +31,7 @@
 
 __BEGIN_DECLS
 
-struct soltab;
+struct soltab;  /* forward declaration */
 
 /**
  * Intersection segment.

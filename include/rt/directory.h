@@ -27,10 +27,9 @@
 #include "common.h"
 #include "vmath.h"
 #include "bu/list.h"
+#include "rt/anim.h"
 
 __BEGIN_DECLS
-
-struct animate;
 
 /**
  * One of these structures is allocated in memory to represent each

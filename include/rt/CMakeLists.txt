@@ -1,4 +1,5 @@
 set(rt_headers
+  anim.h
   arb_edit.h
   db_diff.h
   db_fullpath.h
@@ -10,15 +11,20 @@ set(rt_headers
   hit.h
   mater.h
   mem.h
+  nongeom.h
   op.h
   pattern.h
+  piece.h
   ray_partition.h
   region.h
+  resource.h
   search.h
   seg.h
   soltab.h
   space_partition.h
   tol.h
+  tree.h
+  wdb.h
   xray.h
   )
 

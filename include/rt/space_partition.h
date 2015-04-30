@@ -30,7 +30,7 @@
 
 __BEGIN_DECLS
 
-struct rt_piecelist;
+struct rt_piecelist;  /* forward declaration */
 
 /**
  * Structures for space subdivision.
