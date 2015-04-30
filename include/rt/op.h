@@ -26,7 +26,7 @@
 #ifndef RT_DB_H
 #define RT_DB_H
 
-#include "./defines.h"
+#include "rt/defines.h"
 
 __BEGIN_DECLS
 

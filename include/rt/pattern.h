@@ -42,6 +42,13 @@ __BEGIN_DECLS
  */
 
 /**
+ * PRIVATE: this is new API and should be considered private for the
+ * time being.
+ */
+RT_EXPORT extern int rt_raybundle_maker(struct xray *rp, double radius, const fastf_t *avec, const fastf_t *bvec, int rays_per_ring, int nring);
+
+
+/**
  * Make a bundle of rays around a main ray using a generator
  *
  * If data is NULL, return -1

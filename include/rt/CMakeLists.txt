@@ -2,6 +2,7 @@ set(rt_headers
   anim.h
   application.h
   arb_edit.h
+  boolweave.h
   db_diff.h
   db_fullpath.h
   db_instance.h
@@ -13,10 +14,13 @@ set(rt_headers
   hit.h
   mater.h
   mem.h
+  nmg.h
   nongeom.h
   op.h
+  overlap.h
   pattern.h
   piece.h
+  prep.h
   private.h
   ray_partition.h
   region.h
@@ -24,8 +28,10 @@ set(rt_headers
   rt_instance.h
   search.h
   seg.h
+  shoot.h
   soltab.h
   space_partition.h
+  timer.h
   tol.h
   tree.h
   view.h

@@ -30,6 +30,7 @@
 #include "bu/vls.h"
 #include "bn/tol.h"
 #include "rtgeom.h"
+#include "rt/defines.h"
 #include "rt/application.h"
 #include "rt/db_internal.h"
 #include "rt/db_instance.h"
@@ -41,13 +42,11 @@
 #include "rt/tol.h"
 #include "rt/view.h"
 #include "rt/xray.h"
+#include "nmg.h"
 #include "brep.h"
 
 
 __BEGIN_DECLS
-
-struct nmgregion; /* forward declaration */
-struct model;     /* forward declaration */
 
 /**
  * Object-oriented interface to BRL-CAD geometry.

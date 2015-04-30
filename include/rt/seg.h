@@ -27,6 +27,7 @@
 #include "common.h"
 #include "vmath.h"
 #include "bu/list.h"
+#include "rt/defines.h"
 #include "rt/hit.h"
 
 __BEGIN_DECLS
@@ -81,6 +82,9 @@ struct seg {
             RT_FREE_SEG(_a, _res); \
         } \
     }
+
+/* Print seg struct */
+RT_EXPORT extern void rt_pr_seg(const struct seg *segp);
 
 
 __END_DECLS

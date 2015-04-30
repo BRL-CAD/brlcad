@@ -28,6 +28,7 @@
 #include "vmath.h"
 #include "bu/list.h"
 #include "bu/ptbl.h"
+#include "rt/defines.h"
 #include "rt/tree.h"
 #include "rt/directory.h"
 
@@ -108,31 +109,6 @@ RT_EXPORT extern struct resource rt_uniresource;        /**< @brief  default.  D
 #define RESOURCE_NULL   ((struct resource *)0)
 #define RT_CK_RESOURCE(_p) BU_CKMAG(_p, RESOURCE_MAGIC, "struct resource")
 #define RT_RESOURCE_INIT_ZERO { RESOURCE_MAGIC, 0, BU_LIST_INIT_ZERO, BU_PTBL_INIT_ZERO, 0, 0, 0, BU_LIST_INIT_ZERO, 0, 0, 0, BU_LIST_INIT_ZERO, BU_LIST_INIT_ZERO, BU_LIST_INIT_ZERO, NULL, 0, NULL, 0, 0, 0, 0, 0, 0, 0, 0, NULL, 0, 0, 0, 0, BU_PTBL_INIT_ZERO, NULL, 0, 0, 0, NULL, BU_PTBL_INIT_ZERO }
-
-/**
- * initialize a memory resource structure for use during ray tracing.
- *
- * a given resource structure is prepared for use and marked as the
- * resource for a given thread of execution (indicated by 'cpu_num').
- * if an 'rtip' ray tracing instance pointer is provided, the resource
- * structure will be stored within so that it's available to threads
- * of execution during parallel ray tracing.
- *
- * This routine should initialize all the same resources that
- * rt_clean_resource() releases.  It shouldn't (but currently does for
- * ptbl) allocate any dynamic memory, just init pointers & lists.
- */
-
-struct rt_i; /* forward declaration */
-
-RT_EXPORT extern void rt_init_resource(struct resource *resp, int cpu_num, struct rt_i *rtip);
-
-
-RT_EXPORT extern void rt_clean_resource(struct rt_i *rtip,
-                                        struct resource *resp);
-RT_EXPORT extern void rt_clean_resource_complete(struct rt_i *rtip,
-                                                 struct resource *resp);
-
 
 __END_DECLS
 

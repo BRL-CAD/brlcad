@@ -29,6 +29,7 @@
 #include "bu/magic.h"
 #include "bu/list.h"
 #include "bu/ptbl.h"
+#include "rt/defines.h"
 #include "rt/db_fullpath.h"
 
 __BEGIN_DECLS
@@ -79,6 +80,23 @@ struct soltab {
 
 #define RT_CHECK_SOLTAB(_p) BU_CKMAG(_p, RT_SOLTAB_MAGIC, "struct soltab")
 #define RT_CK_SOLTAB(_p) BU_CKMAG(_p, RT_SOLTAB_MAGIC, "struct soltab")
+
+/**
+ * Decrement use count on soltab structure.  If no longer needed,
+ * release associated storage, and free the structure.
+ *
+ * This routine semaphore protects against other copies of itself
+ * running in parallel, and against other routines (such as
+ * _rt_find_identical_solid()) which might also be modifying the
+ * linked list heads.
+ *
+ * Called by -
+ * db_free_tree()
+ * rt_clean()
+ * rt_gettrees()
+ * rt_kill_deal_solid_refs()
+ */
+RT_EXPORT extern void rt_free_soltab(struct soltab   *stp);
 
 __END_DECLS
 

@@ -37,14 +37,13 @@
 #include "rt/region.h"
 #include "rt/soltab.h"
 #include "rt/tol.h"
+#include "nmg.h"
 
 __BEGIN_DECLS
 
 union tree;       /* forward declaration */
 struct resource;  /* forward declaration */
 struct rt_i;      /* forward declaration */
-struct model;     /* forward declaration */
-struct nmgregion; /* forward declaration */
 
 /**
  * State for database tree walker db_walk_tree() and related

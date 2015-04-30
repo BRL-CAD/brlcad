@@ -33,6 +33,7 @@
 #include "rt/defines.h"
 #include "rt/db_instance.h"
 #include "rt/region.h"
+#include "rt/resource.h"
 #include "rt/space_partition.h" /* cutter */
 #include "rt/soltab.h"
 #include "rt/tol.h"
@@ -146,7 +147,158 @@ struct rt_i {
 
 #define RT_VISIT_ALL_SOLTABS_END        } }
 
+/**************************/
+/* Applications interface */
+/**************************/
 
+/* Prepare for raytracing */
+
+RT_EXPORT extern struct rt_i *rt_new_rti(struct db_i *dbip);
+RT_EXPORT extern void rt_free_rti(struct rt_i *rtip);
+RT_EXPORT extern void rt_prep(struct rt_i *rtip);
+RT_EXPORT extern void rt_prep_parallel(struct rt_i *rtip,
+	                                       int ncpu);
+
+
+/* Get expr tree for object */
+/**
+ * User-called function to add a tree hierarchy to the displayed set.
+ *
+ * This function is not multiply re-entrant.
+ *
+ * Returns -
+ * 0 Ordinarily
+ * -1 On major error
+ *
+ * Note: -2 returns from rt_gettrees_and_attrs are filtered.
+ */
+RT_EXPORT extern int rt_gettree(struct rt_i *rtip,
+                                const char *node);
+RT_EXPORT extern int rt_gettrees(struct rt_i *rtip,
+                                 int argc,
+                                 const char **argv, int ncpus);
+
+/**
+ * User-called function to add a set of tree hierarchies to the active
+ * set.
+ *
+ * This function may run in parallel, but is not multiply re-entrant
+ * itself, because db_walk_tree() isn't multiply re-entrant.
+ *
+ * Semaphores used for critical sections in parallel mode:
+ * RT_SEM_TREE* protects rti_solidheads[] lists, d_uses(solids)
+ * RT_SEM_RESULTS protects HeadRegion, mdl_min/max, d_uses(reg), nregions
+ * RT_SEM_WORKER (db_walk_dispatcher, from db_walk_tree)
+ * RT_SEM_STATS nsolids
+ *
+ * Returns -
+ * 0 Ordinarily
+ * -1 On major error
+ * -2 If there were unresolved names
+ */
+RT_EXPORT extern int rt_gettrees_and_attrs(struct rt_i *rtip,
+                                           const char **attrs,
+                                           int argc,
+                                           const char **argv, int ncpus);
+
+
+/**
+ * User-called function to add a set of tree hierarchies to the active
+ * set. Includes getting the indicated list of attributes and a
+ * Tcl_HashTable for use with the ORCA man regions. (stashed in the
+ * rt_i structure).
+ *
+ * This function may run in parallel, but is not multiply re-entrant
+ * itself, because db_walk_tree() isn't multiply re-entrant.
+ *
+ * Semaphores used for critical sections in parallel mode:
+ * RT_SEM_TREE ====> protects rti_solidheads[] lists, d_uses(solids)
+ * RT_SEM_RESULTS => protects HeadRegion, mdl_min/max, d_uses(reg), nregions
+ * RT_SEM_WORKER ==> (db_walk_dispatcher, from db_walk_tree)
+ * RT_SEM_STATS ===> nsolids
+ *
+ * INPUTS:
+ *
+ * rtip - RT instance pointer
+ *
+ * attrs - attribute value set
+ *
+ * argc - number of trees to get
+ *
+ * argv - array of char pointers to the names of the tree tops
+ *
+ * ncpus - number of cpus to use
+ *
+ * Returns -
+ * 0 Ordinarily
+ * -1 On major error
+ */
+RT_EXPORT extern int rt_gettrees_muves(struct rt_i *rtip,
+                                       const char **attrs,
+                                       int argc,
+                                       const char **argv,
+                                       int ncpus);
+
+DEPRECATED RT_EXPORT extern int rt_load_attrs(struct rt_i *rtip,
+	                                              char **attrs);
+
+
+/* Print the partitions */
+RT_EXPORT extern void rt_pr_partitions(const struct rt_i *rtip,
+	const struct partition *phead,
+	const char *title);
+
+/**
+ * @brief
+ * Find solid by leaf name
+ *
+ * Given the (leaf) name of a solid, find the first occurrence of it
+ * in the solid list.  Used mostly to find the light source.  Returns
+ * soltab pointer, or RT_SOLTAB_NULL.
+ */
+RT_EXPORT extern struct soltab *rt_find_solid(const struct rt_i *rtip,
+	                                              const char *name);
+
+/**
+ * initialize a memory resource structure for use during ray tracing.
+ *
+ * a given resource structure is prepared for use and marked as the
+ * resource for a given thread of execution (indicated by 'cpu_num').
+ * if an 'rtip' ray tracing instance pointer is provided, the resource
+ * structure will be stored within so that it's available to threads
+ * of execution during parallel ray tracing.
+ *
+ * This routine should initialize all the same resources that
+ * rt_clean_resource() releases.  It shouldn't (but currently does for
+ * ptbl) allocate any dynamic memory, just init pointers & lists.
+ */
+
+struct rt_i; /* forward declaration */
+
+RT_EXPORT extern void rt_init_resource(struct resource *resp, int cpu_num, struct rt_i *rtip);
+
+
+RT_EXPORT extern void rt_clean_resource(struct rt_i *rtip,
+                                        struct resource *resp);
+RT_EXPORT extern void rt_clean_resource_complete(struct rt_i *rtip,
+                                                 struct resource *resp);
+
+
+/* Plot a solid */
+int rt_plot_solid(
+	FILE                *fp,
+	struct rt_i         *rtip,
+	const struct soltab *stp,
+	struct resource     *resp);
+
+/** @} */
+/* Release storage assoc with rt_i */
+RT_EXPORT extern void rt_clean(struct rt_i *rtip);
+RT_EXPORT extern int rt_del_regtree(struct rt_i *rtip,
+	struct region *delregp,
+	struct resource *resp);
+/* Check in-memory data structures */
+RT_EXPORT extern void rt_ck(struct rt_i *rtip);
 
 __END_DECLS
 
