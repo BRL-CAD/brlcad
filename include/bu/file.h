@@ -172,7 +172,7 @@ BU_EXPORT extern size_t bu_file_glob(const char *pattern, char ***matches);
  * http://svn.apache.org/repos/asf/httpd/httpd/trunk/docs/conf/mime.types
  *
  * Customizations for BRL-CAD are maintained in misc/mime_cad.types
- * and any types not convered by the standard mime set (such as
+ * and any types not covered by the standard mime set (such as
  * the majority of geometry formats) are added there instead of
  * changing mime.types.
  */

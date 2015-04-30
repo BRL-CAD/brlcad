@@ -21,7 +21,7 @@
 /** @{ */
 /** @file rt/pattern.h
  *
- * Functionality for generating pattenrs of rays.
+ * Functionality for generating patterns of rays.
  *
  */
 
