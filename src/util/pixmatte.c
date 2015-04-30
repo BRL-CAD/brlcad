@@ -148,6 +148,7 @@ get_args(int argc, char **argv)
     int i;
 
     while ((c = bu_getopt(argc, argv, "glenaw:h?")) != -1) {
+fprintf(stderr,"am processing argument %c\n",c);
 	switch (c) {
 	    case 'g':
 		wanted |= GT;
@@ -226,25 +227,13 @@ main(int argc, char **argv)
     setmode(fileno(stderr), O_BINARY);
 
     bu_log("pixmatte:\tif (%s ", file_name[0]);
-    if (wanted & LT) {
-	if (wanted & EQ)
-	    fputs("<=", stderr);
-	else
-	    fputs("<", stderr);
-    }
-    if (wanted & GT) {
-	if (wanted & EQ)
-	    fputs(">=", stderr);
-	else
-	    fputs(">", stderr);
-    }
-    if (wanted & APPROX) {
-	if (wanted & EQ) fputs("~~==", stderr);
-	if (wanted & NE) fputs("~~!=", stderr);
-    } else {
-	if (wanted & EQ) fputs("==", stderr);
-	if (wanted & NE) fputs("!=", stderr);
-    }
+
+    if (wanted & APPROX) fputs("~~", stderr);
+    if (wanted & LT) fputs("<", stderr);
+    if (wanted & EQ) fputs("=", stderr);
+    if (wanted & GT) fputs(">", stderr);
+    if (wanted & NE) fputs("!=", stderr);
+
     bu_log(" %s)\n", file_name[1]);
     bu_log("pixmatte:\t\tthen output %s\n", file_name[2]);
     bu_log("pixmatte:\t\telse output %s\n", file_name[3]);
@@ -338,10 +327,50 @@ main(int argc, char **argv)
 		    }
 		    goto success;
 		}
-	    	/* Look for use of EQ; cannot get here with LT and GT both
-	    	 * in use, because if both LT and GT were detected, they
-	    	 * would have been turned off and replaced with NE.
+	    	/* Cannot get here with LT and GT both in use, because
+		 * if both LT and GT were detected, they would have been
+	    	 * turned off and replaced with NE.
 	    	 */
+		if ( (wanted & GT) && (wanted & EQ) ) {
+		    /* Want approx GT/EQ; in addition to ">=",
+                     * we allow 1 on the OTHER side of equality.
+		     */
+		    for (ep = ap+width; ap < ep;) {
+			if ((i= *ap++ - *bp++) < -1)
+			    goto fail;
+		    }
+		    goto success;
+		}
+		if (wanted & GT) {
+		    /* Want approx GT; same as ">", except we
+                     * stay more than 1 away from equality.
+		     */
+		    for (ep = ap+width; ap < ep;) {
+			if ((i= *ap++ - *bp++) < 2 )
+			    goto fail;
+		    }
+		    goto success;
+		}
+		if ( (wanted & LT) && (wanted & EQ) ) {
+		    /* Want approx LT/EQ; in addition to "<=",
+                     * we allow 1 on the OTHER side of equality.
+		     */
+		    for (ep = ap+width; ap < ep;) {
+			if ((i= *ap++ - *bp++) > 1)
+			    goto fail;
+		    }
+		    goto success;
+		}
+		if (wanted & LT) {
+		    /* Want approx LT; same as "<", except we
+                     * stay more than 1 away from equality.
+		     */
+		    for (ep = ap+width; ap < ep;) {
+			if ((i= *ap++ - *bp++) > -2 )
+			    goto fail;
+		    }
+		    goto success;
+		}
 		if (wanted & EQ) {
 		    /* Want approx equal */
 		    for (ep = ap+width; ap < ep;) {
