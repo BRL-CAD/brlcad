@@ -148,7 +148,6 @@ get_args(int argc, char **argv)
     int i;
 
     while ((c = bu_getopt(argc, argv, "glenaw:h?")) != -1) {
-fprintf(stderr,"am processing argument %c\n",c);
 	switch (c) {
 	    case 'g':
 		wanted |= GT;
@@ -380,20 +379,23 @@ main(int argc, char **argv)
 		    }
 		    goto success;
 		}
-	    } else {
-		for (ep = ap+width; ap < ep; ap++, bp++) {
-		    if (*ap > *bp) {
-			if (!(GT & wanted))
-			    goto fail;
-		    } else if (*ap == *bp) {
-			if (!(EQ & wanted))
-			    goto fail;
-		    } else {
-			if (!(LT & wanted))
-			    goto fail;
-		    }
+	    }
+
+/* (wanted & APPROX) is false if we arrive here.
+ */
+	    for (ep = ap+width; ap < ep; ap++, bp++) {
+		if (*ap > *bp) {
+		    if (!(GT & wanted))
+			goto fail;
+		} else if (*ap == *bp) {
+		    if (!(EQ & wanted))
+			goto fail;
+		} else {
+		    if (!(LT & wanted))
+			goto fail;
 		}
 	    }
+
 	success:
 	    if (buf[2] != NULL)
 		ap = cb2;
