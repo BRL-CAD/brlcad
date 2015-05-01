@@ -27,6 +27,7 @@
 #include "common.h"
 #include "vmath.h"
 #include "bu/list.h"
+#include "bu/vls.h"
 #include "rt/defines.h"
 #include "rt/hit.h"
 
@@ -85,6 +86,7 @@ struct seg {
 
 /* Print seg struct */
 RT_EXPORT extern void rt_pr_seg(const struct seg *segp);
+RT_EXPORT extern void rt_pr_seg_vls(struct bu_vls *, const struct seg *);
 
 
 __END_DECLS

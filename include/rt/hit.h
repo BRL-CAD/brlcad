@@ -27,6 +27,7 @@
 #include "common.h"
 #include "vmath.h"
 #include "bu/magic.h"
+#include "bu/vls.h"
 #include "rt/defines.h"
 #include "rt/xray.h"
 
@@ -155,7 +156,13 @@ struct uvcoord {
 /* Print a bit vector */
 RT_EXPORT extern void rt_pr_hit(const char *str,
 	                        const struct hit *hitp);
-
+RT_EXPORT extern void rt_pr_hit_vls(struct bu_vls *v,
+                                    const char *str,
+                                    const struct hit *hitp);
+RT_EXPORT extern void rt_pr_hitarray_vls(struct bu_vls *v,
+                                         const char *str,
+                                         const struct hit *hitp,
+                                         int count);
 
 __END_DECLS
 

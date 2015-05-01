@@ -32,6 +32,29 @@
 
 __BEGIN_DECLS
 
+/** @file librt/shoot.c
+ *
+ * Ray Tracing program shot coordinator.
+ *
+ * This is the heart of LIBRT's ray-tracing capability.
+ *
+ * Given a ray, shoot it at all the relevant parts of the model,
+ * (building the finished_segs chain), and then call rt_boolregions()
+ * to build and evaluate the partition chain.  If the ray actually hit
+ * anything, call the application's a_hit() routine with a pointer to
+ * the partition chain, otherwise, call the application's a_miss()
+ * routine.
+ *
+ * It is important to note that rays extend infinitely only in the
+ * positive direction.  The ray is composed of all points P, where
+ *
+ * P = r_pt + K * r_dir
+ *
+ * for K ranging from 0 to +infinity.  There is no looking backwards.
+ *
+ */
+
+
 /* Shoot a ray */
 /**
  * Note that the direction vector r_dir must have unit length; this is
@@ -106,7 +129,35 @@ RT_EXPORT extern struct partition *rt_shootray_simple(struct application *ap,
  */
 RT_EXPORT extern int rt_shootray_bundle(register struct application *ap, struct xray *rays, int nrays);
 
+/**
+ * To be called only in non-parallel mode, to tally up the statistics
+ * from the resource structure(s) into the rt instance structure.
+ *
+ * Non-parallel programs should call
+ * rt_add_res_stats(rtip, RESOURCE_NULL);
+ * to have the default resource results tallied in.
+ */
+RT_EXPORT extern void rt_add_res_stats(struct rt_i *rtip,
+                                       struct resource *resp);
+/* Tally stats into struct rt_i */
+RT_EXPORT extern void rt_zero_res_stats(struct resource *resp);
 
+
+RT_EXPORT extern void rt_res_pieces_clean(struct resource *resp,
+                                          struct rt_i *rtip);
+
+
+/**
+ * Allocate the per-processor state variables needed to support
+ * rt_shootray()'s use of 'solid pieces'.
+ */
+RT_EXPORT extern void rt_res_pieces_init(struct resource *resp,
+                                         struct rt_i *rtip);
+RT_EXPORT extern void rt_vstub(struct soltab *stp[],
+                               struct xray *rp[],
+                               struct  seg segp[],
+                               int n,
+                               struct application       *ap);
 
 __END_DECLS
 

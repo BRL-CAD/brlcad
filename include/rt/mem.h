@@ -26,6 +26,7 @@
 
 #include "common.h"
 #include "vmath.h"
+#include "rt/defines.h"
 
 __BEGIN_DECLS
 
@@ -39,6 +40,76 @@ struct mem_map {
     off_t m_addr;               /**< @brief Address of start of this element */
 };
 #define MAP_NULL        ((struct mem_map *) 0)
+
+/* memalloc.c -- non PARALLEL routines */
+
+/**
+ * Takes:               & pointer of map,
+ * size.
+ *
+ * Returns:     NULL Error
+ * <addr> Otherwise
+ *
+ * Comments:
+ * Algorithm is first fit.
+ */
+RT_EXPORT extern size_t rt_memalloc(struct mem_map **pp,
+                                    size_t size);
+
+/**
+ * Takes:               & pointer of map,
+ * size.
+ *
+ * Returns:     NULL Error
+ * <addr> Otherwise
+ *
+ * Comments:
+ * Algorithm is BEST fit.
+ */
+RT_EXPORT extern struct mem_map * rt_memalloc_nosplit(struct mem_map **pp,
+                                                      size_t size);
+
+/**
+ * Returns:     NULL Error
+ * <addr> Otherwise
+ *
+ * Comments:
+ * Algorithm is first fit.
+ * Free space can be split
+ */
+RT_EXPORT extern size_t rt_memget(struct mem_map **pp,
+                                  size_t size,
+                                  off_t place);
+
+/**
+ * Takes:
+ * size,
+ * address.
+ *
+ * Comments:
+ * The routine does not check for wrap around when increasing sizes
+ * or changing addresses.  Other wrap-around conditions are flagged.
+ */
+RT_EXPORT extern void rt_memfree(struct mem_map **pp,
+                                 size_t size,
+                                 off_t addr);
+
+/**
+ * Take everything on the current memory chain, and place it on the
+ * freelist.
+ */
+RT_EXPORT extern void rt_mempurge(struct mem_map **pp);
+
+/**
+ * Print a memory chain.
+ */
+RT_EXPORT extern void rt_memprint(struct mem_map **pp);
+
+/**
+ * Return all the storage used by the rt_mem_freemap.
+ */
+RT_EXPORT extern void rt_memclose(void);
+
 
 __END_DECLS
 

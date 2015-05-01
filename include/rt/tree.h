@@ -246,6 +246,418 @@ struct rt_tree_array
 /* Print an expr tree */
 RT_EXPORT extern void rt_pr_tree(const union tree *tp,
 	                         int lvl);
+RT_EXPORT extern void rt_pr_tree_vls(struct bu_vls *vls,
+                                     const union tree *tp);
+RT_EXPORT extern char *rt_pr_tree_str(const union tree *tree);
+
+struct partition; /* forward declaration */
+RT_EXPORT extern void rt_pr_tree_val(const union tree *tp,
+                                     const struct partition *partp,
+                                     int pr_name,
+                                     int lvl);
+
+/**
+ * Duplicate the contents of a db_tree_state structure, including a
+ * private copy of the ts_mater field(s) and the attribute/value set.
+ */
+RT_EXPORT extern void db_dup_db_tree_state(struct db_tree_state *otsp,
+                                           const struct db_tree_state *itsp);
+
+/**
+ * Release dynamic fields inside the structure, but not the structure
+ * itself.
+ */
+RT_EXPORT extern void db_free_db_tree_state(struct db_tree_state *tsp);
+
+/**
+ * In most cases, you don't want to use this routine, you want to
+ * struct copy mged_initial_tree_state or rt_initial_tree_state, and
+ * then set ts_dbip in your copy.
+ */
+RT_EXPORT extern void db_init_db_tree_state(struct db_tree_state *tsp,
+                                            struct db_i *dbip,
+                                            struct resource *resp);
+RT_EXPORT extern struct combined_tree_state *db_new_combined_tree_state(const struct db_tree_state *tsp,
+                                                                        const struct db_full_path *pathp);
+RT_EXPORT extern struct combined_tree_state *db_dup_combined_tree_state(const struct combined_tree_state *old);
+RT_EXPORT extern void db_free_combined_tree_state(struct combined_tree_state *ctsp);
+RT_EXPORT extern void db_pr_tree_state(const struct db_tree_state *tsp);
+RT_EXPORT extern void db_pr_combined_tree_state(const struct combined_tree_state *ctsp);
+
+/**
+ * Handle inheritance of material property found in combination
+ * record.  Color and the material property have separate inheritance
+ * interlocks.
+ *
+ * Returns -
+ * -1 failure
+ * 0 success
+ * 1 success, this is the top of a new region.
+ */
+RT_EXPORT extern int db_apply_state_from_comb(struct db_tree_state *tsp,
+                                              const struct db_full_path *pathp,
+                                              const struct rt_comb_internal *comb);
+
+/**
+ * Updates state via *tsp, pushes member's directory entry on *pathp.
+ * (Caller is responsible for popping it).
+ *
+ * Returns -
+ * -1 failure
+ * 0 success, member pushed on path
+ */
+RT_EXPORT extern int db_apply_state_from_memb(struct db_tree_state *tsp,
+                                              struct db_full_path *pathp,
+                                              const union tree *tp);
+
+/**
+ * Returns -
+ * -1 found member, failed to apply state
+ * 0 unable to find member 'cp'
+ * 1 state applied OK
+ */
+RT_EXPORT extern int db_apply_state_from_one_member(struct db_tree_state *tsp,
+                                                    struct db_full_path *pathp,
+                                                    const char *cp,
+                                                    int sofar,
+                                                    const union tree *tp);
+
+/**
+ * The search stops on the first match.
+ *
+ * Returns -
+ * tp if found
+ * TREE_NULL if not found in this tree
+ */
+RT_EXPORT extern union tree *db_find_named_leaf(union tree *tp, const char *cp);
+
+/**
+ * The search stops on the first match.
+ *
+ * Returns -
+ * TREE_NULL if not found in this tree
+ * tp if found
+ * *side == 1 if leaf is on lhs.
+ * *side == 2 if leaf is on rhs.
+ *
+ */
+RT_EXPORT extern union tree *db_find_named_leafs_parent(int *side,
+                                                        union tree *tp,
+                                                        const char *cp);
+RT_EXPORT extern void db_tree_del_lhs(union tree *tp,
+                                      struct resource *resp);
+RT_EXPORT extern void db_tree_del_rhs(union tree *tp,
+                                      struct resource *resp);
+
+/**
+ * Given a name presumably referenced in a OP_DB_LEAF node, delete
+ * that node, and the operation node that references it.  Not that
+ * this may not produce an equivalent tree, for example when rewriting
+ * (A - subtree) as (subtree), but that will be up to the caller/user
+ * to adjust.  This routine gets rid of exactly two nodes in the tree:
+ * leaf, and op.  Use some other routine if you wish to kill the
+ * entire rhs below "-" and "intersect" nodes.
+ *
+ * The two nodes deleted will have their memory freed.
+ *
+ * If the tree is a single OP_DB_LEAF node, the leaf is freed and *tp
+ * is set to NULL.
+ *
+ * Returns -
+ * -3 Internal error
+ * -2 Tree is empty
+ * -1 Unable to find OP_DB_LEAF node specified by 'cp'.
+ * 0 OK
+ */
+RT_EXPORT extern int db_tree_del_dbleaf(union tree **tp,
+                                        const char *cp,
+                                        struct resource *resp,
+                                        int nflag);
+
+/**
+ * Multiply on the left every matrix found in a DB_LEAF node in a
+ * tree.
+ */
+RT_EXPORT extern void db_tree_mul_dbleaf(union tree *tp,
+                                         const mat_t mat);
+
+/**
+ * This routine traverses a combination (union tree) in LNR order and
+ * calls the provided function for each OP_DB_LEAF node.  Note that
+ * this routine does not go outside this one combination!!!!
+ *
+ * was previously named comb_functree()
+ */
+RT_EXPORT extern void db_tree_funcleaf(struct db_i              *dbip,
+                                       struct rt_comb_internal  *comb,
+                                       union tree               *comb_tree,
+                                       void (*leaf_func)(struct db_i *, struct rt_comb_internal *, union tree *,
+                                                         void *, void *, void *, void *),
+                                       void *           user_ptr1,
+                                       void *           user_ptr2,
+                                       void *           user_ptr3,
+                                       void *           user_ptr4);
+
+/**
+ * Starting with possible prior partial path and corresponding
+ * accumulated state, follow the path given by "new_path", updating
+ * *tsp and *total_path with full state information along the way.  In
+ * a better world, there would have been a "combined_tree_state" arg.
+ *
+ * Parameter 'depth' controls how much of 'new_path' is used:
+ *
+ * 0 use all of new_path
+ * >0 use only this many of the first elements of the path
+ * <0 use all but this many path elements.
+ *
+ * A much more complete version of rt_plookup() and pathHmat().  There
+ * is also a TCL interface.
+ *
+ * Returns -
+ * 0 success (plus *tsp is updated)
+ * -1 error (*tsp values are not useful)
+ */
+RT_EXPORT extern int db_follow_path(struct db_tree_state *tsp,
+                                    struct db_full_path *total_path,
+                                    const struct db_full_path *new_path,
+                                    int noisy,
+                                    long pdepth);
+
+/**
+ * Follow the slash-separated path given by "cp", and update *tsp and
+ * *total_path with full state information along the way.
+ *
+ * A much more complete version of rt_plookup().
+ *
+ * Returns -
+ * 0 success (plus *tsp is updated)
+ * -1 error (*tsp values are not useful)
+ */
+RT_EXPORT extern int db_follow_path_for_state(struct db_tree_state *tsp,
+                                              struct db_full_path *pathp,
+                                              const char *orig_str, int noisy);
+
+/**
+ * Recurse down the tree, finding all the leaves (or finding just all
+ * the regions).
+ *
+ * ts_region_start_func() is called to permit regions to be skipped.
+ * It is not intended to be used for collecting state.
+ */
+RT_EXPORT extern union tree *db_recurse(struct db_tree_state    *tsp,
+                                        struct db_full_path *pathp,
+                                        struct combined_tree_state **region_start_statepp,
+                                        void *client_data);
+RT_EXPORT extern union tree *db_dup_subtree(const union tree *tp,
+                                            struct resource *resp);
+RT_EXPORT extern void db_ck_tree(const union tree *tp);
+
+
+/**
+ * Release all storage associated with node 'tp', including children
+ * nodes.
+ */
+RT_EXPORT extern void db_free_tree(union tree *tp,
+                                   struct resource *resp);
+
+
+/**
+ * Re-balance this node to make it left heavy.  Union operators will
+ * be moved to left side.  when finished "tp" MUST still point to top
+ * node of this subtree.
+ */
+RT_EXPORT extern void db_left_hvy_node(union tree *tp);
+
+
+/**
+ * If there are non-union operations in the tree, above the region
+ * nodes, then rewrite the tree so that the entire tree top is nothing
+ * but union operations, and any non-union operations are clustered
+ * down near the region nodes.
+ */
+RT_EXPORT extern void db_non_union_push(union tree *tp,
+                                        struct resource *resp);
+
+/**
+ * Return a count of the number of "union tree" nodes below "tp",
+ * including tp.
+ */
+RT_EXPORT extern int db_count_tree_nodes(const union tree *tp,
+                                         int count);
+
+
+/**
+ * Returns -
+ * 1 if this tree contains nothing but union operations.
+ * 0 if at least one subtraction or intersection op exists.
+ */
+RT_EXPORT extern int db_is_tree_all_unions(const union tree *tp);
+RT_EXPORT extern int db_count_subtree_regions(const union tree *tp);
+RT_EXPORT extern int db_tally_subtree_regions(union tree        *tp,
+                                              union tree        **reg_trees,
+                                              int               cur,
+                                              int               lim,
+                                              struct resource *resp);
+
+/**
+ * This is the top interface to the "tree walker."
+ *
+ * Parameters:
+ *      rtip            rt_i structure to database (open with rt_dirbuild())
+ *      argc            # of tree-tops named
+ *      argv            names of tree-tops to process
+ *      init_state      Input parameter: initial state of the tree.
+ *                      For example:  rt_initial_tree_state,
+ *                      and mged_initial_tree_state.
+ *
+ * These parameters are pointers to callback routines.  If NULL, they
+ * won't be called.
+ *
+ *      reg_start_func  Called at beginning of each region, before
+ *                      visiting any nodes within the region.  Return
+ *                      0 if region should be skipped without
+ *                      recursing, otherwise non-zero.  DO NOT USE FOR
+ *                      OTHER PURPOSES!  For example, can be used to
+ *                      quickly skip air regions.
+ *
+ *      reg_end_func    Called after all nodes within a region have been
+ *                      recursively processed by leaf_func.  If it
+ *                      wants to retain 'curtree' then it may steal
+ *                      that pointer and return TREE_NULL.  If it
+ *                      wants us to clean up some or all of that tree,
+ *                      then it returns a non-null (union tree *)
+ *                      pointer, and that tree is safely freed in a
+ *                      non-parallel section before we return.
+ *
+ *      leaf_func       Function to process a leaf node.  It is actually
+ *                      invoked from db_recurse() from
+ *                      _db_walk_subtree().  Returns (union tree *)
+ *                      representing the leaf, or TREE_NULL if leaf
+ *                      does not exist or has an error.
+ *
+ *
+ * This routine will employ multiple CPUs if asked, but is not
+ * multiply-parallel-recursive.  Call this routine with ncpu > 1 from
+ * serial code only.  When called from within an existing thread, ncpu
+ * must be 1.
+ *
+ * If ncpu > 1, the caller is responsible for making sure that
+ * RTG.rtg_parallel is non-zero.
+ *
+ * Plucks per-cpu resources out of rtip->rti_resources[].  They need
+ * to have been initialized first.
+ *
+ * Returns -
+ * -1 Failure to prepare even a single sub-tree
+ * 0 OK
+ */
+RT_EXPORT extern int db_walk_tree(struct db_i *dbip,
+                                  int argc,
+                                  const char **argv,
+                                  int ncpu,
+                                  const struct db_tree_state *init_state,
+                                  int (*reg_start_func) (struct db_tree_state * /*tsp*/,
+                                                         const struct db_full_path * /*pathp*/,
+                                                         const struct rt_comb_internal * /* combp */,
+                                                         void *client_data),
+                                  union tree *(*reg_end_func) (struct db_tree_state * /*tsp*/,
+                                                               const struct db_full_path * /*pathp*/,
+                                                               union tree * /*curtree*/,
+                                                               void *client_data),
+                                  union tree *(*leaf_func) (struct db_tree_state * /*tsp*/,
+                                                            const struct db_full_path * /*pathp*/,
+                                                            struct rt_db_internal * /*ip*/,
+                                                            void *client_data),
+                                  void *client_data);
+
+/**
+ * Fills a bu_vls with a representation of the given tree appropriate
+ * for processing by Tcl scripts.
+ *
+ * A tree 't' is represented in the following manner:
+ *
+ * t := { l dbobjname { mat } }
+ *         | { l dbobjname }
+ *         | { u t1 t2 }
+ *         | { n t1 t2 }
+ *         | { - t1 t2 }
+ *         | { ^ t1 t2 }
+ *         | { ! t1 }
+ *         | { G t1 }
+ *         | { X t1 }
+ *         | { N }
+ *         | {}
+ *
+ * where 'dbobjname' is a string containing the name of a database object,
+ *       'mat'       is the matrix preceding a leaf,
+ *       't1', 't2'  are trees (recursively defined).
+ *
+ * Notice that in most cases, this tree will be grossly unbalanced.
+ */
+RT_EXPORT extern int db_tree_list(struct bu_vls *vls, const union tree *tp);
+
+/**
+ * Take a TCL-style string description of a binary tree, as produced
+ * by db_tree_list(), and reconstruct the in-memory form of that tree.
+ */
+RT_EXPORT extern union tree *db_tree_parse(struct bu_vls *vls, const char *str, struct resource *resp);
+
+/**
+ * This subroutine is called for a no-frills tree-walk, with the
+ * provided subroutines being called at every combination and leaf
+ * (solid) node, respectively.
+ *
+ * This routine is recursive, so no variables may be declared static.
+ */
+RT_EXPORT extern void db_functree(struct db_i *dbip,
+                                  struct directory *dp,
+                                  void (*comb_func)(struct db_i *,
+                                                    struct directory *,
+                                                    void *),
+                                  void (*leaf_func)(struct db_i *,
+                                                    struct directory *,
+                                                    void *),
+                                  struct resource *resp,
+                                  void *client_data);
+/** @file librt/tree.c
+ *
+ * Ray Tracing library database tree walker.
+ *
+ * Collect and prepare regions and solids for subsequent ray-tracing.
+ *
+ */
+
+
+/**
+ * Calculate the bounding RPP of the region whose boolean tree is
+ * 'tp'.  The bounding RPP is returned in tree_min and tree_max, which
+ * need not have been initialized first.
+ *
+ * Returns -
+ * 0 success
+ * -1 failure (tree_min and tree_max may have been altered)
+ */
+RT_EXPORT extern int rt_bound_tree(const union tree     *tp,
+                                   vect_t               tree_min,
+                                   vect_t               tree_max);
+
+/**
+ * Eliminate any references to NOP nodes from the tree.  It is safe to
+ * use db_free_tree() here, because there will not be any dead solids.
+ * They will all have been converted to OP_NOP nodes by
+ * _rt_tree_kill_dead_solid_refs(), previously, so there is no need to
+ * worry about multiple db_free_tree()'s repeatedly trying to free one
+ * solid that has been instanced multiple times.
+ *
+ * Returns -
+ * 0 this node is OK.
+ * -1 request caller to kill this node
+ */
+RT_EXPORT extern int rt_tree_elim_nops(union tree *,
+                                       struct resource *resp);
+
+
+
 
 __END_DECLS
 

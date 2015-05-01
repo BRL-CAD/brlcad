@@ -306,6 +306,11 @@ RT_EXPORT extern void rt_pr_tree_val(const union tree *tp,
 /* Print a partition */
 RT_EXPORT extern void rt_pr_pt(const struct rt_i *rtip,
 	                       const struct partition *pp);
+RT_EXPORT extern void rt_pr_pt_vls(struct bu_vls *v,
+                                   const struct rt_i *rtip,
+                                   const struct partition *pp);
+RT_EXPORT extern void rt_pr_pt(const struct rt_i *rtip,
+                               const struct partition *pp);
 
 /**
  * Go through all the solids in the model, given the model mins and
@@ -327,6 +332,15 @@ RT_EXPORT extern void rt_cut_it(struct rt_i *rtip,
  */
 RT_EXPORT extern void rt_fr_cut(struct rt_i *rtip,
                                 union cutter *cutp);
+
+/**
+ * Apply any deltas to reg_regionid values to allow old applications
+ * that use the reg_regionid number to distinguish between different
+ * instances of the same prototype region.
+ *
+ * Called once, from rt_prep(), before raytracing begins.
+ */
+RT_EXPORT extern void rt_regionfix(struct rt_i *rtip);
 
 
 __END_DECLS
