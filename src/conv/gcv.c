@@ -60,33 +60,30 @@ format_prefix(struct bu_vls *format, struct bu_vls *path, const char *input)
 }
 
 int
-parse_model_string(struct bu_vls *path, const char *input)
+parse_model_string(struct bu_vls *format, struct bu_vls *path, const char *input)
 {
     int type_int = 0;
     mime_model_t type = MIME_MODEL_UNKNOWN;
-    struct bu_vls format = BU_VLS_INIT_ZERO;
 
     if (UNLIKELY(!input) || UNLIKELY(strlen(input) == 0)) return MIME_MODEL_UNKNOWN;
 
     /* See if we have a protocol prefix */
-    if (format_prefix(&format, path, input)) {
-	/* Yes - see if the prefix specifies a model type */
-	type_int = bu_file_mime(bu_vls_addr(&format), MIME_MODEL);
+    if (format_prefix(format, path, input)) {
+	/* Yes - see if the prefix specifies a model format */
+	type_int = bu_file_mime(bu_vls_addr(format), MIME_MODEL);
 	type = (mime_model_t)type_int;
 	if (type == MIME_MODEL_UNKNOWN) {
-	    /* Have prefix, but doesn't result in a known type - that's an error */
+	    /* Have prefix, but doesn't result in a known format - that's an error */
 	    return -1;
 	}
     }
     /* If we have no prefix or the prefix didn't map to a model type, try extension */
     if (type == MIME_MODEL_UNKNOWN) {
-	if (bu_path_component(&format, bu_vls_addr(path), PATH_EXTENSION)) {
-	    type_int = bu_file_mime(bu_vls_addr(&format), MIME_MODEL);
+	if (bu_path_component(format, bu_vls_addr(path), PATH_EXTENSION)) {
+	    type_int = bu_file_mime(bu_vls_addr(format), MIME_MODEL);
 	    type = (mime_model_t)type_int;
 	}
     }
-
-    bu_vls_free(&format);
 
     return (int)type;
 }
@@ -95,54 +92,64 @@ int
 main(int ac, char **av)
 {
     int fmt = 0;
+    int fmt_error = 0;
     const char *in_fmt, *out_fmt;
     mime_model_t in_type, out_type;
+    struct bu_vls in_format = BU_VLS_INIT_ZERO;
     struct bu_vls in_path = BU_VLS_INIT_ZERO;
+    struct bu_vls out_format = BU_VLS_INIT_ZERO;
     struct bu_vls out_path = BU_VLS_INIT_ZERO;
 
-    if (ac < 2 || (ac == 2 && av[1][0] == '-' && av[1][1] == 'h')) {
-	bu_log("Usage: %s [-h] input [output] \n", av[0]);
+    if (ac < 3 || (ac == 2 && av[1][0] == '-' && av[1][1] == 'h')) {
+	bu_log("Usage: %s [-h] [options] [fmt:]input [fmt:]output \n", av[0]);
 	return 1;
     }
 
-    fmt = parse_model_string(&in_path, av[1]);
+    fmt = parse_model_string(&in_format, &in_path, av[1]);
     if (fmt < 0) {
-	bu_log("Error - unknown model type specified as prefix to input.\n");
-	return 1;
-    }
-    in_type = (mime_model_t)fmt;
-    if (ac > 2) {
-	fmt = parse_model_string(&out_path, av[2]);
-	if (fmt < 0) {
-	    bu_log("Error - unknown model type specified as prefix to output.\n");
-	    return 1;
-	}
-	out_type = (mime_model_t)fmt;
+	bu_log("Error: unknown model format \"%s\" specified as prefix to input path.\n", bu_vls_addr(&in_format));
+	fmt_error++;
     } else {
-	/* If no output is specified, assume the requested
-	 * operation is like ps2ps - read in the file and
-	 * write out a cleaned-up version in the same format*/
-	struct bu_vls ext = BU_VLS_INIT_ZERO;
-	out_type = in_type;
-	(void)bu_path_component(&out_path, bu_vls_addr(&in_path), PATH_DIRNAME_CORE);
-	bu_vls_printf(&out_path, "-gcv");
-	if (bu_path_component(&ext, bu_vls_addr(&in_path), PATH_EXTENSION)) {
-	    bu_vls_printf(&out_path, ".%s", bu_vls_addr(&ext));
-	}
-	bu_vls_free(&ext);
+	in_type = (mime_model_t)fmt;
     }
+    fmt = parse_model_string(&out_format, &out_path, av[2]);
+    if (fmt < 0) {
+	bu_log("Error: unknown model format \"%s\" specified as prefix to output path.\n", bu_vls_addr(&out_format));
+	fmt_error++;
+    } else {
+    out_type = (mime_model_t)fmt;
+    }
+    if (BU_STR_EQUAL(bu_vls_addr(&in_path), bu_vls_addr(&out_path))) {
+	bu_log("Error: identical path specified for both input and output: %s\n", bu_vls_addr(&out_path));
+	fmt_error++;
+    }
+    if (in_type == MIME_MODEL_UNKNOWN) {
+	bu_log("Error: unable to identify file format for input path.\n");
+	fmt_error++;
+    }
+    if (out_type == MIME_MODEL_UNKNOWN) {
+	bu_log("Error: unable to identify file format for output path.\n");
+	fmt_error++;
+    }
+    if (fmt_error > 0) return 1;
+
+
     in_fmt = bu_file_mime_str((int)in_type, MIME_MODEL);
     out_fmt = bu_file_mime_str((int)out_type, MIME_MODEL);
 
-    bu_log("input file type: %s\n", in_fmt);
-    bu_log("output file type: %s\n", out_fmt);
+    bu_log("Input file format: %s\n", in_fmt);
+    bu_log("Output file format: %s\n", out_fmt);
+    bu_log("Input file path: %s\n", bu_vls_addr(&in_path));
+    bu_log("Output file path: %s\n", bu_vls_addr(&out_path));
 
-    bu_log("input file path: %s\n", bu_vls_addr(&in_path));
-    bu_log("output file path: %s\n", bu_vls_addr(&out_path));
 
-
+    /* Clean up */
     if (in_fmt) bu_free((char *)in_fmt, "input format string");
     if (out_fmt) bu_free((char *)out_fmt, "output format string");
+    bu_vls_free(&in_format);
+    bu_vls_free(&in_path);
+    bu_vls_free(&out_format);
+    bu_vls_free(&out_path);
 
     return 0;
 }
