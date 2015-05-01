@@ -2,7 +2,6 @@ set(docbook_articles_EN
   TEMPLATE.xml
   about.xml
   animation_tutorial.xml
-  benchmark.xml
   build_pattern.xml
   build_region.xml
   camo_shader.xml
