@@ -26,6 +26,7 @@
 
 #include "common.h"
 #include "vmath.h"
+#include "bn/tol.h"
 #include "rt/defines.h"
 #include "rt/soltab.h"
 
@@ -98,6 +99,32 @@ union cutter {
  */
 RT_EXPORT extern void rt_pr_cut(const union cutter *cutp,
 	                                int lvl);
+
+struct rt_i;     /*forward declaration */
+struct resource; /*forward declaration */
+struct soltab;   /*forward declaration */
+RT_EXPORT extern void rt_pr_cut_info(const struct rt_i  *rtip,
+                                     const char         *str);
+RT_EXPORT extern void remove_from_bsp(struct soltab *stp,
+                                      union cutter *cutp,
+                                      struct bn_tol *tol);
+RT_EXPORT extern void insert_in_bsp(struct soltab *stp,
+                                    union cutter *cutp);
+RT_EXPORT extern void fill_out_bsp(struct rt_i *rtip,
+                                   union cutter *cutp,
+                                   struct resource *resp,
+                                   fastf_t bb[6]);
+
+/**
+ * Add a solid into a given boxnode, extending the lists there.  This
+ * is used only for building the root node, which will then be
+ * subdivided.
+ *
+ * Solids with pieces go onto a special list.
+ */
+RT_EXPORT extern void rt_cut_extend(union cutter *cutp,
+                                    struct soltab *stp,
+                                    const struct rt_i *rtip);
 
 
 __END_DECLS

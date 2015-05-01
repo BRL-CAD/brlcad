@@ -119,19 +119,6 @@ __BEGIN_DECLS
 #include "rt/rt_instance.h"
 
 /**
- * Table for driving generic command-parsing routines
- */
-struct command_tab {
-    const char *ct_cmd;
-    const char *ct_parms;
-    const char *ct_comment;
-    int	(*ct_func)(const int, const char **);
-    int	ct_min;		/**< @brief  min number of words in cmd */
-    int	ct_max;		/**< @brief  max number of words in cmd */
-};
-
-
-/**
  * Used by MGED for labeling vertices of a solid.
  *
  * TODO - eventually this should fade into a general annotation
@@ -178,32 +165,6 @@ RT_EXPORT extern int rt_matrix_transform(struct rt_db_internal *output, const ma
 
 #include "rt/boolweave.h"
 
-/* extend a cut box */
-
-/* cut.c */
-
-RT_EXPORT extern void rt_pr_cut_info(const struct rt_i	*rtip,
-				     const char		*str);
-RT_EXPORT extern void remove_from_bsp(struct soltab *stp,
-				      union cutter *cutp,
-				      struct bn_tol *tol);
-RT_EXPORT extern void insert_in_bsp(struct soltab *stp,
-				    union cutter *cutp);
-RT_EXPORT extern void fill_out_bsp(struct rt_i *rtip,
-				   union cutter *cutp,
-				   struct resource *resp,
-				   fastf_t bb[6]);
-
-/**
- * Add a solid into a given boxnode, extending the lists there.  This
- * is used only for building the root node, which will then be
- * subdivided.
- *
- * Solids with pieces go onto a special list.
- */
-RT_EXPORT extern void rt_cut_extend(union cutter *cutp,
-				    struct soltab *stp,
-				    const struct rt_i *rtip);
 /* find RPP of one region */
 
 /**
@@ -288,36 +249,7 @@ RT_EXPORT extern int rt_bound_internal(struct db_i *dbip,
 				       point_t rpp_min,
 				       point_t rpp_max);
 
-/* cmd.c */
-/* Read semi-colon terminated line */
-
-/*
- * Read one semi-colon terminated string of arbitrary length from the
- * given file into a dynamically allocated buffer.  Various commenting
- * and escaping conventions are implemented here.
- *
- * Returns:
- * NULL on EOF
- * char * on good read
- */
-RT_EXPORT extern char *rt_read_cmd(FILE *fp);
-/* do cmd from string via cmd table */
-
-/*
- * Slice up input buffer into whitespace separated "words", look up
- * the first word as a command, and if it has the correct number of
- * args, call that function.  Negative min/max values in the tp
- * command table effectively mean that they're not bounded.
- *
- * Expected to return -1 to halt command processing loop.
- *
- * Based heavily on mged/cmd.c by Chuck Kennedy.
- *
- * DEPRECATED: needs to migrate to libbu
- */
-RT_EXPORT extern int rt_do_cmd(struct rt_i *rtip,
-			       const char *ilp,
-			       const struct command_tab *tp);
+#include "rt/cmd.h"
 
 /* The database library */
 

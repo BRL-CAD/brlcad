@@ -3,6 +3,7 @@ set(rt_headers
   application.h
   arb_edit.h
   boolweave.h
+  cmd.h
   db_diff.h
   db_fullpath.h
   db_instance.h
