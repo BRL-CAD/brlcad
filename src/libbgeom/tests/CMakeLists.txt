@@ -33,9 +33,20 @@
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
+#  ************ obr.c tests *************
 
-BRLCAD_ADDEXEC(bgeom_tri_tri_isect_coplanar tri_tri_isect_coplanar.c "libbgeom;libbn;libbu" NO_INSTALL)
-BRLCAD_ADDEXEC(bgeom_tri_tri_isect tri_tri_isect.c "libbgeom;libbn;libbu" NO_INSTALL)
+BRLCAD_ADDEXEC(bgeom_obr obr.c "libbgeom;libbn;libbu" NO_INSTALL)
+
+#add_test(NAME bgeom_obr_simple			COMMAND bgeom_obr) # Default points
+
+
+# 2D Convex Hull tests
+BRLCAD_ADDEXEC(bgeom_chull chull.c "libbgeom;libbn;libbu" NO_INSTALL)
+CMAKEFILES(chull_test003_bot.asc)
+CMAKEFILES(chull_test004_bot.asc)
+
+# 3D Convex Hull tests
+BRLCAD_ADDEXEC(bgeom_chull3d chull3d.c "libbgeom;libbn;libbu" NO_INSTALL)
 
 # For COMMAND bgeom_tri_tri_isect_coplanar, the input format is as follows:
 #
@@ -45,6 +56,8 @@ BRLCAD_ADDEXEC(bgeom_tri_tri_isect tri_tri_isect.c "libbgeom;libbn;libbu" NO_INS
 # is three integer or floating point numbers separated by commas. The area
 # flag tells the function whether or not to require non-zero area for an
 # overlap in coplanar cases.
+
+BRLCAD_ADDEXEC(bgeom_tri_tri_isect_coplanar tri_tri_isect_coplanar.c "libbgeom;libbn;libbu" NO_INSTALL)
 
 # TODO - need some tests with floating point vertices that are down around the EPSILON threshold - that's
 # where the NEAR_ZERO components of the bgeom_tri_tri_isect_coplanar logic become important.
@@ -64,6 +77,8 @@ add_test(NAME bgeom_tri_tri_isect_coplanar_full_area   COMMAND bgeom_tri_tri_ise
 #
 # where P and Q are the two triangles in question.  An individual point
 # is three integer or floating point numbers separated by commas.
+
+BRLCAD_ADDEXEC(bgeom_tri_tri_isect tri_tri_isect.c "libbgeom;libbn;libbu" NO_INSTALL)
 
 # Test coplanar triangles
 add_test(NAME bgeom_tri_tri_isect_cp_null   COMMAND bgeom_tri_tri_isect  0,0,0 1,0,0 1,1,0  1.00001,0,0 2,0,0 1.00001,1,0  0)

@@ -29,7 +29,7 @@
 #include <ctype.h>
 #include <string.h>
 
-#include "bn/chull.h"
+#include "bgeom/chull.h"
 #include "rtgeom.h"
 #include "wdb.h"
 #include "./ged_private.h"
@@ -127,7 +127,7 @@ ged_bot(struct ged *gedp, int argc, const char *argv[])
 	    return GED_ERROR;
 	}
 
-	retval = bn_3d_chull(&faces, &fc, &vert_array, &vc, (const point_t *)bot->vertices, (int)bot->num_vertices);
+	retval = bgeom_3d_chull(&faces, &fc, &vert_array, &vc, (const point_t *)bot->vertices, (int)bot->num_vertices);
 
 	if (retval != 3) return GED_ERROR;
 

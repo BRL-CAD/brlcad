@@ -56,11 +56,11 @@
 #include <stdlib.h>
 
 #include "bu/malloc.h"
-#include "bn/chull.h"
-#include "bn/obr.h"
-#include "bn/plane_calc.h"
 #include "bn/tol.h"
-#include "./bn_private.h"
+#include "bn/plane_calc.h"
+#include "bgeom/chull.h"
+#include "bgeom/obr.h"
+#include "./bgeom_private.h"
 
 #define F_NONE -1
 #define F_BOTTOM 0
@@ -198,7 +198,7 @@ UpdateBox(struct obr_vals *obr, point2d_t left_pnt, point2d_t right_pnt, point2d
  * Consequently, we're going to have to build the convex hull for all non-trivial inputs in order to
  * make sure we don't get collinear points from the NMG inputs.*/
 HIDDEN int
-bn_obr_calc(const point2d_t *pnts, int pnt_cnt, struct obr_vals *obr)
+bgeom_obr_calc(const point2d_t *pnts, int pnt_cnt, struct obr_vals *obr)
 {
     int i = 0;
     int dim = 0;
@@ -236,7 +236,7 @@ bn_obr_calc(const point2d_t *pnts, int pnt_cnt, struct obr_vals *obr)
 	    /* Bound convex hull using rotating calipers */
 
 	    /* 1.  Get convex hull */
-	    hull_pnt_cnt = bn_2d_chull(&hull_pnts, pnts, pnt_cnt);
+	    hull_pnt_cnt = bgeom_2d_chull(&hull_pnts, pnts, pnt_cnt);
 
 	    /* 2.  Get edge unit vectors */
 	    edge_unit_vects = (vect2d_t *)bu_calloc(hull_pnt_cnt + 1, sizeof(fastf_t) * 3, "unit vects for edges");
@@ -467,7 +467,7 @@ bn_obr_calc(const point2d_t *pnts, int pnt_cnt, struct obr_vals *obr)
 }
 
 int
-bn_2d_obr(point2d_t *center, vect2d_t *u, vect2d_t *v, const point2d_t *pnts, int pnt_cnt)
+bgeom_2d_obr(point2d_t *center, vect2d_t *u, vect2d_t *v, const point2d_t *pnts, int pnt_cnt)
 {
     struct obr_vals obr;
     V2SET(obr.v, 0.0, 0.0);
@@ -479,7 +479,7 @@ bn_2d_obr(point2d_t *center, vect2d_t *u, vect2d_t *v, const point2d_t *pnts, in
     if (!pnts) return -1;
     if (pnt_cnt <= 0) return -1;
 
-    (void)bn_obr_calc(pnts, pnt_cnt, &obr);
+    (void)bgeom_obr_calc(pnts, pnt_cnt, &obr);
 
     V2SET(*center, obr.center[0], obr.center[1]);
     V2SET(*u, obr.u[0], obr.u[1]);
@@ -493,7 +493,7 @@ bn_2d_obr(point2d_t *center, vect2d_t *u, vect2d_t *v, const point2d_t *pnts, in
 }
 
 int
-bn_3d_coplanar_obr(point_t *center, vect_t *v1, vect_t *v2, const point_t *pnts, int pnt_cnt)
+bgeom_3d_coplanar_obr(point_t *center, vect_t *v1, vect_t *v2, const point_t *pnts, int pnt_cnt)
 {
     int ret = 0;
     point_t origin_pnt;
@@ -518,7 +518,7 @@ bn_3d_coplanar_obr(point_t *center, vect_t *v1, vect_t *v2, const point_t *pnts,
 	return 0;
 
     const_points_tmp = (const point2d_t *)points_tmp;
-    ret = bn_2d_obr(&obr_2d_center, &obr_2d_v1, &obr_2d_v2, const_points_tmp, pnt_cnt);
+    ret = bgeom_2d_obr(&obr_2d_center, &obr_2d_v1, &obr_2d_v2, const_points_tmp, pnt_cnt);
 
     /* Set up the 2D point list so converting it will result in useful 3D points */
     V2MOVE(points_obr[0], obr_2d_center);

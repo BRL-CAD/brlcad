@@ -8,9 +8,6 @@ BRLCAD_ADDEXEC(tester_bn_poly_scale bn_poly_scale.c "libbu;libbn" NO_INSTALL)
 BRLCAD_ADDEXEC(tester_bn_poly_add bn_poly_add.c "libbu;libbn" NO_INSTALL)
 BRLCAD_ADDEXEC(tester_bn_poly_sub bn_poly_sub.c "libbu;libbn" NO_INSTALL)
 BRLCAD_ADDEXEC(tester_bn_poly_synthetic_div bn_poly_synthetic_div.c "libbu;libbn" NO_INSTALL)
-BRLCAD_ADDEXEC(tester_bn_obr bn_obr.c "libbu;libbn" NO_INSTALL)
-BRLCAD_ADDEXEC(tester_bn_chull bn_chull.c "libbu;libbn" NO_INSTALL)
-BRLCAD_ADDEXEC(tester_bn_chull3d bn_chull3d.c "libbu;libbn" NO_INSTALL)
 BRLCAD_ADDEXEC(tester_bn_plane_pt bn_plane_pt.c "libbu;libbn" NO_INSTALL)
 BRLCAD_ADDEXEC(tester_bn_plane_dist bn_plane_dist.c "libbu;libbn" NO_INSTALL)
 BRLCAD_ADDEXEC(tester_bn_plane_isect bn_plane_isect.c "libbu;libbn" NO_INSTALL)
@@ -19,9 +16,7 @@ BRLCAD_ADDEXEC(tester_bn_mat bn_mat.c "libbu;libbn" NO_INSTALL)
 BRLCAD_ADDEXEC(tester_bn_tabdata bn_tabdata.c "libbu;libbn" NO_INSTALL)
 BRLCAD_ADDEXEC(tester_bn_qmath bn_qmath.c "libbu;libbn" NO_INSTALL)
 BRLCAD_ADDEXEC(tester_bn_polygon_triangulate bn_polygon_triangulate.c "libbu;libbn" NO_INSTALL)
-CMAKEFILES(bn_chull_test003_bot.asc)
-CMAKEFILES(bn_chull_test004_bot.asc)
-CMAKEFILES(bn_poly_cubic_roots.c bn_poly_quartic_roots.c bn_obr.c)
+CMAKEFILES(bn_poly_cubic_roots.c bn_poly_quartic_roots.c)
 
 #
 #  ************ list.c tests *************
@@ -64,9 +59,6 @@ add_test(NAME bn_polygon_triangulate	    COMMAND tester_bn_polygon_triangulate)
 
 
 
-#
-#  ************ obr.c tests *************
-#add_test(NAME bn_obr_simple			COMMAND tester_bn_obr) # Default points
 
 #
 #  ************ plane.c tests *************

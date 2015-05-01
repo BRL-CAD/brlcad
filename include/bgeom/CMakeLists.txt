@@ -1,5 +1,7 @@
 set(bgeom_headers
   defines.h
+  chull.h
+  obr.h
   tri_ray.h
   tri_tri.h
   )

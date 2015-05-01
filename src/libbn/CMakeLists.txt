@@ -10,8 +10,6 @@ set(LIBBN_SOURCES
   anim.c
   axis.c
   complex.c
-  chull.c
-  chull3d.cpp
   clip.c
   font.c
   globals.c
@@ -21,7 +19,6 @@ set(LIBBN_SOURCES
   msr.c
   multipoly.c
   noise.c
-  obr.c
   plane.c
   plot3.c
   poly.c
@@ -52,10 +49,7 @@ SET_TARGET_PROPERTIES(libbn PROPERTIES VERSION 20.0.1 SOVERSION 20)
 
 add_subdirectory(tests)
 
-CMAKEFILES(
-  README
-  bn_private.h
-  )
+CMAKEFILES(README)
 
 # Local Variables:
 # tab-width: 8

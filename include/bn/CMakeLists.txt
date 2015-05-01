@@ -1,7 +1,6 @@
 set(bn_headers
   adc.h
   anim.h
-  chull.h
   clip.h
   complex.h
   defines.h
@@ -9,7 +8,6 @@ set(bn_headers
   msr.h
   multipoly.h
   noise.h
-  obr.h
   plane_calc.h
   plane_struct.h
   polygon.h

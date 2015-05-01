@@ -17,6 +17,9 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
+
+/** @addtogroup libbgeom */
+/** @{ */
 /** @file bgeom.h
  *
  * BRL-CAD geometry library. This library is intended for generic
@@ -24,7 +27,20 @@
  *
  */
 
+#ifndef BGEOM_H
+#define BGEOM_H
+
+#include "common.h"
+
+#include "bgeom/defines.h"
+#include "bgeom/chull.h"
+#include "bgeom/obr.h"
+#include "bgeom/tri_ray.h"
 #include "bgeom/tri_tri.h"
+
+#endif /* BGEOM_H */
+
+/** @} */
 
 /*
  * Local Variables:

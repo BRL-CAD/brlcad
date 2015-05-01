@@ -8,10 +8,12 @@ set(BGEOM_INCLUDE_DIRS
 BRLCAD_LIB_INCLUDE_DIRS(bgeom BGEOM_INCLUDE_DIRS "")
 
 set(LIBBGEOM_SOURCES
+  chull.c
+  chull3d.cpp
+  obr.c
   tri_ray.c
   tri_tri.c
   )
-
 
 BRLCAD_ADDLIB(libbgeom "${LIBBGEOM_SOURCES}" libbn libbu)
 set_target_properties(libbgeom PROPERTIES VERSION 20.0.1 SOVERSION 20)

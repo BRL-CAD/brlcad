@@ -27,12 +27,12 @@
  *  @brief Routines for the computation of oriented bounding rectangles 2D and 3D
  */
 
-#ifndef BN_OBR_H
-#define BN_OBR_H
+#ifndef BGEOM_OBR_H
+#define BGEOM_OBR_H
 
 #include "common.h"
 #include "vmath.h"
-#include "bn/defines.h"
+#include "bgeom/defines.h"
 
 __BEGIN_DECLS
 
@@ -70,7 +70,7 @@ __BEGIN_DECLS
  * @param points_2d	array of 2D points
  * @param pnt_cnt	number of points in pnts array
  */
-BN_EXPORT extern int bn_2d_obr(point2d_t *center,
+BGEOM_EXPORT extern int bgeom_2d_obr(point2d_t *center,
 			       vect2d_t *u,
 			       vect2d_t *v,
 			       const point2d_t *points_2d,
@@ -90,7 +90,7 @@ BN_EXPORT extern int bn_2d_obr(point2d_t *center,
  * @param points_3d	array of coplanar 3D points
  * @param pnt_cnt	number of points in pnts array
  */
-BN_EXPORT extern int bn_3d_coplanar_obr(point_t *center,
+BGEOM_EXPORT extern int bgeom_3d_coplanar_obr(point_t *center,
 			       vect_t *v1,
 			       vect_t *v2,
 			       const point_t *points_3d,
@@ -139,14 +139,14 @@ BN_EXPORT extern int bn_3d_coplanar_obr(point_t *center,
  * @param points_3d	array of coplanar 3D points
  * @param pnt_cnt	number of points in pnts array
  */
-BN_EXPORT extern int bn_3d_obb(point_t **pnts,
+BGEOM_EXPORT extern int bgeom_3d_obb(point_t **pnts,
 			       const point_t *points_3d,
 			       int pnt_cnt);
 
 
 __END_DECLS
 
-#endif  /* BN_OBR_H */
+#endif  /* BGEOM_OBR_H */
 /** @} */
 /*
  * Local Variables:

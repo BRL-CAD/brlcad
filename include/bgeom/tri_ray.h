@@ -1,4 +1,4 @@
-/*                      T R I _ T R I . H
+/*                      T R I _ R A Y . H
  * BRL-CAD
  *
  * Copyright (c) 2004-2014 United States Government as represented by
@@ -34,8 +34,8 @@
  *
  */
 
-#ifndef BGEOM_TRI_TRI_H
-#define BGEOM_TRI_TRI_H
+#ifndef BGEOM_TRI_RAY_H
+#define BGEOM_TRI_RAY_H
 
 #include "common.h"
 #include "vmath.h"
@@ -53,7 +53,7 @@ BGEOM_EXPORT extern int bgeom_isect_tri_ray(const point_t orig,
 
 __END_DECLS
 
-#endif  /* BGEOM_RAY_TRI_H */
+#endif  /* BGEOM_TRI_RAY_H */
 /** @} */
 /*
  * Local Variables:
