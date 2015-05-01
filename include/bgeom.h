@@ -23,8 +23,19 @@
 /** @file bgeom.h
  *
  * BRL-CAD geometry library. This library is intended for generic
- * geometry algorithms, such as point-in-polygon.
+ * geometry algorithms, such as point-in-polygon, does a line
+ * intersect a sphere, ear clipping triangulation of a polygon, etc.
  *
+ * Algorithms in this library should not require solid raytracing
+ * of the BRL-CAD CSG boolean hierarchy - routines using those high
+ * level constructs should be in libanalyze, which uses librt to
+ * do the necessary raytracing.  libbgeom is lower level, and should
+ * depend only on the numerics library (libbn) and the libbu utility
+ * (libbu)
+ *
+ * Strictly numerical algorithms, which do not involve 3D geometry
+ * concepts, belong in libbn.  An example of something that would belong
+ * in libbn would be sparse matrix solving.
  */
 
 #ifndef BGEOM_H
