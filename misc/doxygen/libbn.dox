@@ -42,8 +42,6 @@
  /** @ingroup libbn */
  /**  @defgroup tol Tolerances */
  /** @ingroup libbn */
- /**  @defgroup tri_tri Triangle/Triangle Intersection Tests */
- /** @ingroup libbn */
  /**  @defgroup vtree Vertex Trees */
  /** @ingroup libbn */
  /**  @defgroup version Version */

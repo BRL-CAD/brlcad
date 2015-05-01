@@ -1,0 +1,7 @@
+/* Top level library group */
+/** @defgroup libbgeom libbgeom (geometric algorithms) */
+
+/* Second tier groups */
+ /** @ingroup libbgeom */
+ /**  @defgroup tri_tri Triangle/Triangle Intersection Tests */
+
