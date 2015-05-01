@@ -10,6 +10,7 @@ add_definitions(
   )
 
 add_subdirectory(3dm)
+add_subdirectory(gcv)
 add_subdirectory(step)
 
 add_subdirectory(iges)
@@ -30,8 +31,6 @@ set(CONV_INCLUDE_DIRS
   ${REGEX_INCLUDE_DIR}
   )
 BRLCAD_INCLUDE_DIRS(CONV_INCLUDE_DIRS)
-
-BRLCAD_ADDEXEC(gcv gcv.c "libgcv;libbu;${M_LIBRARY}" NO_INSTALL)
 
 BRLCAD_ADDEXEC(asc2dsp asc/asc2dsp.c libbu)
 
