@@ -335,7 +335,7 @@ main(int argc, char **argv)
                      * we allow 1 on the OTHER side of equality.
 		     */
 		    for (ep = ap+width; ap < ep;) {
-			if ((i= *ap++ - *bp++) < -1)
+			if ((*ap++ - *bp++) < -1)
 			    goto fail;
 		    }
 		    goto success;
@@ -345,7 +345,7 @@ main(int argc, char **argv)
                      * stay more than 1 away from equality.
 		     */
 		    for (ep = ap+width; ap < ep;) {
-			if ((i= *ap++ - *bp++) < 2 )
+			if ((*ap++ - *bp++) < 2 )
 			    goto fail;
 		    }
 		    goto success;
@@ -355,7 +355,7 @@ main(int argc, char **argv)
                      * we allow 1 on the OTHER side of equality.
 		     */
 		    for (ep = ap+width; ap < ep;) {
-			if ((i= *ap++ - *bp++) > 1)
+			if ((*ap++ - *bp++) > 1)
 			    goto fail;
 		    }
 		    goto success;
@@ -365,7 +365,7 @@ main(int argc, char **argv)
                      * stay more than 1 away from equality.
 		     */
 		    for (ep = ap+width; ap < ep;) {
-			if ((i= *ap++ - *bp++) > -2 )
+			if ((*ap++ - *bp++) > -2 )
 			    goto fail;
 		    }
 		    goto success;
