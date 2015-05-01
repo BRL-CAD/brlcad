@@ -12,6 +12,12 @@ set(docbook_articles_EN
   pipes.xml
   projection_shader.xml
   tire.xml
+  benchmark.xml
+  irprep.xml
+  old-mged.xml
+  pkg.xml
+  mk.xml
+  ged.xml
   )
 
 set(docbook_articles_EN_IMAGES
@@ -103,7 +109,6 @@ set(docbook_articles_EN_IMAGES
   images/tire_fig12.png
   images/tire_fig13.png
   images/tire_fig14.png
-  images/Lee_tux.gif
   images/animtbl.gif
   images/dagtbl.gif
   images/ell.mpg
@@ -112,6 +117,7 @@ set(docbook_articles_EN_IMAGES
   images/equation.gif
   images/film.gif
   images/fn.gif
+  images/Lee_tux.gif
   images/matrix.gif
   images/moss.mpg
   images/moss_sm.gif
