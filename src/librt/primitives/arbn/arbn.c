@@ -39,7 +39,7 @@
 
 #include "tcl.h"
 #include "bu/cv.h"
-#include "bgeom/polygon.h"
+#include "gm/polygon.h"
 #include "vmath.h"
 #include "nmg.h"
 #include "db.h"
@@ -1308,11 +1308,11 @@ rt_arbn_faces_area(struct poly_face* faces, struct rt_arbn_internal* aip)
 	tmp_pts[i] = faces[i].pts;
     	HMOVE(eqs[i], faces[i].plane_eqn);
     }
-    bgeom_3d_polygon_mk_pts_planes(npts, tmp_pts, aip->neqn, (const plane_t *)eqs);
+    gm_3d_polygon_mk_pts_planes(npts, tmp_pts, aip->neqn, (const plane_t *)eqs);
     for (i = 0; i < aip->neqn; i++) {
 	faces[i].npts = npts[i];
-    	bgeom_3d_polygon_sort_ccw(faces[i].npts, faces[i].pts, faces[i].plane_eqn);
-    	bgeom_3d_polygon_area(&faces[i].area, faces[i].npts, (const point_t *)faces[i].pts);
+    	gm_3d_polygon_sort_ccw(faces[i].npts, faces[i].pts, faces[i].plane_eqn);
+    	gm_3d_polygon_area(&faces[i].area, faces[i].npts, (const point_t *)faces[i].pts);
     }
     bu_free((char *)tmp_pts, "rt_arbn_faces_area: tmp_pts");
     bu_free((char *)npts, "rt_arbn_faces_area: npts");
@@ -1366,7 +1366,7 @@ rt_arbn_centroid(point_t *cent, const struct rt_db_internal *ip)
     }
     rt_arbn_faces_area(faces, aip);
     for (i = 0; i < aip->neqn; i++) {
-	bgeom_3d_polygon_centroid(&faces[i].cent, faces[i].npts, (const point_t *) faces[i].pts);
+	gm_3d_polygon_centroid(&faces[i].cent, faces[i].npts, (const point_t *) faces[i].pts);
 	VADD2(arbit_point, arbit_point, faces[i].cent);
 
     }

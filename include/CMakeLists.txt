@@ -1,6 +1,6 @@
 add_subdirectory(bu)
 add_subdirectory(bn)
-add_subdirectory(bgeom)
+add_subdirectory(gm)
 add_subdirectory(dm)
 add_subdirectory(rt)
 add_subdirectory(fb)
@@ -11,7 +11,7 @@ set(public_hdrs
   RtServerImpl.h
   bn.h
   bu.h
-  bgeom.h
+  gm.h
   common.h
   cursor.h
   ged.h

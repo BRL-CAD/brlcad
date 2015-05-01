@@ -34,16 +34,16 @@
  *
  */
 
-#ifndef BGEOM_TRI_RAY_H
-#define BGEOM_TRI_RAY_H
+#ifndef GM_TRI_RAY_H
+#define GM_TRI_RAY_H
 
 #include "common.h"
 #include "vmath.h"
-#include "bgeom/defines.h"
+#include "gm/defines.h"
 
 __BEGIN_DECLS
 
-BGEOM_EXPORT extern int bgeom_isect_tri_ray(const point_t orig,
+GM_EXPORT extern int gm_isect_tri_ray(const point_t orig,
 				      const point_t dir,
 				      const point_t vert0,
 				      const point_t vert1,
@@ -53,7 +53,7 @@ BGEOM_EXPORT extern int bgeom_isect_tri_ray(const point_t orig,
 
 __END_DECLS
 
-#endif  /* BGEOM_TRI_RAY_H */
+#endif  /* GM_TRI_RAY_H */
 /** @} */
 /*
  * Local Variables:

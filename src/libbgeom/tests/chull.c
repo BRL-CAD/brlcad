@@ -26,7 +26,7 @@
 
 #include "bu.h"
 #include "vmath.h"
-#include "bgeom.h"
+#include "gm.h"
 #include "plot3.h"
 
 HIDDEN
@@ -80,7 +80,7 @@ main(int argc, const char **argv)
 	V2SET(test1_results[3], 2.0, 2.5);
 	V2SET(test1_results[4], 1.0, 2.0);
 
-	retval = bgeom_polyline_2d_chull(&hull_polyline, (const point2d_t *)test1_points, n);
+	retval = gm_polyline_2d_chull(&hull_polyline, (const point2d_t *)test1_points, n);
 	if (!retval) return -1;
 	bu_log("Test #001:  polyline_2d_hull - 4 point test:\n");
 	for (i = 0; i < retval; i++) {
@@ -94,7 +94,7 @@ main(int argc, const char **argv)
 	if (!retval) {return -1;} else {bu_log("Test #001 Passed!\n");}
 
 
-	retval = bgeom_2d_chull(&hull_pnts, (const point2d_t *)test1_points, n);
+	retval = gm_2d_chull(&hull_pnts, (const point2d_t *)test1_points, n);
 	if (!retval) return -1;
 	bu_log("Test #002:  2d_hull - 4 point test:\n");
 	for (i = 0; i < retval; i++) {
@@ -124,7 +124,7 @@ main(int argc, const char **argv)
 	V2SET(test1_results[2], 2.0, 4.0);
 	V2SET(test1_results[3], 1.0, 0.0);
 
-	retval = bgeom_2d_chull(&hull_pnts, (const point2d_t *)test1_points, n);
+	retval = gm_2d_chull(&hull_pnts, (const point2d_t *)test1_points, n);
 	if (!retval) return -1;
 	bu_log("Test #002:  2d_hull - triangle test:\n");
 	for (i = 0; i < retval; i++) {
@@ -160,7 +160,7 @@ main(int argc, const char **argv)
 	VSET(test3_points[14], 0.3888888888888888950567946, 0.05555555555555555247160271, 0.5);
 	VSET(test3_points[15], 0.3518518518518518600757261, 0.2407407407407407273769451, 0.5);
 	VSET(test3_points[16], -0.05555555555555555247160271, -0.05555555555555555247160271, 0.5);
-	retval = bgeom_3d_coplanar_chull(&test3_hull_pnts, (const point_t *)test3_points, 17);
+	retval = gm_3d_coplanar_chull(&test3_hull_pnts, (const point_t *)test3_points, 17);
 	bu_log("Test #003:  3d_hull - points in XY plane at Z=0.5, duplicate points:\n");
 	for (i = 0; i < retval; i++) {
 	    bu_log("      actual[%d]: (%f, %f, %f)\n", i, test3_hull_pnts[i][0], test3_hull_pnts[i][1], test3_hull_pnts[i][2]);
@@ -192,7 +192,7 @@ main(int argc, const char **argv)
 	VSET(test4_points[14],-0.2987115113595283921732459,0.05906363000910182931013637,0.7160595200858336228932899);
 	VSET(test4_points[15],-0.1662792526892814537475829,0.1913008340623683078973727,0.6907551004674108430236856);
 	VSET(test4_points[16],-0.5419274794409739692824246,0.3255440939851655945957987,0.9983903515569694242515197);
-	retval = bgeom_3d_coplanar_chull(&test4_hull_pnts, (const point_t *)test4_points, 17);
+	retval = gm_3d_coplanar_chull(&test4_hull_pnts, (const point_t *)test4_points, 17);
 	bu_log("Test #004:  3d_hull - points in tilted plane, duplicate points:\n");
 	for (i = 0; i < retval; i++) {
 	    bu_log("      actual[%d]: (%f, %f, %f)\n", i, test4_hull_pnts[i][0], test4_hull_pnts[i][1], test4_hull_pnts[i][2]);
@@ -215,7 +215,7 @@ main(int argc, const char **argv)
 	VSET(test5_points[6],-0.2987115113595283921732459,0.05906363000910182931013637,0.7160595200858336228932899);
 	VSET(test5_points[7],-0.1662792526892814537475829,0.1913008340623683078973727,0.6907551004674108430236856);
 	VSET(test5_points[8],-0.5419274794409739692824246,0.3255440939851655945957987,0.9983903515569694242515197);
-	retval = bgeom_3d_coplanar_chull(&test5_hull_pnts, (const point_t *)test5_points, 9);
+	retval = gm_3d_coplanar_chull(&test5_hull_pnts, (const point_t *)test5_points, 9);
 	bu_log("Test #005:  3d_hull - points from test 4 sans square corners, no duplicate points:\n");
 	for (i = 0; i < retval; i++) {
 	    bu_log("      actual[%d]: (%f, %f, %f)\n", i, test5_hull_pnts[i][0], test5_hull_pnts[i][1], test5_hull_pnts[i][2]);

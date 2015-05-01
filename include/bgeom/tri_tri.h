@@ -31,16 +31,16 @@
  * Journal of Graphics Tools, 2(2), 1997
  */
 
-#ifndef BGEOM_TRI_TRI_H
-#define BGEOM_TRI_TRI_H
+#ifndef GM_TRI_TRI_H
+#define GM_TRI_TRI_H
 
 #include "common.h"
 #include "vmath.h"
-#include "bgeom/defines.h"
+#include "gm/defines.h"
 
 __BEGIN_DECLS
 
-BGEOM_EXPORT extern int bgeom_tri_tri_isect_coplanar(point_t V0,
+GM_EXPORT extern int gm_tri_tri_isect_coplanar(point_t V0,
 					       point_t V1,
 					       point_t V2,
 					       point_t U0,
@@ -48,14 +48,14 @@ BGEOM_EXPORT extern int bgeom_tri_tri_isect_coplanar(point_t V0,
 					       point_t U2,
 					       int area_flag);
 
-BGEOM_EXPORT extern int bgeom_tri_tri_isect(point_t V0,
+GM_EXPORT extern int gm_tri_tri_isect(point_t V0,
 				      point_t V1,
 				      point_t V2,
 				      point_t U0,
 				      point_t U1,
 				      point_t U2);
 
-BGEOM_EXPORT extern int bgeom_tri_tri_isect_with_line(point_t V0,
+GM_EXPORT extern int gm_tri_tri_isect_with_line(point_t V0,
 						point_t V1,
 						point_t V2,
 						point_t U0,
@@ -67,7 +67,7 @@ BGEOM_EXPORT extern int bgeom_tri_tri_isect_with_line(point_t V0,
 
 __END_DECLS
 
-#endif  /* BGEOM_TRI_TRI_H */
+#endif  /* GM_TRI_TRI_H */
 /** @} */
 /*
  * Local Variables:

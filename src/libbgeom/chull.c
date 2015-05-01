@@ -24,9 +24,9 @@
 
 #include "bu/malloc.h"
 #include "bu/sort.h"
-#include "bgeom/chull.h"
+#include "gm/chull.h"
 
-#include "./bgeom_private.h"
+#include "./gm_private.h"
 
 
 /* isLeft(): test if a point is Left|On|Right of an infinite line.
@@ -43,7 +43,7 @@
  * http://geomalgorithms.com/a12-_hull-3.html
  */
 int
-bgeom_polyline_2d_chull(point2d_t** hull, const point2d_t* polyline, int n)
+gm_polyline_2d_chull(point2d_t** hull, const point2d_t* polyline, int n)
 {
     int i;
 
@@ -121,7 +121,7 @@ pnt_compare_2d(const void *pnt1, const void *pnt2, void *UNUSED(arg))
 
 
 int
-bgeom_2d_chull(point2d_t **hull, const point2d_t *points_2d, int n)
+gm_2d_chull(point2d_t **hull, const point2d_t *points_2d, int n)
 {
     int i = 0;
     int retval = 0;
@@ -140,7 +140,7 @@ bgeom_2d_chull(point2d_t **hull, const point2d_t *points_2d, int n)
      * and the Melkman algorithm works for a simple polyline even if it
      * isn't closed. */
     const_points = (const point2d_t *)points; /* quell */
-    retval = bgeom_polyline_2d_chull(hull, const_points, n);
+    retval = gm_polyline_2d_chull(hull, const_points, n);
 
     bu_free(points, "free sorted points");
 
@@ -148,7 +148,7 @@ bgeom_2d_chull(point2d_t **hull, const point2d_t *points_2d, int n)
 }
 
 int
-bgeom_3d_coplanar_chull(point_t **hull, const point_t *points_3d, int n)
+gm_3d_coplanar_chull(point_t **hull, const point_t *points_3d, int n)
 {
     int ret = 0;
     int hull_cnt = 0;
@@ -167,7 +167,7 @@ bgeom_3d_coplanar_chull(point_t **hull, const point_t *points_3d, int n)
 
     const_points_tmp = (const point2d_t *)points_tmp;
 
-    hull_cnt = bgeom_2d_chull(&hull_2d, const_points_tmp, n);
+    hull_cnt = gm_2d_chull(&hull_2d, const_points_tmp, n);
     (*hull) = (point_t *)bu_calloc(hull_cnt + 1, sizeof(point_t), "hull array");
 
     ret = coplanar_2d_to_3d(hull, (const point_t *)&origin_pnt, (const vect_t *)&u_axis, (const vect_t *)&v_axis, (const point2d_t *)hull_2d, hull_cnt);

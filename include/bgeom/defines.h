@@ -20,30 +20,30 @@
 
 /*----------------------------------------------------------------------*/
 /* @file defines.h */
-/** @addtogroup libbgeom */
+/** @addtogroup libgm */
 /** @{ */
 /**
- *  @brief Common definitions for the headers used in bgeom.h (i.e. the headers found in include/bgeom)
+ *  @brief Common definitions for the headers used in gm.h (i.e. the headers found in include/gm)
  */
 
-#ifndef BGEOM_DEFINES_H
-#define BGEOM_DEFINES_H
+#ifndef GM_DEFINES_H
+#define GM_DEFINES_H
 
 #include "common.h"
 
-#ifndef BGEOM_EXPORT
-#  if defined(BGEOM_DLL_EXPORTS) && defined(BGEOM_DLL_IMPORTS)
-#    error "Only BGEOM_DLL_EXPORTS or BGEOM_DLL_IMPORTS can be defined, not both."
-#  elif defined(BGEOM_DLL_EXPORTS)
-#    define BGEOM_EXPORT __declspec(dllexport)
-#  elif defined(BGEOM_DLL_IMPORTS)
-#    define BGEOM_EXPORT __declspec(dllimport)
+#ifndef GM_EXPORT
+#  if defined(GM_DLL_EXPORTS) && defined(GM_DLL_IMPORTS)
+#    error "Only GM_DLL_EXPORTS or GM_DLL_IMPORTS can be defined, not both."
+#  elif defined(GM_DLL_EXPORTS)
+#    define GM_EXPORT __declspec(dllexport)
+#  elif defined(GM_DLL_IMPORTS)
+#    define GM_EXPORT __declspec(dllimport)
 #  else
-#    define BGEOM_EXPORT
+#    define GM_EXPORT
 #  endif
 #endif
 
-#endif  /* BGEOM_DEFINES_H */
+#endif  /* GM_DEFINES_H */
 /** @} */
 /*
  * Local Variables:

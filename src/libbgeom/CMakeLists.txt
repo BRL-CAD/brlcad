@@ -1,13 +1,13 @@
-# Include directories needed by libbgeom users
-set(BGEOM_INCLUDE_DIRS
+# Include directories needed by libgm users
+set(GM_INCLUDE_DIRS
   ${BRLCAD_BINARY_DIR}/include
   ${BRLCAD_SOURCE_DIR}/include
   ${BN_INCLUDE_DIRS}
   ${BU_INCLUDE_DIRS}
   )
-BRLCAD_LIB_INCLUDE_DIRS(bgeom BGEOM_INCLUDE_DIRS "")
+BRLCAD_LIB_INCLUDE_DIRS(gm GM_INCLUDE_DIRS "")
 
-set(LIBBGEOM_SOURCES
+set(LIBGM_SOURCES
   chull.c
   chull3d.cpp
   obr.c
@@ -16,8 +16,8 @@ set(LIBBGEOM_SOURCES
   tri_tri.c
   )
 
-BRLCAD_ADDLIB(libbgeom "${LIBBGEOM_SOURCES}" libbn libbu)
-set_target_properties(libbgeom PROPERTIES VERSION 20.0.1 SOVERSION 20)
+BRLCAD_ADDLIB(libgm "${LIBGM_SOURCES}" libbn libbu)
+set_target_properties(libgm PROPERTIES VERSION 20.0.1 SOVERSION 20)
 
 add_subdirectory(tests)
 

@@ -6,8 +6,8 @@
 #include "bu/log.h"
 #include "bu/str.h"
 #include "bu/malloc.h"
-#include "bgeom/polygon.h"
-#include "bgeom/tri_ray.h"
+#include "gm/polygon.h"
+#include "gm/tri_ray.h"
 #include "shape_recognition.h"
 
 HIDDEN void
@@ -102,7 +102,7 @@ subbrep_polygon_tri(const ON_Brep *brep, const point_t *all_verts, int *loops, i
 
 	/* The real work - triangulate the 2D polygon to find out triangles for
 	 * this particular B-Rep face */
-	face_error = bgeom_polygon_triangulate(&faces, &num_faces, NULL, NULL, (const point2d_t *)verts2d, b_loop->m_ti.Count(), EAR_CLIPPING);
+	face_error = gm_polygon_triangulate(&faces, &num_faces, NULL, NULL, (const point2d_t *)verts2d, b_loop->m_ti.Count(), EAR_CLIPPING);
 
     } else {
 
@@ -149,7 +149,7 @@ subbrep_polygon_tri(const ON_Brep *brep, const point_t *all_verts, int *loops, i
 
 	/* The real work - triangulate the 2D polygon to find out triangles for
 	 * this particular B-Rep face */
-	face_error = bgeom_nested_polygon_triangulate(&faces, &num_faces, NULL, NULL, poly, poly_npts, (const int **)holes_array, holes_npts, nholes, (const point2d_t *)verts2d, total_pnts, EAR_CLIPPING);
+	face_error = gm_nested_polygon_triangulate(&faces, &num_faces, NULL, NULL, poly, poly_npts, (const int **)holes_array, holes_npts, nholes, (const point2d_t *)verts2d, total_pnts, EAR_CLIPPING);
 
 	// We have the triangles now, so free up memory...
 	for (int i = 1; i < loop_cnt; i++) {
@@ -328,7 +328,7 @@ negative_polygon(struct subbrep_object_data *data)
 	onp3.y = p3[1];
 	onp3.z = p3[2];
 	ON_Plane fplane(onp1, onp2, onp3);
-	int is_hit = bgeom_isect_tri_ray(origin, dir, p1, p2, p3, &isect);
+	int is_hit = gm_isect_tri_ray(origin, dir, p1, p2, p3, &isect);
 	VMOVE(hit_pnt, isect);
 	// Don't count the point on the ray origin
 	if (hit_pnt.DistanceTo(origin_pnt) < 0.0001) is_hit = 0;

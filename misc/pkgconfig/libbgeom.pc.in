@@ -5,9 +5,9 @@ includedir=@includedir@
 datarootdir=@datarootdir@
 datadir=@datadir@
 
-Name: libbgeom
+Name: libgm
 Description: BRL-CAD Geometry Library
 Version: @BRLCAD_VERSION@
 Requires: libbn libbu
-Libs: -L${libdir} -lbgeom -lbn -lbu @LIBTCL@ @LIBM@
+Libs: -L${libdir} -lgm -lbn -lbu @LIBTCL@ @LIBM@
 Cflags: -I${includedir}/brlcad -I${includedir}

@@ -1,4 +1,4 @@
-/*                     B G E O M _ P R I V A T E . H
+/*                     G M _ P R I V A T E . H
  * BRL-CAD
  *
  * Copyright (c) 2013-2014 United States Government as represented by
@@ -18,16 +18,16 @@
  * information.
  */
 
-/** @addtogroup libbgeom */
+/** @addtogroup libgm */
 /** @{ */
-/** @file bgeom_private.h
+/** @file gm_private.h
  *
- * Private header file for the BRL-CAD Geometry Library, LIBBGEOM.
+ * Private header file for the BRL-CAD Geometry Library, LIBGM.
  *
  */
 
-#ifndef LIBBGEOM_BN_PRIVATE_H
-#define LIBBGEOM_BN_PRIVATE_H
+#ifndef LIBGM_BN_PRIVATE_H
+#define LIBGM_BN_PRIVATE_H
 
 #include "common.h"
 #include "vmath.h"
@@ -84,7 +84,7 @@ coplanar_2d_to_3d(point_t **points_3d, const point_t *origin_pnt,
                      const point2d_t *points_2d, int n);
 
 
-#endif /* LIBBGEOM_BN_PRIVATE_H */
+#endif /* LIBGM_BN_PRIVATE_H */
 
 /** @} */
 /*

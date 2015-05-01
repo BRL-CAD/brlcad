@@ -29,7 +29,7 @@
 #include "rtgeom.h"
 #include "wdb.h"
 #include "bn.h"
-#include "bgeom.h"
+#include "gm.h"
 #include "bu/ptbl.h"
 #include "bu/malloc.h"
 
@@ -88,7 +88,7 @@ nmg_brep_face(ON_Brep **b, const struct faceuse *fu, const struct bn_tol *tol, l
 
 
     /* Calculate the 3D coplanar oriented bounding rectangle (obr) */
-    ret += bgeom_3d_coplanar_obr(&obr_center, &u_axis, &v_axis, (const point_t *)points_3d, pnt_cnt);
+    ret += gm_3d_coplanar_obr(&obr_center, &u_axis, &v_axis, (const point_t *)points_3d, pnt_cnt);
     if (ret) {
 	bu_log("Failed to get oriented bounding rectangle for NMG faceuse #%lu\n", fu->index);
 	return -1;

@@ -5,7 +5,7 @@ set(lib_predefines)
 set(DOX_LIBS
   libbu
   libbn
-  libbgeom
+  libgm
   libsysv
   libbrep
   librt

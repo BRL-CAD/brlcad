@@ -35,72 +35,72 @@
 
 #  ************ obr.c tests *************
 
-BRLCAD_ADDEXEC(bgeom_obr obr.c "libbgeom;libbn;libbu" NO_INSTALL)
+BRLCAD_ADDEXEC(gm_obr obr.c "libgm;libbn;libbu" NO_INSTALL)
 
-#add_test(NAME bgeom_obr_simple			COMMAND bgeom_obr) # Default points
+#add_test(NAME gm_obr_simple			COMMAND gm_obr) # Default points
 
 
 #  ************ polygon.c tests ***********
-BRLCAD_ADDEXEC(bgeom_polygon_triangulate polygon_triangulate.c "libbgeom;libbn;libbu" NO_INSTALL)
+BRLCAD_ADDEXEC(gm_polygon_triangulate polygon_triangulate.c "libgm;libbn;libbu" NO_INSTALL)
 
-add_test(NAME bgeom_polygon_triangulate	    COMMAND bgeom_polygon_triangulate)
+add_test(NAME gm_polygon_triangulate	    COMMAND gm_polygon_triangulate)
 
 
 #  ************ chull.c tests ***********
 # 2D Convex Hull tests
-BRLCAD_ADDEXEC(bgeom_chull chull.c "libbgeom;libbn;libbu" NO_INSTALL)
+BRLCAD_ADDEXEC(gm_chull chull.c "libgm;libbn;libbu" NO_INSTALL)
 CMAKEFILES(chull_test003_bot.asc)
 CMAKEFILES(chull_test004_bot.asc)
 
 #  ************ chull3d.cpp tests ***********
 
 # 3D Convex Hull tests
-BRLCAD_ADDEXEC(bgeom_chull3d chull3d.c "libbgeom;libbn;libbu" NO_INSTALL)
+BRLCAD_ADDEXEC(gm_chull3d chull3d.c "libgm;libbn;libbu" NO_INSTALL)
 
 
 
 #  ************ tri_tri.c tests ***********
 
-# For COMMAND bgeom_tri_tri_isect_coplanar, the input format is as follows:
+# For COMMAND gm_tri_tri_isect_coplanar, the input format is as follows:
 #
-# COMMAND bgeom_tri_tri_isect_coplanar V0 V1 V2 U0 U1 U2 <area_flag> <expected result>
+# COMMAND gm_tri_tri_isect_coplanar V0 V1 V2 U0 U1 U2 <area_flag> <expected result>
 #
 # where P and Q are the two triangles in question.  An individual point
 # is three integer or floating point numbers separated by commas. The area
 # flag tells the function whether or not to require non-zero area for an
 # overlap in coplanar cases.
 
-BRLCAD_ADDEXEC(bgeom_tri_tri_isect_coplanar tri_tri_isect_coplanar.c "libbgeom;libbn;libbu" NO_INSTALL)
+BRLCAD_ADDEXEC(gm_tri_tri_isect_coplanar tri_tri_isect_coplanar.c "libgm;libbn;libbu" NO_INSTALL)
 
 # TODO - need some tests with floating point vertices that are down around the EPSILON threshold - that's
-# where the NEAR_ZERO components of the bgeom_tri_tri_isect_coplanar logic become important.
+# where the NEAR_ZERO components of the gm_tri_tri_isect_coplanar logic become important.
 
-add_test(NAME bgeom_tri_tri_isect_coplanar_null_noarea   COMMAND bgeom_tri_tri_isect_coplanar  0,0,0 1,0,0 1,1,0  1.00001,0,0 2,0,0 1.00001,1,0  0  0)
-add_test(NAME bgeom_tri_tri_isect_coplanar_vertex_noarea COMMAND bgeom_tri_tri_isect_coplanar  0,0,0 1,0,0 1,1,0  1.00001,0,0 2,0,0 1,1,0        0  1)
-add_test(NAME bgeom_tri_tri_isect_coplanar_edge_noarea   COMMAND bgeom_tri_tri_isect_coplanar  0,0,0 1,0,0 1,1,0  1,0,0       2,0,0 1,1,0        0  1)
-add_test(NAME bgeom_tri_tri_isect_coplanar_full_noarea   COMMAND bgeom_tri_tri_isect_coplanar  0,0,0 1,0,0 1,1,0  1,0,0       2,0,0 0.7,0.8,0    0  1)
-add_test(NAME bgeom_tri_tri_isect_coplanar_null_area   COMMAND bgeom_tri_tri_isect_coplanar  0,0,0 1,0,0 1,1,0  1.00001,0,0 2,0,0 1.00001,1,0  1  0)
-add_test(NAME bgeom_tri_tri_isect_coplanar_vertex_area COMMAND bgeom_tri_tri_isect_coplanar  0,0,0 1,0,0 1,1,0  1.00001,0,0 2,0,0 1,1,0        1  0)
-add_test(NAME bgeom_tri_tri_isect_coplanar_edge_area   COMMAND bgeom_tri_tri_isect_coplanar  0,0,0 1,0,0 1,1,0  1,0,0       2,0,0 1,1,0        1  0)
-add_test(NAME bgeom_tri_tri_isect_coplanar_full_area   COMMAND bgeom_tri_tri_isect_coplanar  0,0,0 1,0,0 1,1,0  1,0,0       2,0,0 0.7,0.8,0    1  1)
+add_test(NAME gm_tri_tri_isect_coplanar_null_noarea   COMMAND gm_tri_tri_isect_coplanar  0,0,0 1,0,0 1,1,0  1.00001,0,0 2,0,0 1.00001,1,0  0  0)
+add_test(NAME gm_tri_tri_isect_coplanar_vertex_noarea COMMAND gm_tri_tri_isect_coplanar  0,0,0 1,0,0 1,1,0  1.00001,0,0 2,0,0 1,1,0        0  1)
+add_test(NAME gm_tri_tri_isect_coplanar_edge_noarea   COMMAND gm_tri_tri_isect_coplanar  0,0,0 1,0,0 1,1,0  1,0,0       2,0,0 1,1,0        0  1)
+add_test(NAME gm_tri_tri_isect_coplanar_full_noarea   COMMAND gm_tri_tri_isect_coplanar  0,0,0 1,0,0 1,1,0  1,0,0       2,0,0 0.7,0.8,0    0  1)
+add_test(NAME gm_tri_tri_isect_coplanar_null_area   COMMAND gm_tri_tri_isect_coplanar  0,0,0 1,0,0 1,1,0  1.00001,0,0 2,0,0 1.00001,1,0  1  0)
+add_test(NAME gm_tri_tri_isect_coplanar_vertex_area COMMAND gm_tri_tri_isect_coplanar  0,0,0 1,0,0 1,1,0  1.00001,0,0 2,0,0 1,1,0        1  0)
+add_test(NAME gm_tri_tri_isect_coplanar_edge_area   COMMAND gm_tri_tri_isect_coplanar  0,0,0 1,0,0 1,1,0  1,0,0       2,0,0 1,1,0        1  0)
+add_test(NAME gm_tri_tri_isect_coplanar_full_area   COMMAND gm_tri_tri_isect_coplanar  0,0,0 1,0,0 1,1,0  1,0,0       2,0,0 0.7,0.8,0    1  1)
 
-# For COMMAND bgeom_tri_tri_isect, the input format is as follows:
+# For COMMAND gm_tri_tri_isect, the input format is as follows:
 #
-# COMMAND bgeom_tri_tri_isect V0 V1 V2 U0 U1 U2 <expected result>
+# COMMAND gm_tri_tri_isect V0 V1 V2 U0 U1 U2 <expected result>
 #
 # where P and Q are the two triangles in question.  An individual point
 # is three integer or floating point numbers separated by commas.
 
-BRLCAD_ADDEXEC(bgeom_tri_tri_isect tri_tri_isect.c "libbgeom;libbn;libbu" NO_INSTALL)
+BRLCAD_ADDEXEC(gm_tri_tri_isect tri_tri_isect.c "libgm;libbn;libbu" NO_INSTALL)
 
 # Test coplanar triangles
-add_test(NAME bgeom_tri_tri_isect_cp_null   COMMAND bgeom_tri_tri_isect  0,0,0 1,0,0 1,1,0  1.00001,0,0 2,0,0 1.00001,1,0  0)
-add_test(NAME bgeom_tri_tri_isect_cp_vertex COMMAND bgeom_tri_tri_isect  0,0,0 1,0,0 1,1,0  1.00001,0,0 2,0,0 1,1,0        1)
-add_test(NAME bgeom_tri_tri_isect_cp_edge   COMMAND bgeom_tri_tri_isect  0,0,0 1,0,0 1,1,0  1,0,0       2,0,0 1,1,0        1)
-add_test(NAME bgeom_tri_tri_isect_cp_full   COMMAND bgeom_tri_tri_isect  0,0,0 1,0,0 1,1,0  1,0,0       2,0,0 0.7,0.8,0    1)
+add_test(NAME gm_tri_tri_isect_cp_null   COMMAND gm_tri_tri_isect  0,0,0 1,0,0 1,1,0  1.00001,0,0 2,0,0 1.00001,1,0  0)
+add_test(NAME gm_tri_tri_isect_cp_vertex COMMAND gm_tri_tri_isect  0,0,0 1,0,0 1,1,0  1.00001,0,0 2,0,0 1,1,0        1)
+add_test(NAME gm_tri_tri_isect_cp_edge   COMMAND gm_tri_tri_isect  0,0,0 1,0,0 1,1,0  1,0,0       2,0,0 1,1,0        1)
+add_test(NAME gm_tri_tri_isect_cp_full   COMMAND gm_tri_tri_isect  0,0,0 1,0,0 1,1,0  1,0,0       2,0,0 0.7,0.8,0    1)
 
 # Test more general triangles
-add_test(NAME bgeom_tri_tri_isect_null   COMMAND bgeom_tri_tri_isect  0,0,0 1,0,0 1,1,0  1,0,1 1,0,1 1,1,1  0)
+add_test(NAME gm_tri_tri_isect_null   COMMAND gm_tri_tri_isect  0,0,0 1,0,0 1,1,0  1,0,1 1,0,1 1,1,1  0)
 
 # Local Variables:
 # tab-width: 8

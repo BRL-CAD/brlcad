@@ -1,4 +1,4 @@
-/*        B G E O M  _ P O L Y G O N _ T R I A N G U L A T E . C
+/*        G M  _ P O L Y G O N _ T R I A N G U L A T E . C
  *
  * BRL-CAD
  *
@@ -18,7 +18,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file bgeom_polygon_triangulate.c
+/** @file gm_polygon_triangulate.c
  *
  * Test polygon triangulation routines
  *
@@ -32,7 +32,7 @@
 
 #include "bu.h"
 #include "vmath.h"
-#include "bgeom.h"
+#include "gm.h"
 #include "plot3.h"
 
 /* TODO - the examples below are run, but no check is made to determine
@@ -99,7 +99,7 @@ main(int UNUSED(argc), const char **UNUSED(argv))
 	V2SET(points[43], 2807.83, 2372.83);
 
 	num_points = sizeof(points) / sizeof(point2d_t);
-	ret = bgeom_polygon_triangulate(&faces, &num_faces, NULL, NULL, (const point2d_t *)points, num_points, EAR_CLIPPING);
+	ret = gm_polygon_triangulate(&faces, &num_faces, NULL, NULL, (const point2d_t *)points, num_points, EAR_CLIPPING);
 	if (ret) {
 	    return 1;
 	}
@@ -127,7 +127,7 @@ main(int UNUSED(argc), const char **UNUSED(argv))
 	V2SET(points[13], 814.092008, 761.624528);
 
 	num_points = sizeof(points) / sizeof(point2d_t);
-	ret = bgeom_polygon_triangulate(&faces, &num_faces, NULL, NULL, (const point2d_t *)points, num_points, EAR_CLIPPING);
+	ret = gm_polygon_triangulate(&faces, &num_faces, NULL, NULL, (const point2d_t *)points, num_points, EAR_CLIPPING);
 	if (ret) {
 	    return 1;
 	}
@@ -162,7 +162,7 @@ main(int UNUSED(argc), const char **UNUSED(argv))
 
 	hole_array[0] = (int *)hole;
 
-	ret = bgeom_nested_polygon_triangulate(&faces, &num_faces, NULL, NULL,
+	ret = gm_nested_polygon_triangulate(&faces, &num_faces, NULL, NULL,
 	       	(const int *)poly, 12, (const int **)hole_array, (const size_t *)&hole_cnt, 1,
 	       	(const point2d_t *)points, 16, EAR_CLIPPING);
 	bu_free(hole_array, "free hole array");
@@ -197,7 +197,7 @@ main(int UNUSED(argc), const char **UNUSED(argv))
 
 	hole_array[0] = (int *)hole;
 
-	ret = bgeom_nested_polygon_triangulate(&faces, &num_faces, NULL, NULL,
+	ret = gm_nested_polygon_triangulate(&faces, &num_faces, NULL, NULL,
 	       	(const int *)poly, 8, (const int **)hole_array, (const size_t *)&hole_cnt, 1,
 	       	(const point2d_t *)points, 12, EAR_CLIPPING);
 	bu_free(hole_array, "free hole array");

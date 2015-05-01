@@ -1,4 +1,4 @@
-/*                         B G E O M . H
+/*                         G M . H
  * BRL-CAD
  *
  * Copyright (c) 2015 United States Government as represented by
@@ -18,9 +18,9 @@
  * information.
  */
 
-/** @addtogroup libbgeom */
+/** @addtogroup libgm */
 /** @{ */
-/** @file bgeom.h
+/** @file gm.h
  *
  * BRL-CAD geometry library. This library is intended for generic
  * geometry algorithms, such as point-in-polygon, does a line
@@ -29,7 +29,7 @@
  * Algorithms in this library should not require solid raytracing
  * of the BRL-CAD CSG boolean hierarchy - routines using those high
  * level constructs should be in libanalyze, which uses librt to
- * do the necessary raytracing.  libbgeom is lower level, and should
+ * do the necessary raytracing.  libgm is lower level, and should
  * depend only on the numerics library (libbn) and the libbu utility
  * (libbu)
  *
@@ -38,19 +38,19 @@
  * in libbn would be sparse matrix solving.
  */
 
-#ifndef BGEOM_H
-#define BGEOM_H
+#ifndef GM_H
+#define GM_H
 
 #include "common.h"
 
-#include "bgeom/defines.h"
-#include "bgeom/chull.h"
-#include "bgeom/obr.h"
-#include "bgeom/polygon.h"
-#include "bgeom/tri_ray.h"
-#include "bgeom/tri_tri.h"
+#include "gm/defines.h"
+#include "gm/chull.h"
+#include "gm/obr.h"
+#include "gm/polygon.h"
+#include "gm/tri_ray.h"
+#include "gm/tri_tri.h"
 
-#endif /* BGEOM_H */
+#endif /* GM_H */
 
 /** @} */
 

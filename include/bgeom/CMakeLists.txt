@@ -1,4 +1,4 @@
-set(bgeom_headers
+set(gm_headers
   defines.h
   chull.h
   obr.h
@@ -7,9 +7,9 @@ set(bgeom_headers
   tri_tri.h
   )
 
-install(FILES ${bgeom_headers} DESTINATION ${INCLUDE_DIR}/brlcad/bgeom)
+install(FILES ${gm_headers} DESTINATION ${INCLUDE_DIR}/brlcad/gm)
 
-CMAKEFILES(${bgeom_headers})
+CMAKEFILES(${gm_headers})
 
 # Local Variables:
 # tab-width: 8

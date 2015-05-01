@@ -26,7 +26,7 @@
 
 #include "bu.h"
 #include "vmath.h"
-#include "bgeom.h"
+#include "gm.h"
 #include "plot3.h"
 
 HIDDEN
@@ -83,7 +83,7 @@ main(int argc, const char **argv)
 	V2SET(expected[3], 0.95, 2.15);
 
 
-	retval = bgeom_2d_obr(&center, &u, &v, (const point2d_t *)pnts, n);
+	retval = gm_2d_obr(&center, &u, &v, (const point2d_t *)pnts, n);
 	if (retval) return -1;
 	V2ADD3(output_pnts[2], center, u, v);
 	V2SCALE(u, u, -1);
@@ -93,7 +93,7 @@ main(int argc, const char **argv)
 	V2SCALE(u, u, -1);
 	V2ADD3(output_pnts[1], center, u, v);
 	bu_log("Test #001:  polyline_2d_hull - 4 point test:\n");
-	bu_log("bgeom_2d_obr: center (%f, %f)\n", V2ARGS(center));
+	bu_log("gm_2d_obr: center (%f, %f)\n", V2ARGS(center));
 	bu_log("           u      (%f, %f)\n", V2ARGS(u));
 	bu_log("           v      (%f, %f)\n", V2ARGS(v));
 
@@ -138,7 +138,7 @@ main(int argc, const char **argv)
 	V2SET(expected[3], 1.0, 4.0);
 
 
-	retval = bgeom_2d_obr(&center, &u, &v, (const point2d_t *)pnts, n);
+	retval = gm_2d_obr(&center, &u, &v, (const point2d_t *)pnts, n);
 	if (retval) return -1;
 	V2ADD3(output_pnts[2], center, u, v);
 	V2SCALE(u, u, -1);
@@ -148,7 +148,7 @@ main(int argc, const char **argv)
 	V2SCALE(u, u, -1);
 	V2ADD3(output_pnts[1], center, u, v);
 	bu_log("Test #001:  polyline_2d_hull - triangle test:\n");
-	bu_log("bgeom_2d_obr: center (%f, %f)\n", V2ARGS(center));
+	bu_log("gm_2d_obr: center (%f, %f)\n", V2ARGS(center));
 	bu_log("           u      (%f, %f)\n", V2ARGS(u));
 	bu_log("           v      (%f, %f)\n", V2ARGS(v));
 
@@ -202,7 +202,7 @@ main(int argc, const char **argv)
 	VSET(expected[1], 0.5, -0.5, 0.5);
 	VSET(expected[2], -0.5, -0.5, 0.5);
 	VSET(expected[3], -0.5, 0.5, 0.5);
-	retval = bgeom_3d_coplanar_obr(&center, &u, &v, (const point_t *)test2_points, 17);
+	retval = gm_3d_coplanar_obr(&center, &u, &v, (const point_t *)test2_points, 17);
 	if (retval) return -1;
 	VADD3(output_pnts[2], center, u, v);
 	VSCALE(u, u, -1);
@@ -258,7 +258,7 @@ main(int argc, const char **argv)
 	VSET(expected[2], -1.046915314968751, 0.403400845866492, 1.364433164012691);
 	VSET(expected[3], -0.261599712629723, 0.969271982150686, 1.113297221058893);
 
-	retval = bgeom_3d_coplanar_obr(&center, &u, &v, (const point_t *)test3_points, 17);
+	retval = gm_3d_coplanar_obr(&center, &u, &v, (const point_t *)test3_points, 17);
 	if (retval) return -1;
 	VADD3(output_pnts[2], center, u, v);
 	VSCALE(u, u, -1);
@@ -307,7 +307,7 @@ main(int argc, const char **argv)
 	VSET(expected[2], -0.018014243195113, 0.389528573715492, 0.685662735197256);
 	VSET(expected[3], -0.544605081625695, 0.797081870742539, 1.218494347709310);
 
-	retval = bgeom_3d_coplanar_obr(&center, &u, &v, (const point_t *)test4_points, 9);
+	retval = gm_3d_coplanar_obr(&center, &u, &v, (const point_t *)test4_points, 9);
 	if (retval) return -1;
 	VADD3(output_pnts[2], center, u, v);
 	VSCALE(u, u, -1);

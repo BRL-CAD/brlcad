@@ -27,12 +27,12 @@
  *  @brief Routines for the computation of convex hulls in 2D and 3D
  */
 
-#ifndef BGEOM_CHULL_H
-#define BGEOM_CHULL_H
+#ifndef GM_CHULL_H
+#define GM_CHULL_H
 
 #include "common.h"
 #include "vmath.h"
-#include "bgeom/defines.h"
+#include "gm/defines.h"
 
 __BEGIN_DECLS
 
@@ -50,7 +50,7 @@ __BEGIN_DECLS
  * @param	n the number of points in polyline
  * @return the number of points in the output hull array
  */
-BGEOM_EXPORT int bgeom_polyline_2d_chull(point2d_t** hull, const point2d_t* polyline, int n);
+GM_EXPORT int gm_polyline_2d_chull(point2d_t** hull, const point2d_t* polyline, int n);
 
 /**
  * @brief
@@ -77,7 +77,7 @@ BGEOM_EXPORT int bgeom_polyline_2d_chull(point2d_t** hull, const point2d_t* poly
  * @param	n the number of points in the input set
  * @return the number of points in the output hull array or zero if error.
  */
-BGEOM_EXPORT int bgeom_2d_chull(point2d_t** hull, const point2d_t* points_2d, int n);
+GM_EXPORT int gm_2d_chull(point2d_t** hull, const point2d_t* points_2d, int n);
 
 /**
  * @brief
@@ -98,7 +98,7 @@ BGEOM_EXPORT int bgeom_2d_chull(point2d_t** hull, const point2d_t* points_2d, in
  * @param	n the number of points in the input set
  * @return the number of points in the output hull array
  */
-BGEOM_EXPORT int bgeom_3d_coplanar_chull(point_t** hull, const point_t* points_3d, int n);
+GM_EXPORT int gm_3d_coplanar_chull(point_t** hull, const point_t* points_3d, int n);
 
 /**
  * @brief
@@ -120,13 +120,13 @@ BGEOM_EXPORT int bgeom_3d_coplanar_chull(point_t** hull, const point_t* points_3
  * http://www.netlib.org/voronoi/hull.html - see the file chull3d.c
  * for the full copyright and license statement.
 */
-BGEOM_EXPORT int bgeom_3d_chull(int **faces, int *num_faces, point_t **vertices, int *num_vertices,
+GM_EXPORT int gm_3d_chull(int **faces, int *num_faces, point_t **vertices, int *num_vertices,
                           const point_t *input_points_3d, int num_input_pnts);
 
 
 __END_DECLS
 
-#endif  /* BGEOM_CHULL_H */
+#endif  /* GM_CHULL_H */
 /** @} */
 /*
  * Local Variables:
