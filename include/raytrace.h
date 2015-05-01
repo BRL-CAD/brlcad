@@ -114,67 +114,9 @@ __BEGIN_DECLS
 
 #include "rt/application.h"
 
-
-/**
- * Definitions for librt.a which are global to the library regardless
- * of how many different models are being worked on
- */
-struct rt_g {
-    uint32_t		debug;		/**< @brief  !0 for debug, see librt/debug.h */
-    /* DEPRECATED:  rtg_parallel is not used by LIBRT any longer (and will be removed) */
-    int8_t		rtg_parallel;	/**< @brief  !0 = trying to use multi CPUs */
-    struct bu_list	rtg_vlfree;	/**< @brief  head of bn_vlist freelist */
-    uint32_t		NMG_debug;	/**< @brief  debug bits for NMG's see nmg.h */
-    struct rt_wdb	rtg_headwdb;	/**< @brief  head of database object list */
-};
-#define RT_G_INIT_ZERO { 0, 0, BU_LIST_INIT_ZERO, 0, RT_WDB_INIT_ZERO }
-
-
-/**
- * global ray-trace geometry state
- */
-RT_EXPORT extern struct rt_g RTG;
+#include "rt/global.h"
 
 #include "rt/rt_instance.h"
-
-
-#define RT_NU_GFACTOR_DEFAULT	1.5	 /**< @brief  see rt_cut_it() for a description
-					    of this */
-
-#define	RT_PART_NUBSPT	0
-#define RT_PART_NUGRID	1
-
-/**
- * Applications that are going to use RT_ADD_VLIST and RT_GET_VLIST
- * are required to execute this macro once, first:
- *
- * BU_LIST_INIT(&RTG.rtg_vlfree);
- *
- * Note that RT_GET_VLIST and RT_FREE_VLIST are non-PARALLEL.
- */
-#define RT_GET_VLIST(p) BN_GET_VLIST(&RTG.rtg_vlfree, p)
-
-/** Place an entire chain of bn_vlist structs on the freelist */
-#define RT_FREE_VLIST(hd) BN_FREE_VLIST(&RTG.rtg_vlfree, hd)
-
-#define RT_ADD_VLIST(hd, pnt, draw) BN_ADD_VLIST(&RTG.rtg_vlfree, hd, pnt, draw)
-
-/** Set a point size to apply to the vlist elements that follow. */
-#define RT_VLIST_SET_POINT_SIZE(hd, size) BN_VLIST_SET_POINT_SIZE(&RTG.rtg_vlfree, hd, size)
-
-/** Set a line width to apply to the vlist elements that follow. */
-#define RT_VLIST_SET_LINE_WIDTH(hd, width) BN_VLIST_SET_LINE_WIDTH(&RTG.rtg_vlfree, hd, width)
-
-
-/*
- * Replacements for definitions from vmath.h
- */
-#undef V2PRINT
-#undef VPRINT
-#undef HPRINT
-#define V2PRINT(a, b) bu_log("%s (%g, %g)\n", a, (b)[0], (b)[1]);
-#define VPRINT(a, b) bu_log("%s (%g, %g, %g)\n", a, (b)[0], (b)[1], (b)[2])
-#define HPRINT(a, b) bu_log("%s (%g, %g, %g, %g)\n", a, (b)[0], (b)[1], (b)[2], (b)[3])
 
 /**
  * Table for driving generic command-parsing routines

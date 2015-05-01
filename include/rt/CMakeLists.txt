@@ -11,6 +11,7 @@ set(rt_headers
   defines.h
   directory.h
   functab.h
+  global.h
   hit.h
   mater.h
   mem.h

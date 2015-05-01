@@ -312,6 +312,10 @@ RT_EXPORT extern void rt_pr_pt_vls(struct bu_vls *v,
 RT_EXPORT extern void rt_pr_pt(const struct rt_i *rtip,
                                const struct partition *pp);
 
+
+#define RT_NU_GFACTOR_DEFAULT   1.5      /**< @brief  see rt_cut_it() for a description
+                                            of this */
+
 /**
  * Go through all the solids in the model, given the model mins and
  * maxes, and generate a cutting tree.  A strategy better than
