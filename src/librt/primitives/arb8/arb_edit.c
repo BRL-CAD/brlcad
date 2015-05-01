@@ -31,6 +31,7 @@
 #include <ctype.h>
 #include <string.h>
 
+#include "db.h" /* For ARB* defines */
 #include "rt/arb_edit.h"
 #include "raytrace.h"
 
