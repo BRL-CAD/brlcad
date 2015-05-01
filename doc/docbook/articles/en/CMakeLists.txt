@@ -2,25 +2,27 @@ set(docbook_articles_EN
   TEMPLATE.xml
   about.xml
   animation_tutorial.xml
+  benchmark.xml
   build_pattern.xml
   build_region.xml
   camo_shader.xml
   ebm_primitive.xml
+  ged.xml
+  irprep.xml
   mgedrc.xml
+  mk.xml
   nirt.xml
   oed.xml
+  old-mged.xml
   pipes.xml
+  pkg.xml
   projection_shader.xml
   tire.xml
-  benchmark.xml
-  irprep.xml
-  old-mged.xml
-  pkg.xml
-  mk.xml
-  ged.xml
   )
 
 set(docbook_articles_EN_IMAGES
+  images/Lee_tux.gif
+  images/animtbl.gif
   images/build_pattern_fig01.png
   images/build_pattern_fig02.png
   images/build_pattern_fig03.png
@@ -32,12 +34,23 @@ set(docbook_articles_EN_IMAGES
   images/build_region_fig02.png
   images/build_region_fig03.png
   images/build_region_fig04.png
+  images/dagtbl.gif
   images/ebm_primitive_fig01.png
   images/ebm_primitive_fig02.png
   images/ebm_primitive_fig03.png
+  images/ell.mpg
+  images/ell_sm.gif
+  images/ell_ssm.gif
+  images/equation.gif
+  images/film.gif
+  images/fn.gif
+  images/matrix.gif
   images/mgedrc_fig01.png
   images/mgedrc_fig02.png
   images/mgedrc_fig03.png
+  images/moss.mpg
+  images/moss_sm.gif
+  images/moss_ssm.gif
   images/nirt_fig01.png
   images/nirt_fig02.png
   images/nirt_fig03.png
@@ -109,19 +122,6 @@ set(docbook_articles_EN_IMAGES
   images/tire_fig12.png
   images/tire_fig13.png
   images/tire_fig14.png
-  images/animtbl.gif
-  images/dagtbl.gif
-  images/ell.mpg
-  images/ell_sm.gif
-  images/ell_ssm.gif
-  images/equation.gif
-  images/film.gif
-  images/fn.gif
-  images/Lee_tux.gif
-  images/matrix.gif
-  images/moss.mpg
-  images/moss_sm.gif
-  images/moss_ssm.gif
   images/trans.gif
   images/transboth.gif
   images/transboth_sm.gif
