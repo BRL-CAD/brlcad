@@ -8,12 +8,9 @@ set(docbook_articles_EN
   ebm_primitive.xml
   ged.xml
   mgedrc.xml
-  mk.xml
   nirt.xml
   oed.xml
-  old-mged.xml
   pipes.xml
-  pkg.xml
   projection_shader.xml
   tire.xml
   )
