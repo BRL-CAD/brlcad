@@ -7,7 +7,7 @@
 #include "bu/str.h"
 #include "bu/malloc.h"
 #include "bn/polygon.h"
-#include "bn/tri_ray.h"
+#include "bgeom/tri_ray.h"
 #include "shape_recognition.h"
 
 HIDDEN void
@@ -328,7 +328,7 @@ negative_polygon(struct subbrep_object_data *data)
 	onp3.y = p3[1];
 	onp3.z = p3[2];
 	ON_Plane fplane(onp1, onp2, onp3);
-	int is_hit = bn_isect_tri_ray(origin, dir, p1, p2, p3, &isect);
+	int is_hit = bgeom_isect_tri_ray(origin, dir, p1, p2, p3, &isect);
 	VMOVE(hit_pnt, isect);
 	// Don't count the point on the ray origin
 	if (hit_pnt.DistanceTo(origin_pnt) < 0.0001) is_hit = 0;
