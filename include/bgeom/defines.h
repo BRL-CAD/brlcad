@@ -20,7 +20,7 @@
 
 /*----------------------------------------------------------------------*/
 /* @file defines.h */
-/** @addtogroup libgeom */
+/** @addtogroup libbgeom */
 /** @{ */
 /**
  *  @brief Common definitions for the headers used in bgeom.h (i.e. the headers found in include/bgeom)
