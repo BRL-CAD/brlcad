@@ -1,4 +1,4 @@
-/*                           G C V . C
+/*                           G C V . C P P
  * BRL-CAD
  *
  * Copyright (c) 2015 United States Government as represented by
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file gcv.c
+/** @file gcv.cpp
  *
  * Geometry converter.
  *
@@ -35,8 +35,11 @@ format_prefix(struct bu_vls *format, struct bu_vls *path, const char *input)
     struct bu_vls wformat = BU_VLS_INIT_ZERO;
     struct bu_vls wpath = BU_VLS_INIT_ZERO;
     char *colon_pos = NULL;
+    char *inputcpy = NULL;
     if (UNLIKELY(!input)) return 0;
-    colon_pos = strchr(input, ':');
+    inputcpy = bu_strdup(input);
+    colon_pos = strchr(inputcpy, ':');
+    if (inputcpy) bu_free(inputcpy, "input copy");
     if (colon_pos) {
 	int ret = 0;
 	bu_vls_sprintf(&wformat, "%s", input);
@@ -154,13 +157,12 @@ main(int ac, char **av)
     return 0;
 }
 
-/*
- * Local Variables:
- * mode: C
- * tab-width: 8
- * indent-tabs-mode: t
- * c-file-style: "stroustrup"
- * End:
- * ex: shiftwidth=4 tabstop=8
- */
 
+// Local Variables:
+// tab-width: 8
+// mode: C++
+// c-basic-offset: 4
+// indent-tabs-mode: t
+// c-file-style: "stroustrup"
+// End:
+// ex: shiftwidth=4 tabstop=8

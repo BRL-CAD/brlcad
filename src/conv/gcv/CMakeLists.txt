@@ -6,7 +6,7 @@ set(GCV_INCLUDE_DIRS
 BRLCAD_INCLUDE_DIRS(GCV_INCLUDE_DIRS)
 
 
-BRLCAD_ADDEXEC(gcv gcv.c "libgcv;libbn;libbu;${M_LIBRARY}" NO_INSTALL)
+BRLCAD_ADDEXEC(gcv gcv.cpp "libgcv;libbn;libbu;${M_LIBRARY}" NO_INSTALL)
 
 # Local Variables:
 # tab-width: 8
