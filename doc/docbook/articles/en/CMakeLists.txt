@@ -7,7 +7,6 @@ set(docbook_articles_EN
   camo_shader.xml
   ebm_primitive.xml
   ged.xml
-  irprep.xml
   mgedrc.xml
   mk.xml
   nirt.xml
