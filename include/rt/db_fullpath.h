@@ -30,7 +30,9 @@
 
 __BEGIN_DECLS
 
-struct resource; /* forward declaration */
+struct resource;  /* forward declaration */
+struct db_i;      /* forward declaration */
+struct directory; /* forward declaration */
 
 /**
  * For collecting paths through the database tree.
