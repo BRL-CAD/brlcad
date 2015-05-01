@@ -23,8 +23,8 @@
  *
  */
 
-#ifndef RT_DB_H
-#define RT_DB_H
+#ifndef RT_OP_H
+#define RT_OP_H
 
 #include "rt/defines.h"
 
@@ -73,7 +73,7 @@ db_str2op(const char *str);
 
 __END_DECLS
 
-#endif /* RT_DB_H */
+#endif /* RT_OP_H */
 
 /*
  * Local Variables:
