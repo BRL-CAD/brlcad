@@ -27,9 +27,14 @@
 #include "common.h"
 #include "vmath.h"
 #include "bu/vls.h"
+#include "bu/file.h"
+#include "rt/defines.h"
+#include "rt/mater.h"
 #include "rt/db_fullpath.h"
 
 __BEGIN_DECLS
+
+struct db_i; /* forward declaration */
 
 /**
  * Each one of these structures specifies an arc in the tree that is
@@ -85,6 +90,84 @@ struct animate {
 #define RT_CK_ANIMATE(_p) BU_CKMAG((_p), ANIMATE_MAGIC, "animate")
 
 __END_DECLS
+
+/* db_anim.c */
+RT_EXPORT extern struct animate *db_parse_1anim(struct db_i     *dbip,
+                                                int             argc,
+                                                const char      **argv);
+
+
+/**
+ * A common parser for mged and rt.  Experimental.  Not the best name
+ * for this.
+ */
+RT_EXPORT extern int db_parse_anim(struct db_i     *dbip,
+                                   int             argc,
+                                   const char      **argv);
+
+/**
+ * Add a user-supplied animate structure to the end of the chain of
+ * such structures hanging from the directory structure of the last
+ * node of the path specifier.  When 'root' is non-zero, this matrix
+ * is located at the root of the tree itself, rather than an arc, and
+ * is stored differently.
+ *
+ * In the future, might want to check to make sure that callers
+ * directory references are in the right database (dbip).
+ */
+RT_EXPORT extern int db_add_anim(struct db_i *dbip,
+                                 struct animate *anp,
+                                 int root);
+
+/**
+ * Perform the one animation operation.  Leave results in form that
+ * additional operations can be cascaded.
+ *
+ * Note that 'materp' may be a null pointer, signifying that the
+ * region has already been finalized above this point in the tree.
+ */
+RT_EXPORT extern int db_do_anim(struct animate *anp,
+                                mat_t stack,
+                                mat_t arc,
+                                struct mater_info *materp);
+
+/**
+ * Release chain of animation structures
+ *
+ * An unfortunate choice of name.
+ */
+RT_EXPORT extern void db_free_anim(struct db_i *dbip);
+
+/**
+ * Writes 'count' bytes into at file offset 'offset' from buffer at
+ * 'addr'.  A wrapper for the UNIX write() sys-call that takes into
+ * account syscall semaphores, stdio-only machines, and in-memory
+ * buffering.
+ *
+ * Returns -
+ * 0 OK
+ * -1 FAILURE
+ */
+/* should be HIDDEN */
+RT_EXPORT extern void db_write_anim(FILE *fop,
+                                    struct animate *anp);
+
+/**
+ * Parse one "anim" type command into an "animate" structure.
+ *
+ * argv[1] must be the "a/b" path spec,
+ * argv[2] indicates what is to be animated on that arc.
+ */
+RT_EXPORT extern struct animate *db_parse_1anim(struct db_i *dbip,
+                                                int argc,
+                                                const char **argv);
+
+
+/**
+ * Free one animation structure
+ */
+RT_EXPORT extern void db_free_1anim(struct animate *anp);
+
 
 #endif /* RT_ANIM_H */
 
