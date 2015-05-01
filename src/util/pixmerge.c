@@ -52,7 +52,7 @@ static FILE *f2;
 #define NE 8
 static int wanted;			/* LT|EQ|GT conditions to pick fb */
 
-static int seen_const;
+static int seen_const = 0;
 static int seen_formula = 0;
 
 static int width = 3;
