@@ -20,20 +20,19 @@
 
 /*----------------------------------------------------------------------*/
 /* @file polygon.h */
-/** @addtogroup poly */
+/** @addtogroup polygon */
 /** @{ */
 
 /**
  *  @brief Functions for working with polygons
  */
 
-#ifndef BN_POLYGON_H
-#define BN_POLYGON_H
+#ifndef BGEOM_POLYGON_H
+#define BGEOM_POLYGON_H
 
 #include "common.h"
 #include "vmath.h"
-#include "bn/defines.h"
-#include "bn/tol.h"
+#include "bgeom/defines.h"
 
 __BEGIN_DECLS
 
@@ -59,7 +58,7 @@ __BEGIN_DECLS
  * @return 1 if polygon is clockwise
  * @return 0 if the test failed
  */
-BN_EXPORT extern int bn_polygon_clockwise(size_t npts, const point2d_t *pts, const int *pt_indices);
+BGEOM_EXPORT extern int bgeom_polygon_clockwise(size_t npts, const point2d_t *pts, const int *pt_indices);
 
 
 /**
@@ -78,7 +77,7 @@ BN_EXPORT extern int bn_polygon_clockwise(size_t npts, const point2d_t *pts, con
  * @return 0 if point is outside polygon
  * @return 1 if point is inside polygon
  */
-BN_EXPORT extern int bn_pt_in_polygon(size_t npts, const point2d_t *pts, const point2d_t *test_pt);
+BGEOM_EXPORT extern int bgeom_pt_in_polygon(size_t npts, const point2d_t *pts, const point2d_t *test_pt);
 
 /**
  * Triangulation is the process of finding a set of triangles that as a set cover
@@ -109,7 +108,7 @@ typedef enum {
  * ordered clockwise.
  *
  * If no holes are present, caller should pass NULL for holes_array and holes_npts,
- * and 0 for nholes, or use bn_polygon_triangulate instead.
+ * and 0 for nholes, or use bgeom_polygon_triangulate instead.
  *
  * @param[out] faces Set of faces in the triangulation, stored as integer indices to the pts.  The first three indices are the vertices of the first face, the second three define the second face, and so forth.
  * @param[out] num_faces Number of faces created
@@ -126,7 +125,7 @@ typedef enum {
  * @return 0 if triangulation is successful
  * @return 1 if triangulation is unsuccessful
  */
-BN_EXPORT extern int bn_nested_polygon_triangulate(int **faces, int *num_faces, point2d_t **out_pts, int *num_outpts,
+BGEOM_EXPORT extern int bgeom_nested_polygon_triangulate(int **faces, int *num_faces, point2d_t **out_pts, int *num_outpts,
 	const int *poly, const size_t poly_npts,
        	const int **holes_array, const size_t *holes_npts, const size_t nholes,
        	const point2d_t *pts, const size_t npts, triangulation_t type);
@@ -142,7 +141,7 @@ BN_EXPORT extern int bn_nested_polygon_triangulate(int **faces, int *num_faces, 
  * only those points in the original polygon, and hence only the face
  * information is created as output.
  *
- * The same fundamental routines are used here as in the bn_nested_polygon_triangulate
+ * The same fundamental routines are used here as in the bgeom_nested_polygon_triangulate
  * logic - this is a convenience function to simplify calling the routine when
  * specification of hole polygons is not needed.
  *
@@ -156,7 +155,7 @@ BN_EXPORT extern int bn_nested_polygon_triangulate(int **faces, int *num_faces, 
  * @return 0 if triangulation is successful
  * @return 1 if triangulation is unsuccessful
  */
-BN_EXPORT extern int bn_polygon_triangulate(int **faces, int *num_faces, point2d_t **out_pts, int *num_outpts,
+BGEOM_EXPORT extern int bgeom_polygon_triangulate(int **faces, int *num_faces, point2d_t **out_pts, int *num_outpts,
 	const point2d_t *pts, const size_t npts, triangulation_t type);
 
 
@@ -180,7 +179,7 @@ BN_EXPORT extern int bn_polygon_triangulate(int **faces, int *num_faces, point2d
  * @return 0 if calculation was successful
  * @return 1 if calculation failed, e.g. because one parameter is a NULL-pointer
  */
-BN_EXPORT extern int bn_3d_polygon_area(fastf_t *area, size_t npts, const point_t *pts);
+BGEOM_EXPORT extern int bgeom_3d_polygon_area(fastf_t *area, size_t npts, const point_t *pts);
 
 
 /**
@@ -195,7 +194,7 @@ BN_EXPORT extern int bn_3d_polygon_area(fastf_t *area, size_t npts, const point_
  * @return 0 if calculation was successful
  * @return 1 if calculation failed, e.g. because one in-parameter is a NULL-pointer
  */
-BN_EXPORT extern int bn_3d_polygon_centroid(point_t *cent, size_t npts, const point_t *pts);
+BGEOM_EXPORT extern int bgeom_3d_polygon_centroid(point_t *cent, size_t npts, const point_t *pts);
 
 
 /**
@@ -210,7 +209,7 @@ BN_EXPORT extern int bn_3d_polygon_centroid(point_t *cent, size_t npts, const po
  *@return 0 if calculation was successful
  *@return 1 if calculation failed, e.g. because pts is a NULL-pointer
  */
-BN_EXPORT extern int bn_3d_polygon_sort_ccw(size_t npts, point_t *pts, plane_t cmp);
+BGEOM_EXPORT extern int bgeom_3d_polygon_sort_ccw(size_t npts, point_t *pts, plane_t cmp);
 
 
 /**
@@ -229,13 +228,13 @@ BN_EXPORT extern int bn_3d_polygon_sort_ccw(size_t npts, point_t *pts, plane_t c
  * @return 0 if calculation was successful
  * @return 1 if calculation failed, e.g. because one parameter is a NULL-Pointer
  */
-BN_EXPORT extern int bn_3d_polygon_mk_pts_planes(size_t *npts, point_t **pts, size_t neqs, const plane_t *eqs);
+BGEOM_EXPORT extern int bgeom_3d_polygon_mk_pts_planes(size_t *npts, point_t **pts, size_t neqs, const plane_t *eqs);
 
 
 
 __END_DECLS
 
-#endif  /* BN_POLYGON_H */
+#endif  /* BGEOM_POLYGON_H */
 /** @} */
 /*
  * Local Variables:

@@ -36,6 +36,7 @@
 
 #include "tcl.h"
 #include "bu/cv.h"
+#include "bgeom/polygon.h"
 #include "vmath.h"
 #include "db.h"
 #include "nmg.h"
@@ -5268,8 +5269,8 @@ rt_bot_volume(fastf_t *volume, const struct rt_db_internal *ip)
 	/* SURFACE AREA */
 
 	/* sort points */
-	bn_3d_polygon_sort_ccw(face.npts, face.pts, face.plane_eqn);
-	bn_3d_polygon_area(&face.area, face.npts, (const point_t *)face.pts);
+	bgeom_3d_polygon_sort_ccw(face.npts, face.pts, face.plane_eqn);
+	bgeom_3d_polygon_area(&face.area, face.npts, (const point_t *)face.pts);
 
 	/* VOLUME */
 	VSCALE(tmp, face.plane_eqn, face.area);

@@ -57,7 +57,6 @@
 #include "bn/vert_tree.h"
 #include "bn/vectfont.h"
 #include "bn/plane_struct.h"
-#include "bn/polygon.h"
 #include "bn/clip.h"
 #include "bn/adc.h"
 

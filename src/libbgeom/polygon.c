@@ -23,13 +23,13 @@
 #include "bu/log.h"
 #include "bu/malloc.h"
 #include "bu/sort.h"
-#include "bn/polygon.h"
 #include "bn/plane_struct.h"
 #include "bn/plane_calc.h"
-
+#include "bn/tol.h"
+#include "bgeom/polygon.h"
 
 int
-bn_3d_polygon_area(fastf_t *area, size_t npts, const point_t *pts)
+bgeom_3d_polygon_area(fastf_t *area, size_t npts, const point_t *pts)
 {
     size_t i;
     vect_t v1, v2, tmp, tot = VINIT_ZERO;
@@ -73,7 +73,7 @@ bn_3d_polygon_area(fastf_t *area, size_t npts, const point_t *pts)
 
 
 int
-bn_3d_polygon_centroid(point_t *cent, size_t npts, const point_t *pts)
+bgeom_3d_polygon_centroid(point_t *cent, size_t npts, const point_t *pts)
 {
     size_t i;
     fastf_t x_0 = 0.0;
@@ -138,7 +138,7 @@ bn_3d_polygon_centroid(point_t *cent, size_t npts, const point_t *pts)
 
 
 int
-bn_3d_polygon_mk_pts_planes(size_t *npts, point_t **pts, size_t neqs, const plane_t *eqs)
+bgeom_3d_polygon_mk_pts_planes(size_t *npts, point_t **pts, size_t neqs, const plane_t *eqs)
 {
     size_t i, j, k, l;
     if (!npts || !pts || neqs < 4 || !eqs)
@@ -183,7 +183,7 @@ sort_ccw_3d(const void *x, const void *y, void *cmp)
 
 
 int
-bn_3d_polygon_sort_ccw(size_t npts, point_t *pts, plane_t cmp)
+bgeom_3d_polygon_sort_ccw(size_t npts, point_t *pts, plane_t cmp)
 {
     if (!pts || npts < 3)
 	return 1;
@@ -192,7 +192,7 @@ bn_3d_polygon_sort_ccw(size_t npts, point_t *pts, plane_t cmp)
 }
 
 int
-bn_polygon_clockwise(size_t npts, const point2d_t *pts, const int *pt_indices)
+bgeom_polygon_clockwise(size_t npts, const point2d_t *pts, const int *pt_indices)
 {
     size_t i;
     double sum = 0;
@@ -226,7 +226,7 @@ bn_polygon_clockwise(size_t npts, const point2d_t *pts, const int *pt_indices)
  * Translation to libbn data types of Franklin's point-in-polygon test.
  * See http://www.ecse.rpi.edu/Homepages/wrf/Research/Short_Notes/pnpoly.html
  * for a discussion of the subtleties involved with the inequality tests.
- * The below copyright applies to just the function bn_pt_in_polygon,
+ * The below copyright applies to just the function bgeom_pt_in_polygon,
  * not the whole of polygon.c
  *
  * Copyright (c) 1970-2003, Wm. Randolph Franklin
@@ -256,7 +256,7 @@ bn_polygon_clockwise(size_t npts, const point2d_t *pts, const int *pt_indices)
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 int
-bn_pt_in_polygon(size_t nvert, const point2d_t *pnts, const point2d_t *test)
+bgeom_pt_in_polygon(size_t nvert, const point2d_t *pnts, const point2d_t *test)
 {
     size_t i = 0;
     size_t j = 0;
@@ -404,7 +404,7 @@ is_inside(const point2d_t p1, const point2d_t p2, const point2d_t p3, const poin
     V2MOVE(tri[0], p1);
     V2MOVE(tri[1], p2);
     V2MOVE(tri[2], p3);
-    return bn_pt_in_polygon(3, (const point2d_t *)tri, test);
+    return bgeom_pt_in_polygon(3, (const point2d_t *)tri, test);
 }
 
 
@@ -700,7 +700,7 @@ remove_hole(int **poly, const size_t poly_npts, const int *hole, const size_t ho
     return poly_pnt_cnt;
 }
 
-int bn_nested_polygon_triangulate(int **faces, int *num_faces, point2d_t **out_pts, int *num_outpts,
+int bgeom_nested_polygon_triangulate(int **faces, int *num_faces, point2d_t **out_pts, int *num_outpts,
 	const int *poly, const size_t poly_pnts,
 	const int **holes_array, const size_t *holes_npts, const size_t nholes,
 	const point2d_t *pts, const size_t npts, triangulation_t type)
@@ -731,7 +731,7 @@ int bn_nested_polygon_triangulate(int **faces, int *num_faces, point2d_t **out_p
 
     if (type == DELAUNAY && (!out_pts || !num_outpts)) return 1;
 
-    ccw = bn_polygon_clockwise(poly_pnts, pts, poly);
+    ccw = bgeom_polygon_clockwise(poly_pnts, pts, poly);
 
     if (ccw != -1) {
 	bu_log("Warning - non-CCW point loop!\n");
@@ -917,7 +917,7 @@ cleanup:
     return ret;
 }
 
-int bn_polygon_triangulate(int **faces, int *num_faces, point2d_t **out_pts, int *num_outpts,
+int bgeom_polygon_triangulate(int **faces, int *num_faces, point2d_t **out_pts, int *num_outpts,
 	const point2d_t *pts, const size_t npts, triangulation_t type)
 {
     int ret;
@@ -927,7 +927,7 @@ int bn_polygon_triangulate(int **faces, int *num_faces, point2d_t **out_pts, int
     if (type == DELAUNAY && (!out_pts || !num_outpts)) return 1;
     verts_ind = (int *)bu_calloc(npts, sizeof(int), "vert indices");
     for (i = 0; i < npts; i++) verts_ind[i] = i;
-    ret = bn_nested_polygon_triangulate(faces, num_faces, out_pts, num_outpts, verts_ind, npts, NULL, NULL, 0, pts, npts, type);
+    ret = bgeom_nested_polygon_triangulate(faces, num_faces, out_pts, num_outpts, verts_ind, npts, NULL, NULL, 0, pts, npts, type);
     bu_free(verts_ind, "free verts");
     return ret;
 }

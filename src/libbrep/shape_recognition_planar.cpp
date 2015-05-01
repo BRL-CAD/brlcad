@@ -6,7 +6,7 @@
 #include "bu/log.h"
 #include "bu/str.h"
 #include "bu/malloc.h"
-#include "bn/polygon.h"
+#include "bgeom/polygon.h"
 #include "bgeom/tri_ray.h"
 #include "shape_recognition.h"
 
@@ -102,7 +102,7 @@ subbrep_polygon_tri(const ON_Brep *brep, const point_t *all_verts, int *loops, i
 
 	/* The real work - triangulate the 2D polygon to find out triangles for
 	 * this particular B-Rep face */
-	face_error = bn_polygon_triangulate(&faces, &num_faces, NULL, NULL, (const point2d_t *)verts2d, b_loop->m_ti.Count(), EAR_CLIPPING);
+	face_error = bgeom_polygon_triangulate(&faces, &num_faces, NULL, NULL, (const point2d_t *)verts2d, b_loop->m_ti.Count(), EAR_CLIPPING);
 
     } else {
 
@@ -149,7 +149,7 @@ subbrep_polygon_tri(const ON_Brep *brep, const point_t *all_verts, int *loops, i
 
 	/* The real work - triangulate the 2D polygon to find out triangles for
 	 * this particular B-Rep face */
-	face_error = bn_nested_polygon_triangulate(&faces, &num_faces, NULL, NULL, poly, poly_npts, (const int **)holes_array, holes_npts, nholes, (const point2d_t *)verts2d, total_pnts, EAR_CLIPPING);
+	face_error = bgeom_nested_polygon_triangulate(&faces, &num_faces, NULL, NULL, poly, poly_npts, (const int **)holes_array, holes_npts, nholes, (const point2d_t *)verts2d, total_pnts, EAR_CLIPPING);
 
 	// We have the triangles now, so free up memory...
 	for (int i = 1; i < loop_cnt; i++) {

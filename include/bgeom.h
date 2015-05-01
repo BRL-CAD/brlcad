@@ -35,6 +35,7 @@
 #include "bgeom/defines.h"
 #include "bgeom/chull.h"
 #include "bgeom/obr.h"
+#include "bgeom/polygon.h"
 #include "bgeom/tri_ray.h"
 #include "bgeom/tri_tri.h"
 

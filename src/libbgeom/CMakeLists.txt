@@ -11,6 +11,7 @@ set(LIBBGEOM_SOURCES
   chull.c
   chull3d.cpp
   obr.c
+  polygon.c
   tri_ray.c
   tri_tri.c
   )

@@ -40,13 +40,26 @@ BRLCAD_ADDEXEC(bgeom_obr obr.c "libbgeom;libbn;libbu" NO_INSTALL)
 #add_test(NAME bgeom_obr_simple			COMMAND bgeom_obr) # Default points
 
 
+#  ************ polygon.c tests ***********
+BRLCAD_ADDEXEC(bgeom_polygon_triangulate polygon_triangulate.c "libbgeom;libbn;libbu" NO_INSTALL)
+
+add_test(NAME bgeom_polygon_triangulate	    COMMAND bgeom_polygon_triangulate)
+
+
+#  ************ chull.c tests ***********
 # 2D Convex Hull tests
 BRLCAD_ADDEXEC(bgeom_chull chull.c "libbgeom;libbn;libbu" NO_INSTALL)
 CMAKEFILES(chull_test003_bot.asc)
 CMAKEFILES(chull_test004_bot.asc)
 
+#  ************ chull3d.cpp tests ***********
+
 # 3D Convex Hull tests
 BRLCAD_ADDEXEC(bgeom_chull3d chull3d.c "libbgeom;libbn;libbu" NO_INSTALL)
+
+
+
+#  ************ tri_tri.c tests ***********
 
 # For COMMAND bgeom_tri_tri_isect_coplanar, the input format is as follows:
 #

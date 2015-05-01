@@ -15,7 +15,6 @@ BRLCAD_ADDEXEC(tester_bn_complex bn_complex.c "libbu;libbn" NO_INSTALL)
 BRLCAD_ADDEXEC(tester_bn_mat bn_mat.c "libbu;libbn" NO_INSTALL)
 BRLCAD_ADDEXEC(tester_bn_tabdata bn_tabdata.c "libbu;libbn" NO_INSTALL)
 BRLCAD_ADDEXEC(tester_bn_qmath bn_qmath.c "libbu;libbn" NO_INSTALL)
-BRLCAD_ADDEXEC(tester_bn_polygon_triangulate bn_polygon_triangulate.c "libbu;libbn" NO_INSTALL)
 CMAKEFILES(bn_poly_cubic_roots.c bn_poly_quartic_roots.c)
 
 #
@@ -50,14 +49,6 @@ add_test(NAME bn_poly_add                   COMMAND tester_bn_poly_add)
 # add_test(NAME bn_poly_sub                   COMMAND tester_bn_poly_sub)
 
 add_test(NAME bn_poly_synthetic_div               COMMAND tester_bn_poly_synthetic_div)
-
-
-#
-#  ************ polygon.c tests *************
-#
-add_test(NAME bn_polygon_triangulate	    COMMAND tester_bn_polygon_triangulate)
-
-
 
 
 #
