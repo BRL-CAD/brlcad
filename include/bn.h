@@ -55,7 +55,6 @@
 #include "bn/randmt.h"
 #include "bn/wavelet.h"
 #include "bn/tabdata.h"
-#include "bn/tri_tri.h"
 #include "bn/vlist.h"
 #include "bn/vert_tree.h"
 #include "bn/vectfont.h"

@@ -22,7 +22,6 @@ set(bn_headers
   bn_tcl.h
   tol.h
   tri_ray.h
-  tri_tri.h
   vectfont.h
   version.h
   vert_tree.h

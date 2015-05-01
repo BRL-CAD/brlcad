@@ -36,7 +36,6 @@ set(LIBBN_SOURCES
   tcl.c
   tplot.c
   tri_ray.c
-  tri_tri.c
   ulp.c
   util.c
   vectfont.c
