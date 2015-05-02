@@ -26,8 +26,50 @@
 #include "common.h"
 #include <stdlib.h>
 #include <string.h>
+#include <iostream>
 
 #include "bu.h"
+#include "optionparser.h"
+
+
+
+struct TopLevelArg: public option::Arg
+{
+    /* At the top level, if we don't recognize the option, assume
+     * a format option parser at a lower level will and ignore it */
+    static option::ArgStatus Unknown(const option::Option& UNUSED(option), bool UNUSED(msg))
+    {
+	return option::ARG_IGNORE;
+    }
+    /* Format specifiers, on the other hand, must be validated - that
+     * means that the options used at the top level for format specification
+     * will not be usable at any lower level */
+    static option::ArgStatus Format(const option::Option& option, bool msg)
+    {
+	int type_int = 0;
+	mime_model_t type = MIME_MODEL_UNKNOWN;
+	type_int = bu_file_mime(option.arg, MIME_MODEL);
+	type = (mime_model_t)type_int;
+	if (type == MIME_MODEL_UNKNOWN) {
+	    if (msg) bu_log("Unknown format %s supplied to %s\n",  option.arg, option.name);
+	    return option::ARG_ILLEGAL;
+	} else {
+	    return option::ARG_OK;
+	}
+    }
+};
+
+
+enum TopOptionIndex { UNKNOWN, HELP, IN_FORMAT, OUT_FORMAT };
+
+const option::Descriptor TopUsage[] = {
+     { UNKNOWN, 0, "", "",          TopLevelArg::Unknown, "USAGE: gcv [options] [fmt:]input [fmt:]output\n\n"},
+     { HELP,    0, "h", "help",     option::Arg::Optional,  "-h [category]\t --help [category]\t Print help and exit." },
+     { IN_FORMAT , 0, "", "in-format", TopLevelArg::Format, "\t --in-format\t File format of input file." },
+     { OUT_FORMAT , 0, "", "out-format", TopLevelArg::Format, "\t --out-format\t File format of input file." },
+     { 0, 0, 0, 0, 0, 0 }
+};
+
 
 HIDDEN int
 format_prefix(struct bu_vls *format, struct bu_vls *path, const char *input)
@@ -103,19 +145,33 @@ main(int ac, char **av)
     struct bu_vls out_format = BU_VLS_INIT_ZERO;
     struct bu_vls out_path = BU_VLS_INIT_ZERO;
 
-    if (ac < 3 || (ac == 2 && av[1][0] == '-' && av[1][1] == 'h')) {
-	bu_log("Usage: %s [-h] [options] [fmt:]input [fmt:]output \n", av[0]);
-	return 1;
+    ac-=(ac>0); av+=(ac>0); // skip program name argv[0] if present
+    option::Stats stats(TopUsage, ac, av);
+    option::Option *options = (option::Option *)bu_calloc(stats.options_max, sizeof(option::Option), "options");
+    option::Option *buffer= (option::Option *)bu_calloc(stats.buffer_max, sizeof(option::Option), "options");
+    option::Parser parse(TopUsage, ac, av, options, buffer);
+
+    if (options[HELP] || ac == 0) {
+	option::printUsage(std::cout, TopUsage);
+	return 0;
     }
 
-    fmt = parse_model_string(&in_format, &in_path, av[1]);
+    if (options[IN_FORMAT]) {
+	bu_log("Option: input format override: %s\n", options[IN_FORMAT].arg);
+    }
+
+    if (options[OUT_FORMAT]) {
+	bu_log("Option: output format override: %s\n ", options[OUT_FORMAT].arg);
+    }
+
+    fmt = parse_model_string(&in_format, &in_path, parse.nonOption(0));
     if (fmt < 0) {
 	bu_log("Error: unknown model format \"%s\" specified as prefix to input path.\n", bu_vls_addr(&in_format));
 	fmt_error++;
     } else {
 	in_type = (mime_model_t)fmt;
     }
-    fmt = parse_model_string(&out_format, &out_path, av[2]);
+    fmt = parse_model_string(&out_format, &out_path, parse.nonOption(1));
     if (fmt < 0) {
 	bu_log("Error: unknown model format \"%s\" specified as prefix to output path.\n", bu_vls_addr(&out_format));
 	fmt_error++;
