@@ -44,16 +44,13 @@ void namecvt(int n, char **cp, int c);
 int
 get_line(char *cp, int buflen, char *title)
 {
-    int c;
-    int count = buflen;
-
+    int c = 0;
     struct bu_vls str = BU_VLS_INIT_ZERO;
     c = bu_vls_gets(&str, infp);
-    count = bu_strlcpy(cp, bu_vls_addr(&str), buflen);
     if (c > buflen)
 	printf("get_line(x%lx, %d) input record overflows buffer for %s\n",
 		(unsigned long)cp, buflen, title);
-    return c;
+    return bu_strlcpy(cp, bu_vls_addr(&str), buflen);
 }
 
 
