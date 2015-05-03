@@ -39,6 +39,7 @@ struct TopLevelArg: public option::Arg
      * a format option parser at a lower level will and ignore it */
     static option::ArgStatus Unknown(const option::Option& option, bool UNUSED(msg))
     {
+	if (!option.arg) return option::ARG_NONE;
 	if (option.arg[0] == '-') return option::ARG_IGNORE;
 	return option::ARG_OK;
     }
