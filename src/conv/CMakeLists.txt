@@ -10,7 +10,8 @@ add_definitions(
   )
 
 add_subdirectory(3dm)
-add_subdirectory(gcv)
+#add_subdirectory(gcv)
+CMAKEFILES(gcv)
 add_subdirectory(step)
 
 add_subdirectory(iges)
