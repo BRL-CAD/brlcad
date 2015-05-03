@@ -87,6 +87,7 @@ reassemble_argstr(struct bu_vls *ustr, option::Option *unknowns)
 HIDDEN int
 extract_path(struct bu_vls *path, const char *input)
 {
+    int ret = 0;
     struct bu_vls wpath = BU_VLS_INIT_ZERO;
     char *colon_pos = NULL;
     char *inputcpy = NULL;
@@ -94,7 +95,6 @@ extract_path(struct bu_vls *path, const char *input)
     inputcpy = bu_strdup(input);
     colon_pos = strchr(inputcpy, ':');
     if (colon_pos) {
-	int ret = 0;
 	bu_vls_sprintf(&wpath, "%s", input);
 	bu_vls_nibble(&wpath, strlen(input) - strlen(colon_pos) + 1);
 	if (path && bu_vls_strlen(&wpath) > 0) {
@@ -104,10 +104,11 @@ extract_path(struct bu_vls *path, const char *input)
 	bu_vls_free(&wpath);
     } else {
 	if (path) bu_vls_sprintf(path, "%s", input);
+	ret = 1;
     }
     if (inputcpy) bu_free(inputcpy, "input copy");
-    if (path && !bu_vls_strlen(path) > 0) return 0;
-    return 1;
+    if (path && !(bu_vls_strlen(path) > 0)) return 0;
+    return ret;
 }
 
 HIDDEN int
