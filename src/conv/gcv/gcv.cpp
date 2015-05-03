@@ -37,9 +37,10 @@ struct TopLevelArg: public option::Arg
 {
     /* At the top level, if we don't recognize the option, assume
      * a format option parser at a lower level will and ignore it */
-    static option::ArgStatus Unknown(const option::Option& UNUSED(option), bool UNUSED(msg))
+    static option::ArgStatus Unknown(const option::Option& option, bool UNUSED(msg))
     {
-	return option::ARG_IGNORE;
+	if (option.arg[0] == '-') return option::ARG_IGNORE;
+	return option::ARG_OK;
     }
     /* Format specifiers, on the other hand, must be validated - that
      * means that the options used at the top level for format specification
@@ -63,7 +64,7 @@ struct TopLevelArg: public option::Arg
 enum TopOptionIndex { UNKNOWN, HELP, IN_FORMAT, OUT_FORMAT };
 
 const option::Descriptor TopUsage[] = {
-     { UNKNOWN, 0, "", "",          TopLevelArg::Unknown, "USAGE: gcv [options] [fmt:]input [fmt:]output\n\n"},
+     { UNKNOWN, 0, "", "",          TopLevelArg::Unknown, "USAGE: gcv [options] [fmt:]input [fmt:]output\n"},
      { HELP,    0, "h", "help",     option::Arg::Optional,  "-h [category]\t --help [category]\t Print help and exit." },
      { IN_FORMAT , 0, "", "in-format", TopLevelArg::Format, "\t --in-format\t File format of input file." },
      { OUT_FORMAT , 0, "", "out-format", TopLevelArg::Format, "\t --out-format\t File format of input file." },
@@ -71,33 +72,66 @@ const option::Descriptor TopUsage[] = {
 };
 
 
-HIDDEN int
-format_prefix(struct bu_vls *format, struct bu_vls *path, const char *input)
+HIDDEN void
+reassemble_argstr(struct bu_vls *ustr, option::Option *unknowns)
 {
-    struct bu_vls wformat = BU_VLS_INIT_ZERO;
+    for (option::Option* opt = unknowns; opt; opt = opt->next()) {
+	//bu_log("Unknown option: %s, %s\n", opt->name, opt->arg);
+	if (ustr) {
+	    (strlen(opt->name) == 1) ? bu_vls_printf(ustr, "-%s ", opt->name) : bu_vls_printf(ustr, "%s ", opt->name);
+	    if (opt->arg) bu_vls_printf(ustr, "%s ", opt->arg);
+	}
+    }
+}
+
+HIDDEN int
+extract_path(struct bu_vls *path, const char *input)
+{
     struct bu_vls wpath = BU_VLS_INIT_ZERO;
     char *colon_pos = NULL;
     char *inputcpy = NULL;
     if (UNLIKELY(!input)) return 0;
     inputcpy = bu_strdup(input);
     colon_pos = strchr(inputcpy, ':');
+    if (colon_pos) {
+	int ret = 0;
+	bu_vls_sprintf(&wpath, "%s", input);
+	bu_vls_nibble(&wpath, strlen(input) - strlen(colon_pos) + 1);
+	if (path && bu_vls_strlen(&wpath) > 0) {
+	    ret = 1;
+	    bu_vls_sprintf(path, "%s", bu_vls_addr(&wpath));
+	}
+	bu_vls_free(&wpath);
+    } else {
+	if (path) bu_vls_sprintf(path, "%s", input);
+    }
     if (inputcpy) bu_free(inputcpy, "input copy");
+    if (path && !bu_vls_strlen(path) > 0) return 0;
+    return 1;
+}
+
+HIDDEN int
+extract_format_prefix(struct bu_vls *format, const char *input)
+{
+    struct bu_vls wformat = BU_VLS_INIT_ZERO;
+    char *colon_pos = NULL;
+    char *inputcpy = NULL;
+    if (UNLIKELY(!input)) return 0;
+    inputcpy = bu_strdup(input);
+    colon_pos = strchr(inputcpy, ':');
     if (colon_pos) {
 	int ret = 0;
 	bu_vls_sprintf(&wformat, "%s", input);
-	bu_vls_sprintf(&wpath, "%s", input);
 	bu_vls_trunc(&wformat, -1 * strlen(colon_pos));
-	bu_vls_nibble(&wpath, strlen(input) - strlen(colon_pos) + 1);
 	if (bu_vls_strlen(&wformat) > 0) {
 	    ret = 1;
 	    if (format) bu_vls_sprintf(format, "%s", bu_vls_addr(&wformat));
 	}
-	if (path && bu_vls_strlen(&wpath) > 0) bu_vls_sprintf(path, "%s", bu_vls_addr(&wpath));
 	bu_vls_free(&wformat);
-	bu_vls_free(&wpath);
+	if (inputcpy) bu_free(inputcpy, "input copy");
 	return ret;
     } else {
-	if (path) bu_vls_sprintf(path, "%s", input);
+	if (inputcpy) bu_free(inputcpy, "input copy");
 	return 0;
     }
     /* Shouldn't get here */
@@ -105,31 +139,83 @@ format_prefix(struct bu_vls *format, struct bu_vls *path, const char *input)
 }
 
 int
-parse_model_string(struct bu_vls *format, struct bu_vls *path, const char *input)
+parse_model_string(struct bu_vls *format, struct bu_vls *log, const char *opt, const char *input)
 {
     int type_int = 0;
     mime_model_t type = MIME_MODEL_UNKNOWN;
 
+    struct bu_vls format_cpy = BU_VLS_INIT_ZERO;
+    struct bu_vls path = BU_VLS_INIT_ZERO;
+
     if (UNLIKELY(!input) || UNLIKELY(strlen(input) == 0)) return MIME_MODEL_UNKNOWN;
 
-    /* See if we have a protocol prefix */
-    if (format_prefix(format, path, input)) {
-	/* Yes - see if the prefix specifies a model format */
-	type_int = bu_file_mime(bu_vls_addr(format), MIME_MODEL);
-	type = (mime_model_t)type_int;
+    /* If an external routine has specified a format string, that string will
+     * override the file extension (but not an explicit option or format prefix.
+     * Stash any local format string here for later processing.  The idea is
+     * to allow some other routine (say, an introspection of a file looking for
+     * some signature string) to override a file extension based type identification.
+     * Such introspection is beyond the scope of this function, but should override
+     * the file extension mechanism. */
+    if (format) bu_vls_sprintf(&format_cpy, "%s", bu_vls_addr(format));
+
+    /* If we have an explicit option, that overrides any other format specifiers */
+    if (opt) {
+	type_int = bu_file_mime(opt, MIME_MODEL);
+	type = (type_int < 0) ? MIME_MODEL_UNKNOWN : (mime_model_t)type_int;
 	if (type == MIME_MODEL_UNKNOWN) {
 	    /* Have prefix, but doesn't result in a known format - that's an error */
+	    if (log) bu_vls_printf(log, "Error: unknown model format \"%s\" specified as an option.\n", opt);
+	    bu_vls_free(&format_cpy);
 	    return -1;
 	}
     }
-    /* If we have no prefix or the prefix didn't map to a model type, try extension */
-    if (type == MIME_MODEL_UNKNOWN) {
-	if (bu_path_component(format, bu_vls_addr(path), PATH_EXTENSION)) {
+
+    /* Try for a format prefix */
+    if (extract_format_prefix(format, input)) {
+	/* If we don't already have a valid type and we had a format prefix,
+	 * find out if it maps to a valid type */
+	if (type == MIME_MODEL_UNKNOWN && format) {
+	    /* Yes - see if the prefix specifies a model format */
 	    type_int = bu_file_mime(bu_vls_addr(format), MIME_MODEL);
-	    type = (mime_model_t)type_int;
+	    type = (type_int < 0) ? MIME_MODEL_UNKNOWN : (mime_model_t)type_int;
+	    if (type == MIME_MODEL_UNKNOWN) {
+		/* Have prefix, but doesn't result in a known format - that's an error */
+		if (log) bu_vls_printf(log, "Error: unknown model format \"%s\" specified as a format prefix.\n", bu_vls_addr(format));
+		bu_vls_free(&format_cpy);
+		return -1;
+	    }
 	}
     }
 
+    /* If we don't already have a type and we were passed a format string, give it a try */
+    if (type == MIME_MODEL_UNKNOWN && format && bu_vls_strlen(&format_cpy) > 0) {
+	bu_vls_sprintf(format, "%s", bu_vls_addr(&format_cpy));
+	type_int = bu_file_mime(bu_vls_addr(&format_cpy), MIME_MODEL);
+	type = (type_int < 0) ? MIME_MODEL_UNKNOWN : (mime_model_t)type_int;
+	if (type == MIME_MODEL_UNKNOWN) {
+	    /* Have prefix, but doesn't result in a known format - that's an error */
+	    if (log) bu_vls_printf(log, "Error: unknown model format \"%s\" passed to parse_model_string.\n", bu_vls_addr(format));
+	    bu_vls_free(&format_cpy);
+	    return -1;
+	}
+    }
+
+    /* If we have no prefix or the prefix didn't map to a model type, try file extension */
+    if (type == MIME_MODEL_UNKNOWN && extract_path(&path, input)) {
+	if (bu_path_component(format, bu_vls_addr(&path), PATH_EXTENSION)) {
+	    type_int = bu_file_mime(bu_vls_addr(format), MIME_MODEL);
+	    type = (type_int < 0) ? MIME_MODEL_UNKNOWN : (mime_model_t)type_int;
+	    if (type == MIME_MODEL_UNKNOWN) {
+		/* Have file extension, but doesn't result in a known format - that's an error */
+		if (log) bu_vls_printf(log, "Error: file extension \"%s\" does not map to a known model format.\n", bu_vls_addr(format));
+		bu_vls_free(&format_cpy);
+		bu_vls_free(&path);
+		return -1;
+	    }
+	}
+    }
+    bu_vls_free(&path);
+    bu_vls_free(&format_cpy);
     return (int)type;
 }
 
@@ -137,65 +223,113 @@ int
 main(int ac, char **av)
 {
     int fmt = 0;
-    int fmt_error = 0;
-    const char *in_fmt, *out_fmt;
-    mime_model_t in_type, out_type;
+    int ret = 0;
+    int ac_offset = 0;
+    const char *in_fmt = NULL;
+    const char *out_fmt = NULL;
+    mime_model_t in_type = MIME_MODEL_UNKNOWN;
+    mime_model_t out_type = MIME_MODEL_UNKNOWN;
     struct bu_vls in_format = BU_VLS_INIT_ZERO;
     struct bu_vls in_path = BU_VLS_INIT_ZERO;
     struct bu_vls out_format = BU_VLS_INIT_ZERO;
     struct bu_vls out_path = BU_VLS_INIT_ZERO;
+    struct bu_vls log = BU_VLS_INIT_ZERO;
+    struct bu_vls extra_opts = BU_VLS_INIT_ZERO;
 
     ac-=(ac>0); av+=(ac>0); // skip program name argv[0] if present
-    option::Stats stats(TopUsage, ac, av);
+    ac_offset = (ac > 2) ? 2 : 0;  // The last two argv entries must always be the input and output paths
+    /* Handle anything else as options */
+    option::Stats stats(TopUsage, ac - ac_offset, av);
     option::Option *options = (option::Option *)bu_calloc(stats.options_max, sizeof(option::Option), "options");
     option::Option *buffer= (option::Option *)bu_calloc(stats.buffer_max, sizeof(option::Option), "options");
-    option::Parser parse(TopUsage, ac, av, options, buffer);
+    option::Parser parse(TopUsage, ac - ac_offset, av, options, buffer);
 
     if (options[HELP] || ac == 0) {
 	option::printUsage(std::cout, TopUsage);
-	return 0;
+	goto cleanup;
     }
 
+    /* Any args that weren't top level args will get passed to the
+     * format specific arg processing routines, after we use the known
+     * top level options and the path inputs to determine what the file
+     * types in question are.  Steps:
+     *
+     * 1.  Reassemble the unknown args into a string. */
+    reassemble_argstr(&extra_opts, options[UNKNOWN]);
+    bu_log("Unknown options: %s\n", bu_vls_addr(&extra_opts));
+    /*
+     * 2.  Use bu_argv_from_string to create a new
+     * array to be fed to the format specific option parsers.*/
+
+    /* TODO - determine whether we want to have a specific option prefix,
+     * such as in- and out-, to identify an option as specific to the
+     * input file format suboption parser only.  i.e.:
+     *
+     * --in-tol=1.0  -> --tol=1.0 to the input file's suboptions only
+     * --out-tol=2.0 -> --tol=2.0 to the input file's suboptions only
+     * --tol=1.5     -> --tol=1.5 to both input and output suboptions
+     *
+     *  consistent with top level --in-format and --out-format options
+     *
+     */
+    bu_vls_free(&extra_opts);
+
+    /* See if we have input and output files specified */
+    if (!extract_path(&in_path, av[ac-2])) {
+	bu_vls_printf(&log, "Error: no input path identified: %s\n", av[ac-2]);
+	ret = 1;
+    }
+    if (!extract_path(&out_path, av[ac-1])) {
+	bu_vls_printf(&log, "Error: no output path identified: %s\n", av[ac-1]);
+	ret = 1;
+    }
+
+    /* Make sure we have distinct input and output paths */
+    if (bu_vls_strlen(&in_path) > 0 && BU_STR_EQUAL(bu_vls_addr(&in_path), bu_vls_addr(&out_path))) {
+	bu_vls_printf(&log, "Error: identical path specified for both input and output: %s\n", bu_vls_addr(&out_path));
+	ret = 1;
+    }
+
+    /* Find out what input file type we are dealing with */
     if (options[IN_FORMAT]) {
-	bu_log("Option: input format override: %s\n", options[IN_FORMAT].arg);
-    }
-
-    if (options[OUT_FORMAT]) {
-	bu_log("Option: output format override: %s\n ", options[OUT_FORMAT].arg);
-    }
-
-    fmt = parse_model_string(&in_format, &in_path, parse.nonOption(0));
-    if (fmt < 0) {
-	bu_log("Error: unknown model format \"%s\" specified as prefix to input path.\n", bu_vls_addr(&in_format));
-	fmt_error++;
+	in_fmt = options[IN_FORMAT].arg;
     } else {
-	in_type = (mime_model_t)fmt;
+	/* If we aren't overridden by an option, it's worth doing file
+	 * introspection to see if the file contents identify the input
+	 * type solidly, provided we have that capability.*/
+
+	/* fake type introspection for testing: */
+	//bu_vls_sprintf(&in_format, "step");
     }
-    fmt = parse_model_string(&out_format, &out_path, parse.nonOption(1));
-    if (fmt < 0) {
-	bu_log("Error: unknown model format \"%s\" specified as prefix to output path.\n", bu_vls_addr(&out_format));
-	fmt_error++;
-    } else {
-    out_type = (mime_model_t)fmt;
-    }
-    if (BU_STR_EQUAL(bu_vls_addr(&in_path), bu_vls_addr(&out_path))) {
-	bu_log("Error: identical path specified for both input and output: %s\n", bu_vls_addr(&out_path));
-	fmt_error++;
-    }
+    fmt = parse_model_string(&in_format, &log, in_fmt, av[ac-2]);
+    in_type = (fmt < 0) ? MIME_MODEL_UNKNOWN : (mime_model_t)fmt;
+    in_fmt = NULL;
+
+    /* Identify output file type */
+    if (options[OUT_FORMAT]) out_fmt = options[OUT_FORMAT].arg;
+    fmt = parse_model_string(&out_format, &log, out_fmt, av[ac-1]);
+    out_type = (fmt < 0) ? MIME_MODEL_UNKNOWN : (mime_model_t)fmt;
+    out_fmt = NULL;
+
+    /* If we get to this point without knowing both input and output types, we've got a problem */
     if (in_type == MIME_MODEL_UNKNOWN) {
-	bu_log("Error: unable to identify file format for input path.\n");
-	fmt_error++;
+	bu_vls_printf(&log, "Error: no format type identified for input path: %s\n", bu_vls_addr(&in_path));
+	ret = 1;
     }
     if (out_type == MIME_MODEL_UNKNOWN) {
-	bu_log("Error: unable to identify file format for output path.\n");
-	fmt_error++;
+	bu_vls_printf(&log, "Error: no format type identified for output path: %s\n", bu_vls_addr(&out_path));
+	ret = 1;
     }
-    if (fmt_error > 0) return 1;
+
+    /* If everything isn't OK, we're done - report and clean up memory */
+    if (ret == 1) goto cleanup;
 
 
+    /* If we've gotten this far, we know enough to try to convert. Until we
+     * hook in conversion calls to libgcv, print a summary of the option
+     * parsing results for debugging. */
     in_fmt = bu_file_mime_str((int)in_type, MIME_MODEL);
     out_fmt = bu_file_mime_str((int)out_type, MIME_MODEL);
-
     bu_log("Input file format: %s\n", in_fmt);
     bu_log("Output file format: %s\n", out_fmt);
     bu_log("Input file path: %s\n", bu_vls_addr(&in_path));
@@ -203,14 +337,19 @@ main(int ac, char **av)
 
 
     /* Clean up */
+cleanup:
+    if (bu_vls_strlen(&log) > 0) bu_log("%s", bu_vls_addr(&log));
     if (in_fmt) bu_free((char *)in_fmt, "input format string");
     if (out_fmt) bu_free((char *)out_fmt, "output format string");
+    bu_free(options, "free options");
+    bu_free(buffer, "free buffer");
     bu_vls_free(&in_format);
     bu_vls_free(&in_path);
     bu_vls_free(&out_format);
     bu_vls_free(&out_path);
+    bu_vls_free(&log);
 
-    return 0;
+    return ret;
 }
 
 
