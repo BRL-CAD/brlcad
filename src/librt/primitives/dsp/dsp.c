@@ -3480,11 +3480,11 @@ get_cut_dir(struct rt_dsp_internal *dsp_ip, int x, int y, int xlim, int ylim)
     height[7] = DSP(dsp_ip, xx, yy);
 
     /* compute curvature along the 0<->2 direction */
-    c02 = fabs(height[2] + height[4] - 2*height[0]) + fabs(height[6] + height[0] - 2*height[2]);
+    c02 = abs(height[2] + height[4] - 2*height[0]) + abs(height[6] + height[0] - 2*height[2]);
 
 
     /* compute curvature along the 1<->3 direction */
-    c13 = fabs(height[3] + height[5] - 2*height[1]) + fabs(height[7] + height[1] - 2*height[3]);
+    c13 = abs(height[3] + height[5] - 2*height[1]) + abs(height[7] + height[1] - 2*height[3]);
 
     if (c02 < c13) {
 	/* choose the 0<->2 direction */

@@ -1842,7 +1842,7 @@ rt_rhc_centroid(point_t *cent, const struct rt_db_internal *ip)
 	low = a;
 	high = xf;
 
-	while (abs(high - low) > epsilon) {
+	while (fabs(high - low) > epsilon) {
 	    guess = (high + low) / 2.0;
 	    sqrt_ga = sqrt((guess * guess) - (a * a));
 	    guessArea = (b / a) * ((guess * sqrt_ga) - ((a * a) * log(sqrt_ga + guess)) - ((a * a) * log(guess)));
