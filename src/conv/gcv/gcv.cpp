@@ -32,6 +32,39 @@
 #include "optionparser.h"
 
 
+struct GcvArgs: public option::Arg
+{
+    /* By default, unknown args are bad */
+    static option::ArgStatus Unknown(const option::Option& UNUSED(option), bool UNUSED(msg))
+    {
+	return option::ARG_ILLEGAL;
+    }
+    /* We may also want to require an arg */
+    static option::ArgStatus Required(const option::Option& option, bool UNUSED(msg))
+    {
+	if (!option.arg) return option::ARG_ILLEGAL;
+	return option::ARG_OK;
+    }
+};
+
+
+enum FAST4OptionIndex { FAST4_UNKNOWN, FAST4_WARN_DEFAULT_NAMES };
+
+const option::Descriptor Fast4Usage[] = {
+     { FAST4_UNKNOWN, 0, "", "",          option::Arg::Optional, "FASTGEN 4 format\n"},
+     { FAST4_WARN_DEFAULT_NAMES, 0, "w", "warn-default-names", option::Arg::None, "-w\t --warn-default-names\t File format of input file." },
+     { 0, 0, 0, 0, 0, 0 }
+};
+
+
+enum STLOptionIndex { STL_UNKNOWN, STL_WARN_DEFAULT_NAMES };
+
+const option::Descriptor STLUsage[] = {
+     { STL_UNKNOWN, 0, "", "",          option::Arg::Optional, "STL format\n"},
+     { STL_WARN_DEFAULT_NAMES, 0, "u", "units", GcvArgs::Required, "-w\t --warn-default-names\t File format of input file." },
+     { 0, 0, 0, 0, 0, 0 }
+};
+
 
 struct TopLevelArg: public option::Arg
 {
@@ -221,6 +254,33 @@ parse_model_string(struct bu_vls *format, struct bu_vls *log, const char *opt, c
     return (int)type;
 }
 
+void fast4_arg_process(const char *args) {
+    if (!args) return;
+    char *input = bu_strdup(args);
+    char **argv = (char **)bu_calloc(strlen(args) + 1, sizeof(char *), "argv array");
+    int argc = bu_argv_from_string(argv, strlen(args), input);
+
+    option::Stats stats(Fast4Usage, argc, argv);
+    option::Option *options = (option::Option *)bu_calloc(stats.options_max, sizeof(option::Option), "options");
+    option::Option *buffer= (option::Option *)bu_calloc(stats.buffer_max, sizeof(option::Option), "options");
+    option::Parser parse(Fast4Usage, argc, argv, options, buffer);
+}
+
+
+void stl_arg_process(const char *args) {
+    if (!args) return;
+    char *input = bu_strdup(args);
+    char **argv = (char **)bu_calloc(strlen(args) + 1, sizeof(char *), "argv array");
+    int argc = bu_argv_from_string(argv, strlen(args), input);
+
+    option::Stats stats(STLUsage, argc, argv);
+    option::Option *options = (option::Option *)bu_calloc(stats.options_max, sizeof(option::Option), "options");
+    option::Option *buffer= (option::Option *)bu_calloc(stats.buffer_max, sizeof(option::Option), "options");
+    option::Parser parse(STLUsage, argc, argv, options, buffer);
+}
+
+
+
 int
 main(int ac, char **av)
 {
@@ -274,7 +334,6 @@ main(int ac, char **av)
      *  consistent with top level --in-format and --out-format options
      *
      */
-    bu_vls_free(&extra_opts);
 
     /* See if we have input and output files specified */
     if (!extract_path(&in_path, av[ac-2])) {
@@ -326,6 +385,15 @@ main(int ac, char **av)
     /* If everything isn't OK, we're done - report and clean up memory */
     if (ret == 1) goto cleanup;
 
+    switch (in_type) {
+	case MIME_MODEL_VND_FASTGEN:
+	    fast4_arg_process(bu_vls_addr(&extra_opts));
+	    break;
+	case MIME_MODEL_STL:
+	    stl_arg_process(bu_vls_addr(&extra_opts));
+	default:
+	    break;
+    }
 
     /* If we've gotten this far, we know enough to try to convert. Until we
      * hook in conversion calls to libgcv, print a summary of the option
@@ -350,6 +418,7 @@ cleanup:
     bu_vls_free(&out_format);
     bu_vls_free(&out_path);
     bu_vls_free(&log);
+    bu_vls_free(&extra_opts);
 
     return ret;
 }
