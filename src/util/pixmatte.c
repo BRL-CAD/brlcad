@@ -73,6 +73,7 @@ static long true_cnt = 0;
 static long false_cnt = 0;
 
 static int twoconstants;
+static int limit = 2;
 
 static const char usage_msg[] = "\
 Usage: pixmatte [-w width_in_bytes] {-g -l -e -n -a}\n\
@@ -256,6 +257,23 @@ main(int argc, char **argv)
     	if (wanted & GT) wanted ^=GT;
     }
 
+    if (wanted & APPROX) {
+	if ( (wanted & GT) && (wanted & EQ) )
+	    limit = -1;
+    	    /* remember that limit defaulted to 2,
+	     * (for the case of APPROX/GT)
+	     */
+    	else if (wanted & LT) {
+    	    if (wanted & EQ)
+    		limit = 1;
+    	     else
+    		limit = -2;
+	     }
+    /* Remember that some cases are "don't care" w/r to "limit".
+     */
+    }
+
+
     while (1) {
 	unsigned char *cb0, *cb1;	/* current input buf ptrs */
 	unsigned char *cb2, *cb3;
@@ -330,42 +348,30 @@ main(int argc, char **argv)
 		 * if both LT and GT were detected, they would have been
 	    	 * turned off and replaced with NE.
 	    	 */
-		if ( (wanted & GT) && (wanted & EQ) ) {
-		    /* Want approx GT/EQ; in addition to ">=",
-                     * we allow 1 on the OTHER side of equality.
-		     */
-		    for (ep = ap+width; ap < ep;) {
-			if ((*ap++ - *bp++) < -1)
-			    goto fail;
-		    }
-		    goto success;
-		}
 		if (wanted & GT) {
-		    /* Want approx GT; same as ">", except we
-                     * stay more than 1 away from equality.
+		    /* APPROX/GT/EQ (limit = -1):
+                     *   Want approx GT/EQ; in addition to ">=",
+                     *   we allow 1 on the OTHER side of equality.
+		     * APPROX/GT (limit = 2):
+		     *   Want approx GT; same as ">", except we
+                     *   stay more than 1 away from equality.
 		     */
 		    for (ep = ap+width; ap < ep;) {
-			if ((*ap++ - *bp++) < 2 )
-			    goto fail;
-		    }
-		    goto success;
-		}
-		if ( (wanted & LT) && (wanted & EQ) ) {
-		    /* Want approx LT/EQ; in addition to "<=",
-                     * we allow 1 on the OTHER side of equality.
-		     */
-		    for (ep = ap+width; ap < ep;) {
-			if ((*ap++ - *bp++) > 1)
+			if ((*ap++ - *bp++) < limit)
 			    goto fail;
 		    }
 		    goto success;
 		}
 		if (wanted & LT) {
-		    /* Want approx LT; same as "<", except we
-                     * stay more than 1 away from equality.
+		    /* APPROX/LT/EQ (limit = 1):
+		     *   Want approx LT/EQ; in addition to "<=",
+                     *   we allow 1 on the OTHER side of equality.
+		     * APPROX/LT (limit = -2):
+		     *   Want approx LT; same as "<", except we
+	             *   stay more than 1 away from equality.
 		     */
 		    for (ep = ap+width; ap < ep;) {
-			if ((*ap++ - *bp++) > -2 )
+			if ((*ap++ - *bp++) > limit)
 			    goto fail;
 		    }
 		    goto success;
