@@ -37,8 +37,10 @@
 #include "bio.h"
 
 #include "bu/getopt.h"
-#include "bu/str.h"
 #include "bu/log.h"
+#include "bu/str.h"
+
+#define EL_WIDTH 32 /* Max width of one element */
 
 static int width = 3;
 
@@ -95,8 +97,12 @@ get_args(int argc, char **argv)
 		break;
 	    case 'w':
 		c = atoi(bu_optarg);
-		if (c > 1 && c < (int)sizeof(pconst))
-		    width = c;
+		if (c < 1 || c >= EL_WIDTH){
+		    (void)fputs("pixmerge: illegal width specified\n",stderr);
+		    (void)fputs(usage, stderr);
+		    bu_exit (1, NULL);
+		}
+		width = c;
 		break;
 	    case 'C':
 	    case 'c':	/* backward compatibility */
