@@ -418,7 +418,7 @@ Examples:    r hulltop.r + hulltop.s - hullleft.s - hullright.s
            </programlisting>
          </para>
  <para>
- <emphasis role="bold">        
+ <emphasis role="bold">
 i object combname brname
 </emphasis>
 </para>
@@ -487,7 +487,7 @@ Examples:      l hull
              </programlisting>
 </para>
 <para>
-<emphasis role="bold">             
+<emphasis role="bold">
 mirror -[axis] oldsolid newsolid
 </emphasis>
 </para>
@@ -519,7 +519,7 @@ feature is being used.  Examples of this command will be given in the
 discussion on solid editing.
 </para>
 <para>
-  <emphasis role="bold">    
+  <emphasis role="bold">
 D comb mem1 mem2 .... memn
 </emphasis>
 </para>

@@ -33,7 +33,7 @@ echo "./gcv -f -h"
 
 for arg1 in $INPUT_FILES
 do
-	for arg2 in $OUTPUT_FILES 
+	for arg2 in $OUTPUT_FILES
 	do
 		echo "./gcv $arg1 $arg2"
 		./gcv $arg1 $arg2
@@ -45,7 +45,7 @@ for opt1 in $OPTIONS
 do
 	for arg1 in $INPUT_FILES
 	do
-		for arg2 in $OUTPUT_FILES 
+		for arg2 in $OUTPUT_FILES
 		do
 			echo "./gcv $opt1 $arg1 $arg2"
 			./gcv $opt1 $arg1 $arg2
@@ -55,7 +55,7 @@ do
 	do
 		for arg1 in $INPUT_FILES
 		do
-			for arg2 in $OUTPUT_FILES 
+			for arg2 in $OUTPUT_FILES
 			do
 				echo "./gcv $opt1 $opt2 $arg1 $arg2"
 				./gcv $opt1 $opt2 $arg1 $arg2
