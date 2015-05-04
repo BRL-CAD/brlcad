@@ -8,6 +8,8 @@ BRLCAD_INCLUDE_DIRS(GCV_INCLUDE_DIRS)
 
 BRLCAD_ADDEXEC(gcv gcv.cpp "libgcv;libbn;libbu;${M_LIBRARY}" NO_INSTALL)
 
+CMAKEFILES(gcv.sh)
+
 # Local Variables:
 # tab-width: 8
 # mode: cmake

@@ -318,7 +318,7 @@ main(int ac, char **av)
      *
      * 1.  Reassemble the unknown args into a string. */
     reassemble_argstr(&extra_opts, options[UNKNOWN]);
-    bu_log("Unknown options: %s\n", bu_vls_addr(&extra_opts));
+    if (bu_vls_strlen(&extra_opts) > 0) bu_log("Unknown options: %s\n", bu_vls_addr(&extra_opts));
     /*
      * 2.  Use bu_argv_from_string to create a new
      * array to be fed to the format specific option parsers.*/
