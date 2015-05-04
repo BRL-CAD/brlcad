@@ -23,6 +23,15 @@ set(rt_headers
   pattern.h
   piece.h
   prep.h
+  primitives/arb8.h
+  primitives/ars.h
+  primitives/dsp.h
+  primitives/epa.h
+  primitives/hf.h
+  primitives/metaball.h
+  primitives/pg.h
+  primitives/pipe.h
+  primitives/rpc.h
   private.h
   ray_partition.h
   region.h

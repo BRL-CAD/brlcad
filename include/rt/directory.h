@@ -129,6 +129,25 @@ struct directory {
         (_p)->d_forw = NULL; }
 
 
+/**
+ * convert an argv list of names to a directory pointer array.
+ *
+ * If db_lookup fails for any individual argv, an empty directory
+ * structure is created and assigned the name and RT_DIR_PHONY_ADDR
+ *
+ * The returned directory ** structure is NULL terminated.
+ */
+RT_EXPORT extern struct directory **db_argv_to_dpv(const struct db_i *dbip,
+                                                   const char **argv);
+
+
+/**
+ * convert a directory pointer array to an argv char pointer array.
+ */
+RT_EXPORT extern char **db_dpv_to_argv(struct directory **dpv);
+
+
+
 __END_DECLS
 
 #endif /* RT_DIRECTORY_H */
