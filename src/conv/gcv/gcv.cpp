@@ -57,13 +57,58 @@ const option::Descriptor Fast4Usage[] = {
 };
 
 
-enum STLOptionIndex { STL_UNKNOWN, STL_WARN_DEFAULT_NAMES };
+enum STLOptionIndex { STL_UNKNOWN, STL_UNITS };
 
 const option::Descriptor STLUsage[] = {
      { STL_UNKNOWN, 0, "", "",          option::Arg::Optional, "STL format\n"},
-     { STL_WARN_DEFAULT_NAMES, 0, "u", "units", GcvArgs::Required, "-w\t --warn-default-names\t File format of input file." },
+     { STL_UNITS, 0, "u", "units", GcvArgs::Required, "-u\t --units\t Units of input file." },
      { 0, 0, 0, 0, 0, 0 }
 };
+
+
+
+void fast4_arg_process(const char *args) {
+    if (!args) return;
+    char *input = bu_strdup(args);
+    char **argv = (char **)bu_calloc(strlen(args) + 1, sizeof(char *), "argv array");
+    int argc = bu_argv_from_string(argv, strlen(args), input);
+
+    option::Stats stats(Fast4Usage, argc, argv);
+    option::Option *options = (option::Option *)bu_calloc(stats.options_max, sizeof(option::Option), "options");
+    option::Option *buffer= (option::Option *)bu_calloc(stats.buffer_max, sizeof(option::Option), "options");
+    option::Parser parse(Fast4Usage, argc, argv, options, buffer);
+
+    if (options[FAST4_WARN_DEFAULT_NAMES]) {
+	bu_log("FASTGEN 4 opt: %s:%s\n", options[FAST4_WARN_DEFAULT_NAMES].name, options[FAST4_WARN_DEFAULT_NAMES].arg);
+    }
+
+    bu_free(input, "input");
+    bu_free(options, "free options");
+    bu_free(buffer, "free buffer");
+}
+
+
+void stl_arg_process(const char *args) {
+    if (!args) return;
+    char *input = bu_strdup(args);
+    char **argv = (char **)bu_calloc(strlen(args) + 1, sizeof(char *), "argv array");
+    int argc = bu_argv_from_string(argv, strlen(args), input);
+
+    option::Stats stats(STLUsage, argc, argv);
+    option::Option *options = (option::Option *)bu_calloc(stats.options_max, sizeof(option::Option), "options");
+    option::Option *buffer= (option::Option *)bu_calloc(stats.buffer_max, sizeof(option::Option), "options");
+    option::Parser parse(STLUsage, argc, argv, options, buffer);
+
+
+    if (options[STL_UNITS]) {
+	bu_log("STL opt: %s:%s\n", options[STL_UNITS].name, options[STL_UNITS].arg);
+    }
+
+    bu_free(input, "input");
+    bu_free(options, "free options");
+    bu_free(buffer, "free buffer");
+}
+
 
 
 struct TopLevelArg: public option::Arg
@@ -272,32 +317,6 @@ parse_model_string(struct bu_vls *format, struct bu_vls *log, const char *opt, c
     return (int)type;
 }
 
-void fast4_arg_process(const char *args) {
-    if (!args) return;
-    char *input = bu_strdup(args);
-    char **argv = (char **)bu_calloc(strlen(args) + 1, sizeof(char *), "argv array");
-    int argc = bu_argv_from_string(argv, strlen(args), input);
-
-    option::Stats stats(Fast4Usage, argc, argv);
-    option::Option *options = (option::Option *)bu_calloc(stats.options_max, sizeof(option::Option), "options");
-    option::Option *buffer= (option::Option *)bu_calloc(stats.buffer_max, sizeof(option::Option), "options");
-    option::Parser parse(Fast4Usage, argc, argv, options, buffer);
-}
-
-
-void stl_arg_process(const char *args) {
-    if (!args) return;
-    char *input = bu_strdup(args);
-    char **argv = (char **)bu_calloc(strlen(args) + 1, sizeof(char *), "argv array");
-    int argc = bu_argv_from_string(argv, strlen(args), input);
-
-    option::Stats stats(STLUsage, argc, argv);
-    option::Option *options = (option::Option *)bu_calloc(stats.options_max, sizeof(option::Option), "options");
-    option::Option *buffer= (option::Option *)bu_calloc(stats.buffer_max, sizeof(option::Option), "options");
-    option::Parser parse(STLUsage, argc, argv, options, buffer);
-}
-
-
 
 int
 main(int ac, char **av)
@@ -403,6 +422,16 @@ main(int ac, char **av)
     /* If everything isn't OK, we're done - report and clean up memory */
     if (ret == 1) goto cleanup;
 
+    /* If we've gotten this far, we know enough to try to convert. Until we
+     * hook in conversion calls to libgcv, print a summary of the option
+     * parsing results for debugging. */
+    in_fmt = bu_file_mime_str((int)in_type, MIME_MODEL);
+    out_fmt = bu_file_mime_str((int)out_type, MIME_MODEL);
+    bu_log("Input file format: %s\n", in_fmt);
+    bu_log("Output file format: %s\n", out_fmt);
+    bu_log("Input file path: %s\n", bu_vls_addr(&in_path));
+    bu_log("Output file path: %s\n", bu_vls_addr(&out_path));
+
     switch (in_type) {
 	case MIME_MODEL_VND_FASTGEN:
 	    fast4_arg_process(bu_vls_addr(&extra_opts));
@@ -413,15 +442,16 @@ main(int ac, char **av)
 	    break;
     }
 
-    /* If we've gotten this far, we know enough to try to convert. Until we
-     * hook in conversion calls to libgcv, print a summary of the option
-     * parsing results for debugging. */
-    in_fmt = bu_file_mime_str((int)in_type, MIME_MODEL);
-    out_fmt = bu_file_mime_str((int)out_type, MIME_MODEL);
-    bu_log("Input file format: %s\n", in_fmt);
-    bu_log("Output file format: %s\n", out_fmt);
-    bu_log("Input file path: %s\n", bu_vls_addr(&in_path));
-    bu_log("Output file path: %s\n", bu_vls_addr(&out_path));
+    switch (out_type) {
+	case MIME_MODEL_VND_FASTGEN:
+	    fast4_arg_process(bu_vls_addr(&extra_opts));
+	    break;
+	case MIME_MODEL_STL:
+	    stl_arg_process(bu_vls_addr(&extra_opts));
+	default:
+	    break;
+    }
+
 
 
     /* Clean up */
