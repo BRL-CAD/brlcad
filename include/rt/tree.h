@@ -656,6 +656,87 @@ RT_EXPORT extern int rt_bound_tree(const union tree     *tp,
 RT_EXPORT extern int rt_tree_elim_nops(union tree *,
                                        struct resource *resp);
 
+/**
+ * Return count of number of leaf nodes in this tree.
+ */
+RT_EXPORT extern size_t db_tree_nleaves(const union tree *tp);
+
+/**
+ * Take a binary tree in "V4-ready" layout (non-unions pushed below
+ * unions, left-heavy), and flatten it into an array layout, ready for
+ * conversion back to the GIFT-inspired V4 database format.
+ *
+ * This is done using the db_non_union_push() routine.
+ *
+ * If argument 'free' is non-zero, then the non-leaf nodes are freed
+ * along the way, to prevent memory leaks.  In this case, the caller's
+ * copy of 'tp' will be invalid upon return.
+ *
+ * When invoked at the very top of the tree, the op argument must be
+ * OP_UNION.
+ */
+RT_EXPORT extern struct rt_tree_array *db_flatten_tree(struct rt_tree_array *rt_tree_array, union tree *tp, int op, int avail, struct resource *resp);
+
+
+/**
+ * Produce a GIFT-compatible listing, one "member" per line,
+ * regardless of the structure of the tree we've been given.
+ */
+RT_EXPORT extern void db_tree_flatten_describe(struct bu_vls    *vls,
+                                               const union tree *tp,
+                                               int              indented,
+                                               int              lvl,
+                                               double           mm2local,
+                                               struct resource  *resp);
+
+RT_EXPORT extern void db_tree_describe(struct bu_vls    *vls,
+                                       const union tree *tp,
+                                       int              indented,
+                                       int              lvl,
+                                       double           mm2local);
+
+/**
+ * Support routine for db_ck_v4gift_tree().
+ * Ensure that the tree below 'tp' is left-heavy, i.e. that there are
+ * nothing but solids on the right side of any binary operations.
+ *
+ * Returns -
+ * -1 ERROR
+ * 0 OK
+ */
+RT_EXPORT extern int db_ck_left_heavy_tree(const union tree     *tp,
+                                           int          no_unions);
+/**
+ * Look a gift-tree in the mouth.
+ *
+ * Ensure that this boolean tree conforms to the GIFT convention that
+ * union operations must bind the loosest.
+ *
+ * There are two stages to this check:
+ * 1) Ensure that if unions are present they are all at the root of tree,
+ * 2) Ensure non-union children of union nodes are all left-heavy
+ * (nothing but solid nodes permitted on rhs of binary operators).
+ *
+ * Returns -
+ * -1 ERROR
+ * 0 OK
+ */
+RT_EXPORT extern int db_ck_v4gift_tree(const union tree *tp);
+
+/**
+ * Given a rt_tree_array array, build a tree of "union tree" nodes
+ * appropriately connected together.  Every element of the
+ * rt_tree_array array used is replaced with a TREE_NULL.  Elements
+ * which are already TREE_NULL are ignored.  Returns a pointer to the
+ * top of the tree.
+ */
+RT_EXPORT extern union tree *db_mkbool_tree(struct rt_tree_array *rt_tree_array,
+                                            size_t              howfar,
+                                            struct resource     *resp);
+
+RT_EXPORT extern union tree *db_mkgift_tree(struct rt_tree_array *trees,
+                                            size_t subtreecount,
+                                            struct resource *resp);
 
 
 
