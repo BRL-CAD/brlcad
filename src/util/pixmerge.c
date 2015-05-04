@@ -40,6 +40,7 @@
 #include "bu/str.h"
 #include "bu/log.h"
 
+static int width = 3;
 
 static char *f1_name;
 static char *f2_name;
@@ -50,21 +51,20 @@ static FILE *f2;
 #define EQ 2
 #define GT 4
 #define NE 8
-static int wanted;			/* LT|EQ|GT conditions to pick fb */
+static int wanted = 0;			/* LT|EQ|GT conditions to pick fb */
+
+static long fg_cnt = 0;
+static long bg_cnt = 0;
 
 static int seen_const = 0;
 static int seen_formula = 0;
 
-static int width = 3;
 static unsigned char pconst[32];
 
 #define CHUNK 1024
 static char *b1;			/* fg input buffer */
 static char *b2;			/* bg input buffer */
 static char *b3;			/* output buffer */
-
-static long fg_cnt;
-static long bg_cnt;
 
 static char usage[] = "\
 Usage: pixmerge [-g -l -e -n] [-w bytes_wide] [-C r/g/b]\n\
@@ -114,7 +114,7 @@ get_args(int argc, char **argv)
 		seen_const = 1;
 		break;
 
-	    default:		/* 'h' '?' */
+	    default:		/* '?' 'h' */
 		return 0;
 	}
     }

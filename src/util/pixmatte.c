@@ -175,7 +175,7 @@ get_args(int argc, char **argv)
 	    case 'w':
 		c = atoi(bu_optarg);
 		if (c < 1 || c >= EL_WIDTH)
-		    usage("Illegal width specified\n", 1);
+		    usage("pixmatte: illegal width specified\n", 1);
 		width = c;
 		break;
 	    default:		/* '?' 'h' */
