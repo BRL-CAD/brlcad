@@ -110,11 +110,29 @@ HIDDEN void
 reassemble_argstr(struct bu_vls *ustr, option::Option *unknowns)
 {
     for (option::Option* opt = unknowns; opt; opt = opt->next()) {
-	//bu_log("Unknown option: %s, %s\n", opt->name, opt->arg);
-	if (ustr) {
-	    (strlen(opt->name) == 1) ? bu_vls_printf(ustr, "-%s ", opt->name) : bu_vls_printf(ustr, "%s ", opt->name);
-	    if (opt->arg) bu_vls_printf(ustr, "%s ", opt->arg);
+	char *inputcpy = NULL;
+	inputcpy = bu_strdup(opt->name);
+	char *equal_pos = strchr(inputcpy, '=');
+	if (equal_pos) {
+	    if (ustr) {
+		struct bu_vls vopt = BU_VLS_INIT_ZERO;
+		struct bu_vls varg = BU_VLS_INIT_ZERO;
+		bu_vls_sprintf(&vopt, "%s", inputcpy);
+		bu_vls_trunc(&vopt, -1 * strlen(equal_pos));
+		bu_vls_sprintf(&varg, "%s", inputcpy);
+		bu_vls_nibble(&varg, strlen(inputcpy) - strlen(equal_pos) + 1);
+		(bu_vls_strlen(&vopt) == 1) ? bu_vls_printf(ustr, "-%s ", bu_vls_addr(&vopt)) : bu_vls_printf(ustr, "%s ", bu_vls_addr(&vopt));
+		if (bu_vls_strlen(&varg)) bu_vls_printf(ustr, "%s ", bu_vls_addr(&varg));
+		bu_vls_free(&vopt);
+		bu_vls_free(&varg);
+	    }
+	} else {
+	    if (ustr) {
+		(strlen(opt->name) == 1) ? bu_vls_printf(ustr, "-%s ", opt->name) : bu_vls_printf(ustr, "%s ", opt->name);
+		if (opt->arg) bu_vls_printf(ustr, "%s ", opt->arg);
+	    }
 	}
+	bu_free(inputcpy, "input cpy");
     }
 }
 
