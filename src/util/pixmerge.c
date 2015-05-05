@@ -197,6 +197,21 @@ main(int argc, char **argv)
 	bu_exit (3, NULL);
     }
 
+/* If "<>" is detected (in "wanted"), we change to "!=" because it's the same.
+ */
+    if ( (wanted & LT) && (wanted & GT)) {
+    	wanted |= NE;
+    	wanted ^= LT;
+    	wanted ^= GT;
+    }
+/* If NE is detected, then there is no point also having either LT or GT.
+ */
+    else if ( (wanted & NE) ){
+    	if (wanted & LT) wanted ^=LT;
+    	else
+    	if (wanted & GT) wanted ^=GT;
+    }
+
     while (1) {
 	unsigned char *cb1, *cb2;	/* current input buf ptrs */
 	unsigned char *cb3; 	/* current output buf ptr */
@@ -228,21 +243,25 @@ main(int argc, char **argv)
 		bp = pconst;
 	    else
 		bp = cb2;
+
 	    if (wanted & NE) {
+/* If both NE and EQ are detected, all elements yield true result.
+ */
+	    	if (wanted & EQ) goto success;
 		for (ep = cb1+width; ap < ep; ap++, bp++) {
-		    if (*ap != *bp)
-			goto success;
+		    if (*ap == *bp)
+			goto fail;
 		}
-		goto fail;
-	    } else {
-		for (ep = cb1+width; ap < ep; ap++, bp++) {
-		    if (*ap > *bp) {
-			if (!(GT & wanted)) goto fail;
-		    } else if (*ap == *bp) {
-			if (!(EQ & wanted)) goto fail;
-		    } else {
-			if (!(LT & wanted)) goto fail;
-		    }
+		goto success;
+	    }
+
+	    for (ep = cb1+width; ap < ep; ap++, bp++) {
+		if (*ap > *bp) {
+		    if (!(GT & wanted)) goto fail;
+		} else if (*ap == *bp) {
+		    if (!(EQ & wanted)) goto fail;
+		} else {
+		    if (!(LT & wanted)) goto fail;
 		}
 	    }
 	success:
