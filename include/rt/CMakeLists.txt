@@ -4,6 +4,7 @@ set(rt_headers
   arb_edit.h
   boolweave.h
   cmd.h
+  db_attr.h
   db_diff.h
   db_fullpath.h
   db_instance.h
@@ -25,6 +26,8 @@ set(rt_headers
   prep.h
   primitives/arb8.h
   primitives/ars.h
+  primitives/bot.h
+  primitives/brep.h
   primitives/dsp.h
   primitives/epa.h
   primitives/hf.h
@@ -32,11 +35,14 @@ set(rt_headers
   primitives/pg.h
   primitives/pipe.h
   primitives/rpc.h
+  primitives/sketch.h
+  primitives/tor.h
   private.h
   ray_partition.h
   region.h
   resource.h
   rt_instance.h
+  rt_tcl.h
   search.h
   seg.h
   shoot.h

@@ -99,6 +99,14 @@ struct db_tree_state {
 #define RT_CK_DBTS(_p) BU_CKMAG(_p, RT_DBTS_MAGIC, "db_tree_state")
 
 /**
+ * initial tree start for db tree walkers.
+ *
+ * Also used by converters in conv/ directory.  Don't forget to
+ * initialize ts_dbip before use.
+ */
+RT_EXPORT extern const struct db_tree_state rt_initial_tree_state;
+
+/**
  * State for database traversal functions.
  */
 struct db_traverse
