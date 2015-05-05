@@ -37,7 +37,7 @@ or
 images,
 generates an output stream of the same size, where the value of
 the output is determined by a formula involving the first
-(foreground) stream and a constant, or the value of the second
+(foreground) stream and either a constant or the second
 (background) stream.
 This routine operates on a pixel-by-pixel basis, and thus
 is independent of the resolution of the image.
@@ -57,8 +57,8 @@ For example,
 <option>-le</option>
 selects a foreground pixel when it
 is lexically less than or equal to the background pixel,
-that is, when all bytes of the foreground pixel are less than
-or equal to the background pixel.</para>
+that is, when each byte of the foreground pixel is less than
+or equal to the corresponding byte of background pixel.</para>
 
 <para>The
 <option>-w#</option>
