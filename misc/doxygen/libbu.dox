@@ -7,91 +7,205 @@
 /**  @defgroup bu_defines libbu Definitions*/
 /** @ingroup libbu */
 /**  @defgroup container Data Containers */
+/**  @addtogroup container
+     LIBBU containers for holding various kinds of information.
+ */
 /** @ingroup libbu */
 /**  @defgroup memory Memory Management */
+/**  @addtogroup memory
+     LIBBU wrappers for memory allocation and release, and mapping.
+ */
 /** @ingroup libbu */
 /**  @defgroup io Input/Output */
+/**  @addtogroup io
+     LIBBU support for file and string handling, as well as debugging, path manipulation, logging and vector fonts.
+ */
 /** @ingroup libbu */
 /**  @defgroup data Data Management */
+/**  @addtogroup data
+     LIBBU routines for command processing, network byte order conversion, sorting algorithms, time, endian support, units, etc.
+ */
 /** @ingroup libbu */
 /**  @defgroup parallel  Parallel Processing */
+/**  @addtogroup parallel
+     LIBBU cross platform API for parallel processing, handling issues like threads and semaphores.
+ */
 /** @ingroup libbu */
 /**  @defgroup binding Language Bindings */
+/**  @addtogroup binding
+     LIBBU Tcl interface.
+ */
 
 /* Data Containers */
 /** @ingroup container */
 /**   @defgroup avs Attribute/Value Sets */
+/**  @addtogroup avs
+     Data containers for key/value associative mapping.
+ */
 /** @ingroup container */
 /**   @defgroup bitv Bit Vectors */
+/**  @addtogroup bitv
+     Bit vectors.
+ */
+
 /** @ingroup container */
 /**   @defgroup color Color */
+/**  @addtogroup color
+     Color.
+ */
 /** @ingroup container */
 /**   @defgroup hash Hash Tables */
+/**  @addtogroup hash
+     LIBBU hash container.
+ */
 /** @ingroup container */
 /**   @defgroup list Linked Lists */
+/**  @addtogroup list
+     LIBBU linked lists.
+ */
 /** @ingroup container */
 /**   @defgroup parse Structure Parsing */
+/**  @addtogroup parse
+     Logic for parsing data from structures.
+ */
 /** @ingroup container */
 /**   @defgroup ptbl Pointer Tables */
+/**  @addtogroup ptbl
+     Data container for storing pointers.
+ */
 /** @ingroup container */
 /**   @defgroup rb Red-Black Trees */
+/**  @addtogroup rb
+     LIBBU Red-Black tree.
+ */
 /** @ingroup container */
 /**   @defgroup vlb Variable-length Byte Buffers */
+/**  @addtogroup vlb
+     Variable lenght byte buffers.
+ */
 /** @ingroup container */
 /**   @defgroup vls Variable-length Strings */
+/**  @addtogroup vls
+     Variable length strings are BRL-CAD's preferred method of handling dynamic strings - they serve a function similar to that of std::string in C++.
+ */
+
 
 /* Memory Management */
 /** @ingroup memory */
 /**   @defgroup magic Magic Numbers */
+/**  @addtogroup magic
+     Specific numbers used in structures to verify that a given structure has been properly allocated and is of the correct type.
+ */
 /** @ingroup memory */
 /**   @defgroup malloc Allocation & Deallocation */
+/**  @addtogroup malloc
+     LIBBU wrappers for malloc and free.
+ */
 /** @ingroup memory */
 /**   @defgroup mf Memory-mapped Files */
+/**  @addtogroup mf
+     LIBBU wrappers for memory mapping files.
+ */
 
 /* I/O */
 /** @ingroup io */
 /**   @defgroup str Strings */
+/**  @addtogroup str
+     LIBBU wrappers standard C string handling routines.
+ */
 /** @ingroup io */
 /**   @defgroup debug Debugging */
+/**  @addtogroup debug
+     LIBBU debugging.
+ */
 /** @ingroup io */
 /**   @defgroup path Path Processing */
+/**  @addtogroup path
+     Routines to identify components of and apply normalization rules to paths.  The routines in this module do not assume a file on disk - they operate strictly on the path string.
+ */
 /** @ingroup io */
 /**   @defgroup log Logging */
+/**  @addtogroup log
+     LIBBU logging system.
+ */
 /** @ingroup io */
 /**   @defgroup file File Processing */
+/**  @addtogroup file
+     LIBBU wrappers file handling.
+ */
 /** @ingroup io */
 /**   @defgroup vfont Vector Fonts */
+/**  @addtogroup vfont
+     Basic vector fonts.
+ */
+
 
 /* Data Management */
 /** @ingroup data */
 /**   @defgroup cmd Command Processing */
+/**  @addtogroup cmd
+     Command Processing.
+ */
 /** @ingroup data */
 /**   @defgroup conv Data Conversion */
+/**  @addtogroup conv
+     Data Conversion.
+ */
 /** @ingroup data */
 /**   @defgroup getopt Command-line Option Parsing*/
+/**  @addtogroup getopt
+     Command line option parsing (doesn't currently support --long-option style options.)
+ */
 /** @ingroup data */
 /**   @defgroup hton Network Byte-order Conversion */
+/**  @addtogroup hton
+     Converting bytes to/from network order.
+ */
 /** @ingroup data */
 /**   @defgroup hist Histogram Handling */
+/**  @addtogroup hist
+     Histogram routines.
+ */
 /** @ingroup data */
 /**   @defgroup sort Sorting Algorithms */
+/**  @addtogroup sort
+     Data sorting algorithms.
+ */
 /** @ingroup data */
 /**   @defgroup endian Endian Support */
+/**  @addtogroup endian
+     Endian.
+ */
 /** @ingroup data */
 /**   @defgroup bu_time Time Support */
+/**  @addtogroup bu_time
+     LIBBU wrapper for time.
+ */
 /** @ingroup data */
 /**   @defgroup units Units */
+/**  @addtogroup units
+     LIBBU support for physical unit conversion.
+ */
+
 
 /* Parallel Processing */
 /** @ingroup parallel */
 /**   @defgroup thread Multithreading */
+/**  @addtogroup thread
+     LIBBU cross platform thread wrapping.
+ */
 /** @ingroup parallel */
 /**   @defgroup simd Single Instruction Multiple Data*/
-
+/**  @addtogroup simd
+     LIBBU SIMD routines.
+ */
 
 /* Language Bindings */
 /** @ingroup binding */
 /**   @defgroup tcl Tcl Interfacing */
+/**  @addtogroup tcl
+     LIBBU Tcl bindings.
+ */
 
 /*
  * Local Variables:
