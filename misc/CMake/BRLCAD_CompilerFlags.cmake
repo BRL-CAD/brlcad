@@ -90,6 +90,13 @@ if(${BRLCAD_OPTIMIZED_BUILD} MATCHES "OFF" AND BRLCAD_FLAGS_DEBUG)
   CHECK_CXX_FLAG(qstackprotect)
 endif(${BRLCAD_OPTIMIZED_BUILD} MATCHES "OFF" AND BRLCAD_FLAGS_DEBUG)
 
+# enable memory error detector AddressSanitizer (see
+# https://code.google.com/p/address-sanitizer/ for more info.)
+if(${BRLCAD_OPTIMIZED_BUILD} MATCHES "OFF" AND BRLCAD_FLAGS_DEBUG AND BRLCAD_ADDRESS_SANITIZER)
+  CHECK_C_FLAG(fsanitize=address)
+  CHECK_CXX_FLAG(fsanitize=address)
+endif(${BRLCAD_OPTIMIZED_BUILD} MATCHES "OFF" AND BRLCAD_FLAGS_DEBUG AND BRLCAD_ADDRESS_SANITIZER)
+
 # verbose warning flags.  we intentionally try to turn on as many as
 # possible.  adding more is encouraged (as long as all issues are
 # fixed first).
