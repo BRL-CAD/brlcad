@@ -18,11 +18,10 @@
  * information.
  */
 
-/** @addtogroup libbn */
-/** @{ */
-/** @file bn.h
- *
- * Header file for the BRL-CAD Numerical Computation Library, LIBBN.
+/* Header file for the BRL-CAD Numerical Computation Library, LIBBN.*/
+
+/** @file bn.h */
+/** @addtogroup libbn
  *
  * The library provides a broad assortment of numerical algorithms and
  * computational routines, including random number generation, vector
@@ -62,7 +61,6 @@
 
 #endif /* BN_H */
 
-/** @} */
 /*
  * Local Variables:
  * mode: C
