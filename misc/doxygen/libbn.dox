@@ -26,11 +26,7 @@
  /** @ingroup libbn */
  /**  @defgroup plane Point/Line/Plane Geometry Math */
  /** @ingroup libbn */
- /**  @defgroup chull Convex Hulls */
- /** @ingroup libbn */
  /**  @defgroup poly Polynomials */
- /** @ingroup libbn */
- /**  @defgroup obr Oriented Bounding Rectangles/Rectangular Cuboids*/
  /** @ingroup libbn */
  /**  @defgroup rand Random Numbers */
  /** @ingroup libbn */

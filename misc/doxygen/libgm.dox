@@ -3,5 +3,15 @@
 
 /* Second tier groups */
  /** @ingroup libgm */
- /**  @defgroup tri_tri Triangle/Triangle Intersection Tests */
+ /**  @defgroup tri Triangles */
+/**   @ingroup tri */
+ /**   @defgroup tri_ray Triangle/Ray Intersection Tests */
+/**   @ingroup tri */
+ /**   @defgroup tri_tri Triangle/Triangle Intersection Tests */
+ /** @ingroup libgm */
+ /**  @defgroup polygon Polygons */
+ /** @ingroup libgm */
+ /**  @defgroup chull Convex Hulls */
+ /** @ingroup libgm */
+ /**  @defgroup obr Oriented Bounding Rectangles/Rectangular Cuboids*/
 
