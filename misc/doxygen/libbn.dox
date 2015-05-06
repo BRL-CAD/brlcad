@@ -4,7 +4,9 @@
 
 /* Second tier groups */
  /** @ingroup libbn */
- /**   @defgroup anim Animation */
+/**   @defgroup bn_defines libbn Definitions*/
+ /** @ingroup libbn */
+ /**  @defgroup anim Animation */
  /** @ingroup libbn */
  /**  @defgroup adc Angle/Distance Cursor */
  /** @ingroup libbn */

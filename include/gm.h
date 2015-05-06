@@ -18,9 +18,7 @@
  * information.
  */
 
-/** @addtogroup libgm */
-/** @{ */
-/** @file gm.h
+/** @addtogroup libgm
  *
  * BRL-CAD geometry library. This library is intended for generic
  * geometry algorithms, such as point-in-polygon, does a line
@@ -36,7 +34,13 @@
  * Strictly numerical algorithms, which do not involve 3D geometry
  * concepts, belong in libbn.  An example of something that would belong
  * in libbn would be sparse matrix solving.
+ *
+ * The functionality provided by this library is specified in the gm.h
+ * header or appropriate included files from the ./gm subdirectory.
  */
+/** @{ */
+/** @file gm.h */
+/** @} */
 
 #ifndef GM_H
 #define GM_H
@@ -51,8 +55,6 @@
 #include "gm/tri_tri.h"
 
 #endif /* GM_H */
-
-/** @} */
 
 /*
  * Local Variables:

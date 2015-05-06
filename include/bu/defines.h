@@ -18,7 +18,7 @@
  * information.
  */
 
-/** @file bu/defines.h
+/** @addtogroup bu_defines
  *
  * Commonly used definitions for the BRL-CAD Utility Library, LIBBU.
  *
@@ -48,6 +48,9 @@
  * from constantly having to check for NULL return codes.
  *
  */
+/** @{ */
+/** @file bu/defines.h */
+
 #ifndef BU_DEFINES_H
 #define BU_DEFINES_H
 
@@ -350,6 +353,7 @@ typedef double fastf_t;
 /** DEPRECATED, do not use */
 #define SMALL SQRT_SMALL_FASTF
 
+/** @} */
 
 #endif  /* BU_DEFINES_H */
 

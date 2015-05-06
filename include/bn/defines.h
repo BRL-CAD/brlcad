@@ -18,13 +18,12 @@
  * information.
  */
 
-/*----------------------------------------------------------------------*/
-/* @file defines.h */
-/** @addtogroup libbn */
-/** @{ */
-/**
- *  @brief Common definitions for the headers used in bn.h (i.e. the headers found in include/bn)
+/** @addtogroup bn_defines
+ *
+ *  Common definitions for the headers used in libbn (i.e. the headers found in include/bn)
  */
+/** @{ */
+/** @file defines.h */
 
 #ifndef BN_DEFINES_H
 #define BN_DEFINES_H
@@ -48,7 +47,9 @@
 #define BN_TWIST     2
 
 #endif  /* BN_DEFINES_H */
+
 /** @} */
+
 /*
  * Local Variables:
  * mode: C

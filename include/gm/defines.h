@@ -19,12 +19,11 @@
  */
 
 /*----------------------------------------------------------------------*/
-/* @file defines.h */
-/** @addtogroup libgm */
-/** @{ */
-/**
- *  @brief Common definitions for the headers used in gm.h (i.e. the headers found in include/gm)
+/** @addtogroup libgm
+ * Common definitions for the headers used in gm.h (i.e. the headers found in include/gm)
  */
+/** @{ */
+/** @file defines.h */
 
 #ifndef GM_DEFINES_H
 #define GM_DEFINES_H

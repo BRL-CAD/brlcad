@@ -4,6 +4,8 @@
 
 /* Second tier groups */
 /** @ingroup libbu */
+/**  @defgroup bu_defines libbu Definitions*/
+/** @ingroup libbu */
 /**  @defgroup container Data Containers */
 /** @ingroup libbu */
 /**  @defgroup memory Memory Management */

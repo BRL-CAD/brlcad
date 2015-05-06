@@ -3,6 +3,8 @@
 
 /* Second tier groups */
  /** @ingroup libgm */
+/**   @defgroup gm_defines libgm Definitions*/
+ /** @ingroup libgm */
  /**  @defgroup tri Triangles */
 /**   @ingroup tri */
  /**   @defgroup tri_ray Triangle/Ray Intersection Tests */

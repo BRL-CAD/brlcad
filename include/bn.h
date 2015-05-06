@@ -20,7 +20,6 @@
 
 /* Header file for the BRL-CAD Numerical Computation Library, LIBBN.*/
 
-/** @file bn.h */
 /** @addtogroup libbn
  *
  * The library provides a broad assortment of numerical algorithms and
@@ -28,7 +27,13 @@
  * math, matrix math, quaternion math, complex math, synthetic
  * division, root finding, etc.
  *
+ * The functionality provided by this library is specified in the bn.h
+ * header or appropriate included files from the ./bn subdirectory.
+ *
  */
+/** @{ */
+/** @file bn.h */
+/** @} */
 
 #ifndef BN_H
 #define BN_H
