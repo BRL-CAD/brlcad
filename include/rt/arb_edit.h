@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @addtogroup arb_edit */
+/** @addtogroup librt */
 /** @{ */
 /** @file arb_edit.h
  *
