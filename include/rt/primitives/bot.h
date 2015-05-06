@@ -31,8 +31,37 @@
 #include "rt/defines.h"
 #include "rt/tol.h"
 #include "rt/view.h"
+#include "rt/soltab.h"
 
 __BEGIN_DECLS
+
+/* Shared between bot and ars at the moment */
+struct bot_specific {
+    unsigned char bot_mode;
+    unsigned char bot_orientation;
+    unsigned char bot_flags;
+    size_t bot_ntri;
+    fastf_t *bot_thickness;
+    struct bu_bitv *bot_facemode;
+    void *bot_facelist; /* head of linked list */
+    void **bot_facearray;       /* head of face array */
+    size_t bot_tri_per_piece;   /* log # tri per piece. 1 << bot_ltpp is tri per piece */
+    void *tie; /* FIXME: horrible blind cast, points to one in rt_bot_internal */
+};
+
+RT_EXPORT extern void rt_bot_prep_pieces(struct bot_specific    *bot,
+                                         struct soltab          *stp,
+                                         size_t                 ntri,
+                                         const struct bn_tol    *tol);
+
+RT_EXPORT extern size_t rt_botface(struct soltab                *stp,
+                                   struct bot_specific  *bot,
+                                   fastf_t                      *ap,
+                                   fastf_t                      *bp,
+                                   fastf_t                      *cp,
+                                   size_t                       face_no,
+                                   const struct bn_tol  *tol);
+
 
 /* bot.c */
 RT_EXPORT extern size_t rt_bot_get_edge_list(const struct rt_bot_internal *bot,

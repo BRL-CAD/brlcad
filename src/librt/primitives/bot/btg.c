@@ -29,7 +29,7 @@
 
 #include "raytrace.h"
 #include "rtgeom.h"
-#include "bot.h"
+#include "rt/primitives/bot.h"
 #include "tie.h"
 
 #include "btg.h"

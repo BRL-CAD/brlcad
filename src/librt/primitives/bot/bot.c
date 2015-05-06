@@ -42,7 +42,7 @@
 #include "nmg.h"
 #include "rtgeom.h"
 #include "raytrace.h"
-#include "bot.h"
+#include "rt/primitives/bot.h"
 
 #include "vds.h"
 

@@ -23,7 +23,6 @@ set(public_hdrs
   tclcad.h
   analyze.h
   anim.h
-  bot.h
   brep.h
   brlcad.h
   brlcad.i
