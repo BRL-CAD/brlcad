@@ -58,7 +58,8 @@ For example,
 selects the foreground pixel when it
 is lexically less than or equal to the background pixel,
 that is, when each byte of the foreground pixel is less than
-or equal to the corresponding byte of the background pixel.</para>
+or equal to the corresponding byte of the background pixel; if said
+relationship is found to be false, the background pixel is selected.</para>
 
 <para>The
 <option>-w#</option>
