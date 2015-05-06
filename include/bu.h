@@ -18,9 +18,12 @@
  * information.
  */
 
-/** @file bu.h
+
+/* Main header file for the BRL-CAD Utility Library, LIBBU. */
+
+/** @file bu.h */
+/** @addtogroup libbu
  *
- * Main header file for the BRL-CAD Utility Library, LIBBU.
  *
  * The two letters "BU" stand for "BRL-CAD" and "Utility".  This
  * library provides several layers of low-level utility routines,
