@@ -126,6 +126,22 @@ RT_EXPORT extern void rt_cut_extend(union cutter *cutp,
                                     struct soltab *stp,
                                     const struct rt_i *rtip);
 
+/**
+ * Return pointer to cell 'n' along a given ray.  Used for debugging
+ * of how space partitioning interacts with shootray.  Intended to
+ * mirror the operation of rt_shootray().  The first cell is 0.
+ */
+RT_EXPORT extern const union cutter *rt_cell_n_on_ray(struct application *ap,
+                                                      int n);
+/*
+ * The rtip->rti_CutFree list can not be freed directly because is
+ * bulk allocated.  Fortunately, we have a list of all the
+ * bu_malloc()'ed blocks.  This routine may be called before the first
+ * frame is done, so it must be prepared for uninitialized items.
+ */
+RT_EXPORT extern void rt_cut_clean(struct rt_i *rtip);
+
+
 
 __END_DECLS
 

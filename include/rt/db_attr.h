@@ -223,6 +223,137 @@ RT_EXPORT extern void db5_sync_comb_to_attr(struct bu_attribute_value_set *avs, 
 /* Convenience macros */
 #define ATTR_STD(attr) db5_standard_attribute(db5_standardize_attribute(attr))
 
+
+/**
+ * Convert the on-disk encoding into a handy easy-to-use
+ * bu_attribute_value_set structure.
+ *
+ * Take advantage of the readonly_min/readonly_max capability so that
+ * we don't have to bu_strdup() each string, but can simply point to
+ * it in the provided buffer *ap.  Important implication: don't free
+ * *ap until you're done with this avs.
+ *
+ * The upshot of this is that bu_avs_add() and bu_avs_remove() can be
+ * safely used with this *avs.
+ *
+ * Returns -
+ * >0 count of attributes successfully imported
+ * -1 Error, mal-formed input
+ */
+RT_EXPORT extern int db5_import_attributes(struct bu_attribute_value_set *avs,
+                                           const struct bu_external *ap);
+
+/**
+ * Encode the attribute-value pair information into the external
+ * on-disk format.
+ *
+ * The on-disk encoding is:
+ *
+ * name1 NULL value1 NULL ... nameN NULL valueN NULL NULL
+ *
+ * 'ext' is initialized on behalf of the caller.
+ */
+RT_EXPORT extern void db5_export_attributes(struct bu_external *ap,
+                                            const struct bu_attribute_value_set *avs);
+
+
+
+/* lookup directory entries based on attributes */
+
+/**
+ * lookup directory entries based on directory flags (dp->d_flags) and
+ * attributes the "dir_flags" arg is a mask for the directory flags
+ * the *"avs" is an attribute value set used to select from the
+ * objects that *pass the flags mask. if "op" is 1, then the object
+ * must have all the *attributes and values that appear in "avs" in
+ * order to be *selected. If "op" is 2, then the object must have at
+ * least one of *the attribute/value pairs from "avs".
+ *
+ * dir_flags are in the form used in struct directory (d_flags)
+ *
+ * for op:
+ * 1 -> all attribute name/value pairs must be present and match
+ * 2 -> at least one of the name/value pairs must be present and match
+ *
+ * returns a ptbl list of selected directory pointers an empty list
+ * means nothing met the requirements a NULL return means something
+ * went wrong.
+ */
+RT_EXPORT extern struct bu_ptbl *db_lookup_by_attr(struct db_i *dbip,
+                                                   int dir_flags,
+                                                   struct bu_attribute_value_set *avs,
+                                                   int op);
+/**
+ * Put the old region-id-color-table into the global object.  A null
+ * attribute is set if the material table is empty.
+ *
+ * Returns -
+ * <0 error
+ * 0 OK
+ */
+RT_EXPORT extern int db5_put_color_table(struct db_i *dbip);
+RT_EXPORT extern int db5_update_ident(struct db_i *dbip,
+                                      const char *title,
+                                      double local2mm);
+
+
+/**
+ * Update an arbitrary number of attributes on a given database
+ * object.  For efficiency, this is done without looking at the object
+ * body at all.
+ *
+ * Contents of the bu_attribute_value_set are freed, but not the
+ * struct itself.
+ *
+ * Returns -
+ * 0 on success
+ * <0 on error
+ */
+RT_EXPORT extern int db5_update_attributes(struct directory *dp,
+                                           struct bu_attribute_value_set *avsp,
+                                           struct db_i *dbip);
+
+/**
+ * A convenience routine to update the value of a single attribute.
+ *
+ * Returns -
+ * 0 on success
+ * <0 on error
+ */
+RT_EXPORT extern int db5_update_attribute(const char *obj_name,
+                                          const char *aname,
+                                          const char *value,
+                                          struct db_i *dbip);
+
+/**
+ * Replace the attributes of a given database object.
+ *
+ * For efficiency, this is done without looking at the object body at
+ * all.  Contents of the bu_attribute_value_set are freed, but not the
+ * struct itself.
+ *
+ * Returns -
+ * 0 on success
+ * <0 on error
+ */
+RT_EXPORT extern int db5_replace_attributes(struct directory *dp,
+                                            struct bu_attribute_value_set *avsp,
+                                            struct db_i *dbip);
+
+/**
+ *
+ * Get attributes for an object pointed to by *dp
+ *
+ * returns:
+ * 0 - all is well
+ * <0 - error
+ */
+RT_EXPORT extern int db5_get_attributes(const struct db_i *dbip,
+                                        struct bu_attribute_value_set *avs,
+                                        const struct directory *dp);
+
+
+
 __END_DECLS
 
 #endif /*RT_DB_ATTR_H*/

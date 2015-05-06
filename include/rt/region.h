@@ -66,6 +66,20 @@ struct region {
 /* Print a region */
 RT_EXPORT extern void rt_pr_region(const struct region *rp);
 
+/**
+ * Given the name of a region, return the matrix which maps model
+ * coordinates into "region" coordinates.
+ *
+ * Returns:
+ * 0 OK
+ * <0 Failure
+ */
+RT_EXPORT extern int db_region_mat(mat_t                m,              /* result */
+                                   struct db_i  *dbip,
+                                   const char   *name,
+                                   struct resource *resp);
+
+
 __END_DECLS
 
 #endif /* RT_REGION_H */

@@ -267,6 +267,8 @@ RT_EXPORT extern const struct rt_functab OBJ[];
 
 #define RT_CK_FUNCTAB(_p) BU_CKMAG(_p, RT_FUNCTAB_MAGIC, "functab");
 
+RT_EXPORT extern const struct rt_functab *rt_get_functab_by_label(const char *label);
+
 __END_DECLS
 
 #endif /* RT_FUNCTAB_H */

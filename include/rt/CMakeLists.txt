@@ -3,7 +3,9 @@ set(rt_headers
   application.h
   arb_edit.h
   boolweave.h
+  calc.h
   cmd.h
+  comb.h
   db_attr.h
   db_diff.h
   db_fullpath.h
@@ -12,10 +14,13 @@ set(rt_headers
   debug.h
   defines.h
   directory.h
+  dspline.h
   functab.h
   global.h
   hit.h
+  htbl.h
   mater.h
+  misc.h
   mem.h
   nmg.h
   nongeom.h
@@ -29,13 +34,16 @@ set(rt_headers
   primitives/bot.h
   primitives/brep.h
   primitives/dsp.h
+  primitives/ell.h
   primitives/epa.h
   primitives/hf.h
   primitives/metaball.h
   primitives/pg.h
   primitives/pipe.h
+  primitives/rhc.h
   primitives/rpc.h
   primitives/sketch.h
+  primitives/tgc.h
   primitives/tor.h
   private.h
   ray_partition.h
@@ -52,6 +60,8 @@ set(rt_headers
   tol.h
   tree.h
   view.h
+  vlblock.h
+  vlist.h
   wdb.h
   xray.h
   )

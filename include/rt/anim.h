@@ -169,6 +169,18 @@ RT_EXPORT extern struct animate *db_parse_1anim(struct db_i *dbip,
 RT_EXPORT extern void db_free_1anim(struct animate *anp);
 
 
+/**
+ * 'arc' may be a null pointer, signifying an identity matrix.
+ * 'materp' may be a null pointer, signifying that the region has
+ * already been finalized above this point in the tree.
+ */
+RT_EXPORT extern void db_apply_anims(struct db_full_path *pathp,
+                                     struct directory *dp,
+                                     mat_t stck,
+                                     mat_t arc,
+                                     struct mater_info *materp);
+
+
 #endif /* RT_ANIM_H */
 
 /*

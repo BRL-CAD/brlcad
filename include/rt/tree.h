@@ -747,6 +747,10 @@ RT_EXPORT extern union tree *db_mkgift_tree(struct rt_tree_array *trees,
                                             struct resource *resp);
 
 
+RT_EXPORT extern void rt_optim_tree(union tree *tp,
+	                            struct resource *resp);
+
+
 
 __END_DECLS
 

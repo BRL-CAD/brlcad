@@ -27,6 +27,7 @@
 #include "common.h"
 #include "bu/magic.h"
 #include "bu/avs.h"
+#include "rt/defines.h"
 
 __BEGIN_DECLS
 
@@ -53,6 +54,68 @@ struct rt_db_internal {
         bu_avs_init_empty(&(_p)->idb_avs); \
     }
 #define RT_CK_DB_INTERNAL(_p) BU_CKMAG(_p, RT_DB_INTERNAL_MAGIC, "rt_db_internal")
+
+/**
+ * Get an object from the database, and convert it into its internal
+ * representation.
+ *
+ * Returns -
+ * <0 On error
+ * id On success.
+ */
+RT_EXPORT extern int rt_db_get_internal(struct rt_db_internal   *ip,
+                                        const struct directory  *dp,
+                                        const struct db_i       *dbip,
+                                        const mat_t             mat,
+                                        struct resource         *resp);
+
+/**
+ * Convert the internal representation of a solid to the external one,
+ * and write it into the database.  On success only, the internal
+ * representation is freed.
+ *
+ * Returns -
+ * <0 error
+ * 0 success
+ */
+RT_EXPORT extern int rt_db_put_internal(struct directory        *dp,
+                                        struct db_i             *dbip,
+                                        struct rt_db_internal   *ip,
+                                        struct resource         *resp);
+
+/**
+ * Put an object in internal format out onto a file in external
+ * format.  Used by LIBWDB.
+ *
+ * Can't really require a dbip parameter, as many callers won't have
+ * one.
+ *
+ * THIS ROUTINE ONLY SUPPORTS WRITING V4 GEOMETRY.
+ *
+ * Returns -
+ * 0 OK
+ * <0 error
+ */
+RT_EXPORT extern int rt_fwrite_internal(FILE *fp,
+                                        const char *name,
+                                        const struct rt_db_internal *ip,
+                                        double conv2mm);
+RT_EXPORT extern void rt_db_free_internal(struct rt_db_internal *ip);
+
+/**
+ * Convert an object name to a rt_db_internal pointer
+ *
+ * Looks up the named object in the directory of the specified model,
+ * obtaining a directory pointer.  Then gets that object from the
+ * database and constructs its internal representation.  Returns
+ * ID_NULL on error, otherwise returns the type of the object.
+ */
+RT_EXPORT extern int rt_db_lookup_internal(struct db_i *dbip,
+                                           const char *obj_name,
+                                           struct directory **dpp,
+                                           struct rt_db_internal *ip,
+                                           int noisy,
+                                           struct resource *resp);
 
 
 __END_DECLS
