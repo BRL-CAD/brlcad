@@ -55,10 +55,10 @@ More sophisticated processing can be performed by
 (fg not equal to bg).
 For example,
 <option>-le</option>
-selects a foreground pixel when it
+selects the foreground pixel when it
 is lexically less than or equal to the background pixel,
 that is, when each byte of the foreground pixel is less than
-or equal to the corresponding byte of background pixel.</para>
+or equal to the corresponding byte of the background pixel.</para>
 
 <para>The
 <option>-w#</option>
