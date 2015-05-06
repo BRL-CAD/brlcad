@@ -94,8 +94,18 @@ endif(${BRLCAD_OPTIMIZED_BUILD} MATCHES "OFF" AND BRLCAD_FLAGS_DEBUG)
 # https://code.google.com/p/address-sanitizer/ for more info.)
 if(${BRLCAD_OPTIMIZED_BUILD} MATCHES "OFF" AND BRLCAD_FLAGS_DEBUG AND BRLCAD_ADDRESS_SANITIZER)
   CHECK_C_FLAG(fsanitize=address)
+  CHECK_C_FLAG(fno-omit-frame-pointer)
   CHECK_CXX_FLAG(fsanitize=address)
+  CHECK_CXX_FLAG(fno-omit-frame-pointer)
 endif(${BRLCAD_OPTIMIZED_BUILD} MATCHES "OFF" AND BRLCAD_FLAGS_DEBUG AND BRLCAD_ADDRESS_SANITIZER)
+
+# enable data race detector  ThreadSanitizer (see
+# https://code.google.com/p/thread-sanitizer/ for more info.)
+if(${BRLCAD_OPTIMIZED_BUILD} MATCHES "OFF" AND BRLCAD_FLAGS_DEBUG AND BRLCAD_THREAD_SANITIZER)
+  CHECK_C_FLAG(fsanitize=thread)
+  CHECK_CXX_FLAG(fsanitize=thread)
+endif(${BRLCAD_OPTIMIZED_BUILD} MATCHES "OFF" AND BRLCAD_FLAGS_DEBUG AND BRLCAD_THREAD_SANITIZER)
+
 
 # verbose warning flags.  we intentionally try to turn on as many as
 # possible.  adding more is encouraged (as long as all issues are
