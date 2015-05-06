@@ -46,7 +46,7 @@ __BEGIN_DECLS
 #  endif
 #endif
 
-/** @addtogroup image */
+/** @addtogroup libicv */
 /** @ingroup data */
 /** @{ */
 
