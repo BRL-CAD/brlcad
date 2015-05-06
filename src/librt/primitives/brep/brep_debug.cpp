@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @addtogroup g_ */
+/** @addtogroup librt */
 /** @{ */
 /** @file brep_debug.cpp
  *
