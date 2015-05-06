@@ -2,6 +2,7 @@ set(rt_headers
   anim.h
   application.h
   arb_edit.h
+  binunif.h
   boolweave.h
   calc.h
   cmd.h
@@ -11,6 +12,7 @@ set(rt_headers
   db_fullpath.h
   db_instance.h
   db_internal.h
+  db_io.h
   debug.h
   defines.h
   directory.h
@@ -33,6 +35,7 @@ set(rt_headers
   primitives/ars.h
   primitives/bot.h
   primitives/brep.h
+  primitives/cline.h
   primitives/dsp.h
   primitives/ell.h
   primitives/epa.h
@@ -59,6 +62,7 @@ set(rt_headers
   timer.h
   tol.h
   tree.h
+  version.h
   view.h
   vlblock.h
   vlist.h

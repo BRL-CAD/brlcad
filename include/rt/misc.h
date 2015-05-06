@@ -49,6 +49,24 @@ RT_EXPORT extern int rt_generic_xform(struct rt_db_internal     *op,
                                       struct db_i               *dbip,
                                       struct resource           *resp);
 
+/**
+ * Used by MGED for labeling vertices of a solid.
+ *
+ * TODO - eventually this should fade into a general annotation
+ * framework
+ */
+struct rt_point_labels {
+    char str[8];
+    point_t pt;
+};
+
+/* WARNING - The function below is *HIGHLY* experimental and will certainly
+ * change */
+RT_EXPORT void
+rt_generate_mesh(int **faces, int *num_faces, point_t **points, int *num_pnts,
+                                struct db_i *dbip, const char *obj, fastf_t delta);
+
+
 __END_DECLS
 
 #endif /* RT_MISC_H */

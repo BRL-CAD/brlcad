@@ -30,6 +30,7 @@
 #include "bu/magic.h"
 #include "bu/malloc.h"
 #include "bn/tol.h"
+#include "rtgeom.h"
 #include "rt/defines.h"
 #include "rt/db_instance.h"
 #include "rt/directory.h"
