@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @addtogroup fixme */
+/** @addtogroup common */
 /** @{ */
 /** @file common.h
  *

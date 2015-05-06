@@ -3,6 +3,7 @@ set(lib_inputs
 )
 set(lib_predefines)
 set(DOX_LIBS
+  common
   libbu
   libbn
   libgm
