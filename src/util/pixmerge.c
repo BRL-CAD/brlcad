@@ -61,9 +61,7 @@ static long bg_cnt = 0;
 static int seen_const = 0;
 static int seen_formula = 0;
 
-static unsigned char pconst[32] =
-{ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }; 
+static unsigned char pconst[32] = {0};
 
 #define CHUNK 1024
 static char *b1;			/* fg input buffer */
