@@ -22,13 +22,12 @@
 /** @file libbn/tplot.c
  *
  * @brief
- *	This routine is designed to simplify the creation of
- *  X, Y plots for user.
+ * This routine is designed to simplify the creation of X, Y plots for user.
  *
  *			George W. Hartwig, Jr.
  *				16 March 1979
  *
- *	This routine is designed to simplify the creation of
+ * This routine is designed to simplify the creation of
  * X, Y plots for user. The user need only furnish this program with
  * the data arrays to be plotted, the lengths of the respective
  * axis, titles for the axis, and the point on the page corresponding

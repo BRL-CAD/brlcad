@@ -20,7 +20,8 @@
 
 /*----------------------------------------------------------------------*/
 /** @addtogroup anim
- * Routines useful in animation programs.
+ * @brief
+ * Routines useful for moving geometry.
  *
  * Orientation conventions: The default object orientation is facing
  * the positive x-axis, with the positive y-axis to the object's left

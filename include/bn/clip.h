@@ -20,7 +20,8 @@
 
 /*----------------------------------------------------------------------*/
 /** @addtogroup clip
- *  Clipping functions
+ * @brief
+ * Clipping functions
  */
 /** @{ */
 /** @file clip.h */

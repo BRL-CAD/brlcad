@@ -37,7 +37,7 @@
 
 /**
  * @brief
- *	This routine is intended to take an array of
+ * This routine is intended to take an array of
  * data points as input (either integer, floating, or
  * double), and scale it to fit in a space of LENGTH units.
  *
@@ -51,44 +51,44 @@
  * produce nicer looking axes.
  *
  *
- *	@param[in] idata	This pointer contains the address
- *				of the input array to be scaled.
- *				Actual type of array is determined
- *				by MODE parameter.
+ * @param[in] idata	This pointer contains the address
+ * 			of the input array to be scaled.
+ * 			Actual type of array is determined
+ * 			by MODE parameter.
  *
- *	@param[in] elements	Number of elements in IDATA to be used.
+ * @param[in] elements	Number of elements in IDATA to be used.
  *
- *	@param[in] mode		Specifies type of data that IDATA points
- *				to;  should be one of:
- *					'd' - double precision
- *					'f' - float (single precision)
- *					'i' - integer
+ * @param[in] mode		Specifies type of data that IDATA points
+ * 			to;  should be one of:
+ * 				'd' - double precision
+ * 				'f' - float (single precision)
+ * 				'i' - integer
  *
- *	@param[in] length		Contains the length (in 1/1000ths of an
- *				inch) of the region in which the data is
- *				to be scaled into.  Note that the actual
- *				amount of space needed may be this value
- *				rounded up to the next inch.
+ * @param[in] length		Contains the length (in 1/1000ths of an
+ * 			inch) of the region in which the data is
+ * 			to be scaled into.  Note that the actual
+ * 			amount of space needed may be this value
+ * 			rounded up to the next inch.
  *
- *	@param[out] odata	This pointer contains the address of the
- *				output array, which will always be of
- *				integer type.
+ * @param[out] odata	This pointer contains the address of the
+ * 			output array, which will always be of
+ * 			integer type.
  *
- *	@param[out] min		This pointer contains the address of the
- *				location for minimum point found to be
- *				placed in.
+ * @param[out] min		This pointer contains the address of the
+ * 			location for minimum point found to be
+ * 			placed in.
  *
- *	@param dx		This pointer addresses the delta value
- *				of the data which corresponds to the width
- *				of EACH tick.
- *				This implies that:
- *				 -#	This is exactly the number to divide
- *					raw data by to scale it to this scale
- *					(ex:  2 graphs with one scale factor)
- *				 -#	When this value is fed to the AXIS
- *					routine, it must be multiplied
- *					by 1000.0 first (to specify increment
- *					between one INCH ticks).
+ * @param dx		This pointer addresses the delta value
+ * 			of the data which corresponds to the width
+ * 			of EACH tick.
+ * 			This implies that:
+ * 			 -#	This is exactly the number to divide
+ * 				raw data by to scale it to this scale
+ * 				(ex:  2 graphs with one scale factor)
+ * 			 -#	When this value is fed to the AXIS
+ * 				routine, it must be multiplied
+ * 				by 1000.0 first (to specify increment
+ * 				between one INCH ticks).
  *
  * The fact that this routine returns variables of type DOUBLE has
  * important implications for FORTRAN users.  These variables must
