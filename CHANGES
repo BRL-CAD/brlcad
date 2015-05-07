@@ -1030,3 +1030,5 @@ s/db_normalize/bu_normalize/g
 	move the path normalization routine to libbu [7.25]
 s/(#[[:space:]]*include[[:space:]]+["<])bot\.h/\1rt\/primitives\/bot.h/g
 	consolidate bot header contents [7.25]
+s/(#[[:space:]]*include[[:space:]]+["<])anim\.h/\1bn\/anim.h/g
+	consolidate anim header contents [7.25]

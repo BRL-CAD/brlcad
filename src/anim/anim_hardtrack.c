@@ -38,7 +38,7 @@
 #include "bu/malloc.h"
 #include "bu/str.h"
 #include "bn.h"
-#include "anim.h"
+#include "bn/anim.h"
 
 
 #define OPT_STR "b:d:f:i:l:pr:w:sg:m:ch?"

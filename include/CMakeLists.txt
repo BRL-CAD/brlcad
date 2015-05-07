@@ -22,7 +22,6 @@ set(public_hdrs
   rtserver.h
   tclcad.h
   analyze.h
-  anim.h
   brep.h
   brlcad.h
   brlcad.i
