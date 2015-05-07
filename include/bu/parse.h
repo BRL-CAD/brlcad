@@ -34,7 +34,7 @@
 
 __BEGIN_DECLS
 
-/** @addtogroup parse
+/** @addtogroup bu_parse
  *
  * @brief
  * Definitions and data structures needed for routines that assign

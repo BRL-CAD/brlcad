@@ -30,7 +30,7 @@
 
 __BEGIN_DECLS
 
-/** @addtogroup simd
+/** @addtogroup bu_simd
  *  @brief
  *  Single Instruction Multiple Data support.
  */

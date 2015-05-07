@@ -31,7 +31,7 @@
 __BEGIN_DECLS
 
 /*----------------------------------------------------------------------*/
-/** @addtogroup vlb
+/** @addtogroup bu_vlb
  * @brief
  * The variable length buffer package.
  */

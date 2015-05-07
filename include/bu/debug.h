@@ -26,7 +26,7 @@
 
 __BEGIN_DECLS
 
-/** @addtogroup debug Debugging
+/** @addtogroup bu_debug Debugging
  *
  * @brief
  * Debugging definitions.

@@ -39,77 +39,77 @@
 
 /* Data Containers */
 /** @ingroup bu_container */
-/**   @defgroup avs Attribute/Value Sets */
+/**   @defgroup bu_avs Attribute/Value Sets */
 /** @ingroup bu_container */
-/**   @defgroup bitv Bit Vectors */
+/**   @defgroup bu_bitv Bit Vectors */
 /** @ingroup bu_container */
-/**   @defgroup color Color */
+/**   @defgroup bu_color Color */
 /** @ingroup bu_container */
-/**   @defgroup hash Hash Tables */
+/**   @defgroup bu_hash Hash Tables */
 /** @ingroup bu_container */
-/**   @defgroup list Linked Lists */
+/**   @defgroup bu_list Linked Lists */
 /** @ingroup bu_container */
-/**   @defgroup parse Structure Parsing */
+/**   @defgroup bu_parse Structure Parsing */
 /** @ingroup bu_container */
-/**   @defgroup ptbl Pointer Tables */
+/**   @defgroup bu_ptbl Pointer Tables */
 /** @ingroup bu_container */
-/**   @defgroup rb Red-Black Trees */
+/**   @defgroup bu_rb Red-Black Trees */
 /** @ingroup bu_container */
-/**   @defgroup vlb Variable-length Byte Buffers */
+/**   @defgroup bu_vlb Variable-length Byte Buffers */
 /** @ingroup bu_container */
-/**   @defgroup vls Variable-length Strings */
+/**   @defgroup bu_vls Variable-length Strings */
 
 /* Memory Management */
 /** @ingroup bu_memory */
-/**   @defgroup magic Magic Numbers */
+/**   @defgroup bu_magic Magic Numbers */
 /** @ingroup bu_memory */
-/**   @defgroup malloc Allocation & Deallocation */
+/**   @defgroup bu_malloc Allocation & Deallocation */
 /** @ingroup bu_memory */
-/**   @defgroup mf Memory-mapped Files */
+/**   @defgroup bu_mf Memory-mapped Files */
 
 /* I/O */
 /** @ingroup bu_io */
-/**   @defgroup str Strings */
+/**   @defgroup bu_str Strings */
 /** @ingroup bu_io */
-/**   @defgroup debug Debugging */
+/**   @defgroup bu_debug Debugging */
 /** @ingroup bu_io */
-/**   @defgroup path Path Processing */
+/**   @defgroup bu_path Path Processing */
 /** @ingroup bu_io */
-/**   @defgroup log Logging */
+/**   @defgroup bu_log Logging */
 /** @ingroup bu_io */
-/**   @defgroup file File Processing */
+/**   @defgroup bu_file File Processing */
 /** @ingroup bu_io */
-/**   @defgroup vfont Vector Fonts */
+/**   @defgroup bu_vfont Vector Fonts */
 
 
 /* Data Management */
 /** @ingroup bu_data */
-/**   @defgroup cmd Command Processing */
+/**   @defgroup bu_cmd Command Processing */
 /** @ingroup bu_data */
-/**   @defgroup conv Data Conversion */
+/**   @defgroup bu_conv Data Conversion */
 /** @ingroup bu_data */
-/**   @defgroup getopt Command-line Option Parsing*/
+/**   @defgroup bu_getopt Command-line Option Parsing*/
 /** @ingroup bu_data */
-/**   @defgroup hist Histogram Handling */
+/**   @defgroup bu_hist Histogram Handling */
 /** @ingroup bu_data */
-/**   @defgroup sort Sorting Algorithms */
+/**   @defgroup bu_sort Sorting Algorithms */
 /** @ingroup bu_data */
-/**   @defgroup endian Endian Support */
+/**   @defgroup bu_endian Endian Support */
 /** @ingroup bu_data */
 /**   @defgroup bu_time Time Support */
 /** @ingroup bu_data */
-/**   @defgroup units Units */
+/**   @defgroup bu_units Units */
 
 
 /* Parallel Processing */
 /** @ingroup bu_parallel */
-/**   @defgroup thread Multithreading */
+/**   @defgroup bu_thread Multithreading */
 /** @ingroup bu_parallel */
-/**   @defgroup simd Single Instruction Multiple Data*/
+/**   @defgroup bu_simd Single Instruction Multiple Data*/
 
 /* Language Bindings */
 /** @ingroup bu_binding */
-/**   @defgroup tcl Tcl Interfacing */
+/**   @defgroup bu_tcl Tcl Interfacing */
 
 /*
  * Local Variables:

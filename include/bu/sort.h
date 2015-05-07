@@ -32,7 +32,7 @@
 
 __BEGIN_DECLS
 
-/** @addtogroup sort
+/** @addtogroup bu_sort
  *
  * @brief
  * Platform-independent re-entrant version of qsort.

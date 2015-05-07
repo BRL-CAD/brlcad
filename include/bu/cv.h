@@ -32,7 +32,7 @@ __BEGIN_DECLS
 
 /*----------------------------------------------------------------------*/
 
-/** @addtogroup conv
+/** @addtogroup bu_conv
  *
  * @brief
  * Routines to translate data formats.
@@ -84,7 +84,9 @@ __BEGIN_DECLS
  */
 /** @{*/
 /** @file bu/cv.h */
+/** @}*/
 
+/** @ingroup bu_conv */
 /** @defgroup bu_conv_network_sizes Network Data Sizes */
 /** @addtogroup bu_conv_network_sizes
  * Sizes of "network" format data.  We use the same convention as the
@@ -99,18 +101,7 @@ __BEGIN_DECLS
 #define SIZEOF_NETWORK_DOUBLE 8	/* htond() */
 /** @}*/
 
-/**
- * provide for 64-bit network/host conversions using ntohl()
- */
-#ifndef HAVE_NTOHLL
-#  define ntohll(_val) ((bu_byteorder() == BU_LITTLE_ENDIAN) ?				\
-			((((uint64_t)ntohl((_val))) << 32) + ntohl((_val) >> 32)) : \
-			(_val)) /* sorry pdp-endian */
-#endif
-#ifndef HAVE_HTONLL
-#  define htonll(_val) ntohll(_val)
-#endif
-
+/** @ingroup bu_conv */
 /** @defgroup bu_cv_masks Conversion Bit Masks */
 /** @addtogroup bu_cv_masks
  * Mask definitions for CV
@@ -123,6 +114,7 @@ __BEGIN_DECLS
 #define CV_CONVERT_MASK 0x6000  /* 0110 0000 0000 0000 */
 /** @}*/
 
+/** @ingroup bu_conv */
 /** @defgroup bu_cv_defs Conversion Defines */
 /** @addtogroup bu_cv_defs
  * Various convenience definitions for CV
@@ -155,6 +147,22 @@ __BEGIN_DECLS
 #define IND_ILL    3
 #define IND_CRAY   4
 /** @}*/
+
+/** @addtogroup bu_conv */
+/** @{*/
+
+/**
+ * provide for 64-bit network/host conversions using ntohl()
+ */
+#ifndef HAVE_NTOHLL
+#  define ntohll(_val) ((bu_byteorder() == BU_LITTLE_ENDIAN) ?				\
+			((((uint64_t)ntohl((_val))) << 32) + ntohl((_val) >> 32)) : \
+			(_val)) /* sorry pdp-endian */
+#endif
+#ifndef HAVE_HTONLL
+#  define htonll(_val) ntohll(_val)
+#endif
+
 
 /**
  * convert from one format to another.
@@ -293,7 +301,54 @@ BU_EXPORT extern size_t bu_cv_itemlen(int cookie);
  */
 BU_EXPORT extern size_t bu_cv_w_cookie(void *out, int outcookie, size_t size, void *in, int incookie, size_t count);
 
+/** @} */
 
+
+
+/** @ingroup bu_conv */
+/** @defgroup bu_cv_b64 Base64 Encoding and Decoding */
+/** @addtogroup bu_cv_b64
+ * Functions for b64 encoding and decoding.
+ */
+/** @{*/
+/** @file libbu/b64.c */
+/**
+ * Encode null terminated input char array to b64.
+ *
+ * Caller is responsible for freeing memory allocated to
+ * hold output buffer.
+ */
+BU_EXPORT extern signed char *bu_b64_encode(const signed char *input);
+
+/**
+ * Encode length_in blocks in char array input to b64.
+ *
+ * Caller is responsible for freeing memory allocated to
+ * hold output buffer.
+ */
+
+BU_EXPORT extern signed char *bu_b64_encode_block(const signed char* input, size_t length_in);
+
+/**
+ * Decode null terminated b64 array to output_buffer.
+ *
+ * Caller is responsible for freeing memory allocated to
+ * hold output buffer.
+ */
+
+BU_EXPORT extern int bu_b64_decode(signed char **output_buffer, const signed char *input);
+
+/**
+ * Decode length_in blocks in b64 array input to output_buffer.
+ *
+ * Caller is responsible for freeing memory allocated to
+ * hold output buffer.
+ */
+BU_EXPORT extern int bu_b64_decode_block(signed char **output_buffer, const signed char* input, size_t length_in);
+/** @}*/
+
+
+/** @ingroup bu_conv */
 /** @defgroup bu_hton Network Byte-order Conversion */
 /** @addtogroup bu_hton
  * Network to host and host to network conversion routines.
@@ -302,18 +357,18 @@ BU_EXPORT extern size_t bu_cv_w_cookie(void *out, int outcookie, size_t size, vo
  * real work to do - there is no checking to see if it is reasonable
  * to do any conversions.
   */
-/** @{*/
-
-
-/** @brief Convert doubles to host/network format. */
-/** @file libbu/htond.c */
-
 /** @ingroup bu_hton */
 /** @defgroup bu_htond Network Conversion - Doubles */
+/** @ingroup bu_hton */
+/** @defgroup bu_htonf Network Conversion - Floats */
+/** @ingroup bu_hton */
+/** @defgroup bu_htons Network Conversion - Signed Short */
+
 /** @addtogroup bu_htond
- * Network conversion routines for type double.
+ * @brief Convert doubles to host/network format.
  */
 /** @{*/
+/** @file libbu/htond.c */
 BU_EXPORT extern void bu_cv_htond(unsigned char *out,
 				  const unsigned char *in,
 				  size_t count);
@@ -322,15 +377,12 @@ BU_EXPORT extern void bu_cv_ntohd(unsigned char *out,
 				  size_t count);
 /** @}*/
 
-/** @brief convert floats to host/network format */
-/** @file libbu/htonf.c */
 
-/** @ingroup bu_hton */
-/** @defgroup bu_htonf Network Conversion - Floats */
 /** @addtogroup bu_htonf
- * Network conversion routines for type float.
+ * @brief convert floats to host/network format
  */
 /** @{*/
+/** @file libbu/htonf.c */
 BU_EXPORT extern void bu_cv_htonf(unsigned char *out,
 				  const unsigned char *in,
 				  size_t count);
@@ -339,10 +391,8 @@ BU_EXPORT extern void bu_cv_ntohf(unsigned char *out,
 				  size_t count);
 /** @}*/
 
-/** @ingroup bu_hton */
-/** @defgroup bu_htons Network Conversion - Signed Short */
 /** @addtogroup bu_htons
- * Network to Host Signed Short
+ * @brief Network to Host Signed Short
  *
  * @param in	generic pointer for input.
  * @param count	number of shorts to be generated.
@@ -387,53 +437,7 @@ BU_EXPORT extern size_t bu_cv_htonul(void *,
 /** @}*/
 
 
-/** @}*/ /*hton*/
 
-
-/** @brief A base64 encoding algorithm */
-/** @file libbu/b64.c */
-
-/** @defgroup bu_cv_b64 Base64 Encoding and Decoding */
-/** @addtogroup bu_cv_b64
- * Functions for b64 encoding and decoding.
- */
-/** @{*/
-/**
- * Encode null terminated input char array to b64.
- *
- * Caller is responsible for freeing memory allocated to
- * hold output buffer.
- */
-BU_EXPORT extern signed char *bu_b64_encode(const signed char *input);
-
-/**
- * Encode length_in blocks in char array input to b64.
- *
- * Caller is responsible for freeing memory allocated to
- * hold output buffer.
- */
-
-BU_EXPORT extern signed char *bu_b64_encode_block(const signed char* input, size_t length_in);
-
-/**
- * Decode null terminated b64 array to output_buffer.
- *
- * Caller is responsible for freeing memory allocated to
- * hold output buffer.
- */
-
-BU_EXPORT extern int bu_b64_decode(signed char **output_buffer, const signed char *input);
-
-/**
- * Decode length_in blocks in b64 array input to output_buffer.
- *
- * Caller is responsible for freeing memory allocated to
- * hold output buffer.
- */
-BU_EXPORT extern int bu_b64_decode_block(signed char **output_buffer, const signed char* input, size_t length_in);
-/** @}*/
-
-/** @} */
 
 /*
  * DEPRECATED.

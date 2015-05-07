@@ -36,7 +36,7 @@
 
 __BEGIN_DECLS
 
-/** @addtogroup path
+/** @addtogroup bu_path
  *
  *  @brief
  *  Functionality for processing operating system and geometry database path

@@ -29,7 +29,7 @@
 
 __BEGIN_DECLS
 
-/** @addtogroup str
+/** @addtogroup bu_str
  *
  * @brief
  * Compatibility routines to various string processing functions

@@ -30,7 +30,7 @@
 
 __BEGIN_DECLS
 
-/** @addtogroup hist
+/** @addtogroup bu_hist
  *
  * @brief
  * General purpose histogram handling routines.

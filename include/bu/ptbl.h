@@ -32,7 +32,7 @@
 
 __BEGIN_DECLS
 
-/** @addtogroup ptbl
+/** @addtogroup bu_ptbl
  *
  * @brief
  * Support for generalized "pointer tables", kept compactly in a

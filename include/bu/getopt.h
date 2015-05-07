@@ -29,7 +29,7 @@
 
 __BEGIN_DECLS
 
-/** @addtogroup getopt
+/** @addtogroup bu_getopt
  * @brief
  * Special portable re-entrant version of getopt.
  *

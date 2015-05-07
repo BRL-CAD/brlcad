@@ -145,9 +145,9 @@ typedef ptrdiff_t ssize_t;
  * Provide a means to conveniently test the version of the GNU
  * compiler.  Use it like this:
  *
- * #if GCC_PREREQ(2,8)
+ * \#if GCC_PREREQ(2,8)
  * ... code requiring gcc 2.8 or later ...
- * #endif
+ * \#endif
  *
  * WARNING: THIS MACRO IS CONSIDERED PRIVATE AND SHOULD NOT BE USED
  * OUTSIDE OF THIS HEADER FILE.  DO NOT RELY ON IT.
@@ -166,9 +166,9 @@ typedef ptrdiff_t ssize_t;
  * Provide a means to conveniently test the version of the Intel
  * compiler.  Use it like this:
  *
- * #if ICC_PREREQ(800)
+ * \#if ICC_PREREQ(800)
  * ... code requiring icc 8.0 or later ...
- * #endif
+ * \#endif
  *
  * WARNING: THIS MACRO IS CONSIDERED PRIVATE AND SHOULD NOT BE USED
  * OUTSIDE OF THIS HEADER FILE.  DO NOT RELY ON IT.

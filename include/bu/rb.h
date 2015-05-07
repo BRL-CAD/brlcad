@@ -31,7 +31,7 @@
 __BEGIN_DECLS
 
 /*----------------------------------------------------------------------*/
-/** @addtogroup rb
+/** @addtogroup bu_rb
  *
  * @brief
  * The data structures and constants for red-black trees.

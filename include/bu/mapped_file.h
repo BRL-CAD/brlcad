@@ -35,7 +35,7 @@
 
 __BEGIN_DECLS
 
-/** @addtogroup mf
+/** @addtogroup bu_mf
  *
  * @brief
  * Routines for sharing large read-only data files.

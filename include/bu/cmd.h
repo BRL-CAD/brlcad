@@ -18,7 +18,7 @@
  * information.
  */
 
-/** @addtogroup cmd
+/** @addtogroup bu_cmd
  * @brief
  * Routine(s) for processing subcommands
  */

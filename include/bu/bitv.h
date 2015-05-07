@@ -31,7 +31,7 @@
 __BEGIN_DECLS
 
 /*----------------------------------------------------------------------*/
-/** @addtogroup bitv
+/** @addtogroup bu_bitv
  *
  * @brief
  * Routines for managing efficient high-performance bit vectors of

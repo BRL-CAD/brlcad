@@ -26,7 +26,7 @@
 
 __BEGIN_DECLS
 
-/** @addtogroup endian
+/** @addtogroup bu_endian
  * @brief
  * Run-time byte order detection.
  *

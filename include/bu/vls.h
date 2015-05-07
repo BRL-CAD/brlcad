@@ -33,7 +33,7 @@
 __BEGIN_DECLS
 
 /*----------------------------------------------------------------------*/
-/** @addtogroup vls
+/** @addtogroup bu_vls
  *
  * @brief
  * Variable length strings provide a way for programmers to easily handling

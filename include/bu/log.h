@@ -33,7 +33,7 @@
 
 __BEGIN_DECLS
 
-/** @addtogroup log
+/** @addtogroup bu_log
  *
  * @brief
  * BRL-CAD support library, error logging routines.

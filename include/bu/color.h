@@ -32,7 +32,7 @@ __BEGIN_DECLS
 
 /*----------------------------------------------------------------------*/
 
-/** @addtogroup color
+/** @addtogroup bu_color
  * @brief
  * Support for storing and manipulating color data.
  */

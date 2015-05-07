@@ -29,7 +29,7 @@
 __BEGIN_DECLS
 
 /*----------------------------------------------------------------------*/
-/** @addtogroup list
+/** @addtogroup bu_list
  *
  * @brief
  * Support routines for doubly-linked lists.

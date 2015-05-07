@@ -30,7 +30,7 @@
 
 __BEGIN_DECLS
 
-/** @addtogroup hash
+/** @addtogroup bu_hash
  * @brief
  * An implementation of hash tables.
  */

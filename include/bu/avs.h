@@ -32,7 +32,7 @@
 __BEGIN_DECLS
 
 /*----------------------------------------------------------------------*/
-/** @addtogroup avs
+/** @addtogroup bu_avs
  *
  * @brief
  * Routines to manage attribute/value sets.

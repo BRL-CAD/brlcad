@@ -29,7 +29,7 @@
 
 __BEGIN_DECLS
 
-/** @addtogroup malloc
+/** @addtogroup bu_malloc
  *
  * @brief
  * Parallel-protected debugging-enhanced wrapper around system malloc().

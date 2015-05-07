@@ -25,7 +25,7 @@
 
 #include "bu/defines.h"
 
-/** @addtogroup magic
+/** @addtogroup bu_magic
  *
  * @brief
  * Global registry of recognized magic numbers.

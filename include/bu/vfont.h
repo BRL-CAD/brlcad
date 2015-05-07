@@ -18,7 +18,7 @@
  * information.
  */
 
-/** @addtogroup vfont
+/** @addtogroup bu_vfont
  *
  * @brief
  * Provide a machine-independent interface to files containing
@@ -66,8 +66,8 @@
  *
  */
 /** @{ */
-/** @file libbu/vfont.c */
-/** @file bu/vfont.h */
+/** @file src/libbu/vfont.c */
+/** @file include/bu/vfont.h */
 
 #ifndef BU_VFONT_H
 #define BU_VFONT_H
