@@ -29,7 +29,7 @@
 
 __BEGIN_DECLS
 
-/** @addtogroup version
+/** @addtogroup bu_version
  * @brief
  * Version reporting for LIBBU
  */

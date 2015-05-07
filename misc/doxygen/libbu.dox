@@ -36,6 +36,9 @@
 /**  @addtogroup bu_binding
      @brief Language bindings.
  */
+/** @ingroup libbu */
+/**  @defgroup bu_version Version */
+
 
 /* Data Containers */
 /** @ingroup bu_container */
