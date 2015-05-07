@@ -29,12 +29,7 @@
 __BEGIN_DECLS
 
 /*----------------------------------------------------------------------*/
-/** @addtogroup list */
-/** @{*/
-/** @file libbu/list.c
- *
- * @brief Support routines for doubly-linked lists.
- *
+/** @addtogroup list
  * These macros assume that all user-provided structures will have a
  * "struct bu_list" as their first element (often named "l" [ell]).
  * Thus, a pointer to the bu_list struct is a "pun" for the
@@ -114,6 +109,11 @@ __BEGIN_DECLS
  * NEXT / PREV - from the point of view of a list member
  * forw / back - the actual pointer names
  */
+/** @{*/
+/** @brief Support routines for doubly-linked lists. */
+/** @file libbu/list.c */
+/** @brief Subheader for doubly-linked lists. */
+/** @file bu/list.h */
 
 struct bu_list {
     uint32_t magic;		/**< @brief Magic # for mem id/check */

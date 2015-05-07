@@ -43,34 +43,16 @@
 /**   @defgroup bitv Bit Vectors */
 /** @ingroup container */
 /**   @defgroup color Color */
-/**  @addtogroup color
-     Color.
- */
 /** @ingroup container */
 /**   @defgroup hash Hash Tables */
-/**  @addtogroup hash
-     LIBBU hash container.
- */
 /** @ingroup container */
 /**   @defgroup list Linked Lists */
-/**  @addtogroup list
-     LIBBU linked lists.
- */
 /** @ingroup container */
 /**   @defgroup parse Structure Parsing */
-/**  @addtogroup parse
-     Logic for parsing data from structures.
- */
 /** @ingroup container */
 /**   @defgroup ptbl Pointer Tables */
-/**  @addtogroup ptbl
-     Data container for storing pointers.
- */
 /** @ingroup container */
 /**   @defgroup rb Red-Black Trees */
-/**  @addtogroup rb
-     LIBBU Red-Black tree.
- */
 /** @ingroup container */
 /**   @defgroup vlb Variable-length Byte Buffers */
 /**  @addtogroup vlb

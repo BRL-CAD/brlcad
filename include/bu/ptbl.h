@@ -21,9 +21,6 @@
 /** @defgroup container Data Containers */
 /**   @defgroup ptbl Pointer Tables */
 
-/** @file ptbl.h
- *
- */
 #ifndef BU_PTBL_H
 #define BU_PTBL_H
 
@@ -38,12 +35,7 @@
 
 __BEGIN_DECLS
 
-/* ptbl.c */
-/** @addtogroup ptbl */
-/** @{ */
-/** @file libbu/ptbl.c
- *
- * Support for generalized "pointer tables"
+/** @addtogroup ptbl
  *
  * Support for generalized "pointer tables", kept compactly in a
  * dynamic array.
@@ -54,6 +46,11 @@ __BEGIN_DECLS
  * for) are passed as a "pointer to long".
  *
  */
+/** @{ */
+/** @brief Subheader for generalized "pointer tables" */
+/** @file ptbl.h*/
+/** @brief Implementation file for generalized "pointer tables" */
+/** @file libbu/ptbl.c */
 
 
 /**

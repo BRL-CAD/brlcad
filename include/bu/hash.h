@@ -30,13 +30,14 @@
 
 __BEGIN_DECLS
 
-/** @addtogroup hash */
-/** @{ */
-/** @file libbu/hash.c
- *
- * @brief
+/** @addtogroup hash
  * An implementation of hash tables.
  */
+/** @{ */
+/** @brief Hash subheader. */
+/** @file bu/hash.h */
+/** @brief Hash implementation file. */
+/** @file libbu/hash.c */
 
 /**
  * A hash entry

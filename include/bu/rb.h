@@ -18,9 +18,6 @@
  * information.
  */
 
-/** @file rb.h
- *
- */
 #ifndef BU_RB_H
 #define BU_RB_H
 
@@ -34,9 +31,8 @@
 __BEGIN_DECLS
 
 /*----------------------------------------------------------------------*/
-/** @addtogroup rb */
-/** @{ */
-/*
+/** @addtogroup rb
+ *
  * The data structures and constants for red-black trees.
  *
  * Many of these routines are based on the algorithms in chapter 13 of
@@ -66,6 +62,10 @@ __BEGIN_DECLS
  * is discussed in Chapter 14 of the 2009 edition of "Introduction to
  * Algorithms."
  */
+/** @{ */
+/** @brief Subheader for Red-Black trees */
+/** @file rb.h */
+
 
 /**
  * List of nodes or packages.
@@ -235,11 +235,8 @@ enum BU_RB_WALK_ORDER {
     BU_RB_WALK_POSTORDER
 };
 
-/** @file libbu/rb_create.c
- *
- * Routines to create a red-black tree
- *
- */
+/** @brief Routines to create a red-black tree */
+/** @file libbu/rb_create.c */
 
 /**
  * Create a red-black tree
@@ -268,11 +265,8 @@ BU_EXPORT extern struct bu_rb_tree *bu_rb_create(const char *description, int nm
  */
 BU_EXPORT extern struct bu_rb_tree *bu_rb_create1(const char *description, int (*compare_func)(void));
 
-/** @file libbu/rb_delete.c
- *
- * Routines to delete a node from a red-black tree
- *
- */
+/** @brief Routines to delete a node from a red-black tree */
+/** @file libbu/rb_delete.c */
 
 /**
  * Applications interface to _rb_delete()
@@ -286,11 +280,8 @@ BU_EXPORT extern void bu_rb_delete(struct bu_rb_tree *tree,
 				   int order);
 #define bu_rb_delete1(t) bu_rb_delete((t), 0)
 
-/** @file libbu/rb_diag.c
- *
- * Diagnostic routines for red-black tree maintenance
- *
- */
+/** @brief Diagnostic routines for red-black tree maintenance */
+/** @file libbu/rb_diag.c */
 
 /**
  * Produce a diagnostic printout of a red-black tree
@@ -312,13 +303,8 @@ BU_EXPORT extern void bu_rb_diagnose_tree(struct bu_rb_tree *tree,
  */
 BU_EXPORT extern void bu_rb_summarize_tree(struct bu_rb_tree *tree);
 
-/** @file libbu/rb_extreme.c
- *
- * Routines to extract mins, maxes, adjacent, and current nodes
- * from a red-black tree
- *
- */
-
+/** @brief Routines to extract mins, maxes, adjacent, and current nodes from a red-black tree */
+/** @file libbu/rb_extreme.c */
 
 /**
  * Applications interface to rb_extreme()
@@ -357,11 +343,8 @@ BU_EXPORT extern void *bu_rb_curr(struct bu_rb_tree *tree,
 				  int order);
 #define bu_rb_curr1(t) bu_rb_curr((t), 0)
 
-/** @file libbu/rb_free.c
- *
- * Routines to free a red-black tree
- *
- */
+/** @brief Routines to free a red-black tree */
+/** @file libbu/rb_free.c */
 
 /**
  * Free a red-black tree
@@ -384,11 +367,8 @@ BU_EXPORT extern void bu_rb_free(struct bu_rb_tree *tree, void (*free_data)(void
 	bu_rb_free(t, f);					\
     }
 
-/** @file libbu/rb_insert.c
- *
- * Routines to insert into a red-black tree
- *
- */
+/** @brief Routines to insert into a red-black tree */
+/** @file libbu/rb_insert.c */
 
 /**
  * Applications interface to bu_rb_insert()
@@ -457,11 +437,8 @@ BU_EXPORT extern int bu_rb_uniq_off(struct bu_rb_tree *tree,
 				    int order);
 #define bu_rb_uniq_off1(t) bu_rb_uniq_off((t), 0)
 
-/** @file libbu/rb_order_stats.c
- *
- * Routines to support order-statistic operations for a red-black tree
- *
- */
+/** @brief Routines to support order-statistic operations for a red-black tree */
+/** @file libbu/rb_order_stats.c */
 
 /**
  * Determines the rank of a node in one order of a red-black tree.
@@ -487,11 +464,8 @@ BU_EXPORT extern void *bu_rb_select(struct bu_rb_tree *tree,
 				    int k);
 #define bu_rb_select1(t, k) bu_rb_select((t), 0, (k))
 
-/** @file libbu/rb_search.c
- *
- * Routines to search for a node in a red-black tree
- *
- */
+/** @brief Routines to search for a node in a red-black tree */
+/** @file libbu/rb_search.c */
 
 /**
  * This function has three parameters: the tree in which to search,
@@ -505,10 +479,10 @@ BU_EXPORT extern void *bu_rb_search(struct bu_rb_tree *tree,
 				    void *data);
 #define bu_rb_search1(t, d) bu_rb_search((t), 0, (d))
 
-/** @file libbu/rb_walk.c
- *
- * Routines for traversal of red-black trees
- *
+/** @brief Routines for traversal of red-black trees */
+/** @file libbu/rb_walk.c */
+
+/**
  * The function bu_rb_walk() is defined in terms of the function
  * rb_walk(), which, in turn, calls any of the six functions
  *
@@ -525,9 +499,7 @@ BU_EXPORT extern void *bu_rb_search(struct bu_rb_tree *tree,
  * the root of the tree to traverse, the order on which to do the
  * walking, the function to apply at each visit, and the current
  * depth in the tree.
- */
-
-/**
+ *
  * This function has four parameters: the tree to traverse, the order
  * on which to do the walking, the function to apply to each node, and
  * the type of traversal (preorder, inorder, or postorder).
