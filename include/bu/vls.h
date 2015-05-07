@@ -18,11 +18,6 @@
  * information.
  */
 
-/** @defgroup container Data Containers */
-/**   @defgroup vls Variable-length Strings */
-
-/** @file vls.h
- */
 #ifndef BU_VLS_H
 #define BU_VLS_H
 

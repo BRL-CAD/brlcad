@@ -18,9 +18,6 @@
  * information.
  */
 
-/** @defgroup io Input/Output */
-/** @defgroup path Path Processing */
-
 #ifndef BU_PATH_H
 #define BU_PATH_H
 

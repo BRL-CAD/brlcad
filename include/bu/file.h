@@ -18,9 +18,6 @@
  * information.
  */
 
-/**  @defgroup io Input/Output */
-/**   @defgroup file File Processing */
-
 #ifndef BU_FILE_H
 #define BU_FILE_H
 

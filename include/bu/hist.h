@@ -18,12 +18,6 @@
  * information.
  */
 
-/**  @defgroup data Data Management */
-/**   @defgroup hist Histogram Handling */
-
-/** @file hist.h
- *
- */
 #ifndef BU_HIST_H
 #define BU_HIST_H
 
@@ -47,6 +41,7 @@ __BEGIN_DECLS
  */
 /** @{ */
 /** @file libbu/hist.c */
+/** @file bu/hist.h */
 
 /**
  * histogram support

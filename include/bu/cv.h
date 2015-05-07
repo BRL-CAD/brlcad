@@ -85,8 +85,8 @@ __BEGIN_DECLS
 /** @{*/
 /** @file bu/cv.h */
 
-/** @defgroup conv_network_sizes Network Data Sizes */
-/** @addtogroup conv_network_sizes
+/** @defgroup bu_conv_network_sizes Network Data Sizes */
+/** @addtogroup bu_conv_network_sizes
  * Sizes of "network" format data.  We use the same convention as the
  * TCP/IP specification, namely, big-Endian, IEEE format, twos
  * complement.  This is the BRL-CAD external data representation
@@ -111,8 +111,8 @@ __BEGIN_DECLS
 #  define htonll(_val) ntohll(_val)
 #endif
 
-/** @defgroup cv_masks Conversion Bit Masks */
-/** @addtogroup cv_masks
+/** @defgroup bu_cv_masks Conversion Bit Masks */
+/** @addtogroup bu_cv_masks
  * Mask definitions for CV
  */
 /** @{*/
@@ -123,8 +123,8 @@ __BEGIN_DECLS
 #define CV_CONVERT_MASK 0x6000  /* 0110 0000 0000 0000 */
 /** @}*/
 
-/** @defgroup cv_defs Conversion Defines */
-/** @addtogroup cv_defs
+/** @defgroup bu_cv_defs Conversion Defines */
+/** @addtogroup bu_cv_defs
  * Various convenience definitions for CV
  */
 /** @{*/
@@ -294,8 +294,8 @@ BU_EXPORT extern size_t bu_cv_itemlen(int cookie);
 BU_EXPORT extern size_t bu_cv_w_cookie(void *out, int outcookie, size_t size, void *in, int incookie, size_t count);
 
 
-/** @defgroup hton Network Byte-order Conversion */
-/** @addtogroup hton
+/** @defgroup bu_hton Network Byte-order Conversion */
+/** @addtogroup bu_hton
  * Network to host and host to network conversion routines.
  *
  * It is assumed that these routines will only be called if there is
@@ -308,9 +308,9 @@ BU_EXPORT extern size_t bu_cv_w_cookie(void *out, int outcookie, size_t size, vo
 /** @brief Convert doubles to host/network format. */
 /** @file libbu/htond.c */
 
-/** @ingroup hton */
-/** @defgroup htond Network Conversion - Doubles */
-/** @addtogroup htond
+/** @ingroup bu_hton */
+/** @defgroup bu_htond Network Conversion - Doubles */
+/** @addtogroup bu_htond
  * Network conversion routines for type double.
  */
 /** @{*/
@@ -325,9 +325,9 @@ BU_EXPORT extern void bu_cv_ntohd(unsigned char *out,
 /** @brief convert floats to host/network format */
 /** @file libbu/htonf.c */
 
-/** @ingroup hton */
-/** @defgroup htonf Network Conversion - Floats */
-/** @addtogroup htonf
+/** @ingroup bu_hton */
+/** @defgroup bu_htonf Network Conversion - Floats */
+/** @addtogroup bu_htonf
  * Network conversion routines for type float.
  */
 /** @{*/
@@ -339,9 +339,9 @@ BU_EXPORT extern void bu_cv_ntohf(unsigned char *out,
 				  size_t count);
 /** @}*/
 
-/** @ingroup hton */
-/** @defgroup htons Network Conversion - Signed Short */
-/** @addtogroup htons
+/** @ingroup bu_hton */
+/** @defgroup bu_htons Network Conversion - Signed Short */
+/** @addtogroup bu_htons
  * Network to Host Signed Short
  *
  * @param in	generic pointer for input.
@@ -393,8 +393,8 @@ BU_EXPORT extern size_t bu_cv_htonul(void *,
 /** @brief A base64 encoding algorithm */
 /** @file libbu/b64.c */
 
-/** @defgroup cv_b64 Base64 Encoding and Decoding */
-/** @addtogroup cv_b64
+/** @defgroup bu_cv_b64 Base64 Encoding and Decoding */
+/** @addtogroup bu_cv_b64
  * Functions for b64 encoding and decoding.
  */
 /** @{*/

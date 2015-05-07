@@ -18,9 +18,6 @@
  * information.
  */
 
-/**  @defgroup io Input/Output */
-/**   @defgroup debug Debugging */
-
 #ifndef BU_DEBUG_H
 #define BU_DEBUG_H
 

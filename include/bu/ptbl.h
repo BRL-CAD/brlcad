@@ -18,9 +18,6 @@
  * information.
  */
 
-/** @defgroup container Data Containers */
-/**   @defgroup ptbl Pointer Tables */
-
 #ifndef BU_PTBL_H
 #define BU_PTBL_H
 

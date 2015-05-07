@@ -18,9 +18,6 @@
  * information.
  */
 
-/**  @defgroup io Input/Output */
-/**   @defgroup log Logging */
-
 #ifndef BU_LOG_H
 #define BU_LOG_H
 
