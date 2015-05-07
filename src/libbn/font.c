@@ -31,7 +31,6 @@
 #include "bn/mat.h"
 #include "bn/vectfont.h"
 #include "bn/vlist.h"
-#include "vectfont.h"
 
 
 void
@@ -77,7 +76,7 @@ bn_vlist_3string(struct bu_list *vhead,
 	MAT4X3PNT( loc, mat, temp );
 	BN_ADD_VLIST(free_hd, vhead, loc, BN_VLIST_LINE_MOVE );
 
-	for ( p = tp_getchar(cp); ((stroke= *p)) != LAST; p++ )  {
+	for ( p = tp_getchar(cp); ((stroke= *p)) != VFONT_LAST; p++ )  {
 	    int	draw;
 
 	    if ( (stroke)==NEGY )  {

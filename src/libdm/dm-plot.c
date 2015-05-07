@@ -46,7 +46,7 @@
 #include "dm-Null.h"
 
 #include "solid.h"
-#include "plot3.h"
+#include "bn/plot3.h"
 
 #include "./dm_private.h"
 

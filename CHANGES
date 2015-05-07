@@ -1033,3 +1033,7 @@ s/(#[[:space:]]*include[[:space:]]+["<])bot\.h/\1rt\/primitives\/bot.h/g
 	consolidate bot header contents [7.25]
 s/(#[[:space:]]*include[[:space:]]+["<])anim\.h/\1bn\/anim.h/g
 	consolidate anim header contents [7.25]
+s/(#[[:space:]]*include[[:space:]]+["<])plot3\.h/\1bn.h/g
+	plot3 implementation is in libbn, move header and replace plot3.h with bn.h [7.25]
+s/(#[[:space:]]*include[[:space:]]+["<])vectfont\.h/#define LAST -128\n\1bn\/vectfont.h/g
+	consolidate vectfont.h files [7.25]

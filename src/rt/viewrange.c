@@ -35,7 +35,7 @@
 
 #include "vmath.h"
 #include "raytrace.h"
-#include "plot3.h"
+#include "bn/plot3.h"
 
 /* private */
 #include "./rtuif.h"

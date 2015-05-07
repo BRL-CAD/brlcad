@@ -51,7 +51,7 @@
 #include "nmg.h"
 #include "raytrace.h"
 #include "nurb.h"
-#include "plot3.h"
+#include "bn/plot3.h"
 
 
 #define US_DELAY 10 /* Additional delay between frames */

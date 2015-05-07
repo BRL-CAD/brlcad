@@ -32,7 +32,7 @@
 
 #include "bn.h"
 #include "raytrace.h"
-#include "plot3.h"
+#include "bn/plot3.h"
 
 
 struct bn_vlblock *

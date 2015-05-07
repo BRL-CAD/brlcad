@@ -43,7 +43,7 @@
 #include "mater.h"
 #include "raytrace.h"
 #include "optical.h"
-#include "plot3.h"
+#include "bn/plot3.h"
 #include "light.h"
 
 

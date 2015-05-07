@@ -37,7 +37,7 @@
 #include "nmg.h"
 #include "raytrace.h"
 #include "nurb.h"
-#include "plot3.h"
+#include "bn/plot3.h"
 
 
 /* Plot a faceuse and a line between pt and plane_pt */

@@ -47,7 +47,6 @@ set(public_hdrs
   pc.h
   pkg.h
   plastic.h
-  plot3.h
   redblack.h
   shadefuncs.h
   shadework.h
@@ -56,7 +55,6 @@ set(public_hdrs
   spm.h
   tie.h
   tol.h
-  vectfont.h
   vector_fpu.h
   vector_x86.h
   vmath.h

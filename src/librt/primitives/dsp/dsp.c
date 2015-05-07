@@ -61,7 +61,7 @@
 #include "raytrace.h"
 #include "rtgeom.h"
 #include "db.h"
-#include "plot3.h"
+#include "bn/plot3.h"
 
 /* private header */
 #include "./dsp.h"

@@ -57,7 +57,7 @@
 #include "bu/sort.h"
 #include "bu/units.h"
 #include "nmg.h"
-#include "plot3.h"
+#include "bn/plot3.h"
 #include "rtgeom.h"
 #include "raytrace.h"
 #include "wdb.h"

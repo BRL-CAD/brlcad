@@ -39,7 +39,7 @@
 #include "vmath.h"
 #include "bn.h"
 #include "raytrace.h"
-#include "plot3.h"
+#include "bn/plot3.h"
 
 
 extern void rt_ck(struct rt_i *rtip);

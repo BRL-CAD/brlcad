@@ -28,7 +28,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "plot3.h"
+#include "bn/plot3.h"
 
 #include "solid.h"
 #include "./ged_private.h"

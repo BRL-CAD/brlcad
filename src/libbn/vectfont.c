@@ -50,8 +50,8 @@
 #include <math.h>
 
 #include "vmath.h"
-#include "plot3.h"
-#include "vectfont.h"
+#include "bn/plot3.h"
+#include "bn/vectfont.h"
 #include "bu/malloc.h"
 
 #define NUM_SYMBOLS	8
@@ -68,21 +68,21 @@ static int tp_ctable[] = {
     brt(8, 5),
     drk(4, 8),
     brt(4, 2),
-    LAST,
+    VFONT_LAST,
 
 /*	x	*/
     drk(0, 2),
     brt(8, 8),
     drk(0, 8),
     brt(8, 2),
-    LAST,
+    VFONT_LAST,
 
 /*	triangle	*/
     drk(0, 2),
     brt(4, 8),
     brt(8, 2),
     brt(0, 2),
-    LAST,
+    VFONT_LAST,
 
 /*	square	*/
     drk(0, 2),
@@ -90,7 +90,7 @@ static int tp_ctable[] = {
     brt(8, 8),
     brt(8, 2),
     brt(0, 2),
-    LAST,
+    VFONT_LAST,
 
 /*	hourglass	*/
     drk(0, 2),
@@ -98,7 +98,7 @@ static int tp_ctable[] = {
     brt(0, 8),
     brt(8, 2),
     brt(0, 2),
-    LAST,
+    VFONT_LAST,
 
 /*	plus-minus	*/
     drk(5, 7),
@@ -107,7 +107,7 @@ static int tp_ctable[] = {
     brt(8, 2),
     drk(2, 5),
     brt(8, 5),
-    LAST,
+    VFONT_LAST,
 
 /*	centerline symbol	*/
     drk(8, 4),
@@ -121,7 +121,7 @@ static int tp_ctable[] = {
     brt(8, 4),
     drk(1, 1),
     brt(7, 7),
-    LAST,
+    VFONT_LAST,
 
 /*	degree symbol	*/
     drk(1, 9),
@@ -133,10 +133,10 @@ static int tp_ctable[] = {
     brt(0, 7),
     brt(0, 8),
     brt(1, 9),
-    LAST,
+    VFONT_LAST,
 
 /*	table for ascii 040, ' '	*/
-    LAST,
+    VFONT_LAST,
 
 /*	table for !	*/
     drk(3, 0),
@@ -149,7 +149,7 @@ static int tp_ctable[] = {
     brt(5, 10),
     brt(4, 4),
     brt(4, 10),
-    LAST,
+    VFONT_LAST,
 
 /*	table for "	*/
     drk(1, 10),
@@ -160,7 +160,7 @@ static int tp_ctable[] = {
     brt(7, 10),
     brt(6, 7),
     brt(5, 10),
-    LAST,
+    VFONT_LAST,
 
 
 /*	table for #	*/
@@ -172,7 +172,7 @@ static int tp_ctable[] = {
     brt(0, 3),
     drk(1, 6),
     brt(7, 6),
-    LAST,
+    VFONT_LAST,
 
 /*	table for $	*/
     drk(1, 2),
@@ -185,7 +185,7 @@ static int tp_ctable[] = {
     brt(7, 8),
     drk(4, 10),
     brt(4, 0),
-    LAST,
+    VFONT_LAST,
 
 /*	table for %	*/
     drk(3, 10),
@@ -199,7 +199,7 @@ static int tp_ctable[] = {
     brt(5, 3),
     brt(8, 3),
     brt(8, 0),
-    LAST,
+    VFONT_LAST,
 
 /*	table for &	*/
     drk(7, 3),
@@ -211,14 +211,14 @@ static int tp_ctable[] = {
     brt(3, 10),
     brt(1, 8),
     brt(8, 0),
-    LAST,
+    VFONT_LAST,
 
 /*	table for '	*/
     drk(4, 6),
     brt(5, 10),
     brt(6, 10),
     brt(4, 6),
-    LAST,
+    VFONT_LAST,
 
 /*	table for (	*/
     drk(5, 0),
@@ -227,7 +227,7 @@ static int tp_ctable[] = {
     brt(2, 6),
     brt(3, 9),
     brt(5, 10),
-    LAST,
+    VFONT_LAST,
 
 /*	table for)	*/
     drk(3, 0),
@@ -236,7 +236,7 @@ static int tp_ctable[] = {
     brt(6, 6),
     brt(5, 9),
     brt(3, 10),
-    LAST,
+    VFONT_LAST,
 
 /*	table for *	*/
     drk(4, 2),
@@ -247,14 +247,14 @@ static int tp_ctable[] = {
     brt(2, 7),
     drk(1, 5),
     brt(7, 5),
-    LAST,
+    VFONT_LAST,
 
 /*	table for +	*/
     drk(1, 5),
     brt(7, 5),
     drk(4, 8),
     brt(4, 2),
-    LAST,
+    VFONT_LAST,
 
 /*	table for, 	*/
     drk(5, 0),
@@ -264,12 +264,12 @@ static int tp_ctable[] = {
     brt(5, 0),
     bneg(2, 2),
     brt(4, 0),
-    LAST,
+    VFONT_LAST,
 
 /*	table for -	*/
     drk(1, 5),
     brt(7, 5),
-    LAST,
+    VFONT_LAST,
 
 /*	table for .	*/
     drk(5, 0),
@@ -277,11 +277,11 @@ static int tp_ctable[] = {
     brt(3, 0),
     brt(5, 2),
     brt(5, 0),
-    LAST,
+    VFONT_LAST,
 
 /*	table for /	*/
     brt(8, 10),
-    LAST,
+    VFONT_LAST,
 
 /*	table for 0	*/
     drk(8, 10),
@@ -290,13 +290,13 @@ static int tp_ctable[] = {
     brt(8, 10),
     brt(8, 0),
     brt(0, 0),
-    LAST,
+    VFONT_LAST,
 
 /*	table for 1	*/
     drk(4, 0),
     brt(4, 10),
     brt(2, 8),
-    LAST,
+    VFONT_LAST,
 
 /*	table for 2	*/
     drk(0, 6),
@@ -308,7 +308,7 @@ static int tp_ctable[] = {
     brt(0, 2),
     brt(0, 0),
     brt(8, 0),
-    LAST,
+    VFONT_LAST,
 
 /*	table for 3	*/
     drk(0, 10),
@@ -318,7 +318,7 @@ static int tp_ctable[] = {
     brt(8, 5),
     brt(8, 0),
     brt(0, 0),
-    LAST,
+    VFONT_LAST,
 
 /*	table for 4	*/
     drk(0, 10),
@@ -326,7 +326,7 @@ static int tp_ctable[] = {
     brt(8, 5),
     drk(8, 10),
     brt(8, 0),
-    LAST,
+    VFONT_LAST,
 
 /*	table for 5	*/
     drk(8, 10),
@@ -335,7 +335,7 @@ static int tp_ctable[] = {
     brt(8, 5),
     brt(8, 0),
     brt(0, 0),
-    LAST,
+    VFONT_LAST,
 
 /*	table for 6	*/
     drk(0, 10),
@@ -343,13 +343,13 @@ static int tp_ctable[] = {
     brt(8, 0),
     brt(8, 5),
     brt(0, 5),
-    LAST,
+    VFONT_LAST,
 
 /*	table for 7	*/
     drk(0, 10),
     brt(8, 10),
     brt(6, 0),
-    LAST,
+    VFONT_LAST,
 
 /*	table for 8	*/
     drk(0, 5),
@@ -360,7 +360,7 @@ static int tp_ctable[] = {
     brt(0, 10),
     brt(8, 10),
     brt(8, 5),
-    LAST,
+    VFONT_LAST,
 
 /*	table for 9	*/
     drk(8, 5),
@@ -368,7 +368,7 @@ static int tp_ctable[] = {
     brt(0, 10),
     brt(8, 10),
     brt(8, 0),
-    LAST,
+    VFONT_LAST,
 
 /*	table for :	*/
     drk(5, 6),
@@ -381,7 +381,7 @@ static int tp_ctable[] = {
     brt(3, 0),
     brt(5, 2),
     brt(5, 0),
-    LAST,
+    VFONT_LAST,
 
 /*	table for ;	*/
     drk(5, 6),
@@ -396,26 +396,26 @@ static int tp_ctable[] = {
     brt(5, 0),
     bneg(2, 2),
     brt(4, 0),
-    LAST,
+    VFONT_LAST,
 
 /*	table for <	*/
     drk(8, 8),
     brt(0, 5),
     brt(8, 2),
-    LAST,
+    VFONT_LAST,
 
 /*	table for =	*/
     drk(0, 7),
     brt(8, 7),
     drk(0, 3),
     brt(8, 3),
-    LAST,
+    VFONT_LAST,
 
 /*	table for >	*/
     drk(0, 8),
     brt(8, 5),
     brt(0, 2),
-    LAST,
+    VFONT_LAST,
 
 /*	table for ?	*/
     drk(3, 0),
@@ -431,7 +431,7 @@ static int tp_ctable[] = {
     brt(7, 7),
     brt(4, 5),
     brt(4, 3),
-    LAST,
+    VFONT_LAST,
 
 /*	table for @	*/
     drk(0, 8),
@@ -447,7 +447,7 @@ static int tp_ctable[] = {
     brt(4, 5),
     brt(5, 4),
     brt(5, 0),
-    LAST,
+    VFONT_LAST,
 
 /*	table for A	*/
     brt(0, 8),
@@ -457,7 +457,7 @@ static int tp_ctable[] = {
     brt(8, 0),
     drk(0, 5),
     brt(8, 5),
-    LAST,
+    VFONT_LAST,
 
 /*	table for B	*/
     brt(0, 10),
@@ -471,7 +471,7 @@ static int tp_ctable[] = {
     brt(8, 1),
     brt(5, 0),
     brt(0, 0),
-    LAST,
+    VFONT_LAST,
 
 /*	table for C	*/
     drk(8, 2),
@@ -482,7 +482,7 @@ static int tp_ctable[] = {
     brt(2, 10),
     brt(6, 10),
     brt(8, 8),
-    LAST,
+    VFONT_LAST,
 
 /*	table for D	*/
     brt(0, 10),
@@ -491,7 +491,7 @@ static int tp_ctable[] = {
     brt(8, 2),
     brt(5, 0),
     brt(0, 0),
-    LAST,
+    VFONT_LAST,
 
 /*	table for E	*/
     drk(8, 0),
@@ -500,14 +500,14 @@ static int tp_ctable[] = {
     brt(8, 10),
     drk(0, 5),
     brt(5, 5),
-    LAST,
+    VFONT_LAST,
 
 /*	table for F	*/
     brt(0, 10),
     brt(8, 10),
     drk(0, 5),
     brt(5, 5),
-    LAST,
+    VFONT_LAST,
 
 /*	table for G	*/
     drk(5, 5),
@@ -520,7 +520,7 @@ static int tp_ctable[] = {
     brt(2, 10),
     brt(6, 10),
     brt(8, 8),
-    LAST,
+    VFONT_LAST,
 
 /*	table for H	*/
     brt(0, 10),
@@ -528,7 +528,7 @@ static int tp_ctable[] = {
     brt(8, 0),
     drk(0, 6),
     brt(8, 6),
-    LAST,
+    VFONT_LAST,
 
 /*	table for I	*/
     drk(4, 0),
@@ -537,7 +537,7 @@ static int tp_ctable[] = {
     brt(5, 10),
     brt(4, 10),
     brt(6, 10),
-    LAST,
+    VFONT_LAST,
 
 /*	table for J	*/
     drk(0, 2),
@@ -547,7 +547,7 @@ static int tp_ctable[] = {
     brt(7, 10),
     brt(6, 10),
     brt(8, 10),
-    LAST,
+    VFONT_LAST,
 
 /*	table for K	*/
     brt(0, 10),
@@ -555,13 +555,13 @@ static int tp_ctable[] = {
     brt(8, 10),
     drk(3, 7),
     brt(8, 0),
-    LAST,
+    VFONT_LAST,
 
 /*	table for L	*/
     drk(8, 0),
     brt(0, 0),
     brt(0, 10),
-    LAST,
+    VFONT_LAST,
 
 /*	table for M	*/
     brt(0, 10),
@@ -569,13 +569,13 @@ static int tp_ctable[] = {
     brt(8, 10),
     brt(8, 10),
     brt(8, 0),
-    LAST,
+    VFONT_LAST,
 
 /*	table for N	*/
     brt(0, 10),
     brt(8, 0),
     brt(8, 10),
-    LAST,
+    VFONT_LAST,
 
 /*	table for O	*/
     drk(0, 2),
@@ -587,7 +587,7 @@ static int tp_ctable[] = {
     brt(6, 0),
     brt(2, 0),
     brt(0, 2),
-    LAST,
+    VFONT_LAST,
 
 /*	table for P	*/
     brt(0, 10),
@@ -596,7 +596,7 @@ static int tp_ctable[] = {
     brt(8, 6),
     brt(6, 5),
     brt(0, 5),
-    LAST,
+    VFONT_LAST,
 
 /*	table for Q	*/
     drk(0, 2),
@@ -610,7 +610,7 @@ static int tp_ctable[] = {
     brt(0, 2),
     drk(5, 3),
     brt(8, 0),
-    LAST,
+    VFONT_LAST,
 
 /*	table for R	*/
     brt(0, 10),
@@ -621,7 +621,7 @@ static int tp_ctable[] = {
     brt(0, 5),
     drk(5, 5),
     brt(8, 0),
-    LAST,
+    VFONT_LAST,
 
 /*	table for S	*/
     drk(0, 1),
@@ -636,14 +636,14 @@ static int tp_ctable[] = {
     brt(1, 10),
     brt(7, 10),
     brt(8, 9),
-    LAST,
+    VFONT_LAST,
 
 /*	table for T	*/
     drk(4, 0),
     brt(4, 10),
     drk(0, 10),
     brt(8, 10),
-    LAST,
+    VFONT_LAST,
 
 /*	table for U	*/
     drk(0, 10),
@@ -652,13 +652,13 @@ static int tp_ctable[] = {
     brt(6, 0),
     brt(8, 2),
     brt(8, 10),
-    LAST,
+    VFONT_LAST,
 
 /*	table for V	*/
     drk(0, 10),
     brt(4, 0),
     brt(8, 10),
-    LAST,
+    VFONT_LAST,
 
 /*	table for W	*/
     drk(0, 10),
@@ -666,13 +666,13 @@ static int tp_ctable[] = {
     brt(4, 4),
     brt(7, 0),
     brt(8, 10),
-    LAST,
+    VFONT_LAST,
 
 /*	table for X	*/
     brt(8, 10),
     drk(0, 10),
     brt(8, 0),
-    LAST,
+    VFONT_LAST,
 
 /*	table for Y	*/
     drk(0, 10),
@@ -680,33 +680,33 @@ static int tp_ctable[] = {
     brt(8, 10),
     drk(4, 4),
     brt(4, 0),
-    LAST,
+    VFONT_LAST,
 
 /*	table for Z	*/
     drk(0, 10),
     brt(8, 10),
     brt(0, 0),
     brt(8, 0),
-    LAST,
+    VFONT_LAST,
 
 /*	table for [	*/
     drk(6, 0),
     brt(4, 0),
     brt(4, 10),
     brt(6, 10),
-    LAST,
+    VFONT_LAST,
 
 /*	table for \	*/
     drk(0, 10),
     brt(8, 0),
-    LAST,
+    VFONT_LAST,
 
 /*	table for ]	*/
     drk(2, 0),
     brt(4, 0),
     brt(4, 10),
     brt(2, 10),
-    LAST,
+    VFONT_LAST,
 
 /*	table for ^	*/
     drk(4, 0),
@@ -714,19 +714,19 @@ static int tp_ctable[] = {
     drk(2, 8),
     brt(4, 10),
     brt(6, 8),
-    LAST,
+    VFONT_LAST,
 
 /*	table for _	*/
     dneg(0, 1),
     bneg(11, 1),
-    LAST,
+    VFONT_LAST,
 
 /*	table for ascii 96: accent	*/
     drk(3, 10),
     brt(5, 6),
     brt(4, 10),
     brt(3, 10),
-    LAST,
+    VFONT_LAST,
 
 /*	table for a	*/
     drk(0, 5),
@@ -743,7 +743,7 @@ static int tp_ctable[] = {
     brt(1, 3),
     brt(6, 3),
     brt(7, 2),
-    LAST,
+    VFONT_LAST,
 
 /*	table for b	*/
     brt(0, 10),
@@ -756,7 +756,7 @@ static int tp_ctable[] = {
     brt(4, 0),
     brt(7, 1),
     brt(8, 3),
-    LAST,
+    VFONT_LAST,
 
 /*	table for c	*/
     drk(8, 5),
@@ -768,7 +768,7 @@ static int tp_ctable[] = {
     brt(2, 0),
     brt(7, 0),
     brt(8, 1),
-    LAST,
+    VFONT_LAST,
 
 /*	table for d	*/
     drk(8, 0),
@@ -782,7 +782,7 @@ static int tp_ctable[] = {
     brt(4, 0),
     brt(7, 1),
     brt(8, 3),
-    LAST,
+    VFONT_LAST,
 
 /*	table for e	*/
     drk(0, 4),
@@ -797,7 +797,7 @@ static int tp_ctable[] = {
     brt(1, 0),
     brt(7, 0),
     brt(8, 1),
-    LAST,
+    VFONT_LAST,
 
 /*	table for f	*/
     drk(2, 0),
@@ -807,7 +807,7 @@ static int tp_ctable[] = {
     brt(6, 9),
     drk(1, 5),
     brt(4, 5),
-    LAST,
+    VFONT_LAST,
 
 /*	table for g	*/
     drk(8, 6),
@@ -824,7 +824,7 @@ static int tp_ctable[] = {
     bneg(7, 3),
     bneg(1, 3),
     bneg(0, 2),
-    LAST,
+    VFONT_LAST,
 
 /*	table for h	*/
     brt(0, 10),
@@ -833,7 +833,7 @@ static int tp_ctable[] = {
     brt(6, 6),
     brt(8, 4),
     brt(8, 0),
-    LAST,
+    VFONT_LAST,
 
 /*	table for i	*/
     drk(4, 0),
@@ -843,7 +843,7 @@ static int tp_ctable[] = {
     brt(4, 8),
     drk(3, 0),
     brt(5, 0),
-    LAST,
+    VFONT_LAST,
 
 /*	table for j	*/
     drk(5, 6),
@@ -852,7 +852,7 @@ static int tp_ctable[] = {
     bneg(5, 3),
     bneg(3, 3),
     bneg(2, 2),
-    LAST,
+    VFONT_LAST,
 
 /*	table for k	*/
     brt(2, 0),
@@ -863,14 +863,14 @@ static int tp_ctable[] = {
     brt(8, 6),
     drk(4, 4),
     brt(8, 0),
-    LAST,
+    VFONT_LAST,
 
 /*	table for l	*/
     drk(3, 10),
     brt(4, 10),
     brt(4, 2),
     brt(5, 0),
-    LAST,
+    VFONT_LAST,
 
 /*	table for m	*/
     brt(0, 6),
@@ -884,7 +884,7 @@ static int tp_ctable[] = {
     brt(7, 6),
     brt(8, 5),
     brt(8, 0),
-    LAST,
+    VFONT_LAST,
 
 /*	table for n	*/
     brt(0, 6),
@@ -893,7 +893,7 @@ static int tp_ctable[] = {
     brt(6, 6),
     brt(8, 4),
     brt(8, 0),
-    LAST,
+    VFONT_LAST,
 
 /*	table for o	*/
     drk(8, 3),
@@ -905,7 +905,7 @@ static int tp_ctable[] = {
     brt(4, 0),
     brt(7, 1),
     brt(8, 3),
-    LAST,
+    VFONT_LAST,
 
 /*	table for p	*/
     drk(0, 6),
@@ -919,7 +919,7 @@ static int tp_ctable[] = {
     brt(4, 0),
     brt(7, 1),
     brt(8, 3),
-    LAST,
+    VFONT_LAST,
 
 /*	table for q	*/
     drk(8, 6),
@@ -934,7 +934,7 @@ static int tp_ctable[] = {
     brt(8, 3),
     bneg(8, 3),
     bneg(9, 3),
-    LAST,
+    VFONT_LAST,
 
 /*	table for r	*/
     brt(1, 0),
@@ -944,7 +944,7 @@ static int tp_ctable[] = {
     brt(3, 6),
     brt(6, 6),
     brt(8, 4),
-    LAST,
+    VFONT_LAST,
 
 /*	table for s	*/
     drk(0, 1),
@@ -957,7 +957,7 @@ static int tp_ctable[] = {
     brt(1, 6),
     brt(7, 6),
     brt(8, 5),
-    LAST,
+    VFONT_LAST,
 
 /*	table for t	*/
     drk(7, 1),
@@ -968,7 +968,7 @@ static int tp_ctable[] = {
     brt(2, 10),
     drk(1, 5),
     brt(5, 5),
-    LAST,
+    VFONT_LAST,
 
 /*	table for u	*/
     drk(0, 6),
@@ -980,13 +980,13 @@ static int tp_ctable[] = {
     brt(7, 6),
     drk(7, 1),
     brt(8, 0),
-    LAST,
+    VFONT_LAST,
 
 /*	table for v	*/
     drk(0, 6),
     brt(4, 0),
     brt(8, 6),
-    LAST,
+    VFONT_LAST,
 
 /*	table for w	*/
     drk(0, 6),
@@ -996,13 +996,13 @@ static int tp_ctable[] = {
     brt(6, 0),
     brt(8, 5),
     brt(8, 6),
-    LAST,
+    VFONT_LAST,
 
 /*	table for x	*/
     brt(8, 6),
     drk(0, 6),
     brt(8, 0),
-    LAST,
+    VFONT_LAST,
 
 /*	table for y	*/
     drk(0, 6),
@@ -1015,14 +1015,14 @@ static int tp_ctable[] = {
     bneg(7, 3),
     bneg(1, 3),
     bneg(0, 2),
-    LAST,
+    VFONT_LAST,
 
 /*	table for z	*/
     drk(0, 6),
     brt(8, 6),
     brt(0, 0),
     brt(8, 0),
-    LAST,
+    VFONT_LAST,
 
 /*	table for ascii 123, left brace	*/
     drk(6, 10),
@@ -1034,7 +1034,7 @@ static int tp_ctable[] = {
     brt(4, 1),
     brt(5, 0),
     brt(6, 0),
-    LAST,
+    VFONT_LAST,
 
 /*	table for ascii 124, vertical bar	*/
     drk(4, 4),
@@ -1047,7 +1047,7 @@ static int tp_ctable[] = {
     brt(5, 10),
     brt(5, 6),
     brt(4, 6),
-    LAST,
+    VFONT_LAST,
 
 /*	table for ascii 125, right brace	*/
     drk(2, 0),
@@ -1059,7 +1059,7 @@ static int tp_ctable[] = {
     brt(4, 9),
     brt(3, 10),
     brt(2, 10),
-    LAST,
+    VFONT_LAST,
 
 /*	table for ascii 126, tilde	*/
     drk(0, 5),
@@ -1068,7 +1068,7 @@ static int tp_ctable[] = {
     brt(5, 4),
     brt(7, 4),
     brt(8, 5),
-    LAST,
+    VFONT_LAST,
 
 /*	table for ascii 127, rubout	*/
     drk(0, 2),
@@ -1076,7 +1076,7 @@ static int tp_ctable[] = {
     brt(8, 8),
     brt(8, 2),
     brt(0, 2),
-    LAST
+    VFONT_LAST
 };
 
 void
@@ -1090,7 +1090,7 @@ tp_setup(void)
     /* Store start addrs of each stroke list */
     for (i = 040 - NUM_SYMBOLS; i < 128; i++)  {
 	tp_cindex[i+128] = tp_cindex[i] = p;
-	while ((*p++) != LAST);
+	while ((*p++) != VFONT_LAST);
     }
     for (i = 1; i <= NUM_SYMBOLS; i++)  {
 	tp_cindex[i+128] = tp_cindex[i] = tp_cindex[040-NUM_SYMBOLS-1+i];

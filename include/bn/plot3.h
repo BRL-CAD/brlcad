@@ -32,9 +32,11 @@
 
 #include "common.h"
 
-#include "bu/defines.h"
 #include "vmath.h"
-#include "bn.h"
+#include "bu/defines.h"
+#include "bu/file.h"
+#include "bn/defines.h"
+#include "bn/plot3.h"
 
 __BEGIN_DECLS
 

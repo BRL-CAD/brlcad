@@ -43,7 +43,7 @@
 #include "bu/list.h"
 #include "bu/vls.h"
 #include "vmath.h"
-#include "plot3.h"
+#include "bn/plot3.h"
 #include "brep.h"
 #include "brep_debug.h"
 #include "dvec.h"

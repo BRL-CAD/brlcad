@@ -50,8 +50,8 @@
 #include "bn/mat.h"
 #include "bn/msr.h"
 #include "bn/noise.h"
-#include "bn/plane_calc.h"
 #include "bn/poly.h"
+#include "bn/plot3.h"
 #include "bn/multipoly.h"
 #include "bn/qmath.h"
 #include "bn/rand.h"
@@ -62,6 +62,7 @@
 #include "bn/vert_tree.h"
 #include "bn/vectfont.h"
 #include "bn/plane_struct.h"
+#include "bn/plane_calc.h"
 #include "bn/clip.h"
 #include "bn/adc.h"
 

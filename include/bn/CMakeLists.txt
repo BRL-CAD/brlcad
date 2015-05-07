@@ -10,6 +10,7 @@ set(bn_headers
   noise.h
   plane_calc.h
   plane_struct.h
+  plot3.h
   poly.h
   qmath.h
   rand.h

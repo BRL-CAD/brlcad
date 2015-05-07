@@ -38,7 +38,7 @@
 #include "raytrace.h"
 #include "rtgeom.h"
 #include "optical.h"
-#include "plot3.h"
+#include "bn/plot3.h"
 
 
 #define bbd_MAGIC 0x62626400	/* "bbd" */
