@@ -46,7 +46,7 @@
 #include "bu/sort.h"
 #include "vmath.h"
 #include "raytrace.h"
-#include "bn/plane_calc.h"
+#include "bn/plane.h"
 #include "bn/plot3.h"
 
 

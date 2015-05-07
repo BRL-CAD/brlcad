@@ -23,8 +23,7 @@
 #include "bu/log.h"
 #include "bu/malloc.h"
 #include "bu/sort.h"
-#include "bn/plane_struct.h"
-#include "bn/plane_calc.h"
+#include "bn/plane.h"
 #include "bn/tol.h"
 #include "gm/polygon.h"
 

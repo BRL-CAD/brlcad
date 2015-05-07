@@ -61,8 +61,7 @@
 #include "bn/vlist.h"
 #include "bn/vert_tree.h"
 #include "bn/vectfont.h"
-#include "bn/plane_struct.h"
-#include "bn/plane_calc.h"
+#include "bn/plane.h"
 #include "bn/clip.h"
 #include "bn/adc.h"
 

@@ -57,7 +57,7 @@
 
 #include "bu/malloc.h"
 #include "bn/tol.h"
-#include "bn/plane_calc.h"
+#include "bn/plane.h"
 #include "gm/chull.h"
 #include "gm/obr.h"
 #include "./gm_private.h"

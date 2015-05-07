@@ -15,24 +15,12 @@
  /**  @defgroup bn_vlist Display Lists */
  /** @ingroup libbn */
  /**  @defgroup plot Plot/Draw */
- /**  @addtogroup plot
-      plotting.
-  */
  /** @ingroup libbn */
  /**  @defgroup noise Fractal Noise */
- /**  @addtogroup noise
-      noise generation.
-  */
  /** @ingroup libbn */
  /**  @defgroup mat Matrix/Vector/Quaternion Math */
- /**  @addtogroup mat
-      LIBBN matrix math.
-  */
  /** @ingroup libbn */
  /**  @defgroup plane Point/Line/Plane Geometry Math */
- /**  @addtogroup plane
-      LIBBN simple geometry math.
-  */
  /** @ingroup libbn */
  /**  @defgroup poly Polynomials */
  /**  @addtogroup poly

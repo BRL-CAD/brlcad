@@ -17,15 +17,18 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @addtogroup plot */
-/** @{ */
-/** @file plot3.h
+/** @addtogroup plot
  *
- *  The basic UNIX-plot routines.  The calling sequence is the same as
- *  the original Bell Labs routines, with the exception of the pl_
- *  prefix on the name.
+ * @brief
+ * The basic UNIX-plot routines.
+ *
+ * The calling sequence is the same as
+ * the original Bell Labs routines, with the exception of the pl_
+ * prefix on the name.
  *
  */
+/** @{ */
+/** @file plot3.h */
 
 #ifndef PLOT3_H
 #define PLOT3_H

@@ -8,8 +8,7 @@ set(bn_headers
   msr.h
   multipoly.h
   noise.h
-  plane_calc.h
-  plane_struct.h
+  plane.h
   plot3.h
   poly.h
   qmath.h

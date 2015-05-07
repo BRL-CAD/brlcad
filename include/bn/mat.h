@@ -19,13 +19,14 @@
  */
 
 /*----------------------------------------------------------------------*/
-/* @file mat.h */
-/** @addtogroup mat */
-/** @{ */
 
-/**
- *  @brief Matrix and vector functionality
+/** @addtogroup mat
+ *
+ *  @brief
+ *  Matrix and vector functionality
  */
+/** @{ */
+/* @file mat.h */
 
 #ifndef BN_MAT_H
 #define BN_MAT_H

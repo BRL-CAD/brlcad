@@ -58,8 +58,7 @@
 #include "common.h"
 #include <math.h>
 #include "vmath.h"
-#include "bn/plane_struct.h"
-#include "bn/plane_calc.h"
+#include "bn/plane.h"
 #include "bn/tol.h"
 #include "gm/tri_tri.h"
 
