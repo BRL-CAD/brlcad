@@ -19,7 +19,7 @@
  */
 
 /*----------------------------------------------------------------------*/
-/** @addtogroup libgm
+/** @addtogroup gm_defines
  * @brief
  * Common definitions for the headers used in gm.h (i.e. the headers found in include/gm)
  */
