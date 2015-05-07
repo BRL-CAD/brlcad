@@ -6,13 +6,13 @@
  /** @ingroup libbn */
 /**   @defgroup bn_defines libbn Definitions*/
  /** @ingroup libbn */
- /**  @defgroup anim Animation */
+ /**  @defgroup bn_anim Animation */
  /** @ingroup libbn */
- /**  @defgroup clip Clipping */
+ /**  @defgroup bn_clip Clipping */
  /** @ingroup libbn */
- /**  @defgroup complex Complex Numbers */
+ /**  @defgroup bn_complex Complex Numbers */
  /** @ingroup libbn */
- /**  @defgroup vlist Display Lists */
+ /**  @defgroup bn_vlist Display Lists */
  /** @ingroup libbn */
  /**  @defgroup plot Plot/Draw */
  /**  @addtogroup plot
@@ -64,14 +64,14 @@
       vertex trees.
   */
  /** @ingroup libbn */
- /**  @defgroup version Version */
- /**  @addtogroup version
-      LIBBN version reporting.
-  */
- /** @ingroup libbn */
  /**  @defgroup wavelet Wavelets */
  /**  @addtogroup wavelet
       LIBBN support for wavelets.
+  */
+ /** @ingroup libbn */
+ /**  @defgroup version Version */
+ /**  @addtogroup version
+      LIBBN version reporting.
   */
 
 /* Random Numbers */

@@ -18,28 +18,6 @@
  * information.
  */
 
-/** @addtogroup anim */
-/** @{ */
-/** @file libbn/tabdata.c
- *
- * @brief
- *  Routines for processing tables (curves) of data with one independent
- *  parameter which is common to many sets of dependent data values.
- *
- *  Operates on bn_table (independent var) and
- *  bn_tabdata (dependent variable) structures.
- *
- *  One application is for storing spectral curves, see spectrum.c
- *
- *  @par Inspired by -
- *	Roy Hall and his book "Illumination and Color in Computer
- *@n	Generated Imagery", Springer Verlag, New York, 1989.
- *@n	ISBN 0-387-96774-5
- *
- *  With thanks to Russ Moulton Jr, EOSoft Inc. for his "rad.c" module.
- */
-/** @} */
-
 #include "common.h"
 
 #include <math.h>
@@ -1354,7 +1332,6 @@ bn_tabdata_mk_linear_filter(const struct bn_table *spectrum, double lower_wavele
 
     return filt;
 }
-/** @} */
 /*
  * Local Variables:
  * mode: C

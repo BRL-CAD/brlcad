@@ -19,11 +19,12 @@
  */
 
 /*----------------------------------------------------------------------*/
-/* @file tabdata.h */
-/** @addtogroup tabdata */
-/** @{ */
-
-/**
+/** @addtogroup tabdata
+ *
+ * @brief
+ * Routines for processing tables (curves) of data with one independent
+ * parameter which is common to many sets of dependent data values.
+ *
  * Data structures to assist with recording many sets of data sampled
  * along the same set of independent variables.
  *
@@ -58,7 +59,21 @@
  * increase wavelength sampling density around "important"
  * frequencies.
  *
+ * Operates on bn_table (independent var) and
+ * bn_tabdata (dependent variable) structures.
+ *
+ * One application is for storing spectral curves, see spectrum.c
+ *
+ * @par Inspired by -
+ *     Roy Hall and his book "Illumination and Color in Computer
+ *@n   Generated Imagery", Springer Verlag, New York, 1989.
+ *@n   ISBN 0-387-96774-5
+ *
+ * With thanks to Russ Moulton Jr, EOSoft Inc. for his "rad.c" module.
  */
+/** @{ */
+/* @file bn/tabdata.h */
+/* @file libbn/tabdata.c */
 
 #ifndef BN_TABDATA_H
 #define BN_TABDATA_H

@@ -30,7 +30,7 @@
 __BEGIN_DECLS
 
 /*----------------------------------------------------------------------*/
-/** @addtogroup vlist
+/** @addtogroup bn_vlist
  *
  * @brief
  * Definitions for handling lists of vectors (really vertices, or

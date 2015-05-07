@@ -19,7 +19,7 @@
  */
 
 /*----------------------------------------------------------------------*/
-/** @addtogroup clip
+/** @addtogroup bn_clip
  * @brief
  * Clipping functions
  */

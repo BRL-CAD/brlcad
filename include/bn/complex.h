@@ -19,7 +19,7 @@
  */
 
 /*----------------------------------------------------------------------*/
-/** @addtogroup complex
+/** @addtogroup bn_complex
  * @brief
  * Complex numbers
  */

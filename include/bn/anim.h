@@ -19,7 +19,7 @@
  */
 
 /*----------------------------------------------------------------------*/
-/** @addtogroup anim
+/** @addtogroup bn_anim
  * @brief
  * Routines useful for moving geometry.
  *
