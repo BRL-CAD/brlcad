@@ -69,34 +69,16 @@
 /* I/O */
 /** @ingroup io */
 /**   @defgroup str Strings */
-/**  @addtogroup str
-     LIBBU wrappers standard C string handling routines.
- */
 /** @ingroup io */
 /**   @defgroup debug Debugging */
-/**  @addtogroup debug
-     LIBBU debugging.
- */
 /** @ingroup io */
 /**   @defgroup path Path Processing */
-/**  @addtogroup path
-     Routines to identify components of and apply normalization rules to paths.  The routines in this module do not assume a file on disk - they operate strictly on the path string.
- */
 /** @ingroup io */
 /**   @defgroup log Logging */
-/**  @addtogroup log
-     LIBBU logging system.
- */
 /** @ingroup io */
 /**   @defgroup file File Processing */
-/**  @addtogroup file
-     LIBBU wrappers file handling.
- */
 /** @ingroup io */
 /**   @defgroup vfont Vector Fonts */
-/**  @addtogroup vfont
-     Basic vector fonts.
- */
 
 
 /* Data Management */

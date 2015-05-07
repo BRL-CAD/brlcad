@@ -21,9 +21,6 @@
 /**  @defgroup io Input/Output */
 /**   @defgroup log Logging */
 
-/** @file log.h
- *
- */
 #ifndef BU_LOG_H
 #define BU_LOG_H
 
@@ -39,13 +36,48 @@
 
 __BEGIN_DECLS
 
-/** @addtogroup log */
-/** @{ */
-/** @file libbu/backtrace.c
+/** @addtogroup log
  *
- * Extract a backtrace of the current call stack.
+ * BRL-CAD support library, error logging routines.  Note that the user
+ * may provide his own logging routine, by replacing these functions.
+ * That is why this is in file of its own.  For example, LGT and
+ * RTSRV take advantage of this.
+ *
+ * Here is an example of how to set up a custom logging callback.
+ * While bu_log presently writes to STDERR by default, this behavior
+ * should not be relied upon and may be changed to STDOUT in the
+ * future without notice.
+ *
+ @code
+ --- BEGIN EXAMPLE ---
+
+ int log_output_to_file(void *data, void *str)
+ {
+   FILE *fp = (FILE *)data;
+   fprintf(fp, "LOG: %s", str);
+   return 0;
+ }
+
+ int main(int ac, char *av[])
+ {
+   FILE *fp = fopen("whatever.log", "w+");
+   bu_log_add_hook(log_output_to_file, (void *)fp);
+   bu_log("Logging to file.\n");
+   bu_log_delete_hook(log_output_to_file, (void *)fp);
+   bu_log("Logging to stderr.\n");
+   fclose(fp);
+   return 0;
+ }
+
+ --- END EXAMPLE ---
+ @endcode
  *
  */
+/** @{ */
+/** @file log.h */
+
+/** @brief Extract a backtrace of the current call stack. */
+/** @file libbu/backtrace.c */
 
 /**
  * this routine provides a trace of the call stack to the caller,
@@ -102,11 +134,9 @@ typedef struct bu_hook_list bu_hook_list_t;
  */
 #define BU_HOOK_LIST_IS_INITIALIZED(_p) (((struct bu_hook_list *)(_p) != BU_HOOK_LIST_NULL) && LIKELY((_p)->l.magic == BU_HOOK_LIST_MAGIC))
 
-/** @file libbu/bomb.c
- *
- * Main functions for exiting/bombing.
- *
- */
+/** @brief Main functions for exiting/bombing. */
+/** @file libbu/bomb.c */
+
 /**
  * Adds a hook to the list of bu_bomb hooks.  The top (newest) one of these
  * will be called with its associated client data and a string to be
@@ -167,12 +197,12 @@ BU_EXPORT extern void bu_bomb(const char *str) _BU_ATTR_NORETURN;
  */
 BU_EXPORT extern void bu_exit(int status, const char *fmt, ...) _BU_ATTR_NORETURN _BU_ATTR_PRINTF23;
 
-/** @file libbu/crashreport.c
- *
+/**
+ * @brief
  * Generate a crash report file, including a call stack backtrace and
  * other system details.
- *
  */
+/** @file libbu/crashreport.c */
 
 /**
  * this routine writes out details of the currently running process to
@@ -186,11 +216,11 @@ BU_EXPORT extern void bu_exit(int status, const char *fmt, ...) _BU_ATTR_NORETUR
  */
 BU_EXPORT extern int bu_crashreport(const char *filename);
 
-/** @file libbu/fgets.c
- *
+/**
+ * @brief
  * fgets replacement function that also handles CR as an EOL marker
- *
  */
+/** @file libbu/fgets.c */
 
 /**
  * Reads in at most one less than size characters from stream and
@@ -203,20 +233,13 @@ BU_EXPORT extern int bu_crashreport(const char *filename);
  */
 BU_EXPORT extern char *bu_fgets(char *s, int size, FILE *stream);
 
-/** @file libbu/linebuf.c
- *
- * A portable way of doing setlinebuf().
- *
- */
+/** @brief A portable way of doing setlinebuf(). */
+/** @file libbu/linebuf.c */
 
 BU_EXPORT extern void bu_setlinebuf(FILE *fp);
 
-/** @file libbu/hook.c
- *
- * @brief
- * BRL-CAD support library's hook utility.
- *
- */
+/** @brief BRL-CAD support library's hook utility. */
+/** @file libbu/hook.c*/
 BU_EXPORT extern void bu_hook_list_init(struct bu_hook_list *hlp);
 BU_EXPORT extern void bu_hook_add(struct bu_hook_list *hlp,
 				  bu_hook_t func,
@@ -232,47 +255,8 @@ BU_EXPORT extern void bu_hook_delete_all(struct bu_hook_list *hlp);
 BU_EXPORT extern void bu_hook_restore_all(struct bu_hook_list *hlp,
 					  struct bu_hook_list *restore_hlp);
 
-/** @file libbu/log.c
- *
- * @brief
- * parallel safe version of fprintf for logging
- *
- * BRL-CAD support library, error logging routine.  Note that the user
- * may provide his own logging routine, by replacing these functions.
- * That is why this is in file of its own.  For example, LGT and
- * RTSRV take advantage of this.
- *
- * Here is an example of how to set up a custom logging callback.
- * While bu_log presently writes to STDERR by default, this behavior
- * should not be relied upon and may be changed to STDOUT in the
- * future without notice.
- *
- @code
- --- BEGIN EXAMPLE ---
-
- int log_output_to_file(void *data, void *str)
- {
-   FILE *fp = (FILE *)data;
-   fprintf(fp, "LOG: %s", str);
-   return 0;
- }
-
- int main(int ac, char *av[])
- {
-   FILE *fp = fopen("whatever.log", "w+");
-   bu_log_add_hook(log_output_to_file, (void *)fp);
-   bu_log("Logging to file.\n");
-   bu_log_delete_hook(log_output_to_file, (void *)fp);
-   bu_log("Logging to stderr.\n");
-   fclose(fp);
-   return 0;
- }
-
- --- END EXAMPLE ---
- @endcode
- *
- */
-
+/** @brief parallel safe version of fprintf for logging */
+/** @file libbu/log.c */
 
 /**
  * Change global indentation level by indicated number of characters.
@@ -331,10 +315,12 @@ BU_EXPORT extern void bu_log(const char *, ...) _BU_ATTR_PRINTF12;
  */
 BU_EXPORT extern void bu_flog(FILE *, const char *, ...) _BU_ATTR_PRINTF23;
 
-/** @file libbu/sscanf.c
+/**
+ * @brief
  * libbu implementations of vsscanf/sscanf() with extra format
  * specifiers.
  */
+/** @file libbu/sscanf.c */
 
 /**
  * Custom vsscanf which wraps the system sscanf, and is wrapped by bu_sscanf.
@@ -380,9 +366,8 @@ BU_EXPORT extern int bu_vsscanf(const char *src, const char *fmt, va_list ap);
  */
 BU_EXPORT extern int bu_sscanf(const char *src, const char *fmt, ...) _BU_ATTR_SCANF23;
 
-/** @file libbu/scan.c
- * Routines for scanning certain kinds of data.
- */
+/** Routines for scanning certain kinds of data. */
+/** @file libbu/scan.c */
 
 /**
  * Scans a sequence of fastf_t numbers from a string or stdin
@@ -453,10 +438,10 @@ BU_EXPORT extern int bu_lex(union bu_lex_token *token,
 			    struct bu_lex_key *symbols);
 
 
-/** @file libbu/mread.c
- *
- * multiple-read to fill a buffer
- *
+/** @brief multiple-read to fill a buffer */
+/** @file libbu/mread.c */
+
+/**
  * Provide a general means to a read some count of items from a file
  * descriptor reading multiple times until the quantity desired is
  * obtained.  This is useful for pipes and network connections that
@@ -465,10 +450,6 @@ BU_EXPORT extern int bu_lex(union bu_lex_token *token,
  *
  * If a read error occurs, a negative value will be returns and errno
  * should be set (by read()).
- *
- */
-
-/**
  * "Multiple try" read.  Read multiple times until quantity is
  * obtained or an error occurs.  This is useful for pipes.
  */

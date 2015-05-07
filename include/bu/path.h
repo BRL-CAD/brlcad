@@ -19,18 +19,8 @@
  */
 
 /** @defgroup io Input/Output */
-/** @defgroup path Path Processing
- *
- *  Functionality for processing operating system and geometry database path
- *  strings.  The functions in this module will not check for the presence or
- *  absence of objects on disk or in a geometry database - they operate
- *  only on the the path string itself.  Any validation of the path
- *  is the responsibility of the caller.
- */
+/** @defgroup path Path Processing */
 
-/** @file path.h
- *
- */
 #ifndef BU_PATH_H
 #define BU_PATH_H
 
@@ -49,18 +39,19 @@
 
 __BEGIN_DECLS
 
-/** @addtogroup path */
+/** @addtogroup path
+ *
+ *  Functionality for processing operating system and geometry database path
+ *  strings. Routines in this header have no knowledge of the file system,
+ *  beyond an awareness of the path separator in use in the working operating
+ *  system environment. They will not check for the presence or absence of
+ *  objects on disk or in a geometry database - they operate only on the the
+ *  path string itself.  Any validation of the path is the responsibility of
+ *  the caller.
+ */
 /** @{ */
 /** @file libbu/path.c */
-
-/**
- * Support routines for working with path strings, both
- * filesystem paths and .g database hierarchy paths
- *
- * Routines in this header have no knowledge of the
- * file system, beyond an awareness of the path separator
- * in use in the working operating system environment.
- */
+/** @file bu/path.h */
 
 /**
  * Given a string containing a hierarchical path, return a dynamic
