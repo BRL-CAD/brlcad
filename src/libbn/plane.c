@@ -1688,6 +1688,7 @@ bn_isect_pt_lseg(fastf_t *dist,
  * @param a is line start point
  * @param b is line end point
  * @param p is line intersect point
+ * @param tol contains the tolerances used for calculations
  */
 int
 bn_isect_pt2_lseg2(fastf_t *dist, const fastf_t *a, const fastf_t *b, const fastf_t *p, const struct bn_tol *tol)
