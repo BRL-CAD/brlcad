@@ -84,23 +84,12 @@
 /* Data Management */
 /** @ingroup data */
 /**   @defgroup cmd Command Processing */
-/**  @addtogroup cmd
-     Command Processing.
- */
 /** @ingroup data */
 /**   @defgroup conv Data Conversion */
-/**  @addtogroup conv
-     Data Conversion.
- */
 /** @ingroup data */
 /**   @defgroup getopt Command-line Option Parsing*/
 /**  @addtogroup getopt
      Command line option parsing (doesn't currently support --long-option style options.)
- */
-/** @ingroup data */
-/**   @defgroup hton Network Byte-order Conversion */
-/**  @addtogroup hton
-     Converting bytes to/from network order.
  */
 /** @ingroup data */
 /**   @defgroup hist Histogram Handling */
