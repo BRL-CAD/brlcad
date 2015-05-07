@@ -29,14 +29,13 @@
 
 __BEGIN_DECLS
 
-/** @addtogroup version */
-/** @{ */
-
-/** @file libbu/vers.c
- *
- * version information about LIBBU
- *
+/** @addtogroup version
+ * @brief
+ * Version reporting for LIBBU
  */
+/** @{ */
+/** @file bu/version.h */
+/** @file libbu/vers.c */
 
 /**
  * returns the compile-time version of libbu

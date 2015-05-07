@@ -34,6 +34,7 @@ __BEGIN_DECLS
 /*----------------------------------------------------------------------*/
 /** @addtogroup avs
  *
+ * @brief
  * Routines to manage attribute/value sets.
  */
 /** @{ */

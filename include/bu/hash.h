@@ -31,6 +31,7 @@
 __BEGIN_DECLS
 
 /** @addtogroup hash
+ * @brief
  * An implementation of hash tables.
  */
 /** @{ */

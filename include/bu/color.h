@@ -33,12 +33,11 @@ __BEGIN_DECLS
 /*----------------------------------------------------------------------*/
 
 /** @addtogroup color
- *  Support for storing and manipulating color data.
+ * @brief
+ * Support for storing and manipulating color data.
  */
 /** @{ */
-/** @brief Color subheader */
 /** @file bu/color.h */
-/** @brief Color implementation */
 /** @file libbu/color.c */
 
 #define RED 0

@@ -7,39 +7,12 @@
 /**   @defgroup bn_defines libbn Definitions*/
  /** @ingroup libbn */
  /**  @defgroup anim Animation */
- /**  @addtogroup anim
-      LIBBN support for animation operations.
-  */
- /** @ingroup libbn */
- /**  @defgroup adc Angle/Distance Cursor */
- /**  @addtogroup anim
-      Angle/Distance Cursor
-  */
- /** @ingroup libbn */
- /**  @defgroup axis Axis */
- /**  @addtogroup anim
-      Axix.
-  */
  /** @ingroup libbn */
  /**  @defgroup clip Clipping */
- /**  @addtogroup clip
-      Clipping.
-  */
  /** @ingroup libbn */
  /**  @defgroup complex Complex Numbers */
- /**  @addtogroup complex
-      LIBBN support for complex numbers.
-  */
- /** @ingroup libbn */
- /**  @defgroup const Constants */
- /**  @addtogroup const
-      LIBBN constants.
-  */
  /** @ingroup libbn */
  /**  @defgroup vlist Display Lists */
- /**  @addtogroup vlist
-      vector lists.
-  */
  /** @ingroup libbn */
  /**  @defgroup plot Plot/Draw */
  /**  @addtogroup plot

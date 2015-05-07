@@ -20,6 +20,7 @@
 
 /** @addtogroup libgm
  *
+ * @brief
  * BRL-CAD geometry library. This library is intended for generic
  * geometry algorithms, such as point-in-polygon, does a line
  * intersect a sphere, ear clipping triangulation of a polygon, etc.

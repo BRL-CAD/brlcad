@@ -33,6 +33,7 @@ __BEGIN_DECLS
 /*----------------------------------------------------------------------*/
 /** @addtogroup bitv
  *
+ * @brief
  * Routines for managing efficient high-performance bit vectors of
  * arbitrary length.
  *
@@ -45,9 +46,7 @@ __BEGIN_DECLS
  *
  */
 /** @{*/
-/** @brief Bit Vector sub-header */
 /** @file bu/bitv.h */
-/** @brief Bit Vector implementation */
 /** @file libbu/bitv.c */
 
 /**

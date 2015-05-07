@@ -33,7 +33,7 @@
 __BEGIN_DECLS
 
 /** @addtogroup endian
- *
+ * @brief
  * Run-time byte order detection.
  *
  */

@@ -37,6 +37,7 @@
 __BEGIN_DECLS
 
 /** @addtogroup bu_time
+ * @brief
  * Cross platform wrapper for microsecond accuracy timing functionality.
  */
 /** @{ */

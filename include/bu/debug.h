@@ -31,6 +31,7 @@ __BEGIN_DECLS
 
 /** @addtogroup debug Debugging
  *
+ * @brief
  * Debugging definitions.
  *
  */

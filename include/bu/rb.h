@@ -33,6 +33,7 @@ __BEGIN_DECLS
 /*----------------------------------------------------------------------*/
 /** @addtogroup rb
  *
+ * @brief
  * The data structures and constants for red-black trees.
  *
  * Many of these routines are based on the algorithms in chapter 13 of
@@ -63,8 +64,7 @@ __BEGIN_DECLS
  * Algorithms."
  */
 /** @{ */
-/** @brief Subheader for Red-Black trees */
-/** @file rb.h */
+/** @file bu/rb.h */
 
 
 /**

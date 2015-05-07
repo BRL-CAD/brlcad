@@ -34,7 +34,10 @@ __BEGIN_DECLS
 
 /** @addtogroup conv
  *
- * Routines to translate data formats.  The data formats are:
+ * @brief
+ * Routines to translate data formats.
+ *
+ * The data formats are:
  *
  * \li Host/Network		is the data in host format or local format
  * \li signed/unsigned		Is the data signed?

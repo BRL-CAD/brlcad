@@ -31,6 +31,9 @@ __BEGIN_DECLS
 
 /** @addtogroup malloc
  *
+ * @brief
+ * Parallel-protected debugging-enhanced wrapper around system malloc().
+ *
  * Provides a parallel-safe interface to the system memory allocator
  * with standardized error checking, optional memory-use logging, and
  * optional run-time pointer and memory corruption testing.

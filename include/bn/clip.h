@@ -19,13 +19,11 @@
  */
 
 /*----------------------------------------------------------------------*/
-/* @file clip.h */
-/** @addtogroup clip */
-/** @{ */
-
-/**
- *  @brief Clipping functions
+/** @addtogroup clip
+ *  Clipping functions
  */
+/** @{ */
+/** @file clip.h */
 
 #ifndef BN_CLIP_H
 #define BN_CLIP_H
@@ -60,7 +58,9 @@ BN_EXPORT extern int bn_ray_vclip(vect_t a, vect_t b, fastf_t *min, fastf_t *max
 __END_DECLS
 
 #endif  /* BN_CLIP_H */
+
 /** @} */
+
 /*
  * Local Variables:
  * mode: C

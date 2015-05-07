@@ -21,6 +21,7 @@
 
 /** @addtogroup libbu
  *
+ * @brief
  * The two letters "BU" stand for "BRL-CAD" and "Utility".  This
  * library provides several layers of low-level utility routines,
  * providing features that make cross-platform coding easier.

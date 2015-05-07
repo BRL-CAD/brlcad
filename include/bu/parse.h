@@ -35,6 +35,8 @@
 __BEGIN_DECLS
 
 /** @addtogroup parse
+ *
+ * @brief
  * Definitions and data structures needed for routines that assign
  * values to elements of arbitrary data structures, the layout of
  * which is described by tables of "bu_structparse" structures.
@@ -47,9 +49,7 @@ __BEGIN_DECLS
  * element is changed.
  */
 /** @{ */
-/** @brief Parse subheader */
 /** @file bu/parse.h */
-
 
 /**
  * The general problem of word-addressed hardware where (int *) and

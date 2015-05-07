@@ -8,32 +8,32 @@
 /** @ingroup libbu */
 /**  @defgroup container Data Containers */
 /**  @addtogroup container
-     LIBBU containers for holding various kinds of information.
+     @brief Containers for holding various kinds of information.
  */
 /** @ingroup libbu */
 /**  @defgroup memory Memory Management */
 /**  @addtogroup memory
-     LIBBU wrappers for memory allocation and release, and mapping.
+     @brief Wrappers for memory allocation and release, and mapping.
  */
 /** @ingroup libbu */
 /**  @defgroup io Input/Output */
 /**  @addtogroup io
-     LIBBU support for file and string handling, as well as debugging, path manipulation, logging and vector fonts.
+     @brief Support for file and string handling, as well as debugging, path manipulation, logging and vector fonts.
  */
 /** @ingroup libbu */
 /**  @defgroup data Data Management */
 /**  @addtogroup data
-     LIBBU routines for command processing, network byte order conversion, sorting algorithms, time, endian support, units, etc.
+     @brief Routines for command processing, network byte order conversion, sorting algorithms, time, endian support, units, etc.
  */
 /** @ingroup libbu */
 /**  @defgroup parallel  Parallel Processing */
 /**  @addtogroup parallel
-     LIBBU cross platform API for parallel processing, handling issues like threads and semaphores.
+     @brief Cross platform API for parallel processing, handling issues like threads and semaphores.
  */
 /** @ingroup libbu */
 /**  @defgroup binding Language Bindings */
 /**  @addtogroup binding
-     LIBBU language bindings.
+     @brief Language bindings.
  */
 
 /* Data Containers */

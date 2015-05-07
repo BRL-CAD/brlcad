@@ -19,9 +19,8 @@
  */
 
 /** @addtogroup cmd
- *
- *  Routine(s) for processing subcommands
- *
+ * @brief
+ * Routine(s) for processing subcommands
  */
 /** @{ */
 /** @file bu/cmd.h */

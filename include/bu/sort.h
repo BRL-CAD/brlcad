@@ -34,10 +34,13 @@ __BEGIN_DECLS
 
 /** @addtogroup sort
  *
- * Platform-independent re-entrant version of qsort, where the first argument
- * is the array to sort, the second the number of elements inside the array, the
- * third the size of one element, the fourth the comparison-function and the
- * fifth a variable which is handed as a third argument to the comparison-function.
+ * @brief
+ * Platform-independent re-entrant version of qsort.
+ *
+ * The first argument is the array to sort, the second the number of elements
+ * inside the array, the third the size of one element, the fourth the
+ * comparison-function and the fifth a variable which is handed as a third
+ * argument to the comparison-function.
  *
  */
 /** @{ */

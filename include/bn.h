@@ -21,6 +21,7 @@
 
 /** @addtogroup libbn
  *
+ * @brief
  * The library provides a broad assortment of numerical algorithms and
  * computational routines, including random number generation, vector
  * math, matrix math, quaternion math, complex math, synthetic

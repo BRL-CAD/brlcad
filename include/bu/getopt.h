@@ -30,6 +30,7 @@
 __BEGIN_DECLS
 
 /** @addtogroup getopt
+ * @brief
  * Special portable re-entrant version of getopt.
  *
  * Everything is prefixed with bu_, to distinguish it from the various

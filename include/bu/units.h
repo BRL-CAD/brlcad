@@ -32,6 +32,7 @@
 __BEGIN_DECLS
 
 /** @addtogroup units
+ * @brief
  * Module of libbu to handle units conversion between strings and mm.
  */
 /** @{ */

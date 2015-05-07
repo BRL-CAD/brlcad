@@ -33,6 +33,7 @@
 __BEGIN_DECLS
 
 /** @addtogroup tcl
+ * @brief
  * Routine(s) to allow TCL calling libbu code.
  */
 /** @{ */

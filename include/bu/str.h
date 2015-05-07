@@ -31,6 +31,7 @@ __BEGIN_DECLS
 
 /** @addtogroup str
  *
+ * @brief
  * Compatibility routines to various string processing functions
  * including strlcat and strlcpy.
  *

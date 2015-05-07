@@ -37,6 +37,7 @@ __BEGIN_DECLS
 
 /** @addtogroup ptbl
  *
+ * @brief
  * Support for generalized "pointer tables", kept compactly in a
  * dynamic array.
  *
@@ -47,9 +48,7 @@ __BEGIN_DECLS
  *
  */
 /** @{ */
-/** @brief Subheader for generalized "pointer tables" */
-/** @file ptbl.h*/
-/** @brief Implementation file for generalized "pointer tables" */
+/** @file bu/ptbl.h*/
 /** @file libbu/ptbl.c */
 
 

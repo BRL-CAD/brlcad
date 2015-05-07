@@ -20,7 +20,8 @@
 
 /** @addtogroup bu_defines
  *
- * These definitions are specific to libbu.
+ * @brief
+ * These are definitions specific to libbu, used throughout the library.
  *
  */
 /** @{ */

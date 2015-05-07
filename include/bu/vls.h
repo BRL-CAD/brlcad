@@ -40,18 +40,19 @@ __BEGIN_DECLS
 /*----------------------------------------------------------------------*/
 /** @addtogroup vls
  *
- * Variable length strings provide a way for programmers to easily handling dynamic
- * strings - they serve a function similar to that of std::string in C++.  This
- * frees the programmer from concerns about having character arrays
- * large enough to hold strings.
+ * @brief
+ * Variable length strings provide a way for programmers to easily handling
+ * dynamic strings - they serve a function similar to that of std::string in
+ * C++.
  *
- * Assumption:  libc-provided sprintf() function is safe to use in parallel,
- * on parallel systems.
+ * This frees the programmer from concerns about having character arrays large
+ * enough to hold strings.
+ *
+ * Assumption:  libc-provided sprintf() function is safe to use in parallel, on
+ * parallel systems.
  */
 /** @{ */
-/** @brief Variable Length Strings - implementation */
 /** @file libbu/vls.c */
-/** @brief Variable Length Strings - subheader */
 /** @file bu/vls.h */
 
 /** Primary bu_vls container */

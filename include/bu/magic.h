@@ -27,6 +27,9 @@
 
 /** @addtogroup magic
  *
+ * @brief
+ * Global registry of recognized magic numbers.
+ *
  * Magic numbers provide a means
  * to perform run-time sanity checks for memory corruption and
  * uninitialized data.

@@ -30,21 +30,9 @@
 __BEGIN_DECLS
 
 /*----------------------------------------------------------------------*/
-/* @file vlist.h */
-/** @addtogroup vlist */
-/** @{ */
-
-/**
+/** @addtogroup vlist
+ *
  * @brief
- * Definitions for handling lists of vectors (really vertices, or
- * points) and polygons in 3-space.  Intended for common handling of
- * wireframe display information, in the full resolution that is
- * calculated in.
- */
-
-#define BN_VLIST_CHUNK 35		/**< @brief 32-bit mach => just less than 1k */
-
-/**
  * Definitions for handling lists of vectors (really vertices, or
  * points) and polygons in 3-space.  Intended for common handling of
  * wireframe display information, in the full resolution that is
@@ -68,6 +56,12 @@ __BEGIN_DECLS
  *		}
  *	}
  */
+/** @{ */
+/** @file vlist.h */
+
+
+#define BN_VLIST_CHUNK 35		/**< @brief 32-bit mach => just less than 1k */
+
 struct bn_vlist  {
     struct bu_list l;		/**< @brief magic, forw, back */
     size_t nused;		/**< @brief elements 0..nused active */

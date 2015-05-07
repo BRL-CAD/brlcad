@@ -19,12 +19,8 @@
  */
 
 /*----------------------------------------------------------------------*/
-/* anim.h */
-/** @addtogroup anim */
-/** @{ */
-
-/**
- * @brief Routines useful in animation programs.
+/** @addtogroup anim
+ * Routines useful in animation programs.
  *
  * Orientation conventions: The default object orientation is facing
  * the positive x-axis, with the positive y-axis to the object's left
@@ -34,6 +30,8 @@
  * z-axis, with the negative x-axis leading to the left and the
  * positive y-axis going upwards.
  */
+/** @{ */
+/** @file bn/anim.h */
 
 #ifndef BN_ANIM_H
 #define BN_ANIM_H

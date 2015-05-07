@@ -44,6 +44,7 @@ __BEGIN_DECLS
 
 /** @addtogroup file
  *
+ * @brief
  * Support routines for identifying properties of files and
  * directories such as whether they exist or are the same as another
  * given file.

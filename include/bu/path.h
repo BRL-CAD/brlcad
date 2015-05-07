@@ -41,8 +41,11 @@ __BEGIN_DECLS
 
 /** @addtogroup path
  *
+ *  @brief
  *  Functionality for processing operating system and geometry database path
- *  strings. Routines in this header have no knowledge of the file system,
+ *  strings.
+ *
+ *  Routines in this header have no knowledge of the file system,
  *  beyond an awareness of the path separator in use in the working operating
  *  system environment. They will not check for the presence or absence of
  *  objects on disk or in a geometry database - they operate only on the the

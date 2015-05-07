@@ -30,6 +30,10 @@ __BEGIN_DECLS
 
 /*----------------------------------------------------------------------*/
 /** @addtogroup list
+ *
+ * @brief
+ * Support routines for doubly-linked lists.
+ *
  * These macros assume that all user-provided structures will have a
  * "struct bu_list" as their first element (often named "l" [ell]).
  * Thus, a pointer to the bu_list struct is a "pun" for the

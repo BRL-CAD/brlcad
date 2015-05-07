@@ -34,6 +34,7 @@
 __BEGIN_DECLS
 
 /** @addtogroup thread
+ * @brief
  * Thread based parallelism routines.
  */
 /** @{ */

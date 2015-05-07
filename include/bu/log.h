@@ -38,15 +38,16 @@ __BEGIN_DECLS
 
 /** @addtogroup log
  *
- * BRL-CAD support library, error logging routines.  Note that the user
- * may provide his own logging routine, by replacing these functions.
- * That is why this is in file of its own.  For example, LGT and
+ * @brief
+ * BRL-CAD support library, error logging routines.
+ *
+ * Note that the user may provide his own logging routine, by replacing these
+ * functions.  That is why this is in file of its own.  For example, LGT and
  * RTSRV take advantage of this.
  *
- * Here is an example of how to set up a custom logging callback.
- * While bu_log presently writes to STDERR by default, this behavior
- * should not be relied upon and may be changed to STDOUT in the
- * future without notice.
+ * Here is an example of how to set up a custom logging callback.  While bu_log
+ * presently writes to STDERR by default, this behavior should not be relied
+ * upon and may be changed to STDOUT in the future without notice.
  *
  @code
  --- BEGIN EXAMPLE ---

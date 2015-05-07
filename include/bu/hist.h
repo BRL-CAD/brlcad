@@ -38,6 +38,7 @@ __BEGIN_DECLS
 
 /** @addtogroup hist
  *
+ * @brief
  * General purpose histogram handling routines.
  *
  * The subroutine bu_hist_range() is used to record items that may
