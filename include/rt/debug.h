@@ -19,7 +19,7 @@
  */
 /** @addtogroup librt */
 /** @{ */
-/** @file debug.h
+/** @file rt/debug.h
  *
  * librt debugging information
  *

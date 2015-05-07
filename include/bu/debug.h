@@ -33,7 +33,7 @@ __BEGIN_DECLS
  *
  */
 /** @{ */
-/** @file debug.h */
+/** @file bu/debug.h */
 
 /**
  * controls the libbu debug level

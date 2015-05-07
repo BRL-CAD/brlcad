@@ -23,7 +23,7 @@
  *  Common definitions for the headers used in libbn (i.e. the headers found in include/bn)
  */
 /** @{ */
-/** @file defines.h */
+/** @file bn/defines.h */
 
 #ifndef BN_DEFINES_H
 #define BN_DEFINES_H

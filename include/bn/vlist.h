@@ -57,7 +57,7 @@ __BEGIN_DECLS
  *	}
  */
 /** @{ */
-/** @file vlist.h */
+/** @file bn/vlist.h */
 
 
 #define BN_VLIST_CHUNK 35		/**< @brief 32-bit mach => just less than 1k */

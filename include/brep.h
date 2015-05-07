@@ -17,14 +17,13 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @addtogroup libbrep */
-/** @{ */
-/** @file brep.h
- *
+/** @addtogroup libbrep
+ * @brief
  * Define surface and curve structures for Non-Uniform Rational
  * B-Spline (NURBS) curves and surfaces. Uses openNURBS library.
- *
  */
+/** @{ */
+/** @file include/brep.h */
 #ifndef BREP_H
 #define BREP_H
 
