@@ -19,7 +19,7 @@
  */
 
 /*----------------------------------------------------------------------*/
-/** @addtogroup wavelet
+/** @addtogroup bn_wavelet
  *
  * @brief
  *  This is a standard wavelet library that takes a given data buffer of some data

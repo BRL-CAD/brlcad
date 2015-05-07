@@ -19,7 +19,7 @@
  */
 
 /*----------------------------------------------------------------------*/
-/** @addtogroup vtree
+/** @addtogroup bn_vtree
  *
  * @brief
  * Vertex tree support

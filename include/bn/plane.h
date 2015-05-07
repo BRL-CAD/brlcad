@@ -19,7 +19,7 @@
  */
 
 /*----------------------------------------------------------------------*/
-/** @addtogroup plane
+/** @addtogroup bn_plane
  *
  * @brief
  * Plane structures (from src/librt/plane.h) and plane/line/point calculations

@@ -19,7 +19,7 @@
  */
 
 /*----------------------------------------------------------------------*/
-/** @addtogroup tol
+/** @addtogroup bn_tol
  *
  * @brief Support for uniform tolerances
  *
@@ -58,7 +58,7 @@
  *@n tol->para = 1 - tol->perp;
  */
 /** @{ */
-/** @file tol.h		*/
+/** @file bn/tol.h */
 
 #ifndef BN_TOL_H
 #define BN_TOL_H

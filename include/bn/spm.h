@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @addtogroup sphmap
+/** @addtogroup bn_sphmap
  *
  * @brief Sphere data structure and function declarations.  Provides
  * spherical data structures for texture mapping.

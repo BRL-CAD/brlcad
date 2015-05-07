@@ -19,7 +19,7 @@
  */
 
 /*----------------------------------------------------------------------*/
-/** @addtogroup tabdata
+/** @addtogroup bn_tabdata
  *
  * @brief
  * Routines for processing tables (curves) of data with one independent
