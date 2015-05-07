@@ -38,9 +38,9 @@
 #include <math.h>
 
 #include "vmath.h"
+#include "bn/spm.h"
 #include "raytrace.h"
 #include "fb.h"
-#include "spm.h"
 #include "optical.h"
 
 

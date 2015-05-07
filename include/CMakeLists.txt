@@ -52,7 +52,6 @@ set(public_hdrs
   shadework.h
   solid.h
   spectrum.h
-  spm.h
   tie.h
   tol.h
   vector_fpu.h

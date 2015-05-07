@@ -14,6 +14,7 @@ set(bn_headers
   qmath.h
   rand.h
   randmt.h
+  spm.h
   tabdata.h
   bn_tcl.h
   tol.h

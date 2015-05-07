@@ -30,18 +30,7 @@
 #define SPM_H
 
 #include "common.h"
-
-#ifndef BN_EXPORT
-#  if defined(BN_DLL_EXPORTS) && defined(BN_DLL_IMPORTS)
-#    error "Only BN_DLL_EXPORTS or BN_DLL_IMPORTS can be defined, not both."
-#  elif defined(BN_DLL_EXPORTS)
-#    define BN_EXPORT __declspec(dllexport)
-#  elif defined(BN_DLL_IMPORTS)
-#    define BN_EXPORT __declspec(dllimport)
-#  else
-#    define BN_EXPORT
-#  endif
-#endif
+#include "bn/defines.h"
 
 typedef struct {
     uint32_t magic;
