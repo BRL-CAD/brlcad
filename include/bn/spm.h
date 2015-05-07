@@ -17,14 +17,14 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @addtogroup sphmap */
-/** @{ */
-/** @file spm.h
+/** @addtogroup sphmap
  *
  * @brief Sphere data structure and function declarations.  Provides
  * spherical data structures for texture mapping.
  *
  */
+/** @{ */
+/** @file spm.h */
 
 #ifndef SPM_H
 #define SPM_H

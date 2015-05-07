@@ -171,10 +171,6 @@ struct bn_vlblock {
 #define BN_CK_VLBLOCK(_p)	BU_CKMAG((_p), BN_VLBLOCK_MAGIC, "bn_vlblock")
 
 
-/** @file libbn/font.c
- *
- */
-
 /**
  * Convert a string to a vlist.
  *

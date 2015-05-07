@@ -19,10 +19,9 @@
  */
 
 /*----------------------------------------------------------------------*/
-/** @file tol.h		*/
-/** @addtogroup tol */
-/** @{ */
-/** @brief Support for uniform tolerances
+/** @addtogroup tol
+ *
+ * @brief Support for uniform tolerances
  *
  * A handy way of passing around the tolerance information needed to
  * perform approximate floating-point calculations on geometry.
@@ -58,6 +57,8 @@
  * tol->dist_sq = tol->dist * tol->dist;
  *@n tol->para = 1 - tol->perp;
  */
+/** @{ */
+/** @file tol.h		*/
 
 #ifndef BN_TOL_H
 #define BN_TOL_H
