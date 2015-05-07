@@ -39,6 +39,7 @@
  * header or appropriate included files from the ./gm subdirectory.
  */
 /** @{ */
+/** @brief Header file for the BRL-CAD Geometry Library, LIBGM.*/
 /** @file gm.h */
 /** @} */
 

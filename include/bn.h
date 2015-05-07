@@ -18,7 +18,6 @@
  * information.
  */
 
-/* Header file for the BRL-CAD Numerical Computation Library, LIBBN.*/
 
 /** @addtogroup libbn
  *
@@ -32,6 +31,7 @@
  *
  */
 /** @{ */
+/** @brief Header file for the BRL-CAD Numerical Computation Library, LIBBN.*/
 /** @file bn.h */
 /** @} */
 
