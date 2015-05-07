@@ -39,8 +39,6 @@
 
 __BEGIN_DECLS
 
-#include "tcl_encode.h"
-
 /**
  *@brief
  * Add all the supported Tcl interfaces to LIBBN routines to
@@ -58,6 +56,36 @@ BN_EXPORT extern void bn_tcl_setup(Tcl_Interp *interp);
 BN_EXPORT extern int Bn_Init(Tcl_Interp *interp);
 
 BN_EXPORT extern void bn_tcl_mat_print(Tcl_Interp *interp, const char *title, const mat_t m);
+
+/**
+ *  @brief Support routines for the math functions
+ */
+
+/* XXX Really need a decode_array function that uses atof(),
+ * XXX so that junk like leading { and commas between inputs
+ * XXX don't spoil the conversion.
+ */
+
+/* The presence of Tcl_Interp as an arg prevents giving arg list */
+
+BN_EXPORT extern int bn_decode_mat(mat_t m,
+				   const char *str);
+BN_EXPORT extern int bn_decode_quat(quat_t q,
+				    const char *str);
+BN_EXPORT extern int bn_decode_vect(vect_t v,
+				    const char *str);
+BN_EXPORT extern int bn_decode_hvect(hvect_t v,
+				     const char *str);
+BN_EXPORT extern void bn_encode_mat(struct bu_vls *vp,
+				    const mat_t m);
+BN_EXPORT extern void bn_encode_quat(struct bu_vls *vp,
+				     const quat_t q);
+BN_EXPORT extern void bn_encode_vect(struct bu_vls *vp,
+				     const vect_t v);
+BN_EXPORT extern void bn_encode_hvect(struct bu_vls *vp,
+				      const hvect_t v);
+
+
 
 __END_DECLS
 

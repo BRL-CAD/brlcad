@@ -16,7 +16,6 @@ set(bn_headers
   rand.h
   randmt.h
   tabdata.h
-  tcl_encode.h
   bn_tcl.h
   tol.h
   vectfont.h

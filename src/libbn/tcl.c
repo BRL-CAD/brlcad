@@ -45,7 +45,6 @@
 #include "bn/qmath.h"
 #include "bn/rand.h"
 #include "bn/bn_tcl.h"
-#include "bn/tcl_encode.h"
 
 int
 bn_decode_mat(fastf_t *mat, const char *str)
