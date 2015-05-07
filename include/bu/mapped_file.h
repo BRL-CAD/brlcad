@@ -35,11 +35,7 @@
 
 __BEGIN_DECLS
 
-/** @addtogroup mf */
-/** @{ */
-/** @file libbu/mappedfile.c
- *
- * Routines for sharing large read-only data files.
+/** @addtogroup mf
  *
  * Routines for sharing large read-only data files like height fields,
  * bit map solids, texture maps, etc.  Uses memory mapped files where
@@ -59,8 +55,15 @@ __BEGIN_DECLS
  *
  */
 
+/** @{ */
+/** @brief Routines for sharing large read-only data files. */
+/** @file bu/mapped_file.h */
+/** @brief Mapped file implementation. */
+/** @file libbu/mappedfile.c */
+
+
 /**
- * @struct bu_mapped_file bu.h
+ * @struct bu_mapped_file bu/mapped_file.h
  *
  * Structure for opening a mapped file.
  *

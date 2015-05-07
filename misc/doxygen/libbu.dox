@@ -58,23 +58,13 @@
 /** @ingroup container */
 /**   @defgroup vls Variable-length Strings */
 
-
 /* Memory Management */
 /** @ingroup memory */
 /**   @defgroup magic Magic Numbers */
-/**  @addtogroup magic
-     Specific numbers used in structures to verify that a given structure has been properly allocated and is of the correct type.
- */
 /** @ingroup memory */
 /**   @defgroup malloc Allocation & Deallocation */
-/**  @addtogroup malloc
-     LIBBU wrappers for malloc and free.
- */
 /** @ingroup memory */
 /**   @defgroup mf Memory-mapped Files */
-/**  @addtogroup mf
-     LIBBU wrappers for memory mapping files.
- */
 
 /* I/O */
 /** @ingroup io */
