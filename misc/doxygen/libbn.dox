@@ -16,16 +16,17 @@
  /** @ingroup libbn */
  /**  @defgroup plot Plot/Draw */
  /** @ingroup libbn */
+ /**  @defgroup bn_vfont Vector Fonts*/
+ /** @ingroup libbn */
  /**  @defgroup noise Fractal Noise */
  /** @ingroup libbn */
- /**  @defgroup mat Matrix/Vector/Quaternion Math */
+ /**  @defgroup mat Matrix/Vector Math */
+ /** @ingroup libbn */
+ /**  @defgroup bn_quat Quaternion Math */
  /** @ingroup libbn */
  /**  @defgroup plane Point/Line/Plane Geometry Math */
  /** @ingroup libbn */
  /**  @defgroup poly Polynomials */
- /**  @addtogroup poly
-      LIBBN polynomial support.
-  */
  /** @ingroup libbn */
  /**  @defgroup bntcl libbn Tcl interface */
  /**  @addtogroup bntcl
@@ -66,16 +67,12 @@
 /** @ingroup libbn */
 /**  @defgroup rand Random Numbers */
  /**  @addtogroup rand
-      LIBBN support random number generation.
+      LIBBN support for random number generation.
   */
 /**   @ingroup rand */
-/**    @defgroup msr Minimal Standard Random Numbers */
- /**  @addtogroup msr
-      LIBBN support for minimal standard random numbers.
-  */
+/**    @defgroup bn_msr Minimal Standard Random Numbers */
 /**   @ingroup rand */
-/**    @defgroup rnd Random Number Tables */
- /**  @addtogroup rnd
-      LIBBN Random Number Tables.
-  */
+/**    @defgroup bn_rmt Mersenne Twister */
+/**   @ingroup rand */
+/**    @defgroup bn_rnt Random Number Tables */
 

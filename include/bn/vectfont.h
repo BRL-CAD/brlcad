@@ -26,7 +26,7 @@
 
 __BEGIN_DECLS
 
-/** @addtogroup vectorfont
+/** @addtogroup bn_vfont
  *
  *  @brief
  *  Terminal Independent Graphics Display Package.
