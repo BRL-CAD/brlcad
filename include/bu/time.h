@@ -36,10 +36,13 @@
 
 __BEGIN_DECLS
 
-/** @addtogroup bu_time */
+/** @addtogroup bu_time
+ * Cross platform wrapper for microsecond accuracy timing functionality.
+ */
 /** @{ */
+/** @file libbu/timer.c */
 
-/** @file libbu/timer.c
+/**
  * Return microsecond accuracy time information.
  */
 BU_EXPORT extern int64_t bu_gettime(void);

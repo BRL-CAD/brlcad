@@ -36,9 +36,7 @@
 
 __BEGIN_DECLS
 
-/** @addtogroup hist */
-/** @{ */
-/** @file libbu/hist.c
+/** @addtogroup hist
  *
  * General purpose histogram handling routines.
  *
@@ -46,6 +44,8 @@ __BEGIN_DECLS
  * extend across multiple "bin"s.
  *
  */
+/** @{ */
+/** @file libbu/hist.c */
 
 /**
  * histogram support

@@ -31,15 +31,11 @@
 
 __BEGIN_DECLS
 
-/** @addtogroup units */
-/** @{ */
-
-
-/** @file libbu/units.c
- *
+/** @addtogroup units
  * Module of libbu to handle units conversion between strings and mm.
- *
  */
+/** @{ */
+/** @file libbu/units.c */
 
 /**
  * Given a string representation of a unit of distance (e.g., "feet"),

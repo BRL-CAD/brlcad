@@ -18,12 +18,10 @@
  * information.
  */
 
-/**  @defgroup parallel  Parallel Processing */
-/**   @defgroup thread Multithreading */
-
-/** @file include/bu/parallel.h
- *
- */
+/** @ingroup parallel */
+/** @{ */
+/** @file include/bu/parallel.h */
+/** @} */
 #ifndef BU_PARALLEL_H
 #define BU_PARALLEL_H
 
@@ -35,7 +33,9 @@
 
 __BEGIN_DECLS
 
-/** @addtogroup thread */
+/** @addtogroup thread
+ * Thread based parallelism routines.
+ */
 /** @{ */
 
 /**

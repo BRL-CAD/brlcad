@@ -29,12 +29,7 @@
 
 __BEGIN_DECLS
 
-/** @addtogroup getopt */
-/** @{ */
-
-/** @file libbu/getopt.c
- *
- * @brief
+/** @addtogroup getopt
  * Special portable re-entrant version of getopt.
  *
  * Everything is prefixed with bu_, to distinguish it from the various
@@ -45,6 +40,8 @@ __BEGIN_DECLS
  * to reinitialize bu_optind=1 before beginning on the next argument
  * list.
  */
+/** @{ */
+/** @file libbu/getopt.c */
 
 /**
  * for bu_getopt().  set to zero to suppress errors.

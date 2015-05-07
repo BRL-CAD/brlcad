@@ -32,13 +32,13 @@
 
 __BEGIN_DECLS
 
-/** @addtogroup endian */
-/** @{ */
-/** @file libbu/endian.c
+/** @addtogroup endian
  *
  * Run-time byte order detection.
  *
  */
+/** @{ */
+/** @file libbu/endian.c */
 
 typedef enum {
     BU_LITTLE_ENDIAN = 1234, /* LSB first: i386, VAX order */

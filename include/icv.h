@@ -47,7 +47,6 @@ __BEGIN_DECLS
 #endif
 
 /** @addtogroup libicv */
-/** @ingroup data */
 /** @{ */
 
 typedef enum {

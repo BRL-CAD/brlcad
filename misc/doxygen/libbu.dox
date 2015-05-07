@@ -33,7 +33,7 @@
 /** @ingroup libbu */
 /**  @defgroup binding Language Bindings */
 /**  @addtogroup binding
-     LIBBU Tcl interface.
+     LIBBU language bindings.
  */
 
 /* Data Containers */
@@ -88,54 +88,27 @@
 /**   @defgroup conv Data Conversion */
 /** @ingroup data */
 /**   @defgroup getopt Command-line Option Parsing*/
-/**  @addtogroup getopt
-     Command line option parsing (doesn't currently support --long-option style options.)
- */
 /** @ingroup data */
 /**   @defgroup hist Histogram Handling */
-/**  @addtogroup hist
-     Histogram routines.
- */
 /** @ingroup data */
 /**   @defgroup sort Sorting Algorithms */
-/**  @addtogroup sort
-     Data sorting algorithms.
- */
 /** @ingroup data */
 /**   @defgroup endian Endian Support */
-/**  @addtogroup endian
-     Endian.
- */
 /** @ingroup data */
 /**   @defgroup bu_time Time Support */
-/**  @addtogroup bu_time
-     LIBBU wrapper for time.
- */
 /** @ingroup data */
 /**   @defgroup units Units */
-/**  @addtogroup units
-     LIBBU support for physical unit conversion.
- */
 
 
 /* Parallel Processing */
 /** @ingroup parallel */
 /**   @defgroup thread Multithreading */
-/**  @addtogroup thread
-     LIBBU cross platform thread wrapping.
- */
 /** @ingroup parallel */
 /**   @defgroup simd Single Instruction Multiple Data*/
-/**  @addtogroup simd
-     LIBBU SIMD routines.
- */
 
 /* Language Bindings */
 /** @ingroup binding */
 /**   @defgroup tcl Tcl Interfacing */
-/**  @addtogroup tcl
-     LIBBU Tcl bindings.
- */
 
 /*
  * Local Variables:

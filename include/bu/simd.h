@@ -30,12 +30,11 @@
 
 __BEGIN_DECLS
 
-/** @addtogroup simd */
-/** @{ */
-
-/** @file libbu/simd.c
- * Detect SIMD type at runtime.
+/** @addtogroup simd
+ *  Single Instruction Multiple Data support.
  */
+/** @{ */
+/** @file libbu/simd.c */
 
 #define BU_SIMD_SSE4_2 7
 #define BU_SIMD_SSE4_1 6
