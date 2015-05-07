@@ -78,9 +78,10 @@ It is expected that there will be up to
 <replaceable>bytes_wide</replaceable>
 slash-separated constants given as a single parameter here.</para>
 
-<para>If no formula is specified, the default is to take all foreground
-pixels greater than black (black being specified with all bytes zero), which can be specified
-as:</para>
+<para>If no formula is specified, the default is to use <option>-g</option>, taking all foreground
+pixels greater than a constant (<option>-C</option> parameter if that option is used, otherwise
+defaulting to black, which is specified with all bytes zero).  If the default formula and constant
+are used, this is the same as:</para>
 <para>
    pixmerge -g -C 0/0/0 fg.pix bg.pix</para>
 </refsect1>
