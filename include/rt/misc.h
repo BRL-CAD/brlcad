@@ -19,7 +19,7 @@
  */
 /** @file rt/misc.h
  *
- * Catch all for functions that don't have a clear sub-header yet. 
+ * Catch all for functions that don't have a clear sub-header yet.
  */
 
 #ifndef RT_MISC_H

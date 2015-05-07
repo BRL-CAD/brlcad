@@ -1761,7 +1761,7 @@ BREP/NURBS
   dynamically evaluate surfaces as needed.  a heuristic that takes
   volume and/or structural complexity into account (e.g., no
   derivative changes across all encompassed knots) could result in a
-  beter initial per-surface prep.  with knowledge of the prep
+  better initial per-surface prep.  with knowledge of the prep
   subdivision bounding volume sizes, it should be possible to
   calculate static arrays per surface that will serve as coherent
   book-keeping during shot.  instead of pre-calculating the depths
