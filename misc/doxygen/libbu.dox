@@ -5,109 +5,110 @@
 /* Second tier groups */
 /** @ingroup libbu */
 /**  @defgroup bu_defines libbu Definitions*/
+
 /** @ingroup libbu */
-/**  @defgroup container Data Containers */
-/**  @addtogroup container
+/**  @defgroup bu_container Data Containers */
+/**  @addtogroup bu_container
      @brief Containers for holding various kinds of information.
  */
 /** @ingroup libbu */
-/**  @defgroup memory Memory Management */
-/**  @addtogroup memory
+/**  @defgroup bu_memory Memory Management */
+/**  @addtogroup bu_memory
      @brief Wrappers for memory allocation and release, and mapping.
  */
 /** @ingroup libbu */
-/**  @defgroup io Input/Output */
-/**  @addtogroup io
+/**  @defgroup bu_io Input/Output */
+/**  @addtogroup bu_io
      @brief Support for file and string handling, as well as debugging, path manipulation, logging and vector fonts.
  */
 /** @ingroup libbu */
-/**  @defgroup data Data Management */
-/**  @addtogroup data
+/**  @defgroup bu_data Data Management */
+/**  @addtogroup bu_data
      @brief Routines for command processing, network byte order conversion, sorting algorithms, time, endian support, units, etc.
  */
 /** @ingroup libbu */
-/**  @defgroup parallel  Parallel Processing */
-/**  @addtogroup parallel
+/**  @defgroup bu_parallel  Parallel Processing */
+/**  @addtogroup bu_parallel
      @brief Cross platform API for parallel processing, handling issues like threads and semaphores.
  */
 /** @ingroup libbu */
-/**  @defgroup binding Language Bindings */
-/**  @addtogroup binding
+/**  @defgroup bu_binding Language Bindings */
+/**  @addtogroup bu_binding
      @brief Language bindings.
  */
 
 /* Data Containers */
-/** @ingroup container */
+/** @ingroup bu_container */
 /**   @defgroup avs Attribute/Value Sets */
-/** @ingroup container */
+/** @ingroup bu_container */
 /**   @defgroup bitv Bit Vectors */
-/** @ingroup container */
+/** @ingroup bu_container */
 /**   @defgroup color Color */
-/** @ingroup container */
+/** @ingroup bu_container */
 /**   @defgroup hash Hash Tables */
-/** @ingroup container */
+/** @ingroup bu_container */
 /**   @defgroup list Linked Lists */
-/** @ingroup container */
+/** @ingroup bu_container */
 /**   @defgroup parse Structure Parsing */
-/** @ingroup container */
+/** @ingroup bu_container */
 /**   @defgroup ptbl Pointer Tables */
-/** @ingroup container */
+/** @ingroup bu_container */
 /**   @defgroup rb Red-Black Trees */
-/** @ingroup container */
+/** @ingroup bu_container */
 /**   @defgroup vlb Variable-length Byte Buffers */
-/** @ingroup container */
+/** @ingroup bu_container */
 /**   @defgroup vls Variable-length Strings */
 
 /* Memory Management */
-/** @ingroup memory */
+/** @ingroup bu_memory */
 /**   @defgroup magic Magic Numbers */
-/** @ingroup memory */
+/** @ingroup bu_memory */
 /**   @defgroup malloc Allocation & Deallocation */
-/** @ingroup memory */
+/** @ingroup bu_memory */
 /**   @defgroup mf Memory-mapped Files */
 
 /* I/O */
-/** @ingroup io */
+/** @ingroup bu_io */
 /**   @defgroup str Strings */
-/** @ingroup io */
+/** @ingroup bu_io */
 /**   @defgroup debug Debugging */
-/** @ingroup io */
+/** @ingroup bu_io */
 /**   @defgroup path Path Processing */
-/** @ingroup io */
+/** @ingroup bu_io */
 /**   @defgroup log Logging */
-/** @ingroup io */
+/** @ingroup bu_io */
 /**   @defgroup file File Processing */
-/** @ingroup io */
+/** @ingroup bu_io */
 /**   @defgroup vfont Vector Fonts */
 
 
 /* Data Management */
-/** @ingroup data */
+/** @ingroup bu_data */
 /**   @defgroup cmd Command Processing */
-/** @ingroup data */
+/** @ingroup bu_data */
 /**   @defgroup conv Data Conversion */
-/** @ingroup data */
+/** @ingroup bu_data */
 /**   @defgroup getopt Command-line Option Parsing*/
-/** @ingroup data */
+/** @ingroup bu_data */
 /**   @defgroup hist Histogram Handling */
-/** @ingroup data */
+/** @ingroup bu_data */
 /**   @defgroup sort Sorting Algorithms */
-/** @ingroup data */
+/** @ingroup bu_data */
 /**   @defgroup endian Endian Support */
-/** @ingroup data */
+/** @ingroup bu_data */
 /**   @defgroup bu_time Time Support */
-/** @ingroup data */
+/** @ingroup bu_data */
 /**   @defgroup units Units */
 
 
 /* Parallel Processing */
-/** @ingroup parallel */
+/** @ingroup bu_parallel */
 /**   @defgroup thread Multithreading */
-/** @ingroup parallel */
+/** @ingroup bu_parallel */
 /**   @defgroup simd Single Instruction Multiple Data*/
 
 /* Language Bindings */
-/** @ingroup binding */
+/** @ingroup bu_binding */
 /**   @defgroup tcl Tcl Interfacing */
 
 /*
