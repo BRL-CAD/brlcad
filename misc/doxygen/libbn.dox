@@ -7,51 +7,114 @@
 /**   @defgroup bn_defines libbn Definitions*/
  /** @ingroup libbn */
  /**  @defgroup anim Animation */
+ /**  @addtogroup anim
+      LIBBN support for animation operations.
+  */
  /** @ingroup libbn */
  /**  @defgroup adc Angle/Distance Cursor */
+ /**  @addtogroup anim
+      Angle/Distance Cursor
+  */
  /** @ingroup libbn */
  /**  @defgroup axis Axis */
+ /**  @addtogroup anim
+      Axix.
+  */
  /** @ingroup libbn */
  /**  @defgroup clip Clipping */
+ /**  @addtogroup clip
+      Clipping.
+  */
  /** @ingroup libbn */
  /**  @defgroup complex Complex Numbers */
+ /**  @addtogroup complex
+      LIBBN support for complex numbers.
+  */
  /** @ingroup libbn */
  /**  @defgroup const Constants */
+ /**  @addtogroup const
+      LIBBN constants.
+  */
  /** @ingroup libbn */
  /**  @defgroup vlist Display Lists */
+ /**  @addtogroup vlist
+      vector lists.
+  */
  /** @ingroup libbn */
  /**  @defgroup plot Plot/Draw */
+ /**  @addtogroup plot
+      plotting.
+  */
  /** @ingroup libbn */
  /**  @defgroup noise Fractal Noise */
+ /**  @addtogroup noise
+      noise generation.
+  */
  /** @ingroup libbn */
  /**  @defgroup mat Matrix/Vector/Quaternion Math */
+ /**  @addtogroup mat
+      LIBBN matrix math.
+  */
  /** @ingroup libbn */
  /**  @defgroup plane Point/Line/Plane Geometry Math */
+ /**  @addtogroup plane
+      LIBBN simple geometry math.
+  */
  /** @ingroup libbn */
  /**  @defgroup poly Polynomials */
- /** @ingroup libbn */
- /**  @defgroup rand Random Numbers */
+ /**  @addtogroup poly
+      LIBBN polynomial support.
+  */
  /** @ingroup libbn */
  /**  @defgroup bntcl libbn Tcl interface */
+ /**  @addtogroup bntcl
+      LIBBN Tcl bindings.
+  */
  /** @ingroup libbn */
  /**  @defgroup sphmap Spherical Maps */
+ /**  @addtogroup sphmap
+      LIBBN spherical map.
+  */
  /** @ingroup libbn */
  /**  @defgroup tabdata Tabulated Data */
+ /**  @addtogroup tabdata
+      LIBBN support for tabulated data.
+  */
  /** @ingroup libbn */
  /**  @defgroup tol Tolerances */
+ /**  @addtogroup tol
+      LIBBN support dimensional tolerances.
+  */
  /** @ingroup libbn */
  /**  @defgroup vtree Vertex Trees */
+ /**  @addtogroup vtree
+      vertex trees.
+  */
  /** @ingroup libbn */
  /**  @defgroup version Version */
+ /**  @addtogroup version
+      LIBBN version reporting.
+  */
  /** @ingroup libbn */
  /**  @defgroup wavelet Wavelets */
-
+ /**  @addtogroup wavelet
+      LIBBN support for wavelets.
+  */
 
 /* Random Numbers */
 /** @ingroup libbn */
 /**  @defgroup rand Random Numbers */
+ /**  @addtogroup rand
+      LIBBN support random number generation.
+  */
 /**   @ingroup rand */
 /**    @defgroup msr Minimal Standard Random Numbers */
+ /**  @addtogroup msr
+      LIBBN support for minimal standard random numbers.
+  */
 /**   @ingroup rand */
 /**    @defgroup rnd Random Number Tables */
+ /**  @addtogroup rnd
+      LIBBN Random Number Tables.
+  */
 
