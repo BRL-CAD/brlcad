@@ -39,15 +39,8 @@
 /* Data Containers */
 /** @ingroup container */
 /**   @defgroup avs Attribute/Value Sets */
-/**  @addtogroup avs
-     Data containers for key/value associative mapping.
- */
 /** @ingroup container */
 /**   @defgroup bitv Bit Vectors */
-/**  @addtogroup bitv
-     Bit vectors.
- */
-
 /** @ingroup container */
 /**   @defgroup color Color */
 /**  @addtogroup color

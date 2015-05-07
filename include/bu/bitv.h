@@ -31,9 +31,7 @@
 __BEGIN_DECLS
 
 /*----------------------------------------------------------------------*/
-/** @addtogroup bitv */
-/** @{*/
-/** @file libbu/bitv.c
+/** @addtogroup bitv
  *
  * Routines for managing efficient high-performance bit vectors of
  * arbitrary length.
@@ -46,6 +44,11 @@ __BEGIN_DECLS
  * side of the [0] word.
  *
  */
+/** @{*/
+/** @brief Bit Vector sub-header */
+/** @file bu/bitv.h */
+/** @brief Bit Vector implementation */
+/** @file libbu/bitv.c */
 
 /**
  * bitv_t should be a fast integer type for implementing bit vectors.
@@ -394,11 +397,8 @@ BU_EXPORT extern int bu_hexstr_to_binstr(const char *hexstr, struct bu_vls *b);
  */
 BU_EXPORT extern int bu_binstr_to_hexstr(const char *binstr, struct bu_vls *h);
 
-/** @file libbu/printb.c
- *
- * print bitfields
- *
- */
+/** @brief Bit field printing implementation. */
+/** @file libbu/printb.c */
 
 /**
  * Format a value a la the %b format of the kernel's printf
