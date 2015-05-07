@@ -55,14 +55,8 @@
 /**   @defgroup rb Red-Black Trees */
 /** @ingroup container */
 /**   @defgroup vlb Variable-length Byte Buffers */
-/**  @addtogroup vlb
-     Variable lenght byte buffers.
- */
 /** @ingroup container */
 /**   @defgroup vls Variable-length Strings */
-/**  @addtogroup vls
-     Variable length strings are BRL-CAD's preferred method of handling dynamic strings - they serve a function similar to that of std::string in C++.
- */
 
 
 /* Memory Management */

@@ -38,21 +38,23 @@
 __BEGIN_DECLS
 
 /*----------------------------------------------------------------------*/
-/** @addtogroup vls */
-/** @{ */
-/** @file libbu/vls.c
+/** @addtogroup vls
  *
- @brief
- * Variable Length Strings
- *
- * This structure provides support for variable length strings,
- * freeing the programmer from concerns about having character arrays
+ * Variable length strings provide a way for programmers to easily handling dynamic
+ * strings - they serve a function similar to that of std::string in C++.  This
+ * frees the programmer from concerns about having character arrays
  * large enough to hold strings.
  *
  * Assumption:  libc-provided sprintf() function is safe to use in parallel,
  * on parallel systems.
  */
+/** @{ */
+/** @brief Variable Length Strings - implementation */
+/** @file libbu/vls.c */
+/** @brief Variable Length Strings - subheader */
+/** @file bu/vls.h */
 
+/** Primary bu_vls container */
 struct bu_vls {
     uint32_t vls_magic;
     char *vls_str;	/**< Dynamic memory for buffer */
@@ -391,19 +393,9 @@ BU_EXPORT extern void bu_vls_prepend(struct bu_vls *vp,
 BU_EXPORT extern void bu_vls_substr(struct bu_vls *dest, const struct bu_vls *src,
 				    size_t begin, size_t nchars);
 
+/** @brief bu_vls_vprintf implementation */
+/** @file libbu/vls_vprintf.c */
 
-/** @file libbu/vls_vprintf.c
- *
- @brief
- * Variable Length Strings
- *
- * This structure provides support for variable length strings,
- * freeing the programmer from concerns about having character arrays
- * large enough to hold strings.
- *
- * Assumption:  libc-provided sprintf() function is safe to use in parallel,
- * on parallel systems.
- */
 /**
  * Format a string into a vls using a varargs list.
  *
@@ -420,11 +412,9 @@ BU_EXPORT extern void bu_vls_vprintf(struct bu_vls *vls,
 				     va_list ap);
 
 
-/** @file libbu/encode.c
- *
- @brief
- * Routines to encode/decode strings into bu_vls structures.
- */
+/** @brief Routines to encode/decode strings into bu_vls structures. */
+/** @file libbu/encode.c */
+
 /**
  * given an input string, wrap the string in double quotes if there is
  * a space and append it to the provided bu_vls.  escape any existing
