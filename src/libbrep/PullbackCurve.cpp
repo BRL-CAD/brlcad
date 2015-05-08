@@ -26,7 +26,7 @@
 #include "common.h"
 
 #include "vmath.h"
-#include "dvec.h"
+#include "bn/dvec.h"
 
 #include <assert.h>
 #include <vector>

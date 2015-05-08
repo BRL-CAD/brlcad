@@ -505,6 +505,8 @@ may need adjustment (particularly quoting of '(', ')', and '|'
 characters) for other environments.  Most expressions will apply with:
 	perl -0777 -pi -e 'EXPRESSION' FILE
 
+To apply them to an entire SVN checkout, the following pattern is useful:
+find . -type f -not -path "*.svn/*" -regex '.*\(c\|cpp\|cxx\|h\|hpp\)$' -exec perl -0777 -pi -e 'EXPRESSION' {} \;
 
 6.0 (sed lines)
 ---
@@ -1039,3 +1041,7 @@ s/(#[[:space:]]*include[[:space:]]+["<])vectfont\.h/#define LAST -128\n\1bn\/vec
 	consolidate vectfont.h files [7.25]
 s/(#[[:space:]]*include[[:space:]]+["<])spm\.h/\1bn\/spm.h/g
 	move spm.h into bn subheader directory [7.25]
+s/(#[[:space:]]*include[[:space:]]+["<])dvec\.h/\1bn\/dvec.h/g
+s/(#[[:space:]]*include[[:space:]]+["<])vector_fpu\.h/\1bn\/vector_fpu.h/g
+s/(#[[:space:]]*include[[:space:]]+["<])vector_x86\.h/\1bn\/vector_x86.h/g
+	move dvec.h and friends into bn subheader directory [7.25]

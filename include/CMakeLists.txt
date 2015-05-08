@@ -28,7 +28,6 @@ set(public_hdrs
   db.h
   db5.h
   dm.h
-  dvec.h
   fb.h
   fbserv_obj.h
   fft.h
@@ -54,8 +53,6 @@ set(public_hdrs
   spectrum.h
   tie.h
   tol.h
-  vector_fpu.h
-  vector_x86.h
   vmath.h
   wdb.h
   )

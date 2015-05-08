@@ -127,10 +127,10 @@ extern "C++" {
 /*#undef __SSE2__*/ // Test FPU version
 #if defined(__SSE2__) && defined(__GNUC__) && defined(HAVE_EMMINTRIN_H) && defined(HAVE_EMMINTRIN)
 #  define __x86_vector__
-#  include "vector_x86.h"
+#  include "bn/vector_x86.h"
 #else
 #  define __fpu_vector__
-#  include "vector_fpu.h"
+#  include "bn/vector_fpu.h"
 #endif
 
     inline bool vequals(const vec2d& a, const vec2d& b) {

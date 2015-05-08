@@ -46,7 +46,7 @@
 #include "bu/cv.h"
 #include "bu/time.h"
 #include "brep.h"
-#include "dvec.h"
+#include "bn/dvec.h"
 
 #include "raytrace.h"
 #include "rtgeom.h"

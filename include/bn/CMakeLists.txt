@@ -4,6 +4,7 @@ set(bn_headers
   clip.h
   complex.h
   defines.h
+  dvec.h
   mat.h
   msr.h
   multipoly.h
@@ -19,6 +20,8 @@ set(bn_headers
   bn_tcl.h
   tol.h
   vectfont.h
+  vector_fpu.h
+  vector_x86.h
   version.h
   vert_tree.h
   vlist.h

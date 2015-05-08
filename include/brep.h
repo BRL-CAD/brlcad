@@ -37,7 +37,7 @@ extern "C++" {
 #include <queue>
 #include <assert.h>
 
-#include "dvec.h"
+#include "bn/dvec.h"
 #include "opennurbs.h"
 #include <iostream>
 #include <fstream>

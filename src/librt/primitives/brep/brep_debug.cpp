@@ -46,7 +46,7 @@
 #include "bn/plot3.h"
 #include "brep.h"
 #include "brep_debug.h"
-#include "dvec.h"
+#include "bn/dvec.h"
 
 #include "raytrace.h"
 #include "rtgeom.h"
