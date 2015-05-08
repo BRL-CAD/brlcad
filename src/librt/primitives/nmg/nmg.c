@@ -40,7 +40,7 @@
 #include "rt/db4.h"
 #include "nmg.h"
 #include "raytrace.h"
-#include "nurb.h"
+#include "rt/nurb.h"
 
 
 /* rt_nmg_internal is just "model", from nmg.h */

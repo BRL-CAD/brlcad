@@ -36,7 +36,6 @@ set(public_hdrs
   libtermio.h
   light.h
   nmg.h
-  nurb.h
   obj.h
   optical.h
   photonmap.h

@@ -43,7 +43,7 @@
 #include "raytrace.h"
 #include "nmg.h"
 #include "rtgeom.h"
-#include "nurb.h"
+#include "rt/nurb.h"
 #include "solid.h"
 #include "dm.h"
 #include "dm_private.h"

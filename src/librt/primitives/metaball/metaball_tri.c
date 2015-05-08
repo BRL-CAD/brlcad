@@ -53,7 +53,7 @@
 #include "nmg.h"
 #include "rtgeom.h"
 #include "raytrace.h"
-#include "nurb.h"
+#include "rt/nurb.h"
 #include "wdb.h"
 
 #include "metaball.h"

@@ -34,8 +34,8 @@
 #include "rt/db4.h"
 #include "vmath.h"
 #include "bn.h"
-#include "nurb.h"
 #include "raytrace.h"
+#include "rt/nurb.h"
 #include "rtgeom.h"
 #include "wdb.h"
 

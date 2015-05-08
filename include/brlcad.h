@@ -57,7 +57,7 @@
 #include "raytrace.h"
 
 /* trimmed nurb routines */
-#include "nurb.h"
+#include "rt/nurb.h"
 
 /* the write-only database library interface */
 #include "wdb.h"

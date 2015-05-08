@@ -48,7 +48,7 @@
 #include "rt/db4.h"
 #include "rtgeom.h"
 #include "raytrace.h"
-#include "nurb.h"		/* before nmg.h */
+#include "rt/nurb.h"		/* before nmg.h */
 #include "nmg.h"
 
 #ifdef CONVERT_TO_BREP

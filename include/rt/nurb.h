@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @addtogroup nurb */
+/** @addtogroup librt */
 /** @{ */
 /** @file nurb.h
  *
@@ -34,9 +34,11 @@
 #include "common.h"
 
 #include "vmath.h"
-#include "nmg.h"
-#include "raytrace.h"
+#include "bu/list.h"
+#include "bn/plane.h"
+#include "rt/defines.h"
 
+struct resource; /* forward declaration */
 
 /* Define parametric directions for splitting. */
 

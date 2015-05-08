@@ -31,8 +31,8 @@
 
 #include "bu/getopt.h"
 #include "vmath.h"		/* BRL-CAD Vector macros */
-#include "nurb.h"		/* BRL-CAD Spline data structures */
 #include "raytrace.h"
+#include "rt/nurb.h"		/* BRL-CAD Spline data structures */
 #include "wdb.h"
 
 

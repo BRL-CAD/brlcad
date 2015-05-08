@@ -37,7 +37,7 @@
 #include "nmg.h"
 #include "rtgeom.h"
 #include "ged.h"
-#include "nurb.h"
+#include "rt/nurb.h"
 #include "wdb.h"
 
 #include "./mged.h"

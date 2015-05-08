@@ -31,7 +31,7 @@
 #include <math.h>
 #include "vmath.h"
 #include "raytrace.h"
-#include "nurb.h"
+#include "rt/nurb.h"
 #include "bn/plot3.h"
 
 

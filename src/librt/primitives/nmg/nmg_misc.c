@@ -37,7 +37,7 @@
 #include "nmg.h"
 #include "rtgeom.h"
 #include "raytrace.h"
-#include "nurb.h"
+#include "rt/nurb.h"
 
 #include "rt/db4.h"		/* for debugging stuff at bottom */
 
