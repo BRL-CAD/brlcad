@@ -1,45 +1,37 @@
-/** @defgroup librt librt (geometry, raytracing)
- *
- * @defgroup dbio Database IO
- * @ingroup librt
- *
- * @defgroup db5 Database5
- * @ingroup dbio
- *
- * @defgroup db4 Database4
- * @ingroup dbio
- *
- * @defgroup primitives Primitives
- * @ingroup librt
- *
- * @defgroup nmg N-Manifold Geometry
- * @ingroup primitives
- *
- * @defgroup nurb NURBS
- * @ingroup primitives
- *
- ** @defgroup ray Ray Tracing
- * @ingroup librt
- *
- * @defgroup timer Timer
- * @ingroup librt
- *
- * @defgroup fort Fortran
- * @ingroup librt
- *
- * @defgroup wdb WriteDatabase
- * @ingroup dbio
+/* Top level library group */
+/** @defgroup librt librt (geometry, raytracing) */
+
+/* Second tier groups */
+/** @ingroup librt */
+/**  @defgroup rt_defines librt Definitions*/
+
+/** @ingroup librt */
+/**  @defgroup db4 Database Version 4 */
+/**  @addtogroup db4
+     @brief Routines supporting reading and writing version 4 of the BRL-CAD geometry database.
  */
-/** @defgroup libpc libpc (Parametrics and Constraints)
- *
- * @defgroup pcsolver Constraint Solution
- * @ingroup libpc
- *
- * @defgroup pcparser EBNF Parser
- * @ingroup libpc
- *
- * @defgroup pcdbio Database Input/Output/Updation
- * @ingroup libpc
- *
+
+/** @ingroup librt */
+/**  @defgroup db5 Database Version 5 */
+/**  @addtogroup db5
+     @brief Routines supporting reading and writing version 5 of the BRL-CAD geometry database.
+ */
+
+/** @ingroup librt */
+/**  @defgroup rt_geom Geometry Primitives */
+/**  @addtogroup rt_geom
+     @brief Core geometry definitions.
+ */
+
+/** @ingroup librt */
+/**  @defgroup rt_nmg N-Manifold Geometry */
+/**  @addtogroup rt_nmg
+     @brief Support for N-Manifold Geometry */
+ */
+
+/** @ingroup librt */
+/**  @defgroup rt_boolweave Booleweave */
+/**  @addtogroup rt_boolweave
+     @brief Boolean weaving of raytracing segments */
  */
 
