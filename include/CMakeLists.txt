@@ -3,6 +3,7 @@ add_subdirectory(bn)
 add_subdirectory(gm)
 add_subdirectory(dm)
 add_subdirectory(gcv)
+add_subdirectory(optical)
 add_subdirectory(rt)
 add_subdirectory(fb)
 
