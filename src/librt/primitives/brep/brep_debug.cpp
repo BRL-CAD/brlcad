@@ -49,7 +49,7 @@
 #include "bn/dvec.h"
 
 #include "raytrace.h"
-#include "rtgeom.h"
+#include "rt/geom.h"
 #include "wdb.h"
 
 #include "brep_local.h"

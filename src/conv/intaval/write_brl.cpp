@@ -28,7 +28,7 @@
  */
 
 #include "nmg.h"
-#include "rtgeom.h"
+#include "rt/geom.h"
 #include "write_brl.h"
 
 

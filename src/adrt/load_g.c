@@ -44,7 +44,7 @@
 /* interface headers */
 #include "vmath.h"
 #include "nmg.h"
-#include "rtgeom.h"
+#include "rt/geom.h"
 #include "raytrace.h"
 
 #include "rt/tie.h"

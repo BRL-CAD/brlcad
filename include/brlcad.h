@@ -65,7 +65,7 @@
 /* in-memory representations of the database geometry objects.  these
  * are subject to change and should not be relied upon.
  */
-#include "rtgeom.h"
+#include "rt/geom.h"
 
 /* database object functions
  */

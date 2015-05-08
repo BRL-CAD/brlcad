@@ -41,7 +41,7 @@
 
 #include "bu/cv.h"
 #include "vmath.h"
-#include "rtgeom.h"
+#include "rt/geom.h"
 #include "raytrace.h"
 #include "nmg.h"
 #include "rt/db4.h"

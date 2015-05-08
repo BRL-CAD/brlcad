@@ -19,7 +19,6 @@ set(public_hdrs
   ged.h
   pstdint.h
   raytrace.h
-  rtgeom.h
   rtserver.h
   tclcad.h
   analyze.h

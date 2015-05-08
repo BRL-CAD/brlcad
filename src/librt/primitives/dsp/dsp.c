@@ -59,7 +59,7 @@
 #include "bu/parallel.h"
 #include "vmath.h"
 #include "raytrace.h"
-#include "rtgeom.h"
+#include "rt/geom.h"
 #include "rt/db4.h"
 #include "bn/plot3.h"
 

@@ -56,7 +56,7 @@
 #include "bu/color.h"
 #include "bu/str.h"
 #include "bu/parallel.h"
-#include "rtgeom.h"
+#include "rt/geom.h"
 #include "raytrace.h"
 #include "fb.h"
 #include "fb_private.h"

@@ -30,7 +30,7 @@
 #include <string.h>
 
 #include "bu/path.h"
-#include "rtgeom.h"
+#include "rt/geom.h"
 
 #include "./ged_private.h"
 

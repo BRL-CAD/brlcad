@@ -36,7 +36,7 @@
 #include "gm/polygon.h"
 #include "rt/arb_edit.h"
 #include "raytrace.h"
-#include "rtgeom.h"
+#include "rt/geom.h"
 
 #include "./ged_private.h"
 

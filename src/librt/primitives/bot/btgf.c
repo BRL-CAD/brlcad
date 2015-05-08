@@ -28,7 +28,7 @@
 #define TIE_PRECISION 0
 
 #include "raytrace.h"
-#include "rtgeom.h"
+#include "rt/geom.h"
 #include "rt/tie.h"
 #include "btg.h"
 

@@ -38,7 +38,7 @@
 #include "raytrace.h"
 #include "nmg.h"
 #include "rt/nurb.h"
-#include "rtgeom.h"
+#include "rt/geom.h"
 #include "ged.h"
 #include "wdb.h"
 

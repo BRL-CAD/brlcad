@@ -43,7 +43,7 @@
 #include "bn/dvec.h"
 
 #include "raytrace.h"
-#include "rtgeom.h"
+#include "rt/geom.h"
 
 #define fastf_t double
 

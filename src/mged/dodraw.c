@@ -25,7 +25,7 @@
 #include "vmath.h"
 #include "bn.h"
 #include "nmg.h"
-#include "rtgeom.h"		/* for ID_POLY special support */
+#include "rt/geom.h"		/* for ID_POLY special support */
 #include "raytrace.h"
 #include "rt/db4.h"
 

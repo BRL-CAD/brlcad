@@ -74,7 +74,7 @@
 #include "bn.h"
 #include "vmath.h"
 #include "raytrace.h"
-#include "rtgeom.h"
+#include "rt/geom.h"
 #include "wdb.h"
 #include "rt/db4.h"
 

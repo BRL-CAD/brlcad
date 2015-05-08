@@ -49,7 +49,7 @@
 #include "bu/getopt.h"
 #include "bu/path.h"
 #include "bn.h"
-#include "rtgeom.h"
+#include "rt/geom.h"
 #include "tclcad.h"
 
 #include "./mged.h"

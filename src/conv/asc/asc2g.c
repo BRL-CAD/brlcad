@@ -41,7 +41,7 @@
 #include "bn.h"
 #include "rt/db4.h"
 #include "nmg.h"
-#include "rtgeom.h"
+#include "rt/geom.h"
 #include "ged.h"
 #include "wdb.h"
 #include "raytrace.h"

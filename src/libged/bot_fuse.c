@@ -31,7 +31,7 @@
 
 #include "bu/getopt.h"
 #include "bu/parallel.h"
-#include "rtgeom.h"
+#include "rt/geom.h"
 #include "bn/plot3.h"
 
 #include "./ged_private.h"

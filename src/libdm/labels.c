@@ -27,7 +27,7 @@
 #include "rt/db4.h"
 #include "raytrace.h"
 #include "nmg.h"
-#include "rtgeom.h"
+#include "rt/geom.h"
 #include "rt/nurb.h"
 #include "rt/solid.h"
 #include "dm.h"

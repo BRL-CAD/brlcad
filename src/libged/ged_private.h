@@ -32,7 +32,7 @@
 
 #include "rt/db4.h"
 #include "raytrace.h"
-#include "rtgeom.h"
+#include "rt/geom.h"
 #include "ged.h"
 
 __BEGIN_DECLS

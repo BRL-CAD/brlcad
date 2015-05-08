@@ -29,7 +29,7 @@
 #include <string.h>
 
 #include "vmath.h"
-#include "rtgeom.h"
+#include "rt/geom.h"
 #include "rt/arb_edit.h"
 #include "ged.h"
 #include "rt/db4.h"

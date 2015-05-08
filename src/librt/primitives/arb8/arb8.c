@@ -59,7 +59,7 @@
 #include "bn.h"
 #include "nmg.h"
 #include "rt/db4.h"
-#include "rtgeom.h"
+#include "rt/geom.h"
 #include "rt/arb_edit.h"
 #include "raytrace.h"
 #include "rt/nurb.h"

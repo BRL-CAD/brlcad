@@ -38,7 +38,7 @@
 #include "rt/db4.h"
 #include "raytrace.h"
 #include "wdb.h"
-#include "rtgeom.h"
+#include "rt/geom.h"
 #include "pc.h"
 
 int

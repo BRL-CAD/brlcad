@@ -32,7 +32,7 @@
 #include "bu/path.h"
 #include "vmath.h"
 #include "rt/db4.h"
-#include "rtgeom.h"
+#include "rt/geom.h"
 #include "raytrace.h"
 
 /* Deprecated - use db_ls */

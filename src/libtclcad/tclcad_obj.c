@@ -49,7 +49,7 @@
 #include "bu/units.h"
 #include "vmath.h"
 #include "rt/db4.h"
-#include "rtgeom.h"
+#include "rt/geom.h"
 #include "wdb.h"
 #include "raytrace.h"
 #include "tclcad.h"

@@ -44,7 +44,7 @@ extern "C" {
 #include "bu.h"
 #include "vmath.h"
 #include "raytrace.h"
-#include "rtgeom.h"
+#include "rt/geom.h"
 }
 
 // Local headers

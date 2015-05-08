@@ -28,7 +28,7 @@
 #include <string.h>
 #include "bio.h"
 
-#include "rtgeom.h"
+#include "rt/geom.h"
 #include "raytrace.h"
 #include "wdb.h"
 #include "bn.h"

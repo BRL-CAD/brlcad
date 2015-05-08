@@ -70,7 +70,7 @@
 #include "bu/units.h"
 #include "vmath.h"
 #include "raytrace.h"
-#include "rtgeom.h"
+#include "rt/geom.h"
 
 #include "./vextern.h"
 

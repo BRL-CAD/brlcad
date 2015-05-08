@@ -35,7 +35,7 @@
 #include "vmath.h"
 #include "rt/db4.h"
 #include "nmg.h"
-#include "rtgeom.h"
+#include "rt/geom.h"
 #include "raytrace.h"
 
 

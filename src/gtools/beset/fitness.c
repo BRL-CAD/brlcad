@@ -47,7 +47,7 @@
 #include "vmath.h"
 #include "raytrace.h"
 #include "bn/plot3.h"
-#include "rtgeom.h"
+#include "rt/geom.h"
 
 #include "fitness.h"
 
