@@ -23,24 +23,24 @@
  *
  * Intersect a ray with an 'xxx' primitive object.
  *
- * Adding a new solid type:
+ * Adding a new geometric object type:
  *
- * Design disk record
+ * Design nameless in-memory data structure
  *
- * define rt_xxx_internal --- parameters for solid
+ * define rt_xxx_internal --- struct with parameters for this new object
  * define xxx_specific --- raytracing form, possibly w/precomputed terms
  * define rt_xxx_parse --- struct bu_structparse for "db get", "db adjust", ...
  *
  * code import/export4/describe/print/ifree/plot/prep/shot/curve/uv/tess
  *
- * edit rt/db5.h add solidrec s_type define
+ * edit rt/defines.h add ID_XXX, update ID_MAXIMUM and ID_MAX_SOLID
+ * edit rt/db5.h add DB5_MINORTYPE_BRLCAD_XXX define
  * edit rt/geom.h to add rt_xxx_internal
  * edit bu/magic.h to add RT_XXX_INTERNAL_MAGIC
  * edit table.c:
  *	RT_DECLARE_INTERFACE()
  *	struct rt_functab entry
  *	rt_id_solid()
- * edit raytrace.h to make ID_XXX, increment ID_MAXIMUM
  * edit db_scan.c to add the new solid to db_scan()
  * edit CMakeLists.txt to add g_xxx.c to compile
  *
