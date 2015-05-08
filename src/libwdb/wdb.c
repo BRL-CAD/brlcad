@@ -109,7 +109,7 @@ mk_wedge(struct rt_wdb *wdbp, const char *name, const fastf_t *vert, const fastf
     vect_t xvec;	/* x_axis vector */
     vect_t txvec;	/* top x_axis vector */
     vect_t yvec;	/* y-axis vector */
-    vect_t zvec;	/* z-axix vector */
+    vect_t zvec;	/* z-axis vector */
     vect_t x_unitv;	/* x-axis unit vector*/
     vect_t z_unitv;	/* z-axis unit vector */
     vect_t y_unitv;
