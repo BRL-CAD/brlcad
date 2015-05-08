@@ -39,7 +39,6 @@ set(public_hdrs
   photonmap.h
   pc.h
   pkg.h
-  plastic.h
   spectrum.h
   vmath.h
   wdb.h

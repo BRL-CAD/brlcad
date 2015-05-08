@@ -35,7 +35,7 @@
 #include "raytrace.h"
 #include "optical.h"
 #include "optical/light.h"
-#include "plastic.h"
+#include "optical/plastic.h"
 #include "photonmap.h"
 
 #ifdef RT_MULTISPECTRAL

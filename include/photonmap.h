@@ -42,7 +42,7 @@
 #include "nmg.h"
 #include "raytrace.h"
 #include "optical.h"
-#include "plastic.h"
+#include "optical/plastic.h"
 #include "optical/light.h"
 
 
