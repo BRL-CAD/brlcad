@@ -40,7 +40,6 @@
 #include <string.h>
 
 #include "vmath.h"
-#include "mater.h"
 #include "raytrace.h"
 #include "optical.h"
 #include "bn/plot3.h"

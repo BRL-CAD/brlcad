@@ -51,7 +51,7 @@
 #include "rt/db4.h"
 #include "rtgeom.h"
 #include "wdb.h"
-#include "mater.h"
+#include "raytrace.h"
 #include "tclcad.h"
 
 #include "solid.h"

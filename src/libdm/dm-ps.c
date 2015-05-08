@@ -39,7 +39,7 @@
 
 #include "vmath.h"
 #include "bn.h"
-#include "mater.h"
+#include "raytrace.h"
 
 #include "dm.h"
 #include "dm-ps.h"

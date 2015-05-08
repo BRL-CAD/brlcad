@@ -35,7 +35,6 @@ set(public_hdrs
   icv.h
   libtermio.h
   light.h
-  mater.h
   nmg.h
   nurb.h
   obj.h

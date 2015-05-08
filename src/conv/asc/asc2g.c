@@ -44,7 +44,7 @@
 #include "rtgeom.h"
 #include "ged.h"
 #include "wdb.h"
-#include "mater.h"
+#include "raytrace.h"
 #include "tclcad.h"
 
 

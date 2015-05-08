@@ -31,7 +31,7 @@
 #include <time.h>
 
 #include "rt/db4.h"
-#include "mater.h"
+#include "raytrace.h"
 #include "rtgeom.h"
 #include "ged.h"
 

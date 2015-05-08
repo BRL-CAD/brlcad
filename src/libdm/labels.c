@@ -25,7 +25,7 @@
 #include "vmath.h"
 #include "bn.h"
 #include "rt/db4.h"
-#include "mater.h"
+#include "raytrace.h"
 #include "nmg.h"
 #include "rtgeom.h"
 #include "nurb.h"

@@ -31,7 +31,7 @@
 #include "vmath.h"
 #include "bu/getopt.h"
 #include "bn.h"
-#include "mater.h"
+#include "raytrace.h"
 #include "nmg.h"
 #include "./sedit.h"
 #include "./mged.h"

@@ -49,7 +49,6 @@
 #include <math.h>
 
 #include "vmath.h"
-#include "mater.h"
 #include "icv.h"
 #include "raytrace.h"
 #include "bu/cv.h"

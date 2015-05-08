@@ -39,7 +39,6 @@
 #include "bn.h"
 #include "rt/db5.h"
 #include "raytrace.h"
-#include "mater.h"
 
 
 int

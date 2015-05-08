@@ -45,7 +45,6 @@
 #include "rtgeom.h"
 #include "raytrace.h"
 #include "bn/plot3.h"
-#include "mater.h"
 
 #include "solid.h"
 

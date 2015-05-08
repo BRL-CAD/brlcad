@@ -31,7 +31,7 @@
 
 #include "bu/getopt.h"
 #include "bu/parallel.h"
-#include "mater.h"
+#include "raytrace.h"
 
 
 #include "./ged_private.h"

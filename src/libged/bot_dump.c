@@ -46,7 +46,7 @@
 
 #include "brlcad_version.h"
 
-#include "mater.h"
+#include "raytrace.h"
 
 #include "obj.h"
 

@@ -35,8 +35,6 @@
 #include "rt/db4.h"
 #include "raytrace.h"
 #include "wdb.h"
-#include "mater.h"
-
 
 int
 mk_write_color_table(struct rt_wdb *ofp)

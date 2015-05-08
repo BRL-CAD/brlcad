@@ -25,8 +25,12 @@
 #define RT_MATER_H
 
 #include "common.h"
+#include "rt/defines.h"
+#include "bu/vls.h"
 
 __BEGIN_DECLS
+
+struct region; /* forward declaration */
 
 /**
  * Container for material information
@@ -42,6 +46,35 @@ struct mater_info {
 #define RT_MATER_INFO_INIT_ZERO { VINIT_ZERO, 0.0, 0, 0, 0, NULL }
 /* From MGED initial tree state */
 #define RT_MATER_INFO_INIT_IDN { {1.0, 0.0, 0.0} , -1.0, 0, 0, 0, NULL }
+
+struct mater {
+    short		mt_low;		/**< @brief bounds of region IDs, inclusive */
+    short		mt_high;
+    unsigned char	mt_r;		/**< @brief color */
+    unsigned char	mt_g;
+    unsigned char	mt_b;
+    off_t		mt_daddr;	/**< @brief db address, for updating */
+    struct mater	*mt_forw;	/**< @brief next in chain */
+};
+#define MATER_NULL	((struct mater *)0)
+#define MATER_NO_ADDR	((off_t)0)		/**< @brief invalid mt_daddr */
+
+
+RT_EXPORT extern void rt_region_color_map(struct region *regp);
+
+/* process ID_MATERIAL record */
+RT_EXPORT extern void rt_color_addrec(int low,
+				      int hi,
+				      int r,
+				      int g,
+				      int b,
+				      off_t addr);
+RT_EXPORT extern void rt_insert_color(struct mater *newp);
+RT_EXPORT extern void rt_vls_color_map(struct bu_vls *str);
+RT_EXPORT extern struct mater *rt_material_head(void);
+RT_EXPORT extern void rt_new_material_head(struct mater *);
+RT_EXPORT extern struct mater *rt_dup_material_head(void);
+RT_EXPORT extern void rt_color_free(void);
 
 __END_DECLS
 

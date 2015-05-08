@@ -39,7 +39,7 @@
 #include "tcl.h"
 #include "vmath.h"
 #include "bn.h"
-#include "mater.h"
+#include "raytrace.h"
 #include "dm.h"
 
 #include "dm-plot.h"

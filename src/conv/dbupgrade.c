@@ -37,9 +37,8 @@
 
 #include "vmath.h"
 #include "bn.h"
-#include "raytrace.h"
 #include "rtgeom.h"
-#include "mater.h"
+#include "raytrace.h"
 
 void
 usage (char *name)
