@@ -115,8 +115,6 @@ __BEGIN_DECLS
  */
 /** @{*/
 /** @brief Support routines for doubly-linked lists. */
-/** @file libbu/list.c */
-/** @brief Subheader for doubly-linked lists. */
 /** @file bu/list.h */
 
 struct bu_list {
