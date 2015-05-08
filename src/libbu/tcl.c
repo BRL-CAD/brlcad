@@ -47,7 +47,7 @@ Tcl_Interp *brlcad_interp = (Tcl_Interp *)0;
 /**
  * A wrapper for bu_mem_barriercheck.
  *
- * @param clientData    - UNUSED, present for signature matching
+ * \@param clientData    - UNUSED, present for signature matching
  * @param argc		- number of elements in argv
  * @param argv		- command name and arguments
  *
@@ -78,7 +78,7 @@ tcl_bu_mem_barriercheck(void *UNUSED(clientData),
  * A wrapper for bu_prmem. Prints map of memory currently in use, to
  * stderr.
  *
- * @param clientData    - UNUSED, present for signature matching
+ * \@param clientData    - UNUSED, present for signature matching
  * @param argc		- number of elements in argv
  * @param argv		- command name and arguments
  *
