@@ -30,7 +30,7 @@
 #include "bu/parallel.h"
 #include "vmath.h"
 #include "bn.h"
-#include "db.h"
+#include "rt/db4.h"
 #include "raytrace.h"
 #include "mater.h"
 

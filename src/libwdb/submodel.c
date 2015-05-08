@@ -27,7 +27,7 @@
 #include "rtgeom.h"
 #include "raytrace.h"
 #include "wdb.h"
-#include "db.h"
+#include "rt/db4.h"
 
 
 int

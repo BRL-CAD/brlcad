@@ -60,7 +60,7 @@
 #include "vmath.h"
 #include "raytrace.h"
 #include "rtgeom.h"
-#include "db.h"
+#include "rt/db4.h"
 #include "bn/plot3.h"
 
 /* private header */

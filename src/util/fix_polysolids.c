@@ -57,7 +57,7 @@
 #include "nmg.h"
 #include "rtgeom.h"
 #include "raytrace.h"
-#include "db.h"
+#include "rt/db4.h"
 #include "bu/getopt.h"
 #include "bn.h"
 

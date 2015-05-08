@@ -48,7 +48,7 @@ extern "C" {
 #include "bu.h"
 #include "rtfunc.h"
 #include "raytrace.h"
-#include "db.h"
+#include "rt/db4.h"
 }
 
 /* Local headers */

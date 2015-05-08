@@ -37,7 +37,7 @@
 #include "rt/arb_edit.h"
 #include "nurb.h"
 #include "wdb.h"
-#include "db.h"
+#include "rt/db4.h"
 
 #include "./mged.h"
 #include "./sedit.h"

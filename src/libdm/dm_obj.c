@@ -39,7 +39,7 @@
 #include "bu/endian.h"
 #include "vmath.h"
 #include "bn.h"
-#include "db.h"
+#include "rt/db4.h"
 #include "mater.h"
 #include "nmg.h"
 #include "rtgeom.h"

@@ -32,7 +32,7 @@
 #include "vmath.h"
 #include "bn.h"
 #include "rtgeom.h"
-#include "db.h"
+#include "rt/db4.h"
 #include "raytrace.h"
 #include "wdb.h"
 #include "mater.h"

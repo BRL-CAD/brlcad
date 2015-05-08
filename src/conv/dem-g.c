@@ -76,7 +76,7 @@
 #include "raytrace.h"
 #include "rtgeom.h"
 #include "wdb.h"
-#include "db.h"
+#include "rt/db4.h"
 
 
 const char *progname ="dem-g";

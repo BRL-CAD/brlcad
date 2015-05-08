@@ -37,7 +37,7 @@
 #include <errno.h>
 
 #include "bu/debug.h"
-#include "db.h"
+#include "rt/db4.h"
 #include "vmath.h"
 #include "nmg.h"
 #include "rtgeom.h"

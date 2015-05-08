@@ -30,7 +30,7 @@
 
 #include <time.h>
 
-#include "db.h"
+#include "rt/db4.h"
 #include "mater.h"
 #include "rtgeom.h"
 #include "ged.h"

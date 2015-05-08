@@ -50,7 +50,7 @@ extern "C" {
 #include "rtgeom.h"
 #include "bu.h"
 #include "raytrace.h"
-#include "db.h"
+#include "rt/db4.h"
 }
 
 /* Interface headers */

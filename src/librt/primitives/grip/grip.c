@@ -44,7 +44,7 @@
 #include "rtgeom.h"
 #include "raytrace.h"
 #include "nmg.h"
-#include "db.h"
+#include "rt/db4.h"
 
 #include "../../librt_private.h"
 

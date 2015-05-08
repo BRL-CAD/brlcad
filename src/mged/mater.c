@@ -35,7 +35,7 @@
 #include <string.h>
 
 #include "vmath.h"
-#include "db.h"
+#include "rt/db4.h"
 #include "mater.h"
 
 #include "./mged.h"

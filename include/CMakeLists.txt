@@ -25,8 +25,6 @@ set(public_hdrs
   brep.h
   brlcad.h
   brlcad.i
-  db.h
-  db5.h
   dm.h
   fb.h
   fbserv_obj.h

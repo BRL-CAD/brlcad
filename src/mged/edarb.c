@@ -32,7 +32,7 @@
 #include "rtgeom.h"
 #include "rt/arb_edit.h"
 #include "ged.h"
-#include "db.h"
+#include "rt/db4.h"
 
 #include "./sedit.h"
 #include "./mged.h"

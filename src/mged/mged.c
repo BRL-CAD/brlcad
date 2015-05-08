@@ -68,7 +68,7 @@
 #include "bn.h"
 #include "mater.h"
 #include "libtermio.h"
-#include "db.h"
+#include "rt/db4.h"
 #include "ged.h"
 
 /* private */

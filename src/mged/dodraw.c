@@ -27,7 +27,7 @@
 #include "nmg.h"
 #include "rtgeom.h"		/* for ID_POLY special support */
 #include "raytrace.h"
-#include "db.h"
+#include "rt/db4.h"
 
 #include "./mged.h"
 #include "./mged_dm.h"

@@ -30,7 +30,7 @@
 #include <string.h>
 #include "bio.h"
 
-#include "db.h"
+#include "rt/db4.h"
 #include "vmath.h"
 #include "bn.h"
 #include "rtgeom.h"

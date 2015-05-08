@@ -29,7 +29,7 @@
 #include <ctype.h>
 #include <string.h>
 
-#include "db.h"
+#include "rt/db4.h"
 #include "mater.h"
 
 #include "./ged_private.h"

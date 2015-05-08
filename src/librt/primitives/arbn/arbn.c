@@ -42,7 +42,7 @@
 #include "gm/polygon.h"
 #include "vmath.h"
 #include "nmg.h"
-#include "db.h"
+#include "rt/db4.h"
 #include "rtgeom.h"
 #include "raytrace.h"
 

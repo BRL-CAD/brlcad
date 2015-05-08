@@ -37,7 +37,7 @@
 /* interface headers */
 #include "bu/debug.h"
 #include "bu/getopt.h"
-#include "db.h"
+#include "rt/db4.h"
 #include "vmath.h"
 #include "nmg.h"
 #include "rtgeom.h"

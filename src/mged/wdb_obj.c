@@ -48,7 +48,7 @@
 #include "bu/units.h"
 #include "bn.h"
 #include "vmath.h"
-#include "db.h"
+#include "rt/db4.h"
 #include "rtgeom.h"
 #include "ged.h"
 #include "wdb.h"

@@ -60,7 +60,7 @@
 #include "bu/str.h"
 #include "bu/vls.h"
 #include "bn.h"
-#include "db5.h"
+#include "rt/db5.h"
 #include "nmg.h"
 #include "pc.h"
 #include "rtgeom.h"

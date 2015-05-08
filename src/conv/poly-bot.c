@@ -36,7 +36,7 @@
 #include "vmath.h"
 #include "bu/file.h"
 #include "nmg.h"
-#include "db.h"
+#include "rt/db4.h"
 #include "rtgeom.h"
 #include "raytrace.h"
 #include "wdb.h"

@@ -39,7 +39,7 @@
 #include "raytrace.h"
 #include "nurb.h"
 
-#include "db.h"		/* for debugging stuff at bottom */
+#include "rt/db4.h"		/* for debugging stuff at bottom */
 
 
 int

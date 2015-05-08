@@ -51,7 +51,7 @@
 #include "bn.h"
 
 /* database format storage types */
-#include "db.h"
+#include "rt/db4.h"
 
 /* raytrace interface constructs */
 #include "raytrace.h"

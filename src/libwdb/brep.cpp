@@ -32,7 +32,7 @@
 #include "bio.h"
 
 #include "bu/log.h"
-#include "db.h"
+#include "rt/db4.h"
 #include "vmath.h"
 #include "bn.h"
 #include "wdb.h"

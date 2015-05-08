@@ -40,7 +40,7 @@
 #include "vmath.h"
 #include "bu/getopt.h"
 
-#include "db.h"
+#include "rt/db4.h"
 #include "raytrace.h"
 #include "bn.h"
 #include "dm.h"

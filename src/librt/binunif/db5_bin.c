@@ -41,7 +41,7 @@
 #include "bu/cv.h"
 #include "bu/parse.h"
 #include "vmath.h"
-#include "db5.h"
+#include "rt/db5.h"
 #include "rtgeom.h"
 #include "raytrace.h"
 #include "nurb.h"

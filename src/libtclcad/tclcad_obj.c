@@ -48,7 +48,7 @@
 #include "bu/path.h"
 #include "bu/units.h"
 #include "vmath.h"
-#include "db.h"
+#include "rt/db4.h"
 #include "rtgeom.h"
 #include "wdb.h"
 #include "mater.h"

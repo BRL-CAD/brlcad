@@ -1045,3 +1045,7 @@ s/(#[[:space:]]*include[[:space:]]+["<])dvec\.h/\1bn\/dvec.h/g
 s/(#[[:space:]]*include[[:space:]]+["<])vector_fpu\.h/\1bn\/vector_fpu.h/g
 s/(#[[:space:]]*include[[:space:]]+["<])vector_x86\.h/\1bn\/vector_x86.h/g
 	move dvec.h and friends into bn subheader directory [7.25]
+s/(#[[:space:]]*include[[:space:]]+["<])db\.h/\1rt\/db4.h/g
+	move db.h to rt/db4.h [7.25]
+s/(#[[:space:]]*include[[:space:]]+["<])db5\.h/\1rt\/db5.h/g
+	move db5.h to rt/db5.h [7.25]
