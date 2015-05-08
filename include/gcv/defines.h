@@ -1,7 +1,7 @@
-/*                           G C V . H
+/*                       D E F I N E S . H
  * BRL-CAD
  *
- * Copyright (c) 2008-2014 United States Government as represented by
+ * Copyright (c) 2015 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -17,22 +17,30 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file gcv.h
+/** @file defines.h
  *
- * API of the LIBGCV geometry conversion library.
+ * Brief description
  *
  */
 
-#ifndef GCV_H
-#define GCV_H
+#ifndef GCV_DEFINES_H
+#define GCV_DEFINES_H
 
 #include "common.h"
 
 __BEGIN_DECLS
 
-#include "./gcv/defines.h"
-#include "./gcv/util.h"
-#include "./gcv/api.h"
+#ifndef GCV_EXPORT
+#  if defined(GCV_DLL_EXPORTS) && defined(GCV_DLL_IMPORTS)
+#    error "Only GCV_DLL_EXPORTS or GCV_DLL_IMPORTS can be defined, not both."
+#  elif defined(GCV_DLL_EXPORTS)
+#    define GCV_EXPORT __declspec(dllexport)
+#  elif defined(GCV_DLL_IMPORTS)
+#    define GCV_EXPORT __declspec(dllimport)
+#  else
+#    define GCV_EXPORT
+#  endif
+#endif
 
 __END_DECLS
 
