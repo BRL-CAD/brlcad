@@ -46,7 +46,6 @@ set(public_hdrs
   shadework.h
   solid.h
   spectrum.h
-  tie.h
   vmath.h
   wdb.h
   )

@@ -30,7 +30,7 @@
 #endif
 #include "bio.h"
 
-#include "tie.h"
+#include "rt/tie.h"
 #include "adrt.h"
 
 #include "tienet_master.h"

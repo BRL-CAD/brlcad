@@ -47,7 +47,7 @@
 #include "rtgeom.h"
 #include "raytrace.h"
 
-#include "tie.h"
+#include "rt/tie.h"
 #include "adrt.h"
 #include "adrt_struct.h"
 

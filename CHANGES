@@ -1057,3 +1057,5 @@ s/(#[[:space:]]*include[[:space:]]+["<])rtfunc\.h/#include "raytrace.h"\n\1rt\/f
 	move rtfunc.h to rt/func.h [7.25]
 s/(#[[:space:]]*include[[:space:]]+["<])tol\.h/#include "bn.h"\n#include "raytrace.h"\n\1rt\/tol.h/g
 	consolidate tol.h and rt/tol.h [7.25]
+s/(#[[:space:]]*include[[:space:]]+["<])tie\.h/\1rt\/tie.h/g
+	move tie.h to rt/tie.h [7.25]

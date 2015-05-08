@@ -64,6 +64,7 @@ set(rt_headers
   shoot.h
   soltab.h
   space_partition.h
+  tie.h
   timer.h
   tol.h
   tree.h

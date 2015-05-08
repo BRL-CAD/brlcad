@@ -49,7 +49,7 @@
 #define GLUE(_a, _b)      _a ## _b
 #define XGLUE(_a, _b) GLUE(_a, _b)
 
-#include "tie.h"
+#include "rt/tie.h"
 #include "btg.h"	/* for the bottie_ functions */
 
 #define MAXHITS 128
