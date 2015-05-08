@@ -31,8 +31,7 @@ __BEGIN_DECLS
 /*----------------------------------------------------------------------*/
 /** @addtogroup bu_list
  *
- * @brief
- * Support routines for doubly-linked lists.
+ * @brief Support routines for doubly-linked lists.
  *
  * These macros assume that all user-provided structures will have a
  * "struct bu_list" as their first element (often named "l" [ell]).
@@ -114,8 +113,6 @@ __BEGIN_DECLS
  * forw / back - the actual pointer names
  */
 /** @{*/
-/** @brief Support routines for doubly-linked lists. */
-/** @file bu/list.h */
 
 struct bu_list {
     uint32_t magic;		/**< @brief Magic # for mem id/check */
