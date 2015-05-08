@@ -47,7 +47,6 @@ set(public_hdrs
   solid.h
   spectrum.h
   tie.h
-  tol.h
   vmath.h
   wdb.h
   )

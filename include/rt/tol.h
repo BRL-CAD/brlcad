@@ -17,18 +17,31 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file tol.h
- *
- * librt specific tolerance information.
- */
 
 #ifndef RT_TOL_H
 #define RT_TOL_H
 
 #include "common.h"
 #include "vmath.h"
+#include "bn/tol.h"
+#include "rt/defines.h"
 
 __BEGIN_DECLS
+
+/** @addtogroup librt
+ *
+ * @brief
+ * librt specific tolerance information.
+ *
+ * These routines provide access to the default tolerance values
+ * available within LIBRT.  These routines assume working units of
+ * 'mm' and are idealized to only attempt to account for
+ * cross-platform hardware and floating point instability.  That is to
+ * say that the default tolerance values are tight.
+
+ */
+/** @{ */
+/** @file tol.h */
 
 /*
  * Unfortunately, to prevent divide-by-zero, some tolerancing needs to
@@ -76,6 +89,16 @@ struct rt_tess_tol {
 #define RT_CK_TESS_TOL(_p) BU_CKMAG(_p, RT_TESS_TOL_MAGIC, "rt_tess_tol")
 #define RT_TESS_TOL_INIT_ZERO {RT_TESS_TOL_MAGIC, 0.0, 0.0, 0.0}
 
+/**
+ * Fills in the provided bn_tol structure with compile-time default
+ * tolerance values.  These presently correspond to a distance
+ * tolerance of 5e-5 (assuming default working units is 1/2000th a mm)
+ * and a perpendicularity tolerance of 1e-6.  If tol is NULL, a
+ * structure is allocated, initialized, and returned.
+ */
+RT_EXPORT extern struct bn_tol *rt_tol_default(struct bn_tol *tol);
+
+/** @} */
 
 __END_DECLS
 

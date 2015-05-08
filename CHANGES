@@ -1055,3 +1055,5 @@ s/(#[[:space:]]*include[[:space:]]+["<])nurb\.h/#include "raytrace.h"\n\1rt\/nur
 	move nurb.h to rt/nurb.h [7.25]
 s/(#[[:space:]]*include[[:space:]]+["<])rtfunc\.h/#include "raytrace.h"\n\1rt\/func.h/g
 	move rtfunc.h to rt/func.h [7.25]
+s/(#[[:space:]]*include[[:space:]]+["<])tol\.h/#include "bn.h"\n#include "raytrace.h"\n\1rt\/tol.h/g
+	consolidate tol.h and rt/tol.h [7.25]
