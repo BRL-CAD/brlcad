@@ -31,8 +31,7 @@ __BEGIN_DECLS
 
 /** @addtogroup bu_malloc
  *
- * @brief
- * Parallel-protected debugging-enhanced wrapper around system malloc().
+ * @brief Parallel-protected debugging-enhanced wrapper around system malloc().
  *
  * Provides a parallel-safe interface to the system memory allocator
  * with standardized error checking, optional memory-use logging, and
@@ -44,10 +43,7 @@ __BEGIN_DECLS
  *
  */
 /** @{ */
-/** @brief Parallel-protected debugging-enhanced wrapper around system malloc(). */
-/** @file bu/malloc.h */
-/** @brief Implementation file for LIBBU malloc wrapper. */
-/** @file libbu/malloc.c */
+
 
 BU_EXPORT extern long bu_n_malloc;
 BU_EXPORT extern long bu_n_realloc;
