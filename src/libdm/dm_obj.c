@@ -44,7 +44,7 @@
 #include "nmg.h"
 #include "rtgeom.h"
 #include "rt/nurb.h"
-#include "solid.h"
+#include "rt/solid.h"
 #include "dm.h"
 #include "dm_private.h"
 

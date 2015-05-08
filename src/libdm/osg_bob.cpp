@@ -30,7 +30,7 @@
 
 #include "ged.h"
 #include "tk.h"
-#include "solid.h"
+#include "rt/solid.h"
 #include "dm.h"
 #include "dm_xvars.h"
 #include "dm-ogl.h"

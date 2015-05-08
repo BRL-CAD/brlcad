@@ -45,7 +45,7 @@
 #include "dm-ps.h"
 #include "dm-Null.h"
 
-#include "solid.h"
+#include "rt/solid.h"
 
 #include "./dm_private.h"
 

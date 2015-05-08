@@ -54,7 +54,7 @@
 #include "raytrace.h"
 #include "tclcad.h"
 
-#include "solid.h"
+#include "rt/solid.h"
 #include "dm.h"
 #include "dm/bview.h"
 #include "obj.h"

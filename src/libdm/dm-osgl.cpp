@@ -55,7 +55,7 @@ extern "C" {
 #include "dm-Null.h"
 #include "dm/dm_xvars.h"
 #include "fb.h"
-#include "solid.h"
+#include "rt/solid.h"
 #include "./dm_private.h"
 }
 #include "fb/fb_osgl.h"

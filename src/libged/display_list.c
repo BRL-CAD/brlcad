@@ -30,7 +30,7 @@
 
 #include "bn/plot3.h"
 
-#include "solid.h"
+#include "rt/solid.h"
 #include "./ged_private.h"
 
 

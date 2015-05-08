@@ -31,9 +31,9 @@
 
 #include "common.h"
 
-#include "solid.h"
 #include "dm/bview.h"
 #include "raytrace.h"
+#include "rt/solid.h"
 #include "fbserv_obj.h"
 
 

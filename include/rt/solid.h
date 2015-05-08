@@ -25,11 +25,14 @@
  *
  */
 
-#ifndef SOLID_H
-#define SOLID_H
+#ifndef RT_SOLID_H
+#define RT_SOLID_H
 
+#include "common.h"
+#include "vmath.h"
 #include "bu/list.h"
-#include "raytrace.h"
+#include "rt/defines.h"
+#include "rt/db_fullpath.h"
 
 struct solid  {
     struct bu_list l;
@@ -93,7 +96,7 @@ struct solid  {
 	BU_LIST_NOT_HEAD(p1, hp);\
 	(p1)=BU_LIST_PNEXT(structure, p1)
 
-#endif /* SOLID_H */
+#endif /* RT_SOLID_H */
 
 /** @} */
 /*

@@ -44,7 +44,6 @@ set(public_hdrs
   redblack.h
   shadefuncs.h
   shadework.h
-  solid.h
   spectrum.h
   vmath.h
   wdb.h

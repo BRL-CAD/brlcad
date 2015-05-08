@@ -62,6 +62,7 @@ set(rt_headers
   search.h
   seg.h
   shoot.h
+  solid.h
   soltab.h
   space_partition.h
   tie.h
