@@ -37,8 +37,8 @@ or
 images,
 generates an output stream of the same size, where the value of
 the output is determined by a formula involving the first
-(foreground) stream and either a constant or the second
-(background) stream.
+(foreground) stream and the second (background) stream,
+with the option of using a constant in place of the background stream.
 This routine operates on a pixel-by-pixel basis, and thus
 is independent of the resolution of the image.
 More sophisticated processing can be performed by
