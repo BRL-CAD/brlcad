@@ -44,6 +44,14 @@ is independent of the resolution of the image.
 More sophisticated processing can be performed by
 <command>pixmatte</command> .</para>
 
+<para>If the
+<option>-C r/g/b</option>
+option is specified, then the constant color specified by r/g/b
+is used in place of the appropriate background pixel values.
+It is expected that there will be up to
+<replaceable>bytes_wide</replaceable>
+slash-separated constants given as a single parameter here.</para>
+
 <para>The formula can be any combination of
 <option>-g</option>
 (fg greater than bg),
@@ -69,14 +77,6 @@ flag specifies the width (in bytes) of each "pixel";  the default is
 file format.  A width of 1 is used for processing
 <citerefentry><refentrytitle>bw</refentrytitle><manvolnum>5</manvolnum></citerefentry>
 files.  It is unclear if other widths are useful.</para>
-
-<para>If the
-<option>-C r/g/b</option>
-option is specified, then the constant color specified by r/g/b
-is used in place of the appropriate background pixel values.
-It is expected that there will be up to
-<replaceable>bytes_wide</replaceable>
-slash-separated constants given as a single parameter here.</para>
 
 <para>If no formula is specified, the default is to use <option>-g</option>, taking all foreground
 pixels greater than a constant (<option>-C</option> parameter if that option is used, otherwise
