@@ -40,7 +40,7 @@
 #include "vmath.h"
 #include "raytrace.h"
 #include "optical.h"
-#include "light.h"
+#include "optical/light.h"
 
 /* from view.c */
 extern double AmbientIntensity;

@@ -33,7 +33,6 @@ set(public_hdrs
   gcv.h
   icv.h
   libtermio.h
-  light.h
   nmg.h
   obj.h
   optical.h

@@ -54,7 +54,7 @@
 #include "optical/shadefuncs.h"
 #include "optical/shadework.h"
 #include "bn/plot3.h"
-#include "light.h"
+#include "optical/light.h"
 
 /* private */
 #include "../rt/rtuif.h"

@@ -43,7 +43,7 @@
 #include "raytrace.h"
 #include "optical.h"
 #include "bn/plot3.h"
-#include "light.h"
+#include "optical/light.h"
 
 
 /* Sky onditions for luminance calculations. */

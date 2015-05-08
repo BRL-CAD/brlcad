@@ -43,7 +43,7 @@
 #include "raytrace.h"
 #include "optical.h"
 #include "plastic.h"
-#include "light.h"
+#include "optical/light.h"
 
 
 #define	PM_MAPS		4

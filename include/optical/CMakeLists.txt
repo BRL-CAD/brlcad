@@ -1,6 +1,7 @@
 set(optical_headers
   defines.h
   debug.h
+  light.h
   shadework.h
   shadefuncs.h
   )

@@ -32,7 +32,7 @@
 #include "rt/seg.h"
 
 /* for light_specific, cyclic dependency */
-/* # include "light.h" */
+/* # include "optical/light.h" */
 
 #define SW_NLIGHTS	16		/* Max # of light sources */
 

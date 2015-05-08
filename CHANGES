@@ -1065,3 +1065,5 @@ s/(#[[:space:]]*include[[:space:]]+["<])shadework\.h/\1optical\/shadework.h/g
 	move shadework.h to optical/shadework.h [7.25]
 s/(#[[:space:]]*include[[:space:]]+["<])shadefuncs\.h/\1optical.h/g
 	move shadefuncs.h to optical/shadefuncs.h [7.25]
+s/(#[[:space:]]*include[[:space:]]+["<])light\.h/#include "bn.h"\n#include "raytrace.h"\n\1optical\/light.h/g
+	move light.h to optical/light.h [7.25]

@@ -33,7 +33,7 @@
 #include "vmath.h"
 #include "raytrace.h"
 #include "optical.h"
-#include "light.h"
+#include "optical/light.h"
 
 
 #define FLOOR(x)	((int)(x) - ((x) < 0 && (x) != (int)(x)))

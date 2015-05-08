@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @addtogroup librt */
+/** @addtogroup optical */
 /** @{ */
 /** @file light.h
  *
@@ -33,21 +33,10 @@
 
 #include "bu/magic.h"
 #include "bu/list.h"
-#include "bn.h"
-#include "raytrace.h"
-
-/* FIXME: replicated from optical.h */
-#ifndef OPTICAL_EXPORT
-#  if defined(OPTICAL_DLL_EXPORTS) && defined(OPTICAL_DLL_IMPORTS)
-#    error "Only OPTICAL_DLL_EXPORTS or OPTICAL_DLL_IMPORTS can be defined, not both."
-#  elif defined(OPTICAL_DLL_EXPORTS)
-#    define OPTICAL_EXPORT __declspec(dllexport)
-#  elif defined(OPTICAL_DLL_IMPORTS)
-#    define OPTICAL_EXPORT __declspec(dllimport)
-#  else
-#    define OPTICAL_EXPORT
-#  endif
-#endif
+#include "bn/tabdata.h"
+#include "rt/application.h"
+#include "optical/defines.h"
+#include "optical/shadework.h"
 
 __BEGIN_DECLS
 
