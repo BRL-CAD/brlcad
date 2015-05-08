@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @addtogroup rt */
+/** @addtogroup optical */
 /** @{ */
 /** @file shadefuncs.h
  *
@@ -28,19 +28,12 @@
 
 #include "common.h"
 
-#include "shadework.h"
-
-#ifndef OPTICAL_EXPORT
-#  if defined(OPTICAL_DLL_EXPORTS) && defined(OPTICAL_DLL_IMPORTS)
-#    error "Only OPTICAL_DLL_EXPORTS or OPTICAL_DLL_IMPORTS can be defined, not both."
-#  elif defined(OPTICAL_DLL_EXPORTS)
-#    define OPTICAL_EXPORT __declspec(dllexport)
-#  elif defined(OPTICAL_DLL_IMPORTS)
-#    define OPTICAL_EXPORT __declspec(dllimport)
-#  else
-#    define OPTICAL_EXPORT
-#  endif
-#endif
+#include "bu/vls.h"
+#include "rt/application.h"
+#include "rt/region.h"
+#include "rt/rt_instance.h"
+#include "optical/defines.h"
+#include "optical/shadework.h"
 
 /**
  *  The interface to the various material property & texture routines.

@@ -41,8 +41,6 @@ set(public_hdrs
   pc.h
   pkg.h
   plastic.h
-  shadefuncs.h
-  shadework.h
   spectrum.h
   vmath.h
   wdb.h

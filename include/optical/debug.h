@@ -34,6 +34,8 @@
 
 __BEGIN_DECLS
 
+OPTICAL_EXPORT extern int	rdebug;
+
 /* When in production mode, no debug checking is performed, hence the
  * R_DEBUG define causes sections of debug code to go "poof"
  */
@@ -42,6 +44,7 @@ __BEGIN_DECLS
 #else
 #	define	R_DEBUG	rdebug
 #endif
+
 
 /*
  *  Debugging flags for thr RT program itself.

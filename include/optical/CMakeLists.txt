@@ -1,6 +1,8 @@
 set(optical_headers
   defines.h
   debug.h
+  shadework.h
+  shadefuncs.h
   )
 
 install(FILES ${optical_headers} DESTINATION ${INCLUDE_DIR}/brlcad/optical)

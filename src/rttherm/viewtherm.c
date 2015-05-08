@@ -51,8 +51,8 @@
 #include "bu/parallel.h"
 #include "bu/malloc.h"
 #include "spectrum.h"
-#include "shadefuncs.h"
-#include "shadework.h"
+#include "optical/shadefuncs.h"
+#include "optical/shadework.h"
 #include "bn/plot3.h"
 #include "light.h"
 

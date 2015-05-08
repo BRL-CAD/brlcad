@@ -42,7 +42,7 @@
 #include "vmath.h"
 #include "bn.h"
 #include "raytrace.h"
-#include "shadefuncs.h"
+#include "optical/shadefuncs.h"
 
 
 extern struct mfuncs	*mfHead;	/* view.c */

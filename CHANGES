@@ -1061,3 +1061,7 @@ s/(#[[:space:]]*include[[:space:]]+["<])tie\.h/\1rt\/tie.h/g
 	move tie.h to rt/tie.h [7.25]
 s/(#[[:space:]]*include[[:space:]]+["<])solid\.h/#include "raytrace.h"\n\1rt\/solid.h/g
 	move solid.h to rt/solid.h [7.25]
+s/(#[[:space:]]*include[[:space:]]+["<])shadework\.h/\1optical\/shadework.h/g
+	move shadework.h to optical/shadework.h [7.25]
+s/(#[[:space:]]*include[[:space:]]+["<])shadefuncs\.h/\1optical.h/g
+	move shadefuncs.h to optical/shadefuncs.h [7.25]

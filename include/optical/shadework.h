@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @addtogroup rt */
+/** @addtogroup optical */
 /** @{ */
 /** @file shadework.h
  *
@@ -27,6 +27,9 @@
 #define SHADEWORK_H
 
 #include "common.h"
+#include "bn/tabdata.h"
+#include "rt/hit.h"
+#include "rt/seg.h"
 
 /* for light_specific, cyclic dependency */
 /* # include "light.h" */
