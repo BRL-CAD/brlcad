@@ -20,6 +20,7 @@ set(rt_headers
   defines.h
   directory.h
   dspline.h
+  func.h
   functab.h
   global.h
   hit.h

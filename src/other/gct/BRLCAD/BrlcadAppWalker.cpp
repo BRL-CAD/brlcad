@@ -46,7 +46,7 @@ extern "C" {
 #include "nmg.h"
 #include "rtgeom.h"
 #include "bu.h"
-#include "rtfunc.h"
+#include "rt/func.h"
 #include "raytrace.h"
 #include "rt/db4.h"
 }

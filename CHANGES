@@ -1053,3 +1053,5 @@ s/(#[[:space:]]*include[[:space:]]+["<])mater\.h/\1raytrace.h/g
 	merge mater.h with rt/mater.h [7.25]
 s/(#[[:space:]]*include[[:space:]]+["<])nurb\.h/#include "raytrace.h"\n\1rt\/nurb.h/g
 	move nurb.h to rt/nurb.h [7.25]
+s/(#[[:space:]]*include[[:space:]]+["<])rtfunc\.h/#include "raytrace.h"\n\1rt\/func.h/g
+	move rtfunc.h to rt/func.h [7.25]

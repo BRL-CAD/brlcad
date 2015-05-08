@@ -69,7 +69,7 @@
 
 /* database object functions
  */
-#include "rtfunc.h"
+#include "rt/func.h"
 
 #endif  /* BRLCAD_H */
 /** @} */

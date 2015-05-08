@@ -37,7 +37,8 @@
 #include "vmath.h"
 #include "nmg.h"
 #include "rtgeom.h"
-#include "rtfunc.h"
+#include "raytrace.h"
+#include "rt/func.h"
 
 #include "./ged_private.h"
 

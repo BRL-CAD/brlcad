@@ -43,7 +43,7 @@ extern "C" {
 #include "bu/log.h"
 #include "bu/list.h"
 #include "raytrace.h"
-#include "rtfunc.h"
+#include "rt/func.h"
 }
 
 #include <map>

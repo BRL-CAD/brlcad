@@ -17,9 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @addtogroup rt */
-/** @{ */
-/** @file rtfunc.h
+/** @addtogroup librt
  *
  * @brief Primitive manipulation functions from former functab
  * callback table.
@@ -29,6 +27,8 @@
  * this message goes away.
  *
  */
+/** @{ */
+/** @file rt/func.h */
 
 #ifndef RTFUNC_H
 #define RTFUNC_H
@@ -38,7 +38,21 @@
 #include "bu/list.h"
 #include "bu/parse.h"
 #include "bu/vls.h"
-#include "raytrace.h"
+#include "bn/plane.h"
+#include "bn/tol.h"
+#include "rt/defines.h"
+#include "rt/application.h"
+#include "rt/hit.h"
+#include "rt/piece.h"
+#include "rt/resource.h"
+#include "rt/seg.h"
+#include "rt/soltab.h"
+#include "rt/tol.h"
+#include "rt/db_internal.h"
+#include "rt/db_instance.h"
+#include "rt/rt_instance.h"
+#include "rt/xray.h"
+#include "pc.h"
 
 __BEGIN_DECLS
 
