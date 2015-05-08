@@ -18,35 +18,10 @@
  * information.
  */
 /** @file xxx.h
- * Intersect a ray with an 'xxx' primitive object.
  *
- * Adding a new solid type:
- *
- * Design disk record
- *
- * define rt_xxx_internal --- parameters for solid
- * define xxx_specific --- raytracing form, possibly w/precomputed terms
- * define rt_xxx_parse --- struct bu_structparse for "db get", "db adjust", ...
- *
- * code import/export4/describe/print/ifree/plot/prep/shot/curve/uv/tess
- *
- * edit db.h add solidrec s_type define
- * edit rtgeom.h to add rt_xxx_internal
- * edit bu/magic.h to add RT_XXX_INTERNAL_MAGIC
- * edit table.c:
- *	RT_DECLARE_INTERFACE()
- *	struct rt_functab entry
- *	rt_id_solid()
- * edit raytrace.h to make ID_XXX, increment ID_MAXIMUM
- * edit db_scan.c to add the new solid to db_scan()
- * edit CMakeLists.txt to add g_xxx.c to compile
- *
- * go to src/libwdb and create mk_xxx() routine
- * go to src/conv and edit g2asc.c and asc2g.c to support the new solid
- * go to src/librt and edit tcl.c to add the new solid to
- *	rt_solid_type_lookup[]
- *	also add the interface table and to rt_id_solid() in table.c
- * go to src/mged and create the edit support
+ * Intersect a ray with an 'xxx' primitive object.  Nearly everything
+ * in this file (except for the xxx_specific struct) belongs somewhere
+ * else.  See comments in xxx.c for details.
  *
  */
 
@@ -71,7 +46,6 @@ struct rt_xxx_internal {
     uint32_t magic;
     vect_t v;
 };
-
 
 #  define RT_XXX_INTERNAL_MAGIC 0x78787878 /* 'xxxx' */
 #  define RT_XXX_CK_MAGIC(_p) BU_CKMAG(_p, RT_XXX_INTERNAL_MAGIC, "rt_xxx_internal")
