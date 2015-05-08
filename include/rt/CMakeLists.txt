@@ -22,6 +22,7 @@ set(rt_headers
   dspline.h
   func.h
   functab.h
+  geom.h
   global.h
   hit.h
   htbl.h

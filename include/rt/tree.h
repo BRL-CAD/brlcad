@@ -30,7 +30,7 @@
 #include "bu/magic.h"
 #include "bu/malloc.h"
 #include "bn/tol.h"
-#include "rtgeom.h"
+#include "rt/geom.h"
 #include "rt/defines.h"
 #include "rt/db_instance.h"
 #include "rt/directory.h"
@@ -46,6 +46,8 @@ __BEGIN_DECLS
 union tree;       /* forward declaration */
 struct resource;  /* forward declaration */
 struct rt_i;      /* forward declaration */
+struct rt_comb_internal;      /* forward declaration */
+struct rt_db_internal;      /* forward declaration */
 
 /**
  * State for database tree walker db_walk_tree() and related

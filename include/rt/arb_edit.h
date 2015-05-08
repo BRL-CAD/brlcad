@@ -32,7 +32,7 @@
 #include "common.h"
 #include "bn.h"
 #include "rt/db4.h"
-#include "rtgeom.h"
+#include "rt/geom.h"
 #include "rt/defines.h"
 
 __BEGIN_DECLS

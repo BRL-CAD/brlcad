@@ -29,10 +29,11 @@
 #include "bu/list.h"
 #include "bu/ptbl.h"
 #include "bn/tol.h"
+#include "rt/geom.h"
 #include "rt/hit.h"
+#include "rt/seg.h"
 #include "rt/application.h"
 #include "rt/soltab.h"
-#include "rt/seg.h"
 #include "nmg.h"
 
 __BEGIN_DECLS
@@ -42,6 +43,8 @@ __BEGIN_DECLS
  *      (with minor changes to NMG_GET_HITMISS and NMG_FREE_HITLIST              *
  *      moved here to use RTG.rtg_nmgfree freelist for hitmiss structs.         *
  ******************************************************************************* */
+
+struct rt_db_internal; /*forward declaration*/
 
 #define NMG_HIT_LIST    0
 #define NMG_MISS_LIST   1

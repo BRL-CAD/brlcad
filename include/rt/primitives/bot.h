@@ -27,7 +27,7 @@
 #include "common.h"
 #include "vmath.h"
 #include "bn/tol.h"
-#include "rtgeom.h"
+#include "rt/geom.h"
 #include "rt/defines.h"
 #include "rt/tol.h"
 #include "rt/view.h"

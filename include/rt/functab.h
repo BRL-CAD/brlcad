@@ -29,7 +29,7 @@
 #include "bu/parse.h"
 #include "bu/vls.h"
 #include "bn/tol.h"
-#include "rtgeom.h"
+#include "rt/geom.h"
 #include "rt/defines.h"
 #include "rt/application.h"
 #include "rt/db_internal.h"

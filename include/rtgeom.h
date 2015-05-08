@@ -30,8 +30,8 @@
  *
  */
 
-#ifndef RT_GEOM_H
-#define RT_GEOM_H
+#ifndef RTGEOM_H
+#define RTGEOM_H
 
 #include "common.h"
 
@@ -42,7 +42,7 @@
 #include "bu/vls.h"
 #include "vmath.h"
 
-#include "../nmg.h" /* (temporarily?) needed for knot_vector */
+#include "nmg.h" /* (temporarily?) needed for knot_vector */
 #include "brep.h"
 
 
@@ -865,7 +865,7 @@ struct wdb_metaballpt {
 
 __END_DECLS
 
-#endif /* RT_GEOM_H */
+#endif /* RTGEOM_H */
 
 /** @} */
 /*
