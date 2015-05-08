@@ -40,7 +40,6 @@ set(public_hdrs
   pc.h
   pkg.h
   plastic.h
-  redblack.h
   shadefuncs.h
   shadework.h
   spectrum.h
