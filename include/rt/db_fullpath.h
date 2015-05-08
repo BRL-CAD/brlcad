@@ -17,10 +17,6 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file db_fullpath.h
- *
- * librt functions related to fullpaths.
- */
 
 #ifndef RT_DB_FULLPATH_H
 #define RT_DB_FULLPATH_H
@@ -34,8 +30,16 @@ struct resource;  /* forward declaration */
 struct db_i;      /* forward declaration */
 struct directory; /* forward declaration */
 
+/** @addtogroup db_fullpath
+ *
+ * @brief
+ * Structures and routines for collecting and manipulating paths through the database tree.
+ *
+ */
+/** @{ */
+/** @file rt/db_fullpath.h */
+
 /**
- * For collecting paths through the database tree.
  * The fp_bool array can optionally hold a boolean flag
  * associated with each corresponding dp in fp_names.  This
  * array must be manually maintained by the client code in
@@ -211,6 +215,8 @@ RT_EXPORT extern int db_path_to_mat(struct db_i *dbip,
 				    mat_t mat, /* result */
 				    int depth, /* number of arcs */
 				    struct resource *resp);
+
+/** @} */
 
 __END_DECLS
 

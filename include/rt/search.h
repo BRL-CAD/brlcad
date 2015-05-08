@@ -17,12 +17,12 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @addtogroup librt */
-/** @{ */
-/** @file include/rt/search.h
- *
+/** @addtogroup db_search
+ * @brief
  * Functionality for searching .g files
  */
+/** @{ */
+/** @file include/rt/search.h */
 
 #ifndef RT_SEARCH_H
 #define RT_SEARCH_H
@@ -137,19 +137,21 @@ RT_EXPORT extern void db_search_free(struct bu_ptbl *search_results);
  * struct directory ** array of objects in dpv via argument
  *
  */
-#define DB_LS_PRIM         0x1    /* filter for primitives (solids)*/
-#define DB_LS_COMB         0x2    /* filter for combinations */
-#define DB_LS_REGION       0x4    /* filter for regions */
-#define DB_LS_HIDDEN       0x8    /* include hidden objects in results */
-#define DB_LS_NON_GEOM     0x10   /* filter for non-geometry objects */
-#define DB_LS_TOPS         0x20   /* filter for objects un-referenced by other objects */
-/* TODO - implement this flag
-#define DB_LS_REGEX        0x40*/ /* interpret pattern using regex rules, instead of
-                                     globbing rules (default) */
 RT_EXPORT extern size_t db_ls(const struct db_i *dbip,
                               int flags,
                               const char *pattern,
                               struct directory ***dpv);
+
+/* These are the possible listing flags. */
+#define DB_LS_PRIM         0x1    /**< @brief filter for primitives (solids)*/
+#define DB_LS_COMB         0x2    /**< @brief filter for combinations */
+#define DB_LS_REGION       0x4    /**< @brief filter for regions */
+#define DB_LS_HIDDEN       0x8    /**< @brief include hidden objects in results */
+#define DB_LS_NON_GEOM     0x10   /**< @brief filter for non-geometry objects */
+#define DB_LS_TOPS         0x20   /**< @brief filter for objects un-referenced by other objects */
+/* TODO - implement this flag
+#define DB_LS_REGEX        0x40*/ /* interpret pattern using regex rules, instead of
+                                              globbing rules (default) */
 
 
 

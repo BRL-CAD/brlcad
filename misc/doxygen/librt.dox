@@ -2,25 +2,20 @@
 /** @defgroup librt librt (geometry, raytracing) */
 
 /* Second tier groups */
+
 /** @ingroup librt */
 /**  @defgroup rt_defines librt Definitions*/
 
 /** @ingroup librt */
-/**  @defgroup db4 Database Version 4 */
-/**  @addtogroup db4
-     @brief Routines supporting reading and writing version 4 of the BRL-CAD geometry database.
+/**  @defgroup db Geometry Database*/
+/**  @addtogroup db
+     @brief Definitions and functions supporting the reading, writing and working with BRL-CAD geometry database format.
  */
 
 /** @ingroup librt */
-/**  @defgroup db5 Database Version 5 */
-/**  @addtogroup db5
-     @brief Routines supporting reading and writing version 5 of the BRL-CAD geometry database.
- */
-
-/** @ingroup librt */
-/**  @defgroup rt_geom Geometry Primitives */
-/**  @addtogroup rt_geom
-     @brief Core geometry definitions.
+/**  @defgroup raytrace Raytracing */
+/**  @addtogroup raytrace
+     @brief Definitions and functions supporting raytracing BRL-CAD geometry.
  */
 
 /** @ingroup librt */
@@ -29,7 +24,38 @@
      @brief Support for N-Manifold Geometry */
  */
 
-/** @ingroup librt */
+
+/* Third tier groups */
+
+/** @ingroup db */
+/**  @defgroup db_fullpath Full Paths */
+
+/** @ingroup db */
+/**  @defgroup db4 Database Version 4 */
+/**  @addtogroup db4
+     @brief Routines supporting reading and writing version 4 of the BRL-CAD geometry database.
+ */
+
+/** @ingroup db */
+/**  @defgroup db5 Database Version 5 */
+/**  @addtogroup db5
+     @brief Routines supporting reading and writing version 5 of the BRL-CAD geometry database.
+ */
+
+/** @ingroup db */
+/**  @defgroup db_search Database Searching */
+/**  @addtogroup db_search
+     @brief Routines that find and report on the objects within BRL-CAD geometry databases.
+ */
+
+
+/** @ingroup raytrace */
+/**  @defgroup rt_geom Geometry Primitives */
+/**  @addtogroup rt_geom
+     @brief Core geometry definitions.
+ */
+
+/** @ingroup raytrace */
 /**  @defgroup rt_boolweave Booleweave */
 /**  @addtogroup rt_boolweave
      @brief Boolean weaving of raytracing segments */
