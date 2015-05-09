@@ -17,9 +17,9 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file rt/primitives/rhc.h
- *
- */
+/** @addtogroup rt_rhc */
+/** @{ */
+/** @file rt/primitives/rhc.h */
 
 #ifndef RT_PRIMITIVES_RHC_H
 #define RT_PRIMITIVES_RHC_H
@@ -37,6 +37,8 @@ RT_EXPORT extern int rt_mk_hyperbola(struct rt_pt_node *pts,
                                      fastf_t c,
                                      fastf_t dtol,
                                      fastf_t ntol);
+
+/** @} */
 
 __END_DECLS
 

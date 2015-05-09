@@ -7,6 +7,12 @@
 /**  @defgroup rt_defines librt Definitions*/
 
 /** @ingroup librt */
+/**  @defgroup rt_debug Debugging */
+
+/** @ingroup librt */
+/**  @defgroup rt_geom Geometry Primitives */
+
+/** @ingroup librt */
 /**  @defgroup db Geometry Database*/
 /**  @addtogroup db
      @brief Definitions and functions supporting the reading, writing and working with BRL-CAD geometry database format.
@@ -49,11 +55,77 @@
  */
 
 
-/** @ingroup raytrace */
-/**  @defgroup rt_geom Geometry Primitives */
-/**  @addtogroup rt_geom
-     @brief Core geometry definitions.
- */
+/** @ingroup rt_geom */
+/**  @defgroup rt_annotation Annotation */
+/** @ingroup rt_geom */
+/**  @defgroup rt_arb Arbitrary Polyhedron (4 to 8 defining points)*/
+/** @ingroup rt_geom */
+/**  @defgroup rt_arbn Arbitrary Polyhedron (Convex) */
+/** @ingroup rt_geom */
+/**  @defgroup rt_ars Arbitrary Faceted Solid*/
+/** @ingroup rt_geom */
+/**  @defgroup rt_bot Bag Of Triangles */
+/** @ingroup rt_geom */
+/**  @defgroup rt_brep Boundary Representation (NURBS) */
+/** @ingroup rt_geom */
+/**  @defgroup rt_cline CLINE */
+/** @ingroup rt_geom */
+/**  @defgroup rt_dsp Displacement Map */
+/** @ingroup rt_geom */
+/**  @defgroup rt_ebm Extruded Bitmap */
+/** @ingroup rt_geom */
+/**  @defgroup rt_ehy Elliptical Hyperboloid */
+/** @ingroup rt_geom */
+/**  @defgroup rt_ell Ellipsoid */
+/** @ingroup rt_geom */
+/**  @defgroup rt_epa Elliptical Paraboloid */
+/** @ingroup rt_geom */
+/**  @defgroup rt_eto Elliptical Torus */
+/** @ingroup rt_geom */
+/**  @defgroup rt_extrude Extruded Sketch */
+/** @ingroup rt_geom */
+/**  @defgroup rt_grip Grip */
+/** @ingroup rt_geom */
+/**  @defgroup rt_half Half Plane*/
+/** @ingroup rt_geom */
+/**  @defgroup rt_hf HF */
+/** @ingroup rt_geom */
+/**  @defgroup rt_hrt Heart */
+/** @ingroup rt_geom */
+/**  @defgroup rt_hyp Elliptical Hyperboloid of One Sheet */
+/** @ingroup rt_geom */
+/**  @defgroup rt_joint Joint */
+/** @ingroup rt_geom */
+/**  @defgroup rt_metaball Metaball */
+/** @ingroup rt_geom */
+/**  @defgroup rt_nurb Non-Uniform Rational B-Spline */
+/** @ingroup rt_geom */
+/**  @defgroup rt_part Particle */
+/** @ingroup rt_geom */
+/**  @defgroup rt_pg  POLY */
+/** @ingroup rt_geom */
+/**  @defgroup rt_pipe Pipe */
+/** @ingroup rt_geom */
+/**  @defgroup rt_pnt Point Cloud */
+/** @ingroup rt_geom */
+/**  @defgroup rt_revolve Revolved Sketch */
+/** @ingroup rt_geom */
+/**  @defgroup rt_rhc Right Hyberbolic Cylinder */
+/** @ingroup rt_geom */
+/**  @defgroup rt_rpc Right Parabolic Cylinder */
+/** @ingroup rt_geom */
+/**  @defgroup rt_sketch Sketch */
+/** @ingroup rt_geom */
+/**  @defgroup rt_submodel Submodel */
+/** @ingroup rt_geom */
+/**  @defgroup rt_superell Super Ellipsoid*/
+/** @ingroup rt_geom */
+/**  @defgroup rt_tgc Truncated General Cone*/
+/** @ingroup rt_geom */
+/**  @defgroup rt_tor Torus */
+/** @ingroup rt_geom */
+/**  @defgroup rt_vol Volume */
+
 
 /** @ingroup raytrace */
 /**  @defgroup rt_boolweave Booleweave */

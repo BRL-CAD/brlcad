@@ -17,9 +17,9 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file rt/primitives/cline.h
- *
- */
+/** @addtogroup rt_cline */
+/** @{ */
+/** @file rt/primitives/cline.h */
 
 #ifndef RT_PRIMITIVES_CLINE_H
 #define RT_PRIMITIVES_CLINE_H
@@ -41,6 +41,8 @@ RT_EXPORT extern fastf_t rt_cline_radius;
 __END_DECLS
 
 #endif /* RT_PRIMITIVES_CLINE_H */
+
+/** @} */
 
 /*
  * Local Variables:

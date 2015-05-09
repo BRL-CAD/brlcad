@@ -17,9 +17,10 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file rt/primitives/ars.h
- *
- */
+
+/** @addtogroup rt_ars */
+/** @{ */
+/** @file rt/primitives/ars.h */
 
 #ifndef RT_PRIMITIVES_ARS_H
 #define RT_PRIMITIVES_ARS_H
@@ -33,6 +34,7 @@ __BEGIN_DECLS
 RT_EXPORT extern void rt_hitsort(struct hit h[],
                                  int nh);
 
+/** @} */
 __END_DECLS
 
 #endif /* RT_PRIMITIVES_ARS_H */

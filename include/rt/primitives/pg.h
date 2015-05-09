@@ -17,9 +17,9 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file rt/primitives/pg.h
- *
- */
+/** @addtogroup rt_pg */
+/** @{ */
+/** @file rt/primitives/pg.h */
 
 #ifndef RT_PRIMITIVES_PG_H
 #define RT_PRIMITIVES_PG_H
@@ -44,6 +44,8 @@ RT_EXPORT extern int rt_pg_plot_poly(struct bu_list             *vhead,
                                      struct rt_db_internal      *ip,
                                      const struct rt_tess_tol   *ttol,
                                      const struct bn_tol        *tol);
+
+/** @} */
 
 __END_DECLS
 

@@ -17,13 +17,13 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @addtogroup librt */
-/** @{ */
-/** @file rt/debug.h
+/** @addtogroup rt_debug
  *
- * librt debugging information
+ * @brief librt debugging information
  *
  */
+/** @{ */
+/** @file rt/debug.h */
 
 #ifndef RT_DEBUG_H
 #define RT_DEBUG_H

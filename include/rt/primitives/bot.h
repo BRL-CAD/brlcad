@@ -17,9 +17,9 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file rt/primitives/bot.h
- *
- */
+/** @addtogroup rt_bot */
+/** @{ */
+/** @file rt/primitives/bot.h */
 
 #ifndef RT_PRIMITIVES_BOT_H
 #define RT_PRIMITIVES_BOT_H
@@ -120,6 +120,7 @@ RT_EXPORT extern int rt_bot_decimate(struct rt_bot_internal *bot,
                                      fastf_t max_normal_error,
                                      fastf_t min_edge_length);
 
+/** @} */
 
 __END_DECLS
 

@@ -17,9 +17,9 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file rt/primitives/tgc.h
- *
- */
+/** @addtogroup rt_tgc */
+/** @{ */
+/** @file rt/primitives/tgc.h */
 
 #ifndef RT_PRIMITIVES_TGC_H
 #define RT_PRIMITIVES_TGC_H
@@ -36,6 +36,8 @@ RT_EXPORT extern void rt_pt_sort(fastf_t t[],
 
 
 __END_DECLS
+
+/** @} */
 
 #endif /* RT_PRIMITIVES_TGC_H */
 

@@ -17,9 +17,9 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file rt/primitives/epa.h
- *
- */
+/** @addtogroup rt_epa */
+/** @{ */
+/** @file rt/primitives/epa.h */
 
 #ifndef RT_PRIMITIVES_EPA_H
 #define RT_PRIMITIVES_EPA_H
@@ -35,6 +35,8 @@ RT_EXPORT extern void rt_ell(fastf_t *ov,
                              const fastf_t *A,
                              const fastf_t *B,
                              int sides);
+
+/** @} */
 
 __END_DECLS
 

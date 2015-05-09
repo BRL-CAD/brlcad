@@ -17,9 +17,9 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file rt/primitives/ell.h
- *
- */
+/** @addtogroup rt_ell */
+/** @{ */
+/** @file rt/primitives/ell.h */
 
 #ifndef RT_PRIMITIVES_ELL_H
 #define RT_PRIMITIVES_ELL_H
@@ -35,6 +35,7 @@ RT_EXPORT extern void rt_ell_16pts(fastf_t *ov,
                                    fastf_t *V,
                                    fastf_t *A,
                                    fastf_t *B);
+/** @} */
 
 __END_DECLS
 

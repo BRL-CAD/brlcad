@@ -17,9 +17,9 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file rt/primitives/dsp.h
- *
- */
+/** @addtogroup rt_dsp */
+/** @{ */
+/** @file rt/primitives/dsp.h */
 
 #ifndef RT_PRIMITIVES_DSP_H
 #define RT_PRIMITIVES_DSP_H
@@ -39,6 +39,8 @@ RT_EXPORT extern int dsp_pos(point_t out,
 __END_DECLS
 
 #endif /* RT_PRIMITIVES_DSP_H */
+
+/** @} */
 
 /*
  * Local Variables:

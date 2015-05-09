@@ -17,9 +17,9 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file rt/primitives/rpc.h
- *
- */
+/** @addtogroup rt_rpc */
+/** @{ */
+/** @file rt/primitives/rpc.h */
 
 #ifndef RT_PRIMITIVES_RPC_H
 #define RT_PRIMITIVES_RPC_H
@@ -48,6 +48,8 @@ RT_EXPORT extern struct bu_list *rt_vlblock_find(struct bn_vlblock *vbp,
                                                  int b);
 
 __END_DECLS
+
+/** @} */
 
 #endif /* RT_PRIMITIVES_RPC_H */
 

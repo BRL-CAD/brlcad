@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @addtogroup librt */
+/** @addtogroup rt_nurb */
 /** @{ */
 /** @file nurb.h
  *

@@ -17,9 +17,9 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file rt/primitives/hf.h
- *
- */
+/** @addtogroup rt_hf */
+/** @{ */
+/** @file rt/primitives/hf.h */
 
 #ifndef RT_PRIMITIVES_HF_H
 #define RT_PRIMITIVES_HF_H
@@ -31,6 +31,8 @@
 __BEGIN_DECLS
 
 RT_EXPORT extern int rt_hf_to_dsp(struct rt_db_internal *db_intern);
+
+/** @} */
 
 __END_DECLS
 

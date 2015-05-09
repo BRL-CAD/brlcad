@@ -17,9 +17,9 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file rt/primitives/pipe.h
- *
- */
+/** @addtogroup rt_pipe */
+/** @{ */
+/** @file rt/primitives/pipe.h */
 
 #ifndef RT_PRIMITIVES_PIPE_H
 #define RT_PRIMITIVES_PIPE_H
@@ -39,6 +39,7 @@ RT_EXPORT extern void rt_vls_pipept(struct bu_vls *vp,
 RT_EXPORT extern void rt_pipept_print(const struct wdb_pipept *pipept, double mm2local);
 RT_EXPORT extern int rt_pipe_ck(const struct bu_list *headp);
 
+/** @} */
 
 __END_DECLS
 

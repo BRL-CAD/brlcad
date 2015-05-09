@@ -17,9 +17,9 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file rt/primitives/metaball.h
- *
- */
+/** @addtogroup rt_metaball */
+/** @{ */
+/** @file rt/primitives/metaball.h */
 
 #ifndef RT_PRIMITIVES_METABALL_H
 #define RT_PRIMITIVES_METABALL_H
@@ -48,6 +48,8 @@ RT_EXPORT extern int rt_metaball_add_point(struct rt_metaball_internal *,
                                            const point_t *loc,
                                            const fastf_t fldstr,
                                            const fastf_t goo);
+
+/** @} */
 
 __END_DECLS
 

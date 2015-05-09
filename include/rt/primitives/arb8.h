@@ -17,9 +17,9 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file rt/primitives/arb8.h
- *
- */
+/** @addtogroup rt_arb */
+/** @{ */
+/** @file rt/primitives/arb8.h */
 
 #ifndef RT_PRIMITIVES_ARB8_H
 #define RT_PRIMITIVES_ARB8_H
@@ -80,6 +80,7 @@ RT_EXPORT extern int rt_arb_find_e_nearest_pt2(int *edge, int *vert1, int *vert2
 
 __END_DECLS
 
+/** @} */
 #endif /* RT_PRIMITIVES_ARB8_H */
 
 /*

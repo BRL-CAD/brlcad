@@ -17,9 +17,9 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file rt/primitives/tor.h
- *
- */
+/** @addtogroup rt_tor */
+/** @{ */
+/** @file rt/primitives/tor.h */
 
 #ifndef RT_PRIMITIVES_TOR_H
 #define RT_PRIMITIVES_TOR_H
@@ -33,6 +33,8 @@ RT_EXPORT extern int rt_num_circular_segments(double maxerr,
 	                                      double radius);
 
 __END_DECLS
+
+/** @} */
 
 #endif /* RT_PRIMITIVES_TOR_H */
 

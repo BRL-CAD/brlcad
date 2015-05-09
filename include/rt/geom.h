@@ -1,4 +1,4 @@
-/*                        R T G E O M . H
+/*                        G E O M . H
  * BRL-CAD
  *
  * Copyright (c) 2004-2014 United States Government as represented by
@@ -17,18 +17,19 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @addtogroup librt */
-/** @{ */
-/** @file rtgeom.h
+/** @addtogroup rt_geom
  *
- * @brief Details of the internal forms used by the LIBRT geometry
+ * @brief Functions and details of the internal forms used by the LIBRT geometry
  * routines for the different solids.
  *
  * These structures are what the struct rt_db_internal generic pointer
  * idb_ptr points at, based on idb_type indicating a solid id ID_xxx,
  * such as ID_TGC.
- *
+*
  */
+/** @{ */
+/** @file rt/geom.h */
+/** @} */
 
 #ifndef RT_GEOM_H
 #define RT_GEOM_H
@@ -50,6 +51,8 @@ __BEGIN_DECLS
 
 #define NAMELEN 16	/* NAMESIZE from db.h (can't call it NAMESIZE!!!!!) */
 
+/** @addtogroup rt_tor */
+/** @{ */
 /*
  * ID_TOR
  */
@@ -65,7 +68,10 @@ struct rt_tor_internal {
     fastf_t r_b;	/**< @brief radius in B direction (typ == r_a) */
 };
 #define RT_TOR_CK_MAGIC(_p) BU_CKMAG(_p, RT_TOR_INTERNAL_MAGIC, "rt_tor_internal")
+/** @} */
 
+/** @addtogroup rt_tgc */
+/** @{ */
 /**
  * ID_TGC and ID_REC
  */
@@ -79,7 +85,10 @@ struct rt_tgc_internal {
     vect_t d;
 };
 #define RT_TGC_CK_MAGIC(_p) BU_CKMAG(_p, RT_TGC_INTERNAL_MAGIC, "rt_tgc_internal")
+/** @} */
 
+/** @addtogroup rt_ell */
+/** @{ */
 /*
  * ID_ELL, and ID_SPH
  */
@@ -91,7 +100,10 @@ struct rt_ell_internal {
     vect_t c;  /**< @brief axis c radial length */
 };
 #define RT_ELL_CK_MAGIC(_p) BU_CKMAG(_p, RT_ELL_INTERNAL_MAGIC, "rt_ell_internal")
+/** @} */
 
+/** @addtogroup rt_superell */
+/** @{ */
 /*
  * ID_SUPERELL
  */
@@ -105,7 +117,10 @@ struct rt_superell_internal {
     double e;
 };
 #define RT_SUPERELL_CK_MAGIC(_p) BU_CKMAG(_p, RT_SUPERELL_INTERNAL_MAGIC, "rt_superell_internal")
+/** @} */
 
+/** @addtogroup rt_metaball */
+/** @{ */
 /**
  * ID_METABALL
  *
@@ -150,7 +165,22 @@ struct rt_metaball_internal {
     struct bu_list metaball_ctrl_head;
 };
 #define RT_METABALL_CK_MAGIC(_p) BU_CKMAG(_p, RT_METABALL_INTERNAL_MAGIC, "rt_metaball_internal")
+struct wdb_metaballpt {
+    struct bu_list l;
+    int type;
+    fastf_t fldstr; /**< @brief  field strength */
+    fastf_t sweat;  /**< @brief  beta value used for metaball and blob evaluation */
+    point_t coord;
+    point_t coord2;
+};
+#define WDB_METABALLPT_TYPE_POINT 0x0
+#define WDB_METABALLPT_TYPE_LINE 0x1
+#define WDB_METABALLPT_NULL	((struct wdb_metaballpt *)0)
+/** @} */
 
+
+/** @addtogroup rt_arb */
+/** @{ */
 /*
  * ID_ARB8
  *
@@ -162,7 +192,10 @@ struct rt_arb_internal {
     point_t pt[8];
 };
 #define RT_ARB_CK_MAGIC(_p) BU_CKMAG(_p, RT_ARB_INTERNAL_MAGIC, "rt_arb_internal")
+/** @} */
 
+/** @addtogroup rt_ars */
+/** @{ */
 /*
  * ID_ARS
  */
@@ -173,7 +206,10 @@ struct rt_ars_internal {
     fastf_t **curves;
 };
 #define RT_ARS_CK_MAGIC(_p) BU_CKMAG(_p, RT_ARS_INTERNAL_MAGIC, "rt_ars_internal")
+/** @} */
 
+/** @addtogroup rt_half */
+/** @{ */
 /*
  * ID_HALF
  */
@@ -182,7 +218,10 @@ struct rt_half_internal {
     plane_t eqn;
 };
 #define RT_HALF_CK_MAGIC(_p) BU_CKMAG(_p, RT_HALF_INTERNAL_MAGIC, "rt_half_internal")
+/** @} */
 
+/** @addtogroup rt_grip */
+/** @{ */
 /*
  * ID_GRIP
  */
@@ -194,7 +233,10 @@ struct rt_grip_internal {
     fastf_t mag;
 };
 #define RT_GRIP_CK_MAGIC(_p) BU_CKMAG(_p, RT_GRIP_INTERNAL_MAGIC, "rt_grip_internal")
+/** @} */
 
+/** @addtogroup rt_joint */
+/** @{ */
 /*
  * ID_JOINT
  */
@@ -210,7 +252,10 @@ struct rt_joint_internal {
     fastf_t value;
 };
 #define RT_JOINT_CK_MAGIC(_p) BU_CKMAG(_p, RT_JOINT_INTERNAL_MAGIC, "rt_joint_internal")
+/** @} */
 
+/** @addtogroup rt_pg */
+/** @{ */
 /**
  * ID_POLY
  */
@@ -227,7 +272,10 @@ struct rt_pg_internal {
     size_t max_npts;		/**< @brief maximum value of npts in poly[] */
 };
 #define RT_PG_CK_MAGIC(_p) BU_CKMAG(_p, RT_PG_INTERNAL_MAGIC, "rt_pg_internal")
+/** @} */
 
+/** @addtogroup rt_nurb */
+/** @{ */
 /* ID_BSPLINE */
 struct rt_nurb_internal {
     uint32_t magic;
@@ -242,7 +290,10 @@ struct rt_nurb_internal {
 #define RT_NURB_CK_MAGIC(_p) BU_CKMAG(_p, RT_NURB_INTERNAL_MAGIC, "rt_nurb_internal");
 #define RT_NURB_GET_CONTROL_POINT(_s, _u, _v)	((_s)->ctl_points[ \
 						     ((_v)*(_s)->s_size[0]+(_u))*RT_NURB_EXTRACT_COORDS((_s)->pt_type)])
+/** @} */
 
+/** @addtogroup rt_brep */
+/** @{ */
 /* ID_BREP */
 struct rt_brep_internal {
     uint32_t magic;
@@ -253,6 +304,7 @@ struct rt_brep_internal {
 
 #define RT_BREP_CK_MAGIC(_p) BU_CKMAG(_p, RT_BREP_INTERNAL_MAGIC, "rt_brep_internal");
 #define RT_BREP_TEST_MAGIC(_p) ((_p) && (*((uint32_t *)(_p)) == (uint32_t)(RT_BREP_INTERNAL_MAGIC)))
+/** @} */
 
 
 /*
@@ -263,6 +315,8 @@ struct rt_brep_internal {
  * m = (struct model *)intern.idb_ptr;
  */
 
+/** @addtogroup rt_ebm */
+/** @{ */
 /*
  * ID_EBM
  */
@@ -281,7 +335,10 @@ struct rt_ebm_internal {
     struct bu_mapped_file *mp;	/**< @brief actual data */
 };
 #define RT_EBM_CK_MAGIC(_p) BU_CKMAG(_p, RT_EBM_INTERNAL_MAGIC, "rt_ebm_internal")
+/** @} */
 
+/** @addtogroup rt_vol */
+/** @{ */
 /*
  * ID_VOL
  */
@@ -303,7 +360,10 @@ struct rt_vol_internal {
     unsigned char *map;
 };
 #define RT_VOL_CK_MAGIC(_p) BU_CKMAG(_p, RT_VOL_INTERNAL_MAGIC, "rt_vol_internal")
+/** @} */
 
+/** @addtogroup rt_hf */
+/** @{ */
 /*
  * ID_HF
  */
@@ -330,7 +390,10 @@ struct rt_hf_internal {
     struct bu_mapped_file *mp;	/**< @brief actual data */
 };
 #define RT_HF_CK_MAGIC(_p) BU_CKMAG(_p, RT_HF_INTERNAL_MAGIC, "rt_hf_internal")
+/** @} */
 
+/** @addtogroup rt_arbn */
+/** @{ */
 /*
  * ID_ARBN
  */
@@ -340,7 +403,10 @@ struct rt_arbn_internal {
     plane_t *eqn;
 };
 #define RT_ARBN_CK_MAGIC(_p) BU_CKMAG(_p, RT_ARBN_INTERNAL_MAGIC, "rt_arbn_internal")
+/** @} */
 
+/** @addtogroup rt_pipe */
+/** @{ */
 /*
  * ID_PIPE
  */
@@ -351,7 +417,18 @@ struct rt_pipe_internal {
     int pipe_count;
 };
 #define RT_PIPE_CK_MAGIC(_p) BU_CKMAG(_p, RT_PIPE_INTERNAL_MAGIC, "rt_pipe_internal")
+struct wdb_pipept {
+    struct bu_list l;      /**< @brief  doubly linked list support */
+    point_t pp_coord;      /**< @brief  "control" point for pipe solid */
+    fastf_t pp_id;         /**< @brief  inner diam, <=0 if solid (wire) */
+    fastf_t pp_od;         /**< @brief  pipe outer diam */
+    fastf_t pp_bendradius; /**< @brief  bend radius to use for a bend at this point */
+};
+/** @} */
 
+
+/** @addtogroup rt_part */
+/** @{ */
 /*
  * ID_PARTICLE
  */
@@ -369,7 +446,10 @@ struct rt_part_internal {
 #define RT_PARTICLE_TYPE_SPHERE 1
 #define RT_PARTICLE_TYPE_CYLINDER 2
 #define RT_PARTICLE_TYPE_CONE 3
+/** @} */
 
+/** @addtogroup rt_rpc */
+/** @{ */
 /*
  * ID_RPC
  */
@@ -381,7 +461,10 @@ struct rt_rpc_internal {
     fastf_t rpc_r;	/**< @brief scalar half-width of rectangular face */
 };
 #define RT_RPC_CK_MAGIC(_p) BU_CKMAG(_p, RT_RPC_INTERNAL_MAGIC, "rt_rpc_internal")
+/** @} */
 
+/** @addtogroup rt_rhc */
+/** @{ */
 /*
  * ID_RHC
  */
@@ -394,7 +477,10 @@ struct rt_rhc_internal {
     fastf_t rhc_c;	/**< @brief dist from hyperbola to vertex of asymptotes */
 };
 #define RT_RHC_CK_MAGIC(_p) BU_CKMAG(_p, RT_RHC_INTERNAL_MAGIC, "rt_rhc_internal")
+/** @} */
 
+/** @addtogroup rt_epa */
+/** @{ */
 /*
  * ID_EPA
  */
@@ -407,7 +493,10 @@ struct rt_epa_internal {
     fastf_t epa_r2;	/**< @brief scalar semi-minor axis length */
 };
 #define RT_EPA_CK_MAGIC(_p) BU_CKMAG(_p, RT_EPA_INTERNAL_MAGIC, "rt_epa_internal")
+/** @} */
 
+/** @addtogroup rt_ehy */
+/** @{ */
 /*
  * ID_EHY
  */
@@ -421,7 +510,10 @@ struct rt_ehy_internal {
     fastf_t ehy_c;	/**< @brief dist from hyperbola to vertex of asymptotes */
 };
 #define RT_EHY_CK_MAGIC(_p) BU_CKMAG(_p, RT_EHY_INTERNAL_MAGIC, "rt_ehy_internal")
+/** @} */
 
+/** @addtogroup rt_hyp */
+/** @{ */
 /*
  * ID_HYP
  */
@@ -434,8 +526,10 @@ struct rt_hyp_internal {
     fastf_t hyp_bnr;/**< @brief ratio of minimum neck width to base width */
 };
 #define RT_HYP_CK_MAGIC(_p) BU_CKMAG(_p, RT_HYP_INTERNAL_MAGIC, "rt_hyp_internal")
+/** @} */
 
-
+/** @addtogroup rt_eto */
+/** @{ */
 /*
  * ID_ETO
  */
@@ -448,7 +542,10 @@ struct rt_eto_internal {
     fastf_t eto_rd;	/**< @brief scalar length of semi-minor of ellipse */
 };
 #define RT_ETO_CK_MAGIC(_p) BU_CKMAG(_p, RT_ETO_INTERNAL_MAGIC, "rt_eto_internal")
+/** @} */
 
+/** @addtogroup rt_dsp */
+/** @{ */
 /*
  * ID_DSP
  */
@@ -482,8 +579,11 @@ struct rt_dsp_internal{
     char dsp_datasrc;		/**< @brief which type of data source */
 };
 #define RT_DSP_CK_MAGIC(_p) BU_CKMAG(_p, RT_DSP_INTERNAL_MAGIC, "rt_dsp_internal")
+/** @} */
 
 
+/** @addtogroup rt_sketch */
+/** @{ */
 /*
  * ID_SKETCH
  */
@@ -563,7 +663,10 @@ struct rt_sketch_internal
     struct rt_curve curve;	/**< the curves of this sketch */
 };
 #define RT_SKETCH_CK_MAGIC(_p) BU_CKMAG(_p, RT_SKETCH_INTERNAL_MAGIC, "rt_sketch_internal")
+/** @} */
 
+/** @addtogroup rt_submodel */
+/** @{ */
 /*
  * ID_SUBMODEL
  */
@@ -578,7 +681,10 @@ struct rt_submodel_internal {
     const struct db_i *dbip;
 };
 #define RT_SUBMODEL_CK_MAGIC(_p) BU_CKMAG(_p, RT_SUBMODEL_INTERNAL_MAGIC, "rt_submodel_internal")
+/** @} */
 
+/** @addtogroup rt_extrude */
+/** @{ */
 /*
  * ID_EXTRUDE
  */
@@ -601,7 +707,10 @@ struct rt_extrude_internal
  * and direction are used for scaling and rotation.
  */
 #define RT_EXTRUDE_CK_MAGIC(_p) BU_CKMAG(_p, RT_EXTRUDE_INTERNAL_MAGIC, "rt_extrude_internal")
+/** @} */
 
+/** @addtogroup rt_revolve */
+/** @{ */
 /*
  * ID_REVOLVE
  */
@@ -619,7 +728,10 @@ struct rt_revolve_internal {
     struct rt_sketch_internal *skt;	/**< @brief pointer to sketch */
 };
 #define RT_REVOLVE_CK_MAGIC(_p) BU_CKMAG(_p, RT_REVOLVE_INTERNAL_MAGIC, "rt_revolve_internal")
+/** @} */
 
+/** @addtogroup rt_cline */
+/** @{ */
 /*
  * ID_CLINE
  *
@@ -635,7 +747,10 @@ struct rt_cline_internal
     fastf_t thickness; 	/**< @brief zero thickness means volume mode */
 };
 #define RT_CLINE_CK_MAGIC(_p) BU_CKMAG(_p, RT_CLINE_INTERNAL_MAGIC, "rt_cline_internal")
+/** @} */
 
+/** @addtogroup rt_bot */
+/** @{ */
 /*
  * ID_BOT
  */
@@ -719,8 +834,11 @@ struct rt_bot_list {
 #define RT_BOT_USE_FLOATS 0x4          /**< @brief Use the single precision version of "tri_specific" during prep */
 
 #define RT_BOT_CK_MAGIC(_p) BU_CKMAG(_p, RT_BOT_INTERNAL_MAGIC, "rt_bot_internal")
+/** @} */
 
 
+/** @addtogroup rt_pnt */
+/** @{ */
 /**
  * ID_PNTS
  *
@@ -803,7 +921,10 @@ struct rt_pnts_internal {
     void *point;
 };
 #define RT_PNTS_CK_MAGIC(_p) BU_CKMAG(_p, RT_PNTS_INTERNAL_MAGIC, "rt_pnts_internal")
+/** @} */
 
+/** @addtogroup rt_annotation */
+/** @{ */
 /*
  * ID_ANNOTATION
  *
@@ -824,13 +945,15 @@ struct rt_annotation_internal
     struct rt_sketch_internal *skt;	/**< @brief pointer to sketch holding label decoration (if any) - same plane as text plane */
 };
 
-
 /**
  * Note that the u_vec and v_vec are not unit vectors, their magnitude
  * and direction are used for scaling and rotation.
  */
 #define RT_ANNOTATION_CK_MAGIC(_p) BU_CKMAG(_p, RT_ANNOTATION_INTERNAL_MAGIC, "rt_annotation_internal")
+/** @} */
 
+/** @addtogroup rt_hrt */
+/** @{ */
 struct rt_hrt_internal
 {
     uint32_t hrt_magic;
@@ -841,27 +964,8 @@ struct rt_hrt_internal
     fastf_t d;          /**< @brief distance to cusps */
 };
 #define RT_HRT_CK_MAGIC(_p) BU_CKMAG(_p, RT_HRT_INTERNAL_MAGIC, "rt_hrt_internal")
+/** @} */
 
-
-struct wdb_pipept {
-    struct bu_list l;      /**< @brief  doubly linked list support */
-    point_t pp_coord;      /**< @brief  "control" point for pipe solid */
-    fastf_t pp_id;         /**< @brief  inner diam, <=0 if solid (wire) */
-    fastf_t pp_od;         /**< @brief  pipe outer diam */
-    fastf_t pp_bendradius; /**< @brief  bend radius to use for a bend at this point */
-};
-
-struct wdb_metaballpt {
-    struct bu_list l;
-    int type;
-    fastf_t fldstr; /**< @brief  field strength */
-    fastf_t sweat;  /**< @brief  beta value used for metaball and blob evaluation */
-    point_t coord;
-    point_t coord2;
-};
-#define WDB_METABALLPT_TYPE_POINT 0x0
-#define WDB_METABALLPT_TYPE_LINE 0x1
-#define WDB_METABALLPT_NULL	((struct wdb_metaballpt *)0)
 
 __END_DECLS
 

@@ -17,9 +17,9 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file rt/primitives/sketch.h
- *
- */
+/** @addtogroup rt_sketch */
+/** @{ */
+/** @file rt/primitives/sketch.h */
 
 #ifndef RT_PRIMITIVES_SKETCH_H
 #define RT_PRIMITIVES_SKETCH_H
@@ -59,6 +59,8 @@ RT_EXPORT extern int curve_to_tcl_list(struct bu_vls *vls,
                                        struct rt_curve *crv);
 
 __END_DECLS
+
+/** @} */
 
 #endif /* RT_PRIMITIVES_SKETCH_H */
 

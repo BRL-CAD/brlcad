@@ -17,9 +17,9 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file rt/primitives/brep.h
- *
- */
+/** @addtogroup rt_brep */
+/** @{ */
+/** @file rt/primitives/brep.h */
 
 #ifndef RT_PRIMITIVES_BREP_H
 #define RT_PRIMITIVES_BREP_H
@@ -47,6 +47,7 @@ RT_EXPORT extern int rt_brep_plot_poly(struct bu_list           *vhead,
 /* BREP validity test */
 RT_EXPORT extern int rt_brep_valid(struct rt_db_internal *ip, struct bu_vls *log);
 
+/** @} */
 
 __END_DECLS
 
