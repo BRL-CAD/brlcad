@@ -30,35 +30,47 @@
 
 #include "common.h"
 
-#include "bu/parse.h"
 #include "bn.h"
 
 
-/* EXAMPLE_INTERNAL shows how one would store the values that describe
- * or implement this primitive.  The internal structure should go into
- * rtgeom.h, the magic number should go into bu/magic.h, and of course
- * the #if wrapper should go away.
+/* ray tracing form of solid, including any precomputed terms.  not
+ * strictly necessary in addition to the rt_xxx_internal structure
+ * (see below), but often useful for performance.
  */
-#if defined(EXAMPLE_INTERNAL) || 1
+struct xxx_specific {
+    vect_t xxx_V;
+};
 
-/* parameters for solid, internal representation */
+
+/*
+ * BEGIN EXAMPLE CODE THAT BELONGS ELSEWHERE
+ *
+ * The remainder of this header has example code that belongs in other
+ * files, but that are included here for completeness.  Remove the
+ * logic from this header when you've added them to their proper
+ * location.
+ */
+
+/* For rt/magic.h: magic number registration for this type */
+#define RT_XXX_INTERNAL_MAGIC 0x78787878 /* 'xxxx' */
+
+/* For rt/geom.h: parameters for solid, internal representation */
 struct rt_xxx_internal {
     uint32_t magic;
     vect_t v;
 };
 
-#  define RT_XXX_INTERNAL_MAGIC 0x78787878 /* 'xxxx' */
-#  define RT_XXX_CK_MAGIC(_p) BU_CKMAG(_p, RT_XXX_INTERNAL_MAGIC, "rt_xxx_internal")
+/* For rt/geom.h: validation routines fo rthe internal struct */
+#define RT_XXX_CK_MAGIC(_p) BU_CKMAG(_p, RT_XXX_INTERNAL_MAGIC, "rt_xxx_internal")
 
-/* should set in raytrace.h to ID_MAX_SOLID and increment the max */
+/* For rt/db5.h: Gets ID_MAX_SOLID value, then ID_MAX_SOLID and
+ * ID_MAXIMUM are incremented as needed.
+ */
 #  define ID_XXX 0
 
-#endif
-
-/* ray tracing form of solid, including precomputed terms */
-struct xxx_specific {
-    vect_t xxx_V;
-};
+/*
+ * END EXAMPLE CODE THAT BELONGS ELSEWHERE
+ */
 
 #endif /* LIBRT_PRIMITIVES_XXX_XXX_H */
 
