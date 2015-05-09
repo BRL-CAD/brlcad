@@ -23,38 +23,52 @@
  *
  * Intersect a ray with an 'xxx' primitive object.
  *
- * Adding a new geometric object type:
+ */
+/** @} */
+
+/*****************************************
+ * HOW TO ADD A NEW GEOMETRIC OBJECT TYPE:
  *
- * Design nameless in-memory data structure
- *
- * define rt_xxx_internal --- struct with parameters for this new object
- * define xxx_specific --- raytracing form, possibly w/precomputed terms
- * define rt_xxx_parse --- struct bu_structparse for "db get", "db adjust", ...
- *
- * code import/export4/describe/print/ifree/plot/prep/shot/curve/uv/tess
+ * design a (nameless) in-memory data structure
  *
  * edit rt/defines.h add ID_XXX, update ID_MAXIMUM and ID_MAX_SOLID
  * edit rt/db5.h add DB5_MINORTYPE_BRLCAD_XXX define
  * edit rt/geom.h to add rt_xxx_internal
+ *   struct with parameters for this new object
  * edit bu/magic.h to add RT_XXX_INTERNAL_MAGIC
+ * edit src/librt/primitives/xxx/xxx.c
+ *   minimally, implement callback code for:
+ *     import5/export5 == .g reading/writing
+ *     make == 'make' default constructor command
+ *     describe == 'l' command
+ *     ifree == db memory management
+ *     free == raytrace memory management
+ *     plot == wireframe visualization
+ *     xform == matrix editing
+ *     prep/shot/norm == ray tracing
+ *   ideally, also implement callback code for:
+ *     get/adjust == g2asc, get/put/adjust commands
+ *     form == 'form' command
+ *     bbox == bounding box, 'bb' command
+ *     volume/surf_area/centroid == 'analyze' command
+ *     brep == conversion to NURBS
+ *     adaptive_plot == LoD wireframe
+ *     uv/curve == texture mapping, visualization
+ * edit src/librt/primitives/xxx/xxx.h, 
+ *   define xxx_specific: raytracing form with precomputed terms
+ *   define rt_xxx_parse: bu_structparse for db get, adjust, ...
  * edit table.c:
- *	RT_DECLARE_INTERFACE()
- *	struct rt_functab entry
- *	rt_id_solid()
- * edit db_scan.c to add the new solid to db_scan()
- * edit CMakeLists.txt to add g_xxx.c to compile
- *
- * go to src/libwdb and create mk_xxx() routine
- * go to src/conv and edit g2asc.c and asc2g.c to support the new solid
- * go to src/librt and edit tcl.c to add the new solid to
- *	rt_solid_type_lookup[]
- *	also add the interface table and to rt_id_solid() in table.c;
- *	you MUST add the appropriate RTFUNCTAB_FUNC_X_CAST macro
- *	for each function rt_xxx_X you add (see entire list in raytrace.h)
- * go to src/mged and create the edit support
+ *   RT_DECLARE_INTERFACE()
+ *   struct rt_functab entry
+ * edit src/librt/CMakeLists.txt to add xxx.c to compile
+ * edit src/libwdb/xxx.c and create an mk_xxx() routine
+ * edit src/libwdb/CMakeLists.txt to add xxx.c to compile
+ * edit src/libged/make.c and add 'make' support for xxx
+ * edit src/libged/typein.c and add 'in' support for xxx
+ * edit src/tclscripts/mged to add to mged GUI
+ * edit src/tclscripts/archer to add to archer GUI
  *
  */
-/** @} */
 
 #include "common.h"
 
