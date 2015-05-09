@@ -163,12 +163,12 @@ main(int argc, char **argv)
 	const char *u;
 
 	if (ifp == stdin || ofp == stdout) {
-	    bu_log("Cannot use stdin or stdout for Release 6 or later databases\n");
+	    bu_log("Unsupported: cannot use stdin or stdout for v5 or later geometry databases\n");
 	    bu_exit(1, "Please use the \"g2asc input.g output.g\" form\n");
 	}
 
-	bu_log("Exporting Release 6 database\n");
-	bu_log("  Note that the Release 6 binary format is machine independent.\n");
+	bu_log("Exporting v5 format geometry database\n");
+	bu_log("  Note that the v5 binary format is machine independent.\n");
 	bu_log("  Converting to ASCII to move database to a different\n");
 	bu_log("  computer architecture is no longer necessary.\n");
 	interp = Tcl_CreateInterp();
@@ -324,15 +324,15 @@ main(int argc, char **argv)
 	    Tcl_ResetResult(interp);
 	    rt_db_free_internal(&intern);
 	} FOR_ALL_DIRECTORY_END;
+
+	/* processing a v5, we're done */
 	return 0;
-    } else {
-	/* A record is already in the input buffer */
-	goto top;
     }
 
-    /* Read database file */
- top:
+    /* processing a v4 */
+top:
     do {
+	/* A v4 record is already in the input buffer */
 	/* Check record type and skip deleted records */
 	switch (record.u_id) {
 	    case ID_FREE:
@@ -341,7 +341,8 @@ main(int argc, char **argv)
 		soldump();
 		continue;
 	    case ID_COMB:
-		if (combdump() > 0)  goto top;
+		if (combdump() > 0)
+		    goto top;
 		continue;
 	    case ID_MEMB:
 		fprintf(stderr, "g2asc: stray MEMB record, skipped\n");
@@ -403,6 +404,7 @@ main(int argc, char **argv)
     }  while (fread((char *)&record, sizeof record, 1, ifp) == 1  &&
 	       !feof(ifp));
 
+    /* done with v4 */
     return 0;
 }
 
