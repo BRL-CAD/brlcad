@@ -17,10 +17,11 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file xray.h
- *
- * All necessary information about a ray.
+/** @addtogroup rt_xray
+ * @brief All necessary information about a ray.
  */
+/** @{ */
+/** @file xray.h */
 
 #ifndef RT_XRAY_H
 #define RT_XRAY_H
@@ -29,6 +30,7 @@
 #include "vmath.h"
 
 __BEGIN_DECLS
+#define CORNER_PTS 4
 
 /**
  * @brief Primary ray data structure
@@ -68,7 +70,6 @@ struct xrays
  * The r_dir vectors indicate the edges (and thus the shape) of the
  * prism which is formed from the projection of the pixel into space.
  */
-#define CORNER_PTS 4
 struct pixel_ext {
     uint32_t magic;
     struct xray corner[CORNER_PTS];
@@ -80,7 +81,7 @@ struct pixel_ext {
 __END_DECLS
 
 #endif /* RT_XRAY_H */
-
+/** @} */
 /*
  * Local Variables:
  * tab-width: 8

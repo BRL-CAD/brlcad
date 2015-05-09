@@ -17,9 +17,11 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file seg.h
- *
+/** @addtogroup rt_seg
+ * @brief Intersection segment.
  */
+/** @{ */
+/** @file seg.h */
 
 #ifndef RT_SEG_H
 #define RT_SEG_H
@@ -92,7 +94,7 @@ RT_EXPORT extern void rt_pr_seg_vls(struct bu_vls *, const struct seg *);
 __END_DECLS
 
 #endif /* RT_SEG_H */
-
+/** @} */
 /*
  * Local Variables:
  * tab-width: 8

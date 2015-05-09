@@ -17,13 +17,11 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @addtogroup librt */
-/** @{ */
-/** @file rt/pattern.h
- *
- * Functionality for generating patterns of rays.
- *
+/** @addtogroup rt_pattern
+ * @brief Functionality for generating patterns of rays.
  */
+/** @{ */
+/** @file rt/pattern.h */
 
 #ifndef RT_PATTERN_H
 #define RT_PATTERN_H
@@ -32,7 +30,6 @@
 
 #include "rt/defines.h"
 #include "rt/xray.h"
-
 
 __BEGIN_DECLS
 

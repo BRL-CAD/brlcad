@@ -17,9 +17,13 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file rt/application.h
- *
+/** @addtogroup rt_application
+ * @brief
+ * This structure is the only parameter to rt_shootray() and holds all
+ * user-supplied information necessary to perform a raytrace.
  */
+/** @{ */
+/** @file rt/application.h */
 
 #ifndef RT_APPLICATION_H
 #define RT_APPLICATION_H
@@ -200,6 +204,8 @@ struct application_bundle
 __END_DECLS
 
 #endif /* RT_APPLICATION_H */
+
+/** @} */
 
 /*
  * Local Variables:

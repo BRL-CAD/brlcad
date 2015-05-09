@@ -17,9 +17,12 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file resource.h
- *
+/** @addtogroup rt_resource
+ * @brief
+ * Per-CPU statistics and resources.
  */
+/** @{ */
+/** @file resource.h */
 
 #ifndef RT_RESOURCE_H
 #define RT_RESOURCE_H
@@ -35,8 +38,6 @@
 __BEGIN_DECLS
 
 /**
- * Per-CPU statistics and resources.
- *
  * One of these structures is needed per thread of execution, usually
  * with calling applications creating an array with at least MAX_PSW
  * elements.  To prevent excessive competition for free structures,
@@ -113,7 +114,7 @@ RT_EXPORT extern struct resource rt_uniresource;        /**< @brief  default.  D
 __END_DECLS
 
 #endif /* RT_RESOURCE_H */
-
+/** @} */
 /*
  * Local Variables:
  * tab-width: 8

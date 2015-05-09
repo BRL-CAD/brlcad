@@ -17,9 +17,11 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file rt/boolweave.h
- *
+/** @addtogroup rt_boolweave
+ * @brief Boolean weaving of raytracing segments
  */
+/** @{ */
+/** @file rt/boolweave.h */
 
 #ifndef RT_BOOLWEAVE_H
 #define RT_BOOLWEAVE_H
@@ -170,6 +172,8 @@ RT_EXPORT extern void rt_grow_boolstack(struct resource *res);
 __END_DECLS
 
 #endif /* RT_BOOLWEAVE_H */
+
+/** @} */
 
 /*
  * Local Variables:

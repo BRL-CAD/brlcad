@@ -17,9 +17,11 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file rt/ray_partition.h
- *
+/** @addtogroup rt_partition
+ * @brief Partitions of a ray.
  */
+/** @{ */
+/** @file rt/ray_partition.h */
 
 #ifndef RT_RAY_PARTITION_H
 #define RT_RAY_PARTITION_H
@@ -154,7 +156,7 @@ RT_EXPORT extern int rt_partition_len(const struct partition *partheadp);
 __END_DECLS
 
 #endif /* RT_RAY_PARTITION_H */
-
+/** @} */
 /*
  * Local Variables:
  * tab-width: 8

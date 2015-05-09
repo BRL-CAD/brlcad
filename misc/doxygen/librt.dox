@@ -126,10 +126,23 @@
 /** @ingroup rt_geom */
 /**  @defgroup rt_vol Volume */
 
+/** @ingroup raytrace */
+/**  @defgroup rt_pattern Generate Rays via Pattern Templates */
+
+/** @ingroup raytrace */
+/**  @defgroup rt_shoot Shoot Rays */
+/**    @ingroup rt_shoot*/
+/**     @defgroup rt_application The Application Structure */
+/**    @ingroup rt_shoot*/
+/**     @defgroup rt_resource The Resource Structure */
+/**    @ingroup rt_shoot*/
+/**     @defgroup rt_xray The Ray Structure */
+/**    @ingroup rt_shoot*/
+/**     @defgroup rt_hit The Hit Structure */
+/**    @ingroup rt_shoot*/
+/**     @defgroup rt_seg The Segment Structure */
+/**    @ingroup rt_shoot*/
+/**     @defgroup rt_partition The Partition Structure */
 
 /** @ingroup raytrace */
 /**  @defgroup rt_boolweave Booleweave */
-/**  @addtogroup rt_boolweave
-     @brief Boolean weaving of raytracing segments */
- */
-

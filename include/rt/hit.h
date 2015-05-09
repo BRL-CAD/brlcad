@@ -17,9 +17,11 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file hit.h
- *
+/** @addtogroup rt_hit
+ * @brief Information about where a ray hits the surface.
  */
+/** @{ */
+/** @file rt/hit.h */
 
 #ifndef RT_HIT_H
 #define RT_HIT_H
@@ -167,7 +169,7 @@ RT_EXPORT extern void rt_pr_hitarray_vls(struct bu_vls *v,
 __END_DECLS
 
 #endif /* RT_HIT_H */
-
+/** @} */
 /*
  * Local Variables:
  * tab-width: 8

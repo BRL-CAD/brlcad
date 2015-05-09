@@ -17,26 +17,11 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file rt/shoot.h
+
+/** @addtogroup rt_shoot
  *
- */
-
-#ifndef RT_SHOOT_H
-#define RT_SHOOT_H
-
-#include "common.h"
-#include "vmath.h"
-#include "rt/defines.h"
-#include "rt/application.h"
-#include "rt/xray.h"
-
-__BEGIN_DECLS
-
-/** @file librt/shoot.c
- *
- * Ray Tracing program shot coordinator.
- *
- * This is the heart of LIBRT's ray-tracing capability.
+ * @brief
+ * Ray Tracing program shot coordinator. This is the heart of LIBRT's ray-tracing capability.
  *
  * Given a ray, shoot it at all the relevant parts of the model,
  * (building the finished_segs chain), and then call rt_boolregions()
@@ -52,11 +37,26 @@ __BEGIN_DECLS
  *
  * for K ranging from 0 to +infinity.  There is no looking backwards.
  *
- */
 
+ * */
+/** @{ */
+/** @file rt/shoot.h */
 
-/* Shoot a ray */
+#ifndef RT_SHOOT_H
+#define RT_SHOOT_H
+
+#include "common.h"
+#include "vmath.h"
+#include "rt/defines.h"
+#include "rt/application.h"
+#include "rt/xray.h"
+
+__BEGIN_DECLS
+
 /**
+ * @brief
+ * Shoot a ray
+ *
  * Note that the direction vector r_dir must have unit length; this is
  * mandatory, and is not ordinarily checked, in the name of
  * efficiency.
@@ -83,9 +83,11 @@ __BEGIN_DECLS
  */
 RT_EXPORT extern int rt_shootray(struct application *ap);
 
-/* Shoot a bundle of rays */
 
-/*
+/**
+ * @brief
+ * Shoot a bundle of rays
+ *
  * Function for shooting a bundle of rays. Iteratively walks list of
  * rays contained in the application bundles xrays field 'b_rays'
  * passing each single ray to r_shootray().
@@ -139,7 +141,7 @@ RT_EXPORT extern int rt_shootray_bundle(register struct application *ap, struct 
  */
 RT_EXPORT extern void rt_add_res_stats(struct rt_i *rtip,
                                        struct resource *resp);
-/* Tally stats into struct rt_i */
+/** Tally stats into struct rt_i */
 RT_EXPORT extern void rt_zero_res_stats(struct resource *resp);
 
 
@@ -162,7 +164,7 @@ RT_EXPORT extern void rt_vstub(struct soltab *stp[],
 __END_DECLS
 
 #endif /* RT_SHOOT_H */
-
+/** @} */
 /*
  * Local Variables:
  * tab-width: 8
