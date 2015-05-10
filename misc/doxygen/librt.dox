@@ -126,6 +126,12 @@
 /** @ingroup rt_geom */
 /**  @defgroup rt_vol Volume */
 
+/** @ingroup raytrace*/
+/**  @defgroup rt_soltab The Solids Table*/
+
+/** @ingroup raytrace*/
+/**  @defgroup rt_functab The Function Table*/
+
 /** @ingroup raytrace */
 /**  @defgroup rt_pattern Generate Rays via Pattern Templates */
 
@@ -133,6 +139,8 @@
 /**  @defgroup rt_shoot Shoot Rays */
 /**    @ingroup rt_shoot*/
 /**     @defgroup rt_application The Application Structure */
+/**    @ingroup rt_shoot*/
+/**     @defgroup rt_instance The Raytracing Instance */
 /**    @ingroup rt_shoot*/
 /**     @defgroup rt_resource The Resource Structure */
 /**    @ingroup rt_shoot*/

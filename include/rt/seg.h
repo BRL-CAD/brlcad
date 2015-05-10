@@ -19,6 +19,17 @@
  */
 /** @addtogroup rt_seg
  * @brief Intersection segment.
+ *
+ * A "seg" or segment is a low level in/out ray/shape intersection solution,
+ * derived by performing intersection calculations between a ray and a single
+ * object.  Depending on the type of shape, a single ray may produce
+ * multiple segments when intersected with that shape. Unless the object
+ * happens to also be a top-level unioned object in the database, individual
+ * segments must be "woven" together using boolean hierarchies to obtain the
+ * final partitions which describe solid geometry along a ray.  An individual
+ * segment may have either a positive or negative contribution to the "final"
+ * partition, depending on whether parent combs designate their children
+ * as unioned, intersected, or subtracted.
  */
 /** @{ */
 /** @file seg.h */

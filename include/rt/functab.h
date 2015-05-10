@@ -17,9 +17,17 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file rt/functab.h
+/** @addtogroup rt_functab
+ * @brief Object-oriented interface to BRL-CAD geometry.
+ *
+ * These are the methods for a notional object class "brlcad_solid".
+ * The data for each instance is found separately in struct soltab.
+ * This table is indexed by ID_xxx value of particular solid found in
+ * st_id, or directly pointed at by st_meth.
  *
  */
+/** @{ */
+/** @file rt/functab.h */
 
 #ifndef RT_FUNCTAB_H
 #define RT_FUNCTAB_H
@@ -49,13 +57,6 @@
 __BEGIN_DECLS
 
 /**
- * Object-oriented interface to BRL-CAD geometry.
- *
- * These are the methods for a notional object class "brlcad_solid".
- * The data for each instance is found separately in struct soltab.
- * This table is indexed by ID_xxx value of particular solid found in
- * st_id, or directly pointed at by st_meth.
- *
  * This needs to be at the end of the raytrace.h header file, so that
  * all the structure names are known.  The "union record" and "struct
  * nmgregion" pointers are problematic, so generic pointers are used
@@ -272,7 +273,7 @@ RT_EXPORT extern const struct rt_functab *rt_get_functab_by_label(const char *la
 __END_DECLS
 
 #endif /* RT_FUNCTAB_H */
-
+/** @} */
 /*
  * Local Variables:
  * tab-width: 8

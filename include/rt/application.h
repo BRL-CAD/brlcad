@@ -19,8 +19,8 @@
  */
 /** @addtogroup rt_application
  * @brief
- * This structure is the only parameter to rt_shootray() and holds all
- * user-supplied information necessary to perform a raytrace.
+ * This structure is the only parameter to rt_shootray() and holds
+ * information about how the ray-casting should be performed.
  */
 /** @{ */
 /** @file rt/application.h */
@@ -52,31 +52,35 @@ struct rt_i; /* forward declaration */
  *
  * When calling rt_shootray(), these fields are mandatory:
  *
- *      - a_ray.r_pt    Starting point of ray to be fired
- *      - a_ray.r_dir   UNIT VECTOR with direction to fire in (dir cosines)
- *      - a_hit() Routine to call when something is hit
- *      - a_miss() Routine to call when ray misses everything
- *      - a_rt_i                Must be set to the value returned by rt_dirbuild().
+ * Field       | Description
+ * ----------- | ---------------------------------------------------
+ * a_ray.r_pt  | Starting point of ray to be fired
+ * a_ray.r_dir | UNIT VECTOR with direction to fire in (dir cosines)
+ * a_hit()     | Routine to call when something is hit
+ * a_miss()    | Routine to call when ray misses everything
+ * a_rt_i      | The current struct rt_i instance, which must be set to the value returned by rt_dirbuild().
  *
  * In addition, these fields are used by the library.  If they are set
  * to zero, default behavior will be used.
  *
- *      - a_resource    Pointer to CPU-specific resources.  Multi-CPU only.
- *      - a_overlap() DEPRECATED, set a_multioverlap() instead.
- *                      If non-null, this routine will be called to
- *                      handle overlap conditions.  See librt/bool.c
- *                      for calling sequence.
- *                      Return of 0 eliminates partition with overlap entirely
- *                      Return of !0 retains one partition in output
- *      - a_multioverlap() Called when two or more regions overlap in a partition.
- *                      Default behavior used if pointer not set.
- *                      See librt/bool.c for calling sequence.
- *      - a_level               Printed by librt on errors, but otherwise not used.
- *      - a_x           Printed by librt on errors, but otherwise not used.
- *      - a_y           Printed by librt on errors, but otherwise not used.
- *      - a_purpose     Printed by librt on errors, but otherwise not used.
- *      - a_rbeam               Used to compute beam coverage on geometry,
- *      - a_diverge     for spline subdivision & many UV mappings.
+ * Field            | Description
+ * ---------------- | ---------------------------------------------------
+ * a_resource       | Pointer to CPU-specific resources.  Multi-CPU only.
+ * a_overlap()      | DEPRECATED, set a_multioverlap() instead.
+ *                    If non-null, this routine will be called to
+ *                    handle overlap conditions.  See librt/bool.c
+ *                    for calling sequence.
+ *                    Return of 0 eliminates partition with overlap entirely
+ *                    Return of !0 retains one partition in output
+ * a_multioverlap() | Called when two or more regions overlap in a partition.
+ *                    Default behavior used if pointer not set.
+ *                    See librt/bool.c for calling sequence.
+ * a_level          | Printed by librt on errors, but otherwise not used.
+ * a_x              | Printed by librt on errors, but otherwise not used.
+ * a_y              | Printed by librt on errors, but otherwise not used.
+ * a_purpose        | Printed by librt on errors, but otherwise not used.
+ * a_rbeam          | Used to compute beam coverage on geometry,
+ * a_diverge        | for spline subdivision & many UV mappings.
  *
  *  Note that rt_shootray() returns the (int) return of the
  *  a_hit()/a_miss() function called, as well as placing it in

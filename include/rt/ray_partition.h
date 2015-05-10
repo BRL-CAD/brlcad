@@ -19,6 +19,12 @@
  */
 /** @addtogroup rt_partition
  * @brief Partitions of a ray.
+ *
+ * The partition structure contains information about intervals of the ray which pass
+ * through geometry.  A partition consists of one or more segments, which are
+ * woven together via rt_boolweave to form the final "solid" partitions that describe
+ * solid segments of geometry along a given ray.
+ *
  */
 /** @{ */
 /** @file rt/ray_partition.h */

@@ -19,6 +19,17 @@
  */
 /** @addtogroup rt_hit
  * @brief Information about where a ray hits the surface.
+ *
+ * The hit structure contains information about an
+ * individual boundary/ray intersection.
+ *
+ * This is the lowest level of intersection information returned by
+ * LIBRT's intersection logic.  Generally, multiple hits are used
+ * by higher level routines to construct segments (per shape)
+ * and partitions (boolean evaluations of multiple segments which
+ * constitute the actual portion of the ray deemed to have passed
+ * through solid geometry.)
+ *
  */
 /** @{ */
 /** @file rt/hit.h */
@@ -36,8 +47,10 @@
 __BEGIN_DECLS
 
 /**
+ * @brief
  * Information about where a ray hits the surface.
  *
+*
  * Important Note:  Surface Normals always point OUT of a solid.
  *
  * DEPRECATED: The hit_point and hit_normal elements will be removed

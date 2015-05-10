@@ -17,9 +17,12 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file rt/rt_instance.h
- *
+/** @addtogroup rt_instance
+ * @brief The "raytrace instance" structure contains definitions for
+ * librt which are specific to the particular model being processed.
  */
+/** @{ */
+/** @file rt/rt_instance.h */
 
 #ifndef RT_RT_INSTANCE_H
 #define RT_RT_INSTANCE_H
@@ -350,7 +353,7 @@ RT_EXPORT extern void rt_regionfix(struct rt_i *rtip);
 __END_DECLS
 
 #endif /* RT_RT_INSTANCE_H */
-
+/** @} */
 /*
  * Local Variables:
  * tab-width: 8

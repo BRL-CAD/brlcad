@@ -17,9 +17,11 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file soltab.h
- *
+/** @addtogroup rt_soltab
+ * @brief The LIBRT Solids Table
  */
+/** @{ */
+/** @file soltab.h */
 
 #ifndef RT_SOLTAB_H
 #define RT_SOLTAB_H
@@ -105,7 +107,7 @@ RT_EXPORT extern void rt_pr_soltab(const struct soltab *stp);
 __END_DECLS
 
 #endif /* RT_SOLTAB_H */
-
+/** @} */
 /*
  * Local Variables:
  * tab-width: 8
