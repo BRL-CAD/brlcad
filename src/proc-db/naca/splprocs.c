@@ -203,7 +203,7 @@ InterpolatePolynomial(struct fortran_array *x, struct fortran_array *y, fastf_t 
 {
     int n = SIZE(x);
     struct fortran_array *du;
-    fastf_t sum;
+    fastf_t sum = 0.0;
     int i, j;
     ALLOCATE(du, n);
     VSETALLN(F2C(du), u, n);
