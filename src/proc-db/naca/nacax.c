@@ -1069,7 +1069,7 @@ Thickness6(int family, fastf_t toc, struct fortran_array *x,
     if (ypp) { VSETALLN(F2C(ypp), 0.0, n); }
 
     SetSixDigitPoints(family, toc, xt, yt);
-    VSCALEN(F2C(minus_yt), F2C(yt), 201, -1);
+    VSCALEN(F2C(minus_yt), F2C(yt), -1, 201);
     ParametrizeAirfoil(xt, yt, xt, minus_yt, sLocal, xLocal, yLocal);
 
     FMMspline(sLocal, xLocal, xpLocal);
