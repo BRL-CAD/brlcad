@@ -60,7 +60,7 @@ struct rt_xxx_internal {
     vect_t v;
 };
 
-/* For rt/geom.h: validation routines fo rthe internal struct */
+/* For rt/geom.h: validation routines for the internal struct */
 #define RT_XXX_CK_MAGIC(_p) BU_CKMAG(_p, RT_XXX_INTERNAL_MAGIC, "rt_xxx_internal")
 
 /* For rt/db5.h: Gets ID_MAX_SOLID value, then ID_MAX_SOLID and

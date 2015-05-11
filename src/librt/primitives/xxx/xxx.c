@@ -54,7 +54,7 @@
  *     brep == conversion to NURBS
  *     adaptive_plot == LoD wireframe
  *     uv/curve == texture mapping, visualization
- * edit src/librt/primitives/xxx/xxx.h, 
+ * edit src/librt/primitives/xxx/xxx.h,
  *   define xxx_specific: raytracing form with precomputed terms
  *   define rt_xxx_parse: bu_structparse for db get, adjust, ...
  * edit table.c:
