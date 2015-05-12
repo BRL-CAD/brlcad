@@ -65,6 +65,14 @@ range from 0 to 255 inclusive and can be selected via
 <citerefentry><refentrytitle>fbcolor</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
 A hue of 160 is a pleasing blue.</para>
 
+<para>The
+<option>-a</option>
+and
+<option>-b</option>
+options can be used to set the top and bottom intensity,
+in the range of 0 to 255.
+By default, the top intensity is 240, and the bottom is 50 (these values are used above).</para>
+
 <para><option>-w</option> and <option>-n</option> options set the width and height, respectively;
 <option>-s</option> sets them to the same value.
 By default, the display is assumed to be 512x512 pixels;
@@ -89,14 +97,6 @@ flag is specified, the scanlines will be written out in inverted order
 (i.e., top to bottom).
 This is mostly useful with programs like
 <citerefentry><refentrytitle>cat-fb</refentrytitle><manvolnum>1</manvolnum></citerefentry>.</para>
-
-<para>The
-<option>-a</option>
-and
-<option>-b</option>
-options can be used to set the top and bottom intensity,
-in the range of 0 to 255.
-By default, the top intensity is 240, and the bottom is 50.</para>
 </refsect1>
 
 <refsect1 xml:id='examples'><title>EXAMPLES</title>
