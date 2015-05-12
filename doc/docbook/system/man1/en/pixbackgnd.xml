@@ -65,6 +65,13 @@ range from 0 to 255 inclusive and can be selected via
 <citerefentry><refentrytitle>fbcolor</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
 A hue of 160 is a pleasing blue.</para>
 
+<para><option>-w</option> and <option>-n</option> options set the width and height, respectively;
+<option>-s</option> sets them to the same value.
+By default, the display is assumed to be 512x512 pixels;
+specifying the
+<option>-H</option>
+flag, in addition to changing the title height to 90 scanlines (see below), changes the output size to 1024x1024.</para>
+
 <para>By default, the title height is
 80 scanlines, or 90 scanlines if the
 <option>-H</option>
@@ -75,11 +82,6 @@ If
 <emphasis remap='I'>title_height</emphasis>
 is set to zero, then the white bar
 is omitted as well, and the entire display is smoothly shaded.</para>
-
-<para>By default, the display is assumed to be 512x512 pixels;
-specifying the
-<option>-H</option>
-flag, in addition to changing the title height to 90 scanlines (see above), changes the output size to 1024x1024.</para>
 
 <para>If the
 <option>-i</option>
