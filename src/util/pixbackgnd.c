@@ -47,8 +47,8 @@ int invert = 0;
 
 double deltav;
 int title_height = 80;
-int h_start = 240;
-int h_end = 50;
+int h_start = 240; /* top_inten, in the Usage and in the man page */
+int h_end = 50; /* bottom_inten, in the Usage and in the man page */
 
 char usage[] = "\
 Usage:  pixbackgnd [-H -i] [-s squaresize] [-w width] [-n height]\n\
@@ -194,10 +194,10 @@ get_args(int argc, char **argv)
 		title_height = atoi(bu_optarg);
 		break;
 	    case 'a':
-		h_start = atoi(bu_optarg);
+		h_start = atoi(bu_optarg); /* top_inten, in the Usage and in the man page */
 		break;
 	    case 'b':
-		h_end = atoi(bu_optarg);
+		h_end = atoi(bu_optarg); /* bottom_inten, in the Usage and in the man page */
 		break;
 
 	    default:		/* '?' 'h' */
