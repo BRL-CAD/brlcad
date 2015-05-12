@@ -53,8 +53,9 @@ int h_end = 50; /* bottom_inten, in the Usage and in the man page */
 char usage[] = "\
 Usage:  pixbackgnd [-H -i] [-s squaresize] [-w width] [-n height]\n\
 	[-t title_height] [-a top_inten] [-b bottom_inten]\n\
-	hue saturation > file.pix\n\
-or	pixbackgnd r g b > file.pix\n";
+	hue saturation\n\
+or	r g b <--(used in place of \"hue saturation\" just above)\n\
+	> file.pix\n";
 
 /* rgbhsv
  *
