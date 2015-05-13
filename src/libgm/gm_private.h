@@ -31,6 +31,7 @@
 
 #include "common.h"
 #include "vmath.h"
+#include "gm/defines.h"
 
 /**
  * @brief
@@ -46,7 +47,7 @@
  * @param       n the number of points in the input set
  * @return 0 if successful
  */
-int
+GM_EXPORT int
 coplanar_2d_coord_sys(point_t *origin_pnt, vect_t *u_axis, vect_t *v_axis, const point_t *points_3d, int n);
 
 /**
@@ -61,7 +62,7 @@ coplanar_2d_coord_sys(point_t *origin_pnt, vect_t *u_axis, vect_t *v_axis, const
  * @param       n the number of points in the input set
  * @return 0 if successful
  */
-int
+GM_EXPORT int
 coplanar_3d_to_2d(point2d_t **points_2d, const point_t *origin_pnt,
                      const vect_t *u_axis, const vect_t *v_axis,
                      const point_t *points_3d, int n);
@@ -78,7 +79,7 @@ coplanar_3d_to_2d(point2d_t **points_2d, const point_t *origin_pnt,
  * @param       n the number of points in the input set
  * @return 0 if successful
  */
-int
+GM_EXPORT int
 coplanar_2d_to_3d(point_t **points_3d, const point_t *origin_pnt,
                      const vect_t *u_axis, const vect_t *v_axis,
                      const point2d_t *points_2d, int n);
