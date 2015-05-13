@@ -17,9 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file rt/timer.h
- *
- */
+/** @file rt/timer.h */
 
 #ifndef RT_TIMER_H
 #define RT_TIMER_H
@@ -34,23 +32,22 @@ __BEGIN_DECLS
 /* Start the global timer */
 /** @addtogroup timer */
 /** @{ */
-/** @file librt/timerhep.c
- *
+/**
  * To provide timing information for RT.
  * THIS VERSION FOR Denelcor HEP/UPX (System III-like)
  */
 
-/** @file librt/timer42.c
+/**
 *
 * To provide timing information for RT when running on 4.2 BSD UNIX.
 *
 */
 
- /** @file librt/timer-nt.c
+ /**
  *
  * To provide timing information on Microsoft Windows NT.
  */
- /** @file librt/timerunix.c
+ /**
  *
  * To provide timing information for RT.  This version for any non-BSD
  * UNIX system, including System III, Vr1, Vr2.  Version 6 & 7 should

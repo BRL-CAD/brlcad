@@ -17,9 +17,19 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file rt_tcl.h
+/** @addtogroup librt
+ *
+ * @brief
+ * Tcl interfaces to LIBRT routines.
+ *
+ * LIBRT routines are not for casual command-line use; as a result,
+ * the Tcl name for the function should be exactly the same as the C
+ * name for the underlying function.  Typing "rt_" is no hardship when
+ * writing Tcl procs, and clarifies the origin of the routine.
  *
  */
+/** @{ */
+/** @file rt_tcl.h */
 
 #ifndef RT_RT_TCL_H
 #define RT_RT_TCL_H
@@ -30,20 +40,6 @@
 #include "rt/defines.h"
 
 __BEGIN_DECLS
-
-/* tcl.c */
-/** @addtogroup librt */
-/** @{ */
-/** @file librt/tcl.c
- *
- * Tcl interfaces to LIBRT routines.
- *
- * LIBRT routines are not for casual command-line use; as a result,
- * the Tcl name for the function should be exactly the same as the C
- * name for the underlying function.  Typing "rt_" is no hardship when
- * writing Tcl procs, and clarifies the origin of the routine.
- *
- */
 
 
 /**

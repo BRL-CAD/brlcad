@@ -17,10 +17,11 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file rt/calc.h
- *
+/**
+ * @brief
  * In memory format for non-geometry objects in BRL-CAD databases.
  */
+/** @file rt/calc.h */
 
 #ifndef RT_CALC_H
 #define RT_CALC_H
@@ -154,18 +155,11 @@ RT_EXPORT extern void rt_find_fallback_angle(double angles[5],
 RT_EXPORT extern void rt_pr_tol(const struct bn_tol *tol);
 
 
-/* roots.c */
-/** @addtogroup librt */
-/** @{ */
-/** @file librt/roots.c
- *
+/**
  * Find the roots of a polynomial
  *
  * TODO - should this be moved to libbn?
  *
- */
-
-/**
  * WARNING: The polynomial given as input is destroyed by this
  * routine.  The caller must save it if it is important!
  *

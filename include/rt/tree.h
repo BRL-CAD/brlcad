@@ -630,8 +630,7 @@ RT_EXPORT extern void db_functree(struct db_i *dbip,
                                                     void *),
                                   struct resource *resp,
                                   void *client_data);
-/** @file librt/tree.c
- *
+/**
  * Ray Tracing library database tree walker.
  *
  * Collect and prepare regions and solids for subsequent ray-tracing.

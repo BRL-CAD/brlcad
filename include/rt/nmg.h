@@ -17,9 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file rt/nmg.h
- *
- */
+/** @file rt/nmg.h */
 
 #ifndef RT_NMG_H
 #define RT_NMG_H
