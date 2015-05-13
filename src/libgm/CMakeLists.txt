@@ -21,6 +21,8 @@ set_target_properties(libgm PROPERTIES VERSION 20.0.1 SOVERSION 20)
 
 add_subdirectory(tests)
 
+CMAKEFILES(gm_private.h)
+
 # Local Variables:
 # tab-width: 8
 # mode: cmake
