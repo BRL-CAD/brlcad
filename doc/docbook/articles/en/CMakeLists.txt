@@ -13,6 +13,7 @@ set(docbook_articles_EN
   pipes.xml
   projection_shader.xml
   tire.xml
+  mged.xml
   )
 
 set(docbook_articles_EN_IMAGES
@@ -122,6 +123,34 @@ set(docbook_articles_EN_IMAGES
   images/transboth_sm.gif
   images/v_eqn1.gif
   images/v_eqn2.gif
+  images/azel.jpg
+  images/az_el.gif
+  images/az_el.jpg
+  images/az_el_sm.gif
+  images/base.gif
+  images/base.jpg
+  images/bool.gif
+  images/coord-axes.gif
+  images/cup_and_mug.gif
+  images/cup_and_mug_small.gif
+  images/cup_out+in.gif
+  images/cup_outside.gif
+  images/cup_w_handle.gif
+  images/faceplate.gif
+  images/faceplate_menu.gif
+  images/faceplate_menu_sm.gif
+  images/faceplate_sm.gif
+  images/fillet.gif
+  images/fillet.jpg
+  images/handle.gif
+  images/handle.jpg
+  images/mug_camo.gif
+  images/mug_camo.jpg
+  images/mug_green.gif
+  images/mug_green.jpg
+  images/prims.gif
+  images/rim.gif
+  images/rim.jpg   
   )
 ADD_DOC(docbook_articles_EN_IMAGES html/articles/en/images)
 
