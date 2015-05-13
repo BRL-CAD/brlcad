@@ -242,6 +242,12 @@ file(WRITE ${mime_c_file_tmp} "${c_contents}")
 execute_process(COMMAND ${CMAKE_COMMAND} -E copy_if_different ${mime_h_file_tmp} ${MIME_H_FILE})
 execute_process(COMMAND ${CMAKE_COMMAND} -E copy_if_different ${mime_c_file_tmp} ${MIME_C_FILE})
 
+execute_process(COMMAND ${CMAKE_COMMAND} -E remove ${mime_h_file_tmp})
+execute_process(COMMAND ${CMAKE_COMMAND} -E remove ${mime_c_file_tmp}})
+
+DISTCLEAN(${MIME_H_FILE})
+DISTCLEAN(${MIME_C_FILE})
+
 # Local Variables:
 # tab-width: 8
 # mode: cmake
