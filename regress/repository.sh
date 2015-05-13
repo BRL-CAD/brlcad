@@ -224,6 +224,7 @@ for func in fgets abort dirname getopt strcat strncat strlcat strcpy strncpy str
 | sed 's/.*\/CONFIG_CONTROL_DESIGN.*//' \
 | sed 's/.*\/db\.h.*strncpy.*//' \
 | sed 's/.*\/file\.c:.*remove.*//' \
+| sed 's/.*\/optionparser\.h.*//g' \
 | sed 's/.*\/str\.c:.*strcasecmp.*//' \
 | sed 's/.*\/str\.c:.*strcmp.*//' \
 | sed 's/.*\/str\.c:.*strlcat.*//' \
