@@ -243,7 +243,7 @@ execute_process(COMMAND ${CMAKE_COMMAND} -E copy_if_different ${mime_h_file_tmp}
 execute_process(COMMAND ${CMAKE_COMMAND} -E copy_if_different ${mime_c_file_tmp} ${MIME_C_FILE})
 
 execute_process(COMMAND ${CMAKE_COMMAND} -E remove ${mime_h_file_tmp})
-execute_process(COMMAND ${CMAKE_COMMAND} -E remove ${mime_c_file_tmp}})
+execute_process(COMMAND ${CMAKE_COMMAND} -E remove ${mime_c_file_tmp})
 
 DISTCLEAN(${MIME_H_FILE})
 DISTCLEAN(${MIME_C_FILE})
