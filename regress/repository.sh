@@ -158,7 +158,7 @@ FILES="`grep -I -e '#[[:space:]]*include' $SRCFILES $INCFILES | grep -E 'common.
 #done`"
 
 LEXERS="schema.h obj_grammar.c obj_grammar.cpp obj_scanner.h points_scan.c script.c"
-EXEMPT="bnetwork.h bio.h config_win.h pstdint.h uce-dirent.h ttcp.c $LEXERS"
+EXEMPT="bnetwork.h bio.h config_win.h pstdint.h uce-dirent.h ttcp.c optionparser.h $LEXERS"
 
 FOUND=
 for file in $FILES ; do
