@@ -73,7 +73,6 @@
  */
 /** @{ */
 /* @file bn/tabdata.h */
-/* @file libbn/tabdata.c */
 
 #ifndef BN_TABDATA_H
 #define BN_TABDATA_H
