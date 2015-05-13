@@ -14,7 +14,7 @@
  */
 /** @file util.c
  *
- * This file implements utility functions internal to libbn.
+ * This file implements utility functions internal to libgm.
  */
 
 #include "common.h"
