@@ -14,6 +14,7 @@ set(LIBGM_SOURCES
   polygon.c
   tri_ray.c
   tri_tri.c
+  util.c
   )
 
 BRLCAD_ADDLIB(libgm "${LIBGM_SOURCES}" libbn libbu)

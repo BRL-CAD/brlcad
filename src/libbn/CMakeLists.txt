@@ -32,7 +32,6 @@ set(LIBBN_SOURCES
   tcl.c
   tplot.c
   ulp.c
-  util.c
   vectfont.c
   vector.c
   vers.c
