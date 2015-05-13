@@ -150,7 +150,7 @@ set(docbook_articles_EN_IMAGES
   images/mug_green.jpg
   images/prims.gif
   images/rim.gif
-  images/rim.jpg   
+  images/rim.jpg
   )
 ADD_DOC(docbook_articles_EN_IMAGES html/articles/en/images)
 

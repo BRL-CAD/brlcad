@@ -8,7 +8,7 @@
 		Preface
 	</title>
 		<para>
-			This manual is designed to get the user familiar with BRL-CAD and the facilities available for creating and using geometry. To accomplish this, we start with an introduction to the geometry editor,<emphasis> MGED</emphasis>. 
+			This manual is designed to get the user familiar with BRL-CAD and the facilities available for creating and using geometry. To accomplish this, we start with an introduction to the geometry editor,<emphasis> MGED</emphasis>.
 		</para>
 </section>
 <section>
@@ -42,7 +42,7 @@
             <entry>
             	<para>
               Arbitrary Convex Polyhedron
-              </para>	
+              </para>
             </entry>
             <entry>
             	<para>
@@ -54,7 +54,7 @@
             <entry>
             	<para>
               Arbitrary Convex Polyhedron
-              </para>	
+              </para>
             </entry>
             <entry>
             	<para>
@@ -317,7 +317,7 @@
     </figure>
   </para>
 <para>
-	These primitives can be combined using boolean operators to create complex shapes.  The three boolean operations supported are union, difference (or subtraction), and intersection.  Any number of primitives may be combined to produce a shape.  The union (u) of two solids is defined as the volume in either of the solids.  The difference (-) of two solids is the volume of the first solid which is not in the volume of the second solid.  The intersection (+) of two solids is the volume that is contained in both solids. 
+	These primitives can be combined using boolean operators to create complex shapes.  The three boolean operations supported are union, difference (or subtraction), and intersection.  Any number of primitives may be combined to produce a shape.  The union (u) of two solids is defined as the volume in either of the solids.  The difference (-) of two solids is the volume of the first solid which is not in the volume of the second solid.  The intersection (+) of two solids is the volume that is contained in both solids.
 </para>
   <para>
     <figure>
@@ -349,7 +349,7 @@ Mug = Cup union Handle
     </figure>
   </para>
 <para>
-In this way the shape of objects are built up from components. 
+In this way the shape of objects are built up from components.
 </para>
 <para>
 When the desired shape of an object is attained, a special combination called a ``region'' is created.  A ``region'' represents an actual material component of the model.  It represents an item which is made from a homogeneous type of material.  In the example above two combinations are created: Cup and Handle.  These two are brought together to form an object (Mug) which is made of a single material (such as ceramic or bone china).  Material properties such as color, texture, transparency, reflectivity, etc. are assigned to regions.
@@ -379,7 +379,7 @@ Mugs (u)- Mug 2--Mug (u)	    Outside
         \     /			   \
 	 Mug 3			    Inside
 </programlisting>
-Users familiar with other CAD software may prefer to think of the ``region'' as a ``part''.  Combinations containing of ``regions'' may be thought of as ``assemblies''. 
+Users familiar with other CAD software may prefer to think of the ``region'' as a ``part''.  Combinations containing of ``regions'' may be thought of as ``assemblies''.
 </para>
 	</section>
 <section>
@@ -390,10 +390,10 @@ Users familiar with other CAD software may prefer to think of the ``region'' as 
 	The program for editing BRL-CAD geometry is called ``mged''.
 </para>
 <para>
-All the geometry for a particular model or application is generally stored in a single file called a database.  Each database may contain many different objects.  By convention, the files containing BRL-CAD geometry have an extension of ``.g''. 
+All the geometry for a particular model or application is generally stored in a single file called a database.  Each database may contain many different objects.  By convention, the files containing BRL-CAD geometry have an extension of ``.g''.
 </para>
 <para>
-Before starting mged the user should assure that the X-Windows DISPLAY environment variable has been properly set.  This indicates where applications should display the windows they create. 
+Before starting mged the user should assure that the X-Windows DISPLAY environment variable has been properly set.  This indicates where applications should display the windows they create.
 </para>
 <para>
 We use the following conventions for denoting text:
@@ -411,8 +411,8 @@ To edit or create a geometry file, the user starts the mged program from the she
 <para>
 The filename is required.  Unlike many programs which allow the user to create a new document or database in memory, mged always keeps everything on disk.  After each user command, the contents of the disk file are brought up to date.  By doing this, the amount of work lost in the event of a system crash is minimized.
 </para>
-<para> 
-When mged is started, it prints out the release number and date of compilation. When multiple versions of mged are installed on a machine, this allows the user to verify that the proper version is being started. 
+<para>
+When mged is started, it prints out the release number and date of compilation. When multiple versions of mged are installed on a machine, this allows the user to verify that the proper version is being started.
 </para>
 <para>
 If the file specified does not exist when mged is started, it will stop and ask if the user wishes to create a new database:
@@ -423,8 +423,8 @@ If the file specified does not exist when mged is started, it will stop and ask 
        bparker@vapor.arl.mil:/m/cad/.mged.6d
 
    cup.g: No such file or directory
-   Create new database (y|n)[n]? 
-At this point pressing the ``y'' key followed by a return will create the new database.  Any other (non-y) keys (followed by a return) will cause mged to quit without creating the database. 
+   Create new database (y|n)[n]?
+At this point pressing the ``y'' key followed by a return will create the new database.  Any other (non-y) keys (followed by a return) will cause mged to quit without creating the database.
    % mged -c cup.g
    BRL-CAD Release 4.5   Graphics Editor (MGED)
        Mon May 19 16:31:32 EDT 1997, Compilation 5377
@@ -434,7 +434,7 @@ At this point pressing the ``y'' key followed by a return will create the new da
    Create new database (y|n)[n]? y
    Creating new database "cup.g"
    Untitled MGED Database (units=mm)
-   attach (nu|X|ogl|glx)[nu]? 
+   attach (nu|X|ogl|glx)[nu]?
 </programlisting>
 </para>
 <para>
@@ -500,7 +500,7 @@ At this point, mged is asking what type of geometry display window you would lik
 </tgroup>
 </table>
 <para>
-	Enter one of the names listed followed by a return. 
+	Enter one of the names listed followed by a return.
 </para>
 <para>
 	<programlisting>
@@ -514,7 +514,7 @@ At this point, mged is asking what type of geometry display window you would lik
    Creating new database "cup.g"
    Untitled MGED Database (units=mm)
    attach (nu|X|ogl|glx)[nu]? ogl
-   mged> 
+   mged>
 </programlisting>
 </para>
 <para>
@@ -532,14 +532,14 @@ At this point, mged is asking what type of geometry display window you would lik
   <para>
 When the MGED program has a display window or device attached, it displays a border around the region of the screen being used along with some ancillary status information.  Together, this information is termed the editor ``faceplate''.
 </para>
-<para> 
-In the upper left corner of the window is a small enclosed area which is used to display the current editor state. The current editor state indicates whether objects are selected for editing and what modeling operations are allowed. 
+<para>
+In the upper left corner of the window is a small enclosed area which is used to display the current editor state. The current editor state indicates whether objects are selected for editing and what modeling operations are allowed.
 </para>
 <para>
-Underneath the state display is a zone in which three ``pop-up'' menus may appear.  The top menu is termed the ``button menu,'' as it contains menu items which duplicate many functions which were originally available via an external button box peripheral.  Having these frequently used functions available on a pop-up menu can greatly decrease the number of times that the user needs to remove his hand from the pointing device (either mouse or tablet puck) to reach for the buttons. 
+Underneath the state display is a zone in which three ``pop-up'' menus may appear.  The top menu is termed the ``button menu,'' as it contains menu items which duplicate many functions which were originally available via an external button box peripheral.  Having these frequently used functions available on a pop-up menu can greatly decrease the number of times that the user needs to remove his hand from the pointing device (either mouse or tablet puck) to reach for the buttons.
 </para>
 <para>
-Below is an example of the faceplate and first level menu. 
+Below is an example of the faceplate and first level menu.
 </para>
   <para>
 <figure>
@@ -551,13 +551,13 @@ Below is an example of the faceplate and first level menu.
     </figure>
   </para>
   <para>
-The second menu is used primarily for the various editing states, at which time it contains all the editing operations which are generic across all objects (scaling, rotation, and translation).  The third menu contains selections for object-specific editing operations.  The choices on these menus are detailed below. 
+The second menu is used primarily for the various editing states, at which time it contains all the editing operations which are generic across all objects (scaling, rotation, and translation).  The third menu contains selections for object-specific editing operations.  The choices on these menus are detailed below.
 </para>
 <para>
-Running across the entire bottom of the faceplate is a thin rectangular display area which holds two lines of text.  The first line always contains a numeric display of the model-space coordinates of the center of the view and the current size of the viewing cube, both of which are displayed in the currently selected editing units.  The first line also contains the current rotation rates. 
+Running across the entire bottom of the faceplate is a thin rectangular display area which holds two lines of text.  The first line always contains a numeric display of the model-space coordinates of the center of the view and the current size of the viewing cube, both of which are displayed in the currently selected editing units.  The first line also contains the current rotation rates.
 </para>
 <para>
-The second line has several uses, depending on editor mode.  In various editing states this second line will contain certain path selection information.  When the angle/distance cursor function is activated, the second line will be used to display the current settings of the cursor. 
+The second line has several uses, depending on editor mode.  In various editing states this second line will contain certain path selection information.  When the angle/distance cursor function is activated, the second line will be used to display the current settings of the cursor.
 </para>
 <para>
 All numeric interaction between the user and the editor are in terms of user-selected display units.  The user may select from millimeters, centimeters, meters, inches, and feet, and the currently active display units are noted in the first display line.  One important implementation detail is that all numeric values are stored in the database in millimeters. When MGED interacts with the user, it converts values from the database into the units selected by the user before displaying them.  Likewise, values that the user enters are converted to millimeters before being written to the database.
@@ -568,10 +568,10 @@ All numeric interaction between the user and the editor are in terms of user-sel
 		The Screen Coordinate System
 	</title>
 	<para>
-	Objects drawn on the screen are clipped in X, Y, and Z, to the size indicated on the first status line.  This creates a conceptual ``viewing cube''.  Only objects inside this cube are visible.  This feature allows objects within the cube to be seen, without cluttering the display with objects which are within view in X and Y, but quite far away in the Z direction.  This is especially useful when the display is zoomed in on a small portion of the geometry.  On some displays Z axis clipping can be selectively enabled and disabled as a viewing aid. 
+	Objects drawn on the screen are clipped in X, Y, and Z, to the size indicated on the first status line.  This creates a conceptual ``viewing cube''.  Only objects inside this cube are visible.  This feature allows objects within the cube to be seen, without cluttering the display with objects which are within view in X and Y, but quite far away in the Z direction.  This is especially useful when the display is zoomed in on a small portion of the geometry.  On some displays Z axis clipping can be selectively enabled and disabled as a viewing aid.
 </para>
 <para>
-The MGED editor uses the standard right-handed screen coordinate system shown in the figure below. 
+The MGED editor uses the standard right-handed screen coordinate system shown in the figure below.
 </para>
 <para>
     <figure>
@@ -583,7 +583,7 @@ The MGED editor uses the standard right-handed screen coordinate system shown in
     </figure>
 </para>
 <para>
-	The Z axis is perpendicular to the screen and the positive Z direction is out of the screen towards the viewer.  The directions of positive (+) and negative (-) axis rotations are also indicated.  For these rotations, the ``Right Hand Rule'' applies: Point the thumb of the right hand along the direction of +X axis and the other fingers will describe the sense of positive rotation. 
+	The Z axis is perpendicular to the screen and the positive Z direction is out of the screen towards the viewer.  The directions of positive (+) and negative (-) axis rotations are also indicated.  For these rotations, the ``Right Hand Rule'' applies: Point the thumb of the right hand along the direction of +X axis and the other fingers will describe the sense of positive rotation.
 </para>
 </section>
 <section>
@@ -591,7 +591,7 @@ The MGED editor uses the standard right-handed screen coordinate system shown in
 		Creating Geometry: The Cup
 	</title>
 <para>
-Let's look at the commands needed to build the cup geometry described in the first section.  The following MGED editing session contains all the commands needed to create the mug.  Each command will be explained below. 
+Let's look at the commands needed to build the cup geometry described in the first section.  The following MGED editing session contains all the commands needed to create the mug.  Each command will be explained below.
 <programlisting>
    % newmged Mug.g
    BRL-CAD Release 4.5   Graphics Editor (MGED)
@@ -624,7 +624,7 @@ Let's look at the commands needed to build the cup geometry described in the fir
    Defaulting item number to 1002
    Creating region id=1001, air=0, los=100, GIFTmaterial=1
 </programlisting>
-The first step in preparing a new database is to provide a title which describes the contents of the database.  This is an important opportunity to describe the contents and purpose of the database.  Setting the title is done with the title command in MGED. 
+The first step in preparing a new database is to provide a title which describes the contents of the database.  This is an important opportunity to describe the contents and purpose of the database.  Setting the title is done with the title command in MGED.
 </para>
 <para>
 	<programlisting>
@@ -634,10 +634,10 @@ When the database is first created, the default editing units are set to millime
 <programlisting>
    mged> units in
 </programlisting>
-Now we can create our first solid.  There are two techniques for creating geometry in MGED.  The commands for these two techniques are make and in (for ``insert'').  For precision modeling the in command offers the greatest control over the definition of the solid.  This is the approach we will use. 
+Now we can create our first solid.  There are two techniques for creating geometry in MGED.  The commands for these two techniques are make and in (for ``insert'').  For precision modeling the in command offers the greatest control over the definition of the solid.  This is the approach we will use.
 </para>
 <para>
-The ``in'' command can take all of its arguments on the command line, or it will prompt you for any missing portions.  Remembering what parameters need to be specified for each solid can be difficult at best.  All that you really need to enter is the command name.  Mged will prompt you for the rest of the parameters. 
+The ``in'' command can take all of its arguments on the command line, or it will prompt you for any missing portions.  Remembering what parameters need to be specified for each solid can be difficult at best.  All that you really need to enter is the command name.  Mged will prompt you for the rest of the parameters.
 </para>
 <para>
 In the first example above we specify the name of the solid we are creating (``outside.s'') and the type of solid to create (``rcc''). Then mged prompts for the remaining arguments (vertex, height vector, and radius):
@@ -682,13 +682,13 @@ is written as
 </programlisting>
 </para>
 <para>
-The comb command creates a boolean combination.  In our example we use this to create the shape of the outside of the cup called ``cup.s'' Reading the command above that creates cup.c, we note that cup.c is formed from the union of the volume defined by the solid ``outside.s'' and the subtraction of the volume defined by the solid ``inside.s''. 
+The comb command creates a boolean combination.  In our example we use this to create the shape of the outside of the cup called ``cup.s'' Reading the command above that creates cup.c, we note that cup.c is formed from the union of the volume defined by the solid ``outside.s'' and the subtraction of the volume defined by the solid ``inside.s''.
 </para>
 <para>
-The r command creates a ``region''.  It is just like creating a combination, but the results are a volume of one logical material type. 
+The r command creates a ``region''.  It is just like creating a combination, but the results are a volume of one logical material type.
 </para>
 <para>
-Assigning material properties is done with the mater or shader command.  Here we define which shader should be used when rendering the object, and the parameters for the shader.  The simplest shader is the ``plastic'' shader which uses a Phong lighting model.  For our mug this will be fine.  We specify the plastic shader and set the color to a shade of green. 
+Assigning material properties is done with the mater or shader command.  Here we define which shader should be used when rendering the object, and the parameters for the shader.  The simplest shader is the ``plastic'' shader which uses a Phong lighting model.  For our mug this will be fine.  We specify the plastic shader and set the color to a shade of green.
 <programlisting>
    mged> mater mug.r
    Shader =
@@ -700,8 +700,8 @@ Assigning material properties is done with the mater or shader command.  Here we
 </programlisting>
 </para>
 <para>
-The Inheritance option should be left 0.  This option will be discussed later. 
-Once we have created our geometry, it would be nice to look at the wireframe from a variety of angles.  By clicking on the button menu box a set of options is displayed.  The buttons labeled "35,25", "Top", "Right", "Front", and "45,45" offer a set of standard views. 
+The Inheritance option should be left 0.  This option will be discussed later.
+Once we have created our geometry, it would be nice to look at the wireframe from a variety of angles.  By clicking on the button menu box a set of options is displayed.  The buttons labeled "35,25", "Top", "Right", "Front", and "45,45" offer a set of standard views.
 </para>
 <para>
 It is possible to raytrace the current view from within mged.  But to do so we need a place to display the image.  We start up a framebuffer server (number 1) to accommodate this:
@@ -711,7 +711,7 @@ It is possible to raytrace the current view from within mged.  But to do so we n
 </programlisting>
 </para>
 <para>
-This runs the ``fbserv'' program which will maintain a framebuffer window for us.  Now we are ready to raytrace an image.  First we'll clear the geometry window of all the primitives and combinations and regions we've created.  Then we display the region we want to raytrace with the ``draw'' command.  Finally, we'll select a nice viewing angle of azimuth 35 elevation 25 with the ``ae'' command. 
+This runs the ``fbserv'' program which will maintain a framebuffer window for us.  Now we are ready to raytrace an image.  First we'll clear the geometry window of all the primitives and combinations and regions we've created.  Then we display the region we want to raytrace with the ``draw'' command.  Finally, we'll select a nice viewing angle of azimuth 35 elevation 25 with the ``ae'' command.
 
 <programlisting>
    mged> Z
@@ -768,7 +768,7 @@ Frame     0:   262144 rays   in       7.33 sec =   35746.50 rays/sec (wallclock)
 </programlisting>
 </para>
 <para>
-If all goes well, you will get an image of a green mug on a black background.  
+If all goes well, you will get an image of a green mug on a black background.
 </para>
   <para>
 <figure>
@@ -863,7 +863,7 @@ So far we've focused on creating primitive solids and combinations.  Now let's l
 <para>
 The handle for the mug is a little awkward.  It sticks out too far from the side of the mug, and it is too wide.
 </para>
-<para> 
+<para>
 The bottom is perfectly flat.  Any imperfection in the table top would cause it to wobble.
 The inside bottom corner is too sharp. We need to create a "fillet" at the seam between side and bottom.
 <programlisting>
@@ -2249,7 +2249,7 @@ rt -s 512 -F :1
       The command window also supports cut and paste as well as text
       scrolling. The default bindings for these operations are similar
       to those found in typical X Window applications such as xterm. For
-      example: 
+      example:
     </para>
     <table>
     	<title>Commands</title>
@@ -2472,7 +2472,7 @@ rt -s 512 -F :1
           When the Alt key is held down along with either of the Shift
           and Control keys the transformations are constrained to a
           particular axis. For such constrained transformations the
-          mouse buttons have the following meanings: 
+          mouse buttons have the following meanings:
         </para>
         <table>
         	<title>CONSTRAINED TRANSFORMATIONS</title>
@@ -3496,7 +3496,7 @@ rt -s 512 -F :1
       </listitem>
       <listitem>
         <para xml:id="ViewRing">
-          <emphasis role="strong">ViewRing</emphasis> 
+          <emphasis role="strong">ViewRing</emphasis>
           A view ring is simply a dynamic list of views owned by
           a pane (display manager). This mechanism supports multiple
           views within a single pane. A view consists of a position in
@@ -3624,7 +3624,7 @@ rt -s 512 -F :1
                   items from a listbox, a left buttonpress highlights
                   the solid in question until the button is released. To
                   select a solid, double click with the left mouse
-                  button. 
+                  button.
                 </para>
                 <table>
                 	<title>Commands</title>
@@ -3692,7 +3692,7 @@ rt -s 512 -F :1
                   from a listbox, a left buttonpress highlights the
                   solid/matrix in question until the button is released.
                   To select a solid/matrix, double click with the left
-                  mouse button. 
+                  mouse button.
                 </para>
                 <table>
                 	<title>Commands</title>
@@ -3812,7 +3812,7 @@ rt -s 512 -F :1
                   the rectangular area as specified by the user is
                   raytraced. The rectangular area is also painted with
                   the current contents of the framebuffer. Otherwise,
-                  only the rectangle is drawn. 
+                  only the rectangle is drawn.
                 </para>
                 <table>
                 	<title>Command</title>
@@ -3979,7 +3979,7 @@ rt -s 512 -F :1
                   used to zoom the view. Note - as the user stretches
                   out the zoom rectangle, the rectangle is constrained
                   to be the same shape as the window. This insures that
-                  the user gets what he or she sees. 
+                  the user gets what he or she sees.
                 </para>
                 <table>
                 	<title>Commands</title>
@@ -4536,7 +4536,7 @@ rt -s 512 -F :1
               words, in order for programs outside of MGED to
               communicate with any of MGED’s framebuffers, the intended
               framebuffers must be listening.
-            </para>    
+            </para>
           </listitem>
           <listitem>
             <para xml:id="Persistentsweeprectangle2">
@@ -4553,7 +4553,7 @@ rt -s 512 -F :1
             <para xml:id="AngleDistCursor2">
               <emphasis role="strong">Angle/Dist Cursor</emphasis> -
               toggles drawing the angle distance cursor.
-            </para>  
+            </para>
           </listitem>
           <listitem>
             <para xml:id="Faceplate">
@@ -5034,7 +5034,7 @@ x 					delete character
   </entry>
 </row>
 <row>
-   <entry> 
+   <entry>
     <link linkend="B">B</link>
   </entry>
   <entry>
@@ -5812,7 +5812,7 @@ x 					delete character
     <literal></literal>
   </para>
   <para>
-    $ <emphasis role="strong">exit</emphasis> – Exit the shell. 
+    $ <emphasis role="strong">exit</emphasis> – Exit the shell.
   </para>
   <para>
     mged&gt; – Continue editing in <emphasis>mged</emphasis>.
@@ -5887,14 +5887,14 @@ x 					delete character
   </para>
   <para>
     Enter the X, Y coordinate values: <emphasis role="strong">0
-    1</emphasis> 
+    1</emphasis>
      – The <emphasis>x</emphasis> and<emphasis>y</emphasis>
     coordinates of the fourth point are 0 and 1.
   </para>
   <para>
-    Enter thickness for this arb: <emphasis role="strong">3</emphasis> 
+    Enter thickness for this arb: <emphasis role="strong">3</emphasis>
      – The new <link linkend="ARB">ARB8</link> will be 3
-    <link linkend="units">units</link> thick. 
+    <link linkend="units">units</link> thick.
   </para>
   <para>
     mged&gt; <emphasis role="strong">3ptarb thing 0 0 0 1 0 0 1 1 0 z 0
@@ -6466,7 +6466,7 @@ x 					delete character
   </para>
   <para>
     mged&gt; <emphasis role="strong">adc a1</emphasis> 37.5
-     – Get angle1. 
+     – Get angle1.
   </para>
   <para>
     <literal></literal>
@@ -6788,7 +6788,7 @@ x 					delete character
       <para>
         matrix rmul &lt;xlate|rot&gt;<emphasis>matrix
         elements.</emphasis>  – Right multiply the members matrix with the given
-        matrix. 
+        matrix.
       </para>
     </listitem>
   </itemizedlist>
@@ -6938,21 +6938,21 @@ x 					delete character
   </variablelist>
   <para>
     – Open an ogl display window named .dm_ogl0 (assuming this is the
-    first ogl display window opened using the default naming scheme). 
+    first ogl display window opened using the default naming scheme).
   </para>
   <para>
     <literal></literal>
   </para>
   <para>
-    mged&gt; <emphasis role="strong">attach ogl</emphasis> 
-     – Open a ogl display window named .dm_ogl1. 
+    mged&gt; <emphasis role="strong">attach ogl</emphasis>
+     – Open a ogl display window named .dm_ogl1.
   </para>
   <para>
     <literal></literal>
   </para>
   <para>
     mged&gt; <emphasis role="strong">attach -n myOgl -W 720 -N 486
-    ogl</emphasis> 
+    ogl</emphasis>
      – Open a 720x486 OpenGL display window named myOgl.
   </para>
   <para>
@@ -6960,7 +6960,7 @@ x 					delete character
   </para>
   <para>
     mged&gt; <emphasis role="strong">attach -n myX -d remote_host:0 -i
-    myInit X</emphasis> 
+    myInit X</emphasis>
     – Open an X display window named myX on remote_host
     that is initialized by myInit.
      – myInit might contain user specified bindings like
@@ -6968,7 +6968,7 @@ x 					delete character
   </para>
   <para>
 <literal>mged&gt;</literal>
-    <emphasis role="strong">toplevel .t</emphasis> 
+    <emphasis role="strong">toplevel .t</emphasis>
      – Create a toplevel window named .t.
   </para>
   <para>
@@ -6981,13 +6981,13 @@ x 					delete character
   <para>
  <literal>mged&gt;</literal>
     <emphasis role="strong">button .t.dismiss -text Dismiss -command
-    <quote>release .t.ogl; destroy .t</quote></emphasis> 
+    <quote>release .t.ogl; destroy .t</quote></emphasis>
      – Create a button to dismiss the display manager etc.
   </para>
   <para>
 
  <literal>mged&gt;</literal>
-    <emphasis role="strong">pack .t.ogl -expand 1 -fill both</emphasis> 
+    <emphasis role="strong">pack .t.ogl -expand 1 -fill both</emphasis>
     – Pack the display manager inside .t.
   </para>
   <para>
@@ -6999,7 +6999,7 @@ x 					delete character
   <para>
 
  <literal>mged&gt;</literal>
-    <emphasis role="strong">attach</emphasis> 
+    <emphasis role="strong">attach</emphasis>
     – List the help message that includes the valid display
     types.
   </para>
@@ -7065,7 +7065,7 @@ x 					delete character
     </varlistentry>
     <varlistentry xml:id="autoview">
       <term>
-        autoview 
+        autoview
       </term>
       <listitem>
         <para>
@@ -7621,7 +7621,7 @@ x 					delete character
   </para>
   <para>
     mged&gt; <emphasis role="strong">eval center [vadd2 [center] {2 0
-    0}]</emphasis> 
+    0}]</emphasis>
      – Move the center point two mm in the model
     +<emphasis>x</emphasis> direction.
   </para>
@@ -8018,7 +8018,7 @@ x 					delete character
     </listitem>
     <listitem>
       <para>
-        get shape_or_path [attribute] 
+        get shape_or_path [attribute]
         – Return information about the primitive shape at the
         end of the <emphasis>shape_or_path</emphasis>. If a path is
         specified, the transformation matrices encountered along that
@@ -8150,7 +8150,7 @@ x 					delete character
   </variablelist>
   <para>
 
- l r230 r231 r232 r233 r234 r235 r236 r237 r238 r239 
+ l r230 r231 r232 r233 r234 r235 r236 r237 r238 r239
   – Returns a command string to list objects r230 through
     r239.
   </para>
@@ -8429,7 +8429,7 @@ x 					delete character
   <variablelist xml:id="debugnmg">
     <varlistentry>
       <term>
-        debugnmg [<emphasis>hex_code</emphasis>] 
+        debugnmg [<emphasis>hex_code</emphasis>]
       </term>
       <listitem>
         <para>
@@ -8717,7 +8717,7 @@ x 					delete character
   </para>
   <para>
  <literal>mged&gt;</literal> <emphasis role="strong">dm
-    size</emphasis>  – Return the size to the display manager. 
+    size</emphasis>  – Return the size to the display manager.
   </para>
   <para>
     mged&gt; <emphasis role="strong">dm size 900 900</emphasis>  – Request that the display manager window be resized to
@@ -8862,7 +8862,7 @@ x 					delete character
   </variablelist>
   <para>
     – Check <emphasis>other_model.g</emphasis> for names duplicating
-    those in the current model. 
+    those in the current model.
   </para>
   <para>
     <literal></literal>
@@ -9255,12 +9255,12 @@ x 					delete character
     </varlistentry>
     <varlistentry>
       <term>
-        Examples: 
+        Examples:
       </term>
       <listitem>
       	<para>
        Examples:
-       </para> 
+       </para>
       </listitem>
     </varlistentry>
     <varlistentry>
@@ -9970,7 +9970,7 @@ foo.r_xpand/R
         </para>
       </listitem>
     </varlistentry>
-    <varlistentry> 
+    <varlistentry>
       <term>
         Examples:
       </term>
@@ -11314,7 +11314,7 @@ foo.r_xpand/R
     </varlistentry>
     <varlistentry>
       <term>
-        Examples: 
+        Examples:
       </term>
       <listitem>
       	<para>
@@ -12057,7 +12057,7 @@ foo.r_xpand/R
           <emphasis>mirror</emphasis> operation. If
           <emphasis>old_object</emphasis> is a combination, then
           <emphasis>new_object</emphasis> will simply be a copy of
-          <emphasis>old_object</emphasis> with all of its members 
+          <emphasis>old_object</emphasis> with all of its members
           matrices set to perform the appropriate reflection.
         </para>
       </listitem>
@@ -12659,7 +12659,7 @@ foo.r_xpand/R
           for the face of an <link linkend="ARB">ARB</link> shape that
           is currently being edited. The <emphasis>tuple</emphasis>
           indicates which face is affected and also indicates the
-          desired result. The tuple is formed by concating the list of
+          desired result. The tuple is formed by concatting the list of
           vertex numbers for the face in the order desired such that the
           first vertex listed will become vertex number one (and
           therefore the default
@@ -13961,7 +13961,7 @@ foo.r_xpand/R
   <para>
     <emphasis role="strong"></emphasis>
   </para>
-  <variablelist xml:id="rea_muves"> 
+  <variablelist xml:id="rea_muves">
     <varlistentry>
       <term xml:id="read_muves">
         read_muves MUVES_regionmap_file
@@ -14373,7 +14373,7 @@ foo.r_xpand/R
   <variablelist>
     <varlistentry>
       <term>
-        rot x y z 
+        rot x y z
       </term>
       <listitem>
         <para xml:id="rot">
@@ -15723,7 +15723,7 @@ EOF
     <varlistentry>
       <term>
         – Create an RCC named <emphasis>rcc.s</emphasis> to fill in the
-        hole in the middle of <emphasis>tor</emphasis>.s. 
+        hole in the middle of <emphasis>tor</emphasis>.s.
       </term>
       <listitem>
       	<para>
@@ -16729,7 +16729,7 @@ EOF
   </para>
   <variablelist xml:id="view_size">
     <varlistentry>
-      <term xml:id="ELEVATION"> 
+      <term xml:id="ELEVATION">
         size [<emphasis>val</emphasis>]–get/set the view_size of the
         current view.
         eye [<emphasis>x y z</emphasis>]–get/set the eye point
@@ -17806,7 +17806,7 @@ EOF
     </varlistentry>
   </variablelist>
   <para>
-    – Add the command <quote>ae 35 25</quote> to the history list. 
+    – Add the command <quote>ae 35 25</quote> to the history list.
   </para>
   <para>
     mged <emphasis role="strong">ae 0 90</emphasis>
@@ -18138,7 +18138,7 @@ EOF
   </para>
   <para>
  mged <emphasis role="strong">rset r draw</emphasis>  – Get value for <quote>Rubber Band s</quote> draw
-    variable 0. 
+    variable 0.
   </para>
   <para>
     mged <emphasis role="strong">rset r draw 1</emphasis>  – Draw rubber band.
@@ -18679,7 +18679,7 @@ EOF
     </varlistentry>
   </variablelist>
   <para>
-    – .my_window is now the current display manager. 
+    – .my_window is now the current display manager.
   </para>
   <para>
     mged <emphasis role="strong">winset</emphasis>  – Returns the current display manager (i.e.,
@@ -19458,7 +19458,7 @@ EOF
   </para>
   <para xml:id="primitive">
     <emphasis role="strong">primitive solid</emphasis>
-  </para> 
+  </para>
   <para>
     <emphasis>Primitive solids</emphasis> are the basic building blocks
     of <link linkend="CSG">CSG</link>solid
