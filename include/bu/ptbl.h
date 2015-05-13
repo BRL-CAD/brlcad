@@ -46,7 +46,6 @@ __BEGIN_DECLS
  */
 /** @{ */
 /** @file bu/ptbl.h*/
-/** @file libbu/ptbl.c */
 
 
 /**

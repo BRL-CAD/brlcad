@@ -18,9 +18,6 @@
  * information.
  */
 
-/** @file sort.h
- *
- */
 #ifndef BU_SORT_H
 #define BU_SORT_H
 
@@ -44,7 +41,7 @@ __BEGIN_DECLS
  *
  */
 /** @{ */
-/** @file libbu/sort.c */
+/** @file bu/sort.h */
 
 BU_EXPORT extern void bu_sort(void *array, size_t nummemb, size_t sizememb,
             int (*compare)(const void *, const void *, void *), void *context);

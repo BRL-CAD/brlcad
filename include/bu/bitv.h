@@ -47,7 +47,6 @@ __BEGIN_DECLS
  */
 /** @{*/
 /** @file bu/bitv.h */
-/** @file libbu/bitv.c */
 
 /**
  * bitv_t should be a fast integer type for implementing bit vectors.
@@ -397,7 +396,6 @@ BU_EXPORT extern int bu_hexstr_to_binstr(const char *hexstr, struct bu_vls *b);
 BU_EXPORT extern int bu_binstr_to_hexstr(const char *binstr, struct bu_vls *h);
 
 /** @brief Bit field printing implementation. */
-/** @file libbu/printb.c */
 
 /**
  * Format a value a la the %b format of the kernel's printf

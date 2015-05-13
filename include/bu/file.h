@@ -48,8 +48,7 @@ __BEGIN_DECLS
  *
  */
 /** @{ */
-/** @file libbu/file.c */
-/** @file file.h */
+/** @file bu/file.h */
 
 /**
  * Returns truthfully whether the given file path exists or not.  An
@@ -213,10 +212,8 @@ BU_EXPORT extern int bu_file_mime_int(const char *str);
 
 
 
-/** @file libbu/dirent.c
- *
+/**
  * Functionality for accessing all files in a directory.
- *
  */
 
 /**
@@ -229,11 +226,6 @@ BU_EXPORT extern int bu_file_mime_int(const char *str);
  * with bu_free_argv().
  */
 BU_EXPORT extern size_t bu_dir_list(const char *path, const char *pattern, char ***files);
-
-
-/** @file libbu/realpath.c
- *
- */
 
 /**
  * Call canonicalization routines to both expand and validate
@@ -266,7 +258,6 @@ BU_EXPORT extern char * bu_realpath(const char *path, char *resolved_path);
  * about executable name used to invoke the current program.
  *
  */
-/** @file libbu/progname.c */
 
 /**
  * DEPRECATED: This routine is replaced by bu_getcwd().
@@ -305,7 +296,6 @@ BU_EXPORT extern void bu_setprogname(const char *path);
 
 /**
  * Routine for getting the current working directory full pathname.
- * @file libbu/getcwd.c
  */
 BU_EXPORT extern char *bu_getcwd(char *buf, size_t size);
 
@@ -339,10 +329,11 @@ BU_EXPORT extern const char *bu_which(const char *cmd);
  */
 BU_EXPORT extern const char *bu_whereis(const char *cmd);
 
-/** @brief Routine to open a temporary file. */
-/** @file libbu/temp.c */
 
 /**
+ * @brief
+ * Routine to open a temporary file.
+ *
  * Create a temporary file.  The first readable/writable directory
  * will be used, searching TMPDIR/TEMP/TMP environment variable
  * directories followed by default system temp directories and
@@ -378,10 +369,10 @@ BU_EXPORT extern const char *bu_whereis(const char *cmd);
  */
 BU_EXPORT extern FILE *bu_temp_file(char *filepath, size_t len);
 
-/** @brief Wrapper around fchmod. */
-/** @file libbu/fchmod.c */
 
 /**
+ * @brief Wrapper around fchmod.
+ *
  * Portable wrapper for setting a file descriptor's permissions ala
  * fchmod().
  */
@@ -389,7 +380,6 @@ BU_EXPORT extern int bu_fchmod(int fd, unsigned long pmode);
 
 
 /** @brief Functions related to argv processing. */
-/** @file libbu/argv.c */
 
 /**
  * Build argv[] array from input buffer, by splitting whitespace
@@ -452,7 +442,6 @@ BU_EXPORT extern char **bu_dupinsert_argv(int insert, size_t insertArgc, const c
 
 
 /**@brief BRL-CAD specific path queries */
-/**@file libbu/brlcad_path.c */
 
 /**
  * @brief
@@ -521,7 +510,7 @@ BU_EXPORT extern const char *bu_brlcad_data(const char *rhs, int fail_quietly);
 
 
 
-/** @file libbu/interrupt.c
+/**
  *
  * Routines for managing signals.  In particular, provide a common
  * means to temporarily buffer processing a signal during critical
@@ -557,7 +546,6 @@ BU_EXPORT extern int bu_suspend_interrupts(void);
 BU_EXPORT extern int bu_restore_interrupts(void);
 
 /** @brief Dynamic Library functionality */
-/** @file libbu/dlfcn.c */
 
 #ifdef HAVE_DLOPEN
 # define BU_RTLD_LAZY RTLD_LAZY

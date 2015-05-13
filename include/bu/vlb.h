@@ -36,7 +36,6 @@ __BEGIN_DECLS
  * The variable length buffer package.
  */
 /** @{ */
-/** @file libbu/vlb.c */
 /** @file bu/vlb.h */
 
 

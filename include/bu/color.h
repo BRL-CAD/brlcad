@@ -18,8 +18,6 @@
  * information.
  */
 
-/** @file color.h
-  */
 #ifndef BU_COLOR_H
 #define BU_COLOR_H
 
@@ -38,7 +36,6 @@ __BEGIN_DECLS
  */
 /** @{ */
 /** @file bu/color.h */
-/** @file libbu/color.c */
 
 #define RED 0
 #define GRN 1

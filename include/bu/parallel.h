@@ -48,8 +48,8 @@ __BEGIN_DECLS
  */
 #define MAX_PSW 1024
 
-/** @file libbu/parallel.c
- *
+/**
+ * @brief
  * subroutine to determine if we are multi-threaded
  *
  * This subroutine is separated off from parallel.c so that bu_bomb()
@@ -76,10 +76,9 @@ DEPRECATED BU_EXPORT extern int bu_is_parallel(void);
  */
 BU_EXPORT extern int bu_parallel_id(void);
 
-/** @file libbu/kill.c
- *
+/**
+ * @brief
  * terminate a given process.
- *
  */
 
 /**
@@ -89,10 +88,9 @@ BU_EXPORT extern int bu_parallel_id(void);
  */
 BU_EXPORT extern int bu_terminate(int process);
 
-/** @file libbu/process.c
- *
+/**
+ * @brief
  * process management routines
- *
  */
 
 /**
@@ -100,8 +98,8 @@ BU_EXPORT extern int bu_terminate(int process);
  */
 BU_EXPORT extern int bu_process_id(void);
 
-/** @file libbu/parallel.c
- *
+/**
+ * @brief
  * routines for parallel processing
  *
  * Machine-specific routines for portable parallel processing.
@@ -191,8 +189,8 @@ int main(int ac, char *av[]) {
 BU_EXPORT extern void bu_parallel(void (*func)(int func_cpu_id, void *func_data), size_t ncpu, void *data);
 
 
-/** @file libbu/semaphore.c
- *
+/**
+ * @brief
  * semaphore implementation
  *
  * Machine-specific routines for parallel processing.  Primarily for

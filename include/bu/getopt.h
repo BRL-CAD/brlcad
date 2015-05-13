@@ -18,9 +18,6 @@
  * information.
  */
 
-/** @file getopt.h
- *
- */
 #ifndef BU_GETOPT_H
 #define BU_GETOPT_H
 
@@ -42,7 +39,7 @@ __BEGIN_DECLS
  * list.
  */
 /** @{ */
-/** @file libbu/getopt.c */
+/** @file bu/getopt.h */
 
 /**
  * for bu_getopt().  set to zero to suppress errors.

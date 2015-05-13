@@ -18,9 +18,6 @@
  * information.
  */
 
-/** @file parse.h
- *
- */
 #ifndef BU_PARSE_H
 #define BU_PARSE_H
 
@@ -251,7 +248,6 @@ typedef struct bu_external bu_external_t;
 #define BU_EXTERNAL_IS_INITIALIZED(_p) (((struct bu_external *)(_p) != BU_EXTERNAL_NULL) && (_p)->ext_magic == BU_EXTERNAL_MAGIC)
 
 /** @brief routines for parsing arbitrary structures */
-/** @file libbu/parse.c */
 
 /**
  * ASCII to struct elements.
@@ -457,7 +453,6 @@ BU_EXPORT extern int bu_structparse_argv(struct bu_vls *str,
 
 
 /** @brief routines for parsing boolean values from strings */
-/** @file libbu/booleanize.c */
 
 /**
  * Returns truthfully if a given input string represents an

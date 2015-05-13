@@ -311,7 +311,6 @@ BU_EXPORT extern size_t bu_cv_w_cookie(void *out, int outcookie, size_t size, vo
  * Functions for b64 encoding and decoding.
  */
 /** @{*/
-/** @file libbu/b64.c */
 /**
  * Encode null terminated input char array to b64.
  *
@@ -368,7 +367,6 @@ BU_EXPORT extern int bu_b64_decode_block(signed char **output_buffer, const sign
  * @brief Convert doubles to host/network format.
  */
 /** @{*/
-/** @file libbu/htond.c */
 BU_EXPORT extern void bu_cv_htond(unsigned char *out,
 				  const unsigned char *in,
 				  size_t count);
@@ -382,7 +380,6 @@ BU_EXPORT extern void bu_cv_ntohd(unsigned char *out,
  * @brief convert floats to host/network format
  */
 /** @{*/
-/** @file libbu/htonf.c */
 BU_EXPORT extern void bu_cv_htonf(unsigned char *out,
 				  const unsigned char *in,
 				  size_t count);

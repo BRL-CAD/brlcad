@@ -46,7 +46,7 @@
  */
 /** @{ */
 /** @brief Global registry of recognized magic numbers. */
-/** @file magic.h */
+/** @file bu/magic.h */
 
 __BEGIN_DECLS
 
@@ -225,7 +225,6 @@ __BEGIN_DECLS
 #define ICV_IMAGE_MAGIC		0x6269666d /**< bifm */
 
 /** @brief Routines involved with handling "magic numbers" used to identify various in-memory data structures. */
-/** @file badmagic.c */
 
 /**
  * Macros to check and validate a structure pointer, given that the
@@ -250,7 +249,6 @@ BU_EXPORT extern void bu_badmagic(const uint32_t *ptr, uint32_t magic, const cha
 
 
 /** @brief Routines involved with handling "magic numbers" used to identify various in-memory data structures. */
-/** @file magic.c */
 
 /**
  * Given a number which has been found in the magic number field of a

@@ -43,7 +43,7 @@ __BEGIN_DECLS
  *
  */
 /** @{ */
-
+/** @file bu/malloc.h */
 
 BU_EXPORT extern long bu_n_malloc;
 BU_EXPORT extern long bu_n_realloc;

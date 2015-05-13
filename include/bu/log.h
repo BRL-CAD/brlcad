@@ -72,10 +72,9 @@ __BEGIN_DECLS
  *
  */
 /** @{ */
-/** @file log.h */
+/** @file bu/log.h */
 
 /** @brief Extract a backtrace of the current call stack. */
-/** @file libbu/backtrace.c */
 
 /**
  * this routine provides a trace of the call stack to the caller,
@@ -133,7 +132,6 @@ typedef struct bu_hook_list bu_hook_list_t;
 #define BU_HOOK_LIST_IS_INITIALIZED(_p) (((struct bu_hook_list *)(_p) != BU_HOOK_LIST_NULL) && LIKELY((_p)->l.magic == BU_HOOK_LIST_MAGIC))
 
 /** @brief Main functions for exiting/bombing. */
-/** @file libbu/bomb.c */
 
 /**
  * Adds a hook to the list of bu_bomb hooks.  The top (newest) one of these
@@ -200,7 +198,6 @@ BU_EXPORT extern void bu_exit(int status, const char *fmt, ...) _BU_ATTR_NORETUR
  * Generate a crash report file, including a call stack backtrace and
  * other system details.
  */
-/** @file libbu/crashreport.c */
 
 /**
  * this routine writes out details of the currently running process to
@@ -218,7 +215,6 @@ BU_EXPORT extern int bu_crashreport(const char *filename);
  * @brief
  * fgets replacement function that also handles CR as an EOL marker
  */
-/** @file libbu/fgets.c */
 
 /**
  * Reads in at most one less than size characters from stream and
@@ -232,12 +228,10 @@ BU_EXPORT extern int bu_crashreport(const char *filename);
 BU_EXPORT extern char *bu_fgets(char *s, int size, FILE *stream);
 
 /** @brief A portable way of doing setlinebuf(). */
-/** @file libbu/linebuf.c */
 
 BU_EXPORT extern void bu_setlinebuf(FILE *fp);
 
 /** @brief BRL-CAD support library's hook utility. */
-/** @file libbu/hook.c*/
 BU_EXPORT extern void bu_hook_list_init(struct bu_hook_list *hlp);
 BU_EXPORT extern void bu_hook_add(struct bu_hook_list *hlp,
 				  bu_hook_t func,
@@ -254,7 +248,6 @@ BU_EXPORT extern void bu_hook_restore_all(struct bu_hook_list *hlp,
 					  struct bu_hook_list *restore_hlp);
 
 /** @brief parallel safe version of fprintf for logging */
-/** @file libbu/log.c */
 
 /**
  * Change global indentation level by indicated number of characters.
@@ -318,7 +311,6 @@ BU_EXPORT extern void bu_flog(FILE *, const char *, ...) _BU_ATTR_PRINTF23;
  * libbu implementations of vsscanf/sscanf() with extra format
  * specifiers.
  */
-/** @file libbu/sscanf.c */
 
 /**
  * Custom vsscanf which wraps the system sscanf, and is wrapped by bu_sscanf.
@@ -365,7 +357,6 @@ BU_EXPORT extern int bu_vsscanf(const char *src, const char *fmt, va_list ap);
 BU_EXPORT extern int bu_sscanf(const char *src, const char *fmt, ...) _BU_ATTR_SCANF23;
 
 /** Routines for scanning certain kinds of data. */
-/** @file libbu/scan.c */
 
 /**
  * Scans a sequence of fastf_t numbers from a string or stdin
@@ -389,9 +380,7 @@ BU_EXPORT extern int bu_sscanf(const char *src, const char *fmt, ...) _BU_ATTR_S
  */
 BU_EXPORT extern int bu_scan_fastf_t(int *c, const char *src, const char *delim, size_t n, ...);
 
-/** @file libbu/lex.c
- *
- */
+
 
 #define BU_LEX_ANY 0	/* pseudo type */
 struct bu_lex_t_int {
@@ -437,7 +426,6 @@ BU_EXPORT extern int bu_lex(union bu_lex_token *token,
 
 
 /** @brief multiple-read to fill a buffer */
-/** @file libbu/mread.c */
 
 /**
  * Provide a general means to a read some count of items from a file

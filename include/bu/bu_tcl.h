@@ -38,7 +38,6 @@ __BEGIN_DECLS
  */
 /** @{ */
 /** @file bu/bu_tcl.h */
-/** @file libbu/tcl.c */
 
 /* FIXME Temporary global interp.  Remove me.  */
 BU_EXPORT extern Tcl_Interp *brlcad_interp;
@@ -80,7 +79,6 @@ typedef struct bu_observer bu_observer_t;
 #define BU_OBSERVER_IS_INITIALIZED(_op) (((struct bu_observer *)(_op) != BU_OBSERVER_NULL) && LIKELY((_op)->magic == BU_OBSERVER_MAGIC))
 
 /** @brief Routines for implementing the observer pattern. */
-/** @file libbu/observer.c */
 
 /**
  * runs a given command, calling the corresponding observer callback

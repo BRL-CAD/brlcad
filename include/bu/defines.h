@@ -25,7 +25,6 @@
  *
  */
 /** @{ */
-/** @brief Commonly used definitions for the BRL-CAD Utility Library, LIBBU. */
 /** @file bu/defines.h */
 
 #ifndef BU_DEFINES_H

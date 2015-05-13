@@ -66,7 +66,6 @@
  *
  */
 /** @{ */
-/** @file src/libbu/vfont.c */
 /** @file include/bu/vfont.h */
 
 #ifndef BU_VFONT_H

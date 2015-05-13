@@ -18,9 +18,6 @@
  * information.
  */
 
-/** @file str.h
- *
- */
 #ifndef BU_STR_H
 #define BU_STR_H
 
@@ -37,7 +34,6 @@ __BEGIN_DECLS
  *
  */
 /** @{ */
-/** @file libbu/str.c */
 /** @file bu/str.h */
 
 /**
@@ -143,7 +139,6 @@ BU_EXPORT extern int bu_strncasecmp(const char *string1, const char *string2, si
  * object lists, and more.
  *
  */
-/** @file escape.c */
 
 /**
  * Escapes an input string with preceding '\'s for any characters
@@ -243,7 +238,6 @@ BU_EXPORT extern char *bu_str_escape(const char *input, const char *expression, 
 BU_EXPORT extern char *bu_str_unescape(const char *input, char *output, size_t size);
 
 /** @brief Routines for checking ctypes. */
-/** @file libbu/ctype.c */
 BU_EXPORT extern int bu_str_isprint(const char *cp);
 
 /**
@@ -255,7 +249,6 @@ BU_EXPORT extern int bu_str_isprint(const char *cp);
 BU_EXPORT extern int bu_gethostname(char *hostname, size_t len);
 
 /** @brief Functions related to argv processing. */
-/** @file libbu/argv.c */
 
 /**
  * Build argv[] array from input buffer, by splitting whitespace

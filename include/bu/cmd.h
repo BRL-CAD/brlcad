@@ -74,7 +74,6 @@ struct bu_cmdhist_obj {
 __BEGIN_DECLS
 
 /** @brief Routine(s) for processing subcommands */
-/** @file libbu/cmd.c */
 
 /**
  * This function is intended to be used for parsing subcommands.  If
@@ -94,7 +93,6 @@ __BEGIN_DECLS
 BU_EXPORT extern int bu_cmd(const struct bu_cmdtab *cmds, int argc, const char *argv[], int cmd_index, void *data, int *result);
 
 /** @brief Routines for maintaining a command history */
-/** @file cmdhist.c */
 
 /**
  * Prints out the command history.

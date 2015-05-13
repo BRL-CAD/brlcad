@@ -50,7 +50,6 @@ __BEGIN_DECLS
  *  the caller.
  */
 /** @{ */
-/** @file libbu/path.c */
 /** @file bu/path.h */
 
 /**
@@ -182,9 +181,7 @@ BU_EXPORT extern int bu_path_component(struct bu_vls *component,
 BU_EXPORT extern char **bu_argv_from_path(const char *path, int *ac);
 
 
-/** @file libbu/fnmatch.c
- *
- */
+
 #define BU_FNMATCH_NOESCAPE    0x01 /**< bu_fnmatch() flag.  Backslash escaping. */
 #define BU_FNMATCH_PATHNAME    0x02 /**< bu_fnmatch() flag.  Slash must be matched by slash. */
 #define BU_FNMATCH_PERIOD      0x04 /**< bu_fnmatch() flag.  Period must be matched by period. */

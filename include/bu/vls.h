@@ -47,7 +47,6 @@ __BEGIN_DECLS
  * parallel systems.
  */
 /** @{ */
-/** @file libbu/vls.c */
 /** @file bu/vls.h */
 
 /** Primary bu_vls container */
@@ -390,7 +389,6 @@ BU_EXPORT extern void bu_vls_substr(struct bu_vls *dest, const struct bu_vls *sr
 				    size_t begin, size_t nchars);
 
 /** @brief bu_vls_vprintf implementation */
-/** @file libbu/vls_vprintf.c */
 
 /**
  * Format a string into a vls using a varargs list.
@@ -409,7 +407,6 @@ BU_EXPORT extern void bu_vls_vprintf(struct bu_vls *vls,
 
 
 /** @brief Routines to encode/decode strings into bu_vls structures. */
-/** @file libbu/encode.c */
 
 /**
  * given an input string, wrap the string in double quotes if there is

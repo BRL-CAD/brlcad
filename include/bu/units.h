@@ -18,9 +18,6 @@
  * information.
  */
 
-/** @file units.h
- *
- */
 #ifndef BU_UNITS_H
 #define BU_UNITS_H
 
@@ -36,7 +33,7 @@ __BEGIN_DECLS
  * Module of libbu to handle units conversion between strings and mm.
  */
 /** @{ */
-/** @file libbu/units.c */
+/** @file bu/units.h */
 
 /**
  * Given a string representation of a unit of distance (e.g., "feet"),

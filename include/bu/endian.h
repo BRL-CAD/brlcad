@@ -32,7 +32,6 @@ __BEGIN_DECLS
  *
  */
 /** @{ */
-/** @file libbu/endian.c */
 /** @file bu/endian.h */
 
 

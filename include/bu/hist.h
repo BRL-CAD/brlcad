@@ -40,7 +40,6 @@ __BEGIN_DECLS
  *
  */
 /** @{ */
-/** @file libbu/hist.c */
 /** @file bu/hist.h */
 
 /**

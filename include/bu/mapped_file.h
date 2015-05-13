@@ -18,9 +18,6 @@
  * information.
  */
 
-/** @file mapped_file.h
- *
- */
 #ifndef BU_MAPPED_FILE_H
 #define BU_MAPPED_FILE_H
 
@@ -60,7 +57,6 @@ __BEGIN_DECLS
 
 /** @{ */
 /** @file bu/mapped_file.h */
-/** @file libbu/mappedfile.c */
 
 /**
  * @struct bu_mapped_file bu/mapped_file.h

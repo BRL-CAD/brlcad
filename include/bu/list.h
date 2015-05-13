@@ -113,6 +113,7 @@ __BEGIN_DECLS
  * forw / back - the actual pointer names
  */
 /** @{*/
+/** @file bu/list.h */
 
 struct bu_list {
     uint32_t magic;		/**< @brief Magic # for mem id/check */
