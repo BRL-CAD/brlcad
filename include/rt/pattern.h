@@ -45,6 +45,39 @@ __BEGIN_DECLS
 RT_EXPORT extern int rt_raybundle_maker(struct xray *rp, double radius, const fastf_t *avec, const fastf_t *bvec, int rays_per_ring, int nring);
 
 
+ /** Available ray generation patterns */
+typedef enum {
+    RT_PATTERN_RECT_ORTHOGRID,     /*!< grid of rays with parallel normals */
+    RT_PATTERN_RECT_PERSPGRID,     /*!< rays from a point with diverging normals to a grid */
+    RT_PATTERN_CIRC_ORTHOGRID,     /*!< circular subset of RECT_ORTHOGRID rays */
+    RT_PATTERN_CIRC_PERSPGRID,     /*!< circular subset of RECT_PERSPGRID rays */
+    RT_PATTERN_CIRC_SPIRAL,        /*!< rays in a circular sprial pattern */
+    RT_PATTERN_ELLIPSE_ORTHOGRID,  /*!< elliptical subset of RECT_ORTHOGRID rays */
+    RT_PATTERN_ELLIPSE_PERSPGRID,  /*!< elliptical subset of RECT_PERSPGRID rays */
+    RT_PATTERN_CIRC_LAYERS,        /*!< cylindrical layers of circular arrays */
+    RT_PATTERN_SPH_LAYERS,         /*!< layers of circular rays with the circle radius of each layer described by slices of a sphere */
+    RT_PATTERN_SPH_QRAND           /*!< quasi-random unbiased spherical volume sampling pattern */
+} rt_pattern_t;
+
+
+/**
+ * Data container used to supply options to and recieve data from
+ * the rt_pattern generator function
+ */
+ struct rt_pattern_data {
+    /* output - MUST DO this should really be an array of fastf_t numbers... */
+    fastf_t *rays; /*!< An array of px,py,pz,nx,ny,nz ray/normal results */
+    /* inputs */
+    size_t ray_cnt;
+    point_t center_pt;  /*!< "Seed" ray point */
+    vect_t center_dir;  /*!< "Seed" ray normal */
+    size_t vn;          /*!< Number of additional vect_t input parameters */
+    vect_t *n_vec;      /*!< Array of vect_t input parameters */
+    size_t pn;          /*!< Number of additional floating point number parameters */
+    fastf_t *n_p;       /*!< Array of fastf_t input parameters */
+};
+#define RT_PATTERN_DATA_INIT_ZERO {NULL, 0, {0, 0, 0}, {0, 0, 0}, 0, NULL, 0, NULL}
+
 /**
  * Make a bundle of rays around a main ray using a generator
  *
@@ -64,62 +97,96 @@ RT_EXPORT extern int rt_raybundle_maker(struct xray *rp, double radius, const fa
  *
  *
  * Pattern data for each pattern type:
+ * ===================================
  *
  *   * all lengths are in mm;
  *   * center_ray.r_dir must have unit length, if
  *   * parameter data arrays are necessary they are the responsibility of
  *     the calling function
  *
- *   RT_RECT_GRID:
+ *   RT_PATTERN_RECT_ORTHOGRID:
+ *   --------------------------
  *      Make a bundle of orthogonal rays around a center ray as a uniform
  *      rectangular grid.  Grid extents are from -a_vec to a_vec and -b_vec
  *      to b_vec.
- *      Params:
- *         center_ray
- *         a_vec       Direction for up
- *         b_vec       Direction for right
- *         p1          offset between rays in the a direction
- *         p2          offset between rays in the b direction
- *   RT_FRUSTUM:
+ *
+ *      Param                 | Description
+ *      --------------------- | -----------
+ *      center_pt, center_dir | Initializing ray at center of pattern
+ *      n_vec[0]              | Direction for up
+ *      n_vec[1]              | Direction for right
+ *      n_p[0]                | Offset between rays in the a direction
+ *      n_p[1]                | Offset between rays in the b direction
+ *
+ *   RT_PATTERN_RECT_PERSPGRID:
+ *   --------------------------
  *      Make a bundle of rays around a main ray in the shape of a frustum
  *      as a uniform rectangular grid.
- *      Params:
- *         center_ray
- *         a_vec       Direction for up
- *         b_vec       Direction for right
- *         p_n = 4     Number of parameters
- *         n_p[0]      angle of divergence in the direction of a_vec
- *         n_p[1]      angle of divergence in the direction of b_vec
- *         n_p[2]      a_num
- *         n_p[3]      b_num
  *
- *   RT_CIRCULAR_GRID:
+ *      Param                 | Description
+ *      --------------------- | -----------
+ *      center_pt, center_dir | Initializing ray at center of pattern
+ *      n_vec[0]              | Direction for up
+ *      n_vec[1]              | Direction for right
+ *      n_p[0]                | angle of divergence in the direction of n_vec[0]
+ *      n_p[1]                | angle of divergence in the direction of n_vec[1]
+ *      n_p[2]                |
+ *      n_p[3]                |
+ *
+ *   RT_PATTERN_CIRC_ORTHOGRID:
+ *   --------------------------
  *      Make a bundle of rays around a main ray using a uniform rectangular
  *      grid pattern with a circular extent.
- *      Params:
- *         center_ray
- *         a_vec       Direction for up
- *         p1          grid size
- *         p2          Radius
  *
- *   RT_CONIC:
+ *      Param                 | Description
+ *      --------------------- | -----------
+ *      center_pt, center_dir | Initializing ray at center of pattern
+ *      n_vec[0]              | Direction for up
+ *      n_p[0]                | grid size
+ *      n_p[1]                | Radius
+ *
+ *   RT_PATTERN_CIRC_PERSPGRID:
+ *   --------------------------
  *      Make a bundle of rays around a main ray in the shape of a cone,
  *      using a uniform rectangular grid.
- *      Params:
- *         center_ray
- *         a_vec       Direction for up
- *         p1          angle of divergence of the cone
- *         p2          number of rays that line on each radial ring of the cone
  *
- *   RT_ELLIPTICAL_GRID:
+ *      Param                 | Description
+ *      --------------------- | -----------
+ *      center_pt, center_dir | Initializing ray at center of pattern
+ *      n_vec[0]              | Direction for up
+ *      n_p[0]                | Angle of divergence of the cone
+ *      n_p[1]                | Number of rays that line on each radial ring of the cone
+ *   RT_PATTERN_CIRC_SPIRAL:
+ *   -----------------------
+ *      TODO
+ *
+ *   RT_PATTERN_ELLIPSE_ORTHOGRID:
+ *   -------------------
  *      Make a bundle of rays around a main ray using a uniform rectangular
  *      grid pattern with an elliptical extent.
- *      Params:
- *         center_ray
- *         a_vec       Direction for up
- *         b_vec       Direction for right
- *         p1          grid size
  *
+ *      Param                 | Description
+ *      --------------------- | -----------
+ *      center_pt, center_dir | Initializing ray at center of pattern
+ *      n_vec[0]              | Direction for up
+ *      n_vec[1]              | Direction for right
+ *      n_p[0]                | grid size
+ *
+ *   RT_PATTERN_ELLIPSE_PERSPGRID:
+ *   -----------------------------
+ *      TODO
+ *
+ *   RT_PATTERN_CIRC_LAYERS:
+ *   -----------------------------
+ *      TODO
+ *
+ *   RT_PATTERN_SPH_LAYERS:
+ *   -----------------------------
+ *      TODO
+ *
+ *   RT_PATTERN_SPH_QRAND:
+ *   -----------------------------
+ *      TODO
  *
  * return negative on error (data will be unmodified in error condition)
  *        ray count on success (>=0)
@@ -144,35 +211,6 @@ if (ray_cnt < 0) {
 }
 @endcode
  */
-
- /* RT_PATTERN_<SHAPE>_<SAMPLE> */
-typedef enum {
-    RT_PATTERN_CIRC_LAYERS,
-    RT_PATTERN_CIRC_ORTHOGRID,
-    RT_PATTERN_CIRC_PERSPGRID,
-    RT_PATTERN_CIRC_SPIRAL,
-    RT_PATTERN_ELLIPSE_ORTHOGRID,
-    RT_PATTERN_ELLIPSE_PERSPGRID,
-    RT_PATTERN_RECT_ORTHOGRID,
-    RT_PATTERN_RECT_PERSPGRID,
-    RT_PATTERN_SPH_LAYERS,
-    RT_PATTERN_SPH_QRAND
-} rt_pattern_t;
-
-struct rt_pattern_data {
-    /* output - MUST DO this should really be an array of fastf_t numbers... */
-    fastf_t *rays;
-    /* inputs */
-    size_t ray_cnt;
-    point_t center_pt;
-    vect_t center_dir;
-    size_t vn;
-    vect_t *n_vec;
-    size_t pn;
-    fastf_t *n_p;
-};
-#define RT_PATTERN_DATA_INIT {NULL, 0, {0, 0, 0}, {0, 0, 0}, 0, NULL, 0, NULL}
-
 RT_EXPORT extern int rt_pattern(struct rt_pattern_data *data, rt_pattern_t type);
 
 /**
