@@ -320,7 +320,7 @@ main(int argc, char **argv)
 	for (line = file_height-1; line >= 0; line--)
 	    flood(horiz_buf, vert_buf, vp, line);
     } else {
-	/* Inverted:  top-to-bottom.  Good with cat-fb */
+	/* Inverted: top-to-bottom */
 	for (line=0; line < file_height; line++)
 	    flood(horiz_buf, vert_buf, vp, line);
     }
