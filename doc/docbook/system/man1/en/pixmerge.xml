@@ -94,7 +94,7 @@ are used (and <option>-a</option> was NOT used), this is the same as:</para>
       pixmerge -g fg.pix - &gt; out.pix</para>
 
 <para>   pixbackgnd -t0 160 200 |
-      pixmerge -n -C 63/0/127 fg.pix - | pix-fb</para>
+      pixmerge -n fg.pix - | pix-fb</para>
 <para>The second example is used to composite an
 <citerefentry><refentrytitle>rt</refentrytitle><manvolnum>1</manvolnum></citerefentry>
 generated image on top of a shaded background.</para>
