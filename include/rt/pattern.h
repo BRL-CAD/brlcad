@@ -56,7 +56,8 @@ typedef enum {
     RT_PATTERN_ELLIPSE_PERSPGRID,  /*!< elliptical subset of RECT_PERSPGRID rays */
     RT_PATTERN_CIRC_LAYERS,        /*!< cylindrical layers of circular arrays */
     RT_PATTERN_SPH_LAYERS,         /*!< layers of circular rays with the circle radius of each layer described by slices of a sphere */
-    RT_PATTERN_SPH_QRAND           /*!< quasi-random unbiased spherical volume sampling pattern */
+    RT_PATTERN_SPH_QRAND,          /*!< quasi-random unbiased spherical volume sampling pattern */
+    RT_PATTERN_UNKNOWN             /*!< unknown pattern */
 } rt_pattern_t;
 
 
@@ -67,8 +68,8 @@ typedef enum {
  struct rt_pattern_data {
     /* output - MUST DO this should really be an array of fastf_t numbers... */
     fastf_t *rays; /*!< An array of px,py,pz,nx,ny,nz ray/normal results */
-    /* inputs */
     size_t ray_cnt;
+    /* inputs */
     point_t center_pt;  /*!< "Seed" ray point */
     vect_t center_dir;  /*!< "Seed" ray normal */
     size_t vn;          /*!< Number of additional vect_t input parameters */
@@ -156,9 +157,18 @@ typedef enum {
  *      n_vec[0]              | Direction for up
  *      n_p[0]                | Angle of divergence of the cone
  *      n_p[1]                | Number of rays that line on each radial ring of the cone
+ *
  *   RT_PATTERN_CIRC_SPIRAL:
- *   -----------------------
- *      TODO
+ *   --------------------------
+ *      Make a concentric set of circles of rays (rings) around a main ray.
+ *
+ *      Param                 | Description
+ *      --------------------- | -----------
+ *      center_pt, center_dir | Initializing ray at center of pattern
+ *      n_p[0]                | Pattern maximum radius
+ *      n_p[1]                | Number of rays per ring
+ *      n_p[2]                | Number of rings
+ *      n_p[3]                | Spiral skew
  *
  *   RT_PATTERN_ELLIPSE_ORTHOGRID:
  *   -------------------

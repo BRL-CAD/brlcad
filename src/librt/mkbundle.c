@@ -300,34 +300,68 @@ int rt_gen_rect(struct xrays *rays, const struct xray *center_ray,
     return count;
 }
 
+HIDDEN int
+rt_pattern_circ_spiral(fastf_t **rays, size_t *ray_cnt, const point_t center_pt, const vect_t dir,
+       	const double radius, const int rays_per_ring, const int nring, const double delta)
+{
+    int ring;
+    double fraction = 1.0;
+    double theta;
+    double radial_scale;
+    int count = 0;
+    vect_t avec, bvec;
+    int ray_index = 0;
+
+    bn_vec_ortho(avec, dir);
+    VCROSS(bvec, dir, avec);
+    VUNITIZE(bvec);
+
+    if (!rays) return -1;
+
+    *(rays) = (fastf_t *)bu_calloc(sizeof(fastf_t) * 6, (rays_per_ring * nring) + 1, "rays");
+
+    for (ring = 0; ring < nring; ring++) {
+	register int i;
+
+	theta = 0;
+	fraction = ((double)(ring+1)) / nring;
+	theta = delta * fraction;       /* spiral skew */
+	radial_scale = radius * fraction;
+	for (i=0; i < rays_per_ring; i++) {
+	    register double ct, st;
+	    point_t pt;
+	    /* pt = V + cos(theta) * A + sin(theta) * B */
+	    ct = cos(theta) * radial_scale;
+	    st = sin(theta) * radial_scale;
+	    VJOIN2(pt, center_pt, ct, avec, st, bvec);
+	    (*rays)[6*ray_index] = pt[0];
+	    (*rays)[6*ray_index+1] = pt[1];
+	    (*rays)[6*ray_index+2] = pt[2];
+	    (*rays)[6*ray_index+3] = dir[0];
+	    (*rays)[6*ray_index+4] = dir[1];
+	    (*rays)[6*ray_index+5] = dir[2];
+	    theta += delta;
+	    ray_index++;
+	}
+    }
+    *(ray_cnt) = ray_index;
+    return count;
+}
 
 int
-rt_pattern(struct rt_pattern_data *UNUSED(data), rt_pattern_t UNUSED(type))
+rt_pattern(struct rt_pattern_data *data, rt_pattern_t type)
 {
-#if 0
+    if (!data) return -1;
     switch (type) {
-	case RT_RECT_GRID:
-	    return rt_gen_rect(data->rays, data->center_ray, data->a_vec, data->b_vec, data->p1, data->p2);
-	    break;
-	case RT_FRUSTUM:
-	    if (data->pn != 4 || !data->n_p) return -1;
-	    return rt_gen_frustum(data->rays, data->center_ray, data->a_vec, data->b_vec, data->n_p[0], data->n_p[1], data->n_p[2], data->n_p[3]);
-	    break;
-	case RT_CIRCULAR_GRID:
-	    return rt_gen_circular_grid(data->rays, data->center_ray, data->a_vec, data->b_vec, data->p1, data->p2);
-	    break;
-	case RT_CONIC:
-	    return rt_gen_conic(data->rays, data->center_ray, data->a_vec, data->b_vec, data->p1, data->p2);
-	    break;
-	case RT_ELLIPTICAL_GRID:
-	    return rt_gen_elliptical_grid(data->rays, data->center_ray, data->a_vec, data->b_vec, data->p1, data->p2);
+	case RT_PATTERN_CIRC_SPIRAL:
+	    if (data->pn < 4) return -1;
+	    return rt_pattern_circ_spiral(&(data->rays), &(data->ray_cnt), data->center_pt, data->center_dir, data->n_p[0], data->n_p[1], data->n_p[2], data->n_p[3]);
 	    break;
 	default:
 	    bu_log("Error - unknown pattern type %d\n", type);
 	    return -1;
 	    break;
     }
-#endif
     return -1;
 }
 
