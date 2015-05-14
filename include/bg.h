@@ -18,7 +18,7 @@
  * information.
  */
 
-/** @addtogroup libgm
+/** @addtogroup libbg
  *
  * @brief
  * BRL-CAD geometry library. This library is intended for generic
@@ -28,7 +28,7 @@
  * Algorithms in this library should not require solid raytracing
  * of the BRL-CAD CSG boolean hierarchy - routines using those high
  * level constructs should be in libanalyze, which uses librt to
- * do the necessary raytracing.  libgm is lower level, and should
+ * do the necessary raytracing.  libbg is lower level, and should
  * depend only on the numerics library (libbn) and the libbu utility
  * (libbu)
  *
@@ -36,12 +36,12 @@
  * concepts, belong in libbn.  An example of something that would belong
  * in libbn would be sparse matrix solving.
  *
- * The functionality provided by this library is specified in the gm.h
- * header or appropriate included files from the ./gm subdirectory.
+ * The functionality provided by this library is specified in the bg.h
+ * header or appropriate included files from the ./bg subdirectory.
  */
 /** @{ */
 /** @brief Header file for the BRL-CAD Geometry Library, LIBGM.*/
-/** @file gm.h */
+/** @file bg.h */
 /** @} */
 
 #ifndef GM_H
@@ -49,12 +49,12 @@
 
 #include "common.h"
 
-#include "gm/defines.h"
-#include "gm/chull.h"
-#include "gm/obr.h"
-#include "gm/polygon.h"
-#include "gm/tri_ray.h"
-#include "gm/tri_tri.h"
+#include "bg/defines.h"
+#include "bg/chull.h"
+#include "bg/obr.h"
+#include "bg/polygon.h"
+#include "bg/tri_ray.h"
+#include "bg/tri_tri.h"
 
 #endif /* GM_H */
 
