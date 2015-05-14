@@ -70,7 +70,8 @@ static char *b3;			/* output buffer */
 
 static char usage[] = "\
 Usage: pixmerge [-g -l -e -n] [-w bytes_wide] [-C r/g/b]\n\
-	foreground.pix background.pix > out.pix\n";
+	foreground.pix [background.pix] > out.pix\n\
+	(stdout must go to a file or pipe)\n";
 
 int
 get_args(int argc, char **argv)
@@ -96,13 +97,12 @@ get_args(int argc, char **argv)
 		seen_formula = 1;
 		break;
 	    case 'w':
-		c = atoi(bu_optarg);
-		if (c < 1 || c >= EL_WIDTH){
+		width = atoi(bu_optarg);
+		if (width < 1 || width >= EL_WIDTH){
 		    (void)fputs("pixmerge: illegal width specified\n",stderr);
 		    (void)fputs(usage, stderr);
 		    bu_exit (1, NULL);
 		}
-		width = c;
 		break;
 	    case 'C':
 	    case 'c':	/* backward compatibility */
@@ -125,8 +125,15 @@ get_args(int argc, char **argv)
 	}
     }
 
-    if (bu_optind+2 > argc)
-	return 0;
+    if (seen_formula) {
+	/* If seen_const is 1, we omit the bg argument in the command string. */
+	if (bu_optind+2-seen_const > argc) return 0;
+    } else {
+	if (bu_optind+1 > argc) return 0;
+	/* "wanted" is 0 if arrive here, unless APPROX had been activated */
+	wanted |= GT;
+	seen_const = 1;		/* Default is const of 0/0/0 */
+    }
 
     f1_name = argv[bu_optind++];
     if (BU_STR_EQUAL(f1_name, "-"))
@@ -139,15 +146,17 @@ get_args(int argc, char **argv)
 	return 0;
     }
 
-    f2_name = argv[bu_optind++];
-    if (BU_STR_EQUAL(f2_name, "-"))
-	f2 = stdin;
-    else if ((f2 = fopen(f2_name, "r")) == NULL) {
-	perror(f2_name);
-	fprintf(stderr,
+    if (!seen_const) {
+	f2_name = argv[bu_optind++];
+	if (BU_STR_EQUAL(f2_name, "-"))
+	    f2 = stdin;
+	else if ((f2 = fopen(f2_name, "r")) == NULL) {
+	    perror(f2_name);
+	    fprintf(stderr,
 		"pixmerge: cannot open \"%s\" for reading\n",
 		f2_name);
-	return 0;
+	    return 0;
+	}
     }
 
     if (argc > bu_optind)
@@ -165,11 +174,6 @@ main(int argc, char **argv)
     if (!get_args(argc, argv) || isatty(fileno(stdout))) {
 	(void)fputs(usage, stderr);
 	bu_exit (1, NULL);
-    }
-
-    if (!seen_formula) {
-	wanted = GT;
-	seen_const = 1;		/* Default is const of 0/0/0 */
     }
     fprintf(stderr, "pixmerge: Selecting foreground when fg ");
     if (wanted & LT) putc('<', stderr);
@@ -216,13 +220,14 @@ main(int argc, char **argv)
 	unsigned char *cb1, *cb2;	/* current input buf ptrs */
 	unsigned char *cb3; 	/* current output buf ptr */
 	unsigned char *ebuf;		/* end ptr in b1 */
-	int r1, r2, len;
+	int r2, len;
 
-	r1 = fread(b1, width, CHUNK, f1);
-	r2 = fread(b2, width, CHUNK, f2);
-	len = r1;
-	if (r2 < len)
-	    len = r2;
+	len = fread(b1, width, CHUNK, f1);
+	if (!seen_const) {
+	    r2 = fread(b2, width, CHUNK, f2);
+	    if (r2 < len)
+		len = r2;
+	}
 	if (len <= 0)
 	    break;
 
