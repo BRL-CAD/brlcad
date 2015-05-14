@@ -163,7 +163,6 @@ yuv-pix
 Framebuffer Tools
 =================
 bw-fb
-cat-fb
 cell-fb
 cmap-fb
 ddisp
