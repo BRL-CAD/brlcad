@@ -1528,6 +1528,7 @@ package provide cadwidgets::Ged 1.0
 	$scmd == "poly_line_style" ||
 	$scmd == "polygons_overlap" ||
 	$scmd == "area" ||
+	$scmd == "fill" ||
 	$scmd == "export" ||
 	$scmd == "import" ||
 	$scmd == "moveall"} {

@@ -4199,6 +4199,33 @@ to_data_polygons(struct ged *gedp,
 	return GED_OK;
     }
 
+    if (BU_STR_EQUAL(argv[2], "fill")) {
+	size_t i;
+	vect2d_t vdir;
+	fastf_t vdelta;
+
+	if (argc != 6)
+	    goto bad;
+
+	if (bu_sscanf(argv[3], "%zu", &i) != 1 ||
+	    i >= gdpsp->gdps_polygons.gp_num_polygons)
+	    goto bad;
+
+	if (bu_sscanf(argv[4], "%lf %lf", &vdir[X], &vdir[Y]) != 2) {
+	    bu_vls_printf(gedp->ged_result_str, "%s: bad dir", argv[0], argv[4]);
+	    goto bad;
+	}
+
+	if (bu_sscanf(argv[5], "%lf", &vdelta) != 1) {
+	    bu_vls_printf(gedp->ged_result_str, "%s: bad delta", argv[0], argv[5]);
+	    goto bad;
+	}
+
+	ged_polygon_fill_segments(gedp, &gdpsp->gdps_polygons.gp_polygon[i], vdir, vdelta);
+
+	return GED_OK;
+    }
+
     /* Usage: area i
      *
      * Find area of polygon i
