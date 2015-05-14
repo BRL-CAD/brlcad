@@ -186,7 +186,7 @@ typedef enum {
  *
  *   RT_PATTERN_SPH_QRAND:
  *   -----------------------------
- *      TODO
+ *      TODO - maybe start here?  http://mathworld.wolfram.com/SpherePointPicking.html
  *
  * return negative on error (data will be unmodified in error condition)
  *        ray count on success (>=0)
