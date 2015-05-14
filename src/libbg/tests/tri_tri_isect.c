@@ -23,7 +23,7 @@
 #include <stdio.h>
 
 #include "bu.h"
-#include "gm.h"
+#include "bg.h"
 
 
 int
@@ -62,7 +62,7 @@ main(int argc, char **argv)
 
     sscanf(argv[7], "%d", &expected_result);
 
-    actual_result = gm_tri_tri_isect(V0, V1, V2, U0, U1, U2);
+    actual_result = bg_tri_tri_isect(V0, V1, V2, U0, U1, U2);
 
     bu_log("result: %d\n", actual_result);
 

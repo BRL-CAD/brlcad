@@ -36,11 +36,11 @@
 
 #include "common.h"
 #include "vmath.h"
-#include "gm/defines.h"
+#include "bg/defines.h"
 
 __BEGIN_DECLS
 
-GM_EXPORT extern int gm_tri_tri_isect_coplanar(point_t V0,
+GM_EXPORT extern int bg_tri_tri_isect_coplanar(point_t V0,
 					       point_t V1,
 					       point_t V2,
 					       point_t U0,
@@ -48,14 +48,14 @@ GM_EXPORT extern int gm_tri_tri_isect_coplanar(point_t V0,
 					       point_t U2,
 					       int area_flag);
 
-GM_EXPORT extern int gm_tri_tri_isect(point_t V0,
+GM_EXPORT extern int bg_tri_tri_isect(point_t V0,
 				      point_t V1,
 				      point_t V2,
 				      point_t U0,
 				      point_t U1,
 				      point_t U2);
 
-GM_EXPORT extern int gm_tri_tri_isect_with_line(point_t V0,
+GM_EXPORT extern int bg_tri_tri_isect_with_line(point_t V0,
 						point_t V1,
 						point_t V2,
 						point_t U0,

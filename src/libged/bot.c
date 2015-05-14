@@ -29,7 +29,7 @@
 #include <ctype.h>
 #include <string.h>
 
-#include "gm/chull.h"
+#include "bg/chull.h"
 #include "rt/geom.h"
 #include "wdb.h"
 #include "./ged_private.h"
@@ -127,7 +127,7 @@ ged_bot(struct ged *gedp, int argc, const char *argv[])
 	    return GED_ERROR;
 	}
 
-	retval = gm_3d_chull(&faces, &fc, &vert_array, &vc, (const point_t *)bot->vertices, (int)bot->num_vertices);
+	retval = bg_3d_chull(&faces, &fc, &vert_array, &vc, (const point_t *)bot->vertices, (int)bot->num_vertices);
 
 	if (retval != 3) return GED_ERROR;
 

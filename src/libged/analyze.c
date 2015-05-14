@@ -33,7 +33,7 @@
 
 #include "vmath.h"
 #include "bn.h"
-#include "gm/polygon.h"
+#include "bg/polygon.h"
 #include "rt/arb_edit.h"
 #include "raytrace.h"
 #include "rt/geom.h"
@@ -729,8 +729,8 @@ analyze_poly_face(struct ged *gedp, struct poly_face *face, row_t *row)
     findang(angles, face->plane_eqn);
 
     /* sort points */
-    gm_3d_polygon_sort_ccw(face->npts, face->pts, face->plane_eqn);
-    gm_3d_polygon_area(&face->area, face->npts, (const point_t *)face->pts);
+    bg_3d_polygon_sort_ccw(face->npts, face->pts, face->plane_eqn);
+    bg_3d_polygon_area(&face->area, face->npts, (const point_t *)face->pts);
 
     /* store face information for pretty printing */
     row->nfields = 8;
@@ -922,7 +922,7 @@ analyze_arbn(struct ged *gedp, const struct rt_db_internal *ip)
     table.rows = (row_t *)bu_calloc(aip->neqn, sizeof(row_t), "analyze_arbn: rows");
     table.nrows = aip->neqn;
 
-    gm_3d_polygon_mk_pts_planes(npts, tmp_pts, aip->neqn, (const plane_t *)eqs);
+    bg_3d_polygon_mk_pts_planes(npts, tmp_pts, aip->neqn, (const plane_t *)eqs);
 
     for (i = 0; i < aip->neqn; i++) {
 	vect_t tmp;

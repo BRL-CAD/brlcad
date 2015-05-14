@@ -1,19 +1,19 @@
 /* Top level library group */
-/** @defgroup libgm libgm (geometric algorithms) */
+/** @defgroup libbg libbg (geometric algorithms) */
 
 /* Second tier groups */
- /** @ingroup libgm */
-/**   @defgroup gm_defines libgm Definitions*/
- /** @ingroup libgm */
+ /** @ingroup libbg */
+/**   @defgroup bg_defines libbg Definitions*/
+ /** @ingroup libbg */
  /**  @defgroup tri Triangles */
 /**   @ingroup tri */
  /**   @defgroup tri_ray Triangle/Ray Intersection Tests */
 /**   @ingroup tri */
  /**   @defgroup tri_tri Triangle/Triangle Intersection Tests */
- /** @ingroup libgm */
+ /** @ingroup libbg */
  /**  @defgroup polygon Polygons */
- /** @ingroup libgm */
+ /** @ingroup libbg */
  /**  @defgroup chull Convex Hulls */
- /** @ingroup libgm */
+ /** @ingroup libbg */
  /**  @defgroup obr Oriented Bounding Rectangles/Rectangular Cuboids*/
 

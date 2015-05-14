@@ -18,9 +18,9 @@
  * information.
  */
 
-/** @addtogroup libgm */
+/** @addtogroup libbg */
 /** @{ */
-/** @file gm_private.h
+/** @file bg_private.h
  *
  * Private header file for the BRL-CAD Geometry Library, LIBGM.
  *
@@ -31,7 +31,7 @@
 
 #include "common.h"
 #include "vmath.h"
-#include "gm/defines.h"
+#include "bg/defines.h"
 
 __BEGIN_DECLS
 

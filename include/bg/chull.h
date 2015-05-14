@@ -32,7 +32,7 @@
 
 #include "common.h"
 #include "vmath.h"
-#include "gm/defines.h"
+#include "bg/defines.h"
 
 __BEGIN_DECLS
 
@@ -50,7 +50,7 @@ __BEGIN_DECLS
  * @param	n the number of points in polyline
  * @return the number of points in the output hull array
  */
-GM_EXPORT int gm_polyline_2d_chull(point2d_t** hull, const point2d_t* polyline, int n);
+GM_EXPORT int bg_polyline_2d_chull(point2d_t** hull, const point2d_t* polyline, int n);
 
 /**
  * @brief
@@ -77,7 +77,7 @@ GM_EXPORT int gm_polyline_2d_chull(point2d_t** hull, const point2d_t* polyline, 
  * @param	n the number of points in the input set
  * @return the number of points in the output hull array or zero if error.
  */
-GM_EXPORT int gm_2d_chull(point2d_t** hull, const point2d_t* points_2d, int n);
+GM_EXPORT int bg_2d_chull(point2d_t** hull, const point2d_t* points_2d, int n);
 
 /**
  * @brief
@@ -98,7 +98,7 @@ GM_EXPORT int gm_2d_chull(point2d_t** hull, const point2d_t* points_2d, int n);
  * @param	n the number of points in the input set
  * @return the number of points in the output hull array
  */
-GM_EXPORT int gm_3d_coplanar_chull(point_t** hull, const point_t* points_3d, int n);
+GM_EXPORT int bg_3d_coplanar_chull(point_t** hull, const point_t* points_3d, int n);
 
 /**
  * @brief
@@ -120,7 +120,7 @@ GM_EXPORT int gm_3d_coplanar_chull(point_t** hull, const point_t* points_3d, int
  * http://www.netlib.org/voronoi/hull.html - see the file chull3d.c
  * for the full copyright and license statement.
 */
-GM_EXPORT int gm_3d_chull(int **faces, int *num_faces, point_t **vertices, int *num_vertices,
+GM_EXPORT int bg_3d_chull(int **faces, int *num_faces, point_t **vertices, int *num_vertices,
                           const point_t *input_points_3d, int num_input_pnts);
 
 

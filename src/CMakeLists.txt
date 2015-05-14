@@ -32,7 +32,7 @@ set(level_1_dirs
   libbu
   libbn
   libsysv
-  libgm
+  libbg
   libbrep
   librt
   libwdb

@@ -19,12 +19,12 @@
  */
 
 /*----------------------------------------------------------------------*/
-/** @addtogroup gm_defines
+/** @addtogroup bg_defines
  * @brief
- * Common definitions for the headers used in gm.h (i.e. the headers found in include/gm)
+ * Common definitions for the headers used in bg.h (i.e. the headers found in include/bg)
  */
 /** @{ */
-/** @file gm/defines.h */
+/** @file bg/defines.h */
 
 #ifndef GM_DEFINES_H
 #define GM_DEFINES_H

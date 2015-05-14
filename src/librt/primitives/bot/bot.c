@@ -36,7 +36,7 @@
 
 #include "tcl.h"
 #include "bu/cv.h"
-#include "gm/polygon.h"
+#include "bg/polygon.h"
 #include "vmath.h"
 #include "rt/db4.h"
 #include "nmg.h"
@@ -314,7 +314,7 @@ rt_bot_unoriented_segs(struct hit *hits,
 
 
 /**
- * Given an array of hits, make segments out of them.  Exactly how
+ * Given an array of hits, make sebgents out of them.  Exactly how
  * this is to be done depends on the mode of the BoT.
  */
 int
@@ -375,7 +375,7 @@ rt_bot_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct 
  * This routine may be invoked many times for a single ray, as the ray
  * traverses from one space partitioning cell to the next.
  *
- * Plate-mode (2 hit) segments will be returned immediately in
+ * Plate-mode (2 hit) sebgents will be returned immediately in
  * seghead.
  *
  * Generally the hits are stashed between invocations in psp.
@@ -409,7 +409,7 @@ rt_bot_piece_hitsegs(struct rt_piecestate *psp, struct seg *seghead, struct appl
     /* Sort hits, Near to Far */
     rt_hitsort(psp->htab.hits, psp->htab.end);
 
-    /* build segments */
+    /* build sebgents */
     (void)rt_bot_makesegs(psp->htab.hits, psp->htab.end, psp->stp, &ap->a_ray, ap, seghead, psp);
 }
 
@@ -5269,8 +5269,8 @@ rt_bot_volume(fastf_t *volume, const struct rt_db_internal *ip)
 	/* SURFACE AREA */
 
 	/* sort points */
-	gm_3d_polygon_sort_ccw(face.npts, face.pts, face.plane_eqn);
-	gm_3d_polygon_area(&face.area, face.npts, (const point_t *)face.pts);
+	bg_3d_polygon_sort_ccw(face.npts, face.pts, face.plane_eqn);
+	bg_3d_polygon_area(&face.area, face.npts, (const point_t *)face.pts);
 
 	/* VOLUME */
 	VSCALE(tmp, face.plane_eqn, face.area);

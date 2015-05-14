@@ -39,11 +39,11 @@
 
 #include "common.h"
 #include "vmath.h"
-#include "gm/defines.h"
+#include "bg/defines.h"
 
 __BEGIN_DECLS
 
-GM_EXPORT extern int gm_isect_tri_ray(const point_t orig,
+GM_EXPORT extern int bg_isect_tri_ray(const point_t orig,
 				      const point_t dir,
 				      const point_t vert0,
 				      const point_t vert1,

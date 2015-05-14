@@ -1,11 +1,11 @@
-# Include directories needed by libgm users
+# Include directories needed by libbg users
 set(GM_INCLUDE_DIRS
   ${BRLCAD_BINARY_DIR}/include
   ${BRLCAD_SOURCE_DIR}/include
   ${BN_INCLUDE_DIRS}
   ${BU_INCLUDE_DIRS}
   )
-BRLCAD_LIB_INCLUDE_DIRS(gm GM_INCLUDE_DIRS "")
+BRLCAD_LIB_INCLUDE_DIRS(bg GM_INCLUDE_DIRS "")
 
 set(LIBGM_SOURCES
   chull.c
@@ -17,12 +17,12 @@ set(LIBGM_SOURCES
   util.c
   )
 
-BRLCAD_ADDLIB(libgm "${LIBGM_SOURCES}" libbn libbu)
-set_target_properties(libgm PROPERTIES VERSION 20.0.1 SOVERSION 20)
+BRLCAD_ADDLIB(libbg "${LIBGM_SOURCES}" libbn libbu)
+set_target_properties(libbg PROPERTIES VERSION 20.0.1 SOVERSION 20)
 
 add_subdirectory(tests)
 
-CMAKEFILES(gm_private.h)
+CMAKEFILES(bg_private.h)
 
 # Local Variables:
 # tab-width: 8

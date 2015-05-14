@@ -1,4 +1,4 @@
-set(gm_headers
+set(bg_headers
   defines.h
   chull.h
   obr.h
@@ -7,9 +7,9 @@ set(gm_headers
   tri_tri.h
   )
 
-install(FILES ${gm_headers} DESTINATION ${INCLUDE_DIR}/brlcad/gm)
+install(FILES ${bg_headers} DESTINATION ${INCLUDE_DIR}/brlcad/bg)
 
-CMAKEFILES(${gm_headers})
+CMAKEFILES(${bg_headers})
 
 # Local Variables:
 # tab-width: 8

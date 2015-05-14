@@ -30,7 +30,7 @@
 #include "bu/ptbl.h"
 #include "bu/malloc.h"
 #include "bn/randmt.h"
-#include "gm/chull.h"
+#include "bg/chull.h"
 
 #define BLOCKSIZE 100000
 #define MAXDIM 3
@@ -39,7 +39,7 @@
  * repeatedly calculate the convex hull for subsets of
  * the total set and then fine the hull of that set of
  * hulls.  These parameters control that process - see
- * chull3d_intermediate_set and gm_3d_chull.  In the
+ * chull3d_intermediate_set and bg_3d_chull.  In the
  * worst case this approach will slow the calculation,
  * but so long as some significant percentage of the
  * bot's vertices are not part of the hull it should
@@ -1263,7 +1263,7 @@ chull3d_intermediate_set(point_t **vertices, int *num_vertices, const point_t *i
 }
 
 int
-gm_3d_chull(int **faces, int *num_faces, point_t **vertices, int *num_vertices,
+bg_3d_chull(int **faces, int *num_faces, point_t **vertices, int *num_vertices,
 	const point_t *input_points_3d, int num_input_pnts)
 {
     int i;
@@ -1310,7 +1310,7 @@ gm_3d_chull(int **faces, int *num_faces, point_t **vertices, int *num_vertices,
 	    break;
 	case 2:
 	    /* We already have the hull points, but we need to assemble them into a CCW hull */
-	    gm_3d_coplanar_chull(&hull_2d, (const point_t *)cdata->vert_array, (*cdata->vert_cnt));
+	    bg_3d_coplanar_chull(&hull_2d, (const point_t *)cdata->vert_array, (*cdata->vert_cnt));
 	    (*vertices) = hull_2d;
 	    bu_free(cdata->vert_array, "using 2d vertex list from coplanar_chull");
 	    (*faces) = NULL; /* Should we tessellate the hull and make faces? */

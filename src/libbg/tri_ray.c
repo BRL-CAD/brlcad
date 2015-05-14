@@ -16,17 +16,17 @@
  * The changes made for BRL-CAD integration were to use the point_t
  * data type instead of fastf_t arrays and use vmath's vector macros
  * instead of the locally defined versions.  The function name was
- * changed to gm_isect_tri_ray.
+ * changed to bg_isect_tri_ray.
  */
 
 #include "common.h"
 #include <math.h>
 #include "vmath.h"
-#include "gm/tri_ray.h"
+#include "bg/tri_ray.h"
 
 #define EPSILON 0.000001
 
-int gm_isect_tri_ray(const point_t orig, const point_t dir,
+int bg_isect_tri_ray(const point_t orig, const point_t dir,
 	const point_t vert0, const point_t vert1, const point_t vert2,
 	point_t *isect)
 {

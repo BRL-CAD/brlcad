@@ -1,6 +1,6 @@
 add_subdirectory(bu)
 add_subdirectory(bn)
-add_subdirectory(gm)
+add_subdirectory(bg)
 add_subdirectory(dm)
 add_subdirectory(gcv)
 add_subdirectory(optical)
@@ -13,7 +13,7 @@ set(public_hdrs
   RtServerImpl.h
   bn.h
   bu.h
-  gm.h
+  bg.h
   common.h
   cursor.h
   ged.h

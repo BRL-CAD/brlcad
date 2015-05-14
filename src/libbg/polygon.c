@@ -25,10 +25,10 @@
 #include "bu/sort.h"
 #include "bn/plane.h"
 #include "bn/tol.h"
-#include "gm/polygon.h"
+#include "bg/polygon.h"
 
 int
-gm_3d_polygon_area(fastf_t *area, size_t npts, const point_t *pts)
+bg_3d_polygon_area(fastf_t *area, size_t npts, const point_t *pts)
 {
     size_t i;
     vect_t v1, v2, tmp, tot = VINIT_ZERO;
@@ -72,7 +72,7 @@ gm_3d_polygon_area(fastf_t *area, size_t npts, const point_t *pts)
 
 
 int
-gm_3d_polygon_centroid(point_t *cent, size_t npts, const point_t *pts)
+bg_3d_polygon_centroid(point_t *cent, size_t npts, const point_t *pts)
 {
     size_t i;
     fastf_t x_0 = 0.0;
@@ -137,7 +137,7 @@ gm_3d_polygon_centroid(point_t *cent, size_t npts, const point_t *pts)
 
 
 int
-gm_3d_polygon_mk_pts_planes(size_t *npts, point_t **pts, size_t neqs, const plane_t *eqs)
+bg_3d_polygon_mk_pts_planes(size_t *npts, point_t **pts, size_t neqs, const plane_t *eqs)
 {
     size_t i, j, k, l;
     if (!npts || !pts || neqs < 4 || !eqs)
@@ -182,7 +182,7 @@ sort_ccw_3d(const void *x, const void *y, void *cmp)
 
 
 int
-gm_3d_polygon_sort_ccw(size_t npts, point_t *pts, plane_t cmp)
+bg_3d_polygon_sort_ccw(size_t npts, point_t *pts, plane_t cmp)
 {
     if (!pts || npts < 3)
 	return 1;
@@ -191,7 +191,7 @@ gm_3d_polygon_sort_ccw(size_t npts, point_t *pts, plane_t cmp)
 }
 
 int
-gm_polygon_clockwise(size_t npts, const point2d_t *pts, const int *pt_indices)
+bg_polygon_clockwise(size_t npts, const point2d_t *pts, const int *pt_indices)
 {
     size_t i;
     double sum = 0;
@@ -225,7 +225,7 @@ gm_polygon_clockwise(size_t npts, const point2d_t *pts, const int *pt_indices)
  * Translation to libbn data types of Franklin's point-in-polygon test.
  * See http://www.ecse.rpi.edu/Homepages/wrf/Research/Short_Notes/pnpoly.html
  * for a discussion of the subtleties involved with the inequality tests.
- * The below copyright applies to just the function gm_pt_in_polygon,
+ * The below copyright applies to just the function bg_pt_in_polygon,
  * not the whole of polygon.c
  *
  * Copyright (c) 1970-2003, Wm. Randolph Franklin
@@ -255,7 +255,7 @@ gm_polygon_clockwise(size_t npts, const point2d_t *pts, const int *pt_indices)
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 int
-gm_pt_in_polygon(size_t nvert, const point2d_t *pnts, const point2d_t *test)
+bg_pt_in_polygon(size_t nvert, const point2d_t *pnts, const point2d_t *test)
 {
     size_t i = 0;
     size_t j = 0;
@@ -403,7 +403,7 @@ is_inside(const point2d_t p1, const point2d_t p2, const point2d_t p3, const poin
     V2MOVE(tri[0], p1);
     V2MOVE(tri[1], p2);
     V2MOVE(tri[2], p3);
-    return gm_pt_in_polygon(3, (const point2d_t *)tri, test);
+    return bg_pt_in_polygon(3, (const point2d_t *)tri, test);
 }
 
 
@@ -699,7 +699,7 @@ remove_hole(int **poly, const size_t poly_npts, const int *hole, const size_t ho
     return poly_pnt_cnt;
 }
 
-int gm_nested_polygon_triangulate(int **faces, int *num_faces, point2d_t **out_pts, int *num_outpts,
+int bg_nested_polygon_triangulate(int **faces, int *num_faces, point2d_t **out_pts, int *num_outpts,
 	const int *poly, const size_t poly_pnts,
 	const int **holes_array, const size_t *holes_npts, const size_t nholes,
 	const point2d_t *pts, const size_t npts, triangulation_t type)
@@ -730,7 +730,7 @@ int gm_nested_polygon_triangulate(int **faces, int *num_faces, point2d_t **out_p
 
     if (type == DELAUNAY && (!out_pts || !num_outpts)) return 1;
 
-    ccw = gm_polygon_clockwise(poly_pnts, pts, poly);
+    ccw = bg_polygon_clockwise(poly_pnts, pts, poly);
 
     if (ccw != -1) {
 	bu_log("Warning - non-CCW point loop!\n");
@@ -916,7 +916,7 @@ cleanup:
     return ret;
 }
 
-int gm_polygon_triangulate(int **faces, int *num_faces, point2d_t **out_pts, int *num_outpts,
+int bg_polygon_triangulate(int **faces, int *num_faces, point2d_t **out_pts, int *num_outpts,
 	const point2d_t *pts, const size_t npts, triangulation_t type)
 {
     int ret;
@@ -926,7 +926,7 @@ int gm_polygon_triangulate(int **faces, int *num_faces, point2d_t **out_pts, int
     if (type == DELAUNAY && (!out_pts || !num_outpts)) return 1;
     verts_ind = (int *)bu_calloc(npts, sizeof(int), "vert indices");
     for (i = 0; i < npts; i++) verts_ind[i] = i;
-    ret = gm_nested_polygon_triangulate(faces, num_faces, out_pts, num_outpts, verts_ind, npts, NULL, NULL, 0, pts, npts, type);
+    ret = bg_nested_polygon_triangulate(faces, num_faces, out_pts, num_outpts, verts_ind, npts, NULL, NULL, 0, pts, npts, type);
     bu_free(verts_ind, "free verts");
     return ret;
 }

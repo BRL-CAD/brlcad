@@ -6,7 +6,7 @@ set(DOX_LIBS
   common
   libbu
   libbn
-  libgm
+  libbg
   libsysv
   libbrep
   librt

@@ -26,7 +26,7 @@
 
 #include "bu.h"
 #include "vmath.h"
-#include "gm.h"
+#include "bg.h"
 
 int
 main(int UNUSED(argc), const char **UNUSED(argv))
@@ -50,7 +50,7 @@ main(int UNUSED(argc), const char **UNUSED(argv))
 	VSET(input_verts[6], -1000.0, 1000.0, -1000.0);
 	VSET(input_verts[7], 1000.0, -1000.0, -1000.0);
 
-	retval = gm_3d_chull(&faces, &fc, &vert_array, &vc, (const point_t *)input_verts, 9);
+	retval = bg_3d_chull(&faces, &fc, &vert_array, &vc, (const point_t *)input_verts, 9);
 	bu_log("Test #001:  Cube:\n");
 	bu_log("  Vertices:\n");
 	for(i = 0; i < vc; i++) {
@@ -84,7 +84,7 @@ main(int UNUSED(argc), const char **UNUSED(argv))
 	VSET(input_verts[7], 0.0, 2.0, 2.0);
 	VSET(input_verts[8], 1.0, 1.0, 1.0);
 
-	retval = gm_3d_chull(&faces, &fc, &vert_array, &vc, (const point_t *)input_verts, 9);
+	retval = bg_3d_chull(&faces, &fc, &vert_array, &vc, (const point_t *)input_verts, 9);
 	bu_log("Test #002:  Cube With Center Point:\n");
 	bu_log("  Vertices:\n");
 	for(i = 0; i < vc; i++) {
@@ -114,7 +114,7 @@ main(int UNUSED(argc), const char **UNUSED(argv))
 	VSET(input_verts[3], 5.0, 1.0, 1.0);
 	VSET(input_verts[4], 2.0, 2.0, 2.0);
 
-	retval = gm_3d_chull(&faces, &fc, &vert_array, &vc, (const point_t *)input_verts, 9);
+	retval = bg_3d_chull(&faces, &fc, &vert_array, &vc, (const point_t *)input_verts, 9);
 	bu_log("Test #003:  Flat Triangles:\n");
 	bu_log("  Vertices:\n");
 	for(i = 0; i < vc; i++) {

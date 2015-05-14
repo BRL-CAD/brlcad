@@ -16,7 +16,7 @@
  *
  * Calculate whether two coplanar triangles intersect:
  *
- * int gm_tri_tri_isect_coplanar(point_t V0, point_t V1, point_t V2,
+ * int bg_tri_tri_isect_coplanar(point_t V0, point_t V1, point_t V2,
  *                               point_t U0, point_t U1, point_t U2,
  *                               int area_flag)
  * parameters: vertices of triangle 1: V0, V1, V2
@@ -26,7 +26,7 @@
  *
  * Calculate whether two triangles intersect:
  *
- * int gm_tri_tri_isect(point_t V0, point_t V1, point_t V2,
+ * int bg_tri_tri_isect(point_t V0, point_t V1, point_t V2,
  *                      point_t U0, point_t U1, point_t U2)
  * parameters: vertices of triangle 1: V0, V1, V2
  *             vertices of triangle 2: U0, U1, U2
@@ -35,7 +35,7 @@
  * This version computes the line of intersection as well (if they
  * are not coplanar):
  *
- * int gm_tri_tri_isect_with_line(point_t V0, point_t V1, point_t V2,
+ * int bg_tri_tri_isect_with_line(point_t V0, point_t V1, point_t V2,
  *			          point_t U0, point_t U1, point_t U2,
  *			          int *coplanar, point_t *isectpt1,
  *			          point_t *isectpt2);
@@ -49,7 +49,7 @@
  * The changes made for BRL-CAD integration were to use the point_t
  * data type instead of fastf_t arrays and use vmath's vector macros
  * instead of the locally defined versions.  The function names were
- * changed to gm_tri_tri_isect and gm_tri_tri_isect_with_line.
+ * changed to bg_tri_tri_isect and bg_tri_tri_isect_with_line.
  * A number of minor changes were made for C89 compatibility.  BRL-CAD's
  * NEAR_ZERO macro was used in place of exact floating point comparisons.
  *
@@ -60,7 +60,7 @@
 #include "vmath.h"
 #include "bn/plane.h"
 #include "bn/tol.h"
-#include "gm/tri_tri.h"
+#include "bg/tri_tri.h"
 
 /* if USE_EPSILON_TEST is true then we do a check:
    if |dv|<EPSILON then dv=0.0;
@@ -90,7 +90,7 @@
 
 
 /* this edge to edge test is based on Franklin Antonio's gem:
-   "Faster Line Segment Intersection", in Graphics Gems III,
+   "Faster Line Sebgent Intersection", in Graphics Gems III,
    pp. 199-202 */
 #define EDGE_EDGE_TEST(V0, U0, U1)                      \
     Bx=U0[i0]-U1[i0];                                   \
@@ -178,7 +178,7 @@
     }
 
 
-int gm_tri_tri_isect_coplanar(point_t V0, point_t V1, point_t V2,
+int bg_tri_tri_isect_coplanar(point_t V0, point_t V1, point_t V2,
 			      point_t U0, point_t U1, point_t U2, int area_flag)
 {
     int ret;
@@ -315,7 +315,7 @@ int coplanar_tri_tri(point_t N, point_t V0, point_t V1, point_t V2,
     }
 
 
-int gm_tri_tri_isect(point_t V0, point_t V1, point_t V2,
+int bg_tri_tri_isect(point_t V0, point_t V1, point_t V2,
 		     point_t U0, point_t U1, point_t U2)
 {
     point_t E1, E2;
@@ -475,7 +475,7 @@ int compute_intervals_isectline(point_t VERT0, point_t VERT1, point_t VERT2,
 }
 
 
-int gm_tri_tri_isect_with_line(point_t V0, point_t V1, point_t V2,
+int bg_tri_tri_isect_with_line(point_t V0, point_t V1, point_t V2,
 			       point_t U0, point_t U1, point_t U2,
 			       int *coplanar, point_t *isectpt1, point_t *isectpt2)
 {
