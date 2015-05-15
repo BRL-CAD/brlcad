@@ -54,15 +54,17 @@ main(int argc, char *argv[])
 	case 0:
 	    bu_log("Running test 0 (null inputs)\n");
 	    break;
-	    /*
 	case 1:
 	    bu_log("Running test 1 (rectangular orthogonal grid)\n");
 	    fp = fopen("rt_pattern_test_1.plot3", "wb");
 	    pattern_type = RT_PATTERN_RECT_ORTHOGRID;
 	    data.vn = 2;
 	    data.pn = 2;
+	    VSET(data.n_vec[0], 1000, 0, 0);
+	    VSET(data.n_vec[1], 0, 1000, 0);
+	    data.n_p[0] = 50;
+	    data.n_p[1] = 50;
 	    break;
-	    */
 	case 5:
 	    bu_log("Running test 5 (circular skew)\n");
 	    fp = fopen("rt_pattern_test_5.plot3", "wb");
