@@ -35,14 +35,14 @@ recursively deletes all objects referenced by any of those objects.</refpurpose>
   will also be destroyed. This continues recursively until the
   primitive shapes are reached and destroyed.
   </para>
-  
+
   <para>By default, if only some members of an object hierarchy are
   unique to the hierarchy, these members are deleted but members
   referenced elsewhere are retained. This means that this command may
   invalidate object hierarchies if the <option>-a</option> flag is not
   specified.
   </para>
-  
+
   <variablelist remap="TP">
     <varlistentry>
       <term><option>-a</option></term>

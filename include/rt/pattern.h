@@ -51,7 +51,7 @@ typedef enum {
     RT_PATTERN_RECT_PERSPGRID,     /*!< rays from a point with diverging normals to a grid */
     RT_PATTERN_CIRC_ORTHOGRID,     /*!< circular subset of RECT_ORTHOGRID rays */
     RT_PATTERN_CIRC_PERSPGRID,     /*!< circular subset of RECT_PERSPGRID rays */
-    RT_PATTERN_CIRC_SPIRAL,        /*!< rays in a circular sprial pattern */
+    RT_PATTERN_CIRC_SPIRAL,        /*!< rays in a circular spiral pattern */
     RT_PATTERN_ELLIPSE_ORTHOGRID,  /*!< elliptical subset of RECT_ORTHOGRID rays */
     RT_PATTERN_ELLIPSE_PERSPGRID,  /*!< elliptical subset of RECT_PERSPGRID rays */
     RT_PATTERN_CIRC_LAYERS,        /*!< cylindrical layers of circular arrays */
@@ -62,7 +62,7 @@ typedef enum {
 
 
 /**
- * Data container used to supply options to and recieve data from
+ * Data container used to supply options to and receive data from
  * the rt_pattern generator function
  */
  struct rt_pattern_data {
