@@ -283,6 +283,7 @@ package provide cadwidgets::Ged 1.0
 	method killtree {args}
 	method l {args}
 	method lastMouseRayPos {}
+	method lc {args}
 	method light {args}
 	method light_all {args}
 	method list_views {args}
@@ -2016,6 +2017,10 @@ package provide cadwidgets::Ged 1.0
 
 ::itcl::body cadwidgets::Ged::lastMouseRayPos {} {
     return $mLastMouseRayPos
+}
+
+::itcl::body cadwidgets::Ged::lc {args} {
+    eval $mGed lc $args
 }
 
 ::itcl::body cadwidgets::Ged::light {args} {
