@@ -147,8 +147,9 @@ DISTCLEAN(${CMAKE_CURRENT_BINARY_DIR}/astyle/Makefile)
 CMAKEFILES(astyle.dist)
 
 # dom2dox - Doc-O-Matic to Doxygen C++ source converter
-include(${CMAKE_CURRENT_SOURCE_DIR}/dom2dox.dist)
-CMAKEFILES_IN_DIR(dom2dox_ignore_files dom2dox)
+# until it's made independent of libbu, see src/util/dom2dox
+#include(${CMAKE_CURRENT_SOURCE_DIR}/dom2dox.dist)
+#CMAKEFILES_IN_DIR(dom2dox_ignore_files dom2dox)
 
 # libxml and libxslt tools for DocBook processing.  We build just
 # enough library support to get these two tools working.

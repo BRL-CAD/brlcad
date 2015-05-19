@@ -69,39 +69,48 @@ else(DOM2DOX_IS_SUBBUILD)
   set(CMAKE_MODULE_PATH "${DOM2DOX_CMAKE_DIR};${CMAKE_MODULE_PATH}")
 endif(DOM2DOX_IS_SUBBUILD)
 
-find_package(LEMON)
-find_package(RE2C)
-find_package(PERPLEX)
+if(NOT DOM2DOX_IS_SUBBUILD)
+  find_package(LEMON)
+  find_package(RE2C)
+  find_package(PERPLEX)
 
-include(${CMAKE_CURRENT_SOURCE_DIR}/CMake/PERPLEX_Util.cmake)
-include(${CMAKE_CURRENT_SOURCE_DIR}/CMake/LEMON_Util.cmake)
-include(${CMAKE_CURRENT_SOURCE_DIR}/CMake/RE2C_Util.cmake)
+  include(${CMAKE_CURRENT_SOURCE_DIR}/CMake/PERPLEX_Util.cmake)
+  include(${CMAKE_CURRENT_SOURCE_DIR}/CMake/LEMON_Util.cmake)
+  include(${CMAKE_CURRENT_SOURCE_DIR}/CMake/RE2C_Util.cmake)
+endif(NOT DOM2DOX_IS_SUBBUILD)
 
 include_directories(
   ${CMAKE_CURRENT_SOURCE_DIR}
   ${CMAKE_CURRENT_BINARY_DIR})
 
 
-set(DOC_CONVERTER dom2dox)
+PERPLEX_TARGET(dom2dox_scanner dom2dox_scanner.perplex
+  ${CMAKE_CURRENT_BINARY_DIR}/dom2dox_scanner.c
+  ${CMAKE_CURRENT_BINARY_DIR}/dom2dox_scanner.h)
+LEMON_TARGET(dom2dox_parser dom2dox_parser.lemon
+  ${CMAKE_CURRENT_BINARY_DIR}/dom2dox_parser.c
+  ${CMAKE_CURRENT_BINARY_DIR}/dom2dox_parser.h)
+ADD_PERPLEX_LEMON_DEPENDENCY(dom2dox_scanner dom2dox_parser)
 
-PERPLEX_TARGET(${DOC_CONVERTER}_scanner ${DOC_CONVERTER}_scanner.perplex
-  ${CMAKE_CURRENT_BINARY_DIR}/${DOC_CONVERTER}_scanner.c
-  ${CMAKE_CURRENT_BINARY_DIR}/${DOC_CONVERTER}_scanner.h)
-LEMON_TARGET(${DOC_CONVERTER}_parser ${DOC_CONVERTER}_parser.lemon
-  ${CMAKE_CURRENT_BINARY_DIR}/${DOC_CONVERTER}_parser.c
-  ${CMAKE_CURRENT_BINARY_DIR}/${DOC_CONVERTER}_parser.h)
-ADD_PERPLEX_LEMON_DEPENDENCY(${DOC_CONVERTER}_scanner ${DOC_CONVERTER}_parser)
-
-add_executable(${DOC_CONVERTER} ${DOC_CONVERTER}.c ${DOC_CONVERTER}_scanner.c ${DOC_CONVERTER}_parser.c)
-target_link_libraries(${DOC_CONVERTER} libbu)
+set(dom2dox_srcs
+  dom2dox.c
+  ${CMAKE_CURRENT_BINARY_DIR}/dom2dox_scanner.c
+  ${CMAKE_CURRENT_BINARY_DIR}/dom2dox_parser.c
+)
+add_executable(dom2dox ${dom2dox_srcs})
+target_link_libraries(dom2dox libbu)
+CHECK_C_COMPILER_FLAG(-Wno-error NOERROR_FLAG)
+if(NOERROR_FLAG)
+  set_property(TARGET dom2dox APPEND PROPERTY COMPILE_FLAGS "-Wno-error")
+endif(NOERROR_FLAG)
 
 # TODO - The logic below belongs in BRL-CAD's doc directory
 
 #set(CONVERSION_DIR "${CMAKE_CURRENT_BINARY_DIR}/gen")
 #foreach(ON_source ${ON_sources})
-#  add_custom_command(OUTPUT "${ON_source}" DEPENDS ${DOC_CONVERTER}
+#  add_custom_command(OUTPUT "${ON_source}" DEPENDS dom2dox
 #    COMMAND cmake ARGS -E make_directory "${CONVERSION_DIR}"
-#    COMMAND ${DOC_CONVERTER} ARGS "${OPENNURBS_SOURCE_ROOT}/${ON_source}" "${CONVERSION_DIR}/${ON_source}")
+#    COMMAND dom2dox ARGS "${OPENNURBS_SOURCE_ROOT}/${ON_source}" "${CONVERSION_DIR}/${ON_source}")
 #endforeach(ON_source)
 
 #set(DOC_OUTPUT_DIR "${CMAKE_CURRENT_BINARY_DIR}/doc")

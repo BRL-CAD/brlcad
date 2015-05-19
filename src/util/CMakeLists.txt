@@ -27,6 +27,10 @@ if(MSVC)
     )
 endif(MSVC)
 
+if(BRLCAD_ENABLE_DOM2DOX)
+  set(DOM2DOX_IS_SUBBUILD 1)
+  add_subdirectory(dom2dox)
+endif(BRLCAD_ENABLE_DOM2DOX)
 
 if(BRLCAD_ENABLE_X11)
   BRLCAD_ADDEXEC(plot3-X plot3-X.c "libdm;libbu")
