@@ -87,29 +87,34 @@ ged_gdiff(struct ged *gedp, int argc, const char *argv[])
 	}
     }
 
-#if 0
     {
 	/* Construct a minimal example visual display of a ray diff */
+	struct bu_list *vhead;
 	struct bn_vlblock *vbp = bn_vlblock_init(&RTG.rtg_vlfree, 32);
 	point_t a, b;
+	VSET(a, -100, 0, 0);
+	VSET(b, 0, 0, 0);
 	/* Draw left-only lines */
-	struct bu_list *vhead = bn_vlblock_find(vbp, 255, 0, 0); /* should be red */
+	vhead = bn_vlblock_find(vbp, 255, 0, 0); /* should be red */
 	BN_ADD_VLIST(vbp->free_vlist_hd, vhead, a, BN_VLIST_LINE_MOVE);
 	BN_ADD_VLIST(vbp->free_vlist_hd, vhead, b, BN_VLIST_LINE_DRAW);
 	/* Draw right-only lines */
-	vhead = bn_vlblock_find(vbp, 0, 0, 255); /* should be blue */
-	BN_ADD_VLIST(vbp->free_vlist_hd, vhead, a, BN_VLIST_LINE_MOVE);
-	BN_ADD_VLIST(vbp->free_vlist_hd, vhead, b, BN_VLIST_LINE_DRAW);
-	/* Draw overlap lines */
+	VSET(a, 0, 0, 0);
+	VSET(b, 100, 0, 0);
 	vhead = bn_vlblock_find(vbp, 255, 255, 255); /* should be white */
 	BN_ADD_VLIST(vbp->free_vlist_hd, vhead, a, BN_VLIST_LINE_MOVE);
 	BN_ADD_VLIST(vbp->free_vlist_hd, vhead, b, BN_VLIST_LINE_DRAW);
+	/* Draw overlap lines */
+	VSET(a, 100, 0, 0);
+	VSET(b, 200, 0, 0);
+	vhead = bn_vlblock_find(vbp, 0, 0, 255); /* should be blue */
+	BN_ADD_VLIST(vbp->free_vlist_hd, vhead, a, BN_VLIST_LINE_MOVE);
+	BN_ADD_VLIST(vbp->free_vlist_hd, vhead, b, BN_VLIST_LINE_DRAW);
 
-	_ged_cvt_vlblock_to_solids(gedp, vbp, "diff_left", 0);
+	_ged_cvt_vlblock_to_solids(gedp, vbp, "diff_visual", 0);
 
 	bn_vlblock_free(vbp);
     }
-#endif
 
     /* There are possible convention-based interpretations of 1, 2, 3, 4 and n args
      * beyond those used as options.  For the shortest cases, the interpretation depends
