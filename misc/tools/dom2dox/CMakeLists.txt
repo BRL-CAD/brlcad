@@ -81,7 +81,11 @@ endif(NOT DOM2DOX_IS_SUBBUILD)
 
 include_directories(
   ${CMAKE_CURRENT_SOURCE_DIR}
-  ${CMAKE_CURRENT_BINARY_DIR})
+  ${CMAKE_CURRENT_BINARY_DIR}
+  ${BRLCAD_SRC_INCLUDE_DIR}
+  ${BRLCAD_BUILD_INCLUDE_DIR}
+  ${TCL_INCLUDE_DIR}
+  )
 
 
 PERPLEX_TARGET(dom2dox_scanner dom2dox_scanner.perplex
@@ -98,7 +102,8 @@ set(dom2dox_srcs
   ${CMAKE_CURRENT_BINARY_DIR}/dom2dox_parser.c
 )
 add_executable(dom2dox ${dom2dox_srcs})
-target_link_libraries(dom2dox libbu)
+target_link_libraries(dom2dox ${BU_LIBRARY})
+include(CheckCCompilerFlag)
 CHECK_C_COMPILER_FLAG(-Wno-error NOERROR_FLAG)
 if(NOERROR_FLAG)
   set_property(TARGET dom2dox APPEND PROPERTY COMPILE_FLAGS "-Wno-error")
