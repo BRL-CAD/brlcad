@@ -98,13 +98,13 @@ ged_gdiff(struct ged *gedp, int argc, const char *argv[])
 	vhead = bn_vlblock_find(vbp, 255, 0, 0); /* should be red */
 	BN_ADD_VLIST(vbp->free_vlist_hd, vhead, a, BN_VLIST_LINE_MOVE);
 	BN_ADD_VLIST(vbp->free_vlist_hd, vhead, b, BN_VLIST_LINE_DRAW);
-	/* Draw right-only lines */
+	/* Draw overlap lines */
 	VSET(a, 0, 0, 0);
 	VSET(b, 100, 0, 0);
 	vhead = bn_vlblock_find(vbp, 255, 255, 255); /* should be white */
 	BN_ADD_VLIST(vbp->free_vlist_hd, vhead, a, BN_VLIST_LINE_MOVE);
 	BN_ADD_VLIST(vbp->free_vlist_hd, vhead, b, BN_VLIST_LINE_DRAW);
-	/* Draw overlap lines */
+	/* Draw right-only lines */
 	VSET(a, 100, 0, 0);
 	VSET(b, 200, 0, 0);
 	vhead = bn_vlblock_find(vbp, 0, 0, 255); /* should be blue */
