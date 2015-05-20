@@ -39,7 +39,7 @@ will refuse to write its output to a window; you must redirect the output to a f
 
 <refsect1 xml:id='example'><title>EXAMPLE</title>
 <para>gencolor -r512 0 255 0 &gt; foo.pix</para>
-<para>will output 512 "green" pixels.</para>
+<para>will output 512 "green" pixels (0 255 0 being used as RGB values).</para>
 </refsect1>
 
 <refsect1 xml:id='see_also'><title>SEE ALSO</title>
