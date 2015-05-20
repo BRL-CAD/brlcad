@@ -72,7 +72,6 @@ set(rt_headers
   tree.h
   version.h
   view.h
-  vlblock.h
   vlist.h
   wdb.h
   xray.h

@@ -1071,3 +1071,9 @@ s/(#[[:space:]]*include[[:space:]]+["<])plastic\.h/\1optical\/plastic.h/g
 	move plastic.h to optical/plastic.h [7.25]
 s/(#[[:space:]]*include[[:space:]]+["<])rtgeom\.h/\1rt\/geom.h/g
 	move rtgeom.h to rt/geom.h [7.25]
+s/rt_vlist_get_cmd_description/bn_vlist_get_cmd_description/g
+s/rt_ck_vlist/bn_ck_vlist/g
+s/rt_vlist_export/bn_vlist_export/g
+s/rt_vlblock_free/bn_vlblock_free/g
+s/rt_vlblock_find/bn_vlblock_find/g
+        move vlist functions from librt to libbn [7.25]

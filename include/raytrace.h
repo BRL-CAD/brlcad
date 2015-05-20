@@ -167,8 +167,6 @@ __BEGIN_DECLS
 
 #include "./rt/prep.h"
 
-#include "./rt/vlblock.h"
-
 #include "./rt/vlist.h"
 
 #include "./rt/htbl.h"

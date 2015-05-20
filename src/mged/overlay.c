@@ -129,7 +129,7 @@ f_labelvert(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const c
 
     cvt_vlblock_to_solids(vbp, "_LABELVERT_", 0);
 
-    rt_vlblock_free(vbp);
+    bn_vlblock_free(vbp);
     update_views = 1;
     return TCL_OK;
 }

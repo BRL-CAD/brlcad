@@ -604,7 +604,7 @@ cmd_openpl(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, char **a
 	for (BU_LIST_FOR(plp, plot_list, &HeadPlot.l)) {
 	    /* found object with same name */
 	    if (BU_STR_EQUAL(bu_vls_addr(&plp->pl_name), bnp)) {
-		rt_vlblock_free(plp->pl_vbp);
+		bn_vlblock_free(plp->pl_vbp);
 		goto up_to_vl;
 	    }
 	}
@@ -731,7 +731,7 @@ cmd_closepl(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, char **
 	    if (BU_STR_EQUAL(argv[i], bu_vls_addr(&plp->pl_name))) {
 		BU_LIST_DEQUEUE(&plp->l);
 		bu_vls_free(&plp->pl_name);
-		rt_vlblock_free(plp->pl_vbp);
+		bn_vlblock_free(plp->pl_vbp);
 		bu_free((void *)plp, "cmd_closepl");
 		break;
 	    }
