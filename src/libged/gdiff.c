@@ -90,8 +90,11 @@ ged_gdiff(struct ged *gedp, int argc, const char *argv[])
     {
 	/* Construct a minimal example visual display of a ray diff */
 	struct bu_list *vhead;
-	struct bn_vlblock *vbp = bn_vlblock_init(&RTG.rtg_vlfree, 32);
+	struct bu_list local_vlist;
+	struct bn_vlblock *vbp;
 	point_t a, b;
+	BU_LIST_INIT(&local_vlist);
+	vbp = bn_vlblock_init(&local_vlist, 32);
 	VSET(a, -100, 0, 0);
 	VSET(b, 0, 0, 0);
 	/* Draw left-only lines */
@@ -113,6 +116,7 @@ ged_gdiff(struct ged *gedp, int argc, const char *argv[])
 
 	_ged_cvt_vlblock_to_solids(gedp, vbp, "diff_visual", 0);
 
+	bn_vlist_cleanup(&local_vlist);
 	bn_vlblock_free(vbp);
     }
 
