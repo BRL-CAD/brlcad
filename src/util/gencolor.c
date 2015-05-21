@@ -31,15 +31,16 @@
 #include <ctype.h>
 #include <string.h>
 #include "bio.h"
-
 #include "bu/log.h"
 #include "bu/str.h"
+#include "bu/getopt.h"
 
 #define MAX_BYTES (128*1024)
 
 static const char Usage[] = "Usage: gencolor [-r#] [val1 .. valN] > output_file\n";
 
 int bytes_in_buf, copies_per_buf;
+int32_t count = -1;
 
 unsigned char buf[MAX_BYTES];
 
@@ -47,28 +48,46 @@ void
 printusage(int i)
 {
     bu_log("%s\n", Usage);
-    bu_log("  (No whitespace immediately after -r , and must redirect output)\n");
-    bu_exit(i, NULL);
+    bu_log("  (Must redirect output; cannot send to tty)\n");
+    if (i != 3) bu_exit(i, NULL);
 }
 
+void
+get_args(int argc, char **argv)
+{
+    int c;
+
+    bu_optind = 1;
+    while ((c = bu_getopt(argc, argv, "r:h?")) != -1) {
+	switch (c) {
+	    case 'r':
+		count = atoi(bu_optarg);
+		if (count > INT32_MAX)
+		    count = INT32_MAX;
+		break;
+	    default:		/* 'h' '?' */
+		printusage(0);
+	}
+    }
+
+    if( isatty(fileno(stdout))) printusage(1);
+    if (argc == 1 ){
+    	printusage(3);
+	fprintf(stderr, "       Program continues running:\n");
+    }
+
+    return;
+}
 
 int
 main(int argc, char **argv)
 {
     int i, len, times;
-    int32_t count = -1;
     unsigned char *bp;
 
-    if (argc == 1 || isatty(fileno(stdout)))
-	printusage(1);
-
-    if (argc > 1 && bu_strncmp(argv[1], "-r", 2) == 0) {
-	count = atoi(&argv[1][2]);
-	if (count > INT32_MAX)
-	    count = INT32_MAX;
-	argv++;
-	argc--;
-    }
+    get_args(argc, argv);
+    argc = argc - bu_optind + 1;
+    argv = argv + bu_optind - 1;
 
     if (argc > 1) {
 	/* get values from the command line */
