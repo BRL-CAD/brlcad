@@ -17,8 +17,8 @@
 <refsynopsisdiv xml:id='synopsis'>
 <cmdsynopsis>
   <command>gencolor</command>
-    <arg choice='opt'><replaceable>-r#</replaceable></arg>
-    <arg choice='opt'><replaceable>-p -b -L -H</replaceable></arg>
+    <arg choice='opt'>-r<replaceable>#</replaceable></arg>
+    <arg choice='opt'>-p -b -L -H</arg>
     <arg choice='opt'><arg choice='plain' rep='repeat'><replaceable>val1 </replaceable></arg><arg choice='plain'><replaceable>valN</replaceable></arg></arg>
 </cmdsynopsis>
 </refsynopsisdiv>
