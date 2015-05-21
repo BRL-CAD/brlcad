@@ -41,6 +41,16 @@ static const char Usage[] = "Usage: gencolor [-r#] [val1 .. valN] > output_file\
 
 int bytes_in_buf, copies_per_buf;
 int32_t count = -1;
+int32_t basemultiple = 262144; /* This is 512 squared. */
+int outputtype = 0; /* 1 for pix, 2 for bw;
+ * if this is used and resolution is not yet set,
+ * give resolution a default value of 1
+ */
+int resolution = 0; /* 1 for low-res, 2 for hi-res;
+ * if this is used and outputtype is not yet set,
+ * give outputtype a default value of 1
+ */
+int setrcount = 0; /* set to 1 if -r is detected */
 
 unsigned char buf[MAX_BYTES];
 
@@ -58,12 +68,29 @@ get_args(int argc, char **argv)
     int c;
 
     bu_optind = 1;
-    while ((c = bu_getopt(argc, argv, "r:h?")) != -1) {
+    while ((c = bu_getopt(argc, argv, "r:pbLHh?")) != -1) {
 	switch (c) {
 	    case 'r':
 		count = atoi(bu_optarg);
 		if (count > INT32_MAX)
 		    count = INT32_MAX;
+		setrcount = 1;
+		break;
+	    case 'p':
+		outputtype = 1;
+		if (resolution == 0) resolution = 1;
+		break;
+	    case 'b':
+		outputtype = 2;
+		if (resolution == 0) resolution = 1;
+		break;
+	    case 'L':
+		resolution = 1;
+		if (outputtype == 0) outputtype = 1;
+		break;
+	    case 'H':
+		resolution = 2;
+		if (outputtype == 0) outputtype = 1;
 		break;
 	    default:		/* 'h' '?' */
 		printusage(0);
@@ -107,6 +134,22 @@ main(int argc, char **argv)
 	/* assume black */
 	buf[0] = 0;
 	len = 1;
+    }
+
+/* If -r was used, ignore -p,-b,-L,-H */
+    if (!setrcount) {
+	if (outputtype == 1) {
+	    if (resolution == 1)
+		count = basemultiple*3;
+	    else
+		count = basemultiple*12;
+	} else {
+	    if (resolution == 1)
+		count = basemultiple;
+	    else
+		count = basemultiple*4;
+	}
+    	count = count/len; /* e.g., len is 3 for RGB for a pix file */
     }
 
     /*
