@@ -147,9 +147,9 @@ const option::Descriptor TopUsage[] = {
      { HELP,    0, "h", "help",     option::Arg::Optional,  "-h [format]\t --help [format]\t Print help and exit.  If a format is specified, print help specific to that format" },
      { IN_FORMAT , 0, "", "in-format", TopLevelArg::Format, "\t --in-format\t File format of input file." },
      { OUT_FORMAT , 0, "", "out-format", TopLevelArg::Format, "\t --out-format\t File format of output file." },
-     { IN_OPT , 0, "", "in-<OPTION>", TopLevelArg::Format, "\t --in-<OPTION>\t Options to be passed only to the input handler." },
-     { OUT_OPT , 0, "", "out-<OPTION>", TopLevelArg::Format, "\t --out-<OPTION>\t Options to be passed only to the output handler." },
-     { BOTH_OPT , 0, "", "OPTION", TopLevelArg::Format, "-<O>\t --<OPTION>\t Non-prefixed options are passed to both input and output." },
+     { IN_OPT , 0, "", "in-<OPTION>", TopLevelArg::Unknown, "\t --in-<OPTION>\t Options to be passed only to the input handler." },
+     { OUT_OPT , 0, "", "out-<OPTION>", TopLevelArg::Unknown, "\t --out-<OPTION>\t Options to be passed only to the output handler." },
+     { BOTH_OPT , 0, "", "OPTION", TopLevelArg::Unknown, "-<O>\t --<OPTION>\t Non-prefixed options are passed to both input and output." },
      { 0, 0, 0, 0, 0, 0 }
 };
 
