@@ -140,41 +140,57 @@ struct TopLevelArg: public option::Arg
 };
 
 
-enum TopOptionIndex { UNKNOWN, HELP, IN_FORMAT, OUT_FORMAT };
+enum TopOptionIndex { UNKNOWN, HELP, IN_FORMAT, OUT_FORMAT, IN_OPT, OUT_OPT, BOTH_OPT };
 
 const option::Descriptor TopUsage[] = {
      { UNKNOWN, 0, "", "",          TopLevelArg::Unknown, "USAGE: gcv [options] [fmt:]input [fmt:]output\n"},
-     { HELP,    0, "h", "help",     option::Arg::Optional,  "-h [category]\t --help [category]\t Print help and exit." },
+     { HELP,    0, "h", "help",     option::Arg::Optional,  "-h [format]\t --help [format]\t Print help and exit.  If a format is specified, print help specific to that format" },
      { IN_FORMAT , 0, "", "in-format", TopLevelArg::Format, "\t --in-format\t File format of input file." },
-     { OUT_FORMAT , 0, "", "out-format", TopLevelArg::Format, "\t --out-format\t File format of input file." },
+     { OUT_FORMAT , 0, "", "out-format", TopLevelArg::Format, "\t --out-format\t File format of output file." },
+     { IN_OPT , 0, "", "in-<OPTION>", TopLevelArg::Format, "\t --in-<OPTION>\t Options to be passed only to the input handler." },
+     { OUT_OPT , 0, "", "out-<OPTION>", TopLevelArg::Format, "\t --out-<OPTION>\t Options to be passed only to the output handler." },
+     { BOTH_OPT , 0, "", "OPTION", TopLevelArg::Format, "-<O>\t --<OPTION>\t Non-prefixed options are passed to both input and output." },
      { 0, 0, 0, 0, 0, 0 }
 };
 
 
 HIDDEN void
-reassemble_argstr(struct bu_vls *ustr, option::Option *unknowns)
+reassemble_argstr(struct bu_vls *instr, struct bu_vls *outstr, option::Option *unknowns)
 {
     for (option::Option* opt = unknowns; opt; opt = opt->next()) {
+	int input_only = 0;
+	int output_only = 0;
 	char *inputcpy = NULL;
+	if (!instr || !outstr) return;
 	inputcpy = bu_strdup(opt->name);
+	if (!bu_strncmp(inputcpy, "--in-", 5)) input_only = 1;
+	if (!bu_strncmp(inputcpy, "--out-", 5)) output_only = 1;
 	char *equal_pos = strchr(inputcpy, '=');
 	if (equal_pos) {
-	    if (ustr) {
-		struct bu_vls vopt = BU_VLS_INIT_ZERO;
-		struct bu_vls varg = BU_VLS_INIT_ZERO;
-		bu_vls_sprintf(&vopt, "%s", inputcpy);
-		bu_vls_trunc(&vopt, -1 * strlen(equal_pos));
-		bu_vls_sprintf(&varg, "%s", inputcpy);
-		bu_vls_nibble(&varg, strlen(inputcpy) - strlen(equal_pos) + 1);
-		(bu_vls_strlen(&vopt) == 1) ? bu_vls_printf(ustr, "-%s ", bu_vls_addr(&vopt)) : bu_vls_printf(ustr, "%s ", bu_vls_addr(&vopt));
-		if (bu_vls_strlen(&varg)) bu_vls_printf(ustr, "%s ", bu_vls_addr(&varg));
-		bu_vls_free(&vopt);
-		bu_vls_free(&varg);
+	    struct bu_vls vopt = BU_VLS_INIT_ZERO;
+	    struct bu_vls varg = BU_VLS_INIT_ZERO;
+	    bu_vls_sprintf(&vopt, "%s", inputcpy);
+	    bu_vls_trunc(&vopt, -1 * strlen(equal_pos));
+	    bu_vls_sprintf(&varg, "%s", inputcpy);
+	    bu_vls_nibble(&varg, strlen(inputcpy) - strlen(equal_pos) + 1);
+	    if (!output_only) {
+		(bu_vls_strlen(&vopt) == 1) ? bu_vls_printf(instr, "-%s ", bu_vls_addr(&vopt)) : bu_vls_printf(instr, "%s ", bu_vls_addr(&vopt));
+		if (bu_vls_strlen(&varg)) bu_vls_printf(instr, "%s ", bu_vls_addr(&varg));
 	    }
+	    if (!input_only) {
+		(bu_vls_strlen(&vopt) == 1) ? bu_vls_printf(outstr, "-%s ", bu_vls_addr(&vopt)) : bu_vls_printf(outstr, "%s ", bu_vls_addr(&vopt));
+		if (bu_vls_strlen(&varg)) bu_vls_printf(outstr, "%s ", bu_vls_addr(&varg));
+	    }
+	    bu_vls_free(&vopt);
+	    bu_vls_free(&varg);
 	} else {
-	    if (ustr) {
-		(strlen(opt->name) == 1) ? bu_vls_printf(ustr, "-%s ", opt->name) : bu_vls_printf(ustr, "%s ", opt->name);
-		if (opt->arg) bu_vls_printf(ustr, "%s ", opt->arg);
+	    if (!output_only) {
+		(strlen(opt->name) == 1) ? bu_vls_printf(instr, "-%s ", opt->name) : bu_vls_printf(instr, "%s ", opt->name);
+		if (opt->arg) bu_vls_printf(instr, "%s ", opt->arg);
+	    }
+	    if (!input_only) {
+		(strlen(opt->name) == 1) ? bu_vls_printf(outstr, "-%s ", opt->name) : bu_vls_printf(outstr, "%s ", opt->name);
+		if (opt->arg) bu_vls_printf(outstr, "%s ", opt->arg);
 	    }
 	}
 	bu_free(inputcpy, "input cpy");
@@ -333,18 +349,36 @@ main(int ac, char **av)
     struct bu_vls out_format = BU_VLS_INIT_ZERO;
     struct bu_vls out_path = BU_VLS_INIT_ZERO;
     struct bu_vls log = BU_VLS_INIT_ZERO;
-    struct bu_vls extra_opts = BU_VLS_INIT_ZERO;
+    struct bu_vls input_opts = BU_VLS_INIT_ZERO;
+    struct bu_vls output_opts = BU_VLS_INIT_ZERO;
 
     ac-=(ac>0); av+=(ac>0); // skip program name argv[0] if present
     ac_offset = (ac > 2) ? 2 : 0;  // The last two argv entries must always be the input and output paths
+
     /* Handle anything else as options */
     option::Stats stats(TopUsage, ac - ac_offset, av);
     option::Option *options = (option::Option *)bu_calloc(stats.options_max, sizeof(option::Option), "options");
     option::Option *buffer= (option::Option *)bu_calloc(stats.buffer_max, sizeof(option::Option), "options");
     option::Parser parse(TopUsage, ac - ac_offset, av, options, buffer);
 
+    /* Now that we've parsed them, start using them */
     if (options[HELP] || ac == 0) {
 	option::printUsage(std::cout, TopUsage);
+	// TODO - figure out how to get this info from each plugin to construct this table
+	// on the fly...
+	bu_log("\nSupported formats:\n");
+	bu_log(" ------------------------------------------------------------\n");
+	bu_log(" | Extension  |          File Format      |  Input | Output |\n");
+	bu_log(" |----------------------------------------------------------|\n");
+	bu_log(" |    stl     |   STereoLithography       |   Yes  |   Yes  |\n");
+	bu_log(" |------------|---------------------------|--------|--------|\n");
+	bu_log(" |    obj     |   Wavefront Object        |   Yes  |   Yes  |\n");
+	bu_log(" |------------|---------------------------|--------|--------|\n");
+	bu_log(" |    step    |   STEP (AP203)            |   Yes  |   Yes  |\n");
+	bu_log(" |------------|---------------------------|--------|--------|\n");
+	bu_log(" |    iges    |   Initial Graphics        |   Yes  |   No   |\n");
+	bu_log(" |            |   Exchange Specification  |        |        |\n");
+	bu_log(" |----------------------------------------------------------|\n");
 	goto cleanup;
     }
 
@@ -353,12 +387,13 @@ main(int ac, char **av)
      * top level options and the path inputs to determine what the file
      * types in question are.  Steps:
      *
-     * 1.  Reassemble the unknown args into a string. */
-    reassemble_argstr(&extra_opts, options[UNKNOWN]);
-    if (bu_vls_strlen(&extra_opts) > 0) bu_log("Unknown options: %s\n", bu_vls_addr(&extra_opts));
+     * 1.  Reassemble the unknown args into strings. */
+    reassemble_argstr(&input_opts, &output_opts, options[UNKNOWN]);
+    if (bu_vls_strlen(&input_opts) > 0) bu_log("Unknown options (input): %s\n", bu_vls_addr(&input_opts));
+    if (bu_vls_strlen(&output_opts) > 0) bu_log("Unknown options (output): %s\n", bu_vls_addr(&output_opts));
     /*
-     * 2.  Use bu_argv_from_string to create a new
-     * array to be fed to the format specific option parsers.*/
+     * 2.  Use bu_argv_from_string to create new
+     * arrays to be fed to the format specific option parsers.*/
 
     /* TODO - determine whether we want to have a specific option prefix,
      * such as in- and out-, to identify an option as specific to the
@@ -434,20 +469,20 @@ main(int ac, char **av)
 
     switch (in_type) {
 	case MIME_MODEL_VND_FASTGEN:
-	    fast4_arg_process(bu_vls_addr(&extra_opts));
+	    fast4_arg_process(bu_vls_addr(&input_opts));
 	    break;
 	case MIME_MODEL_STL:
-	    stl_arg_process(bu_vls_addr(&extra_opts));
+	    stl_arg_process(bu_vls_addr(&input_opts));
 	default:
 	    break;
     }
 
     switch (out_type) {
 	case MIME_MODEL_VND_FASTGEN:
-	    fast4_arg_process(bu_vls_addr(&extra_opts));
+	    fast4_arg_process(bu_vls_addr(&output_opts));
 	    break;
 	case MIME_MODEL_STL:
-	    stl_arg_process(bu_vls_addr(&extra_opts));
+	    stl_arg_process(bu_vls_addr(&output_opts));
 	default:
 	    break;
     }
@@ -466,7 +501,8 @@ cleanup:
     bu_vls_free(&out_format);
     bu_vls_free(&out_path);
     bu_vls_free(&log);
-    bu_vls_free(&extra_opts);
+    bu_vls_free(&input_opts);
+    bu_vls_free(&output_opts);
 
     return ret;
 }
