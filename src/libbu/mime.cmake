@@ -248,7 +248,15 @@ set(c_contents "${c_contents}\n${mcstr}")
 file(WRITE ${mime_h_file_tmp} "${h_contents}")
 file(WRITE ${mime_c_file_tmp} "${c_contents}")
 
-execute_process(COMMAND ${CMAKE_COMMAND} -E copy_if_different ${mime_h_file_tmp} ${MIME_H_FILE})
+# The header is checked in to the source tree, so to allow for
+# a "read-only" source tree we make an out of sync mime.h file
+# a configure failure that needs to be corrected.
+execute_process(COMMAND ${CMAKE_COMMAND} -E compare_files ${mime_h_file_tmp} ${MIME_H_FILE} RESULT_VARIABLE header_diff)
+if(header_diff)
+  message(FATAL_ERROR "${MIME_H_FILE} is out of date - please update with ${mime_h_file_tmp}")
+endif(header_diff)
+
+# The C file we generate in the build directory
 execute_process(COMMAND ${CMAKE_COMMAND} -E copy_if_different ${mime_c_file_tmp} ${MIME_C_FILE})
 
 execute_process(COMMAND ${CMAKE_COMMAND} -E remove ${mime_h_file_tmp})
