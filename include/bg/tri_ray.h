@@ -34,8 +34,8 @@
  *
  */
 
-#ifndef GM_TRI_RAY_H
-#define GM_TRI_RAY_H
+#ifndef BG_TRI_RAY_H
+#define BG_TRI_RAY_H
 
 #include "common.h"
 #include "vmath.h"
@@ -43,7 +43,7 @@
 
 __BEGIN_DECLS
 
-GM_EXPORT extern int bg_isect_tri_ray(const point_t orig,
+BG_EXPORT extern int bg_isect_tri_ray(const point_t orig,
 				      const point_t dir,
 				      const point_t vert0,
 				      const point_t vert1,
@@ -53,7 +53,7 @@ GM_EXPORT extern int bg_isect_tri_ray(const point_t orig,
 
 __END_DECLS
 
-#endif  /* GM_TRI_RAY_H */
+#endif  /* BG_TRI_RAY_H */
 /** @} */
 /*
  * Local Variables:
