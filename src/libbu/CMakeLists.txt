@@ -20,7 +20,7 @@ execute_process(COMMAND ${CMAKE_COMMAND} -E remove ${CMAKE_CURRENT_BINARY_DIR}/t
 
 # Set locations for final mime C and header files
 set(MIME_C_FILE ${CMAKE_CURRENT_BINARY_DIR}/mime.c)
-set(MIME_H_FILE ${BRLCAD_BINARY_DIR}/${INCLUDE_DIR}/bu/mime.h)
+set(MIME_H_FILE ${BRLCAD_SOURCE_DIR}/include/bu/mime.h)
 
 # Run the generation process
 include(${CMAKE_CURRENT_SOURCE_DIR}/mime.cmake)
@@ -125,8 +125,6 @@ endif(CPP_DLL_DEFINES)
 
 BRLCAD_ADDDATA(fix.6r vfont)
 BRLCAD_ADDDATA(nonie.r.12 vfont)
-
-install(FILES ${MIME_H_FILE} DESTINATION ${INCLUDE_DIR}/brlcad/bu)
 
 add_subdirectory(tests)
 add_subdirectory(y2038)
