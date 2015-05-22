@@ -108,6 +108,7 @@ int
 main(int argc, char **argv)
 {
     int i, len, times, bytes_in_buf, copies_per_buf;
+    int remainder = 0;
     int32_t basemultiple = 262144; /* This is 512 squared. */
     unsigned char *bp;
 
@@ -136,10 +137,7 @@ main(int argc, char **argv)
     }
 
 /* If -r was used, ignore -p,-b,-L,-H */
-    if (setrcount) {
-    	if (count > 0 && count < len) len = count;
-    }
-    else {
+    if (!setrcount) {
 	if (outputtype == 1) {
 	    if (resolution == 1)
 		count = basemultiple*3;
@@ -151,8 +149,11 @@ main(int argc, char **argv)
 	    else
 		count = basemultiple*4;
 	}
-    	count = count/len; /* e.g., len is 3 for RGB for a pix file */
+	remainder = count % len;
+	count = count/len; /* e.g., len is 3 for RGB for a pix file */
     }
+
+finishup:
 
     /*
      * Replicate the pattern as many times as it will fit
@@ -186,6 +187,13 @@ main(int argc, char **argv)
 	    return 1;
 	}
 	count -= times;
+    }
+
+    if (remainder > 0) {
+	count = 1;
+	len = remainder;
+	remainder = 0;
+	goto finishup;
     }
 
     return 0;
