@@ -39,7 +39,6 @@
 
 static const char Usage[] = "Usage: gencolor [-r#] [val1 .. valN] > output_file\n";
 
-int bytes_in_buf, copies_per_buf;
 int32_t count = -1;
 int outputtype = 0; /* 1 for pix, 2 for bw;
  * if this is used and resolution is not yet set,
@@ -108,7 +107,7 @@ get_args(int argc, char **argv)
 int
 main(int argc, char **argv)
 {
-    int i, len, times;
+    int i, len, times, bytes_in_buf, copies_per_buf;
     int32_t basemultiple = 262144; /* This is 512 squared. */
     unsigned char *bp;
 
