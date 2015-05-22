@@ -137,7 +137,10 @@ main(int argc, char **argv)
     }
 
 /* If -r was used, ignore -p,-b,-L,-H */
-    if (!setrcount) {
+    if (setrcount) {
+    	if (count > 0 && count < len) len = count;
+    }
+    else {
 	if (outputtype == 1) {
 	    if (resolution == 1)
 		count = basemultiple*3;
@@ -166,7 +169,7 @@ main(int argc, char **argv)
 	bytes_in_buf += len;
     }
 
-    if (count < 0) {
+    if (count <= 0) {
 	/* output forever */
 	while (1) {
 	    if (write(1, (char *)buf, bytes_in_buf) != bytes_in_buf) {
