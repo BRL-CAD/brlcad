@@ -34,6 +34,7 @@
 
 #include "bu/defines.h"
 #include "bu/magic.h"
+#include "bu/mime.h"
 #include "bu/vls.h"
 
 __BEGIN_DECLS
