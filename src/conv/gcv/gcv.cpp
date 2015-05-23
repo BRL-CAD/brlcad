@@ -121,6 +121,14 @@ struct TopLevelArg: public option::Arg
 	if (option.arg[0] == '-') return option::ARG_IGNORE;
 	return option::ARG_OK;
     }
+     /* Help may or may not get a format argument */
+    static option::ArgStatus Help(const option::Option& option, bool UNUSED(msg))
+    {
+	if (!option.arg) return option::ARG_NONE;
+	if (option.arg[0] == '-') return option::ARG_IGNORE;
+	return option::ARG_OK;
+    }
+
     /* Format specifiers, on the other hand, must be validated - that
      * means that the options used at the top level for format specification
      * will not be usable at any lower level */
@@ -144,7 +152,7 @@ enum TopOptionIndex { UNKNOWN, HELP, IN_FORMAT, OUT_FORMAT, IN_OPT, OUT_OPT, BOT
 
 const option::Descriptor TopUsage[] = {
      { UNKNOWN, 0, "", "",          TopLevelArg::Unknown, "USAGE: gcv [options] [fmt:]input [fmt:]output\n"},
-     { HELP,    0, "h", "help",     option::Arg::Optional,  "-h [format]\t --help [format]\t Print help and exit.  If a format is specified, print help specific to that format" },
+     { HELP,    0, "h", "help",     TopLevelArg::Help,  "-h\t --help [format]\t Print help and exit.  If a format is specified to --help, print help specific to that format" },
      { IN_FORMAT , 0, "", "in-format", TopLevelArg::Format, "\t --in-format\t File format of input file." },
      { OUT_FORMAT , 0, "", "out-format", TopLevelArg::Format, "\t --out-format\t File format of output file." },
      { IN_OPT , 0, "", "in-<OPTION>", TopLevelArg::Unknown, "\t --in-<OPTION>\t Options to be passed only to the input handler." },
@@ -363,22 +371,37 @@ main(int ac, char **av)
 
     /* Now that we've parsed them, start using them */
     if (options[HELP] || ac == 0) {
-	option::printUsage(std::cout, TopUsage);
-	// TODO - figure out how to get this info from each plugin to construct this table
-	// on the fly...
-	bu_log("\nSupported formats:\n");
-	bu_log(" ------------------------------------------------------------\n");
-	bu_log(" | Extension  |          File Format      |  Input | Output |\n");
-	bu_log(" |----------------------------------------------------------|\n");
-	bu_log(" |    stl     |   STereoLithography       |   Yes  |   Yes  |\n");
-	bu_log(" |------------|---------------------------|--------|--------|\n");
-	bu_log(" |    obj     |   Wavefront Object        |   Yes  |   Yes  |\n");
-	bu_log(" |------------|---------------------------|--------|--------|\n");
-	bu_log(" |    step    |   STEP (AP203)            |   Yes  |   Yes  |\n");
-	bu_log(" |------------|---------------------------|--------|--------|\n");
-	bu_log(" |    iges    |   Initial Graphics        |   Yes  |   No   |\n");
-	bu_log(" |            |   Exchange Specification  |        |        |\n");
-	bu_log(" |----------------------------------------------------------|\n");
+	if (options[HELP].arg) {
+	    int help_type_int = bu_file_mime(options[HELP].arg, MIME_MODEL);
+	    switch (help_type_int) {
+		case MIME_MODEL_VND_FASTGEN:
+		    option::printUsage(std::cout, Fast4Usage);
+		    break;
+		case MIME_MODEL_STL:
+		    option::printUsage(std::cout, STLUsage);
+		    break;
+		default:
+		    option::printUsage(std::cout, TopUsage);
+		    break;
+	    }
+	} else {
+	    option::printUsage(std::cout, TopUsage);
+	    // TODO - figure out how to get this info from each plugin to construct this table
+	    // on the fly...
+	    bu_log("\nSupported formats:\n");
+	    bu_log(" ------------------------------------------------------------\n");
+	    bu_log(" | Extension  |          File Format      |  Input | Output |\n");
+	    bu_log(" |----------------------------------------------------------|\n");
+	    bu_log(" |    stl     |   STereoLithography       |   Yes  |   Yes  |\n");
+	    bu_log(" |------------|---------------------------|--------|--------|\n");
+	    bu_log(" |    obj     |   Wavefront Object        |   Yes  |   Yes  |\n");
+	    bu_log(" |------------|---------------------------|--------|--------|\n");
+	    bu_log(" |    step    |   STEP (AP203)            |   Yes  |   Yes  |\n");
+	    bu_log(" |------------|---------------------------|--------|--------|\n");
+	    bu_log(" |    iges    |   Initial Graphics        |   Yes  |   No   |\n");
+	    bu_log(" |            |   Exchange Specification  |        |        |\n");
+	    bu_log(" |----------------------------------------------------------|\n");
+	}
 	goto cleanup;
     }
 
