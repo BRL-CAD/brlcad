@@ -37,17 +37,16 @@
 
 #define MAX_BYTES (128*1024)
 
-static const char Usage[] = "Usage: gencolor [-r#] [val1 .. valN] > output_file\n";
+static const char Usage[] =
+"Usage: gencolor [-r#] [-p -b -L -H]\n\
+                [-s|S squaresize] [-w|W width] [-n|N height]\n\
+                [val1 .. valN] > output_file\n";
 
 int32_t count = -1;
-int outputtype = 0; /* 1 for pix, 2 for bw;
- * if this is used and resolution is not yet set,
- * give resolution a default value of 1
- */
-int resolution = 0; /* 1 for low-res, 2 for hi-res;
- * if this is used and outputtype is not yet set,
- * give outputtype a default value of 1
- */
+int outputtype = 1; /* 1 for pix, 2 for bw */
+int width = 512;
+int height = 512;
+int typeselected = 0 ; /* set to 1 if any option other than -r appears */
 int setrcount = 0; /* set to 1 if -r is detected */
 
 unsigned char buf[MAX_BYTES];
@@ -56,8 +55,9 @@ void
 printusage(int i)
 {
     bu_log("%s\n", Usage);
-    bu_log("  (Must redirect output; cannot send to tty)\n");
+    bu_log("       (Must redirect output; cannot send to tty)\n");
     if (i != 3) bu_exit(i, NULL);
+    fprintf(stderr, "       Program continues running:\n");
 }
 
 void
@@ -66,7 +66,7 @@ get_args(int argc, char **argv)
     int c;
 
     bu_optind = 1;
-    while ((c = bu_getopt(argc, argv, "r:pbLHh?")) != -1) {
+    while ((c = bu_getopt(argc, argv, "r:pbLHs:S:n:N:w:W:h?")) != -1) {
 	switch (c) {
 	    case 'r':
 		count = atoi(bu_optarg);
@@ -76,30 +76,42 @@ get_args(int argc, char **argv)
 		break;
 	    case 'p':
 		outputtype = 1;
-		if (resolution == 0) resolution = 1;
+		typeselected = 1;
 		break;
 	    case 'b':
 		outputtype = 2;
-		if (resolution == 0) resolution = 1;
+		typeselected = 1;
 		break;
 	    case 'L':
-		resolution = 1;
-		if (outputtype == 0) outputtype = 1;
+		height = width = 512;
+		typeselected = 1;
 		break;
 	    case 'H':
-		resolution = 2;
-		if (outputtype == 0) outputtype = 1;
+		height = width = 1024;
+		typeselected = 1;
+		break;
+	    case 's':
+	    case 'S':
+		height = width = atoi(bu_optarg);
+		typeselected = 1;
+		break;
+	    case 'n':
+	    case 'N':
+		height = atoi(bu_optarg);
+		typeselected = 1;
+		break;
+	    case 'w':
+	    case 'W':
+		width = atoi(bu_optarg);
+		typeselected = 1;
 		break;
 	    default:		/* 'h' '?' */
 		printusage(0);
 	}
     }
 
-    if( isatty(fileno(stdout))) printusage(1);
-    if (argc == 1 ){
-    	printusage(3);
-	fprintf(stderr, "       Program continues running:\n");
-    }
+    if (isatty(fileno(stdout))) printusage(1);
+    if (argc == 1 ) printusage(3);
 
     return;
 }
@@ -109,7 +121,6 @@ main(int argc, char **argv)
 {
     int i, len, times, bytes_in_buf, copies_per_buf;
     int remainder = 0;
-    int32_t basemultiple = 262144; /* This is 512 squared. */
     unsigned char *bp;
 
     get_args(argc, argv);
@@ -136,22 +147,13 @@ main(int argc, char **argv)
 	len = 1;
     }
 
-/* If -r was used, ignore -p,-b,-L,-H in favor of what -r provided; if -r was
- * not used AND outputtype was not set, we have no arguments (other than the
- * color values), and we'd go to the infinite loop which IS documented. 
+/* If -r was used, ignore all other "-" options in favor of what -r provided;
+ * if there were no "-" options at all, we have no arguments (other than the
+ * color values), and we go to the infinite loop which IS documented. 
  */
-    if (!setrcount && outputtype != 0) {
-	if (outputtype == 1) {
-	    if (resolution == 1)
-		count = basemultiple*3;
-	    else
-		count = basemultiple*12;
-	} else {
-	    if (resolution == 1)
-		count = basemultiple;
-	    else
-		count = basemultiple*4;
-	}
+    if (!setrcount && typeselected) {
+	count = width * height;
+	if ( outputtype == 1 ) count = count * 3;
 	remainder = count % len;
 	count = count/len; /* e.g., len is 3 for RGB for a pix file */
     }
