@@ -136,8 +136,11 @@ main(int argc, char **argv)
 	len = 1;
     }
 
-/* If -r was used, ignore -p,-b,-L,-H */
-    if (!setrcount) {
+/* If -r was used, ignore -p,-b,-L,-H in favor of what -r provided; if -r was
+ * not used AND outputtype was not set, we have no arguments (other than the
+ * color values), and we'd go to the infinite loop which IS documented. 
+ */
+    if (!setrcount && outputtype != 0) {
 	if (outputtype == 1) {
 	    if (resolution == 1)
 		count = basemultiple*3;
