@@ -28,10 +28,10 @@
 
 #include "vmath.h"
 #include "bu/log.h"
+#include "bu/ptbl.h"
 #include "raytrace.h"
 
 struct diff_seg {
-    struct bu_list l;
     point_t in_pt;
     point_t out_pt;
 };
@@ -45,17 +45,17 @@ struct raydiff_container {
     int have_diffs;
     const char *left_name;
     const char *right_name;
-    struct diff_seg *left;
-    struct diff_seg *both;
-    struct diff_seg *right;
+    struct bu_ptbl *left;
+    struct bu_ptbl *both;
+    struct bu_ptbl *right;
 };
 
-#define RDIFF_ADD_DSEG(_list, p1, p2) {\
+#define RDIFF_ADD_DSEG(_ptbl, p1, p2) {\
     struct diff_seg *dseg; \
     BU_GET(dseg, struct diff_seg); \
     VMOVE(dseg->in_pt, p1); \
     VMOVE(dseg->out_pt, p2); \
-    BU_LIST_APPEND(&(_list->l), &(dseg->l)); \
+    bu_ptbl_ins(_ptbl, (long *)dseg); \
 }
 
 
@@ -199,7 +199,7 @@ int
 analyze_raydiff(/* TODO - decide what to return.  Probably some sort of left, common, right segment sets.  See what rtcheck does... */
 	struct db_i *dbip, const char *obj1, const char *obj2, struct bn_tol *tol)
 {
-    int i;
+    int i,j;
     struct rt_i *rtip;
     int ncpus = bu_avail_cpus();
     /*int j, dir1;
@@ -223,46 +223,53 @@ analyze_raydiff(/* TODO - decide what to return.  Probably some sort of left, co
 	state[i].right_name = bu_strdup(obj2);
 	BU_GET(state[i].resp, struct resource);
 	rt_init_resource(state[i].resp, i, state->rtip);
-	BU_GET(state[i].left, struct diff_seg);
-	BU_LIST_INIT(&state[i].left->l);
-	BU_GET(state[i].both, struct diff_seg);
-	BU_LIST_INIT(&state[i].both->l);
-	BU_GET(state[i].right, struct diff_seg);
-	BU_LIST_INIT(&state[i].right->l);
+	BU_GET(state[i].left, struct bu_ptbl);
+	bu_ptbl_init(state[i].left, 64, "left solid hits");
+	BU_GET(state[i].both, struct bu_ptbl);
+	bu_ptbl_init(state[i].both, 64, "hits on both solids");
+	BU_GET(state[i].right, struct bu_ptbl);
+	bu_ptbl_init(state[i].right, 64, "right solid hits");
     }
     bu_parallel(raydiff_gen_worker, ncpus, (void *)state);
 
+    /* Collect and print all of the results */
     for (i = 0; i < ncpus+1; i++) {
-	struct diff_seg *dseg;
-	for (BU_LIST_FOR(dseg, diff_seg, &(state[i].left->l))) {
+	for (j = 0; j < (int)BU_PTBL_LEN(state[i].left); j++) {
+	    struct diff_seg *dseg = (struct diff_seg *)BU_PTBL_GET(state[i].left, j);
 	    bu_log("Result: LEFT diff vol (%s): %g %g %g -> %g %g %g\n", obj1, V3ARGS(dseg->in_pt), V3ARGS(dseg->out_pt));
-	}
-	for (BU_LIST_FOR(dseg, diff_seg, &(state[i].both->l))) {
+	}	
+	for (j = 0; j < (int)BU_PTBL_LEN(state[i].both); j++) {
+	    struct diff_seg *dseg = (struct diff_seg *)BU_PTBL_GET(state[i].both, j);
 	    bu_log("Result: BOTH): %g %g %g -> %g %g %g\n", V3ARGS(dseg->in_pt), V3ARGS(dseg->out_pt));
 	}
-	for (BU_LIST_FOR(dseg, diff_seg, &(state[i].right->l))) {
+	for (j = 0; j < (int)BU_PTBL_LEN(state[i].right); j++) {
+	    struct diff_seg *dseg = (struct diff_seg *)BU_PTBL_GET(state[i].right, j);
 	    bu_log("Result: RIGHT diff vol (%s): %g %g %g -> %g %g %g\n", obj2, V3ARGS(dseg->in_pt), V3ARGS(dseg->out_pt));
 	}
     }
 
+    /* Free results */
     for (i = 0; i < ncpus+1; i++) {
-	struct diff_seg *dseg;
-	while (BU_LIST_WHILE(dseg, diff_seg, &(state[i].left->l))) {
-	    BU_LIST_DEQUEUE(&(dseg->l));
+	for (j = 0; j < (int)BU_PTBL_LEN(state[i].left); j++) {
+	    struct diff_seg *dseg = (struct diff_seg *)BU_PTBL_GET(state[i].left, j);
 	    BU_PUT(dseg, struct diff_seg);
-	}
-	while (BU_LIST_WHILE(dseg, diff_seg, &(state[i].both->l))) {
-	    BU_LIST_DEQUEUE(&(dseg->l));
-	    BU_PUT(dseg, struct diff_seg);
-	}
-	while (BU_LIST_WHILE(dseg, diff_seg, &(state[i].right->l))) {
-	    BU_LIST_DEQUEUE(&(dseg->l));
-	    BU_PUT(dseg, struct diff_seg);
-	}
-	BU_PUT(state[i].resp, struct resource);
+	}	
+	bu_ptbl_free(state[i].left);
 	BU_PUT(state[i].left, struct diff_seg);
+	for (j = 0; j < (int)BU_PTBL_LEN(state[i].both); j++) {
+	    struct diff_seg *dseg = (struct diff_seg *)BU_PTBL_GET(state[i].both, j);
+	    BU_PUT(dseg, struct diff_seg);
+	}
+	bu_ptbl_free(state[i].both);
 	BU_PUT(state[i].both, struct diff_seg);
+	for (j = 0; j < (int)BU_PTBL_LEN(state[i].right); j++) {
+	    struct diff_seg *dseg = (struct diff_seg *)BU_PTBL_GET(state[i].right, j);
+	    BU_PUT(dseg, struct diff_seg);
+	}
+	bu_ptbl_free(state[i].right);
 	BU_PUT(state[i].right, struct diff_seg);
+
+	BU_PUT(state[i].resp, struct resource);
     }
     bu_free(state, "free state containers");
 
