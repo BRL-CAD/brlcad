@@ -1350,6 +1350,11 @@ private:
  */
 struct Parser::Action
 {
+  virtual ~Action()
+  {
+  }
+
+
   /**
    * @brief Called by Parser::workhorse() for each Option that has been successfully
    * parsed (including unknown
@@ -1687,6 +1692,11 @@ struct PrintUsageImplementation
    */
   struct IStringWriter
   {
+    virtual ~IStringWriter()
+    {
+    }
+
+
     /**
      * @brief Writes the given number of chars beginning at the given pointer somewhere.
      */
