@@ -39,27 +39,45 @@ struct raydiff_container {
 };
 
 int
-hit(struct application *UNUSED(ap), struct partition *UNUSED(PartHeadp), struct seg *UNUSED(segs))
+hit(struct application *ap, struct partition *PartHeadp, struct seg *UNUSED(segs))
 {
-    bu_log("hit\n");
-    /*
-    rt_pr_seg(const struct seg *segp);
-    */
-    /*rt_pr_partitions(const struct rt_i *rtip, const struct partition *phead, const char *title);*/
+    point_t in_pt, out_pt;
+    struct partition *part;
+    fastf_t part_len = 0.0;
+    struct raydiff_container *state = (struct raydiff_container *)ap->a_uptr;
+    /*rt_pr_seg(segs);*/
+    /*rt_pr_partitions(ap->a_rt_i, PartHeadp, "hits");*/
 
-    /* Does a partition list have all partitions along the ray?  I.e., can we handle both hit
-     * and overlap partitions from here? */
+    for (part = PartHeadp->pt_forw; part != PartHeadp; part = part->pt_forw) {
+	VJOIN1(in_pt, ap->a_ray.r_pt, part->pt_inhit->hit_dist, ap->a_ray.r_dir);
+	VJOIN1(out_pt, ap->a_ray.r_pt, part->pt_outhit->hit_dist, ap->a_ray.r_dir);
+	part_len = DIST_PT_PT(in_pt, out_pt);
+	if (part_len > state->tol)
+	    bu_log("HIT (%s) (len: %f): %g %g %g -> %g %g %g\n", part->pt_regionp->reg_name, part_len, V3ARGS(in_pt), V3ARGS(out_pt));
+    }
+
     return 0;
 }
 
 int
-overlap(struct application *UNUSED(ap),
-	struct partition *UNUSED(pp),
-	struct region *UNUSED(reg1),
-	struct region *UNUSED(reg2),
+overlap(struct application *ap,
+	struct partition *pp,
+	struct region *reg1,
+	struct region *reg2,
 	struct partition *UNUSED(hp))
 {
-    bu_log("overlap\n");
+    point_t in_pt, out_pt;
+    fastf_t overlap_len = 0.0;
+    struct raydiff_container *state = (struct raydiff_container *)ap->a_uptr;
+
+    VJOIN1(in_pt, ap->a_ray.r_pt, pp->pt_inhit->hit_dist, ap->a_ray.r_dir);
+    VJOIN1(out_pt, ap->a_ray.r_pt, pp->pt_outhit->hit_dist, ap->a_ray.r_dir);
+
+    overlap_len = DIST_PT_PT(in_pt, out_pt);
+
+    if (overlap_len > state->tol)
+	bu_log("OVERLAP (%s and %s) (len: %f): %g %g %g -> %g %g %g\n", reg1->reg_name, reg2->reg_name, overlap_len, V3ARGS(in_pt), V3ARGS(out_pt));
+
     return 0;
 }
 
@@ -93,7 +111,7 @@ raydiff_gen_worker(int cpu, void *ptr)
     ap.a_onehit = 0;
     ap.a_logoverlap = rt_silent_logoverlap;
     ap.a_resource = &state->resp[cpu];
-    /*ap.a_uptr = (void *)(&state->npts[cpu]);*/
+    ap.a_uptr = (void *)ptr;
 
     /* get min and max points of bounding box */
     /*VMOVE(min, state->rtip->mdl_min);*/
@@ -153,7 +171,8 @@ analyze_raydiff(/* TODO - decide what to return.  Probably some sort of left, co
     BU_GET(state, struct raydiff_container);
 
     state->rtip = rt_new_rti(dbip);
-    state->tol = tol->dist * 0.5;
+    /*state->tol = tol->dist * 0.5;*/
+    state->tol = 100;
 
     if (rt_gettree(state->rtip, obj1) < 0) return -1;
     if (rt_gettree(state->rtip, obj2) < 0) return -1;
