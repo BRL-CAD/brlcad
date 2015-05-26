@@ -58,8 +58,9 @@ struct raydiff_container {
     BU_LIST_APPEND(&(_list->l), &(dseg->l)); \
 }
 
-int
-hit(struct application *ap, struct partition *PartHeadp, struct seg *UNUSED(segs))
+
+HIDDEN int
+raydiff_hit(struct application *ap, struct partition *PartHeadp, struct seg *UNUSED(segs))
 {
     point_t in_pt, out_pt;
     struct partition *part;
@@ -92,12 +93,13 @@ hit(struct application *ap, struct partition *PartHeadp, struct seg *UNUSED(segs
     return 0;
 }
 
-int
-overlap(struct application *ap,
-	struct partition *pp,
-	struct region *reg1,
-	struct region *reg2,
-	struct partition *UNUSED(hp))
+
+HIDDEN int
+raydiff_overlap(struct application *ap,
+		struct partition *pp,
+		struct region *reg1,
+		struct region *reg2,
+		struct partition *UNUSED(hp))
 {
     point_t in_pt, out_pt;
     fastf_t overlap_len = 0.0;
@@ -116,15 +118,17 @@ overlap(struct application *ap,
     return 0;
 }
 
-int
-miss(struct application *ap)
+
+HIDDEN int
+raydiff_miss(struct application *ap)
 {
     RT_CK_APPLICATION(ap);
 
     return 0;
 }
 
-void
+
+HIDDEN void
 raydiff_gen_worker(int cpu, void *ptr)
 {
     struct application ap;
@@ -140,9 +144,9 @@ raydiff_gen_worker(int cpu, void *ptr)
     */
     RT_APPLICATION_INIT(&ap);
     ap.a_rt_i = state->rtip;
-    ap.a_hit = hit;
-    ap.a_miss = miss;
-    ap.a_overlap = overlap;
+    ap.a_hit = raydiff_hit;
+    ap.a_miss = raydiff_miss;
+    ap.a_overlap = raydiff_overlap;
     ap.a_onehit = 0;
     ap.a_logoverlap = rt_silent_logoverlap;
     ap.a_resource = state->resp;
