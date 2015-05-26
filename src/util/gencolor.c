@@ -149,7 +149,7 @@ main(int argc, char **argv)
 
 /* If -r was used, ignore all other "-" options in favor of what -r provided;
  * if there were no "-" options at all, we have no arguments (other than the
- * color values), and we go to the infinite loop which IS documented. 
+ * color values), and we go to the infinite loop which IS documented.
  */
     if (!setrcount && typeselected) {
 	count = width * height;
