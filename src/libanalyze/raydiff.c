@@ -30,13 +30,33 @@
 #include "bu/log.h"
 #include "raytrace.h"
 
+struct diff_seg {
+    struct bu_list l;
+    point_t in_pt;
+    point_t out_pt;
+};
+
 struct raydiff_container {
     struct rt_i *rtip;
     struct resource *resp;
     int ray_dir;
     int ncpus;
     fastf_t tol;
+    int have_diffs;
+    const char *left_name;
+    const char *right_name;
+    struct diff_seg *left;
+    struct diff_seg *both;
+    struct diff_seg *right;
 };
+
+#define RDIFF_ADD_DSEG(_list, p1, p2) {\
+    struct diff_seg *dseg; \
+    BU_GET(dseg, struct diff_seg); \
+    VMOVE(dseg->in_pt, p1); \
+    VMOVE(dseg->out_pt, p2); \
+    BU_LIST_APPEND(&(_list->l), &(dseg->l)); \
+}
 
 int
 hit(struct application *ap, struct partition *PartHeadp, struct seg *UNUSED(segs))
@@ -44,7 +64,7 @@ hit(struct application *ap, struct partition *PartHeadp, struct seg *UNUSED(segs
     point_t in_pt, out_pt;
     struct partition *part;
     fastf_t part_len = 0.0;
-    struct raydiff_container *state = (struct raydiff_container *)ap->a_uptr;
+    struct raydiff_container *state = (struct raydiff_container *)(ap->a_uptr);
     /*rt_pr_seg(segs);*/
     /*rt_pr_partitions(ap->a_rt_i, PartHeadp, "hits");*/
 
@@ -52,8 +72,21 @@ hit(struct application *ap, struct partition *PartHeadp, struct seg *UNUSED(segs
 	VJOIN1(in_pt, ap->a_ray.r_pt, part->pt_inhit->hit_dist, ap->a_ray.r_dir);
 	VJOIN1(out_pt, ap->a_ray.r_pt, part->pt_outhit->hit_dist, ap->a_ray.r_dir);
 	part_len = DIST_PT_PT(in_pt, out_pt);
-	if (part_len > state->tol)
-	    bu_log("HIT (%s) (len: %f): %g %g %g -> %g %g %g\n", part->pt_regionp->reg_name, part_len, V3ARGS(in_pt), V3ARGS(out_pt));
+	if (part_len > state->tol) {
+	    state->have_diffs = 1;
+	    if (state->left && !bu_strncmp(part->pt_regionp->reg_name+1, state->left_name, strlen(state->left_name))) {
+		RDIFF_ADD_DSEG(state->left, in_pt, out_pt);
+		bu_log("LEFT diff vol (%s) (len: %f): %g %g %g -> %g %g %g\n", part->pt_regionp->reg_name, part_len, V3ARGS(in_pt), V3ARGS(out_pt));
+		continue;
+	    }
+	    if (state->right && !bu_strncmp(part->pt_regionp->reg_name+1, state->right_name, strlen(state->right_name))) {
+		RDIFF_ADD_DSEG(state->right, in_pt, out_pt);
+		bu_log("RIGHT diff vol (%s) (len: %f): %g %g %g -> %g %g %g\n", part->pt_regionp->reg_name, part_len, V3ARGS(in_pt), V3ARGS(out_pt));
+		continue;
+	    }
+	    /* If we aren't collecting segments, we already have our final answer */
+	    if (!state->left && !state->right) return 0;
+	}
     }
 
     return 0;
@@ -75,13 +108,15 @@ overlap(struct application *ap,
 
     overlap_len = DIST_PT_PT(in_pt, out_pt);
 
-    if (overlap_len > state->tol)
+    if (overlap_len > state->tol) {
+	RDIFF_ADD_DSEG(state->both, in_pt, out_pt);
 	bu_log("OVERLAP (%s and %s) (len: %f): %g %g %g -> %g %g %g\n", reg1->reg_name, reg2->reg_name, overlap_len, V3ARGS(in_pt), V3ARGS(out_pt));
+    }
 
     return 0;
 }
 
-    int
+int
 miss(struct application *ap)
 {
     RT_CK_APPLICATION(ap);
@@ -93,7 +128,7 @@ void
 raydiff_gen_worker(int cpu, void *ptr)
 {
     struct application ap;
-    struct raydiff_container *state = (struct raydiff_container *)ptr;
+    struct raydiff_container *state = &(((struct raydiff_container *)ptr)[cpu]);
     point_t max;
     /*
     point_t min;
@@ -110,8 +145,8 @@ raydiff_gen_worker(int cpu, void *ptr)
     ap.a_overlap = overlap;
     ap.a_onehit = 0;
     ap.a_logoverlap = rt_silent_logoverlap;
-    ap.a_resource = &state->resp[cpu];
-    ap.a_uptr = (void *)ptr;
+    ap.a_resource = state->resp;
+    ap.a_uptr = (void *)state;
 
     /* get min and max points of bounding box */
     /*VMOVE(min, state->rtip->mdl_min);*/
@@ -161,6 +196,7 @@ analyze_raydiff(/* TODO - decide what to return.  Probably some sort of left, co
 	struct db_i *dbip, const char *obj1, const char *obj2, struct bn_tol *tol)
 {
     int i;
+    struct rt_i *rtip;
     int ncpus = bu_avail_cpus();
     /*int j, dir1;
     point_t min, max;*/
@@ -168,25 +204,64 @@ analyze_raydiff(/* TODO - decide what to return.  Probably some sort of left, co
 
     if (!dbip || !obj1 || !obj2 || !tol) return 0;
 
-    BU_GET(state, struct raydiff_container);
-
-    state->rtip = rt_new_rti(dbip);
-    /*state->tol = tol->dist * 0.5;*/
-    state->tol = 100;
-
-    if (rt_gettree(state->rtip, obj1) < 0) return -1;
-    if (rt_gettree(state->rtip, obj2) < 0) return -1;
-
-    rt_prep_parallel(state->rtip, 1);
+    rtip = rt_new_rti(dbip);
+    if (rt_gettree(rtip, obj1) < 0) return -1;
+    if (rt_gettree(rtip, obj2) < 0) return -1;
+    rt_prep_parallel(rtip, 1);
 
     ncpus = 1;
-    state->resp = (struct resource *)bu_calloc(ncpus+1, sizeof(struct resource), "resources");
+    state = (struct raydiff_container *)bu_calloc(ncpus+1, sizeof(struct raydiff_container), "resources");
     for (i = 0; i < ncpus+1; i++) {
-	rt_init_resource(&(state->resp[i]), i, state->rtip);
+	state[i].rtip = rtip;
+	state[i].tol = 0.5;
+	state[i].ncpus = ncpus;
+	state[i].left_name = bu_strdup(obj1);
+	state[i].right_name = bu_strdup(obj2);
+	BU_GET(state[i].resp, struct resource);
+	rt_init_resource(state[i].resp, i, state->rtip);
+	BU_GET(state[i].left, struct diff_seg);
+	BU_LIST_INIT(&state[i].left->l);
+	BU_GET(state[i].both, struct diff_seg);
+	BU_LIST_INIT(&state[i].both->l);
+	BU_GET(state[i].right, struct diff_seg);
+	BU_LIST_INIT(&state[i].right->l);
+    }
+    bu_parallel(raydiff_gen_worker, ncpus, (void *)state);
+
+    for (i = 0; i < ncpus+1; i++) {
+	struct diff_seg *dseg;
+	for (BU_LIST_FOR(dseg, diff_seg, &(state[i].left->l))) {
+	    bu_log("Result: LEFT diff vol (%s): %g %g %g -> %g %g %g\n", obj1, V3ARGS(dseg->in_pt), V3ARGS(dseg->out_pt));
+	}
+	for (BU_LIST_FOR(dseg, diff_seg, &(state[i].both->l))) {
+	    bu_log("Result: BOTH): %g %g %g -> %g %g %g\n", V3ARGS(dseg->in_pt), V3ARGS(dseg->out_pt));
+	}
+	for (BU_LIST_FOR(dseg, diff_seg, &(state[i].right->l))) {
+	    bu_log("Result: RIGHT diff vol (%s): %g %g %g -> %g %g %g\n", obj2, V3ARGS(dseg->in_pt), V3ARGS(dseg->out_pt));
+	}
     }
 
-    state->ncpus = ncpus;
-    bu_parallel(raydiff_gen_worker, ncpus, (void *)state);
+    for (i = 0; i < ncpus+1; i++) {
+	struct diff_seg *dseg;
+	while (BU_LIST_WHILE(dseg, diff_seg, &(state[i].left->l))) {
+	    BU_LIST_DEQUEUE(&(dseg->l));
+	    BU_PUT(dseg, struct diff_seg);
+	}
+	while (BU_LIST_WHILE(dseg, diff_seg, &(state[i].both->l))) {
+	    BU_LIST_DEQUEUE(&(dseg->l));
+	    BU_PUT(dseg, struct diff_seg);
+	}
+	while (BU_LIST_WHILE(dseg, diff_seg, &(state[i].right->l))) {
+	    BU_LIST_DEQUEUE(&(dseg->l));
+	    BU_PUT(dseg, struct diff_seg);
+	}
+	BU_PUT(state[i].resp, struct resource);
+	BU_PUT(state[i].left, struct diff_seg);
+	BU_PUT(state[i].both, struct diff_seg);
+	BU_PUT(state[i].right, struct diff_seg);
+    }
+    bu_free(state, "free state containers");
+
     return 0;
 }
 
