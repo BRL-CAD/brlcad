@@ -76,7 +76,7 @@ private:
 
     std::size_t m_next_section_id[MAX_GROUP_ID + 1];
     bool m_record_open;
-    std::ofstream m_ostream;
+    std::ofstream m_ostream, m_colors_ostream;
 };
 
 
@@ -180,9 +180,11 @@ FastgenWriter::Record::text(const std::string &value)
 
 FastgenWriter::FastgenWriter(const std::string &path) :
     m_record_open(false),
-    m_ostream(path.c_str(), std::ofstream::out)
+    m_ostream(path.c_str(), std::ofstream::out),
+    m_colors_ostream((path + ".colors").c_str(), std::ofstream::out)
 {
     m_ostream.exceptions(std::ofstream::failbit | std::ofstream::badbit);
+    m_colors_ostream.exceptions(std::ofstream::failbit | std::ofstream::badbit);
 
     for (std::size_t i = 0; i <= MAX_GROUP_ID; ++i)
 	m_next_section_id[i] = 1;
@@ -205,7 +207,8 @@ FastgenWriter::write_comment(const std::string &value)
 class Section
 {
 public:
-    Section(FastgenWriter &writer, std::string name, bool volume_mode);
+    Section(FastgenWriter &writer, std::string name, bool volume_mode,
+	    const unsigned char *color = NULL);
 
     std::size_t add_grid_point(fastf_t x, fastf_t y, fastf_t z);
 
@@ -238,7 +241,8 @@ private:
 const fastf_t Section::INCHES_PER_MM = 1.0 / 25.4;
 
 
-Section::Section(FastgenWriter &writer, std::string name, bool volume_mode) :
+Section::Section(FastgenWriter &writer, std::string name, bool volume_mode,
+		 const unsigned char *color) :
     m_next_grid_id(1),
     m_next_element_id(1),
     m_volume_mode(volume_mode),
@@ -250,6 +254,8 @@ Section::Section(FastgenWriter &writer, std::string name, bool volume_mode) :
 	if (++group_id > FastgenWriter::MAX_GROUP_ID)
 	    throw std::range_error("group_id exceeds limit");
 
+    std::size_t &next_section_id = m_writer.m_next_section_id[group_id];
+
     if (name.size() > MAX_NAME_SIZE) {
 	m_writer.write_comment(name);
 	name = "..." + name.substr(name.size() - MAX_NAME_SIZE + 3);
@@ -257,15 +263,23 @@ Section::Section(FastgenWriter &writer, std::string name, bool volume_mode) :
 
     {
 	FastgenWriter::Record record(m_writer);
-	record << "$NAME" << group_id << m_writer.m_next_section_id[group_id];
+	record << "$NAME" << group_id << next_section_id;
 	record << "" << "" << "" << "";
 	record.text(name);
     }
 
-    FastgenWriter::Record(m_writer) << "SECTION" << group_id
-				    << m_writer.m_next_section_id[group_id] << (m_volume_mode ? 2 : 1);
+    FastgenWriter::Record(m_writer) << "SECTION" << group_id << next_section_id <<
+				    (m_volume_mode ? 2 : 1);
 
-    ++m_writer.m_next_section_id[group_id];
+    if (color) {
+	writer.m_colors_ostream << next_section_id << ' '
+				<< next_section_id << ' '
+				<< static_cast<unsigned>(color[0] + 0.5) << ' '
+				<< static_cast<unsigned>(color[1] + 0.5) << ' '
+				<< static_cast<unsigned>(color[2] + 0.5) << '\n';
+    }
+
+    ++next_section_id;
 }
 
 
@@ -406,9 +420,9 @@ Section::add_hexahedron(const std::size_t *g)
 
 HIDDEN void
 write_bot(FastgenWriter &writer, const std::string &name,
-	  const rt_bot_internal &bot)
+	  const rt_bot_internal &bot, const unsigned char *color = NULL)
 {
-    Section section(writer, name, bot.mode == RT_BOT_SOLID);
+    Section section(writer, name, bot.mode == RT_BOT_SOLID, color);
 
     for (std::size_t i = 0; i < bot.num_vertices; ++i) {
 	const fastf_t * const vertex = &bot.vertices[i * 3];
@@ -601,8 +615,7 @@ convert_primitive(ConversionData &data, const rt_db_internal &internal,
 
 HIDDEN void
 write_nmg_region(nmgregion *nmg_region, const db_full_path *path,
-		 int UNUSED(region_id), int UNUSED(material_id), float UNUSED(color[3]),
-		 void *client_data)
+		 int UNUSED(region_id), int UNUSED(material_id), float *color, void *client_data)
 {
     NMG_CK_REGION(nmg_region);
     NMG_CK_MODEL(nmg_region->m_p);
@@ -628,7 +641,11 @@ write_nmg_region(nmgregion *nmg_region, const db_full_path *path,
 	internal.idb_ptr = bot;
 
 	try {
-	    write_bot(data.m_writer, name.ptr, *bot);
+	    unsigned char char_color[3];
+	    char_color[0] = static_cast<unsigned char>(color[0] * 255);
+	    char_color[1] = static_cast<unsigned char>(color[1] * 255);
+	    char_color[2] = static_cast<unsigned char>(color[2] * 255);
+	    write_bot(data.m_writer, name.ptr, *bot, char_color);
 	} catch (const std::runtime_error &e) {
 	    bu_log("FAILURE: write_bot() failed on object '%s': %s\n", name.ptr, e.what());
 	} catch (const std::logic_error &e) {
