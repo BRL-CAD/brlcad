@@ -231,6 +231,9 @@ diff_info_dp(void *result, diff_obj_t obj_type);
 ANALYZE_EXPORT struct rt_db_internal *
 diff_info_intern(void *result, diff_obj_t obj_type);
 
+ANALYZE_EXPORT int
+analyze_raydiff(struct db_i *dbip, const char *obj1, const char *obj2, struct bn_tol *tol);
+
 
 __END_DECLS
 
