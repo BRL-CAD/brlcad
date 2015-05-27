@@ -79,19 +79,19 @@ get_args(int argc, char **argv)
 		    rweight = 0.30;
 		    gweight = 0.59;
 		    bweight = 0.11;
-		    red = green = blue = 1;
-		    color = ICV_COLOR_RGB;
 		}
 		else if (BU_STR_EQUAL(bu_optarg, "crt")) {
 		    rweight = 0.26;
 		    gweight = 0.66;
 		    bweight = 0.08;
-		    red = green = blue = 1;
-		    color = ICV_COLOR_RGB;
 		}
-		else
+		else {
+		    fprintf(stderr,"pix-bw: invalid -e argument\n");
 		    return 0;
-	    break;
+		}
+		red = green = blue = 1;
+		color = ICV_COLOR_RGB;
+		break;
 	    case 'R' :
 		red++;
 		rweight = atof(bu_optarg);
