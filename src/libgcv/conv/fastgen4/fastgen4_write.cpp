@@ -764,9 +764,9 @@ write_nmg_region(nmgregion *nmg_region, const db_full_path *path,
 
 	try {
 	    unsigned char char_color[3];
-	    char_color[0] = static_cast<unsigned char>(color[0] * 255 + 0.5);
-	    char_color[1] = static_cast<unsigned char>(color[1] * 255 + 0.5);
-	    char_color[2] = static_cast<unsigned char>(color[2] * 255 + 0.5);
+	    char_color[0] = static_cast<unsigned char>(color[0] * 255.0 + 0.5);
+	    char_color[1] = static_cast<unsigned char>(color[1] * 255.0 + 0.5);
+	    char_color[2] = static_cast<unsigned char>(color[2] * 255.0 + 0.5);
 	    write_bot(data.m_writer, name.ptr, *bot, char_color);
 	} catch (const std::runtime_error &e) {
 	    bu_log("FAILURE: write_bot() failed on object '%s': %s\n", name.ptr, e.what());
@@ -796,13 +796,10 @@ convert_leaf(db_tree_state *tree_state, const db_full_path *path,
 	return NULL;
 
     AutoFreePtr<char> name(db_path_to_string(path));
+    bool converted = false;
 
     try {
-	convert_primitive(data, *internal, name.ptr);
-	tree *result;
-	RT_GET_TREE(result, tree_state->ts_resp);
-	result->tr_op = OP_NOP;
-	return result;
+	converted = convert_primitive(data, *internal, name.ptr);
     } catch (const std::runtime_error &e) {
 	bu_log("FAILURE: convert_primitive() failed on object '%s': %s\n", name.ptr,
 	       e.what());
@@ -811,7 +808,13 @@ convert_leaf(db_tree_state *tree_state, const db_full_path *path,
 	       e.what());
     }
 
-    return nmg_booltree_leaf_tess(tree_state, path, internal, client_data);
+    if (!converted)
+	return nmg_booltree_leaf_tess(tree_state, path, internal, client_data);
+
+    tree *result;
+    RT_GET_TREE(result, tree_state->ts_resp);
+    result->tr_op = OP_NOP;
+    return result;
 }
 
 
