@@ -136,7 +136,7 @@ raydiff_gen_worker(int cpu, void *ptr)
     struct application ap;
     struct raydiff_container *state = &(((struct raydiff_container *)ptr)[cpu]);
     fastf_t si, ei;
-    int start_ind, end_ind, i; 
+    int start_ind, end_ind, i;
     if (cpu == 0) {
 	/* If we're serial, start at the beginning */
 	start_ind = 0;
