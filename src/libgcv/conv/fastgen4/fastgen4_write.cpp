@@ -696,58 +696,58 @@ convert_leaf(db_tree_state *tree_state, const db_full_path *path,
 }
 
 
+HIDDEN int
+gcv_fastgen4_write(const char *path, struct db_i *dbip,
+		   const struct gcv_opts *UNUSED(options))
+{
+    // Set to true to directly translate any primitives that can be represented by fg4.
+    // Due to limitations with the fg4 format, boolean operations can not be represented.
+    const bool convert_primitives = false;
+
+    FastgenWriter writer(path);
+    writer.write_comment(dbip->dbi_title);
+    writer.write_comment("g -> fastgen4 conversion");
+
+    const rt_tess_tol ttol = {RT_TESS_TOL_MAGIC, 0.0, 0.01, 0.0};
+    const bn_tol tol = {BN_TOL_MAGIC, BN_TOL_DIST, BN_TOL_DIST * BN_TOL_DIST, 1e-6, 1 - 1e-6};
+    ConversionData conv_data = {writer, tol};
+
+    {
+	model *vmodel;
+	db_tree_state initial_tree_state = rt_initial_tree_state;
+	initial_tree_state.ts_tol = &tol;
+	initial_tree_state.ts_ttol = &ttol;
+	initial_tree_state.ts_m = &vmodel;
+
+	db_update_nref(dbip, &rt_uniresource);
+	directory **results;
+	std::size_t num_objects = db_ls(dbip, DB_LS_TOPS, NULL, &results);
+	AutoFreePtr<char *> object_names(db_dpv_to_argv(results));
+	bu_free(results, "tops");
+
+	gcv_region_end_data region_end_data = {write_nmg_region, &conv_data};
+	vmodel = nmg_mm();
+	db_walk_tree(dbip, num_objects, const_cast<const char **>(object_names.ptr), 1,
+		     &initial_tree_state, NULL, gcv_region_end,
+		     convert_primitives ? convert_leaf : nmg_booltree_leaf_tess, &region_end_data);
+	nmg_km(vmodel);
+    }
+
+
+    return 1;
+}
+
+
+static const struct gcv_converter converters[] = {
+    {"fg4", NULL, gcv_fastgen4_write},
+    {NULL, NULL, NULL}
+};
+
+
 }
 
 
 extern "C" {
-
-
-    HIDDEN int
-    gcv_fastgen4_write(const char *path, struct db_i *dbip,
-		       const struct gcv_opts *UNUSED(options))
-    {
-	// Set to true to directly translate any primitives that can be represented by fg4.
-	// Due to limitations with the fg4 format, boolean operations can not be represented.
-	const bool convert_primitives = false;
-
-	FastgenWriter writer(path);
-	writer.write_comment(dbip->dbi_title);
-	writer.write_comment("g -> fastgen4 conversion");
-
-	const rt_tess_tol ttol = {RT_TESS_TOL_MAGIC, 0.0, 0.01, 0.0};
-	const bn_tol tol = {BN_TOL_MAGIC, BN_TOL_DIST, BN_TOL_DIST * BN_TOL_DIST, 1e-6, 1 - 1e-6};
-	ConversionData conv_data = {writer, tol};
-
-	{
-	    model *vmodel;
-	    db_tree_state initial_tree_state = rt_initial_tree_state;
-	    initial_tree_state.ts_tol = &tol;
-	    initial_tree_state.ts_ttol = &ttol;
-	    initial_tree_state.ts_m = &vmodel;
-
-	    db_update_nref(dbip, &rt_uniresource);
-	    directory **results;
-	    std::size_t num_objects = db_ls(dbip, DB_LS_TOPS, NULL, &results);
-	    AutoFreePtr<char *> object_names(db_dpv_to_argv(results));
-	    bu_free(results, "tops");
-
-	    gcv_region_end_data region_end_data = {write_nmg_region, &conv_data};
-	    vmodel = nmg_mm();
-	    db_walk_tree(dbip, num_objects, const_cast<const char **>(object_names.ptr), 1,
-			 &initial_tree_state, NULL, gcv_region_end,
-			 convert_primitives ? convert_leaf : nmg_booltree_leaf_tess, &region_end_data);
-	    nmg_km(vmodel);
-	}
-
-
-	return 1;
-    }
-
-
-    static const struct gcv_converter converters[] = {
-	{"fg4", NULL, gcv_fastgen4_write},
-	{NULL, NULL, NULL}
-    };
 
 
     struct gcv_plugin_info gcv_plugin_conv_fastgen4_write = {converters};
