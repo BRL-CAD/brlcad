@@ -28,6 +28,7 @@
 
 #include <fstream>
 #include <iomanip>
+#include <set>
 #include <sstream>
 #include <stdexcept>
 
@@ -632,7 +633,10 @@ find_ccone_cutout(db_i &db, std::string &name, fastf_t &ro1, fastf_t &ro2,
 struct ConversionData {
     FastgenWriter &m_writer;
     const bn_tol &m_tol;
-    db_i &db; // for find_ccone_cutout()
+
+    // for find_ccone_cutout()
+    db_i &db;
+    std::set<std::string> recorded_ccones;
 };
 
 
@@ -677,12 +681,18 @@ convert_primitive(ConversionData &data, const rt_db_internal &internal,
 	    if (internal.idb_type != ID_REC && !tgc_is_ccone(tgc))
 		return false;
 
-	    std::string new_name = name;
-	    fastf_t ro1 = MAGNITUDE(tgc.a), ro2 = MAGNITUDE(tgc.b), ri1 = 0.0, ri2 = 0.0;
+	    std::string new_name;
+	    fastf_t ro1, ro2, ri1, ri2;
 
 	    if (find_ccone_cutout(data.db, new_name, ro1, ro2, ri1, ri2)) {
 		// an imported CCONE with cutout
-		// TODO: record that we have written this CCONE
+		if (!data.recorded_ccones.insert(name).second)
+		    break; // already written
+	    } else {
+		new_name = name;
+		ro1 = MAGNITUDE(tgc.a);
+		ro2 = MAGNITUDE(tgc.b);
+		ri1 = ri2 = 0.0;
 	    }
 
 	    Section section(data.m_writer, new_name, true);
@@ -819,7 +829,7 @@ gcv_fastgen4_write(const char *path, struct db_i *dbip,
 
     const rt_tess_tol ttol = {RT_TESS_TOL_MAGIC, 0.0, 0.01, 0.0};
     const bn_tol tol = {BN_TOL_MAGIC, BN_TOL_DIST, BN_TOL_DIST * BN_TOL_DIST, 1e-6, 1 - 1e-6};
-    ConversionData conv_data = {writer, tol, *dbip};
+    ConversionData conv_data = {writer, tol, *dbip, std::set<std::string>()};
 
     {
 	model *vmodel;
