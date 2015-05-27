@@ -636,6 +636,7 @@ find_ccone_cutout(const std::string &name, db_i &db, std::string &new_name,
 struct ConversionData {
     FastgenWriter &m_writer;
     const bn_tol &m_tol;
+    const bool convert_primitives;
 
     // for find_ccone_cutout()
     db_i &db;
@@ -787,10 +788,7 @@ convert_leaf(db_tree_state *tree_state, const db_full_path *path,
     RT_CK_FULL_PATH(path);
     RT_CK_DB_INTERNAL(internal);
 
-    gcv_region_end_data &region_end_data = *static_cast<gcv_region_end_data *>
-					   (client_data);
-    ConversionData &data = *static_cast<ConversionData *>
-			   (region_end_data.client_data);
+    ConversionData &data = *static_cast<ConversionData *>(client_data);
 
     if (internal->idb_major_type != DB5_MAJORTYPE_BRLCAD)
 	return NULL;
@@ -799,7 +797,8 @@ convert_leaf(db_tree_state *tree_state, const db_full_path *path,
     bool converted = false;
 
     try {
-	converted = convert_primitive(data, *internal, name.ptr);
+	if (data.convert_primitives)
+	    converted = convert_primitive(data, *internal, name.ptr);
     } catch (const std::runtime_error &e) {
 	bu_log("FAILURE: convert_primitive() failed on object '%s': %s\n", name.ptr,
 	       e.what());
@@ -818,6 +817,17 @@ convert_leaf(db_tree_state *tree_state, const db_full_path *path,
 }
 
 
+HIDDEN tree *
+convert_region(db_tree_state *tree_state, const db_full_path *path,
+	       tree *current_tree, void *client_data)
+{
+    ConversionData &data = *static_cast<ConversionData *>(client_data);
+
+    gcv_region_end_data gcv_data = {write_nmg_region, &data};
+    return gcv_region_end(tree_state, path, current_tree, &gcv_data);
+}
+
+
 HIDDEN int
 gcv_fastgen4_write(const char *path, struct db_i *dbip,
 		   const struct gcv_opts *UNUSED(options))
@@ -832,7 +842,7 @@ gcv_fastgen4_write(const char *path, struct db_i *dbip,
 
     const rt_tess_tol ttol = {RT_TESS_TOL_MAGIC, 0.0, 0.01, 0.0};
     const bn_tol tol = {BN_TOL_MAGIC, BN_TOL_DIST, BN_TOL_DIST * BN_TOL_DIST, 1e-6, 1 - 1e-6};
-    ConversionData conv_data = {writer, tol, *dbip, std::set<std::string>()};
+    ConversionData conv_data = {writer, tol, convert_primitives, *dbip, std::set<std::string>()};
 
     {
 	model *vmodel;
@@ -847,11 +857,9 @@ gcv_fastgen4_write(const char *path, struct db_i *dbip,
 	AutoFreePtr<char *> object_names(db_dpv_to_argv(results));
 	bu_free(results, "tops");
 
-	gcv_region_end_data region_end_data = {write_nmg_region, &conv_data};
 	vmodel = nmg_mm();
 	db_walk_tree(dbip, num_objects, const_cast<const char **>(object_names.ptr), 1,
-		     &initial_tree_state, NULL, gcv_region_end,
-		     convert_primitives ? convert_leaf : nmg_booltree_leaf_tess, &region_end_data);
+		     &initial_tree_state, NULL, convert_region, convert_leaf, &conv_data);
 	nmg_km(vmodel);
     }
 
