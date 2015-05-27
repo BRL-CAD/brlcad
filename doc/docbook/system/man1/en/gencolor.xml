@@ -31,8 +31,8 @@
 <para><command>gencolor</command>
 repeats a pattern of up to 8192 8-bit values on its standard output.
 The values, which range from 0 to 255, are taken either from the command
-line, or in binary from its standard input (if not supplied, a single value
-of 0, for black, is assumed).  The
+line, or in binary (as pixels) from standard input; if the values are not supplied, a single value
+of 0, for black, is used.  The
 <option>-r</option>
 flag can be used to specify the number of times to repeat the given pattern,
 the default being infinity (unless any other "-" options are used -- see below).
@@ -53,6 +53,8 @@ overrules use of any other "-" options.</para>
 <refsect1 xml:id='example'><title>EXAMPLE</title>
 <para>gencolor -r512 0 255 0 &gt; foo.pix</para>
 <para>will output 512 "green" pixels (0 255 0 being used as RGB values).</para>
+<para>gencolor -r1 0 255 0 | gencolor -r512 &gt; foo.pix</para>
+<para>will do the same as above, using standard input instead of having the values on the command line.</para>
 </refsect1>
 
 <refsect1 xml:id='see_also'><title>SEE ALSO</title>
@@ -73,4 +75,3 @@ Government as represented by U.S. Army Research Laboratory.</para>
 mail to &lt;devs@brlcad.org&gt;.</para>
 </refsect1>
 </refentry>
-
