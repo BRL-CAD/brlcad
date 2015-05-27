@@ -43,11 +43,11 @@ icv_gray2rgb(icv_image_t *img)
 
     ICV_IMAGE_VAL_INT(img);
 
-    /* This is a true condition i.e the image is already RGB*/
-    if (img->color_space == ICV_COLOR_SPACE_RGB) {
+    /* If this condition is true, the image is already RGB.*/
+    if (img->color_space == ICV_COLOR_SPACE_RGB)
 	return 0;
-    }
-    else if (img->color_space != ICV_COLOR_SPACE_GRAY) {
+
+    if (img->color_space != ICV_COLOR_SPACE_GRAY) {
 	bu_log("ERROR : color_space error");
 	return -1;
     }
@@ -85,10 +85,11 @@ icv_rgb2gray(icv_image_t *img, ICV_COLOR color, double rweight, double gweight, 
 
     ICV_IMAGE_VAL_INT(img);
 
-    /* This is a true condition i.e the image is already GRAY*/
+    /* If this condition is true, the image is already GRAY.*/
     if (img->color_space == ICV_COLOR_SPACE_GRAY)
 	return 0;
-    else if (img->color_space != ICV_COLOR_SPACE_RGB) {
+
+    if (img->color_space != ICV_COLOR_SPACE_RGB) {
 	bu_log("ERROR : color_space error");
 	return -1;
     }
