@@ -559,9 +559,6 @@ find_ccone_cutout(db_i &db, std::string &name, fastf_t &ro1, fastf_t &ro2,
     AutoFreePtr<rt_db_internal, rt_db_free_internal> autofree_comb_db_internal(
 	&comb_db_internal);
 
-    if (comb_db_internal.idb_minor_type != ID_COMBINATION)
-	return false;
-
     rt_comb_internal &comb_internal = *static_cast<rt_comb_internal *>
 				      (comb_db_internal.idb_ptr);
     RT_CK_COMB(&comb_internal);
@@ -570,7 +567,7 @@ find_ccone_cutout(db_i &db, std::string &name, fastf_t &ro1, fastf_t &ro2,
     const tree::tree_node &t = comb_internal.tree->tr_b;
 
     if (t.tb_op != OP_SUBTRACT || !t.tb_left || !t.tb_right
-	|| !t.tb_left->tr_op != OP_DB_LEAF || t.tb_right->tr_op != OP_DB_LEAF)
+	|| t.tb_left->tr_op != OP_DB_LEAF || t.tb_right->tr_op != OP_DB_LEAF)
 	return false;
 
     const directory * const outer_directory = db_lookup(&db,
@@ -681,15 +678,14 @@ convert_primitive(ConversionData &data, const rt_db_internal &internal,
 	    if (internal.idb_type != ID_REC && !tgc_is_ccone(tgc))
 		return false;
 
-	    std::string new_name;
+	    std::string new_name = name;
 	    fastf_t ro1, ro2, ri1, ri2;
 
 	    if (find_ccone_cutout(data.db, new_name, ro1, ro2, ri1, ri2)) {
 		// an imported CCONE with cutout
-		if (!data.recorded_ccones.insert(name).second)
+		if (!data.recorded_ccones.insert(new_name).second)
 		    break; // already written
 	    } else {
-		new_name = name;
 		ro1 = MAGNITUDE(tgc.a);
 		ro2 = MAGNITUDE(tgc.b);
 		ri1 = ri2 = 0.0;
