@@ -17,11 +17,9 @@
 <refsynopsisdiv xml:id='synopsis'>
 <cmdsynopsis>
   <command>pix-bw</command>
-   <arg choice='opt'>
     <arg choice='opt'>-s <replaceable>squaresize</replaceable></arg>
-    <arg choice='opt'>
-     <arg choice='opt'>-w <replaceable>width</replaceable></arg>
-     <arg choice='opt'>-n <replaceable>height</replaceable></arg></arg></arg>
+    <arg choice='opt'>-w <replaceable>width</replaceable></arg>
+    <arg choice='opt'>-n <replaceable>height</replaceable></arg>
    <arg choice='opt'>
     <arg choice='opt'>-e <replaceable>ntsc|crt</replaceable></arg>
     <arg choice='opt'>
