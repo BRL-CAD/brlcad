@@ -18,7 +18,7 @@
 <cmdsynopsis>
   <command>gencolor</command>
     <arg choice='opt'>-r<replaceable>#</replaceable></arg>
-    <arg choice='opt'>-p -b -L -H</arg>
+    <arg choice='opt'>-p -b</arg>
     <arg choice="opt" rep="norepeat">-{sS} <replaceable>squaresize</replaceable></arg>
     <arg choice="opt" rep="norepeat">-{wW} <replaceable>width</replaceable></arg>
     <arg choice="opt" rep="norepeat">-{nN} <replaceable>height</replaceable></arg>
@@ -41,12 +41,11 @@ This program is useful for producing a given grey value or color. Note that
 will refuse to write its output to a window; you must redirect the output to a file.</para>
 
 <para><option>-p</option> and <option>-b</option> are used to specify <replaceable>pix</replaceable> file
-and <replaceable>bw</replaceable> file, respectively.  <option>-L</option> and <option>-H</option> are
-used to specify low resolution (squaresize 512) and high resolution (squaresize 1024), respectively.
+and <replaceable>bw</replaceable> file, respectively.
 <option>-w</option> (or <option>-W</option>) indicates the width;
 <option>-n</option> (or <option>-N</option>) indicates the height;
 width and height are set to the same value using <option>-s</option> (or <option>-S</option>).
-By default, a pix file of low resolution is assumed; however, use of <option>-r</option>
+By default, a pix file of size 512x512 is assumed; however, use of <option>-r</option>
 overrules use of any other "-" options.</para>
 </refsect1>
 

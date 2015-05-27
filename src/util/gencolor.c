@@ -66,7 +66,7 @@ get_args(int argc, char **argv)
     int c;
 
     bu_optind = 1;
-    while ((c = bu_getopt(argc, argv, "r:pbLHs:S:n:N:w:W:h?")) != -1) {
+    while ((c = bu_getopt(argc, argv, "r:pbs:S:n:N:w:W:h?")) != -1) {
 	switch (c) {
 	    case 'r':
 		count = atoi(bu_optarg);
@@ -80,14 +80,6 @@ get_args(int argc, char **argv)
 		break;
 	    case 'b':
 		outputtype = 2;
-		typeselected = 1;
-		break;
-	    case 'L':
-		height = width = 512;
-		typeselected = 1;
-		break;
-	    case 'H':
-		height = width = 1024;
 		typeselected = 1;
 		break;
 	    case 's':
