@@ -38,13 +38,20 @@ namespace
 {
 
 
-template <typename T>
+template <typename T> inline HIDDEN void
+autofreeptr_wrap_bu_free(T *ptr)
+{
+    bu_free(ptr, "AutoFreePtr");
+}
+
+
+template <typename T, void free_fn(T *) = autofreeptr_wrap_bu_free>
 struct AutoFreePtr {
     AutoFreePtr(T *vptr) : ptr(vptr) {}
 
     ~AutoFreePtr()
     {
-	if (ptr) bu_free(ptr, "AutoFreePtr");
+	if (ptr) free_fn(ptr);
     }
 
 
@@ -274,9 +281,9 @@ Section::Section(FastgenWriter &writer, std::string name, bool volume_mode,
     if (color) {
 	writer.m_colors_ostream << next_section_id << ' '
 				<< next_section_id << ' '
-				<< static_cast<unsigned>(color[0] + 0.5) << ' '
-				<< static_cast<unsigned>(color[1] + 0.5) << ' '
-				<< static_cast<unsigned>(color[2] + 0.5) << '\n';
+				<< static_cast<unsigned>(color[0]) << ' '
+				<< static_cast<unsigned>(color[1]) << ' '
+				<< static_cast<unsigned>(color[2]) << '\n';
     }
 
     ++next_section_id;
@@ -530,33 +537,29 @@ tgc_is_ccone(const rt_tgc_internal &tgc)
 
 
 HIDDEN bool
-find_ccone_cutout(db_i &db, const std::string &name, fastf_t &ro1, fastf_t &ro2,
+find_ccone_cutout(db_i &db, std::string &name, fastf_t &ro1, fastf_t &ro2,
 		  fastf_t &ri1, fastf_t &ri2)
 {
+    rt_db_internal comb_db_internal;
     db_full_path path;
 
     if (db_string_to_path(&path, &db, name.c_str()))
 	bu_bomb("logic error: invalid path");
 
-    if (path.fp_len < 2) {
-	db_free_full_path(&path);
-	return false;
-    }
+    AutoFreePtr<db_full_path, db_free_full_path> autofree_path(&path);
 
-    rt_db_internal comb_db_internal;
+    if (path.fp_len < 2)
+	return false;
 
     if (rt_db_get_internal(&comb_db_internal, path.fp_names[path.fp_len - 2], &db,
-			   NULL, &rt_uniresource) < 0) {
-	db_free_full_path(&path);
+			   NULL, &rt_uniresource) < 0)
 	throw std::runtime_error("rt_db_get_internal() failed");
-    }
 
-    db_free_full_path(&path);
+    AutoFreePtr<rt_db_internal, rt_db_free_internal> autofree_comb_db_internal(
+	&comb_db_internal);
 
-    if (comb_db_internal.idb_minor_type != ID_COMBINATION) {
-	rt_db_free_internal(&comb_db_internal);
+    if (comb_db_internal.idb_minor_type != ID_COMBINATION)
 	return false;
-    }
 
     rt_comb_internal &comb_internal = *static_cast<rt_comb_internal *>
 				      (comb_db_internal.idb_ptr);
@@ -566,17 +569,13 @@ find_ccone_cutout(db_i &db, const std::string &name, fastf_t &ro1, fastf_t &ro2,
     const tree::tree_node &t = comb_internal.tree->tr_b;
 
     if (t.tb_op != OP_SUBTRACT || !t.tb_left || !t.tb_right
-	|| !t.tb_left->tr_op != OP_DB_LEAF || t.tb_right->tr_op != OP_DB_LEAF) {
-	rt_db_free_internal(&comb_db_internal);
+	|| !t.tb_left->tr_op != OP_DB_LEAF || t.tb_right->tr_op != OP_DB_LEAF)
 	return false;
-    }
 
     const directory * const outer_directory = db_lookup(&db,
 	    t.tb_left->tr_l.tl_name, false);
     const directory * const inner_directory = db_lookup(&db,
 	    t.tb_right->tr_l.tl_name, false);
-
-    rt_db_free_internal(&comb_db_internal);
 
     // check for nonexistent members
     if (!outer_directory || !inner_directory)
@@ -586,22 +585,23 @@ find_ccone_cutout(db_i &db, const std::string &name, fastf_t &ro1, fastf_t &ro2,
 
     if (rt_db_get_internal(&outer_db_internal, outer_directory, &db, NULL,
 			   &rt_uniresource) < 0)
-	return false;
+	throw std::runtime_error("rt_db_get_internal() failed");
+
+    AutoFreePtr<rt_db_internal, rt_db_free_internal> autofree_outer_db_internal(
+	&outer_db_internal);
 
     if (rt_db_get_internal(&inner_db_internal, inner_directory, &db, NULL,
-			   &rt_uniresource) < 0) {
-	rt_db_free_internal(&outer_db_internal);
-	return false;
-    }
+			   &rt_uniresource) < 0)
+	throw std::runtime_error("rt_db_get_internal() failed");
+
+    AutoFreePtr<rt_db_internal, rt_db_free_internal> autofree_inner_db_internal(
+	&inner_db_internal);
 
     if ((outer_db_internal.idb_minor_type != ID_TGC
 	 && outer_db_internal.idb_minor_type != ID_REC)
 	|| (inner_db_internal.idb_minor_type != ID_TGC
-	    && inner_db_internal.idb_minor_type != ID_REC)) {
-	rt_db_free_internal(&outer_db_internal);
-	rt_db_free_internal(&inner_db_internal);
+	    && inner_db_internal.idb_minor_type != ID_REC))
 	return false;
-    }
 
     const rt_tgc_internal &outer = *static_cast<rt_tgc_internal *>
 				   (outer_db_internal.idb_ptr);
@@ -610,24 +610,21 @@ find_ccone_cutout(db_i &db, const std::string &name, fastf_t &ro1, fastf_t &ro2,
     RT_TGC_CK_MAGIC(&outer);
     RT_TGC_CK_MAGIC(&inner);
 
-    if (!tgc_is_ccone(outer) || !tgc_is_ccone(inner)) {
-	rt_db_free_internal(&outer_db_internal);
-	rt_db_free_internal(&inner_db_internal);
+    // check cone geometry
+    if (!tgc_is_ccone(outer) || !tgc_is_ccone(inner))
 	return false;
-    }
 
-    if (!VEQUAL(outer.v, inner.v) || !VEQUAL(outer.h, inner.h)) {
-	rt_db_free_internal(&outer_db_internal);
-	rt_db_free_internal(&inner_db_internal);
+    if (!VEQUAL(outer.v, inner.v) || !VEQUAL(outer.h, inner.h))
 	return false;
-    }
 
+    // store results
+    // use parent combination's name
+    --path.fp_len;
+    name = AutoFreePtr<char>(db_path_to_string(&path)).ptr;
     ro1 = MAGNITUDE(outer.a);
     ro2 = MAGNITUDE(outer.b);
     ri1 = MAGNITUDE(inner.a);
     ri2 = MAGNITUDE(inner.b);
-    rt_db_free_internal(&outer_db_internal);
-    rt_db_free_internal(&inner_db_internal);
     return true;
 }
 
@@ -635,6 +632,7 @@ find_ccone_cutout(db_i &db, const std::string &name, fastf_t &ro1, fastf_t &ro2,
 struct ConversionData {
     FastgenWriter &m_writer;
     const bn_tol &m_tol;
+    db_i &db; // for find_ccone_cutout()
 };
 
 
@@ -679,12 +677,20 @@ convert_primitive(ConversionData &data, const rt_db_internal &internal,
 	    if (internal.idb_type != ID_REC && !tgc_is_ccone(tgc))
 		return false;
 
-	    Section section(data.m_writer, name, true);
+	    std::string new_name = name;
+	    fastf_t ro1 = MAGNITUDE(tgc.a), ro2 = MAGNITUDE(tgc.b), ri1 = 0.0, ri2 = 0.0;
+
+	    if (find_ccone_cutout(data.db, new_name, ro1, ro2, ri1, ri2)) {
+		// an imported CCONE with cutout
+		// TODO: record that we have written this CCONE
+	    }
+
+	    Section section(data.m_writer, new_name, true);
 	    point_t v2;
 	    VADD2(v2, tgc.v, tgc.h);
 	    section.add_grid_point(V3ARGS(tgc.v));
 	    section.add_grid_point(V3ARGS(v2));
-	    section.add_cone(1, 2, MAGNITUDE(tgc.a), MAGNITUDE(tgc.b), 0.0, 0.0);
+	    section.add_cone(1, 2, ro1, ro2, ri1, ri2);
 	    break;
 	}
 
@@ -745,9 +751,9 @@ write_nmg_region(nmgregion *nmg_region, const db_full_path *path,
 
 	try {
 	    unsigned char char_color[3];
-	    char_color[0] = static_cast<unsigned char>(color[0] * 255);
-	    char_color[1] = static_cast<unsigned char>(color[1] * 255);
-	    char_color[2] = static_cast<unsigned char>(color[2] * 255);
+	    char_color[0] = static_cast<unsigned char>(color[0] * 255 + 0.5);
+	    char_color[1] = static_cast<unsigned char>(color[1] * 255 + 0.5);
+	    char_color[2] = static_cast<unsigned char>(color[2] * 255 + 0.5);
 	    write_bot(data.m_writer, name.ptr, *bot, char_color);
 	} catch (const std::runtime_error &e) {
 	    bu_log("FAILURE: write_bot() failed on object '%s': %s\n", name.ptr, e.what());
@@ -813,7 +819,7 @@ gcv_fastgen4_write(const char *path, struct db_i *dbip,
 
     const rt_tess_tol ttol = {RT_TESS_TOL_MAGIC, 0.0, 0.01, 0.0};
     const bn_tol tol = {BN_TOL_MAGIC, BN_TOL_DIST, BN_TOL_DIST * BN_TOL_DIST, 1e-6, 1 - 1e-6};
-    ConversionData conv_data = {writer, tol};
+    ConversionData conv_data = {writer, tol, *dbip};
 
     {
 	model *vmodel;
