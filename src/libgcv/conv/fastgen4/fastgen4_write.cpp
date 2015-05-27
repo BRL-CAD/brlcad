@@ -537,9 +537,15 @@ tgc_is_ccone(const rt_tgc_internal &tgc)
 }
 
 
+// determines whether the object with the given name is a member of a
+// CCONE-compatible region (typically created by the fastgen4 importer).
+//
+// sets `new_name` to the name of the CCONE
+// sets `ro1`, `ro2`, `ri1`, and `ri2` to the values of
+// the lower/upper outer and inner radii
 HIDDEN bool
-find_ccone_cutout(db_i &db, std::string &name, fastf_t &ro1, fastf_t &ro2,
-		  fastf_t &ri1, fastf_t &ri2)
+find_ccone_cutout(const std::string &name, db_i &db, std::string &new_name,
+		  fastf_t &ro1, fastf_t &ro2, fastf_t &ri1, fastf_t &ri2)
 {
     rt_db_internal comb_db_internal;
     db_full_path path;
@@ -618,7 +624,7 @@ find_ccone_cutout(db_i &db, std::string &name, fastf_t &ro1, fastf_t &ro2,
     // store results
     // use parent combination's name
     --path.fp_len;
-    name = AutoFreePtr<char>(db_path_to_string(&path)).ptr;
+    new_name = AutoFreePtr<char>(db_path_to_string(&path)).ptr;
     ro1 = MAGNITUDE(outer.a);
     ro2 = MAGNITUDE(outer.b);
     ri1 = MAGNITUDE(inner.a);
@@ -678,14 +684,15 @@ convert_primitive(ConversionData &data, const rt_db_internal &internal,
 	    if (internal.idb_type != ID_REC && !tgc_is_ccone(tgc))
 		return false;
 
-	    std::string new_name = name;
+	    std::string new_name;
 	    fastf_t ro1, ro2, ri1, ri2;
 
-	    if (find_ccone_cutout(data.db, new_name, ro1, ro2, ri1, ri2)) {
+	    if (find_ccone_cutout(name, data.db, new_name, ro1, ro2, ri1, ri2)) {
 		// an imported CCONE with cutout
 		if (!data.recorded_ccones.insert(new_name).second)
 		    break; // already written
 	    } else {
+		new_name = name;
 		ro1 = MAGNITUDE(tgc.a);
 		ro2 = MAGNITUDE(tgc.b);
 		ri1 = ri2 = 0.0;
