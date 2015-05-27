@@ -31,7 +31,7 @@
 <para><command>gencolor</command>
 repeats a pattern of up to 8192 8-bit values on its standard output.
 The values, which range from 0 to 255, are taken either from the command
-line, or in binary (as pixels) from standard input; if the values are not supplied, a single value
+line, or in binary (as stored in a .bw or .pix file) from standard input; if the values are not supplied, a single value
 of 0, for black, is used.  The
 <option>-r</option>
 flag can be used to specify the number of times to repeat the given pattern,
