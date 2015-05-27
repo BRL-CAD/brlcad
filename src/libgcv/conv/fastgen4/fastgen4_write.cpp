@@ -106,7 +106,7 @@ FastgenWriter::Record::Record(FastgenWriter &writer) :
     m_writer(writer)
 {
     if (m_writer.m_record_open)
-	throw std::logic_error("record open");
+	bu_bomb("logic error: record open");
 
     m_writer.m_record_open = true;
 }
@@ -124,7 +124,7 @@ template <typename T> FastgenWriter::Record &
 FastgenWriter::Record::operator<<(const T &value)
 {
     if (++m_width > RECORD_WIDTH)
-	throw std::logic_error("invalid record width");
+	bu_bomb("logic error: invalid record width");
 
     std::ostringstream sstream;
 
@@ -294,7 +294,7 @@ Section::add_grid_point(fastf_t x, fastf_t y, fastf_t z)
 	throw std::length_error("maximum GRID records");
 
     if (m_next_element_id != 1)
-	throw std::logic_error("add_grid_point() called after adding elements");
+	bu_bomb("logic error: add_grid_point() called after adding elements");
 
     FastgenWriter::Record record(m_writer);
     record << "GRID" << m_next_grid_id << "";
@@ -525,6 +525,109 @@ tgc_is_ccone(const rt_tgc_internal &tgc)
 	    return false;
     }
 
+    return true;
+}
+
+
+HIDDEN bool
+find_ccone_cutout(db_i &db, const std::string &name, fastf_t &ro1, fastf_t &ro2,
+		  fastf_t &ri1, fastf_t &ri2)
+{
+    db_full_path path;
+
+    if (db_string_to_path(&path, &db, name.c_str()))
+	bu_bomb("logic error: invalid path");
+
+    if (path.fp_len < 2) {
+	db_free_full_path(&path);
+	return false;
+    }
+
+    rt_db_internal comb_db_internal;
+
+    if (rt_db_get_internal(&comb_db_internal, path.fp_names[path.fp_len - 2], &db,
+			   NULL, &rt_uniresource) < 0) {
+	db_free_full_path(&path);
+	throw std::runtime_error("rt_db_get_internal() failed");
+    }
+
+    db_free_full_path(&path);
+
+    if (comb_db_internal.idb_minor_type != ID_COMBINATION) {
+	rt_db_free_internal(&comb_db_internal);
+	return false;
+    }
+
+    rt_comb_internal &comb_internal = *static_cast<rt_comb_internal *>
+				      (comb_db_internal.idb_ptr);
+    RT_CK_COMB(&comb_internal);
+
+    // check tree structure
+    const tree::tree_node &t = comb_internal.tree->tr_b;
+
+    if (t.tb_op != OP_SUBTRACT || !t.tb_left || !t.tb_right
+	|| !t.tb_left->tr_op != OP_DB_LEAF || t.tb_right->tr_op != OP_DB_LEAF) {
+	rt_db_free_internal(&comb_db_internal);
+	return false;
+    }
+
+    const directory * const outer_directory = db_lookup(&db,
+	    t.tb_left->tr_l.tl_name, false);
+    const directory * const inner_directory = db_lookup(&db,
+	    t.tb_right->tr_l.tl_name, false);
+
+    rt_db_free_internal(&comb_db_internal);
+
+    // check for nonexistent members
+    if (!outer_directory || !inner_directory)
+	return false;
+
+    rt_db_internal outer_db_internal, inner_db_internal;
+
+    if (rt_db_get_internal(&outer_db_internal, outer_directory, &db, NULL,
+			   &rt_uniresource) < 0)
+	return false;
+
+    if (rt_db_get_internal(&inner_db_internal, inner_directory, &db, NULL,
+			   &rt_uniresource) < 0) {
+	rt_db_free_internal(&outer_db_internal);
+	return false;
+    }
+
+    if ((outer_db_internal.idb_minor_type != ID_TGC
+	 && outer_db_internal.idb_minor_type != ID_REC)
+	|| (inner_db_internal.idb_minor_type != ID_TGC
+	    && inner_db_internal.idb_minor_type != ID_REC)) {
+	rt_db_free_internal(&outer_db_internal);
+	rt_db_free_internal(&inner_db_internal);
+	return false;
+    }
+
+    const rt_tgc_internal &outer = *static_cast<rt_tgc_internal *>
+				   (outer_db_internal.idb_ptr);
+    const rt_tgc_internal &inner = *static_cast<rt_tgc_internal *>
+				   (inner_db_internal.idb_ptr);
+    RT_TGC_CK_MAGIC(&outer);
+    RT_TGC_CK_MAGIC(&inner);
+
+    if (!tgc_is_ccone(outer) || !tgc_is_ccone(inner)) {
+	rt_db_free_internal(&outer_db_internal);
+	rt_db_free_internal(&inner_db_internal);
+	return false;
+    }
+
+    if (!VEQUAL(outer.v, inner.v) || !VEQUAL(outer.h, inner.h)) {
+	rt_db_free_internal(&outer_db_internal);
+	rt_db_free_internal(&inner_db_internal);
+	return false;
+    }
+
+    ro1 = MAGNITUDE(outer.a);
+    ro2 = MAGNITUDE(outer.b);
+    ri1 = MAGNITUDE(inner.a);
+    ri2 = MAGNITUDE(inner.b);
+    rt_db_free_internal(&outer_db_internal);
+    rt_db_free_internal(&inner_db_internal);
     return true;
 }
 
