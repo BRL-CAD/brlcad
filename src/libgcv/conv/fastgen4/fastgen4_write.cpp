@@ -39,7 +39,7 @@ namespace
 {
 
 
-template <typename T> inline HIDDEN void
+template <typename T> HIDDEN inline void
 autofreeptr_wrap_bu_free(T *ptr)
 {
     bu_free(ptr, "AutoFreePtr");
@@ -537,17 +537,16 @@ tgc_is_ccone(const rt_tgc_internal &tgc)
 }
 
 
-// determines whether the object with the given name is a member of a
+// Determines whether the object with the given name is a member of a
 // CCONE-compatible region (typically created by the fastgen4 importer).
 //
-// sets `new_name` to the name of the CCONE
-// sets `ro1`, `ro2`, `ri1`, and `ri2` to the values of
-// the lower/upper outer and inner radii
+// Sets `new_name` to the name of the CCONE.
+// Sets `ro1`, `ro2`, `ri1`, and `ri2` to the values of
+// the lower/upper outer and inner radii.
 HIDDEN bool
 find_ccone_cutout(const std::string &name, db_i &db, std::string &new_name,
 		  fastf_t &ro1, fastf_t &ro2, fastf_t &ri1, fastf_t &ri2)
 {
-    rt_db_internal comb_db_internal;
     db_full_path path;
 
     if (db_string_to_path(&path, &db, name.c_str()))
@@ -557,6 +556,8 @@ find_ccone_cutout(const std::string &name, db_i &db, std::string &new_name,
 
     if (path.fp_len < 2)
 	return false;
+
+    rt_db_internal comb_db_internal;
 
     if (rt_db_get_internal(&comb_db_internal, path.fp_names[path.fp_len - 2], &db,
 			   NULL, &rt_uniresource) < 0)
@@ -569,21 +570,21 @@ find_ccone_cutout(const std::string &name, db_i &db, std::string &new_name,
 				      (comb_db_internal.idb_ptr);
     RT_CK_COMB(&comb_internal);
 
-    // check tree structure
-    const tree::tree_node &t = comb_internal.tree->tr_b;
+    const directory *outer_directory, *inner_directory;
+    {
+	const tree::tree_node &t = comb_internal.tree->tr_b;
 
-    if (t.tb_op != OP_SUBTRACT || !t.tb_left || !t.tb_right
-	|| t.tb_left->tr_op != OP_DB_LEAF || t.tb_right->tr_op != OP_DB_LEAF)
-	return false;
+	if (t.tb_op != OP_SUBTRACT || !t.tb_left || !t.tb_right
+	    || t.tb_left->tr_op != OP_DB_LEAF || t.tb_right->tr_op != OP_DB_LEAF)
+	    return false;
 
-    const directory * const outer_directory = db_lookup(&db,
-	    t.tb_left->tr_l.tl_name, false);
-    const directory * const inner_directory = db_lookup(&db,
-	    t.tb_right->tr_l.tl_name, false);
+	outer_directory = db_lookup(&db, t.tb_left->tr_l.tl_name, false);
+	inner_directory = db_lookup(&db, t.tb_right->tr_l.tl_name, false);
 
-    // check for nonexistent members
-    if (!outer_directory || !inner_directory)
-	return false;
+	// check for nonexistent members
+	if (!outer_directory || !inner_directory)
+	    return false;
+    }
 
     rt_db_internal outer_db_internal, inner_db_internal;
 
@@ -622,7 +623,6 @@ find_ccone_cutout(const std::string &name, db_i &db, std::string &new_name,
 	return false;
 
     // store results
-    // use parent combination's name
     --path.fp_len;
     new_name = AutoFreePtr<char>(db_path_to_string(&path)).ptr;
     ro1 = MAGNITUDE(outer.a);
@@ -796,10 +796,13 @@ convert_leaf(db_tree_state *tree_state, const db_full_path *path,
 	return NULL;
 
     AutoFreePtr<char> name(db_path_to_string(path));
-    bool converted = false;
 
     try {
-	converted = convert_primitive(data, *internal, name.ptr);
+	convert_primitive(data, *internal, name.ptr);
+	tree *result;
+	RT_GET_TREE(result, tree_state->ts_resp);
+	result->tr_op = OP_NOP;
+	return result;
     } catch (const std::runtime_error &e) {
 	bu_log("FAILURE: convert_primitive() failed on object '%s': %s\n", name.ptr,
 	       e.what());
@@ -808,13 +811,7 @@ convert_leaf(db_tree_state *tree_state, const db_full_path *path,
 	       e.what());
     }
 
-    if (!converted)
-	return nmg_booltree_leaf_tess(tree_state, path, internal, client_data);
-
-    tree *result;
-    RT_GET_TREE(result, tree_state->ts_resp);
-    result->tr_op = OP_NOP;
-    return result;
+    return nmg_booltree_leaf_tess(tree_state, path, internal, client_data);
 }
 
 
@@ -823,7 +820,7 @@ gcv_fastgen4_write(const char *path, struct db_i *dbip,
 		   const struct gcv_opts *UNUSED(options))
 {
     // Set to true to directly translate any primitives that can be represented by fg4.
-    // Due to limitations with the fg4 format, boolean operations can not be represented.
+    // Due to limitations in the fg4 format, boolean operations can not be represented.
     const bool convert_primitives = false;
 
     FastgenWriter writer(path);
