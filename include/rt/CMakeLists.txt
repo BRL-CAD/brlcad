@@ -1,3 +1,5 @@
+add_subdirectory(primitives)
+
 set(rt_headers
   anim.h
   application.h
@@ -37,23 +39,6 @@ set(rt_headers
   pattern.h
   piece.h
   prep.h
-  primitives/arb8.h
-  primitives/ars.h
-  primitives/bot.h
-  primitives/brep.h
-  primitives/cline.h
-  primitives/dsp.h
-  primitives/ell.h
-  primitives/epa.h
-  primitives/hf.h
-  primitives/metaball.h
-  primitives/pg.h
-  primitives/pipe.h
-  primitives/rhc.h
-  primitives/rpc.h
-  primitives/sketch.h
-  primitives/tgc.h
-  primitives/tor.h
   private.h
   ray_partition.h
   region.h
