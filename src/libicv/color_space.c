@@ -76,12 +76,11 @@ icv_rgb2gray(icv_image_t *img, ICV_COLOR color, double rweight, double gweight, 
 {
     double *out_data, *in_data;
     size_t in, out, size;
-    int multiple_colors = 0;
-    int num_color_planes = 3;
+    int multiple_colors = 1; /* will set to 0 if it's found only 1 color is referenced */
+    int num_color_planes;
 
     double value;
-    int red, green, blue;
-    red = green = blue = 0;
+    int red = 0 , green = 0 , blue = 0 ;
 
     ICV_IMAGE_VAL_INT(img);
 
@@ -117,25 +116,21 @@ icv_rgb2gray(icv_image_t *img, ICV_COLOR color, double rweight, double gweight, 
 	    red = 1;
 	    green = 1;
 	    bweight = 0;
-	    multiple_colors = 1;
 	    break;
 	case ICV_COLOR_RB :
 	    blue = 1;
 	    red = 1;
 	    gweight = 0;
-	    multiple_colors = 1;
 	    break;
 	case ICV_COLOR_BG :
 	    blue = 1;
 	    green = 1;
 	    rweight = 0;
-	    multiple_colors = 1;
 	    break;
 	case ICV_COLOR_RGB :
 	    red = 1;
 	    green = 1;
 	    blue = 1;
-	    multiple_colors = 1;
 	    break;
 	default :
 	    bu_log("ERROR: Wrong Arguments for Color");
