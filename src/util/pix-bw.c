@@ -90,7 +90,6 @@ get_args(int argc, char **argv)
 		    return 0;
 		}
 		red = green = blue = 1;
-		color = ICV_COLOR_RGB;
 		break;
 	    case 'R' :
 		red++;
