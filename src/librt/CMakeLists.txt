@@ -122,6 +122,7 @@ set(LIBRT_SOURCES
   primitives/bspline/nurb_xsplit.c
   primitives/cline/cline.c
   primitives/cline/cline_brep.cpp
+  primitives/datum/datum.c
   primitives/dsp/dsp.c
   primitives/dsp/dsp_brep.cpp
   primitives/dsp/dsp_mirror.c
@@ -249,6 +250,8 @@ set(LIBRT_SOURCES
   primitives/vol/vol.c
   primitives/vol/vol_brep.cpp
   primitives/vol/vol_mirror.c
+  primitives/xxx/xxx.c
+  primitives/xxx/xxx.h
   regionfix.c
   roots.c
   screened_poisson.cpp
@@ -289,8 +292,6 @@ set(librt_ignored_files
   primitives/revolve/revolve.h
   primitives/sph/benchmark.sh
   primitives/sph/sph_shot.cl
-  primitives/xxx/xxx.c
-  primitives/xxx/xxx.h
   search.h
   timer-nt.c
   timerhep.c
