@@ -53,7 +53,7 @@ int blue  = 0;
 double rweight = 0.0;
 double gweight = 0.0;
 double bweight = 0.0;
-int inx = 0, iny = 0;
+size_t inx = 0, iny = 0;
 ICV_COLOR color;
 
 char *out_file = NULL;
