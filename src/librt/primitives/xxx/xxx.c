@@ -75,6 +75,7 @@
 #include <stdio.h>
 #include <math.h>
 
+#include "bu/cv.h"
 #include "vmath.h"
 #include "rt/db4.h"
 #include "nmg.h"
