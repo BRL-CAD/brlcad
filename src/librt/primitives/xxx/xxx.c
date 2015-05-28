@@ -102,6 +102,7 @@ int
 rt_xxx_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 {
     struct rt_xxx_internal *xxx_ip;
+    struct xxx_specific *xxx;
 
     if (stp) RT_CK_SOLTAB(stp);
     RT_CK_DB_INTERNAL(ip);
@@ -109,6 +110,12 @@ rt_xxx_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 
     xxx_ip = (struct rt_xxx_internal *)ip->idb_ptr;
     RT_XXX_CK_MAGIC(xxx_ip);
+
+    BU_GET(xxx, struct xxx_specific);
+    stp->st_specific = (void *)xxx;
+
+    /* fill in xxx_specific here */
+    VSETALL(xxx->xxx_V, 0.0);
 
     return 0;
 }
@@ -239,7 +246,10 @@ rt_xxx_free(struct soltab *stp)
     xxx = (struct xxx_specific *)stp->st_specific;
     if (!xxx) return;
 
-    bu_free((char *)xxx, "xxx_specific");
+    /* release xxx_specific memory, however allocated in _prep() */
+    BU_PUT(xxx, struct xxx_specific);
+
+    return;
 }
 
 
