@@ -250,7 +250,6 @@ set(LIBRT_SOURCES
   primitives/vol/vol_brep.cpp
   primitives/vol/vol_mirror.c
   primitives/xxx/xxx.c
-  primitives/xxx/xxx.h
   regionfix.c
   roots.c
   screened_poisson.cpp
@@ -291,6 +290,7 @@ set(librt_ignored_files
   primitives/revolve/revolve.h
   primitives/sph/benchmark.sh
   primitives/sph/sph_shot.cl
+  primitives/xxx/xxx.h
   search.h
   timer-nt.c
   timerhep.c
