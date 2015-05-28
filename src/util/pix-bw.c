@@ -64,8 +64,6 @@ Usage: pix-bw [-s squaresize] [-w width] [-n height]\n\
               [ [-e ntsc|crt] [[-R red_weight] [-G green_weight] [-B blue_weight]] ]\n\
               [-o out_file.bw] [file.pix] [> out_file.bw]\n";
 
-double multiplier = 0.5;
-
 int
 get_args(int argc, char **argv)
 {
