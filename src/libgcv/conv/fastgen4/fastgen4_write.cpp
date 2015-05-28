@@ -31,6 +31,7 @@
 #include <set>
 #include <sstream>
 #include <stdexcept>
+#include <map>
 
 #include "../../plugin.h"
 
@@ -65,29 +66,31 @@ private:
 };
 
 
-class RecordWriter
+class FastgenWriter
 {
 public:
-    RecordWriter();
-    virtual ~RecordWriter();
+    class Record;
+    class SectionWriter;
+
+    FastgenWriter(const std::string &path);
+    ~FastgenWriter();
 
     void write_comment(const std::string &value);
 
-
-protected:
-    class Record;
-    virtual std::ostream &get_ostream() = 0;
-
-
 private:
+    static const std::size_t MAX_GROUP_ID = 49;
+    static const std::size_t MAX_SECTION_ID = 999;
+
+    std::size_t m_next_section_id[MAX_GROUP_ID + 1];
     bool m_record_open;
+    std::ofstream m_ostream, m_colors_ostream;
 };
 
 
-class RecordWriter::Record
+class FastgenWriter::Record
 {
 public:
-    Record(RecordWriter &writer);
+    Record(FastgenWriter &writer);
     ~Record();
 
     template <typename T> Record &operator<<(const T &value);
@@ -95,33 +98,19 @@ public:
     Record &non_zero(fastf_t value);
     Record &text(const std::string &value);
 
+    static std::string truncate_float(fastf_t value);
+
 
 private:
     static const std::size_t FIELD_WIDTH = 8;
     static const std::size_t RECORD_WIDTH = 10;
 
     std::size_t m_width;
-    RecordWriter &m_writer;
+    FastgenWriter &m_writer;
 };
 
 
-inline RecordWriter::RecordWriter() :
-    m_record_open(false)
-{}
-
-
-inline RecordWriter::~RecordWriter()
-{}
-
-
-void
-RecordWriter::write_comment(const std::string &value)
-{
-    (Record(*this) << "$COMMENT").text(" ").text(value);
-}
-
-
-RecordWriter::Record::Record(RecordWriter &writer) :
+FastgenWriter::Record::Record(FastgenWriter &writer) :
     m_width(0),
     m_writer(writer)
 {
@@ -132,16 +121,16 @@ RecordWriter::Record::Record(RecordWriter &writer) :
 }
 
 
-inline RecordWriter::Record::~Record()
+FastgenWriter::Record::~Record()
 {
-    if (m_width) m_writer.get_ostream().put('\n');
+    if (m_width) m_writer.m_ostream.put('\n');
 
     m_writer.m_record_open = false;
 }
 
 
-template <typename T> RecordWriter::Record &
-RecordWriter::Record::operator<<(const T &value)
+template <typename T> FastgenWriter::Record &
+FastgenWriter::Record::operator<<(const T &value)
 {
     if (++m_width > RECORD_WIDTH)
 	throw std::logic_error("logic error: invalid record width");
@@ -156,28 +145,23 @@ RecordWriter::Record::operator<<(const T &value)
     if (str_val.size() > FIELD_WIDTH)
 	throw std::invalid_argument("length exceeds field width");
 
-    m_writer.get_ostream() << std::left << std::setw(FIELD_WIDTH) << str_val;
+    m_writer.m_ostream << std::left << std::setw(FIELD_WIDTH) << str_val;
     return *this;
 }
 
 
-RecordWriter::Record &
-RecordWriter::Record::operator<<(fastf_t value)
+FastgenWriter::Record &
+FastgenWriter::Record::operator<<(fastf_t value)
 {
-    std::ostringstream sstream;
-    sstream << std::fixed << std::showpoint << value;
-    return operator<<(sstream.str().substr(0, FIELD_WIDTH));
+    return operator<<(truncate_float(value));
 }
 
 
 // ensure that the truncated value != 0.0
-RecordWriter::Record &
-RecordWriter::Record::non_zero(fastf_t value)
+FastgenWriter::Record &
+FastgenWriter::Record::non_zero(fastf_t value)
 {
-    std::ostringstream sstream;
-    sstream << std::fixed << std::showpoint << value;
-
-    std::string result = sstream.str().substr(0, FIELD_WIDTH);
+    std::string result = truncate_float(value);
 
     if (result.find_first_not_of("-0.") == std::string::npos) {
 	result = "0.0";
@@ -189,38 +173,26 @@ RecordWriter::Record::non_zero(fastf_t value)
 }
 
 
-RecordWriter::Record &
-RecordWriter::Record::text(const std::string &value)
+FastgenWriter::Record &
+FastgenWriter::Record::text(const std::string &value)
 {
     m_width = RECORD_WIDTH;
-    m_writer.get_ostream() << value;
+    m_writer.m_ostream << value;
     return *this;
 }
 
 
-class FastgenWriter : public RecordWriter
+std::string
+FastgenWriter::Record::truncate_float(fastf_t value)
 {
-public:
-    FastgenWriter(const std::string &path);
-    ~FastgenWriter();
-
-
-protected:
-    virtual std::ostream &get_ostream();
-
-
-private:
-    friend class Section;
-
-    static const std::size_t MAX_GROUP_ID = 49;
-    static const std::size_t MAX_SECTION_ID = 999;
-
-    std::size_t m_next_section_id[MAX_GROUP_ID + 1];
-    std::ofstream m_ostream, m_colors_ostream;
-};
+    std::ostringstream sstream;
+    sstream << std::fixed << std::showpoint << value;
+    return sstream.str().substr(0, FIELD_WIDTH);
+}
 
 
 FastgenWriter::FastgenWriter(const std::string &path) :
+    m_record_open(false),
     m_ostream(path.c_str(), std::ofstream::out),
     m_colors_ostream((path + ".colors").c_str(), std::ofstream::out)
 {
@@ -232,44 +204,39 @@ FastgenWriter::FastgenWriter(const std::string &path) :
 }
 
 
-inline FastgenWriter::~FastgenWriter()
+FastgenWriter::~FastgenWriter()
 {
     Record(*this) << "ENDDATA";
 }
 
 
-inline std::ostream &
-FastgenWriter::get_ostream()
+void
+FastgenWriter::write_comment(const std::string &value)
 {
-    return m_ostream;
+    (Record(*this) << "$COMMENT").text(" ").text(value);
 }
 
 
-class Section : public RecordWriter
+class FastgenWriter::SectionWriter
 {
 public:
-    Section(FastgenWriter &writer, std::string name, bool volume_mode,
-	    const unsigned char *color = NULL);
+    SectionWriter(FastgenWriter &writer, std::string name, bool volume_mode,
+		  const unsigned char *color = NULL);
 
-    ~Section();
+    std::size_t write_grid_point(fastf_t x, fastf_t y, fastf_t z);
 
-    void add_sphere(const std::string &name, const point_t p1, fastf_t thickness,
+    void write_sphere(std::size_t g1, fastf_t thickness, fastf_t radius);
+
+    void write_cone(std::size_t g1, std::size_t g2, fastf_t ro1, fastf_t ro2,
+		    fastf_t ri1, fastf_t ri2);
+
+    void write_line(std::size_t g1, std::size_t g2, fastf_t thickness,
 		    fastf_t radius);
 
-    void add_cone(const std::string &name, const point_t p1, const point_t p2,
-		  fastf_t ro1, fastf_t ro2, fastf_t ri1, fastf_t ri2);
+    void write_triangle(std::size_t g1, std::size_t g2, std::size_t g3,
+			fastf_t thickness, bool grid_centered = false);
 
-    void add_line(const std::string &name, const point_t p1, const point_t p2,
-		  fastf_t thickness, fastf_t radius);
-
-    void add_triangle(const std::string &name, const point_t p1, const point_t p2,
-		      const point_t p3, fastf_t thickness, bool grid_centered = false);
-
-    void add_hexahedron(const std::string &name, const fastf_t points[8][3]);
-
-
-protected:
-    virtual std::ostream &get_ostream();
+    void write_hexahedron(const std::size_t *g);
 
 
 private:
@@ -277,21 +244,18 @@ private:
     static const std::size_t MAX_NAME_SIZE = 25;
     static const std::size_t MAX_GRID_POINTS = 50000;
 
-    std::size_t add_grid_point(const point_t p1);
-
     std::size_t m_next_grid_id;
     std::size_t m_next_element_id;
     bool m_volume_mode;
     FastgenWriter &m_writer;
-    std::ostringstream m_buffer_ostream;
 };
 
 
-const fastf_t Section::INCHES_PER_MM = 1.0 / 25.4;
+const fastf_t FastgenWriter::SectionWriter::INCHES_PER_MM = 1.0 / 25.4;
 
 
-Section::Section(FastgenWriter &writer, std::string name, bool volume_mode,
-		 const unsigned char *color) :
+FastgenWriter::SectionWriter::SectionWriter(FastgenWriter &writer,
+	std::string name, bool volume_mode, const unsigned char *color) :
     m_next_grid_id(1),
     m_next_element_id(1),
     m_volume_mode(volume_mode),
@@ -311,14 +275,14 @@ Section::Section(FastgenWriter &writer, std::string name, bool volume_mode,
     }
 
     {
-	RecordWriter::Record record(m_writer);
+	FastgenWriter::Record record(m_writer);
 	record << "$NAME" << group_id << next_section_id;
 	record << "" << "" << "" << "";
 	record.text(name);
     }
 
-    RecordWriter::Record(m_writer) << "SECTION" << group_id << next_section_id <<
-				   (m_volume_mode ? 2 : 1);
+    FastgenWriter::Record(m_writer) << "SECTION" << group_id << next_section_id <<
+				    (m_volume_mode ? 2 : 1);
 
     if (color) {
 	writer.m_colors_ostream << next_section_id << ' '
@@ -332,67 +296,75 @@ Section::Section(FastgenWriter &writer, std::string name, bool volume_mode,
 }
 
 
-inline Section::~Section()
+std::size_t
+FastgenWriter::SectionWriter::write_grid_point(fastf_t x, fastf_t y, fastf_t z)
 {
-    RecordWriter::Record(m_writer).text(m_buffer_ostream.str());
-}
+    x *= INCHES_PER_MM;
+    y *= INCHES_PER_MM;
+    z *= INCHES_PER_MM;
 
+    if (m_next_grid_id > MAX_GRID_POINTS)
+	throw std::length_error("maximum GRID records");
 
-inline std::ostream &
-Section::get_ostream()
-{
-    return m_buffer_ostream;
+    if (m_next_element_id != 1)
+	throw std::logic_error("logic error: write_grid_point() called after adding elements");
+
+    FastgenWriter::Record record(m_writer);
+    record << "GRID" << m_next_grid_id << "";
+    record << x << y << z;
+    return m_next_grid_id++;
 }
 
 
 void
-Section::add_sphere(const std::string &name, const point_t p1,
-		    fastf_t thickness, fastf_t radius)
+FastgenWriter::SectionWriter::write_sphere(std::size_t g1, fastf_t thickness,
+	fastf_t radius)
 {
     thickness *= INCHES_PER_MM;
     radius *= INCHES_PER_MM;
 
-    if (thickness <= 0.0)
-	throw std::invalid_argument("invalid thickness");
+    if (!g1 || g1 >= m_next_grid_id || thickness <= 0.0 || radius <= 0.0)
+	throw std::invalid_argument("invalid value");
 
-    if (radius <= 0.0)
-	throw std::invalid_argument("invalid radius");
-
-    const std::size_t g1 = add_grid_point(p1);
-    this->write_comment(name);
-    RecordWriter::Record record(*this);
+    FastgenWriter::Record record(m_writer);
     record << "CSPHERE" << m_next_element_id++ << 0 << g1 << "" << "" << "";
     record.non_zero(thickness).non_zero(radius);
 }
 
 
 void
-Section::add_cone(const std::string &name, const point_t p1, const point_t p2,
-		  fastf_t ro1, fastf_t ro2, fastf_t ri1, fastf_t ri2)
+FastgenWriter::SectionWriter::write_cone(std::size_t g1, std::size_t g2,
+	fastf_t ro1, fastf_t ro2,
+	fastf_t ri1, fastf_t ri2)
 {
     ro1 *= INCHES_PER_MM;
     ro2 *= INCHES_PER_MM;
     ri1 *= INCHES_PER_MM;
     ri2 *= INCHES_PER_MM;
 
+    if (g1 == g2 || !g1 || !g2 || g1 >= m_next_grid_id || g2 >= m_next_grid_id)
+	throw std::invalid_argument("invalid grid id");
+
     if (ri1 < 0.0 || ri2 < 0.0 || ri1 >= ro1 || ri2 >= ro2)
 	throw std::invalid_argument("invalid radius");
 
-    const std::size_t g1 = add_grid_point(p1), g2 = add_grid_point(p2);
-    this->write_comment(name);
-    RecordWriter::Record(*this) << "CCONE2" << m_next_element_id << 0 << g1 <<
-				g2 << "" << "" << "" << ro1 << m_next_element_id;
-    RecordWriter::Record(*this) << m_next_element_id << ro2 << ri1 << ri2;
+    FastgenWriter::Record(m_writer) << "CCONE2" << m_next_element_id << 0 << g1 <<
+				    g2 << "" << "" << "" << ro1 << m_next_element_id;
+    FastgenWriter::Record(m_writer) << m_next_element_id << ro2 << ri1 << ri2;
     ++m_next_element_id;
 }
 
 
 void
-Section::add_line(const std::string &name, const point_t p1, const point_t p2,
-		  fastf_t thickness, fastf_t radius)
+FastgenWriter::SectionWriter::write_line(std::size_t g1, std::size_t g2,
+	fastf_t thickness,
+	fastf_t radius)
 {
     thickness *= INCHES_PER_MM;
     radius *= INCHES_PER_MM;
+
+    if (g1 == g2 || !g1 || !g2 || g1 >= m_next_grid_id || g2 >= m_next_grid_id)
+	throw std::invalid_argument("invalid grid id");
 
     if ((!m_volume_mode && thickness <= 0.0) || thickness < 0.0)
 	throw std::invalid_argument("invalid thickness");
@@ -400,9 +372,7 @@ Section::add_line(const std::string &name, const point_t p1, const point_t p2,
     if (radius <= 0.0)
 	throw std::invalid_argument("invalid radius");
 
-    const std::size_t g1 = add_grid_point(p1), g2 = add_grid_point(p2);
-    this->write_comment(name);
-    RecordWriter::Record record(*this);
+    FastgenWriter::Record record(m_writer);
     record << "CLINE" << m_next_element_id++ << 0 << g1 << g2 << "" << "";
 
     if (m_volume_mode)
@@ -415,18 +385,23 @@ Section::add_line(const std::string &name, const point_t p1, const point_t p2,
 
 
 void
-Section::add_triangle(const std::string &name, const point_t p1,
-		      const point_t p2, const point_t p3, fastf_t thickness, bool grid_centered)
+FastgenWriter::SectionWriter::write_triangle(std::size_t g1, std::size_t g2,
+	std::size_t g3,
+	fastf_t thickness, bool grid_centered)
 {
     thickness *= INCHES_PER_MM;
+
+    if (g1 == g2 || g1 == g3 || g2 == g3)
+	throw std::invalid_argument("invalid grid id");
+
+    if (!g1 || !g2 || !g3 || g1 >= m_next_grid_id || g2 >= m_next_grid_id
+	|| g3 >= m_next_grid_id)
+	throw std::invalid_argument("invalid grid id");
 
     if (thickness <= 0.0)
 	throw std::invalid_argument("invalid thickness");
 
-    const std::size_t g1 = add_grid_point(p1), g2 = add_grid_point(p2),
-		      g3 = add_grid_point(p3);
-    this->write_comment(name);
-    RecordWriter::Record record(*this);
+    FastgenWriter::Record record(m_writer);
     record << "CTRI" << m_next_element_id++ << 0 << g1 << g2 << g3;
     record.non_zero(thickness);
     record << (grid_centered ? 1 : 2);
@@ -434,16 +409,19 @@ Section::add_triangle(const std::string &name, const point_t p1,
 
 
 void
-Section::add_hexahedron(const std::string &name, const fastf_t points[8][3])
+FastgenWriter::SectionWriter::write_hexahedron(const std::size_t *g)
 {
-    std::size_t g[8];
+    for (int i = 0; i < 8; ++i) {
+	if (!g[i] || g[i] >= m_next_grid_id)
+	    throw std::invalid_argument("invalid grid id");
 
-    for (int i = 0; i < 8; ++i)
-	g[i] = add_grid_point(points[i]);
+	for (int j = i + 1; j < 8; ++j)
+	    if (g[i] == g[j])
+		throw std::invalid_argument("repeated grid id");
+    }
 
     {
-	this->write_comment(name);
-	RecordWriter::Record record1(*this);
+	FastgenWriter::Record record1(m_writer);
 	record1 << "CHEX2" << m_next_element_id << 0;
 
 	for (int i = 0; i < 6; ++i)
@@ -452,31 +430,154 @@ Section::add_hexahedron(const std::string &name, const fastf_t points[8][3])
 	record1 << m_next_element_id;
     }
 
-    RecordWriter::Record(*this) << m_next_element_id << g[6] << g[7];
+    FastgenWriter::Record(m_writer) << m_next_element_id << g[6] << g[7];
     ++m_next_element_id;
 }
 
 
-std::size_t
-Section::add_grid_point(const point_t p1)
-{
-    if (m_next_grid_id > MAX_GRID_POINTS)
-	throw std::length_error("maximum GRID records");
+struct Point {
+    Point()
+    {
+	VSETALL(m_point, 0.0);
+    }
 
-    RecordWriter::Record record(m_writer);
-    record << "GRID" << m_next_grid_id << "";
-    record << p1[X] * INCHES_PER_MM << p1[Y] * INCHES_PER_MM << p1[Z] *
-	   INCHES_PER_MM;
-    return m_next_grid_id++;
+
+    operator const fastf_t *() const
+    {
+	return m_point;
+    }
+
+
+    operator fastf_t *()
+    {
+	return m_point;
+    }
+
+
+    point_t m_point;
+};
+
+
+class GridManager
+{
+public:
+    GridManager();
+
+    std::size_t get_grid(const Point &point);
+
+    // return a vector of grid IDs corresponding to the given points,
+    // with no duplicate indices in the returned vector.
+    std::vector<std::size_t> get_unique_grids(const std::vector<Point> &points);
+
+
+private:
+    struct FloatFieldComparator {
+	bool operator()(const Point &lhs, const Point &rhs);
+    };
+
+    typedef std::pair<std::map<Point, std::vector<std::size_t>, FloatFieldComparator>::iterator, bool>
+    FindResult;
+    FindResult find_grid(const Point &point);
+
+    std::size_t m_next_grid_id;
+    std::map<Point, std::vector<std::size_t>, FloatFieldComparator> m_grids;
+};
+
+
+inline bool GridManager::FloatFieldComparator::operator()(const Point &lhs,
+	const Point &rhs)
+{
+#define COMPARE(a, b) do { if ((a) != (b)) return (a) < (b); } while (false)
+#define COMPARE_TRUNC(a, b) do { \
+    std::string a_str = FastgenWriter::Record::truncate_float((a)); \
+    std::string b_str = FastgenWriter::Record::truncate_float((b)); \
+    COMPARE(a_str, b_str); \
+} while (false)
+
+    // compare final string forms in order to eliminate duplicate points
+    COMPARE_TRUNC(lhs[X], rhs[X]);
+    COMPARE_TRUNC(lhs[Y], rhs[Y]);
+    COMPARE_TRUNC(lhs[Z], rhs[Z]);
+    return false;
+
+#undef COMPARE_TRUNC
+#undef COMPARE
 }
 
 
+inline GridManager::GridManager() :
+    m_next_grid_id(1),
+    m_grids()
+{}
+
+
+GridManager::FindResult
+GridManager::find_grid(const Point &point)
+{
+    std::vector<std::size_t> temp(1);
+    temp.at(0) = m_next_grid_id;
+    return m_grids.insert(std::make_pair(point, temp));
+}
+
+
+std::size_t
+GridManager::get_grid(const Point &point)
+{
+    FindResult found = find_grid(point);
+
+    if (found.second)
+	++m_next_grid_id;
+
+    return found.first->second.at(0);
+}
+
+
+std::vector<std::size_t>
+GridManager::get_unique_grids(const std::vector<Point> &points)
+{
+    std::vector<std::size_t> results(points.size());
+
+    for (std::size_t i = 0; i < points.size(); ++i) {
+	FindResult found = find_grid(points[i]);
+
+	std::size_t n = 0;
+	results[i] = found.first->second.at(n);
+
+	for (std::size_t j = 0; j < i; ++j)
+	    if (results[j] == results[i]) {
+		if (++n < found.first->second.size() - 1) {
+		    results[i] = found.first->second.at(++n);
+		    j = 0;
+		} else {
+		    found.first->second.push_back(m_next_grid_id);
+		    results[i] = m_next_grid_id++;
+		    break;
+		}
+	    }
+    }
+}
+
+
+class Section
+{
+public:
+    void write(FastgenWriter::SectionWriter &writer);
+};
+
+
 HIDDEN void
-write_bot(const std::string &name, Section &section, const rt_bot_internal &bot)
+write_bot(FastgenWriter &writer, const std::string &name,
+	  const rt_bot_internal &bot, const unsigned char *color = NULL)
 {
     RT_BOT_CK_MAGIC(&bot);
 
-    section.write_comment(name);
+    FastgenWriter::SectionWriter section(writer, name, bot.mode == RT_BOT_SOLID,
+					 color);
+
+    for (std::size_t i = 0; i < bot.num_vertices; ++i) {
+	const fastf_t * const vertex = &bot.vertices[i * 3];
+	section.write_grid_point(V3ARGS(vertex));
+    }
 
     for (std::size_t i = 0; i < bot.num_faces; ++i) {
 	fastf_t thickness = 1.0;
@@ -493,10 +594,8 @@ write_bot(const std::string &name, Section &section, const rt_bot_internal &bot)
 	}
 
 	const int * const face = &bot.faces[i * 3];
-	const fastf_t * const p1 = &bot.vertices[face[0] * 3];
-	const fastf_t * const p2 = &bot.vertices[face[1] * 3];
-	const fastf_t * const p3 = &bot.vertices[face[2] * 3];
-	section.add_triangle("", p1, p2, p3, thickness, grid_centered);
+	section.write_triangle(face[0] + 1, face[1] + 1, face[2] + 1, thickness,
+			       grid_centered);
     }
 }
 
@@ -684,7 +783,6 @@ struct ConversionData {
     FastgenWriter &m_writer;
     const bn_tol &m_tol;
     const bool m_convert_primitives;
-    Section *m_current_section;
 
     // for find_ccone_cutout()
     db_i &m_db;
@@ -702,10 +800,12 @@ convert_primitive(ConversionData &data, const rt_db_internal &internal,
 					     (internal.idb_ptr);
 	    RT_CLINE_CK_MAGIC(&cline);
 
+	    FastgenWriter::SectionWriter section(data.m_writer, name, true);
 	    point_t v2;
 	    VADD2(v2, cline.v, cline.h);
-	    data.m_current_section->add_line(name, cline.v, v2, cline.thickness,
-					     cline.radius);
+	    section.write_grid_point(V3ARGS(cline.v));
+	    section.write_grid_point(V3ARGS(v2));
+	    section.write_line(1, 2, cline.thickness, cline.radius);
 	    break;
 	}
 
@@ -717,7 +817,9 @@ convert_primitive(ConversionData &data, const rt_db_internal &internal,
 	    if (internal.idb_type != ID_SPH && !ell_is_sphere(ell))
 		return false;
 
-	    data.m_current_section->add_sphere(name, ell.v, 1.0, MAGNITUDE(ell.a));
+	    FastgenWriter::SectionWriter section(data.m_writer, name, true);
+	    section.write_grid_point(V3ARGS(ell.v));
+	    section.write_sphere(1, 1.0, MAGNITUDE(ell.a));
 	    break;
 	}
 
@@ -743,24 +845,32 @@ convert_primitive(ConversionData &data, const rt_db_internal &internal,
 		ri1 = ri2 = 0.0;
 	    }
 
+	    FastgenWriter::SectionWriter section(data.m_writer, new_name, true);
 	    point_t v2;
 	    VADD2(v2, tgc.v, tgc.h);
-	    data.m_current_section->add_cone(name, tgc.v, v2, ro1, ro2, ri1, ri2);
+	    section.write_grid_point(V3ARGS(tgc.v));
+	    section.write_grid_point(V3ARGS(v2));
+	    section.write_cone(1, 2, ro1, ro2, ri1, ri2);
 	    break;
 	}
 
 	case ID_ARB8: {
 	    const rt_arb_internal &arb = *static_cast<rt_arb_internal *>(internal.idb_ptr);
 	    RT_ARB_CK_MAGIC(&arb);
-	    data.m_current_section->add_hexahedron(name, arb.pt);
+	    FastgenWriter::SectionWriter section(data.m_writer, name, true);
+
+	    for (int i = 0; i < 8; ++i)
+		section.write_grid_point(V3ARGS(arb.pt[i]));
+
+	    const std::size_t points[] = {1, 2, 3, 4, 5, 6, 7, 8};
+	    section.write_hexahedron(points);
 	    break;
 	}
 
 	case ID_BOT: {
 	    const rt_bot_internal &bot = *static_cast<rt_bot_internal *>(internal.idb_ptr);
 	    RT_BOT_CK_MAGIC(&bot);
-	    // FIXME solidity -- Section section(writer, name, bot.mode == RT_BOT_SOLID);
-	    write_bot(name, *data.m_current_section, bot);
+	    write_bot(data.m_writer, name, bot);
 	    break;
 	}
 
@@ -782,7 +892,7 @@ write_nmg_region(nmgregion *nmg_region, const db_full_path *path,
 
     ConversionData &data = *static_cast<ConversionData *>(client_data);
 
-    const std::string name = AutoFreePtr<char>(db_path_to_string(path)).ptr;
+    AutoFreePtr<char> name(db_path_to_string(path));
 
     shell *vshell;
 
@@ -804,30 +914,13 @@ write_nmg_region(nmgregion *nmg_region, const db_full_path *path,
 	    char_color[0] = static_cast<unsigned char>(color[0] * 255.0 + 0.5);
 	    char_color[1] = static_cast<unsigned char>(color[1] * 255.0 + 0.5);
 	    char_color[2] = static_cast<unsigned char>(color[2] * 255.0 + 0.5);
-	    // FIXME solidity -- Section section(writer, name, bot.mode == RT_BOT_SOLID, char_color);
-	    write_bot(name, *data.m_current_section, *bot);
+	    write_bot(data.m_writer, name.ptr, *bot, char_color);
 	} catch (const std::runtime_error &e) {
-	    bu_log("FAILURE: write_bot() failed on object '%s': %s\n", name.c_str(),
-		   e.what());
+	    bu_log("FAILURE: write_bot() failed on object '%s': %s\n", name.ptr, e.what());
 	}
 
 	internal.idb_meth->ft_ifree(&internal);
     }
-}
-
-
-HIDDEN int
-region_start(db_tree_state *tree_state, const db_full_path *path,
-	     const rt_comb_internal *comb_internal, void *client_data)
-{
-    RT_CK_DBTS(tree_state);
-    RT_CK_FULL_PATH(path);
-    RT_CK_COMB(comb_internal);
-
-    ConversionData &data = *static_cast<ConversionData *>(client_data);
-    const std::string name = AutoFreePtr<char>(db_path_to_string(path)).ptr;
-
-    return 1;
 }
 
 
@@ -840,13 +933,11 @@ convert_leaf(db_tree_state *tree_state, const db_full_path *path,
     RT_CK_DB_INTERNAL(internal);
 
     ConversionData &data = *static_cast<ConversionData *>(client_data);
-    const std::string name = AutoFreePtr<char>(db_path_to_string(path)).ptr;
-
-    data.m_writer.write_comment(name);
 
     if (internal->idb_major_type != DB5_MAJORTYPE_BRLCAD)
 	return NULL;
 
+    const std::string name = AutoFreePtr<char>(db_path_to_string(path)).ptr;
     bool converted = false;
 
     try {
@@ -878,6 +969,9 @@ convert_region(db_tree_state *tree_state, const db_full_path *path,
     ConversionData &data = *static_cast<ConversionData *>(client_data);
     const std::string name = AutoFreePtr<char>(db_path_to_string(path)).ptr;
 
+    bu_log("Processing region: %s\n", name.c_str());
+    rt_pr_tree(current_tree, 0);
+
     gcv_region_end_data gcv_data = {write_nmg_region, &data};
     return gcv_region_end(tree_state, path, current_tree, &gcv_data);
 }
@@ -897,7 +991,7 @@ gcv_fastgen4_write(const char *path, struct db_i *dbip,
 
     const rt_tess_tol ttol = {RT_TESS_TOL_MAGIC, 0.0, 0.01, 0.0};
     const bn_tol tol = {BN_TOL_MAGIC, BN_TOL_DIST, BN_TOL_DIST * BN_TOL_DIST, 1e-6, 1 - 1e-6};
-    ConversionData conv_data = {writer, tol, convert_primitives, NULL, *dbip, std::set<std::string>()};
+    ConversionData conv_data = {writer, tol, convert_primitives, *dbip, std::set<std::string>()};
 
     {
 	model *vmodel;
@@ -913,10 +1007,8 @@ gcv_fastgen4_write(const char *path, struct db_i *dbip,
 	bu_free(results, "tops");
 
 	vmodel = nmg_mm();
-	conv_data.m_current_section = new Section(writer, "global section", true);
 	db_walk_tree(dbip, num_objects, const_cast<const char **>(object_names.ptr), 1,
-		     &initial_tree_state, region_start, convert_region, convert_leaf, &conv_data);
-	delete conv_data.m_current_section;
+		     &initial_tree_state, NULL, convert_region, convert_leaf, &conv_data);
 	nmg_km(vmodel);
     }
 
