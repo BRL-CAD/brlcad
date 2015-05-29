@@ -96,36 +96,36 @@ icv_rgb2gray(icv_image_t *img, ICV_COLOR color, double rweight, double gweight, 
     switch (color) {
 	case ICV_COLOR_R :
 	    red = 1;
-	    bweight = 0.;
-	    gweight = 0.;
+	    bweight = 0.0;
+	    gweight = 0.0;
 	    multiple_colors = 0;
 	    break;
 	case ICV_COLOR_G :
 	    green = 1;
-	    rweight = 0.;
-	    bweight = 0.;
+	    rweight = 0.0;
+	    bweight = 0.0;
 	    multiple_colors = 0;
 	    break;
 	case ICV_COLOR_B :
 	    blue = 1;
-	    rweight = 0.;
-	    gweight = 0.;
+	    rweight = 0.0;
+	    gweight = 0.0;
 	    multiple_colors = 0;
 	    break;
 	case ICV_COLOR_RG :
 	    red = 1;
 	    green = 1;
-	    bweight = 0.;
+	    bweight = 0.0;
 	    break;
 	case ICV_COLOR_RB :
 	    blue = 1;
 	    red = 1;
-	    gweight = 0.;
+	    gweight = 0.0;
 	    break;
 	case ICV_COLOR_BG :
 	    blue = 1;
 	    green = 1;
-	    rweight = 0.;
+	    rweight = 0.0;
 	    break;
 	case ICV_COLOR_RGB :
 	    red = 1;
