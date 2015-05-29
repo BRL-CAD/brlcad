@@ -981,27 +981,32 @@ find_ccone_cutout(const std::string &name, db_i &db, std::string &new_name,
 	    && inner_db_internal.idb_minor_type != ID_REC))
 	return false;
 
-    const rt_tgc_internal &outer = *static_cast<rt_tgc_internal *>
-				   (outer_db_internal.idb_ptr);
-    const rt_tgc_internal &inner = *static_cast<rt_tgc_internal *>
-				   (inner_db_internal.idb_ptr);
-    RT_TGC_CK_MAGIC(&outer);
-    RT_TGC_CK_MAGIC(&inner);
+    const rt_tgc_internal &outer_tgc = *static_cast<rt_tgc_internal *>
+				       (outer_db_internal.idb_ptr);
+    const rt_tgc_internal &inner_tgc = *static_cast<rt_tgc_internal *>
+				       (inner_db_internal.idb_ptr);
+    RT_TGC_CK_MAGIC(&outer_tgc);
+    RT_TGC_CK_MAGIC(&inner_tgc);
 
     // check cone geometry
-    if (!tgc_is_ccone(outer) || !tgc_is_ccone(inner))
+    if (!tgc_is_ccone(outer_tgc) || !tgc_is_ccone(inner_tgc))
 	return false;
 
-    if (!VEQUAL(outer.v, inner.v) || !VEQUAL(outer.h, inner.h))
+    if (!VEQUAL(outer_tgc.v, inner_tgc.v) || !VEQUAL(outer_tgc.h, inner_tgc.h))
 	return false;
 
     // store results
     --path.fp_len;
     new_name = AutoFreePtr<char>(db_path_to_string(&path)).ptr;
-    ro1 = MAGNITUDE(outer.a);
-    ro2 = MAGNITUDE(outer.b);
-    ri1 = MAGNITUDE(inner.a);
-    ri2 = MAGNITUDE(inner.b);
+    ro1 = MAGNITUDE(outer_tgc.a);
+    ro2 = MAGNITUDE(outer_tgc.b);
+    ri1 = MAGNITUDE(inner_tgc.a);
+    ri2 = MAGNITUDE(inner_tgc.b);
+
+    // check radii
+    if (ri1 >= ro1 || ri2 >= ro2)
+	return false;
+
     return true;
 }
 
