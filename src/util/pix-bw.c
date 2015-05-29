@@ -179,10 +179,11 @@ main(int argc, char **argv)
 	color = ICV_COLOR_B;
     else if (green)
 	color = ICV_COLOR_G;
-    else {
-    	bu_log("pix-bw: no color scheme specified\n");
-	bu_exit(1, "%s",usage);
-    }
+    else
+	color = ICV_COLOR_RGB;
+    	/* no color scheme specified; rweight,gweight,bweight have
+	 * all remained zero, so weight the 3 colors equally.
+	 */
 
     icv_rgb2gray(img, color, rweight, gweight, bweight);
 
