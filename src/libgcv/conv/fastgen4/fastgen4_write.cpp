@@ -82,7 +82,7 @@ private:
     static const std::size_t MAX_SECTION_ID = 999;
 
     std::size_t m_next_section_id[MAX_GROUP_ID + 1];
-    bool m_record_open;
+    bool m_record_open, m_section_open;
     std::ofstream m_ostream, m_colors_ostream;
 };
 
@@ -150,6 +150,7 @@ FastgenWriter::Record::operator<<(const T &value)
 }
 
 
+inline
 FastgenWriter::Record &
 FastgenWriter::Record::operator<<(fastf_t value)
 {
@@ -164,7 +165,11 @@ FastgenWriter::Record::non_zero(fastf_t value)
     std::string result = truncate_float(value);
 
     if (result.find_first_not_of("-0.") == std::string::npos) {
-	result = "0.0";
+	if (result.at(0) == '-')
+	    result = "-0.0";
+	else
+	    result = "0.0";
+
 	result.append(FIELD_WIDTH - result.size() - 1, '0');
 	result.push_back('1');
     }
@@ -193,6 +198,7 @@ FastgenWriter::Record::truncate_float(fastf_t value)
 
 FastgenWriter::FastgenWriter(const std::string &path) :
     m_record_open(false),
+    m_section_open(false),
     m_ostream(path.c_str(), std::ofstream::out),
     m_colors_ostream((path + ".colors").c_str(), std::ofstream::out)
 {
@@ -204,13 +210,14 @@ FastgenWriter::FastgenWriter(const std::string &path) :
 }
 
 
+inline
 FastgenWriter::~FastgenWriter()
 {
     Record(*this) << "ENDDATA";
 }
 
 
-void
+inline void
 FastgenWriter::write_comment(const std::string &value)
 {
     (Record(*this) << "$COMMENT").text(" ").text(value);
@@ -222,6 +229,8 @@ class FastgenWriter::SectionWriter
 public:
     SectionWriter(FastgenWriter &writer, std::string name, bool volume_mode,
 		  const unsigned char *color = NULL);
+
+    ~SectionWriter();
 
     std::size_t write_grid_point(fastf_t x, fastf_t y, fastf_t z);
 
@@ -269,6 +278,11 @@ FastgenWriter::SectionWriter::SectionWriter(FastgenWriter &writer,
 
     std::size_t &next_section_id = m_writer.m_next_section_id[group_id];
 
+    if (m_writer.m_section_open)
+	throw std::logic_error("SectionWriter already active");
+    else
+	m_writer.m_section_open = true;
+
     if (name.size() > MAX_NAME_SIZE) {
 	m_writer.write_comment(name);
 	name = "..." + name.substr(name.size() - MAX_NAME_SIZE + 3);
@@ -293,6 +307,13 @@ FastgenWriter::SectionWriter::SectionWriter(FastgenWriter &writer,
     }
 
     ++next_section_id;
+}
+
+
+inline
+FastgenWriter::SectionWriter::~SectionWriter()
+{
+    m_writer.m_section_open = false;
 }
 
 
@@ -435,10 +456,18 @@ FastgenWriter::SectionWriter::write_hexahedron(const std::size_t *g)
 }
 
 
-struct Point {
+class Point
+{
+public:
     Point()
     {
 	VSETALL(m_point, 0.0);
+    }
+
+
+    Point(const fastf_t *values)
+    {
+	VMOVE(m_point, values);
     }
 
 
@@ -454,6 +483,7 @@ struct Point {
     }
 
 
+private:
     point_t m_point;
 };
 
@@ -484,7 +514,8 @@ private:
 };
 
 
-inline bool GridManager::FloatFieldComparator::operator()(const Point &lhs, const Point &rhs) const
+bool GridManager::FloatFieldComparator::operator()(const Point &lhs,
+	const Point &rhs) const
 {
 #define COMPARE(a, b) do { if ((a) != (b)) return (a) < (b); } while (false)
 #define COMPARE_TRUNC(a, b) do { \
@@ -504,7 +535,8 @@ inline bool GridManager::FloatFieldComparator::operator()(const Point &lhs, cons
 }
 
 
-inline GridManager::GridManager() :
+inline
+GridManager::GridManager() :
     m_next_grid_id(1),
     m_grids()
 {}
@@ -544,8 +576,8 @@ GridManager::get_unique_grids(const std::vector<Point> &points)
 
 	for (std::size_t j = 0; j < i; ++j)
 	    if (results[j] == results[i]) {
-		if (++n < found.first->second.size() - 1) {
-		    results[i] = found.first->second.at(++n);
+		if (++n < found.first->second.size()) {
+		    results[i] = found.first->second.at(n);
 		    j = 0;
 		} else {
 		    found.first->second.push_back(m_next_grid_id);
@@ -554,6 +586,7 @@ GridManager::get_unique_grids(const std::vector<Point> &points)
 		}
 	    }
     }
+
     return results;
 }
 
@@ -891,8 +924,7 @@ write_nmg_region(nmgregion *nmg_region, const db_full_path *path,
     RT_CK_FULL_PATH(path);
 
     ConversionData &data = *static_cast<ConversionData *>(client_data);
-
-    AutoFreePtr<char> name(db_path_to_string(path));
+    const std::string name = AutoFreePtr<char>(db_path_to_string(path)).ptr;
 
     shell *vshell;
 
@@ -914,9 +946,10 @@ write_nmg_region(nmgregion *nmg_region, const db_full_path *path,
 	    char_color[0] = static_cast<unsigned char>(color[0] * 255.0 + 0.5);
 	    char_color[1] = static_cast<unsigned char>(color[1] * 255.0 + 0.5);
 	    char_color[2] = static_cast<unsigned char>(color[2] * 255.0 + 0.5);
-	    write_bot(data.m_writer, name.ptr, *bot, char_color);
+	    write_bot(data.m_writer, name, *bot, char_color);
 	} catch (const std::runtime_error &e) {
-	    bu_log("FAILURE: write_bot() failed on object '%s': %s\n", name.ptr, e.what());
+	    bu_log("FAILURE: write_bot() failed on object '%s': %s\n", name.c_str(),
+		   e.what());
 	}
 
 	internal.idb_meth->ft_ifree(&internal);
@@ -932,11 +965,10 @@ convert_leaf(db_tree_state *tree_state, const db_full_path *path,
     RT_CK_FULL_PATH(path);
     RT_CK_DB_INTERNAL(internal);
 
-    ConversionData &data = *static_cast<ConversionData *>(client_data);
-
     if (internal->idb_major_type != DB5_MAJORTYPE_BRLCAD)
 	return NULL;
 
+    ConversionData &data = *static_cast<ConversionData *>(client_data);
     const std::string name = AutoFreePtr<char>(db_path_to_string(path)).ptr;
     bool converted = false;
 
