@@ -520,10 +520,10 @@ bu_opt_desc_free_entry(struct bu_opt_desc *d)
 {
     if (!d) return;
     if (d->shortopt) bu_free((char *)d->shortopt, "shortopt");
-    if (d->longopt) bu_free((char *)d->longopt, "shortopt");
-    if (d->shortopt_doc) bu_free((char *)d->shortopt_doc, "shortopt");
-    if (d->longopt_doc) bu_free((char *)d->longopt_doc, "shortopt");
-    if (d->help_string) bu_free((char *)d->help_string, "shortopt");
+    if (d->longopt) bu_free((char *)d->longopt, "longopt");
+    if (d->shortopt_doc) bu_free((char *)d->shortopt_doc, "shortopt_doc");
+    if (d->longopt_doc) bu_free((char *)d->longopt_doc, "longopt_doc");
+    if (d->help_string) bu_free((char *)d->help_string, "help_string");
 }
 
 void
