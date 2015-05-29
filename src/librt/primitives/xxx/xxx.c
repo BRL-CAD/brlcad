@@ -355,7 +355,7 @@ rt_xxx_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
 
     BU_CK_EXTERNAL(ep);
     ep->ext_nbytes = SIZEOF_NETWORK_DOUBLE * ELEMENTS_PER_VECT;
-    ep->ext_buf = (void *)bu_calloc(1, ep->ext_nbytes, "xxx external");
+    ep->ext_buf = (uint8_t *)bu_calloc(1, ep->ext_nbytes, "xxx external");
 
     /* Since libwdb users may want to operate in units other than mm,
      * we offer the opportunity to scale the solid (to get it into mm)
