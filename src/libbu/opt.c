@@ -472,11 +472,11 @@ bu_opt_data_free_tbl(struct bu_ptbl *tbl)
 }
 
 const char *
-bu_opt_data_arg(struct bu_opt_data *d, int ind)
+bu_opt_data_arg(struct bu_opt_data *d, size_t ind)
 {
     if (!d) return NULL;
     if (d->args) {
-	if (ind > (int)(BU_PTBL_LEN(d->args) - 1)) return NULL;
+	if (ind > (BU_PTBL_LEN(d->args) - 1)) return NULL;
 	return (const char *)BU_PTBL_GET(d->args, ind);
     }
     return NULL;
@@ -515,8 +515,8 @@ bu_opt_desc_set(struct bu_opt_desc *d, int ind,
     d->help_string = help_str;
 }
 
-void
-bu_opt_desc_free(struct bu_opt_desc *d)
+HIDDEN void
+bu_opt_desc_free_entry(struct bu_opt_desc *d)
 {
     if (!d) return;
     if (d->shortopt) bu_free((char *)d->shortopt, "shortopt");
@@ -527,13 +527,13 @@ bu_opt_desc_free(struct bu_opt_desc *d)
 }
 
 void
-bu_opt_desc_free_tbl(struct bu_ptbl *tbl)
+bu_opt_desc_free(struct bu_ptbl *tbl)
 {
     size_t i;
     if (!tbl) return;
     for (i = 0; i < BU_PTBL_LEN(tbl); i++) {
 	struct bu_opt_desc *opt = (struct bu_opt_desc *)BU_PTBL_GET(tbl, i);
-	bu_opt_desc_free(opt);
+	bu_opt_desc_free_entry(opt);
     }
     bu_ptbl_free(tbl);
     BU_PUT(tbl, struct bu_ptbl);

@@ -63,36 +63,20 @@ struct bu_opt_desc {
 };
 #define BU_OPT_DESC_NULL {-1, 0, 0, NULL, NULL, NULL, NULL, NULL, NULL}
 
-/** Initialize a struct bu_opt_desc to BU_OPT_DESC_NULL */
-BU_EXPORT extern void bu_opt_desc_init(struct bu_opt_desc *d);
-
 /** Set the values in a struct bu_opt_desc */
-BU_EXPORT extern void bu_opt_desc_set(struct bu_opt_desc *d, int ind,
+BU_EXPORT extern void bu_opt_desc_add(struct bu_ptbl *dtbl, int ind,
 	size_t min, size_t max, const char *shortopt,
 	const char *longopt, bu_opt_arg_process_t arg_process,
 	const char *shortopt_doc, const char *longopt_doc, const char *help_str);
 
-/** Free an option description structure */
-BU_EXPORT extern void bu_opt_desc_free(struct bu_opt_desc *d);
-
+BU_EXPORT extern void bu_opt_desc_del(struct bu_ptbl *dtbl, int ind);
+BU_EXPORT extern void bu_opt_desc_del_name(struct bu_ptbl *dtbl, const char *name);
 /**
- * Most of the time bu_opt_desc structs that need to be freed will be in bu_ptbl
- * containers, so handle that case
+ *  If bu_opt_desc instances aren't part of static arrays, they'll
+ *  be inside a table.  This function frees them, but does not free
+ *  the bu_ptbl container.
  */
-BU_EXPORT extern void bu_opt_desc_free_tbl(struct bu_ptbl *tbl);
-
-#define BU_OPT_DESC_PTBL_INIT(_i, _ptbl) {\
-    int ptbl_cnt = 0; \
-    bu_ptbl_init(_ptbl, 8, "init table"); \
-    for (ptbl_cnt = 0; ptbl_cnt < _i; ptbl_cnt++) {\
-	struct bu_opt_desc *d; \
-	BU_GET(d, struct bu_opt_desc);\
-	bu_opt_desc_init(d); \
-	bu_ptbl_ins(_ptbl, (long *)d);\
-    } \
-}
-#define BU_OPT_DESC_GET_PTBL(_i, _ptbl) (struct bu_opt_desc *)(_ptbl)->buffer[_i]
-
+BU_EXPORT extern void bu_opt_desc_free(struct bu_ptbl *tbl);
 
 
 /**
@@ -106,24 +90,37 @@ struct bu_opt_data {
     void *user_data;  /* place for arg_process to stash data */
 };
 #define BU_OPT_DATA_NULL {NULL, 0, NULL, NULL, NULL}
-/** Initialize a bu_opt_data structure to BU_OPT_DATA_NULL */
+/** Initialize a bu_opt_data structure to BU_OPT_DATA_NULL
+ * TODO - does this need to be public? */
 BU_EXPORT extern void bu_opt_data_init(struct bu_opt_data *d);
 
 /**
  * Note - description objects pointed to by bu_opt_data strucures
  * are not freed by this function, since they may be multiply
- * referenced by many bu_opt_data struct instances */
+ * referenced by many bu_opt_data struct instances
+ *
+ * TODO - should this just take a table?  all practical
+ * cases will involve releasing the results of the parse step. */
 BU_EXPORT extern void bu_opt_data_free(struct bu_opt_data *d);
 
 /**
  * Most of the time bu_opt_data containers will be in bu_ptbl structs,
- * so handle that case */
+ * so handle that case
+ *
+ * TODO - collapse to just bu_opt_data_free on a table? */
 BU_EXPORT extern void bu_opt_data_free_tbl(struct bu_ptbl *t);
 
 /**
  * Convenience function for extracting args from a bu_opt_data container.
- * Returns NULL if the specified arg is not present. ind starts from 0. */
-BU_EXPORT extern const char *bu_opt_data_arg(struct bu_opt_data *d, int ind);
+ * Provided as an easy way to get either the first arg:
+ *
+ * bu_opt_data_arg(d, 0)
+ *
+ * when it is known that there is only one argument while also allowing
+ * for extraction of other args when multiples are present
+ *
+ * Returns NULL if the specified arg is not present. index starts from 0. */
+BU_EXPORT extern const char *bu_opt_data_arg(struct bu_opt_data *d, size_t ind);
 
 
 /**
@@ -152,7 +149,10 @@ BU_EXPORT extern const char *bu_opt_data_arg(struct bu_opt_data *d, int ind);
  *  bu_opt_parse(argc, argv, d1);
  */
 BU_EXPORT extern int bu_opt_parse(struct bu_ptbl **tbl, struct bu_vls *msgs, int ac, const char **argv, struct bu_opt_desc *ds);
-/** parse argv array defined as a space separated string */
+/**
+ * Option parse an argv array defined as a space separated string.  This
+ * is a convenience function that calls bu_opt_parse and also handles
+ * breaking str down into a proper argv array. */
 BU_EXPORT extern int bu_opt_parse_str(struct bu_ptbl **tbl, struct bu_vls *msgs, const char *str, struct bu_opt_desc *ds);
 
 
@@ -171,7 +171,11 @@ BU_EXPORT extern int bu_opt_parse_str(struct bu_ptbl **tbl, struct bu_vls *msgs,
  *  bu_opt_parse_ptbl(argc, argv, dtbl);
  */
 BU_EXPORT extern int bu_opt_parse_dtbl(struct bu_ptbl **tbl, struct bu_vls *msgs, int ac, const char **argv, struct bu_ptbl *dtbl);
-/** parse argv array defined as a space separated string */
+
+/**
+ * Option parse an argv array defined as a space separated string.  This
+ * is a convenience function that calls bu_opt_parse_dtbl and also handles
+ * breaking str down into a proper argv array. */
 BU_EXPORT extern int bu_opt_parse_str_dtbl(struct bu_ptbl **tbl, struct bu_vls *msgs, const char *str, struct bu_ptbl *dtbl);
 
 /**
@@ -184,7 +188,7 @@ BU_EXPORT extern int bu_opt_parse_str_dtbl(struct bu_ptbl **tbl, struct bu_vls *
  * of the input table before compacting if the user desires to examine the original
  * parsing data.
  */
-BU_EXPORT extern void bu_opt_compact(struct bu_ptbl *opts);
+BU_EXPORT extern void bu_opt_compact(struct bu_ptbl *results);
 
 
 /* Standard option validators - if a custom option argument
@@ -193,7 +197,9 @@ BU_EXPORT extern void bu_opt_compact(struct bu_ptbl *opts);
  * the user_data pointer in bu_opt_data will point to the results
  * of the string->[type] translation in order to allow a calling
  * program to use the int/long/etc. without having to repeat the
- * conversion */
+ * conversion.
+ *
+ * TODO - unimplemented */
 BU_EXPORT extern int bu_opt_arg_int(struct bu_vls *msg, struct bu_opt_data *data);
 BU_EXPORT extern int bu_opt_arg_long(struct bu_vls *msg, struct bu_opt_data *data);
 BU_EXPORT extern int bu_opt_arg_bool(struct bu_vls *msg, struct bu_opt_data *data);
@@ -207,15 +213,7 @@ BU_EXPORT extern int bu_opt_arg_string(struct bu_vls *msg, struct bu_opt_data *d
  * is set to 1.  A key value of -1 retrieves the bu_opt_data struct with the
  * unknown entries stored in its args table.
  */
-BU_EXPORT struct bu_opt_data *bu_opt_find(int key, struct bu_ptbl *opts);
-
-
-/**
- * If an option has a message string associated with it, this function will
- * get it.  This works for both valid and invalid opts, to allow for error
- * message retrieval.  If multiple instances of a key are present, the msg
- * from the last instance is returned. */
-BU_EXPORT const char *bu_opt_msg(int key, struct bu_ptbl *opts);
+BU_EXPORT struct bu_opt_data *bu_opt_find(int key, struct bu_ptbl *results);
 
 /**
  * Find and return a specific option from a bu_ptbl of options using an option
@@ -224,6 +222,15 @@ BU_EXPORT const char *bu_opt_msg(int key, struct bu_ptbl *opts);
  * unknown entries stored in its args table.
  */
 BU_EXPORT struct bu_opt_data *bu_opt_find_name(const char *name, struct bu_ptbl *opts);
+
+
+
+/**
+ * If an option has a message string associated with it, this function will
+ * get it.  This works for both valid and invalid opts, to allow for error
+ * message retrieval.  If multiple instances of a key are present, the msg
+ * from the last instance is returned. */
+BU_EXPORT const char *bu_opt_msg(int key, struct bu_ptbl *results);
 
 /**
  * If an option has a message string associated with it, this function will

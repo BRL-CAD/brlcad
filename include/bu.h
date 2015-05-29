@@ -78,6 +78,7 @@
 #include "./bu/malloc.h"
 #include "./bu/mapped_file.h"
 #include "./bu/mime.h"
+#include "./bu/opt.h"
 #include "./bu/parallel.h"
 #include "./bu/parse.h"
 #include "./bu/ptbl.h"
