@@ -1021,7 +1021,7 @@ f_type(struct db_plan_t *plan, struct db_node_t *db_node, struct db_i *dbip, str
     }
 
     if (rt_db_get_internal(&intern, dp, dbip, (fastf_t *)NULL, &rt_uniresource) < 0) return 0;
-    if (intern.idb_major_type != DB5_MAJORTYPE_BRLCAD || !intern.idb_meth->ft_label) {
+    if (intern.idb_major_type != DB5_MAJORTYPE_BRLCAD) {
 	rt_db_free_internal(&intern);
 	db_node->matched_filters = 0;
 	return 0;
