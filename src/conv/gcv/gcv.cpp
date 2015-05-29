@@ -29,180 +29,48 @@
 #include <iostream>
 
 #include "bu.h"
-#include "optionparser.h"
 
 
-struct GcvArgs: public option::Arg
-{
-    /* By default, unknown args are bad */
-    static option::ArgStatus Unknown(const option::Option& UNUSED(option), bool UNUSED(msg))
-    {
-	return option::ARG_ILLEGAL;
-    }
-    /* We may also want to require an arg */
-    static option::ArgStatus Required(const option::Option& option, bool UNUSED(msg))
-    {
-	if (!option.arg) return option::ARG_ILLEGAL;
-	return option::ARG_OK;
-    }
+/* Emulate a FASTGEN4 format option processer */
+enum fg4_opt_enums { FG4_WARN_DEFAULT_NAMES };
+struct bu_opt_desc fg4_opt_desc[2] = {
+    {FG4_WARN_DEFAULT_NAMES, 0, 0, "w",  "warn-default-names", NULL, "-w", "--warn-default-names", "File format of input file." },
+    BU_OPT_DESC_NULL
 };
-
-
-enum FAST4OptionIndex { FAST4_UNKNOWN, FAST4_WARN_DEFAULT_NAMES };
-
-const option::Descriptor Fast4Usage[] = {
-     { FAST4_UNKNOWN, 0, "", "",          option::Arg::Optional, "FASTGEN 4 format\n"},
-     { FAST4_WARN_DEFAULT_NAMES, 0, "w", "warn-default-names", option::Arg::None, "-w\t --warn-default-names\t File format of input file." },
-     { 0, 0, 0, 0, 0, 0 }
-};
-
-
-enum STLOptionIndex { STL_UNKNOWN, STL_UNITS };
-
-const option::Descriptor STLUsage[] = {
-     { STL_UNKNOWN, 0, "", "",          option::Arg::Optional, "STL format\n"},
-     { STL_UNITS, 0, "u", "units", GcvArgs::Required, "-u\t --units\t Units of input file." },
-     { 0, 0, 0, 0, 0, 0 }
-};
-
-
 
 void fast4_arg_process(const char *args) {
     if (!args) return;
-    char *input = bu_strdup(args);
-    char **argv = (char **)bu_calloc(strlen(args) + 1, sizeof(char *), "argv array");
-    int argc = bu_argv_from_string(argv, strlen(args), input);
+    struct bu_opt_data *d;
+    struct bu_ptbl *results;
 
-    option::Stats stats(Fast4Usage, argc, argv);
-    option::Option *options = (option::Option *)bu_calloc(stats.options_max, sizeof(option::Option), "options");
-    option::Option *buffer= (option::Option *)bu_calloc(stats.buffer_max, sizeof(option::Option), "options");
-    option::Parser parse(Fast4Usage, argc, argv, options, buffer);
-
-    if (options[FAST4_WARN_DEFAULT_NAMES]) {
-	bu_log("FASTGEN 4 opt: %s:%s\n", options[FAST4_WARN_DEFAULT_NAMES].name, options[FAST4_WARN_DEFAULT_NAMES].arg);
+    (void)bu_opt_parse_str(&results, NULL, args, fg4_opt_desc);
+    d = bu_opt_find(FG4_WARN_DEFAULT_NAMES, results);
+    if (d) {
+	bu_log("FASTGEN 4 opt: %s\n", d->name);
     }
 
-    bu_free(input, "input");
-    bu_free(options, "free options");
-    bu_free(buffer, "free buffer");
+    bu_opt_data_free_tbl(results);
 }
 
+/* Emulate a STL format option processer */
+enum stl_opt_enums { STL_UNITS };
+struct bu_opt_desc stl_opt_desc[2] = {
+    {STL_UNITS, 1, 1, "u",  "units", NULL, "-u unit", "--units unit", "Units of input file." },
+    BU_OPT_DESC_NULL
+};
 
 void stl_arg_process(const char *args) {
     if (!args) return;
-    char *input = bu_strdup(args);
-    char **argv = (char **)bu_calloc(strlen(args) + 1, sizeof(char *), "argv array");
-    int argc = bu_argv_from_string(argv, strlen(args), input);
+    struct bu_opt_data *d;
+    struct bu_ptbl *results;
 
-    option::Stats stats(STLUsage, argc, argv);
-    option::Option *options = (option::Option *)bu_calloc(stats.options_max, sizeof(option::Option), "options");
-    option::Option *buffer= (option::Option *)bu_calloc(stats.buffer_max, sizeof(option::Option), "options");
-    option::Parser parse(STLUsage, argc, argv, options, buffer);
-
-
-    if (options[STL_UNITS]) {
-	bu_log("STL opt: %s:%s\n", options[STL_UNITS].name, options[STL_UNITS].arg);
+    (void)bu_opt_parse_str(&results, NULL, args, stl_opt_desc);
+    d = bu_opt_find(STL_UNITS, results);
+    if (d) {
+	bu_log("STL opt: %s:%s\n", d->name, bu_opt_data_arg(d, 0));
     }
 
-    bu_free(input, "input");
-    bu_free(options, "free options");
-    bu_free(buffer, "free buffer");
-}
-
-
-
-struct TopLevelArg: public option::Arg
-{
-    /* At the top level, if we don't recognize the option, assume
-     * a format option parser at a lower level will and ignore it */
-    static option::ArgStatus Unknown(const option::Option& option, bool UNUSED(msg))
-    {
-	if (!option.arg) return option::ARG_NONE;
-	if (option.arg[0] == '-') return option::ARG_IGNORE;
-	return option::ARG_OK;
-    }
-     /* Help may or may not get a format argument */
-    static option::ArgStatus Help(const option::Option& option, bool UNUSED(msg))
-    {
-	if (!option.arg) return option::ARG_NONE;
-	if (option.arg[0] == '-') return option::ARG_IGNORE;
-	return option::ARG_OK;
-    }
-
-    /* Format specifiers, on the other hand, must be validated - that
-     * means that the options used at the top level for format specification
-     * will not be usable at any lower level */
-    static option::ArgStatus Format(const option::Option& option, bool msg)
-    {
-	int type_int = 0;
-	mime_model_t type = MIME_MODEL_UNKNOWN;
-	type_int = bu_file_mime(option.arg, MIME_MODEL);
-	type = (mime_model_t)type_int;
-	if (type == MIME_MODEL_UNKNOWN) {
-	    if (msg) bu_log("Unknown format %s supplied to %s\n",  option.arg, option.name);
-	    return option::ARG_ILLEGAL;
-	} else {
-	    return option::ARG_OK;
-	}
-    }
-};
-
-
-enum TopOptionIndex { UNKNOWN, HELP, IN_FORMAT, OUT_FORMAT, IN_OPT, OUT_OPT, BOTH_OPT };
-
-const option::Descriptor TopUsage[] = {
-     { UNKNOWN, 0, "", "",          TopLevelArg::Unknown, "USAGE: gcv [options] [fmt:]input [fmt:]output\n"},
-     { HELP,    0, "h", "help",     TopLevelArg::Help,  "-h\t --help [format]\t Print help and exit.  If a format is specified to --help, print help specific to that format" },
-     { IN_FORMAT , 0, "", "in-format", TopLevelArg::Format, "\t --in-format\t File format of input file." },
-     { OUT_FORMAT , 0, "", "out-format", TopLevelArg::Format, "\t --out-format\t File format of output file." },
-     { IN_OPT , 0, "", "in-<OPTION>", TopLevelArg::Unknown, "\t --in-<OPTION>\t Options to be passed only to the input handler." },
-     { OUT_OPT , 0, "", "out-<OPTION>", TopLevelArg::Unknown, "\t --out-<OPTION>\t Options to be passed only to the output handler." },
-     { BOTH_OPT , 0, "", "OPTION", TopLevelArg::Unknown, "-<O>\t --<OPTION>\t Non-prefixed options are passed to both input and output." },
-     { 0, 0, 0, 0, 0, 0 }
-};
-
-
-HIDDEN void
-reassemble_argstr(struct bu_vls *instr, struct bu_vls *outstr, option::Option *unknowns)
-{
-    for (option::Option* opt = unknowns; opt; opt = opt->next()) {
-	int input_only = 0;
-	int output_only = 0;
-	char *inputcpy = NULL;
-	if (!instr || !outstr) return;
-	inputcpy = bu_strdup(opt->name);
-	if (!bu_strncmp(inputcpy, "--in-", 5)) input_only = 1;
-	if (!bu_strncmp(inputcpy, "--out-", 5)) output_only = 1;
-	char *equal_pos = strchr(inputcpy, '=');
-	if (equal_pos) {
-	    struct bu_vls vopt = BU_VLS_INIT_ZERO;
-	    struct bu_vls varg = BU_VLS_INIT_ZERO;
-	    bu_vls_sprintf(&vopt, "%s", inputcpy);
-	    bu_vls_trunc(&vopt, -1 * strlen(equal_pos));
-	    bu_vls_sprintf(&varg, "%s", inputcpy);
-	    bu_vls_nibble(&varg, strlen(inputcpy) - strlen(equal_pos) + 1);
-	    if (!output_only) {
-		(bu_vls_strlen(&vopt) == 1) ? bu_vls_printf(instr, "-%s ", bu_vls_addr(&vopt)) : bu_vls_printf(instr, "%s ", bu_vls_addr(&vopt));
-		if (bu_vls_strlen(&varg)) bu_vls_printf(instr, "%s ", bu_vls_addr(&varg));
-	    }
-	    if (!input_only) {
-		(bu_vls_strlen(&vopt) == 1) ? bu_vls_printf(outstr, "-%s ", bu_vls_addr(&vopt)) : bu_vls_printf(outstr, "%s ", bu_vls_addr(&vopt));
-		if (bu_vls_strlen(&varg)) bu_vls_printf(outstr, "%s ", bu_vls_addr(&varg));
-	    }
-	    bu_vls_free(&vopt);
-	    bu_vls_free(&varg);
-	} else {
-	    if (!output_only) {
-		(strlen(opt->name) == 1) ? bu_vls_printf(instr, "-%s ", opt->name) : bu_vls_printf(instr, "%s ", opt->name);
-		if (opt->arg) bu_vls_printf(instr, "%s ", opt->arg);
-	    }
-	    if (!input_only) {
-		(strlen(opt->name) == 1) ? bu_vls_printf(outstr, "-%s ", opt->name) : bu_vls_printf(outstr, "%s ", opt->name);
-		if (opt->arg) bu_vls_printf(outstr, "%s ", opt->arg);
-	    }
-	}
-	bu_free(inputcpy, "input cpy");
-    }
+    bu_opt_data_free_tbl(results);
 }
 
 HIDDEN int
@@ -341,51 +209,114 @@ parse_model_string(struct bu_vls *format, struct bu_vls *log, const char *opt, c
     return (int)type;
 }
 
+int
+file_stat(struct bu_vls *UNUSED(msg), struct bu_opt_data *data)
+{
+    if (!data) return 0;
+    if (!data->args) {
+	data->valid = 0;
+	return 0;
+    }
+    if (!bu_file_exists(bu_opt_data_arg(data, 0), NULL)){
+	data->valid = 0;
+    }
+    return 0;
+}
+
+    int
+file_null(struct bu_vls *msg, struct bu_opt_data *data)
+{
+    if (!data) return 0;
+    if (!data->args) {
+	data->valid = 0;
+	return 0;
+    }
+    if (!bu_file_exists(bu_opt_data_arg(data, 0), NULL)){
+	data->valid = 0;
+	if (msg) bu_vls_sprintf(msg, "Error - file %s already exists!\n", bu_opt_data_arg(data, 0));
+    }
+    return 0;
+}
+
+int
+model_mime(struct bu_vls *UNUSED(msg), struct bu_opt_data *data)
+{
+    int type_int;
+    mime_model_t type = MIME_MODEL_UNKNOWN;
+    if (!data) return 0;
+    if (!data->args) {
+	data->valid = 0;
+	return 0;
+    }
+    type_int = bu_file_mime(bu_opt_data_arg(data, 0), MIME_MODEL);
+    type = (type_int < 0) ? MIME_MODEL_UNKNOWN : (mime_model_t)type_int;
+    if (type == MIME_MODEL_UNKNOWN) {
+	data->valid = 0;
+	return 0;
+    }
+    return 0;
+}
+
+
+#define gcv_help_str "Print help and exit.  If a format is specified to --help, print help specific to that format"
+enum gcv_opt_enums { GCV_HELP, IN_FILE, OUT_FILE, IN_FORMAT, OUT_FORMAT, IN_OPTS, OUT_OPTS };
+struct bu_opt_desc gcv_opt_desc[8] = {
+    {GCV_HELP,    0, 1, "h", "help",             NULL,          "-h [format]", "--help [format]",             gcv_help_str},
+    {IN_FILE ,    1, 1, "i", "input",            &(file_stat),  "-i file",     "--input file",                "Input file." },
+    {OUT_FILE,    1, 1, "o", "output",           &(file_null),  "-o file",     "--output file",               "Output file." },
+    {IN_FORMAT ,  1, 1, "",  "input-format",     &(model_mime), "",            "--input-format format",       "File format of input file." },
+    {OUT_FORMAT , 1, 1, "",  "output-format",    &(model_mime), "",            "--output-format format",      "File format of output file." },
+    {IN_OPTS ,    1, 1, "I", "input-only-opts",  NULL,          "-I \"[opts]\"", "--input-only-opts \"[opts]\"",  "Options to apply only while processing input file.  Quotes around the opts are always necessary, but brackets are only necessary when supplying a single option without arguments that would otherwise be interpreted as an argv entry by the shell, even with quotes.  Brackets will never hurt, and for robustness when scripting they should always be used." },
+    {OUT_OPTS,    1, 1, "O", "output-only-opts", NULL,          "-O \"[opts]\"", "--output-only-opts \"[opts]\"", "Options to apply only while preparing output file.  Quotes around the opts are always necessary, but brackets are only necessary when supplying a single option without arguments that would otherwise be interpreted as an argv entry by the shell, even with quotes.  Brackets will never hurt, and for robustness when scripting they should always be used." },
+    BU_OPT_DESC_NULL
+};
+
 
 int
 main(int ac, char **av)
 {
+    size_t i;
     int fmt = 0;
     int ret = 0;
-    int ac_offset = 0;
     const char *in_fmt = NULL;
     const char *out_fmt = NULL;
     mime_model_t in_type = MIME_MODEL_UNKNOWN;
     mime_model_t out_type = MIME_MODEL_UNKNOWN;
     struct bu_vls in_format = BU_VLS_INIT_ZERO;
+    struct bu_vls in_path_raw = BU_VLS_INIT_ZERO;
     struct bu_vls in_path = BU_VLS_INIT_ZERO;
     struct bu_vls out_format = BU_VLS_INIT_ZERO;
+    struct bu_vls out_path_raw = BU_VLS_INIT_ZERO;
     struct bu_vls out_path = BU_VLS_INIT_ZERO;
     struct bu_vls log = BU_VLS_INIT_ZERO;
     struct bu_vls input_opts = BU_VLS_INIT_ZERO;
     struct bu_vls output_opts = BU_VLS_INIT_ZERO;
+    struct bu_opt_data *d = NULL;
+    struct bu_ptbl *unknown_tbl = NULL;
+    struct bu_ptbl *results = NULL;
 
     ac-=(ac>0); av+=(ac>0); // skip program name argv[0] if present
-    ac_offset = (ac > 2) ? 2 : 0;  // The last two argv entries must always be the input and output paths
 
-    /* Handle anything else as options */
-    option::Stats stats(TopUsage, ac - ac_offset, av);
-    option::Option *options = (option::Option *)bu_calloc(stats.options_max, sizeof(option::Option), "options");
-    option::Option *buffer= (option::Option *)bu_calloc(stats.buffer_max, sizeof(option::Option), "options");
-    option::Parser parse(TopUsage, ac - ac_offset, av, options, buffer);
+    if (ac == 0) {
+	const char *help = bu_opt_describe(gcv_opt_desc, BU_OPT_ASCII, 30, 50);
+	bu_log("%s\n", help);
+	bu_free((char *)help, "help str");
+	// TODO - print some help
+	goto cleanup;
+    }
 
-    /* Now that we've parsed them, start using them */
-    if (options[HELP] || ac == 0) {
-	if (options[HELP].arg) {
-	    int help_type_int = bu_file_mime(options[HELP].arg, MIME_MODEL);
-	    switch (help_type_int) {
-		case MIME_MODEL_VND_FASTGEN:
-		    option::printUsage(std::cout, Fast4Usage);
-		    break;
-		case MIME_MODEL_STL:
-		    option::printUsage(std::cout, STLUsage);
-		    break;
-		default:
-		    option::printUsage(std::cout, TopUsage);
-		    break;
-	    }
+    (void)bu_opt_parse(&results, NULL, ac, (const char **)av, gcv_opt_desc);
+    bu_opt_compact(results);
+
+    /* First, see if help was supplied */
+    d = bu_opt_find(GCV_HELP, results);
+    if (d) {
+	const char *help_fmt = bu_opt_data_arg(d, 0);
+	if (help_fmt) {
+	    // TODO - generate some help based on format
 	} else {
-	    option::printUsage(std::cout, TopUsage);
+	    // TODO - generate some generic gcv help
+
 	    // TODO - figure out how to get this info from each plugin to construct this table
 	    // on the fly...
 	    bu_log("\nSupported formats:\n");
@@ -401,42 +332,62 @@ main(int ac, char **av)
 	    bu_log(" |    iges    |   Initial Graphics        |   Yes  |   No   |\n");
 	    bu_log(" |            |   Exchange Specification  |        |        |\n");
 	    bu_log(" |----------------------------------------------------------|\n");
+
 	}
 	goto cleanup;
     }
 
-    /* Any args that weren't top level args will get passed to the
-     * format specific arg processing routines, after we use the known
-     * top level options and the path inputs to determine what the file
-     * types in question are.  Steps:
-     *
-     * 1.  Reassemble the unknown args into strings. */
-    reassemble_argstr(&input_opts, &output_opts, options[UNKNOWN]);
-    if (bu_vls_strlen(&input_opts) > 0) bu_log("Unknown options (input): %s\n", bu_vls_addr(&input_opts));
-    if (bu_vls_strlen(&output_opts) > 0) bu_log("Unknown options (output): %s\n", bu_vls_addr(&output_opts));
-    /*
-     * 2.  Use bu_argv_from_string to create new
-     * arrays to be fed to the format specific option parsers.*/
+    /* TODO - Do a general check on option validity here - if anything fails, hault and
+     * report it */
 
-    /* TODO - determine whether we want to have a specific option prefix,
-     * such as in- and out-, to identify an option as specific to the
-     * input file format suboption parser only.  i.e.:
-     *
-     * --in-tol=1.0  -> --tol=1.0 to the input file's suboptions only
-     * --out-tol=2.0 -> --tol=2.0 to the input file's suboptions only
-     * --tol=1.5     -> --tol=1.5 to both input and output suboptions
-     *
-     *  consistent with top level --in-format and --out-format options
-     *
-     */
+
+    /* Did we get explicit options for an input and/or output file? */
+    d = bu_opt_find(IN_FILE, results);
+    if (d) bu_vls_sprintf(&in_path_raw, "%s", bu_opt_data_arg(d, 0));
+    d = bu_opt_find(OUT_FILE, results);
+    if (d) bu_vls_sprintf(&out_path_raw, "%s", bu_opt_data_arg(d, 0));
+
+    /* If not specified explicitly with -i or -o, the input and output paths must always
+     * be the last two arguments supplied */
+    d = bu_opt_find(-1, results);
+    if (d) {
+	unknown_tbl = d->args;
+	bu_vls_sprintf(&in_path_raw, "%s", (const char *)BU_PTBL_GET(unknown_tbl, BU_PTBL_LEN(unknown_tbl) - 2));
+	bu_vls_sprintf(&out_path_raw, "%s", (const char *)BU_PTBL_GET(unknown_tbl, BU_PTBL_LEN(unknown_tbl) - 1));
+    }
+
+    /* Any unknown strings not otherwise processed are passed to both input and output.
+     * These are deliberately placed at the beginning of the input strings, so any
+     * input/output specific options have a chance to override them. */
+    if (unknown_tbl) {
+	for (i = 0; i < BU_PTBL_LEN(unknown_tbl) - 2; i++) {
+	    bu_vls_printf(&input_opts, " %s ", (const char *)BU_PTBL_GET(unknown_tbl, i));
+	    bu_vls_printf(&output_opts, " %s ", (const char *)BU_PTBL_GET(unknown_tbl, i));
+	}
+	if (bu_vls_strlen(&input_opts) > 0) bu_log("Unknown options (input): %s\n", bu_vls_addr(&input_opts));
+	if (bu_vls_strlen(&output_opts) > 0) bu_log("Unknown options (output): %s\n", bu_vls_addr(&output_opts));
+    }
+
+    /* If we have input and/or output specific options, append them now */
+    d = bu_opt_find(IN_OPTS, results);
+    if (d) {
+	bu_vls_printf(&input_opts, "%s", bu_opt_data_arg(d, 0));
+	if (bu_vls_strlen(&input_opts) > 0) bu_log("Input only opts: %s\n", bu_opt_data_arg(d, 0));
+    }
+    d = bu_opt_find(OUT_OPTS, results);
+    if (d) {
+	bu_vls_printf(&output_opts, "%s", bu_opt_data_arg(d, 0));
+	if (bu_vls_strlen(&output_opts) > 0) bu_log("Output only opts: %s\n", bu_opt_data_arg(d, 0));
+    }
+
 
     /* See if we have input and output files specified */
-    if (!extract_path(&in_path, av[ac-2])) {
-	bu_vls_printf(&log, "Error: no input path identified: %s\n", av[ac-2]);
+    if (!extract_path(&in_path, bu_vls_addr(&in_path_raw))) {
+	bu_vls_printf(&log, "Error: no input path identified: %s\n", bu_vls_addr(&in_path_raw));
 	ret = 1;
     }
-    if (!extract_path(&out_path, av[ac-1])) {
-	bu_vls_printf(&log, "Error: no output path identified: %s\n", av[ac-1]);
+    if (!extract_path(&out_path, bu_vls_addr(&out_path_raw))) {
+	bu_vls_printf(&log, "Error: no output path identified: %s\n", bu_vls_addr(&in_path_raw));
 	ret = 1;
     }
 
@@ -447,8 +398,11 @@ main(int ac, char **av)
     }
 
     /* Find out what input file type we are dealing with */
-    if (options[IN_FORMAT]) {
-	in_fmt = options[IN_FORMAT].arg;
+
+    /* If we have input and/or output specific options, append them now */
+    d = bu_opt_find(IN_FORMAT, results);
+    if (d) {
+	in_fmt = bu_opt_data_arg(d, 0);
     } else {
 	/* If we aren't overridden by an option, it's worth doing file
 	 * introspection to see if the file contents identify the input
@@ -457,13 +411,14 @@ main(int ac, char **av)
 	/* fake type introspection for testing: */
 	//bu_vls_sprintf(&in_format, "step");
     }
-    fmt = parse_model_string(&in_format, &log, in_fmt, av[ac-2]);
+    fmt = parse_model_string(&in_format, &log, in_fmt, bu_vls_addr(&in_path_raw));
     in_type = (fmt < 0) ? MIME_MODEL_UNKNOWN : (mime_model_t)fmt;
     in_fmt = NULL;
 
     /* Identify output file type */
-    if (options[OUT_FORMAT]) out_fmt = options[OUT_FORMAT].arg;
-    fmt = parse_model_string(&out_format, &log, out_fmt, av[ac-1]);
+    d = bu_opt_find(OUT_FORMAT, results);
+    if (d) out_fmt = bu_opt_data_arg(d, 0);
+    fmt = parse_model_string(&out_format, &log, out_fmt, bu_vls_addr(&out_path_raw));
     out_type = (fmt < 0) ? MIME_MODEL_UNKNOWN : (mime_model_t)fmt;
     out_fmt = NULL;
 
@@ -517,8 +472,6 @@ cleanup:
     if (bu_vls_strlen(&log) > 0) bu_log("%s", bu_vls_addr(&log));
     if (in_fmt) bu_free((char *)in_fmt, "input format string");
     if (out_fmt) bu_free((char *)out_fmt, "output format string");
-    bu_free(options, "free options");
-    bu_free(buffer, "free buffer");
     bu_vls_free(&in_format);
     bu_vls_free(&in_path);
     bu_vls_free(&out_format);
@@ -526,6 +479,7 @@ cleanup:
     bu_vls_free(&log);
     bu_vls_free(&input_opts);
     bu_vls_free(&output_opts);
+    bu_opt_data_free_tbl(results);
 
     return ret;
 }

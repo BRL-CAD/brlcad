@@ -18,6 +18,7 @@ set(bu_headers
   malloc.h
   mapped_file.h
   mime.h
+  opt.h
   parallel.h
   parse.h
   path.h

@@ -74,6 +74,7 @@ set(LIBBU_SOURCES
   ${MIME_C_FILE}
   mread.c
   observer.c
+  opt.c
   parallel.c
   parse.c
   path.c

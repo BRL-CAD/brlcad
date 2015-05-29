@@ -430,6 +430,48 @@ add_test(NAME bu_badmagic_null_ptr    COMMAND tester_bu_badmagic 3)
 add_test(NAME bu_badmagic_misaligned  COMMAND tester_bu_badmagic 4)
 
 #
+#  *********** opt.c tests ************
+#
+
+BRLCAD_ADDEXEC(tester_bu_opt opt.c libbu NO_INSTALL)
+add_test(NAME bu_opt_0    COMMAND tester_bu_opt 0)
+add_test(NAME bu_opt_1_00 COMMAND tester_bu_opt 1)
+add_test(NAME bu_opt_1_01 COMMAND tester_bu_opt 1 -v1)
+add_test(NAME bu_opt_1_02 COMMAND tester_bu_opt 1 -v 1)
+add_test(NAME bu_opt_1_03 COMMAND tester_bu_opt 1 -v=1)
+add_test(NAME bu_opt_1_04 COMMAND tester_bu_opt 1 --v 1)
+add_test(NAME bu_opt_1_05 COMMAND tester_bu_opt 1 --v=1)
+add_test(NAME bu_opt_1_06 COMMAND tester_bu_opt 1 --verbosity 1)
+add_test(NAME bu_opt_1_07 COMMAND tester_bu_opt 1 --verbosity=1)
+add_test(NAME bu_opt_1_08 COMMAND tester_bu_opt 1 --verbosity 4)
+add_test(NAME bu_opt_1_09 COMMAND tester_bu_opt 1 --verbosity=4)
+add_test(NAME bu_opt_1_10 COMMAND tester_bu_opt 1 -h)
+add_test(NAME bu_opt_1_11 COMMAND tester_bu_opt 1 -?)
+add_test(NAME bu_opt_1_12 COMMAND tester_bu_opt 1 --help)
+add_test(NAME bu_opt_1_13 COMMAND tester_bu_opt 1 --help=4)
+add_test(NAME bu_opt_1_14 COMMAND tester_bu_opt 1 -?4)
+add_test(NAME bu_opt_1_15 COMMAND tester_bu_opt 1 -? 4)
+add_test(NAME bu_opt_1_16 COMMAND tester_bu_opt 1 -?=4)
+add_test(NAME bu_opt_1_17 COMMAND tester_bu_opt 1 --?4)
+add_test(NAME bu_opt_1_18 COMMAND tester_bu_opt 1 --? 4)
+add_test(NAME bu_opt_1_19 COMMAND tester_bu_opt 1 --?=4)
+add_test(NAME bu_opt_2_00 COMMAND tester_bu_opt 2 -c)
+add_test(NAME bu_opt_2_01 COMMAND tester_bu_opt 2 --color)
+add_test(NAME bu_opt_2_02 COMMAND tester_bu_opt 2 --color 200/10/30)
+add_test(NAME bu_opt_2_03 COMMAND tester_bu_opt 2 --color 200/10/30 35 33)
+add_test(NAME bu_opt_2_04 COMMAND tester_bu_opt 2 --color 200 10 30)
+add_test(NAME bu_opt_2_05 COMMAND tester_bu_opt 2 --color 200 10 30 35 33)
+add_test(NAME bu_opt_2_06 COMMAND tester_bu_opt 2 --color file 200 35 33)
+add_test(NAME bu_opt_2_07 COMMAND tester_bu_opt 2 -c 200/10/30)
+add_test(NAME bu_opt_2_08 COMMAND tester_bu_opt 2 -c 200/10/30 35 33)
+add_test(NAME bu_opt_2_09 COMMAND tester_bu_opt 2 -c 200 10 30)
+add_test(NAME bu_opt_2_10 COMMAND tester_bu_opt 2 -c 200 10 30 35 33)
+add_test(NAME bu_opt_2_11 COMMAND tester_bu_opt 2 -c file 200 35 33)
+add_test(NAME bu_opt_2_12 COMMAND tester_bu_opt 2 --color=200 10 30)
+add_test(NAME bu_opt_2_13 COMMAND tester_bu_opt 2 --color=200/10/30)
+add_test(NAME bu_opt_2_14 COMMAND tester_bu_opt 2 --color=200 10 30 file)
+
+#
 #  *********** date-time.c tests ************
 #
 
