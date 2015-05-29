@@ -62,7 +62,7 @@ char *in_file = NULL;
 static const char usage[] = "\
 Usage: pix-bw [-s squaresize] [-w width] [-n height]\n\
               [ [-e ntsc|crt] [[-R red_weight] [-G green_weight] [-B blue_weight]] ]\n\
-              [-o out_file.bw] [file.pix] [> out_file.bw]\n";
+              [-o out_file.bw] [[<] file.pix] [> out_file.bw]\n";
 
 int
 get_args(int argc, char **argv)
