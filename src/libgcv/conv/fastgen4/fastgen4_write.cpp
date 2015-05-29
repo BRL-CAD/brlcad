@@ -165,13 +165,8 @@ FastgenWriter::Record::non_zero(fastf_t value)
     std::string result = truncate_float(value);
 
     if (result.find_first_not_of("-0.") == std::string::npos) {
-	if (result.at(0) == '-')
-	    result = "-0.0";
-	else
-	    result = "0.0";
-
-	result.append(FIELD_WIDTH - result.size() - 1, '0');
-	result.push_back('1');
+	result.resize(FIELD_WIDTH, '0');
+	result.at(result.size() - 1) = '1';
     }
 
     return operator<<(result);
