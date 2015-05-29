@@ -472,7 +472,7 @@ public:
 
 private:
     struct FloatFieldComparator {
-	bool operator()(const Point &lhs, const Point &rhs);
+	bool operator()(const Point &lhs, const Point &rhs) const;
     };
 
     typedef std::pair<std::map<Point, std::vector<std::size_t>, FloatFieldComparator>::iterator, bool>
@@ -484,8 +484,7 @@ private:
 };
 
 
-inline bool GridManager::FloatFieldComparator::operator()(const Point &lhs,
-	const Point &rhs)
+inline bool GridManager::FloatFieldComparator::operator()(const Point &lhs, const Point &rhs) const
 {
 #define COMPARE(a, b) do { if ((a) != (b)) return (a) < (b); } while (false)
 #define COMPARE_TRUNC(a, b) do { \
@@ -555,6 +554,7 @@ GridManager::get_unique_grids(const std::vector<Point> &points)
 		}
 	    }
     }
+    return results;
 }
 
 
