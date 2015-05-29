@@ -77,13 +77,12 @@ public:
     ~FastgenWriter();
 
     void write_comment(const std::string &value);
+    void write_section_color(std::size_t section_id, const unsigned char *color);
 
     std::pair<std::size_t, std::size_t> take_next_section_id();
 
 
 private:
-    friend class Section;
-
     static const std::size_t MAX_GROUP_ID = 49;
     static const std::size_t MAX_SECTION_ID = 999;
 
@@ -240,18 +239,30 @@ FastgenWriter::write_comment(const std::string &value)
 }
 
 
+void
+FastgenWriter::write_section_color(std::size_t section_id,
+				   const unsigned char *color)
+{
+    m_colors_ostream << section_id << ' '
+		     << section_id << ' '
+		     << static_cast<unsigned>(color[0]) << ' '
+		     << static_cast<unsigned>(color[1]) << ' '
+		     << static_cast<unsigned>(color[2]) << '\n';
+}
+
+
 class Point
 {
 public:
     Point()
     {
-	VSETALL(m_point, 0.0);
+	VSETALL(*this, 0.0);
     }
 
 
     Point(const fastf_t *values)
     {
-	VMOVE(m_point, values);
+	VMOVE(*this, values);
     }
 
 
@@ -481,7 +492,6 @@ Section::Section(const std::string &name, bool volume_mode) :
 {}
 
 
-inline
 Section::~Section()
 {
     for (std::vector<Geometry *>::iterator it = m_geometry.begin();
@@ -521,13 +531,8 @@ Section::write(FastgenWriter &writer, const unsigned char *color) const
     FastgenWriter::Record(writer) << "SECTION" << id.first << id.second <<
 				  (m_volume_mode ? 2 : 1);
 
-    if (color) {
-	writer.m_colors_ostream << id.second << ' '
-				<< id.second << ' '
-				<< static_cast<unsigned>(color[0]) << ' '
-				<< static_cast<unsigned>(color[1]) << ' '
-				<< static_cast<unsigned>(color[2]) << '\n';
-    }
+    if (color)
+	writer.write_section_color(id.second, color);
 
     m_grid_manager.write(writer);
     std::size_t component_id = m_grid_manager.get_max_id() + 1;
@@ -546,10 +551,8 @@ public:
     Line(Section &section, const std::string &name, const Point &point_a,
 	 const Point &point_b, fastf_t thickness, fastf_t radius);
 
-
 protected:
     virtual void write_to_section(FastgenWriter &writer, std::size_t &id) const;
-
 
 private:
     std::size_t m_grid1, m_grid2;
@@ -603,10 +606,8 @@ public:
     Sphere(Section &section, const std::string &name, const Point &center,
 	   fastf_t thickness, fastf_t radius);
 
-
 protected:
     virtual void write_to_section(FastgenWriter &writer, std::size_t &id) const;
-
 
 private:
     const std::size_t m_grid1;
@@ -643,10 +644,8 @@ public:
 	 const Point &point_b, fastf_t radius_outer1, fastf_t radius_outer2,
 	 fastf_t radius_inner1, fastf_t radius_inner2);
 
-
 protected:
     virtual void write_to_section(FastgenWriter &writer, std::size_t &id) const;
-
 
 private:
     std::size_t m_grid1, m_grid2;
@@ -684,8 +683,7 @@ Section::Cone::write_to_section(FastgenWriter &writer, std::size_t &id) const
     FastgenWriter::Record(writer) << "CCONE2" << id << 0 << m_grid1 << m_grid2 << ""
 				  << "" << "" << m_ro1 * FastgenWriter::INCHES_PER_MM << ++id;
     FastgenWriter::Record(writer) << id << m_ro2 * FastgenWriter::INCHES_PER_MM <<
-				  m_ri1 *
-				  FastgenWriter::INCHES_PER_MM << m_ri2 * FastgenWriter::INCHES_PER_MM;
+				  m_ri1 * FastgenWriter::INCHES_PER_MM << m_ri2 * FastgenWriter::INCHES_PER_MM;
 }
 
 
@@ -696,10 +694,8 @@ public:
 	     const Point &point_b, const Point &point_c, fastf_t thickness,
 	     bool grid_centered);
 
-
 protected:
     virtual void write_to_section(FastgenWriter &writer, std::size_t &id) const;
-
 
 private:
     std::size_t m_grid1, m_grid2, m_grid3;
@@ -750,10 +746,8 @@ public:
     Hexahedron(Section &section, const std::string &name,
 	       const fastf_t points[8][3]);
 
-
 protected:
     virtual void write_to_section(FastgenWriter &writer, std::size_t &id) const;
-
 
 private:
     std::vector<std::size_t> m_grids;
@@ -794,12 +788,9 @@ Section::Hexahedron::write_to_section(FastgenWriter &writer,
 
 
 HIDDEN void
-write_bot(FastgenWriter &writer, const std::string &name,
-	  const rt_bot_internal &bot, const unsigned char *color = NULL)
+write_bot(Section &section, const rt_bot_internal &bot)
 {
     RT_BOT_CK_MAGIC(&bot);
-
-    Section section(name, bot.mode == RT_BOT_SOLID);
 
     for (std::size_t i = 0; i < bot.num_faces; ++i) {
 	fastf_t thickness = 1.0;
@@ -822,8 +813,6 @@ write_bot(FastgenWriter &writer, const std::string &name,
 	section.add(new Section::Triangle(section, "", v1, v2, v3, thickness,
 					  grid_centered));
     }
-
-    section.write(writer, color);
 }
 
 
@@ -1034,6 +1023,7 @@ convert_primitive(ConversionData &data, const rt_db_internal &internal,
 
 	    point_t v2;
 	    VADD2(v2, cline.v, cline.h);
+
 	    Section section(name, true);
 	    section.add(new Section::Line(section, name, cline.v, v2, cline.thickness,
 					  cline.radius));
@@ -1079,6 +1069,7 @@ convert_primitive(ConversionData &data, const rt_db_internal &internal,
 
 	    point_t v2;
 	    VADD2(v2, tgc.v, tgc.h);
+
 	    Section section(new_name, true);
 	    section.add(new Section::Cone(section, name, tgc.v, v2, ro1, ro2, ri1, ri2));
 	    section.write(data.m_writer);
@@ -1098,7 +1089,10 @@ convert_primitive(ConversionData &data, const rt_db_internal &internal,
 	case ID_BOT: {
 	    const rt_bot_internal &bot = *static_cast<rt_bot_internal *>(internal.idb_ptr);
 	    RT_BOT_CK_MAGIC(&bot);
-	    write_bot(data.m_writer, name, bot);
+
+	    Section section(name, bot.mode == RT_BOT_SOLID);
+	    write_bot(section, bot);
+	    section.write(data.m_writer);
 	    break;
 	}
 
@@ -1141,7 +1135,9 @@ write_nmg_region(nmgregion *nmg_region, const db_full_path *path,
 	    char_color[0] = static_cast<unsigned char>(color[0] * 255.0 + 0.5);
 	    char_color[1] = static_cast<unsigned char>(color[1] * 255.0 + 0.5);
 	    char_color[2] = static_cast<unsigned char>(color[2] * 255.0 + 0.5);
-	    write_bot(data.m_writer, name, *bot, char_color);
+	    Section section(name, bot->mode == RT_BOT_SOLID);
+	    write_bot(section, *bot);
+	    section.write(data.m_writer, char_color);
 	} catch (const std::runtime_error &e) {
 	    bu_log("FAILURE: write_bot() failed on object '%s': %s\n", name.c_str(),
 		   e.what());
