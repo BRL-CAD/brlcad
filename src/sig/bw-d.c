@@ -55,6 +55,9 @@ main(int argc, char **argv)
     double scale = 1.0;
     size_t ret;
 
+    if (argc == 1 && isatty(fileno(stdin)))
+	printusage();
+
     if (BU_STR_EQUAL(argv[1], "-h") || BU_STR_EQUAL(argv[1], "-?"))
 	printusage();
 
