@@ -110,6 +110,14 @@ BU_EXPORT extern void bu_opt_data_free(struct bu_opt_data *d);
  * TODO - collapse to just bu_opt_data_free on a table? */
 BU_EXPORT extern void bu_opt_data_free_tbl(struct bu_ptbl *t);
 
+
+/**
+ * Print a table of bu_opt_data structures.  Caller
+ * is responsible for freeing return string. */
+BU_EXPORT extern void bu_opt_data_print(const char *title, struct bu_ptbl *data);
+
+
+
 /**
  * Convenience function for extracting args from a bu_opt_data container.
  * Provided as an easy way to get either the first arg:
@@ -213,7 +221,7 @@ BU_EXPORT extern int bu_opt_arg_string(struct bu_vls *msg, struct bu_opt_data *d
  * is set to 1.  A key value of -1 retrieves the bu_opt_data struct with the
  * unknown entries stored in its args table.
  */
-BU_EXPORT struct bu_opt_data *bu_opt_find(int key, struct bu_ptbl *results);
+BU_EXPORT extern struct bu_opt_data *bu_opt_find(int key, struct bu_ptbl *results);
 
 /**
  * Find and return a specific option from a bu_ptbl of options using an option
@@ -221,7 +229,7 @@ BU_EXPORT struct bu_opt_data *bu_opt_find(int key, struct bu_ptbl *results);
  * is set to 1. A NULL value passed in for name retrieves the bu_opt_data struct with the
  * unknown entries stored in its args table.
  */
-BU_EXPORT struct bu_opt_data *bu_opt_find_name(const char *name, struct bu_ptbl *opts);
+BU_EXPORT extern struct bu_opt_data *bu_opt_find_name(const char *name, struct bu_ptbl *opts);
 
 
 
@@ -230,14 +238,14 @@ BU_EXPORT struct bu_opt_data *bu_opt_find_name(const char *name, struct bu_ptbl 
  * get it.  This works for both valid and invalid opts, to allow for error
  * message retrieval.  If multiple instances of a key are present, the msg
  * from the last instance is returned. */
-BU_EXPORT const char *bu_opt_msg(int key, struct bu_ptbl *results);
+BU_EXPORT extern const char *bu_opt_msg(int key, struct bu_ptbl *results);
 
 /**
  * If an option has a message string associated with it, this function will
  * get it.  This works for both valid and invalid opts, to allow for error
  * message retrieval.  If multiple instances of a name are present, the msg
  * from the last instance is returned. */
-BU_EXPORT const char *bu_opt_msg_name(const char *name, struct bu_ptbl *opts);
+BU_EXPORT extern const char *bu_opt_msg_name(const char *name, struct bu_ptbl *opts);
 
 
 /** Output format options for bu_opt */
@@ -281,6 +289,9 @@ struct bu_opt_desc_opts {
 
 BU_EXPORT extern const char *bu_opt_describe(struct bu_opt_desc *ds, struct bu_opt_desc_opts *settings);
 BU_EXPORT extern const char *bu_opt_describe_tbl(struct bu_ptbl *dtbl, struct bu_opt_desc_opts *settings);
+
+
+
 
 
 /** @} */

@@ -32,43 +32,50 @@
 
 
 /* Emulate a FASTGEN4 format option processer */
-enum fg4_opt_enums { FG4_WARN_DEFAULT_NAMES };
-struct bu_opt_desc fg4_opt_desc[2] = {
-    {FG4_WARN_DEFAULT_NAMES, 0, 0, "w",  "warn-default-names", NULL, "-w", "--warn-default-names", "File format of input file." },
+enum fg4_opt_enums { FG4_TOL, FG4_WARN_DEFAULT_NAMES };
+struct bu_opt_desc fg4_opt_desc[3] = {
+    {FG4_TOL,                1, 1, "t",  "tol",                NULL, "-t tol", "--tol tol",            "Dimensional tolerance." },
+    {FG4_WARN_DEFAULT_NAMES, 0, 0, "w",  "warn-default-names", NULL, "-w",     "--warn-default-names", "File format of input file." },
     BU_OPT_DESC_NULL
 };
 
 void fast4_arg_process(const char *args) {
-    if (!args) return;
     struct bu_opt_data *d;
     struct bu_ptbl *results;
+    if (!args) return;
 
     (void)bu_opt_parse_str(&results, NULL, args, fg4_opt_desc);
     d = bu_opt_find(FG4_WARN_DEFAULT_NAMES, results);
     if (d) {
-	bu_log("FASTGEN 4 opt: %s\n", d->name);
+	bu_log("FASTGEN 4 opt found: %s\n", d->name);
     }
+
+    bu_opt_data_print("FASTGEN4 option parsing results:", results);
 
     bu_opt_data_free_tbl(results);
 }
 
 /* Emulate a STL format option processer */
-enum stl_opt_enums { STL_UNITS };
-struct bu_opt_desc stl_opt_desc[2] = {
+enum stl_opt_enums { STL_TOL, STL_UNITS };
+struct bu_opt_desc stl_opt_desc[3] = {
+    {STL_TOL,   1, 1, "t",  "tol",   NULL, "-t tol",  "--tol tol",    "Dimensional tolerance." },
     {STL_UNITS, 1, 1, "u",  "units", NULL, "-u unit", "--units unit", "Units of input file." },
     BU_OPT_DESC_NULL
 };
 
 void stl_arg_process(const char *args) {
-    if (!args) return;
     struct bu_opt_data *d;
     struct bu_ptbl *results;
+    if (!args) return;
 
     (void)bu_opt_parse_str(&results, NULL, args, stl_opt_desc);
     d = bu_opt_find(STL_UNITS, results);
     if (d) {
-	bu_log("STL opt: %s:%s\n", d->name, bu_opt_data_arg(d, 0));
+	bu_log("STL opt found: %s:%s\n", d->name, bu_opt_data_arg(d, 0));
     }
+
+    bu_opt_data_print("STL option parsing results:", results);
+
 
     bu_opt_data_free_tbl(results);
 }

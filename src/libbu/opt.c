@@ -663,7 +663,52 @@ bu_opt_describe(struct bu_opt_desc *ds, struct bu_opt_desc_opts *settings)
     return finalized;
 }
 
-
+void
+bu_opt_data_print(const char *title, struct bu_ptbl *data)
+{
+    size_t i = 0;
+    size_t j = 0;
+    int offset_1 = 3;
+    struct bu_vls log = BU_VLS_INIT_ZERO;
+    if (!data || BU_PTBL_LEN(data) == 0) return;
+    if (title) {
+	bu_vls_sprintf(&log, "%s\n", title);
+    } else {
+	bu_vls_sprintf(&log, "Options:\n");
+    }
+    for (i = 0; i < BU_PTBL_LEN(data); i++) {
+	struct bu_opt_data *d = (struct bu_opt_data *)BU_PTBL_GET(data, i);
+	if (d->name) {
+	    bu_vls_printf(&log, "%*s%s", offset_1, " ", d->name);
+	    if (d->valid) {
+		bu_vls_printf(&log, "\t(valid)");
+	    } else {
+		bu_vls_printf(&log, "\t(invalid)");
+	    }
+	    if (d->desc && d->desc->arg_cnt_max > 0) {
+		if (d->args && BU_PTBL_LEN(d->args) > 0) {
+		    bu_vls_printf(&log, ": ");
+		    for (j = 0; j < BU_PTBL_LEN(d->args) - 1; j++) {
+			bu_vls_printf(&log, "%s, ", bu_opt_data_arg(d, j));
+		    }
+		    bu_vls_printf(&log, "%s\n", bu_opt_data_arg(d, BU_PTBL_LEN(d->args) - 1));
+		}
+	    } else {
+		bu_vls_printf(&log, "\n");
+	    }
+	} else {
+	    bu_vls_printf(&log, "%*s(unknown): ", offset_1, " ", d->name);
+	    if (d->args && BU_PTBL_LEN(d->args) > 0) {
+		for (j = 0; j < BU_PTBL_LEN(d->args) - 1; j++) {
+		    bu_vls_printf(&log, "%s ", bu_opt_data_arg(d, j));
+		}
+		bu_vls_printf(&log, "%s\n", bu_opt_data_arg(d, BU_PTBL_LEN(d->args) - 1));
+	    }
+	}
+    }
+    bu_log("%s", bu_vls_addr(&log));
+    bu_vls_free(&log);
+}
 
 
 /*
