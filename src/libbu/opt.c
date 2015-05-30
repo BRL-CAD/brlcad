@@ -542,7 +542,7 @@ bu_opt_desc_free(struct bu_ptbl *tbl)
 HIDDEN void
 wrap_help(struct bu_vls *help, int indent, int offset, int len)
 {
-    int i, sc = 0;
+    int i = 0;
     char *input = NULL;
     char **argv = NULL;
     int argc = 0;
@@ -558,8 +558,7 @@ wrap_help(struct bu_vls *help, int indent, int offset, int len)
     for (i = 0; i < argc; i++) {
 	int avl = strlen(argv[i]);
 	if ((int)bu_vls_strlen(&working) + avl + 1 > len) {
-	    bu_vls_printf(&new_help, "%s\n", bu_vls_addr(&working));
-	    for (sc = 0; sc < offset+indent; sc++) bu_vls_putc(&new_help, 32);
+	    bu_vls_printf(&new_help, "%s\n%*s", bu_vls_addr(&working), offset+indent, " ");
 	    bu_vls_trunc(&working, 0);
 	}
 	bu_vls_printf(&working, "%s ", argv[i]);
@@ -578,7 +577,6 @@ bu_opt_describe(struct bu_opt_desc *ds, struct bu_opt_desc_opts *settings)
 {
     size_t i = 0;
     size_t j = 0;
-    int s = 0;
     size_t opt_cnt = 0;
     int offset = 2;
     int opt_cols = 28;
@@ -616,8 +614,7 @@ bu_opt_describe(struct bu_opt_desc *ds, struct bu_opt_desc_opts *settings)
 		    int new_len = strlen(d->shortopt_doc);
 		    if (new_len > 0) {
 			if ((int)bu_vls_strlen(&opts) + new_len + offset + 2 > opt_cols + desc_cols) {
-			    for (s = 0; s < offset; s++) bu_vls_putc(&description, 32);
-			    bu_vls_printf(&description, "%s\n", bu_vls_addr(&opts));
+			    bu_vls_printf(&description, "%*s%s\n", offset, " ", bu_vls_addr(&opts));
 			    bu_vls_sprintf(&opts, "%s, ", d->shortopt_doc);
 			} else {
 			    bu_vls_printf(&opts, "%s, ", d->shortopt_doc);
@@ -634,8 +631,7 @@ bu_opt_describe(struct bu_opt_desc *ds, struct bu_opt_desc_opts *settings)
 		    int new_len = strlen(d->longopt_doc);
 		    if (new_len > 0) {
 			if ((int)bu_vls_strlen(&opts) + new_len + offset + 2 > opt_cols + desc_cols) {
-			    for (s = 0; s < offset; s++) bu_vls_putc(&description, 32);
-			    bu_vls_printf(&description, "%s\n", bu_vls_addr(&opts));
+			    bu_vls_printf(&description, "%*s%s\n", offset, " ", bu_vls_addr(&opts));
 			    bu_vls_sprintf(&opts, "%s, ", d->longopt_doc);
 			} else {
 			    bu_vls_printf(&opts, "%s, ", d->longopt_doc);
@@ -646,19 +642,16 @@ bu_opt_describe(struct bu_opt_desc *ds, struct bu_opt_desc_opts *settings)
 	    }
 
 	    bu_vls_trunc(&opts, -2);
-	    for (s = 0; s < offset; s++) bu_vls_putc(&description, 32);
-	    bu_vls_printf(&description, "%s", bu_vls_addr(&opts));
+	    bu_vls_printf(&description, "%*s%s", offset, " ", bu_vls_addr(&opts));
 	    if ((int)bu_vls_strlen(&opts) > opt_cols) {
-		bu_vls_printf(&description, "\n");
-		for (s = 0; s < opt_cols + offset; s++) bu_vls_putc(&description, 32);
+		bu_vls_printf(&description, "\n%*s", opt_cols + offset, " ");
 	    } else {
-		for (s = 0; s < opt_cols - (int)bu_vls_strlen(&opts); s++) bu_vls_putc(&description, 32);
+		bu_vls_printf(&description, "%*s", opt_cols - (int)bu_vls_strlen(&opts), " ");
 	    }
 	    if ((int)bu_vls_strlen(&help_str) > desc_cols) {
 		wrap_help(&help_str, offset, opt_cols+offset, desc_cols);
 	    }
-	    for (s = 0; s < offset; s++) bu_vls_putc(&description, 32);
-	    bu_vls_printf(&description, "%s\n", bu_vls_addr(&help_str));
+	    bu_vls_printf(&description, "%*s%s\n", offset, " ", bu_vls_addr(&help_str));
 	    bu_vls_free(&help_str);
 	    bu_vls_free(&opts);
 	    status[i] = 1;
