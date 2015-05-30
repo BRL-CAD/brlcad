@@ -48,7 +48,6 @@ int
 d2_color(struct bu_vls *msg, struct bu_opt_data *data)
 {
     unsigned int *rgb;
-    int color_arg_cnt;
     if (!data) return 0;
     if (!data->args) {
 	data->valid = 0;
@@ -56,7 +55,6 @@ d2_color(struct bu_vls *msg, struct bu_opt_data *data)
     }
     if (msg) bu_vls_sprintf(msg, "d2");
 
-    color_arg_cnt = BU_PTBL_LEN(data->args);
     rgb = (unsigned int *)bu_calloc(3, sizeof(unsigned int), "fastf_t array");
 
     /* First, see if the first string converts to rgb */
