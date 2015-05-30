@@ -63,7 +63,7 @@ d2_color(struct bu_vls *msg, struct bu_opt_data *data)
     if (!bu_str_to_rgb((char *)BU_PTBL_GET(data->args, 0), (unsigned char *)&rgb)) {
 	/* nope - maybe we have 3 args? */
 	if (BU_PTBL_LEN(data->args) == 3) {
-	    int rn, gn, bn = 0;
+	    int rn = 0, gn = 0, bn = 0;
 	    if (isnum((const char *)BU_PTBL_GET(data->args, 0)))
 		rn = sscanf((const char *)BU_PTBL_GET(data->args, 0), "%02x", &rgb[0]);
 	    if (isnum((const char *)BU_PTBL_GET(data->args, 1)))
