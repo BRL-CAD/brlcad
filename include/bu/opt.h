@@ -39,6 +39,10 @@ __BEGIN_DECLS
 /* Pick an arbitrary maximum pending a good reason to pick some specific value */
 #define BU_OPT_MAX_ARGS 2000
 
+/* Make a human-readable define for using bu_opt_find to retrieve argv entries
+ * that were not associated with options */
+#define BU_NON_OPTS -1
+
 struct bu_opt_data; /* Forward declaration for bu_opt_desc */
 
 /**

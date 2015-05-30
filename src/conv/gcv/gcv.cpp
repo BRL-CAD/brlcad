@@ -357,7 +357,7 @@ main(int ac, char **av)
 
     /* If not specified explicitly with -i or -o, the input and output paths must always
      * be the last two arguments supplied */
-    d = bu_opt_find(-1, results);
+    d = bu_opt_find(BU_NON_OPTS, results);
     if (d) {
 	unknown_tbl = d->args;
 	if (unknown_tbl && BU_PTBL_LEN(unknown_tbl) > 1)
