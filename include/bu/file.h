@@ -379,68 +379,6 @@ BU_EXPORT extern FILE *bu_temp_file(char *filepath, size_t len);
 BU_EXPORT extern int bu_fchmod(int fd, unsigned long pmode);
 
 
-/** @brief Functions related to argv processing. */
-
-/**
- * Build argv[] array from input buffer, by splitting whitespace
- * separated "words" into null terminated strings.
- *
- * 'lim' indicates the maximum number of elements that can be stored
- * in the argv[] array not including a terminating NULL.
- *
- * The 'lp' input buffer is altered by this process.  The argv[] array
- * points into the input buffer.
- *
- * The argv[] array needs to have at least lim+1 pointers allocated
- * for lim items plus a terminating pointer to NULL.  The input buffer
- * should not be freed until argv has been freed or passes out of
- * scope.
- *
- * Returns -
- * 0	no words in input
- * argc	number of words of input, now in argv[]
- */
-BU_EXPORT extern size_t bu_argv_from_string(char *argv[],
-					    size_t lim,
-					    char *lp);
-
-/**
- * Deallocate all strings in a given argv array and the array itself
- *
- * This call presumes the array has been allocated with bu_dup_argv()
- * or bu_argv_from_path().
- */
-BU_EXPORT extern void bu_free_argv(size_t argc, char *argv[]);
-
-/**
- * free up to argc elements of memory allocated to an array without
- * free'ing the array itself.
- */
-BU_EXPORT extern void bu_free_array(size_t argc, char *argv[], const char *str);
-
-/**
- * Dynamically duplicate an argv array and all elements in the array
- *
- * Duplicate an argv array by duplicating all strings and the array
- * itself.  It is the caller's responsibility to free the array
- * returned including all elements in the array by calling bu_free()
- * or bu_free_argv().
- */
-BU_EXPORT extern char **bu_dup_argv(size_t argc, const char *argv[]);
-
-/**
- * Combine two argv arrays into one new (duplicated) argv array.
- *
- * If insert is negative, the insertArgv array elements will be
- * prepended into the new argv array.  If insert is greater than or
- * equal to argc, the insertArgv array elements will be appended after
- * all duplicated elements in the specified argv array.  Otherwise,
- * the insert argument is the position where the insertArgv array
- * elements will be merged with the specified argv array.
- */
-BU_EXPORT extern char **bu_dupinsert_argv(int insert, size_t insertArgc, const char *insertArgv[], size_t argc, const char *argv[]);
-
-
 /**@brief BRL-CAD specific path queries */
 
 /**
