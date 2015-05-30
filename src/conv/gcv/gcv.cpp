@@ -352,14 +352,16 @@ main(int ac, char **av)
     d = bu_opt_find(-1, results);
     if (d) {
 	unknown_tbl = d->args;
-	bu_vls_sprintf(&in_path_raw, "%s", (const char *)BU_PTBL_GET(unknown_tbl, BU_PTBL_LEN(unknown_tbl) - 2));
-	bu_vls_sprintf(&out_path_raw, "%s", (const char *)BU_PTBL_GET(unknown_tbl, BU_PTBL_LEN(unknown_tbl) - 1));
+	if (unknown_tbl && BU_PTBL_LEN(unknown_tbl) > 1)
+	    bu_vls_sprintf(&in_path_raw, "%s", (const char *)BU_PTBL_GET(unknown_tbl, BU_PTBL_LEN(unknown_tbl) - 2));
+	if (unknown_tbl && BU_PTBL_LEN(unknown_tbl) > 0)
+	    bu_vls_sprintf(&out_path_raw, "%s", (const char *)BU_PTBL_GET(unknown_tbl, BU_PTBL_LEN(unknown_tbl) - 1));
     }
 
     /* Any unknown strings not otherwise processed are passed to both input and output.
      * These are deliberately placed at the beginning of the input strings, so any
      * input/output specific options have a chance to override them. */
-    if (unknown_tbl) {
+    if (unknown_tbl && BU_PTBL_LEN(unknown_tbl) > 2) {
 	for (i = 0; i < BU_PTBL_LEN(unknown_tbl) - 2; i++) {
 	    bu_vls_printf(&input_opts, " %s ", (const char *)BU_PTBL_GET(unknown_tbl, i));
 	    bu_vls_printf(&output_opts, " %s ", (const char *)BU_PTBL_GET(unknown_tbl, i));
@@ -371,23 +373,41 @@ main(int ac, char **av)
     /* If we have input and/or output specific options, append them now */
     d = bu_opt_find(IN_OPTS, results);
     if (d) {
-	bu_vls_printf(&input_opts, "%s", bu_opt_data_arg(d, 0));
-	if (bu_vls_strlen(&input_opts) > 0) bu_log("Input only opts: %s\n", bu_opt_data_arg(d, 0));
+	struct bu_vls o_tmp = BU_VLS_INIT_ZERO;
+	bu_vls_sprintf(&o_tmp, "%s", bu_opt_data_arg(d, 0));
+	if (bu_vls_addr(&o_tmp)[0] == '[') bu_vls_nibble(&o_tmp, 1);
+	if (bu_vls_addr(&o_tmp)[strlen(bu_vls_addr(&o_tmp)) - 1] == ']') bu_vls_trunc(&o_tmp, -1);
+	bu_vls_printf(&input_opts, "%s", bu_vls_addr(&o_tmp));
+	if (bu_vls_strlen(&input_opts) > 0) bu_log("Input only opts: %s\n", bu_vls_addr(&o_tmp));
+	bu_vls_free(&o_tmp);
     }
     d = bu_opt_find(OUT_OPTS, results);
     if (d) {
-	bu_vls_printf(&output_opts, "%s", bu_opt_data_arg(d, 0));
-	if (bu_vls_strlen(&output_opts) > 0) bu_log("Output only opts: %s\n", bu_opt_data_arg(d, 0));
+	struct bu_vls o_tmp = BU_VLS_INIT_ZERO;
+	bu_vls_sprintf(&o_tmp, "%s", bu_opt_data_arg(d, 0));
+	if (bu_vls_addr(&o_tmp)[0] == '[') bu_vls_nibble(&o_tmp, 1);
+	if (bu_vls_addr(&o_tmp)[strlen(bu_vls_addr(&o_tmp)) - 1] == ']') bu_vls_trunc(&o_tmp, -1);
+	bu_vls_printf(&output_opts, "%s", bu_vls_addr(&o_tmp));
+	if (bu_vls_strlen(&output_opts) > 0) bu_log("Output only opts: %s\n", bu_vls_addr(&o_tmp));
+	bu_vls_free(&o_tmp);
     }
 
 
     /* See if we have input and output files specified */
     if (!extract_path(&in_path, bu_vls_addr(&in_path_raw))) {
-	bu_vls_printf(&log, "Error: no input path identified: %s\n", bu_vls_addr(&in_path_raw));
+	if (bu_vls_strlen(&in_path_raw) > 0) {
+	    bu_vls_printf(&log, "Error: no input path identified: %s\n", bu_vls_addr(&in_path_raw));
+	} else {
+	    bu_vls_printf(&log, "Error: no input path.\n");
+	}
 	ret = 1;
     }
     if (!extract_path(&out_path, bu_vls_addr(&out_path_raw))) {
-	bu_vls_printf(&log, "Error: no output path identified: %s\n", bu_vls_addr(&in_path_raw));
+	if (bu_vls_strlen(&out_path_raw) > 0) {
+	    bu_vls_printf(&log, "Error: no output path identified: %s\n", bu_vls_addr(&out_path_raw));
+	} else {
+	    bu_vls_printf(&log, "Error: no output path.\n");
+	}
 	ret = 1;
     }
 
@@ -424,11 +444,19 @@ main(int ac, char **av)
 
     /* If we get to this point without knowing both input and output types, we've got a problem */
     if (in_type == MIME_MODEL_UNKNOWN) {
-	bu_vls_printf(&log, "Error: no format type identified for input path: %s\n", bu_vls_addr(&in_path));
+	if (bu_vls_strlen(&in_path) > 0) {
+	    bu_vls_printf(&log, "Error: no format type identified for input path: %s\n", bu_vls_addr(&in_path));
+	} else {
+	    bu_vls_printf(&log, "Error: no input format type identified.\n");
+	}
 	ret = 1;
     }
     if (out_type == MIME_MODEL_UNKNOWN) {
-	bu_vls_printf(&log, "Error: no format type identified for output path: %s\n", bu_vls_addr(&out_path));
+	if (bu_vls_strlen(&out_path) > 0) {
+	    bu_vls_printf(&log, "Error: no format type identified for output path: %s\n", bu_vls_addr(&out_path));
+	} else {
+	    bu_vls_printf(&log, "Error: no output format type identified.\n");
+	}
 	ret = 1;
     }
 
