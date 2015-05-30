@@ -93,6 +93,9 @@ BRLCAD_ADDEXEC(dsp_add4 "dsp_add4.c;bu_arg_parse.cpp" libbu NO_INSTALL)
 # ignore it for now
 CMAKEFILES(test_bu_arg_parse.c)
 
+# LIBBU advance option handling test
+BRLCAD_ADDEXEC(dsp_add_opt dsp_add_opt.c libbu NO_INSTALL)
+
 # a new admin file
 BRLCAD_ADDEXEC(admin-db "admin-db.cpp;bu_arg_parse.cpp" "libbu;librt" NO_INSTALL)
 
