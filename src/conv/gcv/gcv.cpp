@@ -267,8 +267,9 @@ model_mime(struct bu_vls *UNUSED(msg), struct bu_opt_data *data)
 
 #define gcv_help_str "Print help and exit.  If a format is specified to --help, print help specific to that format"
 enum gcv_opt_enums { GCV_HELP, IN_FILE, OUT_FILE, IN_FORMAT, OUT_FORMAT, IN_OPTS, OUT_OPTS };
-struct bu_opt_desc gcv_opt_desc[8] = {
+struct bu_opt_desc gcv_opt_desc[9] = {
     {GCV_HELP,    0, 1, "h", "help",             NULL,          "-h [format]", "--help [format]",             gcv_help_str},
+    {GCV_HELP,    0, 1, "?", "",                 NULL,          "-? [format]", "",                            gcv_help_str},
     {IN_FILE ,    1, 1, "i", "input",            &(file_stat),  "-i file",     "--input file",                "Input file." },
     {OUT_FILE,    1, 1, "o", "output",           &(file_null),  "-o file",     "--output file",               "Output file." },
     {IN_FORMAT ,  1, 1, "",  "input-format",     &(model_mime), "",            "--input-format format",       "File format of input file." },

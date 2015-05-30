@@ -605,6 +605,18 @@ bu_opt_describe(struct bu_opt_desc *ds, struct bu_opt_desc_opts *settings)
 	if (!status[i]) {
 	    struct bu_vls opts = BU_VLS_INIT_ZERO;
 	    struct bu_vls help_str = BU_VLS_INIT_ZERO;
+
+	    /* We handle all entries with the same key in the same
+	     * pass, so set the status flags accordingly */
+	    j = i;
+	    while (j < opt_cnt) {
+		struct bu_opt_desc *d = &(ds[j]);
+		if (d->index == curr->index) {
+		    status[j] = 1;
+		}
+		j++;
+	    }
+
 	    /* Collect the short options first - may be multiple instances with
 	     * the same index defining aliases, so accumulate all of them. */
 	    j = i;
@@ -620,10 +632,14 @@ bu_opt_describe(struct bu_opt_desc *ds, struct bu_opt_desc_opts *settings)
 			    bu_vls_printf(&opts, "%s, ", d->shortopt_doc);
 			}
 		    }
+		    /* While we're at it, pick up the string.  The last string with
+		     * a matching key wins, as long as its not empty */
 		    if (strlen(d->help_string) > 0) bu_vls_sprintf(&help_str, "%s", d->help_string);
 		}
 		j++;
 	    }
+
+	    /* Now do the long opts */
 	    j = i;
 	    while (j < opt_cnt) {
 		struct bu_opt_desc *d = &(ds[j]);
