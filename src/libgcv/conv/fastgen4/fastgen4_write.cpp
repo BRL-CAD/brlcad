@@ -488,7 +488,9 @@ Section::Geometry::write(FastgenWriter &writer, std::size_t &id) const
 inline
 Section::Section(const std::string &name, bool volume_mode) :
     m_name(name),
-    m_volume_mode(volume_mode)
+    m_volume_mode(volume_mode),
+    m_grid_manager(),
+    m_geometry()
 {}
 
 
@@ -761,7 +763,7 @@ Section::Hexahedron::Hexahedron(Section &section, const std::string &name,
 {
     std::vector<Point> vpoints(8);
 
-    for (int i = 0; i < 8; ++i)
+    for (std::size_t i = 0; i < 8; ++i)
 	vpoints.at(i) = points[i];
 
     m_grids = section.m_grid_manager.get_unique_grids(vpoints);
@@ -776,7 +778,7 @@ Section::Hexahedron::write_to_section(FastgenWriter &writer,
 	FastgenWriter::Record record1(writer);
 	record1 << "CHEX2" << id << 0;
 
-	for (int i = 0; i < 6; ++i)
+	for (std::size_t i = 0; i < 6; ++i)
 	    record1 << m_grids.at(i);
 
 	record1 << ++id;
@@ -1227,7 +1229,8 @@ gcv_fastgen4_write(const char *path, struct db_i *dbip,
 	bu_free(results, "tops");
 
 	vmodel = nmg_mm();
-	db_walk_tree(dbip, num_objects, const_cast<const char **>(object_names.ptr), 1,
+	db_walk_tree(dbip, static_cast<int>(num_objects),
+		     const_cast<const char **>(object_names.ptr), 1,
 		     &initial_tree_state, NULL, convert_region, convert_leaf, &conv_data);
 	nmg_km(vmodel);
     }
