@@ -298,7 +298,7 @@ main(int ac, char **av)
     ac-=(ac>0); av+=(ac>0); // skip program name argv[0] if present
 
     if (ac == 0) {
-	const char *help = bu_opt_describe(gcv_opt_desc, BU_OPT_ASCII, 30, 50);
+	const char *help = bu_opt_describe(gcv_opt_desc, NULL);
 	bu_log("%s\n", help);
 	bu_free((char *)help, "help str");
 	// TODO - print some help

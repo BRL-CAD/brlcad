@@ -249,22 +249,38 @@ typedef enum {
     BU_OPT_MARKDOWN
 } bu_opt_format_t;
 
+typedef enum {
+    BU_OPT_SHORT,
+    BU_OPT_FULL
+} bu_opt_desc_t;
+
+
 /**
  * Construct a textual description of the options defined by
  * the array.
  *
  * The structure is as follows:
  *
- * Options       |Descriptions      EOL
- * -------------- ******************
+ * Offset    Options      Descriptions
+ * ******--------------*********************
+ *       --test-option This is a test option
  *
  * Opt_col specifies how wide the options column is, and desc_cols
  * specifies how wide the description column is.
  *
  *
  */
-BU_EXPORT extern const char *bu_opt_describe(struct bu_opt_desc *ds, bu_opt_format_t type, int opt_cols, int desc_cols);
-BU_EXPORT extern const char *bu_opt_describe_tbl(struct bu_ptbl *dtbl, bu_opt_format_t type, int opt_cols, int desc_cols);
+
+struct bu_opt_desc_opts {
+    bu_opt_desc_t desc_type;
+    bu_opt_format_t format_type;
+    int offset;
+    int option_columns;
+    int description_columns;
+};
+
+BU_EXPORT extern const char *bu_opt_describe(struct bu_opt_desc *ds, struct bu_opt_desc_opts *settings);
+BU_EXPORT extern const char *bu_opt_describe_tbl(struct bu_ptbl *dtbl, struct bu_opt_desc_opts *settings);
 
 
 /** @} */
