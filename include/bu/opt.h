@@ -46,15 +46,15 @@ __BEGIN_DECLS
 /** Output format options for bu_opt documentation generation */
 typedef enum {
     BU_OPT_ASCII,
-    BU_OPT_DOCBOOK,
-    BU_OPT_HTML,
-    BU_OPT_LATEX,
-    BU_OPT_MARKDOWN
+    BU_OPT_DOCBOOK, /* TODO */
+    BU_OPT_HTML,    /* TODO */
+    BU_OPT_LATEX,   /* TODO */
+    BU_OPT_MARKDOWN /* TODO */
 } bu_opt_format_t;
 
 typedef enum {
-    BU_OPT_SHORT,
-    BU_OPT_FULL
+    BU_OPT_SHORT,  /* TODO */
+    BU_OPT_FULL    /* TODO */
 } bu_opt_desc_t;
 
 
@@ -127,6 +127,8 @@ BU_EXPORT extern void bu_opt_desc_free(bu_opt_dtbl_t *tbl);
  * Opt_col specifies how wide the options column is, and desc_cols
  * specifies how wide the description column is.
  */
+
+/* TODO - support actually using the struct... */
 struct bu_opt_desc_opts {
     bu_opt_desc_t desc_type;
     bu_opt_format_t format_type;
@@ -189,6 +191,8 @@ BU_EXPORT extern struct bu_opt_data *bu_opt_find(int key, bu_opt_data_t *results
 BU_EXPORT extern struct bu_opt_data *bu_opt_find_name(const char *name, bu_opt_data_t *results);
 
 /**
+ * TODO
+ *
  * If an option has a message string associated with it, this function will
  * get it.  This works for both valid and invalid opts, to allow for error
  * message retrieval.  If multiple instances of a key are present, the msg
@@ -196,6 +200,8 @@ BU_EXPORT extern struct bu_opt_data *bu_opt_find_name(const char *name, bu_opt_d
 BU_EXPORT extern const char *bu_opt_msg(int key, bu_opt_data_t *results);
 
 /**
+ * TODO
+ *
  * If an option has a message string associated with it, this function will
  * get it.  This works for both valid and invalid opts, to allow for error
  * message retrieval.  If multiple instances of a name are present, the msg
