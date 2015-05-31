@@ -32,15 +32,15 @@
 #include "bu/vls.h"
 
 HIDDEN void
-bu_opt_data_init_entry(struct bu_opt_data *d, const char *name)
+bu_opt_data_init_entry(struct bu_opt_data **d, const char *name)
 {
     if (!d) return;
-    BU_GET(d, struct bu_opt_data);
-    d->desc = NULL;
-    d->valid = 0;
-    d->name = name;
-    d->args = NULL;
-    d->user_data = NULL;
+    BU_GET(*d, struct bu_opt_data);
+    (*d)->desc = NULL;
+    (*d)->valid = 1;
+    (*d)->name = name;
+    (*d)->args = NULL;
+    (*d)->user_data = NULL;
 }
 
 void
@@ -116,6 +116,8 @@ bu_opt_data_print(struct bu_ptbl *data, const char *title)
 			bu_vls_printf(&log, "%s, ", bu_opt_data_arg(d, j));
 		    }
 		    bu_vls_printf(&log, "%s\n", bu_opt_data_arg(d, BU_PTBL_LEN(d->args) - 1));
+		} else {
+		    bu_vls_printf(&log, "\n");
 		}
 	    } else {
 		bu_vls_printf(&log, "\n");
@@ -631,7 +633,7 @@ bu_opt_parse_internal(int argc, const char **argv, struct bu_opt_desc *ds, struc
 	 * we reach an option */
 	if (!is_opt(argv[i])) {
 	    if (!unknowns) {
-		bu_opt_data_init_entry(unknowns, NULL);
+		bu_opt_data_init_entry(&unknowns, NULL);
 		BU_GET(unknowns->args, struct bu_ptbl);
 		bu_ptbl_init(unknowns->args, 8, "args init");
 	    }
@@ -674,7 +676,7 @@ bu_opt_parse_internal(int argc, const char **argv, struct bu_opt_desc *ds, struc
 	if (!desc_found) {
 	    struct bu_vls rebuilt_opt = BU_VLS_INIT_ZERO;
 	    if (!unknowns) {
-		bu_opt_data_init_entry(unknowns, NULL);
+		bu_opt_data_init_entry(&unknowns, NULL);
 		BU_GET(unknowns->args, struct bu_ptbl);
 		bu_ptbl_init(unknowns->args, 8, "args init");
 	    }
@@ -693,7 +695,7 @@ bu_opt_parse_internal(int argc, const char **argv, struct bu_opt_desc *ds, struc
 	}
 
 	/* Initialize with opt */
-	bu_opt_data_init_entry(data, opt);
+	bu_opt_data_init_entry(&data, opt);
 	data->desc = desc;
 	if (eq_arg) {
 	    /* Okay, we actually need it - initialize the arg table */
@@ -809,7 +811,7 @@ bu_opt_parse_dtbl(struct bu_ptbl **tbl, struct bu_vls *msgs, int ac, const char 
 }
 
 int
-bu_opt_parse_str_dtbl(struct bu_ptbl **tbl, struct bu_vls *msgs, const char *str, struct bu_ptbl *dtbl)
+bu_opt_parse_dtbl_str(struct bu_ptbl **tbl, struct bu_vls *msgs, const char *str, struct bu_ptbl *dtbl)
 {
     int ret = 0;
     char *input = NULL;

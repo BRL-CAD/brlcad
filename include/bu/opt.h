@@ -43,7 +43,7 @@ __BEGIN_DECLS
  * that were not associated with options */
 #define BU_NON_OPTS -1
 
-/** Output format options for bu_opt */
+/** Output format options for bu_opt documentation generation */
 typedef enum {
     BU_OPT_ASCII,
     BU_OPT_DOCBOOK,
@@ -67,11 +67,10 @@ struct bu_opt_data;
  */
 typedef int (*bu_opt_arg_process_t)(struct bu_vls *, struct bu_opt_data *);
 
+/* typedefs to avoid confusion when working with bu_opt_data
+ * and bu_opt_desc tables */
 typedef struct bu_ptbl bu_opt_dtbl_t;
 typedef struct bu_ptbl bu_opt_data_t;
-
-
-
 
 /**
  * "Option description" structure
@@ -115,7 +114,6 @@ BU_EXPORT extern void bu_opt_desc_del_name(bu_opt_dtbl_t *dtbl, const char *name
 BU_EXPORT extern void bu_opt_desc_free(bu_opt_dtbl_t *tbl);
 
 
-
 /**
  * Construct a textual description of the options defined by
  * the array.
@@ -128,10 +126,7 @@ BU_EXPORT extern void bu_opt_desc_free(bu_opt_dtbl_t *tbl);
  *
  * Opt_col specifies how wide the options column is, and desc_cols
  * specifies how wide the description column is.
- *
- *
  */
-
 struct bu_opt_desc_opts {
     bu_opt_desc_t desc_type;
     bu_opt_format_t format_type;
@@ -142,7 +137,6 @@ struct bu_opt_desc_opts {
 
 BU_EXPORT extern const char *bu_opt_describe(struct bu_opt_desc *ds, struct bu_opt_desc_opts *settings);
 BU_EXPORT extern const char *bu_opt_describe_dtbl(bu_opt_dtbl_t *dtbl, struct bu_opt_desc_opts *settings);
-
 
 
 
@@ -158,7 +152,7 @@ struct bu_opt_data {
 };
 #define BU_OPT_DATA_NULL {NULL, 0, NULL, NULL, NULL}
 /**
- * Free a table of bu_opt_data results */ 
+ * Free a table of bu_opt_data results */
 BU_EXPORT extern void bu_opt_data_free(bu_opt_data_t *data);
 
 /**
@@ -264,7 +258,7 @@ BU_EXPORT extern int bu_opt_parse_dtbl(bu_opt_data_t **results, struct bu_vls *m
  * Option parse an argv array defined as a space separated string.  This
  * is a convenience function that calls bu_opt_parse_dtbl and also handles
  * breaking str down into a proper argv array. */
-BU_EXPORT extern int bu_opt_parse_str_dtbl(bu_opt_data_t **results, struct bu_vls *msgs, const char *str, bu_opt_dtbl_t *dtbl);
+BU_EXPORT extern int bu_opt_parse_dtbl_str(bu_opt_data_t **results, struct bu_vls *msgs, const char *str, bu_opt_dtbl_t *dtbl);
 
 /**
  * In situations where multiple options are present, the general rule is that
@@ -292,7 +286,6 @@ BU_EXPORT extern int bu_opt_arg_int(struct bu_vls *msg, struct bu_opt_data *data
 BU_EXPORT extern int bu_opt_arg_long(struct bu_vls *msg, struct bu_opt_data *data);
 BU_EXPORT extern int bu_opt_arg_bool(struct bu_vls *msg, struct bu_opt_data *data);
 BU_EXPORT extern int bu_opt_arg_double(struct bu_vls *msg, struct bu_opt_data *data);
-BU_EXPORT extern int bu_opt_arg_string(struct bu_vls *msg, struct bu_opt_data *data);
 
 
 /** @} */
