@@ -41,7 +41,7 @@ struct bu_opt_desc fg4_opt_desc[3] = {
 
 void fast4_arg_process(const char *args) {
     struct bu_opt_data *d;
-    struct bu_ptbl *results;
+    bu_opt_data_t *results;
     if (!args) return;
 
     (void)bu_opt_parse_str(&results, NULL, args, fg4_opt_desc);
@@ -50,9 +50,9 @@ void fast4_arg_process(const char *args) {
 	bu_log("FASTGEN 4 opt found: %s\n", d->name);
     }
 
-    bu_opt_data_print("FASTGEN4 option parsing results:", results);
+    bu_opt_data_print(results, "FASTGEN4 option parsing results:");
 
-    bu_opt_data_free_tbl(results);
+    bu_opt_data_free(results);
 }
 
 /* Emulate a STL format option processer */
@@ -65,7 +65,7 @@ struct bu_opt_desc stl_opt_desc[3] = {
 
 void stl_arg_process(const char *args) {
     struct bu_opt_data *d;
-    struct bu_ptbl *results;
+    bu_opt_data_t *results;
     if (!args) return;
 
     (void)bu_opt_parse_str(&results, NULL, args, stl_opt_desc);
@@ -74,10 +74,10 @@ void stl_arg_process(const char *args) {
 	bu_log("STL opt found: %s:%s\n", d->name, bu_opt_data_arg(d, 0));
     }
 
-    bu_opt_data_print("STL option parsing results:", results);
+    bu_opt_data_print(results, "STL option parsing results:");
 
 
-    bu_opt_data_free_tbl(results);
+    bu_opt_data_free(results);
 }
 
 HIDDEN int
@@ -286,7 +286,6 @@ main(int ac, char **av)
     size_t i;
     int fmt = 0;
     int ret = 0;
-    bu_opt_dtbl_t *top_opt_desc;
     const char *in_fmt = NULL;
     const char *out_fmt = NULL;
     mime_model_t in_type = MIME_MODEL_UNKNOWN;
@@ -302,7 +301,8 @@ main(int ac, char **av)
     struct bu_vls output_opts = BU_VLS_INIT_ZERO;
     struct bu_opt_data *d = NULL;
     struct bu_ptbl *unknown_tbl = NULL;
-    struct bu_ptbl *results = NULL;
+    bu_opt_data_t *results = NULL;
+    bu_opt_dtbl_t *top_opt_desc = NULL;
 
     ac-=(ac>0); av+=(ac>0); // skip program name argv[0] if present
 
@@ -563,7 +563,7 @@ cleanup:
     bu_vls_free(&log);
     bu_vls_free(&input_opts);
     bu_vls_free(&output_opts);
-    bu_opt_data_free_tbl(results);
+    bu_opt_data_free(results);
     if (top_opt_desc) bu_opt_desc_free(top_opt_desc);
 
     return ret;

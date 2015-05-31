@@ -90,11 +90,11 @@ print_usage()
 /*
  * Parse command line flags
  */
-struct bu_ptbl *
+bu_opt_data_t *
 parse_args(int ac, char *av[])
 {
     size_t i = 0;
-    struct bu_ptbl *results;
+    bu_opt_data_t *results;
     (void)bu_opt_parse(&results, NULL, ac, (const char **)av, dsp_opt_desc);
     bu_opt_compact(results);
 
@@ -103,7 +103,7 @@ parse_args(int ac, char *av[])
 	if (!d->valid || !d->name || !d->desc) continue;
 	switch(d->desc->shortopt[0]) {
 	    default:
-		bu_opt_data_free_tbl(results);
+		bu_opt_data_free(results);
 		print_usage();
 	}
     }
@@ -193,7 +193,7 @@ int
 main(int ac, char *av[])
 {
     struct bu_opt_data *non_opts;
-    struct bu_ptbl *results;
+    bu_opt_data_t *results;
     FILE *in1, *in2;
     unsigned short *buf1, *buf2;
     size_t count;
@@ -302,7 +302,7 @@ main(int ac, char *av[])
 	return -1;
     }
 
-    bu_opt_data_free_tbl(results);
+    bu_opt_data_free(results);
 
     return 0;
 }
