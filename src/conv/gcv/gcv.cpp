@@ -266,7 +266,7 @@ model_mime(struct bu_vls *UNUSED(msg), struct bu_opt_data *data)
 
 
 #define gcv_help_str "Print help and exit.  If a format is specified to --help, print help specific to that format"
-enum gcv_opt_enums { GCV_HELP, IN_FILE, OUT_FILE, IN_FORMAT, OUT_FORMAT, IN_OPTS, OUT_OPTS };
+enum gcv_opt_enums { GCV_HELP, IN_FILE, OUT_FILE, IN_FORMAT, OUT_FORMAT, IN_OPTS, OUT_OPTS, GCV_OPTS_MAX };
 struct bu_opt_desc gcv_opt_desc[9] = {
     {GCV_HELP,    0, 1, "h", "help",             NULL,          "-h [format]", "--help [format]",             gcv_help_str},
     {GCV_HELP,    0, 1, "?", "",                 NULL,          "-? [format]", "",                            ""},
@@ -286,6 +286,7 @@ main(int ac, char **av)
     size_t i;
     int fmt = 0;
     int ret = 0;
+    bu_opt_dtbl_t *top_opt_desc;
     const char *in_fmt = NULL;
     const char *out_fmt = NULL;
     mime_model_t in_type = MIME_MODEL_UNKNOWN;
@@ -305,15 +306,20 @@ main(int ac, char **av)
 
     ac-=(ac>0); av+=(ac>0); // skip program name argv[0] if present
 
+    bu_opt_desc_init(&top_opt_desc, (struct bu_opt_desc *)&gcv_opt_desc);
+
     if (ac == 0) {
-	const char *help = bu_opt_describe(gcv_opt_desc, NULL);
+	const char *help = bu_opt_describe_dtbl(top_opt_desc, NULL);
 	bu_log("%s\n", help);
-	bu_free((char *)help, "help str");
+	if (help) bu_free((char *)help, "help str");
 	// TODO - print some help
 	goto cleanup;
     }
 
+    /*
     (void)bu_opt_parse(&results, NULL, ac, (const char **)av, gcv_opt_desc);
+    */
+    (void)bu_opt_parse_dtbl(&results, NULL, ac, (const char **)av, top_opt_desc);
     bu_opt_compact(results);
 
     /* First, see if help was supplied */
@@ -324,6 +330,48 @@ main(int ac, char **av)
 	    // TODO - generate some help based on format
 	} else {
 	    // TODO - generate some generic gcv help
+	    { /* Test static help print  */
+		bu_log("Static help printing:\n");
+		const char *help = bu_opt_describe(gcv_opt_desc, NULL);
+		bu_log("%s\n", help);
+		if (help) bu_free((char *)help, "help str");
+	    }
+
+	    { /* Test help print before dynamic opts */
+		bu_log("Dynamic help printing:\n");
+		const char *help = bu_opt_describe_dtbl(top_opt_desc, NULL);
+		bu_log("%s\n", help);
+		if (help) bu_free((char *)help, "help str");
+	    }
+
+	    /* Simulate a plug-in adding a new option to the toplevel options */
+
+	    bu_opt_desc_add(top_opt_desc, BU_PTBL_LEN(top_opt_desc) + 1, 0, 1, "", "decimate", NULL, "", "--decimate [algorithm]",
+		    "Decimate output triangles.  If an algorithm is supplied use it, otherwise use FOO");
+
+	    int parallel_key = BU_PTBL_LEN(top_opt_desc) + 1;
+	    bu_opt_desc_add(top_opt_desc, parallel_key, 0, 0, "p", "parallel", NULL, "-p", "--parallel", "Enable parallel processing");
+	    bu_opt_desc_add(top_opt_desc, parallel_key, 0, 0, "P", "", NULL, "-P", "", "");
+
+	    { /* Test help print with dynamic opts added */
+		bu_log("Dynamic help printing with added opts:\n");
+		const char *help = bu_opt_describe_dtbl(top_opt_desc, NULL);
+		bu_log("%s\n", help);
+		if (help) bu_free((char *)help, "help str");
+	    }
+
+	    bu_opt_desc_del(top_opt_desc, IN_OPTS);
+	    bu_opt_desc_del(top_opt_desc, OUT_OPTS);
+	    bu_opt_desc_del_name(top_opt_desc, "P");
+
+	    { /* Test help print with dynamic opts removed */
+		bu_log("Dynamic help printing with removed opts:\n");
+		const char *help = bu_opt_describe_dtbl(top_opt_desc, NULL);
+		bu_log("%s\n", help);
+		if (help) bu_free((char *)help, "help str");
+	    }
+
+#if 0
 
 	    // TODO - figure out how to get this info from each plugin to construct this table
 	    // on the fly...
@@ -340,7 +388,7 @@ main(int ac, char **av)
 	    bu_log(" |    iges    |   Initial Graphics        |   Yes  |   No   |\n");
 	    bu_log(" |            |   Exchange Specification  |        |        |\n");
 	    bu_log(" |----------------------------------------------------------|\n");
-
+#endif
 	}
 	goto cleanup;
     }
@@ -516,6 +564,7 @@ cleanup:
     bu_vls_free(&input_opts);
     bu_vls_free(&output_opts);
     bu_opt_data_free_tbl(results);
+    if (top_opt_desc) bu_opt_desc_free(top_opt_desc);
 
     return ret;
 }

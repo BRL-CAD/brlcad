@@ -51,6 +51,8 @@ struct bu_opt_data; /* Forward declaration for bu_opt_desc */
  */
 typedef int (*bu_opt_arg_process_t)(struct bu_vls *, struct bu_opt_data *);
 
+typedef struct bu_ptbl bu_opt_dtbl_t;
+
 /**
  * "Option description" structure
  */
@@ -67,20 +69,30 @@ struct bu_opt_desc {
 };
 #define BU_OPT_DESC_NULL {-1, 0, 0, NULL, NULL, NULL, NULL, NULL, NULL}
 
-/** Set the values in a struct bu_opt_desc */
-BU_EXPORT extern void bu_opt_desc_add(struct bu_ptbl *dtbl, int ind,
+/**
+ * Initialize a bu_opt_desc ptbl.  If ds is not NULL, populate the table
+ * with the bu_opt_desc structs in the ds array. */
+BU_EXPORT extern void bu_opt_desc_init(bu_opt_dtbl_t **dtbl, struct bu_opt_desc *ds);
+
+/**
+ * Add an option description to a bu_opt_desc ptbl */
+BU_EXPORT extern void bu_opt_desc_add(bu_opt_dtbl_t *dtbl, int ind,
 	size_t min, size_t max, const char *shortopt,
 	const char *longopt, bu_opt_arg_process_t arg_process,
 	const char *shortopt_doc, const char *longopt_doc, const char *help_str);
-
-BU_EXPORT extern void bu_opt_desc_del(struct bu_ptbl *dtbl, int ind);
-BU_EXPORT extern void bu_opt_desc_del_name(struct bu_ptbl *dtbl, const char *name);
+/**
+ * Remove option descriptions with index matching key from a bu_opt_desc ptbl */
+BU_EXPORT extern void bu_opt_desc_del(bu_opt_dtbl_t *dtbl, int key);
+/**
+ * Remove option descriptions with either a shortopt or a longopt matching name
+ * from a bu_opt_desc ptbl */
+BU_EXPORT extern void bu_opt_desc_del_name(bu_opt_dtbl_t *dtbl, const char *name);
 /**
  *  If bu_opt_desc instances aren't part of static arrays, they'll
  *  be inside a table.  This function frees them, but does not free
  *  the bu_ptbl container.
  */
-BU_EXPORT extern void bu_opt_desc_free(struct bu_ptbl *tbl);
+BU_EXPORT extern void bu_opt_desc_free(bu_opt_dtbl_t *tbl);
 
 
 /**
@@ -176,19 +188,19 @@ BU_EXPORT extern int bu_opt_parse_str(struct bu_ptbl **tbl, struct bu_vls *msgs,
  *
  *  enum d1_opt_ind {D1_HELP, D1_VERBOSITY};
  *  struct bu_ptbl dtbl;
- *  BU_OPT_DESC_PTBL_INIT(4, &dtbl);
- *  bu_opt_desc_set(BU_OPT_DESC_GET_PTBL(0), D1_HELP, 0, 0, "h", "help", NULL, help_str);
- *  bu_opt_desc_set(BU_OPT_DESC_GET_PTBL(1), D1_HELP, 0, 0, "?", "", NULL, help_str);
- *  bu_opt_desc_set(BU_OPT_DESC_GET_PTBL(2), D1_VERBOSITY, 0, 1, "v", "verbosity", &(dtbl_verbosity), "Set verbosity");
+ *  bu_opt_desc_init(&dtbl, NULL);
+ *  bu_opt_desc_add(D1_HELP, 0, 0, "h", "help",    NULL,      "-h", "--help",    "Help");
+ *  bu_opt_desc_add(D1_HELP, 0, 0, "?", "",        NULL,      "-?", "",          "");
+ *  bu_opt_desc_add(D1_O1,   0, 1, "v", "verbose", &(dtbl_v), "-v", "--verbose", "Set verbosity");
  *  bu_opt_parse_ptbl(argc, argv, dtbl);
  */
-BU_EXPORT extern int bu_opt_parse_dtbl(struct bu_ptbl **tbl, struct bu_vls *msgs, int ac, const char **argv, struct bu_ptbl *dtbl);
+BU_EXPORT extern int bu_opt_parse_dtbl(struct bu_ptbl **tbl, struct bu_vls *msgs, int ac, const char **argv, bu_opt_dtbl_t *dtbl);
 
 /**
  * Option parse an argv array defined as a space separated string.  This
  * is a convenience function that calls bu_opt_parse_dtbl and also handles
  * breaking str down into a proper argv array. */
-BU_EXPORT extern int bu_opt_parse_str_dtbl(struct bu_ptbl **tbl, struct bu_vls *msgs, const char *str, struct bu_ptbl *dtbl);
+BU_EXPORT extern int bu_opt_parse_str_dtbl(struct bu_ptbl **tbl, struct bu_vls *msgs, const char *str, bu_opt_dtbl_t *dtbl);
 
 /**
  * In situations where multiple options are present, the general rule is that
@@ -292,7 +304,7 @@ struct bu_opt_desc_opts {
 };
 
 BU_EXPORT extern const char *bu_opt_describe(struct bu_opt_desc *ds, struct bu_opt_desc_opts *settings);
-BU_EXPORT extern const char *bu_opt_describe_tbl(struct bu_ptbl *dtbl, struct bu_opt_desc_opts *settings);
+BU_EXPORT extern const char *bu_opt_describe_dtbl(bu_opt_dtbl_t *dtbl, struct bu_opt_desc_opts *settings);
 
 
 

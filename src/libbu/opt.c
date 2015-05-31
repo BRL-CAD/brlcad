@@ -483,203 +483,6 @@ bu_opt_data_arg(struct bu_opt_data *d, size_t ind)
 }
 
 void
-bu_opt_desc_init(struct bu_opt_desc *d)
-{
-    if (!d) return;
-    d->index = -1;
-    d->arg_cnt_min = 0;
-    d->arg_cnt_max = 0;
-    d->shortopt = NULL;
-    d->longopt = NULL;
-    d->arg_process = NULL;
-    d->shortopt_doc = NULL;
-    d->longopt_doc = NULL;
-    d->help_string = NULL;
-}
-
-void
-bu_opt_desc_set(struct bu_opt_desc *d, int ind,
-	size_t min, size_t max, const char *shortopt,
-	const char *longopt, bu_opt_arg_process_t arg_process,
-	const char *shortopt_doc, const char *longopt_doc, const char *help_str)
-{
-    if (!d) return;
-    d->index = ind;
-    d->arg_cnt_min = min;
-    d->arg_cnt_max = max;
-    d->shortopt = shortopt;
-    d->longopt = longopt;
-    d->arg_process = arg_process;
-    d->shortopt_doc= shortopt_doc;
-    d->longopt_doc = longopt_doc;
-    d->help_string = help_str;
-}
-
-HIDDEN void
-bu_opt_desc_free_entry(struct bu_opt_desc *d)
-{
-    if (!d) return;
-    if (d->shortopt) bu_free((char *)d->shortopt, "shortopt");
-    if (d->longopt) bu_free((char *)d->longopt, "longopt");
-    if (d->shortopt_doc) bu_free((char *)d->shortopt_doc, "shortopt_doc");
-    if (d->longopt_doc) bu_free((char *)d->longopt_doc, "longopt_doc");
-    if (d->help_string) bu_free((char *)d->help_string, "help_string");
-}
-
-void
-bu_opt_desc_free(struct bu_ptbl *tbl)
-{
-    size_t i;
-    if (!tbl) return;
-    for (i = 0; i < BU_PTBL_LEN(tbl); i++) {
-	struct bu_opt_desc *opt = (struct bu_opt_desc *)BU_PTBL_GET(tbl, i);
-	bu_opt_desc_free_entry(opt);
-    }
-    bu_ptbl_free(tbl);
-    BU_PUT(tbl, struct bu_ptbl);
-}
-
-HIDDEN void
-wrap_help(struct bu_vls *help, int indent, int offset, int len)
-{
-    int i = 0;
-    char *input = NULL;
-    char **argv = NULL;
-    int argc = 0;
-    struct bu_vls new_help = BU_VLS_INIT_ZERO;
-    struct bu_vls working = BU_VLS_INIT_ZERO;
-    bu_vls_trunc(&working, 0);
-    bu_vls_trunc(&new_help, 0);
-
-    input = bu_strdup(bu_vls_addr(help));
-    argv = (char **)bu_calloc(strlen(input) + 1, sizeof(char *), "argv array");
-    argc = bu_argv_from_string(argv, strlen(input), input);
-
-    for (i = 0; i < argc; i++) {
-	int avl = strlen(argv[i]);
-	if ((int)bu_vls_strlen(&working) + avl + 1 > len) {
-	    bu_vls_printf(&new_help, "%s\n%*s", bu_vls_addr(&working), offset+indent, " ");
-	    bu_vls_trunc(&working, 0);
-	}
-	bu_vls_printf(&working, "%s ", argv[i]);
-    }
-    bu_vls_printf(&new_help, "%s", bu_vls_addr(&working));
-
-    bu_vls_sprintf(help, "%s", bu_vls_addr(&new_help));
-    bu_vls_free(&new_help);
-    bu_vls_free(&working);
-    bu_free(input, "input");
-    bu_free(argv, "argv");
-}
-
-HIDDEN const char *
-bu_opt_describe(struct bu_opt_desc *ds, struct bu_opt_desc_opts *settings)
-{
-    size_t i = 0;
-    size_t j = 0;
-    size_t opt_cnt = 0;
-    int offset = 2;
-    int opt_cols = 28;
-    int desc_cols = 50;
-    /*
-    bu_opt_desc_t desc_type = BU_OPT_FULL;
-    bu_opt_format_t format_type = BU_OPT_ASCII;
-    */
-    const char *finalized;
-    struct bu_vls description = BU_VLS_INIT_ZERO;
-    int *status;
-    if (!ds || ds[0].index == -1) return NULL;
-
-    if (settings) {
-	offset = settings->offset;
-	opt_cols = settings->option_columns;
-	desc_cols = settings->description_columns;
-    }
-
-    while (ds[i].index != -1) i++;
-    opt_cnt = i;
-    status = (int *)bu_calloc(opt_cnt, sizeof(int), "opt status");
-    i = 0;
-    while (i < opt_cnt) {
-	struct bu_opt_desc *curr = &(ds[i]);
-	if (!status[i]) {
-	    struct bu_vls opts = BU_VLS_INIT_ZERO;
-	    struct bu_vls help_str = BU_VLS_INIT_ZERO;
-
-	    /* We handle all entries with the same key in the same
-	     * pass, so set the status flags accordingly */
-	    j = i;
-	    while (j < opt_cnt) {
-		struct bu_opt_desc *d = &(ds[j]);
-		if (d->index == curr->index) {
-		    status[j] = 1;
-		}
-		j++;
-	    }
-
-	    /* Collect the short options first - may be multiple instances with
-	     * the same index defining aliases, so accumulate all of them. */
-	    j = i;
-	    while (j < opt_cnt) {
-		struct bu_opt_desc *d = &(ds[j]);
-		if (d->index == curr->index) {
-		    int new_len = strlen(d->shortopt_doc);
-		    if (new_len > 0) {
-			if ((int)bu_vls_strlen(&opts) + new_len + offset + 2 > opt_cols + desc_cols) {
-			    bu_vls_printf(&description, "%*s%s\n", offset, " ", bu_vls_addr(&opts));
-			    bu_vls_sprintf(&opts, "%s, ", d->shortopt_doc);
-			} else {
-			    bu_vls_printf(&opts, "%s, ", d->shortopt_doc);
-			}
-		    }
-		    /* While we're at it, pick up the string.  The last string with
-		     * a matching key wins, as long as its not empty */
-		    if (strlen(d->help_string) > 0) bu_vls_sprintf(&help_str, "%s", d->help_string);
-		}
-		j++;
-	    }
-
-	    /* Now do the long opts */
-	    j = i;
-	    while (j < opt_cnt) {
-		struct bu_opt_desc *d = &(ds[j]);
-		if (d->index == curr->index) {
-		    int new_len = strlen(d->longopt_doc);
-		    if (new_len > 0) {
-			if ((int)bu_vls_strlen(&opts) + new_len + offset + 2 > opt_cols + desc_cols) {
-			    bu_vls_printf(&description, "%*s%s\n", offset, " ", bu_vls_addr(&opts));
-			    bu_vls_sprintf(&opts, "%s, ", d->longopt_doc);
-			} else {
-			    bu_vls_printf(&opts, "%s, ", d->longopt_doc);
-			}
-		    }
-		}
-		j++;
-	    }
-
-	    bu_vls_trunc(&opts, -2);
-	    bu_vls_printf(&description, "%*s%s", offset, " ", bu_vls_addr(&opts));
-	    if ((int)bu_vls_strlen(&opts) > opt_cols) {
-		bu_vls_printf(&description, "\n%*s", opt_cols + offset, " ");
-	    } else {
-		bu_vls_printf(&description, "%*s", opt_cols - (int)bu_vls_strlen(&opts), " ");
-	    }
-	    if ((int)bu_vls_strlen(&help_str) > desc_cols) {
-		wrap_help(&help_str, offset, opt_cols+offset, desc_cols);
-	    }
-	    bu_vls_printf(&description, "%*s%s\n", offset, " ", bu_vls_addr(&help_str));
-	    bu_vls_free(&help_str);
-	    bu_vls_free(&opts);
-	    status[i] = 1;
-	}
-	i++;
-    }
-    finalized = bu_strdup(bu_vls_addr(&description));
-    bu_vls_free(&description);
-    return finalized;
-}
-
-void
 bu_opt_data_print(const char *title, struct bu_ptbl *data)
 {
     size_t i = 0;
@@ -725,6 +528,316 @@ bu_opt_data_print(const char *title, struct bu_ptbl *data)
     bu_log("%s", bu_vls_addr(&log));
     bu_vls_free(&log);
 }
+
+
+HIDDEN void
+bu_opt_desc_init_entry(struct bu_opt_desc *d)
+{
+    if (!d) return;
+    d->index = -1;
+    d->arg_cnt_min = 0;
+    d->arg_cnt_max = 0;
+    d->shortopt = NULL;
+    d->longopt = NULL;
+    d->arg_process = NULL;
+    d->shortopt_doc = NULL;
+    d->longopt_doc = NULL;
+    d->help_string = NULL;
+}
+
+HIDDEN void
+bu_opt_desc_set(struct bu_opt_desc *d, int ind,
+	size_t min, size_t max, const char *shortopt,
+	const char *longopt, bu_opt_arg_process_t arg_process,
+	const char *shortopt_doc, const char *longopt_doc, const char *help_str)
+{
+    if (!d) return;
+    d->index = ind;
+    d->arg_cnt_min = min;
+    d->arg_cnt_max = max;
+    d->shortopt = (shortopt) ? bu_strdup(shortopt) : NULL;
+    d->longopt = (longopt) ? bu_strdup(longopt) : NULL;
+    d->arg_process = arg_process;
+    d->shortopt_doc = (shortopt_doc) ? bu_strdup(shortopt_doc) : NULL;
+    d->longopt_doc = (longopt_doc) ? bu_strdup(longopt_doc) : NULL;
+    d->help_string = (help_str) ? bu_strdup(help_str) : NULL;;
+}
+
+HIDDEN void
+bu_opt_desc_free_entry(struct bu_opt_desc *d)
+{
+    if (!d) return;
+    if (d->shortopt) bu_free((char *)d->shortopt, "shortopt");
+    if (d->longopt) bu_free((char *)d->longopt, "longopt");
+    if (d->shortopt_doc) bu_free((char *)d->shortopt_doc, "shortopt_doc");
+    if (d->longopt_doc) bu_free((char *)d->longopt_doc, "longopt_doc");
+    if (d->help_string) bu_free((char *)d->help_string, "help_string");
+}
+void
+bu_opt_desc_init(bu_opt_dtbl_t **dtbl, struct bu_opt_desc *ds)
+{
+    size_t i;
+    size_t array_cnt = 0;
+    struct bu_opt_desc *cd;
+    struct bu_ptbl *tbl;
+    if (!dtbl) return;
+    BU_GET(tbl, struct bu_ptbl);
+    if (!(!ds || ds[0].index == -1)) {
+	while (ds[array_cnt].index != -1) array_cnt++;
+	bu_ptbl_init(tbl, array_cnt + 1, "new ptbl");
+	for (i = 0; i < array_cnt; i++) {
+	    struct bu_opt_desc *d = &(ds[i]);
+	    BU_GET(cd, struct bu_opt_desc);
+	    bu_opt_desc_init_entry(cd);
+	    bu_opt_desc_set(cd, d->index, d->arg_cnt_min, d->arg_cnt_max,
+		    d->shortopt, d->longopt, d->arg_process,
+		    d->shortopt_doc, d->longopt_doc,
+		    d->help_string);
+	    bu_ptbl_ins(tbl, (long *)cd);
+	}
+    } else {
+	bu_ptbl_init(tbl, 8, "new ptbl");
+    }
+    BU_GET(cd, struct bu_opt_desc);
+    bu_opt_desc_init_entry(cd);
+    bu_ptbl_ins(tbl, (long *)cd);
+    (*dtbl) = tbl;
+}
+
+void
+bu_opt_desc_add(bu_opt_dtbl_t *tbl, int ind, size_t min, size_t max, const char *shortopt,
+	const char *longopt, bu_opt_arg_process_t arg_process,
+	const char *shortopt_doc, const char *longopt_doc, const char *help_str)
+{
+    struct bu_opt_desc *d;
+    long *dn;
+    if (!tbl || (!shortopt && !longopt)) return;
+    dn = BU_PTBL_GET(tbl, BU_PTBL_LEN(tbl) - 1);
+    bu_ptbl_rm(tbl, dn);
+    BU_GET(d, struct bu_opt_desc);
+    bu_opt_desc_init_entry(d);
+    bu_opt_desc_set(d, ind, min, max, shortopt,
+	    longopt, arg_process, shortopt_doc,
+	    longopt_doc, help_str);
+    bu_ptbl_ins(tbl, (long *)d);
+    bu_ptbl_ins(tbl, dn);
+}
+
+void
+bu_opt_desc_del(bu_opt_dtbl_t *tbl, int key)
+{
+    size_t i = 0;
+    struct bu_ptbl tmp_tbl;
+    if (!tbl || key < 0) return;
+    bu_ptbl_init(&tmp_tbl, 64, "tmp tbl");
+    for (i = 0; i < BU_PTBL_LEN(tbl) - 1; i++) {
+	struct bu_opt_desc *d = (struct bu_opt_desc *)BU_PTBL_GET(tbl, i);
+	if (d->index == key) {
+	    bu_ptbl_ins(&tmp_tbl, (long *)d);
+	}
+    }
+    for (i = 0; i < BU_PTBL_LEN(&tmp_tbl); i++) {
+	bu_ptbl_rm(tbl, BU_PTBL_GET(&tmp_tbl, i));
+    }
+    bu_ptbl_free(&tmp_tbl);
+}
+
+void
+bu_opt_desc_del_name(bu_opt_dtbl_t *tbl, const char *name)
+{
+    size_t i = 0;
+    struct bu_ptbl tmp_tbl;
+    if (!tbl || !name) return;
+    bu_ptbl_init(&tmp_tbl, 64, "tmp tbl");
+    for (i = 0; i < BU_PTBL_LEN(tbl) - 1; i++) {
+	struct bu_opt_desc *d = (struct bu_opt_desc *)BU_PTBL_GET(tbl, i);
+	if (BU_STR_EQUAL(d->shortopt, name) || BU_STR_EQUAL(d->longopt, name)) {
+	    bu_ptbl_ins(&tmp_tbl, (long *)d);
+	}
+    }
+    for (i = 0; i < BU_PTBL_LEN(&tmp_tbl); i++) {
+	bu_ptbl_rm(tbl, BU_PTBL_GET(&tmp_tbl, i));
+    }
+    bu_ptbl_free(&tmp_tbl);
+}
+
+void
+bu_opt_desc_free(bu_opt_dtbl_t *tbl)
+{
+    size_t i;
+    if (!tbl) return;
+    for (i = 0; i < BU_PTBL_LEN(tbl); i++) {
+	struct bu_opt_desc *opt = (struct bu_opt_desc *)BU_PTBL_GET(tbl, i);
+	bu_opt_desc_free_entry(opt);
+    }
+    bu_ptbl_free(tbl);
+    BU_PUT(tbl, struct bu_ptbl);
+}
+
+HIDDEN void
+wrap_help(struct bu_vls *help, int indent, int offset, int len)
+{
+    int i = 0;
+    char *input = NULL;
+    char **argv = NULL;
+    int argc = 0;
+    struct bu_vls new_help = BU_VLS_INIT_ZERO;
+    struct bu_vls working = BU_VLS_INIT_ZERO;
+    bu_vls_trunc(&working, 0);
+    bu_vls_trunc(&new_help, 0);
+
+    input = bu_strdup(bu_vls_addr(help));
+    argv = (char **)bu_calloc(strlen(input) + 1, sizeof(char *), "argv array");
+    argc = bu_argv_from_string(argv, strlen(input), input);
+
+    for (i = 0; i < argc; i++) {
+	int avl = strlen(argv[i]);
+	if ((int)bu_vls_strlen(&working) + avl + 1 > len) {
+	    bu_vls_printf(&new_help, "%s\n%*s", bu_vls_addr(&working), offset+indent, " ");
+	    bu_vls_trunc(&working, 0);
+	}
+	bu_vls_printf(&working, "%s ", argv[i]);
+    }
+    bu_vls_printf(&new_help, "%s", bu_vls_addr(&working));
+
+    bu_vls_sprintf(help, "%s", bu_vls_addr(&new_help));
+    bu_vls_free(&new_help);
+    bu_vls_free(&working);
+    bu_free(input, "input");
+    bu_free(argv, "argv");
+}
+
+HIDDEN const char *
+bu_opt_describe_internal_ascii(struct bu_opt_desc *ds, bu_opt_dtbl_t *tbl, struct bu_opt_desc_opts *settings)
+{
+    size_t i = 0;
+    size_t j = 0;
+    size_t opt_cnt = 0;
+    int offset = 2;
+    int opt_cols = 28;
+    int desc_cols = 50;
+    /*
+    bu_opt_desc_t desc_type = BU_OPT_FULL;
+    bu_opt_format_t format_type = BU_OPT_ASCII;
+    */
+    const char *finalized;
+    struct bu_vls description = BU_VLS_INIT_ZERO;
+    int *status;
+    if (((!ds || ds[0].index == -1) && !tbl) || (ds && tbl)) return NULL;
+
+    if (settings) {
+	offset = settings->offset;
+	opt_cols = settings->option_columns;
+	desc_cols = settings->description_columns;
+    }
+
+    if (ds) {
+	while (ds[i].index != -1) i++;
+    } else {
+	int tbl_len = BU_PTBL_LEN(tbl) - 1;
+	i = (tbl_len < 0) ? 0 : tbl_len;
+    }
+    if (i == 0) return NULL;
+    opt_cnt = i;
+    status = (int *)bu_calloc(opt_cnt, sizeof(int), "opt status");
+    i = 0;
+    while (i < opt_cnt) {
+	struct bu_opt_desc *curr;
+	struct bu_opt_desc *d;
+	curr = (ds) ? &(ds[i]) : (struct bu_opt_desc *)BU_PTBL_GET(tbl, i) ;
+	if (!status[i]) {
+	    struct bu_vls opts = BU_VLS_INIT_ZERO;
+	    struct bu_vls help_str = BU_VLS_INIT_ZERO;
+
+	    /* We handle all entries with the same key in the same
+	     * pass, so set the status flags accordingly */
+	    j = i;
+	    while (j < opt_cnt) {
+		d = (ds) ? &(ds[j]) : (struct bu_opt_desc *)BU_PTBL_GET(tbl, j);
+		if (d->index == curr->index) {
+		    status[j] = 1;
+		}
+		j++;
+	    }
+
+	    /* Collect the short options first - may be multiple instances with
+	     * the same index defining aliases, so accumulate all of them. */
+	    j = i;
+	    while (j < opt_cnt) {
+		d = (ds) ? &(ds[j]) : (struct bu_opt_desc *)BU_PTBL_GET(tbl, j);
+		if (d->index == curr->index) {
+		    int new_len = strlen(d->shortopt_doc);
+		    if (new_len > 0) {
+			if ((int)bu_vls_strlen(&opts) + new_len + offset + 2 > opt_cols + desc_cols) {
+			    bu_vls_printf(&description, "%*s%s\n", offset, " ", bu_vls_addr(&opts));
+			    bu_vls_sprintf(&opts, "%s, ", d->shortopt_doc);
+			} else {
+			    bu_vls_printf(&opts, "%s, ", d->shortopt_doc);
+			}
+		    }
+		    /* While we're at it, pick up the string.  The last string with
+		     * a matching key wins, as long as its not empty */
+		    if (strlen(d->help_string) > 0) bu_vls_sprintf(&help_str, "%s", d->help_string);
+		}
+		j++;
+	    }
+
+	    /* Now do the long opts */
+	    j = i;
+	    while (j < opt_cnt) {
+		d = (ds) ? &(ds[j]) : (struct bu_opt_desc *)BU_PTBL_GET(tbl, j);
+		if (d->index == curr->index) {
+		    int new_len = strlen(d->longopt_doc);
+		    if (new_len > 0) {
+			if ((int)bu_vls_strlen(&opts) + new_len + offset + 2 > opt_cols + desc_cols) {
+			    bu_vls_printf(&description, "%*s%s\n", offset, " ", bu_vls_addr(&opts));
+			    bu_vls_sprintf(&opts, "%s, ", d->longopt_doc);
+			} else {
+			    bu_vls_printf(&opts, "%s, ", d->longopt_doc);
+			}
+		    }
+		}
+		j++;
+	    }
+
+	    bu_vls_trunc(&opts, -2);
+	    bu_vls_printf(&description, "%*s%s", offset, " ", bu_vls_addr(&opts));
+	    if ((int)bu_vls_strlen(&opts) > opt_cols) {
+		bu_vls_printf(&description, "\n%*s", opt_cols + offset, " ");
+	    } else {
+		bu_vls_printf(&description, "%*s", opt_cols - (int)bu_vls_strlen(&opts), " ");
+	    }
+	    if ((int)bu_vls_strlen(&help_str) > desc_cols) {
+		wrap_help(&help_str, offset, opt_cols+offset, desc_cols);
+	    }
+	    bu_vls_printf(&description, "%*s%s\n", offset, " ", bu_vls_addr(&help_str));
+	    bu_vls_free(&help_str);
+	    bu_vls_free(&opts);
+	    status[i] = 1;
+	}
+	i++;
+    }
+    finalized = bu_strdup(bu_vls_addr(&description));
+    bu_vls_free(&description);
+    return finalized;
+}
+
+const char *
+bu_opt_describe(struct bu_opt_desc *ds, struct bu_opt_desc_opts *settings)
+{
+    if (!ds) return NULL;
+    if (!settings) return bu_opt_describe_internal_ascii(ds, NULL, NULL);
+    return NULL;
+}
+
+const char *
+bu_opt_describe_dtbl(bu_opt_dtbl_t *dtbl, struct bu_opt_desc_opts *settings)
+{
+    if (!dtbl) return NULL;
+    if (!settings) return bu_opt_describe_internal_ascii(NULL, dtbl, NULL);
+    return NULL;
+}
+
 
 
 /*
