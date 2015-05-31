@@ -45,6 +45,8 @@ void fast4_arg_process(const char *args) {
     if (!args) return;
 
     (void)bu_opt_parse_str(&results, NULL, args, fg4_opt_desc);
+    bu_opt_compact(results);
+    bu_opt_validate(results);
     d = bu_opt_find(FG4_WARN_DEFAULT_NAMES, results);
     if (d) {
 	bu_log("FASTGEN 4 opt found: %s\n", d->name);
@@ -69,6 +71,8 @@ void stl_arg_process(const char *args) {
     if (!args) return;
 
     (void)bu_opt_parse_str(&results, NULL, args, stl_opt_desc);
+    bu_opt_compact(results);
+    bu_opt_validate(results);
     d = bu_opt_find(STL_UNITS, results);
     if (d) {
 	bu_log("STL opt found: %s:%s\n", d->name, bu_opt_data_arg(d, 0));

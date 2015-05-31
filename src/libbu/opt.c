@@ -576,7 +576,7 @@ bu_opt_compact(struct bu_ptbl *opts)
 	for (i = ptblpos - 1; i >= 0; i--) {
 	    struct bu_opt_data *dc = (struct bu_opt_data *)BU_PTBL_GET(opts, i);
 	    if ((dc && dc->desc && data->desc) && dc->desc->index == data->desc->index) {
-		bu_free(dc, "free duplicate");
+		bu_opt_data_free_entry(dc);
 		BU_PTBL_CLEAR_I(opts, i);
 	    }
 	}
@@ -588,6 +588,30 @@ bu_opt_compact(struct bu_ptbl *opts)
     }
     bu_ptbl_free(&tbl);
 }
+
+
+void
+bu_opt_validate(struct bu_ptbl *opts)
+{
+    size_t i;
+    struct bu_ptbl tbl;
+    bu_ptbl_init(&tbl, 8, "local table");
+    for (i = 0; i < BU_PTBL_LEN(opts); i++) {
+	struct bu_opt_data *dc = (struct bu_opt_data *)BU_PTBL_GET(opts, i);
+	if (dc && (dc->valid || (dc->desc && dc->desc->index == -1))) {
+	    bu_ptbl_ins(&tbl, (long *)dc);
+	} else {
+	    bu_opt_data_free_entry(dc);
+	    BU_PTBL_CLEAR_I(opts, i);
+	}
+    }
+    bu_ptbl_reset(opts);
+    for (i = 0; i < BU_PTBL_LEN(&tbl); i++) {
+	bu_ptbl_ins(opts, BU_PTBL_GET(&tbl, i));
+    }
+    bu_ptbl_free(&tbl);
+}
+
 
 /* This implements criteria for deciding when an argv string is
  * an option.  Right now the criteria are:

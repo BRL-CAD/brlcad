@@ -272,6 +272,12 @@ BU_EXPORT extern int bu_opt_parse_dtbl_str(bu_opt_data_t **results, struct bu_vl
  */
 BU_EXPORT extern void bu_opt_compact(bu_opt_data_t *results);
 
+/**
+ * Audit a set of results and remove any bu_opt_data entries that are not marked
+ * as valid.
+ */
+BU_EXPORT extern void bu_opt_validate(bu_opt_data_t *results);
+
 
 /* Standard option validators - if a custom option argument
  * validation isn't needed, the functions below can be
