@@ -31,7 +31,7 @@
 #include "bu.h"
 
 
-/* Emulate a FASTGEN4 format option processer */
+/* Emulate a FASTGEN4 format option processor */
 enum fg4_opt_enums { FG4_TOL, FG4_WARN_DEFAULT_NAMES };
 struct bu_opt_desc fg4_opt_desc[3] = {
     {FG4_TOL,                1, 1, "t",  "tol",                NULL, "-t tol", "--tol tol",            "Dimensional tolerance." },
@@ -57,7 +57,7 @@ void fast4_arg_process(const char *args) {
     bu_opt_data_free(results);
 }
 
-/* Emulate a STL format option processer */
+/* Emulate a STL format option processor */
 enum stl_opt_enums { STL_TOL, STL_UNITS };
 struct bu_opt_desc stl_opt_desc[3] = {
     {STL_TOL,   1, 1, "t",  "tol",   NULL, "-t tol",  "--tol tol",    "Dimensional tolerance." },
@@ -397,7 +397,7 @@ main(int ac, char **av)
 	goto cleanup;
     }
 
-    /* TODO - Do a general check on option validity here - if anything fails, hault and
+    /* TODO - Do a general check on option validity here - if anything fails, halt and
      * report it */
 
 
