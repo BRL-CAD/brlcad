@@ -71,15 +71,22 @@ class FastgenWriter
 public:
     class Record;
 
+    typedef std::pair<std::size_t, std::size_t> SectionID;
+
     static const fastf_t INCHES_PER_MM;
 
     FastgenWriter(const std::string &path);
     ~FastgenWriter();
 
     void write_comment(const std::string &value);
-    void write_section_color(std::size_t section_id, const unsigned char *color);
+    void write_section_color(const SectionID &section_id,
+			     const unsigned char *color);
+    void write_hole(const SectionID &surrounding_id,
+		    const std::vector<SectionID> &subtracted_ids);
+    void write_wall(const SectionID &surrounding_id,
+		    const std::vector<SectionID> &subtracted_ids);
 
-    std::pair<std::size_t, std::size_t> take_next_section_id();
+    SectionID take_next_section_id();
 
 
 private:
@@ -219,7 +226,7 @@ FastgenWriter::~FastgenWriter()
 }
 
 
-std::pair<std::size_t, std::size_t>
+FastgenWriter::SectionID
 FastgenWriter::take_next_section_id()
 {
     std::size_t group_id = 0;
@@ -240,14 +247,48 @@ FastgenWriter::write_comment(const std::string &value)
 
 
 void
-FastgenWriter::write_section_color(std::size_t section_id,
+FastgenWriter::write_section_color(const SectionID &section_id,
 				   const unsigned char *color)
 {
-    m_colors_ostream << section_id << ' '
-		     << section_id << ' '
+    m_colors_ostream << section_id.first << ' '
+		     << section_id.first << ' '
 		     << static_cast<unsigned>(color[0]) << ' '
 		     << static_cast<unsigned>(color[1]) << ' '
 		     << static_cast<unsigned>(color[2]) << '\n';
+}
+
+
+void
+FastgenWriter::write_hole(const SectionID &surrounding_id,
+			  const std::vector<SectionID> &subtracted_ids)
+{
+    if (subtracted_ids.empty() || subtracted_ids.size() > 3)
+	throw std::invalid_argument("invalid number of IDs");
+
+    Record record(*this);
+    record << "HOLE";
+    record << surrounding_id.first << surrounding_id.second;
+
+    for (std::vector<SectionID>::const_iterator it = subtracted_ids.begin();
+	 it != subtracted_ids.end(); ++it)
+	record << it->first << it->second;
+}
+
+
+void
+FastgenWriter::write_wall(const SectionID &surrounding_id,
+			  const std::vector<SectionID> &subtracted_ids)
+{
+    if (subtracted_ids.empty() || subtracted_ids.size() > 3)
+	throw std::invalid_argument("invalid number of IDs");
+
+    Record record(*this);
+    record << "WALL";
+    record << surrounding_id.first << surrounding_id.second;
+
+    for (std::vector<SectionID>::const_iterator it = subtracted_ids.begin();
+	 it != subtracted_ids.end(); ++it)
+	record << it->first << it->second;
 }
 
 
@@ -512,7 +553,7 @@ Section::add(Geometry *geometry)
 void
 Section::write(FastgenWriter &writer, const unsigned char *color) const
 {
-    const std::pair<std::size_t, std::size_t> id = writer.take_next_section_id();
+    const FastgenWriter::SectionID id = writer.take_next_section_id();
 
     {
 	std::string record_name;
@@ -534,7 +575,7 @@ Section::write(FastgenWriter &writer, const unsigned char *color) const
 				  (m_volume_mode ? 2 : 1);
 
     if (color)
-	writer.write_section_color(id.second, color);
+	writer.write_section_color(id, color);
 
     m_grid_manager.write(writer);
     std::size_t component_id = m_grid_manager.get_max_id() + 1;
@@ -606,25 +647,39 @@ class Section::Sphere : public Section::Geometry
 {
 public:
     Sphere(Section &section, const std::string &name, const Point &center,
-	   fastf_t thickness, fastf_t radius);
+	   fastf_t radius);
+    Sphere(Section &section, const std::string &name, const Point &center,
+	   fastf_t radius, fastf_t thickness);
 
 protected:
     virtual void write_to_section(FastgenWriter &writer, std::size_t &id) const;
 
 private:
     const std::size_t m_grid1;
-    const fastf_t m_thickness, m_radius;
+    const fastf_t m_radius, m_thickness;
 };
 
 
 Section::Sphere::Sphere(Section &section, const std::string &name,
-			const Point &center, fastf_t thickness, fastf_t radius) :
+			const Point &center, fastf_t radius) :
     Geometry(section, name),
     m_grid1(m_section.m_grid_manager.get_grid(center)),
-    m_thickness(thickness),
-    m_radius(radius)
+    m_radius(radius),
+    m_thickness(radius)
 {
-    if (m_thickness <= 0.0 || m_radius <= 0.0)
+    if (m_radius <= 0.0)
+	throw std::invalid_argument("invalid radius");
+}
+
+
+Section::Sphere::Sphere(Section &section, const std::string &name,
+			const Point &center, fastf_t radius, fastf_t thickness) :
+    Geometry(section, name),
+    m_grid1(m_section.m_grid_manager.get_grid(center)),
+    m_radius(radius),
+    m_thickness(thickness)
+{
+    if (m_radius <= 0.0 || m_thickness <= 0.0)
 	throw std::invalid_argument("invalid value");
 }
 
@@ -666,6 +721,9 @@ Section::Cone::Cone(Section &section, const std::string &name,
     m_ri1(radius_inner1),
     m_ri2(radius_inner2)
 {
+    if (!m_section.m_volume_mode)
+	throw std::logic_error("CCONE2 elements can only be used in volume-mode components");
+
     if (m_ri1 < 0.0 || m_ri2 < 0.0 || m_ri1 >= m_ro1 || m_ri2 >= m_ro2)
 	throw std::invalid_argument("invalid radius");
 
@@ -837,6 +895,59 @@ write_bot(Section &section, const rt_bot_internal &bot)
 
 
 HIDDEN bool
+tree_entirely_unions(const tree *tree)
+{
+    if (!tree)
+	return true;
+
+    RT_CK_TREE(tree);
+
+    switch (tree->tr_op) {
+	case OP_SOLID:
+	case OP_REGION:
+	case OP_NOP:
+	case OP_NMG_TESS:
+	case OP_DB_LEAF:
+	    return true; // leaf
+
+	case OP_UNION:
+	    return tree_entirely_unions(tree->tr_b.tb_left)
+		   && tree_entirely_unions(tree->tr_b.tb_right);
+
+	default:
+	    return false; // non-union operation
+    }
+}
+
+
+// Determines whether the parent comb is simple enough
+// to be represented by fastgen4.
+HIDDEN bool
+comb_representable(db_i &db, const db_full_path &path)
+{
+    RT_CK_DBI(&db);
+    RT_CK_FULL_PATH(&path);
+
+    if (path.fp_len < 2)
+	throw std::invalid_argument("toplevel");
+
+    rt_db_internal comb_db_internal;
+
+    if (rt_db_get_internal(&comb_db_internal, path.fp_names[path.fp_len - 2], &db,
+			   NULL, &rt_uniresource) < 0)
+	throw std::runtime_error("rt_db_get_internal() failed");
+
+    AutoFreePtr<rt_db_internal, rt_db_free_internal> autofree_comb_db_internal(
+	&comb_db_internal);
+
+    rt_comb_internal &comb_internal = *static_cast<rt_comb_internal *>
+				      (comb_db_internal.idb_ptr);
+    RT_CK_COMB(&comb_internal);
+    return tree_entirely_unions(comb_internal.tree);
+}
+
+
+HIDDEN bool
 ell_is_sphere(const rt_ell_internal &ell)
 {
     RT_ELL_CK_MAGIC(&ell);
@@ -926,9 +1037,11 @@ tgc_is_ccone(const rt_tgc_internal &tgc)
 // Sets `ro1`, `ro2`, `ri1`, and `ri2` to the values of
 // the lower/upper outer and inner radii.
 HIDDEN bool
-find_ccone_cutout(const std::string &name, db_i &db, std::string &new_name,
+find_ccone_cutout(db_i &db, const std::string &name, std::string &new_name,
 		  fastf_t &ro1, fastf_t &ro2, fastf_t &ri1, fastf_t &ri2)
 {
+    RT_CK_DBI(&db);
+
     db_full_path path;
 
     if (db_string_to_path(&path, &db, name.c_str()))
@@ -1135,7 +1248,7 @@ convert_primitive(ConversionData &data, const rt_db_internal &internal,
 		return false;
 
 	    Section section(name, true);
-	    section.add(new Section::Sphere(section, name, ell.v, 1.0, MAGNITUDE(ell.a)));
+	    section.add(new Section::Sphere(section, name, ell.v, MAGNITUDE(ell.a)));
 	    section.write(data.m_writer);
 	    break;
 	}
@@ -1151,7 +1264,7 @@ convert_primitive(ConversionData &data, const rt_db_internal &internal,
 	    std::string new_name;
 	    fastf_t ro1, ro2, ri1, ri2;
 
-	    if (find_ccone_cutout(name, data.m_db, new_name, ro1, ro2, ri1, ri2)) {
+	    if (find_ccone_cutout(data.m_db, name, new_name, ro1, ro2, ri1, ri2)) {
 		// an imported CCONE with cutout
 		if (!data.m_recorded_ccones.insert(new_name).second)
 		    break; // already written
@@ -1265,20 +1378,18 @@ convert_leaf(db_tree_state *tree_state, const db_full_path *path,
     RT_CK_FULL_PATH(path);
     RT_CK_DB_INTERNAL(internal);
 
-    if (internal->idb_major_type != DB5_MAJORTYPE_BRLCAD)
-	return NULL;
-
     ConversionData &data = *static_cast<ConversionData *>(client_data);
     const std::string name = AutoFreePtr<char>(db_path_to_string(path)).ptr;
     bool converted = false;
 
-    try {
-	if (data.m_convert_primitives)
+    if (internal->idb_major_type == DB5_MAJORTYPE_BRLCAD
+	&& data.m_convert_primitives && comb_representable(data.m_db, *path))
+	try {
 	    converted = convert_primitive(data, *internal, name);
-    } catch (const std::runtime_error &e) {
-	bu_log("FAILURE: convert_primitive() failed on object '%s': %s\n", name.c_str(),
-	       e.what());
-    }
+	} catch (const std::runtime_error &e) {
+	    bu_log("FAILURE: convert_primitive() failed on object '%s': %s\n", name.c_str(),
+		   e.what());
+	}
 
     if (!converted)
 	return nmg_booltree_leaf_tess(tree_state, path, internal, client_data);
@@ -1310,6 +1421,8 @@ HIDDEN int
 gcv_fastgen4_write(const char *path, struct db_i *dbip,
 		   const struct gcv_opts *UNUSED(options))
 {
+    RT_CK_DBI(dbip);
+
     // Set to true to directly translate any primitives that can be represented by fg4.
     // Due to limitations in the fg4 format, boolean operations can not be represented.
     const bool convert_primitives = false;
@@ -1319,7 +1432,7 @@ gcv_fastgen4_write(const char *path, struct db_i *dbip,
     writer.write_comment("g -> fastgen4 conversion");
 
     const rt_tess_tol ttol = {RT_TESS_TOL_MAGIC, 0.0, 0.01, 0.0};
-    const bn_tol tol = {BN_TOL_MAGIC, BN_TOL_DIST, BN_TOL_DIST * BN_TOL_DIST, 1e-6, 1 - 1e-6};
+    const bn_tol tol = {BN_TOL_MAGIC, BN_TOL_DIST, BN_TOL_DIST * BN_TOL_DIST, 1.0e-6, 1.0 - 1.0e-6};
     ConversionData conv_data = {writer, tol, convert_primitives, *dbip, std::set<std::string>()};
 
     {
