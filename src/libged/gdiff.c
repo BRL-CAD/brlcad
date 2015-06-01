@@ -29,6 +29,7 @@
 
 #include "bu/cmd.h"
 #include "bu/getopt.h"
+#include "analyze.h"
 
 #include "./ged_private.h"
 
@@ -41,6 +42,9 @@ gdiff_usage()
 int
 ged_gdiff(struct ged *gedp, int argc, const char *argv[])
 {
+    size_t i;
+    struct analyze_raydiff_results *results;
+    struct bn_tol tol = {BN_TOL_MAGIC, BN_TOL_DIST, BN_TOL_DIST * BN_TOL_DIST, 1.0e-6, 1.0 - 1.0e-6 };
     int left_dbip_specified = 0;
     int right_dbip_specified = 0;
     int c = 0;
@@ -86,40 +90,6 @@ ged_gdiff(struct ged *gedp, int argc, const char *argv[])
 		return GED_ERROR;
 	}
     }
-
-    {
-	/* Construct a minimal example visual display of a ray diff */
-	struct bu_list *vhead;
-	struct bu_list local_vlist;
-	struct bn_vlblock *vbp;
-	point_t a, b;
-	BU_LIST_INIT(&local_vlist);
-	vbp = bn_vlblock_init(&local_vlist, 32);
-	VSET(a, -100, 0, 0);
-	VSET(b, 0, 0, 0);
-	/* Draw left-only lines */
-	vhead = bn_vlblock_find(vbp, 255, 0, 0); /* should be red */
-	BN_ADD_VLIST(vbp->free_vlist_hd, vhead, a, BN_VLIST_LINE_MOVE);
-	BN_ADD_VLIST(vbp->free_vlist_hd, vhead, b, BN_VLIST_LINE_DRAW);
-	/* Draw overlap lines */
-	VSET(a, 0, 0, 0);
-	VSET(b, 100, 0, 0);
-	vhead = bn_vlblock_find(vbp, 255, 255, 255); /* should be white */
-	BN_ADD_VLIST(vbp->free_vlist_hd, vhead, a, BN_VLIST_LINE_MOVE);
-	BN_ADD_VLIST(vbp->free_vlist_hd, vhead, b, BN_VLIST_LINE_DRAW);
-	/* Draw right-only lines */
-	VSET(a, 100, 0, 0);
-	VSET(b, 200, 0, 0);
-	vhead = bn_vlblock_find(vbp, 0, 0, 255); /* should be blue */
-	BN_ADD_VLIST(vbp->free_vlist_hd, vhead, a, BN_VLIST_LINE_MOVE);
-	BN_ADD_VLIST(vbp->free_vlist_hd, vhead, b, BN_VLIST_LINE_DRAW);
-
-	_ged_cvt_vlblock_to_solids(gedp, vbp, "diff_visual", 0);
-
-	bn_vlist_cleanup(&local_vlist);
-	bn_vlblock_free(vbp);
-    }
-
     /* There are possible convention-based interpretations of 1, 2, 3, 4 and n args
      * beyond those used as options.  For the shortest cases, the interpretation depends
      * on whether one or two .g files are known:
@@ -152,7 +122,6 @@ ged_gdiff(struct ged *gedp, int argc, const char *argv[])
      *
      * When there is a current .g environment and two additional .g files are
      * specified, the argv environments will override use of the "current" .g environment.
-     */
      if ((argc - bu_optind) == 2) {
 	 bu_log("left: %s", argv[bu_optind]);
 	 bu_log("right: %s", argv[bu_optind+1]);
@@ -165,6 +134,62 @@ ged_gdiff(struct ged *gedp, int argc, const char *argv[])
 	    return GED_ERROR;
 	}
      }
+     */
+
+
+    if ((argc - bu_optind) != 2) {
+	return GED_ERROR;
+    }
+
+    bu_log("left: %s", argv[bu_optind]);
+    bu_log("right: %s", argv[bu_optind+1]);
+
+    analyze_raydiff(&results, gedp->ged_wdbp->dbip, argv[bu_optind], argv[bu_optind+1], &tol);
+
+    {
+	/* Construct a minimal example visual display of a ray diff */
+	struct bu_list *vhead;
+	struct bu_list local_vlist;
+	struct bn_vlblock *vbp;
+	point_t a, b;
+	BU_LIST_INIT(&local_vlist);
+	vbp = bn_vlblock_init(&local_vlist, 32);
+
+	/* Draw left-only lines */
+	for (i = 0; i < BU_PTBL_LEN(results->left); i++) {
+	    struct diff_seg *dseg = (struct diff_seg *)BU_PTBL_GET(results->left, i);
+	    VMOVE(a, dseg->in_pt);
+	    VMOVE(b, dseg->out_pt);
+	    vhead = bn_vlblock_find(vbp, 255, 0, 0); /* should be red */
+	    BN_ADD_VLIST(vbp->free_vlist_hd, vhead, a, BN_VLIST_LINE_MOVE);
+	    BN_ADD_VLIST(vbp->free_vlist_hd, vhead, b, BN_VLIST_LINE_DRAW);
+	}
+	/* Draw overlap lines */
+	for (i = 0; i < BU_PTBL_LEN(results->both); i++) {
+	    struct diff_seg *dseg = (struct diff_seg *)BU_PTBL_GET(results->both, i);
+	    VMOVE(a, dseg->in_pt);
+	    VMOVE(b, dseg->out_pt);
+	    vhead = bn_vlblock_find(vbp, 255, 255, 255); /* should be white */
+	    BN_ADD_VLIST(vbp->free_vlist_hd, vhead, a, BN_VLIST_LINE_MOVE);
+	    BN_ADD_VLIST(vbp->free_vlist_hd, vhead, b, BN_VLIST_LINE_DRAW);
+
+	}
+	for (i = 0; i < BU_PTBL_LEN(results->right); i++) {
+	    struct diff_seg *dseg = (struct diff_seg *)BU_PTBL_GET(results->right, i);
+	    VMOVE(a, dseg->in_pt);
+	    VMOVE(b, dseg->out_pt);
+	    vhead = bn_vlblock_find(vbp, 0, 0, 255); /* should be blue */
+	    BN_ADD_VLIST(vbp->free_vlist_hd, vhead, a, BN_VLIST_LINE_MOVE);
+	    BN_ADD_VLIST(vbp->free_vlist_hd, vhead, b, BN_VLIST_LINE_DRAW);
+	}
+
+	_ged_cvt_vlblock_to_solids(gedp, vbp, "diff_visual", 0);
+
+	bn_vlist_cleanup(&local_vlist);
+	bn_vlblock_free(vbp);
+    }
+
+    analyze_raydiff_results_free(results);
 
     return GED_OK;
 }

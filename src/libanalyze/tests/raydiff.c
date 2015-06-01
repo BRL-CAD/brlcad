@@ -30,10 +30,12 @@
 int
 main(int argc, char **argv)
 {
+    size_t i;
     struct db_i *dbip = DBI_NULL;
     struct directory *dp1 = RT_DIR_NULL;
     struct directory *dp2 = RT_DIR_NULL;
     struct bn_tol tol = {BN_TOL_MAGIC, BN_TOL_DIST, BN_TOL_DIST * BN_TOL_DIST, 1.0e-6, 1.0 - 1.0e-6 };
+    struct analyze_raydiff_results *results;
 
     if (argc != 4) {
 	bu_log("Error - please specify a .g file and two objects\n");
@@ -59,7 +61,23 @@ main(int argc, char **argv)
 
     if (dp1 == RT_DIR_NULL || dp2 == RT_DIR_NULL) return 1;
 
-    analyze_raydiff(dbip, dp1->d_namep, dp2->d_namep, &tol);
+    analyze_raydiff(&results, dbip, dp1->d_namep, dp2->d_namep, &tol);
+
+    /* Print results */
+    for (i = 0; i < BU_PTBL_LEN(results->left); i++) {
+	struct diff_seg *dseg = (struct diff_seg *)BU_PTBL_GET(results->left, i);
+	bu_log("Result: LEFT diff vol (%s): %g %g %g -> %g %g %g\n", argv[2], V3ARGS(dseg->in_pt), V3ARGS(dseg->out_pt));
+    }
+    for (i = 0; i < BU_PTBL_LEN(results->both); i++) {
+	struct diff_seg *dseg = (struct diff_seg *)BU_PTBL_GET(results->both, i);
+	bu_log("Result: BOTH): %g %g %g -> %g %g %g\n", V3ARGS(dseg->in_pt), V3ARGS(dseg->out_pt));
+    }
+    for (i = 0; i < BU_PTBL_LEN(results->right); i++) {
+	struct diff_seg *dseg = (struct diff_seg *)BU_PTBL_GET(results->right, i);
+	bu_log("Result: RIGHT diff vol (%s): %g %g %g -> %g %g %g\n", argv[3], V3ARGS(dseg->in_pt), V3ARGS(dseg->out_pt));
+    }
+
+    analyze_raydiff_results_free(results);
 
     db_close(dbip);
     return 0;

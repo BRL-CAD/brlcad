@@ -30,11 +30,47 @@
 #include "bu/log.h"
 #include "bu/ptbl.h"
 #include "raytrace.h"
+#include "analyze.h"
 
-struct diff_seg {
-    point_t in_pt;
-    point_t out_pt;
-};
+void
+analyze_raydiff_results_init(struct analyze_raydiff_results **results)
+{
+    if (!results) return;
+    BU_GET((*results), struct analyze_raydiff_results);
+    BU_GET((*results)->left, struct bu_ptbl);
+    BU_GET((*results)->right, struct bu_ptbl);
+    BU_GET((*results)->both, struct bu_ptbl);
+    bu_ptbl_init((*results)->left, 64, "init left");
+    bu_ptbl_init((*results)->right, 64, "init right");
+    bu_ptbl_init((*results)->both, 64, "init both");
+}
+
+void
+analyze_raydiff_results_free(struct analyze_raydiff_results *results)
+{
+    size_t i;
+    if (!results) return;
+    for (i = 0; i < BU_PTBL_LEN(results->left); i++) {
+	struct diff_seg *dseg = (struct diff_seg *)BU_PTBL_GET(results->left, i);
+	BU_PUT(dseg, struct diff_seg);
+    }
+    bu_ptbl_free(results->left);
+    BU_PUT(results->left, struct diff_seg);
+    for (i = 0; i < BU_PTBL_LEN(results->both); i++) {
+	struct diff_seg *dseg = (struct diff_seg *)BU_PTBL_GET(results->both, i);
+	BU_PUT(dseg, struct diff_seg);
+    }
+    bu_ptbl_free(results->both);
+    BU_PUT(results->both, struct diff_seg);
+    for (i = 0; i < BU_PTBL_LEN(results->right); i++) {
+	struct diff_seg *dseg = (struct diff_seg *)BU_PTBL_GET(results->right, i);
+	BU_PUT(dseg, struct diff_seg);
+    }
+    bu_ptbl_free(results->right);
+    BU_PUT(results->right, struct diff_seg);
+
+    BU_PUT(results, struct analyze_raydiff_results);
+}
 
 struct raydiff_container {
     struct rt_i *rtip;
@@ -171,8 +207,8 @@ raydiff_gen_worker(int cpu, void *ptr)
 
 /* 0 = no difference within tolerance, 1 = difference >= tolerance */
 int
-analyze_raydiff(/* TODO - decide what to return.  Probably some sort of left, common, right segment sets.  See what rtcheck does... */
-	struct db_i *dbip, const char *obj1, const char *obj2, struct bn_tol *tol)
+analyze_raydiff(struct analyze_raydiff_results **results, struct db_i *dbip,
+       const char *left, const char *right, struct bn_tol *tol)
 {
     int ret;
     int count = 0;
@@ -183,11 +219,11 @@ analyze_raydiff(/* TODO - decide what to return.  Probably some sort of left, co
     fastf_t *rays;
     struct raydiff_container *state;
 
-    if (!dbip || !obj1 || !obj2 || !tol) return 0;
+    if (!results || !dbip || !left || !right|| !tol) return 0;
 
     rtip = rt_new_rti(dbip);
-    if (rt_gettree(rtip, obj1) < 0) return -1;
-    if (rt_gettree(rtip, obj2) < 0) return -1;
+    if (rt_gettree(rtip, left) < 0) return -1;
+    if (rt_gettree(rtip, right) < 0) return -1;
     rt_prep_parallel(rtip, 1);
 
 
@@ -287,8 +323,8 @@ analyze_raydiff(/* TODO - decide what to return.  Probably some sort of left, co
 	    state[i].rtip = rtip;
 	    state[i].tol = 0.5;
 	    state[i].ncpus = ncpus;
-	    state[i].left_name = bu_strdup(obj1);
-	    state[i].right_name = bu_strdup(obj2);
+	    state[i].left_name = bu_strdup(left);
+	    state[i].right_name = bu_strdup(right);
 	    BU_GET(state[i].resp, struct resource);
 	    rt_init_resource(state[i].resp, i, state->rtip);
 	    BU_GET(state[i].left, struct bu_ptbl);
@@ -302,43 +338,28 @@ analyze_raydiff(/* TODO - decide what to return.  Probably some sort of left, co
 	}
 	bu_parallel(raydiff_gen_worker, ncpus, (void *)state);
 
+
+	/* Now we should have results */
+	analyze_raydiff_results_init(results);
+
 	/* Collect and print all of the results */
 	for (i = 0; i < ncpus+1; i++) {
 	    for (j = 0; j < (int)BU_PTBL_LEN(state[i].left); j++) {
-		struct diff_seg *dseg = (struct diff_seg *)BU_PTBL_GET(state[i].left, j);
-		bu_log("Result: LEFT diff vol (%s): %g %g %g -> %g %g %g\n", obj1, V3ARGS(dseg->in_pt), V3ARGS(dseg->out_pt));
+		bu_ptbl_ins((*results)->left, BU_PTBL_GET(state[i].left, j));
 	    }
 	    for (j = 0; j < (int)BU_PTBL_LEN(state[i].both); j++) {
-		struct diff_seg *dseg = (struct diff_seg *)BU_PTBL_GET(state[i].both, j);
-		bu_log("Result: BOTH): %g %g %g -> %g %g %g\n", V3ARGS(dseg->in_pt), V3ARGS(dseg->out_pt));
+		bu_ptbl_ins((*results)->both, BU_PTBL_GET(state[i].both, j));
 	    }
 	    for (j = 0; j < (int)BU_PTBL_LEN(state[i].right); j++) {
-		struct diff_seg *dseg = (struct diff_seg *)BU_PTBL_GET(state[i].right, j);
-		bu_log("Result: RIGHT diff vol (%s): %g %g %g -> %g %g %g\n", obj2, V3ARGS(dseg->in_pt), V3ARGS(dseg->out_pt));
+		bu_ptbl_ins((*results)->right, BU_PTBL_GET(state[i].right, j));
 	    }
 	}
 
-	/* Free results */
+	/* Free memory not stored in tables */
 	for (i = 0; i < ncpus+1; i++) {
-	    for (j = 0; j < (int)BU_PTBL_LEN(state[i].left); j++) {
-		struct diff_seg *dseg = (struct diff_seg *)BU_PTBL_GET(state[i].left, j);
-		BU_PUT(dseg, struct diff_seg);
-	    }
-	    bu_ptbl_free(state[i].left);
-	    BU_PUT(state[i].left, struct diff_seg);
-	    for (j = 0; j < (int)BU_PTBL_LEN(state[i].both); j++) {
-		struct diff_seg *dseg = (struct diff_seg *)BU_PTBL_GET(state[i].both, j);
-		BU_PUT(dseg, struct diff_seg);
-	    }
-	    bu_ptbl_free(state[i].both);
-	    BU_PUT(state[i].both, struct diff_seg);
-	    for (j = 0; j < (int)BU_PTBL_LEN(state[i].right); j++) {
-		struct diff_seg *dseg = (struct diff_seg *)BU_PTBL_GET(state[i].right, j);
-		BU_PUT(dseg, struct diff_seg);
-	    }
-	    bu_ptbl_free(state[i].right);
-	    BU_PUT(state[i].right, struct diff_seg);
-
+	    BU_PUT(state[i].left, struct bu_ptbl);
+	    BU_PUT(state[i].right, struct bu_ptbl);
+	    BU_PUT(state[i].both, struct bu_ptbl);
 	    bu_free((void *)state[i].left_name, "left name");
 	    bu_free((void *)state[i].right_name, "right name");
 	    BU_PUT(state[i].resp, struct resource);

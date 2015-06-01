@@ -126,9 +126,24 @@ ANALYZE_EXPORT extern void
 voxelize(struct rt_i *rtip, fastf_t voxelSize[3], int levelOfDetail, void (*create_boxes)(void *callBackData, int x, int y, int z, const char *regionName, fastf_t percentageFill), void *callBackData);
 
 
+struct analyze_raydiff_results {
+    struct bu_ptbl *left;
+    struct bu_ptbl *right;
+    struct bu_ptbl *both;
+};
+
+
+struct diff_seg {
+    point_t in_pt;
+    point_t out_pt;
+};
+
+void
+analyze_raydiff_results_free(struct analyze_raydiff_results *results);
 
 ANALYZE_EXPORT int
-analyze_raydiff(struct db_i *dbip, const char *obj1, const char *obj2, struct bn_tol *tol);
+analyze_raydiff(struct analyze_raydiff_results **results, struct db_i *dbip,
+	const char *left, const char *right, struct bn_tol *tol);
 
 
 __END_DECLS
