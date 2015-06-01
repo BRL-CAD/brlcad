@@ -1354,6 +1354,7 @@ convert_primitive(ConversionData &data, const rt_db_internal &internal,
 		fastf_t radius, thickness;
 
 		if (find_csphere_cutout(data.m_db, name, new_name, radius, thickness)) {
+		    // an imported CSPHERE with cutout
 		    Section section(name, true);
 		    section.add(new Section::Sphere(section, name, ell.v, radius, thickness));
 		    section.write(data.m_writer);
@@ -1375,25 +1376,28 @@ convert_primitive(ConversionData &data, const rt_db_internal &internal,
 	    if (internal.idb_type != ID_REC && !tgc_is_ccone(tgc))
 		return false;
 
-	    std::string new_name;
-	    fastf_t ro1, ro2, ri1, ri2;
-
-	    if (find_ccone_cutout(data.m_db, name, new_name, ro1, ro2, ri1, ri2)) {
-		// an imported CCONE with cutout
-		if (!data.m_recorded_ccones.insert(new_name).second)
-		    break; // already written
-	    } else {
-		new_name = name;
-		ro1 = MAGNITUDE(tgc.a);
-		ro2 = MAGNITUDE(tgc.b);
-		ri1 = ri2 = 0.0;
-	    }
-
 	    point_t v2;
 	    VADD2(v2, tgc.v, tgc.h);
 
-	    Section section(new_name, true);
-	    section.add(new Section::Cone(section, name, tgc.v, v2, ro1, ro2, ri1, ri2));
+	    {
+		std::string new_name;
+		fastf_t ro1, ro2, ri1, ri2;
+
+		if (find_ccone_cutout(data.m_db, name, new_name, ro1, ro2, ri1, ri2)) {
+		    // an imported CCONE with cutout
+		    if (!data.m_recorded_ccones.insert(new_name).second)
+			break; // already written
+
+		    Section section(new_name, true);
+		    section.add(new Section::Cone(section, new_name, tgc.v, v2, ro1, ro2, ri1,
+						  ri2));
+		    break;
+		}
+	    }
+
+	    Section section(name, true);
+	    section.add(new Section::Cone(section, name, tgc.v, v2, MAGNITUDE(tgc.a),
+					  MAGNITUDE(tgc.b), 0.0, 0.0));
 	    section.write(data.m_writer);
 	    break;
 	}
@@ -1418,6 +1422,7 @@ convert_primitive(ConversionData &data, const rt_db_internal &internal,
 		bool grid_centered;
 
 		if (bot_is_chex1(bot, points, thickness, grid_centered)) {
+		    // an imported CHEX1
 		    Section section(name, true);
 		    section.add(new Section::Hexahedron(section, name, points, thickness,
 							grid_centered));
