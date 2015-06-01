@@ -183,8 +183,10 @@ raydiff_gen_worker(int cpu, void *ptr)
 	start_ind = (int)si;
 	end_ind = (int)ei;
 	if (state->rays_cnt - end_ind < 3) end_ind = state->rays_cnt - 1;
+	/*
 	bu_log("start_ind (%d): %d\n", cpu, start_ind);
 	bu_log("end_ind (%d): %d\n", cpu, end_ind);
+	*/
     }
 
     RT_APPLICATION_INIT(&ap);
@@ -312,9 +314,9 @@ analyze_raydiff(struct analyze_raydiff_results **results, struct db_i *dbip,
     BU_PUT(xdata, struct rt_pattern_data);
     BU_PUT(ydata, struct rt_pattern_data);
     BU_PUT(zdata, struct rt_pattern_data);
-
+/*
     bu_log("ray cnt: %d\n", count);
-
+*/
     {
 	int i, j;
 	ncpus = 2;
