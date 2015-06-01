@@ -1133,6 +1133,108 @@ find_ccone_cutout(db_i &db, const std::string &name, std::string &new_name,
 }
 
 
+// Determines whether the object with the given name is a member of a
+// CSPHERE-compatible region (typically created by the fastgen4 importer).
+//
+// Sets `new_name` to the name of the CSPHERE.
+// Sets `radius` and `thickness` to the radius and thickness of the CSPHERE.
+HIDDEN bool
+find_csphere_cutout(db_i &db, const std::string &name, std::string &new_name,
+		    fastf_t &radius, fastf_t &thickness)
+{
+    RT_CK_DBI(&db);
+
+    db_full_path path;
+
+    if (db_string_to_path(&path, &db, name.c_str()))
+	throw std::logic_error("logic error: invalid path");
+
+    AutoFreePtr<db_full_path, db_free_full_path> autofree_path(&path);
+
+    if (path.fp_len < 2)
+	return false;
+
+    rt_db_internal comb_db_internal;
+
+    if (rt_db_get_internal(&comb_db_internal, path.fp_names[path.fp_len - 2], &db,
+			   NULL, &rt_uniresource) < 0)
+	throw std::runtime_error("rt_db_get_internal() failed");
+
+    AutoFreePtr<rt_db_internal, rt_db_free_internal> autofree_comb_db_internal(
+	&comb_db_internal);
+
+    rt_comb_internal &comb_internal = *static_cast<rt_comb_internal *>
+				      (comb_db_internal.idb_ptr);
+    RT_CK_COMB(&comb_internal);
+
+    const directory *outer_directory, *inner_directory;
+    {
+	const tree::tree_node &t = comb_internal.tree->tr_b;
+
+	if (t.tb_op != OP_SUBTRACT || !t.tb_left || !t.tb_right
+	    || t.tb_left->tr_op != OP_DB_LEAF || t.tb_right->tr_op != OP_DB_LEAF)
+	    return false;
+
+	outer_directory = db_lookup(&db, t.tb_left->tr_l.tl_name, false);
+	inner_directory = db_lookup(&db, t.tb_right->tr_l.tl_name, false);
+
+	// check for nonexistent members
+	if (!outer_directory || !inner_directory)
+	    return false;
+    }
+
+    rt_db_internal outer_db_internal, inner_db_internal;
+
+    if (rt_db_get_internal(&outer_db_internal, outer_directory, &db, NULL,
+			   &rt_uniresource) < 0)
+	throw std::runtime_error("rt_db_get_internal() failed");
+
+    AutoFreePtr<rt_db_internal, rt_db_free_internal> autofree_outer_db_internal(
+	&outer_db_internal);
+
+    if (rt_db_get_internal(&inner_db_internal, inner_directory, &db, NULL,
+			   &rt_uniresource) < 0)
+	throw std::runtime_error("rt_db_get_internal() failed");
+
+    AutoFreePtr<rt_db_internal, rt_db_free_internal> autofree_inner_db_internal(
+	&inner_db_internal);
+
+    if ((outer_db_internal.idb_minor_type != ID_SPH
+	 && outer_db_internal.idb_minor_type != ID_ELL)
+	|| (inner_db_internal.idb_minor_type != ID_SPH
+	    && inner_db_internal.idb_minor_type != ID_ELL))
+	return false;
+
+    const rt_ell_internal &outer_ell = *static_cast<rt_ell_internal *>
+				       (outer_db_internal.idb_ptr);
+    const rt_ell_internal &inner_ell = *static_cast<rt_ell_internal *>
+				       (inner_db_internal.idb_ptr);
+    RT_ELL_CK_MAGIC(&outer_ell);
+    RT_ELL_CK_MAGIC(&inner_ell);
+
+    // check cone geometry
+    if (!ell_is_sphere(outer_ell) || !ell_is_sphere(inner_ell))
+	return false;
+
+    if (!VEQUAL(outer_ell.v, inner_ell.v))
+	return false;
+
+    // store results
+    --path.fp_len;
+    new_name = AutoFreePtr<char>(db_path_to_string(&path)).ptr;
+    const fastf_t ro1 = MAGNITUDE(outer_ell.a);
+    const fastf_t ri1 = MAGNITUDE(inner_ell.a);
+
+    // check radii
+    if (ri1 >= ro1)
+	return false;
+
+    radius = ro1;
+    thickness = ro1 - ri1;
+    return true;
+}
+
+
 // Determines whether `bot` is a CHEX1-compatible BOT
 // (typically created by the fastgen4 importer).
 //
@@ -1246,6 +1348,18 @@ convert_primitive(ConversionData &data, const rt_db_internal &internal,
 
 	    if (internal.idb_type != ID_SPH && !ell_is_sphere(ell))
 		return false;
+
+	    {
+		std::string new_name;
+		fastf_t radius, thickness;
+
+		if (find_csphere_cutout(data.m_db, name, new_name, radius, thickness)) {
+		    Section section(name, true);
+		    section.add(new Section::Sphere(section, name, ell.v, radius, thickness));
+		    section.write(data.m_writer);
+		    break;
+		}
+	    }
 
 	    Section section(name, true);
 	    section.add(new Section::Sphere(section, name, ell.v, MAGNITUDE(ell.a)));
