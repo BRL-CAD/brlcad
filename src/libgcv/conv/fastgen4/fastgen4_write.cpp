@@ -746,27 +746,38 @@ class Section::Hexahedron : public Section::Geometry
 {
 public:
     Hexahedron(Section &section, const std::string &name,
-	       const fastf_t points[8][3]);
+	       const fastf_t points[8][3], fastf_t thickness = MAX_FASTF,
+	       bool grid_centered = false);
 
 protected:
     virtual void write_to_section(FastgenWriter &writer, std::size_t &id) const;
 
 private:
-    std::vector<std::size_t> m_grids;
+    std::size_t m_grids[8];
+    const fastf_t m_thickness;
+    const bool m_grid_centered;
 };
 
 
 Section::Hexahedron::Hexahedron(Section &section, const std::string &name,
-				const fastf_t points[8][3]) :
+				const fastf_t points[8][3], fastf_t thickness, bool grid_centered) :
     Geometry(section, name),
-    m_grids()
+    m_thickness(thickness),
+    m_grid_centered(grid_centered)
 {
+    if (m_thickness <= 0.0)
+	throw std::invalid_argument("invalid thickness");
+
     std::vector<Point> vpoints(8);
 
     for (std::size_t i = 0; i < 8; ++i)
 	vpoints.at(i) = points[i];
 
-    m_grids = section.m_grid_manager.get_unique_grids(vpoints);
+    std::vector<std::size_t> vgrids = m_section.m_grid_manager.get_unique_grids(
+					  vpoints);
+
+    for (std::size_t i = 0; i < 8; ++i)
+	m_grids[i] = vgrids.at(i);
 }
 
 
@@ -774,18 +785,24 @@ void
 Section::Hexahedron::write_to_section(FastgenWriter &writer,
 				      std::size_t &id) const
 {
+    const bool has_thickness = !EQUAL(m_thickness, MAX_FASTF);
+
     {
 	FastgenWriter::Record record1(writer);
-	record1 << "CHEX2" << id << 0;
+	record1 << (has_thickness ? "CHEX1" : "CHEX2");
+	record1 << id << 0;
 
 	for (std::size_t i = 0; i < 6; ++i)
-	    record1 << m_grids.at(i);
+	    record1 << m_grids[i];
 
 	record1 << ++id;
     }
 
     FastgenWriter::Record record2(writer);
-    record2 << id << m_grids.at(6) << m_grids.at(7);
+    record2 << id << m_grids[6] << m_grids[7];
+
+    if (has_thickness)
+	record2 << "" << "" << "" << "" << m_thickness << (m_grid_centered ? 1 : 2);
 }
 
 
