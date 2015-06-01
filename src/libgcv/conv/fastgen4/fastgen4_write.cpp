@@ -1035,7 +1035,7 @@ bot_is_chex1(const rt_bot_internal &bot, fastf_t points[8][3],
     if (bot.num_vertices != 8 || bot.num_faces != 12)
 	return false;
 
-    if (bot.mode == RT_BOT_SURFACE || bot.mode == RT_BOT_SOLID)
+    if (bot.mode != RT_BOT_SOLID && bot.mode != RT_BOT_PLATE)
 	return false;
 
     if (bot.thickness) {
