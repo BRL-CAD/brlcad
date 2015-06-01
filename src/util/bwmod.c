@@ -139,7 +139,7 @@ get_args(int argc, char **argv)
 		op[ numop ] = TRUNC;
 		val[ numop++ ] = atof(bu_optarg);
 		break;
-	    default:		/* '?' */
+	    default:		/* '?' 'h' */
 		return 0;
 	}
     }
@@ -233,7 +233,7 @@ int main(int argc, char **argv)
     unsigned char *p, *q;
     int tmp;
     int n;
-    unsigned long clip_high, clip_low;
+    unsigned long clip_high = 0L , clip_low = 0L ;
 
     setmode(fileno(stdin), O_BINARY);
     setmode(fileno(stdout), O_BINARY);
@@ -252,7 +252,6 @@ int main(int argc, char **argv)
     else
 	mk_trans_tbl();
 
-    clip_high = clip_low = 0L;
     while ((n=read(0, (void *)ibuf, (unsigned)sizeof(ibuf))) > 0) {
 	/* translate */
 	for (p = ibuf, q = &ibuf[n]; p < q; ++p) {
