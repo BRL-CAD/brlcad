@@ -802,7 +802,8 @@ Section::Hexahedron::write_to_section(FastgenWriter &writer,
     record2 << id << m_grids[6] << m_grids[7];
 
     if (has_thickness)
-	record2 << "" << "" << "" << "" << m_thickness << (m_grid_centered ? 1 : 2);
+	record2 << "" << "" << "" << "" << m_thickness * FastgenWriter::INCHES_PER_MM
+		<< (m_grid_centered ? 1 : 2);
 }
 
 
