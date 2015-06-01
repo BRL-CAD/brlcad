@@ -1020,6 +1020,81 @@ find_ccone_cutout(const std::string &name, db_i &db, std::string &new_name,
 }
 
 
+// Determines whether `bot` is a CHEX1-compatible BOT
+// (typically created by the fastgen4 importer).
+//
+// Stores CHEX1 points in `points`.
+// Stores CHEX1 thickness in `thickness`.
+// Stores centering mode in `grid_centered`.
+HIDDEN bool
+bot_is_chex1(const rt_bot_internal &bot, fastf_t points[8][3],
+	     fastf_t &thickness, bool &grid_centered)
+{
+    RT_BOT_CK_MAGIC(&bot);
+
+    if (bot.num_vertices != 8 || bot.num_faces != 12)
+	return false;
+
+    if (bot.mode == RT_BOT_SURFACE || bot.mode == RT_BOT_SOLID)
+	return false;
+
+    if (bot.thickness) {
+	thickness = bot.thickness[0];
+
+	for (std::size_t i = 1; i < bot.num_faces; ++i)
+	    if (!EQUAL(bot.thickness[i], thickness))
+		return false;
+    }
+
+    if (bot.face_mode) {
+	const bool face_mode = BU_BITTEST(bot.face_mode, 0);
+	grid_centered = !face_mode;
+
+	std::size_t count = 0;
+	BU_BITV_LOOP_START(bot.face_mode) {
+	    ++count;
+	}
+	BU_BITV_LOOP_END;
+
+	if (face_mode) {
+	    if (count != bot.num_faces)
+		return false;
+	} else {
+	    if (count)
+		return false;
+	}
+    }
+
+    const int hex_faces[12][3] = {
+	{ 0, 1, 4 },
+	{ 1, 5, 4 },
+	{ 1, 2, 5 },
+	{ 2, 6, 5 },
+	{ 2, 3, 6 },
+	{ 3, 7, 6 },
+	{ 3, 0, 7 },
+	{ 0, 4, 7 },
+	{ 4, 6, 7 },
+	{ 4, 5, 6 },
+	{ 0, 1, 2 },
+	{ 0, 2, 3 }
+    };
+
+    for (int i = 0; i < 12; ++i) {
+	const int *face = &bot.faces[i * 3];
+
+	if (face[0] != hex_faces[i][0] || face[1] != hex_faces[i][1]
+	    || face[2] != hex_faces[i][2])
+	    return false;
+    }
+
+    for (int i = 0; i < 8; ++i)
+	VMOVE(points[i], &bot.vertices[i * 3]);
+
+    return true;
+}
+
+
 struct ConversionData {
     FastgenWriter &m_writer;
     const bn_tol &m_tol;
@@ -1109,6 +1184,20 @@ convert_primitive(ConversionData &data, const rt_db_internal &internal,
 	case ID_BOT: {
 	    const rt_bot_internal &bot = *static_cast<rt_bot_internal *>(internal.idb_ptr);
 	    RT_BOT_CK_MAGIC(&bot);
+
+	    {
+		fastf_t points[8][3];
+		fastf_t thickness;
+		bool grid_centered;
+
+		if (bot_is_chex1(bot, points, thickness, grid_centered)) {
+		    Section section(name, true);
+		    section.add(new Section::Hexahedron(section, name, points, thickness,
+							grid_centered));
+		    section.write(data.m_writer);
+		    break;
+		}
+	    }
 
 	    Section section(name, bot.mode == RT_BOT_SOLID);
 	    write_bot(section, bot);
