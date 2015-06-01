@@ -115,12 +115,12 @@ raydiff_hit(struct application *ap, struct partition *PartHeadp, struct seg *UNU
 	    state->have_diffs = 1;
 	    if (state->left && !bu_strncmp(part->pt_regionp->reg_name+1, state->left_name, strlen(state->left_name))) {
 		RDIFF_ADD_DSEG(state->left, in_pt, out_pt);
-		bu_log("LEFT diff vol (%s) (len: %f): %g %g %g -> %g %g %g\n", part->pt_regionp->reg_name, part_len, V3ARGS(in_pt), V3ARGS(out_pt));
+		/*bu_log("LEFT diff vol (%s) (len: %f): %g %g %g -> %g %g %g\n", part->pt_regionp->reg_name, part_len, V3ARGS(in_pt), V3ARGS(out_pt));*/
 		continue;
 	    }
 	    if (state->right && !bu_strncmp(part->pt_regionp->reg_name+1, state->right_name, strlen(state->right_name))) {
 		RDIFF_ADD_DSEG(state->right, in_pt, out_pt);
-		bu_log("RIGHT diff vol (%s) (len: %f): %g %g %g -> %g %g %g\n", part->pt_regionp->reg_name, part_len, V3ARGS(in_pt), V3ARGS(out_pt));
+		/*bu_log("RIGHT diff vol (%s) (len: %f): %g %g %g -> %g %g %g\n", part->pt_regionp->reg_name, part_len, V3ARGS(in_pt), V3ARGS(out_pt));*/
 		continue;
 	    }
 	    /* If we aren't collecting segments, we already have our final answer */
@@ -135,8 +135,8 @@ raydiff_hit(struct application *ap, struct partition *PartHeadp, struct seg *UNU
 HIDDEN int
 raydiff_overlap(struct application *ap,
 		struct partition *pp,
-		struct region *reg1,
-		struct region *reg2,
+		struct region *UNUSED(reg1),
+		struct region *UNUSED(reg2),
 		struct partition *UNUSED(hp))
 {
     point_t in_pt, out_pt;
@@ -150,7 +150,7 @@ raydiff_overlap(struct application *ap,
 
     if (overlap_len > state->tol) {
 	RDIFF_ADD_DSEG(state->both, in_pt, out_pt);
-	bu_log("OVERLAP (%s and %s) (len: %f): %g %g %g -> %g %g %g\n", reg1->reg_name, reg2->reg_name, overlap_len, V3ARGS(in_pt), V3ARGS(out_pt));
+	/*bu_log("OVERLAP (%s and %s) (len: %f): %g %g %g -> %g %g %g\n", reg1->reg_name, reg2->reg_name, overlap_len, V3ARGS(in_pt), V3ARGS(out_pt));*/
     }
 
     return 0;
@@ -230,7 +230,7 @@ analyze_raydiff(struct analyze_raydiff_results **results, struct db_i *dbip,
     /* Now we've got the bounding box - set up the grids */
     VMOVE(min, rtip->mdl_min);
     VMOVE(max, rtip->mdl_max);
-    VSET(mid, (max[0] - min[0])/2, (max[1] - min[1])/2, (max[2] - min[2])/2);
+    VSET(mid, (max[0] + min[0])/2, (max[1] + min[1])/2, (max[2] + min[2])/2);
 
     BU_GET(xdata, struct rt_pattern_data);
     VSET(xdata->center_pt, min[0] - 0.1 * min[0], mid[1], mid[2]);

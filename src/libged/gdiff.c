@@ -140,10 +140,10 @@ ged_gdiff(struct ged *gedp, int argc, const char *argv[])
     if ((argc - bu_optind) != 2) {
 	return GED_ERROR;
     }
-
+/*
     bu_log("left: %s", argv[bu_optind]);
     bu_log("right: %s", argv[bu_optind+1]);
-
+*/
     analyze_raydiff(&results, gedp->ged_wdbp->dbip, argv[bu_optind], argv[bu_optind+1], &tol);
 
     {
