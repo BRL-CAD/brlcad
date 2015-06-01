@@ -70,6 +70,8 @@ typedef int (*bu_opt_arg_process_t)(struct bu_vls *, struct bu_opt_data *);
 /* typedefs to avoid confusion when working with bu_opt_data
  * and bu_opt_desc tables */
 typedef struct bu_ptbl bu_opt_dtbl_t;
+
+/** TODO - should this be a full struct to allow for easier iteration? */
 typedef struct bu_ptbl bu_opt_data_t;
 
 /**
@@ -234,7 +236,8 @@ BU_EXPORT extern const char *bu_opt_msg_name(const char *name, bu_opt_data_t *re
  *      {D1_VERBOSITY, 0, 1, "v", "verbosity", &(d1_verbosity), "Set verbosity"},
  *      BU_OPT_DESC_NULL
  *  };
- *  bu_opt_parse(argc, argv, d1);
+ *  bu_opt_data_t *results;
+ *  bu_opt_parse(&results, NULL, argc, argv, d1);
  */
 BU_EXPORT extern int bu_opt_parse(bu_opt_data_t **results, struct bu_vls *msgs, int ac, const char **argv, struct bu_opt_desc *ds);
 /**
@@ -250,13 +253,20 @@ BU_EXPORT extern int bu_opt_parse_str(bu_opt_data_t **results, struct bu_vls *ms
  *
  *  If we need dynamic definitions, need to take a slightly different approach
  *
- *  enum d1_opt_ind {D1_HELP, D1_VERBOSITY};
- *  struct bu_ptbl dtbl;
- *  bu_opt_desc_init(&dtbl, NULL);
- *  bu_opt_desc_add(D1_HELP, 0, 0, "h", "help",    NULL,      "-h", "--help",    "Help");
- *  bu_opt_desc_add(D1_HELP, 0, 0, "?", "",        NULL,      "-?", "",          "");
- *  bu_opt_desc_add(D1_O1,   0, 1, "v", "verbose", &(dtbl_v), "-v", "--verbose", "Set verbosity");
- *  bu_opt_parse_ptbl(argc, argv, dtbl);
+ *  enum d1_opt_ind {D1_HELP, D1_VERBOSITY, D_MAX};
+ *  struct bu_opt_desc d1[4] = {
+ *      {D1_HELP, 0, 0, "h", "help", NULL, help_str},
+ *      {D1_VERBOSITY, 0, 1, "v", "verbosity", &(d1_verbosity), "Set verbosity"},
+ *      BU_OPT_DESC_NULL
+ *  };
+
+ *  bu_opt_dtbl_t *dtbl;
+ *  bu_opt_data_t *results;
+
+ *  bu_opt_desc_init(&dtbl, (struct bu_opt_desc *)&d1);
+ *  bu_opt_desc_add(D1_HELP, 0, 0, "?", "",        NULL,      "-?", "",        "");
+ *  bu_opt_desc_add(D_MAX + 1,   0, 0, "d", "dummy",   &(dtbl_d), "-d", "--dummy", "Dummy opt");
+ *  bu_opt_parse_dtbl(&results, NULL, argc, argv, dtbl);
  */
 BU_EXPORT extern int bu_opt_parse_dtbl(bu_opt_data_t **results, struct bu_vls *msgs, int ac, const char **argv, bu_opt_dtbl_t *dtbl);
 
