@@ -1456,9 +1456,9 @@ typedef fastf_t plane_t[ELEMENTS_PER_PLANE];
 
 /** @brief Similar to VELMUL. */
 #define VELDIV(a, b, c) do { \
-	(a)[0] = (b)[0] / (c)[0]; \
-	(a)[1] = (b)[1] / (c)[1]; \
-	(a)[2] = (b)[2] / (c)[2]; \
+	(a)[X] = (b)[X] / (c)[X]; \
+	(a)[Y] = (b)[Y] / (c)[Y]; \
+	(a)[Z] = (b)[Z] / (c)[Z]; \
     } while (0)
 
 /**
