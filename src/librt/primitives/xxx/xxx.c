@@ -38,7 +38,7 @@
  * edit bu/magic.h to add RT_XXX_INTERNAL_MAGIC
  * edit src/librt/primitives/xxx/xxx.c
  *   minimally, implement callback code for:
- *     import5/export5 == .g reading/writing
+ *     export5/import5 == .g writing/reading
  *     make == 'make' default constructor command
  *     describe == 'l' command
  *     ifree == db memory management
@@ -289,6 +289,44 @@ rt_xxx_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 
 
 /**
+ * Export an XXX from internal form to external format.  Note that
+ * this means converting all integers to Big-Endian format and
+ * floating point data to IEEE double.
+ *
+ * Apply the transformation to mm units as well.
+ */
+int
+rt_xxx_export5(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip)
+{
+    struct rt_xxx_internal *xxx_ip;
+
+    /* must be double for import and export */
+    double vec[ELEMENTS_PER_VECT];
+
+    RT_CK_DB_INTERNAL(ip);
+    if (ip->idb_type != ID_XXX) return -1;
+    xxx_ip = (struct rt_xxx_internal *)ip->idb_ptr;
+    RT_XXX_CK_MAGIC(xxx_ip);
+    if (dbip) RT_CK_DBI(dbip);
+
+    BU_CK_EXTERNAL(ep);
+    ep->ext_nbytes = SIZEOF_NETWORK_DOUBLE * ELEMENTS_PER_VECT;
+    ep->ext_buf = (void *)bu_calloc(1, ep->ext_nbytes, "xxx external");
+
+    /* Since libwdb users may want to operate in units other than mm,
+     * we offer the opportunity to scale the solid (to get it into mm)
+     * on the way out.
+     */
+    VSCALE(vec, xxx_ip->v, local2mm);
+
+    /* Convert from internal (host) to database (network) format */
+    bu_cv_htond(ep->ext_buf, (unsigned char *)vec, ELEMENTS_PER_VECT);
+
+    return 0;
+}
+
+
+/**
  * Import an XXX from the database format to the internal format.
  * Note that the data read will be in network order.  This means
  * Big-Endian integers and IEEE doubles for floating point.
@@ -329,44 +367,6 @@ rt_xxx_import5(struct rt_db_internal *ip, const struct bu_external *ep, const ma
     MAT4X3PNT(xxx_ip->v, mat, vv);
 
     return 0;			/* OK */
-}
-
-
-/**
- * Export an XXX from internal form to external format.  Note that
- * this means converting all integers to Big-Endian format and
- * floating point data to IEEE double.
- *
- * Apply the transformation to mm units as well.
- */
-int
-rt_xxx_export5(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip)
-{
-    struct rt_xxx_internal *xxx_ip;
-
-    /* must be double for import and export */
-    double vec[ELEMENTS_PER_VECT];
-
-    RT_CK_DB_INTERNAL(ip);
-    if (ip->idb_type != ID_XXX) return -1;
-    xxx_ip = (struct rt_xxx_internal *)ip->idb_ptr;
-    RT_XXX_CK_MAGIC(xxx_ip);
-    if (dbip) RT_CK_DBI(dbip);
-
-    BU_CK_EXTERNAL(ep);
-    ep->ext_nbytes = SIZEOF_NETWORK_DOUBLE * ELEMENTS_PER_VECT;
-    ep->ext_buf = (uint8_t *)bu_calloc(1, ep->ext_nbytes, "xxx external");
-
-    /* Since libwdb users may want to operate in units other than mm,
-     * we offer the opportunity to scale the solid (to get it into mm)
-     * on the way out.
-     */
-    VSCALE(vec, xxx_ip->v, local2mm);
-
-    /* Convert from internal (host) to database (network) format */
-    bu_cv_htond(ep->ext_buf, (unsigned char *)vec, ELEMENTS_PER_VECT);
-
-    return 0;
 }
 
 
