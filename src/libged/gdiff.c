@@ -48,6 +48,9 @@ ged_gdiff(struct ged *gedp, int argc, const char *argv[])
     int left_dbip_specified = 0;
     int right_dbip_specified = 0;
     int c = 0;
+    int view_left = 0;
+    int view_right = 0;
+    int view_overlap = 0;
     struct bu_vls tmpstr = BU_VLS_INIT_ZERO;
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
@@ -65,25 +68,34 @@ ged_gdiff(struct ged *gedp, int argc, const char *argv[])
     bu_opterr = 1;
 
     /* parse args */
-    while ((c=bu_getopt(argc, (char * const *)argv, "O:N:vhr?")) != -1) {
+    while ((c=bu_getopt(argc, (char * const *)argv, "O:N:vhRlrb?")) != -1) {
 	if (bu_optopt == '?')
 	    c='h';
 	switch (c) {
 	    case 'O' :
 		left_dbip_specified = 1;
 		bu_vls_sprintf(&tmpstr, "%s", bu_optarg);
-		bu_log("Have origin database: %s", bu_vls_addr(&tmpstr));
+		/*bu_log("Have origin database: %s", bu_vls_addr(&tmpstr));*/
 		break;
 	    case 'N' :
 		right_dbip_specified = 1;
 		bu_vls_sprintf(&tmpstr, "%s", bu_optarg);
-		bu_log("Have new database: %s", bu_vls_addr(&tmpstr));
+		/*bu_log("Have new database: %s", bu_vls_addr(&tmpstr));*/
 		break;
 	    case 'v' :
-		bu_log("Reporting mode is verbose");
+		/*bu_log("Reporting mode is verbose");*/
+		break;
+	    case 'R' :
+		/*bu_log("Raytrace based evaluation of differences between objects.");*/
+		break;
+	    case 'l' :
+		view_left = 1;
+		break;
+	    case 'b' :
+		view_overlap = 1;
 		break;
 	    case 'r' :
-		bu_log("Raytrace based evaluation of differences between objects.");
+		view_right = 1;
 		break;
 	    default:
 		bu_vls_printf(gedp->ged_result_str, "Usage: %s", gdiff_usage());
@@ -156,31 +168,38 @@ ged_gdiff(struct ged *gedp, int argc, const char *argv[])
 	vbp = bn_vlblock_init(&local_vlist, 32);
 
 	/* Draw left-only lines */
-	for (i = 0; i < BU_PTBL_LEN(results->left); i++) {
-	    struct diff_seg *dseg = (struct diff_seg *)BU_PTBL_GET(results->left, i);
-	    VMOVE(a, dseg->in_pt);
-	    VMOVE(b, dseg->out_pt);
-	    vhead = bn_vlblock_find(vbp, 255, 0, 0); /* should be red */
-	    BN_ADD_VLIST(vbp->free_vlist_hd, vhead, a, BN_VLIST_LINE_MOVE);
-	    BN_ADD_VLIST(vbp->free_vlist_hd, vhead, b, BN_VLIST_LINE_DRAW);
+	if (view_left) {
+	    for (i = 0; i < BU_PTBL_LEN(results->left); i++) {
+		struct diff_seg *dseg = (struct diff_seg *)BU_PTBL_GET(results->left, i);
+		VMOVE(a, dseg->in_pt);
+		VMOVE(b, dseg->out_pt);
+		vhead = bn_vlblock_find(vbp, 255, 0, 0); /* should be red */
+		BN_ADD_VLIST(vbp->free_vlist_hd, vhead, a, BN_VLIST_LINE_MOVE);
+		BN_ADD_VLIST(vbp->free_vlist_hd, vhead, b, BN_VLIST_LINE_DRAW);
+	    }
 	}
 	/* Draw overlap lines */
-	for (i = 0; i < BU_PTBL_LEN(results->both); i++) {
-	    struct diff_seg *dseg = (struct diff_seg *)BU_PTBL_GET(results->both, i);
-	    VMOVE(a, dseg->in_pt);
-	    VMOVE(b, dseg->out_pt);
-	    vhead = bn_vlblock_find(vbp, 255, 255, 255); /* should be white */
-	    BN_ADD_VLIST(vbp->free_vlist_hd, vhead, a, BN_VLIST_LINE_MOVE);
-	    BN_ADD_VLIST(vbp->free_vlist_hd, vhead, b, BN_VLIST_LINE_DRAW);
+	if (view_overlap) {
+	    for (i = 0; i < BU_PTBL_LEN(results->both); i++) {
+		struct diff_seg *dseg = (struct diff_seg *)BU_PTBL_GET(results->both, i);
+		VMOVE(a, dseg->in_pt);
+		VMOVE(b, dseg->out_pt);
+		vhead = bn_vlblock_find(vbp, 255, 255, 255); /* should be white */
+		BN_ADD_VLIST(vbp->free_vlist_hd, vhead, a, BN_VLIST_LINE_MOVE);
+		BN_ADD_VLIST(vbp->free_vlist_hd, vhead, b, BN_VLIST_LINE_DRAW);
 
+	    }
 	}
-	for (i = 0; i < BU_PTBL_LEN(results->right); i++) {
-	    struct diff_seg *dseg = (struct diff_seg *)BU_PTBL_GET(results->right, i);
-	    VMOVE(a, dseg->in_pt);
-	    VMOVE(b, dseg->out_pt);
-	    vhead = bn_vlblock_find(vbp, 0, 0, 255); /* should be blue */
-	    BN_ADD_VLIST(vbp->free_vlist_hd, vhead, a, BN_VLIST_LINE_MOVE);
-	    BN_ADD_VLIST(vbp->free_vlist_hd, vhead, b, BN_VLIST_LINE_DRAW);
+	/* Draw right lines */
+	if (view_right) {
+	    for (i = 0; i < BU_PTBL_LEN(results->right); i++) {
+		struct diff_seg *dseg = (struct diff_seg *)BU_PTBL_GET(results->right, i);
+		VMOVE(a, dseg->in_pt);
+		VMOVE(b, dseg->out_pt);
+		vhead = bn_vlblock_find(vbp, 0, 0, 255); /* should be blue */
+		BN_ADD_VLIST(vbp->free_vlist_hd, vhead, a, BN_VLIST_LINE_MOVE);
+		BN_ADD_VLIST(vbp->free_vlist_hd, vhead, b, BN_VLIST_LINE_DRAW);
+	    }
 	}
 
 	_ged_cvt_vlblock_to_solids(gedp, vbp, "diff_visual", 0);
