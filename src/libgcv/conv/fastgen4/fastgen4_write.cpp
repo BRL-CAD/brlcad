@@ -250,8 +250,8 @@ void
 FastgenWriter::write_section_color(const SectionID &section_id,
 				   const unsigned char *color)
 {
-    m_colors_ostream << section_id.first << ' '
-		     << section_id.first << ' '
+    m_colors_ostream << section_id.second << ' '
+		     << section_id.second << ' '
 		     << static_cast<unsigned>(color[0]) << ' '
 		     << static_cast<unsigned>(color[1]) << ' '
 		     << static_cast<unsigned>(color[2]) << '\n';
@@ -490,11 +490,11 @@ public:
     Geometry(Section &section, const std::string &name);
     virtual ~Geometry();
 
-    void write(FastgenWriter &writer, std::size_t &id) const;
+    void write(FastgenWriter &writer, std::size_t id) const;
 
 
 protected:
-    virtual void write_to_section(FastgenWriter &writer, std::size_t &id) const = 0;
+    virtual void write_to_section(FastgenWriter &writer, std::size_t id) const = 0;
 
     Section &m_section;
 
@@ -517,7 +517,7 @@ Section::Geometry::~Geometry()
 
 
 void
-Section::Geometry::write(FastgenWriter &writer, std::size_t &id) const
+Section::Geometry::write(FastgenWriter &writer, std::size_t id) const
 {
     if (!m_name.empty())
 	writer.write_comment(m_name);
@@ -578,13 +578,11 @@ Section::write(FastgenWriter &writer, const unsigned char *color) const
 	writer.write_section_color(id, color);
 
     m_grid_manager.write(writer);
-    std::size_t component_id = m_grid_manager.get_max_id() + 1;
+    std::size_t element_id = m_grid_manager.get_max_id() + 1;
 
     for (std::vector<Geometry *>::const_iterator it = m_geometry.begin();
-	 it != m_geometry.end(); ++it) {
-	(*it)->write(writer, component_id);
-	++component_id;
-    }
+	 it != m_geometry.end(); ++it)
+	(*it)->write(writer, element_id++);
 }
 
 
@@ -592,14 +590,14 @@ class Section::Line : public Section::Geometry
 {
 public:
     Line(Section &section, const std::string &name, const Point &point_a,
-	 const Point &point_b, fastf_t thickness, fastf_t radius);
+	 const Point &point_b, fastf_t radius, fastf_t thickness);
 
 protected:
-    virtual void write_to_section(FastgenWriter &writer, std::size_t &id) const;
+    virtual void write_to_section(FastgenWriter &writer, std::size_t id) const;
 
 private:
     std::size_t m_grid1, m_grid2;
-    const fastf_t m_thickness, m_radius;
+    const fastf_t m_radius, m_thickness;
 };
 
 
@@ -608,13 +606,13 @@ Section::Line::Line(Section &section, const std::string &name,
     Geometry(section, name),
     m_grid1(0),
     m_grid2(0),
-    m_thickness(thickness),
-    m_radius(radius)
+    m_radius(radius),
+    m_thickness(thickness)
 {
     if ((!m_section.m_volume_mode && m_thickness <= 0.0) || m_thickness < 0.0)
 	throw std::invalid_argument("invalid thickness");
 
-    if (m_radius <= 0.0)
+    if (m_radius <= 0.0 || m_radius < m_thickness)
 	throw std::invalid_argument("invalid radius");
 
     std::vector<Point> points(2);
@@ -629,7 +627,7 @@ Section::Line::Line(Section &section, const std::string &name,
 
 
 void
-Section::Line::write_to_section(FastgenWriter &writer, std::size_t &id) const
+Section::Line::write_to_section(FastgenWriter &writer, std::size_t id) const
 {
     FastgenWriter::Record record(writer);
     record << "CLINE" << id << 0 << m_grid1 << m_grid2 << "" << "";
@@ -647,12 +645,10 @@ class Section::Sphere : public Section::Geometry
 {
 public:
     Sphere(Section &section, const std::string &name, const Point &center,
-	   fastf_t radius);
-    Sphere(Section &section, const std::string &name, const Point &center,
-	   fastf_t radius, fastf_t thickness);
+	   fastf_t radius, fastf_t thickness = 0.0);
 
 protected:
-    virtual void write_to_section(FastgenWriter &writer, std::size_t &id) const;
+    virtual void write_to_section(FastgenWriter &writer, std::size_t id) const;
 
 private:
     const std::size_t m_grid1;
@@ -661,31 +657,19 @@ private:
 
 
 Section::Sphere::Sphere(Section &section, const std::string &name,
-			const Point &center, fastf_t radius) :
-    Geometry(section, name),
-    m_grid1(m_section.m_grid_manager.get_grid(center)),
-    m_radius(radius),
-    m_thickness(radius)
-{
-    if (m_radius <= 0.0)
-	throw std::invalid_argument("invalid radius");
-}
-
-
-Section::Sphere::Sphere(Section &section, const std::string &name,
 			const Point &center, fastf_t radius, fastf_t thickness) :
     Geometry(section, name),
     m_grid1(m_section.m_grid_manager.get_grid(center)),
     m_radius(radius),
-    m_thickness(thickness)
+    m_thickness(EQUAL(thickness, 0.0) ? m_radius : thickness)
 {
-    if (m_radius <= 0.0 || m_thickness <= 0.0)
+    if (m_radius <= 0.0 || m_thickness <= 0.0 || m_radius < m_thickness)
 	throw std::invalid_argument("invalid value");
 }
 
 
 void
-Section::Sphere::write_to_section(FastgenWriter &writer, std::size_t &id) const
+Section::Sphere::write_to_section(FastgenWriter &writer, std::size_t id) const
 {
     FastgenWriter::Record record(writer);
     record << "CSPHERE" << id << 0 << m_grid1 << "" << "" << "";
@@ -702,7 +686,7 @@ public:
 	 fastf_t radius_inner1, fastf_t radius_inner2);
 
 protected:
-    virtual void write_to_section(FastgenWriter &writer, std::size_t &id) const;
+    virtual void write_to_section(FastgenWriter &writer, std::size_t id) const;
 
 private:
     std::size_t m_grid1, m_grid2;
@@ -738,10 +722,10 @@ Section::Cone::Cone(Section &section, const std::string &name,
 
 
 void
-Section::Cone::write_to_section(FastgenWriter &writer, std::size_t &id) const
+Section::Cone::write_to_section(FastgenWriter &writer, std::size_t id) const
 {
     FastgenWriter::Record(writer) << "CCONE2" << id << 0 << m_grid1 << m_grid2 << ""
-				  << "" << "" << m_ro1 * FastgenWriter::INCHES_PER_MM << ++id;
+				  << "" << "" << m_ro1 * FastgenWriter::INCHES_PER_MM << id;
     FastgenWriter::Record(writer) << id << m_ro2 * FastgenWriter::INCHES_PER_MM <<
 				  m_ri1 * FastgenWriter::INCHES_PER_MM << m_ri2 * FastgenWriter::INCHES_PER_MM;
 }
@@ -752,10 +736,10 @@ class Section::Triangle : public Section::Geometry
 public:
     Triangle(Section &section, const std::string &name, const Point &point_a,
 	     const Point &point_b, const Point &point_c, fastf_t thickness,
-	     bool grid_centered);
+	     bool grid_centered = true);
 
 protected:
-    virtual void write_to_section(FastgenWriter &writer, std::size_t &id) const;
+    virtual void write_to_section(FastgenWriter &writer, std::size_t id) const;
 
 private:
     std::size_t m_grid1, m_grid2, m_grid3;
@@ -791,7 +775,7 @@ Section::Triangle::Triangle(Section &section, const std::string &name,
 
 void
 Section::Triangle::write_to_section(FastgenWriter &writer,
-				    std::size_t &id) const
+				    std::size_t id) const
 {
     FastgenWriter::Record record(writer);
     record << "CTRI" << id << 0 << m_grid1 << m_grid2 << m_grid3;
@@ -804,11 +788,11 @@ class Section::Hexahedron : public Section::Geometry
 {
 public:
     Hexahedron(Section &section, const std::string &name,
-	       const fastf_t points[8][3], fastf_t thickness = MAX_FASTF,
-	       bool grid_centered = false);
+	       const fastf_t points[8][3], fastf_t thickness = 0.0,
+	       bool grid_centered = true);
 
 protected:
-    virtual void write_to_section(FastgenWriter &writer, std::size_t &id) const;
+    virtual void write_to_section(FastgenWriter &writer, std::size_t id) const;
 
 private:
     std::size_t m_grids[8];
@@ -823,7 +807,7 @@ Section::Hexahedron::Hexahedron(Section &section, const std::string &name,
     m_thickness(thickness),
     m_grid_centered(grid_centered)
 {
-    if (m_thickness <= 0.0)
+    if (m_thickness < 0.0)
 	throw std::invalid_argument("invalid thickness");
 
     std::vector<Point> vpoints(8);
@@ -841,9 +825,9 @@ Section::Hexahedron::Hexahedron(Section &section, const std::string &name,
 
 void
 Section::Hexahedron::write_to_section(FastgenWriter &writer,
-				      std::size_t &id) const
+				      std::size_t id) const
 {
-    const bool has_thickness = !EQUAL(m_thickness, MAX_FASTF);
+    const bool has_thickness = !EQUAL(m_thickness, 0.0);
 
     {
 	FastgenWriter::Record record1(writer);
@@ -853,7 +837,7 @@ Section::Hexahedron::write_to_section(FastgenWriter &writer,
 	for (std::size_t i = 0; i < 6; ++i)
 	    record1 << m_grids[i];
 
-	record1 << ++id;
+	record1 << id;
     }
 
     FastgenWriter::Record record2(writer);
@@ -1241,9 +1225,11 @@ find_csphere_cutout(db_i &db, const std::string &name, std::string &new_name,
 // Stores CHEX1 points in `points`.
 // Stores CHEX1 thickness in `thickness`.
 // Stores centering mode in `grid_centered`.
+// Sets `volume_mode` according to whether the containing
+// Section is in volume or plate mode.
 HIDDEN bool
 bot_is_chex1(const rt_bot_internal &bot, fastf_t points[8][3],
-	     fastf_t &thickness, bool &grid_centered)
+	     fastf_t &thickness, bool &grid_centered, bool &volume_mode)
 {
     RT_BOT_CK_MAGIC(&bot);
 
@@ -1255,10 +1241,14 @@ bot_is_chex1(const rt_bot_internal &bot, fastf_t points[8][3],
 
     if (bot.thickness) {
 	thickness = bot.thickness[0];
+	volume_mode = false;
 
 	for (std::size_t i = 1; i < bot.num_faces; ++i)
 	    if (!EQUAL(bot.thickness[i], thickness))
 		return false;
+    } else {
+	thickness = 0.0;
+	volume_mode = true;
     }
 
     if (bot.face_mode) {
@@ -1278,6 +1268,8 @@ bot_is_chex1(const rt_bot_internal &bot, fastf_t points[8][3],
 	    if (count)
 		return false;
 	}
+    } else {
+	grid_centered = true;
     }
 
     const int hex_faces[12][3] = {
@@ -1335,8 +1327,8 @@ convert_primitive(ConversionData &data, const rt_db_internal &internal,
 	    VADD2(v2, cline.v, cline.h);
 
 	    Section section(name, true);
-	    section.add(new Section::Line(section, name, cline.v, v2, cline.thickness,
-					  cline.radius));
+	    section.add(new Section::Line(section, name, cline.v, v2, cline.radius,
+					  cline.thickness));
 	    section.write(data.m_writer);
 	    break;
 	}
@@ -1419,11 +1411,11 @@ convert_primitive(ConversionData &data, const rt_db_internal &internal,
 	    {
 		fastf_t points[8][3];
 		fastf_t thickness;
-		bool grid_centered;
+		bool grid_centered, volume_mode;
 
-		if (bot_is_chex1(bot, points, thickness, grid_centered)) {
+		if (bot_is_chex1(bot, points, thickness, grid_centered, volume_mode)) {
 		    // an imported CHEX1
-		    Section section(name, true);
+		    Section section(name, volume_mode);
 		    section.add(new Section::Hexahedron(section, name, points, thickness,
 							grid_centered));
 		    section.write(data.m_writer);
