@@ -145,6 +145,10 @@ ANALYZE_EXPORT int
 analyze_raydiff(struct analyze_raydiff_results **results, struct db_i *dbip,
 	const char *left, const char *right, struct bn_tol *tol);
 
+ANALYZE_EXPORT int
+analyze_obj_inside(struct db_i *dbip, const char *outside, const char *inside, fastf_t tol);
+
+
 
 __END_DECLS
 
