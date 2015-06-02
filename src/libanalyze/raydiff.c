@@ -50,25 +50,30 @@ analyze_raydiff_results_free(struct analyze_raydiff_results *results)
 {
     size_t i;
     if (!results) return;
-    for (i = 0; i < BU_PTBL_LEN(results->left); i++) {
-	struct diff_seg *dseg = (struct diff_seg *)BU_PTBL_GET(results->left, i);
-	BU_PUT(dseg, struct diff_seg);
+    if (results->left) {
+	for (i = 0; i < BU_PTBL_LEN(results->left); i++) {
+	    struct diff_seg *dseg = (struct diff_seg *)BU_PTBL_GET(results->left, i);
+	    BU_PUT(dseg, struct diff_seg);
+	}
+	bu_ptbl_free(results->left);
+	BU_PUT(results->left, struct diff_seg);
     }
-    bu_ptbl_free(results->left);
-    BU_PUT(results->left, struct diff_seg);
-    for (i = 0; i < BU_PTBL_LEN(results->both); i++) {
-	struct diff_seg *dseg = (struct diff_seg *)BU_PTBL_GET(results->both, i);
-	BU_PUT(dseg, struct diff_seg);
+    if (results->both) {
+	for (i = 0; i < BU_PTBL_LEN(results->both); i++) {
+	    struct diff_seg *dseg = (struct diff_seg *)BU_PTBL_GET(results->both, i);
+	    BU_PUT(dseg, struct diff_seg);
+	}
+	bu_ptbl_free(results->both);
+	BU_PUT(results->both, struct diff_seg);
     }
-    bu_ptbl_free(results->both);
-    BU_PUT(results->both, struct diff_seg);
-    for (i = 0; i < BU_PTBL_LEN(results->right); i++) {
-	struct diff_seg *dseg = (struct diff_seg *)BU_PTBL_GET(results->right, i);
-	BU_PUT(dseg, struct diff_seg);
+    if (results->right) {
+	for (i = 0; i < BU_PTBL_LEN(results->right); i++) {
+	    struct diff_seg *dseg = (struct diff_seg *)BU_PTBL_GET(results->right, i);
+	    BU_PUT(dseg, struct diff_seg);
+	}
+	bu_ptbl_free(results->right);
+	BU_PUT(results->right, struct diff_seg);
     }
-    bu_ptbl_free(results->right);
-    BU_PUT(results->right, struct diff_seg);
-
     BU_PUT(results, struct analyze_raydiff_results);
 }
 
