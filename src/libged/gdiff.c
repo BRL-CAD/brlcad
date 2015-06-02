@@ -45,8 +45,10 @@ ged_gdiff(struct ged *gedp, int argc, const char *argv[])
     size_t i;
     struct analyze_raydiff_results *results;
     struct bn_tol tol = {BN_TOL_MAGIC, BN_TOL_DIST, BN_TOL_DIST * BN_TOL_DIST, 1.0e-6, 1.0 - 1.0e-6 };
+/* these get set in the while and used immediately after, but the use is commented out.
     int left_dbip_specified = 0;
     int right_dbip_specified = 0;
+*/
     int c = 0;
     int do_diff_raytrace = 0;
     int view_left = 0;
@@ -74,12 +76,16 @@ ged_gdiff(struct ged *gedp, int argc, const char *argv[])
 	    c='h';
 	switch (c) {
 	    case 'O' :
+/*	use is commented out after this while
 		left_dbip_specified = 1;
+*/
 		bu_vls_sprintf(&tmpstr, "%s", bu_optarg);
 		/*bu_log("Have origin database: %s", bu_vls_addr(&tmpstr));*/
 		break;
 	    case 'N' :
+/*	use is commented out after this while
 		right_dbip_specified = 1;
+*/
 		bu_vls_sprintf(&tmpstr, "%s", bu_optarg);
 		/*bu_log("Have new database: %s", bu_vls_addr(&tmpstr));*/
 		break;
@@ -137,6 +143,9 @@ ged_gdiff(struct ged *gedp, int argc, const char *argv[])
      *
      * When there is a current .g environment and two additional .g files are
      * specified, the argv environments will override use of the "current" .g environment.
+
+!!! If this is uncommented, uncomment the left_dbip_specified and right_dbip_specified
+!!! definitions, as well as where they're set in the getopt while()
      if ((argc - bu_optind) == 2) {
 	 bu_log("left: %s", argv[bu_optind]);
 	 bu_log("right: %s", argv[bu_optind+1]);
