@@ -48,6 +48,7 @@ ged_gdiff(struct ged *gedp, int argc, const char *argv[])
     int left_dbip_specified = 0;
     int right_dbip_specified = 0;
     int c = 0;
+    int do_diff_raytrace = 0;
     int view_left = 0;
     int view_right = 0;
     int view_overlap = 0;
@@ -86,6 +87,7 @@ ged_gdiff(struct ged *gedp, int argc, const char *argv[])
 		/*bu_log("Reporting mode is verbose");*/
 		break;
 	    case 'R' :
+		do_diff_raytrace = 1;
 		/*bu_log("Raytrace based evaluation of differences between objects.");*/
 		break;
 	    case 'l' :
@@ -102,6 +104,7 @@ ged_gdiff(struct ged *gedp, int argc, const char *argv[])
 		return GED_ERROR;
 	}
     }
+
     /* There are possible convention-based interpretations of 1, 2, 3, 4 and n args
      * beyond those used as options.  For the shortest cases, the interpretation depends
      * on whether one or two .g files are known:
@@ -155,60 +158,85 @@ ged_gdiff(struct ged *gedp, int argc, const char *argv[])
 /*
     bu_log("left: %s", argv[bu_optind]);
     bu_log("right: %s", argv[bu_optind+1]);
-*/
-    analyze_raydiff(&results, gedp->ged_wdbp->dbip, argv[bu_optind], argv[bu_optind+1], &tol);
+    */
+    if (do_diff_raytrace) {
+	analyze_raydiff(&results, gedp->ged_wdbp->dbip, argv[bu_optind], argv[bu_optind+1], &tol);
 
-    {
-	/* Construct a minimal example visual display of a ray diff */
-	struct bu_list *vhead;
-	struct bu_list local_vlist;
-	struct bn_vlblock *vbp;
-	point_t a, b;
-	BU_LIST_INIT(&local_vlist);
-	vbp = bn_vlblock_init(&local_vlist, 32);
-
-	/* Draw left-only lines */
-	if (view_left) {
-	    for (i = 0; i < BU_PTBL_LEN(results->left); i++) {
-		struct diff_seg *dseg = (struct diff_seg *)BU_PTBL_GET(results->left, i);
-		VMOVE(a, dseg->in_pt);
-		VMOVE(b, dseg->out_pt);
-		vhead = bn_vlblock_find(vbp, 255, 0, 0); /* should be red */
-		BN_ADD_VLIST(vbp->free_vlist_hd, vhead, a, BN_VLIST_LINE_MOVE);
-		BN_ADD_VLIST(vbp->free_vlist_hd, vhead, b, BN_VLIST_LINE_DRAW);
-	    }
-	}
-	/* Draw overlap lines */
-	if (view_overlap) {
-	    for (i = 0; i < BU_PTBL_LEN(results->both); i++) {
-		struct diff_seg *dseg = (struct diff_seg *)BU_PTBL_GET(results->both, i);
-		VMOVE(a, dseg->in_pt);
-		VMOVE(b, dseg->out_pt);
-		vhead = bn_vlblock_find(vbp, 255, 255, 255); /* should be white */
-		BN_ADD_VLIST(vbp->free_vlist_hd, vhead, a, BN_VLIST_LINE_MOVE);
-		BN_ADD_VLIST(vbp->free_vlist_hd, vhead, b, BN_VLIST_LINE_DRAW);
-
-	    }
-	}
-	/* Draw right lines */
-	if (view_right) {
-	    for (i = 0; i < BU_PTBL_LEN(results->right); i++) {
-		struct diff_seg *dseg = (struct diff_seg *)BU_PTBL_GET(results->right, i);
-		VMOVE(a, dseg->in_pt);
-		VMOVE(b, dseg->out_pt);
-		vhead = bn_vlblock_find(vbp, 0, 0, 255); /* should be blue */
-		BN_ADD_VLIST(vbp->free_vlist_hd, vhead, a, BN_VLIST_LINE_MOVE);
-		BN_ADD_VLIST(vbp->free_vlist_hd, vhead, b, BN_VLIST_LINE_DRAW);
-	    }
+	/* TODO - may want to integrate with a "regular" diff and report intelligently.  Needs
+	 * some thought. */
+	if (BU_PTBL_LEN(results->left) > 0 || BU_PTBL_LEN(results->right) > 0) {
+	    bu_vls_printf(gedp->ged_result_str, "1");
+	} else {
+	    bu_vls_printf(gedp->ged_result_str, "0");
 	}
 
-	_ged_cvt_vlblock_to_solids(gedp, vbp, "diff_visual", 0);
+	/* For now, graphical output is the main output of this mode, so if we don't have any
+	 * specifics do all */
+	if (!view_left && !view_overlap && !view_right) {
+	    view_left = 1;
+	    view_right = 1;
+	    view_overlap = 1;
+	}
 
-	bn_vlist_cleanup(&local_vlist);
-	bn_vlblock_free(vbp);
+	if (view_left || view_overlap || view_right) {
+	    /* Visualize the differences */
+	    struct bu_list *vhead;
+	    point_t a, b;
+	    struct bn_vlblock *vbp;
+	    struct bu_list local_vlist;
+	    BU_LIST_INIT(&local_vlist);
+	    vbp = bn_vlblock_init(&local_vlist, 32);
+
+	    /* Clear any previous diff drawing */
+	    if (db_lookup(gedp->ged_wdbp->dbip, "diff_visualff", LOOKUP_QUIET) != RT_DIR_NULL)
+		dl_erasePathFromDisplay(gedp->ged_gdp->gd_headDisplay, gedp->ged_wdbp->dbip, gedp->ged_free_vlist_callback, "diff_visualff", 1, gedp->freesolid);
+	    if (db_lookup(gedp->ged_wdbp->dbip, "diff_visualff0000", LOOKUP_QUIET) != RT_DIR_NULL)
+		dl_erasePathFromDisplay(gedp->ged_gdp->gd_headDisplay, gedp->ged_wdbp->dbip, gedp->ged_free_vlist_callback, "diff_visualff0000", 1, gedp->freesolid);
+	    if (db_lookup(gedp->ged_wdbp->dbip, "diff_visualffffff", LOOKUP_QUIET) != RT_DIR_NULL)
+		dl_erasePathFromDisplay(gedp->ged_gdp->gd_headDisplay, gedp->ged_wdbp->dbip, gedp->ged_free_vlist_callback, "diff_visualffffff", 1, gedp->freesolid);
+
+	    /* Draw left-only lines */
+	    if (view_left) {
+		for (i = 0; i < BU_PTBL_LEN(results->left); i++) {
+		    struct diff_seg *dseg = (struct diff_seg *)BU_PTBL_GET(results->left, i);
+		    VMOVE(a, dseg->in_pt);
+		    VMOVE(b, dseg->out_pt);
+		    vhead = bn_vlblock_find(vbp, 255, 0, 0); /* should be red */
+		    BN_ADD_VLIST(vbp->free_vlist_hd, vhead, a, BN_VLIST_LINE_MOVE);
+		    BN_ADD_VLIST(vbp->free_vlist_hd, vhead, b, BN_VLIST_LINE_DRAW);
+		}
+	    }
+	    /* Draw overlap lines */
+	    if (view_overlap) {
+		for (i = 0; i < BU_PTBL_LEN(results->both); i++) {
+		    struct diff_seg *dseg = (struct diff_seg *)BU_PTBL_GET(results->both, i);
+		    VMOVE(a, dseg->in_pt);
+		    VMOVE(b, dseg->out_pt);
+		    vhead = bn_vlblock_find(vbp, 255, 255, 255); /* should be white */
+		    BN_ADD_VLIST(vbp->free_vlist_hd, vhead, a, BN_VLIST_LINE_MOVE);
+		    BN_ADD_VLIST(vbp->free_vlist_hd, vhead, b, BN_VLIST_LINE_DRAW);
+
+		}
+	    }
+	    /* Draw right lines */
+	    if (view_right) {
+		for (i = 0; i < BU_PTBL_LEN(results->right); i++) {
+		    struct diff_seg *dseg = (struct diff_seg *)BU_PTBL_GET(results->right, i);
+		    VMOVE(a, dseg->in_pt);
+		    VMOVE(b, dseg->out_pt);
+		    vhead = bn_vlblock_find(vbp, 0, 0, 255); /* should be blue */
+		    BN_ADD_VLIST(vbp->free_vlist_hd, vhead, a, BN_VLIST_LINE_MOVE);
+		    BN_ADD_VLIST(vbp->free_vlist_hd, vhead, b, BN_VLIST_LINE_DRAW);
+		}
+	    }
+
+	    _ged_cvt_vlblock_to_solids(gedp, vbp, "diff_visual", 0);
+
+	    bn_vlist_cleanup(&local_vlist);
+	    bn_vlblock_free(vbp);
+	}
+	analyze_raydiff_results_free(results);
     }
-
-    analyze_raydiff_results_free(results);
 
     return GED_OK;
 }
