@@ -93,28 +93,31 @@ get_args(int argc, char **argv)
 		val[ numop++ ] = atof(bu_optarg);
 		break;
 	    case 'd':
-		op[ numop ] = MULT;
 		d = atof(bu_optarg);
-
 		if (ZERO(d)) {
 		    bu_exit(2, "bwmod: cannot divide by zero!\n");
 		}
+		op[ numop ] = MULT;
 		val[ numop++ ] = 1.0 / d;
 		break;
 	    case 'A':
 		op[ numop ] = ABS;
-		val[ numop++ ] = 0;
+/* If using ABS, don't care what val[ numop ] is, but still must increment numop.
+ * (The following would increment numop AFTER it's used as "val" subscript.)
+ */
+/*		val[ numop++ ] = 0.0; */
+		numop++;
 		break;
 	    case 'e':
 		op[ numop ] = POW;
 		val[ numop++ ] = atof(bu_optarg);
 		break;
 	    case 'r':
-		op[ numop ] = POW;
 		d = atof(bu_optarg);
 		if (ZERO(d)) {
 		    bu_exit(2, "bwmod: zero root!\n");
 		}
+		op[ numop ] = POW;
 		val[ numop++ ] = 1.0 / d;
 		break;
 	    case 'c':
