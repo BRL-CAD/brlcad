@@ -451,9 +451,11 @@ bu_opt_validate(struct bu_ptbl *opts)
  *
  * 1.  Must have a '-' char as first character
  * 2.  Must not have white space characters present in the string.
+ * 3.  Must be an option in ds.
+ * 4.  Must not be a valid numerical argument to an option expecting a number.
  */
 HIDDEN int
-is_opt(const char *opt) {
+is_opt(const char *opt, struct bu_opt_desc *UNUSED(ds)) {
     size_t i = 0;
     if (!opt) return 0;
     if (!strlen(opt)) return 0;
@@ -464,15 +466,15 @@ is_opt(const char *opt) {
     return 1;
 }
 
-HIDDEN struct bu_ptbl *
-bu_opt_parse_internal(int argc, const char **argv, struct bu_opt_desc *ds, struct bu_ptbl *dptbl, struct bu_vls *UNUSED(msgs))
+int
+bu_opt_parse(struct bu_ptbl **tbl, struct bu_vls *UNUSED(msgs), int argc, const char **argv, struct bu_opt_desc *ds)
 {
     int i = 0;
     int offset = 0;
     const char *ns = NULL;
     struct bu_ptbl *opt_data;
     struct bu_opt_data *unknowns = NULL;
-    if (!argv || (!ds && !dptbl) || (ds && dptbl)) return NULL;
+    if (!argv || !ds) return 1;
 
     BU_GET(opt_data, struct bu_ptbl);
     bu_ptbl_init(opt_data, 8, "opt_data");
@@ -488,7 +490,7 @@ bu_opt_parse_internal(int argc, const char **argv, struct bu_opt_desc *ds, struc
 	struct bu_opt_desc *desc = NULL;
 	/* If 'opt' isn't an option, make a container for non-option values and build it up until
 	 * we reach an option */
-	if (!is_opt(argv[i])) {
+	if (!is_opt(argv[i], ds)) {
 	    if (!unknowns) {
 		bu_opt_data_init_entry(&unknowns, NULL);
 		BU_GET(unknowns->args, struct bu_ptbl);
@@ -497,7 +499,7 @@ bu_opt_parse_internal(int argc, const char **argv, struct bu_opt_desc *ds, struc
 	    ns = bu_strdup(argv[i]);
 	    bu_ptbl_ins(unknowns->args, (long *)ns);
 	    i++;
-	    while (i < argc && !is_opt(argv[i])) {
+	    while (i < argc && !is_opt(argv[i], ds)) {
 		ns = bu_strdup(argv[i]);
 		bu_ptbl_ins(unknowns->args, (long *)ns);
 		i++;
@@ -511,22 +513,14 @@ bu_opt_parse_internal(int argc, const char **argv, struct bu_opt_desc *ds, struc
 	opt = opt_process(&eq_arg, argv[i]);
 
 	/* Find the corresponding desc, if we have one */
-	if (ds) {
-	    desc = &(ds[0]);
-	} else {
-	    desc = (struct bu_opt_desc *)BU_PTBL_GET(dptbl, 0);
-	}
+	desc = &(ds[0]);
 	while (!desc_found && (desc && desc->index != -1)) {
 	    if (BU_STR_EQUAL(opt+offset, desc->shortopt) || BU_STR_EQUAL(opt+offset, desc->longopt)) {
 		desc_found = 1;
 		continue;
 	    }
 	    desc_ind++;
-	    if (ds) {
-		desc = &(ds[desc_ind]);
-	    } else {
-		desc = (struct bu_opt_desc *)BU_PTBL_GET(dptbl, desc_ind);
-	    }
+	    desc = &(ds[desc_ind]);
 	}
 
 	/* If we don't know what we're dealing with, keep going */
@@ -571,7 +565,7 @@ bu_opt_parse_internal(int argc, const char **argv, struct bu_opt_desc *ds, struc
 
 	/* If we're looking for args, do so */
 	if (desc->arg_cnt_max > 0) {
-	    while (arg_cnt < desc->arg_cnt_max && i < argc && !is_opt(argv[i])) {
+	    while (arg_cnt < desc->arg_cnt_max && i < argc && !is_opt(argv[i], ds)) {
 		ns = bu_strdup(argv[i]);
 		if (!data->args) {
 		    /* Okay, we actually need it - initialize the arg table */
@@ -617,21 +611,8 @@ bu_opt_parse_internal(int argc, const char **argv, struct bu_opt_desc *ds, struc
     }
     if (unknowns) bu_ptbl_ins(opt_data, (long *)unknowns);
 
-    return opt_data;
-}
-
-int
-bu_opt_parse(struct bu_ptbl **tbl, struct bu_vls *msgs, int ac, const char **argv, struct bu_opt_desc *ds)
-{
-    struct bu_ptbl *results = NULL;
-    if (!tbl || !argv || !ds) return 1;
-    results = bu_opt_parse_internal(ac, argv, ds, NULL, msgs);
-    if (results) {
-	(*tbl) = results;
-	return 0;
-    } else {
-	return 1;
-    }
+    (*tbl) = opt_data;
+    return 0;
 }
 
 int
