@@ -497,6 +497,7 @@ protected:
     virtual void write_to_section(FastgenWriter &writer, std::size_t id) const = 0;
 
     Section &m_section;
+    const std::size_t m_material_id;
 
 
 private:
@@ -507,6 +508,7 @@ private:
 inline
 Section::Geometry::Geometry(Section &section, const std::string &name) :
     m_section(section),
+    m_material_id(1),
     m_name(name)
 {}
 
@@ -630,7 +632,7 @@ void
 Section::Line::write_to_section(FastgenWriter &writer, std::size_t id) const
 {
     FastgenWriter::Record record(writer);
-    record << "CLINE" << id << 0 << m_grid1 << m_grid2 << "" << "";
+    record << "CLINE" << id << m_material_id << m_grid1 << m_grid2 << "" << "";
 
     if (m_section.m_volume_mode)
 	record << m_thickness * FastgenWriter::INCHES_PER_MM;
@@ -672,7 +674,7 @@ void
 Section::Sphere::write_to_section(FastgenWriter &writer, std::size_t id) const
 {
     FastgenWriter::Record record(writer);
-    record << "CSPHERE" << id << 0 << m_grid1 << "" << "" << "";
+    record << "CSPHERE" << id << m_material_id << m_grid1 << "" << "" << "";
     record.non_zero(m_thickness * FastgenWriter::INCHES_PER_MM).non_zero(
 	m_radius * FastgenWriter::INCHES_PER_MM);
 }
@@ -724,7 +726,8 @@ Section::Cone::Cone(Section &section, const std::string &name,
 void
 Section::Cone::write_to_section(FastgenWriter &writer, std::size_t id) const
 {
-    FastgenWriter::Record(writer) << "CCONE2" << id << 0 << m_grid1 << m_grid2 << ""
+    FastgenWriter::Record(writer) << "CCONE2" << id << m_material_id << m_grid1 <<
+				  m_grid2 << ""
 				  << "" << "" << m_ro1 * FastgenWriter::INCHES_PER_MM << id;
     FastgenWriter::Record(writer) << id << m_ro2 * FastgenWriter::INCHES_PER_MM <<
 				  m_ri1 * FastgenWriter::INCHES_PER_MM << m_ri2 * FastgenWriter::INCHES_PER_MM;
@@ -778,7 +781,7 @@ Section::Triangle::write_to_section(FastgenWriter &writer,
 				    std::size_t id) const
 {
     FastgenWriter::Record record(writer);
-    record << "CTRI" << id << 0 << m_grid1 << m_grid2 << m_grid3;
+    record << "CTRI" << id << m_material_id << m_grid1 << m_grid2 << m_grid3;
     record.non_zero(m_thickness * FastgenWriter::INCHES_PER_MM);
     record << (m_grid_centered ? 1 : 2);
 }
@@ -832,7 +835,7 @@ Section::Hexahedron::write_to_section(FastgenWriter &writer,
     {
 	FastgenWriter::Record record1(writer);
 	record1 << (has_thickness ? "CHEX1" : "CHEX2");
-	record1 << id << 0;
+	record1 << id << m_material_id;
 
 	for (std::size_t i = 0; i < 6; ++i)
 	    record1 << m_grids[i];
