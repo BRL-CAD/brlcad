@@ -36,27 +36,9 @@ __BEGIN_DECLS
 /** @{ */
 /** @file bu/opt.h */
 
-/* Pick an arbitrary maximum pending a good reason to pick some specific value */
-#define BU_OPT_MAX_ARGS 2000
-
 /* Make a human-readable define for using bu_opt_find to retrieve argv entries
  * that were not associated with options */
 #define BU_NON_OPTS -1
-
-/** Output format options for bu_opt documentation generation */
-typedef enum {
-    BU_OPT_ASCII,
-    BU_OPT_DOCBOOK, /* TODO */
-    BU_OPT_HTML,    /* TODO */
-    BU_OPT_LATEX,   /* TODO */
-    BU_OPT_MARKDOWN /* TODO */
-} bu_opt_format_t;
-
-typedef enum {
-    BU_OPT_SHORT,  /* TODO */
-    BU_OPT_FULL    /* TODO */
-} bu_opt_desc_t;
-
 
 /* Forward declaration for bu_opt_desc and bu_opt_arg_process_t */
 struct bu_opt_data;
@@ -90,31 +72,12 @@ struct bu_opt_desc {
 };
 #define BU_OPT_DESC_NULL {-1, 0, 0, NULL, NULL, NULL, NULL, NULL, NULL}
 
-/**
- * Initialize a bu_opt_dtbl_t.  If ds is not NULL, populate the table
- * with the bu_opt_desc structs in the ds array. */
-BU_EXPORT extern void bu_opt_desc_init(bu_opt_dtbl_t **dtbl, struct bu_opt_desc *ds);
 
-/**
- * Add an option description to a bu_opt_desc ptbl */
-BU_EXPORT extern void bu_opt_desc_add(bu_opt_dtbl_t *dtbl, int ind,
-	size_t min, size_t max, const char *shortopt,
-	const char *longopt, bu_opt_arg_process_t arg_process,
-	const char *shortopt_doc, const char *longopt_doc, const char *help_str);
-/**
- * Remove option descriptions with index matching key from a bu_opt_desc ptbl */
-BU_EXPORT extern void bu_opt_desc_del(bu_opt_dtbl_t *dtbl, int key);
-
-/**
- * Remove option descriptions with either a shortopt or a longopt matching name
- * from a bu_opt_desc ptbl */
-BU_EXPORT extern void bu_opt_desc_del_name(bu_opt_dtbl_t *dtbl, const char *name);
-
-/**
- *  Free a bu_opt_dtbl_t.
- */
-BU_EXPORT extern void bu_opt_desc_free(bu_opt_dtbl_t *tbl);
-
+/** Output format options for bu_opt documentation generation */
+typedef enum {
+    BU_OPT_ASCII,
+    BU_OPT_DOCBOOK /* TODO */
+} bu_opt_format_t;
 
 /**
  * Construct a textual description of the options defined by
@@ -132,16 +95,13 @@ BU_EXPORT extern void bu_opt_desc_free(bu_opt_dtbl_t *tbl);
 
 /* TODO - support actually using the struct... */
 struct bu_opt_desc_opts {
-    bu_opt_desc_t desc_type;
-    bu_opt_format_t format_type;
+    bu_opt_format_t format;
     int offset;
     int option_columns;
     int description_columns;
 };
 
 BU_EXPORT extern const char *bu_opt_describe(struct bu_opt_desc *ds, struct bu_opt_desc_opts *settings);
-BU_EXPORT extern const char *bu_opt_describe_dtbl(bu_opt_dtbl_t *dtbl, struct bu_opt_desc_opts *settings);
-
 
 
 /**
@@ -155,6 +115,7 @@ struct bu_opt_data {
     void *user_data;  /* place for arg_process to stash data */
 };
 #define BU_OPT_DATA_NULL {NULL, 0, NULL, NULL, NULL}
+
 /**
  * Free a table of bu_opt_data results */
 BU_EXPORT extern void bu_opt_data_free(bu_opt_data_t *data);
@@ -177,39 +138,12 @@ BU_EXPORT extern void bu_opt_data_print(bu_opt_data_t *data, const char *title);
 BU_EXPORT extern const char *bu_opt_data_arg(struct bu_opt_data *d, size_t ind);
 
 /**
- * Find and return a specific option from a bu_opt_data_t of options using an enum
- * integer as the lookup key.  Will only return an option if its valid entry
- * is set to 1.  A key value of -1 retrieves the bu_opt_data struct with the
- * unknown entries stored in its args table.
- */
-BU_EXPORT extern struct bu_opt_data *bu_opt_find(int key, bu_opt_data_t *results);
-
-/**
  * Find and return a specific option from a bu_opt_data_t of options using an option
  * string as the lookup key.  Will only return an option if its valid entry
  * is set to 1. A NULL value passed in for name retrieves the bu_opt_data struct with the
  * unknown entries stored in its args table.
  */
-BU_EXPORT extern struct bu_opt_data *bu_opt_find_name(const char *name, bu_opt_data_t *results);
-
-/**
- * TODO
- *
- * If an option has a message string associated with it, this function will
- * get it.  This works for both valid and invalid opts, to allow for error
- * message retrieval.  If multiple instances of a key are present, the msg
- * from the last instance is returned. */
-BU_EXPORT extern const char *bu_opt_msg(int key, bu_opt_data_t *results);
-
-/**
- * TODO
- *
- * If an option has a message string associated with it, this function will
- * get it.  This works for both valid and invalid opts, to allow for error
- * message retrieval.  If multiple instances of a name are present, the msg
- * from the last instance is returned. */
-BU_EXPORT extern const char *bu_opt_msg_name(const char *name, bu_opt_data_t *results);
-
+BU_EXPORT extern struct bu_opt_data *bu_opt_find(const char *name, bu_opt_data_t *results);
 
 
 
@@ -245,36 +179,6 @@ BU_EXPORT extern int bu_opt_parse(bu_opt_data_t **results, struct bu_vls *msgs, 
  * is a convenience function that calls bu_opt_parse and also handles
  * breaking str down into a proper argv array. */
 BU_EXPORT extern int bu_opt_parse_str(bu_opt_data_t **results, struct bu_vls *msgs, const char *str, struct bu_opt_desc *ds);
-
-
-/**
- * For situations requiring a dynamic bu_opt_desc generation mechanism,
- * the procedure is slightly different
- *
- *  If we need dynamic definitions, need to take a slightly different approach
- *
- *  enum d1_opt_ind {D1_HELP, D1_VERBOSITY, D_MAX};
- *  struct bu_opt_desc d1[4] = {
- *      {D1_HELP, 0, 0, "h", "help", NULL, help_str},
- *      {D1_VERBOSITY, 0, 1, "v", "verbosity", &(d1_verbosity), "Set verbosity"},
- *      BU_OPT_DESC_NULL
- *  };
-
- *  bu_opt_dtbl_t *dtbl;
- *  bu_opt_data_t *results;
-
- *  bu_opt_desc_init(&dtbl, (struct bu_opt_desc *)&d1);
- *  bu_opt_desc_add(D1_HELP, 0, 0, "?", "",        NULL,      "-?", "",        "");
- *  bu_opt_desc_add(D_MAX + 1,   0, 0, "d", "dummy",   &(dtbl_d), "-d", "--dummy", "Dummy opt");
- *  bu_opt_parse_dtbl(&results, NULL, argc, argv, dtbl);
- */
-BU_EXPORT extern int bu_opt_parse_dtbl(bu_opt_data_t **results, struct bu_vls *msgs, int ac, const char **argv, bu_opt_dtbl_t *dtbl);
-
-/**
- * Option parse an argv array defined as a space separated string.  This
- * is a convenience function that calls bu_opt_parse_dtbl and also handles
- * breaking str down into a proper argv array. */
-BU_EXPORT extern int bu_opt_parse_dtbl_str(bu_opt_data_t **results, struct bu_vls *msgs, const char *str, bu_opt_dtbl_t *dtbl);
 
 /**
  * In situations where multiple options are present, the general rule is that

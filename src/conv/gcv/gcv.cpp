@@ -47,7 +47,7 @@ void fast4_arg_process(const char *args) {
     (void)bu_opt_parse_str(&results, NULL, args, fg4_opt_desc);
     bu_opt_compact(results);
     bu_opt_validate(results);
-    d = bu_opt_find(FG4_WARN_DEFAULT_NAMES, results);
+    d = bu_opt_find("w", results);
     if (d) {
 	bu_log("FASTGEN 4 opt found: %s\n", d->name);
     }
@@ -73,7 +73,7 @@ void stl_arg_process(const char *args) {
     (void)bu_opt_parse_str(&results, NULL, args, stl_opt_desc);
     bu_opt_compact(results);
     bu_opt_validate(results);
-    d = bu_opt_find(STL_UNITS, results);
+    d = bu_opt_find("u", results);
     if (d) {
 	bu_log("STL opt found: %s:%s\n", d->name, bu_opt_data_arg(d, 0));
     }
@@ -306,71 +306,30 @@ main(int ac, char **av)
     struct bu_opt_data *d = NULL;
     struct bu_ptbl *unknown_tbl = NULL;
     bu_opt_data_t *results = NULL;
-    bu_opt_dtbl_t *top_opt_desc = NULL;
 
     ac-=(ac>0); av+=(ac>0); // skip program name argv[0] if present
 
-    bu_opt_desc_init(&top_opt_desc, (struct bu_opt_desc *)&gcv_opt_desc);
-
     if (ac == 0) {
-	const char *help = bu_opt_describe_dtbl(top_opt_desc, NULL);
+	const char *help = bu_opt_describe(gcv_opt_desc, NULL);
 	bu_log("%s\n", help);
 	if (help) bu_free((char *)help, "help str");
 	// TODO - print some help
 	goto cleanup;
     }
 
-    /*
     (void)bu_opt_parse(&results, NULL, ac, (const char **)av, gcv_opt_desc);
-    */
-    (void)bu_opt_parse_dtbl(&results, NULL, ac, (const char **)av, top_opt_desc);
     bu_opt_compact(results);
 
     /* First, see if help was supplied */
-    d = bu_opt_find(GCV_HELP, results);
+    d = bu_opt_find("h", results);
     if (d) {
 	const char *help_fmt = bu_opt_data_arg(d, 0);
 	if (help_fmt) {
 	    // TODO - generate some help based on format
 	} else {
-	    // TODO - generate some generic gcv help
 	    { /* Test static help print  */
-		bu_log("Static help printing:\n");
+		bu_log("Options:\n");
 		const char *help = bu_opt_describe(gcv_opt_desc, NULL);
-		bu_log("%s\n", help);
-		if (help) bu_free((char *)help, "help str");
-	    }
-
-	    { /* Test help print before dynamic opts */
-		bu_log("Dynamic help printing:\n");
-		const char *help = bu_opt_describe_dtbl(top_opt_desc, NULL);
-		bu_log("%s\n", help);
-		if (help) bu_free((char *)help, "help str");
-	    }
-
-	    /* Simulate a plug-in adding a new option to the toplevel options */
-
-	    bu_opt_desc_add(top_opt_desc, BU_PTBL_LEN(top_opt_desc) + 1, 0, 1, "", "decimate", NULL, "", "--decimate [algorithm]",
-		    "Decimate output triangles.  If an algorithm is supplied use it, otherwise use FOO");
-
-	    int parallel_key = BU_PTBL_LEN(top_opt_desc) + 1;
-	    bu_opt_desc_add(top_opt_desc, parallel_key, 0, 0, "p", "parallel", NULL, "-p", "--parallel", "Enable parallel processing");
-	    bu_opt_desc_add(top_opt_desc, parallel_key, 0, 0, "P", "", NULL, "-P", "", "");
-
-	    { /* Test help print with dynamic opts added */
-		bu_log("Dynamic help printing with added opts:\n");
-		const char *help = bu_opt_describe_dtbl(top_opt_desc, NULL);
-		bu_log("%s\n", help);
-		if (help) bu_free((char *)help, "help str");
-	    }
-
-	    bu_opt_desc_del(top_opt_desc, IN_OPTS);
-	    bu_opt_desc_del(top_opt_desc, OUT_OPTS);
-	    bu_opt_desc_del_name(top_opt_desc, "P");
-
-	    { /* Test help print with dynamic opts removed */
-		bu_log("Dynamic help printing with removed opts:\n");
-		const char *help = bu_opt_describe_dtbl(top_opt_desc, NULL);
 		bu_log("%s\n", help);
 		if (help) bu_free((char *)help, "help str");
 	    }
@@ -402,14 +361,14 @@ main(int ac, char **av)
 
 
     /* Did we get explicit options for an input and/or output file? */
-    d = bu_opt_find(IN_FILE, results);
+    d = bu_opt_find("i", results);
     if (d) bu_vls_sprintf(&in_path_raw, "%s", bu_opt_data_arg(d, 0));
-    d = bu_opt_find(OUT_FILE, results);
+    d = bu_opt_find("o", results);
     if (d) bu_vls_sprintf(&out_path_raw, "%s", bu_opt_data_arg(d, 0));
 
     /* If not specified explicitly with -i or -o, the input and output paths must always
      * be the last two arguments supplied */
-    d = bu_opt_find(BU_NON_OPTS, results);
+    d = bu_opt_find(NULL, results);
     if (d) {
 	unknown_tbl = d->args;
 	if (unknown_tbl && BU_PTBL_LEN(unknown_tbl) > 1)
@@ -431,7 +390,7 @@ main(int ac, char **av)
     }
 
     /* If we have input and/or output specific options, append them now */
-    d = bu_opt_find(IN_OPTS, results);
+    d = bu_opt_find("I", results);
     if (d) {
 	struct bu_vls o_tmp = BU_VLS_INIT_ZERO;
 	bu_vls_sprintf(&o_tmp, "%s", bu_opt_data_arg(d, 0));
@@ -441,7 +400,7 @@ main(int ac, char **av)
 	if (bu_vls_strlen(&input_opts) > 0) bu_log("Input only opts: %s\n", bu_vls_addr(&o_tmp));
 	bu_vls_free(&o_tmp);
     }
-    d = bu_opt_find(OUT_OPTS, results);
+    d = bu_opt_find("O", results);
     if (d) {
 	struct bu_vls o_tmp = BU_VLS_INIT_ZERO;
 	bu_vls_sprintf(&o_tmp, "%s", bu_opt_data_arg(d, 0));
@@ -480,7 +439,7 @@ main(int ac, char **av)
     /* Find out what input file type we are dealing with */
 
     /* If we have input and/or output specific options, append them now */
-    d = bu_opt_find(IN_FORMAT, results);
+    d = bu_opt_find("input-format", results);
     if (d) {
 	in_fmt = bu_opt_data_arg(d, 0);
     } else {
@@ -496,7 +455,7 @@ main(int ac, char **av)
     in_fmt = NULL;
 
     /* Identify output file type */
-    d = bu_opt_find(OUT_FORMAT, results);
+    d = bu_opt_find("output-format", results);
     if (d) out_fmt = bu_opt_data_arg(d, 0);
     fmt = parse_model_string(&out_format, &log, out_fmt, bu_vls_addr(&out_path_raw));
     out_type = (fmt < 0) ? MIME_MODEL_UNKNOWN : (mime_model_t)fmt;
@@ -568,7 +527,6 @@ cleanup:
     bu_vls_free(&input_opts);
     bu_vls_free(&output_opts);
     bu_opt_data_free(results);
-    if (top_opt_desc) bu_opt_desc_free(top_opt_desc);
 
     return ret;
 }
