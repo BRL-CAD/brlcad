@@ -169,11 +169,11 @@ _rt_gen_worker(int cpu, void *ptr)
 	if (cpu == state->ncpus) ymax = n[dir3];
     }
 
-    ap.a_ray.r_dir[state->ray_dir] = -1;
+    ap.a_ray.r_dir[dir1] = -1;
     ap.a_ray.r_dir[dir2] = 0;
     ap.a_ray.r_dir[dir3] = 0;
     VMOVE(ap.a_ray.r_pt, min);
-    ap.a_ray.r_pt[state->ray_dir] = max[state->ray_dir] + 100;
+    ap.a_ray.r_pt[dir1] = max[dir1] + 100;
 
     for (i = 0; i < n[dir2]; i++) {
 	ap.a_ray.r_pt[dir3] = min[dir3] + d[dir3] * ymin;
