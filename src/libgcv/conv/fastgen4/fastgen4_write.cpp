@@ -991,7 +991,7 @@ tree_entirely_unions(const tree *tree)
 
 
 HIDDEN rt_db_internal
-get_parent(db_i &db, const db_full_path &path)
+get_parent(const db_i &db, const db_full_path &path)
 {
     RT_CK_DBI(&db);
     RT_CK_FULL_PATH(&path);
@@ -1016,7 +1016,7 @@ get_parent(db_i &db, const db_full_path &path)
 // Determines whether the parent comb is simple enough
 // to be represented by fastgen4.
 HIDDEN bool
-comb_representable(db_i &db, const db_full_path &path)
+comb_representable(const db_i &db, const db_full_path &path)
 {
     RT_CK_DBI(&db);
     RT_CK_FULL_PATH(&path);
@@ -1032,7 +1032,7 @@ comb_representable(db_i &db, const db_full_path &path)
 
 
 HIDDEN std::pair<rt_db_internal, rt_db_internal>
-get_cutout(db_i &db, const std::string &name)
+get_cutout(const db_i &db, const std::string &name)
 {
     RT_CK_DBI(&db);
 
@@ -1082,7 +1082,7 @@ get_cutout(db_i &db, const std::string &name)
 
 
 HIDDEN Section::Cone *
-find_ccone_cutout(Section &section, db_i &db, const std::string &name)
+find_ccone_cutout(Section &section, const db_i &db, const std::string &name)
 {
     RT_CK_DBI(&db);
 
@@ -1136,7 +1136,7 @@ find_ccone_cutout(Section &section, db_i &db, const std::string &name)
 
 
 HIDDEN Section::Sphere *
-find_csphere_cutout(Section &section, db_i &db, const std::string &name)
+find_csphere_cutout(Section &section, const db_i &db, const std::string &name)
 {
     RT_CK_DBI(&db);
 
@@ -1266,7 +1266,7 @@ struct ConversionData {
     const bool m_convert_primitives;
 
     // for find_ccone_cutout()
-    db_i &m_db;
+    const db_i &m_db;
     std::set<std::string> m_recorded_ccones;
 };
 
