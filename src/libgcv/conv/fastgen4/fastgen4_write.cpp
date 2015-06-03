@@ -882,59 +882,6 @@ write_bot(Section &section, const rt_bot_internal &bot)
 
 
 HIDDEN bool
-tree_entirely_unions(const tree *tree)
-{
-    if (!tree)
-	return true;
-
-    RT_CK_TREE(tree);
-
-    switch (tree->tr_op) {
-	case OP_SOLID:
-	case OP_REGION:
-	case OP_NOP:
-	case OP_NMG_TESS:
-	case OP_DB_LEAF:
-	    return true; // leaf
-
-	case OP_UNION:
-	    return tree_entirely_unions(tree->tr_b.tb_left)
-		   && tree_entirely_unions(tree->tr_b.tb_right);
-
-	default:
-	    return false; // non-union operation
-    }
-}
-
-
-// Determines whether the parent comb is simple enough
-// to be represented by fastgen4.
-HIDDEN bool
-comb_representable(db_i &db, const db_full_path &path)
-{
-    RT_CK_DBI(&db);
-    RT_CK_FULL_PATH(&path);
-
-    if (path.fp_len < 2)
-	throw std::invalid_argument("toplevel");
-
-    rt_db_internal comb_db_internal;
-
-    if (rt_db_get_internal(&comb_db_internal, path.fp_names[path.fp_len - 2], &db,
-			   NULL, &rt_uniresource) < 0)
-	throw std::runtime_error("rt_db_get_internal() failed");
-
-    AutoFreePtr<rt_db_internal, rt_db_free_internal> autofree_comb_db_internal(
-	&comb_db_internal);
-
-    rt_comb_internal &comb_internal = *static_cast<rt_comb_internal *>
-				      (comb_db_internal.idb_ptr);
-    RT_CK_COMB(&comb_internal);
-    return tree_entirely_unions(comb_internal.tree);
-}
-
-
-HIDDEN bool
 ell_is_sphere(const rt_ell_internal &ell)
 {
     RT_ELL_CK_MAGIC(&ell);
@@ -1017,8 +964,75 @@ tgc_is_ccone(const rt_tgc_internal &tgc)
 }
 
 
-HIDDEN Section::Cone *
-find_ccone_cutout(Section &section, db_i &db, const std::string &name)
+HIDDEN bool
+tree_entirely_unions(const tree *tree)
+{
+    if (!tree)
+	return true;
+
+    RT_CK_TREE(tree);
+
+    switch (tree->tr_op) {
+	case OP_SOLID:
+	case OP_REGION:
+	case OP_NOP:
+	case OP_NMG_TESS:
+	case OP_DB_LEAF:
+	    return true; // leaf
+
+	case OP_UNION:
+	    return tree_entirely_unions(tree->tr_b.tb_left)
+		   && tree_entirely_unions(tree->tr_b.tb_right);
+
+	default:
+	    return false; // non-union operation
+    }
+}
+
+
+HIDDEN rt_db_internal
+get_parent(db_i &db, const db_full_path &path)
+{
+    RT_CK_DBI(&db);
+    RT_CK_FULL_PATH(&path);
+
+    if (path.fp_len < 2)
+	throw std::invalid_argument("toplevel");
+
+    rt_db_internal comb_db_internal;
+
+    if (rt_db_get_internal(&comb_db_internal, path.fp_names[path.fp_len - 2], &db,
+			   NULL, &rt_uniresource) < 0)
+	throw std::runtime_error("rt_db_get_internal() failed");
+
+    rt_comb_internal &comb_internal = *static_cast<rt_comb_internal *>
+				      (comb_db_internal.idb_ptr);
+    RT_CK_COMB(&comb_internal);
+
+    return comb_db_internal;
+}
+
+
+// Determines whether the parent comb is simple enough
+// to be represented by fastgen4.
+HIDDEN bool
+comb_representable(db_i &db, const db_full_path &path)
+{
+    RT_CK_DBI(&db);
+    RT_CK_FULL_PATH(&path);
+
+    rt_db_internal comb_db_internal = get_parent(db, path);
+    AutoFreePtr<rt_db_internal, rt_db_free_internal> autofree_comb_db_internal(
+	&comb_db_internal);
+
+    rt_comb_internal &comb_internal = *static_cast<rt_comb_internal *>
+				      (comb_db_internal.idb_ptr);
+    return tree_entirely_unions(comb_internal.tree);
+}
+
+
+HIDDEN std::pair<rt_db_internal, rt_db_internal>
+get_cutout(db_i &db, const std::string &name)
 {
     RT_CK_DBI(&db);
 
@@ -1029,21 +1043,11 @@ find_ccone_cutout(Section &section, db_i &db, const std::string &name)
 
     AutoFreePtr<db_full_path, db_free_full_path> autofree_path(&path);
 
-    if (path.fp_len < 2)
-	return NULL;
-
-    rt_db_internal comb_db_internal;
-
-    if (rt_db_get_internal(&comb_db_internal, path.fp_names[path.fp_len - 2], &db,
-			   NULL, &rt_uniresource) < 0)
-	throw std::runtime_error("rt_db_get_internal() failed");
-
+    rt_db_internal comb_db_internal = get_parent(db, path);
     AutoFreePtr<rt_db_internal, rt_db_free_internal> autofree_comb_db_internal(
 	&comb_db_internal);
-
     rt_comb_internal &comb_internal = *static_cast<rt_comb_internal *>
 				      (comb_db_internal.idb_ptr);
-    RT_CK_COMB(&comb_internal);
 
     const directory *outer_directory, *inner_directory;
     {
@@ -1051,55 +1055,70 @@ find_ccone_cutout(Section &section, db_i &db, const std::string &name)
 
 	if (t.tb_op != OP_SUBTRACT || !t.tb_left || !t.tb_right
 	    || t.tb_left->tr_op != OP_DB_LEAF || t.tb_right->tr_op != OP_DB_LEAF)
-	    return NULL;
+	    throw std::invalid_argument("not a cutout");
 
 	outer_directory = db_lookup(&db, t.tb_left->tr_l.tl_name, false);
 	inner_directory = db_lookup(&db, t.tb_right->tr_l.tl_name, false);
 
 	// check for nonexistent members
 	if (!outer_directory || !inner_directory)
-	    return NULL;
+	    throw std::invalid_argument("nonexistent member");
     }
 
-    rt_db_internal outer_db_internal, inner_db_internal;
+    std::pair<rt_db_internal, rt_db_internal> result;
 
-    if (rt_db_get_internal(&outer_db_internal, outer_directory, &db, NULL,
+    if (rt_db_get_internal(&result.first, outer_directory, &db, NULL,
 			   &rt_uniresource) < 0)
 	throw std::runtime_error("rt_db_get_internal() failed");
+
+    if (rt_db_get_internal(&result.second, inner_directory, &db, NULL,
+			   &rt_uniresource) < 0) {
+	rt_db_free_internal(&result.second);
+	throw std::runtime_error("rt_db_get_internal() failed");
+    }
+
+    return result;
+}
+
+
+HIDDEN Section::Cone *
+find_ccone_cutout(Section &section, db_i &db, const std::string &name)
+{
+    RT_CK_DBI(&db);
+
+    std::pair<rt_db_internal, rt_db_internal> internals;
+
+    try {
+	internals = get_cutout(db, name);
+    } catch (const std::invalid_argument &) {
+	return NULL;
+    }
 
     AutoFreePtr<rt_db_internal, rt_db_free_internal> autofree_outer_db_internal(
-	&outer_db_internal);
-
-    if (rt_db_get_internal(&inner_db_internal, inner_directory, &db, NULL,
-			   &rt_uniresource) < 0)
-	throw std::runtime_error("rt_db_get_internal() failed");
-
+	&internals.first);
     AutoFreePtr<rt_db_internal, rt_db_free_internal> autofree_inner_db_internal(
-	&inner_db_internal);
+	&internals.second);
 
-    if ((outer_db_internal.idb_minor_type != ID_TGC
-	 && outer_db_internal.idb_minor_type != ID_REC)
-	|| (inner_db_internal.idb_minor_type != ID_TGC
-	    && inner_db_internal.idb_minor_type != ID_REC))
+    if ((internals.first.idb_minor_type != ID_TGC
+	 && internals.first.idb_minor_type != ID_REC)
+	|| (internals.second.idb_minor_type != ID_TGC
+	    && internals.second.idb_minor_type != ID_REC))
 	return NULL;
 
     const rt_tgc_internal &outer_tgc = *static_cast<rt_tgc_internal *>
-				       (outer_db_internal.idb_ptr);
+				       (internals.first.idb_ptr);
     const rt_tgc_internal &inner_tgc = *static_cast<rt_tgc_internal *>
-				       (inner_db_internal.idb_ptr);
+				       (internals.second.idb_ptr);
     RT_TGC_CK_MAGIC(&outer_tgc);
     RT_TGC_CK_MAGIC(&inner_tgc);
+
+    if (!VEQUAL(outer_tgc.v, inner_tgc.v) || !VEQUAL(outer_tgc.h, inner_tgc.h))
+	return NULL;
 
     // check cone geometry
     if (!tgc_is_ccone(outer_tgc) || !tgc_is_ccone(inner_tgc))
 	return NULL;
 
-    if (!VEQUAL(outer_tgc.v, inner_tgc.v) || !VEQUAL(outer_tgc.h, inner_tgc.h))
-	return NULL;
-
-    // store results
-    --path.fp_len;
-    const std::string new_name = AutoFreePtr<char>(db_path_to_string(&path)).ptr;
     const fastf_t ro1 = MAGNITUDE(outer_tgc.a);
     const fastf_t ro2 = MAGNITUDE(outer_tgc.b);
     const fastf_t ri1 = MAGNITUDE(inner_tgc.a);
@@ -1111,17 +1130,59 @@ find_ccone_cutout(Section &section, db_i &db, const std::string &name)
 
     point_t v2;
     VADD2(v2, outer_tgc.v, outer_tgc.h);
-    return new Section::Cone(section, new_name, outer_tgc.v, v2, ro1, ro2, ri1,
-			     ri2);
+    // FIXME: use parent's name
+    return new Section::Cone(section, name, outer_tgc.v, v2, ro1, ro2, ri1, ri2);
 }
 
 
 HIDDEN Section::Sphere *
-find_csphere_cutout(const Section &UNUSED(section), db_i &UNUSED(db),
-		    const std::string &UNUSED(name))
+find_csphere_cutout(Section &section, db_i &db, const std::string &name)
 {
-    // TODO
-    return NULL;
+    RT_CK_DBI(&db);
+
+    std::pair<rt_db_internal, rt_db_internal> internals;
+
+    try {
+	internals = get_cutout(db, name);
+    } catch (const std::invalid_argument &) {
+	return NULL;
+    }
+
+    AutoFreePtr<rt_db_internal, rt_db_free_internal> autofree_outer_db_internal(
+	&internals.first);
+    AutoFreePtr<rt_db_internal, rt_db_free_internal> autofree_inner_db_internal(
+	&internals.second);
+
+    if ((internals.first.idb_minor_type != ID_SPH
+	 && internals.first.idb_minor_type != ID_ELL)
+	|| (internals.second.idb_minor_type != ID_SPH
+	    && internals.second.idb_minor_type != ID_ELL))
+	return NULL;
+
+    const rt_ell_internal &outer_ell = *static_cast<rt_ell_internal *>
+				       (internals.first.idb_ptr);
+    const rt_ell_internal &inner_ell = *static_cast<rt_ell_internal *>
+				       (internals.second.idb_ptr);
+    RT_ELL_CK_MAGIC(&outer_ell);
+    RT_ELL_CK_MAGIC(&inner_ell);
+
+    if (!VEQUAL(outer_ell.v, inner_ell.v))
+	return NULL;
+
+    // check sphere geometry
+    if (!ell_is_sphere(outer_ell) || !ell_is_sphere(inner_ell))
+	return NULL;
+
+    const fastf_t r_outer = MAGNITUDE(outer_ell.a);
+    const fastf_t r_inner = MAGNITUDE(inner_ell.a);
+
+    // check radii
+    if (r_inner >= r_outer)
+	return NULL;
+
+    // FIXME: use parent's name
+    return new Section::Sphere(section, name, outer_ell.v, r_outer,
+			       r_outer - r_inner);
 }
 
 
