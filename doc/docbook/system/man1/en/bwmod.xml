@@ -35,10 +35,10 @@ file format.
 The pixel values range from 0 to 255 and are internally operated on
 in floating point form (unless the
 <option>-c</option>
-option has been specified) so that dynamic range, truncation, and sign,
+option has been specified) so that dynamic range, truncation, and sign
 are not a problem.  On output they are converted back to 8-bit unsigned
-values clipping to 0 and 255 if necessary.  The number of pixels clipped
-high and low, if any, are reported to standard error on completion.</para>
+values, with clipping to 0 and 255 for values less than 0 and greater than 255.  If any pixels are clipped,
+the numbers of pixels clipped, low and high, are reported to standard error on completion.</para>
 
 <para>If the
 <option>-c</option>
@@ -64,16 +64,16 @@ to multiply by a value.
 to divide by a value.
 <!-- .br -->
 <option>-A</option>
-to take to absolute value of each pixel.
+to take absolute value.
 <!-- .br -->
 <option>-e </option><replaceable>val</replaceable>
-to exponentiate, i.e. raise each pixel to the power
+to exponentiate, i.e. raise to the power
 <emphasis remap='I'>val</emphasis>.
 <!-- .br -->
 <option>-r </option><replaceable>val</replaceable>
 to take the
-<emphasis remap='I'>val</emphasis>
-root of each pixel.</para>
+<emphasis remap='I'>val</emphasis>th
+root.</para>
 
 <para>All arguments can be floating point values.  Note that this command
 can be applied to color
@@ -86,16 +86,20 @@ but no distinction can be made between color planes.</para>
 <para>The command
 <!-- .br -->
 <userinput>bwmod -m-1 -a255 &lt; file.bw &gt; file2.bw</userinput>
-<!-- .br -->
+</para>
+<para>
 will produce the negative of a file by first multiplying by minus
-one, and then adding 255 to shift the pixels back into the 0-&gt;255 range.</para>
+one, and then adding 255 to shift the pixels back into the 0-&gt;255 range.
+(I.e., replace each pixel value by 255 minus that value.)</para>
 
 <para>One can apply a gamma factor to a file as follows:
 <!-- .br -->
 <userinput>bwmod -d255 -r2.2 -m255 &lt; file.bw &gt; file2.bw</userinput>
-<!-- .br -->
-which will first normalize the pixel values, then take the 2.2 root
-of each pixel, and finally scale it back to 0-&gt;255.
+</para>
+<para>
+which will first normalize the pixel values (i.e., put them into 0-&gt;1,
+noting the internal use of floating point), then take the 2.2 root
+of each value, and finally scale the pixel values back to 0-&gt;255.
 [Note however that applying gammas this way is not recommended since
 a function call per pixel results!]</para>
 
