@@ -29,7 +29,6 @@
 #include <string>
 #include "bu/log.h"
 #include "bn.h"
-#include "plot3.h"
 #include "raytrace.h"
 #include "vmath.h"
 #include "debug_plot.h"

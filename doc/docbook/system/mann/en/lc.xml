@@ -24,6 +24,8 @@
        <arg choice="opt" rep="norepeat">-r</arg>
        <arg choice="opt" rep="norepeat">-z</arg>
        <group choice="opt" rep="norepeat">
+	 <arg choice="plain" rep="norepeat">-0</arg>
+	 <arg choice="plain" rep="norepeat">-1</arg>
 	 <arg choice="plain" rep="norepeat">-2</arg>
 	 <arg choice="plain" rep="norepeat">-3</arg>
 	 <arg choice="plain" rep="norepeat">-4</arg>
@@ -86,13 +88,19 @@
       </listitem>
     </varlistentry>
     <varlistentry>
+      <term><option>-0</option></term>
+      <term><option>-1</option></term>
       <term><option>-2</option></term>
       <term><option>-3</option></term>
       <term><option>-4</option></term>
       <term><option>-5</option></term>
       <listitem>
 	<para>
-	  Specifies sort column 2, 3, 4 or 5 (referring to columns listed in the description of this command).
+	Specifies sort column 1, 2, 3, 4 or 5 (referring to columns listed in the description of this command);
+	1 is default.
+	If 0 is specified, the regions are listed in the order in which they are stored, but this will be overridden
+	if <option>-d</option> or <option>-s</option> is used, because of the sorting which needs to be done when
+        either of those options is used.
 	</para>
       </listitem>
     </varlistentry>

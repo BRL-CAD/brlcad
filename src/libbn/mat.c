@@ -40,7 +40,7 @@
 #include "bu/str.h"
 #include "vmath.h"
 #include "bn/mat.h"
-#include "bn/plane_calc.h"
+#include "bn/plane.h"
 
 
 const mat_t bn_mat_identity = MAT_INIT_IDN;

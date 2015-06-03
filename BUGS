@@ -136,8 +136,8 @@ Recent Bugs
 * bu_log() with a width specifier does not align like printf().
   Example: bu_log("%24s", str);
 
-* report that keep sometimes results in a .g file with unknown units
-  dbconcat also is reported to set the units to unknown if concating
+* report that "keep" sometimes results in a .g file with unknown units;
+  dbconcat also is reported to set the units to unknown if concatting
   a file with unknown units.
 
 * infinite loop in rt_find_backing_dist() raytracing a BoT (without

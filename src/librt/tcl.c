@@ -33,7 +33,7 @@
 #include "bu/parallel.h"
 #include "vmath.h"
 #include "bn.h"
-#include "rtgeom.h"
+#include "rt/geom.h"
 #include "raytrace.h"
 
 /* private headers */

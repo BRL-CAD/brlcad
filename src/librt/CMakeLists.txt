@@ -58,7 +58,6 @@ set(LIBRT_SOURCES
   db_lookup.c
   db_match.c
   db_open.c
-  db_path.c
   db_scan.c
   db_tree.c
   db_walk.c
@@ -151,6 +150,8 @@ set(LIBRT_SOURCES
   primitives/half/half_mirror.c
   primitives/hf/hf.c
   primitives/hf/hf_brep.cpp
+  primitives/hrt/hrt.c
+  primitives/hrt/hrt_mirror.c
   primitives/hyp/hyp.c
   primitives/hyp/hyp_brep.cpp
   primitives/hyp/hyp_mirror.c
@@ -248,9 +249,10 @@ set(LIBRT_SOURCES
   primitives/vol/vol.c
   primitives/vol/vol_brep.cpp
   primitives/vol/vol_mirror.c
-  primitives/hrt/hrt.c
+  primitives/xxx/xxx.c
   regionfix.c
   roots.c
+  screened_poisson.cpp
   search.c
   shoot.c
   spectrum.c
@@ -271,7 +273,6 @@ set(librt_ignored_files
   test_nurbsfit.cpp
   test_bot2nurbs.cpp
   test_root3-subd.cpp
-  test_shape_recognition.cpp
   subd_test_bot.asc
   prcomb.c
   primitives/bot/btg.h
@@ -289,7 +290,6 @@ set(librt_ignored_files
   primitives/revolve/revolve.h
   primitives/sph/benchmark.sh
   primitives/sph/sph_shot.cl
-  primitives/xxx/xxx.c
   primitives/xxx/xxx.h
   search.h
   timer-nt.c
@@ -312,7 +312,7 @@ if(BRLCAD_ENABLE_OPENCL)
   set(OPENCL_LIBS ${OPENCL_LIBRARIES})
 endif(BRLCAD_ENABLE_OPENCL)
 
-BRLCAD_ADDLIB(librt "${LIBRT_SOURCES}" "${OPENCL_LIBS};${GDIAM_LIBRARY};${VDS_LIBRARY};libbn;libbu;${OPENNURBS_LIBRARY};${P2T_LIBRARY};libbrep;${REGEX_LIBRARY};${ZLIB_LIBRARY};${WINSOCK_LIB};${RPCRT_LIB};${STDCXX_LIBRARIES}" NO_STRICT_CXX)
+BRLCAD_ADDLIB(librt "${LIBRT_SOURCES}" "${OPENCL_LIBS};${GDIAM_LIBRARY};${VDS_LIBRARY};libbrep;libbg;libbn;libbu;${OPENNURBS_LIBRARY};${P2T_LIBRARY};libSPR;${REGEX_LIBRARY};${ZLIB_LIBRARY};${WINSOCK_LIB};${RPCRT_LIB};${STDCXX_LIBRARIES}" NO_STRICT_CXX)
 
 SET_TARGET_PROPERTIES(librt PROPERTIES VERSION 20.0.1 SOVERSION 20)
 if(CPP_DLL_DEFINES)
@@ -320,6 +320,7 @@ if(CPP_DLL_DEFINES)
   SET_PROPERTY(TARGET librt APPEND PROPERTY COMPILE_DEFINITIONS "DB5_DLL_EXPORTS")
   SET_PROPERTY(TARGET librt APPEND PROPERTY COMPILE_DEFINITIONS "VDS_DLL_IMPORTS")
   SET_PROPERTY(TARGET librt APPEND PROPERTY COMPILE_DEFINITIONS "GDIAM_DLL_IMPORTS")
+  SET_PROPERTY(TARGET librt APPEND PROPERTY COMPILE_DEFINITIONS "SPR_DLL_IMPORTS")
 endif(CPP_DLL_DEFINES)
 
 # The following is build code for test applications used during
@@ -334,9 +335,6 @@ endif(CPP_DLL_DEFINES)
 #BRLCAD_ADDEXEC(test_nurbsfit test_nurbsfit.cpp "librt;libwdb;libbrep;libbu" NO_STRICT NO_INSTALL)
 #BRLCAD_ADDEXEC(test_root3-subd test_root3-subd.cpp "librt;libwdb;libbrep;libbu" NO_STRICT NO_INSTALL)
 #BRLCAD_ADDEXEC(test_surfacetree test_surfacetree.cpp "librt;libwdb;libbrep;libbu" NO_STRICT NO_INSTALL)
-if(DEFINED TEST_SHAPE_RECOGNITION)
- BRLCAD_ADDEXEC(test_shape_recognition test_shape_recognition.cpp "librt;libwdb;libbrep;libbu" NO_STRICT NO_INSTALL)
-endif(DEFINED TEST_SHAPE_RECOGNITION)
 
 add_subdirectory(tests)
 

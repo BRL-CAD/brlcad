@@ -93,28 +93,31 @@ get_args(int argc, char **argv)
 		val[ numop++ ] = atof(bu_optarg);
 		break;
 	    case 'd':
-		op[ numop ] = MULT;
 		d = atof(bu_optarg);
-
 		if (ZERO(d)) {
 		    bu_exit(2, "bwmod: cannot divide by zero!\n");
 		}
+		op[ numop ] = MULT;
 		val[ numop++ ] = 1.0 / d;
 		break;
 	    case 'A':
 		op[ numop ] = ABS;
-		val[ numop++ ] = 0;
+/* If using ABS, don't care what val[ numop ] is, but still must increment numop.
+ * (The following would increment numop AFTER it's used as "val" subscript.)
+ */
+/*		val[ numop++ ] = 0.0; */
+		numop++;
 		break;
 	    case 'e':
 		op[ numop ] = POW;
 		val[ numop++ ] = atof(bu_optarg);
 		break;
 	    case 'r':
-		op[ numop ] = POW;
 		d = atof(bu_optarg);
 		if (ZERO(d)) {
 		    bu_exit(2, "bwmod: zero root!\n");
 		}
+		op[ numop ] = POW;
 		val[ numop++ ] = 1.0 / d;
 		break;
 	    case 'c':
@@ -139,7 +142,7 @@ get_args(int argc, char **argv)
 		op[ numop ] = TRUNC;
 		val[ numop++ ] = atof(bu_optarg);
 		break;
-	    default:		/* '?' */
+	    default:		/* '?' 'h' */
 		return 0;
 	}
     }
@@ -233,7 +236,7 @@ int main(int argc, char **argv)
     unsigned char *p, *q;
     int tmp;
     int n;
-    unsigned long clip_high, clip_low;
+    unsigned long clip_high = 0L , clip_low = 0L ;
 
     setmode(fileno(stdin), O_BINARY);
     setmode(fileno(stdout), O_BINARY);
@@ -252,7 +255,6 @@ int main(int argc, char **argv)
     else
 	mk_trans_tbl();
 
-    clip_high = clip_low = 0L;
     while ((n=read(0, (void *)ibuf, (unsigned)sizeof(ibuf))) > 0) {
 	/* translate */
 	for (p = ibuf, q = &ibuf[n]; p < q; ++p) {

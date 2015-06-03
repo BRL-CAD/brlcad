@@ -19,11 +19,12 @@
  */
 
 /*----------------------------------------------------------------------*/
-/* @file tabdata.h */
-/** @addtogroup tabdata */
-/** @{ */
-
-/**
+/** @addtogroup bn_tabdata
+ *
+ * @brief
+ * Routines for processing tables (curves) of data with one independent
+ * parameter which is common to many sets of dependent data values.
+ *
  * Data structures to assist with recording many sets of data sampled
  * along the same set of independent variables.
  *
@@ -58,7 +59,20 @@
  * increase wavelength sampling density around "important"
  * frequencies.
  *
+ * Operates on bn_table (independent var) and
+ * bn_tabdata (dependent variable) structures.
+ *
+ * One application is for storing spectral curves, see spectrum.c
+ *
+ * @par Inspired by -
+ *     Roy Hall and his book "Illumination and Color in Computer
+ *@n   Generated Imagery", Springer Verlag, New York, 1989.
+ *@n   ISBN 0-387-96774-5
+ *
+ * With thanks to Russ Moulton Jr, EOSoft Inc. for his "rad.c" module.
  */
+/** @{ */
+/* @file bn/tabdata.h */
 
 #ifndef BN_TABDATA_H
 #define BN_TABDATA_H
@@ -428,9 +442,9 @@ BN_EXPORT extern void bn_tabdata_freq_shift(struct bn_tabdata *out,
  *@brief
  *  Returns number of sample points between 'low' and 'hi', inclusive.
  */
-BN_EXPORT extern int bn_table_interval_num_samples(const struct bn_table *tabp,
-						   double low,
-						   double hi);
+BN_EXPORT extern size_t bn_table_interval_num_samples(const struct bn_table *tabp,
+						      double low,
+						      double hi);
 
 /*
  *@brief
@@ -438,9 +452,9 @@ BN_EXPORT extern int bn_table_interval_num_samples(const struct bn_table *tabp,
  *  Don't bother freeing the tiny bit of storage at the end of the array.
  *  Returns number of points removed.
  */
-BN_EXPORT extern int bn_table_delete_sample_pts(struct bn_table *tabp,
-						unsigned int i,
-						unsigned int j);
+BN_EXPORT extern size_t bn_table_delete_sample_pts(struct bn_table *tabp,
+						   size_t i,
+						   size_t j);
 
 /*
  *@brief

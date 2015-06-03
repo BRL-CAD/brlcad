@@ -28,10 +28,10 @@
 #include "icv.h"
 
 HIDDEN size_t **
-icv_init_bins(icv_image_t* img, int n_bins)
+icv_init_bins(icv_image_t* img, size_t n_bins)
 {
-    int c;
-    int i;
+    size_t c;
+    size_t i;
     size_t **bins;
 
     bins = (size_t**) bu_malloc(sizeof(size_t*)*img->channels, "icv_init_bins : Histogram Bins");
@@ -46,13 +46,13 @@ icv_init_bins(icv_image_t* img, int n_bins)
 
 
 size_t **
-icv_hist(icv_image_t* img, int n_bins)
+icv_hist(icv_image_t* img, size_t n_bins)
 {
-    long int i;
-    int j;
+    size_t i;
+    size_t j;
     double *data;
-    int temp;
-    long int size;
+    size_t temp;
+    size_t size;
     size_t **bins;
     size = img->width*img->height;
     data = img->data;
@@ -77,7 +77,7 @@ icv_max(icv_image_t* img)
     double *data = NULL;
     size_t size;
     double *max; /**< An array of size channels. */
-    int i;
+    size_t i;
 
     ICV_IMAGE_VAL_PTR(img);
 
@@ -103,7 +103,7 @@ icv_sum(icv_image_t* img)
     double *data = NULL;
 
     double *sum; /**< An array of size channels. */
-    int i;
+    size_t i;
     size_t size,j;
 
     ICV_IMAGE_VAL_PTR(img);
@@ -129,7 +129,7 @@ icv_mean(icv_image_t* img)
 {
     double *mean;
     size_t size;
-    int i;
+    size_t i;
 
     ICV_IMAGE_VAL_PTR(img);
 
@@ -149,7 +149,7 @@ icv_min(icv_image_t* img)
     double *data = NULL;
     size_t size;
     double *min; /**< An array of size channels. */
-    int i;
+    size_t i;
 
     ICV_IMAGE_VAL_PTR(img);
 
@@ -171,9 +171,9 @@ icv_min(icv_image_t* img)
 
 
 double *
-icv_var(icv_image_t* img, size_t** bins, int n_bins)
+icv_var(icv_image_t* img, size_t** bins, size_t n_bins)
 {
-    int i,c;
+    size_t i,c;
     double *var;
     double *mean;
     size_t size;
@@ -202,9 +202,9 @@ icv_var(icv_image_t* img, size_t** bins, int n_bins)
 
 
 double *
-icv_skew(icv_image_t* img, size_t** bins, int n_bins)
+icv_skew(icv_image_t* img, size_t** bins, size_t n_bins)
 {
-    int i,c;
+    size_t i,c;
     double *skew;
     double *mean;
     size_t size;
@@ -233,9 +233,9 @@ icv_skew(icv_image_t* img, size_t** bins, int n_bins)
 
 
 int *
-icv_median(icv_image_t* img, size_t** bins, int n_bins)
+icv_median(icv_image_t* img, size_t** bins, size_t n_bins)
 {
-    int i,c;
+    size_t i,c;
     int *median;
     double *sum;
     double *partial_sum;
@@ -264,9 +264,9 @@ icv_median(icv_image_t* img, size_t** bins, int n_bins)
 
 
 int *
-icv_mode(icv_image_t* img, size_t** bins, int n_bins)
+icv_mode(icv_image_t* img, size_t** bins, size_t n_bins)
 {
-    int i,c;
+    size_t i,c;
     int *mode;
 
     ICV_IMAGE_VAL_PTR(img);

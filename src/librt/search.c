@@ -90,8 +90,9 @@
 #include <limits.h> /* for INT_MAX */
 
 #include "bu/cmd.h"
+#include "bu/path.h"
 
-#include "db.h"
+#include "rt/db4.h"
 #include "./librt_private.h"
 #include "./search.h"
 
@@ -1020,7 +1021,7 @@ f_type(struct db_plan_t *plan, struct db_node_t *db_node, struct db_i *dbip, str
     }
 
     if (rt_db_get_internal(&intern, dp, dbip, (fastf_t *)NULL, &rt_uniresource) < 0) return 0;
-    if (intern.idb_major_type != DB5_MAJORTYPE_BRLCAD || !intern.idb_meth->ft_label) {
+    if (intern.idb_major_type != DB5_MAJORTYPE_BRLCAD) {
 	rt_db_free_internal(&intern);
 	db_node->matched_filters = 0;
 	return 0;

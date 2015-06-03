@@ -6,8 +6,6 @@
 #include "bu/log.h"
 #include "bu/str.h"
 #include "bu/malloc.h"
-#include "bn/plane_calc.h"
-#include "bn/tol.h"
 #include "shape_recognition.h"
 
 /* Return -1 if the cylinder face is pointing in toward the cylinder axis,
@@ -36,6 +34,100 @@ negative_cylinder(struct subbrep_object_data *data, int face_index, double cyl_t
     if (data->brep->m_F[face_index].m_bRev) ret = -1 * ret;
     return ret;
 }
+
+// Sort the curved edges into one of two circles.
+int
+categorize_arc_edges(ON_Circle *set1_c, ON_Circle *set2_c,
+	struct subbrep_object_data *data, std::set<int> *active_edges, double cyl_tol)
+{
+    if (!set1_c || !set2_c || !data || !active_edges) return 0;
+    std::set<int>::iterator e_it;
+    std::set<int> arc_set_1, arc_set_2;
+    double max_height = 0.0;
+    const ON_BrepEdge *edge = &(data->brep->m_E[*(active_edges->begin())]);
+    ON_Curve *sc = edge->EdgeCurveOf()->Duplicate();
+    ON_Arc arc;
+    (void)sc->IsArc(NULL, &arc, cyl_tol);
+    delete sc;
+    (*set1_c) = ON_Circle(arc.StartPoint(), arc.MidPoint(), arc.EndPoint());
+
+    // Find the arc edge furthest from the set1_c arc - this will define the
+    // "opposite circle" for the cylinder
+    for (e_it = active_edges->begin(); e_it != active_edges->end(); e_it++) {
+        const ON_BrepEdge *cedge = &(data->brep->m_E[*e_it]);
+	if (edge != cedge) {
+	    ON_Curve *ec = cedge->EdgeCurveOf()->Duplicate();
+	    if (ec->IsArc(NULL, &arc, cyl_tol)) {
+		ON_Circle circ(arc.StartPoint(), arc.MidPoint(), arc.EndPoint());
+		if (fabs(circ.Center().DistanceTo(set1_c->Center())) > max_height) {
+		    max_height = fabs(circ.Center().DistanceTo(set1_c->Center()));
+		    (*set2_c) = circ;
+		}
+	    }
+	    delete ec;
+	}
+    }
+
+    // For each arc, assign it to one or the other of the cylinder planes.  If
+    // we find one we can't categorize within tolerance, game over.
+    for (e_it = active_edges->begin(); e_it != active_edges->end(); e_it++) {
+        const ON_BrepEdge *cedge = &(data->brep->m_E[*e_it]);
+	ON_Curve *ec = cedge->EdgeCurveOf()->Duplicate();
+	if (ec->IsArc(NULL, &arc, cyl_tol)) {
+	    ON_Circle circ(arc.StartPoint(), arc.MidPoint(), arc.EndPoint());
+	    double d1 = fabs(circ.Center().DistanceTo(set1_c->Center()));
+	    double d2 = fabs(circ.Center().DistanceTo(set2_c->Center()));
+	    if (!NEAR_ZERO(d1, cyl_tol) && !NEAR_ZERO(d2, cyl_tol)) {
+		bu_log("found extra circle in %s - no go\n", bu_vls_addr(data->key));
+		delete ec;
+		return 0;
+	    }
+	    if (d1 > d2) {
+		arc_set_1.insert(*e_it);
+	    } else {
+		arc_set_2.insert(*e_it);
+	    }
+	}
+	delete ec;
+    }
+
+    // Average the centers of the arc set arcs to get better
+    // values for the cylinder.
+    double avg_radius = 0.0;
+    ON_3dPoint avg_center = ON_3dPoint(0.0, 0.0, 0.0);
+    int cnt = arc_set_1.size();
+    for (e_it = arc_set_1.begin(); e_it != arc_set_1.end(); e_it++) {
+	const ON_BrepEdge *cedge = &(data->brep->m_E[*e_it]);
+	ON_Curve *ec = cedge->EdgeCurveOf()->Duplicate();
+	(void)ec->IsArc(NULL, &arc, cyl_tol);
+	ON_Circle circ(arc.StartPoint(), arc.MidPoint(), arc.EndPoint());
+	avg_radius += circ.Radius();
+	avg_center = avg_center + circ.Center();
+	delete ec;
+    }
+    avg_radius = avg_radius/cnt;
+    avg_center = avg_center/cnt;
+    (*set1_c) = ON_Circle(avg_center, avg_radius);
+
+    avg_radius = 0.0;
+    avg_center = ON_3dPoint(0.0, 0.0, 0.0);
+    cnt = arc_set_2.size();
+    for (e_it = arc_set_2.begin(); e_it != arc_set_2.end(); e_it++) {
+	const ON_BrepEdge *cedge = &(data->brep->m_E[*e_it]);
+	ON_Curve *ec = cedge->EdgeCurveOf()->Duplicate();
+	(void)ec->IsArc(NULL, &arc, cyl_tol);
+	ON_Circle circ(arc.StartPoint(), arc.MidPoint(), arc.EndPoint());
+	avg_radius += circ.Radius();
+	avg_center = avg_center + circ.Center();
+	delete ec;
+    }
+    avg_radius = avg_radius/cnt;
+    avg_center = avg_center/cnt;
+    (*set2_c) = ON_Circle(avg_center, avg_radius);
+
+    return 1;
+}
+
 
 int
 subbrep_is_cylinder(struct subbrep_object_data *data, fastf_t cyl_tol)
@@ -144,72 +236,43 @@ subbrep_is_cylinder(struct subbrep_object_data *data, fastf_t cyl_tol)
     // loops because we are assuming that in the input Brep; any curve except
     // arc curves that survived the degeneracy test has already resulted in an
     // earlier rejection.
-    std::set<int> arc_set_1, arc_set_2;
     ON_Circle set1_c, set2_c;
-    int arc1_circle_set= 0;
-    int arc2_circle_set = 0;
-    for (e_it = active_edges.begin(); e_it != active_edges.end(); e_it++) {
-        const ON_BrepEdge *edge = &(data->brep->m_E[*e_it]);
-	ON_Curve *ec = edge->EdgeCurveOf()->Duplicate();
-        ON_Arc arc;
-        if (ec->IsArc(NULL, &arc, cyl_tol)) {
-            int assigned = 0;
-            ON_Circle circ(arc.StartPoint(), arc.MidPoint(), arc.EndPoint());
-            //std::cout << "circ " << circ.Center().x << " " << circ.Center().y << " " << circ.Center().z << "\n";
-            if (!arc1_circle_set) {
-                arc1_circle_set = 1;
-                set1_c = circ;
-                //std::cout << "center 1 " << set1_c.Center().x << " " << set1_c.Center().y << " " << set1_c.Center().z << "\n";
-            } else {
-                if (!arc2_circle_set) {
-                    if (!(NEAR_ZERO(circ.Center().DistanceTo(set1_c.Center()), cyl_tol))){
-                        arc2_circle_set = 1;
-                        set2_c = circ;
-                        //std::cout << "center 2 " << set2_c.Center().x << " " << set2_c.Center().y << " " << set2_c.Center().z << "\n";
-                    }
-                }
-            }
-            if (NEAR_ZERO(circ.Center().DistanceTo(set1_c.Center()), cyl_tol)){
-                arc_set_1.insert(*e_it);
-                assigned = 1;
-            }
-            if (arc2_circle_set) {
-                if (NEAR_ZERO(circ.Center().DistanceTo(set2_c.Center()), cyl_tol)){
-                    arc_set_2.insert(*e_it);
-                    assigned = 1;
-                }
-            }
-            if (!assigned) {
-                std::cout << "found extra circle - no go\n";
-		delete ec;
-                return 0;
-            }
-        }
-	delete ec;
+    if (!categorize_arc_edges(&set1_c, &set2_c, data, &active_edges, cyl_tol)) {
+	return 0;
     }
+
+    // TODO - should probably average the centers of the arc set arcs to get better
+    // values for the cylinder.
 
     data->type = CYLINDER;
     struct csg_object_params * obj;
     BU_GET(obj, struct csg_object_params);
 
-    ON_3dVector hvect(set2_c.Center() - set1_c.Center());
+    ON_3dPoint center_bottom = set1_c.Center();
+    ON_3dPoint center_top = set2_c.Center();
 
     // Flag the cylinder according to the negative or positive status of the
     // cylinder surface.  Whether it is actually subtracted from the
     // global object or unioned into a comb lower down the tree (or vice versa)
     // is determined later.
-    int negative = negative_cylinder(data, *cylindrical_surfaces.begin(), cyl_tol);
+    data->negative_shape = negative_cylinder(data, *cylindrical_surfaces.begin(), cyl_tol);
 
-    //bu_log("full cylinder negative test: %d\n", negative);
-    // TODO - the surface negative test may not be enough on its own - needs
-    // more thought
-    if (negative == -1) {
-	data->params->bool_op = '-';
-    }
-    if (negative == 1) {
-	data->params->bool_op = 'u';
+    // If we've got a negative cylinder, bump the center points out very slightly
+    // to avoid problems with raytracing - without this, NIST 2 sometimes shows
+    // a half-circle of shading in what should be a subtraction.
+    if (data->negative_shape == -1) {
+	ON_3dVector cvector(center_top - center_bottom);
+	double len = cvector.Length();
+	cvector.Unitize();
+	cvector = cvector * (len * 0.001);
+
+	center_top = center_top + cvector;
+	center_bottom = center_bottom - cvector;
     }
 
+    ON_3dVector hvect(center_top - center_bottom);
+
+    data->params->bool_op = (data->negative_shape == -1) ? '-' : 'u';
     data->params->origin[0] = set1_c.Center().x;
     data->params->origin[1] = set1_c.Center().y;
     data->params->origin[2] = set1_c.Center().z;
@@ -289,12 +352,15 @@ cylinder_csg(struct subbrep_object_data *data, fastf_t cyl_tol)
                 cylindrical_surfaces.insert(f_ind);
                 break;
             default:
-		std::cout << "what???\n";
+		bu_log("what???\n");
                 return 0;
                 break;
         }
     }
     data->params->bool_op = 'u'; // Initialize to union
+    if (BU_STR_EQUAL(bu_vls_addr(data->key), "21_89_102")) {
+	bu_log("key found\n");
+    }
 
     // Check for multiple cylinders.  Can handle this, but for now punt.
     ON_Cylinder cylinder;
@@ -311,7 +377,7 @@ cylinder_csg(struct subbrep_object_data *data, fastf_t cyl_tol)
 	delete fcs;
 	//std::cout << "cyl_count: " << cyl_count << "\n";
 	if (f_cylinder.circle.Center().DistanceTo(cylinder.circle.Center()) > cyl_tol) {
-	    std::cout << "\n\nMultiple cylinders found\n\n";
+	    bu_log("Multiple cylinders found in %s - no go\n", bu_vls_addr(data->key));
 	    return 0;
 	}
     }
@@ -328,7 +394,7 @@ cylinder_csg(struct subbrep_object_data *data, fastf_t cyl_tol)
 	    ON_Plane eplane;
 	    ON_Curve *ecv2 = edge->EdgeCurveOf()->Duplicate();
 	    if (!ecv2->IsPlanar(&eplane, cyl_tol)) {
-		std::cout << "nonplanar edge in cylinder" << "\n";
+		bu_log("Nonplanar edge in cylinder (%s) - no go\n", bu_vls_addr(data->key));
 		delete ecv;
 		delete ecv2;
 		return 0;
@@ -446,10 +512,10 @@ cylinder_csg(struct subbrep_object_data *data, fastf_t cyl_tol)
 			}
 		    }
 		    if (!assigned) {
-			std::cout << "found extra circle - no go: " << bu_vls_addr(data->key) << "\n";
-			std::cout << "center 1 " << set1_c.Center().x << " " << set1_c.Center().y << " " << set1_c.Center().z << "\n";
-			std::cout << "center 2 " << set2_c.Center().x << " " << set2_c.Center().y << " " << set2_c.Center().z << "\n";
-			std::cout << "circ " << circ.Center().x << " " << circ.Center().y << " " << circ.Center().z << "\n";
+			bu_log("found extra circle in %s - no go\n", bu_vls_addr(data->key));
+			//std::cout << "center 1 " << set1_c.Center().x << " " << set1_c.Center().y << " " << set1_c.Center().z << "\n";
+			//std::cout << "center 2 " << set2_c.Center().x << " " << set2_c.Center().y << " " << set2_c.Center().z << "\n";
+			//std::cout << "circ " << circ.Center().x << " " << circ.Center().y << " " << circ.Center().z << "\n";
 			delete ecv;
 			delete ecv2;
 			return 0;
@@ -466,27 +532,13 @@ cylinder_csg(struct subbrep_object_data *data, fastf_t cyl_tol)
 	// cylinder surface.  Whether the comb is actually subtracted from the
 	// global object or unioned into a comb lower down the tree (or vice versa)
 	// is determined later.
-	int negative = negative_cylinder(data, *cylindrical_surfaces.begin(), cyl_tol);
+	data->negative_shape = negative_cylinder(data, *cylindrical_surfaces.begin(), cyl_tol);
+	data->params->bool_op = (data->negative_shape == -1) ? '-' : 'u';
 
 
 	if (corner_verts.size() == 0) {
 	    //std::cout << "Full cylinder\n";
 	    data->type = CYLINDER;
-
-	    if (data->parent->params->bool_op == '-') negative = -1 * negative;
-
-	    switch (negative) {
-		case -1:
-		    data->params->bool_op = '-';
-		    break;
-		case 1:
-		    data->params->bool_op = 'u';
-		    break;
-		default:
-		    std::cout << "Could not determine cylinder status???????\n";
-		    data->params->bool_op = 'u';
-		    break;
-	    }
 
 	    data->params->origin[0] = set1_c.Center().x;
 	    data->params->origin[1] = set1_c.Center().y;
@@ -495,6 +547,10 @@ cylinder_csg(struct subbrep_object_data *data, fastf_t cyl_tol)
 	    data->params->hv[1] = hvect.y;
 	    data->params->hv[2] = hvect.z;
 	    data->params->radius = set1_c.Radius();
+
+	    data->obj_cnt = data->parent->obj_cnt;
+	    (*data->obj_cnt)++;
+	    bu_vls_sprintf(data->name_root, "%s_%d_cyl", bu_vls_addr(data->parent->name_root), *(data->obj_cnt));
 
 	    // If there are faces in the planar volume data matching a planar
 	    // face associated with this cylinder, remove them - a full cylinder
@@ -508,27 +564,19 @@ cylinder_csg(struct subbrep_object_data *data, fastf_t cyl_tol)
 	    // We have parallel faces and corners - we need to use an arb.
 	    data->type = COMB;
 
+	    data->obj_cnt = data->parent->obj_cnt;
+	    (*data->obj_cnt)++;
+	    bu_vls_sprintf(data->name_root, "%s_%d_comb", bu_vls_addr(data->parent->name_root), *(data->obj_cnt));
+
 	    struct subbrep_object_data *cyl_obj;
 	    BU_GET(cyl_obj, struct subbrep_object_data);
 	    subbrep_object_init(cyl_obj, data->brep);
 	    std::string key = face_set_key(cylindrical_surfaces);
 	    bu_vls_sprintf(cyl_obj->key, "%s", key.c_str());
+	    cyl_obj->obj_cnt = data->parent->obj_cnt;
+	    (*cyl_obj->obj_cnt)++;
+	    bu_vls_sprintf(cyl_obj->name_root, "%s_%d_cyl", bu_vls_addr(data->parent->name_root), *(cyl_obj->obj_cnt));
 	    cyl_obj->type = CYLINDER;
-
-	    if (data->parent->params->bool_op == '-') negative = -1 * negative;
-
-	    switch (negative) {
-		case -1:
-		    data->params->bool_op = '-';
-		    break;
-		case 1:
-		    data->params->bool_op = 'u';
-		    break;
-		default:
-		    std::cout << "Could not determine cylinder status???????\n";
-		    data->params->bool_op = 'u';
-		    break;
-	    }
 
 	    // cylinder - positive object in this sub-comb
 	    cyl_obj->params->bool_op = 'u';
@@ -566,6 +614,9 @@ cylinder_csg(struct subbrep_object_data *data, fastf_t cyl_tol)
 	    BU_GET(arb_obj, struct subbrep_object_data);
 	    subbrep_object_init(arb_obj, data->brep);
 	    bu_vls_sprintf(arb_obj->key, "%s_arb8", key.c_str());
+	    arb_obj->obj_cnt = data->parent->obj_cnt;
+	    (*arb_obj->obj_cnt)++;
+	    bu_vls_sprintf(arb_obj->name_root, "%s_%d_arb8", bu_vls_addr(data->parent->name_root), *(arb_obj->obj_cnt));
 	    arb_obj->type = ARB8;
 
 
@@ -575,22 +626,30 @@ cylinder_csg(struct subbrep_object_data *data, fastf_t cyl_tol)
 	    ON_Plane b_plane = set1_c.Plane();
 	    ON_Plane t_plane = set2_c.Plane();
 	    if (subbrep_top_bottom_pnts(data, &corner_verts, &t_plane, &b_plane, &top_pnts, &bottom_pnts)) {
-		std::cout << "Point top/bottom sorting failed\n";
+		bu_log("Point top/bottom sorting failed in %s - no go\n", bu_vls_addr(arb_obj->key));
 		return 0;
 	    }
 
-	    // Second, select a point from an arc edge not on the subtraction
-	    // plane, construct a vector from the circle center to that point,
+	    // Second, iterate over all the arc edges in a set and select
+	    // select the furthest midpoint from the plane.
+	    // Using that point, construct a vector from the circle center to that point,
 	    // and determine if the pcyl plane direction is already in the opposite
 	    // direction or needs to be reversed.
-	    const ON_BrepEdge *edge = &(data->brep->m_E[*arc_set_1.begin()]);
-	    ON_Arc arc;
-	    ON_Curve *ecv = edge->EdgeCurveOf()->Duplicate();
-	    (void)ecv->IsArc(NULL, &arc, cyl_tol);
-	    delete ecv;
+	    std::set<int>::iterator as_it;
 	    ON_3dPoint center = set1_c.Center();
-	    ON_3dPoint midpt = arc.MidPoint();
-
+	    ON_3dPoint midpt;
+	    double dist = 0.0;
+	    for (as_it = arc_set_1.begin(); as_it != arc_set_1.end(); as_it++) {
+		const ON_BrepEdge *edge = &(data->brep->m_E[*as_it]);
+		ON_Arc arc;
+		ON_Curve *ecv = edge->EdgeCurveOf()->Duplicate();
+		(void)ecv->IsArc(NULL, &arc, cyl_tol);
+		delete ecv;
+		if (fabs(pcyl.DistanceTo(arc.MidPoint())) > dist) {
+		    midpt = arc.MidPoint();
+		    dist = fabs(pcyl.DistanceTo(arc.MidPoint()));
+		}
+	    }
 
 	    ON_3dVector invec = center - midpt;
 	    double dotp = ON_DotProduct(invec, pcyl.Normal());
@@ -653,7 +712,7 @@ cylinder_csg(struct subbrep_object_data *data, fastf_t cyl_tol)
 		    // do it again,  but the first shape to make the need clear has
 		    // to trigger the build.
 		    if (!data->parent->planar_obj) {
-			subbrep_planar_init(data);
+			subbrep_planar_init(data->parent);
 		    }
 		    // Now, add the new face
 		    ON_SimpleArray<const ON_BrepVertex *> vert_loop(4);
@@ -661,7 +720,7 @@ cylinder_csg(struct subbrep_object_data *data, fastf_t cyl_tol)
 		    vert_loop.Append(v2);
 		    vert_loop.Append(v3);
 		    vert_loop.Append(v4);
-		    subbrep_add_planar_face(data->parent, &pcyl, &vert_loop, negative);
+		    subbrep_add_planar_face(data->parent, &pcyl, &vert_loop, data->negative_shape);
 		}
 	    }
 
@@ -706,7 +765,9 @@ cylinder_csg(struct subbrep_object_data *data, fastf_t cyl_tol)
 	    // the pcyl normal direction and the cylinder radius to
 	    // construct the remaining arb points.
 	    ON_3dPoint p5, p6, p7, p8;
-	    ON_3dVector arb_side = pcyl.Normal() * 2*set1_c.Radius();
+	    // Try to trim the arb back using dist
+	    double arb_len = (2*set1_c.Radius() - dist*0.95);
+	    ON_3dVector arb_side = pcyl.Normal() * arb_len;
 	    arb_points[4] = arb_points[0] + arb_side;
 	    arb_points[5] = arb_points[1] + arb_side;
 	    arb_points[6] = arb_points[2] + arb_side;
@@ -735,13 +796,25 @@ cylinder_csg(struct subbrep_object_data *data, fastf_t cyl_tol)
 		// We have non parallel faces and no corners - at least one and possible
 		// both end caps need subtracting, but no other subtractions are needed.
 		data->type = COMB;
-		std::cout << "TODO: Minus one or more end-cap arbs\n";
+		data->obj_cnt = data->parent->obj_cnt;
+		(*data->obj_cnt)++;
+		bu_vls_sprintf(data->name_root, "%s_%d_comb", bu_vls_addr(data->parent->name_root), *(data->obj_cnt));
+
+
+		bu_log("TODO: Minus one or more end-cap arbs\n");
 		return 1;
 	    } else {
 		// We have non parallel faces and corners - at least one and possible
 		// both end caps need subtracting, plus an arb to remove part of the
 		// cylinder body.
 		data->type = COMB;
+
+		data->obj_cnt = data->parent->obj_cnt;
+		(*data->obj_cnt)++;
+		bu_vls_sprintf(data->name_root, "%s_%d_comb", bu_vls_addr(data->parent->name_root), *(data->obj_cnt));
+
+
+
 		//std::cout << "Minus one or more end-cap arbs and body arb\n";
 
 		// If an end capping plane's normal is parallel to the cylinder axis,
@@ -761,65 +834,31 @@ cylinder_csg(struct subbrep_object_data *data, fastf_t cyl_tol)
 			base_plane = cyl_planes[1];
 			tilted_plane = cyl_planes[0];
 		    }
-		    std::cout << "plane normal: " << pout(tilted_plane.Normal()) << "\n";
-		    double angle = acos(ON_DotProduct(cylinder.Axis(), tilted_plane.Normal()));
-		    std::cout << "  dihedral angle: " << angle * ON_RADIANS_TO_DEGREES << "\n";
-		    double diameter = cylinder.circle.Radius() * 2;
-		    std::cout << "  diameter: " << diameter << "\n";
-		    double hypotenuse = diameter / ON_DotProduct(cylinder.Axis(), tilted_plane.Normal());
-		    std::cout << "  hypotenuse: " << hypotenuse << "\n";
-		    std::cout << "  opposite: " << sin(angle) * hypotenuse << "\n";
+		    //std::cout << "plane normal: " << pout(tilted_plane.Normal()) << "\n";
+		    //double angle = acos(ON_DotProduct(cylinder.Axis(), tilted_plane.Normal()));
+		    //std::cout << "  dihedral angle: " << angle * ON_RADIANS_TO_DEGREES << "\n";
+		    //double diameter = cylinder.circle.Radius() * 2;
+		    //std::cout << "  diameter: " << diameter << "\n";
+		    //double hypotenuse = diameter / ON_DotProduct(cylinder.Axis(), tilted_plane.Normal());
+		    //std::cout << "  hypotenuse: " << hypotenuse << "\n";
+		    //std::cout << "  opposite: " << sin(angle) * hypotenuse << "\n";
 		} else {
 
 		    data->type = COMB;
+		    data->obj_cnt = data->parent->obj_cnt;
+		    (*data->obj_cnt)++;
+		    bu_vls_sprintf(data->name_root, "%s_%d_comb", bu_vls_addr(data->parent->name_root), *(data->obj_cnt));
+
+
 		    // First order of business - find the intersection between the axis and the capping
 		    // plane
-		    point_t intersect_pt;
-		    fastf_t dist;
-		    point_t axis_pt;
-		    vect_t axis_dir;
-		    plane_t plane_eqn;
-		    struct bn_tol intersect_tol = {BN_TOL_MAGIC, BN_TOL_DIST, BN_TOL_DIST * BN_TOL_DIST, 1e-6, 1.0 - 1e-6 };
-		    VMOVE(axis_pt, cylinder.circle.Center());
-		    VMOVE(axis_dir, cylinder.Axis());
-		    VUNITIZE(axis_dir);
-		    plane_eqn[0] = cyl_planes[0].plane_equation.x;
-		    plane_eqn[1] = cyl_planes[0].plane_equation.y;
-		    plane_eqn[2] = cyl_planes[0].plane_equation.z;
-		    plane_eqn[3] = cyl_planes[0].plane_equation.d;
 
-		    if (bn_isect_line3_plane(&dist, axis_pt, axis_dir, plane_eqn, &intersect_tol) < 0) {
-			plane_eqn[0] = -1 * cyl_planes[0].plane_equation.x;
-			plane_eqn[1] = -1 * cyl_planes[0].plane_equation.y;
-			plane_eqn[2] = -1 * cyl_planes[0].plane_equation.z;
-			(void)bn_isect_line3_plane(&dist, axis_pt, axis_dir, plane_eqn, &intersect_tol);
-		    }
+		    ON_Line line(cylinder.circle.Center(), cylinder.circle.Center() + cylinder.Axis());
+		    ON_3dPoint ip1 = ON_LinePlaneIntersect(line, cyl_planes[0]);
+		    ON_3dPoint ip2 = ON_LinePlaneIntersect(line, cyl_planes[1]);
 
-		    VSCALE(axis_dir, axis_dir, dist);
-		    VADD2(intersect_pt, axis_pt, axis_dir);
-
-		    //std::cout << "Intersect point 1: " << intersect_pt[0] << "," << intersect_pt[1] << "," << intersect_pt[2] << "\n";
-		    ON_3dPoint ip1(intersect_pt[0], intersect_pt[1], intersect_pt[2]);
-
-		    VMOVE(axis_dir, cylinder.Axis());
-		    VUNITIZE(axis_dir);
-		    plane_eqn[0] = cyl_planes[1].plane_equation.x;
-		    plane_eqn[1] = cyl_planes[1].plane_equation.y;
-		    plane_eqn[2] = cyl_planes[1].plane_equation.z;
-		    plane_eqn[3] = cyl_planes[1].plane_equation.d;
-
-		    if (bn_isect_line3_plane(&dist, axis_pt, axis_dir, plane_eqn, &intersect_tol) < 0) {
-			plane_eqn[0] = -1 * cyl_planes[1].plane_equation.x;
-			plane_eqn[1] = -1 * cyl_planes[1].plane_equation.y;
-			plane_eqn[2] = -1 * cyl_planes[1].plane_equation.z;
-			(void)bn_isect_line3_plane(&dist, axis_pt, axis_dir, plane_eqn, &intersect_tol);
-		    }
-
-		    VSCALE(axis_dir, axis_dir, dist);
-		    VADD2(intersect_pt, axis_pt, axis_dir);
-
-		    //std::cout << "Intersect point 2: " << intersect_pt[0] << "," << intersect_pt[1] << "," << intersect_pt[2] << "\n";
-		    ON_3dPoint ip2(intersect_pt[0], intersect_pt[1], intersect_pt[2]);
+		    if (ip1.x > ON_DBL_MAX - SMALL_FASTF || ip1.x < -ON_DBL_MAX + SMALL_FASTF) return 1;
+		    if (ip2.x > ON_DBL_MAX - SMALL_FASTF || ip2.x < -ON_DBL_MAX + SMALL_FASTF) return 1;
 
 		    // Define the cylinder.
 		    struct subbrep_object_data *cyl_obj;
@@ -827,28 +866,17 @@ cylinder_csg(struct subbrep_object_data *data, fastf_t cyl_tol)
 		    subbrep_object_init(cyl_obj, data->brep);
 		    std::string key = face_set_key(cylindrical_surfaces);
 		    bu_vls_sprintf(cyl_obj->key, "%s", key.c_str());
+		    cyl_obj->obj_cnt = data->parent->obj_cnt;
+		    (*cyl_obj->obj_cnt)++;
+		    bu_vls_sprintf(cyl_obj->name_root, "%s_%d_cyl", bu_vls_addr(data->parent->name_root), *(cyl_obj->obj_cnt));
 		    cyl_obj->type = CYLINDER;
 
 		    // Flag the cyl/arb comb according to the negative or positive status of the
 		    // cylinder surface.  Whether the comb is actually subtracted from the
 		    // global object or unioned into a comb lower down the tree (or vice versa)
 		    // is determined later.
-		    int negative = negative_cylinder(data, *cylindrical_surfaces.begin(), cyl_tol);
-
-		    if (data->parent->params->bool_op == '-') negative = -1 * negative;
-
-		    switch (negative) {
-			case -1:
-			    data->params->bool_op = '-';
-			    break;
-			case 1:
-			    data->params->bool_op = 'u';
-			    break;
-			default:
-			    std::cout << "Could not determine cylinder status???????\n";
-			    data->params->bool_op = 'u';
-			    break;
-		    }
+		    data->negative_shape = negative_cylinder(data, *cylindrical_surfaces.begin(), cyl_tol);
+		    data->params->bool_op = (data->negative_shape == -1) ? '-' : 'u';
 
 		    // cylinder - positive object in this sub-comb
 		    cyl_obj->params->bool_op = 'u';
@@ -921,6 +949,9 @@ cylinder_csg(struct subbrep_object_data *data, fastf_t cyl_tol)
 			BU_GET(arb_obj_1, struct subbrep_object_data);
 			subbrep_object_init(arb_obj_1, data->brep);
 			bu_vls_sprintf(arb_obj_1->key, "%s_cap_1", key.c_str());
+			arb_obj_1->obj_cnt = data->parent->obj_cnt;
+			(*arb_obj_1->obj_cnt)++;
+			bu_vls_sprintf(arb_obj_1->name_root, "%s_%d_cap_1", bu_vls_addr(data->parent->name_root), *(arb_obj_1->obj_cnt));
 			arb_obj_1->type = ARB6;
 			arb_obj_1->params->bool_op = '-';
 			arb_obj_1->params->arb_type = 8;
@@ -962,6 +993,9 @@ cylinder_csg(struct subbrep_object_data *data, fastf_t cyl_tol)
 			BU_GET(arb_obj_2, struct subbrep_object_data);
 			subbrep_object_init(arb_obj_2, data->brep);
 			bu_vls_sprintf(arb_obj_2->key, "%s_cap_2", key.c_str());
+			arb_obj_2->obj_cnt = data->parent->obj_cnt;
+			(*arb_obj_2->obj_cnt)++;
+			bu_vls_sprintf(arb_obj_2->name_root, "%s_cap_2", bu_vls_addr(data->parent->name_root), *(arb_obj_2->obj_cnt));
 			arb_obj_2->type = ARB6;
 			arb_obj_2->params->bool_op = '-';
 			arb_obj_2->params->arb_type = 8;
@@ -979,11 +1013,13 @@ cylinder_csg(struct subbrep_object_data *data, fastf_t cyl_tol)
 			BU_GET(arb_obj_3, struct subbrep_object_data);
 			subbrep_object_init(arb_obj_3, data->brep);
 			bu_vls_sprintf(arb_obj_3->key, "%s_back_face", key.c_str());
+			arb_obj_3->obj_cnt = data->parent->obj_cnt;
+			(*arb_obj_3->obj_cnt)++;
+			bu_vls_sprintf(arb_obj_3->name_root, "%s_back_face", bu_vls_addr(data->parent->name_root), *(arb_obj_3->obj_cnt));
 			arb_obj_3->type = ARB8;
 
 
 			// First, find the two points closest to the cap1 and cap2 planes
-			double offset = 0.0;
 			std::set<int>::iterator s_it;
 			ON_SimpleArray<const ON_BrepVertex *> corner_pnts(4);
 			ON_SimpleArray<const ON_BrepVertex *> bottom_pnts(2);
@@ -1074,7 +1110,7 @@ cylinder_csg(struct subbrep_object_data *data, fastf_t cyl_tol)
 				// do it again,  but the first shape to make the need clear has
 				// to trigger the build.
 				if (!data->parent->planar_obj) {
-				    subbrep_planar_init(data);
+				    subbrep_planar_init(data->parent);
 				}
 				// Now, add the new face
 				ON_SimpleArray<const ON_BrepVertex *> vert_loop(4);
@@ -1082,7 +1118,7 @@ cylinder_csg(struct subbrep_object_data *data, fastf_t cyl_tol)
 				vert_loop.Append(v2);
 				vert_loop.Append(v3);
 				vert_loop.Append(v4);
-				subbrep_add_planar_face(data->parent, &pcyl, &vert_loop, negative);
+				subbrep_add_planar_face(data->parent, &pcyl, &vert_loop, data->negative_shape);
 			    }
 			}
 
@@ -1131,7 +1167,6 @@ cylinder_csg(struct subbrep_object_data *data, fastf_t cyl_tol)
 				arb_points[1] = arb_points[1] - a1;
 				arb_points[2] = arb_points[2] + a1;
 			    }
-			    ON_3dVector e4tmp = arb_points[2] - arb_points[1];
 			}
 
 			if (e4_len < axis_length) {
@@ -1145,7 +1180,6 @@ cylinder_csg(struct subbrep_object_data *data, fastf_t cyl_tol)
 				arb_points[3] = arb_points[3] - a1;
 				arb_points[0] = arb_points[0] + a1;
 			    }
-			    ON_3dVector e4tmp = arb_points[3] - arb_points[0];
 			}
 
 			if (e1_len < circ_rad * 2) {
@@ -1187,9 +1221,17 @@ cylinder_csg(struct subbrep_object_data *data, fastf_t cyl_tol)
 		return 1;
 	    }
 	} else {
-	    std::cout << "More than two capping planes (count is " << cyl_planes.Count() << ") - currently unhandled\n";
+	    bu_log("More than two capping planes (count is %d) - currently unhandled\n", cyl_planes.Count());
+	    // Flag the cyl/arb comb according to the negative or positive status of the
+	    // cylinder surface.  Whether the comb is actually subtracted from the
+	    // global object or unioned into a comb lower down the tree (or vice versa)
+	    // is determined later.
+	    data->negative_shape = negative_cylinder(data, *cylindrical_surfaces.begin(), cyl_tol);
+	    data->params->bool_op = (data->negative_shape == -1) ? '-' : 'u';
 	}
     }
+
+    return -1;
 }
 
 // Local Variables:

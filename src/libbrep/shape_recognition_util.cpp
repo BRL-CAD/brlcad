@@ -9,6 +9,35 @@
 #include "brep.h"
 #include "shape_recognition.h"
 
+ON_3dPoint
+ON_LinePlaneIntersect(ON_Line &line, ON_Plane &plane)
+{
+    ON_3dPoint result;
+    result.x = ON_DBL_MAX;
+    result.y = ON_DBL_MAX;
+    result.z = ON_DBL_MAX;
+    ON_3dVector n = plane.Normal();
+    ON_3dVector l = line.Direction();
+    ON_3dPoint l0 = line.PointAt(0.5);
+    ON_3dPoint p0 = plane.Origin();
+
+    ON_3dVector p0l0 = p0 - l0;
+    double p0l0n = ON_DotProduct(p0l0, n);
+    double ln = ON_DotProduct(l, n);
+    if (NEAR_ZERO(ln, 0.000001) && NEAR_ZERO(p0l0n, 0.000001)) {
+	result.x = -ON_DBL_MAX;
+	result.y = -ON_DBL_MAX;
+	result.z = -ON_DBL_MAX;
+	return result;
+    }
+    if (NEAR_ZERO(ln, 0.000001)) return result;
+
+    double d = p0l0n/ln;
+
+    result = d*l + l0;
+    return result;
+}
+
 curve_t
 GetCurveType(ON_Curve *curve)
 {
@@ -44,34 +73,42 @@ GetSurfaceType(const ON_Surface *in_surface, struct filter_obj *obj)
 {
     surface_t ret = SURFACE_GENERAL;
     ON_Surface *surface = in_surface->Duplicate();
+    // Make things a bit larger so small surfaces can be identified
+    ON_Xform sf(1000);
+    surface->Transform(sf);
     if (obj) {
 	filter_obj_init(obj);
 	if (surface->IsPlanar(obj->plane, BREP_PLANAR_TOL)) {
 	    ret = SURFACE_PLANE;
+	    obj->stype = SURFACE_PLANE;
 	    goto st_done;
 	}
 	delete surface;
 	surface = in_surface->Duplicate();
 	if (surface->IsSphere(obj->sphere , BREP_SPHERICAL_TOL)) {
 	    ret = SURFACE_SPHERE;
+	    obj->stype = SURFACE_SPHERE;
 	    goto st_done;
 	}
 	delete surface;
 	surface = in_surface->Duplicate();
 	if (surface->IsCylinder(obj->cylinder , BREP_CYLINDRICAL_TOL)) {
 	    ret = SURFACE_CYLINDER;
+	    obj->stype = SURFACE_CYLINDER;
 	    goto st_done;
 	}
 	delete surface;
 	surface = in_surface->Duplicate();
 	if (surface->IsCone(obj->cone, BREP_CONIC_TOL)) {
 	    ret = SURFACE_CONE;
+	    obj->stype = SURFACE_CONE;
 	    goto st_done;
 	}
 	delete surface;
 	surface = in_surface->Duplicate();
 	if (surface->IsTorus(obj->torus, BREP_TOROIDAL_TOL)) {
 	    ret = SURFACE_TORUS;
+	    obj->stype = SURFACE_TORUS;
 	    goto st_done;
 	}
     } else {
@@ -197,6 +234,42 @@ filter_obj_free(struct filter_obj *obj)
     delete obj->torus;
 }
 
+int
+filter_objs_equal(struct filter_obj *obj1, struct filter_obj *obj2)
+{
+    ON_Line l1;
+    ON_3dPoint p1, p2;
+    double d1, d2;
+    int ret = 0;
+    if (obj1->stype != obj2->stype) return 0;
+    switch (obj1->stype) {
+	case SURFACE_PLANE:
+	    break;
+	case SURFACE_CYLINDRICAL_SECTION:
+	case SURFACE_CYLINDER:
+	    if (NEAR_ZERO(obj1->cylinder->circle.Radius() - obj2->cylinder->circle.Radius(), 0.001)) {
+		l1 = ON_Line(obj1->cylinder->Center(), obj1->cylinder->Center() + obj1->cylinder->Axis());
+		d1 = l1.DistanceTo(obj2->cylinder->Center());
+		d2 = l1.DistanceTo(obj2->cylinder->Center() + obj2->cylinder->Axis());
+		if (NEAR_ZERO(d1, 0.001) && NEAR_ZERO(d2, 0.001)) ret = 1;
+	    }
+	    break;
+	case SURFACE_CONE:
+	    break;
+	case SURFACE_SPHERICAL_SECTION:
+	case SURFACE_SPHERE:
+	    break;
+	case SURFACE_ELLIPSOIDAL_SECTION:
+	case SURFACE_ELLIPSOID:
+	    break;
+	case SURFACE_TORUS:
+	    break;
+	default:
+	    break;
+    }
+    return ret;
+}
+
 volume_t
 subbrep_shape_recognize(struct subbrep_object_data *data)
 {
@@ -207,22 +280,85 @@ subbrep_shape_recognize(struct subbrep_object_data *data)
 }
 
 void
+ON_MinMaxInit(ON_3dPoint *min, ON_3dPoint *max)
+{
+    min->x = ON_DBL_MAX;
+    min->y = ON_DBL_MAX;
+    min->z = ON_DBL_MAX;
+    max->x = -ON_DBL_MAX;
+    max->y = -ON_DBL_MAX;
+    max->z = -ON_DBL_MAX;
+}
+
+void
+subbrep_bbox(struct subbrep_object_data *obj)
+{
+    for (int i = 0; i < obj->fol_cnt; i++) {
+	ON_3dPoint min, max;
+	ON_MinMaxInit(&min, &max);
+	const ON_BrepFace *face = &(obj->brep->m_F[obj->fol[i]]);
+	// Bounding intervals of outer loop
+	for (int ti = 0; ti < face->OuterLoop()->TrimCount(); ti++) {
+	    ON_BrepTrim *trim = face->OuterLoop()->Trim(ti);
+	    trim->GetBoundingBox(min, max, true);
+	}
+	ON_Interval u(min.x, max.x);
+	ON_Interval v(min.y, max.y);
+	surface_GetBoundingBox(face->SurfaceOf(), u, v, *(obj->bbox), true);
+    }
+    std::set<int> loops;
+    array_to_set(&loops, obj->loops, obj->loops_cnt);
+    for (int i = 0; i < obj->fil_cnt; i++) {
+	ON_3dPoint min, max;
+	ON_MinMaxInit(&min, &max);
+	const ON_BrepFace *face = &(obj->brep->m_F[obj->fil[i]]);
+	int loop_ind = -1;
+	for (int li = 0; li < face->LoopCount(); li++) {
+	    int loop_index = face->Loop(li)->m_loop_index;
+	    if (loops.find(loop_index) != loops.end()) {
+		loop_ind = loop_index;
+		break;
+	    }
+	}
+	if (loop_ind == -1) {
+	    bu_log("Error - could not find fil loop!\n");
+	}
+	const ON_BrepLoop *loop= &(obj->brep->m_L[loop_ind]);
+	for (int ti = 0; ti < loop->TrimCount(); ti++) {
+	    ON_BrepTrim *trim = loop->Trim(ti);
+	    trim->GetBoundingBox(min, max, true);
+	}
+	ON_Interval u(min.x, max.x);
+	ON_Interval v(min.y, max.y);
+	surface_GetBoundingBox(face->SurfaceOf(), u, v, *(obj->bbox), true);
+    }
+    obj->bbox_set = 1;
+}
+
+void
 subbrep_object_init(struct subbrep_object_data *obj, const ON_Brep *brep)
 {
     if (!obj) return;
     BU_GET(obj->key, struct bu_vls);
+    BU_GET(obj->name_root, struct bu_vls);
     BU_GET(obj->children, struct bu_ptbl);
     BU_GET(obj->params, struct csg_object_params);
     obj->params->planes = NULL;
     obj->params->bool_op = '\0';
     obj->planar_obj = NULL;
     bu_vls_init(obj->key);
+    bu_vls_init(obj->name_root);
     bu_ptbl_init(obj->children, 8, "children table");
     obj->parent = NULL;
     obj->brep = brep;
     obj->local_brep = NULL;
     obj->type = BREP;
     obj->is_island = 0;
+    obj->negative_shape = 0;
+    obj->bbox = new ON_BoundingBox();
+    ON_MinMaxInit(&(obj->bbox->m_min), &(obj->bbox->m_max));
+    obj->bbox_set = 0;
+    obj->obj_cnt = NULL;
 }
 
 void
@@ -232,12 +368,20 @@ subbrep_object_free(struct subbrep_object_data *obj)
     if (obj->params && obj->params->planes) bu_free(obj->params->planes, "csg planes");
     if (obj->params) BU_PUT(obj->params, struct csg_object_params);
     obj->params = NULL;
+    if (obj->planar_obj && (obj->local_brep == obj->planar_obj->local_brep)) obj->local_brep = NULL;
     if (obj->planar_obj) {
 	subbrep_object_free(obj->planar_obj);
 	BU_PUT(obj->planar_obj, struct subbrep_object_data);
     }
     obj->planar_obj = NULL;
-    bu_vls_free(obj->key);
+    if (obj->key) {
+	bu_vls_free(obj->key);
+	BU_PUT(obj->key, struct bu_vls);
+    }
+    if (obj->name_root) {
+	bu_vls_free(obj->name_root);
+	BU_PUT(obj->name_root, struct bu_vls);
+    }
     if (obj->children) {
 	for (unsigned int i = 0; i < BU_PTBL_LEN(obj->children); i++){
 	    struct subbrep_object_data *cobj = (struct subbrep_object_data *)BU_PTBL_GET(obj->children, i);
@@ -260,9 +404,12 @@ subbrep_object_free(struct subbrep_object_data *obj)
     obj->fil = NULL;
     if (obj->planar_obj_vert_map) bu_free(obj->planar_obj_vert_map, "obj fil");
     obj->planar_obj_vert_map = NULL;
-    obj->parent = NULL;
+    if (obj->planar_obj && (obj->local_brep == obj->planar_obj->local_brep)) obj->local_brep = NULL;
+    if (obj->parent && (obj->parent->local_brep == obj->local_brep)) obj->parent->local_brep = NULL;
     if (obj->local_brep) delete obj->local_brep;
     obj->local_brep = NULL;
+
+    obj->parent = NULL;
 }
 
 
@@ -430,6 +577,7 @@ subbrep_determine_boolean(struct subbrep_object_data *data)
 	   ON_Surface *ts = surf->Duplicate();
 	   (void)ts->IsPlanar(&face_plane, BREP_PLANAR_TOL);
 	   delete ts;
+	   if (face->m_bRev) face_plane.Flip();
        }
        std::set<int> verts;
        for (int j = 0; j < data->edges_cnt; j++) {
@@ -446,6 +594,9 @@ subbrep_determine_boolean(struct subbrep_object_data *data)
 	       if (distance < -1*BREP_PLANAR_TOL) neg_cnt++;
 	   } else {
 	       // TODO - this doesn't seem to work...
+	       if (face->m_bRev) {
+		   // do something...
+	       }
 	       double current_distance = 0;
 	       ON_3dPoint p = data->brep->m_V[*s_it].Point();
 	       ON_3dPoint p3d;
@@ -462,9 +613,12 @@ subbrep_determine_boolean(struct subbrep_object_data *data)
    // Determine what we have.  If we have both pos and neg counts > 0,
    // the proposed brep needs to be broken down further.  all pos
    // counts is a union, all neg counts is a subtraction
-   if (pos_cnt && neg_cnt) return 0;
+   if (pos_cnt && neg_cnt) return -2;
    if (pos_cnt) return 1;
    if (neg_cnt) return -1;
+   if (!pos_cnt && !neg_cnt) return 2;
+
+   return -1;
 }
 
 /* Find corners that can be used to construct a planar face
@@ -522,13 +676,13 @@ subbrep_find_corners(struct subbrep_object_data *data, int **corner_verts_array,
         }
         if (line_cnt > 1 && curve_cnt == 0) {
             linear_verts.insert(*v_it);
-            std::cout << "found linear vert: " << *v_it << "\n";
+            //std::cout << "found linear vert: " << *v_it << "\n";
         }
     }
 
     // First, check corner count
     if (corner_verts.size() > 4) {
-        std::cout << "more than 4 corners - complex\n";
+        //std::cout << "more than 4 corners - complex\n";
         return -1;
     }
     if (corner_verts.size() == 0) return 0;
@@ -544,7 +698,7 @@ subbrep_find_corners(struct subbrep_object_data *data, int **corner_verts_array,
         s_it++;
         ON_3dPoint p4 = data->brep->m_V[*s_it].Point();
         if (tmp_plane.DistanceTo(p4) > BREP_PLANAR_TOL) {
-            std::cout << "planar tol fail\n";
+            //std::cout << "planar tol fail\n";
             return -1;
         } else {
             (*pcyl) = tmp_plane;
@@ -564,7 +718,7 @@ subbrep_find_corners(struct subbrep_object_data *data, int **corner_verts_array,
         for (ls_it = linear_verts.begin(); ls_it != linear_verts.end(); ls_it++) {
             ON_3dPoint pnt = data->brep->m_V[*ls_it].Point();
             if ((*pcyl).DistanceTo(pnt) > BREP_PLANAR_TOL) {
-                std::cout << "stray verts fail\n";
+                //std::cout << "stray verts fail\n";
                 return -1;
             }
         }
@@ -611,6 +765,9 @@ subbrep_top_bottom_pnts(struct subbrep_object_data *data, std::set<int> *corner_
 	}
 	if (!identified) return 1;
     }
+    // TODO - probably doesn't always have to be 2 and 2...
+    if (bottom_pnts->Count() < 2) return 1;
+    if (top_pnts->Count() < 2) return 1;
     return 0;
 }
 

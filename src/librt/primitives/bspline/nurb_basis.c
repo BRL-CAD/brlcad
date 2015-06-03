@@ -31,7 +31,7 @@
 
 #include "vmath.h"
 #include "raytrace.h"
-#include "nurb.h"
+#include "rt/nurb.h"
 
 /**
  * This uses the traditional De Boor-Cox algorithm,

@@ -22,7 +22,7 @@
  *
  */
 
-#include "tie.h"
+#include "rt/tie.h"
 
 #include <math.h>
 #include <stdlib.h>
@@ -34,7 +34,7 @@
 #include "bio.h"
 
 #include "vmath.h"
-#include "rtgeom.h"
+#include "rt/geom.h"
 #include "raytrace.h"
 
 #include "tieprivate.h"
@@ -487,8 +487,10 @@ find_split_optimal(struct tie_s *tie, struct tie_kdtree_s *node, TIE_3 *cmin, TI
      * triangles lack any sort of coherent structure.
      */
     if ((tfloat)(gap[d][1] - gap[d][0]) / (tfloat)slice_num > MIN_SPAN && node_gd->tri_num > 500) {
+	int gap0 = gap[d][0] - slice_num/2;
+	int gap1 = gap[d][1] - slice_num/2;
 	split = d;
-	if (abs(gap[d][0] - slice_num/2) < abs(gap[d][1] - slice_num/2)) {
+	if (abs(gap0) < abs(gap1)) {
 	    /* choose gap[d][0] as splitting plane */
 	    split_coef = ((tfloat)gap[d][0] / (tfloat)(slice_num-1)) * (tfloat)(slice_num-2) / (tfloat)slice_num + (tfloat)1 / (tfloat)slice_num;
 	    split_slice = gap[d][0];

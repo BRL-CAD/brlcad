@@ -36,6 +36,7 @@
 #  include <sys/wait.h>
 #endif
 
+#include "bu/path.h"
 #include "ged.h"
 
 #define WIN_EDITOR "\"c:/Program Files/Windows NT/Accessories/wordpad\""

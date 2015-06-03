@@ -19,13 +19,11 @@
  */
 
 /*----------------------------------------------------------------------*/
-/* @file vert_tree.h */
-/** @addtogroup vtree */
-/** @{ */
-
-/**
+/** @addtogroup bn_vtree
+ *
  * @brief
  * Vertex tree support
+ *
  * Routines to manage a binary search tree of vertices.
  *
  * The actual vertices are stored in an array
@@ -33,6 +31,8 @@
  * The binary search tree stores indices into the array.
  *
  */
+/** @{ */
+/** @file vert_tree.h */
 
 #ifndef BN_VERT_TREE_H
 #define BN_VERT_TREE_H
@@ -92,11 +92,11 @@ BN_EXPORT extern void free_vert_tree(struct vert_root *tree_root);
  *	The array is re-alloc'd if needed.
  *	Returns index into the array of vertices where this vertex is stored
  */
-BN_EXPORT extern int Add_vert(double x,
-			      double y,
-			      double z,
-			      struct vert_root *tree_root,
-			      fastf_t local_tol_sq);
+BN_EXPORT extern size_t Add_vert(double x,
+				 double y,
+				 double z,
+				 struct vert_root *tree_root,
+				 fastf_t local_tol_sq);
 
 /**
  *@brief
@@ -104,14 +104,14 @@ BN_EXPORT extern int Add_vert(double x,
  *	The array is re-alloc'd if needed.
  *	Returns index into the array of vertices where this vertex and normal is stored
  */
-BN_EXPORT extern int Add_vert_and_norm(double x,
-				       double y,
-				       double z,
-				       double nx,
-				       double ny,
-				       double nz,
-				       struct vert_root *tree_root,
-				       fastf_t local_tol_sq);
+BN_EXPORT extern size_t Add_vert_and_norm(double x,
+					  double y,
+					  double z,
+					  double nx,
+					  double ny,
+					  double nz,
+					  struct vert_root *tree_root,
+					  fastf_t local_tol_sq);
 
 /**
  *@brief

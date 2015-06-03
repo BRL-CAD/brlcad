@@ -31,7 +31,7 @@
 #include "common.h"
 
 #include "gcv.h"
-#include "rtgeom.h"
+#include "rt/geom.h"
 
 
 __BEGIN_DECLS

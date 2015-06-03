@@ -52,10 +52,12 @@ RegisterPlugin::RegisterPlugin(const gcv_plugin_info &info)
 // gcv static plugins
 
 PLUGIN(gcv_plugin_conv_brlcad);
+PLUGIN(gcv_plugin_conv_fastgen4_read);
+PLUGIN(gcv_plugin_conv_fastgen4_write);
+PLUGIN(gcv_plugin_conv_obj_read);
+PLUGIN(gcv_plugin_conv_obj_write);
 PLUGIN(gcv_plugin_conv_stl_read);
 PLUGIN(gcv_plugin_conv_stl_write);
-PLUGIN(gcv_plugin_conv_obj_write);
-PLUGIN(gcv_plugin_conv_fastgen4_read);
 PLUGIN(gcv_plugin_conv_vrml_write);
 
 

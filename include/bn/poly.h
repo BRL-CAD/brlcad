@@ -19,13 +19,13 @@
  */
 
 /*----------------------------------------------------------------------*/
-/* @file poly.h */
-/** @addtogroup poly */
-/** @{ */
 
-/**
+/** @addtogroup bn_poly
+ *
  *  @brief Library for dealing with polynomials.
  */
+/** @{ */
+/** @file poly.h */
 
 #ifndef BN_POLY_H
 #define BN_POLY_H

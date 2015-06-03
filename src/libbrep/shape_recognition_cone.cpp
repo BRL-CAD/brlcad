@@ -87,8 +87,8 @@ subbrep_is_cone(struct subbrep_object_data *data, fastf_t cone_tol)
     // are not it isn't fatal, but we need to add a subtracting tgc and return a comb
     // to handle this situation so for now for simplicity require the perpendicular condition
     if (p1.Normal().IsParallelTo(cone.Axis(), 0.01) == 0) {
-        std::cout << "p1 Normal: " << p1.Normal().x << "," << p1.Normal().y << "," << p1.Normal().z << "\n";
-        std::cout << "cone axis: " << cone.Axis().x << "," << cone.Axis().y << "," << cone.Axis().z << "\n";
+        //std::cout << "p1 Normal: " << p1.Normal().x << "," << p1.Normal().y << "," << p1.Normal().z << "\n";
+        //std::cout << "cone axis: " << cone.Axis().x << "," << cone.Axis().y << "," << cone.Axis().z << "\n";
         return 0;
     }
 
@@ -130,7 +130,7 @@ subbrep_is_cone(struct subbrep_object_data *data, fastf_t cone_tol)
                 circle = circ;
             }
             if (!NEAR_ZERO(circ.Center().DistanceTo(circle.Center()), 0.01)){
-                std::cout << "found extra circle - no go\n";
+                bu_log("found extra circle in %s - no go\n", bu_vls_addr(data->key));
 		delete ecurve;
                 return 0;
             }
@@ -140,25 +140,28 @@ subbrep_is_cone(struct subbrep_object_data *data, fastf_t cone_tol)
 
     data->type = CONE;
 
-    ON_3dVector hvect(cone.ApexPoint() - cone.BasePoint());
+    data->negative_shape = negative_cone(data, *conic_surfaces.begin(), cone_tol);
 
-    int negative = negative_cone(data, *conic_surfaces.begin(), cone_tol);
 
-    if (data->parent->params->bool_op == '-') negative = -1 * negative;
+    ON_3dPoint center_bottom = cone.BasePoint();
+    ON_3dPoint center_top = cone.ApexPoint();
 
-    switch (negative) {
-	case -1:
-	    data->params->bool_op = '-';
-	    break;
-	case 1:
-	    data->params->bool_op = 'u';
-	    break;
-	default:
-	    std::cout << "Could not determine cone status???????\n";
-	    data->params->bool_op = 'u';
-	    break;
+    // If we've got a negative cylinder, bump the center points out
+    // very slightly
+    if (data->negative_shape == -1) {
+	ON_3dVector cvector(center_top - center_bottom);
+	double len = cvector.Length();
+	cvector.Unitize();
+	cvector = cvector * (len * 0.001);
+
+	center_top = center_top + cvector;
+	center_bottom = center_bottom - cvector;
     }
 
+    ON_3dVector hvect(center_top - center_bottom);
+
+
+    data->params->bool_op = (data->negative_shape == -1) ? '-' : 'u';
     data->params->origin[0] = cone.BasePoint().x;
     data->params->origin[1] = cone.BasePoint().y;
     data->params->origin[2] = cone.BasePoint().z;
@@ -252,7 +255,7 @@ cone_csg(struct subbrep_object_data *data, fastf_t cone_tol)
 		    }
 		}
 		if (!assigned) {
-		    std::cout << "found extra circle - no go\n";
+		    bu_log("found extra circle in %s - no go\n", bu_vls_addr(data->key));
 		    return 0;
 		}
 	    }
@@ -262,29 +265,19 @@ cone_csg(struct subbrep_object_data *data, fastf_t cone_tol)
     if (!arc2_circle_set) {
 	//std::cout << "True cone!\n";
 	data->type = CONE;
+	data->obj_cnt = data->parent->obj_cnt;
+	(*data->obj_cnt)++;
+	bu_vls_sprintf(data->name_root, "%s_%d_cone", bu_vls_addr(data->parent->name_root), *(data->obj_cnt));
+
 
 	ON_3dVector hvect(cone.ApexPoint() - cone.BasePoint());
 	ON_3dPoint closest_to_base = set1_c.Plane().ClosestPointTo(cone.BasePoint());
 	struct csg_object_params * obj;
         BU_GET(obj, struct csg_object_params);
 
-	int negative = negative_cone(data, *conic_surfaces.begin(), cone_tol);
+	data->negative_shape = negative_cone(data, *conic_surfaces.begin(), cone_tol);
 
-	if (data->parent->params->bool_op == '-') negative = -1 * negative;
-
-	switch (negative) {
-	    case -1:
-		data->params->bool_op = '-';
-		break;
-	    case 1:
-		data->params->bool_op = 'u';
-		break;
-	    default:
-		std::cout << "Could not determine cone status???????\n";
-		data->params->bool_op = 'u';
-		break;
-	}
-
+	data->params->bool_op = (data->negative_shape == -1) ? '-' : 'u';
 	data->params->origin[0] = closest_to_base.x;
 	data->params->origin[1] = closest_to_base.y;
 	data->params->origin[2] = closest_to_base.z;
@@ -317,23 +310,13 @@ cone_csg(struct subbrep_object_data *data, fastf_t cone_tol)
 	    struct csg_object_params * obj;
 	    BU_GET(obj, struct csg_object_params);
 	    data->type = CONE;
+	    data->obj_cnt = data->parent->obj_cnt;
+	    (*data->obj_cnt)++;
+	    bu_vls_sprintf(data->name_root, "%s_%d_cone", bu_vls_addr(data->parent->name_root), *(data->obj_cnt));
 
-	    int negative = negative_cone(data, *conic_surfaces.begin(), cone_tol);
+	    data->negative_shape = negative_cone(data, *conic_surfaces.begin(), cone_tol);
 
-	    if (data->parent->params->bool_op == '-') negative = -1 * negative;
-
-	    switch (negative) {
-		case -1:
-		    data->params->bool_op = '-';
-		    break;
-		case 1:
-		    data->params->bool_op = 'u';
-		    break;
-		default:
-		    data->params->bool_op = 'u';
-		    break;
-	    }
-
+	    data->params->bool_op = (data->negative_shape == -1) ? '-' : 'u';
 	    data->params->origin[0] = base.x;
 	    data->params->origin[1] = base.y;
 	    data->params->origin[2] = base.z;
@@ -349,28 +332,22 @@ cone_csg(struct subbrep_object_data *data, fastf_t cone_tol)
 	} else {
 	    // Have corners, need arb
 	    data->type = COMB;
-	    int negative = negative_cone(data, *conic_surfaces.begin(), cone_tol);
+	    data->obj_cnt = data->parent->obj_cnt;
+	    (*data->obj_cnt)++;
+	    bu_vls_sprintf(data->name_root, "%s_%d_comb", bu_vls_addr(data->parent->name_root), *(data->obj_cnt));
 
-	    if (data->parent->params->bool_op == '-') negative = -1 * negative;
-
-	    switch (negative) {
-		case -1:
-		    data->params->bool_op = '-';
-		    break;
-		case 1:
-		    data->params->bool_op = 'u';
-		    break;
-		default:
-		    std::cout << "Could not determine cone status???????\n";
-		    data->params->bool_op = 'u';
-		    break;
-	    }
+	    data->negative_shape = negative_cone(data, *conic_surfaces.begin(), cone_tol);
+	    data->params->bool_op = (data->negative_shape == -1) ? '-' : 'u';
 
 	    struct subbrep_object_data *cone_obj;
 	    BU_GET(cone_obj, struct subbrep_object_data);
 	    subbrep_object_init(cone_obj, data->brep);
 	    std::string key = face_set_key(conic_surfaces);
 	    bu_vls_sprintf(cone_obj->key, "%s", key.c_str());
+	    cone_obj->obj_cnt = data->parent->obj_cnt;
+	    (*cone_obj->obj_cnt)++;
+	    bu_log("obj_cnt: %d\n", *(cone_obj->obj_cnt));
+	    bu_vls_sprintf(cone_obj->name_root, "%s_%d_cone", bu_vls_addr(data->parent->name_root), *(cone_obj->obj_cnt));
 	    cone_obj->type = CONE;
 
 	    // cone - positive object in this sub-comb
@@ -411,16 +388,19 @@ cone_csg(struct subbrep_object_data *data, fastf_t cone_tol)
             BU_GET(arb_obj, struct subbrep_object_data);
             subbrep_object_init(arb_obj, data->brep);
             bu_vls_sprintf(arb_obj->key, "%s_arb8", key.c_str());
+	    arb_obj->obj_cnt = data->parent->obj_cnt;
+	    (*arb_obj->obj_cnt)++;
+	    bu_vls_sprintf(arb_obj->name_root, "%s_%d_arb8", bu_vls_addr(data->parent->name_root), *(arb_obj->obj_cnt));
             arb_obj->type = ARB8;
 
 
             // First, find the two points closest to the set1_c and set2_c planes
-            ON_SimpleArray<const ON_BrepVertex *> bottom_pnts(2);
-            ON_SimpleArray<const ON_BrepVertex *> top_pnts(2);
+            ON_SimpleArray<const ON_BrepVertex *> bottom_pnts;
+            ON_SimpleArray<const ON_BrepVertex *> top_pnts;
             ON_Plane b_plane = set1_c.Plane();
             ON_Plane t_plane = set2_c.Plane();
             if (subbrep_top_bottom_pnts(data, &corner_verts, &t_plane, &b_plane, &top_pnts, &bottom_pnts)) {
-                std::cout << "Point top/bottom sorting failed\n";
+                bu_log("Point top/bottom sorting failed: %s\n", bu_vls_addr(arb_obj->key));
                 return 0;
             }
 
@@ -497,7 +477,7 @@ cone_csg(struct subbrep_object_data *data, fastf_t cone_tol)
                     // do it again,  but the first shape to make the need clear has
                     // to trigger the build.
                     if (!data->parent->planar_obj) {
-                        subbrep_planar_init(data);
+                        subbrep_planar_init(data->parent);
                     }
                     // Now, add the new face
                     ON_SimpleArray<const ON_BrepVertex *> vert_loop(4);
@@ -505,7 +485,7 @@ cone_csg(struct subbrep_object_data *data, fastf_t cone_tol)
                     vert_loop.Append(v2);
                     vert_loop.Append(v3);
                     vert_loop.Append(v4);
-                    subbrep_add_planar_face(data->parent, &pcone, &vert_loop, negative);
+                    subbrep_add_planar_face(data->parent, &pcone, &vert_loop, data->negative_shape);
                 }
             }
 

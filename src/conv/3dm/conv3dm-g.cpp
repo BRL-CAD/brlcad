@@ -39,6 +39,8 @@
 
 /* implementation headers */
 #include "bu/getopt.h"
+#include "bu/mime.h"
+#include "bu/path.h"
 #include "icv.h"
 #include "vmath.h"
 #include "../../libgcv/bot_solidity.h"
@@ -284,7 +286,7 @@ static void
 load_pix(const std::string &path, int width, int height)
 {
     char buf[BUFSIZ]; // libicv currently requires BUFSIZ
-    ICV_IMAGE_FORMAT format = icv_guess_file_format(path.c_str(), buf);
+    mime_image_t format = icv_guess_file_format(path.c_str(), buf);
     AutoDestroyer<icv_image_t, int, icv_destroy> image(
 	icv_read(path.c_str(), format, width, height));
 

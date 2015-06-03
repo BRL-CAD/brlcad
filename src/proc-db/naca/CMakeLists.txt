@@ -5,7 +5,7 @@ set(naca_srcs
   naca456.c
   )
 
-BRLCAD_ADDEXEC(naca456 "${naca_srcs}" "libwdb;${OPENNURBS_LIBRARY}" NO_STRICT NO_INSTALL)
+BRLCAD_ADDEXEC(naca456 "${naca_srcs}" "libwdb;${OPENNURBS_LIBRARY}" NO_INSTALL)
 
 CMAKEFILES(naca.h)
 

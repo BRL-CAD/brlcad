@@ -18,8 +18,6 @@
  * information.
  */
 
-/** @file color.h
-  */
 #ifndef BU_COLOR_H
 #define BU_COLOR_H
 
@@ -32,9 +30,12 @@ __BEGIN_DECLS
 
 /*----------------------------------------------------------------------*/
 
-/** @addtogroup color */
+/** @addtogroup bu_color
+ * @brief
+ * Support for storing and manipulating color data.
+ */
 /** @{ */
-/** @file libbu/color.c */
+/** @file bu/color.h */
 
 #define RED 0
 #define GRN 1

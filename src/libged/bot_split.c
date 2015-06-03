@@ -29,7 +29,8 @@
 #include <ctype.h>
 #include <string.h>
 
-#include "rtgeom.h"	/* for rt_bot_split (in raytrace.h) */
+#include "bu/path.h"
+#include "rt/geom.h"	/* for rt_bot_split (in raytrace.h) */
 #include "./ged_private.h"
 
 

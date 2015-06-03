@@ -18,11 +18,6 @@
  * information.
  */
 
-/*----------------------------------------------------------------------*/
-/* @file adc.h */
-/** @addtogroup adc */
-/** @{ */
-
 #ifndef BN_ADC_H
 #define BN_ADC_H
 
@@ -43,7 +38,7 @@ BN_EXPORT void adc_reset(struct bview_adc_state *adcs, mat_t view2model, mat_t m
 __END_DECLS
 
 #endif  /* BN_ADC_H */
-/** @} */
+
 /*
  * Local Variables:
  * mode: C

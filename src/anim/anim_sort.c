@@ -169,7 +169,7 @@ main(int argc, char *argv[])
 		    if (!bu_strncmp(line, "start", 5))
 			break;
 		    else {
-			reserve -= strlen(line);
+			reserve -= (int)strlen(line);
 			reserve -= 1;
 			if (reserve > 0) {
 			    bu_strlcat(pbuffer, line, reserve + strlen(line) + 1);

@@ -39,13 +39,12 @@ find_subbreps(const ON_Brep *brep)
     BU_GET(subbreps, struct bu_ptbl);
     bu_ptbl_init(subbreps, 8, "subbrep table");
 
+    int obj_cnt = 0;
+
     /* For each face, build the topologically connected subset.  If that
      * subset has not already been seen, add it to the brep's set of
      * subbreps */
     for (int i = 0; i < brep->m_F.Count(); i++) {
-	if (i >= 26 && i <= 30) {
-	    std::cout << "Considering face " << i << "\n";
-	}
 	std::string key;
 	std::set<int> faces;
 	std::set<int> loops;
@@ -56,6 +55,11 @@ find_subbreps(const ON_Brep *brep)
 	std::set<int> processed_loops;
 	std::set<int>::iterator s_it;
 
+	// TODO - need to watch for an edge that has two general surfaces associated
+	// with it.  That situation is too problematic for us to handle even as a
+	// breakdown into subbreps, and if we see it we need to bail.  Ensuring reliable
+	// inside/outside testing under those conditions is extremely difficult.
+	// Maybe even something to do as an initial test.
 	const ON_BrepFace *face = &(brep->m_F[i]);
 	faces.insert(i);
 	fol.insert(i);
@@ -93,17 +97,18 @@ find_subbreps(const ON_Brep *brep)
 	    }
 	}
 	key = face_set_key(faces);
-	if (i >= 26 && i <= 30) {
-	    std::cout << "key built: " << key << "\n";
-	}
 
 	/* If we haven't seen this particular subset before, add it */
 	if (subbrep_keys.find(key) == subbrep_keys.end()) {
 	    subbrep_keys.insert(key);
-	    struct subbrep_object_data *new_obj;
+	    struct subbrep_object_data *new_obj = NULL;
 	    BU_GET(new_obj, struct subbrep_object_data);
 	    subbrep_object_init(new_obj, brep);
+	    new_obj->obj_cnt = &obj_cnt;
+	    obj_cnt++;
+	    if (obj_cnt > CSG_BREP_MAX_OBJS) goto bail;
 	    bu_vls_sprintf(new_obj->key, "%s", key.c_str());
+	    bu_vls_sprintf(new_obj->name_root, "%d", obj_cnt);
 	    set_to_array(&(new_obj->faces), &(new_obj->faces_cnt), &faces);
 	    set_to_array(&(new_obj->loops), &(new_obj->loops_cnt), &loops);
 	    set_to_array(&(new_obj->edges), &(new_obj->edges_cnt), &edges);
@@ -114,44 +119,37 @@ find_subbreps(const ON_Brep *brep)
 	    // by the edge network.
 	    new_obj->is_island = 1;
 	    new_obj->parent = NULL;
-
-	    // Determine if this subset is being added to or taken from the parent.
-	    if (new_obj->fil_cnt > 0) {
-		int bool_op = subbrep_determine_boolean(new_obj);
-		if (bool_op == -1) {
-		    new_obj->params->bool_op = '-';
-		}
-		if (bool_op == 1) {
-		    new_obj->params->bool_op = 'u';
-		}
-		if (bool_op == 0) {
-		    std::cout << "Error - ambiguous result for boolean test - need to subdivide shape.\n";
-		}
-	    } else {
-		new_obj->params->bool_op = 'u';
-	    }
-
-	    (void)subbrep_make_brep(new_obj);
 	    surface_t hof = highest_order_face(new_obj);
 	    if (hof >= SURFACE_GENERAL) {
 		new_obj->type = BREP;
 		(void)subbrep_make_brep(new_obj);
-		std::cout << "general surface present: " << bu_vls_addr(new_obj->key) << "\n";
+		bu_log("general surface present: %s\n", bu_vls_addr(new_obj->key));
 	    } else {
+		int split = 0;
 		volume_t vtype = subbrep_shape_recognize(new_obj);
-		if (vtype == BREP) {
-		    int split = subbrep_split(new_obj);
-		    if (!split) {
-			(void)subbrep_make_brep(new_obj);
-			std::cout << "split unsuccessful: " << bu_vls_addr(new_obj->key) << "\n";
-		    } else {
-			// If we did successfully split the brep, do some post-split
-			// clean-up
-			new_obj->type = COMB;
-			if (new_obj->planar_obj) {
-			    subbrep_planar_close_obj(new_obj);
+		switch (vtype) {
+		    case BREP:
+			split = subbrep_split(new_obj);
+			if (!split) {
+			    if (obj_cnt > CSG_BREP_MAX_OBJS) goto bail;
+			    (void)subbrep_make_brep(new_obj);
+			    bu_log("split unsuccessful: %s\n", bu_vls_addr(new_obj->key));
+			} else {
+			    // If we did successfully split the brep, do some post-split
+			    // clean-up
+			    new_obj->type = COMB;
+			    if (new_obj->planar_obj) {
+				subbrep_planar_close_obj(new_obj);
+			    }
 			}
-		    }
+			break;
+		    case PLANAR_VOLUME:
+			subbrep_planar_init(new_obj);
+			subbrep_planar_close_obj(new_obj);
+			new_obj->local_brep = new_obj->planar_obj->local_brep;
+			break;
+		    default:
+			break;
 		}
 	    }
 
@@ -159,65 +157,248 @@ find_subbreps(const ON_Brep *brep)
 	}
     }
 
-    // Now that we have the subbreps (or their substructures) and their boolean status we need to
-    // construct the top level tree. Each object will be one of two things - a top level
-    // object unioned into the global comb, or a top level object subtracted from one of the other
-    // top level objects.  We need to build a map of subtractions - for each subtracted object,
-    // find via its shared edges/faces the parent subbrep it is subtracted from.
-    //
-    struct bu_ptbl *subbreps_tree;
-    std::multimap<const char *, long *> ps;
-    std::map<const char *, long *> parents;
-    for (unsigned int i = 0; i < BU_PTBL_LEN(subbreps); i++) {
+    return subbreps;
+
+bail:
+    bu_log("brep converted to more than %d implicits - not a good CSG candidate\n", CSG_BREP_MAX_OBJS, obj_cnt);
+    // Free memory
+    for (unsigned int i = 0; i < BU_PTBL_LEN(subbreps); i++){
 	struct subbrep_object_data *obj = (struct subbrep_object_data *)BU_PTBL_GET(subbreps, i);
-	if (BU_STR_EQUAL(bu_vls_addr(obj->key), "25_26_27_28_29_30_31_32_33_171_419_420_421_422"))
-	    std::cout << "Considering " << bu_vls_addr(obj->key) << "\n";
-	if (obj->params->bool_op == '-') {
-	    int found_parent = 0;
-	    for (unsigned int j = 0; j < BU_PTBL_LEN(subbreps); j++) {
-		struct subbrep_object_data *pobj = (struct subbrep_object_data *)BU_PTBL_GET(subbreps, j);
-		for (int k = 0; k < obj->fil_cnt; k++) {
-		    for (int l = 0; l < pobj->fol_cnt; l++) {
-			if (pobj->fol[l] == obj->fil[k]) {
-			    found_parent = 1;
-			    ps.insert(std::make_pair(bu_vls_addr(pobj->key), (long *)obj));
-			    parents[bu_vls_addr(obj->key)] = (long *)pobj;
-			    if (BU_STR_EQUAL(bu_vls_addr(obj->key), "25_26_27_28_29_30_31_32_33_171_419_420_421_422")){
-				std::cout << "Found parent " << bu_vls_addr(pobj->key) << "\n";
-				std::cout << "parent bool " << pobj->params->bool_op << "\n";
-				std::cout << "urk - problem - a subtraction from a subtraction probably means the two should be unioned into a comb and the comb subtracted...\n";
-			    }
-			    break;
-			}
-			if (found_parent) break;
-		    }
-		    if (found_parent) break;
-		}
-		if (found_parent) break;
-	    }
-	    if (!found_parent) {
-		std::cout << "\n\nError - subtracted object " << bu_vls_addr(obj->key) << "\n\n\n";
-	    }
+	for (unsigned int j = 0; j < BU_PTBL_LEN(obj->children); j++){
+	    struct subbrep_object_data *cdata = (struct subbrep_object_data *)BU_PTBL_GET(obj->children,j);
+	    subbrep_object_free(cdata);
 	}
-    }
-    BU_GET(subbreps_tree, struct bu_ptbl);
-    bu_ptbl_init(subbreps_tree, 8, "subbrep tree table");
-    for (unsigned int i = 0; i < BU_PTBL_LEN(subbreps); i++) {
-	struct subbrep_object_data *obj = (struct subbrep_object_data *)BU_PTBL_GET(subbreps, i);
-	if (obj->params->bool_op == 'u') {
-	    std::pair <std::multimap<const char *, long *>::iterator, std::multimap<const char *, long *>::iterator > ret;
-	    ret = ps.equal_range(bu_vls_addr(obj->key));
-	    bu_ptbl_ins(subbreps_tree, (long *)obj);
-	    for (std::multimap<const char *, long *>::iterator it = ret.first; it != ret.second; it++) {
-		struct subbrep_object_data *sub_obj = (struct subbrep_object_data *)it->second;
-		bu_ptbl_ins(subbreps_tree, (long *)sub_obj);
-	    }
-	}
+	subbrep_object_free(obj);
+	BU_PUT(obj, struct subbrep_object_data);
     }
     bu_ptbl_free(subbreps);
-    return subbreps_tree;
+    bu_ptbl_init(subbreps, 8, "subbrep table");
+    return subbreps;
 }
 
+/* This is the critical point at which we take a pile of shapes and actually reconstruct a
+ * valid boolean tree.  The stages are as follows:
+ *
+ * 1.  Identify the top level union objects (they will have no fil faces in their structure).
+ * 2.  Using the fil faces, build up a queue of subbreps that are topologically connected
+ *     by a loop to the top level union objects.
+ * 3.  Determine the boolean status of the 2nd layer of objects.
+ * 4.  For each sub-object, if that object in turn has fil faces, queue up those objects and goto 3.
+ * 5.  Continue iterating until all objects have a boolean operation assigned.
+ * 6.  For each unioned object, build a set of all subtraction objects (topologically connected or not.)
+ * 7.  add the union pointer to the subbreps_tree, and then add all all topologically connected subtractions
+ *     and remove them from the local set.
+ * 8.  For the remaining (non-topologically linked) subtractions, get a bounding box and see if it overlaps
+ *     with the bounding box of the union object in question.  If yes, add the pointer to subbreps_tree, unless
+ *     the union object's bbox is fully contained by the subtraction bbox - the latter implies that the subtraction
+ *     completely eliminates the union object, which is not how B-Reps work.
+ *     If not, no action is needed.  Once evaluated, remove the subtraction pointer from the set.
+ *
+ * Initially the test will be axis aligned bounding boxes, but ideally we should use oriented bounding boxes
+ * or even tighter tests.  There's a catch here - a positive object overall may be within the bounding box
+ * of a subtracting object (like a positive cone at the bottom of a negative cylinder).  First guess at a rule - subtractions
+ * may propagate back up the topological tree to unions above the subtraction or in other isolated topological
+ * trees, but never to unions below the subtraction
+ * object itself.  Which means we'll need an above/below test for union objects relative to a given
+ * subtraction object, or an "ignore" list for unions which overrides any bbox tests - that list would include the
+ * parent subtraction, that subtraction's parent if it is a subtraction, and so on up to the top level union.  Nested
+ * unions and subtractions mean we'll have to go all the way up that particular chain...
+ */
+struct bu_ptbl *
+find_top_level_hierarchy(struct bu_ptbl *subbreps)
+{
+    // Now that we have the subbreps (or their substructures) and their boolean status we need to
+    // construct the top level tree.
+
+    std::set<long *> subbrep_set;
+    std::set<long *> subbrep_seed_set;
+    std::set<long *> unions;
+    std::set<long *> subtractions;
+    std::set<long *>::iterator sb_it, sb_it2;
+    std::map<long *, std::set<long *> > subbrep_subobjs;
+    std::map<long *, std::set<long *> > subbrep_ignoreobjs;
+    struct bu_ptbl *subbreps_tree;
+
+    for (unsigned int i = 0; i < BU_PTBL_LEN(subbreps); i++) {
+	subbrep_set.insert(BU_PTBL_GET(subbreps, i));
+    }
+
+    /* Separate out top level unions */
+    for (sb_it = subbrep_set.begin(); sb_it != subbrep_set.end(); sb_it++) {
+	struct subbrep_object_data *obj = (struct subbrep_object_data *)*sb_it;
+	//std::cout << bu_vls_addr(obj->key) << " bool: " << obj->params->bool_op << "\n";
+	if (obj->fil_cnt == 0) {
+	    if (!(obj->params->bool_op == '-')) {
+		//std::cout << "Top union found: " << bu_vls_addr(obj->key) << "\n";
+		obj->params->bool_op = 'u';
+		unions.insert((long *)obj);
+		subbrep_set.erase((long *)obj);
+	    } else {
+		if (obj->params->bool_op == '-') {
+		    //std::cout << "zero fills, but a negative shape - " << bu_vls_addr(obj->key) << " added to subtractions\n";
+		    subtractions.insert((long *)obj);
+		}
+	    }
+	}
+    }
+
+    subbrep_seed_set = unions;
+
+    int iterate = 1;
+    while (subbrep_seed_set.size() > 0) {
+	//std::cout << "iterate: " << iterate << "\n";
+	std::set<long *> subbrep_seed_set_2;
+	std::set<long *> subbrep_set_b;
+	for (sb_it = subbrep_seed_set.begin(); sb_it != subbrep_seed_set.end(); sb_it++) {
+	    std::set<int> tu_fol;
+	    struct subbrep_object_data *tu = (struct subbrep_object_data *)*sb_it;
+	    array_to_set(&tu_fol, tu->fol, tu->fol_cnt);
+	    subbrep_set_b = subbrep_set;
+	    for (sb_it2 = subbrep_set.begin(); sb_it2 != subbrep_set.end(); sb_it2++) {
+		struct subbrep_object_data *cobj = (struct subbrep_object_data *)*sb_it2;
+		for (int i = 0; i < cobj->fil_cnt; i++) {
+		    if (tu_fol.find(cobj->fil[i]) != tu_fol.end()) {
+			struct subbrep_object_data *up;
+			//std::cout << "Object " << bu_vls_addr(cobj->key) << " connected to " << bu_vls_addr(tu->key) << "\n";
+			subbrep_seed_set_2.insert(*sb_it2);
+			subbrep_set_b.erase(*sb_it2);
+			// Determine boolean relationship to parent here, and use parent boolean
+			// to decide this object's (cobj) status.  If tu is negative and cobj is unioned
+			// relative to tu, then cobj is also negative.
+
+			// This is a make-or-break step of the algorithm - if we cannot determine whether
+			// a subbrep is added or subtracted, the whole B-Rep conversion process fails.
+			//
+			// TODO - In theory a partial conversion might still be achieved by re-inserting the
+			// problem subbrep back into the parent B-Rep and proceeding with the rest, but
+			// we are not currently set up for that - as of right now, a single failure on
+			// this level of logic results in a completely failed csg conversion.
+
+			int bool_test = 0;
+			int already_flipped = 0;
+			if (cobj->params->bool_op == '\0') {
+			    /* First, check the boolean relationship to the parent solid */
+			    cobj->parent = tu;
+			    bool_test = subbrep_determine_boolean(cobj);
+			    //std::cout << "Initial boolean test for " << bu_vls_addr(cobj->key) << ": " << bool_test << "\n";
+			    switch (bool_test) {
+				case -2:
+				    bu_log("Game over - self intersecting shape reported with subbrep %s\n", bu_vls_addr(cobj->key));
+				    bu_log("Until breakdown logic for this situation is available, this is a conversion stopper.\n");
+				    return NULL;
+				case 2:
+				    /* Test relative to parent inconclusive - fall back on surface test, if available */
+				    if (cobj->negative_shape == -1) bool_test = -1;
+				    if (cobj->negative_shape == 1) bool_test = 1;
+				    break;
+				default:
+				    break;
+			    }
+			} else {
+			    //std::cout << "Boolean status of " << bu_vls_addr(cobj->key) << " already determined\n";
+			    bool_test = (cobj->params->bool_op == '-') ? -1 : 1;
+			    already_flipped = 1;
+			}
+
+			switch (bool_test) {
+			    case -1:
+				cobj->params->bool_op = '-';
+				subtractions.insert((long *)cobj);
+				subbrep_subobjs[*sb_it].insert((long *)cobj);
+				break;
+			    case 1:
+				cobj->params->bool_op = 'u';
+				unions.insert((long *)cobj);
+				/* We've got a union - any subtractions that are parents of this
+				 * object go in its ignore list */
+				up = cobj->parent;
+				while (up) {
+				    if (up->params->bool_op == '-') subbrep_ignoreobjs[(long *)cobj].insert((long *)up);
+				    up = up->parent;
+				}
+				break;
+			    default:
+				bu_log("Boolean status of %s could not be determined - conversion failure\n", bu_vls_addr(cobj->key));;
+				return NULL;
+				break;
+			}
+
+			// If the parent ended up subtracted, we need to propagate the change down the
+			// children of this subbrep.
+			if (bool_test == -1 && !already_flipped) {
+			    for (unsigned int j = 0; j < BU_PTBL_LEN(cobj->children); j++){
+				struct subbrep_object_data *cdata = (struct subbrep_object_data *)BU_PTBL_GET(cobj->children,j);
+				if (cdata && cdata->params) {
+				    cdata->params->bool_op = (cdata->params->bool_op == '-') ? 'u' : '-';
+				} else {
+				    //std::cout << "Child without params??: " << bu_vls_addr(cdata->key) << ", parent: " << bu_vls_addr(cobj->key) << "\n";
+				}
+			    }
+
+			    /* If we're a B-Rep and a subtraction, the B-Rep will be inside out */
+			    if (cobj->type == BREP && cobj->params->bool_op == '-') {
+				for (int l = 0; l < cobj->local_brep->m_F.Count(); l++) {
+				    ON_BrepFace &face = cobj->local_brep->m_F[l];
+				    cobj->local_brep->FlipFace(face);
+				}
+			    }
+			}
+			//std::cout << "Boolean status of " << bu_vls_addr(cobj->key) << ": " << cobj->params->bool_op << "\n";
+		    }
+		}
+	    }
+	}
+	subbrep_seed_set.clear();
+	subbrep_seed_set = subbrep_seed_set_2;
+	subbrep_set.clear();
+	subbrep_set = subbrep_set_b;
+	iterate++;
+    }
+
+    BU_GET(subbreps_tree, struct bu_ptbl);
+    bu_ptbl_init(subbreps_tree, 8, "subbrep tree table");
+
+    for (sb_it = unions.begin(); sb_it != unions.end(); sb_it++) {
+	struct subbrep_object_data *pobj = (struct subbrep_object_data *)(*sb_it);
+	bu_ptbl_ins(subbreps_tree, (long *)pobj);
+	std::set<long *> topological_subtractions = subbrep_subobjs[(long *)pobj];
+	std::set<long *> local_subtraction_queue = subtractions;
+	for (sb_it2 = topological_subtractions.begin(); sb_it2 != topological_subtractions.end(); sb_it2++) {
+	    bu_ptbl_ins(subbreps_tree, *sb_it2);
+	    local_subtraction_queue.erase(*sb_it2);
+	}
+	std::set<long *> ignore_queue = subbrep_ignoreobjs[(long *)pobj];
+	for (sb_it2 = ignore_queue.begin(); sb_it2 != ignore_queue.end(); sb_it2++) {
+	    local_subtraction_queue.erase(*sb_it2);
+	}
+
+	// Now, whatever is left in the local subtraction queue has to be ruled out based on volumetric
+	// intersection testing.
+
+	if (BU_STR_EQUAL(bu_vls_addr(pobj->key), "18_42_46_50")) {
+	    bu_log("handle it!\n");
+	}
+
+	// Construct bounding box for pobj
+	if (!pobj->bbox_set) subbrep_bbox(pobj);
+	// Iterate over the queue
+	for (sb_it2 = local_subtraction_queue.begin(); sb_it2 != local_subtraction_queue.end(); sb_it2++) {
+	    struct subbrep_object_data *sobj = (struct subbrep_object_data *)(*sb_it2);
+	    //std::cout << "Checking subbrep " << bu_vls_addr(sobj->key) << "\n";
+	    // Construct bounding box for sobj
+	    if (!sobj->bbox_set) subbrep_bbox(sobj);
+	    ON_BoundingBox isect;
+	    bool bbi = isect.Intersection(*pobj->bbox, *sobj->bbox);
+	    bool bbc = pobj->bbox->Includes(*sobj->bbox);
+	    bool bcb = sobj->bbox->Includes(*pobj->bbox);
+	    if (!bcb && (bbi || bbc)) {
+		//std::cout << " Found intersecting subbrep " << bu_vls_addr(sobj->key) << " under " << bu_vls_addr(pobj->key) << "\n";
+		bu_ptbl_ins(subbreps_tree, *sb_it2);
+	    }
+	}
+    }
+    return subbreps_tree;
+}
 
 void
 set_filter_obj(const ON_Surface *surface, struct filter_obj *obj)
@@ -468,6 +649,7 @@ subbrep_split(struct subbrep_object_data *data)
 	}
 	filter_obj_free(filters);
 	BU_PUT(filters, struct filter_obj);
+	if ((*data->obj_cnt) > CSG_BREP_MAX_OBJS) goto csg_abort;
     }
     if (subbrep_keys.size() == 0 || csg_fail > 0) {
 	goto csg_abort;
@@ -588,7 +770,9 @@ subbrep_make_brep(struct subbrep_object_data *data)
 		    if (fil.find(old_trim->Face()->m_face_index) != fil.end()) {
 			data->local_brep->FlipFace(new_face);
 		    }
-
+		    if (old_trim->Face()->m_bRev) {
+			data->local_brep->FlipFace(new_face);
+		    }
 		}
 	    }
 	}
@@ -703,64 +887,9 @@ subbrep_make_brep(struct subbrep_object_data *data)
     data->local_brep->ShrinkSurfaces();
     data->local_brep->CullUnusedSurfaces();
 
-    /* If we're a subtraction, the B-Rep will be inside out */
-    if (data->params->bool_op == '-') {
-	for (int l = 0; l < data->local_brep->m_F.Count(); l++) {
-	    ON_BrepFace &face = data->local_brep->m_F[l];
-	    data->local_brep->FlipFace(face);
-	}
-    }
-
-
-    std::cout << "new brep done: " << bu_vls_addr(data->key) << "\n";
+    //std::cout << "new brep done: " << bu_vls_addr(data->key) << "\n";
 
     return 1;
-}
-
-int
-subbreps_boolean_tree(struct bu_ptbl *subbreps)
-{
-    struct subbrep_object_data *top_union = NULL;
-    /* The toplevel unioned object in the tree will be the one with no faces
-     * that have only inner loops in the object loop network */
-    for (unsigned int i = 0; i < BU_PTBL_LEN(subbreps); i++){
-	struct subbrep_object_data *obj = (struct subbrep_object_data *)BU_PTBL_GET(subbreps, i);
-	if (obj->fil_cnt == 0) {
-	    top_union = obj;
-	} else {
-	    bu_log("Error - multiple objects appear to qualify as the first union object\n");
-	    return 0;
-	}
-    }
-    if (!top_union) {
-	bu_log("Error - no object qualifies as the first union object\n");
-	return 0;
-    }
-    /* Once the top level is identified, all other objects are parented to that object.
-     * Technically they are not children of that object but of the toplevel comb */
-    for (unsigned int i = 0; i < BU_PTBL_LEN(subbreps); i++){
-	struct subbrep_object_data *obj = (struct subbrep_object_data *)BU_PTBL_GET(subbreps, i);
-	if (obj != top_union) obj->parent = top_union;
-    }
-
-    /* For each child object, we need to ascertain whether the object is subtracted from the
-     * top object or unioned to it. The general test for this is to raytrace the original BRep
-     * through the child volume in question, and determine from the raytrace results whether
-     * the volume adds to or takes away from the solidity along that shotline.  This is a
-     * relatively expensive test, so if we have simpler shapes that let us do other tests
-     * let's try those first. */
-
-    /* Once we know whether the local shape is a subtraction or addition, we can decide for the
-     * individual shapes in the combination whether they are subtractions or unions locally.
-     * For example, if a cylinder is subtracted from the toplevel nmg, and a cone is
-     * in turn subtracted from that cylinder (in other words, the cone shape contributes volume to the
-     * final shape) the cone is subtracted from the local comb containing the cylinder and the cone, which
-     * is in turn subtracted from the toplevel nmg.  Likewise, if the cylinder had been unioned to the nmg
-     * to add volume and the cone had also added volume to the final shape (i.e. it's surface normals point
-     * outward from the cone) then the code would be unioned with the cylinder in the local comb, and the
-     * local comb would be unioned into the toplevel. */
-
-    return 0;
 }
 
 // Local Variables:

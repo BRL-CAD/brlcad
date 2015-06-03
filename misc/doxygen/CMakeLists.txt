@@ -3,8 +3,10 @@ set(lib_inputs
 )
 set(lib_predefines)
 set(DOX_LIBS
+  common
   libbu
   libbn
+  libbg
   libsysv
   libbrep
   librt
@@ -46,8 +48,10 @@ INPUT += ${CMAKE_SOURCE_DIR}/include/${sublibname}.h
 INPUT += ${CMAKE_SOURCE_DIR}/include/raytrace.h
 ")
   endif(EXISTS ${CMAKE_SOURCE_DIR}/include/${sublibname}.h)
+if(DEFINED BRLCAD_DOXYGEN_ADD_SRCS)
   set(INPUTS "${INPUTS}
 INPUT += ${CMAKE_SOURCE_DIR}/src/${libname}/")
+endif(DEFINED BRLCAD_DOXYGEN_ADD_SRCS)
 
 set(PREDEFINES "
 PREDEFINED += \"${upper_name}_EXTERN(type_and_name,args)=extern type_and_name args\"
@@ -70,8 +74,10 @@ INPUT += ${CMAKE_SOURCE_DIR}/include/${sublibname}.h
 INPUT += ${CMAKE_SOURCE_DIR}/include/raytrace.h
 ")
   endif(EXISTS ${CMAKE_SOURCE_DIR}/include/${sublibname}.h)
+if(DEFINED BRLCAD_DOXYGEN_ADD_SRCS)
   set(lib_inputs "${lib_inputs}
 INPUT += ${CMAKE_SOURCE_DIR}/src/${libname}/")
+endif(DEFINED BRLCAD_DOXYGEN_ADD_SRCS)
 
 set(lib_predefines "${lib_predefines}
 PREDEFINED += \"${upper_name}_EXTERN(type_and_name,args)=extern type_and_name args\"
@@ -104,6 +110,7 @@ add_custom_target(doxygen DEPENDS ${CMAKE_BINARY_DIR}/doc/doxygen_output/html/in
 set(doxygen_ignore_files
   Doxyfile.in
   intro.dox
+  images
   )
 CMAKEFILES(${doxygen_ignore_files})
 

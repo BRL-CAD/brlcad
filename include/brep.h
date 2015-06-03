@@ -17,14 +17,13 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @addtogroup libbrep */
-/** @{ */
-/** @file brep.h
- *
+/** @addtogroup libbrep
+ * @brief
  * Define surface and curve structures for Non-Uniform Rational
  * B-Spline (NURBS) curves and surfaces. Uses openNURBS library.
- *
  */
+/** @{ */
+/** @file include/brep.h */
 #ifndef BREP_H
 #define BREP_H
 
@@ -38,7 +37,7 @@ extern "C++" {
 #include <queue>
 #include <assert.h>
 
-#include "dvec.h"
+#include "bn/dvec.h"
 #include "opennurbs.h"
 #include <iostream>
 #include <fstream>
@@ -350,7 +349,7 @@ public:
     fastf_t getCurveEstimateOfV(fastf_t u, fastf_t tol) const;
     fastf_t getCurveEstimateOfU(fastf_t v, fastf_t tol) const;
 
-    int isTrimmed(const ON_2dPoint &uv, double &trimdist) const;
+    bool isTrimmed(const ON_2dPoint &uv, double &trimdist) const;
     bool doTrimming() const;
 
 private:
@@ -657,7 +656,7 @@ public:
     ON_2dPoint getClosestPointEstimate(const ON_3dPoint &pt);
     ON_2dPoint getClosestPointEstimate(const ON_3dPoint &pt, ON_Interval &u, ON_Interval &v);
     int getLeavesBoundingPoint(const ON_3dPoint &pt, std::list<BBNode *> &out);
-    int isTrimmed(const ON_2dPoint &uv, BRNode **closest, double &closesttrim, double within_distance_tol) const;
+    bool isTrimmed(const ON_2dPoint &uv, BRNode **closest, double &closesttrim, double within_distance_tol) const;
     bool doTrimming() const;
 
     void getTrimsAbove(const ON_2dPoint &uv, std::list<BRNode *> &out_leaves) const;
@@ -1149,8 +1148,8 @@ ON_Intersect(const ON_3dPoint &pointA,
  * An overload of ON_Intersect for point-curve intersection.
  * Intersect pointA with curveB.
  *
- * @param pointA [in]
- * @param pointB [in]
+ * @param pointA [in] pointA
+ * @param curveB [in] curveB
  * @param x [out] Intersection events are appended to this array.
  * @param tolerance [in] If the input intersection_tolerance <= 0.0,
  *     then 0.001 is used.
@@ -1284,8 +1283,8 @@ ON_Intersect(const ON_Curve *curveA,
  * An overload of ON_Intersect for surface-surface intersection.
  * Intersect surfaceA with surfaceB.
  *
- * @param surfaceA [in]
- * @param surfaceB [in]
+ * @param surfA [in]
+ * @param surfB [in]
  * @param x [out] Intersection events are appended to this array.
  * @param intersection_tolerance [in] If the input
  *     intersection_tolerance <= 0.0, then 0.001 is used.
@@ -1348,7 +1347,8 @@ ON_Boolean(ON_Brep *brepO, const ON_Brep *brepA, const ON_Brep *brepB, op_type o
  * Get the curve segment between param a and param b
  *
  * @param in [in] the curve to split
- * @param a, b [in] either of them can be the larger one
+ * @param a  [in] either a or b can be the larger one
+ * @param b  [in] either a or b can be the larger one
  *
  * @return the result curve segment. NULL for error.
  */
@@ -1356,16 +1356,82 @@ extern BREP_EXPORT ON_Curve *
 sub_curve(const ON_Curve *in, double a, double b);
 
 /**
- * Get the sub-surface whose u \in [a,b] or v \in [a, b]
+ * Get the sub-surface whose u in [a,b] or v in [a, b]
  *
  * @param in [in] the surface to split
  * @param dir [in] 0: u-split, 1: v-split
- * @param a, b [in] either of them can be the larger one
+ * @param a [in] either a or b can be the larger one
+ * @param b [in] either a or b can be the larger one
  *
  * @return the result sub-surface. NULL for error.
  */
 extern BREP_EXPORT ON_Surface *
 sub_surface(const ON_Surface *in, int dir, double a, double b);
+
+/* Shape recognition functions - HIGHLY EXPERIMENTAL,
+ * DO NOT RELY ON */
+
+/* Structure for holding parameters corresponding
+ * to a csg primitive.  Not all parameters will be
+ * used for all primitives - the structure includes
+ * enough data slots to describe any primitive that may
+ * be matched by the shape recognition logic */
+struct csg_object_params {
+    char bool_op; /* Boolean operator - u = union (default), - = subtraction, + = intersection */
+    point_t origin;
+    vect_t hv;
+    fastf_t radius;
+    fastf_t r2;
+    fastf_t height;
+    int arb_type;
+    point_t p[8];
+    plane_t *planes;
+};
+
+struct subbrep_object_data {
+    struct bu_vls *key;
+    struct bu_vls *name_root;
+    int *obj_cnt;
+    int *faces;
+    int *loops;
+    int *edges;
+    int *fol; /* Faces with outer loops in object loop network */
+    int *fil; /* Faces with only inner loops in object loop network */
+    int faces_cnt;
+    int loops_cnt;
+    int edges_cnt;
+    int fol_cnt;
+    int fil_cnt;
+
+    const ON_Brep *brep;
+    ON_Brep *local_brep;
+    int type;
+    csg_object_params *params;
+    subbrep_object_data *planar_obj;
+    int planar_obj_vert_cnt;
+    int *planar_obj_vert_map;
+    subbrep_object_data *parent;
+    struct bu_ptbl *children;
+    int is_island;
+    /* Irrespective of the broader context, is the shape
+     * itself negative?  This is not meaningful for general
+     * combs, but individual shapes like cylinders and spheres
+     * (even when they are "trimmed down" by other CSG primitives
+     * are "negative" if their normals point inward.
+     * -1 = negative
+     *  1 = positive
+     *  0 = unknown/unset */
+    int negative_shape;
+    ON_BoundingBox *bbox;
+    int bbox_set;
+};
+
+extern BREP_EXPORT void subbrep_object_free(struct subbrep_object_data *obj);
+extern BREP_EXPORT struct bu_ptbl *find_subbreps(const ON_Brep *brep);
+extern BREP_EXPORT struct bu_ptbl *find_top_level_hierarchy(struct bu_ptbl *subbreps);
+extern BREP_EXPORT int subbrep_polygon_tri(const ON_Brep *brep, const point_t *all_verts, int *loops, int loop_cnt, int **ffaces);
+
+
 } /* extern C++ */
 #endif
 

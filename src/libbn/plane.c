@@ -37,8 +37,7 @@
 #include "bu/log.h"
 #include "vmath.h"
 #include "bn/mat.h"
-#include "bn/plane_struct.h"
-#include "bn/plane_calc.h"
+#include "bn/plane.h"
 #include "bn/tol.h"
 
 #define UNIT_SQ_TOL 1.0e-13
@@ -1688,6 +1687,7 @@ bn_isect_pt_lseg(fastf_t *dist,
  * @param a is line start point
  * @param b is line end point
  * @param p is line intersect point
+ * @param tol contains the tolerances used for calculations
  */
 int
 bn_isect_pt2_lseg2(fastf_t *dist, const fastf_t *a, const fastf_t *b, const fastf_t *p, const struct bn_tol *tol)

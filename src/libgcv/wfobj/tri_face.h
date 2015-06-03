@@ -27,7 +27,7 @@
 #define LIBGCV_WFOBJ_TRI_FACE_H
 
 struct faceuse*
-make_faceuse_from_face(const double points[], int numPoints);
+make_faceuse_from_face(const double points[], size_t numPoints);
 
 void
 triangulateFace(

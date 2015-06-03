@@ -49,7 +49,7 @@
 
 #include "vmath.h"
 #include "raytrace.h"
-#include "rtgeom.h"
+#include "rt/geom.h"
 #include "optical.h"
 
 

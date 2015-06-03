@@ -19,14 +19,14 @@
  */
 
 /*----------------------------------------------------------------------*/
-/* @file noise.h */
-/** @addtogroup noise */
-/** @{ */
 
-/** @brief
+/** @addtogroup noise
  *
+ * @brief
  * These noise functions provide mostly random noise at the integer
- * lattice points.  The functions should be evaluated at non-integer
+ * lattice points.
+ *
+ * The functions should be evaluated at non-integer
  * locations for their nature to be realized.
  *
  * Contains contributed code from:
@@ -34,6 +34,8 @@
  * Robert Skinner
  *
  */
+/** @{ */
+/* @file noise.h */
 
 #ifndef BN_NOISE_H
 #define BN_NOISE_H
@@ -78,9 +80,9 @@ BN_EXPORT extern void bn_noise_vec(point_t point,
  * "value".
  *
  * @param point          location to sample noise
- * @param ``h_val''      fractal increment parameter
- * @param ``lacunarity'' gap between successive frequencies
- * @param ``octaves''  	 number of frequencies in the fBm
+ * @param h_val      fractal increment parameter
+ * @param lacunarity gap between successive frequencies
+ * @param octaves  	 number of frequencies in the fBm
  *
  * The spectral properties of the result are in the APPROXIMATE range
  * [-1..1] Depending upon the number of octaves computed, this range
@@ -109,10 +111,10 @@ BN_EXPORT extern double bn_noise_fbm(point_t point,
  *
  * @return turbulence value for point
  *
- * @param point          location to sample noise at
- * @param ``h_val''      fractal increment parameter
- * @param ``lacunarity'' gap between successive frequencies
- * @param ``octaves''    number of frequencies in the fBm
+ * @param point        location to sample noise at
+ * @param h_val        fractal increment parameter
+ * @param lacunarity   gap between successive frequencies
+ * @param octaves      number of frequencies in the fBm
  *
  * The result is characterized by sharp, narrow trenches in low values
  * and a more fbm-like quality in the mid-high values.  Values are in

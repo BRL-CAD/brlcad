@@ -33,7 +33,7 @@
 
 #include "common.h"
 
-#include "db.h"
+#include "rt/db4.h"
 #include "raytrace.h"
 
 /* approximation formula for the circumference of an ellipse */

@@ -86,11 +86,11 @@ bu_hist_range(register struct bu_hist *hp, fastf_t low, fastf_t high)
     else
 	a = (low - hp->hg_min) / hp->hg_clumpsize;
     if (high >= hp->hg_max)
-	b = hp->hg_nbins-1;
+	b = (long)hp->hg_nbins-1;
     else
 	b = (high - hp->hg_min) / hp->hg_clumpsize;
     if (b >= (long)hp->hg_nbins)
-	b = hp->hg_nbins-1;
+	b = (long)hp->hg_nbins-1;
     if (b < 0)
 	b = 0;
 

@@ -32,11 +32,11 @@ then
     exit
 fi
 mged -c powerplant.g y
-for i in {1..20}; do   #20
-    for j in {a..q}; do #q
+for i in {1..30}; do
+    for j in {a..z}; do
 	if [ -e ppsection$i/part_$j ]
 	then
-	    for k in {0..130}; do  #130
+	    for k in {0..200}; do
 		if [ -e ppsection$i/part_$j/g$k.ply ]
 		then
 		    echo "Converting ppsection$i/part_$j/g$k.ply:"

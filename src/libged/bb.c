@@ -32,7 +32,7 @@
 #include "bu/cmd.h"
 #include "bu/getopt.h"
 #include "bu/units.h"
-#include "rtgeom.h"
+#include "rt/geom.h"
 
 #include "./ged_private.h"
 

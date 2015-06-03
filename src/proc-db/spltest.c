@@ -30,9 +30,9 @@
 #include <math.h>
 
 #include "vmath.h"
-#include "nurb.h"
 #include "raytrace.h"
-#include "rtgeom.h"
+#include "rt/nurb.h"
+#include "rt/geom.h"
 #include "wdb.h"
 
 

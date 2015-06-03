@@ -30,25 +30,9 @@
 
 __BEGIN_DECLS
 
-/* TODO: needs to move to subdir */
-#ifndef GCV_EXPORT
-#  if defined(GCV_DLL_EXPORTS) && defined(GCV_DLL_IMPORTS)
-#    error "Only GCV_DLL_EXPORTS or GCV_DLL_IMPORTS can be defined, not both."
-#  elif defined(GCV_DLL_EXPORTS)
-#    define GCV_EXPORT __declspec(dllexport)
-#  elif defined(GCV_DLL_IMPORTS)
-#    define GCV_EXPORT __declspec(dllimport)
-#  else
-#    define GCV_EXPORT
-#  endif
-#endif
-
-/* TODO: needs to move to subdir */
-#include "gcv_util.h"
-
-/* TODO: main API goes here */
-#include "gcv_api.h"
-
+#include "./gcv/defines.h"
+#include "./gcv/util.h"
+#include "./gcv/api.h"
 
 __END_DECLS
 

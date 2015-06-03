@@ -37,14 +37,14 @@
 #include <errno.h>
 
 #include "bu/debug.h"
-#include "db.h"
+#include "rt/db4.h"
 #include "vmath.h"
 #include "nmg.h"
-#include "rtgeom.h"
+#include "rt/geom.h"
 #include "raytrace.h"
 #include "ged.h"
 #include "wdb.h"
-#include "plot3.h"
+#include "bn/plot3.h"
 
 
 static int grid_size;		/* Number of points that will fit in current grid_pts array */

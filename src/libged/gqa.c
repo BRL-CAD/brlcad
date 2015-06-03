@@ -45,7 +45,7 @@
 #include "bu/getopt.h"
 #include "vmath.h"
 #include "raytrace.h"
-#include "plot3.h"
+#include "bn/plot3.h"
 #include "sysv.h"
 #include "analyze.h"
 
@@ -2396,7 +2396,7 @@ ged_gqa(struct ged *gedp, int argc, const char *argv[])
 
     if (analysis_flags & ANALYSIS_PLOT_OVERLAPS) {
 	ged_gqa_plot.vbp = rt_vlblock_init();
-	ged_gqa_plot.vhead = rt_vlblock_find(ged_gqa_plot.vbp, 0xFF, 0xFF, 0x00);
+	ged_gqa_plot.vhead = bn_vlblock_find(ged_gqa_plot.vbp, 0xFF, 0xFF, 0x00);
     }
 
     rtip = rt_new_rti(gedp->ged_wdbp->dbip);
@@ -2550,7 +2550,7 @@ aborted:
 	aborted = 0; /* reset flag */
 
     if (analysis_flags & ANALYSIS_PLOT_OVERLAPS)
-	rt_vlblock_free(ged_gqa_plot.vbp);
+	bn_vlblock_free(ged_gqa_plot.vbp);
 
     /* Clear out the lists */
     while (BU_LIST_WHILE (rp, region_pair, &overlapList.l)) {

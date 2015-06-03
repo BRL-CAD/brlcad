@@ -107,7 +107,7 @@ torus_csg(struct subbrep_object_data *data, fastf_t torus_tol)
                 toridal_surfaces.insert(f_ind);
 		break;
             default:
-		std::cout << "what???\n";
+		bu_log("what???\n");
                 return 0;
                 break;
         }
@@ -192,6 +192,7 @@ torus_csg(struct subbrep_object_data *data, fastf_t torus_tol)
     // involves the full 360 degree revolution.  If not, we have an arc of the
     // torus, which may be further trimmed down by torus-plane parallel edges.
 
+    return -1;
 }
 
 // Local Variables:

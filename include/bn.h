@@ -18,18 +18,23 @@
  * information.
  */
 
-/** @addtogroup libbn */
-/** @{ */
-/** @file bn.h
+
+/** @addtogroup libbn
  *
- * Header file for the BRL-CAD Numerical Computation Library, LIBBN.
- *
+ * @brief
  * The library provides a broad assortment of numerical algorithms and
  * computational routines, including random number generation, vector
  * math, matrix math, quaternion math, complex math, synthetic
  * division, root finding, etc.
  *
+ * The functionality provided by this library is specified in the bn.h
+ * header or appropriate included files from the ./bn subdirectory.
+ *
  */
+/** @{ */
+/** @brief Header file for the BRL-CAD Numerical Computation Library, LIBBN.*/
+/** @file bn.h */
+/** @} */
 
 #ifndef BN_H
 #define BN_H
@@ -41,32 +46,27 @@
 #include "bn/tol.h"
 #include "bn/anim.h"
 #include "bn/bn_tcl.h"
-#include "bn/chull.h"
 #include "bn/complex.h"
 #include "bn/mat.h"
 #include "bn/msr.h"
 #include "bn/noise.h"
-#include "bn/obr.h"
-#include "bn/plane_calc.h"
 #include "bn/poly.h"
+#include "bn/plot3.h"
 #include "bn/multipoly.h"
 #include "bn/qmath.h"
 #include "bn/rand.h"
 #include "bn/randmt.h"
 #include "bn/wavelet.h"
 #include "bn/tabdata.h"
-#include "bn/tri_tri.h"
 #include "bn/vlist.h"
 #include "bn/vert_tree.h"
 #include "bn/vectfont.h"
-#include "bn/plane_struct.h"
-#include "bn/polygon.h"
+#include "bn/plane.h"
 #include "bn/clip.h"
 #include "bn/adc.h"
 
 #endif /* BN_H */
 
-/** @} */
 /*
  * Local Variables:
  * mode: C

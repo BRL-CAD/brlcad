@@ -31,12 +31,12 @@
 #include <string.h>
 #include "bio.h"
 
-#include "db.h"
+#include "rt/db4.h"
 #include "vmath.h"
 #include "bn.h"
-#include "nurb.h"
 #include "raytrace.h"
-#include "rtgeom.h"
+#include "rt/nurb.h"
+#include "rt/geom.h"
 #include "wdb.h"
 
 

@@ -46,8 +46,8 @@
 #include "bu/parallel.h"
 #include "vmath.h"
 #include "raytrace.h"
-#include "plot3.h"
-#include "rtgeom.h"
+#include "bn/plot3.h"
+#include "rt/geom.h"
 
 #include "fitness.h"
 

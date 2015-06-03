@@ -168,9 +168,9 @@
 
 #include "bu/cv.h"
 #include "vmath.h"
-#include "db.h"
+#include "rt/db4.h"
 #include "nmg.h"
-#include "rtgeom.h"
+#include "rt/geom.h"
 #include "raytrace.h"
 
 #include "../../librt_private.h"
@@ -1842,7 +1842,7 @@ rt_rhc_centroid(point_t *cent, const struct rt_db_internal *ip)
 	low = a;
 	high = xf;
 
-	while (abs(high - low) > epsilon) {
+	while (fabs(high - low) > epsilon) {
 	    guess = (high + low) / 2.0;
 	    sqrt_ga = sqrt((guess * guess) - (a * a));
 	    guessArea = (b / a) * ((guess * sqrt_ga) - ((a * a) * log(sqrt_ga + guess)) - ((a * a) * log(guess)));

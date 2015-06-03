@@ -31,7 +31,7 @@
 #include "bio.h"
 
 #include "vmath.h"
-#include "db.h"
+#include "rt/db4.h"
 #include "raytrace.h"
 
 
@@ -125,6 +125,7 @@ db_dircheck(struct db_i *dbip,
 
 	    bu_vls_strcpy(ret_name, "A_");
 	    bu_vls_strcat(ret_name, this_obj);
+	    cp = bu_vls_addr(ret_name);
 
 	    for (c = 'A'; c <= 'Z'; c++) {
 		*cp = c;

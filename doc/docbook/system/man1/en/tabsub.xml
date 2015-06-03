@@ -434,7 +434,7 @@ will process each frame as fast as it can, and update the screen.</para>
 </refsect1>
 
 <refsect1 xml:id='see_also'><title>SEE ALSO</title>
-<para><citerefentry><refentrytitle>tabinterp</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>xyz-pl</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>txyz-pl</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>cut</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>paste</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>rt</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>mged</refentrytitle><manvolnum>1</manvolnum></citerefentry></para>
+<para><citerefentry><refentrytitle>tabinterp</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>xyz-plot3</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>cut</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>paste</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>rt</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>mged</refentrytitle><manvolnum>1</manvolnum></citerefentry></para>
 </refsect1>
 
 <refsect1 xml:id='bugs'><title>BUGS</title>

@@ -55,8 +55,8 @@ static RGBpixel obuf[MAX_LINE];
 static int fileinput = 0;		/* file of pipe on input? */
 static int autosize = 0;		/* !0 to autosize input */
 
-static unsigned long int file_width = 512;	/* default input width */
-static unsigned long int file_height = 512;	/* default input height */
+static size_t file_width = 512;	/* default input width */
+static size_t file_height = 512;	/* default input height */
 static int scr_width = 0;		/* screen tracks file if not given */
 static int scr_height = 0;
 static int file_xoff, file_yoff;

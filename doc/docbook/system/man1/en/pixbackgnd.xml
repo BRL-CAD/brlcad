@@ -65,6 +65,21 @@ range from 0 to 255 inclusive and can be selected via
 <citerefentry><refentrytitle>fbcolor</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
 A hue of 160 is a pleasing blue.</para>
 
+<para>The
+<option>-a</option>
+and
+<option>-b</option>
+options can be used to set the top and bottom intensity,
+in the range of 0 to 255.
+By default, the top intensity is 240, and the bottom is 50 (these values are used above).</para>
+
+<para><option>-w</option> and <option>-n</option> options set the width and height, respectively;
+<option>-s</option> sets them to the same value.
+By default, the display is assumed to be 512x512 pixels;
+specifying the
+<option>-H</option>
+flag, in addition to changing the title height to 90 scanlines (see below), changes the output size to 1024x1024.</para>
+
 <para>By default, the title height is
 80 scanlines, or 90 scanlines if the
 <option>-H</option>
@@ -76,35 +91,20 @@ If
 is set to zero, then the white bar
 is omitted as well, and the entire display is smoothly shaded.</para>
 
-<para>By default, the display is assumed to be 512x512 pixels;
-specifying the
-<option>-H</option>
-flag, in addition to changing the title height to 90 scanlines (see above), changes the output size to 1024x1024.</para>
-
 <para>If the
 <option>-i</option>
 flag is specified, the scanlines will be written out in inverted order
-(i.e., top to bottom).
-This is mostly useful with programs like
-<citerefentry><refentrytitle>cat-fb</refentrytitle><manvolnum>1</manvolnum></citerefentry>.</para>
-
-<para>The
-<option>-a</option>
-and
-<option>-b</option>
-options can be used to set the top and bottom intensity,
-in the range of 0 to 255.
-By default, the top intensity is 240, and the bottom is 50.</para>
+(i.e., top to bottom).</para>
 </refsect1>
 
 <refsect1 xml:id='examples'><title>EXAMPLES</title>
 <para>pixbackgnd 160 200  |   pixmerge fg.pix - | pix-fb</para>
 <para>pixbackgnd -t120 160 250</para>
-<para>pixbackgnd -i -t0 160 200   |   cat-fb -O file.troff</para>
+<para>pixbackgnd -i -t0 160 200   |   pix-fb</para>
 </refsect1>
 
 <refsect1 xml:id='see_also'><title>SEE ALSO</title>
-<para><citerefentry><refentrytitle>brlcad</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>fbcolor</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>pix-fb</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>pixmerge</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>cat-fb</refentrytitle><manvolnum>1</manvolnum></citerefentry></para>
+<para><citerefentry><refentrytitle>brlcad</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>fbcolor</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>pix-fb</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>pixmerge</refentrytitle><manvolnum>1</manvolnum></citerefentry></para>
 </refsect1>
 
 <refsect1 xml:id='bugs'><title>BUGS</title>

@@ -17,8 +17,11 @@ set(bu_headers
   magic.h
   malloc.h
   mapped_file.h
+  mime.h
+  opt.h
   parallel.h
   parse.h
+  path.h
   ptbl.h
   rb.h
   simd.h
