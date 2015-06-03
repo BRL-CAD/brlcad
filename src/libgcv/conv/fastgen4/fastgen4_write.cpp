@@ -538,7 +538,7 @@ private:
 };
 
 
-Section::Section(FastgenWriter & writer, const std::string & name,
+Section::Section(FastgenWriter &writer, const std::string &name,
 		 bool volume_mode, const unsigned char *color) :
     m_volume_mode(volume_mode),
     m_material_id(1),
@@ -730,7 +730,7 @@ Section::write_hexahedron(const fastf_t vpoints[8][3], fastf_t thickness,
 
 
 HIDDEN void
-write_bot(Section & section, const rt_bot_internal & bot)
+write_bot(Section &section, const rt_bot_internal &bot)
 {
     RT_BOT_CK_MAGIC(&bot);
 
@@ -758,7 +758,7 @@ write_bot(Section & section, const rt_bot_internal & bot)
 
 
 HIDDEN bool
-ell_is_sphere(const rt_ell_internal & ell)
+ell_is_sphere(const rt_ell_internal &ell)
 {
     RT_ELL_CK_MAGIC(&ell);
 
@@ -811,7 +811,7 @@ ell_is_sphere(const rt_ell_internal & ell)
 // Determines whether a tgc can be represented by a CCONE2 object.
 // Assumes that tgc is a valid rt_tgc_internal.
 HIDDEN bool
-tgc_is_ccone(const rt_tgc_internal & tgc)
+tgc_is_ccone(const rt_tgc_internal &tgc)
 {
     RT_TGC_CK_MAGIC(&tgc);
 
@@ -867,7 +867,7 @@ tree_entirely_unions(const tree *tree)
 
 
 HIDDEN rt_db_internal
-get_parent(const db_i & db, const db_full_path & path)
+get_parent(const db_i &db, const db_full_path &path)
 {
     RT_CK_DBI(&db);
     RT_CK_FULL_PATH(&path);
@@ -891,7 +891,7 @@ get_parent(const db_i & db, const db_full_path & path)
 // Determines whether the parent comb is simple enough
 // to be represented by fastgen4.
 HIDDEN bool
-comb_representable(const db_i & db, const db_full_path & path)
+comb_representable(const db_i &db, const db_full_path &path)
 {
 #if 0
     RT_CK_DBI(&db);
@@ -913,7 +913,7 @@ comb_representable(const db_i & db, const db_full_path & path)
 
 
 HIDDEN std::pair<rt_db_internal, rt_db_internal>
-get_cutout(const db_i & db, const std::string & name)
+get_cutout(const db_i &db, const std::string &name)
 {
     RT_CK_DBI(&db);
 
@@ -963,8 +963,8 @@ get_cutout(const db_i & db, const std::string & name)
 
 
 HIDDEN bool
-find_ccone_cutout(Section & section, const db_i & db,
-		  const std::string & name)
+find_ccone_cutout(Section &section, const db_i &db,
+		  const std::string &name)
 {
     RT_CK_DBI(&db);
 
@@ -1018,8 +1018,8 @@ find_ccone_cutout(Section & section, const db_i & db,
 
 
 HIDDEN bool
-find_csphere_cutout(Section & section, const db_i & db,
-		    const std::string & name)
+find_csphere_cutout(Section &section, const db_i &db,
+		    const std::string &name)
 {
     RT_CK_DBI(&db);
 
@@ -1070,7 +1070,7 @@ find_csphere_cutout(Section & section, const db_i & db,
 
 
 HIDDEN bool
-get_chex1(Section & section, const rt_bot_internal & bot)
+get_chex1(Section &section, const rt_bot_internal &bot)
 {
     RT_BOT_CK_MAGIC(&bot);
 
@@ -1155,8 +1155,8 @@ struct ConversionData {
 
 
 HIDDEN bool
-convert_primitive(ConversionData & data, const rt_db_internal & internal,
-		  const std::string & name)
+convert_primitive(ConversionData &data, const rt_db_internal &internal,
+		  const std::string &name)
 {
     switch (internal.idb_type) {
 	case ID_CLINE: {
