@@ -103,12 +103,14 @@ of each value, and finally scale the pixel values back to 0-&gt;255.
 [Note however that applying gammas this way is not recommended since
 a function call per pixel results!]</para>
 
-<para>Suppose you ran bwstat on a file and found min=80, max=210, mean=100.
+<para>Suppose you ran <command>bwstat</command> on a file and found min=80, max=210, mean=100.
 If you wish to expand the range of intensities, while still preserving
 the mean, this can be done by:
-<userinput>bwmod -s100 -m1.409 -a100 &lt; file.bw &gt; file2.bw</userinput>
 <!-- .br -->
-Where 1.409 results from (255-100)/(210-100) which is what one would use
+<userinput>bwmod -s100 -m1.409 -a100 &lt; file.bw &gt; file2.bw</userinput>
+</para>
+<para>
+where 1.409 results from (255-100)/(210-100) which is what one would use
 by boost the max value (210) to full scale (255) after subtracting the
 mean (100).  Subtracting and adding 100 make the multiply occur
 "about that point", i.e. value less than 100 will get smaller; those
