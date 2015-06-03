@@ -75,7 +75,7 @@ int char_arith = 0;
 int
 get_args(int argc, char **argv)
 {
-    int c = 0;
+    int c;
     double d = 0.0;
 
     while ((c = bu_getopt(argc, argv, "a:s:m:d:Ae:r:cS:O:M:X:t:h?")) != -1) {
