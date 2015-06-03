@@ -893,6 +893,7 @@ get_parent(const db_i & db, const db_full_path & path)
 HIDDEN bool
 comb_representable(const db_i & db, const db_full_path & path)
 {
+#if 0
     RT_CK_DBI(&db);
     RT_CK_FULL_PATH(&path);
 
@@ -903,6 +904,11 @@ comb_representable(const db_i & db, const db_full_path & path)
     rt_comb_internal &comb_internal = *static_cast<rt_comb_internal *>
 				      (comb_db_internal.idb_ptr);
     return tree_entirely_unions(comb_internal.tree);
+#else
+    (void)db;
+    (void)path;
+    return true;
+#endif
 }
 
 
