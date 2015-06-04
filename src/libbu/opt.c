@@ -452,10 +452,12 @@ ptbl_to_argv(const char ***argv, struct bu_ptbl *tbl) {
     int ac;
     if (!argv || !tbl || BU_PTBL_LEN(tbl) == 0) return 0;
     ac = BU_PTBL_LEN(tbl);
-    av = (const char **)bu_calloc(ac, sizeof(char *), "argv");
+    av = (const char **)bu_calloc(ac + 1, sizeof(char *), "argv");
     for (i = 0; i < ac; i++) {
 	av[i] = (const char *)BU_PTBL_GET(tbl, i);
     }
+    /* Make it explicitly clear that the array is NULL terminated */
+    av[ac] = NULL;
     (*argv) = av;
     return ac;
 }
