@@ -270,13 +270,11 @@ private:
     static const std::size_t MAX_SECTION_ID = 999;
 
     std::size_t m_next_section_id[MAX_GROUP_ID + 1];
-    bool m_record_open;
     std::ofstream m_ostream, m_colors_ostream;
 };
 
 
 FastgenWriter::FastgenWriter(const std::string &path) :
-    m_record_open(false),
     m_ostream(path.c_str(), std::ofstream::out),
     m_colors_ostream((path + ".colors").c_str(), std::ofstream::out)
 {
@@ -866,18 +864,27 @@ tree_entirely_unions(const tree *tree)
 }
 
 
-HIDDEN rt_db_internal
-get_parent(const db_i &db, const db_full_path &path)
+HIDDEN const directory &
+get_parent_dir(const db_full_path &path)
 {
-    RT_CK_DBI(&db);
     RT_CK_FULL_PATH(&path);
 
     if (path.fp_len < 2)
 	throw std::invalid_argument("toplevel");
 
+    return *path.fp_names[path.fp_len - 2];
+}
+
+
+HIDDEN rt_db_internal
+get_parent_comb(const db_i &db, const db_full_path &path)
+{
+    RT_CK_DBI(&db);
+    RT_CK_FULL_PATH(&path);
+
     rt_db_internal comb_db_internal;
 
-    if (rt_db_get_internal(&comb_db_internal, path.fp_names[path.fp_len - 2], &db,
+    if (rt_db_get_internal(&comb_db_internal, &get_parent_dir(path), &db,
 			   NULL, &rt_uniresource) < 0)
 	throw std::runtime_error("rt_db_get_internal() failed");
 
@@ -897,7 +904,7 @@ comb_representable(const db_i &db, const db_full_path &path)
     RT_CK_DBI(&db);
     RT_CK_FULL_PATH(&path);
 
-    rt_db_internal comb_db_internal = get_parent(db, path);
+    rt_db_internal comb_db_internal = get_parent_comb(db, path);
     AutoFreePtr<rt_db_internal, rt_db_free_internal> autofree_comb_db_internal(
 	&comb_db_internal);
 
@@ -913,18 +920,12 @@ comb_representable(const db_i &db, const db_full_path &path)
 
 
 HIDDEN std::pair<rt_db_internal, rt_db_internal>
-get_cutout(const db_i &db, const std::string &name)
+get_cutout(const db_i &db, const db_full_path &path)
 {
     RT_CK_DBI(&db);
+    RT_CK_FULL_PATH(&path)
 
-    db_full_path path;
-
-    if (db_string_to_path(&path, &db, name.c_str()))
-	throw std::logic_error("logic error: invalid path");
-
-    AutoFreePtr<db_full_path, db_free_full_path> autofree_path(&path);
-
-    rt_db_internal comb_db_internal = get_parent(db, path);
+    rt_db_internal comb_db_internal = get_parent_comb(db, path);
     AutoFreePtr<rt_db_internal, rt_db_free_internal> autofree_comb_db_internal(
 	&comb_db_internal);
     rt_comb_internal &comb_internal = *static_cast<rt_comb_internal *>
@@ -963,15 +964,16 @@ get_cutout(const db_i &db, const std::string &name)
 
 
 HIDDEN bool
-find_ccone_cutout(Section &section, const db_i &db,
-		  const std::string &name)
+find_ccone_cutout(Section &section, const db_i &db, const db_full_path &path,
+		  std::set<std::string> &completed)
 {
     RT_CK_DBI(&db);
+    RT_CK_FULL_PATH(&path);
 
     std::pair<rt_db_internal, rt_db_internal> internals;
 
     try {
-	internals = get_cutout(db, name);
+	internals = get_cutout(db, path);
     } catch (const std::invalid_argument &) {
 	return false;
     }
@@ -1010,6 +1012,9 @@ find_ccone_cutout(Section &section, const db_i &db,
     if (ri1 >= ro1 || ri2 >= ro2)
 	return false;
 
+    if (!completed.insert(get_parent_dir(path).d_namep).second)
+	return true;
+
     point_t v2;
     VADD2(v2, outer_tgc.v, outer_tgc.h);
     section.write_cone(outer_tgc.v, v2, ro1, ro2, ri1, ri2);
@@ -1018,15 +1023,16 @@ find_ccone_cutout(Section &section, const db_i &db,
 
 
 HIDDEN bool
-find_csphere_cutout(Section &section, const db_i &db,
-		    const std::string &name)
+find_csphere_cutout(Section &section, const db_i &db, const db_full_path &path,
+		    std::set<std::string> &completed)
 {
     RT_CK_DBI(&db);
+    RT_CK_FULL_PATH(&path);
 
     std::pair<rt_db_internal, rt_db_internal> internals;
 
     try {
-	internals = get_cutout(db, name);
+	internals = get_cutout(db, path);
     } catch (const std::invalid_argument &) {
 	return false;
     }
@@ -1063,7 +1069,9 @@ find_csphere_cutout(Section &section, const db_i &db,
     if (r_inner >= r_outer)
 	return false;
 
-    // FIXME: use parent's name
+    if (!completed.insert(get_parent_dir(path).d_namep).second)
+	return true;
+
     section.write_sphere(outer_ell.v, r_outer, r_outer - r_inner);
     return true;
 }
@@ -1148,15 +1156,15 @@ struct ConversionData {
     const bn_tol &m_tol;
     const bool m_convert_primitives;
 
-    // for find_ccone_cutout()
+    // for cutout detection
     const db_i &m_db;
-    std::set<std::string> m_recorded_ccones;
+    std::set<std::string> m_recorded_cutouts;
 };
 
 
 HIDDEN bool
-convert_primitive(ConversionData &data, const rt_db_internal &internal,
-		  const std::string &name)
+convert_primitive(ConversionData &data, const std::string &name,
+		  const db_full_path &path, const rt_db_internal &internal)
 {
     switch (internal.idb_type) {
 	case ID_CLINE: {
@@ -1182,7 +1190,7 @@ convert_primitive(ConversionData &data, const rt_db_internal &internal,
 
 	    Section section(data.m_writer, name, true);
 
-	    if (!find_csphere_cutout(section, data.m_db, name))
+	    if (!find_csphere_cutout(section, data.m_db, path, data.m_recorded_cutouts))
 		section.write_sphere(ell.v, MAGNITUDE(ell.a));
 
 	    break;
@@ -1198,7 +1206,7 @@ convert_primitive(ConversionData &data, const rt_db_internal &internal,
 
 	    Section section(data.m_writer, name, true);
 
-	    if (!find_ccone_cutout(section, data.m_db, name)) {
+	    if (!find_ccone_cutout(section, data.m_db, path, data.m_recorded_cutouts)) {
 		point_t v2;
 		VADD2(v2, tgc.v, tgc.h);
 		section.write_cone(tgc.v, v2, MAGNITUDE(tgc.a), MAGNITUDE(tgc.b), 0.0, 0.0);
@@ -1295,7 +1303,7 @@ convert_leaf(db_tree_state *tree_state, const db_full_path *path,
     if (internal->idb_major_type == DB5_MAJORTYPE_BRLCAD
 	&& data.m_convert_primitives && comb_representable(data.m_db, *path))
 	try {
-	    converted = convert_primitive(data, *internal, name);
+	    converted = convert_primitive(data, name, *path, *internal);
 	} catch (const std::runtime_error &e) {
 	    bu_log("FAILURE: convert_primitive() failed on object '%s': %s\n", name.c_str(),
 		   e.what());
