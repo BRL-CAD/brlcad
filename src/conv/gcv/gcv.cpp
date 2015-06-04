@@ -391,9 +391,8 @@ main(int ac, char **av)
 	if (!skip_in && !skip_out) {
 	    if (uac > 1) {
 		bu_vls_sprintf(&in_path_raw, "%s", uav[uac - 2]);
-		uac--;
 		bu_vls_sprintf(&out_path_raw, "%s", uav[uac - 1]);
-		uac--;
+		uac = uac -2;
 	    } else {
 		bu_vls_sprintf(&in_path_raw, "%s", uav[uac - 1]);
 		uac--;
