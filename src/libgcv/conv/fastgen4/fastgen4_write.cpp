@@ -69,6 +69,15 @@ private:
 };
 
 
+HIDDEN void
+char_color_from_floats(unsigned char *color, const float *float_color)
+{
+    color[0] = static_cast<unsigned char>(float_color[0] * 255.0 + 0.5);
+    color[1] = static_cast<unsigned char>(float_color[1] * 255.0 + 0.5);
+    color[2] = static_cast<unsigned char>(float_color[2] * 255.0 + 0.5);
+}
+
+
 class RecordWriter
 {
 public:
@@ -1251,9 +1260,7 @@ write_nmg_region(nmgregion *nmg_region, const db_full_path *path,
 
 	try {
 	    unsigned char char_color[3];
-	    char_color[0] = static_cast<unsigned char>(color[0] * 255.0 + 0.5);
-	    char_color[1] = static_cast<unsigned char>(color[1] * 255.0 + 0.5);
-	    char_color[2] = static_cast<unsigned char>(color[2] * 255.0 + 0.5);
+	    char_color_from_floats(char_color, color);
 	    Section section(bot->mode == RT_BOT_SOLID);
 	    write_bot(section, *bot);
 	    section.write(data.m_writer, name, char_color);
@@ -1311,7 +1318,9 @@ convert_region(db_tree_state *tree_state, const db_full_path *path,
     const std::string name = AutoFreePtr<char>(db_path_to_string(path)).ptr;
     const Section &section = *data.m_sections.at(path->fp_names[path->fp_len - 1]);
 
-    section.write(data.m_writer, name); // TODO
+    unsigned char color[3];
+    char_color_from_floats(color, tree_state->ts_mater.ma_color);
+    section.write(data.m_writer, name, color); // TODO
 
     if (current_tree->tr_op != OP_NOP) {
 	gcv_region_end_data gcv_data = {write_nmg_region, &data};
