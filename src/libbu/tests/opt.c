@@ -28,11 +28,15 @@ int
 d1_verbosity(struct bu_vls *msg, struct bu_opt_data *data)
 {
     int verb;
-    if (!data || data->argc == 0) return -1;
+    if (!data) return 0;
+    if (!data->argv || data->argc == 0) {
+	data->valid = 0;
+	return 0;
+    }
     if (msg) bu_vls_sprintf(msg, "d1");
     sscanf(data->argv[0], "%d", &verb);
     if (verb < 0 || verb > 3) data->valid = 0;
-    return 0;
+    return 1;
 }
 
 int
@@ -71,20 +75,25 @@ d2_color(struct bu_vls *msg, struct bu_opt_data *data)
 	    if (rn != 1 || gn != 1 || bn != 1) {
 		data->valid = 0;
 		bu_free(rgb, "free rgb");
+		return 1;
 	    } else {
 		data->user_data = (void *)rgb;
+		return 3;
 	    }
 	} else {
+	    /* Not valid with 1 and don't have 3 - we require at least one, so
+	     * claim one argv as belonging to this option regardless. */
 	    data->valid = 0;
 	    bu_free(rgb, "free rgb");
+	    return 1;
 	}
     } else {
-	/* yep - if we've got more args, tell the option parser we don't need them */
+	/* yep, 1 did the job */
 	data->user_data = (void *)rgb;
-	if (data->argc > 1) return 1 - data->argc;
+	return 1;
     }
 
-    return 0;
+    return 1;
 }
 
 void

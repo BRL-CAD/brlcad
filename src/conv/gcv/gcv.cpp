@@ -226,12 +226,12 @@ file_stat(struct bu_vls *UNUSED(msg), struct bu_opt_data *data)
     if (!data) return 0;
     if (!data->argv || data->argc == 0) {
 	data->valid = 0;
-	return 0;
+	return 1;
     }
     if (!bu_file_exists(data->argv[0], NULL)){
 	data->valid = 0;
     }
-    return 0;
+    return 1;
 }
 
     int
@@ -240,13 +240,13 @@ file_null(struct bu_vls *msg, struct bu_opt_data *data)
     if (!data) return 0;
     if (!data->argv || data->argc == 0) {
 	data->valid = 0;
-	return 0;
+	return 1;
     }
     if (bu_file_exists(data->argv[0], NULL)){
 	data->valid = 0;
 	if (msg) bu_vls_sprintf(msg, "Error - file %s already exists!\n", data->argv[0]);
     }
-    return 0;
+    return 1;
 }
 
 int
@@ -257,15 +257,15 @@ model_mime(struct bu_vls *UNUSED(msg), struct bu_opt_data *data)
     if (!data) return 0;
     if (!data->argv || data->argc == 0) {
 	data->valid = 0;
-	return 0;
+	return 1;
     }
     type_int = bu_file_mime(data->argv[0], MIME_MODEL);
     type = (type_int < 0) ? MIME_MODEL_UNKNOWN : (mime_model_t)type_int;
     if (type == MIME_MODEL_UNKNOWN) {
 	data->valid = 0;
-	return 0;
+	return 1;
     }
-    return 0;
+    return 1;
 }
 
 

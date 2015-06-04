@@ -141,7 +141,7 @@ bu_opt_find(const char *name, struct bu_ptbl *opts)
 	if (!name && !opt->name) return opt;
 	if (!opt->name) continue;
 	if (!opt->desc) continue;
-	if (BU_STR_EQUAL(opt->desc->shortopt, name) || BU_STR_EQUAL(opt->desc->longopt, name)) {
+	if ((name && BU_STR_EQUAL(opt->desc->shortopt, name)) || (name && BU_STR_EQUAL(opt->desc->longopt, name))) {
 	    /* option culling guarantees us one "winner" if multiple instances
 	     * of an option were originally supplied, so if we find a match we
 	     * have found what we wanted.  Now, just need to check validity */
@@ -302,7 +302,6 @@ bu_opt_describe(struct bu_opt_desc *ds, struct bu_opt_desc_opts *settings)
     return NULL;
 }
 
-
 HIDDEN char *
 opt_process(char **eq_arg, const char *opt_candidate)
 {
@@ -425,16 +424,14 @@ bu_opt_validate(struct bu_ptbl *opts)
 }
 
 
-/* This implements criteria for deciding when an argv string is
+/* This implements naive criteria for deciding when an argv string is
  * an option.  Right now the criteria are:
  *
  * 1.  Must have a '-' char as first character
  * 2.  Must not have white space characters present in the string.
- * 3.  Must be an option in ds.
- * 4.  Must not be a valid numerical argument to an option expecting a number.
  */
 HIDDEN int
-is_opt(const char *opt, struct bu_opt_desc *UNUSED(ds)) {
+can_be_opt(const char *opt) {
     size_t i = 0;
     if (!opt) return 0;
     if (!strlen(opt)) return 0;
@@ -486,19 +483,25 @@ bu_opt_parse(struct bu_ptbl **tbl, struct bu_vls *UNUSED(msgs), int argc, const 
 	struct bu_opt_data *data = NULL;
 	struct bu_opt_desc *desc = NULL;
 	struct bu_ptbl data_args = BU_PTBL_INIT_ZERO;
-	/* If 'opt' isn't an option, make a container for non-option values and build it up until
-	 * we reach an option */
-	if (!is_opt(argv[i], ds)) {
+	/* If argv[i] isn't an option, stick the argv entry (and any
+	 * immediately following non-option entries) into the
+	 * unknown args table */
+	if (!can_be_opt(argv[i])) {
 	    ns = bu_strdup(argv[i]);
 	    bu_ptbl_ins(&unknown_args, (long *)ns);
 	    i++;
-	    while (i < argc && !is_opt(argv[i], ds)) {
+	    while (i < argc && !can_be_opt(argv[i])) {
 		ns = bu_strdup(argv[i]);
 		bu_ptbl_ins(&unknown_args, (long *)ns);
 		i++;
 	    }
 	    continue;
 	}
+
+	/* Now we're past the easy case, and whether something is an
+	 * option or an argument depends on context. argv[i] is at least
+	 * a possibility for a valid option, so the first order of business
+	 * is to determine if it is one. */
 
 	/* It may be that an = has been used instead of a space.  Handle that, and
 	 * strip leading '-' characters.  Also, short-opt options may not have a
@@ -518,20 +521,17 @@ bu_opt_parse(struct bu_ptbl **tbl, struct bu_vls *UNUSED(msgs), int argc, const 
 
 	/* If we don't know what we're dealing with, keep going */
 	if (!desc_found) {
-	    struct bu_vls rebuilt_opt = BU_VLS_INIT_ZERO;
-	    if (strlen(opt) == 1) {
-		bu_vls_sprintf(&rebuilt_opt, "-%s", opt);
-	    } else {
-		bu_vls_sprintf(&rebuilt_opt, "--%s", opt);
-	    }
-	    bu_ptbl_ins(&unknown_args, (long *)bu_strdup(bu_vls_addr(&rebuilt_opt)));
-	    bu_free(opt, "free opt");
-	    bu_vls_free(&rebuilt_opt);
-	    if (eq_arg)
-		bu_ptbl_ins(&unknown_args, (long *)eq_arg);
+	    /* Since the equals sign is regarded as forcing an argument
+	     * to map to a particular option (and is an error if that
+	     * option isn't supposed to have arguments) we pass along
+	     * the original option intact. */
+	    ns = bu_strdup(argv[i]);
+	    bu_ptbl_ins(&unknown_args, (long *)ns);
 	    i++;
 	    continue;
 	}
+
+	/* We've got a description of the option.  Now the real work begins. */
 
 	/* Initialize with opt */
 	bu_opt_data_init_entry(&data, opt);
@@ -550,49 +550,61 @@ bu_opt_parse(struct bu_ptbl **tbl, struct bu_vls *UNUSED(msgs), int argc, const 
 
 	/* If we're looking for args, do so */
 	if (desc->arg_cnt_max > 0) {
-	    while (arg_cnt < desc->arg_cnt_max && i < argc && !is_opt(argv[i], ds)) {
-		ns = bu_strdup(argv[i]);
-		bu_ptbl_ins(&data_args, (long *)ns);
-		i++;
-		arg_cnt++;
-	    }
-	    if (arg_cnt < desc->arg_cnt_min) {
-		data->valid = 0;
-	    }
-	}
-
-	/* Now see if we need to validate the arg(s) */
-	if (desc->arg_process) {
-	    int arg_offset;
-	    data->argc = ptbl_to_argv(&(data->argv), &data_args);
-	    arg_offset = (*desc->arg_process)(NULL, data);
-	    if (arg_offset < 0) {
-		/* arg(s) present but not associated with opt, back them out of data
-		 *
-		 * test example for this - color option
-		 *
-		 * --color 200/30/10 input output  (1 arg to color, 3 args total)
-		 * --color 200 30 10 input output  (3 args to color, 5 total)
-		 *
-		 *  to handle the color case, need to process all three in first case,
-		 *  recognize that first one is sufficient, and release the latter two.
-		 *  for the second case all three are necessary
-		 *
-		 * */
-		int len = BU_PTBL_LEN(&data_args);
-		int j = 0;
-		i = i + arg_offset;
-		while (j > arg_offset) {
-		    bu_free((void *)BU_PTBL_GET(&data_args, len + j - 1), "free str");
-		    j--;
+	    /* If we might have args and we have a validator function,
+	     * construct the greediest possible iterpretation of the option
+	     * description and run the validator to determine the number of
+	     * argv entries associated with this option (can_be_opt is not
+	     * enough if the option is number based, since -9 may be both a
+	     * valid option and a valid argument - the validator must make the
+	     * decision.  If we do not have a validator, the best we can do
+	     * is the can_be_opt test as a terminating trigger. */
+	    if (desc->arg_process) {
+		/* Construct the greedy interpretation of the bu_opt_data argv */
+		int k = 0;
+		int arg_offset = 0;
+		int g_argc = desc->arg_cnt_max;
+		const char **g_argv = (const char **)bu_calloc(g_argc + arg_cnt + 1, sizeof(char *), "greedy argv");
+		if (!g_argc && arg_cnt) g_argc = arg_cnt;
+		if (i != argc) {
+		    if (arg_cnt)
+			g_argv[0] = eq_arg;
+		    for (k = arg_cnt; k < g_argc; k++) {
+			g_argv[k] = argv[i + k];
+		    }
+		    data->argc = g_argc;
+		    data->argv = g_argv;
+		    arg_offset = (*desc->arg_process)(NULL, data);
+		    i = i + arg_offset - arg_cnt;
+		    if (!arg_offset && arg_cnt) arg_offset = arg_cnt;
+		    /* If we used 1 or more args, construct the final argv array that will
+		     * be assigned to the bu_opt_data container */
+		    if (arg_offset > 0) {
+			data->argc = arg_offset;
+			data->argv = (const char **)bu_calloc(arg_offset + 1, sizeof(char *), "final array");
+			if (arg_cnt) data->argv[0] = eq_arg;
+			for (k = arg_cnt; k < arg_offset; k++) {
+			    data->argv[k] = bu_strdup(g_argv[k - arg_cnt]);
+			}
+		    }
+		} else {
+		    /* Need args, but have none - invalid */
+		    data->valid = 0;
+		    data->argc = 0;
+		    data->argv = NULL;
 		}
-		bu_ptbl_trunc(&data_args, len + arg_offset);
-		bu_opt_free_argv(data->argc, (char **)data->argv);
-		data->argv = NULL;
+		bu_free(g_argv, "free greedy argv");
+	    } else {
+		while (arg_cnt < desc->arg_cnt_max && i < argc && !can_be_opt(argv[i])) {
+		    ns = bu_strdup(argv[i]);
+		    bu_ptbl_ins(&data_args, (long *)ns);
+		    i++;
+		    arg_cnt++;
+		}
+		if (arg_cnt < desc->arg_cnt_min) {
+		    data->valid = 0;
+		}
+		data->argc = ptbl_to_argv(&(data->argv), &data_args);
 	    }
-	}
-	if (!data->argv) {
-	    data->argc = ptbl_to_argv(&(data->argv), &data_args);
 	}
 	bu_ptbl_free(&data_args);
 	bu_ptbl_ins(opt_data, (long *)data);
@@ -605,7 +617,6 @@ bu_opt_parse(struct bu_ptbl **tbl, struct bu_vls *UNUSED(msgs), int argc, const 
 	bu_ptbl_free(&unknown_args);
 	bu_ptbl_ins(opt_data, (long *)unknown);
     }
-
 
     (*tbl) = opt_data;
     return 0;
