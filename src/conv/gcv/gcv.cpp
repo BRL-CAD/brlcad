@@ -290,8 +290,10 @@ main(int ac, char **av)
     size_t i;
     int fmt = 0;
     int ret = 0;
+    int uac = 0;
     const char *in_fmt = NULL;
     const char *out_fmt = NULL;
+    const char **uav = NULL;
     mime_model_t in_type = MIME_MODEL_UNKNOWN;
     mime_model_t out_type = MIME_MODEL_UNKNOWN;
     struct bu_vls in_format = BU_VLS_INIT_ZERO;
@@ -367,21 +369,20 @@ main(int ac, char **av)
 
     /* If not specified explicitly with -i or -o, the input and output paths must always
      * be the last two arguments supplied */
-    d = bu_opt_find(NULL, results);
-    if (d) {
-	if (d->argv && d->argc > 1)
-	    bu_vls_sprintf(&in_path_raw, "%s", d->argv[d->argc - 2]);
-	if (d->argv && d->argc > 0)
-	    bu_vls_sprintf(&out_path_raw, "%s", d->argv[d->argc - 1]);
-    }
+    uac = BU_OPT_UNUSED_ARGC(results);
+    uav = BU_OPT_UNUSED_ARGV(results);
+    if (uav && uac > 1)
+	bu_vls_sprintf(&in_path_raw, "%s", uav[uac - 2]);
+    if (uav && uac > 0)
+	bu_vls_sprintf(&out_path_raw, "%s", uav[uac - 1]);
 
     /* Any unknown strings not otherwise processed are passed to both input and output.
      * These are deliberately placed at the beginning of the input strings, so any
      * input/output specific options have a chance to override them. */
-    if (d && d->argc > 2) {
-	for (i = 0; i < (size_t)d->argc - 2; i++) {
-	    bu_vls_printf(&input_opts, " %s ", d->argv[i]);
-	    bu_vls_printf(&output_opts, " %s ", d->argv[i]);
+    if (uac > 2) {
+	for (i = 0; i < (size_t)uac - 2; i++) {
+	    bu_vls_printf(&input_opts, " %s ", uav[i]);
+	    bu_vls_printf(&output_opts, " %s ", uav[i]);
 	}
 	if (bu_vls_strlen(&input_opts) > 0) bu_log("Unknown options (input): %s\n", bu_vls_addr(&input_opts));
 	if (bu_vls_strlen(&output_opts) > 0) bu_log("Unknown options (output): %s\n", bu_vls_addr(&output_opts));

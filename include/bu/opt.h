@@ -126,9 +126,14 @@ BU_EXPORT extern void bu_opt_data_print(bu_opt_data_t *data, const char *title);
  * Find and return a specific option from a bu_opt_data_t of options using an option
  * string as the lookup key.  Will only return an option if its valid entry
  * is set to 1. A NULL value passed in for name retrieves the bu_opt_data struct with the
- * unknown entries stored in its args table.
+ * unused entries stored in its args list.
  */
 BU_EXPORT extern struct bu_opt_data *bu_opt_find(const char *name, bu_opt_data_t *results);
+
+/** Convenience wrapper for reporting the count of unused argv entries */
+#define BU_OPT_UNUSED_ARGC(_results) (_results && bu_opt_find(NULL, _results) != NULL) ? bu_opt_find(NULL, _results)->argc : 0
+/** Convenience wrapper for retrieving the unused entries argv array */
+#define BU_OPT_UNUSED_ARGV(_results) (_results && bu_opt_find(NULL, _results) != NULL) ? bu_opt_find(NULL, _results)->argv : NULL
 
 /**
  * Parse argv array using option descs.
