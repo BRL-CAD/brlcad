@@ -2540,7 +2540,7 @@ extend_curve_end_to_pt(ON_Curve *&curve, ON_3dPoint pt, double tol)
 HIDDEN ON_Curve *
 link_curves(ON_Curve *&c1, ON_Curve *&c2)
 {
-    extend_curve_end_to_pt(c1, c2->PointAtEnd(), ON_ZERO_TOLERANCE);
+    extend_curve_end_to_pt(c1, c2->PointAtStart(), ON_ZERO_TOLERANCE);
 
     ON_NurbsCurve *nc1 = c1->NurbsCurve();
     ON_NurbsCurve *nc2 = c2->NurbsCurve();
