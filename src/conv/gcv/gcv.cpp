@@ -242,7 +242,7 @@ file_null(struct bu_vls *msg, struct bu_opt_data *data)
 	data->valid = 0;
 	return 0;
     }
-    if (!bu_file_exists(data->argv[0], NULL)){
+    if (bu_file_exists(data->argv[0], NULL)){
 	data->valid = 0;
 	if (msg) bu_vls_sprintf(msg, "Error - file %s already exists!\n", data->argv[0]);
     }
@@ -291,6 +291,8 @@ main(int ac, char **av)
     int fmt = 0;
     int ret = 0;
     int uac = 0;
+    int skip_in = 0;
+    int skip_out = 0;
     const char *in_fmt = NULL;
     const char *out_fmt = NULL;
     const char **uav = NULL;
@@ -363,24 +365,47 @@ main(int ac, char **av)
 
     /* Did we get explicit options for an input and/or output file? */
     d = bu_opt_find("i", results);
-    if (d) bu_vls_sprintf(&in_path_raw, "%s", d->argv[0]);
+    if (d) {
+	bu_vls_sprintf(&in_path_raw, "%s", d->argv[0]);
+	skip_in++;
+    }
     d = bu_opt_find("o", results);
-    if (d) bu_vls_sprintf(&out_path_raw, "%s", d->argv[0]);
+    if (d) {
+	bu_vls_sprintf(&out_path_raw, "%s", d->argv[0]);
+	skip_out++;
+    }
 
     /* If not specified explicitly with -i or -o, the input and output paths must always
      * be the last two arguments supplied */
     uac = BU_OPT_UNUSED_ARGC(results);
     uav = BU_OPT_UNUSED_ARGV(results);
-    if (uav && uac > 1)
-	bu_vls_sprintf(&in_path_raw, "%s", uav[uac - 2]);
-    if (uav && uac > 0)
-	bu_vls_sprintf(&out_path_raw, "%s", uav[uac - 1]);
+    if (uav && uac > 0 && !(skip_in && skip_out)) {
+	if (skip_in && !skip_out) {
+	    bu_vls_sprintf(&out_path_raw, "%s", uav[uac - 1]);
+	    uac--;
+	}
+	if (!skip_in && skip_out) {
+	    bu_vls_sprintf(&in_path_raw, "%s", uav[uac - 1]);
+	    uac--;
+	}
+	if (!skip_in && !skip_out) {
+	    if (uac > 1) {
+		bu_vls_sprintf(&in_path_raw, "%s", uav[uac - 2]);
+		uac--;
+		bu_vls_sprintf(&out_path_raw, "%s", uav[uac - 1]);
+		uac--;
+	    } else {
+		bu_vls_sprintf(&in_path_raw, "%s", uav[uac - 1]);
+		uac--;
+	    }
+	}
+    }
 
     /* Any unknown strings not otherwise processed are passed to both input and output.
      * These are deliberately placed at the beginning of the input strings, so any
      * input/output specific options have a chance to override them. */
-    if (uac > 2) {
-	for (i = 0; i < (size_t)uac - 2; i++) {
+    if (uac) {
+	for (i = 0; i < (size_t)uac; i++) {
 	    bu_vls_printf(&input_opts, " %s ", uav[i]);
 	    bu_vls_printf(&output_opts, " %s ", uav[i]);
 	}
