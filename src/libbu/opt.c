@@ -39,8 +39,21 @@ bu_opt_data_init_entry(struct bu_opt_data **d, const char *name)
     (*d)->desc = NULL;
     (*d)->valid = 1;
     (*d)->name = name;
-    (*d)->args = NULL;
+    (*d)->argc = 0;
+    (*d)->argv = NULL;
     (*d)->user_data = NULL;
+}
+
+HIDDEN void
+bu_opt_free_argv(int ac, char **av)
+{
+    if (av) {
+	int i = 0;
+	for (i = 0; i < ac; i++) {
+	    bu_free((char *)av[i], "free argv[i]");
+	}
+	bu_free((char *)av, "free argv");
+    }
 }
 
 HIDDEN void
@@ -49,15 +62,7 @@ bu_opt_data_free_entry(struct bu_opt_data *d)
     if (!d) return;
     if (d->name) bu_free((char *)d->name, "free data name");
     if (d->user_data) bu_free(d->user_data, "free user data");
-    if (d->args) {
-	size_t i;
-	for (i = 0; i < BU_PTBL_LEN(d->args); i++) {
-	    char *arg = (char *)BU_PTBL_GET(d->args, i);
-	    bu_free(arg, "free arg");
-	}
-	bu_ptbl_free(d->args);
-	BU_PUT(d->args, struct bu_ptbl);
-    }
+    bu_opt_free_argv(d->argc, (char **)d->argv);
 }
 
 
@@ -74,24 +79,11 @@ bu_opt_data_free(struct bu_ptbl *tbl)
     BU_PUT(tbl, struct bu_ptbl);
 }
 
-
-
-const char *
-bu_opt_data_arg(struct bu_opt_data *d, size_t ind)
-{
-    if (!d) return NULL;
-    if (d->args) {
-	if (ind > (BU_PTBL_LEN(d->args) - 1)) return NULL;
-	return (const char *)BU_PTBL_GET(d->args, ind);
-    }
-    return NULL;
-}
-
 void
 bu_opt_data_print(struct bu_ptbl *data, const char *title)
 {
     size_t i = 0;
-    size_t j = 0;
+    int j = 0;
     int offset_1 = 3;
     struct bu_vls log = BU_VLS_INIT_ZERO;
     if (!data || BU_PTBL_LEN(data) == 0) return;
@@ -110,12 +102,12 @@ bu_opt_data_print(struct bu_ptbl *data, const char *title)
 		bu_vls_printf(&log, "\t(invalid)");
 	    }
 	    if (d->desc && d->desc->arg_cnt_max > 0) {
-		if (d->args && BU_PTBL_LEN(d->args) > 0) {
+		if (d->argc > 0 && d->argv) {
 		    bu_vls_printf(&log, ": ");
-		    for (j = 0; j < BU_PTBL_LEN(d->args) - 1; j++) {
-			bu_vls_printf(&log, "%s, ", bu_opt_data_arg(d, j));
+		    for (j = 0; j < d->argc - 1; j++) {
+			bu_vls_printf(&log, "%s, ", d->argv[j]);
 		    }
-		    bu_vls_printf(&log, "%s\n", bu_opt_data_arg(d, BU_PTBL_LEN(d->args) - 1));
+		    bu_vls_printf(&log, "%s\n", d->argv[d->argc - 1]);
 		} else {
 		    bu_vls_printf(&log, "\n");
 		}
@@ -124,11 +116,11 @@ bu_opt_data_print(struct bu_ptbl *data, const char *title)
 	    }
 	} else {
 	    bu_vls_printf(&log, "%*s(unknown): ", offset_1, " ", d->name);
-	    if (d->args && BU_PTBL_LEN(d->args) > 0) {
-		for (j = 0; j < BU_PTBL_LEN(d->args) - 1; j++) {
-		    bu_vls_printf(&log, "%s ", bu_opt_data_arg(d, j));
+	    if (d->argc > 0 && d->argv) {
+		for (j = 0; j < d->argc - 1; j++) {
+		    bu_vls_printf(&log, "%s ", d->argv[j]);
 		}
-		bu_vls_printf(&log, "%s\n", bu_opt_data_arg(d, BU_PTBL_LEN(d->args) - 1));
+		bu_vls_printf(&log, "%s\n", d->argv[d->argc-1]);
 	    }
 	}
     }
@@ -453,6 +445,21 @@ is_opt(const char *opt, struct bu_opt_desc *UNUSED(ds)) {
     return 1;
 }
 
+HIDDEN int
+ptbl_to_argv(const char ***argv, struct bu_ptbl *tbl) {
+    int i;
+    const char **av;
+    int ac;
+    if (!argv || !tbl || BU_PTBL_LEN(tbl) == 0) return 0;
+    ac = BU_PTBL_LEN(tbl);
+    av = (const char **)bu_calloc(ac, sizeof(char *), "argv");
+    for (i = 0; i < ac; i++) {
+	av[i] = (const char *)BU_PTBL_GET(tbl, i);
+    }
+    (*argv) = av;
+    return ac;
+}
+
 int
 bu_opt_parse(struct bu_ptbl **tbl, struct bu_vls *UNUSED(msgs), int argc, const char **argv, struct bu_opt_desc *ds)
 {
@@ -460,7 +467,8 @@ bu_opt_parse(struct bu_ptbl **tbl, struct bu_vls *UNUSED(msgs), int argc, const 
     int offset = 0;
     const char *ns = NULL;
     struct bu_ptbl *opt_data;
-    struct bu_opt_data *unknowns = NULL;
+    struct bu_ptbl unknown_args = BU_PTBL_INIT_ZERO;
+    struct bu_opt_data *unknown = NULL;
     if (!argv || !ds) return 1;
 
     BU_GET(opt_data, struct bu_ptbl);
@@ -475,20 +483,16 @@ bu_opt_parse(struct bu_ptbl **tbl, struct bu_vls *UNUSED(msgs), int argc, const 
 	char *eq_arg = NULL;
 	struct bu_opt_data *data = NULL;
 	struct bu_opt_desc *desc = NULL;
+	struct bu_ptbl data_args = BU_PTBL_INIT_ZERO;
 	/* If 'opt' isn't an option, make a container for non-option values and build it up until
 	 * we reach an option */
 	if (!is_opt(argv[i], ds)) {
-	    if (!unknowns) {
-		bu_opt_data_init_entry(&unknowns, NULL);
-		BU_GET(unknowns->args, struct bu_ptbl);
-		bu_ptbl_init(unknowns->args, 8, "args init");
-	    }
 	    ns = bu_strdup(argv[i]);
-	    bu_ptbl_ins(unknowns->args, (long *)ns);
+	    bu_ptbl_ins(&unknown_args, (long *)ns);
 	    i++;
 	    while (i < argc && !is_opt(argv[i], ds)) {
 		ns = bu_strdup(argv[i]);
-		bu_ptbl_ins(unknowns->args, (long *)ns);
+		bu_ptbl_ins(&unknown_args, (long *)ns);
 		i++;
 	    }
 	    continue;
@@ -513,21 +517,16 @@ bu_opt_parse(struct bu_ptbl **tbl, struct bu_vls *UNUSED(msgs), int argc, const 
 	/* If we don't know what we're dealing with, keep going */
 	if (!desc_found) {
 	    struct bu_vls rebuilt_opt = BU_VLS_INIT_ZERO;
-	    if (!unknowns) {
-		bu_opt_data_init_entry(&unknowns, NULL);
-		BU_GET(unknowns->args, struct bu_ptbl);
-		bu_ptbl_init(unknowns->args, 8, "args init");
-	    }
 	    if (strlen(opt) == 1) {
 		bu_vls_sprintf(&rebuilt_opt, "-%s", opt);
 	    } else {
 		bu_vls_sprintf(&rebuilt_opt, "--%s", opt);
 	    }
-	    bu_ptbl_ins(unknowns->args, (long *)bu_strdup(bu_vls_addr(&rebuilt_opt)));
+	    bu_ptbl_ins(&unknown_args, (long *)bu_strdup(bu_vls_addr(&rebuilt_opt)));
 	    bu_free(opt, "free opt");
 	    bu_vls_free(&rebuilt_opt);
 	    if (eq_arg)
-		bu_ptbl_ins(unknowns->args, (long *)eq_arg);
+		bu_ptbl_ins(&unknown_args, (long *)eq_arg);
 	    i++;
 	    continue;
 	}
@@ -536,10 +535,7 @@ bu_opt_parse(struct bu_ptbl **tbl, struct bu_vls *UNUSED(msgs), int argc, const 
 	bu_opt_data_init_entry(&data, opt);
 	data->desc = desc;
 	if (eq_arg) {
-	    /* Okay, we actually need it - initialize the arg table */
-	    BU_GET(data->args, struct bu_ptbl);
-	    bu_ptbl_init(data->args, 8, "args init");
-	    bu_ptbl_ins(data->args, (long *)eq_arg);
+	    bu_ptbl_ins(&data_args, (long *)eq_arg);
 	    arg_cnt = 1;
 	}
 
@@ -554,12 +550,7 @@ bu_opt_parse(struct bu_ptbl **tbl, struct bu_vls *UNUSED(msgs), int argc, const 
 	if (desc->arg_cnt_max > 0) {
 	    while (arg_cnt < desc->arg_cnt_max && i < argc && !is_opt(argv[i], ds)) {
 		ns = bu_strdup(argv[i]);
-		if (!data->args) {
-		    /* Okay, we actually need it - initialize the arg table */
-		    BU_GET(data->args, struct bu_ptbl);
-		    bu_ptbl_init(data->args, 8, "args init");
-		}
-		bu_ptbl_ins(data->args, (long *)ns);
+		bu_ptbl_ins(&data_args, (long *)ns);
 		i++;
 		arg_cnt++;
 	    }
@@ -570,7 +561,9 @@ bu_opt_parse(struct bu_ptbl **tbl, struct bu_vls *UNUSED(msgs), int argc, const 
 
 	/* Now see if we need to validate the arg(s) */
 	if (desc->arg_process) {
-	    int arg_offset = (*desc->arg_process)(NULL, data);
+	    int arg_offset;
+	    data->argc = ptbl_to_argv(&(data->argv), &data_args);
+	    arg_offset = (*desc->arg_process)(NULL, data);
 	    if (arg_offset < 0) {
 		/* arg(s) present but not associated with opt, back them out of data
 		 *
@@ -584,19 +577,33 @@ bu_opt_parse(struct bu_ptbl **tbl, struct bu_vls *UNUSED(msgs), int argc, const 
 		 *  for the second case all three are necessary
 		 *
 		 * */
-		int len = BU_PTBL_LEN(data->args);
+		int len = BU_PTBL_LEN(&data_args);
 		int j = 0;
 		i = i + arg_offset;
 		while (j > arg_offset) {
-		    bu_free((void *)BU_PTBL_GET(data->args, len + j - 1), "free str");
+		    bu_free((void *)BU_PTBL_GET(&data_args, len + j - 1), "free str");
 		    j--;
 		}
-		bu_ptbl_trunc(data->args, len + arg_offset);
+		bu_ptbl_trunc(&data_args, len + arg_offset);
+		bu_opt_free_argv(data->argc, (char **)data->argv);
+		data->argv = NULL;
 	    }
 	}
+	if (!data->argv) {
+	    data->argc = ptbl_to_argv(&(data->argv), &data_args);
+	}
+	bu_ptbl_free(&data_args);
 	bu_ptbl_ins(opt_data, (long *)data);
     }
-    if (unknowns) bu_ptbl_ins(opt_data, (long *)unknowns);
+
+    /* Make an argv array and data entry for the unknown, if any */
+    if (BU_PTBL_LEN(&unknown_args) > 0){
+	bu_opt_data_init_entry(&unknown, NULL);
+	unknown->argc = ptbl_to_argv(&(unknown->argv), &unknown_args);
+	bu_ptbl_free(&unknown_args);
+	bu_ptbl_ins(opt_data, (long *)unknown);
+    }
+
 
     (*tbl) = opt_data;
     return 0;

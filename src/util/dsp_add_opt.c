@@ -214,14 +214,14 @@ main(int ac, char *av[])
     results = parse_args(ac, av);
     non_opts = bu_opt_find(NULL, results);
 
-    if (!non_opts->args || BU_PTBL_LEN(non_opts->args) < 2) {
+    if (!non_opts->argv || non_opts->argc < 2) {
 	bu_log("Error: No files specified\n");
 	print_usage();
     }
 
     /* Open the files */
-    f1 = bu_opt_data_arg(non_opts, 0);
-    f2 = bu_opt_data_arg(non_opts, 1);
+    f1 = non_opts->argv[0];
+    f2 = non_opts->argv[1];
 
     in1 = fopen(f1, "r");
     if (!in1) {

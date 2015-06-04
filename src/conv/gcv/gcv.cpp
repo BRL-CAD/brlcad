@@ -75,7 +75,7 @@ void stl_arg_process(const char *args) {
     bu_opt_validate(results);
     d = bu_opt_find("u", results);
     if (d) {
-	bu_log("STL opt found: %s:%s\n", d->name, bu_opt_data_arg(d, 0));
+	bu_log("STL opt found: %s:%s\n", d->name, d->argv[0]);
     }
 
     bu_opt_data_print(results, "STL option parsing results:");
@@ -224,11 +224,11 @@ int
 file_stat(struct bu_vls *UNUSED(msg), struct bu_opt_data *data)
 {
     if (!data) return 0;
-    if (!data->args) {
+    if (!data->argv || data->argc == 0) {
 	data->valid = 0;
 	return 0;
     }
-    if (!bu_file_exists(bu_opt_data_arg(data, 0), NULL)){
+    if (!bu_file_exists(data->argv[0], NULL)){
 	data->valid = 0;
     }
     return 0;
@@ -238,13 +238,13 @@ file_stat(struct bu_vls *UNUSED(msg), struct bu_opt_data *data)
 file_null(struct bu_vls *msg, struct bu_opt_data *data)
 {
     if (!data) return 0;
-    if (!data->args) {
+    if (!data->argv || data->argc == 0) {
 	data->valid = 0;
 	return 0;
     }
-    if (!bu_file_exists(bu_opt_data_arg(data, 0), NULL)){
+    if (!bu_file_exists(data->argv[0], NULL)){
 	data->valid = 0;
-	if (msg) bu_vls_sprintf(msg, "Error - file %s already exists!\n", bu_opt_data_arg(data, 0));
+	if (msg) bu_vls_sprintf(msg, "Error - file %s already exists!\n", data->argv[0]);
     }
     return 0;
 }
@@ -255,11 +255,11 @@ model_mime(struct bu_vls *UNUSED(msg), struct bu_opt_data *data)
     int type_int;
     mime_model_t type = MIME_MODEL_UNKNOWN;
     if (!data) return 0;
-    if (!data->args) {
+    if (!data->argv || data->argc == 0) {
 	data->valid = 0;
 	return 0;
     }
-    type_int = bu_file_mime(bu_opt_data_arg(data, 0), MIME_MODEL);
+    type_int = bu_file_mime(data->argv[0], MIME_MODEL);
     type = (type_int < 0) ? MIME_MODEL_UNKNOWN : (mime_model_t)type_int;
     if (type == MIME_MODEL_UNKNOWN) {
 	data->valid = 0;
@@ -304,7 +304,6 @@ main(int ac, char **av)
     struct bu_vls input_opts = BU_VLS_INIT_ZERO;
     struct bu_vls output_opts = BU_VLS_INIT_ZERO;
     struct bu_opt_data *d = NULL;
-    struct bu_ptbl *unknown_tbl = NULL;
     bu_opt_data_t *results = NULL;
 
     ac-=(ac>0); av+=(ac>0); // skip program name argv[0] if present
@@ -323,7 +322,7 @@ main(int ac, char **av)
     /* First, see if help was supplied */
     d = bu_opt_find("h", results);
     if (d) {
-	const char *help_fmt = bu_opt_data_arg(d, 0);
+	const char *help_fmt = d->argv[0];
 	if (help_fmt) {
 	    // TODO - generate some help based on format
 	} else {
@@ -362,28 +361,27 @@ main(int ac, char **av)
 
     /* Did we get explicit options for an input and/or output file? */
     d = bu_opt_find("i", results);
-    if (d) bu_vls_sprintf(&in_path_raw, "%s", bu_opt_data_arg(d, 0));
+    if (d) bu_vls_sprintf(&in_path_raw, "%s", d->argv[0]);
     d = bu_opt_find("o", results);
-    if (d) bu_vls_sprintf(&out_path_raw, "%s", bu_opt_data_arg(d, 0));
+    if (d) bu_vls_sprintf(&out_path_raw, "%s", d->argv[0]);
 
     /* If not specified explicitly with -i or -o, the input and output paths must always
      * be the last two arguments supplied */
     d = bu_opt_find(NULL, results);
     if (d) {
-	unknown_tbl = d->args;
-	if (unknown_tbl && BU_PTBL_LEN(unknown_tbl) > 1)
-	    bu_vls_sprintf(&in_path_raw, "%s", (const char *)BU_PTBL_GET(unknown_tbl, BU_PTBL_LEN(unknown_tbl) - 2));
-	if (unknown_tbl && BU_PTBL_LEN(unknown_tbl) > 0)
-	    bu_vls_sprintf(&out_path_raw, "%s", (const char *)BU_PTBL_GET(unknown_tbl, BU_PTBL_LEN(unknown_tbl) - 1));
+	if (d->argv && d->argc > 1)
+	    bu_vls_sprintf(&in_path_raw, "%s", d->argv[d->argc - 2]);
+	if (d->argv && d->argc > 0)
+	    bu_vls_sprintf(&out_path_raw, "%s", d->argv[d->argc - 1]);
     }
 
     /* Any unknown strings not otherwise processed are passed to both input and output.
      * These are deliberately placed at the beginning of the input strings, so any
      * input/output specific options have a chance to override them. */
-    if (unknown_tbl && BU_PTBL_LEN(unknown_tbl) > 2) {
-	for (i = 0; i < BU_PTBL_LEN(unknown_tbl) - 2; i++) {
-	    bu_vls_printf(&input_opts, " %s ", (const char *)BU_PTBL_GET(unknown_tbl, i));
-	    bu_vls_printf(&output_opts, " %s ", (const char *)BU_PTBL_GET(unknown_tbl, i));
+    if (d && d->argc > 2) {
+	for (i = 0; i < (size_t)d->argc - 2; i++) {
+	    bu_vls_printf(&input_opts, " %s ", d->argv[i]);
+	    bu_vls_printf(&output_opts, " %s ", d->argv[i]);
 	}
 	if (bu_vls_strlen(&input_opts) > 0) bu_log("Unknown options (input): %s\n", bu_vls_addr(&input_opts));
 	if (bu_vls_strlen(&output_opts) > 0) bu_log("Unknown options (output): %s\n", bu_vls_addr(&output_opts));
@@ -393,7 +391,7 @@ main(int ac, char **av)
     d = bu_opt_find("I", results);
     if (d) {
 	struct bu_vls o_tmp = BU_VLS_INIT_ZERO;
-	bu_vls_sprintf(&o_tmp, "%s", bu_opt_data_arg(d, 0));
+	bu_vls_sprintf(&o_tmp, "%s", d->argv[0]);
 	if (bu_vls_addr(&o_tmp)[0] == '[') bu_vls_nibble(&o_tmp, 1);
 	if (bu_vls_addr(&o_tmp)[strlen(bu_vls_addr(&o_tmp)) - 1] == ']') bu_vls_trunc(&o_tmp, -1);
 	bu_vls_printf(&input_opts, "%s", bu_vls_addr(&o_tmp));
@@ -403,7 +401,7 @@ main(int ac, char **av)
     d = bu_opt_find("O", results);
     if (d) {
 	struct bu_vls o_tmp = BU_VLS_INIT_ZERO;
-	bu_vls_sprintf(&o_tmp, "%s", bu_opt_data_arg(d, 0));
+	bu_vls_sprintf(&o_tmp, "%s", d->argv[0]);
 	if (bu_vls_addr(&o_tmp)[0] == '[') bu_vls_nibble(&o_tmp, 1);
 	if (bu_vls_addr(&o_tmp)[strlen(bu_vls_addr(&o_tmp)) - 1] == ']') bu_vls_trunc(&o_tmp, -1);
 	bu_vls_printf(&output_opts, "%s", bu_vls_addr(&o_tmp));
@@ -441,7 +439,7 @@ main(int ac, char **av)
     /* If we have input and/or output specific options, append them now */
     d = bu_opt_find("input-format", results);
     if (d) {
-	in_fmt = bu_opt_data_arg(d, 0);
+	in_fmt = d->argv[0];
     } else {
 	/* If we aren't overridden by an option, it's worth doing file
 	 * introspection to see if the file contents identify the input
@@ -456,7 +454,7 @@ main(int ac, char **av)
 
     /* Identify output file type */
     d = bu_opt_find("output-format", results);
-    if (d) out_fmt = bu_opt_data_arg(d, 0);
+    if (d) out_fmt = d->argv[0];
     fmt = parse_model_string(&out_format, &log, out_fmt, bu_vls_addr(&out_path_raw));
     out_type = (fmt < 0) ? MIME_MODEL_UNKNOWN : (mime_model_t)fmt;
     out_fmt = NULL;

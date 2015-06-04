@@ -107,7 +107,8 @@ struct bu_opt_data {
     struct bu_opt_desc *desc;
     unsigned int valid;
     const char *name;
-    struct bu_ptbl *args;
+    int argc;
+    const char **argv;
     void *user_data;  /* place for arg_process to stash data */
 };
 #define BU_OPT_DATA_NULL {NULL, 0, NULL, NULL, NULL}
@@ -122,26 +123,12 @@ BU_EXPORT extern void bu_opt_data_free(bu_opt_data_t *data);
 BU_EXPORT extern void bu_opt_data_print(bu_opt_data_t *data, const char *title);
 
 /**
- * Convenience function for extracting args from a bu_opt_data container.
- * Provided as an easy way to get either the first arg:
- *
- * bu_opt_data_arg(d, 0)
- *
- * when it is known that there is only one argument while also allowing
- * for extraction of other args when multiples are present
- *
- * Returns NULL if the specified arg is not present. index starts from 0. */
-BU_EXPORT extern const char *bu_opt_data_arg(struct bu_opt_data *d, size_t ind);
-
-/**
  * Find and return a specific option from a bu_opt_data_t of options using an option
  * string as the lookup key.  Will only return an option if its valid entry
  * is set to 1. A NULL value passed in for name retrieves the bu_opt_data struct with the
  * unknown entries stored in its args table.
  */
 BU_EXPORT extern struct bu_opt_data *bu_opt_find(const char *name, bu_opt_data_t *results);
-
-
 
 /**
  * Parse argv array using option descs.

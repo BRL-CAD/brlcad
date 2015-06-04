@@ -28,9 +28,9 @@ int
 d1_verbosity(struct bu_vls *msg, struct bu_opt_data *data)
 {
     int verb;
-    if (!data) return -1;
+    if (!data || data->argc == 0) return -1;
     if (msg) bu_vls_sprintf(msg, "d1");
-    sscanf((const char *)BU_PTBL_GET(data->args, 0), "%d", &verb);
+    sscanf(data->argv[0], "%d", &verb);
     if (verb < 0 || verb > 3) data->valid = 0;
     return 0;
 }
@@ -49,7 +49,7 @@ d2_color(struct bu_vls *msg, struct bu_opt_data *data)
 {
     unsigned int *rgb;
     if (!data) return 0;
-    if (!data->args) {
+    if (!data->argv || data->argc == 0) {
 	data->valid = 0;
 	return 0;
     }
@@ -58,16 +58,16 @@ d2_color(struct bu_vls *msg, struct bu_opt_data *data)
     rgb = (unsigned int *)bu_calloc(3, sizeof(unsigned int), "fastf_t array");
 
     /* First, see if the first string converts to rgb */
-    if (!bu_str_to_rgb((char *)BU_PTBL_GET(data->args, 0), (unsigned char *)&rgb)) {
-	/* nope - maybe we have 3 args? */
-	if (BU_PTBL_LEN(data->args) == 3) {
+    if (!bu_str_to_rgb((char *)data->argv[0], (unsigned char *)&rgb)) {
+	/* nope - maybe we have 3 argv? */
+	if (data->argc == 3) {
 	    int rn = 0, gn = 0, bn = 0;
-	    if (isnum((const char *)BU_PTBL_GET(data->args, 0)))
-		rn = sscanf((const char *)BU_PTBL_GET(data->args, 0), "%02x", &rgb[0]);
-	    if (isnum((const char *)BU_PTBL_GET(data->args, 1)))
-		gn = sscanf((const char *)BU_PTBL_GET(data->args, 1), "%02x", &rgb[1]);
-	    if (isnum((const char *)BU_PTBL_GET(data->args, 2)))
-		bn = sscanf((const char *)BU_PTBL_GET(data->args, 2), "%02x", &rgb[2]);
+	    if (isnum(data->argv[0]))
+		rn = sscanf(data->argv[0], "%02x", &rgb[0]);
+	    if (isnum(data->argv[1]))
+		gn = sscanf(data->argv[1], "%02x", &rgb[1]);
+	    if (isnum(data->argv[2]))
+		bn = sscanf(data->argv[2], "%02x", &rgb[2]);
 	    if (rn != 1 || gn != 1 || bn != 1) {
 		data->valid = 0;
 		bu_free(rgb, "free rgb");
@@ -81,7 +81,7 @@ d2_color(struct bu_vls *msg, struct bu_opt_data *data)
     } else {
 	/* yep - if we've got more args, tell the option parser we don't need them */
 	data->user_data = (void *)rgb;
-	if (BU_PTBL_LEN(data->args) > 1) return 1 - BU_PTBL_LEN(data->args);
+	if (data->argc > 1) return 1 - data->argc;
     }
 
     return 0;
@@ -95,12 +95,11 @@ print_results(struct bu_ptbl *results)
     for (i = 0; i < BU_PTBL_LEN(results); i++) {
 	data = (struct bu_opt_data *)BU_PTBL_GET(results, i);
 	bu_log("option name: %s\n", data->name);
-	if (data->args) {
-	    size_t j = 0;
+	if (data->argv && data->argc != 0) {
+	    int j = 0;
 	    bu_log("option args: ");
-	    for (j = 0; j < BU_PTBL_LEN(data->args); j++) {
-		char *arg = (char *)BU_PTBL_GET(data->args, j);
-		bu_log("%s ", arg);
+	    for (j = 0; j < data->argc; j++) {
+		bu_log("%s ", data->argv[j]);
 	    }
 	    bu_log("\n");
 	}
