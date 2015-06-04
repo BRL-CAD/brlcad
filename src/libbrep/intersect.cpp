@@ -28,6 +28,7 @@
 #include <assert.h>
 #include <vector>
 #include <algorithm>
+#include <sstream>
 
 #include "vmath.h"
 

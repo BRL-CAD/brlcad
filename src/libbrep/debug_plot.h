@@ -85,6 +85,22 @@ public:
 	const ON_Surface *surf,
 	ON_ClassArray<LinkedCurve> &linked_curves);
 
+    void
+    Plot3DCurveFrom2D(
+	const ON_Surface *surf,
+	const ON_Curve *crv,
+	const char *filename,
+	unsigned char *color,
+	bool decorate = false
+	);
+
+    void
+    Plot3DCurve(
+	const ON_Curve *crv,
+	const char *filename,
+	unsigned char *color,
+	struct bu_list *vlist = NULL);
+
 private:
     struct bu_list vlist_free_list;
     std::string prefix;
@@ -104,22 +120,6 @@ private:
 	const ON_Surface &surf,
 	const char *filename,
 	unsigned char *color);
-
-    void
-    Plot3DCurveFrom2D(
-	const ON_Surface *surf,
-	const ON_Curve *crv,
-	const char *filename,
-	unsigned char *color,
-	bool decorate = false
-	);
-
-    void
-    Plot3DCurve(
-	const ON_Curve *crv,
-	const char *filename,
-	unsigned char *color,
-	struct bu_list *vlist = NULL);
 
     void
     PlotBoundaryIsocurves(
