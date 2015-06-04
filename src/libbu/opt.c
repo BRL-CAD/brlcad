@@ -193,7 +193,7 @@ wrap_help(struct bu_vls *help, int indent, int offset, int len)
 }
 
 HIDDEN const char *
-bu_opt_describe_internal_ascii(struct bu_opt_desc *ds, bu_opt_dtbl_t *tbl, struct bu_opt_desc_opts *settings)
+bu_opt_describe_internal_ascii(struct bu_opt_desc *ds, struct bu_opt_desc_opts *settings)
 {
     size_t i = 0;
     size_t j = 0;
@@ -208,7 +208,7 @@ bu_opt_describe_internal_ascii(struct bu_opt_desc *ds, bu_opt_dtbl_t *tbl, struc
     const char *finalized;
     struct bu_vls description = BU_VLS_INIT_ZERO;
     int *status;
-    if (((!ds || ds[0].index == -1) && !tbl) || (ds && tbl)) return NULL;
+    if (!ds || ds[0].index == -1) return NULL;
 
     if (settings) {
 	offset = settings->offset;
@@ -216,12 +216,7 @@ bu_opt_describe_internal_ascii(struct bu_opt_desc *ds, bu_opt_dtbl_t *tbl, struc
 	desc_cols = settings->description_columns;
     }
 
-    if (ds) {
-	while (ds[i].index != -1) i++;
-    } else {
-	int tbl_len = BU_PTBL_LEN(tbl) - 1;
-	i = (tbl_len < 0) ? 0 : tbl_len;
-    }
+    while (ds[i].index != -1) i++;
     if (i == 0) return NULL;
     opt_cnt = i;
     status = (int *)bu_calloc(opt_cnt, sizeof(int), "opt status");
@@ -229,7 +224,7 @@ bu_opt_describe_internal_ascii(struct bu_opt_desc *ds, bu_opt_dtbl_t *tbl, struc
     while (i < opt_cnt) {
 	struct bu_opt_desc *curr;
 	struct bu_opt_desc *d;
-	curr = (ds) ? &(ds[i]) : (struct bu_opt_desc *)BU_PTBL_GET(tbl, i) ;
+	curr = &(ds[i]);
 	if (!status[i]) {
 	    struct bu_vls opts = BU_VLS_INIT_ZERO;
 	    struct bu_vls help_str = BU_VLS_INIT_ZERO;
@@ -238,7 +233,7 @@ bu_opt_describe_internal_ascii(struct bu_opt_desc *ds, bu_opt_dtbl_t *tbl, struc
 	     * pass, so set the status flags accordingly */
 	    j = i;
 	    while (j < opt_cnt) {
-		d = (ds) ? &(ds[j]) : (struct bu_opt_desc *)BU_PTBL_GET(tbl, j);
+		d = &(ds[j]);
 		if (d->index == curr->index) {
 		    status[j] = 1;
 		}
@@ -249,7 +244,7 @@ bu_opt_describe_internal_ascii(struct bu_opt_desc *ds, bu_opt_dtbl_t *tbl, struc
 	     * the same index defining aliases, so accumulate all of them. */
 	    j = i;
 	    while (j < opt_cnt) {
-		d = (ds) ? &(ds[j]) : (struct bu_opt_desc *)BU_PTBL_GET(tbl, j);
+		d = &(ds[j]);
 		if (d->index == curr->index) {
 		    int new_len = strlen(d->shortopt_doc);
 		    if (new_len > 0) {
@@ -270,7 +265,7 @@ bu_opt_describe_internal_ascii(struct bu_opt_desc *ds, bu_opt_dtbl_t *tbl, struc
 	    /* Now do the long opts */
 	    j = i;
 	    while (j < opt_cnt) {
-		d = (ds) ? &(ds[j]) : (struct bu_opt_desc *)BU_PTBL_GET(tbl, j);
+		d = &(ds[j]);
 		if (d->index == curr->index) {
 		    int new_len = strlen(d->longopt_doc);
 		    if (new_len > 0) {
@@ -311,15 +306,7 @@ const char *
 bu_opt_describe(struct bu_opt_desc *ds, struct bu_opt_desc_opts *settings)
 {
     if (!ds) return NULL;
-    if (!settings) return bu_opt_describe_internal_ascii(ds, NULL, NULL);
-    return NULL;
-}
-
-const char *
-bu_opt_describe_dtbl(bu_opt_dtbl_t *dtbl, struct bu_opt_desc_opts *settings)
-{
-    if (!dtbl) return NULL;
-    if (!settings) return bu_opt_describe_internal_ascii(NULL, dtbl, NULL);
+    if (!settings) return bu_opt_describe_internal_ascii(ds, NULL);
     return NULL;
 }
 

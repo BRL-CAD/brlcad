@@ -49,11 +49,7 @@ struct bu_opt_data;
  */
 typedef int (*bu_opt_arg_process_t)(struct bu_vls *, struct bu_opt_data *);
 
-/* typedefs to avoid confusion when working with bu_opt_data
- * and bu_opt_desc tables */
-typedef struct bu_ptbl bu_opt_dtbl_t;
-
-/** TODO - should this be a full struct to allow for easier iteration? */
+/** Use a typedef to add contextual awareness to the option data return type */
 typedef struct bu_ptbl bu_opt_data_t;
 
 /**
