@@ -504,6 +504,10 @@ public:
     void write_triangle(const fastf_t *point_a, const fastf_t *point_b,
 			const fastf_t *point_c, fastf_t thickness, bool grid_centered = true);
 
+    void write_quad(const fastf_t *point_a, const fastf_t *point_b,
+		    const fastf_t *point_c, const fastf_t *point_d, fastf_t thickness,
+		    bool grid_centered = true);
+
     void write_hexahedron(const fastf_t points[8][3], fastf_t thickness = 0.0,
 			  bool grid_centered = true);
 
@@ -676,6 +680,33 @@ Section::write_triangle(const fastf_t *point_a, const fastf_t *point_b,
 
 
 void
+Section::write_quad(const fastf_t *point_a, const fastf_t *point_b,
+		    const fastf_t *point_c, const fastf_t *point_d, fastf_t thickness,
+		    bool grid_centered)
+{
+    thickness *= INCHES_PER_MM;
+
+    if (thickness <= 0.0)
+	throw std::invalid_argument("invalid thickness");
+
+    std::vector<Point> points(4);
+    points.at(0) = point_a;
+    points.at(1) = point_b;
+    points.at(2) = point_c;
+    points.at(3) = point_d;
+    const std::vector<std::size_t> grids = m_grids.get_unique_grids(points);
+
+    RecordWriter::Record record(m_elements);
+    record << "CQUAD" << m_next_element_id << m_material_id;
+    record << grids.at(0) << grids.at(1) << grids.at(2) << grids.at(3);
+    record.non_zero(thickness);
+    record << (grid_centered ? 1 : 2);
+    ++m_next_element_id;
+
+}
+
+
+void
 Section::write_hexahedron(const fastf_t vpoints[8][3], fastf_t thickness,
 			  bool grid_centered)
 {
@@ -714,30 +745,58 @@ Section::write_hexahedron(const fastf_t vpoints[8][3], fastf_t thickness,
 }
 
 
+HIDDEN std::pair<fastf_t, bool>
+get_face_info(const rt_bot_internal &bot, std::size_t i)
+{
+    RT_BOT_CK_MAGIC(&bot);
+
+    if (i > bot.num_faces)
+	throw std::invalid_argument("invalid face");
+
+    // defaults
+    std::pair<fastf_t, bool> result(1.0, true);
+
+    if (bot.mode == RT_BOT_PLATE) {
+	// fg4 does not allow zero thickness
+	// set a very small thickness if face thickness is zero
+	if (bot.thickness)
+	    result.first = !ZERO(bot.thickness[i]) ? bot.thickness[i] : 2 * SMALL_FASTF;
+
+	if (bot.face_mode)
+	    result.second = !BU_BITTEST(bot.face_mode, i);
+    }
+
+    return result;
+}
+
+
 HIDDEN void
 write_bot(Section &section, const rt_bot_internal &bot)
 {
     RT_BOT_CK_MAGIC(&bot);
 
     for (std::size_t i = 0; i < bot.num_faces; ++i) {
-	fastf_t thickness = 1.0;
-	bool grid_centered = false;
-
-	if (bot.mode == RT_BOT_PLATE) {
-	    // fg4 does not allow zero thickness
-	    // set a very small thickness if face thickness is zero
-	    if (bot.thickness)
-		thickness = !ZERO(bot.thickness[i]) ? bot.thickness[i] : 2 * SMALL_FASTF;
-
-	    if (bot.face_mode)
-		grid_centered = !BU_BITTEST(bot.face_mode, i);
-	}
-
 	const int * const face = &bot.faces[i * 3];
+	const std::pair<fastf_t, bool> face_info = get_face_info(bot, i);
 	const fastf_t * const v1 = &bot.vertices[face[0] * 3];
 	const fastf_t * const v2 = &bot.vertices[face[1] * 3];
 	const fastf_t * const v3 = &bot.vertices[face[2] * 3];
-	section.write_triangle(v1, v2, v3, thickness, grid_centered);
+
+	if (i + 1 < bot.num_faces) {
+	    // quick check for CQUAD-compatible faces
+	    const int * const next_face = &bot.faces[(i + 1) * 3];
+	    const std::pair<fastf_t, bool> next_face_info = get_face_info(bot, i + 1);
+
+	    if (EQUAL(face_info.first, next_face_info.first)
+		&& face_info.second == next_face_info.second)
+		if (face[0] == next_face[0] && face[2] == next_face[1]) {
+		    const fastf_t * const v4 = &bot.vertices[next_face[2] * 3];
+		    section.write_quad(v1, v2, v3, v4, face_info.first, face_info.second);
+		    continue;
+		}
+	}
+
+	section.write_triangle(v1, v2, v3, face_info.first, face_info.second);
     }
 }
 
@@ -1261,6 +1320,29 @@ write_nmg_region(nmgregion *nmg_region, const db_full_path *path,
 }
 
 
+HIDDEN int
+convert_region_start(db_tree_state *tree_state, const db_full_path *path,
+		     const rt_comb_internal *comb, void *client_data)
+{
+    RT_CK_DBTS(tree_state);
+    RT_CK_FULL_PATH(path);
+    RT_CK_COMB(comb);
+
+    ConversionData &data = *static_cast<ConversionData *>(client_data);
+    const std::string name = AutoFreePtr<char>(db_path_to_string(path)).ptr;
+
+    Section * const section = new Section;
+
+    if (!data.m_sections.insert(std::make_pair(DB_FULL_PATH_CUR_DIR(path),
+				section)).second) {
+	delete section;
+	throw std::logic_error("region already processed");
+    }
+
+    return 1;
+}
+
+
 HIDDEN tree *
 convert_leaf(db_tree_state *tree_state, const db_full_path *path,
 	     rt_db_internal *internal, void *client_data)
@@ -1289,30 +1371,6 @@ convert_leaf(db_tree_state *tree_state, const db_full_path *path,
     RT_GET_TREE(result, tree_state->ts_resp);
     result->tr_op = OP_NOP;
     return result;
-}
-
-
-HIDDEN int
-convert_region_start(db_tree_state *tree_state, const db_full_path *path,
-		     const rt_comb_internal *comb, void *client_data)
-{
-    RT_CK_DBTS(tree_state);
-    RT_CK_FULL_PATH(path);
-    RT_CK_COMB(comb);
-
-    ConversionData &data = *static_cast<ConversionData *>(client_data);
-    const std::string name = AutoFreePtr<char>(db_path_to_string(path)).ptr;
-
-
-    Section * const section = new Section;
-
-    if (!data.m_sections.insert(std::make_pair(DB_FULL_PATH_CUR_DIR(path),
-				section)).second) {
-	delete section;
-	throw std::logic_error("region already processed");
-    }
-
-    return 1;
 }
 
 
@@ -1351,7 +1409,7 @@ gcv_fastgen4_write(const char *path, struct db_i *dbip,
     writer.write_comment(dbip->dbi_title);
     writer.write_comment("g -> fastgen4 conversion");
 
-    const rt_tess_tol ttol = {RT_TESS_TOL_MAGIC, 0.0, 0.01, 0.0};
+    const rt_tess_tol ttol = {RT_TESS_TOL_MAGIC, 0.0, 1.0e-2, 0.0};
     const bn_tol tol = {BN_TOL_MAGIC, BN_TOL_DIST, BN_TOL_DIST * BN_TOL_DIST, 1.0e-6, 1.0 - 1.0e-6};
     ConversionData conv_data(writer, tol, *dbip);
 
