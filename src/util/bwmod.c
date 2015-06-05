@@ -73,6 +73,20 @@ int mapbuf[MAPBUFLEN];		/* translation buffer/lookup table */
 int char_arith = 0;
 
 int
+checkpow(double x , double exponent)
+{
+    double diff;
+    if (x >= 0.0) return 1;
+    diff = exponent - (double)((int)exponent);
+    if ( diff < 0.0 || diff > 0.0 ) {
+	fprintf(stderr,"bwmod: negative number (%f) to non-integer power (%f)\n",
+	x,exponent);
+        bu_exit (-1, NULL);
+    }
+    return 1;
+}
+
+int
 get_args(int argc, char **argv)
 {
     int c;
@@ -184,7 +198,8 @@ void mk_trans_tbl(void)
 	    switch (op[i]) {
 		case ADD : d += val[i]; break;
 		case MULT: d *= val[i]; break;
-		case POW : d = pow(d, val[i]); break;
+		case POW : checkpow(d,val[i]);
+		     d = pow(d, val[i]); break;
 		case ABS : if (d < 0.0) d = - d; break;
 		case SHIFT: tmp=d; tmp=tmp<<(int)val[i];d=tmp;break;
 		case OR  : tmp=d; tmp |= (int)val[i]; d=tmp;break;
@@ -216,7 +231,8 @@ void mk_char_trans_tbl(void)
 	    switch (op[i]) {
 		case ADD : d += val[i]; break;
 		case MULT: d *= val[i]; break;
-		case POW : d = pow((double)d, val[i]); break;
+		case POW : checkpow((double)d,val[i]);
+		    d = pow((double)d, val[i]); break;
 		case ABS : if (d < 0.0) d = - d; break;
 		case SHIFT: d=d<<(int)val[i]; break;
 		case AND : d &= (int)val[i]; break;
