@@ -601,7 +601,7 @@ bu_opt_parse(struct bu_ptbl **tbl, struct bu_vls *UNUSED(msgs), int argc, const 
 	/* If we're looking for args, do so */
 	if (desc->arg_cnt_max > 0) {
 	    /* If we might have args and we have a validator function,
-	     * construct the greediest possible iterpretation of the option
+	     * construct the greediest possible interpretation of the option
 	     * description and run the validator to determine the number of
 	     * argv entries associated with this option (can_be_opt is not
 	     * enough if the option is number based, since -9 may be both a

@@ -30,7 +30,7 @@ Testing:
  * if fixing a bug more than once, is there a test?
  * is a unit test warranted?
  * are there major robustness issues?
- 
+
 Documentation:
  * if publicly visible, is NEWS updated?
  * if public API changed, is CHANGES updated?
