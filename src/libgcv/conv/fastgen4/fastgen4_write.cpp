@@ -792,6 +792,7 @@ write_bot(Section &section, const rt_bot_internal &bot)
 		if (face[0] == next_face[0] && face[2] == next_face[1]) {
 		    const fastf_t * const v4 = &bot.vertices[next_face[2] * 3];
 		    section.write_quad(v1, v2, v3, v4, face_info.first, face_info.second);
+		    ++i;
 		    continue;
 		}
 	}
