@@ -1303,9 +1303,14 @@ convert_region_start(db_tree_state *tree_state, const db_full_path *path,
     ConversionData &data = *static_cast<ConversionData *>(client_data);
     const std::string name = AutoFreePtr<char>(db_path_to_string(path)).ptr;
 
+
+    Section * const section = new Section;
+
     if (!data.m_sections.insert(std::make_pair(DB_FULL_PATH_CUR_DIR(path),
-				new Section)).second)
+				section)).second) {
+	delete section;
 	throw std::logic_error("region already processed");
+    }
 
     return 1;
 }
