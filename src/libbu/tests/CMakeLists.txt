@@ -470,6 +470,9 @@ add_test(NAME bu_opt_2_11 COMMAND tester_bu_opt 2 -c file 200 35 33)
 add_test(NAME bu_opt_2_12 COMMAND tester_bu_opt 2 --color=200 10 30)
 add_test(NAME bu_opt_2_13 COMMAND tester_bu_opt 2 --color=200/10/30)
 add_test(NAME bu_opt_2_14 COMMAND tester_bu_opt 2 --color=200 10 30 file)
+add_test(NAME bu_opt_3_00 COMMAND tester_bu_opt 3 -n)
+add_test(NAME bu_opt_3_01 COMMAND tester_bu_opt 3 -n 1)
+add_test(NAME bu_opt_3_02 COMMAND tester_bu_opt 3 -n -1)
 
 #
 #  *********** date-time.c tests ************

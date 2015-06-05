@@ -691,6 +691,30 @@ bu_opt_parse_str(struct bu_ptbl **tbl, struct bu_vls *msgs, const char *str, str
     return ret;
 }
 
+
+int
+bu_opt_arg_int(struct bu_vls *UNUSED(msg), struct bu_opt_data *data)
+{
+    int i, ret;
+    if (!data) return 0;
+
+    if (data->argc != 1 || !data->argv || !data->argv[0]) {
+	data->valid = 0;
+	return 0;
+    }
+
+    ret = bu_sscanf(data->argv[0], "%i", &i);
+
+    if (ret == 0) {
+	data->valid = 0;
+	return 1;
+    } else {
+	return 1;
+    }
+
+}
+
+
 /*
  * Local Variables:
  * mode: C

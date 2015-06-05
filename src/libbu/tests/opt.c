@@ -139,6 +139,14 @@ main(int argc, const char **argv)
 	BU_OPT_DESC_NULL
     };
 
+    enum d3_opt_ind {D3_HELP, D3_NUM};
+    struct bu_opt_desc d3[4] = {
+	{D3_HELP, 0, 0, "h", "help", NULL, "", help_str},
+	{D3_NUM, 1, 1, "n", "num", &bu_opt_arg_int, "#", "Read number"},
+	BU_OPT_DESC_NULL
+    };
+
+
 
     if (argc < 2)
 	bu_exit(1, "ERROR: wrong number of parameters");
@@ -155,6 +163,9 @@ main(int argc, const char **argv)
 	    break;
 	case 2:
 	    (void)bu_opt_parse(&results, NULL, argc-2, argv+2, d2);
+	    break;
+	case 3:
+	    (void)bu_opt_parse(&results, NULL, argc-2, argv+2, d3);
 	    break;
     }
 
