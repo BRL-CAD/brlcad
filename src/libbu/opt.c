@@ -35,126 +35,6 @@
 #include "bu/vls.h"
 
 HIDDEN void
-bu_opt_data_init_entry(struct bu_opt_data **d, const char *name)
-{
-    if (!d) return;
-    BU_GET(*d, struct bu_opt_data);
-    (*d)->desc = NULL;
-    (*d)->valid = 1;
-    (*d)->name = name;
-    (*d)->argc = 0;
-    (*d)->argv = NULL;
-    (*d)->user_data = NULL;
-}
-
-HIDDEN void
-bu_opt_free_argv(int ac, char **av)
-{
-    if (av) {
-	int i = 0;
-	for (i = 0; i < ac; i++) {
-	    bu_free((char *)av[i], "free argv[i]");
-	}
-	bu_free((char *)av, "free argv");
-    }
-}
-
-HIDDEN void
-bu_opt_data_free_entry(struct bu_opt_data *d)
-{
-    if (!d) return;
-    if (d->name) bu_free((char *)d->name, "free data name");
-    if (d->user_data) bu_free(d->user_data, "free user data");
-    bu_opt_free_argv(d->argc, (char **)d->argv);
-}
-
-
-void
-bu_opt_data_free(struct bu_ptbl *tbl)
-{
-    size_t i;
-    if (!tbl) return;
-    for (i = 0; i < BU_PTBL_LEN(tbl); i++) {
-	struct bu_opt_data *opt = (struct bu_opt_data *)BU_PTBL_GET(tbl, i);
-	bu_opt_data_free_entry(opt);
-    }
-    bu_ptbl_free(tbl);
-    BU_PUT(tbl, struct bu_ptbl);
-}
-
-void
-bu_opt_data_print(struct bu_ptbl *data, const char *title)
-{
-    size_t i = 0;
-    int j = 0;
-    int offset_1 = 3;
-    struct bu_vls log = BU_VLS_INIT_ZERO;
-    if (!data || BU_PTBL_LEN(data) == 0) return;
-    if (title) {
-	bu_vls_sprintf(&log, "%s\n", title);
-    } else {
-	bu_vls_sprintf(&log, "Options:\n");
-    }
-    for (i = 0; i < BU_PTBL_LEN(data); i++) {
-	struct bu_opt_data *d = (struct bu_opt_data *)BU_PTBL_GET(data, i);
-	if (d->name) {
-	    bu_vls_printf(&log, "%*s%s", offset_1, " ", d->name);
-	    if (d->valid) {
-		bu_vls_printf(&log, "\t(valid)");
-	    } else {
-		bu_vls_printf(&log, "\t(invalid)");
-	    }
-	    if (d->desc && d->desc->arg_cnt_max > 0) {
-		if (d->argc > 0 && d->argv) {
-		    bu_vls_printf(&log, ": ");
-		    for (j = 0; j < d->argc - 1; j++) {
-			bu_vls_printf(&log, "%s, ", d->argv[j]);
-		    }
-		    bu_vls_printf(&log, "%s\n", d->argv[d->argc - 1]);
-		} else {
-		    bu_vls_printf(&log, "\n");
-		}
-	    } else {
-		bu_vls_printf(&log, "\n");
-	    }
-	} else {
-	    bu_vls_printf(&log, "%*s(unknown): ", offset_1, " ", d->name);
-	    if (d->argc > 0 && d->argv) {
-		for (j = 0; j < d->argc - 1; j++) {
-		    bu_vls_printf(&log, "%s ", d->argv[j]);
-		}
-		bu_vls_printf(&log, "%s\n", d->argv[d->argc-1]);
-	    }
-	}
-    }
-    bu_log("%s", bu_vls_addr(&log));
-    bu_vls_free(&log);
-}
-
-struct bu_opt_data *
-bu_opt_find(const char *name, struct bu_ptbl *opts)
-{
-    size_t i;
-    if (!opts) return NULL;
-
-    for (i = 0; i < BU_PTBL_LEN(opts); i++) {
-	struct bu_opt_data *opt = (struct bu_opt_data *)BU_PTBL_GET(opts, i);
-	/* Don't check the unknown opts - they were already marked as not
-	 * valid opts per the current descriptions in the parsing pass */
-	if (!name && !opt->name) return opt;
-	if (!opt->name) continue;
-	if (!opt->desc) continue;
-	if ((name && BU_STR_EQUAL(opt->desc->shortopt, name)) || (name && BU_STR_EQUAL(opt->desc->longopt, name))) {
-	    /* option culling guarantees us one "winner" if multiple instances
-	     * of an option were originally supplied, so if we find a match we
-	     * have found what we wanted.  Now, just need to check validity */
-	    return (opt->valid) ? opt : NULL;
-	}
-    }
-    return NULL;
-}
-
-HIDDEN void
 wrap_help(struct bu_vls *help, int indent, int offset, int len)
 {
     int i = 0;
@@ -420,61 +300,6 @@ opt_process(char **eq_arg, const char *opt_candidate)
     return final_opt;
 }
 
-void
-bu_opt_compact(struct bu_ptbl *opts)
-{
-    int i;
-    int ptblpos = BU_PTBL_LEN(opts) - 1;
-    struct bu_ptbl tbl;
-    bu_ptbl_init(&tbl, 8, "local table");
-    while (ptblpos >= 0) {
-	struct bu_opt_data *data = (struct bu_opt_data *)BU_PTBL_GET(opts, ptblpos);
-	if (!data) {
-	    ptblpos--;
-	    continue;
-	}
-	bu_ptbl_ins(&tbl, (long *)data);
-	BU_PTBL_CLEAR_I(opts, ptblpos);
-	for (i = ptblpos - 1; i >= 0; i--) {
-	    struct bu_opt_data *dc = (struct bu_opt_data *)BU_PTBL_GET(opts, i);
-	    if ((dc && dc->desc && data->desc) && dc->desc->index == data->desc->index) {
-		bu_opt_data_free_entry(dc);
-		BU_PTBL_CLEAR_I(opts, i);
-	    }
-	}
-	ptblpos--;
-    }
-    bu_ptbl_reset(opts);
-    for (i = BU_PTBL_LEN(&tbl) - 1; i >= 0; i--) {
-	bu_ptbl_ins(opts, BU_PTBL_GET(&tbl, i));
-    }
-    bu_ptbl_free(&tbl);
-}
-
-
-void
-bu_opt_validate(struct bu_ptbl *opts)
-{
-    size_t i;
-    struct bu_ptbl tbl;
-    bu_ptbl_init(&tbl, 8, "local table");
-    for (i = 0; i < BU_PTBL_LEN(opts); i++) {
-	struct bu_opt_data *dc = (struct bu_opt_data *)BU_PTBL_GET(opts, i);
-	if (dc && (dc->valid || (dc->desc && dc->desc->index == -1))) {
-	    bu_ptbl_ins(&tbl, (long *)dc);
-	} else {
-	    bu_opt_data_free_entry(dc);
-	    BU_PTBL_CLEAR_I(opts, i);
-	}
-    }
-    bu_ptbl_reset(opts);
-    for (i = 0; i < BU_PTBL_LEN(&tbl); i++) {
-	bu_ptbl_ins(opts, BU_PTBL_GET(&tbl, i));
-    }
-    bu_ptbl_free(&tbl);
-}
-
-
 /* This implements naive criteria for deciding when an argv string is
  * an option.  Right now the criteria are:
  *
@@ -493,36 +318,16 @@ can_be_opt(const char *opt) {
     return 1;
 }
 
-HIDDEN int
-ptbl_to_argv(const char ***argv, struct bu_ptbl *tbl) {
-    int i;
-    const char **av;
-    int ac;
-    if (!argv || !tbl || BU_PTBL_LEN(tbl) == 0) return 0;
-    ac = BU_PTBL_LEN(tbl);
-    av = (const char **)bu_calloc(ac + 1, sizeof(char *), "argv");
-    for (i = 0; i < ac; i++) {
-	av[i] = (const char *)BU_PTBL_GET(tbl, i);
-    }
-    /* Make it explicitly clear that the array is NULL terminated */
-    av[ac] = NULL;
-    (*argv) = av;
-    return ac;
-}
 
 int
-bu_opt_parse(struct bu_ptbl **tbl, struct bu_vls *msgs, int argc, const char **argv, struct bu_opt_desc *ds)
+bu_opt_parse(const char ***unused, size_t sizeof_unused, struct bu_vls *msgs, int argc, const char **argv, struct bu_opt_desc *ds)
 {
     int i = 0;
     int offset = 0;
+    int ret_argc = 0;
     const char *ns = NULL;
-    struct bu_ptbl *opt_data;
     struct bu_ptbl unknown_args = BU_PTBL_INIT_ZERO;
-    struct bu_opt_data *unknown = NULL;
     if (!argv || !ds) return -1;
-
-    BU_GET(opt_data, struct bu_ptbl);
-    bu_ptbl_init(opt_data, 8, "opt_data");
 
     /* Now identify opt/arg pairs.*/
     while (i < argc) {
@@ -531,19 +336,15 @@ bu_opt_parse(struct bu_ptbl **tbl, struct bu_vls *msgs, int argc, const char **a
 	size_t arg_cnt = 0;
 	char *opt = NULL;
 	char *eq_arg = NULL;
-	struct bu_opt_data *data = NULL;
 	struct bu_opt_desc *desc = NULL;
-	struct bu_ptbl data_args = BU_PTBL_INIT_ZERO;
 	/* If argv[i] isn't an option, stick the argv entry (and any
 	 * immediately following non-option entries) into the
 	 * unknown args table */
 	if (!can_be_opt(argv[i])) {
-	    ns = bu_strdup(argv[i]);
-	    bu_ptbl_ins(&unknown_args, (long *)ns);
+	    bu_ptbl_ins(&unknown_args, (long *)argv[i]);
 	    i++;
 	    while (i < argc && !can_be_opt(argv[i])) {
-		ns = bu_strdup(argv[i]);
-		bu_ptbl_ins(&unknown_args, (long *)ns);
+		bu_ptbl_ins(&unknown_args, (long *)argv[i]);
 		i++;
 	    }
 	    continue;
@@ -576,28 +377,24 @@ bu_opt_parse(struct bu_ptbl **tbl, struct bu_vls *msgs, int argc, const char **a
 	     * to map to a particular option (and is an error if that
 	     * option isn't supposed to have arguments) we pass along
 	     * the original option intact. */
-	    ns = bu_strdup(argv[i]);
-	    bu_ptbl_ins(&unknown_args, (long *)ns);
+	    bu_ptbl_ins(&unknown_args, (long *)argv[i]);
 	    i++;
 	    continue;
 	}
 
 	/* We've got a description of the option.  Now the real work begins. */
-
-	/* Initialize with opt */
-	bu_opt_data_init_entry(&data, opt);
-	data->desc = desc;
-	if (eq_arg) {
-	    bu_ptbl_ins(&data_args, (long *)eq_arg);
-	    arg_cnt = 1;
-	}
+	if (eq_arg) arg_cnt = 1;
 
 	/* handled the option - any remaining processing is on args, if any*/
 	i = i + 1;
 
 	/* If we already got an arg from the equals mechanism and we aren't
-	 * supposed to have one, we're invalid */
-	if (arg_cnt > 0 && desc->arg_cnt_max == 0) data->valid = 0;
+	 * supposed to have one, we're invalid - hault. */
+	if (eq_arg && desc->arg_cnt_max == 0) {
+	    if (msgs) bu_vls_printf(msgs, "Option %s takes no arguments, but argument %s is present - haulting.\n", argv[i-1], eq_arg);
+	    bu_free(eq_arg, "free arg after equals sign copy");
+	    return -1;
+	}
 
 	/* If we're looking for args, do so */
 	if (desc->arg_cnt_max > 0) {
@@ -610,7 +407,7 @@ bu_opt_parse(struct bu_ptbl **tbl, struct bu_vls *msgs, int argc, const char **a
 	     * decision.  If we do not have a validator, the best we can do
 	     * is the can_be_opt test as a terminating trigger. */
 	    if (desc->arg_process) {
-		/* Construct the greedy interpretation of the bu_opt_data argv */
+		/* Construct the greedy interpretation of the option argv */
 		int k = 0;
 		int arg_offset = 0;
 		int g_argc = desc->arg_cnt_max;
@@ -622,9 +419,7 @@ bu_opt_parse(struct bu_ptbl **tbl, struct bu_vls *msgs, int argc, const char **a
 		    for (k = 0; k < g_argc; k++) {
 			g_argv[k+arg_cnt] = argv[i + k];
 		    }
-		    data->argc = g_argc;
-		    data->argv = g_argv;
-		    arg_offset = (*desc->arg_process)(msgs, data, desc->set_var);
+		    arg_offset = (*desc->arg_process)(msgs, g_argc, g_argv, desc->set_var);
 		    if (arg_offset == -1) {
 			/* This isn't just an unknown option to be passed
 			 * through for possible later processing.  If the
@@ -643,16 +438,6 @@ bu_opt_parse(struct bu_ptbl **tbl, struct bu_vls *msgs, int argc, const char **a
 			}
 		    }
 		    i = i + arg_offset - arg_cnt;
-		    if (!arg_offset && arg_cnt) arg_offset = arg_cnt;
-		    /* If we used 1 or more args, construct the final argv array that will
-		     * be assigned to the bu_opt_data container */
-		    if (arg_offset > 0) {
-			data->argc = arg_offset;
-			data->argv = (const char **)bu_calloc(arg_offset + 1, sizeof(char *), "final array");
-			for (k = 0; k < arg_offset; k++) {
-			    data->argv[k] = bu_strdup(g_argv[k]);
-			}
-		    }
 		} else {
 		    if (desc->arg_cnt_min == 0) {
 			/* If this is allowed to function just as a flag, an int may
@@ -660,53 +445,66 @@ bu_opt_parse(struct bu_ptbl **tbl, struct bu_vls *msgs, int argc, const char **a
 			int *flag_var = (int *)desc->set_var;
 			if (flag_var) (*flag_var) = 1;
 		    }
-		    data->argc = 0;
-		    data->argv = NULL;
 		}
 		bu_free(g_argv, "free greedy argv");
 	    } else {
 		while (arg_cnt < desc->arg_cnt_max && i < argc && !can_be_opt(argv[i])) {
 		    ns = bu_strdup(argv[i]);
-		    bu_ptbl_ins(&data_args, (long *)ns);
 		    i++;
 		    arg_cnt++;
 		}
 		if (arg_cnt < desc->arg_cnt_min) {
-		    data->valid = 0;
+		    if (msgs) bu_vls_printf(msgs, "Option %s requires at least %d arguments but only %d were found - haulting.\n", argv[i-1], desc->arg_cnt_min, arg_cnt);
+		    return -1;
 		}
-		data->argc = ptbl_to_argv(&(data->argv), &data_args);
 	    }
+	} else {
+	    /* only a flag - see if we're supposed to set an int */
+	    int *flag_var = (int *)desc->set_var;
+	    if (flag_var) (*flag_var) = 1;
 	}
-	bu_ptbl_free(&data_args);
-	bu_ptbl_ins(opt_data, (long *)data);
     }
 
-    /* Make an argv array and data entry for the unknown, if any */
-    if (BU_PTBL_LEN(&unknown_args) > 0){
-	bu_opt_data_init_entry(&unknown, NULL);
-	unknown->argc = ptbl_to_argv(&(unknown->argv), &unknown_args);
-	bu_ptbl_free(&unknown_args);
-	bu_ptbl_ins(opt_data, (long *)unknown);
+    /* Copy as many of the unknown args as we can fit into the provided argv array.
+     * Program must check return value to see if any were lost due to the provided
+     * array being too small. */
+    ret_argc = BU_PTBL_LEN(&unknown_args);
+    if (ret_argc > 0 && sizeof_unused > 0 && unused) {
+	int avc = 0;
+	int max_avc_cnt = (BU_PTBL_LEN(&unknown_args) < sizeof_unused) ? BU_PTBL_LEN(&unknown_args) : sizeof_unused;
+	for (avc = 0; avc < max_avc_cnt; avc++) {
+	    (*unused)[avc] = (const char *)BU_PTBL_GET(&unknown_args, avc);
+	}
     }
+    bu_ptbl_free(&unknown_args);
 
-    (*tbl) = opt_data;
-    return 0;
+    return ret_argc;
 }
 
 int
-bu_opt_parse_str(struct bu_ptbl **tbl, struct bu_vls *msgs, const char *str, struct bu_opt_desc *ds)
+bu_opt_parse_str(const char ***unused, size_t sizeof_unused, struct bu_vls *msgs, const char *str, struct bu_opt_desc *ds)
 {
+    int i = 0;
+    int max_cnt = 0;
     int ret = 0;
     char *input = NULL;
     char **argv = NULL;
     int argc = 0;
-    if (!tbl || !str || !ds) return 1;
+    const char **unused_tmp = (const char **)bu_calloc(sizeof_unused, sizeof(char *), "tmp array");
+    if (!str || !ds) return 1;
     input = bu_strdup(str);
     argv = (char **)bu_calloc(strlen(input) + 1, sizeof(char *), "argv array");
     argc = bu_argv_from_string(argv, strlen(input), input);
 
-    ret = bu_opt_parse(tbl, msgs, argc, (const char **)argv, ds);
+    ret = bu_opt_parse(&unused_tmp, sizeof_unused, msgs, argc, (const char **)argv, ds);
 
+    /* We have a transient argv, so duplicate the unknown strings - it's up to the caller to free these */
+    max_cnt = (ret > (int)sizeof_unused) ? (int)sizeof_unused : ret;
+    for (i = 0; i < max_cnt; i++) {
+	(*unused)[i] = bu_strdup(unused_tmp[i]);
+    }
+
+    bu_free(unused_tmp, "free str copy");
     bu_free(input, "free str copy");
     bu_free(argv, "free argv memory");
     return ret;
@@ -714,28 +512,27 @@ bu_opt_parse_str(struct bu_ptbl **tbl, struct bu_vls *msgs, const char *str, str
 
 
 int
-bu_opt_arg_int(struct bu_vls *msg, struct bu_opt_data *data, void *set_var)
+bu_opt_int(struct bu_vls *msg, int argc, const char **argv, void *set_var)
 {
     long int l;
     int i;
     char *endptr = NULL;
     int *int_set = (int *)set_var;
-    if (!data) return 0;
 
-    if (!data || !data->argv || !data->argv[0] || strlen(data->argv[0]) == 0 || data->argc != 1 ) {
+    if (!argv || !argv[0] || strlen(argv[0]) == 0 || argc != 1 ) {
 	return 0;
     }
 
-    l = strtol(data->argv[0], &endptr, 0);
+    l = strtol(argv[0], &endptr, 0);
 
     if (endptr != NULL && strlen(endptr) > 0) {
 	/* Had some invalid character in the input, fail */
-	if (msg) bu_vls_printf(msg, "Invalid string specifier for int: %s\n", data->argv[0]);
+	if (msg) bu_vls_printf(msg, "Invalid string specifier for int: %s\n", argv[0]);
 	return -1;
     }
 
     if (errno == ERANGE) {
-	if (msg) bu_vls_printf(msg, "Invalid input for int (range error): %s\n", data->argv[0]);
+	if (msg) bu_vls_printf(msg, "Invalid input for int (range error): %s\n", argv[0]);
 	return -1;
     }
 
@@ -753,37 +550,53 @@ bu_opt_arg_int(struct bu_vls *msg, struct bu_opt_data *data, void *set_var)
 }
 
 int
-bu_opt_arg_fastf_t(struct bu_vls *msg, struct bu_opt_data *data, void *set_var)
+bu_opt_fastf_t(struct bu_vls *msg, int argc, const char **argv, void *set_var)
 {
     fastf_t f;
     fastf_t *f_set = (fastf_t *)set_var;
     char *endptr = NULL;
-    if (!data) return 0;
 
-    if (!data || !data->argv || !data->argv[0] || strlen(data->argv[0]) == 0 || data->argc != 1 ) {
+    if (!argv || !argv[0] || strlen(argv[0]) == 0 || argc != 1 ) {
 	return 0;
     }
 
     if (sizeof(fastf_t) == sizeof(float)) {
-	f = strtof(data->argv[0], &endptr);
+	f = strtof(argv[0], &endptr);
     }
 
     if (sizeof(fastf_t) == sizeof(double)) {
-	f = strtod(data->argv[0], &endptr);
+	f = strtod(argv[0], &endptr);
     }
 
     if (endptr != NULL && strlen(endptr) > 0) {
 	/* Had some invalid character in the input, fail */
-	if (msg) bu_vls_printf(msg, "Invalid string specifier for fastf_t: %s\n", data->argv[0]);
+	if (msg) bu_vls_printf(msg, "Invalid string specifier for fastf_t: %s\n", argv[0]);
 	return -1;
     }
 
     if (errno == ERANGE) {
-	if (msg) bu_vls_printf(msg, "Invalid input for fastf_t (range error): %s\n", data->argv[0]);
+	if (msg) bu_vls_printf(msg, "Invalid input for fastf_t (range error): %s\n", argv[0]);
 	return -1;
     }
 
     if (f_set) (*f_set) = f;
+    return 1;
+}
+
+/* TODO - the bu_strdup is required because of eq_arg (i.e., breaking
+ * out an argument from an atomic argv entry) - can that be reworked
+ * to avoid needing the strdup by incrementing the pointer and pointing
+ * to the arg portion of the original string? */
+int
+bu_opt_str(struct bu_vls *UNUSED(msg), int argc, const char **argv, void *set_var)
+{
+    char **s_set = (char **)set_var;
+
+    if (!argv || !argv[0] || strlen(argv[0]) == 0 || argc != 1 ) {
+	return 0;
+    }
+
+    if (s_set) (*s_set) = bu_strdup(argv[0]);
     return 1;
 }
 
