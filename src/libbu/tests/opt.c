@@ -19,23 +19,24 @@
  */
 
 #include "common.h"
+#include <limits.h>
 #include <ctype.h>
 #include "bu.h"
 #include "bn.h"
 #include "string.h"
 
 int
-d1_verbosity(struct bu_vls *msg, struct bu_opt_data *data)
+d1_verbosity(struct bu_vls *msg, struct bu_opt_data *data, void *set_v)
 {
-    int verb;
-    if (!data) return 0;
-    if (!data->argv || data->argc == 0) {
-	data->valid = 0;
-	return 0;
-    }
-    if (msg) bu_vls_sprintf(msg, "d1");
-    sscanf(data->argv[0], "%d", &verb);
-    if (verb < 0 || verb > 3) data->valid = 0;
+    int val = INT_MAX;
+    int *int_set = (int *)set_v;
+    int int_ret = bu_opt_arg_int(msg, data, (void *)&val);
+    if (int_ret == -1 || int_ret == 0) return int_ret;
+
+    if (val < 0 || val > 3) return -1;
+
+    if (int_set) (*int_set) = val;
+
     return 1;
 }
 
@@ -49,51 +50,44 @@ isnum(const char *str) {
 }
 
 int
-d2_color(struct bu_vls *msg, struct bu_opt_data *data)
+d2_color(struct bu_vls *msg, struct bu_opt_data *data, void *set_c)
 {
-    unsigned int *rgb;
-    if (!data) return 0;
-    if (!data->argv || data->argc == 0) {
-	data->valid = 0;
+    struct bu_color *set_color = (struct bu_color *)set_c;
+    unsigned int rgb[3];
+    if (!data || !data->argv || !data->argv[0] || strlen(data->argv[0]) == 0 || data->argc == 0) {
 	return 0;
     }
-    if (msg) bu_vls_sprintf(msg, "d2");
-
-    rgb = (unsigned int *)bu_calloc(3, sizeof(unsigned int), "fastf_t array");
 
     /* First, see if the first string converts to rgb */
     if (!bu_str_to_rgb((char *)data->argv[0], (unsigned char *)&rgb)) {
 	/* nope - maybe we have 3 argv? */
 	if (data->argc == 3) {
-	    int rn = 0, gn = 0, bn = 0;
-	    if (isnum(data->argv[0]))
-		rn = sscanf(data->argv[0], "%02x", &rgb[0]);
-	    if (isnum(data->argv[1]))
-		gn = sscanf(data->argv[1], "%02x", &rgb[1]);
-	    if (isnum(data->argv[2]))
-		bn = sscanf(data->argv[2], "%02x", &rgb[2]);
-	    if (rn != 1 || gn != 1 || bn != 1) {
-		data->valid = 0;
-		bu_free(rgb, "free rgb");
-		return 1;
+	    struct bu_vls tmp_color = BU_VLS_INIT_ZERO;
+	    bu_vls_sprintf(&tmp_color, "%s/%s/%s", data->argv[0], data->argv[1], data->argv[2]);
+	    if (!bu_str_to_rgb(bu_vls_addr(&tmp_color), (unsigned char *)&rgb)) {
+		/* Not valid with 3 */
+		bu_vls_free(&tmp_color);
+		if (msg) bu_vls_sprintf(msg, "No valid color found.");
+		return -1;
 	    } else {
-		data->user_data = (void *)rgb;
+		/* 3 did the job */
+		bu_vls_free(&tmp_color);
+		if (set_color) (void)bu_color_from_rgb_chars(set_color, (unsigned char *)&rgb);
 		return 3;
 	    }
 	} else {
 	    /* Not valid with 1 and don't have 3 - we require at least one, so
 	     * claim one argv as belonging to this option regardless. */
-	    data->valid = 0;
-	    bu_free(rgb, "free rgb");
-	    return 1;
+	    if (msg) bu_vls_sprintf(msg, "No valid color found: %s", data->argv[0]);
+	    return -1;
 	}
     } else {
 	/* yep, 1 did the job */
-	data->user_data = (void *)rgb;
+	if (set_color) (void)bu_color_from_rgb_chars(set_color, (unsigned char *)&rgb);
 	return 1;
     }
 
-    return 1;
+    return 0;
 }
 
 void
@@ -121,28 +115,32 @@ print_results(struct bu_ptbl *results)
 int
 main(int argc, const char **argv)
 {
+    int ret = 0;
     int function_num;
     struct bu_ptbl *results = NULL;
+    struct bu_vls parse_msgs = BU_VLS_INIT_ZERO;
+    static int i = 0;
+    static struct bu_color color = BU_COLOR_INIT_ZERO;
 
     enum d1_opt_ind {D1_HELP, D1_VERBOSITY};
     struct bu_opt_desc d1[4] = {
-	{D1_HELP, 0, 0, "h", "help", NULL, "", help_str},
-	{D1_HELP, 0, 0, "?", "",     NULL, "", help_str},
-	{D1_VERBOSITY, 0, 1, "v", "verbosity", &(d1_verbosity), "#", "Set verbosity (range is 0 to 3)"},
+	{D1_HELP, 0, 0, "h", "help", NULL, "", help_str, NULL},
+	{D1_HELP, 0, 0, "?", "",     NULL, "", help_str, NULL},
+	{D1_VERBOSITY, 0, 1, "v", "verbosity", &(d1_verbosity), "#", "Set verbosity (range is 0 to 3)", (void *)&i},
 	BU_OPT_DESC_NULL
     };
 
     enum d2_opt_ind {D2_HELP, D2_COLOR};
     struct bu_opt_desc d2[4] = {
-	{D2_HELP, 0, 0, "h", "help", NULL, "", help_str},
-	{D2_COLOR, 1, 3, "C", "color", &(d2_color), "r/g/b", "Set color"},
+	{D2_HELP, 0, 0, "h", "help", NULL, "", help_str, NULL},
+	{D2_COLOR, 1, 3, "C", "color", &(d2_color), "r/g/b", "Set color", (void *)&color},
 	BU_OPT_DESC_NULL
     };
 
     enum d3_opt_ind {D3_HELP, D3_NUM};
     struct bu_opt_desc d3[4] = {
-	{D3_HELP, 0, 0, "h", "help", NULL, "", help_str},
-	{D3_NUM, 1, 1, "n", "num", &bu_opt_arg_int, "#", "Read number"},
+	{D3_HELP, 0, 0, "h", "help", NULL, "", help_str, NULL},
+	{D3_NUM, 1, 1, "n", "num", &bu_opt_arg_int, "#", "Read number", (void *)&i},
 	BU_OPT_DESC_NULL
     };
 
@@ -155,24 +153,34 @@ main(int argc, const char **argv)
 
     switch (function_num) {
 	case 0:
-	    (void)bu_opt_parse(&results, NULL, 0, NULL, NULL);
+	    ret = bu_opt_parse(&results, &parse_msgs, 0, NULL, NULL);
 	    return (results == NULL) ? 0 : 1;
 	    break;
 	case 1:
-	    (void)bu_opt_parse(&results, NULL, argc-2, argv+2, d1);
+	    ret = bu_opt_parse(&results, &parse_msgs, argc-2, argv+2, d1);
 	    break;
 	case 2:
-	    (void)bu_opt_parse(&results, NULL, argc-2, argv+2, d2);
+	    ret = bu_opt_parse(&results, &parse_msgs, argc-2, argv+2, d2);
 	    break;
 	case 3:
-	    (void)bu_opt_parse(&results, NULL, argc-2, argv+2, d3);
+	    ret = bu_opt_parse(&results, &parse_msgs, argc-2, argv+2, d3);
 	    break;
+    }
+
+    if (ret == -1) {
+	bu_log("%s", bu_vls_addr(&parse_msgs));
     }
 
     if (results) {
 	bu_opt_compact(results);
 	print_results(results);
+	if (function_num == 1 || function_num == 3)
+	    bu_log("Int var: %d\n", i);
+	if (function_num == 2)
+	    bu_log("Color var: %0.2f, %0.2f, %0.2f\n", color.buc_rgb[0], color.buc_rgb[1], color.buc_rgb[2]);
     }
+
+    bu_vls_free(&parse_msgs);
 
     return 0;
 }

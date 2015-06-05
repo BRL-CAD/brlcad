@@ -32,16 +32,19 @@
 
 
 /* Emulate a FASTGEN4 format option processor */
-enum fg4_opt_enums { FG4_TOL, FG4_WARN_DEFAULT_NAMES };
-struct bu_opt_desc fg4_opt_desc[3] = {
-    {FG4_TOL,                1, 1, "t",  "tol",                NULL, "tol", "Dimensional tolerance." },
-    {FG4_WARN_DEFAULT_NAMES, 0, 0, "w",  "warn-default-names", NULL, "",    "File format of input file." },
-    BU_OPT_DESC_NULL
-};
-
 void fast4_arg_process(const char *args) {
     struct bu_opt_data *d;
     bu_opt_data_t *results;
+
+    static fastf_t tol;
+
+    enum fg4_opt_enums { FG4_TOL, FG4_WARN_DEFAULT_NAMES };
+    struct bu_opt_desc fg4_opt_desc[3] = {
+	{FG4_TOL,                1, 1, "t",  "tol", &bu_opt_arg_int, "tol", "Dimensional tolerance.", (void *)&tol},
+	{FG4_WARN_DEFAULT_NAMES, 0, 0, "w",  "warn-default-names", NULL, "", "File format of input file.", NULL},
+	BU_OPT_DESC_NULL
+    };
+
     if (!args) return;
 
     (void)bu_opt_parse_str(&results, NULL, args, fg4_opt_desc);
@@ -58,16 +61,20 @@ void fast4_arg_process(const char *args) {
 }
 
 /* Emulate a STL format option processor */
-enum stl_opt_enums { STL_TOL, STL_UNITS };
-struct bu_opt_desc stl_opt_desc[3] = {
-    {STL_TOL,   1, 1, "t",  "tol",   NULL, "tol",  "Dimensional tolerance." },
-    {STL_UNITS, 1, 1, "u",  "units", NULL, "unit", "Units of input file." },
-    BU_OPT_DESC_NULL
-};
-
 void stl_arg_process(const char *args) {
     struct bu_opt_data *d;
     bu_opt_data_t *results;
+
+    static fastf_t tol;
+    static int units;
+
+    enum stl_opt_enums { STL_TOL, STL_UNITS };
+    struct bu_opt_desc stl_opt_desc[3] = {
+	{STL_TOL,   1, 1, "t",  "tol",   &bu_opt_arg_int, "tol",  "Dimensional tolerance.", (void *)&tol },
+	{STL_UNITS, 1, 1, "u",  "units", &bu_opt_arg_int, "unit", "Units of input file.", (void *)&units },
+	BU_OPT_DESC_NULL
+    };
+
     if (!args) return;
 
     (void)bu_opt_parse_str(&results, NULL, args, stl_opt_desc);
@@ -75,7 +82,7 @@ void stl_arg_process(const char *args) {
     bu_opt_validate(results);
     d = bu_opt_find("u", results);
     if (d) {
-	bu_log("STL opt found: %s:%s\n", d->name, d->argv[0]);
+	bu_log("STL opt found: %s:%s -> %d\n", d->name, d->argv[0], units);
     }
 
     bu_opt_data_print(results, "STL option parsing results:");
@@ -221,68 +228,52 @@ parse_model_string(struct bu_vls *format, struct bu_vls *log, const char *opt, c
 }
 
 int
-file_stat(struct bu_vls *UNUSED(msg), struct bu_opt_data *data)
+file_stat(struct bu_vls *UNUSED(msg), struct bu_opt_data *data, void *UNUSED(set_var))
 {
     if (!data) return 0;
     if (!data->argv || data->argc == 0) {
-	data->valid = 0;
-	return 1;
+	return -1;
     }
     if (!bu_file_exists(data->argv[0], NULL)){
-	data->valid = 0;
+	return -1;
     }
     return 1;
 }
 
     int
-file_null(struct bu_vls *msg, struct bu_opt_data *data)
+file_null(struct bu_vls *msg, struct bu_opt_data *data, void *UNUSED(set_var))
 {
     if (!data) return 0;
     if (!data->argv || data->argc == 0) {
-	data->valid = 0;
-	return 1;
     }
     if (bu_file_exists(data->argv[0], NULL)){
-	data->valid = 0;
 	if (msg) bu_vls_sprintf(msg, "Error - file %s already exists!\n", data->argv[0]);
+	return -1;
     }
     return 1;
 }
 
 int
-model_mime(struct bu_vls *UNUSED(msg), struct bu_opt_data *data)
+model_mime(struct bu_vls *UNUSED(msg), struct bu_opt_data *data, void *set_mime)
 {
     int type_int;
     mime_model_t type = MIME_MODEL_UNKNOWN;
+    mime_model_t *set_type = (mime_model_t *)set_mime;
     if (!data) return 0;
     if (!data->argv || data->argc == 0) {
-	data->valid = 0;
-	return 1;
+	return -1;
     }
     type_int = bu_file_mime(data->argv[0], MIME_MODEL);
     type = (type_int < 0) ? MIME_MODEL_UNKNOWN : (mime_model_t)type_int;
     if (type == MIME_MODEL_UNKNOWN) {
-	data->valid = 0;
-	return 1;
+	return -1;
     }
+    if (set_type) (*set_type) = type;
     return 1;
 }
 
 
 #define gcv_help_str "Print help and exit.  If a format is specified to --help, print help specific to that format"
-enum gcv_opt_enums { GCV_HELP, IN_FILE, OUT_FILE, IN_FORMAT, OUT_FORMAT, IN_OPTS, OUT_OPTS, GCV_OPTS_MAX };
-struct bu_opt_desc gcv_opt_desc[9] = {
-    {GCV_HELP,    0, 1, "h", "help",             NULL,          "format", gcv_help_str},
-    {GCV_HELP,    0, 1, "?", "",                 NULL,          "format", ""},
-    {IN_FILE ,    1, 1, "i", "input",            &(file_stat),  "file",   "Input file." },
-    {OUT_FILE,    1, 1, "o", "output",           &(file_null),  "file",   "Output file." },
-    {IN_FORMAT ,  1, 1, "",  "input-format",     &(model_mime), "format", "File format of input file." },
-    {OUT_FORMAT , 1, 1, "",  "output-format",    &(model_mime), "format", "File format of output file." },
-    {IN_OPTS ,    1, 1, "I", "input-only-opts",  NULL,          "\"[opts]\"", "Options to apply only while processing input file.  Quotes around the opts are always necessary, but brackets are only necessary when supplying a single option without arguments that would otherwise be interpreted as an argv entry by the shell, even with quotes.  Brackets will never hurt, and for robustness when scripting they should always be used." },
-    {OUT_OPTS,    1, 1, "O", "output-only-opts", NULL,          "\"[opts]\"", "Options to apply only while preparing output file.  Quotes around the opts are always necessary, but brackets are only necessary when supplying a single option without arguments that would otherwise be interpreted as an argv entry by the shell, even with quotes.  Brackets will never hurt, and for robustness when scripting they should always be used." },
-    BU_OPT_DESC_NULL
-};
-
 
 int
 main(int ac, char **av)
@@ -296,8 +287,8 @@ main(int ac, char **av)
     const char *in_fmt = NULL;
     const char *out_fmt = NULL;
     const char **uav = NULL;
-    mime_model_t in_type = MIME_MODEL_UNKNOWN;
-    mime_model_t out_type = MIME_MODEL_UNKNOWN;
+    static mime_model_t in_type = MIME_MODEL_UNKNOWN;
+    static mime_model_t out_type = MIME_MODEL_UNKNOWN;
     struct bu_vls in_format = BU_VLS_INIT_ZERO;
     struct bu_vls in_path_raw = BU_VLS_INIT_ZERO;
     struct bu_vls in_path = BU_VLS_INIT_ZERO;
@@ -309,6 +300,19 @@ main(int ac, char **av)
     struct bu_vls output_opts = BU_VLS_INIT_ZERO;
     struct bu_opt_data *d = NULL;
     bu_opt_data_t *results = NULL;
+
+    enum gcv_opt_enums { GCV_HELP, IN_FILE, OUT_FILE, IN_FORMAT, OUT_FORMAT, IN_OPTS, OUT_OPTS, GCV_OPTS_MAX };
+    struct bu_opt_desc gcv_opt_desc[9] = {
+	{GCV_HELP,    0, 1, "h", "help",             NULL,          "format", gcv_help_str, NULL},
+	{GCV_HELP,    0, 1, "?", "",                 NULL,          "format", "", NULL},
+	{IN_FILE ,    1, 1, "i", "input",            &(file_stat),  "file",   "Input file.", NULL},
+	{OUT_FILE,    1, 1, "o", "output",           &(file_null),  "file",   "Output file.", NULL },
+	{IN_FORMAT ,  1, 1, "",  "input-format",     &(model_mime), "format", "File format of input file.", (void *)&in_type },
+	{OUT_FORMAT , 1, 1, "",  "output-format",    &(model_mime), "format", "File format of output file.", (void *)&out_type },
+	{IN_OPTS ,    1, 1, "I", "input-only-opts",  NULL,          "\"[opts]\"", "Options to apply only while processing input file.  Quotes around the opts are always necessary, but brackets are only necessary when supplying a single option without arguments that would otherwise be interpreted as an argv entry by the shell, even with quotes.  Brackets will never hurt, and for robustness when scripting they should always be used.", NULL },
+	{OUT_OPTS,    1, 1, "O", "output-only-opts", NULL,          "\"[opts]\"", "Options to apply only while preparing output file.  Quotes around the opts are always necessary, but brackets are only necessary when supplying a single option without arguments that would otherwise be interpreted as an argv entry by the shell, even with quotes.  Brackets will never hurt, and for robustness when scripting they should always be used.", NULL },
+	BU_OPT_DESC_NULL
+    };
 
     ac-=(ac>0); av+=(ac>0); // skip program name argv[0] if present
 

@@ -22,6 +22,8 @@
 
 #include <stdio.h>
 #include <string.h>
+#include <stdlib.h> /* for strtol */
+#include <limits.h> /* for INT_MAX */
 #include <ctype.h> /* for isspace */
 
 #include "bu/log.h"
@@ -510,7 +512,7 @@ ptbl_to_argv(const char ***argv, struct bu_ptbl *tbl) {
 }
 
 int
-bu_opt_parse(struct bu_ptbl **tbl, struct bu_vls *UNUSED(msgs), int argc, const char **argv, struct bu_opt_desc *ds)
+bu_opt_parse(struct bu_ptbl **tbl, struct bu_vls *msgs, int argc, const char **argv, struct bu_opt_desc *ds)
 {
     int i = 0;
     int offset = 0;
@@ -518,7 +520,7 @@ bu_opt_parse(struct bu_ptbl **tbl, struct bu_vls *UNUSED(msgs), int argc, const 
     struct bu_ptbl *opt_data;
     struct bu_ptbl unknown_args = BU_PTBL_INIT_ZERO;
     struct bu_opt_data *unknown = NULL;
-    if (!argv || !ds) return 1;
+    if (!argv || !ds) return -1;
 
     BU_GET(opt_data, struct bu_ptbl);
     bu_ptbl_init(opt_data, 8, "opt_data");
@@ -615,7 +617,7 @@ bu_opt_parse(struct bu_ptbl **tbl, struct bu_vls *UNUSED(msgs), int argc, const 
 		int g_argc = desc->arg_cnt_max;
 		const char **g_argv = (const char **)bu_calloc(g_argc + arg_cnt + 1, sizeof(char *), "greedy argv");
 		if (!g_argc && arg_cnt) g_argc = arg_cnt;
-		if (i != argc) {
+		if (i != argc || arg_cnt) {
 		    if (arg_cnt)
 			g_argv[0] = eq_arg;
 		    for (k = arg_cnt; k < g_argc; k++) {
@@ -623,7 +625,16 @@ bu_opt_parse(struct bu_ptbl **tbl, struct bu_vls *UNUSED(msgs), int argc, const 
 		    }
 		    data->argc = g_argc;
 		    data->argv = g_argv;
-		    arg_offset = (*desc->arg_process)(NULL, data);
+		    arg_offset = (*desc->arg_process)(msgs, data, desc->set_var);
+		    if (arg_offset == -1) {
+			/* This isn't just an unknown option to be passed
+			 * through for possible later processing.  If the
+			 * arg_process callback returns -1, something has gone
+			 * seriously awry and a known-to-be-invalid arg was
+			 * seen.  Fail early and hard. */
+			if (msgs) bu_vls_printf(msgs, "Invalid argument supplied to %s - haulting.\n", argv[i-1]);
+			return -1;
+		    }
 		    i = i + arg_offset - arg_cnt;
 		    if (!arg_offset && arg_cnt) arg_offset = arg_cnt;
 		    /* If we used 1 or more args, construct the final argv array that will
@@ -693,25 +704,37 @@ bu_opt_parse_str(struct bu_ptbl **tbl, struct bu_vls *msgs, const char *str, str
 
 
 int
-bu_opt_arg_int(struct bu_vls *UNUSED(msg), struct bu_opt_data *data)
+bu_opt_arg_int(struct bu_vls *msg, struct bu_opt_data *data, void *set_var)
 {
-    int i, ret;
+    long int l;
+    int i;
+    char *endptr = NULL;
+    int *int_set = (int *)set_var;
     if (!data) return 0;
 
-    if (data->argc != 1 || !data->argv || !data->argv[0]) {
-	data->valid = 0;
+    if (!data || !data->argv || !data->argv[0] || strlen(data->argv[0]) == 0 || data->argc != 1 ) {
 	return 0;
     }
 
-    ret = bu_sscanf(data->argv[0], "%i", &i);
+    l = strtol(data->argv[0], &endptr, 0);
 
-    if (ret == 0) {
-	data->valid = 0;
-	return 1;
-    } else {
-	return 1;
+    if (endptr != NULL && strlen(endptr) > 0) {
+	/* Had some invalid character in the input, fail */
+	if (msg) bu_vls_printf(msg, "Invalid string specifier for int: %s\n", data->argv[0]);
+	return -1;
     }
 
+    /* If the long fits inside an int, we're OK */
+    if (l <= INT_MAX || l >= -INT_MAX) {
+	i = (int)l;
+    } else {
+	/* Too big or too small, fail */
+	if (msg) bu_vls_printf(msg, "String specifies number too large for int data type: %l\n", l);
+	return -1;
+    }
+
+    if (int_set) (*int_set) = i;
+    return 1;
 }
 
 

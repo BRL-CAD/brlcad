@@ -47,7 +47,7 @@ struct bu_opt_data;
  * Convenience typedef for function callback to validate bu_opt
  * arguments
  */
-typedef int (*bu_opt_arg_process_t)(struct bu_vls *, struct bu_opt_data *);
+typedef int (*bu_opt_arg_process_t)(struct bu_vls *, struct bu_opt_data *, void *);
 
 /** Use a typedef to add contextual awareness to the option data return type */
 typedef struct bu_ptbl bu_opt_data_t;
@@ -64,8 +64,9 @@ struct bu_opt_desc {
     bu_opt_arg_process_t arg_process;
     const char *arg_helpstr;
     const char *help_string;
+    void *set_var;
 };
-#define BU_OPT_DESC_NULL {-1, 0, 0, NULL, NULL, NULL, NULL, NULL}
+#define BU_OPT_DESC_NULL {-1, 0, 0, NULL, NULL, NULL, NULL, NULL, NULL}
 
 
 /** Output format options for bu_opt documentation generation */
@@ -194,11 +195,11 @@ BU_EXPORT extern void bu_opt_validate(bu_opt_data_t *results);
  * program to use the int/long/etc. without having to repeat the
  * conversion.
  */
-BU_EXPORT extern int bu_opt_arg_int(struct bu_vls *msg, struct bu_opt_data *data);
+BU_EXPORT extern int bu_opt_arg_int(struct bu_vls *msg, struct bu_opt_data *data, void *set_var);
 /* TODO - unimplemented */
-BU_EXPORT extern int bu_opt_arg_long(struct bu_vls *msg, struct bu_opt_data *data);
-BU_EXPORT extern int bu_opt_arg_bool(struct bu_vls *msg, struct bu_opt_data *data);
-BU_EXPORT extern int bu_opt_arg_double(struct bu_vls *msg, struct bu_opt_data *data);
+BU_EXPORT extern int bu_opt_arg_long(struct bu_vls *msg, struct bu_opt_data *data, void *set_var);
+BU_EXPORT extern int bu_opt_arg_bool(struct bu_vls *msg, struct bu_opt_data *data, void *set_var);
+BU_EXPORT extern int bu_opt_arg_double(struct bu_vls *msg, struct bu_opt_data *data, void *set_var);
 
 
 /** @} */
