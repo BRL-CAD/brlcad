@@ -62,11 +62,10 @@ struct bu_opt_desc {
     const char *shortopt;
     const char *longopt;
     bu_opt_arg_process_t arg_process;
-    const char *shortopt_doc;
-    const char *longopt_doc;
+    const char *arg_helpstr;
     const char *help_string;
 };
-#define BU_OPT_DESC_NULL {-1, 0, 0, NULL, NULL, NULL, NULL, NULL, NULL}
+#define BU_OPT_DESC_NULL {-1, 0, 0, NULL, NULL, NULL, NULL, NULL}
 
 
 /** Output format options for bu_opt documentation generation */

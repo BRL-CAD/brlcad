@@ -45,8 +45,8 @@ static const char usage[] = "Usage: dsp_add [opts] dsp_1 dsp_2 > dsp_3\n";
 
 enum dsp_add_enums {DSP_HELP};
 struct bu_opt_desc dsp_opt_desc[3] = {
-    {DSP_HELP, 0, 0, "h", "help", NULL, "-h", "--help", "Print help and exit"},
-    {DSP_HELP, 0, 0, "?", "",     NULL, "-?", "", ""},
+    {DSP_HELP, 0, 0, "h", "help", NULL, "", "Print help and exit"},
+    {DSP_HELP, 0, 0, "?", "",     NULL, "", ""},
     BU_OPT_DESC_NULL
 };
 

@@ -238,14 +238,39 @@ bu_opt_describe_internal_ascii(struct bu_opt_desc *ds, struct bu_opt_desc_opts *
 	    while (j < opt_cnt) {
 		d = &(ds[j]);
 		if (d->index == curr->index) {
-		    int new_len = strlen(d->shortopt_doc);
-		    if (new_len > 0) {
+		    if (d->shortopt && strlen(d->shortopt) > 0) {
+			struct bu_vls tmp_arg = BU_VLS_INIT_ZERO;
+			int new_len = strlen(d->arg_helpstr);
+			if (d->arg_cnt_min == 0 && d->arg_cnt_max != 0) {
+			    if (new_len > 0) {
+				bu_vls_sprintf(&tmp_arg, "-%s [%s]", d->shortopt, d->arg_helpstr);
+				new_len = new_len + 5;
+			    } else {
+				bu_vls_sprintf(&tmp_arg, "-%s [opts]", d->shortopt);
+				new_len = 9;
+			    }
+			} else {
+			    if (d->arg_cnt_min == 0 && d->arg_cnt_max == 0) {
+				bu_vls_sprintf(&tmp_arg, "-%s", d->shortopt);
+				new_len = 2;
+			    }
+			    if (d->arg_cnt_min > 0) {
+				if (new_len > 0) {
+				    bu_vls_sprintf(&tmp_arg, "-%s %s", d->shortopt, d->arg_helpstr);
+				    new_len = new_len + 3;
+				} else {
+				    bu_vls_sprintf(&tmp_arg, "-%s opts", d->shortopt);
+				    new_len = 7;
+				}
+			    }
+			}
 			if ((int)bu_vls_strlen(&opts) + new_len + offset + 2 > opt_cols + desc_cols) {
 			    bu_vls_printf(&description, "%*s%s\n", offset, " ", bu_vls_addr(&opts));
-			    bu_vls_sprintf(&opts, "%s, ", d->shortopt_doc);
+			    bu_vls_sprintf(&opts, "%s, ", bu_vls_addr(&tmp_arg));
 			} else {
-			    bu_vls_printf(&opts, "%s, ", d->shortopt_doc);
+			    bu_vls_printf(&opts, "%s, ", bu_vls_addr(&tmp_arg));
 			}
+			bu_vls_free(&tmp_arg);
 		    }
 		    /* While we're at it, pick up the string.  The last string with
 		     * a matching key wins, as long as its not empty */
@@ -259,14 +284,39 @@ bu_opt_describe_internal_ascii(struct bu_opt_desc *ds, struct bu_opt_desc_opts *
 	    while (j < opt_cnt) {
 		d = &(ds[j]);
 		if (d->index == curr->index) {
-		    int new_len = strlen(d->longopt_doc);
-		    if (new_len > 0) {
+		    if (d->longopt && strlen(d->longopt) > 0) {
+			struct bu_vls tmp_arg = BU_VLS_INIT_ZERO;
+			int new_len = strlen(d->arg_helpstr);
+			if (d->arg_cnt_min == 0 && d->arg_cnt_max != 0) {
+			    if (new_len > 0) {
+				bu_vls_sprintf(&tmp_arg, "--%s [%s]", d->longopt, d->arg_helpstr);
+				new_len = new_len + strlen(d->longopt) + 5;
+			    } else {
+				bu_vls_sprintf(&tmp_arg, "--%s [opts]", d->longopt);
+				new_len = strlen(d->longopt) + 9;
+			    }
+			} else {
+			    if (d->arg_cnt_min == 0 && d->arg_cnt_max == 0) {
+				bu_vls_sprintf(&tmp_arg, "--%s", d->longopt);
+				new_len = strlen(d->longopt) + 2;
+			    }
+			    if (d->arg_cnt_min > 0) {
+				if (new_len > 0) {
+				    bu_vls_sprintf(&tmp_arg, "--%s %s", d->longopt, d->arg_helpstr);
+				    new_len = strlen(d->longopt) + new_len + 3;
+				} else {
+				    bu_vls_sprintf(&tmp_arg, "--%s opts", d->longopt);
+				    new_len = strlen(d->longopt) + 7;
+				}
+			    }
+			}
 			if ((int)bu_vls_strlen(&opts) + new_len + offset + 2 > opt_cols + desc_cols) {
 			    bu_vls_printf(&description, "%*s%s\n", offset, " ", bu_vls_addr(&opts));
-			    bu_vls_sprintf(&opts, "%s, ", d->longopt_doc);
+			    bu_vls_sprintf(&opts, "%s, ", bu_vls_addr(&tmp_arg));
 			} else {
-			    bu_vls_printf(&opts, "%s, ", d->longopt_doc);
+			    bu_vls_printf(&opts, "%s, ", bu_vls_addr(&tmp_arg));
 			}
+			bu_vls_free(&tmp_arg);
 		    }
 		}
 		j++;

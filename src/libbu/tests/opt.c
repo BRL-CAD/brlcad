@@ -126,16 +126,16 @@ main(int argc, const char **argv)
 
     enum d1_opt_ind {D1_HELP, D1_VERBOSITY};
     struct bu_opt_desc d1[4] = {
-	{D1_HELP,     0, 0, "h", "help",             NULL,          "-h",          "--help", help_str},
-	{D1_HELP, 0, 0, "?", "", NULL, "-?", "", help_str},
-	{D1_VERBOSITY, 0, 1, "v", "verbosity", &(d1_verbosity), "-v #", "--verbosity #", "Set verbosity (range is 0 to 3)"},
+	{D1_HELP, 0, 0, "h", "help", NULL, "", help_str},
+	{D1_HELP, 0, 0, "?", "",     NULL, "", help_str},
+	{D1_VERBOSITY, 0, 1, "v", "verbosity", &(d1_verbosity), "#", "Set verbosity (range is 0 to 3)"},
 	BU_OPT_DESC_NULL
     };
 
     enum d2_opt_ind {D2_HELP, D2_COLOR};
     struct bu_opt_desc d2[4] = {
-	{D2_HELP, 0, 0, "h", "help", NULL, "-h", "--help", help_str},
-	{D2_COLOR, 1, 3, "C", "color", &(d2_color), "-c r/g/b", "--color r/g/b", "Set color"},
+	{D2_HELP, 0, 0, "h", "help", NULL, "", help_str},
+	{D2_COLOR, 1, 3, "C", "color", &(d2_color), "r/g/b", "Set color"},
 	BU_OPT_DESC_NULL
     };
 

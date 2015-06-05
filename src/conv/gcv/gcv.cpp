@@ -34,8 +34,8 @@
 /* Emulate a FASTGEN4 format option processor */
 enum fg4_opt_enums { FG4_TOL, FG4_WARN_DEFAULT_NAMES };
 struct bu_opt_desc fg4_opt_desc[3] = {
-    {FG4_TOL,                1, 1, "t",  "tol",                NULL, "-t tol", "--tol tol",            "Dimensional tolerance." },
-    {FG4_WARN_DEFAULT_NAMES, 0, 0, "w",  "warn-default-names", NULL, "-w",     "--warn-default-names", "File format of input file." },
+    {FG4_TOL,                1, 1, "t",  "tol",                NULL, "tol", "Dimensional tolerance." },
+    {FG4_WARN_DEFAULT_NAMES, 0, 0, "w",  "warn-default-names", NULL, "",    "File format of input file." },
     BU_OPT_DESC_NULL
 };
 
@@ -60,8 +60,8 @@ void fast4_arg_process(const char *args) {
 /* Emulate a STL format option processor */
 enum stl_opt_enums { STL_TOL, STL_UNITS };
 struct bu_opt_desc stl_opt_desc[3] = {
-    {STL_TOL,   1, 1, "t",  "tol",   NULL, "-t tol",  "--tol tol",    "Dimensional tolerance." },
-    {STL_UNITS, 1, 1, "u",  "units", NULL, "-u unit", "--units unit", "Units of input file." },
+    {STL_TOL,   1, 1, "t",  "tol",   NULL, "tol",  "Dimensional tolerance." },
+    {STL_UNITS, 1, 1, "u",  "units", NULL, "unit", "Units of input file." },
     BU_OPT_DESC_NULL
 };
 
@@ -272,14 +272,14 @@ model_mime(struct bu_vls *UNUSED(msg), struct bu_opt_data *data)
 #define gcv_help_str "Print help and exit.  If a format is specified to --help, print help specific to that format"
 enum gcv_opt_enums { GCV_HELP, IN_FILE, OUT_FILE, IN_FORMAT, OUT_FORMAT, IN_OPTS, OUT_OPTS, GCV_OPTS_MAX };
 struct bu_opt_desc gcv_opt_desc[9] = {
-    {GCV_HELP,    0, 1, "h", "help",             NULL,          "-h [format]", "--help [format]",             gcv_help_str},
-    {GCV_HELP,    0, 1, "?", "",                 NULL,          "-? [format]", "",                            ""},
-    {IN_FILE ,    1, 1, "i", "input",            &(file_stat),  "-i file",     "--input file",                "Input file." },
-    {OUT_FILE,    1, 1, "o", "output",           &(file_null),  "-o file",     "--output file",               "Output file." },
-    {IN_FORMAT ,  1, 1, "",  "input-format",     &(model_mime), "",            "--input-format format",       "File format of input file." },
-    {OUT_FORMAT , 1, 1, "",  "output-format",    &(model_mime), "",            "--output-format format",      "File format of output file." },
-    {IN_OPTS ,    1, 1, "I", "input-only-opts",  NULL,          "-I \"[opts]\"", "--input-only-opts \"[opts]\"",  "Options to apply only while processing input file.  Quotes around the opts are always necessary, but brackets are only necessary when supplying a single option without arguments that would otherwise be interpreted as an argv entry by the shell, even with quotes.  Brackets will never hurt, and for robustness when scripting they should always be used." },
-    {OUT_OPTS,    1, 1, "O", "output-only-opts", NULL,          "-O \"[opts]\"", "--output-only-opts \"[opts]\"", "Options to apply only while preparing output file.  Quotes around the opts are always necessary, but brackets are only necessary when supplying a single option without arguments that would otherwise be interpreted as an argv entry by the shell, even with quotes.  Brackets will never hurt, and for robustness when scripting they should always be used." },
+    {GCV_HELP,    0, 1, "h", "help",             NULL,          "format", gcv_help_str},
+    {GCV_HELP,    0, 1, "?", "",                 NULL,          "format", ""},
+    {IN_FILE ,    1, 1, "i", "input",            &(file_stat),  "file",   "Input file." },
+    {OUT_FILE,    1, 1, "o", "output",           &(file_null),  "file",   "Output file." },
+    {IN_FORMAT ,  1, 1, "",  "input-format",     &(model_mime), "format", "File format of input file." },
+    {OUT_FORMAT , 1, 1, "",  "output-format",    &(model_mime), "format", "File format of output file." },
+    {IN_OPTS ,    1, 1, "I", "input-only-opts",  NULL,          "\"[opts]\"", "Options to apply only while processing input file.  Quotes around the opts are always necessary, but brackets are only necessary when supplying a single option without arguments that would otherwise be interpreted as an argv entry by the shell, even with quotes.  Brackets will never hurt, and for robustness when scripting they should always be used." },
+    {OUT_OPTS,    1, 1, "O", "output-only-opts", NULL,          "\"[opts]\"", "Options to apply only while preparing output file.  Quotes around the opts are always necessary, but brackets are only necessary when supplying a single option without arguments that would otherwise be interpreted as an argv entry by the shell, even with quotes.  Brackets will never hurt, and for robustness when scripting they should always be used." },
     BU_OPT_DESC_NULL
 };
 
