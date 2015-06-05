@@ -848,7 +848,7 @@ get_region_dir(const db_i &db, const db_full_path &path)
     for (std::size_t i = 0; i < path.fp_len - 1; ++i) {
 	rt_db_internal comb_db_internal;
 
-	if (rt_db_get_internal(&comb_db_internal, path.fp_names[i], &db, NULL,
+	if (rt_db_get_internal(&comb_db_internal, DB_FULL_PATH_GET(&path, i), &db, NULL,
 			       &rt_uniresource) < 0)
 	    throw std::runtime_error("rt_db_get_internal() failed");
 
@@ -859,7 +859,7 @@ get_region_dir(const db_i &db, const db_full_path &path)
 	RT_CK_COMB(&comb_internal);
 
 	if (comb_internal.region_flag)
-	    return *path.fp_names[i];
+	    return *DB_FULL_PATH_GET(&path, i);
     }
 
     throw std::logic_error("no parent region");
@@ -870,7 +870,7 @@ HIDDEN std::pair<rt_db_internal, rt_db_internal>
 get_cutout(const db_i &db, const db_full_path &path)
 {
     RT_CK_DBI(&db);
-    RT_CK_FULL_PATH(&path)
+    RT_CK_FULL_PATH(&path);
 
     rt_db_internal comb_db_internal;
 
@@ -918,7 +918,7 @@ get_cutout(const db_i &db, const db_full_path &path)
 
 HIDDEN bool
 find_ccone_cutout(Section &section, const db_i &db, const db_full_path &path,
-		  std::set<std::string> &completed)
+		  std::set<const directory *> &completed)
 {
     RT_CK_DBI(&db);
     RT_CK_FULL_PATH(&path);
@@ -965,7 +965,7 @@ find_ccone_cutout(Section &section, const db_i &db, const db_full_path &path,
     if (ri1 >= ro1 || ri2 >= ro2)
 	return false;
 
-    if (!completed.insert(get_parent_dir(path).d_namep).second)
+    if (!completed.insert(&get_parent_dir(path)).second)
 	return true;
 
     point_t v2;
@@ -977,7 +977,7 @@ find_ccone_cutout(Section &section, const db_i &db, const db_full_path &path,
 
 HIDDEN bool
 find_csphere_cutout(Section &section, const db_i &db, const db_full_path &path,
-		    std::set<std::string> &completed)
+		    std::set<const directory *> &completed)
 {
     RT_CK_DBI(&db);
     RT_CK_FULL_PATH(&path);
@@ -1022,7 +1022,7 @@ find_csphere_cutout(Section &section, const db_i &db, const db_full_path &path,
     if (r_inner >= r_outer)
 	return false;
 
-    if (!completed.insert(get_parent_dir(path).d_namep).second)
+    if (!completed.insert(&get_parent_dir(path)).second)
 	return true;
 
     section.write_sphere(outer_ell.v, r_outer, r_outer - r_inner);
@@ -1087,7 +1087,7 @@ get_chex1(Section &section, const rt_bot_internal &bot)
     };
 
     for (int i = 0; i < 12; ++i) {
-	const int *face = &bot.faces[i * 3];
+	const int * const face = &bot.faces[i * 3];
 
 	if (face[0] != hex_faces[i][0] || face[1] != hex_faces[i][1]
 	    || face[2] != hex_faces[i][2])
@@ -1108,15 +1108,14 @@ struct ConversionData {
     ConversionData(FastgenWriter &writer, const bn_tol &tol, const db_i &db);
     ~ConversionData();
 
-    FastgenWriter &m_writer;
     const bn_tol &m_tol;
+    const db_i &m_db;
+    FastgenWriter &m_writer;
 
-    Section &get_section(const directory *dir);
     std::map<const directory *, Section *> m_sections;
 
     // for cutout detection
-    const db_i &m_db;
-    std::set<std::string> m_recorded_cutouts;
+    std::set<const directory *> m_recorded_cutouts;
 
 
 private:
@@ -1127,10 +1126,10 @@ private:
 
 ConversionData::ConversionData(FastgenWriter &writer, const bn_tol &tol,
 			       const db_i &db) :
-    m_writer(writer),
     m_tol(tol),
-    m_sections(),
     m_db(db),
+    m_writer(writer),
+    m_sections(),
     m_recorded_cutouts()
 {}
 
@@ -1143,23 +1142,11 @@ ConversionData::~ConversionData()
 }
 
 
-Section &
-ConversionData::get_section(const directory *dir)
-{
-    Section *&result = m_sections[dir];
-
-    if (!result)
-	result = new Section;
-
-    return *result;
-}
-
-
 HIDDEN bool
 convert_primitive(ConversionData &data, const db_full_path &path,
 		  const rt_db_internal &internal)
 {
-    Section &section = data.get_section(&get_region_dir(data.m_db, path));
+    Section &section = *data.m_sections.at(&get_region_dir(data.m_db, path));
 
     switch (internal.idb_type) {
 	case ID_CLINE: {
@@ -1286,7 +1273,6 @@ convert_leaf(db_tree_state *tree_state, const db_full_path *path,
     const std::string name = AutoFreePtr<char>(db_path_to_string(path)).ptr;
 
     bool converted = false;
-    Section section;
 
     if (internal->idb_major_type == DB5_MAJORTYPE_BRLCAD)
 	try {
@@ -1306,9 +1292,28 @@ convert_leaf(db_tree_state *tree_state, const db_full_path *path,
 }
 
 
+HIDDEN int
+convert_region_start(db_tree_state *tree_state, const db_full_path *path,
+		     const rt_comb_internal *comb, void *client_data)
+{
+    RT_CK_DBTS(tree_state);
+    RT_CK_FULL_PATH(path);
+    RT_CK_COMB(comb);
+
+    ConversionData &data = *static_cast<ConversionData *>(client_data);
+    const std::string name = AutoFreePtr<char>(db_path_to_string(path)).ptr;
+
+    if (!data.m_sections.insert(std::make_pair(DB_FULL_PATH_CUR_DIR(path),
+				new Section)).second)
+	throw std::logic_error("region already processed");
+
+    return 1;
+}
+
+
 HIDDEN tree *
-convert_region(db_tree_state *tree_state, const db_full_path *path,
-	       tree *current_tree, void *client_data)
+convert_region_end(db_tree_state *tree_state, const db_full_path *path,
+		   tree *current_tree, void *client_data)
 {
     RT_CK_DBTS(tree_state);
     RT_CK_FULL_PATH(path);
@@ -1316,7 +1321,7 @@ convert_region(db_tree_state *tree_state, const db_full_path *path,
 
     ConversionData &data = *static_cast<ConversionData *>(client_data);
     const std::string name = AutoFreePtr<char>(db_path_to_string(path)).ptr;
-    const Section &section = *data.m_sections.at(path->fp_names[path->fp_len - 1]);
+    const Section &section = *data.m_sections.at(DB_FULL_PATH_CUR_DIR(path));
 
     unsigned char color[3];
     char_color_from_floats(color, tree_state->ts_mater.ma_color);
@@ -1361,7 +1366,8 @@ gcv_fastgen4_write(const char *path, struct db_i *dbip,
 	vmodel = nmg_mm();
 	db_walk_tree(dbip, static_cast<int>(num_objects),
 		     const_cast<const char **>(object_names.ptr), 1,
-		     &initial_tree_state, NULL, convert_region, convert_leaf, &conv_data);
+		     &initial_tree_state, convert_region_start, convert_region_end, convert_leaf,
+		     &conv_data);
 	nmg_km(vmodel);
     }
 
