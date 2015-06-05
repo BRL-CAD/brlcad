@@ -193,9 +193,9 @@ BU_EXPORT extern void bu_opt_validate(bu_opt_data_t *results);
  * of the string->[type] translation in order to allow a calling
  * program to use the int/long/etc. without having to repeat the
  * conversion.
- *
- * TODO - unimplemented */
+ */
 BU_EXPORT extern int bu_opt_arg_int(struct bu_vls *msg, struct bu_opt_data *data);
+/* TODO - unimplemented */
 BU_EXPORT extern int bu_opt_arg_long(struct bu_vls *msg, struct bu_opt_data *data);
 BU_EXPORT extern int bu_opt_arg_bool(struct bu_vls *msg, struct bu_opt_data *data);
 BU_EXPORT extern int bu_opt_arg_double(struct bu_vls *msg, struct bu_opt_data *data);
