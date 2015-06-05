@@ -196,10 +196,14 @@ BU_EXPORT extern void bu_opt_validate(bu_opt_data_t *results);
  * conversion.
  */
 BU_EXPORT extern int bu_opt_arg_int(struct bu_vls *msg, struct bu_opt_data *data, void *set_var);
+BU_EXPORT extern int bu_opt_arg_fastf_t(struct bu_vls *msg, struct bu_opt_data *data, void *set_var);
 /* TODO - unimplemented */
-BU_EXPORT extern int bu_opt_arg_long(struct bu_vls *msg, struct bu_opt_data *data, void *set_var);
 BU_EXPORT extern int bu_opt_arg_bool(struct bu_vls *msg, struct bu_opt_data *data, void *set_var);
+BU_EXPORT extern int bu_opt_arg_long(struct bu_vls *msg, struct bu_opt_data *data, void *set_var);
+BU_EXPORT extern int bu_opt_arg_float(struct bu_vls *msg, struct bu_opt_data *data, void *set_var);
 BU_EXPORT extern int bu_opt_arg_double(struct bu_vls *msg, struct bu_opt_data *data, void *set_var);
+BU_EXPORT extern int bu_opt_arg_ascii(struct bu_vls *msg, struct bu_opt_data *data, void *set_var);
+BU_EXPORT extern int bu_opt_arg_utf8(struct bu_vls *msg, struct bu_opt_data *data, void *set_var);
 
 
 /** @} */

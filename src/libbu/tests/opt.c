@@ -128,6 +128,7 @@ main(int argc, const char **argv)
     struct bu_ptbl *results = NULL;
     struct bu_vls parse_msgs = BU_VLS_INIT_ZERO;
     static int i = 0;
+    static fastf_t f = 0;
     static struct bu_color color = BU_COLOR_INIT_ZERO;
 
     enum d1_opt_ind {D1_HELP, D1_VERBOSITY};
@@ -145,13 +146,13 @@ main(int argc, const char **argv)
 	BU_OPT_DESC_NULL
     };
 
-    enum d3_opt_ind {D3_HELP, D3_NUM};
+    enum d3_opt_ind {D3_HELP, D3_NUM, D3_FASTF};
     struct bu_opt_desc d3[4] = {
 	{D3_HELP, 0, 0, "h", "help", NULL, "", help_str, NULL},
 	{D3_NUM, 1, 1, "n", "num", &bu_opt_arg_int, "#", "Read number", (void *)&i},
+	{D3_FASTF, 1, 1, "f", "fastf_t", &bu_opt_arg_fastf_t, "#", "Read number", (void *)&f},
 	BU_OPT_DESC_NULL
     };
-
 
 
     if (argc < 2)
@@ -187,6 +188,7 @@ main(int argc, const char **argv)
 	print_results(results);
 	if (test_num == 1 || test_num == 3)
 	    bu_log("Int var: %d\n", i);
+	    bu_log("Fastf_t var: %f\n", f);
 	if (test_num == 2)
 	    bu_log("Color var: %0.2f, %0.2f, %0.2f\n", color.buc_rgb[0], color.buc_rgb[1], color.buc_rgb[2]);
     }
