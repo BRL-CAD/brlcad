@@ -86,6 +86,8 @@ public:
     RecordWriter();
     virtual ~RecordWriter();
 
+    void write_comment(const std::string &value);
+
 
 protected:
     virtual std::ostream &get_ostream() = 0;
@@ -211,6 +213,13 @@ RecordWriter::Record::truncate_float(fastf_t value)
 }
 
 
+inline void
+RecordWriter::write_comment(const std::string &value)
+{
+    (Record(*this) << "$COMMENT").text(" ").text(value);
+}
+
+
 class StringBuffer : public RecordWriter
 {
 public:
@@ -250,7 +259,6 @@ public:
     FastgenWriter(const std::string &path);
     ~FastgenWriter();
 
-    void write_comment(const std::string &value);
     void write_section_color(const SectionID &section_id,
 			     const unsigned char *color);
 
@@ -311,13 +319,6 @@ FastgenWriter::take_next_section_id()
 	    throw std::length_error("maximum number of sections");
 
     return std::make_pair(group_id, m_next_section_id[group_id]++);
-}
-
-
-inline void
-FastgenWriter::write_comment(const std::string &value)
-{
-    (Record(*this) << "$COMMENT").text(" ").text(value);
 }
 
 
@@ -492,6 +493,8 @@ public:
     void write(FastgenWriter &writer, std::string name,
 	       const unsigned char *color = NULL) const;
 
+    void write_name(const std::string &value);
+
     void write_line(const fastf_t *point_a, const fastf_t *point_b,
 		    fastf_t radius, fastf_t thickness);
 
@@ -559,6 +562,13 @@ Section::write(FastgenWriter &writer, std::string name,
 
     m_grids.write(writer);
     m_elements.write(writer);
+}
+
+
+inline void
+Section::write_name(const std::string &value)
+{
+    m_elements.write_comment(value);
 }
 
 
@@ -760,7 +770,7 @@ get_face_info(const rt_bot_internal &bot, std::size_t i)
     // set a very small thickness if face thickness is zero
     if (bot.thickness)
 	result.first = !NEAR_ZERO(bot.thickness[i],
-				  RT_LEN_TOL) ? bot.thickness[i] : 2 * SMALL_FASTF;
+				  RT_LEN_TOL) ? bot.thickness[i] : 2 * RT_LEN_TOL;
 
     if (bot.face_mode)
 	result.second = !BU_BITTEST(bot.face_mode, i);
@@ -1036,8 +1046,8 @@ find_ccone2_cutout(Section &section, const db_i &db, const db_full_path &path,
 
     const fastf_t ro1 = MAGNITUDE(outer_tgc.a);
     const fastf_t ro2 = MAGNITUDE(outer_tgc.c);
-    const fastf_t ri1 = MAGNITUDE(inner_tgc.b);
-    const fastf_t ri2 = MAGNITUDE(inner_tgc.d);
+    const fastf_t ri1 = MAGNITUDE(inner_tgc.a);
+    const fastf_t ri2 = MAGNITUDE(inner_tgc.c);
 
     // check radii
     if (ri1 >= ro1 || ri2 >= ro2)
@@ -1045,6 +1055,7 @@ find_ccone2_cutout(Section &section, const db_i &db, const db_full_path &path,
 
     point_t v2;
     VADD2(v2, outer_tgc.v, outer_tgc.h);
+    section.write_name(get_parent_dir(path).d_namep);
     section.write_cone(outer_tgc.v, v2, ro1, ro2, ri1, ri2);
     completed.insert(&get_parent_dir(path)).second;
     return true;
@@ -1102,6 +1113,7 @@ find_csphere_cutout(Section &section, const db_i &db, const db_full_path &path,
 	return false;
 
     completed.insert(&get_parent_dir(path));
+    section.write_name(get_parent_dir(path).d_namep);
     section.write_sphere(outer_ell.v, r_outer, r_outer - r_inner);
     return true;
 }
@@ -1233,6 +1245,7 @@ convert_primitive(ConversionData &data, const db_full_path &path,
 
 	    point_t v2;
 	    VADD2(v2, cline.v, cline.h);
+	    section.write_name(DB_FULL_PATH_CUR_DIR(&path)->d_namep);
 	    section.write_line(cline.v, v2, cline.radius, cline.thickness);
 	    break;
 	}
@@ -1245,8 +1258,10 @@ convert_primitive(ConversionData &data, const db_full_path &path,
 	    if (internal.idb_type != ID_SPH && !ell_is_sphere(ell))
 		return false;
 
-	    if (!find_csphere_cutout(section, data.m_db, path, data.m_recorded_cutouts))
+	    if (!find_csphere_cutout(section, data.m_db, path, data.m_recorded_cutouts)) {
+		section.write_name(DB_FULL_PATH_CUR_DIR(&path)->d_namep);
 		section.write_sphere(ell.v, MAGNITUDE(ell.a));
+	    }
 
 	    break;
 	}
@@ -1262,6 +1277,7 @@ convert_primitive(ConversionData &data, const db_full_path &path,
 	    if (!find_ccone2_cutout(section, data.m_db, path, data.m_recorded_cutouts)) {
 		point_t v2;
 		VADD2(v2, tgc.v, tgc.h);
+		section.write_name(DB_FULL_PATH_CUR_DIR(&path)->d_namep);
 		section.write_cone(tgc.v, v2, MAGNITUDE(tgc.a), MAGNITUDE(tgc.c), 0.0, 0.0);
 	    }
 
@@ -1272,6 +1288,7 @@ convert_primitive(ConversionData &data, const db_full_path &path,
 	    const rt_arb_internal &arb = *static_cast<rt_arb_internal *>(internal.idb_ptr);
 	    RT_ARB_CK_MAGIC(&arb);
 
+	    section.write_name(DB_FULL_PATH_CUR_DIR(&path)->d_namep);
 	    section.write_hexahedron(arb.pt);
 	    break;
 	}
@@ -1279,6 +1296,8 @@ convert_primitive(ConversionData &data, const db_full_path &path,
 	case ID_BOT: {
 	    const rt_bot_internal &bot = *static_cast<rt_bot_internal *>(internal.idb_ptr);
 	    RT_BOT_CK_MAGIC(&bot);
+
+	    section.write_name(DB_FULL_PATH_CUR_DIR(&path)->d_namep);
 
 	    // FIXME Section section(bot.mode == RT_BOT_SOLID);
 	    if (!get_chex1(section, bot))
