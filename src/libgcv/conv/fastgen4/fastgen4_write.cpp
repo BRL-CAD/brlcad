@@ -411,7 +411,7 @@ private:
 bool GridManager::PointComparator::operator()(const Point &lhs,
 	const Point &rhs) const
 {
-#define COMPARE(a, b) do { if (!EQUAL((a), (b))) return (a) < (b); } while (false)
+#define COMPARE(a, b) do { if (!NEAR_EQUAL((a), (b), RT_LEN_TOL)) return (a) < (b); } while (false)
 
     COMPARE(lhs[X], rhs[X]);
     COMPARE(lhs[Y], rhs[Y]);
@@ -598,11 +598,11 @@ void
 Section::write_sphere(const fastf_t *center, fastf_t radius,
 		      fastf_t thickness)
 {
+    if (NEAR_EQUAL(thickness, 0.0, RT_LEN_TOL))
+	thickness = radius;
+
     radius *= INCHES_PER_MM;
     thickness *= INCHES_PER_MM;
-
-    if (EQUAL(thickness, 0.0))
-	thickness = radius;
 
     if (radius <= 0.0 || thickness <= 0.0 || radius < thickness)
 	throw std::invalid_argument("invalid value");
@@ -722,7 +722,7 @@ Section::write_hexahedron(const fastf_t vpoints[8][3], fastf_t thickness,
 
     const std::vector<std::size_t> grids = m_grids.get_unique_grids(points);
 
-    const bool has_thickness = !EQUAL(thickness, 0.0);
+    const bool has_thickness = !NEAR_EQUAL(thickness, 0.0, RT_LEN_TOL);
 
     {
 	RecordWriter::Record record1(m_elements);
@@ -756,15 +756,14 @@ get_face_info(const rt_bot_internal &bot, std::size_t i)
     // defaults
     std::pair<fastf_t, bool> result(1.0, true);
 
-    if (bot.mode == RT_BOT_PLATE) {
-	// fg4 does not allow zero thickness
-	// set a very small thickness if face thickness is zero
-	if (bot.thickness)
-	    result.first = !ZERO(bot.thickness[i]) ? bot.thickness[i] : 2 * SMALL_FASTF;
+    // fg4 does not allow zero thickness
+    // set a very small thickness if face thickness is zero
+    if (bot.thickness)
+	result.first = !NEAR_ZERO(bot.thickness[i],
+				  RT_LEN_TOL) ? bot.thickness[i] : 2 * SMALL_FASTF;
 
-	if (bot.face_mode)
-	    result.second = !BU_BITTEST(bot.face_mode, i);
-    }
+    if (bot.face_mode)
+	result.second = !BU_BITTEST(bot.face_mode, i);
 
     return result;
 }
@@ -787,7 +786,7 @@ write_bot(Section &section, const rt_bot_internal &bot)
 	    const int * const next_face = &bot.faces[(i + 1) * 3];
 	    const std::pair<fastf_t, bool> next_face_info = get_face_info(bot, i + 1);
 
-	    if (EQUAL(face_info.first, next_face_info.first)
+	    if (NEAR_EQUAL(face_info.first, next_face_info.first, RT_LEN_TOL)
 		&& face_info.second == next_face_info.second)
 		if (face[0] == next_face[0] && face[2] == next_face[1]) {
 		    const fastf_t * const v4 = &bot.vertices[next_face[2] * 3];
@@ -809,44 +808,46 @@ ell_is_sphere(const rt_ell_internal &ell)
 
     // based on rt_sph_prep()
 
-    fastf_t magsq_a, magsq_b, magsq_c;
+    fastf_t mag_a, mag_b, mag_c;
     vect_t Au, Bu, Cu; // A, B, C with unit length
     fastf_t f;
 
     // Validate that |A| > 0, |B| > 0, |C| > 0
-    magsq_a = MAGSQ(ell.a);
-    magsq_b = MAGSQ(ell.b);
-    magsq_c = MAGSQ(ell.c);
+    mag_a = MAGNITUDE(ell.a);
+    mag_b = MAGNITUDE(ell.b);
+    mag_c = MAGNITUDE(ell.c);
 
-    if (ZERO(magsq_a) || ZERO(magsq_b) || ZERO(magsq_c))
+    if (NEAR_ZERO(mag_a, RT_LEN_TOL) || NEAR_ZERO(mag_b, RT_LEN_TOL)
+	|| NEAR_ZERO(mag_c, RT_LEN_TOL))
 	return false;
 
     // Validate that |A|, |B|, and |C| are nearly equal
-    if (!EQUAL(magsq_a, magsq_b) || !EQUAL(magsq_a, magsq_c))
+    if (!NEAR_EQUAL(mag_a, mag_b, RT_LEN_TOL)
+	|| !NEAR_EQUAL(mag_a, mag_c, RT_LEN_TOL))
 	return false;
 
     // Create unit length versions of A, B, C
-    f = 1.0 / sqrt(magsq_a);
+    f = 1.0 / mag_a;
     VSCALE(Au, ell.a, f);
-    f = 1.0 / sqrt(magsq_b);
+    f = 1.0 / mag_b;
     VSCALE(Bu, ell.b, f);
-    f = 1.0 / sqrt(magsq_c);
+    f = 1.0 / mag_c;
     VSCALE(Cu, ell.c, f);
 
     // Validate that A.B == 0, B.C == 0, A.C == 0 (check dir only)
     f = VDOT(Au, Bu);
 
-    if (!ZERO(f))
+    if (!NEAR_ZERO(f, RT_DOT_TOL))
 	return false;
 
     f = VDOT(Bu, Cu);
 
-    if (!ZERO(f))
+    if (!NEAR_ZERO(f, RT_DOT_TOL))
 	return false;
 
     f = VDOT(Au, Cu);
 
-    if (!ZERO(f))
+    if (!NEAR_ZERO(f, RT_DOT_TOL))
 	return false;
 
     return true;
@@ -856,14 +857,25 @@ ell_is_sphere(const rt_ell_internal &ell)
 // Determines whether a tgc can be represented by a CCONE2 object.
 // Assumes that tgc is a valid rt_tgc_internal.
 HIDDEN bool
-tgc_is_ccone(const rt_tgc_internal &tgc)
+tgc_is_ccone2(const rt_tgc_internal &tgc)
 {
     RT_TGC_CK_MAGIC(&tgc);
 
-    if (VZERO(tgc.a) || VZERO(tgc.b))
+    // ensure non-zero magnitudes
+    if (NEAR_ZERO(MAGNITUDE(tgc.h), RT_LEN_TOL)
+	|| NEAR_ZERO(MAGNITUDE(tgc.a), RT_LEN_TOL)
+	|| NEAR_ZERO(MAGNITUDE(tgc.b), RT_LEN_TOL))
 	return false;
 
-    if (!ZERO(VDOT(tgc.h, tgc.a)) || !ZERO(VDOT(tgc.h, tgc.b)))
+    // ensure |A| == |B| and |C| == |D|
+    if (!NEAR_EQUAL(MAGNITUDE(tgc.a), MAGNITUDE(tgc.b), RT_LEN_TOL)
+	|| !NEAR_EQUAL(MAGNITUDE(tgc.c), MAGNITUDE(tgc.d), RT_LEN_TOL))
+	return false;
+
+    // ensure h, a, b are mutually perpendicular
+    if (!NEAR_ZERO(VDOT(tgc.h, tgc.a), RT_DOT_TOL)
+	|| !NEAR_ZERO(VDOT(tgc.h, tgc.b), RT_DOT_TOL)
+	|| !NEAR_ZERO(VDOT(tgc.a, tgc.b), RT_DOT_TOL))
 	return false;
 
     {
@@ -877,7 +889,8 @@ tgc_is_ccone(const rt_tgc_internal &tgc)
 	VUNITIZE(c_norm);
 	VUNITIZE(d_norm);
 
-	if (!VEQUAL(a_norm, c_norm) || !VEQUAL(b_norm, d_norm))
+	if (!VNEAR_EQUAL(a_norm, c_norm, RT_LEN_TOL)
+	    || !VNEAR_EQUAL(b_norm, d_norm, RT_LEN_TOL))
 	    return false;
     }
 
@@ -976,12 +989,16 @@ get_cutout(const db_i &db, const db_full_path &path)
 }
 
 
+// Test for and create ccone2 elements.
 HIDDEN bool
-find_ccone_cutout(Section &section, const db_i &db, const db_full_path &path,
-		  std::set<const directory *> &completed)
+find_ccone2_cutout(Section &section, const db_i &db, const db_full_path &path,
+		   std::set<const directory *> &completed)
 {
     RT_CK_DBI(&db);
     RT_CK_FULL_PATH(&path);
+
+    if (completed.count(&get_parent_dir(path)))
+	return true; // already processed
 
     std::pair<rt_db_internal, rt_db_internal> internals;
 
@@ -1009,28 +1026,27 @@ find_ccone_cutout(Section &section, const db_i &db, const db_full_path &path,
     RT_TGC_CK_MAGIC(&outer_tgc);
     RT_TGC_CK_MAGIC(&inner_tgc);
 
-    if (!VEQUAL(outer_tgc.v, inner_tgc.v) || !VEQUAL(outer_tgc.h, inner_tgc.h))
+    if (!VNEAR_EQUAL(outer_tgc.v, inner_tgc.v, RT_LEN_TOL)
+	|| !VNEAR_EQUAL(outer_tgc.h, inner_tgc.h, RT_LEN_TOL))
 	return false;
 
     // check cone geometry
-    if (!tgc_is_ccone(outer_tgc) || !tgc_is_ccone(inner_tgc))
+    if (!tgc_is_ccone2(outer_tgc) || !tgc_is_ccone2(inner_tgc))
 	return false;
 
     const fastf_t ro1 = MAGNITUDE(outer_tgc.a);
-    const fastf_t ro2 = MAGNITUDE(outer_tgc.b);
-    const fastf_t ri1 = MAGNITUDE(inner_tgc.a);
-    const fastf_t ri2 = MAGNITUDE(inner_tgc.b);
+    const fastf_t ro2 = MAGNITUDE(outer_tgc.c);
+    const fastf_t ri1 = MAGNITUDE(inner_tgc.b);
+    const fastf_t ri2 = MAGNITUDE(inner_tgc.d);
 
     // check radii
     if (ri1 >= ro1 || ri2 >= ro2)
 	return false;
 
-    if (!completed.insert(&get_parent_dir(path)).second)
-	return true;
-
     point_t v2;
     VADD2(v2, outer_tgc.v, outer_tgc.h);
     section.write_cone(outer_tgc.v, v2, ro1, ro2, ri1, ri2);
+    completed.insert(&get_parent_dir(path)).second;
     return true;
 }
 
@@ -1041,6 +1057,9 @@ find_csphere_cutout(Section &section, const db_i &db, const db_full_path &path,
 {
     RT_CK_DBI(&db);
     RT_CK_FULL_PATH(&path);
+
+    if (completed.count(&get_parent_dir(path)))
+	return true; // already processed
 
     std::pair<rt_db_internal, rt_db_internal> internals;
 
@@ -1068,7 +1087,7 @@ find_csphere_cutout(Section &section, const db_i &db, const db_full_path &path,
     RT_ELL_CK_MAGIC(&outer_ell);
     RT_ELL_CK_MAGIC(&inner_ell);
 
-    if (!VEQUAL(outer_ell.v, inner_ell.v))
+    if (!VNEAR_EQUAL(outer_ell.v, inner_ell.v, RT_LEN_TOL))
 	return false;
 
     // check sphere geometry
@@ -1082,9 +1101,7 @@ find_csphere_cutout(Section &section, const db_i &db, const db_full_path &path,
     if (r_inner >= r_outer)
 	return false;
 
-    if (!completed.insert(&get_parent_dir(path)).second)
-	return true;
-
+    completed.insert(&get_parent_dir(path));
     section.write_sphere(outer_ell.v, r_outer, r_outer - r_inner);
     return true;
 }
@@ -1108,7 +1125,7 @@ get_chex1(Section &section, const rt_bot_internal &bot)
 	hex_thickness = bot.thickness[0];
 
 	for (std::size_t i = 1; i < bot.num_faces; ++i)
-	    if (!EQUAL(bot.thickness[i], hex_thickness))
+	    if (!NEAR_EQUAL(bot.thickness[i], hex_thickness, RT_LEN_TOL))
 		return false;
     }
 
@@ -1239,13 +1256,13 @@ convert_primitive(ConversionData &data, const db_full_path &path,
 	    const rt_tgc_internal &tgc = *static_cast<rt_tgc_internal *>(internal.idb_ptr);
 	    RT_TGC_CK_MAGIC(&tgc);
 
-	    if (internal.idb_type != ID_REC && !tgc_is_ccone(tgc))
+	    if (internal.idb_type != ID_REC && !tgc_is_ccone2(tgc))
 		return false;
 
-	    if (!find_ccone_cutout(section, data.m_db, path, data.m_recorded_cutouts)) {
+	    if (!find_ccone2_cutout(section, data.m_db, path, data.m_recorded_cutouts)) {
 		point_t v2;
 		VADD2(v2, tgc.v, tgc.h);
-		section.write_cone(tgc.v, v2, MAGNITUDE(tgc.a), MAGNITUDE(tgc.b), 0.0, 0.0);
+		section.write_cone(tgc.v, v2, MAGNITUDE(tgc.a), MAGNITUDE(tgc.c), 0.0, 0.0);
 	    }
 
 	    break;
