@@ -30,8 +30,15 @@ d1_verbosity(struct bu_vls *msg, struct bu_opt_data *data, void *set_v)
 {
     int val = INT_MAX;
     int *int_set = (int *)set_v;
-    int int_ret = bu_opt_arg_int(msg, data, (void *)&val);
-    if (int_ret == -1 || int_ret == 0) return int_ret;
+    int int_ret;
+    if (!data || !data->argv || !data->argv[0] || strlen(data->argv[0]) == 0 || data->argc == 1) {
+	/* Have verbosity flag but no valid arg - go with just the flag */
+	if (int_set) (*int_set) = 1;
+	return 0;
+    }
+
+    int_ret = bu_opt_arg_int(msg, data, (void *)&val);
+    if (int_ret == -1) return -1;
 
     if (val < 0 || val > 3) return -1;
 
@@ -67,7 +74,7 @@ d2_color(struct bu_vls *msg, struct bu_opt_data *data, void *set_c)
 	    if (!bu_str_to_rgb(bu_vls_addr(&tmp_color), (unsigned char *)&rgb)) {
 		/* Not valid with 3 */
 		bu_vls_free(&tmp_color);
-		if (msg) bu_vls_sprintf(msg, "No valid color found.");
+		if (msg) bu_vls_sprintf(msg, "No valid color found.\n");
 		return -1;
 	    } else {
 		/* 3 did the job */
@@ -78,7 +85,7 @@ d2_color(struct bu_vls *msg, struct bu_opt_data *data, void *set_c)
 	} else {
 	    /* Not valid with 1 and don't have 3 - we require at least one, so
 	     * claim one argv as belonging to this option regardless. */
-	    if (msg) bu_vls_sprintf(msg, "No valid color found: %s", data->argv[0]);
+	    if (msg) bu_vls_sprintf(msg, "No valid color found: %s\n", data->argv[0]);
 	    return -1;
 	}
     } else {
@@ -116,7 +123,8 @@ int
 main(int argc, const char **argv)
 {
     int ret = 0;
-    int function_num;
+    char *endptr = NULL;
+    long test_num;
     struct bu_ptbl *results = NULL;
     struct bu_vls parse_msgs = BU_VLS_INIT_ZERO;
     static int i = 0;
@@ -149,9 +157,12 @@ main(int argc, const char **argv)
     if (argc < 2)
 	bu_exit(1, "ERROR: wrong number of parameters");
 
-    sscanf(argv[1], "%d", &function_num);
+    test_num = strtol(argv[1], &endptr, 0);
+    if (endptr && strlen(endptr) != 0) {
+	bu_exit(1, "Invalid test number: %s\n", argv[1]);
+    }
 
-    switch (function_num) {
+    switch (test_num) {
 	case 0:
 	    ret = bu_opt_parse(&results, &parse_msgs, 0, NULL, NULL);
 	    return (results == NULL) ? 0 : 1;
@@ -174,9 +185,9 @@ main(int argc, const char **argv)
     if (results) {
 	bu_opt_compact(results);
 	print_results(results);
-	if (function_num == 1 || function_num == 3)
+	if (test_num == 1 || test_num == 3)
 	    bu_log("Int var: %d\n", i);
-	if (function_num == 2)
+	if (test_num == 2)
 	    bu_log("Color var: %0.2f, %0.2f, %0.2f\n", color.buc_rgb[0], color.buc_rgb[1], color.buc_rgb[2]);
     }
 

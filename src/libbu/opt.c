@@ -380,8 +380,7 @@ opt_process(char **eq_arg, const char *opt_candidate)
 	    bu_vls_sprintf(&varg, "%s", inputcpy);
 	    bu_vls_nibble(&varg, 2);
 
-#if 0
-	    /* A possible exception is an equals sign, e.g. -s=1024 - in that
+	    /* A exception is an equals sign, e.g. -s=1024 - in that
 	     * instance, the expectation might be that = would be interpreted
 	     * as an assignment.  This means that to get the literal =1024 as
 	     * an option, you would need a space after the s, e.g.:  -s =1024
@@ -393,7 +392,6 @@ opt_process(char **eq_arg, const char *opt_candidate)
 	    if (equal_pos && equal_pos == inputcpy+2) {
 		bu_vls_nibble(&varg, 1);
 	    }
-#endif
 
 	    (*eq_arg) = bu_strdup(bu_vls_addr(&varg));
 	    final_opt = bu_strdup(bu_vls_addr(&vopt));
@@ -620,8 +618,8 @@ bu_opt_parse(struct bu_ptbl **tbl, struct bu_vls *msgs, int argc, const char **a
 		if (i != argc || arg_cnt) {
 		    if (arg_cnt)
 			g_argv[0] = eq_arg;
-		    for (k = arg_cnt; k < g_argc; k++) {
-			g_argv[k] = argv[i + k];
+		    for (k = 0; k < g_argc; k++) {
+			g_argv[k+arg_cnt] = argv[i + k];
 		    }
 		    data->argc = g_argc;
 		    data->argv = g_argv;
@@ -632,8 +630,16 @@ bu_opt_parse(struct bu_ptbl **tbl, struct bu_vls *msgs, int argc, const char **a
 			 * arg_process callback returns -1, something has gone
 			 * seriously awry and a known-to-be-invalid arg was
 			 * seen.  Fail early and hard. */
-			if (msgs) bu_vls_printf(msgs, "Invalid argument supplied to %s - haulting.\n", argv[i-1]);
+			if (msgs) bu_vls_printf(msgs, "Invalid argument supplied to %s: %s - haulting.\n", argv[i-1], argv[i]);
 			return -1;
+		    }
+		    if (arg_offset == 0) {
+			if (desc->arg_cnt_min > 0) {
+			    if (msgs) bu_vls_printf(msgs, "Option %s requires an argument but none was found - haulting.\n", argv[i-1]);
+			    return -1;
+			} else {
+			    continue;
+			}
 		    }
 		    i = i + arg_offset - arg_cnt;
 		    if (!arg_offset && arg_cnt) arg_offset = arg_cnt;
@@ -642,14 +648,17 @@ bu_opt_parse(struct bu_ptbl **tbl, struct bu_vls *msgs, int argc, const char **a
 		    if (arg_offset > 0) {
 			data->argc = arg_offset;
 			data->argv = (const char **)bu_calloc(arg_offset + 1, sizeof(char *), "final array");
-			if (arg_cnt) data->argv[0] = eq_arg;
-			for (k = arg_cnt; k < arg_offset; k++) {
-			    data->argv[k] = bu_strdup(g_argv[k - arg_cnt]);
+			for (k = 0; k < arg_offset; k++) {
+			    data->argv[k] = bu_strdup(g_argv[k]);
 			}
 		    }
 		} else {
-		    /* Need args, but have none - invalid */
-		    data->valid = 0;
+		    if (desc->arg_cnt_min == 0) {
+			/* If this is allowed to function just as a flag, an int may
+			 * be supplied to record the status - try to set it */
+			int *flag_var = (int *)desc->set_var;
+			if (flag_var) (*flag_var) = 1;
+		    }
 		    data->argc = 0;
 		    data->argv = NULL;
 		}
