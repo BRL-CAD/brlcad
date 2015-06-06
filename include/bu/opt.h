@@ -46,7 +46,6 @@ typedef int (*bu_opt_arg_process_t)(struct bu_vls *, int argc, const char **argv
  * "Option description" structure
  */
 struct bu_opt_desc {
-    int index;
     size_t arg_cnt_min;
     size_t arg_cnt_max;
     const char *shortopt;
@@ -56,7 +55,7 @@ struct bu_opt_desc {
     const char *help_string;
     void *set_var;
 };
-#define BU_OPT_DESC_NULL {-1, 0, 0, NULL, NULL, NULL, NULL, NULL, NULL}
+#define BU_OPT_DESC_NULL {0, 0, NULL, NULL, NULL, NULL, NULL, NULL}
 
 
 /**

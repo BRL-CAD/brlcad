@@ -67,6 +67,24 @@ wrap_help(struct bu_vls *help, int indent, int offset, int len)
     bu_free(argv, "argv");
 }
 
+HIDDEN int
+opt_desc_is_null(struct bu_opt_desc *ds)
+{
+    int non_null = 0;
+    if (!ds) return 1;
+
+    if (ds->arg_cnt_min != 0) non_null++;
+    if (ds->arg_cnt_max != 0) non_null++;
+    if (ds->shortopt) non_null++;
+    if (ds->longopt) non_null++;
+    if (ds->arg_process) non_null++;
+    if (ds->arg_helpstr) non_null++;
+    if (ds->help_string) non_null++;
+    if (ds->set_var) non_null++;
+
+    return (non_null > 0) ? 0 : 1;
+}
+
 HIDDEN const char *
 bu_opt_describe_internal_ascii(struct bu_opt_desc *ds, struct bu_opt_desc_opts *settings)
 {
@@ -83,7 +101,7 @@ bu_opt_describe_internal_ascii(struct bu_opt_desc *ds, struct bu_opt_desc_opts *
     const char *finalized;
     struct bu_vls description = BU_VLS_INIT_ZERO;
     int *status;
-    if (!ds || ds[0].index == -1) return NULL;
+    if (!ds || opt_desc_is_null(&ds[0])) return NULL;
 
     if (settings) {
 	offset = settings->offset;
@@ -91,7 +109,7 @@ bu_opt_describe_internal_ascii(struct bu_opt_desc *ds, struct bu_opt_desc_opts *
 	desc_cols = settings->description_columns;
     }
 
-    while (ds[i].index != -1) i++;
+    while (!opt_desc_is_null(&ds[i])) i++;
     if (i == 0) return NULL;
     opt_cnt = i;
     status = (int *)bu_calloc(opt_cnt, sizeof(int), "opt status");
@@ -104,23 +122,23 @@ bu_opt_describe_internal_ascii(struct bu_opt_desc *ds, struct bu_opt_desc_opts *
 	    struct bu_vls opts = BU_VLS_INIT_ZERO;
 	    struct bu_vls help_str = BU_VLS_INIT_ZERO;
 
-	    /* We handle all entries with the same key in the same
+	    /* We handle all entries with the same set_var in the same
 	     * pass, so set the status flags accordingly */
 	    j = i;
 	    while (j < opt_cnt) {
 		d = &(ds[j]);
-		if (d->index == curr->index) {
+		if (d == curr || (d->set_var && curr->set_var && d->set_var == curr->set_var)) {
 		    status[j] = 1;
 		}
 		j++;
 	    }
 
 	    /* Collect the short options first - may be multiple instances with
-	     * the same index defining aliases, so accumulate all of them. */
+	     * the same set_var, so accumulate all of them. */
 	    j = i;
 	    while (j < opt_cnt) {
 		d = &(ds[j]);
-		if (d->index == curr->index) {
+		if (d == curr || (d->set_var && curr->set_var && d->set_var == curr->set_var)) {
 		    if (d->shortopt && strlen(d->shortopt) > 0) {
 			struct bu_vls tmp_arg = BU_VLS_INIT_ZERO;
 			int new_len = strlen(d->arg_helpstr);
@@ -166,7 +184,7 @@ bu_opt_describe_internal_ascii(struct bu_opt_desc *ds, struct bu_opt_desc_opts *
 	    j = i;
 	    while (j < opt_cnt) {
 		d = &(ds[j]);
-		if (d->index == curr->index) {
+		if (d == curr || (d->set_var && curr->set_var && d->set_var == curr->set_var)) {
 		    if (d->longopt && strlen(d->longopt) > 0) {
 			struct bu_vls tmp_arg = BU_VLS_INIT_ZERO;
 			int new_len = strlen(d->arg_helpstr);
@@ -361,7 +379,7 @@ bu_opt_parse(const char ***unused, size_t sizeof_unused, struct bu_vls *msgs, in
 
 	/* Find the corresponding desc, if we have one */
 	desc = &(ds[0]);
-	while (!desc_found && (desc && desc->index != -1)) {
+	while (!desc_found && (desc && opt_desc_is_null(desc))) {
 	    if (BU_STR_EQUAL(opt+offset, desc->shortopt) || BU_STR_EQUAL(opt+offset, desc->longopt)) {
 		desc_found = 1;
 		continue;

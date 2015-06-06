@@ -41,10 +41,9 @@ void fast4_arg_process(const char *args) {
     const char **non_opts;
     static int tol = 0.0;
     static int w_flag;
-    enum fg4_opt_enums { FG4_TOL, FG4_WARN_DEFAULT_NAMES };
     struct bu_opt_desc fg4_opt_desc[3] = {
-	{FG4_TOL,                1, 1, "t",  "tol", &bu_opt_int, "tol", "Dimensional tolerance.",      (void *)&tol},
-	{FG4_WARN_DEFAULT_NAMES, 0, 0, "w",  "warn-default-names", NULL, "", "File format of input file.", (void *)&w_flag},
+	{1, 1, "t",  "tol", &bu_opt_int, "tol", "Dimensional tolerance.",      (void *)&tol},
+	{0, 0, "w",  "warn-default-names", NULL, "", "File format of input file.", (void *)&w_flag},
 	BU_OPT_DESC_NULL
     };
 
@@ -79,10 +78,9 @@ void stl_arg_process(const char *args) {
     const char **non_opts;
     static int tol = 0.0;
     static int units = 0;
-    enum stl_opt_enums { STL_TOL, STL_UNITS };
     struct bu_opt_desc stl_opt_desc[3] = {
-	{STL_TOL,   1, 1, "t",  "tol",   &bu_opt_int, "tol",  "Dimensional tolerance.", (void *)&tol },
-	{STL_UNITS, 1, 1, "u",  "units", &bu_opt_int, "unit", "Units of input file.", (void *)&units },
+	{1, 1, "t",  "tol",   &bu_opt_int, "tol",  "Dimensional tolerance.", (void *)&tol },
+	{1, 1, "u",  "units", &bu_opt_int, "unit", "Units of input file.", (void *)&units },
 	BU_OPT_DESC_NULL
     };
 
@@ -353,16 +351,15 @@ main(int ac, char **av)
     int uac = 0;
     const char **uav = (const char **)bu_calloc(ac, sizeof(char *), "unknown results");
 
-    enum gcv_opt_enums { GCV_HELP, IN_FILE, OUT_FILE, IN_FORMAT, OUT_FORMAT, IN_OPTS, OUT_OPTS, GCV_OPTS_MAX };
     struct bu_opt_desc gcv_opt_desc[9] = {
-	{GCV_HELP,    0, 1, "h", "help",             &gcv_help,   "format", gcv_help_str, (void *)&hs },
-	{GCV_HELP,    0, 1, "?", "",                 &gcv_help,   "format", "",           (void *)&hs },
-	{IN_FILE ,    1, 1, "i", "input",            &file_stat,  "file",   "Input file.", (void *)&in_path_str },
-	{OUT_FILE,    1, 1, "o", "output",           &file_null,  "file",   "Output file.", (void *)&out_path_str },
-	{IN_FORMAT ,  1, 1, "",  "input-format",     &model_mime, "format", "File format of input file.", (void *)&in_type },
-	{OUT_FORMAT , 1, 1, "",  "output-format",    &model_mime, "format", "File format of output file.", (void *)&out_type },
-	{IN_OPTS ,    1, 1, "I", "input-only-opts",  &bu_opt_str,          "\"[opts]\"", "Options to apply only while processing input file.  Quotes around the opts are always necessary, but brackets are only necessary when supplying a single option without arguments that would otherwise be interpreted as an argv entry by the shell, even with quotes.  Brackets will never hurt, and for robustness when scripting they should always be used.", (void *)&in_only_opts },
-	{OUT_OPTS,    1, 1, "O", "output-only-opts", &bu_opt_str,          "\"[opts]\"", "Options to apply only while preparing output file.  Quotes around the opts are always necessary, but brackets are only necessary when supplying a single option without arguments that would otherwise be interpreted as an argv entry by the shell, even with quotes.  Brackets will never hurt, and for robustness when scripting they should always be used.", (void *)&out_only_opts },
+	{0, 1, "h", "help",             &gcv_help,   "format", gcv_help_str, (void *)&hs },
+	{0, 1, "?", "",                 &gcv_help,   "format", "",           (void *)&hs },
+	{1, 1, "i", "input",            &file_stat,  "file",   "Input file.", (void *)&in_path_str },
+	{1, 1, "o", "output",           &file_null,  "file",   "Output file.", (void *)&out_path_str },
+	{1, 1, "",  "input-format",     &model_mime, "format", "File format of input file.", (void *)&in_type },
+	{1, 1, "",  "output-format",    &model_mime, "format", "File format of output file.", (void *)&out_type },
+	{1, 1, "I", "input-only-opts",  &bu_opt_str,          "\"[opts]\"", "Options to apply only while processing input file.  Quotes around the opts are always necessary, but brackets are only necessary when supplying a single option without arguments that would otherwise be interpreted as an argv entry by the shell, even with quotes.  Brackets will never hurt, and for robustness when scripting they should always be used.", (void *)&in_only_opts },
+	{1, 1, "O", "output-only-opts", &bu_opt_str,          "\"[opts]\"", "Options to apply only while preparing output file.  Quotes around the opts are always necessary, but brackets are only necessary when supplying a single option without arguments that would otherwise be interpreted as an argv entry by the shell, even with quotes.  Brackets will never hurt, and for robustness when scripting they should always be used.", (void *)&out_only_opts },
 	BU_OPT_DESC_NULL
     };
 

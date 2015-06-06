@@ -109,30 +109,28 @@ main(int argc, const char **argv)
     struct bu_ptbl *results = NULL;
     struct bu_vls parse_msgs = BU_VLS_INIT_ZERO;
     static int i = 0;
+    static int print_help = 0;
     static fastf_t f = 0;
     static struct bu_color color = BU_COLOR_INIT_ZERO;
     const char **unknown = (const char **)bu_calloc(argc, sizeof(char *), "unknown results");
 
-    enum d1_opt_ind {D1_HELP, D1_VERBOSITY};
     struct bu_opt_desc d1[4] = {
-	{D1_HELP, 0, 0, "h", "help", NULL, "", help_str, NULL},
-	{D1_HELP, 0, 0, "?", "",     NULL, "", help_str, NULL},
-	{D1_VERBOSITY, 0, 1, "v", "verbosity", &(d1_verbosity), "#", "Set verbosity (range is 0 to 3)", (void *)&i},
+	{0, 0, "h", "help", NULL, "", help_str, (void *)&print_help},
+	{0, 0, "?", "",     NULL, "", help_str, (void *)&print_help},
+	{0, 1, "v", "verbosity", &(d1_verbosity), "#", "Set verbosity (range is 0 to 3)", (void *)&i},
 	BU_OPT_DESC_NULL
     };
 
-    enum d2_opt_ind {D2_HELP, D2_COLOR};
     struct bu_opt_desc d2[4] = {
-	{D2_HELP, 0, 0, "h", "help", NULL, "", help_str, NULL},
-	{D2_COLOR, 1, 3, "C", "color", &(d2_color), "r/g/b", "Set color", (void *)&color},
+	{0, 0, "h", "help", NULL, "", help_str, (void *)&print_help},
+	{1, 3, "C", "color", &(d2_color), "r/g/b", "Set color", (void *)&color},
 	BU_OPT_DESC_NULL
     };
 
-    enum d3_opt_ind {D3_HELP, D3_NUM, D3_FASTF};
     struct bu_opt_desc d3[4] = {
-	{D3_HELP, 0, 0, "h", "help", NULL, "", help_str, NULL},
-	{D3_NUM, 1, 1, "n", "num", &bu_opt_int, "#", "Read number", (void *)&i},
-	{D3_FASTF, 1, 1, "f", "fastf_t", &bu_opt_fastf_t, "#", "Read number", (void *)&f},
+	{0, 0, "h", "help", NULL, "", help_str, (void *)&print_help},
+	{1, 1, "n", "num", &bu_opt_int, "#", "Read number", (void *)&i},
+	{1, 1, "f", "fastf_t", &bu_opt_fastf_t, "#", "Read number", (void *)&f},
 	BU_OPT_DESC_NULL
     };
 
