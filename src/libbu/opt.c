@@ -379,7 +379,7 @@ bu_opt_parse(const char ***unused, size_t sizeof_unused, struct bu_vls *msgs, in
 
 	/* Find the corresponding desc, if we have one */
 	desc = &(ds[0]);
-	while (!desc_found && (desc && opt_desc_is_null(desc))) {
+	while (!desc_found && (desc && !opt_desc_is_null(desc))) {
 	    if (BU_STR_EQUAL(opt+offset, desc->shortopt) || BU_STR_EQUAL(opt+offset, desc->longopt)) {
 		desc_found = 1;
 		continue;

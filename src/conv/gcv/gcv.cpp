@@ -42,8 +42,8 @@ void fast4_arg_process(const char *args) {
     static int tol = 0.0;
     static int w_flag;
     struct bu_opt_desc fg4_opt_desc[3] = {
-	{1, 1, "t",  "tol", &bu_opt_int, "tol", "Dimensional tolerance.",      (void *)&tol},
-	{0, 0, "w",  "warn-default-names", NULL, "", "File format of input file.", (void *)&w_flag},
+	{"t", "tol",                1, 1, &bu_opt_int, (void *)&tol, "tol", "Dimensional tolerance."},
+	{"w", "warn-default-names", 0, 0, NULL, (void *)&w_flag, "", "File format of input file."},
 	BU_OPT_DESC_NULL
     };
 
@@ -79,8 +79,8 @@ void stl_arg_process(const char *args) {
     static int tol = 0.0;
     static int units = 0;
     struct bu_opt_desc stl_opt_desc[3] = {
-	{1, 1, "t",  "tol",   &bu_opt_int, "tol",  "Dimensional tolerance.", (void *)&tol },
-	{1, 1, "u",  "units", &bu_opt_int, "unit", "Units of input file.", (void *)&units },
+	{"t",  "tol",   1, 1, &bu_opt_int, (void *)&tol, "tol",  "Dimensional tolerance." },
+	{"u",  "units", 1, 1, &bu_opt_int, (void *)&units, "unit", "Units of input file." },
 	BU_OPT_DESC_NULL
     };
 
@@ -319,6 +319,9 @@ gcv_help(struct bu_vls *UNUSED(msg), int argc, const char **argv, void *set_var)
 
 #define gcv_help_str "Print help and exit.  If a format is specified to --help, print help specific to that format"
 
+#define gcv_inopt_str "Options to apply only while processing input file.  Quotes around the opts are always necessary, but brackets are only necessary when supplying a single option without arguments that would otherwise be interpreted as an argv entry by the shell, even with quotes.  Brackets will never hurt, and for robustness when scripting they should always be used."
+
+#define gcv_outopt_str "Options to apply only while preparing output file.  Quotes around the opts are always necessary, but brackets are only necessary when supplying a single option without arguments that would otherwise be interpreted as an argv entry by the shell, even with quotes.  Brackets will never hurt, and for robustness when scripting they should always be used."
 
 int
 main(int ac, char **av)
@@ -352,14 +355,14 @@ main(int ac, char **av)
     const char **uav = (const char **)bu_calloc(ac, sizeof(char *), "unknown results");
 
     struct bu_opt_desc gcv_opt_desc[9] = {
-	{0, 1, "h", "help",             &gcv_help,   "format", gcv_help_str, (void *)&hs },
-	{0, 1, "?", "",                 &gcv_help,   "format", "",           (void *)&hs },
-	{1, 1, "i", "input",            &file_stat,  "file",   "Input file.", (void *)&in_path_str },
-	{1, 1, "o", "output",           &file_null,  "file",   "Output file.", (void *)&out_path_str },
-	{1, 1, "",  "input-format",     &model_mime, "format", "File format of input file.", (void *)&in_type },
-	{1, 1, "",  "output-format",    &model_mime, "format", "File format of output file.", (void *)&out_type },
-	{1, 1, "I", "input-only-opts",  &bu_opt_str,          "\"[opts]\"", "Options to apply only while processing input file.  Quotes around the opts are always necessary, but brackets are only necessary when supplying a single option without arguments that would otherwise be interpreted as an argv entry by the shell, even with quotes.  Brackets will never hurt, and for robustness when scripting they should always be used.", (void *)&in_only_opts },
-	{1, 1, "O", "output-only-opts", &bu_opt_str,          "\"[opts]\"", "Options to apply only while preparing output file.  Quotes around the opts are always necessary, but brackets are only necessary when supplying a single option without arguments that would otherwise be interpreted as an argv entry by the shell, even with quotes.  Brackets will never hurt, and for robustness when scripting they should always be used.", (void *)&out_only_opts },
+	{"h", "help",             0, 1, &gcv_help,    (void *)&hs,            "format",     gcv_help_str,                 },
+	{"?", "",                 0, 1, &gcv_help,    (void *)&hs,            "format",     "",                           },
+	{"i", "input",            1, 1, &file_stat,   (void *)&in_path_str,   "file",       "Input file.",                },
+	{"o", "output",           1, 1, &file_null,   (void *)&out_path_str,  "file",       "Output file.",               },
+	{"",  "input-format",     1, 1, &model_mime,  (void *)&in_type,       "format",     "File format of input file.", },
+	{"",  "output-format",    1, 1, &model_mime,  (void *)&out_type,      "format",     "File format of output file." },
+	{"I", "input-only-opts",  1, 1, &bu_opt_str,  (void *)&in_only_opts,  "\"[opts]\"", gcv_inopt_str,                },
+	{"O", "output-only-opts", 1, 1, &bu_opt_str,  (void *)&out_only_opts, "\"[opts]\"", gcv_outopt_str,               },
 	BU_OPT_DESC_NULL
     };
 
@@ -468,7 +471,7 @@ main(int ac, char **av)
     /* If we have input and/or output specific options, append them now */
     if (in_only_opts) {
 	struct bu_vls o_tmp = BU_VLS_INIT_ZERO;
-	if (bu_vls_strlen(&input_opts) > 0) 
+	if (bu_vls_strlen(&input_opts) > 0)
 	    bu_vls_printf(&input_opts, " ");
 
 	bu_vls_sprintf(&o_tmp, "%s", in_only_opts);
@@ -480,9 +483,9 @@ main(int ac, char **av)
     }
     if (out_only_opts) {
 	struct bu_vls o_tmp = BU_VLS_INIT_ZERO;
-	if (bu_vls_strlen(&output_opts) > 0) 
+	if (bu_vls_strlen(&output_opts) > 0)
 	    bu_vls_printf(&output_opts, " ");
-	
+
 	bu_vls_sprintf(&o_tmp, "%s", out_only_opts);
 	if (bu_vls_addr(&o_tmp)[0] == '[') bu_vls_nibble(&o_tmp, 1);
 	if (bu_vls_addr(&o_tmp)[strlen(bu_vls_addr(&o_tmp)) - 1] == ']') bu_vls_trunc(&o_tmp, -1);

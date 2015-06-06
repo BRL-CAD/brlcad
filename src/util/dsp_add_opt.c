@@ -157,8 +157,8 @@ main(int ac, char *av[])
 
     static const char usage[] = "Usage: dsp_add [opts] dsp_1 dsp_2 > dsp_3\n";
     struct bu_opt_desc dsp_opt_desc[3] = {
-	{0, 0, "h", "help", NULL, "", "Print help and exit", (void *)&print_help},
-	{0, 0, "?", "",     NULL, "", "",                    (void *)&print_help},
+	{"h", "help", 0, 0, NULL, (void *)&print_help, "", "Print help and exit"},
+	{"?", "",     0, 0, NULL, (void *)&print_help, "", ""},
 	BU_OPT_DESC_NULL
     };
 

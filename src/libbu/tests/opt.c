@@ -26,7 +26,7 @@
 #include "string.h"
 
 int
-d1_verbosity(struct bu_vls *msg, int argc, const char **argv, void *set_v)
+d1_verb(struct bu_vls *msg, int argc, const char **argv, void *set_v)
 {
     int val = INT_MAX;
     int *int_set = (int *)set_v;
@@ -115,25 +115,24 @@ main(int argc, const char **argv)
     const char **unknown = (const char **)bu_calloc(argc, sizeof(char *), "unknown results");
 
     struct bu_opt_desc d1[4] = {
-	{0, 0, "h", "help", NULL, "", help_str, (void *)&print_help},
-	{0, 0, "?", "",     NULL, "", help_str, (void *)&print_help},
-	{0, 1, "v", "verbosity", &(d1_verbosity), "#", "Set verbosity (range is 0 to 3)", (void *)&i},
+	{"h", "help",      0, 0, NULL,       (void *)&print_help, "", help_str},
+	{"?", "",          0, 0, NULL,       (void *)&print_help, "", help_str},
+	{"v", "verbosity", 0, 1, &d1_verb, (void *)&i, "#", "Set verbosity (range is 0 to 3)"},
 	BU_OPT_DESC_NULL
     };
 
     struct bu_opt_desc d2[4] = {
-	{0, 0, "h", "help", NULL, "", help_str, (void *)&print_help},
-	{1, 3, "C", "color", &(d2_color), "r/g/b", "Set color", (void *)&color},
+	{"h", "help",  0, 0, NULL,        (void *)&print_help, "", help_str},
+	{"C", "color", 1, 3, &d2_color, (void *)&color, "r/g/b", "Set color"},
 	BU_OPT_DESC_NULL
     };
 
     struct bu_opt_desc d3[4] = {
-	{0, 0, "h", "help", NULL, "", help_str, (void *)&print_help},
-	{1, 1, "n", "num", &bu_opt_int, "#", "Read number", (void *)&i},
-	{1, 1, "f", "fastf_t", &bu_opt_fastf_t, "#", "Read number", (void *)&f},
+	{"h", "help",    0, 0, NULL,            (void *)&print_help, "", help_str},
+	{"n", "num",     1, 1, &bu_opt_int,     (void *)&i, "#", "Read int"},
+	{"f", "fastf_t", 1, 1, &bu_opt_fastf_t, (void *)&f, "#", "Read float"},
 	BU_OPT_DESC_NULL
     };
-
 
     if (argc < 2)
 	bu_exit(1, "ERROR: wrong number of parameters");

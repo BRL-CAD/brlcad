@@ -46,16 +46,16 @@ typedef int (*bu_opt_arg_process_t)(struct bu_vls *, int argc, const char **argv
  * "Option description" structure
  */
 struct bu_opt_desc {
-    size_t arg_cnt_min;
-    size_t arg_cnt_max;
     const char *shortopt;
     const char *longopt;
+    size_t arg_cnt_min;
+    size_t arg_cnt_max;
     bu_opt_arg_process_t arg_process;
+    void *set_var;
     const char *arg_helpstr;
     const char *help_string;
-    void *set_var;
 };
-#define BU_OPT_DESC_NULL {0, 0, NULL, NULL, NULL, NULL, NULL, NULL}
+#define BU_OPT_DESC_NULL {NULL, NULL, 0, 0, NULL, NULL, NULL, NULL}
 
 
 /**
@@ -112,7 +112,6 @@ BU_EXPORT extern int bu_opt_float(struct bu_vls *msg, int argc, const char **arg
 BU_EXPORT extern int bu_opt_double(struct bu_vls *msg, int argc, const char **argv, void *set_var);
 BU_EXPORT extern int bu_opt_ascii(struct bu_vls *msg, int argc, const char **argv, void *set_var);
 BU_EXPORT extern int bu_opt_utf8(struct bu_vls *msg, int argc, const char **argv, void *set_var);
-
 
 
 /** Output format options for bu_opt documentation generation */
