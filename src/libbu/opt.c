@@ -325,7 +325,6 @@ bu_opt_parse(const char ***unused, size_t sizeof_unused, struct bu_vls *msgs, in
     int i = 0;
     int offset = 0;
     int ret_argc = 0;
-    const char *ns = NULL;
     struct bu_ptbl unknown_args = BU_PTBL_INIT_ZERO;
     if (!argv || !ds) return -1;
 
@@ -449,7 +448,6 @@ bu_opt_parse(const char ***unused, size_t sizeof_unused, struct bu_vls *msgs, in
 		bu_free(g_argv, "free greedy argv");
 	    } else {
 		while (arg_cnt < desc->arg_cnt_max && i < argc && !can_be_opt(argv[i])) {
-		    ns = bu_strdup(argv[i]);
 		    i++;
 		    arg_cnt++;
 		}
