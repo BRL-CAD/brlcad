@@ -480,36 +480,6 @@ bu_opt_parse(const char ***unused, size_t sizeof_unused, struct bu_vls *msgs, in
 }
 
 int
-bu_opt_parse_str(const char ***unused, size_t sizeof_unused, struct bu_vls *msgs, const char *str, struct bu_opt_desc *ds)
-{
-    int i = 0;
-    int max_cnt = 0;
-    int ret = 0;
-    char *input = NULL;
-    char **argv = NULL;
-    int argc = 0;
-    const char **unused_tmp = (const char **)bu_calloc(sizeof_unused, sizeof(char *), "tmp array");
-    if (!str || !ds) return 1;
-    input = bu_strdup(str);
-    argv = (char **)bu_calloc(strlen(input) + 1, sizeof(char *), "argv array");
-    argc = bu_argv_from_string(argv, strlen(input), input);
-
-    ret = bu_opt_parse(&unused_tmp, sizeof_unused, msgs, argc, (const char **)argv, ds);
-
-    /* We have a transient argv, so duplicate the unknown strings - it's up to the caller to free these */
-    max_cnt = (ret > (int)sizeof_unused) ? (int)sizeof_unused : ret;
-    for (i = 0; i < max_cnt; i++) {
-	(*unused)[i] = bu_strdup(unused_tmp[i]);
-    }
-
-    bu_free(unused_tmp, "free str copy");
-    bu_free(input, "free str copy");
-    bu_free(argv, "free argv memory");
-    return ret;
-}
-
-
-int
 bu_opt_int(struct bu_vls *msg, int argc, const char **argv, void *set_var)
 {
     long int l;

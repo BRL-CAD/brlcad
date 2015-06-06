@@ -94,18 +94,6 @@ struct bu_opt_desc {
  */
 BU_EXPORT extern int bu_opt_parse(const char ***unused, size_t sizeof_unused, struct bu_vls *msgs, int ac, const char **argv, struct bu_opt_desc *ds);
 
-/**
- *
- * TODO - get rid of this - using argv pointers to return unused argv
- * entries means we can't make an argv array that's invisible to the
- * calling program - the callee will have to make an argv and use
- * bu_opt_parse.
- *
- * Option parse an argv array defined as a space separated string.  This
- * is a convenience function that calls bu_opt_parse and also handles
- * breaking str down into a proper argv array. */
-BU_EXPORT extern int bu_opt_parse_str(const char ***unused, size_t sizeof_unused, struct bu_vls *msgs, const char *str, struct bu_opt_desc *ds);
-
 
 /* Standard option validators - if a custom option argument
  * validation isn't needed, the functions below can be

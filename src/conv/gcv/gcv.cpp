@@ -33,12 +33,14 @@
 
 /* Emulate a FASTGEN4 format option processor */
 void fast4_arg_process(const char *args) {
-    int i= 0;
-    static int tol = 0.0;
-    static int w_flag;
+    int i = 0;
+    char *input = NULL;
+    int argc = 0;
+    char **argv = NULL;
     int ret_argc = 0;
     const char **non_opts;
-
+    static int tol = 0.0;
+    static int w_flag;
     enum fg4_opt_enums { FG4_TOL, FG4_WARN_DEFAULT_NAMES };
     struct bu_opt_desc fg4_opt_desc[3] = {
 	{FG4_TOL,                1, 1, "t",  "tol", &bu_opt_int, "tol", "Dimensional tolerance.",      (void *)&tol},
@@ -46,26 +48,37 @@ void fast4_arg_process(const char *args) {
 	BU_OPT_DESC_NULL
     };
 
+    input = bu_strdup(args);
+    argv = (char **)bu_calloc(strlen(input) + 1, sizeof(char *), "argv array");
+    argc = bu_argv_from_string(argv, strlen(input), input);
+
     non_opts = (const char **)bu_calloc(strlen(args) + 1, sizeof(const char *), "non_opts array");
-    ret_argc = bu_opt_parse_str(&non_opts, strlen(args), NULL, args, fg4_opt_desc);
+    ret_argc = bu_opt_parse(&non_opts, strlen(args), NULL, argc, (const char **)argv, fg4_opt_desc);
 
     if (w_flag)	bu_log("FASTGEN 4 warn default names set\n");
     bu_log("FASTGEN 4 tol: %d\n", tol);
 
-    for (i = 0; i < ret_argc; i++) {
-	bu_free((char *)non_opts[i], "free unknown cpy");
+    if (ret_argc) {
+	bu_log("Unknown args: ");
+	for (i = 0; i < ret_argc - 1; i++) {
+	    bu_log("%s, ", non_opts[i]);
+	}
+	bu_log("%s\n", non_opts[ret_argc - 1]);
     }
-    bu_free(non_opts, "free array");
+
+    bu_free(input, "free array");
+    bu_free(argv, "free argv");
 }
 
-/* Emulate a STL format option processor */
 void stl_arg_process(const char *args) {
     int i= 0;
-    static int tol = 0.0;
-    static int units = 0;
+    char *input = NULL;
+    int argc = 0;
+    char **argv = NULL;
     int ret_argc = 0;
     const char **non_opts;
-
+    static int tol = 0.0;
+    static int units = 0;
     enum stl_opt_enums { STL_TOL, STL_UNITS };
     struct bu_opt_desc stl_opt_desc[3] = {
 	{STL_TOL,   1, 1, "t",  "tol",   &bu_opt_int, "tol",  "Dimensional tolerance.", (void *)&tol },
@@ -73,16 +86,26 @@ void stl_arg_process(const char *args) {
 	BU_OPT_DESC_NULL
     };
 
+    input = bu_strdup(args);
+    argv = (char **)bu_calloc(strlen(input) + 1, sizeof(char *), "argv array");
+    argc = bu_argv_from_string(argv, strlen(input), input);
+
     non_opts = (const char **)bu_calloc(strlen(args) + 1, sizeof(const char *), "non_opts array");
-    ret_argc = bu_opt_parse_str(&non_opts, strlen(args), NULL, args, stl_opt_desc);
+    ret_argc = bu_opt_parse(&non_opts, strlen(args), NULL, argc, (const char **)argv, stl_opt_desc);
 
     bu_log("STL tol: %d\n", tol);
-    bu_log("STL units: %d\n", tol);
+    bu_log("STL units: %d\n", units);
 
-    for (i = 0; i < ret_argc; i++) {
-	bu_free((char *)non_opts[i], "free unknown cpy");
+    if (ret_argc) {
+	bu_log("Unknown args: ");
+	for (i = 0; i < ret_argc - 1; i++) {
+	    bu_log("%s, ", non_opts[i]);
+	}
+	bu_log("%s\n", non_opts[ret_argc - 1]);
     }
-    bu_free(non_opts, "free array");
+
+    bu_free(input, "free array");
+    bu_free(argv, "free argv");
 }
 
 HIDDEN int
