@@ -40,7 +40,7 @@ enum {INITIAL, code, group, group_in};
 %%
 <> => code { continue; }
 
-/* matching group() { , funtions inside group() and the end of group() */
+/* matching group() { , functions inside group() and the end of group() */
 
 optional_ws = [ \t]*;
 

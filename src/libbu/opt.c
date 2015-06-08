@@ -406,9 +406,9 @@ bu_opt_parse(const char ***unused, size_t sizeof_unused, struct bu_vls *msgs, in
 	i = i + 1;
 
 	/* If we already got an arg from the equals mechanism and we aren't
-	 * supposed to have one, we're invalid - hault. */
+	 * supposed to have one, we're invalid - halt. */
 	if (eq_arg && desc->arg_cnt_max == 0) {
-	    if (msgs) bu_vls_printf(msgs, "Option %s takes no arguments, but argument %s is present - haulting.\n", argv[i-1], eq_arg);
+	    if (msgs) bu_vls_printf(msgs, "Option %s takes no arguments, but argument %s is present - halting.\n", argv[i-1], eq_arg);
 	    bu_free(eq_arg, "free arg after equals sign copy");
 	    return -1;
 	}
@@ -443,12 +443,12 @@ bu_opt_parse(const char ***unused, size_t sizeof_unused, struct bu_vls *msgs, in
 			 * arg_process callback returns -1, something has gone
 			 * seriously awry and a known-to-be-invalid arg was
 			 * seen.  Fail early and hard. */
-			if (msgs) bu_vls_printf(msgs, "Invalid argument supplied to %s: %s - haulting.\n", argv[i-1], argv[i]);
+			if (msgs) bu_vls_printf(msgs, "Invalid argument supplied to %s: %s - halting.\n", argv[i-1], argv[i]);
 			return -1;
 		    }
 		    if (arg_offset == 0) {
 			if (desc->arg_cnt_min > 0) {
-			    if (msgs) bu_vls_printf(msgs, "Option %s requires an argument but none was found - haulting.\n", argv[i-1]);
+			    if (msgs) bu_vls_printf(msgs, "Option %s requires an argument but none was found - halting.\n", argv[i-1]);
 			    return -1;
 			} else {
 			    continue;
@@ -470,7 +470,7 @@ bu_opt_parse(const char ***unused, size_t sizeof_unused, struct bu_vls *msgs, in
 		    arg_cnt++;
 		}
 		if (arg_cnt < desc->arg_cnt_min) {
-		    if (msgs) bu_vls_printf(msgs, "Option %s requires at least %d arguments but only %d were found - haulting.\n", argv[i-1], desc->arg_cnt_min, arg_cnt);
+		    if (msgs) bu_vls_printf(msgs, "Option %s requires at least %d arguments but only %d were found - halting.\n", argv[i-1], desc->arg_cnt_min, arg_cnt);
 		    return -1;
 		}
 	    }
