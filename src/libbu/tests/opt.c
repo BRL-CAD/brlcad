@@ -25,13 +25,17 @@
 #include "bn.h"
 #include "string.h"
 
+
+#define help_str "Print help string and exit."
+
+
 int
 d1_verb(struct bu_vls *msg, int argc, const char **argv, void *set_v)
 {
     int val = INT_MAX;
     int *int_set = (int *)set_v;
     int int_ret;
-    if (!argv || !argv[0] || strlen(argv[0]) == 0 || argc == 1) {
+    if (!argv || !argv[0] || strlen(argv[0]) == 0 || argc == 0) {
 	/* Have verbosity flag but no valid arg - go with just the flag */
 	if (int_set) (*int_set) = 1;
 	return 0;
@@ -47,6 +51,197 @@ d1_verb(struct bu_vls *msg, int argc, const char **argv, void *set_v)
     return 1;
 }
 
+
+int desc_1(int test_num)
+{
+    static int print_help = 0;
+    static int verbosity = 0;
+
+    /* Option descriptions */
+    struct bu_opt_desc d[4] = {
+	{"h", "help",      0, 0, NULL,     (void *)&print_help, "",  help_str},
+	{"?", "",          0, 0, NULL,     (void *)&print_help, "",  help_str},
+	{"v", "verbosity", 0, 1, &d1_verb, (void *)&verbosity,  "#", "Set verbosity (range is 0 to 3)"},
+	BU_OPT_DESC_NULL
+    };
+
+    int ac = 0;
+    int val_ok = 0;
+    int ret = 0;
+    int containers = 6;
+    const char **av;
+    const char **unknown;
+    struct bu_vls parse_msgs = BU_VLS_INIT_ZERO;
+
+    av = (const char **)bu_calloc(containers, sizeof(char *), "Input array");
+    unknown = (const char **)bu_calloc(containers, sizeof(char *), "unknown results");
+
+    switch (test_num) {
+	case 0:
+	    ret = bu_opt_parse(&unknown, 0, &parse_msgs, 0, NULL, d);
+	    break;
+	case 1:
+	    ac = 1;
+	    av[0] = "-v";
+	    bu_vls_printf(&parse_msgs, "Parsing arg string \"-v\":");
+	    ret = bu_opt_parse(&unknown, containers, &parse_msgs, ac, av, d);
+	    if (ret || verbosity != 1) {
+		bu_vls_printf(&parse_msgs, "\nError - expected value \"1\" and got value %d\n", verbosity);
+		val_ok = 0;
+	    } else {
+		bu_vls_printf(&parse_msgs, "  OK\nverbosity = %d\n", verbosity);
+	    }
+	    break;
+	case 2:
+	    ac = 1;
+	    av[0] = "-v1";
+	    bu_vls_printf(&parse_msgs, "Parsing arg string \"-v1\":");
+	    ret = bu_opt_parse(&unknown, containers, &parse_msgs, ac, av, d);
+	    if (ret || verbosity != 1) {
+		bu_vls_printf(&parse_msgs, "\nError - expected value \"1\" and got value %d\n", verbosity);
+		val_ok = 0;
+	    } else {
+		bu_vls_printf(&parse_msgs, "  OK\nverbosity = %d\n", verbosity);
+	    }
+	    break;
+	case 3:
+	    ac = 2;
+	    av[0] = "-v";
+	    av[1] = "1";
+	    bu_vls_printf(&parse_msgs, "Parsing arg string \"-v 1\":");
+	    ret = bu_opt_parse(&unknown, containers, &parse_msgs, ac, av, d);
+	    if (ret || verbosity != 1) {
+		bu_vls_printf(&parse_msgs, "\nError - expected value \"1\" and got value %d\n", verbosity);
+		val_ok = 0;
+	    } else {
+		bu_vls_printf(&parse_msgs, "  OK\nverbosity = %d\n", verbosity);
+	    }
+	    break;
+	case 4:
+	    ac = 1;
+	    av[0] = "-v=1";
+	    bu_vls_printf(&parse_msgs, "Parsing arg string \"-v=1\":");
+	    ret = bu_opt_parse(&unknown, containers, &parse_msgs, ac, av, d);
+	    if (ret || verbosity != 1) {
+		bu_vls_printf(&parse_msgs, "\nError - expected value \"1\" and got value %d\n", verbosity);
+		val_ok = 0;
+	    } else {
+		bu_vls_printf(&parse_msgs, "  OK\nverbosity = %d\n", verbosity);
+	    }
+	    break;
+	case 5:
+	    ac = 2;
+	    av[0] = "--v";
+	    av[1] = "1";
+	    bu_vls_printf(&parse_msgs, "Parsing arg string \"--v 1\":");
+	    ret = bu_opt_parse(&unknown, containers, &parse_msgs, ac, av, d);
+	    if (ret || verbosity != 1) {
+		bu_vls_printf(&parse_msgs, "\nError - expected value \"1\" and got value %d\n", verbosity);
+		val_ok = 0;
+	    } else {
+		bu_vls_printf(&parse_msgs, "  OK\nverbosity = %d\n", verbosity);
+	    }
+	    break;
+	case 6:
+	    ac = 1;
+	    av[0] = "--v=1";
+	    bu_vls_printf(&parse_msgs, "Parsing arg string \"--v=1\":");
+	    ret = bu_opt_parse(&unknown, containers, &parse_msgs, ac, av, d);
+	    if (ret || verbosity != 1) {
+		bu_vls_printf(&parse_msgs, "\nError - expected value \"1\" and got value %d\n", verbosity);
+		val_ok = 0;
+	    } else {
+		bu_vls_printf(&parse_msgs, "  OK\nverbosity = %d\n", verbosity);
+	    }
+	    break;
+	case 7:
+	    ac = 2;
+	    av[0] = "-v";
+	    av[1] = "2";
+	    bu_vls_printf(&parse_msgs, "Parsing arg string \"-v 2\":");
+	    ret = bu_opt_parse(&unknown, containers, &parse_msgs, ac, av, d);
+	    if (ret || verbosity != 2) {
+		bu_vls_printf(&parse_msgs, "\nError - expected value \"2\" and got value %d\n", verbosity);
+		val_ok = 0;
+	    } else {
+		bu_vls_printf(&parse_msgs, "  OK\nverbosity = %d\n", verbosity);
+	    }
+	    break;
+	case 8:
+	    ac = 2;
+	    av[0] = "-v";
+	    av[1] = "4";
+	    bu_vls_printf(&parse_msgs, "Parsing arg string \"-v 4\":");
+	    ret = bu_opt_parse(&unknown, containers, &parse_msgs, ac, av, d);
+	    if (!ret==-1) {
+		bu_vls_printf(&parse_msgs, "\nError - expected parser to fail with error and it didn't\n", verbosity);
+		val_ok = 0;
+	    } else {
+		bu_vls_printf(&parse_msgs, "OK (expected failure) - verbosity failed (4 > 3)\n", verbosity);
+	    }
+	    break;
+	case 9:
+	    ac = 2;
+	    av[0] = "--verbosity";
+	    av[1] = "2";
+	    bu_vls_printf(&parse_msgs, "Parsing arg string \"--verbosity 2\":");
+	    ret = bu_opt_parse(&unknown, containers, &parse_msgs, ac, av, d);
+	    if (ret || verbosity != 2) {
+		bu_vls_printf(&parse_msgs, "\nError - expected value \"2\" and got value %d\n", verbosity);
+		val_ok = 0;
+	    } else {
+		bu_vls_printf(&parse_msgs, "  OK\nverbosity = %d\n", verbosity);
+	    }
+	    break;
+	case 10:
+	    ac = 2;
+	    av[0] = "--verbosity";
+	    av[1] = "4";
+	    bu_vls_printf(&parse_msgs, "Parsing arg string \"--verbosity 4\":");
+	    ret = bu_opt_parse(&unknown, containers, &parse_msgs, ac, av, d);
+	    if (!ret==-1) {
+		bu_vls_printf(&parse_msgs, "\nError - expected parser to fail with error and it didn't\n", verbosity);
+		val_ok = 0;
+	    } else {
+		bu_vls_printf(&parse_msgs, "OK (expected failure) - verbosity failed (4 > 3)\n", verbosity);
+	    }
+	    break;
+	case 11:
+	    ac = 1;
+	    av[0] = "--verbosity=2";
+	    bu_vls_printf(&parse_msgs, "Parsing arg string \"--verbosity=2\":");
+	    ret = bu_opt_parse(&unknown, containers, &parse_msgs, ac, av, d);
+	    if (ret || verbosity != 2) {
+		bu_vls_printf(&parse_msgs, "\nError - expected value \"2\" and got value %d\n", verbosity);
+		val_ok = 0;
+	    } else {
+		bu_vls_printf(&parse_msgs, "  OK\nverbosity = %d\n", verbosity);
+	    }
+	    break;
+    }
+
+    if (ret > 0) {
+	int u = 0;
+	bu_vls_printf(&parse_msgs, "\nUnknown args: ");
+	for (u = 0; u < ret - 1; u++) {
+	    bu_vls_printf(&parse_msgs, "%s, ", unknown[u]);
+	}
+	bu_vls_printf(&parse_msgs, "%s\n", unknown[ret - 1]);
+    }
+
+    if (!val_ok) ret = -1;
+
+    if (bu_vls_strlen(&parse_msgs) > 0) {
+	bu_log("%s\n", bu_vls_addr(&parse_msgs));
+    }
+    bu_vls_free(&parse_msgs);
+    bu_free(av, "free av");
+    bu_free(unknown, "free av");
+    return ret;
+}
+
+
+
 int
 isnum(const char *str) {
     int i, sl;
@@ -57,7 +252,7 @@ isnum(const char *str) {
 }
 
 int
-d2_color(struct bu_vls *msg, int argc, const char **argv, void *set_c)
+dc_color(struct bu_vls *msg, int argc, const char **argv, void *set_c)
 {
     struct bu_color *set_color = (struct bu_color *)set_c;
     unsigned int rgb[3];
@@ -97,80 +292,218 @@ d2_color(struct bu_vls *msg, int argc, const char **argv, void *set_c)
     return 0;
 }
 
-#define help_str "Print help string and exit."
+int desc_2(int test_num)
+{
+    int ret = 0;
+    int val_ok = 0;
+    int print_help = 0;
+    struct bu_color color = BU_COLOR_INIT_ZERO;
+    int containers = 6;
+    int ac = 0;
+    const char **av;
+    const char **unknown;
+    struct bu_vls parse_msgs = BU_VLS_INIT_ZERO;
+ 
+    struct bu_opt_desc d[3];
+    BU_OPT(d[0], "h", "help",  0, 0, NULL,      (void *)&print_help, "",      help_str);
+    BU_OPT(d[1], "C", "color", 1, 3, &dc_color, (void *)&color,      "r/g/b", "Set color");
+    BU_OPT_NULL(d[2]);
+
+    av = (const char **)bu_calloc(containers, sizeof(char *), "Input array");
+    unknown = (const char **)bu_calloc(containers, sizeof(char *), "unknown results");
+
+    switch (test_num) {
+	case 0:
+	    ret = bu_opt_parse(&unknown, 0, &parse_msgs, 0, NULL, d);
+	    break;
+	case 1:
+	    ac = 2;
+	    av[0] = "--color";
+	    av[1] = "200/10/30";
+	    bu_vls_printf(&parse_msgs, "Parsing arg string \"--color 200/10/30\":");
+	    ret = bu_opt_parse(&unknown, containers, &parse_msgs, ac, av, d);
+	    if (ret || (!NEAR_EQUAL(color.buc_rgb[0], 200.0, SMALL_FASTF) || !NEAR_EQUAL(color.buc_rgb[1], 10, SMALL_FASTF) || !NEAR_EQUAL(color.buc_rgb[2], 30, SMALL_FASTF))) {
+		bu_vls_printf(&parse_msgs, "\nError - expected value \"200/10/30\" and got value %.0f/%.0f/%.0f\n", color.buc_rgb[0], color.buc_rgb[1], color.buc_rgb[2]);
+		val_ok = 0;
+	    } else {
+		bu_vls_printf(&parse_msgs, "  OK (color == %.0f/%.0f/%.0f)\n", color.buc_rgb[0], color.buc_rgb[1], color.buc_rgb[2]);
+	    }
+	    break;
+	case 2:
+	    ac = 4;
+	    av[0] = "--color";
+	    av[1] = "200";
+	    av[2] = "10";
+	    av[3] = "30";
+	    bu_vls_printf(&parse_msgs, "Parsing arg string \"--color 200 10 30\":");
+	    ret = bu_opt_parse(&unknown, containers, &parse_msgs, ac, av, d);
+	    if (ret || (!NEAR_EQUAL(color.buc_rgb[0], 200.0, SMALL_FASTF) || !NEAR_EQUAL(color.buc_rgb[1], 10, SMALL_FASTF) || !NEAR_EQUAL(color.buc_rgb[2], 30, SMALL_FASTF))) {
+		bu_vls_printf(&parse_msgs, "\nError - expected value \"200/10/30\" and got value %0f/%0f/%0f\n", color.buc_rgb[0], color.buc_rgb[1], color.buc_rgb[2]);
+		val_ok = 0;
+	    } else {
+		bu_vls_printf(&parse_msgs, "  OK (color == %.0f/%.0f/%.0f)\n", color.buc_rgb[0], color.buc_rgb[1], color.buc_rgb[2]);
+	    }
+
+	    break;
+    }
+
+    if (ret > 0) {
+	int u = 0;
+	bu_vls_printf(&parse_msgs, "\nUnknown args: ");
+	for (u = 0; u < ret - 1; u++) {
+	    bu_vls_printf(&parse_msgs, "%s, ", unknown[u]);
+	}
+	bu_vls_printf(&parse_msgs, "%s\n", unknown[ret - 1]);
+    }
+    
+    if (!val_ok) ret = -1;
+
+    if (bu_vls_strlen(&parse_msgs) > 0) {
+	bu_log("%s\n", bu_vls_addr(&parse_msgs));
+    }
+    bu_vls_free(&parse_msgs);
+    bu_free(av, "free av");
+    bu_free(unknown, "free av");
+    return ret;
+}
+
+
+int desc_3(int test_num)
+{
+    static int print_help = 0;
+    static int int_num = 0;
+    static fastf_t float_num = 0;
+
+    struct bu_opt_desc d[4] = {
+	{"h", "help",    0, 0, NULL,            (void *)&print_help, "", help_str},
+	{"n", "num",     1, 1, &bu_opt_int,     (void *)&int_num, "#", "Read int"},
+	{"f", "fastf_t", 1, 1, &bu_opt_fastf_t, (void *)&float_num, "#", "Read float"},
+	BU_OPT_DESC_NULL
+    };
+
+    int containers = 6;
+    int val_ok = 1;
+    int ac = 0;
+    const char **av;
+    const char **unknown;
+    struct bu_vls parse_msgs = BU_VLS_INIT_ZERO;
+    int ret = 0;
+
+    av = (const char **)bu_calloc(containers, sizeof(char *), "Input array");
+    unknown = (const char **)bu_calloc(containers, sizeof(char *), "unknown results");
+
+    switch (test_num) {
+	case 0:
+	    ret = bu_opt_parse(&unknown, 0, &parse_msgs, 0, NULL, d);
+	    break;
+	case 1:
+	    ac = 2;
+	    av[0] = "-n";
+	    av[1] = "1";
+	    bu_vls_printf(&parse_msgs, "Parsing arg string \"-n 1\":");
+	    ret = bu_opt_parse(&unknown, containers, &parse_msgs, ac, av, d);
+	    if (ret || int_num != 1) {
+		bu_vls_printf(&parse_msgs, "\nError - expected value \"1\" and got value %d\n", int_num);
+		val_ok = 0;
+	    } else {
+		bu_vls_printf(&parse_msgs, "  OK\nint_num = %d\n", int_num);
+	    }
+	    break;
+	case 2:
+	    ac = 2;
+	    av[0] = "-n";
+	    av[1] = "-1";
+	    bu_vls_printf(&parse_msgs, "Parsing arg string \"-n -1\":");
+	    ret = bu_opt_parse(&unknown, containers, &parse_msgs, ac, av, d);
+	    if (ret || int_num != -1) {
+		bu_vls_printf(&parse_msgs, "\nError - expected value \"-1\" and got value %d\n", int_num);
+		val_ok = 0;
+	    } else {
+		bu_vls_printf(&parse_msgs, "  OK\nint_num = %d\n", int_num);
+	    }
+
+	    break;
+	
+	case 3:
+	    ac = 2;
+	    av[0] = "-f";
+	    av[1] = "-3.0e-3";
+	    bu_vls_printf(&parse_msgs, "Parsing arg string \"-f -3.0e-3\":");
+	    ret = bu_opt_parse(&unknown, containers, &parse_msgs, ac, av, d);
+	    if (ret || !NEAR_EQUAL(float_num, -0.003, SMALL_FASTF)) {
+		bu_vls_printf(&parse_msgs, "\nError - expected value \"-0.003\" and got value %.3f\n", float_num);
+		val_ok = 0;
+	    } else {
+		bu_vls_printf(&parse_msgs, "  OK\nfloat_num = %0.3f\n", float_num);
+	    }
+	    break;
+    }
+
+    if (ret > 0) {
+	int u = 0;
+	bu_vls_printf(&parse_msgs, "\nUnknown args: ");
+	for (u = 0; u < ret - 1; u++) {
+	    bu_vls_printf(&parse_msgs, "%s, ", unknown[u]);
+	}
+	bu_vls_printf(&parse_msgs, "%s\n", unknown[ret - 1]);
+    }
+
+    if (!val_ok) ret = -1;
+
+    if (bu_vls_strlen(&parse_msgs) > 0) {
+	bu_log("%s\n", bu_vls_addr(&parse_msgs));
+    }
+    bu_vls_free(&parse_msgs);
+    bu_free(av, "free av");
+    bu_free(unknown, "free av");
+    return ret;
+
+}
+
 
 int
 main(int argc, const char **argv)
 {
-    int u = 0;
     int ret = 0;
-    char *endptr = NULL;
+    long desc_num;
     long test_num;
-    struct bu_ptbl *results = NULL;
-    struct bu_vls parse_msgs = BU_VLS_INIT_ZERO;
-    static int i = 0;
-    static int print_help = 0;
-    static fastf_t f = 0;
-    static struct bu_color color = BU_COLOR_INIT_ZERO;
-    const char **unknown = (const char **)bu_calloc(argc, sizeof(char *), "unknown results");
+    char *endptr = NULL;
 
-    struct bu_opt_desc d1[4] = {
-	{"h", "help",      0, 0, NULL,       (void *)&print_help, "", help_str},
-	{"?", "",          0, 0, NULL,       (void *)&print_help, "", help_str},
-	{"v", "verbosity", 0, 1, &d1_verb, (void *)&i, "#", "Set verbosity (range is 0 to 3)"},
-	BU_OPT_DESC_NULL
-    };
+    /* Sanity check */
+    if (argc < 3)
+	bu_exit(1, "ERROR: wrong number of parameters - need option num and test num");
 
-    struct bu_opt_desc d2[4] = {
-	{"h", "help",  0, 0, NULL,        (void *)&print_help, "", help_str},
-	{"C", "color", 1, 3, &d2_color, (void *)&color, "r/g/b", "Set color"},
-	BU_OPT_DESC_NULL
-    };
-
-    struct bu_opt_desc d3[4] = {
-	{"h", "help",    0, 0, NULL,            (void *)&print_help, "", help_str},
-	{"n", "num",     1, 1, &bu_opt_int,     (void *)&i, "#", "Read int"},
-	{"f", "fastf_t", 1, 1, &bu_opt_fastf_t, (void *)&f, "#", "Read float"},
-	BU_OPT_DESC_NULL
-    };
-
-    if (argc < 2)
-	bu_exit(1, "ERROR: wrong number of parameters");
-
-    test_num = strtol(argv[1], &endptr, 0);
+    /* Set the option description to used based on the input number */
+    desc_num = strtol(argv[1], &endptr, 0);
     if (endptr && strlen(endptr) != 0) {
-	bu_exit(1, "Invalid test number: %s\n", argv[1]);
+	bu_exit(1, "Invalid desc number: %s\n", argv[1]);
     }
 
-    switch (test_num) {
+    test_num = strtol(argv[2], &endptr, 0);
+    if (endptr && strlen(endptr) != 0) {
+	bu_exit(1, "Invalid test number: %s\n", argv[2]);
+    }
+
+    switch (desc_num) {
 	case 0:
-	    ret = bu_opt_parse(&unknown, argc, &parse_msgs, 0, NULL, NULL);
-	    return (results == NULL) ? 0 : 1;
-	    break;
+	    ret = bu_opt_parse(NULL, 0, NULL, 0, NULL, NULL);
 	case 1:
-	    ret = bu_opt_parse(&unknown, argc, &parse_msgs, argc-2, argv+2, d1);
+	    ret = desc_1(test_num);
 	    break;
 	case 2:
-	    ret = bu_opt_parse(&unknown, argc, &parse_msgs, argc-2, argv+2, d2);
+	    ret = desc_2(test_num);
 	    break;
 	case 3:
-	    ret = bu_opt_parse(&unknown, argc, &parse_msgs, argc-2, argv+2, d3);
+	    ret = desc_3(test_num);
 	    break;
     }
-
-    if (ret == -1) {
-	bu_log("%s", bu_vls_addr(&parse_msgs));
-	return 0;
-    }
-
-    if (test_num == 1 || test_num == 3) {
-	bu_log("Int var: %d\n", i);
-	bu_log("Fastf_t var: %f\n", f);
-    }
-    if (test_num == 2)
-	bu_log("Color var: %0.2f, %0.2f, %0.2f\n", color.buc_rgb[0], color.buc_rgb[1], color.buc_rgb[2]);
+#if 0
+    bu_log("Int var: %d\n", i);
+    bu_log("Fastf_t var: %f\n", f);
+    bu_log("Color var: %0.2f, %0.2f, %0.2f\n", color.buc_rgb[0], color.buc_rgb[1], color.buc_rgb[2]);
 
     if (ret > 0) {
+	int u = 0;
 	bu_log("Unknown args: ");
 	for (u = 0; u < ret - 1; u++) {
 	    bu_log("%s, ", unknown[u]);
@@ -179,7 +512,7 @@ main(int argc, const char **argv)
     }
     bu_vls_free(&parse_msgs);
     bu_free(unknown, "unknown argv");
-
+#endif
     return 0;
 }
 

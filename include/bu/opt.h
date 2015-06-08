@@ -37,13 +37,49 @@ __BEGIN_DECLS
 /** @file bu/opt.h */
 
 /**
- * Convenience typedef for function callback to validate bu_opt
- * arguments
+ * Callback function signature for bu_opt_desc argument processing functions.
+ *
+ * Return values:
+ *
+ * -1 - Invalid argument encountered.
+ *  0 - No argument processed.
+ * >0 - Number of argv elements used in valid argument processing.
+ *
  */
 typedef int (*bu_opt_arg_process_t)(struct bu_vls *, int argc, const char **argv, void *);
 
 /**
- * "Option description" structure
+ * "Option description" structure.
+ *
+ * This structure is used to define a command line option.  The usage pattern is to
+ * build up a BU_OPT_DESC_NULL terminated array of option descriptions, which are
+ * used by bu_opt_parse to process an argv array.
+ *
+ * The set_var pointer points to a user selected variable.  The type of the variable
+ * needed is determined by the arg_process callback.  If no callback is present and
+ * the max arg count is zero, set_var is expected to be an integer that will be set
+ * to 1 if the option is present in the argv string.
+*
+ * @code
+ * #define help_str "Print help and exit"
+ * static int ph = 0;
+ * static int i = 0;
+ * static fastf_t f = 0.0;
+ * struct bu_opt_desc opt_defs[4] = {
+ *     {"h", "help",    0, 0, NULL,            (void *)&ph , "", help_str},
+ *     {"n", "num",     1, 1, &bu_opt_int,     (void *)&i,   "#", "Read int"},
+ *     {"f", "fastf_t", 1, 1, &bu_opt_fastf_t, (void *)&f,   "#", "Read float"},
+ *     BU_OPT_DESC_NULL
+ * };
+ * @endcode
+ *
+ * If an array initialization of an option description array is provided as in
+ * the above example , the variables specified by the user for setting must all
+ * be static (as long as C89 is used.) This should work for executable
+ * argc/argv parsing, but for libraries it is not advisable due to static
+ * variables rendering the function in question thread unsafe.  For an approach
+ * usable in a library see the BU_OPT macro documentation.
+ *
  */
 struct bu_opt_desc {
     const char *shortopt;
@@ -55,34 +91,55 @@ struct bu_opt_desc {
     const char *arg_helpstr;
     const char *help_string;
 };
+
+/* Convenience definition for NULL bu_opt_desc struct */
 #define BU_OPT_DESC_NULL {NULL, NULL, 0, 0, NULL, NULL, NULL, NULL}
+
+/**
+ * Macro for assigning values to bu_opt_desc array entries.  Use this style
+ * when it isn't possible to use static variables as set_var entries
+ * (such as libraries which need to be thread safe.)
+ *
+ * @code
+ * #define help_str "Print help and exit"
+ * int ph = 0;
+ * int i = 0;
+ * fastf_t f = 0.0;
+ * struct bu_opt_desc opt_defs[4];
+ * BU_OPT(opt_defs[0], "h", "help",     0, 0, NULL,            (void *)&ph, "", help_str);
+ * BU_OPT(opt_defs[1], "n", "num",      1, 1, &bu_opt_ind,     (void *)&i,  "#", "Read int");
+ * BU_OPT(opt_defs[2], "f", "fastf_t",  1, 1, &bu_opt_fastf_t, (void *)&f,  "#", "Read float");
+ * BU_OPT_NULL(opt_defs[3]);
+ *
+ */
+#define BU_OPT(_desc, _so, _lo, _min, _max, _aprocess, _var, _ahelp, _help) { \
+    _desc.shortopt = _so; \
+    _desc.longopt = _lo; \
+    _desc.arg_cnt_min = _min; \
+    _desc.arg_cnt_max = _max; \
+    _desc.arg_process = _aprocess; \
+    _desc.set_var = _var; \
+    _desc.arg_helpstr = _ahelp; \
+    _desc.help_string = _help; \
+}
+
+/* Convenience macro for setting a bu_opt_desc struct to BU_OPT_DESC_NULL */
+#define BU_OPT_NULL(_desc) { \
+    _desc.shortopt = NULL; \
+    _desc.longopt = NULL; \
+    _desc.arg_cnt_min = 0; \
+    _desc.arg_cnt_max = 0; \
+    _desc.arg_process = NULL; \
+    _desc.set_var = NULL; \
+    _desc.arg_helpstr = NULL; \
+    _desc.help_string = NULL; \
+}
 
 
 /**
  * Parse argv array using option descs.
  *
- * returns a bu_opt_data_t of bu_opt_data structure pointers, or NULL if the parsing
- * failed.  If a desc has an arg process, function, the valid field in
- * bu_opt_data for each option will indicate if the value in arg was
- * successfully processed by arg_process.  In situations where multiple options
- * are present, the general rule is that the last one in the list wins.
- *
- * bu_opt_desc array ds must be null terminated with BU_OPT_DESC_NULL.
- *
- * Return 0 if parse successful (all options valid) and 1 otherwise.
- *
- *
- *  Style to use when static definitions are possible
- *
- *  enum d1_opt_ind {D1_HELP, D1_VERBOSITY};
- *  struct bu_opt_desc d1[4] = {
- *      {D1_HELP, 0, 0, "h", "help", NULL, help_str},
- *      {D1_HELP, 0, 0, "?", "", NULL, help_str},
- *      {D1_VERBOSITY, 0, 1, "v", "verbosity", &(d1_verbosity), "Set verbosity"},
- *      BU_OPT_DESC_NULL
- *  };
- *  bu_opt_data_t *results;
- *  bu_opt_parse(&results, NULL, argc, argv, d1);
+ * The bu_opt_desc array ds must be null terminated with BU_OPT_DESC_NULL.
  *
  * Return vals:
  *
