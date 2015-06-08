@@ -66,7 +66,7 @@ int desc_1(int test_num)
     };
 
     int ac = 0;
-    int val_ok = 0;
+    int val_ok = 1;
     int ret = 0;
     int containers = 6;
     const char **av;
@@ -79,6 +79,7 @@ int desc_1(int test_num)
     switch (test_num) {
 	case 0:
 	    ret = bu_opt_parse(&unknown, 0, &parse_msgs, 0, NULL, d);
+	    ret = (ret == -1) ? 0 : -1;
 	    break;
 	case 1:
 	    ac = 1;
@@ -174,10 +175,11 @@ int desc_1(int test_num)
 	    bu_vls_printf(&parse_msgs, "Parsing arg string \"-v 4\":");
 	    ret = bu_opt_parse(&unknown, containers, &parse_msgs, ac, av, d);
 	    if (!ret==-1) {
-		bu_vls_printf(&parse_msgs, "\nError - expected parser to fail with error and it didn't\n", verbosity);
+		bu_vls_printf(&parse_msgs, "\nError - expected parser to fail with error and it didn't\n");
 		val_ok = 0;
 	    } else {
-		bu_vls_printf(&parse_msgs, "OK (expected failure) - verbosity failed (4 > 3)\n", verbosity);
+		bu_vls_printf(&parse_msgs, "OK (expected failure) - verbosity failed (4 > 3)\n");
+		ret = 0;
 	    }
 	    break;
 	case 9:
@@ -200,10 +202,11 @@ int desc_1(int test_num)
 	    bu_vls_printf(&parse_msgs, "Parsing arg string \"--verbosity 4\":");
 	    ret = bu_opt_parse(&unknown, containers, &parse_msgs, ac, av, d);
 	    if (!ret==-1) {
-		bu_vls_printf(&parse_msgs, "\nError - expected parser to fail with error and it didn't\n", verbosity);
+		bu_vls_printf(&parse_msgs, "\nError - expected parser to fail with error and it didn't\n");
 		val_ok = 0;
 	    } else {
-		bu_vls_printf(&parse_msgs, "OK (expected failure) - verbosity failed (4 > 3)\n", verbosity);
+		bu_vls_printf(&parse_msgs, "OK (expected failure) - verbosity failed (4 > 3)\n");
+		ret = 0;
 	    }
 	    break;
 	case 11:
@@ -218,6 +221,20 @@ int desc_1(int test_num)
 		bu_vls_printf(&parse_msgs, "  OK\nverbosity = %d\n", verbosity);
 	    }
 	    break;
+	case 12:
+	    ac = 1;
+	    av[0] = "--verbosity=4";
+	    bu_vls_printf(&parse_msgs, "Parsing arg string \"--verbosity=4\":");
+	    ret = bu_opt_parse(&unknown, containers, &parse_msgs, ac, av, d);
+	    if (!ret==-1) {
+		bu_vls_printf(&parse_msgs, "\nError - expected parser to fail with error and it didn't\n");
+		val_ok = 0;
+	    } else {
+		bu_vls_printf(&parse_msgs, "OK (expected failure) - verbosity failed (4 > 3)\n");
+		ret = 0;
+	    }
+	    break;
+
     }
 
     if (ret > 0) {
@@ -295,7 +312,7 @@ dc_color(struct bu_vls *msg, int argc, const char **argv, void *set_c)
 int desc_2(int test_num)
 {
     int ret = 0;
-    int val_ok = 0;
+    int val_ok = 1;
     int print_help = 0;
     struct bu_color color = BU_COLOR_INIT_ZERO;
     int containers = 6;
@@ -303,7 +320,7 @@ int desc_2(int test_num)
     const char **av;
     const char **unknown;
     struct bu_vls parse_msgs = BU_VLS_INIT_ZERO;
- 
+
     struct bu_opt_desc d[3];
     BU_OPT(d[0], "h", "help",  0, 0, NULL,      (void *)&print_help, "",      help_str);
     BU_OPT(d[1], "C", "color", 1, 3, &dc_color, (void *)&color,      "r/g/b", "Set color");
@@ -315,6 +332,7 @@ int desc_2(int test_num)
     switch (test_num) {
 	case 0:
 	    ret = bu_opt_parse(&unknown, 0, &parse_msgs, 0, NULL, d);
+	    ret = (ret == -1) ? 0 : -1;
 	    break;
 	case 1:
 	    ac = 2;
@@ -355,7 +373,7 @@ int desc_2(int test_num)
 	}
 	bu_vls_printf(&parse_msgs, "%s\n", unknown[ret - 1]);
     }
-    
+
     if (!val_ok) ret = -1;
 
     if (bu_vls_strlen(&parse_msgs) > 0) {
@@ -395,6 +413,7 @@ int desc_3(int test_num)
     switch (test_num) {
 	case 0:
 	    ret = bu_opt_parse(&unknown, 0, &parse_msgs, 0, NULL, d);
+	    ret = (ret == -1) ? 0 : -1;
 	    break;
 	case 1:
 	    ac = 2;
@@ -423,7 +442,6 @@ int desc_3(int test_num)
 	    }
 
 	    break;
-	
 	case 3:
 	    ac = 2;
 	    av[0] = "-f";
@@ -497,23 +515,8 @@ main(int argc, const char **argv)
 	    ret = desc_3(test_num);
 	    break;
     }
-#if 0
-    bu_log("Int var: %d\n", i);
-    bu_log("Fastf_t var: %f\n", f);
-    bu_log("Color var: %0.2f, %0.2f, %0.2f\n", color.buc_rgb[0], color.buc_rgb[1], color.buc_rgb[2]);
 
-    if (ret > 0) {
-	int u = 0;
-	bu_log("Unknown args: ");
-	for (u = 0; u < ret - 1; u++) {
-	    bu_log("%s, ", unknown[u]);
-	}
-	bu_log("%s\n", unknown[ret - 1]);
-    }
-    bu_vls_free(&parse_msgs);
-    bu_free(unknown, "unknown argv");
-#endif
-    return 0;
+    return ret;
 }
 
 /*
