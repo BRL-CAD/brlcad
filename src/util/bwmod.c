@@ -54,7 +54,7 @@ char *file_name;
 
 char usage[] = "\
 Usage: bwmod [-c] {-a add -s sub -m mult -d div -A -e exp -r root\n\
-		   -S shift -M and -O or -X xor -t trunc} [file.bw] > file2.bw\n";
+		   -S shift -M and -O or -X xor -R -t} [file.bw] > file2.bw\n";
 
 #define ADD	1
 #define MULT	2
@@ -64,7 +64,9 @@ Usage: bwmod [-c] {-a add -s sub -m mult -d div -A -e exp -r root\n\
 #define AND	6
 #define OR	7
 #define XOR	8
-#define TRUNC	9
+#define ROUND	9 /* this was TRUNC, which is discontinued because
+                   * truncation is handled internally as "-S 0"
+                   */
 #define BUFLEN	(8192*2)	/* usually 2 pages of memory, 16KB */
 
 int numop = 0;		/* number of operations */
@@ -96,7 +98,7 @@ get_args(int argc, char **argv)
     int c;
     double d = 0.0;
 
-    while ((c = bu_getopt(argc, argv, "a:s:m:d:Ae:r:cS:O:M:X:t:h?")) != -1) {
+    while ((c = bu_getopt(argc, argv, "a:s:m:d:Ae:r:cS:O:M:X:Rth?")) != -1) {
 	switch (c) {
 	    case 'a':
 		op[ numop ] = ADD;
@@ -156,9 +158,15 @@ get_args(int argc, char **argv)
 		op[ numop ] = XOR;
 		val[ numop++ ] = atof(bu_optarg);
 		break;
-	    case 't':
-		op[ numop ] = TRUNC;
-		val[ numop++ ] = atof(bu_optarg);
+	    case 'R':
+		op[ numop ] = ROUND;
+/* See above remark for case 'A' (don't care about val[numop] but need numop++).
+ */
+/*		val[ numop++ ] = 0.0; */
+		numop++;
+	    case 't': /* Notice that -S truncates, so we internally use -S 0 */
+		op[ numop ] = SHIFT;
+		val[ numop++ ] = 0.0;
 		break;
 	    default:		/* '?' 'h' */
 		return 0;
@@ -214,8 +222,14 @@ void mk_trans_tbl(void)
 			break;
 		case OR  : tmp=d; tmp |= (int)val[i]; d=tmp;break;
 		case AND : tmp=d; tmp &= (int)val[i]; d=tmp;break;
-		case XOR : tmp=d; tmp ^= (int)val[i]; d= tmp; break;
-		    /* case TRUNC: tmp=((int)d/(int)val[i])*(int)val[i]; break; */
+		case XOR : tmp=d; tmp ^= (int)val[i]; d=tmp; break;
+	     /* case TRUNC: tmp=((int)d/(int)val[i])*(int)val[i]; d=tmp; break; */
+		case ROUND:
+			if (d > 0)
+			  d = (int)(d+0.5);
+			else if (d < 0)
+			  d = (int)(d-0.5);
+			break;
 		default  : fprintf(stderr, "%s: error in op\n", progname);
 		    bu_exit (-1, NULL);
 		    break;
@@ -253,9 +267,11 @@ void mk_char_trans_tbl(void)
 		case AND : d &= (int)val[i]; break;
 		case OR  : d |= (int)val[i]; break;
 		case XOR : d ^= (int)val[i]; break;
-		case TRUNC: d /= (int)val[i];d *= (int)val[i]; break;
 		default  : fprintf(stderr, "%s: error in op\n", progname);
 		    bu_exit (-1, NULL);
+	     /* TRUNC and ROUND do nothing because we already have integer value */
+	     /* case TRUNC: */
+		case ROUND:
 		    break;
 	    }
 	}
