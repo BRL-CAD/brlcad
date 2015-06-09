@@ -141,11 +141,19 @@ the mean, this can be done by:
 <userinput>bwmod -s100 -m1.409 -a100 &lt; file.bw &gt; file2.bw</userinput>
 </para>
 <para>
-where 1.409 results from (255-100)/(210-100) which is what one would use
-by boost the max value (210) to full scale (255) after subtracting the
-mean (100).  Subtracting and adding 100 make the multiply occur
-"about that point", i.e. value less than 100 will get smaller; those
-above, higher.</para>
+where 1.409 results from (255.0-100.0)/(210.0-100.0), which is what one would use
+to boost the max value (210) to full scale (255) after subtracting the
+mean (100).  Subtracting and adding 100 makes the multiply occur
+"about that point"; i.e., values less than 100 get smaller, and those
+above get higher.  A <replaceable>file.bw</replaceable> for this example can be created with these three command lines:</para>
+<para>
+<!-- .br -->
+<userinput>gencolor -r 11 80 &gt;file.bw</userinput>
+<!-- .br -->
+<userinput>gencolor -r 262131 100 &gt;&gt;file.bw</userinput>
+<!-- .br -->
+<userinput>gencolor -r 2 210 &gt;&gt;file.bw</userinput>
+</para>
 </refsect1>
 
 <refsect1 xml:id='see_also'><title>SEE ALSO</title>
