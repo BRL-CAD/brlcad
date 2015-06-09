@@ -123,6 +123,91 @@ color_from_floats(const float *float_color)
 }
 
 
+class DBInternal
+{
+public:
+    static const directory &lookup(const db_i &db, const std::string &name);
+
+    DBInternal();
+    DBInternal(const db_i &db, const directory &dir);
+    ~DBInternal();
+
+    void load(const db_i &db, const directory &dir);
+    const rt_db_internal &get() const;
+
+
+private:
+    DBInternal(const DBInternal &source);
+    DBInternal &operator=(const DBInternal &source);
+
+    bool m_valid;
+    rt_db_internal m_internal;
+};
+
+
+const directory &
+DBInternal::lookup(const db_i &db, const std::string &name)
+{
+    const directory *dir = db_lookup(&db, name.c_str(), LOOKUP_QUIET);
+
+    if (!dir)
+	throw std::invalid_argument("db_lookup() failed");
+
+    return *dir;
+}
+
+
+DBInternal::DBInternal() :
+    m_valid(false),
+    m_internal()
+{}
+
+
+DBInternal::DBInternal(const db_i &db, const directory &dir) :
+    m_valid(false),
+    m_internal()
+{
+    load(db, dir);
+}
+
+
+inline
+DBInternal::~DBInternal()
+{
+    if (m_valid)
+	rt_db_free_internal(&m_internal);
+}
+
+
+void
+DBInternal::load(const db_i &db, const directory &dir)
+{
+    RT_CK_DBI(&db);
+    RT_CK_DIR(&dir);
+
+    if (m_valid) {
+	rt_db_free_internal(&m_internal);
+	m_valid = false;
+    }
+
+    if (rt_db_get_internal(&m_internal, &dir, &db, NULL, &rt_uniresource) < 0)
+	throw std::runtime_error("rt_db_get_internal() failed");
+
+    RT_CK_DB_INTERNAL(&m_internal);
+    m_valid = true;
+}
+
+
+inline const rt_db_internal &
+DBInternal::get() const
+{
+    if (!m_valid)
+	throw std::logic_error("invalid");
+
+    return m_internal;
+}
+
+
 class RecordWriter
 {
 public:
@@ -305,6 +390,7 @@ public:
     ~FastgenWriter();
 
     void write_section_color(const SectionID &section_id, const Color &color);
+    SectionID write_compsplt(const SectionID &id, fastf_t z_coordinate);
 
     enum BooleanType { HOLE, WALL };
     void write_boolean(BooleanType type, const SectionID &section_a,
@@ -375,6 +461,20 @@ FastgenWriter::write_section_color(const SectionID &section_id,
 		     << static_cast<unsigned>(color[0]) << ' '
 		     << static_cast<unsigned>(color[1]) << ' '
 		     << static_cast<unsigned>(color[2]) << '\n';
+}
+
+
+FastgenWriter::SectionID
+FastgenWriter::write_compsplt(const SectionID &id, fastf_t z_coordinate)
+{
+    SectionID result = take_next_section_id();
+
+    Record record(*this);
+    record << "COMPSPLT" << id.first << id.second;
+    record << result.first << result.second;
+    record << z_coordinate;
+
+    return result;
 }
 
 
@@ -958,88 +1058,28 @@ get_parent_dir(const db_full_path &path)
 }
 
 
-class DBInternal
-{
-public:
-    static const directory &lookup(const db_i &db, const std::string &name);
-
-    DBInternal();
-    DBInternal(const db_i &db, const directory &dir);
-    ~DBInternal();
-
-    void load(const db_i &db, const directory &dir);
-    const rt_db_internal &get() const;
-
-
-private:
-    DBInternal(const DBInternal &source);
-    DBInternal &operator=(const DBInternal &source);
-
-    bool m_valid;
-    rt_db_internal m_internal;
-};
-
-
-const directory &
-DBInternal::lookup(const db_i &db, const std::string &name)
-{
-    const directory *dir = db_lookup(&db, name.c_str(), LOOKUP_QUIET);
-
-    if (!dir)
-	throw std::invalid_argument("db_lookup() failed");
-
-    return *dir;
-}
-
-
-DBInternal::DBInternal() :
-    m_valid(false),
-    m_internal()
-{}
-
-
-DBInternal::DBInternal(const db_i &db, const directory &dir) :
-    m_valid(false),
-    m_internal()
-{
-    load(db, dir);
-}
-
-
-inline
-DBInternal::~DBInternal()
-{
-    if (m_valid)
-	rt_db_free_internal(&m_internal);
-}
-
-
-void
-DBInternal::load(const db_i &db, const directory &dir)
+const directory *
+get_region_dir(const db_i &db, const db_full_path &path)
 {
     RT_CK_DBI(&db);
-    RT_CK_DIR(&dir);
+    RT_CK_FULL_PATH(&path);
 
-    if (m_valid) {
-	rt_db_free_internal(&m_internal);
-	m_valid = false;
+    for (std::size_t i = 0; i < path.fp_len; ++i) {
+	DBInternal comb_db_internal(db, *DB_FULL_PATH_GET(&path, i));
+
+	if ((i == path.fp_len - 1)
+	    && comb_db_internal.get().idb_minor_type != ID_COMBINATION)
+	    continue;
+
+	const rt_comb_internal &comb_internal = *static_cast<rt_comb_internal *>
+						(comb_db_internal.get().idb_ptr);
+	RT_CK_COMB(&comb_internal);
+
+	if (comb_internal.region_flag)
+	    return DB_FULL_PATH_GET(&path, i);
     }
 
-    if (rt_db_get_internal(&m_internal, &dir, &db, NULL, &rt_uniresource) < 0)
-	throw std::runtime_error("rt_db_get_internal() failed");
-
-    RT_CK_DB_INTERNAL(&m_internal);
-    m_valid = true;
-}
-
-
-inline const rt_db_internal &
-DBInternal::get() const
-{
-    if (!m_valid)
-	throw std::logic_error("invalid");
-
-    return m_internal;
+    return NULL; // no parent region
 }
 
 
@@ -1253,6 +1293,142 @@ get_chex1(Section &section, const rt_bot_internal &bot)
 }
 
 
+HIDDEN void
+get_unioned(const db_i &db, const tree *tree,
+	    std::set<const directory *> &results)
+{
+    RT_CK_DBI(&db);
+
+    if (!tree)
+	return;
+
+    RT_CK_TREE(tree);
+
+    switch (tree->tr_op) {
+	case OP_NOP:
+	    break;
+
+	case OP_DB_LEAF:
+	    results.insert(&DBInternal::lookup(db, tree->tr_l.tl_name));
+	    break;
+
+	case OP_UNION:
+	    get_unioned(db, tree->tr_b.tb_left, results);
+	    get_unioned(db, tree->tr_b.tb_right, results);
+	    break;
+
+	case OP_SUBTRACT:
+	    get_unioned(db, tree->tr_b.tb_left, results);
+	    break;
+    }
+}
+
+
+HIDDEN void
+get_intersected(const db_i &db, const tree *tree,
+		std::set<const directory *> &results)
+{
+    RT_CK_DBI(&db);
+
+    if (!tree)
+	return;
+
+    RT_CK_TREE(tree);
+
+    switch (tree->tr_op) {
+	case OP_NOP:
+	    break;
+
+	case OP_INTERSECT:
+	    get_unioned(db, tree->tr_b.tb_left, results);
+	    get_unioned(db, tree->tr_b.tb_right, results);
+	    break;
+
+	case OP_UNION:
+	    get_intersected(db, tree->tr_b.tb_left, results);
+	    get_intersected(db, tree->tr_b.tb_right, results);
+	    break;
+
+	case OP_SUBTRACT:
+	    get_intersected(db, tree->tr_b.tb_left, results);
+	    break;
+    }
+}
+
+
+HIDDEN void
+get_subtracted(const db_i &db, const tree *tree,
+	       std::set<const directory *> &results)
+{
+    RT_CK_DBI(&db);
+
+    if (!tree)
+	return;
+
+    RT_CK_TREE(tree);
+
+    switch (tree->tr_op) {
+	case OP_NOP:
+	    break;
+
+	case OP_UNION:
+	case OP_INTERSECT:
+	    get_subtracted(db, tree->tr_b.tb_left, results);
+	    get_subtracted(db, tree->tr_b.tb_right, results);
+	    break;
+
+	case OP_SUBTRACT:
+	    get_subtracted(db, tree->tr_b.tb_left, results);
+	    get_unioned(db, tree->tr_b.tb_right, results);
+	    break;
+    }
+}
+
+
+HIDDEN bool
+find_compsplt(Section &section, const db_i &db, const db_full_path &path,
+	      const rt_half_internal &half)
+{
+    RT_CK_DBI(&db);
+    RT_CK_FULL_PATH(&path);
+    RT_HALF_CK_MAGIC(&half);
+
+    const vect_t normal = {0.0, 0.0, 1.0};
+
+    if (!VNEAR_EQUAL(half.eqn, normal, RT_LEN_TOL))
+	return false;
+
+    // ensure that the halfspace is subtracted from the parent region
+    DBInternal parent_region_internal;
+
+    if (const directory *parent_region_dir = get_region_dir(db, path))
+	parent_region_internal.load(db, *parent_region_dir);
+    else
+	return false;
+
+    const rt_comb_internal &parent_region = *static_cast<rt_comb_internal *>
+					    (parent_region_internal.get().idb_ptr);
+    RT_CK_COMB(&parent_region);
+
+    std::set<const directory *> leaves;
+    get_intersected(db, parent_region.tree, leaves);
+
+    if (leaves.count(DB_FULL_PATH_CUR_DIR(&path))) {
+	// this is one half of the compsplt
+    } else {
+	leaves.clear();
+	get_subtracted(db, parent_region.tree, leaves);
+
+	if (!leaves.count(DB_FULL_PATH_CUR_DIR(&path)))
+	    return false; // not a compsplt
+
+	// here we have the other half
+    }
+
+    return false;
+}
+
+
 struct FastgenConversion {
     FastgenConversion(const std::string &path, const db_i &db, const bn_tol &tol);
     ~FastgenConversion();
@@ -1269,8 +1445,6 @@ struct FastgenConversion {
 private:
     FastgenConversion(const FastgenConversion &source);
     FastgenConversion &operator=(const FastgenConversion &source);
-
-    const directory * get_region_dir(const db_full_path &path) const;
 
     std::map<const directory *, Section *> m_sections;
 };
@@ -1304,35 +1478,11 @@ FastgenConversion::~FastgenConversion()
 }
 
 
-const directory *
-FastgenConversion::get_region_dir(const db_full_path &path) const
-{
-    RT_CK_FULL_PATH(&path);
-
-    for (std::size_t i = 0; i < path.fp_len; ++i) {
-	DBInternal comb_db_internal(m_db, *DB_FULL_PATH_GET(&path, i));
-
-	if ((i == path.fp_len - 1)
-	    && comb_db_internal.get().idb_minor_type != ID_COMBINATION)
-	    continue;
-
-	const rt_comb_internal &comb_internal = *static_cast<rt_comb_internal *>
-						(comb_db_internal.get().idb_ptr);
-	RT_CK_COMB(&comb_internal);
-
-	if (comb_internal.region_flag)
-	    return DB_FULL_PATH_GET(&path, i);
-    }
-
-    return NULL; // no parent region
-}
-
-
 void
 FastgenConversion::create_section(const db_full_path &path)
 {
     std::pair<std::map<const directory *, Section *>::iterator, bool> found =
-	m_sections.insert(std::make_pair(get_region_dir(path),
+	m_sections.insert(std::make_pair(get_region_dir(m_db, path),
 					 static_cast<Section *>(NULL)));
 
     if (!found.second)
@@ -1348,113 +1498,7 @@ Section &
 FastgenConversion::get_section(const db_full_path &path)
 {
     RT_CK_FULL_PATH(&path);
-    return *m_sections.at(get_region_dir(path));
-}
-
-
-HIDDEN bool
-get_walls_helper_extract_solids(const db_i &db, const tree *tree,
-				std::set<const directory *> &results)
-{
-    RT_CK_DBI(&db);
-
-    if (!tree || tree->tr_op == OP_NOP) {
-	return true;
-    } else if (tree->tr_op == OP_UNION) {
-	return get_walls_helper_extract_solids(db, tree->tr_b.tb_left, results)
-	       && get_walls_helper_extract_solids(db, tree->tr_b.tb_right, results);
-    } else if (tree->tr_op == OP_DB_LEAF) {
-	return results.insert(&DBInternal::lookup(db, tree->tr_l.tl_name)).second;
-    } else {
-	return false;
-    }
-}
-
-
-HIDDEN std::vector<const directory *>
-get_walls_helper_find_regions(const db_i &db,
-			      std::set<const directory *> &subtracted)
-{
-    RT_CK_DBI(&db);
-
-    std::vector<const directory *> results;
-
-    directory **regions;
-    std::size_t num_regions = db_ls(&db, DB_LS_REGION, NULL, &regions);
-    AutoFreePtr<directory *> autofree_regions(regions);
-
-    for (std::size_t i = 0; i < num_regions; ++i) {
-	DBInternal region_db_internal(db, *regions[i]);
-	const rt_comb_internal &region_internal = *static_cast<rt_comb_internal *>
-		(region_db_internal.get().idb_ptr);
-	RT_CK_COMB(&region_internal);
-	std::set<const directory *> unioned;
-	get_walls_helper_extract_solids(db, region_internal.tree, unioned);
-
-	// FIXME check transforms
-
-	bool success = false;
-
-	for (std::set<const directory *>::const_iterator it = unioned.begin();
-	     it != unioned.end(); ++it) {
-	    if (subtracted.erase(*it))
-		success = true;
-	}
-
-	if (success)
-	    results.push_back(regions[i]);
-    }
-
-    return results;
-}
-
-
-HIDDEN void
-get_walls(const FastgenConversion &data, const db_full_path &path)
-{
-    RT_CK_FULL_PATH(&path);
-
-    std::set<const directory *> subtracted;
-    {
-	DBInternal self_internal(data.m_db, *DB_FULL_PATH_CUR_DIR(&path));
-
-	if (self_internal.get().idb_minor_type != ID_COMBINATION)
-	    return;
-
-	const rt_comb_internal &comb = *static_cast<rt_comb_internal *>
-				       (self_internal.get().idb_ptr);
-	RT_CK_COMB(&comb);
-
-	// check that structure is similar to an imported WALL
-	// TODO: other compatible possibilities
-	if (comb.tree->tr_op != OP_SUBTRACT)
-	    return;
-
-	const tree::tree_node &b = comb.tree->tr_b;
-
-	if (!b.tb_left || !b.tb_right || b.tb_left->tr_op != OP_DB_LEAF
-	    || (b.tb_right->tr_op != OP_DB_LEAF && b.tb_right->tr_op != OP_UNION))
-	    return;
-
-	if (b.tb_right->tr_op == OP_DB_LEAF) {
-	    subtracted.insert(&DBInternal::lookup(data.m_db, b.tb_right->tr_l.tl_name));
-	} else if (b.tb_right->tr_op == OP_UNION) {
-	    if (!get_walls_helper_extract_solids(data.m_db, b.tb_right, subtracted))
-		return;
-	} else {
-	    return;
-	}
-    }
-
-    std::vector<const directory *> subtracted_regions =
-	get_walls_helper_find_regions(data.m_db, subtracted);
-
-    if (!subtracted.empty())
-	return; // holes?
-
-    for (std::vector<const directory *>::const_iterator it =
-	     subtracted_regions.begin(); it != subtracted_regions.end(); ++it)
-	bu_log("DEBUG: %s\n", (*it)->d_namep);
+    return *m_sections.at(get_region_dir(m_db, path));
 }
 
 
@@ -1534,6 +1578,17 @@ convert_primitive(FastgenConversion &data, const db_full_path &path,
 		write_bot(section, bot);
 
 	    break;
+	}
+
+	case ID_HALF: {
+	    const rt_half_internal &half = *static_cast<rt_half_internal *>
+					   (internal.idb_ptr);
+	    RT_HALF_CK_MAGIC(&half);
+
+	    if (!find_compsplt(section, data.m_db, path, half))
+		return false;
+	    else
+		break;
 	}
 
 	default:
@@ -1638,7 +1693,6 @@ convert_region_end(db_tree_state *tree_state, const db_full_path *path,
     FastgenConversion &data = *static_cast<FastgenConversion *>(client_data);
     Section &section = data.get_section(*path);
     section.set_color(color_from_floats(tree_state->ts_mater.ma_color));
-    get_walls(data, *path);
 
     if (current_tree->tr_op != OP_NOP) {
 	gcv_region_end_data gcv_data = {write_nmg_region, &data};
