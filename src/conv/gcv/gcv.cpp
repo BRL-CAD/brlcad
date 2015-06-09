@@ -337,8 +337,8 @@ main(int ac, char **av)
     static mime_model_t out_type = MIME_MODEL_UNKNOWN;
     static char *in_path_str = NULL;
     static char *out_path_str = NULL;
-    static char *in_only_opts = NULL;
-    static char *out_only_opts = NULL;
+    static struct bu_vls in_only_opts = BU_VLS_INIT_ZERO;
+    static struct bu_vls out_only_opts = BU_VLS_INIT_ZERO;
     static struct gcv_help_state hs;
 
     struct bu_vls in_format = BU_VLS_INIT_ZERO;
@@ -361,8 +361,8 @@ main(int ac, char **av)
 	{"o", "output",           1, 1, &file_null,   (void *)&out_path_str,  "file",       "Output file.",               },
 	{"",  "input-format",     1, 1, &model_mime,  (void *)&in_type,       "format",     "File format of input file.", },
 	{"",  "output-format",    1, 1, &model_mime,  (void *)&out_type,      "format",     "File format of output file." },
-	{"I", "input-only-opts",  1, 1, &bu_opt_str,  (void *)&in_only_opts,  "\"[opts]\"", gcv_inopt_str,                },
-	{"O", "output-only-opts", 1, 1, &bu_opt_str,  (void *)&out_only_opts, "\"[opts]\"", gcv_outopt_str,               },
+	{"I", "input-only-opts",  1, 1, &bu_opt_vls,  (void *)&in_only_opts,  "\"[opts]\"", gcv_inopt_str,                },
+	{"O", "output-only-opts", 1, 1, &bu_opt_vls,  (void *)&out_only_opts, "\"[opts]\"", gcv_outopt_str,               },
 	BU_OPT_DESC_NULL
     };
 
@@ -469,24 +469,24 @@ main(int ac, char **av)
     }
 
     /* If we have input and/or output specific options, append them now */
-    if (in_only_opts) {
+    if (bu_vls_strlen(&in_only_opts) > 0) {
 	struct bu_vls o_tmp = BU_VLS_INIT_ZERO;
 	if (bu_vls_strlen(&input_opts) > 0)
 	    bu_vls_printf(&input_opts, " ");
 
-	bu_vls_sprintf(&o_tmp, "%s", in_only_opts);
+	bu_vls_sprintf(&o_tmp, "%s", bu_vls_addr(&in_only_opts));
 	if (bu_vls_addr(&o_tmp)[0] == '[') bu_vls_nibble(&o_tmp, 1);
 	if (bu_vls_addr(&o_tmp)[strlen(bu_vls_addr(&o_tmp)) - 1] == ']') bu_vls_trunc(&o_tmp, -1);
 	bu_vls_printf(&input_opts, "%s", bu_vls_addr(&o_tmp));
 	if (bu_vls_strlen(&input_opts) > 0) bu_log("Input only opts: %s\n", bu_vls_addr(&o_tmp));
 	bu_vls_free(&o_tmp);
     }
-    if (out_only_opts) {
+    if (bu_vls_strlen(&out_only_opts) > 0) {
 	struct bu_vls o_tmp = BU_VLS_INIT_ZERO;
 	if (bu_vls_strlen(&output_opts) > 0)
 	    bu_vls_printf(&output_opts, " ");
 
-	bu_vls_sprintf(&o_tmp, "%s", out_only_opts);
+	bu_vls_sprintf(&o_tmp, "%s", &out_only_opts);
 	if (bu_vls_addr(&o_tmp)[0] == '[') bu_vls_nibble(&o_tmp, 1);
 	if (bu_vls_addr(&o_tmp)[strlen(bu_vls_addr(&o_tmp)) - 1] == ']') bu_vls_trunc(&o_tmp, -1);
 	bu_vls_printf(&output_opts, "%s", bu_vls_addr(&o_tmp));
@@ -597,7 +597,8 @@ cleanup:
     bu_vls_free(&log);
     bu_vls_free(&input_opts);
     bu_vls_free(&output_opts);
-
+    bu_vls_free(&in_only_opts);
+    bu_vls_free(&out_only_opts);
     return ret;
 }
 

@@ -563,20 +563,20 @@ bu_opt_fastf_t(struct bu_vls *msg, int argc, const char **argv, void *set_var)
     return 1;
 }
 
-/* TODO - the bu_strdup is required because of eq_arg (i.e., breaking
- * out an argument from an atomic argv entry) - can that be reworked
- * to avoid needing the strdup by incrementing the pointer and pointing
- * to the arg portion of the original string? */
 int
-bu_opt_str(struct bu_vls *UNUSED(msg), int argc, const char **argv, void *set_var)
+bu_opt_vls(struct bu_vls *UNUSED(msg), int argc, const char **argv, void *set_var)
 {
-    char **s_set = (char **)set_var;
+    struct bu_vls *s_set = (struct bu_vls *)set_var;
 
-    if (!argv || !argv[0] || strlen(argv[0]) == 0 || argc != 1 ) {
-	return 0;
+    if (!argv || !argc ) return 0;
+
+    if (s_set) {
+	int i = 0;
+	for (i = 0; i < argc - 1; i++) {
+	    bu_vls_printf(s_set, "%s ", argv[i]);
+	}
+	bu_vls_printf(s_set, "%s", argv[argc - 1]);
     }
-
-    if (s_set) (*s_set) = bu_strdup(argv[0]);
     return 1;
 }
 
