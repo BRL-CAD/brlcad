@@ -436,7 +436,7 @@ int desc_2(int test_num)
     int val_ok = 1;
     int print_help = 0;
     struct bu_color color = BU_COLOR_INIT_ZERO;
-    int containers = 6;
+    int containers = 7;
     int ac = 0;
     const char **av;
     const char **unknown;
@@ -457,7 +457,7 @@ int desc_2(int test_num)
 	    break;
 	case 1:
 	    ac = 2;
-	    av[0] = "--color";
+	    av[0] = "-C";
 	    av[1] = "200/10/30";
 	    set_msg_str(&parse_msgs, ac, av);
 	    ret = bu_opt_parse(&unknown, containers, &parse_msgs, ac, av, d);
@@ -465,7 +465,7 @@ int desc_2(int test_num)
 	    break;
 	case 2:
 	    ac = 4;
-	    av[0] = "--color";
+	    av[0] = "-C";
 	    av[1] = "200";
 	    av[2] = "10";
 	    av[3] = "30";
@@ -475,6 +475,46 @@ int desc_2(int test_num)
 	    break;
 	case 3:
 	    ac = 4;
+	    av[0] = "-C";
+	    av[1] = "200/10/30";
+	    av[2] = "50";
+	    av[3] = "100";
+	    set_msg_str(&parse_msgs, ac, av);
+	    ret = bu_opt_parse(&unknown, containers, &parse_msgs, ac, av, d);
+	    EXPECT_SUCCESS_COLOR_UNKNOWN("color", color, 200, 10, 30);
+	    break;
+	case 4:
+	    ac = 6;
+	    av[0] = "-C";
+	    av[1] = "200";
+	    av[2] = "10";
+	    av[3] = "30";
+	    av[4] = "50";
+	    av[5] = "100";
+	    set_msg_str(&parse_msgs, ac, av);
+	    ret = bu_opt_parse(&unknown, containers, &parse_msgs, ac, av, d);
+	    EXPECT_SUCCESS_COLOR_UNKNOWN("color", color, 200, 10, 30);
+	    break;
+	case 5:
+	    ac = 2;
+	    av[0] = "--color";
+	    av[1] = "200/10/30";
+	    set_msg_str(&parse_msgs, ac, av);
+	    ret = bu_opt_parse(&unknown, containers, &parse_msgs, ac, av, d);
+	    EXPECT_SUCCESS_COLOR("color", color, 200, 10, 30);
+	    break;
+	case 6:
+	    ac = 4;
+	    av[0] = "--color";
+	    av[1] = "200";
+	    av[2] = "10";
+	    av[3] = "30";
+	    set_msg_str(&parse_msgs, ac, av);
+	    ret = bu_opt_parse(&unknown, containers, &parse_msgs, ac, av, d);
+	    EXPECT_SUCCESS_COLOR("color", color, 200, 10, 30);
+	    break;
+	case 7:
+	    ac = 4;
 	    av[0] = "--color";
 	    av[1] = "200/10/30";
 	    av[2] = "50";
@@ -482,6 +522,75 @@ int desc_2(int test_num)
 	    set_msg_str(&parse_msgs, ac, av);
 	    ret = bu_opt_parse(&unknown, containers, &parse_msgs, ac, av, d);
 	    EXPECT_SUCCESS_COLOR_UNKNOWN("color", color, 200, 10, 30);
+	    break;
+	case 8:
+	    ac = 6;
+	    av[0] = "--color";
+	    av[1] = "200";
+	    av[2] = "10";
+	    av[3] = "30";
+	    av[4] = "50";
+	    av[5] = "100";
+	    set_msg_str(&parse_msgs, ac, av);
+	    ret = bu_opt_parse(&unknown, containers, &parse_msgs, ac, av, d);
+	    EXPECT_SUCCESS_COLOR_UNKNOWN("color", color, 200, 10, 30);
+	    break;
+	case 9:
+	    ac = 1;
+	    av[0] = "-C200/10/30";
+	    set_msg_str(&parse_msgs, ac, av);
+	    ret = bu_opt_parse(&unknown, containers, &parse_msgs, ac, av, d);
+	    EXPECT_SUCCESS_COLOR("color", color, 200, 10, 30);
+	    break;
+	case 10:
+	    ac = 1;
+	    av[0] = "-C=200/10/30";
+	    set_msg_str(&parse_msgs, ac, av);
+	    ret = bu_opt_parse(&unknown, containers, &parse_msgs, ac, av, d);
+	    EXPECT_SUCCESS_COLOR("color", color, 200, 10, 30);
+	    break;
+	case 11:
+	    ac = 3;
+	    av[0] = "-C200";
+	    av[1] = "10";
+	    av[2] = "30";
+	    set_msg_str(&parse_msgs, ac, av);
+	    ret = bu_opt_parse(&unknown, containers, &parse_msgs, ac, av, d);
+	    EXPECT_SUCCESS_COLOR("color", color, 200, 10, 30);
+	    break;
+	case 12:
+	    ac = 3;
+	    av[0] = "-C=200";
+	    av[1] = "10";
+	    av[2] = "30";
+	    set_msg_str(&parse_msgs, ac, av);
+	    ret = bu_opt_parse(&unknown, containers, &parse_msgs, ac, av, d);
+	    EXPECT_SUCCESS_COLOR("color", color, 200, 10, 30);
+	    break;
+	case 13:
+	    ac = 1;
+	    av[0] = "-C";
+	    set_msg_str(&parse_msgs, ac, av);
+	    ret = bu_opt_parse(&unknown, containers, &parse_msgs, ac, av, d);
+	    EXPECT_FAILURE("color", "missing argument");
+	    break;
+	case 14:
+	    ac = 1;
+	    av[0] = "--color";
+	    set_msg_str(&parse_msgs, ac, av);
+	    ret = bu_opt_parse(&unknown, containers, &parse_msgs, ac, av, d);
+	    EXPECT_FAILURE("color", "missing argument");
+	    break;
+	case 15:
+	    ac = 5;
+	    av[0] = "--color";
+	    av[1] = "file";
+	    av[2] = "10";
+	    av[3] = "30";
+	    av[4] = "50";
+	    set_msg_str(&parse_msgs, ac, av);
+	    ret = bu_opt_parse(&unknown, containers, &parse_msgs, ac, av, d);
+	    EXPECT_FAILURE("color", "invalid argument");
 	    break;
 
     }
