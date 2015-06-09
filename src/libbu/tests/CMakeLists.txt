@@ -464,6 +464,7 @@ add_test(NAME bu_opt_1_h_09  COMMAND tester_bu_opt 1 23)
 add_test(NAME bu_opt_2_color_00  COMMAND tester_bu_opt 2 0)
 add_test(NAME bu_opt_2_color_01  COMMAND tester_bu_opt 2 1)
 add_test(NAME bu_opt_2_color_02  COMMAND tester_bu_opt 2 2)
+add_test(NAME bu_opt_2_color_03  COMMAND tester_bu_opt 2 3)
 
 add_test(NAME bu_opt_3_00  COMMAND tester_bu_opt 3 0)
 add_test(NAME bu_opt_3_01  COMMAND tester_bu_opt 3 1)

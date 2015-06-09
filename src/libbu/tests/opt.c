@@ -79,12 +79,16 @@ set_msg_str(struct bu_vls *msg, int ac, const char **av)
 }
 
 #define EXPECT_SUCCESS_INT_UNKNOWN(_name, _var, _exp) { \
-    if (ret <= 0 || _var != _exp) { \
+    if (ret <= 0) { \
+	bu_vls_printf(&parse_msgs, "\nError - extra args but none found.\n"); \
+	val_ok = 0; \
+    } else { \
+    if ( _var != _exp) { \
 	bu_vls_printf(&parse_msgs, "\nError - expected value \"%d\" and got value %d\n", _exp, _var); \
 	val_ok = 0; \
     } else { \
 	bu_vls_printf(&parse_msgs, "  \nGot expected value: %s = %d\n", _name, _var); \
-    } \
+    }} \
 }
 
 #define EXPECT_FAILURE_INT_UNKNOWN(_name, _var, _exp) { \
@@ -113,6 +117,20 @@ set_msg_str(struct bu_vls *msg, int ac, const char **av)
 	bu_vls_printf(&parse_msgs, "  \nGot expected value: %s == %.0f/%.0f/%.0f)\n", _name,  _color.buc_rgb[0], _color.buc_rgb[1], _color.buc_rgb[2]); \
     } \
 }
+
+#define EXPECT_SUCCESS_COLOR_UNKNOWN(_name, _color, _r, _g, _b) { \
+    if (ret <= 0) { \
+	bu_vls_printf(&parse_msgs, "\nError - extra args expected but not found\n"); \
+	val_ok = 0; \
+    } else { \
+    if ((!NEAR_EQUAL(_color.buc_rgb[0], _r, SMALL_FASTF) || !NEAR_EQUAL(_color.buc_rgb[1], _g, SMALL_FASTF) || !NEAR_EQUAL(_color.buc_rgb[2], _b, SMALL_FASTF))) { \
+	bu_vls_printf(&parse_msgs, "\nError - expected value \"%d/%d/%d\" and got value %.0f/%.0f/%.0f\n", _r, _g, _b, _color.buc_rgb[0], _color.buc_rgb[1], _color.buc_rgb[2]); \
+	val_ok = 0; \
+    } else { \
+	bu_vls_printf(&parse_msgs, "  \nGot expected value: %s == %.0f/%.0f/%.0f)\n", _name,  _color.buc_rgb[0], _color.buc_rgb[1], _color.buc_rgb[2]); \
+    }} \
+}
+
 
 #define EXPECT_FAILURE(_name, _reason) { \
     if (!ret==-1) { \
@@ -455,6 +473,17 @@ int desc_2(int test_num)
 	    ret = bu_opt_parse(&unknown, containers, &parse_msgs, ac, av, d);
 	    EXPECT_SUCCESS_COLOR("color", color, 200, 10, 30);
 	    break;
+	case 3:
+	    ac = 4;
+	    av[0] = "--color";
+	    av[1] = "200/10/30";
+	    av[2] = "50";
+	    av[3] = "100";
+	    set_msg_str(&parse_msgs, ac, av);
+	    ret = bu_opt_parse(&unknown, containers, &parse_msgs, ac, av, d);
+	    EXPECT_SUCCESS_COLOR_UNKNOWN("color", color, 200, 10, 30);
+	    break;
+
     }
 
     if (ret > 0) {
@@ -466,7 +495,7 @@ int desc_2(int test_num)
 	bu_vls_printf(&parse_msgs, "%s\n", unknown[ret - 1]);
     }
 
-    if (!val_ok) ret = -1;
+    ret = (!val_ok) ? -1 : 0;
 
     if (bu_vls_strlen(&parse_msgs) > 0) {
 	bu_log("%s\n", bu_vls_addr(&parse_msgs));
@@ -568,7 +597,7 @@ int desc_3(int test_num)
 	bu_vls_printf(&parse_msgs, "%s\n", unknown[ret - 1]);
     }
 
-    if (!val_ok) ret = -1;
+    ret = (!val_ok) ? -1 : 0;
 
     if (bu_vls_strlen(&parse_msgs) > 0) {
 	bu_log("%s\n", bu_vls_addr(&parse_msgs));
