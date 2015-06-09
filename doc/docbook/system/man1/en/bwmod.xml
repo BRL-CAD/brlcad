@@ -86,7 +86,8 @@ to shift by <emphasis remap='I'>val</emphasis> bits. If
 <emphasis remap='I'>val</emphasis> is positive, this uses C-language "^&lt;&lt;" operator, doing left-shift; if
 <emphasis remap='I'>val</emphasis> is negative, this uses C-language "&gt;&gt;" operator, doing right-shift by
 -<emphasis remap='I'>val</emphasis> bits.  This is a bitwise operation,
-and if it is about to be used, both the pixel value and val are truncated to integer. Unless <option>-c</option> is in effect,
+and if it is about to be used, both the pixel value and <replaceable>val</replaceable>
+are truncated to integer. Unless <option>-c</option> is in effect,
 the resulting new value will again be placed in floating-point.  (So it's "user beware" if this option is applied to a
 non-integer value.)
 <!-- .br -->
