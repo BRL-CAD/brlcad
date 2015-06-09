@@ -254,16 +254,14 @@ bu_opt_describe(struct bu_opt_desc *ds, struct bu_opt_desc_opts *settings)
 }
 
 HIDDEN char *
-opt_process(char **eq_arg, const char *opt_candidate)
+opt_process(const char **eq_arg, const char *opt_candidate)
 {
     int offset = 1;
-    char *inputcpy;
     char *final_opt;
     char *equal_pos;
     if (!eq_arg && !opt_candidate) return NULL;
-    inputcpy = bu_strdup(opt_candidate);
-    if (inputcpy[1] == '-') offset++;
-    equal_pos = strchr(inputcpy, '=');
+    if (opt_candidate[1] == '-') offset++;
+    equal_pos = strchr(opt_candidate, '=');
 
     /* If we've got a single opt, things are handled differently */
     if (offset == 1) {
@@ -274,10 +272,10 @@ opt_process(char **eq_arg, const char *opt_candidate)
 	     * interpretation in this context is everything after
 	     * the first letter is arg.*/
 	    struct bu_vls vopt = BU_VLS_INIT_ZERO;
-	    struct bu_vls varg = BU_VLS_INIT_ZERO;
-	    bu_vls_strncat(&vopt, inputcpy+1, 1);
-	    bu_vls_sprintf(&varg, "%s", inputcpy);
-	    bu_vls_nibble(&varg, 2);
+	    const char *varg = opt_candidate;
+	    bu_vls_strncat(&vopt, opt_candidate+1, 1);
+
+	    varg = opt_candidate + 2;
 
 	    /* A exception is an equals sign, e.g. -s=1024 - in that
 	     * instance, the expectation might be that = would be interpreted
@@ -288,33 +286,30 @@ opt_process(char **eq_arg, const char *opt_candidate)
 	     * "looks right" - may be worth revisiting or even an option at
 	     * some point...*/
 
-	    if (equal_pos && equal_pos == inputcpy+2) {
-		bu_vls_nibble(&varg, 1);
-	    }
+	    if (equal_pos) varg++;
 
-	    (*eq_arg) = bu_strdup(bu_vls_addr(&varg));
+	    (*eq_arg) = varg;
 	    final_opt = bu_strdup(bu_vls_addr(&vopt));
 	    bu_vls_free(&vopt);
-	    bu_vls_free(&varg);
 	}
     } else {
 	if (equal_pos) {
 	    struct bu_vls vopt = BU_VLS_INIT_ZERO;
-	    struct bu_vls varg = BU_VLS_INIT_ZERO;
-	    bu_vls_sprintf(&vopt, "%s", inputcpy);
+	    const char *varg = opt_candidate;
+	    bu_vls_sprintf(&vopt, "%s", opt_candidate);
 	    bu_vls_trunc(&vopt, -1 * strlen(equal_pos));
 	    bu_vls_nibble(&vopt, offset);
-	    bu_vls_sprintf(&varg, "%s", inputcpy);
-	    bu_vls_nibble(&varg, strlen(inputcpy) - strlen(equal_pos) + 1);
-	    (*eq_arg) = bu_strdup(bu_vls_addr(&varg));
+
+	    varg = opt_candidate + bu_vls_strlen(&vopt) + 2;
+	    if (equal_pos) varg++;
+
+	    (*eq_arg) = varg;
 	    final_opt = bu_strdup(bu_vls_addr(&vopt));
 	    bu_vls_free(&vopt);
-	    bu_vls_free(&varg);
 	} else {
 	    final_opt = bu_strdup(opt_candidate+offset);
 	}
     }
-    bu_free(inputcpy, "cleanup working copy");
     return final_opt;
 }
 
@@ -352,7 +347,7 @@ bu_opt_parse(const char ***unused, size_t sizeof_unused, struct bu_vls *msgs, in
 	int desc_ind = 0;
 	size_t arg_cnt = 0;
 	char *opt = NULL;
-	char *eq_arg = NULL;
+	const char *eq_arg = NULL;
 	struct bu_opt_desc *desc = NULL;
 	/* If argv[i] isn't an option, stick the argv entry (and any
 	 * immediately following non-option entries) into the
@@ -409,7 +404,6 @@ bu_opt_parse(const char ***unused, size_t sizeof_unused, struct bu_vls *msgs, in
 	 * supposed to have one, we're invalid - halt. */
 	if (eq_arg && desc->arg_cnt_max == 0) {
 	    if (msgs) bu_vls_printf(msgs, "Option %s takes no arguments, but argument %s is present - halting.\n", argv[i-1], eq_arg);
-	    bu_free(eq_arg, "free arg after equals sign copy");
 	    return -1;
 	}
 
