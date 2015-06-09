@@ -28,6 +28,10 @@
  * Note that this works on PIX files also but there is no distinction
  * made between colors.
  *
+ * WARNING, added 8 June 2015: SHIFT is done the way it is because I
+ * did not see << and >> working properly when attempted with negative
+ * arguments.
+ *
  */
 
 #include "common.h"
@@ -188,7 +192,7 @@ get_args(int argc, char **argv)
 
 void mk_trans_tbl(void)
 {
-    int j, i, tmp;
+    int j, i, tmp, intval;
     double d;
 
     /* create translation map */
@@ -201,7 +205,13 @@ void mk_trans_tbl(void)
 		case POW : checkpow(d,val[i]);
 		     d = pow(d, val[i]); break;
 		case ABS : if (d < 0.0) d = - d; break;
-		case SHIFT: tmp=d; tmp=tmp<<(int)val[i];d=tmp;break;
+		case SHIFT: tmp=d; intval=(int)val[i];
+			if (intval > 0 )
+			  tmp=tmp << intval;
+			else if (intval < 0 )
+			  tmp=tmp >> (-intval);
+			d=tmp;
+			break;
 		case OR  : tmp=d; tmp |= (int)val[i]; d=tmp;break;
 		case AND : tmp=d; tmp &= (int)val[i]; d=tmp;break;
 		case XOR : tmp=d; tmp ^= (int)val[i]; d= tmp; break;
@@ -221,7 +231,7 @@ void mk_trans_tbl(void)
 }
 void mk_char_trans_tbl(void)
 {
-    int j, i;
+    int j, i, intval;
     signed char d;
 
     /* create translation map */
@@ -234,7 +244,12 @@ void mk_char_trans_tbl(void)
 		case POW : checkpow((double)d,val[i]);
 		    d = pow((double)d, val[i]); break;
 		case ABS : if (d < 0.0) d = - d; break;
-		case SHIFT: d=d<<(int)val[i]; break;
+		case SHIFT: intval = (int)val[i];
+			if (intval > 0 )
+			  d=d << intval;
+			else if (intval < 0 )
+			  d=d >> (-intval);
+			break;
 		case AND : d &= (int)val[i]; break;
 		case OR  : d |= (int)val[i]; break;
 		case XOR : d ^= (int)val[i]; break;
