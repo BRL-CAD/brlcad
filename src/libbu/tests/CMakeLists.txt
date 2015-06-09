@@ -486,26 +486,6 @@ add_test(NAME bu_opt_3_04  COMMAND tester_bu_opt 3 4)
 add_test(NAME bu_opt_3_05  COMMAND tester_bu_opt 3 5)
 add_test(NAME bu_opt_3_06  COMMAND tester_bu_opt 3 6)
 
-#add_test(NAME bu_opt_2_00 COMMAND tester_bu_opt 2 -c)
-#add_test(NAME bu_opt_2_01 COMMAND tester_bu_opt 2 --color)
-#add_test(NAME bu_opt_2_02 COMMAND tester_bu_opt 2 --color 200/10/30)
-#add_test(NAME bu_opt_2_03 COMMAND tester_bu_opt 2 --color 200/10/30 35 33)
-#add_test(NAME bu_opt_2_04 COMMAND tester_bu_opt 2 --color 200 10 30)
-#add_test(NAME bu_opt_2_05 COMMAND tester_bu_opt 2 --color 200 10 30 35 33)
-#add_test(NAME bu_opt_2_06 COMMAND tester_bu_opt 2 --color file 200 35 33)
-#add_test(NAME bu_opt_2_07 COMMAND tester_bu_opt 2 -c 200/10/30)
-#add_test(NAME bu_opt_2_08 COMMAND tester_bu_opt 2 -c 200/10/30 35 33)
-#add_test(NAME bu_opt_2_09 COMMAND tester_bu_opt 2 -c 200 10 30)
-#add_test(NAME bu_opt_2_10 COMMAND tester_bu_opt 2 -c 200 10 30 35 33)
-#add_test(NAME bu_opt_2_11 COMMAND tester_bu_opt 2 -c file 200 35 33)
-#add_test(NAME bu_opt_2_12 COMMAND tester_bu_opt 2 --color=200 10 30)
-#add_test(NAME bu_opt_2_13 COMMAND tester_bu_opt 2 --color=200/10/30)
-#add_test(NAME bu_opt_2_14 COMMAND tester_bu_opt 2 --color=200 10 30 file)
-#add_test(NAME bu_opt_3_00 COMMAND tester_bu_opt 3 -n)
-#add_test(NAME bu_opt_3_01 COMMAND tester_bu_opt 3 -n 1)
-#add_test(NAME bu_opt_3_02 COMMAND tester_bu_opt 3 -n -1)
-#add_test(NAME bu_opt_3_03 COMMAND tester_bu_opt 3 -n -1 -f -3.0e-3)
-
 #
 #  *********** date-time.c tests ************
 #
