@@ -51,6 +51,61 @@ d1_verb(struct bu_vls *msg, int argc, const char **argv, void *set_v)
     return 1;
 }
 
+#define voff 0
+#define hoff 15
+
+void
+set_msg_str(struct bu_vls *msg, int ac, const char **av)
+{
+    int i = 0;
+    struct bu_vls vls = BU_VLS_INIT_ZERO;
+    if (!msg || !av) return;
+    bu_vls_sprintf(&vls, "Parsing arg string \"");
+    for (i = 0; i < ac - 1; i++) {
+	bu_vls_printf(&vls, "%s ", av[i]);
+    }
+    bu_vls_printf(&vls, "%s\":", av[ac - 1]);
+    bu_vls_printf(msg, "%s", bu_vls_addr(&vls));
+    bu_vls_free(&vls);
+}
+
+#define EXPECT_SUCCESS_INT(_name, _var, _exp) { \
+    if (ret || _var != _exp) { \
+	bu_vls_printf(&parse_msgs, "\nError - expected value \"%d\" and got value %d\n", _exp, _var); \
+	val_ok = 0; \
+    } else { \
+	bu_vls_printf(&parse_msgs, "  OK\nGot expected value: %s = %d\n", _name, _var); \
+    } \
+}
+
+#define EXPECT_SUCCESS_FLOAT(_name, _var, _exp) { \
+    if (ret || !NEAR_EQUAL(_var, _exp, SMALL_FASTF)) { \
+	bu_vls_printf(&parse_msgs, "\nError - expected value \"%f\" and got value %f\n", _exp, _var); \
+	val_ok = 0; \
+    } else { \
+	bu_vls_printf(&parse_msgs, "  OK\nGot expected value: %s = %f\n", _name, _var); \
+    } \
+}
+
+#define EXPECT_SUCCESS_COLOR(_name, _color, _r, _g, _b) { \
+    if (ret || (!NEAR_EQUAL(_color.buc_rgb[0], _r, SMALL_FASTF) || !NEAR_EQUAL(_color.buc_rgb[1], _g, SMALL_FASTF) || !NEAR_EQUAL(_color.buc_rgb[2], _b, SMALL_FASTF))) { \
+	bu_vls_printf(&parse_msgs, "\nError - expected value \"%d/%d/%d\" and got value %.0f/%.0f/%.0f\n", _r, _g, _b, _color.buc_rgb[0], _color.buc_rgb[1], _color.buc_rgb[2]); \
+	val_ok = 0; \
+    } else { \
+	bu_vls_printf(&parse_msgs, "  OK\nGot expected value: %s == %.0f/%.0f/%.0f)\n", _name,  _color.buc_rgb[0], _color.buc_rgb[1], _color.buc_rgb[2]); \
+    } \
+}
+
+#define EXPECT_FAILURE(_name, _reason) { \
+    if (!ret==-1) { \
+	bu_vls_printf(&parse_msgs, "\nError - expected parser to fail with error and it didn't\n"); \
+	val_ok = 0; \
+    } else { \
+	bu_vls_printf(&parse_msgs, "OK (expected failure) - %s failed (%s)\n", _name, _reason); \
+	ret = 0; \
+    } \
+}
+
 
 int desc_1(int test_num)
 {
@@ -77,77 +132,107 @@ int desc_1(int test_num)
     unknown = (const char **)bu_calloc(containers, sizeof(char *), "unknown results");
 
     switch (test_num) {
-	case 0:
+	/* Verbosity option tests */
+	case voff:
 	    ret = bu_opt_parse(&unknown, 0, &parse_msgs, 0, NULL, d);
 	    ret = (ret == -1) ? 0 : -1;
 	    break;
-	case 1:
+	case voff+1:
 	    ac = 1;
 	    av[0] = "-v";
-	    bu_vls_printf(&parse_msgs, "Parsing arg string \"-v\":");
+	    set_msg_str(&parse_msgs, ac, av);
 	    ret = bu_opt_parse(&unknown, containers, &parse_msgs, ac, av, d);
-	    if (ret || verbosity != 1) {
-		bu_vls_printf(&parse_msgs, "\nError - expected value \"1\" and got value %d\n", verbosity);
-		val_ok = 0;
-	    } else {
-		bu_vls_printf(&parse_msgs, "  OK\nverbosity = %d\n", verbosity);
-	    }
+	    EXPECT_SUCCESS_INT("verbosity", verbosity, 1);
 	    break;
-	case 2:
+	case voff+2:
 	    ac = 1;
 	    av[0] = "-v1";
-	    bu_vls_printf(&parse_msgs, "Parsing arg string \"-v1\":");
+	    set_msg_str(&parse_msgs, ac, av);
 	    ret = bu_opt_parse(&unknown, containers, &parse_msgs, ac, av, d);
-	    if (ret || verbosity != 1) {
-		bu_vls_printf(&parse_msgs, "\nError - expected value \"1\" and got value %d\n", verbosity);
-		val_ok = 0;
-	    } else {
-		bu_vls_printf(&parse_msgs, "  OK\nverbosity = %d\n", verbosity);
-	    }
+	    EXPECT_SUCCESS_INT("verbosity", verbosity, 1);
 	    break;
-	case 3:
+	case voff+3:
 	    ac = 2;
 	    av[0] = "-v";
 	    av[1] = "1";
-	    bu_vls_printf(&parse_msgs, "Parsing arg string \"-v 1\":");
+	    set_msg_str(&parse_msgs, ac, av);
 	    ret = bu_opt_parse(&unknown, containers, &parse_msgs, ac, av, d);
-	    if (ret || verbosity != 1) {
-		bu_vls_printf(&parse_msgs, "\nError - expected value \"1\" and got value %d\n", verbosity);
-		val_ok = 0;
-	    } else {
-		bu_vls_printf(&parse_msgs, "  OK\nverbosity = %d\n", verbosity);
-	    }
+	    EXPECT_SUCCESS_INT("verbosity", verbosity, 1);
 	    break;
-	case 4:
+	case voff+4:
 	    ac = 1;
 	    av[0] = "-v=1";
-	    bu_vls_printf(&parse_msgs, "Parsing arg string \"-v=1\":");
+	    set_msg_str(&parse_msgs, ac, av);
 	    ret = bu_opt_parse(&unknown, containers, &parse_msgs, ac, av, d);
-	    if (ret || verbosity != 1) {
-		bu_vls_printf(&parse_msgs, "\nError - expected value \"1\" and got value %d\n", verbosity);
-		val_ok = 0;
-	    } else {
-		bu_vls_printf(&parse_msgs, "  OK\nverbosity = %d\n", verbosity);
-	    }
+	    EXPECT_SUCCESS_INT("verbosity", verbosity, 1);
 	    break;
-	case 5:
+	case voff+5:
 	    ac = 2;
 	    av[0] = "--v";
 	    av[1] = "1";
-	    bu_vls_printf(&parse_msgs, "Parsing arg string \"--v 1\":");
+	    set_msg_str(&parse_msgs, ac, av);
 	    ret = bu_opt_parse(&unknown, containers, &parse_msgs, ac, av, d);
-	    if (ret || verbosity != 1) {
-		bu_vls_printf(&parse_msgs, "\nError - expected value \"1\" and got value %d\n", verbosity);
-		val_ok = 0;
-	    } else {
-		bu_vls_printf(&parse_msgs, "  OK\nverbosity = %d\n", verbosity);
-	    }
+	    EXPECT_SUCCESS_INT("verbosity", verbosity, 1);
 	    break;
-	case 6:
+	case voff+6:
 	    ac = 1;
 	    av[0] = "--v=1";
-	    bu_vls_printf(&parse_msgs, "Parsing arg string \"--v=1\":");
+	    set_msg_str(&parse_msgs, ac, av);
 	    ret = bu_opt_parse(&unknown, containers, &parse_msgs, ac, av, d);
+	    EXPECT_SUCCESS_INT("verbosity", verbosity, 1);
+	    break;
+	case voff+7:
+	    ac = 2;
+	    av[0] = "-v";
+	    av[1] = "2";
+	    set_msg_str(&parse_msgs, ac, av);
+	    ret = bu_opt_parse(&unknown, containers, &parse_msgs, ac, av, d);
+	    EXPECT_SUCCESS_INT("verbosity", verbosity, 2);
+	    break;
+	case voff+8:
+	    ac = 2;
+	    av[0] = "-v";
+	    av[1] = "4";
+	    set_msg_str(&parse_msgs, ac, av);
+	    ret = bu_opt_parse(&unknown, containers, &parse_msgs, ac, av, d);
+	    EXPECT_FAILURE("verbosity", "4 > 3");
+	    break;
+	case voff+9:
+	    ac = 2;
+	    av[0] = "--verbosity";
+	    av[1] = "2";
+	    set_msg_str(&parse_msgs, ac, av);
+	    ret = bu_opt_parse(&unknown, containers, &parse_msgs, ac, av, d);
+	    EXPECT_SUCCESS_INT("verbosity", verbosity, 2);
+	    break;
+	case voff+10:
+	    ac = 2;
+	    av[0] = "--verbosity";
+	    av[1] = "4";
+	    set_msg_str(&parse_msgs, ac, av);
+	    ret = bu_opt_parse(&unknown, containers, &parse_msgs, ac, av, d);
+	    EXPECT_FAILURE("verbosity", "4 > 3");
+	    break;
+	case voff+11:
+	    ac = 1;
+	    av[0] = "--verbosity=2";
+	    set_msg_str(&parse_msgs, ac, av);
+	    ret = bu_opt_parse(&unknown, containers, &parse_msgs, ac, av, d);
+	    EXPECT_SUCCESS_INT("verbosity", verbosity, 2);
+	    break;
+	case voff+12:
+	    ac = 1;
+	    av[0] = "--verbosity=4";
+	    set_msg_str(&parse_msgs, ac, av);
+	    ret = bu_opt_parse(&unknown, containers, &parse_msgs, ac, av, d);
+	    EXPECT_FAILURE("verbosity", "4 > 3");
+	    break;
+	case voff+13:
+	    ac = 1;
+	    av[0] = "--v";
+	    set_msg_str(&parse_msgs, ac, av);
+	    ret = bu_opt_parse(&unknown, containers, &parse_msgs, ac, av, d);
+	    EXPECT_SUCCESS_INT("verbosity", verbosity, 1);
 	    if (ret || verbosity != 1) {
 		bu_vls_printf(&parse_msgs, "\nError - expected value \"1\" and got value %d\n", verbosity);
 		val_ok = 0;
@@ -155,84 +240,27 @@ int desc_1(int test_num)
 		bu_vls_printf(&parse_msgs, "  OK\nverbosity = %d\n", verbosity);
 	    }
 	    break;
-	case 7:
-	    ac = 2;
-	    av[0] = "-v";
-	    av[1] = "2";
-	    bu_vls_printf(&parse_msgs, "Parsing arg string \"-v 2\":");
-	    ret = bu_opt_parse(&unknown, containers, &parse_msgs, ac, av, d);
-	    if (ret || verbosity != 2) {
-		bu_vls_printf(&parse_msgs, "\nError - expected value \"2\" and got value %d\n", verbosity);
-		val_ok = 0;
-	    } else {
-		bu_vls_printf(&parse_msgs, "  OK\nverbosity = %d\n", verbosity);
-	    }
-	    break;
-	case 8:
-	    ac = 2;
-	    av[0] = "-v";
-	    av[1] = "4";
-	    bu_vls_printf(&parse_msgs, "Parsing arg string \"-v 4\":");
-	    ret = bu_opt_parse(&unknown, containers, &parse_msgs, ac, av, d);
-	    if (!ret==-1) {
-		bu_vls_printf(&parse_msgs, "\nError - expected parser to fail with error and it didn't\n");
-		val_ok = 0;
-	    } else {
-		bu_vls_printf(&parse_msgs, "OK (expected failure) - verbosity failed (4 > 3)\n");
-		ret = 0;
-	    }
-	    break;
-	case 9:
-	    ac = 2;
-	    av[0] = "--verbosity";
-	    av[1] = "2";
-	    bu_vls_printf(&parse_msgs, "Parsing arg string \"--verbosity 2\":");
-	    ret = bu_opt_parse(&unknown, containers, &parse_msgs, ac, av, d);
-	    if (ret || verbosity != 2) {
-		bu_vls_printf(&parse_msgs, "\nError - expected value \"2\" and got value %d\n", verbosity);
-		val_ok = 0;
-	    } else {
-		bu_vls_printf(&parse_msgs, "  OK\nverbosity = %d\n", verbosity);
-	    }
-	    break;
-	case 10:
-	    ac = 2;
-	    av[0] = "--verbosity";
-	    av[1] = "4";
-	    bu_vls_printf(&parse_msgs, "Parsing arg string \"--verbosity 4\":");
-	    ret = bu_opt_parse(&unknown, containers, &parse_msgs, ac, av, d);
-	    if (!ret==-1) {
-		bu_vls_printf(&parse_msgs, "\nError - expected parser to fail with error and it didn't\n");
-		val_ok = 0;
-	    } else {
-		bu_vls_printf(&parse_msgs, "OK (expected failure) - verbosity failed (4 > 3)\n");
-		ret = 0;
-	    }
-	    break;
-	case 11:
+	case voff+14:
 	    ac = 1;
-	    av[0] = "--verbosity=2";
-	    bu_vls_printf(&parse_msgs, "Parsing arg string \"--verbosity=2\":");
+	    av[0] = "--verbosity";
+	    set_msg_str(&parse_msgs, ac, av);
 	    ret = bu_opt_parse(&unknown, containers, &parse_msgs, ac, av, d);
-	    if (ret || verbosity != 2) {
-		bu_vls_printf(&parse_msgs, "\nError - expected value \"2\" and got value %d\n", verbosity);
-		val_ok = 0;
-	    } else {
-		bu_vls_printf(&parse_msgs, "  OK\nverbosity = %d\n", verbosity);
-	    }
+	    EXPECT_SUCCESS_INT("verbosity", verbosity, 1);
 	    break;
-	case 12:
+	/* Help option tests */
+	case hoff:
 	    ac = 1;
-	    av[0] = "--verbosity=4";
-	    bu_vls_printf(&parse_msgs, "Parsing arg string \"--verbosity=4\":");
+	    av[0] = "-h";
+	    set_msg_str(&parse_msgs, ac, av);
 	    ret = bu_opt_parse(&unknown, containers, &parse_msgs, ac, av, d);
-	    if (!ret==-1) {
-		bu_vls_printf(&parse_msgs, "\nError - expected parser to fail with error and it didn't\n");
-		val_ok = 0;
-	    } else {
-		bu_vls_printf(&parse_msgs, "OK (expected failure) - verbosity failed (4 > 3)\n");
-		ret = 0;
-	    }
+	    EXPECT_SUCCESS_INT("print_help", print_help, 1);
+	    break;
+	case hoff + 1:
+	    ac = 1;
+	    av[0] = "-?";
+	    set_msg_str(&parse_msgs, ac, av);
+	    ret = bu_opt_parse(&unknown, containers, &parse_msgs, ac, av, d);
+	    EXPECT_SUCCESS_INT("print_help", print_help, 1);
 	    break;
 
     }
@@ -338,14 +366,9 @@ int desc_2(int test_num)
 	    ac = 2;
 	    av[0] = "--color";
 	    av[1] = "200/10/30";
-	    bu_vls_printf(&parse_msgs, "Parsing arg string \"--color 200/10/30\":");
+	    set_msg_str(&parse_msgs, ac, av);
 	    ret = bu_opt_parse(&unknown, containers, &parse_msgs, ac, av, d);
-	    if (ret || (!NEAR_EQUAL(color.buc_rgb[0], 200.0, SMALL_FASTF) || !NEAR_EQUAL(color.buc_rgb[1], 10, SMALL_FASTF) || !NEAR_EQUAL(color.buc_rgb[2], 30, SMALL_FASTF))) {
-		bu_vls_printf(&parse_msgs, "\nError - expected value \"200/10/30\" and got value %.0f/%.0f/%.0f\n", color.buc_rgb[0], color.buc_rgb[1], color.buc_rgb[2]);
-		val_ok = 0;
-	    } else {
-		bu_vls_printf(&parse_msgs, "  OK (color == %.0f/%.0f/%.0f)\n", color.buc_rgb[0], color.buc_rgb[1], color.buc_rgb[2]);
-	    }
+	    EXPECT_SUCCESS_COLOR("color", color, 200, 10, 30);
 	    break;
 	case 2:
 	    ac = 4;
@@ -353,15 +376,9 @@ int desc_2(int test_num)
 	    av[1] = "200";
 	    av[2] = "10";
 	    av[3] = "30";
-	    bu_vls_printf(&parse_msgs, "Parsing arg string \"--color 200 10 30\":");
+	    set_msg_str(&parse_msgs, ac, av);
 	    ret = bu_opt_parse(&unknown, containers, &parse_msgs, ac, av, d);
-	    if (ret || (!NEAR_EQUAL(color.buc_rgb[0], 200.0, SMALL_FASTF) || !NEAR_EQUAL(color.buc_rgb[1], 10, SMALL_FASTF) || !NEAR_EQUAL(color.buc_rgb[2], 30, SMALL_FASTF))) {
-		bu_vls_printf(&parse_msgs, "\nError - expected value \"200/10/30\" and got value %0f/%0f/%0f\n", color.buc_rgb[0], color.buc_rgb[1], color.buc_rgb[2]);
-		val_ok = 0;
-	    } else {
-		bu_vls_printf(&parse_msgs, "  OK (color == %.0f/%.0f/%.0f)\n", color.buc_rgb[0], color.buc_rgb[1], color.buc_rgb[2]);
-	    }
-
+	    EXPECT_SUCCESS_COLOR("color", color, 200, 10, 30);
 	    break;
     }
 
@@ -419,41 +436,25 @@ int desc_3(int test_num)
 	    ac = 2;
 	    av[0] = "-n";
 	    av[1] = "1";
-	    bu_vls_printf(&parse_msgs, "Parsing arg string \"-n 1\":");
+	    set_msg_str(&parse_msgs, ac, av);
 	    ret = bu_opt_parse(&unknown, containers, &parse_msgs, ac, av, d);
-	    if (ret || int_num != 1) {
-		bu_vls_printf(&parse_msgs, "\nError - expected value \"1\" and got value %d\n", int_num);
-		val_ok = 0;
-	    } else {
-		bu_vls_printf(&parse_msgs, "  OK\nint_num = %d\n", int_num);
-	    }
+	    EXPECT_SUCCESS_INT("int_num", int_num, 1);
 	    break;
 	case 2:
 	    ac = 2;
 	    av[0] = "-n";
 	    av[1] = "-1";
-	    bu_vls_printf(&parse_msgs, "Parsing arg string \"-n -1\":");
+	    set_msg_str(&parse_msgs, ac, av);
 	    ret = bu_opt_parse(&unknown, containers, &parse_msgs, ac, av, d);
-	    if (ret || int_num != -1) {
-		bu_vls_printf(&parse_msgs, "\nError - expected value \"-1\" and got value %d\n", int_num);
-		val_ok = 0;
-	    } else {
-		bu_vls_printf(&parse_msgs, "  OK\nint_num = %d\n", int_num);
-	    }
-
+	    EXPECT_SUCCESS_INT("int_num", int_num, -1);
 	    break;
 	case 3:
 	    ac = 2;
 	    av[0] = "-f";
 	    av[1] = "-3.0e-3";
-	    bu_vls_printf(&parse_msgs, "Parsing arg string \"-f -3.0e-3\":");
+	    set_msg_str(&parse_msgs, ac, av);
 	    ret = bu_opt_parse(&unknown, containers, &parse_msgs, ac, av, d);
-	    if (ret || !NEAR_EQUAL(float_num, -0.003, SMALL_FASTF)) {
-		bu_vls_printf(&parse_msgs, "\nError - expected value \"-0.003\" and got value %.3f\n", float_num);
-		val_ok = 0;
-	    } else {
-		bu_vls_printf(&parse_msgs, "  OK\nfloat_num = %0.3f\n", float_num);
-	    }
+	    EXPECT_SUCCESS_FLOAT("float_num", float_num, -0.003);
 	    break;
     }
 
