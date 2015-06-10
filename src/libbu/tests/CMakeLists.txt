@@ -460,6 +460,13 @@ add_test(NAME bu_opt_1_h_06  COMMAND tester_bu_opt 1 20)
 add_test(NAME bu_opt_1_h_07  COMMAND tester_bu_opt 1 21)
 add_test(NAME bu_opt_1_h_08  COMMAND tester_bu_opt 1 22)
 add_test(NAME bu_opt_1_h_09  COMMAND tester_bu_opt 1 23)
+add_test(NAME bu_opt_1_h_10  COMMAND tester_bu_opt 1 24)
+
+add_test(NAME bu_opt_1_b_01  COMMAND tester_bu_opt 1 25)
+add_test(NAME bu_opt_1_b_02  COMMAND tester_bu_opt 1 26)
+add_test(NAME bu_opt_1_b_03  COMMAND tester_bu_opt 1 27)
+add_test(NAME bu_opt_1_b_04  COMMAND tester_bu_opt 1 28)
+
 
 add_test(NAME bu_opt_2_color_00  COMMAND tester_bu_opt 2 0)
 add_test(NAME bu_opt_2_color_01  COMMAND tester_bu_opt 2 1)

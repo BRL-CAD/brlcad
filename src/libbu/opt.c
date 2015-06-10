@@ -580,6 +580,33 @@ bu_opt_vls(struct bu_vls *UNUSED(msg), int argc, const char **argv, void *set_va
     return 1;
 }
 
+int
+bu_opt_bool(struct bu_vls *msg, int argc, const char **argv, void *set_var)
+{
+    int *b_set = (int *)set_var;
+    int bool_val;
+
+    if (!argv || !argv[0] || strlen(argv[0]) == 0 || argc != 1 ) {
+	return 0;
+    }
+
+    bool_val = bu_str_true(argv[0]);
+
+    if (bool_val != 0 && bool_val != 1) {
+	if (msg) bu_vls_printf(msg, "Invalid input for boolean type: %s\n", argv[0]);
+	return -1;
+    }
+
+    if (b_set) (*b_set) = bool_val;
+    return 1;
+}
+
+
+
+
+
+
+
 /*
  * Local Variables:
  * mode: C

@@ -53,6 +53,7 @@ d1_verb(struct bu_vls *msg, int argc, const char **argv, void *set_v)
 
 #define voff 0
 #define hoff 15
+#define boff 25
 
 void
 set_msg_str(struct bu_vls *msg, int ac, const char **av)
@@ -147,12 +148,14 @@ int desc_1(int test_num)
 {
     static int print_help = 0;
     static int verbosity = 0;
+    static int b = -1;
 
     /* Option descriptions */
-    struct bu_opt_desc d[4] = {
-	{"h", "help",      0, 0, NULL,     (void *)&print_help, "",  help_str},
-	{"?", "",          0, 0, NULL,     (void *)&print_help, "",  help_str},
-	{"v", "verbosity", 0, 1, &d1_verb, (void *)&verbosity,  "#", "Set verbosity (range is 0 to 3)"},
+    struct bu_opt_desc d[5] = {
+	{"h", "help",      0, 0, NULL,     (void *)&print_help, "",     help_str},
+	{"?", "",          0, 0, NULL,     (void *)&print_help, "",     help_str},
+	{"v", "verbosity", 0, 1, &d1_verb, (void *)&verbosity,  "#",    "Set verbosity (range is 0 to 3)"},
+	{"b", "bool",      1, 1, &bu_opt_bool, (void *)&b,      "bool", "Set verbosity (range is 0 to 3)"},
 	BU_OPT_DESC_NULL
     };
 
@@ -356,6 +359,41 @@ int desc_1(int test_num)
 	    ret = bu_opt_parse(&unknown, containers, &parse_msgs, ac, av, d);
 	    EXPECT_FAILURE("print_help", "extra arg");
 	    break;
+	case boff:
+	    ac = 2;
+	    av[0] = "-b";
+	    av[1] = "true";
+	    set_msg_str(&parse_msgs, ac, av);
+	    ret = bu_opt_parse(&unknown, containers, &parse_msgs, ac, av, d);
+	    EXPECT_SUCCESS_INT("bool", b, 1);
+	    break;
+	case boff  + 1:
+	    ac = 2;
+	    av[0] = "-b";
+	    av[1] = "false";
+	    set_msg_str(&parse_msgs, ac, av);
+	    ret = bu_opt_parse(&unknown, containers, &parse_msgs, ac, av, d);
+	    EXPECT_SUCCESS_INT("bool", b, 0);
+	    break;
+	case boff  + 2:
+	    ac = 2;
+	    av[0] = "--bool";
+	    av[1] = "1";
+	    set_msg_str(&parse_msgs, ac, av);
+	    ret = bu_opt_parse(&unknown, containers, &parse_msgs, ac, av, d);
+	    EXPECT_SUCCESS_INT("bool", b, 1);
+	    break;
+	case boff  + 3:
+	    ac = 2;
+	    av[0] = "--bool";
+	    av[1] = "0";
+	    set_msg_str(&parse_msgs, ac, av);
+	    ret = bu_opt_parse(&unknown, containers, &parse_msgs, ac, av, d);
+	    EXPECT_SUCCESS_INT("bool", b, 0);
+	    break;
+	default:
+	    bu_vls_printf(&parse_msgs, "unknown test: %d\n", test_num);
+	    return -1;
     }
 
     if (ret > 0) {
