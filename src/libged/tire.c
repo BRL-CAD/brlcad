@@ -31,7 +31,6 @@
 #include <string.h>
 #include <math.h>
 
-#include "bu/getopt.h"
 #include "bu/opt.h"
 #include "bu/units.h"
 #include "vmath.h"
@@ -2011,7 +2010,7 @@ ged_tire(struct ged *gedp, int argc, const char *argv[])
     bu_vls_free(&name);
     bu_vls_free(&dimen);
     bu_free((char *)unknown, "free unknown args array");
-	
+
     return GED_OK;
 }
 
