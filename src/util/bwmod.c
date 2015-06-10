@@ -81,15 +81,21 @@ int char_arith = 0;
 int
 checkpow(double x , double exponent)
 {
-    double diff;
-    if (x >= 0.0) return 1;
-    diff = exponent - (double)((int)exponent);
-    if ( diff < 0.0 || diff > 0.0 ) {
-	fprintf(stderr,"bwmod: negative number (%f) to non-integer power (%f)\n",
-	x,exponent);
-        bu_exit (-1, NULL);
+    if (x > 0.0) return 1;
+    if (x < 0.0) {
+	double diff;
+	diff = exponent - (double)((int)exponent);
+	if ( diff < 0.0 || diff > 0.0 ) {
+	    fprintf(stderr,"bwmod: negative number (%f) to non-integer power (%f)\n",
+	    x,exponent);
+	    bu_exit (-1, NULL);
+	}
+	return 1;
     }
-    return 1;
+/* We have x == 0.0, and we accept that 0 to 0 power is 1. */
+    if (exponent >= 0.0) return 1;
+    fprintf(stderr,"bwmod: zero to negative power (%f)\n",exponent);
+    bu_exit (-1, NULL);
 }
 
 int
