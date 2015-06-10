@@ -72,11 +72,11 @@ main(int argc, char **argv)
 {
     int i, n;
     double d;
-    long num_pixels;
     unsigned char *bp;
-    long sum, partial_sum;
-    int max, min, mode, median;
-    double mean, var, skew;
+    long num_pixels = 0L ;
+    long sum = 0L , partial_sum = 0L ;
+    int max = -1, min = 256 , mode = 0 , median = 0 ;
+    double mean, var = 0.0 , skew = 0.0 ;
     FILE *fp;
 
     if (BU_STR_EQUAL(argv[1], "-h") || BU_STR_EQUAL(argv[1], "-?"))
@@ -105,9 +105,8 @@ main(int argc, char **argv)
     }
 
     /*
-     * Build the histogram.
+     * Build the histogram. (num_pixels initialized to 0)
      */
-    num_pixels = 0;
     while ((n = fread(buf, sizeof(*buf), IBUFSIZE, fp)) > 0) {
 	num_pixels += n;
 	bp = &buf[0];
@@ -116,18 +115,19 @@ main(int argc, char **argv)
     }
 
     /*
-     * Find sum, min, max, mode.
+     * Find sum, min, max, mode. (sum and mode initialized to 0;
+     * min initialized to 256; max initialized to -1)
      */
-    sum = 0;
-    min = 256;
-    max = -1;
-    mode = 0;
     for (i = 0; i < 256; i++) {
-	sum += i * bin[i];
-	if (i < min && bin[i] != 0)
-	    min = i;
-	if (i > max && bin[i] != 0)
-	    max = i;
+	if (bin[i] != 0) {
+	    sum += i * bin[i];
+	    /* no "else" between the next 2 statements,
+	     * because both min and max are changed the 1st
+	     * time this block runs during the present run.
+	     */
+	    if (i < min) min = i;
+	    if (i > max) max = i;
+	}
 	if (bin[i] > bin[mode]) {
 	    mode = i;
 	}
@@ -136,11 +136,9 @@ main(int argc, char **argv)
 
     /*
      * Now do a second pass to compute median,
-     * variance and skew.
+     * variance and skew. (median and partial_sum initialized to 0;
+     * var and skew initialized to 0.0)
      */
-    partial_sum = 0;
-    median = 0;
-    var = skew = 0.0;
     for (i = 0; i < 256; i++) {
 	if (partial_sum < sum/2.0) {
 	    partial_sum += i * bin[i];

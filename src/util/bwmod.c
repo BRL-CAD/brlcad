@@ -28,6 +28,10 @@
  * Note that this works on PIX files also but there is no distinction
  * made between colors.
  *
+ * WARNING, added 8 June 2015: SHIFT is done the way it is because I
+ * did not see << and >> working properly when attempted with negative
+ * arguments.
+ *
  */
 
 #include "common.h"
@@ -50,7 +54,7 @@ char *file_name;
 
 char usage[] = "\
 Usage: bwmod [-c] {-a add -s sub -m mult -d div -A -e exp -r root\n\
-		   -S shift -M and -O or -X xor -t trunc} [file.bw] > file2.bw\n";
+		   -S shift -M and -O or -X xor -R -t} [file.bw] > file2.bw\n";
 
 #define ADD	1
 #define MULT	2
@@ -60,7 +64,9 @@ Usage: bwmod [-c] {-a add -s sub -m mult -d div -A -e exp -r root\n\
 #define AND	6
 #define OR	7
 #define XOR	8
-#define TRUNC	9
+#define ROUND	9 /* this was TRUNC, which is discontinued because
+                   * truncation is handled internally as "-S 0"
+                   */
 #define BUFLEN	(8192*2)	/* usually 2 pages of memory, 16KB */
 
 int numop = 0;		/* number of operations */
@@ -73,12 +79,32 @@ int mapbuf[MAPBUFLEN];		/* translation buffer/lookup table */
 int char_arith = 0;
 
 int
+checkpow(double x , double exponent)
+{
+    if (x > 0.0) return 1;
+    if (x < 0.0) {
+	double diff;
+	diff = exponent - (double)((int)exponent);
+	if ( diff < 0.0 || diff > 0.0 ) {
+	    fprintf(stderr,"bwmod: negative number (%f) to non-integer power (%f)\n",
+	    x,exponent);
+	    bu_exit (-1, NULL);
+	}
+	return 1;
+    }
+/* We have x == 0.0, and we accept that 0 to 0 power is 1. */
+    if (exponent >= 0.0) return 1;
+    fprintf(stderr,"bwmod: zero to negative power (%f)\n",exponent);
+    bu_exit (-1, NULL);
+}
+
+int
 get_args(int argc, char **argv)
 {
-    int c = 0;
+    int c;
     double d = 0.0;
 
-    while ((c = bu_getopt(argc, argv, "a:s:m:d:Ae:r:cS:O:M:X:t:h?")) != -1) {
+    while ((c = bu_getopt(argc, argv, "a:s:m:d:Ae:r:cS:O:M:X:Rth?")) != -1) {
 	switch (c) {
 	    case 'a':
 		op[ numop ] = ADD;
@@ -138,9 +164,15 @@ get_args(int argc, char **argv)
 		op[ numop ] = XOR;
 		val[ numop++ ] = atof(bu_optarg);
 		break;
-	    case 't':
-		op[ numop ] = TRUNC;
-		val[ numop++ ] = atof(bu_optarg);
+	    case 'R':
+		op[ numop ] = ROUND;
+/* See above remark for case 'A' (don't care about val[numop] but need numop++).
+ */
+/*		val[ numop++ ] = 0.0; */
+		numop++;
+	    case 't': /* Notice that -S truncates, so we internally use -S 0 */
+		op[ numop ] = SHIFT;
+		val[ numop++ ] = 0.0;
 		break;
 	    default:		/* '?' 'h' */
 		return 0;
@@ -174,7 +206,7 @@ get_args(int argc, char **argv)
 
 void mk_trans_tbl(void)
 {
-    int j, i, tmp;
+    int j, i, tmp, intval;
     double d;
 
     /* create translation map */
@@ -184,13 +216,26 @@ void mk_trans_tbl(void)
 	    switch (op[i]) {
 		case ADD : d += val[i]; break;
 		case MULT: d *= val[i]; break;
-		case POW : d = pow(d, val[i]); break;
+		case POW : checkpow(d,val[i]);
+		     d = pow(d, val[i]); break;
 		case ABS : if (d < 0.0) d = - d; break;
-		case SHIFT: tmp=d; tmp=tmp<<(int)val[i];d=tmp;break;
+		case SHIFT: tmp=d; intval=(int)val[i];
+			if (intval > 0 )
+			  tmp=tmp << intval;
+			else if (intval < 0 )
+			  tmp=tmp >> (-intval);
+			d=tmp;
+			break;
 		case OR  : tmp=d; tmp |= (int)val[i]; d=tmp;break;
 		case AND : tmp=d; tmp &= (int)val[i]; d=tmp;break;
-		case XOR : tmp=d; tmp ^= (int)val[i]; d= tmp; break;
-		    /* case TRUNC: tmp=((int)d/(int)val[i])*(int)val[i]; break; */
+		case XOR : tmp=d; tmp ^= (int)val[i]; d=tmp; break;
+	     /* case TRUNC: tmp=((int)d/(int)val[i])*(int)val[i]; d=tmp; break; */
+		case ROUND:
+			if (d > 0)
+			  d = (int)(d+0.5);
+			else if (d < 0)
+			  d = (int)(d-0.5);
+			break;
 		default  : fprintf(stderr, "%s: error in op\n", progname);
 		    bu_exit (-1, NULL);
 		    break;
@@ -206,7 +251,7 @@ void mk_trans_tbl(void)
 }
 void mk_char_trans_tbl(void)
 {
-    int j, i;
+    int j, i, intval;
     signed char d;
 
     /* create translation map */
@@ -216,15 +261,23 @@ void mk_char_trans_tbl(void)
 	    switch (op[i]) {
 		case ADD : d += val[i]; break;
 		case MULT: d *= val[i]; break;
-		case POW : d = pow((double)d, val[i]); break;
+		case POW : checkpow((double)d,val[i]);
+		    d = pow((double)d, val[i]); break;
 		case ABS : if (d < 0.0) d = - d; break;
-		case SHIFT: d=d<<(int)val[i]; break;
+		case SHIFT: intval = (int)val[i];
+			if (intval > 0 )
+			  d=d << intval;
+			else if (intval < 0 )
+			  d=d >> (-intval);
+			break;
 		case AND : d &= (int)val[i]; break;
 		case OR  : d |= (int)val[i]; break;
 		case XOR : d ^= (int)val[i]; break;
-		case TRUNC: d /= (int)val[i];d *= (int)val[i]; break;
 		default  : fprintf(stderr, "%s: error in op\n", progname);
 		    bu_exit (-1, NULL);
+	     /* TRUNC and ROUND do nothing because we already have integer value */
+	     /* case TRUNC: */
+		case ROUND:
 		    break;
 	    }
 	}

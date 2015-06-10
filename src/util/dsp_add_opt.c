@@ -40,15 +40,6 @@
 #include "bn.h"
 
 
-/* declarations to support use of bu_getopt() system call */
-static const char usage[] = "Usage: dsp_add [opts] dsp_1 dsp_2 > dsp_3\n";
-
-enum dsp_add_enums {DSP_HELP};
-struct bu_opt_desc dsp_opt_desc[3] = {
-    {DSP_HELP, 0, 0, "h", "help", NULL, "-h", "--help", "Print help and exit"},
-    {DSP_HELP, 0, 0, "?", "",     NULL, "-?", "", ""},
-    BU_OPT_DESC_NULL
-};
 
 /* purpose: combine two dsp files
  *
@@ -72,45 +63,6 @@ struct bu_opt_desc dsp_opt_desc[3] = {
 #define ADD_STYLE_FLOAT 1
 
 static int style = ADD_STYLE_INT;
-
-/*
- * tell user how to invoke this program, then exit
- */
-static void
-print_usage()
-{
-    const char *help = bu_opt_describe(dsp_opt_desc, NULL);
-    bu_log(usage);
-    bu_log("Options:\n%s\n", help);
-    bu_free((char *)help, "help str");
-    bu_exit (1, NULL);
-}
-
-
-/*
- * Parse command line flags
- */
-bu_opt_data_t *
-parse_args(int ac, char *av[])
-{
-    size_t i = 0;
-    bu_opt_data_t *results;
-    (void)bu_opt_parse(&results, NULL, ac, (const char **)av, dsp_opt_desc);
-    bu_opt_compact(results);
-
-    for (i = 0; i < BU_PTBL_LEN(results); i++) {
-	struct bu_opt_data *d = (struct bu_opt_data *)BU_PTBL_GET(results, i);
-	if (!d->valid || !d->name || !d->desc) continue;
-	switch(d->desc->shortopt[0]) {
-	    default:
-		bu_opt_data_free(results);
-		print_usage();
-	}
-    }
-
-    return results;
-}
-
 
 static void
 swap_bytes(unsigned short *buf, unsigned long count)
@@ -186,14 +138,11 @@ add_int(unsigned short *buf1, unsigned short *buf2, unsigned long count)
 
 
 /*
- * Call parse_args to handle command line arguments first, then
- * process input.
+ * Handle command line arguments first, then process input.
  */
 int
 main(int ac, char *av[])
 {
-    struct bu_opt_data *non_opts;
-    bu_opt_data_t *results;
     FILE *in1, *in2;
     unsigned short *buf1, *buf2;
     size_t count;
@@ -202,36 +151,51 @@ main(int ac, char *av[])
     struct stat sb;
     size_t ret;
     const char *f1, *f2;
+    static int print_help = 0;
+    int non_opt_argc = 0;
+    const char **non_opts = (const char **)bu_calloc(4, sizeof(char *), "extra args");
 
-    if (ac < 2)
-	print_usage();
+    static const char usage[] = "Usage: dsp_add [opts] dsp_1 dsp_2 > dsp_3\n";
+    struct bu_opt_desc dsp_opt_desc[3] = {
+	{"h", "help", 0, 0, NULL, (void *)&print_help, "", "Print help and exit"},
+	{"?", "",     0, 0, NULL, (void *)&print_help, "", ""},
+	BU_OPT_DESC_NULL
+    };
+
+    if (ac < 2) print_help = 1;
 
     if (isatty(fileno(stdout))) {
 	bu_log("Error: Must redirect standard output\n");
-	print_usage();
+	print_help = 1;
     }
 
-    results = parse_args(ac, av);
-    non_opts = bu_opt_find(NULL, results);
+    if (!print_help)
+	non_opt_argc = bu_opt_parse(&non_opts, 4, NULL, ac, (const char **)av, dsp_opt_desc);
 
-    if (!non_opts->args || BU_PTBL_LEN(non_opts->args) < 2) {
-	bu_log("Error: No files specified\n");
-	print_usage();
+    if (print_help || non_opt_argc < 2) {
+	const char *help = bu_opt_describe(dsp_opt_desc, NULL);
+	bu_log(usage);
+	bu_log("Options:\n%s\n", help);
+	bu_free((char *)help, "help str");
+	bu_free(non_opts, "free non_opts array");
+	bu_exit (1, NULL);
     }
 
     /* Open the files */
-    f1 = bu_opt_data_arg(non_opts, 0);
-    f2 = bu_opt_data_arg(non_opts, 1);
+    f1 = non_opts[0];
+    f2 = non_opts[1];
 
     in1 = fopen(f1, "r");
     if (!in1) {
 	perror(f1);
+	bu_free(non_opts, "free non_opts array");
 	return -1;
     }
 
     if (fstat(fileno(in1), &sb)) {
 	perror(f1);
 	fclose(in1);
+	bu_free(non_opts, "free non_opts array");
 	return -1;
     }
 
@@ -242,6 +206,7 @@ main(int ac, char *av[])
     if (!in2) {
 	perror(f2);
 	fclose(in1);
+	bu_free(non_opts, "free non_opts array");
 	return -1;
     }
 
@@ -249,12 +214,14 @@ main(int ac, char *av[])
 	perror(f2);
 	fclose(in1);
 	fclose(in2);
+	bu_free(non_opts, "free non_opts array");
 	return -1;
     }
 
     if ((size_t)sb.st_size != count) {
 	fclose(in1);
 	fclose(in2);
+	bu_free(non_opts, "free non_opts array");
 	bu_exit(EXIT_FAILURE, "**** ERROR **** file size mis-match\n");
     }
 
@@ -299,10 +266,11 @@ main(int ac, char *av[])
 
     if (fwrite(buf1, sizeof(short), count, stdout) != count) {
 	bu_log("Error writing data\n");
+	bu_free(non_opts, "free non_opts array");
 	return -1;
     }
 
-    bu_opt_data_free(results);
+    bu_free(non_opts, "free non_opts array");
 
     return 0;
 }

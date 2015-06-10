@@ -44,10 +44,10 @@ icv_rect(icv_image_t *img, size_t xorig, size_t yorig, size_t xnum, size_t ynum)
 	bu_exit(1, "icv_rect : ERROR: Vertical Cut Size\n");
 
     if (xorig+xnum > img->width)
-	bu_exit(1, "icv_rect : Cut not possible, Input parameters exceeds the width\n");
+	bu_exit(1, "icv_rect : Cut not possible; input parameters exceed the width.\n");
 
     if (yorig+ynum > img->height)
-	bu_exit(1, "icv_rect : Cut not possible, Input parameters exceeds the height\n");
+	bu_exit(1, "icv_rect : Cut not possible; input parameters exceed the height.\n");
 
     /* initialization of variables to insure cropping and copying */
     widthstep_in = img->width*img->channels;

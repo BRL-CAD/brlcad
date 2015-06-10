@@ -1,0 +1,66 @@
+/*                 C S G _ P A R S E R . L E M O N
+ * BRL-CAD
+ *
+ * Copyright (c) 2013 United States Government as represented by
+ * the U.S. Army Research Laboratory.
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public License
+ * version 2.1 as published by the Free Software Foundation.
+ *
+ * This library is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this file; see the file named COPYING for more
+ * information.
+ */
+
+%include {
+#include <assert.h>
+#include <string.h>
+#include "csg.h"
+
+#if defined(__GNUC__) && (__GNUC__ == 4 && __GNUC_MINOR__ >= 3) && !defined(__clang__)
+#  pragma GCC diagnostic ignored "-Wunused-variable"
+#  pragma GCC diagnostic ignored "-Wunused-parameter"
+
+#endif
+#if defined(__clang__)
+#  pragma clang diagnostic ignored "-Wunused-variable"
+#  pragma clang diagnostic ignored "-Wunused-parameter"
+#endif
+
+}
+
+%token_type {token_t *}
+%extra_argument {app_data_t *appData}
+
+/* priorities , not sure if this is how is intended to be used */
+
+%left GROUP_BEGIN.
+%left GROUP_CONTENT.
+%left GROUP_END.
+
+
+/* I believe here I get the compiling error */
+start_symbol ::= block.
+
+//source ::= /* empty */.
+
+/* Initial, simple grammar, just for testing  */
+block ::= code.
+code ::= group_begin.
+{
+  fprintf(appData->outfile, "we found group() {\n");
+}
+group_begin ::= GROUP_BEGIN group_content.
+{
+  fprintf(appData->outfile, "in group(), we found %s ",bu_vls_addr(&appData->description));
+}
+group_content ::= GROUP_END.
+{
+  fprintf(appData->outfile, "we found the end of group()");
+}

@@ -38,7 +38,7 @@
 #define MAX_BYTES (128*1024)
 
 static const char Usage[] =
-"Usage: gencolor [-r#] [-p -b -L -H]\n\
+"Usage: gencolor [-r#] [-p -b]\n\
                 [-s|S squaresize] [-w|W width] [-n|N height]\n\
                 [val1 .. valN] > output_file\n";
 
