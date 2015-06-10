@@ -47,26 +47,33 @@ static const fastf_t INCHES_PER_MM = 1.0 / 25.4;
 template <typename T> HIDDEN inline void
 autofreeptr_wrap_bu_free(T *ptr)
 {
-    bu_free(ptr, "AutoFreePtr");
+    bu_free(ptr, "AutoPtr");
 }
 
 
 template <typename T, void free_fn(T *) = autofreeptr_wrap_bu_free>
-struct AutoFreePtr {
-    AutoFreePtr(T *vptr) : ptr(vptr) {}
+struct AutoPtr {
+    AutoPtr(T *vptr = NULL) : ptr(vptr) {}
 
-    ~AutoFreePtr()
+    ~AutoPtr()
     {
 	if (ptr) free_fn(ptr);
     }
 
+    void free()
+    {
+	if (ptr) free_fn(ptr);
 
-    T * const ptr;
+	ptr = NULL;
+    }
+
+
+    T *ptr;
 
 
 private:
-    AutoFreePtr(const AutoFreePtr &source);
-    AutoFreePtr &operator=(const AutoFreePtr &source);
+    AutoPtr(const AutoPtr &source);
+    AutoPtr &operator=(const AutoPtr &source);
 };
 
 
@@ -1493,19 +1500,19 @@ find_compsplt(Section &section, const db_i &db, const db_full_path &path,
     // find the other half
     const directory *other_half_dir = NULL;
     {
-	directory **region_dirs;
-	const std::size_t num_regions = db_ls(&db, DB_LS_REGION, NULL, &region_dirs);
-	AutoFreePtr<directory *> autofree_region_dirst(region_dirs);
+	AutoPtr<directory *> region_dirs;
+	const std::size_t num_regions = db_ls(&db, DB_LS_REGION, NULL,
+					      &region_dirs.ptr);
 
 	for (std::size_t i = 0; i < num_regions; ++i) {
-	    if (region_dirs[i] == parent_region_dir)
+	    if (region_dirs.ptr[i] == parent_region_dir)
 		continue;
 
-	    const int current_id = identify_compsplt(db, *region_dirs[i],
+	    const int current_id = identify_compsplt(db, *region_dirs.ptr[i],
 				   *DB_FULL_PATH_CUR_DIR(&path));
 
 	    if (current_id && current_id != this_id) {
-		other_half_dir = region_dirs[i];
+		other_half_dir = region_dirs.ptr[i];
 		break;
 	    }
 	}
@@ -1523,35 +1530,34 @@ find_compsplt(Section &section, const db_i &db, const db_full_path &path,
 }
 
 
-HIDDEN void
+// returns set of members to ignore
+HIDDEN std::set<const directory *>
 find_walls(const db_i &db, const directory &region_dir)
 {
     RT_CK_DBI(&db);
     RT_CK_DIR(&region_dir);
 
-    std::set<const directory *> unioned, subtracted;
+    std::set<const directory *> results;
+    std::set<const directory *> subtracted;
     {
 	DBInternal region_db_internal(db, region_dir);
 	const rt_comb_internal &region = *static_cast<rt_comb_internal *>
 					 (region_db_internal.get().idb_ptr);
 	RT_CK_COMB(&region);
 
-	get_unioned(db, region.tree, unioned);
-	get_intersected(db, region.tree, unioned);
 	get_subtracted(db, region.tree, subtracted);
 
-	if (unioned.empty() || subtracted.empty())
-	    return;
+	if (subtracted.empty())
+	    return results;
     }
 
-    std::vector<const directory *> other_regions;
     {
-	directory **region_dirs;
-	const std::size_t num_regions = db_ls(&db, DB_LS_REGION, NULL, &region_dirs);
-	AutoFreePtr<directory *> autofree_region_dirst(region_dirs);
+	AutoPtr<directory *> region_dirs;
+	const std::size_t num_regions = db_ls(&db, DB_LS_REGION, NULL,
+					      &region_dirs.ptr);
 
 	for (std::size_t i = 0; i < num_regions; ++i) {
-	    DBInternal region_db_internal(db, *region_dirs[i]);
+	    DBInternal region_db_internal(db, *region_dirs.ptr[i]);
 	    const rt_comb_internal &region = *static_cast<rt_comb_internal *>
 					     (region_db_internal.get().idb_ptr);
 	    RT_CK_COMB(&region);
@@ -1562,10 +1568,14 @@ find_walls(const db_i &db, const directory &region_dir)
 
 	    if (!leaves.empty()
 		&& std::includes(subtracted.begin(), subtracted.end(), leaves.begin(),
-				 leaves.end()))
-		other_regions.push_back(region_dirs[i]);
+				 leaves.end())) {
+		std::copy(leaves.begin(), leaves.end(), std::inserter(results,
+			  results.begin()));
+	    }
 	}
     }
+
+    return results;
 }
 
 
@@ -1580,6 +1590,7 @@ struct FastgenConversion {
 
     void create_section(const db_full_path &path);
     Section &get_section(const db_full_path &path);
+    bool member_ignored(const db_full_path &path, const directory &dir) const;
 
 
 private:
@@ -1587,6 +1598,7 @@ private:
     FastgenConversion &operator=(const FastgenConversion &source);
 
     std::map<const directory *, Section *> m_sections;
+    std::map<const directory *, std::set<const directory *> > m_ignored_members;
 };
 
 
@@ -1596,7 +1608,8 @@ FastgenConversion::FastgenConversion(const std::string &path, const db_i &db,
     m_tol(tol),
     m_recorded_cutouts(),
     m_writer(path),
-    m_sections()
+    m_sections(),
+    m_ignored_members()
 {
     RT_CK_DBI(&m_db);
     BN_CK_TOL(&m_tol);
@@ -1623,16 +1636,24 @@ FastgenConversion::~FastgenConversion()
 void
 FastgenConversion::create_section(const db_full_path &path)
 {
+    RT_CK_FULL_PATH(&path);
+
+    const directory *region_dir = get_region_dir(m_db, path);
+
+    if (!region_dir)
+	throw std::runtime_error("toplevel");
+
     std::pair<std::map<const directory *, Section *>::iterator, bool> found =
-	m_sections.insert(std::make_pair(get_region_dir(m_db, path),
-					 static_cast<Section *>(NULL)));
+	m_sections.insert(std::make_pair(region_dir, static_cast<Section *>(NULL)));
 
     if (!found.second)
 	throw std::logic_error("Section already created");
 
-    const std::string name = AutoFreePtr<char>(db_path_to_string(&path)).ptr;
+    const std::string name = AutoPtr<char>(db_path_to_string(&path)).ptr;
     found.first->second = new Section(name, true);
-    return;
+
+    m_ignored_members.insert(std::make_pair(region_dir, find_walls(m_db,
+					    *region_dir)));
 }
 
 
@@ -1640,7 +1661,23 @@ Section &
 FastgenConversion::get_section(const db_full_path &path)
 {
     RT_CK_FULL_PATH(&path);
+
     return *m_sections.at(get_region_dir(m_db, path));
+}
+
+
+bool
+FastgenConversion::member_ignored(const db_full_path &path,
+				  const directory &dir) const
+{
+    RT_CK_FULL_PATH(&path);
+
+    const directory *region_dir = get_region_dir(m_db, path);
+
+    if (!region_dir)
+	return false; // toplevel
+
+    return m_ignored_members.at(region_dir).count(&dir);
 }
 
 
@@ -1751,7 +1788,7 @@ write_nmg_region(nmgregion *nmg_region, const db_full_path *path,
     RT_CK_FULL_PATH(path);
 
     FastgenConversion &data = *static_cast<FastgenConversion *>(client_data);
-    const std::string name = AutoFreePtr<char>(db_path_to_string(path)).ptr;
+    const std::string name = AutoPtr<char>(db_path_to_string(path)).ptr;
     Section &section = data.get_section(*path);
     shell *vshell;
 
@@ -1790,7 +1827,6 @@ convert_region_start(db_tree_state *tree_state, const db_full_path *path,
 
     FastgenConversion &data = *static_cast<FastgenConversion *>(client_data);
     data.create_section(*path);
-    find_walls(data.m_db, *DB_FULL_PATH_CUR_DIR(path));
 
     return 1;
 }
@@ -1798,17 +1834,19 @@ convert_region_start(db_tree_state *tree_state, const db_full_path *path,
 
 HIDDEN tree *
 convert_leaf(db_tree_state *tree_state, const db_full_path *path,
-	     rt_db_internal * internal, void *client_data)
+	     rt_db_internal *internal, void *client_data)
 {
     RT_CK_DBTS(tree_state);
     RT_CK_FULL_PATH(path);
     RT_CK_DB_INTERNAL(internal);
 
     FastgenConversion &data = *static_cast<FastgenConversion *>(client_data);
-    const std::string name = AutoFreePtr<char>(db_path_to_string(path)).ptr;
+    const std::string name = AutoPtr<char>(db_path_to_string(path)).ptr;
     bool converted = false;
 
-    if (internal->idb_major_type == DB5_MAJORTYPE_BRLCAD)
+    if (data.member_ignored(*path, get_parent_dir(*path)))
+	converted = true;
+    else
 	try {
 	    converted = convert_primitive(data, *path, *internal);
 	} catch (const std::runtime_error &e) {
@@ -1849,7 +1887,7 @@ convert_region_end(db_tree_state *tree_state, const db_full_path *path,
 
 HIDDEN int
 gcv_fastgen4_write(const char *path, struct db_i *dbip,
-		   const struct gcv_opts * UNUSED(options))
+		   const struct gcv_opts *UNUSED(options))
 {
     RT_CK_DBI(dbip);
 
@@ -1864,10 +1902,11 @@ gcv_fastgen4_write(const char *path, struct db_i *dbip,
     initial_tree_state.ts_m = &vmodel;
 
     db_update_nref(dbip, &rt_uniresource);
-    directory **results;
-    const std::size_t num_objects = db_ls(dbip, DB_LS_TOPS, NULL, &results);
-    AutoFreePtr<char *> object_names(db_dpv_to_argv(results));
-    bu_free(results, "tops");
+    AutoPtr<directory *> toplevel_dirs;
+    const std::size_t num_objects = db_ls(dbip, DB_LS_TOPS, NULL,
+					  &toplevel_dirs.ptr);
+    AutoPtr<char *> object_names(db_dpv_to_argv(toplevel_dirs.ptr));
+    toplevel_dirs.free();
 
     vmodel = nmg_mm();
     db_walk_tree(dbip, static_cast<int>(num_objects),
