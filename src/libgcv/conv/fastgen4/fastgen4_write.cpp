@@ -472,7 +472,7 @@ FastgenWriter::write_compsplt(const SectionID &id, fastf_t z_coordinate)
     Record record(*this);
     record << "COMPSPLT" << id.first << id.second;
     record << result.first << result.second;
-    record << z_coordinate;
+    record << z_coordinate * INCHES_PER_MM;
 
     return result;
 }
@@ -608,6 +608,8 @@ public:
 
     bool empty() const;
     void set_color(const Color &value);
+    void set_compsplt(fastf_t z_coordinate);
+    void disable();
 
     void write(FastgenWriter &writer) const;
 
@@ -639,7 +641,10 @@ private:
     const std::string m_name;
     const bool m_volume_mode;
     const std::size_t m_material_id;
+
     std::pair<bool, Color> m_color;
+    std::pair<bool, fastf_t> m_compsplt;
+    bool m_enabled;
 
     GridManager m_grids;
     StringBuffer m_elements;
@@ -651,7 +656,9 @@ Section::Section(const std::string &name, bool volume_mode) :
     m_name(name),
     m_volume_mode(volume_mode),
     m_material_id(1),
-    m_color(std::make_pair(false, Color())),
+    m_color(false, Color()),
+    m_compsplt(false, 0.0),
+    m_enabled(true),
     m_grids(),
     m_elements(),
     m_next_element_id(1)
@@ -674,9 +681,35 @@ Section::set_color(const Color &value)
 
 
 void
+Section::set_compsplt(fastf_t z_coordinate)
+{
+    m_compsplt.first = true;
+    m_compsplt.second = z_coordinate;
+}
+
+
+inline void
+Section::disable()
+{
+    m_enabled = false;
+}
+
+
+void
 Section::write(FastgenWriter &writer) const
 {
+    if (!m_enabled)
+	return;
+
     const FastgenWriter::SectionID id = writer.take_next_section_id();
+
+    if (m_compsplt.first) {
+	const FastgenWriter::SectionID split_id = writer.write_compsplt(id,
+		m_compsplt.second);
+
+	if (m_color.first)
+	    writer.write_section_color(split_id, m_color.second);
+    }
 
     {
 	std::string new_name = m_name;
@@ -1385,26 +1418,32 @@ get_subtracted(const db_i &db, const tree *tree,
 }
 
 
-// Identifies which half of a COMPSPLT a region with the given tree represents.
+// Identifies which half of a COMPSPLT a given region represents.
 // Returns:
 //   0 - not a COMPSPLT
 //   1 - the intersected half
 //   2 - the subtracted half
 HIDDEN int
-identify_compsplt(const db_i &db, const tree *tree, const directory &half_dir)
+identify_compsplt(const db_i &db, const directory &parent_region_dir,
+		  const directory &half_dir)
 {
     RT_CK_DBI(&db);
-    RT_CK_TREE(tree);
+    RT_CK_DIR(&parent_region_dir);
     RT_CK_DIR(&half_dir);
 
+    DBInternal parent_region_internal(db, parent_region_dir);
+    const rt_comb_internal &parent_region = *static_cast<rt_comb_internal *>
+					    (parent_region_internal.get().idb_ptr);
+    RT_CK_COMB(&parent_region);
+
     std::set<const directory *> leaves;
-    get_intersected(db, tree, leaves);
+    get_intersected(db, parent_region.tree, leaves);
 
     if (leaves.count(&half_dir))
 	return 1;
 
     leaves.clear();
-    get_subtracted(db, tree, leaves);
+    get_subtracted(db, parent_region.tree, leaves);
 
     if (leaves.count(&half_dir))
 	return 2;
@@ -1431,48 +1470,43 @@ find_compsplt(Section &section, const db_i &db, const db_full_path &path,
     if (!parent_region_dir)
 	return false;
 
-    DBInternal parent_region_internal;
-    parent_region_internal.load(db, *parent_region_dir);
-    const rt_comb_internal &parent_region = *static_cast<rt_comb_internal *>
-					    (parent_region_internal.get().idb_ptr);
-    RT_CK_COMB(&parent_region);
+    const int this_id = identify_compsplt(db, *parent_region_dir,
+					  *DB_FULL_PATH_CUR_DIR(&path));
 
-    const int this_half = identify_compsplt(db, parent_region.tree,
-					    *DB_FULL_PATH_CUR_DIR(&path));
-
-    if (!this_half)
+    if (!this_id)
 	return false;
 
     // find the other half
-    directory **region_dirs;
-    const std::size_t num_regions = db_ls(&db, DB_LS_REGION, NULL, &region_dirs);
-    AutoFreePtr<directory *> autofree_region_dirst(region_dirs);
+    const directory *other_half_dir = NULL;
+    {
+	directory **region_dirs;
+	const std::size_t num_regions = db_ls(&db, DB_LS_REGION, NULL, &region_dirs);
+	AutoFreePtr<directory *> autofree_region_dirst(region_dirs);
 
-    const directory *other_side = NULL;
+	for (std::size_t i = 0; i < num_regions; ++i) {
+	    if (region_dirs[i] == parent_region_dir)
+		continue;
 
-    for (std::size_t i = 0; i < num_regions; ++i) {
-	if (region_dirs[i] == parent_region_dir)
-	    continue;
+	    const int current_id = identify_compsplt(db, *region_dirs[i],
+				   *DB_FULL_PATH_CUR_DIR(&path));
 
-	DBInternal region_internal(db, *region_dirs[i]);
-	const rt_comb_internal &region = *static_cast<rt_comb_internal *>
-					 (region_internal.get().idb_ptr);
-	RT_CK_COMB(&region);
-
-	const int current_half = identify_compsplt(db, region.tree,
-				 *DB_FULL_PATH_CUR_DIR(&path));
-
-	if (current_half && current_half != this_half) {
-	    other_side = region_dirs[i];
-	    break;
+	    if (current_id && current_id != this_id) {
+		other_half_dir = region_dirs[i];
+		break;
+	    }
 	}
     }
 
-    if (!other_side)
+    if (!other_half_dir)
 	return false;
 
+    if (this_id == 1)
+	section.disable();
+    else
+	section.set_compsplt(half.eqn[3]);
+
     // TODO
-    return false;
+    return true;
 }
 
 
@@ -1497,8 +1531,8 @@ private:
 };
 
 
-FastgenConversion::FastgenConversion(const std::string &path, const db_i &db,
-				     const bn_tol &tol) :
+FastgenConversion::FastgenConversion(const std::string & path, const db_i & db,
+				     const bn_tol & tol) :
     m_db(db),
     m_tol(tol),
     m_recorded_cutouts(),
@@ -1519,14 +1553,16 @@ FastgenConversion::~FastgenConversion()
 {
     for (std::map<const directory *, Section *>::iterator it = m_sections.begin();
 	 it != m_sections.end(); ++it) {
-	it->second->write(m_writer);
+	if (!it->second->empty())
+	    it->second->write(m_writer);
+
 	delete it->second;
     }
 }
 
 
 void
-FastgenConversion::create_section(const db_full_path &path)
+FastgenConversion::create_section(const db_full_path & path)
 {
     std::pair<std::map<const directory *, Section *>::iterator, bool> found =
 	m_sections.insert(std::make_pair(get_region_dir(m_db, path),
@@ -1542,7 +1578,7 @@ FastgenConversion::create_section(const db_full_path &path)
 
 
 Section &
-FastgenConversion::get_section(const db_full_path &path)
+FastgenConversion::get_section(const db_full_path & path)
 {
     RT_CK_FULL_PATH(&path);
     return *m_sections.at(get_region_dir(m_db, path));
@@ -1550,8 +1586,8 @@ FastgenConversion::get_section(const db_full_path &path)
 
 
 HIDDEN bool
-convert_primitive(FastgenConversion &data, const db_full_path &path,
-		  const rt_db_internal &internal)
+convert_primitive(FastgenConversion & data, const db_full_path & path,
+		  const rt_db_internal & internal)
 {
     RT_CK_FULL_PATH(&path);
     RT_CK_DB_INTERNAL(&internal);
@@ -1647,8 +1683,8 @@ convert_primitive(FastgenConversion &data, const db_full_path &path,
 
 
 HIDDEN void
-write_nmg_region(nmgregion *nmg_region, const db_full_path *path,
-		 int UNUSED(region_id), int UNUSED(material_id), float *UNUSED(color),
+write_nmg_region(nmgregion * nmg_region, const db_full_path * path,
+		 int UNUSED(region_id), int UNUSED(material_id), float * UNUSED(color),
 		 void *client_data)
 {
     NMG_CK_REGION(nmg_region);
@@ -1686,7 +1722,7 @@ write_nmg_region(nmgregion *nmg_region, const db_full_path *path,
 
 
 HIDDEN int
-convert_region_start(db_tree_state *tree_state, const db_full_path *path,
+convert_region_start(db_tree_state * tree_state, const db_full_path * path,
 		     const rt_comb_internal * comb, void *client_data)
 {
     RT_CK_DBTS(tree_state);
@@ -1700,7 +1736,7 @@ convert_region_start(db_tree_state *tree_state, const db_full_path *path,
 
 
 HIDDEN tree *
-convert_leaf(db_tree_state *tree_state, const db_full_path *path,
+convert_leaf(db_tree_state * tree_state, const db_full_path * path,
 	     rt_db_internal * internal, void *client_data)
 {
     RT_CK_DBTS(tree_state);
@@ -1730,7 +1766,7 @@ convert_leaf(db_tree_state *tree_state, const db_full_path *path,
 
 
 HIDDEN tree *
-convert_region_end(db_tree_state *tree_state, const db_full_path *path,
+convert_region_end(db_tree_state * tree_state, const db_full_path * path,
 		   tree * current_tree, void *client_data)
 {
     RT_CK_DBTS(tree_state);
@@ -1751,8 +1787,8 @@ convert_region_end(db_tree_state *tree_state, const db_full_path *path,
 
 
 HIDDEN int
-gcv_fastgen4_write(const char *path, struct db_i *dbip,
-		   const struct gcv_opts *UNUSED(options))
+gcv_fastgen4_write(const char *path, struct db_i * dbip,
+		   const struct gcv_opts * UNUSED(options))
 {
     RT_CK_DBI(dbip);
 
