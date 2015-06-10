@@ -159,14 +159,12 @@ BU_EXPORT extern int bu_opt_parse(const char ***unused, size_t sizeof_unused, st
  * program to use the int/long/etc. without having to repeat the
  * conversion.
  */
+BU_EXPORT extern int bu_opt_bool(struct bu_vls *msg, int argc, const char **argv, void *set_var);
 BU_EXPORT extern int bu_opt_int(struct bu_vls *msg, int argc, const char **argv, void *set_var);
+BU_EXPORT extern int bu_opt_long(struct bu_vls *msg, int argc, const char **argv, void *set_var);
 BU_EXPORT extern int bu_opt_fastf_t(struct bu_vls *msg, int argc, const char **argv, void *set_var);
 BU_EXPORT extern int bu_opt_str(struct bu_vls *msg, int argc, const char **argv, void *set_var);
 BU_EXPORT extern int bu_opt_vls(struct bu_vls *msg, int argc, const char **argv, void *set_var);
-BU_EXPORT extern int bu_opt_bool(struct bu_vls *msg, int argc, const char **argv, void *set_var);
-/* TODO - unimplemented */
-BU_EXPORT extern int bu_opt_long(struct bu_vls *msg, int argc, const char **argv, void *set_var);
-BU_EXPORT extern int bu_opt_utf8(struct bu_vls *msg, int argc, const char **argv, void *set_var);
 
 
 /** Output format options for bu_opt documentation generation */

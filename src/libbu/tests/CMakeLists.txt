@@ -465,26 +465,33 @@ add_test(NAME bu_opt_1_h_08  COMMAND tester_bu_opt 1 h 8)
 add_test(NAME bu_opt_1_h_09  COMMAND tester_bu_opt 1 h 9)
 add_test(NAME bu_opt_1_h_10  COMMAND tester_bu_opt 1 h 10)
 
+# Boolean option testing
 add_test(NAME bu_opt_1_b_01  COMMAND tester_bu_opt 1 b 1)
 add_test(NAME bu_opt_1_b_02  COMMAND tester_bu_opt 1 b 2)
 add_test(NAME bu_opt_1_b_03  COMMAND tester_bu_opt 1 b 3)
 add_test(NAME bu_opt_1_b_04  COMMAND tester_bu_opt 1 b 4)
 
+# String option testing
 add_test(NAME bu_opt_1_s_01  COMMAND tester_bu_opt 1 s 1)
 add_test(NAME bu_opt_1_s_02  COMMAND tester_bu_opt 1 s 2)
 
+# Integer option testing
 add_test(NAME bu_opt_1_i_01  COMMAND tester_bu_opt 1 i 1)
 add_test(NAME bu_opt_1_i_02  COMMAND tester_bu_opt 1 i 2)
 add_test(NAME bu_opt_1_i_03  COMMAND tester_bu_opt 1 i 3)
 add_test(NAME bu_opt_1_i_04  COMMAND tester_bu_opt 1 i 4)
 
+# Long int option testing
 add_test(NAME bu_opt_1_l_01  COMMAND tester_bu_opt 1 l 1)
 add_test(NAME bu_opt_1_l_02  COMMAND tester_bu_opt 1 l 2)
 
+# fastf_t option testing
 add_test(NAME bu_opt_1_f_01  COMMAND tester_bu_opt 1 f 1)
 add_test(NAME bu_opt_1_f_02  COMMAND tester_bu_opt 1 f 2)
 add_test(NAME bu_opt_1_f_03  COMMAND tester_bu_opt 1 f 3)
 
+# non-static var assignment option testing (and also complex
+# custom arg processing testing)
 add_test(NAME bu_opt_2_color_00  COMMAND tester_bu_opt 2 C 0)
 add_test(NAME bu_opt_2_color_01  COMMAND tester_bu_opt 2 C 1)
 add_test(NAME bu_opt_2_color_02  COMMAND tester_bu_opt 2 C 2)
