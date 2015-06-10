@@ -530,6 +530,34 @@ bu_opt_int(struct bu_vls *msg, int argc, const char **argv, void *set_var)
 }
 
 int
+bu_opt_long(struct bu_vls *msg, int argc, const char **argv, void *set_var)
+{
+    long int l;
+    char *endptr = NULL;
+    long *long_set = (long *)set_var;
+
+    if (!argv || !argv[0] || strlen(argv[0]) == 0 || argc != 1 ) {
+	return 0;
+    }
+
+    l = strtol(argv[0], &endptr, 0);
+
+    if (endptr != NULL && strlen(endptr) > 0) {
+	/* Had some invalid character in the input, fail */
+	if (msg) bu_vls_printf(msg, "Invalid string specifier for int: %s\n", argv[0]);
+	return -1;
+    }
+
+    if (errno == ERANGE) {
+	if (msg) bu_vls_printf(msg, "Invalid input for int (range error): %s\n", argv[0]);
+	return -1;
+    }
+
+    if (long_set) (*long_set) = l;
+    return 1;
+}
+
+int
 bu_opt_fastf_t(struct bu_vls *msg, int argc, const char **argv, void *set_var)
 {
     fastf_t f;
@@ -560,6 +588,17 @@ bu_opt_fastf_t(struct bu_vls *msg, int argc, const char **argv, void *set_var)
     }
 
     if (f_set) (*f_set) = f;
+    return 1;
+}
+
+int
+bu_opt_str(struct bu_vls *UNUSED(msg), int argc, const char **argv, void *set_var)
+{
+    const char **s_set = (const char **)set_var;
+
+    if (!argv || !argv[0] || strlen(argv[0]) == 0 || argc != 1 ) return 0;
+
+    if (s_set) (*s_set) = argv[0];
     return 1;
 }
 
