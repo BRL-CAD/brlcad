@@ -1571,6 +1571,7 @@ find_walls(const db_i &db, const directory &region_dir)
 				 leaves.end())) {
 		std::copy(leaves.begin(), leaves.end(), std::inserter(results,
 			  results.begin()));
+		// TODO: write WALL records
 	    }
 	}
     }
@@ -1590,7 +1591,7 @@ struct FastgenConversion {
 
     void create_section(const db_full_path &path);
     Section &get_section(const db_full_path &path);
-    bool member_ignored(const db_full_path &path, const directory &dir) const;
+    bool member_ignored(const db_full_path &path) const;
 
 
 private:
@@ -1646,8 +1647,11 @@ FastgenConversion::create_section(const db_full_path &path)
     std::pair<std::map<const directory *, Section *>::iterator, bool> found =
 	m_sections.insert(std::make_pair(region_dir, static_cast<Section *>(NULL)));
 
-    if (!found.second)
-	throw std::logic_error("Section already created");
+    if (!found.second) {
+	// new reference to a region
+	found.first->second->write(m_writer);
+	delete found.first->second;
+    }
 
     const std::string name = AutoPtr<char>(db_path_to_string(&path)).ptr;
     found.first->second = new Section(name, true);
@@ -1667,8 +1671,7 @@ FastgenConversion::get_section(const db_full_path &path)
 
 
 bool
-FastgenConversion::member_ignored(const db_full_path &path,
-				  const directory &dir) const
+FastgenConversion::member_ignored(const db_full_path &path) const
 {
     RT_CK_FULL_PATH(&path);
 
@@ -1677,7 +1680,7 @@ FastgenConversion::member_ignored(const db_full_path &path,
     if (!region_dir)
 	return false; // toplevel
 
-    return m_ignored_members.at(region_dir).count(&dir);
+    return m_ignored_members.at(region_dir).count(&get_parent_dir(path));
 }
 
 
@@ -1844,7 +1847,7 @@ convert_leaf(db_tree_state *tree_state, const db_full_path *path,
     const std::string name = AutoPtr<char>(db_path_to_string(path)).ptr;
     bool converted = false;
 
-    if (data.member_ignored(*path, get_parent_dir(*path)))
+    if (data.member_ignored(*path))
 	converted = true;
     else
 	try {
