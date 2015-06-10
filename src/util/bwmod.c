@@ -78,10 +78,12 @@ unsigned char ibuf[BUFLEN];	/* input buffer */
 int mapbuf[MAPBUFLEN];		/* translation buffer/lookup table */
 int char_arith = 0;
 
-int
+void
 checkpow(double x , double exponent)
 {
-    if (x > 0.0) return 1;
+    if (x > 0.0)
+	return;
+
     if (x < 0.0) {
 	double diff;
 	diff = exponent - (double)((int)exponent);
@@ -90,10 +92,11 @@ checkpow(double x , double exponent)
 	    x,exponent);
 	    bu_exit (-1, NULL);
 	}
-	return 1;
     }
 /* We have x == 0.0, and we accept that 0 to 0 power is 1. */
-    if (exponent >= 0.0) return 1;
+    if (exponent >= 0.0)
+	return;
+
     fprintf(stderr,"bwmod: zero to negative power (%f)\n",exponent);
     bu_exit (-1, NULL);
 }
