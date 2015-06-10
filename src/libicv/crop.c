@@ -34,20 +34,31 @@ icv_rect(icv_image_t *img, size_t xorig, size_t yorig, size_t xnum, size_t ynum)
     size_t row;
     double *p, *in_data, *out_data;
     size_t widthstep_in, widthstep_out, bytes_row; /**<  */
+    int errorflag;
 
     ICV_IMAGE_VAL_INT(img);
 
-    if (xnum < 1)
-	bu_exit(1, "icv_rect : ERROR: Horizontal Cut Size\n");
+    errorflag=0;
+    if (xnum < 1) {
+	fprintf(stderr,"icv_rect : ERROR: Horizontal Cut Size\n");
+    	errorflag=1;
+    }
+    if (ynum < 1) {
+	fprintf(stderr,"icv_rect : ERROR: Vertical Cut Size\n");
+    	errorflag=1;
+    }
+    if (errorflag) bu_exit(1,NULL);
 
-    if (ynum < 1)
-	bu_exit(1, "icv_rect : ERROR: Vertical Cut Size\n");
-
-    if (xorig+xnum > img->width)
-	bu_exit(1, "icv_rect : Cut not possible; input parameters exceed the width.\n");
-
-    if (yorig+ynum > img->height)
-	bu_exit(1, "icv_rect : Cut not possible; input parameters exceed the height.\n");
+    errorflag=0;
+    if (xorig+xnum > img->width) {
+	fprintf(stderr,"icv_rect : Cut not possible; input parameters exceed the width.\n");
+    	errorflag=1;
+    }
+    if (yorig+ynum > img->height) {
+	fprintf(stderr,"icv_rect : Cut not possible; input parameters exceed the height.\n");
+    	errorflag=1;
+    }
+    if (errorflag) bu_exit(1,NULL);
 
     /* initialization of variables to insure cropping and copying */
     widthstep_in = img->width*img->channels;
