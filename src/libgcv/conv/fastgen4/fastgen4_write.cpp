@@ -1523,68 +1523,49 @@ find_compsplt(Section &section, const db_i &db, const db_full_path &path,
 }
 
 
-HIDDEN std::vector<const directory *>
-find_wall_sections(const db_i &db, const std::set<const directory *> &unioned,
-		   const std::set<const directory *> &subtracted)
-{
-    RT_CK_DBI(&db);
-
-    std::vector<const directory *> results;
-
-    directory **region_dirs;
-    const std::size_t num_regions = db_ls(&db, DB_LS_REGION, NULL, &region_dirs);
-    AutoFreePtr<directory *> autofree_region_dirst(region_dirs);
-
-    for (std::size_t i = 0; i < num_regions; ++i) {
-	DBInternal region_db_internal(db, *region_dirs[i]);
-	const rt_comb_internal &region = *static_cast<rt_comb_internal *>
-					 (region_db_internal.get().idb_ptr);
-	RT_CK_COMB(&region);
-
-	std::set<const directory *> leaves;
-	get_unioned(db, region.tree, leaves);
-	get_intersected(db, region.tree, leaves);
-
-	if (leaves.empty()
-	    || !std::includes(subtracted.begin(), subtracted.end(), leaves.begin(),
-			      leaves.end()))
-	    continue;
-
-	leaves.clear();
-	get_subtracted(db, region.tree, leaves);
-
-	if (leaves.empty()
-	    || !std::includes(leaves.begin(), leaves.end(), unioned.begin(), unioned.end()))
-	    continue;
-
-	results.push_back(region_dirs[i]);
-    }
-
-    return results;
-}
-
-
 HIDDEN void
 find_walls(const db_i &db, const directory &region_dir)
 {
     RT_CK_DBI(&db);
     RT_CK_DIR(&region_dir);
 
-    DBInternal region_db_internal(db, region_dir);
-    const rt_comb_internal &region = *static_cast<rt_comb_internal *>
-				     (region_db_internal.get().idb_ptr);
-    RT_CK_COMB(&region);
-
     std::set<const directory *> unioned, subtracted;
-    get_unioned(db, region.tree, unioned);
-    get_intersected(db, region.tree, unioned);
-    get_subtracted(db, region.tree, subtracted);
+    {
+	DBInternal region_db_internal(db, region_dir);
+	const rt_comb_internal &region = *static_cast<rt_comb_internal *>
+					 (region_db_internal.get().idb_ptr);
+	RT_CK_COMB(&region);
 
-    if (unioned.empty() || subtracted.empty())
-	return;
+	get_unioned(db, region.tree, unioned);
+	get_intersected(db, region.tree, unioned);
+	get_subtracted(db, region.tree, subtracted);
 
-    std::vector<const directory *> sections = find_wall_sections(db, unioned,
-	    subtracted);
+	if (unioned.empty() || subtracted.empty())
+	    return;
+    }
+
+    std::vector<const directory *> other_regions;
+    {
+	directory **region_dirs;
+	const std::size_t num_regions = db_ls(&db, DB_LS_REGION, NULL, &region_dirs);
+	AutoFreePtr<directory *> autofree_region_dirst(region_dirs);
+
+	for (std::size_t i = 0; i < num_regions; ++i) {
+	    DBInternal region_db_internal(db, *region_dirs[i]);
+	    const rt_comb_internal &region = *static_cast<rt_comb_internal *>
+					     (region_db_internal.get().idb_ptr);
+	    RT_CK_COMB(&region);
+
+	    std::set<const directory *> leaves;
+	    get_unioned(db, region.tree, leaves);
+	    get_intersected(db, region.tree, leaves);
+
+	    if (!leaves.empty()
+		&& std::includes(subtracted.begin(), subtracted.end(), leaves.begin(),
+				 leaves.end()))
+		other_regions.push_back(region_dirs[i]);
+	}
+    }
 }
 
 
