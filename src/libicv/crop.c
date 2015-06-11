@@ -34,11 +34,10 @@ icv_rect(icv_image_t *img, size_t xorig, size_t yorig, size_t xnum, size_t ynum)
     size_t row;
     double *p, *in_data, *out_data;
     size_t widthstep_in, widthstep_out, bytes_row; /**<  */
-    int errorflag;
+    int errorflag = 0;
 
     ICV_IMAGE_VAL_INT(img);
 
-    errorflag=0;
     if (xnum < 1) {
 	fprintf(stderr,"icv_rect : ERROR: Horizontal Cut Size\n");
     	errorflag=1;
@@ -49,7 +48,6 @@ icv_rect(icv_image_t *img, size_t xorig, size_t yorig, size_t xnum, size_t ynum)
     }
     if (errorflag) bu_exit(1,NULL);
 
-    errorflag=0;
     if (xorig+xnum > img->width) {
 	fprintf(stderr,"icv_rect : Cut not possible; input parameters exceed the width.\n");
     	errorflag=1;
