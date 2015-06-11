@@ -250,6 +250,8 @@ RecordWriter::~RecordWriter()
 class RecordWriter::Record
 {
 public:
+    static const std::size_t FIELD_WIDTH = 8;
+
     explicit Record(RecordWriter &writer);
     ~Record();
 
@@ -260,7 +262,6 @@ public:
 
 
 private:
-    static const std::size_t FIELD_WIDTH = 8;
     static const std::size_t RECORD_WIDTH = 10;
 
     static std::string truncate_float(fastf_t value);
@@ -353,8 +354,7 @@ RecordWriter::Record::truncate_float(fastf_t value)
     const std::size_t end_digit = result.find_last_not_of('0');
     const std::size_t end_point = result.find('.');
 
-    if (end_digit != std::string::npos)
-	result.substr(0, std::max(end_digit, end_point + 1) + 1).swap(result);
+    result.erase(std::max(end_point + 2, end_digit + 1));
 
     if (end_point >= result.size() - 1)
 	throw std::runtime_error("value too large");
@@ -654,7 +654,7 @@ public:
 
 
 private:
-    static const std::size_t MAX_NAME_SIZE = 25;
+    static const std::size_t MAX_NAME_SIZE = RecordWriter::Record::FIELD_WIDTH * 3;
 
     const std::string m_name;
     const bool m_volume_mode;
