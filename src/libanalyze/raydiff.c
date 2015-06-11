@@ -246,8 +246,8 @@ analyze_raydiff(struct analyze_raydiff_results **results, struct db_i *dbip,
     xdata->pn = 2;
     xdata->n_vec = (vect_t *)bu_calloc(xdata->vn + 1, sizeof(vect_t), "vects array");
     xdata->n_p = (fastf_t *)bu_calloc(xdata->pn + 1, sizeof(fastf_t), "params array");
-    xdata->n_p[0] = 50; /* TODO - get tolerances from caller */
-    xdata->n_p[1] = 50;
+    xdata->n_p[0] = tol->dist;
+    xdata->n_p[1] = tol->dist;
     VSET(xdata->n_vec[0], 0, max[1], 0);
     VSET(xdata->n_vec[1], 0, 0, max[2]);
     ret = rt_pattern(xdata, RT_PATTERN_RECT_ORTHOGRID);
@@ -263,8 +263,8 @@ analyze_raydiff(struct analyze_raydiff_results **results, struct db_i *dbip,
     ydata->pn = 2;
     ydata->n_vec = (vect_t *)bu_calloc(ydata->vn + 1, sizeof(vect_t), "vects array");
     ydata->n_p = (fastf_t *)bu_calloc(ydata->pn + 1, sizeof(fastf_t), "params array");
-    ydata->n_p[0] = 50; /* TODO - get tolerances from caller */
-    ydata->n_p[1] = 50;
+    ydata->n_p[0] = tol->dist;
+    ydata->n_p[1] = tol->dist;
     VSET(ydata->n_vec[0], max[0], 0, 0);
     VSET(ydata->n_vec[1], 0, 0, max[2]);
     ret = rt_pattern(ydata, RT_PATTERN_RECT_ORTHOGRID);
@@ -279,8 +279,8 @@ analyze_raydiff(struct analyze_raydiff_results **results, struct db_i *dbip,
     zdata->pn = 2;
     zdata->n_vec = (vect_t *)bu_calloc(zdata->vn + 1, sizeof(vect_t), "vects array");
     zdata->n_p = (fastf_t *)bu_calloc(zdata->pn + 1, sizeof(fastf_t), "params array");
-    zdata->n_p[0] = 50; /* TODO - get tolerances from caller */
-    zdata->n_p[1] = 50;
+    zdata->n_p[0] = tol->dist;
+    zdata->n_p[1] = tol->dist;
     VSET(zdata->n_vec[0], max[0], 0, 0);
     VSET(zdata->n_vec[1], 0, max[1], 0);
     ret = rt_pattern(zdata, RT_PATTERN_RECT_ORTHOGRID);
@@ -324,7 +324,7 @@ analyze_raydiff(struct analyze_raydiff_results **results, struct db_i *dbip,
 */
     {
 	int i, j;
-	ncpus = 2;
+	/*ncpus = 2;*/
 	state = (struct raydiff_container *)bu_calloc(ncpus+1, sizeof(struct raydiff_container), "resources");
 	for (i = 0; i < ncpus+1; i++) {
 	    state[i].rtip = rtip;
