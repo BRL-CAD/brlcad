@@ -45,19 +45,19 @@ static const fastf_t INCHES_PER_MM = 1.0 / 25.4;
 
 
 template <typename T> HIDDEN inline void
-autofreeptr_wrap_bu_free(T *ptr)
+autoptr_wrap_bu_free(T *ptr)
 {
     bu_free(ptr, "AutoPtr");
 }
 
 
-template <typename T, void free_fn(T *) = autofreeptr_wrap_bu_free>
+template <typename T, void free_fn(T *) = autoptr_wrap_bu_free>
 struct AutoPtr {
-    AutoPtr(T *vptr = NULL) : ptr(vptr) {}
+    explicit AutoPtr(T *vptr = NULL) : ptr(vptr) {}
 
     ~AutoPtr()
     {
-	if (ptr) free_fn(ptr);
+	free();
     }
 
     void free()
@@ -93,7 +93,7 @@ public:
     }
 
 
-    Triple(const T *values)
+    explicit Triple(const T *values)
     {
 	VMOVE(*this, values);
     }
@@ -250,7 +250,7 @@ RecordWriter::~RecordWriter()
 class RecordWriter::Record
 {
 public:
-    Record(RecordWriter &writer);
+    explicit Record(RecordWriter &writer);
     ~Record();
 
     template <typename T> Record &operator<<(const T &value);
@@ -346,8 +346,20 @@ std::string
 RecordWriter::Record::truncate_float(fastf_t value)
 {
     std::ostringstream sstream;
-    sstream << std::fixed << std::showpoint << value;
-    return sstream.str().substr(0, FIELD_WIDTH);
+    sstream.precision(FIELD_WIDTH);
+    sstream << std::fixed << value;
+    std::string result = sstream.str().substr(0, FIELD_WIDTH);
+
+    const std::size_t end_digit = result.find_last_not_of('0');
+    const std::size_t end_point = result.find('.');
+
+    if (end_digit != std::string::npos)
+	result.substr(0, std::max(end_digit, end_point + 1) + 1).swap(result);
+
+    if (end_point >= result.size() - 1)
+	throw std::runtime_error("value too large");
+
+    return result;
 }
 
 
@@ -394,7 +406,7 @@ class FastgenWriter : public RecordWriter
 public:
     typedef std::pair<std::size_t, std::size_t> SectionID;
 
-    FastgenWriter(const std::string &path);
+    explicit FastgenWriter(const std::string &path);
     ~FastgenWriter();
 
     void write_section_color(const SectionID &section_id, const Color &color);
@@ -495,7 +507,6 @@ FastgenWriter::write_boolean(BooleanType type, const SectionID &section_a,
     Record record(*this);
     record << (type == HOLE ? "HOLE" : "WALL");
     record << section_a.first << section_a.second;
-
     record << section_b.first << section_b.second;
 
     if (section_c)
@@ -567,26 +578,25 @@ GridManager::get_unique_grids(const std::vector<Point> &points)
 
 	if (found.second) {
 	    ++m_next_grid_id;
-	    results[i] = found.first->second.at(0);
+	    results.at(i) = found.first->second.at(0);
 	    continue;
 	}
 
-	std::size_t n = 0;
-	results[i] = found.first->second.at(n);
+	results.at(i) = found.first->second.at(0);
 
-	for (std::size_t j = 0; j < i; ++j)
-	    if (results[j] == results[i]) {
+	for (std::size_t j = 0, n = 0; j < i; ++j)
+	    if (results.at(j) == results.at(i)) {
 		if (++n < found.first->second.size()) {
-		    results[i] = found.first->second.at(n);
+		    results.at(i) = found.first->second.at(n);
 		    j = 0;
 		} else {
 		    found.first->second.push_back(m_next_grid_id);
-		    results[i] = m_next_grid_id++;
+		    results.at(i) = m_next_grid_id++;
 		    break;
 		}
 	    }
 
-	if (results[i] > MAX_GRID_POINTS)
+	if (results.at(i) > MAX_GRID_POINTS)
 	    throw std::length_error("invalid grid ID");
     }
 
@@ -618,7 +628,6 @@ public:
     bool empty() const;
     void set_color(const Color &value);
     void set_compsplt(fastf_t z_coordinate);
-    void disable();
 
     void write(FastgenWriter &writer) const;
 
@@ -653,7 +662,6 @@ private:
 
     std::pair<bool, Color> m_color;
     std::pair<bool, fastf_t> m_compsplt;
-    bool m_enabled;
 
     GridManager m_grids;
     StringBuffer m_elements;
@@ -667,7 +675,6 @@ Section::Section(const std::string &name, bool volume_mode) :
     m_material_id(1),
     m_color(false, Color()),
     m_compsplt(false, 0.0),
-    m_enabled(true),
     m_grids(),
     m_elements(),
     m_next_element_id(1)
@@ -700,19 +707,9 @@ Section::set_compsplt(fastf_t z_coordinate)
 }
 
 
-inline void
-Section::disable()
-{
-    m_enabled = false;
-}
-
-
 void
 Section::write(FastgenWriter &writer) const
 {
-    if (!m_enabled)
-	return;
-
     const FastgenWriter::SectionID id = writer.take_next_section_id();
 
     if (m_compsplt.first) {
@@ -769,8 +766,8 @@ Section::write_line(const fastf_t *point_a, const fastf_t *point_b,
 	throw std::invalid_argument("invalid radius");
 
     std::vector<Point> points(2);
-    points.at(0) = point_a;
-    points.at(1) = point_b;
+    points.at(0) = Point(point_a);
+    points.at(1) = Point(point_b);
     const std::vector<std::size_t> grids = m_grids.get_unique_grids(points);
 
     RecordWriter::Record record(m_elements);
@@ -801,7 +798,7 @@ Section::write_sphere(const fastf_t *center, fastf_t radius,
 	throw std::invalid_argument("invalid value");
 
     std::vector<Point> points(1);
-    points.at(0) = center;
+    points.at(0) = Point(center);
     const std::vector<std::size_t> grids = m_grids.get_unique_grids(points);
 
     RecordWriter::Record record(m_elements);
@@ -828,8 +825,8 @@ Section::write_cone(const fastf_t *point_a, const fastf_t *point_b, fastf_t ro1,
 	throw std::invalid_argument("invalid radius");
 
     std::vector<Point> points(2);
-    points.at(0) = point_a;
-    points.at(1) = point_b;
+    points.at(0) = Point(point_a);
+    points.at(1) = Point(point_b);
     const std::vector<std::size_t> grids = m_grids.get_unique_grids(points);
 
     {
@@ -858,9 +855,9 @@ Section::write_triangle(const fastf_t *point_a, const fastf_t *point_b,
 	throw std::invalid_argument("invalid thickness");
 
     std::vector<Point> points(3);
-    points.at(0) = point_a;
-    points.at(1) = point_b;
-    points.at(2) = point_c;
+    points.at(0) = Point(point_a);
+    points.at(1) = Point(point_b);
+    points.at(2) = Point(point_c);
     const std::vector<std::size_t> grids = m_grids.get_unique_grids(points);
 
     RecordWriter::Record record(m_elements);
@@ -883,10 +880,10 @@ Section::write_quad(const fastf_t *point_a, const fastf_t *point_b,
 	throw std::invalid_argument("invalid thickness");
 
     std::vector<Point> points(4);
-    points.at(0) = point_a;
-    points.at(1) = point_b;
-    points.at(2) = point_c;
-    points.at(3) = point_d;
+    points.at(0) = Point(point_a);
+    points.at(1) = Point(point_b);
+    points.at(2) = Point(point_c);
+    points.at(3) = Point(point_d);
     const std::vector<std::size_t> grids = m_grids.get_unique_grids(points);
 
     RecordWriter::Record record(m_elements);
@@ -911,7 +908,7 @@ Section::write_hexahedron(const fastf_t vpoints[8][3], fastf_t thickness,
     std::vector<Point> points(8);
 
     for (int i = 0; i < 8; ++i)
-	points.at(i) = vpoints[i];
+	points.at(i) = Point(vpoints[i]);
 
     const std::vector<std::size_t> grids = m_grids.get_unique_grids(points);
 
@@ -1350,9 +1347,6 @@ get_unioned(const db_i &db, const tree *tree,
     RT_CK_TREE(tree);
 
     switch (tree->tr_op) {
-	case OP_NOP:
-	    break;
-
 	case OP_DB_LEAF: {
 	    const directory *dir;
 
@@ -1374,6 +1368,9 @@ get_unioned(const db_i &db, const tree *tree,
 	case OP_SUBTRACT:
 	    get_unioned(db, tree->tr_b.tb_left, results);
 	    break;
+
+	default:
+	    break;
     }
 }
 
@@ -1390,9 +1387,6 @@ get_intersected(const db_i &db, const tree *tree,
     RT_CK_TREE(tree);
 
     switch (tree->tr_op) {
-	case OP_NOP:
-	    break;
-
 	case OP_INTERSECT:
 	    get_unioned(db, tree->tr_b.tb_left, results);
 	    get_unioned(db, tree->tr_b.tb_right, results);
@@ -1405,6 +1399,9 @@ get_intersected(const db_i &db, const tree *tree,
 
 	case OP_SUBTRACT:
 	    get_intersected(db, tree->tr_b.tb_left, results);
+	    break;
+
+	default:
 	    break;
     }
 }
@@ -1422,9 +1419,6 @@ get_subtracted(const db_i &db, const tree *tree,
     RT_CK_TREE(tree);
 
     switch (tree->tr_op) {
-	case OP_NOP:
-	    break;
-
 	case OP_UNION:
 	case OP_INTERSECT:
 	    get_subtracted(db, tree->tr_b.tb_left, results);
@@ -1434,6 +1428,9 @@ get_subtracted(const db_i &db, const tree *tree,
 	case OP_SUBTRACT:
 	    get_subtracted(db, tree->tr_b.tb_left, results);
 	    get_unioned(db, tree->tr_b.tb_right, results);
+	    break;
+
+	default:
 	    break;
     }
 }
@@ -1470,63 +1467,6 @@ identify_compsplt(const db_i &db, const directory &parent_region_dir,
 	return 2;
 
     return 0;
-}
-
-
-HIDDEN bool
-find_compsplt(Section &section, const db_i &db, const db_full_path &path,
-	      const rt_half_internal &half)
-{
-    RT_CK_DBI(&db);
-    RT_CK_FULL_PATH(&path);
-    RT_HALF_CK_MAGIC(&half);
-
-    const vect_t normal = {0.0, 0.0, 1.0};
-
-    if (!VNEAR_EQUAL(half.eqn, normal, RT_LEN_TOL))
-	return false;
-
-    const directory *parent_region_dir = get_region_dir(db, path);
-
-    if (!parent_region_dir)
-	return false;
-
-    const int this_id = identify_compsplt(db, *parent_region_dir,
-					  *DB_FULL_PATH_CUR_DIR(&path));
-
-    if (!this_id)
-	return false;
-
-    // find the other half
-    const directory *other_half_dir = NULL;
-    {
-	AutoPtr<directory *> region_dirs;
-	const std::size_t num_regions = db_ls(&db, DB_LS_REGION, NULL,
-					      &region_dirs.ptr);
-
-	for (std::size_t i = 0; i < num_regions; ++i) {
-	    if (region_dirs.ptr[i] == parent_region_dir)
-		continue;
-
-	    const int current_id = identify_compsplt(db, *region_dirs.ptr[i],
-				   *DB_FULL_PATH_CUR_DIR(&path));
-
-	    if (current_id && current_id != this_id) {
-		other_half_dir = region_dirs.ptr[i];
-		break;
-	    }
-	}
-    }
-
-    if (!other_half_dir)
-	return false;
-
-    if (this_id == 1)
-	section.disable();
-    else
-	section.set_compsplt(half.eqn[3]);
-
-    return true;
 }
 
 
@@ -1592,14 +1532,38 @@ struct FastgenConversion {
     void create_section(const db_full_path &path);
     Section &get_section(const db_full_path &path);
     bool member_ignored(const db_full_path &path) const;
+    bool find_compsplt(const db_full_path &path, const rt_half_internal &half);
 
 
 private:
     FastgenConversion(const FastgenConversion &source);
     FastgenConversion &operator=(const FastgenConversion &source);
 
-    std::map<const directory *, Section *> m_sections;
-    std::map<const directory *, std::set<const directory *> > m_ignored_members;
+    class SectionInfo;
+    std::map<const directory *, SectionInfo *> m_sections;
+};
+
+
+class FastgenConversion::SectionInfo
+{
+public:
+    SectionInfo(const std::string &name , bool volume_mode) :
+	m_enabled(true),
+	m_section(name, volume_mode),
+	m_ignored_members()
+    {}
+
+
+    void write(FastgenWriter &writer) const
+    {
+	if (m_enabled && !m_section.empty())
+	    m_section.write(writer);
+    }
+
+
+    bool m_enabled;
+    Section m_section;
+    std::set<const directory *> m_ignored_members;
 };
 
 
@@ -1609,25 +1573,23 @@ FastgenConversion::FastgenConversion(const std::string &path, const db_i &db,
     m_tol(tol),
     m_recorded_cutouts(),
     m_writer(path),
-    m_sections(),
-    m_ignored_members()
+    m_sections()
 {
     RT_CK_DBI(&m_db);
     BN_CK_TOL(&m_tol);
+
     m_writer.write_comment(m_db.dbi_title);
     m_writer.write_comment("g -> fastgen4 conversion");
-
     m_sections.insert(std::make_pair(static_cast<const directory *>(NULL),
-				     new Section("toplevels", true)));
+				     new SectionInfo("toplevels", true)));
 }
 
 
 FastgenConversion::~FastgenConversion()
 {
-    for (std::map<const directory *, Section *>::iterator it = m_sections.begin();
-	 it != m_sections.end(); ++it) {
-	if (!it->second->empty())
-	    it->second->write(m_writer);
+    for (std::map<const directory *, SectionInfo *>::iterator it =
+	     m_sections.begin(); it != m_sections.end(); ++it) {
+	it->second->write(m_writer);
 
 	delete it->second;
     }
@@ -1644,8 +1606,8 @@ FastgenConversion::create_section(const db_full_path &path)
     if (!region_dir)
 	throw std::runtime_error("toplevel");
 
-    std::pair<std::map<const directory *, Section *>::iterator, bool> found =
-	m_sections.insert(std::make_pair(region_dir, static_cast<Section *>(NULL)));
+    std::pair<std::map<const directory *, SectionInfo *>::iterator, bool> found =
+	m_sections.insert(std::make_pair(region_dir, static_cast<SectionInfo *>(NULL)));
 
     if (!found.second) {
 	// new reference to a region
@@ -1654,10 +1616,8 @@ FastgenConversion::create_section(const db_full_path &path)
     }
 
     const std::string name = AutoPtr<char>(db_path_to_string(&path)).ptr;
-    found.first->second = new Section(name, true);
-
-    m_ignored_members.insert(std::make_pair(region_dir, find_walls(m_db,
-					    *region_dir)));
+    found.first->second = new SectionInfo(name, true);
+    found.first->second->m_ignored_members = find_walls(m_db, *region_dir);
 }
 
 
@@ -1666,7 +1626,7 @@ FastgenConversion::get_section(const db_full_path &path)
 {
     RT_CK_FULL_PATH(&path);
 
-    return *m_sections.at(get_region_dir(m_db, path));
+    return m_sections.at(get_region_dir(m_db, path))->m_section;
 }
 
 
@@ -1680,7 +1640,64 @@ FastgenConversion::member_ignored(const db_full_path &path) const
     if (!region_dir)
 	return false; // toplevel
 
-    return m_ignored_members.at(region_dir).count(&get_parent_dir(path));
+    return m_sections.at(region_dir)->m_ignored_members.count(&get_parent_dir(
+		path));
+}
+
+
+bool
+FastgenConversion::find_compsplt(const db_full_path &path,
+				 const rt_half_internal &half)
+{
+    RT_CK_FULL_PATH(&path);
+    RT_HALF_CK_MAGIC(&half);
+
+    const vect_t normal = {0.0, 0.0, 1.0};
+
+    if (!VNEAR_EQUAL(half.eqn, normal, RT_LEN_TOL))
+	return false;
+
+    const directory *parent_region_dir = get_region_dir(m_db, path);
+
+    if (!parent_region_dir)
+	return false;
+
+    const int this_id = identify_compsplt(m_db, *parent_region_dir,
+					  *DB_FULL_PATH_CUR_DIR(&path));
+
+    if (!this_id)
+	return false;
+
+    // find the other half
+    const directory *other_half_dir = NULL;
+    {
+	AutoPtr<directory *> region_dirs;
+	const std::size_t num_regions = db_ls(&m_db, DB_LS_REGION, NULL,
+					      &region_dirs.ptr);
+
+	for (std::size_t i = 0; i < num_regions; ++i) {
+	    if (region_dirs.ptr[i] == parent_region_dir)
+		continue;
+
+	    const int current_id = identify_compsplt(m_db, *region_dirs.ptr[i],
+				   *DB_FULL_PATH_CUR_DIR(&path));
+
+	    if (current_id && current_id != this_id) {
+		other_half_dir = region_dirs.ptr[i];
+		break;
+	    }
+	}
+    }
+
+    if (!other_half_dir)
+	return false;
+
+    if (this_id == 1)
+	m_sections.at(parent_region_dir)->m_enabled = false;
+    else
+	m_sections.at(parent_region_dir)->m_section.set_compsplt(half.eqn[3]);
+
+    return true;
 }
 
 
@@ -1767,7 +1784,7 @@ convert_primitive(FastgenConversion &data, const db_full_path &path,
 					   (internal.idb_ptr);
 	    RT_HALF_CK_MAGIC(&half);
 
-	    if (!find_compsplt(section, data.m_db, path, half))
+	    if (!data.find_compsplt(path, half))
 		return false;
 	    else
 		break;
@@ -1791,7 +1808,6 @@ write_nmg_region(nmgregion *nmg_region, const db_full_path *path,
     RT_CK_FULL_PATH(path);
 
     FastgenConversion &data = *static_cast<FastgenConversion *>(client_data);
-    const std::string name = AutoPtr<char>(db_path_to_string(path)).ptr;
     Section &section = data.get_section(*path);
     shell *vshell;
 
@@ -1811,8 +1827,8 @@ write_nmg_region(nmgregion *nmg_region, const db_full_path *path,
 	try {
 	    write_bot(section, *bot);
 	} catch (const std::runtime_error &e) {
-	    bu_log("FAILURE: write_bot() failed on object '%s': %s\n", name.c_str(),
-		   e.what());
+	    bu_log("FAILURE: write_bot() failed on object '%s': %s\n",
+		   AutoPtr<char>(db_path_to_string(path)).ptr, e.what());
 	}
 
 	internal.idb_meth->ft_ifree(&internal);
@@ -1844,7 +1860,6 @@ convert_leaf(db_tree_state *tree_state, const db_full_path *path,
     RT_CK_DB_INTERNAL(internal);
 
     FastgenConversion &data = *static_cast<FastgenConversion *>(client_data);
-    const std::string name = AutoPtr<char>(db_path_to_string(path)).ptr;
     bool converted = false;
 
     if (data.member_ignored(*path))
@@ -1853,8 +1868,8 @@ convert_leaf(db_tree_state *tree_state, const db_full_path *path,
 	try {
 	    converted = convert_primitive(data, *path, *internal);
 	} catch (const std::runtime_error &e) {
-	    bu_log("FAILURE: convert_primitive() failed on object '%s': %s\n", name.c_str(),
-		   e.what());
+	    bu_log("FAILURE: convert_primitive() failed on object '%s': %s\n",
+		   AutoPtr<char>(db_path_to_string(path)).ptr, e.what());
 	}
 
     if (!converted)
@@ -1898,11 +1913,11 @@ gcv_fastgen4_write(const char *path, struct db_i *dbip,
     const bn_tol tol = {BN_TOL_MAGIC, BN_TOL_DIST, BN_TOL_DIST * BN_TOL_DIST, 1.0e-6, 1.0 - 1.0e-6};
     FastgenConversion data(path, *dbip, tol);
 
-    model *vmodel;
+    AutoPtr<model, nmg_km> vmodel;
     db_tree_state initial_tree_state = rt_initial_tree_state;
     initial_tree_state.ts_tol = &tol;
     initial_tree_state.ts_ttol = &ttol;
-    initial_tree_state.ts_m = &vmodel;
+    initial_tree_state.ts_m = &vmodel.ptr;
 
     db_update_nref(dbip, &rt_uniresource);
     AutoPtr<directory *> toplevel_dirs;
@@ -1911,11 +1926,10 @@ gcv_fastgen4_write(const char *path, struct db_i *dbip,
     AutoPtr<char *> object_names(db_dpv_to_argv(toplevel_dirs.ptr));
     toplevel_dirs.free();
 
-    vmodel = nmg_mm();
+    vmodel.ptr = nmg_mm();
     db_walk_tree(dbip, static_cast<int>(num_objects),
 		 const_cast<const char **>(object_names.ptr), 1, &initial_tree_state,
 		 convert_region_start, convert_region_end, convert_leaf, &data);
-    nmg_km(vmodel);
 
     return 1;
 }
