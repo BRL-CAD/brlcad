@@ -240,7 +240,7 @@ analyze_raydiff(struct analyze_raydiff_results **results, struct db_i *dbip,
     VSET(mid, (max[0] + min[0])/2, (max[1] + min[1])/2, (max[2] + min[2])/2);
 
     BU_GET(xdata, struct rt_pattern_data);
-    VSET(xdata->center_pt, min[0] - 0.1 * min[0], mid[1], mid[2]);
+    VSET(xdata->center_pt, min[0] - 0.1 * fabs(min[0]), mid[1], mid[2]);
     VSET(xdata->center_dir, 1, 0, 0);
     xdata->vn = 2;
     xdata->pn = 2;
@@ -248,8 +248,8 @@ analyze_raydiff(struct analyze_raydiff_results **results, struct db_i *dbip,
     xdata->n_p = (fastf_t *)bu_calloc(xdata->pn + 1, sizeof(fastf_t), "params array");
     xdata->n_p[0] = tol->dist;
     xdata->n_p[1] = tol->dist;
-    VSET(xdata->n_vec[0], 0, max[1], 0);
-    VSET(xdata->n_vec[1], 0, 0, max[2]);
+    VSET(xdata->n_vec[0], 0, max[1] - mid[1], 0);
+    VSET(xdata->n_vec[1], 0, 0, max[2] - mid[2]);
     ret = rt_pattern(xdata, RT_PATTERN_RECT_ORTHOGRID);
     bu_free(xdata->n_vec, "x vec inputs");
     bu_free(xdata->n_p, "x p inputs");
@@ -257,7 +257,7 @@ analyze_raydiff(struct analyze_raydiff_results **results, struct db_i *dbip,
 
 
     BU_GET(ydata, struct rt_pattern_data);
-    VSET(ydata->center_pt, mid[0], min[1] - 0.1 * min[1], mid[2]);
+    VSET(ydata->center_pt, mid[0], min[1] - 0.1 * fabs(min[1]), mid[2]);
     VSET(ydata->center_dir, 0, 1, 0);
     ydata->vn = 2;
     ydata->pn = 2;
@@ -265,15 +265,32 @@ analyze_raydiff(struct analyze_raydiff_results **results, struct db_i *dbip,
     ydata->n_p = (fastf_t *)bu_calloc(ydata->pn + 1, sizeof(fastf_t), "params array");
     ydata->n_p[0] = tol->dist;
     ydata->n_p[1] = tol->dist;
-    VSET(ydata->n_vec[0], max[0], 0, 0);
-    VSET(ydata->n_vec[1], 0, 0, max[2]);
+    VSET(ydata->n_vec[0], max[0] - mid[0], 0, 0);
+    VSET(ydata->n_vec[1], 0, 0, max[2] - mid[2]);
     ret = rt_pattern(ydata, RT_PATTERN_RECT_ORTHOGRID);
     bu_free(ydata->n_vec, "y vec inputs");
     bu_free(ydata->n_p, "y p inputs");
     if (ret < 0) return -1;
 
+#if 0
+    {
+	size_t i = 0;
+	FILE fp = fopen("ydata.plot3", "wb");
+	for (i=0; i <= ydata->ray_cnt; i++) {
+	    point_t base;
+	    vect_t dir;
+	    point_t tip;
+	    VSET(base, ydata->rays[6*i], ydata->rays[6*i+1], ydata->rays[6*i+2]);
+	    VSET(dir, ydata->rays[6*i+3], ydata->rays[6*i+4], ydata->rays[6*i+5]);
+	    VJOIN1(tip, base, 500, dir);
+	    pdv_3line(fp, base, tip);
+	}
+	fclose(fp);
+    }
+#endif
+
     BU_GET(zdata, struct rt_pattern_data);
-    VSET(zdata->center_pt, mid[0], mid[1], min[2] - 0.1 * min[2]);
+    VSET(zdata->center_pt, mid[0], mid[1], min[2] - 0.1 * fabs(min[2]));
     VSET(zdata->center_dir, 0, 0, 1);
     zdata->vn = 2;
     zdata->pn = 2;
@@ -281,8 +298,8 @@ analyze_raydiff(struct analyze_raydiff_results **results, struct db_i *dbip,
     zdata->n_p = (fastf_t *)bu_calloc(zdata->pn + 1, sizeof(fastf_t), "params array");
     zdata->n_p[0] = tol->dist;
     zdata->n_p[1] = tol->dist;
-    VSET(zdata->n_vec[0], max[0], 0, 0);
-    VSET(zdata->n_vec[1], 0, max[1], 0);
+    VSET(zdata->n_vec[0], max[0] - mid[0], 0, 0);
+    VSET(zdata->n_vec[1], 0, max[1] - mid[1], 0);
     ret = rt_pattern(zdata, RT_PATTERN_RECT_ORTHOGRID);
     bu_free(zdata->n_vec, "x vec inputs");
     bu_free(zdata->n_p, "x p inputs");
