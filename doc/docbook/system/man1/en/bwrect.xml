@@ -52,7 +52,7 @@ does the same for the display device.</para>
 <option>-n </option><replaceable>file_height</replaceable>
 and
 <option>-N </option><replaceable>scr_height</replaceable>
-flags specifies the height in scanlines of the input file and display device
+flags specify the height in scanlines of the input file and display device
 respectively.</para>
 
 <para><option>-s </option><replaceable>squarefilesize</replaceable>
