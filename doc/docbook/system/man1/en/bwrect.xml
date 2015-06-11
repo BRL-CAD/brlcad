@@ -40,7 +40,7 @@ extracts a rectangular region from a black and white
 format file. The default input image size is 512x512.
 The x,y coordinates of the origin (the default xorig=0, yorig=0 corresponds to the
 lower left corner) are passed as
-command line arguments.</para>
+arguments for <option>-x</option> and <option>-y</option>.</para>
 
 <para>The
 <option>-w </option><replaceable>file_width</replaceable>
