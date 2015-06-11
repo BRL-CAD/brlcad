@@ -19,7 +19,7 @@
  */
 /** @file util/pixrect.c
  *
- * Remove a portion of a potentially huge pix file.
+ * Remove a portion of a potentially huge .pix file.
  *
  */
 
