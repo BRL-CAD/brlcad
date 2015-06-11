@@ -35,6 +35,7 @@
 
 /* interface headers */
 #include "bu/getopt.h"
+#include "bu/opt.h"
 #include "bu/parallel.h"
 #include "vmath.h"
 #include "nmg.h"
@@ -85,12 +86,74 @@ static int regions_tried = 0;
 static int regions_converted = 0;
 static int regions_written = 0;
 static int inches = 0;
+static int print_help = 0;
+
+static int
+parse_tol_abs(struct bu_vls *UNUSED(error_msg), int UNUSED(argc), const char **argv, void *UNUSED(set_var))
+{
+    ttol.abs = atof(argv[0]);
+    ttol.rel = 0.0;
+    return 1;
+}
+
+static int
+parse_tol_norm(struct bu_vls *UNUSED(error_msg), int UNUSED(argc), const char **argv, void *UNUSED(set_var))
+{
+    ttol.norm = atof(argv[0]);
+    ttol.rel = 0.0;
+    return 1;
+}
+
+static int
+parse_tol_dist(struct bu_vls *UNUSED(error_msg), int UNUSED(argc), const char **argv, void *UNUSED(set_var))
+{
+    tol.dist = atof(argv[0]);
+    tol.dist_sq = tol.dist * tol.dist;
+    rt_pr_tol(&tol);
+    return 1;
+}
+
+static int
+parse_debug_rt(struct bu_vls *UNUSED(error_msg), int UNUSED(argc), const char **argv, void *UNUSED(set_var))
+{
+    sscanf(argv[0], "%x", (unsigned int *)&RTG.debug);
+    return 1;
+}
+
+static int
+parse_debug_nmg(struct bu_vls *UNUSED(error_msg), int UNUSED(argc), const char **argv, void *UNUSED(set_var))
+{
+    sscanf(argv[0], "%x", (unsigned int *)&RTG.NMG_debug);
+    NMG_debug = RTG.NMG_debug;
+    return 1;
+}
+
+static struct bu_opt_desc options[] = {
+    {"?", "", 0, 0, NULL, &print_help, "", "print help and exit"},
+    {"h", "", 0, 0, NULL, &print_help, "", "print help and exit"},
+    {"i", "", 0, 0, NULL, &inches, "", "change output units from mm to inches"},
+    {"m", "", 0, 0, NULL, &usemtl, "", "output usemtl statements"},
+    {"u", "", 0, 0, NULL, &do_normals, "", "output vertex normals"},
+    {"v", "", 0, 0, NULL, &verbose, "", "verbose output"},
+    {"a", "", 1, 1, parse_tol_abs, &ttol, "#", "absolute tolerance"},
+    {"n", "", 1, 1, parse_tol_norm, &ttol, "#", "surface normal tolerance"},
+    {"D", "", 1, 1, parse_tol_dist, &tol, "#", "distance tolerance"},
+    {"x", "", 1, 1, parse_debug_rt, NULL, "level", "set RT debug flag"},
+    {"X", "", 1, 1, parse_debug_nmg, NULL, "level", "set NMG debug flag"},
+    {"e", "", 1, 1, bu_opt_str, &error_file, "error_file", "error file name"},
+    {"o", "", 1, 1, bu_opt_str, &output_file, "output.obj", "output file name"},
+    {"P", "", 1, 1, bu_opt_int, &ncpu, "#", "number of CPUs"},
+    {"r", "", 1, 1, bu_opt_fastf_t, &ttol.rel, "#", "relative tolerance"},
+    BU_OPT_DESC_NULL
+};
 
 int
-main(int argc, char **argv)
+main(int argc, const char **argv)
 {
     int c;
     double percent;
+    const char **extra_args;
+    struct bu_vls parse_msgs = BU_VLS_INIT_ZERO;
 
     bu_setprogname(argv[0]);
     bu_setlinebuf(stderr);
@@ -117,59 +180,18 @@ main(int argc, char **argv)
     BU_LIST_INIT(&RTG.rtg_vlfree);	/* for vlist macros */
 
     /* Get command line arguments. */
-    while ((c = bu_getopt(argc, argv, "mua:n:o:r:vx:D:P:X:e:ih?")) != -1) {
-	switch (c) {
-	    case 'm':		/* include 'usemtl' statements */
-		usemtl = 1;
-		break;
-	    case 'u':		/* Include vertexuse normals */
-		do_normals = 1;
-		break;
-	    case 'a':		/* Absolute tolerance. */
-		ttol.abs = atof(bu_optarg);
-		ttol.rel = 0.0;
-		break;
-	    case 'n':		/* Surface normal tolerance. */
-		ttol.norm = atof(bu_optarg);
-		ttol.rel = 0.0;
-		break;
-	    case 'o':		/* Output file name. */
-		output_file = bu_optarg;
-		break;
-	    case 'r':		/* Relative tolerance. */
-		ttol.rel = atof(bu_optarg);
-		break;
-	    case 'v':
-		verbose = 1;
-		break;
-	    case 'P':
-		ncpu = atoi(bu_optarg);
-		break;
-	    case 'x':
-		sscanf(bu_optarg, "%x", (unsigned int *)&RTG.debug);
-		break;
-	    case 'D':
-		tol.dist = atof(bu_optarg);
-		tol.dist_sq = tol.dist * tol.dist;
-		rt_pr_tol(&tol);
-		break;
-	    case 'X':
-		sscanf(bu_optarg, "%x", (unsigned int *)&RTG.NMG_debug);
-		NMG_debug = RTG.NMG_debug;
-		break;
-	    case 'e':		/* Error file name. */
-		error_file = bu_optarg;
-		break;
-	    case 'i':
-		inches = 1;
-		break;
-	    default:
-		print_usage(argv[0]);
-	}
-    }
+    ++argv; --argc;
+    extra_args = (const char **)bu_calloc(argc, sizeof(char *), "extra args");
 
-    if (bu_optind+1 >= argc)
+    argc = bu_opt_parse(&extra_args, argc, &parse_msgs, argc, argv, options);
+
+    if (bu_vls_strlen(&parse_msgs) > 0) {
+	bu_log("%s\n", bu_vls_cstr(&parse_msgs));
+    }
+    if (argc < 2 || print_help) {
 	print_usage(argv[0]);
+    }
+    argv = extra_args;
 
     if (!output_file)
 	fp = stdout;
@@ -191,8 +213,6 @@ main(int argc, char **argv)
     }
 
     /* Open BRL-CAD database */
-    argc -= bu_optind;
-    argv += bu_optind;
     if ((dbip = db_open(argv[0], DB_OPEN_READONLY)) == DBI_NULL) {
 	perror(argv[0]);
 	bu_exit(1, "Unable to open geometry database file (%s)\n", argv[0]);
