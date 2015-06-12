@@ -48,9 +48,9 @@ __BEGIN_DECLS
  * static int i = 0;
  * static fastf_t f = 0.0;
  * struct bu_opt_desc opt_defs[] = {
- *     {"h", "help",    NULL,            (void *)&ph , "", help_str},
- *     {"n", "num",     &bu_opt_int,     (void *)&i,   "#", "Read int"},
- *     {"f", "fastf_t", &bu_opt_fastf_t, (void *)&f,   "#", "Read float"},
+ *     {"h", "help",    "",  NULL,            (void *)&ph, help_str},
+ *     {"n", "num",     "#", &bu_opt_int,     (void *)&i,  "Read int"},
+ *     {"f", "fastf_t", "#", &bu_opt_fastf_t, (void *)&f,  "Read float"},
  *     BU_OPT_DESC_NULL
  * };
  * @endcode
@@ -69,9 +69,9 @@ __BEGIN_DECLS
  * int i = 0;
  * fastf_t f = 0.0;
  * struct bu_opt_desc opt_defs[4];
- * BU_OPT(opt_defs[0], "h", "help",     NULL,            (void *)&ph, "", help_str);
- * BU_OPT(opt_defs[1], "n", "num",      &bu_opt_ind,     (void *)&i,  "#", "Read int");
- * BU_OPT(opt_defs[2], "f", "fastf_t",  &bu_opt_fastf_t, (void *)&f,  "#", "Read float");
+ * BU_OPT(opt_defs[0], "h", "help",    "",  NULL,            (void *)&ph, help_str);
+ * BU_OPT(opt_defs[1], "n", "num",     "#", &bu_opt_ind,     (void *)&i,  "Read int");
+ * BU_OPT(opt_defs[2], "f", "fastf_t", "#", &bu_opt_fastf_t, (void *)&f,  "Read float");
  * BU_OPT_NULL(opt_defs[3]);
  * @endcode
  *
