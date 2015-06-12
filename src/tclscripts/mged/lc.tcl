@@ -27,7 +27,7 @@
 # Option '-d' specifies to list only regions with duplicate 'region_id'.
 #
 # Option '-s' is the same as '-d' except some duplicates will not be
-# reported (i.e. will be skipped). Skipped duplicates will be those within the
+# reported (i.e. skipped). Skipped duplicates will be those within the
 # specified group, that have the same parent, 'material_id' and 'los'.
 #
 # Option '-r' removes regions from the list in which their parent is
@@ -48,7 +48,7 @@
 
 set lc_done_flush 0
 
-proc lc {args} {
+proc lc2 {args} {
     global lc_done_flush
     set name_cnt 0
     set error_cnt 0
@@ -120,17 +120,20 @@ proc lc {args} {
 	    set file_name $arg
 	    continue
 	}
+	if { $arg <= -0 && $arg >= -5 } {
+	    set sort_column [expr abs($arg)]
+	    continue
+	}
 	if { $arg == "-f" } {
 	    set file_name_flag_cnt 1
 	    continue
 	}
-	if { $arg == "-d" } {
+	if { $arg == "-d" || $arg == "-s"} {
 	    set find_duplicates_flag_cnt 1
-	    continue
-	}
-	if { $arg == "-s" } {
-	    set find_duplicates_flag_cnt 1
-	    set skip_special_duplicates_flag_cnt 1
+
+	    if { $arg == "-s" } {
+		set skip_special_duplicates_flag_cnt 1
+	    }
 	    continue
 	}
 	if { $arg == "-r" } {
@@ -139,10 +142,6 @@ proc lc {args} {
 	}
 	if { $arg == "-z" } {
 	    set descending_sort_flag_cnt 1
-	    continue
-	}
-	if { $arg <= -0 && $arg >= -5 } {
-	    set sort_column [expr abs($arg)]
 	    continue
 	}
 	set group_name_set 1

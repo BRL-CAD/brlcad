@@ -43,8 +43,6 @@
 extern fastf_t	gift_grid_rounding;
 extern point_t	viewbase_model;
 
-extern int	npsw;			/* number of worker PSWs to run */
-
 /* Viewing module specific "set" variables */
 struct bu_structparse view_parse[] = {
     {"",	0, (char *)0,	0,		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }

@@ -32,6 +32,7 @@
 #include "bu/file.h"
 #include "bu/log.h"
 #include "bu/malloc.h"
+#include "bu/path.h"
 #include "bu/str.h"
 #include "bu/vls.h"
 #include "sysv.h"
@@ -75,7 +76,7 @@ _brlcad_data(void)
 
 
 /**
- *print out an error/warning message if we cannot find the specified
+ * print out an error/warning message if we cannot find the specified
  * BRLCAD_ROOT (compile-time install path)
  */
 HIDDEN void

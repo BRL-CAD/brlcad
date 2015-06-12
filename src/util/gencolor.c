@@ -31,15 +31,23 @@
 #include <ctype.h>
 #include <string.h>
 #include "bio.h"
-
 #include "bu/log.h"
 #include "bu/str.h"
+#include "bu/getopt.h"
 
 #define MAX_BYTES (128*1024)
 
-static const char Usage[] = "Usage: gencolor [-r#] [val1 .. valN] > output_file\n";
+static const char Usage[] =
+"Usage: gencolor [-r#] [-p -b]\n\
+                [-s|S squaresize] [-w|W width] [-n|N height]\n\
+                [val1 .. valN] > output_file\n";
 
-int bytes_in_buf, copies_per_buf;
+int32_t count = -1;
+int outputtype = 1; /* 1 for pix, 2 for bw */
+int width = 512;
+int height = 512;
+int typeselected = 0 ; /* set to 1 if any option other than -r appears */
+int setrcount = 0; /* set to 1 if -r is detected */
 
 unsigned char buf[MAX_BYTES];
 
@@ -47,29 +55,69 @@ void
 printusage(int i)
 {
     bu_log("%s\n", Usage);
-    bu_log("  (No whitespace immediately after -r , and must redirect output)\n");
-    bu_exit(i, NULL);
+    bu_log("       (Must redirect output; cannot send to tty)\n");
+    if (i != 3) bu_exit(i, NULL);
+    fprintf(stderr, "       Program continues running:\n");
 }
 
+void
+get_args(int argc, char **argv)
+{
+    int c;
+
+    bu_optind = 1;
+    while ((c = bu_getopt(argc, argv, "r:pbs:S:n:N:w:W:h?")) != -1) {
+	switch (c) {
+	    case 'r':
+		count = atoi(bu_optarg);
+		if (count > INT32_MAX)
+		    count = INT32_MAX;
+		setrcount = 1;
+		break;
+	    case 'p':
+		outputtype = 1;
+		typeselected = 1;
+		break;
+	    case 'b':
+		outputtype = 2;
+		typeselected = 1;
+		break;
+	    case 's':
+	    case 'S':
+		height = width = atoi(bu_optarg);
+		typeselected = 1;
+		break;
+	    case 'n':
+	    case 'N':
+		height = atoi(bu_optarg);
+		typeselected = 1;
+		break;
+	    case 'w':
+	    case 'W':
+		width = atoi(bu_optarg);
+		typeselected = 1;
+		break;
+	    default:		/* 'h' '?' */
+		printusage(0);
+	}
+    }
+
+    if (isatty(fileno(stdout))) printusage(1);
+    if (argc == 1 ) printusage(3);
+
+    return;
+}
 
 int
 main(int argc, char **argv)
 {
-    int i, len, times;
-    int32_t count;
+    int i, len, times, bytes_in_buf, copies_per_buf;
+    int remainder = 0;
     unsigned char *bp;
 
-    if (argc == 1 || isatty(fileno(stdout)))
-	printusage(1);
-
-    count = -1;
-    if (argc > 1 && bu_strncmp(argv[1], "-r", 2) == 0) {
-	count = atoi(&argv[1][2]);
-	if (count > INT32_MAX)
-	    count = INT32_MAX;
-	argv++;
-	argc--;
-    }
+    get_args(argc, argv);
+    argc = argc - bu_optind + 1;
+    argv = argv + bu_optind - 1;
 
     if (argc > 1) {
 	/* get values from the command line */
@@ -91,6 +139,19 @@ main(int argc, char **argv)
 	len = 1;
     }
 
+/* If -r was used, ignore all other "-" options in favor of what -r provided;
+ * if there were no "-" options at all, we have no arguments (other than the
+ * color values), and we go to the infinite loop which IS documented.
+ */
+    if (!setrcount && typeselected) {
+	count = width * height;
+	if ( outputtype == 1 ) count = count * 3;
+	remainder = count % len;
+	count = count/len; /* e.g., len is 3 for RGB for a pix file */
+    }
+
+finishup:
+
     /*
      * Replicate the pattern as many times as it will fit
      * in the buffer.
@@ -105,7 +166,7 @@ main(int argc, char **argv)
 	bytes_in_buf += len;
     }
 
-    if (count < 0) {
+    if (count <= 0) {
 	/* output forever */
 	while (1) {
 	    if (write(1, (char *)buf, bytes_in_buf) != bytes_in_buf) {
@@ -123,6 +184,13 @@ main(int argc, char **argv)
 	    return 1;
 	}
 	count -= times;
+    }
+
+    if (remainder > 0) {
+	count = 1;
+	len = remainder;
+	remainder = 0;
+	goto finishup;
     }
 
     return 0;

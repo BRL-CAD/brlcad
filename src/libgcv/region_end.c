@@ -102,8 +102,15 @@ gcv_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, unio
      */
     NMG_debug_state = RTG.NMG_debug;
 
-    /* Begin bomb protection */
-    if (BU_SETJUMP) {
+    if (!BU_SETJUMP) {
+	/* try */
+	/* perform boolean evaluation on the NMG, presently modifies
+	 * curtree to an evaluated result and returns it if the evaluation
+	 * is successful.
+	 */
+	ret_tree = nmg_booltree_evaluate(tp, tsp->ts_tol, &rt_uniresource);
+    } else {
+	/* catch */
 	/* Error, bail out */
 	char *sofar;
 
@@ -127,14 +134,6 @@ gcv_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, unio
 	*tsp->ts_m = nmg_mm();
 
 	return _gcv_cleanup(NMG_debug_state, tp);
-    } else {
-
-	/* perform boolean evaluation on the NMG, presently modifies
-	 * curtree to an evaluated result and returns it if the evaluation
-	 * is successful.
-	 */
-	ret_tree = nmg_booltree_evaluate(tp, tsp->ts_tol, &rt_uniresource);
-
     } BU_UNSETJUMP; /* Relinquish bomb protection */
 
     r = (struct nmgregion *)NULL;

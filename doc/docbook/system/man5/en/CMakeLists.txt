@@ -26,10 +26,12 @@ set(docbook_man5_EN
   cmap.xml
   pix.xml
   plot3.xml
+  STEP.xml
   )
 
 
 DOCBOOK_TO_HTML(man5 docbook_man5_EN html/man5/en "${attributes_DEPS}")
+DOCBOOK_TO_PHP(man5 docbook_man5_EN html/man5/en "${attributes_DEPS}")
 DOCBOOK_TO_MAN(man5 docbook_man5_EN 5 5 man5 "${attributes_DEPS}")
 
 if(BRLCAD_EXTRADOCS_PDF_MAN)

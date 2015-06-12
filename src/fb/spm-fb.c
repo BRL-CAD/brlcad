@@ -30,7 +30,7 @@
 #include "bu/getopt.h"
 #include "bu/log.h"
 #include "fb.h"
-#include "spm.h"
+#include "bn/spm.h"
 
 
 static fb *fbp;

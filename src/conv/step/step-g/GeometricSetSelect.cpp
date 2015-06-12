@@ -70,11 +70,11 @@ GeometricSetSelect::GetSurfaceElement() {
 }
 
 bool
-GeometricSetSelect::Load(STEPWrapper *sw,SDAI_Select *sse) {
+GeometricSetSelect::Load(STEPWrapper *sw, SDAI_Application_instance *sse) {
     step=sw;
 
     if (element == NULL) {
-	SdaiGeometric_set_select *v = (SdaiGeometric_set_select *) sse;
+	SdaiGeometric_set_select *v = (SdaiGeometric_set_select *)sse;
 
 	if (v->IsPoint()) {
 	    SdaiPoint *point_select = *v;

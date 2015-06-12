@@ -95,7 +95,7 @@ get_args(int argc, char **argv, size_t *width, size_t *height, FILE **infp, FILE
 		break;
 	    }
 
-	    default: /* help */
+	    default: /* 'h' '?' */
 		return 0;
 	}
     }
@@ -205,7 +205,8 @@ main(int argc, char *argv[])
     outfp = stdout;
 
     if (!get_args(argc, argv, &file_width, &file_height, &infp, &outfp)) {
-	bu_exit(1, "%s\n", usage);
+	(void)fputs(usage, stderr);
+	bu_exit(1, NULL);
     }
 
     /* autosize input? */

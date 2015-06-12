@@ -1,4 +1,4 @@
-<article xmlns="http://docbook.org/ns/docbook" version="5.0">
+<article xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink"  version="5.0">
   <info><title>Vehicle Tire and Wheel Creation in BRL-CAD</title>
 
     <author><personname><firstname>Clifford</firstname><surname>Yapp</surname></personname></author>
@@ -8,11 +8,11 @@
   <section><info><title>Overview</title></info>
 
     <para>
-      Traditionally, BRL-CAD tire models have been created using a single cylinder, a torus intersected
-      with a cylinder, or in some cases additional combinations of these primitives.  While these approximations
-      are often sufficient for analytical purposes the resulting model is typically a poor visual match
-      to the real tire when raytracing.  Creating more complex models to better approximate the tire's shape
-      almost always requires more resources than can be justified.
+      Traditionally, <link xlink:href="http://brlcad.org">BRL-CAD</link> tire models have been created using a
+      single cylinder, a torus intersected with a cylinder, or in some cases additional combinations of these
+      primitives.  While these approximations are often sufficient for analytical purposes the resulting model
+      is typically a poor visual match to the real tire when raytracing.  Creating more complex models to better
+      approximate the tire's shape almost always requires more resources than can be justified.
     </para>
 
     <para>

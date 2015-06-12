@@ -30,9 +30,9 @@
 
 #include <time.h>
 
-#include "db.h"
-#include "mater.h"
-#include "rtgeom.h"
+#include "rt/db4.h"
+#include "raytrace.h"
+#include "rt/geom.h"
 #include "ged.h"
 
 __BEGIN_DECLS
@@ -184,7 +184,7 @@ extern int dl_bounding_sph(struct bu_list *hdlp, vect_t *min, vect_t *max, int p
 /* Returns a bu_ptbl of all solids referenced by the display list */
 extern struct bu_ptbl *dl_get_solids(struct display_list *gdlp);
 
-extern void dl_add_path(struct display_list *gdlp, int dashflag, int transparency, int dmode, int hiddenLine, struct bu_list *vhead, const struct db_full_path *pathp, struct db_tree_state *tsp, unsigned char *wireframe_color_override, void (*callback)(struct display_list *), struct solid *freesolid);
+extern void dl_add_path(struct display_list *gdlp, int dashflag, int transparency, int dmode, int hiddenLine, struct bu_list *vhead, const struct db_full_path *pathp, struct db_tree_state *tsp, unsigned char *wireframe_color_override, void (*callback)(struct solid *), struct solid *freesolid);
 
 extern int dl_redraw(struct display_list *gdlp, struct db_i *dbip, struct db_tree_state *tsp, struct bview *gvp, void (*callback)(struct display_list *));
 extern union tree * append_solid_to_display_list(struct db_tree_state *tsp, const struct db_full_path *pathp, struct rt_db_internal *ip, void *client_data);
@@ -523,6 +523,8 @@ extern int _ged_results_init(struct ged_results *results);
  *
  */
 extern int _ged_results_add(struct ged_results *results, const char *result_string);
+
+extern int _ged_brep_to_csg(struct ged *gedp, const char *obj_name);
 
 __END_DECLS
 

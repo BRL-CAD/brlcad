@@ -57,7 +57,7 @@
 #include "bu/log.h"
 #include "bn.h"
 #include "nmg.h"
-#include "rtgeom.h"
+#include "rt/geom.h"
 #include "raytrace.h"
 #include "wdb.h"
 
@@ -1034,7 +1034,7 @@ proc_region(char *name1)
 {
     char tmpname[NAMESIZE*2];
     int chkroot;
-    int i;
+    size_t i;
     int cc;
     static int reg_count=0;
     static int mir_count=0;

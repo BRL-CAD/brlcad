@@ -131,7 +131,9 @@ if(COMMAND CMAKE_POLICY)
   CMAKE_POLICY(SET CMP0017 OLD)
 
   # allow relative paths in INCLUDE_DIRECTORIES
-  CMAKE_POLICY(SET CMP0021 OLD)
+  if ("${CMAKE_VERSION}" VERSION_EQUAL 2.8.12 OR "${CMAKE_VERSION}" VERSION_GREATER 2.8.12)
+    CMAKE_POLICY(SET CMP0021 OLD)
+  endif ("${CMAKE_VERSION}" VERSION_EQUAL 2.8.12 OR "${CMAKE_VERSION}" VERSION_GREATER 2.8.12)
 
   if ("${CMAKE_VERSION}" VERSION_GREATER 2.99)
     CMAKE_POLICY(SET CMP0026 OLD)
@@ -1362,6 +1364,9 @@ include(CMakeDependentOption)
 # documentation is disabled.
 CMAKE_DEPENDENT_OPTION(BRLCAD_EXTRADOCS_HTML "Build MAN page output from DocBook documentation" ON "BRLCAD_EXTRADOCS" OFF)
 mark_as_advanced(BRLCAD_EXTRADOCS_HTML)
+
+CMAKE_DEPENDENT_OPTION(BRLCAD_EXTRADOCS_PHP "Build MAN page output from DocBook documentation" OFF "BRLCAD_EXTRADOCS" OFF)
+mark_as_advanced(BRLCAD_EXTRADOCS_PHP)
 
 # Normally, we'll turn on man page output by default, but there is
 # no point in doing man page output for a Visual Studio build - the

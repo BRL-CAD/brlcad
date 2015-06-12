@@ -5,6 +5,8 @@
 #ifndef SHAPE_RECOGNITION_H
 #define SHAPE_RECOGNITION_H
 
+#define CSG_BREP_MAX_OBJS 1500
+
 #define BREP_PLANAR_TOL 0.05
 #define BREP_CYLINDRICAL_TOL 0.05
 #define BREP_CONIC_TOL 0.05
@@ -12,7 +14,7 @@
 #define BREP_ELLIPSOIDAL_TOL 0.05
 #define BREP_TOROIDAL_TOL 0.05
 
-#define pout(p)  p.x << "," << p.y << "," << p.z
+#define pout(p)  p.x << " " << p.y << " " << p.z
 
 typedef enum {
     CURVE_POINT = 0,
@@ -77,61 +79,26 @@ void set_to_array(int **array, int *array_cnt, std::set<int> *set);
 void array_to_set(std::set<int> *set, int *array, int array_cnt);
 
 
-/* Structure for holding parameters corresponding
- * to a csg primitive.  Not all parameters will be
- * used for all primitives - the structure includes
- * enough data slots to describe any primitive that may
- * be matched by the shape recognition logic */
-struct csg_object_params {
-    char bool_op; /* Boolean operator - u = union (default), - = subtraction, + = intersection */
-    point_t origin;
-    vect_t hv;
-    fastf_t radius;
-    fastf_t r2;
-    fastf_t height;
-    int arb_type;
-    point_t p[8];
-    plane_t *planes;
-};
-
-struct subbrep_object_data {
-    struct bu_vls *key;
-    int *faces;
-    int *loops;
-    int *edges;
-    int *fol; /* Faces with outer loops in object loop network */
-    int *fil; /* Faces with only inner loops in object loop network */
-    int faces_cnt;
-    int loops_cnt;
-    int edges_cnt;
-    int fol_cnt;
-    int fil_cnt;
-
-    const ON_Brep *brep;
-    ON_Brep *local_brep;
-    volume_t type;
-    csg_object_params *params;
-    subbrep_object_data *planar_obj;
-    int planar_obj_vert_cnt;
-    int *planar_obj_vert_map;
-    subbrep_object_data *parent;
-    struct bu_ptbl *children;
-    int is_island;
-};
 
 void subbrep_object_init(struct subbrep_object_data *obj, const ON_Brep *brep);
-void subbrep_object_free(struct subbrep_object_data *obj);
+//void subbrep_object_free(struct subbrep_object_data *obj);
 
 int subbrep_split(struct subbrep_object_data *data);
 int subbrep_make_brep(struct subbrep_object_data *data);
 int subbrep_make_planar(struct subbrep_object_data *data);
 
+int subbrep_determine_boolean(struct subbrep_object_data *data);
+
+
 // Functions for defining a simplified planar subvolume
 void subbrep_planar_init(struct subbrep_object_data *data);
 void subbrep_planar_close_obj(struct subbrep_object_data *data);
-int subbrep_add_planar_face(struct subbrep_object_data *data, ON_Plane *pcyl, ON_SimpleArray<const ON_BrepVertex *> *vert_loop);
+void subbrep_add_planar_face(struct subbrep_object_data *data, ON_Plane *pcyl, ON_SimpleArray<const ON_BrepVertex *> *vert_loop, int neg_surf);
 
-struct bu_ptbl *find_subbreps(const ON_Brep *brep);
+void subbrep_bbox(struct subbrep_object_data *obj);
+
+//struct bu_ptbl *find_subbreps(const ON_Brep *brep);
+//struct bu_ptbl *find_top_level_hierarchy(struct bu_ptbl *subbreps);
 void print_subbrep_object(struct subbrep_object_data *data, const char *offset);
 volume_t subbrep_shape_recognize(struct subbrep_object_data *data);
 
@@ -154,6 +121,17 @@ void set_to_array(int **array, int *array_cnt, std::set<int> *set);
 void array_to_set(std::set<int> *set, int *array, int array_cnt);
 void map_to_array(int **array, int *array_cnt, std::map<int,int> *map);
 void array_to_map(std::map<int,int> *map, int *array, int array_cnt);
+
+int subbrep_find_corners(struct subbrep_object_data *data, int **corner_verts_array, ON_Plane *pcyl);
+int subbrep_top_bottom_pnts(struct subbrep_object_data *data, std::set<int> *corner_verts, ON_Plane *top_plane, ON_Plane *bottom_plane, ON_SimpleArray<const ON_BrepVertex *> *top_pnts, ON_SimpleArray<const ON_BrepVertex *> *bottom_pnts);
+
+ON_3dPoint ON_LinePlaneIntersect(ON_Line &line, ON_Plane &plane);
+void ON_MinMaxInit(ON_3dPoint *min, ON_3dPoint *max);
+
+
+//int subbrep_polygon_tri(const ON_Brep *brep, const point_t *all_verts, int *loops, int loop_cnt, int **ffaces);
+
+int filter_objs_equal(struct filter_obj *obj1, struct filter_obj *obj2);
 
 #endif /* SHAPE_RECOGNITION_H */
 

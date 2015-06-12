@@ -95,7 +95,7 @@ point_t ce[4];
 point_t Centroid;			/* object, description centroids */
 unsigned char rgb[3];
 int debug = 0;
-float mmtin = 25.4;
+float mmtin = 25.4f;
 double conv_mm2in;
 fastf_t third = 0.333333333;
 

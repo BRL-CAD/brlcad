@@ -31,9 +31,9 @@
 
 #include "common.h"
 
-#include "solid.h"
 #include "dm/bview.h"
 #include "raytrace.h"
+#include "rt/solid.h"
 #include "fbserv_obj.h"
 
 
@@ -79,6 +79,7 @@ __BEGIN_DECLS
 
 #define GED_FUNC_PTR_NULL ((ged_func_ptr)0)
 #define GED_REFRESH_CALLBACK_PTR_NULL ((ged_refresh_callback_ptr)0)
+#define GED_CREATE_VLIST_SOLID_CALLBACK_PTR_NULL ((ged_create_vlist_solid_callback_ptr)0)
 #define GED_CREATE_VLIST_CALLBACK_PTR_NULL ((ged_create_vlist_callback_ptr)0)
 #define GED_FREE_VLIST_CALLBACK_PTR_NULL ((ged_free_vlist_callback_ptr)0)
 
@@ -367,7 +368,8 @@ struct ged {
     void			(*ged_refresh_handler)(void *);	/**< @brief  function for handling refresh requests */
     void			(*ged_output_handler)(struct ged *, char *);	/**< @brief  function for handling output */
     char			*ged_output_script;		/**< @brief  script for use by the outputHandler */
-    void			(*ged_create_vlist_callback)(struct display_list *);	/**< @brief  function to call after creating a vlist */
+    void			(*ged_create_vlist_solid_callback)(struct solid *);	/**< @brief  function to call after creating a vlist to create display list for solid */
+    void			(*ged_create_vlist_callback)(struct display_list *);	/**< @brief  function to call after all vlist created that loops through creating display list for each solid  */
     void			(*ged_free_vlist_callback)(unsigned int, int);	/**< @brief  function to call after freeing a vlist */
 
     /* FIXME -- this ugly hack needs to die.  the result string should be stored before the call. */
@@ -389,6 +391,7 @@ struct ged {
 
 typedef int (*ged_func_ptr)(struct ged *, int, const char *[]);
 typedef void (*ged_refresh_callback_ptr)(void *);
+typedef void (*ged_create_vlist_solid_callback_ptr)(struct solid *);
 typedef void (*ged_create_vlist_callback_ptr)(struct display_list *);
 typedef void (*ged_free_vlist_callback_ptr)(unsigned int, int);
 
@@ -464,7 +467,7 @@ struct polygon_header {
 #define POLYGON_HEADER_MAGIC 0x8623bad2
 GED_EXPORT extern void dl_polybinout(struct bu_list *hdlp, struct polygon_header *ph, FILE *fp);
 
-GED_EXPORT extern int invent_solid(struct bu_list *hdlp, struct db_i *dbip, void (*callback_create)(struct display_list *), void (*callback_free)(unsigned int, int), char *name, struct bu_list *vhead, long int rgb, int copy, fastf_t transparency, int dmode, struct solid *freesolid, int csoltab);
+GED_EXPORT extern int invent_solid(struct bu_list *hdlp, struct db_i *dbip, void (*callback_create)(struct solid *), void (*callback_free)(unsigned int, int), char *name, struct bu_list *vhead, long int rgb, int copy, fastf_t transparency, int dmode, struct solid *freesolid, int csoltab);
 
 
 /* defined in ged.c */
@@ -1904,6 +1907,7 @@ GED_EXPORT extern int ged_export_polygon(struct ged *gedp, bview_data_polygon_st
 GED_EXPORT extern bview_polygon *ged_import_polygon(struct ged *gedp, const char *sname);
 GED_EXPORT extern fastf_t ged_find_polygon_area(bview_polygon *gpoly, fastf_t sf, matp_t model2view, fastf_t size);
 GED_EXPORT extern int ged_polygons_overlap(struct ged *gedp, bview_polygon *polyA, bview_polygon *polyB);
+GED_EXPORT extern void ged_polygon_fill_segments(struct ged *gedp, bview_polygon *poly, vect2d_t vfilldir, fastf_t vfilldelta);
 
 
 

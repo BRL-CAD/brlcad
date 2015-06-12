@@ -28,15 +28,16 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "plot3.h"
+#include "bn/plot3.h"
 
-#include "solid.h"
+#include "rt/solid.h"
 #include "./ged_private.h"
 
 
 
 /* defined in draw_calc.cpp */
 extern fastf_t brep_est_avg_curve_len(struct rt_brep_internal *bi);
+extern void createDListSolid(struct solid *sp);
 
 struct display_list *
 dl_addToDisplay(struct bu_list *hdlp, struct db_i *dbip,
@@ -667,7 +668,7 @@ solid_append_vlist(struct solid *sp, struct bn_vlist *vlist)
 }
 
 void
-dl_add_path(struct display_list *gdlp, int dashflag, int transparency, int dmode, int hiddenLine, struct bu_list *vhead, const struct db_full_path *pathp, struct db_tree_state *tsp, unsigned char *wireframe_color_override, void (*callback)(struct display_list *), struct solid *freesolid)
+dl_add_path(struct display_list *gdlp, int dashflag, int transparency, int dmode, int hiddenLine, struct bu_list *vhead, const struct db_full_path *pathp, struct db_tree_state *tsp, unsigned char *wireframe_color_override, void (*callback)(struct solid *sp), struct solid *freesolid)
 {
     struct solid *sp;
     GET_SOLID(sp, &freesolid->l);
@@ -699,8 +700,8 @@ dl_add_path(struct display_list *gdlp, int dashflag, int transparency, int dmode
     BU_LIST_APPEND(gdlp->dl_headSolid.back, &sp->l);
     bu_semaphore_release(RT_SEM_MODEL);
 
-    if (callback != GED_CREATE_VLIST_CALLBACK_PTR_NULL) {
-	(*callback)(gdlp);
+    if (callback != GED_CREATE_VLIST_SOLID_CALLBACK_PTR_NULL) {
+	(*callback)(sp);
     }
 
 }
@@ -1101,7 +1102,7 @@ solid_copy_vlist(struct solid *sp, struct bn_vlist *vlist)
 }
 
 int invent_solid(struct bu_list *hdlp, struct db_i *dbip,
-       	void (*callback_create)(struct display_list *), void (*callback_free)(unsigned int, int),
+       	void (*callback_create)(struct solid *), void (*callback_free)(unsigned int, int),
        	char *name, struct bu_list *vhead, long int rgb, int copy, fastf_t transparency, int dmode,
        	struct solid *freesolid, int csoltab)
 {
@@ -1167,8 +1168,8 @@ int invent_solid(struct bu_list *hdlp, struct db_i *dbip,
     if (csoltab)
 	color_soltab(sp);
 
-    if (callback_create != GED_CREATE_VLIST_CALLBACK_PTR_NULL)
-	(*callback_create)(gdlp);
+    if (callback_create != GED_CREATE_VLIST_SOLID_CALLBACK_PTR_NULL)
+	(*callback_create)(sp);
 
     return 0;           /* OK */
 
@@ -2203,13 +2204,13 @@ dl_print_schain(struct bu_list *hdlp, struct db_i *dbip, int lvl, int vlcmds, st
 
 		    for (i = 0; i < nused; i++, cmd++, pt++) {
 			bu_vls_printf(vls, "  %s (%g, %g, %g)\n",
-				      rt_vlist_get_cmd_description(*cmd),
+				      bn_vlist_get_cmd_description(*cmd),
 				      V3ARGS(*pt));
 		    }
 		}
 
 		bu_vls_printf(vls, "  %d vlist structures, %d pts\n", nvlist, npts);
-		bu_vls_printf(vls, "  %d pts (via rt_ck_vlist)\n", rt_ck_vlist(&(sp->s_vlist)));
+		bu_vls_printf(vls, "  %d pts (via bn_ck_vlist)\n", bn_ck_vlist(&(sp->s_vlist)));
 	    }
 
 	    gdlp = next_gdlp;

@@ -66,9 +66,9 @@
 #include "bu/units.h"
 #include "bu/version.h"
 #include "bn.h"
-#include "mater.h"
+#include "raytrace.h"
 #include "libtermio.h"
-#include "db.h"
+#include "rt/db4.h"
 #include "ged.h"
 
 /* private */
@@ -849,10 +849,12 @@ mged_process_char(char ch)
 	    pr_prompt(interactive);
 	    bu_vls_trunc(&input_str, 0);
 	    bu_vls_vlscat(&input_str, vp);
-	    if (bu_vls_addr(&input_str)[bu_vls_strlen(&input_str)-1] == '\n')
-		bu_vls_trunc(&input_str, bu_vls_strlen(&input_str)-1); /* del \n */
-	    bu_log("%s", bu_vls_addr(&input_str));
-	    input_str_index = bu_vls_strlen(&input_str);
+	    if (bu_vls_strlen(&input_str) > 0) {
+		if (bu_vls_addr(&input_str)[bu_vls_strlen(&input_str)-1] == '\n')
+		    bu_vls_trunc(&input_str, bu_vls_strlen(&input_str)-1); /* del \n */
+		bu_log("%s", bu_vls_addr(&input_str));
+		input_str_index = bu_vls_strlen(&input_str);
+	    }
 	    escaped = bracketed = 0;
 	    break;
 	case CTRL_W:                   /* backward-delete-word */
@@ -2769,6 +2771,7 @@ f_opendb(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *a
     GED_INIT(gedp, ged_wdbp);
     gedp->ged_output_handler = mged_output_handler;
     gedp->ged_refresh_handler = mged_refresh_handler;
+    gedp->ged_create_vlist_solid_callback = createDListSolid;
     gedp->ged_create_vlist_callback = createDListAll;
     gedp->ged_free_vlist_callback = freeDListsAll;
 

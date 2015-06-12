@@ -138,6 +138,7 @@ if(BRLCAD_FREETYPE_BUILD)
   SetTargetFolder(freetype "Third Party Libraries")
 endif(BRLCAD_FREETYPE_BUILD)
 DISTCLEAN(${CMAKE_CURRENT_BINARY_DIR}/freetype/include/ftconfig.h)
+DISTCLEAN(${CMAKE_CURRENT_BINARY_DIR}/freetype/include/freetype2/ftconfig.h)
 mark_as_advanced(FREETYPE_INCLUDE_DIRS)
 mark_as_advanced(FREETYPE_INCLUDE_DIR_freetype2)
 mark_as_advanced(FREETYPE_INCLUDE_DIR_ft2build)
@@ -686,7 +687,19 @@ THIRD_PARTY(openNURBS OPENNURBS openNURBS opennurbs_DESCRIPTION ALIASES
 SetTargetFolder(openNURBS "Third Party Libraries")
 SetTargetFolder(openNURBS-static "Third Party Libraries")
 
-# STEPcode 
+# Screened Poisson Reconstruction Library
+set(poissonrecon_ALIASES ENABLE_SPR)
+set(poissonrecon_DESCRIPTION "
+Option for enabling and disabling compilation of the PoissonRecon library
+provided with BRL-CAD's source code.  Default is AUTO, responsive to
+the toplevel BRLCAD_BUNDLED_LIBS option and testing first for a system
+version if BRLCAD_BUNDLED_LIBS is also AUTO.
+")
+THIRD_PARTY(PoissonRecon SPR PoissonRecon poissonrecon_DESCRIPTION ALIASES
+  ${poissonrecon_ALIASES} FLAGS NOSYS)
+SetTargetFolder(PoissonRecon "Third Party Libraries")
+
+# STEPcode
 # Need Lemon/Perplex to build STEP - conditionalize
 
 # Set some options for the SCL build

@@ -14,6 +14,12 @@ changes made.  See document footer for additional details.
 --- 2014-XX-XX  Release 7.26.XX                                    ---
 ----------------------------------------------------------------------
 
+* improved help option consistency across numerous tools - Carl Moore
+* added prefatory FASTGEN4 geometry export support - Jon Engbert
+* improved option parsing and output options for gencolor - Carl Moore
+* fixed composition bugs in pixmatte and pixmerge - Carl Moore
+* fixed definition of "light year" in unit conversions - Cliff Yapp
+* added mirroring support for hrt primitive objects - Isaac Kamga
 * ported the mged Overlap Tool to Windows - Sean Morrison
 * improved NURBS prep performance for UV-remapped surfaces - Nick Reed
 * fixed dbconcat -c crash when color table does not exist - Nick Reed
@@ -71,6 +77,7 @@ changes made.  See document footer for additional details.
 * improved 'search' with above/equal/below depth limits - Cliff Yapp
 * added comb -S option to stop when object already exists - Cliff Yapp
 * improved comb command documentation with many examples - Cliff Yapp
+* implemented new 'hrt' heart-shaped primitive object - Isaac Kamga
 
 
 ----------------------------------------------------------------------

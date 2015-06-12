@@ -37,13 +37,11 @@
 #include "bu/units.h"
 #include "vmath.h"
 #include "raytrace.h"
-#include "plot3.h"
+#include "bn/plot3.h"
 
 #include "./rtuif.h"
 #include "./ext.h"
 
-
-extern int npsw;			/* number of worker PSWs to run */
 
 extern int rpt_overlap;
 

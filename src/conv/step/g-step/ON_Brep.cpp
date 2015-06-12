@@ -107,7 +107,7 @@ Add_Edge(ON_BrepTrim *trim, SdaiPath *e_loop_path, ON_Brep_Info_AP203 *info)
 	    // add the edge
 	    oriented_edge->orientation_((Boolean)!trim->m_bRev3d);
 	    info->oriented_edges.push_back(new_oriented_edge);
-	    i = info->oriented_edges.size() - 1;
+	    i = (int)info->oriented_edges.size() - 1;
 	    e_loop_path->edge_list_()->AddNode(new EntityNode((SDAI_Application_instance *)(info->oriented_edges.at(i))));
 	}
     }

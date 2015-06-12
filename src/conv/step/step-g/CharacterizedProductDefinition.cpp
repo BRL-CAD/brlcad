@@ -120,7 +120,7 @@ CharacterizedProductDefinition::GetRelatedProductDefinition()
 }
 
 bool
-CharacterizedProductDefinition::Load(STEPWrapper *sw,SDAI_Select *sse) {
+CharacterizedProductDefinition::Load(STEPWrapper *sw, SDAI_Application_instance *sse) {
     step=sw;
 
     if (definition == NULL) {

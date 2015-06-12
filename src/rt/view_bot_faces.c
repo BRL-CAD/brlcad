@@ -41,7 +41,7 @@
 #include "bu/parallel.h"
 #include "vmath.h"
 #include "raytrace.h"
-#include "plot3.h"
+#include "bn/plot3.h"
 
 #include "./rtuif.h"
 #include "./ext.h"
@@ -50,8 +50,6 @@
 extern char *outputfile;		/* output file name */
 
 extern point_t viewbase_model;
-
-extern int npsw;			/* number of worker PSWs to run */
 
 extern int rpt_overlap;
 

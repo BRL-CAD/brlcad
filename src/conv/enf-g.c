@@ -35,13 +35,13 @@
 #include "bio.h"
 
 #include "bu/getopt.h"
-#include "db.h"
+#include "rt/db4.h"
 #include "vmath.h"
 #include "nmg.h"
-#include "rtgeom.h"
+#include "rt/geom.h"
 #include "raytrace.h"
 #include "wdb.h"
-#include "plot3.h"
+#include "bn/plot3.h"
 
 
 #define MAX_LINE_SIZE 256
@@ -203,22 +203,6 @@ add_triangle(int v[3])
 
     /* increment count */
     curr_tri++;
-}
-
-
-void
-List_assem(struct obj_info *assem)
-{
-    size_t i;
-
-    if (assem->obj_type != ASSEMBLY_TYPE) {
-	bu_log("ERROR: List_assem called for non-assembly\n");
-    }
-    bu_log("Assembly: %s (id=%d)\n", assem->obj_name, assem->obj_id);
-    bu_log("\t%zu members\n", assem->part_count);
-    for (i=0; i<assem->part_count; i++) {
-	bu_log("\t\ty %s\n", assem->members[i]->obj_name);
-    }
 }
 
 

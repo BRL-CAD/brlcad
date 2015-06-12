@@ -36,7 +36,7 @@
 #include "bu/parallel.h"
 #include "brep.h"
 #include "libbrep_brep_tools.h"
-#include "dvec.h"
+#include "bn/dvec.h"
 
 #define RANGE_HI 0.55
 #define RANGE_LO 0.45

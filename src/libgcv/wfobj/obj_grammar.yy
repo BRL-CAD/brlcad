@@ -95,12 +95,6 @@ inline static parser_state_type & get_state(yyscan_t scanner)
 	parser_state;
 }
 
-inline static objCombinedState::basic_parser_type &get_parser(yyscan_t scanner)
-{
-    return *(static_cast<objCombinedState*>(obj_parser_get_state(scanner))->
-	    basic_parser);
-}
-
 inline static contents_type & get_contents(yyscan_t scanner)
 {
     return *(static_cast<objCombinedState*>(obj_parser_get_state(scanner))->

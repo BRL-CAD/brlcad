@@ -9,7 +9,7 @@
 #include "shape_recognition.h"
 
 int
-subbrep_is_sphere(struct subbrep_object_data *data, fastf_t cyl_tol)
+subbrep_is_sphere(struct subbrep_object_data *data, fastf_t)
 {
     std::set<int>::iterator f_it;
     std::set<int> spherical_surfaces;
@@ -80,8 +80,8 @@ negative_sphere(struct subbrep_object_data *data, int face_index, double sph_tol
     double dotp = ON_DotProduct(vect, normal);
 
     if (NEAR_ZERO(dotp, 0.000001)) return 0;
-    if (dotp < 0) return 1;
-    return -1;
+    if (dotp < 0) return -1;
+    return 1;
 }
 
 
@@ -207,32 +207,27 @@ sphere_csg(struct subbrep_object_data *data, fastf_t sph_tol)
 
 	// Start building the local comb
 	data->type = COMB;
+	data->obj_cnt = data->parent->obj_cnt;
+	(*data->obj_cnt)++;
+	bu_vls_sprintf(data->name_root, "%s_%d_comb", bu_vls_addr(data->parent->name_root), *(data->obj_cnt));
+
 
 	struct subbrep_object_data *sph_obj;
 	BU_GET(sph_obj, struct subbrep_object_data);
 	subbrep_object_init(sph_obj, data->brep);
 	std::string key = face_set_key(spherical_surfaces);
 	bu_vls_sprintf(sph_obj->key, "%s_sph", key.c_str());
+	sph_obj->obj_cnt = data->parent->obj_cnt;
+	(*sph_obj->obj_cnt)++;
+	bu_vls_sprintf(sph_obj->name_root, "%s_%d_sph", bu_vls_addr(data->parent->name_root), *(sph_obj->obj_cnt));
 	sph_obj->type = SPHERE;
 
 	// Flag the sph/arb comb according to the negative or positive status of the
 	// sphere surface.  Whether the comb is actually subtracted from the
 	// global object or unioned into a comb lower down the tree (or vice versa)
 	// is determined later.
-	int negative = negative_sphere(data, *spherical_surfaces.begin(), sph_tol);
-
-	switch (negative) {
-	    case -1:
-		data->params->bool_op = '-';
-		break;
-	    case 1:
-		data->params->bool_op = 'u';
-		break;
-	    default:
-		std::cout << "Could not determine sphere status???????\n";
-		data->params->bool_op = 'u';
-		break;
-	}
+	data->negative_shape = negative_sphere(data, *spherical_surfaces.begin(), sph_tol);
+	data->params->bool_op = (data->negative_shape == -1) ? '-' : 'u';
 
 	// Add the sphere - unioned top level for this sub-comb
 	sph_obj->params->bool_op = 'u';
@@ -248,10 +243,9 @@ sphere_csg(struct subbrep_object_data *data, fastf_t sph_tol)
 	// the parent planer brep, if there is one.
 	if (!data->is_island && data->parent) {
 	    if (!data->parent->planar_obj) {
-		subbrep_planar_init(data);
+		subbrep_planar_init(data->parent);
 	    }
-	    std::cout << "add sph plane\n";
-	    subbrep_add_planar_face(data->parent, &back_plane, &sph_verts);
+	    subbrep_add_planar_face(data->parent, &back_plane, &sph_verts, data->negative_shape);
 	}
 
 	// The planes each define an arb8 (4 all together) that carve the
@@ -266,8 +260,8 @@ sphere_csg(struct subbrep_object_data *data, fastf_t sph_tol)
 	    ON_3dVector y = back_plane.Yaxis();
 	    x.Unitize();
 	    y.Unitize();
-	    x = x * 1.05 * sph.Radius();
-	    y = y * 1.05 * sph.Radius();
+	    x = x * 1.5 * sph.Radius();
+	    y = y * 1.5 * sph.Radius();
 	    arb1_points[0] = bpc - x - y;
 	    arb1_points[1] = bpc + x - y;
 	    arb1_points[2] = bpc + x + y;
@@ -284,6 +278,9 @@ sphere_csg(struct subbrep_object_data *data, fastf_t sph_tol)
 	    BU_GET(arb_obj, struct subbrep_object_data);
 	    subbrep_object_init(arb_obj, data->brep);
 	    bu_vls_sprintf(arb_obj->key, "%s_arb8_b", key.c_str());
+	    arb_obj->obj_cnt = data->parent->obj_cnt;
+	    (*arb_obj->obj_cnt)++;
+	    bu_vls_sprintf(arb_obj->name_root, "%s_%d_arb8_b", bu_vls_addr(data->parent->name_root), *(arb_obj->obj_cnt));
 	    arb_obj->type = ARB8;
 
 	    arb_obj->params->bool_op = '-';
@@ -303,8 +300,8 @@ sphere_csg(struct subbrep_object_data *data, fastf_t sph_tol)
 	    ON_3dPoint ecenter = edge_centers[i];
 	    ex.Unitize();
 	    ey.Unitize();
-	    ex = ex * 1.05 * sph.Radius();
-	    ey = ey * 1.05 * sph.Radius();
+	    ex = ex * 1.5 * sph.Radius();
+	    ey = ey * 1.5 * sph.Radius();
 	    arb_points[0] = ecenter - ex - ey;
 	    arb_points[1] = ecenter + ex - ey;
 	    arb_points[2] = ecenter + ex + ey;
@@ -321,6 +318,9 @@ sphere_csg(struct subbrep_object_data *data, fastf_t sph_tol)
 	    BU_GET(earb_obj, struct subbrep_object_data);
 	    subbrep_object_init(earb_obj, data->brep);
 	    bu_vls_sprintf(earb_obj->key, "%s_arb8_%d", key.c_str(), i);
+	    earb_obj->obj_cnt = data->parent->obj_cnt;
+	    (*earb_obj->obj_cnt)++;
+	    bu_vls_sprintf(earb_obj->name_root, "%s_%d_arb8_%d", bu_vls_addr(data->parent->name_root), *(earb_obj->obj_cnt), i);
 	    earb_obj->type = ARB8;
 
 	    earb_obj->params->bool_op = '-';
@@ -332,14 +332,15 @@ sphere_csg(struct subbrep_object_data *data, fastf_t sph_tol)
 
 	}
 
-	return 0;
+	return 1;
     }
 
     if (verts.size() >= 3) {
-	std::cout << "Complex situation.\n";
+	bu_log("Complex sphere situation.\n");
 	return 0;
     }
 
+    return -1;
 }
 
 // Local Variables:

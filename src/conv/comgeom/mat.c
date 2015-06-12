@@ -293,29 +293,6 @@ mat_inv(matp_t output, matp_t input)
 
 
 /*
- * Takes a pointer to [x, y, z, w], and converts it to
- * an ordinary vector [x/w, y/w, z/w].
- * Optimization for the case of w==1 is performed.
- */
-void
-htov_move(float *v, float *h)
-{
-    static float inv;
-
-    if (ZERO(h[3] - 1.0)) {
-	*v++ = *h++;
-	*v++ = *h++;
-	*v   = *h;
-    }  else {
-	inv = 1 / h[3];
-
-	*v++ = *h++ * inv;
-	*v++ = *h++ * inv;
-	*v   = *h   * inv;
-    }
-}
-
-/*
  * Local Variables:
  * mode: C
  * tab-width: 8

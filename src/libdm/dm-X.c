@@ -65,7 +65,7 @@
 #include "fb.h"
 #include "fb/fb_X.h"
 
-#include "solid.h"
+#include "rt/solid.h"
 
 #include "dm_private.h"
 

@@ -39,11 +39,11 @@
 #include "bu/debug.h"
 #include "bu/cv.h"
 #include "vmath.h"
-#include "db.h"
+#include "rt/db4.h"
 #include "nmg.h"
-#include "rtgeom.h"
+#include "rt/geom.h"
 #include "raytrace.h"
-#include "nurb.h"
+#include "rt/nurb.h"
 
 #include "../../librt_private.h"
 
@@ -497,8 +497,8 @@ seg_to_vlist(struct bu_list *vhead, const struct rt_tess_tol *ttol, fastf_t *V, 
 		break;
 	    }
 	    VJOIN2(pt, V, sketch_ip->verts[lsg->start][0], u_vec, sketch_ip->verts[lsg->start][1], v_vec);
-	    RT_ADD_VLIST(vhead, pt, BN_VLIST_LINE_MOVE)
-		VJOIN2(pt, V, sketch_ip->verts[lsg->end][0], u_vec, sketch_ip->verts[lsg->end][1], v_vec);
+	    RT_ADD_VLIST(vhead, pt, BN_VLIST_LINE_MOVE);
+	    VJOIN2(pt, V, sketch_ip->verts[lsg->end][0], u_vec, sketch_ip->verts[lsg->end][1], v_vec);
 	    RT_ADD_VLIST(vhead, pt, BN_VLIST_LINE_DRAW);
 	    break;
 	case CURVE_CARC_MAGIC:

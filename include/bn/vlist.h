@@ -30,21 +30,9 @@
 __BEGIN_DECLS
 
 /*----------------------------------------------------------------------*/
-/* @file vlist.h */
-/** @addtogroup vlist */
-/** @{ */
-
-/**
+/** @addtogroup bn_vlist
+ *
  * @brief
- * Definitions for handling lists of vectors (really vertices, or
- * points) and polygons in 3-space.  Intended for common handling of
- * wireframe display information, in the full resolution that is
- * calculated in.
- */
-
-#define BN_VLIST_CHUNK 35		/**< @brief 32-bit mach => just less than 1k */
-
-/**
  * Definitions for handling lists of vectors (really vertices, or
  * points) and polygons in 3-space.  Intended for common handling of
  * wireframe display information, in the full resolution that is
@@ -68,6 +56,12 @@ __BEGIN_DECLS
  *		}
  *	}
  */
+/** @{ */
+/** @file bn/vlist.h */
+
+
+#define BN_VLIST_CHUNK 35		/**< @brief 32-bit mach => just less than 1k */
+
 struct bn_vlist  {
     struct bu_list l;		/**< @brief magic, forw, back */
     size_t nused;		/**< @brief elements 0..nused active */
@@ -162,6 +156,8 @@ struct bn_vlist  {
 BN_EXPORT extern int bn_vlist_cmd_cnt(struct bn_vlist *vlist);
 BN_EXPORT extern int bn_vlist_bbox(struct bn_vlist *vp, point_t *bmin, point_t *bmax);
 
+
+
 /**
  * For plotting, a way of separating plots into separate color vlists:
  * blocks of vlists, each with an associated color.
@@ -177,21 +173,17 @@ struct bn_vlblock {
 #define BN_CK_VLBLOCK(_p)	BU_CKMAG((_p), BN_VLBLOCK_MAGIC, "bn_vlblock")
 
 
-/** @file libbn/font.c
- *
- */
-
 /**
  * Convert a string to a vlist.
  *
  * 'scale' is the width, in mm, of one character.
  *
- * @param vhead
+ * @param vhead   vhead
  * @param free_hd source of free vlists
  * @param string  string of chars to be plotted
- * @param origin	 lower left corner of 1st char
- * @param rot	 Transform matrix (WARNING: may xlate)
- * @param scale    scale factor to change 1x1 char sz
+ * @param origin  lower left corner of 1st char
+ * @param rot	  Transform matrix (WARNING: may xlate)
+ * @param scale   scale factor to change 1x1 char sz
  *
  */
 BN_EXPORT extern void bn_vlist_3string(struct bu_list *vhead,
@@ -207,7 +199,7 @@ BN_EXPORT extern void bn_vlist_3string(struct bu_list *vhead,
  * A simpler interface, for those cases where the text lies in the X-Y
  * plane.
  *
- * @param vhead
+ * @param vhead		vhead
  * @param free_hd	source of free vlists
  * @param string	string of chars to be plotted
  * @param x		lower left corner of 1st char
@@ -223,6 +215,68 @@ BN_EXPORT extern void bn_vlist_2string(struct bu_list *vhead,
 				       double y,
 				       double scale,
 				       double theta);
+
+/**
+ * Returns the description of a vlist cmd.  Caller is responsible
+ * for freeing the returned string.
+ */
+BN_EXPORT extern const char *bn_vlist_get_cmd_description(int cmd);
+
+/**
+ * Validate an bn_vlist chain for having reasonable values inside.
+ * Calls bu_bomb() if not.
+ *
+ * Returns -
+ * npts Number of point/command sets in use.
+ */
+BN_EXPORT extern int bn_ck_vlist(const struct bu_list *vhead);
+
+
+/**
+ * Duplicate the contents of a vlist.  Note that the copy may be more
+ * densely packed than the source.
+ */
+BN_EXPORT extern void bn_vlist_copy(struct bu_list *vlists,
+	                            struct bu_list *dest,
+                                    const struct bu_list *src);
+
+
+/**
+ * Convert a vlist chain into a blob of network-independent binary,
+ * for transmission to another machine.
+ *
+ * The result is stored in a vls string, so that both the address and
+ * length are available conveniently.
+ */
+BN_EXPORT extern void bn_vlist_export(struct bu_vls *vls,
+                                      struct bu_list *hp,
+                                      const char *name);
+
+
+/**
+ * Convert a blob of network-independent binary prepared by
+ * vls_vlist() and received from another machine, into a vlist chain.
+ */
+BN_EXPORT extern void bn_vlist_import(struct bu_list *vlists,
+                                      struct bu_list *hp,
+                                      struct bu_vls *namevls,
+                                      const unsigned char *buf);
+
+BN_EXPORT extern void bn_vlist_cleanup(struct bu_list *hd);
+
+BN_EXPORT extern struct bn_vlblock *bn_vlblock_init(struct bu_list *free_vlist_hd, /* where to get/put free vlists */
+                                                    int max_ent);
+
+BN_EXPORT extern void bn_vlblock_free(struct bn_vlblock *vbp);
+
+BN_EXPORT extern struct bu_list *bn_vlblock_find(struct bn_vlblock *vbp,
+                                                 int r,
+                                                 int g,
+                                                 int b);
+
+
+BN_EXPORT void bn_vlist_rpp(struct bu_list *vlists, struct bu_list *hd, const point_t minn, const point_t maxx);
+
 
 /** @} */
 

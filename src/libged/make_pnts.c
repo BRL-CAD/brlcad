@@ -31,7 +31,7 @@
 
 #include "bu/sort.h"
 #include "bu/units.h"
-#include "rtgeom.h"
+#include "rt/geom.h"
 #include "wdb.h"
 
 #include "./ged_private.h"

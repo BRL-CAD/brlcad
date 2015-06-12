@@ -468,7 +468,8 @@ bu_struct_put(FILE *fp, const struct bu_external *ext)
 size_t
 bu_struct_get(struct bu_external *ext, FILE *fp)
 {
-    size_t i;
+    uint32_t val;
+    size_t ret;
     uint32_t len;
 
     if (UNLIKELY(!ext || !fp))
@@ -478,56 +479,57 @@ bu_struct_get(struct bu_external *ext, FILE *fp)
     ext->ext_buf = (uint8_t *)bu_malloc(6, "bu_struct_get buffer head");
     bu_semaphore_acquire(BU_SEM_SYSCALL);		/* lock */
 
-    i = fread((char *)ext->ext_buf, 1, 6, fp);	/* res_syscall */
+    ret = fread((char *)ext->ext_buf, 1, 6, fp);	/* res_syscall */
     bu_semaphore_release(BU_SEM_SYSCALL);		/* unlock */
 
-    if (i != 6) {
-	if (i == 0)
+    if (ret != 6) {
+	if (ret == 0)
 	    return 0;
 
 	perror("fread");
 	bu_log("ERROR: bu_struct_get bad fread (%zu), file %s, line %d\n",
-	       i, __FILE__, __LINE__);
+	       ret, __FILE__, __LINE__);
 	return 0;
     }
 
-    i = (((unsigned char *)(ext->ext_buf))[0] << 8)
+    val = (((unsigned char *)(ext->ext_buf))[0] << 8)
 	| ((unsigned char *)(ext->ext_buf))[1];
+
+    if (UNLIKELY(val != PARSE_MAGIC_1)) {
+	bu_log("ERROR: bad getput buffer header %p, s/b %x, was %s(0x%lx), file %s, line %d\n",
+	       (void *)ext->ext_buf, PARSE_MAGIC_1,
+	       bu_identify_magic(val), val, __FILE__, __LINE__);
+	bu_bomb("bad getput buffer");
+    }
 
     len = (((unsigned char *)(ext->ext_buf))[2] << 24)
 	| (((unsigned char *)(ext->ext_buf))[3] << 16)
 	| (((unsigned char *)(ext->ext_buf))[4] << 8)
 	| (((unsigned char *)(ext->ext_buf))[5]);
 
-    if (UNLIKELY(i != PARSE_MAGIC_1)) {
-	bu_log("ERROR: bad getput buffer header %p, s/b %x, was %s(0x%lx), file %s, line %d\n",
-	       (void *)ext->ext_buf, PARSE_MAGIC_1,
-	       bu_identify_magic(i), (long int)i, __FILE__, __LINE__);
-	bu_bomb("bad getput buffer");
-    }
     ext->ext_nbytes = len;
     ext->ext_buf = (uint8_t *)bu_realloc((char *) ext->ext_buf, len,
 					 "bu_struct_get full buffer");
     bu_semaphore_acquire(BU_SEM_SYSCALL);		/* lock */
-    i = fread((char *)ext->ext_buf + 6, 1, len-6, fp);	/* res_syscall */
+    ret = fread((char *)ext->ext_buf + 6, 1, len-6, fp);	/* res_syscall */
     bu_semaphore_release(BU_SEM_SYSCALL);		/* unlock */
 
-    if (UNLIKELY(i != len-6)) {
+    if (UNLIKELY(ret != len-6)) {
 	bu_log("ERROR: bu_struct_get bad fread (%zu), file %s, line %d\n",
-	       i, __FILE__, __LINE__);
+	       ret, __FILE__, __LINE__);
 	ext->ext_nbytes = 0;
 	bu_free(ext->ext_buf, "bu_struct_get full buffer");
 	ext->ext_buf = NULL;
 	return 0;
     }
 
-    i = (((unsigned char *)(ext->ext_buf))[len-2] << 8)
+    val = (((unsigned char *)(ext->ext_buf))[len-2] << 8)
 	| ((unsigned char *)(ext->ext_buf))[len-1];
 
-    if (UNLIKELY(i != PARSE_MAGIC_2)) {
+    if (UNLIKELY(val != PARSE_MAGIC_2)) {
 	bu_log("ERROR: bad getput buffer %p, s/b %x, was %s(0x%lx), file %s, line %d\n",
 	       (void *)ext->ext_buf, PARSE_MAGIC_2,
-	       bu_identify_magic(i), (long int)i, __FILE__, __LINE__);
+	       bu_identify_magic(val), val, __FILE__, __LINE__);
 	ext->ext_nbytes = 0;
 	bu_free(ext->ext_buf, "bu_struct_get full buffer");
 	ext->ext_buf = NULL;
@@ -2055,7 +2057,7 @@ bu_shader_to_list(const char *in, struct bu_vls *vls)
 		if (bu_vls_strlen(vls) > len) {
 		    bu_vls_putc(vls, '}');
 		} else {
-		    bu_vls_trunc(vls, len - 2);
+		    bu_vls_trunc(vls, (int)len - 2);
 		}
 	    }
 	} else if (*iptr && *iptr == ';') {

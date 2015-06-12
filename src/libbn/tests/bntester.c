@@ -45,8 +45,8 @@ parse_case(char *buf_p, int *i, long *l, fastf_t *d, unsigned long *u, char *fmt
     int l_idx = 0;
     int d_idx = 0;
     int u_idx = 1; /* start index at 1 since function number is stored at 0 */
-    int idx;
-    int fmt_str_len;
+    size_t idx;
+    size_t fmt_str_len;
     char *endp;
     long int l_tmp;
 
@@ -69,13 +69,13 @@ parse_case(char *buf_p, int *i, long *l, fastf_t *d, unsigned long *u, char *fmt
 	    case 'd' : /* double */
 		d[d_idx] = strtod(buf_p, &endp);
 		if (errno) {
-		    fprintf(stream, "Convert to double failed, function %lu test case on line %lu parameter %d error msg: '%s' string '%s'\n",
-				  u[0], line_num, idx+2, strerror(errno), buf_p);
+		    fprintf(stream, "Convert to double failed, function %lu test case on line %lu parameter %lu error msg: '%s' string '%s'\n",
+			    u[0], line_num, (unsigned long)idx+2, strerror(errno), buf_p);
 		    return EXIT_FAILURE;
 		}
 		if ((*endp != '\0') || (buf_p == endp)) {
-		    fprintf(stream, "Convert to double failed, function %lu test case on line %lu parameter %d string '%s'\n",
-				  u[0], line_num, idx+2, buf_p);
+		    fprintf(stream, "Convert to double failed, function %lu test case on line %lu parameter %lu string '%s'\n",
+			    u[0], line_num, (unsigned long)idx+2, buf_p);
 		    return EXIT_FAILURE;
 		}
 		d_idx++;
@@ -83,13 +83,13 @@ parse_case(char *buf_p, int *i, long *l, fastf_t *d, unsigned long *u, char *fmt
 	    case 'l' : /* long int */
 		l[l_idx] = strtol(buf_p, &endp, 10);
 		if (errno) {
-		    fprintf(stream, "Convert to long int failed, function %lu test case on line %lu parameter %d error msg: '%s' string '%s'\n",
-				  u[0], line_num, idx+2, strerror(errno), buf_p);
+		    fprintf(stream, "Convert to long int failed, function %lu test case on line %lu parameter %lu error msg: '%s' string '%s'\n",
+			    u[0], line_num, (unsigned long)idx+2, strerror(errno), buf_p);
 		    return EXIT_FAILURE;
 		}
 		if ((*endp != '\0') || (buf_p == endp)) {
-		    fprintf(stream, "Convert to long int failed, function %lu test case on line %lu parameter %d string '%s'\n",
-				  u[0], line_num, idx+2, buf_p);
+		    fprintf(stream, "Convert to long int failed, function %lu test case on line %lu parameter %lu string '%s'\n",
+			    u[0], line_num, (unsigned long)idx+2, buf_p);
 		    return EXIT_FAILURE;
 		}
 		l_idx++;
@@ -97,18 +97,18 @@ parse_case(char *buf_p, int *i, long *l, fastf_t *d, unsigned long *u, char *fmt
 	    case 'i' : /* int */
 		l_tmp = strtol(buf_p, &endp, 10);
 		if (errno) {
-		    fprintf(stream, "Convert to int failed, function %lu test case on line %lu parameter %d error msg: '%s' string '%s'\n",
-				  u[0], line_num, idx+2, strerror(errno), buf_p);
+		    fprintf(stream, "Convert to int failed, function %lu test case on line %lu parameter %lu error msg: '%s' string '%s'\n",
+			    u[0], line_num, (unsigned long)idx+2, strerror(errno), buf_p);
 		    return EXIT_FAILURE;
 		}
 		if ((*endp != '\0') || (buf_p == endp)) {
-		    fprintf(stream, "Convert to int failed, function %lu test case on line %lu parameter %d string '%s'\n",
-				  u[0], line_num, idx+2, buf_p);
+		    fprintf(stream, "Convert to int failed, function %lu test case on line %lu parameter %lu string '%s'\n",
+			    u[0], line_num, (unsigned long)idx+2, buf_p);
 		    return EXIT_FAILURE;
 		}
 		if (l_tmp > INT_MAX || l_tmp < INT_MIN) {
-		    fprintf(stream, "Convert to int failed (under/over flow), function %lu test case on line %lu parameter %d string '%s'\n",
-				  u[0], line_num, idx+2, buf_p);
+		    fprintf(stream, "Convert to int failed (under/over flow), function %lu test case on line %lu parameter %lu string '%s'\n",
+			    u[0], line_num, (unsigned long)idx+2, buf_p);
 		    return EXIT_FAILURE;
 		}
 		i[i_idx] = (int)l_tmp;
@@ -117,13 +117,13 @@ parse_case(char *buf_p, int *i, long *l, fastf_t *d, unsigned long *u, char *fmt
 	    case 'u' : /* unsigned long */
 		u[u_idx] = strtoul(buf_p, &endp, 10);
 		if (errno) {
-		    fprintf(stream, "Convert to unsigned long int failed, function %lu test case on line %lu parameter %d error msg: '%s' string '%s'\n",
-				  u[0], line_num, idx+2, strerror(errno), buf_p);
+		    fprintf(stream, "Convert to unsigned long int failed, function %lu test case on line %lu parameter %lu error msg: '%s' string '%s'\n",
+			    u[0], line_num, (unsigned long)idx+2, strerror(errno), buf_p);
 		    return EXIT_FAILURE;
 		}
 		if ((*endp != '\0') || (buf_p == endp) || (strchr(buf_p, '-') != '\0')) {
-		    fprintf(stream, "Convert to unsigned long int failed, function %lu test case on line %lu parameter %d string '%s'\n",
-				  u[0], line_num, idx+2, buf_p);
+		    fprintf(stream, "Convert to unsigned long int failed, function %lu test case on line %lu parameter %lu string '%s'\n",
+			    u[0], line_num, (unsigned long)idx+2, buf_p);
 		    return EXIT_FAILURE;
 		}
 		u_idx++;
@@ -154,7 +154,7 @@ main(int argc, char **argv)
     char buf[BUFSIZ];
     FILE *fp_in = NULL;
     char *endp = NULL;
-    int string_length;
+    size_t string_length;
     int argv_idx;
     int c;
     char dt_fmt[50];  /* data type format string */
@@ -182,7 +182,7 @@ main(int argc, char **argv)
     int valid_function_number = 0;
     int process_test_case = 0;
     int early_exit = 0;
-    int found_eof = 0;
+    static int found_eof = 0; /* static due to longjmp */
 
     /* set initial values in tol structure */
     tol.magic = BN_TOL_MAGIC;

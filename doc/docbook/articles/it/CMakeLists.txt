@@ -16,6 +16,7 @@ set(docbook_articles_IT_IMAGES
 ADD_DOC(docbook_articles_IT_IMAGES html/articles/it/images)
 
 DOCBOOK_TO_HTML(article docbook_articles_IT html/articles/it docbook_articles_IT_IMAGES_cp)
+DOCBOOK_TO_PHP(article docbook_articles_IT html/articles/it docbook_articles_IT_IMAGES_cp)
 
 if(BRLCAD_EXTRADOCS_PDF)
   DOCBOOK_TO_PDF(article docbook_articles_IT pdf/articles/it docbook_articles_IT_IMAGES_cp)

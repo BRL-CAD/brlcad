@@ -28,18 +28,19 @@
 
 #include "bu/log.h"
 #include "bu/malloc.h"
+#include "vmath.h"
 #include "icv.h"
 
 /* defined in encoding.c */
 extern unsigned char *data2uchar(const icv_image_t *bif);
-extern double *uchar2double(unsigned char *data, long int size);
+extern double *uchar2double(unsigned char *data, size_t size);
 
 /* flip an image vertically */
 int
-image_flip(unsigned char *buf, int width, int height)
+image_flip(unsigned char *buf, size_t width, size_t height)
 {
     unsigned char *buf2;
-    int i;
+    size_t i;
     size_t pitch = width * 3 * sizeof(char);
 
     buf2 = (unsigned char *)bu_malloc((size_t)(height * pitch), "image flip");
@@ -73,50 +74,51 @@ ppm_write(icv_image_t *bif, const char *filename)
     data =  data2uchar(bif);
     size = (size_t) bif->width*bif->height*3;
     image_flip(data, bif->width, bif->height);
-    ret = fprintf(fp, "P6 %d %d 255\n", bif->width, bif->height);
+    ret = fprintf(fp, "P6 %lu %lu 255\n", (unsigned long)bif->width, (unsigned long)bif->height);
 
-    ret = fwrite(data, 1, size, fp);
+     ret = fwrite(data, 1, size, fp);
 
-    fclose(fp);
-    if (ret != size) {
-	bu_log("ERROR : Short Write");
-	return -1;
-    }
-    return 0;
-}
+     fclose(fp);
+     if (ret != size) {
+	 bu_log("ERROR : Short Write");
+	 return -1;
+     }
+     return 0;
+ }
 
 
 HIDDEN void
 ppm_nextline(FILE *fp)
 {
-    int c;
+     size_t c;
 
-    /* skip to the binary data section, starting on next line.
-     * supports mac, unix, windows line endings.
-     */
-    do {
-	c = fgetc(fp);
-	if (c == '\r') {
-	    c = fgetc(fp);
-	    if (c != '\n') {
-		ungetc(c, fp);
-		c = '\n'; /* pretend we're not an old mac file */
-	    }
-	}
-    } while (c != '\n');
+     /* skip to the binary data section, starting on next line.
+      * supports mac, unix, windows line endings.
+      */
+     do {
+	 c = fgetc(fp);
+	 if (c == '\r') {
+	     c = fgetc(fp);
+	     if (c != '\n') {
+		 ungetc(c, fp);
+		 c = '\n'; /* pretend we're not an old mac file */
+	     }
+	 }
+     } while (c != '\n');
 }
 
 
 icv_image_t*
 ppm_read(const char *filename)
 {
-    char buff[3]; /* To ensure that the format. And thus read "P6" */
-    FILE *fp;
-    char c;
-    icv_image_t *bif;
-    int rgb_comp_color;
-    unsigned char *data;
-    size_t size,ret;
+     char buff[3]; /* To ensure that the format. And thus read "P6" */
+     FILE *fp;
+     char c;
+     icv_image_t *bif;
+     int rgb_comp_color;
+     unsigned char *data;
+    size_t size, ret;
+    int parse_width, parse_height;
 
     if (filename == NULL) {
 	fp = stdin;
@@ -150,11 +152,15 @@ ppm_read(const char *filename)
     ungetc(c, fp);
 
     /* read image size information */
-    if (fscanf(fp, "%d %d", &bif->width, &bif->height) != 2) {
+    if (fscanf(fp, "%d %d", &parse_width, &parse_height) != 2) {
 	fprintf(stderr, "Invalid image size (error loading '%s')\n", filename);
 	bu_free(bif, "icv_image structure");
 	return NULL;
     }
+    CLAMP(parse_width, 0, INT32_MAX);
+    CLAMP(parse_height, 0, INT32_MAX);
+    bif->width = parse_width;
+    bif->height = parse_height;
 
     /* read rgb component */
     if (fscanf(fp, "%d", &rgb_comp_color) != 1) {

@@ -126,76 +126,64 @@ main(int argc, char **argv)
     }
 
     if (argc == 14) {
-	if (argv[3])
-	    scanlen = atoi(argv[3]);
-	else
+	if (! argv[3])
 	    return 1;
+        scanlen = atoi(argv[3]);
 
-	if (argv[4]) {
-	    atoival = atoi(argv[4]);
-	    if (atoival < 0)
-		atoival = 0;
-	    if (atoival > INT_MAX-1)
-		atoival = INT_MAX-1;
-	    xnum = atoival;
-	} else {
+	if (! argv[4])
 	    return 1;
-	}
+	atoival = atoi(argv[4]);
+	if (atoival < 0)
+	    atoival = 0;
+	else if (atoival > INT_MAX-1)
+	    atoival = INT_MAX-1;
+        xnum = atoival;
 
-	if (argv[5]) {
-	    atoival = atoi(argv[5]);
-	    if (atoival < 0)
-		atoival = 0;
-	    if (atoival > INT_MAX-1)
-		atoival = INT_MAX-1;
-	    ynum = atoival;
-	} else {
+	if (! argv[5])
 	    return 1;
-	}
+	atoival = atoi(argv[5]);
+	if (atoival < 0)
+	    atoival = 0;
+	else if (atoival > INT_MAX-1)
+	    atoival = INT_MAX-1;
+	ynum = atoival;
 
-	if (argv[6])
-	    ulx = atoi(argv[6]);
-	else
+	if (! argv[6])
 	    return 1;
+	ulx = atoi(argv[6]);
 
-	if (argv[7])
-	    uly = atoi(argv[7]);
-	else
+	if (! argv[7])
 	    return 1;
+	uly = atoi(argv[7]);
 
-	if (argv[8])
-	    urx = atoi(argv[8]);
-	else
+	if (! argv[8])
 	    return 1;
+	urx = atoi(argv[8]);
 
-	if (argv[9])
-	    ury = atoi(argv[9]);
-	else
+	if (! argv[9])
 	    return 1;
+	ury = atoi(argv[9]);
 
-	if (argv[10])
-	    lrx = atoi(argv[10]);
-	else
+	if (! argv[10])
 	    return 1;
+	lrx = atoi(argv[10]);
 
-	if (argv[11])
-	    lry = atoi(argv[11]);
-	else
+	if (! argv[11])
 	    return 1;
+	lry = atoi(argv[11]);
 
-	if (argv[12])
-	    llx = atoi(argv[12]);
-	else
+	if (! argv[12])
 	    return 1;
+	llx = atoi(argv[12]);
 
-	if (argv[13])
-	    lly = atoi(argv[13]);
-	else
+	if (! argv[13])
 	    return 1;
+	lly = atoi(argv[13]);
     } else {
 	double xval, yval;
 	unsigned long len;
 	/* Get info */
+
 	printf("Scanline length in input file: ");
 	ret = scanf("%lu", &len);
 	if (ret != 1)
@@ -204,23 +192,22 @@ main(int argc, char **argv)
 	if (scanlen <= 0) {
 	    bu_exit(4, "bwcrop: scanlen = %zu, don't be ridiculous\n", scanlen);
 	}
+
 	printf("Line Length and Number of scan lines (in new file)?: ");
 	ret = scanf("%lf%lf", &xval, &yval);
 	if (ret != 2) {
 	    perror("scanf");
 	}
 
-	/* sanitize */
+	/* sanitize xval,yval*/
 	if (xval < 1)
 	    xval = 1;
-	if (xval > INT_MAX-1)
+	else if (xval > INT_MAX-1)
 	    xval = INT_MAX-1;
 	xnum = xval;
-
-	/* sanitize */
 	if (yval < 1)
 	    yval = 1;
-	if (yval > INT_MAX-1)
+	else if (yval > INT_MAX-1)
 	    yval = INT_MAX-1;
 	ynum = yval;
 

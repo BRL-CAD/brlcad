@@ -31,8 +31,8 @@
 #include <math.h>
 #include "vmath.h"
 #include "raytrace.h"
-#include "nurb.h"
-#include "plot3.h"
+#include "rt/nurb.h"
+#include "bn/plot3.h"
 
 
 extern double drand48(void);

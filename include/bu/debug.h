@@ -18,12 +18,6 @@
  * information.
  */
 
-/**  @defgroup io Input/Output */
-/**   @defgroup debug Debugging */
-
-/** @file debug.h
- *
- */
 #ifndef BU_DEBUG_H
 #define BU_DEBUG_H
 
@@ -32,8 +26,14 @@
 
 __BEGIN_DECLS
 
-/** @addtogroup debug Debugging */
+/** @addtogroup bu_debug Debugging
+ *
+ * @brief
+ * Debugging definitions.
+ *
+ */
 /** @{ */
+/** @file bu/debug.h */
 
 /**
  * controls the libbu debug level

@@ -27,7 +27,7 @@
 #include <signal.h>
 
 #include "vmath.h"
-#include "mater.h"
+#include "raytrace.h"
 
 #include "./mged.h"
 #include "./sedit.h"
@@ -129,7 +129,7 @@ f_labelvert(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const c
 
     cvt_vlblock_to_solids(vbp, "_LABELVERT_", 0);
 
-    rt_vlblock_free(vbp);
+    bn_vlblock_free(vbp);
     update_views = 1;
     return TCL_OK;
 }

@@ -39,7 +39,7 @@
 #include "vmath.h"
 #include "nmg.h"
 #include "raytrace.h"
-#include "rtgeom.h"
+#include "rt/geom.h"
 #include "wdb.h"
 
 
@@ -83,49 +83,6 @@ static void
 print_usage(const char *progname)
 {
     bu_exit(1, "Usage: %s %s", progname, usage);
-}
-
-void
-Find_loop_crack(struct shell *s)
-{
-    struct faceuse *fu;
-
-    for (BU_LIST_FOR(fu, faceuse, &s->fu_hd)) {
-	struct loopuse *lu;
-
-	for (BU_LIST_FOR(lu, loopuse, &fu->lu_hd)) {
-	    struct edgeuse *eu;
-	    int found=0;
-
-	    if (BU_LIST_FIRST_MAGIC(&lu->down_hd) != NMG_EDGEUSE_MAGIC)
-		continue;
-
-	    for (BU_LIST_FOR(eu, edgeuse, &lu->down_hd)) {
-		struct edgeuse *eu_next;
-
-		eu_next = BU_LIST_PNEXT_CIRC(edgeuse, &eu->l);
-		if (eu->vu_p->v_p == eu_next->vu_p->v_p) {
-		    found = 2;
-		    break;
-		}
-		eu_next = BU_LIST_PNEXT_CIRC(edgeuse, &eu_next->l);
-
-		if (eu->vu_p->v_p == eu_next->vu_p->v_p) {
-		    found = 1;
-		    break;
-		}
-	    }
-
-	    if (!found)
-		continue;
-
-	    if (found == 1)
-		bu_log("Found a crack:\n");
-	    else if (found ==2)
-		bu_log("Found a zero length edge:\n");
-	    nmg_pr_fu_briefly(fu, "");
-	}
-    }
 }
 
 
