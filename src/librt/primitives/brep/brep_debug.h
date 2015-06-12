@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @addtogroup g_ */
+/** @addtogroup librt */
 /** @{ */
 /** @file brep_debug.h
  *
@@ -40,10 +40,10 @@
 #include "vmath.h"
 
 #include "brep.h"
-#include "dvec.h"
+#include "bn/dvec.h"
 
 #include "raytrace.h"
-#include "rtgeom.h"
+#include "rt/geom.h"
 
 #define fastf_t double
 
@@ -57,7 +57,7 @@ extern "C" {
 
 using namespace brlcad;
 
-#include "plot3.h"
+#include "bn/plot3.h"
 
 #define BLUEVIOLET 138, 43, 226
 #define CADETBLUE 95, 159, 159

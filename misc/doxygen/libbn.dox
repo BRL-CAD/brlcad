@@ -4,58 +4,54 @@
 
 /* Second tier groups */
  /** @ingroup libbn */
- /**   @defgroup anim Animation */
+/**   @defgroup bn_defines libbn Definitions*/
  /** @ingroup libbn */
- /**  @defgroup adc Angle/Distance Cursor */
+ /**  @defgroup bn_anim Animation */
  /** @ingroup libbn */
- /**  @defgroup axis Axis */
+ /**  @defgroup bn_clip Clipping */
  /** @ingroup libbn */
- /**  @defgroup clip Clipping */
+ /**  @defgroup bn_complex Complex Numbers */
  /** @ingroup libbn */
- /**  @defgroup complex Complex Numbers */
- /** @ingroup libbn */
- /**  @defgroup const Constants */
- /** @ingroup libbn */
- /**  @defgroup vlist Display Lists */
+ /**  @defgroup bn_vlist Display Lists */
  /** @ingroup libbn */
  /**  @defgroup plot Plot/Draw */
  /** @ingroup libbn */
+ /**  @defgroup bn_vfont Vector Fonts*/
+ /** @ingroup libbn */
  /**  @defgroup noise Fractal Noise */
  /** @ingroup libbn */
- /**  @defgroup mat Matrix/Vector/Quaternion Math */
+ /**  @defgroup mat Matrix/Vector Math */
  /** @ingroup libbn */
- /**  @defgroup plane Point/Line/Plane Geometry Math */
+ /**  @defgroup bn_quat Quaternion Math */
+ /* Random Numbers */
  /** @ingroup libbn */
- /**  @defgroup chull Convex Hulls */
+ /**  @defgroup bn_rand Random Numbers */
+ /**  @addtogroup bn_rand
+      LIBBN support for random number generation.
+  */
+ /** @ingroup bn_rand */
+ /**  @defgroup bn_msr Minimal Standard Random Numbers */
+ /** @ingroup bn_rand */
+ /**  @defgroup bn_rmt Mersenne Twister */
+ /** @ingroup bn_rand */
+ /**  @defgroup bn_rnt Random Number Tables */
  /** @ingroup libbn */
- /**  @defgroup poly Polynomials */
+ /**  @defgroup bn_plane Point/Line/Plane Geometry Math */
  /** @ingroup libbn */
- /**  @defgroup obr Oriented Bounding Rectangles/Rectangular Cuboids*/
+ /**  @defgroup bn_poly Polynomials */
  /** @ingroup libbn */
- /**  @defgroup rand Random Numbers */
+ /**  @defgroup bn_tcl libbn Tcl interface */
  /** @ingroup libbn */
- /**  @defgroup bntcl libbn Tcl interface */
+ /**  @defgroup bn_sphmap Spherical Maps */
  /** @ingroup libbn */
- /**  @defgroup sphmap Spherical Maps */
+ /**  @defgroup bn_tabdata Tabulated Data */
  /** @ingroup libbn */
- /**  @defgroup tabdata Tabulated Data */
+ /**  @defgroup bn_tol Tolerances */
  /** @ingroup libbn */
- /**  @defgroup tol Tolerances */
+ /**  @defgroup bn_vtree Vertex Trees */
  /** @ingroup libbn */
- /**  @defgroup tri_tri Triangle/Triangle Intersection Tests */
+ /**  @defgroup bn_wavelet Wavelets */
  /** @ingroup libbn */
- /**  @defgroup vtree Vertex Trees */
- /** @ingroup libbn */
- /**  @defgroup version Version */
- /** @ingroup libbn */
- /**  @defgroup wavelet Wavelets */
+ /**  @defgroup bn_version Version */
 
-
-/* Random Numbers */
-/** @ingroup libbn */
-/**  @defgroup rand Random Numbers */
-/**   @ingroup rand */
-/**    @defgroup msr Minimal Standard Random Numbers */
-/**   @ingroup rand */
-/**    @defgroup rnd Random Number Tables */
 

@@ -44,8 +44,9 @@
 
 #include "bu/str.h"
 #include "vmath.h"
-#include "plot3.h"
-#include "vectfont.h"
+#include "bn/mat.h"
+#include "bn/plot3.h"
+#include "bn/vectfont.h"
 
 void
 tp_3symbol(FILE *fp, char *string, fastf_t *origin, fastf_t *rot, double scale)
@@ -90,7 +91,7 @@ tp_3symbol(FILE *fp, char *string, fastf_t *origin, fastf_t *rot, double scale)
 	MAT4X3PNT( loc, mat, temp );
 	pdv_3move( fp, loc );
 
-	for ( p = tp_getchar(cp); (stroke= *p) != LAST; p++ )  {
+	for ( p = tp_getchar(cp); (stroke= *p) != VFONT_LAST; p++ )  {
 	    int	draw;
 
 	    if ( stroke==NEGY )  {

@@ -246,6 +246,7 @@ set_source_files_properties(pix2asc.xml PROPERTIES EXTRA_MAN_OUTPUTS "asc2pix.1"
 set_source_files_properties(chan_mult.xml PROPERTIES EXTRA_MAN_OUTPUTS "chan_add.1")
 
 DOCBOOK_TO_HTML(man1 docbook_man1_EN html/man1/en "")
+DOCBOOK_TO_PHP(man1 docbook_man1_EN html/man1/en "")
 DOCBOOK_TO_MAN(man1 docbook_man1_EN 1 1 man1 "")
 
 if(BRLCAD_EXTRADOCS_PDF_MAN)

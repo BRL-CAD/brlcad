@@ -106,7 +106,7 @@
 #include "bu/cmd.h"
 #include "bn.h"
 #include "vmath.h"
-#include "mater.h"
+#include "raytrace.h"
 #include "nmg.h"
 
 #include "./ged_private.h"

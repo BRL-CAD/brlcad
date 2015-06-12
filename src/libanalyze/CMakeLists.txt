@@ -9,7 +9,9 @@ BRLCAD_LIB_INCLUDE_DIRS(analyze ANALYZE_INCLUDE_DIRS "")
 
 set(LIBANALYZE_SOURCES
   density.c
+  inside.c
   overlaps.c
+  raydiff.c
   voxels.c
   )
 

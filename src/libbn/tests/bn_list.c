@@ -26,7 +26,7 @@
 
 #include "bn.h"
 #include "bu.h"
-#include "plot3.h"
+#include "bn/plot3.h"
 
 #define BUFFER_SIZE 2000
 #define MAX_POINTS 30

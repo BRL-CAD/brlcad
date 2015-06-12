@@ -48,7 +48,7 @@
 #include <string.h>
 
 #include "vmath.h"
-#include "plot3.h"
+#include "bn/plot3.h"
 
 void
 tp_2marker(FILE *fp, register int c, double x, double y, double scale)

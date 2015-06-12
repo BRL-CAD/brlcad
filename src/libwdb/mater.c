@@ -31,12 +31,10 @@
 
 #include "vmath.h"
 #include "bn.h"
-#include "rtgeom.h"
-#include "db.h"
+#include "rt/geom.h"
+#include "rt/db4.h"
 #include "raytrace.h"
 #include "wdb.h"
-#include "mater.h"
-
 
 int
 mk_write_color_table(struct rt_wdb *ofp)

@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file defines.h
+/** @file rt/defines.h
  *
  * Common definitions for LIBRT
  *
@@ -39,6 +39,160 @@
 #endif
 
 #endif /* RT_DEFINES_H */
+
+/*
+ * Values for Solid ID.
+ */
+#define ID_NULL         0       /**< @brief Unused */
+#define ID_TOR          1       /**< @brief Toroid */
+#define ID_TGC          2       /**< @brief Generalized Truncated General Cone */
+#define ID_ELL          3       /**< @brief Ellipsoid */
+#define ID_ARB8         4       /**< @brief Generalized ARB.  V + 7 vectors */
+#define ID_ARS          5       /**< @brief ARS */
+#define ID_HALF         6       /**< @brief Half-space */
+#define ID_REC          7       /**< @brief Right Elliptical Cylinder [TGC special] */
+#define ID_POLY         8       /**< @brief Polygonal faceted object */
+#define ID_BSPLINE      9       /**< @brief B-spline object */
+#define ID_SPH          10      /**< @brief Sphere */
+#define ID_NMG          11      /**< @brief n-Manifold Geometry solid */
+#define ID_EBM          12      /**< @brief Extruded bitmap solid */
+#define ID_VOL          13      /**< @brief 3-D Volume */
+#define ID_ARBN         14      /**< @brief ARB with N faces */
+#define ID_PIPE         15      /**< @brief Pipe (wire) solid */
+#define ID_PARTICLE     16      /**< @brief Particle system solid */
+#define ID_RPC          17      /**< @brief Right Parabolic Cylinder  */
+#define ID_RHC          18      /**< @brief Right Hyperbolic Cylinder  */
+#define ID_EPA          19      /**< @brief Elliptical Paraboloid  */
+#define ID_EHY          20      /**< @brief Elliptical Hyperboloid  */
+#define ID_ETO          21      /**< @brief Elliptical Torus  */
+#define ID_GRIP         22      /**< @brief Pseudo Solid Grip */
+#define ID_JOINT        23      /**< @brief Pseudo Solid/Region Joint */
+#define ID_HF           24      /**< @brief Height Field */
+#define ID_DSP          25      /**< @brief Displacement map */
+#define ID_SKETCH       26      /**< @brief 2D sketch */
+#define ID_EXTRUDE      27      /**< @brief Solid of extrusion */
+#define ID_SUBMODEL     28      /**< @brief Instanced submodel */
+#define ID_CLINE        29      /**< @brief FASTGEN4 CLINE solid */
+#define ID_BOT          30      /**< @brief Bag o' triangles */
+
+/* Add a new primitive id above here (this is will break v5 format)
+ * NOTE: must update the non-geometric object id's below the
+ * ADD_BELOW_HERE marker
+ */
+#define ID_MAX_SOLID    44      /**< @brief Maximum defined ID_xxx for solids */
+
+/*
+ * Non-geometric objects
+ */
+#define ID_COMBINATION  31      /**< @brief Combination Record */
+#define ID_UNUSED1      32      /**< @brief UNUSED (placeholder)  */
+#define ID_BINUNIF      33      /**< @brief Uniform-array binary */
+#define ID_UNUSED2      34      /**< @brief UNUSED (placeholder) */
+#define ID_CONSTRAINT   39      /**< @brief Constraint object */
+
+/* - ADD_BELOW_HERE - */
+/* superellipsoid should be 31, but is not v5 compatible */
+#define ID_SUPERELL     35      /**< @brief Superquadratic ellipsoid */
+#define ID_METABALL     36      /**< @brief Metaball */
+#define ID_BREP         37      /**< @brief B-rep object */
+#define ID_HYP          38      /**< @brief Hyperboloid of one sheet */
+#define ID_REVOLVE      40      /**< @brief Solid of Revolution */
+#define ID_PNTS         41      /**< @brief Collection of Points */
+#define ID_ANNOTATION   42      /**< @brief Annotation */
+#define ID_HRT          43      /**< @brief Heart */
+
+#define ID_MAXIMUM      44      /**< @brief Maximum defined ID_xxx value */
+
+/**
+ * DEPRECATED: external applications should use other LIBRT API to
+ * access database objects.
+ *
+ * The directory is organized as forward linked lists hanging off of
+ * one of RT_DBNHASH headers in the db_i structure.
+ *
+ * FIXME: this should not be public API, push container and iteration
+ * down into LIBRT.  External applications should not use this.
+ */
+#define RT_DBNHASH              8192    /**< @brief hash table is an
+                                         * array of linked lists with
+                                         * this many array pointer
+                                         * elements (Memory use for
+                                         * 32-bit: 32KB, 64-bit: 64KB)
+                                         */
+
+#if     ((RT_DBNHASH)&((RT_DBNHASH)-1)) != 0
+/**
+ * DEPRECATED: external applications should use other LIBRT API to
+ * access database objects.
+ */
+#define RT_DBHASH(sum)  ((size_t)(sum) % (RT_DBNHASH))
+#else
+/**
+ * DEPRECATED: external applications should use other LIBRT API to
+ * access database objects.
+ */
+#define RT_DBHASH(sum)  ((size_t)(sum) & ((RT_DBNHASH)-1))
+#endif
+
+/* Used to set globals declared in bot.c */
+#define RT_DEFAULT_MINPIECES            32
+#define RT_DEFAULT_TRIS_PER_PIECE       4
+#define RT_DEFAULT_MINTIE               0       /* TODO: find the best value */
+
+
+/* Normally set when in production mode, setting the RT_G_DEBUG define
+ * to 0 will allow chucks of code to poof away at compile time (since
+ * they are truth-functionally constant (false)) This can boost
+ * raytrace performance considerably (~10%).
+ */
+#ifdef NO_DEBUG_CHECKING
+#  define RT_G_DEBUG 0
+#else
+#  define RT_G_DEBUG RTG.debug
+#endif
+
+/**
+ * Definition of global parallel-processing semaphores.
+ *
+ * res_syscall is now   BU_SEM_SYSCALL
+ */
+#define RT_SEM_TREE0    (BU_SEM_LAST)
+#define RT_SEM_TREE1    (RT_SEM_TREE0+1)
+#define RT_SEM_TREE2    (RT_SEM_TREE1+1)
+#define RT_SEM_TREE3    (RT_SEM_TREE2+1)
+#define RT_SEM_WORKER   (RT_SEM_TREE3+1)
+#define RT_SEM_STATS    (RT_SEM_WORKER+1)
+#define RT_SEM_RESULTS  (RT_SEM_STATS+1)
+#define RT_SEM_MODEL    (RT_SEM_RESULTS+1)
+
+#define RT_SEM_LAST     (RT_SEM_MODEL+1)
+
+
+#define BACKING_DIST    (-2.0)          /**< @brief  mm to look behind start point */
+#define OFFSET_DIST     0.01            /**< @brief  mm to advance point into box */
+
+/**
+ * FIXME: These should probably be vmath macros
+ */
+#define RT_BADNUM(n)    (!((n) >= -INFINITY && (n) <= INFINITY))
+#define RT_BADVEC(v)    (RT_BADNUM((v)[X]) || RT_BADNUM((v)[Y]) || RT_BADNUM((v)[Z]))
+
+/* FIXME: this is a dubious define that should be removed */
+#define RT_MAXLINE              10240
+
+#define RT_PART_NUBSPT  0
+#define RT_PART_NUGRID  1
+
+/*
+ *  * Replacements for definitions from vmath.h
+ *   */
+#undef V2PRINT
+#undef VPRINT
+#undef HPRINT
+#define V2PRINT(a, b) bu_log("%s (%g, %g)\n", a, (b)[0], (b)[1]);
+#define VPRINT(a, b) bu_log("%s (%g, %g, %g)\n", a, (b)[0], (b)[1], (b)[2])
+#define HPRINT(a, b) bu_log("%s (%g, %g, %g, %g)\n", a, (b)[0], (b)[1], (b)[2], (b)[3])
+
 
 /*
  * Local Variables:

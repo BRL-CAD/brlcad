@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @addtogroup g_ */
+/** @addtogroup librt */
 /** @{ */
 /** @file primitives/table.c
  *
@@ -34,10 +34,10 @@
 
 
 #include "vmath.h"
-#include "db.h"
+#include "rt/db4.h"
 #include "nmg.h"
 #include "raytrace.h"
-#include "rtgeom.h"
+#include "rt/geom.h"
 
 
 #define RT_DECLARE_INTERFACE(name) \
@@ -1003,7 +1003,7 @@ const struct rt_functab OBJ[] = {
 	NULL,
 	RTFUNCTAB_FUNC_PARAMS_CAST(rt_rhc_params),
 	RTFUNCTAB_FUNC_BBOX_CAST(rt_rhc_bbox),
-	NULL,
+	RTFUNCTAB_FUNC_VOLUME_CAST(rt_rhc_volume),
 	RTFUNCTAB_FUNC_SURF_AREA_CAST(rt_rhc_surf_area),
 	RTFUNCTAB_FUNC_CENTROID_CAST(rt_rhc_centroid),
 	NULL,

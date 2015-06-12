@@ -35,10 +35,11 @@
 
 /* interface headers */
 #include "bu/getopt.h"
+#include "bu/opt.h"
 #include "bu/parallel.h"
 #include "vmath.h"
 #include "nmg.h"
-#include "rtgeom.h"
+#include "rt/geom.h"
 #include "raytrace.h"
 
 
@@ -85,12 +86,74 @@ static int regions_tried = 0;
 static int regions_converted = 0;
 static int regions_written = 0;
 static int inches = 0;
+static int print_help = 0;
+
+static int
+parse_tol_abs(struct bu_vls *UNUSED(error_msg), int UNUSED(argc), const char **argv, void *UNUSED(set_var))
+{
+    ttol.abs = atof(argv[0]);
+    ttol.rel = 0.0;
+    return 1;
+}
+
+static int
+parse_tol_norm(struct bu_vls *UNUSED(error_msg), int UNUSED(argc), const char **argv, void *UNUSED(set_var))
+{
+    ttol.norm = atof(argv[0]);
+    ttol.rel = 0.0;
+    return 1;
+}
+
+static int
+parse_tol_dist(struct bu_vls *UNUSED(error_msg), int UNUSED(argc), const char **argv, void *UNUSED(set_var))
+{
+    tol.dist = atof(argv[0]);
+    tol.dist_sq = tol.dist * tol.dist;
+    rt_pr_tol(&tol);
+    return 1;
+}
+
+static int
+parse_debug_rt(struct bu_vls *UNUSED(error_msg), int UNUSED(argc), const char **argv, void *UNUSED(set_var))
+{
+    sscanf(argv[0], "%x", (unsigned int *)&RTG.debug);
+    return 1;
+}
+
+static int
+parse_debug_nmg(struct bu_vls *UNUSED(error_msg), int UNUSED(argc), const char **argv, void *UNUSED(set_var))
+{
+    sscanf(argv[0], "%x", (unsigned int *)&RTG.NMG_debug);
+    NMG_debug = RTG.NMG_debug;
+    return 1;
+}
+
+static struct bu_opt_desc options[] = {
+    {"?", "", NULL,         NULL,            &print_help,  "print help and exit"},
+    {"h", "", NULL,         NULL,            &print_help,  "print help and exit"},
+    {"i", "", NULL,         NULL,            &inches,      "change output units from mm to inches"},
+    {"m", "", NULL,         NULL,            &usemtl,      "output usemtl statements"},
+    {"u", "", NULL,         NULL,            &do_normals,  "output vertex normals"},
+    {"v", "", NULL,         NULL,            &verbose,     "verbose output"},
+    {"a", "", "#",          parse_tol_abs,   &ttol,        "absolute tolerance"},
+    {"n", "", "#",          parse_tol_norm,  &ttol,        "surface normal tolerance"},
+    {"D", "", "#",          parse_tol_dist,  &tol,         "distance tolerance"},
+    {"x", "", "level",      parse_debug_rt,  NULL,         "set RT debug flag"},
+    {"X", "", "level",      parse_debug_nmg, NULL,         "set NMG debug flag"},
+    {"e", "", "error_file", bu_opt_str,      &error_file,  "error file name"},
+    {"o", "", "output.obj", bu_opt_str,      &output_file, "output file name"},
+    {"P", "", "#",          bu_opt_int,      &ncpu,        "number of CPUs"},
+    {"r", "", "#",          bu_opt_fastf_t,  &ttol.rel,    "relative tolerance"},
+    BU_OPT_DESC_NULL
+};
 
 int
-main(int argc, char **argv)
+main(int argc, const char **argv)
 {
     int c;
     double percent;
+    struct bu_vls parse_msgs = BU_VLS_INIT_ZERO;
+    const char *prog_name = argv[0];
 
     bu_setprogname(argv[0]);
     bu_setlinebuf(stderr);
@@ -117,59 +180,16 @@ main(int argc, char **argv)
     BU_LIST_INIT(&RTG.rtg_vlfree);	/* for vlist macros */
 
     /* Get command line arguments. */
-    while ((c = bu_getopt(argc, argv, "mua:n:o:r:vx:D:P:X:e:ih?")) != -1) {
-	switch (c) {
-	    case 'm':		/* include 'usemtl' statements */
-		usemtl = 1;
-		break;
-	    case 'u':		/* Include vertexuse normals */
-		do_normals = 1;
-		break;
-	    case 'a':		/* Absolute tolerance. */
-		ttol.abs = atof(bu_optarg);
-		ttol.rel = 0.0;
-		break;
-	    case 'n':		/* Surface normal tolerance. */
-		ttol.norm = atof(bu_optarg);
-		ttol.rel = 0.0;
-		break;
-	    case 'o':		/* Output file name. */
-		output_file = bu_optarg;
-		break;
-	    case 'r':		/* Relative tolerance. */
-		ttol.rel = atof(bu_optarg);
-		break;
-	    case 'v':
-		verbose = 1;
-		break;
-	    case 'P':
-		ncpu = atoi(bu_optarg);
-		break;
-	    case 'x':
-		sscanf(bu_optarg, "%x", (unsigned int *)&RTG.debug);
-		break;
-	    case 'D':
-		tol.dist = atof(bu_optarg);
-		tol.dist_sq = tol.dist * tol.dist;
-		rt_pr_tol(&tol);
-		break;
-	    case 'X':
-		sscanf(bu_optarg, "%x", (unsigned int *)&RTG.NMG_debug);
-		NMG_debug = RTG.NMG_debug;
-		break;
-	    case 'e':		/* Error file name. */
-		error_file = bu_optarg;
-		break;
-	    case 'i':
-		inches = 1;
-		break;
-	    default:
-		print_usage(argv[0]);
-	}
-    }
+    ++argv; --argc;
 
-    if (bu_optind+1 >= argc)
-	print_usage(argv[0]);
+    argc = bu_opt_parse(&parse_msgs, argc, argv, options);
+
+    if (bu_vls_strlen(&parse_msgs) > 0) {
+	bu_log("%s\n", bu_vls_cstr(&parse_msgs));
+    }
+    if (argc < 2 || print_help) {
+	print_usage(prog_name);
+    }
 
     if (!output_file)
 	fp = stdout;
@@ -191,8 +211,6 @@ main(int argc, char **argv)
     }
 
     /* Open BRL-CAD database */
-    argc -= bu_optind;
-    argv += bu_optind;
     if ((dbip = db_open(argv[0], DB_OPEN_READONLY)) == DBI_NULL) {
 	perror(argv[0]);
 	bu_exit(1, "Unable to open geometry database file (%s)\n", argv[0]);
@@ -226,10 +244,10 @@ main(int argc, char **argv)
 
     if (regions_tried>0) {
 	percent = ((double)regions_converted * 100.0) / regions_tried;
-	printf("Tried %d regions, %d converted to NMG's successfully.  %g%%\n",
+	bu_log("Tried %d regions, %d converted to NMG's successfully.  %g%%\n",
 	       regions_tried, regions_converted, percent);
 	percent = ((double)regions_written * 100.0) / regions_tried;
-	printf("                 %d triangulated successfully. %g%%\n",
+	bu_log("                 %d triangulated successfully. %g%%\n",
 	       regions_written, percent);
     }
 
@@ -456,11 +474,6 @@ nmg_to_obj(struct nmgregion *r, const struct db_full_path *pathp, int UNUSED(reg
 	    }
 	}
     }
-    /*	regions_converted++;
-	printf("Processed region %s\n", region_name);
-	printf("Regions attempted = %d Regions done = %d\n", regions_tried, regions_converted);
-	fflush(stdout);
-    */
     vert_offset += numverts;
     bu_ptbl_free(&verts);
     if (do_normals) {
@@ -652,7 +665,7 @@ do_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union
 
 	npercent = (float)(regions_converted * 100) / regions_tried;
 	tpercent = (float)(regions_written * 100) / regions_tried;
-	printf("Tried %d regions; %d conv. to NMG's, %d conv. to tri.; nmgper = %.2f%%, triper = %.2f%%\n",
+	bu_log("Tried %d regions; %d conv. to NMG's, %d conv. to tri.; nmgper = %.2f%%, triper = %.2f%%\n",
 	       regions_tried, regions_converted, regions_written, npercent, tpercent);
     }
 

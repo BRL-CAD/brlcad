@@ -42,7 +42,7 @@
 #include "dm/dm_xvars.h"
 
 #include "vmath.h"
-#include "mater.h"
+#include "raytrace.h"
 #include "ged.h"
 
 #include "./mged.h"

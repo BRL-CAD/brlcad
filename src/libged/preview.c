@@ -433,7 +433,7 @@ ged_preview(struct ged *gedp, int argc, const char *argv[])
 	_ged_cvt_vlblock_to_solids(gedp, preview_vbp, "EYE_PATH", 0);
 
     if (preview_vbp) {
-	rt_vlblock_free(preview_vbp);
+	bn_vlblock_free(preview_vbp);
 	preview_vbp = (struct bn_vlblock *)NULL;
     }
     db_free_anim(gedp->ged_wdbp->dbip);	/* Forget any anim commands */

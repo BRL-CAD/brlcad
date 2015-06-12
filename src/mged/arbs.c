@@ -27,7 +27,7 @@
 
 #include "bu/vls.h"
 #include "vmath.h"
-#include "rtgeom.h"
+#include "rt/geom.h"
 #include "raytrace.h"
 #include "./mged.h"
 #include "./mged_dm.h"

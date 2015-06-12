@@ -31,8 +31,8 @@
 
 #include "bu/getopt.h"
 #include "ged.h"
-#include "db.h"
-#include "mater.h"
+#include "rt/db4.h"
+#include "raytrace.h"
 
 #include "./ged_private.h"
 

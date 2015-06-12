@@ -27,6 +27,10 @@
 #define RT_DB_DIFF_H
 
 #include "common.h"
+#include "bu/ptbl.h"
+#include "bn/tol.h"
+#include "rt/defines.h"
+#include "rt/db_instance.h"
 
 __BEGIN_DECLS
 

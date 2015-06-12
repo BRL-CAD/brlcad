@@ -31,7 +31,7 @@
 #include "bn.h"
 #include "raytrace.h"
 #include "wdb.h"
-#include "rtgeom.h"
+#include "rt/geom.h"
 
 extern struct rt_sketch_internal *sketch_start();
 

@@ -15,11 +15,6 @@ on-going issues.
 Recent Bugs
 -----------
 
-* rtg3 appears to be broken in latest trunk - it looks like it has
-  to do with the new icv logic, which assumes an image.  In the
-  case of rtg3, it's actually a text output that is specified with
-  the -o option
-
 * pixborder doesn't account for an edge case where the right edge of
   an image is expected to be colored (except for one pixel on the top
   edge).  Example:
@@ -141,8 +136,8 @@ Recent Bugs
 * bu_log() with a width specifier does not align like printf().
   Example: bu_log("%24s", str);
 
-* report that keep sometimes results in a .g file with unknown units
-  dbconcat also is reported to set the units to unknown if concating
+* report that "keep" sometimes results in a .g file with unknown units;
+  dbconcat also is reported to set the units to unknown if concatting
   a file with unknown units.
 
 * infinite loop in rt_find_backing_dist() raytracing a BoT (without

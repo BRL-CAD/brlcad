@@ -19,14 +19,14 @@
  */
 
 /*----------------------------------------------------------------------*/
-/* @file noise.h */
-/** @addtogroup noise */
-/** @{ */
 
-/** @brief
+/** @addtogroup noise
  *
+ * @brief
  * These noise functions provide mostly random noise at the integer
- * lattice points.  The functions should be evaluated at non-integer
+ * lattice points.
+ *
+ * The functions should be evaluated at non-integer
  * locations for their nature to be realized.
  *
  * Contains contributed code from:
@@ -34,6 +34,8 @@
  * Robert Skinner
  *
  */
+/** @{ */
+/* @file noise.h */
 
 #ifndef BN_NOISE_H
 #define BN_NOISE_H

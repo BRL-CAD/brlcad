@@ -34,8 +34,8 @@
 #include "vmath.h"
 #include "raytrace.h"
 #include "optical.h"
-#include "plot3.h"
-#include "light.h"
+#include "bn/plot3.h"
+#include "optical/light.h"
 #include "photonmap.h"
 
 #ifdef RT_MULTISPECTRAL
@@ -408,7 +408,7 @@ light_gen_sample_pts_hit(register struct application *ap, struct partition *Part
 	/* The inbound point is not against another object, so
 	 * light will be emitted in this direction
 	 */
-	if (&lsp->lt_sample_pts) {
+	if (lsp->lt_sample_pts) {
 	    light_pt_allocate(lsp);
 	    lpt = &lsp->lt_sample_pts[lsp->lt_pt_count++];
 	} else {
@@ -447,7 +447,7 @@ light_gen_sample_pts_hit(register struct application *ap, struct partition *Part
 	/* The out point isn't against another object, so light
 	 * will be emitted in this direction
 	 */
-	if (&lsp->lt_sample_pts) {
+	if (lsp->lt_sample_pts) {
 	    light_pt_allocate(lsp);
 	    lpt = &lsp->lt_sample_pts[lsp->lt_pt_count++];
 	} else {

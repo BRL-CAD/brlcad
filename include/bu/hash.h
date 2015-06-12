@@ -18,9 +18,6 @@
  * information.
  */
 
-/** @file hash.h
- *
- */
 #ifndef BU_HASH_H
 #define BU_HASH_H
 
@@ -30,13 +27,12 @@
 
 __BEGIN_DECLS
 
-/** @addtogroup hash */
-/** @{ */
-/** @file libbu/hash.c
- *
+/** @addtogroup bu_hash
  * @brief
  * An implementation of hash tables.
  */
+/** @{ */
+/** @file bu/hash.h */
 
 /**
  * A hash entry

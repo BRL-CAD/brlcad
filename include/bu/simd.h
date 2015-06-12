@@ -18,9 +18,6 @@
  * information.
  */
 
-/** @file simd.h
- *
- */
 #ifndef BU_SIMD_H
 #define BU_SIMD_H
 
@@ -30,12 +27,12 @@
 
 __BEGIN_DECLS
 
-/** @addtogroup simd */
-/** @{ */
-
-/** @file libbu/simd.c
- * Detect SIMD type at runtime.
+/** @addtogroup bu_simd
+ *  @brief
+ *  Single Instruction Multiple Data support.
  */
+/** @{ */
+/** @file bu/simd.h */
 
 #define BU_SIMD_SSE4_2 7
 #define BU_SIMD_SSE4_1 6

@@ -19,13 +19,11 @@
  */
 
 /*----------------------------------------------------------------------*/
-/* @file vert_tree.h */
-/** @addtogroup vtree */
-/** @{ */
-
-/**
+/** @addtogroup bn_vtree
+ *
  * @brief
  * Vertex tree support
+ *
  * Routines to manage a binary search tree of vertices.
  *
  * The actual vertices are stored in an array
@@ -33,6 +31,8 @@
  * The binary search tree stores indices into the array.
  *
  */
+/** @{ */
+/** @file vert_tree.h */
 
 #ifndef BN_VERT_TREE_H
 #define BN_VERT_TREE_H

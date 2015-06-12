@@ -18,9 +18,6 @@
  * information.
  */
 
-/** @file parse.h
- *
- */
 #ifndef BU_PARSE_H
 #define BU_PARSE_H
 
@@ -34,17 +31,22 @@
 
 __BEGIN_DECLS
 
-/*----------------------------------------------------------------------*/
-/* parse.c */
-/** @addtogroup parse */
-/** @{ */
-/*
- * Structure parse/print
+/** @addtogroup bu_parse
  *
+ * @brief
  * Definitions and data structures needed for routines that assign
  * values to elements of arbitrary data structures, the layout of
  * which is described by tables of "bu_structparse" structures.
+ *
+ * parse.c defines routines to assign values to elements of arbitrary structures.  The
+ * layout of a structure to be processed is described by a structure
+ * of type "bu_structparse", giving element names, element formats, an
+ * offset from the beginning of the structure, and a pointer to an
+ * optional "hooked" function that is called whenever that structure
+ * element is changed.
  */
+/** @{ */
+/** @file bu/parse.h */
 
 /**
  * The general problem of word-addressed hardware where (int *) and
@@ -245,17 +247,7 @@ typedef struct bu_external bu_external_t;
  */
 #define BU_EXTERNAL_IS_INITIALIZED(_p) (((struct bu_external *)(_p) != BU_EXTERNAL_NULL) && (_p)->ext_magic == BU_EXTERNAL_MAGIC)
 
-/** @file libbu/parse.c
- *
- * routines for parsing arbitrary structures
- *
- * Routines to assign values to elements of arbitrary structures.  The
- * layout of a structure to be processed is described by a structure
- * of type "bu_structparse", giving element names, element formats, an
- * offset from the beginning of the structure, and a pointer to an
- * optional "hooked" function that is called whenever that structure
- * element is changed.
- */
+/** @brief routines for parsing arbitrary structures */
 
 /**
  * ASCII to struct elements.
@@ -460,10 +452,7 @@ BU_EXPORT extern int bu_structparse_argv(struct bu_vls *str,
     }
 
 
-/** @file libbu/booleanize.c
- *
- * routines for parsing boolean values from strings
- */
+/** @brief routines for parsing boolean values from strings */
 
 /**
  * Returns truthfully if a given input string represents an

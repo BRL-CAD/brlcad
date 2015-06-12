@@ -19,12 +19,9 @@
  */
 
 /*----------------------------------------------------------------------*/
-/* @file qmath.h */
-/** @addtogroup mat */
-/** @{ */
-
-/** @brief
+/** @addtogroup bn_quat
  *
+ *  @brief
  *  Quaternion math routines.
  *
  *  Unit Quaternions:
@@ -54,6 +51,8 @@
  *  SIGGRAPH '89 course notes for "Math for SIGGRAPH", May 1989.
  *
  */
+/** @{ */
+/* @file qmath.h */
 
 #ifndef BN_QMATH_H
 #define BN_QMATH_H

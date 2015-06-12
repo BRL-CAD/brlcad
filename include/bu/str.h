@@ -18,9 +18,6 @@
  * information.
  */
 
-/** @file str.h
- *
- */
 #ifndef BU_STR_H
 #define BU_STR_H
 
@@ -29,15 +26,15 @@
 
 __BEGIN_DECLS
 
-/** @addtogroup str */
-/** @{ */
-
-/** @file libbu/str.c
+/** @addtogroup bu_str
  *
+ * @brief
  * Compatibility routines to various string processing functions
  * including strlcat and strlcpy.
  *
  */
+/** @{ */
+/** @file bu/str.h */
 
 /**
  * concatenate one string onto the end of another, returning the
@@ -135,8 +132,8 @@ BU_EXPORT extern int bu_strncasecmp(const char *string1, const char *string2, si
 #define BU_STR_EQUIV(s1, s2) (bu_strcasecmp((s1), (s2)) == 0)
 
 
-/** @file escape.c
- *
+/**
+ * @brief
  * These routines implement support for escaping and unescaping
  * generalized strings that may represent filesystem paths, URLs,
  * object lists, and more.
@@ -240,12 +237,7 @@ BU_EXPORT extern char *bu_str_escape(const char *input, const char *expression, 
  */
 BU_EXPORT extern char *bu_str_unescape(const char *input, char *output, size_t size);
 
-
-/** @file libbu/ctype.c
- *
- * Routines for checking ctypes.
- *
- */
+/** @brief Routines for checking ctypes. */
 BU_EXPORT extern int bu_str_isprint(const char *cp);
 
 /**
@@ -256,12 +248,7 @@ BU_EXPORT extern int bu_str_isprint(const char *cp);
  */
 BU_EXPORT extern int bu_gethostname(char *hostname, size_t len);
 
-/** @file libbu/argv.c
- *
- * Functions related to argv processing.
- *
- */
-
+/** @brief Functions related to argv processing. */
 
 /**
  * Build argv[] array from input buffer, by splitting whitespace

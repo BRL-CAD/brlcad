@@ -1,29 +1,27 @@
 set(bn_headers
   adc.h
   anim.h
-  chull.h
   clip.h
   complex.h
   defines.h
+  dvec.h
   mat.h
   msr.h
   multipoly.h
   noise.h
-  obr.h
-  plane_calc.h
-  plane_struct.h
-  polygon.h
+  plane.h
+  plot3.h
   poly.h
   qmath.h
   rand.h
   randmt.h
+  spm.h
   tabdata.h
-  tcl_encode.h
   bn_tcl.h
   tol.h
-  tri_ray.h
-  tri_tri.h
   vectfont.h
+  vector_fpu.h
+  vector_x86.h
   version.h
   vert_tree.h
   vlist.h

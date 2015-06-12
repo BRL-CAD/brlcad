@@ -29,7 +29,7 @@
 #include "bu/malloc.h"
 #include "bu/str.h"
 #include "vmath.h"
-#include "spm.h"
+#include "bn/spm.h"
 
 
 void

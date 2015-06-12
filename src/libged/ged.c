@@ -42,12 +42,11 @@
 #include "bu/sort.h"
 #include "vmath.h"
 #include "bn.h"
-#include "rtgeom.h"
+#include "rt/geom.h"
 #include "raytrace.h"
-#include "plot3.h"
-#include "mater.h"
+#include "bn/plot3.h"
 
-#include "solid.h"
+#include "rt/solid.h"
 
 #include "./ged_private.h"
 #include "./qray.h"

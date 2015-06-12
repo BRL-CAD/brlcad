@@ -274,7 +274,7 @@ joint_mesh(struct ged *gedp, int argc, const char *argv[])
      * each grip to every other grip in that list.
      */
     vbp = rt_vlblock_init();
-    vhead = rt_vlblock_find(vbp, 0x00, 0xff, 0xff);
+    vhead = bn_vlblock_find(vbp, 0x00, 0xff, 0xff);
 
     for (BU_LIST_FOR(jp, artic_joints, &artic_head)) {
 	i=0;
@@ -295,7 +295,7 @@ joint_mesh(struct ged *gedp, int argc, const char *argv[])
 
     _ged_cvt_vlblock_to_solids(gedp, vbp, name, 0);
 
-    rt_vlblock_free(vbp);
+    bn_vlblock_free(vbp);
     while (BU_LIST_WHILE(jp, artic_joints, &artic_head)) {
 	while (BU_LIST_WHILE(gp, artic_grips, &jp->head)) {
 	    BU_LIST_DEQUEUE(&gp->l);

@@ -31,12 +31,13 @@
 __BEGIN_DECLS
 
 /*----------------------------------------------------------------------*/
-/** @addtogroup vlb */
-/** @{ */
-/** @file libbu/vlb.c
- *
+/** @addtogroup bu_vlb
+ * @brief
  * The variable length buffer package.
  */
+/** @{ */
+/** @file bu/vlb.h */
+
 
 /**
  * Variable Length Buffer: bu_vlb support

@@ -27,6 +27,7 @@ set(documentation_DATA
   benchmark.tr
   brep.txt
   BRL-CAD.bib
+  code_review.txt
   cvs.txt
   description.txt
   ged.tr

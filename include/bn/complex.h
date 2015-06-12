@@ -19,13 +19,12 @@
  */
 
 /*----------------------------------------------------------------------*/
-/* @file complex.h */
-/** @addtogroup complex */
-/** @{ */
-
-/**
- *  @brief Complex numbers
+/** @addtogroup bn_complex
+ * @brief
+ * Complex numbers
  */
+/** @{ */
+/** @file complex.h */
 
 #ifndef BN_COMPLEX_H
 #define BN_COMPLEX_H

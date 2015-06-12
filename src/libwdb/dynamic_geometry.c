@@ -78,7 +78,7 @@ make_hole(struct rt_wdb *wdbp,		/* database to be modified */
     struct bu_vls tmp_name = BU_VLS_INIT_ZERO;
     int i, base_len, count=0;
 
-    RT_CHECK_WDB(wdbp);
+    RT_CK_WDB(wdbp);
 
     /* make sure we are only making holes in combinations, they do not
      * have to be regions

@@ -48,7 +48,6 @@ bu_fgets(char *s, int size, FILE *stream)
 
     /* check for EOF or error */
     if (feof(stream) || ferror(stream)) {
-	*s = '\0';
 	return (char *)NULL;
     }
 

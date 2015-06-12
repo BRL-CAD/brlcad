@@ -48,11 +48,11 @@
 #include "bu/units.h"
 #include "bn.h"
 #include "vmath.h"
-#include "db.h"
-#include "rtgeom.h"
+#include "rt/db4.h"
+#include "rt/geom.h"
 #include "ged.h"
 #include "wdb.h"
-#include "mater.h"
+#include "raytrace.h"
 #include "obj.h"
 
 #define WDB_TCL_READ_ERR { \

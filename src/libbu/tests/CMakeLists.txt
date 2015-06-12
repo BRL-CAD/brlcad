@@ -40,16 +40,13 @@ add_test(NAME bu_basename_sp__sp__sp_                            COMMAND tester_
 #      bu_file_path_component testing    #
 ##########################################
 BRLCAD_ADDEXEC(tester_bu_path_component    bu_path_component.c    libbu NO_INSTALL)
-add_test(NAME bu_path_component_null                       COMMAND tester_bu_path_component) # tests NULL
-add_test(NAME bu_path_component_empty                      COMMAND tester_bu_path_component 0) # tests empty
-add_test(NAME bu_path_component_sl_usr_sl_dir_sl_file_0    COMMAND tester_bu_path_component "/usr/dir/file.ext" "ext" 0)
-add_test(NAME bu_path_component_sl_usr_sl_dir_sl_file_1    COMMAND tester_bu_path_component "/usr/dir/file.ext" "file.ext" 1)
-add_test(NAME bu_path_component_sl_usr_sl_dir_sl_file_2    COMMAND tester_bu_path_component "/usr/dir/file.ext" "file" 2)
-add_test(NAME bu_path_component_sl_usr_sl_dir_sl_file_3    COMMAND tester_bu_path_component "/usr/dir/file.ext" "/usr/dir" 3)
-add_test(NAME bu_path_component_C_dir1_dir2_name_ext_4     COMMAND tester_bu_path_component "C:/dir1/dir2/name.ext" "C" 4)
-add_test(NAME bu_path_component_C_dir1_dir2_name_ext_5     COMMAND tester_bu_path_component "C:/dir1/dir2/name.ext" "/dir1/dir2/name.ext" 5)
-add_test(NAME bu_path_component_png:dir/file.ext_4         COMMAND tester_bu_path_component "png:dir/file.ext" "png" 4)
-add_test(NAME bu_path_component_png:dir/file.ext_5         COMMAND tester_bu_path_component "png:dir/file.ext" "dir/file.ext" 5)
+add_test(NAME bu_path_component_null                               COMMAND tester_bu_path_component) # tests NULL
+add_test(NAME bu_path_component_empty                              COMMAND tester_bu_path_component 0) # tests empty
+add_test(NAME bu_path_component_sl_usr_sl_dir_sl_file_ext          COMMAND tester_bu_path_component "/usr/dir/file.ext" "ext" 4)
+add_test(NAME bu_path_component_sl_usr_sl_dir_sl_file_base         COMMAND tester_bu_path_component "/usr/dir/file.ext" "file.ext" 2)
+add_test(NAME bu_path_component_sl_usr_sl_dir_sl_file_base_core    COMMAND tester_bu_path_component "/usr/dir/file.ext" "file" 3)
+add_test(NAME bu_path_component_sl_usr_sl_dir_sl_file_dir          COMMAND tester_bu_path_component "/usr/dir/file.ext" "/usr/dir" 0)
+add_test(NAME bu_path_component_sl_usr_sl_dir_sl_file_dir_core     COMMAND tester_bu_path_component "/usr/dir/file.ext" "/usr/dir/file" 1)
 
 
 ################################
@@ -431,6 +428,86 @@ add_test(NAME bu_badmagic_diff_magic  COMMAND tester_bu_badmagic 1)
 add_test(NAME bu_badmagic_normal      COMMAND tester_bu_badmagic 2)
 add_test(NAME bu_badmagic_null_ptr    COMMAND tester_bu_badmagic 3)
 add_test(NAME bu_badmagic_misaligned  COMMAND tester_bu_badmagic 4)
+
+#
+#  *********** opt.c tests ************
+#
+
+BRLCAD_ADDEXEC(tester_bu_opt opt.c libbu NO_INSTALL)
+add_test(NAME bu_opt_null  COMMAND tester_bu_opt 0 0 0)
+
+# Verbosity (custom handler) testing
+add_test(NAME bu_opt_1_v_00  COMMAND tester_bu_opt 1 v 0)
+add_test(NAME bu_opt_1_v_01  COMMAND tester_bu_opt 1 v 1)
+add_test(NAME bu_opt_1_v_02  COMMAND tester_bu_opt 1 v 2)
+add_test(NAME bu_opt_1_v_03  COMMAND tester_bu_opt 1 v 3)
+add_test(NAME bu_opt_1_v_04  COMMAND tester_bu_opt 1 v 4)
+add_test(NAME bu_opt_1_v_05  COMMAND tester_bu_opt 1 v 5)
+add_test(NAME bu_opt_1_v_06  COMMAND tester_bu_opt 1 v 6)
+add_test(NAME bu_opt_1_v_07  COMMAND tester_bu_opt 1 v 7)
+add_test(NAME bu_opt_1_v_08  COMMAND tester_bu_opt 1 v 8)
+add_test(NAME bu_opt_1_v_09  COMMAND tester_bu_opt 1 v 9)
+add_test(NAME bu_opt_1_v_10  COMMAND tester_bu_opt 1 v 10)
+add_test(NAME bu_opt_1_v_11  COMMAND tester_bu_opt 1 v 11)
+add_test(NAME bu_opt_1_v_12  COMMAND tester_bu_opt 1 v 12)
+add_test(NAME bu_opt_1_v_13  COMMAND tester_bu_opt 1 v 13)
+add_test(NAME bu_opt_1_v_14  COMMAND tester_bu_opt 1 v 14)
+
+# Help option testing
+add_test(NAME bu_opt_1_h_01  COMMAND tester_bu_opt 1 h 1)
+add_test(NAME bu_opt_1_h_02  COMMAND tester_bu_opt 1 h 2)
+add_test(NAME bu_opt_1_h_03  COMMAND tester_bu_opt 1 h 3)
+add_test(NAME bu_opt_1_h_04  COMMAND tester_bu_opt 1 h 4)
+add_test(NAME bu_opt_1_h_05  COMMAND tester_bu_opt 1 h 5)
+add_test(NAME bu_opt_1_h_06  COMMAND tester_bu_opt 1 h 6)
+add_test(NAME bu_opt_1_h_07  COMMAND tester_bu_opt 1 h 7)
+add_test(NAME bu_opt_1_h_08  COMMAND tester_bu_opt 1 h 8)
+add_test(NAME bu_opt_1_h_09  COMMAND tester_bu_opt 1 h 9)
+add_test(NAME bu_opt_1_h_10  COMMAND tester_bu_opt 1 h 10)
+
+# Boolean option testing
+add_test(NAME bu_opt_1_b_01  COMMAND tester_bu_opt 1 b 1)
+add_test(NAME bu_opt_1_b_02  COMMAND tester_bu_opt 1 b 2)
+add_test(NAME bu_opt_1_b_03  COMMAND tester_bu_opt 1 b 3)
+add_test(NAME bu_opt_1_b_04  COMMAND tester_bu_opt 1 b 4)
+
+# String option testing
+add_test(NAME bu_opt_1_s_01  COMMAND tester_bu_opt 1 s 1)
+add_test(NAME bu_opt_1_s_02  COMMAND tester_bu_opt 1 s 2)
+
+# Integer option testing
+add_test(NAME bu_opt_1_i_01  COMMAND tester_bu_opt 1 i 1)
+add_test(NAME bu_opt_1_i_02  COMMAND tester_bu_opt 1 i 2)
+add_test(NAME bu_opt_1_i_03  COMMAND tester_bu_opt 1 i 3)
+add_test(NAME bu_opt_1_i_04  COMMAND tester_bu_opt 1 i 4)
+
+# Long int option testing
+add_test(NAME bu_opt_1_l_01  COMMAND tester_bu_opt 1 l 1)
+add_test(NAME bu_opt_1_l_02  COMMAND tester_bu_opt 1 l 2)
+
+# fastf_t option testing
+add_test(NAME bu_opt_1_f_01  COMMAND tester_bu_opt 1 f 1)
+add_test(NAME bu_opt_1_f_02  COMMAND tester_bu_opt 1 f 2)
+add_test(NAME bu_opt_1_f_03  COMMAND tester_bu_opt 1 f 3)
+
+# non-static var assignment option testing (and also complex
+# custom arg processing testing)
+add_test(NAME bu_opt_2_color_00  COMMAND tester_bu_opt 2 C 0)
+add_test(NAME bu_opt_2_color_01  COMMAND tester_bu_opt 2 C 1)
+add_test(NAME bu_opt_2_color_02  COMMAND tester_bu_opt 2 C 2)
+add_test(NAME bu_opt_2_color_03  COMMAND tester_bu_opt 2 C 3)
+add_test(NAME bu_opt_2_color_04  COMMAND tester_bu_opt 2 C 4)
+add_test(NAME bu_opt_2_color_05  COMMAND tester_bu_opt 2 C 5)
+add_test(NAME bu_opt_2_color_06  COMMAND tester_bu_opt 2 C 6)
+add_test(NAME bu_opt_2_color_07  COMMAND tester_bu_opt 2 C 7)
+add_test(NAME bu_opt_2_color_08  COMMAND tester_bu_opt 2 C 8)
+add_test(NAME bu_opt_2_color_09  COMMAND tester_bu_opt 2 C 9)
+add_test(NAME bu_opt_2_color_10  COMMAND tester_bu_opt 2 C 10)
+add_test(NAME bu_opt_2_color_11  COMMAND tester_bu_opt 2 C 11)
+add_test(NAME bu_opt_2_color_12  COMMAND tester_bu_opt 2 C 12)
+add_test(NAME bu_opt_2_color_13  COMMAND tester_bu_opt 2 C 13)
+add_test(NAME bu_opt_2_color_14  COMMAND tester_bu_opt 2 C 14)
+add_test(NAME bu_opt_2_color_15  COMMAND tester_bu_opt 2 C 15)
 
 #
 #  *********** date-time.c tests ************

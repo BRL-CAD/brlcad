@@ -28,7 +28,7 @@
 #include "bu/getopt.h"
 #include "bu/file.h"
 #include "bu/log.h"
-#include "rtgeom.h"
+#include "rt/geom.h"
 #include "raytrace.h"
 #include "wdb.h"
 

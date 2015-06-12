@@ -19,11 +19,9 @@
  */
 
 /*----------------------------------------------------------------------*/
-/* @file wavelet.h */
-/** @addtogroup wavelet */
-/** @{ */
-
-/** @brief
+/** @addtogroup bn_wavelet
+ *
+ * @brief
  *  This is a standard wavelet library that takes a given data buffer of some data
  *  type and then performs a wavelet transform on that data.
  *
@@ -140,6 +138,8 @@
  *  bn_wlt_haar_1d_*_reconstruct(tbuffer, buffer, dimen, channels, sub_sz, limit)
  *
  */
+/** @{ */
+/** @file wavelet.h */
 
 #ifndef BN_WAVELET_H
 #define BN_WAVELET_H

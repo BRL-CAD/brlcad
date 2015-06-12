@@ -24,7 +24,7 @@
 #ifndef ADRT_LIBRENDER_CAMERA_H
 #define ADRT_LIBRENDER_CAMERA_H
 
-#include "tie.h"
+#include "rt/tie.h"
 #include "adrt.h"
 #include "render.h"
 

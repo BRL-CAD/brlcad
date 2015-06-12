@@ -640,7 +640,7 @@ nmg_eval_plot(struct nmg_bool_state *bs, int num)
 	} else {
 	    bu_log("null nmg_vlblock_anim_upcall, no animation\n");
 	}
-	rt_vlblock_free(vbp);
+	bn_vlblock_free(vbp);
     }
 }
 

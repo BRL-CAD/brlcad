@@ -17,11 +17,9 @@
 <refsynopsisdiv xml:id='synopsis'>
 <cmdsynopsis>
   <command>pix-bw</command>
-   <arg choice='opt'>
     <arg choice='opt'>-s <replaceable>squaresize</replaceable></arg>
-    <arg choice='opt'>
-     <arg choice='opt'>-w <replaceable>width</replaceable></arg>
-     <arg choice='opt'>-n <replaceable>height</replaceable></arg></arg></arg>
+    <arg choice='opt'>-w <replaceable>width</replaceable></arg>
+    <arg choice='opt'>-n <replaceable>height</replaceable></arg>
    <arg choice='opt'>
     <arg choice='opt'>-e <replaceable>ntsc|crt</replaceable></arg>
     <arg choice='opt'>
@@ -29,7 +27,8 @@
      <arg choice='opt'><arg choice='plain'>-G </arg><replaceable>g_weight</replaceable></arg>
      <arg choice='opt'><arg choice='plain'>-B </arg><replaceable>b_weight</replaceable></arg> </arg> </arg>
      <arg choice='opt'>-o <replaceable>out.bw</replaceable></arg>
-   <arg choice='opt'><replaceable>in.pix</replaceable></arg>
+   <arg choice='opt'>
+     <arg choice='opt'>&lt;</arg><replaceable>in.pix</replaceable></arg>
    <arg choice='plain'>&gt;</arg>
    <arg choice='plain'><replaceable>out.bw</replaceable></arg>
 </cmdsynopsis>
@@ -94,7 +93,8 @@ are 1.0 divided by the number of colors selected.</para>
 
 <refsect1 xml:id='examples'><title>EXAMPLES</title>
 <para>pix-bw -R0.0 -B0.0 &lt; <emphasis remap='I'>file.pix</emphasis> &gt; <emphasis remap='I'>file.bw</emphasis></para>
-<para>will equally blend the red and blue color planes.</para>
+<para>will equally blend the red and blue color planes; because -G is omitted, the green color plane is not considered.
+(Had "-G0.0" been included in this example, the three colors would have been weighted equally, as in the default condition.)</para>
 
 <para>pix-bw -R0.30 -G0.59 -B0.11 &lt; <emphasis remap='I'>file.pix</emphasis> &gt; <emphasis remap='I'>file.bw</emphasis></para>
 <para>

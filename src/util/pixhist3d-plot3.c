@@ -34,7 +34,7 @@
 #include "vmath.h"
 #include "bu/log.h"
 #include "bn.h"
-#include "plot3.h"
+#include "bn/plot3.h"
 
 
 FILE *fp;

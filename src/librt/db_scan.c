@@ -34,9 +34,8 @@
 
 #include "bu/units.h"
 #include "vmath.h"
-#include "db.h"
+#include "rt/db4.h"
 #include "raytrace.h"
-#include "mater.h"
 
 #include "./librt_private.h"
 

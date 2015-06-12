@@ -36,7 +36,7 @@
 #include "vmath.h"
 #include "nmg.h"
 #include "raytrace.h"
-#include "plot3.h"
+#include "bn/plot3.h"
 
 
 /* macros for comparing 2D points in scanline order */

@@ -32,8 +32,8 @@
 #include <string.h>
 
 #include "vmath.h"
-#include "nurb.h"
 #include "raytrace.h"
+#include "rt/nurb.h"
 #include "wdb.h"
 
 

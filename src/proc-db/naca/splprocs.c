@@ -203,7 +203,7 @@ InterpolatePolynomial(struct fortran_array *x, struct fortran_array *y, fastf_t 
 {
     int n = SIZE(x);
     struct fortran_array *du;
-    fastf_t sum;
+    fastf_t sum = 0.0;
     int i, j;
     ALLOCATE(du, n);
     VSETALLN(F2C(du), u, n);
@@ -373,6 +373,7 @@ Zeroin(fastf_t ax, fastf_t bx, fastf_t (*f)(fastf_t x), fastf_t tol)
     fb = f(b); /* should test that fa and fb have opposite signs */
     c = b;
     fc = fb;
+    e = b - a;
 
     for (k = 1; k <= MAX_ITER; k++) { /* begin iteration */
 	if (((fb > 0.0) && (fc > 0.0)) || ((fb < 0.0 && fc < 0.0))) {

@@ -30,9 +30,9 @@
 
 #include <time.h>
 
-#include "db.h"
-#include "mater.h"
-#include "rtgeom.h"
+#include "rt/db4.h"
+#include "raytrace.h"
+#include "rt/geom.h"
 #include "ged.h"
 
 __BEGIN_DECLS

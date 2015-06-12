@@ -47,7 +47,7 @@
 
 #include "bu/log.h"
 #include "bn.h"
-#include "anim.h"
+#include "bn/anim.h"
 #include "vmath.h"
 
 

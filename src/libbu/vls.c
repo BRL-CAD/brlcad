@@ -631,25 +631,33 @@ bu_vls_gets(struct bu_vls *vp, FILE *fp)
     startlen = bu_vls_strlen(vp);
 
     do {
+	size_t buflen;
+
 	bufp = bu_fgets(buffer, BUFSIZ+1, fp);
 
 	if (!bufp)
 	    return -1;
 
+	/* an empty parse means we're done */
+	buflen = strlen(bufp);
+	if (buflen == 0) {
+	    break;
+	}
+
 	/* keep reading if we just filled the buffer */
-	if ((strlen(bufp) == BUFSIZ) && (bufp[BUFSIZ-1] != '\n') && (bufp[BUFSIZ-1] != '\r')) {
+	if ((buflen == BUFSIZ) && (bufp[BUFSIZ-1] != '\n') && (bufp[BUFSIZ-1] != '\r')) {
 	    done = 0;
 	} else {
 	    done = 1;
 	}
 
 	/* strip the trailing EOL (or at least part of it) */
-	if ((bufp[strlen(bufp)-1] == '\n') || (bufp[strlen(bufp)-1] == '\r'))
-	    bufp[strlen(bufp)-1] = '\0';
+	if ((bufp[buflen-1] == '\n') || (bufp[buflen-1] == '\r'))
+	    bufp[buflen-1] = '\0';
 
 	/* handle \r\n lines */
-	if (bufp[strlen(bufp)-1] == '\r')
-	    bufp[strlen(bufp)-1] = '\0';
+	if (bufp[buflen-1] == '\r')
+	    bufp[buflen-1] = '\0';
 
 	bu_vls_printf(vp, "%s", bufp);
     } while (!done);

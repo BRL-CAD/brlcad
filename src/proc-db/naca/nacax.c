@@ -508,15 +508,15 @@ LoadX(int denCode, int nx, struct fortran_array *x)
 			      0.96,0.97,0.975,0.98,0.985,0.99,0.995,0.999,1.0};
     switch (denCode) {
     case 2:
-	nx = 26;
+	nx = (int) (sizeof(MEDIUM) / sizeof(fastf_t));
 	VMOVEN(F2C(x), MEDIUM, nx);
 	break;
     case 3:
-	nx = 64;
+	nx = (int) (sizeof(FINE) / sizeof(fastf_t));
 	VMOVEN(F2C(x), FINE, nx);
 	break;
     default: /* denCode = 1 and anything else (probably an accident) */
-	nx = 98;
+	nx = (int) (sizeof(COARSE) / sizeof(fastf_t));
 	VMOVEN(F2C(x), COARSE, nx);
 	break;
     }
@@ -1069,7 +1069,7 @@ Thickness6(int family, fastf_t toc, struct fortran_array *x,
     if (ypp) { VSETALLN(F2C(ypp), 0.0, n); }
 
     SetSixDigitPoints(family, toc, xt, yt);
-    VSCALEN(F2C(minus_yt), F2C(yt), 201, -1);
+    VSCALEN(F2C(minus_yt), F2C(yt), -1, 201);
     ParametrizeAirfoil(xt, yt, xt, minus_yt, sLocal, xLocal, yLocal);
 
     FMMspline(sLocal, xLocal, xpLocal);

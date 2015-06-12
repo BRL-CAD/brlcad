@@ -36,7 +36,7 @@
 #include "bu/malloc.h"
 #include "bu/str.h"
 #include "bn.h"
-#include "anim.h"
+#include "bn/anim.h"
 #include "vmath.h"
 
 #include "./cattrack.h"

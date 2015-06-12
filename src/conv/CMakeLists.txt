@@ -10,7 +10,9 @@ add_definitions(
   )
 
 add_subdirectory(3dm)
+add_subdirectory(gcv)
 add_subdirectory(step)
+add_subdirectory(csg)
 
 add_subdirectory(iges)
 add_subdirectory(intaval)

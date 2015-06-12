@@ -158,7 +158,7 @@ FILES="`grep -I -e '#[[:space:]]*include' $SRCFILES $INCFILES | grep -E 'common.
 #done`"
 
 LEXERS="schema.h obj_grammar.c obj_grammar.cpp obj_scanner.h points_scan.c script.c"
-EXEMPT="bnetwork.h bio.h config_win.h pstdint.h uce-dirent.h ttcp.c $LEXERS"
+EXEMPT="bnetwork.h bio.h config_win.h pstdint.h uce-dirent.h ttcp.c optionparser.h $LEXERS"
 
 FOUND=
 for file in $FILES ; do
@@ -222,8 +222,9 @@ for func in fgets abort dirname getopt strcat strncat strlcat strcpy strncpy str
 | sed 's/.*\/bu\/log\.h.*//' \
 | sed 's/.*\/cursor\.c.*//g' \
 | sed 's/.*\/CONFIG_CONTROL_DESIGN.*//' \
-| sed 's/.*\/db\.h.*strncpy.*//' \
+| sed 's/.*\/rt\/db4\.h.*strncpy.*//' \
 | sed 's/.*\/file\.c:.*remove.*//' \
+| sed 's/.*\/optionparser\.h.*//g' \
 | sed 's/.*\/str\.c:.*strcasecmp.*//' \
 | sed 's/.*\/str\.c:.*strcmp.*//' \
 | sed 's/.*\/str\.c:.*strlcat.*//' \

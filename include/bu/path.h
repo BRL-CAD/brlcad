@@ -18,12 +18,6 @@
  * information.
  */
 
-/**  @defgroup io Input/Output */
-/**   @defgroup path Path Processing */
-
-/** @file path.h
- *
- */
 #ifndef BU_PATH_H
 #define BU_PATH_H
 
@@ -42,18 +36,21 @@
 
 __BEGIN_DECLS
 
-/** @addtogroup path */
-/** @{ */
-/** @file libbu/path.c */
-
-/**
- * Support routines for working with path strings, both
- * filesystem paths and .g database hierarchy paths
+/** @addtogroup bu_path
  *
- * Routines in this header have no knowledge of the
- * file system, beyond an awareness of the path separator
- * in use in the working operating system environment.
+ *  @brief
+ *  Functionality for processing operating system and geometry database path
+ *  strings.
+ *
+ *  Routines in this header have no knowledge of the file system,
+ *  beyond an awareness of the path separator in use in the working operating
+ *  system environment. They will not check for the presence or absence of
+ *  objects on disk or in a geometry database - they operate only on the the
+ *  path string itself.  Any validation of the path is the responsibility of
+ *  the caller.
  */
+/** @{ */
+/** @file bu/path.h */
 
 /**
  * Given a string containing a hierarchical path, return a dynamic
@@ -73,18 +70,20 @@ __BEGIN_DECLS
  *
  * Examples of strings returned:
  *
- *      /usr/dir/file   /usr/dir
- * @n   /usr/dir/       /usr
- * @n   /usr/file       /usr
- * @n   /usr/           /
- * @n   /usr            /
- * @n   /               /
- * @n   .               .
- * @n   ..              .
- * @n   usr             .
- * @n   a/b             a
- * @n   a/              .
- * @n   ../a/b          ../a
+ * Input String  | Output String
+ * ------------- | -------------
+ * /usr/dir/file | /usr/dir
+ * /usr/dir/     | /usr
+ * /usr/file     | /usr
+ * /usr/         | /
+ * /usr          | /
+ * /             | /
+ * .             | .
+ * ..            | .
+ * usr           | .
+ * a/b           | a
+ * a/            | .
+ * ../a/b        | ../a
  *
  * This routine will return "." if other valid results are not available
  * but should never return NULL.
@@ -114,17 +113,20 @@ BU_EXPORT extern char *bu_dirname(const char *path);
  *
  * Examples of strings returned:
  *
- *      /usr/dir/file   file
- * @n   /usr/dir/       dir
- * @n   /usr/           usr
- * @n   /usr            usr
- * @n   /               /
- * @n   .               .
- * @n   ..              ..
- * @n   usr             usr
- * @n   a/b             b
- * @n   a/              a
- * @n   ///             /
+ * Input String  | Output String
+ * ------------- | -------------
+ * /usr/dir/file | file
+ * /usr/dir/     | dir
+ * /usr/         | usr
+ * /usr          | usr
+ * /             | /
+ * .             | .
+ * ..            | ..
+ * usr           | usr
+ * a/b           | b
+ * a/            | a
+ * ///           | /
+ *
  */
 BU_EXPORT extern void bu_basename(char *basename, const char *path);
 
@@ -136,43 +138,31 @@ BU_EXPORT extern void bu_basename(char *basename, const char *path);
  * A STATIC buffer is returned.  It is the caller's responsibility to
  * call bu_strdup() or make other provisions to save the returned
  * string, before calling again.
- */
+  */
 BU_EXPORT extern const char *bu_normalize(const char *path);
 
 /**
- * Attempts to extract a component from a file path.
- * Supported components are:
+ * Components of a path recognized by libbu, identified below in the
+ * context of the example path:
  *
- * PATH_DIRECTORY       Directory without the last name.
- * PATH_FILENAME        Name after last directory separator in path
- * PATH_FILE_EXTENSION  File extension of PATH_FILENAME
- * PATH_ROOT_FILENAME   PATH_FILENAME without PATH_FILE_EXTENSION
- * PATH_PROTOCOL        If the path has a ':' character, return the string before the first ':'
- * PATH_ADDRESS         If the path has a ':' character, return the string after the first ':'
- *
- * Both PATH_PROTOCOL and PATH_ADDRESS will return 0 if there
- * is not at least one ':' character in the path.  The path
- * protocol is useful for obtaining driver letters in DOS style
- * paths, or formats in Imagemagick style format prefix specifiers:
- *
- * bu_path_component(*out, "C:/some/file/path", PATH_PROTOCOL) -> "C"
- * bu_path_component(*out, "C:/some/file/path", PATH_ADDRESS) -> "/some/file/path"
- * bu_path_component(*out, "png:/some/image/file ", PATH_PROTOCOL) -> "png"
- * bu_path_component(*out, "png:/some/image/file ", PATH_ADDRESS) -> "/some/image/file"
+ *     /dir1/dir2/file.ext
+ */
+typedef enum {
+    PATH_DIRNAME = 0,   /*!< /dir1/dir2 */
+    PATH_DIRNAME_CORE,  /*!< /dir1/dir2/file */
+    PATH_BASENAME,      /*!< file.ext */
+    PATH_BASENAME_CORE, /*!< file */
+    PATH_EXTENSION      /*!< ext */
+} path_component_t;
+
+
+/**
+ * Attempt to extract a component from a file path.
  *
  * returns 0 if the specified component was not found, 1
  * if it was.  If the bu_vls pointer component is not NULL,
  * the component will be written to the vls.
  */
-
-typedef enum {
-    PATH_FILE_EXTENSION,
-    PATH_FILENAME,
-    PATH_ROOT_FILENAME,
-    PATH_DIRECTORY,
-    PATH_PROTOCOL,
-    PATH_ADDRESS
-} path_component_t;
 
 BU_EXPORT extern int bu_path_component(struct bu_vls *component,
 	                               const char *path,
@@ -192,10 +182,6 @@ BU_EXPORT extern char **bu_argv_from_path(const char *path, int *ac);
 
 
 
-/** @file libbu/fnmatch.c
- *
- */
-
 #define BU_FNMATCH_NOESCAPE    0x01 /**< bu_fnmatch() flag.  Backslash escaping. */
 #define BU_FNMATCH_PATHNAME    0x02 /**< bu_fnmatch() flag.  Slash must be matched by slash. */
 #define BU_FNMATCH_PERIOD      0x04 /**< bu_fnmatch() flag.  Period must be matched by period. */
@@ -203,93 +189,14 @@ BU_EXPORT extern char **bu_argv_from_path(const char *path, int *ac);
 #define BU_FNMATCH_CASEFOLD    0x10 /**< bu_fnmatch() flag.  Case-insensitive searching. */
 
 /**
- * bu_fnmatch() return value when no match is found (0 if found)
- */
-#define BU_FNMATCH_NOMATCH 1       /* Match failed. */
-
-/**
  * Function fnmatch() as specified in POSIX 1003.2-1992, section B.6.
  * Compares a string filename or pathname to a pattern.
  *
- * Returns 0 if a match is found or BU_FNMATCH_NOMATCH otherwise.
+ * Returns 0 if a match is found or 1 otherwise.
  *
  */
 BU_EXPORT extern int bu_fnmatch(const char *pattern, const char *pathname, int flags);
 
-
-
-/*################################*/
-/* BRL-CAD specific path routines */
-/*################################*/
-
-
-/**@file libbu/brlcad_path.c
- *
- * Report the relative paths being used to hold BRL-CAD applications,
- * libraries, and data.
- *
- * Recognized keys include:
- *
- *   bin     - Directory containing binary applications
- *   lib     - Directory containing libraries
- *   include - Directory containing headers
- *   data    - Directory containing shared data
- *   share   - Directory containing shared data
- *   doc     - Directory containing documentation
- *   man     - Directory containing Unix man pages
- *
- * @return
- * A STATIC buffer is returned.  It is the caller's responsibility to
- * call bu_strdup() or make other provisions to save the returned
- * string, before calling again.
- */
-
-/**
- * @brief
- * A support routine to provide the executable code with the path
- * to where the BRL-CAD programs and libraries are installed.
- *
- */
-BU_EXPORT extern const char *bu_brlcad_dir(const char *dirkey, int fail_quietly);
-
-/**
- * Locate where the BRL-CAD applications and libraries are installed.
- *
- * The BRL-CAD root is searched for in the following order of
- * precedence by testing for the rhs existence if provided or the
- * directory existence otherwise:
- *
- *   BRLCAD_ROOT environment variable if set
- *   BRLCAD_ROOT compile-time path
- *   run-time path identification
- *   /usr/brlcad static path
- *   current directory
- *
- * @return
- * A STATIC buffer is returned.  It is the caller's responsibility to
- * call bu_strdup() or make other provisions to save the returned
- * string, before calling again.
- */
-BU_EXPORT extern const char *bu_brlcad_root(const char *rhs, int fail_quietly);
-
-/**
- * Locate where the BRL-CAD data resources are installed.
- *
- * The BRL-CAD data resources are searched for in the following order
- * of precedence by testing for the existence of rhs if provided or
- * the directory existence otherwise:
- *
- *   BRLCAD_DATA environment variable if set
- *   BRLCAD_DATA compile-time path
- *   bu_brlcad_root/DATA_DIR path
- *   bu_brlcad_root/share path
- *   current directory
- *
- * A STATIC buffer is returned.  It is the caller's responsibility to
- * call bu_strdup() or make other provisions to save the returned
- * string, before calling again.
- */
-BU_EXPORT extern const char *bu_brlcad_data(const char *rhs, int fail_quietly);
 
 
 /** @} */

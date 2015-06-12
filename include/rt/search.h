@@ -17,12 +17,12 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @addtogroup librt */
-/** @{ */
-/** @file include/rt/search.h
- *
+/** @addtogroup db_search
+ * @brief
  * Functionality for searching .g files
  */
+/** @{ */
+/** @file include/rt/search.h */
 
 #ifndef RT_SEARCH_H
 #define RT_SEARCH_H
@@ -122,6 +122,38 @@ RT_EXPORT extern int db_search(struct bu_ptbl *results,
 RT_EXPORT extern void db_search_free(struct bu_ptbl *search_results);
 
 
+/* db_ls.c */
+/**
+ * db_ls takes a database instance pointer and assembles a directory
+ * pointer array of objects in the database according to a set of
+ * flags.  An optional pattern can be supplied for match filtering
+ * via globbing rules (see bu_fnmatch).  If pattern is NULL, filtering
+ * is performed using only the flags.
+ *
+ * The caller is responsible for freeing the array.
+ *
+ * Returns -
+ * integer count of objects in dpv
+ * struct directory ** array of objects in dpv via argument
+ *
+ */
+RT_EXPORT extern size_t db_ls(const struct db_i *dbip,
+                              int flags,
+                              const char *pattern,
+                              struct directory ***dpv);
+
+/* These are the possible listing flags. */
+#define DB_LS_PRIM         0x1    /**< @brief filter for primitives (solids)*/
+#define DB_LS_COMB         0x2    /**< @brief filter for combinations */
+#define DB_LS_REGION       0x4    /**< @brief filter for regions */
+#define DB_LS_HIDDEN       0x8    /**< @brief include hidden objects in results */
+#define DB_LS_NON_GEOM     0x10   /**< @brief filter for non-geometry objects */
+#define DB_LS_TOPS         0x20   /**< @brief filter for objects un-referenced by other objects */
+/* TODO - implement this flag
+#define DB_LS_REGEX        0x40*/ /* interpret pattern using regex rules, instead of
+                                              globbing rules (default) */
+
+
 
 /***************************************************************
  * DEPRECATED - all structures and functions below this notice
@@ -145,6 +177,11 @@ DEPRECATED RT_EXPORT extern struct db_full_path_list *db_search_full_paths(void 
 DEPRECATED RT_EXPORT extern struct bu_ptbl *db_search_unique_objects(void *searchplan,
 								     struct db_full_path_list *path_list,
 								     struct db_i *dbip);
+/* DEPRECATED: Use db_ls() instead of this function. */
+DEPRECATED RT_EXPORT extern int db_regexp_match_all(struct bu_vls *dest,
+                                         struct db_i *dbip,
+                                         const char *pattern);
+
 
 __END_DECLS
 

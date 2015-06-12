@@ -17,6 +17,8 @@ set(bu_headers
   magic.h
   malloc.h
   mapped_file.h
+  mime.h
+  opt.h
   parallel.h
   parse.h
   path.h
@@ -35,7 +37,6 @@ set(bu_headers
 install(FILES ${bu_headers} DESTINATION ${INCLUDE_DIR}/brlcad/bu)
 
 CMAKEFILES(${bu_headers})
-CMAKEFILES(mime.types mime_cad.types)
 
 # Local Variables:
 # tab-width: 8

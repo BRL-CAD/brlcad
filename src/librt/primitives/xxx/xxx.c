@@ -23,48 +23,63 @@
  *
  * Intersect a ray with an 'xxx' primitive object.
  *
- * Adding a new solid type:
- *
- * Design disk record
- *
- * define rt_xxx_internal --- parameters for solid
- * define xxx_specific --- raytracing form, possibly w/precomputed terms
- * define rt_xxx_parse --- struct bu_structparse for "db get", "db adjust", ...
- *
- * code import/export4/describe/print/ifree/plot/prep/shot/curve/uv/tess
- *
- * edit db.h add solidrec s_type define
- * edit rtgeom.h to add rt_xxx_internal
- * edit bu/magic.h to add RT_XXX_INTERNAL_MAGIC
- * edit table.c:
- *	RT_DECLARE_INTERFACE()
- *	struct rt_functab entry
- *	rt_id_solid()
- * edit raytrace.h to make ID_XXX, increment ID_MAXIMUM
- * edit db_scan.c to add the new solid to db_scan()
- * edit CMakeLists.txt to add g_xxx.c to compile
- *
- * go to src/libwdb and create mk_xxx() routine
- * go to src/conv and edit g2asc.c and asc2g.c to support the new solid
- * go to src/librt and edit tcl.c to add the new solid to
- *	rt_solid_type_lookup[]
- *	also add the interface table and to rt_id_solid() in table.c;
- *	you MUST add the appropriate RTFUNCTAB_FUNC_X_CAST macro
- *	for each function rt_xxx_X you add (see entire list in raytrace.h)
- * go to src/mged and create the edit support
- *
  */
 /** @} */
+
+/*****************************************
+ * HOW TO ADD A NEW GEOMETRIC OBJECT TYPE:
+ *
+ * design a (nameless) in-memory data structure
+ *
+ * edit rt/defines.h add ID_XXX, update ID_MAXIMUM and ID_MAX_SOLID
+ * edit rt/db5.h add DB5_MINORTYPE_BRLCAD_XXX define
+ * edit rt/geom.h to add rt_xxx_internal
+ *   struct with parameters for this new object
+ * edit bu/magic.h to add RT_XXX_INTERNAL_MAGIC
+ * edit src/librt/primitives/xxx/xxx.c
+ *   minimally, implement callback code for:
+ *     export5/import5 == .g writing/reading
+ *     make == 'make' default constructor command
+ *     describe == 'l' command
+ *     ifree == db memory management
+ *     free == raytrace memory management
+ *     plot == wireframe visualization
+ *     xform == matrix editing
+ *     prep/shot/norm == ray tracing
+ *   ideally, also implement callback code for:
+ *     get/adjust == g2asc, get/put/adjust commands
+ *     form == 'form' command
+ *     bbox == bounding box, 'bb' command
+ *     volume/surf_area/centroid == 'analyze' command
+ *     brep == conversion to NURBS
+ *     adaptive_plot == LoD wireframe
+ *     uv/curve == texture mapping, visualization
+ * edit src/librt/primitives/xxx/xxx.h,
+ *   define xxx_specific: raytracing form with precomputed terms
+ *   define rt_xxx_parse: bu_structparse for db get, adjust, ...
+ * edit table.c:
+ *   RT_DECLARE_INTERFACE()
+ *   struct rt_functab entry
+ * edit src/librt/CMakeLists.txt to add xxx.c to compile
+ * edit src/libwdb/xxx.c and create an mk_xxx() routine
+ * edit src/libwdb/CMakeLists.txt to add xxx.c to compile
+ * edit src/libged/make.c and add 'make' support for xxx
+ * edit src/libged/typein.c and add 'in' support for xxx
+ * edit src/tclscripts/mged to add to mged GUI
+ * edit src/tclscripts/archer to add to archer GUI
+ *
+ */
 
 #include "common.h"
 
 #include <stdio.h>
 #include <math.h>
 
+#include "bu/cv.h"
 #include "vmath.h"
-#include "db.h"
+#include "rt/db4.h"
 #include "nmg.h"
-#include "rtgeom.h"
+#include "rt/geom.h"
 #include "raytrace.h"
 
 /* local interface header */
@@ -88,6 +103,7 @@ int
 rt_xxx_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 {
     struct rt_xxx_internal *xxx_ip;
+    struct xxx_specific *xxx;
 
     if (stp) RT_CK_SOLTAB(stp);
     RT_CK_DB_INTERNAL(ip);
@@ -95,6 +111,12 @@ rt_xxx_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 
     xxx_ip = (struct rt_xxx_internal *)ip->idb_ptr;
     RT_XXX_CK_MAGIC(xxx_ip);
+
+    BU_GET(xxx, struct xxx_specific);
+    stp->st_specific = (void *)xxx;
+
+    /* fill in xxx_specific here */
+    VSETALL(xxx->xxx_V, 0.0);
 
     return 0;
 }
@@ -225,7 +247,10 @@ rt_xxx_free(struct soltab *stp)
     xxx = (struct xxx_specific *)stp->st_specific;
     if (!xxx) return;
 
-    bu_free((char *)xxx, "xxx_specific");
+    /* release xxx_specific memory, however allocated in _prep() */
+    BU_PUT(xxx, struct xxx_specific);
+
+    return;
 }
 
 
@@ -260,6 +285,44 @@ rt_xxx_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     RT_XXX_CK_MAGIC(xxx_ip);
 
     return -1;
+}
+
+
+/**
+ * Export an XXX from internal form to external format.  Note that
+ * this means converting all integers to Big-Endian format and
+ * floating point data to IEEE double.
+ *
+ * Apply the transformation to mm units as well.
+ */
+int
+rt_xxx_export5(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip)
+{
+    struct rt_xxx_internal *xxx_ip;
+
+    /* must be double for import and export */
+    double vec[ELEMENTS_PER_VECT];
+
+    RT_CK_DB_INTERNAL(ip);
+    if (ip->idb_type != ID_XXX) return -1;
+    xxx_ip = (struct rt_xxx_internal *)ip->idb_ptr;
+    RT_XXX_CK_MAGIC(xxx_ip);
+    if (dbip) RT_CK_DBI(dbip);
+
+    BU_CK_EXTERNAL(ep);
+    ep->ext_nbytes = SIZEOF_NETWORK_DOUBLE * ELEMENTS_PER_VECT;
+    ep->ext_buf = (uint8_t *)bu_calloc(1, ep->ext_nbytes, "xxx external");
+
+    /* Since libwdb users may want to operate in units other than mm,
+     * we offer the opportunity to scale the solid (to get it into mm)
+     * on the way out.
+     */
+    VSCALE(vec, xxx_ip->v, local2mm);
+
+    /* Convert from internal (host) to database (network) format */
+    bu_cv_htond(ep->ext_buf, (unsigned char *)vec, ELEMENTS_PER_VECT);
+
+    return 0;
 }
 
 
@@ -304,44 +367,6 @@ rt_xxx_import5(struct rt_db_internal *ip, const struct bu_external *ep, const ma
     MAT4X3PNT(xxx_ip->v, mat, vv);
 
     return 0;			/* OK */
-}
-
-
-/**
- * Export an XXX from internal form to external format.  Note that
- * this means converting all integers to Big-Endian format and
- * floating point data to IEEE double.
- *
- * Apply the transformation to mm units as well.
- */
-int
-rt_xxx_export5(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip)
-{
-    struct rt_xxx_internal *xxx_ip;
-
-    /* must be double for import and export */
-    double vec[ELEMENTS_PER_VECT];
-
-    RT_CK_DB_INTERNAL(ip);
-    if (ip->idb_type != ID_XXX) return -1;
-    xxx_ip = (struct rt_xxx_internal *)ip->idb_ptr;
-    RT_XXX_CK_MAGIC(xxx_ip);
-    if (dbip) RT_CK_DBI(dbip);
-
-    BU_CK_EXTERNAL(ep);
-    ep->ext_nbytes = SIZEOF_NETWORK_DOUBLE * ELEMENTS_PER_VECT;
-    ep->ext_buf = (void *)bu_calloc(1, ep->ext_nbytes, "xxx external");
-
-    /* Since libwdb users may want to operate in units other than mm,
-     * we offer the opportunity to scale the solid (to get it into mm)
-     * on the way out.
-     */
-    VSCALE(vec, xxx_ip->v, local2mm);
-
-    /* Convert from internal (host) to database (network) format */
-    bu_cv_htond(ep->ext_buf, (unsigned char *)vec, ELEMENTS_PER_VECT);
-
-    return 0;
 }
 
 

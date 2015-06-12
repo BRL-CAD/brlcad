@@ -49,12 +49,11 @@
 #include <math.h>
 
 #include "vmath.h"
-#include "mater.h"
 #include "icv.h"
 #include "raytrace.h"
 #include "bu/cv.h"
 #include "fb.h"
-#include "plot3.h"
+#include "bn/plot3.h"
 #include "photonmap.h"
 #include "scanline.h"
 
