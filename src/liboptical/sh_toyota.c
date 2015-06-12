@@ -40,11 +40,10 @@
 #include <string.h>
 
 #include "vmath.h"
-#include "mater.h"
 #include "raytrace.h"
 #include "optical.h"
-#include "plot3.h"
-#include "light.h"
+#include "bn/plot3.h"
+#include "optical/light.h"
 
 
 /* Sky onditions for luminance calculations. */

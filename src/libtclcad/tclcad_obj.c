@@ -45,15 +45,16 @@
 
 #include "bn.h"
 #include "bu/cmd.h"
+#include "bu/path.h"
 #include "bu/units.h"
 #include "vmath.h"
-#include "db.h"
-#include "rtgeom.h"
+#include "rt/db4.h"
+#include "rt/geom.h"
 #include "wdb.h"
-#include "mater.h"
+#include "raytrace.h"
 #include "tclcad.h"
 
-#include "solid.h"
+#include "rt/solid.h"
 #include "dm.h"
 #include "dm/bview.h"
 #include "obj.h"
@@ -4201,6 +4202,33 @@ to_data_polygons(struct ged *gedp,
 	gdpsp->gdps_polygons.gp_polygon[i].gp_line_width = gdpsp->gdps_line_width;
 
 	to_refresh_view(gdvp);
+	return GED_OK;
+    }
+
+    if (BU_STR_EQUAL(argv[2], "fill")) {
+	size_t i;
+	vect2d_t vdir;
+	fastf_t vdelta;
+
+	if (argc != 6)
+	    goto bad;
+
+	if (bu_sscanf(argv[3], "%zu", &i) != 1 ||
+	    i >= gdpsp->gdps_polygons.gp_num_polygons)
+	    goto bad;
+
+	if (bu_sscanf(argv[4], "%lf %lf", &vdir[X], &vdir[Y]) != 2) {
+	    bu_vls_printf(gedp->ged_result_str, "%s: bad dir", argv[0], argv[4]);
+	    goto bad;
+	}
+
+	if (bu_sscanf(argv[5], "%lf", &vdelta) != 1) {
+	    bu_vls_printf(gedp->ged_result_str, "%s: bad delta", argv[0], argv[5]);
+	    goto bad;
+	}
+
+	ged_polygon_fill_segments(gedp, &gdpsp->gdps_polygons.gp_polygon[i], vdir, vdelta);
+
 	return GED_OK;
     }
 

@@ -74,9 +74,9 @@
 #include "bn.h"
 #include "vmath.h"
 #include "raytrace.h"
-#include "rtgeom.h"
+#include "rt/geom.h"
 #include "wdb.h"
-#include "db.h"
+#include "rt/db4.h"
 
 
 const char *progname ="dem-g";
@@ -213,7 +213,7 @@ void remove_whitespace(char *input_string)
 {
     char *idx = NULL;
     int idx2 = 0;
-    int input_string_length = 0;
+    size_t input_string_length = 0;
     char *firstp = NULL;
     char *lastp = NULL;
     int found_start = 0;

@@ -18,12 +18,6 @@
  * information.
  */
 
-/** @defgroup data Data Management */
-/**   @defgroup endian Endian Support */
-
-/** @file endian.h
- *
- */
 #ifndef BU_ENDIAN_H
 #define BU_ENDIAN_H
 
@@ -32,13 +26,14 @@
 
 __BEGIN_DECLS
 
-/** @addtogroup endian */
-/** @{ */
-/** @file libbu/endian.c
- *
+/** @addtogroup bu_endian
+ * @brief
  * Run-time byte order detection.
  *
  */
+/** @{ */
+/** @file bu/endian.h */
+
 
 typedef enum {
     BU_LITTLE_ENDIAN = 1234, /* LSB first: i386, VAX order */

@@ -266,7 +266,7 @@ int icv_saturate(icv_image_t* img, double sat)
     double bw;			/* monochrome intensity */
     double rwgt, gwgt, bwgt;
     double rt, gt, bt;
-    long size;
+    size_t size;
 
     ICV_IMAGE_VAL_INT(img);
 

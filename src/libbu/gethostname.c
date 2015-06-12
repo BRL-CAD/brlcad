@@ -41,7 +41,7 @@ bu_gethostname(char *hostname, size_t hostlen)
 	bu_log("ERROR: unable to initialize networking\n");
 #endif
 
-#if defined(HAVE_WORKING_GETHOSTNAME_FUNCTION)
+#ifdef HAVE_GETHOSTNAME
     status = gethostname(hostname, hostlen);
 #else
 

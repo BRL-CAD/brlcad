@@ -166,3 +166,48 @@ VRML/X3d  (LGPL license)
 http://openvrml.sourceforge.net/
 http://sourceforge.net/projects/x3dtoolkit/
 
+
+===
+
+# inspired by https://xiph.org/flac/api/group__flac__stream__decoder.html
+
+gcv = new() := create context
+delete(gcv) := delete context
+set_...(gcv, ...) := set context properties
+get_...(gcv, ...) := get context properties
+init_fd(gcv, callbacks) := connect to a file descriptor
+init_FILE(gcv, callbacks) := connect to a file pointer
+init_file(gcv, callbacks) := connect to a file
+finish(gcv) := complete the conversion process, flush buffers, reset context (pairs with init)
+flush(gcv) := ensure all output streams are flushed (ensures writes)
+reset(gcv) := resets the context to an initialization state
+process_single(gcv) := process single object
+process(gcv) := process to end of stream
+
+# per format
+
+read(gcv, object(s), client_data) := read object(s)
+write(gcv, const object(s), client_data) := write object(s)
+seek(gcv, offset, client_data) := go to object #
+tell(gcv, offset, client_data) := current object position #
+length(gcv, length, client_data) := object count
+metadata(gcv, metadata, client_data) := object metadata (first, last, length/size, type, data)
+error(gcv, status, client_data) := called whenever an error occurs during conversion
+
+# modeled after java streams
+# inspired by http://docs.oracle.com/javase/8/docs/api/java/util/stream/Stream.html
+
+stream() := similar to read/write, returns set of objects
+filter() := applies filtering expression, returns set of objects
+toArray() := returns objects as a null-terminated array
+skip() := returns object set after discarding first n objects
+limit() := returns object set after discarding last n objects
+sorted() := returns object set sorted by specified criteria
+of() := returns ordered set of specified values
+min() := returns minimum object matching comparator callback
+max() : = returns maximum object matching comparator callback
+forEach() := perform action on each object
+count() := returns size of the object set
+distinct() := returns set of distinct objects from stream
+concat() := joins two streams together
+

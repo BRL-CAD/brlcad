@@ -17,13 +17,8 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @addtogroup fixme */
-/** @{ */
-/** @file common.h
- *
- * @brief
- *  Header file for the BRL-CAD common definitions.
- *
+
+/** @addtogroup common
  *  This header wraps the system-specific encapsulation of
  *  brlcad_config.h and removes need to conditionally include
  *  brlcad_config.h everywhere based on HAVE_CONFIG_H.  The common
@@ -32,6 +27,9 @@
  *  for the win32 platform.
  *
  */
+/** @{ */
+/** @brief Header file for the BRL-CAD common definitions. */
+/** @file common.h */
 
 #ifndef COMMON_H
 #define COMMON_H
@@ -67,14 +65,15 @@
 
 /* provide declaration markers for header externals */
 #ifdef __cplusplus
-#  define __BEGIN_DECLS   extern "C" {
-#  define __END_DECLS     }
+#  define __BEGIN_DECLS   extern "C" {   /**< if C++, set to extern "C" { */
+#  define __END_DECLS     }              /**< if C++, set to } */
 #else
-#  define __BEGIN_DECLS
-#  define __END_DECLS
+#  define __BEGIN_DECLS /**< if C++, set to extern "C" { */
+#  define __END_DECLS   /**< if C++, set to } */
 #endif
 
-/* Functions local to one file IN A LIBRARY should be declared HIDDEN.
+/**
+ * Functions local to one file IN A LIBRARY should be declared HIDDEN.
  * Disabling the static classifier is sometimes helpful for debugging.
  * It can help prevent some compilers from inlining functions that one
  * might want to set a breakpoint on.  Do not use on variables.
@@ -98,14 +97,17 @@
 #  endif
 #endif
 
+/** Find and return the maximum value */
 #ifndef FMAX
 #  define FMAX(a, b)	(((a)>(b))?(a):(b))
 #endif
+/** Find and return the minimum value */
 #ifndef FMIN
 #  define FMIN(a, b)	(((a)<(b))?(a):(b))
 #endif
 
-/* C99 does not provide a ssize_t even though it is provided by SUS97.
+/**
+ * C99 does not provide a ssize_t even though it is provided by SUS97.
  * regardless, we use it so make sure it's declared by using the
  * similar POSIX ptrdiff_t type.
  */
@@ -139,12 +141,15 @@ typedef ptrdiff_t ssize_t;
 #  endif
 #endif
 
-/* Provide a means to conveniently test the version of the GNU
+/**
+ * Provide a means to conveniently test the version of the GNU
  * compiler.  Use it like this:
  *
+ * @code
  * #if GCC_PREREQ(2,8)
  * ... code requiring gcc 2.8 or later ...
  * #endif
+ * @endcode
  *
  * WARNING: THIS MACRO IS CONSIDERED PRIVATE AND SHOULD NOT BE USED
  * OUTSIDE OF THIS HEADER FILE.  DO NOT RELY ON IT.
@@ -159,12 +164,15 @@ typedef ptrdiff_t ssize_t;
 #  define GCC_PREREQ(major, minor) 0
 #endif
 
-/* Provide a means to conveniently test the version of the Intel
+/**
+ * Provide a means to conveniently test the version of the Intel
  * compiler.  Use it like this:
  *
+ * @code
  * #if ICC_PREREQ(800)
  * ... code requiring icc 8.0 or later ...
  * #endif
+ * @endcode
  *
  * WARNING: THIS MACRO IS CONSIDERED PRIVATE AND SHOULD NOT BE USED
  * OUTSIDE OF THIS HEADER FILE.  DO NOT RELY ON IT.
@@ -319,7 +327,8 @@ typedef ptrdiff_t ssize_t;
 #  define __STDC_VERSION__ 0
 #endif
 
-/* Provide macros to indicate availability of diagnostic pragmas for
+/**
+ * Provide macros to indicate availability of diagnostic pragmas for
  * GCC and Clang.
  */
 #define HAVE_GCC_DIAG_PRAGMAS \

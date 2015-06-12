@@ -61,12 +61,12 @@ union vert_tree {
     char type;		/* type - leaf or node */
     struct vert_leaf {
 	char type;
-	int index;	/* index into the array */
+	size_t index;	/* index into the array */
     } vleaf;
     struct vert_node {
 	char type;
 	double cut_val; /* cutting value */
-	int coord;	/* cutting coordinate */
+	size_t coord;	/* cutting coordinate */
 	union vert_tree *higher, *lower;	/* subtrees */
     } vnode;
 };
@@ -177,7 +177,7 @@ free_vert_tree( struct vert_root *vert_root )
     vert_root->max_vert = 0;
 }
 
-int
+size_t
 Add_vert( double x, double y, double z, struct vert_root *vert_root, fastf_t local_tol_sq )
 {
     union vert_tree *ptr, *prev=NULL, *new_leaf, *new_node;
@@ -203,7 +203,7 @@ Add_vert( double x, double y, double z, struct vert_root *vert_root, fastf_t loc
 		ptr = ptr->vnode.lower;
 	    }
 	} else {
-	    int ij;
+	    size_t ij;
 
 	    ij = ptr->vleaf.index*3;
 	    diff[0] = fabs( vertex[0] - vert_root->the_array[ij] );
@@ -296,7 +296,7 @@ Add_vert( double x, double y, double z, struct vert_root *vert_root, fastf_t loc
     return new_leaf->vleaf.index;
 }
 
-int
+size_t
 Add_vert_and_norm( double x, double y, double z, double nx, double ny, double nz, struct vert_root *vert_root, fastf_t local_tol_sq )
 {
     union vert_tree *ptr, *prev=NULL, *new_leaf, *new_node;
@@ -316,7 +316,7 @@ Add_vert_and_norm( double x, double y, double z, double nx, double ny, double nz
     /* look for this vertex and normal already in the list */
     ptr = vert_root->the_tree;
     while ( ptr ) {
-	int i;
+	size_t i;
 
 	if ( ptr->type == VERT_NODE ) {
 	    prev = ptr;
@@ -326,7 +326,7 @@ Add_vert_and_norm( double x, double y, double z, double nx, double ny, double nz
 		ptr = ptr->vnode.lower;
 	    }
 	} else {
-	    int ij;
+	    size_t ij;
 
 	    ij = ptr->vleaf.index*6;
 	    for ( i=0; i<6; i++ ) {
@@ -364,7 +364,7 @@ Add_vert_and_norm( double x, double y, double z, double nx, double ny, double nz
 	vert_root->the_tree = new_leaf;
     } else if ( ptr && ptr->type == VERT_LEAF ) {
 	fastf_t max;
-	int i;
+	size_t i;
 
 	/* search above ended at a leaf, need to add a node above this leaf and the new leaf */
 	BU_ALLOC(new_node, union vert_tree);

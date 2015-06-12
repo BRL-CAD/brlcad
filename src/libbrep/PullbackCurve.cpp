@@ -26,7 +26,7 @@
 #include "common.h"
 
 #include "vmath.h"
-#include "dvec.h"
+#include "bn/dvec.h"
 
 #include <assert.h>
 #include <vector>
@@ -270,7 +270,7 @@ surface_GetBoundingBox(
 	return false;
     }
 
-    bool growcurrent = bGrowBox;
+    bool growcurrent = (bool)bGrowBox;
     for (int i=0; i<2; i++) {
 	if (domSplits[0][i] == ON_Interval::EmptyInterval)
 	    continue;
@@ -347,7 +347,7 @@ face_GetBoundingBox(
 
     // may be a smaller trimmed subset of surface so worth getting
     // face boundary
-    bool growcurrent = bGrowBox;
+    bool growcurrent = (bool)bGrowBox;
     ON_3dPoint min, max;
     for (int li = 0; li < face.LoopCount(); li++) {
 	for (int ti = 0; ti < face.Loop(li)->TrimCount(); ti++) {
@@ -2280,7 +2280,7 @@ newNURBSCurve(BSpline& spline, int dimension = 3)
 					  false,
 					  spline.p + 1,
 					  spline.n + 1);
-    c->ReserveKnotCapacity(spline.knots.size() - 2);
+    c->ReserveKnotCapacity((int)spline.knots.size() - 2);
     for (unsigned int i = 1; i < spline.knots.size() - 1; i++) {
 	c->m_knot[i - 1] = spline.knots[i];
     }
@@ -3064,13 +3064,13 @@ pullback_samples_from_closed_surface(PBCData* data,
     if (samples != NULL) {
 	data->segments.push_back(samples);
 
-	int numsegs = data->segments.size();
+	size_t numsegs = data->segments.size();
 
 	if (numsegs > 1) {
 	    if (curve->IsClosed()) {
 		ON_2dPointArray *reordered_samples= new ON_2dPointArray();
 		// must have walked over seam but have closed curve so reorder stitching
-		int seg = 0;
+		size_t seg = 0;
 		for (std::list<ON_2dPointArray *>::reverse_iterator rit=data->segments.rbegin(); rit!=data->segments.rend(); ++seg) {
 		    samples = *rit;
 		    if (seg < numsegs-1) { // since end points should be repeated

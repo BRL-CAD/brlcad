@@ -6,8 +6,8 @@
 #include "bu/log.h"
 #include "bu/str.h"
 #include "bu/malloc.h"
-#include "bn/polygon.h"
-#include "bn/tri_ray.h"
+#include "bg/polygon.h"
+#include "bg/tri_ray.h"
 #include "shape_recognition.h"
 
 HIDDEN void
@@ -24,7 +24,6 @@ verts_assemble(point2d_t *verts2d, int *index, std::map<int, int> *local_to_vert
 	    const ON_BrepEdge *edge = &(brep->m_E[trim->m_ei]);
 	    const ON_Curve *trim_curve = trim->TrimCurveOf();
 	    ON_2dPoint cp = trim_curve->PointAt(trim_curve->Domain().Min());
-	    ON_2dPoint cp_max = trim_curve->PointAt(trim_curve->Domain().Max());
 	    V2MOVE(verts2d[ti+verts_offset], cp);
 	    if (trim->m_bRev3d) {
 		(*local_to_verts)[ti+verts_offset] = edge->Vertex(1)->m_vertex_index;
@@ -103,7 +102,7 @@ subbrep_polygon_tri(const ON_Brep *brep, const point_t *all_verts, int *loops, i
 
 	/* The real work - triangulate the 2D polygon to find out triangles for
 	 * this particular B-Rep face */
-	face_error = bn_polygon_triangulate(&faces, &num_faces, NULL, NULL, (const point2d_t *)verts2d, b_loop->m_ti.Count(), EAR_CLIPPING);
+	face_error = bg_polygon_triangulate(&faces, &num_faces, NULL, NULL, (const point2d_t *)verts2d, b_loop->m_ti.Count(), EAR_CLIPPING);
 
     } else {
 
@@ -150,7 +149,7 @@ subbrep_polygon_tri(const ON_Brep *brep, const point_t *all_verts, int *loops, i
 
 	/* The real work - triangulate the 2D polygon to find out triangles for
 	 * this particular B-Rep face */
-	face_error = bn_nested_polygon_triangulate(&faces, &num_faces, NULL, NULL, poly, poly_npts, (const int **)holes_array, holes_npts, nholes, (const point2d_t *)verts2d, total_pnts, EAR_CLIPPING);
+	face_error = bg_nested_polygon_triangulate(&faces, &num_faces, NULL, NULL, poly, poly_npts, (const int **)holes_array, holes_npts, nholes, (const point2d_t *)verts2d, total_pnts, EAR_CLIPPING);
 
 	// We have the triangles now, so free up memory...
 	for (int i = 1; i < loop_cnt; i++) {
@@ -313,8 +312,6 @@ negative_polygon(struct subbrep_object_data *data)
     // Test the ray against the triangle set
     int hit_cnt = 0;
     point_t p1, p2, p3, isect;
-    point2d_t pts2d[3];
-    point2d_t test_pt;
     ON_3dPointArray hit_pnts;
     for (int i = 0; i < all_faces_cnt; i++) {
 	ON_3dPoint onp1, onp2, onp3, hit_pnt;
@@ -331,7 +328,7 @@ negative_polygon(struct subbrep_object_data *data)
 	onp3.y = p3[1];
 	onp3.z = p3[2];
 	ON_Plane fplane(onp1, onp2, onp3);
-	int is_hit = bn_isect_tri_ray(origin, dir, p1, p2, p3, &isect);
+	int is_hit = bg_isect_tri_ray(origin, dir, p1, p2, p3, &isect);
 	VMOVE(hit_pnt, isect);
 	// Don't count the point on the ray origin
 	if (hit_pnt.DistanceTo(origin_pnt) < 0.0001) is_hit = 0;
@@ -393,8 +390,6 @@ subbrep_is_planar(struct subbrep_object_data *data)
 int
 characterize_vert(struct subbrep_object_data *data, const ON_BrepVertex *v)
 {
-    int non_linear_edge_cnt = 0;
-    int linear_edge_both_faces_nonplanar_cnt = 0;
     std::set<int> non_planar_faces;
     std::set<int>::iterator f_it;
     std::set<struct filter_obj *> fobjs;
@@ -568,7 +563,6 @@ subbrep_planar_init(struct subbrep_object_data *data)
 	    } else {
 		v[vi] = vertex_map[old_edge->Vertex(vi)->m_vertex_index];
 	    }
-	    ON_3dPoint vp = old_edge->Vertex(vi)->Point();
 	}
 
 	ON_BrepEdge& new_edge = data->planar_obj->local_brep->NewEdge(data->planar_obj->local_brep->m_V[v[0]], data->planar_obj->local_brep->m_V[v[1]], c3i, NULL ,0);
@@ -1058,8 +1052,6 @@ subbrep_add_planar_face(struct subbrep_object_data *data, ON_Plane *pcyl,
 	vind2 = vert_map[v2->m_vertex_index];
 	ON_BrepVertex &new_v1 = pdata->local_brep->m_V[vind1];
 	ON_BrepVertex &new_v2 = pdata->local_brep->m_V[vind2];
-	ON_3dPoint np1 = new_v1.Point();
-	ON_3dPoint np2 = new_v2.Point();
 
 	// Because we may have already created a needed edge only in the new
 	// Brep with a previous face, we have to check all the edges in the new
@@ -1183,8 +1175,8 @@ subbrep_add_planar_face(struct subbrep_object_data *data, ON_Plane *pcyl,
 
 // Returns 1 if point set forms a convex polyhedron, 0 if the point set
 // forms a degenerate chull, and -1 if the point set is concave
-    int
-convex_point_set(struct subbrep_object_data *data, std::set<int> *verts)
+int
+convex_point_set(struct subbrep_object_data *, std::set<int> *)
 {
     // Use chull3d to find the set of vertices that are on the convex
     // hull.  If all of them are, the point set defines a convex polyhedron.
@@ -1196,7 +1188,7 @@ convex_point_set(struct subbrep_object_data *data, std::set<int> *verts)
  * is convex, 0 if unsuccessful and vertex set's chull is degenerate (i.e. the
  * planar component of this CSG shape contributes no positive volume),  and -1
  * if unsuccessful and point set is neither degenerate nor convex */
-    int
+int
 point_set_is_arb4(struct subbrep_object_data *data, std::set<int> *verts)
 {
     int is_convex = convex_point_set(data, verts);
@@ -1206,45 +1198,45 @@ point_set_is_arb4(struct subbrep_object_data *data, std::set<int> *verts)
     }
     return 0;
 }
-    int
+int
 point_set_is_arb5(struct subbrep_object_data *data, std::set<int> *verts)
 {
     int is_convex = convex_point_set(data, verts);
 
-    if (!is_convex == 1) {
+    if (is_convex) {
 	return is_convex;
     }
     // TODO - arb5 test
     return 0;
 }
-    int
+int
 point_set_is_arb6(struct subbrep_object_data *data, std::set<int> *verts)
 {
     int is_convex = convex_point_set(data, verts);
 
-    if (!is_convex == 1) {
+    if (is_convex) {
 	return is_convex;
     }
     // TODO - arb6 test
     return 0;
 }
-    int
+int
 point_set_is_arb7(struct subbrep_object_data *data, std::set<int> *verts)
 {
     int is_convex = convex_point_set(data, verts);
 
-    if (!is_convex == 1) {
+    if (is_convex) {
 	return is_convex;
     }
     // TODO - arb7 test
     return 0;
 }
-    int
+int
 point_set_is_arb8(struct subbrep_object_data *data, std::set<int> *verts)
 {
     int is_convex = convex_point_set(data, verts);
 
-    if (!is_convex == 1) {
+    if (is_convex) {
 	return is_convex;
     }
     // TODO - arb8 test
@@ -1255,8 +1247,8 @@ point_set_is_arb8(struct subbrep_object_data *data, std::set<int> *verts)
  * make sure the normal is in the correct direction, find the center point of
  * the verts and the center point of the face verts to construct a vector which
  * can be used in a dot product test with the face normal.*/
-    int
-point_set_is_arbn(struct subbrep_object_data *data, std::set<int> *faces, std::set<int> *verts, int do_test)
+int
+point_set_is_arbn(struct subbrep_object_data *data, std::set<int> *, std::set<int> *verts, int do_test)
 {
     int is_convex;
     if (!do_test) {
@@ -1264,7 +1256,8 @@ point_set_is_arbn(struct subbrep_object_data *data, std::set<int> *faces, std::s
     } else {
 	is_convex = convex_point_set(data, verts);
     }
-    if (!is_convex == 1) return is_convex;
+    if (is_convex)
+	return is_convex;
 
     // TODO - arbn assembly
     return 2;
@@ -1273,15 +1266,15 @@ point_set_is_arbn(struct subbrep_object_data *data, std::set<int> *faces, std::s
 // In the worst case, make a brep for later conversion into an nmg.
 // The other possibility here is an arbn csg tree, but that needs
 // more thought...
-    int
-subbrep_make_planar_brep(struct subbrep_object_data *data)
+int
+subbrep_make_planar_brep(struct subbrep_object_data *)
 {
     // TODO - check for self intersections in the candidate shape, and handle
     // if any are discovered.
     return 0;
 }
 
-    int
+int
 planar_switch(int ret, struct subbrep_object_data *data, std::set<int> *faces, std::set<int> *verts)
 {
     switch (ret) {

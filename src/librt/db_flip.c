@@ -29,7 +29,7 @@
 #include "common.h"
 
 #include "vmath.h"
-#include "db.h"
+#include "rt/db4.h"
 
 
 typedef union {

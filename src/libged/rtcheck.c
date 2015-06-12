@@ -120,7 +120,7 @@ rtcheck_vector_handler(ClientData clientData, int UNUSED(mask))
 
 	/* Add overlay */
 	_ged_cvt_vlblock_to_solids(rtcp->gedp, rtcp->vbp, "OVERLAPS", 0);
-	rt_vlblock_free(rtcp->vbp);
+	bn_vlblock_free(rtcp->vbp);
 
 	/* wait for the forked process */
 	while ((rpid = wait(&retcode)) != rtcp->pid && rpid != -1) {
@@ -190,7 +190,7 @@ rtcheck_vector_handler(ClientData clientData, int mask)
 
 	/* Add overlay */
 	_ged_cvt_vlblock_to_solids(rtcp->gedp, rtcp->vbp, "OVERLAPS", 0);
-	rt_vlblock_free(rtcp->vbp);
+	bn_vlblock_free(rtcp->vbp);
 
 	/* wait for the forked process */
 	WaitForSingleObject( rtcp->hProcess, INFINITE );
@@ -397,7 +397,7 @@ ged_rtcheck(struct ged *gedp, int argc, const char *argv[])
     rtcp->fp = fdopen(i_pipe[0], "r");
     rtcp->pid = pid;
     rtcp->vbp = rt_vlblock_init();
-    rtcp->vhead = rt_vlblock_find(rtcp->vbp, 0xFF, 0xFF, 0x00);
+    rtcp->vhead = bn_vlblock_find(rtcp->vbp, 0xFF, 0xFF, 0x00);
     rtcp->csize = gedp->ged_gvp->gv_scale * 0.01;
     rtcp->gedp = gedp;
     rtcp->interp = brlcad_interp;
@@ -502,7 +502,7 @@ ged_rtcheck(struct ged *gedp, int argc, const char *argv[])
     rtcp->hProcess = pi.hProcess;
     rtcp->pid = pi.dwProcessId;
     rtcp->vbp = rt_vlblock_init();
-    rtcp->vhead = rt_vlblock_find(rtcp->vbp, 0xFF, 0xFF, 0x00);
+    rtcp->vhead = bn_vlblock_find(rtcp->vbp, 0xFF, 0xFF, 0x00);
     rtcp->csize = gedp->ged_gvp->gv_scale * 0.01;
     rtcp->gedp = gedp;
     rtcp->interp = brlcad_interp;

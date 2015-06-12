@@ -114,7 +114,7 @@ TrimmedCurve::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
 		p = static_cast<SDAI_Select *>(sn->node);
 		TrimmingSelect *aTS = new TrimmingSelect();
 
-		if (p && !aTS->Load(step, p)) {
+		if (p && !aTS->Load(step, (SDAI_Application_instance *)p)) {
 		    std::cout << CLASSNAME << ":Error loading TrimmingSelect from list." << std::endl;
 		    delete aTS;
 		    goto step_error;
@@ -135,7 +135,7 @@ TrimmedCurve::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
 		p = static_cast<SDAI_Select *>(sn->node);
 		TrimmingSelect *aTS = new TrimmingSelect();
 
-		if (p && !aTS->Load(step, p)) {
+		if (p && !aTS->Load(step, (SDAI_Application_instance *)p)) {
 		    std::cout << CLASSNAME << ":Error loading TrimmingSelect from list." << std::endl;
 		    delete aTS;
 		    goto step_error;

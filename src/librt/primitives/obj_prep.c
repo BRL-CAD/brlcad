@@ -20,7 +20,8 @@
 
 #include "common.h"
 
-#include "rtfunc.h"
+#include "raytrace.h"
+#include "rt/func.h"
 
 
 int

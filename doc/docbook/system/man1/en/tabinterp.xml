@@ -37,7 +37,7 @@ interpolation techniques to provide an output table
 which has one line for each time step.</para>
 
 <para>The overall notion is based on parameter
-<emphasis remap='I'>tables.</emphasis>
+<emphasis remap='I'>tables</emphasis>.
 Each table is arranged so that every row (line) represents the
 state of some set of parameters at a given
 <emphasis remap='I'>time</emphasis>.
@@ -250,7 +250,7 @@ command.</para>
 <emphasis remap='B'>fromto</emphasis>
 directive in
 <citerefentry><refentrytitle>tabsub</refentrytitle><manvolnum>1</manvolnum></citerefentry>
-which is used in conjunction with this).
+which is used in conjunction with this.)
 The command</para>
 
 <para>   next 4 5 +3;</para>
@@ -306,7 +306,7 @@ otherwise only the indicated channels are dumped.</para>
 <para>The
 <emphasis remap='B'>help</emphasis>
 command can be given to get a list of all available commands.
-(Don't forget the semi-colon).</para>
+(Don't forget the semi-colon.)</para>
 </refsect1>
 
 <refsect1 xml:id='options'><title>OPTIONS</title>
@@ -380,13 +380,12 @@ To visualize the exact position taken by the aim point
 in the example (output channels 3, 4, 5), a UNIX-plot file
 of that trajectory can be created with:</para>
 
-<para>   cut -f5,6,7 table.final | xyz-pl &gt; aim.plot3
-<!-- .br -->
-   cut -f1,5,6,7 table.final | txyz-pl &gt; aim.plot3</para>
+<para>   cut -f5,6,7 table.final | xyz-plot3 &gt; aim.plot3</para>
+<para>   cut -f1,5,6,7 table.final | xyz-plot3 &gt; aim.plot3</para>
 
 <para>Similarly, the position of the main object can be viewed with</para>
 
-<para>   cut -f2,3,4 table.final | xyz-pl &gt; obj.plot3</para>
+<para>   cut -f2,3,4 table.final | xyz-plot3 &gt; obj.plot3</para>
 
 <para><command>tabinterp</command>
 uses 0-based column numbering, while
@@ -405,7 +404,7 @@ by giving the command</para>
 <para>   overlay aim.plot3</para>
 
 <para>to
-<emphasis remap='I'>mged.</emphasis>
+<command>mged</command>.
 If the model geometry is brought into view using the
 <emphasis remap='I'>mged</emphasis>
 <emphasis remap='B'>e</emphasis>
@@ -416,8 +415,8 @@ which is going to be animated.</para>
 
 <refsect1 xml:id='preparing_input_tables'><title>PREPARING INPUT TABLES</title>
 <para>The
-<citerefentry><refentrytitle>mged</refentrytitle><manvolnum>1</manvolnum></citerefentry>
-<emphasis remap='B'>savekey</emphasis>
+<citerefentry><refentrytitle>mged</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+<emphasis remap='B'>savekey</emphasis>,
 and
 <emphasis remap='B'>saveview</emphasis>
 commands can be very useful for creating the input tables necessary
@@ -433,7 +432,7 @@ few gems of data buried in the heaps of "printout".</para>
 </refsect1>
 
 <refsect1 xml:id='see_also'><title>SEE ALSO</title>
-<para><citerefentry><refentrytitle>tabsub</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>xyz-pl</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>txyz-pl</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>cut</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>paste</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>rt</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>mged</refentrytitle><manvolnum>1</manvolnum></citerefentry></para>
+<para><citerefentry><refentrytitle>tabsub</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>xyz-plot3</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>cut</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>paste</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>rt</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>mged</refentrytitle><manvolnum>1</manvolnum></citerefentry></para>
 </refsect1>
 
 <refsect1 xml:id='bugs'><title>BUGS</title>

@@ -35,7 +35,7 @@
 
 #include "bu/list.h"
 
-#include "tie.h"
+#include "rt/tie.h"
 #include "texture_internal.h"
 #include "render.h"
 

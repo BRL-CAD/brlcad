@@ -570,10 +570,13 @@ ph_options(struct pkg_conn *UNUSED(pc), char *buf)
     process_cmd(buf);
 
     /* Just in case command processed was "opt -P" */
-    if (npsw < 0)  {
-	/* Negative number means "all but #" available */
-	npsw = avail_cpus - npsw;
-    }
+    /* need to decouple parsing of user args from the npsw processor
+     * thread count being used, which should be an unsigned/size_t
+     * type. -- CSM */
+/*     if (npsw < 0)  { */
+/* 	/\* Negative number means "all but #" available *\/ */
+/* 	npsw = avail_cpus - npsw; */
+/*     } */
 
     /* basic bounds sanity */
     if (npsw > MAX_PSW)

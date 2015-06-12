@@ -104,7 +104,6 @@ struct shot {
 };
 
 /**
- * @struct shot_sp
  * The parse table for a struct shot
  */
 static const struct bu_structparse shot_sp[] = {

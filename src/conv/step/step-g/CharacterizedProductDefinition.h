@@ -63,7 +63,7 @@ public:
     int GetProductId();
     ProductDefinition *GetRelatingProductDefinition();
     ProductDefinition *GetRelatedProductDefinition();
-    bool Load(STEPWrapper *sw, SDAI_Select *sse);
+    bool Load(STEPWrapper *sw, SDAI_Application_instance *sse);
     virtual bool LoadONBrep(ON_Brep *brep);
     virtual void Print(int level);
     virtual CharacterizedProductDefinition_type CharacterizedProductDefinitionType()

@@ -53,6 +53,7 @@
 
 #include "bu/getopt.h"
 #include "bu/log.h"
+#include "bu/mime.h"
 
 #include "icv.h"
 
@@ -157,14 +158,14 @@ main(int argc, char **argv)
         return 1;
     }
 
-    img = icv_read(in_file, ICV_IMAGE_PIX, inx, iny);
+    img = icv_read(in_file, MIME_IMAGE_PIX, inx, iny);
     if (img == NULL)
         return 1;
     if (max < 0 )
 	icv_fade(img, multiplier);
     else
 	icv_ceiling(img, max);
-    icv_write(img, out_file, ICV_IMAGE_PIX);
+    icv_write(img, out_file, MIME_IMAGE_PIX);
 
     icv_destroy(img);
     return 0;

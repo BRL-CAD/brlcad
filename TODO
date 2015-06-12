@@ -56,6 +56,10 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
 
+* importer for LS-DYNA .k keyword files.  they support a variety of
+  geometry constructs.  their spec is freely available online.  no
+  existing libs are known.
+
 * analyze output that can characterize how much error or any other
   issues identified in a given object.  this is primarily intended for
   bot, nmg, and brep nurbs models, to report the amount of spatial
@@ -1749,13 +1753,51 @@ STEP
 BREP/NURBS
 ----------
 
+* optimize prep.  crazy slow building a surface tree deeply to ensure
+  surface evaluations will converge to proper hit points.  this uses a
+  lot of memory and requires cpu-costly derivative evaluations during
+  surface splitting.  it also uses classic object structures and
+  incoherent pointer chasing during construction and traversal.
+
+  among several optimization approaches discussed, one plan involves
+  making prep only minimally subdivide surfaces (e.g., only one
+  subdivision per surface initially) and letting ray tracing
+  dynamically evaluate surfaces as needed.  a heuristic that takes
+  volume and/or structural complexity into account (e.g., no
+  derivative changes across all encompassed knots) could result in a
+  better initial per-surface prep.  with knowledge of the prep
+  subdivision bounding volume sizes, it should be possible to
+  calculate static arrays per surface that will serve as coherent
+  book-keeping during shot.  instead of pre-calculating the depths
+  during prep, the static arrays get filled in on-demand during shot
+  and are used to track bounding box and UV extents as rays require
+  additional surface subdivision.  it should be possible to construct
+  an extents container such that for a given depth, a ray will only
+  calculate further depths as needed with minimal locking:
+
+  0) prep: organize surfaces into BSP container (kd-tree)
+  1) prep: calculate maximum possible subdivision depth
+  2) prep: allocate extent container array depths
+  3) prep: calculate initial required subdivision(s)
+  4) prep: fill initial subdivisions into array
+  5) shot: traverse BSP to find surfaces in proximity
+  6) shot: traverse subdivision array to lowest initialized level
+  7) shot: evaluate surface to determine need for further subdivision
+  8) shot: while subdivision needed, calculate subdivision and store
+  9) shot: evaluate and return surface hits
+
+  The way to do step 8 with minimal locking involves having an
+  initialization / sentinel value that is checked for non-zero and
+  only set after array values are already locked, written, and
+  unlocked.  Doing this, it is possible for multiple rays to evaluate
+  the same subdivisions unnecessarily, but avoids locks entirely in
+  the common case and minimizes lock contention.
+
 * create a BC_Brep class that inherits from ON_Brep so we can cleanly
   extend and implement functions that were intentionally removed from
   openNURBS.
 
 * implement tessellation support.
-
-* profile and optimize prep.  crazy slow.
 
 * tighten up the bounding boxes around nurbs geometry.  seems to be
   bounding the untrimmed surfaces instead of the trimmed edges

@@ -37,7 +37,7 @@
 #include "bu/units.h"
 #include "vmath.h"
 #include "nmg.h"
-#include "rtgeom.h"
+#include "rt/geom.h"
 
 #include "dm/bview.h"
 
@@ -46,7 +46,7 @@
 
 #include "brlcad_version.h"
 
-#include "mater.h"
+#include "raytrace.h"
 
 #include "obj.h"
 

@@ -188,7 +188,7 @@ bool ON_Surface_IsFlat(ON_Plane *frames, double f_tol);
   Array index conventions are the same as ::ON_Surface_IsFlat.
 
   @param frames Array of 9 frenet frames
-  @param s_tol Straightness tolerance - 0 always evaluates to straight, 1 requires perfect straightness
+  @param f_tol Straightness tolerance - 0 always evaluates to straight, 1 requires perfect straightness
 */
 BREP_EXPORT
 bool ON_Surface_IsFlat_U(ON_Plane *frames, double f_tol);
@@ -200,7 +200,7 @@ bool ON_Surface_IsFlat_U(ON_Plane *frames, double f_tol);
   Array index conventions are the same as ::ON_Surface_IsFlat.
 
   @param frames Array of 9 frenet frames
-  @param s_tol Straightness tolerance - 0 always evaluates to straight, 1 requires perfect straightness
+  @param f_tol Straightness tolerance - 0 always evaluates to straight, 1 requires perfect straightness
 */
 BREP_EXPORT
 bool ON_Surface_IsFlat_V(ON_Plane *frames, double f_tol);
@@ -285,7 +285,7 @@ bool ON_Surface_SubSurface(
   @param u U interval of parent surface
   @param v V interval of parent surface
   @param upt U interval point for quad definition
-  @param upt U interval point for quad definition
+  @param vpt V interval point for quad definition
   @param q0 surface calculated by split algorithm
   @param q1 surface calculated by split algorithm
   @param q2 surface calculated by split algorithm

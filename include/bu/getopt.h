@@ -18,9 +18,6 @@
  * information.
  */
 
-/** @file getopt.h
- *
- */
 #ifndef BU_GETOPT_H
 #define BU_GETOPT_H
 
@@ -29,11 +26,7 @@
 
 __BEGIN_DECLS
 
-/** @addtogroup getopt */
-/** @{ */
-
-/** @file libbu/getopt.c
- *
+/** @addtogroup bu_getopt
  * @brief
  * Special portable re-entrant version of getopt.
  *
@@ -45,6 +38,8 @@ __BEGIN_DECLS
  * to reinitialize bu_optind=1 before beginning on the next argument
  * list.
  */
+/** @{ */
+/** @file bu/getopt.h */
 
 /**
  * for bu_getopt().  set to zero to suppress errors.

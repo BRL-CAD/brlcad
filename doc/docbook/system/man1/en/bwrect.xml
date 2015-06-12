@@ -40,7 +40,7 @@ extracts a rectangular region from a black and white
 format file. The default input image size is 512x512.
 The x,y coordinates of the origin (the default xorig=0, yorig=0 corresponds to the
 lower left corner) are passed as
-command line arguments.</para>
+arguments for <option>-x</option> and <option>-y</option>.</para>
 
 <para>The
 <option>-w </option><replaceable>file_width</replaceable>
@@ -52,13 +52,19 @@ does the same for the display device.</para>
 <option>-n </option><replaceable>file_height</replaceable>
 and
 <option>-N </option><replaceable>scr_height</replaceable>
-flags specifies the height in scanlines of the input file or display device
+flags specify the height in scanlines of the input file and display device
 respectively.</para>
 
 <para><option>-s </option><replaceable>squarefilesize</replaceable>
 and
 <option>-S </option><replaceable>squarescrsize</replaceable>
 set both the height and width to the size given (for input file and display device respectively).</para>
+
+<para>
+(<replaceable>scr_width</replaceable> and <replaceable>scr_height</replaceable> must be set
+to positive values, either separately via <option>-W</option> and <option>-N</option>, or
+jointly via <option>-S</option>.  This is because they start with default values of zero.)
+</para>
 
 <para><option>-o </option><replaceable>out_file.bw</replaceable> is a way of specifying output
 file name.</para>

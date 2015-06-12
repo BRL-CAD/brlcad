@@ -90,15 +90,36 @@ if(${BRLCAD_OPTIMIZED_BUILD} MATCHES "OFF" AND BRLCAD_FLAGS_DEBUG)
   CHECK_CXX_FLAG(qstackprotect)
 endif(${BRLCAD_OPTIMIZED_BUILD} MATCHES "OFF" AND BRLCAD_FLAGS_DEBUG)
 
+# enable memory error detector AddressSanitizer (see
+# https://code.google.com/p/address-sanitizer/ for more info.)
+if(${BRLCAD_OPTIMIZED_BUILD} MATCHES "OFF" AND BRLCAD_FLAGS_DEBUG AND BRLCAD_ADDRESS_SANITIZER)
+  CHECK_C_FLAG(fsanitize=address)
+  CHECK_C_FLAG(fno-omit-frame-pointer)
+  CHECK_CXX_FLAG(fsanitize=address)
+  CHECK_CXX_FLAG(fno-omit-frame-pointer)
+endif(${BRLCAD_OPTIMIZED_BUILD} MATCHES "OFF" AND BRLCAD_FLAGS_DEBUG AND BRLCAD_ADDRESS_SANITIZER)
+
+# enable data race detector  ThreadSanitizer (see
+# https://code.google.com/p/thread-sanitizer/ for more info.)
+if(${BRLCAD_OPTIMIZED_BUILD} MATCHES "OFF" AND BRLCAD_FLAGS_DEBUG AND BRLCAD_THREAD_SANITIZER)
+  CHECK_C_FLAG(fsanitize=thread)
+  CHECK_CXX_FLAG(fsanitize=thread)
+endif(${BRLCAD_OPTIMIZED_BUILD} MATCHES "OFF" AND BRLCAD_FLAGS_DEBUG AND BRLCAD_THREAD_SANITIZER)
+
+
 # verbose warning flags.  we intentionally try to turn on as many as
 # possible.  adding more is encouraged (as long as all issues are
 # fixed first).
 if(BRLCAD_ENABLE_COMPILER_WARNINGS OR BRLCAD_ENABLE_STRICT)
   # also of interest:
   # -Wunreachable-code -Wmissing-declarations -Wmissing-prototypes -Wstrict-prototypes -ansi
-  # -Wformat=2 (after bu_fopen_uniq() is obsolete) -Wdocumentation (for Doxygen comments)
+  # -Wformat=2 (after bu_fopen_uniq() is obsolete)
   CHECK_C_FLAG(pedantic)
   CHECK_CXX_FLAG(pedantic)
+
+  #Added to make llvm happy on FreeBSD, but a good idea anyway
+  CHECK_C_FLAG(pedantic-errors)
+  #CHECK_CXX_FLAG(pedantic-errors)  #This line makes poissonrecon break, so disable for now
 
   # this catches a lot, it's good
   CHECK_C_FLAG(Wall)
@@ -159,6 +180,11 @@ if(BRLCAD_ENABLE_COMPILER_WARNINGS OR BRLCAD_ENABLE_STRICT)
   # this is for X11 headers, they use variadic macros
   CHECK_C_FLAG(Wno-variadic-macros)
   CHECK_CXX_FLAG(Wno-variadic-macros)
+
+  # this is used to check Doxygen comment syntax
+  CHECK_C_FLAG(Wdocumentation)
+  CHECK_CXX_FLAG(Wdocumentation)
+
 endif(BRLCAD_ENABLE_COMPILER_WARNINGS OR BRLCAD_ENABLE_STRICT)
 
 if(BRLCAD_ENABLE_COVERAGE)

@@ -38,7 +38,7 @@
 #include "bu/malloc.h"
 #include "bu/str.h"
 #include "bn.h"
-#include "anim.h"
+#include "bn/anim.h"
 
 
 #define OPT_STR "b:d:f:i:l:pr:w:sg:m:ch?"
@@ -134,7 +134,7 @@ get_link(fastf_t *pos, fastf_t *angle_p, fastf_t dist)
 	    VSCALE(temp, (x[i].t.dir), dist);
 	    VADD2(pos, x[i].t.pos1, temp);
 	    *angle_p = atan2(x[i].t.dir[2], x[i].t.dir[0]);
-	    return 2*i;
+	    return (int)2*i;
 	}
 	if ((dist -= x[i].w.rad*x[i].w.arc) < 0) {
 	    *angle_p = dist/x[i].w.rad;
@@ -143,7 +143,7 @@ get_link(fastf_t *pos, fastf_t *angle_p, fastf_t dist)
 	    pos[1] = x[i].w.pos[1];
 	    pos[2] = x[i].w.pos[2] + x[i].w.rad*sin(*angle_p);
 	    *angle_p -= M_PI_2; /*angle of clockwise tangent to circle*/
-	    return 2*i+1;
+	    return (int)2*i+1;
 	}
     }
     return -1;
@@ -348,7 +348,9 @@ main(int argc, char *argv[])
     vect_t zero = VINIT_ZERO;
 
     init_dist = radius= 0.0;
-    first_frame = num_wheels = steer = axes = cent = links_placed = num_links = 0;
+    first_frame = steer = axes = cent = links_placed = (int)0;
+    num_wheels = num_links = (size_t)0;
+
     MAT_IDN(m_axes);
     MAT_IDN(m_rev_axes);
 

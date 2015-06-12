@@ -115,6 +115,10 @@
 #define ON_COMPILER_SUN
 #endif
 
+#if defined(AIX) || defined(_AIX)
+#define ON_COMPILER_AIX
+#endif
+
 #if defined(_GNU_SOURCE) && defined(__APPLE__)
 /* using Apple's OSX Xcode compiler */
 #if !defined(ON_COMPILER_XCODE)
@@ -251,7 +255,6 @@ extern "C" {
 #include <ctype.h>
 
 /* these are for openindiana (opensolaris fork) */
-#if 0
 /* limits.h (sys/syslimits.h) should define this, but some don't */
 #ifndef NAME_MAX
 #  define NAME_MAX 255
@@ -260,9 +263,8 @@ extern "C" {
 #ifndef isfinite
 #  define isfinite(x) (fpclassify(x) & (FP_NORMAL | FP_SUBNORMAL | FP_ZERO))
 #endif
-#endif
 
-#if defined(ON_COMPILER_IRIX) || defined(ON_COMPILER_SUN)
+#if defined(ON_COMPILER_IRIX) || defined(ON_COMPILER_SUN) || defined(ON_COMPILER_AIX)
 #include <alloca.h>
 #endif
 
@@ -278,7 +280,6 @@ extern "C" {
 // ON_CreateUuid calls Windows's ::UuidCreate() which
 // is declared in Rpcdce.h and defined in Rpcrt4.lib.
 #include <Rpc.h>
-
 #endif
 
 #if defined(ON_COMPILER_GNU)
@@ -358,7 +359,7 @@ typedef ON__UINT16 wchar_t;
 // or 64 bits, the ON__INT16, ON__INT32, and ON__INT64
 // typedefs are used.
 
-#if defined(_M_X64) || defined(_WIN64) || defined(__LP64__)
+#if defined(_M_X64) || defined(_WIN64) || defined(__LP64__) || defined(__INT64_TYPE__)
 // 64 bit (8 byte) pointers
 #define ON_SIZEOF_POINTER 8
 #define ON_64BIT_POINTER
@@ -414,6 +415,16 @@ typedef unsigned long long ON__UINT64;
 
 // Don't know for sure what Sun Studio
 // uses, try long long
+
+// 64 bit integer
+typedef long long ON__INT64;
+
+// 64 bit unsigned integer
+typedef unsigned long long ON__UINT64;
+
+#elif defined(ON_COMPILER_AIX)
+
+// AIX uses long long
 
 // 64 bit integer
 typedef long long ON__INT64;

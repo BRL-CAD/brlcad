@@ -33,11 +33,12 @@
 #include "vmath.h"
 #include "bn.h"
 #include "nmg.h"
-#include "rtgeom.h"
+#include "rt/geom.h"
+#include "raytrace.h"
 #include "rt/arb_edit.h"
-#include "nurb.h"
+#include "rt/nurb.h"
 #include "wdb.h"
-#include "db.h"
+#include "rt/db4.h"
 
 #include "./mged.h"
 #include "./sedit.h"
@@ -1621,7 +1622,7 @@ nmg_ed(int arg)
 		    nmg_vlblock_around_eu(vbp, es_eu, tab, 1, &mged_tol);
 		    cvt_vlblock_to_solids(vbp, "_EU_", 0);	/* swipe vlist */
 
-		    rt_vlblock_free(vbp);
+		    bn_vlblock_free(vbp);
 		    bu_free((void *)tab, "nmg_ed tab[]");
 		}
 		view_state->vs_flag = 1;

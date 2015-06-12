@@ -76,7 +76,7 @@
 #include "./mged_dm.h"
 
 /* Needed to define struct solid */
-#include "solid.h"
+#include "rt/solid.h"
 
 
 #define MGED_DB_NAME "db"

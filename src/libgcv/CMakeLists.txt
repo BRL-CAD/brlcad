@@ -48,7 +48,6 @@ set(LIBGCV_SOURCES
   region_end_mc.c
   tri_intersect.c
   bot_solidity.c
-  screened_poisson.cpp
   )
 
 list(APPEND LIBGCV_SOURCES
@@ -68,10 +67,10 @@ list(APPEND LIBGCV_SOURCES
   ${CMAKE_CURRENT_BINARY_DIR}/obj_rules.cpp
   )
 
-BRLCAD_ADDLIB(libgcv "${LIBGCV_SOURCES}" "librt;libwdb;libbu")
+BRLCAD_ADDLIB(libgcv "${LIBGCV_SOURCES}" "librt;libwdb;libbu" NO_STRICT_CXX)
 SET_TARGET_PROPERTIES(libgcv PROPERTIES VERSION 20.0.1 SOVERSION 20)
 
-BRLCAD_ADDEXEC(gcv gcv.c libgcv)
+BRLCAD_ADDEXEC(gcv_test gcv_test.c libgcv NO_INSTALL)
 
 enable_testing()
 BRLCAD_ADDEXEC(test_bottess test_bottess.c libgcv NO_INSTALL)
@@ -80,9 +79,17 @@ if(CPP_DLL_DEFINES)
 endif(CPP_DLL_DEFINES)
 add_test(NAME bottess_test COMMAND test_bottess)
 
-BRLCAD_ADDEXEC(test_screened_poisson test_screened_poisson.cpp "libgcv" NO_INSTALL)
+set(GCV_IGNORE_FILES
+  NOTES
+  conv/fastgen4/NOTES
+  gcv_private.h
+  plugin.h
+  soup.h
+  tri_intersect.h
+  bot_solidity.h
+  )
+CMAKEFILES(${GCV_IGNORE_FILES})
 
-CMAKEFILES(NOTES gcv_private.h plugin.h soup.h tri_intersect.h bot_solidity.h)
 DISTCLEAN(${CMAKE_CURRENT_BINARY_DIR}/CTestTestfile.cmake)
 DISTCLEAN(${CMAKE_CURRENT_BINARY_DIR}/wfobj/CTestTestfile.cmake)
 

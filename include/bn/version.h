@@ -19,9 +19,12 @@
  */
 
 /*----------------------------------------------------------------------*/
-/* @file version.h */
-/** @addtogroup version */
+/** @addtogroup bn_version
+ * @brief
+ * report version information about LIBBN
+ */
 /** @{ */
+/* @file version.h */
 
 #ifndef BN_VERSION_H
 #define BN_VERSION_H
@@ -31,9 +34,6 @@
 
 __BEGIN_DECLS
 
-/**
- * report version information about LIBBN
- */
 BN_EXPORT extern const char *bn_version(void);
 
 __END_DECLS

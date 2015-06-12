@@ -2,17 +2,12 @@
 BRLCAD_ADDEXEC(bntester bntester.c "libbu;libbn" NO_INSTALL)
 
 
-BRLCAD_ADDEXEC(tester_bn_tri_tri_isect_coplanar bn_tri_tri_isect_coplanar.c "libbu;libbn" NO_INSTALL)
-BRLCAD_ADDEXEC(tester_bn_tri_tri_isect bn_tri_tri_isect.c "libbu;libbn" NO_INSTALL)
 BRLCAD_ADDEXEC(tester_bn_list bn_list.c "libbu;libbn" NO_INSTALL)
 BRLCAD_ADDEXEC(tester_bn_poly_multiply bn_poly_multiply.c "libbu;libbn" NO_INSTALL)
 BRLCAD_ADDEXEC(tester_bn_poly_scale bn_poly_scale.c "libbu;libbn" NO_INSTALL)
 BRLCAD_ADDEXEC(tester_bn_poly_add bn_poly_add.c "libbu;libbn" NO_INSTALL)
 BRLCAD_ADDEXEC(tester_bn_poly_sub bn_poly_sub.c "libbu;libbn" NO_INSTALL)
 BRLCAD_ADDEXEC(tester_bn_poly_synthetic_div bn_poly_synthetic_div.c "libbu;libbn" NO_INSTALL)
-BRLCAD_ADDEXEC(tester_bn_obr bn_obr.c "libbu;libbn" NO_INSTALL)
-BRLCAD_ADDEXEC(tester_bn_chull bn_chull.c "libbu;libbn" NO_INSTALL)
-BRLCAD_ADDEXEC(tester_bn_chull3d bn_chull3d.c "libbu;libbn" NO_INSTALL)
 BRLCAD_ADDEXEC(tester_bn_plane_pt bn_plane_pt.c "libbu;libbn" NO_INSTALL)
 BRLCAD_ADDEXEC(tester_bn_plane_dist bn_plane_dist.c "libbu;libbn" NO_INSTALL)
 BRLCAD_ADDEXEC(tester_bn_plane_isect bn_plane_isect.c "libbu;libbn" NO_INSTALL)
@@ -20,48 +15,7 @@ BRLCAD_ADDEXEC(tester_bn_complex bn_complex.c "libbu;libbn" NO_INSTALL)
 BRLCAD_ADDEXEC(tester_bn_mat bn_mat.c "libbu;libbn" NO_INSTALL)
 BRLCAD_ADDEXEC(tester_bn_tabdata bn_tabdata.c "libbu;libbn" NO_INSTALL)
 BRLCAD_ADDEXEC(tester_bn_qmath bn_qmath.c "libbu;libbn" NO_INSTALL)
-BRLCAD_ADDEXEC(tester_bn_polygon_triangulate bn_polygon_triangulate.c "libbu;libbn" NO_INSTALL)
-CMAKEFILES(bn_chull_test003_bot.asc)
-CMAKEFILES(bn_chull_test004_bot.asc)
-CMAKEFILES(bn_poly_cubic_roots.c bn_poly_quartic_roots.c bn_obr.c)
-
-# For COMMAND tester_bn_tri_tri_isect_coplanar, the input format is as follows:
-#
-# COMMAND tester_bn_tri_tri_isect_coplanar V0 V1 V2 U0 U1 U2 <area_flag> <expected result>
-#
-# where P and Q are the two triangles in question.  An individual point
-# is three integer or floating point numbers separated by commas. The area
-# flag tells the function whether or not to require non-zero area for an
-# overlap in coplanar cases.
-
-# TODO - need some tests with floating point vertices that are down around the EPSILON threshold - that's
-# where the NEAR_ZERO components of the bn_tri_tri_isect_coplanar logic become important.
-
-add_test(NAME bn_tri_tri_isect_coplanar_null_noarea   COMMAND tester_bn_tri_tri_isect_coplanar  0,0,0 1,0,0 1,1,0  1.00001,0,0 2,0,0 1.00001,1,0  0  0)
-add_test(NAME bn_tri_tri_isect_coplanar_vertex_noarea COMMAND tester_bn_tri_tri_isect_coplanar  0,0,0 1,0,0 1,1,0  1.00001,0,0 2,0,0 1,1,0        0  1)
-add_test(NAME bn_tri_tri_isect_coplanar_edge_noarea   COMMAND tester_bn_tri_tri_isect_coplanar  0,0,0 1,0,0 1,1,0  1,0,0       2,0,0 1,1,0        0  1)
-add_test(NAME bn_tri_tri_isect_coplanar_full_noarea   COMMAND tester_bn_tri_tri_isect_coplanar  0,0,0 1,0,0 1,1,0  1,0,0       2,0,0 0.7,0.8,0    0  1)
-add_test(NAME bn_tri_tri_isect_coplanar_null_area   COMMAND tester_bn_tri_tri_isect_coplanar  0,0,0 1,0,0 1,1,0  1.00001,0,0 2,0,0 1.00001,1,0  1  0)
-add_test(NAME bn_tri_tri_isect_coplanar_vertex_area COMMAND tester_bn_tri_tri_isect_coplanar  0,0,0 1,0,0 1,1,0  1.00001,0,0 2,0,0 1,1,0        1  0)
-add_test(NAME bn_tri_tri_isect_coplanar_edge_area   COMMAND tester_bn_tri_tri_isect_coplanar  0,0,0 1,0,0 1,1,0  1,0,0       2,0,0 1,1,0        1  0)
-add_test(NAME bn_tri_tri_isect_coplanar_full_area   COMMAND tester_bn_tri_tri_isect_coplanar  0,0,0 1,0,0 1,1,0  1,0,0       2,0,0 0.7,0.8,0    1  1)
-
-# For COMMAND tester_bn_tri_tri_isect, the input format is as follows:
-#
-# COMMAND tester_bn_tri_tri_isect V0 V1 V2 U0 U1 U2 <expected result>
-#
-# where P and Q are the two triangles in question.  An individual point
-# is three integer or floating point numbers separated by commas.
-
-# Test coplanar triangles
-add_test(NAME bn_tri_tri_isect_cp_null   COMMAND tester_bn_tri_tri_isect  0,0,0 1,0,0 1,1,0  1.00001,0,0 2,0,0 1.00001,1,0  0)
-add_test(NAME bn_tri_tri_isect_cp_vertex COMMAND tester_bn_tri_tri_isect  0,0,0 1,0,0 1,1,0  1.00001,0,0 2,0,0 1,1,0        1)
-add_test(NAME bn_tri_tri_isect_cp_edge   COMMAND tester_bn_tri_tri_isect  0,0,0 1,0,0 1,1,0  1,0,0       2,0,0 1,1,0        1)
-add_test(NAME bn_tri_tri_isect_cp_full   COMMAND tester_bn_tri_tri_isect  0,0,0 1,0,0 1,1,0  1,0,0       2,0,0 0.7,0.8,0    1)
-
-# Test more general triangles
-add_test(NAME bn_tri_tri_isect_null   COMMAND tester_bn_tri_tri_isect  0,0,0 1,0,0 1,1,0  1,0,1 1,0,1 1,1,1  0)
-
+CMAKEFILES(bn_poly_cubic_roots.c bn_poly_quartic_roots.c)
 
 #
 #  ************ list.c tests *************
@@ -96,17 +50,6 @@ add_test(NAME bn_poly_add                   COMMAND tester_bn_poly_add)
 
 add_test(NAME bn_poly_synthetic_div               COMMAND tester_bn_poly_synthetic_div)
 
-
-#
-#  ************ polygon.c tests *************
-#
-add_test(NAME bn_polygon_triangulate	    COMMAND tester_bn_polygon_triangulate)
-
-
-
-#
-#  ************ obr.c tests *************
-#add_test(NAME bn_obr_simple			COMMAND tester_bn_obr) # Default points
 
 #
 #  ************ plane.c tests *************

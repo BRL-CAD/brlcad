@@ -25,12 +25,18 @@
 
 #include "bu/defines.h"
 
-
-/** @addtogroup magic */
-/** @{ */
-/** @file magic.h
+/** @addtogroup bu_magic
  *
+ * @brief
  * Global registry of recognized magic numbers.
+ *
+ * Magic numbers provide a means
+ * to perform run-time sanity checks for memory corruption and
+ * uninitialized data.
+ *
+ * The one ugly thing about this implementation is that every BRL-CAD
+ * structure needs to have its magic number registered here and in
+ * the header.
  *
  * This file is part of LIBBU even though it provides magic numbers
  * for structures in other libraries.
@@ -38,6 +44,9 @@
  * The defines should be considered PRIVATE (even though they are not)
  * and should NEVER be referenced by value.
  */
+/** @{ */
+/** @brief Global registry of recognized magic numbers. */
+/** @file bu/magic.h */
 
 __BEGIN_DECLS
 
@@ -215,13 +224,7 @@ __BEGIN_DECLS
 #define WMEMBER_MAGIC			0x43128912 /**< C??? */
 #define ICV_IMAGE_MAGIC		0x6269666d /**< bifm */
 
-
-/** @file badmagic.c
- *
- * Routines involved with handling "magic numbers" used to identify
- * various in-memory data structures.
- *
- */
+/** @brief Routines involved with handling "magic numbers" used to identify various in-memory data structures. */
 
 /**
  * Macros to check and validate a structure pointer, given that the
@@ -245,19 +248,8 @@ __BEGIN_DECLS
 BU_EXPORT extern void bu_badmagic(const uint32_t *ptr, uint32_t magic, const char *str, const char *file, int line);
 
 
+/** @brief Routines involved with handling "magic numbers" used to identify various in-memory data structures. */
 
-/** @file magic.c
- *
- * Routines involved with handling "magic numbers" used to identify
- * various in-memory data structures.  Magic numbers provide a means
- * to perform run-time sanity checks for memory corruption and
- * uninitialized data.
- *
- * The one ugly thing about this implementation is that every BRL-CAD
- * structure needs to have its magic number registered here and in
- * the header.
- *
- */
 /**
  * Given a number which has been found in the magic number field of a
  * structure (which is typically the first entry), determine what kind

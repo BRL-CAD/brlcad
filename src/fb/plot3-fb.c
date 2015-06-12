@@ -83,7 +83,7 @@
 #include "bu/log.h"
 #include "bu/parallel.h"
 #include "fb.h"
-#include "plot3.h"
+#include "bn/plot3.h"
 
 #define COMMA ','
 

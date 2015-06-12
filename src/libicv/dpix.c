@@ -46,7 +46,7 @@ icv_normalize(icv_image_t *bif)
     double max, min;
     double m, b;
     size_t size;
-    unsigned long int i;
+    size_t i;
 
     if (bif == NULL) {
 	bu_log("icv_normalize : trying to normalize a NULL bif\n");
@@ -84,7 +84,7 @@ icv_normalize(icv_image_t *bif)
 
 
 icv_image_t *
-dpix_read(const char *filename, int width, int height)
+dpix_read(const char *filename, size_t width, size_t height)
 {
     icv_image_t *bif;
     int fd;

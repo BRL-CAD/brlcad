@@ -69,9 +69,9 @@ size_t Bot::addPoint(point_t& point)
 }
 
 
-void Bot::addTriangle(int a,
-		      int b,
-		      int c)
+void Bot::addTriangle(size_t a,
+		      size_t b,
+		      size_t c)
 {
     // add a new triangle
     m_faces.push_back(a);

@@ -36,6 +36,7 @@
 
 #include "bu/cmd.h"
 #include "bu/getopt.h"
+#include "bu/path.h"
 
 #include "./ged_private.h"
 
@@ -60,7 +61,7 @@ _path_scrub(struct bu_vls *path)
     if (bu_vls_addr(path)[0] == '/')
 	islocal = 0;
 
-    normalized = db_normalize(bu_vls_addr(path));
+    normalized = bu_normalize(bu_vls_addr(path));
 
     if (normalized && !BU_STR_EQUAL(normalized, "/")) {
 	char *tbasename = (char *)bu_calloc(strlen(normalized), sizeof(char), "_path_scrub tbasename");

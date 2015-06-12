@@ -1,4 +1,7 @@
 BRLCAD_ADDEXEC(tester_density density.c "libanalyze;libbu" NO_INSTALL)
+BRLCAD_ADDEXEC(tester_raydiff raydiff.c "libanalyze;libbu" NO_INSTALL)
+
+CMAKEFILES(raydiff.g)
 
 # Local Variables:
 # tab-width: 8

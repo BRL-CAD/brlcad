@@ -439,7 +439,7 @@ bu_binary_to_bitv2(const char *str, const int nbytes)
     size_t word_count;
     size_t chunksize = 0;
     volatile size_t BVS = sizeof(bitv_t); /* should be 1 byte as defined in bu/bitv.h */
-    unsigned bytes;
+    size_t bytes;
 
     /* copy the input string and remove leading and trailing white space */
     bu_vls_strcpy(&v, str);

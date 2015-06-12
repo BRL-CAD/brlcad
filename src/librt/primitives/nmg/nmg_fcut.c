@@ -1542,7 +1542,7 @@ nmg_special_wedge_processing(struct nmg_vu_stuff *vs, int start, int end, double
 	fclose(fp);
 	bu_log("wrote %s\n", buf);
 	bu_free((char *)b, "nmg_special_wedge_processing flag[]");
-	rt_vlblock_free(vbp);
+	bn_vlblock_free(vbp);
     }
 
     if (end-start >= 128) bu_bomb("nmg_special_wedge_processing: array overflow\n");

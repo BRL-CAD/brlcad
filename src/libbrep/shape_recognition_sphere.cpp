@@ -9,7 +9,7 @@
 #include "shape_recognition.h"
 
 int
-subbrep_is_sphere(struct subbrep_object_data *data, fastf_t cyl_tol)
+subbrep_is_sphere(struct subbrep_object_data *data, fastf_t)
 {
     std::set<int>::iterator f_it;
     std::set<int> spherical_surfaces;
@@ -340,6 +340,7 @@ sphere_csg(struct subbrep_object_data *data, fastf_t sph_tol)
 	return 0;
     }
 
+    return -1;
 }
 
 // Local Variables:

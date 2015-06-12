@@ -30,7 +30,7 @@
 
 
 #include "raytrace.h"
-#include "rtgeom.h"
+#include "rt/geom.h"
 #include "wdb.h"
 
 #include "./ged_private.h"
@@ -295,7 +295,7 @@ ged_brep(struct ged *gedp, int argc, const char *argv[])
 	}
 
 	_ged_cvt_vlblock_to_solids(gedp, vbp, namebuf, 0);
-	rt_vlblock_free(vbp);
+	bn_vlblock_free(vbp);
 	vbp = (struct bn_vlblock *)NULL;
 
 	rt_db_free_internal(&intern);
@@ -484,7 +484,7 @@ ged_brep(struct ged *gedp, int argc, const char *argv[])
 
     snprintf(namebuf, 64, "%s%s_", commtag, solid_name);
     _ged_cvt_vlblock_to_solids(gedp, vbp, namebuf, 0);
-    rt_vlblock_free(vbp);
+    bn_vlblock_free(vbp);
     vbp = (struct bn_vlblock *)NULL;
 
     rt_db_free_internal(&intern);

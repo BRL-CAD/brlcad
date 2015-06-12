@@ -119,7 +119,7 @@ static struct cvt_tab bu_units_length_tab[] = {
     {1.495979e+14,	"astronomical unit"},
     {1.07925285e+15,	"light hour"},
     {2.59020684e+16,	"light day"},
-    {9.4605284+18,	"light year"},
+    {9.4605284e+18,	"light year"},
     {3.08568025e+19,	"pc"},
     {3.08568025e+19,	"parsec"},
     {0.0,		""}			/* LAST ENTRY */

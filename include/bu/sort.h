@@ -18,9 +18,6 @@
  * information.
  */
 
-/** @file sort.h
- *
- */
 #ifndef BU_SORT_H
 #define BU_SORT_H
 
@@ -32,15 +29,20 @@
 
 __BEGIN_DECLS
 
-/** @addtogroup sort */
-/** @{ */
-
-/** @file libbu/sort.c
- * platform-independent re-entrant version of qsort, where the first argument
- * is the array to sort, the second the number of elements inside the array, the
- * third the size of one element, the fourth the comparison-function and the
- * fifth a variable which is handed as a third argument to the comparison-function.
+/** @addtogroup bu_sort
+ *
+ * @brief
+ * Platform-independent re-entrant version of qsort.
+ *
+ * The first argument is the array to sort, the second the number of elements
+ * inside the array, the third the size of one element, the fourth the
+ * comparison-function and the fifth a variable which is handed as a third
+ * argument to the comparison-function.
+ *
  */
+/** @{ */
+/** @file bu/sort.h */
+
 BU_EXPORT extern void bu_sort(void *array, size_t nummemb, size_t sizememb,
             int (*compare)(const void *, const void *, void *), void *context);
 

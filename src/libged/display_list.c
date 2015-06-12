@@ -28,9 +28,9 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "plot3.h"
+#include "bn/plot3.h"
 
-#include "solid.h"
+#include "rt/solid.h"
 #include "./ged_private.h"
 
 
@@ -2204,13 +2204,13 @@ dl_print_schain(struct bu_list *hdlp, struct db_i *dbip, int lvl, int vlcmds, st
 
 		    for (i = 0; i < nused; i++, cmd++, pt++) {
 			bu_vls_printf(vls, "  %s (%g, %g, %g)\n",
-				      rt_vlist_get_cmd_description(*cmd),
+				      bn_vlist_get_cmd_description(*cmd),
 				      V3ARGS(*pt));
 		    }
 		}
 
 		bu_vls_printf(vls, "  %d vlist structures, %d pts\n", nvlist, npts);
-		bu_vls_printf(vls, "  %d pts (via rt_ck_vlist)\n", rt_ck_vlist(&(sp->s_vlist)));
+		bu_vls_printf(vls, "  %d pts (via bn_ck_vlist)\n", bn_ck_vlist(&(sp->s_vlist)));
 	    }
 
 	    gdlp = next_gdlp;

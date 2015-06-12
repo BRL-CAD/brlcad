@@ -131,7 +131,7 @@ render_util_shotline_list(struct tie_s *tie, struct tie_ray_s *ray, void **data,
     struct tie_id_s id;
     struct render_shotline_s shotline;
     uint32_t i;
-    uint8_t c;
+    size_t c;
 
     shotline.seglist = NULL;
     shotline.segnum = 0;
