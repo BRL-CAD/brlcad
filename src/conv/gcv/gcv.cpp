@@ -40,9 +40,9 @@ void fast4_arg_process(const char *args) {
     int ret_argc = 0;
     static int tol = 0.0;
     static int w_flag;
-    struct bu_opt_desc fg4_opt_desc[3] = {
-	{"t", "tol",                1, 1, &bu_opt_int, (void *)&tol, "tol", "Dimensional tolerance."},
-	{"w", "warn-default-names", 0, 0, NULL, (void *)&w_flag, "", "File format of input file."},
+    struct bu_opt_desc fg4_opt_desc[] = {
+	{"t", "tol",                "#", &bu_opt_int, (void *)&tol,    "Dimensional tolerance."},
+	{"w", "warn-default-names", "" , NULL,        (void *)&w_flag, "File format of input file."},
 	BU_OPT_DESC_NULL
     };
 
@@ -76,8 +76,8 @@ void stl_arg_process(const char *args) {
     static int tol = 0.0;
     static int units = 0;
     struct bu_opt_desc stl_opt_desc[3] = {
-	{"t",  "tol",   1, 1, &bu_opt_int, (void *)&tol, "tol",  "Dimensional tolerance." },
-	{"u",  "units", 1, 1, &bu_opt_int, (void *)&units, "unit", "Units of input file." },
+	{"t",  "tol",   "#", &bu_opt_int, (void *)&tol,   "Dimensional tolerance." },
+	{"u",  "units", "#", &bu_opt_int, (void *)&units, "Units of input file." },
 	BU_OPT_DESC_NULL
     };
 
@@ -244,7 +244,8 @@ file_stat(struct bu_vls *msg, int argc, const char **argv, void *set_var)
     char **file_set = (char **)set_var;
 
     if (!argv || strlen(argv[0]) || argc == 0) {
-	return 0;
+	if (msg) bu_vls_sprintf(msg, "Error - no file name supplied\n");
+	return -1;
     }
     if (!bu_file_exists(argv[0], NULL)){
 	if (msg) bu_vls_sprintf(msg, "Error - file %s does not exist!\n", argv[0]);
@@ -262,7 +263,8 @@ file_null(struct bu_vls *msg, int argc, const char **argv, void *set_var)
     char **file_set = (char **)set_var;
 
     if (!argv || strlen(argv[0]) || argc == 0) {
-	return 0;
+	if (msg) bu_vls_sprintf(msg, "Error - no file name supplied\n");
+	return -1;
     }
     if (bu_file_exists(argv[0], NULL)){
 	if (msg) bu_vls_sprintf(msg, "Error - file %s already exists!\n", argv[0]);
@@ -281,7 +283,8 @@ model_mime(struct bu_vls *msg, int argc, const char **argv, void *set_mime)
     mime_model_t type = MIME_MODEL_UNKNOWN;
     mime_model_t *set_type = (mime_model_t *)set_mime;
     if (!argv || argc == 0) {
-	return 0;
+	if (msg) bu_vls_sprintf(msg, "Error - no file type supplied\n");
+	return -1;
     }
     type_int = bu_file_mime(argv[0], MIME_MODEL);
     type = (type_int < 0) ? MIME_MODEL_UNKNOWN : (mime_model_t)type_int;
@@ -350,14 +353,14 @@ main(int ac, const char **av)
     int uac = 0;
 
     struct bu_opt_desc gcv_opt_desc[9] = {
-	{"h", "help",             0, 1, &gcv_help,    (void *)&hs,            "format",     gcv_help_str,                 },
-	{"?", "",                 0, 1, &gcv_help,    (void *)&hs,            "format",     "",                           },
-	{"i", "input",            1, 1, &file_stat,   (void *)&in_path_str,   "file",       "Input file.",                },
-	{"o", "output",           1, 1, &file_null,   (void *)&out_path_str,  "file",       "Output file.",               },
-	{"",  "input-format",     1, 1, &model_mime,  (void *)&in_type,       "format",     "File format of input file.", },
-	{"",  "output-format",    1, 1, &model_mime,  (void *)&out_type,      "format",     "File format of output file." },
-	{"I", "input-only-opts",  1, 1, &bu_opt_vls,  (void *)&in_only_opts,  "\"[opts]\"", gcv_inopt_str,                },
-	{"O", "output-only-opts", 1, 1, &bu_opt_vls,  (void *)&out_only_opts, "\"[opts]\"", gcv_outopt_str,               },
+	{"h", "help",             "[format]",   &gcv_help,    (void *)&hs,            gcv_help_str,                 },
+	{"?", "",                 "[format]",   &gcv_help,    (void *)&hs,            "",                           },
+	{"i", "input",            "file",       &file_stat,   (void *)&in_path_str,   "Input file.",                },
+	{"o", "output",           "file",       &file_null,   (void *)&out_path_str,  "Output file.",               },
+	{"",  "input-format",     "format",     &model_mime,  (void *)&in_type,       "File format of input file.", },
+	{"",  "output-format",    "format",     &model_mime,  (void *)&out_type,      "File format of output file." },
+	{"I", "input-only-opts",  "\"[opts]\"", &bu_opt_vls,  (void *)&in_only_opts,  gcv_inopt_str,                },
+	{"O", "output-only-opts", "\"[opts]\"", &bu_opt_vls,  (void *)&out_only_opts, gcv_outopt_str,               },
 	BU_OPT_DESC_NULL
     };
 

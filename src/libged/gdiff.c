@@ -59,11 +59,11 @@ ged_gdiff(struct ged *gedp, int argc, const char *argv[])
     int ret_ac = 0;
 
     struct bu_opt_desc d[6];
-    BU_OPT(d[0], "t", "tol", 1, 1, &bu_opt_fastf_t, (void *)&len_tol, "#", "Tolerance")
-    BU_OPT(d[1], "R", "ray-diff", 0, 0, NULL, (void *)&do_diff_raytrace, "", "Test for differences with raytracing")
-    BU_OPT(d[2], "l", "view-left", 0, 0, NULL, (void *)&view_left, "", "Visualize volumes added only by left object")
-    BU_OPT(d[3], "b", "view-both", 0, 0, NULL, (void *)&view_overlap, "", "Visualize volumes common to both objects")
-    BU_OPT(d[4], "r", "view-right", 0, 0, NULL, (void *)&view_right, "", "Visualize volumes added only by right object")
+    BU_OPT(d[0], "t", "tol",      "#", &bu_opt_fastf_t, (void *)&len_tol, "Tolerance")
+    BU_OPT(d[1], "R", "ray-diff", "", NULL, (void *)&do_diff_raytrace, "Test for differences with raytracing")
+    BU_OPT(d[2], "l", "view-left", "", NULL, (void *)&view_left, "Visualize volumes added only by left object")
+    BU_OPT(d[3], "b", "view-both", "", NULL, (void *)&view_overlap, "Visualize volumes common to both objects")
+    BU_OPT(d[4], "r", "view-right", "", NULL, (void *)&view_right, "Visualize volumes added only by right object")
     BU_OPT_NULL(d[5]);
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);

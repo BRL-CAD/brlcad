@@ -1788,7 +1788,7 @@ _opt_tire_iso(struct bu_vls *msg, int argc, const char **argv, void *set_var)
     char s1, s2;
     int sret = 0;
     fastf_t *isoarray = (fastf_t *)set_var;
-    if (!argv || !argv[0] || strlen(argv[0]) == 0 || argc == 0) return 0;
+    if (!argv || !argv[0] || strlen(argv[0]) == 0 || argc == 0) return -1;
 
     sret = bu_sscanf(argv[0], "%d%c%d%c%d", &d1, &s1, &d2, &s2, &d3);
 
@@ -1854,22 +1854,22 @@ ged_tire(struct ged *gedp, int argc, const char *argv[])
     const char *cmd_name = argv[0];
 
     struct bu_opt_desc d[17];
-    BU_OPT(d[0],  "h", "help",                0, 0, NULL,             (void *)&print_help,     "",           "Print help and exit");
-    BU_OPT(d[1],  "?", "",                    0, 0, NULL,             (void *)&print_help,     "",           "");
-    BU_OPT(d[2],  "n", "obj-name",            1, 1, &bu_opt_vls,      (void *)&name,           "name",       "Set top-level object name");
-    BU_OPT(d[3],  "w", "wheel",               1, 1, &bu_opt_bool,     (void *)&usewheel,       "bool",       "Enable/disable wheel (default is enabled).");
-    BU_OPT(d[4],  "d", "dimensions",          1, 1, &_opt_tire_iso,   (void *)isoarray,        ISO_TIRE_FMT, "Specify tire dimensions using ISO style inputs");
-    BU_OPT(d[5],  "",  "ISO",                 1, 1, &_opt_tire_iso,   (void *)isoarray,        ISO_TIRE_FMT, "");
-    BU_OPT(d[6],  "W", "width",               1, 1, &bu_opt_fastf_t,  (void *)&width,          "#",          "Tire width (mm).  Overrides -d");
-    BU_OPT(d[7],  "R", "aspect-ratio",        1, 1, &bu_opt_fastf_t,  (void *)&aspect,         "#",          "Aspect ratio (#/100). Overrides -d.");
-    BU_OPT(d[8],  "D", "rim-diameter",        1, 1, &bu_opt_fastf_t,  (void *)&rim_diam,       "#",          "Rim diameter (inches). Overrides -d.");
-    BU_OPT(d[9],  "g", "tread-depth",         1, 1, &bu_opt_fastf_t,  (void *)&tread_depth,    "#",          "Tread depth (1/32 inch)");
-    BU_OPT(d[10], "j", "hub-width",           1, 1, &bu_opt_fastf_t,  (void *)&hub_width,      "#",          "Rim width (inches)");
-    BU_OPT(d[11], "s", "max-sidewall-radius", 1, 1, &bu_opt_fastf_t,  (void *)&zside1,         "#",          "Maximum sidewall radius (mm)");
-    BU_OPT(d[12], "u", "tire-thickness",      1, 1, &bu_opt_fastf_t,  (void *)&tire_thickness, "#",          "Tire thickness (mm)");
-    BU_OPT(d[13], "p", "tread-pattern",       1, 1, &bu_opt_int,      (void *)&pattern_type,   "#",          "Tread pattern (integer id, range 1 - 2)");
-    BU_OPT(d[14], "c", "tread-pattern-cnt",   1, 1, &bu_opt_int,      (void *)&num_tread_ptns, "#",          "Number of tread patterns around tire");
-    BU_OPT(d[15], "t", "tread-shape",         1, 1, &bu_opt_int,      (void *)&tread_type,     "#",          "Tread shape profile (integer id, range 1 - 2)");
+    BU_OPT(d[0],  "h", "help",                "",           NULL,             (void *)&print_help,     "Print help and exit");
+    BU_OPT(d[1],  "?", "",                    "",           NULL,             (void *)&print_help,     "");
+    BU_OPT(d[2],  "n", "obj-name",            "name",       &bu_opt_vls,      (void *)&name,           "Set top-level object name");
+    BU_OPT(d[3],  "w", "wheel",               "bool",       &bu_opt_bool,     (void *)&usewheel,       "Enable/disable wheel (default is enabled).");
+    BU_OPT(d[4],  "d", "dimensions",          ISO_TIRE_FMT, &_opt_tire_iso,   (void *)isoarray,        "Specify tire dimensions using ISO style inputs");
+    BU_OPT(d[5],  "",  "ISO",                 ISO_TIRE_FMT, &_opt_tire_iso,   (void *)isoarray,        "");
+    BU_OPT(d[6],  "W", "width",               "#",          &bu_opt_fastf_t,  (void *)&width,          "Tire width (mm).  Overrides -d");
+    BU_OPT(d[7],  "R", "aspect-ratio",        "#",          &bu_opt_fastf_t,  (void *)&aspect,         "Aspect ratio (#/100). Overrides -d.");
+    BU_OPT(d[8],  "D", "rim-diameter",        "#",          &bu_opt_fastf_t,  (void *)&rim_diam,       "Rim diameter (inches). Overrides -d.");
+    BU_OPT(d[9],  "g", "tread-depth",         "#",          &bu_opt_fastf_t,  (void *)&tread_depth,    "Tread depth (1/32 inch)");
+    BU_OPT(d[10], "j", "hub-width",           "#",          &bu_opt_fastf_t,  (void *)&hub_width,      "Rim width (inches)");
+    BU_OPT(d[11], "s", "max-sidewall-radius", "#",          &bu_opt_fastf_t,  (void *)&zside1,         "Maximum sidewall radius (mm)");
+    BU_OPT(d[12], "u", "tire-thickness",      "#",          &bu_opt_fastf_t,  (void *)&tire_thickness, "Tire thickness (mm)");
+    BU_OPT(d[13], "p", "tread-pattern",       "#",          &bu_opt_int,      (void *)&pattern_type,   "Tread pattern (integer id, range 1 - 2)");
+    BU_OPT(d[14], "c", "tread-pattern-cnt",   "#",          &bu_opt_int,      (void *)&num_tread_ptns, "Number of tread patterns around tire");
+    BU_OPT(d[15], "t", "tread-shape",         "#",          &bu_opt_int,      (void *)&tread_type,     "Tread shape profile (integer id, range 1 - 2)");
     BU_OPT_NULL(d[16]);
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);

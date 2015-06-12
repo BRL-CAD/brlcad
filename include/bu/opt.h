@@ -65,10 +65,10 @@ typedef int (*bu_opt_arg_process_t)(struct bu_vls *, int argc, const char **argv
  * static int ph = 0;
  * static int i = 0;
  * static fastf_t f = 0.0;
- * struct bu_opt_desc opt_defs[4] = {
- *     {"h", "help",    0, 0, NULL,            (void *)&ph , "", help_str},
- *     {"n", "num",     1, 1, &bu_opt_int,     (void *)&i,   "#", "Read int"},
- *     {"f", "fastf_t", 1, 1, &bu_opt_fastf_t, (void *)&f,   "#", "Read float"},
+ * struct bu_opt_desc opt_defs[] = {
+ *     {"h", "help",    NULL,            (void *)&ph , "", help_str},
+ *     {"n", "num",     &bu_opt_int,     (void *)&i,   "#", "Read int"},
+ *     {"f", "fastf_t", &bu_opt_fastf_t, (void *)&f,   "#", "Read float"},
  *     BU_OPT_DESC_NULL
  * };
  * @endcode
@@ -84,16 +84,14 @@ typedef int (*bu_opt_arg_process_t)(struct bu_vls *, int argc, const char **argv
 struct bu_opt_desc {
     const char *shortopt;
     const char *longopt;
-    size_t arg_cnt_min;
-    size_t arg_cnt_max;
+    const char *arg_helpstr;
     bu_opt_arg_process_t arg_process;
     void *set_var;
-    const char *arg_helpstr;
     const char *help_string;
 };
 
 /* Convenience definition for NULL bu_opt_desc struct */
-#define BU_OPT_DESC_NULL {NULL, NULL, 0, 0, NULL, NULL, NULL, NULL}
+#define BU_OPT_DESC_NULL {NULL, NULL, NULL, NULL, NULL, NULL}
 
 /**
  * Macro for assigning values to bu_opt_desc array entries.  Use this style
@@ -106,20 +104,18 @@ struct bu_opt_desc {
  * int i = 0;
  * fastf_t f = 0.0;
  * struct bu_opt_desc opt_defs[4];
- * BU_OPT(opt_defs[0], "h", "help",     0, 0, NULL,            (void *)&ph, "", help_str);
- * BU_OPT(opt_defs[1], "n", "num",      1, 1, &bu_opt_ind,     (void *)&i,  "#", "Read int");
- * BU_OPT(opt_defs[2], "f", "fastf_t",  1, 1, &bu_opt_fastf_t, (void *)&f,  "#", "Read float");
+ * BU_OPT(opt_defs[0], "h", "help",     NULL,            (void *)&ph, "", help_str);
+ * BU_OPT(opt_defs[1], "n", "num",      &bu_opt_ind,     (void *)&i,  "#", "Read int");
+ * BU_OPT(opt_defs[2], "f", "fastf_t",  &bu_opt_fastf_t, (void *)&f,  "#", "Read float");
  * BU_OPT_NULL(opt_defs[3]);
  *
  */
-#define BU_OPT(_desc, _so, _lo, _min, _max, _aprocess, _var, _ahelp, _help) { \
+#define BU_OPT(_desc, _so, _lo, _ahelp, _aprocess, _var, _help) { \
     _desc.shortopt = _so; \
     _desc.longopt = _lo; \
-    _desc.arg_cnt_min = _min; \
-    _desc.arg_cnt_max = _max; \
+    _desc.arg_helpstr = _ahelp; \
     _desc.arg_process = _aprocess; \
     _desc.set_var = _var; \
-    _desc.arg_helpstr = _ahelp; \
     _desc.help_string = _help; \
 }
 
@@ -127,14 +123,11 @@ struct bu_opt_desc {
 #define BU_OPT_NULL(_desc) { \
     _desc.shortopt = NULL; \
     _desc.longopt = NULL; \
-    _desc.arg_cnt_min = 0; \
-    _desc.arg_cnt_max = 0; \
+    _desc.arg_helpstr = NULL; \
     _desc.arg_process = NULL; \
     _desc.set_var = NULL; \
-    _desc.arg_helpstr = NULL; \
     _desc.help_string = NULL; \
 }
-
 
 /**
  * Parse argv array using option descs.

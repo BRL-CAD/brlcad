@@ -129,21 +129,21 @@ parse_debug_nmg(struct bu_vls *UNUSED(error_msg), int UNUSED(argc), const char *
 }
 
 static struct bu_opt_desc options[] = {
-    {"?", "", 0, 0, NULL, &print_help, "", "print help and exit"},
-    {"h", "", 0, 0, NULL, &print_help, "", "print help and exit"},
-    {"i", "", 0, 0, NULL, &inches, "", "change output units from mm to inches"},
-    {"m", "", 0, 0, NULL, &usemtl, "", "output usemtl statements"},
-    {"u", "", 0, 0, NULL, &do_normals, "", "output vertex normals"},
-    {"v", "", 0, 0, NULL, &verbose, "", "verbose output"},
-    {"a", "", 1, 1, parse_tol_abs, &ttol, "#", "absolute tolerance"},
-    {"n", "", 1, 1, parse_tol_norm, &ttol, "#", "surface normal tolerance"},
-    {"D", "", 1, 1, parse_tol_dist, &tol, "#", "distance tolerance"},
-    {"x", "", 1, 1, parse_debug_rt, NULL, "level", "set RT debug flag"},
-    {"X", "", 1, 1, parse_debug_nmg, NULL, "level", "set NMG debug flag"},
-    {"e", "", 1, 1, bu_opt_str, &error_file, "error_file", "error file name"},
-    {"o", "", 1, 1, bu_opt_str, &output_file, "output.obj", "output file name"},
-    {"P", "", 1, 1, bu_opt_int, &ncpu, "#", "number of CPUs"},
-    {"r", "", 1, 1, bu_opt_fastf_t, &ttol.rel, "#", "relative tolerance"},
+    {"?", "", NULL,         NULL,            &print_help,  "print help and exit"},
+    {"h", "", NULL,         NULL,            &print_help,  "print help and exit"},
+    {"i", "", NULL,         NULL,            &inches,      "change output units from mm to inches"},
+    {"m", "", NULL,         NULL,            &usemtl,      "output usemtl statements"},
+    {"u", "", NULL,         NULL,            &do_normals,  "output vertex normals"},
+    {"v", "", NULL,         NULL,            &verbose,     "verbose output"},
+    {"a", "", "#",          parse_tol_abs,   &ttol,        "absolute tolerance"},
+    {"n", "", "#",          parse_tol_norm,  &ttol,        "surface normal tolerance"},
+    {"D", "", "#",          parse_tol_dist,  &tol,         "distance tolerance"},
+    {"x", "", "level",      parse_debug_rt,  NULL,         "set RT debug flag"},
+    {"X", "", "level",      parse_debug_nmg, NULL,         "set NMG debug flag"},
+    {"e", "", "error_file", bu_opt_str,      &error_file,  "error file name"},
+    {"o", "", "output.obj", bu_opt_str,      &output_file, "output file name"},
+    {"P", "", "#",          bu_opt_int,      &ncpu,        "number of CPUs"},
+    {"r", "", "#",          bu_opt_fastf_t,  &ttol.rel,    "relative tolerance"},
     BU_OPT_DESC_NULL
 };
 

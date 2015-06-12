@@ -176,15 +176,15 @@ int desc_1(const char *cgy, int test_num)
     static fastf_t f = 0;
 
     /* Option descriptions */
-    struct bu_opt_desc d[9] = {
-	{"h", "help",    0, 0, NULL,     (void *)&print_help, "",       help_str},
-	{"?", "",        0, 0, NULL,     (void *)&print_help, "",       help_str},
-	{"v", "verb",    0, 1, &d1_verb, (void *)&verbosity,  "#",      "Set verbosity (range is 0 to 3)"},
-	{"b", "bool",    1, 1, &bu_opt_bool, (void *)&b,      "bool",   "Set boolean flag"},
-	{"s", "str",     1, 1, &bu_opt_str,  (void *)&str,    "string", "Set string"},
-	{"i", "int",     1, 1, &bu_opt_int,  (void *)&i,      "#",      "Set int"},
-	{"l", "long",    1, 1, &bu_opt_long, (void *)&l,      "#",      "Set long"},
-	{"f", "fastf_t", 1, 1, &bu_opt_fastf_t, (void *)&f,   "#",      "Read float"},
+    struct bu_opt_desc d[] = {
+	{"h", "help",    "",       NULL,     (void *)&print_help, help_str},
+	{"?", "",        "",       NULL,     (void *)&print_help, help_str},
+	{"v", "verb",    "[#]",    &d1_verb, (void *)&verbosity,  "Set verbosity (range is 0 to 3)"},
+	{"b", "bool",    "bool",   &bu_opt_bool, (void *)&b,      "Set boolean flag"},
+	{"s", "str",     "string", &bu_opt_str,  (void *)&str,    "Set string"},
+	{"i", "int",     "#",      &bu_opt_int,  (void *)&i,      "Set int"},
+	{"l", "long",    "#",      &bu_opt_long, (void *)&l,      "Set long"},
+	{"f", "fastf_t", "#",      &bu_opt_fastf_t, (void *)&f,   "Read float"},
 	BU_OPT_DESC_NULL
     };
 
@@ -540,13 +540,13 @@ dc_color(struct bu_vls *msg, int argc, const char **argv, void *set_c)
     struct bu_color *set_color = (struct bu_color *)set_c;
     unsigned int rgb[3];
     if (!argv || !argv[0] || strlen(argv[0]) == 0 || argc == 0) {
-	return 0;
+	return -1;
     }
 
     /* First, see if the first string converts to rgb */
     if (!bu_str_to_rgb((char *)argv[0], (unsigned char *)&rgb)) {
 	/* nope - maybe we have 3 args? */
-	if (argc == 3) {
+	if (argc >= 3) {
 	    struct bu_vls tmp_color = BU_VLS_INIT_ZERO;
 	    bu_vls_sprintf(&tmp_color, "%s/%s/%s", argv[0], argv[1], argv[2]);
 	    if (!bu_str_to_rgb(bu_vls_addr(&tmp_color), (unsigned char *)&rgb)) {
@@ -572,7 +572,7 @@ dc_color(struct bu_vls *msg, int argc, const char **argv, void *set_c)
 	return 1;
     }
 
-    return 0;
+    return -1;
 }
 
 int desc_2(int test_num)
@@ -587,8 +587,8 @@ int desc_2(int test_num)
     struct bu_vls parse_msgs = BU_VLS_INIT_ZERO;
 
     struct bu_opt_desc d[3];
-    BU_OPT(d[0], "h", "help",  0, 0, NULL,      (void *)&print_help, "",      help_str);
-    BU_OPT(d[1], "C", "color", 1, 3, &dc_color, (void *)&color,      "r/g/b", "Set color");
+    BU_OPT(d[0], "h", "help",  "",      NULL,      (void *)&print_help, help_str);
+    BU_OPT(d[1], "C", "color", "r/g/b", &dc_color, (void *)&color,      "Set color");
     BU_OPT_NULL(d[2]);
 
     av = (const char **)bu_calloc(containers, sizeof(char *), "Input array");
