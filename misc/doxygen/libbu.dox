@@ -91,7 +91,11 @@
 /** @ingroup bu_data */
 /**   @defgroup bu_conv Data Conversion */
 /** @ingroup bu_data */
-/**   @defgroup bu_getopt Command-line Option Parsing*/
+/**   @defgroup bu_getopt Basic Command-line Option Parsing*/
+/** @ingroup bu_data */
+/**   @defgroup bu_opt Generalized Command-line Option Parsing*/
+/**   @ingroup bu_opt */
+/**     @defgroup bu_opt_arg_process Pre-Defined Option Parsers*/
 /** @ingroup bu_data */
 /**   @defgroup bu_hist Histogram Handling */
 /** @ingroup bu_data */
