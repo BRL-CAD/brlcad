@@ -152,8 +152,8 @@ main(int argc, const char **argv)
 {
     int c;
     double percent;
-    const char **extra_args;
     struct bu_vls parse_msgs = BU_VLS_INIT_ZERO;
+    const char *prog_name = argv[0];
 
     bu_setprogname(argv[0]);
     bu_setlinebuf(stderr);
@@ -181,17 +181,15 @@ main(int argc, const char **argv)
 
     /* Get command line arguments. */
     ++argv; --argc;
-    extra_args = (const char **)bu_calloc(argc, sizeof(char *), "extra args");
 
-    argc = bu_opt_parse(&extra_args, argc, &parse_msgs, argc, argv, options);
+    argc = bu_opt_parse(&parse_msgs, argc, argv, options);
 
     if (bu_vls_strlen(&parse_msgs) > 0) {
 	bu_log("%s\n", bu_vls_cstr(&parse_msgs));
     }
     if (argc < 2 || print_help) {
-	print_usage(argv[0]);
+	print_usage(prog_name);
     }
-    argv = extra_args;
 
     if (!output_file)
 	fp = stdout;

@@ -153,7 +153,6 @@ main(int ac, char *av[])
     const char *f1, *f2;
     static int print_help = 0;
     int non_opt_argc = 0;
-    const char **non_opts = (const char **)bu_calloc(4, sizeof(char *), "extra args");
 
     static const char usage[] = "Usage: dsp_add [opts] dsp_1 dsp_2 > dsp_3\n";
     struct bu_opt_desc dsp_opt_desc[3] = {
@@ -170,32 +169,29 @@ main(int ac, char *av[])
     }
 
     if (!print_help)
-	non_opt_argc = bu_opt_parse(&non_opts, 4, NULL, ac, (const char **)av, dsp_opt_desc);
+	non_opt_argc = bu_opt_parse(NULL, ac, (const char **)av, dsp_opt_desc);
 
     if (print_help || non_opt_argc < 2) {
 	const char *help = bu_opt_describe(dsp_opt_desc, NULL);
 	bu_log(usage);
 	bu_log("Options:\n%s\n", help);
 	bu_free((char *)help, "help str");
-	bu_free(non_opts, "free non_opts array");
 	bu_exit (1, NULL);
     }
 
     /* Open the files */
-    f1 = non_opts[0];
-    f2 = non_opts[1];
+    f1 = av[0];
+    f2 = av[1];
 
     in1 = fopen(f1, "r");
     if (!in1) {
 	perror(f1);
-	bu_free(non_opts, "free non_opts array");
 	return -1;
     }
 
     if (fstat(fileno(in1), &sb)) {
 	perror(f1);
 	fclose(in1);
-	bu_free(non_opts, "free non_opts array");
 	return -1;
     }
 
@@ -206,7 +202,6 @@ main(int ac, char *av[])
     if (!in2) {
 	perror(f2);
 	fclose(in1);
-	bu_free(non_opts, "free non_opts array");
 	return -1;
     }
 
@@ -214,14 +209,12 @@ main(int ac, char *av[])
 	perror(f2);
 	fclose(in1);
 	fclose(in2);
-	bu_free(non_opts, "free non_opts array");
 	return -1;
     }
 
     if ((size_t)sb.st_size != count) {
 	fclose(in1);
 	fclose(in2);
-	bu_free(non_opts, "free non_opts array");
 	bu_exit(EXIT_FAILURE, "**** ERROR **** file size mis-match\n");
     }
 
@@ -266,11 +259,8 @@ main(int ac, char *av[])
 
     if (fwrite(buf1, sizeof(short), count, stdout) != count) {
 	bu_log("Error writing data\n");
-	bu_free(non_opts, "free non_opts array");
 	return -1;
     }
-
-    bu_free(non_opts, "free non_opts array");
 
     return 0;
 }

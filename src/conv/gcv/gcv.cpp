@@ -38,7 +38,6 @@ void fast4_arg_process(const char *args) {
     int argc = 0;
     char **argv = NULL;
     int ret_argc = 0;
-    const char **non_opts;
     static int tol = 0.0;
     static int w_flag;
     struct bu_opt_desc fg4_opt_desc[3] = {
@@ -51,8 +50,7 @@ void fast4_arg_process(const char *args) {
     argv = (char **)bu_calloc(strlen(input) + 1, sizeof(char *), "argv array");
     argc = bu_argv_from_string(argv, strlen(input), input);
 
-    non_opts = (const char **)bu_calloc(strlen(args) + 1, sizeof(const char *), "non_opts array");
-    ret_argc = bu_opt_parse(&non_opts, strlen(args), NULL, argc, (const char **)argv, fg4_opt_desc);
+    ret_argc = bu_opt_parse(NULL, argc, (const char **)argv, fg4_opt_desc);
 
     if (w_flag)	bu_log("FASTGEN 4 warn default names set\n");
     bu_log("FASTGEN 4 tol: %d\n", tol);
@@ -60,9 +58,9 @@ void fast4_arg_process(const char *args) {
     if (ret_argc) {
 	bu_log("Unknown args: ");
 	for (i = 0; i < ret_argc - 1; i++) {
-	    bu_log("%s, ", non_opts[i]);
+	    bu_log("%s, ", argv[i]);
 	}
-	bu_log("%s\n", non_opts[ret_argc - 1]);
+	bu_log("%s\n", argv[ret_argc - 1]);
     }
 
     bu_free(input, "free array");
@@ -75,7 +73,6 @@ void stl_arg_process(const char *args) {
     int argc = 0;
     char **argv = NULL;
     int ret_argc = 0;
-    const char **non_opts;
     static int tol = 0.0;
     static int units = 0;
     struct bu_opt_desc stl_opt_desc[3] = {
@@ -88,8 +85,7 @@ void stl_arg_process(const char *args) {
     argv = (char **)bu_calloc(strlen(input) + 1, sizeof(char *), "argv array");
     argc = bu_argv_from_string(argv, strlen(input), input);
 
-    non_opts = (const char **)bu_calloc(strlen(args) + 1, sizeof(const char *), "non_opts array");
-    ret_argc = bu_opt_parse(&non_opts, strlen(args), NULL, argc, (const char **)argv, stl_opt_desc);
+    ret_argc = bu_opt_parse(NULL, argc, (const char **)argv, stl_opt_desc);
 
     bu_log("STL tol: %d\n", tol);
     bu_log("STL units: %d\n", units);
@@ -97,9 +93,9 @@ void stl_arg_process(const char *args) {
     if (ret_argc) {
 	bu_log("Unknown args: ");
 	for (i = 0; i < ret_argc - 1; i++) {
-	    bu_log("%s, ", non_opts[i]);
+	    bu_log("%s, ", argv[i]);
 	}
-	bu_log("%s\n", non_opts[ret_argc - 1]);
+	bu_log("%s\n", argv[ret_argc - 1]);
     }
 
     bu_free(input, "free array");
@@ -324,7 +320,7 @@ gcv_help(struct bu_vls *UNUSED(msg), int argc, const char **argv, void *set_var)
 #define gcv_outopt_str "Options to apply only while preparing output file.  Quotes around the opts are always necessary, but brackets are only necessary when supplying a single option without arguments that would otherwise be interpreted as an argv entry by the shell, even with quotes.  Brackets will never hurt, and for robustness when scripting they should always be used."
 
 int
-main(int ac, char **av)
+main(int ac, const char **av)
 {
     size_t i;
     int fmt = 0;
@@ -352,7 +348,6 @@ main(int ac, char **av)
     struct bu_vls output_opts = BU_VLS_INIT_ZERO;
     struct bu_vls parse_msgs = BU_VLS_INIT_ZERO;
     int uac = 0;
-    const char **uav = (const char **)bu_calloc(ac, sizeof(char *), "unknown results");
 
     struct bu_opt_desc gcv_opt_desc[9] = {
 	{"h", "help",             0, 1, &gcv_help,    (void *)&hs,            "format",     gcv_help_str,                 },
@@ -379,7 +374,7 @@ main(int ac, char **av)
 	goto cleanup;
     }
 
-    uac = bu_opt_parse(&uav, ac, &parse_msgs, ac, (const char **)av, gcv_opt_desc);
+    uac = bu_opt_parse(&parse_msgs, ac, av, gcv_opt_desc);
 
     /* First, see if help was supplied */
     if (hs.flag) {
@@ -433,20 +428,20 @@ main(int ac, char **av)
      * be the last two arguments supplied */
     if (uac > 0 && !(skip_in && skip_out)) {
 	if (skip_in && !skip_out) {
-	    bu_vls_sprintf(&out_path_raw, "%s", uav[uac - 1]);
+	    bu_vls_sprintf(&out_path_raw, "%s", av[uac - 1]);
 	    uac--;
 	}
 	if (!skip_in && skip_out) {
-	    bu_vls_sprintf(&in_path_raw, "%s", uav[uac - 1]);
+	    bu_vls_sprintf(&in_path_raw, "%s", av[uac - 1]);
 	    uac--;
 	}
 	if (!skip_in && !skip_out) {
 	    if (uac > 1) {
-		bu_vls_sprintf(&in_path_raw, "%s", uav[uac - 2]);
-		bu_vls_sprintf(&out_path_raw, "%s", uav[uac - 1]);
+		bu_vls_sprintf(&in_path_raw, "%s", av[uac - 2]);
+		bu_vls_sprintf(&out_path_raw, "%s", av[uac - 1]);
 		uac = uac -2;
 	    } else {
-		bu_vls_sprintf(&in_path_raw, "%s", uav[uac - 1]);
+		bu_vls_sprintf(&in_path_raw, "%s", av[uac - 1]);
 		uac--;
 	    }
 	}
@@ -461,8 +456,8 @@ main(int ac, char **av)
 		bu_vls_printf(&input_opts, " ");
 		bu_vls_printf(&output_opts, " ");
 	    }
-	    bu_vls_printf(&input_opts, "%s", uav[i]);
-	    bu_vls_printf(&output_opts, "%s", uav[i]);
+	    bu_vls_printf(&input_opts, "%s", av[i]);
+	    bu_vls_printf(&output_opts, "%s", av[i]);
 	}
 	if (bu_vls_strlen(&input_opts) > 0) bu_log("Unknown options (input): %s\n", bu_vls_addr(&input_opts));
 	if (bu_vls_strlen(&output_opts) > 0) bu_log("Unknown options (output): %s\n", bu_vls_addr(&output_opts));

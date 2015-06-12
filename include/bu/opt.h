@@ -145,10 +145,11 @@ struct bu_opt_desc {
  *
  * -1  - fatal error in parsing.  Program must decide to recover or exit.
  *  0  - all argv options handled.
- *  >0 - some unused argv entries returned in unused array (if provided), return int is unused argc count.
+ *  >0 - some unused argv entries returned at the beginning of the argv array.
+ *       returned int is unused argc count.
  *
  */
-BU_EXPORT extern int bu_opt_parse(const char ***unused, size_t sizeof_unused, struct bu_vls *msgs, int ac, const char **argv, struct bu_opt_desc *ds);
+BU_EXPORT extern int bu_opt_parse(struct bu_vls *msgs, int ac, const char **argv, struct bu_opt_desc *ds);
 
 
 /* Standard option validators - if a custom option argument

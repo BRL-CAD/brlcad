@@ -333,11 +333,12 @@ can_be_opt(const char *opt) {
 
 
 int
-bu_opt_parse(const char ***unused, size_t sizeof_unused, struct bu_vls *msgs, int argc, const char **argv, struct bu_opt_desc *ds)
+bu_opt_parse(struct bu_vls *msgs, int argc, const char **argv, struct bu_opt_desc *ds)
 {
     int i = 0;
     int offset = 0;
     int ret_argc = 0;
+    struct bu_ptbl known_args = BU_PTBL_INIT_ZERO;
     struct bu_ptbl unknown_args = BU_PTBL_INIT_ZERO;
     if (!argv || !ds) return -1;
 
@@ -398,6 +399,7 @@ bu_opt_parse(const char ***unused, size_t sizeof_unused, struct bu_vls *msgs, in
 	if (eq_arg) arg_cnt = 1;
 
 	/* handled the option - any remaining processing is on args, if any*/
+	bu_ptbl_ins(&known_args, (long *)argv[i]);
 	i = i + 1;
 
 	/* If we already got an arg from the equals mechanism and we aren't
@@ -448,6 +450,9 @@ bu_opt_parse(const char ***unused, size_t sizeof_unused, struct bu_vls *msgs, in
 			    continue;
 			}
 		    }
+		    for (k = (int)i; k < (int)(i + arg_offset - arg_cnt); k++) {
+			bu_ptbl_ins(&known_args, (long *)argv[k]);
+		    }
 		    i = i + arg_offset - arg_cnt;
 		} else {
 		    if (desc->arg_cnt_min == 0) {
@@ -459,13 +464,27 @@ bu_opt_parse(const char ***unused, size_t sizeof_unused, struct bu_vls *msgs, in
 		}
 		bu_free(g_argv, "free greedy argv");
 	    } else {
-		while (arg_cnt < desc->arg_cnt_max && i < argc && !can_be_opt(argv[i])) {
-		    i++;
-		    arg_cnt++;
-		}
-		if (arg_cnt < desc->arg_cnt_min) {
-		    if (msgs) bu_vls_printf(msgs, "Option %s requires at least %d arguments but only %d were found - halting.\n", argv[i-1], desc->arg_cnt_min, arg_cnt);
+		if (desc->arg_cnt_min > 0) {
+		    if (msgs) {
+			if (desc->arg_cnt_min == 1) {
+			    if (desc->longopt && strlen(desc->longopt) > 0) {
+				bu_vls_printf(msgs, "Option %s found and requires at least one argument, but no arg processing function was defined - halting.\n", desc->longopt);
+			    } else {
+				bu_vls_printf(msgs, "Option %s found and requires at least one argument, but no arg processing function was defined - halting.\n", desc->shortopt);
+			    }
+			} else {
+			    if (desc->longopt && strlen(desc->longopt) > 0) {
+				bu_vls_printf(msgs, "Option %s found and requires at least %d arguments, but no arg processing function was defined - halting.\n", desc->longopt, desc->arg_cnt_min);
+			    } else {
+				bu_vls_printf(msgs, "Option %s found and requires at least %d arguments, but no arg processing function was defined - halting.\n", desc->shortopt, desc->arg_cnt_min);
+			    }
+			}
+		    }
 		    return -1;
+		} else {
+		    /* No desc->arg_process and no minimum arg count - handle as a flag */
+		    int *flag_var = (int *)desc->set_var;
+		    if (flag_var) (*flag_var) = 1;
 		}
 	    }
 	} else {
@@ -475,18 +494,22 @@ bu_opt_parse(const char ***unused, size_t sizeof_unused, struct bu_vls *msgs, in
 	}
     }
 
-    /* Copy as many of the unknown args as we can fit into the provided argv array.
-     * Program must check return value to see if any were lost due to the provided
-     * array being too small. */
+    /* Rearrange argv so the unused options are ordered at the front of the array. */
     ret_argc = BU_PTBL_LEN(&unknown_args);
-    if (ret_argc > 0 && sizeof_unused > 0 && unused) {
+    if (ret_argc > 0) {
 	int avc = 0;
-	int max_avc_cnt = (BU_PTBL_LEN(&unknown_args) < sizeof_unused) ? BU_PTBL_LEN(&unknown_args) : sizeof_unused;
-	for (avc = 0; avc < max_avc_cnt; avc++) {
-	    (*unused)[avc] = (const char *)BU_PTBL_GET(&unknown_args, avc);
+	int akc = BU_PTBL_LEN(&known_args);
+	for (avc = 0; avc < ret_argc; avc++) {
+	    argv[avc] = (const char *)BU_PTBL_GET(&unknown_args, avc);
+	}
+	/* Put the option argv pointers at the end of the array, in case they
+	 * are still needed for memory freeing by the caller */
+	for (avc = ret_argc; avc < akc + ret_argc; avc++) {
+	    argv[avc] = (const char *)BU_PTBL_GET(&unknown_args, avc);
 	}
     }
     bu_ptbl_free(&unknown_args);
+    bu_ptbl_free(&known_args);
 
     return ret_argc;
 }

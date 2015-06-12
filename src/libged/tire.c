@@ -1851,7 +1851,7 @@ ged_tire(struct ged *gedp, int argc, const char *argv[])
     fastf_t tread_depth_float = tread_depth/32.0;
     int print_help = 0;
     int ret_ac = 0;
-    const char **unknown;
+    const char *cmd_name = argv[0];
 
     struct bu_opt_desc d[17];
     BU_OPT(d[0],  "h", "help",                0, 0, NULL,             (void *)&print_help,     "",           "Print help and exit");
@@ -1875,20 +1875,20 @@ ged_tire(struct ged *gedp, int argc, const char *argv[])
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
     GED_CHECK_READ_ONLY(gedp, GED_ERROR);
 
-    unknown = (const char **)bu_calloc(argc, sizeof(char *), "non-option argv array");
-    ret_ac = bu_opt_parse(&unknown, argc, &str, argc-1, argv+1, d);
+    /* Skip first arg */
+    argv++; argc--;
+
+    ret_ac = bu_opt_parse(&str, argc-1, argv+1, d);
     if (ret_ac < 0) {
 	bu_vls_printf(gedp->ged_result_str, "%s\n", bu_vls_addr(&str));
 	bu_vls_free(&name);
 	bu_vls_free(&str);
-	bu_free((char *)unknown, "free unknown args array");
 	return GED_ERROR;
     }
     if (print_help) {
-	_tire_show_help(gedp, argv[0], d);
+	_tire_show_help(gedp, cmd_name, d);
 	bu_vls_free(&name);
 	bu_vls_free(&str);
-	bu_free((char *)unknown, "free unknown args array");
 	return GED_ERROR;
     }
 
@@ -1906,7 +1906,7 @@ ged_tire(struct ged *gedp, int argc, const char *argv[])
      * overridden by the last argument on command line*/
     if (bu_vls_strlen(&name) == 0) {
 	if (ret_ac > 0) {
-	    bu_vls_printf(&name, "%s", unknown[0]);
+	    bu_vls_printf(&name, "%s", argv[0]);
 	    ret_ac--;
 	} else {
 	    bu_vls_printf(&name,"tire-%d-%dR%d", (int)isoarray[0], (int)isoarray[1], (int)isoarray[2]);
@@ -1917,7 +1917,6 @@ ged_tire(struct ged *gedp, int argc, const char *argv[])
 	bu_vls_sprintf(gedp->ged_result_str, "unknown args supplied.\n");
 	bu_vls_free(&name);
 	bu_vls_free(&str);
-	bu_free((char *)unknown, "free unknown args array");
 	return GED_ERROR;
     }
 
@@ -1925,7 +1924,6 @@ ged_tire(struct ged *gedp, int argc, const char *argv[])
 	bu_vls_sprintf(gedp->ged_result_str, "%s already exists.\n", bu_vls_addr(&name));
 	bu_vls_free(&name);
 	bu_vls_free(&str);
-	bu_free((char *)unknown, "free unknown args array");
 	return GED_ERROR;
     }
 
@@ -2009,7 +2007,6 @@ ged_tire(struct ged *gedp, int argc, const char *argv[])
     bu_vls_free(&str);
     bu_vls_free(&name);
     bu_vls_free(&dimen);
-    bu_free((char *)unknown, "free unknown args array");
 
     return GED_OK;
 }
