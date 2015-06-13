@@ -1203,7 +1203,7 @@ find_ccone2_cutout(Section &section, const db_i &db, const db_full_path &path,
     VADD2(v2, outer_tgc.v, outer_tgc.h);
     section.write_name(get_parent_dir(path).d_namep);
     section.write_cone(outer_tgc.v, v2, ro1, ro2, ri1, ri2);
-    completed.insert(&get_parent_dir(path)).second;
+    completed.insert(&get_parent_dir(path));
     return true;
 }
 
