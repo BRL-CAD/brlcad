@@ -77,6 +77,7 @@ private:
 };
 
 
+// Assignable/CopyConstructible for use with STL containers.
 template <typename T>
 class Triple
 {
@@ -354,6 +355,7 @@ RecordWriter::Record::truncate_float(fastf_t value)
     const std::size_t end_digit = result.find_last_not_of('0');
     const std::size_t end_point = result.find('.');
 
+    // remove redundant trailing zeros
     result.erase(std::max(end_point + 2, end_digit + 1));
 
     if (end_point >= result.size() - 1)
@@ -370,9 +372,11 @@ RecordWriter::write_comment(const std::string &value)
 }
 
 
+// simple way to order records properly within the output file
 class StringBuffer : public RecordWriter
 {
 public:
+    StringBuffer();
     void write(RecordWriter &writer) const;
 
 
@@ -383,6 +387,12 @@ protected:
 private:
     std::ostringstream m_ostringstream;
 };
+
+
+inline
+StringBuffer::StringBuffer() :
+    m_ostringstream()
+{}
 
 
 inline void
@@ -404,7 +414,7 @@ StringBuffer::get_ostream()
 class FastgenWriter : public RecordWriter
 {
 public:
-    typedef std::pair<std::size_t, std::size_t> SectionID;
+    typedef std::pair<std::size_t, std::size_t> SectionID; // group, component
 
     explicit FastgenWriter(const std::string &path);
     ~FastgenWriter();
@@ -517,13 +527,14 @@ FastgenWriter::write_boolean(BooleanType type, const SectionID &section_a,
 }
 
 
+// stores grid IDs and reuses duplicate grid points when possible
 class GridManager
 {
 public:
     GridManager();
 
     // return a vector of grid IDs corresponding to the given points,
-    // with no duplicate indices in the returned vector.
+    // with no duplicate indices in the returned vector
     std::vector<std::size_t> get_unique_grids(const std::vector<Point> &points);
 
     void write(RecordWriter &writer) const;
@@ -631,6 +642,7 @@ public:
 
     void write(FastgenWriter &writer) const;
 
+    // create a comment describing an element
     void write_name(const std::string &value);
 
     void write_line(const fastf_t *point_a, const fastf_t *point_b,
@@ -660,7 +672,7 @@ private:
     const bool m_volume_mode;
     const std::size_t m_material_id;
 
-    std::pair<bool, Color> m_color;
+    std::pair<bool, Color> m_color; // optional color
     std::pair<bool, fastf_t> m_compsplt;
 
     GridManager m_grids;
@@ -946,7 +958,7 @@ get_face_info(const rt_bot_internal &bot, std::size_t i)
     // defaults
     std::pair<fastf_t, bool> result(1.0, true);
 
-    // fg4 does not allow zero thickness
+    // fastgen forbids a thickness of zero here
     // set a very small thickness if face thickness is zero
     if (bot.thickness)
 	result.first = !NEAR_ZERO(bot.thickness[i],
@@ -1045,7 +1057,7 @@ ell_is_sphere(const rt_ell_internal &ell)
 
 
 // Determines whether a tgc can be represented by a CCONE2 object.
-// Assumes that tgc is a valid rt_tgc_internal.
+// Assumes that `tgc` is a valid rt_tgc_internal.
 HIDDEN bool
 tgc_is_ccone2(const rt_tgc_internal &tgc)
 {
@@ -1069,6 +1081,7 @@ tgc_is_ccone2(const rt_tgc_internal &tgc)
 	return false;
 
     {
+	// ensure unit vectors are equal
 	vect_t a_norm, b_norm, c_norm, d_norm;
 	VMOVE(a_norm, tgc.a);
 	VMOVE(b_norm, tgc.b);
@@ -1100,6 +1113,7 @@ get_parent_dir(const db_full_path &path)
 }
 
 
+// get the parent region's directory
 HIDDEN const directory &
 get_region_dir(const db_i &db, const db_full_path &path)
 {
@@ -1125,6 +1139,7 @@ get_region_dir(const db_i &db, const db_full_path &path)
 }
 
 
+// get the parent region's path
 HIDDEN const db_full_path
 get_region_path(const db_i &db, const db_full_path &path)
 {
@@ -1141,6 +1156,8 @@ get_region_path(const db_i &db, const db_full_path &path)
 }
 
 
+// helper; sets `outer` and `inner` if they exist in
+// a tree describing `outer` - `inner`
 HIDDEN bool
 get_cutout(const db_i &db, const db_full_path &member_path, DBInternal &outer,
 	   DBInternal &inner)
@@ -1165,7 +1182,7 @@ get_cutout(const db_i &db, const db_full_path &member_path, DBInternal &outer,
 }
 
 
-// Test for and create ccone2 elements.
+// test for and create ccone2 elements
 HIDDEN bool
 find_ccone2_cutout(Section &section, const db_i &db,
 		   const db_full_path &member_path, std::set<const directory *> &completed)
@@ -1224,6 +1241,7 @@ find_ccone2_cutout(Section &section, const db_i &db,
 }
 
 
+// test for and create CSPHERE elements
 HIDDEN bool
 find_csphere_cutout(Section &section, const db_i &db,
 		    const db_full_path &member_path, std::set<const directory *> &completed)
@@ -1277,6 +1295,7 @@ find_csphere_cutout(Section &section, const db_i &db,
 }
 
 
+// test for and create CHEX1 elements
 HIDDEN bool
 get_chex1(Section &section, const rt_bot_internal &bot)
 {
@@ -1303,6 +1322,7 @@ get_chex1(Section &section, const rt_bot_internal &bot)
 	const bool face_mode = BU_BITTEST(bot.face_mode, 0);
 	hex_grid_centered = !face_mode;
 
+	// check that all faces have a uniform face mode
 	std::size_t count = 0;
 	BU_BITV_LOOP_START(bot.face_mode) {
 	    ++count;
@@ -1536,6 +1556,7 @@ find_walls(const db_i &db, const directory &region_dir)
 }
 
 
+// stores information pertaining to the current conversion process
 struct FastgenConversion {
     class RegionManager;
 
@@ -1558,6 +1579,8 @@ private:
 };
 
 
+// Organize Section objects by their corresponding region, and store
+// additional conversion data pertinent to these sections.
 class FastgenConversion::RegionManager
 {
 public:
@@ -1566,8 +1589,12 @@ public:
 
     void write(FastgenWriter &writer) const;
 
+    // don't write this Section
     void disable();
+
+    // returns true if the given member shouldn't be written
     bool member_ignored(const directory &member_dir) const;
+
     void create_section(const db_full_path &region_instance_path);
     Section &get_section(const db_full_path &region_instance_path);
 
@@ -1661,6 +1688,7 @@ FastgenConversion::RegionManager::get_section(const db_full_path
 }
 
 
+// test for and create compsplts
 HIDDEN bool
 find_compsplt(FastgenConversion &data, const db_full_path &half_path,
 	      const rt_half_internal &half)
@@ -1740,6 +1768,7 @@ FastgenConversion::FastgenConversion(const std::string &path, const db_i &db,
     const std::size_t num_regions = db_ls(&db, DB_LS_REGION, NULL,
 					  &region_dirs.ptr);
 
+    // create a RegionManager for all regions in the database
     try {
 	for (std::size_t i = 0; i < num_regions; ++i)
 	    m_regions[region_dirs.ptr[i]] = new RegionManager(m_db, *region_dirs.ptr[i]);
