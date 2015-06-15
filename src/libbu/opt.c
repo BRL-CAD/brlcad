@@ -577,17 +577,17 @@ bu_opt_vls(struct bu_vls *msg, int argc, const char **argv, void *set_var)
 {
     struct bu_vls *s_set = (struct bu_vls *)set_var;
 
-    if (!argv || !argc ) {
+    if (!argv || !argv[0] || strlen(argv[0]) == 0 || argc != 1 ) {
 	if (msg) bu_vls_printf(msg, "bu_opt_vls requires arg, but arg not found - aborting\n");
 	return -1;
     }
 
     if (s_set) {
-	int i = 0;
-	for (i = 0; i < argc - 1; i++) {
-	    bu_vls_printf(s_set, "%s ", argv[i]);
+	if (bu_vls_strlen(s_set) > 0) {
+	    bu_vls_printf(s_set, " %s", argv[0]);
+	} else {
+	    bu_vls_printf(s_set, "%s", argv[0]);
 	}
-	bu_vls_printf(s_set, "%s", argv[argc - 1]);
     }
     return 1;
 }
