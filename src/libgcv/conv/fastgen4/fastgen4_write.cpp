@@ -429,6 +429,8 @@ public:
 
     SectionID take_next_section_id();
 
+    RecordWriter &get_section_writer();
+
 
 protected:
     virtual std::ostream &get_ostream();
@@ -439,11 +441,13 @@ private:
     static const std::size_t MAX_SECTION_ID = 999;
 
     std::size_t m_next_section_id[MAX_GROUP_ID + 1];
+    StringBuffer m_sections;
     std::ofstream m_ostream, m_colors_ostream;
 };
 
 
 FastgenWriter::FastgenWriter(const std::string &path) :
+    m_sections(),
     m_ostream(path.c_str(), std::ofstream::out),
     m_colors_ostream((path + ".colors").c_str(), std::ofstream::out)
 {
@@ -458,6 +462,7 @@ FastgenWriter::FastgenWriter(const std::string &path) :
 inline
 FastgenWriter::~FastgenWriter()
 {
+    m_sections.write(*this);
     Record(*this) << "ENDDATA";
 }
 
@@ -479,6 +484,13 @@ FastgenWriter::take_next_section_id()
 	    throw std::length_error("maximum number of sections");
 
     return std::make_pair(group_id, m_next_section_id[group_id]++);
+}
+
+
+inline RecordWriter &
+FastgenWriter::get_section_writer()
+{
+    return m_sections;
 }
 
 
@@ -709,6 +721,9 @@ Section::has_color() const
 inline Color
 Section::get_color() const
 {
+    if (!has_color())
+	throw std::logic_error("no color information for this Section");
+
     return m_color.second;
 }
 
@@ -724,28 +739,30 @@ Section::set_color(const Color &value)
 void
 Section::write(FastgenWriter &writer, const FastgenWriter::SectionID &id) const
 {
+    RecordWriter &sections = writer.get_section_writer();
+
+    if (has_color())
+	writer.write_section_color(id, get_color());
+
     {
 	std::string new_name = m_name;
 
 	if (new_name.size() > MAX_NAME_SIZE) {
-	    writer.write_comment(new_name);
+	    sections.write_comment(new_name);
 	    new_name = "..." + new_name.substr(new_name.size() - MAX_NAME_SIZE + 3);
 	}
 
-	RecordWriter::Record record(writer);
+	RecordWriter::Record record(sections);
 	record << "$NAME" << id.first << id.second;
 	record << "" << "" << "" << "";
 	record.text(new_name);
     }
 
-    RecordWriter::Record(writer) << "SECTION" << id.first << id.second <<
-				 (m_volume_mode ? 2 : 1);
+    RecordWriter::Record(sections)
+	    << "SECTION" << id.first << id.second << (m_volume_mode ? 2 : 1);
 
-    if (has_color())
-	writer.write_section_color(id, get_color());
-
-    m_grids.write(writer);
-    m_elements.write(writer);
+    m_grids.write(sections);
+    m_elements.write(sections);
 }
 
 
