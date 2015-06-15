@@ -2455,10 +2455,10 @@ CONFIG_H_APPEND(BRLCAD "#define BRLCAD_COMPILE_HOST ${BRLCAD_COMPILE_HOST}\n")
 CONFIG_H_APPEND(BRLCAD "#define BRLCAD_COMPILE_USER ${BRLCAD_COMPILE_USER}\n")
 CONFIG_H_APPEND(BRLCAD "#define BRLCAD_COMPILE_COUNT ${BRLCAD_COMPILE_COUNT}\n")
 
-# If we're building on Windows, use config_win.h file
-if(WIN32)
+# If we're building on Windows with MSVC, use config_win.h file
+if(MSVC)
   CONFIG_H_APPEND(BRLCAD "#include \"config_win.h\"\n")
-endif(WIN32)
+endif(MSVC)
 
 # Now that all the tests are done, configure the brlcad_config.h file:
 CONFIG_H_APPEND(BRLCAD "#endif /* __CONFIG_H__ */\n")
