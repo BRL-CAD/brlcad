@@ -203,6 +203,17 @@ struct bu_opt_desc_opts {
     int description_columns;
 };
 
+/**
+ *
+ * Using the example definition above, bu_opt_describe would
+ * generate the following help string by default:
+ *
+\verbatim
+  -h, --help                    Print help string and exit.
+  -n #, --num #                 Read int
+  -f #, --fastf_t #             Read float
+\endverbatim
+ */
 BU_EXPORT extern const char *bu_opt_describe(struct bu_opt_desc *ds, struct bu_opt_desc_opts *settings);
 
 
