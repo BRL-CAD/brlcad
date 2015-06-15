@@ -160,26 +160,6 @@ struct bu_opt_desc {
 BU_EXPORT extern int bu_opt_parse(struct bu_vls *msgs, int ac, const char **argv, struct bu_opt_desc *ds);
 
 
-/** @addtogroup bu_opt_arg_process
- *
- * Standard option validators - if a custom option argument
- * validation isn't needed, the functions below can be
- * used for most valid data types. When data conversion is successful,
- * the user_data pointer in bu_opt_data will point to the results
- * of the string->[type] translation in order to allow a calling
- * program to use the int/long/etc. without having to repeat the
- * conversion.
- */
-/** @{ */
-BU_EXPORT extern int bu_opt_bool(struct bu_vls *msg, int argc, const char **argv, void *set_var);
-BU_EXPORT extern int bu_opt_int(struct bu_vls *msg, int argc, const char **argv, void *set_var);
-BU_EXPORT extern int bu_opt_long(struct bu_vls *msg, int argc, const char **argv, void *set_var);
-BU_EXPORT extern int bu_opt_fastf_t(struct bu_vls *msg, int argc, const char **argv, void *set_var);
-BU_EXPORT extern int bu_opt_str(struct bu_vls *msg, int argc, const char **argv, void *set_var);
-BU_EXPORT extern int bu_opt_vls(struct bu_vls *msg, int argc, const char **argv, void *set_var);
-/** @} */
-
-
 /** Output format options for bu_opt documentation generation */
 typedef enum {
     BU_OPT_ASCII,
@@ -211,8 +191,27 @@ struct bu_opt_desc_opts {
 BU_EXPORT extern const char *bu_opt_describe(struct bu_opt_desc *ds, struct bu_opt_desc_opts *settings);
 
 
-
 /** @} */
+
+/** @addtogroup bu_opt_arg_process
+ *
+ * Standard option validators - if a custom option argument
+ * validation isn't needed, the functions below can be
+ * used for most valid data types. When data conversion is successful,
+ * the user_data pointer in bu_opt_data will point to the results
+ * of the string->[type] translation in order to allow a calling
+ * program to use the int/long/etc. without having to repeat the
+ * conversion.
+ */
+/** @{ */
+BU_EXPORT extern int bu_opt_bool(struct bu_vls *msg, int argc, const char **argv, void *set_var);
+BU_EXPORT extern int bu_opt_int(struct bu_vls *msg, int argc, const char **argv, void *set_var);
+BU_EXPORT extern int bu_opt_long(struct bu_vls *msg, int argc, const char **argv, void *set_var);
+BU_EXPORT extern int bu_opt_fastf_t(struct bu_vls *msg, int argc, const char **argv, void *set_var);
+BU_EXPORT extern int bu_opt_str(struct bu_vls *msg, int argc, const char **argv, void *set_var);
+BU_EXPORT extern int bu_opt_vls(struct bu_vls *msg, int argc, const char **argv, void *set_var);
+/** @} */
+
 
 __END_DECLS
 
