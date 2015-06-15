@@ -44,7 +44,7 @@ __BEGIN_DECLS
  *
  * To set up a bu_opt parsing system, an array of bu_opt_desc (option description)
  * structures is defined and terminated with a BU_OPT_DESC_NULL entry.  This array
- * is then used by bu_opt_parse to process an argv array.
+ * is then used by \link bu_opt_parse \endlink to process an argv array.
  *
  * When defining a bu_opt_desc entry, the type of the set_var assignment variable
  * needed is determined by the arg_process callback.  If no callback is present and
@@ -89,9 +89,12 @@ __BEGIN_DECLS
  * @endcode
  *
  * Given the option description array and argc/argv data, \link bu_opt_parse \endlink will do the
- * rest.  The design of bu_opt_parse is to fail early when an invalid option
+ * rest.  The design of \link bu_opt_parse \endlink is to fail early when an invalid option
  * situation is encountered, so code using this system needs to be ready to handle
  * such cases.
+ *
+ * For generating descriptive help strings from a bu_opt_desc array use the \link bu_opt_describe \endlink
+ * function, which supports multiple output styles and formats.
  */
 /** @{ */
 /** @file bu/opt.h */
@@ -116,7 +119,6 @@ typedef int (*bu_opt_arg_process_t)(struct bu_vls *, int argc, const char **argv
  * "Option description" structure.
  *
  * Arrays of this structure are used to define command line options.
- *
  */
 struct bu_opt_desc {
     const char *shortopt;             /**< @brief "Short" option (i.e. -h for help option) */
@@ -130,11 +132,7 @@ struct bu_opt_desc {
 /** Convenience initializer for NULL bu_opt_desc array terminator */
 #define BU_OPT_DESC_NULL {NULL, NULL, NULL, NULL, NULL, NULL}
 
-/**
- * Macro for assigning values to bu_opt_desc array entries.  Use this style
- * when it isn't possible to use static variables as set_var entries
- * (such as libraries which need to be thread safe.)
- */
+/** Macro for assigning values to bu_opt_desc array entries. */
 #define BU_OPT(_desc, _so, _lo, _ahelp, _aprocess, _var, _help) { \
     _desc.shortopt = _so; \
     _desc.longopt = _lo; \
@@ -144,7 +142,7 @@ struct bu_opt_desc {
     _desc.help_string = _help; \
 }
 
-/* Convenience macro for setting a bu_opt_desc struct to BU_OPT_DESC_NULL */
+/** Convenience macro for setting a bu_opt_desc struct to BU_OPT_DESC_NULL */
 #define BU_OPT_NULL(_desc) { \
     _desc.shortopt = NULL; \
     _desc.longopt = NULL; \
@@ -221,11 +219,17 @@ BU_EXPORT extern const char *bu_opt_describe(struct bu_opt_desc *ds, struct bu_o
  * conversion.
  */
 /** @{ */
+/** Process 1 argument to set a boolean type */
 BU_EXPORT extern int bu_opt_bool(struct bu_vls *msg, int argc, const char **argv, void *set_var);
+/** Process 1 argument to set an integer */
 BU_EXPORT extern int bu_opt_int(struct bu_vls *msg, int argc, const char **argv, void *set_var);
+/** Process 1 argument to set a long */
 BU_EXPORT extern int bu_opt_long(struct bu_vls *msg, int argc, const char **argv, void *set_var);
+/** Process 1 argument to set a \link fastf_t \endlink (either a float or a double, depending on how BRL-CAD was compiled) */
 BU_EXPORT extern int bu_opt_fastf_t(struct bu_vls *msg, int argc, const char **argv, void *set_var);
+/** Process 1 argument to set a char pointer (uses the original argv string, does not make a copy) */
 BU_EXPORT extern int bu_opt_str(struct bu_vls *msg, int argc, const char **argv, void *set_var);
+/** Process 1 argument to append to a vls (places a space before the new entry if the target vls is not empty) */
 BU_EXPORT extern int bu_opt_vls(struct bu_vls *msg, int argc, const char **argv, void *set_var);
 /** @} */
 
