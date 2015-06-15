@@ -228,13 +228,13 @@ SC_TCL_64BIT_FLAGS()
 #--------------------------------------------------------------------
 #       Check endianness because we can optimize some operations
 #--------------------------------------------------------------------
-IF(NOT MSVC)
+IF(NOT WIN32)
   INCLUDE(TestBigEndian)
   TEST_BIG_ENDIAN(WORDS_BIGENDIAN)
   IF(WORDS_BIGENDIAN)
     add_definitions(-DWORDS_BIGENDIAN=1)
   ENDIF(WORDS_BIGENDIAN)
-ENDIF(NOT MSVC)
+ENDIF(NOT WIN32)
 
 #------------------------------------------------------------------------------
 #       Find out all about time handling differences.

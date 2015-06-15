@@ -286,13 +286,13 @@ add_definitions(-DYYENABLE_NLS=0)
 #       Tcl_UniChar strings to memcmp on big-endian systems.
 #--------------------------------------------------------------------
 # Test endianness 
-IF(NOT MSVC)
+IF(NOT WIN32)
   INCLUDE(TestBigEndian)
   TEST_BIG_ENDIAN(WORDS_BIGENDIAN)
   IF(WORDS_BIGENDIAN)
     ADD_TCL_CFLAG(WORDS_BIGENDIAN)
   ENDIF(WORDS_BIGENDIAN)
-ENDIF(NOT MSVC)
+ENDIF(NOT WIN32)
 
 #--------------------------------------------------------------------
 #       Supply substitutes for missing POSIX library procedures, or
