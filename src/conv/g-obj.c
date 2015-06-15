@@ -93,7 +93,7 @@ parse_tol_abs(struct bu_vls *error_msg, int argc, const char **argv, void *UNUSE
 {
     int ret;
     if (!argv || !argv[0] || strlen(argv[0]) == 0 || argc == 0) {
-	if (error_msg) bu_vls_printf(error_msg, "Error - no argument supplied to abosolute tolerance option\n");
+	if (error_msg) bu_vls_printf(error_msg, "Error - no argument supplied to absolute tolerance option\n");
 	return -1;
     };
 

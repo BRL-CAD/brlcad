@@ -406,7 +406,7 @@ bu_opt_parse(struct bu_vls *msgs, int argc, const char **argv, struct bu_opt_des
 		 * most likely scenario is an = assignment forced an argument to be
 		 * sent to an option that doesn't take arguments */
 		if (!arg_offset) {
-		    if (msgs) bu_vls_printf(msgs, "Option %s did not successfully use the supplied argument %s - haulting.\n", argv[i-1], eq_arg);
+		    if (msgs) bu_vls_printf(msgs, "Option %s did not successfully use the supplied argument %s - halting.\n", argv[i-1], eq_arg);
 		    return -1;
 		}
 
@@ -429,7 +429,7 @@ bu_opt_parse(struct bu_vls *msgs, int argc, const char **argv, struct bu_opt_des
 	    /* If we already got an arg from the equals mechanism and we aren't
 	     * supposed to have one, we're invalid - halt. */
 	    if (eq_arg) {
-		if (msgs) bu_vls_printf(msgs, "Option %s does not take an argument, but %s was supplied - haulting.\n", argv[i-1], eq_arg);
+		if (msgs) bu_vls_printf(msgs, "Option %s does not take an argument, but %s was supplied - halting.\n", argv[i-1], eq_arg);
 		return -1;
 	    }
 	}
