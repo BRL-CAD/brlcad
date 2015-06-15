@@ -57,6 +57,9 @@ ged_gdiff(struct ged *gedp, int argc, const char *argv[])
     const char *right_obj;
     fastf_t len_tol = BN_TOL_DIST;
     int ret_ac = 0;
+    /* Skip command name */
+    int ac = argc - 1;
+    const char **av = argv+1;
 
     struct bu_opt_desc d[6];
     BU_OPT(d[0], "t", "tol",      "#", &bu_opt_fastf_t, (void *)&len_tol, "Tolerance")
@@ -69,7 +72,7 @@ ged_gdiff(struct ged *gedp, int argc, const char *argv[])
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
-    ret_ac = bu_opt_parse(NULL, argc-1, argv+1, d);
+    ret_ac = bu_opt_parse(NULL, ac, av, d);
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
@@ -78,8 +81,8 @@ ged_gdiff(struct ged *gedp, int argc, const char *argv[])
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s", gdiff_usage());
 	return GED_ERROR;
     } else {
-	left_obj = argv[0];
-	right_obj = argv[1];
+	left_obj = av[0];
+	right_obj = av[1];
     }
 
     tol.dist = len_tol;
