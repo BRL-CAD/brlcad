@@ -55,9 +55,9 @@ gcv_fmt_fun(struct bu_vls *UNUSED(msgs), int argc, const char **argv, void *set_
     int args_used = 0;
     struct gcv_fmt_opts *gfo = (struct gcv_fmt_opts *)set_var;
 
-    if (!argv || argc < 3 ) return 0;
+    if (!argv || argc < 1 ) return 0;
 
-    for (i = 0; i < argc - 2; i++) {
+    for (i = 0; i < argc; i++) {
 	struct bu_vls cmp_arg = BU_VLS_INIT_ZERO;
 	const char *arg = argv[i]+1;
 	const char *equal_pos;
@@ -86,6 +86,32 @@ gcv_fmt_fun(struct bu_vls *UNUSED(msgs), int argc, const char **argv, void *set_
     }
 
     return args_used;
+}
+
+int
+io_opt_files(int argc, const char **argv)
+{
+    int i_opts = 0;
+    int o_opts = 0;
+    const char *equal_pos = NULL;
+    int i = 0;
+    for (i = 0; i < argc; i++) {
+	struct bu_vls cmp_arg = BU_VLS_INIT_ZERO;
+	const char *arg = argv[i];
+	if (arg[0] != '-') continue;
+	arg++;
+	if (arg[0] == '-') arg++;
+	equal_pos = strchr(arg, '=');
+	bu_vls_sprintf(&cmp_arg, "%s", arg);
+	if (equal_pos)
+	    bu_vls_trunc(&cmp_arg, -1 * strlen(equal_pos));
+
+	if (BU_STR_EQUAL(bu_vls_addr(&cmp_arg), "input")) i_opts++;
+	if (BU_STR_EQUAL(bu_vls_addr(&cmp_arg), "output")) o_opts++;
+    }
+    i_opts = (i_opts > 0) ? 1 : 0;
+    o_opts = (o_opts > 0) ? 1 : 0;
+    return i_opts + o_opts;
 }
 
 /* Emulate a FASTGEN4 format option processor */
@@ -280,7 +306,7 @@ file_stat(struct bu_vls *msg, int argc, const char **argv, void *set_var)
 {
     char **file_set = (char **)set_var;
 
-    if (!argv || strlen(argv[0]) || argc == 0) {
+    if (!argv || !strlen(argv[0]) || argc == 0) {
 	if (msg) bu_vls_sprintf(msg, "Error - no file name supplied\n");
 	return -1;
     }
@@ -299,7 +325,7 @@ file_null(struct bu_vls *msg, int argc, const char **argv, void *set_var)
 {
     char **file_set = (char **)set_var;
 
-    if (!argv || strlen(argv[0]) || argc == 0) {
+    if (!argv || !strlen(argv[0]) || argc == 0) {
 	if (msg) bu_vls_sprintf(msg, "Error - no file name supplied\n");
 	return -1;
     }
@@ -389,6 +415,7 @@ main(int ac, const char **av)
     struct bu_ptbl output_opts = BU_PTBL_INIT_ZERO;
     struct bu_vls parse_msgs = BU_VLS_INIT_ZERO;
     int uac = 0;
+    int io_opt_cnt = io_opt_files(ac, av);
 
     struct bu_opt_desc gcv_opt_desc[] = {
 	{"h", "help",             "[format]",   &gcv_help,    (void *)&hs,            gcv_help_str,                 },
@@ -418,7 +445,12 @@ main(int ac, const char **av)
 	goto cleanup;
     }
 
-    uac = bu_opt_parse(&parse_msgs, ac, av, gcv_opt_desc);
+    uac = bu_opt_parse(&parse_msgs, ac - 2 + io_opt_cnt, av, gcv_opt_desc);
+
+    if (uac == -1) {
+	bu_log("Parsing error: %s\n", bu_vls_addr(&parse_msgs));
+	goto cleanup;
+    }
 
     /* First, see if help was supplied */
     if (hs.flag) {
@@ -470,23 +502,19 @@ main(int ac, const char **av)
 
     /* If not specified explicitly with -i or -o, the input and output paths must always
      * be the last two arguments supplied */
-    if (uac > 0 && !(skip_in && skip_out)) {
+    if (!(skip_in && skip_out)) {
 	if (skip_in && !skip_out) {
-	    bu_vls_sprintf(&out_path_raw, "%s", av[uac - 1]);
-	    uac--;
+	    bu_vls_sprintf(&out_path_raw, "%s", av[ac - 1]);
 	}
 	if (!skip_in && skip_out) {
-	    bu_vls_sprintf(&in_path_raw, "%s", av[uac - 1]);
-	    uac--;
+	    bu_vls_sprintf(&in_path_raw, "%s", av[ac - 1]);
 	}
 	if (!skip_in && !skip_out) {
-	    if (uac > 1) {
-		bu_vls_sprintf(&in_path_raw, "%s", av[uac - 2]);
-		bu_vls_sprintf(&out_path_raw, "%s", av[uac - 1]);
-		uac = uac -2;
+	    if (ac > 1) {
+		bu_vls_sprintf(&in_path_raw, "%s", av[ac - 2]);
+		bu_vls_sprintf(&out_path_raw, "%s", av[ac - 1]);
 	    } else {
-		bu_vls_sprintf(&in_path_raw, "%s", av[uac - 1]);
-		uac--;
+		bu_vls_sprintf(&in_path_raw, "%s", av[ac - 1]);
 	    }
 	}
     }
