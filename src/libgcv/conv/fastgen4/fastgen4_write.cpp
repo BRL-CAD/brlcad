@@ -34,6 +34,7 @@
 #include <stdexcept>
 #include <map>
 
+#include "rt/func.h"
 #include "../../plugin.h"
 
 
@@ -143,6 +144,7 @@ public:
 
     void load(const db_i &db, const directory &dir);
     const rt_db_internal &get() const;
+    rt_db_internal &get();
 
 
 private:
@@ -209,6 +211,16 @@ DBInternal::load(const db_i &db, const directory &dir)
 
 const rt_db_internal &
 DBInternal::get() const
+{
+    if (!m_valid)
+	throw std::logic_error("invalid");
+
+    return m_internal;
+}
+
+
+rt_db_internal &
+DBInternal::get()
 {
     if (!m_valid)
 	throw std::logic_error("invalid");
@@ -509,8 +521,7 @@ FastgenWriter::write_section_color(const SectionID &section_id,
 FastgenWriter::SectionID
 FastgenWriter::write_compsplt(const SectionID &id, fastf_t z_coordinate)
 {
-    // FIXME this record should go before any section records
-    SectionID result = take_next_section_id();
+    const SectionID result = take_next_section_id();
 
     Record record(*this);
     record << "COMPSPLT" << id.first << id.second;
@@ -1110,6 +1121,34 @@ tgc_is_ccone2(const rt_tgc_internal &tgc)
 }
 
 
+HIDDEN void
+path_to_mat(const db_i &db, const db_full_path &path, mat_t result)
+{
+    RT_CK_DBI(&db);
+    RT_CK_FULL_PATH(&path);
+
+    db_full_path temp;
+    db_full_path_init(&temp);
+    db_dup_full_path(&temp, &path);
+    AutoPtr<db_full_path, db_free_full_path> autofree_path(&temp);
+
+    if (!db_path_to_mat(const_cast<db_i *>(&db), &temp, result, 0, &rt_uniresource))
+	throw std::runtime_error("db_path_to_mat() failed");
+}
+
+
+HIDDEN void
+apply_path_xform(const db_i &db, const mat_t matrix, rt_db_internal &internal)
+{
+    RT_CK_DBI(&db);
+    RT_CK_DB_INTERNAL(&internal);
+
+    if (rt_obj_xform(&internal, matrix, &internal, 0, const_cast<db_i *>(&db),
+		     &rt_uniresource))
+	throw std::runtime_error("rt_obj_xform() failed");
+}
+
+
 HIDDEN const directory &
 get_parent_dir(const db_full_path &path)
 {
@@ -1119,6 +1158,20 @@ get_parent_dir(const db_full_path &path)
 	throw std::invalid_argument("toplevel");
 
     return *path.fp_names[path.fp_len - 2];
+}
+
+
+HIDDEN const db_full_path
+get_parent_path(const db_full_path &path)
+{
+    RT_CK_FULL_PATH(&path);
+
+    if (path.fp_len < 2)
+	throw std::invalid_argument("toplevel");
+
+    db_full_path temp = path;
+    --temp.fp_len;
+    return temp;
 }
 
 
@@ -1168,13 +1221,13 @@ get_region_path(const db_i &db, const db_full_path &path)
 // helper; sets `outer` and `inner` if they exist in
 // a tree describing `outer` - `inner`
 HIDDEN bool
-get_cutout(const db_i &db, const db_full_path &member_path, DBInternal &outer,
+get_cutout(const db_i &db, const db_full_path &parent_path, DBInternal &outer,
 	   DBInternal &inner)
 {
     RT_CK_DBI(&db);
-    RT_CK_FULL_PATH(&member_path);
+    RT_CK_FULL_PATH(&parent_path);
 
-    DBInternal comb_db_internal(db, get_parent_dir(member_path));
+    DBInternal comb_db_internal(db, *DB_FULL_PATH_CUR_DIR(&parent_path));
     const rt_comb_internal &comb_internal = *static_cast<rt_comb_internal *>
 					    (comb_db_internal.get().idb_ptr);
     RT_CK_COMB(&comb_internal);
@@ -1185,8 +1238,29 @@ get_cutout(const db_i &db, const db_full_path &member_path, DBInternal &outer,
 	|| t.tb_left->tr_op != OP_DB_LEAF || t.tb_right->tr_op != OP_DB_LEAF)
 	return false;
 
-    outer.load(db, DBInternal::lookup(db, t.tb_left->tr_l.tl_name));
-    inner.load(db, DBInternal::lookup(db, t.tb_right->tr_l.tl_name));
+    const directory &outer_dir = DBInternal::lookup(db, t.tb_left->tr_l.tl_name);
+    const directory &inner_dir = DBInternal::lookup(db, t.tb_right->tr_l.tl_name);
+    outer.load(db, outer_dir);
+    inner.load(db, inner_dir);
+
+    {
+	mat_t matrix;
+	db_full_path temp;
+	db_full_path_init(&temp);
+	AutoPtr<db_full_path, db_free_full_path> autofree_temp(&temp);
+	db_dup_full_path(&temp, &parent_path);
+
+	db_add_node_to_full_path(&temp, const_cast<directory *>(&outer_dir));
+	path_to_mat(db, temp, matrix);
+	apply_path_xform(db, matrix, outer.get());
+
+	DB_FULL_PATH_POP(&temp);
+	db_add_node_to_full_path(&temp, const_cast<directory *>(&inner_dir));
+	path_to_mat(db, temp, matrix);
+	apply_path_xform(db, matrix, inner.get());
+
+    }
+
     return true;
 }
 
@@ -1194,13 +1268,15 @@ get_cutout(const db_i &db, const db_full_path &member_path, DBInternal &outer,
 // test for and create ccone2 elements
 HIDDEN bool
 find_ccone2_cutout(Section &section, const db_i &db,
-		   const db_full_path &member_path, std::set<const directory *> &completed)
+		   const db_full_path &parent_path, std::set<const directory *> &completed)
 {
     RT_CK_DBI(&db);
-    RT_CK_FULL_PATH(&member_path);
+    RT_CK_FULL_PATH(&parent_path);
+
+    const directory &parent_dir = *DB_FULL_PATH_CUR_DIR(&parent_path);
 
     try {
-	if (completed.count(&get_parent_dir(member_path)))
+	if (completed.count(&parent_dir))
 	    return true; // already processed
     } catch (const std::invalid_argument &) {
 	return false;
@@ -1208,7 +1284,7 @@ find_ccone2_cutout(Section &section, const db_i &db,
 
     std::pair<DBInternal, DBInternal> internals;
 
-    if (!get_cutout(db, member_path, internals.first, internals.second))
+    if (!get_cutout(db, parent_path, internals.first, internals.second))
 	return false;
 
     if ((internals.first.get().idb_minor_type != ID_TGC
@@ -1243,9 +1319,9 @@ find_ccone2_cutout(Section &section, const db_i &db,
 
     point_t v2;
     VADD2(v2, outer_tgc.v, outer_tgc.h);
-    section.write_name(get_parent_dir(member_path).d_namep);
+    section.write_name(parent_dir.d_namep);
     section.write_cone(outer_tgc.v, v2, ro1, ro2, ri1, ri2);
-    completed.insert(&get_parent_dir(member_path));
+    completed.insert(&parent_dir);
     return true;
 }
 
@@ -1253,13 +1329,15 @@ find_ccone2_cutout(Section &section, const db_i &db,
 // test for and create CSPHERE elements
 HIDDEN bool
 find_csphere_cutout(Section &section, const db_i &db,
-		    const db_full_path &member_path, std::set<const directory *> &completed)
+		    const db_full_path &parent_path, std::set<const directory *> &completed)
 {
     RT_CK_DBI(&db);
-    RT_CK_FULL_PATH(&member_path);
+    RT_CK_FULL_PATH(&parent_path);
+
+    const directory &parent_dir = *DB_FULL_PATH_CUR_DIR(&parent_path);
 
     try {
-	if (completed.count(&get_parent_dir(member_path)))
+	if (completed.count(&parent_dir))
 	    return true; // already processed
     } catch (const std::invalid_argument &) {
 	return false;
@@ -1267,7 +1345,7 @@ find_csphere_cutout(Section &section, const db_i &db,
 
     std::pair<DBInternal, DBInternal> internals;
 
-    if (!get_cutout(db, member_path, internals.first, internals.second))
+    if (!get_cutout(db, parent_path, internals.first, internals.second))
 	return false;
 
     if ((internals.first.get().idb_minor_type != ID_SPH
@@ -1297,8 +1375,8 @@ find_csphere_cutout(Section &section, const db_i &db,
     if (r_inner >= r_outer)
 	return false;
 
-    completed.insert(&get_parent_dir(member_path));
-    section.write_name(get_parent_dir(member_path).d_namep);
+    completed.insert(&parent_dir);
+    section.write_name(parent_dir.d_namep);
     section.write_sphere(outer_ell.v, r_outer, r_outer - r_inner);
     return true;
 }
@@ -1749,7 +1827,6 @@ find_compsplt(FastgenConversion &data, const db_full_path &half_path,
 	return false;
     }
 
-
     const int this_id = identify_compsplt(data.m_db, *parent_region_dir,
 					  *DB_FULL_PATH_CUR_DIR(&half_path));
 
@@ -1870,7 +1947,8 @@ convert_primitive(FastgenConversion &data, const db_full_path &path,
 	    if (internal.idb_type != ID_SPH && !ell_is_sphere(ell))
 		return false;
 
-	    if (!find_csphere_cutout(section, data.m_db, path, data.m_recorded_cutouts)) {
+	    if (!find_csphere_cutout(section, data.m_db, get_parent_path(path),
+				     data.m_recorded_cutouts)) {
 		section.write_name(DB_FULL_PATH_CUR_DIR(&path)->d_namep);
 		section.write_sphere(ell.v, MAGNITUDE(ell.a));
 	    }
@@ -1886,7 +1964,8 @@ convert_primitive(FastgenConversion &data, const db_full_path &path,
 	    if (internal.idb_type != ID_REC && !tgc_is_ccone2(tgc))
 		return false;
 
-	    if (!find_ccone2_cutout(section, data.m_db, path, data.m_recorded_cutouts)) {
+	    if (!find_ccone2_cutout(section, data.m_db, get_parent_path(path),
+				    data.m_recorded_cutouts)) {
 		point_t v2;
 		VADD2(v2, tgc.v, tgc.h);
 		section.write_name(DB_FULL_PATH_CUR_DIR(&path)->d_namep);
