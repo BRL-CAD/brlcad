@@ -202,8 +202,8 @@ DBInternal::load(const db_i &db, const directory &dir)
     if (rt_db_get_internal(&m_internal, &dir, &db, NULL, &rt_uniresource) < 0)
 	throw std::runtime_error("rt_db_get_internal() failed");
 
-    RT_CK_DB_INTERNAL(&m_internal);
     m_valid = true;
+    RT_CK_DB_INTERNAL(&m_internal);
 }
 
 
@@ -606,9 +606,6 @@ GridManager::get_unique_grids(const std::vector<Point> &points)
 		    break;
 		}
 	    }
-
-	if (results.at(i) > MAX_GRID_POINTS)
-	    throw std::length_error("invalid grid ID");
     }
 
     return results;
@@ -618,6 +615,9 @@ GridManager::get_unique_grids(const std::vector<Point> &points)
 void
 GridManager::write(RecordWriter &writer) const
 {
+    if (m_next_grid_id - 1 > MAX_GRID_POINTS)
+	throw std::length_error("max grid points exceeded");
+
     for (std::map<Point, std::vector<std::size_t>, PointComparator>::const_iterator
 	 it = m_grids.begin(); it != m_grids.end(); ++it)
 	for (std::vector<std::size_t>::const_iterator id_it = it->second.begin();
@@ -637,10 +637,11 @@ public:
     Section(const std::string &name, bool volume_mode);
 
     bool empty() const;
+    bool has_color() const;
+    Color get_color() const;
     void set_color(const Color &value);
-    void set_compsplt(fastf_t z_coordinate);
 
-    void write(FastgenWriter &writer) const;
+    void write(FastgenWriter &writer, const FastgenWriter::SectionID &id) const;
 
     // create a comment describing an element
     void write_name(const std::string &value);
@@ -673,7 +674,6 @@ private:
     const std::size_t m_material_id;
 
     std::pair<bool, Color> m_color; // optional color
-    std::pair<bool, fastf_t> m_compsplt;
 
     GridManager m_grids;
     StringBuffer m_elements;
@@ -686,7 +686,6 @@ Section::Section(const std::string &name, bool volume_mode) :
     m_volume_mode(volume_mode),
     m_material_id(1),
     m_color(false, Color()),
-    m_compsplt(false, 0.0),
     m_grids(),
     m_elements(),
     m_next_element_id(1)
@@ -700,6 +699,20 @@ Section::empty() const
 }
 
 
+inline bool
+Section::has_color() const
+{
+    return m_color.first;
+}
+
+
+inline Color
+Section::get_color() const
+{
+    return m_color.second;
+}
+
+
 void
 Section::set_color(const Color &value)
 {
@@ -709,29 +722,8 @@ Section::set_color(const Color &value)
 
 
 void
-Section::set_compsplt(fastf_t z_coordinate)
+Section::write(FastgenWriter &writer, const FastgenWriter::SectionID &id) const
 {
-    if (m_compsplt.first)
-	throw std::logic_error("already a COMPSPLT");
-
-    m_compsplt.first = true;
-    m_compsplt.second = z_coordinate;
-}
-
-
-void
-Section::write(FastgenWriter &writer) const
-{
-    const FastgenWriter::SectionID id = writer.take_next_section_id();
-
-    if (m_compsplt.first) {
-	const FastgenWriter::SectionID split_id = writer.write_compsplt(id,
-		m_compsplt.second);
-
-	if (m_color.first)
-	    writer.write_section_color(split_id, m_color.second);
-    }
-
     {
 	std::string new_name = m_name;
 
@@ -749,8 +741,8 @@ Section::write(FastgenWriter &writer) const
     RecordWriter::Record(writer) << "SECTION" << id.first << id.second <<
 				 (m_volume_mode ? 2 : 1);
 
-    if (m_color.first)
-	writer.write_section_color(id, m_color.second);
+    if (has_color())
+	writer.write_section_color(id, get_color());
 
     m_grids.write(writer);
     m_elements.write(writer);
@@ -962,7 +954,7 @@ get_face_info(const rt_bot_internal &bot, std::size_t i)
     // set a very small thickness if face thickness is zero
     if (bot.thickness)
 	result.first = !NEAR_ZERO(bot.thickness[i],
-				  RT_LEN_TOL) ? bot.thickness[i] : 2 * RT_LEN_TOL;
+				  RT_LEN_TOL) ? bot.thickness[i] : 2.0 * RT_LEN_TOL;
 
     if (bot.face_mode)
 	result.second = !BU_BITTEST(bot.face_mode, i);
@@ -1580,7 +1572,7 @@ private:
 
 
 // Organize Section objects by their corresponding region, and store
-// additional conversion data pertinent to these sections.
+// additional conversion state regarding those Sections.
 class FastgenConversion::RegionManager
 {
 public:
@@ -1589,8 +1581,11 @@ public:
 
     void write(FastgenWriter &writer) const;
 
-    // don't write this Section
+    // don't write these Sections
     void disable();
+
+    // mark these Sections as having a COMPSPLT
+    void set_compsplt(fastf_t z_coordinate);
 
     // returns true if the given member shouldn't be written
     bool member_ignored(const directory &member_dir) const;
@@ -1604,6 +1599,7 @@ private:
     RegionManager &operator=(const RegionManager &source);
 
     bool m_enabled;
+    std::pair<bool, fastf_t> m_compsplt;
     const std::set<const directory *> m_ignored_members;
     std::map<std::string, Section *> m_sections;
 };
@@ -1612,6 +1608,7 @@ private:
 FastgenConversion::RegionManager::RegionManager(const db_i &db,
 	const directory &region_dir) :
     m_enabled(true),
+    m_compsplt(false, 0.0),
     m_ignored_members(find_walls(db, region_dir)),
     m_sections()
 {}
@@ -1632,9 +1629,24 @@ FastgenConversion::RegionManager::write(FastgenWriter &writer) const
 	return;
 
     for (std::map<std::string, Section *>::const_iterator it = m_sections.begin();
-	 it != m_sections.end(); ++it)
-	if (!it->second->empty())
-	    it->second->write(writer);
+	 it != m_sections.end(); ++it) {
+	if (it->second->empty())
+	    continue;
+
+	const FastgenWriter::SectionID id = writer.take_next_section_id();
+
+	if (m_compsplt.first) {
+	    const FastgenWriter::SectionID split_id = writer.write_compsplt(id,
+		    m_compsplt.second);
+
+	    if (it->second->has_color()) {
+		Color color = it->second->get_color();
+		writer.write_section_color(split_id, color);
+	    }
+	}
+
+	it->second->write(writer, id);
+    }
 }
 
 
@@ -1645,6 +1657,17 @@ FastgenConversion::RegionManager::disable()
 	throw std::logic_error("already disabled");
 
     m_enabled = false;
+}
+
+
+void
+FastgenConversion::RegionManager::set_compsplt(fastf_t z_coordinate)
+{
+    if (m_compsplt.first)
+	throw std::logic_error("already a COMPSPLT");
+
+    m_compsplt.first = true;
+    m_compsplt.second = z_coordinate;
 }
 
 
@@ -1743,8 +1766,7 @@ find_compsplt(FastgenConversion &data, const db_full_path &half_path,
     if (this_id == 1)
 	data.get_region(*parent_region_dir).disable();
     else
-	data.get_region(*parent_region_dir).get_section(get_region_path(data.m_db,
-		half_path)).set_compsplt(half.eqn[3]);
+	data.get_region(*parent_region_dir).set_compsplt(half.eqn[3]);
 
     return true;
 }
