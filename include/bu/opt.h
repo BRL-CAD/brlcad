@@ -32,15 +32,31 @@ __BEGIN_DECLS
  * @brief
  * Generalized option handling.
  *
- * The usage pattern is to
- * build up a BU_OPT_DESC_NULL terminated array of option descriptions, which are
- * used by bu_opt_parse to process an argv array.
+ * This module implements a callback and assignment based mechanism for generalized
+ * handling of option handling.  Functionally it is intended to provide capabilities
+ * similar to getopt_long, Qt's QCommandLineParser, and the tclap library.  Results
+ * are returned by way of variable assignment, and function callbacks are used to
+ * convert and validate argument strings.
  *
- * The set_var pointer points to a user selected variable.  The type of the variable
+ * The bu_opt option parsing system does not make any use of global values, unless
+ * a user defines an option definiton array that passes in pointers to global variables
+ * for setting.
+ *
+ * To set up a bu_opt parsing system, an array of bu_opt_desc (option description)
+ * structures is defined and terminated with a BU_OPT_DESC_NULL entry.  This array
+ * is then used by bu_opt_parse to process an argv array.
+ *
+ * When defining a bu_opt_desc entry, the type of the set_var assignment variable
  * needed is determined by the arg_process callback.  If no callback is present and
  * the max arg count is zero, set_var is expected to be an integer that will be set
- * to 1 if the option is present in the argv string.
-
+ * to 1 if the option is present in the argv string.  Because it is necessary for
+ * arbitrary variables to be assigned to the set_var slot (the type needed is determined
+ * by the arg_process callback function and may be anything) all set_var variables
+ * are identified by their pointers (which are in turn cast to void.)
+ *
+ * There are two styles in which a bu_opt_desc array may be initialized.  The first
+ * is very compact but in C89 based code requires static variables as set_var entries,
+ * as seen in the following example:
  *
  * @code
  * #define help_str "Print help and exit"
@@ -55,13 +71,10 @@ __BEGIN_DECLS
  * };
  * @endcode
  *
- * If an array initialization of an option description array is provided as in
- * the above example , the variables specified by the user for setting must all
- * be static (as long as C89 is used.) This should work for executable
- * argc/argv parsing, but for libraries it is not advisable due to static
- * variables rendering the function in question thread unsafe.  For an approach
- * usable in a library see the BU_OPT macro documentation.
- *
+ * This style of initialization is suitable for application programs, but in libraries
+ * such static variables will preclude thread and reentrant safety.  For libraries,
+ * the BU_OPT and BU_OPT_NULL macros are used to construct a bu_opt_desc array that
+ * does not require static variables:
  *
  * @code
  * #define help_str "Print help and exit"
@@ -70,11 +83,15 @@ __BEGIN_DECLS
  * fastf_t f = 0.0;
  * struct bu_opt_desc opt_defs[4];
  * BU_OPT(opt_defs[0], "h", "help",    "",  NULL,            (void *)&ph, help_str);
- * BU_OPT(opt_defs[1], "n", "num",     "#", &bu_opt_ind,     (void *)&i,  "Read int");
+ * BU_OPT(opt_defs[1], "n", "num",     "#", &bu_opt_int,     (void *)&i,  "Read int");
  * BU_OPT(opt_defs[2], "f", "fastf_t", "#", &bu_opt_fastf_t, (void *)&f,  "Read float");
  * BU_OPT_NULL(opt_defs[3]);
  * @endcode
  *
+ * Given the option description array and argc/argv data, \link bu_opt_parse \endlink will do the
+ * rest.  The design of bu_opt_parse is to fail early when an invalid option
+ * situation is encountered, so code using this system needs to be ready to handle
+ * such cases.
  */
 /** @{ */
 /** @file bu/opt.h */
