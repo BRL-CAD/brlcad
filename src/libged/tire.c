@@ -1788,7 +1788,8 @@ _opt_tire_iso(struct bu_vls *msg, int argc, const char **argv, void *set_var)
     char s1, s2;
     int sret = 0;
     fastf_t *isoarray = (fastf_t *)set_var;
-    if (!argv || !argv[0] || strlen(argv[0]) == 0 || argc == 0) return -1;
+
+    BU_OPT_CHECK_ARGV0(msg, argc, argv, "ISO tire dimensions");
 
     sret = bu_sscanf(argv[0], "%d%c%d%c%d", &d1, &s1, &d2, &s2, &d3);
 

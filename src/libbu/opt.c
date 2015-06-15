@@ -463,10 +463,7 @@ bu_opt_int(struct bu_vls *msg, int argc, const char **argv, void *set_var)
     char *endptr = NULL;
     int *int_set = (int *)set_var;
 
-    if (!argv || !argv[0] || strlen(argv[0]) == 0 || argc < 1 ) {
-	if (msg) bu_vls_printf(msg, "bu_opt_int requires arg, but arg not found - aborting\n");
-	return -1;
-    }
+    BU_OPT_CHECK_ARGV0(msg, argc, argv, "bu_opt_int");
 
     l = strtol(argv[0], &endptr, 0);
 
@@ -501,10 +498,7 @@ bu_opt_long(struct bu_vls *msg, int argc, const char **argv, void *set_var)
     char *endptr = NULL;
     long *long_set = (long *)set_var;
 
-    if (!argv || !argv[0] || strlen(argv[0]) == 0 || argc < 1 ) {
-	if (msg) bu_vls_printf(msg, "bu_opt_long requires arg, but arg not found - aborting\n");
-	return -1;
-    }
+    BU_OPT_CHECK_ARGV0(msg, argc, argv, "bu_opt_long");
 
     l = strtol(argv[0], &endptr, 0);
 
@@ -530,10 +524,7 @@ bu_opt_fastf_t(struct bu_vls *msg, int argc, const char **argv, void *set_var)
     fastf_t *f_set = (fastf_t *)set_var;
     char *endptr = NULL;
 
-    if (!argv || !argv[0] || strlen(argv[0]) == 0 || argc < 1 ) {
-	if (msg) bu_vls_printf(msg, "bu_opt_fastf_t requires arg, but arg not found - aborting\n");
-	return -1;
-    }
+    BU_OPT_CHECK_ARGV0(msg, argc, argv, "bu_opt_fastf_t");
 
     if (sizeof(fastf_t) == sizeof(float)) {
 	f = strtof(argv[0], &endptr);
@@ -563,10 +554,7 @@ bu_opt_str(struct bu_vls *msg, int argc, const char **argv, void *set_var)
 {
     const char **s_set = (const char **)set_var;
 
-    if (!argv || !argv[0] || strlen(argv[0]) == 0 || argc < 1 ) {
-	if (msg) bu_vls_printf(msg, "bu_opt_str requires arg, but arg not found - aborting\n");
-	return -1;
-    }
+    BU_OPT_CHECK_ARGV0(msg, argc, argv, "bu_opt_str");
 
     if (s_set) (*s_set) = argv[0];
     return 1;
@@ -577,10 +565,7 @@ bu_opt_vls(struct bu_vls *msg, int argc, const char **argv, void *set_var)
 {
     struct bu_vls *s_set = (struct bu_vls *)set_var;
 
-    if (!argv || !argv[0] || strlen(argv[0]) == 0 || argc < 1 ) {
-	if (msg) bu_vls_printf(msg, "bu_opt_vls requires arg, but arg not found - aborting\n");
-	return -1;
-    }
+    BU_OPT_CHECK_ARGV0(msg, argc, argv, "bu_opt_vls");
 
     if (s_set) {
 	if (bu_vls_strlen(s_set) > 0) {
@@ -598,10 +583,7 @@ bu_opt_bool(struct bu_vls *msg, int argc, const char **argv, void *set_var)
     int *b_set = (int *)set_var;
     int bool_val;
 
-    if (!argv || !argv[0] || strlen(argv[0]) == 0 || argc < 1 ) {
-	if (msg) bu_vls_printf(msg, "bu_opt_bool requires arg, but arg not found - aborting\n");
-	return -1;
-    }
+    BU_OPT_CHECK_ARGV0(msg, argc, argv, "bu_opt_bool");
 
     bool_val = bu_str_true(argv[0]);
 
@@ -613,12 +595,6 @@ bu_opt_bool(struct bu_vls *msg, int argc, const char **argv, void *set_var)
     if (b_set) (*b_set) = bool_val;
     return 1;
 }
-
-
-
-
-
-
 
 /*
  * Local Variables:

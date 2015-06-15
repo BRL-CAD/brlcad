@@ -114,6 +114,16 @@ __BEGIN_DECLS
  */
 typedef int (*bu_opt_arg_process_t)(struct bu_vls *, int argc, const char **argv, void *);
 
+
+#define BU_OPT_CHECK_ARGV0(_log_vls, _argc, _argv, _opt_name) \
+if (_argc < 1 || !_argv || !_argv[0] || _argv[0][0] != '\0') { \
+    if (_log_vls) { \
+	bu_vls_printf(_log_vls, "Error: missing required argument: " _opt_name "\n"); \
+    } \
+    return -1; \
+}
+
+
 /**
  * @brief
  * "Option description" structure.

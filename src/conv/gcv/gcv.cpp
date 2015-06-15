@@ -306,10 +306,8 @@ file_stat(struct bu_vls *msg, int argc, const char **argv, void *set_var)
 {
     char **file_set = (char **)set_var;
 
-    if (!argv || !strlen(argv[0]) || argc == 0) {
-	if (msg) bu_vls_sprintf(msg, "Error - no file name supplied\n");
-	return -1;
-    }
+    BU_OPT_CHECK_ARGV0(msg, argc, argv, "input file");
+
     if (!bu_file_exists(argv[0], NULL)){
 	if (msg) bu_vls_sprintf(msg, "Error - file %s does not exist!\n", argv[0]);
 	return -1;
@@ -325,10 +323,8 @@ file_null(struct bu_vls *msg, int argc, const char **argv, void *set_var)
 {
     char **file_set = (char **)set_var;
 
-    if (!argv || !strlen(argv[0]) || argc == 0) {
-	if (msg) bu_vls_sprintf(msg, "Error - no file name supplied\n");
-	return -1;
-    }
+    BU_OPT_CHECK_ARGV0(msg, argc, argv, "output file");
+
     if (bu_file_exists(argv[0], NULL)){
 	if (msg) bu_vls_sprintf(msg, "Error - file %s already exists!\n", argv[0]);
 	return -1;
@@ -345,10 +341,9 @@ model_mime(struct bu_vls *msg, int argc, const char **argv, void *set_mime)
     int type_int;
     mime_model_t type = MIME_MODEL_UNKNOWN;
     mime_model_t *set_type = (mime_model_t *)set_mime;
-    if (!argv || argc == 0) {
-	if (msg) bu_vls_sprintf(msg, "Error - no file type supplied\n");
-	return -1;
-    }
+
+    BU_OPT_CHECK_ARGV0(msg, argc, argv, "mime format");
+
     type_int = bu_file_mime(argv[0], MIME_MODEL);
     type = (type_int < 0) ? MIME_MODEL_UNKNOWN : (mime_model_t)type_int;
     if (type == MIME_MODEL_UNKNOWN) {
