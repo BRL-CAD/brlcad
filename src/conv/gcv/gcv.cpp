@@ -30,13 +30,67 @@
 
 #include "bu.h"
 
+struct gcv_fmt_opts {
+    struct bu_ptbl *args;
+    struct bu_opt_desc *ds;
+};
+
+void gcv_fmt_opts_init(struct gcv_fmt_opts *gfo, bu_opt_desc *ds)
+{
+    BU_GET(gfo->args, struct bu_ptbl);
+    bu_ptbl_init(gfo->args, 8, "init opts tbl");
+    gfo->ds = ds;
+}
+
+void gcv_fmt_opts_free(struct gcv_fmt_opts *gfo)
+{
+    bu_ptbl_free(gfo->args);
+    BU_PUT(gfo->args, struct bu_ptbl);
+}
+
+int
+gcv_fmt_fun(struct bu_vls *UNUSED(msgs), int argc, const char **argv, void *set_var)
+{
+    int i = 0;
+    int args_used = 0;
+    struct gcv_fmt_opts *gfo = (struct gcv_fmt_opts *)set_var;
+
+    if (!argv || argc < 3 ) return 0;
+
+    for (i = 0; i < argc - 2; i++) {
+	struct bu_vls cmp_arg = BU_VLS_INIT_ZERO;
+	const char *arg = argv[i]+1;
+	const char *equal_pos;
+	int d_ind = 0;
+	int in_desc = 0;
+	if (arg[0] == '-') arg++;
+	equal_pos = strchr(arg, '=');
+	bu_vls_sprintf(&cmp_arg, "%s", arg);
+	if (equal_pos)
+	    bu_vls_trunc(&cmp_arg, -1 * strlen(equal_pos));
+
+	struct bu_opt_desc *d = &(gfo->ds[d_ind]);
+	while (((d->shortopt && strlen(d->shortopt) > 0) || (d->longopt && strlen(d->longopt) > 0)) && !in_desc) {
+	    if (BU_STR_EQUAL(bu_vls_addr(&cmp_arg), d->shortopt) || BU_STR_EQUAL(bu_vls_addr(&cmp_arg), d->longopt)) {
+		/* Top level option hit - we're done */
+		bu_vls_free(&cmp_arg);
+		return args_used;
+	    } else {
+		d_ind++;
+		d = &(gfo->ds[d_ind]);
+	    }
+	}
+	bu_ptbl_ins(gfo->args, (long *)argv[i]);
+	args_used++;
+	bu_vls_free(&cmp_arg);
+    }
+
+    return args_used;
+}
 
 /* Emulate a FASTGEN4 format option processor */
-void fast4_arg_process(const char *args) {
+void fast4_arg_process(int argc, const char **argv) {
     int i = 0;
-    char *input = NULL;
-    int argc = 0;
-    char **argv = NULL;
     int ret_argc = 0;
     static int tol = 0.0;
     static int w_flag;
@@ -45,10 +99,6 @@ void fast4_arg_process(const char *args) {
 	{"w", "warn-default-names", "" , NULL,        (void *)&w_flag, "File format of input file."},
 	BU_OPT_DESC_NULL
     };
-
-    input = bu_strdup(args);
-    argv = (char **)bu_calloc(strlen(input) + 1, sizeof(char *), "argv array");
-    argc = bu_argv_from_string(argv, strlen(input), input);
 
     ret_argc = bu_opt_parse(NULL, argc, (const char **)argv, fg4_opt_desc);
 
@@ -62,16 +112,10 @@ void fast4_arg_process(const char *args) {
 	}
 	bu_log("%s\n", argv[ret_argc - 1]);
     }
-
-    bu_free(input, "free array");
-    bu_free(argv, "free argv");
 }
 
-void stl_arg_process(const char *args) {
+void stl_arg_process(int argc, const char **argv) {
     int i= 0;
-    char *input = NULL;
-    int argc = 0;
-    char **argv = NULL;
     int ret_argc = 0;
     static int tol = 0.0;
     static int units = 0;
@@ -80,10 +124,6 @@ void stl_arg_process(const char *args) {
 	{"u",  "units", "#", &bu_opt_int, (void *)&units, "Units of input file." },
 	BU_OPT_DESC_NULL
     };
-
-    input = bu_strdup(args);
-    argv = (char **)bu_calloc(strlen(input) + 1, sizeof(char *), "argv array");
-    argc = bu_argv_from_string(argv, strlen(input), input);
 
     ret_argc = bu_opt_parse(NULL, argc, (const char **)argv, stl_opt_desc);
 
@@ -97,9 +137,6 @@ void stl_arg_process(const char *args) {
 	}
 	bu_log("%s\n", argv[ret_argc - 1]);
     }
-
-    bu_free(input, "free array");
-    bu_free(argv, "free argv");
 }
 
 HIDDEN int
@@ -318,9 +355,9 @@ gcv_help(struct bu_vls *UNUSED(msg), int argc, const char **argv, void *set_var)
 
 #define gcv_help_str "Print help and exit.  If a format is specified to --help, print help specific to that format"
 
-#define gcv_inopt_str "Options to apply only while processing input file.  Quotes around the opts are always necessary, but brackets are only necessary when supplying a single option without arguments that would otherwise be interpreted as an argv entry by the shell, even with quotes.  Brackets will never hurt, and for robustness when scripting they should always be used."
+#define gcv_inopt_str "Options to apply only while processing input file.  Accepts options until another toplevel option is encountered."
 
-#define gcv_outopt_str "Options to apply only while preparing output file.  Quotes around the opts are always necessary, but brackets are only necessary when supplying a single option without arguments that would otherwise be interpreted as an argv entry by the shell, even with quotes.  Brackets will never hurt, and for robustness when scripting they should always be used."
+#define gcv_outopt_str "Options to apply only while preparing output file.  Accepts options until another toplevel option is encountered."
 
 int
 main(int ac, const char **av)
@@ -336,8 +373,8 @@ main(int ac, const char **av)
     static mime_model_t out_type = MIME_MODEL_UNKNOWN;
     static char *in_path_str = NULL;
     static char *out_path_str = NULL;
-    static struct bu_vls in_only_opts = BU_VLS_INIT_ZERO;
-    static struct bu_vls out_only_opts = BU_VLS_INIT_ZERO;
+    static struct gcv_fmt_opts in_only_opts;
+    static struct gcv_fmt_opts out_only_opts;
     static struct gcv_help_state hs;
 
     struct bu_vls in_format = BU_VLS_INIT_ZERO;
@@ -347,22 +384,26 @@ main(int ac, const char **av)
     struct bu_vls out_path_raw = BU_VLS_INIT_ZERO;
     struct bu_vls out_path = BU_VLS_INIT_ZERO;
     struct bu_vls log = BU_VLS_INIT_ZERO;
-    struct bu_vls input_opts = BU_VLS_INIT_ZERO;
-    struct bu_vls output_opts = BU_VLS_INIT_ZERO;
+
+    struct bu_ptbl input_opts = BU_PTBL_INIT_ZERO;
+    struct bu_ptbl output_opts = BU_PTBL_INIT_ZERO;
     struct bu_vls parse_msgs = BU_VLS_INIT_ZERO;
     int uac = 0;
 
-    struct bu_opt_desc gcv_opt_desc[9] = {
+    struct bu_opt_desc gcv_opt_desc[] = {
 	{"h", "help",             "[format]",   &gcv_help,    (void *)&hs,            gcv_help_str,                 },
 	{"?", "",                 "[format]",   &gcv_help,    (void *)&hs,            "",                           },
 	{"i", "input",            "file",       &file_stat,   (void *)&in_path_str,   "Input file.",                },
 	{"o", "output",           "file",       &file_null,   (void *)&out_path_str,  "Output file.",               },
 	{"",  "input-format",     "format",     &model_mime,  (void *)&in_type,       "File format of input file.", },
 	{"",  "output-format",    "format",     &model_mime,  (void *)&out_type,      "File format of output file." },
-	{"I", "input-only-opts",  "\"[opts]\"", &bu_opt_vls,  (void *)&in_only_opts,  gcv_inopt_str,                },
-	{"O", "output-only-opts", "\"[opts]\"", &bu_opt_vls,  (void *)&out_only_opts, gcv_outopt_str,               },
+	{"I", "input-only-opts",  "opts",       &gcv_fmt_fun, (void *)&in_only_opts,  gcv_inopt_str,                },
+	{"O", "output-only-opts", "opts",       &gcv_fmt_fun, (void *)&out_only_opts, gcv_outopt_str,               },
 	BU_OPT_DESC_NULL
     };
+
+    gcv_fmt_opts_init(&in_only_opts, gcv_opt_desc);
+    gcv_fmt_opts_init(&out_only_opts, gcv_opt_desc);
 
     hs.flag = 0;
     hs.format = NULL;
@@ -455,43 +496,18 @@ main(int ac, const char **av)
      * input/output specific options have a chance to override them. */
     if (uac) {
 	for (i = 0; i < (size_t)uac; i++) {
-	    if (i != 0) {
-		bu_vls_printf(&input_opts, " ");
-		bu_vls_printf(&output_opts, " ");
-	    }
-	    bu_vls_printf(&input_opts, "%s", av[i]);
-	    bu_vls_printf(&output_opts, "%s", av[i]);
+	    bu_ptbl_ins(&input_opts, (long *)av[i]);
+	    bu_ptbl_ins(&output_opts, (long *)av[i]);
 	}
-	if (bu_vls_strlen(&input_opts) > 0) bu_log("Unknown options (input): %s\n", bu_vls_addr(&input_opts));
-	if (bu_vls_strlen(&output_opts) > 0) bu_log("Unknown options (output): %s\n", bu_vls_addr(&output_opts));
     }
 
     /* If we have input and/or output specific options, append them now */
-    if (bu_vls_strlen(&in_only_opts) > 0) {
-	struct bu_vls o_tmp = BU_VLS_INIT_ZERO;
-	if (bu_vls_strlen(&input_opts) > 0)
-	    bu_vls_printf(&input_opts, " ");
-
-	bu_vls_sprintf(&o_tmp, "%s", bu_vls_addr(&in_only_opts));
-	if (bu_vls_addr(&o_tmp)[0] == '[') bu_vls_nibble(&o_tmp, 1);
-	if (bu_vls_addr(&o_tmp)[strlen(bu_vls_addr(&o_tmp)) - 1] == ']') bu_vls_trunc(&o_tmp, -1);
-	bu_vls_printf(&input_opts, "%s", bu_vls_addr(&o_tmp));
-	if (bu_vls_strlen(&input_opts) > 0) bu_log("Input only opts: %s\n", bu_vls_addr(&o_tmp));
-	bu_vls_free(&o_tmp);
+    if (BU_PTBL_LEN(in_only_opts.args) > 0) {
+	bu_ptbl_cat(&input_opts, in_only_opts.args);
     }
-    if (bu_vls_strlen(&out_only_opts) > 0) {
-	struct bu_vls o_tmp = BU_VLS_INIT_ZERO;
-	if (bu_vls_strlen(&output_opts) > 0)
-	    bu_vls_printf(&output_opts, " ");
-
-	bu_vls_sprintf(&o_tmp, "%s", &out_only_opts);
-	if (bu_vls_addr(&o_tmp)[0] == '[') bu_vls_nibble(&o_tmp, 1);
-	if (bu_vls_addr(&o_tmp)[strlen(bu_vls_addr(&o_tmp)) - 1] == ']') bu_vls_trunc(&o_tmp, -1);
-	bu_vls_printf(&output_opts, "%s", bu_vls_addr(&o_tmp));
-	if (bu_vls_strlen(&output_opts) > 0) bu_log("Output only opts: %s\n", bu_vls_addr(&o_tmp));
-	bu_vls_free(&o_tmp);
+    if (BU_PTBL_LEN(out_only_opts.args) > 0) {
+	bu_ptbl_cat(&output_opts, out_only_opts.args);
     }
-
 
     /* See if we have input and output files specified */
     if (!extract_path(&in_path, bu_vls_addr(&in_path_raw))) {
@@ -563,20 +579,20 @@ main(int ac, const char **av)
 
     switch (in_type) {
 	case MIME_MODEL_VND_FASTGEN:
-	    fast4_arg_process(bu_vls_addr(&input_opts));
+	    fast4_arg_process(BU_PTBL_LEN(&input_opts), (const char **)input_opts.buffer);
 	    break;
 	case MIME_MODEL_STL:
-	    stl_arg_process(bu_vls_addr(&input_opts));
+	    stl_arg_process(BU_PTBL_LEN(&input_opts), (const char **)input_opts.buffer);
 	default:
 	    break;
     }
 
     switch (out_type) {
 	case MIME_MODEL_VND_FASTGEN:
-	    fast4_arg_process(bu_vls_addr(&output_opts));
+	    fast4_arg_process(BU_PTBL_LEN(&output_opts), (const char **)output_opts.buffer);
 	    break;
 	case MIME_MODEL_STL:
-	    stl_arg_process(bu_vls_addr(&output_opts));
+	    stl_arg_process(BU_PTBL_LEN(&output_opts), (const char **)output_opts.buffer);
 	default:
 	    break;
     }
@@ -593,10 +609,10 @@ cleanup:
     bu_vls_free(&out_format);
     bu_vls_free(&out_path);
     bu_vls_free(&log);
-    bu_vls_free(&input_opts);
-    bu_vls_free(&output_opts);
-    bu_vls_free(&in_only_opts);
-    bu_vls_free(&out_only_opts);
+    bu_ptbl_free(&input_opts);
+    bu_ptbl_free(&output_opts);
+    gcv_fmt_opts_free(&in_only_opts);
+    gcv_fmt_opts_free(&out_only_opts);
     return ret;
 }
 
