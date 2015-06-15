@@ -205,14 +205,56 @@ struct bu_opt_desc_opts {
 
 /**
  *
- * Using the example definition above, bu_opt_describe would
- * generate the following help string by default:
+ * Using the example definition:
+ *
+ * @code
+ * struct bu_opt_desc opt_defs[] = {
+ *     {"h", "help",    "",  NULL,            (void *)&ph, "Print help string and exit."},
+ *     {"n", "num",     "#", &bu_opt_int,     (void *)&i,  "Read int"},
+ *     {"f", "fastf_t", "#", &bu_opt_fastf_t, (void *)&f,  "Read float"},
+ *     BU_OPT_DESC_NULL
+ * };
+ * @endcode
+ *
+ * bu_opt_describe would generate the following help string by default:
  *
 \verbatim
   -h, --help                    Print help string and exit.
   -n #, --num #                 Read int
   -f #, --fastf_t #             Read float
 \endverbatim
+ *
+ * When multiple options use the same set_var to capture
+ * their effect, they are considered aliases for documentation
+ * purposes.  For example, if we add multiple aliases to the
+ * help option and make it more elaborate:
+ *
+ * @code
+ * #define help_str "Print help and exit. If a type is specified to --help, print help specific to that type"
+ * struct help_struct hs;
+ * struct bu_opt_desc opt_defs[] = {
+ *     {"h", "help",    "[type]",  &hfun, (void *)&hs, help_str},
+ *     {"H", "HELP",    "[type]",  &hfun, (void *)&hs, help_str},
+ *     {"?", "",        "[type]",  &hfun, (void *)&hs, help_str},
+ *     {"n", "num",     "#", &bu_opt_int,     (void *)&i,  "Read int"},
+ *     {"f", "fastf_t", "#", &bu_opt_fastf_t, (void *)&f,  "Read float"},
+ *     BU_OPT_DESC_NULL
+ * };
+ * @endcode
+ *
+ * the generated help string reflects this:
+ *
+\verbatim
+  -h [type], -H [type], -? [type], --help [type], --HELP [type]
+                                Print help and exit. If a type is specified to
+                                --help, print help specific to that type
+  -n #, --num #                 Read int
+  -f #, --fastf_t #             Read float
+\endverbatim
+ *
+ * \returns
+ * The generated help string.  Note that the string uses allocated memory - it is the responsibility of the
+ * caller to free it with \link bu_free \endlink.
  */
 BU_EXPORT extern const char *bu_opt_describe(struct bu_opt_desc *ds, struct bu_opt_desc_opts *settings);
 
