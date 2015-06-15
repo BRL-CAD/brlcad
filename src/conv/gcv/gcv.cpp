@@ -384,6 +384,7 @@ gcv_help(struct bu_vls *UNUSED(msg), int argc, const char **argv, void *set_var)
 #define gcv_inopt_str "Options to apply only while processing input file.  Accepts options until another toplevel option is encountered."
 
 #define gcv_outopt_str "Options to apply only while preparing output file.  Accepts options until another toplevel option is encountered."
+#define gcv_both_str "Options to apply both during input and output handling.  Accepts options until another toplevel option is encountered."
 
 int
 main(int ac, const char **av)
@@ -401,6 +402,7 @@ main(int ac, const char **av)
     static char *out_path_str = NULL;
     static struct gcv_fmt_opts in_only_opts;
     static struct gcv_fmt_opts out_only_opts;
+    static struct gcv_fmt_opts both_opts;
     static struct gcv_help_state hs;
 
     struct bu_vls in_format = BU_VLS_INIT_ZERO;
@@ -426,11 +428,13 @@ main(int ac, const char **av)
 	{"",  "output-format",    "format",     &model_mime,  (void *)&out_type,      "File format of output file." },
 	{"I", "input-only-opts",  "opts",       &gcv_fmt_fun, (void *)&in_only_opts,  gcv_inopt_str,                },
 	{"O", "output-only-opts", "opts",       &gcv_fmt_fun, (void *)&out_only_opts, gcv_outopt_str,               },
+	{"B", "input-and-output-opts", "opts",  &gcv_fmt_fun, (void *)&both_opts,     gcv_both_str,                 },
 	BU_OPT_DESC_NULL
     };
 
     gcv_fmt_opts_init(&in_only_opts, gcv_opt_desc);
     gcv_fmt_opts_init(&out_only_opts, gcv_opt_desc);
+    gcv_fmt_opts_init(&both_opts, gcv_opt_desc);
 
     hs.flag = 0;
     hs.format = NULL;
@@ -527,6 +531,11 @@ main(int ac, const char **av)
 	    bu_ptbl_ins(&input_opts, (long *)av[i]);
 	    bu_ptbl_ins(&output_opts, (long *)av[i]);
 	}
+    }
+    /* Same for any options that were supplied explicitly to go to both input and output */
+    if (BU_PTBL_LEN(both_opts.args) > 0) {
+	bu_ptbl_cat(&input_opts, both_opts.args);
+	bu_ptbl_cat(&output_opts, both_opts.args);
     }
 
     /* If we have input and/or output specific options, append them now */
@@ -641,6 +650,7 @@ cleanup:
     bu_ptbl_free(&output_opts);
     gcv_fmt_opts_free(&in_only_opts);
     gcv_fmt_opts_free(&out_only_opts);
+    gcv_fmt_opts_free(&both_opts);
     return ret;
 }
 
