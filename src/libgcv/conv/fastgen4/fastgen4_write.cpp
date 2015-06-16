@@ -1458,9 +1458,11 @@ get_chex1(Section &section, const rt_bot_internal &bot)
 }
 
 
+typedef std::map<const directory *, const fastf_t *> LeafMap;
+
+
 HIDDEN void
-get_unioned(const db_i &db, const tree *tree,
-	    std::set<const directory *> &results)
+get_unioned(const db_i &db, const tree *tree, LeafMap &results)
 {
     RT_CK_DBI(&db);
 
@@ -1479,7 +1481,7 @@ get_unioned(const db_i &db, const tree *tree,
 		break;
 	    }
 
-	    results.insert(dir);
+	    results.insert(std::make_pair(dir, tree->tr_l.tl_mat));
 	    break;
 	}
 
@@ -1499,8 +1501,7 @@ get_unioned(const db_i &db, const tree *tree,
 
 
 HIDDEN void
-get_intersected(const db_i &db, const tree *tree,
-		std::set<const directory *> &results)
+get_intersected(const db_i &db, const tree *tree, LeafMap &results)
 {
     RT_CK_DBI(&db);
 
@@ -1533,8 +1534,7 @@ get_intersected(const db_i &db, const tree *tree,
 
 
 HIDDEN void
-get_subtracted(const db_i &db, const tree *tree,
-	       std::set<const directory *> &results)
+get_subtracted(const db_i &db, const tree *tree, LeafMap &results)
 {
     RT_CK_DBI(&db);
 
@@ -1579,7 +1579,7 @@ identify_compsplt(const db_i &db, const directory &parent_region_dir,
 					    (parent_region_internal.get().idb_ptr);
     RT_CK_COMB(&parent_region);
 
-    std::set<const directory *> leaves;
+    LeafMap leaves;
     get_intersected(db, parent_region.tree, leaves);
 
     if (leaves.count(&half_dir))
@@ -1599,13 +1599,14 @@ identify_compsplt(const db_i &db, const directory &parent_region_dir,
 // - set of regions that are joined to the region by a WALL
 // - set of members to ignore
 HIDDEN std::pair<std::set<const directory *>, std::set<const directory *> >
-find_walls(const db_i &db, const directory &region_dir)
+find_walls(const db_i &db, const directory &region_dir, const bn_tol &tol)
 {
     RT_CK_DBI(&db);
     RT_CK_DIR(&region_dir);
+    BN_CK_TOL(&tol);
 
     std::pair<std::set<const directory *>, std::set<const directory *> > results;
-    std::set<const directory *> subtracted;
+    LeafMap subtracted;
     {
 	DBInternal region_db_internal(db, region_dir);
 	const rt_comb_internal &region = *static_cast<rt_comb_internal *>
@@ -1629,16 +1630,38 @@ find_walls(const db_i &db, const directory &region_dir)
 					     (region_db_internal.get().idb_ptr);
 	    RT_CK_COMB(&region);
 
-	    std::set<const directory *> leaves;
+	    LeafMap leaves;
 	    get_unioned(db, region.tree, leaves);
 	    get_intersected(db, region.tree, leaves);
 
-	    if (!leaves.empty()
-		&& std::includes(subtracted.begin(), subtracted.end(), leaves.begin(),
-				 leaves.end())) {
-		std::copy(leaves.begin(), leaves.end(), std::inserter(results.second,
-			  results.second.begin()));
+	    if (leaves.empty())
+		continue;
+
+	    bool subset = true;
+
+	    for (LeafMap::const_iterator it = leaves.begin(); it != leaves.end(); ++it) {
+		const LeafMap::const_iterator subtracted_it = subtracted.find(it->first);
+
+		if (subtracted_it == subtracted.end()) {
+		    subset = false;
+		    break;
+		}
+
+		const mat_t identity = MAT_INIT_IDN;
+		const fastf_t *mat_a = it->second ? it->second : identity;
+		const fastf_t *mat_b = subtracted_it->second ? subtracted_it->second : identity;
+
+		if (!bn_mat_is_equal(mat_a, mat_b, &tol)) {
+		    subset = false;
+		    break;
+		}
+	    }
+
+	    if (subset) {
 		results.first.insert(region_dirs.ptr[i]);
+
+		for (LeafMap::const_iterator it = leaves.begin(); it != leaves.end(); ++it)
+		    results.second.insert(it->first);
 	    }
 	}
     }
@@ -1676,7 +1699,7 @@ private:
 class FastgenConversion::RegionManager
 {
 public:
-    RegionManager(const db_i &db, const directory &region_dir);
+    RegionManager(const db_i &db, const directory &region_dir, const bn_tol &tol);
     ~RegionManager();
 
     std::vector<FastgenWriter::SectionID> write(FastgenWriter &writer) const;
@@ -1711,10 +1734,10 @@ private:
 
 
 FastgenConversion::RegionManager::RegionManager(const db_i &db,
-	const directory &region_dir) :
+	const directory &region_dir, const bn_tol &tol) :
     m_enabled(true),
     m_compsplt(false, 0.0),
-    m_walls(find_walls(db, region_dir)),
+    m_walls(find_walls(db, region_dir, tol)),
     m_sections()
 {}
 
@@ -1925,7 +1948,8 @@ FastgenConversion::FastgenConversion(const std::string &path, const db_i &db,
     // create a RegionManager for all regions in the database
     try {
 	for (std::size_t i = 0; i < num_regions; ++i)
-	    m_regions[region_dirs.ptr[i]] = new RegionManager(m_db, *region_dirs.ptr[i]);
+	    m_regions[region_dirs.ptr[i]] = new RegionManager(m_db, *region_dirs.ptr[i],
+		    m_tol);
     } catch (...) {
 	for (std::map<const directory *, RegionManager *>::iterator it =
 		 m_regions.begin(); it != m_regions.end(); ++it)
