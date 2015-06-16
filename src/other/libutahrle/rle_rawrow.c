@@ -52,7 +52,7 @@ rle_pixel ** outrows;
 		    *outptr = j;
 	    }
 	    else
-		bzero( (char *)&outrows[chan][the_hdr->xmin],
+		memset( (char *)&outrows[chan][the_hdr->xmin], 0,
 		       the_hdr->xmax - the_hdr->xmin + 1 );
 
 	    for( i = 0; i < nraw[chan]; i++ )
