@@ -1035,8 +1035,12 @@ ELSE(WIN32)
   SET(TCLSH_SRCS unix/tclAppInit.c)
 ENDIF(WIN32)
 
+IF(MINGW)
+  set(TCL_MINGW_LIBS ws2_32)
+ENDIF(MINGW)
+
 add_library(tcl ${TCL_SRCS})
-target_link_libraries(tcl ${CoreFoundation_LIBRARIES} ${TCL_LINK_LIBS} ${DL_LIBRARY} ${CMAKE_THREAD_LIBS_INIT} ws2_32)
+target_link_libraries(tcl ${CoreFoundation_LIBRARIES} ${TCL_LINK_LIBS} ${DL_LIBRARY} ${CMAKE_THREAD_LIBS_INIT} ${TCL_MINGW_LIBS})
 install(TARGETS tcl 
 	RUNTIME DESTINATION ${BIN_DIR}
 	LIBRARY DESTINATION ${LIB_DIR}
