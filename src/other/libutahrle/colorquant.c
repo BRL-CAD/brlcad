@@ -126,10 +126,6 @@ static int  FindCutpoint();
  * The colorquant() routine has been tested on an Iris 4D70 workstation,
  * a Sun 3/60 workstation, and (to some extent), a Macintosh.
  *
- * Calls to bzero() may have to be replaced with the appropriate thing on
- * your system.  (bzero(ptr, len) writes 'len' 0-bytes starting at the location
- * pointed to by ptr.)
- *
  * Although I've tried to avoid integer overflow problems where ever possible,
  * it's likely I've missed a spot where an 'int' should really be a 'long'.
  * (On the machine this was developed on, an int == long == 32 bits.)
@@ -272,9 +268,9 @@ int flags, accum_hist;
 	/*
 	 * Zero-out the projected frequency arrays of the largest box.
 	 */
-	bzero(Boxes->freq[0], ColormaxI * sizeof(unsigned long));
-	bzero(Boxes->freq[1], ColormaxI * sizeof(unsigned long));
-	bzero(Boxes->freq[2], ColormaxI * sizeof(unsigned long));
+	memset(Boxes->freq[0], 0, ColormaxI * sizeof(unsigned long));
+	memset(Boxes->freq[1], 0, ColormaxI * sizeof(unsigned long));
+	memset(Boxes->freq[2], 0, ColormaxI * sizeof(unsigned long));
 	SumPixels = 0;
     }
 
@@ -554,9 +550,9 @@ register Box *box1, *box2;
 	register int b, g, r;
 	int roff;
 
-	bzero(box1->freq[0], ColormaxI * sizeof(unsigned long));
-	bzero(box1->freq[1], ColormaxI * sizeof(unsigned long));
-	bzero(box1->freq[2], ColormaxI * sizeof(unsigned long));
+	memset(box1->freq[0], 0, ColormaxI * sizeof(unsigned long));
+	memset(box1->freq[1], 0, ColormaxI * sizeof(unsigned long));
+	memset(box1->freq[2], 0, ColormaxI * sizeof(unsigned long));
 
 	for (r = box1->low[0]; r < box1->high[0]; r++) {
 		roff = r << Bits;

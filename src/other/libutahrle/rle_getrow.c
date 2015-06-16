@@ -356,13 +356,13 @@ rle_pixel *scanline[];
     if ( the_hdr->background != 1 )
     {
 	if ( the_hdr->alpha && RLE_BIT( *the_hdr, -1 ) )
-	    bzero( (char *)scanline[-1] + the_hdr->xmin,
-		   the_hdr->xmax - the_hdr->xmin + 1 );
+	    memset( (char *)scanline[-1] + the_hdr->xmin,
+		   0, the_hdr->xmax - the_hdr->xmin + 1 );
 	for ( nc = 0; nc < the_hdr->ncolors; nc++ )
 	    if ( RLE_BIT( *the_hdr, nc ) )
 		/* Unless bg color given explicitly, use 0. */
 		if ( the_hdr->background != 2 || the_hdr->bg_color[nc] == 0 )
-		    bzero( (char *)scanline[nc] + the_hdr->xmin,
+		    memset( (char *)scanline[nc] + the_hdr->xmin, 0,
 			   the_hdr->xmax - the_hdr->xmin + 1 );
 		else
 		    bfill( (char *)scanline[nc] + the_hdr->xmin,
