@@ -1513,6 +1513,8 @@ get_intersected(const db_i &db, const tree *tree,
 	case OP_INTERSECT:
 	    get_unioned(db, tree->tr_b.tb_left, results);
 	    get_unioned(db, tree->tr_b.tb_right, results);
+	    get_intersected(db, tree->tr_b.tb_left, results);
+	    get_intersected(db, tree->tr_b.tb_right, results);
 	    break;
 
 	case OP_UNION:
@@ -1593,14 +1595,14 @@ identify_compsplt(const db_i &db, const directory &parent_region_dir,
 }
 
 
-// returns set of members to ignore
-HIDDEN std::set<const directory *>
+// returns set of unioned Section regions and set of members to ignore
+HIDDEN std::pair<std::set<const directory *>, std::set<const directory *> >
 find_walls(const db_i &db, const directory &region_dir)
 {
     RT_CK_DBI(&db);
     RT_CK_DIR(&region_dir);
 
-    std::set<const directory *> results;
+    std::pair<std::set<const directory *>, std::set<const directory *> > results;
     std::set<const directory *> subtracted;
     {
 	DBInternal region_db_internal(db, region_dir);
@@ -1632,9 +1634,9 @@ find_walls(const db_i &db, const directory &region_dir)
 	    if (!leaves.empty()
 		&& std::includes(subtracted.begin(), subtracted.end(), leaves.begin(),
 				 leaves.end())) {
-		std::copy(leaves.begin(), leaves.end(), std::inserter(results,
-			  results.begin()));
-		// TODO: write WALL records
+		std::copy(leaves.begin(), leaves.end(), std::inserter(results.second,
+			  results.second.begin()));
+		results.first.insert(region_dirs.ptr[i]);
 	    }
 	}
     }
@@ -1674,7 +1676,11 @@ public:
     RegionManager(const db_i &db, const directory &region_dir);
     ~RegionManager();
 
-    void write(FastgenWriter &writer) const;
+    std::vector<FastgenWriter::SectionID> write(FastgenWriter &writer) const;
+
+    void write_walls(FastgenWriter &writer,
+		     const std::map<const directory *, std::vector<FastgenWriter::SectionID> > &ids,
+		     const directory &region_dir) const;
 
     // don't write these Sections
     void disable();
@@ -1695,7 +1701,8 @@ private:
 
     bool m_enabled;
     std::pair<bool, fastf_t> m_compsplt;
-    const std::set<const directory *> m_ignored_members;
+    const std::pair<std::set<const directory *>, std::set<const directory *> >
+    m_walls;
     std::map<std::string, Section *> m_sections;
 };
 
@@ -1704,7 +1711,7 @@ FastgenConversion::RegionManager::RegionManager(const db_i &db,
 	const directory &region_dir) :
     m_enabled(true),
     m_compsplt(false, 0.0),
-    m_ignored_members(find_walls(db, region_dir)),
+    m_walls(find_walls(db, region_dir)),
     m_sections()
 {}
 
@@ -1717,16 +1724,18 @@ FastgenConversion::RegionManager::~RegionManager()
 }
 
 
-void
+std::vector<FastgenWriter::SectionID>
 FastgenConversion::RegionManager::write(FastgenWriter &writer) const
 {
+    std::vector<FastgenWriter::SectionID> results;
+
     if (!m_enabled)
-	return;
+	return results;
 
     for (std::map<std::string, Section *>::const_iterator it = m_sections.begin();
 	 it != m_sections.end(); ++it) {
 	if (it->second->empty())
-	    continue;
+	    return results;
 
 	const FastgenWriter::SectionID id = writer.take_next_section_id();
 
@@ -1741,6 +1750,31 @@ FastgenConversion::RegionManager::write(FastgenWriter &writer) const
 	}
 
 	it->second->write(writer, id);
+	results.push_back(id);
+    }
+
+    return results;
+}
+
+
+void
+FastgenConversion::RegionManager::write_walls(FastgenWriter &writer,
+	const std::map<const directory *, std::vector<FastgenWriter::SectionID> > &ids,
+	const directory &region_dir)
+const
+{
+    const std::vector<FastgenWriter::SectionID> &this_ids = ids.at(&region_dir);
+
+    for (std::vector<FastgenWriter::SectionID>::const_iterator it =
+	     this_ids.begin(); it != this_ids.end(); ++it) {
+	for (std::set<const directory *>::const_iterator wall_it =
+		 m_walls.first.begin(); wall_it != m_walls.first.end(); ++wall_it) {
+	    for (std::vector<FastgenWriter::SectionID>::const_iterator wall_section_it =
+		     ids.at(*wall_it).begin(); wall_section_it != ids.at(*wall_it).end();
+		 ++wall_section_it) {
+		writer.write_boolean(FastgenWriter::WALL, *it, *wall_section_it);
+	    }
+	}
     }
 }
 
@@ -1772,7 +1806,7 @@ const
 {
     RT_CK_DIR(&member_dir);
 
-    return m_ignored_members.count(&member_dir);
+    return m_walls.second.count(&member_dir);
 }
 
 
@@ -1900,10 +1934,15 @@ FastgenConversion::FastgenConversion(const std::string &path, const db_i &db,
 
 FastgenConversion::~FastgenConversion()
 {
+    std::map<const directory *, std::vector<FastgenWriter::SectionID> > ids;
+
+    for (std::map<const directory *, RegionManager *>::const_iterator it =
+	     m_regions.begin(); it != m_regions.end(); ++it)
+	ids[it->first] = it->second->write(m_writer);
+
     for (std::map<const directory *, RegionManager *>::iterator it =
 	     m_regions.begin(); it != m_regions.end(); ++it) {
-	it->second->write(m_writer);
-
+	it->second->write_walls(m_writer, ids, *it->first);
 	delete it->second;
     }
 }
