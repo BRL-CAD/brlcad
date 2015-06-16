@@ -1804,12 +1804,12 @@ FastgenConversion::RegionManager::set_compsplt(fastf_t z_coordinate)
 
 
 bool
-FastgenConversion::RegionManager::member_ignored(const directory &member_dir)
-const
+FastgenConversion::RegionManager::member_ignored(
+    const directory &member_dir) const
 {
     RT_CK_DIR(&member_dir);
 
-    return m_walls.second.count(&member_dir);
+    return !m_enabled || m_walls.second.count(&member_dir);
 }
 
 
@@ -2111,9 +2111,9 @@ write_nmg_region(nmgregion *nmg_region, const db_full_path *path,
 
 	try {
 	    write_bot(section, *bot);
-	} catch (const std::runtime_error &e) {
-	    bu_log("FAILURE: write_bot() failed on object '%s': %s\n",
-		   AutoPtr<char>(db_path_to_string(path)).ptr, e.what());
+	} catch (...) {
+	    internal.idb_meth->ft_ifree(&internal);
+	    throw;
 	}
 
 	internal.idb_meth->ft_ifree(&internal);
@@ -2156,12 +2156,7 @@ convert_leaf(db_tree_state *tree_state, const db_full_path *path,
 	&& data.get_region(*region_dir).member_ignored(get_parent_dir(*path)))
 	converted = true;
     else
-	try {
-	    converted = convert_primitive(data, *path, *internal);
-	} catch (const std::runtime_error &e) {
-	    bu_log("FAILURE: convert_primitive() failed on object '%s': %s\n",
-		   AutoPtr<char>(db_path_to_string(path)).ptr, e.what());
-	}
+	converted = convert_primitive(data, *path, *internal);
 
     if (!converted)
 	return nmg_booltree_leaf_tess(tree_state, path, internal, client_data);
