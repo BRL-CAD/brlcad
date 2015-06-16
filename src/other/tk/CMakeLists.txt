@@ -188,9 +188,9 @@ add_definitions(-DTCL_SHLIB_EXT="${CMAKE_SHARED_LIBRARY_SUFFIX}")
 #----------------------------------------------------------------------------
 # Define some platform specific flags
 
-IF(WIN32)
+IF(MSVC)
   add_definitions(-D_CRT_SECURE_NO_DEPRECATE -D_CRT_NONSTDC_NO_DEPRECATE -Ot -Oi -fp:strict -Gs -GS -GL -MD -DBUILD_tk -BUILD_ttk -DSUPPORT_CONFIG_EMBEDDED -DHAVE_UXTHEME_H=1)
-ENDIF(WIN32)
+ENDIF(MSVC)
 
 IF(APPLE)
   add_definitions(-DMAC_OSX_TCL=1)

@@ -157,11 +157,11 @@ add_definitions(-DTCL_SHLIB_EXT="${CMAKE_SHARED_LIBRARY_SUFFIX}")
 # Define some platform specific flags
 
 # Windows specific flags
-IF(WIN32)
+IF(MSVC)
   add_definitions(-D_CRT_SECURE_NO_DEPRECATE -D_CRT_NONSTDC_NO_DEP -Ot -Oi -fp:strict -Gs -GS -GL -MD)
   add_definitions(-DTCL_PIPE_DLL="tclpip${TCL_VERSION_MAJOR}${TCL_VERSION_MINOR}.dll")
   add_definitions(-Dinline=__inline -DBUILD_tcl)
-ENDIF(WIN32)
+ENDIF(MSVC)
 
 IF(APPLE)
   ADD_TCL_CFLAG(MAC_OSX_TCL)
