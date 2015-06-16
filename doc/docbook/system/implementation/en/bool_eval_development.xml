@@ -1,0 +1,123 @@
+<article xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink" version="5.0">
+
+  <info>
+    <title>NURBS Boolean Evaluation Development Guide</title>
+    <author>
+      <personname>
+        <firstname>Nicholas</firstname>
+        <surname>Reed</surname>
+      </personname>
+    </author>
+  </info>
+
+  <section>
+    <title>NURBS Boolean Evaluation Using the brep Command</title>
+    <section>
+      <title>Known Limitations</title>
+      <itemizedlist>
+        <listitem><para>Frequently produces incorrect output due to unhandled intersection cases.</para></listitem>
+        <listitem><para>Unoptimized performance.</para></listitem>
+	<listitem><para>Material properties of source objects are discarded.</para></listitem>
+	<listitem><para>Some primitive conversions to NURBS are ill-defined.</para></listitem>
+	<listitem><para>Hollow objects are not built topologically continuous.</para></listitem>
+      </itemizedlist>
+    </section>
+  </section>
+
+  <section>
+    <title>Overview of the Implementation</title>
+    <section>
+      <title>Description of Major Functions</title>
+      <section>
+	<title><filename>src/libbrep/boolean.cpp</filename></title>
+	<synopsis>
+	<![CDATA[
+int
+ON_Boolean(
+    ON_Brep *evaluated_brep,
+    const ON_Brep *brep1,
+    const ON_Brep *brep2,
+    op_type operation);
+	]]>
+	</synopsis>
+	<para>
+	In the nontrivial case where the bounding boxes of <parameter>brep1</parameter> and <parameter>brep2</parameter> intersect, <function>get_evaluated_faces</function> is called to get the trimmed NURBS faces of the evaluated boolean result. The faces are then combined into a single brep object returned via the <parameter>evaluated_brep</parameter> argument. 
+	</para>
+	<synopsis>
+	<![CDATA[
+ON_ClassArray< ON_SimpleArray<Trimmed Face *> >
+get_evaluated_faces(
+    const ON_Brep *brep1,
+    const ON_Brep *brep2,
+    op_type operation);
+	]]>
+	</synopsis>
+	<para>
+	The intersection curves between the faces of <parameter>brep1</parameter> and <parameter>brep2</parameter> are found by <function>get_face_intersection_curves</function>. These curves are used to split the original surfaces into pieces, each becoming a new trimmed NURBS face. The <function>categorize_trimmed_faces</function> function is used to identify which pieces, based on the boolean operation, are part of the evaluated result. Each <classname>TrimmedFace</classname> whose m_belong_to_final member is marked <constant>TrimmedFace::BELONG</constant> is used by <function>ON_Boolean</function> to create the final evaluated result.
+	</para>
+	<synopsis>
+	<![CDATA[
+ON_ClassArray< ON_SimpleArray<SSICurve> >
+get_face_intersection_curves(
+    ON_SimpleArray<Subsurface *> &surf_tree1,
+    ON_SimpleArray<Subsurface *> &surf_tree2,
+    const ON_Brep *brep1,
+    const ON_Brep *brep2,
+    op_type operation);
+	]]>
+	</synopsis>
+	<para>
+	Each pair of <parameter>brep1</parameter> and <parameter>brep2</parameter> surfaces whose bounding boxes intersect are passed to the <function>ON_Intersect</function> surface-surface intersection routine. The surface-surface intersection curves are then clipped using the trimming curves of the associated faces by the get_subcurves_inside_faces routine.
+	</para>
+      </section>
+      <section>
+	<title><filename>src/libbrep/intersect.cpp</filename></title>
+	<synopsis>
+	<![CDATA[
+int
+ON_Intersect(const ON_Surface *surfA,
+             const ON_Surface *surfB,
+             ON_ClassArray<ON_SSX_EVENT> &x,
+             double isect_tol,
+             double overlap_tol,
+             double fitting_tol,
+             const ON_Interval *surfaceA_udomain,
+             const ON_Interval *surfaceA_vdomain,
+             const ON_Interval *surfaceB_udomain,
+             const ON_Interval *surfaceB_vdomain,
+             Subsurface *treeA,
+             Subsurface *treeB);
+	]]>
+	</synopsis>
+	<para>
+	The first stage of the surface-surface intersection algorithm attempts to identify overlap intersections (areas where the two surfaces are coincident). Our assumption is that the boundary curve of any overlap region must be formed from isocurves of the overlapping surfaces. Subcurves of isocurves that intersect both surfaces, such that the surfaces are coincident on one side of the curve but not the other, potentially form part of overlap boundaries. These curves are identified using <function>find_overlap_boundary_curves</function>, which may also return some intersection points and curves that aren't on overlap boundaries to avoid wasted effort. Then, the split_overlaps_at_intersections function is run, and curves that share endpoints are stitched together. Stitched curves that close to form loops are recorded as overlap intersection events.
+	</para>
+	<para>
+	The second stage of the surface-surface intersection algorithm attempts to identify other intersection curves and points. The input surfaces <parameter>surfA</parameter> and <parameter>surfB</parameter> are subdivided into four subsurfaces, whose bounding boxes are tested in pairs for intersection. This subdivision repeats to a fixed depth determined by <constant>MAX_SSI_DEPTH</constant>. Subsurfaces that lie completely inside an overlap region identified in the first stage are discarded. Each final pair of subsurfaces with intersecting bounding boxes is approximated with two triangles. The triangles are then intersected, and the average of all intersection points is used as the initial guess for a Newton iterative solver, implemented by <function>newton_ssi</function>, which searches for a point close to the guess point which lies on both surfaces. Solved points that lies inside an overlap region identified in the first stage are discarded. Nearby points in the set of solved intersection points between <parameter>surfA</parameter> and <parameter>surfB</parameter> are then stitched together into polyline curves. If a line or conic curve can be fit to the polyline curves in 2d, the fit curve replaces the original <parameter>surfA</parameter> and/or <parameter>surfB</parameter> polyline curve. 
+	</para>
+      </section>
+    </section>
+
+    <section>
+      <title>Visualizing the Algorithm</title>
+      <para>Walking through an evaluation.</para>
+    </section>
+
+    <section>
+      <title>The OpenNURBS API</title>
+      <section>
+	<title>Pitfalls</title>
+	<para>Mistakes made.</para>
+      </section>
+    </section>
+
+    <section>
+      <title>Code Conventions</title>
+      <section>
+	<title>Pitfalls</title>
+	<para>Mistakes made.</para>
+      </section>
+    </section>
+
+  </section>
+</article>
