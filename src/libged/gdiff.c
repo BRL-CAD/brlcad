@@ -141,6 +141,12 @@ ged_gdiff(struct ged *gedp, int argc, const char *argv[])
     bu_log("right: %s", argv[bu_optind+1]);
     */
     if (do_diff_raytrace) {
+	if (db_lookup(gedp->ged_wdbp->dbip, left_obj, LOOKUP_NOISY) == RT_DIR_NULL) {
+	    return GED_ERROR;
+	}
+	if (db_lookup(gedp->ged_wdbp->dbip, right_obj, LOOKUP_NOISY) == RT_DIR_NULL) {
+	    return GED_ERROR;
+	}
 	analyze_raydiff(&results, gedp->ged_wdbp->dbip, left_obj, right_obj, &tol);
 
 	/* TODO - may want to integrate with a "regular" diff and report intelligently.  Needs
