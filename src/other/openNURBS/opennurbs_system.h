@@ -272,6 +272,10 @@ extern "C" {
 #include <alloca.h>
 #endif
 
+#if defined(__MINGW32__)
+#include <malloc.h>
+#endif
+
 #if !defined(ON_COMPILER_BORLAND)
 #include <wchar.h>
 #endif
