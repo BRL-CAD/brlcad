@@ -173,7 +173,7 @@ char	*argv[];
 		    *pix = c;
 	    }
 	    else
-		memset( (char *)&scanline[j][out_hdr.xmin], 0,
+		bzero( (char *)&scanline[j][out_hdr.xmin],
 		       out_hdr.xmax - out_hdr.xmin + 1 );
 
 	bottom_row = in_hdr.ymin;

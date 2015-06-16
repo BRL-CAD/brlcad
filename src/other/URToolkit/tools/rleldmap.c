@@ -238,7 +238,7 @@ char **argv;
 	    else
 		break;
 	    /* Build in_hdr for non-existant image (all zeros works fine) */
-	    memset( &in_hdr, 0, sizeof in_hdr );
+	    bzero( &in_hdr, sizeof in_hdr );
 	}
 
 	/* If apply flag was given, check for compatibility of color maps */

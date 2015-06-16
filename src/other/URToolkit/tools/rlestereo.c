@@ -195,10 +195,10 @@ char **argv;
 	     */
 	    if (GreenFlag) {
 		RightIndex = 1;
-		memset(outline[2], 0, Xres * sizeof(rle_pixel));
+		bzero(outline[2], Xres * sizeof(rle_pixel));
 	    } else {
 		RightIndex = 2;
-		memset(outline[1], 0, Xres * sizeof(rle_pixel));
+		bzero(outline[1], Xres * sizeof(rle_pixel));
 	    }
 
 	    /*

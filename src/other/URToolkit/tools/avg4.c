@@ -121,7 +121,7 @@ char	*argv[];
 		 */
 		if ((chan == RLE_ALPHA) && (!in_hdr.alpha))
 		{
-		    memset(alphptr, 0, new_xlen);
+		    bzero(alphptr, new_xlen);
 		}
 		else for( i = 0; i < new_xlen; i++)
 		{

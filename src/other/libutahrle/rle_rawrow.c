@@ -52,7 +52,7 @@ rle_pixel ** outrows;
 		    *outptr = j;
 	    }
 	    else
-		memset( (char *)&outrows[chan][the_hdr->xmin], 0,
+		bzero( (char *)&outrows[chan][the_hdr->xmin],
 		       the_hdr->xmax - the_hdr->xmin + 1 );
 
 	    for( i = 0; i < nraw[chan]; i++ )
@@ -61,7 +61,7 @@ rle_pixel ** outrows;
 		switch (raw[chan][i].opcode)
 		{
 		case RByteDataOp:
-		    memcpy( (char *)raw[chan][i].u.pixels, (char *)outptr,
+		    bcopy( (char *)raw[chan][i].u.pixels, (char *)outptr,
 			   raw[chan][i].length );
 		    break;
 

@@ -748,7 +748,7 @@ void
 clear_raster(ras_ptr)
 rle_pixel ***ras_ptr;
 {
-    memset( &(ras_ptr[cur_chan][0][0]), 0, array_width * array_lines );
+    bzero( &(ras_ptr[cur_chan][0][0]), array_width * array_lines );
 }
 
 #ifdef DEBUG
