@@ -100,7 +100,7 @@ get_args(int argc, char **argv)
 		iny = atoi(bu_optarg);
 		break;
 
-	    default:		/* '?' */
+	    default:		/* 'h' , '?' */
 		return 0;
 	}
     }
@@ -109,9 +109,7 @@ get_args(int argc, char **argv)
     if (bu_optind+5 == argc) {
 	file_name = argv[bu_optind++];
 	if ((buffp = fopen(file_name, "r")) == NULL) {
-	    fprintf(stderr,
-		    "bwscale: cannot open \"%s\" for reading\n",
-		    file_name);
+	    bu_log("bwscale: cannot open \"%s\" for reading\n",file_name);
 	    return 0;
 	}
 	inx = atoi(argv[bu_optind++]);
@@ -132,9 +130,7 @@ get_args(int argc, char **argv)
     } else {
 	file_name = argv[bu_optind];
 	if ((buffp = fopen(file_name, "r")) == NULL) {
-	    fprintf(stderr,
-		    "bwscale: cannot open \"%s\" for reading\n",
-		    file_name);
+	    bu_log("bwscale: cannot open \"%s\" for reading\n", file_name);
 	    return 0;
 	}
     }
