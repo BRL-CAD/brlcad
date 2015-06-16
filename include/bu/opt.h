@@ -114,7 +114,11 @@ __BEGIN_DECLS
  */
 typedef int (*bu_opt_arg_process_t)(struct bu_vls *, int argc, const char **argv, void *);
 
-
+/**
+ * A common task when writing bu_opt_arg_process_t validators is to check the
+ * first argument of the argv array - this macro encapsulates that into a
+ * standard check.
+ */
 #define BU_OPT_CHECK_ARGV0(_log_vls, _argc, _argv, _opt_name) \
 if (_argc < 1 || !_argv || !_argv[0] || _argv[0][0] == '\0') { \
     if (_log_vls) { \
@@ -122,7 +126,6 @@ if (_argc < 1 || !_argv || !_argv[0] || _argv[0][0] == '\0') { \
     } \
     return -1; \
 }
-
 
 /**
  * @brief
