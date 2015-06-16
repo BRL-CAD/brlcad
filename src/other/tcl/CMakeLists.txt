@@ -163,6 +163,14 @@ IF(MSVC)
   add_definitions(-Dinline=__inline -DBUILD_tcl)
 ENDIF(MSVC)
 
+IF(MINGW)
+  add_definitions(-D_CRT_SECURE_NO_DEPRECATE -D_CRT_NONSTDC_NO_DEP)
+  add_definitions(-DTCL_PIPE_DLL="tclpip${TCL_VERSION_MAJOR}${TCL_VERSION_MINOR}.dll")
+  add_definitions(-Dinline=__inline -DBUILD_tcl)
+  remove_definitions(-w)
+  add_definitions(-DHAVE_NO_SEH -DEXCEPTION_DISPOSITION=int)
+ENDIF(MINGW)
+
 IF(APPLE)
   ADD_TCL_CFLAG(MAC_OSX_TCL)
 ENDIF(APPLE)
@@ -1028,7 +1036,7 @@ ELSE(WIN32)
 ENDIF(WIN32)
 
 add_library(tcl ${TCL_SRCS})
-target_link_libraries(tcl ${CoreFoundation_LIBRARIES} ${TCL_LINK_LIBS} ${DL_LIBRARY} ${CMAKE_THREAD_LIBS_INIT})
+target_link_libraries(tcl ${CoreFoundation_LIBRARIES} ${TCL_LINK_LIBS} ${DL_LIBRARY} ${CMAKE_THREAD_LIBS_INIT} ws2_32)
 install(TARGETS tcl 
 	RUNTIME DESTINATION ${BIN_DIR}
 	LIBRARY DESTINATION ${LIB_DIR}
