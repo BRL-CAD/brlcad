@@ -1597,7 +1597,7 @@ identify_compsplt(const db_i &db, const directory &parent_region_dir,
 
 // returns:
 // - set of regions that are joined to the region by a WALL
-// - and set of members to ignore
+// - set of members to ignore
 HIDDEN std::pair<std::set<const directory *>, std::set<const directory *> >
 find_walls(const db_i &db, const directory &region_dir)
 {
@@ -1973,7 +1973,6 @@ get_section(FastgenConversion &data, const db_full_path &path)
 	region_dir = &get_region_dir(data.m_db, path);
     } catch (std::invalid_argument &) {}
 
-
     if (region_dir)
 	return data.get_region(*region_dir).get_section(get_region_path(data.m_db,
 		path));
@@ -2013,8 +2012,9 @@ convert_primitive(FastgenConversion &data, const db_full_path &path,
 	    if (internal.idb_type != ID_SPH && !ell_is_sphere(ell))
 		return false;
 
-	    if (!find_csphere_cutout(section, data.m_db, get_parent_path(path),
-				     data.m_recorded_cutouts)) {
+	    if (path.fp_len < 2
+		|| !find_csphere_cutout(section, data.m_db, get_parent_path(path),
+					data.m_recorded_cutouts)) {
 		section.write_name(DB_FULL_PATH_CUR_DIR(&path)->d_namep);
 		section.write_sphere(ell.v, MAGNITUDE(ell.a));
 	    }
@@ -2030,8 +2030,9 @@ convert_primitive(FastgenConversion &data, const db_full_path &path,
 	    if (internal.idb_type != ID_REC && !tgc_is_ccone2(tgc))
 		return false;
 
-	    if (!find_ccone2_cutout(section, data.m_db, get_parent_path(path),
-				    data.m_recorded_cutouts)) {
+	    if (path.fp_len < 2
+		|| !find_ccone2_cutout(section, data.m_db, get_parent_path(path),
+				       data.m_recorded_cutouts)) {
 		point_t v2;
 		VADD2(v2, tgc.v, tgc.h);
 		section.write_name(DB_FULL_PATH_CUR_DIR(&path)->d_namep);
