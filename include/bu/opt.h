@@ -39,20 +39,20 @@ __BEGIN_DECLS
  * convert and validate argument strings.
  *
  * The bu_opt option parsing system does not make any use of global values, unless
- * a user defines an option definiton array that passes in pointers to global variables
+ * a user defines an option definition array that passes in pointers to global variables
  * for setting.
  *
  * To set up a bu_opt parsing system, an array of bu_opt_desc (option description)
  * structures is defined and terminated with a BU_OPT_DESC_NULL entry.  This array
- * is then used by \link bu_opt_parse \endlink to process an argv array.
+ * is then used by @link bu_opt_parse @endlink to process an argv array.
  *
  * When defining a bu_opt_desc entry, the type of the set_var assignment variable
- * needed is determined by the arg_process callback.  If no callback is present and
- * the max arg count is zero, set_var is expected to be an integer that will be set
- * to 1 if the option is present in the argv string.  Because it is necessary for
- * arbitrary variables to be assigned to the set_var slot (the type needed is determined
- * by the arg_process callback function and may be anything) all set_var variables
- * are identified by their pointers (which are in turn cast to void.)
+ * needed is determined by the arg_process callback.  If no callback is present,
+ * set_var is expected to be an integer that will be set to 1 if the option is
+ * present in the argv string.  Because it is necessary for arbitrary variables
+ * to be assigned to the set_var slot (the type needed is determined by the
+ * arg_process callback function and may be anything) all set_var variables are
+ * identified by their pointers (which are in turn cast to void.)
  *
  * There are two styles in which a bu_opt_desc array may be initialized.  The first
  * is very compact but in C89 based code requires static variables as set_var entries,
@@ -88,12 +88,12 @@ __BEGIN_DECLS
  * BU_OPT_NULL(opt_defs[3]);
  * @endcode
  *
- * Given the option description array and argc/argv data, \link bu_opt_parse \endlink will do the
- * rest.  The design of \link bu_opt_parse \endlink is to fail early when an invalid option
+ * Given the option description array and argc/argv data, @link bu_opt_parse @endlink will do the
+ * rest.  The design of @link bu_opt_parse @endlink is to fail early when an invalid option
  * situation is encountered, so code using this system needs to be ready to handle
  * such cases.
  *
- * For generating descriptive help strings from a bu_opt_desc array use the \link bu_opt_describe \endlink
+ * For generating descriptive help strings from a bu_opt_desc array use the @link bu_opt_describe @endlink
  * function, which supports multiple output styles and formats.
  */
 /** @{ */
@@ -104,25 +104,52 @@ __BEGIN_DECLS
  * user defined argument processing function should match this signature and return
  * values as documented below.
  *
- * \returns
+ * @param[out]    msg     If not NULL, callback messages (usually
+ *                        error descriptions) may be appended here. 
+ * @param[in]     argc    Number of arguments in argv.
+ * @param[in]     argv    @em All arguments that follow the option flag.
+ * @param[in,out] set_var The value specified in the associated bu_opt_desc.
+ *
+ * @returns
  * Val | Interpretation
  * --- | --------------
  * -1  | Invalid argument encountered, or argument expected but not found.
  *  0  | No argument processed (not an error.)
  * >0  | Number of argv elements used in valid argument processing.
  *
+ * An example user-defined argument processing function:
+ * @code
+ * static int
+ * parse_opt_mode(struct bu_vls *msg, int argc, const char **argv, void *set_var)
+ * {
+ *     int ret, mode;
+ *
+ *     BU_OPT_CHECK_ARGV0(msg, argc, argv, "mode");
+ *
+ *     ret = bu_opt_int(msg, argc, argv, set_var);
+ *     mode = *(int *)set_var;
+ *
+ *     if (mode < 0 || mode > 2) {
+ *         ret = -1;
+ *         if (msg) {
+ *             bu_vls_printf(msg, "Error: mode must be 0, 1, or 2.");
+ *         }
+ *     }
+ *     return ret;
+ * }
+ * @endcode
  */
-typedef int (*bu_opt_arg_process_t)(struct bu_vls *, int argc, const char **argv, void *);
+typedef int (*bu_opt_arg_process_t)(struct bu_vls *msg, int argc, const char **argv, void *set_var);
 
 /**
  * A common task when writing bu_opt_arg_process_t validators is to check the
  * first argument of the argv array - this macro encapsulates that into a
  * standard check.
  */
-#define BU_OPT_CHECK_ARGV0(_log_vls, _argc, _argv, _opt_name) \
+#define BU_OPT_CHECK_ARGV0(_msg, _argc, _argv, _opt_name) \
 if (_argc < 1 || !_argv || !_argv[0] || _argv[0][0] == '\0') { \
-    if (_log_vls) { \
-	bu_vls_printf(_log_vls, "Error: missing required argument: " _opt_name "\n"); \
+    if (_msg) { \
+	bu_vls_printf(_msg, "Error: missing required argument: " _opt_name "\n"); \
     } \
     return -1; \
 }
@@ -166,24 +193,23 @@ struct bu_opt_desc {
 }
 
 /**
- * Parse argv array using option descs.
+ * Parse @p argv array using option descriptions.
  *
- * The bu_opt_desc array ds must be null terminated with BU_OPT_DESC_NULL.
+ * The bu_opt_desc array @p ds must be terminated with BU_OPT_DESC_NULL.
  *
- * \returns
+ * @returns
  * Val | Interpretation
  * --- | --------------
- * -1  | fatal error in parsing.  Program must decide to recover or exit.
- *  0  | all argv options handled.
- *  >0 | number of unused argv entries returned at the begging of the argv array.
+ * -1  | Fatal error in parsing.  Program must decide to recover or exit.
+ *  0  | All argv options handled.
+ *  >0 | Number of unused argv entries returned at the beginning of the argv array.
  *
- * msgs will collect any informational messages generated by the parser (typically
- * used for error reporting.)
- *
- * Note: An option definition without an arg_process callback that indicates
- * the option requires >0 arguments in its definition will be treated as a
- * fatal error, should that option be encountered while processing an argv
- * input.
+ * @param msgs[out]    will collect any informational messages
+ *                     generated by the parser (typically used for
+ *                     error reporting)
+ * @param argv[in,out] a return value >0 indicates that argv has been
+ *                     reordered to move the indicated number of
+ *                     unused args to the beginning of the array
  */
 BU_EXPORT extern int bu_opt_parse(struct bu_vls *msgs, int ac, const char **argv, struct bu_opt_desc *ds);
 
@@ -231,11 +257,11 @@ struct bu_opt_desc_opts {
  *
  * bu_opt_describe would generate the following help string by default:
  *
-\verbatim
+@verbatim
   -h, --help                    Print help string and exit.
   -n #, --num #                 Read int
   -f #, --fastf_t #             Read float
-\endverbatim
+@endverbatim
  *
  * When multiple options use the same set_var to capture
  * their effect, they are considered aliases for documentation
@@ -257,17 +283,17 @@ struct bu_opt_desc_opts {
  *
  * the generated help string reflects this:
  *
-\verbatim
+@verbatim
   -h [type], -H [type], -? [type], --help [type], --HELP [type]
                                 Print help and exit. If a type is specified to
                                 --help, print help specific to that type
   -n #, --num #                 Read int
   -f #, --fastf_t #             Read float
-\endverbatim
+@endverbatim
  *
- * \returns
+ * @returns
  * The generated help string.  Note that the string uses allocated memory - it is the responsibility of the
- * caller to free it with \link bu_free \endlink.
+ * caller to free it with @link bu_free @endlink.
  */
 BU_EXPORT extern const char *bu_opt_describe(struct bu_opt_desc *ds, struct bu_opt_desc_opts *settings);
 
@@ -291,7 +317,7 @@ BU_EXPORT extern int bu_opt_bool(struct bu_vls *msg, int argc, const char **argv
 BU_EXPORT extern int bu_opt_int(struct bu_vls *msg, int argc, const char **argv, void *set_var);
 /** Process 1 argument to set a long */
 BU_EXPORT extern int bu_opt_long(struct bu_vls *msg, int argc, const char **argv, void *set_var);
-/** Process 1 argument to set a \link fastf_t \endlink (either a float or a double, depending on how BRL-CAD was compiled) */
+/** Process 1 argument to set a @link fastf_t @endlink (either a float or a double, depending on how BRL-CAD was compiled) */
 BU_EXPORT extern int bu_opt_fastf_t(struct bu_vls *msg, int argc, const char **argv, void *set_var);
 /** Process 1 argument to set a char pointer (uses the original argv string, does not make a copy) */
 BU_EXPORT extern int bu_opt_str(struct bu_vls *msg, int argc, const char **argv, void *set_var);
