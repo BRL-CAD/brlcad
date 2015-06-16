@@ -1595,7 +1595,9 @@ identify_compsplt(const db_i &db, const directory &parent_region_dir,
 }
 
 
-// returns set of unioned Section regions and set of members to ignore
+// returns:
+// - set of regions that are joined to the region by a WALL
+// - and set of members to ignore
 HIDDEN std::pair<std::set<const directory *>, std::set<const directory *> >
 find_walls(const db_i &db, const directory &region_dir)
 {
@@ -1657,6 +1659,7 @@ struct FastgenConversion {
     const db_i &m_db;
     const bn_tol &m_tol;
     std::set<const directory *> m_recorded_cutouts;
+    Section m_toplevels;
 
 
 private:
@@ -1905,6 +1908,7 @@ FastgenConversion::FastgenConversion(const std::string &path, const db_i &db,
     m_db(db),
     m_tol(tol),
     m_recorded_cutouts(),
+    m_toplevels("toplevels", true),
     m_regions(),
     m_writer(path)
 {
@@ -1934,6 +1938,9 @@ FastgenConversion::FastgenConversion(const std::string &path, const db_i &db,
 
 FastgenConversion::~FastgenConversion()
 {
+    if (!m_toplevels.empty())
+	m_toplevels.write(m_writer, m_writer.take_next_section_id());
+
     std::map<const directory *, std::vector<FastgenWriter::SectionID> > ids;
 
     for (std::map<const directory *, RegionManager *>::const_iterator it =
@@ -1955,6 +1962,27 @@ FastgenConversion::get_region(const directory &region_dir)
 }
 
 
+HIDDEN Section &
+get_section(FastgenConversion &data, const db_full_path &path)
+{
+    RT_CK_FULL_PATH(&path);
+
+    const directory *region_dir = NULL;
+
+    try {
+	region_dir = &get_region_dir(data.m_db, path);
+    } catch (std::invalid_argument &) {}
+
+
+    if (region_dir)
+	return data.get_region(*region_dir).get_section(get_region_path(data.m_db,
+		path));
+    else
+	return data.m_toplevels;
+
+}
+
+
 HIDDEN bool
 convert_primitive(FastgenConversion &data, const db_full_path &path,
 		  const rt_db_internal &internal)
@@ -1962,8 +1990,7 @@ convert_primitive(FastgenConversion &data, const db_full_path &path,
     RT_CK_FULL_PATH(&path);
     RT_CK_DB_INTERNAL(&internal);
 
-    Section &section = data.get_region(get_region_dir(data.m_db,
-				       path)).get_section(get_region_path(data.m_db, path));
+    Section &section = get_section(data, path);
 
     switch (internal.idb_type) {
 	case ID_CLINE: {
@@ -2065,8 +2092,7 @@ write_nmg_region(nmgregion *nmg_region, const db_full_path *path,
     RT_CK_FULL_PATH(path);
 
     FastgenConversion &data = *static_cast<FastgenConversion *>(client_data);
-    Section &section = data.get_region(*DB_FULL_PATH_CUR_DIR(path)).get_section(
-			   *path);
+    Section &section = get_section(data, *path);
     shell *vshell;
 
     for (BU_LIST_FOR(vshell, shell, &nmg_region->s_hd)) {
@@ -2118,10 +2144,15 @@ convert_leaf(db_tree_state *tree_state, const db_full_path *path,
     RT_CK_DB_INTERNAL(internal);
 
     FastgenConversion &data = *static_cast<FastgenConversion *>(client_data);
+    const directory *region_dir = NULL;
     bool converted = false;
 
-    if (data.get_region(get_region_dir(data.m_db,
-				       *path)).member_ignored(get_parent_dir(*path)))
+    try {
+	region_dir = &get_region_dir(data.m_db, *path);
+    } catch (const std::invalid_argument &) {}
+
+    if (region_dir
+	&& data.get_region(*region_dir).member_ignored(get_parent_dir(*path)))
 	converted = true;
     else
 	try {
@@ -2150,8 +2181,14 @@ convert_region_end(db_tree_state *tree_state, const db_full_path *path,
     RT_CK_TREE(current_tree);
 
     FastgenConversion &data = *static_cast<FastgenConversion *>(client_data);
-    Section &section = data.get_region(*DB_FULL_PATH_CUR_DIR(path)).get_section(
-			   *path);
+    const directory *region_dir = NULL;
+
+    try {
+	region_dir = &get_region_dir(data.m_db, *path);
+    } catch (const std::invalid_argument &) {}
+
+    Section &section = region_dir ? data.get_region(*region_dir).get_section(
+			   *path) : data.m_toplevels;
     section.set_color(color_from_floats(tree_state->ts_mater.ma_color));
 
     if (current_tree->tr_op != OP_NOP) {
