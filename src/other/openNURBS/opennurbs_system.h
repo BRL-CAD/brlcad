@@ -141,6 +141,10 @@
 // to explicitly exclude inclusion of windows.h.
 */
 
+#if defined(__MINGW32__)
+#  define ON_NO_WINDOWS
+#endif
+
 #if !defined(ON_NO_WINDOWS)
 
 /*
