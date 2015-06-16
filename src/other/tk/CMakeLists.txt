@@ -188,9 +188,9 @@ add_definitions(-DTCL_SHLIB_EXT="${CMAKE_SHARED_LIBRARY_SUFFIX}")
 #----------------------------------------------------------------------------
 # Define some platform specific flags
 
-IF(WIN32)
+IF(MSVC)
   add_definitions(-D_CRT_SECURE_NO_DEPRECATE -D_CRT_NONSTDC_NO_DEPRECATE -Ot -Oi -fp:strict -Gs -GS -GL -MD -DBUILD_tk -BUILD_ttk -DSUPPORT_CONFIG_EMBEDDED -DHAVE_UXTHEME_H=1)
-ENDIF(WIN32)
+ENDIF(MSVC)
 
 IF(APPLE)
   add_definitions(-DMAC_OSX_TCL=1)
@@ -228,13 +228,13 @@ SC_TCL_64BIT_FLAGS()
 #--------------------------------------------------------------------
 #       Check endianness because we can optimize some operations
 #--------------------------------------------------------------------
-IF(NOT MSVC)
+IF(NOT WIN32)
   INCLUDE(TestBigEndian)
   TEST_BIG_ENDIAN(WORDS_BIGENDIAN)
   IF(WORDS_BIGENDIAN)
     add_definitions(-DWORDS_BIGENDIAN=1)
   ENDIF(WORDS_BIGENDIAN)
-ENDIF(NOT MSVC)
+ENDIF(NOT WIN32)
 
 #------------------------------------------------------------------------------
 #       Find out all about time handling differences.

@@ -19,14 +19,13 @@
  */
 /** @file util/pixrect.c
  *
- * Remove a portion of a potentially huge pix file.
+ * Remove a portion of a potentially huge .pix file.
  *
  */
 
 #include "common.h"
 
 #include <stdlib.h>
-#include <ctype.h>
 #include "bio.h"
 
 #include "bu/getopt.h"
@@ -52,7 +51,8 @@ get_args(int argc, char **argv)
 {
     int c;
 
-    while ((c = bu_getopt(argc, argv, "s:w:n:S:W:N:x:y:o:#:h?")) != -1) {
+/* "#:" was removed from the following: */
+    while ((c = bu_getopt(argc, argv, "s:w:n:S:W:N:x:y:o:h?")) != -1) {
 	switch (c) {
 	    case 's':
 		inx = iny = atoi(bu_optarg);
@@ -81,9 +81,10 @@ get_args(int argc, char **argv)
 	    case 'o':
 		out_file = bu_optarg;
 		break;
-	    case '#' :
-		bu_log("pixrect: bytes per pixel is not supported.\n");
-		return 0;
+/*	    case '#' :
+ *		bu_log("pixrect: bytes per pixel is not supported.\n");
+ *		return 0;
+ */
 	    default : /* '?' , 'h' */
 		return 0;
 	}

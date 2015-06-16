@@ -26,7 +26,7 @@ set(CSG_SRCS
 
 BRLCAD_ADDEXEC(csg "${CSG_SRCS}" "libgcv;libbu" NO_INSTALL)
 
-CMAKEFILES(csg.h)
+CMAKEFILES(csg.h csg_parser.lemon csg_scanner.perplex)
 
 # Local Variables:
 # tab-width: 8

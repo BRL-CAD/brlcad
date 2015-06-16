@@ -70,7 +70,7 @@ PCurveOrSurface::~PCurveOrSurface()
 }
 
 bool
-PCurveOrSurface::Load(STEPWrapper *sw, SDAI_Select *sse)
+PCurveOrSurface::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
 {
     step = sw;
 

@@ -69,9 +69,10 @@ icv_rect(icv_image_t *img, size_t xorig, size_t yorig, size_t xnum, size_t ynum)
     /* Hopes to the initial point to be extracted on the first line */
     in_data = img->data + xorig*img->channels;
 
-    for (row = yorig; row < yorig+ynum ;row++) {
-	    VMOVEN(p,in_data,widthstep_out);
-	    in_data	+= widthstep_in;
+    for (row = 0; row < yorig+ynum ;row++) {
+	VMOVEN(p,in_data,widthstep_out);
+	in_data += widthstep_in;
+	if (row >= yorig)
 	    p += widthstep_out;
     }
 

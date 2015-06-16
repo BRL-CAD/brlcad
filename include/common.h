@@ -41,7 +41,7 @@
  */
 #if defined(BRLCADBUILD) && defined(HAVE_CONFIG_H)
 
-#  if defined(_WIN32) && !defined(__CYGWIN__) && !defined(CMAKE_HEADERS)
+#  if defined(_WIN32) && !defined(__CYGWIN__) && !defined(__MINGW32__) && !defined(CMAKE_HEADERS)
 #    include "config_win.h"
 #  else
 #    include "brlcad_config.h"

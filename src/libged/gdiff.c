@@ -28,7 +28,7 @@
 #include <string.h>
 
 #include "bu/cmd.h"
-#include "bu/getopt.h"
+#include "bu/opt.h"
 #include "analyze.h"
 
 #include "./ged_private.h"
@@ -49,67 +49,43 @@ ged_gdiff(struct ged *gedp, int argc, const char *argv[])
     int left_dbip_specified = 0;
     int right_dbip_specified = 0;
 */
-    int c = 0;
     int do_diff_raytrace = 0;
     int view_left = 0;
     int view_right = 0;
     int view_overlap = 0;
-    struct bu_vls tmpstr = BU_VLS_INIT_ZERO;
+    const char *left_obj;
+    const char *right_obj;
+    fastf_t len_tol = BN_TOL_DIST;
+    int ret_ac = 0;
+    /* Skip command name */
+    int ac = argc - 1;
+    const char **av = argv+1;
+
+    struct bu_opt_desc d[6];
+    BU_OPT(d[0], "t", "tol",      "#", &bu_opt_fastf_t, (void *)&len_tol, "Tolerance")
+    BU_OPT(d[1], "R", "ray-diff", "", NULL, (void *)&do_diff_raytrace, "Test for differences with raytracing")
+    BU_OPT(d[2], "l", "view-left", "", NULL, (void *)&view_left, "Visualize volumes added only by left object")
+    BU_OPT(d[3], "b", "view-both", "", NULL, (void *)&view_overlap, "Visualize volumes common to both objects")
+    BU_OPT(d[4], "r", "view-right", "", NULL, (void *)&view_right, "Visualize volumes added only by right object")
+    BU_OPT_NULL(d[5]);
+
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
+
+    ret_ac = bu_opt_parse(NULL, ac, av, d);
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
 
-    if (argc < 3) {
+    if (ret_ac != 2) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s", gdiff_usage());
 	return GED_ERROR;
+    } else {
+	left_obj = av[0];
+	right_obj = av[1];
     }
 
-    /* skip command name */
-    bu_optind = 1;
-    bu_opterr = 1;
-
-    /* parse args */
-    while ((c=bu_getopt(argc, (char * const *)argv, "O:N:vhRlrb?")) != -1) {
-	if (bu_optopt == '?')
-	    c='h';
-	switch (c) {
-	    case 'O' :
-/*	use is commented out after this while
-		left_dbip_specified = 1;
-*/
-		bu_vls_sprintf(&tmpstr, "%s", bu_optarg);
-		/*bu_log("Have origin database: %s", bu_vls_addr(&tmpstr));*/
-		break;
-	    case 'N' :
-/*	use is commented out after this while
-		right_dbip_specified = 1;
-*/
-		bu_vls_sprintf(&tmpstr, "%s", bu_optarg);
-		/*bu_log("Have new database: %s", bu_vls_addr(&tmpstr));*/
-		break;
-	    case 'v' :
-		/*bu_log("Reporting mode is verbose");*/
-		break;
-	    case 'R' :
-		do_diff_raytrace = 1;
-		/*bu_log("Raytrace based evaluation of differences between objects.");*/
-		break;
-	    case 'l' :
-		view_left = 1;
-		break;
-	    case 'b' :
-		view_overlap = 1;
-		break;
-	    case 'r' :
-		view_right = 1;
-		break;
-	    default:
-		bu_vls_printf(gedp->ged_result_str, "Usage: %s", gdiff_usage());
-		return GED_ERROR;
-	}
-    }
+    tol.dist = len_tol;
 
     /* There are possible convention-based interpretations of 1, 2, 3, 4 and n args
      * beyond those used as options.  For the shortest cases, the interpretation depends
@@ -160,16 +136,12 @@ ged_gdiff(struct ged *gedp, int argc, const char *argv[])
      }
      */
 
-
-    if ((argc - bu_optind) != 2) {
-	return GED_ERROR;
-    }
 /*
     bu_log("left: %s", argv[bu_optind]);
     bu_log("right: %s", argv[bu_optind+1]);
     */
     if (do_diff_raytrace) {
-	analyze_raydiff(&results, gedp->ged_wdbp->dbip, argv[bu_optind], argv[bu_optind+1], &tol);
+	analyze_raydiff(&results, gedp->ged_wdbp->dbip, left_obj, right_obj, &tol);
 
 	/* TODO - may want to integrate with a "regular" diff and report intelligently.  Needs
 	 * some thought. */

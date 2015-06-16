@@ -141,6 +141,10 @@
 // to explicitly exclude inclusion of windows.h.
 */
 
+#if defined(__MINGW32__)
+#  define ON_NO_WINDOWS
+#endif
+
 #if !defined(ON_NO_WINDOWS)
 
 /*
@@ -266,6 +270,10 @@ extern "C" {
 
 #if defined(ON_COMPILER_IRIX) || defined(ON_COMPILER_SUN) || defined(ON_COMPILER_AIX)
 #include <alloca.h>
+#endif
+
+#if defined(__MINGW32__)
+#include <malloc.h>
 #endif
 
 #if !defined(ON_COMPILER_BORLAND)
