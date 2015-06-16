@@ -61,7 +61,7 @@ rle_pixel ** outrows;
 		switch (raw[chan][i].opcode)
 		{
 		case RByteDataOp:
-		    bcopy( (char *)raw[chan][i].u.pixels, (char *)outptr,
+		    memcpy( (char *)raw[chan][i].u.pixels, (char *)outptr,
 			   raw[chan][i].length );
 		    break;
 

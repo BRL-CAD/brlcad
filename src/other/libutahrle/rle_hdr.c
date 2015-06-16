@@ -153,7 +153,7 @@ rle_hdr *from_hdr, *to_hdr;
 	int size = to_hdr->ncolors * sizeof(int);
 	to_hdr->bg_color = (int *)malloc( size );
 	RLE_CHECK_ALLOC( to_hdr->cmd, to_hdr->bg_color, "background color" );
-	bcopy( from_hdr->bg_color, to_hdr->bg_color, size );
+	memcpy( from_hdr->bg_color, to_hdr->bg_color, size );
     }
 
     if ( to_hdr->cmap )
@@ -161,7 +161,7 @@ rle_hdr *from_hdr, *to_hdr;
 	int size = to_hdr->ncmap * (1 << to_hdr->cmaplen) * sizeof(rle_map);
 	to_hdr->cmap = (rle_map *)malloc( size );
 	RLE_CHECK_ALLOC( to_hdr->cmd, to_hdr->cmap, "color map" );
-	bcopy( from_hdr->cmap, to_hdr->cmap, size );
+	memcpy( from_hdr->cmap, to_hdr->cmap, size );
     }
 
     /* Only copy array of pointers, as the original comment memory
@@ -180,7 +180,7 @@ rle_hdr *from_hdr, *to_hdr;
 	    size *= sizeof(char *);
 	    to_hdr->comments = (CONST_DECL char **)malloc( size );
 	    RLE_CHECK_ALLOC( to_hdr->cmd, to_hdr->comments, "comments" );
-	    bcopy( (const void *)from_hdr->comments, (void *)to_hdr->comments, size );
+	    memcpy( (const void *)from_hdr->comments, (void *)to_hdr->comments, size );
 	}
 	else
 	    to_hdr->comments = NULL;	/* Blow off empty comment list. */
