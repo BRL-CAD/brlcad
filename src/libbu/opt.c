@@ -483,7 +483,7 @@ bu_opt_int(struct bu_vls *msg, int argc, const char **argv, void *set_var)
 	i = (int)l;
     } else {
 	/* Too big or too small, fail */
-	if (msg) bu_vls_printf(msg, "String specifies number too large for int data type: %l\n", l);
+	if (msg) bu_vls_printf(msg, "String specifies number too large for int data type: %ld\n", l);
 	return -1;
     }
 
