@@ -465,7 +465,7 @@ long int size;
    * Usually compilers fill buffers with zeros,
    * but ...
    */
-  bzero( ptr, size );
+  memset( ptr, 0, size );
   return ptr;
 }
 

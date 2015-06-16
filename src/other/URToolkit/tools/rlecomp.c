@@ -184,13 +184,13 @@ char	*argv[];
 	{
 	    A_hdr.bg_color = (int *)malloc( A_hdr.ncolors * sizeof(int) );
 	    RLE_CHECK_ALLOC( A_hdr.cmd, A_hdr.bg_color, "background color" );
-	    bzero( A_hdr.bg_color, A_hdr.ncolors * sizeof(int) );
+	    memset( A_hdr.bg_color, 0, A_hdr.ncolors * sizeof(int) );
 	}
 	if ( B_hdr.bg_color == 0 )
 	{
 	    B_hdr.bg_color = (int *)malloc( B_hdr.ncolors * sizeof(int) );
 	    RLE_CHECK_ALLOC( B_hdr.cmd, B_hdr.bg_color, "background color" );
-	    bzero( B_hdr.bg_color, B_hdr.ncolors * sizeof(int) );
+	    memset( B_hdr.bg_color, 0, B_hdr.ncolors * sizeof(int) );
 	}
 
 	/*
@@ -204,8 +204,8 @@ char	*argv[];
 	    MALLOC_ERR;
 	for ( i = RLE_ALPHA; i < out_hdr.ncolors; i++ )
 	{
-	    bzero( Ascanline[i], out_hdr.xmax + 1 );
-	    bzero( Bscanline[i], out_hdr.xmax + 1 );
+	    memset( Ascanline[i], 0, out_hdr.xmax + 1 );
+	    memset( Bscanline[i], 0, out_hdr.xmax + 1 );
 	}
 
 	if (rle_row_alloc( &out_hdr, &scanout ) < 0)
@@ -433,7 +433,7 @@ int * tmp_nraw;			/* copy_scanline. */
     if (*num_skip > 0)		/* Generate a blank (skipped) scanline */
     {
 	for( i = RLE_ALPHA; i < the_hdr->ncolors; i++ )
-	    bzero( scanline[i], the_hdr->xmax );
+	    memset( scanline[i], 0, the_hdr->xmax );
 	(*num_skip)--;
 	if (*num_skip == 0)
 	    *num_skip = -1;	/* Flag raw data available */
@@ -537,7 +537,7 @@ int blank_output;		/* if non-zero, just eat input & blank output */
 	    /*
 	     * Create a "bytemask" of the non-zero pixels.
 	     */
-	    bzero( non_zero_pixels, xlen );
+	    memset( non_zero_pixels, 0, xlen );
 	    for (chan = 0; chan < in_hdr->ncolors; chan++ )
 	    {
 		register int bgc = in_hdr->bg_color[chan];

@@ -106,9 +106,9 @@ char **argv;
     /*
      * Initialize some variables.
      */
-    bzero( scanred, LINE_LENGTH * FRAME_LENGTH );
-    bzero( scangrn, LINE_LENGTH * FRAME_LENGTH );
-    bzero( scanblu, LINE_LENGTH * FRAME_LENGTH );
+    memset( scanred, 0, LINE_LENGTH * FRAME_LENGTH );
+    memset( scangrn, 0, LINE_LENGTH * FRAME_LENGTH );
+    memset( scanblu, 0, LINE_LENGTH * FRAME_LENGTH );
 
     for (i=0; i<3; i++)
 	scanbuf[i] = (rle_pixel *) malloc ( LINE_LENGTH * sizeof(rle_pixel));

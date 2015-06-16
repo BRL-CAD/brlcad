@@ -178,7 +178,7 @@ int	minx, maxx, miny, maxy, frame_number;
    char		*d_str;
    long		second;
 
-   bzero(&rlb_head, 740);
+   memset(&rlb_head, 0, 740);
    rlb_head.window.left   = minx;
    rlb_head.window.right  = maxx;
    rlb_head.window.top    = maxy;

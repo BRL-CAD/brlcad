@@ -381,7 +381,7 @@ sum_hist ()
     /* Get a color box. */
     cb = (color_box_t *) malloc( sizeof( color_box_t ) );
     RLE_CHECK_ALLOC( cmd_nm, cb, 0 );
-    bzero( cb, sizeof( color_box_t ) );
+    memset( cb, 0, sizeof( color_box_t ) );
 
     /* Compact histogram. */
     for ( oldh = newh = 0; oldh < 32768; oldh++ )
@@ -502,7 +502,7 @@ color_box_t *box;
      */
     newbox = (color_box_t *) malloc( sizeof(color_box_t) );
     RLE_CHECK_ALLOC( cmd_nm, newbox, 0 );
-    bzero( newbox, sizeof( color_box_t ) );
+    memset( newbox, 0, sizeof( color_box_t ) );
 
     newbox->hist = &box->hist[i];
     newbox->hsize = box->hsize - i;
