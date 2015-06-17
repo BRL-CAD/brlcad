@@ -1677,6 +1677,9 @@ endif(APPLE)
 # target, since C++11 doesn't allow inline to be re-defined. See
 # misc/CMake/BRLCAD_Targets.cmake for handling of C_INLINE.
 CHECK_C_INLINE(C_INLINE)
+if(NOT HAVE_INLINE_KEYWORD AND HAVE___INLINE_KEYWORD)
+  CONFIG_H_APPEND(BRLCAD "#define inline __inline\n")
+endif(NOT HAVE_INLINE_KEYWORD AND HAVE___INLINE_KEYWORD)
 
 # If doing an optimized build, set _FORTIFY_SOURCE to 2.  Provides
 # compile-time best-practice error checking on certain libc functions
@@ -2068,32 +2071,116 @@ if("${HAVE_HTONLL}" STREQUAL "")
 endif("${HAVE_HTONLL}" STREQUAL "")
 
 # Windows has its own ideas about some functions - test and handle
-# accordingly.
+# accordingly.  There are a slew of Windows functions that need to be defined
+# to map to their corresponding versions with an underscore prefix - unless we
+# need to do something more sophisticated, we'll check for the existance of an
+# underscored version of the function and add the appropriate define.  If we
+# get into a situation where multiple platforms have both func and _func and
+# we're supposed to use func on one and _func on another we'll need a much
+# more sophisticated approach to testing based on functionality, but hopefully
+# it won't come to that.
 
-# execvp
-BRLCAD_FUNCTION_EXISTS(execvp HAVE_EXECVP)
-if (NOT HAVE_EXECVP)
-  BRLCAD_FUNCTION_EXISTS(_execvp HAVE__EXECVP)
-  if (HAVE__EXECVP)
-    CONFIG_H_APPEND(BRLCAD "#define execvp _execvp\n")
-  endif (HAVE__PIPE)
-endif (NOT HAVE_EXECVP)
+macro(BRLCAD_PFUNCTION_EXISTS func)
+  string(TOUPPER ${func} FUNC_UPPER)
+  BRLCAD_FUNCTION_EXISTS(_${func} HAVE__${FUNC_UPPER})
+  if (HAVE__${FUNC_UPPER})
+    CONFIG_H_APPEND(BRLCAD "#define ${func} _${func}\n")
+  endif (HAVE__${FUNC_UPPER})
+endmacro(BRLCAD_PFUNCTION_EXISTS func)
+
+# The following get wrapped in C++ protection
+CONFIG_H_APPEND(BRLCAD "#ifndef __cplusplus\n")
+BRLCAD_PFUNCTION_EXISTS(access)
+BRLCAD_PFUNCTION_EXISTS(chmod)
+BRLCAD_PFUNCTION_EXISTS(chsize)
+BRLCAD_PFUNCTION_EXISTS(close)
+BRLCAD_PFUNCTION_EXISTS(commit)
+BRLCAD_PFUNCTION_EXISTS(creat)
+BRLCAD_PFUNCTION_EXISTS(dup)
+BRLCAD_PFUNCTION_EXISTS(dup2)
+BRLCAD_PFUNCTION_EXISTS(isatty)
+BRLCAD_PFUNCTION_EXISTS(locking)
+BRLCAD_PFUNCTION_EXISTS(open)
+BRLCAD_PFUNCTION_EXISTS(unlink)
+BRLCAD_PFUNCTION_EXISTS(read)
+BRLCAD_PFUNCTION_EXISTS(setmode)
+BRLCAD_PFUNCTION_EXISTS(umask)
+BRLCAD_PFUNCTION_EXISTS(write)
+CONFIG_H_APPEND(BRLCAD "#endif /*__cplusplus*/\n")
+
+# If we've got _open, need some additional defines - TODO, should
+# probably test this somehow...
+if(HAVE__OPEN)
+  CONFIG_H_APPEND(BRLCAD "/* for _open() (#defined to open above) */\n")
+  CONFIG_H_APPEND(BRLCAD "#define O_APPEND _O_APPEND\n")
+  CONFIG_H_APPEND(BRLCAD "#define O_BINARY _O_BINARY\n")
+  CONFIG_H_APPEND(BRLCAD "#define O_CREAT _O_CREAT\n")
+  CONFIG_H_APPEND(BRLCAD "#define O_EXCL _O_EXCL\n")
+  CONFIG_H_APPEND(BRLCAD "#define O_RDONLY _O_RDONLY\n")
+  CONFIG_H_APPEND(BRLCAD "#define O_RDWR _O_RDWR\n")
+  CONFIG_H_APPEND(BRLCAD "#define O_TRUNC _O_TRUNC\n")
+  CONFIG_H_APPEND(BRLCAD "#define O_WRONLY _O_WRONLY\n")
+endif(HAVE__OPEN)
+
+# If we've got _access, need some additional defines - TODO, should
+# probably test this somehow...
+if(HAVE__ACCESS)
+  CONFIG_H_APPEND(BRLCAD "/* for _access() (#defined to access above) */\n")
+  CONFIG_H_APPEND(BRLCAD "#define R_OK 4\n")
+  CONFIG_H_APPEND(BRLCAD "#define W_OK 2\n")
+  CONFIG_H_APPEND(BRLCAD "#define X_OK 1\n")
+  CONFIG_H_APPEND(BRLCAD "#define F_OK 0\n")
+endif(HAVE__ACCESS)
+
+BRLCAD_PFUNCTION_EXISTS(nextafter)
+BRLCAD_PFUNCTION_EXISTS(execvp)
+BRLCAD_PFUNCTION_EXISTS(fdopen)
+BRLCAD_PFUNCTION_EXISTS(fileno)
+BRLCAD_PFUNCTION_EXISTS(getpid)
+BRLCAD_PFUNCTION_EXISTS(isascii)
+BRLCAD_PFUNCTION_EXISTS(pclose)
+BRLCAD_PFUNCTION_EXISTS(popen)
+BRLCAD_PFUNCTION_EXISTS(putenv)
+BRLCAD_PFUNCTION_EXISTS(snprintf)
+BRLCAD_PFUNCTION_EXISTS(sopen)
+BRLCAD_PFUNCTION_EXISTS(strdup)
+BRLCAD_PFUNCTION_EXISTS(sys_errlist)
+BRLCAD_PFUNCTION_EXISTS(sys_nerr)
+BRLCAD_PFUNCTION_EXISTS(getcwd)
+
+# strcasecmp/stricmp
+BRLCAD_FUNCTION_EXISTS(_stricmp HAVE__STRICMP)
+if(HAVE__STRICMP)
+  CONFIG_H_APPEND(BRLCAD "#define strcasecmp _stricmp\n")
+endif(HAVE__STRICMP)
+
+# strncasecmp/strnicmp
+BRLCAD_FUNCTION_EXISTS(_strnicmp HAVE__STRNICMP)
+if(HAVE__STRNICMP)
+  CONFIG_H_APPEND(BRLCAD "#define strncasecmp _strnicmp\n")
+endif(HAVE__STRNICMP)
 
 # pipe
-BRLCAD_FUNCTION_EXISTS(pipe HAVE_PIPE)
-if (NOT HAVE_PIPE)
-  BRLCAD_FUNCTION_EXISTS(_pipe HAVE__PIPE)
-  if (HAVE__PIPE)
-    # Note, we can't just #define pipe _pipe because of the extra args
-    CONFIG_H_APPEND(BRLCAD "#define pipe(_FD)  (_pipe((_FD), 256, _O_TEXT))\n")
-  endif (HAVE__PIPE)
-endif (NOT HAVE_PIPE)
+BRLCAD_FUNCTION_EXISTS(_pipe HAVE__PIPE)
+if(HAVE__PIPE)
+  # Note, we can't just #define pipe _pipe because of the extra args
+  CONFIG_H_APPEND(BRLCAD "#define pipe(_FD)  (_pipe((_FD), 256, _O_TEXT))\n")
+else(HAVE__PIPE)
+  BRLCAD_FUNCTION_EXISTS(pipe HAVE_PIPE)
+endif(HAVE__PIPE)
 
-#fork
+# fork is a no-go on Windows...
 BRLCAD_FUNCTION_EXISTS(fork HAVE_FORK)
-if (NOT HAVE_FORK)
+if(NOT HAVE_FORK)
   CONFIG_H_APPEND(BRLCAD "#define fork() -1\n")
-endif (NOT HAVE_FORK)
+endif(NOT HAVE_FORK)
+
+# sleep needs defining on Windows...  TODO - should we test for Sleep vs. sleep?
+BRLCAD_FUNCTION_EXISTS(sleep HAVE_SLEEP)
+if(NOT HAVE_SLEEP)
+  CONFIG_H_APPEND(BRLCAD "#define sleep(_SECONDS) (Sleep(1000 * (_SECONDS)))\n")
+endif(NOT HAVE_SLEEP)
+
 
 
 # we may compile in strict pedantic mode, but still want access to
@@ -2191,66 +2278,85 @@ if(ENABLE_POSIX_COMPLIANCE
 endif()
 #-----------------------------------------------------------------------
 
-# On Windows, we need to check for hypot etc.  This test pertains
-# to the windows specific config file, not CONFIG_H_FILE - hence,
-# just run the test and it will be handled by configure_file later.
+# On Windows, we need to check for hypot, isnan, etc. as symbols, so
+# set up a layered testing approach.
 include(CheckSymbolExists)
+
 if(WIN32)
   # consider all warnings as errors (MSVC)
   set(CMAKE_REQUIRED_FLAGS ${CMAKE_REQUIRED_FLAGS} /WX)
-
-  CHECK_SYMBOL_EXISTS(hypot "math.h" HAVE_HYPOT)
-  #If we don't have it, need to define it as _hypot in config_win
-  if(NOT HAVE_HYPOT)
-    set(hypot 1)
-  endif(NOT HAVE_HYPOT)
-
-  CHECK_SYMBOL_EXISTS(asinh "math.h" HAVE_ASINH)
-  #If we don't have it, need to define it in config_win
-  if(NOT HAVE_ASINH)
-    set(asinh 1)
-  endif(NOT HAVE_ASINH)
-
-  CHECK_SYMBOL_EXISTS(isnan "math.h" HAVE_ISNAN)
-  #If we don't have it, need to define it in config_win
-  if(NOT HAVE_ISNAN)
-    set(isnan 1)
-  endif(NOT HAVE_ISNAN)
-
-  CHECK_SYMBOL_EXISTS(isinf "math.h" HAVE_ISINF)
-  #If we don't have it, need to define it in config_win
-  if(NOT HAVE_ISINF)
-    set(isinf 1)
-  endif(NOT HAVE_ISINF)
-
-  CHECK_SYMBOL_EXISTS(rint "math.h" HAVE_RINT)
-  #If we don't have it, need to define it in config_win
-  if(NOT HAVE_RINT)
-    set(rint 1)
-  endif(NOT HAVE_RINT)
-
-  CHECK_SYMBOL_EXISTS(fmax "math.h" HAVE_FMAX)
-  #If we don't have it, need to define it in config_win
-  if(NOT HAVE_FMAX)
-    set(fmax 1)
-  endif(NOT HAVE_FMAX)
-
-  CHECK_SYMBOL_EXISTS(nextafterf "math.h" HAVE_NEXTAFTERF)
-  #If we don't have it, need to define it in config_win
-  if(NOT HAVE_NEXTAFTERF)
-    set(nextafterf 1)
-  endif(NOT HAVE_NEXTAFTERF)
-
-  CHECK_SYMBOL_EXISTS(nextafterl "math.h" HAVE_NEXTAFTERL)
-  #If we don't have it, need to define it in config_win
-  if(NOT HAVE_NEXTAFTERL)
-    set(nextafterl 1)
-  endif(NOT HAVE_NEXTAFTERL)
-
-  BRLCAD_FUNCTION_EXISTS(_fseeki64 HAVE__FSEEKI64)
-  BRLCAD_FUNCTION_EXISTS(_ftelli64 HAVE__FTELLI64)
-
 endif(WIN32)
+
+BRLCAD_FUNCTION_EXISTS(hypot HAVE_HYPOT REQUIRED_LIBS ${M_LIBRARY})
+if(NOT HAVE_HYPOT)
+  CHECK_SYMBOL_EXISTS(_hypot "math.h" HAVE__HYPOT)
+  if(HAVE__HYPOT)
+    CONFIG_H_APPEND(BRLCAD "#define hypot _hypot\n")
+  endif(HAVE__HYPOT)
+endif(NOT HAVE_HYPOT)
+
+set(asinh_test "#include <math.h>\nint main() { return (asinh(3.14) > 0) ? 0 : 1; }")
+BRLCAD_FUNCTION_EXISTS(asinh HAVE_ASINH COMPILE_TEST_SRCS asinh_test REQUIRED_LIBS ${M_LIBRARY})
+if(NOT HAVE_ASINH)
+  CHECK_SYMBOL_EXISTS(asinh "math.h" HAVE_ASINH_SYMBOL)
+  IF(NOT HAVE_ASINH_SYMBOL)
+    CONFIG_H_APPEND(BRLCAD "#define asinh(x) (log(x + sqrt(x * x + 1)))\n")
+  endIF(NOT HAVE_ASINH_SYMBOL)
+endif(NOT HAVE_ASINH)
+
+BRLCAD_FUNCTION_EXISTS(isnan HAVE_ISNAN REQUIRED_LIBS ${M_LIBRARY})
+if(NOT HAVE_ISNAN)
+  CHECK_SYMBOL_EXISTS(_isnan "math.h" HAVE__ISNAN)
+  if(HAVE__ISNAN)
+    CONFIG_H_APPEND(BRLCAD "#define isnan _isnan\n")
+  endif(HAVE__ISNAN)
+endif(NOT HAVE_ISNAN)
+
+BRLCAD_FUNCTION_EXISTS(isinf HAVE_ISINF REQUIRED_LIBS ${M_LIBRARY})
+if(NOT HAVE_ISINF)
+  CHECK_SYMBOL_EXISTS(isinf "math.h" HAVE_ISINF_SYMBOL)
+  if(NOT HAVE_ISINF_SYMBOL)
+    # TODO - should check for _finite here?
+    CONFIG_H_APPEND(BRLCAD "#define isinf(x) (!_finite(x))\n")
+  endif(NOT HAVE_ISINF_SYMBOL)
+endif(NOT HAVE_ISINF)
+
+BRLCAD_FUNCTION_EXISTS(rint HAVE_RINT REQUIRED_LIBS ${M_LIBRARY})
+if(NOT HAVE_RINT)
+  CHECK_SYMBOL_EXISTS(rint "math.h" HAVE_RINT_SYMBOL)
+  if(NOT HAVE_RINT_SYMBOL)
+    # TODO - should check for floor here?
+    CONFIG_H_APPEND(BRLCAD "#define rint(x) (floor((_X) + 0.5))\n")
+  endif(NOT HAVE_RINT_SYMBOL)
+endif(NOT HAVE_RINT)
+
+BRLCAD_FUNCTION_EXISTS(fmax HAVE_FMAX REQUIRED_LIBS ${M_LIBRARY})
+if(NOT HAVE_FMAX)
+  CHECK_SYMBOL_EXISTS(__max "math.h" HAVE___MAX)
+  if(HAVE___MAX)
+    CONFIG_H_APPEND(BRLCAD "#define fmax __max\n")
+  endif(HAVE___MAX)
+endif(NOT HAVE_FMAX)
+
+BRLCAD_FUNCTION_EXISTS(nextafterf HAVE_NEXTAFTERF REQUIRED_LIBS ${M_LIBRARY})
+if(NOT HAVE_NEXTAFTERF)
+  CHECK_SYMBOL_EXISTS(nextafterf "math.h" HAVE_NEXTAFTERF_SYMBOL)
+  if(NOT HAVE_NEXTAFTERF_SYMBOL)
+    CONFIG_H_APPEND(BRLCAD "#define nextafterf(x,y) ((y)>0?(x)+FLT_EPSILON:(x)-FLT_EPSILON)")
+  endif(NOT HAVE_NEXTAFTERF_SYMBOL)
+endif(NOT HAVE_NEXTAFTERF)
+
+BRLCAD_FUNCTION_EXISTS(nextafterl HAVE_NEXTAFTERL REQUIRED_LIBS ${M_LIBRARY})
+if(NOT HAVE_NEXTAFTERL)
+  CHECK_SYMBOL_EXISTS(nextafterl "math.h" HAVE_NEXTAFTERL_SYMBOL)
+  if(NOT HAVE_NEXTAFTERL_SYMBOL)
+    CONFIG_H_APPEND(BRLCAD "#define nextafterl(x,y) ((y)>0?(x)+DBL_EPSILON:(x)-DBL_EPSILON)")
+  endif(NOT HAVE_NEXTAFTERL_SYMBOL)
+endif(NOT HAVE_NEXTAFTERL)
+
+
+BRLCAD_FUNCTION_EXISTS(_fseeki64 HAVE__FSEEKI64)
+BRLCAD_FUNCTION_EXISTS(_ftelli64 HAVE__FTELLI64)
 
 # Check whether we need to add import/export lines to libraries
 if(MSVC)
