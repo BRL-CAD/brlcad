@@ -32,6 +32,7 @@ set(XSL_XHTML_STYLESHEET "${CMAKE_CURRENT_BINARY_DIR}/../resources/brlcad/brlcad
 set(XSL_MAN_STYLESHEET "${CMAKE_CURRENT_BINARY_DIR}/../resources/brlcad/brlcad-man-stylesheet.xsl")
 set(XSL_FO_STYLESHEET "${CMAKE_CURRENT_BINARY_DIR}/../resources/brlcad/brlcad-man-fo-stylesheet.xsl")
 
+add_subdirectory(implementation)
 add_subdirectory(man1)
 add_subdirectory(man3)
 add_subdirectory(man5)
