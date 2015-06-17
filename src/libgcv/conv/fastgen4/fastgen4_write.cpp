@@ -1853,10 +1853,11 @@ FastgenConversion::RegionManager::create_section(const db_full_path
     std::pair<std::map<std::string, Section *>::iterator, bool> found =
 	m_sections.insert(std::make_pair(name, static_cast<Section *>(NULL)));
 
-    if (!found.second)
-	throw std::logic_error("Section already created (region used twice in the same tree)");
-
-    found.first->second = new Section(name, true);
+    if (found.second)
+	found.first->second = new Section(name, true);
+    else {
+	// multiple references within the same comb tree
+    }
 }
 
 
