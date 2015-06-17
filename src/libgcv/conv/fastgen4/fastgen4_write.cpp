@@ -669,14 +669,15 @@ GridManager::write(RecordWriter &writer) const
 class Section
 {
 public:
-    Section(const std::string &name, bool volume_mode);
+    Section(bool volume_mode);
 
     bool empty() const;
     bool has_color() const;
     Color get_color() const;
     void set_color(const Color &value);
 
-    void write(FastgenWriter &writer, const FastgenWriter::SectionID &id) const;
+    void write(FastgenWriter &writer, const std::string &name,
+	       const FastgenWriter::SectionID &id) const;
 
     // create a comment describing an element
     void write_name(const std::string &value);
@@ -704,7 +705,6 @@ public:
 private:
     static const std::size_t MAX_NAME_SIZE = RecordWriter::Record::FIELD_WIDTH * 3;
 
-    const std::string m_name;
     const bool m_volume_mode;
     const std::size_t m_material_id;
 
@@ -716,8 +716,7 @@ private:
 };
 
 
-Section::Section(const std::string &name, bool volume_mode) :
-    m_name(name),
+Section::Section(bool volume_mode) :
     m_volume_mode(volume_mode),
     m_material_id(1),
     m_color(false, Color()),
@@ -760,29 +759,30 @@ Section::set_color(const Color &value)
 
 
 void
-Section::write(FastgenWriter &writer, const FastgenWriter::SectionID &id) const
+Section::write(FastgenWriter &writer, const std::string &name,
+	       const FastgenWriter::SectionID &id) const
 {
     RecordWriter &sections = writer.get_section_writer();
 
     if (has_color())
 	writer.write_section_color(id, get_color());
 
-    {
-	std::string new_name = m_name;
+    RecordWriter::Record(sections)
+	    << "SECTION" << id.first << id.second << (m_volume_mode ? 2 : 1);
 
-	if (new_name.size() > MAX_NAME_SIZE) {
-	    sections.write_comment(new_name);
-	    new_name = "..." + new_name.substr(new_name.size() - MAX_NAME_SIZE + 3);
+    {
+	std::string short_name = name;
+
+	if (short_name.size() > MAX_NAME_SIZE) {
+	    sections.write_comment(short_name);
+	    short_name = "..." + short_name.substr(short_name.size() - MAX_NAME_SIZE + 3);
 	}
 
 	RecordWriter::Record record(sections);
 	record << "$NAME" << id.first << id.second;
 	record << "" << "" << "" << "";
-	record.text(new_name);
+	record.text(short_name);
     }
-
-    RecordWriter::Record(sections)
-	    << "SECTION" << id.first << id.second << (m_volume_mode ? 2 : 1);
 
     m_grids.write(sections);
     m_elements.write(sections);
@@ -1674,7 +1674,7 @@ find_walls(const db_i &db, const directory &region_dir, const bn_tol &tol)
 }
 
 
-// stores information pertaining to the current conversion process
+// stores state for the ongoing conversion process
 struct FastgenConversion {
     class RegionManager;
 
@@ -1767,7 +1767,7 @@ FastgenConversion::RegionManager::write(FastgenWriter &writer) const
     for (std::map<std::string, Section *>::const_iterator it = m_sections.begin();
 	 it != m_sections.end(); ++it) {
 	if (it->second->empty())
-	    return results;
+	    continue;
 
 	const FastgenWriter::SectionID id = writer.take_next_section_id();
 
@@ -1781,7 +1781,7 @@ FastgenConversion::RegionManager::write(FastgenWriter &writer) const
 	    }
 	}
 
-	it->second->write(writer, id);
+	it->second->write(writer, it->first, id);
 	results.push_back(id);
     }
 
@@ -1804,7 +1804,7 @@ const
 		 m_walls.first.begin(); wall_dir_it != m_walls.first.end(); ++wall_dir_it)
 	    for (IDVector::const_iterator target_id_it = ids.at(*wall_dir_it).begin();
 		 target_id_it != ids.at(*wall_dir_it).end(); ++target_id_it)
-		writer.write_boolean(FastgenWriter::WALL, *this_id_it, *target_id_it);
+		writer.write_boolean(FastgenWriter::WALL, *target_id_it, *this_id_it);
 }
 
 
@@ -1854,7 +1854,7 @@ FastgenConversion::RegionManager::create_section(const db_full_path
 	m_sections.insert(std::make_pair(name, static_cast<Section *>(NULL)));
 
     if (found.second)
-	found.first->second = new Section(name, true);
+	found.first->second = new Section(true);
     else {
 	// multiple references within the same comb tree
     }
@@ -1939,7 +1939,7 @@ FastgenConversion::FastgenConversion(const std::string &path, const db_i &db,
     m_db(db),
     m_tol(tol),
     m_recorded_cutouts(),
-    m_toplevels("toplevels", true),
+    m_toplevels(true),
     m_regions(),
     m_writer(path)
 {
@@ -1971,7 +1971,7 @@ FastgenConversion::FastgenConversion(const std::string &path, const db_i &db,
 FastgenConversion::~FastgenConversion()
 {
     if (!m_toplevels.empty())
-	m_toplevels.write(m_writer, m_writer.take_next_section_id());
+	m_toplevels.write(m_writer, "toplevels", m_writer.take_next_section_id());
 
     std::map<const directory *, std::vector<FastgenWriter::SectionID> > ids;
 
