@@ -119,6 +119,8 @@ __BEGIN_DECLS
 
 #include "./rt/view.h"
 
+#include "./rt/func.h"
+
 #include "./rt/functab.h"
 
 #include "./rt/private.h"

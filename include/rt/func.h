@@ -42,6 +42,7 @@
 #include "bn/tol.h"
 #include "rt/defines.h"
 #include "rt/application.h"
+#include "rt/functab.h"
 #include "rt/hit.h"
 #include "rt/piece.h"
 #include "rt/resource.h"
@@ -149,7 +150,7 @@ RT_EXPORT extern int rt_obj_get(struct bu_vls *logstr, const struct rt_db_intern
 /**
  * db object 'adjust' support, modify a tcl list representation
  */
-RT_EXPORT extern int rt_obj_adjust(struct bu_vls *logstr, struct rt_db_internal *ip, int argc, char **argv);
+RT_EXPORT extern int rt_obj_adjust(struct bu_vls *logstr, struct rt_db_internal *ip, int argc, const char **argv);
 
 /**
  * describe an object in text form (used by the 'l' command)
