@@ -260,18 +260,17 @@ ged_rselect(struct ged *gedp, int argc, const char *argv[])
 	return ret;
     } else {
 	if (pflag)
-
 	    return dl_select_partial(gedp->ged_gdp->gd_headDisplay, gedp->ged_gvp->gv_model2view, gedp->ged_result_str, 				       gedp->ged_gvp->gv_rect.x,
-		    gedp->ged_gvp->gv_rect.y,
-		    gedp->ged_gvp->gv_rect.width,
-		    gedp->ged_gvp->gv_rect.height,
-		    0);
+				     gedp->ged_gvp->gv_rect.y,
+				     gedp->ged_gvp->gv_rect.width,
+				     gedp->ged_gvp->gv_rect.height,
+				     0);
 	else
-	    return dl_select_partial(gedp->ged_gdp->gd_headDisplay, gedp->ged_gvp->gv_model2view, gedp->ged_result_str, 				       gedp->ged_gvp->gv_rect.x,
-			       gedp->ged_gvp->gv_rect.y,
-			       gedp->ged_gvp->gv_rect.width,
-			       gedp->ged_gvp->gv_rect.height,
-			       0);
+	    return dl_select(gedp->ged_gdp->gd_headDisplay, gedp->ged_gvp->gv_model2view, gedp->ged_result_str, 				       gedp->ged_gvp->gv_rect.x,
+			     gedp->ged_gvp->gv_rect.y,
+			     gedp->ged_gvp->gv_rect.width,
+			     gedp->ged_gvp->gv_rect.height,
+			     0);
     }
 }
 
