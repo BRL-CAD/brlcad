@@ -26,7 +26,6 @@
 
 #include "common.h"
 
-#include <algorithm>
 #include <fstream>
 #include <iomanip>
 #include <set>
@@ -130,6 +129,19 @@ color_from_floats(const float *float_color)
     result[1] = static_cast<unsigned char>(float_color[1] * 255.0 + 0.5);
     result[2] = static_cast<unsigned char>(float_color[2] * 255.0 + 0.5);
     return result;
+}
+
+
+HIDDEN bool
+mat_equal(const mat_t vmat_a, const mat_t vmat_b, const bn_tol &tol)
+{
+    BN_CK_TOL(&tol);
+
+    const mat_t identity = MAT_INIT_IDN;
+    const fastf_t * const mat_a = vmat_a ? vmat_a : identity;
+    const fastf_t * const mat_b = vmat_b ? vmat_b : identity;
+
+    return bn_mat_is_equal(mat_a, mat_b, &tol);
 }
 
 
@@ -1562,11 +1574,11 @@ get_subtracted(const db_i &db, const tree *tree, LeafMap &results)
 
 
 // Identifies which half of a COMPSPLT a given region represents.
-// Returns:
+// Returns an int and a pointer to the half's matrix within the region.
 //   0 - not a COMPSPLT
 //   1 - the intersected half
 //   2 - the subtracted half
-HIDDEN int
+HIDDEN std::pair<int, const fastf_t *>
 identify_compsplt(const db_i &db, const directory &parent_region_dir,
 		  const directory &half_dir)
 {
@@ -1582,16 +1594,19 @@ identify_compsplt(const db_i &db, const directory &parent_region_dir,
     LeafMap leaves;
     get_intersected(db, parent_region.tree, leaves);
 
-    if (leaves.count(&half_dir))
-	return 1;
+    LeafMap::const_iterator found = leaves.find(&half_dir);
+
+    if (found != leaves.end())
+	return std::make_pair(1, found->second);
 
     leaves.clear();
     get_subtracted(db, parent_region.tree, leaves);
+    found = leaves.find(&half_dir);
 
-    if (leaves.count(&half_dir))
-	return 2;
+    if (found != leaves.end())
+	return std::make_pair(2, found->second);
 
-    return 0;
+    return std::make_pair(0, static_cast<fastf_t *>(NULL));
 }
 
 
@@ -1607,8 +1622,8 @@ find_walls(const db_i &db, const directory &region_dir, const bn_tol &tol)
 
     std::pair<std::set<const directory *>, std::set<const directory *> > results;
     LeafMap subtracted;
+    DBInternal region_db_internal(db, region_dir);
     {
-	DBInternal region_db_internal(db, region_dir);
 	const rt_comb_internal &region = *static_cast<rt_comb_internal *>
 					 (region_db_internal.get().idb_ptr);
 	RT_CK_COMB(&region);
@@ -1625,33 +1640,22 @@ find_walls(const db_i &db, const directory &region_dir, const bn_tol &tol)
 					      &region_dirs.ptr);
 
 	for (std::size_t i = 0; i < num_regions; ++i) {
-	    DBInternal region_db_internal(db, *region_dirs.ptr[i]);
+	    DBInternal this_region_db_internal(db, *region_dirs.ptr[i]);
 	    const rt_comb_internal &region = *static_cast<rt_comb_internal *>
-					     (region_db_internal.get().idb_ptr);
+					     (this_region_db_internal.get().idb_ptr);
 	    RT_CK_COMB(&region);
 
 	    LeafMap leaves;
 	    get_unioned(db, region.tree, leaves);
 	    get_intersected(db, region.tree, leaves);
+	    bool subset = !leaves.empty();
 
-	    if (leaves.empty())
-		continue;
+	    for (LeafMap::const_iterator leaf_it = leaves.begin(); leaf_it != leaves.end();
+		 ++leaf_it) {
+		const LeafMap::const_iterator subtracted_it = subtracted.find(leaf_it->first);
 
-	    bool subset = true;
-
-	    for (LeafMap::const_iterator it = leaves.begin(); it != leaves.end(); ++it) {
-		const LeafMap::const_iterator subtracted_it = subtracted.find(it->first);
-
-		if (subtracted_it == subtracted.end()) {
-		    subset = false;
-		    break;
-		}
-
-		const mat_t identity = MAT_INIT_IDN;
-		const fastf_t *mat_a = it->second ? it->second : identity;
-		const fastf_t *mat_b = subtracted_it->second ? subtracted_it->second : identity;
-
-		if (!bn_mat_is_equal(mat_a, mat_b, &tol)) {
+		if (subtracted_it == subtracted.end()
+		    || !mat_equal(leaf_it->second, subtracted_it->second, tol)) {
 		    subset = false;
 		    break;
 		}
@@ -1705,8 +1709,8 @@ public:
     std::vector<FastgenWriter::SectionID> write(FastgenWriter &writer) const;
 
     void write_walls(FastgenWriter &writer,
-		     const std::map<const directory *, std::vector<FastgenWriter::SectionID> > &ids,
-		     const directory &region_dir) const;
+		     const std::map<const directory *, std::vector<FastgenWriter::SectionID> > &ids)
+    const;
 
     // don't write these Sections
     void disable();
@@ -1725,6 +1729,7 @@ private:
     RegionManager(const RegionManager &source);
     RegionManager &operator=(const RegionManager &source);
 
+    const directory &m_region_dir;
     bool m_enabled;
     std::pair<bool, fastf_t> m_compsplt;
     const std::pair<std::set<const directory *>, std::set<const directory *> >
@@ -1735,6 +1740,7 @@ private:
 
 FastgenConversion::RegionManager::RegionManager(const db_i &db,
 	const directory &region_dir, const bn_tol &tol) :
+    m_region_dir(region_dir),
     m_enabled(true),
     m_compsplt(false, 0.0),
     m_walls(find_walls(db, region_dir, tol)),
@@ -1785,23 +1791,20 @@ FastgenConversion::RegionManager::write(FastgenWriter &writer) const
 
 void
 FastgenConversion::RegionManager::write_walls(FastgenWriter &writer,
-	const std::map<const directory *, std::vector<FastgenWriter::SectionID> > &ids,
-	const directory &region_dir)
+	const std::map<const directory *, std::vector<FastgenWriter::SectionID> > &ids)
 const
 {
-    const std::vector<FastgenWriter::SectionID> &this_ids = ids.at(&region_dir);
+    typedef std::vector<FastgenWriter::SectionID> IDVector;
 
-    for (std::vector<FastgenWriter::SectionID>::const_iterator it =
-	     this_ids.begin(); it != this_ids.end(); ++it) {
-	for (std::set<const directory *>::const_iterator wall_it =
-		 m_walls.first.begin(); wall_it != m_walls.first.end(); ++wall_it) {
-	    for (std::vector<FastgenWriter::SectionID>::const_iterator wall_section_it =
-		     ids.at(*wall_it).begin(); wall_section_it != ids.at(*wall_it).end();
-		 ++wall_section_it) {
-		writer.write_boolean(FastgenWriter::WALL, *it, *wall_section_it);
-	    }
-	}
-    }
+    const IDVector &this_region_ids = ids.at(&m_region_dir);
+
+    for (IDVector::const_iterator this_id_it = this_region_ids.begin();
+	 this_id_it != this_region_ids.end(); ++this_id_it)
+	for (std::set<const directory *>::const_iterator wall_dir_it =
+		 m_walls.first.begin(); wall_dir_it != m_walls.first.end(); ++wall_dir_it)
+	    for (IDVector::const_iterator target_id_it = ids.at(*wall_dir_it).begin();
+		 target_id_it != ids.at(*wall_dir_it).end(); ++target_id_it)
+		writer.write_boolean(FastgenWriter::WALL, *this_id_it, *target_id_it);
 }
 
 
@@ -1841,6 +1844,9 @@ FastgenConversion::RegionManager::create_section(const db_full_path
 	&region_instance_path)
 {
     RT_CK_FULL_PATH(&region_instance_path);
+
+    if (DB_FULL_PATH_CUR_DIR(&region_instance_path) != &m_region_dir)
+	throw std::invalid_argument("invalid path");
 
     const std::string name = AutoPtr<char>(db_path_to_string(
 	    &region_instance_path)).ptr;
@@ -1887,10 +1893,10 @@ find_compsplt(FastgenConversion &data, const db_full_path &half_path,
 	return false;
     }
 
-    const int this_id = identify_compsplt(data.m_db, *parent_region_dir,
-					  *DB_FULL_PATH_CUR_DIR(&half_path));
+    const std::pair<int, const fastf_t *> this_compsplt = identify_compsplt(
+		data.m_db, *parent_region_dir, *DB_FULL_PATH_CUR_DIR(&half_path));
 
-    if (!this_id)
+    if (!this_compsplt.first)
 	return false;
 
     // find the other half
@@ -1904,20 +1910,21 @@ find_compsplt(FastgenConversion &data, const db_full_path &half_path,
 	    if (region_dirs.ptr[i] == parent_region_dir)
 		continue;
 
-	    const int current_id = identify_compsplt(data.m_db, *region_dirs.ptr[i],
-				   *DB_FULL_PATH_CUR_DIR(&half_path));
+	    const std::pair<int, const fastf_t *> current = identify_compsplt(data.m_db,
+		    *region_dirs.ptr[i], *DB_FULL_PATH_CUR_DIR(&half_path));
 
-	    if (current_id && current_id != this_id) {
-		other_half_dir = region_dirs.ptr[i];
-		break;
-	    }
+	    if (current.first && current.first != this_compsplt.first)
+		if (mat_equal(current.second, this_compsplt.second, data.m_tol)) {
+		    other_half_dir = region_dirs.ptr[i];
+		    break;
+		}
 	}
     }
 
     if (!other_half_dir)
 	return false;
 
-    if (this_id == 1)
+    if (this_compsplt.first == 1)
 	data.get_region(*parent_region_dir).disable();
     else
 	data.get_region(*parent_region_dir).set_compsplt(half.eqn[3]);
@@ -1973,7 +1980,7 @@ FastgenConversion::~FastgenConversion()
 
     for (std::map<const directory *, RegionManager *>::iterator it =
 	     m_regions.begin(); it != m_regions.end(); ++it) {
-	it->second->write_walls(m_writer, ids, *it->first);
+	it->second->write_walls(m_writer, ids);
 	delete it->second;
     }
 }
