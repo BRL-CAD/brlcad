@@ -2059,7 +2059,7 @@ BRLCAD_FUNCTION_EXISTS(execvp HAVE_EXECVP)
 if (NOT HAVE_EXECVP)
   BRLCAD_FUNCTION_EXISTS(_execvp HAVE__EXECVP)
   if (HAVE__EXECVP)
-    CONFIG_H_APPEND(BRLCAD "#define execvp _execvp")
+    CONFIG_H_APPEND(BRLCAD "#define execvp _execvp\n")
   endif (HAVE__PIPE)
 endif (NOT HAVE_EXECVP)
 
@@ -2069,14 +2069,14 @@ if (NOT HAVE_PIPE)
   BRLCAD_FUNCTION_EXISTS(_pipe HAVE__PIPE)
   if (HAVE__PIPE)
     # Note - why not just #define pipe _pipe?why not just #define pipe _pipe?
-    CONFIG_H_APPEND(BRLCAD "#define pipe(_FD)  (_pipe((_FD), 256, _O_TEXT))")
+    CONFIG_H_APPEND(BRLCAD "#define pipe(_FD)  (_pipe((_FD), 256, _O_TEXT))\n")
   endif (HAVE__PIPE)
 endif (NOT HAVE_PIPE)
 
 #fork
 BRLCAD_FUNCTION_EXISTS(fork HAVE_FORK)
 if (NOT HAVE_FORK)
-    CONFIG_H_APPEND(BRLCAD "#define fork -1")
+  CONFIG_H_APPEND(BRLCAD "#define fork -1\n")
 endif (NOT HAVE_FORK)
 
 
