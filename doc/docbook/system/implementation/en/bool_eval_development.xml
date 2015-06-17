@@ -105,6 +105,35 @@ ON_Intersect(const ON_Surface *surfA,
 
     <section>
       <title>The OpenNURBS API</title>
+      <para>
+        BRL-CAD leverages the OpenNURBS library primarily for its classes that represent general (NURBS) b-rep, surface, curve, and point geometry. The following sections describe the OpenNURBS library symbols most frequently used in the NURBS boolean evaluation implementation, with relevant usage notes.
+      </para>
+      <section>
+        <title>Arrays</title>
+        <para>
+          OpenNURBS includes two general array classes similar to C++'s <classname>std::vector</classname>, <classname>ON_ClassArray</classname> and <classname>ON_SimpleArray</classname>. Besides having slightly friendlier interfaces, they also feature some higher-level member functions like <function>Reverse</function> and <function>Quicksort</function>.
+        </para>
+        <para>
+          The primary difference between the two classes is that <classname>ON_SimpleArray</classname> doesn't bother constructing and destructing its items. This makes it more efficient than <classname>ON_ClassArray</classname>, but unsuitable for class objects (though pointers to objects are fine). <classname>ON_ClassArray</classname> requires items to have working copy/assignment functions.
+        </para>
+	<para>
+	  The NURBS boolean evaluation implementation frequently employs a combined array of known size to index elements from two input objects. For example, if <parameter>brepA</parameter> has <inlineequation><mathphrase>i</mathphrase></inlineequation> faces and <parameter>brepB</parameter> has <inlineequation><mathphrase>j</mathphrase></inlineequation> faces, a single array of <inlineequation><mathphrase>i + j</mathphrase></inlineequation> elements is created.
+	</para>
+	<warning>
+	  <para>
+	    The OpenNURBS array classes do not check for out-of-bounds indexing. This isn't a problem in the simple case where items are added with <function>Append</function> and elements <inlineequation><mathphrase>[0, </mathphrase></inlineequation><function>Count()</function><inlineequation><mathphrase> - 1]</mathphrase></inlineequation> are iterated over.
+	  </para>
+	  <para>
+	    However, if the array will be a fixed size whose items are assigned in a nonsequential order, both the <emphasis>capacity</emphasis> and <emphasis>count</emphasis> should be set, or else the reported <function>Count</function> will be incorrect, and copying arrays by assignment won't work.
+	  </para>
+	  <programlisting>
+	<![CDATA[
+	ON_ClassArray< ON_SimpleArray<SSICurve> > curves_array(face_count1 + face_count2);
+	curves_array.SetCount(curves_array.Capacity());
+	]]>
+	  </programlisting>
+	</warning>
+      </section>
       <section>
 	<title>Pitfalls</title>
 	<para>Mistakes made.</para>
