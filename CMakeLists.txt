@@ -2076,7 +2076,7 @@ endif (NOT HAVE_PIPE)
 #fork
 BRLCAD_FUNCTION_EXISTS(fork HAVE_FORK)
 if (NOT HAVE_FORK)
-  CONFIG_H_APPEND(BRLCAD "#define fork -1\n")
+  CONFIG_H_APPEND(BRLCAD "#define fork() -1\n")
 endif (NOT HAVE_FORK)
 
 
