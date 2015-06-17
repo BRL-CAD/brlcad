@@ -2150,7 +2150,7 @@ package provide Archer 1.0
 	    catch {$itk_component(botView) selectBotPts $_mstring} msg
 	}
     } else {
-	$ArcherCore::compSelectCallback $_mstring
+	ArcherCore::compSelectCallback $_mstring
     }
     $itk_component(ged) rect dim 0 0
 }
@@ -8883,7 +8883,7 @@ proc title_node_handler {node} {
 
     $itk_component(ged) refresh_on
     $itk_component(ged) refresh
-}
+} 
 
 
 ::itcl::body Archer::applyPreferenceSettings {} {
