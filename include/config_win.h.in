@@ -46,6 +46,11 @@
  * Ensure that Project Settings / Project Options includes
  *	/Za		for ANSI C
  */
+
+/* !!! this should not be here, need to figure out what the
+ * problem is trying to build with /Za */
+#define __STDC__ 1
+
 # if !__STDC__
 #	error "STDC is not properly set on WIN32 build, add /Za to Project Settings / Project Options"
 # endif

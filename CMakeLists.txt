@@ -1545,7 +1545,10 @@ else()
   CHECK_CXX_FLAG("std=gnu++98" BUILD_TYPES Debug)
   CHECK_CXX_FLAG("std=gnu++98" BUILD_TYPES Release VARS CXX03_FLAG)
 endif()
-CHECK_C_FLAG("Za" BUILD_TYPES ALL)
+# TODO - should be using this with MSVC, but it breaks the BUILD_SLEEP
+# try_compile below with errors that appear to be coming from Windows
+# headers??
+# CHECK_C_FLAG("Za" BUILD_TYPES ALL)
 
 # What POSIX do we want to target, initially?  See
 # http://www.gnu.org/software/libc/manual/html_node/Feature-Test-Macros.html
