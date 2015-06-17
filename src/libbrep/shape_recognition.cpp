@@ -634,10 +634,12 @@ subbrep_split(struct subbrep_object_data *data)
 		    csg_fail++;
 		    break;
 		case TORUS:
+		    bu_log("TODO: process partial torus shapes\n");
+		    /*
 		    if (!torus_csg(new_obj, BREP_TOROIDAL_TOL)) {
 			bu_log("torus csg failure: %s\n", key.c_str());
-			csg_fail++;
-		    }
+		    }*/
+		    csg_fail++;
 		    break;
 		default:
 		    /* Unknown object type - can't convert to csg */
