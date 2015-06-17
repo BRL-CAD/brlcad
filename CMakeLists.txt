@@ -1545,6 +1545,7 @@ else()
   CHECK_CXX_FLAG("std=gnu++98" BUILD_TYPES Debug)
   CHECK_CXX_FLAG("std=gnu++98" BUILD_TYPES Release VARS CXX03_FLAG)
 endif()
+CHECK_C_FLAG("Za" BUILD_TYPES ALL)
 
 # What POSIX do we want to target, initially?  See
 # http://www.gnu.org/software/libc/manual/html_node/Feature-Test-Macros.html
@@ -1793,6 +1794,9 @@ BRLCAD_CHECK_LIBRARY(DL dl dlopen)
 # Solaris lexer library
 BRLCAD_CHECK_LIBRARY(SOLARIS_LEXER l yyless)
 
+# Windows ws2_32 library
+BRLCAD_CHECK_LIBRARY(WS2_32 ws2_32 gethostname)
+
 # timeSetEvent in Windows memory management
 if("${HAVE_TIMESETEVENT}" MATCHES "^${HAVE_TIMESETEVENT}$")
   set(CMAKE_REQUIRED_LIBRARIES_BAK ${CMAKE_REQUIRED_LIBRARIES})
@@ -2016,7 +2020,7 @@ BRLCAD_FUNCTION_EXISTS(getcwd HAVE_GETCWD)
 BRLCAD_FUNCTION_EXISTS(getegid HAVE_GETEGID)
 BRLCAD_FUNCTION_EXISTS(getenv_s HAVE_GETENV_S)
 BRLCAD_FUNCTION_EXISTS(geteuid HAVE_GETEUID)
-BRLCAD_FUNCTION_EXISTS(gethostname HAVE_GETHOSTNAME)
+BRLCAD_FUNCTION_EXISTS(gethostname HAVE_GETHOSTNAME REQUIRED_LIBS ${WS2_32_LIBRARY})
 BRLCAD_FUNCTION_EXISTS(getloadavg HAVE_GETLOADAVG)
 BRLCAD_FUNCTION_EXISTS(getopt_long HAVE_GETOPT_LONG)
 BRLCAD_FUNCTION_EXISTS(getprogname HAVE_GETPROGNAME) # bsd
@@ -2132,6 +2136,78 @@ if(HAVE__ACCESS)
   CONFIG_H_APPEND(BRLCAD "#define F_OK 0\n")
 endif(HAVE__ACCESS)
 
+# if we've got _chmod, need some additional defines - TODO, should this
+# be tested for somehow?
+if(HAVE__CHMOD)
+CONFIG_H_APPEND(BRLCAD "
+/* for _chmod() */
+#ifndef S_IFMT
+#  define S_IFMT _S_IFMT
+#endif
+#ifndef S_IFDIR
+#  define S_IFDIR _S_IFDIR
+#endif
+#ifndef S_IFCHR
+#  define S_IFCHR _S_IFCHR
+#endif
+#ifndef S_IFREG
+#  define S_IFREG _S_IFREG
+#endif
+
+#ifndef S_IREAD
+#  define S_IREAD _S_IREAD
+#endif
+#ifndef S_IWRITE
+#  define S_IWRITE _S_IWRITE
+#endif
+#ifndef S_IEXEC
+#  define S_IEXEC _S_IEXEC
+#endif
+
+#ifndef S_IRUSR
+#  define S_IRUSR      S_IREAD
+#endif
+#ifndef S_IWUSR
+#  define S_IWUSR      S_IWRITE
+#endif
+#ifndef S_IXUSR
+#  define S_IXUSR      S_IEXEC
+#endif
+#ifndef S_IRWXU
+#  define S_IRWXU      ((S_IRUSR)|(S_IWUSR)|(S_IXUSR))
+#endif
+
+#ifndef S_IRGRP
+#  define S_IRGRP      ((S_IRUSR)>>3)
+#endif
+#ifndef S_IWGRP
+#  define S_IWGRP      ((S_IWUSR)>>3)
+#endif
+#ifndef S_IXGRP
+#  define S_IXGRP      ((S_IXUSR)>>3)
+#endif
+#ifndef S_IROTH
+#  define S_IROTH      ((S_IRUSR)>>6)
+#endif
+#ifndef S_IWOTH
+#  define S_IWOTH      ((S_IWUSR)>>6)
+#endif
+#ifndef S_IXOTH
+#  define S_IXOTH      ((S_IXUSR)>>6)
+#endif
+
+#ifndef S_ISDIR
+#  define S_ISDIR(x)   ((x) & S_IFDIR)
+#endif
+#ifndef S_ISREG
+#  define S_ISREG(x)   ((x) & S_IFREG)
+#endif
+#ifndef S_ISLNK
+#  define S_ISLNK(x)   (0)
+#endif
+")
+endif(HAVE__CHMOD)
+
 BRLCAD_PFUNCTION_EXISTS(nextafter)
 BRLCAD_PFUNCTION_EXISTS(execvp)
 BRLCAD_PFUNCTION_EXISTS(fdopen)
@@ -2147,6 +2223,36 @@ BRLCAD_PFUNCTION_EXISTS(strdup)
 BRLCAD_PFUNCTION_EXISTS(sys_errlist)
 BRLCAD_PFUNCTION_EXISTS(sys_nerr)
 BRLCAD_PFUNCTION_EXISTS(getcwd)
+
+# for _fileno
+if(HAVE__FILENO)
+CONFIG_H_APPEND(BRLCAD "
+/*
+ * defines for stdin/stdout/stderr file numbers
+ */
+#if !defined(STDIN_FILENO) && defined(_STDIN_FILENO)
+#  define STDIN_FILENO _STDIN_FILENO
+#endif
+#if !defined(STDIN_FILENO) && HAVE__FILENO
+#  define STDIN_FILENO _fileno(stdin)
+#endif
+
+#if !defined(STDOUT_FILENO) && defined(_STDOUT_FILENO)
+#  define STDOUT_FILENO _STDOUT_FILENO
+#endif
+#if !defined(STDOUT_FILENO) && HAVE__FILENO
+#  define STDOUT_FILENO _fileno(stdout)
+#endif
+
+#if !defined(STDERR_FILENO) && defined(_STDERR_FILENO)
+#  define STDERR_FILENO _STDERR_FILENO
+#endif
+#if !defined(STDERR_FILENO) && HAVE__FILENO
+#  define STDERR_FILENO _fileno(stderr)
+#endif
+
+")
+endif(HAVE__FILENO)
 
 # strcasecmp/stricmp
 BRLCAD_FUNCTION_EXISTS(_stricmp HAVE__STRICMP)

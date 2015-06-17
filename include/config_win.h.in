@@ -32,9 +32,6 @@
 #include <fcntl.h>
 #include <errno.h>
 
-/* !!! this should not be here, should fix the build system settings */
-#define __STDC__ 1
-
 /* 4127 conditional expression is constant
  * 4244 conversion from type 1 to type 2
  * 4305 truncation
@@ -42,7 +39,7 @@
  * 4018 signed/unsigned mismatch
  * 4996 deprecation warning on non-secure functions
  */
-#pragma warning( disable : 4127 4244 4312 4996 )
+/*#pragma warning( disable : 4127 4244 4312 4996 )*/
 /* #pragma warning( disable : 4244 4305 4018) */
 
 /*
@@ -97,7 +94,7 @@
 
 #define YY_NO_UNISTD_H		1
 #define YYTOKENTYPE		1
-
+#if 0
 /* it we're compiling c++ sources, there's a possibility that we'll be
  * including libc++ headers (e.g., iostream) where these underscore IO
  * function hacks become counterproductive.
@@ -160,7 +157,7 @@
 #define sys_errlist _sys_errlist
 #define sys_nerr _sys_nerr
 #define getcwd _getcwd
-
+#endif
 /* set up stat */
 #if defined(SIZEOF_VOID_P) && SIZEOF_VOID_P == 8
 #   define stat _stati64
@@ -182,7 +179,7 @@
 #   define lseek _lseek
 #endif
 
-#cmakedefine fmax __max
+/*#cmakedefine fmax __max*/
 #define ioctl ioctlsocket
 
 #define SHARED_PTR_BOOST	1
@@ -205,7 +202,7 @@ typedef unsigned int gid_t;
 typedef unsigned int uid_t;
 typedef int mode_t;
 
-
+#if 0
 /*
  * for chmod()
  */
@@ -296,16 +293,16 @@ typedef int mode_t;
 #define W_OK 2
 #define X_OK 1
 #define F_OK 0
-
+#endif
 /*
  * faking it
  */
 
-#define fork() -1
+/*#define fork() -1*/
 #define getprogname() _pgmptr
-#cmakedefine rint(_X) (floor((_X) + 0.5))
+/*#cmakedefine rint(_X) (floor((_X) + 0.5))*/
 #define sleep(_SECONDS) (Sleep(1000 * (_SECONDS)))
-
+#if 0
 #ifndef __cplusplus
 /*  Microsoft specific inline specifier */
 #   define inline __inline
@@ -340,6 +337,7 @@ typedef int mode_t;
 #endif
 #ifndef STDERR_FILENO
 #  define STDERR_FILENO _fileno(stderr)
+#endif
 #endif
 
 #endif /* if defined(_WIN32) */
