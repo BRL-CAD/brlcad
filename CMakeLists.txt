@@ -78,6 +78,31 @@
 # This file contains the top level CMakeLists.txt logic for the
 # BRL-CAD software package.
 
+
+# Wrap the default message() function to also append ALL messages to a
+# CMakeOutput.log file in addition to usual console printing.
+
+function(message)
+
+  # bleh, don't know a clean+safe way to avoid string comparing the
+  # optional arg, so we extract it and test.
+  list(GET ARGV 0 MessageType)
+
+  if (MessageType STREQUAL FATAL_ERROR OR MessageType STREQUAL SEND_ERROR OR MessageType STREQUAL WARNING OR MessageType STREQUAL AUTHOR_WARNING OR MessageType STREQUAL STATUS)
+    list(REMOVE_AT ARGV 0)
+    _message(${MessageType} "${ARGV}")
+    file(APPEND ${BRLCAD_BINARY_DIR}/CMakeFiles/CMakeOutput.log "${MessageType}: ${ARGV}\n")
+  else (MessageType STREQUAL FATAL_ERROR OR MessageType STREQUAL SEND_ERROR OR MessageType STREQUAL WARNING OR MessageType STREQUAL AUTHOR_WARNING OR MessageType STREQUAL STATUS)
+    _message("${ARGV}")
+    file(APPEND ${BRLCAD_BINARY_DIR}/CMakeFiles/CMakeOutput.log "${ARGV}\n")
+  endif (MessageType STREQUAL FATAL_ERROR OR MessageType STREQUAL SEND_ERROR OR MessageType STREQUAL WARNING OR MessageType STREQUAL AUTHOR_WARNING OR MessageType STREQUAL STATUS)
+
+  # ~10% slower alternative that avoids adding '--' to STATUS messages
+  # execute_process(COMMAND ${CMAKE_COMMAND} -E echo "${ARGV}")
+
+endfunction(message)
+
+
 # We want to support a "distclean" build target that will clear all
 # CMake-generated files from a source directory in the case of an
 # in-source-dir configuration.  Not recommended, but we'll try to
@@ -492,16 +517,6 @@ if(NOT BRLCAD_IS_SUBBUILD)
 
 endif(NOT BRLCAD_IS_SUBBUILD)
 
-# We wrap the message function to also append ALL messages to CMakeOutput.log,
-# as well as printing them on the console output.
-if(NOT BRLCAD_IS_SUBBUILD)
-  function(message)
-    _message(${ARGN})
-    string(REPLACE ";" ": " msg "${ARGV}")
-    file(APPEND ${BRLCAD_BINARY_DIR}/CMakeFiles/CMakeOutput.log "${msg}\n")
-  endfunction(message)
-endif(NOT BRLCAD_IS_SUBBUILD)
-
 # To support "make check" (which will build the required targets for testing
 # in the style of GNU Autotools, we define a "check" target per
 # http://www.cmake.org/Wiki/CMakeEmulateMakeCheck and have add_test
@@ -620,6 +635,7 @@ if(TIME_RESULT MATCHES "^0$")
 else(TIME_RESULT MATCHES "^0$")
   message(FATAL_ERROR "Code to determine current date and time failed!\n")
 endif(TIME_RESULT MATCHES "^0$")
+
 
 #---------------------------------------------------------------------
 # print out the title with a pretty box computed to wrap around
