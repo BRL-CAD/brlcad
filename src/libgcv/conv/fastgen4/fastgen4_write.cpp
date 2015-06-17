@@ -767,9 +767,6 @@ Section::write(FastgenWriter &writer, const std::string &name,
     if (has_color())
 	writer.write_section_color(id, get_color());
 
-    RecordWriter::Record(sections)
-	    << "SECTION" << id.first << id.second << (m_volume_mode ? 2 : 1);
-
     {
 	std::string short_name = name;
 
@@ -783,6 +780,9 @@ Section::write(FastgenWriter &writer, const std::string &name,
 	record << "" << "" << "" << "";
 	record.text(short_name);
     }
+
+    RecordWriter::Record(sections)
+	    << "SECTION" << id.first << id.second << (m_volume_mode ? 2 : 1);
 
     m_grids.write(sections);
     m_elements.write(sections);
@@ -1804,7 +1804,7 @@ const
 		 m_walls.first.begin(); wall_dir_it != m_walls.first.end(); ++wall_dir_it)
 	    for (IDVector::const_iterator target_id_it = ids.at(*wall_dir_it).begin();
 		 target_id_it != ids.at(*wall_dir_it).end(); ++target_id_it)
-		writer.write_boolean(FastgenWriter::WALL, *target_id_it, *this_id_it);
+		writer.write_boolean(FastgenWriter::WALL, *this_id_it, *target_id_it);
 }
 
 
