@@ -1376,10 +1376,8 @@ mark_as_advanced(BRLCAD_EXTRADOCS_PHP)
 CMAKE_DEPENDENT_OPTION(BRLCAD_EXTRADOCS_MAN "Build MAN page output from DocBook documentation" ON "BRLCAD_EXTRADOCS;NOT MSVC" OFF)
 mark_as_advanced(BRLCAD_EXTRADOCS_MAN)
 
-# Don't do PDF by default, and hide the option unless the tools to do it are
-# present.  Provide an option to disable the PDF output for man pages without
-# disabling the rest of the PDF output - PDF generation for hundreds of man
-# pages can be expensive in time.
+# Don't do PDF by default because it's pretty expensive, and hide the
+# option unless the tools to do it are present.
 set(BRLCAD_EXTRADOCS_PDF_DESCRIPTION "
 Option that enables building of BRL-CAD's DocBook PDF-based documentation
 (includes manuals and man pages for commands, among
@@ -1388,12 +1386,7 @@ Note that you may set environment variable APACHE_FOP
 to point to your locally installed fop executable file (which on Linux is
 usually a shell script with 0755 permissions).
 ")
-set(BRLCAD_EXTRADOCS_PDF_MAN_DESCRIPTION "
-Option that enables building of BRL-CAD's DocBook PDF-based documentation
-for man pages only.  Defaults to OFF.
-")
 CMAKE_DEPENDENT_OPTION(BRLCAD_EXTRADOCS_PDF "Build PDF output from DocBook documentation" OFF "BRLCAD_EXTRADOCS;APACHE_FOP" OFF)
-CMAKE_DEPENDENT_OPTION(BRLCAD_EXTRADOCS_PDF_MAN "Build PDF output from DocBook documentation for man pages" ON "BRLCAD_EXTRADOCS_PDF" OFF)
 
 # Provide an option to enable/disable XML validation as part
 # of the DocBook build - sort of a "strict flags" mode for DocBook.
