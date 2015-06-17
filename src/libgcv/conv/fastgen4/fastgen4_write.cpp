@@ -44,7 +44,7 @@ namespace
 static const fastf_t INCHES_PER_MM = 1.0 / 25.4;
 
 
-template <typename T> HIDDEN inline void
+template <typename T> inline void
 autoptr_wrap_bu_free(T *ptr)
 {
     bu_free(ptr, "AutoPtr");
