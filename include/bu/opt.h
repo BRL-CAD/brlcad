@@ -105,7 +105,7 @@ __BEGIN_DECLS
  * values as documented below.
  *
  * @param[out]    msg     If not NULL, callback messages (usually
- *                        error descriptions) may be appended here. 
+ *                        error descriptions) may be appended here.
  * @param[in]     argc    Number of arguments in argv.
  * @param[in]     argv    @em All arguments that follow the option flag.
  * @param[in,out] set_var The value specified in the associated bu_opt_desc.
