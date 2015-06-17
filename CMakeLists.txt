@@ -2084,7 +2084,7 @@ BRLCAD_FUNCTION_EXISTS(pipe HAVE_PIPE)
 if (NOT HAVE_PIPE)
   BRLCAD_FUNCTION_EXISTS(_pipe HAVE__PIPE)
   if (HAVE__PIPE)
-    # Note - why not just #define pipe _pipe?why not just #define pipe _pipe?
+    # Note, we can't just #define pipe _pipe because of the extra args
     CONFIG_H_APPEND(BRLCAD "#define pipe(_FD)  (_pipe((_FD), 256, _O_TEXT))\n")
   endif (HAVE__PIPE)
 endif (NOT HAVE_PIPE)
