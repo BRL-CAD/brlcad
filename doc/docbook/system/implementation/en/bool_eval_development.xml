@@ -53,7 +53,7 @@ get_evaluated_faces(
 	]]>
 	</synopsis>
 	<para>
-	The intersection curves between the faces of <parameter>brep1</parameter> and <parameter>brep2</parameter> are found by <function>get_face_intersection_curves</function>. These curves are used to split the original surfaces into pieces, each becoming a new trimmed NURBS face. The <function>categorize_trimmed_faces</function> function is used to identify which pieces, based on the boolean operation, are part of the evaluated result. Each <classname>TrimmedFace</classname> whose m_belong_to_final member is marked <constant>TrimmedFace::BELONG</constant> is used by <function>ON_Boolean</function> to create the final evaluated result.
+	The intersection curves between the faces of <parameter>brep1</parameter> and <parameter>brep2</parameter> are found by <function>get_face_intersection_curves</function>. These curves are used to split the original surfaces into pieces, each becoming a new trimmed NURBS face. The <function>categorize_trimmed_faces</function> function is used to identify which pieces, based on the boolean operation, are part of the evaluated result. Each <classname>TrimmedFace</classname> whose <varname>m_belong_to_final</varname> member is marked <constant>TrimmedFace::BELONG</constant> is used by <function>ON_Boolean</function> to create the final evaluated result.
 	</para>
 	<synopsis>
 	<![CDATA[
@@ -153,6 +153,21 @@ ON_Intersect(const ON_Surface *surfA,
 	      <classname>ON_2dPoint</classname> objects can be, and are, safely passed to functions that take <classname>ON_3dPoint</classname> arguments. The <classname>ON_3dPoint</classname> arguments are constructed from the provided <classname>ON_2dPoint</classname> objects, wth their <varname>z</varname> coordinates set to 0.
 	    </para>
 	  </note>
+	</section>
+	<section>
+	  <title>Domain Intervals</title>
+	  <para>
+	    <classname>ON_Interval</classname> is used to represent the domains of parametric curves and surfaces. The domain <emphasis>starts</emphasis> at <varname>m_t[0]</varname> and <emphasis>ends</emphasis> at <varname>m_t[1]</varname>. These members can be set directly or via <function>Set(double t0, double t1)</function>.
+	  </para>
+	  <warning>
+	    <para>
+	      The start, end, and overall length of the domain are <emphasis>arbitrary</emphasis>, and <varname>m_t[0]</varname> need not be less than <varname>m_t[1]</varname>. If the numerically smaller or larger domain endpoint is needed, these should be accessed via the <function>Min</function> and <function>Max</function> member functions.
+	    </para>
+	  </warning>
+
+          <para>
+            The <function>ParameterAt(double x)</function> function translate a normalized parameter (from a domain starting at 0.0 and ending at 1.0) into a real parameter. Thus, the start of the domain is at <varname>domain.ParameterAt(0.0)</varname>, the midpoint is at <varname>domain.ParameterAt(.5)</varname>, etc.
+          </para>
 	</section>
       </section>
       <section>
