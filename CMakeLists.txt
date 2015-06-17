@@ -2007,7 +2007,6 @@ BRLCAD_FUNCTION_EXISTS(lrand48 HAVE_LRAND48)
 BRLCAD_FUNCTION_EXISTS(memset HAVE_MEMSET)
 BRLCAD_FUNCTION_EXISTS(mkstemp HAVE_MKSTEMP)
 BRLCAD_FUNCTION_EXISTS(ntohll HAVE_NTOHLL)
-BRLCAD_FUNCTION_EXISTS(pipe HAVE_PIPE)
 BRLCAD_FUNCTION_EXISTS(popen HAVE_POPEN)
 BRLCAD_FUNCTION_EXISTS(posix_memalign HAVE_POSIX_MEMALIGN) # IEEE Std 1003.1-2001
 BRLCAD_FUNCTION_EXISTS(random HAVE_RANDOM)
@@ -2051,6 +2050,35 @@ if("${HAVE_HTONLL}" STREQUAL "")
       CONFIG_H_APPEND(BRLCAD "#cmakedefine HAVE_HTONLL 1\n")
   endif(HAVE_HTONLL_SYS__ENDIAN AND CONFIG_H_FILE)
 endif("${HAVE_HTONLL}" STREQUAL "")
+
+# Windows has its own ideas about some functions - test and handle
+# accordingly.
+
+# execvp
+BRLCAD_FUNCTION_EXISTS(execvp HAVE_EXECVP)
+if (NOT HAVE_EXECVP)
+  BRLCAD_FUNCTION_EXISTS(_execvp HAVE__EXECVP)
+  if (HAVE__EXECVP)
+    CONFIG_H_APPEND(BRLCAD "#define execvp _execvp")
+  endif (HAVE__PIPE)
+endif (NOT HAVE_EXECVP)
+
+# pipe
+BRLCAD_FUNCTION_EXISTS(pipe HAVE_PIPE)
+if (NOT HAVE_PIPE)
+  BRLCAD_FUNCTION_EXISTS(_pipe HAVE__PIPE)
+  if (HAVE__PIPE)
+    # Note - why not just #define pipe _pipe?why not just #define pipe _pipe?
+    CONFIG_H_APPEND(BRLCAD "#define pipe(_FD)  (_pipe((_FD), 256, _O_TEXT))")
+  endif (HAVE__PIPE)
+endif (NOT HAVE_PIPE)
+
+#fork
+BRLCAD_FUNCTION_EXISTS(fork HAVE_FORK)
+if (NOT HAVE_FORK)
+    CONFIG_H_APPEND(BRLCAD "#define fork -1")
+endif (NOT HAVE_FORK)
+
 
 # we may compile in strict pedantic mode, but still want access to
 # some POSIX functions.  test whether some symbols (below) are
