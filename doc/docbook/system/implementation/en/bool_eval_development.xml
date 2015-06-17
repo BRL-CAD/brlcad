@@ -135,6 +135,27 @@ ON_Intersect(const ON_Surface *surfA,
 	</warning>
       </section>
       <section>
+        <title>Geometry</title>
+	<section>
+	  <title>2D and 3D Points</title>
+	  <para>
+	    The <classname>ON_2dPoint</classname> and <classname>ON_3dPoint</classname> classes implement the expected operators allowing points to be easily summed and scaled.
+	  </para>
+	  <para>
+	    The <function>operator[]</function> functions are notable because coordinates are not actually stored as arrays in these classes, but rather in the named members <varname>x</varname>, <varname>y</varname>, and <varname>z</varname>. So while accessing coordinates as <varname>pt[0]</varname>, <varname>pt[1]</varname> is possible, the more readable <varname>pt.x</varname>, <varname>pt.y</varname>, is more typically seen.
+	  </para>
+
+	  <para>
+	    The most frequently used member function is <function><![CDATA[DistanceTo(const ON_3dPoint &p)]]></function>, used to check inter-point distances, either as part of an intersection test or to identify closeable gaps or duplicate points.
+	  </para>
+	  <note>
+	    <para>
+	      <classname>ON_2dPoint</classname> objects can be, and are, safely passed to functions that take <classname>ON_3dPoint</classname> arguments. The <classname>ON_3dPoint</classname> arguments are constructed from the provided <classname>ON_2dPoint</classname> objects, wth their <varname>z</varname> coordinates set to 0.
+	    </para>
+	  </note>
+	</section>
+      </section>
+      <section>
 	<title>Pitfalls</title>
 	<para>Mistakes made.</para>
       </section>
