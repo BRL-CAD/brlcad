@@ -2200,7 +2200,9 @@ package provide Archer 1.0
     if {$mCompSelectMode != $COMP_SELECT_LIST_MODE &&
 	$mCompSelectMode != $COMP_SELECT_LIST_PARTIAL_MODE &&
 	$mCompSelectMode != $COMP_SELECT_BOT_POINTS_MODE} {
-	doSelectGroup
+	if {!$mOverrideBinding} {
+	    doSelectGroup
+	}
     }
 
     $itk_component(ged) clear_view_rect_callback_list
