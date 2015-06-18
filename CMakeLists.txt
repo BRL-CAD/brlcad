@@ -1806,11 +1806,10 @@ if("${HAVE_WS2_32_LIBRARY}" MATCHES "^${HAVE_WS2_32_LIBRARY}$")
   check_c_source_runs("
 #include <winsock2.h>
 int main() {
-  char name[32];
-  WORD wVersionRequested = MAKEWORD(1, 1);
+  char name[256] = {0};
   WSADATA wsaData;
-  WSAStartup(wVersionRequested, &wsaData);
-  (void)gethostname(name, 32);
+  WSAStartup(MAKEWORD(2,2), &wsaData);
+  (void)gethostname(name, sizeof(name));
   WSACleanup();
   return 0;
 }
