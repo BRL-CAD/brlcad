@@ -48,23 +48,26 @@ group_end = "}";
 
 <code>  {
 (group_begin) {
-    YYSETCONDITION(code);
+	YYSETCONDITION(code);
     return GROUP_BEGIN;
-  }
+    }
 [^] { continue; }
 }
+
 /*
 <group> {
-(group_end) {
+(group_content) {
      YYSETCONDITION(code);
      return GROUP_CONTENT;
    }
+[^] { continue; }
 }
+
 <group_in> {
-  (optional_ws)(group_end) {
+(group_end) {
      YYSETCONDITION(group);
      return GROUP_END;
-}
+	}
 [^] { continue; }
 }
 */

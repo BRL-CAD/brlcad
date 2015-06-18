@@ -41,21 +41,17 @@
 /* priorities , not sure if this is how is intended to be used */
 
 %left GROUP_BEGIN.
-/*
 %left GROUP_CONTENT.
 %left GROUP_END.
-*/
+
 
 /* I believe here I get the compiling error */
-start_symbol ::= code. 
-
-//source ::= /* empty */.
+start_symbol ::= code.
 
 /* Initial, simple grammar, just for testing  */
-
 code ::= groupb.  
 
-groupb::= GROUP_BEGIN.  
+groupb::= GROUP_BEGIN. 
 {
   fprintf(appData->outfile, "we found group() {\n");
 }
