@@ -2184,7 +2184,7 @@ convert_leaf(db_tree_state *tree_state, const db_full_path *path,
 	region_dir = &get_region_dir(data.m_db, *path);
     } catch (const std::invalid_argument &) {}
 
-    const bool facetize = region_dir && data.m_facetize_regions.count(region_dir);
+    const bool facetize = data.m_facetize_regions.count(region_dir);
 
     if (region_dir
 	&& data.get_region(*region_dir).member_ignored(get_parent_dir(*path)))
@@ -2193,7 +2193,7 @@ convert_leaf(db_tree_state *tree_state, const db_full_path *path,
 	converted = convert_primitive(data, *path, *internal, subtracted);
 
     if (!converted) {
-	if (!facetize && subtracted && region_dir)
+	if (!facetize && subtracted)
 	    data.m_failed_regions.insert(region_dir);
 	else
 	    return nmg_booltree_leaf_tess(tree_state, path, internal, client_data);
@@ -2276,6 +2276,7 @@ gcv_fastgen4_write(const char *path, struct db_i *dbip,
 
     std::set<const directory *> failed_regions = do_conversion(*dbip, path);
 
+    // tessellate all regions that contain an incompatible boolean operation
     if (!failed_regions.empty())
 	if (!do_conversion(*dbip, path, failed_regions).empty())
 	    throw std::runtime_error("failed to convert all regions");
