@@ -1868,6 +1868,9 @@ find_compsplt(FastgenConversion &data, const db_full_path &half_path,
     RT_CK_FULL_PATH(&half_path);
     RT_HALF_CK_MAGIC(&half);
 
+    if (DB_FULL_PATH_CUR_DIR(&half_path)->d_nref < 2)
+	return false;
+
     const vect_t normal = {0.0, 0.0, 1.0};
 
     if (!VNEAR_EQUAL(half.eqn, normal, RT_LEN_TOL))
