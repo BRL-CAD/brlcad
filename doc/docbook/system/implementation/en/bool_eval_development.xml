@@ -215,6 +215,23 @@ ON_Curve* Duplicate()
 	    This method is common to all OpenNURBS geometry classes, but curves are by far the most frequently duplicated objects. However, if curves are simply being retained from a working set of container objects, the curve pointers are freqently stolen rather than copied, with curve members set to <constant>NULL</constant> so that the curves aren't destructed with the containers.
 	  </para>
 	</section>
+	<section>
+	  <title>Lines</title>
+	  <para>
+	    <classname>ON_Line</classname> is used to represent an infinite line, defined by two points, <varname>from</varname> and <varname>to</varname>.
+	  </para>
+
+	  <para>
+	    <classname>ON_Line</classname> is not a subclass of <classname>ON_Curve</classname> and should not be confused with <classname>ON_LineCurve</classname> (which has an <classname>ON_Line</classname> member), though it does have some of the same methods as an <classname>ON_Curve</classname> class, including <function>PointAt(double t)</function>. However, because the line has an infinite domain, it can be evaluated at any <varname>t</varname> value, though evaluating at 0.0 returns <varname>from</varname> and evaluating at 1.0 returns <varname>to</varname>, as if the line was a parametric curve with a domain between 0.0 and 1.0.
+	  </para>
+
+	  <para>
+	    <classname>ON_Line</classname> has helpful line-specific methods such as <function><![CDATA[ClosestPointTo(const ON_3dPoint &point)]]></function>. Again, because the line is treated as infinite, this function doesn't necessarily return a point in the segment between <varname>from</varname> and <varname>to</varname>.
+	  </para>
+
+	  <para>
+	  </para>
+	</section>
       </section>
       <section>
 	<title>Pitfalls</title>
