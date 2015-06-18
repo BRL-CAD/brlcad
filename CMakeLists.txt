@@ -1682,7 +1682,9 @@ endif(APPLE)
 # misc/CMake/BRLCAD_Targets.cmake for handling of C_INLINE.
 CHECK_C_INLINE(C_INLINE)
 if(NOT HAVE_INLINE_KEYWORD AND HAVE___INLINE_KEYWORD)
-  CONFIG_H_APPEND(BRLCAD "#define inline __inline\n")
+  CONFIG_H_APPEND(BRLCAD "#ifndef __cplusplus\n")
+  CONFIG_H_APPEND(BRLCAD "#  define inline __inline\n")
+  CONFIG_H_APPEND(BRLCAD "#endif /* not __cplusplus */\n")
 endif(NOT HAVE_INLINE_KEYWORD AND HAVE___INLINE_KEYWORD)
 
 # If doing an optimized build, set _FORTIFY_SOURCE to 2.  Provides
