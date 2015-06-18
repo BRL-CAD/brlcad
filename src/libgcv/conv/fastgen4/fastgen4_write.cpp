@@ -145,6 +145,98 @@ mat_equal(const mat_t vmat_a, const mat_t vmat_b, const bn_tol &tol)
 }
 
 
+class DBPath
+{
+public:
+    struct Comparator {
+	bool operator()(const DBPath &left, const DBPath &right) const;
+    };
+
+    DBPath();
+    ~DBPath();
+    explicit DBPath(const db_full_path &value);
+    DBPath(const DBPath &source);
+    DBPath &operator=(const DBPath &source);
+
+    const db_full_path &get() const;
+
+private:
+    db_full_path m_value;
+};
+
+
+bool
+DBPath::Comparator::operator()(const DBPath &left, const DBPath &right) const
+{
+#define COMPARE(a, b) \
+    do { \
+	const int v = bu_strcmp((a), (b)); \
+	if (v != 0) return v < 0; \
+    } while (false)
+
+    const std::size_t len = std::min(left.get().fp_len, right.get().fp_len);
+
+    for (std::size_t i = 0; i < len; ++i)
+	COMPARE(left.get().fp_names[i]->d_namep, right.get().fp_names[i]->d_namep);
+
+    return left.get().fp_len < right.get().fp_len;
+
+#undef COMPARE
+}
+
+
+inline DBPath::DBPath() :
+    m_value()
+{
+    db_full_path_init(&m_value);
+}
+
+
+inline
+DBPath::~DBPath()
+{
+    db_free_full_path(&m_value);
+}
+
+
+inline
+DBPath::DBPath(const db_full_path &value) :
+    m_value()
+{
+    RT_CK_FULL_PATH(&value);
+    db_full_path_init(&m_value);
+    db_dup_full_path(&m_value, &value);
+}
+
+
+inline
+DBPath::DBPath(const DBPath &source) :
+    m_value()
+{
+    db_full_path_init(&m_value);
+    db_dup_full_path(&m_value, &source.m_value);
+}
+
+
+inline DBPath &
+DBPath::operator=(const DBPath &source)
+{
+    if (this != &source) {
+	db_free_full_path(&m_value);
+	db_dup_full_path(&m_value, &m_value);
+    }
+
+    return *this;
+}
+
+
+inline const db_full_path &
+DBPath::get() const
+{
+    return m_value;
+}
+
+
 class DBInternal
 {
 public:
@@ -653,16 +745,22 @@ GridManager::write(RecordWriter &writer) const
     if (m_next_grid_id - 1 > MAX_GRID_POINTS)
 	throw std::length_error("max grid points exceeded");
 
+    std::set<std::pair<std::size_t, Point> > sorted_grids;
+
     for (std::map<Point, std::vector<std::size_t>, PointComparator>::const_iterator
-	 it = m_grids.begin(); it != m_grids.end(); ++it)
-	for (std::vector<std::size_t>::const_iterator id_it = it->second.begin();
-	     id_it != it->second.end(); ++id_it) {
-	    RecordWriter::Record record(writer);
-	    record << "GRID" << *id_it << "";
-	    record << it->first[X] * INCHES_PER_MM;
-	    record << it->first[Y] * INCHES_PER_MM;
-	    record << it->first[Z] * INCHES_PER_MM;
-	}
+	 point_it = m_grids.begin(); point_it != m_grids.end(); ++point_it)
+	for (std::vector<std::size_t>::const_iterator id_it = point_it->second.begin();
+	     id_it != point_it->second.end(); ++id_it)
+	    sorted_grids.insert(std::make_pair(*id_it, point_it->first));
+
+    for (std::set<std::pair<std::size_t, Point> >::const_iterator it =
+	     sorted_grids.begin(); it != sorted_grids.end(); ++it) {
+	RecordWriter::Record record(writer);
+	record << "GRID" << it->first << "";
+	record << it->second[X] * INCHES_PER_MM;
+	record << it->second[Y] * INCHES_PER_MM;
+	record << it->second[Z] * INCHES_PER_MM;
+    }
 }
 
 
