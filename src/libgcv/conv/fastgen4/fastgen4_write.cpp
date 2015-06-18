@@ -2236,7 +2236,7 @@ convert_region_end(db_tree_state *tree_state, const db_full_path *path,
 
 HIDDEN std::set<const directory *>
 do_conversion(db_i &db, const std::string &path,
-	      const std::set<const directory *> &failed_regions =
+	      const std::set<const directory *> &facetize_regions =
 		  std::set<const directory *>())
 {
     RT_CK_DBI(&db);
@@ -2259,7 +2259,7 @@ do_conversion(db_i &db, const std::string &path,
 
     vmodel.ptr = nmg_mm();
     FastgenConversion data(path, db, tol);
-    data.m_facetize_regions = failed_regions;
+    data.m_facetize_regions = facetize_regions;
     db_walk_tree(&db, static_cast<int>(num_objects),
 		 const_cast<const char **>(object_names.ptr), 1, &initial_tree_state,
 		 convert_region_start, convert_region_end, convert_leaf, &data);
