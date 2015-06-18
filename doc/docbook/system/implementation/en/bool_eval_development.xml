@@ -258,6 +258,27 @@ ON_3dPoint trim_midpt_3d = surface->PointAt(start_uv.x, start_uv.y);
 	    </programlisting>
 	  </example>
 	</section>
+	<section>
+	  <title>Boundary Representation Objects</title>
+	  <para>
+	    <classname>ON_Brep</classname> is the top-level OpenNURBS class used to represent the two input objects and the evaluated result of the <function>ON_Boolean</function> function. The geometry is encoded as a collection of faces, which for our purposes should be topologically connected to enclose solid volumes.
+	  </para>
+	  <para>
+	    An object's faces are <classname>ON_BrepFace</classname> objects stored in the <classname>ON_Brep</classname> face array, <varname>m_F</varname>.
+	  </para>
+	  <para>
+	    Each <classname>ON_BrepFace</classname> is defined as the subset of an <classname>ON_Surface</classname> lying inside the face's <glossterm>outerloop</glossterm> (a.k.a. the <glossterm>face boundary</glossterm>) and outside all of its <glossterm>innerloops</glossterm> (a.k.a. <glossterm>trim loops</glossterm> or just <glossterm>trims</glossterm>). 
+	  </para>
+	  <para>
+	    The loops of an <classname>ON_BrepFace</classname> are listed in its loop array <varname>m_li</varname> as indexes into the associated <classname>ON_Brep</classname> object's <classname>ON_BrepLoop</classname> array, <varname>m_L</varname>. The first (and possibly only) loop listed in the face's loop index array is the outerloop, and all following loops are inner trim loops. The type of the loop is also recorded in the loop's <varname>m_type</varname> member.
+	  </para>
+	  <programlisting>
+brep->m_L[brep->m_F[0]->m_li[0]].m_type;      // ON_BrepLoop::outer
+brep->m_L[brep->m_F[0]->m_li[1]].m_type;      // ON_BrepLoop::inner
+...
+brep->m_L[*brep->m_F[0]->m_li.Last()].m_type; // ON_BrepLoop::inner
+	  </programlisting>
+	</section>
       </section>
       <section>
 	<title>Pitfalls</title>
