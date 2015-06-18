@@ -32,16 +32,6 @@
 #include <fcntl.h>
 #include <errno.h>
 
-/* 4127 conditional expression is constant
- * 4244 conversion from type 1 to type 2
- * 4305 truncation
- * 4312 type cast: conversion from type1 to type2 of greater size
- * 4018 signed/unsigned mismatch
- * 4996 deprecation warning on non-secure functions
- */
-/*#pragma warning( disable : 4127 4244 4312 4996 )*/
-/* #pragma warning( disable : 4244 4305 4018) */
-
 /*
  * Ensure that Project Settings / Project Options includes
  *	/Za		for ANSI C
@@ -99,70 +89,8 @@
 
 #define YY_NO_UNISTD_H		1
 #define YYTOKENTYPE		1
-#if 0
-/* it we're compiling c++ sources, there's a possibility that we'll be
- * including libc++ headers (e.g., iostream) where these underscore IO
- * function hacks become counterproductive.
- */
-#ifndef __cplusplus
+#define isascii __isascii /* TODO - fix the test for this, it isn't working yet */
 
-/*
- * functions declared in io.h
- */
-
-#define access _access
-#define chmod _chmod
-#define chsize _chsize
-#define close _close
-#define commit _commit
-#define creat _creat
-#define dup _dup
-#define dup2 _dup2
-/* #define filelength _filelength */
-#define isatty _isatty
-#define locking _locking
-/* #define mktemp _mktemp */
-#define open _open
-#define unlink _unlink
-/* why not just #define pipe _pipe? */
-#define pipe(_FD) (_pipe((_FD), 256, _O_TEXT))
-#define read _read
-#define setmode _setmode
-/* #define tell _tell */
-#define umask _umask
-#define write _write
-
-#endif /* __cplusplus */
-
-/*
- * other functions declared elsewhere (many in stdio.h)
- */
-
-#define nextafter _nextafter
-#cmakedefine nextafterf(x,y) ((y)>0?(x)+FLT_EPSILON:(x)-FLT_EPSILON)
-#cmakedefine nextafterl(x,y) ((y)>0?(x)+DBL_EPSILON:(x)-DBL_EPSILON)
-#cmakedefine isnan _isnan
-#cmakedefine isinf(x) (!_finite(x))
-#cmakedefine asinh(x) (log(x + sqrt(x * x + 1)))
-#define execvp _execvp
-#define fdopen _fdopen
-#define fileno _fileno
-#define getpid _getpid
-#cmakedefine hypot _hypot
-#define isascii __isascii
-#define pclose _pclose
-#define popen _popen
-#define putenv _putenv
-#define snprintf _snprintf
-#define snprintf _snprintf
-#define sopen _sopen
-#define strcasecmp _stricmp
-#define strncasecmp _strnicmp
-#define strdup _strdup
-#define sys_errlist _sys_errlist
-#define sys_nerr _sys_nerr
-#define getcwd _getcwd
-#endif
 /* set up stat */
 #if defined(SIZEOF_VOID_P) && SIZEOF_VOID_P == 8
 #   define stat _stati64
@@ -184,7 +112,6 @@
 #   define lseek _lseek
 #endif
 
-/*#cmakedefine fmax __max*/
 #define ioctl ioctlsocket
 
 #define SHARED_PTR_BOOST	1
@@ -207,143 +134,8 @@ typedef unsigned int gid_t;
 typedef unsigned int uid_t;
 typedef int mode_t;
 
-#if 0
-/*
- * for chmod()
- */
-
-#ifndef S_IFMT
-#  define S_IFMT _S_IFMT
-#endif
-#ifndef S_IFDIR
-#  define S_IFDIR _S_IFDIR
-#endif
-#ifndef S_IFCHR
-#  define S_IFCHR _S_IFCHR
-#endif
-#ifndef S_IFREG
-#  define S_IFREG _S_IFREG
-#endif
-
-#ifndef S_IREAD
-#  define S_IREAD _S_IREAD
-#endif
-#ifndef S_IWRITE
-#  define S_IWRITE _S_IWRITE
-#endif
-#ifndef S_IEXEC
-#  define S_IEXEC _S_IEXEC
-#endif
-
-#ifndef S_IRUSR
-#  define S_IRUSR      S_IREAD
-#endif
-#ifndef S_IWUSR
-#  define S_IWUSR      S_IWRITE
-#endif
-#ifndef S_IXUSR
-#  define S_IXUSR      S_IEXEC
-#endif
-#ifndef S_IRWXU
-#  define S_IRWXU      ((S_IRUSR)|(S_IWUSR)|(S_IXUSR))
-#endif
-
-#ifndef S_IRGRP
-#  define S_IRGRP      ((S_IRUSR)>>3)
-#endif
-#ifndef S_IWGRP
-#  define S_IWGRP      ((S_IWUSR)>>3)
-#endif
-#ifndef S_IXGRP
-#  define S_IXGRP      ((S_IXUSR)>>3)
-#endif
-#ifndef S_IROTH
-#  define S_IROTH      ((S_IRUSR)>>6)
-#endif
-#ifndef S_IWOTH
-#  define S_IWOTH      ((S_IWUSR)>>6)
-#endif
-#ifndef S_IXOTH
-#  define S_IXOTH      ((S_IXUSR)>>6)
-#endif
-
-#ifndef S_ISDIR
-#  define S_ISDIR(x)   ((x) & S_IFDIR)
-#endif
-#ifndef S_ISREG
-#  define S_ISREG(x)   ((x) & S_IFREG)
-#endif
-#ifndef S_ISLNK
-#  define S_ISLNK(x)   (0)
-#endif
-
-/*
- * for open()
- */
-
-#define O_APPEND _O_APPEND
-#define O_BINARY _O_BINARY
-#define O_CREAT _O_CREAT
-#define O_EXCL _O_EXCL
-#define O_RDONLY _O_RDONLY
-#define O_RDWR _O_RDWR
-#define O_TRUNC _O_TRUNC
-#define O_WRONLY _O_WRONLY
-
-/*
- * for access()
- */
-
-#define R_OK 4
-#define W_OK 2
-#define X_OK 1
-#define F_OK 0
-#endif
-/*
- * faking it
- */
-
-/*#define fork() -1*/
 #define getprogname() _pgmptr
-/*#cmakedefine rint(_X) (floor((_X) + 0.5))*/
 #define sleep(_SECONDS) (Sleep(1000 * (_SECONDS)))
-#if 0
-#ifndef __cplusplus
-/*  Microsoft specific inline specifier */
-#   define inline __inline
-#endif /* not __cplusplus */
-
-/*
- * defines for stdin/stdout/stderr file numbers
- */
-
-#ifndef STDIN_FILENO
-#  ifdef _STDIN_FILENO
-#    define STDIN_FILENO _STDIN_FILENO
-#  endif
-#endif
-#ifndef STDIN_FILENO
-#  define STDIN_FILENO _fileno(stdin)
-#endif
-
-#ifndef STDOUT_FILENO
-#  ifdef _STDOUT_FILENO
-#    define STDOUT_FILENO _STDOUT_FILENO
-#  endif
-#endif
-#ifndef STDOUT_FILENO
-#  define STDOUT_FILENO _fileno(stdout)
-#endif
-
-#ifndef STDERR_FILENO
-#  ifdef _STDERR_FILENO
-#    define STDERR_FILENO _STDERR_FILENO
-#  endif
-#endif
-#ifndef STDERR_FILENO
-#  define STDERR_FILENO _fileno(stderr)
-#endif
-#endif
 
 #endif /* if defined(_WIN32) */
 #endif /* ifndef IGNORE_CONFIG_H */
