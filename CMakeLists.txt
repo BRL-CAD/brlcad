@@ -1803,7 +1803,18 @@ BRLCAD_CHECK_LIBRARY(SOLARIS_LEXER l yyless)
 if("${HAVE_WS2_32_LIBRARY}" MATCHES "^${HAVE_WS2_32_LIBRARY}$")
   set(CMAKE_REQUIRED_LIBRARIES_BAK ${CMAKE_REQUIRED_LIBRARIES})
   set(CMAKE_REQUIRED_LIBRARIES "ws2_32.lib")
-  check_c_source_runs("#include <windows.h>\nint main() {char name[32]; (void)gethostname(name, 32); return 0;}" HAVE_WS2_32_LIBRARY)
+  check_c_source_runs("
+#include <winsock2.h>
+int main() {
+  char name[32];
+  WORD wVersionRequested = MAKEWORD(1, 1);
+  WSADATA wsaData;
+  WSAStartup(wVersionRequested, &wsaData);
+  (void)gethostname(name, 32);
+  WSACleanup();
+  return 0;
+}
+" HAVE_WS2_32_LIBRARY)
   if(HAVE_WS2_32_LIBRARY)
     set(WS2_32_LIBRARY "ws2_32.lib")
     set(WINSOCK_LIB "ws2_32.lib")
