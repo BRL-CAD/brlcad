@@ -2193,7 +2193,7 @@ convert_leaf(db_tree_state *tree_state, const db_full_path *path,
 	converted = convert_primitive(data, *path, *internal, subtracted);
 
     if (!converted) {
-	if (!facetize && subtracted)
+	if (!facetize && subtracted && region_dir)
 	    data.m_failed_regions.insert(region_dir);
 	else
 	    return nmg_booltree_leaf_tess(tree_state, path, internal, client_data);
