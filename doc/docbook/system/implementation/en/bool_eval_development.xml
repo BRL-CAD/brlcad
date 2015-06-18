@@ -232,6 +232,32 @@ ON_Curve* Duplicate()
 	  <para>
 	  </para>
 	</section>
+	<section>
+	  <title>Surfaces</title>
+	  <para>
+	    An <classname>ON_Surface</classname> has a similar interface to an <classname>ON_Curve</classname>, but adapted to support the surface's two domains, <parameter>u</parameter> and <parameter>v</parameter> (sometimes called <parameter>s</parameter> and <parameter>t</parameter>) which correspond with 0 and 1 (first example) or <parameter>x</parameter> and <parameter>y</parameter> (second example).
+	  </para>
+	  <example>
+	    <title>Projecting an arbitrary <inlineequation><mathphrase>(u, v)</mathphrase></inlineequation> point into 3d.</title>
+	    <programlisting>
+<![CDATA[
+ON_Interval udom = surface->Domain(0);
+ON_Interval vdom = surface->Domain(1);
+ON_3dPoint surf_midpt_3d = surface->PointAt(udom.ParameterAt(.5), vdom.ParameterAt(.5));
+]]>
+	    </programlisting>
+	  </example>
+	  <example>
+	    <title>Projecting a trim-curve point into 3d.</title>
+	    <programlisting>
+<![CDATA[
+ON_Interval tdom = trim_curve->Domain();
+ON_3dPoint trim_midpt_uv = trim_curve->PointAt(tdom.ParameterAt(.5));
+ON_3dPoint trim_midpt_3d = surface->PointAt(start_uv.x, start_uv.y);
+]]>
+	    </programlisting>
+	  </example>
+	</section>
       </section>
       <section>
 	<title>Pitfalls</title>
