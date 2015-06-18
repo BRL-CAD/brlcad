@@ -164,10 +164,56 @@ ON_Intersect(const ON_Surface *surfA,
 	      The start, end, and overall length of the domain are <emphasis>arbitrary</emphasis>, and <varname>m_t[0]</varname> need not be less than <varname>m_t[1]</varname>. If the numerically smaller or larger domain endpoint is needed, these should be accessed via the <function>Min</function> and <function>Max</function> member functions.
 	    </para>
 	  </warning>
-
           <para>
             The <function>ParameterAt(double x)</function> function translate a normalized parameter (from a domain starting at 0.0 and ending at 1.0) into a real parameter. Thus, the start of the domain is at <varname>domain.ParameterAt(0.0)</varname>, the midpoint is at <varname>domain.ParameterAt(.5)</varname>, etc.
           </para>
+	</section>
+	<section>
+	  <title>Parametric Curves</title>
+	  <para>
+	    The most frequenlty used geomety class is <classname>ON_Curve</classname>, a generic container for parametric curves. The curve is interrogated by using the <function>PointAt(double t)</function> method to evaluate points at arbitrary values inside the curve's domain, which is specified by the <classname>ON_Interval</classname> returned by the <function>Domain()</function> method. The start and end points of the curve have dedicated access methods, <function>PointAtStart()</function> and <function>PointAtEnd()</function>.
+	  </para>
+	  <warning>
+	    <para>
+	      <function>PointAt</function> takes a real parameter; normalized parameters must be converted. For example, the midpoint of the curve can be found as <varname>curve->PointAt(curve->Domain().ParameterAt(.5))</varname>. <function>PointAt</function> <emphasis role="bold">does not check</emphasis> if the <parameter>t</parameter> value you give it is inside the curve's domain, so you have to get this right!
+	    </para>
+	  </warning>
+	  <para>
+	    All the <function>PointAt</function> methods return an <classname>ON_3dPoint</classname>, though in the common case where <classname>ON_Curve</classname> objects are representing 2d trim curves, the z coordinate will be 0.0.
+	  </para>
+	  <para>
+	    The curve's domain is frequently reversed using the <function>Reverse()</function> method to facilitate stitching curves together. The function has a boolean <type>int</type> return value that must be checked.
+	  </para>
+	  <para>
+	    <programlisting>
+<![CDATA[
+if (curveA->PointAtStart().DistanceTo(curveB->PointAtStart()) < dist_tol) {
+    if (curveA->Reverse()) {
+        curveA = link_curves(curveA, curveB);
+    }
+}
+]]>
+	    </programlisting>
+	  </para>
+	  <warning>
+	    <para>
+	      Comparing curve endpoints, or even just bounding boxes (retrived via the <function>BoundingBox()</function> method), is often sufficient in the context of different intersection and stitching procedures. However, it's important to keep in mind that in the general case, the shape of the curve between its endpoints or within its bounding box could be anything. For example, two curves with matching endpoints could both be linear, creating a degenerate loop. A curve whose endpoints are equal within the OpenNURBS <constant>ON_ZERO_TOLERANCE</constant> (testable using the <function>IsClosed()</function> method), may be self-intersecting, or degenerate to a point.
+	    </para>
+	  </warning>
+	  <para>
+	    A copy of the curve can be easily made using <function>Duplicate()</function>, which simply wraps a standard copy procedure:
+	  </para>
+	  <programlisting>
+ON_Curve* Duplicate()
+{
+    ON_Curve *p = new ON_Curve;
+    if (p) *p = *this;
+    return p;
+}
+	  </programlisting>
+	  <para>
+	    This method is common to all OpenNURBS geometry classes, but curves are by far the most frequently duplicated objects. However, if curves are simply being retained from a working set of container objects, the curve pointers are freqently stolen rather than copied, with curve members set to <constant>NULL</constant> so that the curves aren't destructed with the containers.
+	  </para>
 	</section>
       </section>
       <section>
