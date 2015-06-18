@@ -170,8 +170,8 @@ DBPath::Comparator::operator()(const DBPath &left, const DBPath &right) const
 {
 #define COMPARE(a, b) \
     do { \
-	const int v = bu_strcmp((a), (b)); \
-	if (v != 0) return v < 0; \
+	const int r = bu_strcmp((a), (b)); \
+	if (r) return r < 0; \
     } while (false)
 
     const std::size_t len = std::min(left.get().fp_len, right.get().fp_len);
@@ -2073,14 +2073,22 @@ FastgenConversion::~FastgenConversion()
 
     std::map<const directory *, std::vector<FastgenWriter::SectionID> > ids;
 
+    typedef std::map<std::string, std::map<const directory *, RegionManager *>::const_iterator>
+    SortedRegionMap;
+    SortedRegionMap sorted_regions;
+
     for (std::map<const directory *, RegionManager *>::const_iterator it =
 	     m_regions.begin(); it != m_regions.end(); ++it)
-	ids[it->first] = it->second->write(m_writer);
+	sorted_regions[it->first->d_namep] = it;
 
-    for (std::map<const directory *, RegionManager *>::iterator it =
-	     m_regions.begin(); it != m_regions.end(); ++it) {
-	it->second->write_walls(m_writer, ids);
-	delete it->second;
+    for (SortedRegionMap::const_iterator it = sorted_regions.begin();
+	 it != sorted_regions.end(); ++it)
+	ids[it->second->first] = it->second->second->write(m_writer);
+
+    for (SortedRegionMap::iterator it = sorted_regions.begin();
+	 it != sorted_regions.end(); ++it) {
+	it->second->second->write_walls(m_writer, ids);
+	delete it->second->second;
     }
 }
 
