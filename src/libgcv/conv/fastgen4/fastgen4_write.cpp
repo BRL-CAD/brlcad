@@ -1180,7 +1180,7 @@ get_parent_path(const db_full_path &path)
 	throw std::invalid_argument("toplevel");
 
     db_full_path temp = path;
-    --temp.fp_len;
+    DB_FULL_PATH_POP(&temp);
     return temp;
 }
 
@@ -1192,20 +1192,9 @@ get_region_dir(const db_i &db, const db_full_path &path)
     RT_CK_DBI(&db);
     RT_CK_FULL_PATH(&path);
 
-    for (std::size_t i = 0; i < path.fp_len; ++i) {
-	DBInternal comb_db_internal(db, *DB_FULL_PATH_GET(&path, i));
-
-	if ((i == path.fp_len - 1)
-	    && comb_db_internal.get().idb_minor_type != ID_COMBINATION)
-	    continue;
-
-	const rt_comb_internal &comb_internal = *static_cast<rt_comb_internal *>
-						(comb_db_internal.get().idb_ptr);
-	RT_CK_COMB(&comb_internal);
-
-	if (comb_internal.region_flag)
+    for (std::size_t i = 0; i < path.fp_len; ++i)
+	if (DB_FULL_PATH_GET(&path, i)->d_flags & RT_DIR_REGION)
 	    return *DB_FULL_PATH_GET(&path, i);
-    }
 
     throw std::invalid_argument("no parent region");
 }
