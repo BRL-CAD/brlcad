@@ -621,14 +621,12 @@ GridManager::get_unique_grids(const std::vector<Point> &points)
 	temp.at(0) = m_next_grid_id;
 	std::pair<std::map<Point, std::vector<std::size_t>, PointComparator>::iterator, bool>
 	found = m_grids.insert(std::make_pair(points.at(i), temp));
+	results.at(i) = found.first->second.at(0);
 
 	if (found.second) {
 	    ++m_next_grid_id;
-	    results.at(i) = found.first->second.at(0);
 	    continue;
 	}
-
-	results.at(i) = found.first->second.at(0);
 
 	for (std::size_t j = 0, n = 0; j < i; ++j)
 	    if (results.at(j) == results.at(i)) {
@@ -818,7 +816,7 @@ Section::write_line(const fastf_t *point_a, const fastf_t *point_b,
     record << "CLINE" << m_next_element_id << m_material_id << grids.at(
 	       0) << grids.at(1) << "" << "";
 
-    if (m_volume_mode)
+    if (m_volume_mode && NEAR_ZERO(thickness, RT_LEN_TOL))
 	record << thickness;
     else
 	record.non_zero(thickness);
