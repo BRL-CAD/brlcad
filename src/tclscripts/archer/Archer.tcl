@@ -8885,7 +8885,7 @@ proc title_node_handler {node} {
 
     $itk_component(ged) refresh_on
     $itk_component(ged) refresh
-} 
+}
 
 
 ::itcl::body Archer::applyPreferenceSettings {} {
