@@ -1672,7 +1672,8 @@ struct FastgenConversion {
 
     const db_i &m_db;
     const bn_tol &m_tol;
-    std::set<const directory *> m_recorded_cutouts;
+    std::set<const directory *> m_recorded_cutouts, m_failed_regions,
+	m_facetize_regions;
     Section m_toplevels;
 
 
@@ -1929,6 +1930,8 @@ FastgenConversion::FastgenConversion(const std::string &path, const db_i &db,
     m_db(db),
     m_tol(tol),
     m_recorded_cutouts(),
+    m_failed_regions(),
+    m_facetize_regions(),
     m_toplevels(true),
     m_regions(),
     m_writer(path)
@@ -2014,7 +2017,7 @@ get_section(FastgenConversion &data, const db_full_path &path)
 
 HIDDEN bool
 convert_primitive(FastgenConversion &data, const db_full_path &path,
-		  const rt_db_internal &internal)
+		  const rt_db_internal &internal, bool subtracted)
 {
     RT_CK_FULL_PATH(&path);
     RT_CK_DB_INTERNAL(&internal);
@@ -2042,13 +2045,13 @@ convert_primitive(FastgenConversion &data, const db_full_path &path,
 	    if (internal.idb_type != ID_SPH && !ell_is_sphere(ell))
 		return false;
 
-	    if (path.fp_len < 2
-		|| !find_csphere_cutout(section, data.m_db, get_parent_path(path),
-					data.m_recorded_cutouts)) {
-		section.write_name(DB_FULL_PATH_CUR_DIR(&path)->d_namep);
-		section.write_sphere(ell.v, MAGNITUDE(ell.a));
-	    }
+	    if (path.fp_len > 1
+		&& find_csphere_cutout(section, data.m_db, get_parent_path(path),
+				       data.m_recorded_cutouts))
+		return true;
 
+	    section.write_name(DB_FULL_PATH_CUR_DIR(&path)->d_namep);
+	    section.write_sphere(ell.v, MAGNITUDE(ell.a));
 	    break;
 	}
 
@@ -2060,15 +2063,15 @@ convert_primitive(FastgenConversion &data, const db_full_path &path,
 	    if (internal.idb_type != ID_REC && !tgc_is_ccone2(tgc))
 		return false;
 
-	    if (path.fp_len < 2
-		|| !find_ccone2_cutout(section, data.m_db, get_parent_path(path),
-				       data.m_recorded_cutouts)) {
-		point_t v2;
-		VADD2(v2, tgc.v, tgc.h);
-		section.write_name(DB_FULL_PATH_CUR_DIR(&path)->d_namep);
-		section.write_cone(tgc.v, v2, MAGNITUDE(tgc.a), MAGNITUDE(tgc.c), 0.0, 0.0);
-	    }
+	    if (path.fp_len > 1
+		&& find_ccone2_cutout(section, data.m_db, get_parent_path(path),
+				      data.m_recorded_cutouts))
+		return true;
 
+	    point_t v2;
+	    VADD2(v2, tgc.v, tgc.h);
+	    section.write_name(DB_FULL_PATH_CUR_DIR(&path)->d_namep);
+	    section.write_cone(tgc.v, v2, MAGNITUDE(tgc.a), MAGNITUDE(tgc.c), 0.0, 0.0);
 	    break;
 	}
 
@@ -2099,17 +2102,14 @@ convert_primitive(FastgenConversion &data, const db_full_path &path,
 					   (internal.idb_ptr);
 	    RT_HALF_CK_MAGIC(&half);
 
-	    if (!find_compsplt(data, path, half))
-		return false;
-	    else
-		break;
+	    return find_compsplt(data, path, half);
 	}
 
 	default:
 	    return false;
     }
 
-    return true;
+    return !subtracted;
 }
 
 
@@ -2175,6 +2175,8 @@ convert_leaf(db_tree_state *tree_state, const db_full_path *path,
     RT_CK_DB_INTERNAL(internal);
 
     FastgenConversion &data = *static_cast<FastgenConversion *>(client_data);
+    const bool subtracted = tree_state->ts_sofar & (TS_SOFAR_MINUS |
+			    TS_SOFAR_INTER);
     const directory *region_dir = NULL;
     bool converted = false;
 
@@ -2182,14 +2184,20 @@ convert_leaf(db_tree_state *tree_state, const db_full_path *path,
 	region_dir = &get_region_dir(data.m_db, *path);
     } catch (const std::invalid_argument &) {}
 
+    const bool facetize = region_dir && data.m_facetize_regions.count(region_dir);
+
     if (region_dir
 	&& data.get_region(*region_dir).member_ignored(get_parent_dir(*path)))
 	converted = true;
-    else
-	converted = convert_primitive(data, *path, *internal);
+    else if (!facetize)
+	converted = convert_primitive(data, *path, *internal, subtracted);
 
-    if (!converted)
-	return nmg_booltree_leaf_tess(tree_state, path, internal, client_data);
+    if (!converted) {
+	if (!facetize && subtracted)
+	    data.m_failed_regions.insert(region_dir);
+	else
+	    return nmg_booltree_leaf_tess(tree_state, path, internal, client_data);
+    }
 
     tree *result;
     RT_GET_TREE(result, tree_state->ts_resp);
@@ -2226,15 +2234,15 @@ convert_region_end(db_tree_state *tree_state, const db_full_path *path,
 }
 
 
-HIDDEN int
-gcv_fastgen4_write(const char *path, struct db_i *dbip,
-		   const struct gcv_opts *UNUSED(options))
+HIDDEN std::set<const directory *>
+do_conversion(db_i &db, const std::string &path,
+	      const std::set<const directory *> &failed_regions =
+		  std::set<const directory *>())
 {
-    RT_CK_DBI(dbip);
+    RT_CK_DBI(&db);
 
     const rt_tess_tol ttol = {RT_TESS_TOL_MAGIC, 0.0, 1.0e-2, 0.0};
     const bn_tol tol = {BN_TOL_MAGIC, BN_TOL_DIST, BN_TOL_DIST * BN_TOL_DIST, 1.0e-6, 1.0 - 1.0e-6};
-    FastgenConversion data(path, *dbip, tol);
 
     AutoPtr<model, nmg_km> vmodel;
     db_tree_state initial_tree_state = rt_initial_tree_state;
@@ -2242,17 +2250,35 @@ gcv_fastgen4_write(const char *path, struct db_i *dbip,
     initial_tree_state.ts_ttol = &ttol;
     initial_tree_state.ts_m = &vmodel.ptr;
 
-    db_update_nref(dbip, &rt_uniresource);
+    db_update_nref(&db, &rt_uniresource);
     AutoPtr<directory *> toplevel_dirs;
-    const std::size_t num_objects = db_ls(dbip, DB_LS_TOPS, NULL,
+    const std::size_t num_objects = db_ls(&db, DB_LS_TOPS, NULL,
 					  &toplevel_dirs.ptr);
     AutoPtr<char *> object_names(db_dpv_to_argv(toplevel_dirs.ptr));
     toplevel_dirs.free();
 
     vmodel.ptr = nmg_mm();
-    db_walk_tree(dbip, static_cast<int>(num_objects),
+    FastgenConversion data(path, db, tol);
+    data.m_facetize_regions = failed_regions;
+    db_walk_tree(&db, static_cast<int>(num_objects),
 		 const_cast<const char **>(object_names.ptr), 1, &initial_tree_state,
 		 convert_region_start, convert_region_end, convert_leaf, &data);
+
+    return data.m_failed_regions;
+}
+
+
+HIDDEN int
+gcv_fastgen4_write(const char *path, struct db_i *dbip,
+		   const gcv_opts *UNUSED(options))
+{
+    RT_CK_DBI(dbip);
+
+    std::set<const directory *> failed_regions = do_conversion(*dbip, path);
+
+    if (!failed_regions.empty())
+	if (!do_conversion(*dbip, path, failed_regions).empty())
+	    throw std::runtime_error("failed to convert all regions");
 
     return 1;
 }
