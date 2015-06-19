@@ -1978,6 +1978,12 @@ if(HAVE_EMMINTRIN_H)
   endif(HAVE_EMMINTRIN)
 endif(HAVE_EMMINTRIN_H)
 
+# TODO - until we finish replacing all of the flex/bison code
+# with perplex/re2c/lemon, need the following
+if(HAVE_WINDOWS_H)
+  CONFIG_H_APPEND(BRLCAD "#define YY_NO_UNISTD_H 1\n")
+  CONFIG_H_APPEND(BRLCAD "#define YYTOKENTYPE 1\n")
+endif(HAVE_WINDOWS_H)
 
 # *******************************************************************
 if(NOT EXISTS ${CMAKE_BINARY_DIR}/CMakeCache.txt.prev)
