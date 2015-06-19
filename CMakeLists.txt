@@ -2456,7 +2456,7 @@ if(NOT HAVE_RINT)
   CHECK_SYMBOL_EXISTS(rint "math.h" HAVE_RINT_SYMBOL)
   if(NOT HAVE_RINT_SYMBOL)
     # TODO - should check for floor here?
-    CONFIG_H_APPEND(BRLCAD "#define rint(x) (floor((_X) + 0.5))\n")
+    CONFIG_H_APPEND(BRLCAD "#define rint(_X) (floor((_X) + 0.5))\n")
   endif(NOT HAVE_RINT_SYMBOL)
 endif(NOT HAVE_RINT)
 
