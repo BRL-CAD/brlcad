@@ -1945,6 +1945,9 @@ BRLCAD_INCLUDE_FILE(windows.h HAVE_WINDOWS_H)
 if(HAVE_WINDOWS_H)
   CONFIG_H_APPEND(BRLCAD "#define HAVE_WINSOCK2_H 1\n")
   CONFIG_H_APPEND(BRLCAD "#define HAVE_WINSOCK_H 1\n")
+  # TODO - For reasons that aren't currently clear, on Windows
+  # we need to use bu_log instead of fb_log
+  CONFIG_H_APPEND(BRLCAD "#define fb_log bu_log\n")
 endif(HAVE_WINDOWS_H)
 
 
