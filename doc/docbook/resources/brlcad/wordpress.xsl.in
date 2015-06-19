@@ -2,25 +2,48 @@
 <xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="1.0">
 
   <!-- Include other stylesheets -->
-  <xsl:import href="file:///@DOCBOOK_BINARY_DIR@/doc/docbook/resources/other/standard/xsl/xhtml-1_1/docbook.xsl"/>
+  <xsl:import href="../other/standard/xsl/xhtml/docbook.xsl"/>
 
    <xsl:template match="*" mode="process.root">
     <xsl:variable name="doc" select="self::*"/>
     <xsl:processing-instruction name="php">
-      require('wp-blog-header.php');
+      require('../../wp-blog-header.php'); 
       class MyPost { var $post_title = "<xsl:apply-templates select="$doc" mode="object.title.markup.textonly"/>"; }
       $wp_query->is_home = false;
       $wp_query->is_single = true;
       $wp_query->queried_object = new MyPost();
       get_header();
     </xsl:processing-instruction>
-    <div id="content" class="narrowcolumn" role="main">
-      <xsl:apply-templates select="."/>
-    </div>
+  <div id="content-side">
+  <div id="primary" class="content-area">
+    <main id="main" class="site-main" role="main">
+      <div class="row">
     <xsl:processing-instruction name="php">
-      get_sidebar();
-      get_footer();
+      if(is_user_logged_in()){
+        edit();
+      }
+      else
+      {
+        without_login_edit();
+      }
+    </xsl:processing-instruction>
 
+      <xsl:apply-templates select="."/>
+      </div>    
+    </main>
+      </div>
+  </div>
+<div id='content-side2'><div class='row'>
+  <div id='secondary' class='widget-area' role='complementary'>
+    <xsl:processing-instruction name="php">
+    include('../../search_document.php');
+    include('../../articles/en/main_menu.html');
+    </xsl:processing-instruction>
+  </div>
+</div>
+</div>
+    <xsl:processing-instruction name="php">
+      get_footer(); 
     </xsl:processing-instruction>
   </xsl:template>
 
