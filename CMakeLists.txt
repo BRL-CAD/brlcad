@@ -2331,11 +2331,44 @@ if(NOT HAVE_FORK)
   CONFIG_H_APPEND(BRLCAD "#define fork() -1\n")
 endif(NOT HAVE_FORK)
 
-# sleep needs defining on Windows...  TODO - should we test for Sleep vs. sleep?
+# sleep needs defining on Windows
 BRLCAD_FUNCTION_EXISTS(sleep HAVE_SLEEP)
 if(NOT HAVE_SLEEP)
   CONFIG_H_APPEND(BRLCAD "#define sleep(_SECONDS) (Sleep(1000 * (_SECONDS)))\n")
 endif(NOT HAVE_SLEEP)
+
+# _stati64/_stat
+BRLCAD_FUNCTION_EXISTS(_stati64 HAVE__STATI64)
+if(HAVE__STATI64)
+  CONFIG_H_APPEND(BRLCAD "#define stat _stati64\n")
+else(HAVE__STATI64)
+  BRLCAD_FUNCTION_EXISTS(_stat HAVE__STAT)
+  if(HAVE__STAT)
+    CONFIG_H_APPEND(BRLCAD "#define stat _stat\n")
+  endif(HAVE__STAT)
+endif(HAVE__STATI64)
+
+# _fstati64/_fstat
+BRLCAD_FUNCTION_EXISTS(_fstati64 HAVE__FSTATI64)
+if(HAVE__FSTATI64)
+  CONFIG_H_APPEND(BRLCAD "#define fstat _fstati64\n")
+else(HAVE__FSTATI64)
+  BRLCAD_FUNCTION_EXISTS(_fstat HAVE__FSTAT)
+  if(HAVE__FSTAT)
+    CONFIG_H_APPEND(BRLCAD "#define fstat _fstat\n")
+  endif(HAVE__FSTAT)
+endif(HAVE__FSTATI64)
+
+# _lseeki64/_lseek
+BRLCAD_FUNCTION_EXISTS(_lseeki64 HAVE__LSEEKI64)
+if(HAVE__LSEEKI64)
+  CONFIG_H_APPEND(BRLCAD "#define lseek _lseeki64\n")
+else(HAVE__LSEEKI64)
+  BRLCAD_FUNCTION_EXISTS(_lseek HAVE__LSEEK)
+  if(HAVE__LSEEK)
+    CONFIG_H_APPEND(BRLCAD "#define lseek _lseek\n")
+  endif(HAVE__LSEEK)
+endif(HAVE__LSEEKI64)
 
 
 
