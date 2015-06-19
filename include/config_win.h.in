@@ -54,14 +54,7 @@
  * declare results of configure tests
  */
 
-#define HAVE_DECL_FILENO	1
-
-#define HAVE_FCNTL_H		1
-#define HAVE_FLOAT_H		1
 #define HAVE_GETFULLPATHNAME	1
-#define HAVE_GETHOSTNAME	1
-#define HAVE_GETPROGNAME        1
-#define HAVE_GL_GL_H		1
 #define HAVE_OFF_T		1
 #define HAVE_PROCESS_H  	1
 #define HAVE_REGEX_H		1
@@ -69,8 +62,6 @@
 #define HAVE_STRDUP_DECL	1
 #define HAVE_TIME		1
 #define HAVE_VFORK		1
-
-#define HAVE_X11_TYPES 1
 
 #define YY_NO_UNISTD_H		1
 #define YYTOKENTYPE		1
@@ -119,7 +110,7 @@ typedef unsigned int gid_t;
 typedef unsigned int uid_t;
 typedef int mode_t;
 
-#define getprogname() _pgmptr
+/*#define getprogname() _pgmptr*/
 #define sleep(_SECONDS) (Sleep(1000 * (_SECONDS)))
 
 #endif /* if defined(_WIN32) */
