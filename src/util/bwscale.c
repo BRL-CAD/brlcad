@@ -97,6 +97,192 @@ fill_buffer(int y)
 
 
 /*
+ * Nearest Neighbor Interpolate a file of pixels.
+ *
+ * This version preserves the outside pixels and interps inside only.
+ */
+void
+ninterp(FILE *ofp, int ix, int iy, int ox, int oy)
+{
+    int i, j;
+    double x, y;
+    double xstep, ystep;
+    unsigned char *op, *lp;
+    size_t ret;
+
+    xstep = (double)(ix - 1) / (double)ox - 1.0e-6;
+    ystep = (double)(iy - 1) / (double)oy - 1.0e-6;
+
+    /* For each output pixel */
+    for (j = 0; j < oy; j++) {
+	y = j * ystep;
+	/*
+	 * Make sure we have this row (and the one after it)
+	 * in the buffer
+	 */
+	bufy = (int)y - buf_start;
+	if (bufy < 0 || bufy >= buflines-1) {
+	    fill_buffer((int)y);
+	    bufy = (int)y - buf_start;
+	}
+
+	op = outbuf;
+
+	for (i = 0; i < ox; i++) {
+	    x = i * xstep;
+	    lp = &buffer[bufy*scanlen+(int)x];
+	    *op++ = lp[0];
+	}
+
+	ret = fwrite(outbuf, 1, ox, ofp);
+	if (ret != (size_t)ox)
+	    perror("fwrite");
+    }
+}
+
+/*
+ * Bilinear Interpolate a file of pixels.
+ *
+ * This version preserves the outside pixels and interps inside only.
+ */
+void
+binterp(FILE *ofp, int ix, int iy, int ox, int oy)
+{
+    int i, j;
+    double x, y, dx, dy, mid1, mid2;
+    double xstep, ystep;
+    unsigned char *op, *up, *lp;
+
+    xstep = (double)(ix - 1) / (double)ox - 1.0e-6;
+    ystep = (double)(iy - 1) / (double)oy - 1.0e-6;
+
+    /* For each output pixel */
+    for (j = 0; j < oy; j++) {
+	size_t ret;
+	y = j * ystep;
+	/*
+	 * Make sure we have this row (and the one after it)
+	 * in the buffer
+	 */
+	bufy = (int)y - buf_start;
+	if (bufy < 0 || bufy >= buflines-1) {
+	    fill_buffer((int)y);
+	    bufy = (int)y - buf_start;
+	}
+
+	op = outbuf;
+
+	for (i = 0; i < ox; i++) {
+	    x = i * xstep;
+	    dx = x - (int)x;
+	    dy = y - (int)y;
+
+	    /* Note: (1-a)*foo + a*bar = foo + a*(bar-foo) */
+
+	    lp = &buffer[bufy*scanlen+(int)x];
+	    up = &buffer[(bufy+1)*scanlen+(int)x];
+
+	    mid1 = lp[0] + dx * ((double)lp[1] - (double)lp[0]);
+	    mid2 = up[0] + dx * ((double)up[1] - (double)up[0]);
+
+	    *op++ = mid1 + dy * (mid2 - mid1);
+	}
+
+	ret = fwrite(outbuf, 1, ox, ofp);
+	if (ret != (size_t)ox)
+	    perror("fwrite");
+    }
+}
+
+/*
+ * Scale a file of pixels to a different size.
+ *
+ * To scale down we make a square pixel assumption.
+ * We will preserve the amount of light energy per unit area.
+ * To scale up we use bilinear interpolation.
+ */
+int
+scale(FILE *ofp, int ix, int iy, int ox, int oy)
+{
+    int i, j, k, l;
+    double pxlen, pylen;			/* # old pixels per new pixel */
+    double xstart, xend, ystart, yend;	/* edges of new pixel in old coordinates */
+    double xdist, ydist;			/* length of new pixel sides in old coord */
+    double sum;
+    unsigned char *op;
+
+    pxlen = (double)ix / (double)ox;
+    pylen = (double)iy / (double)oy;
+    if ((pxlen < 1.0 && pylen > 1.0) || (pxlen > 1.0 && pylen < 1.0)) {
+	fprintf(stderr, "bwscale: can't stretch one way and compress another!\n");
+	return -1;
+    }
+    if (pxlen < 1.0 || pylen < 1.0) {
+	/* scale up */
+	if (rflag) {
+	    /* nearest neighbor interpolate */
+	    ninterp(ofp, ix, iy, ox, oy);
+	} else {
+	    /* bilinear interpolate */
+	    binterp(ofp, ix, iy, ox, oy);
+	}
+	return 0;
+    }
+
+    /* for each output pixel */
+    for (j = 0; j < oy; j++) {
+	size_t ret;
+
+	ystart = j * pylen;
+	yend = ystart + pylen;
+	op = outbuf;
+	for (i = 0; i < ox; i++) {
+	    xstart = i * pxlen;
+	    xend = xstart + pxlen;
+	    sum = 0.0;
+	    /*
+	     * For each pixel of the original falling
+	     * inside this new pixel.
+	     */
+	    for (l = FLOOR(ystart); l < CEILING(yend); l++) {
+
+		/* Make sure we have this row in the buffer */
+		bufy = l - buf_start;
+		if (bufy < 0 || bufy >= buflines) {
+		    fill_buffer(l);
+		    bufy = l - buf_start;
+		}
+
+		/* Compute height of this row */
+		if ((double)l < ystart)
+		    ydist = CEILING(ystart) - ystart;
+		else
+		    ydist = MIN(1.0, yend - (double)l);
+
+		for (k = FLOOR(xstart); k < CEILING(xend); k++) {
+		    /* Compute width of column */
+		    if ((double)k < xstart)
+			xdist = CEILING(xstart) - xstart;
+		    else
+			xdist = MIN(1.0, xend - (double)k);
+
+		    /* Add this pixels contribution */
+		    /* sum += old[l][k] * xdist * ydist; */
+		    sum += buffer[bufy * scanlen + k] * xdist * ydist;
+		}
+	    }
+	    *op++ = (int)(sum / (pxlen * pylen));
+	    if (op > (outbuf+scanlen))
+		bu_bomb("unexpected buffer overrun");
+	}
+	ret = fwrite(outbuf, 1, ox, ofp);
+	if (ret != (size_t)ox)
+	    perror("fwrite");
+    }
+    return 1;
+}
+
+/*
  * Determine max number of lines to buffer.
  * and malloc space for it.
  * XXX - CHECK FILE SIZE
@@ -197,195 +383,6 @@ get_args(int argc, char **argv)
 
     return 1;		/* OK */
 }
-
-/*
- * Bilinear Interpolate a file of pixels.
- *
- * This version preserves the outside pixels and interps inside only.
- */
-void
-binterp(FILE *ofp, int ix, int iy, int ox, int oy)
-{
-    int i, j;
-    double x, y, dx, dy, mid1, mid2;
-    double xstep, ystep;
-    unsigned char *op, *up, *lp;
-
-    xstep = (double)(ix - 1) / (double)ox - 1.0e-6;
-    ystep = (double)(iy - 1) / (double)oy - 1.0e-6;
-
-    /* For each output pixel */
-    for (j = 0; j < oy; j++) {
-	size_t ret;
-	y = j * ystep;
-	/*
-	 * Make sure we have this row (and the one after it)
-	 * in the buffer
-	 */
-	bufy = (int)y - buf_start;
-	if (bufy < 0 || bufy >= buflines-1) {
-	    fill_buffer((int)y);
-	    bufy = (int)y - buf_start;
-	}
-
-	op = outbuf;
-
-	for (i = 0; i < ox; i++) {
-	    x = i * xstep;
-	    dx = x - (int)x;
-	    dy = y - (int)y;
-
-	    /* Note: (1-a)*foo + a*bar = foo + a*(bar-foo) */
-
-	    lp = &buffer[bufy*scanlen+(int)x];
-	    up = &buffer[(bufy+1)*scanlen+(int)x];
-
-	    mid1 = lp[0] + dx * ((double)lp[1] - (double)lp[0]);
-	    mid2 = up[0] + dx * ((double)up[1] - (double)up[0]);
-
-	    *op++ = mid1 + dy * (mid2 - mid1);
-	}
-
-	ret = fwrite(outbuf, 1, ox, ofp);
-	if (ret != (size_t)ox)
-	    perror("fwrite");
-    }
-}
-
-
-/*
- * Nearest Neighbor Interpolate a file of pixels.
- *
- * This version preserves the outside pixels and interps inside only.
- */
-void
-ninterp(FILE *ofp, int ix, int iy, int ox, int oy)
-{
-    int i, j;
-    double x, y;
-    double xstep, ystep;
-    unsigned char *op, *lp;
-    size_t ret;
-
-    xstep = (double)(ix - 1) / (double)ox - 1.0e-6;
-    ystep = (double)(iy - 1) / (double)oy - 1.0e-6;
-
-    /* For each output pixel */
-    for (j = 0; j < oy; j++) {
-	y = j * ystep;
-	/*
-	 * Make sure we have this row (and the one after it)
-	 * in the buffer
-	 */
-	bufy = (int)y - buf_start;
-	if (bufy < 0 || bufy >= buflines-1) {
-	    fill_buffer((int)y);
-	    bufy = (int)y - buf_start;
-	}
-
-	op = outbuf;
-
-	for (i = 0; i < ox; i++) {
-	    x = i * xstep;
-	    lp = &buffer[bufy*scanlen+(int)x];
-	    *op++ = lp[0];
-	}
-
-	ret = fwrite(outbuf, 1, ox, ofp);
-	if (ret != (size_t)ox)
-	    perror("fwrite");
-    }
-}
-
-
-/*
- * Scale a file of pixels to a different size.
- *
- * To scale down we make a square pixel assumption.
- * We will preserve the amount of light energy per unit area.
- * To scale up we use bilinear interpolation.
- */
-int
-scale(FILE *ofp, int ix, int iy, int ox, int oy)
-{
-    int i, j, k, l;
-    double pxlen, pylen;			/* # old pixels per new pixel */
-    double xstart, xend, ystart, yend;	/* edges of new pixel in old coordinates */
-    double xdist, ydist;			/* length of new pixel sides in old coord */
-    double sum;
-    unsigned char *op;
-
-    pxlen = (double)ix / (double)ox;
-    pylen = (double)iy / (double)oy;
-    if ((pxlen < 1.0 && pylen > 1.0) || (pxlen > 1.0 && pylen < 1.0)) {
-	fprintf(stderr, "bwscale: can't stretch one way and compress another!\n");
-	return -1;
-    }
-    if (pxlen < 1.0 || pylen < 1.0) {
-	/* scale up */
-	if (rflag) {
-	    /* nearest neighbor interpolate */
-	    ninterp(ofp, ix, iy, ox, oy);
-	} else {
-	    /* bilinear interpolate */
-	    binterp(ofp, ix, iy, ox, oy);
-	}
-	return 0;
-    }
-
-    /* for each output pixel */
-    for (j = 0; j < oy; j++) {
-	size_t ret;
-
-	ystart = j * pylen;
-	yend = ystart + pylen;
-	op = outbuf;
-	for (i = 0; i < ox; i++) {
-	    xstart = i * pxlen;
-	    xend = xstart + pxlen;
-	    sum = 0.0;
-	    /*
-	     * For each pixel of the original falling
-	     * inside this new pixel.
-	     */
-	    for (l = FLOOR(ystart); l < CEILING(yend); l++) {
-
-		/* Make sure we have this row in the buffer */
-		bufy = l - buf_start;
-		if (bufy < 0 || bufy >= buflines) {
-		    fill_buffer(l);
-		    bufy = l - buf_start;
-		}
-
-		/* Compute height of this row */
-		if ((double)l < ystart)
-		    ydist = CEILING(ystart) - ystart;
-		else
-		    ydist = MIN(1.0, yend - (double)l);
-
-		for (k = FLOOR(xstart); k < CEILING(xend); k++) {
-		    /* Compute width of column */
-		    if ((double)k < xstart)
-			xdist = CEILING(xstart) - xstart;
-		    else
-			xdist = MIN(1.0, xend - (double)k);
-
-		    /* Add this pixels contribution */
-		    /* sum += old[l][k] * xdist * ydist; */
-		    sum += buffer[bufy * scanlen + k] * xdist * ydist;
-		}
-	    }
-	    *op++ = (int)(sum / (pxlen * pylen));
-	    if (op > (outbuf+scanlen))
-		bu_bomb("unexpected buffer overrun");
-	}
-	ret = fwrite(outbuf, 1, ox, ofp);
-	if (ret != (size_t)ox)
-	    perror("fwrite");
-    }
-    return 1;
-}
-
 
 int
 main(int argc, char **argv)

@@ -88,6 +88,7 @@ init_buffer(int len)
 	buflines = scanlen;
 
     buffer = (unsigned char *)bu_malloc(buflines * len, "buffer");
+fprintf(stderr,"in bwcrop.c , int_buffer: (int)buflines, len %d %d\n",(int)buflines,len);
 }
 
 
@@ -100,6 +101,7 @@ fill_buffer(int y)
 {
     size_t ret;
 
+fprintf(stderr,"bwcrop: reached fill_buffer\n");
     buf_start = y - buflines/2;
     if (buf_start < 0) buf_start = 0;
 
@@ -265,6 +267,7 @@ main(int argc, char **argv)
 
 	    /* Make sure we are in the buffer */
 	    yindex = round(y) - buf_start;
+fprintf(stderr,"yindex,round(y),buf_start %f %i %f\n",(float)yindex,round(y),(float)buf_start);
 	    if (yindex >= buflines) {
 		fill_buffer(round(y));
 		yindex = round(y) - buf_start;
