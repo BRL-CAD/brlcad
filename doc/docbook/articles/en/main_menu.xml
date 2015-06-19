@@ -19,27 +19,27 @@
       <para>
         <link xlink:href="../../articles/en/build_pattern.php">Build Pattern</link>
       </para>
-    </listitem>    
+    </listitem>
     <listitem>
       <para>
         <link xlink:href="../../articles/en/build_region.php">Build Region</link>
       </para>
-    </listitem>        
+    </listitem>
     <listitem>
       <para>
         <link xlink:href="../../articles/en/ebm_primitive.php">EBM Primitive</link>
       </para>
-    </listitem>        
+    </listitem>
     <listitem>
       <para>
         <link xlink:href="../../articles/en/mgedrc.php">MGEDRC</link>
       </para>
-    </listitem>        
+    </listitem>
     <listitem>
       <para>
         <link xlink:href="../../articles/en/nirt.php">NIRT</link>
       </para>
-    </listitem>        
+    </listitem>
     <listitem>
       <para>
         <link xlink:href="../../articles/en/oed.php">OED</link>
@@ -49,37 +49,37 @@
       <para>
         <link xlink:href="../../articles/en/pipes.php">Pipes</link>
       </para>
-    </listitem>    
+    </listitem>
     <listitem>
       <para>
         <link xlink:href="../../articles/en/projection_shader.php">Projection Shader</link>
       </para>
-    </listitem>     
+    </listitem>
     <listitem>
       <para>
         <link xlink:href="../../articles/en/tire.php">Tire</link>
       </para>
-    </listitem>    
+    </listitem>
     <listitem>
       <para>
         <link xlink:href="../../articles/en/TEMPLATE.php">Template</link>
       </para>
-    </listitem>    
+    </listitem>
    <listitem>
       <para>
         <link xlink:href="../../articles/hy/about_hy.php">About BRL-CAD(hy)</link>
       </para>
-    </listitem>    
+    </listitem>
    <listitem>
       <para>
         <link xlink:href="../../articles/it/about_it.php">About BRL-CAD(it)</link>
       </para>
-    </listitem>    
+    </listitem>
    <listitem>
       <para>
         <link xlink:href="../../articles/ru/about_ru.php">About BRL-CAD(ru)</link>
       </para>
-    </listitem>    
+    </listitem>
 
   </itemizedlist>
   </section>
@@ -92,22 +92,22 @@
       <para>
         <link xlink:href="../../books/en/BRL-CAD_Tutorial_Series-VolumeI.php">BRL-CAD_Tutorial_Series-Volume</link>
       </para>
-    </listitem>    
+    </listitem>
     <listitem>
       <para>
         <link xlink:href="../../books/en/BRL-CAD_Tutorial_Series-VolumeII.php">BRL-CAD_Tutorial_Series-VolumeII</link>
       </para>
-    </listitem>    
+    </listitem>
     <listitem>
       <para>
         <link xlink:href="../../books/en/BRL-CAD_Tutorial_Series-VolumeIII.php">BRL-CAD_Tutorial_Series-VolumeIII</link>
       </para>
-    </listitem>    
+    </listitem>
     <listitem>
       <para>
         <link xlink:href="../../books/en/BRL-CAD_Tutorial_Series-VolumeIV.php">BRL-CAD_Tutorial_Series-VolumeIV</link>
       </para>
-    </listitem>    
+    </listitem>
   </itemizedlist>
 </section>
 <section>
@@ -119,27 +119,27 @@
       <para>
         <link xlink:href="../../lessons/en/mged01_creating_primitive_shapes.php">MGED01 Creating Primitive Shapes</link>
       </para>
-    </listitem>    
+    </listitem>
     <listitem>
       <para>
         <link xlink:href="../../lessons/en/mged02_learning_viewing_options.php">MGED02 Learning Viewing Options</link>
       </para>
-    </listitem>    
+    </listitem>
     <listitem>
       <para>
         <link xlink:href="../../lessons/en/mged03_using_insert_command.php">MGED03 Using Insert Command</link>
       </para>
-    </listitem>    
+    </listitem>
     <listitem>
       <para>
         <link xlink:href="../../lessons/en/mged04_assign_mat_prop_rt.php">MGED04 Assign Mat Prop RT</link>
       </para>
-    </listitem>  
+    </listitem>
     <listitem>
       <para>
         <link xlink:href="../../lessons/en/mged05_learning_boolean_expressions.php">MGED05 Learning Boolean Expressions</link>
       </para>
-    </listitem>        
+    </listitem>
     <listitem>
       <para>
         <link xlink:href="../../lessons/en/mged06_creating_a_goblet.php">MGED06 Creating A Goblet</link>
@@ -169,7 +169,7 @@
       <para>
         <link xlink:href="../../lessons/en/mged11_refining_mug.php">MGED11 Refining MUG</link>
       </para>
-    </listitem>    
+    </listitem>
     <listitem>
       <para>
         <link xlink:href="../../lessons/en/mged12_mug_through_gui.php">MGED12 MUG Through Gui</link>
@@ -179,7 +179,7 @@
       <para>
         <link xlink:href="../../lessons/en/mged13_placing_shapes_in_3d.php">MGED13 Placing Shapes In 3D</link>
       </para>
-    </listitem>    
+    </listitem>
     <listitem>
       <para>
         <link xlink:href="../../lessons/en/mged14_placing_shape_3d_2.php">MGED14 Placing Shape 3D 2</link>
@@ -204,27 +204,27 @@
       <para>
         <link xlink:href="../../lessons/es/mged01_crear_figuras_primitivas.php">MGED01 Crear Figuras Primitivas </link>
       </para>
-    </listitem>    
+    </listitem>
     <listitem>
       <para>
         <link xlink:href="../../lessons/es/mged02_opciones_vistas.php">MGED02 Opciones Vistas</link>
       </para>
-    </listitem>    
+    </listitem>
     <listitem>
       <para>
         <link xlink:href="../../lessons/es/mged03_utilizer_commando_in.php">MGED03 Utilizer Commando In</link>
       </para>
-    </listitem>    
+    </listitem>
     <listitem>
       <para>
         <link xlink:href="../../lessons/es/mged04_prop_materiales.php">MGED04 Prop Materiales</link>
       </para>
-    </listitem>  
+    </listitem>
     <listitem>
       <para>
         <link xlink:href="../../lessons/es/mged05_expressiones_booleanas.php">MGED05 Experessiones Booleanas</link>
       </para>
-    </listitem>        
+    </listitem>
     <listitem>
       <para>
         <link xlink:href="../../lessons/es/mged06_crear_una_copa.php">MGED06 Crear Una Copa</link>
@@ -254,7 +254,7 @@
       <para>
         <link xlink:href="../../lessons/es/mged11_refinar_taza.php">MGED11 Refinar Taza</link>
       </para>
-    </listitem>    
+    </listitem>
     <listitem>
       <para>
         <link xlink:href="../../lessons/es/mged12_taza_desde_gui.php">MGED12 TAZA Desde Gui</link>
@@ -264,7 +264,7 @@
       <para>
         <link xlink:href="../../lessons/es/mged13_ubicar_figuras_en_3d.php">MGED13 Ubicar Figuras En 3D</link>
       </para>
-    </listitem>    
+    </listitem>
     <listitem>
       <para>
         <link xlink:href="../../lessons/es/mged14_ubicar_figuras_en_3d_2.php">MGED14 Ubicar Figuras En 3D 2</link>
@@ -291,12 +291,12 @@
       <para>
         <link xlink:href="../../presentations/en/brlcad-app-devel.php">Brl-Cad App Devel</link>
       </para>
-    </listitem>    
+    </listitem>
     <listitem>
       <para>
         <link xlink:href="../../presentations/en/intro-to-tcltk.php">Intro To TclTK</link>
       </para>
-    </listitem>    
+    </listitem>
   </itemizedlist>
   </section>
 <section>
@@ -308,9 +308,9 @@
       <para>
         <link xlink:href="../../specifications/en/BRL_CAD_g_format_V5.php">Brl-Cad G Format V5</link>
       </para>
-    </listitem>    
+    </listitem>
   </itemizedlist>
-  </section>  
+  </section>
 <section>
   <title>
     Man 1
@@ -380,7 +380,7 @@
       <para>
         <link xlink:href="../../man1/en/anim_time.php">Anim Time</link>
       </para>
-    </listitem>    
+    </listitem>
     <listitem>
       <para>
         <link xlink:href="../../man1/en/anim_track.php">Anim Track</link>
@@ -595,7 +595,7 @@
       <para>
         <link xlink:href="../../man1/en/comgeom-g.php">Comgeon G</link>
       </para>
-    </listitem>    
+    </listitem>
     <listitem>
       <para>
         <link xlink:href="../../man1/en/conv-vg2g.php">Conv vg2g</link>
@@ -605,7 +605,7 @@
       <para>
         <link xlink:href="../../man1/en/cv.php">Cv</link>
       </para>
-    </listitem>    
+    </listitem>
     <listitem>
       <para>
         <link xlink:href="../../man1/en/cy-g.php">Cy-g </link>
@@ -620,7 +620,7 @@
       <para>
         <link xlink:href="../../man1/en/dbclean.php">Db Clean</link>
       </para>
-    </listitem>  
+    </listitem>
     <listitem>
       <para>
         <link xlink:href="../../man1/en/dbcp.php">Db cp</link>
@@ -1054,7 +1054,7 @@
     </listitem>
     <listitem>
       <para>
-        <link xlink:href="../../man1/en/pixbustup.php">Pix Bustup</link>  
+        <link xlink:href="../../man1/en/pixbustup.php">Pix Bustup</link>
       </para>
     </listitem>
     <listitem>
@@ -1538,7 +1538,7 @@
       </para>
     </listitem>
 </itemizedlist>
-  </section>  
+  </section>
 <section>
   <title>
     Man 3
@@ -1687,7 +1687,7 @@
       <para>
         <link xlink:href="../../mann/en/anim_offset.php">Anim Offset</link>
       </para>
-    </listitem>    
+    </listitem>
     <listitem>
       <para>
         <link xlink:href="../../mann/en/anim_orient.php">Anim Orient</link>
@@ -1887,7 +1887,7 @@
       <para>
         <link xlink:href="../../mann/en/dbupgrade.php">DB Upgrade</link>
       </para>
-    </listitem>    
+    </listitem>
     <listitem>
       <para>
         <link xlink:href="../../mann/en/debugbu.php">De Bugbu</link>
@@ -1897,7 +1897,7 @@
       <para>
         <link xlink:href="../../mann/en/debugdir.php">De Bugdir</link>
       </para>
-    </listitem>    
+    </listitem>
     <listitem>
       <para>
         <link xlink:href="../../mann/en/debuglib.php">De Buglib </link>
@@ -1912,7 +1912,7 @@
       <para>
         <link xlink:href="../../mann/en/debugnmg.php">De Bugnmg</link>
       </para>
-    </listitem>  
+    </listitem>
     <listitem>
       <para>
         <link xlink:href="../../mann/en/decompose.php">De Compose</link>
@@ -2350,7 +2350,7 @@
     </listitem>
     <listitem>
       <para>
-        <link xlink:href="../../mann/en/overlay.php">Over Lay</link>  
+        <link xlink:href="../../mann/en/overlay.php">Over Lay</link>
       </para>
     </listitem>
     <listitem>
@@ -2844,6 +2844,6 @@
       </para>
     </listitem>
   </itemizedlist>
-  </section>  
+  </section>
 
 </article>

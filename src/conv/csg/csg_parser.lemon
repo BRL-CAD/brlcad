@@ -49,9 +49,9 @@
 start_symbol ::= code.
 
 /* Initial, simple grammar, just for testing  */
-code ::= groupb.  
+code ::= groupb.
 
-groupb::= GROUP_BEGIN. 
+groupb::= GROUP_BEGIN.
 {
   fprintf(appData->outfile, "we found group() {\n");
 }
