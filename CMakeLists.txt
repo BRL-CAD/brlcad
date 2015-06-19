@@ -2113,6 +2113,7 @@ macro(BRLCAD_PFUNCTION_EXISTS func)
   BRLCAD_FUNCTION_EXISTS(_${func} HAVE__${FUNC_UPPER})
   if (HAVE__${FUNC_UPPER})
     CONFIG_H_APPEND(BRLCAD "#define ${func} _${func}\n")
+    CONFIG_H_APPEND(BRLCAD "#define HAVE_${FUNC_UPPER} 1\n")
   endif (HAVE__${FUNC_UPPER})
 endmacro(BRLCAD_PFUNCTION_EXISTS func)
 
