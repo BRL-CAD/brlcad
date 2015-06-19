@@ -125,16 +125,14 @@ db_dpv_to_argv(struct directory **dpv)
 {
     char **argv = NULL;
     int dpv_cnt = 0;
-    struct directory *dp = dpv[dpv_cnt];
     if (!dpv) return argv;
-    while (dp) {
+
+    while (dpv[dpv_cnt]) {
 	dpv_cnt++;
-	dp = dpv[dpv_cnt];
     }
     if (dpv_cnt > 0) {
 	argv = (char **)bu_malloc(sizeof(char *) * (dpv_cnt + 1), "char pointer array");
 	dpv_cnt = 0;
-	dp = dpv[0];
 	while (dpv[dpv_cnt]) {
 	    argv[dpv_cnt] = dpv[dpv_cnt]->d_namep;
 	    dpv_cnt++;
