@@ -2215,14 +2215,7 @@ convert_region_end(db_tree_state *tree_state, const db_full_path *path,
     RT_CK_TREE(current_tree);
 
     FastgenConversion &data = *static_cast<FastgenConversion *>(client_data);
-    const directory *region_dir = NULL;
-
-    try {
-	region_dir = &get_region_dir(data.m_db, *path);
-    } catch (const std::invalid_argument &) {}
-
-    Section &section = region_dir ? data.get_region(*region_dir).get_section(
-			   *path) : data.m_toplevels;
+    Section &section = get_section(data, *path);
     section.set_color(color_from_floats(tree_state->ts_mater.ma_color));
 
     if (current_tree->tr_op != OP_NOP) {
@@ -2276,7 +2269,7 @@ gcv_fastgen4_write(const char *path, struct db_i *dbip,
 
     std::set<const directory *> failed_regions = do_conversion(*dbip, path);
 
-    // tessellate all regions that contain an incompatible boolean operation
+    // facetize all regions that contain an incompatible boolean operation
     if (!failed_regions.empty())
 	if (!do_conversion(*dbip, path, failed_regions).empty())
 	    throw std::runtime_error("failed to convert all regions");

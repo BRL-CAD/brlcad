@@ -1,4 +1,6 @@
+GRID record limit:
+    - fastgen4 permits 50k GRID records per Section, and this is enforced by the export plugin.
+    - this limit is exceeded by db/goliath.g, for which the "toplevels" Section accumulates a very large number of primitives existing outside of regions.
+
 Boolean operations:
-    - If an fg4 primitive has a facetized object subtracted from it, the facetized object will currently not be output (tree appears empty).
     - Objects subtracted using HOLE records must be completely enclosed within the containing object.
-    - Check matrices
