@@ -38,9 +38,9 @@
 #include "bio.h"
 
 #include "bu/getopt.h"
-#include "bu/file.h"
 #include "bu/malloc.h"
 #include "bu/log.h"
+#include "bu/file.h"
 
 
 #define MAXBUFBYTES 4096*4096	/* max bytes to malloc in buffer space */
@@ -67,6 +67,63 @@ static char usage[] = "\
 Usage: bwscale [-r] [-s squareinsize] [-w inwidth] [-n inheight]\n\
 	[-S squareoutsize] [-W outwidth] [-N outheight] [in.bw] > out.bw\n";
 
+/****** THIS PROBABLY SHOULD BE ELSEWHERE *******/
+
+/* ceiling and floor functions for positive numbers */
+#define CEILING(x)	(((x) > (int)(x)) ? (int)(x)+1 : (int)(x))
+#define FLOOR(x)	((int)(x))
+#define MIN(x, y)	(((x) > (y)) ? (y) : (x))
+
+
+/*
+ * Load the buffer with scan lines centered around
+ * the given y coordinate.
+ */
+static void
+fill_buffer(int y)
+{
+    size_t ret;
+    buf_start = y - buflines/2;
+    if (buf_start < 0) buf_start = 0;
+
+    if (bu_fseek(buffp, buf_start * scanlen, 0) < 0) {
+	fprintf(stderr, "bwscale: Can't seek to input pixel!\n");
+	/* bu_exit (3, NULL); */
+    }
+    ret = fread(buffer, scanlen, buflines, buffp);
+    if (ret != (size_t)buflines)
+	perror("fread");
+}
+
+
+/*
+ * Determine max number of lines to buffer.
+ * and malloc space for it.
+ * XXX - CHECK FILE SIZE
+ */
+void
+init_buffer(size_t len)
+{
+    int max;
+
+    /* See how many we could buffer */
+    max = MAXBUFBYTES / len;
+
+    /*
+     * XXX We really should see how big
+     * the input file is to decide if we should buffer
+     * less than our max.
+     */
+    if (max > 4096) max = 4096;
+
+    if (max < iny)
+	buflines = max;
+    else
+	buflines = iny;
+
+    buf_start = (-buflines);
+    buffer = (unsigned char *)bu_calloc(buflines, len, "buffer");
+}
 
 static int
 get_args(int argc, char **argv)
@@ -140,66 +197,6 @@ get_args(int argc, char **argv)
 
     return 1;		/* OK */
 }
-
-
-/****** THIS PROBABLY SHOULD BE ELSEWHERE *******/
-
-/* ceiling and floor functions for positive numbers */
-#define CEILING(x)	(((x) > (int)(x)) ? (int)(x)+1 : (int)(x))
-#define FLOOR(x)	((int)(x))
-#define MIN(x, y)	(((x) > (y)) ? (y) : (x))
-
-
-/*
- * Load the buffer with scan lines centered around
- * the given y coordinate.
- */
-static void
-fill_buffer(int y)
-{
-    size_t ret;
-    buf_start = y - buflines/2;
-    if (buf_start < 0) buf_start = 0;
-
-    if (bu_fseek(buffp, buf_start * scanlen, 0) < 0) {
-	fprintf(stderr, "bwscale: Can't seek to input pixel!\n");
-	/* bu_exit (3, NULL); */
-    }
-    ret = fread(buffer, scanlen, buflines, buffp);
-    if (ret != (size_t)buflines)
-	perror("fread");
-}
-
-
-/*
- * Determine max number of lines to buffer.
- * and malloc space for it.
- * XXX - CHECK FILE SIZE
- */
-void
-init_buffer(size_t len)
-{
-    int max;
-
-    /* See how many we could buffer */
-    max = MAXBUFBYTES / len;
-
-    /*
-     * XXX We really should see how big
-     * the input file is to decide if we should buffer
-     * less than our max.
-     */
-    if (max > 4096) max = 4096;
-
-    if (max < iny)
-	buflines = max;
-    else
-	buflines = iny;
-
-    buf_start = (-buflines);
-    buffer = (unsigned char *)bu_calloc(buflines, len, "buffer");
-}
-
 
 /*
  * Bilinear Interpolate a file of pixels.
