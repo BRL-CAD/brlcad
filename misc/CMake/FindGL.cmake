@@ -111,9 +111,9 @@
 #=============================================================================
 
 if(WIN32)
-  if(CYGWIN)
+  find_path(OPENGL_INCLUDE_DIR_GL GL/gl.h )
 
-    find_path(OPENGL_INCLUDE_DIR_GL GL/gl.h )
+  if(CYGWIN)
 
     find_library(OPENGL_gl_LIBRARY opengl32 )
 
