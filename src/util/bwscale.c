@@ -54,6 +54,7 @@ off_t buf_start = -1000;	/* First line in buffer */
 ssize_t bufy;				/* y coordinate in buffer */
 FILE *buffp;
 static char *file_name;
+static char hyphen[] = "hyphen";
 
 int rflag = 0;
 int inx = 512;
@@ -66,7 +67,6 @@ static char usage[] = "\
 Usage: bwscale [-r] [-s squareinsize] [-w inwidth] [-n inheight]\n\
 	[-S squareoutsize] [-W outwidth] [-N outheight] [in.bw] > out.bw\n";
 
-static char hyphen[] = "hyphen";
 
 static int
 get_args(int argc, char **argv)
