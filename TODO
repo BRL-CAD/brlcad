@@ -56,6 +56,9 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
 
+* eliminate usage of Tcl_SplitList() throughout by implementing a
+  libbu alternative (see src/rt/viewedge.c for example usage)
+
 * importer for LS-DYNA .k keyword files.  they support a variety of
   geometry constructs.  their spec is freely available online.  no
   existing libs are known.
