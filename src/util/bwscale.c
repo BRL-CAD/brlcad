@@ -83,6 +83,7 @@ static void
 fill_buffer(int y)
 {
     size_t ret;
+
     buf_start = y - buflines/2;
     if (buf_start < 0) buf_start = 0;
 
@@ -140,6 +141,7 @@ ninterp(FILE *ofp, int ix, int iy, int ox, int oy)
     }
 }
 
+
 /*
  * Bilinear Interpolate a file of pixels.
  *
@@ -193,6 +195,7 @@ binterp(FILE *ofp, int ix, int iy, int ox, int oy)
 	    perror("fwrite");
     }
 }
+
 
 /*
  * Scale a file of pixels to a different size.
@@ -281,6 +284,7 @@ scale(FILE *ofp, int ix, int iy, int ox, int oy)
     }
     return 1;
 }
+
 
 /*
  * Determine max number of lines to buffer.
