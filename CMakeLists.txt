@@ -1940,7 +1940,13 @@ BRLCAD_INCLUDE_FILE(termlib.h HAVE_TERMLIB_H)
 BRLCAD_INCLUDE_FILE(tinfo.h HAVE_TINFO_H)
 BRLCAD_INCLUDE_FILE(ulocks.h HAVE_ULOCKS_H)
 BRLCAD_INCLUDE_FILE(unistd.h HAVE_UNISTD_H)
-BRLCAD_INCLUDE_FILE(windows.h HAVE_WINDOWS_H) # for QueryPerformanceCounter() on Windows
+BRLCAD_INCLUDE_FILE(windows.h HAVE_WINDOWS_H)
+# If we've got windows.h, assume some other headers as well
+if(HAVE_WINDOWS_H)
+  CONFIG_H_APPEND(BRLCAD "#define HAVE_WINSOCK2_H 1\n")
+  CONFIG_H_APPEND(BRLCAD "#define HAVE_WINSOCK_H 1\n")
+endif(HAVE_WINDOWS_H)
+
 
 # C++
 BRLCAD_INCLUDE_FILE_CXX(istream HAVE_ISTREAM)
