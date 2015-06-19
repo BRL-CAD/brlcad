@@ -38,7 +38,7 @@ int dm_validXType(char *dpy_string, char *name);
 char *dm_bestXType(char *dpy_string);
 
 int
-#if !defined(DM_WGL) && !defined(DM_RTGL) && !defined(DM_OGL) && !defined(DM_X) && !defined(DM_TK)
+#if !defined(DM_WGL) && !defined(DM_RTGL) && !defined(DM_OGL) && !defined(DM_X)
 dm_validXType(char *UNUSED(dpy_string), char *name)
 #else
 dm_validXType(char *dpy_string, char *name)
@@ -117,7 +117,7 @@ dm_validXType(char *dpy_string, char *name)
   */
 
 char *
-#if !defined(DM_WGL) && !defined(DM_RTGL) && !defined(DM_OGL) && !defined(DM_OSGL) && !defined(DM_X) && !defined(DM_TK)
+#if !defined(DM_WGL) && !defined(DM_RTGL) && !defined(DM_OGL) && !defined(DM_OSGL) && !defined(DM_X)
 dm_bestXType(char *UNUSED(dpy_string))
 #else
 dm_bestXType(char *dpy_string)
