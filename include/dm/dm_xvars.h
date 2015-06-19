@@ -30,11 +30,11 @@
 #ifdef HAVE_X11_XLIB_H
 #  include <X11/Xlib.h>
 #  include <X11/Xutil.h>
-#  define HAVE_X11_TYPES 1
 #endif
 
 #ifdef HAVE_TK
 #  include "tk.h"
+#  define HAVE_X11_TYPES 1
 #endif
 #ifdef IF_WGL
 #include "tkWinInt.h"
