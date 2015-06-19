@@ -14,6 +14,7 @@ set(docbook_articles_EN
   projection_shader.xml
   tire.xml
   mged.xml
+  main_menu.xml
   )
 
 set(docbook_articles_EN_IMAGES
