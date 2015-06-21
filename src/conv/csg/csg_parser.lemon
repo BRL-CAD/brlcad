@@ -44,24 +44,25 @@
 %left GROUP_CONTENT.
 %left GROUP_END.
 
-
-/* I believe here I get the compiling error */
-start_symbol ::= code.
-
 /* Initial, simple grammar, just for testing  */
+
+start_symbol ::= code.
 code ::= groupb.
+groupb ::= groupb group_content group_end.
 
 groupb::= GROUP_BEGIN.
 {
   fprintf(appData->outfile, "we found group() {\n");
 }
-/*
-group_begin ::= GROUP_BEGIN group_content.
+
+groupb ::= .
+
+group_content ::= GROUP_CONTENT .
 {
-  fprintf(appData->outfile, "in group(), we found %s ",bu_vls_addr(&appData->description));
+  fprintf(appData->outfile, "inside group() we found a function\n");
 }
-group_content ::= GROUP_END.
+
+group_end ::= GROUP_END.
 {
-  fprintf(appData->outfile, "we found the end of group()");
+  fprintf(appData->outfile, "we found the end of group()\n");
 }
-*/

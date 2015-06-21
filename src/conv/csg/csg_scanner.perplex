@@ -35,13 +35,12 @@
 
 /* condition states - no idea what this enum does but I modified it according
 to what I used below */
-enum {INITIAL, code, group, groupb};
+enum {INITIAL, code};
 
 %%
 <> => code { continue; }
 
 optional_ws = [ \t]*;
-
 group_begin = "group() {";
 group_content = [a-z]+ "("*")";
 group_end = "}";
@@ -51,23 +50,16 @@ group_end = "}";
 	YYSETCONDITION(code);
     return GROUP_BEGIN;
     }
-[^] { continue; }
-}
 
-/*
-<group> {
-(group_content) {
+(optional_ws)(group_content) {
      YYSETCONDITION(code);
      return GROUP_CONTENT;
-   }
-[^] { continue; }
-}
+    }
 
-<group_in> {
-(group_end) {
-     YYSETCONDITION(group);
+(optional_ws)(group_end) {
+     YYSETCONDITION(code);
      return GROUP_END;
 	}
 [^] { continue; }
 }
-*/
+
