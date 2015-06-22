@@ -1056,6 +1056,9 @@ cylinder_csg(struct subbrep_object_data *data, fastf_t cyl_tol)
 			    pcyl.Flip();
 			}
 
+			/* If we don't have bottom points, bail */
+			if (!bottom_pnts[0] ||!bottom_pnts[1]) return -1;
+
 			// Third, construct the axis vector and determine the arb
 			// order of the bottom and top points
 
