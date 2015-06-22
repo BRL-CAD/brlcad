@@ -2028,23 +2028,23 @@ endif(HAVE_PTRDIFF_T AND NOT HAVE_OFF_T)
 
 # Fallback typedefs
 if(NOT HAVE_GID_T)
-  CONFIG_H_APPEND(BRLCAD "typedef unsigned int gid_t\n")
+  CONFIG_H_APPEND(BRLCAD "typedef unsigned int gid_t;\n")
 endif(NOT HAVE_GID_T)
 
 if(NOT HAVE_MODE_T)
-  CONFIG_H_APPEND(BRLCAD "typedef int mode_t\n")
+  CONFIG_H_APPEND(BRLCAD "typedef int mode_t;\n")
 endif(NOT HAVE_MODE_T)
 
 if(NOT HAVE_PID_T)
-  CONFIG_H_APPEND(BRLCAD "typedef int pid_t\n")
+  CONFIG_H_APPEND(BRLCAD "typedef int pid_t;\n")
 endif(NOT HAVE_PID_T)
 
 if(NOT HAVE_SOCKLEN_T)
-  CONFIG_H_APPEND(BRLCAD "typedef int socklen_t\n")
+  CONFIG_H_APPEND(BRLCAD "typedef int socklen_t;\n")
 endif(NOT HAVE_SOCKLEN_T)
 
 if(NOT HAVE_UID_T)
-  CONFIG_H_APPEND(BRLCAD "typedef unsigned int uid_t\n")
+  CONFIG_H_APPEND(BRLCAD "typedef unsigned int uid_t;\n")
 endif(NOT HAVE_UID_T)
 
 # see if we have a TLS intrinsic, first check C++11 compliance
