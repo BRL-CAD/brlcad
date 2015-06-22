@@ -1009,6 +1009,11 @@ subbrep_add_planar_face(struct subbrep_object_data *data, ON_Plane *pcyl,
     std::map<int, int> vert_map;
     array_to_map(&vert_map, pdata->planar_obj_vert_map, pdata->planar_obj_vert_cnt);
 
+    /* If the index isn't in the array, something's wrong - bail */
+    if (((*vert_loop)[0])->m_vertex_index > pdata->local_brep->m_V.Count() - 1) return;
+    if (((*vert_loop)[1])->m_vertex_index > pdata->local_brep->m_V.Count() - 1) return;
+    if (((*vert_loop)[2])->m_vertex_index > pdata->local_brep->m_V.Count() - 1) return;
+
     ON_3dPoint p1 = pdata->local_brep->m_V[vert_map[((*vert_loop)[0])->m_vertex_index]].Point();
     ON_3dPoint p2 = pdata->local_brep->m_V[vert_map[((*vert_loop)[1])->m_vertex_index]].Point();
     ON_3dPoint p3 = pdata->local_brep->m_V[vert_map[((*vert_loop)[2])->m_vertex_index]].Point();
