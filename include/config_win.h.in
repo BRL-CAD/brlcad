@@ -50,7 +50,6 @@
  * declare results of configure tests
  */
 
-#define HAVE_VFORK		1
 #define isascii __isascii /* TODO - fix the test for this, it isn't working yet */
 
 #define ioctl ioctlsocket
