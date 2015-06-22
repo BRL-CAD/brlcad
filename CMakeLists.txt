@@ -1998,22 +1998,33 @@ BRLCAD_STRUCT_MEMBER("struct stat" st_blocks sys/stat.h STRUCT_STAT_ST_BLOCKS)
 BRLCAD_STRUCT_MEMBER("struct stat" st_rdev sys/stat.h STRUCT_STAT_ST_RDEV)
 
 # socklen_t
-BRLCAD_TYPE_SIZE("socklen_t" "sys/types.h")
+BRLCAD_TYPE_SIZE("socklen_t" "")
 if(NOT HAVE_SOCKLEN_T)
-  BRLCAD_TYPE_SIZE("socklen_t" "sys/socket.h")
+  BRLCAD_TYPE_SIZE("socklen_t" "sys/types.h")
+  if(NOT HAVE_SOCKLEN_T)
+    BRLCAD_TYPE_SIZE("socklen_t" "sys/socket.h")
+  endif(NOT HAVE_SOCKLEN_T)
 endif(NOT HAVE_SOCKLEN_T)
 BRLCAD_TYPE_SIZE("cpu_set_t" "sched.h")
 
+BRLCAD_TYPE_SIZE("gid_t" "")
 BRLCAD_TYPE_SIZE("int" "")
 BRLCAD_TYPE_SIZE("long" "")
 BRLCAD_TYPE_SIZE("long long" "")
+BRLCAD_TYPE_SIZE("mode_t" "")
 BRLCAD_TYPE_SIZE("off_t" "")
+BRLCAD_TYPE_SIZE("pid_t" "")
 BRLCAD_TYPE_SIZE("ptrdiff_t" "")
 BRLCAD_TYPE_SIZE("size_t" "")
 BRLCAD_TYPE_SIZE("ssize_t" "")
+BRLCAD_TYPE_SIZE("uid_t" "")
 BRLCAD_TYPE_SIZE("uint64_t" "")
 BRLCAD_TYPE_SIZE("uintptr_t" "")
 BRLCAD_TYPE_SIZE("sig_t" "signal.h")
+
+if(HAVE_PTRDIFF_T AND NOT HAVE_OFF_T)
+  CONFIG_H_APPEND(BRLCAD "#define off_t ptrdiff_t\n")
+endif(HAVE_PTRDIFF_T AND NOT HAVE_OFF_T)
 
 # see if we have a TLS intrinsic, first check C++11 compliance
 check_cxx_source_compiles("static thread_local int i = 0; int main() { return i; }" HAVE_THREAD_LOCAL)
@@ -2263,7 +2274,6 @@ BRLCAD_PFUNCTION_EXISTS(execvp)
 BRLCAD_PFUNCTION_EXISTS(fdopen)
 BRLCAD_PFUNCTION_EXISTS(fileno)
 BRLCAD_PFUNCTION_EXISTS(getpid)
-BRLCAD_PFUNCTION_EXISTS(isascii)
 BRLCAD_PFUNCTION_EXISTS(pclose)
 BRLCAD_PFUNCTION_EXISTS(popen)
 BRLCAD_PFUNCTION_EXISTS(putenv)
@@ -2304,6 +2314,14 @@ CONFIG_H_APPEND(BRLCAD "
 ")
 endif(HAVE__FILENO)
 
+# __isascii/isascii
+BRLCAD_FUNCTION_EXISTS(__isascii HAVE___ISASCII)
+if(HAVE___ISASCII)
+  CONFIG_H_APPEND(BRLCAD "#define isascii __isascii\n")
+else(HAVE___ISASCII)
+  BRLCAD_FUNCTION_EXISTS(isascii HAVE_ISASCII)
+endif(HAVE___ISASCII)
+
 # strcasecmp/stricmp
 BRLCAD_FUNCTION_EXISTS(_stricmp HAVE__STRICMP)
 if(HAVE__STRICMP)
@@ -2332,10 +2350,13 @@ if(NOT HAVE_FORK)
 endif(NOT HAVE_FORK)
 
 # sleep needs defining on Windows
-BRLCAD_FUNCTION_EXISTS(sleep HAVE_SLEEP)
-if(NOT HAVE_SLEEP)
+if(NOT HAVE_WINDOWS_H)
+  BRLCAD_FUNCTION_EXISTS(sleep HAVE_SLEEP)
+else(NOT HAVE_WINDOWS_H)
+  # TODO - Need to find out what we're looking for here... Is there a risk
+  # that Windows might define a sleep that behaves the same way as Sleep?
   CONFIG_H_APPEND(BRLCAD "#define sleep(_SECONDS) (Sleep(1000 * (_SECONDS)))\n")
-endif(NOT HAVE_SLEEP)
+endif(NOT HAVE_WINDOWS_H)
 
 # _stati64/_stat
 BRLCAD_FUNCTION_EXISTS(_stati64 HAVE__STATI64)
@@ -2370,6 +2391,11 @@ else(HAVE__LSEEKI64)
   endif(HAVE__LSEEK)
 endif(HAVE__LSEEKI64)
 
+# ioctlsocket/ioctl
+BRLCAD_FUNCTION_EXISTS(ioctlsocket HAVE_IOCTLSOCKET)
+if(HAVE_IOCTLSOCKET)
+  CONFIG_H_APPEND(BRLCAD "#define ioctl ioctlsocket\n")
+endif(HAVE_IOCTLSOCKET)
 
 
 # we may compile in strict pedantic mode, but still want access to
