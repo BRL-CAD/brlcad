@@ -2022,30 +2022,30 @@ BRLCAD_TYPE_SIZE("uint64_t" "")
 BRLCAD_TYPE_SIZE("uintptr_t" "")
 BRLCAD_TYPE_SIZE("sig_t" "signal.h")
 
-if(HAVE_PTRDIFF_T AND NOT HAVE_OFF_T)
+if(HAVE_PTRDIFF_T AND NOT HAVE_OFF_T AND HAVE_WINDOWS_H)
   CONFIG_H_APPEND(BRLCAD "#define off_t ptrdiff_t\n")
-endif(HAVE_PTRDIFF_T AND NOT HAVE_OFF_T)
+endif(HAVE_PTRDIFF_T AND NOT HAVE_OFF_T AND HAVE_WINDOWS_H)
 
 # Fallback typedefs
-if(NOT HAVE_GID_T)
+if(NOT HAVE_GID_T AND HAVE_WINDOWS_H)
   CONFIG_H_APPEND(BRLCAD "typedef unsigned int gid_t;\n")
-endif(NOT HAVE_GID_T)
+endif(NOT HAVE_GID_T AND HAVE_WINDOWS_H)
 
-if(NOT HAVE_MODE_T)
+if(NOT HAVE_MODE_T AND HAVE_WINDOWS_H)
   CONFIG_H_APPEND(BRLCAD "typedef int mode_t;\n")
-endif(NOT HAVE_MODE_T)
+endif(NOT HAVE_MODE_T AND HAVE_WINDOWS_H)
 
-if(NOT HAVE_PID_T)
+if(NOT HAVE_PID_T AND HAVE_WINDOWS_H)
   CONFIG_H_APPEND(BRLCAD "typedef int pid_t;\n")
-endif(NOT HAVE_PID_T)
+endif(NOT HAVE_PID_T AND HAVE_WINDOWS_H)
 
-if(NOT HAVE_SOCKLEN_T)
+if(NOT HAVE_SOCKLEN_T AND HAVE_WINDOWS_H)
   CONFIG_H_APPEND(BRLCAD "typedef int socklen_t;\n")
-endif(NOT HAVE_SOCKLEN_T)
+endif(NOT HAVE_SOCKLEN_T AND HAVE_WINDOWS_H)
 
-if(NOT HAVE_UID_T)
+if(NOT HAVE_UID_T AND HAVE_WINDOWS_H)
   CONFIG_H_APPEND(BRLCAD "typedef unsigned int uid_t;\n")
-endif(NOT HAVE_UID_T)
+endif(NOT HAVE_UID_T AND HAVE_WINDOWS_H)
 
 # see if we have a TLS intrinsic, first check C++11 compliance
 check_cxx_source_compiles("static thread_local int i = 0; int main() { return i; }" HAVE_THREAD_LOCAL)
