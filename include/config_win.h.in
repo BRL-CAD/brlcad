@@ -50,17 +50,10 @@
  * declare results of configure tests
  */
 
-#define HAVE_SIG_T		1
 #define HAVE_VFORK		1
 #define isascii __isascii /* TODO - fix the test for this, it isn't working yet */
 
 #define ioctl ioctlsocket
-
-/*
- * Signal handling
- */
-
-typedef void (*sig_t)(int);
 
 /*
  * types
