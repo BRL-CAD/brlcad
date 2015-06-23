@@ -203,6 +203,18 @@ ged_bot_merge(struct ged *gedp, int argc, const char *argv[])
     GED_DB_DIRADD(gedp, new_dp, argv[1], RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (void *)&intern.idb_type, GED_ERROR);
     GED_DB_PUT_INTERNAL(gedp, new_dp, &intern, &rt_uniresource, GED_ERROR);
 
+    for (i = 1; i < idx; ++i) {
+	/* fill in an rt_db_internal so we can free it */
+	struct rt_db_internal internal;
+	RT_DB_INTERNAL_INIT(&internal);
+	internal.idb_major_type = DB5_MAJORTYPE_BRLCAD;
+	internal.idb_minor_type = ID_BOT;
+	internal.idb_meth = &OBJ[ID_BOT];
+	internal.idb_ptr = bots[i];
+
+	rt_db_free_internal(&internal);
+    }
+
     bu_free(bots, "bots");
 
     return GED_OK;
