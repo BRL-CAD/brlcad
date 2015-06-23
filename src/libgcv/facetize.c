@@ -143,37 +143,35 @@ gcv_facetize(struct db_i *db, const struct db_full_path *path,
     for (BU_LIST_FOR(nmg_region, nmgregion, &nmg_model->r_hd)) {
 	struct shell *current_shell = BU_LIST_FIRST(shell, &nmg_region->s_hd);
 
-	/* kill cracks */
 	while (BU_LIST_NOT_HEAD(&current_shell->l, &nmg_region->s_hd)) {
 	    struct shell *next_shell = BU_LIST_PNEXT(shell, &current_shell->l);
 
 	    if (nmg_kill_cracks(current_shell) && nmg_ks(current_shell))
+		continue;
+
+	    if (nmg_kill_zero_length_edgeuses(nmg_model))
 		return gcv_facetize_cleanup(nmg_model, facetize_tree);
 
-	    current_shell = next_shell;
-	}
-
-	if (nmg_kill_zero_length_edgeuses(nmg_model))
-	    return gcv_facetize_cleanup(nmg_model, facetize_tree); /* empty model */
-
-	if (!BU_SETJUMP) {
-	    /* try */
-
-	    if (!result)
-		result = nmg_bot(current_shell, tol);
-	    else {
-		struct rt_bot_internal *bots[2];
-		bots[0] = result;
-		bots[1] = nmg_bot(current_shell, tol);
-		result = rt_bot_merge(2, (const struct rt_bot_internal * const *)bots);
-		gcv_free_bot(bots[0]);
-		gcv_free_bot(bots[1]);
+	    if (!BU_SETJUMP) {
+		/* try */
+		if (!result)
+		    result = nmg_bot(current_shell, tol);
+		else {
+		    struct rt_bot_internal *bots[2];
+		    bots[0] = result;
+		    bots[1] = nmg_bot(current_shell, tol);
+		    result = rt_bot_merge(2, (const struct rt_bot_internal * const *)bots);
+		    gcv_free_bot(bots[0]);
+		    gcv_free_bot(bots[1]);
+		}
+	    } else {
+		/* catch */
+		BU_UNSETJUMP;
+		bu_log("gcv_facetize(): conversion to BOT failed\n");
+		return gcv_facetize_cleanup(nmg_model, facetize_tree);
 	    }
-	} else {
-	    /* catch */
-	    BU_UNSETJUMP;
-	    bu_log("gcv_facetize(): conversion to BOT failed\n");
-	    return gcv_facetize_cleanup(nmg_model, facetize_tree);
+
+	    current_shell = next_shell;
 	}
 
 	BU_UNSETJUMP;
