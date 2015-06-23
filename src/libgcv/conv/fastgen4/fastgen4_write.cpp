@@ -2231,11 +2231,11 @@ do_conversion(db_i &db, const std::string &path,
     const rt_tess_tol ttol = {RT_TESS_TOL_MAGIC, 0.0, 1.0e-2, 0.0};
     const bn_tol tol = {BN_TOL_MAGIC, BN_TOL_DIST, BN_TOL_DIST * BN_TOL_DIST, 1.0e-6, 1.0 - 1.0e-6};
 
-    AutoPtr<model, nmg_km> vmodel;
+    AutoPtr<model, nmg_km> nmg_model;
     db_tree_state initial_tree_state = rt_initial_tree_state;
     initial_tree_state.ts_tol = &tol;
     initial_tree_state.ts_ttol = &ttol;
-    initial_tree_state.ts_m = &vmodel.ptr;
+    initial_tree_state.ts_m = &nmg_model.ptr;
 
     db_update_nref(&db, &rt_uniresource);
     AutoPtr<directory *> toplevel_dirs;
@@ -2244,12 +2244,15 @@ do_conversion(db_i &db, const std::string &path,
     AutoPtr<char *> object_names(db_dpv_to_argv(toplevel_dirs.ptr));
     toplevel_dirs.free();
 
-    vmodel.ptr = nmg_mm();
+    nmg_model.ptr = nmg_mm();
     FastgenConversion data(path, db, tol);
     data.m_facetize_regions = facetize_regions;
-    db_walk_tree(&db, static_cast<int>(num_objects),
-		 const_cast<const char **>(object_names.ptr), 1, &initial_tree_state,
-		 convert_region_start, convert_region_end, convert_leaf, &data);
+    const int ret = db_walk_tree(&db, static_cast<int>(num_objects),
+				 const_cast<const char **>(object_names.ptr), 1, &initial_tree_state,
+				 convert_region_start, convert_region_end, convert_leaf, &data);
+
+    if (ret)
+	throw std::runtime_error("db_walk_tree() failed");
 
     return data.m_failed_regions;
 }
