@@ -2133,20 +2133,14 @@ write_nmg_region(nmgregion *nmg_region, const db_full_path *path,
 
 	// fill in an rt_db_internal with our new bot so we can free it
 	rt_db_internal internal;
+	AutoPtr<rt_db_internal, rt_db_free_internal> autofree_internal(&internal);
 	RT_DB_INTERNAL_INIT(&internal);
 	internal.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 	internal.idb_minor_type = ID_BOT;
 	internal.idb_meth = &OBJ[ID_BOT];
 	internal.idb_ptr = bot;
 
-	try {
-	    write_bot(section, *bot);
-	} catch (...) {
-	    internal.idb_meth->ft_ifree(&internal);
-	    throw;
-	}
-
-	internal.idb_meth->ft_ifree(&internal);
+	write_bot(section, *bot);
     }
 }
 
