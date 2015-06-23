@@ -36,8 +36,8 @@
 <div id='content-side2'><div class='row'>
   <div id='secondary' class='widget-area' role='complementary'>
     <xsl:processing-instruction name="php">
-    include('../../search_document.php');
-    include('../../articles/en/main_menu.html');
+    search_document();
+    main_menu();
     </xsl:processing-instruction>
   </div>
 </div>
