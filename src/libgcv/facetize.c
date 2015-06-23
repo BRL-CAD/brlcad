@@ -77,13 +77,13 @@ gcv_facetize(struct db_i *db, const struct db_full_path *path,
 
     RT_CK_DBI(db);
     RT_CK_FULL_PATH(path);
-    BN_CK_TOL(math_tol);
+    BN_CK_TOL(tol);
     RT_CK_TESS_TOL(tess_tol);
 
     {
 	char *str_path = db_path_to_string(path);
 	struct db_tree_state initial_tree_state = rt_initial_tree_state;
-	initial_tree_state.ts_tol = math_tol;
+	initial_tree_state.ts_tol = tol;
 	initial_tree_state.ts_ttol = tess_tol;
 	initial_tree_state.ts_m = &nmg_model;
 
@@ -106,7 +106,7 @@ gcv_facetize(struct db_i *db, const struct db_full_path *path,
     /* Now, evaluate the boolean tree into ONE region */
     if (!BU_SETJUMP) {
 	/* try */
-	if (nmg_boolean(facetize_tree, nmg_model, math_tol, &rt_uniresource)) {
+	if (nmg_boolean(facetize_tree, nmg_model, tol, &rt_uniresource)) {
 	    BU_UNSETJUMP;
 	    return gcv_facetize_cleanup(nmg_model, facetize_tree);
 	}
@@ -131,9 +131,22 @@ gcv_facetize(struct db_i *db, const struct db_full_path *path,
 	nmg_region = BU_LIST_FIRST(nmgregion, &nmg_model->r_hd);
 	current_shell = BU_LIST_FIRST(shell, &nmg_region->s_hd);
 
+	/* kill cracks */
+	while (BU_LIST_NOT_HEAD(&current_shell->l, &nmg_region->s_hd)) {
+	    struct shell *next_shell = BU_LIST_PNEXT(shell, &current_shell->l);
+
+	    if (nmg_kill_cracks(current_shell) && nmg_ks(current_shell))
+		return gcv_facetize_cleanup(nmg_model, facetize_tree);
+
+	    current_shell = next_shell;
+	}
+
+	if (nmg_kill_zero_length_edgeuses(nmg_model))
+	    return gcv_facetize_cleanup(nmg_model, facetize_tree); /* empty model */
+
 	if (!BU_SETJUMP) {
 	    /* try */
-	    result = nmg_bot(current_shell, math_tol);
+	    result = nmg_bot(current_shell, tol);
 	} else {
 	    /* catch */
 	    BU_UNSETJUMP;
