@@ -5400,6 +5400,130 @@ rt_bot_surf_area(fastf_t *area, const struct rt_db_internal *ip)
     return;
 }
 
+
+struct rt_bot_internal *
+rt_bot_merge(size_t num_bots, const struct rt_bot_internal * const *bots)
+{
+    struct rt_bot_internal *result;
+    int avail_vert, avail_face;
+    size_t i, face;
+    int *reverse_flags;
+
+    /* create a new bot */
+    BU_ALLOC(result, struct rt_bot_internal);
+    result->mode = 0;
+    result->orientation = RT_BOT_UNORIENTED;
+    result->bot_flags = 0;
+    result->num_vertices = 0;
+    result->num_faces = 0;
+    result->faces = (int *)0;
+    result->vertices = (fastf_t *)0;
+    result->thickness = (fastf_t *)0;
+    result->face_mode = (struct bu_bitv *)0;
+    result->num_normals = 0;
+    result->normals = (fastf_t *)0;
+    result->num_face_normals = 0;
+    result->face_normals = 0;
+    result->magic = RT_BOT_INTERNAL_MAGIC;
+
+    if (!num_bots)
+	return result;
+
+    for (i = 0; i < num_bots; ++i) {
+	RT_BOT_CK_MAGIC(bots[i]);
+
+	result->num_vertices += bots[i]->num_vertices;
+	result->num_faces += bots[i]->num_faces;
+    }
+
+    reverse_flags = (int *)bu_calloc(num_bots, sizeof(int), "reverse_flags");
+
+    for (i = 0; i < num_bots; ++i) {
+	/* check for surface normals */
+	if (result->mode) {
+	    if (result->mode != bots[i]->mode) {
+		bu_log("rt_bot_merge(): Warning: not all bots share same mode\n");
+	    }
+	} else {
+	    result->mode = bots[i]->mode;
+	}
+
+	if (bots[i]->bot_flags & RT_BOT_HAS_SURFACE_NORMALS) result->bot_flags |= RT_BOT_HAS_SURFACE_NORMALS;
+	if (bots[i]->bot_flags & RT_BOT_USE_NORMALS) result->bot_flags |= RT_BOT_USE_NORMALS;
+
+	if (result->orientation) {
+	    if (bots[i]->orientation == RT_BOT_UNORIENTED) {
+		result->orientation = RT_BOT_UNORIENTED;
+	    } else {
+		reverse_flags[i] = 1; /* set flag to reverse order of faces */
+	    }
+	} else {
+	    result->orientation = bots[i]->orientation;
+	}
+    }
+
+
+    result->vertices = (fastf_t *)bu_calloc(result->num_vertices*3, sizeof(fastf_t), "verts");
+    result->faces = (int *)bu_calloc(result->num_faces*3, sizeof(int), "verts");
+
+    if (result->mode == RT_BOT_PLATE || result->mode == RT_BOT_PLATE_NOCOS) {
+	result->thickness = (fastf_t *)bu_calloc(result->num_faces, sizeof(fastf_t), "thickness");
+	result->face_mode = (struct bu_bitv *)bu_calloc(result->num_faces, sizeof(struct bu_bitv), "face_mode");
+    }
+
+    avail_vert = 0;
+    avail_face = 0;
+
+
+    for (i = 0; i < num_bots; ++i) {
+	/* copy the vertices */
+	memcpy(&result->vertices[3*avail_vert], bots[i]->vertices, bots[i]->num_vertices*3*sizeof(fastf_t));
+
+	/* copy/convert the faces, potentially maintaining a common orientation */
+	if (result->orientation != RT_BOT_UNORIENTED && reverse_flags[i]) {
+	    /* copy and reverse */
+	    for (face=0; face < bots[i]->num_faces; face++) {
+		/* copy the 3 verts of this face and convert to new index */
+		result->faces[avail_face*3+face*3+2] = bots[i]->faces[face*3  ] + avail_vert;
+		result->faces[avail_face*3+face*3+1] = bots[i]->faces[face*3+1] + avail_vert;
+		result->faces[avail_face*3+face*3  ] = bots[i]->faces[face*3+2] + avail_vert;
+
+		if (result->mode == RT_BOT_PLATE || result->mode == RT_BOT_PLATE_NOCOS) {
+		    result->thickness[avail_face+face] = bots[i]->thickness[face];
+		    result->face_mode[avail_face+face] = bots[i]->face_mode[face];
+		}
+	    }
+	} else {
+	    /* just copy */
+	    for (face=0; face < bots[i]->num_faces; face++) {
+		/* copy the 3 verts of this face and convert to new index */
+		result->faces[avail_face*3+face*3  ] = bots[i]->faces[face*3  ] + avail_vert;
+		result->faces[avail_face*3+face*3+1] = bots[i]->faces[face*3+1] + avail_vert;
+		result->faces[avail_face*3+face*3+2] = bots[i]->faces[face*3+2] + avail_vert;
+
+		if (result->mode == RT_BOT_PLATE || result->mode == RT_BOT_PLATE_NOCOS) {
+		    result->thickness[avail_face+face] = bots[i]->thickness[face];
+		    result->face_mode[avail_face+face] = bots[i]->face_mode[face];
+		}
+	    }
+	}
+
+	/* copy surface normals */
+	if (result->bot_flags == RT_BOT_HAS_SURFACE_NORMALS) {
+	    bu_log("not yet copying surface normals\n");
+	    if (bots[i]->bot_flags == RT_BOT_HAS_SURFACE_NORMALS) {
+	    } else {
+	    }
+	}
+
+	avail_vert += bots[i]->num_vertices;
+	avail_face += bots[i]->num_faces;
+    }
+
+    return result;
+}
+
+
 /** @} */
 /*
  * Local Variables:
