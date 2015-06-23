@@ -88,6 +88,7 @@ ged_bot_merge(struct ged *gedp, int argc, const char *argv[])
 
 	if (intern.idb_major_type != DB5_MAJORTYPE_BRLCAD || intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_BOT) {
 	    bu_vls_printf(gedp->ged_result_str, "%s: %s is not a BOT solid!  Skipping.\n", argv[0], argv[i]);
+	    rt_db_free_internal(&intern);
 	    continue;
 	}
 
