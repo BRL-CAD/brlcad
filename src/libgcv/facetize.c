@@ -160,7 +160,8 @@ gcv_facetize(struct db_i *db, const struct db_full_path *path,
 		    struct rt_bot_internal *bots[2];
 		    bots[0] = result;
 		    bots[1] = nmg_bot(current_shell, tol);
-		    result = rt_bot_merge(2, (const struct rt_bot_internal * const *)bots);
+		    result = rt_bot_merge(sizeof(bots) / sizeof(bots[0]),
+					  (const struct rt_bot_internal * const *)bots);
 		    gcv_free_bot(bots[0]);
 		    gcv_free_bot(bots[1]);
 		}
@@ -177,6 +178,9 @@ gcv_facetize(struct db_i *db, const struct db_full_path *path,
 	BU_UNSETJUMP;
     }
 
+    rt_bot_vertex_fuse(result, tol);
+    rt_bot_face_fuse(result);
+    rt_bot_condense(result);
     gcv_facetize_cleanup(nmg_model, facetize_tree);
     return result;
 }
