@@ -68,12 +68,29 @@ gcv_facetize_cleanup(struct model *nmg_model, union tree *facetize_tree)
 }
 
 
+HIDDEN void
+gcv_free_bot(struct rt_bot_internal *bot)
+{
+    /* fill in an rt_db_internal so we can free it */
+    struct rt_db_internal internal;
+    RT_DB_INTERNAL_INIT(&internal);
+    internal.idb_major_type = DB5_MAJORTYPE_BRLCAD;
+    internal.idb_minor_type = ID_BOT;
+    internal.idb_meth = &OBJ[ID_BOT];
+    internal.idb_ptr = bot;
+
+    rt_db_free_internal(&internal);
+}
+
+
 struct rt_bot_internal *
 gcv_facetize(struct db_i *db, const struct db_full_path *path,
 	     const struct bn_tol *tol, const struct rt_tess_tol *tess_tol)
 {
     union tree *facetize_tree;
     struct model *nmg_model;
+    struct rt_bot_internal *result;
+    struct nmgregion *nmg_region;
 
     RT_CK_DBI(db);
     RT_CK_FULL_PATH(path);
@@ -121,15 +138,10 @@ gcv_facetize(struct db_i *db, const struct db_full_path *path,
 
     /* New region remains part of this nmg "model" */
     NMG_CK_REGION(facetize_tree->tr_d.td_r);
+    result = NULL;
 
-    {
-	struct rt_bot_internal *result;
-	struct nmgregion *nmg_region;
-	struct shell *current_shell;
-
-	/* FIXME: only dumping the first shell of the first region */
-	nmg_region = BU_LIST_FIRST(nmgregion, &nmg_model->r_hd);
-	current_shell = BU_LIST_FIRST(shell, &nmg_region->s_hd);
+    for (BU_LIST_FOR(nmg_region, nmgregion, &nmg_model->r_hd)) {
+	struct shell *current_shell = BU_LIST_FIRST(shell, &nmg_region->s_hd);
 
 	/* kill cracks */
 	while (BU_LIST_NOT_HEAD(&current_shell->l, &nmg_region->s_hd)) {
@@ -146,7 +158,17 @@ gcv_facetize(struct db_i *db, const struct db_full_path *path,
 
 	if (!BU_SETJUMP) {
 	    /* try */
-	    result = nmg_bot(current_shell, tol);
+
+	    if (!result)
+		result = nmg_bot(current_shell, tol);
+	    else {
+		struct rt_bot_internal *bots[2];
+		bots[0] = result;
+		bots[1] = nmg_bot(current_shell, tol);
+		result = rt_bot_merge(2, (const struct rt_bot_internal * const *)bots);
+		gcv_free_bot(bots[0]);
+		gcv_free_bot(bots[1]);
+	    }
 	} else {
 	    /* catch */
 	    BU_UNSETJUMP;
@@ -155,9 +177,10 @@ gcv_facetize(struct db_i *db, const struct db_full_path *path,
 	}
 
 	BU_UNSETJUMP;
-	gcv_facetize_cleanup(nmg_model, facetize_tree);
-	return result;
     }
+
+    gcv_facetize_cleanup(nmg_model, facetize_tree);
+    return result;
 }
 
 
