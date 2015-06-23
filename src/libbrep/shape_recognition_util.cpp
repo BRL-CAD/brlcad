@@ -424,7 +424,7 @@ face_set_key(std::set<int> fset)
 	bu_vls_printf(&vls_key, "%d", (*s_it));
 	s_it2 = s_it;
 	s_it2++;
-	if (s_it2 != fset.end()) bu_vls_printf(&vls_key, "_");
+	if (s_it2 != fset.end()) bu_vls_printf(&vls_key, ",");
     }
     key.append(bu_vls_addr(&vls_key));
     bu_vls_free(&vls_key);

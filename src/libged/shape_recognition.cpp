@@ -17,6 +17,30 @@
 #define ptout(p)  p.x << " " << p.y << " " << p.z
 
 HIDDEN void
+obj_add_attr_key(struct subbrep_object_data *data, struct rt_wdb *wdbp, const char *obj_name)
+{
+    struct bu_attribute_value_set avs;
+    struct directory *dp;
+
+    if (!data || !wdbp || !obj_name) return;
+
+    dp = db_lookup(wdbp->dbip, obj_name, LOOKUP_QUIET);
+
+    if (dp == RT_DIR_NULL) return;
+
+    bu_avs_init_empty(&avs);
+
+    if (db5_get_attributes(wdbp->dbip, &avs, dp)) return;
+
+    (void)bu_avs_add(&avs, "bfaces", bu_vls_addr(data->key));
+
+    if (db5_replace_attributes(dp, &avs, wdbp->dbip)) {
+	bu_avs_free(&avs);
+	return;
+    }
+}
+
+HIDDEN void
 subbrep_obj_name(struct subbrep_object_data *data, struct bu_vls *name_root, struct bu_vls *name)
 {
     if (!data || !name) return;
@@ -122,6 +146,8 @@ brep_to_bot(struct subbrep_object_data *data, struct rt_wdb *wdbp, struct bu_vls
     subbrep_obj_name(data, name_root, &prim_name);
     if (mk_bot(wdbp, bu_vls_addr(&prim_name), RT_BOT_SOLID, RT_BOT_UNORIENTED, 0, data->brep->m_V.Count(), all_faces_cnt, (fastf_t *)all_verts, final_faces, (fastf_t *)NULL, (struct bu_bitv *)NULL)) {
 	std::cout << "mk_bot failed for overall bot\n";
+    } else {
+	obj_add_attr_key(data, wdbp, bu_vls_addr(&prim_name));
     }
     return 1;
 }
@@ -135,6 +161,7 @@ subbrep_to_csg_arb6(struct subbrep_object_data *data, struct rt_wdb *wdbp, struc
 	subbrep_obj_name(data, name_root, &prim_name);
 
 	mk_arb6(wdbp, bu_vls_addr(&prim_name), (const fastf_t *)params->p);
+	obj_add_attr_key(data, wdbp, bu_vls_addr(&prim_name));
 	//std::cout << bu_vls_addr(&prim_name) << ": " << params->bool_op << "\n";
 	if (wcomb) (void)mk_addmember(bu_vls_addr(&prim_name), &((*wcomb).l), NULL, db_str2op(&(params->bool_op)));
 	bu_vls_free(&prim_name);
@@ -153,6 +180,7 @@ subbrep_to_csg_arb8(struct subbrep_object_data *data, struct rt_wdb *wdbp, struc
 	subbrep_obj_name(data, name_root, &prim_name);
 
 	mk_arb8(wdbp, bu_vls_addr(&prim_name), (const fastf_t *)params->p);
+	obj_add_attr_key(data, wdbp, bu_vls_addr(&prim_name));
 	//std::cout << bu_vls_addr(&prim_name) << ": " << params->bool_op << "\n";
 	if (wcomb) (void)mk_addmember(bu_vls_addr(&prim_name), &((*wcomb).l), NULL, db_str2op(&(params->bool_op)));
 	bu_vls_free(&prim_name);
@@ -218,6 +246,8 @@ subbrep_to_csg_cylinder(struct subbrep_object_data *data, struct rt_wdb *wdbp, s
 	int ret = mk_rcc(wdbp, bu_vls_addr(&prim_name), params->origin, params->hv, params->radius);
 	if (ret) {
 	    std::cout << "problem making " << bu_vls_addr(&prim_name) << "\n";
+	} else {
+	    obj_add_attr_key(data, wdbp, bu_vls_addr(&prim_name));
 	}
 	if (wcomb) (void)mk_addmember(bu_vls_addr(&prim_name), &((*wcomb).l), NULL, db_str2op(&(params->bool_op)));
 	bu_vls_free(&prim_name);
@@ -235,6 +265,7 @@ subbrep_to_csg_conic(struct subbrep_object_data *data, struct rt_wdb *wdbp, stru
 	subbrep_obj_name(data, name_root, &prim_name);
 
 	mk_cone(wdbp, bu_vls_addr(&prim_name), params->origin, params->hv, params->height, params->radius, params->r2);
+	obj_add_attr_key(data, wdbp, bu_vls_addr(&prim_name));
 	//std::cout << bu_vls_addr(&prim_name) << ": " << params->bool_op << "\n";
 	if (wcomb) (void)mk_addmember(bu_vls_addr(&prim_name), &((*wcomb).l), NULL, db_str2op(&(params->bool_op)));
 	bu_vls_free(&prim_name);
@@ -252,6 +283,7 @@ subbrep_to_csg_sphere(struct subbrep_object_data *data, struct rt_wdb *wdbp, str
 	subbrep_obj_name(data, name_root, &prim_name);
 
 	mk_sph(wdbp, bu_vls_addr(&prim_name), params->origin, params->radius);
+	obj_add_attr_key(data, wdbp, bu_vls_addr(&prim_name));
 	//std::cout << bu_vls_addr(&prim_name) << ": " << params->bool_op << "\n";
 	if (wcomb) (void)mk_addmember(bu_vls_addr(&prim_name), &((*wcomb).l), NULL, db_str2op(&(params->bool_op)));
 	bu_vls_free(&prim_name);
@@ -343,6 +375,7 @@ make_shapes(struct subbrep_object_data *data, struct rt_wdb *wdbp, struct bu_vls
 	    }
 
 	    mk_lcomb(wdbp, bu_vls_addr(&comb_name), &wcomb, 0, NULL, NULL, NULL, 0);
+	    obj_add_attr_key(data, wdbp, bu_vls_addr(&comb_name));
 
 	    // TODO - almost certainly need to do more work to get correct booleans
 	    //std::cout << bu_vls_addr(&comb_name) << ": " << data->params->bool_op << "\n";
