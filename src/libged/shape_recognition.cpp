@@ -434,6 +434,7 @@ brep_to_csg(struct ged *gedp, struct directory *dp)
 
     struct bu_ptbl *subbreps = find_subbreps(brep);
     struct bu_ptbl *subbreps_tree = find_top_level_hierarchy(subbreps);
+    if (!subbreps_tree) return 2;
     for (unsigned int i = 0; i < BU_PTBL_LEN(subbreps); i++){
 	struct subbrep_object_data *obj = (struct subbrep_object_data *)BU_PTBL_GET(subbreps, i);
 	(void)make_shapes(obj, wdbp, &comb_name, NULL, 0);
