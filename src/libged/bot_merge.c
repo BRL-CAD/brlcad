@@ -94,6 +94,7 @@ ged_bot_merge(struct ged *gedp, int argc, const char *argv[])
 	bots[idx] = (struct rt_bot_internal *)intern.idb_ptr;
 
 	intern.idb_ptr = (void *)0;
+	rt_db_free_internal(&intern);
 
 	RT_BOT_CK_MAGIC(bots[idx]);
 
@@ -103,7 +104,10 @@ ged_bot_merge(struct ged *gedp, int argc, const char *argv[])
 	idx++;
     }
 
-    if (idx == 1) return GED_ERROR;
+    if (idx == 1) {
+	bu_vls_printf(gedp->ged_result_str, "%s: No BOT solids given.\n", argv[0]);
+	return GED_ERROR;
+    }
 
 
     for (i = 1; i < idx; i++) {
