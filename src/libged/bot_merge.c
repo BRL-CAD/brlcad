@@ -83,6 +83,7 @@ ged_bot_merge(struct ged *gedp, int argc, const char *argv[])
 
     if (idx == 0) {
 	bu_vls_printf(gedp->ged_result_str, "%s: No BOT solids given.\n", argv[0]);
+	bu_free(bots, "bots");
 	return GED_ERROR;
     }
 
