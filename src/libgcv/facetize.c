@@ -27,8 +27,8 @@
 
 
 HIDDEN union tree *
-	gcv_facetize_region_end(struct db_tree_state *tree_state,
-				const struct db_full_path *path, union tree *current_tree, void *client_data)
+_gcv_facetize_region_end(struct db_tree_state *tree_state,
+			 const struct db_full_path *path, union tree *current_tree, void *client_data)
 {
     union tree **facetize_tree;
 
@@ -60,7 +60,7 @@ HIDDEN union tree *
 
 
 HIDDEN struct rt_bot_internal *
-gcv_facetize_cleanup(struct model *nmg_model, union tree *facetize_tree)
+_gcv_facetize_cleanup(struct model *nmg_model, union tree *facetize_tree)
 {
     nmg_km(nmg_model);
     db_free_tree(facetize_tree, &rt_uniresource);
@@ -69,7 +69,7 @@ gcv_facetize_cleanup(struct model *nmg_model, union tree *facetize_tree)
 
 
 HIDDEN void
-gcv_free_bot(struct rt_bot_internal *bot)
+_gcv_facetize_free_bot(struct rt_bot_internal *bot)
 {
     /* fill in an rt_db_internal so we can free it */
     struct rt_db_internal internal;
@@ -108,30 +108,30 @@ gcv_facetize(struct db_i *db, const struct db_full_path *path,
 	nmg_model = nmg_mm();
 
 	if (db_walk_tree(db, 1, (const char **)&str_path, 1, &initial_tree_state, NULL,
-			 gcv_facetize_region_end, nmg_booltree_leaf_tess, &facetize_tree)) {
+			 _gcv_facetize_region_end, nmg_booltree_leaf_tess, &facetize_tree)) {
 	    bu_log("gcv_facetize(): error in db_walk_tree()\n");
 	    bu_free(str_path, "str_path");
-	    return gcv_facetize_cleanup(nmg_model, facetize_tree);
+	    return _gcv_facetize_cleanup(nmg_model, facetize_tree);
 	}
 
 	bu_free(str_path, "str_path");
     }
 
     if (!facetize_tree)
-	return gcv_facetize_cleanup(nmg_model, facetize_tree);
+	return _gcv_facetize_cleanup(nmg_model, facetize_tree);
 
     /* Now, evaluate the boolean tree into ONE region */
     if (!BU_SETJUMP) {
 	/* try */
 	if (nmg_boolean(facetize_tree, nmg_model, tol, &rt_uniresource)) {
 	    BU_UNSETJUMP;
-	    return gcv_facetize_cleanup(nmg_model, facetize_tree);
+	    return _gcv_facetize_cleanup(nmg_model, facetize_tree);
 	}
     } else {
 	/* catch */
 	BU_UNSETJUMP;
 	bu_log("gcv_facetize(): boolean evaluation failed\n");
-	return gcv_facetize_cleanup(nmg_model, facetize_tree);
+	return _gcv_facetize_cleanup(nmg_model, facetize_tree);
     }
 
     BU_UNSETJUMP;
@@ -150,7 +150,7 @@ gcv_facetize(struct db_i *db, const struct db_full_path *path,
 		continue;
 
 	    if (nmg_kill_zero_length_edgeuses(nmg_model))
-		return gcv_facetize_cleanup(nmg_model, facetize_tree);
+		return _gcv_facetize_cleanup(nmg_model, facetize_tree);
 
 	    if (!BU_SETJUMP) {
 		/* try */
@@ -162,14 +162,14 @@ gcv_facetize(struct db_i *db, const struct db_full_path *path,
 		    bots[1] = nmg_bot(current_shell, tol);
 		    result = rt_bot_merge(sizeof(bots) / sizeof(bots[0]),
 					  (const struct rt_bot_internal * const *)bots);
-		    gcv_free_bot(bots[0]);
-		    gcv_free_bot(bots[1]);
+		    _gcv_facetize_free_bot(bots[0]);
+		    _gcv_facetize_free_bot(bots[1]);
 		}
 	    } else {
 		/* catch */
 		BU_UNSETJUMP;
 		bu_log("gcv_facetize(): conversion to BOT failed\n");
-		return gcv_facetize_cleanup(nmg_model, facetize_tree);
+		return _gcv_facetize_cleanup(nmg_model, facetize_tree);
 	    }
 
 	    current_shell = next_shell;
@@ -181,7 +181,7 @@ gcv_facetize(struct db_i *db, const struct db_full_path *path,
     rt_bot_vertex_fuse(result, tol);
     rt_bot_face_fuse(result);
     rt_bot_condense(result);
-    gcv_facetize_cleanup(nmg_model, facetize_tree);
+    _gcv_facetize_cleanup(nmg_model, facetize_tree);
     return result;
 }
 
