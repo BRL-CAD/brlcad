@@ -32,8 +32,11 @@
 // will be needed to resolve this.
 
 struct bu_ptbl *
-find_subbreps(const ON_Brep *brep)
+find_subbreps(struct bu_vls *msgs, const ON_Brep *brep)
 {
+    std::map<int, surface_t> fstypes;
+    std::map<int, surface_t>::iterator fs_it;
+    int successful_splits = 0;
     struct bu_ptbl *subbreps;
     std::set<std::string> subbrep_keys;
     BU_GET(subbreps, struct bu_ptbl);
@@ -55,11 +58,6 @@ find_subbreps(const ON_Brep *brep)
 	std::set<int> processed_loops;
 	std::set<int>::iterator s_it;
 
-	// TODO - need to watch for an edge that has two general surfaces associated
-	// with it.  That situation is too problematic for us to handle even as a
-	// breakdown into subbreps, and if we see it we need to bail.  Ensuring reliable
-	// inside/outside testing under those conditions is extremely difficult.
-	// Maybe even something to do as an initial test.
 	const ON_BrepFace *face = &(brep->m_F[i]);
 	faces.insert(i);
 	fol.insert(i);
@@ -73,12 +71,22 @@ find_subbreps(const ON_Brep *brep)
 		const ON_BrepTrim *trim = &(face->Brep()->m_T[loop->m_ti[ti]]);
 		const ON_BrepEdge *edge = &(face->Brep()->m_E[trim->m_ei]);
 		if (trim->m_ei != -1 && edge->TrimCount() > 1) {
+		    int edge_general_surfaces = 0;
 		    edges.insert(trim->m_ei);
 		    for (int j = 0; j < edge->TrimCount(); j++) {
 			int fio = edge->Trim(j)->FaceIndexOf();
 			if (edge->m_ti[j] != ti && fio != -1) {
+			    surface_t stype;
 			    int li = edge->Trim(j)->Loop()->m_loop_index;
 			    faces.insert(fio);
+			    fs_it = fstypes.find(fio);
+			    if (fs_it == fstypes.end()) {
+				stype = GetSurfaceType(brep->m_F[fio].SurfaceOf(), NULL);
+				fstypes.insert(std::pair<int, surface_t>(fio, stype));
+			    } else {
+				stype = fs_it->second;
+			    }
+			    if (stype == SURFACE_GENERAL) edge_general_surfaces++;
 			    if (processed_loops.find(li) == processed_loops.end()) {
 				local_loops.push(li);
 				processed_loops.insert(li);
@@ -87,6 +95,15 @@ find_subbreps(const ON_Brep *brep)
 				fol.insert(fio);
 			    }
 			}
+		    }
+		    // Need to watch for an edge that has two general surfaces associated
+		    // with it.  That situation is currently too problematic for us to
+		    // handle even as a breakdown into subbreps, and if we see it we need
+		    // to bail.  Ensuring reliable inside/outside testing in that case
+		    // is extremely difficult.
+		    if (edge_general_surfaces > 1) {
+			if (msgs) bu_vls_printf(msgs, "L1: Error - edge %d is connected to more than one general surface - aborting.\n", trim->m_ei);
+			goto bail;
 		    }
 		}
 	    }
@@ -106,7 +123,10 @@ find_subbreps(const ON_Brep *brep)
 	    subbrep_object_init(new_obj, brep);
 	    new_obj->obj_cnt = &obj_cnt;
 	    obj_cnt++;
-	    if (obj_cnt > CSG_BREP_MAX_OBJS) goto bail;
+	    if (obj_cnt > CSG_BREP_MAX_OBJS) {
+		if (msgs) bu_vls_printf(msgs, "L1: Error - brep converted to more than %d implicits - not currently a good CSG candidate\n", CSG_BREP_MAX_OBJS, obj_cnt);
+		goto bail;
+	    }
 	    bu_vls_sprintf(new_obj->key, "%s", key.c_str());
 	    bu_vls_sprintf(new_obj->name_root, "%d", obj_cnt);
 	    set_to_array(&(new_obj->faces), &(new_obj->faces_cnt), &faces);
@@ -121,19 +141,23 @@ find_subbreps(const ON_Brep *brep)
 	    new_obj->parent = NULL;
 	    surface_t hof = highest_order_face(new_obj);
 	    if (hof >= SURFACE_GENERAL) {
+		if (msgs) bu_vls_printf(msgs, "L1: Note - general surface present: %s\n", bu_vls_addr(new_obj->key));
 		new_obj->type = BREP;
 		(void)subbrep_make_brep(new_obj);
-		bu_log("general surface present: %s\n", bu_vls_addr(new_obj->key));
 	    } else {
 		int split = 0;
 		volume_t vtype = subbrep_shape_recognize(new_obj);
 		switch (vtype) {
 		    case BREP:
+			/* No general surfaces and it's not all planar - have at it */
 			split = subbrep_split(new_obj);
+			if (obj_cnt > CSG_BREP_MAX_OBJS) {
+			    if (msgs) bu_vls_printf(msgs, "L1: Error: brep converted to more than %d implicits - not currently a good CSG candidate\n", CSG_BREP_MAX_OBJS, obj_cnt);
+			    goto bail;
+			}
 			if (!split) {
-			    if (obj_cnt > CSG_BREP_MAX_OBJS) goto bail;
 			    (void)subbrep_make_brep(new_obj);
-			    bu_log("split unsuccessful: %s\n", bu_vls_addr(new_obj->key));
+			    if (msgs) bu_vls_printf(msgs, "L1: Note - split unsuccessful: %s\n", bu_vls_addr(new_obj->key));
 			} else {
 			    // If we did successfully split the brep, do some post-split
 			    // clean-up
@@ -141,12 +165,15 @@ find_subbreps(const ON_Brep *brep)
 			    if (new_obj->planar_obj) {
 				subbrep_planar_close_obj(new_obj);
 			    }
+			    successful_splits++;
 			}
 			break;
 		    case PLANAR_VOLUME:
+			/* Planar volumes are exactly representable as BoTs, which will most likely raytrace faster */
 			subbrep_planar_init(new_obj);
 			subbrep_planar_close_obj(new_obj);
 			new_obj->local_brep = new_obj->planar_obj->local_brep;
+			successful_splits++;
 			break;
 		    default:
 			break;
@@ -157,10 +184,15 @@ find_subbreps(const ON_Brep *brep)
 	}
     }
 
+    /* If we didn't do anything to simplify the shape, we're stuck with the original */
+    if (!successful_splits) {
+	if (msgs) bu_vls_printf(msgs, "L1: Note - no successful simplifications\n");
+	goto bail;
+    }
+
     return subbreps;
 
 bail:
-    bu_log("brep converted to more than %d implicits - not a good CSG candidate\n", CSG_BREP_MAX_OBJS, obj_cnt);
     // Free memory
     for (unsigned int i = 0; i < BU_PTBL_LEN(subbreps); i++){
 	struct subbrep_object_data *obj = (struct subbrep_object_data *)BU_PTBL_GET(subbreps, i);
@@ -172,8 +204,8 @@ bail:
 	BU_PUT(obj, struct subbrep_object_data);
     }
     bu_ptbl_free(subbreps);
-    bu_ptbl_init(subbreps, 8, "subbrep table");
-    return subbreps;
+    BU_PUT(subbreps, struct bu_ptbl);
+    return NULL;
 }
 
 /* This is the critical point at which we take a pile of shapes and actually reconstruct a
@@ -218,6 +250,8 @@ find_top_level_hierarchy(struct bu_ptbl *subbreps)
     std::map<long *, std::set<long *> > subbrep_subobjs;
     std::map<long *, std::set<long *> > subbrep_ignoreobjs;
     struct bu_ptbl *subbreps_tree;
+
+    if (!subbreps) return NULL;
 
     for (unsigned int i = 0; i < BU_PTBL_LEN(subbreps); i++) {
 	subbrep_set.insert(BU_PTBL_GET(subbreps, i));
