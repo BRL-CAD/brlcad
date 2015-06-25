@@ -83,7 +83,7 @@ void array_to_set(std::set<int> *set, int *array, int array_cnt);
 void subbrep_object_init(struct subbrep_object_data *obj, const ON_Brep *brep);
 //void subbrep_object_free(struct subbrep_object_data *obj);
 
-int subbrep_split(struct subbrep_object_data *data);
+int subbrep_split(struct bu_vls *msgs, struct subbrep_object_data *data);
 int subbrep_make_brep(struct subbrep_object_data *data);
 int subbrep_make_planar(struct subbrep_object_data *data);
 
@@ -100,13 +100,13 @@ void subbrep_bbox(struct subbrep_object_data *obj);
 //struct bu_ptbl *find_subbreps(const ON_Brep *brep);
 //struct bu_ptbl *find_top_level_hierarchy(struct bu_ptbl *subbreps);
 void print_subbrep_object(struct subbrep_object_data *data, const char *offset);
-volume_t subbrep_shape_recognize(struct subbrep_object_data *data);
+volume_t subbrep_shape_recognize(struct bu_vls *msgs, struct subbrep_object_data *data);
 
 int subbrep_is_planar(struct subbrep_object_data *data);
 
 int cylindrical_loop_planar_vertices(ON_BrepFace *face, int loop_index);
-int subbrep_is_cylinder(struct subbrep_object_data *data, fastf_t cyl_tol);
-int cylinder_csg(struct subbrep_object_data *data, fastf_t cyl_tol);
+int subbrep_is_cylinder(struct bu_vls *msgs, struct subbrep_object_data *data, fastf_t cyl_tol);
+int cylinder_csg(struct bu_vls *msgs, struct subbrep_object_data *data, fastf_t cyl_tol);
 
 int subbrep_is_cone(struct subbrep_object_data *data, fastf_t cone_tol);
 int cone_csg(struct subbrep_object_data *data, fastf_t cone_tol);

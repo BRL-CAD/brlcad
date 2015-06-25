@@ -432,8 +432,8 @@ brep_to_csg(struct ged *gedp, struct directory *dp)
     bu_vls_sprintf(&comb_name, "csg_%s", dp->d_namep);
     BU_LIST_INIT(&pcomb.l);
 
-    struct bu_ptbl *subbreps = find_subbreps(NULL, brep);
-    struct bu_ptbl *subbreps_tree = find_top_level_hierarchy(subbreps);
+    struct bu_ptbl *subbreps = find_subbreps(gedp->ged_result_str, brep);
+    struct bu_ptbl *subbreps_tree = find_top_level_hierarchy(gedp->ged_result_str, subbreps);
     if (!subbreps) return 2;
     if (!subbreps_tree) return 2;
     for (unsigned int i = 0; i < BU_PTBL_LEN(subbreps); i++){
