@@ -655,7 +655,7 @@ subbrep_split(struct bu_vls *msgs, struct subbrep_object_data *data)
 		    }
 		    break;
 		case CONE:
-		    if (!cone_csg(new_obj, BREP_CONIC_TOL)) {
+		    if (!cone_csg(msgs, new_obj, BREP_CONIC_TOL)) {
 			if (msgs) bu_vls_printf(msgs, "%*sError - cone csg failure: %s\n", L2_OFFSET, " ", key.c_str());
 			csg_fail++;
 		    }

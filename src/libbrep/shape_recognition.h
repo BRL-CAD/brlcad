@@ -102,14 +102,14 @@ void subbrep_bbox(struct subbrep_object_data *obj);
 void print_subbrep_object(struct subbrep_object_data *data, const char *offset);
 volume_t subbrep_shape_recognize(struct bu_vls *msgs, struct subbrep_object_data *data);
 
-int subbrep_is_planar(struct subbrep_object_data *data);
+int subbrep_is_planar(struct bu_vls *msgs, struct subbrep_object_data *data);
 
 int cylindrical_loop_planar_vertices(ON_BrepFace *face, int loop_index);
 int subbrep_is_cylinder(struct bu_vls *msgs, struct subbrep_object_data *data, fastf_t cyl_tol);
 int cylinder_csg(struct bu_vls *msgs, struct subbrep_object_data *data, fastf_t cyl_tol);
 
-int subbrep_is_cone(struct subbrep_object_data *data, fastf_t cone_tol);
-int cone_csg(struct subbrep_object_data *data, fastf_t cone_tol);
+int subbrep_is_cone(struct bu_vls *msgs, struct subbrep_object_data *data, fastf_t cone_tol);
+int cone_csg(struct bu_vls *msgs, struct subbrep_object_data *data, fastf_t cone_tol);
 
 int sphere_csg(struct subbrep_object_data *data, fastf_t cone_tol);
 

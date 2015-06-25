@@ -59,8 +59,8 @@ subbrep_obj_name(struct subbrep_object_data *data, struct bu_vls *name_root, str
 	    return;
 	case CONE:
 	    bu_vls_sprintf(name, "%s-trc_%s.s", bu_vls_addr(name_root), bu_vls_addr(data->name_root));
-	    std::cout << bu_vls_addr(name) << "\n";
-	    std::cout << bu_vls_addr(data->key) << "\n";
+	    //std::cout << bu_vls_addr(name) << "\n";
+	    //std::cout << bu_vls_addr(data->key) << "\n";
 	    return;
 	case SPHERE:
 	    bu_vls_sprintf(name, "%s-sph_%s.s", bu_vls_addr(name_root), bu_vls_addr(data->name_root));
@@ -82,7 +82,7 @@ subbrep_obj_name(struct subbrep_object_data *data, struct bu_vls *name_root, str
 
 
 HIDDEN int
-brep_to_bot(struct subbrep_object_data *data, struct rt_wdb *wdbp, struct bu_vls *name_root)
+brep_to_bot(struct bu_vls *msgs, struct subbrep_object_data *data, struct rt_wdb *wdbp, struct bu_vls *name_root)
 {
     /* Triangulate faces and write out as a bot */
     struct bu_vls prim_name = BU_VLS_INIT_ZERO;
@@ -90,7 +90,7 @@ brep_to_bot(struct subbrep_object_data *data, struct rt_wdb *wdbp, struct bu_vls
     int *final_faces = NULL;
 
     if (!data->local_brep) {
-	bu_log("No valid local brep?? bot %s failed\n", bu_vls_addr(data->name_root));
+	if (msgs) bu_vls_printf(msgs, "No valid local brep?? bot %s failed\n", bu_vls_addr(data->name_root));
 	return 0;
     }
 
@@ -101,7 +101,7 @@ brep_to_bot(struct subbrep_object_data *data, struct rt_wdb *wdbp, struct bu_vls
      * the final BoT build - all face definitions will ultimately index
      * into this array */
     if (data->local_brep->m_V.Count() == 0) {
-	bu_log("No verts in brep?? bot %s failed\n", bu_vls_addr(data->name_root));
+	if (msgs) bu_vls_printf(msgs, "No verts in brep?? bot %s failed\n", bu_vls_addr(data->name_root));
 	return 0;
     }
     point_t *all_verts = (point_t *)bu_calloc(data->local_brep->m_V.Count(), sizeof(point_t), "bot verts");
@@ -122,7 +122,7 @@ brep_to_bot(struct subbrep_object_data *data, struct rt_wdb *wdbp, struct bu_vls
 	    if (b_loop != b_oloop) loop_inds[j] = b_loop->m_loop_index;
 	}
 	int *ffaces = NULL;
-	int num_faces = subbrep_polygon_tri(data->local_brep, all_verts, loop_inds, b_face->LoopCount(), &ffaces);
+	int num_faces = subbrep_polygon_tri(msgs, data->local_brep, all_verts, loop_inds, b_face->LoopCount(), &ffaces);
 	if (num_faces > 0) contributing_faces++;
 	for (int f_ind = 0; f_ind < num_faces*3; f_ind++) {
 	    all_faces.push_back(ffaces[f_ind]);
@@ -145,7 +145,7 @@ brep_to_bot(struct subbrep_object_data *data, struct rt_wdb *wdbp, struct bu_vls
     /* Make the bot, using the data key for a unique name */
     subbrep_obj_name(data, name_root, &prim_name);
     if (mk_bot(wdbp, bu_vls_addr(&prim_name), RT_BOT_SOLID, RT_BOT_UNORIENTED, 0, data->brep->m_V.Count(), all_faces_cnt, (fastf_t *)all_verts, final_faces, (fastf_t *)NULL, (struct bu_bitv *)NULL)) {
-	std::cout << "mk_bot failed for overall bot\n";
+	if (msgs) bu_vls_printf(msgs, "mk_bot failed for overall bot\n");
     } else {
 	obj_add_attr_key(data, wdbp, bu_vls_addr(&prim_name));
     }
@@ -191,7 +191,7 @@ subbrep_to_csg_arb8(struct subbrep_object_data *data, struct rt_wdb *wdbp, struc
 }
 
 HIDDEN int
-subbrep_to_csg_planar(struct subbrep_object_data *data, struct rt_wdb *wdbp, struct bu_vls *name_root, struct wmember *wcomb)
+subbrep_to_csg_planar(struct bu_vls *msgs, struct subbrep_object_data *data, struct rt_wdb *wdbp, struct bu_vls *name_root, struct wmember *wcomb)
 {
     if (data->type == PLANAR_VOLUME) {
 	// BRL-CAD's arbn primitive does not support concave shapes, and we want to use
@@ -219,10 +219,10 @@ subbrep_to_csg_planar(struct subbrep_object_data *data, struct rt_wdb *wdbp, str
 	//          nmg - that's the most general of the arb* primitives and should be
 	//          relatively close to what is needed here.
 	if (!data->local_brep) {
-	    bu_log("error - no local brep built for %s\n", bu_vls_addr(data->name_root));
+	    if (msgs) bu_vls_printf(msgs, "error - no local brep built for %s\n", bu_vls_addr(data->name_root));
 	    return 0;
 	}
-	if (!brep_to_bot(data, wdbp, name_root)) return 0;
+	if (!brep_to_bot(msgs, data, wdbp, name_root)) return 0;
 	struct csg_object_params *params = data->params;
 	struct bu_vls prim_name = BU_VLS_INIT_ZERO;
 	subbrep_obj_name(data, name_root, &prim_name);
@@ -245,7 +245,7 @@ subbrep_to_csg_cylinder(struct subbrep_object_data *data, struct rt_wdb *wdbp, s
 
 	int ret = mk_rcc(wdbp, bu_vls_addr(&prim_name), params->origin, params->hv, params->radius);
 	if (ret) {
-	    std::cout << "problem making " << bu_vls_addr(&prim_name) << "\n";
+	    //std::cout << "problem making " << bu_vls_addr(&prim_name) << "\n";
 	} else {
 	    obj_add_attr_key(data, wdbp, bu_vls_addr(&prim_name));
 	}
@@ -293,7 +293,7 @@ subbrep_to_csg_sphere(struct subbrep_object_data *data, struct rt_wdb *wdbp, str
 }
 
 HIDDEN void
-process_params(struct subbrep_object_data *data, struct rt_wdb *wdbp, struct bu_vls *name_root, struct wmember *wcomb)
+process_params(struct bu_vls *msgs, struct subbrep_object_data *data, struct rt_wdb *wdbp, struct bu_vls *name_root, struct wmember *wcomb)
 {
     switch (data->type) {
 	case ARB6:
@@ -303,7 +303,7 @@ process_params(struct subbrep_object_data *data, struct rt_wdb *wdbp, struct bu_
 	    subbrep_to_csg_arb8(data, wdbp, name_root, wcomb);
 	    break;
 	case PLANAR_VOLUME:
-	    subbrep_to_csg_planar(data, wdbp, name_root, wcomb);
+	    subbrep_to_csg_planar(msgs, data, wdbp, name_root, wcomb);
 	    break;
 	case CYLINDER:
 	    subbrep_to_csg_cylinder(data, wdbp, name_root, wcomb);
@@ -325,13 +325,13 @@ process_params(struct subbrep_object_data *data, struct rt_wdb *wdbp, struct bu_
 
 
 HIDDEN int
-make_shapes(struct subbrep_object_data *data, struct rt_wdb *wdbp, struct bu_vls *name_root, struct wmember *pcomb, int depth)
+make_shapes(struct bu_vls *msgs, struct subbrep_object_data *data, struct rt_wdb *wdbp, struct bu_vls *name_root, struct wmember *pcomb, int depth)
 {
     struct bu_vls spacer = BU_VLS_INIT_ZERO;
     for (int i = 0; i < depth; i++)
 	bu_vls_printf(&spacer, " ");
     //std::cout << bu_vls_addr(&spacer) << "Making shape for " << bu_vls_addr(data->name_root) << "\n";
-#if 1
+#if 0
     if (data->planar_obj && data->planar_obj->local_brep) {
 	struct bu_vls brep_name = BU_VLS_INIT_ZERO;
 	bu_vls_sprintf(&brep_name, "planar_%s.s", bu_vls_addr(data->name_root));
@@ -343,13 +343,16 @@ make_shapes(struct subbrep_object_data *data, struct rt_wdb *wdbp, struct bu_vls
 	if (data->local_brep) {
 	    struct bu_vls brep_name = BU_VLS_INIT_ZERO;
 	    subbrep_obj_name(data, name_root, &brep_name);
+	    if (!data->local_brep->IsValid()) {
+		if (msgs) bu_vls_printf(msgs, "Warning - data->local_brep is not valid for %s\n", bu_vls_addr(&brep_name));
+	    }
 	    mk_brep(wdbp, bu_vls_addr(&brep_name), data->local_brep);
 	    // TODO - almost certainly need to do more work to get correct booleans
 	    //std::cout << bu_vls_addr(&brep_name) << ": " << data->params->bool_op << "\n";
 	    if (pcomb) (void)mk_addmember(bu_vls_addr(&brep_name), &(pcomb->l), NULL, db_str2op(&(data->params->bool_op)));
 	    bu_vls_free(&brep_name);
 	} else {
-	    bu_log("Warning - mk_brep called but data->local_brep is empty\n");
+	    if (msgs) bu_vls_printf(msgs, "Warning - mk_brep called but data->local_brep is empty\n");
 	}
     } else {
 	if (data->type == COMB) {
@@ -360,18 +363,18 @@ make_shapes(struct subbrep_object_data *data, struct rt_wdb *wdbp, struct bu_vls
 	    BU_LIST_INIT(&wcomb.l);
 	    if (data->planar_obj && data->planar_obj->negative_shape != -1) {
 	    //bu_log("%smake planar obj %s\n", bu_vls_addr(&spacer), bu_vls_addr(data->name_root));
-		process_params(data->planar_obj, wdbp, name_root, &wcomb);
+		process_params(msgs, data->planar_obj, wdbp, name_root, &wcomb);
 	    }
 	    //bu_log("make comb %s\n", bu_vls_addr(data->name_root));
 	    for (unsigned int i = 0; i < BU_PTBL_LEN(data->children); i++){
 		struct subbrep_object_data *cdata = (struct subbrep_object_data *)BU_PTBL_GET(data->children,i);
 		//std::cout << bu_vls_addr(&spacer) << "Making child shape " << bu_vls_addr(cdata->name_root) << " (" << cdata->type << "):\n";
-		make_shapes(cdata, wdbp, name_root, &wcomb, depth+1);
+		make_shapes(msgs, cdata, wdbp, name_root, &wcomb, depth+1);
 		subbrep_object_free(cdata);
 	    }
 	    if (data->planar_obj && data->planar_obj->negative_shape == -1) {
 	    //bu_log("%smake planar obj %s\n", bu_vls_addr(&spacer), bu_vls_addr(data->name_root));
-		process_params(data->planar_obj, wdbp, name_root, &wcomb);
+		process_params(msgs, data->planar_obj, wdbp, name_root, &wcomb);
 	    }
 
 	    mk_lcomb(wdbp, bu_vls_addr(&comb_name), &wcomb, 0, NULL, NULL, NULL, 0);
@@ -386,7 +389,7 @@ make_shapes(struct subbrep_object_data *data, struct rt_wdb *wdbp, struct bu_vls
 	} else {
 	    //std::cout << "type: " << data->type << "\n";
 	    //bu_log("%smake solid %s\n", bu_vls_addr(&spacer), bu_vls_addr(data->name_root));
-	    process_params(data, wdbp, name_root, pcomb);
+	    process_params(msgs, data, wdbp, name_root, pcomb);
 	}
     }
     return 0;
@@ -411,7 +414,7 @@ brep_to_csg(struct ged *gedp, struct directory *dp)
     if (rt_db_get_internal(&intern, dp, wdbp->dbip, NULL, &rt_uniresource) < 0) {
 	return -1;
     }
-    bu_log("processing %s\n", dp->d_namep);
+    bu_vls_printf(gedp->ged_result_str, "processing %s\n", dp->d_namep);
 
     if (intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_BREP) {
 	bu_vls_printf(gedp->ged_result_str, "%s is not a B-Rep - aborting\n", dp->d_namep);
@@ -438,7 +441,7 @@ brep_to_csg(struct ged *gedp, struct directory *dp)
     if (!subbreps_tree) return 2;
     for (unsigned int i = 0; i < BU_PTBL_LEN(subbreps); i++){
 	struct subbrep_object_data *obj = (struct subbrep_object_data *)BU_PTBL_GET(subbreps, i);
-	(void)make_shapes(obj, wdbp, &comb_name, NULL, 0);
+	(void)make_shapes(gedp->ged_result_str, obj, wdbp, &comb_name, NULL, 0);
     }
 
     struct wmember *ccomb = NULL;
@@ -532,7 +535,7 @@ brep_csg_conversion_tree(struct ged *gedp, const union tree *oldtree, union tree
 	case OP_SUBTRACT:
 	case OP_XOR:
 	    /* convert right */
-	    bu_log("convert right\n");
+	    //bu_log("convert right\n");
 	    newtree->tr_b.tb_right = new tree;
 	    RT_TREE_INIT(newtree->tr_b.tb_right);
 	    ret = brep_csg_conversion_tree(gedp, oldtree->tr_b.tb_right, newtree->tr_b.tb_right);
@@ -547,7 +550,7 @@ brep_csg_conversion_tree(struct ged *gedp, const union tree *oldtree, union tree
 	case OP_GUARD:
 	case OP_XNOP:
 	    /* convert left */
-	    bu_log("convert left\n");
+	    //bu_log("convert left\n");
 	    BU_ALLOC(newtree->tr_b.tb_left, union tree);
 	    RT_TREE_INIT(newtree->tr_b.tb_left);
 	    ret = brep_csg_conversion_tree(gedp, oldtree->tr_b.tb_left, newtree->tr_b.tb_left);
@@ -563,8 +566,8 @@ brep_csg_conversion_tree(struct ged *gedp, const union tree *oldtree, union tree
 	    char *oldname = oldtree->tr_l.tl_name;
 	    bu_vls_sprintf(&tmpname, "csg_%s", oldname);
 	    newtree->tr_l.tl_name = (char*)bu_malloc(strlen(bu_vls_addr(&tmpname))+1, "char");
-	    bu_log("have leaf: %s\n", oldtree->tr_l.tl_name);
-	    bu_log("checking for: %s\n", bu_vls_addr(&tmpname));
+	    //bu_log("have leaf: %s\n", oldtree->tr_l.tl_name);
+	    //bu_log("checking for: %s\n", bu_vls_addr(&tmpname));
 	    if (db_lookup(gedp->ged_wdbp->dbip, bu_vls_addr(&tmpname), LOOKUP_QUIET) == RT_DIR_NULL) {
 		struct directory *dir = db_lookup(gedp->ged_wdbp->dbip, oldname, LOOKUP_QUIET);
 
@@ -585,15 +588,15 @@ brep_csg_conversion_tree(struct ged *gedp, const union tree *oldtree, union tree
 		    int need_break = 0;
 		    switch (brep_c) {
 			case 0:
-			    bu_log("processed brep %s.\n", bu_vls_addr(&tmpname));
+			    bu_vls_printf(gedp->ged_result_str, "processed brep %s.\n", bu_vls_addr(&tmpname));
 			    bu_strlcpy(newtree->tr_l.tl_name, bu_vls_addr(&tmpname), strlen(bu_vls_addr(&tmpname))+1);
 			    break;
 			case 1:
-			    bu_log("non brep solid %s.\n", bu_vls_addr(&tmpname));
+			    bu_vls_printf(gedp->ged_result_str, "non brep solid %s.\n", bu_vls_addr(&tmpname));
 			    bu_strlcpy(newtree->tr_l.tl_name, oldname, strlen(oldname)+1);
 			    break;
 			case 2:
-			    bu_log("skipped invalid brep %s.\n", bu_vls_addr(&tmpname));
+			    bu_vls_printf(gedp->ged_result_str, "skipped invalid brep %s.\n", bu_vls_addr(&tmpname));
 			    bu_strlcpy(newtree->tr_l.tl_name, oldname, strlen(oldname)+1);
 			default:
 			    bu_vls_free(&tmpname);
@@ -602,12 +605,12 @@ brep_csg_conversion_tree(struct ged *gedp, const union tree *oldtree, union tree
 		    }
 		    if (need_break) break;
 		} else {
-		    bu_log("Cannot find %s.\n", oldname);
+		    bu_vls_printf(gedp->ged_result_str, "Cannot find %s.\n", oldname);
 		    newtree = NULL;
 		    ret = -1;
 		}
 	    } else {
-		bu_log("%s already exists.\n", bu_vls_addr(&tmpname));
+		bu_vls_printf(gedp->ged_result_str, "%s already exists.\n", bu_vls_addr(&tmpname));
 		bu_strlcpy(newtree->tr_l.tl_name, bu_vls_addr(&tmpname), strlen(bu_vls_addr(&tmpname))+1);
 	    }
 	    bu_vls_free(&tmpname);
