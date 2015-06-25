@@ -42,10 +42,10 @@ _determine_bot_min_edge_length(const struct rt_bot_internal *bot,
 
     for (i = 0; i < bot->num_faces; ++i) {
 	vect_t temp;
-	const int *face = &bot->faces[i * 3];
-	const fastf_t *p1 = &bot->vertices[face[0] * 3];
-	const fastf_t *p2 = &bot->vertices[face[1] * 3];
-	const fastf_t *p3 = &bot->vertices[face[2] * 3];
+	const int * const face = &bot->faces[i * 3];
+	const fastf_t * const p1 = &bot->vertices[face[0] * 3];
+	const fastf_t * const p2 = &bot->vertices[face[1] * 3];
+	const fastf_t * const p3 = &bot->vertices[face[2] * 3];
 
 	VSUB2(temp, p1, p2);
 	min_len_sq = FMIN(min_len_sq, MAGSQ(temp));
@@ -82,14 +82,27 @@ _rt_obj_reduce_bot(struct rt_db_internal *dest,
     else {
 	/* arbitrary */
 	max_chord_error = min_edge_length * reduction_level;
-	max_normal_error = 45.0 * reduction_level;
+	max_normal_error = 22.5 * reduction_level;
     }
+
+    min_edge_length = FMAX(RT_LEN_TOL, min_edge_length);
+    max_chord_error = FMAX(RT_LEN_TOL, max_chord_error);
+    max_normal_error = FMAX(90.0 - RAD2DEG * acos(RT_DOT_TOL), max_normal_error);
 
     /* clone bot */
     result = rt_bot_merge(1, (const struct rt_bot_internal * const *)&bot);
 
     /* reduce */
     rt_bot_decimate(result, max_chord_error, max_normal_error, min_edge_length);
+    {
+	struct bn_tol tol = BN_TOL_INIT_ZERO;
+	tol.dist = max_chord_error;
+	tol.dist_sq = tol.dist * tol.dist;
+	tol.perp = tol.para = cos(DEG2RAD * max_normal_error);
+	rt_bot_vertex_fuse(result, &tol);
+    }
+    rt_bot_face_fuse(result);
+    rt_bot_condense(result);
 
     /* store result */
     dest->idb_major_type = DB5_MAJORTYPE_BRLCAD;
