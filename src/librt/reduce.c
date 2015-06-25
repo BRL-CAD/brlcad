@@ -119,6 +119,12 @@ rt_obj_reduce(struct rt_db_internal *dest,
     RT_CK_DB_INTERNAL(dest);
     RT_CK_DB_INTERNAL(internal);
 
+    if (reduction_level > 1.0 && !EQUAL(reduction_level, 1.0))
+	if (reduction_level < 0.0 && !EQUAL(reduction_level, 0.0))
+	    bu_bomb("rt_obj_reduce(): invalid reduction_level");
+
+    reduction_level = FMAX(0.0, FMIN(1.0, reduction_level));
+
     if (internal->idb_major_type != DB5_MAJORTYPE_BRLCAD)
 	switch (internal->idb_minor_type) {
 	    case ID_BOT: {
