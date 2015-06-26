@@ -72,7 +72,7 @@ find_subbreps(struct bu_vls *msgs, const ON_Brep *brep)
 	    for (int ti = 0; ti < loop->m_ti.Count(); ti++) {
 		const ON_BrepTrim *trim = &(face->Brep()->m_T[loop->m_ti[ti]]);
 		const ON_BrepEdge *edge = &(face->Brep()->m_E[trim->m_ei]);
-		if (trim->m_ei != -1 && edge->TrimCount() > 1) {
+		if (trim->m_ei != -1 && edge->TrimCount() > 0) {
 		    int edge_general_surfaces = 0;
 		    edges.insert(trim->m_ei);
 		    for (int j = 0; j < edge->TrimCount(); j++) {
@@ -857,7 +857,7 @@ subbrep_make_brep(struct subbrep_object_data *data)
 		ON_BrepTrim &nt = data->local_brep->NewTrim(n_edge, old_trim->m_bRev3d, new_loop, c2_map[old_trim->TrimCurveIndexOf()]);
 		nt.m_tolerance[0] = old_trim->m_tolerance[0];
 		nt.m_tolerance[1] = old_trim->m_tolerance[1];
-
+		nt.m_type = old_trim->m_type;
 		nt.m_iso = old_trim->m_iso;
 	    } else {
 		/* If we didn't have an edge originally, we need to add the 2d curve here */
@@ -872,10 +872,12 @@ subbrep_make_brep(struct subbrep_object_data *data)
 		    vertex_map[old_trim->Vertex(0)->m_vertex_index] = newvs.m_vertex_index;
 
 		    ON_BrepTrim &nt = data->local_brep->NewSingularTrim(newvs, new_loop, old_trim->m_iso, c2_map[old_trim->TrimCurveIndexOf()]);
+		    nt.m_type = old_trim->m_type;
 		    nt.m_tolerance[0] = old_trim->m_tolerance[0];
 		    nt.m_tolerance[1] = old_trim->m_tolerance[1];
 		} else {
 		    ON_BrepTrim &nt = data->local_brep->NewSingularTrim(data->local_brep->m_V[vertex_map[old_trim->Vertex(0)->m_vertex_index]], new_loop, old_trim->m_iso, c2_map[old_trim->TrimCurveIndexOf()]);
+		    nt.m_type = old_trim->m_type;
 		    nt.m_tolerance[0] = old_trim->m_tolerance[0];
 		    nt.m_tolerance[1] = old_trim->m_tolerance[1];
 		}
