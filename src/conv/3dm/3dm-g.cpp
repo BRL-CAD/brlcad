@@ -1,14 +1,14 @@
-/*                   C O N V 3 D M - G . C P P
+/*                       3 D M - G . C P P
  * BRL-CAD
  *
  * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
- * This library is free software; you can redistribute it and/or
+ * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public License
  * version 2.1 as published by the Free Software Foundation.
  *
- * This library is distributed in the hope that it will be useful, but
+ * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
@@ -17,24 +17,24 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file conv3dm-g.cpp
+/** @file 3dm-g.cpp
  *
- * Library for conversion of Rhino models (in .3dm files) to BRL-CAD databases.
+ * Conversion of Rhino models (.3dm files) into BRL-CAD databases.
  *
  */
 
 
 #ifdef OBJ_BREP
 
-/* interface header */
-#include "conv3dm-g.hpp" // includes common.h
+#include "common.h"
 
 /* system headers */
 #include <cctype>
 #include <iomanip>
 #include <limits>
+#include <map>
+#include <set>
 #include <sstream>
-#include <stdexcept>
 #include <vector>
 
 /* implementation headers */
@@ -42,7 +42,7 @@
 #include "bu/mime.h"
 #include "bu/path.h"
 #include "icv.h"
-#include "vmath.h"
+#include "wdb.h"
 #include "../../libgcv/bot_solidity.h"
 
 
@@ -54,29 +54,143 @@ static const ON_UUID &ROOT_UUID = ON_nil_uuid;
 static const char * const DEFAULT_NAME = "noname";
 
 
-static struct InitOpenNURBS {
-    InitOpenNURBS()
+static const struct _initOpenNURBS {
+    _initOpenNURBS()
     {
 	ON::Begin();
     }
 
 
-    ~InitOpenNURBS()
+    ~_initOpenNURBS()
     {
 	ON::End();
     }
-} init_opennurbs;
+} _init_opennurbs;
 
 
-static inline void
-check_return(int ret, const std::string &message)
+static std::string
+get_basename(const std::string &path)
 {
-    if (ret != 0)
-	throw std::runtime_error(message);
+    std::vector<char> buf(path.size() + 1);
+    bu_basename(&buf[0], path.c_str());
+    return &buf[0];
 }
 
 
-static inline std::string
+template <typename T> inline void
+autoptr_wrap_bu_free(T *ptr)
+{
+    bu_free(ptr, "AutoPtr");
+}
+
+
+template <typename T, typename R = void, R free_fn(T *) = autoptr_wrap_bu_free>
+struct AutoPtr {
+    explicit AutoPtr(T *vptr = NULL) : ptr(vptr) {}
+
+    ~AutoPtr()
+    {
+	free();
+    }
+
+    void free()
+    {
+	if (ptr) free_fn(ptr);
+
+	ptr = NULL;
+    }
+
+
+    T *ptr;
+
+
+private:
+    AutoPtr(const AutoPtr &source);
+    AutoPtr &operator=(const AutoPtr &source);
+};
+
+
+class Color
+{
+public:
+    static Color random();
+
+    Color(unsigned char red, unsigned char green, unsigned char blue);
+    explicit Color(const ON_Color &src);
+
+    bool operator==(const Color &other) const;
+    bool operator!=(const Color &other) const;
+
+    const unsigned char *get_rgb() const;
+
+
+private:
+    unsigned char m_rgb[3];
+};
+
+
+Color
+Color::random()
+{
+    unsigned char color[3];
+
+    for (int i = 0; i < 3; ++i)
+	color[i] = static_cast<unsigned char>(255.0 * drand48() + 0.5);
+
+    return Color(V3ARGS(color));
+}
+
+
+inline Color::Color(unsigned char red, unsigned char green,
+		    unsigned char blue)
+{
+    VSET(m_rgb, red, green, blue);
+}
+
+
+inline Color::Color(const ON_Color &src)
+{
+    m_rgb[0] = static_cast<unsigned char>(src.Red());
+    m_rgb[1] = static_cast<unsigned char>(src.Green());
+    m_rgb[2] = static_cast<unsigned char>(src.Blue());
+}
+
+
+inline bool
+Color::operator==(const Color &other) const
+{
+    return m_rgb[0] == other.m_rgb[0]
+	   && m_rgb[1] == other.m_rgb[1]
+	   && m_rgb[2] == other.m_rgb[2];
+}
+
+
+inline bool
+Color::operator!=(const Color &other) const
+{
+    return !operator==(other);
+}
+
+
+const unsigned char *
+Color::get_rgb() const
+{
+    if (*this != Color(0, 0, 0) && *this != Color(128, 128, 128))
+	return m_rgb;
+    else
+	return NULL;
+}
+
+
+struct UuidCompare {
+    inline bool operator()(const ON_UUID &left, const ON_UUID &right) const
+    {
+	return ON_UuidCompare(&left, &right) == -1;
+    }
+};
+
+
+static std::string
 uuid2string(const ON_UUID &uuid)
 {
     // UUID buffers must be >= 37 chars per openNURBS API
@@ -87,7 +201,7 @@ uuid2string(const ON_UUID &uuid)
 }
 
 
-static inline std::string
+static std::string
 w2string(const ON_wString &source)
 {
     if (source)
@@ -97,40 +211,33 @@ w2string(const ON_wString &source)
 }
 
 
+static void
+xform2mat(const ON_Xform &source, mat_t dest)
+{
+    for (int row = 0; row < 4; ++row)
+	for (int col = 0; col < 4; ++col)
+	    dest[row * 4 + col] = source[row][col];
+}
+
+
+static inline bool
+is_toplevel(const ON_Layer &layer)
+{
+    return layer.m_parent_layer_id == ROOT_UUID && layer.m_layer_id != ROOT_UUID;
+}
+
+
 // used for checking ON_SimpleArray::At(),
 // when accessing ONX_Model member objects referenced by index
-template <typename T, typename A>
-static inline const T &
-at_ref(const A &array, int index)
+template <typename T, typename Array>
+static const T &
+at_ref(const Array &array, int index)
 {
     if (const T *ptr = array.At(index))
 	return *ptr;
     else
 	throw std::out_of_range("invalid index");
 }
-
-
-template <typename T, typename R, R(*Destructor)(T *)>
-class AutoDestroyer
-{
-public:
-    AutoDestroyer() : ptr(NULL) {}
-    AutoDestroyer(T *vptr) : ptr(vptr) {}
-
-
-    ~AutoDestroyer()
-    {
-	if (ptr) Destructor(ptr);
-    }
-
-
-    T *ptr;
-
-
-private:
-    AutoDestroyer(const AutoDestroyer &);
-    AutoDestroyer &operator=(const AutoDestroyer &);
-};
 
 
 // according to openNURBS documentation, their own ON_CreateUuid()
@@ -163,21 +270,13 @@ generate_uuid()
 }
 
 
-static inline bool
-is_toplevel(const ON_Layer &layer)
-{
-    return (layer.m_parent_layer_id == ROOT_UUID)
-	   && (layer.m_layer_id != ROOT_UUID);
-}
-
-
 // ONX_Model::Audit() fails to repair UUID issues on some platforms
 // because ON_CreateUuid() is not implemented.
 // This function repairs nil and duplicate UUIDs.
 static void
 repair_model_uuids(ONX_Model &model)
 {
-    std::set<ON_UUID, conv3dm::UuidCompare> uuids;
+    std::set<ON_UUID, UuidCompare> uuids;
     uuids.insert(ROOT_UUID);
 
     for (int i = 0; i < model.m_idef_table.Count(); ++i) {
@@ -203,15 +302,15 @@ repair_model_uuids(ONX_Model &model)
 }
 
 
-static const char *
+static std::string
 get_object_suffix(const ON_Object &object)
 {
+    if (ON_Bitmap::Cast(&object))
+	return ".pix";
+
     if (const ON_Geometry *geom = ON_Geometry::Cast(&object))
 	if (geom->HasBrepForm())
 	    return ".s";
-
-    if (ON_Bitmap::Cast(&object))
-	return ".pix";
 
     switch (object.ObjectType()) {
 	case ON::layer_object:
@@ -230,30 +329,31 @@ get_object_suffix(const ON_Object &object)
 
 
 static std::string
-get_basename(const std::string &path)
+clean_name(const std::string &input)
 {
-    std::vector<char> buf(path.size() + 1);
-    bu_basename(&buf[0], path.c_str());
-    return &buf[0];
-}
+    if (input.empty())
+	return DEFAULT_NAME;
+
+    std::string result;
+    std::size_t index = 0;
+
+    for (std::string::const_iterator it = input.begin();
+	 it != input.end(); ++it, ++index)
+	switch (*it) {
+	    case '.':
+	    case '-':
+		result.push_back(index ? *it : '_');
+		break;
 
 
-static std::string
-get_dirname(const std::string &path)
-{
-    char *buf = bu_dirname(path.c_str());
-    std::string result = buf;
-    bu_free(buf, "bu_dirname buffer");
+	    default:
+		if (std::isalnum(*it))
+		    result.push_back(*it);
+		else
+		    result.push_back('_');
+	}
+
     return result;
-}
-
-
-static void
-xform2mat(const ON_Xform &source, mat_t dest)
-{
-    for (int row = 0; row < 4; ++row)
-	for (int col = 0; col < 4; ++col)
-	    dest[row * 4 + col] = source[row][col];
 }
 
 
@@ -283,12 +383,12 @@ extract_bitmap(const std::string &dir_path, const std::string &filename,
 
 
 static void
-load_pix(const std::string &path, int width, int height)
+load_pix(const std::string &path, std::size_t width, std::size_t height)
 {
     char buf[BUFSIZ]; // libicv currently requires BUFSIZ
     mime_image_t format = icv_guess_file_format(path.c_str(), buf);
-    AutoDestroyer<icv_image_t, int, icv_destroy> image(
-	icv_read(path.c_str(), format, width, height));
+    AutoPtr<icv_image_t, int, icv_destroy> image(icv_read(path.c_str(), format,
+	    width, height));
 
     if (!image.ptr)
 	throw std::runtime_error("icv_read() failed");
@@ -297,67 +397,83 @@ load_pix(const std::string &path, int width, int height)
 }
 
 
-static std::string
-clean_name(const std::string &input)
-{
-    if (input.empty())
-	return DEFAULT_NAME;
-
-    std::ostringstream ss;
-    int index = 0;
-
-    for (std::string::const_iterator it = input.begin();
-	 it != input.end(); ++it, ++index)
-	switch (*it) {
-	    case '.':
-	    case '-':
-		ss.put(index > 0 ? *it : '_');
-		break;
-
-
-	    default:
-		if (std::isalnum(*it))
-		    ss.put(*it);
-		else
-		    ss.put('_');
-	}
-
-    return ss.str();
-}
-
-
-}
-
-
-namespace conv3dm
-{
-
-
-inline bool
-UuidCompare::operator()(const ON_UUID &left,
-			const ON_UUID &right) const
-{
-    return ON_UuidCompare(&left, &right) == -1;
-}
-
-
-class RhinoConverter::Color
+class RhinoConverter
 {
 public:
-    static Color random();
+    RhinoConverter(const std::string &output_path, bool verbose_mode);
+    ~RhinoConverter();
 
-    Color();
-    Color(unsigned char red, unsigned char green, unsigned char blue);
-    explicit Color(const ON_Color &src);
 
-    bool operator==(const Color &other) const;
-    bool operator!=(const Color &other) const;
-
-    const unsigned char *get_rgb() const;
+    void write_model(const std::string &path, bool use_uuidnames,
+		     bool random_colors);
 
 
 private:
-    unsigned char m_rgb[3];
+    class ObjectManager
+    {
+    public:
+	ObjectManager();
+
+	void add(bool use_uuid, const ON_UUID &uuid, const std::string &prefix,
+		 const std::string &syffix);
+	void register_member(const ON_UUID &parent_uuid, const ON_UUID &member_uuid);
+	void mark_idef_member(const ON_UUID &uuid);
+
+	bool exists(const ON_UUID &uuid) const;
+	const std::string &get_name(const ON_UUID &uuid) const;
+	const std::set<ON_UUID, UuidCompare> &get_members(const ON_UUID &uuid) const;
+	bool is_idef_member(const ON_UUID &uuid) const;
+
+
+    private:
+	struct ModelObject;
+
+	std::string unique_name(const std::string &prefix, const std::string &suffix);
+
+	std::map<ON_UUID, ModelObject, UuidCompare> m_obj_map;
+	std::map<std::string, std::size_t> m_name_count_map;
+    };
+
+
+    RhinoConverter(const RhinoConverter &source);
+    RhinoConverter &operator=(const RhinoConverter &source);
+
+    void clean_model();
+    void map_uuid_names(bool use_uuidnames);
+    void create_all_bitmaps();
+    void create_all_layers();
+    void create_all_idefs();
+    void create_all_objects();
+
+    void create_bitmap(const ON_Bitmap &bitmap);
+    void create_layer(const ON_Layer &layer);
+    void create_idef(const ON_InstanceDefinition &idef);
+
+    void create_object(const ON_Object &object,
+		       const ON_3dmObjectAttributes &object_attrs);
+    void create_geom_comb(const ON_3dmObjectAttributes &geom_attrs);
+
+    void create_iref(const ON_InstanceRef &iref,
+		     const ON_3dmObjectAttributes &iref_attrs);
+
+    void create_brep(const ON_Brep &brep, const ON_3dmObjectAttributes &brep_attrs);
+
+    void create_mesh(ON_Mesh mesh, const ON_3dmObjectAttributes &mesh_attrs);
+
+    Color get_color(const ON_3dmObjectAttributes &obj_attrs) const;
+    Color get_color(const ON_Layer &layer) const;
+
+    std::pair<std::string, std::string> get_shader(int index) const;
+
+
+    const bool m_verbose_mode;
+    const std::string m_output_dirname;
+    rt_wdb * const m_db;
+    ON_TextLog m_log;
+    ObjectManager m_objects;
+
+    bool m_random_colors;
+    ONX_Model m_model;
 };
 
 
@@ -375,14 +491,11 @@ struct RhinoConverter::ObjectManager::ModelObject {
 
 
 std::string
-RhinoConverter::ObjectManager::unique_name(std::string prefix,
-	const char *suffix)
+RhinoConverter::ObjectManager::unique_name(const std::string &prefix,
+	const std::string &suffix)
 {
-    if (std::isdigit(*prefix.rbegin()))
-	prefix += '_';
-
-    std::string name = prefix + suffix;
-    int number = ++m_name_count_map[name];
+    const std::string name = prefix + suffix;
+    const std::size_t number = ++m_name_count_map[name];
 
     if (number <= 1)
 	return name;
@@ -391,13 +504,13 @@ RhinoConverter::ObjectManager::unique_name(std::string prefix,
 	for (std::map<ON_UUID, ObjectManager::ModelObject, UuidCompare>
 	     ::iterator it = m_obj_map.begin(); it != m_obj_map.end(); ++it)
 	    if (it->second.m_name == name) {
-		it->second.m_name.insert(it->second.m_name.find_last_of('.'), "001");
+		it->second.m_name.insert(it->second.m_name.find_last_of('.'), "_001");
 		break;
 	    }
     }
 
     std::ostringstream ss;
-    ss << prefix << std::setw(3) << std::setfill('0') << number << suffix;
+    ss << prefix << '_' << std::setw(3) << std::setfill('0') << number << suffix;
     return ss.str();
 }
 
@@ -410,7 +523,7 @@ inline RhinoConverter::ObjectManager::ObjectManager() :
 
 void
 RhinoConverter::ObjectManager::add(bool use_uuid, const ON_UUID &uuid,
-				   const std::string &prefix, const char *suffix)
+				   const std::string &prefix, const std::string &suffix)
 {
     ModelObject object;
 
@@ -428,7 +541,7 @@ void
 RhinoConverter::ObjectManager::register_member(
     const ON_UUID &parent_uuid, const ON_UUID &member_uuid)
 {
-    if (!m_obj_map[parent_uuid].m_members.insert(member_uuid).second)
+    if (!m_obj_map.at(parent_uuid).m_members.insert(member_uuid).second)
 	throw std::invalid_argument("duplicate member uuid");
 }
 
@@ -443,7 +556,7 @@ RhinoConverter::ObjectManager::mark_idef_member(const ON_UUID &uuid)
 inline bool
 RhinoConverter::ObjectManager::exists(const ON_UUID &uuid) const
 {
-    return m_obj_map.find(uuid) != m_obj_map.end();
+    return m_obj_map.count(uuid);
 }
 
 
@@ -468,70 +581,10 @@ RhinoConverter::ObjectManager::is_idef_member(const ON_UUID &uuid) const
 }
 
 
-RhinoConverter::Color
-RhinoConverter::Color::random()
-{
-    unsigned char red = static_cast<unsigned char>(255 * drand48());
-    unsigned char green = static_cast<unsigned char>(255 * drand48());
-    unsigned char blue = static_cast<unsigned char>(255 * drand48());
-
-    return Color(red, green, blue);
-}
-
-
-inline RhinoConverter::Color::Color()
-{
-    m_rgb[0] = m_rgb[1] = m_rgb[2] = 0;
-}
-
-
-inline RhinoConverter::Color::Color(unsigned char red, unsigned char green,
-				    unsigned char blue)
-{
-    m_rgb[0] = red;
-    m_rgb[1] = green;
-    m_rgb[2] = blue;
-}
-
-
-inline RhinoConverter::Color::Color(const ON_Color &src)
-{
-    m_rgb[0] = static_cast<unsigned char>(src.Red());
-    m_rgb[1] = static_cast<unsigned char>(src.Green());
-    m_rgb[2] = static_cast<unsigned char>(src.Blue());
-}
-
-
-inline bool
-RhinoConverter::Color::operator==(const Color &other) const
-{
-    return m_rgb[0] == other.m_rgb[0]
-	   && m_rgb[1] == other.m_rgb[1]
-	   && m_rgb[2] == other.m_rgb[2];
-}
-
-
-inline bool
-RhinoConverter::Color::operator!=(const Color &other) const
-{
-    return !operator==(other);
-}
-
-
-const unsigned char *
-RhinoConverter::Color::get_rgb() const
-{
-    if (*this != Color(0, 0, 0))
-	return m_rgb;
-    else
-	return NULL;
-}
-
-
 RhinoConverter::RhinoConverter(const std::string &output_path,
 			       bool verbose_mode) :
     m_verbose_mode(verbose_mode),
-    m_output_dirname(get_dirname(output_path)),
+    m_output_dirname(AutoPtr<char>(bu_dirname(output_path.c_str())).ptr),
     m_db(wdb_fopen(output_path.c_str())),
     m_log(),
     m_objects(),
@@ -583,25 +636,16 @@ RhinoConverter::clean_model()
 {
     m_model.Polish(); // fill in defaults
 
-    int repair_count = 0;
+    repair_model_uuids(m_model);
+    int repair_count;
     int num_problems = m_model.Audit(true, &repair_count, &m_log, NULL);
 
-    if (!num_problems)
-	return;
-
-    m_log.Print("WARNING: Model is NOT valid. Attempting repairs.\n");
-
-    // repair remaining UUID issues
-    if (num_problems != repair_count) {
-	repair_model_uuids(m_model);
-	num_problems = m_model.Audit(true, &repair_count, NULL, NULL);
+    if (num_problems) {
+	if (num_problems == repair_count)
+	    m_log.Print("Repair successful; model is now valid.\n");
+	else
+	    m_log.Print("WARNING: Repair of invalid model failed.\n");
     }
-
-    if (num_problems != repair_count) {
-	m_log.Print("Repair failed. Remaining problems:\n");
-	m_model.Audit(false, NULL, &m_log, NULL);
-    } else
-	m_log.Print("Repair successful; model is now valid.\n");
 }
 
 
@@ -624,7 +668,7 @@ RhinoConverter::map_uuid_names(bool use_uuidnames)
 	const ON_3dmObjectAttributes &object_attrs =
 	    m_model.m_object_table[i].m_attributes;
 	const std::string name = clean_name(w2string(object_attrs.m_name));
-	const char *suffix;
+	std::string suffix;
 
 	try {
 	    suffix = get_object_suffix(*m_model.m_object_table[i].m_object);
@@ -659,7 +703,9 @@ RhinoConverter::create_all_bitmaps()
 	const ON_Bitmap &bitmap = *m_model.m_bitmap_table[i];
 	const std::string &bitmap_name = m_objects.get_name(bitmap.m_bitmap_id);
 
-	m_log.Print("Creating bitmap: %s\n", bitmap_name.c_str());
+	if (m_verbose_mode)
+	    m_log.Print("Creating bitmap '%s'\n", bitmap_name.c_str());
+
 	create_bitmap(bitmap);
     }
 }
@@ -673,10 +719,11 @@ RhinoConverter::create_bitmap(const ON_Bitmap &bmap)
 	const std::string path = extract_bitmap(m_output_dirname, filename, *bitmap);
 
 	try {
-	    load_pix(path, bitmap->Width(), bitmap->Height());
+	    load_pix(path, static_cast<std::size_t>(bitmap->Width()),
+		     static_cast<std::size_t>(bitmap->Height()));
 	} catch (const std::runtime_error &) {
-	    m_log.Print("Couldn't convert bitmap to pix\n");
-	    m_log.Print("Extracted embedded bitmap to '%s'\n", path.c_str());
+	    m_log.Print("Couldn't convert bitmap to pix"
+			" -- extracted embedded bitmap to '%s'\n", path.c_str());
 	    return;
 	}
 
@@ -684,15 +731,16 @@ RhinoConverter::create_bitmap(const ON_Bitmap &bmap)
     } else {
 	try {
 	    load_pix(w2string(bmap.m_bitmap_filename),
-		     bmap.Width(), bmap.Height());
+		     static_cast<std::size_t>(bmap.Width()),
+		     static_cast<std::size_t>(bmap.Height()));
 	} catch (const std::runtime_error &) {
-	    m_log.Print("Couldn't convert bitmap to pix\n");
+	    m_log.Print("Couldn't convert bitmap to pix.\n");
 	    return;
 	}
     }
 
     if (m_verbose_mode)
-	m_log.Print("Successfully read bitmap\n");
+	m_log.Print("Successfully read bitmap.\n");
 }
 
 
@@ -711,7 +759,9 @@ RhinoConverter::create_all_layers()
 	const ON_Layer &layer = m_model.m_layer_table[i];
 	const std::string &layer_name = m_objects.get_name(layer.m_layer_id);
 
-	m_log.Print("Creating layer: %s\n", layer_name.c_str());
+	if (m_verbose_mode)
+	    m_log.Print("Creating layer '%s'\n", layer_name.c_str());
+
 	create_layer(layer);
     }
 
@@ -740,12 +790,13 @@ RhinoConverter::create_layer(const ON_Layer &layer)
 	get_shader(layer.m_material_index);
 
     const bool do_inherit = !m_random_colors && is_toplevel(layer);
-    int ret = mk_comb(m_db, m_objects.get_name(layer.m_layer_id).c_str(),
-		      &wmembers.l, false,
-		      shader.first.c_str(), shader.second.c_str(), get_color(layer).get_rgb(),
-		      0, 0, 0, 0, do_inherit, false, false);
+    const int ret = mk_comb(m_db, m_objects.get_name(layer.m_layer_id).c_str(),
+			    &wmembers.l, false,
+			    shader.first.c_str(), shader.second.c_str(), get_color(layer).get_rgb(),
+			    0, 0, 0, 0, do_inherit, false, false);
 
-    check_return(ret, "mk_comb()");
+    if (ret)
+	throw std::runtime_error("mk_comb() failed");
 }
 
 
@@ -758,7 +809,9 @@ RhinoConverter::create_all_idefs()
 	const ON_InstanceDefinition &idef = m_model.m_idef_table[i];
 	const std::string &idef_name = m_objects.get_name(idef.m_uuid);
 
-	m_log.Print("Creating instance definition: %s\n", idef_name.c_str());
+	if (m_verbose_mode)
+	    m_log.Print("Creating instance definition '%s'\n", idef_name.c_str());
+
 	create_idef(idef);
     }
 }
@@ -781,10 +834,11 @@ RhinoConverter::create_idef(const ON_InstanceDefinition &idef)
 
     const std::string &idef_name = m_objects.get_name(idef.m_uuid);
     const bool do_inherit = false;
-    int ret = mk_comb(m_db, idef_name.c_str(), &wmembers.l, false,
-		      NULL, NULL, NULL, 0, 0, 0, 0, do_inherit, false, false);
+    const int ret = mk_comb(m_db, idef_name.c_str(), &wmembers.l, false,
+			    NULL, NULL, NULL, 0, 0, 0, 0, do_inherit, false, false);
 
-    check_return(ret, "mk_comb()");
+    if (ret)
+	throw std::runtime_error("mk_comb() failed");
 }
 
 
@@ -808,12 +862,13 @@ RhinoConverter::create_iref(const ON_InstanceRef &iref,
     mk_addmember(member_name.c_str(), &members.l, matrix, WMOP_UNION);
 
     const bool do_inherit = false;
-    int ret = mk_comb(m_db, iref_name.c_str(), &members.l, false,
-		      shader.first.c_str(), shader.second.c_str(),
-		      get_color(iref_attrs).get_rgb(),
-		      0, 0, 0, 0, do_inherit, false, false);
+    const int ret = mk_comb(m_db, iref_name.c_str(), &members.l, false,
+			    shader.first.c_str(), shader.second.c_str(),
+			    get_color(iref_attrs).get_rgb(),
+			    0, 0, 0, 0, do_inherit, false, false);
 
-    check_return(ret, "mk_comb()");
+    if (ret)
+	throw std::runtime_error("mk_comb() failed");
 
     const ON_UUID &parent_uuid =
 	at_ref<ON_Layer>(m_model.m_layer_table, iref_attrs.m_layer_index).m_layer_id;
@@ -821,19 +876,17 @@ RhinoConverter::create_iref(const ON_InstanceRef &iref,
 }
 
 
-RhinoConverter::Color
+Color
 RhinoConverter::get_color(const ON_3dmObjectAttributes &obj_attrs) const
 {
     if (m_random_colors)
 	return Color::random();
 
-    const Color UNSET_COLOR(128, 128, 128);
-    Color result = Color(m_model.WireframeColor(obj_attrs));
-    return result != UNSET_COLOR ? result : Color(0, 0, 0);
+    return Color(m_model.WireframeColor(obj_attrs));
 }
 
 
-RhinoConverter::Color
+Color
 RhinoConverter::get_color(const ON_Layer &layer) const
 {
     if (m_random_colors)
@@ -883,7 +936,7 @@ RhinoConverter::create_geom_comb(const ON_3dmObjectAttributes &geom_attrs)
     // so create material information for it
 
     if (m_verbose_mode)
-	m_log.Print("Creating comb for high-level geometry\n");
+	m_log.Print("Creating comb for high-level geometry.\n");
 
     const std::string &geom_name = m_objects.get_name(geom_attrs.m_uuid);
     const ON_UUID comb_uuid = generate_uuid();
@@ -897,12 +950,13 @@ RhinoConverter::create_geom_comb(const ON_3dmObjectAttributes &geom_attrs)
     mk_addmember(geom_name.c_str(), &members.l, NULL, WMOP_UNION);
 
     const bool do_inherit = false;
-    int ret = mk_comb(m_db, comb_name.c_str(), &members.l, false,
-		      shader.first.c_str(), shader.second.c_str(),
-		      get_color(geom_attrs).get_rgb(),
-		      0, 0, 0, 0, do_inherit, false, false);
+    const int ret = mk_comb(m_db, comb_name.c_str(), &members.l, false,
+			    shader.first.c_str(), shader.second.c_str(),
+			    get_color(geom_attrs).get_rgb(),
+			    0, 0, 0, 0, do_inherit, false, false);
 
-    check_return(ret, "mk_comb()");
+    if (ret)
+	throw std::runtime_error("mk_comb() failed");
 
     m_objects.register_member(parent_layer.m_layer_id, comb_uuid);
 }
@@ -914,8 +968,9 @@ RhinoConverter::create_brep(const ON_Brep &brep,
 {
     const std::string &brep_name = m_objects.get_name(brep_attrs.m_uuid);
 
-    int ret = mk_brep(m_db, brep_name.c_str(), const_cast<ON_Brep *>(&brep));
-    check_return(ret, "mk_brep()");
+    if (mk_brep(m_db, brep_name.c_str(), const_cast<ON_Brep *>(&brep)))
+	throw std::runtime_error("mk_brep() failed");
+
     create_geom_comb(brep_attrs);
 }
 
@@ -952,7 +1007,7 @@ RhinoConverter::create_mesh(ON_Mesh mesh,
 	    bu_bomb("logic error: unknown orientation");
     }
 
-    if (num_vertices == 0 || num_faces == 0) {
+    if (!num_vertices || !num_faces) {
 	m_log.Print("Mesh has no content; skipping...\n");
 	return;
     }
@@ -960,24 +1015,22 @@ RhinoConverter::create_mesh(ON_Mesh mesh,
     std::vector<fastf_t> vertices(num_vertices * 3);
 
     for (std::size_t i = 0; i < num_vertices; ++i) {
-	const ON_3fPoint &point = mesh.m_V[static_cast<int>(i)];
-	vertices[i * 3] = point.x;
-	vertices[i * 3 + 1] = point.y;
-	vertices[i * 3 + 2] = point.z;
+	const ON_3fPoint &current_vertex = mesh.m_V[static_cast<int>(i)];
+	VMOVE(&vertices[i * 3], current_vertex);
     }
 
     std::vector<int> faces(num_faces * 3);
 
     for (std::size_t i = 0; i < num_faces; ++i) {
-	const ON_MeshFace &face = mesh.m_F[static_cast<int>(i)];
-	faces[i * 3] = face.vi[0];
-	faces[i * 3 + 1] = face.vi[1];
-	faces[i * 3 + 2] = face.vi[2];
+	const ON_MeshFace &current_face = mesh.m_F[static_cast<int>(i)];
+	VMOVE(&faces[i * 3], current_face.vi);
     }
 
     unsigned char mode;
     {
-	rt_bot_internal bot;
+	rt_bot_internal bot = {};
+	bot.magic = RT_BOT_INTERNAL_MAGIC;
+	bot.orientation = orientation;
 	bot.num_faces = num_faces;
 	bot.num_vertices = num_vertices;
 	bot.faces = &faces[0];
@@ -986,7 +1039,7 @@ RhinoConverter::create_mesh(ON_Mesh mesh,
     }
 
     std::vector<fastf_t> thicknesses;
-    AutoDestroyer<bu_bitv, void, bu_bitv_free> mbitv;
+    AutoPtr<bu_bitv, void, bu_bitv_free> mbitv;
 
     if (mode == RT_BOT_PLATE) {
 	const fastf_t PLATE_THICKNESS = 1;
@@ -995,38 +1048,35 @@ RhinoConverter::create_mesh(ON_Mesh mesh,
     }
 
     if (mesh.m_FN.Count() != mesh.m_F.Count()) {
-	int ret = mk_bot(m_db, mesh_name.c_str(), mode, orientation, 0,
-			 num_vertices, num_faces, &vertices[0], &faces[0],
-			 thicknesses.empty() ? NULL : &thicknesses[0],
-			 mbitv.ptr);
+	const int ret = mk_bot(m_db, mesh_name.c_str(), mode, orientation, 0,
+			       num_vertices, num_faces, &vertices[0], &faces[0],
+			       thicknesses.empty() ? NULL : &thicknesses[0],
+			       mbitv.ptr);
 
-	check_return(ret, "mk_bot()");
+	if (ret)
+	    throw std::runtime_error("mk_bot() failed");
     } else {
 	mesh.UnitizeFaceNormals();
 	std::vector<fastf_t> normals(num_faces * 3);
 
 	for (std::size_t i = 0; i < num_faces; ++i) {
-	    const ON_3fVector &vec = mesh.m_FN[static_cast<int>(i)];
-	    normals[i * 3] = vec.x;
-	    normals[i * 3 + 1] = vec.y;
-	    normals[i * 3 + 2] = vec.z;
+	    const ON_3fVector &current_normal = mesh.m_FN[static_cast<int>(i)];
+	    VMOVE(&normals[i * 3], current_normal);
 	}
 
 	std::vector<int> face_normals(num_faces * 3);
 
-	for (std::size_t i = 0; i < num_faces; ++i) {
-	    face_normals[i * 3] = static_cast<int>(i);
-	    face_normals[i * 3 + 1] = static_cast<int>(i);
-	    face_normals[i * 3 + 2] = static_cast<int>(i);
-	}
+	for (std::size_t i = 0; i < num_faces; ++i)
+	    VSETALL(&face_normals[i * 3], static_cast<int>(i));
 
-	int ret = mk_bot_w_normals(m_db, mesh_name.c_str(), mode, orientation,
-				   RT_BOT_HAS_SURFACE_NORMALS | RT_BOT_USE_NORMALS,
-				   num_vertices, num_faces, &vertices[0], &faces[0],
-				   thicknesses.empty() ? NULL : &thicknesses[0],
-				   mbitv.ptr, num_faces, &normals[0], &face_normals[0]);
+	const int ret = mk_bot_w_normals(m_db, mesh_name.c_str(), mode, orientation,
+					 RT_BOT_HAS_SURFACE_NORMALS | RT_BOT_USE_NORMALS,
+					 num_vertices, num_faces, &vertices[0], &faces[0],
+					 thicknesses.empty() ? NULL : &thicknesses[0],
+					 mbitv.ptr, num_faces, &normals[0], &face_normals[0]);
 
-	check_return(ret, "mk_bot_w_normals()");
+	if (ret)
+	    throw std::runtime_error("mk_bot_w_normals() failed");
     }
 
     create_geom_comb(mesh_attrs);
@@ -1066,7 +1116,7 @@ RhinoConverter::create_all_objects()
     }
 
     if (num_created != num_objects)
-	m_log.Print("Created %d of %d objects\n", num_created, num_objects);
+	m_log.Print("Created %d of %d objects.\n", num_created, num_objects);
 }
 
 
@@ -1104,7 +1154,94 @@ RhinoConverter::create_object(const ON_Object &object,
 }
 
 
-#endif //OBJ_BREP
+int
+main(int argc, char **argv)
+{
+    static const char * const usage =
+	"Usage: 3dm-g [-v] [-r] [-u] -o output_file.g input_file.3dm\n";
+
+    bool verbose_mode = false;
+    bool random_colors = false;
+    bool use_uuidnames = false;
+    const char *output_path = NULL;
+    const char *input_path;
+
+    int c;
+
+    while ((c = bu_getopt(argc, argv, "o:dvt:s:ruh?")) != -1) {
+	switch (c) {
+	    case 's':	/* scale factor */
+		break;
+
+	    case 'o':	/* specify output file name */
+		output_path = bu_optarg;
+		break;
+
+	    case 'd':	/* debug */
+		break;
+
+	    case 't':	/* tolerance */
+		break;
+
+	    case 'v':	/* verbose */
+		verbose_mode = true;
+		break;
+
+	    case 'r':  /* randomize colors */
+		random_colors = true;
+		break;
+
+	    case 'u':
+		use_uuidnames = true;
+		break;
+
+	    default:
+		std::cerr << usage;
+		return 1;
+	}
+    }
+
+    if (bu_optind == argc || !output_path) {
+	std::cerr << usage;
+	return 1;
+    }
+
+    input_path = argv[bu_optind];
+
+    try {
+	RhinoConverter converter(output_path, verbose_mode);
+	converter.write_model(input_path, use_uuidnames, random_colors);
+    } catch (const std::logic_error &e) {
+	std::cerr << "Conversion failed: " << e.what() << '\n';
+	return 1;
+    } catch (const std::runtime_error &e) {
+	std::cerr << "Conversion failed: " << e.what() << '\n';
+	return 1;
+    }
+
+    return 0;
+}
+
+
+#else
+
+
+#include "common.h"
+
+#include <iostream>
+
+
+int
+main()
+{
+    std::cerr <<
+	      "ERROR: Boundary Representation object support is not available"
+	      "with this compilation of BRL-CAD.\n";
+    return 1;
+}
+
+
+#endif
 
 // Local Variables:
 // tab-width: 8
