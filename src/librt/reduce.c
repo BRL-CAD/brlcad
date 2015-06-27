@@ -93,7 +93,6 @@ _rt_obj_reduce_bot(struct rt_db_internal *dest,
     result = rt_bot_merge(1, (const struct rt_bot_internal * const *)&bot);
 
     /* reduce */
-    rt_bot_decimate(result, max_chord_error, max_normal_error, min_edge_length);
     {
 	struct bn_tol tol = BN_TOL_INIT_ZERO;
 	tol.dist = max_chord_error;
@@ -103,6 +102,7 @@ _rt_obj_reduce_bot(struct rt_db_internal *dest,
     }
     rt_bot_face_fuse(result);
     rt_bot_condense(result);
+    rt_bot_decimate(result, max_chord_error, max_normal_error, min_edge_length);
 
     /* store result */
     dest->idb_major_type = DB5_MAJORTYPE_BRLCAD;
