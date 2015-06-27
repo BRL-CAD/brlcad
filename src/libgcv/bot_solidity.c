@@ -72,10 +72,13 @@ halfedge_compare(const void  *pleft, const void *pright)
 HIDDEN struct halfedge *
 generate_edge_list(const struct rt_bot_internal *bot)
 {
-    const size_t num_edges = 3 * bot->num_faces;
+    size_t num_edges;
     struct halfedge *edge_list;
     size_t face_index, edge_index;
 
+    RT_BOT_CK_MAGIC(bot);
+
+    num_edges = 3 * bot->num_faces;
     edge_list = (struct halfedge *)bu_calloc(num_edges, sizeof(struct halfedge),
 		"edge_list");
 
@@ -102,9 +105,13 @@ generate_edge_list(const struct rt_bot_internal *bot)
 int
 gcv_bot_is_solid(const struct rt_bot_internal *bot)
 {
-    const size_t num_edges = 3 * bot->num_faces;
+    size_t num_edges;
     struct halfedge *edge_list;
     size_t i;
+
+    RT_BOT_CK_MAGIC(bot);
+
+    num_edges = 3 * bot->num_faces;
 
     if (bot->num_faces < 4 || bot->num_vertices < 4 || num_edges % 2)
 	return 0;
@@ -141,9 +148,13 @@ gcv_bot_is_solid(const struct rt_bot_internal *bot)
 int
 gcv_bot_is_closed_fan(const struct rt_bot_internal *bot)
 {
-    const size_t num_edges = 3 * bot->num_faces;
+    size_t num_edges;
     struct halfedge *edge_list;
     size_t i;
+
+    RT_BOT_CK_MAGIC(bot);
+
+    num_edges = 3 * bot->num_faces;
 
     if (bot->num_faces < 4 || bot->num_vertices < 4 || num_edges % 2)
 	return 0;
@@ -174,9 +185,13 @@ gcv_bot_is_closed_fan(const struct rt_bot_internal *bot)
 int
 gcv_bot_is_orientable(const struct rt_bot_internal *bot)
 {
-    const size_t num_edges = 3 * bot->num_faces;
+    size_t num_edges;
     struct halfedge *edge_list;
     size_t i;
+
+    RT_BOT_CK_MAGIC(bot);
+
+    num_edges = 3 * bot->num_faces;
 
     if (bot->num_faces < 4 || bot->num_vertices < 4)
 	return 0;
