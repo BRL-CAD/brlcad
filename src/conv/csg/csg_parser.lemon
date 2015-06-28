@@ -43,26 +43,49 @@
 %left GROUP_BEGIN.
 %left GROUP_CONTENT.
 %left GROUP_END.
+%left LB RB.
+%left LSB RSB.
 
 /* Initial, simple grammar, just for testing  */
 
 start_symbol ::= code.
 code ::= groupb.
-groupb ::= groupb group_content group_end.
 
-groupb::= GROUP_BEGIN.
-{
-  fprintf(appData->outfile, "we found group() {\n");
-}
+groupb ::= GROUP_BEGIN  group_content GROUP_END.
+{printf("group() { something }\n");}
 
-groupb ::= .
+group_content ::= function LCURLY group_content GROUP_END.
+{printf("function_name( parameters ) { something } \n");}
+group_content ::= function.
+{printf("function_name( parameters );\n");}
+group_content ::= groupb.
 
-group_content ::= GROUP_CONTENT .
-{
-  fprintf(appData->outfile, "inside group() we found a function\n");
-}
+function ::= TEXT LB param_list RB.
+{printf("function_name( parameters )\n");}
 
-group_end ::= GROUP_END.
-{
-  fprintf(appData->outfile, "we found the end of group()\n");
-}
+param_list ::= param_list assign.
+{printf("parameters , text = something\n");}
+param_list ::= array_of_vectors.
+{printf("[[  ],[  ],...]\n");}
+param_list ::= .
+
+assign ::= TEXT EQ expr.
+{printf("text = X\n");}
+
+expr ::= array_of_vectors.
+{printf("X can be an array_of_vectors\n");}
+expr ::= INTEGER.
+{printf("X can be an INTEGER\n");}
+expr ::= TEXT.
+{printf("X can be also text\n");}
+
+array_of_vectors ::= LSB vecs.
+{printf("[ something\n");}
+vecs ::= vector vecs.
+vecs ::= RSB.
+{printf("something ]\n");}
+
+vector ::= LSB INTEGER INTEGER INTEGER RSB.
+{printf("[ int int int ]\n");}
+vector ::= LSB INTEGER INTEGER INTEGER INTEGER RSB.
+{printf("[ int int int int ]\n");}

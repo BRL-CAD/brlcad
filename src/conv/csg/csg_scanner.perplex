@@ -40,10 +40,22 @@ enum {INITIAL, code};
 %%
 <> => code { continue; }
 
+integer = [1-9][0-9]*;
+
+lb = "(";
+rb = ")";
+lsb = "[";  // left square bracket
+rsb = "]";  // right square bracket
+lcurly = "{";
+eq = "=";
+
 optional_ws = [ \t]*;
+
 group_begin = "group() {";
-group_content = [a-z]+ "("*")";
+text = [a-z]+;
 group_end = "}";
+
+
 
 <code>  {
 (group_begin) {
@@ -51,15 +63,49 @@ group_end = "}";
     return GROUP_BEGIN;
     }
 
-(optional_ws)(group_content) {
-     YYSETCONDITION(code);
-     return GROUP_CONTENT;
+(optional_ws)(text) {
+	  return TEXT;
     }
-
+			
 (optional_ws)(group_end) {
      YYSETCONDITION(code);
      return GROUP_END;
-	}
+	  }
+
+(optional_ws)(integer) {
+	   YYSETCONDITION(code);
+		 return INTEGER;
+    }
+
+(optional_ws)(lb) {
+		YYSETCONDITION(code);
+		return LB;
+		}
+
+(optional_ws)(rb) {
+		YYSETCONDITION(code);
+		return RB;
+		}
+
+(optional_ws)(lsb) {
+		YYSETCONDITION(code);
+		return LSB;
+		}
+
+(optional_ws)(rsb) {
+		YYSETCONDITION(code);
+		return RSB;
+		}
+
+(optional_ws)(eq) {
+		YYSETCONDITION(code);
+		return EQ;
+		}
+
+(optional_ws)(lcurly) {
+		YYSETCONDITION(code);
+		return LCURLY;
+		}
+
 [^] { continue; }
 }
-
