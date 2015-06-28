@@ -35,6 +35,7 @@
 #include <map>
 #include <set>
 #include <sstream>
+#include <stdexcept>
 #include <vector>
 
 /* implementation headers */
@@ -1028,7 +1029,7 @@ RhinoConverter::create_mesh(ON_Mesh mesh,
 
     unsigned char mode;
     {
-	rt_bot_internal bot = {};
+	rt_bot_internal bot;
 	bot.magic = RT_BOT_INTERNAL_MAGIC;
 	bot.orientation = orientation;
 	bot.num_faces = num_faces;
