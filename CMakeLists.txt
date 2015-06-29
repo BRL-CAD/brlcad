@@ -3271,7 +3271,6 @@ execute_process(COMMAND ${CMAKE_COMMAND} -E compare_files
   DIFF_ERROR)
 if(IS_CONFIG_SH_DIFFERENT)
   message(FATAL_ERROR "\n${BRLCAD_SOURCE_DIR}/configure is out of date. An updated version has been generated at ${BRLCAD_BINARY_DIR}/configure.new\nTo clear this warning, replace ${BRLCAD_SOURCE_DIR}/configure with ${BRLCAD_BINARY_DIR}/configure.new\n")
-endif(LOCKED_SOURCE_DIR)
 endif(IS_CONFIG_SH_DIFFERENT)
 
 
