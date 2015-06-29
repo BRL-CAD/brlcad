@@ -89,40 +89,53 @@ static int inches = 0;
 static int print_help = 0;
 
 static int
-parse_tol_abs(struct bu_vls *UNUSED(error_msg), int UNUSED(argc), const char **argv, void *UNUSED(set_var))
+parse_tol_abs(struct bu_vls *error_msg, int argc, const char **argv, void *UNUSED(set_var))
 {
-    ttol.abs = atof(argv[0]);
+    int ret;
+    BU_OPT_CHECK_ARGV0(error_msg, argc, argv, "absolute tolerance");
+
+    ret = bu_opt_fastf_t(error_msg, argc, argv, (void *)&(ttol.abs));
     ttol.rel = 0.0;
-    return 1;
+    return ret;
 }
 
 static int
-parse_tol_norm(struct bu_vls *UNUSED(error_msg), int UNUSED(argc), const char **argv, void *UNUSED(set_var))
+parse_tol_norm(struct bu_vls *error_msg, int argc, const char **argv, void *UNUSED(set_var))
 {
-    ttol.norm = atof(argv[0]);
+    int ret;
+    BU_OPT_CHECK_ARGV0(error_msg, argc, argv, "normal tolerance");
+
+    ret = bu_opt_fastf_t(error_msg, argc, argv, (void *)&(ttol.norm));
     ttol.rel = 0.0;
-    return 1;
+    return ret;
 }
 
 static int
-parse_tol_dist(struct bu_vls *UNUSED(error_msg), int UNUSED(argc), const char **argv, void *UNUSED(set_var))
+parse_tol_dist(struct bu_vls *error_msg, int argc, const char **argv, void *UNUSED(set_var))
 {
-    tol.dist = atof(argv[0]);
+    int ret;
+    BU_OPT_CHECK_ARGV0(error_msg, argc, argv, "distance tolerance");
+
+    ret = bu_opt_fastf_t(error_msg, argc, argv, (void *)&(tol.dist));
     tol.dist_sq = tol.dist * tol.dist;
     rt_pr_tol(&tol);
-    return 1;
+    return ret;
 }
 
 static int
-parse_debug_rt(struct bu_vls *UNUSED(error_msg), int UNUSED(argc), const char **argv, void *UNUSED(set_var))
+parse_debug_rt(struct bu_vls *error_msg, int argc, const char **argv, void *UNUSED(set_var))
 {
+    BU_OPT_CHECK_ARGV0(error_msg, argc, argv, "debug rt");
+
     sscanf(argv[0], "%x", (unsigned int *)&RTG.debug);
     return 1;
 }
 
 static int
-parse_debug_nmg(struct bu_vls *UNUSED(error_msg), int UNUSED(argc), const char **argv, void *UNUSED(set_var))
+parse_debug_nmg(struct bu_vls *error_msg, int argc, const char **argv, void *UNUSED(set_var))
 {
+    BU_OPT_CHECK_ARGV0(error_msg, argc, argv, "debug nmg");
+
     sscanf(argv[0], "%x", (unsigned int *)&RTG.NMG_debug);
     NMG_debug = RTG.NMG_debug;
     return 1;

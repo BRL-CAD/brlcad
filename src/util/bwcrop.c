@@ -81,6 +81,12 @@ init_buffer(int len)
     if (max > 4096) max = 4096;
 
     buflines = max;
+
+    if (max < scanlen)
+	buflines = max;
+    else
+	buflines = scanlen;
+
     buffer = (unsigned char *)bu_malloc(buflines * len, "buffer");
 }
 

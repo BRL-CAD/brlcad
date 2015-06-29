@@ -33,10 +33,7 @@ set(docbook_man5_EN
 DOCBOOK_TO_HTML(man5 docbook_man5_EN html/man5/en "${attributes_DEPS}")
 DOCBOOK_TO_PHP(man5 docbook_man5_EN html/man5/en "${attributes_DEPS}")
 DOCBOOK_TO_MAN(man5 docbook_man5_EN 5 5 man5 "${attributes_DEPS}")
-
-if(BRLCAD_EXTRADOCS_PDF_MAN)
-  DOCBOOK_TO_PDF(man5 docbook_man5_EN pdf/man5/en "${attributes_DEPS}")
-endif(BRLCAD_EXTRADOCS_PDF_MAN)
+DOCBOOK_TO_PDF(man5 docbook_man5_EN pdf/man5/en "${attributes_DEPS}")
 
 add_dependencies(attributes_man5_html attr_std_list_xml attr_std_table_xml)
 

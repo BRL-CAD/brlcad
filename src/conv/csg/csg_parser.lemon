@@ -38,29 +38,55 @@
 %token_type {token_t *}
 %extra_argument {app_data_t *appData}
 
-/* priorities , not sure if this is how is intended to be used */
+%left LCURLY GROUP_END.
+%left LSB RSB.
+%left LB RB.
 
-%left GROUP_BEGIN.
-%left GROUP_CONTENT.
-%left GROUP_END.
+start_symbol ::= code.
+code ::= groupb.
+
+groupb ::= GROUP_BEGIN  group_content GROUP_END.
+{printf("group() { something }\n");}
+group_content ::= groupb.
+group_content ::= .
+group_content ::= entry group_content.
+{printf("entry\n");}
+
+entry ::= TEXT LB params RB LCURLY ceva GROUP_END.
+{printf("function_name( parameters ){smth}\n");}
+ceva ::= entry.
+{printf("{function_name( parameters ){smth}}\n");}
+ceva ::= .
+{printf("function_name( parameters ){}\n");}
+
+params ::=  param_type params.
+{printf("param\n");}
+params ::= .
+{printf("no param\n");}
+
+param_type ::= assign.
+{printf("param type = assign\n");}
+param_type ::= array_of_vectors.
+{printf("param type = array_of_vectors\n");}
+
+assign ::= TEXT EQ expr.
+{printf("text = X\n");}
+
+expr ::= array_of_vectors.
+{printf("X from the assign is array_of_vectors\n");}
+expr ::= INTEGER.
+{printf("X from the assign is INTEGER\n");}
+expr ::= TEXT.
+{printf("X from the assign is text\n");}
 
 
-/* I believe here I get the compiling error */
-start_symbol ::= block.
+array_of_vectors ::= LSB vecs.
+{printf("[ something\n");}
+vecs ::= vector vecs.
+vecs ::= RSB.
+{printf("something ]\n");}
 
-//source ::= /* empty */.
-
-/* Initial, simple grammar, just for testing  */
-block ::= code.
-code ::= group_begin.
-{
-  fprintf(appData->outfile, "we found group() {\n");
-}
-group_begin ::= GROUP_BEGIN group_content.
-{
-  fprintf(appData->outfile, "in group(), we found %s ",bu_vls_addr(&appData->description));
-}
-group_content ::= GROUP_END.
-{
-  fprintf(appData->outfile, "we found the end of group()");
-}
+vector ::= LSB INTEGER INTEGER INTEGER RSB.
+{printf("[ int int int ]\n");}
+vector ::= LSB INTEGER INTEGER INTEGER INTEGER RSB.
+{printf("[ int int int int ]\n");}

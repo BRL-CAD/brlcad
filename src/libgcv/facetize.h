@@ -1,7 +1,7 @@
-/*                          C O N F I G _ W I N . H
+/*                      F A C E T I Z E . H
  * BRL-CAD
  *
- * Copyright (c) 1993-2014 United States Government as represented by
+ * Copyright (c) 2015 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -17,42 +17,33 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @addtogroup fixme */
-/** @{ */
-/** @file config_win.h
+/** @file facetize.h
  *
- * This file is used for compilation on the Windows platform in place
- * of using the auto-generated brlcad_config.h header.
+ * Convenience functions for facetization.
  *
  */
 
-#ifndef IGNORE_CONFIG_H
-#if defined(_WIN32)
 
-#include <fcntl.h>
-#include <errno.h>
+#include "common.h"
 
-/*
- * Ensure that Project Settings / Project Options includes
- *	/Za		for ANSI C
- */
+#include "gcv.h"
 
-/* !!! this should not be here, need to figure out what the
- * problem is trying to build with /Za */
-#define __STDC__ 1
 
-# if !__STDC__
-#	error "STDC is not properly set on WIN32 build, add /Za to Project Settings / Project Options"
-# endif
+__BEGIN_DECLS
 
-#endif /* if defined(_WIN32) */
-#endif /* ifndef IGNORE_CONFIG_H */
 
-/** @} */
+struct rt_bot_internal *gcv_facetize(struct db_i *db,
+				     const struct db_full_path *path, const struct bn_tol *tol,
+				     const struct rt_tess_tol *tess_tol);
+
+
+__END_DECLS
+
+
 /*
  * Local Variables:
- * mode: C
  * tab-width: 8
+ * mode: C
  * indent-tabs-mode: t
  * c-file-style: "stroustrup"
  * End:

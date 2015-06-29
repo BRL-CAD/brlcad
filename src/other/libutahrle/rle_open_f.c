@@ -24,6 +24,10 @@
 #endif
 #include <errno.h>
 
+#if defined(__MINGW32__)
+#define NO_OPEN_PIPES
+#endif
+
 /* Count outstanding children.  Assume no more than 100 possible. */
 #define MAX_CHILDREN 100
 static int catching_children = 0;

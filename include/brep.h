@@ -1424,12 +1424,13 @@ struct subbrep_object_data {
     int negative_shape;
     ON_BoundingBox *bbox;
     int bbox_set;
+    int obj_id;
 };
 
 extern BREP_EXPORT void subbrep_object_free(struct subbrep_object_data *obj);
-extern BREP_EXPORT struct bu_ptbl *find_subbreps(const ON_Brep *brep);
-extern BREP_EXPORT struct bu_ptbl *find_top_level_hierarchy(struct bu_ptbl *subbreps);
-extern BREP_EXPORT int subbrep_polygon_tri(const ON_Brep *brep, const point_t *all_verts, int *loops, int loop_cnt, int **ffaces);
+extern BREP_EXPORT struct bu_ptbl *find_subbreps(struct bu_vls *msgs, const ON_Brep *brep);
+extern BREP_EXPORT struct bu_ptbl *find_top_level_hierarchy(struct bu_vls *msgs, struct bu_ptbl *subbreps);
+extern BREP_EXPORT int subbrep_polygon_tri(struct bu_vls *msgs, const ON_Brep *brep, const point_t *all_verts, int *loops, int loop_cnt, int **ffaces);
 
 
 } /* extern C++ */

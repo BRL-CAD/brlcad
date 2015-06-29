@@ -250,6 +250,7 @@ set(LIBRT_SOURCES
   primitives/vol/vol_brep.cpp
   primitives/vol/vol_mirror.c
   primitives/xxx/xxx.c
+  reduce.c
   regionfix.c
   roots.c
   screened_poisson.cpp

@@ -35,35 +35,78 @@
 
 /* condition states - no idea what this enum does but I modified it according
 to what I used below */
-enum {INITIAL, code, group, group_in};
+enum {INITIAL, code};
 
 %%
 <> => code { continue; }
 
-/* matching group() { , functions inside group() and the end of group() */
+integer = [1-9][0-9]*;
+
+lb = "(";
+rb = ")";
+lsb = "[";  // left square bracket
+rsb = "]";  // right square bracket
+
+lcurly = "{";
+eq = "=";
 
 optional_ws = [ \t]*;
 
 group_begin = "group() {";
-group_content = [a-z]+ "("*")";
+text = [a-z]+;
 group_end = "}";
 
-/* returning the tokens found, not sure if correct or not */
+
+
 <code>  {
 (optional_ws)(group_begin) {
+	YYSETCONDITION(code);
     return GROUP_BEGIN;
-  }
-}
+    }
 
-<group> {
-(optional_ws)(group_content) {
+(optional_ws)(text) {
+	  return TEXT;
+    }
+
+(optional_ws)(group_end) {
      YYSETCONDITION(code);
-     return GROUP_CONTENT;
-   }
-}
-<group_in> {
-  (optional_ws)(group_end) {
-     YYSETCONDITION(group);
      return GROUP_END;
-}
+	  }
+
+(optional_ws)(integer) {
+	   YYSETCONDITION(code);
+		 return INTEGER;
+    }
+
+(optional_ws)(lb) {
+		YYSETCONDITION(code);
+		return LB;
+		}
+
+(optional_ws)(rb) {
+		YYSETCONDITION(code);
+		return RB;
+		}
+
+(optional_ws)(lsb) {
+		YYSETCONDITION(code);
+		return LSB;
+		}
+
+(optional_ws)(rsb) {
+		YYSETCONDITION(code);
+		return RSB;
+		}
+
+(optional_ws)(eq) {
+		YYSETCONDITION(code);
+		return EQ;
+		}
+
+(optional_ws)(lcurly) {
+		YYSETCONDITION(code);
+		return LCURLY;
+		}
+
+[^] { continue; }
 }

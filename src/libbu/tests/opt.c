@@ -539,9 +539,8 @@ dc_color(struct bu_vls *msg, int argc, const char **argv, void *set_c)
 {
     struct bu_color *set_color = (struct bu_color *)set_c;
     unsigned int rgb[3];
-    if (!argv || !argv[0] || strlen(argv[0]) == 0 || argc == 0) {
-	return -1;
-    }
+
+    BU_OPT_CHECK_ARGV0(msg, argc, argv, "color");
 
     /* First, see if the first string converts to rgb */
     if (!bu_str_to_rgb((char *)argv[0], (unsigned char *)&rgb)) {
