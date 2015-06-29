@@ -125,7 +125,7 @@ rt_obj_reduce(struct rt_db_internal *dest,
 
     reduction_level = FMAX(0.0, FMIN(1.0, reduction_level));
 
-    if (internal->idb_major_type != DB5_MAJORTYPE_BRLCAD)
+    if (internal->idb_major_type == DB5_MAJORTYPE_BRLCAD)
 	switch (internal->idb_minor_type) {
 	    case ID_BOT: {
 		const struct rt_bot_internal *bot = (struct rt_bot_internal *)internal->idb_ptr;
