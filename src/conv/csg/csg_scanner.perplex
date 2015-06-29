@@ -46,6 +46,7 @@ lb = "(";
 rb = ")";
 lsb = "[";  // left square bracket
 rsb = "]";  // right square bracket
+
 lcurly = "{";
 eq = "=";
 
@@ -58,7 +59,7 @@ group_end = "}";
 
 
 <code>  {
-(group_begin) {
+(optional_ws)(group_begin) {
 	YYSETCONDITION(code);
     return GROUP_BEGIN;
     }
@@ -66,7 +67,7 @@ group_end = "}";
 (optional_ws)(text) {
 	  return TEXT;
     }
-			
+
 (optional_ws)(group_end) {
      YYSETCONDITION(code);
      return GROUP_END;
