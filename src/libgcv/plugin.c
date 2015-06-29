@@ -75,9 +75,10 @@ gcv_plugin_free(struct gcv_plugin *entry)
 HIDDEN int
 gcv_extension_match(const char *path, const char *extension)
 {
-    path = strrchr(path, '.');
+    if (!(path = strrchr(path, '.')))
+	return 0;
 
-    if (!path++) return 0;
+    ++path;
 
     while (1) {
 	const char * const next = strchr(extension, ';');

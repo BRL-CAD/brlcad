@@ -53,23 +53,28 @@ ged_gdiff(struct ged *gedp, int argc, const char *argv[])
     int view_left = 0;
     int view_right = 0;
     int view_overlap = 0;
+    int grazereport = 0;
     const char *left_obj;
     const char *right_obj;
     fastf_t len_tol = BN_TOL_DIST;
     int ret_ac = 0;
+    /* Skip command name */
+    int ac = argc - 1;
+    const char **av = argv+1;
 
-    struct bu_opt_desc d[6];
+    struct bu_opt_desc d[7];
     BU_OPT(d[0], "t", "tol",      "#", &bu_opt_fastf_t, (void *)&len_tol, "Tolerance")
     BU_OPT(d[1], "R", "ray-diff", "", NULL, (void *)&do_diff_raytrace, "Test for differences with raytracing")
     BU_OPT(d[2], "l", "view-left", "", NULL, (void *)&view_left, "Visualize volumes added only by left object")
     BU_OPT(d[3], "b", "view-both", "", NULL, (void *)&view_overlap, "Visualize volumes common to both objects")
     BU_OPT(d[4], "r", "view-right", "", NULL, (void *)&view_right, "Visualize volumes added only by right object")
-    BU_OPT_NULL(d[5]);
+    BU_OPT(d[5], "G", "grazing",    "", NULL, (void *)&grazereport, "Report differences in grazing hits (raytracing mode)")
+    BU_OPT_NULL(d[6]);
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
-    ret_ac = bu_opt_parse(NULL, argc-1, argv+1, d);
+    ret_ac = bu_opt_parse(NULL, ac, av, d);
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
@@ -78,8 +83,8 @@ ged_gdiff(struct ged *gedp, int argc, const char *argv[])
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s", gdiff_usage());
 	return GED_ERROR;
     } else {
-	left_obj = argv[0];
-	right_obj = argv[1];
+	left_obj = av[0];
+	right_obj = av[1];
     }
 
     tol.dist = len_tol;
@@ -138,7 +143,13 @@ ged_gdiff(struct ged *gedp, int argc, const char *argv[])
     bu_log("right: %s", argv[bu_optind+1]);
     */
     if (do_diff_raytrace) {
-	analyze_raydiff(&results, gedp->ged_wdbp->dbip, left_obj, right_obj, &tol);
+	if (db_lookup(gedp->ged_wdbp->dbip, left_obj, LOOKUP_NOISY) == RT_DIR_NULL) {
+	    return GED_ERROR;
+	}
+	if (db_lookup(gedp->ged_wdbp->dbip, right_obj, LOOKUP_NOISY) == RT_DIR_NULL) {
+	    return GED_ERROR;
+	}
+	analyze_raydiff(&results, gedp->ged_wdbp->dbip, left_obj, right_obj, &tol, !grazereport);
 
 	/* TODO - may want to integrate with a "regular" diff and report intelligently.  Needs
 	 * some thought. */

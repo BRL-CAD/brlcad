@@ -26,7 +26,6 @@
 
 #include "common.h"
 
-#include <algorithm>
 #include <fstream>
 #include <iomanip>
 #include <set>
@@ -34,6 +33,7 @@
 #include <stdexcept>
 #include <map>
 
+#include "rt/func.h"
 #include "../../plugin.h"
 
 
@@ -44,7 +44,7 @@ namespace
 static const fastf_t INCHES_PER_MM = 1.0 / 25.4;
 
 
-template <typename T> HIDDEN inline void
+template <typename T> inline void
 autoptr_wrap_bu_free(T *ptr)
 {
     bu_free(ptr, "AutoPtr");
@@ -77,6 +77,7 @@ private:
 };
 
 
+// Assignable/CopyConstructible for use with STL containers.
 template <typename T>
 class Triple
 {
@@ -131,6 +132,19 @@ color_from_floats(const float *float_color)
 }
 
 
+HIDDEN bool
+mat_equal(const mat_t vmat_a, const mat_t vmat_b, const bn_tol &tol)
+{
+    BN_CK_TOL(&tol);
+
+    const mat_t identity = MAT_INIT_IDN;
+    const fastf_t * const mat_a = vmat_a ? vmat_a : identity;
+    const fastf_t * const mat_b = vmat_b ? vmat_b : identity;
+
+    return bn_mat_is_equal(mat_a, mat_b, &tol);
+}
+
+
 class DBInternal
 {
 public:
@@ -142,6 +156,7 @@ public:
 
     void load(const db_i &db, const directory &dir);
     const rt_db_internal &get() const;
+    rt_db_internal &get();
 
 
 private:
@@ -201,13 +216,23 @@ DBInternal::load(const db_i &db, const directory &dir)
     if (rt_db_get_internal(&m_internal, &dir, &db, NULL, &rt_uniresource) < 0)
 	throw std::runtime_error("rt_db_get_internal() failed");
 
-    RT_CK_DB_INTERNAL(&m_internal);
     m_valid = true;
+    RT_CK_DB_INTERNAL(&m_internal);
 }
 
 
 const rt_db_internal &
 DBInternal::get() const
+{
+    if (!m_valid)
+	throw std::logic_error("invalid");
+
+    return m_internal;
+}
+
+
+rt_db_internal &
+DBInternal::get()
 {
     if (!m_valid)
 	throw std::logic_error("invalid");
@@ -354,6 +379,7 @@ RecordWriter::Record::truncate_float(fastf_t value)
     const std::size_t end_digit = result.find_last_not_of('0');
     const std::size_t end_point = result.find('.');
 
+    // remove redundant trailing zeros
     result.erase(std::max(end_point + 2, end_digit + 1));
 
     if (end_point >= result.size() - 1)
@@ -370,9 +396,11 @@ RecordWriter::write_comment(const std::string &value)
 }
 
 
+// simple way to order records properly within the output file
 class StringBuffer : public RecordWriter
 {
 public:
+    StringBuffer();
     void write(RecordWriter &writer) const;
 
 
@@ -383,6 +411,12 @@ protected:
 private:
     std::ostringstream m_ostringstream;
 };
+
+
+inline
+StringBuffer::StringBuffer() :
+    m_ostringstream()
+{}
 
 
 inline void
@@ -404,7 +438,7 @@ StringBuffer::get_ostream()
 class FastgenWriter : public RecordWriter
 {
 public:
-    typedef std::pair<std::size_t, std::size_t> SectionID;
+    typedef std::pair<std::size_t, std::size_t> SectionID; // group, component
 
     explicit FastgenWriter(const std::string &path);
     ~FastgenWriter();
@@ -419,6 +453,8 @@ public:
 
     SectionID take_next_section_id();
 
+    RecordWriter &get_section_writer();
+
 
 protected:
     virtual std::ostream &get_ostream();
@@ -429,11 +465,13 @@ private:
     static const std::size_t MAX_SECTION_ID = 999;
 
     std::size_t m_next_section_id[MAX_GROUP_ID + 1];
+    StringBuffer m_sections;
     std::ofstream m_ostream, m_colors_ostream;
 };
 
 
 FastgenWriter::FastgenWriter(const std::string &path) :
+    m_sections(),
     m_ostream(path.c_str(), std::ofstream::out),
     m_colors_ostream((path + ".colors").c_str(), std::ofstream::out)
 {
@@ -448,6 +486,7 @@ FastgenWriter::FastgenWriter(const std::string &path) :
 inline
 FastgenWriter::~FastgenWriter()
 {
+    m_sections.write(*this);
     Record(*this) << "ENDDATA";
 }
 
@@ -472,6 +511,13 @@ FastgenWriter::take_next_section_id()
 }
 
 
+inline RecordWriter &
+FastgenWriter::get_section_writer()
+{
+    return m_sections;
+}
+
+
 void
 FastgenWriter::write_section_color(const SectionID &section_id,
 				   const Color &color)
@@ -487,8 +533,7 @@ FastgenWriter::write_section_color(const SectionID &section_id,
 FastgenWriter::SectionID
 FastgenWriter::write_compsplt(const SectionID &id, fastf_t z_coordinate)
 {
-    // FIXME this record should go before any section records
-    SectionID result = take_next_section_id();
+    const SectionID result = take_next_section_id();
 
     Record record(*this);
     record << "COMPSPLT" << id.first << id.second;
@@ -517,13 +562,14 @@ FastgenWriter::write_boolean(BooleanType type, const SectionID &section_a,
 }
 
 
+// stores grid IDs and reuses duplicate grid points when possible
 class GridManager
 {
 public:
     GridManager();
 
     // return a vector of grid IDs corresponding to the given points,
-    // with no duplicate indices in the returned vector.
+    // with no duplicate indices in the returned vector
     std::vector<std::size_t> get_unique_grids(const std::vector<Point> &points);
 
     void write(RecordWriter &writer) const;
@@ -575,14 +621,12 @@ GridManager::get_unique_grids(const std::vector<Point> &points)
 	temp.at(0) = m_next_grid_id;
 	std::pair<std::map<Point, std::vector<std::size_t>, PointComparator>::iterator, bool>
 	found = m_grids.insert(std::make_pair(points.at(i), temp));
+	results.at(i) = found.first->second.at(0);
 
 	if (found.second) {
 	    ++m_next_grid_id;
-	    results.at(i) = found.first->second.at(0);
 	    continue;
 	}
-
-	results.at(i) = found.first->second.at(0);
 
 	for (std::size_t j = 0, n = 0; j < i; ++j)
 	    if (results.at(j) == results.at(i)) {
@@ -595,9 +639,6 @@ GridManager::get_unique_grids(const std::vector<Point> &points)
 		    break;
 		}
 	    }
-
-	if (results.at(i) > MAX_GRID_POINTS)
-	    throw std::length_error("invalid grid ID");
     }
 
     return results;
@@ -607,6 +648,9 @@ GridManager::get_unique_grids(const std::vector<Point> &points)
 void
 GridManager::write(RecordWriter &writer) const
 {
+    if (m_next_grid_id - 1 > MAX_GRID_POINTS)
+	throw std::length_error("max grid points exceeded");
+
     for (std::map<Point, std::vector<std::size_t>, PointComparator>::const_iterator
 	 it = m_grids.begin(); it != m_grids.end(); ++it)
 	for (std::vector<std::size_t>::const_iterator id_it = it->second.begin();
@@ -623,14 +667,17 @@ GridManager::write(RecordWriter &writer) const
 class Section
 {
 public:
-    Section(const std::string &name, bool volume_mode);
+    Section(bool volume_mode);
 
     bool empty() const;
+    bool has_color() const;
+    Color get_color() const;
     void set_color(const Color &value);
-    void set_compsplt(fastf_t z_coordinate);
 
-    void write(FastgenWriter &writer) const;
+    void write(FastgenWriter &writer, const std::string &name,
+	       const FastgenWriter::SectionID &id) const;
 
+    // create a comment describing an element
     void write_name(const std::string &value);
 
     void write_line(const fastf_t *point_a, const fastf_t *point_b,
@@ -656,12 +703,10 @@ public:
 private:
     static const std::size_t MAX_NAME_SIZE = RecordWriter::Record::FIELD_WIDTH * 3;
 
-    const std::string m_name;
     const bool m_volume_mode;
     const std::size_t m_material_id;
 
-    std::pair<bool, Color> m_color;
-    std::pair<bool, fastf_t> m_compsplt;
+    std::pair<bool, Color> m_color; // optional color
 
     GridManager m_grids;
     StringBuffer m_elements;
@@ -669,12 +714,10 @@ private:
 };
 
 
-Section::Section(const std::string &name, bool volume_mode) :
-    m_name(name),
+Section::Section(bool volume_mode) :
     m_volume_mode(volume_mode),
     m_material_id(1),
     m_color(false, Color()),
-    m_compsplt(false, 0.0),
     m_grids(),
     m_elements(),
     m_next_element_id(1)
@@ -688,6 +731,23 @@ Section::empty() const
 }
 
 
+inline bool
+Section::has_color() const
+{
+    return m_color.first;
+}
+
+
+inline Color
+Section::get_color() const
+{
+    if (!has_color())
+	throw std::logic_error("no color information for this Section");
+
+    return m_color.second;
+}
+
+
 void
 Section::set_color(const Color &value)
 {
@@ -697,51 +757,33 @@ Section::set_color(const Color &value)
 
 
 void
-Section::set_compsplt(fastf_t z_coordinate)
+Section::write(FastgenWriter &writer, const std::string &name,
+	       const FastgenWriter::SectionID &id) const
 {
-    if (m_compsplt.first)
-	throw std::logic_error("already a COMPSPLT");
+    RecordWriter &sections = writer.get_section_writer();
 
-    m_compsplt.first = true;
-    m_compsplt.second = z_coordinate;
-}
-
-
-void
-Section::write(FastgenWriter &writer) const
-{
-    const FastgenWriter::SectionID id = writer.take_next_section_id();
-
-    if (m_compsplt.first) {
-	const FastgenWriter::SectionID split_id = writer.write_compsplt(id,
-		m_compsplt.second);
-
-	if (m_color.first)
-	    writer.write_section_color(split_id, m_color.second);
-    }
+    if (has_color())
+	writer.write_section_color(id, get_color());
 
     {
-	std::string new_name = m_name;
+	std::string short_name = name;
 
-	if (new_name.size() > MAX_NAME_SIZE) {
-	    writer.write_comment(new_name);
-	    new_name = "..." + new_name.substr(new_name.size() - MAX_NAME_SIZE + 3);
+	if (short_name.size() > MAX_NAME_SIZE) {
+	    sections.write_comment(short_name);
+	    short_name = "..." + short_name.substr(short_name.size() - MAX_NAME_SIZE + 3);
 	}
 
-	RecordWriter::Record record(writer);
+	RecordWriter::Record record(sections);
 	record << "$NAME" << id.first << id.second;
 	record << "" << "" << "" << "";
-	record.text(new_name);
+	record.text(short_name);
     }
 
-    RecordWriter::Record(writer) << "SECTION" << id.first << id.second <<
-				 (m_volume_mode ? 2 : 1);
+    RecordWriter::Record(sections)
+	    << "SECTION" << id.first << id.second << (m_volume_mode ? 2 : 1);
 
-    if (m_color.first)
-	writer.write_section_color(id, m_color.second);
-
-    m_grids.write(writer);
-    m_elements.write(writer);
+    m_grids.write(sections);
+    m_elements.write(sections);
 }
 
 
@@ -774,7 +816,7 @@ Section::write_line(const fastf_t *point_a, const fastf_t *point_b,
     record << "CLINE" << m_next_element_id << m_material_id << grids.at(
 	       0) << grids.at(1) << "" << "";
 
-    if (m_volume_mode)
+    if (m_volume_mode && NEAR_ZERO(thickness, RT_LEN_TOL))
 	record << thickness;
     else
 	record.non_zero(thickness);
@@ -946,11 +988,11 @@ get_face_info(const rt_bot_internal &bot, std::size_t i)
     // defaults
     std::pair<fastf_t, bool> result(1.0, true);
 
-    // fg4 does not allow zero thickness
+    // fastgen forbids a thickness of zero here
     // set a very small thickness if face thickness is zero
     if (bot.thickness)
 	result.first = !NEAR_ZERO(bot.thickness[i],
-				  RT_LEN_TOL) ? bot.thickness[i] : 2 * RT_LEN_TOL;
+				  RT_LEN_TOL) ? bot.thickness[i] : 2.0 * RT_LEN_TOL;
 
     if (bot.face_mode)
 	result.second = !BU_BITTEST(bot.face_mode, i);
@@ -1045,7 +1087,7 @@ ell_is_sphere(const rt_ell_internal &ell)
 
 
 // Determines whether a tgc can be represented by a CCONE2 object.
-// Assumes that tgc is a valid rt_tgc_internal.
+// Assumes that `tgc` is a valid rt_tgc_internal.
 HIDDEN bool
 tgc_is_ccone2(const rt_tgc_internal &tgc)
 {
@@ -1069,6 +1111,7 @@ tgc_is_ccone2(const rt_tgc_internal &tgc)
 	return false;
 
     {
+	// ensure unit vectors are equal
 	vect_t a_norm, b_norm, c_norm, d_norm;
 	VMOVE(a_norm, tgc.a);
 	VMOVE(b_norm, tgc.b);
@@ -1088,6 +1131,34 @@ tgc_is_ccone2(const rt_tgc_internal &tgc)
 }
 
 
+HIDDEN void
+path_to_mat(const db_i &db, const db_full_path &path, mat_t result)
+{
+    RT_CK_DBI(&db);
+    RT_CK_FULL_PATH(&path);
+
+    db_full_path temp;
+    db_full_path_init(&temp);
+    db_dup_full_path(&temp, &path);
+    AutoPtr<db_full_path, db_free_full_path> autofree_path(&temp);
+
+    if (!db_path_to_mat(const_cast<db_i *>(&db), &temp, result, 0, &rt_uniresource))
+	throw std::runtime_error("db_path_to_mat() failed");
+}
+
+
+HIDDEN void
+apply_path_xform(const db_i &db, const mat_t matrix, rt_db_internal &internal)
+{
+    RT_CK_DBI(&db);
+    RT_CK_DB_INTERNAL(&internal);
+
+    if (rt_obj_xform(&internal, matrix, &internal, 0, const_cast<db_i *>(&db),
+		     &rt_uniresource))
+	throw std::runtime_error("rt_obj_xform() failed");
+}
+
+
 HIDDEN const directory &
 get_parent_dir(const db_full_path &path)
 {
@@ -1100,39 +1171,62 @@ get_parent_dir(const db_full_path &path)
 }
 
 
-const directory *
+HIDDEN const db_full_path
+get_parent_path(const db_full_path &path)
+{
+    RT_CK_FULL_PATH(&path);
+
+    if (path.fp_len < 2)
+	throw std::invalid_argument("toplevel");
+
+    db_full_path temp = path;
+    DB_FULL_PATH_POP(&temp);
+    return temp;
+}
+
+
+// get the parent region's directory
+HIDDEN const directory &
 get_region_dir(const db_i &db, const db_full_path &path)
 {
     RT_CK_DBI(&db);
     RT_CK_FULL_PATH(&path);
 
-    for (std::size_t i = 0; i < path.fp_len; ++i) {
-	DBInternal comb_db_internal(db, *DB_FULL_PATH_GET(&path, i));
+    for (std::size_t i = 0; i < path.fp_len; ++i)
+	if (DB_FULL_PATH_GET(&path, i)->d_flags & RT_DIR_REGION)
+	    return *DB_FULL_PATH_GET(&path, i);
 
-	if ((i == path.fp_len - 1)
-	    && comb_db_internal.get().idb_minor_type != ID_COMBINATION)
-	    continue;
-
-	const rt_comb_internal &comb_internal = *static_cast<rt_comb_internal *>
-						(comb_db_internal.get().idb_ptr);
-	RT_CK_COMB(&comb_internal);
-
-	if (comb_internal.region_flag)
-	    return DB_FULL_PATH_GET(&path, i);
-    }
-
-    return NULL; // no parent region
+    throw std::invalid_argument("no parent region");
 }
 
 
-HIDDEN bool
-get_cutout(const db_i &db, const db_full_path &path, DBInternal &outer,
-	   DBInternal &inner)
+// get the parent region's path
+HIDDEN const db_full_path
+get_region_path(const db_i &db, const db_full_path &path)
 {
     RT_CK_DBI(&db);
     RT_CK_FULL_PATH(&path);
 
-    DBInternal comb_db_internal(db, get_parent_dir(path));
+    const directory &region_dir = get_region_dir(db, path);
+    db_full_path result = path;
+
+    while (DB_FULL_PATH_CUR_DIR(&result) != &region_dir)
+	DB_FULL_PATH_POP(&result);
+
+    return result;
+}
+
+
+// helper; sets `outer` and `inner` if they exist in
+// a tree describing `outer` - `inner`
+HIDDEN bool
+get_cutout(const db_i &db, const db_full_path &parent_path, DBInternal &outer,
+	   DBInternal &inner)
+{
+    RT_CK_DBI(&db);
+    RT_CK_FULL_PATH(&parent_path);
+
+    DBInternal comb_db_internal(db, *DB_FULL_PATH_CUR_DIR(&parent_path));
     const rt_comb_internal &comb_internal = *static_cast<rt_comb_internal *>
 					    (comb_db_internal.get().idb_ptr);
     RT_CK_COMB(&comb_internal);
@@ -1143,22 +1237,45 @@ get_cutout(const db_i &db, const db_full_path &path, DBInternal &outer,
 	|| t.tb_left->tr_op != OP_DB_LEAF || t.tb_right->tr_op != OP_DB_LEAF)
 	return false;
 
-    outer.load(db, DBInternal::lookup(db, t.tb_left->tr_l.tl_name));
-    inner.load(db, DBInternal::lookup(db, t.tb_right->tr_l.tl_name));
+    const directory &outer_dir = DBInternal::lookup(db, t.tb_left->tr_l.tl_name);
+    const directory &inner_dir = DBInternal::lookup(db, t.tb_right->tr_l.tl_name);
+    outer.load(db, outer_dir);
+    inner.load(db, inner_dir);
+
+    {
+	mat_t matrix;
+	db_full_path temp;
+	db_full_path_init(&temp);
+	AutoPtr<db_full_path, db_free_full_path> autofree_temp(&temp);
+	db_dup_full_path(&temp, &parent_path);
+
+	db_add_node_to_full_path(&temp, const_cast<directory *>(&outer_dir));
+	path_to_mat(db, temp, matrix);
+	apply_path_xform(db, matrix, outer.get());
+
+	DB_FULL_PATH_POP(&temp);
+	db_add_node_to_full_path(&temp, const_cast<directory *>(&inner_dir));
+	path_to_mat(db, temp, matrix);
+	apply_path_xform(db, matrix, inner.get());
+
+    }
+
     return true;
 }
 
 
-// Test for and create ccone2 elements.
+// test for and create ccone2 elements
 HIDDEN bool
-find_ccone2_cutout(Section &section, const db_i &db, const db_full_path &path,
-		   std::set<const directory *> &completed)
+find_ccone2_cutout(Section &section, const db_i &db,
+		   const db_full_path &parent_path, std::set<const directory *> &completed)
 {
     RT_CK_DBI(&db);
-    RT_CK_FULL_PATH(&path);
+    RT_CK_FULL_PATH(&parent_path);
+
+    const directory &parent_dir = *DB_FULL_PATH_CUR_DIR(&parent_path);
 
     try {
-	if (completed.count(&get_parent_dir(path)))
+	if (completed.count(&parent_dir))
 	    return true; // already processed
     } catch (const std::invalid_argument &) {
 	return false;
@@ -1166,7 +1283,7 @@ find_ccone2_cutout(Section &section, const db_i &db, const db_full_path &path,
 
     std::pair<DBInternal, DBInternal> internals;
 
-    if (!get_cutout(db, path, internals.first, internals.second))
+    if (!get_cutout(db, parent_path, internals.first, internals.second))
 	return false;
 
     if ((internals.first.get().idb_minor_type != ID_TGC
@@ -1201,22 +1318,25 @@ find_ccone2_cutout(Section &section, const db_i &db, const db_full_path &path,
 
     point_t v2;
     VADD2(v2, outer_tgc.v, outer_tgc.h);
-    section.write_name(get_parent_dir(path).d_namep);
+    section.write_name(parent_dir.d_namep);
     section.write_cone(outer_tgc.v, v2, ro1, ro2, ri1, ri2);
-    completed.insert(&get_parent_dir(path)).second;
+    completed.insert(&parent_dir);
     return true;
 }
 
 
+// test for and create CSPHERE elements
 HIDDEN bool
-find_csphere_cutout(Section &section, const db_i &db, const db_full_path &path,
-		    std::set<const directory *> &completed)
+find_csphere_cutout(Section &section, const db_i &db,
+		    const db_full_path &parent_path, std::set<const directory *> &completed)
 {
     RT_CK_DBI(&db);
-    RT_CK_FULL_PATH(&path);
+    RT_CK_FULL_PATH(&parent_path);
+
+    const directory &parent_dir = *DB_FULL_PATH_CUR_DIR(&parent_path);
 
     try {
-	if (completed.count(&get_parent_dir(path)))
+	if (completed.count(&parent_dir))
 	    return true; // already processed
     } catch (const std::invalid_argument &) {
 	return false;
@@ -1224,7 +1344,7 @@ find_csphere_cutout(Section &section, const db_i &db, const db_full_path &path,
 
     std::pair<DBInternal, DBInternal> internals;
 
-    if (!get_cutout(db, path, internals.first, internals.second))
+    if (!get_cutout(db, parent_path, internals.first, internals.second))
 	return false;
 
     if ((internals.first.get().idb_minor_type != ID_SPH
@@ -1254,13 +1374,14 @@ find_csphere_cutout(Section &section, const db_i &db, const db_full_path &path,
     if (r_inner >= r_outer)
 	return false;
 
-    completed.insert(&get_parent_dir(path));
-    section.write_name(get_parent_dir(path).d_namep);
+    completed.insert(&parent_dir);
+    section.write_name(parent_dir.d_namep);
     section.write_sphere(outer_ell.v, r_outer, r_outer - r_inner);
     return true;
 }
 
 
+// test for and create CHEX1 elements
 HIDDEN bool
 get_chex1(Section &section, const rt_bot_internal &bot)
 {
@@ -1287,6 +1408,7 @@ get_chex1(Section &section, const rt_bot_internal &bot)
 	const bool face_mode = BU_BITTEST(bot.face_mode, 0);
 	hex_grid_centered = !face_mode;
 
+	// check that all faces have a uniform face mode
 	std::size_t count = 0;
 	BU_BITV_LOOP_START(bot.face_mode) {
 	    ++count;
@@ -1335,9 +1457,11 @@ get_chex1(Section &section, const rt_bot_internal &bot)
 }
 
 
+typedef std::map<const directory *, const fastf_t *> LeafMap;
+
+
 HIDDEN void
-get_unioned(const db_i &db, const tree *tree,
-	    std::set<const directory *> &results)
+get_unioned(const db_i &db, const tree *tree, LeafMap &results)
 {
     RT_CK_DBI(&db);
 
@@ -1356,7 +1480,7 @@ get_unioned(const db_i &db, const tree *tree,
 		break;
 	    }
 
-	    results.insert(dir);
+	    results.insert(std::make_pair(dir, tree->tr_l.tl_mat));
 	    break;
 	}
 
@@ -1376,8 +1500,7 @@ get_unioned(const db_i &db, const tree *tree,
 
 
 HIDDEN void
-get_intersected(const db_i &db, const tree *tree,
-		std::set<const directory *> &results)
+get_intersected(const db_i &db, const tree *tree, LeafMap &results)
 {
     RT_CK_DBI(&db);
 
@@ -1390,6 +1513,8 @@ get_intersected(const db_i &db, const tree *tree,
 	case OP_INTERSECT:
 	    get_unioned(db, tree->tr_b.tb_left, results);
 	    get_unioned(db, tree->tr_b.tb_right, results);
+	    get_intersected(db, tree->tr_b.tb_left, results);
+	    get_intersected(db, tree->tr_b.tb_right, results);
 	    break;
 
 	case OP_UNION:
@@ -1408,8 +1533,7 @@ get_intersected(const db_i &db, const tree *tree,
 
 
 HIDDEN void
-get_subtracted(const db_i &db, const tree *tree,
-	       std::set<const directory *> &results)
+get_subtracted(const db_i &db, const tree *tree, LeafMap &results)
 {
     RT_CK_DBI(&db);
 
@@ -1437,11 +1561,11 @@ get_subtracted(const db_i &db, const tree *tree,
 
 
 // Identifies which half of a COMPSPLT a given region represents.
-// Returns:
+// Returns an int and a pointer to the half's matrix within the region.
 //   0 - not a COMPSPLT
 //   1 - the intersected half
 //   2 - the subtracted half
-HIDDEN int
+HIDDEN std::pair<int, const fastf_t *>
 identify_compsplt(const db_i &db, const directory &parent_region_dir,
 		  const directory &half_dir)
 {
@@ -1454,33 +1578,39 @@ identify_compsplt(const db_i &db, const directory &parent_region_dir,
 					    (parent_region_internal.get().idb_ptr);
     RT_CK_COMB(&parent_region);
 
-    std::set<const directory *> leaves;
+    LeafMap leaves;
     get_intersected(db, parent_region.tree, leaves);
 
-    if (leaves.count(&half_dir))
-	return 1;
+    LeafMap::const_iterator found = leaves.find(&half_dir);
+
+    if (found != leaves.end())
+	return std::make_pair(1, found->second);
 
     leaves.clear();
     get_subtracted(db, parent_region.tree, leaves);
+    found = leaves.find(&half_dir);
 
-    if (leaves.count(&half_dir))
-	return 2;
+    if (found != leaves.end())
+	return std::make_pair(2, found->second);
 
-    return 0;
+    return std::make_pair(0, static_cast<fastf_t *>(NULL));
 }
 
 
-// returns set of members to ignore
-HIDDEN std::set<const directory *>
-find_walls(const db_i &db, const directory &region_dir)
+// returns:
+// - set of regions that are joined to the region by a WALL
+// - set of members to ignore
+HIDDEN std::pair<std::set<const directory *>, std::set<const directory *> >
+find_walls(const db_i &db, const directory &region_dir, const bn_tol &tol)
 {
     RT_CK_DBI(&db);
     RT_CK_DIR(&region_dir);
+    BN_CK_TOL(&tol);
 
-    std::set<const directory *> results;
-    std::set<const directory *> subtracted;
+    std::pair<std::set<const directory *>, std::set<const directory *> > results;
+    LeafMap subtracted;
+    DBInternal region_db_internal(db, region_dir);
     {
-	DBInternal region_db_internal(db, region_dir);
 	const rt_comb_internal &region = *static_cast<rt_comb_internal *>
 					 (region_db_internal.get().idb_ptr);
 	RT_CK_COMB(&region);
@@ -1497,21 +1627,32 @@ find_walls(const db_i &db, const directory &region_dir)
 					      &region_dirs.ptr);
 
 	for (std::size_t i = 0; i < num_regions; ++i) {
-	    DBInternal region_db_internal(db, *region_dirs.ptr[i]);
+	    DBInternal this_region_db_internal(db, *region_dirs.ptr[i]);
 	    const rt_comb_internal &region = *static_cast<rt_comb_internal *>
-					     (region_db_internal.get().idb_ptr);
+					     (this_region_db_internal.get().idb_ptr);
 	    RT_CK_COMB(&region);
 
-	    std::set<const directory *> leaves;
+	    LeafMap leaves;
 	    get_unioned(db, region.tree, leaves);
 	    get_intersected(db, region.tree, leaves);
+	    bool subset = !leaves.empty();
 
-	    if (!leaves.empty()
-		&& std::includes(subtracted.begin(), subtracted.end(), leaves.begin(),
-				 leaves.end())) {
-		std::copy(leaves.begin(), leaves.end(), std::inserter(results,
-			  results.begin()));
-		// TODO: write WALL records
+	    for (LeafMap::const_iterator leaf_it = leaves.begin(); leaf_it != leaves.end();
+		 ++leaf_it) {
+		const LeafMap::const_iterator subtracted_it = subtracted.find(leaf_it->first);
+
+		if (subtracted_it == subtracted.end()
+		    || !mat_equal(leaf_it->second, subtracted_it->second, tol)) {
+		    subset = false;
+		    break;
+		}
+	    }
+
+	    if (subset) {
+		results.first.insert(region_dirs.ptr[i]);
+
+		for (LeafMap::const_iterator it = leaves.begin(); it != leaves.end(); ++it)
+		    results.second.insert(it->first);
 	    }
 	}
     }
@@ -1520,51 +1661,268 @@ find_walls(const db_i &db, const directory &region_dir)
 }
 
 
+// stores state for the ongoing conversion process
 struct FastgenConversion {
+    class RegionManager;
+
     FastgenConversion(const std::string &path, const db_i &db, const bn_tol &tol);
     ~FastgenConversion();
 
+    RegionManager &get_region(const directory &region_dir);
+
     const db_i &m_db;
     const bn_tol &m_tol;
-    std::set<const directory *> m_recorded_cutouts;
-    FastgenWriter m_writer;
-
-    void create_section(const db_full_path &path);
-    Section &get_section(const db_full_path &path);
-    bool member_ignored(const db_full_path &path) const;
-    bool find_compsplt(const db_full_path &path, const rt_half_internal &half);
+    std::set<const directory *> m_recorded_cutouts, m_failed_regions,
+	m_facetize_regions;
+    Section m_toplevels;
 
 
 private:
     FastgenConversion(const FastgenConversion &source);
     FastgenConversion &operator=(const FastgenConversion &source);
 
-    class SectionInfo;
-    std::map<const directory *, SectionInfo *> m_sections;
+    std::map<const directory *, RegionManager *> m_regions;
+    FastgenWriter m_writer;
 };
 
 
-class FastgenConversion::SectionInfo
+// Organize Section objects by their corresponding region, and store
+// additional conversion state regarding those Sections.
+class FastgenConversion::RegionManager
 {
 public:
-    SectionInfo(const std::string &name , bool volume_mode) :
-	m_enabled(true),
-	m_section(name, volume_mode),
-	m_ignored_members()
-    {}
+    RegionManager(const db_i &db, const directory &region_dir, const bn_tol &tol);
+    ~RegionManager();
+
+    std::vector<FastgenWriter::SectionID> write(FastgenWriter &writer) const;
+
+    void write_walls(FastgenWriter &writer,
+		     const std::map<const directory *, std::vector<FastgenWriter::SectionID> > &ids)
+    const;
+
+    // don't write these Sections
+    void disable();
+
+    // mark these Sections as having a COMPSPLT
+    void set_compsplt(fastf_t z_coordinate);
+
+    // returns true if the given member shouldn't be written
+    bool member_ignored(const directory &member_dir) const;
+
+    void create_section(const db_full_path &region_instance_path);
+    Section &get_section(const db_full_path &region_instance_path);
 
 
-    void write(FastgenWriter &writer) const
-    {
-	if (m_enabled && !m_section.empty())
-	    m_section.write(writer);
+private:
+    RegionManager(const RegionManager &source);
+    RegionManager &operator=(const RegionManager &source);
+
+    const directory &m_region_dir;
+    bool m_enabled;
+    std::pair<bool, fastf_t> m_compsplt;
+    const std::pair<std::set<const directory *>, std::set<const directory *> >
+    m_walls;
+    std::map<std::string, Section *> m_sections;
+};
+
+
+FastgenConversion::RegionManager::RegionManager(const db_i &db,
+	const directory &region_dir, const bn_tol &tol) :
+    m_region_dir(region_dir),
+    m_enabled(true),
+    m_compsplt(false, 0.0),
+    m_walls(find_walls(db, region_dir, tol)),
+    m_sections()
+{}
+
+
+FastgenConversion::RegionManager::~RegionManager()
+{
+    for (std::map<std::string, Section *>::iterator it = m_sections.begin();
+	 it != m_sections.end(); ++it)
+	delete it->second;
+}
+
+
+std::vector<FastgenWriter::SectionID>
+FastgenConversion::RegionManager::write(FastgenWriter &writer) const
+{
+    std::vector<FastgenWriter::SectionID> results;
+
+    if (!m_enabled)
+	return results;
+
+    for (std::map<std::string, Section *>::const_iterator it = m_sections.begin();
+	 it != m_sections.end(); ++it) {
+	if (it->second->empty())
+	    continue;
+
+	const FastgenWriter::SectionID id = writer.take_next_section_id();
+
+	if (m_compsplt.first) {
+	    const FastgenWriter::SectionID split_id = writer.write_compsplt(id,
+		    m_compsplt.second);
+
+	    if (it->second->has_color()) {
+		Color color = it->second->get_color();
+		writer.write_section_color(split_id, color);
+	    }
+	}
+
+	it->second->write(writer, it->first, id);
+	results.push_back(id);
     }
 
+    return results;
+}
 
-    bool m_enabled;
-    Section m_section;
-    std::set<const directory *> m_ignored_members;
-};
+
+void
+FastgenConversion::RegionManager::write_walls(FastgenWriter &writer,
+	const std::map<const directory *, std::vector<FastgenWriter::SectionID> > &ids)
+const
+{
+    typedef std::vector<FastgenWriter::SectionID> IDVector;
+
+    const IDVector &this_region_ids = ids.at(&m_region_dir);
+
+    for (IDVector::const_iterator this_id_it = this_region_ids.begin();
+	 this_id_it != this_region_ids.end(); ++this_id_it)
+	for (std::set<const directory *>::const_iterator wall_dir_it =
+		 m_walls.first.begin(); wall_dir_it != m_walls.first.end(); ++wall_dir_it)
+	    for (IDVector::const_iterator target_id_it = ids.at(*wall_dir_it).begin();
+		 target_id_it != ids.at(*wall_dir_it).end(); ++target_id_it)
+		writer.write_boolean(FastgenWriter::WALL, *this_id_it, *target_id_it);
+}
+
+
+void
+FastgenConversion::RegionManager::disable()
+{
+    if (!m_enabled)
+	throw std::logic_error("already disabled");
+
+    m_enabled = false;
+}
+
+
+void
+FastgenConversion::RegionManager::set_compsplt(fastf_t z_coordinate)
+{
+    if (m_compsplt.first)
+	throw std::logic_error("already a COMPSPLT");
+
+    m_compsplt.first = true;
+    m_compsplt.second = z_coordinate;
+}
+
+
+bool
+FastgenConversion::RegionManager::member_ignored(
+    const directory &member_dir) const
+{
+    RT_CK_DIR(&member_dir);
+
+    return !m_enabled || m_walls.second.count(&member_dir);
+}
+
+
+void
+FastgenConversion::RegionManager::create_section(const db_full_path
+	&region_instance_path)
+{
+    RT_CK_FULL_PATH(&region_instance_path);
+
+    if (DB_FULL_PATH_CUR_DIR(&region_instance_path) != &m_region_dir)
+	throw std::invalid_argument("invalid path");
+
+    const std::string name = AutoPtr<char>(db_path_to_string(
+	    &region_instance_path)).ptr;
+    std::pair<std::map<std::string, Section *>::iterator, bool> found =
+	m_sections.insert(std::make_pair(name, static_cast<Section *>(NULL)));
+
+    if (found.second)
+	found.first->second = new Section(true);
+    else {
+	// multiple references within the same comb tree
+    }
+}
+
+
+Section &
+FastgenConversion::RegionManager::get_section(const db_full_path
+	&region_instance_path)
+{
+    RT_CK_FULL_PATH(&region_instance_path);
+
+    const std::string name = AutoPtr<char>(db_path_to_string(
+	    &region_instance_path)).ptr;
+    return *m_sections.at(name);
+}
+
+
+// test for and create compsplts
+HIDDEN bool
+find_compsplt(FastgenConversion &data, const db_full_path &half_path,
+	      const rt_half_internal &half)
+{
+    RT_CK_FULL_PATH(&half_path);
+    RT_HALF_CK_MAGIC(&half);
+
+    if (DB_FULL_PATH_CUR_DIR(&half_path)->d_nref < 2)
+	return false;
+
+    const vect_t normal = {0.0, 0.0, 1.0};
+
+    if (!VNEAR_EQUAL(half.eqn, normal, RT_LEN_TOL))
+	return false;
+
+    const directory *parent_region_dir;
+
+    try {
+	parent_region_dir = &get_region_dir(data.m_db, half_path);
+    } catch (const std::invalid_argument &) {
+	return false;
+    }
+
+    const std::pair<int, const fastf_t *> this_compsplt = identify_compsplt(
+		data.m_db, *parent_region_dir, *DB_FULL_PATH_CUR_DIR(&half_path));
+
+    if (!this_compsplt.first)
+	return false;
+
+    // find the other half
+    const directory *other_half_dir = NULL;
+    {
+	AutoPtr<directory *> region_dirs;
+	const std::size_t num_regions = db_ls(&data.m_db, DB_LS_REGION, NULL,
+					      &region_dirs.ptr);
+
+	for (std::size_t i = 0; i < num_regions; ++i) {
+	    if (region_dirs.ptr[i] == parent_region_dir)
+		continue;
+
+	    const std::pair<int, const fastf_t *> current = identify_compsplt(data.m_db,
+		    *region_dirs.ptr[i], *DB_FULL_PATH_CUR_DIR(&half_path));
+
+	    if (current.first && current.first != this_compsplt.first)
+		if (mat_equal(current.second, this_compsplt.second, data.m_tol)) {
+		    other_half_dir = region_dirs.ptr[i];
+		    break;
+		}
+	}
+    }
+
+    if (!other_half_dir)
+	return false;
+
+    if (this_compsplt.first == 1)
+	data.get_region(*parent_region_dir).disable();
+    else
+	data.get_region(*parent_region_dir).set_compsplt(half.eqn[3]);
+
+    return true;
+}
 
 
 FastgenConversion::FastgenConversion(const std::string &path, const db_i &db,
@@ -1572,143 +1930,99 @@ FastgenConversion::FastgenConversion(const std::string &path, const db_i &db,
     m_db(db),
     m_tol(tol),
     m_recorded_cutouts(),
-    m_writer(path),
-    m_sections()
+    m_failed_regions(),
+    m_facetize_regions(),
+    m_toplevels(true),
+    m_regions(),
+    m_writer(path)
 {
     RT_CK_DBI(&m_db);
     BN_CK_TOL(&m_tol);
 
     m_writer.write_comment(m_db.dbi_title);
     m_writer.write_comment("g -> fastgen4 conversion");
-    m_sections.insert(std::make_pair(static_cast<const directory *>(NULL),
-				     new SectionInfo("toplevels", true)));
+
+    AutoPtr<directory *> region_dirs;
+    const std::size_t num_regions = db_ls(&db, DB_LS_REGION, NULL,
+					  &region_dirs.ptr);
+
+    // create a RegionManager for all regions in the database
+    try {
+	for (std::size_t i = 0; i < num_regions; ++i)
+	    m_regions[region_dirs.ptr[i]] = new RegionManager(m_db, *region_dirs.ptr[i],
+		    m_tol);
+    } catch (...) {
+	for (std::map<const directory *, RegionManager *>::iterator it =
+		 m_regions.begin(); it != m_regions.end(); ++it)
+	    delete it->second;
+
+	throw;
+    }
 }
 
 
 FastgenConversion::~FastgenConversion()
 {
-    for (std::map<const directory *, SectionInfo *>::iterator it =
-	     m_sections.begin(); it != m_sections.end(); ++it) {
-	it->second->write(m_writer);
+    if (!m_toplevels.empty())
+	m_toplevels.write(m_writer, "toplevels", m_writer.take_next_section_id());
 
-	delete it->second;
+    std::map<const directory *, std::vector<FastgenWriter::SectionID> > ids;
+
+    typedef std::map<std::string, std::map<const directory *, RegionManager *>::const_iterator>
+    SortedRegionMap;
+    SortedRegionMap sorted_regions;
+
+    for (std::map<const directory *, RegionManager *>::const_iterator it =
+	     m_regions.begin(); it != m_regions.end(); ++it)
+	sorted_regions[it->first->d_namep] = it;
+
+    for (SortedRegionMap::const_iterator it = sorted_regions.begin();
+	 it != sorted_regions.end(); ++it)
+	ids[it->second->first] = it->second->second->write(m_writer);
+
+    for (SortedRegionMap::iterator it = sorted_regions.begin();
+	 it != sorted_regions.end(); ++it) {
+	it->second->second->write_walls(m_writer, ids);
+	delete it->second->second;
     }
 }
 
 
-void
-FastgenConversion::create_section(const db_full_path &path)
+FastgenConversion::RegionManager &
+FastgenConversion::get_region(const directory &region_dir)
 {
-    RT_CK_FULL_PATH(&path);
-
-    const directory *region_dir = get_region_dir(m_db, path);
-
-    if (!region_dir)
-	throw std::runtime_error("toplevel");
-
-    std::pair<std::map<const directory *, SectionInfo *>::iterator, bool> found =
-	m_sections.insert(std::make_pair(region_dir, static_cast<SectionInfo *>(NULL)));
-
-    if (!found.second) {
-	// new reference to a region
-	found.first->second->write(m_writer);
-	delete found.first->second;
-    }
-
-    const std::string name = AutoPtr<char>(db_path_to_string(&path)).ptr;
-    found.first->second = new SectionInfo(name, true);
-    found.first->second->m_ignored_members = find_walls(m_db, *region_dir);
+    return *m_regions.at(&region_dir);
 }
 
 
-Section &
-FastgenConversion::get_section(const db_full_path &path)
+HIDDEN Section &
+get_section(FastgenConversion &data, const db_full_path &path)
 {
     RT_CK_FULL_PATH(&path);
 
-    return m_sections.at(get_region_dir(m_db, path))->m_section;
-}
+    const directory *region_dir = NULL;
 
+    try {
+	region_dir = &get_region_dir(data.m_db, path);
+    } catch (std::invalid_argument &) {}
 
-bool
-FastgenConversion::member_ignored(const db_full_path &path) const
-{
-    RT_CK_FULL_PATH(&path);
-
-    const directory *region_dir = get_region_dir(m_db, path);
-
-    if (!region_dir)
-	return false; // toplevel
-
-    return m_sections.at(region_dir)->m_ignored_members.count(&get_parent_dir(
+    if (region_dir)
+	return data.get_region(*region_dir).get_section(get_region_path(data.m_db,
 		path));
-}
-
-
-bool
-FastgenConversion::find_compsplt(const db_full_path &path,
-				 const rt_half_internal &half)
-{
-    RT_CK_FULL_PATH(&path);
-    RT_HALF_CK_MAGIC(&half);
-
-    const vect_t normal = {0.0, 0.0, 1.0};
-
-    if (!VNEAR_EQUAL(half.eqn, normal, RT_LEN_TOL))
-	return false;
-
-    const directory *parent_region_dir = get_region_dir(m_db, path);
-
-    if (!parent_region_dir)
-	return false;
-
-    const int this_id = identify_compsplt(m_db, *parent_region_dir,
-					  *DB_FULL_PATH_CUR_DIR(&path));
-
-    if (!this_id)
-	return false;
-
-    // find the other half
-    const directory *other_half_dir = NULL;
-    {
-	AutoPtr<directory *> region_dirs;
-	const std::size_t num_regions = db_ls(&m_db, DB_LS_REGION, NULL,
-					      &region_dirs.ptr);
-
-	for (std::size_t i = 0; i < num_regions; ++i) {
-	    if (region_dirs.ptr[i] == parent_region_dir)
-		continue;
-
-	    const int current_id = identify_compsplt(m_db, *region_dirs.ptr[i],
-				   *DB_FULL_PATH_CUR_DIR(&path));
-
-	    if (current_id && current_id != this_id) {
-		other_half_dir = region_dirs.ptr[i];
-		break;
-	    }
-	}
-    }
-
-    if (!other_half_dir)
-	return false;
-
-    if (this_id == 1)
-	m_sections.at(parent_region_dir)->m_enabled = false;
     else
-	m_sections.at(parent_region_dir)->m_section.set_compsplt(half.eqn[3]);
+	return data.m_toplevels;
 
-    return true;
 }
 
 
 HIDDEN bool
 convert_primitive(FastgenConversion &data, const db_full_path &path,
-		  const rt_db_internal &internal)
+		  const rt_db_internal &internal, bool subtracted)
 {
     RT_CK_FULL_PATH(&path);
     RT_CK_DB_INTERNAL(&internal);
 
-    Section &section = data.get_section(path);
+    Section &section = get_section(data, path);
 
     switch (internal.idb_type) {
 	case ID_CLINE: {
@@ -1731,11 +2045,13 @@ convert_primitive(FastgenConversion &data, const db_full_path &path,
 	    if (internal.idb_type != ID_SPH && !ell_is_sphere(ell))
 		return false;
 
-	    if (!find_csphere_cutout(section, data.m_db, path, data.m_recorded_cutouts)) {
-		section.write_name(DB_FULL_PATH_CUR_DIR(&path)->d_namep);
-		section.write_sphere(ell.v, MAGNITUDE(ell.a));
-	    }
+	    if (path.fp_len > 1
+		&& find_csphere_cutout(section, data.m_db, get_parent_path(path),
+				       data.m_recorded_cutouts))
+		return true;
 
+	    section.write_name(DB_FULL_PATH_CUR_DIR(&path)->d_namep);
+	    section.write_sphere(ell.v, MAGNITUDE(ell.a));
 	    break;
 	}
 
@@ -1747,13 +2063,15 @@ convert_primitive(FastgenConversion &data, const db_full_path &path,
 	    if (internal.idb_type != ID_REC && !tgc_is_ccone2(tgc))
 		return false;
 
-	    if (!find_ccone2_cutout(section, data.m_db, path, data.m_recorded_cutouts)) {
-		point_t v2;
-		VADD2(v2, tgc.v, tgc.h);
-		section.write_name(DB_FULL_PATH_CUR_DIR(&path)->d_namep);
-		section.write_cone(tgc.v, v2, MAGNITUDE(tgc.a), MAGNITUDE(tgc.c), 0.0, 0.0);
-	    }
+	    if (path.fp_len > 1
+		&& find_ccone2_cutout(section, data.m_db, get_parent_path(path),
+				      data.m_recorded_cutouts))
+		return true;
 
+	    point_t v2;
+	    VADD2(v2, tgc.v, tgc.h);
+	    section.write_name(DB_FULL_PATH_CUR_DIR(&path)->d_namep);
+	    section.write_cone(tgc.v, v2, MAGNITUDE(tgc.a), MAGNITUDE(tgc.c), 0.0, 0.0);
 	    break;
 	}
 
@@ -1784,17 +2102,14 @@ convert_primitive(FastgenConversion &data, const db_full_path &path,
 					   (internal.idb_ptr);
 	    RT_HALF_CK_MAGIC(&half);
 
-	    if (!data.find_compsplt(path, half))
-		return false;
-	    else
-		break;
+	    return find_compsplt(data, path, half);
 	}
 
 	default:
 	    return false;
     }
 
-    return true;
+    return !subtracted;
 }
 
 
@@ -1808,7 +2123,7 @@ write_nmg_region(nmgregion *nmg_region, const db_full_path *path,
     RT_CK_FULL_PATH(path);
 
     FastgenConversion &data = *static_cast<FastgenConversion *>(client_data);
-    Section &section = data.get_section(*path);
+    Section &section = get_section(data, *path);
     shell *vshell;
 
     for (BU_LIST_FOR(vshell, shell, &nmg_region->s_hd)) {
@@ -1818,20 +2133,14 @@ write_nmg_region(nmgregion *nmg_region, const db_full_path *path,
 
 	// fill in an rt_db_internal with our new bot so we can free it
 	rt_db_internal internal;
+	AutoPtr<rt_db_internal, rt_db_free_internal> autofree_internal(&internal);
 	RT_DB_INTERNAL_INIT(&internal);
 	internal.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 	internal.idb_minor_type = ID_BOT;
 	internal.idb_meth = &OBJ[ID_BOT];
 	internal.idb_ptr = bot;
 
-	try {
-	    write_bot(section, *bot);
-	} catch (const std::runtime_error &e) {
-	    bu_log("FAILURE: write_bot() failed on object '%s': %s\n",
-		   AutoPtr<char>(db_path_to_string(path)).ptr, e.what());
-	}
-
-	internal.idb_meth->ft_ifree(&internal);
+	write_bot(section, *bot);
     }
 }
 
@@ -1845,7 +2154,7 @@ convert_region_start(db_tree_state *tree_state, const db_full_path *path,
     RT_CK_COMB(comb);
 
     FastgenConversion &data = *static_cast<FastgenConversion *>(client_data);
-    data.create_section(*path);
+    data.get_region(*DB_FULL_PATH_CUR_DIR(path)).create_section(*path);
 
     return 1;
 }
@@ -1860,20 +2169,29 @@ convert_leaf(db_tree_state *tree_state, const db_full_path *path,
     RT_CK_DB_INTERNAL(internal);
 
     FastgenConversion &data = *static_cast<FastgenConversion *>(client_data);
+    const bool subtracted = tree_state->ts_sofar & (TS_SOFAR_MINUS |
+			    TS_SOFAR_INTER);
+    const directory *region_dir = NULL;
     bool converted = false;
 
-    if (data.member_ignored(*path))
-	converted = true;
-    else
-	try {
-	    converted = convert_primitive(data, *path, *internal);
-	} catch (const std::runtime_error &e) {
-	    bu_log("FAILURE: convert_primitive() failed on object '%s': %s\n",
-		   AutoPtr<char>(db_path_to_string(path)).ptr, e.what());
-	}
+    try {
+	region_dir = &get_region_dir(data.m_db, *path);
+    } catch (const std::invalid_argument &) {}
 
-    if (!converted)
-	return nmg_booltree_leaf_tess(tree_state, path, internal, client_data);
+    const bool facetize = data.m_facetize_regions.count(region_dir);
+
+    if (region_dir
+	&& data.get_region(*region_dir).member_ignored(get_parent_dir(*path)))
+	converted = true;
+    else if (!facetize)
+	converted = convert_primitive(data, *path, *internal, subtracted);
+
+    if (!converted) {
+	if (!facetize && subtracted)
+	    data.m_failed_regions.insert(region_dir);
+	else
+	    return nmg_booltree_leaf_tess(tree_state, path, internal, client_data);
+    }
 
     tree *result;
     RT_GET_TREE(result, tree_state->ts_resp);
@@ -1891,7 +2209,7 @@ convert_region_end(db_tree_state *tree_state, const db_full_path *path,
     RT_CK_TREE(current_tree);
 
     FastgenConversion &data = *static_cast<FastgenConversion *>(client_data);
-    Section &section = data.get_section(*path);
+    Section &section = get_section(data, *path);
     section.set_color(color_from_floats(tree_state->ts_mater.ma_color));
 
     if (current_tree->tr_op != OP_NOP) {
@@ -1903,33 +2221,55 @@ convert_region_end(db_tree_state *tree_state, const db_full_path *path,
 }
 
 
-HIDDEN int
-gcv_fastgen4_write(const char *path, struct db_i *dbip,
-		   const struct gcv_opts *UNUSED(options))
+HIDDEN std::set<const directory *>
+do_conversion(db_i &db, const std::string &path,
+	      const std::set<const directory *> &facetize_regions =
+		  std::set<const directory *>())
 {
-    RT_CK_DBI(dbip);
+    RT_CK_DBI(&db);
 
     const rt_tess_tol ttol = {RT_TESS_TOL_MAGIC, 0.0, 1.0e-2, 0.0};
     const bn_tol tol = {BN_TOL_MAGIC, BN_TOL_DIST, BN_TOL_DIST * BN_TOL_DIST, 1.0e-6, 1.0 - 1.0e-6};
-    FastgenConversion data(path, *dbip, tol);
 
-    AutoPtr<model, nmg_km> vmodel;
+    AutoPtr<model, nmg_km> nmg_model;
     db_tree_state initial_tree_state = rt_initial_tree_state;
     initial_tree_state.ts_tol = &tol;
     initial_tree_state.ts_ttol = &ttol;
-    initial_tree_state.ts_m = &vmodel.ptr;
+    initial_tree_state.ts_m = &nmg_model.ptr;
 
-    db_update_nref(dbip, &rt_uniresource);
+    db_update_nref(&db, &rt_uniresource);
     AutoPtr<directory *> toplevel_dirs;
-    const std::size_t num_objects = db_ls(dbip, DB_LS_TOPS, NULL,
+    const std::size_t num_objects = db_ls(&db, DB_LS_TOPS, NULL,
 					  &toplevel_dirs.ptr);
     AutoPtr<char *> object_names(db_dpv_to_argv(toplevel_dirs.ptr));
     toplevel_dirs.free();
 
-    vmodel.ptr = nmg_mm();
-    db_walk_tree(dbip, static_cast<int>(num_objects),
-		 const_cast<const char **>(object_names.ptr), 1, &initial_tree_state,
-		 convert_region_start, convert_region_end, convert_leaf, &data);
+    nmg_model.ptr = nmg_mm();
+    FastgenConversion data(path, db, tol);
+    data.m_facetize_regions = facetize_regions;
+    const int ret = db_walk_tree(&db, static_cast<int>(num_objects),
+				 const_cast<const char **>(object_names.ptr), 1, &initial_tree_state,
+				 convert_region_start, convert_region_end, convert_leaf, &data);
+
+    if (ret)
+	throw std::runtime_error("db_walk_tree() failed");
+
+    return data.m_failed_regions;
+}
+
+
+HIDDEN int
+gcv_fastgen4_write(const char *path, struct db_i *dbip,
+		   const gcv_opts *UNUSED(options))
+{
+    RT_CK_DBI(dbip);
+
+    std::set<const directory *> failed_regions = do_conversion(*dbip, path);
+
+    // facetize all regions that contain an incompatible boolean operation
+    if (!failed_regions.empty())
+	if (!do_conversion(*dbip, path, failed_regions).empty())
+	    throw std::runtime_error("failed to convert all regions");
 
     return 1;
 }

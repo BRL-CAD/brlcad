@@ -51,7 +51,7 @@ flag.</para>
 
 <para>By default, the
 <emphasis remap="I">bw</emphasis>
-file, and the requested framebuffer size, is assumed to be 512x512 pixels.
+file (and, automatically, the requested framebuffer size) is assumed to be 512x512 pixels.
 Specifying the
 <option>-a</option>
 flag causes the program to attempt to autosize.
@@ -89,20 +89,18 @@ pixel value.</para>
 <para>The
 <option>-w </option><replaceable>file_width</replaceable>
 flag specifies the width of each scanline in the input file, in pixels.
-<option>-W </option><replaceable>scr_width</replaceable>
-does the same for the display device.</para>
-
-<para>The
+The
 <option>-n </option><replaceable>file_height</replaceable>
-and
-<option>-N </option><replaceable>scr_height</replaceable>
-flags specify the height in scanlines of the input file and display device,
-respectively.</para>
-
-<para><option>-s </option><replaceable>squarefilesize</replaceable>
-and
+flag specifies the height in scanlines of the input file.
+Both are set to to the same value via
+<option>-s </option><replaceable>squarefilesize</replaceable>.
+(<option>-W </option><replaceable>scr_width</replaceable>,
+<option>-N </option><replaceable>scr_height</replaceable>, and
 <option>-S </option><replaceable>squarescrsize</replaceable>
-set both the height and width to the size given.</para>
+perform these roles for the display device; if none of these
+three options are used, the display device uses the dimensions
+of the input file.)
+</para>
 
 <para><option>-x </option><replaceable>file_xoff</replaceable>,
 <option>-y </option><replaceable>file_yoff</replaceable>,

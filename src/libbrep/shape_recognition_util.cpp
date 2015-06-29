@@ -271,11 +271,11 @@ filter_objs_equal(struct filter_obj *obj1, struct filter_obj *obj2)
 }
 
 volume_t
-subbrep_shape_recognize(struct subbrep_object_data *data)
+subbrep_shape_recognize(struct bu_vls *msgs, struct subbrep_object_data *data)
 {
-    if (subbrep_is_planar(data)) return PLANAR_VOLUME;
-    if (subbrep_is_cylinder(data, BREP_CYLINDRICAL_TOL)) return CYLINDER;
-    if (subbrep_is_cone(data, BREP_CONIC_TOL)) return CONE;
+    if (subbrep_is_planar(msgs, data)) return PLANAR_VOLUME;
+    if (subbrep_is_cylinder(msgs, data, BREP_CYLINDRICAL_TOL)) return CYLINDER;
+    if (subbrep_is_cone(msgs, data, BREP_CONIC_TOL)) return CONE;
     return BREP;
 }
 
@@ -424,7 +424,7 @@ face_set_key(std::set<int> fset)
 	bu_vls_printf(&vls_key, "%d", (*s_it));
 	s_it2 = s_it;
 	s_it2++;
-	if (s_it2 != fset.end()) bu_vls_printf(&vls_key, "_");
+	if (s_it2 != fset.end()) bu_vls_printf(&vls_key, ",");
     }
     key.append(bu_vls_addr(&vls_key));
     bu_vls_free(&vls_key);

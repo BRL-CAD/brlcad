@@ -14,6 +14,7 @@ set(docbook_articles_EN
   projection_shader.xml
   tire.xml
   mged.xml
+  main_menu.xml
   )
 
 set(docbook_articles_EN_IMAGES
@@ -156,10 +157,7 @@ ADD_DOC(docbook_articles_EN_IMAGES html/articles/en/images)
 
 DOCBOOK_TO_HTML(article docbook_articles_EN html/articles/en docbook_articles_EN_IMAGES_cp)
 DOCBOOK_TO_PHP(article docbook_articles_EN html/articles/en docbook_articles_EN_IMAGES_cp)
-
-if(BRLCAD_EXTRADOCS_PDF)
-  DOCBOOK_TO_PDF(article docbook_articles_EN pdf/articles/en docbook_articles_EN_IMAGES_cp)
-endif(BRLCAD_EXTRADOCS_PDF)
+DOCBOOK_TO_PDF(article docbook_articles_EN pdf/articles/en docbook_articles_EN_IMAGES_cp)
 
 CMAKEFILES(images/tire_fig12.svg images/tire_fig13.svg)
 

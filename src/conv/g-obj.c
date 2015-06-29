@@ -92,10 +92,7 @@ static int
 parse_tol_abs(struct bu_vls *error_msg, int argc, const char **argv, void *UNUSED(set_var))
 {
     int ret;
-    if (!argv || !argv[0] || strlen(argv[0]) == 0 || argc == 0) {
-	if (error_msg) bu_vls_printf(error_msg, "Error - no argument supplied to abosolute tolerance option\n");
-	return -1;
-    };
+    BU_OPT_CHECK_ARGV0(error_msg, argc, argv, "absolute tolerance");
 
     ret = bu_opt_fastf_t(error_msg, argc, argv, (void *)&(ttol.abs));
     ttol.rel = 0.0;
@@ -106,10 +103,7 @@ static int
 parse_tol_norm(struct bu_vls *error_msg, int argc, const char **argv, void *UNUSED(set_var))
 {
     int ret;
-    if (!argv || !argv[0] || strlen(argv[0]) == 0 || argc == 0) {
-	if (error_msg) bu_vls_printf(error_msg, "Error - no argument supplied to normal tolerance option\n");
-	return -1;
-    };
+    BU_OPT_CHECK_ARGV0(error_msg, argc, argv, "normal tolerance");
 
     ret = bu_opt_fastf_t(error_msg, argc, argv, (void *)&(ttol.norm));
     ttol.rel = 0.0;
@@ -120,10 +114,7 @@ static int
 parse_tol_dist(struct bu_vls *error_msg, int argc, const char **argv, void *UNUSED(set_var))
 {
     int ret;
-    if (!argv || !argv[0] || strlen(argv[0]) == 0 || argc == 0) {
-	if (error_msg) bu_vls_printf(error_msg, "Error - no argument supplied to distance tolerance option\n");
-	return -1;
-    };
+    BU_OPT_CHECK_ARGV0(error_msg, argc, argv, "distance tolerance");
 
     ret = bu_opt_fastf_t(error_msg, argc, argv, (void *)&(tol.dist));
     tol.dist_sq = tol.dist * tol.dist;
@@ -134,10 +125,7 @@ parse_tol_dist(struct bu_vls *error_msg, int argc, const char **argv, void *UNUS
 static int
 parse_debug_rt(struct bu_vls *error_msg, int argc, const char **argv, void *UNUSED(set_var))
 {
-    if (!argv || !argv[0] || strlen(argv[0]) == 0 || argc == 0) {
-	if (error_msg) bu_vls_printf(error_msg, "Error - no argument supplied to debug rt option\n");
-	return -1;
-    };
+    BU_OPT_CHECK_ARGV0(error_msg, argc, argv, "debug rt");
 
     sscanf(argv[0], "%x", (unsigned int *)&RTG.debug);
     return 1;
@@ -146,10 +134,7 @@ parse_debug_rt(struct bu_vls *error_msg, int argc, const char **argv, void *UNUS
 static int
 parse_debug_nmg(struct bu_vls *error_msg, int argc, const char **argv, void *UNUSED(set_var))
 {
-    if (!argv || !argv[0] || strlen(argv[0]) == 0 || argc == 0) {
-	if (error_msg) bu_vls_printf(error_msg, "Error - no argument supplied to debug nmg option\n");
-	return -1;
-    };
+    BU_OPT_CHECK_ARGV0(error_msg, argc, argv, "debug nmg");
 
     sscanf(argv[0], "%x", (unsigned int *)&RTG.NMG_debug);
     NMG_debug = RTG.NMG_debug;

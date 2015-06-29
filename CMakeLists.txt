@@ -78,6 +78,31 @@
 # This file contains the top level CMakeLists.txt logic for the
 # BRL-CAD software package.
 
+
+# Wrap the default message() function to also append ALL messages to a
+# CMakeOutput.log file in addition to usual console printing.
+
+function(message)
+
+  # bleh, don't know a clean+safe way to avoid string comparing the
+  # optional arg, so we extract it and test.
+  list(GET ARGV 0 MessageType)
+
+  if (MessageType STREQUAL FATAL_ERROR OR MessageType STREQUAL SEND_ERROR OR MessageType STREQUAL WARNING OR MessageType STREQUAL AUTHOR_WARNING OR MessageType STREQUAL STATUS)
+    list(REMOVE_AT ARGV 0)
+    _message(${MessageType} "${ARGV}")
+    file(APPEND ${BRLCAD_BINARY_DIR}/CMakeFiles/CMakeOutput.log "${MessageType}: ${ARGV}\n")
+  else (MessageType STREQUAL FATAL_ERROR OR MessageType STREQUAL SEND_ERROR OR MessageType STREQUAL WARNING OR MessageType STREQUAL AUTHOR_WARNING OR MessageType STREQUAL STATUS)
+    _message("${ARGV}")
+    file(APPEND ${BRLCAD_BINARY_DIR}/CMakeFiles/CMakeOutput.log "${ARGV}\n")
+  endif (MessageType STREQUAL FATAL_ERROR OR MessageType STREQUAL SEND_ERROR OR MessageType STREQUAL WARNING OR MessageType STREQUAL AUTHOR_WARNING OR MessageType STREQUAL STATUS)
+
+  # ~10% slower alternative that avoids adding '--' to STATUS messages
+  # execute_process(COMMAND ${CMAKE_COMMAND} -E echo "${ARGV}")
+
+endfunction(message)
+
+
 # We want to support a "distclean" build target that will clear all
 # CMake-generated files from a source directory in the case of an
 # in-source-dir configuration.  Not recommended, but we'll try to
@@ -492,16 +517,6 @@ if(NOT BRLCAD_IS_SUBBUILD)
 
 endif(NOT BRLCAD_IS_SUBBUILD)
 
-# We wrap the message function to also append ALL messages to CMakeOutput.log,
-# as well as printing them on the console output.
-if(NOT BRLCAD_IS_SUBBUILD)
-  function(message)
-    _message(${ARGN})
-    string(REPLACE ";" ": " msg "${ARGV}")
-    file(APPEND ${BRLCAD_BINARY_DIR}/CMakeFiles/CMakeOutput.log "${msg}\n")
-  endfunction(message)
-endif(NOT BRLCAD_IS_SUBBUILD)
-
 # To support "make check" (which will build the required targets for testing
 # in the style of GNU Autotools, we define a "check" target per
 # http://www.cmake.org/Wiki/CMakeEmulateMakeCheck and have add_test
@@ -620,6 +635,7 @@ if(TIME_RESULT MATCHES "^0$")
 else(TIME_RESULT MATCHES "^0$")
   message(FATAL_ERROR "Code to determine current date and time failed!\n")
 endif(TIME_RESULT MATCHES "^0$")
+
 
 #---------------------------------------------------------------------
 # print out the title with a pretty box computed to wrap around
@@ -1376,10 +1392,8 @@ mark_as_advanced(BRLCAD_EXTRADOCS_PHP)
 CMAKE_DEPENDENT_OPTION(BRLCAD_EXTRADOCS_MAN "Build MAN page output from DocBook documentation" ON "BRLCAD_EXTRADOCS;NOT MSVC" OFF)
 mark_as_advanced(BRLCAD_EXTRADOCS_MAN)
 
-# Don't do PDF by default, and hide the option unless the tools to do it are
-# present.  Provide an option to disable the PDF output for man pages without
-# disabling the rest of the PDF output - PDF generation for hundreds of man
-# pages can be expensive in time.
+# Don't do PDF by default because it's pretty expensive, and hide the
+# option unless the tools to do it are present.
 set(BRLCAD_EXTRADOCS_PDF_DESCRIPTION "
 Option that enables building of BRL-CAD's DocBook PDF-based documentation
 (includes manuals and man pages for commands, among
@@ -1388,12 +1402,7 @@ Note that you may set environment variable APACHE_FOP
 to point to your locally installed fop executable file (which on Linux is
 usually a shell script with 0755 permissions).
 ")
-set(BRLCAD_EXTRADOCS_PDF_MAN_DESCRIPTION "
-Option that enables building of BRL-CAD's DocBook PDF-based documentation
-for man pages only.  Defaults to OFF.
-")
 CMAKE_DEPENDENT_OPTION(BRLCAD_EXTRADOCS_PDF "Build PDF output from DocBook documentation" OFF "BRLCAD_EXTRADOCS;APACHE_FOP" OFF)
-CMAKE_DEPENDENT_OPTION(BRLCAD_EXTRADOCS_PDF_MAN "Build PDF output from DocBook documentation for man pages" ON "BRLCAD_EXTRADOCS_PDF" OFF)
 
 # Provide an option to enable/disable XML validation as part
 # of the DocBook build - sort of a "strict flags" mode for DocBook.
@@ -1536,6 +1545,10 @@ else()
   CHECK_CXX_FLAG("std=gnu++98" BUILD_TYPES Debug)
   CHECK_CXX_FLAG("std=gnu++98" BUILD_TYPES Release VARS CXX03_FLAG)
 endif()
+# TODO - should be using this with MSVC, but it breaks the BUILD_SLEEP
+# try_compile below with errors that appear to be coming from Windows
+# headers??
+# CHECK_C_FLAG("Za" BUILD_TYPES ALL)
 
 # What POSIX do we want to target, initially?  See
 # http://www.gnu.org/software/libc/manual/html_node/Feature-Test-Macros.html
@@ -1668,6 +1681,11 @@ endif(APPLE)
 # target, since C++11 doesn't allow inline to be re-defined. See
 # misc/CMake/BRLCAD_Targets.cmake for handling of C_INLINE.
 CHECK_C_INLINE(C_INLINE)
+if(NOT HAVE_INLINE_KEYWORD AND HAVE___INLINE_KEYWORD)
+  CONFIG_H_APPEND(BRLCAD "#ifndef __cplusplus\n")
+  CONFIG_H_APPEND(BRLCAD "#  define inline __inline\n")
+  CONFIG_H_APPEND(BRLCAD "#endif /* not __cplusplus */\n")
+endif(NOT HAVE_INLINE_KEYWORD AND HAVE___INLINE_KEYWORD)
 
 # If doing an optimized build, set _FORTIFY_SOURCE to 2.  Provides
 # compile-time best-practice error checking on certain libc functions
@@ -1781,6 +1799,28 @@ BRLCAD_CHECK_LIBRARY(DL dl dlopen)
 # Solaris lexer library
 BRLCAD_CHECK_LIBRARY(SOLARIS_LEXER l yyless)
 
+# Windows ws2_32 library
+if("${HAVE_WS2_32_LIBRARY}" MATCHES "^${HAVE_WS2_32_LIBRARY}$")
+  set(CMAKE_REQUIRED_LIBRARIES_BAK ${CMAKE_REQUIRED_LIBRARIES})
+  set(CMAKE_REQUIRED_LIBRARIES "ws2_32.lib")
+  check_c_source_runs("
+#include <winsock2.h>
+int main() {
+  char name[256] = {0};
+  WSADATA wsaData;
+  WSAStartup(MAKEWORD(2,2), &wsaData);
+  (void)gethostname(name, sizeof(name));
+  WSACleanup();
+  return 0;
+}
+" HAVE_WS2_32_LIBRARY)
+  if(HAVE_WS2_32_LIBRARY)
+    set(WS2_32_LIBRARY "ws2_32.lib")
+    set(WINSOCK_LIB "ws2_32.lib")
+  endif(HAVE_WS2_32_LIBRARY)
+  set(CMAKE_REQUIRED_LIBRARIES ${CMAKE_REQUIRED_LIBRARIES_BAK})
+endif("${HAVE_WS2_32_LIBRARY}" MATCHES "^${HAVE_WS2_32_LIBRARY}$")
+
 # timeSetEvent in Windows memory management
 if("${HAVE_TIMESETEVENT}" MATCHES "^${HAVE_TIMESETEVENT}$")
   set(CMAKE_REQUIRED_LIBRARIES_BAK ${CMAKE_REQUIRED_LIBRARIES})
@@ -1854,6 +1894,7 @@ BRLCAD_INCLUDE_FILE(ncurses.h HAVE_NCURSES_H)
 BRLCAD_INCLUDE_FILE(netdb.h HAVE_NETDB_H)
 BRLCAD_INCLUDE_FILE(netinet/in.h HAVE_NETINET_IN_H)
 BRLCAD_INCLUDE_FILE(poll.h HAVE_POLL_H)
+BRLCAD_INCLUDE_FILE(process.h HAVE_PROCESS_H)
 BRLCAD_INCLUDE_FILE(pthread.h HAVE_PTHREAD_H)
 BRLCAD_INCLUDE_FILE(pthread_np.h HAVE_PTHREAD_NP_H)
 BRLCAD_INCLUDE_FILE(pwd.h HAVE_PWD_H)
@@ -1900,7 +1941,16 @@ BRLCAD_INCLUDE_FILE(termlib.h HAVE_TERMLIB_H)
 BRLCAD_INCLUDE_FILE(tinfo.h HAVE_TINFO_H)
 BRLCAD_INCLUDE_FILE(ulocks.h HAVE_ULOCKS_H)
 BRLCAD_INCLUDE_FILE(unistd.h HAVE_UNISTD_H)
-BRLCAD_INCLUDE_FILE(windows.h HAVE_WINDOWS_H) # for QueryPerformanceCounter() on Windows
+BRLCAD_INCLUDE_FILE(windows.h HAVE_WINDOWS_H)
+# If we've got windows.h, assume some other headers as well
+if(HAVE_WINDOWS_H)
+  CONFIG_H_APPEND(BRLCAD "#define HAVE_WINSOCK2_H 1\n")
+  CONFIG_H_APPEND(BRLCAD "#define HAVE_WINSOCK_H 1\n")
+  # TODO - For reasons that aren't currently clear, on Windows
+  # we need to use bu_log instead of fb_log
+  CONFIG_H_APPEND(BRLCAD "#define fb_log bu_log\n")
+endif(HAVE_WINDOWS_H)
+
 
 # C++
 BRLCAD_INCLUDE_FILE_CXX(istream HAVE_ISTREAM)
@@ -1912,9 +1962,9 @@ BRLCAD_CHECK_DIRNAME()
 
 # OpenGL headers
 if(BRLCAD_ENABLE_OPENGL)
-  if(OPENGL_INCLUDE_DIR_GL)
+  if(OPENGL_INCLUDE_DIR_GL OR HAVE_WINDOWS_H)
     CONFIG_H_APPEND(BRLCAD "#define HAVE_GL_GL_H 1\n")
-  endif(OPENGL_INCLUDE_DIR_GL)
+  endif(OPENGL_INCLUDE_DIR_GL OR HAVE_WINDOWS_H)
   if(OPENGL_INCLUDE_DIR_GLX)
     CONFIG_H_APPEND(BRLCAD "#define HAVE_GL_GLX_H 1\n")
   endif(OPENGL_INCLUDE_DIR_GLX)
@@ -1928,6 +1978,12 @@ if(HAVE_EMMINTRIN_H)
   endif(HAVE_EMMINTRIN)
 endif(HAVE_EMMINTRIN_H)
 
+# TODO - until we finish replacing all of the flex/bison code
+# with perplex/re2c/lemon, need the following
+if(HAVE_WINDOWS_H)
+  CONFIG_H_APPEND(BRLCAD "#define YY_NO_UNISTD_H 1\n")
+  CONFIG_H_APPEND(BRLCAD "#define YYTOKENTYPE 1\n")
+endif(HAVE_WINDOWS_H)
 
 # *******************************************************************
 if(NOT EXISTS ${CMAKE_BINARY_DIR}/CMakeCache.txt.prev)
@@ -1942,22 +1998,54 @@ BRLCAD_STRUCT_MEMBER("struct stat" st_blocks sys/stat.h STRUCT_STAT_ST_BLOCKS)
 BRLCAD_STRUCT_MEMBER("struct stat" st_rdev sys/stat.h STRUCT_STAT_ST_RDEV)
 
 # socklen_t
-BRLCAD_TYPE_SIZE("socklen_t" "sys/types.h")
+BRLCAD_TYPE_SIZE("socklen_t" "")
 if(NOT HAVE_SOCKLEN_T)
-  BRLCAD_TYPE_SIZE("socklen_t" "sys/socket.h")
+  BRLCAD_TYPE_SIZE("socklen_t" "sys/types.h")
+  if(NOT HAVE_SOCKLEN_T)
+    BRLCAD_TYPE_SIZE("socklen_t" "sys/socket.h")
+  endif(NOT HAVE_SOCKLEN_T)
 endif(NOT HAVE_SOCKLEN_T)
 BRLCAD_TYPE_SIZE("cpu_set_t" "sched.h")
 
+BRLCAD_TYPE_SIZE("gid_t" "")
 BRLCAD_TYPE_SIZE("int" "")
 BRLCAD_TYPE_SIZE("long" "")
 BRLCAD_TYPE_SIZE("long long" "")
+BRLCAD_TYPE_SIZE("mode_t" "")
 BRLCAD_TYPE_SIZE("off_t" "")
+BRLCAD_TYPE_SIZE("pid_t" "")
 BRLCAD_TYPE_SIZE("ptrdiff_t" "")
 BRLCAD_TYPE_SIZE("size_t" "")
 BRLCAD_TYPE_SIZE("ssize_t" "")
+BRLCAD_TYPE_SIZE("uid_t" "")
 BRLCAD_TYPE_SIZE("uint64_t" "")
 BRLCAD_TYPE_SIZE("uintptr_t" "")
 BRLCAD_TYPE_SIZE("sig_t" "signal.h")
+
+if(HAVE_PTRDIFF_T AND NOT HAVE_OFF_T AND HAVE_WINDOWS_H)
+  CONFIG_H_APPEND(BRLCAD "#define off_t ptrdiff_t\n")
+endif(HAVE_PTRDIFF_T AND NOT HAVE_OFF_T AND HAVE_WINDOWS_H)
+
+# Fallback typedefs
+if(NOT HAVE_GID_T AND HAVE_WINDOWS_H)
+  CONFIG_H_APPEND(BRLCAD "typedef unsigned int gid_t;\n")
+endif(NOT HAVE_GID_T AND HAVE_WINDOWS_H)
+
+if(NOT HAVE_MODE_T AND HAVE_WINDOWS_H)
+  CONFIG_H_APPEND(BRLCAD "typedef int mode_t;\n")
+endif(NOT HAVE_MODE_T AND HAVE_WINDOWS_H)
+
+if(NOT HAVE_PID_T AND HAVE_WINDOWS_H)
+  CONFIG_H_APPEND(BRLCAD "typedef int pid_t;\n")
+endif(NOT HAVE_PID_T AND HAVE_WINDOWS_H)
+
+if(NOT HAVE_SOCKLEN_T AND HAVE_WINDOWS_H)
+  CONFIG_H_APPEND(BRLCAD "typedef int socklen_t;\n")
+endif(NOT HAVE_SOCKLEN_T AND HAVE_WINDOWS_H)
+
+if(NOT HAVE_UID_T AND HAVE_WINDOWS_H)
+  CONFIG_H_APPEND(BRLCAD "typedef unsigned int uid_t;\n")
+endif(NOT HAVE_UID_T AND HAVE_WINDOWS_H)
 
 # see if we have a TLS intrinsic, first check C++11 compliance
 check_cxx_source_compiles("static thread_local int i = 0; int main() { return i; }" HAVE_THREAD_LOCAL)
@@ -2004,17 +2092,25 @@ BRLCAD_FUNCTION_EXISTS(getcwd HAVE_GETCWD)
 BRLCAD_FUNCTION_EXISTS(getegid HAVE_GETEGID)
 BRLCAD_FUNCTION_EXISTS(getenv_s HAVE_GETENV_S)
 BRLCAD_FUNCTION_EXISTS(geteuid HAVE_GETEUID)
-BRLCAD_FUNCTION_EXISTS(gethostname HAVE_GETHOSTNAME)
+if (NOT WS2_32_LIBRARY)
+  BRLCAD_FUNCTION_EXISTS(gethostname HAVE_GETHOSTNAME)
+else (NOT WS2_32_LIBRARY)
+  CONFIG_H_APPEND(BRLCAD "#define HAVE_GETHOSTNAME 1\n")
+endif (NOT WS2_32_LIBRARY)
 BRLCAD_FUNCTION_EXISTS(getloadavg HAVE_GETLOADAVG)
 BRLCAD_FUNCTION_EXISTS(getopt_long HAVE_GETOPT_LONG)
-BRLCAD_FUNCTION_EXISTS(getprogname HAVE_GETPROGNAME) # bsd
+if (NOT WS2_32_LIBRARY)
+  BRLCAD_FUNCTION_EXISTS(getprogname HAVE_GETPROGNAME) # bsd
+else (NOT WS2_32_LIBRARY)
+  CONFIG_H_APPEND(BRLCAD "#define HAVE_GETPROGNAME 1\n")
+  CONFIG_H_APPEND(BRLCAD "#define getprogname() _pgmptr\n")
+endif (NOT WS2_32_LIBRARY)
 BRLCAD_FUNCTION_EXISTS(htonll HAVE_HTONLL)
 BRLCAD_FUNCTION_EXISTS(logb HAVE_LOGB REQUIRED_LIBS ${M_LIBRARY})
 BRLCAD_FUNCTION_EXISTS(lrand48 HAVE_LRAND48)
 BRLCAD_FUNCTION_EXISTS(memset HAVE_MEMSET)
 BRLCAD_FUNCTION_EXISTS(mkstemp HAVE_MKSTEMP)
 BRLCAD_FUNCTION_EXISTS(ntohll HAVE_NTOHLL)
-BRLCAD_FUNCTION_EXISTS(pipe HAVE_PIPE)
 BRLCAD_FUNCTION_EXISTS(popen HAVE_POPEN)
 BRLCAD_FUNCTION_EXISTS(posix_memalign HAVE_POSIX_MEMALIGN) # IEEE Std 1003.1-2001
 BRLCAD_FUNCTION_EXISTS(random HAVE_RANDOM)
@@ -2059,6 +2155,270 @@ if("${HAVE_HTONLL}" STREQUAL "")
   endif(HAVE_HTONLL_SYS__ENDIAN AND CONFIG_H_FILE)
 endif("${HAVE_HTONLL}" STREQUAL "")
 
+# Windows has its own ideas about some functions - test and handle
+# accordingly.  There are a slew of Windows functions that need to be defined
+# to map to their corresponding versions with an underscore prefix - unless we
+# need to do something more sophisticated, we'll check for the existance of an
+# underscored version of the function and add the appropriate define.  If we
+# get into a situation where multiple platforms have both func and _func and
+# we're supposed to use func on one and _func on another we'll need a much
+# more sophisticated approach to testing based on functionality, but hopefully
+# it won't come to that.
+
+macro(BRLCAD_PFUNCTION_EXISTS func)
+  string(TOUPPER ${func} FUNC_UPPER)
+  BRLCAD_FUNCTION_EXISTS(_${func} HAVE__${FUNC_UPPER})
+  if (HAVE__${FUNC_UPPER})
+    CONFIG_H_APPEND(BRLCAD "#define ${func} _${func}\n")
+    CONFIG_H_APPEND(BRLCAD "#define HAVE_${FUNC_UPPER} 1\n")
+  endif (HAVE__${FUNC_UPPER})
+endmacro(BRLCAD_PFUNCTION_EXISTS func)
+
+# The following get wrapped in C++ protection
+CONFIG_H_APPEND(BRLCAD "#ifndef __cplusplus\n")
+BRLCAD_PFUNCTION_EXISTS(access)
+BRLCAD_PFUNCTION_EXISTS(chmod)
+BRLCAD_PFUNCTION_EXISTS(chsize)
+BRLCAD_PFUNCTION_EXISTS(close)
+BRLCAD_PFUNCTION_EXISTS(commit)
+BRLCAD_PFUNCTION_EXISTS(creat)
+BRLCAD_PFUNCTION_EXISTS(dup)
+BRLCAD_PFUNCTION_EXISTS(dup2)
+BRLCAD_PFUNCTION_EXISTS(isatty)
+BRLCAD_PFUNCTION_EXISTS(locking)
+BRLCAD_PFUNCTION_EXISTS(open)
+BRLCAD_PFUNCTION_EXISTS(unlink)
+BRLCAD_PFUNCTION_EXISTS(read)
+BRLCAD_PFUNCTION_EXISTS(setmode)
+BRLCAD_PFUNCTION_EXISTS(umask)
+BRLCAD_PFUNCTION_EXISTS(write)
+CONFIG_H_APPEND(BRLCAD "#endif /*__cplusplus*/\n")
+
+# If we've got _open, need some additional defines - TODO, should
+# probably test this somehow...
+if(HAVE__OPEN)
+  CONFIG_H_APPEND(BRLCAD "/* for _open() (#defined to open above) */\n")
+  CONFIG_H_APPEND(BRLCAD "#define O_APPEND _O_APPEND\n")
+  CONFIG_H_APPEND(BRLCAD "#define O_BINARY _O_BINARY\n")
+  CONFIG_H_APPEND(BRLCAD "#define O_CREAT _O_CREAT\n")
+  CONFIG_H_APPEND(BRLCAD "#define O_EXCL _O_EXCL\n")
+  CONFIG_H_APPEND(BRLCAD "#define O_RDONLY _O_RDONLY\n")
+  CONFIG_H_APPEND(BRLCAD "#define O_RDWR _O_RDWR\n")
+  CONFIG_H_APPEND(BRLCAD "#define O_TRUNC _O_TRUNC\n")
+  CONFIG_H_APPEND(BRLCAD "#define O_WRONLY _O_WRONLY\n")
+endif(HAVE__OPEN)
+
+# If we've got _access, need some additional defines - TODO, should
+# probably test this somehow...
+if(HAVE__ACCESS)
+  CONFIG_H_APPEND(BRLCAD "/* for _access() (#defined to access above) */\n")
+  CONFIG_H_APPEND(BRLCAD "#define R_OK 4\n")
+  CONFIG_H_APPEND(BRLCAD "#define W_OK 2\n")
+  CONFIG_H_APPEND(BRLCAD "#define X_OK 1\n")
+  CONFIG_H_APPEND(BRLCAD "#define F_OK 0\n")
+endif(HAVE__ACCESS)
+
+# if we've got _chmod, need some additional defines - TODO, should this
+# be tested for somehow?
+if(HAVE__CHMOD)
+CONFIG_H_APPEND(BRLCAD "
+/* for _chmod() */
+#ifndef S_IFMT
+#  define S_IFMT _S_IFMT
+#endif
+#ifndef S_IFDIR
+#  define S_IFDIR _S_IFDIR
+#endif
+#ifndef S_IFCHR
+#  define S_IFCHR _S_IFCHR
+#endif
+#ifndef S_IFREG
+#  define S_IFREG _S_IFREG
+#endif
+
+#ifndef S_IREAD
+#  define S_IREAD _S_IREAD
+#endif
+#ifndef S_IWRITE
+#  define S_IWRITE _S_IWRITE
+#endif
+#ifndef S_IEXEC
+#  define S_IEXEC _S_IEXEC
+#endif
+
+#ifndef S_IRUSR
+#  define S_IRUSR      S_IREAD
+#endif
+#ifndef S_IWUSR
+#  define S_IWUSR      S_IWRITE
+#endif
+#ifndef S_IXUSR
+#  define S_IXUSR      S_IEXEC
+#endif
+#ifndef S_IRWXU
+#  define S_IRWXU      ((S_IRUSR)|(S_IWUSR)|(S_IXUSR))
+#endif
+
+#ifndef S_IRGRP
+#  define S_IRGRP      ((S_IRUSR)>>3)
+#endif
+#ifndef S_IWGRP
+#  define S_IWGRP      ((S_IWUSR)>>3)
+#endif
+#ifndef S_IXGRP
+#  define S_IXGRP      ((S_IXUSR)>>3)
+#endif
+#ifndef S_IROTH
+#  define S_IROTH      ((S_IRUSR)>>6)
+#endif
+#ifndef S_IWOTH
+#  define S_IWOTH      ((S_IWUSR)>>6)
+#endif
+#ifndef S_IXOTH
+#  define S_IXOTH      ((S_IXUSR)>>6)
+#endif
+
+#ifndef S_ISDIR
+#  define S_ISDIR(x)   ((x) & S_IFDIR)
+#endif
+#ifndef S_ISREG
+#  define S_ISREG(x)   ((x) & S_IFREG)
+#endif
+#ifndef S_ISLNK
+#  define S_ISLNK(x)   (0)
+#endif
+")
+endif(HAVE__CHMOD)
+
+BRLCAD_PFUNCTION_EXISTS(nextafter)
+BRLCAD_PFUNCTION_EXISTS(execvp)
+BRLCAD_PFUNCTION_EXISTS(fdopen)
+BRLCAD_PFUNCTION_EXISTS(fileno)
+BRLCAD_PFUNCTION_EXISTS(getpid)
+BRLCAD_PFUNCTION_EXISTS(pclose)
+BRLCAD_PFUNCTION_EXISTS(popen)
+BRLCAD_PFUNCTION_EXISTS(putenv)
+BRLCAD_PFUNCTION_EXISTS(snprintf)
+BRLCAD_PFUNCTION_EXISTS(sopen)
+BRLCAD_PFUNCTION_EXISTS(strdup)
+BRLCAD_PFUNCTION_EXISTS(sys_errlist)
+BRLCAD_PFUNCTION_EXISTS(sys_nerr)
+BRLCAD_PFUNCTION_EXISTS(getcwd)
+
+# for _fileno
+if(HAVE__FILENO)
+CONFIG_H_APPEND(BRLCAD "
+/*
+ * defines for stdin/stdout/stderr file numbers
+ */
+#if !defined(STDIN_FILENO) && defined(_STDIN_FILENO)
+#  define STDIN_FILENO _STDIN_FILENO
+#endif
+#if !defined(STDIN_FILENO) && HAVE__FILENO
+#  define STDIN_FILENO _fileno(stdin)
+#endif
+
+#if !defined(STDOUT_FILENO) && defined(_STDOUT_FILENO)
+#  define STDOUT_FILENO _STDOUT_FILENO
+#endif
+#if !defined(STDOUT_FILENO) && HAVE__FILENO
+#  define STDOUT_FILENO _fileno(stdout)
+#endif
+
+#if !defined(STDERR_FILENO) && defined(_STDERR_FILENO)
+#  define STDERR_FILENO _STDERR_FILENO
+#endif
+#if !defined(STDERR_FILENO) && HAVE__FILENO
+#  define STDERR_FILENO _fileno(stderr)
+#endif
+
+")
+endif(HAVE__FILENO)
+
+# __isascii/isascii
+BRLCAD_FUNCTION_EXISTS(__isascii HAVE___ISASCII)
+if(HAVE___ISASCII)
+  CONFIG_H_APPEND(BRLCAD "#define isascii __isascii\n")
+else(HAVE___ISASCII)
+  BRLCAD_FUNCTION_EXISTS(isascii HAVE_ISASCII)
+endif(HAVE___ISASCII)
+
+# strcasecmp/stricmp
+BRLCAD_FUNCTION_EXISTS(_stricmp HAVE__STRICMP)
+if(HAVE__STRICMP)
+  CONFIG_H_APPEND(BRLCAD "#define strcasecmp _stricmp\n")
+endif(HAVE__STRICMP)
+
+# strncasecmp/strnicmp
+BRLCAD_FUNCTION_EXISTS(_strnicmp HAVE__STRNICMP)
+if(HAVE__STRNICMP)
+  CONFIG_H_APPEND(BRLCAD "#define strncasecmp _strnicmp\n")
+endif(HAVE__STRNICMP)
+
+# pipe
+BRLCAD_FUNCTION_EXISTS(_pipe HAVE__PIPE)
+if(HAVE__PIPE)
+  # Note, we can't just #define pipe _pipe because of the extra args
+  CONFIG_H_APPEND(BRLCAD "#define pipe(_FD)  (_pipe((_FD), 256, _O_TEXT))\n")
+else(HAVE__PIPE)
+  BRLCAD_FUNCTION_EXISTS(pipe HAVE_PIPE)
+endif(HAVE__PIPE)
+
+# fork is a no-go on Windows...
+BRLCAD_FUNCTION_EXISTS(fork HAVE_FORK)
+if(NOT HAVE_FORK)
+  CONFIG_H_APPEND(BRLCAD "#define fork() -1\n")
+endif(NOT HAVE_FORK)
+
+# sleep needs defining on Windows
+if(NOT HAVE_WINDOWS_H)
+  BRLCAD_FUNCTION_EXISTS(sleep HAVE_SLEEP)
+else(NOT HAVE_WINDOWS_H)
+  # TODO - Need to find out what we're looking for here... Is there a risk
+  # that Windows might define a sleep that behaves the same way as Sleep?
+  CONFIG_H_APPEND(BRLCAD "#define sleep(_SECONDS) (Sleep(1000 * (_SECONDS)))\n")
+endif(NOT HAVE_WINDOWS_H)
+
+# _stati64/_stat
+BRLCAD_FUNCTION_EXISTS(_stati64 HAVE__STATI64)
+if(HAVE__STATI64)
+  CONFIG_H_APPEND(BRLCAD "#define stat _stati64\n")
+else(HAVE__STATI64)
+  BRLCAD_FUNCTION_EXISTS(_stat HAVE__STAT)
+  if(HAVE__STAT)
+    CONFIG_H_APPEND(BRLCAD "#define stat _stat\n")
+  endif(HAVE__STAT)
+endif(HAVE__STATI64)
+
+# _fstati64/_fstat
+BRLCAD_FUNCTION_EXISTS(_fstati64 HAVE__FSTATI64)
+if(HAVE__FSTATI64)
+  CONFIG_H_APPEND(BRLCAD "#define fstat _fstati64\n")
+else(HAVE__FSTATI64)
+  BRLCAD_FUNCTION_EXISTS(_fstat HAVE__FSTAT)
+  if(HAVE__FSTAT)
+    CONFIG_H_APPEND(BRLCAD "#define fstat _fstat\n")
+  endif(HAVE__FSTAT)
+endif(HAVE__FSTATI64)
+
+# _lseeki64/_lseek
+BRLCAD_FUNCTION_EXISTS(_lseeki64 HAVE__LSEEKI64)
+if(HAVE__LSEEKI64)
+  CONFIG_H_APPEND(BRLCAD "#define lseek _lseeki64\n")
+else(HAVE__LSEEKI64)
+  BRLCAD_FUNCTION_EXISTS(_lseek HAVE__LSEEK)
+  if(HAVE__LSEEK)
+    CONFIG_H_APPEND(BRLCAD "#define lseek _lseek\n")
+  endif(HAVE__LSEEK)
+endif(HAVE__LSEEKI64)
+
+# ioctlsocket/ioctl
+# TODO - this will take some work to properly test...
+if(HAVE_WINDOWS_H)
+  CONFIG_H_APPEND(BRLCAD "#define ioctl ioctlsocket\n")
+endif(HAVE_WINDOWS_H)
+
+
 # we may compile in strict pedantic mode, but still want access to
 # some POSIX functions.  test whether some symbols (below) are
 # declared in addition to whether they resolve (above).
@@ -2085,6 +2445,20 @@ if("${HAVE_DECL_FILENO}" MATCHES "^${HAVE_DECL_FILENO}$")
     CONFIG_H_APPEND(BRLCAD "#cmakedefine HAVE_DECL_FILENO 1\n")
   endif(HAVE_DECL_FILENO)
 endif("${HAVE_DECL_FILENO}" MATCHES "^${HAVE_DECL_FILENO}$")
+
+# GetFullPathName
+check_c_source_compiles("
+#include <windows.h>
+int main() {
+const char *path = \"Windows\";
+char *resolved_path;
+(void)GetFullPathName(path, MAX_PATH, resolved_path, NULL);
+return 0;
+}
+" HAVE_GETFULLPATHNAME)
+if(HAVE_GETFULLPATHNAME)
+  CONFIG_H_APPEND(BRLCAD "#define HAVE_GETFULLPATHNAME 1\n")
+endif(HAVE_GETFULLPATHNAME)
 
 # test for program_invocation_name global variable
 if("${HAVE_PROGRAM_INVOCATION_NAME}" MATCHES "^${HAVE_PROGRAM_INVOCATION_NAME}$")
@@ -2154,66 +2528,85 @@ if(ENABLE_POSIX_COMPLIANCE
 endif()
 #-----------------------------------------------------------------------
 
-# On Windows, we need to check for hypot etc.  This test pertains
-# to the windows specific config file, not CONFIG_H_FILE - hence,
-# just run the test and it will be handled by configure_file later.
+# On Windows, we need to check for hypot, isnan, etc. as symbols, so
+# set up a layered testing approach.
 include(CheckSymbolExists)
+
 if(WIN32)
   # consider all warnings as errors (MSVC)
   set(CMAKE_REQUIRED_FLAGS ${CMAKE_REQUIRED_FLAGS} /WX)
-
-  CHECK_SYMBOL_EXISTS(hypot "math.h" HAVE_HYPOT)
-  #If we don't have it, need to define it as _hypot in config_win
-  if(NOT HAVE_HYPOT)
-    set(hypot 1)
-  endif(NOT HAVE_HYPOT)
-
-  CHECK_SYMBOL_EXISTS(asinh "math.h" HAVE_ASINH)
-  #If we don't have it, need to define it in config_win
-  if(NOT HAVE_ASINH)
-    set(asinh 1)
-  endif(NOT HAVE_ASINH)
-
-  CHECK_SYMBOL_EXISTS(isnan "math.h" HAVE_ISNAN)
-  #If we don't have it, need to define it in config_win
-  if(NOT HAVE_ISNAN)
-    set(isnan 1)
-  endif(NOT HAVE_ISNAN)
-
-  CHECK_SYMBOL_EXISTS(isinf "math.h" HAVE_ISINF)
-  #If we don't have it, need to define it in config_win
-  if(NOT HAVE_ISINF)
-    set(isinf 1)
-  endif(NOT HAVE_ISINF)
-
-  CHECK_SYMBOL_EXISTS(rint "math.h" HAVE_RINT)
-  #If we don't have it, need to define it in config_win
-  if(NOT HAVE_RINT)
-    set(rint 1)
-  endif(NOT HAVE_RINT)
-
-  CHECK_SYMBOL_EXISTS(fmax "math.h" HAVE_FMAX)
-  #If we don't have it, need to define it in config_win
-  if(NOT HAVE_FMAX)
-    set(fmax 1)
-  endif(NOT HAVE_FMAX)
-
-  CHECK_SYMBOL_EXISTS(nextafterf "math.h" HAVE_NEXTAFTERF)
-  #If we don't have it, need to define it in config_win
-  if(NOT HAVE_NEXTAFTERF)
-    set(nextafterf 1)
-  endif(NOT HAVE_NEXTAFTERF)
-
-  CHECK_SYMBOL_EXISTS(nextafterl "math.h" HAVE_NEXTAFTERL)
-  #If we don't have it, need to define it in config_win
-  if(NOT HAVE_NEXTAFTERL)
-    set(nextafterl 1)
-  endif(NOT HAVE_NEXTAFTERL)
-
-  BRLCAD_FUNCTION_EXISTS(_fseeki64 HAVE__FSEEKI64)
-  BRLCAD_FUNCTION_EXISTS(_ftelli64 HAVE__FTELLI64)
-
 endif(WIN32)
+
+BRLCAD_FUNCTION_EXISTS(hypot HAVE_HYPOT REQUIRED_LIBS ${M_LIBRARY})
+if(NOT HAVE_HYPOT)
+  CHECK_SYMBOL_EXISTS(_hypot "math.h" HAVE__HYPOT)
+  if(HAVE__HYPOT)
+    CONFIG_H_APPEND(BRLCAD "#define hypot _hypot\n")
+  endif(HAVE__HYPOT)
+endif(NOT HAVE_HYPOT)
+
+set(asinh_test "#include <math.h>\nint main() { return (asinh(3.14) > 0) ? 0 : 1; }")
+BRLCAD_FUNCTION_EXISTS(asinh HAVE_ASINH COMPILE_TEST_SRCS asinh_test REQUIRED_LIBS ${M_LIBRARY})
+if(NOT HAVE_ASINH)
+  CHECK_SYMBOL_EXISTS(asinh "math.h" HAVE_ASINH_SYMBOL)
+  IF(NOT HAVE_ASINH_SYMBOL)
+    CONFIG_H_APPEND(BRLCAD "#define asinh(x) (log(x + sqrt(x * x + 1)))\n")
+  endIF(NOT HAVE_ASINH_SYMBOL)
+endif(NOT HAVE_ASINH)
+
+BRLCAD_FUNCTION_EXISTS(isnan HAVE_ISNAN REQUIRED_LIBS ${M_LIBRARY})
+if(NOT HAVE_ISNAN)
+  CHECK_SYMBOL_EXISTS(_isnan "math.h" HAVE__ISNAN)
+  if(HAVE__ISNAN)
+    CONFIG_H_APPEND(BRLCAD "#define isnan _isnan\n")
+  endif(HAVE__ISNAN)
+endif(NOT HAVE_ISNAN)
+
+BRLCAD_FUNCTION_EXISTS(isinf HAVE_ISINF REQUIRED_LIBS ${M_LIBRARY})
+if(NOT HAVE_ISINF)
+  CHECK_SYMBOL_EXISTS(isinf "math.h" HAVE_ISINF_SYMBOL)
+  if(NOT HAVE_ISINF_SYMBOL)
+    # TODO - should check for _finite here?
+    CONFIG_H_APPEND(BRLCAD "#define isinf(x) (!_finite(x))\n")
+  endif(NOT HAVE_ISINF_SYMBOL)
+endif(NOT HAVE_ISINF)
+
+BRLCAD_FUNCTION_EXISTS(rint HAVE_RINT REQUIRED_LIBS ${M_LIBRARY})
+if(NOT HAVE_RINT)
+  CHECK_SYMBOL_EXISTS(rint "math.h" HAVE_RINT_SYMBOL)
+  if(NOT HAVE_RINT_SYMBOL)
+    # TODO - should check for floor here?
+    CONFIG_H_APPEND(BRLCAD "#define rint(_X) (floor((_X) + 0.5))\n")
+  endif(NOT HAVE_RINT_SYMBOL)
+endif(NOT HAVE_RINT)
+
+BRLCAD_FUNCTION_EXISTS(fmax HAVE_FMAX REQUIRED_LIBS ${M_LIBRARY})
+if(NOT HAVE_FMAX)
+  CHECK_SYMBOL_EXISTS(__max "math.h" HAVE___MAX)
+  if(HAVE___MAX)
+    CONFIG_H_APPEND(BRLCAD "#define fmax __max\n")
+  endif(HAVE___MAX)
+endif(NOT HAVE_FMAX)
+
+BRLCAD_FUNCTION_EXISTS(nextafterf HAVE_NEXTAFTERF REQUIRED_LIBS ${M_LIBRARY})
+if(NOT HAVE_NEXTAFTERF)
+  CHECK_SYMBOL_EXISTS(nextafterf "math.h" HAVE_NEXTAFTERF_SYMBOL)
+  if(NOT HAVE_NEXTAFTERF_SYMBOL)
+    CONFIG_H_APPEND(BRLCAD "#define nextafterf(x,y) ((y)>0?(x)+FLT_EPSILON:(x)-FLT_EPSILON)\n")
+  endif(NOT HAVE_NEXTAFTERF_SYMBOL)
+endif(NOT HAVE_NEXTAFTERF)
+
+BRLCAD_FUNCTION_EXISTS(nextafterl HAVE_NEXTAFTERL REQUIRED_LIBS ${M_LIBRARY})
+if(NOT HAVE_NEXTAFTERL)
+  CHECK_SYMBOL_EXISTS(nextafterl "math.h" HAVE_NEXTAFTERL_SYMBOL)
+  if(NOT HAVE_NEXTAFTERL_SYMBOL)
+    CONFIG_H_APPEND(BRLCAD "#define nextafterl(x,y) ((y)>0?(x)+DBL_EPSILON:(x)-DBL_EPSILON)\n")
+  endif(NOT HAVE_NEXTAFTERL_SYMBOL)
+endif(NOT HAVE_NEXTAFTERL)
+
+
+BRLCAD_FUNCTION_EXISTS(_fseeki64 HAVE__FSEEKI64)
+BRLCAD_FUNCTION_EXISTS(_ftelli64 HAVE__FTELLI64)
 
 # Check whether we need to add import/export lines to libraries
 if(MSVC)
@@ -2455,10 +2848,10 @@ CONFIG_H_APPEND(BRLCAD "#define BRLCAD_COMPILE_HOST ${BRLCAD_COMPILE_HOST}\n")
 CONFIG_H_APPEND(BRLCAD "#define BRLCAD_COMPILE_USER ${BRLCAD_COMPILE_USER}\n")
 CONFIG_H_APPEND(BRLCAD "#define BRLCAD_COMPILE_COUNT ${BRLCAD_COMPILE_COUNT}\n")
 
-# If we're building on Windows, use config_win.h file
-if(WIN32)
+# If we're building on Windows with MSVC, use config_win.h file
+if(MSVC)
   CONFIG_H_APPEND(BRLCAD "#include \"config_win.h\"\n")
-endif(WIN32)
+endif(MSVC)
 
 # Now that all the tests are done, configure the brlcad_config.h file:
 CONFIG_H_APPEND(BRLCAD "#endif /* __CONFIG_H__ */\n")
