@@ -84,10 +84,8 @@ f_facedef(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const cha
     struct rt_arb_internal *arb;
     struct rt_arb_internal *arbo;
     plane_t planes[6];
-    int status = TCL_OK;
-    struct bu_vls error_msg = BU_VLS_INIT_ZERO;
-
-    RT_DB_INTERNAL_INIT(&intern);
+    int status;
+    struct bu_vls error_msg;
 
     if (argc < 2) {
 	struct bu_vls vls = BU_VLS_INIT_ZERO;
@@ -102,6 +100,10 @@ f_facedef(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const cha
 	(void)signal(SIGINT, sig3);  /* allow interrupts */
     else
 	return TCL_OK;
+
+    status = TCL_OK;
+    BU_VLS_INIT(&error_msg);
+    RT_DB_INTERNAL_INIT(&intern);
 
     if (STATE != ST_S_EDIT) {
 	Tcl_AppendResult(interp, "Facedef: must be in solid edit mode\n", (char *)NULL);

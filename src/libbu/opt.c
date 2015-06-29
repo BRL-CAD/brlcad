@@ -24,6 +24,7 @@
 #include <string.h>
 #include <stdlib.h> /* for strtol */
 #include <limits.h> /* for INT_MAX */
+#include <float.h> /* for FLT_MAX */
 #include <ctype.h> /* for isspace */
 #include <errno.h> /* for errno */
 
@@ -406,7 +407,7 @@ bu_opt_parse(struct bu_vls *msgs, int argc, const char **argv, struct bu_opt_des
 		 * most likely scenario is an = assignment forced an argument to be
 		 * sent to an option that doesn't take arguments */
 		if (!arg_offset) {
-		    if (msgs) bu_vls_printf(msgs, "Option %s did not successfully use the supplied argument %s - haulting.\n", argv[i-1], eq_arg);
+		    if (msgs) bu_vls_printf(msgs, "Option %s did not successfully use the supplied argument %s - halting.\n", argv[i-1], eq_arg);
 		    return -1;
 		}
 
@@ -429,7 +430,7 @@ bu_opt_parse(struct bu_vls *msgs, int argc, const char **argv, struct bu_opt_des
 	    /* If we already got an arg from the equals mechanism and we aren't
 	     * supposed to have one, we're invalid - halt. */
 	    if (eq_arg) {
-		if (msgs) bu_vls_printf(msgs, "Option %s does not take an argument, but %s was supplied - haulting.\n", argv[i-1], eq_arg);
+		if (msgs) bu_vls_printf(msgs, "Option %s does not take an argument, but %s was supplied - halting.\n", argv[i-1], eq_arg);
 		return -1;
 	    }
 	}
@@ -463,10 +464,7 @@ bu_opt_int(struct bu_vls *msg, int argc, const char **argv, void *set_var)
     char *endptr = NULL;
     int *int_set = (int *)set_var;
 
-    if (!argv || !argv[0] || strlen(argv[0]) == 0 || argc != 1 ) {
-	if (msg) bu_vls_printf(msg, "bu_opt_int requires arg, but arg not found - aborting\n");
-	return -1;
-    }
+    BU_OPT_CHECK_ARGV0(msg, argc, argv, "bu_opt_int");
 
     l = strtol(argv[0], &endptr, 0);
 
@@ -486,7 +484,7 @@ bu_opt_int(struct bu_vls *msg, int argc, const char **argv, void *set_var)
 	i = (int)l;
     } else {
 	/* Too big or too small, fail */
-	if (msg) bu_vls_printf(msg, "String specifies number too large for int data type: %l\n", l);
+	if (msg) bu_vls_printf(msg, "String specifies number too large for int data type: %ld\n", l);
 	return -1;
     }
 
@@ -501,10 +499,7 @@ bu_opt_long(struct bu_vls *msg, int argc, const char **argv, void *set_var)
     char *endptr = NULL;
     long *long_set = (long *)set_var;
 
-    if (!argv || !argv[0] || strlen(argv[0]) == 0 || argc != 1 ) {
-	if (msg) bu_vls_printf(msg, "bu_opt_long requires arg, but arg not found - aborting\n");
-	return -1;
-    }
+    BU_OPT_CHECK_ARGV0(msg, argc, argv, "bu_opt_long");
 
     l = strtol(argv[0], &endptr, 0);
 
@@ -526,22 +521,14 @@ bu_opt_long(struct bu_vls *msg, int argc, const char **argv, void *set_var)
 int
 bu_opt_fastf_t(struct bu_vls *msg, int argc, const char **argv, void *set_var)
 {
+    double d;
     fastf_t f;
     fastf_t *f_set = (fastf_t *)set_var;
     char *endptr = NULL;
 
-    if (!argv || !argv[0] || strlen(argv[0]) == 0 || argc != 1 ) {
-	if (msg) bu_vls_printf(msg, "bu_opt_fastf_t requires arg, but arg not found - aborting\n");
-	return -1;
-    }
+    BU_OPT_CHECK_ARGV0(msg, argc, argv, "bu_opt_fastf_t");
 
-    if (sizeof(fastf_t) == sizeof(float)) {
-	f = strtof(argv[0], &endptr);
-    }
-
-    if (sizeof(fastf_t) == sizeof(double)) {
-	f = strtod(argv[0], &endptr);
-    }
+    d = strtod(argv[0], &endptr);
 
     if (endptr != NULL && strlen(endptr) > 0) {
 	/* Had some invalid character in the input, fail */
@@ -554,6 +541,13 @@ bu_opt_fastf_t(struct bu_vls *msg, int argc, const char **argv, void *set_var)
 	return -1;
     }
 
+    if (sizeof(fastf_t) == sizeof(float) && (d > FLT_MAX)) {
+	if (msg) bu_vls_printf(msg, "Invalid input for fastf_t (range error): %s\n", argv[0]);
+	return -1;
+    }
+
+    f = (fastf_t)d;
+
     if (f_set) (*f_set) = f;
     return 1;
 }
@@ -563,10 +557,7 @@ bu_opt_str(struct bu_vls *msg, int argc, const char **argv, void *set_var)
 {
     const char **s_set = (const char **)set_var;
 
-    if (!argv || !argv[0] || strlen(argv[0]) == 0 || argc != 1 ) {
-	if (msg) bu_vls_printf(msg, "bu_opt_str requires arg, but arg not found - aborting\n");
-	return -1;
-    }
+    BU_OPT_CHECK_ARGV0(msg, argc, argv, "bu_opt_str");
 
     if (s_set) (*s_set) = argv[0];
     return 1;
@@ -577,17 +568,14 @@ bu_opt_vls(struct bu_vls *msg, int argc, const char **argv, void *set_var)
 {
     struct bu_vls *s_set = (struct bu_vls *)set_var;
 
-    if (!argv || !argc ) {
-	if (msg) bu_vls_printf(msg, "bu_opt_vls requires arg, but arg not found - aborting\n");
-	return -1;
-    }
+    BU_OPT_CHECK_ARGV0(msg, argc, argv, "bu_opt_vls");
 
     if (s_set) {
-	int i = 0;
-	for (i = 0; i < argc - 1; i++) {
-	    bu_vls_printf(s_set, "%s ", argv[i]);
+	if (bu_vls_strlen(s_set) > 0) {
+	    bu_vls_printf(s_set, " %s", argv[0]);
+	} else {
+	    bu_vls_printf(s_set, "%s", argv[0]);
 	}
-	bu_vls_printf(s_set, "%s", argv[argc - 1]);
     }
     return 1;
 }
@@ -598,10 +586,7 @@ bu_opt_bool(struct bu_vls *msg, int argc, const char **argv, void *set_var)
     int *b_set = (int *)set_var;
     int bool_val;
 
-    if (!argv || !argv[0] || strlen(argv[0]) == 0 || argc != 1 ) {
-	if (msg) bu_vls_printf(msg, "bu_opt_bool requires arg, but arg not found - aborting\n");
-	return -1;
-    }
+    BU_OPT_CHECK_ARGV0(msg, argc, argv, "bu_opt_bool");
 
     bool_val = bu_str_true(argv[0]);
 
@@ -613,12 +598,6 @@ bu_opt_bool(struct bu_vls *msg, int argc, const char **argv, void *set_var)
     if (b_set) (*b_set) = bool_val;
     return 1;
 }
-
-
-
-
-
-
 
 /*
  * Local Variables:

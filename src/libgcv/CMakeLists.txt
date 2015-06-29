@@ -43,6 +43,7 @@ BRLCAD_LIB_INCLUDE_DIRS(gcv GCV_INCLUDE_DIRS "")
 
 set(LIBGCV_SOURCES
   bottess.c
+  facetize.c
   plugin.c
   region_end.c
   region_end_mc.c

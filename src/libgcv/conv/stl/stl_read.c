@@ -504,7 +504,7 @@ Convert_part_binary()
 }
 
 
-HIDDEN static void
+HIDDEN void
 Convert_input()
 {
     char line[ MAX_LINE_SIZE ];

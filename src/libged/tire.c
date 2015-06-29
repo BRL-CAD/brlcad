@@ -1788,7 +1788,8 @@ _opt_tire_iso(struct bu_vls *msg, int argc, const char **argv, void *set_var)
     char s1, s2;
     int sret = 0;
     fastf_t *isoarray = (fastf_t *)set_var;
-    if (!argv || !argv[0] || strlen(argv[0]) == 0 || argc == 0) return -1;
+
+    BU_OPT_CHECK_ARGV0(msg, argc, argv, "ISO tire dimensions");
 
     sret = bu_sscanf(argv[0], "%d%c%d%c%d", &d1, &s1, &d2, &s2, &d3);
 
@@ -1818,7 +1819,8 @@ _tire_show_help(struct ged *gedp, const char *cmd, struct bu_opt_desc *d)
 	bu_vls_printf(&str, "Options:\n%s\n", option_help);
 	bu_free((char *)option_help, "help str");
     }
-    bu_vls_printf(&str, "\nStandard ISO formatting for tire dimensions is of the form %s, where <width> is in mm, <aspect> is a ratio, and <rim diameter> is in inches.\n");
+    bu_vls_printf(&str, "\nStandard ISO formatting for tire dimensions is of the form %s, where <width> is in mm, <aspect> is a ratio, and <rim diameter> is in inches.\n",
+    ISO_TIRE_FMT);
 
     bu_vls_printf(gedp->ged_result_str, "%s", bu_vls_addr(&str));
     bu_vls_free(&str);
@@ -1878,7 +1880,7 @@ ged_tire(struct ged *gedp, int argc, const char *argv[])
     /* Skip first arg */
     argv++; argc--;
 
-    ret_ac = bu_opt_parse(&str, argc-1, argv+1, d);
+    ret_ac = bu_opt_parse(&str, argc, argv, d);
     if (ret_ac < 0) {
 	bu_vls_printf(gedp->ged_result_str, "%s\n", bu_vls_addr(&str));
 	bu_vls_free(&name);

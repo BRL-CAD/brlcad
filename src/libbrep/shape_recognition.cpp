@@ -9,6 +9,8 @@
 #include "bu/malloc.h"
 #include "shape_recognition.h"
 
+#define L1_OFFSET 2
+#define L2_OFFSET 4
 
 // TODO - the topological test by itself is not guaranteed to isolate volumes that
 // are uniquely positive or uniquely negative contributions to the overall volume.
@@ -32,8 +34,11 @@
 // will be needed to resolve this.
 
 struct bu_ptbl *
-find_subbreps(const ON_Brep *brep)
+find_subbreps(struct bu_vls *msgs, const ON_Brep *brep)
 {
+    std::map<int, surface_t> fstypes;
+    std::map<int, surface_t>::iterator fs_it;
+    int successful_splits = 0;
     struct bu_ptbl *subbreps;
     std::set<std::string> subbrep_keys;
     BU_GET(subbreps, struct bu_ptbl);
@@ -55,11 +60,6 @@ find_subbreps(const ON_Brep *brep)
 	std::set<int> processed_loops;
 	std::set<int>::iterator s_it;
 
-	// TODO - need to watch for an edge that has two general surfaces associated
-	// with it.  That situation is too problematic for us to handle even as a
-	// breakdown into subbreps, and if we see it we need to bail.  Ensuring reliable
-	// inside/outside testing under those conditions is extremely difficult.
-	// Maybe even something to do as an initial test.
 	const ON_BrepFace *face = &(brep->m_F[i]);
 	faces.insert(i);
 	fol.insert(i);
@@ -72,13 +72,23 @@ find_subbreps(const ON_Brep *brep)
 	    for (int ti = 0; ti < loop->m_ti.Count(); ti++) {
 		const ON_BrepTrim *trim = &(face->Brep()->m_T[loop->m_ti[ti]]);
 		const ON_BrepEdge *edge = &(face->Brep()->m_E[trim->m_ei]);
-		if (trim->m_ei != -1 && edge->TrimCount() > 1) {
+		if (trim->m_ei != -1 && edge->TrimCount() > 0) {
+		    int edge_general_surfaces = 0;
 		    edges.insert(trim->m_ei);
 		    for (int j = 0; j < edge->TrimCount(); j++) {
 			int fio = edge->Trim(j)->FaceIndexOf();
 			if (edge->m_ti[j] != ti && fio != -1) {
+			    surface_t stype;
 			    int li = edge->Trim(j)->Loop()->m_loop_index;
 			    faces.insert(fio);
+			    fs_it = fstypes.find(fio);
+			    if (fs_it == fstypes.end()) {
+				stype = GetSurfaceType(brep->m_F[fio].SurfaceOf(), NULL);
+				fstypes.insert(std::pair<int, surface_t>(fio, stype));
+			    } else {
+				stype = fs_it->second;
+			    }
+			    if (stype == SURFACE_GENERAL) edge_general_surfaces++;
 			    if (processed_loops.find(li) == processed_loops.end()) {
 				local_loops.push(li);
 				processed_loops.insert(li);
@@ -87,6 +97,15 @@ find_subbreps(const ON_Brep *brep)
 				fol.insert(fio);
 			    }
 			}
+		    }
+		    // Need to watch for an edge that has two general surfaces associated
+		    // with it.  That situation is currently too problematic for us to
+		    // handle even as a breakdown into subbreps, and if we see it we need
+		    // to bail.  Ensuring reliable inside/outside testing in that case
+		    // is extremely difficult.
+		    if (edge_general_surfaces > 1) {
+			if (msgs) bu_vls_printf(msgs, "%*sError - edge %d is connected to more than one general surface - aborting.\n", L1_OFFSET, " ", trim->m_ei);
+			goto bail;
 		    }
 		}
 	    }
@@ -106,7 +125,10 @@ find_subbreps(const ON_Brep *brep)
 	    subbrep_object_init(new_obj, brep);
 	    new_obj->obj_cnt = &obj_cnt;
 	    obj_cnt++;
-	    if (obj_cnt > CSG_BREP_MAX_OBJS) goto bail;
+	    if (obj_cnt > CSG_BREP_MAX_OBJS) {
+		if (msgs) bu_vls_printf(msgs, "%*sError - brep converted to more than %d implicits - not currently a good CSG candidate\n", L1_OFFSET, " ", CSG_BREP_MAX_OBJS, obj_cnt);
+		goto bail;
+	    }
 	    bu_vls_sprintf(new_obj->key, "%s", key.c_str());
 	    bu_vls_sprintf(new_obj->name_root, "%d", obj_cnt);
 	    set_to_array(&(new_obj->faces), &(new_obj->faces_cnt), &faces);
@@ -121,19 +143,23 @@ find_subbreps(const ON_Brep *brep)
 	    new_obj->parent = NULL;
 	    surface_t hof = highest_order_face(new_obj);
 	    if (hof >= SURFACE_GENERAL) {
+		if (msgs) bu_vls_printf(msgs, "%*sNote - general surface present: %s\n", L1_OFFSET, " ", bu_vls_addr(new_obj->key));
 		new_obj->type = BREP;
 		(void)subbrep_make_brep(new_obj);
-		bu_log("general surface present: %s\n", bu_vls_addr(new_obj->key));
 	    } else {
 		int split = 0;
-		volume_t vtype = subbrep_shape_recognize(new_obj);
+		volume_t vtype = subbrep_shape_recognize(msgs, new_obj);
 		switch (vtype) {
 		    case BREP:
-			split = subbrep_split(new_obj);
+			/* No general surfaces and it's not all planar - have at it */
+			split = subbrep_split(msgs, new_obj);
+			if (obj_cnt > CSG_BREP_MAX_OBJS) {
+			    if (msgs) bu_vls_printf(msgs, "%*sError: brep converted to more than %d implicits - not currently a good CSG candidate\n", L1_OFFSET, " ", CSG_BREP_MAX_OBJS, obj_cnt);
+			    goto bail;
+			}
 			if (!split) {
-			    if (obj_cnt > CSG_BREP_MAX_OBJS) goto bail;
+			    if (msgs) bu_vls_printf(msgs, "%*sNote - split unsuccessful, making brep: %s\n", L1_OFFSET, " ", bu_vls_addr(new_obj->key));
 			    (void)subbrep_make_brep(new_obj);
-			    bu_log("split unsuccessful: %s\n", bu_vls_addr(new_obj->key));
 			} else {
 			    // If we did successfully split the brep, do some post-split
 			    // clean-up
@@ -141,12 +167,15 @@ find_subbreps(const ON_Brep *brep)
 			    if (new_obj->planar_obj) {
 				subbrep_planar_close_obj(new_obj);
 			    }
+			    successful_splits++;
 			}
 			break;
 		    case PLANAR_VOLUME:
+			/* Planar volumes are exactly representable as BoTs, which will most likely raytrace faster */
 			subbrep_planar_init(new_obj);
 			subbrep_planar_close_obj(new_obj);
 			new_obj->local_brep = new_obj->planar_obj->local_brep;
+			successful_splits++;
 			break;
 		    default:
 			break;
@@ -157,10 +186,15 @@ find_subbreps(const ON_Brep *brep)
 	}
     }
 
+    /* If we didn't do anything to simplify the shape, we're stuck with the original */
+    if (!successful_splits) {
+	if (msgs) bu_vls_printf(msgs, "%*sNote - no successful simplifications\n", L1_OFFSET, " ");
+	goto bail;
+    }
+
     return subbreps;
 
 bail:
-    bu_log("brep converted to more than %d implicits - not a good CSG candidate\n", CSG_BREP_MAX_OBJS, obj_cnt);
     // Free memory
     for (unsigned int i = 0; i < BU_PTBL_LEN(subbreps); i++){
 	struct subbrep_object_data *obj = (struct subbrep_object_data *)BU_PTBL_GET(subbreps, i);
@@ -172,8 +206,8 @@ bail:
 	BU_PUT(obj, struct subbrep_object_data);
     }
     bu_ptbl_free(subbreps);
-    bu_ptbl_init(subbreps, 8, "subbrep table");
-    return subbreps;
+    BU_PUT(subbreps, struct bu_ptbl);
+    return NULL;
 }
 
 /* This is the critical point at which we take a pile of shapes and actually reconstruct a
@@ -205,7 +239,7 @@ bail:
  * unions and subtractions mean we'll have to go all the way up that particular chain...
  */
 struct bu_ptbl *
-find_top_level_hierarchy(struct bu_ptbl *subbreps)
+find_top_level_hierarchy(struct bu_vls *msgs, struct bu_ptbl *subbreps)
 {
     // Now that we have the subbreps (or their substructures) and their boolean status we need to
     // construct the top level tree.
@@ -218,6 +252,8 @@ find_top_level_hierarchy(struct bu_ptbl *subbreps)
     std::map<long *, std::set<long *> > subbrep_subobjs;
     std::map<long *, std::set<long *> > subbrep_ignoreobjs;
     struct bu_ptbl *subbreps_tree;
+
+    if (!subbreps) return NULL;
 
     for (unsigned int i = 0; i < BU_PTBL_LEN(subbreps); i++) {
 	subbrep_set.insert(BU_PTBL_GET(subbreps, i));
@@ -283,8 +319,10 @@ find_top_level_hierarchy(struct bu_ptbl *subbreps)
 			    //std::cout << "Initial boolean test for " << bu_vls_addr(cobj->key) << ": " << bool_test << "\n";
 			    switch (bool_test) {
 				case -2:
-				    bu_log("Game over - self intersecting shape reported with subbrep %s\n", bu_vls_addr(cobj->key));
-				    bu_log("Until breakdown logic for this situation is available, this is a conversion stopper.\n");
+				    if (msgs) {
+					bu_vls_printf(msgs, "%*sGame over - self intersecting shape reported with subbrep %s\n", L1_OFFSET, " ", bu_vls_addr(cobj->key));
+					bu_vls_printf(msgs, "%*sUntil breakdown logic for this situation is available, this is a conversion stopper.\n", L1_OFFSET, " ");
+				    }
 				    return NULL;
 				case 2:
 				    /* Test relative to parent inconclusive - fall back on surface test, if available */
@@ -318,7 +356,7 @@ find_top_level_hierarchy(struct bu_ptbl *subbreps)
 				}
 				break;
 			    default:
-				bu_log("Boolean status of %s could not be determined - conversion failure\n", bu_vls_addr(cobj->key));;
+				if (msgs) bu_vls_printf(msgs, "%*sBoolean status of %s could not be determined - conversion failure.\n", L1_OFFSET, " ", bu_vls_addr(cobj->key));
 				return NULL;
 				break;
 			}
@@ -517,7 +555,7 @@ add_loops_from_face(int f_ind, struct subbrep_object_data *data, std::set<int> *
  * type of the subbrep is set to COMB and the children bu_ptbl is
  * populated with subbrep_object_data sets. */
 int
-subbrep_split(struct subbrep_object_data *data)
+subbrep_split(struct bu_vls *msgs, struct subbrep_object_data *data)
 {
     //if (BU_STR_EQUAL(bu_vls_addr(data->key), "325_326_441_527_528")) {
     //	std::cout << "looking at 325_326_441_527_528\n";
@@ -611,33 +649,35 @@ subbrep_split(struct subbrep_object_data *data)
 	    new_obj->type = filters->type;
 	    switch (new_obj->type) {
 		case CYLINDER:
-		    if (!cylinder_csg(new_obj, BREP_CYLINDRICAL_TOL)) {
-			bu_log("cylinder csg failure: %s\n", key.c_str());
+		    if (!cylinder_csg(msgs, new_obj, BREP_CYLINDRICAL_TOL)) {
+			if (msgs) bu_vls_printf(msgs, "%*sError - cylinder csg failure: %s\n", L2_OFFSET, " ", key.c_str());
 			csg_fail++;
 		    }
 		    break;
 		case CONE:
-		    if (!cone_csg(new_obj, BREP_CONIC_TOL)) {
-			bu_log("cone csg failure: %s\n", key.c_str());
+		    if (!cone_csg(msgs, new_obj, BREP_CONIC_TOL)) {
+			if (msgs) bu_vls_printf(msgs, "%*sError - cone csg failure: %s\n", L2_OFFSET, " ", key.c_str());
 			csg_fail++;
 		    }
 		    break;
 		case SPHERE:
 		    if (!sphere_csg(new_obj, BREP_SPHERICAL_TOL)) {
-			bu_log("sphere csg failure: %s\n", key.c_str());
+			if (msgs) bu_vls_printf(msgs, "%*sError - sphere csg failure: %s\n", L2_OFFSET, " ", key.c_str());
 			csg_fail++;
 		    }
 		    break;
 		case ELLIPSOID:
-		    bu_log("TODO: process partial ellipsoid\n");
+		    if (msgs) bu_vls_printf(msgs, "%*sTODO: process partial ellipsoid\n", L2_OFFSET, " ");
 		    /* TODO - Until we properly handle these shapes, this is a failure case */
 		    csg_fail++;
 		    break;
 		case TORUS:
+		    if (msgs) bu_vls_printf(msgs, "%*sTODO: process partial torus\n", L2_OFFSET, " ");
+		    /*
 		    if (!torus_csg(new_obj, BREP_TOROIDAL_TOL)) {
 			bu_log("torus csg failure: %s\n", key.c_str());
-			csg_fail++;
-		    }
+		    }*/
+		    csg_fail++;
 		    break;
 		default:
 		    /* Unknown object type - can't convert to csg */
@@ -817,7 +857,7 @@ subbrep_make_brep(struct subbrep_object_data *data)
 		ON_BrepTrim &nt = data->local_brep->NewTrim(n_edge, old_trim->m_bRev3d, new_loop, c2_map[old_trim->TrimCurveIndexOf()]);
 		nt.m_tolerance[0] = old_trim->m_tolerance[0];
 		nt.m_tolerance[1] = old_trim->m_tolerance[1];
-
+		nt.m_type = old_trim->m_type;
 		nt.m_iso = old_trim->m_iso;
 	    } else {
 		/* If we didn't have an edge originally, we need to add the 2d curve here */
@@ -832,10 +872,12 @@ subbrep_make_brep(struct subbrep_object_data *data)
 		    vertex_map[old_trim->Vertex(0)->m_vertex_index] = newvs.m_vertex_index;
 
 		    ON_BrepTrim &nt = data->local_brep->NewSingularTrim(newvs, new_loop, old_trim->m_iso, c2_map[old_trim->TrimCurveIndexOf()]);
+		    nt.m_type = old_trim->m_type;
 		    nt.m_tolerance[0] = old_trim->m_tolerance[0];
 		    nt.m_tolerance[1] = old_trim->m_tolerance[1];
 		} else {
 		    ON_BrepTrim &nt = data->local_brep->NewSingularTrim(data->local_brep->m_V[vertex_map[old_trim->Vertex(0)->m_vertex_index]], new_loop, old_trim->m_iso, c2_map[old_trim->TrimCurveIndexOf()]);
+		    nt.m_type = old_trim->m_type;
 		    nt.m_tolerance[0] = old_trim->m_tolerance[0];
 		    nt.m_tolerance[1] = old_trim->m_tolerance[1];
 		}

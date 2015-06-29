@@ -72,26 +72,28 @@
 
 /* I/O */
 /** @ingroup bu_io */
-/**   @defgroup bu_str Strings */
+/**   @defgroup bu_getopt Basic Command-line Option Parsing*/
 /** @ingroup bu_io */
-/**   @defgroup bu_debug Debugging */
+/**   @defgroup bu_opt Generalized Command-line Option Parsing*/
+/**   @ingroup bu_opt */
+/**     @defgroup bu_opt_arg_process Pre-Defined Option Parsers*/
+/** @ingroup bu_io */
+/**   @defgroup bu_cmd Sub-Command Processing */
 /** @ingroup bu_io */
 /**   @defgroup bu_path Path Processing */
 /** @ingroup bu_io */
-/**   @defgroup bu_log Logging */
-/** @ingroup bu_io */
 /**   @defgroup bu_file File Processing */
 /** @ingroup bu_io */
+/**   @defgroup bu_log Logging */
+/** @ingroup bu_io */
 /**   @defgroup bu_vfont Vector Fonts */
+/** @ingroup bu_io */
+/**   @defgroup bu_debug Debugging */
 
 
 /* Data Management */
 /** @ingroup bu_data */
-/**   @defgroup bu_cmd Command Processing */
-/** @ingroup bu_data */
 /**   @defgroup bu_conv Data Conversion */
-/** @ingroup bu_data */
-/**   @defgroup bu_getopt Command-line Option Parsing*/
 /** @ingroup bu_data */
 /**   @defgroup bu_hist Histogram Handling */
 /** @ingroup bu_data */
@@ -100,6 +102,8 @@
 /**   @defgroup bu_endian Endian Support */
 /** @ingroup bu_data */
 /**   @defgroup bu_time Time Support */
+/** @ingroup bu_data */
+/**   @defgroup bu_str Strings */
 /** @ingroup bu_data */
 /**   @defgroup bu_units Units */
 

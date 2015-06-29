@@ -32,71 +32,49 @@ __BEGIN_DECLS
  * @brief
  * Generalized option handling.
  *
- */
-/** @{ */
-/** @file bu/opt.h */
-
-/**
- * Callback function signature for bu_opt_desc argument processing functions.
+ * This module implements a callback and assignment based mechanism for generalized
+ * handling of option handling.  Functionally it is intended to provide capabilities
+ * similar to getopt_long, Qt's QCommandLineParser, and the tclap library.  Results
+ * are returned by way of variable assignment, and function callbacks are used to
+ * convert and validate argument strings.
  *
- * Return values:
+ * The bu_opt option parsing system does not make any use of global values, unless
+ * a user defines an option definition array that passes in pointers to global variables
+ * for setting.
  *
- * -1 - Invalid argument encountered.
- *  0 - No argument processed.
- * >0 - Number of argv elements used in valid argument processing.
+ * To set up a bu_opt parsing system, an array of bu_opt_desc (option description)
+ * structures is defined and terminated with a BU_OPT_DESC_NULL entry.  This array
+ * is then used by @link bu_opt_parse @endlink to process an argv array.
  *
- */
-typedef int (*bu_opt_arg_process_t)(struct bu_vls *, int argc, const char **argv, void *);
-
-/**
- * "Option description" structure.
+ * When defining a bu_opt_desc entry, the type of the set_var assignment variable
+ * needed is determined by the arg_process callback.  If no callback is present,
+ * set_var is expected to be an integer that will be set to 1 if the option is
+ * present in the argv string.  Because it is necessary for arbitrary variables
+ * to be assigned to the set_var slot (the type needed is determined by the
+ * arg_process callback function and may be anything) all set_var variables are
+ * identified by their pointers (which are in turn cast to void.)
  *
- * This structure is used to define a command line option.  The usage pattern is to
- * build up a BU_OPT_DESC_NULL terminated array of option descriptions, which are
- * used by bu_opt_parse to process an argv array.
+ * There are two styles in which a bu_opt_desc array may be initialized.  The first
+ * is very compact but in C89 based code requires static variables as set_var entries,
+ * as seen in the following example:
  *
- * The set_var pointer points to a user selected variable.  The type of the variable
- * needed is determined by the arg_process callback.  If no callback is present and
- * the max arg count is zero, set_var is expected to be an integer that will be set
- * to 1 if the option is present in the argv string.
-*
  * @code
  * #define help_str "Print help and exit"
  * static int ph = 0;
  * static int i = 0;
  * static fastf_t f = 0.0;
  * struct bu_opt_desc opt_defs[] = {
- *     {"h", "help",    NULL,            (void *)&ph , "", help_str},
- *     {"n", "num",     &bu_opt_int,     (void *)&i,   "#", "Read int"},
- *     {"f", "fastf_t", &bu_opt_fastf_t, (void *)&f,   "#", "Read float"},
+ *     {"h", "help",    "",  NULL,            (void *)&ph, help_str},
+ *     {"n", "num",     "#", &bu_opt_int,     (void *)&i,  "Read int"},
+ *     {"f", "fastf_t", "#", &bu_opt_fastf_t, (void *)&f,  "Read float"},
  *     BU_OPT_DESC_NULL
  * };
  * @endcode
  *
- * If an array initialization of an option description array is provided as in
- * the above example , the variables specified by the user for setting must all
- * be static (as long as C89 is used.) This should work for executable
- * argc/argv parsing, but for libraries it is not advisable due to static
- * variables rendering the function in question thread unsafe.  For an approach
- * usable in a library see the BU_OPT macro documentation.
- *
- */
-struct bu_opt_desc {
-    const char *shortopt;
-    const char *longopt;
-    const char *arg_helpstr;
-    bu_opt_arg_process_t arg_process;
-    void *set_var;
-    const char *help_string;
-};
-
-/* Convenience definition for NULL bu_opt_desc struct */
-#define BU_OPT_DESC_NULL {NULL, NULL, NULL, NULL, NULL, NULL}
-
-/**
- * Macro for assigning values to bu_opt_desc array entries.  Use this style
- * when it isn't possible to use static variables as set_var entries
- * (such as libraries which need to be thread safe.)
+ * This style of initialization is suitable for application programs, but in libraries
+ * such static variables will preclude thread and reentrant safety.  For libraries,
+ * the BU_OPT and BU_OPT_NULL macros are used to construct a bu_opt_desc array that
+ * does not require static variables:
  *
  * @code
  * #define help_str "Print help and exit"
@@ -104,12 +82,97 @@ struct bu_opt_desc {
  * int i = 0;
  * fastf_t f = 0.0;
  * struct bu_opt_desc opt_defs[4];
- * BU_OPT(opt_defs[0], "h", "help",     NULL,            (void *)&ph, "", help_str);
- * BU_OPT(opt_defs[1], "n", "num",      &bu_opt_ind,     (void *)&i,  "#", "Read int");
- * BU_OPT(opt_defs[2], "f", "fastf_t",  &bu_opt_fastf_t, (void *)&f,  "#", "Read float");
+ * BU_OPT(opt_defs[0], "h", "help",    "",  NULL,            (void *)&ph, help_str);
+ * BU_OPT(opt_defs[1], "n", "num",     "#", &bu_opt_int,     (void *)&i,  "Read int");
+ * BU_OPT(opt_defs[2], "f", "fastf_t", "#", &bu_opt_fastf_t, (void *)&f,  "Read float");
  * BU_OPT_NULL(opt_defs[3]);
+ * @endcode
  *
+ * Given the option description array and argc/argv data, @link bu_opt_parse @endlink will do the
+ * rest.  The design of @link bu_opt_parse @endlink is to fail early when an invalid option
+ * situation is encountered, so code using this system needs to be ready to handle
+ * such cases.
+ *
+ * For generating descriptive help strings from a bu_opt_desc array use the @link bu_opt_describe @endlink
+ * function, which supports multiple output styles and formats.
  */
+/** @{ */
+/** @file bu/opt.h */
+
+/**
+ * Callback function signature for bu_opt_desc argument processing functions. Any
+ * user defined argument processing function should match this signature and return
+ * values as documented below.
+ *
+ * @param[out]    msg     If not NULL, callback messages (usually
+ *                        error descriptions) may be appended here.
+ * @param[in]     argc    Number of arguments in argv.
+ * @param[in]     argv    @em All arguments that follow the option flag.
+ * @param[in,out] set_var The value specified in the associated bu_opt_desc.
+ *
+ * @returns
+ * Val | Interpretation
+ * --- | --------------
+ * -1  | Invalid argument encountered, or argument expected but not found.
+ *  0  | No argument processed (not an error.)
+ * >0  | Number of argv elements used in valid argument processing.
+ *
+ * An example user-defined argument processing function:
+ * @code
+ * static int
+ * parse_opt_mode(struct bu_vls *msg, int argc, const char **argv, void *set_var)
+ * {
+ *     int ret, mode;
+ *
+ *     BU_OPT_CHECK_ARGV0(msg, argc, argv, "mode");
+ *
+ *     ret = bu_opt_int(msg, argc, argv, set_var);
+ *     mode = *(int *)set_var;
+ *
+ *     if (mode < 0 || mode > 2) {
+ *         ret = -1;
+ *         if (msg) {
+ *             bu_vls_printf(msg, "Error: mode must be 0, 1, or 2.");
+ *         }
+ *     }
+ *     return ret;
+ * }
+ * @endcode
+ */
+typedef int (*bu_opt_arg_process_t)(struct bu_vls *msg, int argc, const char **argv, void *set_var);
+
+/**
+ * A common task when writing bu_opt_arg_process_t validators is to check the
+ * first argument of the argv array - this macro encapsulates that into a
+ * standard check.
+ */
+#define BU_OPT_CHECK_ARGV0(_msg, _argc, _argv, _opt_name) \
+if (_argc < 1 || !_argv || !_argv[0] || _argv[0][0] == '\0') { \
+    if (_msg) { \
+	bu_vls_printf(_msg, "Error: missing required argument: " _opt_name "\n"); \
+    } \
+    return -1; \
+}
+
+/**
+ * @brief
+ * "Option description" structure.
+ *
+ * Arrays of this structure are used to define command line options.
+ */
+struct bu_opt_desc {
+    const char *shortopt;             /**< @brief "Short" option (i.e. -h for help option) */
+    const char *longopt;              /**< @brief "Long" option (i.e. --help for help option) */
+    const char *arg_helpstr;          /**< @brief Documentation describing option argument, if any (i.e. "file" in --input file)*/
+    bu_opt_arg_process_t arg_process; /**< @brief Argument processing function pointer */
+    void *set_var;                    /**< @brief Pointer to the variable or structure that collects this option's results */
+    const char *help_string;          /**< @brief Option description */
+};
+
+/** Convenience initializer for NULL bu_opt_desc array terminator */
+#define BU_OPT_DESC_NULL {NULL, NULL, NULL, NULL, NULL, NULL}
+
+/** Macro for assigning values to bu_opt_desc array entries. */
 #define BU_OPT(_desc, _so, _lo, _ahelp, _aprocess, _var, _help) { \
     _desc.shortopt = _so; \
     _desc.longopt = _lo; \
@@ -119,7 +182,7 @@ struct bu_opt_desc {
     _desc.help_string = _help; \
 }
 
-/* Convenience macro for setting a bu_opt_desc struct to BU_OPT_DESC_NULL */
+/** Convenience macro for setting a bu_opt_desc struct to BU_OPT_DESC_NULL */
 #define BU_OPT_NULL(_desc) { \
     _desc.shortopt = NULL; \
     _desc.longopt = NULL; \
@@ -130,42 +193,25 @@ struct bu_opt_desc {
 }
 
 /**
- * Parse argv array using option descs.
+ * Parse @p argv array using option descriptions.
  *
- * The bu_opt_desc array ds must be null terminated with BU_OPT_DESC_NULL.
+ * The bu_opt_desc array @p ds must be terminated with BU_OPT_DESC_NULL.
  *
- * Return vals:
+ * @returns
+ * Val | Interpretation
+ * --- | --------------
+ * -1  | Fatal error in parsing.  Program must decide to recover or exit.
+ *  0  | All argv options handled.
+ *  >0 | Number of unused argv entries returned at the beginning of the argv array.
  *
- * -1  - fatal error in parsing.  Program must decide to recover or exit.
- *  0  - all argv options handled.
- *  >0 - some unused argv entries returned at the beginning of the argv array.
- *       returned int is unused argc count.
- *
- * msgs will collect any informational messages generated by the parser (typically
- * used for error reporting.)
- *
- * Note: An option definition without an arg_process callback that indicates
- * the option requires >0 arguments in its definition will be treated as a
- * fatal error, should that option be encountered while processing an argv
- * input.
+ * @param[out] msgs    will collect any informational messages
+ *                     generated by the parser (typically used for
+ *                     error reporting)
+ * @param[in,out] argv a return value >0 indicates that argv has been
+ *                     reordered to move the indicated number of
+ *                     unused args to the beginning of the array
  */
 BU_EXPORT extern int bu_opt_parse(struct bu_vls *msgs, int ac, const char **argv, struct bu_opt_desc *ds);
-
-
-/* Standard option validators - if a custom option argument
- * validation isn't needed, the functions below can be
- * used for most valid data types. When data conversion is successful,
- * the user_data pointer in bu_opt_data will point to the results
- * of the string->[type] translation in order to allow a calling
- * program to use the int/long/etc. without having to repeat the
- * conversion.
- */
-BU_EXPORT extern int bu_opt_bool(struct bu_vls *msg, int argc, const char **argv, void *set_var);
-BU_EXPORT extern int bu_opt_int(struct bu_vls *msg, int argc, const char **argv, void *set_var);
-BU_EXPORT extern int bu_opt_long(struct bu_vls *msg, int argc, const char **argv, void *set_var);
-BU_EXPORT extern int bu_opt_fastf_t(struct bu_vls *msg, int argc, const char **argv, void *set_var);
-BU_EXPORT extern int bu_opt_str(struct bu_vls *msg, int argc, const char **argv, void *set_var);
-BU_EXPORT extern int bu_opt_vls(struct bu_vls *msg, int argc, const char **argv, void *set_var);
 
 
 /** Output format options for bu_opt documentation generation */
@@ -196,11 +242,89 @@ struct bu_opt_desc_opts {
     int description_columns;
 };
 
+/**
+ *
+ * Using the example definition:
+ *
+ * @code
+ * struct bu_opt_desc opt_defs[] = {
+ *     {"h", "help",    "",  NULL,            (void *)&ph, "Print help string and exit."},
+ *     {"n", "num",     "#", &bu_opt_int,     (void *)&i,  "Read int"},
+ *     {"f", "fastf_t", "#", &bu_opt_fastf_t, (void *)&f,  "Read float"},
+ *     BU_OPT_DESC_NULL
+ * };
+ * @endcode
+ *
+ * bu_opt_describe would generate the following help string by default:
+ *
+@verbatim
+  -h, --help                    Print help string and exit.
+  -n #, --num #                 Read int
+  -f #, --fastf_t #             Read float
+@endverbatim
+ *
+ * When multiple options use the same set_var to capture
+ * their effect, they are considered aliases for documentation
+ * purposes.  For example, if we add multiple aliases to the
+ * help option and make it more elaborate:
+ *
+ * @code
+ * #define help_str "Print help and exit. If a type is specified to --help, print help specific to that type"
+ * struct help_struct hs;
+ * struct bu_opt_desc opt_defs[] = {
+ *     {"h", "help",    "[type]",  &hfun, (void *)&hs, help_str},
+ *     {"H", "HELP",    "[type]",  &hfun, (void *)&hs, help_str},
+ *     {"?", "",        "[type]",  &hfun, (void *)&hs, help_str},
+ *     {"n", "num",     "#", &bu_opt_int,     (void *)&i,  "Read int"},
+ *     {"f", "fastf_t", "#", &bu_opt_fastf_t, (void *)&f,  "Read float"},
+ *     BU_OPT_DESC_NULL
+ * };
+ * @endcode
+ *
+ * the generated help string reflects this:
+ *
+@verbatim
+  -h [type], -H [type], -? [type], --help [type], --HELP [type]
+                                Print help and exit. If a type is specified to
+                                --help, print help specific to that type
+  -n #, --num #                 Read int
+  -f #, --fastf_t #             Read float
+@endverbatim
+ *
+ * @returns
+ * The generated help string.  Note that the string uses allocated memory - it is the responsibility of the
+ * caller to free it with @link bu_free @endlink.
+ */
 BU_EXPORT extern const char *bu_opt_describe(struct bu_opt_desc *ds, struct bu_opt_desc_opts *settings);
 
 
-
 /** @} */
+
+/** @addtogroup bu_opt_arg_process
+ *
+ * Standard option validators - if a custom option argument
+ * validation isn't needed, the functions below can be
+ * used for most valid data types. When data conversion is successful,
+ * the user_data pointer in bu_opt_data will point to the results
+ * of the string->[type] translation in order to allow a calling
+ * program to use the int/long/etc. without having to repeat the
+ * conversion.
+ */
+/** @{ */
+/** Process 1 argument to set a boolean type */
+BU_EXPORT extern int bu_opt_bool(struct bu_vls *msg, int argc, const char **argv, void *set_var);
+/** Process 1 argument to set an integer */
+BU_EXPORT extern int bu_opt_int(struct bu_vls *msg, int argc, const char **argv, void *set_var);
+/** Process 1 argument to set a long */
+BU_EXPORT extern int bu_opt_long(struct bu_vls *msg, int argc, const char **argv, void *set_var);
+/** Process 1 argument to set a @link fastf_t @endlink (either a float or a double, depending on how BRL-CAD was compiled) */
+BU_EXPORT extern int bu_opt_fastf_t(struct bu_vls *msg, int argc, const char **argv, void *set_var);
+/** Process 1 argument to set a char pointer (uses the original argv string, does not make a copy) */
+BU_EXPORT extern int bu_opt_str(struct bu_vls *msg, int argc, const char **argv, void *set_var);
+/** Process 1 argument to append to a vls (places a space before the new entry if the target vls is not empty) */
+BU_EXPORT extern int bu_opt_vls(struct bu_vls *msg, int argc, const char **argv, void *set_var);
+/** @} */
+
 
 __END_DECLS
 
