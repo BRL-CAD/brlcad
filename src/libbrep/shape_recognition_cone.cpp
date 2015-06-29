@@ -307,6 +307,9 @@ cone_csg(struct bu_vls *msgs, struct subbrep_object_data *data, fastf_t cone_tol
 	    if (msgs) bu_vls_printf(msgs, "%*sFound partial TGC!\n", L3_OFFSET, " ");
 	}
 
+	// TODO -check for shared verts between nonlinear curves from different planes.
+	// If we have that case, we're looking at a "sliver" of a cone and need arbs
+
 	if (corner_verts_cnt == 0) {
 	    // Full TGC cone
 	    struct csg_object_params * obj;

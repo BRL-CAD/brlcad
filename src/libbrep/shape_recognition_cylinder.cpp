@@ -540,6 +540,8 @@ cylinder_csg(struct bu_vls *msgs, struct subbrep_object_data *data, fastf_t cyl_
 	data->negative_shape = negative_cylinder(data, *cylindrical_surfaces.begin(), cyl_tol);
 	data->params->bool_op = (data->negative_shape == -1) ? '-' : 'u';
 
+	// TODO -check for shared verts between nonlinear curves from different planes.
+	// If we have that case, we're looking at a "sliver" of a cylinder and need arbs
 
 	if (corner_verts.size() == 0) {
 	    //std::cout << "Full cylinder\n";
