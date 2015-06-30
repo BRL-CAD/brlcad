@@ -80,8 +80,6 @@ init_buffer()
      */
     if (max > 4096) max = 4096;
 
-    buflines = max;
-
     if (max < scanlen)
 	buflines = max;
     else
