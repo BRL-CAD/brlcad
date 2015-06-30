@@ -30,9 +30,16 @@
 #include <stddef.h>
 #include <stdint.h>
 
+
 #include "cpuconfig.h"
 #include "mm.h"
 
+#if defined(__GNUC__) && (__GNUC__ == 4 && __GNUC_MINOR__ >= 3) && !defined(__clang__)
+#  pragma GCC diagnostic ignored "-Wunused-function"
+#endif
+#if defined(__clang__)
+#  pragma clang diagnostic ignored "-Wunused-function"
+#endif
 
 void mmAtomicListAdd(mmAtomicP *list, void *item, intptr_t offset)
 {

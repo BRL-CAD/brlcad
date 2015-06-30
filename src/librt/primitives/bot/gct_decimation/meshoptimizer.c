@@ -47,6 +47,13 @@
 
 #include "bu/log.h"
 
+#if defined(__GNUC__) && (__GNUC__ == 4 && __GNUC_MINOR__ >= 3) && !defined(__clang__)
+#  pragma GCC diagnostic ignored "-Wunused-function"
+#endif
+#if defined(__clang__)
+#  pragma clang diagnostic ignored "-Wunused-function"
+#endif
+
 
 #ifdef MM_ATOMIC_SUPPORT
 #define MO_CONFIG_ATOMIC_SUPPORT
