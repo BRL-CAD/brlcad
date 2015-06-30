@@ -292,12 +292,12 @@ scale(FILE *ofp, int ix, int iy, int ox, int oy)
  * XXX - CHECK FILE SIZE
  */
 void
-init_buffer(size_t len)
+init_buffer()
 {
-    int max;
+    ssize_t max;
 
     /* See how many we could buffer */
-    max = MAXBUFBYTES / len;
+    max = MAXBUFBYTES / scanlen;
 
     /*
      * XXX We really should see how big
@@ -312,7 +312,7 @@ init_buffer(size_t len)
 	buflines = iny;
 
     buf_start = (-buflines);
-    buffer = (unsigned char *)bu_calloc(buflines, len, "buffer");
+    buffer = (unsigned char *)bu_calloc(buflines, scanlen, "buffer");
 }
 
 static int
@@ -405,7 +405,7 @@ main(int argc, char **argv)
 
     /* See how many lines we can buffer */
     scanlen = inx;
-    init_buffer(scanlen);
+    init_buffer();
 
     i = (inx < outx) ? outx : inx;
     outbuf = (unsigned char *)bu_malloc(i, "outbuf");
