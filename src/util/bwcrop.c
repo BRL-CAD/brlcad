@@ -66,12 +66,12 @@ Usage: bwcrop in.bw out.bw (I prompt!)\n\
  * XXX - CHECK FILE SIZE
  */
 void
-init_buffer(int len)
+init_buffer()
 {
-    int max;
+    ssize_t max;
 
     /* See how many we could buffer */
-    max = MAXBUFBYTES / len;
+    max = MAXBUFBYTES / scanlen;
 
     /*
      * Do a max of 4096.  We really should see how big
@@ -87,7 +87,7 @@ init_buffer(int len)
     else
 	buflines = scanlen;
 
-    buffer = (unsigned char *)bu_malloc(buflines * len, "buffer");
+    buffer = (unsigned char *)bu_malloc(buflines * scanlen, "buffer");
 }
 
 
@@ -239,7 +239,7 @@ main(int argc, char **argv)
     }
 
     /* See how many lines we can buffer */
-    init_buffer(scanlen);
+    init_buffer();
 
     /* Check for silly buffer syndrome */
     if ((ssize_t)abs((int)(ury - uly)) > buflines/2 || (ssize_t)abs((int)(lry - lly)) > buflines/2) {
