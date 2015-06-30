@@ -1,16 +1,16 @@
 /* *****************************************************************************
  *
  * Copyright (c) 2014 Alexis Naveros. All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without modification, are
  * permitted provided that the following conditions are met:
- * 
+ *
  * 1. Redistributions of source code must retain the above copyright notice, this
  *    list of conditions and the following disclaimer.
  * 2. Redistributions in binary form must reproduce the above copyright notice,
  *    this list of conditions and the following disclaimer in the documentation
  *    and/or other materials provided with the distribution.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY
  * EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
  * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT
@@ -76,4 +76,3 @@ typeof(*(p)) _n[3] = { p[0], p[1], p[2] }; \
 (p)[0]=(_n)[0]*(m)[0*4+0]+(_n)[1]*(m)[1*4+0]+(_n)[2]*(m)[2*4+0]+(m)[3*4+0]; \
 (p)[1]=(_n)[0]*(m)[0*4+1]+(_n)[1]*(m)[1*4+1]+(_n)[2]*(m)[2*4+1]+(m)[3*4+1]; \
 (p)[2]=(_n)[0]*(m)[0*4+2]+(_n)[1]*(m)[1*4+2]+(_n)[2]*(m)[2*4+2]+(m)[3*4+2]; } while (0)
-

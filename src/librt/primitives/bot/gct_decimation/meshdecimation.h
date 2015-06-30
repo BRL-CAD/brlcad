@@ -1,16 +1,16 @@
 /* *****************************************************************************
  *
  * Copyright (c) 2014 Alexis Naveros. All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without modification, are
  * permitted provided that the following conditions are met:
- * 
+ *
  * 1. Redistributions of source code must retain the above copyright notice, this
  *    list of conditions and the following disclaimer.
  * 2. Redistributions in binary form must reproduce the above copyright notice,
  *    this list of conditions and the following disclaimer in the documentation
  *    and/or other materials provided with the distribution.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY
  * EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
  * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT
@@ -33,72 +33,68 @@ extern "C" {
 #define MD_ATTRIB_MAX (16)
 
 
-typedef struct
-{
-  void *base;
-  int width;
-  size_t count;
-  size_t stride;
-  int flags;
+typedef struct {
+    void *base;
+    int width;
+    size_t count;
+    size_t stride;
+    int flags;
 } mdOpAttrib;
 
 
-typedef struct
-{
-  double progress;
-  int stage;
-  const char *stagename;
-  long trianglecount;
+typedef struct {
+    double progress;
+    int stage;
+    const char *stagename;
+    long trianglecount;
 } mdStatus;
 
-enum
-{
-  MD_STATUS_STAGE_INIT,
-  MD_STATUS_STAGE_BUILDVERTICES,
-  MD_STATUS_STAGE_BUILDTRIANGLES,
-  MD_STATUS_STAGE_BUILDTRIREFS,
-  MD_STATUS_STAGE_BUILDQUEUE,
-  MD_STATUS_STAGE_DECIMATION,
-  MD_STATUS_STAGE_STORE,
-  MD_STATUS_STAGE_DONE,
+enum {
+    MD_STATUS_STAGE_INIT,
+    MD_STATUS_STAGE_BUILDVERTICES,
+    MD_STATUS_STAGE_BUILDTRIANGLES,
+    MD_STATUS_STAGE_BUILDTRIREFS,
+    MD_STATUS_STAGE_BUILDQUEUE,
+    MD_STATUS_STAGE_DECIMATION,
+    MD_STATUS_STAGE_STORE,
+    MD_STATUS_STAGE_DONE,
 
-  MD_STATUS_STAGE_COUNT
+    MD_STATUS_STAGE_COUNT
 };
 
 
-typedef struct
-{
-  size_t vertexcount;
-  void *vertex;
-  int vertexwidth;
-  size_t vertexstride;
-  size_t vertexalloc;
+typedef struct {
+    size_t vertexcount;
+    void *vertex;
+    int vertexwidth;
+    size_t vertexstride;
+    size_t vertexalloc;
 
-  void *indices;
-  int indiceswidth;
-  size_t indicesstride;
-  size_t tricount;
+    void *indices;
+    int indiceswidth;
+    size_t indicesstride;
+    size_t tricount;
 
-  double decimationstrength;
-  int decimationcount;
+    double decimationstrength;
+    int decimationcount;
 
-  int attribcount;
-  mdOpAttrib attrib[MD_ATTRIB_MAX];
-  mdOpAttrib normalattrib;
+    int attribcount;
+    mdOpAttrib attrib[MD_ATTRIB_MAX];
+    mdOpAttrib normalattrib;
 
-  long msecs;
+    long msecs;
 
-  /* Status callback */
-  long statusmiliseconds;
-  void *statusopaquepointer;
-  void (*statuscallback)( void *opaquepointer, const mdStatus *status );
+    /* Status callback */
+    long statusmiliseconds;
+    void *statusopaquepointer;
+    void (*statuscallback)(void *opaquepointer, const mdStatus *status);
 
-  /* Advanced configuration options */
-  double compactnesstarget;
-  double compactnesspenalty;
-  int syncstepcount;
-  double normalsearchangle;
-  size_t maxmemorysize;
+    /* Advanced configuration options */
+    double compactnesstarget;
+    double compactnesspenalty;
+    int syncstepcount;
+    double normalsearchangle;
+    size_t maxmemorysize;
 
 } mdOperation;
 
@@ -113,11 +109,11 @@ void mdInit();
 /*
  * Set up the mdOperation struct to configure a mesh decimation task.
  */
-void mdOperationInit( mdOperation *op );
-void mdOperationData( mdOperation *op, size_t vertexcount, void *vertex, int vertexwidth, size_t vertexstride, size_t tricount, void *indices, int indiceswidth, size_t indicesstride );
-int mdOperationAddAttrib( mdOperation *op, void *base, int width, size_t count, size_t stride, int flags );
-void mdOperationStrength( mdOperation *op, double decimationstrength );
-void mdOperationStatusCallback( mdOperation *op, void (*statuscallback)( void *opaquepointer, const mdStatus *status ), void *opaquepointer, long miliseconds );
+void mdOperationInit(mdOperation *op);
+void mdOperationData(mdOperation *op, size_t vertexcount, void *vertex, int vertexwidth, size_t vertexstride, size_t tricount, void *indices, int indiceswidth, size_t indicesstride);
+int mdOperationAddAttrib(mdOperation *op, void *base, int width, size_t count, size_t stride, int flags);
+void mdOperationStrength(mdOperation *op, double decimationstrength);
+void mdOperationStatusCallback(mdOperation *op, void (*statuscallback)(void *opaquepointer, const mdStatus *status), void *opaquepointer, long miliseconds);
 
 #define MD_ATTRIB_FLAGS_NORMALIZE (0x1)
 #define MD_ATTRIB_FLAGS_COMPUTE_NORMALS (0x2)
@@ -126,7 +122,7 @@ void mdOperationStatusCallback( mdOperation *op, void (*statuscallback)( void *o
 /*
  * Decimate the mesh specifed by the mdOperation struct.
  */
-int mdMeshDecimation( mdOperation *operation, int threadcount, int flags );
+int mdMeshDecimation(mdOperation *operation, int threadcount, int flags);
 
 /* Slightly increases the quality of the mesh decimation */
 #define MD_FLAGS_CONTINUOUS_UPDATE (0x1)
@@ -141,8 +137,6 @@ int mdMeshDecimation( mdOperation *operation, int threadcount, int flags );
 #define MD_FLAGS_NO_DECIMATION (0x20)
 
 
-
 #ifdef __cplusplus
 }
 #endif
-

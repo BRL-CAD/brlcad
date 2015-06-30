@@ -3,16 +3,16 @@
  * ----------------------------------------------------------------------
  *
  * Copyright (c) 2014 SURVICE Engineering. All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without modification, are
  * permitted provided that the following conditions are met:
- * 
+ *
  * 1. Redistributions of source code must retain the above copyright notice, this
  *    list of conditions and the following disclaimer.
  * 2. Redistributions in binary form must reproduce the above copyright notice,
  *    this list of conditions and the following disclaimer in the documentation
  *    and/or other materials provided with the distribution.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY
  * EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
  * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT
@@ -44,50 +44,56 @@
 #include "meshoptimization.h"
 
 void
-mesh_optimization (long vertexcount,
-		   long tricount,
-		   void *indices,
-		   int indiceswidth,
-		   int threadcount,
-		   int optimizationlevel
+mesh_optimization(long vertexcount,
+		  long tricount,
+		  void *indices,
+		  int indiceswidth,
+		  int threadcount,
+		  int optimizationlevel
 #if DEBUG_MESH_OPTIMIZATION_VERBOSE
-		   , std::string rname
+		  , std::string rname
 #endif
-		   )
+		 )
 {
-  int depth, flags, maxthreadcount;
-  switch( optimizationlevel )
-    {
-    case 3:
-      depth = 32;
-      flags = 0;
-      break;
-    case 2:
-      depth = 32;
-      flags = OPTIMIZATION_FLAGS;
-      break;
-    case 1:
-      depth = 16;
-      flags = OPTIMIZATION_FLAGS;
-      break;
-    case 0:
-    default:
-      return;
+    int depth, flags, maxthreadcount;
+
+    switch (optimizationlevel) {
+	case 3:
+	    depth = 32;
+	    flags = 0;
+	    break;
+
+	case 2:
+	    depth = 32;
+	    flags = OPTIMIZATION_FLAGS;
+	    break;
+
+	case 1:
+	    depth = 16;
+	    flags = OPTIMIZATION_FLAGS;
+	    break;
+
+	case 0:
+	default:
+	    return;
     }
-  maxthreadcount = tricount / 16384;
-  if( threadcount > maxthreadcount )
-    threadcount = maxthreadcount;
+
+    maxthreadcount = tricount / 16384;
+
+    if (threadcount > maxthreadcount)
+	threadcount = maxthreadcount;
+
 #if DEBUG_MESH_OPTIMIZATION_VERBOSE
-  fprintf (stderr, "Optimizing %s...", rname.c_str());
+    fprintf(stderr, "Optimizing %s...", rname.c_str());
 #endif
-  moOptimizeMesh (vertexcount,
-		  tricount,
-		  indices, indiceswidth,
-		  3*indiceswidth, 0, 0,
-		  depth,
-		  threadcount,
-		  flags);
+    moOptimizeMesh(vertexcount,
+		   tricount,
+		   indices, indiceswidth,
+		   3 * indiceswidth, 0, 0,
+		   depth,
+		   threadcount,
+		   flags);
 #if DEBUG_MESH_OPTIMIZATION_VERBOSE
-  fprintf (stderr, "Done.\n");
+    fprintf(stderr, "Done.\n");
 #endif
 }

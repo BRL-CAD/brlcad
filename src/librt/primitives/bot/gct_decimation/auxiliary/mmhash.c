@@ -1,16 +1,16 @@
 /* *****************************************************************************
  *
  * Copyright (c) 2014 Alexis Naveros. All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without modification, are
  * permitted provided that the following conditions are met:
- * 
+ *
  * 1. Redistributions of source code must retain the above copyright notice, this
  *    list of conditions and the following disclaimer.
  * 2. Redistributions in binary form must reproduce the above copyright notice,
  *    this list of conditions and the following disclaimer in the documentation
  *    and/or other materials provided with the distribution.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY
  * EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
  * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT
@@ -39,64 +39,60 @@
 #include "mmhash.h"
 
 
-
-
-typedef struct
-{
+typedef struct {
 #ifdef MM_ATOMIC_SUPPORT
-  /* Powerful atomic read/write lock */
-  mmAtomicLock32 lock;
-  mmAtomicP owner;
+    /* Powerful atomic read/write lock */
+    mmAtomicLock32 lock;
+    mmAtomicP owner;
 #else
-  /* Mutex, or how to ruin performance */
-  mtMutex mutex;
-  void *owner;
+    /* Mutex, or how to ruin performance */
+    mtMutex mutex;
+    void *owner;
 #endif
 } mmHashPage MM_CACHE_ALIGN;
 
-typedef struct
-{
-  uint32_t status;
-  uint32_t flags;
-  size_t entrysize;
+typedef struct {
+    uint32_t status;
+    uint32_t flags;
+    size_t entrysize;
 
-  /* Page locks */
-  uint32_t pageshift;
-  uint32_t pagecount;
-  uint32_t pagemask;
-  mmHashPage *page;
+    /* Page locks */
+    uint32_t pageshift;
+    uint32_t pagecount;
+    uint32_t pagemask;
+    mmHashPage *page;
 
-  /* Hash size */
-  uint32_t minhashbits;
-  uint32_t hashbits;
-  uint32_t hashsize;
-  uint32_t hashmask;
+    /* Hash size */
+    uint32_t minhashbits;
+    uint32_t hashbits;
+    uint32_t hashsize;
+    uint32_t hashmask;
 
-  /* Entry count tracking if hash table is dynamic */
+    /* Entry count tracking if hash table is dynamic */
 #ifdef MM_ATOMIC_SUPPORT
-  mmAtomic32 entrycount;
+    mmAtomic32 entrycount;
 #else
-  mtMutex countmutex;
-  uint32_t entrycount;
+    mtMutex countmutex;
+    uint32_t entrycount;
 #endif
-  uint32_t lowcount;
-  uint32_t highcount;
+    uint32_t lowcount;
+    uint32_t highcount;
 
-  /* Global lock as the final word to resolve fighting between threads trying to access the same entry */
-  char paddingA[64];
+    /* Global lock as the final word to resolve fighting between threads trying to access the same entry */
+    char paddingA[64];
 #ifdef MM_ATOMIC_SUPPORT
-  mmAtomic32 globallock;
+    mmAtomic32 globallock;
 #else
-  mtMutex globalmutex;
+    mtMutex globalmutex;
 #endif
-  char paddingB[64];
+    char paddingB[64];
 
 #ifdef MM_HASH_DEBUG_STATISTICS
-  long entrycountmax;
-  mmAtomicL statentrycount;
-  mmAtomicL accesscount;
-  mmAtomicL collisioncount;
-  mmAtomicL relocationcount;
+    long entrycountmax;
+    mmAtomicL statentrycount;
+    mmAtomicL accesscount;
+    mmAtomicL collisioncount;
+    mmAtomicL relocationcount;
 #endif
 
 } mmHashTable;
@@ -111,1048 +107,1068 @@ typedef struct
 #define MM_HASH_PAGELIST(table) (void *)ADDRESS(table,MM_HASH_ALIGN64(MM_HASH_SIZEOF_ALIGN64(mmHashTable)+((table)->hashsize*(table)->entrysize)))
 
 
-
 /****/
 
 
-
-static void mmHashSetBounds( mmHashTable *table )
+static void mmHashSetBounds(mmHashTable *table)
 {
-  table->lowcount = 0;
-  if( table->hashbits > table->minhashbits )
-    table->lowcount = table->hashsize / 5;
-  table->highcount = table->hashsize / 2;
-  return;
+    table->lowcount = 0;
+
+    if (table->hashbits > table->minhashbits)
+	table->lowcount = table->hashsize / 5;
+
+    table->highcount = table->hashsize / 2;
+    return;
 }
 
 
-size_t mmHashRequiredSize( size_t entrysize, uint32_t hashbits, uint32_t pageshift )
+size_t mmHashRequiredSize(size_t entrysize, uint32_t hashbits, uint32_t pageshift)
 {
-  uint32_t entrycount;
-  uint32_t pagecount;
-  entrycount = 1 << hashbits;
-  pagecount = entrycount >> pageshift;
-  if( !( pagecount ) )
-    pagecount = 1;
-  return MM_HASH_ALIGN64( MM_HASH_SIZEOF_ALIGN16(mmHashTable) + ( entrycount * entrysize ) ) + ( pagecount * sizeof(mmHashPage) );
+    uint32_t entrycount;
+    uint32_t pagecount;
+    entrycount = 1 << hashbits;
+    pagecount = entrycount >> pageshift;
+
+    if (!(pagecount))
+	pagecount = 1;
+
+    return MM_HASH_ALIGN64(MM_HASH_SIZEOF_ALIGN16(mmHashTable) + (entrycount * entrysize)) + (pagecount * sizeof(mmHashPage));
 }
 
 
-void mmHashInit( void *hashtable, mmHashAccess *vaccess, size_t entrysize, uint32_t hashbits, uint32_t pageshift, uint32_t flags )
+void mmHashInit(void *hashtable, mmHashAccess *vaccess, size_t entrysize, uint32_t hashbits, uint32_t pageshift, uint32_t flags)
 {
-  uint32_t hashkey, pageindex;
-  void *entry;
-  mmHashTable *table;
-  mmHashPage *page;
+    uint32_t hashkey, pageindex;
+    void *entry;
+    mmHashTable *table;
+    mmHashPage *page;
 
-  table = (mmHashTable *)hashtable;
-  table->status = MM_HASH_STATUS_NORMAL;
-  if( flags & MM_HASH_FLAGS_NO_COUNT )
-    table->status = MM_HASH_STATUS_UNKNOWN;
-  table->flags = flags;
-  table->entrysize = entrysize;
-  table->minhashbits = hashbits;
-  table->hashbits = hashbits;
-  table->hashsize = 1 << table->hashbits;
-  table->hashmask = table->hashsize - 1;
-  table->pageshift = pageshift;
-  table->pagecount = table->hashsize >> pageshift;
-  if( !( table->pagecount ) )
-    table->pagecount = 1;
-  table->pagemask = table->pagecount - 1;
-  table->page = (mmHashPage *)MM_HASH_PAGELIST( table );
+    table = (mmHashTable *)hashtable;
+    table->status = MM_HASH_STATUS_NORMAL;
+
+    if (flags & MM_HASH_FLAGS_NO_COUNT)
+	table->status = MM_HASH_STATUS_UNKNOWN;
+
+    table->flags = flags;
+    table->entrysize = entrysize;
+    table->minhashbits = hashbits;
+    table->hashbits = hashbits;
+    table->hashsize = 1 << table->hashbits;
+    table->hashmask = table->hashsize - 1;
+    table->pageshift = pageshift;
+    table->pagecount = table->hashsize >> pageshift;
+
+    if (!(table->pagecount))
+	table->pagecount = 1;
+
+    table->pagemask = table->pagecount - 1;
+    table->page = (mmHashPage *)MM_HASH_PAGELIST(table);
 #ifdef MM_ATOMIC_SUPPORT
-  mmAtomicWrite32( &table->entrycount, 0 );
+    mmAtomicWrite32(&table->entrycount, 0);
 #else
-  mtMutexInit( &table->countmutex );
-  table->entrycount = 0;
+    mtMutexInit(&table->countmutex);
+    table->entrycount = 0;
 #endif
-  mmHashSetBounds( table );
+    mmHashSetBounds(table);
 
-  /* Clear the table */
-  entry = MM_HASH_ENTRYLIST( table );
-  for( hashkey = 0 ; hashkey < table->hashsize ; hashkey++ )
-  {
-    vaccess->clearentry( entry );
-    entry = ADDRESS( entry, entrysize );
-  }
+    /* Clear the table */
+    entry = MM_HASH_ENTRYLIST(table);
 
-  /* Clear the lock pages */
-  page = table->page;
-#ifdef MM_ATOMIC_SUPPORT
-  for( pageindex = table->pagecount ; pageindex ; pageindex--, page++ )
-  {
-    mmAtomicLockInit32( &page->lock );
-    mmAtomicWriteP( &page->owner, 0 );
-  }
-  mmAtomicWrite32( &table->globallock, 0x0 );
-#else
-  for( pageindex = table->pagecount ; pageindex ; pageindex--, page++ )
-  {
-    mtMutexInit( &page->mutex );
-    page->owner = 0;
-  }
-  mtMutexInit( &table->globalmutex );
-#endif
+    for (hashkey = 0 ; hashkey < table->hashsize ; hashkey++) {
+	vaccess->clearentry(entry);
+	entry = ADDRESS(entry, entrysize);
+    }
 
-#ifdef MM_HASH_DEBUG_STATISTICS
-  table->entrycountmax = 0;
-  mmAtomicWriteL( &table->statentrycount, 0 );
-  mmAtomicWriteL( &table->accesscount, 0 );
-  mmAtomicWriteL( &table->collisioncount, 0 );
-  mmAtomicWriteL( &table->relocationcount, 0 );
-#endif
-
-  return;
-}
-
-
-int mmHashGetStatus( void *hashtable, int *rethashbits )
-{
-  mmHashTable *table;
-  table = (mmHashTable *)hashtable;
-  if( rethashbits )
-    *rethashbits = table->hashbits;
-  return table->status;
-}
-
-
-
-/****/
-
-
-
+    /* Clear the lock pages */
+    page = table->page;
 #ifdef MM_ATOMIC_SUPPORT
 
- #define MM_HASH_LOCK_TRY_READ(t,p) (mmAtomicLockTryRead32(&t->page[p].lock,MM_HASH_ATOMIC_TRYCOUNT))
- #define MM_HASH_LOCK_TRY_WRITE(t,p) (mmAtomicLockTryWrite32(&t->page[p].lock,MM_HASH_ATOMIC_TRYCOUNT))
- #define MM_HASH_LOCK_DONE_READ(t,p) (mmAtomicLockDoneRead32(&t->page[p].lock))
- #define MM_HASH_LOCK_DONE_WRITE(t,p) (mmAtomicLockDoneWrite32(&t->page[p].lock))
- #define MM_HASH_GLOBAL_LOCK(t) (mmAtomicSpin32(&t->globallock,0x0,0x1))
- #define MM_HASH_GLOBAL_UNLOCK(t) (mmAtomicWrite32(&t->globallock,0x0))
- #define MM_HASH_ENTRYCOUNT_ADD_READ(t,c) (mmAtomicAddRead32(&table->entrycount,c))
+    for (pageindex = table->pagecount ; pageindex ; pageindex--, page++) {
+	mmAtomicLockInit32(&page->lock);
+	mmAtomicWriteP(&page->owner, 0);
+    }
+
+    mmAtomicWrite32(&table->globallock, 0x0);
+#else
+
+    for (pageindex = table->pagecount ; pageindex ; pageindex--, page++) {
+	mtMutexInit(&page->mutex);
+	page->owner = 0;
+    }
+
+    mtMutexInit(&table->globalmutex);
+#endif
+
+#ifdef MM_HASH_DEBUG_STATISTICS
+    table->entrycountmax = 0;
+    mmAtomicWriteL(&table->statentrycount, 0);
+    mmAtomicWriteL(&table->accesscount, 0);
+    mmAtomicWriteL(&table->collisioncount, 0);
+    mmAtomicWriteL(&table->relocationcount, 0);
+#endif
+
+    return;
+}
+
+
+int mmHashGetStatus(void *hashtable, int *rethashbits)
+{
+    mmHashTable *table;
+    table = (mmHashTable *)hashtable;
+
+    if (rethashbits)
+	*rethashbits = table->hashbits;
+
+    return table->status;
+}
+
+
+/****/
+
+
+#ifdef MM_ATOMIC_SUPPORT
+
+#define MM_HASH_LOCK_TRY_READ(t,p) (mmAtomicLockTryRead32(&t->page[p].lock,MM_HASH_ATOMIC_TRYCOUNT))
+#define MM_HASH_LOCK_TRY_WRITE(t,p) (mmAtomicLockTryWrite32(&t->page[p].lock,MM_HASH_ATOMIC_TRYCOUNT))
+#define MM_HASH_LOCK_DONE_READ(t,p) (mmAtomicLockDoneRead32(&t->page[p].lock))
+#define MM_HASH_LOCK_DONE_WRITE(t,p) (mmAtomicLockDoneWrite32(&t->page[p].lock))
+#define MM_HASH_GLOBAL_LOCK(t) (mmAtomicSpin32(&t->globallock,0x0,0x1))
+#define MM_HASH_GLOBAL_UNLOCK(t) (mmAtomicWrite32(&t->globallock,0x0))
+#define MM_HASH_ENTRYCOUNT_ADD_READ(t,c) (mmAtomicAddRead32(&table->entrycount,c))
 
 #else
 
- #define MM_HASH_LOCK_TRY_READ(t,p) (mtMutexTryLock(&t->page[p].mutex))
- #define MM_HASH_LOCK_TRY_WRITE(t,p) (mtMutexTryLock(&t->page[p].mutex))
- #define MM_HASH_LOCK_DONE_READ(t,p) (mtMutexUnlock(&t->page[p].mutex))
- #define MM_HASH_LOCK_DONE_WRITE(t,p) (mtMutexUnlock(&t->page[p].mutex))
- #define MM_HASH_GLOBAL_LOCK(t) (mtMutexLock(&t->globalmutex))
- #define MM_HASH_GLOBAL_UNLOCK(t) (mtMutexUnlock(&t->globalmutex))
+#define MM_HASH_LOCK_TRY_READ(t,p) (mtMutexTryLock(&t->page[p].mutex))
+#define MM_HASH_LOCK_TRY_WRITE(t,p) (mtMutexTryLock(&t->page[p].mutex))
+#define MM_HASH_LOCK_DONE_READ(t,p) (mtMutexUnlock(&t->page[p].mutex))
+#define MM_HASH_LOCK_DONE_WRITE(t,p) (mtMutexUnlock(&t->page[p].mutex))
+#define MM_HASH_GLOBAL_LOCK(t) (mtMutexLock(&t->globalmutex))
+#define MM_HASH_GLOBAL_UNLOCK(t) (mtMutexUnlock(&t->globalmutex))
 
-static inline uint32_t MM_HASH_ENTRYCOUNT_ADD_READ( mmHashTable *t, int32_t c )
+static inline uint32_t MM_HASH_ENTRYCOUNT_ADD_READ(mmHashTable *t, int32_t c)
 {
-  uint32_t entrycount;
-  mtMutexLock( &t->countmutex );
-  t->entrycount += c;
-  entrycount = t->entrycount;
-  mtMutexUnlock( &t->countmutex );
-  return entrycount;
+    uint32_t entrycount;
+    mtMutexLock(&t->countmutex);
+    t->entrycount += c;
+    entrycount = t->entrycount;
+    mtMutexUnlock(&t->countmutex);
+    return entrycount;
 }
 
 #endif
-
 
 
 /****/
 
 
-
-void *mmHashDirectFindEntry( void *hashtable, mmHashAccess *vaccess, void *findentry )
+void *mmHashDirectFindEntry(void *hashtable, mmHashAccess *vaccess, void *findentry)
 {
-  int cmpvalue;
-  uint32_t hashkey;
-  void *entry;
-  mmHashTable *table;
+    int cmpvalue;
+    uint32_t hashkey;
+    void *entry;
+    mmHashTable *table;
 
-  table = (mmHashTable *)hashtable;
-
-#ifdef MM_HASH_DEBUG_STATISTICS
-  mmAtomicAddL( &table->accesscount, 1 );
-#endif
-
-  /* Hash key of entry */
-  hashkey = vaccess->entrykey( findentry ) & table->hashmask;
-
-  /* Search the entry */
-  for( ; ; hashkey = ( hashkey + 1 ) & table->hashmask )
-  {
-    entry = MM_HASH_ENTRY( table, hashkey );
-    cmpvalue = vaccess->entrycmp( entry, findentry );
-    if( cmpvalue == MM_HASH_ENTRYCMP_INVALID )
-      break;
-    else if( cmpvalue == MM_HASH_ENTRYCMP_FOUND )
-      return entry;
-#ifdef MM_HASH_DEBUG_STATISTICS
-    mmAtomicAddL( &table->collisioncount, 1 );
-#endif
-  }
-
-  return 0;
-}
-
-
-static int mmHashTryFindEntry( mmHashTable *table, mmHashAccess *vaccess, void *findentry, void **retentry )
-{
-  uint32_t hashkey;
-  uint32_t pageindex, pagestart, pagefinal;
-  int cmpvalue, retvalue;
-  void *entry;
+    table = (mmHashTable *)hashtable;
 
 #ifdef MM_HASH_DEBUG_STATISTICS
-  mmAtomicAddL( &table->accesscount, 1 );
+    mmAtomicAddL(&table->accesscount, 1);
 #endif
 
-  /* Hash key of entry */
-  hashkey = vaccess->entrykey( findentry ) & table->hashmask;
+    /* Hash key of entry */
+    hashkey = vaccess->entrykey(findentry) & table->hashmask;
 
-  /* Lock first page */
-  pagestart = hashkey >> table->pageshift;
-  pagefinal = pagestart;
-  if( !( MM_HASH_LOCK_TRY_READ( table, pagestart ) ) )
-    return MM_HASH_TRYAGAIN;
+    /* Search the entry */
+    for (; ; hashkey = (hashkey + 1) & table->hashmask) {
+	entry = MM_HASH_ENTRY(table, hashkey);
+	cmpvalue = vaccess->entrycmp(entry, findentry);
 
-  /* Search the entry */
-  entry = 0;
-  retvalue = MM_HASH_SUCCESS;
-  for( ; ; hashkey = ( hashkey + 1 ) & table->hashmask )
-  {
-    /* Lock new pages */
-    pageindex = hashkey >> table->pageshift;
-    if( pageindex != pagefinal )
-    {
-      if( !( MM_HASH_LOCK_TRY_READ( table, pageindex ) ) )
-      {
-        retvalue = MM_HASH_TRYAGAIN;
-        break;
-      }
-      pagefinal = pageindex;
+	if (cmpvalue == MM_HASH_ENTRYCMP_INVALID)
+	    break;
+	else if (cmpvalue == MM_HASH_ENTRYCMP_FOUND)
+	    return entry;
+
+#ifdef MM_HASH_DEBUG_STATISTICS
+	mmAtomicAddL(&table->collisioncount, 1);
+#endif
     }
 
-    /* Check for entry match */
-    entry = MM_HASH_ENTRY( table, hashkey );
-    cmpvalue = vaccess->entrycmp( entry, findentry );
-    if( cmpvalue == MM_HASH_ENTRYCMP_INVALID )
-    {
-      retvalue = MM_HASH_FAILURE;
-      entry = 0;
-      break;
-    }
-    else if( cmpvalue == MM_HASH_ENTRYCMP_FOUND )
-      break;
-#ifdef MM_HASH_DEBUG_STATISTICS
-    mmAtomicAddL( &table->collisioncount, 1 );
-#endif
-  }
-
-  /* Unlock all pages */
-  for( pageindex = pagestart ; ; pageindex = ( pageindex + 1 ) & table->pagemask )
-  {
-    MM_HASH_LOCK_DONE_READ( table, pageindex );
-    if( pageindex == pagefinal )
-      break;
-  }
-
-  *retentry = entry;
-  return retvalue;
+    return 0;
 }
 
 
-void *mmHashLockFindEntry( void *hashtable, mmHashAccess *vaccess, void *findentry )
+static int mmHashTryFindEntry(mmHashTable *table, mmHashAccess *vaccess, void *findentry, void **retentry)
 {
-  int retvalue;
-  void *entry;
-  mmHashTable *table;
+    uint32_t hashkey;
+    uint32_t pageindex, pagestart, pagefinal;
+    int cmpvalue, retvalue;
+    void *entry;
 
-  table = (mmHashTable *)hashtable;
-  retvalue = mmHashTryFindEntry( table, vaccess, findentry, &entry );
-  if( retvalue == MM_HASH_TRYAGAIN )
-  {
-    MM_HASH_GLOBAL_LOCK( table );
-    do
-    {
-      retvalue = mmHashTryFindEntry( table, vaccess, findentry, &entry );
-    } while( retvalue == MM_HASH_TRYAGAIN );
-    MM_HASH_GLOBAL_UNLOCK( table );
-  }
+#ifdef MM_HASH_DEBUG_STATISTICS
+    mmAtomicAddL(&table->accesscount, 1);
+#endif
 
-  return entry;
+    /* Hash key of entry */
+    hashkey = vaccess->entrykey(findentry) & table->hashmask;
+
+    /* Lock first page */
+    pagestart = hashkey >> table->pageshift;
+    pagefinal = pagestart;
+
+    if (!(MM_HASH_LOCK_TRY_READ(table, pagestart)))
+	return MM_HASH_TRYAGAIN;
+
+    /* Search the entry */
+    entry = 0;
+    retvalue = MM_HASH_SUCCESS;
+
+    for (; ; hashkey = (hashkey + 1) & table->hashmask) {
+	/* Lock new pages */
+	pageindex = hashkey >> table->pageshift;
+
+	if (pageindex != pagefinal) {
+	    if (!(MM_HASH_LOCK_TRY_READ(table, pageindex))) {
+		retvalue = MM_HASH_TRYAGAIN;
+		break;
+	    }
+
+	    pagefinal = pageindex;
+	}
+
+	/* Check for entry match */
+	entry = MM_HASH_ENTRY(table, hashkey);
+	cmpvalue = vaccess->entrycmp(entry, findentry);
+
+	if (cmpvalue == MM_HASH_ENTRYCMP_INVALID) {
+	    retvalue = MM_HASH_FAILURE;
+	    entry = 0;
+	    break;
+	} else if (cmpvalue == MM_HASH_ENTRYCMP_FOUND)
+	    break;
+
+#ifdef MM_HASH_DEBUG_STATISTICS
+	mmAtomicAddL(&table->collisioncount, 1);
+#endif
+    }
+
+    /* Unlock all pages */
+    for (pageindex = pagestart ; ; pageindex = (pageindex + 1) & table->pagemask) {
+	MM_HASH_LOCK_DONE_READ(table, pageindex);
+
+	if (pageindex == pagefinal)
+	    break;
+    }
+
+    *retentry = entry;
+    return retvalue;
 }
 
+
+void *mmHashLockFindEntry(void *hashtable, mmHashAccess *vaccess, void *findentry)
+{
+    int retvalue;
+    void *entry;
+    mmHashTable *table;
+
+    table = (mmHashTable *)hashtable;
+    retvalue = mmHashTryFindEntry(table, vaccess, findentry, &entry);
+
+    if (retvalue == MM_HASH_TRYAGAIN) {
+	MM_HASH_GLOBAL_LOCK(table);
+
+	do {
+	    retvalue = mmHashTryFindEntry(table, vaccess, findentry, &entry);
+	} while (retvalue == MM_HASH_TRYAGAIN);
+
+	MM_HASH_GLOBAL_UNLOCK(table);
+    }
+
+    return entry;
+}
 
 
 /****/
 
 
-
-void mmHashDirectListEntry( void *hashtable, mmHashAccess *vaccess, void *listentry, void *opaque )
+void mmHashDirectListEntry(void *hashtable, mmHashAccess *vaccess, void *listentry, void *opaque)
 {
-  int cmpvalue;
-  uint32_t hashkey;
-  void *entry;
-  mmHashTable *table;
+    int cmpvalue;
+    uint32_t hashkey;
+    void *entry;
+    mmHashTable *table;
 
-  table = (mmHashTable *)hashtable;
-
-#ifdef MM_HASH_DEBUG_STATISTICS
-  mmAtomicAddL( &table->accesscount, 1 );
-#endif
-
-  /* Hash key of entry */
-  hashkey = vaccess->entrykey( listentry ) & table->hashmask;
-
-  /* Search the entry */
-  for( ; ; hashkey = ( hashkey + 1 ) & table->hashmask )
-  {
-    entry = MM_HASH_ENTRY( table, hashkey );
-    cmpvalue = vaccess->entrylist( opaque, entry, listentry );
-    if( cmpvalue == MM_HASH_ENTRYLIST_BREAK )
-      break;
-#ifdef MM_HASH_DEBUG_STATISTICS
-    mmAtomicAddL( &table->collisioncount, 1 );
-#endif
-  }
-
-  return;
-}
-
-
-static int mmHashTryListEntry( mmHashTable *table, mmHashAccess *vaccess, void *listentry, void *opaque )
-{
-  uint32_t hashkey;
-  uint32_t pageindex, pagestart, pagefinal;
-  int cmpvalue, retvalue;
-  void *entry;
+    table = (mmHashTable *)hashtable;
 
 #ifdef MM_HASH_DEBUG_STATISTICS
-  mmAtomicAddL( &table->accesscount, 1 );
+    mmAtomicAddL(&table->accesscount, 1);
 #endif
 
-  /* Hash key of entry */
-  hashkey = vaccess->entrykey( listentry ) & table->hashmask;
+    /* Hash key of entry */
+    hashkey = vaccess->entrykey(listentry) & table->hashmask;
 
-  /* Lock first page */
-  pagestart = hashkey >> table->pageshift;
-  pagefinal = pagestart;
-  if( !( MM_HASH_LOCK_TRY_READ( table, pagestart ) ) )
-    return MM_HASH_TRYAGAIN;
+    /* Search the entry */
+    for (; ; hashkey = (hashkey + 1) & table->hashmask) {
+	entry = MM_HASH_ENTRY(table, hashkey);
+	cmpvalue = vaccess->entrylist(opaque, entry, listentry);
 
-  /* Search the entry */
-  entry = 0;
-  retvalue = MM_HASH_SUCCESS;
-  for( ; ; hashkey = ( hashkey + 1 ) & table->hashmask )
-  {
-    /* Lock new pages */
-    pageindex = hashkey >> table->pageshift;
-    if( pageindex != pagefinal )
-    {
-      if( !( MM_HASH_LOCK_TRY_READ( table, pageindex ) ) )
-      {
-        retvalue = MM_HASH_TRYAGAIN;
-        break;
-      }
-      pagefinal = pageindex;
+	if (cmpvalue == MM_HASH_ENTRYLIST_BREAK)
+	    break;
+
+#ifdef MM_HASH_DEBUG_STATISTICS
+	mmAtomicAddL(&table->collisioncount, 1);
+#endif
     }
 
-    /* Check for entry match */
-    entry = MM_HASH_ENTRY( table, hashkey );
-    cmpvalue = vaccess->entrylist( opaque, entry, listentry );
-    if( cmpvalue == MM_HASH_ENTRYLIST_BREAK )
-      break;
-#ifdef MM_HASH_DEBUG_STATISTICS
-    mmAtomicAddL( &table->collisioncount, 1 );
-#endif
-  }
-
-  /* Unlock all pages */
-  for( pageindex = pagestart ; ; pageindex = ( pageindex + 1 ) & table->pagemask )
-  {
-    MM_HASH_LOCK_DONE_READ( table, pageindex );
-    if( pageindex == pagefinal )
-      break;
-  }
-
-  return retvalue;
+    return;
 }
 
 
-void mmHashLockListEntry( void *hashtable, mmHashAccess *vaccess, void *listentry, void *opaque )
+static int mmHashTryListEntry(mmHashTable *table, mmHashAccess *vaccess, void *listentry, void *opaque)
 {
-  int retvalue;
-  mmHashTable *table;
+    uint32_t hashkey;
+    uint32_t pageindex, pagestart, pagefinal;
+    int cmpvalue, retvalue;
+    void *entry;
 
-  table = (mmHashTable *)hashtable;
-  retvalue = mmHashTryListEntry( table, vaccess, listentry, opaque );
-  if( retvalue == MM_HASH_TRYAGAIN )
-  {
-    MM_HASH_GLOBAL_LOCK( table );
-    do
-    {
-      retvalue = mmHashTryListEntry( table, vaccess, listentry, opaque );
-    } while( retvalue == MM_HASH_TRYAGAIN );
-    MM_HASH_GLOBAL_UNLOCK( table );
-  }
+#ifdef MM_HASH_DEBUG_STATISTICS
+    mmAtomicAddL(&table->accesscount, 1);
+#endif
 
-  return;
+    /* Hash key of entry */
+    hashkey = vaccess->entrykey(listentry) & table->hashmask;
+
+    /* Lock first page */
+    pagestart = hashkey >> table->pageshift;
+    pagefinal = pagestart;
+
+    if (!(MM_HASH_LOCK_TRY_READ(table, pagestart)))
+	return MM_HASH_TRYAGAIN;
+
+    /* Search the entry */
+    entry = 0;
+    retvalue = MM_HASH_SUCCESS;
+
+    for (; ; hashkey = (hashkey + 1) & table->hashmask) {
+	/* Lock new pages */
+	pageindex = hashkey >> table->pageshift;
+
+	if (pageindex != pagefinal) {
+	    if (!(MM_HASH_LOCK_TRY_READ(table, pageindex))) {
+		retvalue = MM_HASH_TRYAGAIN;
+		break;
+	    }
+
+	    pagefinal = pageindex;
+	}
+
+	/* Check for entry match */
+	entry = MM_HASH_ENTRY(table, hashkey);
+	cmpvalue = vaccess->entrylist(opaque, entry, listentry);
+
+	if (cmpvalue == MM_HASH_ENTRYLIST_BREAK)
+	    break;
+
+#ifdef MM_HASH_DEBUG_STATISTICS
+	mmAtomicAddL(&table->collisioncount, 1);
+#endif
+    }
+
+    /* Unlock all pages */
+    for (pageindex = pagestart ; ; pageindex = (pageindex + 1) & table->pagemask) {
+	MM_HASH_LOCK_DONE_READ(table, pageindex);
+
+	if (pageindex == pagefinal)
+	    break;
+    }
+
+    return retvalue;
 }
 
+
+void mmHashLockListEntry(void *hashtable, mmHashAccess *vaccess, void *listentry, void *opaque)
+{
+    int retvalue;
+    mmHashTable *table;
+
+    table = (mmHashTable *)hashtable;
+    retvalue = mmHashTryListEntry(table, vaccess, listentry, opaque);
+
+    if (retvalue == MM_HASH_TRYAGAIN) {
+	MM_HASH_GLOBAL_LOCK(table);
+
+	do {
+	    retvalue = mmHashTryListEntry(table, vaccess, listentry, opaque);
+	} while (retvalue == MM_HASH_TRYAGAIN);
+
+	MM_HASH_GLOBAL_UNLOCK(table);
+    }
+
+    return;
+}
 
 
 /****/
 
 
-
-int mmHashDirectReadEntry( void *hashtable, mmHashAccess *vaccess, void *readentry )
+int mmHashDirectReadEntry(void *hashtable, mmHashAccess *vaccess, void *readentry)
 {
-  int cmpvalue;
-  uint32_t hashkey;
-  void *entry;
-  mmHashTable *table;
+    int cmpvalue;
+    uint32_t hashkey;
+    void *entry;
+    mmHashTable *table;
 
-  table = (mmHashTable *)hashtable;
-
-#ifdef MM_HASH_DEBUG_STATISTICS
-  mmAtomicAddL( &table->accesscount, 1 );
-#endif
-
-  /* Hash key of entry */
-  hashkey = vaccess->entrykey( readentry ) & table->hashmask;
-
-  /* Search the entry */
-  for( ; ; hashkey = ( hashkey + 1 ) & table->hashmask )
-  {
-    entry = MM_HASH_ENTRY( table, hashkey );
-    cmpvalue = vaccess->entrycmp( entry, readentry );
-    if( cmpvalue == MM_HASH_ENTRYCMP_INVALID )
-      break;
-    else if( cmpvalue == MM_HASH_ENTRYCMP_FOUND )
-    {
-      memcpy( readentry, entry, table->entrysize );
-      return MM_HASH_SUCCESS;
-    }
-#ifdef MM_HASH_DEBUG_STATISTICS
-    mmAtomicAddL( &table->collisioncount, 1 );
-#endif
-  }
-
-  return MM_HASH_FAILURE;
-}
-
-
-static int mmHashTryReadEntry( mmHashTable *table, mmHashAccess *vaccess, void *readentry )
-{
-  uint32_t hashkey;
-  uint32_t pageindex, pagestart, pagefinal;
-  int cmpvalue, retvalue;
-  void *entry;
-
-  /* Hash key of entry */
-  hashkey = vaccess->entrykey( readentry ) & table->hashmask;
+    table = (mmHashTable *)hashtable;
 
 #ifdef MM_HASH_DEBUG_STATISTICS
-  mmAtomicAddL( &table->accesscount, 1 );
+    mmAtomicAddL(&table->accesscount, 1);
 #endif
 
-  /* Lock first page */
-  pagestart = hashkey >> table->pageshift;
-  pagefinal = pagestart;
-  if( !( MM_HASH_LOCK_TRY_READ( table, pagestart ) ) )
-    return MM_HASH_TRYAGAIN;
+    /* Hash key of entry */
+    hashkey = vaccess->entrykey(readentry) & table->hashmask;
 
-  /* Search the entry */
-  entry = 0;
-  retvalue = MM_HASH_SUCCESS;
-  for( ; ; hashkey = ( hashkey + 1 ) & table->hashmask )
-  {
-    /* Lock new pages */
-    pageindex = hashkey >> table->pageshift;
-    if( pageindex != pagefinal )
-    {
-      if( !( MM_HASH_LOCK_TRY_READ( table, pageindex ) ) )
-      {
-        retvalue = MM_HASH_TRYAGAIN;
-        break;
-      }
-      pagefinal = pageindex;
+    /* Search the entry */
+    for (; ; hashkey = (hashkey + 1) & table->hashmask) {
+	entry = MM_HASH_ENTRY(table, hashkey);
+	cmpvalue = vaccess->entrycmp(entry, readentry);
+
+	if (cmpvalue == MM_HASH_ENTRYCMP_INVALID)
+	    break;
+	else if (cmpvalue == MM_HASH_ENTRYCMP_FOUND) {
+	    memcpy(readentry, entry, table->entrysize);
+	    return MM_HASH_SUCCESS;
+	}
+
+#ifdef MM_HASH_DEBUG_STATISTICS
+	mmAtomicAddL(&table->collisioncount, 1);
+#endif
     }
 
-    /* Check for entry match */
-    entry = MM_HASH_ENTRY( table, hashkey );
-    cmpvalue = vaccess->entrycmp( entry, readentry );
-    if( cmpvalue == MM_HASH_ENTRYCMP_INVALID )
-    {
-      retvalue = MM_HASH_FAILURE;
-      entry = 0;
-      break;
-    }
-    else if( cmpvalue == MM_HASH_ENTRYCMP_FOUND )
-      break;
-#ifdef MM_HASH_DEBUG_STATISTICS
-    mmAtomicAddL( &table->collisioncount, 1 );
-#endif
-  }
-
-  if( entry )
-    memcpy( readentry, entry, table->entrysize );
-
-  /* Unlock all pages */
-  for( pageindex = pagestart ; ; pageindex = ( pageindex + 1 ) & table->pagemask )
-  {
-    MM_HASH_LOCK_DONE_READ( table, pageindex );
-    if( pageindex == pagefinal )
-      break;
-  }
-
-  return retvalue;
-}
-
-
-int mmHashLockReadEntry( void *hashtable, mmHashAccess *vaccess, void *readentry )
-{
-  int retvalue;
-  mmHashTable *table;
-
-  table = (mmHashTable *)hashtable;
-  retvalue = mmHashTryReadEntry( table, vaccess, readentry );
-  if( retvalue == MM_HASH_TRYAGAIN )
-  {
-    MM_HASH_GLOBAL_LOCK( table );
-    do
-    {
-      retvalue = mmHashTryReadEntry( table, vaccess, readentry );
-    } while( retvalue == MM_HASH_TRYAGAIN );
-    MM_HASH_GLOBAL_UNLOCK( table );
-  }
-
-  return retvalue;
-}
-
-
-
-/****/
-
-
-
-int mmHashDirectCallEntry( void *hashtable, mmHashAccess *vaccess, void *callentry, void (*callback)( void *opaque, void *entry, int newflag ), void *opaque, int addflag )
-{
-  int cmpvalue;
-  uint32_t hashkey, entrycount;
-  void *entry;
-  mmHashTable *table;
-
-  table = (mmHashTable *)hashtable;
-
-  /* Hash key of entry */
-  hashkey = vaccess->entrykey( callentry ) & table->hashmask;
-
-#ifdef MM_HASH_DEBUG_STATISTICS
-  mmAtomicAddL( &table->accesscount, 1 );
-#endif
-
-  /* Search an available entry */
-  for( ; ; hashkey = ( hashkey + 1 ) & table->hashmask )
-  {
-    entry = MM_HASH_ENTRY( table, hashkey );
-    cmpvalue = vaccess->entrycmp( entry, callentry );
-    if( cmpvalue == MM_HASH_ENTRYCMP_INVALID )
-      break;
-    else if( cmpvalue == MM_HASH_ENTRYCMP_FOUND )
-    {
-      callback( opaque, entry, 0 );
-      return MM_HASH_SUCCESS;
-    }
-#ifdef MM_HASH_DEBUG_STATISTICS
-    mmAtomicAddL( &table->collisioncount, 1 );
-#endif
-  }
-
-  if( !( addflag ) )
     return MM_HASH_FAILURE;
-
-  /* Store new entry */
-  memcpy( entry, callentry, table->entrysize );
-  callback( opaque, entry, 1 );
-
-  /* Increment count of entries in table */
-  if( !( table->flags & MM_HASH_FLAGS_NO_COUNT ) )
-  {
-    entrycount = MM_HASH_ENTRYCOUNT_ADD_READ( table, 1 );
-    if( entrycount >= table->highcount )
-      table->status = MM_HASH_STATUS_MUSTGROW;
-  }
-
-#ifdef MM_HASH_DEBUG_STATISTICS
-  int statentrycount = mmAtomicAddReadL( &table->statentrycount, 1 );
-  if( statentrycount > table->entrycountmax )
-    table->entrycountmax = statentrycount;
-#endif
-
-  return MM_HASH_SUCCESS;
 }
 
 
-static int mmHashTryCallEntry( mmHashTable *table, mmHashAccess *vaccess, void *callentry, void (*callback)( void *opaque, void *entry, int newflag ), void *opaque, int addflag )
+static int mmHashTryReadEntry(mmHashTable *table, mmHashAccess *vaccess, void *readentry)
 {
-  uint32_t hashkey, entrycount;
-  uint32_t pageindex, pagestart, pagefinal;
-  int cmpvalue, retvalue;
-  void *entry;
+    uint32_t hashkey;
+    uint32_t pageindex, pagestart, pagefinal;
+    int cmpvalue, retvalue;
+    void *entry;
 
-  /* Hash key of entry */
-  hashkey = vaccess->entrykey( callentry ) & table->hashmask;
+    /* Hash key of entry */
+    hashkey = vaccess->entrykey(readentry) & table->hashmask;
 
 #ifdef MM_HASH_DEBUG_STATISTICS
-  mmAtomicAddL( &table->accesscount, 1 );
+    mmAtomicAddL(&table->accesscount, 1);
 #endif
 
-  /* Lock first page */
-  pagestart = hashkey >> table->pageshift;
-  pagefinal = pagestart;
-  if( !( MM_HASH_LOCK_TRY_WRITE( table, pagestart ) ) )
-    return MM_HASH_TRYAGAIN;
+    /* Lock first page */
+    pagestart = hashkey >> table->pageshift;
+    pagefinal = pagestart;
 
-  /* Search an available entry */
-  retvalue = MM_HASH_SUCCESS;
-  for( ; ; hashkey = ( hashkey + 1 ) & table->hashmask )
-  {
-    /* Lock new pages */
-    pageindex = hashkey >> table->pageshift;
-    if( pageindex != pagefinal )
-    {
-      if( !( MM_HASH_LOCK_TRY_WRITE( table, pageindex ) ) )
-      {
-        retvalue = MM_HASH_TRYAGAIN;
-        goto end;
-      }
-      pagefinal = pageindex;
+    if (!(MM_HASH_LOCK_TRY_READ(table, pagestart)))
+	return MM_HASH_TRYAGAIN;
+
+    /* Search the entry */
+    entry = 0;
+    retvalue = MM_HASH_SUCCESS;
+
+    for (; ; hashkey = (hashkey + 1) & table->hashmask) {
+	/* Lock new pages */
+	pageindex = hashkey >> table->pageshift;
+
+	if (pageindex != pagefinal) {
+	    if (!(MM_HASH_LOCK_TRY_READ(table, pageindex))) {
+		retvalue = MM_HASH_TRYAGAIN;
+		break;
+	    }
+
+	    pagefinal = pageindex;
+	}
+
+	/* Check for entry match */
+	entry = MM_HASH_ENTRY(table, hashkey);
+	cmpvalue = vaccess->entrycmp(entry, readentry);
+
+	if (cmpvalue == MM_HASH_ENTRYCMP_INVALID) {
+	    retvalue = MM_HASH_FAILURE;
+	    entry = 0;
+	    break;
+	} else if (cmpvalue == MM_HASH_ENTRYCMP_FOUND)
+	    break;
+
+#ifdef MM_HASH_DEBUG_STATISTICS
+	mmAtomicAddL(&table->collisioncount, 1);
+#endif
     }
 
-    /* Check for entry available */
-    entry = MM_HASH_ENTRY( table, hashkey );
-    cmpvalue = vaccess->entrycmp( entry, callentry );
-    if( cmpvalue == MM_HASH_ENTRYCMP_INVALID )
-      break;
-    else if( cmpvalue == MM_HASH_ENTRYCMP_FOUND )
-    {
-      callback( opaque, entry, 0 );
-      retvalue = MM_HASH_SUCCESS;
-      goto end;
+    if (entry)
+	memcpy(readentry, entry, table->entrysize);
+
+    /* Unlock all pages */
+    for (pageindex = pagestart ; ; pageindex = (pageindex + 1) & table->pagemask) {
+	MM_HASH_LOCK_DONE_READ(table, pageindex);
+
+	if (pageindex == pagefinal)
+	    break;
     }
-#ifdef MM_HASH_DEBUG_STATISTICS
-    mmAtomicAddL( &table->collisioncount, 1 );
-#endif
-  }
 
-  if( !( addflag ) )
-  {
-    retvalue = MM_HASH_FAILURE;
-    goto end;
-  }
-
-  /* Store new entry */
-  memcpy( entry, callentry, table->entrysize );
-  callback( opaque, entry, 1 );
-
-  /* Increment count of entries in table */
-  if( !( table->flags & MM_HASH_FLAGS_NO_COUNT ) )
-  {
-    entrycount = MM_HASH_ENTRYCOUNT_ADD_READ( table, 1 );
-    if( entrycount >= table->highcount )
-      table->status = MM_HASH_STATUS_MUSTGROW;
-  }
-
-#ifdef MM_HASH_DEBUG_STATISTICS
-  int statentrycount = mmAtomicAddReadL( &table->statentrycount, 1 );
-  if( statentrycount > table->entrycountmax )
-    table->entrycountmax = statentrycount;
-#endif
-
-  end:
-
-  /* Unlock all pages */
-  for( pageindex = pagestart ; ; pageindex = ( pageindex + 1 ) & table->pagemask )
-  {
-    MM_HASH_LOCK_DONE_WRITE( table, pageindex );
-    if( pageindex == pagefinal )
-      break;
-  }
-
-  return retvalue;
+    return retvalue;
 }
 
 
-int mmHashLockCallEntry( void *hashtable, mmHashAccess *vaccess, void *callentry, void (*callback)( void *opaque, void *entry, int newflag ), void *opaque, int addflag )
+int mmHashLockReadEntry(void *hashtable, mmHashAccess *vaccess, void *readentry)
 {
-  int retvalue;
-  mmHashTable *table;
+    int retvalue;
+    mmHashTable *table;
 
-  table = (mmHashTable *)hashtable;
-  retvalue = mmHashTryCallEntry( table, vaccess, callentry, callback, opaque, addflag );
-  if( retvalue == MM_HASH_TRYAGAIN )
-  {
-    MM_HASH_GLOBAL_LOCK( table );
-    do
-    {
-      retvalue = mmHashTryCallEntry( table, vaccess, callentry, callback, opaque, addflag );
-    } while( retvalue == MM_HASH_TRYAGAIN );
-    MM_HASH_GLOBAL_UNLOCK( table );
-  }
+    table = (mmHashTable *)hashtable;
+    retvalue = mmHashTryReadEntry(table, vaccess, readentry);
 
-  return retvalue;
+    if (retvalue == MM_HASH_TRYAGAIN) {
+	MM_HASH_GLOBAL_LOCK(table);
+
+	do {
+	    retvalue = mmHashTryReadEntry(table, vaccess, readentry);
+	} while (retvalue == MM_HASH_TRYAGAIN);
+
+	MM_HASH_GLOBAL_UNLOCK(table);
+    }
+
+    return retvalue;
 }
-
 
 
 /****/
 
 
-
-int mmHashDirectReplaceEntry( void *hashtable, mmHashAccess *vaccess, void *replaceentry, int addflag )
+int mmHashDirectCallEntry(void *hashtable, mmHashAccess *vaccess, void *callentry, void (*callback)(void *opaque, void *entry, int newflag), void *opaque, int addflag)
 {
-  int cmpvalue;
-  uint32_t hashkey, entrycount;
-  void *entry;
-  mmHashTable *table;
+    int cmpvalue;
+    uint32_t hashkey, entrycount;
+    void *entry;
+    mmHashTable *table;
 
-  table = (mmHashTable *)hashtable;
+    table = (mmHashTable *)hashtable;
 
-  /* Hash key of entry */
-  hashkey = vaccess->entrykey( replaceentry ) & table->hashmask;
+    /* Hash key of entry */
+    hashkey = vaccess->entrykey(callentry) & table->hashmask;
 
 #ifdef MM_HASH_DEBUG_STATISTICS
-  mmAtomicAddL( &table->accesscount, 1 );
+    mmAtomicAddL(&table->accesscount, 1);
 #endif
 
-  /* Search an available entry */
-  for( ; ; hashkey = ( hashkey + 1 ) & table->hashmask )
-  {
-    entry = MM_HASH_ENTRY( table, hashkey );
-    cmpvalue = vaccess->entrycmp( entry, replaceentry );
-    if( cmpvalue == MM_HASH_ENTRYCMP_INVALID )
-      break;
-    else if( cmpvalue == MM_HASH_ENTRYCMP_FOUND )
-    {
-      memcpy( entry, replaceentry, table->entrysize );
-      return MM_HASH_SUCCESS;
+    /* Search an available entry */
+    for (; ; hashkey = (hashkey + 1) & table->hashmask) {
+	entry = MM_HASH_ENTRY(table, hashkey);
+	cmpvalue = vaccess->entrycmp(entry, callentry);
+
+	if (cmpvalue == MM_HASH_ENTRYCMP_INVALID)
+	    break;
+	else if (cmpvalue == MM_HASH_ENTRYCMP_FOUND) {
+	    callback(opaque, entry, 0);
+	    return MM_HASH_SUCCESS;
+	}
+
+#ifdef MM_HASH_DEBUG_STATISTICS
+	mmAtomicAddL(&table->collisioncount, 1);
+#endif
     }
-#ifdef MM_HASH_DEBUG_STATISTICS
-    mmAtomicAddL( &table->collisioncount, 1 );
-#endif
-  }
 
-  if( !( addflag ) )
-    return MM_HASH_FAILURE;
+    if (!(addflag))
+	return MM_HASH_FAILURE;
 
-  /* Store new entry */
-  memcpy( entry, replaceentry, table->entrysize );
+    /* Store new entry */
+    memcpy(entry, callentry, table->entrysize);
+    callback(opaque, entry, 1);
 
-  /* Increment count of entries in table */
-  if( !( table->flags & MM_HASH_FLAGS_NO_COUNT ) )
-  {
-    entrycount = MM_HASH_ENTRYCOUNT_ADD_READ( table, 1 );
-    if( entrycount >= table->highcount )
-      table->status = MM_HASH_STATUS_MUSTGROW;
-  }
+    /* Increment count of entries in table */
+    if (!(table->flags & MM_HASH_FLAGS_NO_COUNT)) {
+	entrycount = MM_HASH_ENTRYCOUNT_ADD_READ(table, 1);
+
+	if (entrycount >= table->highcount)
+	    table->status = MM_HASH_STATUS_MUSTGROW;
+    }
 
 #ifdef MM_HASH_DEBUG_STATISTICS
-  int statentrycount = mmAtomicAddReadL( &table->statentrycount, 1 );
-  if( statentrycount > table->entrycountmax )
-    table->entrycountmax = statentrycount;
+    int statentrycount = mmAtomicAddReadL(&table->statentrycount, 1);
+
+    if (statentrycount > table->entrycountmax)
+	table->entrycountmax = statentrycount;
+
 #endif
 
-  return MM_HASH_SUCCESS;
+    return MM_HASH_SUCCESS;
 }
 
 
-static int mmHashTryReplaceEntry( mmHashTable *table, mmHashAccess *vaccess, void *replaceentry, int addflag )
+static int mmHashTryCallEntry(mmHashTable *table, mmHashAccess *vaccess, void *callentry, void (*callback)(void *opaque, void *entry, int newflag), void *opaque, int addflag)
 {
-  uint32_t hashkey, entrycount;
-  uint32_t pageindex, pagestart, pagefinal;
-  int cmpvalue, retvalue;
-  void *entry;
+    uint32_t hashkey, entrycount;
+    uint32_t pageindex, pagestart, pagefinal;
+    int cmpvalue, retvalue;
+    void *entry;
 
-  /* Hash key of entry */
-  hashkey = vaccess->entrykey( replaceentry ) & table->hashmask;
+    /* Hash key of entry */
+    hashkey = vaccess->entrykey(callentry) & table->hashmask;
 
 #ifdef MM_HASH_DEBUG_STATISTICS
-  mmAtomicAddL( &table->accesscount, 1 );
+    mmAtomicAddL(&table->accesscount, 1);
 #endif
 
-  /* Lock first page */
-  pagestart = hashkey >> table->pageshift;
-  pagefinal = pagestart;
-  if( !( MM_HASH_LOCK_TRY_WRITE( table, pagestart ) ) )
-    return MM_HASH_TRYAGAIN;
+    /* Lock first page */
+    pagestart = hashkey >> table->pageshift;
+    pagefinal = pagestart;
 
+    if (!(MM_HASH_LOCK_TRY_WRITE(table, pagestart)))
+	return MM_HASH_TRYAGAIN;
 
-  /* Search an available entry */
-  retvalue = MM_HASH_SUCCESS;
-  for( ; ; hashkey = ( hashkey + 1 ) & table->hashmask )
-  {
-    /* Lock new pages */
-    pageindex = hashkey >> table->pageshift;
-    if( pageindex != pagefinal )
-    {
-      if( !( MM_HASH_LOCK_TRY_WRITE( table, pageindex ) ) )
-      {
-        retvalue = MM_HASH_TRYAGAIN;
-        goto end;
-      }
-      pagefinal = pageindex;
+    /* Search an available entry */
+    retvalue = MM_HASH_SUCCESS;
+
+    for (; ; hashkey = (hashkey + 1) & table->hashmask) {
+	/* Lock new pages */
+	pageindex = hashkey >> table->pageshift;
+
+	if (pageindex != pagefinal) {
+	    if (!(MM_HASH_LOCK_TRY_WRITE(table, pageindex))) {
+		retvalue = MM_HASH_TRYAGAIN;
+		goto end;
+	    }
+
+	    pagefinal = pageindex;
+	}
+
+	/* Check for entry available */
+	entry = MM_HASH_ENTRY(table, hashkey);
+	cmpvalue = vaccess->entrycmp(entry, callentry);
+
+	if (cmpvalue == MM_HASH_ENTRYCMP_INVALID)
+	    break;
+	else if (cmpvalue == MM_HASH_ENTRYCMP_FOUND) {
+	    callback(opaque, entry, 0);
+	    retvalue = MM_HASH_SUCCESS;
+	    goto end;
+	}
+
+#ifdef MM_HASH_DEBUG_STATISTICS
+	mmAtomicAddL(&table->collisioncount, 1);
+#endif
     }
 
-    /* Check for entry available */
-    entry = MM_HASH_ENTRY( table, hashkey );
-    cmpvalue = vaccess->entrycmp( entry, replaceentry );
-    if( cmpvalue == MM_HASH_ENTRYCMP_INVALID )
-      break;
-    else if( cmpvalue == MM_HASH_ENTRYCMP_FOUND )
-    {
-      memcpy( entry, replaceentry, table->entrysize );
-      retvalue = MM_HASH_SUCCESS;
-      goto end;
+    if (!(addflag)) {
+	retvalue = MM_HASH_FAILURE;
+	goto end;
     }
-#ifdef MM_HASH_DEBUG_STATISTICS
-    mmAtomicAddL( &table->collisioncount, 1 );
-#endif
-  }
 
-  if( !( addflag ) )
-  {
-    retvalue = MM_HASH_FAILURE;
-    goto end;
-  }
+    /* Store new entry */
+    memcpy(entry, callentry, table->entrysize);
+    callback(opaque, entry, 1);
 
-  /* Store new entry */
-  memcpy( entry, replaceentry, table->entrysize );
+    /* Increment count of entries in table */
+    if (!(table->flags & MM_HASH_FLAGS_NO_COUNT)) {
+	entrycount = MM_HASH_ENTRYCOUNT_ADD_READ(table, 1);
 
-  /* Increment count of entries in table */
-  if( !( table->flags & MM_HASH_FLAGS_NO_COUNT ) )
-  {
-    entrycount = MM_HASH_ENTRYCOUNT_ADD_READ( table, 1 );
-    if( entrycount >= table->highcount )
-      table->status = MM_HASH_STATUS_MUSTGROW;
-  }
+	if (entrycount >= table->highcount)
+	    table->status = MM_HASH_STATUS_MUSTGROW;
+    }
 
 #ifdef MM_HASH_DEBUG_STATISTICS
-  int statentrycount = mmAtomicAddReadL( &table->statentrycount, 1 );
-  if( statentrycount > table->entrycountmax )
-    table->entrycountmax = statentrycount;
+    int statentrycount = mmAtomicAddReadL(&table->statentrycount, 1);
+
+    if (statentrycount > table->entrycountmax)
+	table->entrycountmax = statentrycount;
+
 #endif
 
-  end:
+end:
 
-  /* Unlock all pages */
-  for( pageindex = pagestart ; ; pageindex = ( pageindex + 1 ) & table->pagemask )
-  {
-    MM_HASH_LOCK_DONE_WRITE( table, pageindex );
-    if( pageindex == pagefinal )
-      break;
-  }
+    /* Unlock all pages */
+    for (pageindex = pagestart ; ; pageindex = (pageindex + 1) & table->pagemask) {
+	MM_HASH_LOCK_DONE_WRITE(table, pageindex);
 
-  return retvalue;
+	if (pageindex == pagefinal)
+	    break;
+    }
+
+    return retvalue;
 }
 
 
-int mmHashLockReplaceEntry( void *hashtable, mmHashAccess *vaccess, void *replaceentry, int addflag )
+int mmHashLockCallEntry(void *hashtable, mmHashAccess *vaccess, void *callentry, void (*callback)(void *opaque, void *entry, int newflag), void *opaque, int addflag)
 {
-  int retvalue;
-  mmHashTable *table;
+    int retvalue;
+    mmHashTable *table;
 
-  table = (mmHashTable *)hashtable;
-  retvalue = mmHashTryReplaceEntry( table, vaccess, replaceentry, addflag );
-  if( retvalue == MM_HASH_TRYAGAIN )
-  {
-    MM_HASH_GLOBAL_LOCK( table );
-    do
-    {
-      retvalue = mmHashTryReplaceEntry( table, vaccess, replaceentry, addflag );
-    } while( retvalue == MM_HASH_TRYAGAIN );
-    MM_HASH_GLOBAL_UNLOCK( table );
-  }
+    table = (mmHashTable *)hashtable;
+    retvalue = mmHashTryCallEntry(table, vaccess, callentry, callback, opaque, addflag);
 
-  return retvalue;
+    if (retvalue == MM_HASH_TRYAGAIN) {
+	MM_HASH_GLOBAL_LOCK(table);
+
+	do {
+	    retvalue = mmHashTryCallEntry(table, vaccess, callentry, callback, opaque, addflag);
+	} while (retvalue == MM_HASH_TRYAGAIN);
+
+	MM_HASH_GLOBAL_UNLOCK(table);
+    }
+
+    return retvalue;
 }
-
 
 
 /****/
 
 
-
-int mmHashDirectAddEntry( void *hashtable, mmHashAccess *vaccess, void *addentry, int nodupflag )
+int mmHashDirectReplaceEntry(void *hashtable, mmHashAccess *vaccess, void *replaceentry, int addflag)
 {
-  int cmpvalue;
-  uint32_t hashkey, entrycount;
-  void *entry;
-  mmHashTable *table;
+    int cmpvalue;
+    uint32_t hashkey, entrycount;
+    void *entry;
+    mmHashTable *table;
 
-  table = (mmHashTable *)hashtable;
+    table = (mmHashTable *)hashtable;
+
+    /* Hash key of entry */
+    hashkey = vaccess->entrykey(replaceentry) & table->hashmask;
 
 #ifdef MM_HASH_DEBUG_STATISTICS
-  mmAtomicAddL( &table->accesscount, 1 );
+    mmAtomicAddL(&table->accesscount, 1);
 #endif
 
-  /* Hash key of entry */
-  hashkey = vaccess->entrykey( addentry ) & table->hashmask;
+    /* Search an available entry */
+    for (; ; hashkey = (hashkey + 1) & table->hashmask) {
+	entry = MM_HASH_ENTRY(table, hashkey);
+	cmpvalue = vaccess->entrycmp(entry, replaceentry);
 
-  /* Search an available entry */
-  for( ; ; hashkey = ( hashkey + 1 ) & table->hashmask )
-  {
-    entry = MM_HASH_ENTRY( table, hashkey );
-    /* Do we allow duplicate entries? */
-    if( nodupflag )
-    {
-      cmpvalue = vaccess->entrycmp( entry, addentry );
-      if( cmpvalue == MM_HASH_ENTRYCMP_INVALID )
-        break;
-      else if( cmpvalue == MM_HASH_ENTRYCMP_FOUND )
-        return MM_HASH_FAILURE;
+	if (cmpvalue == MM_HASH_ENTRYCMP_INVALID)
+	    break;
+	else if (cmpvalue == MM_HASH_ENTRYCMP_FOUND) {
+	    memcpy(entry, replaceentry, table->entrysize);
+	    return MM_HASH_SUCCESS;
+	}
+
+#ifdef MM_HASH_DEBUG_STATISTICS
+	mmAtomicAddL(&table->collisioncount, 1);
+#endif
     }
-    else
-    {
-      if( !( vaccess->entryvalid( entry ) ) )
-        break;
+
+    if (!(addflag))
+	return MM_HASH_FAILURE;
+
+    /* Store new entry */
+    memcpy(entry, replaceentry, table->entrysize);
+
+    /* Increment count of entries in table */
+    if (!(table->flags & MM_HASH_FLAGS_NO_COUNT)) {
+	entrycount = MM_HASH_ENTRYCOUNT_ADD_READ(table, 1);
+
+	if (entrycount >= table->highcount)
+	    table->status = MM_HASH_STATUS_MUSTGROW;
     }
-#ifdef MM_HASH_DEBUG_STATISTICS
-    mmAtomicAddL( &table->collisioncount, 1 );
-#endif
-  }
-
-  /* Store new entry */
-  memcpy( entry, addentry, table->entrysize );
-
-  /* Increment count of entries in table */
-  if( !( table->flags & MM_HASH_FLAGS_NO_COUNT ) )
-  {
-    entrycount = MM_HASH_ENTRYCOUNT_ADD_READ( table, 1 );
-    if( entrycount >= table->highcount )
-      table->status = MM_HASH_STATUS_MUSTGROW;
-  }
 
 #ifdef MM_HASH_DEBUG_STATISTICS
-  int statentrycount = mmAtomicAddReadL( &table->statentrycount, 1 );
-  if( statentrycount > table->entrycountmax )
-    table->entrycountmax = statentrycount;
+    int statentrycount = mmAtomicAddReadL(&table->statentrycount, 1);
+
+    if (statentrycount > table->entrycountmax)
+	table->entrycountmax = statentrycount;
+
 #endif
 
-  return MM_HASH_SUCCESS;
+    return MM_HASH_SUCCESS;
 }
 
 
-static int mmHashTryAddEntry( mmHashTable *table, mmHashAccess *vaccess, void *addentry, int nodupflag )
+static int mmHashTryReplaceEntry(mmHashTable *table, mmHashAccess *vaccess, void *replaceentry, int addflag)
 {
-  uint32_t hashkey, entrycount;
-  uint32_t pageindex, pagestart, pagefinal;
-  int cmpvalue, retvalue;
-  void *entry;
+    uint32_t hashkey, entrycount;
+    uint32_t pageindex, pagestart, pagefinal;
+    int cmpvalue, retvalue;
+    void *entry;
 
-  /* Hash key of entry */
-  hashkey = vaccess->entrykey( addentry ) & table->hashmask;
-
-#ifdef MM_HASH_DEBUG_STATISTICS
-  mmAtomicAddL( &table->accesscount, 1 );
-#endif
-
-  /* Lock first page */
-  pagestart = hashkey >> table->pageshift;
-  pagefinal = pagestart;
-  if( !( MM_HASH_LOCK_TRY_WRITE( table, pagestart ) ) )
-    return MM_HASH_TRYAGAIN;
-
-  /* Search an available entry */
-  retvalue = MM_HASH_SUCCESS;
-  for( ; ; hashkey = ( hashkey + 1 ) & table->hashmask )
-  {
-    /* Lock new pages */
-    pageindex = hashkey >> table->pageshift;
-    if( pageindex != pagefinal )
-    {
-      if( !( MM_HASH_LOCK_TRY_WRITE( table, pageindex ) ) )
-      {
-        retvalue = MM_HASH_TRYAGAIN;
-        goto end;
-      }
-      pagefinal = pageindex;
-    }
-
-    /* Check for entry available */
-    entry = MM_HASH_ENTRY( table, hashkey );
-    /* Do we allow duplicate entries? */
-    if( nodupflag )
-    {
-      cmpvalue = vaccess->entrycmp( entry, addentry );
-      if( cmpvalue == MM_HASH_ENTRYCMP_INVALID )
-        break;
-      else if( cmpvalue == MM_HASH_ENTRYCMP_FOUND )
-      {
-        retvalue = MM_HASH_FAILURE;
-        goto end;
-      }
-    }
-    else
-    {
-      if( !( vaccess->entryvalid( entry ) ) )
-        break;
-    }
-#ifdef MM_HASH_DEBUG_STATISTICS
-    mmAtomicAddL( &table->collisioncount, 1 );
-#endif
-  }
-
-  /* Store new entry */
-  memcpy( entry, addentry, table->entrysize );
-
-  /* Increment count of entries in table */
-  if( !( table->flags & MM_HASH_FLAGS_NO_COUNT ) )
-  {
-    entrycount = MM_HASH_ENTRYCOUNT_ADD_READ( table, 1 );
-    if( entrycount >= table->highcount )
-      table->status = MM_HASH_STATUS_MUSTGROW;
-  }
+    /* Hash key of entry */
+    hashkey = vaccess->entrykey(replaceentry) & table->hashmask;
 
 #ifdef MM_HASH_DEBUG_STATISTICS
-  int statentrycount = mmAtomicAddReadL( &table->statentrycount, 1 );
-  if( statentrycount > table->entrycountmax )
-    table->entrycountmax = statentrycount;
+    mmAtomicAddL(&table->accesscount, 1);
 #endif
 
-  end:
+    /* Lock first page */
+    pagestart = hashkey >> table->pageshift;
+    pagefinal = pagestart;
 
-  /* Unlock all pages */
-  for( pageindex = pagestart ; ; pageindex = ( pageindex + 1 ) & table->pagemask )
-  {
-    MM_HASH_LOCK_DONE_WRITE( table, pageindex );
-    if( pageindex == pagefinal )
-      break;
-  }
+    if (!(MM_HASH_LOCK_TRY_WRITE(table, pagestart)))
+	return MM_HASH_TRYAGAIN;
 
-  return retvalue;
+
+    /* Search an available entry */
+    retvalue = MM_HASH_SUCCESS;
+
+    for (; ; hashkey = (hashkey + 1) & table->hashmask) {
+	/* Lock new pages */
+	pageindex = hashkey >> table->pageshift;
+
+	if (pageindex != pagefinal) {
+	    if (!(MM_HASH_LOCK_TRY_WRITE(table, pageindex))) {
+		retvalue = MM_HASH_TRYAGAIN;
+		goto end;
+	    }
+
+	    pagefinal = pageindex;
+	}
+
+	/* Check for entry available */
+	entry = MM_HASH_ENTRY(table, hashkey);
+	cmpvalue = vaccess->entrycmp(entry, replaceentry);
+
+	if (cmpvalue == MM_HASH_ENTRYCMP_INVALID)
+	    break;
+	else if (cmpvalue == MM_HASH_ENTRYCMP_FOUND) {
+	    memcpy(entry, replaceentry, table->entrysize);
+	    retvalue = MM_HASH_SUCCESS;
+	    goto end;
+	}
+
+#ifdef MM_HASH_DEBUG_STATISTICS
+	mmAtomicAddL(&table->collisioncount, 1);
+#endif
+    }
+
+    if (!(addflag)) {
+	retvalue = MM_HASH_FAILURE;
+	goto end;
+    }
+
+    /* Store new entry */
+    memcpy(entry, replaceentry, table->entrysize);
+
+    /* Increment count of entries in table */
+    if (!(table->flags & MM_HASH_FLAGS_NO_COUNT)) {
+	entrycount = MM_HASH_ENTRYCOUNT_ADD_READ(table, 1);
+
+	if (entrycount >= table->highcount)
+	    table->status = MM_HASH_STATUS_MUSTGROW;
+    }
+
+#ifdef MM_HASH_DEBUG_STATISTICS
+    int statentrycount = mmAtomicAddReadL(&table->statentrycount, 1);
+
+    if (statentrycount > table->entrycountmax)
+	table->entrycountmax = statentrycount;
+
+#endif
+
+end:
+
+    /* Unlock all pages */
+    for (pageindex = pagestart ; ; pageindex = (pageindex + 1) & table->pagemask) {
+	MM_HASH_LOCK_DONE_WRITE(table, pageindex);
+
+	if (pageindex == pagefinal)
+	    break;
+    }
+
+    return retvalue;
 }
 
 
-
-int mmHashLockAddEntry( void *hashtable, mmHashAccess *vaccess, void *addentry, int nodupflag )
+int mmHashLockReplaceEntry(void *hashtable, mmHashAccess *vaccess, void *replaceentry, int addflag)
 {
-  int retvalue;
-  mmHashTable *table;
+    int retvalue;
+    mmHashTable *table;
 
-  table = (mmHashTable *)hashtable;
-  retvalue = mmHashTryAddEntry( table, vaccess, addentry, nodupflag );
-  if( retvalue == MM_HASH_TRYAGAIN )
-  {
-    MM_HASH_GLOBAL_LOCK( table );
-    do
-    {
-      retvalue = mmHashTryAddEntry( table, vaccess, addentry, nodupflag );
-    } while( retvalue == MM_HASH_TRYAGAIN );
-    MM_HASH_GLOBAL_UNLOCK( table );
-  }
+    table = (mmHashTable *)hashtable;
+    retvalue = mmHashTryReplaceEntry(table, vaccess, replaceentry, addflag);
 
-  return retvalue;
+    if (retvalue == MM_HASH_TRYAGAIN) {
+	MM_HASH_GLOBAL_LOCK(table);
+
+	do {
+	    retvalue = mmHashTryReplaceEntry(table, vaccess, replaceentry, addflag);
+	} while (retvalue == MM_HASH_TRYAGAIN);
+
+	MM_HASH_GLOBAL_UNLOCK(table);
+    }
+
+    return retvalue;
 }
 
+
+/****/
+
+
+int mmHashDirectAddEntry(void *hashtable, mmHashAccess *vaccess, void *addentry, int nodupflag)
+{
+    int cmpvalue;
+    uint32_t hashkey, entrycount;
+    void *entry;
+    mmHashTable *table;
+
+    table = (mmHashTable *)hashtable;
+
+#ifdef MM_HASH_DEBUG_STATISTICS
+    mmAtomicAddL(&table->accesscount, 1);
+#endif
+
+    /* Hash key of entry */
+    hashkey = vaccess->entrykey(addentry) & table->hashmask;
+
+    /* Search an available entry */
+    for (; ; hashkey = (hashkey + 1) & table->hashmask) {
+	entry = MM_HASH_ENTRY(table, hashkey);
+
+	/* Do we allow duplicate entries? */
+	if (nodupflag) {
+	    cmpvalue = vaccess->entrycmp(entry, addentry);
+
+	    if (cmpvalue == MM_HASH_ENTRYCMP_INVALID)
+		break;
+	    else if (cmpvalue == MM_HASH_ENTRYCMP_FOUND)
+		return MM_HASH_FAILURE;
+	} else {
+	    if (!(vaccess->entryvalid(entry)))
+		break;
+	}
+
+#ifdef MM_HASH_DEBUG_STATISTICS
+	mmAtomicAddL(&table->collisioncount, 1);
+#endif
+    }
+
+    /* Store new entry */
+    memcpy(entry, addentry, table->entrysize);
+
+    /* Increment count of entries in table */
+    if (!(table->flags & MM_HASH_FLAGS_NO_COUNT)) {
+	entrycount = MM_HASH_ENTRYCOUNT_ADD_READ(table, 1);
+
+	if (entrycount >= table->highcount)
+	    table->status = MM_HASH_STATUS_MUSTGROW;
+    }
+
+#ifdef MM_HASH_DEBUG_STATISTICS
+    int statentrycount = mmAtomicAddReadL(&table->statentrycount, 1);
+
+    if (statentrycount > table->entrycountmax)
+	table->entrycountmax = statentrycount;
+
+#endif
+
+    return MM_HASH_SUCCESS;
+}
+
+
+static int mmHashTryAddEntry(mmHashTable *table, mmHashAccess *vaccess, void *addentry, int nodupflag)
+{
+    uint32_t hashkey, entrycount;
+    uint32_t pageindex, pagestart, pagefinal;
+    int cmpvalue, retvalue;
+    void *entry;
+
+    /* Hash key of entry */
+    hashkey = vaccess->entrykey(addentry) & table->hashmask;
+
+#ifdef MM_HASH_DEBUG_STATISTICS
+    mmAtomicAddL(&table->accesscount, 1);
+#endif
+
+    /* Lock first page */
+    pagestart = hashkey >> table->pageshift;
+    pagefinal = pagestart;
+
+    if (!(MM_HASH_LOCK_TRY_WRITE(table, pagestart)))
+	return MM_HASH_TRYAGAIN;
+
+    /* Search an available entry */
+    retvalue = MM_HASH_SUCCESS;
+
+    for (; ; hashkey = (hashkey + 1) & table->hashmask) {
+	/* Lock new pages */
+	pageindex = hashkey >> table->pageshift;
+
+	if (pageindex != pagefinal) {
+	    if (!(MM_HASH_LOCK_TRY_WRITE(table, pageindex))) {
+		retvalue = MM_HASH_TRYAGAIN;
+		goto end;
+	    }
+
+	    pagefinal = pageindex;
+	}
+
+	/* Check for entry available */
+	entry = MM_HASH_ENTRY(table, hashkey);
+
+	/* Do we allow duplicate entries? */
+	if (nodupflag) {
+	    cmpvalue = vaccess->entrycmp(entry, addentry);
+
+	    if (cmpvalue == MM_HASH_ENTRYCMP_INVALID)
+		break;
+	    else if (cmpvalue == MM_HASH_ENTRYCMP_FOUND) {
+		retvalue = MM_HASH_FAILURE;
+		goto end;
+	    }
+	} else {
+	    if (!(vaccess->entryvalid(entry)))
+		break;
+	}
+
+#ifdef MM_HASH_DEBUG_STATISTICS
+	mmAtomicAddL(&table->collisioncount, 1);
+#endif
+    }
+
+    /* Store new entry */
+    memcpy(entry, addentry, table->entrysize);
+
+    /* Increment count of entries in table */
+    if (!(table->flags & MM_HASH_FLAGS_NO_COUNT)) {
+	entrycount = MM_HASH_ENTRYCOUNT_ADD_READ(table, 1);
+
+	if (entrycount >= table->highcount)
+	    table->status = MM_HASH_STATUS_MUSTGROW;
+    }
+
+#ifdef MM_HASH_DEBUG_STATISTICS
+    int statentrycount = mmAtomicAddReadL(&table->statentrycount, 1);
+
+    if (statentrycount > table->entrycountmax)
+	table->entrycountmax = statentrycount;
+
+#endif
+
+end:
+
+    /* Unlock all pages */
+    for (pageindex = pagestart ; ; pageindex = (pageindex + 1) & table->pagemask) {
+	MM_HASH_LOCK_DONE_WRITE(table, pageindex);
+
+	if (pageindex == pagefinal)
+	    break;
+    }
+
+    return retvalue;
+}
+
+
+int mmHashLockAddEntry(void *hashtable, mmHashAccess *vaccess, void *addentry, int nodupflag)
+{
+    int retvalue;
+    mmHashTable *table;
+
+    table = (mmHashTable *)hashtable;
+    retvalue = mmHashTryAddEntry(table, vaccess, addentry, nodupflag);
+
+    if (retvalue == MM_HASH_TRYAGAIN) {
+	MM_HASH_GLOBAL_LOCK(table);
+
+	do {
+	    retvalue = mmHashTryAddEntry(table, vaccess, addentry, nodupflag);
+	} while (retvalue == MM_HASH_TRYAGAIN);
+
+	MM_HASH_GLOBAL_UNLOCK(table);
+    }
+
+    return retvalue;
+}
 
 
 /****/
@@ -1161,750 +1177,771 @@ int mmHashLockAddEntry( void *hashtable, mmHashAccess *vaccess, void *addentry, 
 #define MM_ROBUST_DELETION
 
 
-int mmHashDirectDeleteEntry( void *hashtable, mmHashAccess *vaccess, void *deleteentry, int readflag )
+int mmHashDirectDeleteEntry(void *hashtable, mmHashAccess *vaccess, void *deleteentry, int readflag)
 {
-  int cmpvalue;
-  uint32_t hashkey, srckey, srcpos, targetpos = 0, targetkey, entrycount;
+    int cmpvalue;
+    uint32_t hashkey, srckey, srcpos, targetpos = 0, targetkey, entrycount;
 #ifdef MM_ROBUST_DELETION
-  uint32_t delbase;
+    uint32_t delbase;
 #else
-  int32_t halftablesize, distance;
+    int32_t halftablesize, distance;
 #endif
-  void *entry, *srcentry, *targetentry;
-  mmHashTable *table;
+    void *entry, *srcentry, *targetentry;
+    mmHashTable *table;
 
-  table = (mmHashTable *)hashtable;
+    table = (mmHashTable *)hashtable;
 
 #ifdef MM_HASH_DEBUG_STATISTICS
-  mmAtomicAddL( &table->accesscount, 1 );
+    mmAtomicAddL(&table->accesscount, 1);
 #endif
 
-  /* Hash key of entry */
-  hashkey = vaccess->entrykey( deleteentry ) & table->hashmask;
+    /* Hash key of entry */
+    hashkey = vaccess->entrykey(deleteentry) & table->hashmask;
 
-  /* Search the entry */
-  for( ; ; hashkey = ( hashkey + 1 ) & table->hashmask )
-  {
-    entry = MM_HASH_ENTRY( table, hashkey );
-    cmpvalue = vaccess->entrycmp( entry, deleteentry );
-    if( cmpvalue == MM_HASH_ENTRYCMP_INVALID )
-      return MM_HASH_FAILURE;
-    else if( cmpvalue == MM_HASH_ENTRYCMP_FOUND )
-      break;
+    /* Search the entry */
+    for (; ; hashkey = (hashkey + 1) & table->hashmask) {
+	entry = MM_HASH_ENTRY(table, hashkey);
+	cmpvalue = vaccess->entrycmp(entry, deleteentry);
+
+	if (cmpvalue == MM_HASH_ENTRYCMP_INVALID)
+	    return MM_HASH_FAILURE;
+	else if (cmpvalue == MM_HASH_ENTRYCMP_FOUND)
+	    break;
+
 #ifdef MM_HASH_DEBUG_STATISTICS
-    mmAtomicAddL( &table->collisioncount, 1 );
-#endif
-  }
-
-  if( readflag )
-    memcpy( deleteentry, entry, table->entrysize );
-
-#ifdef MM_ROBUST_DELETION
-  for( delbase = hashkey ; ; )
-  {
-    delbase = ( delbase - 1 ) & table->hashmask;
-    if( !( vaccess->entryvalid( MM_HASH_ENTRY( table, delbase ) ) ) )
-      break;
-  }
-  delbase = ( delbase + 1 ) & table->hashmask;
-#else
-  halftablesize = table->hashsize >> 1;
-#endif
-
-  /* Entry found, delete it */
-  for( ; ; )
-  {
-    /* Find replacement target */
-    targetkey = hashkey;
-    targetentry = 0;
-    for( srcpos = hashkey ; ; )
-    {
-      srcpos = ( srcpos + 1 ) & table->hashmask;
-
-      /* Try next entry */
-      srcentry = MM_HASH_ENTRY( table, srcpos );
-      if( !( vaccess->entryvalid( srcentry ) ) )
-        break;
-      srckey = vaccess->entrykey( srcentry ) & table->hashmask;
-
-#ifdef MM_ROBUST_DELETION
-      if( targetkey >= delbase )
-      {
-        if( ( srckey < delbase ) || ( srckey > targetkey ) )
-          continue;
-      }
-      else if( ( srckey > targetkey ) && ( srckey < delbase ) )
-        continue;
-      targetentry = srcentry;
-      targetkey = srckey;
-      targetpos = srcpos;
-#else
-      /* Check if moving the entry backwards is allowed without breaking chain */
-      distance = (int32_t)targetkey - (int32_t)srckey;
-      if( distance > halftablesize )
-        distance -= table->hashsize;
-      else if( distance < -halftablesize )
-        distance += table->hashsize;
-      if( distance >= 0 )
-      {
-        targetentry = srcentry;
-        targetkey = srckey;
-        targetpos = srcpos;
-      }
+	mmAtomicAddL(&table->collisioncount, 1);
 #endif
     }
 
-    /* No replacement found, just clear it */
-    entry = MM_HASH_ENTRY( table, hashkey );
-    if( !( targetentry ) )
-    {
-      vaccess->clearentry( entry );
-      break;
+    if (readflag)
+	memcpy(deleteentry, entry, table->entrysize);
+
+#ifdef MM_ROBUST_DELETION
+
+    for (delbase = hashkey ; ;) {
+	delbase = (delbase - 1) & table->hashmask;
+
+	if (!(vaccess->entryvalid(MM_HASH_ENTRY(table, delbase))))
+	    break;
     }
 
-    /* Move entry in place and continue the repair process */
-    memcpy( entry, targetentry, table->entrysize );
-
-#ifdef MM_HASH_DEBUG_STATISTICS
-    mmAtomicAddL( &table->relocationcount, 1 );
+    delbase = (delbase + 1) & table->hashmask;
+#else
+    halftablesize = table->hashsize >> 1;
 #endif
 
-    hashkey = targetpos;
-  }
+    /* Entry found, delete it */
+    for (; ;) {
+	/* Find replacement target */
+	targetkey = hashkey;
+	targetentry = 0;
 
-  /* Decrement count of entries in table */
-  if( !( table->flags & MM_HASH_FLAGS_NO_COUNT ) )
-  {
-    entrycount = MM_HASH_ENTRYCOUNT_ADD_READ( table, -1 );
-    if( entrycount < table->lowcount )
-      table->status = MM_HASH_STATUS_MUSTSHRINK;
-  }
+	for (srcpos = hashkey ; ;) {
+	    srcpos = (srcpos + 1) & table->hashmask;
+
+	    /* Try next entry */
+	    srcentry = MM_HASH_ENTRY(table, srcpos);
+
+	    if (!(vaccess->entryvalid(srcentry)))
+		break;
+
+	    srckey = vaccess->entrykey(srcentry) & table->hashmask;
+
+#ifdef MM_ROBUST_DELETION
+
+	    if (targetkey >= delbase) {
+		if ((srckey < delbase) || (srckey > targetkey))
+		    continue;
+	    } else if ((srckey > targetkey) && (srckey < delbase))
+		continue;
+
+	    targetentry = srcentry;
+	    targetkey = srckey;
+	    targetpos = srcpos;
+#else
+	    /* Check if moving the entry backwards is allowed without breaking chain */
+	    distance = (int32_t)targetkey - (int32_t)srckey;
+
+	    if (distance > halftablesize)
+		distance -= table->hashsize;
+	    else if (distance < -halftablesize)
+		distance += table->hashsize;
+
+	    if (distance >= 0) {
+		targetentry = srcentry;
+		targetkey = srckey;
+		targetpos = srcpos;
+	    }
+
+#endif
+	}
+
+	/* No replacement found, just clear it */
+	entry = MM_HASH_ENTRY(table, hashkey);
+
+	if (!(targetentry)) {
+	    vaccess->clearentry(entry);
+	    break;
+	}
+
+	/* Move entry in place and continue the repair process */
+	memcpy(entry, targetentry, table->entrysize);
 
 #ifdef MM_HASH_DEBUG_STATISTICS
-  mmAtomicAddL( &table->statentrycount, -1 );
+	mmAtomicAddL(&table->relocationcount, 1);
 #endif
 
-  return MM_HASH_SUCCESS;
+	hashkey = targetpos;
+    }
+
+    /* Decrement count of entries in table */
+    if (!(table->flags & MM_HASH_FLAGS_NO_COUNT)) {
+	entrycount = MM_HASH_ENTRYCOUNT_ADD_READ(table, -1);
+
+	if (entrycount < table->lowcount)
+	    table->status = MM_HASH_STATUS_MUSTSHRINK;
+    }
+
+#ifdef MM_HASH_DEBUG_STATISTICS
+    mmAtomicAddL(&table->statentrycount, -1);
+#endif
+
+    return MM_HASH_SUCCESS;
 }
 
 
-static int mmHashTryDeleteEntry( mmHashTable *table, mmHashAccess *vaccess, void *deleteentry, int readflag )
+static int mmHashTryDeleteEntry(mmHashTable *table, mmHashAccess *vaccess, void *deleteentry, int readflag)
 {
-  uint32_t hashkey, srckey, srcpos, srcend, targetpos = 0, targetkey, entrycount;
-  uint32_t pageindex, pagestart, pagefinal;
+    uint32_t hashkey, srckey, srcpos, srcend, targetpos = 0, targetkey, entrycount;
+    uint32_t pageindex, pagestart, pagefinal;
 #ifdef MM_ROBUST_DELETION
-  uint32_t delbase;
+    uint32_t delbase;
 #else
-  int32_t halftablesize, distance;
+    int32_t halftablesize, distance;
 #endif
-  int cmpvalue, retvalue;
-  void *entry, *srcentry, *targetentry;
+    int cmpvalue, retvalue;
+    void *entry, *srcentry, *targetentry;
 
-  /* Hash key of entry */
-  hashkey = vaccess->entrykey( deleteentry ) & table->hashmask;
+    /* Hash key of entry */
+    hashkey = vaccess->entrykey(deleteentry) & table->hashmask;
 
 #ifdef MM_HASH_DEBUG_STATISTICS
-  mmAtomicAddL( &table->accesscount, 1 );
+    mmAtomicAddL(&table->accesscount, 1);
 #endif
 
-  /* Lock first page */
-  pagestart = hashkey >> table->pageshift;
-  pagefinal = pagestart;
-  if( !( MM_HASH_LOCK_TRY_WRITE( table, pagestart ) ) )
-    return MM_HASH_TRYAGAIN;
+    /* Lock first page */
+    pagestart = hashkey >> table->pageshift;
+    pagefinal = pagestart;
 
-  /* Search the entry */
-  retvalue = MM_HASH_SUCCESS;
-  for( ; ; hashkey = ( hashkey + 1 ) & table->hashmask )
-  {
-    /* Lock new pages */
-    pageindex = hashkey >> table->pageshift;
-    if( pageindex != pagefinal )
-    {
-      if( !( MM_HASH_LOCK_TRY_WRITE( table, pageindex ) ) )
-      {
-        retvalue = MM_HASH_TRYAGAIN;
-        goto end;
-      }
-      pagefinal = pageindex;
-    }
+    if (!(MM_HASH_LOCK_TRY_WRITE(table, pagestart)))
+	return MM_HASH_TRYAGAIN;
 
-    /* Check for entry match */
-    entry = MM_HASH_ENTRY( table, hashkey );
-    cmpvalue = vaccess->entrycmp( entry, deleteentry );
-    if( cmpvalue == MM_HASH_ENTRYCMP_INVALID )
-    {
-      retvalue = MM_HASH_FAILURE;
-      goto end;
-    }
-    else if( cmpvalue == MM_HASH_ENTRYCMP_FOUND )
-      break;
+    /* Search the entry */
+    retvalue = MM_HASH_SUCCESS;
+
+    for (; ; hashkey = (hashkey + 1) & table->hashmask) {
+	/* Lock new pages */
+	pageindex = hashkey >> table->pageshift;
+
+	if (pageindex != pagefinal) {
+	    if (!(MM_HASH_LOCK_TRY_WRITE(table, pageindex))) {
+		retvalue = MM_HASH_TRYAGAIN;
+		goto end;
+	    }
+
+	    pagefinal = pageindex;
+	}
+
+	/* Check for entry match */
+	entry = MM_HASH_ENTRY(table, hashkey);
+	cmpvalue = vaccess->entrycmp(entry, deleteentry);
+
+	if (cmpvalue == MM_HASH_ENTRYCMP_INVALID) {
+	    retvalue = MM_HASH_FAILURE;
+	    goto end;
+	} else if (cmpvalue == MM_HASH_ENTRYCMP_FOUND)
+	    break;
+
 #ifdef MM_HASH_DEBUG_STATISTICS
-    mmAtomicAddL( &table->collisioncount, 1 );
+	mmAtomicAddL(&table->collisioncount, 1);
 #endif
-  }
-
-  if( readflag )
-    memcpy( deleteentry, entry, table->entrysize );
-
-#ifdef MM_ROBUST_DELETION
-  for( delbase = hashkey ; ; )
-  {
-    delbase = ( delbase - 1 ) & table->hashmask;
-    if( !( vaccess->entryvalid( MM_HASH_ENTRY( table, delbase ) ) ) )
-      break;
-  }
-  delbase = ( delbase + 1 ) & table->hashmask;
-#else
-  halftablesize = table->hashsize >> 1;
-#endif
-
-  /* Preemtively lock all pages in the stream before starting the operation */
-  for( srcend = hashkey ; ; )
-  {
-    srcend = ( srcend + 1 ) & table->hashmask;
-
-    /* Lock new pages */
-    pageindex = srcend >> table->pageshift;
-    if( pageindex != pagefinal )
-    {
-      if( !( MM_HASH_LOCK_TRY_WRITE( table, pageindex ) ) )
-      {
-        retvalue = MM_HASH_TRYAGAIN;
-        goto end;
-      }
-      pagefinal = pageindex;
     }
 
-    /* Check for valid entry */
-    srcentry = MM_HASH_ENTRY( table, srcend );
-    if( !( vaccess->entryvalid( srcentry ) ) )
-      break;
-  }
-
-  /* Entry found, delete it and reorder the hash stream of entries */
-  for( ; ; )
-  {
-    /* Find replacement target */
-    targetkey = hashkey;
-    targetentry = 0;
-    for( srcpos = hashkey ; ; )
-    {
-      srcpos = ( srcpos + 1 ) & table->hashmask;
-      srcentry = MM_HASH_ENTRY( table, srcpos );
-
-      /* Don't loop beyond the end of hash stream */
-      if( srcpos == srcend )
-        break;
-
-      /* Try next entry */
-      srckey = vaccess->entrykey( srcentry ) & table->hashmask;
+    if (readflag)
+	memcpy(deleteentry, entry, table->entrysize);
 
 #ifdef MM_ROBUST_DELETION
-      if( targetkey >= delbase )
-      {
-        if( ( srckey < delbase ) || ( srckey > targetkey ) )
-          continue;
-      }
-      else if( ( srckey > targetkey ) && ( srckey < delbase ) )
-        continue;
-      targetentry = srcentry;
-      targetkey = srckey;
-      targetpos = srcpos;
+
+    for (delbase = hashkey ; ;) {
+	delbase = (delbase - 1) & table->hashmask;
+
+	if (!(vaccess->entryvalid(MM_HASH_ENTRY(table, delbase))))
+	    break;
+    }
+
+    delbase = (delbase + 1) & table->hashmask;
 #else
-      /* Check if moving the entry backwards is allowed without breaking chain */
-      distance = (int32_t)targetkey - (int32_t)srckey;
-      if( distance > halftablesize )
-        distance -= table->hashsize;
-      else if( distance < -halftablesize )
-        distance += table->hashsize;
-      if( distance >= 0 )
-      {
-        targetentry = srcentry;
-        targetkey = srckey;
-        targetpos = srcpos;
-      }
+    halftablesize = table->hashsize >> 1;
 #endif
+
+    /* Preemtively lock all pages in the stream before starting the operation */
+    for (srcend = hashkey ; ;) {
+	srcend = (srcend + 1) & table->hashmask;
+
+	/* Lock new pages */
+	pageindex = srcend >> table->pageshift;
+
+	if (pageindex != pagefinal) {
+	    if (!(MM_HASH_LOCK_TRY_WRITE(table, pageindex))) {
+		retvalue = MM_HASH_TRYAGAIN;
+		goto end;
+	    }
+
+	    pagefinal = pageindex;
+	}
+
+	/* Check for valid entry */
+	srcentry = MM_HASH_ENTRY(table, srcend);
+
+	if (!(vaccess->entryvalid(srcentry)))
+	    break;
     }
 
-    /* No replacement found, just clear it */
-    entry = MM_HASH_ENTRY( table, hashkey );
-    if( !( targetentry ) )
-    {
-      vaccess->clearentry( entry );
-      break;
+    /* Entry found, delete it and reorder the hash stream of entries */
+    for (; ;) {
+	/* Find replacement target */
+	targetkey = hashkey;
+	targetentry = 0;
+
+	for (srcpos = hashkey ; ;) {
+	    srcpos = (srcpos + 1) & table->hashmask;
+	    srcentry = MM_HASH_ENTRY(table, srcpos);
+
+	    /* Don't loop beyond the end of hash stream */
+	    if (srcpos == srcend)
+		break;
+
+	    /* Try next entry */
+	    srckey = vaccess->entrykey(srcentry) & table->hashmask;
+
+#ifdef MM_ROBUST_DELETION
+
+	    if (targetkey >= delbase) {
+		if ((srckey < delbase) || (srckey > targetkey))
+		    continue;
+	    } else if ((srckey > targetkey) && (srckey < delbase))
+		continue;
+
+	    targetentry = srcentry;
+	    targetkey = srckey;
+	    targetpos = srcpos;
+#else
+	    /* Check if moving the entry backwards is allowed without breaking chain */
+	    distance = (int32_t)targetkey - (int32_t)srckey;
+
+	    if (distance > halftablesize)
+		distance -= table->hashsize;
+	    else if (distance < -halftablesize)
+		distance += table->hashsize;
+
+	    if (distance >= 0) {
+		targetentry = srcentry;
+		targetkey = srckey;
+		targetpos = srcpos;
+	    }
+
+#endif
+	}
+
+	/* No replacement found, just clear it */
+	entry = MM_HASH_ENTRY(table, hashkey);
+
+	if (!(targetentry)) {
+	    vaccess->clearentry(entry);
+	    break;
+	}
+
+	/* Move entry in place and continue the repair process */
+	memcpy(entry, targetentry, table->entrysize);
+
+#ifdef MM_HASH_DEBUG_STATISTICS
+	mmAtomicAddL(&table->relocationcount, 1);
+#endif
+
+	hashkey = targetpos;
     }
 
-    /* Move entry in place and continue the repair process */
-    memcpy( entry, targetentry, table->entrysize );
+    /* Decrement count of entries in table */
+    if (!(table->flags & MM_HASH_FLAGS_NO_COUNT)) {
+	entrycount = MM_HASH_ENTRYCOUNT_ADD_READ(table, -1);
+
+	if (entrycount < table->lowcount)
+	    table->status = MM_HASH_STATUS_MUSTSHRINK;
+    }
 
 #ifdef MM_HASH_DEBUG_STATISTICS
-    mmAtomicAddL( &table->relocationcount, 1 );
+    mmAtomicAddL(&table->statentrycount, -1);
 #endif
 
-    hashkey = targetpos;
-  }
+end:
 
-  /* Decrement count of entries in table */
-  if( !( table->flags & MM_HASH_FLAGS_NO_COUNT ) )
-  {
-    entrycount = MM_HASH_ENTRYCOUNT_ADD_READ( table, -1 );
-    if( entrycount < table->lowcount )
-      table->status = MM_HASH_STATUS_MUSTSHRINK;
-  }
+    /* Unlock all pages */
+    for (pageindex = pagestart ; ; pageindex = (pageindex + 1) & table->pagemask) {
+	MM_HASH_LOCK_DONE_WRITE(table, pageindex);
 
-#ifdef MM_HASH_DEBUG_STATISTICS
-  mmAtomicAddL( &table->statentrycount, -1 );
-#endif
+	if (pageindex == pagefinal)
+	    break;
+    }
 
-  end:
-
-  /* Unlock all pages */
-  for( pageindex = pagestart ; ; pageindex = ( pageindex + 1 ) & table->pagemask )
-  {
-    MM_HASH_LOCK_DONE_WRITE( table, pageindex );
-    if( pageindex == pagefinal )
-      break;
-  }
-
-  return retvalue;
+    return retvalue;
 }
 
 
-int mmHashLockDeleteEntry( void *hashtable, mmHashAccess *vaccess, void *deleteentry, int readflag )
+int mmHashLockDeleteEntry(void *hashtable, mmHashAccess *vaccess, void *deleteentry, int readflag)
 {
-  int retvalue;
-  mmHashTable *table;
+    int retvalue;
+    mmHashTable *table;
 
-  table = (mmHashTable *)hashtable;
-  retvalue = mmHashTryDeleteEntry( table, vaccess, deleteentry, readflag );
-  if( retvalue == MM_HASH_TRYAGAIN )
-  {
-    MM_HASH_GLOBAL_LOCK( table );
-    do
-    {
-      retvalue = mmHashTryDeleteEntry( table, vaccess, deleteentry, readflag );
-    } while( retvalue == MM_HASH_TRYAGAIN );
-    MM_HASH_GLOBAL_UNLOCK( table );
-  }
+    table = (mmHashTable *)hashtable;
+    retvalue = mmHashTryDeleteEntry(table, vaccess, deleteentry, readflag);
 
-  return retvalue;
+    if (retvalue == MM_HASH_TRYAGAIN) {
+	MM_HASH_GLOBAL_LOCK(table);
+
+	do {
+	    retvalue = mmHashTryDeleteEntry(table, vaccess, deleteentry, readflag);
+	} while (retvalue == MM_HASH_TRYAGAIN);
+
+	MM_HASH_GLOBAL_UNLOCK(table);
+    }
+
+    return retvalue;
 }
-
 
 
 /****/
-
 
 
 /* Must be called while NO other thread will ever vaccess the table for writing */
-void mmHashResize( void *newtable, void *oldtable, mmHashAccess *vaccess, uint32_t hashbits, uint32_t pageshift )
+void mmHashResize(void *newtable, void *oldtable, mmHashAccess *vaccess, uint32_t hashbits, uint32_t pageshift)
 {
-  uint32_t hashkey, hashpos, dstkey, dstpos, pageindex;
-  void *srcentry, *dstentry;
-  mmHashTable *dst, *src;
-  mmHashPage *page;
+    uint32_t hashkey, hashpos, dstkey, dstpos, pageindex;
+    void *srcentry, *dstentry;
+    mmHashTable *dst, *src;
+    mmHashPage *page;
 
-  dst = (mmHashTable *)newtable;
-  src = (mmHashTable *)oldtable;
-  dst->status = MM_HASH_STATUS_NORMAL;
-  dst->flags = src->flags;
-  dst->entrysize = src->entrysize;
-  dst->minhashbits = src->minhashbits;
-  dst->hashbits = hashbits;
-  dst->hashsize = 1 << dst->hashbits;
-  dst->hashmask = dst->hashsize - 1;
-  dst->pageshift = pageshift;
-  dst->pagecount = dst->hashsize >> pageshift;
-  dst->pagemask = dst->pagecount - 1;
-  dst->page = (mmHashPage *)MM_HASH_PAGELIST( dst );
+    dst = (mmHashTable *)newtable;
+    src = (mmHashTable *)oldtable;
+    dst->status = MM_HASH_STATUS_NORMAL;
+    dst->flags = src->flags;
+    dst->entrysize = src->entrysize;
+    dst->minhashbits = src->minhashbits;
+    dst->hashbits = hashbits;
+    dst->hashsize = 1 << dst->hashbits;
+    dst->hashmask = dst->hashsize - 1;
+    dst->pageshift = pageshift;
+    dst->pagecount = dst->hashsize >> pageshift;
+    dst->pagemask = dst->pagecount - 1;
+    dst->page = (mmHashPage *)MM_HASH_PAGELIST(dst);
 #ifdef MM_ATOMIC_SUPPORT
-  mmAtomicWrite32( &dst->entrycount, mmAtomicRead32( &src->entrycount ) );
+    mmAtomicWrite32(&dst->entrycount, mmAtomicRead32(&src->entrycount));
 #else
-  dst->entrycount = src->entrycount;
+    dst->entrycount = src->entrycount;
 #endif
-  mmHashSetBounds( dst );
+    mmHashSetBounds(dst);
 
-  /* Clear the whole destination table */
-  dstentry = MM_HASH_ENTRYLIST( dst );
-  for( hashpos = 0 ; hashpos < dst->hashsize ; hashpos++ )
-  {
-    vaccess->clearentry( dstentry );
-    dstentry = ADDRESS( dstentry, dst->entrysize );
-  }
+    /* Clear the whole destination table */
+    dstentry = MM_HASH_ENTRYLIST(dst);
 
-  /* Clear the lock pages */
-#ifdef MM_ATOMIC_SUPPORT
-  page = dst->page;
-  for( pageindex = 0 ; pageindex < dst->pagecount ; pageindex++, page++ )
-  {
-    mmAtomicLockInit32( &page->lock );
-    mmAtomicWriteP( &page->owner, (void *)0 );
-  }
-  mmAtomicWrite32( &dst->globallock, 0x0 );
-#else
-  page = src->page;
-  for( pageindex = src->pagecount ; pageindex ; pageindex--, page++ )
-    mtMutexDestroy( &page->mutex );
-  mtMutexDestroy( &src->globalmutex );
-  page = dst->page;
-  for( pageindex = dst->pagecount ; pageindex ; pageindex--, page++ )
-  {
-    mtMutexInit( &page->mutex );
-    page->owner = 0;
-  }
-  mtMutexInit( &dst->globalmutex );
-#endif
-
-  /* Move all entries from the src table to the dst table */
-  srcentry = MM_HASH_ENTRYLIST( src );
-  for( hashpos = 0 ; hashpos < src->hashsize ; hashpos++ )
-  {
-    hashkey = vaccess->entrykey( srcentry );
-    dstkey = hashkey & dst->hashmask;
-
-    /* Search an empty spot in the destination table */
-    for( dstpos = dstkey ; ; dstpos = ( dstpos + 1 ) & dst->hashmask )
-    {
-      dstentry = MM_HASH_ENTRY( dst, dstpos );
-      if( !( vaccess->entryvalid( dstentry ) ) )
-        break;
+    for (hashpos = 0 ; hashpos < dst->hashsize ; hashpos++) {
+	vaccess->clearentry(dstentry);
+	dstentry = ADDRESS(dstentry, dst->entrysize);
     }
 
-    /* Copy entry from src table to dst table */
-    memcpy( dstentry, srcentry, src->entrysize );
-    srcentry = ADDRESS( srcentry, src->entrysize );
-  }
+    /* Clear the lock pages */
+#ifdef MM_ATOMIC_SUPPORT
+    page = dst->page;
 
-  return;
+    for (pageindex = 0 ; pageindex < dst->pagecount ; pageindex++, page++) {
+	mmAtomicLockInit32(&page->lock);
+	mmAtomicWriteP(&page->owner, (void *)0);
+    }
+
+    mmAtomicWrite32(&dst->globallock, 0x0);
+#else
+    page = src->page;
+
+    for (pageindex = src->pagecount ; pageindex ; pageindex--, page++)
+	mtMutexDestroy(&page->mutex);
+
+    mtMutexDestroy(&src->globalmutex);
+    page = dst->page;
+
+    for (pageindex = dst->pagecount ; pageindex ; pageindex--, page++) {
+	mtMutexInit(&page->mutex);
+	page->owner = 0;
+    }
+
+    mtMutexInit(&dst->globalmutex);
+#endif
+
+    /* Move all entries from the src table to the dst table */
+    srcentry = MM_HASH_ENTRYLIST(src);
+
+    for (hashpos = 0 ; hashpos < src->hashsize ; hashpos++) {
+	hashkey = vaccess->entrykey(srcentry);
+	dstkey = hashkey & dst->hashmask;
+
+	/* Search an empty spot in the destination table */
+	for (dstpos = dstkey ; ; dstpos = (dstpos + 1) & dst->hashmask) {
+	    dstentry = MM_HASH_ENTRY(dst, dstpos);
+
+	    if (!(vaccess->entryvalid(dstentry)))
+		break;
+	}
+
+	/* Copy entry from src table to dst table */
+	memcpy(dstentry, srcentry, src->entrysize);
+	srcentry = ADDRESS(srcentry, src->entrysize);
+    }
+
+    return;
 }
-
 
 
 /****/
 
 
-static int mmHashLockRangeTry( mmHashTable *table, mmHashAccess *vaccess, mmHashLock *hashlock, mmHashLockRange *lockrange, uint32_t hashkey )
+static int mmHashLockRangeTry(mmHashTable *table, mmHashAccess *vaccess, mmHashLock *hashlock, mmHashLockRange *lockrange, uint32_t hashkey)
 {
-  int newcount;
-  uint32_t srckey;
-  uint32_t pageindex, pagestart, pagefinal;
-  void *srcentry;
+    int newcount;
+    uint32_t srckey;
+    uint32_t pageindex, pagestart, pagefinal;
+    void *srcentry;
 
-  /* Lock first page */
-  pagestart = hashkey >> table->pageshift;
-  pagefinal = pagestart;
+    /* Lock first page */
+    pagestart = hashkey >> table->pageshift;
+    pagefinal = pagestart;
 #ifdef MM_ATOMIC_SUPPORT
-  if( mmAtomicReadP( &table->page[pagestart].owner ) != (void *)hashlock )
-  {
-    if( !( MM_HASH_LOCK_TRY_WRITE( table, pagestart ) ) )
-      return MM_HASH_TRYAGAIN;
-  }
-  mmAtomicWriteP( &table->page[pagestart].owner, (void *)hashlock );
-#else
-  if( table->page[pagestart].owner != (void *)hashlock )
-  {
-    if( !( MM_HASH_LOCK_TRY_WRITE( table, pagestart ) ) )
-      return MM_HASH_TRYAGAIN;
-  }
-  table->page[pagestart].owner = hashlock;
-#endif
 
-  /* Lock all pages in stream */
-  newcount = hashlock->newcount;
-  for( srckey = hashkey ; ; )
-  {
-    srckey = ( srckey + 1 ) & table->hashmask;
-
-    /* Lock new pages */
-    pageindex = srckey >> table->pageshift;
-    if( pageindex != pagefinal )
-    {
-#ifdef MM_ATOMIC_SUPPORT
-      if( mmAtomicReadP( &table->page[pageindex].owner ) != (void *)hashlock )
-      {
-        if( MM_HASH_LOCK_TRY_WRITE( table, pageindex ) )
-        {
-          mmAtomicWriteP( &table->page[pageindex].owner, (void *)hashlock );
-          continue;
-        }
-        /* Failed, unlock all pages */
-        for( pageindex = pagestart ; ; pageindex = ( pageindex + 1 ) & table->pagemask )
-        {
-          mmAtomicWriteP( &table->page[pageindex].owner, (void *)0 );
-          MM_HASH_LOCK_DONE_WRITE( table, pageindex );
-          if( pageindex == pagefinal )
-            break;
-        }
-        return MM_HASH_TRYAGAIN;
-      }
-#else
-      if( table->page[pageindex].owner != (void *)hashlock )
-      {
-        if( MM_HASH_LOCK_TRY_WRITE( table, pageindex ) )
-        {
-          table->page[pageindex].owner = (void *)hashlock;
-          continue;
-        }
-        /* Failed, unlock all pages */
-        for( pageindex = pagestart ; ; pageindex = ( pageindex + 1 ) & table->pagemask )
-        {
-          table->page[pageindex].owner = 0;
-          MM_HASH_LOCK_DONE_WRITE( table, pageindex );
-          if( pageindex == pagefinal )
-            break;
-        }
-        return MM_HASH_TRYAGAIN;
-      }
-#endif
-      pagefinal = pageindex;
+    if (mmAtomicReadP(&table->page[pagestart].owner) != (void *)hashlock) {
+	if (!(MM_HASH_LOCK_TRY_WRITE(table, pagestart)))
+	    return MM_HASH_TRYAGAIN;
     }
 
-    /* Check for valid entry */
-    srcentry = MM_HASH_ENTRY( table, srckey );
-    if( !( vaccess->entryvalid( srcentry ) ) )
-    {
-      if( --newcount <= 0 )
-        break;
+    mmAtomicWriteP(&table->page[pagestart].owner, (void *)hashlock);
+#else
+
+    if (table->page[pagestart].owner != (void *)hashlock) {
+	if (!(MM_HASH_LOCK_TRY_WRITE(table, pagestart)))
+	    return MM_HASH_TRYAGAIN;
     }
-  }
 
-  /* Store lock pagestart and pagefinal */
-  lockrange->pagestart = pagestart;
-  lockrange->pagefinal = pagefinal;
+    table->page[pagestart].owner = hashlock;
+#endif
 
-  return MM_HASH_SUCCESS;
-} 
+    /* Lock all pages in stream */
+    newcount = hashlock->newcount;
+
+    for (srckey = hashkey ; ;) {
+	srckey = (srckey + 1) & table->hashmask;
+
+	/* Lock new pages */
+	pageindex = srckey >> table->pageshift;
+
+	if (pageindex != pagefinal) {
+#ifdef MM_ATOMIC_SUPPORT
+
+	    if (mmAtomicReadP(&table->page[pageindex].owner) != (void *)hashlock) {
+		if (MM_HASH_LOCK_TRY_WRITE(table, pageindex)) {
+		    mmAtomicWriteP(&table->page[pageindex].owner, (void *)hashlock);
+		    continue;
+		}
+
+		/* Failed, unlock all pages */
+		for (pageindex = pagestart ; ; pageindex = (pageindex + 1) & table->pagemask) {
+		    mmAtomicWriteP(&table->page[pageindex].owner, (void *)0);
+		    MM_HASH_LOCK_DONE_WRITE(table, pageindex);
+
+		    if (pageindex == pagefinal)
+			break;
+		}
+
+		return MM_HASH_TRYAGAIN;
+	    }
+
+#else
+
+	    if (table->page[pageindex].owner != (void *)hashlock) {
+		if (MM_HASH_LOCK_TRY_WRITE(table, pageindex)) {
+		    table->page[pageindex].owner = (void *)hashlock;
+		    continue;
+		}
+
+		/* Failed, unlock all pages */
+		for (pageindex = pagestart ; ; pageindex = (pageindex + 1) & table->pagemask) {
+		    table->page[pageindex].owner = 0;
+		    MM_HASH_LOCK_DONE_WRITE(table, pageindex);
+
+		    if (pageindex == pagefinal)
+			break;
+		}
+
+		return MM_HASH_TRYAGAIN;
+	    }
+
+#endif
+	    pagefinal = pageindex;
+	}
+
+	/* Check for valid entry */
+	srcentry = MM_HASH_ENTRY(table, srckey);
+
+	if (!(vaccess->entryvalid(srcentry))) {
+	    if (--newcount <= 0)
+		break;
+	}
+    }
+
+    /* Store lock pagestart and pagefinal */
+    lockrange->pagestart = pagestart;
+    lockrange->pagefinal = pagefinal;
+
+    return MM_HASH_SUCCESS;
+}
 
 
-static void mmHashLockReleaseAll( mmHashTable *table, mmHashLock *hashlock )
+static void mmHashLockReleaseAll(mmHashTable *table, mmHashLock *hashlock)
 {
-  uint32_t pageindex, pagestart, pagefinal;
-  mmHashLockRange *lockrange;
+    uint32_t pageindex, pagestart, pagefinal;
+    mmHashLockRange *lockrange;
 
-  for( lockrange = (mmHashLockRange *)hashlock->rangelist ; lockrange ; lockrange = (mmHashLockRange *)lockrange->next )
-  {
-    if( lockrange->pagestart == ~(uint32_t)0x0 )
-      continue;
-    pagestart = lockrange->pagestart;
-    pagefinal = lockrange->pagefinal;
-    for( pageindex = pagestart ; ; pageindex = ( pageindex + 1 ) & table->pagemask )
-    {
+    for (lockrange = (mmHashLockRange *)hashlock->rangelist ; lockrange ; lockrange = (mmHashLockRange *)lockrange->next) {
+	if (lockrange->pagestart == ~(uint32_t)0x0)
+	    continue;
+
+	pagestart = lockrange->pagestart;
+	pagefinal = lockrange->pagefinal;
+
+	for (pageindex = pagestart ; ; pageindex = (pageindex + 1) & table->pagemask) {
 #ifdef MM_ATOMIC_SUPPORT
-      if( mmAtomicReadP( &table->page[pageindex].owner ) == (void *)hashlock )
-      {
-        mmAtomicWriteP( &table->page[pageindex].owner, (void *)0 );
-        mmAtomicLockDoneWrite32( &table->page[pageindex].lock );
-      }
-#else
-      if( table->page[pageindex].owner == (void *)hashlock )
-      {
-        table->page[pageindex].owner = (void *)0;
-        MM_HASH_LOCK_DONE_WRITE( table, pageindex );
-      }
-#endif
-      if( pageindex == pagefinal )
-        break;
-    }
-  }
 
-  for( lockrange = (mmHashLockRange *)hashlock->rangelist ; lockrange ; lockrange = (mmHashLockRange *)lockrange->next )
-  {
+	    if (mmAtomicReadP(&table->page[pageindex].owner) == (void *)hashlock) {
+		mmAtomicWriteP(&table->page[pageindex].owner, (void *)0);
+		mmAtomicLockDoneWrite32(&table->page[pageindex].lock);
+	    }
+
+#else
+
+	    if (table->page[pageindex].owner == (void *)hashlock) {
+		table->page[pageindex].owner = (void *)0;
+		MM_HASH_LOCK_DONE_WRITE(table, pageindex);
+	    }
+
+#endif
+
+	    if (pageindex == pagefinal)
+		break;
+	}
+    }
+
+    for (lockrange = (mmHashLockRange *)hashlock->rangelist ; lockrange ; lockrange = (mmHashLockRange *)lockrange->next) {
+	lockrange->pagestart = ~0x0;
+	lockrange->pagefinal = ~0x0;
+    }
+
+    return;
+}
+
+
+static int mmHashLockApplyAll(mmHashTable *table, mmHashAccess *vaccess, mmHashLock *hashlock)
+{
+    mmHashLockRange *lockrange, *lockrangenext;
+    /* 2012-10-22 ch3: rangelist set but never used, so commented */
+    /*mmHashLockRange *rangelist; */
+
+    /*rangelist = hashlock->rangelist; */
+    for (lockrange = (mmHashLockRange *)hashlock->rangelist ; lockrange ; lockrange = lockrangenext) {
+	lockrangenext = (mmHashLockRange *)lockrange->next;
+
+	if (mmHashLockRangeTry(table, vaccess, hashlock, lockrange, lockrange->hashkey) == MM_HASH_TRYAGAIN) {
+	    /* Failure, release all locks */
+	    mmHashLockReleaseAll(table, hashlock);
+	    return MM_HASH_TRYAGAIN;
+	}
+    }
+
+    return MM_HASH_SUCCESS;
+}
+
+
+/****/
+
+
+void mmHashLockInit(mmHashLock *hashlock, int newcount)
+{
+    memset(hashlock, 0, sizeof(mmHashLock));
+    hashlock->newcount = newcount;
+    return;
+}
+
+void mmHashLockAdd(void *hashtable, mmHashAccess *vaccess, void *entry, mmHashLock *hashlock, mmHashLockRange *lockrange)
+{
+    uint32_t hashkey;
+    mmHashTable *table;
+
+    /* Hash key of entry */
+    table = (mmHashTable *)hashtable;
+    hashkey = vaccess->entrykey(entry) & table->hashmask;
+
+    lockrange->hashkey = hashkey;
     lockrange->pagestart = ~0x0;
     lockrange->pagefinal = ~0x0;
-  }
+    lockrange->next = hashlock->rangelist;
+    hashlock->rangelist = lockrange;
 
-  return;
+    return;
 }
 
-
-static int mmHashLockApplyAll( mmHashTable *table, mmHashAccess *vaccess, mmHashLock *hashlock )
+void mmHashLockAcquire(void *hashtable, mmHashAccess *vaccess, mmHashLock *hashlock)
 {
-  mmHashLockRange *lockrange, *lockrangenext;
-  /* 2012-10-22 ch3: rangelist set but never used, so commented */
-  /*mmHashLockRange *rangelist; */
+    int status;
+    mmHashTable *table;
 
-  /*rangelist = hashlock->rangelist; */
-  for( lockrange = (mmHashLockRange *)hashlock->rangelist ; lockrange ; lockrange = lockrangenext )
-  {
-    lockrangenext = (mmHashLockRange *)lockrange->next;
-    if( mmHashLockRangeTry( table, vaccess, hashlock, lockrange, lockrange->hashkey ) == MM_HASH_TRYAGAIN )
-    {
-      /* Failure, release all locks */
-      mmHashLockReleaseAll( table, hashlock );
-      return MM_HASH_TRYAGAIN;
+    table = (mmHashTable *)hashtable;
+    status = mmHashLockApplyAll(table, vaccess, hashlock);
+
+    if (status == MM_HASH_TRYAGAIN) {
+	MM_HASH_GLOBAL_LOCK(table);
+
+	do {
+	    status = mmHashLockApplyAll(table, vaccess, hashlock);
+	} while (status == MM_HASH_TRYAGAIN);
+
+	MM_HASH_GLOBAL_UNLOCK(table);
     }
-  }
 
-  return MM_HASH_SUCCESS;
+    return;
 }
 
-
-
-/****/
-
-
-
-void mmHashLockInit( mmHashLock *hashlock, int newcount )
+void mmHashLockRelease(void *hashtable, mmHashLock *hashlock)
 {
-  memset( hashlock, 0, sizeof(mmHashLock) );
-  hashlock->newcount = newcount;
-  return;
-}
+    mmHashTable *table;
 
-void mmHashLockAdd( void *hashtable, mmHashAccess *vaccess, void *entry, mmHashLock *hashlock, mmHashLockRange *lockrange )
-{
-  uint32_t hashkey;
-  mmHashTable *table;
+    table = (mmHashTable *)hashtable;
+    mmHashLockReleaseAll(table, hashlock);
 
-  /* Hash key of entry */
-  table = (mmHashTable *)hashtable;
-  hashkey = vaccess->entrykey( entry ) & table->hashmask;
-
-  lockrange->hashkey = hashkey;
-  lockrange->pagestart = ~0x0;
-  lockrange->pagefinal = ~0x0;
-  lockrange->next = hashlock->rangelist;
-  hashlock->rangelist = lockrange;
-
-  return;
-}
-
-void mmHashLockAcquire( void *hashtable, mmHashAccess *vaccess, mmHashLock *hashlock )
-{
-  int status;
-  mmHashTable *table;
-
-  table = (mmHashTable *)hashtable;
-  status = mmHashLockApplyAll( table, vaccess, hashlock );
-  if( status == MM_HASH_TRYAGAIN )
-  {
-    MM_HASH_GLOBAL_LOCK( table );
-    do
-    {
-      status = mmHashLockApplyAll( table, vaccess, hashlock );
-    } while( status == MM_HASH_TRYAGAIN );
-    MM_HASH_GLOBAL_UNLOCK( table );
-  }
-
-  return;
-}
-
-void mmHashLockRelease( void *hashtable, mmHashLock *hashlock )
-{
-  mmHashTable *table;
-
-  table = (mmHashTable *)hashtable;
-  mmHashLockReleaseAll( table, hashlock );
-
-  return;
+    return;
 }
 
 
 /****/
 
 
-void mmHashGlobalLockEnable( void *hashtable )
+void mmHashGlobalLockEnable(void *hashtable)
 {
-  uint32_t pageindex;
-  mmHashTable *table;
+    uint32_t pageindex;
+    mmHashTable *table;
 
-  table = (mmHashTable *)hashtable;
-  MM_HASH_GLOBAL_LOCK( table );
-  for( pageindex = 0 ; pageindex < table->pagecount ; pageindex++ )
-    MM_HASH_LOCK_TRY_WRITE( table, pageindex );
+    table = (mmHashTable *)hashtable;
+    MM_HASH_GLOBAL_LOCK(table);
 
-  return;
+    for (pageindex = 0 ; pageindex < table->pagecount ; pageindex++)
+	MM_HASH_LOCK_TRY_WRITE(table, pageindex);
+
+    return;
 }
 
 
-void mmHashGlobalLockDisable( void *hashtable )
+void mmHashGlobalLockDisable(void *hashtable)
 {
-  uint32_t pageindex;
-  mmHashTable *table;
+    uint32_t pageindex;
+    mmHashTable *table;
 
-  table = (mmHashTable *)hashtable;
-  for( pageindex = 0 ; pageindex < table->pagecount ; pageindex++ )
-    MM_HASH_LOCK_DONE_WRITE( table, pageindex );
-  MM_HASH_GLOBAL_UNLOCK( table );
+    table = (mmHashTable *)hashtable;
 
-  return;
+    for (pageindex = 0 ; pageindex < table->pagecount ; pageindex++)
+	MM_HASH_LOCK_DONE_WRITE(table, pageindex);
+
+    MM_HASH_GLOBAL_UNLOCK(table);
+
+    return;
 }
 
 
 /****/
 
 
-
-void mmHashDirectDebugDuplicate( void *hashtable, mmHashAccess *vaccess, void (*callback)( void *opaque, void *entry0, void *entry1 ), void *opaque )
+void mmHashDirectDebugDuplicate(void *hashtable, mmHashAccess *vaccess, void (*callback)(void *opaque, void *entry0, void *entry1), void *opaque)
 {
-  uint32_t hashbase, hashkey;
-  void *baseentry, *entry;
-  mmHashTable *table;
+    uint32_t hashbase, hashkey;
+    void *baseentry, *entry;
+    mmHashTable *table;
 
-  table = (mmHashTable *)hashtable;
+    table = (mmHashTable *)hashtable;
 
-  for( hashbase = 0 ; hashbase < table->hashsize ; hashbase++ )
-  {
-    baseentry = MM_HASH_ENTRY( table, hashbase );
-    for( hashkey = hashbase ; ; )
-    {
-      hashkey = ( hashkey + 1 ) & table->hashmask;
-      entry = MM_HASH_ENTRY( table, hashkey );
-      if( !( vaccess->entryvalid( entry ) ) )
-        break;
-      if( vaccess->entrycmp( entry, baseentry ) )
-        callback( opaque, entry, baseentry );
+    for (hashbase = 0 ; hashbase < table->hashsize ; hashbase++) {
+	baseentry = MM_HASH_ENTRY(table, hashbase);
+
+	for (hashkey = hashbase ; ;) {
+	    hashkey = (hashkey + 1) & table->hashmask;
+	    entry = MM_HASH_ENTRY(table, hashkey);
+
+	    if (!(vaccess->entryvalid(entry)))
+		break;
+
+	    if (vaccess->entrycmp(entry, baseentry))
+		callback(opaque, entry, baseentry);
+	}
     }
-  }
 
-  return;
+    return;
 }
 
 
-void mmHashDirectDebugPages( void *hashtable )
+void mmHashDirectDebugPages(void *hashtable)
 {
-  uint32_t pageindex;
-  mmHashTable *table;
-  mmHashPage *page;
+    uint32_t pageindex;
+    mmHashTable *table;
+    mmHashPage *page;
 
-  table = (mmHashTable *)hashtable;
+    table = (mmHashTable *)hashtable;
 
 #ifdef MM_ATOMIC_SUPPORT
-  page = table->page;
-  for( pageindex = 0 ; pageindex < table->pagecount ; pageindex++, page++ )
-  {
-    if( ( page->lock.v.value ) || mmAtomicReadP( &page->owner ) )
-      printf( "Page[%d] = 0x%x ; %p\n", pageindex, page->lock.v.value, mmAtomicReadP( &page->owner ) );
-  }
-  fflush( stdout );
+    page = table->page;
+
+    for (pageindex = 0 ; pageindex < table->pagecount ; pageindex++, page++) {
+	if ((page->lock.v.value) || mmAtomicReadP(&page->owner))
+	    printf("Page[%d] = 0x%x ; %p\n", pageindex, page->lock.v.value, mmAtomicReadP(&page->owner));
+    }
+
+    fflush(stdout);
 #endif
 
-  return;
+    return;
 }
 
 
-
-void mmHashStatistics( void *hashtable, long *accesscount, long *collisioncount, long *relocationcount, long *entrycount, long *entrycountmax, long *hashsizemax )
+void mmHashStatistics(void *hashtable, long *accesscount, long *collisioncount, long *relocationcount, long *entrycount, long *entrycountmax, long *hashsizemax)
 {
-  mmHashTable *table;
+    mmHashTable *table;
 
-  table = (mmHashTable *)hashtable;
+    table = (mmHashTable *)hashtable;
 #ifdef MM_HASH_DEBUG_STATISTICS
-  *accesscount = mmAtomicReadL( &table->accesscount );
-  *collisioncount = mmAtomicReadL( &table->collisioncount );
-  *relocationcount = mmAtomicReadL( &table->relocationcount );
-  *entrycount = mmAtomicReadL( &table->statentrycount );
-  *entrycountmax = table->entrycountmax;
-  *hashsizemax = 1 << table->hashbits;
+    *accesscount = mmAtomicReadL(&table->accesscount);
+    *collisioncount = mmAtomicReadL(&table->collisioncount);
+    *relocationcount = mmAtomicReadL(&table->relocationcount);
+    *entrycount = mmAtomicReadL(&table->statentrycount);
+    *entrycountmax = table->entrycountmax;
+    *hashsizemax = 1 << table->hashbits;
 #else
-  *accesscount = 0;
-  *collisioncount = 0;
-  *relocationcount = 0;
-  *entrycount = 0;
-  *entrycountmax = 0;
-  *hashsizemax = 1 << table->hashbits;
+    *accesscount = 0;
+    *collisioncount = 0;
+    *relocationcount = 0;
+    *entrycount = 0;
+    *entrycountmax = 0;
+    *hashsizemax = 1 << table->hashbits;
 #endif
 
-  return;
+    return;
 }
