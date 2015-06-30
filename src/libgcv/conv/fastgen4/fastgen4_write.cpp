@@ -125,9 +125,10 @@ HIDDEN Color
 color_from_floats(const float *float_color)
 {
     Color result;
-    result[0] = static_cast<unsigned char>(float_color[0] * 255.0 + 0.5);
-    result[1] = static_cast<unsigned char>(float_color[1] * 255.0 + 0.5);
-    result[2] = static_cast<unsigned char>(float_color[2] * 255.0 + 0.5);
+
+    for (int i = 0; i < 3; ++i)
+	result[i] = static_cast<unsigned char>(float_color[i] * 255.0 + 0.5);
+
     return result;
 }
 
@@ -2137,7 +2138,7 @@ write_nmg_region(nmgregion *nmg_region, const db_full_path *path,
 	RT_DB_INTERNAL_INIT(&internal);
 	internal.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 	internal.idb_minor_type = ID_BOT;
-	internal.idb_meth = &OBJ[ID_BOT];
+	internal.idb_meth = &OBJ[internal.idb_minor_type];
 	internal.idb_ptr = bot;
 
 	write_bot(section, *bot);
