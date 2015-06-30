@@ -51,7 +51,7 @@ mesh_optimization(long vertexcount,
 		  int threadcount,
 		  int optimizationlevel
 #if DEBUG_MESH_OPTIMIZATION_VERBOSE
-		  , std::string rname
+		  , const char *rname
 #endif
 		 )
 {
@@ -84,7 +84,7 @@ mesh_optimization(long vertexcount,
 	threadcount = maxthreadcount;
 
 #if DEBUG_MESH_OPTIMIZATION_VERBOSE
-    fprintf(stderr, "Optimizing %s...", rname.c_str());
+    fprintf(stderr, "Optimizing %s...", rname);
 #endif
     moOptimizeMesh(vertexcount,
 		   tricount,

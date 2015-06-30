@@ -40,10 +40,7 @@
 #ifndef MESHOPTIMIZATION_H
 #define MESHOPTIMIZATION_H
 
-// Standard headers
-#include <string>
-
-// Local headers
+/* Local headers */
 #include "meshoptimizer.h"
 
 #define OPTIMIZATION_FLAGS MO_FLAGS_DISABLE_LOOK_AHEAD | \
@@ -63,7 +60,7 @@ mesh_optimization(long vertexcount,
 		  int threadcount,
 		  int optimizationlevel
 #if DEBUG_MESH_OPTIMIZATION_VERBOSE
-		  , std::string rname
+		  , const char *rname
 #endif
 		 );
 
