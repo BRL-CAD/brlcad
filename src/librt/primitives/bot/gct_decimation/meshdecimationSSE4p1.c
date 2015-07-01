@@ -34,16 +34,13 @@
 #include <float.h>
 
 
-#include "cpuconfig.h"
-
-#include "cpuinfo.h"
-
-#include "cc.h"
-#include "mm.h"
-#include "mmhash.h"
-#include "math3d.h"
-
-#include "mmbinsort.h"
+#include "auxiliary/cpuconfig.h"
+#include "auxiliary/cpuinfo.h"
+#include "auxiliary/cc.h"
+#include "auxiliary/mm.h"
+#include "auxiliary/mmhash.h"
+#include "auxiliary/math3d.h"
+#include "auxiliary/mmbinsort.h"
 #include "meshdecimation.h"
 
 #if defined(__GNUC__) && (__GNUC__ == 4 && __GNUC_MINOR__ >= 3) && !defined(__clang__)
