@@ -245,6 +245,8 @@ _rt_generate_points(int **faces, int *num_faces, point_t **points, int *num_pnts
 	}
     }
 
+    if (!out_cnt) return 1;
+
     struct rt_vert **rt_verts = (struct rt_vert **)bu_calloc(out_cnt, sizeof(struct rt_vert *), "output array");
     int curr_ind = 0;
     for (i = 0; i < ncpus+1; i++) {
