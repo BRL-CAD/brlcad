@@ -416,7 +416,7 @@ void mmNodeAlignFree(int UNUSED(nodeindex), void *v, size_t UNUSED(bytes))
  *
  * The head of the linked list should be defined as a void pointer. The list
  * parameter can be a pointer to it, or a pointer to the mmListNode.next
- * variable of the preceeding item. The offset parameter should be the offset
+ * variable of the preceding item. The offset parameter should be the offset
  * of the mmListNode structure within the structure of the item. It can be
  * easily obtained with the offsetof(,) macro.
  */
@@ -2131,11 +2131,11 @@ void MM_FUNC(GrowFreeAll)(mmGrow *mgrow MM_PARAMS)
 
 
 /**
- * Allocate a chunk of memory from a growing memoy allocator.
+ * Allocate a chunk of memory from a growing memory allocator.
  *
  * The memory can only be freed with mmGrowFreeAll() for the whole allocator.
- * There are no memory alignment garantees for the allocations, yet as all
- * memory is tightly packed, the alignment is directly dependant on the size
+ * There are no memory alignment guarantees for the allocations, yet as all
+ * memory is tightly packed, the alignment is directly dependent on the size
  * of the previous allocations.
  */
 void *MM_FUNC(GrowAlloc)(mmGrow *mgrow, size_t bytes MM_PARAMS)

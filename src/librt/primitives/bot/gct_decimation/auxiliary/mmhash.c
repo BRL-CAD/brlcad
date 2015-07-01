@@ -1390,7 +1390,7 @@ static int mmHashTryDeleteEntry(mmHashTable *table, mmHashAccess *vaccess, void 
     halftablesize = table->hashsize >> 1;
 #endif
 
-    /* Preemtively lock all pages in the stream before starting the operation */
+    /* Preemptively lock all pages in the stream before starting the operation */
     for (srcend = hashkey ; ;) {
 	srcend = (srcend + 1) & table->hashmask;
 
