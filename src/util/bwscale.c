@@ -393,14 +393,11 @@ main(int argc, char **argv)
 {
     int i;
 
-    if (!get_args(argc, argv) || isatty(fileno(stdout))) {
-	(void)fputs(usage, stderr);
-	bu_exit (1, NULL);
-    }
+    if (!get_args(argc, argv) || isatty(fileno(stdout)))
+	bu_exit(1, "%s", usage);
 
     if (inx <= 0 || iny <= 0 || outx <= 0 || outy <= 0) {
-	fprintf(stderr, "bwscale: bad size\n");
-	bu_exit (2, NULL);
+	bu_exit(2, "bwscale: bad size\n");
     }
 
     /* See how many lines we can buffer */
