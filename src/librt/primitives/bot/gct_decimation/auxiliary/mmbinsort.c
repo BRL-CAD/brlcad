@@ -43,12 +43,14 @@
 
 #include "mmbinsort.h"
 
+
 #if defined(__GNUC__) && (__GNUC__ == 4 && __GNUC_MINOR__ >= 3) && !defined(__clang__)
 #  pragma GCC diagnostic ignored "-Wunused-function"
 #endif
 #if defined(__clang__)
 #  pragma clang diagnostic ignored "-Wunused-function"
 #endif
+
 
 /*
 #define MM_BINSORT_INSERTION_SORT
@@ -74,6 +76,7 @@ typedef struct {
 typedef struct {
     mmbsf groupbase, groupmax, bucketrange;
     int bucketmax;
+    mmBinSortBucket bucket[1];
 } mmBinSortGroup;
 
 
@@ -94,6 +97,7 @@ typedef struct {
     mmBlockHead bucketblock;
     mmBlockHead groupblock;
 
+    /* Top-level group, *MUST* be at end of struct due to bucket[] zero-length array */
     mmBinSortGroup root;
 
 } mmBinSortHead;
@@ -142,7 +146,7 @@ void *mmBinSortInit(size_t itemlistoffset, int rootbucketcount, int groupbucketc
     group->groupmax = rootmax;
     group->bucketrange = (rootmax - rootmin) / (double)rootbucketcount;
     group->bucketmax = rootbucketcount - 1;
-    bucket = (mmBinSortBucket *)(group + 1);
+    bucket = group->bucket;
 
     for (bucketindex = 0 ; bucketindex < rootbucketcount ; bucketindex++) {
 	bucket->flags = 0;
@@ -204,7 +208,7 @@ static mmBinSortGroup *mmBinSortSpawnGroup(mmBinSortHead *bsort, void *itembase,
     group->bucketrange = range / (mmbsf)bsort->groupbucketcount;
     group->bucketmax = bsort->groupbucketcount - 1;
 
-    bucket = (mmBinSortBucket *)(group + 1);
+    bucket = group->bucket;
 
     for (bucketindex = 0 ; bucketindex < bsort->groupbucketcount ; bucketindex++) {
 	bucket->flags = 0;
@@ -228,7 +232,7 @@ static mmBinSortGroup *mmBinSortSpawnGroup(mmBinSortHead *bsort, void *itembase,
 	if (value > bucket->max)
 	    bucket->max = value;
 
-	bucket = (mmBinSortBucket *)(group + 1) + bucketindex;
+	bucket = &group->bucket[ bucketindex ];
 	bucket->itemcount++;
 	mmListAdd(bucket->last, item, bsort->itemlistoffset);
 	bucket->last = &((mmListNode *)ADDRESS(item, bsort->itemlistoffset))->next;
@@ -296,7 +300,7 @@ static void mmBinSortCollapseGroup(mmBinSortHead *bsort, mmBinSortBucket *parent
 
     itemcount = 0;
 
-    for (bucketindex = 0, bucket = (mmBinSortBucket *)(group + 1) ; bucketindex < bsort->groupbucketcount ; bucketindex++, bucket++) {
+    for (bucketindex = 0, bucket = group->bucket ; bucketindex < bsort->groupbucketcount ; bucketindex++, bucket++) {
 	if (bucket->flags & MM_BINSORT_BUCKET_FLAGS_SUBGROUP)
 	    mmBinSortCollapseGroup(bsort, bucket);
 
@@ -332,7 +336,7 @@ void mmBinSortAdd(void *binsort, void *item, double itemvalue)
 
     for (depth = 0 ; ; group = (mmBinSortGroup *)bucket->p, depth++) {
 	bucketindex = mmBinSortBucketIndex(group, value);
-	bucket = (mmBinSortBucket *)(group + 1) + bucketindex;
+	bucket = &group->bucket[ bucketindex ];
 	bucket->itemcount++;
 
 	if (bucket->flags & MM_BINSORT_BUCKET_FLAGS_SUBGROUP)
@@ -391,7 +395,7 @@ void mmBinSortRemove(void *binsort, void *item, double itemvalue)
 
     for (; ; group = (mmBinSortGroup *)bucket->p) {
 	bucketindex = mmBinSortBucketIndex(group, value);
-	bucket = (mmBinSortBucket *)(group + 1) + bucketindex;
+	bucket = &group->bucket[ bucketindex ];
 	bucket->itemcount--;
 
 	if (bucket->flags & MM_BINSORT_BUCKET_FLAGS_SUBGROUP) {
@@ -427,7 +431,7 @@ void *mmBinSortGetRootBucket(void *binsort, int bucketindex, int *itemcount)
     mmBinSortBucket *bucket;
 
     bsort = (mmBinSortHead *)binsort;
-    bucket = (mmBinSortBucket *)(bsort + 1) + bucketindex;
+    bucket = &bsort->root.bucket[ bucketindex ];
 
     *itemcount = bucket->itemcount;
     return bucket->p;
@@ -440,7 +444,7 @@ void *mmBinSortGetGroupBucket(void *binsortgroup, int bucketindex, int *itemcoun
     mmBinSortBucket *bucket;
 
     group = (mmBinSortGroup *)binsortgroup;
-    bucket = (mmBinSortBucket *)(group + 1) + bucketindex;
+    bucket = &group->bucket[ bucketindex ];
 
     *itemcount = bucket->itemcount;
     return bucket->p;
@@ -470,7 +474,7 @@ static void *mmBinSortGroupFirstItem(mmBinSortHead *bsort, mmBinSortGroup *group
     printf( "  Failmax %f ; Base %f ; Range %f ; Index %f\n", failmax, group->groupbase, group->bucketrange, mmbsfceil( failmax - group->groupbase ) / group->bucketrange );
     printf( "  Top bucket : %d\n", topbucket );
     */
-    bucket = (mmBinSortBucket *)(group + 1);
+    bucket = group->bucket;
 
     for (bucketindex = 0 ; bucketindex <= topbucket ; bucketindex++, bucket++) {
 	/*
@@ -512,7 +516,7 @@ void *mmBinSortGetFirstItem(void *binsort, double failmax)
     /*
       printf( "TopBucket : %d / %d\n", topbucket, bsort->root.bucketmax );
     */
-    bucket = (mmBinSortBucket *)(bsort + 1);
+    bucket = bsort->root.bucket;
 
     for (bucketindex = 0 ; bucketindex <= topbucket ; bucketindex++, bucket++) {
 	/*
