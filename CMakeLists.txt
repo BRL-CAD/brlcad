@@ -2022,9 +2022,11 @@ BRLCAD_TYPE_SIZE("uint64_t" "")
 BRLCAD_TYPE_SIZE("uintptr_t" "")
 BRLCAD_TYPE_SIZE("sig_t" "signal.h")
 
-if(HAVE_PTRDIFF_T AND NOT HAVE_OFF_T AND HAVE_WINDOWS_H)
+# TODO - off_t test isn't sufficient apparently - passes with MSVC
+# but we still need this define
+if(HAVE_PTRDIFF_T AND HAVE_WINDOWS_H)
   CONFIG_H_APPEND(BRLCAD "#define off_t ptrdiff_t\n")
-endif(HAVE_PTRDIFF_T AND NOT HAVE_OFF_T AND HAVE_WINDOWS_H)
+endif(HAVE_PTRDIFF_T AND HAVE_WINDOWS_H)
 
 # Fallback typedefs
 if(NOT HAVE_GID_T AND HAVE_WINDOWS_H)
