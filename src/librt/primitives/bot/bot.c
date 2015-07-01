@@ -52,6 +52,11 @@
 #include "rt/tie.h"
 #include "btg.h"	/* for the bottie_ functions */
 
+
+#include "gct_decimation/meshdecimation.h"
+#include "gct_decimation/meshoptimization.h"
+
+
 #define MAXHITS 128
 
 #define BOT_MIN_DN 1.0e-9
@@ -4245,6 +4250,45 @@ edge_can_be_decimated(struct rt_bot_internal *bot,
     }
 
     return 1;
+}
+
+
+/**
+ * decimate a BOT using the new GCT decimator.
+ * `feature_size` is the smallest feature size to keep undecimated.
+ * returns the number of edges removed.
+ */
+size_t
+rt_bot_decimate_gct(struct rt_bot_internal *bot, fastf_t feature_size)
+{
+    const int opt_level = 3; /* maximum */
+    mdOperation mdop;
+
+    RT_BOT_CK_MAGIC(bot);
+
+    if (feature_size < 0.0 && !NEAR_ZERO(feature_size, RT_LEN_TOL))
+	bu_bomb("invalid feature_size");
+    else
+	feature_size = FMAX(0.0, feature_size);
+
+    mdOperationInit(&mdop);
+    mdOperationData(&mdop, bot->num_vertices, bot->vertices,
+		    sizeof(bot->vertices[0]), 3 * sizeof(bot->vertices[0]), bot->num_faces,
+		    bot->faces, sizeof(bot->faces[0]), 3 * sizeof(bot->faces[0]));
+    mdOperationStrength(&mdop, feature_size);
+    mdOperationAddAttrib(&mdop, bot->face_normals, sizeof(bot->face_normals[0]), 3,
+			 3 * sizeof(bot->face_normals[0]), MD_ATTRIB_FLAGS_COMPUTE_NORMALS);
+
+    mdMeshDecimation(&mdop, bu_avail_cpus(),
+		     MD_FLAGS_NORMAL_VERTEX_SPLITTING | MD_FLAGS_TRIANGLE_WINDING_CCW);
+
+    bot->num_vertices = mdop.vertexcount;
+    bot->num_faces = mdop.tricount;
+
+    mesh_optimization(bot->num_vertices, bot->num_faces, bot->faces,
+		      sizeof(bot->faces[0]), bu_avail_cpus(), opt_level);
+
+    return mdop.decimationcount;
 }
 
 

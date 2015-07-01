@@ -41,10 +41,12 @@ ged_bot_decimate(struct ged *gedp, int argc, const char *argv[])
     struct rt_db_internal intern;
     struct rt_bot_internal *bot;
     struct directory *dp;
-    fastf_t max_chord_error=-1.0;
-    fastf_t max_normal_error=-1.0;
-    fastf_t min_edge_length=-1.0;
-    static const char *usage = "-c maximum_chord_error -n maximum_normal_error -e minimum_edge_length new_bot_name current_bot_name";
+    fastf_t max_chord_error = -1.0;
+    fastf_t max_normal_error = -1.0;
+    fastf_t min_edge_length = -1.0;
+    fastf_t feature_size = -1.0;
+    static const char *usage = "-f feature_size (to use the newer GCT decimator)"
+			       "\nOR: -c maximum_chord_error -n maximum_normal_error -e minimum_edge_length new_bot_name current_bot_name";
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
     GED_CHECK_READ_ONLY(gedp, GED_ERROR);
@@ -67,37 +69,63 @@ ged_bot_decimate(struct ged *gedp, int argc, const char *argv[])
     /* process args */
     bu_optind = 1;
     bu_opterr = 0;
-    while ((c=bu_getopt(argc, (char * const *)argv, "c:n:e:")) != -1) {
+
+    while ((c = bu_getopt(argc, (char * const *)argv, "c:n:e:f:")) != -1) {
 	switch (c) {
 	    case 'c':
 		max_chord_error = atof(bu_optarg);
+
 		if (max_chord_error < 0.0) {
 		    bu_vls_printf(gedp->ged_result_str,
 				  "Maximum chord error cannot be less than zero");
 		    return GED_ERROR;
 		}
+
 		break;
+
 	    case 'n':
 		max_normal_error = atof(bu_optarg);
+
 		if (max_normal_error < 0.0) {
 		    bu_vls_printf(gedp->ged_result_str,
 				  "Maximum normal error cannot be less than zero");
 		    return GED_ERROR;
 		}
+
 		break;
+
 	    case 'e':
 		min_edge_length = atof(bu_optarg);
+
 		if (min_edge_length < 0.0) {
 		    bu_vls_printf(gedp->ged_result_str,
 				  "minimum edge length cannot be less than zero");
 		    return GED_ERROR;
 		}
+
 		break;
+
+	    case 'f':
+		feature_size = atof(bu_optarg);
+
+		if (feature_size < 0.0) {
+		    bu_vls_printf(gedp->ged_result_str,
+				  "minimum feature size cannot be less than zero");
+		    return GED_ERROR;
+		}
+
+		break;
+
 	    default: {
 		bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 		return GED_ERROR;
 	    }
 	}
+    }
+
+    if (feature_size > 0.0 && (max_chord_error > 0.0 || max_normal_error > 0.0 ||  min_edge_length > 0.0)) {
+	bu_vls_printf(gedp->ged_result_str, "-f may not be used with -c, -n, or -e");
+	return GED_ERROR;
     }
 
     argc -= bu_optind;
@@ -124,19 +152,31 @@ ged_bot_decimate(struct ged *gedp, int argc, const char *argv[])
 
     RT_BOT_CK_MAGIC(bot);
 
-    /* convert maximum error and edge length to mm */
+    /* convert maximum error, edge length, and feature size to mm */
     if (max_chord_error > 0.0) {
 	max_chord_error = max_chord_error * gedp->ged_wdbp->dbip->dbi_local2base;
     }
+
     if (min_edge_length > 0.0) {
 	min_edge_length = min_edge_length * gedp->ged_wdbp->dbip->dbi_local2base;
     }
 
-    /* do the decimation */
-    if (rt_bot_decimate(bot, max_chord_error, max_normal_error, min_edge_length) < 0) {
-	bu_vls_printf(gedp->ged_result_str, "Decimation Error\n");
-	rt_db_free_internal(&intern);
-	return GED_ERROR;
+    if (feature_size > 0.0) {
+	/* use the new GCT decimator */
+	const size_t orig_num_faces = bot->num_faces;
+	size_t edges_removed;
+	feature_size *= gedp->ged_wdbp->dbip->dbi_local2base;
+	edges_removed = rt_bot_decimate_gct(bot, feature_size);
+	bu_log("original face count = %zu\n", orig_num_faces);
+	bu_log("\tedges removed = %zu\n", edges_removed);
+	bu_log("\tnew face count = %zu\n", bot->num_faces);
+    } else {
+	/* use the old decimator */
+	if (rt_bot_decimate(bot, max_chord_error, max_normal_error, min_edge_length) < 0) {
+	    bu_vls_printf(gedp->ged_result_str, "Decimation Error\n");
+	    rt_db_free_internal(&intern);
+	    return GED_ERROR;
+	}
     }
 
     /* save the result to the database */
