@@ -66,6 +66,8 @@ Help -> Apropos                     |                     INCOMPLETE, not workin
   acknowledgements is out of date (should remove or just put AUTHORS
   file).
 
+* dm command is currently mged specific - need to migrate to libged
+  and rework to allow usage by arbitrary GUIs.
 
 ---- BETA ISSUES ----
 stability & usability
