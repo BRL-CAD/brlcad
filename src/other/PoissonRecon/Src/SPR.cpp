@@ -55,6 +55,8 @@ spr_surface_build(int **faces, int *num_faces, double **points, int *num_pnts,
 		const struct cvertex **verts, int cnt, struct spr_options *opts)
 {
     if (!num_pnts || !num_faces || !points || !faces) return -1;
+    // Probably unnecessary but here to be consistent with original code
+    Reset< double >();
     XForm4x4< double > xForm;
     xForm = XForm4x4< double >::Identity();
     Octree< double > tree;
@@ -69,6 +71,7 @@ spr_surface_build(int **faces, int *num_faces, double **points, int *num_pnts,
     int pointCount = tree.SetTree< float >(pointStream , opts->mindepth, opts->depth, opts->fulldepth, opts->kerneldepth,
 	    opts->samples_per_node, opts->scale, 0, 0, opts->pointweight, opts->adaptiveexponent, *pointInfo,
 	    *normalInfo , *kernelDensityWeights , *centerWeights , opts->boundarytype, xForm , 0);
+    kernelDensityWeights->clear();
     delete kernelDensityWeights;
     kernelDensityWeights = NULL;
     Pointer( double ) constraints = tree.SetLaplacianConstraints( *normalInfo );
@@ -78,6 +81,10 @@ spr_surface_build(int **faces, int *num_faces, double **points, int *num_pnts,
     FreePointer(constraints);
     CoredFileMeshData< PlyVertex <float> > mesh;
     double isoValue = tree.GetIsoValue( solution , *centerWeights );
+    centerWeights->clear();
+    delete centerWeights;
+    centerWeights = NULL;
+    delete pointStream;
     tree.GetMCIsoSurface( NullPointer< double >() , solution , isoValue , mesh , true , 1 , 0 );
     /* mesh to triangles */
     (*num_pnts) = int(mesh.outOfCorePointCount()+mesh.inCorePoints.size());
@@ -110,6 +117,8 @@ spr_surface_build(int **faces, int *num_faces, double **points, int *num_pnts,
         (*faces)[i*3+1] = (polygon[1].inCore) ? polygon[1].idx : polygon[1].idx + int(mesh.inCorePoints.size());
         (*faces)[i*3+2] = (polygon[2].inCore) ? polygon[2].idx : polygon[2].idx + int(mesh.inCorePoints.size());
     }
+    // Cleanup
+    Reset< double>();
     return 0;
 }
 
