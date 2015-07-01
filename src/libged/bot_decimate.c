@@ -123,7 +123,7 @@ ged_bot_decimate(struct ged *gedp, int argc, const char *argv[])
 	}
     }
 
-    if (feature_size > 0.0 && (max_chord_error > 0.0 || max_normal_error > 0.0 ||  min_edge_length > 0.0)) {
+    if (feature_size >= 0.0 && (max_chord_error >= 0.0 || max_normal_error >= 0.0 ||  min_edge_length >= 0.0)) {
 	bu_vls_printf(gedp->ged_result_str, "-f may not be used with -c, -n, or -e");
 	return GED_ERROR;
     }
@@ -161,7 +161,7 @@ ged_bot_decimate(struct ged *gedp, int argc, const char *argv[])
 	min_edge_length = min_edge_length * gedp->ged_wdbp->dbip->dbi_local2base;
     }
 
-    if (feature_size > 0.0) {
+    if (feature_size >= 0.0) {
 	/* use the new GCT decimator */
 	const size_t orig_num_faces = bot->num_faces;
 	size_t edges_removed;
