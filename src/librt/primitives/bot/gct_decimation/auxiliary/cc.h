@@ -26,6 +26,11 @@
  */
 
 
+#include "common.h"
+
+#include "cpuconfig.h"
+
+
 #ifndef ADDRESS
 #define ADDRESS(p,o) ((void *)(((char *)p)+(o)))
 #endif
@@ -39,39 +44,9 @@
 
 
 uint32_t ccHash32Data(void *data, int size);
-uint32_t ccHash32Int32(uint32_t data);
-uint32_t ccHash32Int64(uint64_t data);
 uint32_t ccHash32Array32(uint32_t *data, int count);
 uint32_t ccHash32Array64(uint64_t *data, int count);
 
-static inline uint32_t ccHash32Int16Inline(uint32_t i)
-{
-    uint32_t hash;
-    hash = (i << 16) ^ i;
-    hash += hash >> 11;
-    hash ^= hash << 3;
-    hash += hash >> 5;
-    hash ^= hash << 4;
-    hash += hash >> 17;
-    hash ^= hash << 25;
-    hash += hash >> 6;
-    return hash;
-}
-
-static inline uint32_t ccHash32Int32Inline(uint32_t i)
-{
-    uint32_t hash;
-    hash = i & 0xFFFF;
-    hash = ((hash << 16) ^ hash) ^ ((i & 0xFFFF0000) >> 5);
-    hash += hash >> 11;
-    hash ^= hash << 3;
-    hash += hash >> 5;
-    hash ^= hash << 4;
-    hash += hash >> 17;
-    hash ^= hash << 25;
-    hash += hash >> 6;
-    return hash;
-}
 
 static inline uint32_t ccHash32Int64Inline(uint64_t i)
 {
@@ -89,118 +64,6 @@ static inline uint32_t ccHash32Int64Inline(uint64_t i)
     hash += hash >> 6;
     return hash;
 }
-
-static inline uint32_t ccHash32Data3Inline(uint8_t *data)
-{
-    uint32_t hash;
-    hash = 0;
-    hash += ((uint32_t)data[1] << 8) | (uint32_t)data[0];
-    hash ^= hash << 16;
-    hash ^= (uint32_t)data[2] << 18;
-    hash += hash >> 11;
-    hash ^= hash << 3;
-    hash += hash >> 5;
-    hash ^= hash << 4;
-    hash += hash >> 17;
-    hash ^= hash << 25;
-    hash += hash >> 6;
-    return hash;
-}
-
-static inline uint32_t ccHash32Data4Inline(uint8_t *data)
-{
-    uint32_t hash;
-    hash = 0;
-    hash += ((uint32_t)data[1] << 8) | (uint32_t)data[0];
-    hash = (hash << 16) ^ ((((uint32_t)data[3] << 19) | ((uint32_t)data[2] << 11)) ^ hash);
-    hash += hash >> 11;
-    hash ^= hash << 3;
-    hash += hash >> 5;
-    hash ^= hash << 4;
-    hash += hash >> 17;
-    hash ^= hash << 25;
-    hash += hash >> 6;
-    return hash;
-}
-
-static inline uint32_t ccHash32Data5Inline(uint8_t *data)
-{
-    uint32_t hash;
-    hash = 0;
-    hash += ((uint32_t)data[1] << 8) | (uint32_t)data[0];
-    hash = (hash << 16) ^ ((((uint32_t)data[3] << 19) | ((uint32_t)data[2] << 11)) ^ hash);
-    hash += hash >> 11;
-    hash += (uint32_t)data[4];
-    hash ^= hash << 10;
-    hash += hash >> 1;
-    hash ^= hash << 3;
-    hash += hash >> 5;
-    hash ^= hash << 4;
-    hash += hash >> 17;
-    hash ^= hash << 25;
-    hash += hash >> 6;
-    return hash;
-}
-
-static inline uint32_t ccHash32Data6Inline(uint8_t *data)
-{
-    uint32_t hash;
-    hash = 0;
-    hash += ((uint32_t)data[1] << 8) | (uint32_t)data[0];
-    hash = (hash << 16) ^ ((((uint32_t)data[3] << 19) | ((uint32_t)data[2] << 11)) ^ hash);
-    hash += hash >> 11;
-    hash += ((uint32_t)data[5] << 8) | (uint32_t)data[4];
-    hash ^= hash << 11;
-    hash += hash >> 17;
-    hash ^= hash << 3;
-    hash += hash >> 5;
-    hash ^= hash << 4;
-    hash += hash >> 17;
-    hash ^= hash << 25;
-    hash += hash >> 6;
-    return hash;
-}
-
-static inline uint32_t ccHash32Data7Inline(uint8_t *data)
-{
-    uint32_t hash;
-    hash = 0;
-    hash += ((uint32_t)data[1] << 8) | (uint32_t)data[0];
-    hash = (hash << 16) ^ ((((uint32_t)data[3] << 19) | ((uint32_t)data[2] << 11)) ^ hash);
-    hash += hash >> 11;
-    data = (uint8_t *)ADDRESS(data, 4);
-    hash += ((uint32_t)data[5] << 8) | (uint32_t)data[4];
-    hash ^= hash << 16;
-    hash ^= (uint32_t)data[6] << 18;
-    hash += hash >> 11;
-    hash ^= hash << 3;
-    hash += hash >> 5;
-    hash ^= hash << 4;
-    hash += hash >> 17;
-    hash ^= hash << 25;
-    hash += hash >> 6;
-    return hash;
-}
-
-static inline uint32_t ccHash32Data8Inline(uint8_t *data)
-{
-    uint32_t hash;
-    hash = 0;
-    hash += ((uint32_t)data[1] << 8) | (uint32_t)data[0];
-    hash = (hash << 16) ^ ((((uint32_t)data[3] << 19) | ((uint32_t)data[2] << 11)) ^ hash);
-    hash += hash >> 11;
-    hash += ((uint32_t)data[5] << 8) | (uint32_t)data[4];
-    hash = (hash << 16) ^ ((((uint32_t)data[7] << 19) | ((uint32_t)data[6] << 11)) ^ hash);
-    hash += hash >> 11;
-    hash ^= hash << 3;
-    hash += hash >> 5;
-    hash ^= hash << 4;
-    hash += hash >> 17;
-    hash ^= hash << 25;
-    hash += hash >> 6;
-    return hash;
-}
-
 
 /****/
 
@@ -233,41 +96,6 @@ static inline void ccQuickRand32Seed(ccQuickRandState32 *randstate, uint32_t see
 
     for (i = 0 ; i < 20 ; i++)
 	ccQuickRand32(randstate);
-
-    return;
-}
-
-
-typedef struct {
-    uint64_t a;
-    uint64_t b;
-    uint64_t c;
-    uint64_t d;
-} ccQuickRandState64;
-
-static inline uint64_t ccQuickRand64(ccQuickRandState64 *randstate)
-{
-    uint64_t e;
-    e = randstate->a - ((randstate->b << 7) | (randstate->b >> (64 - 7)));
-    randstate->a = randstate->b ^ ((randstate->c << 13) | (randstate->c >> (64 - 13)));
-    randstate->b = randstate->c + ((randstate->d << 37) | (randstate->d >> (64 - 37)));
-    randstate->c = randstate->d + e;
-    randstate->d = e + randstate->a;
-    return randstate->d;
-}
-
-static inline void ccQuickRand64Seed(ccQuickRandState64 *randstate, uint64_t seed)
-{
-    uint64_t i;
-    randstate->a = 0xf1ea5eed;
-    randstate->b = seed;
-    randstate->c = seed;
-    randstate->d = seed;
-
-    for (i = 0 ; i < 20 ; i++)
-	ccQuickRand64(randstate);
-
-    return;
 }
 
 
@@ -359,18 +187,6 @@ static inline uint32_t ccAlignInt32(uint32_t i)
     return i + 1;
 }
 
-static inline uint64_t ccAlignInt64(uint64_t i)
-{
-    i--;
-    i |= i >> 1;
-    i |= i >> 2;
-    i |= i >> 4;
-    i |= i >> 8;
-    i |= i >> 16;
-    i |= i >> 32;
-    return i + 1;
-}
-
 static inline uintptr_t ccAlignIntPtr(uintptr_t i)
 {
     i--;
@@ -388,9 +204,6 @@ static inline uintptr_t ccAlignIntPtr(uintptr_t i)
 
 /****/
 
-
-void ccQuickSort(void **table, int count, int (*sortfunc)(void *t0, void *t1), uint32_t randmask);
-void ccQuickSortContext(void **table, int count, int (*sortfunc)(void *t0, void *t1, void *context), void *context, uint32_t randmask);
 
 int ccMergeSort(void **src, void **tmp, int count, int (*sortfunc)(void *t0, void *t1));
 int ccMergeSortContext(void **src, void **tmp, int count, int (*sortfunc)(void *t0, void *t1, void *context), void *context);
