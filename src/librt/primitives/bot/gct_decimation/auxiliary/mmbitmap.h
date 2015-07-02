@@ -38,22 +38,7 @@ typedef struct {
 } mmBitMap;
 
 void mmBitMapInit(mmBitMap *bitmap, size_t entrycount, int initvalue);
-void mmBitMapReset(mmBitMap *bitmap, int resetvalue);
 void mmBitMapFree(mmBitMap *bitmap);
 
 int mmBitMapDirectGet(mmBitMap *bitmap, size_t entryindex);
 void mmBitMapDirectSet(mmBitMap *bitmap, size_t entryindex);
-void mmBitMapDirectClear(mmBitMap *bitmap, size_t entryindex);
-
-int mmBitMapDirectMaskGet(mmBitMap *bitmap, size_t entryindex, long mask);
-void mmBitMapDirectMaskSet(mmBitMap *bitmap, size_t entryindex, long value, long mask);
-
-int mmBitMapGet(mmBitMap *bitmap, size_t entryindex);
-void mmBitMapSet(mmBitMap *bitmap, size_t entryindex);
-void mmBitMapClear(mmBitMap *bitmap, size_t entryindex);
-
-int mmBitMapMaskGet(mmBitMap *bitmap, size_t entryindex, long mask);
-void mmBitMapMaskSet(mmBitMap *bitmap, size_t entryindex, long value, long mask);
-
-int mmBitMapFindSet(mmBitMap *bitmap, size_t entryindex, size_t entryindexlast, size_t *retentryindex);
-int mmBitMapFindClear(mmBitMap *bitmap, size_t entryindex, size_t entryindexlast, size_t *retentryindex);

@@ -93,7 +93,6 @@ set(LIBRT_SOURCES
   primitives/bot/btg.c
   primitives/bot/btgf.c
   primitives/bot/gct_decimation/auxiliary/cc.c
-  primitives/bot/gct_decimation/auxiliary/mmatomic.c
   primitives/bot/gct_decimation/auxiliary/mmbinsort.c
   primitives/bot/gct_decimation/auxiliary/mmbitmap.c
   primitives/bot/gct_decimation/auxiliary/mm.c
