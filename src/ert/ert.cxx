@@ -227,31 +227,63 @@ void brlcadBoundsFunction(void *ptr, size_t i, RTCBounds &bounds)
     bounds.upper_z = (float)rtip->rti_Solids[i]->st_max[Z];
 }
 
-void brlcadIntersectFunction(void * ptr, RTCRay &ray, size_t i)
+void freeTheSegs(struct seg &seghead, struct application *ap)
+{
+    struct seg *segp;
+    while (BU_LIST_WHILE(segp, seg, &(seghead.l))) {
+
+        BU_LIST_DEQUEUE(&(segp->l));
+
+        segp->seg_in.hit_rayp = segp->seg_out.hit_rayp = &ap->a_ray;
+        rt_pr_seg(segp);
+
+        RT_FREE_SEG(segp, ap->a_resource);
+    }
+}
+
+void basicIntersection(void * ptr, RTCRay &ray, size_t i, struct seg segHead, struct application &ap)
 {
     struct rt_i *rtip = (struct rt_i *)ptr;
-    struct application ap;
-    struct seg seghead;
-    BU_LIST_INIT(&seghead.l);
-
     VMOVE(ap.a_ray.r_pt, ray.org);
     VMOVE(ap.a_ray.r_dir, ray.dir);
 
     RT_APPLICATION_INIT(&ap);
     ap.a_rt_i = rtip;
     ap.a_resource = &rt_uniresource;
-    ap.a_hit = bhit;
-    ap.a_miss = miss;
 
     rtip->rti_Solids[i]->st_meth->ft_shot(rtip->rti_Solids[i],
 					  &ap.a_ray,
 					  &ap,
-					  &seghead);
+					  &segHead);
 }
 
-void brlcadOccludedFunction(void * ptr, RTCRay & /*ray*/, size_t /*i*/)
+void brlcadIntersectFunction(void * ptr, RTCRay &ray, size_t i)
 {
-    struct rt_i *rtip = (struct rt_i *)ptr;
+    struct seg seghead;
+    BU_LIST_INIT(&seghead.l);
+    struct application ap;
+
+    basicIntersection( ptr, ray, i, seghead, ap);
+
+    // process the segs here to give embree what it wants, free them for later use 
+    // perhaps we stash the segs in the RTCRay payload ;-)
+}
+
+void brlcadOccludedFunction(void * ptr, RTCRay & ray, size_t i)
+{
+    struct seg seghead;
+    BU_LIST_INIT(&seghead.l);
+
+    struct application ap;
+
+    basicIntersection( ptr, ray, i, seghead, ap);
+
+    // fi segs found, then indicate we were hit
+    if ( ! BU_LIST_IS_EMPTY(&(seghead.l)) ) {
+	ray.geomID = 0;
+    }
+
+    freeTheSegs(seghead, &ap);
 }
 
 void essenceOfEmbree(struct application &ap)
@@ -268,9 +300,15 @@ void essenceOfEmbree(struct application &ap)
     rtcSetIntersectFunction(scene, geomID, brlcadIntersectFunction);
     rtcSetOccludedFunction(scene, geomID, brlcadOccludedFunction);
 
+    // launch a ray
+    // collect the segs
+    // call boolweave
+
     rtcDeleteScene(scene);
     rtcExit();
 }
+
+
 
 void essenceOfShootray(struct application *ap)
 {
@@ -288,17 +326,7 @@ void essenceOfShootray(struct application *ap)
 
     RT_VISIT_ALL_SOLTABS_END;
 
-    struct seg *segp;
-    while (BU_LIST_WHILE(segp, seg, &(seghead.l))) {
-
-        BU_LIST_DEQUEUE(&(segp->l));
-
-        segp->seg_in.hit_rayp = segp->seg_out.hit_rayp = &ap->a_ray;
-        rt_pr_seg(segp);
-
-        RT_FREE_SEG(segp, ap->a_resource);
-    }
-
+    freeTheSegs(seghead, ap);
 }
 
 /**
