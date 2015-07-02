@@ -112,20 +112,6 @@ extern "C" {
 #endif
 
 
-#if defined(__GNUC__) || defined(__INTEL_COMPILER)
-#define MM_ALIGN16 __attribute__((aligned(16)))
-#define MM_ALIGN16_SAFE (1)
-#elif defined(_MSC_VER)
-#define MM_ALIGN16 __declspec(align(16))
-#define MM_ALIGN16_SAFE (1)
-#else
-#define MM_ALIGN16
-#define MM_ALIGN16_SAFE (0)
-#endif
-
-
-#define MM_ERROR()  {printf("MM Error at %s:%d\n",file,line);exit(1)}
-
 #ifndef ADDRESS
 #define ADDRESS(p,o) ((void *)(((char *)p)+(o)))
 #endif
