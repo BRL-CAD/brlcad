@@ -188,7 +188,7 @@ main(int argc, char **argv)
 	unsigned long len;
 	/* Get info */
 
-	printf("Scanline length in input file: ");
+	printf("Scanline length in input file?: ");
 	ret = scanf("%lu", &len);
 	if (ret != 1)
 	    perror("scanf");
@@ -197,7 +197,7 @@ main(int argc, char **argv)
 	    bu_exit(4, "bwcrop: scanlen = %zu, don't be ridiculous\n", scanlen);
 	}
 
-	printf("Line Length and Number of scan lines (in new file)?: ");
+	printf("Line Length and Number of scan lines in new file?: ");
 	ret = scanf("%lf%lf", &xval, &yval);
 	if (ret != 2) {
 	    perror("scanf");
@@ -215,7 +215,7 @@ main(int argc, char **argv)
 	    yval = INT_MAX-1;
 	ynum = yval;
 
-	printf("Upper left corner in input file (x, y)?: ");
+	printf("Upper left corner (in input file) (x, y)?: ");
 	ret = scanf("%f%f", &ulx, &uly);
 	if (ret != 2)
 	    perror("scanf");
@@ -225,12 +225,12 @@ main(int argc, char **argv)
 	if (ret != 2)
 	    perror("scanf");
 
-	printf("Lower right (x, y)?: ");
+	printf("Lower right corner (x, y)?: ");
 	ret = scanf("%f%f", &lrx, &lry);
 	if (ret != 2)
 	    perror("scanf");
 
-	printf("Lower left (x, y)?: ");
+	printf("Lower left corner (x, y)?: ");
 	ret = scanf("%f%f", &llx, &lly);
 	if (ret != 2)
 	    perror("scanf");
