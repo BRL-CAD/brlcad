@@ -75,6 +75,11 @@ extern "C" {
 
 #include <embree2/rtcore.h>
 #include <embree2/rtcore_ray.h>
+#include <embree2/rtcore_geometry_user.h>
+
+
+
+
 
 /**
  * rt_shootray() was told to call this on a hit.
@@ -209,6 +214,92 @@ miss(struct application *UNUSED(ap))
     return 0;
 }
 
+void brlcadBoundsFunction(void *ptr, size_t i, RTCBounds &bounds)
+{
+    struct rt_i *rtip = (struct rt_i *)ptr;
+
+    bounds.lower_x = (float)rtip->rti_Solids[i]->st_min[X];
+    bounds.lower_y = (float)rtip->rti_Solids[i]->st_min[Y];
+    bounds.lower_z = (float)rtip->rti_Solids[i]->st_min[Z];
+
+    bounds.upper_x = (float)rtip->rti_Solids[i]->st_max[X];
+    bounds.upper_y = (float)rtip->rti_Solids[i]->st_max[Y];
+    bounds.upper_z = (float)rtip->rti_Solids[i]->st_max[Z];
+}
+
+void brlcadIntersectFunction(void * ptr, RTCRay &ray, size_t i)
+{
+    struct rt_i *rtip = (struct rt_i *)ptr;
+    struct application ap;
+    struct seg seghead;
+    BU_LIST_INIT(&seghead.l);
+
+    VMOVE(ap.a_ray.r_pt, ray.org);
+    VMOVE(ap.a_ray.r_dir, ray.dir);
+
+    RT_APPLICATION_INIT(&ap);
+    ap.a_rt_i = rtip;
+    ap.a_resource = &rt_uniresource;
+    ap.a_hit = bhit;
+    ap.a_miss = miss;
+
+    rtip->rti_Solids[i]->st_meth->ft_shot(rtip->rti_Solids[i],
+					  &ap.a_ray,
+					  &ap,
+					  &seghead);
+}
+
+void brlcadOccludedFunction(void * ptr, RTCRay & /*ray*/, size_t /*i*/)
+{
+    struct rt_i *rtip = (struct rt_i *)ptr;
+}
+
+void essenceOfEmbree(struct application &ap)
+{
+    rtcInit();
+
+    RTCScene scene = rtcNewScene(RTC_SCENE_STATIC, RTC_INTERSECT1);
+
+    struct rt_i *rtip = ap.a_rt_i;
+
+    unsigned geomID = rtcNewUserGeometry(scene, rtip->nsolids);
+    rtcSetUserData(scene, geomID, rtip);
+    rtcSetBoundsFunction(scene, geomID, brlcadBoundsFunction);
+    rtcSetIntersectFunction(scene, geomID, brlcadIntersectFunction);
+    rtcSetOccludedFunction(scene, geomID, brlcadOccludedFunction);
+
+    rtcDeleteScene(scene);
+    rtcExit();
+}
+
+void essenceOfShootray(struct application *ap)
+{
+    struct seg seghead;
+    BU_LIST_INIT(&seghead.l);
+
+    bu_log("nsolids:%lu\n", ap->a_rt_i->nsolids);
+
+    // long solidbits = rt_get_solidbitv(rtip->nsolids, resp);
+
+    struct soltab *stp;
+    RT_VISIT_ALL_SOLTABS_START(stp, ap->a_rt_i)
+
+            stp->st_meth->ft_shot(stp, &ap->a_ray, ap, &seghead);
+
+    RT_VISIT_ALL_SOLTABS_END;
+
+    struct seg *segp;
+    while (BU_LIST_WHILE(segp, seg, &(seghead.l))) {
+
+        BU_LIST_DEQUEUE(&(segp->l));
+
+        segp->seg_in.hit_rayp = segp->seg_out.hit_rayp = &ap->a_ray;
+        rt_pr_seg(segp);
+
+        RT_FREE_SEG(segp, ap->a_resource);
+    }
+
+}
 
 /**
  * START HERE
@@ -307,11 +398,20 @@ main(int argc, char **argv)
     VPRINT("Pnt", ap.a_ray.r_pt);
     VPRINT("Dir", ap.a_ray.r_dir);
 
+    
     /* This is what callback to perform on a hit. */
     ap.a_hit = bhit;
 
     /* This is what callback to perform on a miss. */
     ap.a_miss = miss;
+
+
+    rt_init_resource(&rt_uniresource, 0, rtip);
+    ap.a_resource = &rt_uniresource;
+
+    essenceOfShootray(&ap);
+
+    essenceOfEmbree(ap);
 
     /* Shoot the ray. */
     (void)rt_shootray(&ap);
