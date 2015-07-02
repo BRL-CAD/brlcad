@@ -35,7 +35,6 @@
 
 
 #include "auxiliary/cpuconfig.h"
-#include "auxiliary/cpuinfo.h"
 #include "auxiliary/cc.h"
 #include "auxiliary/mm.h"
 #include "auxiliary/mmhash.h"
