@@ -105,8 +105,8 @@ bu_semaphore_init(unsigned int nsemaphores)
 
 #	if defined(SUNOS)
     for (i=bu_nsemaphores; i < nsemaphores; i++) {
+	memset(&bu_semaphores[i], 0, sizeof(struct bu_semaphores));
 	bu_semaphores[i].magic = SEMAPHORE_MAGIC;
-	memset(&bu_semaphores[i].mu, 0, sizeof(struct bu_semaphores));
 	if (mutex_init(&bu_semaphores[i].mu, USYNC_THREAD, NULL)) {
 	    fprintf(stderr, "bu_semaphore_init(): mutex_init() failed on [%d] of [%d]\n", i+1, nsemaphores - bu_nsemaphores);
 	    bu_bomb("fatal semaphore acquisition failure");
@@ -114,8 +114,8 @@ bu_semaphore_init(unsigned int nsemaphores)
     }
 #	elif defined(HAVE_PTHREAD_H)
     for (i=bu_nsemaphores; i < nsemaphores; i++) {
+	memset(&bu_semaphores[i], 0, sizeof(struct bu_semaphores));
 	bu_semaphores[i].magic = SEMAPHORE_MAGIC;
-	memset(&bu_semaphores[i].mu, 0, sizeof(struct bu_semaphores));
 	if (pthread_mutex_init(&bu_semaphores[i].mu,  NULL)) {
 	    fprintf(stderr, "bu_semaphore_init(): pthread_mutex_init() failed on [%d] of [%d]\n", i+1, nsemaphores - bu_nsemaphores);
 	    bu_bomb("fatal semaphore acquisition failure");
@@ -123,8 +123,8 @@ bu_semaphore_init(unsigned int nsemaphores)
     }
 #	elif defined(_WIN32) && !defined(__CYGWIN__)
     for (i=bu_nsemaphores; i < nsemaphores; i++) {
+	memset(&bu_semaphores[i], 0, sizeof(struct bu_semaphores));
 	bu_semaphores[i].magic = SEMAPHORE_MAGIC;
-	memset(&bu_semaphores[i].mu, 0, sizeof(struct bu_semaphores));
 	/* This cannot fail except for very low memory situations in XP. */
 	InitializeCriticalSection(&bu_semaphores[i].mu);
     }
