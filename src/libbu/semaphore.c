@@ -108,7 +108,7 @@ bu_semaphore_init(unsigned int nsemaphores)
 	bu_semaphores[i].magic = SEMAPHORE_MAGIC;
 	memset(&bu_semaphores[i].mu, 0, sizeof(struct bu_semaphores));
 	if (mutex_init(&bu_semaphores[i].mu, USYNC_THREAD, NULL)) {
-	    fprintf(stderr, "bu_semaphore_init(): mutex_init() failed on [%d]\n", i+1, nsemaphores - bu_nsemaphores);
+	    fprintf(stderr, "bu_semaphore_init(): mutex_init() failed on [%d] of [%d]\n", i+1, nsemaphores - bu_nsemaphores);
 	    bu_bomb("fatal semaphore acquisition failure");
 	}
     }
