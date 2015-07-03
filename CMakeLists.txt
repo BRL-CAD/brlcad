@@ -79,30 +79,6 @@
 # BRL-CAD software package.
 
 
-# Wrap the default message() function to also append ALL messages to a
-# CMakeOutput.log file in addition to usual console printing.
-
-function(message)
-
-  # bleh, don't know a clean+safe way to avoid string comparing the
-  # optional arg, so we extract it and test.
-  list(GET ARGV 0 MessageType)
-
-  if (MessageType STREQUAL FATAL_ERROR OR MessageType STREQUAL SEND_ERROR OR MessageType STREQUAL WARNING OR MessageType STREQUAL AUTHOR_WARNING OR MessageType STREQUAL STATUS)
-    list(REMOVE_AT ARGV 0)
-    _message(${MessageType} "${ARGV}")
-    file(APPEND ${BRLCAD_BINARY_DIR}/CMakeFiles/CMakeOutput.log "${MessageType}: ${ARGV}\n")
-  else (MessageType STREQUAL FATAL_ERROR OR MessageType STREQUAL SEND_ERROR OR MessageType STREQUAL WARNING OR MessageType STREQUAL AUTHOR_WARNING OR MessageType STREQUAL STATUS)
-    _message("${ARGV}")
-    file(APPEND ${BRLCAD_BINARY_DIR}/CMakeFiles/CMakeOutput.log "${ARGV}\n")
-  endif (MessageType STREQUAL FATAL_ERROR OR MessageType STREQUAL SEND_ERROR OR MessageType STREQUAL WARNING OR MessageType STREQUAL AUTHOR_WARNING OR MessageType STREQUAL STATUS)
-
-  # ~10% slower alternative that avoids adding '--' to STATUS messages
-  # execute_process(COMMAND ${CMAKE_COMMAND} -E echo "${ARGV}")
-
-endfunction(message)
-
-
 # We want to support a "distclean" build target that will clear all
 # CMake-generated files from a source directory in the case of an
 # in-source-dir configuration.  Not recommended, but we'll try to
@@ -174,6 +150,34 @@ endif(COMMAND CMAKE_POLICY)
 
 # set CMake project name
 project(BRLCAD)
+
+
+# Wrap the default message() function to also append ALL messages to a
+# CMakeOutput.log file in addition to usual console printing.
+# Note - only do this after calling project, since this override seems to do
+# unexpected things to the messages returned by that command
+
+function(message)
+
+  # bleh, don't know a clean+safe way to avoid string comparing the
+  # optional arg, so we extract it and test.
+  list(GET ARGV 0 MessageType)
+
+  if (MessageType STREQUAL FATAL_ERROR OR MessageType STREQUAL SEND_ERROR OR MessageType STREQUAL WARNING OR MessageType STREQUAL AUTHOR_WARNING OR MessageType STREQUAL STATUS)
+    list(REMOVE_AT ARGV 0)
+    _message(${MessageType} "${ARGV}")
+    file(APPEND ${BRLCAD_BINARY_DIR}/CMakeFiles/CMakeOutput.log "${MessageType}: ${ARGV}\n")
+  else (MessageType STREQUAL FATAL_ERROR OR MessageType STREQUAL SEND_ERROR OR MessageType STREQUAL WARNING OR MessageType STREQUAL AUTHOR_WARNING OR MessageType STREQUAL STATUS)
+    _message("${ARGV}")
+    file(APPEND ${BRLCAD_BINARY_DIR}/CMakeFiles/CMakeOutput.log "${ARGV}\n")
+  endif (MessageType STREQUAL FATAL_ERROR OR MessageType STREQUAL SEND_ERROR OR MessageType STREQUAL WARNING OR MessageType STREQUAL AUTHOR_WARNING OR MessageType STREQUAL STATUS)
+
+  # ~10% slower alternative that avoids adding '--' to STATUS messages
+  # execute_process(COMMAND ${CMAKE_COMMAND} -E echo "${ARGV}")
+
+endfunction(message)
+
+
 
 #---------------------------------------------------------------------
 # Write out entries to populate a tm struct (will be used for time
