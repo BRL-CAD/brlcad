@@ -25,6 +25,15 @@
  * *****************************************************************************
  */
 
+
+#if defined(__GNUC__) && (__GNUC__ == 5 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 3)) && !defined(__clang__)
+#  pragma GCC diagnostic ignored "-Wunused-function"
+#endif
+#if defined(__clang__)
+#  pragma clang diagnostic ignored "-Wunused-function"
+#endif
+
+
 #include "common.h"
 
 #include <stdio.h>
@@ -65,13 +74,6 @@
 #endif
 #ifdef __SSE4_1__
 #include <smmintrin.h>
-#endif
-
-#if defined(__GNUC__) && (__GNUC__ == 4 && __GNUC_MINOR__ >= 3) && !defined(__clang__)
-#  pragma GCC diagnostic ignored "-Wunused-function"
-#endif
-#if defined(__clang__)
-#  pragma clang diagnostic ignored "-Wunused-function"
 #endif
 
 /* Define to use double floating point precision */

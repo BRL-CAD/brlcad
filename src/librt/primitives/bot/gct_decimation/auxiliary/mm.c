@@ -41,6 +41,16 @@
 
 
 #ifdef MM_THREADING
+
+
+#if defined(__GNUC__) && (__GNUC__ == 5 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 3)) && !defined(__clang__)
+#  pragma GCC diagnostic ignored "-Wunused-function"
+#endif
+#if defined(__clang__)
+#  pragma clang diagnostic ignored "-Wunused-function"
+#endif
+
+
 #define _GNU_SOURCE
 #include <pthread.h>
 #include <sched.h>
@@ -65,12 +75,6 @@
 #include "cc.h"
 #include "mm.h"
 
-#if defined(__GNUC__) && (__GNUC__ == 4 && __GNUC_MINOR__ >= 3) && !defined(__clang__)
-#  pragma GCC diagnostic ignored "-Wunused-function"
-#endif
-#if defined(__clang__)
-#  pragma clang diagnostic ignored "-Wunused-function"
-#endif
 
 #if defined(MM_UNIX)
 #include <fcntl.h>

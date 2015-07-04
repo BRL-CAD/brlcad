@@ -26,6 +26,14 @@
  */
 
 
+#if defined(__GNUC__) && (__GNUC__ == 5 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 3)) && !defined(__clang__)
+#  pragma GCC diagnostic ignored "-Wunused-function"
+#endif
+#if defined(__clang__)
+#  pragma clang diagnostic ignored "-Wunused-function"
+#endif
+
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <stddef.h>
@@ -37,13 +45,6 @@
 #include "cc.h"
 #include "mm.h"
 #include "mmhash.h"
-
-#if defined(__GNUC__) && (__GNUC__ == 4 && __GNUC_MINOR__ >= 3) && !defined(__clang__)
-#  pragma GCC diagnostic ignored "-Wunused-function"
-#endif
-#if defined(__clang__)
-#  pragma clang diagnostic ignored "-Wunused-function"
-#endif
 
 typedef struct {
 #ifdef MM_ATOMIC_SUPPORT
