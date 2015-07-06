@@ -36,6 +36,20 @@
 
 #include "common.h"
 
+#include "meshcorrection.h"
+
+#include "auxiliary/cpuconfig.h"
+#include "auxiliary/cpuinfo.h"
+#include "auxiliary/cc.h"
+#include "auxiliary/mm.h"
+#include "auxiliary/mmhash.h"
+#include "auxiliary/mmbitmap.h"
+#include "auxiliary/math3d.h"
+#include "auxiliary/mmbinsort.h"
+
+#include "bu/log.h"
+#include "vmath.h"
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <stddef.h>
@@ -43,21 +57,6 @@
 #include <string.h>
 #include <math.h>
 #include <float.h>
-
-
-#include "auxiliary/cpuconfig.h"
-#include "auxiliary/cc.h"
-#include "auxiliary/mm.h"
-#include "auxiliary/mmhash.h"
-#include "auxiliary/mmbitmap.h"
-#include "auxiliary/math3d.h"
-
-#include "auxiliary/mmbinsort.h"
-#include "meshcorrection.h"
-
-#include "bu/log.h"
-#include "vmath.h"
-
 
 /****/
 
@@ -71,12 +70,6 @@ typedef int mci;
 typedef float mcf;
 */
 typedef double mcf;
-
-
-/*
-#define DEBUG_VERBOSE
-#define DEBUG_VERBOSE_TRITEST
-*/
 
 
 /* Maximum count of attempts to try avoiding inexact results */
@@ -147,7 +140,7 @@ static uint32_t mcEdgeHashEntryKey(void *entry)
 #if MC_SIZEOF_MCI == 4
 #if CPUCONF_WORD_SIZE == 64
     {
-	uint64_t *v = (uint64_t *)(uint64_t *)edge->v;
+	uint64_t *v = (uint64_t *)edge->v;
 	hashkey = ccHash32Int64Inline(*v);
     }
 #else
@@ -465,7 +458,7 @@ static int mcIntersectRayTriangle(mcf *src, mcf *vector, mcf *v0, mcf *v1, mcf *
 
 #endif
 
-    if (!ZERO(denom))   /* Ray is parallel to triangle, what about a robust check for near parallel? */
+    if (ZERO(denom))    /* Ray is parallel to triangle, what about a robust check for near parallel? */
 	return 0;
 
     M3D_VectorSubStore(sv0, src, v0);
@@ -502,7 +495,7 @@ static int mcIntersectRayTriangle(mcf *src, mcf *vector, mcf *v0, mcf *v1, mcf *
     printf("      D : %f\n", d);
 #endif
 
-    if (!ZERO(d))
+    if (ZERO(d))
 	return 0;
 
     d = 1.0 / d;
@@ -585,7 +578,7 @@ static int mcIntersectSegmentTriangle(mcf *src, mcf *dst, mcf *v0, mcf *v1, mcf 
 
 #endif
 
-    if (!ZERO(denom))    /* Ray is parallel to triangle, what about a robust check for near parallel? */
+    if (ZERO(denom))    /* Ray is parallel to triangle, what about a robust check for near parallel? */
 	return 0;
 
     M3D_VectorSubStore(sv0, src, v0);
@@ -631,7 +624,7 @@ static int mcIntersectSegmentTriangle(mcf *src, mcf *dst, mcf *v0, mcf *v1, mcf 
     printf("      D : %f\n", d);
 #endif
 
-    if (!ZERO(d))
+    if (ZERO(d))
 	return 0;
 
     d = 1.0 / d;

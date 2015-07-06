@@ -31,10 +31,14 @@
  */
 
 
+#ifndef MM_ATOMIC_H
+#define MM_ATOMIC_H
+
+
 #include "common.h"
 
 
-#if ( defined(CPUCONF_ARCH_IA32) || defined(CPUCONF_ARCH_AMD64) ) && defined(__GNUC__) && !defined(MM_ATOMIC_SUPPORT)
+#if ( defined(CPUCONF_ARCH_IA32) || defined(CPUCONF_ARCH_AMD64) ) && defined(__GNUC__)
 #define MM_ATOMIC_SUPPORT
 
 
@@ -315,6 +319,9 @@ static inline int64_t mmAtomicCmpXchg64(mmAtomic64 *v, int64_t old, int64_t vnew
 	:"r"(vnew), "m"(v->value), "a"(old) :"memory");
     return prev;
 }
+
+
+#endif
 
 
 #endif

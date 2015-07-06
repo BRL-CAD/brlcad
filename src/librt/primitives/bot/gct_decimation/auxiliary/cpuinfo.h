@@ -25,8 +25,12 @@
  * *****************************************************************************
  */
 
-#ifndef CPUINFO_H
-#define CPUINFO_H
+
+#ifndef MM_CPUINFO_H
+#define MM_CPUINFO_H
+
+
+#include "common.h"
 
 
 typedef struct {
@@ -36,10 +40,10 @@ typedef struct {
 } cpuInfo;
 
 
-inline void cpuGetInfo(cpuInfo *cpu)
+static inline void cpuGetInfo(cpuInfo *cpu)
 {
     cpu->capsse2 = cpu->capsse3 = cpu->capsse4p1 = 0;
 }
 
 
-#endif /* CPUINFO_H */
+#endif

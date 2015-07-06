@@ -26,6 +26,13 @@
  */
 
 
+#ifndef MM_BINSORT_H
+#define MM_BINSORT_H
+
+
+#include "common.h"
+
+
 void *mmBinSortInit(size_t itemlistoffset, int rootbucketcount, int groupbucketcount, double rootmin, double rootmax, int groupthreshold, double(*itemvaluecallback)(void *item), int maxdepth, int numanodeindex);
 void mmBinSortFree(void *binsort);
 
@@ -39,3 +46,6 @@ void *mmBinSortGetGroupBucket(void *binsortgroup, int bucketindex, int *itemcoun
 
 
 void *mmBinSortGetFirstItem(void *binsort, double failmax);
+
+
+#endif

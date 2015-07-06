@@ -37,20 +37,13 @@
  *
  */
 
-#ifndef MESHOPTIMIZATION_H
-#define MESHOPTIMIZATION_H
 
-/* Local headers */
-#include "meshoptimizer.h"
+#ifndef MD_MESHOPTIMIZATION_H
+#define MD_MESHOPTIMIZATION_H
 
-#define OPTIMIZATION_FLAGS MO_FLAGS_DISABLE_LOOK_AHEAD | \
-  MO_FLAGS_ENABLE_LAZY_SEARCH | \
-  MO_FLAGS_FAST_SEED_SELECT
-#define DEBUG_MESH_OPTIMIZATION_VERBOSE 0
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+#include "common.h"
+
 
 void
 mesh_optimization(long vertexcount,
@@ -59,13 +52,7 @@ mesh_optimization(long vertexcount,
 		  int indiceswidth,
 		  int threadcount,
 		  int optimizationlevel
-#if DEBUG_MESH_OPTIMIZATION_VERBOSE
-		  , const char *rname
-#endif
 		 );
 
-#ifdef __cplusplus
-}
-#endif
 
 #endif

@@ -26,9 +26,11 @@
  */
 
 
-/*
-#define MM_HASH_DEBUG_STATISTICS
-*/
+#ifndef MM_HASH_H
+#define MM_HASH_H
+
+
+#include "common.h"
 
 
 enum {
@@ -138,3 +140,6 @@ void mmHashDirectDebugDuplicate(void *hashtable, mmHashAccess *access, void (*ca
 void mmHashDirectDebugPages(void *hashtable);
 
 void mmHashStatistics(void *hashtable, long *accesscount, long *collisioncount, long *relocationcount, long *entrycount, long *entrycountmax, long *hashsizemax);
+
+
+#endif

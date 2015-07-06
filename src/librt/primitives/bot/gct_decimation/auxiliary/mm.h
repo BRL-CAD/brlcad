@@ -31,13 +31,15 @@
  */
 
 
-#ifndef MM_H
-#define MM_H
+#ifndef MM_MM_H
+#define MM_MM_H
 
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+#include "common.h"
+
+
+#include <stdlib.h>
+#include <stdio.h>
 
 
 #define MM_DEBUG 0
@@ -723,11 +725,6 @@ static inline uint64_t mmGetNanosecondsTime()
 
 
 /****/
-
-
-#ifdef __cplusplus
-}
-#endif
 
 
 #endif

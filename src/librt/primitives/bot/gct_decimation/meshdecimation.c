@@ -36,13 +36,7 @@
 
 #include "common.h"
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <stddef.h>
-#include <stdint.h>
-#include <string.h>
-#include <math.h>
-#include <float.h>
+#include "meshdecimation.h"
 
 #include "auxiliary/cpuconfig.h"
 #include "auxiliary/cpuinfo.h"
@@ -52,10 +46,17 @@
 #include "auxiliary/math3d.h"
 #include "auxiliary/mmbinsort.h"
 
-#include "meshdecimation.h"
-
 #include "bu/log.h"
 #include "vmath.h"
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <stddef.h>
+#include <stdint.h>
+#include <string.h>
+#include <math.h>
+#include <float.h>
+
 
 #ifdef __SSE__
 #include <xmmintrin.h>
@@ -75,6 +76,7 @@
 #ifdef __SSE4_1__
 #include <smmintrin.h>
 #endif
+
 
 /* Define to use double floating point precision */
 /*
@@ -183,20 +185,14 @@
 
 #ifdef MD_CONFIG_SSE_SUPPORT
 extern int mdPathSSE4p1;
-float mdEdgeCollapsePenaltyTriangleSSE4p1f(float *newpoint, float *oldpoint,
-	float *leftpoint, float *rightpoint, int *denyflag, float compactnesstarget);
-double mdEdgeCollapsePenaltyTriangleSSE4p1d(double *newpoint, double *oldpoint,
-	double *leftpoint, double *rightpoint, int *denyflag, double compactnesstarget);
+float mdEdgeCollapsePenaltyTriangleSSE4p1f(float *newpoint, float *oldpoint, float *leftpoint, float *rightpoint, int *denyflag, float compactnesstarget);
+double mdEdgeCollapsePenaltyTriangleSSE4p1d(double *newpoint, double *oldpoint, double *leftpoint, double *rightpoint, int *denyflag, double compactnesstarget);
 extern int mdPathSSE3;
-float mdEdgeCollapsePenaltyTriangleSSE3f(float *newpoint, float *oldpoint,
-	float *leftpoint, float *rightpoint, int *denyflag, float compactnesstarget);
-double mdEdgeCollapsePenaltyTriangleSSE3d(double *newpoint, double *oldpoint,
-	double *leftpoint, double *rightpoint, int *denyflag, double compactnesstarget);
+float mdEdgeCollapsePenaltyTriangleSSE3f(float *newpoint, float *oldpoint, float *leftpoint, float *rightpoint, int *denyflag, float compactnesstarget);
+double mdEdgeCollapsePenaltyTriangleSSE3d(double *newpoint, double *oldpoint, double *leftpoint, double *rightpoint, int *denyflag, double compactnesstarget);
 extern int mdPathSSE2;
-float mdEdgeCollapsePenaltyTriangleSSE2f(float *newpoint, float *oldpoint,
-	float *leftpoint, float *rightpoint, int *denyflag, float compactnesstarget);
-double mdEdgeCollapsePenaltyTriangleSSE2d(double *newpoint, double *oldpoint,
-	double *leftpoint, double *rightpoint, int *denyflag, double compactnesstarget);
+float mdEdgeCollapsePenaltyTriangleSSE2f(float *newpoint, float *oldpoint, float *leftpoint, float *rightpoint, int *denyflag, float compactnesstarget);
+double mdEdgeCollapsePenaltyTriangleSSE2d(double *newpoint, double *oldpoint, double *leftpoint, double *rightpoint, int *denyflag, double compactnesstarget);
 #endif
 
 
@@ -282,8 +278,7 @@ typedef struct {
 #endif
 } mathQuadric;
 
-static void mathQuadricInit(mathQuadric *q, mdqf a, mdqf b, mdqf c, mdqf d,
-			    mdqf area)
+static void mathQuadricInit(mathQuadric *q, mdqf a, mdqf b, mdqf c, mdqf d, mdqf area)
 {
     q->area = area;
 
@@ -303,9 +298,7 @@ static void mathQuadricInit(mathQuadric *q, mdqf a, mdqf b, mdqf c, mdqf d,
 #endif
 
 #ifdef DEBUG_VERBOSE_QUADRIC
-    printf("    Q Init %f ; %f %f %f %f %f %f %f %f %f %f\n", (double)q->area,
-	   (double)q->a2, (double)q->ab, (double)q->ac, (double)q->ad, (double)q->b2,
-	   (double)q->bc, (double)q->bd, (double)q->c2, (double)q->cd, (double)q->d2);
+    printf("    Q Init %f ; %f %f %f %f %f %f %f %f %f %f\n", (double)q->area, (double)q->a2, (double)q->ab, (double)q->ac, (double)q->ad, (double)q->b2, (double)q->bc, (double)q->bd, (double)q->c2, (double)q->cd, (double)q->d2);
 #endif
 
     return;
@@ -318,12 +311,9 @@ static void mathQuadricInit(mathQuadric *q, mdqf a, mdqf b, mdqf c, mdqf d,
 static mdqf mathMatrix3x3Determinant(mdqf *m)
 {
     mdqf det;
-    det  = m[0 * 3 + 0] * (m[2 * 3 + 2] * m[1 * 3 + 1] - m[2 * 3 + 1] * m[1 * 3 +
-			   2]);
-    det -= m[1 * 3 + 0] * (m[2 * 3 + 2] * m[0 * 3 + 1] - m[2 * 3 + 1] * m[0 * 3 +
-			   2]);
-    det += m[2 * 3 + 0] * (m[1 * 3 + 2] * m[0 * 3 + 1] - m[1 * 3 + 1] * m[0 * 3 +
-			   2]);
+    det  = m[0 * 3 + 0] * (m[2 * 3 + 2] * m[1 * 3 + 1] - m[2 * 3 + 1] * m[1 * 3 + 2]);
+    det -= m[1 * 3 + 0] * (m[2 * 3 + 2] * m[0 * 3 + 1] - m[2 * 3 + 1] * m[0 * 3 + 2]);
+    det += m[2 * 3 + 0] * (m[1 * 3 + 2] * m[0 * 3 + 1] - m[1 * 3 + 1] * m[0 * 3 + 2]);
     return det;
 }
 
@@ -355,24 +345,15 @@ static void mathMatrix3x3Invert(mdqf *mdst, mdqf *m, mdqf det)
 {
     mdf detinv;
     detinv = 1.0 / det;
-    mdst[0 * 3 + 0] = (m[2 * 3 + 2] * m[1 * 3 + 1] - m[2 * 3 + 1] * m[1 * 3 + 2]) *
-		      detinv;
-    mdst[0 * 3 + 1] = -(m[2 * 3 + 2] * m[0 * 3 + 1] - m[2 * 3 + 1] * m[0 * 3 + 2]) *
-		      detinv;
-    mdst[0 * 3 + 2] = (m[1 * 3 + 2] * m[0 * 3 + 1] - m[1 * 3 + 1] * m[0 * 3 + 2]) *
-		      detinv;
-    mdst[1 * 3 + 0] = -(m[2 * 3 + 2] * m[1 * 3 + 0] - m[2 * 3 + 0] * m[1 * 3 + 2]) *
-		      detinv;
-    mdst[1 * 3 + 1] = (m[2 * 3 + 2] * m[0 * 3 + 0] - m[2 * 3 + 0] * m[0 * 3 + 2]) *
-		      detinv;
-    mdst[1 * 3 + 2] = -(m[1 * 3 + 2] * m[0 * 3 + 0] - m[1 * 3 + 0] * m[0 * 3 + 2]) *
-		      detinv;
-    mdst[2 * 3 + 0] = (m[2 * 3 + 1] * m[1 * 3 + 0] - m[2 * 3 + 0] * m[1 * 3 + 1]) *
-		      detinv;
-    mdst[2 * 3 + 1] = -(m[2 * 3 + 1] * m[0 * 3 + 0] - m[2 * 3 + 0] * m[0 * 3 + 1]) *
-		      detinv;
-    mdst[2 * 3 + 2] = (m[1 * 3 + 1] * m[0 * 3 + 0] - m[1 * 3 + 0] * m[0 * 3 + 1]) *
-		      detinv;
+    mdst[0 * 3 + 0] = (m[2 * 3 + 2] * m[1 * 3 + 1] - m[2 * 3 + 1] * m[1 * 3 + 2]) * detinv;
+    mdst[0 * 3 + 1] = -(m[2 * 3 + 2] * m[0 * 3 + 1] - m[2 * 3 + 1] * m[0 * 3 + 2]) * detinv;
+    mdst[0 * 3 + 2] = (m[1 * 3 + 2] * m[0 * 3 + 1] - m[1 * 3 + 1] * m[0 * 3 + 2]) * detinv;
+    mdst[1 * 3 + 0] = -(m[2 * 3 + 2] * m[1 * 3 + 0] - m[2 * 3 + 0] * m[1 * 3 + 2]) * detinv;
+    mdst[1 * 3 + 1] = (m[2 * 3 + 2] * m[0 * 3 + 0] - m[2 * 3 + 0] * m[0 * 3 + 2]) * detinv;
+    mdst[1 * 3 + 2] = -(m[1 * 3 + 2] * m[0 * 3 + 0] - m[1 * 3 + 0] * m[0 * 3 + 2]) * detinv;
+    mdst[2 * 3 + 0] = (m[2 * 3 + 1] * m[1 * 3 + 0] - m[2 * 3 + 0] * m[1 * 3 + 1]) * detinv;
+    mdst[2 * 3 + 1] = -(m[2 * 3 + 1] * m[0 * 3 + 0] - m[2 * 3 + 0] * m[0 * 3 + 1]) * detinv;
+    mdst[2 * 3 + 2] = (m[1 * 3 + 1] * m[0 * 3 + 0] - m[1 * 3 + 0] * m[0 * 3 + 1]) * detinv;
     return;
 }
 
@@ -404,8 +385,7 @@ static int mathQuadricSolve(mathQuadric *q, mdf *v)
     v[2] =  vres[2];
 
 #ifdef DEBUG_VERBOSE_QUADRIC
-    printf("    Vector : %f %f %f : %f %f %f\n", (double)vector[0],
-	   (double)vector[1], (double)vector[2], (double)v[0], (double)v[1], (double)v[2]);
+    printf("    Vector : %f %f %f : %f %f %f\n", (double)vector[0], (double)vector[1], (double)vector[2], (double)v[0], (double)v[1], (double)v[2]);
 #endif
 
     return 1;
@@ -428,17 +408,12 @@ static void mathQuadricZero(mathQuadric *q)
 }
 
 
-static void mathQuadricAddStoreQuadric(mathQuadric *qdst, mathQuadric *q0,
-				       mathQuadric *q1)
+static void mathQuadricAddStoreQuadric(mathQuadric *qdst, mathQuadric *q0, mathQuadric *q1)
 {
 
 #ifdef DEBUG_VERBOSE_QUADRIC
-    printf("    QAdd Sr0 %f ; %f %f %f %f %f %f %f %f %f %f\n", (double)q0->area,
-	   (double)q0->a2, (double)q0->ab, (double)q0->ac, (double)q0->ad, (double)q0->b2,
-	   (double)q0->bc, (double)q0->bd, (double)q0->c2, (double)q0->cd, (double)q0->d2);
-    printf("    QAdd Sr1 %f ; %f %f %f %f %f %f %f %f %f %f\n", (double)q1->area,
-	   (double)q1->a2, (double)q1->ab, (double)q1->ac, (double)q1->ad, (double)q1->b2,
-	   (double)q1->bc, (double)q1->bd, (double)q1->c2, (double)q1->cd, (double)q1->d2);
+    printf("    QAdd Sr0 %f ; %f %f %f %f %f %f %f %f %f %f\n", (double)q0->area, (double)q0->a2, (double)q0->ab, (double)q0->ac, (double)q0->ad, (double)q0->b2, (double)q0->bc, (double)q0->bd, (double)q0->c2, (double)q0->cd, (double)q0->d2);
+    printf("    QAdd Sr1 %f ; %f %f %f %f %f %f %f %f %f %f\n", (double)q1->area, (double)q1->a2, (double)q1->ab, (double)q1->ac, (double)q1->ad, (double)q1->b2, (double)q1->bc, (double)q1->bd, (double)q1->c2, (double)q1->cd, (double)q1->d2);
 #endif
 
     qdst->area = q0->area + q1->area;
@@ -454,10 +429,7 @@ static void mathQuadricAddStoreQuadric(mathQuadric *qdst, mathQuadric *q0,
     qdst->d2 = q0->d2 + q1->d2;
 
 #ifdef DEBUG_VERBOSE_QUADRIC
-    printf("      QSum   %f ; %f %f %f %f %f %f %f %f %f %f\n", (double)qdst->area,
-	   (double)qdst->a2, (double)qdst->ab, (double)qdst->ac, (double)qdst->ad,
-	   (double)qdst->b2, (double)qdst->bc, (double)qdst->bd, (double)qdst->c2,
-	   (double)qdst->cd, (double)qdst->d2);
+    printf("      QSum   %f ; %f %f %f %f %f %f %f %f %f %f\n", (double)qdst->area, (double)qdst->a2, (double)qdst->ab, (double)qdst->ac, (double)qdst->ad, (double)qdst->b2, (double)qdst->bc, (double)qdst->bd, (double)qdst->c2, (double)qdst->cd, (double)qdst->d2);
 #endif
 
     return;
@@ -467,13 +439,8 @@ static void mathQuadricAddQuadric(mathQuadric *qdst, mathQuadric *q)
 {
 
 #ifdef DEBUG_VERBOSE_QUADRIC
-    printf("    QAdd Src %f ; %f %f %f %f %f %f %f %f %f %f\n", (double)q->area,
-	   (double)q->a2, (double)q->ab, (double)q->ac, (double)q->ad, (double)q->b2,
-	   (double)q->bc, (double)q->bd, (double)q->c2, (double)q->cd, (double)q->d2);
-    printf("    QAdd Dst %f ; %f %f %f %f %f %f %f %f %f %f\n", (double)qdst->area,
-	   (double)qdst->a2, (double)qdst->ab, (double)qdst->ac, (double)qdst->ad,
-	   (double)qdst->b2, (double)qdst->bc, (double)qdst->bd, (double)qdst->c2,
-	   (double)qdst->cd, (double)qdst->d2);
+    printf("    QAdd Src %f ; %f %f %f %f %f %f %f %f %f %f\n", (double)q->area, (double)q->a2, (double)q->ab, (double)q->ac, (double)q->ad, (double)q->b2, (double)q->bc, (double)q->bd, (double)q->c2, (double)q->cd, (double)q->d2);
+    printf("    QAdd Dst %f ; %f %f %f %f %f %f %f %f %f %f\n", (double)qdst->area, (double)qdst->a2, (double)qdst->ab, (double)qdst->ac, (double)qdst->ad, (double)qdst->b2, (double)qdst->bc, (double)qdst->bd, (double)qdst->c2, (double)qdst->cd, (double)qdst->d2);
 #endif
 
     qdst->area += q->area;
@@ -489,10 +456,7 @@ static void mathQuadricAddQuadric(mathQuadric *qdst, mathQuadric *q)
     qdst->d2 += q->d2;
 
 #ifdef DEBUG_VERBOSE_QUADRIC
-    printf("      QSum   %f ; %f %f %f %f %f %f %f %f %f %f\n", (double)qdst->area,
-	   (double)qdst->a2, (double)qdst->ab, (double)qdst->ac, (double)qdst->ad,
-	   (double)qdst->b2, (double)qdst->bc, (double)qdst->bd, (double)qdst->c2,
-	   (double)qdst->cd, (double)qdst->d2);
+    printf("      QSum   %f ; %f %f %f %f %f %f %f %f %f %f\n", (double)qdst->area, (double)qdst->a2, (double)qdst->ab, (double)qdst->ac, (double)qdst->ad, (double)qdst->b2, (double)qdst->bc, (double)qdst->bd, (double)qdst->c2, (double)qdst->cd, (double)qdst->d2);
 #endif
 
     return;
@@ -508,12 +472,9 @@ static mdf mathQuadricEvaluate(mathQuadric *q, mdf *v)
     vh[1] = v[1];
     vh[2] = v[2];
 
-    d = vh[0] * vh[0] * (mdqfhigh)q->a2 + vh[1] * vh[1] * (mdqfhigh)q->b2 + vh[2] *
-	vh[2] * (mdqfhigh)q->c2;
-    d += 2.0 * (vh[0] * vh[1] * (mdqfhigh)q->ab + vh[0] * vh[2] *
-		(mdqfhigh)q->ac + vh[1] * vh[2] * (mdqfhigh)q->bc);
-    d += 2.0 * (vh[0] * (mdqfhigh)q->ad + vh[1] * (mdqfhigh)q->bd + vh[2] *
-		(mdqfhigh)q->cd);
+    d = vh[0] * vh[0] * (mdqfhigh)q->a2 + vh[1] * vh[1] * (mdqfhigh)q->b2 + vh[2] * vh[2] * (mdqfhigh)q->c2;
+    d += 2.0 * (vh[0] * vh[1] * (mdqfhigh)q->ab + vh[0] * vh[2] * (mdqfhigh)q->ac + vh[1] * vh[2] * (mdqfhigh)q->bc);
+    d += 2.0 * (vh[0] * (mdqfhigh)q->ad + vh[1] * (mdqfhigh)q->bd + vh[2] * (mdqfhigh)q->cd);
     d += q->d2;
 #else
     volatile mdqf d;
@@ -523,17 +484,13 @@ static mdf mathQuadricEvaluate(mathQuadric *q, mdf *v)
     vd[2] = v[2];
 
     d = vd[0] * vd[0] * q->a2 + vd[1] * vd[1] * q->b2 + vd[2] * vd[2] * q->c2;
-    d += 2.0 * (vd[0] * vd[1] * q->ab + vd[0] * vd[2] * q->ac + vd[1] * vd[2] *
-		q->bc);
+    d += 2.0 * (vd[0] * vd[1] * q->ab + vd[0] * vd[2] * q->ac + vd[1] * vd[2] * q->bc);
     d += 2.0 * (vd[0] * q->ad + vd[1] * q->bd + vd[2] * q->cd);
     d += q->d2;
 #endif
 
 #ifdef DEBUG_VERBOSE_QUADRIC
-    printf("        Q Eval %f ; %f %f %f %f %f %f %f %f %f %f : %.12f\n",
-	   (double)q->area, (double)q->a2, (double)q->ab, (double)q->ac, (double)q->ad,
-	   (double)q->b2, (double)q->bc, (double)q->bd, (double)q->c2, (double)q->cd,
-	   (double)q->d2, (double)d);
+    printf("        Q Eval %f ; %f %f %f %f %f %f %f %f %f %f : %.12f\n", (double)q->area, (double)q->a2, (double)q->ab, (double)q->ac, (double)q->ad, (double)q->b2, (double)q->bc, (double)q->bd, (double)q->c2, (double)q->cd, (double)q->d2, (double)d);
 #endif
 
     return (mdf)d;
@@ -719,8 +676,7 @@ typedef struct {
     void *edgehashtable;
 
     /* Collapse penalty function */
-    mdf(*collapsepenalty)(mdf *newpoint, mdf *oldpoint, mdf *leftpoint,
-			  mdf *rightpoint, int *denyflag, mdf compactnesstarget);
+    mdf(*collapsepenalty)(mdf *newpoint, mdf *oldpoint, mdf *leftpoint, mdf *rightpoint, int *denyflag, mdf compactnesstarget);
 
     /* Custom vertex attributes besides point position */
     int attribcount;
@@ -862,8 +818,7 @@ static void mdVertexNativeToDouble(void *dst, mdf *src)
 }
 
 
-static void mdTriangleComputeQuadric(mdMesh *mesh, mdTriangle *tri,
-				     mathQuadric *q)
+static void mdTriangleComputeQuadric(mdMesh *mesh, mdTriangle *tri, mathQuadric *q)
 {
     mdf area, norm, norminv, vecta[3], vectb[3], plane[4];
     mdVertex *vertex0, *vertex1, *vertex2;
@@ -898,8 +853,7 @@ static void mdTriangleComputeQuadric(mdMesh *mesh, mdTriangle *tri,
     }
 
 #ifdef DEBUG_VERBOSE_QUADRIC
-    printf("  Plane %f %f %f %f : Area %f\n", plane[0], plane[1], plane[2],
-	   plane[3], area);
+    printf("  Plane %f %f %f %f : Area %f\n", plane[0], plane[1], plane[2], plane[3], area);
 #endif
 
     mathQuadricInit(q, plane[0], plane[1], plane[2], plane[3], area);
@@ -926,16 +880,14 @@ static mdf mdEdgeSolvePoint(mdVertex *vertex0, mdVertex *vertex1, mdf *point)
 	bestcost = mathQuadricEvaluate(&q, midpoint);
 
 #ifdef DEBUG_VERBOSE_QUADRIC
-	printf("        MidCost %f %f %f : %f\n", midpoint[0], midpoint[1], midpoint[2],
-	       bestcost);
+	printf("        MidCost %f %f %f : %f\n", midpoint[0], midpoint[1], midpoint[2], bestcost);
 #endif
 
 	bestpoint = midpoint;
 	cost = mathQuadricEvaluate(&q, vertex0->point);
 
 #ifdef DEBUG_VERBOSE_QUADRIC
-	printf("        Vx0Cost %f %f %f : %f\n", vertex0->point[0], vertex0->point[1],
-	       vertex0->point[2], cost);
+	printf("        Vx0Cost %f %f %f : %f\n", vertex0->point[0], vertex0->point[1], vertex0->point[2], cost);
 #endif
 
 	if (cost < bestcost) {
@@ -946,8 +898,7 @@ static mdf mdEdgeSolvePoint(mdVertex *vertex0, mdVertex *vertex1, mdf *point)
 	cost = mathQuadricEvaluate(&q, vertex1->point);
 
 #ifdef DEBUG_VERBOSE_QUADRIC
-	printf("        Vx1Cost %f %f %f : %f\n", vertex1->point[0], vertex1->point[1],
-	       vertex1->point[2], cost);
+	printf("        Vx1Cost %f %f %f : %f\n", vertex1->point[0], vertex1->point[1], vertex1->point[2], cost);
 #endif
 
 	if (cost < bestcost) {
@@ -965,8 +916,7 @@ static mdf mdEdgeSolvePoint(mdVertex *vertex0, mdVertex *vertex1, mdf *point)
 /****/
 
 
-static void mdMeshAccumulateBoundary(mdVertex *vertex0, mdVertex *vertex1,
-				     mdVertex *vertex2)
+static void mdMeshAccumulateBoundary(mdVertex *vertex0, mdVertex *vertex1, mdVertex *vertex2)
 {
     mdf normal[3], sideplane[4], vecta[3], vectb[3], norm, norminv, area;
     mathQuadric q;
@@ -974,8 +924,7 @@ static void mdMeshAccumulateBoundary(mdVertex *vertex0, mdVertex *vertex1,
     M3D_VectorSubStore(vecta, vertex1->point, vertex0->point);
     M3D_VectorSubStore(vectb, vertex2->point, vertex0->point);
     M3D_VectorCrossProduct(normal, vectb, vecta);
-    norm = mdfsqrt(normal[0] * normal[0] + normal[1] * normal[1] + normal[2] *
-		   normal[2]);
+    norm = mdfsqrt(normal[0] * normal[0] + normal[1] * normal[1] + normal[2] * normal[2]);
     area = 0.5 * norm;
     norminv = 1.0 / norm;
     M3D_VectorMulScalar(normal, norminv);
@@ -991,12 +940,10 @@ static void mdMeshAccumulateBoundary(mdVertex *vertex0, mdVertex *vertex1,
 
 #ifdef DEBUG_VERBOSE_BOUNDARY
     printf("  Area %f\n", area);
-    printf("  Boundary %f %f %f %f\n", sideplane[0], sideplane[1], sideplane[2],
-	   sideplane[3]);
+    printf("  Boundary %f %f %f %f\n", sideplane[0], sideplane[1], sideplane[2], sideplane[3]);
 #endif
 
-    mathQuadricInit(&q, sideplane[0], sideplane[1], sideplane[2], sideplane[3],
-		    area);
+    mathQuadricInit(&q, sideplane[0], sideplane[1], sideplane[2], sideplane[3], area);
     mathQuadricMul(&q, MD_BOUNDARY_WEIGHT);
     /*
       mathQuadricMul( &q, area * MD_BOUNDARY_WEIGHT );
@@ -1111,8 +1058,7 @@ static mmHashAccess mdEdgeHashEdge = {
     NULL
 };
 
-static int mdMeshHashInit(mdMesh *mesh, size_t trianglecount, mdf hashextrabits,
-			  uint32_t lockpageshift, size_t maxmemorysize)
+static int mdMeshHashInit(mdMesh *mesh, size_t trianglecount, mdf hashextrabits, uint32_t lockpageshift, size_t maxmemorysize)
 {
     size_t edgecount, hashmemsize, meshmemsize, totalmemorysize;
     uint32_t hashbits, hashbitsmin, hashbitsmax;
@@ -1143,8 +1089,7 @@ static int mdMeshHashInit(mdMesh *mesh, size_t trianglecount, mdf hashextrabits,
     else if (lockpageshift > 16)
 	lockpageshift = 16;
 
-    meshmemsize = (mesh->tricount * sizeof(mdTriangle)) + (mesh->vertexcount *
-		  sizeof(mdVertex));
+    meshmemsize = (mesh->tricount * sizeof(mdTriangle)) + (mesh->vertexcount * sizeof(mdVertex));
 
     for (; ; hashbits--) {
 	if (hashbits < hashbitsmin)
@@ -1158,10 +1103,8 @@ static int mdMeshHashInit(mdMesh *mesh, size_t trianglecount, mdf hashextrabits,
 
 #ifdef DEBUG_VERBOSE_MEMORY
 	printf("  Hash bits : %d (%d)\n", hashbits, hashbitsmin);
-	printf("    Estimated Memory Requirements : %lld bytes (%lld MB)\n",
-	       (long long)totalmemorysize, (long long)totalmemorysize >> 20);
-	printf("    Memory Hard Limit : %lld bytes (%lld MB)\n",
-	       (long long)maxmemorysize, (long long)maxmemorysize >> 20);
+	printf("    Estimated Memory Requirements : %lld bytes (%lld MB)\n", (long long)totalmemorysize, (long long)totalmemorysize >> 20);
+	printf("    Memory Hard Limit : %lld bytes (%lld MB)\n", (long long)maxmemorysize, (long long)maxmemorysize >> 20);
 #endif
 
 	if (totalmemorysize > maxmemorysize)
@@ -1173,8 +1116,7 @@ static int mdMeshHashInit(mdMesh *mesh, size_t trianglecount, mdf hashextrabits,
 	    break;
     }
 
-    mmHashInit(mesh->edgehashtable, &mdEdgeHashEdge, sizeof(mdEdge), hashbits,
-	       lockpageshift, MM_HASH_FLAGS_NO_COUNT);
+    mmHashInit(mesh->edgehashtable, &mdEdgeHashEdge, sizeof(mdEdge), hashbits, lockpageshift, MM_HASH_FLAGS_NO_COUNT);
 
     return 1;
 }
@@ -1275,8 +1217,7 @@ static void mdUpdateBufferEnd(mdUpdateBuffer *updatebuffer)
     return;
 }
 
-static void mdUpdateBufferAdd(mdUpdateBuffer *updatebuffer, mdOp *op,
-			      int orflags)
+static void mdUpdateBufferAdd(mdUpdateBuffer *updatebuffer, mdOp *op, int orflags)
 {
     int32_t flags;
 
@@ -1292,8 +1233,7 @@ static void mdUpdateBufferAdd(mdUpdateBuffer *updatebuffer, mdOp *op,
 	    return;
 	}
 
-	if (mmAtomicCmpReplace32(&op->flags, flags,
-				 flags | orflags | MD_OP_FLAGS_UPDATE_QUEUED | MD_OP_FLAGS_UPDATE_NEEDED))
+	if (mmAtomicCmpReplace32(&op->flags, flags, flags | orflags | MD_OP_FLAGS_UPDATE_QUEUED | MD_OP_FLAGS_UPDATE_NEEDED))
 	    break;
     }
 
@@ -1302,8 +1242,7 @@ static void mdUpdateBufferAdd(mdUpdateBuffer *updatebuffer, mdOp *op,
 
     if (updatebuffer->opcount >= updatebuffer->opalloc) {
 	updatebuffer->opalloc <<= 1;
-	updatebuffer->opbuffer = (void **)realloc(updatebuffer->opbuffer,
-				 updatebuffer->opalloc * sizeof(mdOp *));
+	updatebuffer->opbuffer = (void **)realloc(updatebuffer->opbuffer, updatebuffer->opalloc * sizeof(mdOp *));
     }
 
     updatebuffer->opbuffer[ updatebuffer->opcount++ ] = op;
@@ -1329,8 +1268,7 @@ static void mdUpdateBufferAdd(mdUpdateBuffer *updatebuffer, mdOp *op,
 
     if (updatebuffer->opcount >= updatebuffer->opalloc) {
 	updatebuffer->opalloc <<= 1;
-	updatebuffer->opbuffer = realloc(updatebuffer->opbuffer,
-					 updatebuffer->opalloc * sizeof(mdOp *));
+	updatebuffer->opbuffer = realloc(updatebuffer->opbuffer, updatebuffer->opalloc * sizeof(mdOp *));
     }
 
     updatebuffer->opbuffer[ updatebuffer->opcount++ ] = op;
@@ -1347,12 +1285,10 @@ static void mdUpdateBufferAdd(mdUpdateBuffer *updatebuffer, mdOp *op,
 
 #define MD_COMPACTNESS_NORMALIZATION_FACTOR (0.5*4.0*1.732050808)
 
-static mdf mdEdgeCollapsePenaltyTriangle(mdf *newpoint, mdf *oldpoint,
-	mdf *leftpoint, mdf *rightpoint, int *denyflag, mdf compactnesstarget)
+static mdf mdEdgeCollapsePenaltyTriangle(mdf *newpoint, mdf *oldpoint, mdf *leftpoint, mdf *rightpoint, int *denyflag, mdf compactnesstarget)
 {
     mdf penalty, compactness, oldcompactness, newcompactness, vecta2, norm;
-    mdf vecta[3], oldvectb[3], oldvectc[3], newvectb[3], newvectc[3], oldnormal[3],
-	newnormal[3];
+    mdf vecta[3], oldvectb[3], oldvectc[3], newvectb[3], newvectc[3], oldnormal[3], newnormal[3];
 
     /* Normal of old triangle */
     M3D_VectorSubStore(vecta, rightpoint, leftpoint);
@@ -1373,19 +1309,14 @@ static mdf mdEdgeCollapsePenaltyTriangle(mdf *newpoint, mdf *oldpoint,
     penalty = 0.0;
     vecta2 = M3D_VectorDotProduct(vecta, vecta);
     M3D_VectorSubStore(newvectc, newpoint, rightpoint);
-    newcompactness = MD_COMPACTNESS_NORMALIZATION_FACTOR * mdfsqrt(
-			 M3D_VectorDotProduct(newnormal, newnormal));
-    norm = vecta2 + M3D_VectorDotProduct(newvectb,
-					 newvectb) + M3D_VectorDotProduct(newvectc, newvectc);
+    newcompactness = MD_COMPACTNESS_NORMALIZATION_FACTOR * mdfsqrt(M3D_VectorDotProduct(newnormal, newnormal));
+    norm = vecta2 + M3D_VectorDotProduct(newvectb, newvectb) + M3D_VectorDotProduct(newvectc, newvectc);
 
     if (newcompactness < (compactnesstarget * norm)) {
 	newcompactness /= norm;
 	M3D_VectorSubStore(oldvectc, oldpoint, rightpoint);
-	oldcompactness = (MD_COMPACTNESS_NORMALIZATION_FACTOR * mdfsqrt(
-			      M3D_VectorDotProduct(oldnormal,
-				      oldnormal))) / (vecta2 + M3D_VectorDotProduct(oldvectb,
-					      oldvectb) + M3D_VectorDotProduct(oldvectc, oldvectc));
-	compactness = FMIN(compactnesstarget, oldcompactness) - newcompactness;
+	oldcompactness = (MD_COMPACTNESS_NORMALIZATION_FACTOR * mdfsqrt(M3D_VectorDotProduct(oldnormal, oldnormal))) / (vecta2 + M3D_VectorDotProduct(oldvectb, oldvectb) + M3D_VectorDotProduct(oldvectc, oldvectc));
+	compactness = mdfmin(compactnesstarget, oldcompactness) - newcompactness;
 
 	if (compactness > 0.0)
 	    penalty = compactness;
@@ -1395,16 +1326,13 @@ static mdf mdEdgeCollapsePenaltyTriangle(mdf *newpoint, mdf *oldpoint,
 }
 
 
-static mdf mdEdgeCollapsePenaltyAll(mdMesh *mesh, mdThreadData *UNUSED(tdata),
-				    mdi *trireflist, mdi trirefcount, mdi pivotindex, mdi skipindex,
-				    mdf *collapsepoint, int *denyflag)
+static mdf mdEdgeCollapsePenaltyAll(mdMesh *mesh, mdThreadData *UNUSED(tdata), mdi *trireflist, mdi trirefcount, mdi pivotindex, mdi skipindex, mdf *collapsepoint, int *denyflag)
 {
     int vindex;
     mdf penalty;
     mdi triindex;
     mdTriangle *tri;
-    mdf(*collapsepenalty)(mdf * newpoint, mdf * oldpoint, mdf * leftpoint,
-			  mdf * rightpoint, int *denyflag, mdf compactnesstarget);
+    mdf(*collapsepenalty)(mdf * newpoint, mdf * oldpoint, mdf * leftpoint, mdf * rightpoint, int *denyflag, mdf compactnesstarget);
 
     collapsepenalty = mesh->collapsepenalty;
     penalty = 0.0;
@@ -1420,8 +1348,7 @@ static mdf mdEdgeCollapsePenaltyAll(mdMesh *mesh, mdThreadData *UNUSED(tdata),
 	    continue;
 
 #ifdef DEBUG_VERBOSE_PENALTY
-	printf("    Penalty Tri %d,%d,%d ( Pivot %d ; Skip %d )\n", tri->v[0],
-	       tri->v[1], tri->v[2], pivotindex, skipindex);
+	printf("    Penalty Tri %d,%d,%d ( Pivot %d ; Skip %d )\n", tri->v[0], tri->v[1], tri->v[2], pivotindex, skipindex);
 #endif
 
 #ifdef DEBUG_DEBUG
@@ -1435,23 +1362,17 @@ static mdf mdEdgeCollapsePenaltyAll(mdMesh *mesh, mdThreadData *UNUSED(tdata),
 	    if ((tri->v[1] == skipindex) || (tri->v[2] == skipindex))
 		continue;
 
-	    penalty += collapsepenalty(collapsepoint, mesh->vertexlist[ tri->v[0] ].point,
-				       mesh->vertexlist[ tri->v[2] ].point, mesh->vertexlist[ tri->v[1] ].point,
-				       denyflag, mesh->compactnesstarget);
+	    penalty += collapsepenalty(collapsepoint, mesh->vertexlist[ tri->v[0] ].point, mesh->vertexlist[ tri->v[2] ].point, mesh->vertexlist[ tri->v[1] ].point, denyflag, mesh->compactnesstarget);
 	} else if (tri->v[1] == pivotindex) {
 	    if ((tri->v[2] == skipindex) || (tri->v[0] == skipindex))
 		continue;
 
-	    penalty += collapsepenalty(collapsepoint, mesh->vertexlist[ tri->v[1] ].point,
-				       mesh->vertexlist[ tri->v[0] ].point, mesh->vertexlist[ tri->v[2] ].point,
-				       denyflag, mesh->compactnesstarget);
+	    penalty += collapsepenalty(collapsepoint, mesh->vertexlist[ tri->v[1] ].point, mesh->vertexlist[ tri->v[0] ].point, mesh->vertexlist[ tri->v[2] ].point, denyflag, mesh->compactnesstarget);
 	} else if (tri->v[2] == pivotindex) {
 	    if ((tri->v[0] == skipindex) || (tri->v[1] == skipindex))
 		continue;
 
-	    penalty += collapsepenalty(collapsepoint, mesh->vertexlist[ tri->v[2] ].point,
-				       mesh->vertexlist[ tri->v[1] ].point, mesh->vertexlist[ tri->v[0] ].point,
-				       denyflag, mesh->compactnesstarget);
+	    penalty += collapsepenalty(collapsepoint, mesh->vertexlist[ tri->v[2] ].point, mesh->vertexlist[ tri->v[1] ].point, mesh->vertexlist[ tri->v[0] ].point, denyflag, mesh->compactnesstarget);
 	} else {
 #ifdef DEBUG_DEBUG
 	    bu_bomb("SHOULD NOT HAPPEN");
@@ -1476,8 +1397,7 @@ static mdf mdEdgeCollapsePenaltyAll(mdMesh *mesh, mdThreadData *UNUSED(tdata),
 }
 
 
-static mdf mdEdgeCollapsePenalty(mdMesh *mesh, mdThreadData *tdata, mdi v0,
-				 mdi v1, mdf *collapsepoint, int *denyflag)
+static mdf mdEdgeCollapsePenalty(mdMesh *mesh, mdThreadData *tdata, mdi v0, mdi v1, mdf *collapsepoint, int *denyflag)
 {
     mdf penalty, collapsearea, penaltyfactor;
     mdVertex *vertex0, *vertex1;
@@ -1486,24 +1406,18 @@ static mdf mdEdgeCollapsePenalty(mdMesh *mesh, mdThreadData *tdata, mdi v0,
     vertex1 = &mesh->vertexlist[ v1 ];
 
     collapsearea = vertex0->quadric.area + vertex1->quadric.area;
-    penaltyfactor = collapsearea * collapsearea / (vertex0->trirefcount +
-		    vertex1->trirefcount);
+    penaltyfactor = collapsearea * collapsearea / (vertex0->trirefcount + vertex1->trirefcount);
 
 #ifdef DEBUG_VERBOSE_PENALTY
     printf("  Compute Penalty Edge %d,%d\n", v0, v1);
 #endif
 
     *denyflag = 0;
-    penalty  = mdEdgeCollapsePenaltyAll(mesh, tdata,
-					&mesh->trireflist[ vertex0->trirefbase ], vertex0->trirefcount, v0, v1,
-					collapsepoint, denyflag);
-    penalty += mdEdgeCollapsePenaltyAll(mesh, tdata,
-					&mesh->trireflist[ vertex1->trirefbase ], vertex1->trirefcount, v1, v0,
-					collapsepoint, denyflag);
+    penalty  = mdEdgeCollapsePenaltyAll(mesh, tdata, &mesh->trireflist[ vertex0->trirefbase ], vertex0->trirefcount, v0, v1, collapsepoint, denyflag);
+    penalty += mdEdgeCollapsePenaltyAll(mesh, tdata, &mesh->trireflist[ vertex1->trirefbase ], vertex1->trirefcount, v1, v0, collapsepoint, denyflag);
 
 #ifdef DEBUG_VERBOSE_PENALTY
-    printf("    Penalty Total : %f * %f -> %f\n", penalty, penaltyfactor,
-	   penalty * penaltyfactor);
+    printf("    Penalty Total : %f * %f -> %f\n", penalty, penaltyfactor, penalty * penaltyfactor);
 #endif
 
     penalty *= penaltyfactor;
@@ -1542,13 +1456,11 @@ static void mdMeshAddOp(mdMesh *mesh, mdThreadData *tdata, mdi v0, mdi v1)
     op->updatebuffer = tdata->updatebuffer;
     op->v0 = v0;
     op->v1 = v1;
-    op->value = mdEdgeSolvePoint(&mesh->vertexlist[v0], &mesh->vertexlist[v1],
-				 op->collapsepoint);
+    op->value = mdEdgeSolvePoint(&mesh->vertexlist[v0], &mesh->vertexlist[v1], op->collapsepoint);
 #ifdef MD_CONFIG_SSE_SUPPORT
     op->collapsepoint[3] = 0.0;
 #endif
-    op->penalty = mdEdgeCollapsePenalty(mesh, tdata, v0, v1, op->collapsepoint,
-					&denyflag);
+    op->penalty = mdEdgeCollapsePenalty(mesh, tdata, v0, v1, op->collapsepoint, &denyflag);
     op->collapsecost = op->value + op->penalty;
 
     if ((denyflag) || (op->collapsecost > mesh->maxcollapsecost))
@@ -1567,21 +1479,17 @@ static void mdMeshAddOp(mdMesh *mesh, mdThreadData *tdata, mdi v0, mdi v1)
     edge.v[0] = v0;
     edge.v[1] = v1;
 
-    if (mmHashLockCallEntry(mesh->edgehashtable, &mdEdgeHashEdge, &edge,
-			    mdMeshEdgeOpCallback, op, 0) != MM_HASH_SUCCESS)
+    if (mmHashLockCallEntry(mesh->edgehashtable, &mdEdgeHashEdge, &edge, mdMeshEdgeOpCallback, op, 0) != MM_HASH_SUCCESS)
 	bu_bomb("SHOULD NOT HAPPEN");
 
 #ifdef DEBUG_VERBOSE_COLLAPSE
-    printf("  Solve Edge %d,%d ; Point %f %f %f ; Value %f ; Penalty %f ; Cost %f\n",
-	   (int)op->v0, (int)op->v1, op->collapsepoint[0], op->collapsepoint[1],
-	   op->collapsepoint[2], op->value, op->penalty, op->collapsecost);
+    printf("  Solve Edge %d,%d ; Point %f %f %f ; Value %f ; Penalty %f ; Cost %f\n", (int)op->v0, (int)op->v1, op->collapsepoint[0], op->collapsepoint[1], op->collapsepoint[2], op->value, op->penalty, op->collapsecost);
 #endif
 
     return;
 }
 
-static void mdMeshPopulateOpList(mdMesh *mesh, mdThreadData *tdata, mdi tribase,
-				 mdi tricount)
+static void mdMeshPopulateOpList(mdMesh *mesh, mdThreadData *tdata, mdi tribase, mdi tricount)
 {
     mdTriangle *tri, *tristart, *triend;
     long populatecount;
@@ -1617,8 +1525,7 @@ static void mdMeshPopulateOpList(mdMesh *mesh, mdThreadData *tdata, mdi tribase,
 
 
 /* Merge vertex attributes of v0 and v1, write to v0 */
-static void mdEdgeCollapseAttrib(mdMesh *mesh, mdThreadData *UNUSED(tdata),
-				 mdi v0, mdi v1, mdf *collapsepoint)
+static void mdEdgeCollapseAttrib(mdMesh *mesh, mdThreadData *UNUSED(tdata), mdi v0, mdi v1, mdf *collapsepoint)
 {
     int vindex;
     mdVertex *vertex0, *vertex1;
@@ -1664,20 +1571,19 @@ static void mdEdgeCollapseAttrib(mdMesh *mesh, mdThreadData *UNUSED(tdata),
 	    attr0pf = (float *)attr0p;
 	    attr1pf = (float *)attr1p;
 
-	    for (vindex = 0 ; vindex < (int)attrib->count ; vindex++)
-		attr0pf[vindex] = (attr0pf[vindex] * (float)weight0) + (attr1pf[vindex] *
-				  (float)weight1);
+	    for (vindex = 0 ; vindex < (mdi)attrib->count ; vindex++)
+		attr0pf[vindex] = (attr0pf[vindex] * (float)weight0) + (attr1pf[vindex] * (float)weight1);
 
 	    if (attrib->flags & MD_ATTRIB_FLAGS_NORMALIZE) {
 		sumf = 0.0;
 
-		for (vindex = 0 ; vindex < (int)attrib->count ; vindex++)
+		for (vindex = 0 ; vindex < (mdi)attrib->count ; vindex++)
 		    sumf += attr0pf[vindex] * attr0pf[vindex];
 
 		if (!ZERO(sumf)) {
 		    suminvf = 1.0 / sumf;
 
-		    for (vindex = 0 ; vindex < (int)attrib->count ; vindex++)
+		    for (vindex = 0 ; vindex < (mdi)attrib->count ; vindex++)
 			attr0pf[vindex] *= suminvf;
 		}
 	    }
@@ -1685,20 +1591,19 @@ static void mdEdgeCollapseAttrib(mdMesh *mesh, mdThreadData *UNUSED(tdata),
 	    attr0pd = (double *)attr0p;
 	    attr1pd = (double *)attr1p;
 
-	    for (vindex = 0 ; vindex < (int)attrib->count ; vindex++)
-		attr0pd[vindex] = (attr0pd[vindex] * (double)weight0) + (attr1pd[vindex] *
-				  (double)weight1);
+	    for (vindex = 0 ; vindex < (mdi)attrib->count ; vindex++)
+		attr0pd[vindex] = (attr0pd[vindex] * (double)weight0) + (attr1pd[vindex] * (double)weight1);
 
 	    if (attrib->flags & MD_ATTRIB_FLAGS_NORMALIZE) {
 		sumd = 0.0;
 
-		for (vindex = 0 ; vindex < (int)attrib->count ; vindex++)
+		for (vindex = 0 ; vindex < (mdi)attrib->count ; vindex++)
 		    sumd += attr0pd[vindex] * attr0pd[vindex];
 
 		if (!ZERO(sumd)) {
 		    suminvd = 1.0 / sumd;
 
-		    for (vindex = 0 ; vindex < (int)attrib->count ; vindex++)
+		    for (vindex = 0 ; vindex < (mdi)attrib->count ; vindex++)
 			attr0pd[vindex] *= suminvd;
 		}
 	    }
@@ -1710,8 +1615,7 @@ static void mdEdgeCollapseAttrib(mdMesh *mesh, mdThreadData *UNUSED(tdata),
 
 
 /* Delete triangle and return outer vertex */
-static mdi mdEdgeCollapseDeleteTriangle(mdMesh *mesh, mdThreadData *tdata,
-					mdi v0, mdi v1, int *retdelflags)
+static mdi mdEdgeCollapseDeleteTriangle(mdMesh *mesh, mdThreadData *tdata, mdi v0, mdi v1, int *retdelflags)
 {
     int delflags = 0;
     mdi outer = 0;
@@ -1725,15 +1629,13 @@ static mdi mdEdgeCollapseDeleteTriangle(mdMesh *mesh, mdThreadData *tdata,
     edge.v[0] = v0;
     edge.v[1] = v1;
 
-    if (mmHashLockDeleteEntry(mesh->edgehashtable, &mdEdgeHashEdge, &edge,
-			      1) != MM_HASH_SUCCESS)
+    if (mmHashLockDeleteEntry(mesh->edgehashtable, &mdEdgeHashEdge, &edge, 1) != MM_HASH_SUCCESS)
 	return -1;
 
     op = (mdOp *)edge.op;
 
     if (op)
-	mdUpdateBufferAdd(&op->updatebuffer[ tdata->threadid >>
-					     mesh->updatebuffershift ], op, MD_OP_FLAGS_DELETION_PENDING);
+	mdUpdateBufferAdd(&op->updatebuffer[ tdata->threadid >> mesh->updatebuffershift ], op, MD_OP_FLAGS_DELETION_PENDING);
 
     tri = &mesh->trilist[ edge.triindex ];
 
@@ -1745,45 +1647,39 @@ static mdi mdEdgeCollapseDeleteTriangle(mdMesh *mesh, mdThreadData *tdata,
 	edge.v[0] = tri->v[0];
 	edge.v[1] = tri->v[1];
 
-	if (mmHashLockDeleteEntry(mesh->edgehashtable, &mdEdgeHashEdge, &edge,
-				  1) != MM_HASH_SUCCESS)
+	if (mmHashLockDeleteEntry(mesh->edgehashtable, &mdEdgeHashEdge, &edge, 1) != MM_HASH_SUCCESS)
 	    bu_bomb("SHOULD NOT HAPPEN");
 
 	op = (mdOp *)edge.op;
 
 	if (op)
-	    mdUpdateBufferAdd(&op->updatebuffer[ tdata->threadid >>
-						 mesh->updatebuffershift ], op, MD_OP_FLAGS_DELETION_PENDING);
+	    mdUpdateBufferAdd(&op->updatebuffer[ tdata->threadid >> mesh->updatebuffershift ], op, MD_OP_FLAGS_DELETION_PENDING);
     }
 
     if (tri->v[1] != v0) {
 	edge.v[0] = tri->v[1];
 	edge.v[1] = tri->v[2];
 
-	if (mmHashLockDeleteEntry(mesh->edgehashtable, &mdEdgeHashEdge, &edge,
-				  1) != MM_HASH_SUCCESS)
+	if (mmHashLockDeleteEntry(mesh->edgehashtable, &mdEdgeHashEdge, &edge, 1) != MM_HASH_SUCCESS)
 	    bu_bomb("SHOULD NOT HAPPEN");
 
 	op = (mdOp *)edge.op;
 
 	if (op)
-	    mdUpdateBufferAdd(&op->updatebuffer[ tdata->threadid >>
-						 mesh->updatebuffershift ], op, MD_OP_FLAGS_DELETION_PENDING);
+	    mdUpdateBufferAdd(&op->updatebuffer[ tdata->threadid >> mesh->updatebuffershift ], op, MD_OP_FLAGS_DELETION_PENDING);
     }
 
     if (tri->v[2] != v0) {
 	edge.v[0] = tri->v[2];
 	edge.v[1] = tri->v[0];
 
-	if (mmHashLockDeleteEntry(mesh->edgehashtable, &mdEdgeHashEdge, &edge,
-				  1) != MM_HASH_SUCCESS)
+	if (mmHashLockDeleteEntry(mesh->edgehashtable, &mdEdgeHashEdge, &edge, 1) != MM_HASH_SUCCESS)
 	    bu_bomb("SHOULD NOT HAPPEN");
 
 	op = (mdOp *)edge.op;
 
 	if (op)
-	    mdUpdateBufferAdd(&op->updatebuffer[ tdata->threadid >>
-						 mesh->updatebuffershift ], op, MD_OP_FLAGS_DELETION_PENDING);
+	    mdUpdateBufferAdd(&op->updatebuffer[ tdata->threadid >> mesh->updatebuffershift ], op, MD_OP_FLAGS_DELETION_PENDING);
     }
 
     /* Determine outer vertex */
@@ -1827,38 +1723,30 @@ static mdi mdEdgeCollapseDeleteTriangle(mdMesh *mesh, mdThreadData *tdata,
 }
 
 
-static void mdEdgeCollapseUpdateTriangle(mdMesh *mesh, mdThreadData *tdata,
-	mdTriangle *tri, mdi newv, int pivot, int left, int right)
+static void mdEdgeCollapseUpdateTriangle(mdMesh *mesh, mdThreadData *tdata, mdTriangle *tri, mdi newv, int pivot, int left, int right)
 {
     mdEdge edge;
     mdOp *op;
-    /* 2012-10-22 ch3: vertex set but never used, so commented
-    /mdVertex *vertex; */
 
     memset(&edge, 0, sizeof(mdEdge));    /*DRH added so it's initialized*/
 
 #ifdef DEBUG_VERBOSE_COLLAPSE
-    printf("  Collapse Update %d : Tri %d,%d,%d\n", newv, tri->v[pivot],
-	   tri->v[right], tri->v[left]);
+    printf("  Collapse Update %d : Tri %d,%d,%d\n", newv, tri->v[pivot], tri->v[right], tri->v[left]);
 #endif
 
-    /*vertex = &mesh->vertexlist[ tri->v[right] ]; */
     edge.v[0] = tri->v[pivot];
     edge.v[1] = tri->v[right];
 
     if (edge.v[0] == newv) {
-	if (mmHashLockReadEntry(mesh->edgehashtable, &mdEdgeHashEdge,
-				&edge) != MM_HASH_SUCCESS)
+	if (mmHashLockReadEntry(mesh->edgehashtable, &mdEdgeHashEdge, &edge) != MM_HASH_SUCCESS)
 	    bu_bomb("SHOULD NOT HAPPEN");
     } else {
-	if (mmHashLockDeleteEntry(mesh->edgehashtable, &mdEdgeHashEdge, &edge,
-				  1) != MM_HASH_SUCCESS)
+	if (mmHashLockDeleteEntry(mesh->edgehashtable, &mdEdgeHashEdge, &edge, 1) != MM_HASH_SUCCESS)
 	    bu_bomb("SHOULD NOT HAPPEN");
 
 	edge.v[0] = newv;
 
-	if (mmHashLockAddEntry(mesh->edgehashtable, &mdEdgeHashEdge, &edge,
-			       1) != MM_HASH_SUCCESS)
+	if (mmHashLockAddEntry(mesh->edgehashtable, &mdEdgeHashEdge, &edge, 1) != MM_HASH_SUCCESS)
 	    bu_bomb("SHOULD NOT HAPPEN");
     }
 
@@ -1866,56 +1754,43 @@ static void mdEdgeCollapseUpdateTriangle(mdMesh *mesh, mdThreadData *tdata,
 
     if (op) {
 #ifdef DEBUG_VERBOSE_COLLAPSE
-	printf("    Update Edge %d,%d Before ; Point %f %f %f ; Cost %f\n", op->v0,
-	       op->v1, op->collapsepoint[0], op->collapsepoint[1], op->collapsepoint[2],
-	       op->collapsecost);
+	printf("    Update Edge %d,%d Before ; Point %f %f %f ; Cost %f\n", op->v0, op->v1, op->collapsepoint[0], op->collapsepoint[1], op->collapsepoint[2], op->collapsecost);
 #endif
 
 #ifdef MD_CONFIG_DELAYED_OP_REDIRECT
-	op->value = mdEdgeSolvePoint(&mesh->vertexlist[edge.v[0]],
-				     &mesh->vertexlist[edge.v[1]], op->collapsepoint);
+	op->value = mdEdgeSolvePoint(&mesh->vertexlist[edge.v[0]], &mesh->vertexlist[edge.v[1]], op->collapsepoint);
 #ifdef MD_CONFIG_SSE_SUPPORT
 	op->collapsepoint[3] = 0.0;
 #endif
-	mdUpdateBufferAdd(&op->updatebuffer[ tdata->threadid >>
-					     mesh->updatebuffershift ], op, 0x0);
+	mdUpdateBufferAdd(&op->updatebuffer[ tdata->threadid >> mesh->updatebuffershift ], op, 0x0);
 #else
 	op->v0 = newv;
-	op->value = mdEdgeSolvePoint(&mesh->vertexlist[op->v0],
-				     &mesh->vertexlist[op->v1], op->collapsepoint);
+	op->value = mdEdgeSolvePoint(&mesh->vertexlist[op->v0], &mesh->vertexlist[op->v1], op->collapsepoint);
 #ifdef MD_CONFIG_SSE_SUPPORT
 	op->collapsepoint[3] = 0.0;
 #endif
-	mdUpdateBufferAdd(&op->updatebuffer[ tdata->threadid >>
-					     mesh->updatebuffershift ], op, 0x0);
+	mdUpdateBufferAdd(&op->updatebuffer[ tdata->threadid >> mesh->updatebuffershift ], op, 0x0);
 #endif
 
 #ifdef DEBUG_VERBOSE_COLLAPSE
-	printf("    Update Edge %d,%d After  ; Point %f %f %f ; Cost %f\n", op->v0,
-	       op->v1, op->collapsepoint[0], op->collapsepoint[1], op->collapsepoint[2],
-	       op->collapsecost);
-	printf("    Edge %d,%d ; Value %f ; Penalty %f ; Cost %f\n", op->v0, op->v1,
-	       op->value, op->penalty, op->collapsecost);
+	printf("    Update Edge %d,%d After  ; Point %f %f %f ; Cost %f\n", op->v0, op->v1, op->collapsepoint[0], op->collapsepoint[1], op->collapsepoint[2], op->collapsecost);
+	printf("    Edge %d,%d ; Value %f ; Penalty %f ; Cost %f\n", op->v0, op->v1, op->value, op->penalty, op->collapsecost);
 #endif
     }
 
-    /*vertex = &mesh->vertexlist[ tri->v[right] ];*/
     edge.v[0] = tri->v[left];
     edge.v[1] = tri->v[pivot];
 
     if (edge.v[1] == newv) {
-	if (mmHashLockReadEntry(mesh->edgehashtable, &mdEdgeHashEdge,
-				&edge) != MM_HASH_SUCCESS)
+	if (mmHashLockReadEntry(mesh->edgehashtable, &mdEdgeHashEdge, &edge) != MM_HASH_SUCCESS)
 	    bu_bomb("SHOULD NOT HAPPEN");
     } else {
-	if (mmHashLockDeleteEntry(mesh->edgehashtable, &mdEdgeHashEdge, &edge,
-				  1) != MM_HASH_SUCCESS)
+	if (mmHashLockDeleteEntry(mesh->edgehashtable, &mdEdgeHashEdge, &edge, 1) != MM_HASH_SUCCESS)
 	    bu_bomb("SHOULD NOT HAPPEN");
 
 	edge.v[1] = newv;
 
-	if (mmHashLockAddEntry(mesh->edgehashtable, &mdEdgeHashEdge, &edge,
-			       1) != MM_HASH_SUCCESS)
+	if (mmHashLockAddEntry(mesh->edgehashtable, &mdEdgeHashEdge, &edge, 1) != MM_HASH_SUCCESS)
 	    bu_bomb("SHOULD NOT HAPPEN");
     }
 
@@ -1923,36 +1798,27 @@ static void mdEdgeCollapseUpdateTriangle(mdMesh *mesh, mdThreadData *tdata,
 
     if (op) {
 #ifdef DEBUG_VERBOSE_COLLAPSE
-	printf("    Update Edge %d,%d Before ; Point %f %f %f ; Cost %f\n", op->v0,
-	       op->v1, op->collapsepoint[0], op->collapsepoint[1], op->collapsepoint[2],
-	       op->collapsecost);
+	printf("    Update Edge %d,%d Before ; Point %f %f %f ; Cost %f\n", op->v0, op->v1, op->collapsepoint[0], op->collapsepoint[1], op->collapsepoint[2], op->collapsecost);
 #endif
 
 #ifdef MD_CONFIG_DELAYED_OP_REDIRECT
-	op->value = mdEdgeSolvePoint(&mesh->vertexlist[edge.v[0]],
-				     &mesh->vertexlist[edge.v[1]], op->collapsepoint);
+	op->value = mdEdgeSolvePoint(&mesh->vertexlist[edge.v[0]], &mesh->vertexlist[edge.v[1]], op->collapsepoint);
 #ifdef MD_CONFIG_SSE_SUPPORT
 	op->collapsepoint[3] = 0.0;
 #endif
-	mdUpdateBufferAdd(&op->updatebuffer[ tdata->threadid >>
-					     mesh->updatebuffershift ], op, 0x0);
+	mdUpdateBufferAdd(&op->updatebuffer[ tdata->threadid >> mesh->updatebuffershift ], op, 0x0);
 #else
 	op->v1 = newv;
-	op->value = mdEdgeSolvePoint(&mesh->vertexlist[op->v0],
-				     &mesh->vertexlist[op->v1], op->collapsepoint);
+	op->value = mdEdgeSolvePoint(&mesh->vertexlist[op->v0], &mesh->vertexlist[op->v1], op->collapsepoint);
 #ifdef MD_CONFIG_SSE_SUPPORT
 	op->collapsepoint[3] = 0.0;
 #endif
-	mdUpdateBufferAdd(&op->updatebuffer[ tdata->threadid >>
-					     mesh->updatebuffershift ], op, 0x0);
+	mdUpdateBufferAdd(&op->updatebuffer[ tdata->threadid >> mesh->updatebuffershift ], op, 0x0);
 #endif
 
 #ifdef DEBUG_VERBOSE_COLLAPSE
-	printf("    Update Edge %d,%d After  ; Point %f %f %f ; Cost %f\n", op->v0,
-	       op->v1, op->collapsepoint[0], op->collapsepoint[1], op->collapsepoint[2],
-	       op->collapsecost);
-	printf("    Edge %d,%d ; Value %f ; Penalty %f ; Cost %f\n", op->v0, op->v1,
-	       op->value, op->penalty, op->collapsecost);
+	printf("    Update Edge %d,%d After  ; Point %f %f %f ; Cost %f\n", op->v0, op->v1, op->collapsepoint[0], op->collapsepoint[1], op->collapsepoint[2], op->collapsecost);
+	printf("    Edge %d,%d ; Value %f ; Penalty %f ; Cost %f\n", op->v0, op->v1, op->value, op->penalty, op->collapsecost);
 #endif
     }
 
@@ -1967,8 +1833,7 @@ Walk through the list of all triangles attached to a vertex
 - Update cost of collapse for other edges of triangles
 - Build up the updated list of triangle references for new vertex
 */
-static mdi *mdEdgeCollapseUpdateAll(mdMesh *mesh, mdThreadData *tdata,
-				    mdi *trireflist, mdi trirefcount, mdi oldv, mdi newv, mdi *trirefstore)
+static mdi *mdEdgeCollapseUpdateAll(mdMesh *mesh, mdThreadData *tdata, mdi *trireflist, mdi trirefcount, mdi oldv, mdi newv, mdi *trirefstore)
 {
     int vindex;
     mdi triindex;
@@ -2002,8 +1867,7 @@ static mdi *mdEdgeCollapseUpdateAll(mdMesh *mesh, mdThreadData *tdata,
 }
 
 
-static void mdVertexInvalidateTri(mdMesh *mesh, mdThreadData *tdata, mdi v0,
-				  mdi v1)
+static void mdVertexInvalidateTri(mdMesh *mesh, mdThreadData *tdata, mdi v0, mdi v1)
 {
     mdEdge edge;
     mdOp *op;
@@ -2012,8 +1876,7 @@ static void mdVertexInvalidateTri(mdMesh *mesh, mdThreadData *tdata, mdi v0,
     edge.v[0] = v0;
     edge.v[1] = v1;
 
-    if (mmHashLockReadEntry(mesh->edgehashtable, &mdEdgeHashEdge,
-			    &edge) != MM_HASH_SUCCESS)
+    if (mmHashLockReadEntry(mesh->edgehashtable, &mdEdgeHashEdge, &edge) != MM_HASH_SUCCESS)
 	bu_bomb("SHOULD NOT HAPPEN");
 
     op = (mdOp *)edge.op;
@@ -2021,14 +1884,12 @@ static void mdVertexInvalidateTri(mdMesh *mesh, mdThreadData *tdata, mdi v0,
     if (!(op))
 	return;
 
-    mdUpdateBufferAdd(&op->updatebuffer[ tdata->threadid >>
-					 mesh->updatebuffershift ], op, 0x0);
+    mdUpdateBufferAdd(&op->updatebuffer[ tdata->threadid >> mesh->updatebuffershift ], op, 0x0);
 
     return;
 }
 
-static void mdVertexInvalidate(mdMesh *mesh, mdThreadData *tdata,
-			       mdi vertexindex)
+static void mdVertexInvalidate(mdMesh *mesh, mdThreadData *tdata, mdi vertexindex)
 {
     mdi vindex, triindex, trirefcount;
     mdi *trireflist;
@@ -2063,8 +1924,7 @@ static void mdVertexInvalidate(mdMesh *mesh, mdThreadData *tdata,
     return;
 }
 
-static void mdVertexInvalidateAll(mdMesh *mesh, mdThreadData *tdata,
-				  mdi *trireflist, mdi trirefcount, mdi pivotindex)
+static void mdVertexInvalidateAll(mdMesh *mesh, mdThreadData *tdata, mdi *trireflist, mdi trirefcount, mdi pivotindex)
 {
     int vindex;
     mdi triindex;
@@ -2094,8 +1954,7 @@ static void mdVertexInvalidateAll(mdMesh *mesh, mdThreadData *tdata,
 }
 
 
-static void mdEdgeCollapseLinkOuter(mdMesh *mesh, mdThreadData *tdata, mdi newv,
-				    mdi outer)
+static void mdEdgeCollapseLinkOuter(mdMesh *mesh, mdThreadData *tdata, mdi newv, mdi outer)
 {
     int sideflags;
     mdEdge edge;
@@ -2109,8 +1968,7 @@ static void mdEdgeCollapseLinkOuter(mdMesh *mesh, mdThreadData *tdata, mdi newv,
     edge.v[0] = newv;
     edge.v[1] = outer;
 
-    if (mmHashLockReadEntry(mesh->edgehashtable, &mdEdgeHashEdge,
-			    &edge) == MM_HASH_SUCCESS) {
+    if (mmHashLockReadEntry(mesh->edgehashtable, &mdEdgeHashEdge, &edge) == MM_HASH_SUCCESS) {
 	sideflags |= 0x1;
 	op = (mdOp *)edge.op;
 
@@ -2121,8 +1979,7 @@ static void mdEdgeCollapseLinkOuter(mdMesh *mesh, mdThreadData *tdata, mdi newv,
     edge.v[0] = outer;
     edge.v[1] = newv;
 
-    if (mmHashLockReadEntry(mesh->edgehashtable, &mdEdgeHashEdge,
-			    &edge) == MM_HASH_SUCCESS) {
+    if (mmHashLockReadEntry(mesh->edgehashtable, &mdEdgeHashEdge, &edge) == MM_HASH_SUCCESS) {
 	sideflags |= 0x2;
 	op = (mdOp *)edge.op;
 
@@ -2148,15 +2005,13 @@ static void mdEdgeCollapsePropagateBoundary(mdMesh *mesh, mdi v0, mdi v1)
     edge.v[0] = v1;
     edge.v[1] = v0;
 
-    if (mmHashLockReadEntry(mesh->edgehashtable, &mdEdgeHashEdge,
-			    &edge) == MM_HASH_SUCCESS)
+    if (mmHashLockReadEntry(mesh->edgehashtable, &mdEdgeHashEdge, &edge) == MM_HASH_SUCCESS)
 	return;
 
     edge.v[0] = v0;
     edge.v[1] = v1;
 
-    if (mmHashLockReadEntry(mesh->edgehashtable, &mdEdgeHashEdge,
-			    &edge) != MM_HASH_SUCCESS)
+    if (mmHashLockReadEntry(mesh->edgehashtable, &mdEdgeHashEdge, &edge) != MM_HASH_SUCCESS)
 	return;
 
     tri = &mesh->trilist[ edge.triindex ];
@@ -2231,8 +2086,7 @@ static inline void mdLockBufferEnd(mdLockBuffer *buffer)
     return;
 }
 
-void mdLockBufferUnlockAll(mdMesh *mesh, mdThreadData *tdata,
-			   mdLockBuffer *buffer)
+void mdLockBufferUnlockAll(mdMesh *mesh, mdThreadData *tdata, mdLockBuffer *buffer)
 {
     int vindex;
     mdVertex *vertex;
@@ -2259,8 +2113,7 @@ void mdLockBufferUnlockAll(mdMesh *mesh, mdThreadData *tdata,
 }
 
 /* If it fails, release all locks */
-int mdLockBufferTryLock(mdMesh *mesh, mdThreadData *tdata, mdLockBuffer *buffer,
-			mdi vertexindex)
+int mdLockBufferTryLock(mdMesh *mesh, mdThreadData *tdata, mdLockBuffer *buffer, mdi vertexindex)
 {
     int32_t owner;
     mdVertex *vertex;
@@ -2272,8 +2125,7 @@ int mdLockBufferTryLock(mdMesh *mesh, mdThreadData *tdata, mdLockBuffer *buffer,
     if (owner == tdata->threadid)
 	return 1;
 
-    if ((owner != -1)
-	|| !(mmAtomicCmpReplace32(&vertex->atomicowner, -1, tdata->threadid))) {
+    if ((owner != -1) || !(mmAtomicCmpReplace32(&vertex->atomicowner, -1, tdata->threadid))) {
 	mdLockBufferUnlockAll(mesh, tdata, buffer);
 	return 0;
     }
@@ -2302,8 +2154,7 @@ int mdLockBufferTryLock(mdMesh *mesh, mdThreadData *tdata, mdLockBuffer *buffer,
 }
 
 /* If it fails, release all locks then wait for the desired lock to become available */
-int mdLockBufferLock(mdMesh *mesh, mdThreadData *tdata, mdLockBuffer *buffer,
-		     mdi vertexindex)
+int mdLockBufferLock(mdMesh *mesh, mdThreadData *tdata, mdLockBuffer *buffer, mdi vertexindex)
 {
     int32_t owner;
     mdVertex *vertex;
@@ -2315,8 +2166,7 @@ int mdLockBufferLock(mdMesh *mesh, mdThreadData *tdata, mdLockBuffer *buffer,
     if (owner == tdata->threadid)
 	return 1;
 
-    if ((owner == -1)
-	&& mmAtomicCmpReplace32(&vertex->atomicowner, -1, tdata->threadid)) {
+    if ((owner == -1) && mmAtomicCmpReplace32(&vertex->atomicowner, -1, tdata->threadid)) {
 	buffer->vertexlist[buffer->vertexcount++] = vertexindex;
 	return 1;
     }
@@ -2364,8 +2214,7 @@ int mdLockBufferLock(mdMesh *mesh, mdThreadData *tdata, mdLockBuffer *buffer,
 }
 
 
-static int mdPivotLockRefs(mdMesh *mesh, mdThreadData *tdata,
-			   mdLockBuffer *buffer, mdi vertexindex)
+static int mdPivotLockRefs(mdMesh *mesh, mdThreadData *tdata, mdLockBuffer *buffer, mdi vertexindex)
 {
     int vindex;
     mdi triindex, iav = 0, ibv = 0, trirefcount;
@@ -2407,8 +2256,7 @@ static int mdPivotLockRefs(mdMesh *mesh, mdThreadData *tdata,
 }
 
 
-static void mdOpResolveLockEdge(mdMesh *mesh, mdThreadData *tdata,
-				mdLockBuffer *lockbuffer, mdOp *op)
+static void mdOpResolveLockEdge(mdMesh *mesh, mdThreadData *tdata, mdLockBuffer *lockbuffer, mdOp *op)
 {
     int failcount, globalflag;
     mdVertex *vertex0, *vertex1;
@@ -2427,8 +2275,7 @@ static void mdOpResolveLockEdge(mdMesh *mesh, mdThreadData *tdata,
 	    globalflag = 1;
 	}
 
-	if (!(mdLockBufferLock(mesh, tdata, lockbuffer, op->v0))
-	    || !(mdLockBufferLock(mesh, tdata, lockbuffer, op->v1))) {
+	if (!(mdLockBufferLock(mesh, tdata, lockbuffer, op->v0)) || !(mdLockBufferLock(mesh, tdata, lockbuffer, op->v1))) {
 	    failcount++;
 	    continue;
 	}
@@ -2464,14 +2311,12 @@ static void mdOpResolveLockEdge(mdMesh *mesh, mdThreadData *tdata,
     return;
 }
 
-static int mdOpResolveLockEdgeTry(mdMesh *mesh, mdThreadData *tdata,
-				  mdLockBuffer *lockbuffer, mdOp *op)
+static int mdOpResolveLockEdgeTry(mdMesh *mesh, mdThreadData *tdata, mdLockBuffer *lockbuffer, mdOp *op)
 {
     mdVertex *vertex0, *vertex1;
 
     for (; ;) {
-	if (!(mdLockBufferTryLock(mesh, tdata, lockbuffer, op->v0))
-	    || !(mdLockBufferTryLock(mesh, tdata, lockbuffer, op->v1)))
+	if (!(mdLockBufferTryLock(mesh, tdata, lockbuffer, op->v0)) || !(mdLockBufferTryLock(mesh, tdata, lockbuffer, op->v1)))
 	    return 0;
 
 	vertex0 = &mesh->vertexlist[ op->v0 ];
@@ -2493,8 +2338,7 @@ static int mdOpResolveLockEdgeTry(mdMesh *mesh, mdThreadData *tdata,
     return 1;
 }
 
-static void mdOpResolveLockFull(mdMesh *mesh, mdThreadData *tdata,
-				mdLockBuffer *lockbuffer, mdOp *op)
+static void mdOpResolveLockFull(mdMesh *mesh, mdThreadData *tdata, mdLockBuffer *lockbuffer, mdOp *op)
 {
     int failcount, globalflag;
     mdVertex *vertex0, *vertex1;
@@ -2513,8 +2357,7 @@ static void mdOpResolveLockFull(mdMesh *mesh, mdThreadData *tdata,
 	    globalflag = 1;
 	}
 
-	if (!(mdLockBufferLock(mesh, tdata, lockbuffer, op->v0))
-	    || !(mdLockBufferLock(mesh, tdata, lockbuffer, op->v1))) {
+	if (!(mdLockBufferLock(mesh, tdata, lockbuffer, op->v0)) || !(mdLockBufferLock(mesh, tdata, lockbuffer, op->v1))) {
 	    failcount++;
 	    continue;
 	}
@@ -2528,11 +2371,9 @@ static void mdOpResolveLockFull(mdMesh *mesh, mdThreadData *tdata,
 	else if (vertex1->redirectindex != -1)
 	    op->v1 = vertex1->redirectindex;
 	else {
-	    mdLockBufferResize(lockbuffer,
-			       2 + ((vertex0->trirefcount + vertex1->trirefcount) << 1));
+	    mdLockBufferResize(lockbuffer, 2 + ((vertex0->trirefcount + vertex1->trirefcount) << 1));
 
-	    if (!(mdPivotLockRefs(mesh, tdata, lockbuffer, op->v0))
-		|| !(mdPivotLockRefs(mesh, tdata, lockbuffer, op->v1))) {
+	    if (!(mdPivotLockRefs(mesh, tdata, lockbuffer, op->v0)) || !(mdPivotLockRefs(mesh, tdata, lockbuffer, op->v1))) {
 		failcount++;
 		continue;
 	    }
@@ -2541,11 +2382,9 @@ static void mdOpResolveLockFull(mdMesh *mesh, mdThreadData *tdata,
 	}
 
 #else
-	mdLockBufferResize(lockbuffer,
-			   2 + ((vertex0->trirefcount + vertex1->trirefcount) << 1));
+	mdLockBufferResize(lockbuffer, 2 + ((vertex0->trirefcount + vertex1->trirefcount) << 1));
 
-	if (!(mdPivotLockRefs(mesh, tdata, lockbuffer, op->v0))
-	    || !(mdPivotLockRefs(mesh, tdata, lockbuffer, op->v1))) {
+	if (!(mdPivotLockRefs(mesh, tdata, lockbuffer, op->v0)) || !(mdPivotLockRefs(mesh, tdata, lockbuffer, op->v1))) {
 	    failcount++;
 	    continue;
 	}
@@ -2572,8 +2411,7 @@ static void mdOpResolveLockFull(mdMesh *mesh, mdThreadData *tdata,
 
 #define MD_EDGE_COLLAPSE_TRIREF_STATIC (512)
 
-static void mdEdgeCollapse(mdMesh *mesh, mdThreadData *tdata, mdi v0, mdi v1,
-			   mdf *collapsepoint)
+static void mdEdgeCollapse(mdMesh *mesh, mdThreadData *tdata, mdi v0, mdi v1, mdf *collapsepoint)
 {
     int vindex, delflags0, delflags1;
     long deletioncount;
@@ -2590,9 +2428,7 @@ static void mdEdgeCollapse(mdMesh *mesh, mdThreadData *tdata, mdi v0, mdi v1,
     mdEdgeCollapseAttrib(mesh, tdata, v0, v1, collapsepoint);
 
 #ifdef DEBUG_VERBOSE_COLLAPSE
-    printf("Collapse %d,%d ; Point %f %f %f ( Overwrite %d ; Delete %d )\n",
-	   (int)v0, (int)v1, collapsepoint[0], collapsepoint[1], collapsepoint[2], (int)v0,
-	   (int)v1);
+    printf("Collapse %d,%d ; Point %f %f %f ( Overwrite %d ; Delete %d )\n", (int)v0, (int)v1, collapsepoint[0], collapsepoint[1], collapsepoint[2], (int)v0, (int)v1);
 #endif
 
     /* New vertex overwriting v0 */
@@ -2614,14 +2450,11 @@ static void mdEdgeCollapse(mdMesh *mesh, mdThreadData *tdata, mdi v0, mdi v1,
     tdata->statusdeletioncount = deletioncount;
 
 #ifdef DEBUG_VERBOSE_COLLAPSE
-    printf("  Redirect %d -> %d ; %d -> %d\n", (int)v0, (int)vertex0->redirectindex,
-	   (int)v1, (int)vertex1->redirectindex);
+    printf("  Redirect %d -> %d ; %d -> %d\n", (int)v0, (int)vertex0->redirectindex, (int)v1, (int)vertex1->redirectindex);
 #endif
 
 #ifdef DEBUG_VERBOSE_COLLAPSE
-    printf("    Move Point %f %f %f ( %f %f %f ) -> %f %f %f\n", vertex0->point[0],
-	   vertex0->point[1], vertex0->point[2], vertex1->point[0], vertex1->point[1],
-	   vertex1->point[2], collapsepoint[0], collapsepoint[1], collapsepoint[2]);
+    printf("    Move Point %f %f %f ( %f %f %f ) -> %f %f %f\n", vertex0->point[0], vertex0->point[1], vertex0->point[2], vertex1->point[0], vertex1->point[1], vertex1->point[2], collapsepoint[0], collapsepoint[1], collapsepoint[2]);
 #endif
 
     /* Set up new vertex over v0 */
@@ -2648,7 +2481,7 @@ static void mdEdgeCollapse(mdMesh *mesh, mdThreadData *tdata, mdi v0, mdi v1,
     /* Redirect vertex1 to vertex0 */
     vertex1->redirectindex = newv;
 
-    /* Maximum theoretical count of triangle references for our new vertex, we need a chunk of memory that big */
+    /* Maximum theoritical count of triangle references for our new vertex, we need a chunk of memory that big */
     trirefmax = vertex0->trirefcount + vertex1->trirefcount;
 
     /* Buffer to temporarily store our new trirefs */
@@ -2659,12 +2492,8 @@ static void mdEdgeCollapse(mdMesh *mesh, mdThreadData *tdata, mdi v0, mdi v1,
 
     /* Update all triangles connected to vertex0 and vertex1 */
     trirefstore = trireflist;
-    trirefstore = mdEdgeCollapseUpdateAll(mesh, tdata,
-					  &mesh->trireflist[ vertex0->trirefbase ], vertex0->trirefcount, v0, newv,
-					  trirefstore);
-    trirefstore = mdEdgeCollapseUpdateAll(mesh, tdata,
-					  &mesh->trireflist[ vertex1->trirefbase ], vertex1->trirefcount, v1, newv,
-					  trirefstore);
+    trirefstore = mdEdgeCollapseUpdateAll(mesh, tdata, &mesh->trireflist[ vertex0->trirefbase ], vertex0->trirefcount, v0, newv, trirefstore);
+    trirefstore = mdEdgeCollapseUpdateAll(mesh, tdata, &mesh->trireflist[ vertex1->trirefbase ], vertex1->trirefcount, v1, newv, trirefstore);
 
     /* Find where to store the trirefs */
     trirefcount = (int)(trirefstore - trireflist);
@@ -2743,8 +2572,7 @@ typedef struct {
     mdi triright;
 } mdEdgeCollisionData;
 
-static void mdEdgeCollisionCallback(void *opaque, void *entry,
-				    int UNUSED(newflag))
+static void mdEdgeCollisionCallback(void *opaque, void *entry, int UNUSED(newflag))
 {
     mdEdge *edge;
     mdEdgeCollisionData *ecd;
@@ -2764,8 +2592,7 @@ Prevent 2D collapses
 Check all triangles attached to v1 that would have to attach back to v0
 If any of the edge is already present in the hash table, deny the collapse
 */
-static int mdEdgeCollisionCheck(mdMesh *mesh, mdThreadData *UNUSED(tdata),
-				mdi v0, mdi v1)
+static int mdEdgeCollisionCheck(mdMesh *mesh, mdThreadData *UNUSED(tdata), mdi v0, mdi v1)
 {
     int vindex, trirefcount, left, right;
     mdi triindex, vsrc, vdst;
@@ -2775,7 +2602,7 @@ static int mdEdgeCollisionCheck(mdMesh *mesh, mdThreadData *UNUSED(tdata),
     mdVertex *vertex0, *vertex1;
     mdEdgeCollisionData ecd;
 
-    memset(&edge, 0, sizeof(mdEdge));    /* DRH added so it's initialized */
+    memset(&edge, 0, sizeof(mdEdge));    /*DRH added so it's initialized*/
     vertex0 = &mesh->vertexlist[ v0 ];
     vertex1 = &mesh->vertexlist[ v1 ];
 
@@ -2802,16 +2629,14 @@ static int mdEdgeCollisionCheck(mdMesh *mesh, mdThreadData *UNUSED(tdata),
     edge.v[0] = v0;
     edge.v[1] = v1;
 
-    if (mmHashLockReadEntry(mesh->edgehashtable, &mdEdgeHashEdge,
-			    &edge) == MM_HASH_SUCCESS)
+    if (mmHashLockReadEntry(mesh->edgehashtable, &mdEdgeHashEdge, &edge) == MM_HASH_SUCCESS)
 	ecd.trileft = edge.triindex;
 
     ecd.triright = -1;
     edge.v[0] = v1;
     edge.v[1] = v0;
 
-    if (mmHashLockReadEntry(mesh->edgehashtable, &mdEdgeHashEdge,
-			    &edge) == MM_HASH_SUCCESS)
+    if (mmHashLockReadEntry(mesh->edgehashtable, &mdEdgeHashEdge, &edge) == MM_HASH_SUCCESS)
 	ecd.triright = edge.triindex;
 
     /* Check all trirefs for collision */
@@ -2846,16 +2671,14 @@ static int mdEdgeCollisionCheck(mdMesh *mesh, mdThreadData *UNUSED(tdata),
 
 	edge.v[0] = vdst;
 	edge.v[1] = tri->v[right];
-	mmHashLockCallEntry(mesh->edgehashtable, &mdEdgeHashEdge, &edge,
-			    mdEdgeCollisionCallback, &ecd, 0);
+	mmHashLockCallEntry(mesh->edgehashtable, &mdEdgeHashEdge, &edge, mdEdgeCollisionCallback, &ecd, 0);
 
 	if (ecd.collisionflag)
 	    return 0;
 
 	edge.v[0] = tri->v[left];
 	edge.v[1] = vdst;
-	mmHashLockCallEntry(mesh->edgehashtable, &mdEdgeHashEdge, &edge,
-			    mdEdgeCollisionCallback, &ecd, 0);
+	mmHashLockCallEntry(mesh->edgehashtable, &mdEdgeHashEdge, &edge, mdEdgeCollisionCallback, &ecd, 0);
 
 	if (ecd.collisionflag)
 	    return 0;
@@ -2874,8 +2697,7 @@ static int mdMeshInit(mdMesh *mesh, size_t maxmemorysize)
     int retval;
 
     /* Allocate vertices, no extra room for vertices, we overwrite existing ones as we decimate */
-    mesh->vertexlist = (mdVertex *)mmAlignAlloc(mesh->vertexalloc * sizeof(
-			   mdVertex), 0x40);
+    mesh->vertexlist = (mdVertex *)mmAlignAlloc(mesh->vertexalloc * sizeof(mdVertex), 0x40);
 
     /* Allocate space for per-vertex lists of face references, including future vertices */
     mesh->trirefcount = 0;
@@ -2908,8 +2730,7 @@ static int mdMeshInit(mdMesh *mesh, size_t maxmemorysize)
 
 
 /* Mesh init step 1, initialize vertices, threaded */
-static void mdMeshInitVertices(mdMesh *mesh, mdThreadData *tdata,
-			       int threadcount)
+static void mdMeshInitVertices(mdMesh *mesh, mdThreadData *tdata, int threadcount)
 {
     int vertexindex, vertexindexmax, vertexperthread;
     mdVertex *vertex;
@@ -2948,8 +2769,7 @@ static void mdMeshInitVertices(mdMesh *mesh, mdThreadData *tdata,
 
 
 /* Mesh init step 2, initialize triangles, threaded */
-static void mdMeshInitTriangles(mdMesh *mesh, mdThreadData *tdata,
-				int threadcount)
+static void mdMeshInitTriangles(mdMesh *mesh, mdThreadData *tdata, int threadcount)
 {
     int i, triperthread, triindex, triindexmax;
     long buildtricount;
@@ -2973,8 +2793,7 @@ static void mdMeshInitTriangles(mdMesh *mesh, mdThreadData *tdata,
     tri = &mesh->trilist[triindex];
     edge.op = 0;
 
-    for (; triindex < triindexmax ;
-	 triindex++, indices = ADDRESS(indices, mesh->indicesstride), tri++) {
+    for (; triindex < triindexmax ; triindex++, indices = ADDRESS(indices, mesh->indicesstride), tri++) {
 	mesh->indicesUserToNative(tri->v, indices);
 #ifdef DEBUG_VERBOSE_QUADRIC
 	printf("Triangle %d,%d,%d\n", (int)tri->v[0], (int)tri->v[1], (int)tri->v[2]);
@@ -3001,22 +2820,19 @@ static void mdMeshInitTriangles(mdMesh *mesh, mdThreadData *tdata,
 	    edge.v[0] = tri->v[0];
 	    edge.v[1] = tri->v[1];
 
-	    if (mmHashLockAddEntry(mesh->edgehashtable, &mdEdgeHashEdge, &edge,
-				   1) != MM_HASH_SUCCESS)
+	    if (mmHashLockAddEntry(mesh->edgehashtable, &mdEdgeHashEdge, &edge, 1) != MM_HASH_SUCCESS)
 		bu_bomb("SHOULD NOT HAPPEN");
 
 	    edge.v[0] = tri->v[1];
 	    edge.v[1] = tri->v[2];
 
-	    if (mmHashLockAddEntry(mesh->edgehashtable, &mdEdgeHashEdge, &edge,
-				   1) != MM_HASH_SUCCESS)
+	    if (mmHashLockAddEntry(mesh->edgehashtable, &mdEdgeHashEdge, &edge, 1) != MM_HASH_SUCCESS)
 		bu_bomb("SHOULD NOT HAPPEN");
 
 	    edge.v[0] = tri->v[2];
 	    edge.v[1] = tri->v[0];
 
-	    if (mmHashLockAddEntry(mesh->edgehashtable, &mdEdgeHashEdge, &edge,
-				   1) != MM_HASH_SUCCESS)
+	    if (mmHashLockAddEntry(mesh->edgehashtable, &mdEdgeHashEdge, &edge, 1) != MM_HASH_SUCCESS)
 		bu_bomb("SHOULD NOT HAPPEN");
 	}
 
@@ -3038,8 +2854,7 @@ static void mdMeshInitTrirefs(mdMesh *mesh)
     trirefcount = 0;
     vertex = mesh->vertexlist;
 
-    for (vertexindex = 0 ; vertexindex < mesh->vertexcount ;
-	 vertexindex++, vertex++) {
+    for (vertexindex = 0 ; vertexindex < mesh->vertexcount ; vertexindex++, vertex++) {
 	vertex->trirefbase = trirefcount;
 	trirefcount += vertex->trirefcount;
 	vertex->trirefcount = 0;
@@ -3052,8 +2867,7 @@ static void mdMeshInitTrirefs(mdMesh *mesh)
 
 
 /* Mesh init step 4, store vertex trirefs and accumulate boundary quadrics, threaded */
-static void mdMeshBuildTrirefs(mdMesh *mesh, mdThreadData *tdata,
-			       int threadcount)
+static void mdMeshBuildTrirefs(mdMesh *mesh, mdThreadData *tdata, int threadcount)
 {
     int i, triperthread, triindex, triindexmax;
     long buildrefcount;
@@ -3135,11 +2949,11 @@ static void mdMeshBuildTrirefs(mdMesh *mesh, mdThreadData *tdata,
 static void mdMeshEnd(mdMesh *mesh)
 {
 #ifndef MD_CONFIG_ATOMIC_SUPPORT
-    mdi vindex;
+    mdi index;
     mdVertex *vertex;
     vertex = mesh->vertexlist;
 
-    for (vindex = 0 ; vindex < mesh->vertexcount ; vindex++, vertex++)
+    for (index = 0 ; index < mesh->vertexcount ; index++, vertex++)
 	mtSpinDestroy(&vertex->ownerspinlock);
 
     mtSpinDestroy(&mesh->trirefspinlock);
@@ -3205,8 +3019,7 @@ static void mdSortOp(mdMesh *mesh, mdThreadData *tdata, mdOp *op, int denyflag)
 }
 
 
-static void mdUpdateOp(mdMesh *mesh, mdThreadData *tdata, mdOp *op,
-		       int32_t opflagsmask)
+static void mdUpdateOp(mdMesh *mesh, mdThreadData *tdata, mdOp *op, int32_t opflagsmask)
 {
     int denyflag, flags;
 #ifdef MD_CONFIG_ATOMIC_SUPPORT
@@ -3247,16 +3060,14 @@ static void mdUpdateOp(mdMesh *mesh, mdThreadData *tdata, mdOp *op,
 	mtSpinUnlock(&op->spinlock);
 #endif
     } else {
-	op->penalty = mdEdgeCollapsePenalty(mesh, tdata, op->v0, op->v1,
-					    op->collapsepoint, &denyflag);
+	op->penalty = mdEdgeCollapsePenalty(mesh, tdata, op->v0, op->v1, op->collapsepoint, &denyflag);
 	mdSortOp(mesh, tdata, op, denyflag);
     }
 
     return;
 }
 
-static void mdUpdateBufferOps(mdMesh *mesh, mdThreadData *tdata,
-			      mdUpdateBuffer *updatebuffer, mdLockBuffer *lockbuffer)
+static void mdUpdateBufferOps(mdMesh *mesh, mdThreadData *tdata, mdUpdateBuffer *updatebuffer, mdLockBuffer *lockbuffer)
 {
     int vindex;
     mdOp *op;
@@ -3271,8 +3082,7 @@ static void mdUpdateBufferOps(mdMesh *mesh, mdThreadData *tdata,
 	op = (mdOp *)updatebuffer->opbuffer[vindex];
 
 	if (mdOpResolveLockEdgeTry(mesh, tdata, lockbuffer, op)) {
-	    mdUpdateOp(mesh, tdata, op,
-		       ~(MD_OP_FLAGS_UPDATE_QUEUED | MD_OP_FLAGS_UPDATE_NEEDED));
+	    mdUpdateOp(mesh, tdata, op, ~(MD_OP_FLAGS_UPDATE_QUEUED | MD_OP_FLAGS_UPDATE_NEEDED));
 	    mdLockBufferUnlockAll(mesh, tdata, lockbuffer);
 	} else {
 #ifdef MD_CONFIG_ATOMIC_SUPPORT
@@ -3281,8 +3091,7 @@ static void mdUpdateBufferOps(mdMesh *mesh, mdThreadData *tdata,
 	    mtSpinUnlock(&updatebuffer->spinlock);
 #endif
 	    mdOpResolveLockEdge(mesh, tdata, lockbuffer, op);
-	    mdUpdateOp(mesh, tdata, op,
-		       ~(MD_OP_FLAGS_UPDATE_QUEUED | MD_OP_FLAGS_UPDATE_NEEDED));
+	    mdUpdateOp(mesh, tdata, op, ~(MD_OP_FLAGS_UPDATE_QUEUED | MD_OP_FLAGS_UPDATE_NEEDED));
 	    mdLockBufferUnlockAll(mesh, tdata, lockbuffer);
 #ifdef MD_CONFIG_ATOMIC_SUPPORT
 	    mmAtomicSpin32(&updatebuffer->atomlock, 0x0, 0x1);
@@ -3348,10 +3157,7 @@ static int mdMeshProcessQueue(mdMesh *mesh, mdThreadData *tdata)
 	}
 
 #ifdef DEBUG_VERBOSE
-	printf("Op %p ; Edge %d,%d (0x%x) ; Point %f %f %f ; Value %f ; Penalty %f ; Cost %f\n",
-	       op, op->v0, op->v1, mmAtomicRead32(&op->flags), op->collapsepoint[0],
-	       op->collapsepoint[1], op->collapsepoint[2], op->value, op->penalty,
-	       op->collapsecost);
+	printf("Op %p ; Edge %d,%d (0x%x) ; Point %f %f %f ; Value %f ; Penalty %f ; Cost %f\n", op, op->v0, op->v1, mmAtomicRead32(&op->flags), op->collapsepoint[0], op->collapsepoint[1], op->collapsepoint[2], op->value, op->penalty, op->collapsecost);
 #endif
 
 	/* Acquire lock for op edge and all trirefs vertices */
@@ -3371,17 +3177,6 @@ static int mdMeshProcessQueue(mdMesh *mesh, mdThreadData *tdata)
 	    mdUpdateOp(mesh, tdata, op, ~MD_OP_FLAGS_UPDATE_NEEDED);
 	    continue;
 	}
-
-#if defined(DEBUG_PENALTY_CHECK) && DEBUG_PENALTY_CHECK
-	int denyflag;
-	mdf penalty;
-	penalty = mdEdgeCollapsePenalty(mesh, tdata, op->v0, op->v1, op->collapsepoint,
-					&denyflag);
-
-	if (fabs(penalty - op->penalty) > 0.001 * fmax(penalty, op->penalty))
-	    printf("CRAP : %f %f\n", penalty, op->penalty);
-
-#endif
 
 	if (!(mdEdgeCollisionCheck(mesh, tdata, op->v0, op->v1))) {
 #ifdef MD_CONFIG_ATOMIC_SUPPORT
@@ -3481,8 +3276,7 @@ static void mdMeshBuildTriangleNormals(mdMesh *mesh)
 {
     mdTriangle *tri, *triend;
     mdVertex *vertex0, *vertex1, *vertex2;
-    mdf vecta[3], vectb[3], vectc[3], normalfactor, magna, magnb, magnc, norm,
-	norminv;
+    mdf vecta[3], vectb[3], vectc[3], normalfactor, magna, magnb, magnc, norm, norminv;
     mdTriNormal *trinormal;
 
     trinormal = (mdTriNormal *)mesh->trinormal;
@@ -3520,12 +3314,9 @@ static void mdMeshBuildTriangleNormals(mdMesh *mesh)
 	magna = M3D_VectorMagnitude(vecta);
 	magnb = M3D_VectorMagnitude(vectb);
 	magnc = M3D_VectorMagnitude(vectc);
-	trinormal->factor[0] = norm * mdMeshAngleFactor(M3D_VectorDotProduct(vecta,
-			       vectb) / (magna * magnb));
-	trinormal->factor[1] = norm * mdMeshAngleFactor(-M3D_VectorDotProduct(vecta,
-			       vectc) / (magna * magnc));
-	trinormal->factor[2] = norm * mdMeshAngleFactor(M3D_VectorDotProduct(vectb,
-			       vectc) / (magnb * magnc));
+	trinormal->factor[0] = norm * mdMeshAngleFactor(M3D_VectorDotProduct(vecta, vectb) / (magna * magnb));
+	trinormal->factor[1] = norm * mdMeshAngleFactor(-M3D_VectorDotProduct(vecta, vectc) / (magna * magnc));
+	trinormal->factor[2] = norm * mdMeshAngleFactor(M3D_VectorDotProduct(vectb, vectc) / (magnb * magnc));
 
 	trinormal++;
     }
@@ -3534,8 +3325,7 @@ static void mdMeshBuildTriangleNormals(mdMesh *mesh)
 }
 
 
-static int mdMeshVertexComputeNormal(mdMesh *mesh, mdi vertexindex,
-				     mdi *trireflist, int trirefcount, mdf *normal)
+static int mdMeshVertexComputeNormal(mdMesh *mesh, mdi vertexindex, mdi *trireflist, int trirefcount, mdf *normal)
 {
     int vindex, pivot, validflag;
     mdi triindex;
@@ -3600,8 +3390,7 @@ static mdi mdMeshCloneVertex(mdMesh *mesh, mdi cloneindex, mdf *point)
     retindex = -1;
     vertex = &mesh->vertexlist[ mesh->clonesearchindex ];
 
-    for (vertexindex = mesh->clonesearchindex ; vertexindex < mesh->vertexalloc ;
-	 vertexindex++, vertex++) {
+    for (vertexindex = mesh->clonesearchindex ; vertexindex < mesh->vertexalloc ; vertexindex++, vertex++) {
 	if ((vertexindex < mesh->vertexcount) && (vertex->trirefcount))
 	    continue;
 
@@ -3639,16 +3428,11 @@ static mdi mdMeshCloneVertex(mdMesh *mesh, mdi cloneindex, mdf *point)
 }
 
 
-static void mdMeshVertexRedirectTriRefs(mdMesh *mesh, mdi vertexindex,
-					mdi newvertexindex, mdi *trireflist, int trirefcount)
+static void mdMeshVertexRedirectTriRefs(mdMesh *mesh, mdi vertexindex, mdi newvertexindex, mdi *trireflist, int trirefcount)
 {
     int vindex;
     mdi triindex;
     mdTriangle *tri;
-    /* 2012-10-22 ch3: trinormal set but never used, so commented
-    mdTriNormal *trinormal;
-
-    trinormal = mesh->trinormal; */
 
     for (vindex = 0 ; vindex < trirefcount ; vindex++) {
 	triindex = trireflist[ vindex ];
@@ -3676,8 +3460,7 @@ static void mdMeshVertexRedirectTriRefs(mdMesh *mesh, mdi vertexindex,
 
 
 /* Find a target normal */
-static int mdMeshVertexFindTarget(mdMesh *mesh, mdi *trireflist,
-				  int trirefcount, mdf **targetnormal)
+static int mdMeshVertexFindTarget(mdMesh *mesh, mdi *trireflist, int trirefcount, mdf **targetnormal)
 {
     int i0, i1;
     mdi triindex0, triindex1;
@@ -3732,8 +3515,7 @@ static int mdMeshVertexFindTarget(mdMesh *mesh, mdi *trireflist,
 
 #define MD_MESH_TRIREF_MAX (256)
 
-static int mdMeshVertexBuildNormal(mdMesh *mesh, mdi vertexindex,
-				   mdi *trireflist, int trirefcount, mdf *point, mdf *normal)
+static int mdMeshVertexBuildNormal(mdMesh *mesh, mdi vertexindex, mdi *trireflist, int trirefcount, mdf *point, mdf *normal)
 {
     int vindex, trirefbuffercount;
     mdi triindex, newvertexindex;
@@ -3751,8 +3533,7 @@ static int mdMeshVertexBuildNormal(mdMesh *mesh, mdi vertexindex,
 
     for (; ;) {
 	/* Compute normal for vertex */
-	if (!(mdMeshVertexComputeNormal(mesh, vertexindex, trireflist, trirefcount,
-					normal)))
+	if (!(mdMeshVertexComputeNormal(mesh, vertexindex, trireflist, trirefcount, normal)))
 	    return 0;
 
 	/* If user doesn't allow vertex splitting, take the normal as it is */
@@ -3802,14 +3583,11 @@ static int mdMeshVertexBuildNormal(mdMesh *mesh, mdi vertexindex,
 	    break;
 
 	/* Correct all trirefs to new vertex */
-	mdMeshVertexRedirectTriRefs(mesh, vertexindex, newvertexindex, trirefbuffer,
-				    trirefbuffercount);
+	mdMeshVertexRedirectTriRefs(mesh, vertexindex, newvertexindex, trirefbuffer, trirefbuffercount);
 
 	/* Spawn a new vertex */
-	newnormal = (mdf *)ADDRESS(mesh->vertexnormal,
-				   newvertexindex * 3 * sizeof(mdf));
-	mdMeshVertexBuildNormal(mesh, newvertexindex, trirefbuffer, trirefbuffercount,
-				point, newnormal);
+	newnormal = (mdf *)ADDRESS(mesh->vertexnormal, newvertexindex * 3 * sizeof(mdf));
+	mdMeshVertexBuildNormal(mesh, newvertexindex, trirefbuffer, trirefbuffercount, point, newnormal);
     }
 
     return 1;
@@ -3841,8 +3619,7 @@ static int mdMeshVertexCheckUse(mdMesh *mesh, mdi *trireflist, int trirefcount)
 }
 
 
-static void mdMeshWriteVertices(mdMesh *mesh, mdOpAttrib *normalattrib,
-				mdf *vertexnormal)
+static void mdMeshWriteVertices(mdMesh *mesh, mdOpAttrib *normalattrib, mdf *vertexnormal)
 {
     mdi vertexindex, writeindex;
     mdf *point, *normal;
@@ -3866,8 +3643,7 @@ static void mdMeshWriteVertices(mdMesh *mesh, mdOpAttrib *normalattrib,
     attrib = mesh->attrib;
     attribend = &mesh->attrib[mesh->attribcount];
 
-    for (vertexindex = 0 ; vertexindex < mesh->vertexcount ;
-	 vertexindex++, vertex++) {
+    for (vertexindex = 0 ; vertexindex < mesh->vertexcount ; vertexindex++, vertex++) {
 	if (!(mesh->operationflags & MD_FLAGS_NO_VERTEX_PACKING)) {
 	    if (vertex->redirectindex != -1)
 		continue;
@@ -3876,9 +3652,7 @@ static void mdMeshWriteVertices(mdMesh *mesh, mdOpAttrib *normalattrib,
 		continue;
 
 	    /* The whole mdMeshRecomputeNormals() process already strips unused vertices */
-	    if (!(vertexnormal) && (vertex->trirefcount != -1)
-		&& !(mdMeshVertexCheckUse(mesh, &mesh->trireflist[ vertex->trirefbase ],
-					  vertex->trirefcount)))
+	    if (!(vertexnormal) && (vertex->trirefcount != -1) && !(mdMeshVertexCheckUse(mesh, &mesh->trireflist[ vertex->trirefbase ], vertex->trirefcount)))
 		continue;
 	}
 
@@ -3947,8 +3721,7 @@ static void mdMeshWriteIndices(mdMesh *mesh)
 /* Recompute normals, store them along with vertices and indices at once */
 static void mdMeshRecomputeNormals(mdMesh *mesh, mdOpAttrib *normalattrib)
 {
-    /* 2012-10-22 ch3: vertexcount set but never used, so commented */
-    mdi vertexindex /*, vertexcount*/;
+    mdi vertexindex;
     mdf *normal;
     mdVertex *vertex;
 
@@ -3965,19 +3738,15 @@ static void mdMeshRecomputeNormals(mdMesh *mesh, mdOpAttrib *normalattrib)
     mdMeshBuildTriangleNormals(mesh);
 
     /* Build each vertex normal */
-    /* vertexcount = 0; */
     vertex = mesh->vertexlist;
 
-    for (vertexindex = 0 ; vertexindex < mesh->vertexcount ;
-	 vertexindex++, vertex++) {
+    for (vertexindex = 0 ; vertexindex < mesh->vertexcount ; vertexindex++, vertex++) {
 	if (!(vertex->trirefcount) || (vertex->trirefcount == -1))
 	    continue;
 
 	normal = (mdf *)ADDRESS(mesh->vertexnormal, vertexindex * 3 * sizeof(mdf));
 
-	if (!(mdMeshVertexBuildNormal(mesh, vertexindex,
-				      &mesh->trireflist[ vertex->trirefbase ], vertex->trirefcount, vertex->point,
-				      normal)))
+	if (!(mdMeshVertexBuildNormal(mesh, vertexindex, &mesh->trireflist[ vertex->trirefbase ], vertex->trirefcount, vertex->point, normal)))
 	    vertex->trirefcount = 0;
     }
 
@@ -4046,9 +3815,7 @@ static void *mdThreadMain(void *value)
     } else
 	mmBlockInit(&tdata.opblock, sizeof(mdOp), 16384, 16384, 0x10);
 
-    tdata.binsort = mmBinSortInit(offsetof(mdOp, list), 64, 16,
-				  -0.2 * mesh->maxcollapsecost, 1.2 * mesh->maxcollapsecost, groupthreshold,
-				  mdMeshOpValueCallback, 6, nodeindex);
+    tdata.binsort = mmBinSortInit(offsetof(mdOp, list), 64, 16, -0.2 * mesh->maxcollapsecost, 1.2 * mesh->maxcollapsecost, groupthreshold, mdMeshOpValueCallback, 6, nodeindex);
 
     for (vindex = 0 ; vindex < mesh->updatebuffercount ; vindex++)
 	mdUpdateBufferInit(&tdata.updatebuffer[vindex], 4096);
@@ -4151,8 +3918,7 @@ static double mdStatusStageProgress[] = {
     0.0
 };
 
-static void mdUpdateStatus(mdMesh *mesh, mdThreadInit *threadinit, int stage,
-			   mdStatus *status)
+static void mdUpdateStatus(mdMesh *mesh, mdThreadInit *threadinit, int stage, mdStatus *status)
 {
     int threadid, stageindex;
     long buildtricount, buildrefcount, populatecount, deletioncount;
@@ -4253,11 +4019,10 @@ void mdOperationInit(mdOperation *op)
     op->syncstepcount = 32;
     op->normalsearchangle = 45.0;
     mmInit();
-    op->maxmemorysize = ((long long)2) * 1024 * 1024 * 1024;
+    op->maxmemorysize = ((size_t)2) * 1024 * 1024 * 1024;
 
     if (mmcontext.sysmemory) {
-	op->maxmemorysize = (mmcontext.sysmemory >> 1) + (mmcontext.sysmemory >>
-			    2);     /* By default, allow to allocate up to 75% of system memory */
+	op->maxmemorysize = (mmcontext.sysmemory >> 1) + (mmcontext.sysmemory >> 2);     /* By default, allow to allocate up to 75% of system memory */
 
 	if (op->maxmemorysize < 1024 * 1024 * 1024)
 	    op->maxmemorysize = 1024 * 1024 * 1024;
@@ -4266,9 +4031,7 @@ void mdOperationInit(mdOperation *op)
     return;
 }
 
-void mdOperationData(mdOperation *op, size_t vertexcount, void *vertex,
-		     int vertexwidth, size_t vertexstride, size_t tricount, void *indices,
-		     int indiceswidth, size_t indicesstride)
+void mdOperationData(mdOperation *op, size_t vertexcount, void *vertex, int vertexwidth, size_t vertexstride, size_t tricount, void *indices, int indiceswidth, size_t indicesstride)
 {
     op->vertexcount = vertexcount;
     op->vertex = vertex;
@@ -4281,8 +4044,7 @@ void mdOperationData(mdOperation *op, size_t vertexcount, void *vertex,
     return;
 }
 
-int mdOperationAddAttrib(mdOperation *op, void *base, int width, size_t count,
-			 size_t stride, int flags)
+int mdOperationAddAttrib(mdOperation *op, void *base, int width, size_t count, size_t stride, int flags)
 {
     mdOpAttrib *attrib;
 
@@ -4313,9 +4075,7 @@ void mdOperationStrength(mdOperation *op, double decimationstrength)
     return;
 }
 
-void mdOperationStatusCallback(mdOperation *op,
-			       void (*statuscallback)(void *opaquepointer, const mdStatus *status),
-			       void *opaquepointer, long miliseconds)
+void mdOperationStatusCallback(mdOperation *op, void (*statuscallback)(void *opaquepointer, const mdStatus *status), void *opaquepointer, long miliseconds)
 {
     op->statusmiliseconds = miliseconds;
     op->statusopaquepointer = opaquepointer;
@@ -4441,8 +4201,7 @@ int mdMeshDecimation(mdOperation *operation, int threadcount, int flags)
     if (mesh.syncstepcount > 1024)
 	mesh.syncstepcount = 1024;
 
-    mesh.normalsearchangle = cos(1.0 * operation->normalsearchangle *
-				 (M_PI / 180.0));
+    mesh.normalsearchangle = cos(1.0 * operation->normalsearchangle * (M_PI / 180.0));
 
     if (mesh.normalsearchangle > 0.9)
 	mesh.normalsearchangle = 0.9;
@@ -4452,9 +4211,7 @@ int mdMeshDecimation(mdOperation *operation, int threadcount, int flags)
     mdBarrierInit(&mesh.globalbarrier, threadcount + 1);
 
     /* Determine update buffer shift required, find the count of updatebuffers */
-    for (mesh.updatebuffershift = 0 ;
-	 (threadcount >> mesh.updatebuffershift) > MD_THREAD_UPDATE_BUFFER_COUNTMAX ;
-	 mesh.updatebuffershift++);
+    for (mesh.updatebuffershift = 0 ; (threadcount >> mesh.updatebuffershift) > MD_THREAD_UPDATE_BUFFER_COUNTMAX ; mesh.updatebuffershift++);
 
     mesh.updatebuffercount = ((threadcount - 1) >> mesh.updatebuffershift) + 1;
 
@@ -4464,61 +4221,41 @@ int mdMeshDecimation(mdOperation *operation, int threadcount, int flags)
 #ifdef MD_CONFIG_SSE_SUPPORT
 #ifndef MD_CONF_DOUBLE_PRECISION
 
-#if defined(__SSE4_1__) && __SSE4_1__
-
     if ((mdCpuInfo.capsse4p1) && (mdPathSSE4p1 & 0x1)) {
 #ifdef DEBUG_VERBOSE
 	printf("PATH : SSE4.1 Float\n");
 #endif
 	mesh.collapsepenalty = mdEdgeCollapsePenaltyTriangleSSE4p1f;
-    } else
-#endif
-#if defined(__SSE3__) && __SSE3__
-	if ((mdCpuInfo.capsse3) && (mdPathSSE3 & 0x1)) {
+    } else if ((mdCpuInfo.capsse3) && (mdPathSSE3 & 0x1)) {
 #ifdef DEBUG_VERBOSE
-	    printf("PATH : SSE3 Float\n");
+	printf("PATH : SSE3 Float\n");
 #endif
-	    mesh.collapsepenalty = mdEdgeCollapsePenaltyTriangleSSE3f;
-	} else
-#endif
-#if defined(__SSE2__) && __SSE2__
-	    if ((mdCpuInfo.capsse2) && (mdPathSSE2 & 0x1)) {
+	mesh.collapsepenalty = mdEdgeCollapsePenaltyTriangleSSE3f;
+    } else if ((mdCpuInfo.capsse2) && (mdPathSSE2 & 0x1)) {
 #ifdef DEBUG_VERBOSE
-		printf("PATH : SSE2 Float\n");
+	printf("PATH : SSE2 Float\n");
 #endif
-		mesh.collapsepenalty = mdEdgeCollapsePenaltyTriangleSSE2f;
-	    } else
-#endif
-	    {}
+	mesh.collapsepenalty = mdEdgeCollapsePenaltyTriangleSSE2f;
+    }
 
 #else
-
-#if defined(__SSE4_1__) && __SSE4_1__
 
     if ((mdCpuInfo.capsse4p1) && (mdPathSSE4p1 & 0x2)) {
 #ifdef DEBUG_VERBOSE
 	printf("PATH : SSE4.1 Double\n");
 #endif
 	mesh.collapsepenalty = mdEdgeCollapsePenaltyTriangleSSE4p1d;
-    } else
-#endif
-#if defined(__SSE3__) && __SSE3__
-	if ((mdCpuInfo.capsse3) && (mdPathSSE3 & 0x2)) {
+    } else if ((mdCpuInfo.capsse3) && (mdPathSSE3 & 0x2)) {
 #ifdef DEBUG_VERBOSE
-	    printf("PATH : SSE3 Double\n");
+	printf("PATH : SSE3 Double\n");
 #endif
-	    mesh.collapsepenalty = mdEdgeCollapsePenaltyTriangleSSE3d;
-	} else
-#endif
-#if defined(__SSE2__) && __SSE2__
-	    if ((mdCpuInfo.capsse2) && (mdPathSSE2 & 0x2)) {
+	mesh.collapsepenalty = mdEdgeCollapsePenaltyTriangleSSE3d;
+    } else if ((mdCpuInfo.capsse2) && (mdPathSSE2 & 0x2)) {
 #ifdef DEBUG_VERBOSE
-		printf("PATH : SSE2 Double\n");
+	printf("PATH : SSE2 Double\n");
 #endif
-		mesh.collapsepenalty = mdEdgeCollapsePenaltyTriangleSSE2d;
-	    } else
-#endif
-	    {}
+	mesh.collapsepenalty = mdEdgeCollapsePenaltyTriangleSSE2d;
+    }
 
 #endif
 #endif
@@ -4535,8 +4272,7 @@ int mdMeshDecimation(mdOperation *operation, int threadcount, int flags)
 
     mesh.updatestatusflag = 0;
     status.progress = 0.0;
-    statuswait = (operation->statusmiliseconds > 10 ? operation->statusmiliseconds :
-		  10);
+    statuswait = (operation->statusmiliseconds > 10 ? operation->statusmiliseconds : 10);
     status.trianglecount = 0;
 
     if (operation->statuscallback) {
@@ -4552,8 +4288,7 @@ int mdMeshDecimation(mdOperation *operation, int threadcount, int flags)
 	tinit->threadid = threadid;
 	tinit->mesh = &mesh;
 	tinit->stage = MD_STATUS_STAGE_INIT;
-	mtThreadCreate(&thread[threadid], mdThreadMain, tinit, MT_THREAD_FLAGS_JOINABLE,
-		       0, 0);
+	mtThreadCreate(&thread[threadid], mdThreadMain, tinit, MT_THREAD_FLAGS_JOINABLE, 0, 0);
     }
 
     /* Wait until all threads have properly initialized */
@@ -4644,8 +4379,7 @@ int mdMeshDecimation(mdOperation *operation, int threadcount, int flags)
 	long accesscount, collisioncount, relocationcount;
 	long entrycount, entrycountmax, hashsizemax;
 
-	mmHashStatistics(mesh.edgehashtable, &accesscount, &collisioncount,
-			 &relocationcount, &entrycount, &entrycountmax, &hashsizemax);
+	mmHashStatistics(mesh.edgehashtable, &accesscount, &collisioncount, &relocationcount, &entrycount, &entrycountmax, &hashsizemax);
 
 	printf("Hash Access     : %ld\n", accesscount);
 	printf("Hash Collision  : %ld\n", collisioncount);

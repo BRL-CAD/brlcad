@@ -99,7 +99,7 @@ set(LIBRT_SOURCES
   primitives/bot/gct_decimation/auxiliary/mmhash.c
   primitives/bot/gct_decimation/meshcorrection.c
   primitives/bot/gct_decimation/meshdecimation.c
-  primitives/bot/gct_decimation/meshoptimization.cpp
+  primitives/bot/gct_decimation/meshoptimization.c
   primitives/bot/gct_decimation/meshoptimizer.c
   primitives/bot/gct_decimation/meshdecimationSSE2.c
   primitives/bot/gct_decimation/meshdecimationSSE3.c

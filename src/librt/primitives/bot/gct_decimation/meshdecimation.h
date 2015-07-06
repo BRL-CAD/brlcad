@@ -25,9 +25,14 @@
  * *****************************************************************************
  */
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+
+#ifndef MD_MESHDECIMATION_H
+#define MD_MESHDECIMATION_H
+
+
+#include "common.h"
+
+#include <stddef.h>
 
 
 #define MD_ATTRIB_MAX (16)
@@ -137,6 +142,4 @@ int mdMeshDecimation(mdOperation *operation, int threadcount, int flags);
 #define MD_FLAGS_NO_DECIMATION (0x20)
 
 
-#ifdef __cplusplus
-}
 #endif

@@ -31,6 +31,13 @@
  */
 
 
+#ifndef MM_THREAD_H
+#define MM_THREAD_H
+
+
+#include "common.h"
+
+
 #ifndef STAND_ALONE_MD
 
 #if defined(COMPILE_FOR_VSL)
@@ -531,6 +538,9 @@ static inline int mtRWlockTryWrite(mtRWlock *rwlock)
 {
     return pthread_rwlock_wrlock(&rwlock->prwlock);
 }
+
+#endif
+
 
 #endif
 

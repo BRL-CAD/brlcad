@@ -26,6 +26,13 @@
  */
 
 
+#ifndef MM_BITMAP_H
+#define MM_BITMAP_H
+
+
+#include "common.h"
+
+
 typedef struct {
     size_t entrycount;
     size_t mapsize;
@@ -42,3 +49,6 @@ void mmBitMapFree(mmBitMap *bitmap);
 
 int mmBitMapDirectGet(mmBitMap *bitmap, size_t entryindex);
 void mmBitMapDirectSet(mmBitMap *bitmap, size_t entryindex);
+
+
+#endif

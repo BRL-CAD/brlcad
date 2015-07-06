@@ -1,3 +1,10 @@
+#ifndef MM_CPUCONFIG_H
+#define MM_CPUCONFIG_H
+
+
+#include "common.h"
+
+
 /* Automatically generated CPU information header */
 
 #define CPUCONF_INT_SIZE (4)
@@ -17,3 +24,6 @@
  * CPUCONF_STORE_REORDERING_AFTER_STORE
  * CPUCONF_ARCH_IA32
  */
+
+
+#endif

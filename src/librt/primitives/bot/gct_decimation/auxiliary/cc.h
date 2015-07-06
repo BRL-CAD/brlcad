@@ -26,6 +26,10 @@
  */
 
 
+#ifndef MM_CC_H
+#define MM_CC_H
+
+
 #include "common.h"
 
 #include "cpuconfig.h"
@@ -207,3 +211,6 @@ static inline uintptr_t ccAlignIntPtr(uintptr_t i)
 
 int ccMergeSort(void **src, void **tmp, int count, int (*sortfunc)(void *t0, void *t1));
 int ccMergeSortContext(void **src, void **tmp, int count, int (*sortfunc)(void *t0, void *t1, void *context), void *context);
+
+
+#endif

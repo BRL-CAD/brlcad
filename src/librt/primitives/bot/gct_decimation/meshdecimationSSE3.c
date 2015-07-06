@@ -34,6 +34,18 @@
 #endif
 
 
+#include "common.h"
+
+#include "meshdecimation.h"
+
+#include "auxiliary/cpuconfig.h"
+#include "auxiliary/cpuinfo.h"
+#include "auxiliary/cc.h"
+#include "auxiliary/mm.h"
+#include "auxiliary/mmhash.h"
+#include "auxiliary/math3d.h"
+#include "auxiliary/mmbinsort.h"
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <stddef.h>
@@ -41,15 +53,6 @@
 #include <string.h>
 #include <math.h>
 #include <float.h>
-
-
-#include "auxiliary/cpuconfig.h"
-#include "auxiliary/cc.h"
-#include "auxiliary/mm.h"
-#include "auxiliary/mmhash.h"
-#include "auxiliary/math3d.h"
-#include "auxiliary/mmbinsort.h"
-#include "meshdecimation.h"
 
 
 #ifdef __SSE__
@@ -77,6 +80,9 @@
 
 #ifdef __SSE3__
 #define MD_CONFIG_SSE3_SUPPORT
+#else
+#warning "SSE3 wasn't enabled to compile this file."
+#endif
 
 
 #if defined(__GNUC__) || defined(__INTEL_COMPILER)
@@ -85,7 +91,7 @@
 #define RF_ALIGN16 __declspec(align(16))
 #else
 #define RF_ALIGN16
-#error "SSE Disabled: Unsupported Compiler."
+#warning "SSE Disabled: Unsupported Compiler."
 #ifdef MD_CONFIG_SSE3_SUPPORT
 #undef MD_CONFIG_SSE3_SUPPORT
 #endif
@@ -278,9 +284,6 @@ double mdEdgeCollapsePenaltyTriangleSSE3d(double *newpoint, double *oldpoint, do
 {
     return 0.0;
 }
-
-
-#endif
 
 
 #endif

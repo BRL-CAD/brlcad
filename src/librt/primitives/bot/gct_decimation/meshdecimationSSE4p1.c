@@ -34,6 +34,18 @@
 #endif
 
 
+#include "common.h"
+
+#include "meshdecimation.h"
+
+#include "auxiliary/cpuconfig.h"
+#include "auxiliary/cpuinfo.h"
+#include "auxiliary/cc.h"
+#include "auxiliary/mm.h"
+#include "auxiliary/mmhash.h"
+#include "auxiliary/math3d.h"
+#include "auxiliary/mmbinsort.h"
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <stddef.h>
@@ -41,15 +53,6 @@
 #include <string.h>
 #include <math.h>
 #include <float.h>
-
-
-#include "auxiliary/cpuconfig.h"
-#include "auxiliary/cc.h"
-#include "auxiliary/mm.h"
-#include "auxiliary/mmhash.h"
-#include "auxiliary/math3d.h"
-#include "auxiliary/mmbinsort.h"
-#include "meshdecimation.h"
 
 
 #ifdef __SSE__
@@ -77,6 +80,7 @@
 
 #ifdef __SSE4_1__
 #define MD_CONFIG_SSE4_1_SUPPORT
+#endif
 
 
 #if defined(__GNUC__) || defined(__INTEL_COMPILER)
@@ -85,7 +89,6 @@
 #define RF_ALIGN16 __declspec(align(16))
 #else
 #define RF_ALIGN16
-#error "SSE Disabled: Unsupported Compiler."
 #ifdef MD_CONFIG_SSE4_1_SUPPORT
 #undef MD_CONFIG_SSE4_1_SUPPORT
 #endif
@@ -243,18 +246,15 @@ double mdEdgeCollapsePenaltyTriangleSSE4p1d(double *newpoint, double *oldpoint, 
 
 int mdPathSSE4p1 = 0x0;
 
-float mdEdgeCollapsePenaltyTriangleSSE4p1f(float *newpoint, float *oldpoint, float *leftpoint, float *rightpoint, int *denyflag)
+float mdEdgeCollapsePenaltyTriangleSSE4p1f(float *UNUSED(newpoint), float *UNUSED(oldpoint), float *UNUSED(leftpoint), float *UNUSED(rightpoint), int *UNUSED(denyflag))
 {
     return 0.0;
 }
 
-double mdEdgeCollapsePenaltyTriangleSSE4p1d(double *newpoint, double *oldpoint, double *leftpoint, double *rightpoint, int *denyflag)
+double mdEdgeCollapsePenaltyTriangleSSE4p1d(double *UNUSED(newpoint), double *UNUSED(oldpoint), double *UNUSED(leftpoint), double *UNUSED(rightpoint), int *UNUSED(denyflag))
 {
     return 0.0;
 }
-
-
-#endif
 
 
 #endif

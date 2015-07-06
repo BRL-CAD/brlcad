@@ -25,18 +25,21 @@
  * *****************************************************************************
  */
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+
+#ifndef MD_MESHCORRECTION_H
+#define MD_MESHCORRECTION_H
 
 
-int mcMeshCorrection(size_t vertexcount, void *vertex, int vertexwidth, size_t vertexstride, size_t tricount, void *indices, int indiceswidth, size_t indicesstride, long attemptcount, int flags)
-;
+#include "common.h"
+
+#include <stddef.h>
+
+
+int mcMeshCorrection(size_t vertexcount, void *vertex, int vertexwidth, size_t vertexstride, size_t tricount, void *indices, int indiceswidth, size_t indicesstride, long attemptcount, int flags);
+
 
 #define MC_FLAGS_TRIANGLE_WINDING_CW (0x1)
 #define MC_FLAGS_TRIANGLE_WINDING_CCW (0x2)
 
 
-#ifdef __cplusplus
-}
 #endif

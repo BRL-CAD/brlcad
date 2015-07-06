@@ -37,11 +37,21 @@
  *
  */
 
-// System headers
+
+#include "common.h"
+
+#include "meshoptimization.h"
+
+#include "meshoptimizer.h"
+
 #include <stdio.h>
 
-// Local headers
-#include "meshoptimization.h"
+
+#define OPTIMIZATION_FLAGS MO_FLAGS_DISABLE_LOOK_AHEAD | \
+  MO_FLAGS_ENABLE_LAZY_SEARCH | \
+  MO_FLAGS_FAST_SEED_SELECT
+#define DEBUG_MESH_OPTIMIZATION_VERBOSE 0
+
 
 void
 mesh_optimization(long vertexcount,
@@ -50,9 +60,6 @@ mesh_optimization(long vertexcount,
 		  int indiceswidth,
 		  int threadcount,
 		  int optimizationlevel
-#if DEBUG_MESH_OPTIMIZATION_VERBOSE
-		  , const char *rname
-#endif
 		 )
 {
     int depth, flags, maxthreadcount;
@@ -83,9 +90,6 @@ mesh_optimization(long vertexcount,
     if (threadcount > maxthreadcount)
 	threadcount = maxthreadcount;
 
-#if DEBUG_MESH_OPTIMIZATION_VERBOSE
-    fprintf(stderr, "Optimizing %s...", rname);
-#endif
     moOptimizeMesh(vertexcount,
 		   tricount,
 		   indices, indiceswidth,
@@ -93,7 +97,4 @@ mesh_optimization(long vertexcount,
 		   depth,
 		   threadcount,
 		   flags);
-#if DEBUG_MESH_OPTIMIZATION_VERBOSE
-    fprintf(stderr, "Done.\n");
-#endif
 }

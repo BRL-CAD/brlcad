@@ -36,6 +36,17 @@
 
 #include "common.h"
 
+#include "meshoptimizer.h"
+
+#include "auxiliary/cpuconfig.h"
+#include "auxiliary/cpuinfo.h"
+#include "auxiliary/cc.h"
+#include "auxiliary/mm.h"
+#include "auxiliary/mmhash.h"
+#include "auxiliary/math3d.h"
+
+#include "bu/log.h"
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <stddef.h>
@@ -45,26 +56,9 @@
 #include <float.h>
 
 
-#include "auxiliary/cpuconfig.h"
-#include "auxiliary/cc.h"
-#include "auxiliary/mm.h"
-#include "auxiliary/mmhash.h"
-#include "auxiliary/math3d.h"
-
-#include "meshoptimizer.h"
-
-#include "bu/log.h"
-
-
 #ifdef MM_ATOMIC_SUPPORT
 #define MO_CONFIG_ATOMIC_SUPPORT
 #endif
-
-
-/*
-#define DEBUG_VERBOSE
-#define DEBUG_VERBOSE_TIME
-*/
 
 
 #ifdef CPUCONF_CORES_COUNT
@@ -87,6 +81,9 @@ typedef float mof;
 
 
 #define MO_CACHE_HASH_SIZE_MAX (0x100)
+
+
+#define mopowf(base, exponent) pow((base), (exponent))
 
 
 /****/
@@ -139,35 +136,6 @@ static int moBarrierSync(moBarrier *barrier)
     mtMutexUnlock(&barrier->mutex);
     return ret;
 }
-
-#if 0 /* 2012-10-22 ch3: this function not currently used, so commented */
-static int moBarrierSyncTimeout(moBarrier *barrier, long miliseconds)
-{
-    int index, ret;
-    mtMutexLock(&barrier->mutex);
-    index = barrier->index;
-    ret = 0;
-
-    if (!(--barrier->count[index])) {
-	ret = 1;
-	mtSignalBroadcast(&barrier->signal);
-	index ^= 1;
-	barrier->index = index;
-	barrier->count[index] = barrier->resetcount;
-    } else {
-	mtSignalWaitTimeout(&barrier->signal, &barrier->mutex, miliseconds);
-
-	if (!(barrier->count[index]))
-	    ret = 1;
-	else
-	    barrier->count[index]++;
-    }
-
-    mtMutexUnlock(&barrier->mutex);
-    return ret;
-}
-#endif
-
 
 /****/
 
@@ -490,7 +458,7 @@ static moi moMeshBuildTrirefs(moMesh *mesh, moThreadData *tdata, int threadcount
 static inline uint32_t moCacheHashKey(moi vindex)
 {
     uint32_t hashkey;
-    hashkey  = vindex;
+    hashkey = vindex;
     hashkey += hashkey << 10;
     hashkey ^= hashkey >> 6;
     hashkey += hashkey << 6;
@@ -1641,7 +1609,7 @@ int moOptimizeMesh(size_t vertexcount, size_t tricount, void *indices, int indic
 	factor *= 0.25;
 
     for (a = 3 ; a < mesh.vertexcachesize ; a++)
-	mesh.cachescore[a] = pow(1.0 - ((mof)(a - 3) * factor), 1.5);
+	mesh.cachescore[a] = mopowf(1.0 - ((mof)(a - 3) * factor), 1.5);
 
     if (mesh.operationflags & MO_FLAGS_FIXED_CACHE_SIZE) {
 	if (mesh.vertexcachesize > 1)
@@ -1654,7 +1622,7 @@ int moOptimizeMesh(size_t vertexcount, size_t tricount, void *indices, int indic
     mesh.trirefscore[0] = -256.0;
 
     for (a = 1 ; a < MO_TRIREFSCORE_COUNT ; a++)
-	mesh.trirefscore[a] = 2.0 * pow(a, -0.5);
+	mesh.trirefscore[a] = 2.0 * mopowf((float)a, -0.5);
 
     /* Allocation */
     mesh.vertexlist = (moVertex *)mmAlignAlloc(mesh.vertexcount * sizeof(moVertex), 0x40);
@@ -1776,11 +1744,6 @@ double moEvaluateMesh(size_t tricount, void *indices, int indiceswidth, size_t i
 	cachemiss += moEvalCacheInsert(vertexcache, vertexcachesize, triv[1]);
 	cachemiss += moEvalCacheInsert(vertexcache, vertexcachesize, triv[2]);
     }
-
-    /*
-    printf( "Cache Miss : %d / %d\n", cachemiss, (int)tricount*3 );
-    printf( "ACMR : %f\n", (double)cachemiss / (double)tricount );
-    */
 
     return (double)cachemiss / (double)tricount;
 }

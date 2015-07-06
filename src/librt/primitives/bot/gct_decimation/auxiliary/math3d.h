@@ -25,23 +25,31 @@
  * *****************************************************************************
  */
 
+
+#ifndef MM_MATH3D_H
+#define MM_MATH3D_H
+
+
+#include "common.h"
+
+
 #define M3D_VectorZero(x) do {(x)[0]=0.0;(x)[1]=0.0;(x)[2]=0.0;} while (0)
 #define M3D_VectorMagnitude(x) (sqrt((x)[0]*(x)[0]+(x)[1]*(x)[1]+(x)[2]*(x)[2]))
 #define M3D_VectorCopy(x,y) do {(x)[0]=(y)[0];(x)[1]=(y)[1];(x)[2]=(y)[2];} while (0)
-#define M3D_VectorAdd(x,y) (x)[0]+=(y)[0];(x)[1]+=(y)[1];(x)[2]+=(y)[2]
-#define M3D_VectorAddStore(x,y,z) (x)[0]=(y)[0]+(z)[0];(x)[1]=(y)[1]+(z)[1];(x)[2]=(y)[2]+(z)[2]
-#define M3D_VectorAddMulScalar(x,y,z) (x)[0]+=(y)[0]*(z);(x)[1]+=(y)[1]*(z);(x)[2]+=(y)[2]*(z)
-#define M3D_VectorAddMul(x,y,z) (x)[0]+=(y)[0]*(z)[0];(x)[1]+=(y)[1]*(z)[1];(x)[2]+=(y)[2]*(z)[2]
-#define M3D_VectorSub(x,y) (x)[0]-=(y)[0];(x)[1]-=(y)[1];(x)[2]-=(y)[2]
-#define M3D_VectorSubStore(x,y,z) (x)[0]=(y)[0]-(z)[0];(x)[1]=(y)[1]-(z)[1];(x)[2]=(y)[2]-(z)[2]
-#define M3D_VectorSubMulScalar(x,y,z) (x)[0]-=(y)[0]*(z);(x)[1]-=(y)[1]*(z);(x)[2]-=(y)[2]*(z)
-#define M3D_VectorSubMul(x,y,z) (x)[0]-=(y)[0]*(z)[0];(x)[1]-=(y)[1]*(z)[1];(x)[2]-=(y)[2]*(z)[2]
-#define M3D_VectorMul(x,y) (x)[0]*=(y)[0];(x)[1]*=(y)[1];(x)[2]*=(y)[2]
-#define M3D_VectorMulStore(x,y,z) (x)[0]=(y)[0]*(z)[0];(x)[1]=(y)[1]*(z)[1];(x)[2]=(y)[2]*(z)[2]
-#define M3D_VectorMulScalar(x,y) (x)[0]*=(y);(x)[1]*=(y);(x)[2]*=(y)
-#define M3D_VectorMulScalarStore(x,y,z) (x)[0]=(y)[0]*(z);(x)[1]=(y)[1]*(z);(x)[2]=(y)[2]*(z)
-#define M3D_VectorDiv(x,y) (x)[0]/=(y)[0];(x)[1]/=(y)[1];(x)[2]/=(y)[2]
-#define M3D_VectorDivStore(x,y,z) (x)[0]=(y)[0]/(z)[0];(x)[1]=(y)[1]/(z)[1];(x)[2]=(y)[2]/(z)[2]
+#define M3D_VectorAdd(x,y) do {(x)[0]+=(y)[0];(x)[1]+=(y)[1];(x)[2]+=(y)[2];} while (0)
+#define M3D_VectorAddStore(x,y,z) do {(x)[0]=(y)[0]+(z)[0];(x)[1]=(y)[1]+(z)[1];(x)[2]=(y)[2]+(z)[2];} while (0)
+#define M3D_VectorAddMulScalar(x,y,z) do {(x)[0]+=(y)[0]*(z);(x)[1]+=(y)[1]*(z);(x)[2]+=(y)[2]*(z);} while (0)
+#define M3D_VectorAddMul(x,y,z) do {(x)[0]+=(y)[0]*(z)[0];(x)[1]+=(y)[1]*(z)[1];(x)[2]+=(y)[2]*(z)[2];} while(0)
+#define M3D_VectorSub(x,y) do {(x)[0]-=(y)[0];(x)[1]-=(y)[1];(x)[2]-=(y)[2];} while (0)
+#define M3D_VectorSubStore(x,y,z) do {(x)[0]=(y)[0]-(z)[0];(x)[1]=(y)[1]-(z)[1];(x)[2]=(y)[2]-(z)[2];} while (0)
+#define M3D_VectorSubMulScalar(x,y,z) do {(x)[0]-=(y)[0]*(z);(x)[1]-=(y)[1]*(z);(x)[2]-=(y)[2]*(z);} while (0)
+#define M3D_VectorSubMul(x,y,z) do {(x)[0]-=(y)[0]*(z)[0];(x)[1]-=(y)[1]*(z)[1];(x)[2]-=(y)[2]*(z)[2];} while (0)
+#define M3D_VectorMul(x,y) do {(x)[0]*=(y)[0];(x)[1]*=(y)[1];(x)[2]*=(y)[2];} while (0)
+#define M3D_VectorMulStore(x,y,z) do {(x)[0]=(y)[0]*(z)[0];(x)[1]=(y)[1]*(z)[1];(x)[2]=(y)[2]*(z)[2];} while (0)
+#define M3D_VectorMulScalar(x,y) do {(x)[0]*=(y);(x)[1]*=(y);(x)[2]*=(y);} while (0)
+#define M3D_VectorMulScalarStore(x,y,z) do (x)[0]=(y)[0]*(z);(x)[1]=(y)[1]*(z);(x)[2]=(y)[2]*(z);} while (0)
+#define M3D_VectorDiv(x,y) do {(x)[0]/=(y)[0];(x)[1]/=(y)[1];(x)[2]/=(y)[2];} while (0)
+#define M3D_VectorDivStore(x,y,z) do {(x)[0]=(y)[0]/(z)[0];(x)[1]=(y)[1]/(z)[1];(x)[2]=(y)[2]/(z)[2];} while (0)
 #define M3D_VectorDotProduct(x,y) ((x)[0]*(y)[0]+(x)[1]*(y)[1]+(x)[2]*(y)[2])
 #define M3D_PlanePoint(x,y) ((x)[0]*(y)[0]+(x)[1]*(y)[1]+(x)[2]*(y)[2]+(x)[3])
 #define M3D_VectorNormalize(type, x) do {type _f;_f=1.0/sqrt((x)[0]*(x)[0]+(x)[1]*(x)[1]+(x)[2]*(x)[2]);(x)[0]*=_f;(x)[1]*=_f;(x)[2]*=_f;} while (0)
@@ -55,7 +63,7 @@
 (d)[1]=(p)[0]*(m)[0*4+1]+(p)[1]*(m)[1*4+1]+(p)[2]*(m)[2*4+1]; \
 (d)[2]=(p)[0]*(m)[0*4+2]+(p)[1]*(m)[1*4+2]+(p)[2]*(m)[2*4+2]; } while (0)
 
-#define M3D_MatrixTransMulVector(d,p,m) do { \
+#define M3D_MatrixTransMulVector(d,p,m)do { \
 (d)[0]=(p)[0]*(m)[0*4+0]+(p)[1]*(m)[0*4+1]+(p)[2]*(m)[0*4+2]; \
 (d)[1]=(p)[0]*(m)[1*4+0]+(p)[1]*(m)[1*4+1]+(p)[2]*(m)[1*4+2]; \
 (d)[2]=(p)[0]*(m)[2*4+0]+(p)[1]*(m)[2*4+1]+(p)[2]*(m)[2*4+2]; } while (0)
@@ -76,3 +84,6 @@ typeof(*(p)) _n[3] = { p[0], p[1], p[2] }; \
 (p)[0]=(_n)[0]*(m)[0*4+0]+(_n)[1]*(m)[1*4+0]+(_n)[2]*(m)[2*4+0]+(m)[3*4+0]; \
 (p)[1]=(_n)[0]*(m)[0*4+1]+(_n)[1]*(m)[1*4+1]+(_n)[2]*(m)[2*4+1]+(m)[3*4+1]; \
 (p)[2]=(_n)[0]*(m)[0*4+2]+(_n)[1]*(m)[1*4+2]+(_n)[2]*(m)[2*4+2]+(m)[3*4+2]; } while (0)
+
+
+#endif

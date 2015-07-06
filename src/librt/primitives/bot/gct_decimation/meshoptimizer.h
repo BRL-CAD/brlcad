@@ -25,9 +25,14 @@
  * *****************************************************************************
  */
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+
+#ifndef MD_MESHOPTIMIZER_H
+#define MD_MESHOPTIMIZER_H
+
+
+#include "common.h"
+
+#include <stddef.h>
 
 
 int moOptimizeMesh(size_t vertexcount, size_t tricount, void *indices, int indiceswidth, size_t indicesstride, void (*shufflecallback)(void *opaquepointer, long newvertexindex, long oldvertexindex), void *shuffleopaquepointer, int vertexcachesize, int threadcount, int flags);
@@ -41,6 +46,4 @@ int moOptimizeMesh(size_t vertexcount, size_t tricount, void *indices, int indic
 double moEvaluateMesh(size_t tricount, void *indices, int indiceswidth, size_t indicesstride, int vertexcachesize, int flags);
 
 
-#ifdef __cplusplus
-}
 #endif
