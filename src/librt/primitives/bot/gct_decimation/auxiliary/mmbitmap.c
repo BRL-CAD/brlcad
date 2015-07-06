@@ -36,28 +36,11 @@
 
 #include "common.h"
 
-
-#include <stdio.h>
-#include <stdlib.h>
-#include <stddef.h>
-#include <stdint.h>
-#include <string.h>
-#include <math.h>
-
-#include "cpuconfig.h"
-#include "cc.h"
-#include "mm.h"
 #include "mmbitmap.h"
 
+#include "cpuconfig.h"
 
-/* Friendlier to cache on SMP systems */
-#define BP_BITMAP_PREWRITE_CHECK
-
-
-/*
-TODO
-If we don't have atomic instruction support, we need a much better mutex locking mechanism!!
-*/
+#include <stdlib.h>
 
 
 void mmBitMapInit(mmBitMap *bitmap, size_t entrycount, int initvalue)
@@ -93,32 +76,6 @@ void mmBitMapInit(mmBitMap *bitmap, size_t entrycount, int initvalue)
     return;
 }
 
-void mmBitMapReset(mmBitMap *bitmap, int resetvalue)
-{
-    size_t vindex;
-    long value;
-#ifdef MM_ATOMIC_SUPPORT
-    mmAtomicL *map;
-#else
-    long *map;
-#endif
-
-    map = bitmap->map;
-    value = (resetvalue & 0x1 ? ~(long)0x0 : (long)0x0);
-#ifdef MM_ATOMIC_SUPPORT
-
-    for (vindex = 0 ; vindex < bitmap->mapsize ; vindex++)
-	mmAtomicWriteL(&map[vindex], value);
-
-#else
-
-    for (vindex = 0 ; vindex < bitmap->mapsize ; vindex++)
-	map[vindex] = value;
-
-#endif
-
-    return;
-}
 
 void mmBitMapFree(mmBitMap *bitmap)
 {
@@ -130,6 +87,7 @@ void mmBitMapFree(mmBitMap *bitmap)
 #endif
     return;
 }
+
 
 int mmBitMapDirectGet(mmBitMap *bitmap, size_t entryindex)
 {
@@ -154,119 +112,6 @@ void mmBitMapDirectSet(mmBitMap *bitmap, size_t entryindex)
     MM_ATOMIC_ACCESS_L(&bitmap->map[vindex]) |= (long)1 << shift;
 #else
     bitmap->map[vindex] |= (long)1 << shift;
-#endif
-    return;
-}
-
-void mmBitMapDirectClear(mmBitMap *bitmap, size_t entryindex)
-{
-    size_t vindex, shift;
-    vindex = entryindex >> CPUCONF_LONG_BITSHIFT;
-    shift = entryindex & (CPUCONF_LONG_BITS - 1);
-#ifdef MM_ATOMIC_SUPPORT
-    MM_ATOMIC_ACCESS_L(&bitmap->map[vindex]) &= ~((long)1 << shift);
-#else
-    bitmap->map[vindex] &= ~((long)1 << shift);
-#endif
-    return;
-}
-
-int mmBitMapGet(mmBitMap *bitmap, size_t entryindex)
-{
-    int value;
-    size_t vindex, shift;
-    vindex = entryindex >> CPUCONF_LONG_BITSHIFT;
-    shift = entryindex & (CPUCONF_LONG_BITS - 1);
-#ifdef MM_ATOMIC_SUPPORT
-    value = (mmAtomicReadL(&bitmap->map[vindex]) >> shift) & 0x1;
-#else
-    mtMutexLock(&bitmap->mutex);
-    value = (bitmap->map[vindex] >> shift) & 0x1;
-    mtMutexUnlock(&bitmap->mutex);
-#endif
-    return value;
-}
-
-void mmBitMapSet(mmBitMap *bitmap, size_t entryindex)
-{
-    size_t vindex, shift;
-    vindex = entryindex >> CPUCONF_LONG_BITSHIFT;
-    shift = entryindex & (CPUCONF_LONG_BITS - 1);
-#ifdef MM_ATOMIC_SUPPORT
-#ifdef BP_BITMAP_PREWRITE_CHECK
-
-    if (!(mmAtomicReadL(&bitmap->map[vindex]) & ((long)1 << shift)))
-	mmAtomicOrL(&bitmap->map[vindex], (long)1 << shift);
-
-#else
-    mmAtomicOrL(&bitmap->map[vindex], (long)1 << shift);
-#endif
-#else
-    mtMutexLock(&bitmap->mutex);
-    bitmap->map[vindex] |= (long)1 << shift;
-    mtMutexUnlock(&bitmap->mutex);
-#endif
-    return;
-}
-
-void mmBitMapClear(mmBitMap *bitmap, size_t entryindex)
-{
-    size_t vindex, shift;
-    vindex = entryindex >> CPUCONF_LONG_BITSHIFT;
-    shift = entryindex & (CPUCONF_LONG_BITS - 1);
-#ifdef MM_ATOMIC_SUPPORT
-#ifdef BP_BITMAP_PREWRITE_CHECK
-
-    if (mmAtomicReadL(&bitmap->map[vindex]) & ((long)1 << shift))
-	mmAtomicAndL(&bitmap->map[vindex], ~((long)1 << shift));
-
-#else
-    mmAtomicAndL(&bitmap->map[vindex], ~((long)1 << shift));
-#endif
-#else
-    mtMutexLock(&bitmap->mutex);
-    bitmap->map[vindex] &= ~((long)1 << shift);
-    mtMutexUnlock(&bitmap->mutex);
-#endif
-    return;
-}
-
-int mmBitMapMaskGet(mmBitMap *bitmap, size_t entryindex, long mask)
-{
-    int value;
-    size_t vindex, shift;
-    vindex = entryindex >> CPUCONF_LONG_BITSHIFT;
-    shift = entryindex & (CPUCONF_LONG_BITS - 1);
-#ifdef MM_ATOMIC_SUPPORT
-    value = (mmAtomicReadL(&bitmap->map[vindex]) >> shift) & mask;
-#else
-    mtMutexLock(&bitmap->mutex);
-    value = (bitmap->map[vindex] >> shift) & mask;
-    mtMutexUnlock(&bitmap->mutex);
-#endif
-    return value;
-}
-
-void mmBitMapMaskSet(mmBitMap *bitmap, size_t entryindex, long value, long mask)
-{
-    size_t vindex, shift;
-    long oldvalue, newvalue;
-    vindex = entryindex >> CPUCONF_LONG_BITSHIFT;
-    shift = entryindex & (CPUCONF_LONG_BITS - 1);
-#ifdef MM_ATOMIC_SUPPORT
-
-    for (; ;) {
-	oldvalue = mmAtomicReadL(&bitmap->map[vindex]);
-	newvalue = (oldvalue & ~(mask << shift)) | (value << shift);
-
-	if (mmAtomicCmpReplaceL(&bitmap->map[vindex], oldvalue, newvalue))
-	    break;
-    }
-
-#else
-    mtMutexLock(&bitmap->mutex);
-    bitmap->map[vindex] = (bitmap->map[vindex] & ~(mask << shift)) | (value << shift);
-    mtMutexUnlock(&bitmap->mutex);
 #endif
     return;
 }

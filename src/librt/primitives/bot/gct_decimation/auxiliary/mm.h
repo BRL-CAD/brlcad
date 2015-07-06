@@ -37,9 +37,13 @@
 
 #include "common.h"
 
+#include "mmatomic.h"
+#include "mmthread.h"
 
+#include <stddef.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <sys/time.h>
 
 
 #define MM_DEBUG 0
@@ -98,11 +102,6 @@
 #define MM_NODE_COUNT_MAXIMUM (256)
 
 
-#ifndef CPUCONF_CACHE_LINE_SIZE
-#define CPUCONF_CACHE_LINE_SIZE 64
-#endif
-
-
 #if defined(__GNUC__)
 #define MM_CACHE_ALIGN __attribute__((aligned(CPUCONF_CACHE_LINE_SIZE)))
 #define MM_RESTRICT __restrict
@@ -123,8 +122,6 @@
 #endif
 
 
-#include <sys/time.h>
-
 #ifdef __WIN32__
 int mmGetTimeOfDay(struct timeval *tv);
 #define gettimeofday(a,b) mmGetTimeOfDay(a)
@@ -143,10 +140,6 @@ typedef struct {
 } mmContext;
 
 extern mmContext mmcontext;
-
-
-#include "mmatomic.h"
-#include "mmthread.h"
 
 
 #if MM_DEBUG
@@ -452,27 +445,6 @@ size_t mmIndexCount(mmIndexHead *head);
 
 
 typedef struct {
-    uintptr_t bitmask;
-    int bitshift;
-    uintptr_t countalign;
-    uintptr_t indexshift;
-    uintptr_t indexmask;
-    uintptr_t initmask;
-    size_t mapsize;
-    uintptr_t *map;
-    mtSpin spinlock;
-} mmBitTableHead;
-
-void mmBitTableInit(mmBitTableHead *head, int bitsperentry, int chunksize, int initmask);
-void mmBitTableFreeAll(mmBitTableHead *head);
-void mmBitTableSet(mmBitTableHead *head, uintptr_t index, int flags, int editmask);
-uintptr_t mmBitTableGet(mmBitTableHead *head, uintptr_t index);
-
-
-/****/
-
-
-typedef struct {
     size_t size;
     size_t used;
     void *next;
@@ -492,43 +464,6 @@ void *MM_FUNC(GrowAlloc)(mmGrow *mgrow, size_t bytes MM_PARAMS);
 #define mmGrowInit(x,y) MM_FUNC(GrowInit)(x,y,__FILE__,__LINE__)
 #define mmGrowFreeAll(x) MM_FUNC(GrowFreeAll)(x,__FILE__,__LINE__)
 #define mmGrowAlloc(x,y) MM_FUNC(GrowAlloc)(x,y,__FILE__,__LINE__)
-#endif
-
-
-/****/
-
-
-#if 0
-
-typedef struct {
-    void ***table;
-    intptr_t pagecount;
-    intptr_t pagesize;
-    intptr_t pagemask;
-    intptr_t pageshift;
-    mtSpin spinlock;
-} mmDirectory;
-
-#define MM_DIR_ENTRY(dir,index) ( (dir)->table[ index >> (dir)->pageshift ][ index & (dir)->pagemask ] )
-
-int MM_FUNC(DirInit)(mmDirectory *dir, intptr_t pageshift, intptr_t pagecount MM_PARAMS);
-void MM_FUNC(DirSize)(mmDirectory *dir, intptr_t size MM_PARAMS);
-void MM_FUNC(DirSet)(mmDirectory *dir, intptr_t index, void *entry MM_PARAMS);
-void *MM_FUNC(DirGet)(mmDirectory *dir, intptr_t index MM_PARAMS);
-void MM_FUNC(DirSetFast)(mmDirectory *dir, intptr_t index, void *entry MM_PARAMS);
-void *MM_FUNC(DirGetFast)(mmDirectory *dir, intptr_t index MM_PARAMS);
-void MM_FUNC(DirFree)(mmDirectory *dir MM_PARAMS);
-
-#if MM_DEBUG
-#define mmDirInit(x,y,z) MM_FUNC(DirInit)(x,y,z,__FILE__,__LINE__)
-#define mmDirSize(x,y) MM_FUNC(DirSize)(x,y,__FILE__,__LINE__)
-#define mmDirSet(x,y,z) MM_FUNC(DirSet)(x,y,z,__FILE__,__LINE__)
-#define mmDirGet(x,y) MM_FUNC(DirGet)(x,y,__FILE__,__LINE__)
-#define mmDirSetFast(x,y,z) MM_FUNC(DirSetFast)(x,y,z,__FILE__,__LINE__)
-#define mmDirGetFast(x,y) MM_FUNC(DirGetFast)(x,y,__FILE__,__LINE__)
-#define mmDirFree(x) MM_FUNC(DirFree)(x,__FILE__,__LINE__)
-#endif
-
 #endif
 
 

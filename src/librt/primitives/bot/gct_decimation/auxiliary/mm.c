@@ -37,12 +37,6 @@
  */
 
 
-#define MM_THREADING
-
-
-#ifdef MM_THREADING
-
-
 #if defined(__GNUC__) && (__GNUC__ == 5 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 3)) && !defined(__clang__)
 #  pragma GCC diagnostic ignored "-Wunused-function"
 #endif
@@ -54,8 +48,13 @@
 #define _GNU_SOURCE
 #include <pthread.h>
 #include <sched.h>
-#endif
 
+#include "common.h"
+
+#include "mm.h"
+
+#include "cc.h"
+#include "cpuconfig.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -69,12 +68,6 @@
 #include <stdarg.h>
 #include <errno.h>
 #include <assert.h>
-
-
-#include "cpuconfig.h"
-#include "cc.h"
-#include "mm.h"
-
 
 #if defined(MM_UNIX)
 #include <fcntl.h>
@@ -1993,91 +1986,6 @@ size_t mmIndexCount(mmIndexHead *head)
 /****/
 
 
-#define MM_BITTABLE_SIZEBYTES(head) ((((head->mapsize)<<head->bitshift))>>CPUCONF_CHAR_BITSHIFT)
-#define MM_BITTABLE_MINALIGN (4096)
-
-void mmBitTableInit(mmBitTableHead *head, int bitsperentry, int chunksize, int initmask)
-{
-    int i;
-    head->bitshift = ccLog2Int32(ccAlignInt32(bitsperentry));
-    head->bitmask = (1 << bitsperentry) - 1;
-    head->countalign = ccAlignIntPtr(chunksize);
-
-    if (head->countalign < MM_BITTABLE_MINALIGN)
-	head->countalign = MM_BITTABLE_MINALIGN;
-
-    head->indexshift = CPUCONF_INTPTR_BITSHIFT >> head->bitshift;
-    head->indexmask = (1 << head->indexshift) - 1;
-    head->mapsize = 0;
-    head->map = 0;
-    initmask &= (1 << head->bitmask) - 1;
-    head->initmask = 0;
-
-    for (i = 0 ; i < CPUCONF_INTPTR_BITS ; i += head->bitmask)
-	head->initmask |= initmask << i;
-
-    mtSpinInit(&head->spinlock);
-    return;
-}
-
-void mmBitTableFreeAll(mmBitTableHead *head)
-{
-    free(head->map);
-    head->map = 0;
-    head->mapsize = 0;
-    mtSpinDestroy(&head->spinlock);
-    return;
-}
-
-void mmBitTableSet(mmBitTableHead *head, uintptr_t vindex, int flags, int editmask)
-{
-    uintptr_t *map;
-    uintptr_t offset, shift, mapindex, mapindexend;
-    mtSpinLock(&head->spinlock);
-    map = head->map;
-
-    if (vindex >= head->mapsize) {
-	mapindex = head->mapsize >> CPUCONF_INTPTR_BITSHIFT;
-	head->mapsize = (vindex + head->countalign) & (head->countalign - 1);
-	head->map = (uintptr_t *)realloc(head->map, MM_BITTABLE_SIZEBYTES(head));
-	mapindexend = head->mapsize >> CPUCONF_INTPTR_BITSHIFT;
-	map = head->map;
-
-	for (; mapindex < mapindexend ; mapindex++)
-	    map[mapindex] = head->initmask;
-    }
-
-    offset = vindex >> head->indexshift;
-    shift = (vindex & head->indexmask) << head->bitshift;
-    map[ offset ] &= ~(editmask << shift);
-    map[ offset ] |= ((flags & editmask) << shift);
-    mtSpinUnlock(&head->spinlock);
-    return;
-}
-
-uintptr_t mmBitTableGet(mmBitTableHead *head, uintptr_t vindex)
-{
-    uintptr_t *map;
-    uintptr_t offset, shift, value;
-    mtSpinLock(&head->spinlock);
-
-    if (vindex >= head->mapsize) {
-	mtSpinUnlock(&head->spinlock);
-	return head->initmask;
-    }
-
-    map = head->map;
-    offset = vindex >> head->indexshift;
-    shift = (vindex & head->indexmask) << head->bitshift;
-    value = (map[ offset ] >> shift) & head->bitmask;
-    mtSpinUnlock(&head->spinlock);
-    return value;
-}
-
-
-/****/
-
-
 #define MM_GROW_NODE_MEM(x,b) ADDRESS(x,sizeof(mmGrowNode)+b)
 
 /**
@@ -3241,11 +3149,7 @@ void *mmDebugAlloc(size_t bytes, char *file, int line)
     if (!(chunk = (mmChunk *)malloc(sizeof(mmChunk) + bytes + MM_DEBUG_GUARD_BYTES)))
 #endif
     {
-#ifdef MM_WINDOWS
 	fprintf(stderr, "FATAL : Denied memory allocation ( %ld ) at %s:%d !\nExiting\n", (long)bytes, file, line);
-#else
-	fprintf(stderr, "FATAL : Denied memory allocation ( %ld ) at %s:%d !\nExiting\n", (long)bytes, file, line);
-#endif
 	exit(1);
     }
 
@@ -3343,17 +3247,10 @@ void *mmAlloc(void *UNUSED(unused), size_t bytes MM_PARAMS)
     return mmDebugAlloc(bytes MM_PASSPARAMS);
 #else
     void *chunk;
-#ifdef MM_WINDOWS
 
     if (!(chunk = malloc(bytes)))
 	fprintf(stderr, "WARNING : Denied memory allocation ( %ld )!\nExiting\n", (long)bytes);
 
-#else
-
-    if (!(chunk = malloc(bytes)))
-	fprintf(stderr, "WARNING : Denied memory allocation ( %ld )!\nExiting\n", (long)bytes);
-
-#endif
     return chunk;
 #endif
 }
@@ -3364,17 +3261,10 @@ void *mmRealloc(void *UNUSED(unused), void *v, size_t bytes MM_PARAMS)
 #if MM_DEBUG
     return mmDebugRealloc(v, bytes MM_PASSPARAMS);
 #else
-#ifdef MM_WINDOWS
 
     if (!(v = realloc(v, bytes)) && (bytes))
 	fprintf(stderr, "WARNING : Denied memory reallocation ( %ld )!\nExiting\n", (long)bytes);
 
-#else
-
-    if (!(v = realloc(v, bytes)) && (bytes))
-	fprintf(stderr, "WARNING : Denied memory reallocation ( %ld )!\nExiting\n", (long)bytes);
-
-#endif
     return v;
 #endif
 }
@@ -3483,13 +3373,8 @@ void mmListUses(char *file, int line)
 	free(chunksort);
     }
 
-#ifdef MM_WINDOWS
     printf(" %10ld bytes total\n", (long)totalsize);
     printf(" %10ld bytes maximum reached\n\n", (long)mmMaxCount);
-#else
-    printf(" %10ld bytes total\n", (long)totalsize);
-    printf(" %10ld bytes maximum reached\n\n", (long)mmMaxCount);
-#endif
     mtMutexUnlock(&mmGlobalMutex);
     return;
 }
@@ -3503,7 +3388,7 @@ void mmListUses(char *file, int line)
 #include <time.h>
 #include <windows.h>
 
-#define DELTA_EPOCH_IN_MICROSECS  11644473600000000ULL
+#define DELTA_EPOCH_IN_MICROSECS  UINT64_C(11644473600000000)
 
 int mmGetTimeOfDay(struct timeval *tv)
 {

@@ -37,6 +37,8 @@
 
 #include "common.h"
 
+#include "cpuconfig.h"
+
 
 #if ( defined(CPUCONF_ARCH_IA32) || defined(CPUCONF_ARCH_AMD64) ) && defined(__GNUC__)
 #define MM_ATOMIC_SUPPORT

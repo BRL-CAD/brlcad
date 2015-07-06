@@ -37,6 +37,8 @@
 
 #include "common.h"
 
+#include "mmatomic.h"
+
 
 #ifndef STAND_ALONE_MD
 
@@ -47,11 +49,7 @@
 #endif
 
 
-#if defined(MT_QT)
-
-#include "mmthreadqt.h"
-
-#elif defined(MT_DISABLED)
+#if defined(MT_DISABLED)
 
 struct mtNull {
 };
@@ -83,6 +81,7 @@ typedef struct mtNull mtSignal;
 #include <pthread.h>
 #include <unistd.h>
 #include <sched.h>
+#include <sys/time.h>
 #include <limits.h>
 
 #if _POSIX_SPIN_LOCKS > 0

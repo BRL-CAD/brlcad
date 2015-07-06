@@ -32,6 +32,11 @@
 
 #include "common.h"
 
+#include "mmatomic.h"
+#include "mmthread.h"
+
+#include <stddef.h>
+
 
 typedef struct {
     size_t entrycount;

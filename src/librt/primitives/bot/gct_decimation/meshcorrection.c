@@ -437,21 +437,11 @@ static int mcIntersectRayTriangle(mcf *src, mcf *vector, mcf *v0, mcf *v1, mcf *
     M3D_VectorSubStore(v, v2, v0);
     M3D_VectorCrossProduct(normal, u, v);
 
-#ifdef DEBUG_VERBOSE_TRITEST
-    printf("    V0 : %f %f %f\n", v0[0], v0[1], v0[2]);
-    printf("    V1 : %f %f %f\n", v1[0], v1[1], v1[2]);
-    printf("    V2 : %f %f %f\n", v2[0], v2[1], v2[2]);
-    printf("    Normal : %f %f %f\n", normal[0], normal[1], normal[2]);
-#endif
-
     denom = M3D_VectorDotProduct(normal, vector);
 
     /* Dotproduct of normal,vector  should be near mag(normal)*mag(vector) for high accuracy */
 #ifdef MC_ENABLE_INEXACTFLAG_SUPPORT
     accuracy = fabs(denom) / (M3D_VectorMagnitude(normal) * M3D_VectorMagnitude(vector));
-#ifdef DEBUG_VERBOSE_TRITEST
-    printf("      Accuracy : %f\n", accuracy);
-#endif
 
     if (accuracy < inexact->vectorthreshold)
 	inexact->inexactflag = 1;
@@ -465,9 +455,6 @@ static int mcIntersectRayTriangle(mcf *src, mcf *vector, mcf *v0, mcf *v1, mcf *
     num = -M3D_VectorDotProduct(normal, sv0);
     distance = num / denom;
 
-#ifdef DEBUG_VERBOSE_TRITEST
-    printf("      Distance : %f\n", distance);
-#endif
 
 #ifdef MC_ENABLE_INEXACTFLAG_SUPPORT
 
@@ -491,9 +478,6 @@ static int mcIntersectRayTriangle(mcf *src, mcf *vector, mcf *v0, mcf *v1, mcf *
     vv = M3D_VectorDotProduct(v, v);
     d = (uv * uv) - (uu * vv);
 
-#ifdef DEBUG_VERBOSE_TRITEST
-    printf("      D : %f\n", d);
-#endif
 
     if (ZERO(d))
 	return 0;
@@ -504,27 +488,18 @@ static int mcIntersectRayTriangle(mcf *src, mcf *vector, mcf *v0, mcf *v1, mcf *
     planehit[1] = src[1] + (distance * vector[1]);
     planehit[2] = src[2] + (distance * vector[2]);
 
-#ifdef DEBUG_VERBOSE_TRITEST
-    printf("      Planehit : %f %f %f\n", planehit[0], planehit[1], planehit[2]);
-#endif
 
     M3D_VectorSubStore(w, planehit, v0);
     wu = M3D_VectorDotProduct(w, u);
     wv = M3D_VectorDotProduct(w, v);
     s = ((uv * wv) - (vv * wu)) * d;
 
-#ifdef DEBUG_VERBOSE_TRITEST
-    printf("      S : %f\n", s);
-#endif
 
     if ((s < 0.0) || (s > 1.0))
 	return 0;
 
     t = ((uv * wu) - (uu * wv)) * d;
 
-#ifdef DEBUG_VERBOSE_TRITEST
-    printf("      T : %f\n", t);
-#endif
 
     if ((t < 0.0) || ((s + t) > 1.0))
 	return 0;
@@ -556,12 +531,6 @@ static int mcIntersectSegmentTriangle(mcf *src, mcf *dst, mcf *v0, mcf *v1, mcf 
     M3D_VectorSubStore(v, v2, v0);
     M3D_VectorCrossProduct(normal, u, v);
 
-#ifdef DEBUG_VERBOSE_TRITEST
-    printf("    V0 : %f %f %f\n", v0[0], v0[1], v0[2]);
-    printf("    V1 : %f %f %f\n", v1[0], v1[1], v1[2]);
-    printf("    V2 : %f %f %f\n", v2[0], v2[1], v2[2]);
-    printf("    Normal : %f %f %f\n", normal[0], normal[1], normal[2]);
-#endif
 
     M3D_VectorSubStore(vector, dst, src);
     denom = M3D_VectorDotProduct(normal, vector);
@@ -569,9 +538,6 @@ static int mcIntersectSegmentTriangle(mcf *src, mcf *dst, mcf *v0, mcf *v1, mcf 
     /* Dotproduct of normal,vector  should be near mag(normal)*mag(vector) for high accuracy */
 #ifdef MC_ENABLE_INEXACTFLAG_SUPPORT
     accuracy = fabs(denom) / (M3D_VectorMagnitude(normal) * M3D_VectorMagnitude(vector));
-#ifdef DEBUG_VERBOSE_TRITEST
-    printf("      Accuracy : %f\n", accuracy);
-#endif
 
     if (accuracy < inexact->vectorthreshold)
 	inexact->inexactflag = 1;
@@ -585,9 +551,6 @@ static int mcIntersectSegmentTriangle(mcf *src, mcf *dst, mcf *v0, mcf *v1, mcf 
     num = -M3D_VectorDotProduct(normal, sv0);
     distance = num / denom;
 
-#ifdef DEBUG_VERBOSE_TRITEST
-    printf("      Distance : %f\n", distance);
-#endif
 
 #ifdef MC_ENABLE_INEXACTFLAG_SUPPORT
 
@@ -620,9 +583,6 @@ static int mcIntersectSegmentTriangle(mcf *src, mcf *dst, mcf *v0, mcf *v1, mcf 
     vv = M3D_VectorDotProduct(v, v);
     d = (uv * uv) - (uu * vv);
 
-#ifdef DEBUG_VERBOSE_TRITEST
-    printf("      D : %f\n", d);
-#endif
 
     if (ZERO(d))
 	return 0;
@@ -633,27 +593,18 @@ static int mcIntersectSegmentTriangle(mcf *src, mcf *dst, mcf *v0, mcf *v1, mcf 
     planehit[1] = src[1] + (distance * vector[1]);
     planehit[2] = src[2] + (distance * vector[2]);
 
-#ifdef DEBUG_VERBOSE_TRITEST
-    printf("      Planehit : %f %f %f\n", planehit[0], planehit[1], planehit[2]);
-#endif
 
     M3D_VectorSubStore(w, planehit, v0);
     wu = M3D_VectorDotProduct(w, u);
     wv = M3D_VectorDotProduct(w, v);
     s = ((uv * wv) - (vv * wu)) * d;
 
-#ifdef DEBUG_VERBOSE_TRITEST
-    printf("      S : %f\n", s);
-#endif
 
     if ((s < 0.0) || (s > 1.0))
 	return 0;
 
     t = ((uv * wu) - (uu * wv)) * d;
 
-#ifdef DEBUG_VERBOSE_TRITEST
-    printf("      T : %f\n", t);
-#endif
 
     if ((t < 0.0) || ((s + t) > 1.0))
 	return 0;
@@ -693,9 +644,6 @@ static int mcGetSeedtriangle(mcMesh *mesh)
     mcf vecta[3], vectb[3], normal[3];
     mcIntersectInexact inexact;
 
-#ifdef DEBUG_VERBOSE
-    printf("\nNew Seed Search\n");
-#endif
 
     /* Set up initial exactitude thresholds */
     inexact.vectorthreshold = MC_INEXACT_VECTOR_THRESHOLD;
@@ -711,9 +659,6 @@ static int mcGetSeedtriangle(mcMesh *mesh)
 	if (--mesh->attemptcount < 0)
 	    return -1;
 
-#ifdef DEBUG_VERBOSE
-	printf("Attempt : %d\n", attemptcount);
-#endif
 
 	for (; ;) {
 	    refplane[0] = ((mcf)(ccQuickRand32(&mesh->randstate) & 0xffff) / 65535.0) - 0.5;
@@ -727,9 +672,6 @@ static int mcGetSeedtriangle(mcMesh *mesh)
 	M3D_VectorNormalize(mcf, refplane);
 	refplane[3] = 0.0;
 
-#ifdef DEBUG_VERBOSE
-	printf("Refplane : %f %f %f %f\n", refplane[0], refplane[1], refplane[2], refplane[3]);
-#endif
 
 	/* Loop through all unused triangles, find the right-most vertex and buffer up all triangles that connect to it */
 	bestdistance = -FLT_MAX;
@@ -790,14 +732,8 @@ static int mcGetSeedtriangle(mcMesh *mesh)
 
 	    tribuffer[tribuffercount++] = triindex;
 
-#ifdef DEBUG_VERBOSE
-	    printf("  Seed Buffer Up %d : %d\n", tribuffercount - 1, triindex);
-#endif
 	}
 
-#ifdef DEBUG_VERBOSE
-	printf("Seed Buffer Count : %d\n", tribuffercount);
-#endif
 
 	/* No buffered triangle means all triangles have been processed */
 	if (!(tribuffercount))
@@ -823,9 +759,6 @@ static int mcGetSeedtriangle(mcMesh *mesh)
 	    midpoint[1] = (1.0 / 3.0) * (v0f[1] + v1f[1] + v2f[1]);
 	    midpoint[2] = (1.0 / 3.0) * (v0f[2] + v1f[2] + v2f[2]);
 
-#ifdef DEBUG_VERBOSE
-	    printf("  Target Midpoint : %f %f %f\n", midpoint[0], midpoint[1], midpoint[2]);
-#endif
 
 	    /* Define ray origin as beyond plane, perpendicular to plane normal, heading towards midpoint */
 	    middistance = M3D_PlanePoint(refplane, midpoint);
@@ -843,10 +776,6 @@ static int mcGetSeedtriangle(mcMesh *mesh)
 	    rayvector[1] = midpoint[1] - raysrc[1];
 	    rayvector[2] = midpoint[2] - raysrc[2];
 
-#ifdef DEBUG_VERBOSE
-	    printf("    Ray src : %f %f %f\n", raysrc[0], raysrc[1], raysrc[2]);
-	    printf("    Vector  : %f %f %f\n", rayvector[0], rayvector[1], rayvector[2]);
-#endif
 
 	    if (mcIntersectRayTriangle(raysrc, rayvector, v0f, v1f, v2f, raydst, &inexact)) {
 		seedindex = triindex;
@@ -856,15 +785,9 @@ static int mcGetSeedtriangle(mcMesh *mesh)
 
 	/* If no triangle was hit by our ray, try again with a new reference plane */
 	if (seedindex == -1) {
-#ifdef DEBUG_VERBOSE
-	    printf("      No intersection found in limit vertex!\n");
-#endif
 	    continue;
 	}
 
-#ifdef DEBUG_VERBOSE
-	printf("    Current Seed : %d\n", triindex);
-#endif
 
 	/* Find the first hit along ray */
 	for (triindex = 0 ; triindex < (mci)mesh->tricount ; triindex++) {
@@ -883,9 +806,6 @@ static int mcGetSeedtriangle(mcMesh *mesh)
 
 	    /* Check if that triangle is on top of our current target */
 	    if (mcIntersectSegmentTriangle(raysrc, raydst, v0f, v1f, v2f, raydst, &inexact)) {
-#ifdef DEBUG_VERBOSE
-		printf("    New Hit %d : %f %f %f\n", triindex, raydst[0], raydst[1], raydst[2]);
-#endif
 		seedindex = triindex;
 	    }
 	}
@@ -894,9 +814,6 @@ static int mcGetSeedtriangle(mcMesh *mesh)
 	if (mmBitMapDirectGet(&mesh->tribitmap, seedindex))
 	    continue;
 
-#ifdef DEBUG_VERBOSE
-	printf("    Seed Found %d ; Inexactflag %d\n", seedindex, inexact.inexactflag);
-#endif
 
 	/* We may hit floating point inaccuracy issues somewhere in our calculations */
 	/* If inexactflag is raised, do NOT accept the result, pick a different reference plane and try again */
@@ -906,9 +823,6 @@ static int mcGetSeedtriangle(mcMesh *mesh)
 	/* For the next pass, reduce accuracy thresholds a little */
 	inexact.vectorthreshold *= MC_INEXACT_THRESHOLD_ATTEMPT_FACTOR;
 	inexact.segmentthreshold *= MC_INEXACT_THRESHOLD_ATTEMPT_FACTOR;
-#ifdef DEBUG_VERBOSE
-	printf("      Inexact Thresholds : %f %f\n", inexact.vectorthreshold, inexact.segmentthreshold);
-#endif
     }
 
     if (seedindex == -1)
@@ -932,24 +846,14 @@ static int mcGetSeedtriangle(mcMesh *mesh)
     if (mesh->flags & MC_FLAGS_TRIANGLE_WINDING_CCW)
 	signfactor = -1.0;
 
-#ifdef DEBUG_VERBOSE
-    printf("Seed Normal : %f %f %f\n", normal[0], normal[1], normal[2]);
-    printf("Ray Vector  : %f %f %f\n", rayvector[0], rayvector[1], rayvector[2]);
-#endif
 
     if ((signfactor * M3D_VectorDotProduct(normal, rayvector)) > 0.0) {
-#ifdef DEBUG_VERBOSE
-	printf("Seed %d ; %d %d %d, Flip True\n", seedindex, (int)indices[0], (int)indices[1], (int)indices[2]);
-#endif
 	/* If facing towards ray, seed triangle requires flipping */
 	indtemp = indices[2];
 	indices[2] = indices[1];
 	indices[1] = indtemp;
 	mesh->indicesNativeToUser(ADDRESS(mesh->indices, seedindex * mesh->indicesstride), indices);
     } else {
-#ifdef DEBUG_VERBOSE
-	printf("Seed %d ; %d %d %d, Flip False\n", seedindex, (int)indices[0], (int)indices[1], (int)indices[2]);
-#endif
     }
 
     mmBitMapDirectSet(&mesh->tribitmap, seedindex);
@@ -1039,9 +943,6 @@ static void mcQueueNewOp(mcMesh *mesh, void **oplist, mci v0, mci v1, mci triind
     op->v1 = v1;
     op->triindex = triindex;
 
-#ifdef DEBUG_VERBOSE
-    printf("  Queue New Op ; Edge %d %d ; Triindex %d\n", v0, v1, triindex);
-#endif
 
     mmListAdd(oplist, op, offsetof(mcOp, list));
     return;
@@ -1076,15 +977,9 @@ static void mcPerformCorrection(mcMesh *mesh)
 	mcQueueNewOp(mesh, &oplist, indices[1], indices[2], seedindex);
 	mcQueueNewOp(mesh, &oplist, indices[2], indices[0], seedindex);
 
-#ifdef DEBUG_VERBOSE
-	printf("  Queued Seed %d %d %d\n", (int)indices[0], (int)indices[1], (int)indices[2]);
-#endif
 
 	/* Process all pending edges */
 	for (op = (mcOp *)oplist ; op ; op = (mcOp *)oplist) {
-#ifdef DEBUG_VERBOSE
-	    printf("  Op %d %d, triindex %d\n", (int)op->v0, (int)op->v1, (int)op->triindex);
-#endif
 
 	    /* Accumulate results for edge in both direction */
 	    mcEdgeTriBufferReset(&tribuffer);
@@ -1096,9 +991,6 @@ static void mcPerformCorrection(mcMesh *mesh)
 	    edge.v[1] = op->v0;
 	    mmHashDirectListEntry(mesh->edgehashtable, &mcEdgeHashBufferAdd, &edge, &tribuffer);
 
-#ifdef DEBUG_VERBOSE
-	    printf("    Tribuffercount : %d\n", tribuffer.tricount);
-#endif
 
 	    /* If edge is uncertain due to multiple linked edges, do not process */
 	    if (tribuffer.tricount != 1)
@@ -1109,15 +1001,9 @@ static void mcPerformCorrection(mcMesh *mesh)
 
 	    /* Check if we have already processed that edge */
 	    if (mmBitMapDirectGet(&mesh->tribitmap, triindex)) {
-#ifdef DEBUG_VERBOSE
-		printf("      Skip Triindex %d\n", (int)triindex);
-#endif
 		goto next;
 	    }
 
-#ifdef DEBUG_VERBOSE
-	    printf("    Linked Triindex %d\n", (int)triindex);
-#endif
 
 	    /* Check the linked triangle, flip if it doesn't face the same way */
 	    flipflag = 0;
@@ -1135,9 +1021,6 @@ static void mcPerformCorrection(mcMesh *mesh)
 	    } else
 		bu_bomb("SHOULD NOT HAPPEN");
 
-#ifdef DEBUG_VERBOSE
-	    printf("  Walk %d %d %d, Flipflag %d\n", (int)indices[0], (int)indices[1], (int)indices[2], flipflag);
-#endif
 
 	    /* If necessary, flip the indices and write them back */
 	    mmBitMapDirectSet(&mesh->tribitmap, triindex);
@@ -1244,10 +1127,6 @@ int mcMeshCorrection(size_t vertexcount, void *vertex, int vertexwidth, size_t v
     mcHashBuild(&mesh);
 
     mcPerformCorrection(&mesh);
-
-#ifdef DEBUG_VERBOSE
-    printf("Final Process Count : %d\n", mesh.processcount);
-#endif
 
     free(mesh.edgehashtable);
     mmBitMapFree(&mesh.tribitmap);

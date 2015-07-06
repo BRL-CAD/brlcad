@@ -32,18 +32,15 @@
 
 #include "common.h"
 
+#include <stddef.h>
+
 
 void *mmBinSortInit(size_t itemlistoffset, int rootbucketcount, int groupbucketcount, double rootmin, double rootmax, int groupthreshold, double(*itemvaluecallback)(void *item), int maxdepth, int numanodeindex);
 void mmBinSortFree(void *binsort);
 
-
 void mmBinSortAdd(void *binsort, void *item, double itemvalue);
 void mmBinSortRemove(void *binsort, void *item, double itemvalue);
 void mmBinSortUpdate(void *binsort, void *item, double olditemvalue, double newitemvalue);
-
-void *mmBinSortGetRootBucket(void *binsort, int bucketindex, int *itemcount);
-void *mmBinSortGetGroupBucket(void *binsortgroup, int bucketindex, int *itemcount);
-
 
 void *mmBinSortGetFirstItem(void *binsort, double failmax);
 

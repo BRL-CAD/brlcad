@@ -768,19 +768,6 @@ static void moDetachTriangle(moMesh *mesh, moThreadData *tdata, moi detachtriind
 	trireflist = &mesh->trireflist[vertex->trirefbase];
 
 	for (trirefindex = 0 ; ; trirefindex++) {
-#ifdef DEBUG_VERBOSE
-#ifdef MO_CONFIG_ATOMIC_SUPPORT
-
-	    if (trirefindex >= mmAtomicRead32(&vertex->atomictrirefcount))
-		bu_bomb("SHOULD NOT HAPPEN");
-
-#else
-
-	    if (trirefindex >= vertex->trirefcount)
-		bu_bomb("SHOULD NOT HAPPEN");
-
-#endif
-#endif
 	    triindex = trireflist[trirefindex];
 
 	    if (triindex != detachtriindex)
@@ -969,10 +956,6 @@ static moi moFindNextStep(moMesh *mesh, moThreadData *tdata)
 
     /* Add score bonus for triangle strip continuity ? */
 
-#ifdef DEBUG_VERBOSE
-    tri = &mesh->trilist[besttriindex];
-    printf("  Tri %d : %d,%d,%d ( %f )\n", besttriindex, tri->v[0], tri->v[1], tri->v[2], bestscore);
-#endif
 
     return besttriindex;
 }
@@ -1106,9 +1089,6 @@ static moi moFindNextStepLookAhead(moMesh *mesh, moThreadData *tdata)
     besttriindex = -1;
 
     for (entry = &scorebuffer[MO_LOOK_AHEAD_BEST_BUFFER_SIZE - 1] ; entry >= scorebuffer ; entry--) {
-#ifdef DEBUG_VERBOSE
-	printf("Result[%d] = %d : %f\n", (int)(entry - scorebuffer), entry->triindex, entry->score);
-#endif
 
 	if (entry->triindex == -1)
 	    break;
@@ -1140,10 +1120,6 @@ static moi moFindNextStepLookAhead(moMesh *mesh, moThreadData *tdata)
 
     /* Add score bonus for triangle strip continuity ? */
 
-#ifdef DEBUG_VERBOSE
-    tri = &mesh->trilist[besttriindex];
-    printf("  Tri %d : %d,%d,%d ( %f )\n", besttriindex, tri->v[0], tri->v[1], tri->v[2], bestscore);
-#endif
 
     return besttriindex;
 }
@@ -1178,9 +1154,6 @@ static void moRebuildMesh(moMesh *mesh, moThreadData *tdata, moi seedindex)
 
 	tri = &mesh->trilist[seedindex];
 
-#ifdef DEBUG_VERBOSE
-	printf("Seed %d : %d,%d,%d\n", seedindex, tri->v[0], tri->v[1], tri->v[2]);
-#endif
 
 	/* Add triangle to list */
 #ifdef MO_CONFIG_ATOMIC_SUPPORT
@@ -1226,9 +1199,6 @@ static void moRebuildMesh(moMesh *mesh, moThreadData *tdata, moi seedindex)
 	besttriindex = findnextstep(mesh, tdata);
 
 	if (besttriindex == -1) {
-#ifdef DEBUG_VERBOSE
-	    printf("Strip Dead End\n");
-#endif
 
 	    /* Exhaustive search for a new seed triangle */
 	    besttriindex = moFindSeedTriangle(mesh, tdata);
@@ -1236,9 +1206,6 @@ static void moRebuildMesh(moMesh *mesh, moThreadData *tdata, moi seedindex)
 	    if (besttriindex == -1)
 		return;
 
-#ifdef DEBUG_VERBOSE
-	    printf("Seed %d\n", besttriindex);
-#endif
 	}
 
 	/* If triangle has already been added by the time we got here, we have to start over... */
@@ -1408,9 +1375,6 @@ static void moWriteIndices(moMesh *mesh, moThreadInit *threadinit)
 	    trinext = tri->trinext;
 #endif
 
-#ifdef DEBUG_VERBOSE
-	    printf("Tri %d,%d,%d\n", tri->v[0], tri->v[1], tri->v[2]);
-#endif
 
 	    mesh->indicesNativeToUser(indices, tri->v);
 	    indices = ADDRESS(indices, mesh->indicesstride);
@@ -1497,9 +1461,6 @@ static void moWriteRedirectIndices(moMesh *mesh, moThreadInit *threadinit)
 	    vertex = &mesh->vertexlist[tri->v[2]];
 	    triindices[2] = vertex->redirectindex;
 
-#ifdef DEBUG_VERBOSE
-	    printf("Tri %d,%d,%d\n", triindices[0], triindices[1], triindices[2]);
-#endif
 
 	    mesh->indicesNativeToUser(indices, triindices);
 	    indices = ADDRESS(indices, mesh->indicesstride);
@@ -1522,10 +1483,6 @@ int moOptimizeMesh(size_t vertexcount, size_t tricount, void *indices, int indic
     moThreadInit threadinit[MO_THREAD_COUNT_MAX];
     moThreadInit *tinit;
 
-#ifdef DEBUG_VERBOSE_TIME
-    long long msecs;
-    msecs = mmGetMilisecondsTime();
-#endif
 
     if (tricount < 3)
 	return 1;
@@ -1584,9 +1541,6 @@ int moOptimizeMesh(size_t vertexcount, size_t tricount, void *indices, int indic
     moBarrierInit(&mesh.workbarrier, threadcount);
     moBarrierInit(&mesh.globalbarrier, threadcount + 1);
 
-#ifdef DEBUG_VERBOSE
-    printf("Mesh Optimization ; %d vertices ; %d triangles\n", (int)vertexcount, (int)tricount);
-#endif
 
     /* Score look-up tables */
     mesh.lookaheadfactor = 0.5;
@@ -1660,10 +1614,6 @@ int moOptimizeMesh(size_t vertexcount, size_t tricount, void *indices, int indic
     moBarrierDestroy(&mesh.workbarrier);
     moBarrierDestroy(&mesh.globalbarrier);
 
-#ifdef DEBUG_VERBOSE_TIME
-    msecs = mmGetMilisecondsTime() - msecs;
-    printf("Mesh Optimization : %lld msecs\n", (long long)msecs);
-#endif
 
     return 1;
 }
