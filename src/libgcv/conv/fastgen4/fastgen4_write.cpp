@@ -2061,7 +2061,7 @@ convert_primitive(FastgenConversion &data, const db_full_path &path,
 	    const rt_tgc_internal &tgc = *static_cast<rt_tgc_internal *>(internal.idb_ptr);
 	    RT_TGC_CK_MAGIC(&tgc);
 
-	    if (internal.idb_type != ID_REC && !tgc_is_ccone2(tgc))
+	    if (!tgc_is_ccone2(tgc))
 		return false;
 
 	    if (path.fp_len > 1
