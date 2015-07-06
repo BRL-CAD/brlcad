@@ -39,45 +39,6 @@
 
 #include "mmatomic.h"
 
-
-#ifndef STAND_ALONE_MD
-
-#if defined(COMPILE_FOR_VSL)
-#define MT_QT
-#endif
-
-#endif
-
-
-#if defined(MT_DISABLED)
-
-struct mtNull {
-};
-
-typedef struct mtNull mtMutex;
-typedef struct mtNull mtSpin;
-typedef struct mtNull mtSignal;
-
-#define mtMutexInit(a)
-#define mtMutexDestroy(a)
-#define mtMutexLock(a)
-#define mtMutexUnlock(a)
-#define mtMutexTryLock(a)
-
-#define mtSpinInit(a)
-#define mtSpinDestroy(a)
-#define mtSpinLock(a)
-#define mtSpinUnlock(a)
-#define mtSpinTryLock(a)
-
-#define mtSignalInit(a)
-#define mtSignalDestroy(a)
-#define mtSignalDispatch(a)
-#define mtSignalBroadcast(a)
-#define mtSignalMutexWait(a,b)
-
-#else
-
 #include <pthread.h>
 #include <unistd.h>
 #include <sched.h>
@@ -87,10 +48,6 @@ typedef struct mtNull mtSignal;
 #if _POSIX_SPIN_LOCKS > 0
 #define MT_SPIN_LOCK_SUPPORT
 #endif
-/*
- #define MT_BARRIER_SUPPORT
- #define MT_RWLOCK_SUPPORT
-*/
 
 
 static inline void mtYield()
@@ -310,6 +267,7 @@ static inline void mtSignalBroadcast(mtSignal *signal)
     return;
 }
 
+
 static inline void mtSignalWait(mtSignal *signal, mtMutex *mutex)
 {
 #ifdef MT_DEBUG
@@ -341,6 +299,7 @@ static inline void mtSignalWaitTimeout(mtSignal *signal, mtMutex *mutex, long mi
     pthread_cond_timedwait(&signal->pcond, &mutex->pmutex, &ts);
     return;
 }
+
 
 #ifdef MT_DEBUG
 #define MT_MUTEX_INITIALIZER { 0, 0, 0, PTHREAD_MUTEX_INITIALIZER }
@@ -388,7 +347,7 @@ static inline int mtSpinTryLock(mtSpin *spin)
     return mmAtomicCmpReplace32(&spin->atomicspin, 0x0, 0x1);
 }
 
-#elif _POSIX_SPIN_LOCKS > 0
+#elif defined(MT_SPIN_LOCK_SUPPORT)
 
 typedef struct mtSpin mtSpin;
 
@@ -453,93 +412,6 @@ typedef struct mtMutex mtSpin;
 #define mtSpinLock(a) mtMutexLock(a)
 #define mtSpinUnlock(a) mtMutexUnlock(a)
 #define mtSpinTryLock(a) mtMutexTryLock(a)
-
-#endif
-
-
-/****/
-
-
-#ifdef MT_BARRIER_SUPPORT
-
-typedef struct {
-    pthread_barrier_t pbarrier;
-} mtBarrier;
-
-static inline void mtBarrierInit(mtBarrier *barrier, int count)
-{
-    pthread_barrier_init(&barrier->pbarrier, 0, count);
-    return;
-}
-
-static inline void mtBarrierDestroy(mtBarrier *barrier)
-{
-    pthread_barrier_destroy(&barrier->pbarrier);
-    return;
-}
-
-static inline int mtBarrierWait(mtBarrier *barrier)
-{
-    return pthread_barrier_wait(&barrier->pbarrier);
-}
-
-#endif
-
-
-/****/
-
-
-#ifdef MT_RWLOCK_SUPPORT
-
-typedef struct mtRWlock mtRWlock;
-
-struct mtRWlock {
-    pthread_rwlock_t prwlock;
-};
-
-
-static inline void mtRWlockInit(mtRWlock *rwlock)
-{
-    pthread_rwlock_init(&rwlock->prwlock, 0);
-    return;
-}
-
-static inline void mtRWlockDestroy(mtRWlock *rwlock)
-{
-    pthread_rwlock_destroy(&rwlock->prwlock);
-    return;
-}
-
-static inline void mtRWlockRead(mtRWlock *rwlock)
-{
-    pthread_rwlock_rdlock(&rwlock->prwlock);
-    return;
-}
-
-static inline void mtRWlockWrite(mtRWlock *rwlock)
-{
-    pthread_rwlock_wrlock(&rwlock->prwlock);
-    return;
-}
-
-static inline void mtRWlockUnlock(mtRWlock *rwlock)
-{
-    pthread_rwlock_unlock(&rwlock->prwlock);
-    return;
-}
-
-static inline int mtRWlockTryRead(mtRWlock *rwlock)
-{
-    return pthread_rwlock_rdlock(&rwlock->prwlock);
-}
-
-static inline int mtRWlockTryWrite(mtRWlock *rwlock)
-{
-    return pthread_rwlock_wrlock(&rwlock->prwlock);
-}
-
-#endif
-
 
 #endif
 

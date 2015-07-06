@@ -41,6 +41,7 @@
 #include "mm.h"
 
 #include <float.h>
+#include <stdlib.h>
 #include <math.h>
 
 

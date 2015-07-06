@@ -37,33 +37,20 @@
 
 #include "common.h"
 
-#include "mmatomic.h"
 #include "mmthread.h"
 
-#include <stddef.h>
-#include <stdlib.h>
-#include <stdio.h>
-#include <sys/time.h>
 
+#define ADDRESS(p,o) ((void *)(((char *)p)+(o)))
 
-#define MM_DEBUG 0
+#define MM_CPU_COUNT_MAXIMUM (1024)
+#define MM_NODE_COUNT_MAXIMUM (256)
 
-#define MM_INLINE_LIST_FUNCTIONS
-
-#define MM_ALLOC_CHECK
-
-
-#define MM_DEBUG_GUARD_BYTES (32)
-#define MM_DEBUG_MMAP (1)
-/* Enabling this will lead to ever growing memory usage! Strictly for debugging. */
-#define MM_DEBUG_MMAP_LINGERING (0)
-
-
-/****/
-
-
-#ifdef MM_NUMA
-#include <numa.h>
+#if defined(__GNUC__)
+#define MM_CACHE_ALIGN __attribute__((aligned(CPUCONF_CACHE_LINE_SIZE)))
+#define MM_NOINLINE __attribute__((noinline))
+#else
+#define MM_CACHE_ALIGN
+#define MM_NOINLINE
 #endif
 
 
@@ -92,40 +79,27 @@
 #endif
 
 
-#if !MM_UNIX
-#undef MM_DEBUG_MMAP
-#define MM_DEBUG_MMAP (0)
-#endif
+typedef struct {
+    void *blocklist;
+    void *freelist;
+    size_t chunksize;
+    int chunkperblock;
+    int alignment;
+    size_t allocsize;
+    int keepfreecount;
+    int chunkfreecount;
+    void *treeroot;
+    void *(*relayalloc)(void *head, size_t bytes);
+    void (*relayfree)(void *head, void *v, size_t bytes);
+    void *relayvalue;
+    mtSpin spinlock;
+} mmBlockHead;
 
 
-#define MM_CPU_COUNT_MAXIMUM (1024)
-#define MM_NODE_COUNT_MAXIMUM (256)
-
-
-#if defined(__GNUC__)
-#define MM_CACHE_ALIGN __attribute__((aligned(CPUCONF_CACHE_LINE_SIZE)))
-#define MM_RESTRICT __restrict
-#define MM_NOINLINE __attribute__((noinline))
-#else
-#define MM_CACHE_ALIGN
-#define MM_RESTRICT
-#define MM_NOINLINE
-#endif
-
-
-#ifndef ADDRESS
-#define ADDRESS(p,o) ((void *)(((char *)p)+(o)))
-#endif
-
-#ifndef ADDRESSDIFF
-#define ADDRESSDIFF(a,b) (((char *)a)-((char *)b))
-#endif
-
-
-#ifdef __WIN32__
-int mmGetTimeOfDay(struct timeval *tv);
-#define gettimeofday(a,b) mmGetTimeOfDay(a)
-#endif
+typedef struct {
+    void **prev;
+    void *next;
+} mmListNode;
 
 
 typedef struct {
@@ -142,497 +116,26 @@ typedef struct {
 extern mmContext mmcontext;
 
 
-#if MM_DEBUG
-#define MM_FUNC(n) mm##n##Debug
-#define MM_PARAMS , char *file, int line
-#else
-#define MM_FUNC(n) mm##n
-#define MM_PARAMS
-#endif
-
-
-/****/
-
-
 void mmInit();
-void mmEnd();
 
 
-void mmThreadBindToNode(int nodeindex);
-void mmThreadBindToNode(int nodeindex);
-void mmThreadBindToCpu(int cpuindex);
-int mmCpuGetNode(int cpuindex);
+void *mmAlignAlloc(size_t bytes, intptr_t align);
+void mmAlignFree(void *v);
 
+void *mmBlockAlloc(mmBlockHead *head);
+void mmBlockRelease(mmBlockHead *head, void *v);
+void mmBlockFreeAll(mmBlockHead *head);
+void mmBlockNodeInit(mmBlockHead *head, int nodeindex, size_t chunksize, int chunkperblock, int keepfreecount, int alignment);
+void mmBlockInit(mmBlockHead *head, size_t chunksize, int chunkperblock, int keepfreecount, int alignment);
 void *mmNodeAlloc(int nodeindex, size_t size);
 void mmNodeFree(int nodeindex, void *v, size_t size);
-void mmNodeMap(int nodeindex, void *start, size_t bytes);
 
-void *mmNodeAlignAlloc(int nodeindex, size_t size, intptr_t align);
-void mmNodeAlignFree(int nodeindex, void *v, size_t size);
-
-
-/****/
-
-
-typedef struct {
-    void **prev;
-    void *next;
-} mmListNode;
-
-typedef struct {
-    void *first;
-    void **last;
-} mmListDualHead;
-
-typedef struct {
-    void *first;
-    void *last;
-} mmListLoopHead;
-
-#ifndef MM_INLINE_LIST_FUNCTIONS
 
 void mmListAdd(void **list, void *item, intptr_t offset);
 void mmListRemove(void *item, intptr_t offset);
-void mmListMergeList(void **listdst, void **listsrc, intptr_t offset);
-void mmListMoveList(void **listdst, void **listsrc, intptr_t offset);
 
-void mmListDualInit(mmListDualHead *head);
-void mmListDualAddFirst(mmListDualHead *head, void *item, intptr_t offset);
-void mmListDualAddLast(mmListDualHead *head, void *item, intptr_t offset);
-void mmListDualRemove(mmListDualHead *head, void *item, intptr_t offset);
-void *mmListDualLast(mmListDualHead *head, intptr_t offset);
-
-#else
-
-static inline void mmListAdd(void **list, void *item, intptr_t offset)
-{
-    mmListNode *node, *next;
-    node = (mmListNode *)ADDRESS(item, offset);
-    node->prev = list;
-    node->next = *list;
-
-    if (*list) {
-	next = (mmListNode *)ADDRESS(*list, offset);
-	next->prev = &(node->next);
-    }
-
-    *list = item;
-    return;
-}
-
-static inline void mmListRemove(void *item, intptr_t offset)
-{
-    mmListNode *node, *next;
-    node = (mmListNode *)ADDRESS(item, offset);
-    *(node->prev) = (void *)node->next;
-
-    if (node->next) {
-	next = (mmListNode *)ADDRESS(node->next, offset);
-	next->prev = node->prev;
-    }
-
-    return;
-}
-
-static inline void mmListMergeList(void **listdst, void **listsrc, intptr_t offset)
-{
-    void *item;
-    mmListNode *node;
-
-    if (!(*listsrc))
-	return;
-
-    for (item = *listdst ; item ; item = node->next) {
-	node = (mmListNode *)ADDRESS(item, offset);
-	listdst = &node->next;
-    }
-
-    item = *listsrc;
-    node = (mmListNode *)ADDRESS(item, offset);
-    node->prev = listdst;
-    *listdst = item;
-    *listsrc = 0;
-    return;
-}
-
-static inline void mmListMoveList(void **listdst, void **listsrc, intptr_t offset)
-{
-    void *item;
-    mmListNode *node;
-
-    if (!(*listsrc)) {
-	*listdst = 0;
-	return;
-    }
-
-    item = *listsrc;
-    node = (mmListNode *)ADDRESS(item, offset);
-    node->prev = listdst;
-    *listdst = item;
-    *listsrc = 0;
-    return;
-}
-
-static inline void mmListDualInit(mmListDualHead *head)
-{
-    head->first = 0;
-    head->last = &head->first;
-    return;
-}
-
-static inline void mmListDualAddFirst(mmListDualHead *head, void *item, intptr_t offset)
-{
-    mmListNode *node, *next;
-    node = (mmListNode *)ADDRESS(item, offset);
-    node->prev = &head->first;
-    node->next = head->first;
-
-    if (node->next) {
-	next = (mmListNode *)ADDRESS(node->next, offset);
-	next->prev = &(node->next);
-    } else
-	head->last = &(node->next);
-
-    head->first = item;
-    return;
-}
-
-static inline void mmListDualAddLast(mmListDualHead *head, void *item, intptr_t offset)
-{
-    mmListNode *node;
-    void **prev;
-    prev = head->last;
-    *prev = item;
-    node = (mmListNode *)ADDRESS(item, offset);
-    node->prev = head->last;
-    head->last = &(node->next);
-    node->next = 0;
-    return;
-}
-
-static inline void mmListDualRemove(mmListDualHead *head, void *item, intptr_t offset)
-{
-    mmListNode *node, *next;
-    node = (mmListNode *)ADDRESS(item, offset);
-    *(node->prev) = (void *)node->next;
-
-    if (node->next) {
-	next = (mmListNode *)ADDRESS(node->next, offset);
-	next->prev = node->prev;
-    } else
-	head->last = node->prev;
-
-    return;
-}
-
-static inline void *mmListDualLast(mmListDualHead *head, intptr_t offset)
-{
-    if (!(head->first))
-	return 0;
-
-    return ADDRESS(head->last, -(offset + offsetof(mmListNode, next)));
-}
-
-#endif
-
-void mmListLoopInit(mmListLoopHead *head);
-void mmListLoopAddFirst(mmListLoopHead *head, void *item, intptr_t offset);
-void mmListLoopAddLast(mmListLoopHead *head, void *item, intptr_t offset);
-void mmListLoopInsert(mmListLoopHead *head, void *previtem, void *item, intptr_t offset);
-void mmListLoopRemove(mmListLoopHead *head, void *item, intptr_t offset);
-void *mmListLoopLast(mmListLoopHead *head, intptr_t offset);
-
-
-/****/
-
-
-typedef struct {
-    void *child[2];
-    void *parent;
-    int flags;
-} mmBTreeNode;
-
-#define MM_BTREE_FLAGS_LEFT (0)
-#define MM_BTREE_FLAGS_RIGHT (1)
-#define MM_BTREE_FLAGS_DIRECTION_MASK (1)
-#define MM_BTREE_FLAGS_STEP (2)
-
-void mmBTreeInsert(void *item, void *parent, int itemflag, intptr_t offset, void **root);
-void mmBTreeRemove(void *item, intptr_t offset, void **root);
-
-void *mmBtreeMostLeft(void *root, intptr_t offset);
-void *mmBtreeMostRight(void *root, intptr_t offset);
-void *mmBtreeNeighbourLeft(void *item, intptr_t offset);
-void *mmBtreeNeighbourRight(void *item, intptr_t offset);
-intptr_t mmBtreeItemCount(void *root, intptr_t offset);
-int mmBtreeListOrdered(void *root, intptr_t offset, int (*callback)(void *item, void *v), void *v);
-int mmBtreeListBalanced(void *root, intptr_t offset, int (*callback)(void *item, void *v), void *v);
-
-
-/****/
-
-
-typedef struct {
-    mmListNode listnode;
-    mmBTreeNode node;
-    int freecount;
-    int blockindex;
-} mmBlock;
-
-typedef struct {
-    void *blocklist;
-    void *freelist;
-    size_t chunksize;
-    int chunkperblock;
-    int alignment;
-    size_t allocsize;
-    int keepfreecount;
-    int chunkfreecount;
-    void *treeroot;
-    void *(*relayalloc)(void *head, size_t bytes MM_PARAMS);
-    void (*relayfree)(void *head, void *v, size_t bytes MM_PARAMS);
-    void *relayvalue;
-    mtSpin spinlock;
-} mmBlockHead;
-
-void MM_FUNC(BlockInit)(mmBlockHead *head, size_t chunksize, int chunkperblock, int keepfreecount, int alignment MM_PARAMS);
-void MM_FUNC(BlockNodeInit)(mmBlockHead *head, int nodeindex, size_t chunksize, int chunkperblock, int keepfreecount, int alignment MM_PARAMS);
-void *MM_FUNC(BlockAlloc)(mmBlockHead *head MM_PARAMS);
-void MM_FUNC(BlockRelease)(mmBlockHead *head, void *v MM_PARAMS);
-void MM_FUNC(BlockFree)(mmBlockHead *head, void *v MM_PARAMS);
-void MM_FUNC(BlockFreeAll)(mmBlockHead *head MM_PARAMS);
-void MM_FUNC(BlockProcessList)(mmBlockHead *head, void *userpointer, int (*processchunk)(void *chunk, void *userpointer) MM_PARAMS);
-int MM_FUNC(BlockUseCount)(mmBlockHead *head MM_PARAMS);
-int MM_FUNC(BlockFreeCount)(mmBlockHead *head MM_PARAMS);
-
-#if MM_DEBUG
-#define mmBlockInit(v,w,x,y,z) MM_FUNC(BlockInit)(v,w,x,y,z,__FILE__,__LINE__)
-#define mmBlockNodeInit(u,v,w,x,y,z) MM_FUNC(BlockNodeInit)(u,v,w,x,y,z,__FILE__,__LINE__)
-#define mmBlockAlloc(x) MM_FUNC(BlockAlloc)(x,__FILE__,__LINE__)
-#define mmBlockRelease(x,y) MM_FUNC(BlockRelease)(x,y,__FILE__,__LINE__)
-#define mmBlockFree(x,y) MM_FUNC(BlockFree)(x,y,__FILE__,__LINE__)
-#define mmBlockFreeAll(x) MM_FUNC(BlockFreeAll)(x,__FILE__,__LINE__)
-#define mmBlockProcessList(x,y,z) MM_FUNC(BlockProcessList)(x,y,z,__FILE__,__LINE__)
-#define mmBlockUseCount(x) MM_FUNC(BlockProcessList)(x,__FILE__,__LINE__)
-#define mmBlockFreeCount(x) MM_FUNC(BlockProcessList)(x,__FILE__,__LINE__)
-#endif
-
-/*
-void mmBlockRelayByVolume( mmBlockHead *head, void *volumehead );
-void mmBlockRelayByZone( mmBlockHead *head, void *zonehead );
-*/
-
-
-/****/
-
-
-typedef struct {
-    mmBlockHead indexblock;
-    void *indextree;
-    intptr_t indexlimit;
-    mtSpin spinlock;
-} mmIndexHead;
-
-void mmIndexInit(mmIndexHead *head, int indexesperblock);
-void mmIndexFreeAll(mmIndexHead *head);
-void mmIndexAdd(mmIndexHead *head, intptr_t index);
-intptr_t mmIndexGet(mmIndexHead *head);
-int mmIndexRemove(mmIndexHead *head, intptr_t index);
-size_t mmIndexCount(mmIndexHead *head);
-
-
-/****/
-
-
-typedef struct {
-    size_t size;
-    size_t used;
-    void *next;
-} mmGrowNode;
-
-typedef struct {
-    mmGrowNode *first;
-    size_t nodesize;
-    mtSpin spinlock;
-} mmGrow;
-
-int MM_FUNC(GrowInit)(mmGrow *mgrow, size_t nodesize MM_PARAMS);
-void MM_FUNC(GrowFreeAll)(mmGrow *mgrow MM_PARAMS);
-void *MM_FUNC(GrowAlloc)(mmGrow *mgrow, size_t bytes MM_PARAMS);
-
-#if MM_DEBUG
-#define mmGrowInit(x,y) MM_FUNC(GrowInit)(x,y,__FILE__,__LINE__)
-#define mmGrowFreeAll(x) MM_FUNC(GrowFreeAll)(x,__FILE__,__LINE__)
-#define mmGrowAlloc(x,y) MM_FUNC(GrowAlloc)(x,y,__FILE__,__LINE__)
-#endif
-
-
-/****/
-
-
-void *MM_FUNC(AlignAlloc)(size_t bytes, intptr_t align MM_PARAMS);
-void MM_FUNC(AlignFree)(void *v MM_PARAMS);
-void *MM_FUNC(AlignGrow)(void *v, size_t bytes, size_t copybytes, intptr_t align MM_PARAMS);
-void *MM_FUNC(AlignRelayAlloc)(void *(*relayalloc)(void *head, size_t bytes MM_PARAMS), void *relayvalue, size_t bytes, intptr_t align, size_t displacement MM_PARAMS);
-void MM_FUNC(AlignRelayFree)(void (*relayfree)(void *head, void *v, size_t bytes MM_PARAMS), void *relayvalue, void *v, size_t bytes MM_PARAMS);
-
-#if MM_DEBUG
-#define mmAlignAlloc(x,y) MM_FUNC(AlignAlloc)(x,y,__FILE__,__LINE__)
-#define mmAlignFree(x) MM_FUNC(AlignFree)(x,__FILE__,__LINE__)
-#define mmAlignGrow(x) MM_FUNC(AlignGrow)(x,__FILE__,__LINE__)
-#define mmAlignRelayAlloc(v,w,x,y,z) MM_FUNC(AlignRelayAlloc)(v,w,x,y,z,__FILE__,__LINE__)
-#define mmAlignRelayFree(w,x,y,z) MM_FUNC(AlignRelayFree)(w,x,y,z,__FILE__,__LINE__)
-#endif
-
-
-/****/
-
-
-typedef struct {
-    size_t volumesize;
-    size_t volumeblocksize;
-    size_t minchunksize;
-    size_t volumechunksize;
-    size_t keepfreesize;
-    size_t totalfreesize;
-    size_t alignment;
-    void *freeroot;
-    void *volumelist;
-    void *(*relayalloc)(void *head, size_t bytes MM_PARAMS);
-    void (*relayfree)(void *head, void *v, size_t bytes MM_PARAMS);
-    void *relayvalue;
-    mtSpin spinlock;
-} mmVolumeHead;
-
-void MM_FUNC(VolumeInit)(mmVolumeHead *head, size_t volumesize, size_t minchunksize, size_t keepfreesize, size_t alignment MM_PARAMS);
-void MM_FUNC(VolumeNodeInit)(mmVolumeHead *head, int nodeindex, size_t volumesize, size_t minchunksize, size_t keepfreesize, size_t alignment MM_PARAMS);
-void *MM_FUNC(VolumeAlloc)(mmVolumeHead *head, size_t bytes MM_PARAMS);
-void MM_FUNC(VolumeRelease)(mmVolumeHead *head, void *v MM_PARAMS);
-void MM_FUNC(VolumeFree)(mmVolumeHead *head, void *v MM_PARAMS);
-void MM_FUNC(VolumeShrink)(mmVolumeHead *head, void *v, size_t bytes MM_PARAMS);
-size_t MM_FUNC(VolumeGetAllocSize)(mmVolumeHead *head, void *v);
-void MM_FUNC(VolumeClean)(mmVolumeHead *head MM_PARAMS);
-void MM_FUNC(VolumeFreeAll)(mmVolumeHead *head MM_PARAMS);
-void *MM_FUNC(VolumeRealloc)(mmVolumeHead *head, void *v, size_t bytes MM_PARAMS);
-
-#if MM_DEBUG
-#define mmVolumeInit(w,x,y,z,a) MM_FUNC(VolumeInit)(w,x,y,z,a,__FILE__,__LINE__);
-#define mmVolumeNodeInit(v,w,x,y,z) MM_FUNC(VolumeNodeInit)(v,w,x,y,z,__FILE__,__LINE__);
-#define mmVolumeAlloc(x,y) MM_FUNC(VolumeAlloc)(x,y,__FILE__,__LINE__);
-#define mmVolumeRelease(x,y) MM_FUNC(VolumeRelease)(x,y,__FILE__,__LINE__);
-#define mmVolumeFree(x,y) MM_FUNC(VolumeFree)(x,y,__FILE__,__LINE__);
-#define mmVolumeShrink(x,y,z) MM_FUNC(VolumeShrink)(x,y,z,__FILE__,__LINE__);
-#define mmVolumeGetAllocSize(x) MM_FUNC(VolumeGetAllocSize)(x,y,__FILE__,__LINE__);
-#define mmVolumeClean(x) MM_FUNC(VolumeClean)(x,__FILE__,__LINE__);
-#define mmVolumeFreeAll(x) MM_FUNC(VolumeFreeAll)(x,__FILE__,__LINE__);
-#define mmVolumeRealloc(x) MM_FUNC(VolumeRealloc)(x,y,z,__FILE__,__LINE__);
-
-#define mmVolumeAlloc MM_FUNC(VolumeAlloc)
-#define mmVolumeRelease MM_FUNC(VolumeRelease)
-#define mmVolumeFree MM_FUNC(VolumeFree)
-
-#endif
-
-/*
-void mmVolumeRelayByZone( mmVolumeHead *head, void *zonehead );
-*/
-
-
-/****/
-
-
-typedef struct {
-    void *address;
-    size_t pagesize;
-    size_t pagealignment;
-    size_t zonesize;
-    size_t alignment;
-    size_t chunkheadersize;
-    void *chunklist;
-    mtSpin spinlock;
-} mmZoneHead;
-
-int MM_FUNC(ZoneInit)(mmZoneHead *head, size_t zonesize, intptr_t alignment MM_PARAMS);
-void *MM_FUNC(ZoneAlloc)(mmZoneHead *head, size_t bytes MM_PARAMS);
-void MM_FUNC(ZoneFree)(mmZoneHead *head, void *v MM_PARAMS);
-void MM_FUNC(ZoneFreeAll)(mmZoneHead *head MM_PARAMS);
-
-#if MM_DEBUG
-#define mmZoneInit(x,y,z) MM_FUNC(ZoneInit)(x,y,z,__FILE__,__LINE__);
-#define mmZoneAlloc(x,y) MM_FUNC(ZoneAlloc)(x,y,__FILE__,__LINE__);
-#define mmZoneFree(x,y) MM_FUNC(ZoneFree)(x,y,__FILE__,__LINE__);
-#define mmZoneFreeAll(x) MM_FUNC(ZoneFreeAll)(x,__FILE__,__LINE__);
-#endif
-
-
-/****/
-
-
-void *mmAlloc(void *unused, size_t bytes MM_PARAMS);
-void *mmRealloc(void *unused, void *v, size_t bytes MM_PARAMS);
-void mmFree(void *unused, void *v, size_t bytes MM_PARAMS);
-
-void *mmDebugAlloc(size_t bytes, char *file, int line);
-void *mmDebugRealloc(void *v, size_t bytes, char *file, int line);
-void mmDebugFree(void *v, char *file, int line);
-#define mmDebugAlloc(x) mmDebugAlloc(x,__FILE__,__LINE__)
-#define mmDebugFree(x) mmDebugFree(x,__FILE__,__LINE__)
-#define mmDebugRealloc(x,y) mmDebugRealloc(x,y,__FILE__,__LINE__)
-
-void mmListUses(char *file, int line);
-#define mmListUses() mmListUses(__FILE__,__LINE__);
-
-
-/****/
-
-
-#if MM_DEBUG
-#define malloc(x) mmAlloc(0,(x),__FILE__,__LINE__)
-#define realloc(x,y) mmRealloc(0,(x),(y),__FILE__,__LINE__)
-#define free(x) mmFree(0,(x),0,__FILE__,__LINE__)
-#elif defined(MM_ALLOC_CHECK)
-
-static inline void *mmAllocCheck(size_t size, char *file, int line)
-{
-    void *p;
-    p = malloc(size);
-#ifdef MM_WINDOWS
-
-    if (!(p))
-	fprintf(stderr, "WARNING : Denied memory allocation ( %ld bytes ) at %s:%d\n", (long)size, file, line);
-
-#else
-
-    if (!(p))
-	fprintf(stderr, "WARNING : Denied memory allocation ( %lld bytes ) at %s:%d\n", (long long)size, file, line);
-
-#endif
-    return p;
-}
-
-static inline void *mmReallocCheck(void *p, size_t size, char *file, int line)
-{
-    p = realloc(p, size);
-#ifdef MM_WINDOWS
-
-    if (!(p))
-	fprintf(stderr, "WARNING : Denied memory allocation ( %ld bytes ) at %s:%d\n", (long)size, file, line);
-
-#else
-
-    if (!(p))
-	fprintf(stderr, "WARNING : Denied memory allocation ( %lld bytes ) at %s:%d\n", (long long)size, file, line);
-
-#endif
-    return p;
-}
-
-#define malloc(x) mmAllocCheck((x),__FILE__,__LINE__)
-#define realloc(x,y) mmReallocCheck((x),(y),__FILE__,__LINE__)
-#endif
-
-
-/****/
+void mmThreadBindToCpu(int cpuindex);
+int mmCpuGetNode(int cpuindex);
 
 
 static inline uint64_t mmGetMillisecondsTime()
@@ -641,25 +144,6 @@ static inline uint64_t mmGetMillisecondsTime()
     gettimeofday(&lntime, 0);
     return ((uint64_t)lntime.tv_sec * 1000) + ((uint64_t)lntime.tv_usec / 1000);
 }
-
-
-static inline uint64_t mmGetMicrosecondsTime()
-{
-    struct timeval lntime;
-    gettimeofday(&lntime, 0);
-    return ((uint64_t)lntime.tv_sec * 1000000) + (uint64_t)lntime.tv_usec;
-}
-
-
-static inline uint64_t mmGetNanosecondsTime()
-{
-    struct timeval lntime;
-    gettimeofday(&lntime, 0);
-    return ((uint64_t)lntime.tv_sec * 1000000000) + ((uint64_t)lntime.tv_usec * 1000);
-}
-
-
-/****/
 
 
 #endif
