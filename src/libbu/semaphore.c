@@ -42,6 +42,8 @@ struct bu_semaphores {
     uint32_t magic;
     mutex_t mu;
 };
+
+static mutext_t bu_init_lock = SEMAPHORE_INIT;
 #	define DEFINED_BU_SEMAPHORES 1
 
 /*
@@ -54,6 +56,8 @@ struct bu_semaphores {
     uint32_t magic;
     pthread_mutex_t mu;
 };
+
+static pthread_mutex_t bu_init_lock = SEMAPHORE_INIT;
 #	define DEFINED_BU_SEMAPHORES 1
 
 /*
@@ -65,6 +69,8 @@ struct bu_semaphores {
     uint32_t magic;
     CRITICAL_SECTION mu;
 };
+
+static uint32_t bu_init_lock = 0;
 #	define DEFINED_BU_SEMAPHORES 1
 #endif
 
@@ -104,6 +110,10 @@ bu_semaphore_init(unsigned int nsemaphores)
      */
 
 #	if defined(SUNOS)
+    if (mutex_lock(&bu_init_lock)) {
+	fprintf(stderr, "bu_semaphore_acquire(): mutex_lock() failed on init lock\n");
+	bu_bomb("fatal semaphore acquisition failure");
+    }
     for (i=bu_nsemaphores; i < nsemaphores; i++) {
 	memset(&bu_semaphores[i], 0, sizeof(struct bu_semaphores));
 	bu_semaphores[i].magic = SEMAPHORE_MAGIC;
@@ -112,7 +122,16 @@ bu_semaphore_init(unsigned int nsemaphores)
 	    bu_bomb("fatal semaphore acquisition failure");
 	}
     }
+    bu_nsemaphores = nsemaphores;
+    if (mutex_unlock(&bu_init_lock)) {
+	fprintf(stderr, "bu_semaphore_acquire(): mutex_unlock() failed on init lock\n");
+	bu_bomb("fatal semaphore acquisition failure");
+    }
 #	elif defined(HAVE_PTHREAD_H)
+    if (pthread_mutex_lock(&bu_init_lock)) {
+	fprintf(stderr, "bu_semaphore_acquire(): pthread_mutex_lock() failed on init lock\n");
+	bu_bomb("fatal semaphore acquisition failure");
+    }
     for (i=bu_nsemaphores; i < nsemaphores; i++) {
 	memset(&bu_semaphores[i], 0, sizeof(struct bu_semaphores));
 	bu_semaphores[i].magic = SEMAPHORE_MAGIC;
@@ -121,21 +140,21 @@ bu_semaphore_init(unsigned int nsemaphores)
 	    bu_bomb("fatal semaphore acquisition failure");
 	}
     }
+    bu_nsemaphores = nsemaphores;
+    if (pthread_mutex_unlock(&bu_init_lock)) {
+	fprintf(stderr, "bu_semaphore_acquire(): pthread_mutex_unlock() failed on init lock\n");
+	bu_bomb("fatal semaphore acquisition failure");
+    }
 #	elif defined(_WIN32) && !defined(__CYGWIN__)
+    while (InterlockedCompareExchange(&bu_init_lock, 1, 0));
     for (i=bu_nsemaphores; i < nsemaphores; i++) {
 	memset(&bu_semaphores[i], 0, sizeof(struct bu_semaphores));
 	bu_semaphores[i].magic = SEMAPHORE_MAGIC;
 	/* This cannot fail except for very low memory situations in XP. */
 	InitializeCriticalSection(&bu_semaphores[i].mu);
     }
+    bu_init_lock = 0;
 #	endif
-
-    /*
-     * This should be last thing done before returning, so that
-     * any subroutines called (e.g. bu_calloc()) won't think that
-     * parallel operation has begun yet, and do acquire/release.
-     */
-    bu_nsemaphores = nsemaphores;
 #endif	/* PARALLEL */
 }
 
