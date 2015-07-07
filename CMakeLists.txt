@@ -2362,13 +2362,15 @@ if(HAVE__STRNICMP)
 endif(HAVE__STRNICMP)
 
 # pipe
-BRLCAD_FUNCTION_EXISTS(_pipe HAVE__PIPE)
-if(HAVE__PIPE)
-  # Note, we can't just #define pipe _pipe because of the extra args
-  CONFIG_H_APPEND(BRLCAD "#define pipe(_FD)  (_pipe((_FD), 256, _O_TEXT))\n")
-else(HAVE__PIPE)
-  BRLCAD_FUNCTION_EXISTS(pipe HAVE_PIPE)
-endif(HAVE__PIPE)
+BRLCAD_FUNCTION_EXISTS(pipe HAVE_PIPE)
+if(NOT HAVE_PIPE)
+  # freebsd has _pipe as an alias to pipe, so test second
+  BRLCAD_FUNCTION_EXISTS(_pipe HAVE__PIPE)
+  if(HAVE__PIPE)
+    # Note, we can't just #define pipe _pipe because of the extra args
+    CONFIG_H_APPEND(BRLCAD "#define pipe(_FD)  (_pipe((_FD), 256, _O_TEXT))\n")
+  endif(HAVE__PIPE)
+endif(HAVE_PIPE)
 
 # fork is a no-go on Windows...
 BRLCAD_FUNCTION_EXISTS(fork HAVE_FORK)
