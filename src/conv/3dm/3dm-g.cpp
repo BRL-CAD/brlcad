@@ -416,7 +416,7 @@ private:
 	ObjectManager();
 
 	void add(bool use_uuid, const ON_UUID &uuid, const std::string &prefix,
-		 const std::string &syffix);
+		 const std::string &suffix);
 	void register_member(const ON_UUID &parent_uuid, const ON_UUID &member_uuid);
 	void mark_idef_member(const ON_UUID &uuid);
 
