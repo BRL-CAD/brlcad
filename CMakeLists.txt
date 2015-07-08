@@ -2370,7 +2370,7 @@ if(NOT HAVE_PIPE)
     # Note, we can't just #define pipe _pipe because of the extra args
     CONFIG_H_APPEND(BRLCAD "#define pipe(_FD)  (_pipe((_FD), 256, _O_TEXT))\n")
   endif(HAVE__PIPE)
-endif(HAVE_PIPE)
+endif(NOT HAVE_PIPE)
 
 # fork is a no-go on Windows...
 BRLCAD_FUNCTION_EXISTS(fork HAVE_FORK)
