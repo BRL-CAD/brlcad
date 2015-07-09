@@ -40,6 +40,7 @@
 
 #include "cc.h"
 
+#include <limits.h>
 #include <stdlib.h>
 
 

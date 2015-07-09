@@ -38,7 +38,6 @@
 
 #include "meshdecimation.h"
 
-#include "auxiliary/cpuconfig.h"
 #include "auxiliary/cpuinfo.h"
 #include "auxiliary/cc.h"
 #include "auxiliary/mm.h"
@@ -50,13 +49,7 @@
 #include "bu/parallel.h"
 #include "vmath.h"
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <stddef.h>
-#include <stdint.h>
 #include <string.h>
-#include <math.h>
-#include <float.h>
 
 
 #ifdef __SSE__
@@ -116,11 +109,6 @@
 
 /* Required with multithreading! */
 #define MD_CONFIG_DELAYED_OP_REDIRECT
-
-
-#ifdef MM_ATOMIC_SUPPORT
-#define MD_CONFIG_ATOMIC_SUPPORT
-#endif
 
 
 #if defined(CPUCONF_ARCH_AMD64) || defined(CPUCONF_ARCH_IA32)
@@ -558,7 +546,7 @@ typedef struct RF_ALIGN16 {
 #else
     mdf point[3];
 #endif
-#ifdef MD_CONFIG_ATOMIC_SUPPORT
+#ifdef MM_ATOMIC_SUPPORT
     mmAtomic32 atomicowner;
 #else
     int owner;
@@ -591,7 +579,7 @@ typedef struct {
     mdi trirefcount;
     long trirefalloc;
     char paddingA[64];
-#ifdef MD_CONFIG_ATOMIC_SUPPORT
+#ifdef MM_ATOMIC_SUPPORT
     mmAtomic32 trireflock;
 #else
     mtSpin trirefspinlock;
@@ -629,7 +617,7 @@ typedef struct {
     mdf maxcollapsecost;
 
     char paddingC[64];
-#ifdef MD_CONFIG_ATOMIC_SUPPORT
+#ifdef MM_ATOMIC_SUPPORT
     mmAtomic32 globalvertexlock;
 #else
     mtSpin globalvertexspinlock;
@@ -872,7 +860,7 @@ static void mdMeshAccumulateBoundary(mdVertex *vertex0, mdVertex *vertex1, mdVer
       mathQuadricMul( &q, area * MD_BOUNDARY_WEIGHT );
     */
 
-#ifdef MD_CONFIG_ATOMIC_SUPPORT
+#ifdef MM_ATOMIC_SUPPORT
     mmAtomicSpin32(&vertex0->atomicowner, -1, 0xffff);
     mathQuadricAddQuadric(&vertex0->quadric, &q);
     mmAtomicWrite32(&vertex0->atomicowner, -1);
@@ -882,7 +870,7 @@ static void mdMeshAccumulateBoundary(mdVertex *vertex0, mdVertex *vertex1, mdVer
     mtSpinUnlock(&vertex0->ownerspinlock);
 #endif
 
-#ifdef MD_CONFIG_ATOMIC_SUPPORT
+#ifdef MM_ATOMIC_SUPPORT
     mmAtomicSpin32(&vertex1->atomicowner, -1, 0xffff);
     mathQuadricAddQuadric(&vertex1->quadric, &q);
     mmAtomicWrite32(&vertex1->atomicowner, -1);
@@ -1024,7 +1012,7 @@ typedef struct RF_ALIGN64 {
     void **opbuffer;
     int opcount;
     int opalloc;
-#ifdef MD_CONFIG_ATOMIC_SUPPORT
+#ifdef MM_ATOMIC_SUPPORT
     mmAtomic32 atomlock;
 #else
     mtSpin spinlock;
@@ -1034,7 +1022,7 @@ typedef struct RF_ALIGN64 {
 
 /* 56 bytes, try padding to 64? */
 typedef struct {
-#ifdef MD_CONFIG_ATOMIC_SUPPORT
+#ifdef MM_ATOMIC_SUPPORT
     mmAtomic32 flags;
 #else
     int flags;
@@ -1089,7 +1077,7 @@ static void mdUpdateBufferInit(mdUpdateBuffer *updatebuffer, int opalloc)
     updatebuffer->opbuffer = (void **)malloc(opalloc * sizeof(mdOp *));
     updatebuffer->opcount = 0;
     updatebuffer->opalloc = opalloc;
-#ifdef MD_CONFIG_ATOMIC_SUPPORT
+#ifdef MM_ATOMIC_SUPPORT
     mmAtomicWrite32(&updatebuffer->atomlock, 0x0);
 #else
     mtSpinInit(&updatebuffer->spinlock);
@@ -1099,7 +1087,7 @@ static void mdUpdateBufferInit(mdUpdateBuffer *updatebuffer, int opalloc)
 
 static void mdUpdateBufferEnd(mdUpdateBuffer *updatebuffer)
 {
-#ifndef MD_CONFIG_ATOMIC_SUPPORT
+#ifndef MM_ATOMIC_SUPPORT
     mtSpinDestroy(&updatebuffer->spinlock);
 #endif
     free(updatebuffer->opbuffer);
@@ -1110,7 +1098,7 @@ static void mdUpdateBufferAdd(mdUpdateBuffer *updatebuffer, mdOp *op, int orflag
 {
     int32_t flags;
 
-#ifdef MD_CONFIG_ATOMIC_SUPPORT
+#ifdef MM_ATOMIC_SUPPORT
 
     for (; ;) {
 	flags = mmAtomicRead32(&op->flags);
@@ -1329,7 +1317,7 @@ static void mdMeshAddOp(mdMesh *mesh, mdThreadData *tdata, mdi v0, mdi v1)
     else
 	mmBinSortAdd(tdata->binsort, op, op->collapsecost);
 
-#ifdef MD_CONFIG_ATOMIC_SUPPORT
+#ifdef MM_ATOMIC_SUPPORT
     mmAtomicWrite32(&op->flags, opflags);
 #else
     op->flags = opflags;
@@ -1925,7 +1913,7 @@ void mdLockBufferUnlockAll(mdMesh *mesh, mdThreadData *tdata, mdLockBuffer *buff
 
     for (vindex = 0 ; vindex < buffer->vertexcount ; vindex++) {
 	vertex = &mesh->vertexlist[ buffer->vertexlist[vindex] ];
-#ifdef MD_CONFIG_ATOMIC_SUPPORT
+#ifdef MM_ATOMIC_SUPPORT
 
 	if (mmAtomicRead32(&vertex->atomicowner) == tdata->threadid)
 	    mmAtomicCmpXchg32(&vertex->atomicowner, tdata->threadid, -1);
@@ -1951,7 +1939,7 @@ int mdLockBufferTryLock(mdMesh *mesh, mdThreadData *tdata, mdLockBuffer *buffer,
     mdVertex *vertex;
     vertex = &mesh->vertexlist[ vertexindex ];
 
-#ifdef MD_CONFIG_ATOMIC_SUPPORT
+#ifdef MM_ATOMIC_SUPPORT
     owner = mmAtomicRead32(&vertex->atomicowner);
 
     if (owner == tdata->threadid)
@@ -1992,7 +1980,7 @@ int mdLockBufferLock(mdMesh *mesh, mdThreadData *tdata, mdLockBuffer *buffer, md
     mdVertex *vertex;
     vertex = &mesh->vertexlist[ vertexindex ];
 
-#ifdef MD_CONFIG_ATOMIC_SUPPORT
+#ifdef MM_ATOMIC_SUPPORT
     owner = mmAtomicRead32(&vertex->atomicowner);
 
     if (owner == tdata->threadid)
@@ -2099,7 +2087,7 @@ static void mdOpResolveLockEdge(mdMesh *mesh, mdThreadData *tdata, mdLockBuffer 
     for (; ;) {
 	if ((failcount > MD_GLOBAL_LOCK_THRESHOLD) && !(globalflag)) {
 	    mdLockBufferUnlockAll(mesh, tdata, lockbuffer);
-#ifdef MD_CONFIG_ATOMIC_SUPPORT
+#ifdef MM_ATOMIC_SUPPORT
 	    mmAtomicSpin32(&mesh->globalvertexlock, 0x0, 0x1);
 #else
 	    mtSpinLock(&mesh->globalvertexspinlock);
@@ -2128,7 +2116,7 @@ static void mdOpResolveLockEdge(mdMesh *mesh, mdThreadData *tdata, mdLockBuffer 
 #endif
     }
 
-#ifdef MD_CONFIG_ATOMIC_SUPPORT
+#ifdef MM_ATOMIC_SUPPORT
 
     if (globalflag)
 	mmAtomicWrite32(&mesh->globalvertexlock, 0x0);
@@ -2181,7 +2169,7 @@ static void mdOpResolveLockFull(mdMesh *mesh, mdThreadData *tdata, mdLockBuffer 
     for (; ;) {
 	if ((failcount > MD_GLOBAL_LOCK_THRESHOLD) && !(globalflag)) {
 	    mdLockBufferUnlockAll(mesh, tdata, lockbuffer);
-#ifdef MD_CONFIG_ATOMIC_SUPPORT
+#ifdef MM_ATOMIC_SUPPORT
 	    mmAtomicSpin32(&mesh->globalvertexlock, 0x0, 0x1);
 #else
 	    mtSpinLock(&mesh->globalvertexspinlock);
@@ -2225,7 +2213,7 @@ static void mdOpResolveLockFull(mdMesh *mesh, mdThreadData *tdata, mdLockBuffer 
 #endif
     }
 
-#ifdef MD_CONFIG_ATOMIC_SUPPORT
+#ifdef MM_ATOMIC_SUPPORT
 
     if (globalflag)
 	mmAtomicWrite32(&mesh->globalvertexlock, 0x0);
@@ -2326,7 +2314,7 @@ static void mdEdgeCollapse(mdMesh *mesh, mdThreadData *tdata, mdi v0, mdi v1, md
 	    vertex0->trirefbase = vertex1->trirefbase;
 	else {
 	    /* Multithreading, acquire lock */
-#ifdef MD_CONFIG_ATOMIC_SUPPORT
+#ifdef MM_ATOMIC_SUPPORT
 	    mmAtomicSpin32(&mesh->trireflock, 0x0, 0x1);
 #else
 	    mtSpinLock(&mesh->trirefspinlock);
@@ -2337,7 +2325,7 @@ static void mdEdgeCollapse(mdMesh *mesh, mdThreadData *tdata, mdi v0, mdi v1, md
 	    if (mesh->trirefcount >= mesh->trirefalloc)
 		bu_bomb("SHOULD NOT HAPPEN");
 
-#ifdef MD_CONFIG_ATOMIC_SUPPORT
+#ifdef MM_ATOMIC_SUPPORT
 	    mmAtomicWrite32(&mesh->trireflock, 0x0);
 #else
 	    mtSpinUnlock(&mesh->trirefspinlock);
@@ -2521,7 +2509,7 @@ static int mdMeshInit(mdMesh *mesh, size_t maxmemorysize)
     mesh->attribcount = 0;
     mesh->attrib = 0;
 
-#ifdef MD_CONFIG_ATOMIC_SUPPORT
+#ifdef MM_ATOMIC_SUPPORT
     mmAtomicWrite32(&mesh->trireflock, 0x0);
     mmAtomicWrite32(&mesh->globalvertexlock, 0x0);
 #else
@@ -2551,7 +2539,7 @@ static void mdMeshInitVertices(mdMesh *mesh, mdThreadData *tdata, int threadcoun
     point = ADDRESS(mesh->point, vertexindex * mesh->pointstride);
 
     for (; vertexindex < vertexindexmax ; vertexindex++, vertex++) {
-#ifdef MD_CONFIG_ATOMIC_SUPPORT
+#ifdef MM_ATOMIC_SUPPORT
 	mmAtomicWrite32(&vertex->atomicowner, -1);
 #else
 	vertex->owner = -1;
@@ -2603,7 +2591,7 @@ static void mdMeshInitTriangles(mdMesh *mesh, mdThreadData *tdata, int threadcou
 
 	for (i = 0 ; i < 3 ; i++) {
 	    vertex = &mesh->vertexlist[ tri->v[i] ];
-#ifdef MD_CONFIG_ATOMIC_SUPPORT
+#ifdef MM_ATOMIC_SUPPORT
 	    mmAtomicSpin32(&vertex->atomicowner, -1, tdata->threadid);
 	    mathQuadricAddQuadric(&vertex->quadric, &q);
 	    vertex->trirefcount++;
@@ -2690,7 +2678,7 @@ static void mdMeshBuildTrirefs(mdMesh *mesh, mdThreadData *tdata, int threadcoun
     for (; triindex < triindexmax ; triindex++, tri++) {
 	for (i = 0 ; i < 3 ; i++) {
 	    vertex = &mesh->vertexlist[ tri->v[i] ];
-#ifdef MD_CONFIG_ATOMIC_SUPPORT
+#ifdef MM_ATOMIC_SUPPORT
 	    mmAtomicSpin32(&vertex->atomicowner, -1, tdata->threadid);
 	    mesh->trireflist[ vertex->trirefbase + vertex->trirefcount++ ] = triindex;
 	    mmAtomicWrite32(&vertex->atomicowner, -1);
@@ -2740,7 +2728,7 @@ static void mdMeshBuildTrirefs(mdMesh *mesh, mdThreadData *tdata, int threadcoun
 /* Mesh clean up */
 static void mdMeshEnd(mdMesh *mesh)
 {
-#ifndef MD_CONFIG_ATOMIC_SUPPORT
+#ifndef MM_ATOMIC_SUPPORT
     mdi vindex;
     mdVertex *vertex;
     vertex = mesh->vertexlist;
@@ -2767,7 +2755,7 @@ static void mdSortOp(mdMesh *mesh, mdThreadData *tdata, mdOp *op, int denyflag)
     collapsecost = op->value + op->penalty;
 
     if ((denyflag) || (collapsecost > mesh->maxcollapsecost)) {
-#ifdef MD_CONFIG_ATOMIC_SUPPORT
+#ifdef MM_ATOMIC_SUPPORT
 
 	if (!(mmAtomicRead32(&op->flags) & MD_OP_FLAGS_DETACHED)) {
 	    mmBinSortRemove(tdata->binsort, op, op->collapsecost);
@@ -2785,7 +2773,7 @@ static void mdSortOp(mdMesh *mesh, mdThreadData *tdata, mdOp *op, int denyflag)
 	mtSpinUnlock(&op->spinlock);
 #endif
     } else {
-#ifdef MD_CONFIG_ATOMIC_SUPPORT
+#ifdef MM_ATOMIC_SUPPORT
 
 	if (mmAtomicRead32(&op->flags) & MD_OP_FLAGS_DETACHED) {
 	    mmBinSortAdd(tdata->binsort, op, collapsecost);
@@ -2814,7 +2802,7 @@ static void mdSortOp(mdMesh *mesh, mdThreadData *tdata, mdOp *op, int denyflag)
 static void mdUpdateOp(mdMesh *mesh, mdThreadData *tdata, mdOp *op, int32_t opflagsmask)
 {
     int denyflag, flags;
-#ifdef MD_CONFIG_ATOMIC_SUPPORT
+#ifdef MM_ATOMIC_SUPPORT
 
     for (; ;) {
 	flags = mmAtomicRead32(&op->flags);
@@ -2844,7 +2832,7 @@ static void mdUpdateOp(mdMesh *mesh, mdThreadData *tdata, mdOp *op, int32_t opfl
 	/*
 	    mmBlockFree( &tdata->opblock, op );
 	*/
-#ifdef MD_CONFIG_ATOMIC_SUPPORT
+#ifdef MM_ATOMIC_SUPPORT
 	mmAtomicOr32(&op->flags, MD_OP_FLAGS_DELETED);
 #else
 	mtSpinLock(&op->spinlock);
@@ -2864,7 +2852,7 @@ static void mdUpdateBufferOps(mdMesh *mesh, mdThreadData *tdata, mdUpdateBuffer 
     int vindex;
     mdOp *op;
 
-#ifdef MD_CONFIG_ATOMIC_SUPPORT
+#ifdef MM_ATOMIC_SUPPORT
     mmAtomicSpin32(&updatebuffer->atomlock, 0x0, 0x1);
 #else
     mtSpinLock(&updatebuffer->spinlock);
@@ -2877,7 +2865,7 @@ static void mdUpdateBufferOps(mdMesh *mesh, mdThreadData *tdata, mdUpdateBuffer 
 	    mdUpdateOp(mesh, tdata, op, ~(MD_OP_FLAGS_UPDATE_QUEUED | MD_OP_FLAGS_UPDATE_NEEDED));
 	    mdLockBufferUnlockAll(mesh, tdata, lockbuffer);
 	} else {
-#ifdef MD_CONFIG_ATOMIC_SUPPORT
+#ifdef MM_ATOMIC_SUPPORT
 	    mmAtomicWrite32(&updatebuffer->atomlock, 0x0);
 #else
 	    mtSpinUnlock(&updatebuffer->spinlock);
@@ -2885,7 +2873,7 @@ static void mdUpdateBufferOps(mdMesh *mesh, mdThreadData *tdata, mdUpdateBuffer 
 	    mdOpResolveLockEdge(mesh, tdata, lockbuffer, op);
 	    mdUpdateOp(mesh, tdata, op, ~(MD_OP_FLAGS_UPDATE_QUEUED | MD_OP_FLAGS_UPDATE_NEEDED));
 	    mdLockBufferUnlockAll(mesh, tdata, lockbuffer);
-#ifdef MD_CONFIG_ATOMIC_SUPPORT
+#ifdef MM_ATOMIC_SUPPORT
 	    mmAtomicSpin32(&updatebuffer->atomlock, 0x0, 0x1);
 #else
 	    mtSpinLock(&updatebuffer->spinlock);
@@ -2894,7 +2882,7 @@ static void mdUpdateBufferOps(mdMesh *mesh, mdThreadData *tdata, mdUpdateBuffer 
     }
 
     updatebuffer->opcount = 0;
-#ifdef MD_CONFIG_ATOMIC_SUPPORT
+#ifdef MM_ATOMIC_SUPPORT
     mmAtomicWrite32(&updatebuffer->atomlock, 0x0);
 #else
     mtSpinUnlock(&updatebuffer->spinlock);
@@ -2950,7 +2938,7 @@ static int mdMeshProcessQueue(mdMesh *mesh, mdThreadData *tdata)
 	mdOpResolveLockFull(mesh, tdata, &lockbuffer, op);
 
 	/* If our op was flagged for update between mdUpdateBufferOps() and before we acquired lock, no big deal, catch the update */
-#ifdef MD_CONFIG_ATOMIC_SUPPORT
+#ifdef MM_ATOMIC_SUPPORT
 	opflags = mmAtomicRead32(&op->flags);
 #else
 	mtSpinLock(&op->spinlock);
@@ -2965,7 +2953,7 @@ static int mdMeshProcessQueue(mdMesh *mesh, mdThreadData *tdata)
 	}
 
 	if (!(mdEdgeCollisionCheck(mesh, tdata, op->v0, op->v1))) {
-#ifdef MD_CONFIG_ATOMIC_SUPPORT
+#ifdef MM_ATOMIC_SUPPORT
 
 	    if (mmAtomicRead32(&op->flags) & MD_OP_FLAGS_DETACHED)
 		bu_bomb("SHOULD NOT HAPPEN");
@@ -3550,7 +3538,7 @@ typedef struct {
     int stage;
 } mdThreadInit;
 
-#ifndef MD_CONFIG_ATOMIC_SUPPORT
+#ifndef MM_ATOMIC_SUPPORT
 int mdFreeOpCallback(void *chunk, void *UNUSED(userpointer))
 {
     mdOp *op;
@@ -3655,7 +3643,7 @@ static void *mdThreadMain(void *value)
     mdBarrierSync(&mesh->globalbarrier);
 
     /* If we didn't use atomic operations, we have spinlocks to destroy in each op */
-#ifndef MD_CONFIG_ATOMIC_SUPPORT
+#ifndef MM_ATOMIC_SUPPORT
     mmBlockProcessList(&tdata.opblock, 0, mdFreeOpCallback);
 #endif
 
@@ -4048,7 +4036,7 @@ int mdMeshDecimation(mdOperation *operation, int threadcount, int flags)
 	tinit->threadid = threadid;
 	tinit->mesh = &mesh;
 	tinit->stage = MD_STATUS_STAGE_INIT;
-	mtThreadCreate(&thread[threadid], mdThreadMain, tinit, MT_THREAD_FLAGS_JOINABLE, 0, 0);
+	mtThreadCreate(&thread[threadid], mdThreadMain, tinit);
     }
 
     /* Wait until all threads have properly initialized */

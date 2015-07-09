@@ -40,10 +40,8 @@
 #include "mmatomic.h"
 
 #include <pthread.h>
-#include <unistd.h>
-#include <sched.h>
 #include <sys/time.h>
-#include <limits.h>
+#include <unistd.h>
 
 #if _POSIX_SPIN_LOCKS > 0
 #define MT_SPIN_LOCK_SUPPORT
@@ -57,47 +55,22 @@ struct mtThread {
 };
 
 
-#define MT_THREAD_FLAGS_JOINABLE (0x1)
-#define MT_THREAD_FLAGS_SETSTACK (0x2)
-
-
 #define MT_MUTEX_INITIALIZER { PTHREAD_MUTEX_INITIALIZER }
 
 
-static inline void mtThreadCreate(mtThread *thread, void *(*threadmain)(void *value), void *value, int flags, void *stack, size_t stacksize)
+static inline void mtThreadCreate(mtThread *thread, void *(*threadmain)(void *value), void *value)
 {
     pthread_attr_t attr;
-
     pthread_attr_init(&attr);
-#if !defined(MM_WIN32) && !defined(MM_WIN64)
-
-    if (flags & MT_THREAD_FLAGS_SETSTACK)
-	pthread_attr_setstack(&attr, stack, stacksize);
-
-#endif
-
-    if (flags & MT_THREAD_FLAGS_JOINABLE)
-	pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
-    else
-	pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
-
+    pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
     pthread_create(&thread->pthread, &attr, threadmain, value);
     pthread_attr_destroy(&attr);
-
-    return;
-}
-
-static inline void mtThreadExit()
-{
-    pthread_exit(0);
-    return;
 }
 
 static inline void mtThreadJoin(mtThread *thread)
 {
     void *ret;
     pthread_join(thread->pthread, &ret);
-    return;
 }
 
 
@@ -110,31 +83,28 @@ struct mtMutex {
 static inline void mtMutexInit(mtMutex *mutex)
 {
     pthread_mutex_init(&mutex->pmutex, 0);
-    return;
 }
 
 static inline void mtMutexDestroy(mtMutex *mutex)
 {
     pthread_mutex_destroy(&mutex->pmutex);
-    return;
 }
 
 static inline void mtMutexLock(mtMutex *mutex)
 {
     pthread_mutex_lock(&mutex->pmutex);
-    return;
 }
 
 static inline void mtMutexUnlock(mtMutex *mutex)
 {
     pthread_mutex_unlock(&mutex->pmutex);
-    return;
 }
 
 static inline int mtMutexTryLock(mtMutex *mutex)
 {
     return !(pthread_mutex_trylock(&mutex->pmutex));
 }
+
 
 /****/
 
@@ -145,36 +115,30 @@ struct mtSignal {
     pthread_cond_t pcond;
 };
 
+
 static inline void mtSignalInit(mtSignal *signal)
 {
     pthread_cond_init(&signal->pcond, 0);
-    return;
 }
+
 
 static inline void mtSignalDestroy(mtSignal *signal)
 {
     pthread_cond_destroy(&signal->pcond);
-    return;
 }
 
-static inline void mtSignalWake(mtSignal *signal)
-{
-    pthread_cond_signal(&signal->pcond);
-    return;
-}
 
 static inline void mtSignalBroadcast(mtSignal *signal)
 {
     pthread_cond_broadcast(&signal->pcond);
-    return;
 }
 
 
 static inline void mtSignalWait(mtSignal *signal, mtMutex *mutex)
 {
     pthread_cond_wait(&signal->pcond, &mutex->pmutex);
-    return;
 }
+
 
 static inline void mtSignalWaitTimeout(mtSignal *signal, mtMutex *mutex, long milliseconds)
 {
@@ -201,86 +165,82 @@ static inline void mtSignalWaitTimeout(mtSignal *signal, mtMutex *mutex, long mi
 
 #ifdef MM_ATOMIC_SUPPORT
 
+
 typedef struct mtSpin mtSpin;
+
 
 struct mtSpin {
     mmAtomic32 atomicspin;
 };
 
+
 static inline void mtSpinInit(mtSpin *spin)
 {
     mmAtomicWrite32(&spin->atomicspin, 0x0);
-    return;
 }
 
+
 static inline void mtSpinDestroy(mtSpin *UNUSED(spin))
-{
-    return;
-}
+{}
+
 
 static inline void mtSpinLock(mtSpin *spin)
 {
     mmAtomicSpin32(&spin->atomicspin, 0x0, 0x1);
-    return;
 }
+
 
 static inline void mtSpinUnlock(mtSpin *spin)
 {
     mmAtomicWrite32(&spin->atomicspin, 0x0);
-    return;
 }
 
-static inline int mtSpinTryLock(mtSpin *spin)
-{
-    return mmAtomicCmpReplace32(&spin->atomicspin, 0x0, 0x1);
-}
 
 #elif defined(MT_SPIN_LOCK_SUPPORT)
 
+
 typedef struct mtSpin mtSpin;
+
 
 struct mtSpin {
     pthread_spinlock_t pspinlock;
 };
 
+
 static inline void mtSpinInit(mtSpin *spin)
 {
     pthread_spin_init(&spin->pspinlock, PTHREAD_PROCESS_PRIVATE);
-    return;
 }
+
 
 static inline void mtSpinDestroy(mtSpin *spin)
 {
     pthread_spin_destroy(&spin->pspinlock);
-    return;
 }
 
 static inline void mtSpinLock(mtSpin *spin)
 {
     pthread_spin_lock(&spin->pspinlock);
-    return;
 }
+
 
 static inline void mtSpinUnlock(mtSpin *spin)
 {
     pthread_spin_unlock(&spin->pspinlock);
-    return;
 }
 
-static inline int mtSpinTryLock(mtSpin *spin)
-{
-    return !(pthread_spin_trylock(&spin->pspinlock));
-}
 
 #else
 
+
 typedef struct mtMutex mtSpin;
+
 
 #define mtSpinInit(a) mtMutexInit(a)
 #define mtSpinDestroy(a) mtMutexDestroy(a)
 #define mtSpinLock(a) mtMutexLock(a)
 #define mtSpinUnlock(a) mtMutexUnlock(a)
-#define mtSpinTryLock(a) mtMutexTryLock(a)
+
 
 #endif
 

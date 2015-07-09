@@ -32,8 +32,6 @@
 
 #include "common.h"
 
-#include "cpuconfig.h"
-
 
 typedef struct {
     uint32_t a;
