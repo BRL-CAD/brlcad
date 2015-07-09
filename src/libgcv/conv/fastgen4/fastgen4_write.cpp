@@ -2172,20 +2172,24 @@ convert_leaf(db_tree_state *tree_state, const db_full_path *path,
     FastgenConversion &data = *static_cast<FastgenConversion *>(client_data);
     const bool subtracted = tree_state->ts_sofar & (TS_SOFAR_MINUS |
 			    TS_SOFAR_INTER);
-    const directory *region_dir = NULL;
-    bool converted = false;
+    const directory *region_dir;
 
     try {
 	region_dir = &get_region_dir(data.m_db, *path);
-    } catch (const std::invalid_argument &) {}
+    } catch (const std::invalid_argument &) {
+	region_dir = NULL;
+    }
 
     const bool facetize = data.m_facetize_regions.count(region_dir);
+    bool converted;
 
     if (region_dir
 	&& data.get_region(*region_dir).member_ignored(get_parent_dir(*path)))
 	converted = true;
     else if (!facetize)
 	converted = convert_primitive(data, *path, *internal, subtracted);
+    else
+	converted = false;
 
     if (!converted) {
 	if (!facetize && subtracted)

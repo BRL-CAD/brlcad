@@ -92,12 +92,10 @@ set(LIBRT_SOURCES
   primitives/bot/bot_oriented_bbox.cpp
   primitives/bot/btg.c
   primitives/bot/btgf.c
-  primitives/bot/gct_decimation/auxiliary/cc.c
   primitives/bot/gct_decimation/auxiliary/mmbinsort.c
   primitives/bot/gct_decimation/auxiliary/mmbitmap.c
   primitives/bot/gct_decimation/auxiliary/mm.c
   primitives/bot/gct_decimation/auxiliary/mmhash.c
-  primitives/bot/gct_decimation/meshcorrection.c
   primitives/bot/gct_decimation/meshdecimation.c
   primitives/bot/gct_decimation/meshoptimization.c
   primitives/bot/gct_decimation/meshoptimizer.c

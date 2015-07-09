@@ -47,6 +47,7 @@
 #include "auxiliary/mmbinsort.h"
 
 #include "bu/log.h"
+#include "bu/parallel.h"
 #include "vmath.h"
 
 #include <stdio.h>
@@ -91,11 +92,6 @@
 #define MD_CONF_ENABLE_PROGRESS
 
 
-#ifdef CPUCONF_CORES_COUNT
-#define MD_THREAD_COUNT_DEFAULT CPUCONF_CORES_COUNT
-#else
-#define MD_THREAD_COUNT_DEFAULT (4)
-#endif
 #define MD_THREAD_COUNT_MAX (64)
 
 
@@ -130,9 +126,6 @@
 #if defined(CPUCONF_ARCH_AMD64) || defined(CPUCONF_ARCH_IA32)
 #define MD_CONFIG_SSE_SUPPORT
 #endif
-
-
-#define MD_CONFIG_FAST_HASH
 
 
 #define MD_CONFIG_HIGH_QUADRICS
@@ -927,8 +920,6 @@ static uint32_t mdEdgeHashEntryKey(void *entry)
     mdEdge *edge;
     edge = (mdEdge *)entry;
 
-#ifdef MD_CONFIG_FAST_HASH
-
     hashkey  = edge->v[0];
     hashkey += hashkey << 10;
     hashkey ^= hashkey >> 6;
@@ -938,29 +929,6 @@ static uint32_t mdEdgeHashEntryKey(void *entry)
     hashkey += hashkey << 6;
     hashkey ^= hashkey >> 11;
     hashkey += hashkey << 15;
-
-#else
-
-#if MD_SIZEOF_MDI == 4
-#if CPUCONF_WORD_SIZE == 64
-    {
-	uint64_t *v = (uint64_t *)edge->v;
-	hashkey = ccHash32Int64Inline(*v);
-    }
-#else
-    hashkey = ccHash32Data4Inline((void *)edge->v);
-#endif
-#elif MD_SIZEOF_MDI == 8
-#if CPUCONF_WORD_SIZE == 64
-    hashkey = ccHash32Array64((uint64_t *)edge->v, 2);
-#else
-    hashkey = ccHash32Array32((uint32_t *)edge->v, 4);
-#endif
-#else
-    hashkey = ccHash32Data(edge->v, 2 * sizeof(mdi));
-#endif
-
-#endif
 
     return hashkey;
 }
@@ -996,11 +964,7 @@ static int mdMeshHashInit(mdMesh *mesh, size_t trianglecount, mdf hashextrabits,
     edgecount = trianglecount * 3;
 
     /* Hard minimum count of hash table bits */
-#if CPUCONF_WORD_SIZE == 64
-    hashbitsmin = ccLog2Int64(edgecount) + 1;
-#else
-    hashbitsmin = ccLog2Int32(edgecount) + 1;
-#endif
+    hashbitsmin = ccLog2Int(edgecount) + 1;
     hashbitsmax = hashbitsmin + 4;
 
     hashbits = (uint32_t)(mdflog2((mdf)edgecount) + hashextrabits + 0.5);
@@ -3933,7 +3897,7 @@ int mdMeshDecimation(mdOperation *operation, int threadcount, int flags)
 	threadcount = mmcontext.cpucount;
 
 	if (threadcount <= 0)
-	    threadcount = MD_THREAD_COUNT_DEFAULT;
+	    threadcount = bu_avail_cpus();
     }
 
     if (threadcount > MD_THREAD_COUNT_MAX)

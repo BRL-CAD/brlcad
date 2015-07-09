@@ -38,9 +38,13 @@
 
 #include "mmbitmap.h"
 
-#include "cpuconfig.h"
+#include "cc.h"
 
 #include <stdlib.h>
+
+
+static const int LONG_BITS = sizeof(long) * CHAR_BIT;
+#define LONG_BITSHIFT (ccLog2Int(LONG_BITS))
 
 
 void mmBitMapInit(mmBitMap *bitmap, size_t entrycount, int initvalue)
@@ -53,7 +57,7 @@ void mmBitMapInit(mmBitMap *bitmap, size_t entrycount, int initvalue)
     long *map;
 #endif
 
-    mapsize = (entrycount + CPUCONF_LONG_BITS - 1) >> CPUCONF_LONG_BITSHIFT;
+    mapsize = (entrycount + LONG_BITS - 1) >> LONG_BITSHIFT;
     bitmap->map = (mmAtomic64 *)malloc(mapsize * sizeof(mmAtomicL));
     bitmap->mapsize = mapsize;
     bitmap->entrycount = entrycount;
@@ -93,8 +97,8 @@ int mmBitMapDirectGet(mmBitMap *bitmap, size_t entryindex)
 {
     int value;
     size_t vindex, shift;
-    vindex = entryindex >> CPUCONF_LONG_BITSHIFT;
-    shift = entryindex & (CPUCONF_LONG_BITS - 1);
+    vindex = entryindex >> LONG_BITSHIFT;
+    shift = entryindex & (LONG_BITS - 1);
 #ifdef MM_ATOMIC_SUPPORT
     value = (MM_ATOMIC_ACCESS_L(&bitmap->map[vindex]) >> shift) & 0x1;
 #else
@@ -106,8 +110,8 @@ int mmBitMapDirectGet(mmBitMap *bitmap, size_t entryindex)
 void mmBitMapDirectSet(mmBitMap *bitmap, size_t entryindex)
 {
     size_t vindex, shift;
-    vindex = entryindex >> CPUCONF_LONG_BITSHIFT;
-    shift = entryindex & (CPUCONF_LONG_BITS - 1);
+    vindex = entryindex >> LONG_BITSHIFT;
+    shift = entryindex & (LONG_BITS - 1);
 #ifdef MM_ATOMIC_SUPPORT
     MM_ATOMIC_ACCESS_L(&bitmap->map[vindex]) |= (long)1 << shift;
 #else

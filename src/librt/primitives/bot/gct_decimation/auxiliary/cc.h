@@ -81,25 +81,15 @@ static inline uint32_t ccPow2Round32(uint32_t v)
 }
 
 
-static inline uint32_t ccHash32Int64Inline(uint64_t i)
+static inline unsigned ccLog2Int(unsigned value)
 {
-    uint32_t hash;
-    hash = i & 0xFFFF;
-    hash = ((hash << 16) ^ hash) ^ (((uint32_t)(i >> 16) & 0xFFFF) << 11);
-    hash += (hash >> 11) + ((uint32_t)(i >> 32) & 0xFFFF);
-    hash = ((hash << 16) ^ hash) ^ (uint32_t)((i & INT64_C(0xFFFF000000000000)) >> 37);
-    hash += hash >> 11;
-    hash ^= hash << 3;
-    hash += hash >> 5;
-    hash ^= hash << 4;
-    hash += hash >> 17;
-    hash ^= hash << 25;
-    hash += hash >> 6;
-    return hash;
+    unsigned result = 0;
+
+    while (value >>= 1)
+	++result;
+
+    return result;
 }
-
-
-uint64_t ccLog2Int64(uint64_t i);
 
 
 #endif

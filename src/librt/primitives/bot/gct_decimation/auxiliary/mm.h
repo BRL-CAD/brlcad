@@ -45,7 +45,7 @@
 #define MM_CPU_COUNT_MAXIMUM (1024)
 #define MM_NODE_COUNT_MAXIMUM (256)
 
-#if defined(__GNUC__)
+#if defined(__GNUC__) && defined(CPUCONF_CACHE_LINE_SIZE)
 #define MM_CACHE_ALIGN __attribute__((aligned(CPUCONF_CACHE_LINE_SIZE)))
 #define MM_NOINLINE __attribute__((noinline))
 #else

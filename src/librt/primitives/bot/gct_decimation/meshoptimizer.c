@@ -46,6 +46,7 @@
 #include "auxiliary/math3d.h"
 
 #include "bu/log.h"
+#include "bu/parallel.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -61,11 +62,6 @@
 #endif
 
 
-#ifdef CPUCONF_CORES_COUNT
-#define MO_THREAD_COUNT_DEFAULT CPUCONF_CORES_COUNT
-#else
-#define MO_THREAD_COUNT_DEFAULT (4)
-#endif
 #define MO_THREAD_COUNT_MAX (64)
 
 
@@ -1496,7 +1492,7 @@ int moOptimizeMesh(size_t vertexcount, size_t tricount, void *indices, int indic
 	threadcount = mmcontext.cpucount;
 
 	if (threadcount <= 0)
-	    threadcount = MO_THREAD_COUNT_DEFAULT;
+	    threadcount = bu_avail_cpus();
     }
 
     if (threadcount > MO_THREAD_COUNT_MAX)

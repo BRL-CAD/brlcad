@@ -5,25 +5,13 @@
 #include "common.h"
 
 
-/* Automatically generated CPU information header */
+/* Automatically generated CPU information header -- FIXME */
 
-#define CPUCONF_INT_SIZE (4)
-#define CPUCONF_WORD_SIZE (64)
-#define CPUCONF_INTPTR_BITS (64)
-#define CPUCONF_INTPTR_BITSHIFT (6)
-#define CPUCONF_CHAR_BITSHIFT (3)
-#define CPUCONF_CACHE_LINE_SIZE (64)
 #define CPUCONF_ARCH_AMD64
-#define CPUCONF_CAP_SSE2
+/* #define CPUCONF_ARCH_IA32 */
+
 #define CPUCONF_POINTER_BITS (64)
-#define CPUCONF_LONG_BITS (64)
-#define CPUCONF_LONG_BITSHIFT (6)
-#define CPUCONF_CORES_COUNT (8)
 
-/*
- * CPUCONF_STORE_REORDERING_AFTER_STORE
- * CPUCONF_ARCH_IA32
- */
-
+/* #define CPUCONF_CACHE_LINE_SIZE (64) (optional)*/
 
 #endif
