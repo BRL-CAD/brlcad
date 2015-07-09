@@ -1157,7 +1157,7 @@ static void mdUpdateBufferAdd(mdUpdateBuffer *updatebuffer, mdOp *op, int orflag
 
     if (updatebuffer->opcount >= updatebuffer->opalloc) {
 	updatebuffer->opalloc <<= 1;
-	updatebuffer->opbuffer = realloc(updatebuffer->opbuffer, updatebuffer->opalloc * sizeof(mdOp *));
+	updatebuffer->opbuffer = (void **)realloc(updatebuffer->opbuffer, updatebuffer->opalloc * sizeof(mdOp *));
     }
 
     updatebuffer->opbuffer[ updatebuffer->opcount++ ] = op;
@@ -2741,11 +2741,11 @@ static void mdMeshBuildTrirefs(mdMesh *mesh, mdThreadData *tdata, int threadcoun
 static void mdMeshEnd(mdMesh *mesh)
 {
 #ifndef MD_CONFIG_ATOMIC_SUPPORT
-    mdi index;
+    mdi vindex;
     mdVertex *vertex;
     vertex = mesh->vertexlist;
 
-    for (index = 0 ; index < mesh->vertexcount ; index++, vertex++)
+    for (vindex = 0; vindex < mesh->vertexcount ; vindex++, vertex++)
 	mtSpinDestroy(&vertex->ownerspinlock);
 
     mtSpinDestroy(&mesh->trirefspinlock);
@@ -2799,7 +2799,7 @@ static void mdSortOp(mdMesh *mesh, mdThreadData *tdata, mdOp *op, int denyflag)
 	if (op->flags & MD_OP_FLAGS_DETACHED) {
 	    mmBinSortAdd(tdata->binsort, op, collapsecost);
 	    op->flags &= ~MD_OP_FLAGS_DETACHED;
-	} else if (op->collapsecost != collapsecost)
+	} else if (!EQUAL(op->collapsecost, collapsecost))
 	    mmBinSortUpdate(tdata->binsort, op, op->collapsecost, collapsecost);
 
 	mtSpinUnlock(&op->spinlock);
@@ -3551,11 +3551,12 @@ typedef struct {
 } mdThreadInit;
 
 #ifndef MD_CONFIG_ATOMIC_SUPPORT
-int mdFreeOpCallback(void *chunk, void *userpointer)
+int mdFreeOpCallback(void *chunk, void *UNUSED(userpointer))
 {
     mdOp *op;
-    op = chunk;
+    op = (mdOp *)chunk;
     mtSpinDestroy(&op->spinlock);
+    return 0;
 }
 #endif
 

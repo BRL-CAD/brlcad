@@ -51,28 +51,23 @@ void mmBitMapInit(mmBitMap *bitmap, size_t entrycount, int initvalue)
 {
     size_t mapsize, vindex;
     long value;
-#ifdef MM_ATOMIC_SUPPORT
-    mmAtomicL *map;
-#else
-    long *map;
-#endif
 
     mapsize = (entrycount + LONG_BITS - 1) >> LONG_BITSHIFT;
-    bitmap->map = (mmAtomic64 *)malloc(mapsize * sizeof(mmAtomicL));
     bitmap->mapsize = mapsize;
     bitmap->entrycount = entrycount;
 
-    map = bitmap->map;
     value = (initvalue & 0x1 ? ~0x0 : 0x0);
 #ifdef MM_ATOMIC_SUPPORT
+    bitmap->map = (mmAtomic64 *)malloc(mapsize * sizeof(mmAtomicL));
 
     for (vindex = 0 ; vindex < mapsize ; vindex++)
-	mmAtomicWriteL(&map[vindex], value);
+	mmAtomicWriteL(&bitmap->map[vindex], value);
 
 #else
+    bitmap->map = (long *)malloc(mapsize * sizeof(long));
 
     for (vindex = 0 ; vindex < mapsize ; vindex++)
-	map[vindex] = value;
+	bitmap->map[vindex] = value;
 
     mtMutexInit(&bitmap->mutex);
 #endif

@@ -423,6 +423,75 @@ static void mmFree(void *UNUSED(unused), void *v, size_t UNUSED(bytes))
 mmContext mmcontext;
 
 
+#ifndef MM_ATOMIC_SUPPORT
+#include "cc.h"
+#include <stdlib.h>
+void mmBlockProcessList(mmBlockHead *head, void *userpointer, int (*processchunk)(void *chunk, void *userpointer))
+{
+    static const int INTPTR_BITS = sizeof(intptr_t) * CHAR_BIT;
+    const int INTPTR_BITSHIFT = ccLog2Int(INTPTR_BITS);
+
+    int i, blockcount, blockrefsize, chunkperblock;
+    intptr_t **bitsref;
+    intptr_t *blockmask;
+    intptr_t blockindex, chunkindex;
+    size_t chunksize;
+    void *p, *chunk;
+    mmBlock *block;
+    mmListNode *list;
+
+    mtSpinLock(&head->spinlock);
+
+    blockcount = 0;
+
+    for (block = (mmBlock *)head->blocklist ; block ; block = (mmBlock *)block->listnode.next)
+	block->blockindex = blockcount++;
+
+    chunksize = head->chunksize;
+    chunkperblock = head->chunkperblock;
+    blockrefsize = ((chunkperblock + INTPTR_BITS - 1) >> INTPTR_BITSHIFT) * sizeof(intptr_t);
+    bitsref = (intptr_t **)malloc(blockcount * (sizeof(intptr_t *) + blockrefsize));
+    memset(bitsref, 0, blockcount * (sizeof(intptr_t *) + blockrefsize));
+
+    p = ADDRESS(bitsref, blockcount * sizeof(intptr_t *));
+
+    for (i = 0 ; i < blockcount ; i++) {
+	bitsref[i] = (intptr_t *)p;
+	p = ADDRESS(p, blockrefsize);
+    }
+
+    for (list = (mmListNode *)head->freelist ; list ; list = (mmListNode *)list->next) {
+	block = mmBlockResolveChunk(list, (mmBlock *)head->treeroot);
+	chunkindex = ADDRESSDIFF(list, ADDRESS(block, sizeof(mmBlock))) / chunksize;
+	bitsref[ block->blockindex ][ chunkindex >> INTPTR_BITSHIFT ] |= (intptr_t)1 << (chunkindex & (INTPTR_BITS - 1));
+    }
+
+    blockindex = 0;
+
+    for (block = (mmBlock *)head->blocklist ; block ; block = (mmBlock *)block->listnode.next) {
+	blockmask = bitsref[ blockindex ];
+	chunk = ADDRESS(block, sizeof(mmBlock));
+
+	for (chunkindex = 0 ; chunkindex < chunkperblock ; chunkindex++, chunk = ADDRESS(chunk, chunksize)) {
+	    if (blockmask[ chunkindex >> INTPTR_BITSHIFT ] & ((intptr_t)1 << (chunkindex & (INTPTR_BITS - 1))))
+		continue;
+
+	    if (processchunk(chunk, userpointer))
+		goto end;
+	}
+
+	blockindex++;
+    }
+
+end:
+    free(bitsref);
+    mtSpinUnlock(&head->spinlock);
+
+    return;
+}
+#endif
+
+
 void mmInit()
 {
     int64_t sysmemory;

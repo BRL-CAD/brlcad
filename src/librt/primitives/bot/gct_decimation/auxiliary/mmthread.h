@@ -50,13 +50,6 @@
 #endif
 
 
-static inline void mtYield()
-{
-    sched_yield();
-    return;
-}
-
-
 typedef struct mtThread mtThread;
 
 struct mtThread {
@@ -66,6 +59,9 @@ struct mtThread {
 
 #define MT_THREAD_FLAGS_JOINABLE (0x1)
 #define MT_THREAD_FLAGS_SETSTACK (0x2)
+
+
+#define MT_MUTEX_INITIALIZER { PTHREAD_MUTEX_INITIALIZER }
 
 
 static inline void mtThreadCreate(mtThread *thread, void *(*threadmain)(void *value), void *value, int flags, void *stack, size_t stacksize)
@@ -105,31 +101,9 @@ static inline void mtThreadJoin(mtThread *thread)
 }
 
 
-static inline size_t mtGetMinimumStackSize()
-{
-#ifdef PTHREAD_STACK_MIN
-    return PTHREAD_STACK_MIN;
-#else
-    return (mmcontext.pagesize ? 4 * mmcontext.pagesize : 16384);
-#endif
-}
-
-
-#ifdef MT_DEBUG
-#ifndef DEBUG_WARNING()
-#define DEBUG_WARNING() ({printf( "\nRF WARNING : %s %s %d\n", __FILE__, __FUNCTION__, __LINE__ ); fflush( stdout );})
-#endif
-#endif
-
-
 typedef struct mtMutex mtMutex;
 
 struct mtMutex {
-#ifdef MT_DEBUG
-    unsigned char *function;
-    unsigned char *file;
-    int line;
-#endif
     pthread_mutex_t pmutex;
 };
 
@@ -144,61 +118,6 @@ static inline void mtMutexDestroy(mtMutex *mutex)
     pthread_mutex_destroy(&mutex->pmutex);
     return;
 }
-
-#ifdef MT_DEBUG
-
-#define mtMutexLock(a) mtMutexLockDebug(a,__FUNCTION__,__FILE__,__LINE__)
-#define mtMutexUnlock(a) mtMutexUnlockDebug(a,__FUNCTION__,__FILE__,__LINE__)
-#define mtMutexTryLock(a) mtMutexTryLockDebug(a,__FUNCTION__,__FILE__,__LINE__)
-
-static inline void mtMutexLockDebug(mtMutex *mutex, const unsigned char *function, const unsigned char *file, const int line)
-{
-    printf("Mutex lock :    Thread %d on %p from %s() in %s:%d\n", (int)pthread_self(), mutex, function, file, line);
-    fflush(stdout);
-
-    if (pthread_mutex_trylock(&mutex->pmutex)) {
-	printf("    Mutex %p locked by %s() in %s:%d\n", mutex, mutex->function, mutex->file, mutex->line);
-	fflush(stdout);
-
-	if (pthread_mutex_lock(&mutex->pmutex))
-	    DEBUG_WARNING();
-    }
-
-    mutex->function = (unsigned char *)function;
-    mutex->file = (unsigned char *)file;
-    mutex->line = line;
-    return;
-}
-
-static inline void mtMutexUnlockDebug(mtMutex *mutex, const unsigned char *function, const unsigned char *file, const int line)
-{
-    mutex->function = (unsigned char *)function;
-    mutex->file = (unsigned char *)file;
-    mutex->line = line;
-    printf("Mutex Unlock :  Thread %d on %p from %s() in %s:%d\n", (int)pthread_self(), mutex, function, file, line);
-    fflush(stdout);
-
-    if (pthread_mutex_unlock(&mutex->pmutex))
-	DEBUG_WARNING();
-
-    return;
-}
-
-static inline int mtMutexTryLockDebug(mtMutex *mutex, const unsigned char *function, const unsigned char *file, const int line)
-{
-    printf("Mutex Trylock :  Thread %d on %p from %s() in %s:%d\n", (int)pthread_self(), mutex, function, file, line);
-    fflush(stdout);
-
-    if (!(pthread_mutex_trylock(&mutex->pmutex))) {
-	mutex->function = (unsigned char *)function;
-	mutex->file = (unsigned char *)file;
-	mutex->line = line;
-	return 1;
-    } else
-	return 0;
-}
-
-#else
 
 static inline void mtMutexLock(mtMutex *mutex)
 {
@@ -216,9 +135,6 @@ static inline int mtMutexTryLock(mtMutex *mutex)
 {
     return !(pthread_mutex_trylock(&mutex->pmutex));
 }
-
-#endif
-
 
 /****/
 
@@ -243,41 +159,20 @@ static inline void mtSignalDestroy(mtSignal *signal)
 
 static inline void mtSignalWake(mtSignal *signal)
 {
-#ifdef MT_DEBUG
-
-    if (pthread_cond_signal(&signal->pcond))
-	DEBUG_WARNING();
-
-#else
     pthread_cond_signal(&signal->pcond);
-#endif
     return;
 }
 
 static inline void mtSignalBroadcast(mtSignal *signal)
 {
-#ifdef MT_DEBUG
-
-    if (pthread_cond_broadcast(&signal->pcond))
-	DEBUG_WARNING();
-
-#else
     pthread_cond_broadcast(&signal->pcond);
-#endif
     return;
 }
 
 
 static inline void mtSignalWait(mtSignal *signal, mtMutex *mutex)
 {
-#ifdef MT_DEBUG
-
-    if (pthread_cond_wait(&signal->pcond, &mutex->pmutex))
-	DEBUG_WARNING();
-
-#else
     pthread_cond_wait(&signal->pcond, &mutex->pmutex);
-#endif
     return;
 }
 
@@ -299,13 +194,6 @@ static inline void mtSignalWaitTimeout(mtSignal *signal, mtMutex *mutex, long mi
     pthread_cond_timedwait(&signal->pcond, &mutex->pmutex, &ts);
     return;
 }
-
-
-#ifdef MT_DEBUG
-#define MT_MUTEX_INITIALIZER { 0, 0, 0, PTHREAD_MUTEX_INITIALIZER }
-#else
-#define MT_MUTEX_INITIALIZER { PTHREAD_MUTEX_INITIALIZER }
-#endif
 
 
 /****/
@@ -352,11 +240,6 @@ static inline int mtSpinTryLock(mtSpin *spin)
 typedef struct mtSpin mtSpin;
 
 struct mtSpin {
-#ifdef MT_DEBUG
-    unsigned char *function;
-    unsigned char *file;
-    int line;
-#endif
     pthread_spinlock_t pspinlock;
 };
 
@@ -374,27 +257,13 @@ static inline void mtSpinDestroy(mtSpin *spin)
 
 static inline void mtSpinLock(mtSpin *spin)
 {
-#ifdef MT_DEBUG
-
-    if (pthread_spin_lock(&spin->pspinlock))
-	DEBUG_WARNING();
-
-#else
     pthread_spin_lock(&spin->pspinlock);
-#endif
     return;
 }
 
 static inline void mtSpinUnlock(mtSpin *spin)
 {
-#ifdef MT_DEBUG
-
-    if (pthread_spin_unlock(&spin->pspinlock))
-	DEBUG_WARNING();
-
-#else
     pthread_spin_unlock(&spin->pspinlock);
-#endif
     return;
 }
 

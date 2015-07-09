@@ -130,6 +130,10 @@ void mmBlockInit(mmBlockHead *head, size_t chunksize, int chunkperblock, int kee
 void *mmNodeAlloc(int nodeindex, size_t size);
 void mmNodeFree(int nodeindex, void *v, size_t size);
 
+#ifndef MM_ATOMIC_SUPPORT
+void mmBlockProcessList(mmBlockHead *head, void *userpointer, int (*processchunk)(void *chunk, void *userpointer));
+#endif
+
 
 void mmListAdd(void **list, void *item, intptr_t offset);
 void mmListRemove(void *item, intptr_t offset);
