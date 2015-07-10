@@ -39,8 +39,6 @@
 
 #include "mmthread.h"
 
-#include <sys/time.h>
-
 
 #define ADDRESS(p,o) ((void *)(((char *)p)+(o)))
 

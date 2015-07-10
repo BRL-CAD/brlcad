@@ -38,6 +38,7 @@ freely, subject to the following restrictions:
 #endif
 
 
+/* modified to use gettimeofday() */
 #ifdef CLOCK_REALTIME
 #undef CLOCK_REALTIME
 #endif
