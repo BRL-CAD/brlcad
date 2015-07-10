@@ -122,12 +122,6 @@ file(APPEND ${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/CMakeOutput.log "${CMAKE_COMM
 # Minimum required version of CMake
 cmake_minimum_required(VERSION 2.8.4)
 if(COMMAND CMAKE_POLICY)
-  # libraries linked via full path don't introduce linker search paths
-  CMAKE_POLICY(SET CMP0003 NEW)
-
-  # list command doesn't ignore empty elements
-  CMAKE_POLICY(SET CMP0007 NEW)
-
   if ("${CMAKE_VERSION}" VERSION_GREATER 2.99)
     CMAKE_POLICY(SET CMP0026 OLD)
     CMAKE_POLICY(SET CMP0042 NEW)
