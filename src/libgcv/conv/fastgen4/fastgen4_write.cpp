@@ -864,7 +864,7 @@ Section::write_cone(const fastf_t *point_a, const fastf_t *point_b, fastf_t ro1,
     if (!m_volume_mode)
 	throw std::logic_error("CCONE2 elements can only be used in volume-mode components");
 
-    if (ri1 < 0.0 || ri2 < 0.0 || ri1 >= ro1 || ri2 >= ro2)
+    if (ri1 < 0.0 || ri2 < 0.0 || ri1 > ro1 || ri2 > ro2)
 	throw std::invalid_argument("invalid radius");
 
     std::vector<Point> points(2);
@@ -1275,6 +1275,23 @@ get_cutout(const db_i &db, const db_full_path &parent_path, DBInternal &outer,
 }
 
 
+// most uses of CCONE1 elements can be represented as CCONE2 elements.
+// this handles the cases for which we can't do this.
+// note: CCONE1 is deprecated.
+HIDDEN bool
+get_ccone1_cutout_helper(Section &section, const directory &parent_dir,
+			 const rt_tgc_internal &outer_tgc, const rt_tgc_internal &inner_tgc)
+{
+    RT_CK_DIR(&parent_dir);
+    RT_TGC_CK_MAGIC(&outer_tgc);
+    RT_TGC_CK_MAGIC(&inner_tgc);
+
+    (void)section;
+
+    return false;
+}
+
+
 // test for and create ccone2 elements
 HIDDEN bool
 find_ccone2_cutout(Section &section, const db_i &db,
@@ -1310,10 +1327,6 @@ find_ccone2_cutout(Section &section, const db_i &db,
     RT_TGC_CK_MAGIC(&outer_tgc);
     RT_TGC_CK_MAGIC(&inner_tgc);
 
-    if (!VNEAR_EQUAL(outer_tgc.v, inner_tgc.v, RT_LEN_TOL)
-	|| !VNEAR_EQUAL(outer_tgc.h, inner_tgc.h, RT_LEN_TOL))
-	return false;
-
     // check cone geometry
     if (!tgc_is_ccone2(outer_tgc) || !tgc_is_ccone2(inner_tgc))
 	return false;
@@ -1324,8 +1337,18 @@ find_ccone2_cutout(Section &section, const db_i &db,
     const fastf_t ri2 = MAGNITUDE(inner_tgc.c);
 
     // check radii
-    if (ri1 >= ro1 || ri2 >= ro2)
+    if (ri1 > ro1 || ri2 > ro2)
 	return false;
+
+    if (!VNEAR_EQUAL(outer_tgc.v, inner_tgc.v, RT_LEN_TOL)
+	|| !VNEAR_EQUAL(outer_tgc.h, inner_tgc.h, RT_LEN_TOL)) {
+	if (!get_ccone1_cutout_helper(section, parent_dir, outer_tgc, inner_tgc))
+	    return false;
+
+	// this was a CCONE1
+	completed.insert(&parent_dir);
+	return true;
+    }
 
     point_t v2;
     VADD2(v2, outer_tgc.v, outer_tgc.h);
