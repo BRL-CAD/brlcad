@@ -35,7 +35,7 @@
 #include <stddef.h>
 
 
-int moOptimizeMesh(size_t vertexcount, size_t tricount, void *indices, int indiceswidth, size_t indicesstride, void (*shufflecallback)(void *opaquepointer, long newvertexindex, long oldvertexindex), void *shuffleopaquepointer, int vertexcachesize, int threadcount, int flags);
+int moOptimizeMesh(size_t vertexcount, size_t tricount, void *indices, int indiceswidth, size_t indicesstride, void (*shufflecallback)(void *opaquepointer, long newvertexindex, long oldvertexindex), void *shuffleopaquepointer, int vertexcachesize, int flags);
 
 #define MO_FLAGS_FIXED_CACHE_SIZE (0x1)
 #define MO_FLAGS_DISABLE_LOOK_AHEAD (0x2)

@@ -4279,14 +4279,13 @@ rt_bot_decimate_gct(struct rt_bot_internal *bot, fastf_t feature_size)
     mdOperationAddAttrib(&mdop, bot->face_normals, sizeof(bot->face_normals[0]), 3,
 			 3 * sizeof(bot->face_normals[0]), MD_ATTRIB_FLAGS_COMPUTE_NORMALS);
 
-    mdMeshDecimation(&mdop, bu_avail_cpus(),
-		     MD_FLAGS_NORMAL_VERTEX_SPLITTING | MD_FLAGS_TRIANGLE_WINDING_CCW);
+    mdMeshDecimation(&mdop, MD_FLAGS_NORMAL_VERTEX_SPLITTING | MD_FLAGS_TRIANGLE_WINDING_CCW);
 
     bot->num_vertices = mdop.vertexcount;
     bot->num_faces = mdop.tricount;
 
-    mesh_optimization(bot->num_vertices, bot->num_faces, bot->faces,
-		      sizeof(bot->faces[0]), bu_avail_cpus(), opt_level);
+    mesh_optimization(bot->num_vertices, bot->num_faces, bot->faces, sizeof(bot->faces[0]),
+	    opt_level);
 
     return mdop.decimationcount;
 }

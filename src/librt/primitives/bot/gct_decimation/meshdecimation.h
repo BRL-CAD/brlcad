@@ -127,7 +127,7 @@ void mdOperationStatusCallback(mdOperation *op, void (*statuscallback)(void *opa
 /*
  * Decimate the mesh specifed by the mdOperation struct.
  */
-int mdMeshDecimation(mdOperation *operation, int threadcount, int flags);
+int mdMeshDecimation(mdOperation *operation, int flags);
 
 /* Slightly increases the quality of the mesh decimation */
 #define MD_FLAGS_CONTINUOUS_UPDATE (0x1)

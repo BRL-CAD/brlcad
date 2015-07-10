@@ -32,21 +32,13 @@
 
 #include "common.h"
 
-#include "mmatomic.h"
-#include "mmthread.h"
-
 #include <stddef.h>
 
 
 typedef struct {
     size_t entrycount;
     size_t mapsize;
-#ifdef MM_ATOMIC_SUPPORT
-    mmAtomicL *map;
-#else
     long *map;
-    mtMutex mutex;
-#endif
 } mmBitMap;
 
 void mmBitMapInit(mmBitMap *bitmap, size_t entrycount, int initvalue);

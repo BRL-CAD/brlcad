@@ -39,108 +39,19 @@
 
 #include "mmatomic.h"
 
-#include <pthread.h>
-#include <sys/time.h>
-#include <unistd.h>
+#include "bu/log.h"
 
-#if _POSIX_SPIN_LOCKS > 0
-#define MT_SPIN_LOCK_SUPPORT
+#include "tinycthread.h"
+
+#include <sys/time.h>
+
+#ifdef HAVE_PTHREAD_H
+#include <pthread.h>
+#include <unistd.h>
 #endif
 
 
-typedef struct mtThread mtThread;
-
-struct mtThread {
-    pthread_t pthread;
-};
-
-
-#define MT_MUTEX_INITIALIZER { PTHREAD_MUTEX_INITIALIZER }
-
-
-static inline void mtThreadCreate(mtThread *thread, void *(*threadmain)(void *value), void *value)
-{
-    pthread_attr_t attr;
-    pthread_attr_init(&attr);
-    pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
-    pthread_create(&thread->pthread, &attr, threadmain, value);
-    pthread_attr_destroy(&attr);
-}
-
-static inline void mtThreadJoin(mtThread *thread)
-{
-    void *ret;
-    pthread_join(thread->pthread, &ret);
-}
-
-
-typedef struct mtMutex mtMutex;
-
-struct mtMutex {
-    pthread_mutex_t pmutex;
-};
-
-static inline void mtMutexInit(mtMutex *mutex)
-{
-    pthread_mutex_init(&mutex->pmutex, 0);
-}
-
-static inline void mtMutexDestroy(mtMutex *mutex)
-{
-    pthread_mutex_destroy(&mutex->pmutex);
-}
-
-static inline void mtMutexLock(mtMutex *mutex)
-{
-    pthread_mutex_lock(&mutex->pmutex);
-}
-
-static inline void mtMutexUnlock(mtMutex *mutex)
-{
-    pthread_mutex_unlock(&mutex->pmutex);
-}
-
-static inline int mtMutexTryLock(mtMutex *mutex)
-{
-    return !(pthread_mutex_trylock(&mutex->pmutex));
-}
-
-
-/****/
-
-
-typedef struct mtSignal mtSignal;
-
-struct mtSignal {
-    pthread_cond_t pcond;
-};
-
-
-static inline void mtSignalInit(mtSignal *signal)
-{
-    pthread_cond_init(&signal->pcond, 0);
-}
-
-
-static inline void mtSignalDestroy(mtSignal *signal)
-{
-    pthread_cond_destroy(&signal->pcond);
-}
-
-
-static inline void mtSignalBroadcast(mtSignal *signal)
-{
-    pthread_cond_broadcast(&signal->pcond);
-}
-
-
-static inline void mtSignalWait(mtSignal *signal, mtMutex *mutex)
-{
-    pthread_cond_wait(&signal->pcond, &mutex->pmutex);
-}
-
-
-static inline void mtSignalWaitTimeout(mtSignal *signal, mtMutex *mutex, long milliseconds)
+static inline void mtSignalWaitTimeout(cnd_t *signal, mtx_t *mutex, long milliseconds)
 {
     uint64_t microsecs;
     struct timespec ts;
@@ -155,12 +66,10 @@ static inline void mtSignalWaitTimeout(mtSignal *signal, mtMutex *mutex, long mi
     }
 
     ts.tv_nsec = microsecs * 1000;
-    pthread_cond_timedwait(&signal->pcond, &mutex->pmutex, &ts);
-    return;
+
+    if (cnd_timedwait(signal, mutex, &ts) == thrd_error)
+	bu_bomb("cnd_timedwait() failed");
 }
-
-
-/****/
 
 
 #ifdef MM_ATOMIC_SUPPORT
@@ -196,7 +105,7 @@ static inline void mtSpinUnlock(mtSpin *spin)
 }
 
 
-#elif defined(MT_SPIN_LOCK_SUPPORT)
+#elif _POSIX_SPIN_LOCKS > 0
 
 
 typedef struct mtSpin mtSpin;

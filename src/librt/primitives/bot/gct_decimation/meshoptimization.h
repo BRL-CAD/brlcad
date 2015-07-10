@@ -50,7 +50,6 @@ mesh_optimization(long vertexcount,
 		  long tricount,
 		  void *indices,
 		  int indiceswidth,
-		  int threadcount,
 		  int optimizationlevel
 		 );
 

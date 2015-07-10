@@ -57,11 +57,10 @@ mesh_optimization(long vertexcount,
 		  long tricount,
 		  void *indices,
 		  int indiceswidth,
-		  int threadcount,
 		  int optimizationlevel
 		 )
 {
-    int depth, flags, maxthreadcount;
+    int depth, flags;
 
     switch (optimizationlevel) {
 	case 3:
@@ -84,16 +83,10 @@ mesh_optimization(long vertexcount,
 	    return;
     }
 
-    maxthreadcount = tricount / 16384;
-
-    if (threadcount > maxthreadcount)
-	threadcount = maxthreadcount;
-
     moOptimizeMesh(vertexcount,
 		   tricount,
 		   indices, indiceswidth,
 		   3 * indiceswidth, 0, 0,
 		   depth,
-		   threadcount,
 		   flags);
 }

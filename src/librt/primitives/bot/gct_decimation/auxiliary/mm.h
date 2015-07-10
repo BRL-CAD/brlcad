@@ -39,6 +39,8 @@
 
 #include "mmthread.h"
 
+#include <sys/time.h>
+
 
 #define ADDRESS(p,o) ((void *)(((char *)p)+(o)))
 
@@ -105,11 +107,9 @@ typedef struct {
 typedef struct {
     int numaflag;
     int pagesize;
-    int cpucount;
     int nodecount;
     int cpunode[MM_CPU_COUNT_MAXIMUM];
     int64_t nodesize[MM_NODE_COUNT_MAXIMUM];
-    int nodecpucount[MM_NODE_COUNT_MAXIMUM];
     int64_t sysmemory;
 } mmContext;
 

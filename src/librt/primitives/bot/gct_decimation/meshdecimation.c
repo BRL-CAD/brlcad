@@ -85,9 +85,6 @@
 #define MD_CONF_ENABLE_PROGRESS
 
 
-#define MD_THREAD_COUNT_MAX (64)
-
-
 /**/
 
 
@@ -447,8 +444,8 @@ static void mathQuadricMul(mathQuadric *qdst, mdf f)
 
 
 typedef struct {
-    mtMutex mutex;
-    mtSignal signal;
+    mtx_t mutex;
+    cnd_t signal;
     int resetcount;
     volatile int index;
     volatile int count[2];
@@ -456,8 +453,12 @@ typedef struct {
 
 static void mdBarrierInit(mdBarrier *barrier, int count)
 {
-    mtMutexInit(&barrier->mutex);
-    mtSignalInit(&barrier->signal);
+    if (mtx_init(&barrier->mutex, mtx_plain) == thrd_error)
+	bu_bomb("mtx_init() failed");
+
+    if (cnd_init(&barrier->signal) == thrd_error)
+	bu_bomb("mtx_init() failed");
+
     barrier->resetcount = count;
     barrier->index = 0;
     barrier->count[0] = count;
@@ -467,43 +468,57 @@ static void mdBarrierInit(mdBarrier *barrier, int count)
 
 static void mdBarrierDestroy(mdBarrier *barrier)
 {
-    mtMutexDestroy(&barrier->mutex);
-    mtSignalDestroy(&barrier->signal);
-    return;
+    mtx_destroy(&barrier->mutex);
+    cnd_destroy(&barrier->signal);
 }
 
 static int mdBarrierSync(mdBarrier *barrier)
 {
     int vindex, ret;
-    mtMutexLock(&barrier->mutex);
+
+    if (mtx_lock(&barrier->mutex) == thrd_error)
+	bu_bomb("mtx_lock() failed");
+
     vindex = barrier->index;
     ret = 0;
 
     if (!(--barrier->count[vindex])) {
 	ret = 1;
-	mtSignalBroadcast(&barrier->signal);
+
+	if (cnd_broadcast(&barrier->signal) == thrd_error)
+	    bu_bomb("cnd_broadcast() failed");
+
 	vindex ^= 1;
 	barrier->index = vindex;
 	barrier->count[vindex] = barrier->resetcount;
     } else {
 	for (; barrier->count[vindex] ;)
-	    mtSignalWait(&barrier->signal, &barrier->mutex);
+	    if (cnd_wait(&barrier->signal, &barrier->mutex) == thrd_error)
+		bu_bomb("cnd_wait() failed");
     }
 
-    mtMutexUnlock(&barrier->mutex);
+    if (mtx_unlock(&barrier->mutex) == thrd_error)
+	bu_bomb("mtx_unlock() failed");
+
     return ret;
 }
 
 static int mdBarrierSyncTimeout(mdBarrier *barrier, long miliseconds)
 {
     int vindex, ret;
-    mtMutexLock(&barrier->mutex);
+
+    if (mtx_lock(&barrier->mutex) == thrd_error)
+	bu_bomb("mtx_lock() failed");
+
     vindex = barrier->index;
     ret = 0;
 
     if (!(--barrier->count[vindex])) {
 	ret = 1;
-	mtSignalBroadcast(&barrier->signal);
+
+	if (cnd_broadcast(&barrier->signal) == thrd_error)
+	    bu_bomb("cnd_broadcast() failed");
+
 	vindex ^= 1;
 	barrier->index = vindex;
 	barrier->count[vindex] = barrier->resetcount;
@@ -516,7 +531,9 @@ static int mdBarrierSyncTimeout(mdBarrier *barrier, long miliseconds)
 	    barrier->count[vindex]++;
     }
 
-    mtMutexUnlock(&barrier->mutex);
+    if (mtx_unlock(&barrier->mutex) == thrd_error)
+	bu_bomb("mtx_unlock() failed");
+
     return ret;
 }
 
@@ -3549,7 +3566,7 @@ int mdFreeOpCallback(void *chunk, void *UNUSED(userpointer))
 #endif
 
 
-static void *mdThreadMain(void *value)
+static int mdThreadMain(void *value)
 {
     int vindex, tribase, trimax, triperthread, nodeindex;
     int groupthreshold;
@@ -3853,13 +3870,13 @@ void mdOperationStatusCallback(mdOperation *op, void (*statuscallback)(void *opa
 /****/
 
 
-int mdMeshDecimation(mdOperation *operation, int threadcount, int flags)
+int mdMeshDecimation(mdOperation *operation, int flags)
 {
-    int threadid, maxthreadcount;
+    int threadid, threadcount;
     long statuswait;
     mdMesh mesh;
-    mtThread thread[MD_THREAD_COUNT_MAX];
-    mdThreadInit threadinit[MD_THREAD_COUNT_MAX];
+    thrd_t thread[MAX_PSW];
+    mdThreadInit threadinit[MAX_PSW];
     mdThreadInit *tinit;
     mdStatus status;
 #ifdef MD_CONF_ENABLE_PROGRESS
@@ -3877,20 +3894,8 @@ int mdMeshDecimation(mdOperation *operation, int threadcount, int flags)
 	cpuGetInfo(&mdCpuInfo);
     }
 
-    maxthreadcount = operation->tricount / 1024;
-
-    if (threadcount > maxthreadcount)
-	threadcount = maxthreadcount;
-
-    if (threadcount <= 0) {
-	threadcount = mmcontext.cpucount;
-
-	if (threadcount <= 0)
-	    threadcount = bu_avail_cpus();
-    }
-
-    if (threadcount > MD_THREAD_COUNT_MAX)
-	threadcount = MD_THREAD_COUNT_MAX;
+    threadcount = bu_avail_cpus();
+    threadcount = FMIN((size_t)threadcount, operation->tricount / 1024);
 
     /* Get operation general settings */
     mesh.point = (mdf *)operation->vertex;
@@ -4036,7 +4041,9 @@ int mdMeshDecimation(mdOperation *operation, int threadcount, int flags)
 	tinit->threadid = threadid;
 	tinit->mesh = &mesh;
 	tinit->stage = MD_STATUS_STAGE_INIT;
-	mtThreadCreate(&thread[threadid], mdThreadMain, tinit);
+
+	if (thrd_create(&thread[threadid], mdThreadMain, tinit) == thrd_error)
+	    bu_bomb("thrd_create() failed");
     }
 
     /* Wait until all threads have properly initialized */
@@ -4081,7 +4088,9 @@ int mdMeshDecimation(mdOperation *operation, int threadcount, int flags)
 
     for (threadid = 0 ; threadid < threadcount ; threadid++) {
 	deletioncount += threadinit[threadid].deletioncount;
-	mtThreadJoin(&thread[threadid]);
+
+	if (thrd_join(thread[threadid], NULL) == thrd_error)
+	    bu_bomb("thrd_join() failed");
     }
 
     status.trianglecount = mesh.tricount - deletioncount;

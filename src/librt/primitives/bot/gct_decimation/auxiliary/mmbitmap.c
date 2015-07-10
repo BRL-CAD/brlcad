@@ -58,22 +58,10 @@ void mmBitMapInit(mmBitMap *bitmap, size_t entrycount, int initvalue)
     bitmap->entrycount = entrycount;
 
     value = (initvalue & 0x1 ? ~0x0 : 0x0);
-#ifdef MM_ATOMIC_SUPPORT
-    bitmap->map = (mmAtomic64 *)malloc(mapsize * sizeof(mmAtomicL));
-
-    for (vindex = 0 ; vindex < mapsize ; vindex++)
-	mmAtomicWriteL(&bitmap->map[vindex], value);
-
-#else
     bitmap->map = (long *)malloc(mapsize * sizeof(long));
 
     for (vindex = 0 ; vindex < mapsize ; vindex++)
 	bitmap->map[vindex] = value;
-
-    mtMutexInit(&bitmap->mutex);
-#endif
-
-    return;
 }
 
 
@@ -82,10 +70,6 @@ void mmBitMapFree(mmBitMap *bitmap)
     free(bitmap->map);
     bitmap->map = 0;
     bitmap->mapsize = 0;
-#ifndef MM_ATOMIC_SUPPORT
-    mtMutexDestroy(&bitmap->mutex);
-#endif
-    return;
 }
 
 
@@ -95,23 +79,15 @@ int mmBitMapDirectGet(mmBitMap *bitmap, size_t entryindex)
     size_t vindex, shift;
     vindex = entryindex >> LONG_BITSHIFT;
     shift = entryindex & (LONG_BITS - 1);
-#ifdef MM_ATOMIC_SUPPORT
-    value = (MM_ATOMIC_ACCESS_L(&bitmap->map[vindex]) >> shift) & 0x1;
-#else
     value = (bitmap->map[vindex] >> shift) & 0x1;
-#endif
     return value;
 }
+
 
 void mmBitMapDirectSet(mmBitMap *bitmap, size_t entryindex)
 {
     size_t vindex, shift;
     vindex = entryindex >> LONG_BITSHIFT;
     shift = entryindex & (LONG_BITS - 1);
-#ifdef MM_ATOMIC_SUPPORT
-    MM_ATOMIC_ACCESS_L(&bitmap->map[vindex]) |= (long)1 << shift;
-#else
     bitmap->map[vindex] |= (long)1 << shift;
-#endif
-    return;
 }

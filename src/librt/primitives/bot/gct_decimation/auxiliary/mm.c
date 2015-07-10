@@ -86,7 +86,6 @@ typedef struct {
 
 
 static int mmInitStatus = 0;
-static mtMutex mmGlobalMutex = MT_MUTEX_INITIALIZER;
 
 
 static void *mmAlignRelayAlloc(void *(*relayalloc)(void *head, size_t bytes), void *relayvalue, size_t bytes, intptr_t align, size_t displacement)
@@ -508,18 +507,13 @@ void mmInit()
 	mmcontext.nodecount = 1;
 	sysmemory = -1;
 #if defined(MM_LINUX)
-	mmcontext.cpucount = bu_avail_cpus();
 	mmcontext.pagesize = sysconf(_SC_PAGESIZE);
 #elif defined(MM_UNIX)
-	mmcontext.cpucount = sysconf(_SC_NPROCESSORS_CONF);
 	mmcontext.pagesize = sysconf(_SC_PAGESIZE);
 #elif defined(MM_WIN32)
 	SYSTEM_INFO sysinfo;
 	GetSystemInfo(&sysinfo);
-	mmcontext.cpucount = sysinfo.dwNumberOfProcessors;
 	mmcontext.pagesize = sysinfo.dwPageSize;
-#else
-	mmcontext.cpucount = 1;
 #endif
 #if defined(MM_UNIX) && defined(_SC_PHYS_PAGES)
 	sysmemory = sysconf(_SC_PHYS_PAGES);
@@ -530,10 +524,8 @@ void mmInit()
 #endif
 	mmcontext.sysmemory = sysmemory;
 	mmcontext.nodesize[0] = mmcontext.sysmemory;
-	mmcontext.nodecpucount[0] = mmcontext.cpucount;
     }
 
-    mtMutexInit(&mmGlobalMutex);
     mmInitStatus = 1;
 }
 
