@@ -3953,7 +3953,7 @@ int mdMeshDecimation(mdOperation *operation, int flags)
     mesh.maxcollapsecost = operation->decimationstrength;
 
     /* Record start time */
-    operation->msecs = bu_gettime();
+    operation->msecs = (bu_gettime() + 500) / 1000;
 
     mesh.threadcount = threadcount;
     mesh.operationflags = flags;
@@ -4142,7 +4142,7 @@ error:
     mdBarrierDestroy(&mesh.globalbarrier);
 
     /* Store total processing time */
-    operation->msecs = bu_gettime() - operation->msecs;
+    operation->msecs = ((bu_gettime() + 500) / 1000) - operation->msecs;
 
     return 1;
 }
