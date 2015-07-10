@@ -26,10 +26,8 @@ find_package(Threads)
 add_subdirectory(Auxiliary)
 add_subdirectory(BRLCAD)
 add_subdirectory(Sampler)
-add_subdirectory(BallPivoting)
 add_subdirectory(MeshDecimation)
 add_subdirectory(psmain)
-add_subdirectory(bpmain)
 add_subdirectory(dcmain)
 
 # Local Variables:
