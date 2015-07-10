@@ -1087,6 +1087,16 @@ ell_is_sphere(const rt_ell_internal &ell)
 }
 
 
+HIDDEN bool
+mutually_orthogonal(const fastf_t *vect_a, const fastf_t *vect_b,
+		    const fastf_t *vect_c)
+{
+    return NEAR_ZERO(VDOT(vect_a, vect_b), RT_DOT_TOL)
+	   && NEAR_ZERO(VDOT(vect_a, vect_c), RT_DOT_TOL)
+	   && NEAR_ZERO(VDOT(vect_b, vect_c), RT_DOT_TOL);
+}
+
+
 // Determines whether a tgc can be represented by a CCONE2 object.
 // Assumes that `tgc` is a valid rt_tgc_internal.
 HIDDEN bool
@@ -1094,10 +1104,7 @@ tgc_is_ccone2(const rt_tgc_internal &tgc)
 {
     RT_TGC_CK_MAGIC(&tgc);
 
-    // ensure non-zero magnitudes
-    if (NEAR_ZERO(MAGNITUDE(tgc.h), RT_LEN_TOL)
-	|| NEAR_ZERO(MAGNITUDE(tgc.a), RT_LEN_TOL)
-	|| NEAR_ZERO(MAGNITUDE(tgc.b), RT_LEN_TOL))
+    if (NEAR_ZERO(MAGNITUDE(tgc.h), RT_LEN_TOL))
 	return false;
 
     // ensure |A| == |B| and |C| == |D|
@@ -1105,15 +1112,14 @@ tgc_is_ccone2(const rt_tgc_internal &tgc)
 	|| !NEAR_EQUAL(MAGNITUDE(tgc.c), MAGNITUDE(tgc.d), RT_LEN_TOL))
 	return false;
 
-    // ensure h, a, b are mutually orthogonal
-    if (!NEAR_ZERO(VDOT(tgc.h, tgc.a), RT_DOT_TOL)
-	|| !NEAR_ZERO(VDOT(tgc.h, tgc.b), RT_DOT_TOL)
-	|| !NEAR_ZERO(VDOT(tgc.a, tgc.b), RT_DOT_TOL))
-	return false;
+    // handle non-truncated cones
+    if (NEAR_ZERO(MAGNITUDE(tgc.a), RT_LEN_TOL))
+	return mutually_orthogonal(tgc.h, tgc.c, tgc.d);
+    else if (NEAR_ZERO(MAGNITUDE(tgc.c), RT_LEN_TOL))
+	return mutually_orthogonal(tgc.h, tgc.a, tgc.b);
 
-    // check for non-truncated cone
-    if (VNEAR_ZERO(tgc.c, RT_LEN_TOL))
-	return true;
+    if (!mutually_orthogonal(tgc.h, tgc.a, tgc.b))
+	return false;
 
     {
 	// ensure unit vectors are equal
