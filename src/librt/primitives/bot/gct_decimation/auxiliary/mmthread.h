@@ -43,22 +43,15 @@
 
 #include "tinycthread.h"
 
-#include <sys/time.h>
-
-#ifdef HAVE_PTHREAD_H
-#include <pthread.h>
-#include <unistd.h>
-#endif
-
 
 static inline void mtSignalWaitTimeout(cnd_t *signal, mtx_t *mutex, long milliseconds)
 {
     uint64_t microsecs;
     struct timespec ts;
-    struct timeval tp;
-    gettimeofday(&tp, NULL);
-    ts.tv_sec  = tp.tv_sec + (milliseconds / 1000);
-    microsecs = tp.tv_usec + ((milliseconds % 1000) * 1000);
+
+    timespec_get(&ts, TIME_UTC);
+    ts.tv_sec += (milliseconds / 1000);
+    microsecs = ((ts.tv_nsec + 500) / 1000) + ((milliseconds % 1000) * 1000);
 
     if (microsecs >= 1000000) {
 	ts.tv_sec++;
@@ -105,15 +98,21 @@ static inline void mtSpinUnlock(mtSpin *spin)
 }
 
 
-#elif _POSIX_SPIN_LOCKS > 0
+#else
+
+#ifdef HAVE_PTHREAD_H
+#include <pthread.h>
+#ifdef HAVE_UNISTD_H
+#include <unistd.h>
+#endif
+#endif
+
+#if defined(_POSIX_SPIN_LOCKS) && _POSIX_SPIN_LOCKS > 0
 
 
-typedef struct mtSpin mtSpin;
-
-
-struct mtSpin {
+typedef struct {
     pthread_spinlock_t pspinlock;
-};
+} mtSpin;
 
 
 static inline void mtSpinInit(mtSpin *spin)
@@ -142,15 +141,36 @@ static inline void mtSpinUnlock(mtSpin *spin)
 #else
 
 
-typedef struct mtMutex mtSpin;
+typedef mtx_t mtSpin;
 
 
-#define mtSpinInit(a) mtMutexInit(a)
-#define mtSpinDestroy(a) mtMutexDestroy(a)
-#define mtSpinLock(a) mtMutexLock(a)
-#define mtSpinUnlock(a) mtMutexUnlock(a)
+static inline void mtSpinInit(mtSpin *spin)
+{
+    if (mtx_init(spin, mtx_plain) == thrd_error)
+	bu_bomb("mtx_init() failed");
+}
 
 
+static inline void mtSpinDestroy(mtSpin *spin)
+{
+    mtx_destroy(spin);
+}
+
+static inline void mtSpinLock(mtSpin *spin)
+{
+    if (mtx_lock(spin) == thrd_error)
+	bu_bomb("mtx_lock() failed");
+}
+
+
+static inline void mtSpinUnlock(mtSpin *spin)
+{
+    if (mtx_unlock(spin) == thrd_error)
+	bu_bomb("mtx_unlock() failed");
+}
+
+
+#endif
 #endif
 
 

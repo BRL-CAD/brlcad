@@ -47,6 +47,7 @@
 
 #include "bu/log.h"
 #include "bu/parallel.h"
+#include "bu/time.h"
 #include "vmath.h"
 
 #include <string.h>
@@ -456,7 +457,7 @@ static void mdBarrierInit(mdBarrier *barrier, int count)
     if (mtx_init(&barrier->mutex, mtx_plain) == thrd_error)
 	bu_bomb("mtx_init() failed");
 
-    if (cnd_init(&barrier->signal) == thrd_error)
+    if (cnd_init(&barrier->signal) != thrd_success)
 	bu_bomb("mtx_init() failed");
 
     barrier->resetcount = count;
@@ -3952,7 +3953,7 @@ int mdMeshDecimation(mdOperation *operation, int flags)
     mesh.maxcollapsecost = operation->decimationstrength;
 
     /* Record start time */
-    operation->msecs = mmGetMillisecondsTime();
+    operation->msecs = bu_gettime();
 
     mesh.threadcount = threadcount;
     mesh.operationflags = flags;
@@ -4141,7 +4142,7 @@ error:
     mdBarrierDestroy(&mesh.globalbarrier);
 
     /* Store total processing time */
-    operation->msecs = mmGetMillisecondsTime() - operation->msecs;
+    operation->msecs = bu_gettime() - operation->msecs;
 
     return 1;
 }

@@ -140,12 +140,4 @@ void mmThreadBindToCpu(int cpuindex);
 int mmCpuGetNode(int cpuindex);
 
 
-static inline uint64_t mmGetMillisecondsTime()
-{
-    struct timeval lntime;
-    gettimeofday(&lntime, 0);
-    return ((uint64_t)lntime.tv_sec * 1000) + ((uint64_t)lntime.tv_usec / 1000);
-}
-
-
 #endif

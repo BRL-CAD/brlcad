@@ -57,6 +57,10 @@
 
 #include <string.h>
 
+#if defined(MM_LINUX) || defined(MM_UNIX)
+#include <unistd.h>
+#endif
+
 
 #define ADDRESSDIFF(a,b) (((char *)a)-((char *)b))
 

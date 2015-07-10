@@ -82,7 +82,7 @@ static void moBarrierInit(moBarrier *barrier, int count)
     if (mtx_init(&barrier->mutex, mtx_plain) == thrd_error)
 	bu_bomb("mtx_init() failed");
 
-    if (cnd_init(&barrier->signal) == thrd_error)
+    if (cnd_init(&barrier->signal) != thrd_success)
 	bu_bomb("cnd_init() failed");
 
     barrier->resetcount = count;
