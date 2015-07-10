@@ -195,8 +195,9 @@ macro(THIRD_PARTY dir varname_root build_target description)
 
     # Find the package in question.  It is the toplevel CMakeLists.txt's responsibility to make
     # sure that the CMAKE_MODULE_PATH variable is set correctly if there are local versions of
-    # Find*.cmake scripts that should be used instead of the installed CMake version.
-
+    # Find*.cmake scripts that should be used.  Note that newer CMake versions will prefer a system
+    # version of the module, so if a custom override is needed the Find*.cmake name should not conflict
+    # with the system version.
     find_package(${${varname_root}_FIND_NAME} ${${varname_root}_FIND_VERSION} COMPONENTS ${${varname_root}_FIND_COMPONENTS})
 
     # going to use system or bundled versions of deps

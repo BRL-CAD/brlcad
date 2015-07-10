@@ -128,9 +128,6 @@ if(COMMAND CMAKE_POLICY)
   # list command doesn't ignore empty elements
   CMAKE_POLICY(SET CMP0007 NEW)
 
-  # prefer files in CMAKE_MODULE_PATH over the cmake module dir
-  CMAKE_POLICY(SET CMP0017 OLD)
-
   # allow relative paths in INCLUDE_DIRECTORIES
   if ("${CMAKE_VERSION}" VERSION_EQUAL 2.8.12 OR "${CMAKE_VERSION}" VERSION_GREATER 2.8.12)
     CMAKE_POLICY(SET CMP0021 OLD)
