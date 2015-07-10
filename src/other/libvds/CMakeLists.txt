@@ -1,7 +1,7 @@
 ##########################################################################
 #   Copyright 2011  United States Government as represented by the U.S.
 #   Army Research Laboratory.
-# 
+#
 #   Copyright 1999 The University of Virginia.
 #   All Rights Reserved.
 #
@@ -11,14 +11,14 @@
 #   complete text of this comment appear in all copies, and provided that
 #   the University of Virginia and the original authors are credited in
 #   any publications arising from the use of this software.
-# 
-#   IN NO EVENT SHALL THE UNIVERSITY OF VIRGINIA OR ANY AUTHOR OF THIS 
-#   SOFTWARE BE LIABLE TO ANY PARTY FOR DIRECT, INDIRECT, SPECIAL, 
-#   INCIDENTAL, OR CONSEQUENTIAL DAMAGES, INCLUDING LOST PROFITS, 
-#   ARISING OUT OF THE USE OF THIS SOFTWARE AND ITS DOCUMENTATION, EVEN 
-#   IF THE UNIVERSITY OF VIRGINIA AND/OR THE AUTHOR OF THIS SOFTWARE 
+#
+#   IN NO EVENT SHALL THE UNIVERSITY OF VIRGINIA OR ANY AUTHOR OF THIS
+#   SOFTWARE BE LIABLE TO ANY PARTY FOR DIRECT, INDIRECT, SPECIAL,
+#   INCIDENTAL, OR CONSEQUENTIAL DAMAGES, INCLUDING LOST PROFITS,
+#   ARISING OUT OF THE USE OF THIS SOFTWARE AND ITS DOCUMENTATION, EVEN
+#   IF THE UNIVERSITY OF VIRGINIA AND/OR THE AUTHOR OF THIS SOFTWARE
 #   HAVE BEEN ADVISED OF THE POSSIBILITY OF SUCH DAMAGES.
-# 
+#
 ##########################################################################
 
 # This file contains the top level CMakeLists.txt logic for the
@@ -27,13 +27,6 @@
 CMAKE_MINIMUM_REQUIRED(VERSION 2.8.3)
 if(COMMAND CMAKE_POLICY)
   CMAKE_POLICY(SET CMP0003 NEW)
-  CMAKE_POLICY(SET CMP0007 OLD)
-  if("${CMAKE_VERSION}" VERSION_GREATER 2.8.3)
-    CMAKE_POLICY(SET CMP0017 OLD)
-  endif("${CMAKE_VERSION}" VERSION_GREATER 2.8.3)
-  if ("${CMAKE_VERSION}" VERSION_GREATER 2.99)
-    CMAKE_POLICY(SET CMP0026 OLD)
-  endif ("${CMAKE_VERSION}" VERSION_GREATER 2.99)
 endif(COMMAND CMAKE_POLICY)
 
 # set CMake project name
