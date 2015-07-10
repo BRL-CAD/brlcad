@@ -46,6 +46,7 @@
 #include "auxiliary/mmbinsort.h"
 
 #include "bu/log.h"
+#include "bu/malloc.h"
 #include "bu/parallel.h"
 #include "bu/time.h"
 #include "vmath.h"
@@ -1005,7 +1006,7 @@ static int mdMeshHashInit(mdMesh *mesh, size_t trianglecount, mdf hashextrabits,
 	if (totalmemorysize > maxmemorysize)
 	    continue;
 
-	mesh->edgehashtable = malloc(hashmemsize);
+	mesh->edgehashtable = bu_malloc(hashmemsize, "mesh->edgehashtable");
 
 	if (mesh->edgehashtable)
 	    break;
@@ -1018,8 +1019,7 @@ static int mdMeshHashInit(mdMesh *mesh, size_t trianglecount, mdf hashextrabits,
 
 static void mdMeshHashEnd(mdMesh *mesh)
 {
-    free(mesh->edgehashtable);
-    return;
+    bu_free(mesh->edgehashtable, "mesh->edgehashtable");
 }
 
 
@@ -1092,7 +1092,7 @@ typedef struct RF_ALIGN64 {
 
 static void mdUpdateBufferInit(mdUpdateBuffer *updatebuffer, int opalloc)
 {
-    updatebuffer->opbuffer = (void **)malloc(opalloc * sizeof(mdOp *));
+    updatebuffer->opbuffer = (void **)bu_malloc(opalloc * sizeof(mdOp *), "updatebuffer->opbuffer");
     updatebuffer->opcount = 0;
     updatebuffer->opalloc = opalloc;
 #ifdef MM_ATOMIC_SUPPORT
@@ -1108,8 +1108,7 @@ static void mdUpdateBufferEnd(mdUpdateBuffer *updatebuffer)
 #ifndef MM_ATOMIC_SUPPORT
     mtSpinDestroy(&updatebuffer->spinlock);
 #endif
-    free(updatebuffer->opbuffer);
-    return;
+    bu_free(updatebuffer->opbuffer, "updatebuffer->opbuffer");
 }
 
 static void mdUpdateBufferAdd(mdUpdateBuffer *updatebuffer, mdOp *op, int orflags)
@@ -1884,7 +1883,7 @@ static inline void mdLockBufferInit(mdLockBuffer *buffer, int maxvertexcount)
     buffer->vertexalloc = MD_LOCK_BUFFER_STATIC;
 
     if (maxvertexcount > MD_LOCK_BUFFER_STATIC) {
-	buffer->vertexlist = (mdi *)malloc(maxvertexcount * sizeof(mdi));
+	buffer->vertexlist = (mdi *)bu_malloc(maxvertexcount * sizeof(mdi), "buffer->vertexlist");
 	buffer->vertexalloc = maxvertexcount;
     }
 
@@ -1898,13 +1897,13 @@ static inline void mdLockBufferResize(mdLockBuffer *buffer, int maxvertexcount)
     mdi *vertexlist;
 
     if (maxvertexcount > buffer->vertexalloc) {
-	vertexlist = (mdi *)malloc(maxvertexcount * sizeof(mdi));
+	vertexlist = (mdi *)bu_malloc(maxvertexcount * sizeof(mdi), "vertexlist");
 
 	for (vindex = 0 ; vindex < buffer->vertexcount ; vindex++)
 	    vertexlist[vindex] = buffer->vertexlist[vindex];
 
 	if (buffer->vertexlist != buffer->vertexstatic)
-	    free(buffer->vertexlist);
+	    bu_free(buffer->vertexlist, "buffer->vertexlist");
 
 	buffer->vertexlist = vertexlist;
 	buffer->vertexalloc = maxvertexcount;
@@ -1916,7 +1915,7 @@ static inline void mdLockBufferResize(mdLockBuffer *buffer, int maxvertexcount)
 static inline void mdLockBufferEnd(mdLockBuffer *buffer)
 {
     if (buffer->vertexlist != buffer->vertexstatic)
-	free(buffer->vertexlist);
+	bu_free(buffer->vertexlist, "buffer->vertexlist");
 
     buffer->vertexlist = buffer->vertexstatic;
     buffer->vertexalloc = MD_LOCK_BUFFER_STATIC;
@@ -2316,7 +2315,7 @@ static void mdEdgeCollapse(mdMesh *mesh, mdThreadData *tdata, mdi v0, mdi v1, md
     trireflist = trirefstatic;
 
     if (trirefmax > MD_EDGE_COLLAPSE_TRIREF_STATIC)
-	trireflist = (mdi *)malloc(trirefmax * sizeof(mdi));
+	trireflist = (mdi *)bu_malloc(trirefmax * sizeof(mdi), "trireflist");
 
     /* Update all triangles connected to vertex0 and vertex1 */
     trirefstore = trireflist;
@@ -2369,7 +2368,7 @@ static void mdEdgeCollapse(mdMesh *mesh, mdThreadData *tdata, mdi v0, mdi v1, md
 
     /* If buffer wasn't static, free it */
     if (trireflist != trirefstatic)
-	free(trireflist);
+	bu_free(trireflist, "trireflist");
 
     /* Verify if we should create new ops between newv and outer vertices of deleted triangles */
     mdEdgeCollapseLinkOuter(mesh, tdata, newv, outer0);
@@ -2512,10 +2511,10 @@ static int mdMeshInit(mdMesh *mesh, size_t maxmemorysize)
     /* Allocate space for per-vertex lists of face references, including future vertices */
     mesh->trirefcount = 0;
     mesh->trirefalloc = 2 * 6 * mesh->tricount;
-    mesh->trireflist = (mdi *)malloc(mesh->trirefalloc * sizeof(mdi));
+    mesh->trireflist = (mdi *)bu_malloc(mesh->trirefalloc * sizeof(mdi), "mesh->trireflist");
 
     /* Allocate triangles */
-    mesh->trilist = (mdTriangle *)malloc(mesh->tricount * sizeof(mdTriangle));
+    mesh->trilist = (mdTriangle *)bu_malloc(mesh->tricount * sizeof(mdTriangle), "mesh->trilist");
 
     /* Allocate edge hash table */
     retval = 1;
@@ -2758,9 +2757,8 @@ static void mdMeshEnd(mdMesh *mesh)
     mtSpinDestroy(&mesh->globalvertexspinlock);
 #endif
     mmAlignFree(mesh->vertexlist);
-    free(mesh->trireflist);
-    free(mesh->trilist);
-    return;
+    bu_free(mesh->trireflist, "mesh->trireflist");
+    bu_free(mesh->trilist, "mesh->trilist");
 }
 
 
@@ -3514,8 +3512,8 @@ static void mdMeshRecomputeNormals(mdMesh *mesh, mdOpAttrib *normalattrib)
     /* Count triangles and assign redirectindex to each in sequence */
     mdMeshPackCountTriangles(mesh);
 
-    mesh->vertexnormal = malloc(mesh->vertexalloc * 3 * sizeof(normal));
-    mesh->trinormal = malloc(mesh->tripackcount * sizeof(mdTriNormal));
+    mesh->vertexnormal = bu_malloc(mesh->vertexalloc * 3 * sizeof(normal), "mesh->vertexnormal");
+    mesh->trinormal = bu_malloc(mesh->tripackcount * sizeof(mdTriNormal), "mesh->trinormal");
 
     /* Build up mesh->trinormal, store normals, area and vertex angles of each triangle */
     mdMeshBuildTriangleNormals(mesh);
@@ -3537,10 +3535,8 @@ static void mdMeshRecomputeNormals(mdMesh *mesh, mdOpAttrib *normalattrib)
     mdMeshWriteVertices(mesh, normalattrib, (mdf *)mesh->vertexnormal);
     mdMeshWriteIndices(mesh);
 
-    free(mesh->vertexnormal);
-    free(mesh->trinormal);
-
-    return;
+    bu_free(mesh->vertexnormal, "mesh->vertexnormal");
+    bu_free(mesh->trinormal, "mesh->trinormal");
 }
 
 

@@ -43,6 +43,7 @@
 #include "auxiliary/math3d.h"
 
 #include "bu/log.h"
+#include "bu/malloc.h"
 #include "bu/parallel.h"
 
 #include <stdlib.h>
@@ -1560,7 +1561,7 @@ int moOptimizeMesh(size_t vertexcount, size_t tricount, void *indices, int indic
     mesh.vertexlist = (moVertex *)mmAlignAlloc(mesh.vertexcount * sizeof(moVertex), 0x40);
     mesh.trilist = (moTriangle *)mmAlignAlloc(mesh.tricount * sizeof(moTriangle), 0x40);
     mesh.trirefcount = 0;
-    mesh.trireflist = (moi *)malloc(3 * mesh.tricount * sizeof(moi));
+    mesh.trireflist = (moi *)bu_malloc(3 * mesh.tricount * sizeof(moi), "mesh.trireflist");
 
     /* Launch threads! */
     tinit = threadinit;
@@ -1591,10 +1592,9 @@ int moOptimizeMesh(size_t vertexcount, size_t tricount, void *indices, int indic
     /* Free all global data */
     mmAlignFree(mesh.vertexlist);
     mmAlignFree(mesh.trilist);
-    free(mesh.trireflist);
+    bu_free(mesh.trireflist, "mesh.trireflist");
     moBarrierDestroy(&mesh.workbarrier);
     moBarrierDestroy(&mesh.globalbarrier);
-
 
     return 1;
 }

@@ -453,7 +453,7 @@ void mmBlockProcessList(mmBlockHead *head, void *userpointer, int (*processchunk
     chunksize = head->chunksize;
     chunkperblock = head->chunkperblock;
     blockrefsize = ((chunkperblock + INTPTR_BITS - 1) >> INTPTR_BITSHIFT) * sizeof(intptr_t);
-    bitsref = (intptr_t **)malloc(blockcount * (sizeof(intptr_t *) + blockrefsize));
+    bitsref = (intptr_t **)bu_malloc(blockcount * (sizeof(intptr_t *) + blockrefsize), "bitsref");
     memset(bitsref, 0, blockcount * (sizeof(intptr_t *) + blockrefsize));
 
     p = ADDRESS(bitsref, blockcount * sizeof(intptr_t *));
@@ -487,7 +487,7 @@ void mmBlockProcessList(mmBlockHead *head, void *userpointer, int (*processchunk
     }
 
 end:
-    free(bitsref);
+    bu_free(bitsref, "bitsref");
     mtSpinUnlock(&head->spinlock);
 
     return;

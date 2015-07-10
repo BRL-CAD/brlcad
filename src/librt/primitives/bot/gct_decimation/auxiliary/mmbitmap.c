@@ -40,6 +40,8 @@
 
 #include "cc.h"
 
+#include "bu/malloc.h"
+
 #include <limits.h>
 #include <stdlib.h>
 
@@ -58,7 +60,7 @@ void mmBitMapInit(mmBitMap *bitmap, size_t entrycount, int initvalue)
     bitmap->entrycount = entrycount;
 
     value = (initvalue & 0x1 ? ~0x0 : 0x0);
-    bitmap->map = (long *)malloc(mapsize * sizeof(long));
+    bitmap->map = (long *)bu_malloc(mapsize * sizeof(long), "bitmap->map");
 
     for (vindex = 0 ; vindex < mapsize ; vindex++)
 	bitmap->map[vindex] = value;
@@ -67,7 +69,7 @@ void mmBitMapInit(mmBitMap *bitmap, size_t entrycount, int initvalue)
 
 void mmBitMapFree(mmBitMap *bitmap)
 {
-    free(bitmap->map);
+    bu_free(bitmap->map, "bitmap->map");
     bitmap->map = 0;
     bitmap->mapsize = 0;
 }

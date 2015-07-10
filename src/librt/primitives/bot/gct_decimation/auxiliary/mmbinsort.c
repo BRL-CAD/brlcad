@@ -40,6 +40,8 @@
 
 #include "mm.h"
 
+#include "bu/malloc.h"
+
 #include <float.h>
 #include <stdlib.h>
 #include <math.h>
@@ -238,7 +240,7 @@ void *mmBinSortInit(size_t itemlistoffset, int rootbucketcount, int groupbucketc
 	mmBlockNodeInit(&bsort->bucketblock, numanodeindex, sizeof(mmBinSortBucket), 1024, 1024, 0x40);
 	mmBlockNodeInit(&bsort->groupblock, numanodeindex, sizeof(mmBinSortGroup) + (groupbucketcount * sizeof(mmBinSortBucket)), 16, 16, 0x40);
     } else {
-	bsort = (mmBinSortHead *)malloc(memsize);
+	bsort = (mmBinSortHead *)bu_malloc(memsize, "bsort");
 	mmBlockInit(&bsort->bucketblock, sizeof(mmBinSortBucket), 1024, 1024, 0x40);
 	mmBlockInit(&bsort->groupblock, sizeof(mmBinSortGroup) + (groupbucketcount * sizeof(mmBinSortBucket)), 16, 16, 0x40);
     }
@@ -285,9 +287,7 @@ void mmBinSortFree(void *binsort)
     if (bsort->numanodeindex >= 0)
 	mmNodeFree(bsort->numanodeindex, bsort, bsort->memsize);
     else
-	free(bsort);
-
-    return;
+	bu_free(bsort, "bsort");
 }
 
 
