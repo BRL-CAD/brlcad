@@ -1111,6 +1111,10 @@ tgc_is_ccone2(const rt_tgc_internal &tgc)
 	|| !NEAR_ZERO(VDOT(tgc.a, tgc.b), RT_DOT_TOL))
 	return false;
 
+    // check for apex at infinity
+    if (VNEAR_ZERO(tgc.c, RT_LEN_TOL))
+	return true;
+
     {
 	// ensure unit vectors are equal
 	vect_t a_norm, b_norm, c_norm, d_norm;
