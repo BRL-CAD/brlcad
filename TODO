@@ -56,6 +56,13 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
 
+* Post 7.26.0 release, need to look at migrating CMake logic off of
+  the OLD behavior for policy 0026 (using LOCATION property.)  Now
+  that Debian stable is using CMake >=3.0 we should be OK to require
+  the more modern CMake.  Another TODO once we require the newer CMake
+  is retiring our custom time stamping code in favor of using
+  the CMake time stamp mechanism.
+
 * convert usages of Tcl_InitHashTable() and friends to libbu
   containers (see src/conv/enf-g.c for example usage)
 
