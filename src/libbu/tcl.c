@@ -36,13 +36,8 @@
 #include "bu/bu_tcl.h"
 #include "vmath.h"
 
-
-/*XXX Temporary global interp */
-Tcl_Interp *brlcad_interp = (Tcl_Interp *)0;
-
 #define TINYBUFSIZ 32
 #define SMALLBUFSIZ 256
-
 
 /**
  * A wrapper for bu_mem_barriercheck.
@@ -435,9 +430,6 @@ Bu_Init(void *p)
 	{"bu_hsv_to_rgb",		tcl_bu_hsv_to_rgb},
 	{(const char *)NULL, BU_CMD_NULL}
     };
-
-    /*XXX Use of brlcad_interp is temporary */
-    brlcad_interp = interp;
 
     register_cmds(interp, cmds);
 

@@ -25,10 +25,16 @@
 #define RT_GLOBAL_H
 
 #include "common.h"
+
+#include "tcl.h"        /* Included for Tcl_Interp definition */
+
 #include "vmath.h"
 #include "rt/defines.h"
 
 __BEGIN_DECLS
+
+/* FIXME Temporary global interp.  Remove me.  */
+RT_EXPORT extern Tcl_Interp *brlcad_interp;
 
 /**
  * Definitions for librt.a which are global to the library regardless
@@ -70,6 +76,7 @@ RT_EXPORT extern struct rt_g RTG;
 
 /** Set a line width to apply to the vlist elements that follow. */
 #define RT_VLIST_SET_LINE_WIDTH(hd, width) BN_VLIST_SET_LINE_WIDTH(&RTG.rtg_vlfree, hd, width)
+
 
 
 __END_DECLS

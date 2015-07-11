@@ -39,9 +39,6 @@ __BEGIN_DECLS
 /** @{ */
 /** @file bu/bu_tcl.h */
 
-/* FIXME Temporary global interp.  Remove me.  */
-BU_EXPORT extern Tcl_Interp *brlcad_interp;
-
 /**
  * Bu_Init
  *
