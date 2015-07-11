@@ -35,7 +35,6 @@
 #include <ctype.h>
 #include "bnetwork.h"
 
-#include "tcl.h"
 #include "vmath.h"
 #include "bu/debug.h"
 #include "bu/cv.h"
@@ -2620,18 +2619,14 @@ rt_sketch_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc,
 	    skt->vert_count = len / 2;
 	} else if (BU_STR_EQUAL(argv[0], "SL")) {
 	    /* the entire segment list */
-	    Tcl_Obj *tmp;
 	    struct rt_curve *crv;
-
-	    /* create a Tcl object */
-	    tmp = Tcl_NewStringObj(argv[1], -1);
 
 	    crv = &skt->curve;
 	    crv->count = 0;
 	    crv->reverse = (int *)NULL;
 	    crv->segment = (void **)NULL;
 
-	    if ((ret=get_tcl_curve(logstr, crv, argv[1])) != TCL_OK)
+	    if ((ret=get_tcl_curve(logstr, crv, argv[1])) != 0)
 		return ret;
 	} else if (*argv[0] == 'V' && isdigit((int)*(argv[0]+1))) {
 	    /* changing a specific vertex */
