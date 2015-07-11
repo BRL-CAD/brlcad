@@ -61,7 +61,6 @@
 #include "./bu/version.h"
 #include "./bu/avs.h"
 #include "./bu/bitv.h"
-#include "./bu/bu_tcl.h"
 #include "./bu/cmd.h"
 #include "./bu/color.h"
 #include "./bu/cv.h"

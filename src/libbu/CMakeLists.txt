@@ -99,7 +99,6 @@ set(LIBBU_SOURCES
   sscanf.c
   scan.c
   str.c
-  tcl.c
   temp.c
   thread.cpp
   timer.c
@@ -114,12 +113,8 @@ set(LIBBU_SOURCES
   xdr.c
   )
 
-BRLCAD_ADDLIB(libbu "${LIBBU_SOURCES}" "${CMAKE_THREAD_LIBS_INIT};${TCL_LIBRARY};${WINSOCK_LIB};${PSAPI_LIB};${M_LIBRARY};y2038")
+BRLCAD_ADDLIB(libbu "${LIBBU_SOURCES}" "${CMAKE_THREAD_LIBS_INIT};${DL_LIBRARY};${WINSOCK_LIB};${PSAPI_LIB};${M_LIBRARY};y2038")
 set_target_properties(libbu PROPERTIES VERSION 20.0.1 SOVERSION 20)
-get_directory_property(BRLCAD_TCL_BUILD DIRECTORY ${BRLCAD_SOURCE_DIR}/src/other DEFINITION BRLCAD_TCL_BUILD)
-if("${BRLCAD_TCL_BUILD}" STREQUAL "ON")
-  add_dependencies(libbu tcl)
-endif("${BRLCAD_TCL_BUILD}" STREQUAL "ON")
 if(CPP_DLL_DEFINES)
   set_property(TARGET libbu APPEND PROPERTY COMPILE_DEFINITIONS "Y2038_DLL_IMPORTS")
 endif(CPP_DLL_DEFINES)
