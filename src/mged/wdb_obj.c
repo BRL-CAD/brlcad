@@ -2657,6 +2657,11 @@ wdb_put_cmd(struct rt_wdb *wdbp,
     return TCL_OK;
 }
 
+HIDDEN void
+_wdb_eval(void *context, const char *cmd) {
+    Tcl_Interp *interp = (Tcl_Interp *)context;
+    Tcl_Eval(interp, cmd);
+}
 
 int
 wdb_adjust_cmd(struct rt_wdb *wdbp,
@@ -2724,7 +2729,7 @@ wdb_adjust_cmd(struct rt_wdb *wdbp,
     }
 
     /* notify observers */
-    bu_observer_notify(wdbp->wdb_interp, &wdbp->wdb_observers, bu_vls_addr(&wdbp->wdb_name));
+    bu_observer_notify((void *)wdbp->wdb_interp, &(_wdb_eval), &wdbp->wdb_observers, bu_vls_addr(&wdbp->wdb_name));
 
     return status;
 }

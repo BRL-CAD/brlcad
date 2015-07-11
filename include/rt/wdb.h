@@ -29,7 +29,8 @@
 #include "bu/magic.h"
 #include "bu/list.h"
 #include "bu/vls.h"
-#include "bu/bu_tcl.h" /* for bu_observer and Tcl_Interp */
+#include "bu/bu_tcl.h" /* for Tcl_Interp */
+#include "bu/observer.h"
 #include "bn/tol.h"
 #include "rt/db_instance.h"
 #include "rt/tree.h"

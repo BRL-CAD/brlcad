@@ -86,10 +86,11 @@
 /** @ingroup bu_io */
 /**   @defgroup bu_log Logging */
 /** @ingroup bu_io */
+/**   @defgroup bu_observer Observer*/
+/** @ingroup bu_io */
 /**   @defgroup bu_vfont Vector Fonts */
 /** @ingroup bu_io */
 /**   @defgroup bu_debug Debugging */
-
 
 /* Data Management */
 /** @ingroup bu_data */
