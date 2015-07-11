@@ -487,8 +487,11 @@ int hit(register struct application *ap, struct partition *PartHeadp, struct seg
     }
     for (; pp != PartHeadp; pp = pp->pt_forw) {
 	matp_t inv_mat;
-	const char *key = (const char *)(size_t)pp->pt_regionp->reg_bit;
+	struct bu_vls key = BU_VLS_INIT_ZERO;
 	struct bu_hash_entry *entry;
+	struct bu_hash_entry *prev = NULL;
+	unsigned long idx;
+	bu_vls_sprintf(&key, "%ld", pp->pt_regionp->reg_bit);
 
 	bu_log("\n--- Hit region %s (in %s, out %s) reg_bit = %d\n",
 	       pp->pt_regionp->reg_name,
@@ -497,7 +500,8 @@ int hit(register struct application *ap, struct partition *PartHeadp, struct seg
 	       pp->pt_regionp->reg_bit);
 
 	entry = bu_hash_tbl_find((struct bu_hash_tbl *)ap->a_rt_i->Orca_hash_tbl,
-				  (unsigned char *)key, strlen(key) + 1, NULL, NULL);
+				  (unsigned char *)bu_vls_addr(&key), bu_vls_strlen(&key) + 1, &prev, &idx);
+	bu_vls_free(&key);
 	if (!entry) {
 	    inv_mat = (matp_t)NULL;
 	} else {

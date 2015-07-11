@@ -225,7 +225,8 @@ _rt_gettree_region_end(struct db_tree_state *tsp, const struct db_full_path *pat
     if (tbl && bu_avs_get(&tsp->ts_attrs, "ORCA_Comp")) {
 	int newentry;
 	long int reg_bit = rp->reg_bit;
-	const char *key = (char *)reg_bit;
+	struct bu_vls key = BU_VLS_INIT_ZERO;
+	bu_vls_sprintf(&key, "%ld", reg_bit);
 
 	inv_mat = (matp_t)bu_calloc(16, sizeof(fastf_t), "inv_mat");
 	bn_mat_inv(inv_mat, tsp->ts_mat);
@@ -233,11 +234,12 @@ _rt_gettree_region_end(struct db_tree_state *tsp, const struct db_full_path *pat
 	/* enter critical section */
 	bu_semaphore_acquire(RT_SEM_RESULTS);
 
-	entry = bu_hash_tbl_add(tbl, (unsigned char *)key, strlen(key) + 1, &newentry);
+	entry = bu_hash_tbl_add(tbl, (unsigned char *)bu_vls_addr(&key), bu_vls_strlen(&key) + 1, &newentry);
 	bu_set_hash_value(entry, (unsigned char *)inv_mat);
 
 	/* leave critical section */
 	bu_semaphore_release(RT_SEM_RESULTS);
+	bu_vls_free(&key);
     }
 
     if (RT_G_DEBUG & DEBUG_REGIONS) {
