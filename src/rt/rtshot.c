@@ -487,7 +487,8 @@ int hit(register struct application *ap, struct partition *PartHeadp, struct seg
     }
     for (; pp != PartHeadp; pp = pp->pt_forw) {
 	matp_t inv_mat;
-	Tcl_HashEntry *entry;
+	const char *key = (const char *)(size_t)pp->pt_regionp->reg_bit;
+	struct bu_hash_entry *entry;
 
 	bu_log("\n--- Hit region %s (in %s, out %s) reg_bit = %d\n",
 	       pp->pt_regionp->reg_name,
@@ -495,12 +496,12 @@ int hit(register struct application *ap, struct partition *PartHeadp, struct seg
 	       pp->pt_outseg->seg_stp->st_name,
 	       pp->pt_regionp->reg_bit);
 
-	entry = Tcl_FindHashEntry((Tcl_HashTable *)ap->a_rt_i->Orca_hash_tbl,
-				  (const char *)(size_t)pp->pt_regionp->reg_bit);
+	entry = bu_hash_tbl_find((struct bu_hash_tbl *)ap->a_rt_i->Orca_hash_tbl,
+				  (unsigned char *)key, strlen(key) + 1, NULL, NULL);
 	if (!entry) {
 	    inv_mat = (matp_t)NULL;
 	} else {
-	    inv_mat = (matp_t)Tcl_GetHashValue(entry);
+	    inv_mat = (matp_t)bu_get_hash_value(entry);
 	    bn_mat_print("inv_mat", inv_mat);
 	}
 
@@ -642,19 +643,20 @@ int bundle_hit(register struct application_bundle *bundle, struct partition_bund
 	for (; pp != &pl->PartHeadp; pp = pp->pt_forw) {
 	    fastf_t out;
 	    matp_t inv_mat;
-	    Tcl_HashEntry *entry;
+	    const char *key = (const char *)(size_t)pp->pt_regionp->reg_bit;
+	    struct bu_hash_entry *entry;
 
 	    bu_log("\n--- Hit region %s (in %s, out %s) reg_bit = %d\n",
 		   pp->pt_regionp->reg_name, pp->pt_inseg->seg_stp->st_name,
 		   pp->pt_outseg->seg_stp->st_name, pp->pt_regionp->reg_bit);
 
-	    entry = Tcl_FindHashEntry(
-		(Tcl_HashTable *) pl->ap->a_rt_i->Orca_hash_tbl,
-		(const char *) (size_t) pp->pt_regionp->reg_bit);
+	    entry = bu_hash_tbl_find((struct bu_hash_tbl *)pl->ap->a_rt_i->Orca_hash_tbl,
+		    (unsigned char *)key, strlen(key) + 1, NULL, NULL);
+
 	    if (!entry) {
 		inv_mat = (matp_t) NULL;
 	    } else {
-		inv_mat = (matp_t) Tcl_GetHashValue(entry);
+		inv_mat = (matp_t)bu_get_hash_value(entry);
 		bn_mat_print("inv_mat", inv_mat);
 	    }
 

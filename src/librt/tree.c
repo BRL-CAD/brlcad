@@ -233,7 +233,7 @@ _rt_gettree_region_end(struct db_tree_state *tsp, const struct db_full_path *pat
 	/* enter critical section */
 	bu_semaphore_acquire(RT_SEM_RESULTS);
 
-	entry = bu_hash_tbl_add(tbl, (const unsigned char *)key, strlen(key), &newentry);
+	entry = bu_hash_tbl_add(tbl, (unsigned char *)key, strlen(key) + 1, &newentry);
 	bu_set_hash_value(entry, (unsigned char *)inv_mat);
 
 	/* leave critical section */
