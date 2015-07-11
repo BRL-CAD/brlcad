@@ -1,4 +1,4 @@
-/*                        B N _ T C L . H
+/*                        B N _ S T R . H
  * BRL-CAD
  *
  * Copyright (c) 2004-2014 United States Government as represented by
@@ -19,45 +19,25 @@
  */
 
 /*----------------------------------------------------------------------*/
-/** @addtogroup bn_tcl
+/** @addtogroup bn_str
  *
  * @brief
- * Tcl interfaces to all the LIBBN math routines.
+ * LIBBN encode/decode string routines.
  *
  */
 /** @{ */
-/** @file bn_tcl.h */
+/** @file bn/str.h */
 
-#ifndef BN_TCL_H
-#define BN_TCL_H
+#ifndef BN_STR_H
+#define BN_STR_H
 
 #include "common.h"
-
-#include "tcl.h"
 
 #include "vmath.h"
 #include "bu/vls.h"
 #include "bn/defines.h"
 
 __BEGIN_DECLS
-
-/**
- *@brief
- * Add all the supported Tcl interfaces to LIBBN routines to
- * the list of commands known by the given interpreter.
- */
-BN_EXPORT extern void bn_tcl_setup(Tcl_Interp *interp);
-
-/**
- *@brief
- * Allows LIBBN to be dynamically loaded to a vanilla tclsh/wish with
- * "load /usr/brlcad/lib/libbn.so"
- *
- * The name of this function is specified by TCL.
- */
-BN_EXPORT extern int Bn_Init(Tcl_Interp *interp);
-
-BN_EXPORT extern void bn_tcl_mat_print(Tcl_Interp *interp, const char *title, const mat_t m);
 
 /**
  *  @brief Support routines for the math functions
@@ -67,8 +47,6 @@ BN_EXPORT extern void bn_tcl_mat_print(Tcl_Interp *interp, const char *title, co
  * XXX so that junk like leading { and commas between inputs
  * XXX don't spoil the conversion.
  */
-
-/* The presence of Tcl_Interp as an arg prevents giving arg list */
 
 BN_EXPORT extern int bn_decode_mat(mat_t m,
 				   const char *str);
@@ -88,10 +66,9 @@ BN_EXPORT extern void bn_encode_hvect(struct bu_vls *vp,
 				      const hvect_t v);
 
 
-
 __END_DECLS
 
-#endif  /* BN_TCL_H */
+#endif  /* BN_STR_H */
 /** @} */
 /*
  * Local Variables:

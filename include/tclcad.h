@@ -129,6 +129,9 @@ TCLCAD_EXPORT extern int tclcad_tk_setup(Tcl_Interp *interp);
 TCLCAD_EXPORT extern void tclcad_auto_path(Tcl_Interp *interp);
 TCLCAD_EXPORT extern void tclcad_tcl_library(Tcl_Interp *interp);
 TCLCAD_EXPORT extern int Bu_Init(void *interp);
+TCLCAD_EXPORT extern void bn_tcl_setup(Tcl_Interp *interp);
+TCLCAD_EXPORT extern int Bn_Init(Tcl_Interp *interp);
+TCLCAD_EXPORT extern void bn_tcl_mat_print(Tcl_Interp *interp, const char *title, const mat_t m);
 TCLCAD_EXPORT extern int Tclcad_Init(Tcl_Interp *interp);
 
 /* defined in tclcad_obj.c */

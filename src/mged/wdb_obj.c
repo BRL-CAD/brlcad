@@ -53,6 +53,7 @@
 #include "ged.h"
 #include "wdb.h"
 #include "raytrace.h"
+#include "tclcad.h"
 #include "obj.h"
 
 #define WDB_TCL_READ_ERR { \
