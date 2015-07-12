@@ -2564,7 +2564,7 @@ rt_sketch_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc,
 	if (BU_STR_EQUAL(argv[0], "V")) {
 	    newval = skt->V;
 	    array_len = 3;
-	    if (tcl_list_to_fastf_array(brlcad_interp, argv[1], &newval, &array_len) !=
+	    if (rt_tcl_list_to_fastf_array(argv[1], &newval, &array_len) !=
 		array_len) {
 		bu_vls_printf(logstr, "ERROR: Incorrect number of coordinates for vertex\n");
 		return BRLCAD_ERROR;
@@ -2572,7 +2572,7 @@ rt_sketch_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc,
 	} else if (BU_STR_EQUAL(argv[0], "A")) {
 	    newval = skt->u_vec;
 	    array_len = 3;
-	    if (tcl_list_to_fastf_array(brlcad_interp, argv[1], &newval, &array_len) !=
+	    if (rt_tcl_list_to_fastf_array(argv[1], &newval, &array_len) !=
 		array_len) {
 		bu_vls_printf(logstr, "ERROR: Incorrect number of coordinates for vertex\n");
 		return BRLCAD_ERROR;
@@ -2580,7 +2580,7 @@ rt_sketch_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc,
 	} else if (BU_STR_EQUAL(argv[0], "B")) {
 	    newval = skt->v_vec;
 	    array_len = 3;
-	    if (tcl_list_to_fastf_array(brlcad_interp, argv[1], &newval, &array_len) !=
+	    if (rt_tcl_list_to_fastf_array(argv[1], &newval, &array_len) !=
 		array_len) {
 		bu_vls_printf(logstr, "ERROR: Incorrect number of coordinates for vertex\n");
 		return BRLCAD_ERROR;
@@ -2605,7 +2605,7 @@ rt_sketch_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc,
 	    }
 
 	    len = 0;
-	    (void)tcl_list_to_fastf_array(brlcad_interp, dupstr, &new_verts, &len);
+	    (void)rt_tcl_list_to_fastf_array(dupstr, &new_verts, &len);
 	    bu_free(dupstr, "sketch adjust strdup");
 
 	    if (len%2) {
@@ -2640,7 +2640,7 @@ rt_sketch_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc,
 		return BRLCAD_ERROR;
 	    }
 	    array_len = 2;
-	    if (tcl_list_to_fastf_array(brlcad_interp, argv[1], &new_vert, &array_len) != array_len) {
+	    if (rt_tcl_list_to_fastf_array(argv[1], &new_vert, &array_len) != array_len) {
 		bu_vls_printf(logstr, "ERROR: Incorrect number of coordinates for vertex\n");
 		return BRLCAD_ERROR;
 	    }
