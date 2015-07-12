@@ -92,8 +92,6 @@ int rt_brep_export5(struct bu_external *ep, const struct rt_db_internal *ip, dou
 int rt_brep_import5(struct rt_db_internal *ip, const struct bu_external *ep, register const fastf_t *mat, const struct db_i *dbip);
 void rt_brep_ifree(struct rt_db_internal *ip);
 int rt_brep_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose, double mm2local);
-int rt_brep_tclget(Tcl_Interp *interp, const struct rt_db_internal *intern, const char *attr);
-int rt_brep_tcladjust(Tcl_Interp *interp, struct rt_db_internal *intern, int argc, const char **argv);
 int rt_brep_params(struct pc_pc_set *, const struct rt_db_internal *ip);
 RT_EXPORT extern int rt_brep_boolean(struct rt_db_internal *out, const struct rt_db_internal *ip1, const struct rt_db_internal *ip2, db_op_t operation);
 struct rt_selection_set *rt_brep_find_selections(const struct rt_db_internal *ip, const struct rt_selection_query *query);
@@ -4840,21 +4838,6 @@ rt_brep_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbos
 
     return 0;
 }
-
-
-int
-rt_brep_tclget(Tcl_Interp *, const struct rt_db_internal *, const char *)
-{
-    return 0;
-}
-
-
-int
-rt_brep_tcladjust(Tcl_Interp *, struct rt_db_internal *, int, const char **)
-{
-    return 0;
-}
-
 
 int
 rt_brep_params(struct pc_pc_set *, const struct rt_db_internal *)
