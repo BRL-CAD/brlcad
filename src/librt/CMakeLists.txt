@@ -286,6 +286,7 @@ set(librt_ignored_files
   test_root3-subd.cpp
   subd_test_bot.asc
   prcomb.c
+  primitives/bot/gct_decimation
   primitives/bot/btg.h
   primitives/bot/g_bot_include.c
   primitives/bot/bot_wireframe.cpp
