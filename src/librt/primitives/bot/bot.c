@@ -2228,7 +2228,7 @@ rt_bot_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, co
 
 	    if (argv[0][2] == '\0') {
 		if (bu_argv_from_tcl_list(argv[1], &len, (const char ***)&obj_array) != 0) {
-		    bu_vls_printf(logstr, "Tcl list parse error.", len);
+		    bu_vls_printf(logstr, "tcl list parse error.", len);
 		    return BRLCAD_ERROR;
 		}
 		if ((size_t)len != bot->num_faces || len <= 0) {
@@ -2339,7 +2339,7 @@ rt_bot_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, co
 
 	    if (argv[0][1] == '\0') {
 		if (bu_argv_from_tcl_list(argv[1], &len, (const char ***)&obj_array) != 0) {
-		    bu_vls_printf(logstr, "Tcl list parse error.", len);
+		    bu_vls_printf(logstr, "tcl list parse error.", len);
 		    return BRLCAD_ERROR;
 		}
 		if (len <= 0) {
@@ -2408,7 +2408,7 @@ rt_bot_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, co
 
 	    if (argv[0][1] == '\0') {
 		if (bu_argv_from_tcl_list(argv[1], &len, (const char ***)&obj_array) != 0) {
-		    bu_vls_printf(logstr, "Tcl list parse error.", len);
+		    bu_vls_printf(logstr, "tcl list parse error.", len);
 		    return BRLCAD_ERROR;
 		}
 		if (len <= 0) {
@@ -2472,7 +2472,7 @@ rt_bot_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, co
 
 	    if (argv[0][1] == '\0') {
 		if (bu_argv_from_tcl_list(argv[1], &len, (const char ***)&obj_array) != 0) {
-		    bu_vls_printf(logstr, "Tcl list parse error.", len);
+		    bu_vls_printf(logstr, "tcl list parse error.", len);
 		    return BRLCAD_ERROR;
 		}
 		if (len <= 0) {
@@ -2595,7 +2595,7 @@ rt_bot_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, co
 
 	    if (argv[0][1] == '\0') {
 		if (bu_argv_from_tcl_list(argv[1], &len, (const char ***)&obj_array) != 0) {
-		    bu_vls_printf(logstr, "Tcl list parse error.", len);
+		    bu_vls_printf(logstr, "tcl list parse error.", len);
 		    return BRLCAD_ERROR;
 		}
 		if (len <= 0) {
@@ -2682,7 +2682,7 @@ rt_bot_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, co
 	    }
 	} else if (BU_STR_EQUAL(argv[0], "flags")) {
 	    if (bu_argv_from_tcl_list(argv[1], &len, (const char ***)&obj_array) != 0) {
-		bu_vls_printf(logstr, "Tcl list parse error.", len);
+		bu_vls_printf(logstr, "tcl list parse error.", len);
 		return BRLCAD_ERROR;
 	    }
 	    bot->bot_flags = 0;
