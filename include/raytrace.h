@@ -43,7 +43,6 @@
 #include "common.h"
 
 /* interface headers */
-#include "tcl.h"
 #include "bu/avs.h"
 #include "bu/bitv.h"
 #include "bu/file.h"
@@ -171,8 +170,6 @@ __BEGIN_DECLS
 #include "./rt/vlist.h"
 
 #include "./rt/htbl.h"
-
-#include "./rt/rt_tcl.h"
 
 #include "./rt/dspline.h"
 

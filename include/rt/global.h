@@ -26,15 +26,10 @@
 
 #include "common.h"
 
-#include "tcl.h"        /* Included for Tcl_Interp definition */
-
 #include "vmath.h"
 #include "rt/defines.h"
 
 __BEGIN_DECLS
-
-/* FIXME Temporary global interp.  Remove me.  */
-RT_EXPORT extern Tcl_Interp *brlcad_interp;
 
 /**
  * Definitions for librt.a which are global to the library regardless
