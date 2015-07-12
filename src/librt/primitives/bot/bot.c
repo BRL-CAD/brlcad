@@ -34,7 +34,6 @@
 #include <ctype.h>
 #include "bnetwork.h"
 
-#include "tcl.h"
 #include "bu/cv.h"
 #include "bg/polygon.h"
 #include "vmath.h"

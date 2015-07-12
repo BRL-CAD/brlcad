@@ -33,7 +33,6 @@
 #include <string.h>
 #include "bnetwork.h"
 
-#include "tcl.h"
 #include "bu/cv.h"
 #include "bu/debug.h"
 #include "vmath.h"

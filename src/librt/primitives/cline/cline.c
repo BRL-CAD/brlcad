@@ -32,7 +32,6 @@
 #include <math.h>
 #include "bio.h"
 
-#include "tcl.h"
 #include "bu/cv.h"
 #include "vmath.h"
 #include "rt/db4.h"

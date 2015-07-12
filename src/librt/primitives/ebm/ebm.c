@@ -36,7 +36,6 @@
 #include <ctype.h>
 #include "bio.h"
 
-#include "tcl.h"
 #include "bu/parallel.h"
 #include "vmath.h"
 #include "rt/db4.h"

@@ -37,8 +37,6 @@
 #include <math.h>
 #include "bnetwork.h"
 
-#include "tcl.h"
-
 #include "bu/cv.h"
 #include "vmath.h"
 
