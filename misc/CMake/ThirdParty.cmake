@@ -157,7 +157,6 @@ macro(THIRD_PARTY dir varname_root build_target description)
     endif("${OPT_STR_UPPER}" STREQUAL "BUNDLED")
   endif(OPT_STR_UPPER)
 
-
   # 5. If BRLCAD_BUNDLED_LIBS is exactly SYSTEM or exactly BUNDLED, and we haven't been overridden by
   # one of the other conditions above, go with that.
   if(NOT ${varname_root}_MET_CONDITION)
@@ -173,7 +172,6 @@ macro(THIRD_PARTY dir varname_root build_target description)
       endif("${BRLCAD_BUNDLED_LIBS}" STREQUAL "SYSTEM")
     endif("${BRLCAD_BUNDLED_LIBS}" STREQUAL "SYSTEM" OR "${BRLCAD_BUNDLED_LIBS}" STREQUAL "BUNDLED")
   endif(NOT ${varname_root}_MET_CONDITION)
-
 
   # If we haven't been knocked out by any of the above conditions, do our testing and base the results on that.
 
