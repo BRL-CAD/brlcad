@@ -828,7 +828,8 @@ subbrep_make_brep(struct subbrep_object_data *data)
 			// whatever they were in the original brep.
 			ON_BrepLoop &nl = data->local_brep->NewLoop(ON_BrepLoop::outer, data->local_brep->m_F[face_map[old_loop->m_fi]]);
 			loop_map[old_loop->m_loop_index] = nl.m_loop_index;
-			nl.m_type = old_loop->m_type;
+			if (old_loop->m_type != ON_BrepLoop::outer && old_loop->m_type != ON_BrepLoop::inner)
+			    nl.m_type = old_loop->m_type;
 			//std::cout << "adding loop: " << old_loop->m_loop_index << "\n";
 		    }
 		} //else {
