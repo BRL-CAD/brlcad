@@ -1236,8 +1236,9 @@ cylinder_csg(struct bu_vls *msgs, struct subbrep_object_data *data, fastf_t cyl_
 	    // cylinder surface.  Whether the comb is actually subtracted from the
 	    // global object or unioned into a comb lower down the tree (or vice versa)
 	    // is determined later.
-	    data->negative_shape = negative_cylinder(data, *cylindrical_surfaces.begin(), cyl_tol);
-	    data->params->bool_op = (data->negative_shape == -1) ? '-' : 'u';
+	    return 0;
+	    //data->negative_shape = negative_cylinder(data, *cylindrical_surfaces.begin(), cyl_tol);
+	    //data->params->bool_op = (data->negative_shape == -1) ? '-' : 'u';
 	}
     }
 
