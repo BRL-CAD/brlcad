@@ -3092,7 +3092,6 @@ shift_loop_straddled_over_seam(const ON_Surface *surf,  ON_SimpleArray<BrepTrimP
 
 	int seam = 0;
 	int i;
-	ON_2dPoint *prev_pt = NULL;
 	BrepTrimPoint btp;
 	BrepTrimPoint end_btp;
 	ON_SimpleArray<BrepTrimPoint> part1;
@@ -3120,7 +3119,6 @@ shift_loop_straddled_over_seam(const ON_Surface *surf,  ON_SimpleArray<BrepTrimP
 		    part2.Append(btp);
 		}
 	    }
-	    prev_pt = &brep_loop_points[i].p2d;
 	}
 
 	brep_loop_points.Empty();
