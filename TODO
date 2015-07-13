@@ -21,12 +21,6 @@ THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 * make sure rt -I interactive mode still works... looks like code for
   it was removed.
 
-* fix iges exporter (spaces after commas)
-
-* fix the bn_poly_sub unit test
-
-* fix the bu_heap_test_1 unit test (seen on ia32 fbsd)
-
 * sync tgc/rec shot() behavior, sort results for proper normal.
   inspect t62 grazing with r653,r735 (tgc on an arb8) looking at ae0,0
   and z=1524 (was hit/overlap, now misses).
