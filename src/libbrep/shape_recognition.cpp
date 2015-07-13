@@ -824,7 +824,7 @@ subbrep_make_brep(struct subbrep_object_data *data)
 	    if (face_map.find(old_trim->Face()->m_face_index) != face_map.end()) {
 		if (loops.find(old_loop->m_loop_index) != loops.end()) {
 		    if (loop_map.find(old_loop->m_loop_index) == loop_map.end()) {
-			// After the initial breakout, all loops in any given subbrep are outer loops,
+			// After the initial breakout, most of the loops in any given subbrep are outer loops,
 			// whatever they were in the original brep.
 			ON_BrepLoop &nl = data->local_brep->NewLoop(ON_BrepLoop::outer, data->local_brep->m_F[face_map[old_loop->m_fi]]);
 			loop_map[old_loop->m_loop_index] = nl.m_loop_index;
@@ -921,12 +921,24 @@ subbrep_make_brep(struct subbrep_object_data *data)
 	}
     }
 #endif
-    // Make sure all the loop directions are correct
-    for (int l = 0; l < data->local_brep->m_L.Count(); l++) {
-	if (data->local_brep->LoopDirection(data->local_brep->m_L[l]) != 1) {
-	    data->local_brep->FlipLoop(data->local_brep->m_L[l]);
+    // Make sure all the loop directions and types are correct
+    for (int f = 0; f < data->local_brep->m_F.Count(); f++) {
+	ON_BrepFace *face = &(data->local_brep->m_F[f]);
+	for (int l = 0; l < face->m_li.Count(); l++) {
+	    ON_BrepLoop& loop = data->local_brep->m_L[face->m_li[l]];
+	    if (l == 0) {
+		if (data->local_brep->LoopDirection(data->local_brep->m_L[l]) != 1) {
+		    data->local_brep->FlipLoop(data->local_brep->m_L[l]);
+		}
+		loop.m_type = ON_BrepLoop::outer;
+	    } else {
+		if (loop.m_type == ON_BrepLoop::outer) {
+		    loop.m_type = ON_BrepLoop::inner;
+		}
+	    }
 	}
     }
+
 
     data->local_brep->ShrinkSurfaces();
     data->local_brep->CullUnusedSurfaces();
