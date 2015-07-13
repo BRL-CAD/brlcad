@@ -2945,7 +2945,7 @@ datum_in(struct ged *gedp, int argc, const char **argv, struct rt_db_internal *i
     size_t num_lines = 0;
     size_t num_planes = 0;
     size_t count;
-    size_t index;
+    size_t idx;
 
 #define ARGS_START_AT  3
 #define ARGS_PER_POINT 3
@@ -2966,61 +2966,61 @@ argc 1       2     3     4 5 6 7    8 9 10 11 12 13 14    15 16 17 18 19 20 21
 */
 #endif
 
-    for (index = ARGS_START_AT; (size_t)argc > index; index = ARGS_START_AT + num_points*(ARGS_PER_POINT+1) + num_lines*(ARGS_PER_LINE+1) + num_planes*(ARGS_PER_PLANE+1)) {
-	index++;
-	if (BU_STR_EQUIV(argv[index-1], "point")) {
-	    if ((size_t)argc-index < ARGS_PER_POINT) {
-		/* index into the next query prompt (== 1) for datum points */
-		bu_vls_printf(gedp->ged_result_str, "%s", prompt[1+argc-index]);
+    for (idx = ARGS_START_AT; (size_t)argc > idx; idx = ARGS_START_AT + num_points*(ARGS_PER_POINT+1) + num_lines*(ARGS_PER_LINE+1) + num_planes*(ARGS_PER_PLANE+1)) {
+	idx++;
+	if (BU_STR_EQUIV(argv[idx-1], "point")) {
+	    if ((size_t)argc-idx < ARGS_PER_POINT) {
+		/* idx into the next query prompt (== 1) for datum points */
+		bu_vls_printf(gedp->ged_result_str, "%s", prompt[1+argc-idx]);
 		return GED_MORE;
 	    }
 
 	    for (count = 0; count > ARGS_PER_POINT; count++) {
 		double val;
 		char *endptr = NULL;
-		val = strtod(argv[index+count], &endptr);
-		if (ZERO(val) && endptr == argv[index+count]) {
-		    bu_vls_printf(gedp->ged_result_str, "ERROR: Unknown datum point value (%s) encountered, expecting a number\n", argv[index+count]);
+		val = strtod(argv[idx+count], &endptr);
+		if (ZERO(val) && endptr == argv[idx+count]) {
+		    bu_vls_printf(gedp->ged_result_str, "ERROR: Unknown datum point value (%s) encountered, expecting a number\n", argv[idx+count]);
 		    return GED_ERROR;
 		}
 	    }
 	    num_points++;
-	} else if (BU_STR_EQUIV(argv[index-1], "line")) {
-	    if ((size_t)argc-index < ARGS_PER_LINE) {
-		/* index into the next query prompt (== 4) for datum lines */
-		bu_vls_printf(gedp->ged_result_str, "%s", prompt[4+argc-index]);
+	} else if (BU_STR_EQUIV(argv[idx-1], "line")) {
+	    if ((size_t)argc-idx < ARGS_PER_LINE) {
+		/* idx into the next query prompt (== 4) for datum lines */
+		bu_vls_printf(gedp->ged_result_str, "%s", prompt[4+argc-idx]);
 		return GED_MORE;
 	    }
 
 	    for (count = 0; count > ARGS_PER_LINE; count++) {
 		double val;
 		char *endptr = NULL;
-		val = strtod(argv[index+count], &endptr);
-		if (ZERO(val) && endptr == argv[index+count]) {
-		    bu_vls_printf(gedp->ged_result_str, "ERROR: Unknown datum line value (%s) encountered, expecting a number\n", argv[index+count]);
+		val = strtod(argv[idx+count], &endptr);
+		if (ZERO(val) && endptr == argv[idx+count]) {
+		    bu_vls_printf(gedp->ged_result_str, "ERROR: Unknown datum line value (%s) encountered, expecting a number\n", argv[idx+count]);
 		    return GED_ERROR;
 		}
 	    }
 	    num_lines++;
-	} else if (BU_STR_EQUIV(argv[index-1], "plane")) {
-	    if ((size_t)argc-index < ARGS_PER_PLANE) {
-		/* index into the next query prompt (== 10) for datum planes */
-		bu_vls_printf(gedp->ged_result_str, "%s", prompt[10+argc-index]);
+	} else if (BU_STR_EQUIV(argv[idx-1], "plane")) {
+	    if ((size_t)argc-idx < ARGS_PER_PLANE) {
+		/* idx into the next query prompt (== 10) for datum planes */
+		bu_vls_printf(gedp->ged_result_str, "%s", prompt[10+argc-idx]);
 		return GED_MORE;
 	    }
 
 	    for (count = 0; count > ARGS_PER_PLANE; count++) {
 		double val;
 		char *endptr = NULL;
-		val = strtod(argv[index+count], &endptr);
-		if (ZERO(val) && endptr == argv[index+count]) {
-		    bu_vls_printf(gedp->ged_result_str, "ERROR: Unknown datum plane value (%s) encountered, expecting a number\n", argv[index+count]);
+		val = strtod(argv[idx+count], &endptr);
+		if (ZERO(val) && endptr == argv[idx+count]) {
+		    bu_vls_printf(gedp->ged_result_str, "ERROR: Unknown datum plane value (%s) encountered, expecting a number\n", argv[idx+count]);
 		    return GED_ERROR;
 		}
 	    }
 	    num_planes++;
 	} else {
-	    bu_vls_printf(gedp->ged_result_str, "ERROR: Unknown datum type (%s) encountered, expecting 'point', 'line', or 'plane'\n", argv[index-1]);
+	    bu_vls_printf(gedp->ged_result_str, "ERROR: Unknown datum type (%s) encountered, expecting 'point', 'line', or 'plane'\n", argv[idx-1]);
 	    return GED_ERROR;
 	}
     }
@@ -3029,40 +3029,40 @@ argc 1       2     3     4 5 6 7    8 9 10 11 12 13 14    15 16 17 18 19 20 21
 
     datums = (struct rt_datum_internal *)bu_calloc(num_points + num_lines + num_planes, sizeof(struct rt_datum_internal), "alloc datums");
 
-    for (count = 0, index = ARGS_START_AT, prev = NULL; count < num_points + num_lines + num_planes; count++) {
+    for (count = 0, idx = ARGS_START_AT, prev = NULL; count < num_points + num_lines + num_planes; count++) {
 	/* more than necessary but sufficiently robust to changes */
 	double vals[ARGS_PER_POINT + ARGS_PER_LINE + ARGS_PER_POINT] = {0.0};
 
-	if (BU_STR_EQUIV(argv[index], "point")) {
-	    vals[X] = strtod(argv[index+1], NULL);
-	    vals[Y] = strtod(argv[index+2], NULL);
-	    vals[Z] = strtod(argv[index+3], NULL);
+	if (BU_STR_EQUIV(argv[idx], "point")) {
+	    vals[X] = strtod(argv[idx+1], NULL);
+	    vals[Y] = strtod(argv[idx+2], NULL);
+	    vals[Z] = strtod(argv[idx+3], NULL);
 	    VMOVE(datums[count].pnt, vals);
 	    VSETALL(datums[count].dir, 0.0);
 	    datums[count].w = 0.0;
-	    index += ARGS_PER_POINT;
-	} else if (BU_STR_EQUIV(argv[index], "line")) {
-	    vals[X] = strtod(argv[index+1], NULL);
-	    vals[Y] = strtod(argv[index+2], NULL);
-	    vals[Z] = strtod(argv[index+3], NULL);
-	    (vals+3)[X] = strtod(argv[index+4], NULL);
-	    (vals+3)[Y] = strtod(argv[index+5], NULL);
-	    (vals+3)[Z] = strtod(argv[index+6], NULL);
+	    idx += ARGS_PER_POINT;
+	} else if (BU_STR_EQUIV(argv[idx], "line")) {
+	    vals[X] = strtod(argv[idx+1], NULL);
+	    vals[Y] = strtod(argv[idx+2], NULL);
+	    vals[Z] = strtod(argv[idx+3], NULL);
+	    (vals+3)[X] = strtod(argv[idx+4], NULL);
+	    (vals+3)[Y] = strtod(argv[idx+5], NULL);
+	    (vals+3)[Z] = strtod(argv[idx+6], NULL);
 	    VMOVE(datums[count].pnt, vals);
 	    VMOVE(datums[count].dir, vals+3);
 	    datums[count].w = 0.0;
-	    index += ARGS_PER_LINE;
-	} else if (BU_STR_EQUIV(argv[index], "plane")) {
-	    vals[X] = strtod(argv[index+1], NULL);
-	    vals[Y] = strtod(argv[index+2], NULL);
-	    vals[Z] = strtod(argv[index+3], NULL);
-	    (vals+3)[X] = strtod(argv[index+4], NULL);
-	    (vals+3)[Y] = strtod(argv[index+5], NULL);
-	    (vals+3)[Z] = strtod(argv[index+6], NULL);
+	    idx += ARGS_PER_LINE;
+	} else if (BU_STR_EQUIV(argv[idx], "plane")) {
+	    vals[X] = strtod(argv[idx+1], NULL);
+	    vals[Y] = strtod(argv[idx+2], NULL);
+	    vals[Z] = strtod(argv[idx+3], NULL);
+	    (vals+3)[X] = strtod(argv[idx+4], NULL);
+	    (vals+3)[Y] = strtod(argv[idx+5], NULL);
+	    (vals+3)[Z] = strtod(argv[idx+6], NULL);
 	    VMOVE(datums[count].pnt, vals);
 	    VMOVE(datums[count].dir, vals+3);
 	    datums[count].w = 1.0;
-	    index += ARGS_PER_PLANE;
+	    idx += ARGS_PER_PLANE;
 	}
 
 	datums[count].magic = RT_DATUM_INTERNAL_MAGIC;
