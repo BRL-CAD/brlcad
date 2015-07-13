@@ -276,7 +276,7 @@ BU_EXPORT extern size_t bu_argv_from_string(char *argv[],
 
 /**
  * libbu replacement for Tcl's ascii list to argc/argv functionality
- * (Note: function signature dupliates that of Tcl_SplitList)
+ * (Note: function signature duplicates that of Tcl_SplitList)
  */
 BU_EXPORT extern int bu_argv_from_tcl_list(const char *list_str,
                                            int *argc,

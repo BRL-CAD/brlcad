@@ -299,7 +299,7 @@ bu_dupinsert_argv(int insert, size_t insertArgc, const char *insertArgv[], size_
  *
  * GOVERNMENT USE: If you are acquiring this software on behalf of the
  * U.S. government, the Government shall have only "Restricted Rights"
- * in the software and related documentation as defined in the Federal 
+ * in the software and related documentation as defined in the Federal
  * Acquisition Regulations (FARs) in Clause 52.227.19 (c) (2).  If you
  * are acquiring the software on behalf of the Department of Defense, the
  * software shall be classified as "Commercial Computer Software" and the
