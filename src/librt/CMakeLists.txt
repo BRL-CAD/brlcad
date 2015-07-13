@@ -88,21 +88,24 @@ set(LIBRT_SOURCES
   primitives/ars/ars_mirror.c
   primitives/bot/bot.c
   primitives/bot/bot_brep.cpp
+  primitives/bot/bot_edge.c
   primitives/bot/bot_mirror.c
   primitives/bot/bot_oriented_bbox.cpp
   primitives/bot/btg.c
   primitives/bot/btgf.c
-  primitives/bot/gct_decimation/auxiliary/tinycthread.c
-  primitives/bot/gct_decimation/auxiliary/mmbinsort.c
-  primitives/bot/gct_decimation/auxiliary/mmbitmap.c
-  primitives/bot/gct_decimation/auxiliary/mm.c
-  primitives/bot/gct_decimation/auxiliary/mmhash.c
-  primitives/bot/gct_decimation/meshdecimation.c
-  primitives/bot/gct_decimation/meshoptimization.c
-  primitives/bot/gct_decimation/meshoptimizer.c
-  primitives/bot/gct_decimation/meshdecimationSSE2.c
-  primitives/bot/gct_decimation/meshdecimationSSE3.c
-  primitives/bot/gct_decimation/meshdecimationSSE4p1.c
+  # FIXME: enable when more portable
+  # primitives/bot/gct_decimation/auxiliary/tinycthread.c
+  # primitives/bot/gct_decimation/auxiliary/mmbinsort.c
+  # primitives/bot/gct_decimation/auxiliary/mmbitmap.c
+  # primitives/bot/gct_decimation/auxiliary/mm.c
+  # primitives/bot/gct_decimation/auxiliary/mmhash.c
+  # primitives/bot/gct_decimation/meshdecimation.c
+  # primitives/bot/gct_decimation/meshoptimization.c
+  # primitives/bot/gct_decimation/meshoptimizer.c
+  # primitives/bot/gct_decimation/meshdecimationSSE2.c
+  # primitives/bot/gct_decimation/meshdecimationSSE3.c
+  # primitives/bot/gct_decimation/meshdecimationSSE4p1.c
+  primitives/bot/decimate.c
   primitives/brep/brep.cpp
   primitives/brep/brep_debug.cpp
   primitives/bspline/bspline.cpp
@@ -289,6 +292,7 @@ set(librt_ignored_files
   primitives/bot/gct_decimation
   primitives/bot/btg.h
   primitives/bot/g_bot_include.c
+  primitives/bot/bot_edge.h
   primitives/bot/bot_wireframe.cpp
   primitives/bot/tieprivate.h
   primitives/bot/tie.c
