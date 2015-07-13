@@ -156,7 +156,6 @@ highest_order_face(struct subbrep_object_data *data)
     int cone = 0;
     int torus = 0;
     int general = 0;
-    int hof = -1;
     surface_t hofo = SURFACE_PLANE;
     std::set<int> faces;
     std::set<int>::iterator f_it;
@@ -169,35 +168,30 @@ highest_order_face(struct subbrep_object_data *data)
 	    case SURFACE_PLANE:
 		planar++;
 		if (hofo < SURFACE_PLANE) {
-		    hof = ind;
 		    hofo = SURFACE_PLANE;
 		}
 		break;
 	    case SURFACE_SPHERE:
 		spherical++;
 		if (hofo < SURFACE_SPHERE) {
-		    hof = ind;
 		    hofo = SURFACE_SPHERE;
 		}
 		break;
 	    case SURFACE_CYLINDER:
 		cylindrical++;
 		if (hofo < SURFACE_CYLINDER) {
-		    hof = ind;
 		    hofo = SURFACE_CYLINDER;
 		}
 		break;
 	    case SURFACE_CONE:
 		cone++;
 		if (hofo < SURFACE_CONE) {
-		    hof = ind;
 		    hofo = SURFACE_CONE;
 		}
 		break;
 	    case SURFACE_TORUS:
 		torus++;
 		if (hofo < SURFACE_TORUS) {
-		    hof = ind;
 		    hofo = SURFACE_TORUS;
 		}
 		break;

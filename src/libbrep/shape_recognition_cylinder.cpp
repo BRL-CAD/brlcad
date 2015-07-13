@@ -248,8 +248,6 @@ subbrep_is_cylinder(struct bu_vls *msgs, struct subbrep_object_data *data, fastf
     // values for the cylinder.
 
     data->type = CYLINDER;
-    struct csg_object_params * obj;
-    BU_GET(obj, struct csg_object_params);
 
     ON_3dPoint center_bottom = set1_c.Center();
     ON_3dPoint center_top = set2_c.Center();

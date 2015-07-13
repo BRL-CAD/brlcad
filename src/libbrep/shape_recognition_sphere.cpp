@@ -46,10 +46,7 @@ subbrep_is_sphere(struct subbrep_object_data *data, fastf_t)
     // TODO - devise other tests necessary to make sure we have a closed sphere,
     // if any are needed.  Maybe rule out anything with linear edges?
 
-
     data->type = SPHERE;
-    struct csg_object_params * obj;
-    BU_GET(obj, struct csg_object_params);
 
     data->params->bool_op= 'u';  // TODO - not always union
     data->params->origin[0] = sph.Center().x;
