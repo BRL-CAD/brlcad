@@ -17,7 +17,7 @@ set(OBJ_G_SRCS
   wfobj/tri_face.c
   )
 
-BRLCAD_ADDEXEC(obj-g "${OBJ_G_SRCS}" "libbu;libbn;librt;libwdb" NO_STRICT_CXX)
+BRLCAD_ADDEXEC(obj-g "${OBJ_G_SRCS}" "libbu;libbn;librt;libwdb")
 
 set(wfobj_ignore_files
   wfobj/obj_grammar_decls.h
@@ -68,7 +68,7 @@ list(APPEND LIBGCV_SOURCES
   ${CMAKE_CURRENT_BINARY_DIR}/obj_rules.cpp
   )
 
-BRLCAD_ADDLIB(libgcv "${LIBGCV_SOURCES}" "librt;libwdb;libbu" NO_STRICT_CXX)
+BRLCAD_ADDLIB(libgcv "${LIBGCV_SOURCES}" "librt;libwdb;libbu")
 SET_TARGET_PROPERTIES(libgcv PROPERTIES VERSION 20.0.1 SOVERSION 20)
 
 BRLCAD_ADDEXEC(gcv_test gcv_test.c libgcv NO_INSTALL)
