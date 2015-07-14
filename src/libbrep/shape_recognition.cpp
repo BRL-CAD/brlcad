@@ -922,6 +922,9 @@ subbrep_make_brep(struct subbrep_object_data *data)
     }
 #endif
     // Make sure all the loop directions and types are correct
+    //
+    // TODO - this is not good enough.  Need to actually test the loops to see which one is really the outer.
+    // Use the 2D bbox in UV space - the outer trimming curve bbox will contain inner curve boxes
     for (int f = 0; f < data->local_brep->m_F.Count(); f++) {
 	ON_BrepFace *face = &(data->local_brep->m_F[f]);
 	for (int l = 0; l < face->m_li.Count(); l++) {
