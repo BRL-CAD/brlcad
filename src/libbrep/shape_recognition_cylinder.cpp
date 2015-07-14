@@ -827,6 +827,8 @@ cylinder_csg(struct bu_vls *msgs, struct subbrep_object_data *data, fastf_t cyl_
 		// the cylinder.
 		int parallel_1 = 0;
 		int parallel_2 = 0;
+		int do_cap_1 = 0;
+		int do_cap_2 = 0;
 		if (cyl_planes[0].Normal().IsParallelTo(cylinder.Axis(), 0.1/*cyl_tol*/)) parallel_1 = 1;
 		if (cyl_planes[1].Normal().IsParallelTo(cylinder.Axis(), 0.1/*cyl_tol*/)) parallel_2 = 1;
 		if (parallel_1 + parallel_2 == 1) {
@@ -835,9 +837,11 @@ cylinder_csg(struct bu_vls *msgs, struct subbrep_object_data *data, fastf_t cyl_
 		    if (parallel_1) {
 			base_plane = cyl_planes[0];
 			tilted_plane = cyl_planes[1];
+			do_cap_2 = 1;
 		    } else {
 			base_plane = cyl_planes[1];
 			tilted_plane = cyl_planes[0];
+			do_cap_1 = 1;
 		    }
 
 		    // TODO - do something to actually make geometry here...
@@ -851,384 +855,386 @@ cylinder_csg(struct bu_vls *msgs, struct subbrep_object_data *data, fastf_t cyl_
 		    //std::cout << "  hypotenuse: " << hypotenuse << "\n";
 		    //std::cout << "  opposite: " << sin(angle) * hypotenuse << "\n";
 		} else {
-
-		    data->type = COMB;
-		    data->obj_cnt = data->parent->obj_cnt;
-		    (*data->obj_cnt)++;
-		    bu_vls_sprintf(data->name_root, "%s_%d_comb", bu_vls_addr(data->parent->name_root), *(data->obj_cnt));
-
-
-		    // First order of business - find the intersection between the axis and the capping
-		    // plane
-
-		    ON_Line line(cylinder.circle.Center(), cylinder.circle.Center() + cylinder.Axis());
-		    ON_3dPoint ip1 = ON_LinePlaneIntersect(line, cyl_planes[0]);
-		    ON_3dPoint ip2 = ON_LinePlaneIntersect(line, cyl_planes[1]);
-
-		    if (ip1.x > ON_DBL_MAX - SMALL_FASTF || ip1.x < -ON_DBL_MAX + SMALL_FASTF) return 1;
-		    if (ip2.x > ON_DBL_MAX - SMALL_FASTF || ip2.x < -ON_DBL_MAX + SMALL_FASTF) return 1;
-
-		    // Define the cylinder.
-		    struct subbrep_object_data *cyl_obj;
-		    BU_GET(cyl_obj, struct subbrep_object_data);
-		    subbrep_object_init(cyl_obj, data->brep);
-		    std::string key = face_set_key(cylindrical_surfaces);
-		    bu_vls_sprintf(cyl_obj->key, "%s", key.c_str());
-		    cyl_obj->obj_cnt = data->parent->obj_cnt;
-		    (*cyl_obj->obj_cnt)++;
-		    bu_vls_sprintf(cyl_obj->name_root, "%s_%d_cyl", bu_vls_addr(data->parent->name_root), *(cyl_obj->obj_cnt));
-		    cyl_obj->type = CYLINDER;
-
-		    // Flag the cyl/arb comb according to the negative or positive status of the
-		    // cylinder surface.  Whether the comb is actually subtracted from the
-		    // global object or unioned into a comb lower down the tree (or vice versa)
-		    // is determined later.
-		    data->negative_shape = negative_cylinder(data, *cylindrical_surfaces.begin(), cyl_tol);
-		    data->params->bool_op = (data->negative_shape == -1) ? '-' : 'u';
-
-		    // cylinder - positive object in this sub-comb
-		    cyl_obj->params->bool_op = 'u';
-		    VMOVE(cyl_obj->params->origin, ip1);
-		    ON_3dVector hvect = ip2 - ip1;
-		    cyl_obj->params->hv[0] = hvect.x;
-		    cyl_obj->params->hv[1] = hvect.y;
-		    cyl_obj->params->hv[2] = hvect.z;
-		    cyl_obj->params->radius = cylinder.circle.Radius();
-
-		    bu_ptbl_ins(data->children, (long *)cyl_obj);
-
-		    // Create an OpenNURBS cylinder from the final cyl data
-		    // so we can use it to guide the arb creation.
-		    ON_Plane fplane(ip1, hvect);
-		    ON_Circle fcirc(fplane, cylinder.circle.Radius());
-		    ON_Cylinder fcyl(fcirc, hvect.Length());
-
-		    ON_Plane cap1(ip1, cyl_planes[0].Normal());
-		    if(ON_DotProduct(cap1.Normal(), hvect) > 0) cap1.Flip();
-		    ON_Plane cap2(ip2, cyl_planes[1].Normal());
-		    if(ON_DotProduct(cap2.Normal(), hvect) < 0) cap2.Flip();
-
-#if 0
-		    ON_3dPoint cp1 = ip1 + ext_dir_1;
-		    std::cout << "CP1: " << pout(cp1) << "\n";
-		    ON_3dPoint cp2 = ip2 + ext_dir_2;
-		    std::cout << "CP2: " << pout(cp2) << "\n";
-#endif
-		    // The normal of the two end cap planes, when projected
-		    // onto the axis plane, "points" the way towards the lowest
-		    // point of the arb.  To form the arb, the cylinder face is
-		    // bound by a square in the plane of the face where the
-		    // pointing vector points to the middle of one of the
-		    // edges.  This square provides 4 of the 6 arb points, and
-		    // then the last two are made by dropping vectors down the
-		    // cylinder axis from the two square points on the "low"
-		    // side
-		    {
-			// Cap 1
-			cap1.Flip();
-			double angle = acos(ON_DotProduct(fplane.Normal(), cap1.Normal()));
-			double diameter = fcyl.circle.Radius();
-			double hypotenuse = diameter / ON_DotProduct(fplane.Normal(), cap1.Normal());
-			double ext_length = fabs(sin(angle) * hypotenuse);
-			ON_3dVector ext_dir = hvect;
-			ext_dir.Unitize();
-			ext_dir = ext_dir * ext_length;
-			cap1.Flip();
-
-			ON_Xform cyl_proj;
-			cyl_proj.PlanarProjection(fplane);
-			ON_3dVector v1 = cap1.Normal();
-			v1.Transform(cyl_proj);
-			v1.Unitize();
-			ON_3dVector v2 = ON_CrossProduct(-1*fplane.Normal(), v1);
-			v1 = v1 * fcyl.circle.Radius();
-			v2 = v2 * fcyl.circle.Radius();
-
-			ON_SimpleArray<ON_3dPoint> arb_points(6);
-			arb_points[1] = ip1 + v1 - v2;
-			arb_points[2] = ip1 + v1 + v2;
-			arb_points[4] = ip1 - v2;
-			arb_points[5] = ip1 + v2;
-
-			arb_points[0] = arb_points[1] + ext_dir;
-			arb_points[3] = arb_points[2] + ext_dir;
-
-			struct subbrep_object_data *arb_obj_1;
-			BU_GET(arb_obj_1, struct subbrep_object_data);
-			subbrep_object_init(arb_obj_1, data->brep);
-			bu_vls_sprintf(arb_obj_1->key, "%s_cap_1", key.c_str());
-			arb_obj_1->obj_cnt = data->parent->obj_cnt;
-			(*arb_obj_1->obj_cnt)++;
-			bu_vls_sprintf(arb_obj_1->name_root, "%s_%d_cap_1", bu_vls_addr(data->parent->name_root), *(arb_obj_1->obj_cnt));
-			arb_obj_1->type = ARB6;
-			arb_obj_1->params->bool_op = '-';
-			arb_obj_1->params->arb_type = 8;
-			for (int j = 0; j < 6; j++) {
-			    VMOVE(arb_obj_1->params->p[j], arb_points[j]);
-			}
-
-			bu_ptbl_ins(data->children, (long *)arb_obj_1);
-		    }
-		    {
-			// Cap 2
-			double angle = acos(ON_DotProduct(fplane.Normal(), cap2.Normal()));
-			double diameter = fcyl.circle.Radius();
-			double hypotenuse = diameter / ON_DotProduct(fplane.Normal(), cap2.Normal());
-			double ext_length = fabs(sin(angle) * hypotenuse);
-			ON_3dVector ext_dir = -hvect;
-			ext_dir.Unitize();
-			ext_dir = ext_dir * ext_length;
-
-			ON_Xform cyl_proj;
-			cyl_proj.PlanarProjection(fplane);
-			ON_3dVector v1 = cap2.Normal();
-			v1.Transform(cyl_proj);
-			v1.Unitize();
-			ON_3dVector v2 = ON_CrossProduct(fplane.Normal(), v1);
-			v1 = v1 * fcyl.circle.Radius();
-			v2 = v2 * fcyl.circle.Radius();
-
-			ON_SimpleArray<ON_3dPoint> arb_points(6);
-			arb_points[1] = ip2 + v1 - v2;
-			arb_points[2] = ip2 + v1 + v2;
-			arb_points[4] = ip2 - v2;
-			arb_points[5] = ip2 + v2;
-
-			arb_points[0] = arb_points[1] + ext_dir;
-			arb_points[3] = arb_points[2] + ext_dir;
-
-			struct subbrep_object_data *arb_obj_2;
-			BU_GET(arb_obj_2, struct subbrep_object_data);
-			subbrep_object_init(arb_obj_2, data->brep);
-			bu_vls_sprintf(arb_obj_2->key, "%s_cap_2", key.c_str());
-			arb_obj_2->obj_cnt = data->parent->obj_cnt;
-			(*arb_obj_2->obj_cnt)++;
-			bu_vls_sprintf(arb_obj_2->name_root, "%s_cap_2", bu_vls_addr(data->parent->name_root), *(arb_obj_2->obj_cnt));
-			arb_obj_2->type = ARB6;
-			arb_obj_2->params->bool_op = '-';
-			arb_obj_2->params->arb_type = 8;
-			for (int j = 0; j < 6; j++) {
-			    VMOVE(arb_obj_2->params->p[j], arb_points[j]);
-			}
-
-			bu_ptbl_ins(data->children, (long *)arb_obj_2);
-		    }
-
-		    {
-
-			// back face arb8
-			struct subbrep_object_data *arb_obj_3;
-			BU_GET(arb_obj_3, struct subbrep_object_data);
-			subbrep_object_init(arb_obj_3, data->brep);
-			bu_vls_sprintf(arb_obj_3->key, "%s_back_face", key.c_str());
-			arb_obj_3->obj_cnt = data->parent->obj_cnt;
-			(*arb_obj_3->obj_cnt)++;
-			bu_vls_sprintf(arb_obj_3->name_root, "%s_back_face", bu_vls_addr(data->parent->name_root), *(arb_obj_3->obj_cnt));
-			arb_obj_3->type = ARB8;
-
-
-			// First, find the two points closest to the cap1 and cap2 planes
-			std::set<int>::iterator s_it;
-			ON_SimpleArray<const ON_BrepVertex *> corner_pnts(4);
-			ON_SimpleArray<const ON_BrepVertex *> bottom_pnts(2);
-			ON_SimpleArray<const ON_BrepVertex *> top_pnts(2);
-			for (s_it = corner_verts.begin(); s_it != corner_verts.end(); s_it++) {
-			    ON_3dPoint p = data->brep->m_V[*s_it].Point();
-			    double d1 = fabs(cyl_planes[0].DistanceTo(p));
-			    double d2 = fabs(cyl_planes[1].DistanceTo(p));
-			    //std::cout << "d1: " << d1 << "\n";
-			    //std::cout << "d2: " << d2 << "\n";
-			    if (d1 < d2) {
-				//std::cout << "bottom point: " << *s_it << "\n";
-				bottom_pnts.Append(&(data->brep->m_V[*s_it]));
-			    } else {
-				//std::cout << "top point: " << *s_it << "\n";
-				top_pnts.Append(&(data->brep->m_V[*s_it]));
-			    }
-			}
-
-			// Second, select a point from an arc edge not on the subtraction
-			// plane, construct a vector from the circle center to that point,
-			// and determine if the pcyl plane direction is already in the opposite
-			// direction or needs to be reversed.
-			//
-			// TODO - need a non-linear edge for this - any should do...
-			const ON_BrepEdge *nonlin_edge = &(data->brep->m_E[non_linear_edge_ind]);
-			ON_3dPoint center = fcyl.circle.Center();
-			ON_3dPoint midpt = nonlin_edge->EdgeCurveOf()->PointAt(nonlin_edge->EdgeCurveOf()->Domain().Mid());
-
-
-			ON_3dVector invec = center - midpt;
-			double dotp = ON_DotProduct(invec, pcyl.Normal());
-			if (dotp < 0) {
-			    pcyl.Flip();
-			}
-
-			/* If we don't have bottom points, bail */
-			if (!bottom_pnts[0] ||!bottom_pnts[1]) return -1;
-
-			// Third, construct the axis vector and determine the arb
-			// order of the bottom and top points
-
-			ON_3dVector vv1 = bottom_pnts[0]->Point() - bottom_pnts[1]->Point();
-			ON_3dVector v1x = ON_CrossProduct(vv1, fcyl.Axis());
-
-			double flag1 = ON_DotProduct(v1x, pcyl.Normal());
-
-			ON_3dVector w1 = top_pnts[0]->Point() - top_pnts[1]->Point();
-			ON_3dVector w1x = ON_CrossProduct(w1, fcyl.Axis());
-
-			double flag3 = ON_DotProduct(w1x, pcyl.Normal());
-
-			const ON_BrepVertex *v1, *v2, *v3, *v4;
-			if (flag1 < 0) {
-			    v1 = bottom_pnts[1];
-			    v2 = bottom_pnts[0];
-			    vv1 = -vv1;
-			} else {
-			    v1 = bottom_pnts[0];
-			    v2 = bottom_pnts[1];
-			}
-			if (flag3 < 0) {
-			    v3 = top_pnts[0];
-			    v4 = top_pnts[1];
-			} else {
-			    v3 = top_pnts[1];
-			    v4 = top_pnts[0];
-			}
-#if 0
-			std::cout << "v1 (" << pout(v1->Point()) << ")\n";
-			std::cout << "v2 (" << pout(v2->Point()) << ")\n";
-			std::cout << "v3 (" << pout(v3->Point()) << ")\n";
-			std::cout << "v4 (" << pout(v4->Point()) << ")\n";
-#endif
-
-			// Before we manipulate the points for arb construction,
-			// see if we need to use them to define a new face.
-			if (!data->is_island) {
-			    // The cylinder shape is a partial cylinder, and it is not
-			    // topologically isolated, so we need to make a new face
-			    // in the parent to replace this one.
-			    if (data->parent) {
-				// First, see if a local planar brep object has been generated for
-				// this shape.  Such a brep is not generated up front, because
-				// there is no way to be sure a planar parent is needed until
-				// we hit a case like this - for example, a brep consisting of
-				// stacked cylinders of different diameters will have multiple
-				// planar surfaces, but can be completely described without use
-				// of planar volumes in the final CSG expression.  If another
-				// shape has already triggered the generation we don't want to
-				// do it again,  but the first shape to make the need clear has
-				// to trigger the build.
-				if (!data->parent->planar_obj) {
-				    subbrep_planar_init(data->parent);
-				}
-				// Now, add the new face
-				ON_SimpleArray<const ON_BrepVertex *> vert_loop(4);
-				vert_loop.Append(v1);
-				vert_loop.Append(v2);
-				vert_loop.Append(v3);
-				vert_loop.Append(v4);
-				subbrep_add_planar_face(data->parent, &pcyl, &vert_loop, data->negative_shape);
-			    }
-			}
-
-			// Once the 1,2,3,4 points are determined, scale them out
-			// along their respective line segment axis to make sure
-			// the resulting arb is large enough to subtract the full
-			// radius of the cylinder.
-			//
-			// TODO - Only need to do this if the
-			// center point of the cylinder is inside the subtracting arb -
-			// should be able to test that with the circle center point
-			// a distance to pcyl plane calculation for the second point,
-			// then subtract the center from the point on the plane and do
-			// a dot product test with pcyl's normal.
-			//
-			// TODO - Can optimize this - can make a narrower arb using
-			// the knowledge of the distance between p1/p2.  We only need
-			// to add enough extra length to clear the cylinder, which
-			// means the full radius length is almost always overkill.
-			ON_SimpleArray<ON_3dPoint> arb_points(8);
-
-			ON_3dVector axis = ip2 - ip1;
-			ON_3dVector e1 = v2->Point() - v1->Point(); // radius
-			ON_3dVector e2 = v3->Point() - v2->Point(); // axis
-			ON_3dVector e3 = v4->Point() - v3->Point(); // radius
-			ON_3dVector e4 = v1->Point() - v4->Point(); // axis
-			double e1_len = fabs(e1.Length());
-			double e2_len = fabs(e2.Length());
-			double e3_len = fabs(e3.Length());
-			double e4_len = fabs(e4.Length());
-			double circ_rad = fabs(fcyl.circle.Radius()) + fabs(fcyl.circle.Radius()) * 0.05;
-			double axis_length = fabs(axis.Length()) + fabs(axis.Length()) * 0.05;
-			arb_points[0] = v1->Point();
-			arb_points[1] = v2->Point();
-			arb_points[2] = v3->Point();
-			arb_points[3] = v4->Point();
-
-			if (e2_len < axis_length) {
-			    ON_3dVector a1 = e2;
-			    a1.Unitize();
-			    a1 = a1 * (axis_length - e2_len)/2;
-			    if (ON_DotProduct(a1,e2) < 0) {
-				arb_points[1] = arb_points[1] + a1;
-				arb_points[2] = arb_points[2] - a1;
-			    } else {
-				arb_points[1] = arb_points[1] - a1;
-				arb_points[2] = arb_points[2] + a1;
-			    }
-			}
-
-			if (e4_len < axis_length) {
-			    ON_3dVector a1 = e4;
-			    a1.Unitize();
-			    a1 = a1 * (axis_length - e4_len)/2;
-			    if (ON_DotProduct(a1,e4) < 0) {
-				arb_points[3] = arb_points[3] + a1;
-				arb_points[0] = arb_points[0] - a1;
-			    } else {
-				arb_points[3] = arb_points[3] - a1;
-				arb_points[0] = arb_points[0] + a1;
-			    }
-			}
-
-			if (e1_len < circ_rad * 2) {
-			    ON_3dVector a1 = e1;
-			    a1.Unitize();
-			    a1 = a1 * circ_rad;
-			    arb_points[0] = arb_points[0] - a1;
-			    arb_points[1] = arb_points[1] + a1;
-			}
-
-			if (e3_len < circ_rad * 2) {
-			    ON_3dVector a1 = e3;
-			    a1.Unitize();
-			    a1 = a1 * circ_rad;
-			    arb_points[2] = arb_points[2] - a1;
-			    arb_points[3] = arb_points[3] + a1;
-			}
-
-			// Once the final 1,2,3,4 points have been determined, use
-			// the pcyl normal direction and the cylinder radius to
-			// construct the remaining arb points.
-			ON_3dPoint p5, p6, p7, p8;
-			ON_3dVector arb_side = pcyl.Normal() * 2*fcyl.circle.Radius();
-			arb_points[4] = arb_points[0] + arb_side;
-			arb_points[5] = arb_points[1] + arb_side;
-			arb_points[6] = arb_points[2] + arb_side;
-			arb_points[7] = arb_points[3] + arb_side;
-
-			arb_obj_3->params->bool_op = '-';
-			arb_obj_3->params->arb_type = 8;
-			for (int j = 0; j < 8; j++) {
-			    VMOVE(arb_obj_3->params->p[j], arb_points[j]);
-			}
-
-			bu_ptbl_ins(data->children, (long *)arb_obj_3);
-		    }
-
+		    do_cap_1 = 1;
+		    do_cap_2 = 1;
 		}
+
+		data->type = COMB;
+		data->obj_cnt = data->parent->obj_cnt;
+		(*data->obj_cnt)++;
+		bu_vls_sprintf(data->name_root, "%s_%d_comb", bu_vls_addr(data->parent->name_root), *(data->obj_cnt));
+
+
+		// First order of business - find the intersection between the axis and the capping
+		// plane
+
+		ON_Line line(cylinder.circle.Center(), cylinder.circle.Center() + cylinder.Axis());
+		ON_3dPoint ip1 = ON_LinePlaneIntersect(line, cyl_planes[0]);
+		ON_3dPoint ip2 = ON_LinePlaneIntersect(line, cyl_planes[1]);
+
+		if (ip1.x > ON_DBL_MAX - SMALL_FASTF || ip1.x < -ON_DBL_MAX + SMALL_FASTF) return 1;
+		if (ip2.x > ON_DBL_MAX - SMALL_FASTF || ip2.x < -ON_DBL_MAX + SMALL_FASTF) return 1;
+
+		// Define the cylinder.
+		struct subbrep_object_data *cyl_obj;
+		BU_GET(cyl_obj, struct subbrep_object_data);
+		subbrep_object_init(cyl_obj, data->brep);
+		std::string key = face_set_key(cylindrical_surfaces);
+		bu_vls_sprintf(cyl_obj->key, "%s", key.c_str());
+		cyl_obj->obj_cnt = data->parent->obj_cnt;
+		(*cyl_obj->obj_cnt)++;
+		bu_vls_sprintf(cyl_obj->name_root, "%s_%d_cyl", bu_vls_addr(data->parent->name_root), *(cyl_obj->obj_cnt));
+		cyl_obj->type = CYLINDER;
+
+		// Flag the cyl/arb comb according to the negative or positive status of the
+		// cylinder surface.  Whether the comb is actually subtracted from the
+		// global object or unioned into a comb lower down the tree (or vice versa)
+		// is determined later.
+		data->negative_shape = negative_cylinder(data, *cylindrical_surfaces.begin(), cyl_tol);
+		data->params->bool_op = (data->negative_shape == -1) ? '-' : 'u';
+
+		// cylinder - positive object in this sub-comb
+		cyl_obj->params->bool_op = 'u';
+		VMOVE(cyl_obj->params->origin, ip1);
+		ON_3dVector hvect = ip2 - ip1;
+		cyl_obj->params->hv[0] = hvect.x;
+		cyl_obj->params->hv[1] = hvect.y;
+		cyl_obj->params->hv[2] = hvect.z;
+		cyl_obj->params->radius = cylinder.circle.Radius();
+
+		bu_ptbl_ins(data->children, (long *)cyl_obj);
+
+		// Create an OpenNURBS cylinder from the final cyl data
+		// so we can use it to guide the arb creation.
+		ON_Plane fplane(ip1, hvect);
+		ON_Circle fcirc(fplane, cylinder.circle.Radius());
+		ON_Cylinder fcyl(fcirc, hvect.Length());
+
+		ON_Plane cap1(ip1, cyl_planes[0].Normal());
+		if(ON_DotProduct(cap1.Normal(), hvect) > 0) cap1.Flip();
+		ON_Plane cap2(ip2, cyl_planes[1].Normal());
+		if(ON_DotProduct(cap2.Normal(), hvect) < 0) cap2.Flip();
+
+#if 0
+		ON_3dPoint cp1 = ip1 + ext_dir_1;
+		std::cout << "CP1: " << pout(cp1) << "\n";
+		ON_3dPoint cp2 = ip2 + ext_dir_2;
+		std::cout << "CP2: " << pout(cp2) << "\n";
+#endif
+		// The normal of the two end cap planes, when projected
+		// onto the axis plane, "points" the way towards the lowest
+		// point of the arb.  To form the arb, the cylinder face is
+		// bound by a square in the plane of the face where the
+		// pointing vector points to the middle of one of the
+		// edges.  This square provides 4 of the 6 arb points, and
+		// then the last two are made by dropping vectors down the
+		// cylinder axis from the two square points on the "low"
+		// side
+		if (do_cap_1) {
+		    // Cap 1
+		    cap1.Flip();
+		    double angle = acos(ON_DotProduct(fplane.Normal(), cap1.Normal()));
+		    double diameter = fcyl.circle.Radius();
+		    double hypotenuse = diameter / ON_DotProduct(fplane.Normal(), cap1.Normal());
+		    double ext_length = fabs(sin(angle) * hypotenuse);
+		    ON_3dVector ext_dir = hvect;
+		    ext_dir.Unitize();
+		    ext_dir = ext_dir * ext_length;
+		    cap1.Flip();
+
+		    ON_Xform cyl_proj;
+		    cyl_proj.PlanarProjection(fplane);
+		    ON_3dVector v1 = cap1.Normal();
+		    v1.Transform(cyl_proj);
+		    v1.Unitize();
+		    ON_3dVector v2 = ON_CrossProduct(-1*fplane.Normal(), v1);
+		    v1 = v1 * fcyl.circle.Radius();
+		    v2 = v2 * fcyl.circle.Radius();
+
+		    ON_SimpleArray<ON_3dPoint> arb_points(6);
+		    arb_points[1] = ip1 + v1 - v2;
+		    arb_points[2] = ip1 + v1 + v2;
+		    arb_points[4] = ip1 - v2;
+		    arb_points[5] = ip1 + v2;
+
+		    arb_points[0] = arb_points[1] + ext_dir;
+		    arb_points[3] = arb_points[2] + ext_dir;
+
+		    struct subbrep_object_data *arb_obj_1;
+		    BU_GET(arb_obj_1, struct subbrep_object_data);
+		    subbrep_object_init(arb_obj_1, data->brep);
+		    bu_vls_sprintf(arb_obj_1->key, "%s_cap_1", key.c_str());
+		    arb_obj_1->obj_cnt = data->parent->obj_cnt;
+		    (*arb_obj_1->obj_cnt)++;
+		    bu_vls_sprintf(arb_obj_1->name_root, "%s_%d_cap_1", bu_vls_addr(data->parent->name_root), *(arb_obj_1->obj_cnt));
+		    arb_obj_1->type = ARB6;
+		    arb_obj_1->params->bool_op = '-';
+		    arb_obj_1->params->arb_type = 8;
+		    for (int j = 0; j < 6; j++) {
+			VMOVE(arb_obj_1->params->p[j], arb_points[j]);
+		    }
+
+		    bu_ptbl_ins(data->children, (long *)arb_obj_1);
+		}
+		if (do_cap_2) {
+		    // Cap 2
+		    double angle = acos(ON_DotProduct(fplane.Normal(), cap2.Normal()));
+		    double diameter = fcyl.circle.Radius();
+		    double hypotenuse = diameter / ON_DotProduct(fplane.Normal(), cap2.Normal());
+		    double ext_length = fabs(sin(angle) * hypotenuse);
+		    ON_3dVector ext_dir = -hvect;
+		    ext_dir.Unitize();
+		    ext_dir = ext_dir * ext_length;
+
+		    ON_Xform cyl_proj;
+		    cyl_proj.PlanarProjection(fplane);
+		    ON_3dVector v1 = cap2.Normal();
+		    v1.Transform(cyl_proj);
+		    v1.Unitize();
+		    ON_3dVector v2 = ON_CrossProduct(fplane.Normal(), v1);
+		    v1 = v1 * fcyl.circle.Radius();
+		    v2 = v2 * fcyl.circle.Radius();
+
+		    ON_SimpleArray<ON_3dPoint> arb_points(6);
+		    arb_points[1] = ip2 + v1 - v2;
+		    arb_points[2] = ip2 + v1 + v2;
+		    arb_points[4] = ip2 - v2;
+		    arb_points[5] = ip2 + v2;
+
+		    arb_points[0] = arb_points[1] + ext_dir;
+		    arb_points[3] = arb_points[2] + ext_dir;
+
+		    struct subbrep_object_data *arb_obj_2;
+		    BU_GET(arb_obj_2, struct subbrep_object_data);
+		    subbrep_object_init(arb_obj_2, data->brep);
+		    bu_vls_sprintf(arb_obj_2->key, "%s_cap_2", key.c_str());
+		    arb_obj_2->obj_cnt = data->parent->obj_cnt;
+		    (*arb_obj_2->obj_cnt)++;
+		    bu_vls_sprintf(arb_obj_2->name_root, "%s_cap_2", bu_vls_addr(data->parent->name_root), *(arb_obj_2->obj_cnt));
+		    arb_obj_2->type = ARB6;
+		    arb_obj_2->params->bool_op = '-';
+		    arb_obj_2->params->arb_type = 8;
+		    for (int j = 0; j < 6; j++) {
+			VMOVE(arb_obj_2->params->p[j], arb_points[j]);
+		    }
+
+		    bu_ptbl_ins(data->children, (long *)arb_obj_2);
+		}
+
+		{
+
+		    // back face arb8
+		    struct subbrep_object_data *arb_obj_3;
+		    BU_GET(arb_obj_3, struct subbrep_object_data);
+		    subbrep_object_init(arb_obj_3, data->brep);
+		    bu_vls_sprintf(arb_obj_3->key, "%s_back_face", key.c_str());
+		    arb_obj_3->obj_cnt = data->parent->obj_cnt;
+		    (*arb_obj_3->obj_cnt)++;
+		    bu_vls_sprintf(arb_obj_3->name_root, "%s_back_face", bu_vls_addr(data->parent->name_root), *(arb_obj_3->obj_cnt));
+		    arb_obj_3->type = ARB8;
+
+
+		    // First, find the two points closest to the cap1 and cap2 planes
+		    std::set<int>::iterator s_it;
+		    ON_SimpleArray<const ON_BrepVertex *> corner_pnts(4);
+		    ON_SimpleArray<const ON_BrepVertex *> bottom_pnts(2);
+		    ON_SimpleArray<const ON_BrepVertex *> top_pnts(2);
+		    for (s_it = corner_verts.begin(); s_it != corner_verts.end(); s_it++) {
+			ON_3dPoint p = data->brep->m_V[*s_it].Point();
+			double d1 = fabs(cyl_planes[0].DistanceTo(p));
+			double d2 = fabs(cyl_planes[1].DistanceTo(p));
+			//std::cout << "d1: " << d1 << "\n";
+			//std::cout << "d2: " << d2 << "\n";
+			if (d1 < d2) {
+			    //std::cout << "bottom point: " << *s_it << "\n";
+			    bottom_pnts.Append(&(data->brep->m_V[*s_it]));
+			} else {
+			    //std::cout << "top point: " << *s_it << "\n";
+			    top_pnts.Append(&(data->brep->m_V[*s_it]));
+			}
+		    }
+
+		    // Second, select a point from an arc edge not on the subtraction
+		    // plane, construct a vector from the circle center to that point,
+		    // and determine if the pcyl plane direction is already in the opposite
+		    // direction or needs to be reversed.
+		    //
+		    // TODO - need a non-linear edge for this - any should do...
+		    const ON_BrepEdge *nonlin_edge = &(data->brep->m_E[non_linear_edge_ind]);
+		    ON_3dPoint center = fcyl.circle.Center();
+		    ON_3dPoint midpt = nonlin_edge->EdgeCurveOf()->PointAt(nonlin_edge->EdgeCurveOf()->Domain().Mid());
+
+
+		    ON_3dVector invec = center - midpt;
+		    double dotp = ON_DotProduct(invec, pcyl.Normal());
+		    if (dotp < 0) {
+			pcyl.Flip();
+		    }
+
+		    /* If we don't have bottom points, bail */
+		    if (!bottom_pnts[0] ||!bottom_pnts[1]) return -1;
+
+		    // Third, construct the axis vector and determine the arb
+		    // order of the bottom and top points
+
+		    ON_3dVector vv1 = bottom_pnts[0]->Point() - bottom_pnts[1]->Point();
+		    ON_3dVector v1x = ON_CrossProduct(vv1, fcyl.Axis());
+
+		    double flag1 = ON_DotProduct(v1x, pcyl.Normal());
+
+		    ON_3dVector w1 = top_pnts[0]->Point() - top_pnts[1]->Point();
+		    ON_3dVector w1x = ON_CrossProduct(w1, fcyl.Axis());
+
+		    double flag3 = ON_DotProduct(w1x, pcyl.Normal());
+
+		    const ON_BrepVertex *v1, *v2, *v3, *v4;
+		    if (flag1 < 0) {
+			v1 = bottom_pnts[1];
+			v2 = bottom_pnts[0];
+			vv1 = -vv1;
+		    } else {
+			v1 = bottom_pnts[0];
+			v2 = bottom_pnts[1];
+		    }
+		    if (flag3 < 0) {
+			v3 = top_pnts[0];
+			v4 = top_pnts[1];
+		    } else {
+			v3 = top_pnts[1];
+			v4 = top_pnts[0];
+		    }
+#if 0
+		    std::cout << "v1 (" << pout(v1->Point()) << ")\n";
+		    std::cout << "v2 (" << pout(v2->Point()) << ")\n";
+		    std::cout << "v3 (" << pout(v3->Point()) << ")\n";
+		    std::cout << "v4 (" << pout(v4->Point()) << ")\n";
+#endif
+
+		    // Before we manipulate the points for arb construction,
+		    // see if we need to use them to define a new face.
+		    if (!data->is_island) {
+			// The cylinder shape is a partial cylinder, and it is not
+			// topologically isolated, so we need to make a new face
+			// in the parent to replace this one.
+			if (data->parent) {
+			    // First, see if a local planar brep object has been generated for
+			    // this shape.  Such a brep is not generated up front, because
+			    // there is no way to be sure a planar parent is needed until
+			    // we hit a case like this - for example, a brep consisting of
+			    // stacked cylinders of different diameters will have multiple
+			    // planar surfaces, but can be completely described without use
+			    // of planar volumes in the final CSG expression.  If another
+			    // shape has already triggered the generation we don't want to
+			    // do it again,  but the first shape to make the need clear has
+			    // to trigger the build.
+			    if (!data->parent->planar_obj) {
+				subbrep_planar_init(data->parent);
+			    }
+			    // Now, add the new face
+			    ON_SimpleArray<const ON_BrepVertex *> vert_loop(4);
+			    vert_loop.Append(v1);
+			    vert_loop.Append(v2);
+			    vert_loop.Append(v3);
+			    vert_loop.Append(v4);
+			    subbrep_add_planar_face(data->parent, &pcyl, &vert_loop, data->negative_shape);
+			}
+		    }
+
+		    // Once the 1,2,3,4 points are determined, scale them out
+		    // along their respective line segment axis to make sure
+		    // the resulting arb is large enough to subtract the full
+		    // radius of the cylinder.
+		    //
+		    // TODO - Only need to do this if the
+		    // center point of the cylinder is inside the subtracting arb -
+		    // should be able to test that with the circle center point
+		    // a distance to pcyl plane calculation for the second point,
+		    // then subtract the center from the point on the plane and do
+		    // a dot product test with pcyl's normal.
+		    //
+		    // TODO - Can optimize this - can make a narrower arb using
+		    // the knowledge of the distance between p1/p2.  We only need
+		    // to add enough extra length to clear the cylinder, which
+		    // means the full radius length is almost always overkill.
+		    ON_SimpleArray<ON_3dPoint> arb_points(8);
+
+		    ON_3dVector axis = ip2 - ip1;
+		    ON_3dVector e1 = v2->Point() - v1->Point(); // radius
+		    ON_3dVector e2 = v3->Point() - v2->Point(); // axis
+		    ON_3dVector e3 = v4->Point() - v3->Point(); // radius
+		    ON_3dVector e4 = v1->Point() - v4->Point(); // axis
+		    double e1_len = fabs(e1.Length());
+		    double e2_len = fabs(e2.Length());
+		    double e3_len = fabs(e3.Length());
+		    double e4_len = fabs(e4.Length());
+		    double circ_rad = fabs(fcyl.circle.Radius()) + fabs(fcyl.circle.Radius()) * 0.05;
+		    double axis_length = fabs(axis.Length()) + fabs(axis.Length()) * 0.05;
+		    arb_points[0] = v1->Point();
+		    arb_points[1] = v2->Point();
+		    arb_points[2] = v3->Point();
+		    arb_points[3] = v4->Point();
+
+		    if (e2_len < axis_length) {
+			ON_3dVector a1 = e2;
+			a1.Unitize();
+			a1 = a1 * (axis_length - e2_len)/2;
+			if (ON_DotProduct(a1,e2) < 0) {
+			    arb_points[1] = arb_points[1] + a1;
+			    arb_points[2] = arb_points[2] - a1;
+			} else {
+			    arb_points[1] = arb_points[1] - a1;
+			    arb_points[2] = arb_points[2] + a1;
+			}
+		    }
+
+		    if (e4_len < axis_length) {
+			ON_3dVector a1 = e4;
+			a1.Unitize();
+			a1 = a1 * (axis_length - e4_len)/2;
+			if (ON_DotProduct(a1,e4) < 0) {
+			    arb_points[3] = arb_points[3] + a1;
+			    arb_points[0] = arb_points[0] - a1;
+			} else {
+			    arb_points[3] = arb_points[3] - a1;
+			    arb_points[0] = arb_points[0] + a1;
+			}
+		    }
+
+		    if (e1_len < circ_rad * 2) {
+			ON_3dVector a1 = e1;
+			a1.Unitize();
+			a1 = a1 * circ_rad;
+			arb_points[0] = arb_points[0] - a1;
+			arb_points[1] = arb_points[1] + a1;
+		    }
+
+		    if (e3_len < circ_rad * 2) {
+			ON_3dVector a1 = e3;
+			a1.Unitize();
+			a1 = a1 * circ_rad;
+			arb_points[2] = arb_points[2] - a1;
+			arb_points[3] = arb_points[3] + a1;
+		    }
+
+		    // Once the final 1,2,3,4 points have been determined, use
+		    // the pcyl normal direction and the cylinder radius to
+		    // construct the remaining arb points.
+		    ON_3dPoint p5, p6, p7, p8;
+		    ON_3dVector arb_side = pcyl.Normal() * 2*fcyl.circle.Radius();
+		    arb_points[4] = arb_points[0] + arb_side;
+		    arb_points[5] = arb_points[1] + arb_side;
+		    arb_points[6] = arb_points[2] + arb_side;
+		    arb_points[7] = arb_points[3] + arb_side;
+
+		    arb_obj_3->params->bool_op = '-';
+		    arb_obj_3->params->arb_type = 8;
+		    for (int j = 0; j < 8; j++) {
+			VMOVE(arb_obj_3->params->p[j], arb_points[j]);
+		    }
+
+		    bu_ptbl_ins(data->children, (long *)arb_obj_3);
+		}
+
 		return 1;
 	    }
 	} else {
