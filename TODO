@@ -69,9 +69,6 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
 * convert usages of Tcl_InitHashTable() and friends to libbu
   containers (see src/conv/enf-g.c for example usage)
 
-* eliminate usage of Tcl_SplitList() throughout by implementing a
-  libbu alternative (see src/rt/viewedge.c for example usage)
-
 * importer for LS-DYNA .k keyword files.  they support a variety of
   geometry constructs.  their spec is freely available online.  no
   existing libs are known.
@@ -1303,9 +1300,8 @@ LIBGED
   (also in mged) into libged where appropriate. the 'png' command
   comes to mind.
 
-* refactor wdb_obj and view_obj in libged.  with the de-tcl'ing of the
-  base libs, it should disappear but shouldn't have wdb_*() funcs in
-  libged regardless.  work in progress.
+* refactor wdb_obj and view_obj in libged. they should disappear but
+  shouldn't have wdb_*() funcs in libged regardless.
 
 * make ged command names aware of object arguments for automatic
   globbing and regular expression expansion:
