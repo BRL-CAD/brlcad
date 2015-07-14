@@ -839,6 +839,9 @@ cylinder_csg(struct bu_vls *msgs, struct subbrep_object_data *data, fastf_t cyl_
 			base_plane = cyl_planes[1];
 			tilted_plane = cyl_planes[0];
 		    }
+
+		    // TODO - do something to actually make geometry here...
+
 		    //std::cout << "plane normal: " << pout(tilted_plane.Normal()) << "\n";
 		    //double angle = acos(ON_DotProduct(cylinder.Axis(), tilted_plane.Normal()));
 		    //std::cout << "  dihedral angle: " << angle * ON_RADIANS_TO_DEGREES << "\n";
