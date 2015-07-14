@@ -48,8 +48,6 @@
 #include "rt/tie.h"
 
 /* private implementation headers */
-#include "./gct_decimation/meshdecimation.h"
-#include "./gct_decimation/meshoptimization.h"
 #include "./btg.h"	/* for the bottie_ functions */
 #include "./bot_edge.h"
 
