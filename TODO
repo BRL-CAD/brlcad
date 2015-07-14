@@ -52,6 +52,13 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
 
+* expand libbu parallelism with thread-level control, i.e., the
+  ability to start/stop/wait on individual threads in addition to the
+  existing bu_parallel() call.  bu_parallel() gets updated to call the
+  new thread-level control under the hood, but allows for more
+  expressive threading structures (e.g., a function similar to
+  bu_parallel() that is non-blocking).
+
 * Post 7.26.0 release, need to look at migrating CMake logic off of
   the OLD behavior for policy 0026 (using LOCATION property.)  Now
   that Debian stable is using CMake >=3.0 we should be OK to require
