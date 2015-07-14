@@ -2730,7 +2730,7 @@ wdb_adjust_cmd(struct rt_wdb *wdbp,
     }
 
     /* notify observers */
-    bu_observer_notify((void *)wdbp->wdb_interp, &(_wdb_eval), &wdbp->wdb_observers, bu_vls_addr(&wdbp->wdb_name));
+    bu_observer_notify((void *)wdbp->wdb_interp, &wdbp->wdb_observers, bu_vls_addr(&wdbp->wdb_name), &(_wdb_eval));
 
     return status;
 }

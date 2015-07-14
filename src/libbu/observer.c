@@ -136,7 +136,7 @@ observer_show(void *clientData, int argc, const char **UNUSED(argv))
 }
 
 void
-bu_observer_notify(void *context, bu_observer_eval_t *cmd_eval, struct bu_observer *headp, char *self)
+bu_observer_notify(void *context, struct bu_observer *headp, char *self, bu_observer_eval_t *cmd_eval)
 {
     struct bu_observer *op;
     struct bu_vls vls = BU_VLS_INIT_ZERO;
