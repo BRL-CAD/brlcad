@@ -117,6 +117,8 @@ and new names should be listed for reference.
 
 7.26
 ----
+all global variables
+	global variables are no longer considered published public API [deprecated 7.26]
 include/bn.h
 	bn_tcl_mat_print, removal of all tcl-specific API functions [deprecated 7.26]
 	tp_setup, no longer needs to be public API [deprecated 7.26]
