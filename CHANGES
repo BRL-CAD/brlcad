@@ -276,6 +276,8 @@ now no longer a part of BRL-CAD.
 
 7.26.0
 ------
+libbu, libbn
+        no longer utilize or require Tcl [7.26 architecture change]
 include/dg.h
         implementation detail no longer being exposed, use libged [deprecated 7.22]
 autogen.sh && configure
