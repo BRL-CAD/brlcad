@@ -22,7 +22,7 @@
 /** @file primitives/datum/datum.c
  *
  * Implement support for datum reference entities.  The basic
- * structural container supports fairely arbitrary collections of
+ * structural container supports fairly arbitrary collections of
  * points, lines, or planes which can be used to represent reference
  * features, axes, and coordinate systems.
  *

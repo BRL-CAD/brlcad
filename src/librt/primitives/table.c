@@ -2270,7 +2270,7 @@ const struct rt_functab OBJ[] = {
 	NULL, /* bbox */
 	NULL, /* volume */
 	NULL, /* surface */
-	NULL, /* centroid */ 
+	NULL, /* centroid */
 	NULL,
 	NULL,
 	NULL,
