@@ -521,6 +521,8 @@ view_init(struct application *ap, char *file, char *UNUSED(obj), int minus_o, in
 	    else
 		bu_log("rtedge: got tree for object %d = %s\n", i, objs[i]);
 
+	bu_free((char *)objs, "free occlusion objs array");
+
 	bu_log("rtedge: occlusion rt_gettrees done.\n");
 
 	rt_prep(occlusion_rtip);
