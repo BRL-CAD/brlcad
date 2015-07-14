@@ -300,7 +300,14 @@ void essenceOfEmbree(struct application &ap)
     rtcSetIntersectFunction(scene, geomID, brlcadIntersectFunction);
     rtcSetOccludedFunction(scene, geomID, brlcadOccludedFunction);
 
+    RTCRay rtcRay;
+    VMOVE(rtcRay.org, ap.a_ray.r_pt); // double->float
+    VMOVE(rtcRay.dir, ap.a_ray.r_dir); // double->float
+    rtcRay.tnear = 0.0;
+
     // launch a ray
+    rtcIntersect( scene, rtcRay);
+
     // collect the segs
     // call boolweave
 
