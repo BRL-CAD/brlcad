@@ -526,7 +526,7 @@ brep_to_csg(struct ged *gedp, struct directory *dp, int verify)
 	ON_BoundingBox bbox;
 	struct bn_tol tol = {BN_TOL_MAGIC, BN_TOL_DIST, BN_TOL_DIST * BN_TOL_DIST, 1.0e-6, 1.0 - 1.0e-6 };
 	brep->GetBoundingBox(bbox);
-	tol.dist = (bbox.Diagonal().Length() / 1000.0);
+	tol.dist = (bbox.Diagonal().Length() / 100.0);
 	    bu_log("Analyzing %s csg conversion, tol %f...\n", dp->d_namep, tol.dist);
 	if (analyze_raydiff(NULL, gedp->ged_wdbp->dbip, dp->d_namep, bu_vls_addr(&comb_name), &tol, 1)) {
 	    /* TODO - kill tree if debugging flag isn't passed - not valid */
