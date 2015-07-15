@@ -274,8 +274,6 @@ cone_csg(struct bu_vls *msgs, struct subbrep_object_data *data, fastf_t cone_tol
 
 	ON_3dVector hvect(cone.ApexPoint() - cone.BasePoint());
 	ON_3dPoint closest_to_base = set1_c.Plane().ClosestPointTo(cone.BasePoint());
-	struct csg_object_params * obj;
-        BU_GET(obj, struct csg_object_params);
 
 	data->negative_shape = negative_cone(data, *conic_surfaces.begin(), cone_tol);
 
@@ -307,10 +305,11 @@ cone_csg(struct bu_vls *msgs, struct subbrep_object_data *data, fastf_t cone_tol
 	    if (msgs) bu_vls_printf(msgs, "%*sFound partial TGC!\n", L3_OFFSET, " ");
 	}
 
+	// TODO -check for shared verts between nonlinear curves from different planes.
+	// If we have that case, we're looking at a "sliver" of a cone and need arbs
+
 	if (corner_verts_cnt == 0) {
 	    // Full TGC cone
-	    struct csg_object_params * obj;
-	    BU_GET(obj, struct csg_object_params);
 	    data->type = CONE;
 	    data->obj_cnt = data->parent->obj_cnt;
 	    (*data->obj_cnt)++;

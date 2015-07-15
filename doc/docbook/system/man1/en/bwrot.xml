@@ -36,8 +36,8 @@ format file or read from standard input if a file name is not given.  The
 <option>-w</option>
 and
 <option>-n</option>
-flags specify the input file width and number of scan lines in pixels.
-They can both be set to same value via
+flags specify the input file width and number of scan lines in pixels (both values default to 512);
+they can be set to same value via
 <option>-s.</option></para>
 
 <para>The
@@ -62,7 +62,7 @@ and inverting.</para>
 <para>If the
 <option>-a</option>
 flag is used, the image will be rotated counterclockwise by the specified
-arbitrary angle.</para>
+arbitrary angle (in degrees).</para>
 
 <para>The
 <option>-o</option>

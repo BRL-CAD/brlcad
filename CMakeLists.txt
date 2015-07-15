@@ -79,30 +79,6 @@
 # BRL-CAD software package.
 
 
-# Wrap the default message() function to also append ALL messages to a
-# CMakeOutput.log file in addition to usual console printing.
-
-function(message)
-
-  # bleh, don't know a clean+safe way to avoid string comparing the
-  # optional arg, so we extract it and test.
-  list(GET ARGV 0 MessageType)
-
-  if (MessageType STREQUAL FATAL_ERROR OR MessageType STREQUAL SEND_ERROR OR MessageType STREQUAL WARNING OR MessageType STREQUAL AUTHOR_WARNING OR MessageType STREQUAL STATUS)
-    list(REMOVE_AT ARGV 0)
-    _message(${MessageType} "${ARGV}")
-    file(APPEND ${BRLCAD_BINARY_DIR}/CMakeFiles/CMakeOutput.log "${MessageType}: ${ARGV}\n")
-  else (MessageType STREQUAL FATAL_ERROR OR MessageType STREQUAL SEND_ERROR OR MessageType STREQUAL WARNING OR MessageType STREQUAL AUTHOR_WARNING OR MessageType STREQUAL STATUS)
-    _message("${ARGV}")
-    file(APPEND ${BRLCAD_BINARY_DIR}/CMakeFiles/CMakeOutput.log "${ARGV}\n")
-  endif (MessageType STREQUAL FATAL_ERROR OR MessageType STREQUAL SEND_ERROR OR MessageType STREQUAL WARNING OR MessageType STREQUAL AUTHOR_WARNING OR MessageType STREQUAL STATUS)
-
-  # ~10% slower alternative that avoids adding '--' to STATUS messages
-  # execute_process(COMMAND ${CMAKE_COMMAND} -E echo "${ARGV}")
-
-endfunction(message)
-
-
 # We want to support a "distclean" build target that will clear all
 # CMake-generated files from a source directory in the case of an
 # in-source-dir configuration.  Not recommended, but we'll try to
@@ -146,34 +122,48 @@ file(APPEND ${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/CMakeOutput.log "${CMAKE_COMM
 # Minimum required version of CMake
 cmake_minimum_required(VERSION 2.8.4)
 if(COMMAND CMAKE_POLICY)
-  # libraries linked via full path don't introduce linker search paths
-  CMAKE_POLICY(SET CMP0003 NEW)
-
-  # list command doesn't ignore empty elements
-  CMAKE_POLICY(SET CMP0007 NEW)
-
-  # prefer files in CMAKE_MODULE_PATH over the cmake module dir
-  CMAKE_POLICY(SET CMP0017 OLD)
-
-  # allow relative paths in INCLUDE_DIRECTORIES
-  if ("${CMAKE_VERSION}" VERSION_EQUAL 2.8.12 OR "${CMAKE_VERSION}" VERSION_GREATER 2.8.12)
-    CMAKE_POLICY(SET CMP0021 OLD)
-  endif ("${CMAKE_VERSION}" VERSION_EQUAL 2.8.12 OR "${CMAKE_VERSION}" VERSION_GREATER 2.8.12)
-
   if ("${CMAKE_VERSION}" VERSION_GREATER 2.99)
     CMAKE_POLICY(SET CMP0026 OLD)
-    CMAKE_POLICY(SET CMP0042 OLD)
+    CMAKE_POLICY(SET CMP0042 NEW)
   endif ("${CMAKE_VERSION}" VERSION_GREATER 2.99)
 
   if ("${CMAKE_VERSION}" VERSION_GREATER 3.0.9)
     CMAKE_POLICY(SET CMP0046 NEW)
-    CMAKE_POLICY(SET CMP0053 OLD)
+    CMAKE_POLICY(SET CMP0053 NEW)
     CMAKE_POLICY(SET CMP0054 NEW)
   endif ("${CMAKE_VERSION}" VERSION_GREATER 3.0.9)
 endif(COMMAND CMAKE_POLICY)
 
 # set CMake project name
 project(BRLCAD)
+
+
+# Wrap the default message() function to also append ALL messages to a
+# CMakeOutput.log file in addition to usual console printing.
+# Note - only do this after calling project, since this override seems to do
+# unexpected things to the messages returned by that command
+
+function(message)
+
+  # bleh, don't know a clean+safe way to avoid string comparing the
+  # optional arg, so we extract it and test.
+  list(GET ARGV 0 MessageType)
+
+  if (MessageType STREQUAL FATAL_ERROR OR MessageType STREQUAL SEND_ERROR OR MessageType STREQUAL WARNING OR MessageType STREQUAL AUTHOR_WARNING OR MessageType STREQUAL STATUS)
+    list(REMOVE_AT ARGV 0)
+    _message(${MessageType} "${ARGV}")
+    file(APPEND ${BRLCAD_BINARY_DIR}/CMakeFiles/CMakeOutput.log "${MessageType}: ${ARGV}\n")
+  else (MessageType STREQUAL FATAL_ERROR OR MessageType STREQUAL SEND_ERROR OR MessageType STREQUAL WARNING OR MessageType STREQUAL AUTHOR_WARNING OR MessageType STREQUAL STATUS)
+    _message("${ARGV}")
+    file(APPEND ${BRLCAD_BINARY_DIR}/CMakeFiles/CMakeOutput.log "${ARGV}\n")
+  endif (MessageType STREQUAL FATAL_ERROR OR MessageType STREQUAL SEND_ERROR OR MessageType STREQUAL WARNING OR MessageType STREQUAL AUTHOR_WARNING OR MessageType STREQUAL STATUS)
+
+  # ~10% slower alternative that avoids adding '--' to STATUS messages
+  # execute_process(COMMAND ${CMAKE_COMMAND} -E echo "${ARGV}")
+
+endfunction(message)
+
+
 
 #---------------------------------------------------------------------
 # Write out entries to populate a tm struct (will be used for time
@@ -2032,9 +2022,11 @@ BRLCAD_TYPE_SIZE("uint64_t" "")
 BRLCAD_TYPE_SIZE("uintptr_t" "")
 BRLCAD_TYPE_SIZE("sig_t" "signal.h")
 
-if(HAVE_PTRDIFF_T AND NOT HAVE_OFF_T AND HAVE_WINDOWS_H)
+# TODO - off_t test isn't sufficient apparently - passes with MSVC
+# but we still need this define
+if(HAVE_PTRDIFF_T AND HAVE_WINDOWS_H)
   CONFIG_H_APPEND(BRLCAD "#define off_t ptrdiff_t\n")
-endif(HAVE_PTRDIFF_T AND NOT HAVE_OFF_T AND HAVE_WINDOWS_H)
+endif(HAVE_PTRDIFF_T AND HAVE_WINDOWS_H)
 
 # Fallback typedefs
 if(NOT HAVE_GID_T AND HAVE_WINDOWS_H)
@@ -2366,13 +2358,15 @@ if(HAVE__STRNICMP)
 endif(HAVE__STRNICMP)
 
 # pipe
-BRLCAD_FUNCTION_EXISTS(_pipe HAVE__PIPE)
-if(HAVE__PIPE)
-  # Note, we can't just #define pipe _pipe because of the extra args
-  CONFIG_H_APPEND(BRLCAD "#define pipe(_FD)  (_pipe((_FD), 256, _O_TEXT))\n")
-else(HAVE__PIPE)
-  BRLCAD_FUNCTION_EXISTS(pipe HAVE_PIPE)
-endif(HAVE__PIPE)
+BRLCAD_FUNCTION_EXISTS(pipe HAVE_PIPE)
+if(NOT HAVE_PIPE)
+  # freebsd has _pipe as an alias to pipe, so test second
+  BRLCAD_FUNCTION_EXISTS(_pipe HAVE__PIPE)
+  if(HAVE__PIPE)
+    # Note, we can't just #define pipe _pipe because of the extra args
+    CONFIG_H_APPEND(BRLCAD "#define pipe(_FD)  (_pipe((_FD), 256, _O_TEXT))\n")
+  endif(HAVE__PIPE)
+endif(NOT HAVE_PIPE)
 
 # fork is a no-go on Windows...
 BRLCAD_FUNCTION_EXISTS(fork HAVE_FORK)
@@ -3267,12 +3261,7 @@ execute_process(COMMAND ${CMAKE_COMMAND} -E compare_files
   RESULT_VARIABLE IS_DIFFERENT OUTPUT_VARIABLE DIFF_OUTPUT ERROR_VARIABLE
   DIFF_ERROR)
 if(IS_DIFFERENT)
-  if(LOCKED_SOURCE_DIR)
-    message(WARNING "\n${BRLCAD_SOURCE_DIR}/INSTALL is out of date.  An updated version has been generated at ${BRLCAD_BINARY_DIR}/INSTALL.new\nTo clear this warning, replace ${BRLCAD_SOURCE_DIR}/INSTALL with ${BRLCAD_BINARY_DIR}/INSTALL.new\n")
-  else(LOCKED_SOURCE_DIR)
-    set_source_files_properties(${BRLCAD_BINARY_DIR}/INSTALL.new PROPERTIES GENERATED TRUE)
-    configure_file(${BRLCAD_BINARY_DIR}/INSTALL.new ${BRLCAD_SOURCE_DIR}/INSTALL COPYONLY)
-  endif(LOCKED_SOURCE_DIR)
+  message(FATAL_ERROR "\n${BRLCAD_SOURCE_DIR}/INSTALL is out of date.  An updated version has been generated at ${BRLCAD_BINARY_DIR}/INSTALL.new\nTo clear this warning, replace ${BRLCAD_SOURCE_DIR}/INSTALL with ${BRLCAD_BINARY_DIR}/INSTALL.new\n")
 endif(IS_DIFFERENT)
 
 # Do the same thing for the configure shell script - finish it and check
@@ -3285,12 +3274,7 @@ execute_process(COMMAND ${CMAKE_COMMAND} -E compare_files
   RESULT_VARIABLE IS_CONFIG_SH_DIFFERENT OUTPUT_VARIABLE DIFF_OUTPUT ERROR_VARIABLE
   DIFF_ERROR)
 if(IS_CONFIG_SH_DIFFERENT)
-  if(LOCKED_SOURCE_DIR)
-    message(WARNING "\n${BRLCAD_SOURCE_DIR}/configure is out of date. An updated version has been generated at ${BRLCAD_BINARY_DIR}/configure.new\nTo clear this warning, replace ${BRLCAD_SOURCE_DIR}/configure with ${BRLCAD_BINARY_DIR}/configure.new\n")
-  else(LOCKED_SOURCE_DIR)
-    set_source_files_properties(${BRLCAD_BINARY_DIR}/configure.new PROPERTIES GENERATED TRUE)
-    configure_file(${BRLCAD_BINARY_DIR}/configure.new ${BRLCAD_SOURCE_DIR}/configure COPYONLY)
-  endif(LOCKED_SOURCE_DIR)
+  message(FATAL_ERROR "\n${BRLCAD_SOURCE_DIR}/configure is out of date. An updated version has been generated at ${BRLCAD_BINARY_DIR}/configure.new\nTo clear this warning, replace ${BRLCAD_SOURCE_DIR}/configure with ${BRLCAD_BINARY_DIR}/configure.new\n")
 endif(IS_CONFIG_SH_DIFFERENT)
 
 

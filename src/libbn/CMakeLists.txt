@@ -27,9 +27,9 @@ set(LIBBN_SOURCES
   randmt.c
   scale.c
   sphmap.c
+  str.c
   symbol.c
   tabdata.c
-  tcl.c
   tplot.c
   ulp.c
   vectfont.c
@@ -41,7 +41,7 @@ set(LIBBN_SOURCES
   )
 
 
-BRLCAD_ADDLIB(libbn "${LIBBN_SOURCES}" libbu)
+BRLCAD_ADDLIB(libbn "${LIBBN_SOURCES}" "libbu")
 SET_TARGET_PROPERTIES(libbn PROPERTIES VERSION 20.0.1 SOVERSION 20)
 
 

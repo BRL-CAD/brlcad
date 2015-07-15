@@ -34,8 +34,6 @@
 #include <errno.h>
 #include "bio.h"
 
-#include "tcl.h"
-
 #include "vmath.h"
 #include "nmg.h"
 #include "rt/geom.h"
@@ -51,14 +49,14 @@ tcl_list_to_avs(const char *tcl_list, struct bu_attribute_value_set *avs, int of
     int list_c = 0;
     const char **listv = (const char **)NULL;
 
-    if (Tcl_SplitList(NULL, tcl_list, &list_c, (const char ***)&listv) != TCL_OK) {
+    if (bu_argv_from_tcl_list(tcl_list, &list_c, (const char ***)&listv) != 0) {
 	return -1;
     }
 
     if (!BU_AVS_IS_INITIALIZED(avs)) BU_AVS_INIT(avs);
 
     if (!list_c) {
-	Tcl_Free((char *)listv);
+	bu_free((char *)listv, "listv");
 	return 0;
     }
 
@@ -70,7 +68,7 @@ tcl_list_to_avs(const char *tcl_list, struct bu_attribute_value_set *avs, int of
 	return -1;
     }
 
-    Tcl_Free((char *)listv);
+    bu_free((char *)listv, "listv");
     return 0;
 }
 
@@ -99,6 +97,7 @@ arb_type_to_str(int type) {
     }
     return NULL;
 }
+
 HIDDEN const char *
 type_to_str(const struct rt_db_internal *obj, int arb_type) {
     if (arb_type) return arb_type_to_str(arb_type);

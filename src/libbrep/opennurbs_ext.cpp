@@ -1288,7 +1288,9 @@ SurfaceTree::subdivideSurface(const ON_Surface *localsurf,
     }
     //////////////////////////////////////
     if (do_u_split) {
+#ifdef _OLD_SUBDIVISION_
 	bool split;
+#endif
 	ON_Interval firstu(u.Min(), usplit);
 	ON_Interval secondu(usplit, u.Max());
 #ifdef _OLD_SUBDIVISION_
@@ -1314,7 +1316,6 @@ SurfaceTree::subdivideSurface(const ON_Surface *localsurf,
 #else
 	const ON_Surface *east = localsurf;
 	const ON_Surface *west = localsurf;
-	split = true;
 #endif
 
 	//////////////////////////////////
@@ -1469,7 +1470,9 @@ SurfaceTree::subdivideSurface(const ON_Surface *localsurf,
 	return parent;
     }
     if (do_v_split || !prev_knot) {
+#ifdef _OLD_SUBDIVISION_
 	bool split;
+#endif
 	ON_Interval firstv(v.Min(), vsplit);
 	ON_Interval secondv(vsplit, v.Max());
 
@@ -1497,7 +1500,6 @@ SurfaceTree::subdivideSurface(const ON_Surface *localsurf,
 #else
 	const ON_Surface *north = localsurf;
 	const ON_Surface *south = localsurf;
-	split = true;
 #endif
 	//////////////////////////////////
 	/*********************************************************************

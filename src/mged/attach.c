@@ -134,14 +134,10 @@ ogl_doevent(void *UNUSED(vclientData), void *veventPtr)
     /*ClientData clientData = (ClientData)vclientData;*/
     XEvent *eventPtr= (XEvent *)veventPtr;
     if (eventPtr->type == Expose && eventPtr->xexpose.count == 0) {
-	if (!dm_make_current(dmp))
-	    /* allow further processing of this event */
-	    return TCL_OK;
+	(void)dm_make_current(dmp);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
 	dirty = 1;
-	/* no further processing for this event */
-	return TCL_RETURN;
+	return TCL_OK;
     }
     /* allow further processing of this event */
     return TCL_OK;
@@ -155,14 +151,10 @@ osgl_doevent(void *UNUSED(vclientData), void *veventPtr)
     /*ClientData clientData = (ClientData)vclientData;*/
     XEvent *eventPtr= (XEvent *)veventPtr;
     if (eventPtr->type == Expose && eventPtr->xexpose.count == 0) {
-	if (!dm_make_current(dmp))
-	    /* allow further processing of this event */
-	    return TCL_OK;
+	(void)dm_make_current(dmp);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
 	dirty = 1;
-	/* no further processing for this event */
-	return TCL_RETURN;
+	return TCL_OK;
     }
     /* allow further processing of this event */
     return TCL_OK;

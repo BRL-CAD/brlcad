@@ -21,12 +21,6 @@ THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 * make sure rt -I interactive mode still works... looks like code for
   it was removed.
 
-* fix iges exporter (spaces after commas)
-
-* fix the bn_poly_sub unit test
-
-* fix the bu_heap_test_1 unit test (seen on ia32 fbsd)
-
 * sync tgc/rec shot() behavior, sort results for proper normal.
   inspect t62 grazing with r653,r735 (tgc on an arb8) looking at ae0,0
   and z=1524 (was hit/overlap, now misses).
@@ -34,6 +28,8 @@ THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 
 THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 -------------------------------------------------------
+
+* turn on Bullet code (simulate command) unconditionally
 
 * create a BRL-CAD .g with all possible object types embedded.  The
   csgbrep command is a good starting point, but only about half of
@@ -56,11 +52,22 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
 
+* expand libbu parallelism with thread-level control, i.e., the
+  ability to start/stop/wait on individual threads in addition to the
+  existing bu_parallel() call.  bu_parallel() gets updated to call the
+  new thread-level control under the hood, but allows for more
+  expressive threading structures (e.g., a function similar to
+  bu_parallel() that is non-blocking).
+
+* Post 7.26.0 release, need to look at migrating CMake logic off of
+  the OLD behavior for policy 0026 (using LOCATION property.)  Now
+  that Debian stable is using CMake >=3.0 we should be OK to require
+  the more modern CMake.  Another TODO once we require the newer CMake
+  is retiring our custom time stamping code in favor of using
+  the CMake time stamp mechanism.
+
 * convert usages of Tcl_InitHashTable() and friends to libbu
   containers (see src/conv/enf-g.c for example usage)
-
-* eliminate usage of Tcl_SplitList() throughout by implementing a
-  libbu alternative (see src/rt/viewedge.c for example usage)
 
 * importer for LS-DYNA .k keyword files.  they support a variety of
   geometry constructs.  their spec is freely available online.  no
@@ -1293,9 +1300,8 @@ LIBGED
   (also in mged) into libged where appropriate. the 'png' command
   comes to mind.
 
-* refactor wdb_obj and view_obj in libged.  with the de-tcl'ing of the
-  base libs, it should disappear but shouldn't have wdb_*() funcs in
-  libged regardless.  work in progress.
+* refactor wdb_obj and view_obj in libged. they should disappear but
+  shouldn't have wdb_*() funcs in libged regardless.
 
 * make ged command names aware of object arguments for automatic
   globbing and regular expression expansion:

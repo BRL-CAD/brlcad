@@ -26,6 +26,7 @@
 
 #include "common.h"
 
+#include <cmath>
 #include <fstream>
 #include <iomanip>
 #include <set>
@@ -125,9 +126,10 @@ HIDDEN Color
 color_from_floats(const float *float_color)
 {
     Color result;
-    result[0] = static_cast<unsigned char>(float_color[0] * 255.0 + 0.5);
-    result[1] = static_cast<unsigned char>(float_color[1] * 255.0 + 0.5);
-    result[2] = static_cast<unsigned char>(float_color[2] * 255.0 + 0.5);
+
+    for (int i = 0; i < 3; ++i)
+	result[i] = static_cast<unsigned char>(float_color[i] * 255.0 + 0.5);
+
     return result;
 }
 
@@ -686,6 +688,11 @@ public:
     void write_sphere(const fastf_t *center, fastf_t radius,
 		      fastf_t thickness = 0.0);
 
+    // note: this element (CCONE1) is deprecated
+    void write_thin_cone(const fastf_t *point_a, const fastf_t *point_b,
+			 fastf_t radius1, fastf_t radius2, fastf_t thickness,
+			 bool end1_open = true, bool end2_open = true);
+
     void write_cone(const fastf_t *point_a, const fastf_t *point_b, fastf_t ro1,
 		    fastf_t ro2, fastf_t ri1, fastf_t ri2);
 
@@ -836,7 +843,7 @@ Section::write_sphere(const fastf_t *center, fastf_t radius,
     radius *= INCHES_PER_MM;
     thickness *= INCHES_PER_MM;
 
-    if (radius <= 0.0 || thickness <= 0.0 || radius < thickness)
+    if (radius < thickness || thickness <= 0.0)
 	throw std::invalid_argument("invalid value");
 
     std::vector<Point> points(1);
@@ -847,6 +854,45 @@ Section::write_sphere(const fastf_t *center, fastf_t radius,
     record << "CSPHERE" << m_next_element_id << m_material_id;
     record << grids.at(0) << "" << "" << "";
     record.non_zero(thickness).non_zero(radius);
+    ++m_next_element_id;
+}
+
+
+void
+Section::write_thin_cone(const fastf_t *point_a, const fastf_t *point_b,
+			 fastf_t radius1, fastf_t radius2, fastf_t thickness,
+			 bool end1_open, bool end2_open)
+{
+    radius1 *= INCHES_PER_MM;
+    radius2 *= INCHES_PER_MM;
+    thickness *= INCHES_PER_MM;
+
+    if (radius1 < 0.0 || radius2 < 0.0)
+	throw std::invalid_argument("invalid radius");
+
+    if (thickness <= 0.0 || (radius1 < thickness && radius2 < thickness))
+	throw std::invalid_argument("invalid thickness");
+
+    std::vector<Point> points(2);
+    points.at(0) = Point(point_a);
+    points.at(1) = Point(point_b);
+    const std::vector<std::size_t> grids = m_grids.get_unique_grids(points);
+
+    {
+	RecordWriter::Record record1(m_elements);
+	record1 << "CCONE1" << m_next_element_id << m_material_id;
+	record1 << grids.at(0) << grids.at(1);
+	record1 << "" << "" << thickness << radius1 << m_next_element_id;
+    }
+
+    {
+	RecordWriter::Record record2(m_elements);
+	record2 << m_next_element_id << radius2;
+
+	record2 << ((end1_open || !NEAR_ZERO(radius1, RT_LEN_TOL)) ? "" : "2");
+	record2 << ((end2_open || !NEAR_ZERO(radius2, RT_LEN_TOL)) ? "" : "2");
+    }
+
     ++m_next_element_id;
 }
 
@@ -863,7 +909,7 @@ Section::write_cone(const fastf_t *point_a, const fastf_t *point_b, fastf_t ro1,
     if (!m_volume_mode)
 	throw std::logic_error("CCONE2 elements can only be used in volume-mode components");
 
-    if (ri1 < 0.0 || ri2 < 0.0 || ri1 >= ro1 || ri2 >= ro2)
+    if (ri1 < 0.0 || ri2 < 0.0 || ro1 < ri1 || ro2 < ri2)
 	throw std::invalid_argument("invalid radius");
 
     std::vector<Point> points(2);
@@ -906,7 +952,7 @@ Section::write_triangle(const fastf_t *point_a, const fastf_t *point_b,
     record << "CTRI" << m_next_element_id << m_material_id;
     record << grids.at(0) << grids.at(1) << grids.at(2);
     record.non_zero(thickness);
-    record << (grid_centered ? 1 : 2);
+    record << (grid_centered ? "1" : "");
     ++m_next_element_id;
 }
 
@@ -932,7 +978,7 @@ Section::write_quad(const fastf_t *point_a, const fastf_t *point_b,
     record << "CQUAD" << m_next_element_id << m_material_id;
     record << grids.at(0) << grids.at(1) << grids.at(2) << grids.at(3);
     record.non_zero(thickness);
-    record << (grid_centered ? 1 : 2);
+    record << (grid_centered ? "1" : "");
     ++m_next_element_id;
 
 }
@@ -971,7 +1017,7 @@ Section::write_hexahedron(const fastf_t vpoints[8][3], fastf_t thickness,
     record2 << m_next_element_id << grids.at(6) << grids.at(7);
 
     if (has_thickness)
-	record2 << "" << "" << "" << "" << thickness << (grid_centered ? 1 : 2);
+	record2 << "" << "" << "" << "" << thickness << (grid_centered ? "1" : "");
 
     ++m_next_element_id;
 }
@@ -1086,6 +1132,16 @@ ell_is_sphere(const rt_ell_internal &ell)
 }
 
 
+HIDDEN bool
+mutually_orthogonal(const fastf_t *vect_a, const fastf_t *vect_b,
+		    const fastf_t *vect_c)
+{
+    return NEAR_ZERO(VDOT(vect_a, vect_b), RT_DOT_TOL)
+	   && NEAR_ZERO(VDOT(vect_a, vect_c), RT_DOT_TOL)
+	   && NEAR_ZERO(VDOT(vect_b, vect_c), RT_DOT_TOL);
+}
+
+
 // Determines whether a tgc can be represented by a CCONE2 object.
 // Assumes that `tgc` is a valid rt_tgc_internal.
 HIDDEN bool
@@ -1093,10 +1149,7 @@ tgc_is_ccone2(const rt_tgc_internal &tgc)
 {
     RT_TGC_CK_MAGIC(&tgc);
 
-    // ensure non-zero magnitudes
-    if (NEAR_ZERO(MAGNITUDE(tgc.h), RT_LEN_TOL)
-	|| NEAR_ZERO(MAGNITUDE(tgc.a), RT_LEN_TOL)
-	|| NEAR_ZERO(MAGNITUDE(tgc.b), RT_LEN_TOL))
+    if (NEAR_ZERO(MAGNITUDE(tgc.h), RT_LEN_TOL))
 	return false;
 
     // ensure |A| == |B| and |C| == |D|
@@ -1104,10 +1157,13 @@ tgc_is_ccone2(const rt_tgc_internal &tgc)
 	|| !NEAR_EQUAL(MAGNITUDE(tgc.c), MAGNITUDE(tgc.d), RT_LEN_TOL))
 	return false;
 
-    // ensure h, a, b are mutually orthogonal
-    if (!NEAR_ZERO(VDOT(tgc.h, tgc.a), RT_DOT_TOL)
-	|| !NEAR_ZERO(VDOT(tgc.h, tgc.b), RT_DOT_TOL)
-	|| !NEAR_ZERO(VDOT(tgc.a, tgc.b), RT_DOT_TOL))
+    // handle non-truncated cones
+    if (NEAR_ZERO(MAGNITUDE(tgc.a), RT_LEN_TOL))
+	return mutually_orthogonal(tgc.h, tgc.c, tgc.d);
+    else if (NEAR_ZERO(MAGNITUDE(tgc.c), RT_LEN_TOL))
+	return mutually_orthogonal(tgc.h, tgc.a, tgc.b);
+
+    if (!mutually_orthogonal(tgc.h, tgc.a, tgc.b))
 	return false;
 
     {
@@ -1264,6 +1320,61 @@ get_cutout(const db_i &db, const db_full_path &parent_path, DBInternal &outer,
 }
 
 
+// most uses of CCONE1 elements can be represented as CCONE2 elements.
+// this handles the cases for which we can't do this.
+// note: CCONE1 is deprecated.
+HIDDEN bool
+get_ccone1_cutout_helper(Section &section, const directory &parent_dir,
+			 const rt_tgc_internal &outer_tgc, const rt_tgc_internal &inner_tgc)
+{
+    RT_CK_DIR(&parent_dir);
+    RT_TGC_CK_MAGIC(&outer_tgc);
+    RT_TGC_CK_MAGIC(&inner_tgc);
+
+    const fastf_t radius1 = MAGNITUDE(outer_tgc.a);
+    const fastf_t radius2 = MAGNITUDE(outer_tgc.c);
+    fastf_t sin_angle;
+
+    {
+	const fastf_t length = MAGNITUDE(outer_tgc.h);
+	const fastf_t slant_length = std::sqrt(length * length + (radius2 - radius1) *
+					       (radius2 - radius1));
+	sin_angle = length / slant_length;
+    }
+
+    fastf_t thickness = 0.0;
+    bool end1_open, end2_open;
+
+    if (VNEAR_EQUAL(inner_tgc.v, outer_tgc.v, RT_LEN_TOL)) {
+	end1_open = true;
+	thickness = (radius1 - MAGNITUDE(inner_tgc.a)) * sin_angle;
+    } else {
+	end1_open = false;
+    }
+
+    if (VNEAR_EQUAL(inner_tgc.h, outer_tgc.h, RT_LEN_TOL)) {
+	end2_open = true;
+
+	const fastf_t temp_thickness = (radius2 - MAGNITUDE(inner_tgc.a)) * sin_angle;
+
+	if (!NEAR_EQUAL(thickness, temp_thickness, RT_LEN_TOL))
+	    return false;
+
+    } else {
+	end2_open = false;
+    }
+
+    vect_t point_b;
+    VADD2(point_b, outer_tgc.v, outer_tgc.h);
+
+    return false;
+
+    section.write_thin_cone(outer_tgc.a, point_b, radius1, radius2, thickness,
+			    end1_open, end2_open);
+    return true;
+}
+
+
 // test for and create ccone2 elements
 HIDDEN bool
 find_ccone2_cutout(Section &section, const db_i &db,
@@ -1299,10 +1410,6 @@ find_ccone2_cutout(Section &section, const db_i &db,
     RT_TGC_CK_MAGIC(&outer_tgc);
     RT_TGC_CK_MAGIC(&inner_tgc);
 
-    if (!VNEAR_EQUAL(outer_tgc.v, inner_tgc.v, RT_LEN_TOL)
-	|| !VNEAR_EQUAL(outer_tgc.h, inner_tgc.h, RT_LEN_TOL))
-	return false;
-
     // check cone geometry
     if (!tgc_is_ccone2(outer_tgc) || !tgc_is_ccone2(inner_tgc))
 	return false;
@@ -1313,8 +1420,18 @@ find_ccone2_cutout(Section &section, const db_i &db,
     const fastf_t ri2 = MAGNITUDE(inner_tgc.c);
 
     // check radii
-    if (ri1 >= ro1 || ri2 >= ro2)
+    if (ri1 > ro1 || ri2 > ro2)
 	return false;
+
+    if (!VNEAR_EQUAL(outer_tgc.v, inner_tgc.v, RT_LEN_TOL)
+	|| !VNEAR_EQUAL(outer_tgc.h, inner_tgc.h, RT_LEN_TOL)) {
+	if (!get_ccone1_cutout_helper(section, parent_dir, outer_tgc, inner_tgc))
+	    return false;
+
+	// this was a CCONE1
+	completed.insert(&parent_dir);
+	return true;
+    }
 
     point_t v2;
     VADD2(v2, outer_tgc.v, outer_tgc.h);
@@ -2060,7 +2177,7 @@ convert_primitive(FastgenConversion &data, const db_full_path &path,
 	    const rt_tgc_internal &tgc = *static_cast<rt_tgc_internal *>(internal.idb_ptr);
 	    RT_TGC_CK_MAGIC(&tgc);
 
-	    if (internal.idb_type != ID_REC && !tgc_is_ccone2(tgc))
+	    if (!tgc_is_ccone2(tgc))
 		return false;
 
 	    if (path.fp_len > 1
@@ -2137,7 +2254,7 @@ write_nmg_region(nmgregion *nmg_region, const db_full_path *path,
 	RT_DB_INTERNAL_INIT(&internal);
 	internal.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 	internal.idb_minor_type = ID_BOT;
-	internal.idb_meth = &OBJ[ID_BOT];
+	internal.idb_meth = &OBJ[internal.idb_minor_type];
 	internal.idb_ptr = bot;
 
 	write_bot(section, *bot);
@@ -2171,20 +2288,24 @@ convert_leaf(db_tree_state *tree_state, const db_full_path *path,
     FastgenConversion &data = *static_cast<FastgenConversion *>(client_data);
     const bool subtracted = tree_state->ts_sofar & (TS_SOFAR_MINUS |
 			    TS_SOFAR_INTER);
-    const directory *region_dir = NULL;
-    bool converted = false;
+    const directory *region_dir;
 
     try {
 	region_dir = &get_region_dir(data.m_db, *path);
-    } catch (const std::invalid_argument &) {}
+    } catch (const std::invalid_argument &) {
+	region_dir = NULL;
+    }
 
     const bool facetize = data.m_facetize_regions.count(region_dir);
+    bool converted;
 
     if (region_dir
 	&& data.get_region(*region_dir).member_ignored(get_parent_dir(*path)))
 	converted = true;
     else if (!facetize)
 	converted = convert_primitive(data, *path, *internal, subtracted);
+    else
+	converted = false;
 
     if (!converted) {
 	if (!facetize && subtracted)

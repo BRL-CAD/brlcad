@@ -55,7 +55,9 @@ All responses should be pixel counts or first
 quadrant coordinates.
 The second form allows all of the needed parameters to be given
 on the command line and is intended for use from shell scripts.
-The coordinate names stand for upper-left-x, lower-right-y, etc.</para>
+The coordinate names (the eight arguments listed above after
+<replaceable>outheight</replaceable>) refer to the input file,
+and more specifically to upper-left-x (ulx), lower-right-y (lry), etc.</para>
 
 <para>The nearest input pixel is selected for each output pixel.  No
 interpolation is done by this program.</para>

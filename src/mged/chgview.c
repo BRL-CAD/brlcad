@@ -33,6 +33,7 @@
 #include "bn.h"
 #include "raytrace.h"
 #include "nmg.h"
+#include "tclcad.h"
 #include "./sedit.h"
 #include "./mged.h"
 #include "./mged_dm.h"

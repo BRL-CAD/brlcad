@@ -342,13 +342,18 @@ analyze_raydiff(struct analyze_raydiff_results **results, struct db_i *dbip,
     struct rt_pattern_data *xdata, *ydata, *zdata;
     fastf_t *rays;
     struct raydiff_container *state;
+    /*const char *argv[2];*/
 
-    if (!results || !dbip || !left || !right|| !tol) return 0;
+    if (!dbip || !left || !right|| !tol) return 0;
 
     rtip = rt_new_rti(dbip);
+    /* TODO - figure out how to do this in parallel */
+    /*argv[0] = left;
+    argv[1] = right;
+    if (rt_gettrees(rtip, 2, argv, ncpus) < 0) return -1;*/
     if (rt_gettree(rtip, left) < 0) return -1;
     if (rt_gettree(rtip, right) < 0) return -1;
-    rt_prep_parallel(rtip, 1);
+    rt_prep_parallel(rtip, ncpus);
 
 
     /* Now we've got the bounding box - set up the grids */
@@ -459,6 +464,7 @@ analyze_raydiff(struct analyze_raydiff_results **results, struct db_i *dbip,
     {
 	int i, j;
 	struct bu_ptbl test_tbl = BU_PTBL_INIT_ZERO;
+	ret = 0;
 	/*ncpus = 2;*/
 	state = (struct raydiff_container *)bu_calloc(ncpus+1, sizeof(struct raydiff_container), "resources");
 	for (i = 0; i < ncpus+1; i++) {
@@ -509,20 +515,26 @@ analyze_raydiff(struct analyze_raydiff_results **results, struct db_i *dbip,
 	}
 
 	/* Collect and print all of the results */
-	analyze_raydiff_results_init(results);
+	if (results) analyze_raydiff_results_init(results);
 	for (i = 0; i < ncpus+1; i++) {
 	    for (j = 0; j < (int)BU_PTBL_LEN(state[i].left); j++) {
 		struct diff_seg *d = (struct diff_seg *)BU_PTBL_GET(state[i].left, j);
-		if (d->valid)
-		    bu_ptbl_ins((*results)->left, (long *)d);
+		if (d->valid) {
+		    if (results) bu_ptbl_ins((*results)->left, (long *)d);
+		    ret = 1;
+		}
 	    }
-	    for (j = 0; j < (int)BU_PTBL_LEN(state[i].both); j++) {
-		bu_ptbl_ins((*results)->both, BU_PTBL_GET(state[i].both, j));
+	    if (results) {
+		for (j = 0; j < (int)BU_PTBL_LEN(state[i].both); j++) {
+		    bu_ptbl_ins((*results)->both, BU_PTBL_GET(state[i].both, j));
+		}
 	    }
 	    for (j = 0; j < (int)BU_PTBL_LEN(state[i].right); j++) {
 		struct diff_seg *d = (struct diff_seg *)BU_PTBL_GET(state[i].right, j);
-		if (d->valid)
-		    bu_ptbl_ins((*results)->right, (long *)d);
+		if (d->valid) {
+		    if (results) bu_ptbl_ins((*results)->right, (long *)d);
+		    ret = 1;
+		}
 	    }
 	}
 
@@ -537,7 +549,7 @@ analyze_raydiff(struct analyze_raydiff_results **results, struct db_i *dbip,
 	}
 	bu_free(state, "free state containers");
     }
-    return 0;
+    return ret;
 }
 
 /*

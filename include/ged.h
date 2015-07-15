@@ -250,6 +250,9 @@ __BEGIN_DECLS
 	return (_flags); \
     }
 
+/* FIXME Temporary global interp.  Remove me.  */
+RT_EXPORT extern Tcl_Interp *brlcad_interp;
+
 /* From include/dm.h */
 #define GED_MAX 2047.0
 #define GED_MIN -2048.0
@@ -1312,6 +1315,11 @@ GED_EXPORT extern int ged_mrot(struct ged *gedp, int argc, const char *argv[]);
  */
 GED_EXPORT extern int ged_nirt(struct ged *gedp, int argc, const char *argv[]);
 GED_EXPORT extern int ged_vnirt(struct ged *gedp, int argc, const char *argv[]);
+
+/**
+ * NMG command with subcommands for altering NMG datastructure.
+ */
+GED_EXPORT extern int ged_nmg(struct ged *gedp, int argc, const char *argv[]);
 
 /**
  * Decimate NMG primitive via edge collapse

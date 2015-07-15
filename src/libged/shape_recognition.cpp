@@ -11,6 +11,7 @@
 
 #include "vmath.h"
 #include "wdb.h"
+#include "analyze.h"
 #include "ged.h"
 #include "../libbrep/shape_recognition.h"
 
@@ -518,6 +519,19 @@ brep_to_csg(struct ged *gedp, struct directory *dp)
     }
     // TODO - probably should be region
     mk_lcomb(wdbp, bu_vls_addr(&comb_name), &pcomb, 0, NULL, NULL, NULL, 0);
+
+
+    // Verify that the resulting csg tree and the original B-Rep pass a difference test.
+    {
+	ON_BoundingBox bbox;
+	struct bn_tol tol = {BN_TOL_MAGIC, BN_TOL_DIST, BN_TOL_DIST * BN_TOL_DIST, 1.0e-6, 1.0 - 1.0e-6 };
+	brep->GetBoundingBox(bbox);
+	tol.dist = (bbox.Diagonal().Length() / 1000.0);
+	if (analyze_raydiff(NULL, gedp->ged_wdbp->dbip, dp->d_namep, bu_vls_addr(&comb_name), &tol, 1)) {
+	    /* TODO - kill tree if debugging flag isn't passed - not valid */
+	    bu_log("Warning - %s did not pass diff test at tol %f!\n", bu_vls_addr(&comb_name), tol.dist);
+	}
+    }
 
     return 0;
 }

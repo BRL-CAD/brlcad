@@ -25,7 +25,7 @@
 #include "bu/cmd.h"
 #include "bu/malloc.h"
 #include "bu/str.h"
-#include "bu/bu_tcl.h"
+#include "bu/observer.h"
 
 /**
  * Attach observer.
@@ -135,9 +135,8 @@ observer_show(void *clientData, int argc, const char **UNUSED(argv))
     return BRLCAD_OK;
 }
 
-
 void
-bu_observer_notify(Tcl_Interp *interp, struct bu_observer *headp, char *self)
+bu_observer_notify(void *context, struct bu_observer *headp, char *self, bu_observer_eval_t *cmd_eval)
 {
     struct bu_observer *op;
     struct bu_vls vls = BU_VLS_INIT_ZERO;
@@ -146,17 +145,18 @@ bu_observer_notify(Tcl_Interp *interp, struct bu_observer *headp, char *self)
 	if (bu_vls_strlen(&op->cmd) > 0) {
 	    /* Execute cmd */
 	    bu_vls_strcpy(&vls, bu_vls_addr(&op->cmd));
-	    Tcl_Eval(interp, bu_vls_addr(&vls));
+	    if (cmd_eval)
+		(*cmd_eval)(context, bu_vls_addr(&vls));
 	} else {
 	    /* Assume that observer is some object that has an update method */
 	    bu_vls_trunc(&vls, 0);
 	    bu_vls_printf(&vls, "%s update %s", bu_vls_addr(&op->observer), self);
-	    Tcl_Eval(interp, bu_vls_addr(&vls));
+	    if (cmd_eval)
+		(*cmd_eval)(context, bu_vls_addr(&vls));
 	}
     }
     bu_vls_free(&vls);
 }
-
 
 void
 bu_observer_free(struct bu_observer *headp)
