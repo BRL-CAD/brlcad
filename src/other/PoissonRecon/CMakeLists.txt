@@ -36,7 +36,30 @@
 # Minimum required version of CMake
 cmake_minimum_required(VERSION 2.8.4)
 if(COMMAND CMAKE_POLICY)
+  # libraries linked via full path don't introduce linker search paths
   CMAKE_POLICY(SET CMP0003 NEW)
+
+  # list command doesn't ignore empty elements
+  CMAKE_POLICY(SET CMP0007 NEW)
+
+  # prefer files in CMAKE_MODULE_PATH over the cmake module dir
+  CMAKE_POLICY(SET CMP0017 OLD)
+
+  # allow relative paths in INCLUDE_DIRECTORIES
+  if ("${CMAKE_VERSION}" VERSION_EQUAL 2.8.12 OR "${CMAKE_VERSION}" VERSION_GREATER 2.8.12)
+    CMAKE_POLICY(SET CMP0021 OLD)
+  endif ("${CMAKE_VERSION}" VERSION_EQUAL 2.8.12 OR "${CMAKE_VERSION}" VERSION_GREATER 2.8.12)
+
+  if ("${CMAKE_VERSION}" VERSION_GREATER 2.99)
+    CMAKE_POLICY(SET CMP0026 OLD)
+    CMAKE_POLICY(SET CMP0042 OLD)
+  endif ("${CMAKE_VERSION}" VERSION_GREATER 2.99)
+
+  if ("${CMAKE_VERSION}" VERSION_GREATER 3.0.9)
+    CMAKE_POLICY(SET CMP0046 NEW)
+    CMAKE_POLICY(SET CMP0053 OLD)
+    CMAKE_POLICY(SET CMP0054 NEW)
+  endif ("${CMAKE_VERSION}" VERSION_GREATER 3.0.9)
 endif(COMMAND CMAKE_POLICY)
 
 # set CMake project name
