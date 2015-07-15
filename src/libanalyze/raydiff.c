@@ -334,25 +334,51 @@ int
 analyze_raydiff(struct analyze_raydiff_results **results, struct db_i *dbip,
        const char *left, const char *right, struct bn_tol *tol, int solidcheck)
 {
-    int ret;
+    int ret, i, j;
     int count = 0;
     struct rt_i *rtip;
     int ncpus = bu_avail_cpus();
     point_t min, mid, max;
     struct rt_pattern_data *xdata, *ydata, *zdata;
     fastf_t *rays;
-    struct raydiff_container *state;
-    /*const char *argv[2];*/
+    struct raydiff_container *state = (struct raydiff_container *)bu_calloc(ncpus+1, sizeof(struct raydiff_container), "resources");
+    struct bu_ptbl test_tbl = BU_PTBL_INIT_ZERO;
 
-    if (!dbip || !left || !right|| !tol) return 0;
+    if (!dbip || !left || !right|| !tol) {
+	ret = 0;
+	goto memfree;
+    }
 
     rtip = rt_new_rti(dbip);
-    /* TODO - figure out how to do this in parallel */
-    /*argv[0] = left;
-    argv[1] = right;
-    if (rt_gettrees(rtip, 2, argv, ncpus) < 0) return -1;*/
+
+    for (i = 0; i < ncpus+1; i++) {
+	state[i].rtip = rtip;
+	state[i].tol = 0.5;
+	state[i].ncpus = ncpus;
+	state[i].left_name = bu_strdup(left);
+	state[i].right_name = bu_strdup(right);
+	BU_GET(state[i].resp, struct resource);
+	rt_init_resource(state[i].resp, i, state->rtip);
+	BU_GET(state[i].left, struct bu_ptbl);
+	bu_ptbl_init(state[i].left, 64, "left solid hits");
+	BU_GET(state[i].both, struct bu_ptbl);
+	bu_ptbl_init(state[i].both, 64, "hits on both solids");
+	BU_GET(state[i].right, struct bu_ptbl);
+	bu_ptbl_init(state[i].right, 64, "right solid hits");
+    }
+    {
+	const char *argv[2];
+	argv[0] = left;
+	argv[1] = right;
+	if (rt_gettrees(rtip, 2, argv, ncpus) < 0) {
+	    ret = -1;
+	    goto memfree;
+	}
+    }
+    /*
     if (rt_gettree(rtip, left) < 0) return -1;
     if (rt_gettree(rtip, right) < 0) return -1;
+    */
     rt_prep_parallel(rtip, ncpus);
 
 
@@ -375,8 +401,10 @@ analyze_raydiff(struct analyze_raydiff_results **results, struct db_i *dbip,
     ret = rt_pattern(xdata, RT_PATTERN_RECT_ORTHOGRID);
     bu_free(xdata->n_vec, "x vec inputs");
     bu_free(xdata->n_p, "x p inputs");
-    if (ret < 0) return -1;
-
+    if (ret < 0) {
+	ret = -1;
+	goto memfree;
+    }
 
     BU_GET(ydata, struct rt_pattern_data);
     VSET(ydata->center_pt, mid[0], min[1] - 0.1 * fabs(min[1]), mid[2]);
@@ -392,7 +420,10 @@ analyze_raydiff(struct analyze_raydiff_results **results, struct db_i *dbip,
     ret = rt_pattern(ydata, RT_PATTERN_RECT_ORTHOGRID);
     bu_free(ydata->n_vec, "y vec inputs");
     bu_free(ydata->n_p, "y p inputs");
-    if (ret < 0) return -1;
+    if (ret < 0) {
+	ret = -1;
+	goto memfree;
+    }
 
 #if 0
     {
@@ -425,130 +456,118 @@ analyze_raydiff(struct analyze_raydiff_results **results, struct db_i *dbip,
     ret = rt_pattern(zdata, RT_PATTERN_RECT_ORTHOGRID);
     bu_free(zdata->n_vec, "x vec inputs");
     bu_free(zdata->n_p, "x p inputs");
-    if (ret < 0) return -1;
+    if (ret < 0) {
+	ret = -1;
+	goto memfree;
+    }
 
     /* Consolidate the grids into a single ray array */
     {
-	size_t i, j;
+	size_t si, sj;
 	rays = (fastf_t *)bu_calloc((xdata->ray_cnt + ydata->ray_cnt + zdata->ray_cnt + 1) * 6, sizeof(fastf_t), "rays");
 	count = 0;
-	for (i = 0; i < xdata->ray_cnt; i++) {
-	    for (j = 0; j < 6; j++) {
-		rays[6*count+j] = xdata->rays[6*i + j];
+	for (si = 0; si < xdata->ray_cnt; si++) {
+	    for (sj = 0; sj < 6; sj++) {
+		rays[6*count+sj] = xdata->rays[6*si + sj];
 	    }
 	    count++;
 	}
-	for (i = 0; i < ydata->ray_cnt; i++) {
-	    for (j = 0; j < 6; j++) {
-		rays[6*count+j] = ydata->rays[6*i + j];
+	for (si = 0; si < ydata->ray_cnt; si++) {
+	    for (sj = 0; sj < 6; sj++) {
+		rays[6*count+sj] = ydata->rays[6*si + sj];
 	    }
 	    count++;
 	}
-	for (i = 0; i < zdata->ray_cnt; i++) {
-	    for (j = 0; j < 6; j++) {
-		rays[6*count+j] = zdata->rays[6*i+j];
+	for (si = 0; si < zdata->ray_cnt; si++) {
+	    for (sj = 0; sj < 6; sj++) {
+		rays[6*count+sj] = zdata->rays[6*si+sj];
 	    }
 	    count++;
 	}
 
     }
+/*
+    bu_log("ray cnt: %d\n", count);
+*/
+    ret = 0;
+    for (i = 0; i < ncpus+1; i++) {
+	state[i].rays_cnt = count;
+	state[i].rays = rays;
+    }
+
+    bu_parallel(raydiff_gen_worker, ncpus, (void *)state);
+
+    /* If we want to do a solidity check, do it here. */
+    if (solidcheck) {
+	for (i = 0; i < ncpus+1; i++) {
+	    for (j = 0; j < (int)BU_PTBL_LEN(state[i].left); j++) {
+		bu_ptbl_ins(&test_tbl, BU_PTBL_GET(state[i].left, j));
+	    }
+	    for (j = 0; j < (int)BU_PTBL_LEN(state[i].right); j++) {
+		bu_ptbl_ins(&test_tbl, BU_PTBL_GET(state[i].right, j));
+	    }
+	}
+	for (i = 0; i < ncpus+1; i++) {
+	    state[i].test = &test_tbl;
+	}
+	bu_parallel(raycheck_gen_worker, ncpus, (void *)state);
+    } else {
+	/* Not restricting to solids, all are valid */
+	for (i = 0; i < ncpus+1; i++) {
+	    for (j = 0; j < (int)BU_PTBL_LEN(state[i].left); j++) {
+		struct diff_seg *d = (struct diff_seg *)BU_PTBL_GET(state[i].left, j);
+		d->valid = 1;
+	    }
+	    for (j = 0; j < (int)BU_PTBL_LEN(state[i].right); j++) {
+		struct diff_seg *d = (struct diff_seg *)BU_PTBL_GET(state[i].right, j);
+		d->valid = 1;
+	    }
+	}
+    }
+
+    /* Collect and print all of the results */
+    if (results) analyze_raydiff_results_init(results);
+    for (i = 0; i < ncpus+1; i++) {
+	for (j = 0; j < (int)BU_PTBL_LEN(state[i].left); j++) {
+	    struct diff_seg *d = (struct diff_seg *)BU_PTBL_GET(state[i].left, j);
+	    if (d->valid) {
+		if (results) bu_ptbl_ins((*results)->left, (long *)d);
+		ret = 1;
+	    }
+	}
+	if (results) {
+	    for (j = 0; j < (int)BU_PTBL_LEN(state[i].both); j++) {
+		bu_ptbl_ins((*results)->both, BU_PTBL_GET(state[i].both, j));
+	    }
+	}
+	for (j = 0; j < (int)BU_PTBL_LEN(state[i].right); j++) {
+	    struct diff_seg *d = (struct diff_seg *)BU_PTBL_GET(state[i].right, j);
+	    if (d->valid) {
+		if (results) bu_ptbl_ins((*results)->right, (long *)d);
+		ret = 1;
+	    }
+	}
+    }
+
+
+memfree:
+    /* Free memory not stored in tables */
     bu_free(xdata->rays, "x rays");
     bu_free(ydata->rays, "y rays");
     bu_free(zdata->rays, "z rays");
     BU_PUT(xdata, struct rt_pattern_data);
     BU_PUT(ydata, struct rt_pattern_data);
     BU_PUT(zdata, struct rt_pattern_data);
-/*
-    bu_log("ray cnt: %d\n", count);
-*/
-    {
-	int i, j;
-	struct bu_ptbl test_tbl = BU_PTBL_INIT_ZERO;
-	ret = 0;
-	/*ncpus = 2;*/
-	state = (struct raydiff_container *)bu_calloc(ncpus+1, sizeof(struct raydiff_container), "resources");
-	for (i = 0; i < ncpus+1; i++) {
-	    state[i].rtip = rtip;
-	    state[i].tol = 0.5;
-	    state[i].ncpus = ncpus;
-	    state[i].left_name = bu_strdup(left);
-	    state[i].right_name = bu_strdup(right);
-	    BU_GET(state[i].resp, struct resource);
-	    rt_init_resource(state[i].resp, i, state->rtip);
-	    BU_GET(state[i].left, struct bu_ptbl);
-	    bu_ptbl_init(state[i].left, 64, "left solid hits");
-	    BU_GET(state[i].both, struct bu_ptbl);
-	    bu_ptbl_init(state[i].both, 64, "hits on both solids");
-	    BU_GET(state[i].right, struct bu_ptbl);
-	    bu_ptbl_init(state[i].right, 64, "right solid hits");
-	    state[i].rays_cnt = count;
-	    state[i].rays = rays;
-	}
-	bu_parallel(raydiff_gen_worker, ncpus, (void *)state);
-
-	/* If we want to do a solidity check, do it here. */
-	if (solidcheck) {
-	    for (i = 0; i < ncpus+1; i++) {
-		for (j = 0; j < (int)BU_PTBL_LEN(state[i].left); j++) {
-		    bu_ptbl_ins(&test_tbl, BU_PTBL_GET(state[i].left, j));
-		}
-		for (j = 0; j < (int)BU_PTBL_LEN(state[i].right); j++) {
-		    bu_ptbl_ins(&test_tbl, BU_PTBL_GET(state[i].right, j));
-		}
-	    }
-	    for (i = 0; i < ncpus+1; i++) {
-		state[i].test = &test_tbl;
-	    }
-	    bu_parallel(raycheck_gen_worker, ncpus, (void *)state);
-	} else {
-	    /* Not restricting to solids, all are valid */
-	    for (i = 0; i < ncpus+1; i++) {
-		for (j = 0; j < (int)BU_PTBL_LEN(state[i].left); j++) {
-		    struct diff_seg *d = (struct diff_seg *)BU_PTBL_GET(state[i].left, j);
-		    d->valid = 1;
-		}
-		for (j = 0; j < (int)BU_PTBL_LEN(state[i].right); j++) {
-		    struct diff_seg *d = (struct diff_seg *)BU_PTBL_GET(state[i].right, j);
-		    d->valid = 1;
-		}
-	    }
-	}
-
-	/* Collect and print all of the results */
-	if (results) analyze_raydiff_results_init(results);
-	for (i = 0; i < ncpus+1; i++) {
-	    for (j = 0; j < (int)BU_PTBL_LEN(state[i].left); j++) {
-		struct diff_seg *d = (struct diff_seg *)BU_PTBL_GET(state[i].left, j);
-		if (d->valid) {
-		    if (results) bu_ptbl_ins((*results)->left, (long *)d);
-		    ret = 1;
-		}
-	    }
-	    if (results) {
-		for (j = 0; j < (int)BU_PTBL_LEN(state[i].both); j++) {
-		    bu_ptbl_ins((*results)->both, BU_PTBL_GET(state[i].both, j));
-		}
-	    }
-	    for (j = 0; j < (int)BU_PTBL_LEN(state[i].right); j++) {
-		struct diff_seg *d = (struct diff_seg *)BU_PTBL_GET(state[i].right, j);
-		if (d->valid) {
-		    if (results) bu_ptbl_ins((*results)->right, (long *)d);
-		    ret = 1;
-		}
-	    }
-	}
-
-	/* Free memory not stored in tables */
-	for (i = 0; i < ncpus+1; i++) {
-	    BU_PUT(state[i].left, struct bu_ptbl);
-	    BU_PUT(state[i].right, struct bu_ptbl);
-	    BU_PUT(state[i].both, struct bu_ptbl);
-	    bu_free((void *)state[i].left_name, "left name");
-	    bu_free((void *)state[i].right_name, "right name");
-	    BU_PUT(state[i].resp, struct resource);
-	}
-	bu_free(state, "free state containers");
+    for (i = 0; i < ncpus+1; i++) {
+	BU_PUT(state[i].left, struct bu_ptbl);
+	BU_PUT(state[i].right, struct bu_ptbl);
+	BU_PUT(state[i].both, struct bu_ptbl);
+	bu_free((void *)state[i].left_name, "left name");
+	bu_free((void *)state[i].right_name, "right name");
+	BU_PUT(state[i].resp, struct resource);
     }
+    bu_free(state, "free state containers");
+
     return ret;
 }
 
