@@ -1128,6 +1128,9 @@ if(BRLCAD_ENABLE_EMBREE)
   endif(NOT EMBREE_FOUND)
 endif(BRLCAD_ENABLE_EMBREE)
 
+# Enable STEP
+option(BRLCAD_ENABLE_STEP "Enable STEP" ON)
+
 #----------------------------------------------------------------------
 # The following are fine-grained options for enabling/disabling compiler
 # and source code definition settings.  Typically these are set to

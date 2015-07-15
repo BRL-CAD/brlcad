@@ -12,7 +12,9 @@ add_definitions(
 add_subdirectory(3dm)
 add_subdirectory(asc)
 add_subdirectory(gcv)
-add_subdirectory(step)
+if(BRLCAD_ENABLE_STEP)
+  add_subdirectory(step)
+endif(BRLCAD_ENABLE_STEP)
 add_subdirectory(csg)
 
 add_subdirectory(iges)

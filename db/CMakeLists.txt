@@ -73,7 +73,9 @@ else(CMAKE_CONFIGURATION_TYPES)
 endif(CMAKE_CONFIGURATION_TYPES)
 
 add_subdirectory(comgeom)
-add_subdirectory(nist)
+if(BRLCAD_ENABLE_STEP)
+  add_subdirectory(nist)
+endif(BRLCAD_ENABLE_STEP)
 add_subdirectory(faa)
 
 foreach(g_input ${G_BENCHMARK_MODELS})
