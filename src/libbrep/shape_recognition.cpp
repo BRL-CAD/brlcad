@@ -103,10 +103,12 @@ find_subbreps(struct bu_vls *msgs, const ON_Brep *brep)
 		    // handle even as a breakdown into subbreps, and if we see it we need
 		    // to bail.  Ensuring reliable inside/outside testing in that case
 		    // is extremely difficult.
+#if 0
 		    if (edge_general_surfaces > 1) {
 			if (msgs) bu_vls_printf(msgs, "%*sError - edge %d is connected to more than one general surface - aborting.\n", L1_OFFSET, " ", trim->m_ei);
 			goto bail;
 		    }
+#endif
 		}
 	    }
 	}
