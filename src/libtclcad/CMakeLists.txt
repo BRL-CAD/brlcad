@@ -19,6 +19,7 @@ if(BRLCAD_ENABLE_X11)
 endif(BRLCAD_ENABLE_X11)
 
 set(LIBTCLCAD_SRCS
+  libfuncs.c
   tclcad.c
   tclcadAutoPath.c
   tclcad_obj.c
