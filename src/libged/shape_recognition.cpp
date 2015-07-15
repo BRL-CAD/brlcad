@@ -403,7 +403,7 @@ make_shapes(struct bu_vls *msgs, struct subbrep_object_data *data, struct rt_wdb
  *  2 not a valid brep
  */
 int
-brep_to_csg(struct ged *gedp, struct directory *dp)
+brep_to_csg(struct ged *gedp, struct directory *dp, int verify)
 {
     struct rt_db_internal intern;
     struct rt_brep_internal *brep_ip = NULL;
@@ -522,11 +522,12 @@ brep_to_csg(struct ged *gedp, struct directory *dp)
 
 
     // Verify that the resulting csg tree and the original B-Rep pass a difference test.
-    {
+    if (verify) {
 	ON_BoundingBox bbox;
 	struct bn_tol tol = {BN_TOL_MAGIC, BN_TOL_DIST, BN_TOL_DIST * BN_TOL_DIST, 1.0e-6, 1.0 - 1.0e-6 };
 	brep->GetBoundingBox(bbox);
 	tol.dist = (bbox.Diagonal().Length() / 1000.0);
+	    bu_log("Analyzing %s csg conversion, tol %f...\n", dp->d_namep, tol.dist);
 	if (analyze_raydiff(NULL, gedp->ged_wdbp->dbip, dp->d_namep, bu_vls_addr(&comb_name), &tol, 1)) {
 	    /* TODO - kill tree if debugging flag isn't passed - not valid */
 	    bu_log("Warning - %s did not pass diff test at tol %f!\n", bu_vls_addr(&comb_name), tol.dist);
@@ -536,10 +537,10 @@ brep_to_csg(struct ged *gedp, struct directory *dp)
     return 0;
 }
 
-int comb_to_csg(struct ged *gedp, struct directory *dp);
+int comb_to_csg(struct ged *gedp, struct directory *dp, int verify);
 
 int
-brep_csg_conversion_tree(struct ged *gedp, const union tree *oldtree, union tree *newtree)
+brep_csg_conversion_tree(struct ged *gedp, const union tree *oldtree, union tree *newtree, int verify)
 {
     int ret = 0;
     *newtree = *oldtree;
@@ -552,7 +553,7 @@ brep_csg_conversion_tree(struct ged *gedp, const union tree *oldtree, union tree
 	    //bu_log("convert right\n");
 	    newtree->tr_b.tb_right = new tree;
 	    RT_TREE_INIT(newtree->tr_b.tb_right);
-	    ret = brep_csg_conversion_tree(gedp, oldtree->tr_b.tb_right, newtree->tr_b.tb_right);
+	    ret = brep_csg_conversion_tree(gedp, oldtree->tr_b.tb_right, newtree->tr_b.tb_right, verify);
 #if 0
 	    if (ret) {
 		delete newtree->tr_b.tb_right;
@@ -567,7 +568,7 @@ brep_csg_conversion_tree(struct ged *gedp, const union tree *oldtree, union tree
 	    //bu_log("convert left\n");
 	    BU_ALLOC(newtree->tr_b.tb_left, union tree);
 	    RT_TREE_INIT(newtree->tr_b.tb_left);
-	    ret = brep_csg_conversion_tree(gedp, oldtree->tr_b.tb_left, newtree->tr_b.tb_left);
+	    ret = brep_csg_conversion_tree(gedp, oldtree->tr_b.tb_left, newtree->tr_b.tb_left, verify);
 #if 0
 	    if (ret) {
 		delete newtree->tr_b.tb_left;
@@ -587,7 +588,7 @@ brep_csg_conversion_tree(struct ged *gedp, const union tree *oldtree, union tree
 
 		if (dir != RT_DIR_NULL) {
 		    if (dir->d_flags & RT_DIR_COMB) {
-			ret = comb_to_csg(gedp, dir);
+			ret = comb_to_csg(gedp, dir, verify);
 			if (ret) {
 			    bu_vls_free(&tmpname);
 			    break;
@@ -598,7 +599,7 @@ brep_csg_conversion_tree(struct ged *gedp, const union tree *oldtree, union tree
 		    }
 		    // It's a primitive. If it's a b-rep object, convert it. Otherwise,
 		    // just duplicate it. Might need better error codes from brep_to_csg for this...
-		    int brep_c = brep_to_csg(gedp, dir);
+		    int brep_c = brep_to_csg(gedp, dir, verify);
 		    int need_break = 0;
 		    switch (brep_c) {
 			case 0:
@@ -634,7 +635,7 @@ brep_csg_conversion_tree(struct ged *gedp, const union tree *oldtree, union tree
 }
 
 int
-comb_to_csg(struct ged *gedp, struct directory *dp)
+comb_to_csg(struct ged *gedp, struct directory *dp, int verify)
 {
     struct rt_db_internal intern;
     struct rt_comb_internal *comb_internal = NULL;
@@ -668,23 +669,23 @@ comb_to_csg(struct ged *gedp, struct directory *dp)
 
     union tree *newtree = new_internal->tree;
 
-    (void)brep_csg_conversion_tree(gedp, oldtree, newtree);
+    (void)brep_csg_conversion_tree(gedp, oldtree, newtree, verify);
     (void)wdb_export(wdbp, bu_vls_addr(&comb_name), (void *)new_internal, ID_COMBINATION, 1);
 
     return 0;
 }
 
 extern "C" int
-_ged_brep_to_csg(struct ged *gedp, const char *dp_name)
+_ged_brep_to_csg(struct ged *gedp, const char *dp_name, int verify)
 {
     struct rt_wdb *wdbp = gedp->ged_wdbp;
     struct directory *dp = db_lookup(wdbp->dbip, dp_name, LOOKUP_QUIET);
     if (dp == RT_DIR_NULL) return GED_ERROR;
 
     if (dp->d_flags & RT_DIR_COMB) {
-	return comb_to_csg(gedp, dp) ? GED_ERROR : GED_OK;
+	return comb_to_csg(gedp, dp, verify) ? GED_ERROR : GED_OK;
     } else {
-	return brep_to_csg(gedp, dp) ? GED_ERROR : GED_OK;
+	return brep_to_csg(gedp, dp, verify) ? GED_ERROR : GED_OK;
     }
 }
 
