@@ -30,6 +30,7 @@
 #include "bu/log.h"
 #include "bu/ptbl.h"
 #include "bn/mat.h"
+#include "bu/time.h"
 #include "raytrace.h"
 #include "analyze.h"
 #include "./analyze_private.h"
@@ -193,6 +194,7 @@ analyze_raydiff(struct analyze_raydiff_results **results, struct db_i *dbip,
        const char *left, const char *right, struct bn_tol *tol, int solidcheck)
 {
     int ret, i, j;
+    fastf_t oldtime, currtime;
     int ind = 0;
     int count = 0;
     struct rt_i *rtip;
@@ -207,6 +209,8 @@ analyze_raydiff(struct analyze_raydiff_results **results, struct db_i *dbip,
 	ret = 0;
 	goto memfree;
     }
+
+    oldtime = bu_gettime();
 
     rtip = rt_new_rti(dbip);
 
@@ -241,7 +245,7 @@ analyze_raydiff(struct analyze_raydiff_results **results, struct db_i *dbip,
 	const char *argv[2];
 	argv[0] = left;
 	argv[1] = right;
-	if (rt_gettrees(rtip, 2, argv, ncpus) < 0) {
+	if (rt_gettrees(rtip, 2, argv, /*ncpus*/12) < 0) {
 	    ret = -1;
 	    goto memfree;
 	}
@@ -253,6 +257,9 @@ analyze_raydiff(struct analyze_raydiff_results **results, struct db_i *dbip,
 #endif
 
     rt_prep_parallel(rtip, ncpus);
+
+    currtime = bu_gettime();
+    bu_log("prep time: %.1f\n", (currtime - oldtime)/1e6);
 
     count = analyze_get_bbox_rays(&rays, rtip->mdl_min, rtip->mdl_max, tol);
     for (i = 0; i < ncpus+1; i++) {
@@ -267,6 +274,7 @@ analyze_raydiff(struct analyze_raydiff_results **results, struct db_i *dbip,
 	state[i].rays = rays;
     }
 
+    oldtime = bu_gettime();
     bu_parallel(analyze_gen_worker, ncpus, (void *)state);
 
     /* If we want to do a solidity check, do it here. */
@@ -293,6 +301,8 @@ analyze_raydiff(struct analyze_raydiff_results **results, struct db_i *dbip,
 	    }
 	}
     }
+    currtime = bu_gettime();
+    bu_log("rt time: %.1f\n", (currtime - oldtime)/1e6);
 
     /* Collect and print all of the results */
     if (results) analyze_raydiff_results_init(results);
