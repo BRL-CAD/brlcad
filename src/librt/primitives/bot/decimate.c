@@ -480,10 +480,8 @@ rt_bot_decimate_gct(struct rt_bot_internal *bot, fastf_t feature_size)
 
     RT_BOT_CK_MAGIC(bot);
 
-    if (feature_size < 0.0 && !NEAR_ZERO(feature_size, RT_LEN_TOL))
+    if (feature_size < 0.0)
 	bu_bomb("invalid feature_size");
-    else
-	feature_size = FMAX(0.0, feature_size);
 
 #ifdef ENABLE_WHEN_PORTABLE
     mdOperationInit(&mdop);
