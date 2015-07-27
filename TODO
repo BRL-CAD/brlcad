@@ -54,6 +54,8 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
 
+* start making use of the CMakePushCheckState macros
+
 * expand libbu parallelism with thread-level control, i.e., the
   ability to start/stop/wait on individual threads in addition to the
   existing bu_parallel() call.  bu_parallel() gets updated to call the
