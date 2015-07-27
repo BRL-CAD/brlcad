@@ -417,6 +417,17 @@ find_top_level_hierarchy(struct bu_vls *msgs, struct bu_ptbl *subbreps)
 	// TODO - below test is not good - easy to construct cases where the bbox isn't enough or gives
 	// the wrong answer.  What we're going to have to do is for the cases where the bboxes do overlap,
 	// stash the items in a queue that will be evaluated higher up the chain by raytracing based testing.
+	//
+	// Some thoughts on what we'll have to implement:
+	//
+	// Shoot the csg object without the (possible) subtraction objects present.  Shoot the parent nurb
+	// with the same set of rays.  find all segments from the parent NURBS object that share a start
+	// or end point with the candidate csg object, but are not identical.  because all possible contemplated
+	// operations at this stage are subtractions, any differences (within tolerance) should be due to
+	// missing subtraction objects.  Now, shoot rays with problematic segments at the subtraction object
+	// candidates.  If things work correctly, should be able to identify which candidate shape or shapes
+	// provide segments which map to the segments that "should" be missing from the csg, per the parent nurb.
+	// On that basis, finish the tree.
 
 	// Construct bounding box for pobj
 	if (!pobj->bbox_set) subbrep_bbox(pobj);
@@ -428,6 +439,8 @@ find_top_level_hierarchy(struct bu_vls *msgs, struct bu_ptbl *subbreps)
 	    if (!sobj->bbox_set) subbrep_bbox(sobj);
 	    ON_BoundingBox isect;
 	    bool bbi = isect.Intersection(*pobj->bbox, *sobj->bbox);
+
+	    // TODO - this bit goes - if we have an intersection per above, needs more evaluation
 	    bool bbc = pobj->bbox->Includes(*sobj->bbox);
 	    bool bcb = sobj->bbox->Includes(*pobj->bbox);
 	    if (!bcb && (bbi || bbc)) {
