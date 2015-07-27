@@ -134,19 +134,6 @@ color_from_floats(const float *float_color)
 }
 
 
-HIDDEN bool
-mat_equal(const mat_t vmat_a, const mat_t vmat_b, const bn_tol &tol)
-{
-    BN_CK_TOL(&tol);
-
-    const mat_t identity = MAT_INIT_IDN;
-    const fastf_t * const mat_a = vmat_a ? vmat_a : identity;
-    const fastf_t * const mat_b = vmat_b ? vmat_b : identity;
-
-    return bn_mat_is_equal(mat_a, mat_b, &tol);
-}
-
-
 class DBInternal
 {
 public:
@@ -303,7 +290,7 @@ RecordWriter::Record::Record(RecordWriter &writer) :
     m_writer(writer)
 {
     if (m_writer.m_record_open)
-	throw std::logic_error("logic error: record open");
+	throw std::logic_error("record open");
 
     m_writer.m_record_open = true;
 }
@@ -321,7 +308,7 @@ template <typename T> RecordWriter::Record &
 RecordWriter::Record::operator<<(const T &value)
 {
     if (++m_width > RECORD_WIDTH)
-	throw std::logic_error("logic error: invalid record width");
+	throw std::logic_error("invalid record width");
 
     std::ostringstream sstream;
 
@@ -346,7 +333,7 @@ RecordWriter::Record::operator<<(fastf_t value)
 }
 
 
-// ensure that the truncated value != 0.0
+// ensure that the truncated value isn't "0.0"
 RecordWriter::Record &
 RecordWriter::Record::non_zero(fastf_t value)
 {
@@ -382,7 +369,7 @@ RecordWriter::Record::truncate_float(fastf_t value)
     const std::size_t end_point = result.find('.');
 
     // remove redundant trailing zeros
-    result.erase(std::max(end_point + 2, end_digit + 1));
+    result.erase(std::min(result.size(), std::max(end_point + 2, end_digit + 1)));
 
     if (end_point >= result.size() - 1)
 	throw std::runtime_error("value too large");
@@ -391,7 +378,7 @@ RecordWriter::Record::truncate_float(fastf_t value)
 }
 
 
-inline void
+void
 RecordWriter::write_comment(const std::string &value)
 {
     (Record(*this) << "$COMMENT").text(" ").text(value);
@@ -448,7 +435,7 @@ public:
     void write_section_color(const SectionID &section_id, const Color &color);
     SectionID write_compsplt(const SectionID &id, fastf_t z_coordinate);
 
-    enum BooleanType {HOLE, WALL};
+    enum BooleanType {BOOL_HOLE, BOOL_WALL};
     void write_boolean(BooleanType type, const SectionID &section_a,
 		       const SectionID &section_b, const SectionID *section_c = NULL,
 		       const SectionID *section_d = NULL);
@@ -552,7 +539,14 @@ FastgenWriter::write_boolean(BooleanType type, const SectionID &section_a,
 			     const SectionID *section_d)
 {
     Record record(*this);
-    record << (type == HOLE ? "HOLE" : "WALL");
+
+    if (type == BOOL_HOLE)
+	record << "HOLE";
+    else if (type == BOOL_WALL)
+	record << "WALL";
+    else
+	throw std::logic_error("unknown Boolean type");
+
     record << section_a.first << section_a.second;
     record << section_b.first << section_b.second;
 
@@ -589,7 +583,8 @@ private:
 };
 
 
-bool GridManager::PointComparator::operator()(const Point &lhs,
+bool
+GridManager::PointComparator::operator()(const Point &lhs,
 	const Point &rhs) const
 {
 #define COMPARE(a, b) \
@@ -669,14 +664,15 @@ GridManager::write(RecordWriter &writer) const
 class Section
 {
 public:
-    Section(bool volume_mode);
+    Section();
 
     bool empty() const;
+
     bool has_color() const;
     Color get_color() const;
     void set_color(const Color &value);
 
-    void write(FastgenWriter &writer, const std::string &name,
+    void write(RecordWriter &writer, const std::string &name,
 	       const FastgenWriter::SectionID &id) const;
 
     // create a comment describing an element
@@ -721,8 +717,8 @@ private:
 };
 
 
-Section::Section(bool volume_mode) :
-    m_volume_mode(volume_mode),
+Section::Section() :
+    m_volume_mode(true),
     m_material_id(1),
     m_color(false, Color()),
     m_grids(),
@@ -758,39 +754,36 @@ Section::get_color() const
 void
 Section::set_color(const Color &value)
 {
-    m_color.first = true;
-    m_color.second = value;
+    m_color = std::make_pair(true, value);
 }
 
 
 void
-Section::write(FastgenWriter &writer, const std::string &name,
+Section::write(RecordWriter &writer, const std::string &name,
 	       const FastgenWriter::SectionID &id) const
 {
-    RecordWriter &sections = writer.get_section_writer();
-
-    if (has_color())
-	writer.write_section_color(id, get_color());
+    if (empty())
+	throw std::logic_error("empty Section");
 
     {
 	std::string short_name = name;
 
 	if (short_name.size() > MAX_NAME_SIZE) {
-	    sections.write_comment(short_name);
+	    writer.write_comment(short_name);
 	    short_name = "..." + short_name.substr(short_name.size() - MAX_NAME_SIZE + 3);
 	}
 
-	RecordWriter::Record record(sections);
+	RecordWriter::Record record(writer);
 	record << "$NAME" << id.first << id.second;
 	record << "" << "" << "" << "";
 	record.text(short_name);
     }
 
-    RecordWriter::Record(sections)
+    RecordWriter::Record(writer)
 	    << "SECTION" << id.first << id.second << (m_volume_mode ? 2 : 1);
 
-    m_grids.write(sections);
-    m_elements.write(sections);
+    m_grids.write(writer);
+    m_elements.write(writer);
 }
 
 
@@ -820,8 +813,8 @@ Section::write_line(const fastf_t *point_a, const fastf_t *point_b,
     const std::vector<std::size_t> grids = m_grids.get_unique_grids(points);
 
     RecordWriter::Record record(m_elements);
-    record << "CLINE" << m_next_element_id << m_material_id << grids.at(
-	       0) << grids.at(1) << "" << "";
+    record << "CLINE" << m_next_element_id << m_material_id;
+    record << grids.at(0) << grids.at(1) << "" << "";
 
     if (m_volume_mode && NEAR_ZERO(thickness, RT_LEN_TOL))
 	record << thickness;
@@ -867,7 +860,7 @@ Section::write_thin_cone(const fastf_t *point_a, const fastf_t *point_b,
     radius2 *= INCHES_PER_MM;
     thickness *= INCHES_PER_MM;
 
-    if (false && m_volume_mode) // TODO
+    if (m_volume_mode && false) // TODO
 	throw std::logic_error("CCONE1 in volume-mode component should be a CCONE2");
 
     if (radius1 < 0.0 || radius2 < 0.0)
@@ -1043,6 +1036,7 @@ Section::write_hexahedron(const fastf_t vpoints[8][3], fastf_t thickness,
 }
 
 
+// returns: thickness, thickness_is_centered
 HIDDEN std::pair<fastf_t, bool>
 get_face_info(const rt_bot_internal &bot, std::size_t i)
 {
@@ -1079,14 +1073,14 @@ write_bot(Section &section, const rt_bot_internal &bot)
 	const fastf_t * const v2 = &bot.vertices[face[1] * 3];
 	const fastf_t * const v3 = &bot.vertices[face[2] * 3];
 
+	// quick check for CQUAD-compatible faces
 	if (i + 1 < bot.num_faces) {
-	    // quick check for CQUAD-compatible faces
 	    const int * const next_face = &bot.faces[(i + 1) * 3];
 	    const std::pair<fastf_t, bool> next_face_info = get_face_info(bot, i + 1);
 
-	    if (NEAR_EQUAL(face_info.first, next_face_info.first, RT_LEN_TOL)
-		&& face_info.second == next_face_info.second)
-		if (face[0] == next_face[0] && face[2] == next_face[1]) {
+	    if (face[0] == next_face[0] && face[2] == next_face[1])
+		if (NEAR_EQUAL(face_info.first, next_face_info.first, RT_LEN_TOL)
+		    && face_info.second == next_face_info.second) {
 		    const fastf_t * const v4 = &bot.vertices[next_face[2] * 3];
 		    section.write_quad(v1, v2, v3, v4, face_info.first, face_info.second);
 		    ++i;
@@ -1099,54 +1093,42 @@ write_bot(Section &section, const rt_bot_internal &bot)
 }
 
 
+// based on rt_sph_prep()
 HIDDEN bool
 ell_is_sphere(const rt_ell_internal &ell)
 {
     RT_ELL_CK_MAGIC(&ell);
 
-    // based on rt_sph_prep()
-
-    fastf_t mag_a, mag_b, mag_c;
-    vect_t Au, Bu, Cu; // A, B, C with unit length
-    fastf_t f;
-
-    // Validate that |A| > 0, |B| > 0, |C| > 0
-    mag_a = MAGNITUDE(ell.a);
-    mag_b = MAGNITUDE(ell.b);
-    mag_c = MAGNITUDE(ell.c);
-
-    if (NEAR_ZERO(mag_a, RT_LEN_TOL) || NEAR_ZERO(mag_b, RT_LEN_TOL)
-	|| NEAR_ZERO(mag_c, RT_LEN_TOL))
+    // validate that |A| > 0, |B| > 0, |C| > 0
+    if (NEAR_ZERO(MAGNITUDE(ell.a), RT_LEN_TOL)
+	|| NEAR_ZERO(MAGNITUDE(ell.b), RT_LEN_TOL)
+	|| NEAR_ZERO(MAGNITUDE(ell.c), RT_LEN_TOL))
 	return false;
 
-    // Validate that |A|, |B|, and |C| are nearly equal
-    if (!NEAR_EQUAL(mag_a, mag_b, RT_LEN_TOL)
-	|| !NEAR_EQUAL(mag_a, mag_c, RT_LEN_TOL))
+    // validate that |A|, |B|, and |C| are nearly equal
+    if (!NEAR_EQUAL(MAGNITUDE(ell.a), MAGNITUDE(ell.b), RT_LEN_TOL)
+	|| !NEAR_EQUAL(MAGNITUDE(ell.a), MAGNITUDE(ell.c), RT_LEN_TOL))
 	return false;
 
-    // Create unit length versions of A, B, C
-    f = 1.0 / mag_a;
-    VSCALE(Au, ell.a, f);
-    f = 1.0 / mag_b;
-    VSCALE(Bu, ell.b, f);
-    f = 1.0 / mag_c;
-    VSCALE(Cu, ell.c, f);
+    // validate that Au.Bu == 0, Bu.Cu == 0, Au.Cu == 0 (check dir only)
+    {
+	vect_t a_u, b_u, c_u; // A, B, C with unit length
+	VMOVE(a_u, ell.a);
+	VMOVE(b_u, ell.b);
+	VMOVE(c_u, ell.c);
+	VUNITIZE(a_u);
+	VUNITIZE(b_u);
+	VUNITIZE(c_u);
 
-    // Validate that A.B == 0, B.C == 0, A.C == 0 (check dir only)
-    f = VDOT(Au, Bu);
+	if (!NEAR_ZERO(VDOT(a_u, b_u), RT_DOT_TOL))
+	    return false;
 
-    if (!NEAR_ZERO(f, RT_DOT_TOL))
-	return false;
+	if (!NEAR_ZERO(VDOT(b_u, c_u), RT_DOT_TOL))
+	    return false;
 
-    f = VDOT(Bu, Cu);
-
-    if (!NEAR_ZERO(f, RT_DOT_TOL))
-	return false;
-
-    f = VDOT(Au, Cu);
-
-    if (!NEAR_ZERO(f, RT_DOT_TOL))
-	return false;
+	if (!NEAR_ZERO(VDOT(a_u, c_u), RT_DOT_TOL))
+	    return false;
+    }
 
     return true;
 }
@@ -1162,7 +1144,7 @@ mutually_orthogonal(const fastf_t *vect_a, const fastf_t *vect_b,
 }
 
 
-// Determines whether a tgc can be represented by a CCONE2 object.
+// Determines whether a tgc can be represented by a CCONE2 element.
 // Assumes that `tgc` is a valid rt_tgc_internal.
 HIDDEN bool
 tgc_is_ccone2(const rt_tgc_internal &tgc)
@@ -1204,6 +1186,19 @@ tgc_is_ccone2(const rt_tgc_internal &tgc)
     }
 
     return true;
+}
+
+
+HIDDEN bool
+mat_equal(const mat_t vmat_a, const mat_t vmat_b, const bn_tol &tol)
+{
+    BN_CK_TOL(&tol);
+
+    const mat_t identity = MAT_INIT_IDN;
+    const fastf_t * const mat_a = vmat_a ? vmat_a : identity;
+    const fastf_t * const mat_b = vmat_b ? vmat_b : identity;
+
+    return bn_mat_is_equal(mat_a, mat_b, &tol);
 }
 
 
@@ -1422,7 +1417,7 @@ get_ccone1_cutout_helper(Section &section, const directory &parent_dir,
 }
 
 
-// test for and create ccone2 elements
+// test for and create CCONE{1,2} elements
 HIDDEN bool
 find_ccone_cutout(Section &section, const db_i &db,
 		  const db_full_path &parent_path, std::set<const directory *> &completed)
@@ -1543,19 +1538,44 @@ get_chex1(Section &section, const rt_bot_internal &bot)
 {
     RT_BOT_CK_MAGIC(&bot);
 
-    fastf_t hex_thickness = 0.0;
-    bool hex_grid_centered = true;
-
     if (bot.num_vertices != 8 || bot.num_faces != 12)
 	return false;
 
     if (bot.mode != RT_BOT_SOLID && bot.mode != RT_BOT_PLATE)
 	return false;
 
+    {
+	const int hex_faces[12][3] = {
+	    {0, 1, 4},
+	    {1, 5, 4},
+	    {1, 2, 5},
+	    {2, 6, 5},
+	    {2, 3, 6},
+	    {3, 7, 6},
+	    {3, 0, 7},
+	    {0, 4, 7},
+	    {4, 6, 7},
+	    {4, 5, 6},
+	    {0, 1, 2},
+	    {0, 2, 3}
+	};
+
+	for (int i = 0; i < 12; ++i) {
+	    const int * const face = &bot.faces[i * 3];
+
+	    if (face[0] != hex_faces[i][0] || face[1] != hex_faces[i][1]
+		|| face[2] != hex_faces[i][2])
+		return false;
+	}
+    }
+
+    fastf_t hex_thickness = 0.0;
+    bool hex_grid_centered = true;
+
     if (bot.thickness) {
 	hex_thickness = bot.thickness[0];
 
-	for (std::size_t i = 1; i < bot.num_faces; ++i)
+	for (std::size_t i = 0; i < bot.num_faces; ++i)
 	    if (!NEAR_EQUAL(bot.thickness[i], hex_thickness, RT_LEN_TOL))
 		return false;
     }
@@ -1574,32 +1594,7 @@ get_chex1(Section &section, const rt_bot_internal &bot)
 	if (face_mode) {
 	    if (count != bot.num_faces)
 		return false;
-	} else {
-	    if (count)
-		return false;
-	}
-    }
-
-    const int hex_faces[12][3] = {
-	{0, 1, 4},
-	{1, 5, 4},
-	{1, 2, 5},
-	{2, 6, 5},
-	{2, 3, 6},
-	{3, 7, 6},
-	{3, 0, 7},
-	{0, 4, 7},
-	{4, 6, 7},
-	{4, 5, 6},
-	{0, 1, 2},
-	{0, 2, 3}
-    };
-
-    for (int i = 0; i < 12; ++i) {
-	const int * const face = &bot.faces[i * 3];
-
-	if (face[0] != hex_faces[i][0] || face[1] != hex_faces[i][1]
-	    || face[2] != hex_faces[i][2])
+	} else if (count)
 	    return false;
     }
 
@@ -1660,10 +1655,10 @@ get_intersected(const db_i &db, const tree *tree, LeafMap &results)
 
     switch (tree->tr_op) {
 	case OP_INTERSECT:
-	    get_unioned(db, tree->tr_b.tb_left, results);
-	    get_unioned(db, tree->tr_b.tb_right, results);
 	    get_intersected(db, tree->tr_b.tb_left, results);
 	    get_intersected(db, tree->tr_b.tb_right, results);
+	    get_unioned(db, tree->tr_b.tb_left, results);
+	    get_unioned(db, tree->tr_b.tb_right, results);
 	    break;
 
 	case OP_UNION:
@@ -1709,12 +1704,11 @@ get_subtracted(const db_i &db, const tree *tree, LeafMap &results)
 }
 
 
+enum CompspltPartitionType {COMPSPLT_PARTITION_NONE, COMPSPLT_PARTITION_INTERSECTED, COMPSPLT_PARTITION_SUBTRACTED};
 // Identifies which half of a COMPSPLT a given region represents.
-// Returns an int and a pointer to the half's matrix within the region.
-//   0 - not a COMPSPLT
-//   1 - the intersected half
-//   2 - the subtracted half
-HIDDEN std::pair<int, const fastf_t *>
+// Assumes that `half_dir` represents a COMPSPLT-compatible halfspace.
+// Returns the partition type and a pointer to the half's matrix within the region.
+HIDDEN std::pair<CompspltPartitionType, const fastf_t *>
 identify_compsplt(const db_i &db, const directory &parent_region_dir,
 		  const directory &half_dir)
 {
@@ -1733,16 +1727,16 @@ identify_compsplt(const db_i &db, const directory &parent_region_dir,
     LeafMap::const_iterator found = leaves.find(&half_dir);
 
     if (found != leaves.end())
-	return std::make_pair(1, found->second);
+	return std::make_pair(COMPSPLT_PARTITION_INTERSECTED, found->second);
 
     leaves.clear();
     get_subtracted(db, parent_region.tree, leaves);
     found = leaves.find(&half_dir);
 
     if (found != leaves.end())
-	return std::make_pair(2, found->second);
+	return std::make_pair(COMPSPLT_PARTITION_SUBTRACTED, found->second);
 
-    return std::make_pair(0, static_cast<fastf_t *>(NULL));
+    return std::make_pair(COMPSPLT_PARTITION_NONE, static_cast<fastf_t *>(NULL));
 }
 
 
@@ -1814,16 +1808,19 @@ find_walls(const db_i &db, const directory &region_dir, const bn_tol &tol)
 struct FastgenConversion {
     class RegionManager;
 
-    FastgenConversion(const std::string &path, const db_i &db, const bn_tol &tol);
+    FastgenConversion(const std::string &path, const db_i &db, const bn_tol &tol,
+		      const std::set<const directory *> &facetize_regions);
     ~FastgenConversion();
 
     RegionManager &get_region(const directory &region_dir);
+    Section &get_section(const db_full_path &path);
+
+    // NULL indicates toplevels
+    bool do_force_facetize_region(const directory *region_dir) const;
 
     const db_i &m_db;
     const bn_tol &m_tol;
-    std::set<const directory *> m_recorded_cutouts, m_failed_regions,
-	m_facetize_regions;
-    Section m_toplevels;
+    std::set<const directory *> m_recorded_cutouts, m_failed_regions;
 
 
 private:
@@ -1831,11 +1828,13 @@ private:
     FastgenConversion &operator=(const FastgenConversion &source);
 
     const std::string m_path;
+    const std::set<const directory *> m_facetize_regions;
     std::map<const directory *, RegionManager *> m_regions;
+    Section m_toplevels;
 };
 
 
-// Organize Section objects by their corresponding region, and store
+// organize Section objects by their corresponding region, and store
 // additional conversion state regarding those Sections.
 class FastgenConversion::RegionManager
 {
@@ -1867,10 +1866,10 @@ private:
     RegionManager &operator=(const RegionManager &source);
 
     const directory &m_region_dir;
-    bool m_enabled;
-    std::pair<bool, fastf_t> m_compsplt;
     const std::pair<std::set<const directory *>, std::set<const directory *> >
     m_walls;
+    bool m_enabled;
+    std::pair<bool, fastf_t> m_compsplt;
     std::map<std::string, Section *> m_sections;
 };
 
@@ -1878,9 +1877,9 @@ private:
 FastgenConversion::RegionManager::RegionManager(const db_i &db,
 	const directory &region_dir, const bn_tol &tol) :
     m_region_dir(region_dir),
+    m_walls(find_walls(db, region_dir, tol)),
     m_enabled(true),
     m_compsplt(false, 0.0),
-    m_walls(find_walls(db, region_dir, tol)),
     m_sections()
 {}
 
@@ -1912,14 +1911,15 @@ FastgenConversion::RegionManager::write(FastgenWriter &writer) const
 	    const FastgenWriter::SectionID split_id = writer.write_compsplt(id,
 		    m_compsplt.second);
 
-	    if (it->second->has_color()) {
-		Color color = it->second->get_color();
-		writer.write_section_color(split_id, color);
-	    }
+	    if (it->second->has_color())
+		writer.write_section_color(split_id, it->second->get_color());
 	}
 
-	it->second->write(writer, it->first, id);
+	it->second->write(writer.get_section_writer(), it->first, id);
 	results.push_back(id);
+
+	if (it->second->has_color())
+	    writer.write_section_color(id, it->second->get_color());
     }
 
     return results;
@@ -1941,7 +1941,7 @@ const
 		 m_walls.first.begin(); wall_dir_it != m_walls.first.end(); ++wall_dir_it)
 	    for (IDVector::const_iterator target_id_it = ids.at(*wall_dir_it).begin();
 		 target_id_it != ids.at(*wall_dir_it).end(); ++target_id_it)
-		writer.write_boolean(FastgenWriter::WALL, *this_id_it, *target_id_it);
+		writer.write_boolean(FastgenWriter::BOOL_WALL, *this_id_it, *target_id_it);
 }
 
 
@@ -1961,8 +1961,7 @@ FastgenConversion::RegionManager::set_compsplt(fastf_t z_coordinate)
     if (m_compsplt.first)
 	throw std::logic_error("already a COMPSPLT");
 
-    m_compsplt.first = true;
-    m_compsplt.second = z_coordinate;
+    m_compsplt = std::make_pair(true, z_coordinate);
 }
 
 
@@ -1991,7 +1990,7 @@ FastgenConversion::RegionManager::create_section(const db_full_path
 	m_sections.insert(std::make_pair(name, static_cast<Section *>(NULL)));
 
     if (found.second)
-	found.first->second = new Section(true);
+	found.first->second = new Section;
     else {
 	// multiple references within the same comb tree
     }
@@ -2034,10 +2033,11 @@ find_compsplt(FastgenConversion &data, const db_full_path &half_path,
 	return false;
     }
 
-    const std::pair<int, const fastf_t *> this_compsplt = identify_compsplt(
-		data.m_db, *parent_region_dir, *DB_FULL_PATH_CUR_DIR(&half_path));
+    const std::pair<CompspltPartitionType, const fastf_t *> this_compsplt =
+	identify_compsplt(data.m_db, *parent_region_dir,
+			  *DB_FULL_PATH_CUR_DIR(&half_path));
 
-    if (!this_compsplt.first)
+    if (this_compsplt.first == COMPSPLT_PARTITION_NONE)
 	return false;
 
     // find the other half
@@ -2051,10 +2051,12 @@ find_compsplt(FastgenConversion &data, const db_full_path &half_path,
 	    if (region_dirs.ptr[i] == parent_region_dir)
 		continue;
 
-	    const std::pair<int, const fastf_t *> current = identify_compsplt(data.m_db,
-		    *region_dirs.ptr[i], *DB_FULL_PATH_CUR_DIR(&half_path));
+	    const std::pair<CompspltPartitionType, const fastf_t *> current =
+		identify_compsplt(data.m_db, *region_dirs.ptr[i],
+				  *DB_FULL_PATH_CUR_DIR(&half_path));
 
-	    if (current.first && current.first != this_compsplt.first)
+	    if (current.first != COMPSPLT_PARTITION_NONE
+		&& current.first != this_compsplt.first)
 		if (mat_equal(current.second, this_compsplt.second, data.m_tol)) {
 		    other_half_dir = region_dirs.ptr[i];
 		    break;
@@ -2065,25 +2067,27 @@ find_compsplt(FastgenConversion &data, const db_full_path &half_path,
     if (!other_half_dir)
 	return false;
 
-    if (this_compsplt.first == 1)
+    if (this_compsplt.first == COMPSPLT_PARTITION_INTERSECTED)
+	data.get_region(*parent_region_dir).set_compsplt(half.eqn[3]);
+    else if (this_compsplt.first == COMPSPLT_PARTITION_SUBTRACTED)
 	data.get_region(*parent_region_dir).disable();
     else
-	data.get_region(*parent_region_dir).set_compsplt(half.eqn[3]);
+	throw std::logic_error("unknown COMPSPLT partition type");
 
     return true;
 }
 
 
 FastgenConversion::FastgenConversion(const std::string &path, const db_i &db,
-				     const bn_tol &tol) :
+				     const bn_tol &tol, const std::set<const directory *> &facetize_regions) :
     m_db(db),
     m_tol(tol),
     m_recorded_cutouts(),
     m_failed_regions(),
-    m_facetize_regions(),
-    m_toplevels(true),
     m_path(path),
-    m_regions()
+    m_facetize_regions(facetize_regions),
+    m_regions(),
+    m_toplevels()
 {
     RT_CK_DBI(&m_db);
     BN_CK_TOL(&m_tol);
@@ -2146,24 +2150,33 @@ FastgenConversion::get_region(const directory &region_dir)
 
 
 HIDDEN Section &
-get_section(FastgenConversion &data, const db_full_path &path)
+FastgenConversion::get_section(const db_full_path &path)
 {
     RT_CK_FULL_PATH(&path);
 
     const directory *region_dir;
 
     try {
-	region_dir = &get_region_dir(data.m_db, path);
+	region_dir = &get_region_dir(m_db, path);
     } catch (std::invalid_argument &) {
 	region_dir = NULL;
     }
 
     if (region_dir)
-	return data.get_region(*region_dir).get_section(get_region_path(data.m_db,
-		path));
+	return get_region(*region_dir).get_section(get_region_path(m_db, path));
     else
-	return data.m_toplevels;
+	return m_toplevels;
 
+}
+
+
+bool
+FastgenConversion::do_force_facetize_region(const directory *region_dir) const
+{
+    if (region_dir)
+	RT_CK_DIR(region_dir);
+
+    return m_facetize_regions.count(region_dir);
 }
 
 
@@ -2174,7 +2187,7 @@ convert_primitive(FastgenConversion &data, const db_full_path &path,
     RT_CK_FULL_PATH(&path);
     RT_CK_DB_INTERNAL(&internal);
 
-    Section &section = get_section(data, path);
+    Section &section = data.get_section(path);
 
     switch (internal.idb_type) {
 	case ID_CLINE: {
@@ -2275,7 +2288,7 @@ write_nmg_region(nmgregion *nmg_region, const db_full_path *path,
     RT_CK_FULL_PATH(path);
 
     FastgenConversion &data = *static_cast<FastgenConversion *>(client_data);
-    Section &section = get_section(data, *path);
+    Section &section = data.get_section(*path);
     shell *vshell;
 
     for (BU_LIST_FOR(vshell, shell, &nmg_region->s_hd)) {
@@ -2331,7 +2344,7 @@ convert_leaf(db_tree_state *tree_state, const db_full_path *path,
 	region_dir = NULL;
     }
 
-    const bool facetize = data.m_facetize_regions.count(region_dir);
+    const bool facetize = data.do_force_facetize_region(region_dir);
     bool converted;
 
     if (region_dir
@@ -2365,8 +2378,10 @@ convert_region_end(db_tree_state *tree_state, const db_full_path *path,
     RT_CK_TREE(current_tree);
 
     FastgenConversion &data = *static_cast<FastgenConversion *>(client_data);
-    Section &section = get_section(data, *path);
-    section.set_color(color_from_floats(tree_state->ts_mater.ma_color));
+    Section &section = data.get_section(*path);
+
+    if (tree_state->ts_mater.ma_color_valid)
+	section.set_color(color_from_floats(tree_state->ts_mater.ma_color));
 
     if (current_tree->tr_op != OP_NOP) {
 	gcv_region_end_data gcv_data = {write_nmg_region, &data};
@@ -2378,7 +2393,7 @@ convert_region_end(db_tree_state *tree_state, const db_full_path *path,
 
 
 HIDDEN std::set<const directory *>
-do_conversion(db_i &db, const std::string &path,
+do_conversion(const db_i &db, const std::string &path,
 	      const std::set<const directory *> &facetize_regions =
 		  std::set<const directory *>())
 {
@@ -2393,7 +2408,7 @@ do_conversion(db_i &db, const std::string &path,
     initial_tree_state.ts_ttol = &ttol;
     initial_tree_state.ts_m = &nmg_model.ptr;
 
-    db_update_nref(&db, &rt_uniresource);
+    db_update_nref(const_cast<db_i *>(&db), &rt_uniresource);
     AutoPtr<directory *> toplevel_dirs;
     const std::size_t num_objects = db_ls(&db, DB_LS_TOPS, NULL,
 					  &toplevel_dirs.ptr);
@@ -2401,9 +2416,9 @@ do_conversion(db_i &db, const std::string &path,
     toplevel_dirs.free();
 
     nmg_model.ptr = nmg_mm();
-    FastgenConversion data(path, db, tol);
-    data.m_facetize_regions = facetize_regions;
-    const int ret = db_walk_tree(&db, static_cast<int>(num_objects),
+    FastgenConversion data(path, db, tol, facetize_regions);
+    const int ret = db_walk_tree(const_cast<db_i *>(&db),
+				 static_cast<int>(num_objects),
 				 const_cast<const char **>(object_names.ptr), 1, &initial_tree_state,
 				 convert_region_start, convert_region_end, convert_leaf, &data);
 
