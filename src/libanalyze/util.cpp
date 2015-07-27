@@ -382,7 +382,6 @@ struct solids_container {
     struct minimal_partitions **results;
 };
 
-// TODO - hit
 HIDDEN int
 sp_hit(struct application *ap, struct partition *PartHeadp, struct seg *UNUSED(segs))
 {
@@ -399,28 +398,36 @@ sp_hit(struct application *ap, struct partition *PartHeadp, struct seg *UNUSED(s
 	part_len = part->pt_outhit->hit_dist - part->pt_inhit->hit_dist;
 	if (part_len > state->tol) hit_cnt++;
     }
+    if (!hit_cnt) return 0;
+    if (state->results[s->curr_ind]) {
+	bu_log("Huh??\n");
+    }
     BU_GET(state->results[s->curr_ind], struct minimal_partitions);
     p = state->results[s->curr_ind];
+    p->hit_cnt = 0;
+    p->gap_cnt = 0;
     p->hits = (fastf_t *)bu_calloc(hit_cnt * 2, sizeof(fastf_t), "overlaps");
-    p->gaps = (fastf_t *)bu_calloc((hit_cnt - 1) * 2, sizeof(fastf_t), "overlaps");
+    if (hit_cnt > 1)
+	p->gaps = (fastf_t *)bu_calloc((hit_cnt - 1) * 2, sizeof(fastf_t), "overlaps");
     for (part = PartHeadp->pt_forw; part != PartHeadp; part = part->pt_forw) {
 	part_len = part->pt_outhit->hit_dist - part->pt_inhit->hit_dist;
 	if (part_len > state->tol) {
 	    if (g1 > -DBL_MAX) g2 = part->pt_inhit->hit_dist;
-	    bu_log("hit: t = %f to t = %f, len: %f\n", part->pt_inhit->hit_dist, part->pt_outhit->hit_dist, part_len);
+	    //bu_log("hit: t = %f to t = %f, len: %f\n", part->pt_inhit->hit_dist, part->pt_outhit->hit_dist, part_len);
 	    p->hits[p->hit_cnt] = part->pt_inhit->hit_dist;
 	    p->hits[p->hit_cnt + 1] = part->pt_outhit->hit_dist;
 	    p->hit_cnt = p->hit_cnt + 2;
 	    if (g2 > -DBL_MAX) {
-		p->hits[p->hit_cnt - 1] = g1;
-		p->hits[p->hit_cnt] = g2;
-		p->hit_cnt = p->hit_cnt + 2;
+		//bu_log("gap: t = %f to t = %f, len: %f\n", g1, g2, g2 - g1);
+		p->gaps[p->gap_cnt] = g1;
+		p->gaps[p->gap_cnt + 1] = g2;
+		p->gap_cnt = p->gap_cnt + 2;
 	    }
 	    g1 = part->pt_outhit->hit_dist;
 	}
     }
     p->hit_cnt = hit_cnt;
-    p->gap_cnt = hit_cnt - 1;
+    p->gap_cnt = (int)(p->gap_cnt / 2);
     return 0;
 }
 
@@ -444,7 +451,7 @@ sp_overlap(struct application *ap,
 
 /* Will need the region flag set for this to work... */
 extern "C" int
-analyze_get_solid_partitions(struct bu_ptbl *results, const fastf_t *rays, int ray_cnt,
+analyze_get_solid_partitions(struct bu_ptbl *results, struct rt_gen_worker_vars *pstate, const fastf_t *rays, int ray_cnt,
 	struct db_i *dbip, const char *obj, struct bn_tol *tol)
 {
     int i;
@@ -460,35 +467,42 @@ analyze_get_solid_partitions(struct bu_ptbl *results, const fastf_t *rays, int r
 
     if (!results || !rays || ray_cnt == 0 || !dbip || !obj || !tol) return 0;
 
-    state = (struct rt_gen_worker_vars *)bu_calloc(ncpus+1, sizeof(struct rt_gen_worker_vars), "state");
+    if (!pstate) {
+	state = (struct rt_gen_worker_vars *)bu_calloc(ncpus+1, sizeof(struct rt_gen_worker_vars), "state");
+	resp = (struct resource *)bu_calloc(ncpus+1, sizeof(struct resource), "resources");
+    } else {
+	state = pstate;
+    }
     local_state = (struct solids_container *)bu_calloc(ncpus+1, sizeof(struct solids_container), "local state");
-    resp = (struct resource *)bu_calloc(ncpus+1, sizeof(struct resource), "resources");
     ray_results = (struct minimal_partitions **)bu_calloc(ray_cnt+1, sizeof(struct minimal_partitions *), "results");
 
     rtip = rt_new_rti(dbip);
 
+    if (!pstate) {
+	for (i = 0; i < ncpus+1; i++) {
+	    /* standard */
+	    state[i].rtip = rtip;
+	    state[i].fhit = sp_hit;
+	    state[i].fmiss = sp_miss;
+	    state[i].foverlap = sp_overlap;
+	    state[i].resp = &resp[i];
+	    state[i].ind_src = &ind;
+	    state[i].step = (int)(ray_cnt/ncpus * 0.1);
+	    rt_init_resource(state[i].resp, i, rtip);
+	}
+	if (rt_gettree(rtip, obj) < 0) {
+	    ret = -1;
+	    goto memfree;
+	}
+	rt_prep_parallel(rtip, ncpus);
+    }
+
     for (i = 0; i < ncpus+1; i++) {
-	/* standard */
-	state[i].rtip = rtip;
-	state[i].fhit = sp_hit;
-	state[i].fmiss = sp_miss;
-	state[i].foverlap = sp_overlap;
-	state[i].resp = &resp[i];
-	state[i].ind_src = &ind;
-	state[i].step = (int)(ray_cnt/ncpus * 0.1);
-	rt_init_resource(state[i].resp, i, rtip);
 	/* local */
 	local_state[i].tol = 0.5;
 	local_state[i].results = ray_results;
 	state[i].ptr = (void *)&(local_state[i]);
     }
-
-    if (rt_gettree(rtip, obj) < 0) {
-	ret = -1;
-	goto memfree;
-    }
-
-    rt_prep_parallel(rtip, ncpus);
 
     ret = 0;
     for (i = 0; i < ncpus+1; i++) {
@@ -514,9 +528,10 @@ memfree:
 
     bu_free(ray_results, "free state");
     bu_free(local_state, "free state");
-    bu_free(state, "free state");
-    bu_free(resp, "free state");
-
+    if (!pstate) {
+	bu_free(state, "free state");
+	bu_free(resp, "free state");
+    }
     return ret;
 
 }
