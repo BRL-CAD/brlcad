@@ -486,12 +486,7 @@ analyze_get_solid_partitions(struct bu_ptbl *results, struct rt_gen_worker_vars 
 	for (i = 0; i < ncpus+1; i++) {
 	    /* standard */
 	    state[i].rtip = rtip;
-	    state[i].fhit = sp_hit;
-	    state[i].fmiss = sp_miss;
-	    state[i].foverlap = sp_overlap;
 	    state[i].resp = &resp[i];
-	    state[i].ind_src = &ind;
-	    state[i].step = (int)(ray_cnt/ncpus * 0.1);
 	    rt_init_resource(state[i].resp, i, rtip);
 	}
 	if (rt_gettree(rtip, obj) < 0) {
@@ -502,6 +497,13 @@ analyze_get_solid_partitions(struct bu_ptbl *results, struct rt_gen_worker_vars 
     }
 
     for (i = 0; i < ncpus+1; i++) {
+	/* standard */
+	state[i].fhit = sp_hit;
+	state[i].fmiss = sp_miss;
+	state[i].foverlap = sp_overlap;
+	state[i].step = (int)(ray_cnt/ncpus * 0.1);
+	state[i].ind_src = &ind;
+
 	/* local */
 	local_state[i].tol = 0.5;
 	local_state[i].results = ray_results;

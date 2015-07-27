@@ -39,8 +39,11 @@ find_missing_gaps(struct bu_ptbl *UNUSED(missing), struct bu_ptbl *UNUSED(p_orig
 /* Pass in the parent brep rt prep and non-finalized comb prep to avoid doing them multiple times.
  * */
 extern "C" int
-analyze_find_subtracted(struct bu_ptbl *UNUSED(results), struct db_i *dbip, const char *pbrep, struct rt_gen_worker_vars *pbrep_rtvars, struct bu_vls *curr_comb, struct rt_gen_worker_vars *ccomb_rtvars, struct bu_ptbl *candidates, void *data)
+analyze_find_subtracted(struct bu_ptbl *UNUSED(results), struct db_i *dbip, const char *pbrep, struct rt_gen_worker_vars *pbrep_rtvars, const char *curr_comb, struct bu_ptbl *candidates, void *data)
 {
+    struct rt_gen_worker_vars *ccomb_vars;
+    struct resource *ccomb_resp;
+    struct rt_i *ccomb_rtip;
     size_t ncpus = bu_avail_cpus();
     struct subbrep_object_data *curr_union_data = (struct subbrep_object_data *)data;
     //const ON_Brep *brep = curr_union_data->brep;
@@ -49,9 +52,22 @@ analyze_find_subtracted(struct bu_ptbl *UNUSED(results), struct db_i *dbip, cons
 
     if (!curr_union_data) return 0;
 
-    // TODO parent brep prep is worth passing in, but curr_comb should probably be here, since we're iterating
-    // over all candidates.  Might be worth caching *all* preps on all objects for later diff validatiaon processing, but
-    // that needs more thought
+    // Parent brep prep is worth passing in, but curr_comb should be prepped here, since we're iterating
+    // over all candidates.  Might be worth caching *all* preps on all objects for later more efficient
+    // diff validatiaon processing, but that needs more thought
+    ccomb_vars = (struct rt_gen_worker_vars *)bu_calloc(ncpus+1, sizeof(struct rt_gen_worker_vars ), "ccomb state");
+    ccomb_resp = (struct resource *)bu_calloc(ncpus+1, sizeof(struct resource), "ccomb resources");
+    ccomb_rtip = rt_new_rti(dbip);
+    for (i = 0; i < ncpus+1; i++) {
+	ccomb_vars[i].rtip = ccomb_rtip;
+	ccomb_vars[i].resp = &ccomb_resp[i];
+	rt_init_resource(ccomb_vars[i].resp, i, ccomb_rtip);
+    }
+    if (rt_gettree(ccomb_rtip, curr_comb) < 0) {
+	// TODO - free memory
+	return 0;
+    }
+    rt_prep_parallel(ccomb_rtip, ncpus);
 
     for (i = 0; i < BU_PTBL_LEN(candidates); i++) {
 	point_t bmin, bmax;
@@ -79,17 +95,8 @@ analyze_find_subtracted(struct bu_ptbl *UNUSED(results), struct db_i *dbip, cons
 	struct bu_ptbl o_brep_results = BU_PTBL_INIT_ZERO;
 	struct bu_ptbl curr_comb_results = BU_PTBL_INIT_ZERO;
 
-	//Note - remember step has to be reset for ALL of the rt_gen_worker_vars (original brep and control, not just candiate) each time new rays are created (and any other resets...)
-	for (i = 0; i < ncpus + 1; i++) {
-	    pbrep_rtvars[i].step = (int)(ray_cnt/ncpus * 0.1);
-	}
-
-	for (i = 0; i < ncpus + 1; i++) {
-	    ccomb_rtvars[i].step = (int)(ray_cnt/ncpus * 0.1);
-	}
-
 	analyze_get_solid_partitions(&o_brep_results, pbrep_rtvars, candidate_rays, ray_cnt, dbip, pbrep, &tol);
-	analyze_get_solid_partitions(&curr_comb_results, ccomb_rtvars, candidate_rays, ray_cnt, dbip, bu_vls_addr(curr_comb), &tol);
+	analyze_get_solid_partitions(&curr_comb_results, ccomb_vars, candidate_rays, ray_cnt, dbip, curr_comb, &tol);
 	//
 	// 3. Compare the two partition/gap sets that result.
 	//

@@ -170,8 +170,7 @@ struct rt_gen_worker_vars {
 ANALYZE_EXPORT int
 analyze_find_subtracted(struct bu_ptbl *results, struct db_i *dbip,
 	const char *pbrep, struct rt_gen_worker_vars *pbrep_rtvars,
-	struct bu_vls *curr_comb, struct rt_gen_worker_vars *ccomb_rtvars,
-	struct bu_ptbl *candidates, void *curr_union_data);
+	const char *curr_comb, struct bu_ptbl *candidates, void *curr_union_data);
 
 
 __END_DECLS
