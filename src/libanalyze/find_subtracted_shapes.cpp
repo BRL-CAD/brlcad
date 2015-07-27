@@ -2,12 +2,15 @@
 
 #include <string.h> /* for memset */
 
+extern "C" {
 #include "vmath.h"
 #include "bu/log.h"
 #include "bu/ptbl.h"
 #include "bn/mat.h"
 #include "raytrace.h"
 #include "analyze.h"
+#include "./analyze_private.h"
+}
 
 /* Note that we are only looking for gaps within the solid partitions of p - curr_comb is the
  * context we are examining for subtractions, and impacts beyond it are of no concern here.*/
@@ -36,38 +39,64 @@ find_missing_gaps(struct bu_ptbl *UNUSED(missing), struct bu_ptbl *UNUSED(p_orig
 /* Pass in the parent brep rt prep and non-finalized comb prep to avoid doing them multiple times.
  * */
 extern "C" int
-analyze_find_subtracted(struct bu_ptbl *UNUSED(results), struct db_i *UNUSED(dbip), const char *UNUSED(pbrep), struct rt_gen_worker_vars *UNUSED(pbrep_rtvars), struct bu_vls *UNUSED(curr_comb), struct rt_gen_worker_vars *UNUSED(ccomb_rtvars), struct bu_ptbl *UNUSED(candidates), void *data)
+analyze_find_subtracted(struct bu_ptbl *UNUSED(results), struct db_i *UNUSED(dbip), const char *UNUSED(pbrep), struct rt_gen_worker_vars *UNUSED(pbrep_rtvars), struct bu_vls *UNUSED(curr_comb), struct rt_gen_worker_vars *UNUSED(ccomb_rtvars), struct bu_ptbl *candidates, void *data)
 {
     struct subbrep_object_data *curr_union_data = (struct subbrep_object_data *)data;
+    //const ON_Brep *brep = curr_union_data->brep;
+    size_t i = 0;
+    struct bn_tol tol = {BN_TOL_MAGIC, BN_TOL_DIST, BN_TOL_DIST * BN_TOL_DIST, 1.0e-6, 1.0 - 1.0e-6 };
 
     if (!curr_union_data) return 0;
 
 
-    // For each candidate:
-    //
-    // 1. Get a bbox from the faces.  Construct the rays to shoot from that
-    // bbox.
-    //
-    // Note - remember step has to be reset for ALL of the rt_gen_worker_vars (original brep, control as well as canddiate) each time new rays are created (and any other resets...)
-    //
-    // 2. For the original brep and curr_comb (which are already prepped) shoot
-    // the rays from the candidate.
-    // struct bu_ptbl o_brep_results = BU_PTBL_INIT_ZERO;
-    // struct bu_ptbl curr_comb_results = BU_PTBL_INIT_ZERO;
-    //
-    // analyze_get_solid_partitions(&o_brep_results, pbrep_rtvars, candidate_rays, ray_cnt, dbip, bu_vls_addr(&pbrep));
-    // analyze_get_solid_partitions(&curr_comb_results, ccomb_rtvars, candidate_rays, ray_cnt, dbip, bu_vls_addr(&pbrep));
-    //
-    // 3. Compare the two partition/gap sets that result.
-    //
-    // int missing_gaps = find_missing_gaps(o_brep_results, curr_comb_results, ray_cnt);
-    //
-    // 4.  If there are missing gaps in curr_comb, prep candidate and
-    // shoot the same rays against it.  If candidate 1) removes either all or a
-    // subset of the missing material and 2) does not remove material that is
-    // present in the results from the original brep, it is subtracted.  Add it
-    // to the results set.
-    //
+    for (i = 0; i < BU_PTBL_LEN(candidates); i++) {
+	point_t bmin, bmax;
+	int count = 0;
+	fastf_t *rays = NULL;
+	struct subbrep_object_data *candidate = (struct subbrep_object_data *)BU_PTBL_GET(candidates, i);
+
+	// 1. Get the subbrep_bbox.
+
+	if (!candidate->bbox_set) {
+	    bu_log("How did we call this a candidate without doing the bbox calculation already?\n");
+	    subbrep_bbox(candidate);
+	}
+
+	// Construct the rays to shoot from the bbox  (TODO what tol?)
+	count = analyze_get_bbox_rays(&rays, bmin, bmax, &tol);
+
+	// 2. The rays come from the dimensions of the candidate bbox, but
+	//    first check to see whether the original and the ccomb have any
+	//    disagreement about what should be there in this particular zone.  If
+	//    they don't, then we don't need to prep and shoot this candidate at
+	//    all.  If they do, we need to know what the disagreement is in order
+	//    to determine if this candidate resolves it.
+	//
+	// struct bu_ptbl o_brep_results = BU_PTBL_INIT_ZERO;
+	// struct bu_ptbl curr_comb_results = BU_PTBL_INIT_ZERO;
+	//
+	// Note - remember step has to be reset for ALL of the rt_gen_worker_vars (original brep and control, not just candiate) each time new rays are created (and any other resets...)
+	// for (i = 0; i < ncpus + 1; i++) {
+	//   pbrep_rtvars[i].step = (int)(count/ncpus * 0.1);
+	// }
+	//
+	// for (i = 0; i < ncpus + 1; i++) {
+	//   ccomb_rtvars[i].step = (int)(count/ncpus * 0.1);
+	// }
+	//
+	// analyze_get_solid_partitions(&o_brep_results, pbrep_rtvars, candidate_rays, ray_cnt, dbip, bu_vls_addr(&pbrep));
+	// analyze_get_solid_partitions(&curr_comb_results, ccomb_rtvars, candidate_rays, ray_cnt, dbip, bu_vls_addr(&pbrep));
+	//
+	// 3. Compare the two partition/gap sets that result.
+	//
+	// int missing_gaps = find_missing_gaps(o_brep_results, curr_comb_results, ray_cnt);
+	//
+	// 4.  If there are missing gaps in curr_comb, prep candidate and
+	// shoot the same rays against it.  If candidate 1) removes either all or a
+	// subset of the missing material and 2) does not remove material that is
+	// present in the results from the original brep, it is subtracted.  Add it
+	// to the results set.
+    }
     // Once all candidates are processed, return the BU_PTBL_LEN of results.
     return 0;
 }

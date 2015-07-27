@@ -1370,7 +1370,9 @@ extern BREP_EXPORT ON_Surface *
 sub_surface(const ON_Surface *in, int dir, double a, double b);
 
 /* Shape recognition functions - HIGHLY EXPERIMENTAL,
- * DO NOT RELY ON */
+ * DO NOT RELY ON - the odds are quite good that this whole
+ * setup will be moving to libanalyze and it's public API
+ * there will likely be quite different */
 
 /* Structure for holding parameters corresponding
  * to a csg primitive.  Not all parameters will be
@@ -1431,6 +1433,7 @@ struct subbrep_object_data {
     struct bu_ptbl *subtraction_candidates;
 };
 
+extern BREP_EXPORT void subbrep_bbox(struct subbrep_object_data *obj);
 extern BREP_EXPORT void subbrep_object_free(struct subbrep_object_data *obj);
 extern BREP_EXPORT struct bu_ptbl *find_subbreps(struct bu_vls *msgs, const ON_Brep *brep);
 extern BREP_EXPORT struct bu_ptbl *find_top_level_hierarchy(struct bu_vls *msgs, struct bu_ptbl *subbreps);
