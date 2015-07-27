@@ -3,6 +3,7 @@ set(ANALYZE_INCLUDE_DIRS
   ${BRLCAD_BINARY_DIR}/include
   ${BRLCAD_SOURCE_DIR}/include
   ${BU_INCLUDE_DIRS}
+  ${RT_INCLUDE_DIRS}
   ${TCL_INCLUDE_DIRS}
   )
 BRLCAD_LIB_INCLUDE_DIRS(analyze ANALYZE_INCLUDE_DIRS "")
@@ -12,7 +13,7 @@ set(LIBANALYZE_SOURCES
   inside.c
   overlaps.c
   raydiff.c
-  util.c
+  util.cpp
   voxels.c
   )
 

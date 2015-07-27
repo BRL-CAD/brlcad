@@ -22,6 +22,14 @@
  */
 #include "common.h"
 
+#include "raytrace.h"
+
+struct partitions {
+    fastf_t *t;
+    int cnt;
+};
+
+
 /* Returns count of rays in rays array */
 int analyze_get_bbox_rays(fastf_t **rays, point_t min, point_t max, struct bn_tol *tol);
 

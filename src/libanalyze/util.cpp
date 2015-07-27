@@ -24,14 +24,16 @@
 
 #include <string.h> /* for memset */
 
+extern "C" {
 #include "vmath.h"
 #include "bu/log.h"
 #include "bu/ptbl.h"
 #include "bn/mat.h"
+}
 #include "raytrace.h"
 #include "analyze.h"
 
-int
+extern "C" int
 analyze_get_bbox_rays(fastf_t **rays, point_t min, point_t max, struct bn_tol *tol)
 {
     int ret, count;
@@ -280,7 +282,7 @@ segfilter_gen_worker(int cpu, void *ptr)
  * filter all rays that are "solid"
  * filter all rays surrouned by "similar" results (grab only grazing rays)
  */
-void
+extern "C" void
 analyze_seg_filter(struct bu_ptbl *segs, struct rt_i *rtip, struct resource *resp, fastf_t tol)
 {
     int i = 0;
