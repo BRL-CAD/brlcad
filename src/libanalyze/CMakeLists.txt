@@ -12,6 +12,7 @@ set(LIBANALYZE_SOURCES
   inside.c
   overlaps.c
   raydiff.c
+  util.c
   voxels.c
   )
 
@@ -20,7 +21,7 @@ add_subdirectory(tests)
 BRLCAD_ADDLIB(libanalyze "${LIBANALYZE_SOURCES}" "${TCL_LIBRARY};libbu;librt")
 set_target_properties(libanalyze PROPERTIES VERSION 20.0.1 SOVERSION 20)
 
-#CMAKEFILES(diff.c)
+CMAKEFILES(analyze_private.h)
 
 # Local Variables:
 # tab-width: 8
