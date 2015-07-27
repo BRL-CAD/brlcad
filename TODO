@@ -59,6 +59,22 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
   expressive threading structures (e.g., a function similar to
   bu_parallel() that is non-blocking).
 
+  One consideration would be to implement something similar to Intel's
+  Cilk API:
+
+  + bu_spawn() specifies that a function call to execute
+  asynchronously, without requiring the caller to wait for it to
+  return.  This allows for parallelism but does not mandate it (so
+  code will function as expected if it does block).
+
+  + bu_sync() specifies that all spawned calls must complete before
+  execution continues.  This allows for synchronization of data at
+  different phases of a computation.
+
+  + bu_for() specifies iterations of a loop body to be executed in
+  parallel.  This would be a way to easily parallelize existing code
+  without needing to create wrapper functions for bu_parallel().
+
 * Post 7.26.0 release, need to look at migrating CMake logic off of
   the OLD behavior for policy 0026 (using LOCATION property.)  Now
   that Debian stable is using CMake >=3.0 we should be OK to require
