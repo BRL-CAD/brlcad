@@ -89,7 +89,7 @@ gcv_facetize(struct db_i *db, const struct db_full_path *path,
 {
     union tree *facetize_tree;
     struct model *nmg_model;
-    struct nmgregion *nmg_region;
+    struct nmgregion *current_region;
 
     /* static to silence warnings over longjmp  */
     static struct rt_bot_internal *result;
@@ -142,17 +142,20 @@ gcv_facetize(struct db_i *db, const struct db_full_path *path,
     NMG_CK_REGION(facetize_tree->tr_d.td_r);
     result = NULL;
 
-    for (BU_LIST_FOR(nmg_region, nmgregion, &nmg_model->r_hd)) {
+    for (BU_LIST_FOR(current_region, nmgregion, &nmg_model->r_hd)) {
 	/* static to silence warnings over longjmp */
 	static struct shell *current_shell;
 
-	current_shell = BU_LIST_FIRST(shell, &nmg_region->s_hd);
+	current_shell = BU_LIST_FIRST(shell, &current_region->s_hd);
 
-	while (BU_LIST_NOT_HEAD(&current_shell->l, &nmg_region->s_hd)) {
-	    struct shell *next_shell = BU_LIST_PNEXT(shell, &current_shell->l);
+	while (BU_LIST_NOT_HEAD(&current_shell->l, &current_region->s_hd)) {
+	    struct shell * const next_shell = BU_LIST_PNEXT(shell, &current_shell->l);
 
-	    if (nmg_kill_cracks(current_shell) && nmg_ks(current_shell))
+	    if (nmg_kill_cracks(current_shell)) {
+		nmg_ks(current_shell);
+		current_shell = next_shell;
 		continue;
+	    }
 
 	    if (nmg_kill_zero_length_edgeuses(nmg_model))
 		return _gcv_facetize_cleanup(nmg_model, facetize_tree);
@@ -177,10 +180,9 @@ gcv_facetize(struct db_i *db, const struct db_full_path *path,
 		return _gcv_facetize_cleanup(nmg_model, facetize_tree);
 	    }
 
+	    BU_UNSETJUMP;
 	    current_shell = next_shell;
 	}
-
-	BU_UNSETJUMP;
     }
 
     rt_bot_vertex_fuse(result, tol);
