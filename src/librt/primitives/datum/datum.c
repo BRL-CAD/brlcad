@@ -276,7 +276,11 @@ rt_datum_export5(struct bu_external *ep, const struct rt_db_internal *ip, double
     datum_ip = (struct rt_datum_internal *)ip->idb_ptr;
 
     BU_CK_EXTERNAL(ep);
-    ep->ext_nbytes = count * MAX_VALS * SIZEOF_NETWORK_DOUBLE;
+
+    /* we allocate potentially more than strictly necessary so we can
+     * change datums in place. avoids growing the export unnecessarily.
+     */
+    ep->ext_nbytes = SIZEOF_NETWORK_LONG /* #datums */ + (count * (MAX_VALS + 1 /* #vals */) * SIZEOF_NETWORK_DOUBLE);
     ep->ext_buf = (uint8_t *)bu_calloc(1, ep->ext_nbytes, "datum external");
     buf = (unsigned char *)ep->ext_buf;
 
