@@ -27,23 +27,22 @@
 
 #include <stdlib.h> /* for atof() */
 #include <math.h>
-#include <time.h>	/* for ctime() */
+#include <time.h> /* for ctime() */
 #include "bio.h"
-
 #include "bu/getopt.h"
 #include "bu/log.h"
 
-#define DEFAULT_SIZE 6.75		/* default output size in inches */
+#define DEFAULT_SIZE 6.75	/* default output size in inches */
 #define MAX_BYTES (64*128)	/* max bytes per image chunk */
 
 static int encapsulated = 0;	/* encapsulated postscript */
 static int center = 0;		/* center output on 8.5 x 11 page */
-static int landscape = 0;		/* landscape mode */
+static int landscape = 0;	/* landscape mode */
 
 static size_t width = 512;		/* input size in pixels */
 static size_t height = 512;
-static double outwidth;		/* output image size in inches */
-static double outheight;
+static double outwidth = DEFAULT_SIZE;		/* output image size in inches */
+static double outheight = DEFAULT_SIZE;
 static size_t xpoints;		/* output image size in points */
 static size_t ypoints;
 static size_t pagewidth = 612;	/* page size in points - 8.5 inches */
@@ -99,7 +98,7 @@ get_args(int argc, char **argv)
 		outheight = atof(bu_optarg);
 		break;
 
-	    default:		/* '?' */
+	    default:		/* 'h' '?' */
 		return 0;
 	}
     }
@@ -134,8 +133,6 @@ main(int argc, char **argv)
     size_t num = 0;
     size_t scans_per_patch, bytes_per_patch;
     size_t y;
-
-    outwidth = outheight = DEFAULT_SIZE;
 
     if (!get_args(argc, argv)) {
 	(void)fputs(usage, stderr);
