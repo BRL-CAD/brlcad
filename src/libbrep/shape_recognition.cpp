@@ -225,9 +225,8 @@ bail:
  * 7.  add the union pointer to the subbreps_tree, and then add all all topologically connected subtractions
  *     and remove them from the local set.
  * 8.  For the remaining (non-topologically linked) subtractions, get a bounding box and see if it overlaps
- *     with the bounding box of the union object in question.  If yes, add the pointer to subbreps_tree, unless
- *     the union object's bbox is fully contained by the subtraction bbox - the latter implies that the subtraction
- *     completely eliminates the union object, which is not how B-Reps work.
+ *     with the bounding box of the union object in question.  If yes, we have to stash it for later
+ *     evaluation - only solid raytracing will suffice to properly resolve complex cases.
  *     If not, no action is needed.  Once evaluated, remove the subtraction pointer from the set.
  *
  * Initially the test will be axis aligned bounding boxes, but ideally we should use oriented bounding boxes
@@ -415,9 +414,9 @@ find_top_level_hierarchy(struct bu_vls *msgs, struct bu_ptbl *subbreps)
 	// Now, whatever is left in the local subtraction queue has to be ruled out based on volumetric
 	// intersection testing.
 
-	if (BU_STR_EQUAL(bu_vls_addr(pobj->key), "18_42_46_50")) {
-	    bu_log("handle it!\n");
-	}
+	// TODO - below test is not good - easy to construct cases where the bbox isn't enough or gives
+	// the wrong answer.  What we're going to have to do is for the cases where the bboxes do overlap,
+	// stash the items in a queue that will be evaluated higher up the chain by raytracing based testing.
 
 	// Construct bounding box for pobj
 	if (!pobj->bbox_set) subbrep_bbox(pobj);
