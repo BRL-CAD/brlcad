@@ -109,11 +109,11 @@ ged_nmg_cmface(struct ged *gedp, int argc, const char *argv[])
     face_verts = (struct vertex ***) bu_calloc( num_verts,
                sizeof(struct vertex **), "face_verts");
 
-    for (idx=0; idx < num_verts * 3; idx+=3){
-        verts[idx/3].pt[0] = (fastf_t)atof(argv[idx+2]);
-        verts[idx/3].pt[1] = (fastf_t)atof(argv[idx+3]);
-        verts[idx/3].pt[2] = (fastf_t)atof(argv[idx+4]);
-        face_verts[idx/3] = &verts[idx/3].v;
+    for (idx=0; idx < num_verts; idx++){
+        verts[idx].pt[0] = (fastf_t)atof(argv[idx*3+2]);
+        verts[idx].pt[1] = (fastf_t)atof(argv[idx*3+3]);
+        verts[idx].pt[2] = (fastf_t)atof(argv[idx*3+4]);
+        face_verts[idx] = &verts[idx].v;
     }
 
     fu = nmg_cmface( s, face_verts, num_verts );
