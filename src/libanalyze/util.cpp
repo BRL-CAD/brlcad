@@ -66,6 +66,7 @@ analyze_gen_worker(int cpu, void *ptr)
     end_ind = start_ind + state->step + state_jmp - 1;
     while (start_ind < state->rays_cnt) {
 	for (i = start_ind; i <= end_ind && i < state->rays_cnt; i++) {
+	    state->curr_ind = i;
 	    VSET(ap.a_ray.r_pt, state->rays[6*i+0], state->rays[6*i+1], state->rays[6*i+2]);
 	    VSET(ap.a_ray.r_dir, state->rays[6*i+3], state->rays[6*i+4], state->rays[6*i+5]);
 	    rt_shootray(&ap);
@@ -377,22 +378,44 @@ mp_flag(void *container)
 
 struct solids_container {
     fastf_t tol;
-    struct bu_ptbl *results;
+    struct minimal_partitions **results;
 };
 
 // TODO - hit
 HIDDEN int
 sp_hit(struct application *ap, struct partition *PartHeadp, struct seg *UNUSED(segs))
 {
+    int hit_cnt = 0;
     struct partition *part;
     fastf_t part_len = 0.0;
+    struct minimal_partitions *p;
     struct rt_gen_worker_vars *s = (struct rt_gen_worker_vars *)(ap->a_uptr);
     struct solids_container *state = (struct solids_container *)(s->ptr);
 
     for (part = PartHeadp->pt_forw; part != PartHeadp; part = part->pt_forw) {
 	part_len = part->pt_outhit->hit_dist - part->pt_inhit->hit_dist;
+	if (part_len > state->tol) hit_cnt++;
+    }
+    p = state->results[s->curr_ind];
+    if (!p) {
+	BU_GET(state->results[s->curr_ind], struct minimal_partitions);
+	p = state->results[s->curr_ind];
+    }
+    if (!p->hits) {
+	p->hits = (fastf_t *)bu_calloc(6, sizeof(fastf_t), "overlaps");
+	p->hit_size = hit_cnt * 2 + 2;
+    }
+    if (p->hit_cnt + 2 > p->hit_size) {
+	p->hits = (fastf_t *)bu_realloc((void *)p->hits, sizeof(fastf_t) * 2 * p->hit_size, "list extend");
+	p->hit_size = p->hit_size * 2;
+    }
+    for (part = PartHeadp->pt_forw; part != PartHeadp; part = part->pt_forw) {
+	part_len = part->pt_outhit->hit_dist - part->pt_inhit->hit_dist;
 	if (part_len > state->tol) {
 	    bu_log("hit: t = %f to t = %f, len: %f\n", part->pt_inhit->hit_dist, part->pt_outhit->hit_dist, part_len);
+	    p->hits[p->hit_cnt] = part->pt_inhit->hit_dist;
+	    p->hits[p->hit_cnt + 1] = part->pt_outhit->hit_dist;
+	    p->hit_cnt = p->hit_cnt + 2;
 	}
     }
     return 0;
@@ -417,6 +440,25 @@ sp_overlap(struct application *ap,
     struct solids_container *state = (struct solids_container *)(s->ptr);
     fastf_t part_len = pp->pt_outhit->hit_dist - pp->pt_inhit->hit_dist;
     if (part_len > state->tol) {
+	struct minimal_partitions *p;
+	p = state->results[s->curr_ind];
+	if (!p) {
+	    BU_GET(state->results[s->curr_ind], struct minimal_partitions);
+	    p = state->results[s->curr_ind];
+	}
+	if (!p->overlaps) {
+	    p->overlaps = (fastf_t *)bu_calloc(6, sizeof(fastf_t), "overlaps");
+	    p->overlap_size = 4;
+	}
+	if (p->overlap_cnt + 2 > p->overlap_size) {
+	    p->overlaps = (fastf_t *)bu_realloc((void *)p->overlaps, sizeof(fastf_t) * 2 * p->overlap_size, "list extend");
+	    p->overlap_size = p->overlap_size * 2;
+	}
+
+	p->overlaps[p->overlap_cnt] = pp->pt_inhit->hit_dist;
+	p->overlaps[p->overlap_cnt + 1] = pp->pt_outhit->hit_dist;
+	p->overlap_cnt = p->overlap_cnt + 2;
+
 	bu_log("overlap: t = %f to t = %f, len: %f\n", pp->pt_inhit->hit_dist, pp->pt_outhit->hit_dist, part_len);
     }
     return 0;
@@ -427,7 +469,7 @@ extern "C" int
 analyze_get_solid_partitions(struct bu_ptbl *results, const fastf_t *rays, int ray_cnt,
 	struct db_i *dbip, const char *obj, struct bn_tol *tol)
 {
-    int i, j;
+    int i;
     int ind = 0;
     int ret = 0;
     int ncpus = bu_avail_cpus();
@@ -435,13 +477,15 @@ analyze_get_solid_partitions(struct bu_ptbl *results, const fastf_t *rays, int r
     struct solids_container *local_state;
     struct resource *resp;
     struct rt_i *rtip;
-    struct bu_ptbl temp_results = BU_PTBL_INIT_ZERO;
+    //struct bu_ptbl temp_results = BU_PTBL_INIT_ZERO;
+    struct minimal_partitions **ray_results;
 
     if (!results || !rays || ray_cnt == 0 || !dbip || !obj || !tol) return 0;
 
     state = (struct rt_gen_worker_vars *)bu_calloc(ncpus+1, sizeof(struct rt_gen_worker_vars), "state");
     local_state = (struct solids_container *)bu_calloc(ncpus+1, sizeof(struct solids_container), "local state");
     resp = (struct resource *)bu_calloc(ncpus+1, sizeof(struct resource), "resources");
+    ray_results = (struct minimal_partitions **)bu_calloc(ray_cnt+1, sizeof(struct minimal_partitions *), "results");
 
     rtip = rt_new_rti(dbip);
 
@@ -457,8 +501,7 @@ analyze_get_solid_partitions(struct bu_ptbl *results, const fastf_t *rays, int r
 	rt_init_resource(state[i].resp, i, rtip);
 	/* local */
 	local_state[i].tol = 0.5;
-	BU_GET(local_state[i].results, struct bu_ptbl);
-	bu_ptbl_init(local_state[i].results, 64, "hits");
+	local_state[i].results = ray_results;
 	state[i].ptr = (void *)&(local_state[i]);
     }
 
@@ -476,7 +519,7 @@ analyze_get_solid_partitions(struct bu_ptbl *results, const fastf_t *rays, int r
     }
 
     bu_parallel(analyze_gen_worker, ncpus, (void *)state);
-
+#if 0
     for (i = 0; i < ncpus+1; i++) {
 	for (j = 0; j < (int)BU_PTBL_LEN(local_state[i].results); j++) {
 	    bu_ptbl_ins(&temp_results, BU_PTBL_GET(local_state[i].results, j));
@@ -487,12 +530,10 @@ analyze_get_solid_partitions(struct bu_ptbl *results, const fastf_t *rays, int r
     // TODO - assign valid results to final results table and free invalid results
 
     ret = BU_PTBL_LEN(results);
-
+#endif
 memfree:
 
-    for (i = 0; i < ncpus+1; i++) {
-	BU_PUT(local_state[i].results, struct bu_ptbl);
-    }
+    bu_free(ray_results, "free state");
     bu_free(local_state, "free state");
     bu_free(state, "free state");
     bu_free(resp, "free state");
