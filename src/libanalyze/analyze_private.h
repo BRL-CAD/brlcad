@@ -29,8 +29,9 @@
 #define ANALYZE_PRIVATE_H
 
 struct minimal_partitions {
-    fastf_t *solids;
-    fastf_t *gaps;
+    fastf_t *hits;
+    fastf_t *overlaps;
+    fastf_t *gaps; /* not calculated until after raytrace - need both hits and overlaps for a gap/no-gap determination */
     int cnt;
     struct xray ray;
     int valid;
