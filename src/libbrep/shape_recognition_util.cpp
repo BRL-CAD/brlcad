@@ -403,6 +403,8 @@ subbrep_object_free(struct subbrep_object_data *obj)
     if (obj->local_brep) delete obj->local_brep;
     obj->local_brep = NULL;
 
+    if (obj->obj_name) bu_free((void *)obj->obj_name, "obj name");
+
     obj->parent = NULL;
 }
 
