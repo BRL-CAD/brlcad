@@ -52,6 +52,7 @@ struct rt_gen_worker_vars {
     int step;       /* number of rays to be fired by this worker before calling back */
     int *ind_src;   /* source of starting index */
     nextstart_t nstart; /* function to call to get next starting index */
+    void *ptr; /* application specific info */
 };
 
 typedef struct rt_gen_worker_vars * (*getrtgen_t)(void *ptr);

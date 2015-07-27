@@ -80,7 +80,6 @@ analyze_raydiff_results_free(struct analyze_raydiff_results *results)
 }
 
 struct raydiff_container {
-    struct rt_gen_worker_vars rtgen;
     int ncpus;
     fastf_t tol;
     int have_diffs;
@@ -124,7 +123,8 @@ raydiff_hit(struct application *ap, struct partition *PartHeadp, struct seg *UNU
     point_t in_pt, out_pt;
     struct partition *part;
     fastf_t part_len = 0.0;
-    struct raydiff_container *state = (struct raydiff_container *)(ap->a_uptr);
+    struct rt_gen_worker_vars *s = (struct rt_gen_worker_vars *)(ap->a_uptr);
+    struct raydiff_container *state = (struct raydiff_container *)(s->ptr);
     /*rt_pr_seg(segs);*/
     /*rt_pr_partitions(ap->a_rt_i, PartHeadp, "hits");*/
 
@@ -162,7 +162,8 @@ raydiff_overlap(struct application *ap,
 {
     point_t in_pt, out_pt;
     fastf_t overlap_len = 0.0;
-    struct raydiff_container *state = (struct raydiff_container *)ap->a_uptr;
+    struct rt_gen_worker_vars *s = (struct rt_gen_worker_vars *)(ap->a_uptr);
+    struct raydiff_container *state = (struct raydiff_container *)(s->ptr);
 
     VJOIN1(in_pt, ap->a_ray.r_pt, pp->pt_inhit->hit_dist, ap->a_ray.r_dir);
     VJOIN1(out_pt, ap->a_ray.r_pt, pp->pt_outhit->hit_dist, ap->a_ray.r_dir);
@@ -191,8 +192,8 @@ HIDDEN void
 raydiff_gen_worker(int cpu, void *ptr)
 {
     struct application ap;
-    struct raydiff_container *s = &(((struct raydiff_container *)ptr)[cpu]);
-    struct rt_gen_worker_vars *state = &(s->rtgen);
+    struct rt_gen_worker_vars *state = &(((struct rt_gen_worker_vars *)ptr)[cpu]);
+    struct raydiff_container *s = (struct raydiff_container *)state->ptr;
     fastf_t si, ei;
     int start_ind, end_ind, i;
     if (cpu == 0) {
@@ -213,9 +214,9 @@ raydiff_gen_worker(int cpu, void *ptr)
 
     RT_APPLICATION_INIT(&ap);
     ap.a_rt_i = state->rtip;
-    ap.a_hit = raydiff_hit;
-    ap.a_miss = raydiff_miss;
-    ap.a_overlap = raydiff_overlap;
+    ap.a_hit = state->fhit;
+    ap.a_miss = state->fmiss;
+    ap.a_overlap = state->foverlap;
     ap.a_onehit = 0;
     ap.a_logoverlap = rt_silent_logoverlap;
     ap.a_resource = state->resp;
@@ -239,7 +240,8 @@ analyze_raydiff(struct analyze_raydiff_results **results, struct db_i *dbip,
     struct rt_i *rtip;
     int ncpus = bu_avail_cpus();
     fastf_t *rays;
-    struct raydiff_container *state = (struct raydiff_container *)bu_calloc(ncpus+1, sizeof(struct raydiff_container), "state");
+    struct rt_gen_worker_vars *state = (struct rt_gen_worker_vars *)bu_calloc(ncpus+1, sizeof(struct rt_gen_worker_vars ), "state");
+    struct raydiff_container *local_state = (struct raydiff_container *)bu_calloc(ncpus+1, sizeof(struct raydiff_container), "local state");
     struct bu_ptbl test_tbl = BU_PTBL_INIT_ZERO;
     struct resource *resp = (struct resource *)bu_calloc(ncpus+1, sizeof(struct resource), "resources");
 
@@ -251,19 +253,25 @@ analyze_raydiff(struct analyze_raydiff_results **results, struct db_i *dbip,
     rtip = rt_new_rti(dbip);
 
     for (i = 0; i < ncpus+1; i++) {
-	state[i].rtgen.rtip = rtip;
-	state[i].tol = 0.5;
-	state[i].ncpus = ncpus;
-	state[i].left_name = bu_strdup(left);
-	state[i].right_name = bu_strdup(right);
-	state[i].rtgen.resp = &resp[i];
-	rt_init_resource(state[i].rtgen.resp, i, rtip);
-	BU_GET(state[i].left, struct bu_ptbl);
-	bu_ptbl_init(state[i].left, 64, "left solid hits");
-	BU_GET(state[i].both, struct bu_ptbl);
-	bu_ptbl_init(state[i].both, 64, "hits on both solids");
-	BU_GET(state[i].right, struct bu_ptbl);
-	bu_ptbl_init(state[i].right, 64, "right solid hits");
+	/* standard */
+	state[i].rtip = rtip;
+	state[i].fhit = raydiff_hit;
+	state[i].fmiss = raydiff_miss;
+	state[i].foverlap = raydiff_overlap;
+	state[i].resp = &resp[i];
+	rt_init_resource(state[i].resp, i, rtip);
+	/* local */
+	local_state[i].tol = 0.5;
+	local_state[i].ncpus = ncpus;
+	local_state[i].left_name = bu_strdup(left);
+	local_state[i].right_name = bu_strdup(right);
+	BU_GET(local_state[i].left, struct bu_ptbl);
+	bu_ptbl_init(local_state[i].left, 64, "left solid hits");
+	BU_GET(local_state[i].both, struct bu_ptbl);
+	bu_ptbl_init(local_state[i].both, 64, "hits on both solids");
+	BU_GET(local_state[i].right, struct bu_ptbl);
+	bu_ptbl_init(local_state[i].right, 64, "right solid hits");
+	state[i].ptr = (void *)&(local_state[i]);
     }
     {
 	const char *argv[2];
@@ -286,8 +294,8 @@ analyze_raydiff(struct analyze_raydiff_results **results, struct db_i *dbip,
 */
     ret = 0;
     for (i = 0; i < ncpus+1; i++) {
-	state[i].rtgen.rays_cnt = count;
-	state[i].rtgen.rays = rays;
+	state[i].rays_cnt = count;
+	state[i].rays = rays;
     }
 
     bu_parallel(raydiff_gen_worker, ncpus, (void *)state);
@@ -295,23 +303,23 @@ analyze_raydiff(struct analyze_raydiff_results **results, struct db_i *dbip,
     /* If we want to do a solidity check, do it here. */
     if (solidcheck) {
 	for (i = 0; i < ncpus+1; i++) {
-	    for (j = 0; j < (int)BU_PTBL_LEN(state[i].left); j++) {
-		bu_ptbl_ins(&test_tbl, BU_PTBL_GET(state[i].left, j));
+	    for (j = 0; j < (int)BU_PTBL_LEN(local_state[i].left); j++) {
+		bu_ptbl_ins(&test_tbl, BU_PTBL_GET(local_state[i].left, j));
 	    }
-	    for (j = 0; j < (int)BU_PTBL_LEN(state[i].right); j++) {
-		bu_ptbl_ins(&test_tbl, BU_PTBL_GET(state[i].right, j));
+	    for (j = 0; j < (int)BU_PTBL_LEN(local_state[i].right); j++) {
+		bu_ptbl_ins(&test_tbl, BU_PTBL_GET(local_state[i].right, j));
 	    }
 	}
 	analyze_seg_filter(&test_tbl, &diff_ray, &diff_flag, rtip, resp, 0.5);
     } else {
 	/* Not restricting to solids, all are valid */
 	for (i = 0; i < ncpus+1; i++) {
-	    for (j = 0; j < (int)BU_PTBL_LEN(state[i].left); j++) {
-		struct diff_seg *d = (struct diff_seg *)BU_PTBL_GET(state[i].left, j);
+	    for (j = 0; j < (int)BU_PTBL_LEN(local_state[i].left); j++) {
+		struct diff_seg *d = (struct diff_seg *)BU_PTBL_GET(local_state[i].left, j);
 		d->valid = 1;
 	    }
-	    for (j = 0; j < (int)BU_PTBL_LEN(state[i].right); j++) {
-		struct diff_seg *d = (struct diff_seg *)BU_PTBL_GET(state[i].right, j);
+	    for (j = 0; j < (int)BU_PTBL_LEN(local_state[i].right); j++) {
+		struct diff_seg *d = (struct diff_seg *)BU_PTBL_GET(local_state[i].right, j);
 		d->valid = 1;
 	    }
 	}
@@ -320,20 +328,20 @@ analyze_raydiff(struct analyze_raydiff_results **results, struct db_i *dbip,
     /* Collect and print all of the results */
     if (results) analyze_raydiff_results_init(results);
     for (i = 0; i < ncpus+1; i++) {
-	for (j = 0; j < (int)BU_PTBL_LEN(state[i].left); j++) {
-	    struct diff_seg *d = (struct diff_seg *)BU_PTBL_GET(state[i].left, j);
+	for (j = 0; j < (int)BU_PTBL_LEN(local_state[i].left); j++) {
+	    struct diff_seg *d = (struct diff_seg *)BU_PTBL_GET(local_state[i].left, j);
 	    if (d->valid) {
 		if (results) bu_ptbl_ins((*results)->left, (long *)d);
 		ret = 1;
 	    }
 	}
 	if (results) {
-	    for (j = 0; j < (int)BU_PTBL_LEN(state[i].both); j++) {
-		bu_ptbl_ins((*results)->both, BU_PTBL_GET(state[i].both, j));
+	    for (j = 0; j < (int)BU_PTBL_LEN(local_state[i].both); j++) {
+		bu_ptbl_ins((*results)->both, BU_PTBL_GET(local_state[i].both, j));
 	    }
 	}
-	for (j = 0; j < (int)BU_PTBL_LEN(state[i].right); j++) {
-	    struct diff_seg *d = (struct diff_seg *)BU_PTBL_GET(state[i].right, j);
+	for (j = 0; j < (int)BU_PTBL_LEN(local_state[i].right); j++) {
+	    struct diff_seg *d = (struct diff_seg *)BU_PTBL_GET(local_state[i].right, j);
 	    if (d->valid) {
 		if (results) bu_ptbl_ins((*results)->right, (long *)d);
 		ret = 1;
@@ -345,14 +353,15 @@ analyze_raydiff(struct analyze_raydiff_results **results, struct db_i *dbip,
 memfree:
     /* Free memory not stored in tables */
     for (i = 0; i < ncpus+1; i++) {
-	BU_PUT(state[i].left, struct bu_ptbl);
-	BU_PUT(state[i].right, struct bu_ptbl);
-	BU_PUT(state[i].both, struct bu_ptbl);
-	if (state[i].left_name)  bu_free((void *)state[i].left_name, "left name");
-	if (state[i].right_name) bu_free((void *)state[i].right_name, "right name");
+	BU_PUT(local_state[i].left, struct bu_ptbl);
+	BU_PUT(local_state[i].right, struct bu_ptbl);
+	BU_PUT(local_state[i].both, struct bu_ptbl);
+	if (local_state[i].left_name)  bu_free((void *)local_state[i].left_name, "left name");
+	if (local_state[i].right_name) bu_free((void *)local_state[i].right_name, "right name");
 	/*BU_PUT(state[i].resp, struct resource);*/
     }
     bu_free(state, "free state containers");
+    bu_free(local_state, "free state containers");
     bu_free(resp, "free resources");
 
     return ret;
