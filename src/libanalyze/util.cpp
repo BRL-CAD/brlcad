@@ -356,32 +356,14 @@ analyze_seg_filter(struct bu_ptbl *segs, getray_t gray, getflag_t gflag, struct 
     return;
 }
 
-struct raydiff_container {
-    struct rt_i *rtip;
-    struct resource *resp;
-    int ray_dir;
-    int ncpus;
-    fastf_t tol;
-    int have_diffs;
-    const char *left_name;
-    const char *right_name;
-    struct bu_ptbl *left;
-    struct bu_ptbl *both;
-    struct bu_ptbl *right;
-    const fastf_t *rays;
-    int rays_cnt;
-    int cnt;
-    struct bu_ptbl *test;
-};
-
-struct xray *
+HIDDEN struct xray *
 mp_ray(void *container)
 {
     struct minimal_partitions *d = (struct minimal_partitions *)container;
     return &(d->ray);
 }
 
-int *
+HIDDEN int *
 mp_flag(void *container)
 {
     struct minimal_partitions *d = (struct minimal_partitions *)container;
@@ -391,17 +373,45 @@ mp_flag(void *container)
 struct solids_container {
     fastf_t tol;
     struct bu_ptbl *results;
-}
+};
 
 // TODO - hit
+HIDDEN int
+sp_hit(struct application *ap, struct partition *UNUSED(PartHeadp), struct seg *UNUSED(segs))
+{
+    RT_CK_APPLICATION(ap);
+    bu_log("hit");
+    return 0;
+}
+
 // TODO - miss
+HIDDEN int
+sp_miss(struct application *ap)
+{
+    RT_CK_APPLICATION(ap);
+    return 0;
+}
+
 // TODO - overlap
+HIDDEN int
+sp_overlap(struct application *ap,
+	struct partition *UNUSED(pp),
+	struct region *UNUSED(reg1),
+	struct region *UNUSED(reg2),
+	struct partition *UNUSED(hp))
+{
+    RT_CK_APPLICATION(ap);
+    bu_log("overlap");
+    return 0;
+}
+
 
 int
 analyze_get_solid_partitions(struct bu_ptbl *results, const fastf_t *rays, int ray_cnt,
 	struct db_i *dbip, const char *obj, struct bn_tol *tol)
 {
     int i, j;
+    int ind = 0;
     int ret = 0;
     int ncpus = bu_avail_cpus();
     struct rt_gen_worker_vars *state;
@@ -414,22 +424,23 @@ analyze_get_solid_partitions(struct bu_ptbl *results, const fastf_t *rays, int r
 
     state = (struct rt_gen_worker_vars *)bu_calloc(ncpus+1, sizeof(struct rt_gen_worker_vars), "state");
     local_state = (struct solids_container *)bu_calloc(ncpus+1, sizeof(struct solids_container), "local state");
+    resp = (struct resource *)bu_calloc(ncpus+1, sizeof(struct resource), "resources");
 
     rtip = rt_new_rti(dbip);
 
     for (i = 0; i < ncpus+1; i++) {
 	/* standard */
 	state[i].rtip = rtip;
-	state[i].fhit = raydiff_hit;
-	state[i].fmiss = raydiff_miss;
-	state[i].foverlap = raydiff_overlap;
+	state[i].fhit = sp_hit;
+	state[i].fmiss = sp_miss;
+	state[i].foverlap = sp_overlap;
 	state[i].resp = &resp[i];
 	state[i].ind_src = &ind;
 	rt_init_resource(state[i].resp, i, rtip);
 	/* local */
 	local_state[i].tol = 0.5;
 	BU_GET(local_state[i].results, struct bu_ptbl);
-	bu_ptbl_init(local_state[i].results, 64, "hits on both solids");
+	bu_ptbl_init(local_state[i].results, 64, "hits");
 	state[i].ptr = (void *)&(local_state[i]);
     }
 
@@ -449,8 +460,8 @@ analyze_get_solid_partitions(struct bu_ptbl *results, const fastf_t *rays, int r
     bu_parallel(analyze_gen_worker, ncpus, (void *)state);
 
     for (i = 0; i < ncpus+1; i++) {
-	for (j = 0; j < (int)BU_PTBL_LEN(state[i].both); j++) {
-	    bu_ptbl_ins(&temp_results, BU_PTBL_GET(state[i].both, j));
+	for (j = 0; j < (int)BU_PTBL_LEN(local_state[i].results); j++) {
+	    bu_ptbl_ins(&temp_results, BU_PTBL_GET(local_state[i].results, j));
 	}
     }
     analyze_seg_filter(&temp_results, &mp_ray, &mp_flag, rtip, resp, 0.5);
@@ -462,8 +473,9 @@ analyze_get_solid_partitions(struct bu_ptbl *results, const fastf_t *rays, int r
 memfree:
 
     for (i = 0; i < ncpus+1; i++) {
-	BU_PUT(state[i].both, struct bu_ptbl);
+	BU_PUT(local_state[i].results, struct bu_ptbl);
     }
+    bu_free(local_state, "free state");
     bu_free(state, "free state");
     bu_free(resp, "free state");
 
