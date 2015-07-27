@@ -35,7 +35,7 @@ find_missing_gaps(struct bu_ptbl *missing, struct bu_ptbl *p_orig, struct bu_ptb
 /* Pass in the parent brep rt prep and non-finalized comb prep to avoid doing them multiple times.
  * */
 int
-analyze_find_subtracted(struct bu_ptbl *results, struct db_i *dbip, struct bu_vls *pbrep, struct rt_gen_worker_vars *pbrep_rtvars, struct bu_vls *curr_comb, struct rt_gen_worker_vars *ccomb_rtvars, struct bu_ptbl *candidates, struct subbrep_object_data *curr_union_data)
+analyze_find_subtracted(struct bu_ptbl *results, struct db_i *dbip, const char *pbrep, struct rt_gen_worker_vars *pbrep_rtvars, struct bu_vls *curr_comb, struct rt_gen_worker_vars *ccomb_rtvars, struct bu_ptbl *candidates, struct subbrep_object_data *curr_union_data)
 {
     // For each candidate:
     //
