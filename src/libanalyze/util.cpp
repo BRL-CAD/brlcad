@@ -42,6 +42,7 @@ analyze_gen_worker(int cpu, void *ptr)
     struct application ap;
     struct rt_gen_worker_vars *state = &(((struct rt_gen_worker_vars *)ptr)[cpu]);
     int start_ind, end_ind, i;
+    int state_jmp = 0;
 
     RT_APPLICATION_INIT(&ap);
     ap.a_rt_i = state->rtip;
@@ -53,12 +54,16 @@ analyze_gen_worker(int cpu, void *ptr)
     ap.a_resource = state->resp;
     ap.a_uptr = (void *)state;
 
+    /* Because a zero step means an infinite loop, ensure we are moving ahead
+     * at least 1 ray each step */
+    if (!state->step) state_jmp = 1;
+
     bu_semaphore_acquire(RT_SEM_WORKER);
     start_ind = (*state->ind_src);
-    (*state->ind_src) = start_ind + state->step;
+    (*state->ind_src) = start_ind + state->step + state_jmp;
     //bu_log("increment(%d): %d\n", cpu, start_ind);
     bu_semaphore_release(RT_SEM_WORKER);
-    end_ind = start_ind + state->step - 1;
+    end_ind = start_ind + state->step + state_jmp - 1;
     while (start_ind < state->rays_cnt) {
 	for (i = start_ind; i <= end_ind && i < state->rays_cnt; i++) {
 	    VSET(ap.a_ray.r_pt, state->rays[6*i+0], state->rays[6*i+1], state->rays[6*i+2]);
@@ -67,10 +72,10 @@ analyze_gen_worker(int cpu, void *ptr)
 	}
 	bu_semaphore_acquire(RT_SEM_WORKER);
 	start_ind = (*state->ind_src);
-	(*state->ind_src) = start_ind + state->step;
+	(*state->ind_src) = start_ind + state->step + state_jmp;
 	//bu_log("increment(%d): %d\n", cpu, start_ind);
 	bu_semaphore_release(RT_SEM_WORKER);
-	end_ind = start_ind + state->step - 1;
+	end_ind = start_ind + state->step + state_jmp - 1;
     }
 }
 
