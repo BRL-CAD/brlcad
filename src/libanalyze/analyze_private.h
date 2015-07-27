@@ -40,7 +40,6 @@ struct minimal_partitions {
 typedef int (*hitfunc_t)(struct application *, struct partition *, struct seg *);
 typedef int (*missfunc_t)(struct application *);
 typedef int (*overlapfunc_t)(struct application *, struct partition *, struct region *, struct region *, struct partition *);
-typedef int (*nextstart_t)(int *);
 
 struct rt_gen_worker_vars {
     struct rt_i *rtip;
@@ -52,7 +51,6 @@ struct rt_gen_worker_vars {
     overlapfunc_t foverlap;
     int step;       /* number of rays to be fired by this worker before calling back */
     int *ind_src;   /* source of starting index */
-    nextstart_t nstart; /* function to call to get next starting index */
     void *ptr; /* application specific info */
 };
 
@@ -61,6 +59,9 @@ void analyze_gen_worker(int cpu, void *ptr);
 /* Returns count of rays in rays array */
 int analyze_get_bbox_rays(fastf_t **rays, point_t min, point_t max, struct bn_tol *tol);
 
+int
+analyze_get_solid_partitions(struct bu_ptbl *results, const fastf_t *rays, int ray_cnt,
+	        struct db_i *dbip, const char *obj, struct bn_tol *tol);
 
 
 typedef struct xray * (*getray_t)(void *ptr);

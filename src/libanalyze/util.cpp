@@ -377,14 +377,22 @@ struct solids_container {
 
 // TODO - hit
 HIDDEN int
-sp_hit(struct application *ap, struct partition *UNUSED(PartHeadp), struct seg *UNUSED(segs))
+sp_hit(struct application *ap, struct partition *PartHeadp, struct seg *UNUSED(segs))
 {
-    RT_CK_APPLICATION(ap);
-    bu_log("hit");
+    struct partition *part;
+    fastf_t part_len = 0.0;
+    struct rt_gen_worker_vars *s = (struct rt_gen_worker_vars *)(ap->a_uptr);
+    struct solids_container *state = (struct solids_container *)(s->ptr);
+
+    for (part = PartHeadp->pt_forw; part != PartHeadp; part = part->pt_forw) {
+	part_len = part->pt_outhit->hit_dist - part->pt_inhit->hit_dist;
+	if (part_len > state->tol) {
+	    bu_log("hit: t = %f to t = %f, len: %f\n", part->pt_inhit->hit_dist, part->pt_outhit->hit_dist, part_len);
+	}
+    }
     return 0;
 }
 
-// TODO - miss
 HIDDEN int
 sp_miss(struct application *ap)
 {
@@ -395,18 +403,22 @@ sp_miss(struct application *ap)
 // TODO - overlap
 HIDDEN int
 sp_overlap(struct application *ap,
-	struct partition *UNUSED(pp),
+	struct partition *pp,
 	struct region *UNUSED(reg1),
 	struct region *UNUSED(reg2),
 	struct partition *UNUSED(hp))
 {
-    RT_CK_APPLICATION(ap);
-    bu_log("overlap");
+    struct rt_gen_worker_vars *s = (struct rt_gen_worker_vars *)(ap->a_uptr);
+    struct solids_container *state = (struct solids_container *)(s->ptr);
+    fastf_t part_len = pp->pt_outhit->hit_dist - pp->pt_inhit->hit_dist;
+    if (part_len > state->tol) {
+	bu_log("overlap: t = %f to t = %f, len: %f\n", pp->pt_inhit->hit_dist, pp->pt_outhit->hit_dist, part_len);
+    }
     return 0;
 }
 
 
-int
+extern "C" int
 analyze_get_solid_partitions(struct bu_ptbl *results, const fastf_t *rays, int ray_cnt,
 	struct db_i *dbip, const char *obj, struct bn_tol *tol)
 {
@@ -436,6 +448,7 @@ analyze_get_solid_partitions(struct bu_ptbl *results, const fastf_t *rays, int r
 	state[i].foverlap = sp_overlap;
 	state[i].resp = &resp[i];
 	state[i].ind_src = &ind;
+	state[i].step = (int)(ray_cnt/ncpus * 0.1);
 	rt_init_resource(state[i].resp, i, rtip);
 	/* local */
 	local_state[i].tol = 0.5;
