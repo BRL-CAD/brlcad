@@ -11,8 +11,8 @@
 
 /* Note that we are only looking for gaps within the solid partitions of p - curr_comb is the
  * context we are examining for subtractions, and impacts beyond it are of no concern here.*/
-int
-find_missing_gaps(struct bu_ptbl *missing, struct bu_ptbl *p_orig, struct bu_ptbl *p, int max_cnt)
+HIDDEN int
+find_missing_gaps(struct bu_ptbl *UNUSED(missing), struct bu_ptbl *UNUSED(p_orig), struct bu_ptbl *UNUSED(p), int UNUSED(max_cnt))
 {
 //1. Set up pointer arrays for both partition lists
 //
@@ -30,17 +30,25 @@ find_missing_gaps(struct bu_ptbl *missing, struct bu_ptbl *p_orig, struct bu_ptb
 //   process is repeated for all rays.
 //
 //4. return the length of the missing bu_ptbl.
+    return 0;
 }
 
 /* Pass in the parent brep rt prep and non-finalized comb prep to avoid doing them multiple times.
  * */
-int
-analyze_find_subtracted(struct bu_ptbl *results, struct db_i *dbip, const char *pbrep, struct rt_gen_worker_vars *pbrep_rtvars, struct bu_vls *curr_comb, struct rt_gen_worker_vars *ccomb_rtvars, struct bu_ptbl *candidates, struct subbrep_object_data *curr_union_data)
+extern "C" int
+analyze_find_subtracted(struct bu_ptbl *UNUSED(results), struct db_i *UNUSED(dbip), const char *UNUSED(pbrep), struct rt_gen_worker_vars *UNUSED(pbrep_rtvars), struct bu_vls *UNUSED(curr_comb), struct rt_gen_worker_vars *UNUSED(ccomb_rtvars), struct bu_ptbl *UNUSED(candidates), void *data)
 {
+    struct subbrep_object_data *curr_union_data = (struct subbrep_object_data *)data;
+
+    if (!curr_union_data) return 0;
+
+
     // For each candidate:
     //
     // 1. Get a bbox from the faces.  Construct the rays to shoot from that
     // bbox.
+    //
+    // Note - remember step has to be reset for ALL of the rt_gen_worker_vars (original brep, control as well as canddiate) each time new rays are created (and any other resets...)
     //
     // 2. For the original brep and curr_comb (which are already prepped) shoot
     // the rays from the candidate.
@@ -61,6 +69,7 @@ analyze_find_subtracted(struct bu_ptbl *results, struct db_i *dbip, const char *
     // to the results set.
     //
     // Once all candidates are processed, return the BU_PTBL_LEN of results.
+    return 0;
 }
 
 /*

@@ -399,6 +399,9 @@ make_shapes(struct bu_vls *msgs, struct subbrep_object_data *data, struct rt_wdb
 void
 finalize_comb(struct rt_wdb *wdbp, struct directory *brep_dp, struct rt_gen_worker_vars *pbrep_vars, struct bu_vls *comb_name, struct wmember *ccomb, struct subbrep_object_data *curr_union)
 {
+    int i = 0;
+    int ind;
+    int ncpus = bu_avail_cpus();
     struct bu_ptbl *sc = curr_union->subtraction_candidates;
     // We've collected all the subtractions we know about - make a temp comb for raytracing.
     // mk_lcomb(wdbp, bu_vls_addr(comb_name), ccomb, 1, NULL, NULL, NULL, 0);
@@ -408,6 +411,9 @@ finalize_comb(struct rt_wdb *wdbp, struct directory *brep_dp, struct rt_gen_work
     if (sc && BU_PTBL_LEN(sc) > 0) {
 	struct bu_ptbl cc = BU_PTBL_INIT_ZERO;
 	struct bu_ptbl results = BU_PTBL_INIT_ZERO;
+	struct rt_gen_worker_vars *ccomb_vars;
+	struct resource *ccomb_resp;
+	struct rt_i *ccomb_rtip;
 	for (unsigned int j = 0; j < BU_PTBL_LEN(sc); j++) {
 	    struct subbrep_object_data *sobj = (struct subbrep_object_data *)BU_PTBL_GET(sc, j);
 	    bu_log("Need to test %s against %s\n", bu_vls_addr(sobj->name_root), bu_vls_addr(curr_union->name_root));
@@ -419,9 +425,19 @@ finalize_comb(struct rt_wdb *wdbp, struct directory *brep_dp, struct rt_gen_work
 	}
 
 	// TODO - prep comb_name
-	analyze_find_subtracted(&results, wdbp->dbip, brep_dp->d_namep, pbrep_vars, comb_name, ccomb_vars, cc, curr_union);
-	for (unsigned int j = 0; j < BU_PTBL_LEN(results); j++) {
-	    struct subbrep_object_data *sobj = (struct subbrep_object_data *)BU_PTBL_GET(results, j);
+	ccomb_vars = (struct rt_gen_worker_vars *)bu_calloc(ncpus+1, sizeof(struct rt_gen_worker_vars ), "ccomb state");
+	ccomb_resp = (struct resource *)bu_calloc(ncpus+1, sizeof(struct resource), "ccomb resources");
+	ccomb_rtip = rt_new_rti(wdbp->dbip);
+	for (i = 0; i < ncpus+1; i++) {
+	    ccomb_vars[i].rtip = ccomb_rtip;
+	    ccomb_vars[i].resp = &ccomb_resp[i];
+	    ccomb_vars[i].ind_src = &ind;
+	    rt_init_resource(ccomb_vars[i].resp, i, ccomb_rtip);
+	}
+
+	analyze_find_subtracted(&results, wdbp->dbip, brep_dp->d_namep, pbrep_vars, comb_name, ccomb_vars, &cc, (void *)curr_union);
+	for (unsigned int j = 0; j < BU_PTBL_LEN(&results); j++) {
+	    struct subbrep_object_data *sobj = (struct subbrep_object_data *)BU_PTBL_GET(&results, j);
 	    bu_log("Subtract %s from %s\n", bu_vls_addr(sobj->name_root), bu_vls_addr(curr_union->name_root));
 	}
     }
@@ -497,7 +513,7 @@ brep_to_csg(struct ged *gedp, struct directory *dp, int verify)
 		//print_subbrep_object(obj, "");
 		if (ccomb) {
 		    // May need to stash for later processing rahter than finalizing now...
-		    finalize_comb(wdbp, &obj_comb_name, ccomb, curr_union);
+		    finalize_comb(wdbp, dp, NULL, &obj_comb_name, ccomb, curr_union);
 		    BU_PUT(ccomb, struct wmember);
 		    if (scomb) {
 			mk_lcomb(wdbp, bu_vls_addr(&sub_comb_name), scomb, 0, NULL, NULL, NULL, 0);
@@ -530,7 +546,7 @@ brep_to_csg(struct ged *gedp, struct directory *dp, int verify)
 
 	/* Make the last comb - TODO - should we also finalize all the other combs that need it now? */
 	if (ccomb) {
-	    finalize_comb(wdbp, &obj_comb_name, ccomb, curr_union);
+	    finalize_comb(wdbp, dp, NULL, &obj_comb_name, ccomb, curr_union);
 	    BU_PUT(ccomb, struct wmember);
 	    if (scomb) {
 		mk_lcomb(wdbp, bu_vls_addr(&sub_comb_name), scomb, 0, NULL, NULL, NULL, 0);

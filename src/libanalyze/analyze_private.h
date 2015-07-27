@@ -24,6 +24,7 @@
 #include "bu/ptbl.h"
 
 #include "raytrace.h"
+#include "analyze.h"
 
 #ifndef ANALYZE_PRIVATE_H
 #define ANALYZE_PRIVATE_H
@@ -38,24 +39,6 @@ struct minimal_partitions {
     int valid;
 };
 
-
-typedef int (*hitfunc_t)(struct application *, struct partition *, struct seg *);
-typedef int (*missfunc_t)(struct application *);
-typedef int (*overlapfunc_t)(struct application *, struct partition *, struct region *, struct region *, struct partition *);
-
-struct rt_gen_worker_vars {
-    struct rt_i *rtip;
-    struct resource *resp;
-    int rays_cnt;
-    const fastf_t *rays;
-    hitfunc_t fhit;
-    missfunc_t fmiss;
-    overlapfunc_t foverlap;
-    int step;       /* number of rays to be fired by this worker before calling back */
-    int *ind_src;   /* source of starting index */
-    int curr_ind;   /* current ray index */
-    void *ptr; /* application specific info */
-};
 
 void analyze_gen_worker(int cpu, void *ptr);
 

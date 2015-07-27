@@ -13,6 +13,7 @@ set(LIBANALYZE_SOURCES
   inside.c
   overlaps.c
   raydiff.c
+  find_subtracted_shapes.cpp
   util.cpp
   voxels.c
   )
