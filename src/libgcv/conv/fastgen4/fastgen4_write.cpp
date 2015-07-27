@@ -448,7 +448,7 @@ public:
     void write_section_color(const SectionID &section_id, const Color &color);
     SectionID write_compsplt(const SectionID &id, fastf_t z_coordinate);
 
-    enum BooleanType { HOLE, WALL };
+    enum BooleanType {HOLE, WALL};
     void write_boolean(BooleanType type, const SectionID &section_a,
 		       const SectionID &section_b, const SectionID *section_c = NULL,
 		       const SectionID *section_d = NULL);
@@ -1424,20 +1424,16 @@ get_ccone1_cutout_helper(Section &section, const directory &parent_dir,
 
 // test for and create ccone2 elements
 HIDDEN bool
-find_ccone2_cutout(Section &section, const db_i &db,
-		   const db_full_path &parent_path, std::set<const directory *> &completed)
+find_ccone_cutout(Section &section, const db_i &db,
+		  const db_full_path &parent_path, std::set<const directory *> &completed)
 {
     RT_CK_DBI(&db);
     RT_CK_FULL_PATH(&parent_path);
 
     const directory &parent_dir = *DB_FULL_PATH_CUR_DIR(&parent_path);
 
-    try {
-	if (completed.count(&parent_dir))
-	    return true; // already processed
-    } catch (const std::invalid_argument &) {
-	return false;
-    }
+    if (completed.count(&parent_dir))
+	return true; // already processed
 
     std::pair<DBInternal, DBInternal> internals;
 
@@ -1499,12 +1495,8 @@ find_csphere_cutout(Section &section, const db_i &db,
 
     const directory &parent_dir = *DB_FULL_PATH_CUR_DIR(&parent_path);
 
-    try {
-	if (completed.count(&parent_dir))
-	    return true; // already processed
-    } catch (const std::invalid_argument &) {
-	return false;
-    }
+    if (completed.count(&parent_dir))
+	return true; // already processed
 
     std::pair<DBInternal, DBInternal> internals;
 
@@ -1589,18 +1581,18 @@ get_chex1(Section &section, const rt_bot_internal &bot)
     }
 
     const int hex_faces[12][3] = {
-	{ 0, 1, 4 },
-	{ 1, 5, 4 },
-	{ 1, 2, 5 },
-	{ 2, 6, 5 },
-	{ 2, 3, 6 },
-	{ 3, 7, 6 },
-	{ 3, 0, 7 },
-	{ 0, 4, 7 },
-	{ 4, 6, 7 },
-	{ 4, 5, 6 },
-	{ 0, 1, 2 },
-	{ 0, 2, 3 }
+	{0, 1, 4},
+	{1, 5, 4},
+	{1, 2, 5},
+	{2, 6, 5},
+	{2, 3, 6},
+	{3, 7, 6},
+	{3, 0, 7},
+	{0, 4, 7},
+	{4, 6, 7},
+	{4, 5, 6},
+	{0, 1, 2},
+	{0, 2, 3}
     };
 
     for (int i = 0; i < 12; ++i) {
@@ -1636,15 +1628,8 @@ get_unioned(const db_i &db, const tree *tree, LeafMap &results)
 
     switch (tree->tr_op) {
 	case OP_DB_LEAF: {
-	    const directory *dir;
-
-	    try {
-		dir = &DBInternal::lookup(db, tree->tr_l.tl_name);
-	    } catch (const std::invalid_argument &) {
-		break;
-	    }
-
-	    results.insert(std::make_pair(dir, tree->tr_l.tl_mat));
+	    const directory &dir = DBInternal::lookup(db, tree->tr_l.tl_name);
+	    results.insert(std::make_pair(&dir, tree->tr_l.tl_mat));
 	    break;
 	}
 
@@ -1845,8 +1830,8 @@ private:
     FastgenConversion(const FastgenConversion &source);
     FastgenConversion &operator=(const FastgenConversion &source);
 
+    const std::string m_path;
     std::map<const directory *, RegionManager *> m_regions;
-    FastgenWriter m_writer;
 };
 
 
@@ -2097,14 +2082,11 @@ FastgenConversion::FastgenConversion(const std::string &path, const db_i &db,
     m_failed_regions(),
     m_facetize_regions(),
     m_toplevels(true),
-    m_regions(),
-    m_writer(path)
+    m_path(path),
+    m_regions()
 {
     RT_CK_DBI(&m_db);
     BN_CK_TOL(&m_tol);
-
-    m_writer.write_comment(m_db.dbi_title);
-    m_writer.write_comment("g -> fastgen4 conversion");
 
     AutoPtr<directory *> region_dirs;
     const std::size_t num_regions = db_ls(&db, DB_LS_REGION, NULL,
@@ -2127,8 +2109,12 @@ FastgenConversion::FastgenConversion(const std::string &path, const db_i &db,
 
 FastgenConversion::~FastgenConversion()
 {
+    FastgenWriter writer(m_path);
+    writer.write_comment(m_db.dbi_title);
+    writer.write_comment("g -> fastgen4 conversion");
+
     if (!m_toplevels.empty())
-	m_toplevels.write(m_writer, "toplevels", m_writer.take_next_section_id());
+	m_toplevels.write(writer, "toplevels", writer.take_next_section_id());
 
     std::map<const directory *, std::vector<FastgenWriter::SectionID> > ids;
 
@@ -2142,11 +2128,11 @@ FastgenConversion::~FastgenConversion()
 
     for (SortedRegionMap::const_iterator it = sorted_regions.begin();
 	 it != sorted_regions.end(); ++it)
-	ids[it->second->first] = it->second->second->write(m_writer);
+	ids[it->second->first] = it->second->second->write(writer);
 
     for (SortedRegionMap::iterator it = sorted_regions.begin();
 	 it != sorted_regions.end(); ++it) {
-	it->second->second->write_walls(m_writer, ids);
+	it->second->second->write_walls(writer, ids);
 	delete it->second->second;
     }
 }
@@ -2164,11 +2150,13 @@ get_section(FastgenConversion &data, const db_full_path &path)
 {
     RT_CK_FULL_PATH(&path);
 
-    const directory *region_dir = NULL;
+    const directory *region_dir;
 
     try {
 	region_dir = &get_region_dir(data.m_db, path);
-    } catch (std::invalid_argument &) {}
+    } catch (std::invalid_argument &) {
+	region_dir = NULL;
+    }
 
     if (region_dir)
 	return data.get_region(*region_dir).get_section(get_region_path(data.m_db,
@@ -2228,8 +2216,8 @@ convert_primitive(FastgenConversion &data, const db_full_path &path,
 		return false;
 
 	    if (path.fp_len > 1
-		&& find_ccone2_cutout(section, data.m_db, get_parent_path(path),
-				      data.m_recorded_cutouts))
+		&& find_ccone_cutout(section, data.m_db, get_parent_path(path),
+				     data.m_recorded_cutouts))
 		return true;
 
 	    point_t v2;
@@ -2434,7 +2422,7 @@ gcv_fastgen4_write(const char *path, struct db_i *dbip,
 
     std::set<const directory *> failed_regions = do_conversion(*dbip, path);
 
-    // facetize all regions that contain an incompatible boolean operation
+    // facetize all regions that contain incompatible boolean operations
     if (!failed_regions.empty())
 	if (!do_conversion(*dbip, path, failed_regions).empty())
 	    throw std::runtime_error("failed to convert all regions");
