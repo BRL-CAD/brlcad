@@ -62,7 +62,7 @@ void mmBitMapInit(mmBitMap *bitmap, size_t entrycount, int initvalue)
     value = (initvalue & 0x1 ? ~0x0 : 0x0);
     bitmap->map = (long *)bu_malloc(mapsize * sizeof(long), "bitmap->map");
 
-    for (vindex = 0 ; vindex < mapsize ; vindex++)
+    for (vindex = 0; vindex < mapsize; vindex++)
 	bitmap->map[vindex] = value;
 }
 

@@ -43,7 +43,6 @@
 #include "auxiliary/cc.h"
 #include "auxiliary/mm.h"
 #include "auxiliary/mmhash.h"
-#include "auxiliary/math3d.h"
 #include "auxiliary/mmbinsort.h"
 
 #include <stdio.h>

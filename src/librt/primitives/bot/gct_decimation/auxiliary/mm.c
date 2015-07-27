@@ -137,7 +137,7 @@ static void mmBTreeInsertBalance(void *item, intptr_t offset, void **root)
     ancestor = pnode->parent;
     anode = (mmBTreeNode *)ADDRESS(ancestor, offset);
 
-    relative = anode->child[(pnode->flags & MM_BTREE_FLAGS_DIRECTION_MASK) ^ 1 ];
+    relative = anode->child[(pnode->flags & MM_BTREE_FLAGS_DIRECTION_MASK) ^ 1];
 
     if ((relative) && !((rnode = (mmBTreeNode *)ADDRESS(relative, offset))->flags & MM_BTREE_FLAGS_STEP)) {
 	anode->flags &= ~MM_BTREE_FLAGS_STEP;
@@ -180,7 +180,7 @@ static void mmBTreeInsertBalance(void *item, intptr_t offset, void **root)
 
 	    if (vlink) {
 		lnode = (mmBTreeNode *)ADDRESS(vlink, offset);
-		lnode->child[ node->flags & MM_BTREE_FLAGS_DIRECTION_MASK ] = item;
+		lnode->child[node->flags & MM_BTREE_FLAGS_DIRECTION_MASK] = item;
 		return;
 	    }
 
@@ -218,7 +218,7 @@ static void mmBTreeInsertBalance(void *item, intptr_t offset, void **root)
 
 	    if (vlink) {
 		lnode = (mmBTreeNode *)ADDRESS(vlink, offset);
-		lnode->child[ node->flags & MM_BTREE_FLAGS_DIRECTION_MASK ] = item;
+		lnode->child[node->flags & MM_BTREE_FLAGS_DIRECTION_MASK] = item;
 		return;
 	    }
 
@@ -247,7 +247,7 @@ static void mmBTreeInsertBalance(void *item, intptr_t offset, void **root)
 
 	if (vlink) {
 	    lnode = (mmBTreeNode *)ADDRESS(vlink, offset);
-	    lnode->child[ pnode->flags & MM_BTREE_FLAGS_DIRECTION_MASK ] = parent;
+	    lnode->child[pnode->flags & MM_BTREE_FLAGS_DIRECTION_MASK] = parent;
 	    return;
 	}
 
@@ -273,15 +273,13 @@ static void mmBTreeInsertBalance(void *item, intptr_t offset, void **root)
 
 	if (vlink) {
 	    lnode = (mmBTreeNode *)ADDRESS(vlink, offset);
-	    lnode->child[ pnode->flags & MM_BTREE_FLAGS_DIRECTION_MASK ] = parent;
+	    lnode->child[pnode->flags & MM_BTREE_FLAGS_DIRECTION_MASK] = parent;
 	    return;
 	}
 
 	*root = parent;
 	return;
     }
-
-    return;
 }
 
 
@@ -312,8 +310,6 @@ static void mmBTreeInsert(void *item, void *parent, int itemflag, intptr_t offse
     }
 
     mmBTreeInsertBalance(item, offset, root);
-
-    return;
 }
 
 
@@ -326,7 +322,7 @@ static void mmBlockTreeInsert(mmBlock *block, void **treeroot)
 	return;
     }
 
-    for (; ;) {
+    for (;;) {
 	if (block < root) {
 	    if (root->node.child[0]) {
 		root = (mmBlock *)root->node.child[0];
@@ -345,8 +341,6 @@ static void mmBlockTreeInsert(mmBlock *block, void **treeroot)
 	    break;
 	}
     }
-
-    return;
 }
 
 
@@ -354,7 +348,7 @@ static mmBlock *mmBlockResolveChunk(void *p, mmBlock *root)
 {
     mmBlock *best = 0;
 
-    for (; root ;) {
+    for (; root;) {
 	if (p < (void *)root)
 	    root = (mmBlock *)root->node.child[0];
 	else {
@@ -372,7 +366,6 @@ static void mmAlignRelayFree(void (*relayfree)(void *head, void *v, size_t bytes
     mmAlign *malign;
     malign = (mmAlign *)ADDRESS(v, -sizeof(mmAlign));
     relayfree(relayvalue, ADDRESS(v, -malign->padding), bytes);
-    return;
 }
 
 
@@ -403,7 +396,6 @@ static void mmNodeRelayFree(void *UNUSED(head), void *v, size_t bytes)
     (void)bytes;
 #endif
     bu_free(v, "mmNodeRelayFree()");
-    return;
 }
 
 
@@ -416,7 +408,6 @@ static void *mmAlloc(void *UNUSED(unused), size_t bytes)
 static void mmFree(void *UNUSED(unused), void *v, size_t UNUSED(bytes))
 {
     bu_free(v, "mmFree()");
-    return;
 }
 
 
@@ -447,7 +438,7 @@ void mmBlockProcessList(mmBlockHead *head, void *userpointer, int (*processchunk
 
     blockcount = 0;
 
-    for (block = (mmBlock *)head->blocklist ; block ; block = (mmBlock *)block->listnode.next)
+    for (block = (mmBlock *)head->blocklist; block; block = (mmBlock *)block->listnode.next)
 	block->blockindex = blockcount++;
 
     chunksize = head->chunksize;
@@ -458,25 +449,25 @@ void mmBlockProcessList(mmBlockHead *head, void *userpointer, int (*processchunk
 
     p = ADDRESS(bitsref, blockcount * sizeof(intptr_t *));
 
-    for (i = 0 ; i < blockcount ; i++) {
+    for (i = 0; i < blockcount; i++) {
 	bitsref[i] = (intptr_t *)p;
 	p = ADDRESS(p, blockrefsize);
     }
 
-    for (list = (mmListNode *)head->freelist ; list ; list = (mmListNode *)list->next) {
+    for (list = (mmListNode *)head->freelist; list; list = (mmListNode *)list->next) {
 	block = mmBlockResolveChunk(list, (mmBlock *)head->treeroot);
 	chunkindex = ADDRESSDIFF(list, ADDRESS(block, sizeof(mmBlock))) / chunksize;
-	bitsref[ block->blockindex ][ chunkindex >> INTPTR_BITSHIFT ] |= (intptr_t)1 << (chunkindex & (INTPTR_BITS - 1));
+	bitsref[block->blockindex][chunkindex >> INTPTR_BITSHIFT] |= (intptr_t)1 << (chunkindex & (INTPTR_BITS - 1));
     }
 
     blockindex = 0;
 
-    for (block = (mmBlock *)head->blocklist ; block ; block = (mmBlock *)block->listnode.next) {
-	blockmask = bitsref[ blockindex ];
+    for (block = (mmBlock *)head->blocklist; block; block = (mmBlock *)block->listnode.next) {
+	blockmask = bitsref[blockindex];
 	chunk = ADDRESS(block, sizeof(mmBlock));
 
-	for (chunkindex = 0 ; chunkindex < chunkperblock ; chunkindex++, chunk = ADDRESS(chunk, chunksize)) {
-	    if (blockmask[ chunkindex >> INTPTR_BITSHIFT ] & ((intptr_t)1 << (chunkindex & (INTPTR_BITS - 1))))
+	for (chunkindex = 0; chunkindex < chunkperblock; chunkindex++, chunk = ADDRESS(chunk, chunksize)) {
+	    if (blockmask[chunkindex >> INTPTR_BITSHIFT] & ((intptr_t)1 << (chunkindex & (INTPTR_BITS - 1))))
 		continue;
 
 	    if (processchunk(chunk, userpointer))
@@ -489,8 +480,6 @@ void mmBlockProcessList(mmBlockHead *head, void *userpointer, int (*processchunk
 end:
     bu_free(bitsref, "bitsref");
     mtSpinUnlock(&head->spinlock);
-
-    return;
 }
 #endif
 
@@ -563,7 +552,6 @@ void mmAlignFree(void *v)
     mmAlign *malign;
     malign = (mmAlign *)ADDRESS(v, -sizeof(mmAlign));
     bu_free(ADDRESS(v, -malign->padding), "mmAlignFree()");
-    return;
 }
 
 /**
@@ -592,7 +580,7 @@ void *mmBlockAlloc(mmBlockHead *head)
 	mmListAdd(&head->blocklist, block, offsetof(mmBlock, listnode));
 	chunk = ADDRESS(block, sizeof(mmBlock));
 
-	for (a = 0 ; a < head->chunkperblock ; a++, chunk = ADDRESS(chunk, head->chunksize))
+	for (a = 0; a < head->chunkperblock; a++, chunk = ADDRESS(chunk, head->chunksize))
 	    mmListAdd(&head->freelist, chunk, 0);
 
 	mmBlockTreeInsert(block, &head->treeroot);
@@ -626,7 +614,6 @@ void mmBlockRelease(mmBlockHead *head, void *v)
     head->chunkfreecount++;
     mmListAdd(&head->freelist, chunk, 0);
     mtSpinUnlock(&head->spinlock);
-    return;
 }
 
 
@@ -638,7 +625,7 @@ void mmBlockFreeAll(mmBlockHead *head)
     mmBlock *block, *blocknext;
     mtSpinLock(&head->spinlock);
 
-    for (block = (mmBlock *)head->blocklist ; block ; block = blocknext) {
+    for (block = (mmBlock *)head->blocklist; block; block = blocknext) {
 	blocknext = (mmBlock *)block->listnode.next;
 
 	if (head->alignment)
@@ -652,7 +639,6 @@ void mmBlockFreeAll(mmBlockHead *head)
     head->treeroot = 0;
     mtSpinUnlock(&head->spinlock);
     mtSpinDestroy(&head->spinlock);
-    return;
 }
 
 void mmBlockNodeInit(mmBlockHead *head, int nodeindex, size_t chunksize, int chunkperblock, int keepfreecount, int alignment)
@@ -661,7 +647,6 @@ void mmBlockNodeInit(mmBlockHead *head, int nodeindex, size_t chunksize, int chu
     head->relayalloc = mmNodeRelayAlloc;
     head->relayfree = mmNodeRelayFree;
     head->relayvalue = (void *)((intptr_t)nodeindex);
-    return;
 }
 
 
@@ -694,7 +679,6 @@ void mmBlockInit(mmBlockHead *head, size_t chunksize, int chunkperblock, int kee
     head->allocsize = sizeof(mmBlock) + head->chunksize * head->chunkperblock;
     head->keepfreecount = keepfreecount + chunkperblock;
     mtSpinInit(&head->spinlock);
-    return;
 }
 
 
@@ -723,7 +707,6 @@ void mmNodeFree(int UNUSED(nodeindex), void *v, size_t size)
     (void)size;
 #endif
     bu_free(v, "mmNodeFree()");
-    return;
 }
 
 
@@ -749,7 +732,6 @@ void mmListAdd(void **list, void *item, intptr_t offset)
     }
 
     *list = item;
-    return;
 }
 
 
@@ -770,8 +752,6 @@ void mmListRemove(void *item, intptr_t offset)
 	next = (mmListNode *)ADDRESS(node->next, offset);
 	next->prev = node->prev;
     }
-
-    return;
 }
 
 
@@ -785,10 +765,9 @@ void mmThreadBindToCpu(int cpuindex)
 #else
     (void)cpuindex;
 #endif
-    return;
 }
 
 int mmCpuGetNode(int cpuindex)
 {
-    return mmcontext.cpunode[ cpuindex ];
+    return mmcontext.cpunode[cpuindex];
 }
