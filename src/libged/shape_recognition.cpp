@@ -458,7 +458,17 @@ brep_to_csg(struct ged *gedp, struct directory *dp, int verify)
 	    if (obj->params->bool_op == 'u') {
 		//print_subbrep_object(obj, "");
 		if (ccomb) {
+		    // We've collected all the subtractions we know about - make a temp comb for raytracing.
+		    //mk_lcomb(wdbp, bu_vls_addr(&obj_comb_name), ccomb, 1, NULL, NULL, NULL, 0);
+
+		    // Evaluate the candidate subtraction objects using solid raytracing, and add the ones
+		    // that contribute gaps to the comb definition.
+
+
+		    // kill the temp comb and replace it with the final version, which will contain any additional
+		    // subtractions.  Unlike the temp comb, this comb is not a region
 		    mk_lcomb(wdbp, bu_vls_addr(&obj_comb_name), ccomb, 0, NULL, NULL, NULL, 0);
+
 		    BU_PUT(ccomb, struct wmember);
 		    if (scomb) {
 			mk_lcomb(wdbp, bu_vls_addr(&sub_comb_name), scomb, 0, NULL, NULL, NULL, 0);
@@ -486,9 +496,20 @@ brep_to_csg(struct ged *gedp, struct directory *dp, int verify)
 	    //(void)mk_addmember(bu_vls_addr(&obj_name), &(pcomb.l), NULL, db_str2op(&(obj->params->bool_op)));
 	    bu_vls_free(&obj_name);
 	}
+
 	/* Make the last comb */
 	if (ccomb) {
+	    // We've collected all the subtractions we know about - make a temp comb for raytracing.
+	    //mk_lcomb(wdbp, bu_vls_addr(&obj_comb_name), ccomb, 1, NULL, NULL, NULL, 0);
+
+	    // Evaluate the candidate subtraction objects using solid raytracing, and add the ones
+	    // that contribute gaps to the comb definition.
+
+
+	    // kill the temp comb and replace it with the final version, which will contain any additional
+	    // subtractions.  Unlike the temp comb, this comb is not a region
 	    mk_lcomb(wdbp, bu_vls_addr(&obj_comb_name), ccomb, 0, NULL, NULL, NULL, 0);
+
 	    BU_PUT(ccomb, struct wmember);
 	    if (scomb) {
 		mk_lcomb(wdbp, bu_vls_addr(&sub_comb_name), scomb, 0, NULL, NULL, NULL, 0);
