@@ -2725,7 +2725,7 @@ read_fast4_colors(char *color_file)
 static int
 gcv_fastgen4_read(const char *path, struct rt_wdb *wdbp, const struct gcv_opts *UNUSED(options))
 {
-    int result = 1;
+    int result = 0;
     char *plot_file = NULL;
     char *color_file = NULL;
 
@@ -2743,6 +2743,7 @@ gcv_fastgen4_read(const char *path, struct rt_wdb *wdbp, const struct gcv_opts *
     if (plot_file) {
 	if ((fp_plot=fopen(plot_file, "wb")) == NULL) {
 	    bu_log("Cannot open plot file (%s)\n", plot_file);
+	    fclose(fpin);
 	    return 0;
 	}
     }
@@ -2790,42 +2791,38 @@ gcv_fastgen4_read(const char *path, struct rt_wdb *wdbp, const struct gcv_opts *
     if (!quiet)
 	bu_log("Building component names....\n");
 
-    if (!Process_input(0)) {
-	result = 0;
-	goto cleanup;
+    if (Process_input(0)) {
+	rewind(fpin);
+
+	/* Make an ID record if no vehicle card was found */
+	if (!vehicle[0])
+	    mk_id_units(fpout, path, "in");
+
+	if (!quiet)
+	    bu_log("Building components....\n");
+
+	if (Process_input(1)) {
+	    if (!quiet)
+		bu_log("Building regions and groups....\n");
+
+	    /* make regions */
+	    make_regions();
+
+	    /* make groups */
+	    f4_do_groups();
+
+	    if (debug)
+		List_holes();
+
+	    if (!quiet)
+		bu_log("%d components converted\n", comp_count);
+
+	    result = 1;
+	}
     }
 
-    rewind(fpin);
+    /* cleanup */
 
-    /* Make an ID record if no vehicle card was found */
-    if (!vehicle[0])
-	mk_id_units(fpout, path, "in");
-
-    if (!quiet)
-	bu_log("Building components....\n");
-
-    if (!Process_input(1)) {
-	result = 0;
-	goto cleanup;
-    }
-
-    if (!quiet)
-	bu_log("Building regions and groups....\n");
-
-    /* make regions */
-    make_regions();
-
-    /* make groups */
-    f4_do_groups();
-
-    if (debug)
-	List_holes();
-
-    if (!quiet)
-	bu_log("%d components converted\n", comp_count);
-
-
-cleanup:
     fclose(fpin);
     bu_free(grid_points, "grid_points");
     bu_ptbl_free(&stack);
