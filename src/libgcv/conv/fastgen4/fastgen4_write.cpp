@@ -1366,50 +1366,58 @@ get_ccone1_cutout_helper(Section &section, const directory &parent_dir,
     bool known_thickness = false;
     fastf_t thickness;
 
-    if (end1_open) {
-	known_thickness = true;
-	thickness = (radius1 - inner_radius1) * sin_angle;
-    } else if (!NEAR_ZERO(inner_radius1, RT_LEN_TOL)) {
-	known_thickness = true;
-	thickness =
-	    (inner_radius1 - radius1) / ((radius2 - radius1) / length - 1.0 / sin_angle);
+    if (!NEAR_ZERO(inner_radius1, RT_LEN_TOL)) {
+	if (end1_open) {
+	    known_thickness = true;
+	    thickness = (radius1 - inner_radius1) * sin_angle;
+	} else {
+	    known_thickness = true;
+	    thickness =
+		(inner_radius1 - radius1) / ((radius2 - radius1) / length - 1.0 / sin_angle);
 
-	vect_t temp_base, h_dir;
-	VMOVE(h_dir, outer_tgc.h);
-	VUNITIZE(h_dir);
-	VJOIN1(temp_base, outer_tgc.v, thickness, h_dir);
+	    vect_t temp_base, h_dir;
+	    VMOVE(h_dir, outer_tgc.h);
+	    VUNITIZE(h_dir);
+	    VJOIN1(temp_base, outer_tgc.v, thickness, h_dir);
 
-	if (!VNEAR_EQUAL(temp_base, inner_tgc.v, RT_LEN_TOL))
-	    return false;
+	    if (!VNEAR_EQUAL(temp_base, inner_tgc.v, RT_LEN_TOL))
+		return false;
+	}
     }
 
-    if (end2_open) {
-	const fastf_t temp_thickness = (radius2 - inner_radius2) * sin_angle;
+    if (!NEAR_ZERO(inner_radius2, RT_LEN_TOL)) {
+	if (end2_open) {
+	    const fastf_t temp_thickness = (radius2 - inner_radius2) * sin_angle;
 
-	if (!known_thickness) {
-	    known_thickness = true;
-	    thickness = temp_thickness;
-	} else if (!NEAR_EQUAL(temp_thickness, thickness, RT_LEN_TOL))
-	    return false;
-    } else if (!NEAR_ZERO(inner_radius2, RT_LEN_TOL)) {
-	const fastf_t temp_thickness =
-	    (inner_radius2 - radius2) / ((radius1 - radius2) / length - 1.0 / sin_angle);
+	    if (!known_thickness) {
+		known_thickness = true;
+		thickness = temp_thickness;
+	    } else if (!NEAR_EQUAL(temp_thickness, thickness, RT_LEN_TOL))
+		return false;
+	} else {
+	    const fastf_t temp_thickness =
+		(inner_radius2 - radius2) / ((radius1 - radius2) / length - 1.0 / sin_angle);
 
-	if (!known_thickness) {
-	    known_thickness = true;
-	    thickness = temp_thickness;
-	} else if (!NEAR_EQUAL(temp_thickness, thickness, RT_LEN_TOL))
-	    return false;
+	    if (!known_thickness) {
+		known_thickness = true;
+		thickness = temp_thickness;
+	    } else if (!NEAR_EQUAL(temp_thickness, thickness, RT_LEN_TOL))
+		return false;
+	}
     }
-
-    if (!known_thickness)
-	throw std::logic_error("unable to determine thickness of potential CCONE1");
 
     vect_t point_b;
     VADD2(point_b, outer_tgc.v, outer_tgc.h);
     section.write_name(parent_dir.d_namep);
-    section.write_thin_cone(outer_tgc.v, point_b, radius1, radius2, thickness,
-			    end1_open, end2_open);
+
+    if (known_thickness) {
+	section.write_thin_cone(outer_tgc.v, point_b, radius1, radius2, thickness,
+				end1_open, end2_open);
+    } else {
+	// `inner_radius1` and `inner_radius2` are zero
+	section.write_cone(outer_tgc.v, point_b, radius1, radius2, 0.0, 0.0);
+    }
+
     return true;
 }
 
