@@ -21,19 +21,30 @@
  *
  */
 #include "common.h"
+#include "bu/ptbl.h"
 
 #include "raytrace.h"
 
-struct partitions {
+struct minimal_partitions {
     fastf_t *t;
     int cnt;
+    struct xray ray;
+    int valid;
 };
 
+typedef int (*hitfunc_t)(struct application *, struct partition *, struct seg *);
+typedef int (*missfunc_t)(struct application *);
+typedef int (*overlapfunc_t)(struct application *, struct partition *, struct region *, struct region *, struct partition *);
+
+typedef struct xray * (*getray_t)(void *ptr);
+typedef int *         (*getflag_t)(void *ptr);
+
+void raydiff_gen_worker(int cpu, void *ptr);
 
 /* Returns count of rays in rays array */
 int analyze_get_bbox_rays(fastf_t **rays, point_t min, point_t max, struct bn_tol *tol);
 
-void analyze_seg_filter(struct bu_ptbl *segs, struct rt_i *rtip, struct resource *resp, fastf_t tol);
+void analyze_seg_filter(struct bu_ptbl *segs, getray_t gray, getflag_t gflag, struct rt_i *rtip, struct resource *resp, fastf_t tol);
 
 /*
  * Local Variables:

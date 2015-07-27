@@ -29,9 +29,12 @@ extern "C" {
 #include "bu/log.h"
 #include "bu/ptbl.h"
 #include "bn/mat.h"
+#include "analyze_private.h"
 }
 #include "raytrace.h"
+extern "C" {
 #include "analyze.h"
+}
 
 extern "C" int
 analyze_get_bbox_rays(fastf_t **rays, point_t min, point_t max, struct bn_tol *tol)
@@ -155,6 +158,8 @@ struct segfilter_container {
     fastf_t *rays;
     int rays_cnt;
     int cnt;
+    getray_t g_ray;
+    getflag_t g_flag;
     struct bu_ptbl *test;
 };
 
@@ -235,40 +240,41 @@ segfilter_gen_worker(int cpu, void *ptr)
         point_t r_pt;
         vect_t v1, v2;
         int valid = 0;
-        struct diff_seg *d = (struct diff_seg *)BU_PTBL_GET(state->test, i);
-        VMOVE(ap.a_ray.r_dir, d->ray.r_dir);
+	struct xray *ray = (*state->g_ray)((void *)BU_PTBL_GET(state->test, i));
+	int *d_valid = (*state->g_flag)((void *)BU_PTBL_GET(state->test, i));
+        VMOVE(ap.a_ray.r_dir, ray->r_dir);
         /* Construct 4 rays and test around the original hit.*/
-        bn_vec_perp(v1, d->ray.r_dir);
-        VCROSS(v2, v1, d->ray.r_dir);
+        bn_vec_perp(v1, ray->r_dir);
+        VCROSS(v2, v1, ray->r_dir);
         VUNITIZE(v1);
         VUNITIZE(v2);
 
         valid = 0;
-        VJOIN2(r_pt, d->ray.r_pt, 0.5 * state->tol, v1, 0.5 * state->tol, v2);
+        VJOIN2(r_pt, ray->r_pt, 0.5 * state->tol, v1, 0.5 * state->tol, v2);
         state->cnt = 0;
         VMOVE(ap.a_ray.r_pt, r_pt);
         rt_shootray(&ap);
         if (state->cnt) valid++;
         state->cnt = 0;
-        VJOIN2(r_pt, d->ray.r_pt, -0.5 * state->tol, v1, -0.5 * state->tol, v2);
+        VJOIN2(r_pt, ray->r_pt, -0.5 * state->tol, v1, -0.5 * state->tol, v2);
         state->cnt = 0;
         VMOVE(ap.a_ray.r_pt, r_pt);
         rt_shootray(&ap);
         if (state->cnt) valid++;
-        VJOIN2(r_pt, d->ray.r_pt, -0.5 * state->tol, v1, 0.5 * state->tol, v2);
+        VJOIN2(r_pt, ray->r_pt, -0.5 * state->tol, v1, 0.5 * state->tol, v2);
         state->cnt = 0;
         VMOVE(ap.a_ray.r_pt, r_pt);
         rt_shootray(&ap);
         if (state->cnt) valid++;
         state->cnt = 0;
-        VJOIN2(r_pt, d->ray.r_pt, 0.5 * state->tol, v1, -0.5 * state->tol, v2);
+        VJOIN2(r_pt, ray->r_pt, 0.5 * state->tol, v1, -0.5 * state->tol, v2);
         state->cnt = 0;
         VMOVE(ap.a_ray.r_pt, r_pt);
         rt_shootray(&ap);
         if (state->cnt) valid++;
 
         if (valid == 4) {
-            d->valid = 1;
+            *d_valid = 1;
         }
     }
 }
@@ -283,7 +289,7 @@ segfilter_gen_worker(int cpu, void *ptr)
  * filter all rays surrouned by "similar" results (grab only grazing rays)
  */
 extern "C" void
-analyze_seg_filter(struct bu_ptbl *segs, struct rt_i *rtip, struct resource *resp, fastf_t tol)
+analyze_seg_filter(struct bu_ptbl *segs, getray_t gray, getflag_t gflag, struct rt_i *rtip, struct resource *resp, fastf_t tol)
 {
     int i = 0;
     int ncpus = bu_avail_cpus();
@@ -300,6 +306,8 @@ analyze_seg_filter(struct bu_ptbl *segs, struct rt_i *rtip, struct resource *res
 	state[i].tol = tol;
 	state[i].ncpus = ncpus;
 	state[i].resp = &resp[i];
+	state[i].g_ray = gray;
+	state[i].g_flag = gflag;
 	state[i].test = segs;
     }
 
@@ -308,6 +316,108 @@ analyze_seg_filter(struct bu_ptbl *segs, struct rt_i *rtip, struct resource *res
     bu_free(state, "state");
 
     return;
+}
+
+struct raydiff_container {
+    struct rt_i *rtip;
+    struct resource *resp;
+    int ray_dir;
+    int ncpus;
+    fastf_t tol;
+    int have_diffs;
+    const char *left_name;
+    const char *right_name;
+    struct bu_ptbl *left;
+    struct bu_ptbl *both;
+    struct bu_ptbl *right;
+    const fastf_t *rays;
+    int rays_cnt;
+    int cnt;
+    struct bu_ptbl *test;
+};
+
+struct xray *
+mp_ray(void *container)
+{
+    struct minimal_partitions *d = (struct minimal_partitions *)container;
+    return &(d->ray);
+}
+
+int *
+mp_flag(void *container)
+{
+    struct minimal_partitions *d = (struct minimal_partitions *)container;
+    return &(d->valid);
+}
+
+
+int
+analyze_get_solid_partitions(struct bu_ptbl *results, const fastf_t *rays, int ray_cnt,
+	struct db_i *dbip, const char *obj, struct bn_tol *tol)
+{
+    int i, j;
+    int ret = 0;
+    int ncpus = bu_avail_cpus();
+    struct raydiff_container *state;
+    struct resource *resp;
+    struct rt_i *rtip;
+
+    if (!results || !rays || ray_cnt == 0 || !dbip || !obj || !tol) return 0;
+
+    state = (struct raydiff_container *)bu_calloc(ncpus+1, sizeof(struct raydiff_container), "state");
+    resp = (struct resource *)bu_calloc(ncpus+1, sizeof(struct resource), "resources");
+    rtip = rt_new_rti(dbip);
+
+    for (i = 0; i < ncpus+1; i++) {
+	state[i].rtip = rtip;
+	state[i].tol = 0.5;
+	state[i].ncpus = ncpus;
+	state[i].resp = &resp[i];
+	rt_init_resource(state[i].resp, i, state->rtip);
+	BU_GET(state[i].left, struct bu_ptbl);
+	bu_ptbl_init(state[i].left, 64, "left solid hits");
+	BU_GET(state[i].both, struct bu_ptbl);
+	bu_ptbl_init(state[i].both, 64, "hits on both solids");
+	BU_GET(state[i].right, struct bu_ptbl);
+	bu_ptbl_init(state[i].right, 64, "right solid hits");
+    }
+
+    if (rt_gettree(rtip, obj) < 0) {
+	ret = -1;
+	goto memfree;
+    }
+
+    rt_prep_parallel(rtip, ncpus);
+
+    ret = 0;
+    for (i = 0; i < ncpus+1; i++) {
+	state[i].rays_cnt = ray_cnt;
+	state[i].rays = rays;
+    }
+
+    bu_parallel(raydiff_gen_worker, ncpus, (void *)state);
+
+    for (i = 0; i < ncpus+1; i++) {
+	for (j = 0; j < (int)BU_PTBL_LEN(state[i].both); j++) {
+	    bu_ptbl_ins(results, BU_PTBL_GET(state[i].both, j));
+	}
+    }
+    analyze_seg_filter(results, &mp_ray, &mp_flag, rtip, resp, 0.5);
+
+    // TODO - remove invalid results
+
+    ret = BU_PTBL_LEN(results);
+
+memfree:
+
+    for (i = 0; i < ncpus+1; i++) {
+	BU_PUT(state[i].both, struct bu_ptbl);
+    }
+    bu_free(state, "free state");
+    bu_free(resp, "free state");
+
+    return ret;
+
 }
 
 /*

@@ -91,7 +91,7 @@ struct raydiff_container {
     struct bu_ptbl *left;
     struct bu_ptbl *both;
     struct bu_ptbl *right;
-    fastf_t *rays;
+    const fastf_t *rays;
     int rays_cnt;
     int cnt;
     struct bu_ptbl *test;
@@ -108,6 +108,19 @@ struct raydiff_container {
     bu_ptbl_ins(_ptbl, (long *)dseg); \
 }
 
+struct xray *
+diff_ray(void *container)
+{
+    struct diff_seg *d = (struct diff_seg *)container;
+    return &(d->ray);
+}
+
+int *
+diff_flag(void *container)
+{
+    struct diff_seg *d = (struct diff_seg *)container;
+    return &(d->valid);
+}
 
 HIDDEN int
 raydiff_hit(struct application *ap, struct partition *PartHeadp, struct seg *UNUSED(segs))
@@ -231,7 +244,7 @@ analyze_raydiff(struct analyze_raydiff_results **results, struct db_i *dbip,
     fastf_t *rays;
     struct raydiff_container *state = (struct raydiff_container *)bu_calloc(ncpus+1, sizeof(struct raydiff_container), "state");
     struct bu_ptbl test_tbl = BU_PTBL_INIT_ZERO;
-    struct resource *resp = (struct resource *)bu_calloc(ncpus+1, sizeof(struct resource), "resources");;
+    struct resource *resp = (struct resource *)bu_calloc(ncpus+1, sizeof(struct resource), "resources");
 
     if (!dbip || !left || !right|| !tol) {
 	ret = 0;
@@ -292,7 +305,7 @@ analyze_raydiff(struct analyze_raydiff_results **results, struct db_i *dbip,
 		bu_ptbl_ins(&test_tbl, BU_PTBL_GET(state[i].right, j));
 	    }
 	}
-	analyze_seg_filter(&test_tbl, rtip, resp, 0.5);
+	analyze_seg_filter(&test_tbl, &diff_ray, &diff_flag, rtip, resp, 0.5);
     } else {
 	/* Not restricting to solids, all are valid */
 	for (i = 0; i < ncpus+1; i++) {
