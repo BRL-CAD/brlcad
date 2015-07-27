@@ -404,6 +404,7 @@ sp_hit(struct application *ap, struct partition *PartHeadp, struct seg *UNUSED(s
     }
     BU_GET(state->results[s->curr_ind], struct minimal_partitions);
     p = state->results[s->curr_ind];
+    p->index = s->curr_ind;
     VMOVE(p->ray.r_pt, ap->a_ray.r_pt);
     VMOVE(p->ray.r_dir, ap->a_ray.r_dir);
     p->hit_cnt = 0;

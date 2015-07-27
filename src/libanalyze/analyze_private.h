@@ -34,6 +34,7 @@ struct minimal_partitions {
     fastf_t *gaps;
     int gap_cnt;
     struct xray ray;
+    int index;
     int valid;
 };
 
