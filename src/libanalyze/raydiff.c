@@ -235,7 +235,7 @@ analyze_raydiff(struct analyze_raydiff_results **results, struct db_i *dbip,
 	bu_ptbl_init(local_state[i].right, 64, "right solid hits");
 	state[i].ptr = (void *)&(local_state[i]);
     }
-#if 1
+#if 0
     {
         /*
 	 * Really weird behavior sometimes - builds a tree that raytraces
@@ -245,13 +245,13 @@ analyze_raydiff(struct analyze_raydiff_results **results, struct db_i *dbip,
 	const char *argv[2];
 	argv[0] = left;
 	argv[1] = right;
-	if (rt_gettrees(rtip, 2, argv, /*ncpus*/12) < 0) {
+	if (rt_gettrees(rtip, 2, argv, ncpus) < 0) {
 	    ret = -1;
 	    goto memfree;
 	}
     }
 #endif
-#if 0
+#if 1
     if (rt_gettree(rtip, left) < 0) return -1;
     if (rt_gettree(rtip, right) < 0) return -1;
 #endif

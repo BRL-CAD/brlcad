@@ -23,6 +23,7 @@
 #include "common.h"
 
 #include <string.h> /* for memset */
+#include <map>
 
 extern "C" {
 #include "vmath.h"
@@ -391,33 +392,35 @@ sp_hit(struct application *ap, struct partition *PartHeadp, struct seg *UNUSED(s
     struct minimal_partitions *p;
     struct rt_gen_worker_vars *s = (struct rt_gen_worker_vars *)(ap->a_uptr);
     struct solids_container *state = (struct solids_container *)(s->ptr);
+    fastf_t g1 = -DBL_MAX;
+    fastf_t g2 = -DBL_MAX;
 
     for (part = PartHeadp->pt_forw; part != PartHeadp; part = part->pt_forw) {
 	part_len = part->pt_outhit->hit_dist - part->pt_inhit->hit_dist;
 	if (part_len > state->tol) hit_cnt++;
     }
+    BU_GET(state->results[s->curr_ind], struct minimal_partitions);
     p = state->results[s->curr_ind];
-    if (!p) {
-	BU_GET(state->results[s->curr_ind], struct minimal_partitions);
-	p = state->results[s->curr_ind];
-    }
-    if (!p->hits) {
-	p->hits = (fastf_t *)bu_calloc(6, sizeof(fastf_t), "overlaps");
-	p->hit_size = hit_cnt * 2 + 2;
-    }
-    if (p->hit_cnt + 2 > p->hit_size) {
-	p->hits = (fastf_t *)bu_realloc((void *)p->hits, sizeof(fastf_t) * 2 * p->hit_size, "list extend");
-	p->hit_size = p->hit_size * 2;
-    }
+    p->hits = (fastf_t *)bu_calloc(hit_cnt * 2, sizeof(fastf_t), "overlaps");
+    p->gaps = (fastf_t *)bu_calloc((hit_cnt - 1) * 2, sizeof(fastf_t), "overlaps");
     for (part = PartHeadp->pt_forw; part != PartHeadp; part = part->pt_forw) {
 	part_len = part->pt_outhit->hit_dist - part->pt_inhit->hit_dist;
 	if (part_len > state->tol) {
+	    if (g1 > -DBL_MAX) g2 = part->pt_inhit->hit_dist;
 	    bu_log("hit: t = %f to t = %f, len: %f\n", part->pt_inhit->hit_dist, part->pt_outhit->hit_dist, part_len);
 	    p->hits[p->hit_cnt] = part->pt_inhit->hit_dist;
 	    p->hits[p->hit_cnt + 1] = part->pt_outhit->hit_dist;
 	    p->hit_cnt = p->hit_cnt + 2;
+	    if (g2 > -DBL_MAX) {
+		p->hits[p->hit_cnt - 1] = g1;
+		p->hits[p->hit_cnt] = g2;
+		p->hit_cnt = p->hit_cnt + 2;
+	    }
+	    g1 = part->pt_outhit->hit_dist;
 	}
     }
+    p->hit_cnt = hit_cnt;
+    p->gap_cnt = hit_cnt - 1;
     return 0;
 }
 
@@ -428,43 +431,18 @@ sp_miss(struct application *ap)
     return 0;
 }
 
-// TODO - overlap
 HIDDEN int
 sp_overlap(struct application *ap,
-	struct partition *pp,
+	struct partition *UNUSED(pp),
 	struct region *UNUSED(reg1),
 	struct region *UNUSED(reg2),
 	struct partition *UNUSED(hp))
 {
-    struct rt_gen_worker_vars *s = (struct rt_gen_worker_vars *)(ap->a_uptr);
-    struct solids_container *state = (struct solids_container *)(s->ptr);
-    fastf_t part_len = pp->pt_outhit->hit_dist - pp->pt_inhit->hit_dist;
-    if (part_len > state->tol) {
-	struct minimal_partitions *p;
-	p = state->results[s->curr_ind];
-	if (!p) {
-	    BU_GET(state->results[s->curr_ind], struct minimal_partitions);
-	    p = state->results[s->curr_ind];
-	}
-	if (!p->overlaps) {
-	    p->overlaps = (fastf_t *)bu_calloc(6, sizeof(fastf_t), "overlaps");
-	    p->overlap_size = 4;
-	}
-	if (p->overlap_cnt + 2 > p->overlap_size) {
-	    p->overlaps = (fastf_t *)bu_realloc((void *)p->overlaps, sizeof(fastf_t) * 2 * p->overlap_size, "list extend");
-	    p->overlap_size = p->overlap_size * 2;
-	}
-
-	p->overlaps[p->overlap_cnt] = pp->pt_inhit->hit_dist;
-	p->overlaps[p->overlap_cnt + 1] = pp->pt_outhit->hit_dist;
-	p->overlap_cnt = p->overlap_cnt + 2;
-
-	bu_log("overlap: t = %f to t = %f, len: %f\n", pp->pt_inhit->hit_dist, pp->pt_outhit->hit_dist, part_len);
-    }
+    RT_CK_APPLICATION(ap);
     return 0;
 }
 
-
+/* Will need the region flag set for this to work... */
 extern "C" int
 analyze_get_solid_partitions(struct bu_ptbl *results, const fastf_t *rays, int ray_cnt,
 	struct db_i *dbip, const char *obj, struct bn_tol *tol)
@@ -519,6 +497,7 @@ analyze_get_solid_partitions(struct bu_ptbl *results, const fastf_t *rays, int r
     }
 
     bu_parallel(analyze_gen_worker, ncpus, (void *)state);
+
 #if 0
     for (i = 0; i < ncpus+1; i++) {
 	for (j = 0; j < (int)BU_PTBL_LEN(local_state[i].results); j++) {

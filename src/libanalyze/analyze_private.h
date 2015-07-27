@@ -30,9 +30,9 @@
 
 struct minimal_partitions {
     fastf_t *hits;
-    fastf_t *overlaps;
-    fastf_t *gaps; /* not calculated until after raytrace - need both hits and overlaps for a gap/no-gap determination */
-    int cnt;
+    int hit_cnt;
+    fastf_t *gaps;
+    int gap_cnt;
     struct xray ray;
     int valid;
 };
@@ -52,6 +52,7 @@ struct rt_gen_worker_vars {
     overlapfunc_t foverlap;
     int step;       /* number of rays to be fired by this worker before calling back */
     int *ind_src;   /* source of starting index */
+    int curr_ind;   /* current ray index */
     void *ptr; /* application specific info */
 };
 

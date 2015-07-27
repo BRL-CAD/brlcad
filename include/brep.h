@@ -37,6 +37,7 @@ extern "C++" {
 #include <queue>
 #include <assert.h>
 
+#include "bu/ptbl.h"
 #include "bn/dvec.h"
 #include "opennurbs.h"
 #include <iostream>
@@ -1425,6 +1426,9 @@ struct subbrep_object_data {
     ON_BoundingBox *bbox;
     int bbox_set;
     int obj_id;
+    /* For some objects, additional post processing is needed
+     * for a subtract/no-subtract determination */
+    struct bu_ptbl *subtraction_candidates;
 };
 
 extern BREP_EXPORT void subbrep_object_free(struct subbrep_object_data *obj);

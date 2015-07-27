@@ -396,6 +396,30 @@ make_shapes(struct bu_vls *msgs, struct subbrep_object_data *data, struct rt_wdb
     return 0;
 }
 
+void
+finalize_comb(struct rt_wdb *wdbp, struct bu_vls *comb_name, struct wmember *ccomb, struct subbrep_object_data *curr_union)
+{
+    struct bu_ptbl *sc = curr_union->subtraction_candidates;
+    // We've collected all the subtractions we know about - make a temp comb for raytracing.
+    //mk_lcomb(wdbp, bu_vls_addr(comb_name), ccomb, 1, NULL, NULL, NULL, 0);
+    // Evaluate the candidate subtraction objects using solid raytracing, and add the ones
+    // that contribute gaps to the comb definition.
+    if (sc && BU_PTBL_LEN(sc) > 0) {
+	for (unsigned int j = 0; j < BU_PTBL_LEN(sc); j++) {
+	    struct subbrep_object_data *sobj = (struct subbrep_object_data *)BU_PTBL_GET(sc, j);
+	    bu_log("Need to test %s against %s\n", bu_vls_addr(sobj->name_root), bu_vls_addr(curr_union->name_root));
+	    // Will have to make each test subtraction as a unique region to make sure the
+	    // partitions are all there - overlaps don't come in to this test.  The "final"
+	    // subtraction combs are made elsewhere, so just do the temporary region versions here.
+	}
+    }
+
+    // kill the temp comb and replace it with the final version, which will contain any additional
+    // subtractions.  Unlike the temp comb, this comb is not a region
+    mk_lcomb(wdbp, bu_vls_addr(comb_name), ccomb, 0, NULL, NULL, NULL, 0);
+}
+
+
 /* return codes:
  * -1 get internal failure
  *  0 success
@@ -449,6 +473,8 @@ brep_to_csg(struct ged *gedp, struct directory *dp, int verify)
     struct wmember *scomb = NULL;
     struct bu_vls obj_comb_name = BU_VLS_INIT_ZERO;
     struct bu_vls sub_comb_name = BU_VLS_INIT_ZERO;
+    struct subbrep_object_data *curr_union;
+
     if (subbreps_tree) {
 	for (unsigned int i = 0; i < BU_PTBL_LEN(subbreps_tree); i++){
 	    struct subbrep_object_data *obj = (struct subbrep_object_data *)BU_PTBL_GET(subbreps_tree, i);
@@ -458,17 +484,7 @@ brep_to_csg(struct ged *gedp, struct directory *dp, int verify)
 	    if (obj->params->bool_op == 'u') {
 		//print_subbrep_object(obj, "");
 		if (ccomb) {
-		    // We've collected all the subtractions we know about - make a temp comb for raytracing.
-		    //mk_lcomb(wdbp, bu_vls_addr(&obj_comb_name), ccomb, 1, NULL, NULL, NULL, 0);
-
-		    // Evaluate the candidate subtraction objects using solid raytracing, and add the ones
-		    // that contribute gaps to the comb definition.
-
-
-		    // kill the temp comb and replace it with the final version, which will contain any additional
-		    // subtractions.  Unlike the temp comb, this comb is not a region
-		    mk_lcomb(wdbp, bu_vls_addr(&obj_comb_name), ccomb, 0, NULL, NULL, NULL, 0);
-
+		    finalize_comb(wdbp, &obj_comb_name, ccomb, curr_union);
 		    BU_PUT(ccomb, struct wmember);
 		    if (scomb) {
 			mk_lcomb(wdbp, bu_vls_addr(&sub_comb_name), scomb, 0, NULL, NULL, NULL, 0);
@@ -478,7 +494,9 @@ brep_to_csg(struct ged *gedp, struct directory *dp, int verify)
 		}
 		BU_GET(ccomb, struct wmember);
 		BU_LIST_INIT(&ccomb->l);
-		bu_vls_sprintf(&obj_comb_name, "%s-c_%s.c", bu_vls_addr(&comb_name), bu_vls_addr(obj->name_root));
+		curr_union = obj;
+		bu_vls_sprintf(&obj_comb_name, "%s-_test_c_%s.c", bu_vls_addr(&comb_name), bu_vls_addr(obj->name_root));
+		bu_log("Working %s\n", bu_vls_addr(&obj_comb_name));
 		bu_vls_sprintf(&sub_comb_name, "%s-s_%s.c", bu_vls_addr(&comb_name), bu_vls_addr(obj->name_root));
 		(void)mk_addmember(bu_vls_addr(&obj_comb_name), &(pcomb.l), NULL, db_str2op(&(obj->params->bool_op)));
 		(void)mk_addmember(bu_vls_addr(&obj_name), &((*ccomb).l), NULL, db_str2op(&(obj->params->bool_op)));
@@ -499,17 +517,7 @@ brep_to_csg(struct ged *gedp, struct directory *dp, int verify)
 
 	/* Make the last comb */
 	if (ccomb) {
-	    // We've collected all the subtractions we know about - make a temp comb for raytracing.
-	    //mk_lcomb(wdbp, bu_vls_addr(&obj_comb_name), ccomb, 1, NULL, NULL, NULL, 0);
-
-	    // Evaluate the candidate subtraction objects using solid raytracing, and add the ones
-	    // that contribute gaps to the comb definition.
-
-
-	    // kill the temp comb and replace it with the final version, which will contain any additional
-	    // subtractions.  Unlike the temp comb, this comb is not a region
-	    mk_lcomb(wdbp, bu_vls_addr(&obj_comb_name), ccomb, 0, NULL, NULL, NULL, 0);
-
+	    finalize_comb(wdbp, &obj_comb_name, ccomb, curr_union);
 	    BU_PUT(ccomb, struct wmember);
 	    if (scomb) {
 		mk_lcomb(wdbp, bu_vls_addr(&sub_comb_name), scomb, 0, NULL, NULL, NULL, 0);

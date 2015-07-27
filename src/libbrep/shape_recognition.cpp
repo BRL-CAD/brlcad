@@ -413,40 +413,32 @@ find_top_level_hierarchy(struct bu_vls *msgs, struct bu_ptbl *subbreps)
 
 	// Now, whatever is left in the local subtraction queue has to be ruled out based on volumetric
 	// intersection testing.
-
-	// TODO - below test is not good - easy to construct cases where the bbox isn't enough or gives
-	// the wrong answer.  What we're going to have to do is for the cases where the bboxes do overlap,
-	// stash the items in a queue that will be evaluated higher up the chain by raytracing based testing.
-	//
-	// Some thoughts on what we'll have to implement:
-	//
-	// Shoot the csg object without the (possible) subtraction objects present.  Shoot the parent nurb
-	// with the same set of rays.  find all segments from the parent NURBS object that share a start
-	// or end point with the candidate csg object, but are not identical.  because all possible contemplated
-	// operations at this stage are subtractions, any differences (within tolerance) should be due to
-	// missing subtraction objects.  Now, shoot rays with problematic segments at the subtraction object
-	// candidates.  If things work correctly, should be able to identify which candidate shape or shapes
-	// provide segments which map to the segments that "should" be missing from the csg, per the parent nurb.
-	// On that basis, finish the tree.
-
-	// Construct bounding box for pobj
-	if (!pobj->bbox_set) subbrep_bbox(pobj);
-	// Iterate over the queue
-	for (sb_it2 = local_subtraction_queue.begin(); sb_it2 != local_subtraction_queue.end(); sb_it2++) {
-	    struct subbrep_object_data *sobj = (struct subbrep_object_data *)(*sb_it2);
-	    //std::cout << "Checking subbrep " << bu_vls_addr(sobj->key) << "\n";
-	    // Construct bounding box for sobj
-	    if (!sobj->bbox_set) subbrep_bbox(sobj);
-	    ON_BoundingBox isect;
-	    bool bbi = isect.Intersection(*pobj->bbox, *sobj->bbox);
-
-	    // TODO - this bit goes - if we have an intersection per above, needs more evaluation
-	    bool bbc = pobj->bbox->Includes(*sobj->bbox);
-	    bool bcb = sobj->bbox->Includes(*pobj->bbox);
-	    if (!bcb && (bbi || bbc)) {
-		//std::cout << " Found intersecting subbrep " << bu_vls_addr(sobj->key) << " under " << bu_vls_addr(pobj->key) << "\n";
-		bu_ptbl_ins(subbreps_tree, *sb_it2);
+	if (!local_subtraction_queue.empty()) {
+	    BU_GET(pobj->subtraction_candidates, struct bu_ptbl);
+	    bu_ptbl_init(pobj->subtraction_candidates, 8, "subtbl init");
+	    // Construct bounding box for pobj
+	    if (!pobj->bbox_set) subbrep_bbox(pobj);
+	    // Iterate over the queue
+	    for (sb_it2 = local_subtraction_queue.begin(); sb_it2 != local_subtraction_queue.end(); sb_it2++) {
+		struct subbrep_object_data *sobj = (struct subbrep_object_data *)(*sb_it2);
+		//std::cout << "Checking subbrep " << bu_vls_addr(sobj->key) << "\n";
+		// Construct bounding box for sobj
+		if (!sobj->bbox_set) subbrep_bbox(sobj);
+		ON_BoundingBox isect;
+		bool bbi = isect.Intersection(*pobj->bbox, *sobj->bbox);
+		// If there is overlap, we have a possible subtraction object.  It isn't currently possible
+		// to sort out reliably in the libbrep context if this object is really a net contributor
+		// to negative volume, so we store the candidates for post processing.  Not even surface/surface
+		// intersection testing will resolve this - a small arb in the center of a torus will not contribute
+		// a net negative volume, but a small arb in the center of a sphere will, and in both cases
+		// the bbox tests and the surface/surface tests will give the same answers.  At the moment the
+		// only practical approach requires solid raytracing.
+		if (bbi) {
+		    bu_ptbl_ins(pobj->subtraction_candidates, *sb_it2);
+		}
 	    }
+	} else {
+	    pobj->subtraction_candidates = NULL;
 	}
     }
     return subbreps_tree;
