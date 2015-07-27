@@ -36,6 +36,48 @@ extern "C" {
 #include "analyze.h"
 }
 
+#if 0
+extern "C" void
+analyze_gen_worker(int cpu, void *ptr)
+{
+    struct application ap;
+    struct raydiff_container *state = &(((struct raydiff_container *)ptr)[cpu]);
+    fastf_t si, ei;
+    int start_ind, end_ind, i;
+    if (cpu == 0) {
+	/* If we're serial, start at the beginning */
+	start_ind = 0;
+	end_ind = state->rays_cnt - 1;
+    } else {
+	si = (fastf_t)(cpu - 1)/(fastf_t)state->ncpus * (fastf_t) state->rays_cnt;
+	ei = (fastf_t)cpu/(fastf_t)state->ncpus * (fastf_t) state->rays_cnt - 1;
+	start_ind = (int)si;
+	end_ind = (int)ei;
+	if (state->rays_cnt - end_ind < 3) end_ind = state->rays_cnt - 1;
+	/*
+	 *         bu_log("start_ind (%d): %d\n", cpu, start_ind);
+	 *                 bu_log("end_ind (%d): %d\n", cpu, end_ind);
+	 *                         */
+    }
+
+    RT_APPLICATION_INIT(&ap);
+    ap.a_rt_i = state->rtip;
+    ap.a_hit = raydiff_hit;
+    ap.a_miss = raydiff_miss;
+    ap.a_overlap = raydiff_overlap;
+    ap.a_onehit = 0;
+    ap.a_logoverlap = rt_silent_logoverlap;
+    ap.a_resource = state->resp;
+    ap.a_uptr = (void *)state;
+
+    for (i = start_ind; i <= end_ind; i++) {
+	VSET(ap.a_ray.r_pt, state->rays[6*i+0], state->rays[6*i+1], state->rays[6*i+2]);
+	VSET(ap.a_ray.r_dir, state->rays[6*i+3], state->rays[6*i+4], state->rays[6*i+5]);
+	rt_shootray(&ap);
+    }
+}
+#endif
+
 extern "C" int
 analyze_get_bbox_rays(fastf_t **rays, point_t min, point_t max, struct bn_tol *tol)
 {
@@ -374,12 +416,8 @@ analyze_get_solid_partitions(struct bu_ptbl *results, const fastf_t *rays, int r
 	state[i].ncpus = ncpus;
 	state[i].resp = &resp[i];
 	rt_init_resource(state[i].resp, i, state->rtip);
-	BU_GET(state[i].left, struct bu_ptbl);
-	bu_ptbl_init(state[i].left, 64, "left solid hits");
 	BU_GET(state[i].both, struct bu_ptbl);
 	bu_ptbl_init(state[i].both, 64, "hits on both solids");
-	BU_GET(state[i].right, struct bu_ptbl);
-	bu_ptbl_init(state[i].right, 64, "right solid hits");
     }
 
     if (rt_gettree(rtip, obj) < 0) {

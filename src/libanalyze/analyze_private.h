@@ -25,6 +25,9 @@
 
 #include "raytrace.h"
 
+#ifndef ANALYZE_PRIVATE_H
+#define ANALYZE_PRIVATE_H
+
 struct minimal_partitions {
     fastf_t *t;
     int cnt;
@@ -32,10 +35,26 @@ struct minimal_partitions {
     int valid;
 };
 
+
 typedef int (*hitfunc_t)(struct application *, struct partition *, struct seg *);
 typedef int (*missfunc_t)(struct application *);
 typedef int (*overlapfunc_t)(struct application *, struct partition *, struct region *, struct region *, struct partition *);
+typedef int (*nextstart_t)(int *);
 
+struct rt_gen_worker_vars {
+    struct rt_i *rtip;
+    struct resource *resp;
+    int rays_cnt;
+    const fastf_t *rays;
+    hitfunc_t fhit;
+    missfunc_t fmiss;
+    overlapfunc_t foverlap;
+    int step;       /* number of rays to be fired by this worker before calling back */
+    int *ind_src;   /* source of starting index */
+    nextstart_t nstart; /* function to call to get next starting index */
+};
+
+typedef struct rt_gen_worker_vars * (*getrtgen_t)(void *ptr);
 typedef struct xray * (*getray_t)(void *ptr);
 typedef int *         (*getflag_t)(void *ptr);
 
@@ -45,6 +64,8 @@ void raydiff_gen_worker(int cpu, void *ptr);
 int analyze_get_bbox_rays(fastf_t **rays, point_t min, point_t max, struct bn_tol *tol);
 
 void analyze_seg_filter(struct bu_ptbl *segs, getray_t gray, getflag_t gflag, struct rt_i *rtip, struct resource *resp, fastf_t tol);
+
+#endif /* ANALYZE_PRIVATE_H */
 
 /*
  * Local Variables:

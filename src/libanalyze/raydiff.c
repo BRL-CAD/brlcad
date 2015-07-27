@@ -80,9 +80,7 @@ analyze_raydiff_results_free(struct analyze_raydiff_results *results)
 }
 
 struct raydiff_container {
-    struct rt_i *rtip;
-    struct resource *resp;
-    int ray_dir;
+    struct rt_gen_worker_vars rtgen;
     int ncpus;
     fastf_t tol;
     int have_diffs;
@@ -91,8 +89,6 @@ struct raydiff_container {
     struct bu_ptbl *left;
     struct bu_ptbl *both;
     struct bu_ptbl *right;
-    const fastf_t *rays;
-    int rays_cnt;
     int cnt;
     struct bu_ptbl *test;
 };
@@ -195,7 +191,8 @@ HIDDEN void
 raydiff_gen_worker(int cpu, void *ptr)
 {
     struct application ap;
-    struct raydiff_container *state = &(((struct raydiff_container *)ptr)[cpu]);
+    struct raydiff_container *s = &(((struct raydiff_container *)ptr)[cpu]);
+    struct rt_gen_worker_vars *state = &(s->rtgen);
     fastf_t si, ei;
     int start_ind, end_ind, i;
     if (cpu == 0) {
@@ -203,8 +200,8 @@ raydiff_gen_worker(int cpu, void *ptr)
 	start_ind = 0;
 	end_ind = state->rays_cnt - 1;
     } else {
-	si = (fastf_t)(cpu - 1)/(fastf_t)state->ncpus * (fastf_t) state->rays_cnt;
-	ei = (fastf_t)cpu/(fastf_t)state->ncpus * (fastf_t) state->rays_cnt - 1;
+	si = (fastf_t)(cpu - 1)/(fastf_t)s->ncpus * (fastf_t) state->rays_cnt;
+	ei = (fastf_t)cpu/(fastf_t)s->ncpus * (fastf_t) state->rays_cnt - 1;
 	start_ind = (int)si;
 	end_ind = (int)ei;
 	if (state->rays_cnt - end_ind < 3) end_ind = state->rays_cnt - 1;
@@ -254,13 +251,13 @@ analyze_raydiff(struct analyze_raydiff_results **results, struct db_i *dbip,
     rtip = rt_new_rti(dbip);
 
     for (i = 0; i < ncpus+1; i++) {
-	state[i].rtip = rtip;
+	state[i].rtgen.rtip = rtip;
 	state[i].tol = 0.5;
 	state[i].ncpus = ncpus;
 	state[i].left_name = bu_strdup(left);
 	state[i].right_name = bu_strdup(right);
-	state[i].resp = &resp[i];
-	rt_init_resource(state[i].resp, i, state->rtip);
+	state[i].rtgen.resp = &resp[i];
+	rt_init_resource(state[i].rtgen.resp, i, rtip);
 	BU_GET(state[i].left, struct bu_ptbl);
 	bu_ptbl_init(state[i].left, 64, "left solid hits");
 	BU_GET(state[i].both, struct bu_ptbl);
@@ -289,8 +286,8 @@ analyze_raydiff(struct analyze_raydiff_results **results, struct db_i *dbip,
 */
     ret = 0;
     for (i = 0; i < ncpus+1; i++) {
-	state[i].rays_cnt = count;
-	state[i].rays = rays;
+	state[i].rtgen.rays_cnt = count;
+	state[i].rtgen.rays = rays;
     }
 
     bu_parallel(raydiff_gen_worker, ncpus, (void *)state);
