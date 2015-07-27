@@ -406,7 +406,7 @@ finalize_comb(struct rt_wdb *wdbp, struct directory *brep_dp, struct rt_gen_work
 	struct bu_ptbl cc = BU_PTBL_INIT_ZERO;
 	struct bu_ptbl results = BU_PTBL_INIT_ZERO;
 
-	bu_log("Working %s...\n", curr_union->obj_name);
+	bu_log("Working on %s...\n", curr_union->obj_name);
 	bu_vls_sprintf(&tmp_comb_name, "%s-r", curr_union->obj_name);
 
 	// We've collected all the subtractions we know about - make a temp comb for raytracing.  Because
@@ -519,6 +519,7 @@ brep_to_csg(struct ged *gedp, struct directory *dp, int verify)
 		    // May need to stash for later processing rahter than finalizing now...
 		    curr_union->wmember = (void *)ccomb;
 		    bu_ptbl_ins(&finalize_combs, (long *)curr_union);
+		    bu_log("inserting %s\n", curr_union->obj_name);
 		    ccomb = NULL;  /* stashed in the subbrep object - clear for the next comb */
 		    if (scomb) {
 			mk_lcomb(wdbp, bu_vls_addr(&sub_comb_name), scomb, 0, NULL, NULL, NULL, 0);
@@ -555,6 +556,7 @@ brep_to_csg(struct ged *gedp, struct directory *dp, int verify)
 	if (ccomb) {
 	    curr_union->wmember = (void *)ccomb;
 	    bu_ptbl_ins(&finalize_combs, (long *)curr_union);
+	    bu_log("inserting %s\n", curr_union->obj_name);
 	    if (scomb) {
 		mk_lcomb(wdbp, bu_vls_addr(&sub_comb_name), scomb, 0, NULL, NULL, NULL, 0);
 		BU_PUT(scomb, struct wmember);
@@ -565,8 +567,9 @@ brep_to_csg(struct ged *gedp, struct directory *dp, int verify)
 	/* finalize the combs that need it */
 	for (unsigned int i = 0; i < BU_PTBL_LEN(&finalize_combs); i++){
 	    struct subbrep_object_data *obj = (struct subbrep_object_data *)BU_PTBL_GET(&finalize_combs, i);
+	    bu_log("finalizing %s\n", obj->obj_name);
 	    ccomb = (struct wmember *)obj->wmember;
-	    finalize_comb(wdbp, dp, NULL, curr_union);
+	    finalize_comb(wdbp, dp, NULL, obj);
 	    BU_PUT(ccomb, struct wmember);
 	}
 
