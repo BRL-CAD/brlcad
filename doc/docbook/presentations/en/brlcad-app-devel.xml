@@ -130,26 +130,21 @@ therapy (run, do not walk, to the nearest exit).</para>
 #include "raytrace.h"   /* librt interface definitions  */
 </programlisting>
 
-<itemizedlist>
+    <itemizedlist>
       <listitem>
         <para>The conf.h and machine.h are ubiquitous in almost all BRLCAD apps</para>
       </listitem>
       <listitem>
         <para>The raytrace.h is present for geometry programs</para>
-      </listitem>
-    </itemizedlist>
 
-<itemizedlist>
-      <listitem>
-        <para><itemizedlist>
-            <listitem>
-              <para>Includes some additional headers</para>
-            </listitem>
-            <listitem>
-              <para>Contains most ray-tracing data structure definitions</para>
-            </listitem>
-          </itemizedlist>
-</para>
+        <itemizedlist>
+          <listitem>
+            <para>Includes some additional headers</para>
+          </listitem>
+          <listitem>
+            <para>Contains most ray-tracing data structure definitions</para>
+          </listitem>
+        </itemizedlist>
       </listitem>
     </itemizedlist>
 
