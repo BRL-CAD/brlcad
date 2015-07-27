@@ -55,7 +55,7 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
 
 * start making use of the CMakePushCheckState macros - we are doing
-  this manually in severl places
+  this manually in several places
 
 * expand libbu parallelism with thread-level control, i.e., the
   ability to start/stop/wait on individual threads in addition to the
