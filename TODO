@@ -1634,6 +1634,16 @@ NEW OBJECTS
 
 * spheroid (quadratic) - special performance case of ell
 
+* ovoid - a 3D rotated oval "egg" shape.  can be constructed as the
+  union of two separate ell.  very simliar to our pill/particle
+  primitive except that an elliptical curve connects the two shapes
+  (and depending on which oval curvature is used) -- could probably
+  use eto+sph evaluation for shot().
+
+  http://www.mathematische-basteleien.de/eggcurves.htm
+  http://www.geocities.jp/nyjp07/Egg/index_egg_E.html
+  https://en.wikipedia.org/wiki/Oval
+
 * conical edge (cubic) - unsure of this one's practical utility except
   as a means to construct a pinched tgc (unioning two halves).
 
