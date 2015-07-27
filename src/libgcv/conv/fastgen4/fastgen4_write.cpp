@@ -119,7 +119,7 @@ private:
 
 
 typedef Triple<fastf_t> Point;
-typedef Triple<unsigned char> Color;
+typedef Triple<uint8_t> Color;
 
 
 HIDDEN Color
@@ -128,7 +128,7 @@ color_from_floats(const float *float_color)
     Color result;
 
     for (int i = 0; i < 3; ++i)
-	result[i] = static_cast<unsigned char>(float_color[i] * 255.0 + 0.5);
+	result[i] = static_cast<uint8_t>(float_color[i] * 255.0 + 0.5);
 
     return result;
 }
@@ -664,6 +664,9 @@ GridManager::write(RecordWriter &writer) const
 class Section
 {
 public:
+    class SectionModeError;
+
+
     Section();
 
     bool empty() const;
@@ -672,8 +675,8 @@ public:
     Color get_color() const;
     void set_color(const Color &value);
 
-    void write(RecordWriter &writer, const std::string &name,
-	       const FastgenWriter::SectionID &id) const;
+    void write(RecordWriter &writer, const FastgenWriter::SectionID &id,
+	       const std::string &name) const;
 
     // create a comment describing an element
     void write_name(const std::string &value);
@@ -705,6 +708,7 @@ public:
 
 private:
     static const std::size_t MAX_NAME_SIZE = RecordWriter::Record::FIELD_WIDTH * 3;
+    static const bool CHECK_MODE_ERRORS = false;
 
     const bool m_volume_mode;
     const std::size_t m_material_id;
@@ -717,8 +721,17 @@ private:
 };
 
 
+class Section::SectionModeError : public std::logic_error
+{
+public:
+    SectionModeError(const std::string &message) :
+	std::logic_error("Section mode inconsistency: " + message)
+    {}
+};
+
+
 Section::Section() :
-    m_volume_mode(true),
+    m_volume_mode(false),
     m_material_id(1),
     m_color(false, Color()),
     m_grids(),
@@ -751,7 +764,7 @@ Section::get_color() const
 }
 
 
-void
+inline void
 Section::set_color(const Color &value)
 {
     m_color = std::make_pair(true, value);
@@ -759,8 +772,8 @@ Section::set_color(const Color &value)
 
 
 void
-Section::write(RecordWriter &writer, const std::string &name,
-	       const FastgenWriter::SectionID &id) const
+Section::write(RecordWriter &writer, const FastgenWriter::SectionID &id,
+	       const std::string &name) const
 {
     if (empty())
 	throw std::logic_error("empty Section");
@@ -801,8 +814,12 @@ Section::write_line(const fastf_t *point_a, const fastf_t *point_b,
     radius *= INCHES_PER_MM;
     thickness *= INCHES_PER_MM;
 
-    if ((!m_volume_mode && thickness <= 0.0) || thickness < 0.0)
-	throw std::invalid_argument("invalid thickness");
+    if (thickness < 0.0)
+	throw std::invalid_argument("negative thickness");
+
+    if (CHECK_MODE_ERRORS)
+	if (!m_volume_mode && NEAR_ZERO(thickness, RT_LEN_TOL))
+	    throw SectionModeError("line with zero thickness in a plate-mode component");
 
     if (radius <= 0.0 || radius < thickness)
 	throw std::invalid_argument("invalid radius");
@@ -830,14 +847,18 @@ void
 Section::write_sphere(const fastf_t *center, fastf_t radius,
 		      fastf_t thickness)
 {
-    if (NEAR_EQUAL(thickness, 0.0, RT_LEN_TOL))
-	thickness = radius;
-
     radius *= INCHES_PER_MM;
     thickness *= INCHES_PER_MM;
 
+    if (NEAR_ZERO(thickness, RT_LEN_TOL))
+	thickness = radius;
+
+    if (CHECK_MODE_ERRORS)
+	if (m_volume_mode && !NEAR_EQUAL(thickness, radius, RT_LEN_TOL))
+	    throw SectionModeError("Sphere with thickness in a volume-mode Section");
+
     if (radius < thickness || thickness <= 0.0)
-	throw std::invalid_argument("invalid value");
+	throw std::invalid_argument("invalid thickness");
 
     std::vector<Point> points(1);
     points.at(0) = Point(center);
@@ -846,7 +867,13 @@ Section::write_sphere(const fastf_t *center, fastf_t radius,
     RecordWriter::Record record(m_elements);
     record << "CSPHERE" << m_next_element_id << m_material_id;
     record << grids.at(0) << "" << "" << "";
-    record.non_zero(thickness).non_zero(radius);
+
+    if (m_volume_mode)
+	record << "";
+    else
+	record.non_zero(thickness);
+
+    record.non_zero(radius);
     ++m_next_element_id;
 }
 
@@ -860,8 +887,9 @@ Section::write_thin_cone(const fastf_t *point_a, const fastf_t *point_b,
     radius2 *= INCHES_PER_MM;
     thickness *= INCHES_PER_MM;
 
-    if (m_volume_mode && false) // TODO
-	throw std::logic_error("CCONE1 in volume-mode component should be a CCONE2");
+    if (CHECK_MODE_ERRORS)
+	if (m_volume_mode)
+	    throw SectionModeError("CCONE1 in volume-mode component should be a CCONE2");
 
     if (radius1 < 0.0 || radius2 < 0.0)
 	throw std::invalid_argument("invalid radius");
@@ -877,8 +905,8 @@ Section::write_thin_cone(const fastf_t *point_a, const fastf_t *point_b,
     {
 	RecordWriter::Record record1(m_elements);
 	record1 << "CCONE1" << m_next_element_id << m_material_id;
-	record1 << grids.at(0) << grids.at(1);
-	record1 << "" << "" << thickness << radius1 << m_next_element_id;
+	record1 << grids.at(0) << grids.at(1) << "" << "";
+	record1 << thickness << radius1 << m_next_element_id;
     }
 
     {
@@ -910,10 +938,14 @@ Section::write_cone(const fastf_t *point_a, const fastf_t *point_b, fastf_t ro1,
     ri1 *= INCHES_PER_MM;
     ri2 *= INCHES_PER_MM;
 
-    if (!m_volume_mode)
-	throw std::logic_error("CCONE2 elements can only be used in volume-mode components");
+    if (CHECK_MODE_ERRORS)
+	if (!m_volume_mode)
+	    throw SectionModeError("CCONE2 element in plate-mode Section");
 
     if (ri1 < 0.0 || ri2 < 0.0 || ro1 < ri1 || ro2 < ri2)
+	throw std::invalid_argument("invalid radius");
+
+    if (NEAR_ZERO(ro1, RT_LEN_TOL) && NEAR_ZERO(ro2, RT_LEN_TOL))
 	throw std::invalid_argument("invalid radius");
 
     std::vector<Point> points(2);
@@ -943,8 +975,16 @@ Section::write_triangle(const fastf_t *point_a, const fastf_t *point_b,
 {
     thickness *= INCHES_PER_MM;
 
-    if (thickness <= 0.0)
-	throw std::invalid_argument("invalid thickness");
+    if (thickness < 0.0)
+	throw std::invalid_argument("negative thickness");
+
+    if (CHECK_MODE_ERRORS)
+	if (NEAR_ZERO(thickness, RT_LEN_TOL) != m_volume_mode) {
+	    if (m_volume_mode)
+		throw SectionModeError("triangle with thickness in a volume-mode Section");
+	    else
+		throw SectionModeError("triangle without thickness in a plate-mode Section");
+	}
 
     std::vector<Point> points(3);
     points.at(0) = Point(point_a);
@@ -955,10 +995,13 @@ Section::write_triangle(const fastf_t *point_a, const fastf_t *point_b,
     RecordWriter::Record record(m_elements);
     record << "CTRI" << m_next_element_id << m_material_id;
     record << grids.at(0) << grids.at(1) << grids.at(2);
-    record.non_zero(thickness);
 
-    if (grid_centered)
-	record << 1;
+    if (!m_volume_mode) {
+	record.non_zero(thickness);
+
+	if (grid_centered)
+	    record << 1;
+    }
 
     ++m_next_element_id;
 }
@@ -971,8 +1014,16 @@ Section::write_quad(const fastf_t *point_a, const fastf_t *point_b,
 {
     thickness *= INCHES_PER_MM;
 
-    if (thickness <= 0.0)
-	throw std::invalid_argument("invalid thickness");
+    if (thickness < 0.0)
+	throw std::invalid_argument("negative thickness");
+
+    if (CHECK_MODE_ERRORS)
+	if (NEAR_ZERO(thickness, RT_LEN_TOL) != m_volume_mode) {
+	    if (m_volume_mode)
+		throw SectionModeError("quad with thickness in a volume-mode Section");
+	    else
+		throw SectionModeError("quad without thickness in a plate-mode Section");
+	}
 
     std::vector<Point> points(4);
     points.at(0) = Point(point_a);
@@ -984,10 +1035,13 @@ Section::write_quad(const fastf_t *point_a, const fastf_t *point_b,
     RecordWriter::Record record(m_elements);
     record << "CQUAD" << m_next_element_id << m_material_id;
     record << grids.at(0) << grids.at(1) << grids.at(2) << grids.at(3);
-    record.non_zero(thickness);
 
-    if (grid_centered)
-	record << 1;
+    if (!m_volume_mode) {
+	record.non_zero(thickness);
+
+	if (grid_centered)
+	    record << 1;
+    }
 
     ++m_next_element_id;
 
@@ -1003,13 +1057,18 @@ Section::write_hexahedron(const fastf_t vpoints[8][3], fastf_t thickness,
     if (thickness < 0.0)
 	throw std::invalid_argument("invalid thickness");
 
+    const bool has_thickness = !NEAR_ZERO(thickness, RT_LEN_TOL);
+
+    if (CHECK_MODE_ERRORS)
+	if (m_volume_mode && has_thickness)
+	    throw SectionModeError("hexahedron with thickness in a volume-mode Section");
+
     std::vector<Point> points(8);
 
     for (int i = 0; i < 8; ++i)
 	points.at(i) = Point(vpoints[i]);
 
     const std::vector<std::size_t> grids = m_grids.get_unique_grids(points);
-    const bool has_thickness = !NEAR_EQUAL(thickness, 0.0, RT_LEN_TOL);
 
     {
 	RecordWriter::Record record1(m_elements);
@@ -1048,11 +1107,8 @@ get_face_info(const rt_bot_internal &bot, std::size_t i)
     // defaults
     std::pair<fastf_t, bool> result(1.0, true);
 
-    // fastgen forbids a thickness of zero here
-    // set a very small thickness if face thickness is zero
     if (bot.thickness)
-	result.first = !NEAR_ZERO(bot.thickness[i],
-				  RT_LEN_TOL) ? bot.thickness[i] : 2.0 * RT_LEN_TOL;
+	result.first = bot.thickness[i];
 
     if (bot.face_mode)
 	result.second = !BU_BITTEST(bot.face_mode, i);
@@ -1915,7 +1971,7 @@ FastgenConversion::RegionManager::write(FastgenWriter &writer) const
 		writer.write_section_color(split_id, it->second->get_color());
 	}
 
-	it->second->write(writer.get_section_writer(), it->first, id);
+	it->second->write(writer.get_section_writer(), id, it->first);
 	results.push_back(id);
 
 	if (it->second->has_color())
@@ -2118,7 +2174,7 @@ FastgenConversion::~FastgenConversion()
     writer.write_comment("g -> fastgen4 conversion");
 
     if (!m_toplevels.empty())
-	m_toplevels.write(writer, "toplevels", writer.take_next_section_id());
+	m_toplevels.write(writer, writer.take_next_section_id(), "toplevels");
 
     std::map<const directory *, std::vector<FastgenWriter::SectionID> > ids;
 
@@ -2334,8 +2390,6 @@ convert_leaf(db_tree_state *tree_state, const db_full_path *path,
     RT_CK_DB_INTERNAL(internal);
 
     FastgenConversion &data = *static_cast<FastgenConversion *>(client_data);
-    const bool subtracted = tree_state->ts_sofar & (TS_SOFAR_MINUS |
-			    TS_SOFAR_INTER);
     const directory *region_dir;
 
     try {
@@ -2344,22 +2398,24 @@ convert_leaf(db_tree_state *tree_state, const db_full_path *path,
 	region_dir = NULL;
     }
 
-    const bool facetize = data.do_force_facetize_region(region_dir);
-    bool converted;
+    if (!data.m_failed_regions.count(region_dir)) {
+	const bool facetize = data.do_force_facetize_region(region_dir);
+	const bool subtracted = tree_state->ts_sofar & (TS_SOFAR_MINUS |
+				TS_SOFAR_INTER);
+	bool converted = false;
 
-    if (region_dir
-	&& data.get_region(*region_dir).member_ignored(get_parent_dir(*path)))
-	converted = true;
-    else if (!facetize)
-	converted = convert_primitive(data, *path, *internal, subtracted);
-    else
-	converted = false;
+	if (region_dir
+	    && data.get_region(*region_dir).member_ignored(get_parent_dir(*path)))
+	    converted = true;
+	else if (!facetize)
+	    converted = convert_primitive(data, *path, *internal, subtracted);
 
-    if (!converted) {
-	if (!facetize && subtracted)
-	    data.m_failed_regions.insert(region_dir);
-	else
-	    return nmg_booltree_leaf_tess(tree_state, path, internal, client_data);
+	if (!converted) {
+	    if (!facetize && subtracted)
+		data.m_failed_regions.insert(region_dir);
+	    else
+		return nmg_booltree_leaf_tess(tree_state, path, internal, client_data);
+	}
     }
 
     tree *result;
@@ -2383,17 +2439,13 @@ convert_region_end(db_tree_state *tree_state, const db_full_path *path,
     if (tree_state->ts_mater.ma_color_valid)
 	section.set_color(color_from_floats(tree_state->ts_mater.ma_color));
 
-    if (current_tree->tr_op != OP_NOP) {
-	gcv_region_end_data gcv_data = {write_nmg_region, &data};
-	return gcv_region_end(tree_state, path, current_tree, &gcv_data);
-    }
-
-    return current_tree;
+    gcv_region_end_data gcv_data = {write_nmg_region, &data};
+    return gcv_region_end(tree_state, path, current_tree, &gcv_data);
 }
 
 
 HIDDEN std::set<const directory *>
-do_conversion(const db_i &db, const std::string &path,
+do_conversion(db_i &db, const std::string &path,
 	      const std::set<const directory *> &facetize_regions =
 		  std::set<const directory *>())
 {
@@ -2408,7 +2460,7 @@ do_conversion(const db_i &db, const std::string &path,
     initial_tree_state.ts_ttol = &ttol;
     initial_tree_state.ts_m = &nmg_model.ptr;
 
-    db_update_nref(const_cast<db_i *>(&db), &rt_uniresource);
+    db_update_nref(&db, &rt_uniresource);
     AutoPtr<directory *> toplevel_dirs;
     const std::size_t num_objects = db_ls(&db, DB_LS_TOPS, NULL,
 					  &toplevel_dirs.ptr);
@@ -2417,8 +2469,7 @@ do_conversion(const db_i &db, const std::string &path,
 
     nmg_model.ptr = nmg_mm();
     FastgenConversion data(path, db, tol, facetize_regions);
-    const int ret = db_walk_tree(const_cast<db_i *>(&db),
-				 static_cast<int>(num_objects),
+    const int ret = db_walk_tree(&db, static_cast<int>(num_objects),
 				 const_cast<const char **>(object_names.ptr), 1, &initial_tree_state,
 				 convert_region_start, convert_region_end, convert_leaf, &data);
 
