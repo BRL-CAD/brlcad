@@ -143,6 +143,171 @@ memfree:
     return ret;
 }
 
+
+struct segfilter_container {
+    struct rt_i *rtip;
+    struct resource *resp;
+    int ray_dir;
+    int ncpus;
+    fastf_t tol;
+    fastf_t *rays;
+    int rays_cnt;
+    int cnt;
+    struct bu_ptbl *test;
+};
+
+HIDDEN int
+segfilter_hit(struct application *ap, struct partition *PartHeadp, struct seg *UNUSED(segs))
+{
+    point_t in_pt, out_pt;
+    struct partition *part;
+    fastf_t part_len = 0.0;
+    struct segfilter_container *state = (struct segfilter_container *)(ap->a_uptr);
+
+    for (part = PartHeadp->pt_forw; part != PartHeadp; part = part->pt_forw) {
+        VJOIN1(in_pt, ap->a_ray.r_pt, part->pt_inhit->hit_dist, ap->a_ray.r_dir);
+        VJOIN1(out_pt, ap->a_ray.r_pt, part->pt_outhit->hit_dist, ap->a_ray.r_dir);
+        part_len = DIST_PT_PT(in_pt, out_pt);
+        if (part_len > state->tol) {
+            state->cnt++;
+            return 0;
+        }
+    }
+
+    return 0;
+}
+
+HIDDEN int
+segfilter_miss(struct application *ap)
+{
+    RT_CK_APPLICATION(ap);
+
+    return 0;
+}
+
+HIDDEN int
+segfilter_overlap(struct application *ap,
+                struct partition *UNUSED(pp),
+                struct region *UNUSED(reg1),
+                struct region *UNUSED(reg2),
+                struct partition *UNUSED(hp))
+{
+    RT_CK_APPLICATION(ap);
+    return 0;
+}
+
+HIDDEN void
+segfilter_gen_worker(int cpu, void *ptr)
+{
+    struct application ap;
+    struct segfilter_container *state = &(((struct segfilter_container *)ptr)[cpu]);
+    fastf_t si, ei;
+    int start_ind, end_ind, i;
+    if (cpu == 0) {
+        /* If we're serial, start at the beginning */
+        start_ind = 0;
+        end_ind = BU_PTBL_LEN(state->test) - 1;
+    } else {
+        si = (fastf_t)(cpu - 1)/(fastf_t)state->ncpus * (fastf_t) BU_PTBL_LEN(state->test);
+        ei = (fastf_t)cpu/(fastf_t)state->ncpus * (fastf_t) BU_PTBL_LEN(state->test) - 1;
+        start_ind = (int)si;
+        end_ind = (int)ei;
+        if (BU_PTBL_LEN(state->test) - end_ind < 3) end_ind = BU_PTBL_LEN(state->test) - 1;
+        /*
+        bu_log("start_ind (%d): %d\n", cpu, start_ind);
+        bu_log("end_ind (%d): %d\n", cpu, end_ind);
+        */
+    }
+
+    RT_APPLICATION_INIT(&ap);
+    ap.a_rt_i = state->rtip;
+    ap.a_hit = segfilter_hit;
+    ap.a_miss = segfilter_miss;
+    ap.a_overlap = segfilter_overlap;
+    ap.a_onehit = 0;
+    ap.a_logoverlap = rt_silent_logoverlap;
+    ap.a_resource = state->resp;
+    ap.a_uptr = (void *)state;
+
+    for (i = start_ind; i <= end_ind; i++) {
+        point_t r_pt;
+        vect_t v1, v2;
+        int valid = 0;
+        struct diff_seg *d = (struct diff_seg *)BU_PTBL_GET(state->test, i);
+        VMOVE(ap.a_ray.r_dir, d->ray.r_dir);
+        /* Construct 4 rays and test around the original hit.*/
+        bn_vec_perp(v1, d->ray.r_dir);
+        VCROSS(v2, v1, d->ray.r_dir);
+        VUNITIZE(v1);
+        VUNITIZE(v2);
+
+        valid = 0;
+        VJOIN2(r_pt, d->ray.r_pt, 0.5 * state->tol, v1, 0.5 * state->tol, v2);
+        state->cnt = 0;
+        VMOVE(ap.a_ray.r_pt, r_pt);
+        rt_shootray(&ap);
+        if (state->cnt) valid++;
+        state->cnt = 0;
+        VJOIN2(r_pt, d->ray.r_pt, -0.5 * state->tol, v1, -0.5 * state->tol, v2);
+        state->cnt = 0;
+        VMOVE(ap.a_ray.r_pt, r_pt);
+        rt_shootray(&ap);
+        if (state->cnt) valid++;
+        VJOIN2(r_pt, d->ray.r_pt, -0.5 * state->tol, v1, 0.5 * state->tol, v2);
+        state->cnt = 0;
+        VMOVE(ap.a_ray.r_pt, r_pt);
+        rt_shootray(&ap);
+        if (state->cnt) valid++;
+        state->cnt = 0;
+        VJOIN2(r_pt, d->ray.r_pt, 0.5 * state->tol, v1, -0.5 * state->tol, v2);
+        state->cnt = 0;
+        VMOVE(ap.a_ray.r_pt, r_pt);
+        rt_shootray(&ap);
+        if (state->cnt) valid++;
+
+        if (valid == 4) {
+            d->valid = 1;
+        }
+    }
+}
+
+
+
+/* TODO - may be several possible operations here:
+ *
+ * filter all rays not "solid" (as in gdiff)
+ * filter all rays not surrounded by "similar" results (need to keep subtractions)
+ * filter all rays that are "solid"
+ * filter all rays surrouned by "similar" results (grab only grazing rays)
+ */
+void
+analyze_seg_filter(struct bu_ptbl *segs, struct rt_i *rtip, struct resource *resp, fastf_t tol)
+{
+    int i = 0;
+    int ncpus = bu_avail_cpus();
+    struct segfilter_container *state;
+
+    if (!segs || !rtip) return;
+
+    state = (struct segfilter_container *)bu_calloc(ncpus+1, sizeof(struct segfilter_container), "resources");
+    /* Preparing rtip is the responsibility of the calling function - here we're just setting
+     * up the resources.  The rays are contained in the individual segs structures and are
+     * extracted by the gen_worker function. */
+    for (i = 0; i < ncpus+1; i++) {
+	state[i].rtip = rtip;
+	state[i].tol = tol;
+	state[i].ncpus = ncpus;
+	state[i].resp = &resp[i];
+	state[i].test = segs;
+    }
+
+    bu_parallel(segfilter_gen_worker, ncpus, (void *)state);
+
+    bu_free(state, "state");
+
+    return;
+}
+
 /*
  * Local Variables:
  * tab-width: 8

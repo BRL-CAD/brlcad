@@ -219,117 +219,6 @@ raydiff_gen_worker(int cpu, void *ptr)
 }
 
 
-/* TODO - do we care if it's a left or right hit? */
-HIDDEN int
-raycheck_hit(struct application *ap, struct partition *PartHeadp, struct seg *UNUSED(segs))
-{
-    point_t in_pt, out_pt;
-    struct partition *part;
-    fastf_t part_len = 0.0;
-    struct raydiff_container *state = (struct raydiff_container *)(ap->a_uptr);
-
-    for (part = PartHeadp->pt_forw; part != PartHeadp; part = part->pt_forw) {
-	VJOIN1(in_pt, ap->a_ray.r_pt, part->pt_inhit->hit_dist, ap->a_ray.r_dir);
-	VJOIN1(out_pt, ap->a_ray.r_pt, part->pt_outhit->hit_dist, ap->a_ray.r_dir);
-	part_len = DIST_PT_PT(in_pt, out_pt);
-	if (part_len > state->tol) {
-	    state->cnt++;
-	    return 0;
-	}
-    }
-
-    return 0;
-}
-
-
-HIDDEN int
-raycheck_overlap(struct application *ap,
-		struct partition *UNUSED(pp),
-		struct region *UNUSED(reg1),
-		struct region *UNUSED(reg2),
-		struct partition *UNUSED(hp))
-{
-    RT_CK_APPLICATION(ap);
-    return 0;
-}
-
-
-
-HIDDEN void
-raycheck_gen_worker(int cpu, void *ptr)
-{
-    struct application ap;
-    struct raydiff_container *state = &(((struct raydiff_container *)ptr)[cpu]);
-    fastf_t si, ei;
-    int start_ind, end_ind, i;
-    if (cpu == 0) {
-	/* If we're serial, start at the beginning */
-	start_ind = 0;
-	end_ind = BU_PTBL_LEN(state->test) - 1;
-    } else {
-	si = (fastf_t)(cpu - 1)/(fastf_t)state->ncpus * (fastf_t) BU_PTBL_LEN(state->test);
-	ei = (fastf_t)cpu/(fastf_t)state->ncpus * (fastf_t) BU_PTBL_LEN(state->test) - 1;
-	start_ind = (int)si;
-	end_ind = (int)ei;
-	if (BU_PTBL_LEN(state->test) - end_ind < 3) end_ind = BU_PTBL_LEN(state->test) - 1;
-	/*
-	bu_log("start_ind (%d): %d\n", cpu, start_ind);
-	bu_log("end_ind (%d): %d\n", cpu, end_ind);
-	*/
-    }
-
-    RT_APPLICATION_INIT(&ap);
-    ap.a_rt_i = state->rtip;
-    ap.a_hit = raycheck_hit;
-    ap.a_miss = raydiff_miss;
-    ap.a_overlap = raycheck_overlap;
-    ap.a_onehit = 0;
-    ap.a_logoverlap = rt_silent_logoverlap;
-    ap.a_resource = state->resp;
-    ap.a_uptr = (void *)state;
-
-    for (i = start_ind; i <= end_ind; i++) {
-	point_t r_pt;
-	vect_t v1, v2;
-	int valid = 0;
-	struct diff_seg *d = (struct diff_seg *)BU_PTBL_GET(state->test, i);
-	VMOVE(ap.a_ray.r_dir, d->ray.r_dir);
-	/* Construct 4 rays and test around the original hit.*/
-	bn_vec_perp(v1, d->ray.r_dir);
-	VCROSS(v2, v1, d->ray.r_dir);
-	VUNITIZE(v1);
-	VUNITIZE(v2);
-
-	valid = 0;
-	VJOIN2(r_pt, d->ray.r_pt, 0.5 * state->tol, v1, 0.5 * state->tol, v2);
-	state->cnt = 0;
-	VMOVE(ap.a_ray.r_pt, r_pt);
-	rt_shootray(&ap);
-	if (state->cnt) valid++;
-	state->cnt = 0;
-	VJOIN2(r_pt, d->ray.r_pt, -0.5 * state->tol, v1, -0.5 * state->tol, v2);
-	state->cnt = 0;
-	VMOVE(ap.a_ray.r_pt, r_pt);
-	rt_shootray(&ap);
-	if (state->cnt) valid++;
-	VJOIN2(r_pt, d->ray.r_pt, -0.5 * state->tol, v1, 0.5 * state->tol, v2);
-	state->cnt = 0;
-	VMOVE(ap.a_ray.r_pt, r_pt);
-	rt_shootray(&ap);
-	if (state->cnt) valid++;
-	state->cnt = 0;
-	VJOIN2(r_pt, d->ray.r_pt, 0.5 * state->tol, v1, -0.5 * state->tol, v2);
-	state->cnt = 0;
-	VMOVE(ap.a_ray.r_pt, r_pt);
-	rt_shootray(&ap);
-	if (state->cnt) valid++;
-
-	if (valid == 4) {
-	    d->valid = 1;
-	}
-    }
-}
-
 /* 0 = no difference within tolerance, 1 = difference >= tolerance */
 int
 analyze_raydiff(struct analyze_raydiff_results **results, struct db_i *dbip,
@@ -340,8 +229,9 @@ analyze_raydiff(struct analyze_raydiff_results **results, struct db_i *dbip,
     struct rt_i *rtip;
     int ncpus = bu_avail_cpus();
     fastf_t *rays;
-    struct raydiff_container *state = (struct raydiff_container *)bu_calloc(ncpus+1, sizeof(struct raydiff_container), "resources");
+    struct raydiff_container *state = (struct raydiff_container *)bu_calloc(ncpus+1, sizeof(struct raydiff_container), "state");
     struct bu_ptbl test_tbl = BU_PTBL_INIT_ZERO;
+    struct resource *resp = (struct resource *)bu_calloc(ncpus+1, sizeof(struct resource), "resources");;
 
     if (!dbip || !left || !right|| !tol) {
 	ret = 0;
@@ -356,7 +246,7 @@ analyze_raydiff(struct analyze_raydiff_results **results, struct db_i *dbip,
 	state[i].ncpus = ncpus;
 	state[i].left_name = bu_strdup(left);
 	state[i].right_name = bu_strdup(right);
-	BU_GET(state[i].resp, struct resource);
+	state[i].resp = &resp[i];
 	rt_init_resource(state[i].resp, i, state->rtip);
 	BU_GET(state[i].left, struct bu_ptbl);
 	bu_ptbl_init(state[i].left, 64, "left solid hits");
@@ -402,10 +292,7 @@ analyze_raydiff(struct analyze_raydiff_results **results, struct db_i *dbip,
 		bu_ptbl_ins(&test_tbl, BU_PTBL_GET(state[i].right, j));
 	    }
 	}
-	for (i = 0; i < ncpus+1; i++) {
-	    state[i].test = &test_tbl;
-	}
-	bu_parallel(raycheck_gen_worker, ncpus, (void *)state);
+	analyze_seg_filter(&test_tbl, rtip, resp, 0.5);
     } else {
 	/* Not restricting to solids, all are valid */
 	for (i = 0; i < ncpus+1; i++) {
@@ -453,9 +340,10 @@ memfree:
 	BU_PUT(state[i].both, struct bu_ptbl);
 	if (state[i].left_name)  bu_free((void *)state[i].left_name, "left name");
 	if (state[i].right_name) bu_free((void *)state[i].right_name, "right name");
-	BU_PUT(state[i].resp, struct resource);
+	/*BU_PUT(state[i].resp, struct resource);*/
     }
     bu_free(state, "free state containers");
+    bu_free(resp, "free resources");
 
     return ret;
 }

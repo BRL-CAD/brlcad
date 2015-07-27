@@ -25,6 +25,8 @@
 /* Returns count of rays in rays array */
 int analyze_get_bbox_rays(fastf_t **rays, point_t min, point_t max, struct bn_tol *tol);
 
+void analyze_seg_filter(struct bu_ptbl *segs, struct rt_i *rtip, struct resource *resp, fastf_t tol);
+
 /*
  * Local Variables:
  * tab-width: 8
