@@ -55,15 +55,15 @@ struct rt_gen_worker_vars {
     void *ptr; /* application specific info */
 };
 
-typedef struct rt_gen_worker_vars * (*getrtgen_t)(void *ptr);
-typedef struct xray * (*getray_t)(void *ptr);
-typedef int *         (*getflag_t)(void *ptr);
-
-void raydiff_gen_worker(int cpu, void *ptr);
+void analyze_gen_worker(int cpu, void *ptr);
 
 /* Returns count of rays in rays array */
 int analyze_get_bbox_rays(fastf_t **rays, point_t min, point_t max, struct bn_tol *tol);
 
+
+
+typedef struct xray * (*getray_t)(void *ptr);
+typedef int *         (*getflag_t)(void *ptr);
 void analyze_seg_filter(struct bu_ptbl *segs, getray_t gray, getflag_t gflag, struct rt_i *rtip, struct resource *resp, fastf_t tol);
 
 #endif /* ANALYZE_PRIVATE_H */

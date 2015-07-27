@@ -36,47 +36,43 @@ extern "C" {
 #include "analyze.h"
 }
 
-#if 0
 extern "C" void
 analyze_gen_worker(int cpu, void *ptr)
 {
     struct application ap;
-    struct raydiff_container *state = &(((struct raydiff_container *)ptr)[cpu]);
-    fastf_t si, ei;
+    struct rt_gen_worker_vars *state = &(((struct rt_gen_worker_vars *)ptr)[cpu]);
     int start_ind, end_ind, i;
-    if (cpu == 0) {
-	/* If we're serial, start at the beginning */
-	start_ind = 0;
-	end_ind = state->rays_cnt - 1;
-    } else {
-	si = (fastf_t)(cpu - 1)/(fastf_t)state->ncpus * (fastf_t) state->rays_cnt;
-	ei = (fastf_t)cpu/(fastf_t)state->ncpus * (fastf_t) state->rays_cnt - 1;
-	start_ind = (int)si;
-	end_ind = (int)ei;
-	if (state->rays_cnt - end_ind < 3) end_ind = state->rays_cnt - 1;
-	/*
-	 *         bu_log("start_ind (%d): %d\n", cpu, start_ind);
-	 *                 bu_log("end_ind (%d): %d\n", cpu, end_ind);
-	 *                         */
-    }
 
     RT_APPLICATION_INIT(&ap);
     ap.a_rt_i = state->rtip;
-    ap.a_hit = raydiff_hit;
-    ap.a_miss = raydiff_miss;
-    ap.a_overlap = raydiff_overlap;
+    ap.a_hit = state->fhit;
+    ap.a_miss = state->fmiss;
+    ap.a_overlap = state->foverlap;
     ap.a_onehit = 0;
     ap.a_logoverlap = rt_silent_logoverlap;
     ap.a_resource = state->resp;
     ap.a_uptr = (void *)state;
 
-    for (i = start_ind; i <= end_ind; i++) {
-	VSET(ap.a_ray.r_pt, state->rays[6*i+0], state->rays[6*i+1], state->rays[6*i+2]);
-	VSET(ap.a_ray.r_dir, state->rays[6*i+3], state->rays[6*i+4], state->rays[6*i+5]);
-	rt_shootray(&ap);
+    bu_semaphore_acquire(RT_SEM_WORKER);
+    start_ind = (*state->ind_src);
+    (*state->ind_src) = start_ind + state->step;
+    //bu_log("increment(%d): %d\n", cpu, start_ind);
+    bu_semaphore_release(RT_SEM_WORKER);
+    end_ind = start_ind + state->step - 1;
+    while (start_ind < state->rays_cnt) {
+	for (i = start_ind; i <= end_ind && i < state->rays_cnt; i++) {
+	    VSET(ap.a_ray.r_pt, state->rays[6*i+0], state->rays[6*i+1], state->rays[6*i+2]);
+	    VSET(ap.a_ray.r_dir, state->rays[6*i+3], state->rays[6*i+4], state->rays[6*i+5]);
+	    rt_shootray(&ap);
+	}
+	bu_semaphore_acquire(RT_SEM_WORKER);
+	start_ind = (*state->ind_src);
+	(*state->ind_src) = start_ind + state->step;
+	//bu_log("increment(%d): %d\n", cpu, start_ind);
+	bu_semaphore_release(RT_SEM_WORKER);
+	end_ind = start_ind + state->step - 1;
     }
 }
-#endif
 
 extern "C" int
 analyze_get_bbox_rays(fastf_t **rays, point_t min, point_t max, struct bn_tol *tol)
@@ -433,7 +429,7 @@ analyze_get_solid_partitions(struct bu_ptbl *results, const fastf_t *rays, int r
 	state[i].rays = rays;
     }
 
-    bu_parallel(raydiff_gen_worker, ncpus, (void *)state);
+    bu_parallel(analyze_gen_worker, ncpus, (void *)state);
 
     for (i = 0; i < ncpus+1; i++) {
 	for (j = 0; j < (int)BU_PTBL_LEN(state[i].both); j++) {

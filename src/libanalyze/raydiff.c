@@ -80,7 +80,6 @@ analyze_raydiff_results_free(struct analyze_raydiff_results *results)
 }
 
 struct raydiff_container {
-    int ncpus;
     fastf_t tol;
     int have_diffs;
     const char *left_name;
@@ -188,54 +187,13 @@ raydiff_miss(struct application *ap)
 }
 
 
-HIDDEN void
-raydiff_gen_worker(int cpu, void *ptr)
-{
-    struct application ap;
-    struct rt_gen_worker_vars *state = &(((struct rt_gen_worker_vars *)ptr)[cpu]);
-    struct raydiff_container *s = (struct raydiff_container *)state->ptr;
-    fastf_t si, ei;
-    int start_ind, end_ind, i;
-    if (cpu == 0) {
-	/* If we're serial, start at the beginning */
-	start_ind = 0;
-	end_ind = state->rays_cnt - 1;
-    } else {
-	si = (fastf_t)(cpu - 1)/(fastf_t)s->ncpus * (fastf_t) state->rays_cnt;
-	ei = (fastf_t)cpu/(fastf_t)s->ncpus * (fastf_t) state->rays_cnt - 1;
-	start_ind = (int)si;
-	end_ind = (int)ei;
-	if (state->rays_cnt - end_ind < 3) end_ind = state->rays_cnt - 1;
-	/*
-	bu_log("start_ind (%d): %d\n", cpu, start_ind);
-	bu_log("end_ind (%d): %d\n", cpu, end_ind);
-	*/
-    }
-
-    RT_APPLICATION_INIT(&ap);
-    ap.a_rt_i = state->rtip;
-    ap.a_hit = state->fhit;
-    ap.a_miss = state->fmiss;
-    ap.a_overlap = state->foverlap;
-    ap.a_onehit = 0;
-    ap.a_logoverlap = rt_silent_logoverlap;
-    ap.a_resource = state->resp;
-    ap.a_uptr = (void *)state;
-
-    for (i = start_ind; i <= end_ind; i++) {
-	VSET(ap.a_ray.r_pt, state->rays[6*i+0], state->rays[6*i+1], state->rays[6*i+2]);
-	VSET(ap.a_ray.r_dir, state->rays[6*i+3], state->rays[6*i+4], state->rays[6*i+5]);
-	rt_shootray(&ap);
-    }
-}
-
-
 /* 0 = no difference within tolerance, 1 = difference >= tolerance */
 int
 analyze_raydiff(struct analyze_raydiff_results **results, struct db_i *dbip,
        const char *left, const char *right, struct bn_tol *tol, int solidcheck)
 {
     int ret, i, j;
+    int ind = 0;
     int count = 0;
     struct rt_i *rtip;
     int ncpus = bu_avail_cpus();
@@ -259,10 +217,10 @@ analyze_raydiff(struct analyze_raydiff_results **results, struct db_i *dbip,
 	state[i].fmiss = raydiff_miss;
 	state[i].foverlap = raydiff_overlap;
 	state[i].resp = &resp[i];
+	state[i].ind_src = &ind;
 	rt_init_resource(state[i].resp, i, rtip);
 	/* local */
 	local_state[i].tol = 0.5;
-	local_state[i].ncpus = ncpus;
 	local_state[i].left_name = bu_strdup(left);
 	local_state[i].right_name = bu_strdup(right);
 	BU_GET(local_state[i].left, struct bu_ptbl);
@@ -289,6 +247,9 @@ analyze_raydiff(struct analyze_raydiff_results **results, struct db_i *dbip,
     rt_prep_parallel(rtip, ncpus);
 
     count = analyze_get_bbox_rays(&rays, rtip->mdl_min, rtip->mdl_max, tol);
+    for (i = 0; i < ncpus+1; i++) {
+	state[i].step = (int)(count/ncpus * 0.1);
+    }
 /*
     bu_log("ray cnt: %d\n", count);
 */
@@ -298,7 +259,7 @@ analyze_raydiff(struct analyze_raydiff_results **results, struct db_i *dbip,
 	state[i].rays = rays;
     }
 
-    bu_parallel(raydiff_gen_worker, ncpus, (void *)state);
+    bu_parallel(analyze_gen_worker, ncpus, (void *)state);
 
     /* If we want to do a solidity check, do it here. */
     if (solidcheck) {
