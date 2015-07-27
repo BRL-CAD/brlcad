@@ -867,6 +867,9 @@ Section::write_thin_cone(const fastf_t *point_a, const fastf_t *point_b,
     radius2 *= INCHES_PER_MM;
     thickness *= INCHES_PER_MM;
 
+    if (false && m_volume_mode) // TODO
+	throw std::logic_error("CCONE1 in volume-mode component should be a CCONE2");
+
     if (radius1 < 0.0 || radius2 < 0.0)
 	throw std::invalid_argument("invalid radius");
 
@@ -889,8 +892,16 @@ Section::write_thin_cone(const fastf_t *point_a, const fastf_t *point_b,
 	RecordWriter::Record record2(m_elements);
 	record2 << m_next_element_id << radius2;
 
-	record2 << ((end1_open || !NEAR_ZERO(radius1, RT_LEN_TOL)) ? "" : "2");
-	record2 << ((end2_open || !NEAR_ZERO(radius2, RT_LEN_TOL)) ? "" : "2");
+	end1_open = end1_open || !NEAR_ZERO(radius1, RT_LEN_TOL);
+	end2_open = end2_open || !NEAR_ZERO(radius2, RT_LEN_TOL);
+
+	if (!end1_open)
+	    record2 << 2;
+	else if (!end2_open)
+	    record2 << "";
+
+	if (!end2_open)
+	    record2 << 2;
     }
 
     ++m_next_element_id;
@@ -952,7 +963,10 @@ Section::write_triangle(const fastf_t *point_a, const fastf_t *point_b,
     record << "CTRI" << m_next_element_id << m_material_id;
     record << grids.at(0) << grids.at(1) << grids.at(2);
     record.non_zero(thickness);
-    record << (grid_centered ? "1" : "");
+
+    if (grid_centered)
+	record << 1;
+
     ++m_next_element_id;
 }
 
@@ -978,7 +992,10 @@ Section::write_quad(const fastf_t *point_a, const fastf_t *point_b,
     record << "CQUAD" << m_next_element_id << m_material_id;
     record << grids.at(0) << grids.at(1) << grids.at(2) << grids.at(3);
     record.non_zero(thickness);
-    record << (grid_centered ? "1" : "");
+
+    if (grid_centered)
+	record << 1;
+
     ++m_next_element_id;
 
 }
@@ -999,7 +1016,6 @@ Section::write_hexahedron(const fastf_t vpoints[8][3], fastf_t thickness,
 	points.at(i) = Point(vpoints[i]);
 
     const std::vector<std::size_t> grids = m_grids.get_unique_grids(points);
-
     const bool has_thickness = !NEAR_EQUAL(thickness, 0.0, RT_LEN_TOL);
 
     {
@@ -1016,8 +1032,12 @@ Section::write_hexahedron(const fastf_t vpoints[8][3], fastf_t thickness,
     RecordWriter::Record record2(m_elements);
     record2 << m_next_element_id << grids.at(6) << grids.at(7);
 
-    if (has_thickness)
-	record2 << "" << "" << "" << "" << thickness << (grid_centered ? "1" : "");
+    if (has_thickness) {
+	record2 << "" << "" << "" << "" << thickness;
+
+	if (grid_centered)
+	    record2 << 1;
+    }
 
     ++m_next_element_id;
 }
@@ -1333,43 +1353,62 @@ get_ccone1_cutout_helper(Section &section, const directory &parent_dir,
 
     const fastf_t radius1 = MAGNITUDE(outer_tgc.a);
     const fastf_t radius2 = MAGNITUDE(outer_tgc.c);
-    fastf_t sin_angle;
+    const fastf_t length = MAGNITUDE(outer_tgc.h);
+    const fastf_t inner_radius1 = MAGNITUDE(inner_tgc.a);
+    const fastf_t inner_radius2 = MAGNITUDE(inner_tgc.c);
+    const bool end1_open = VNEAR_EQUAL(inner_tgc.v, outer_tgc.v, RT_LEN_TOL);
+    const bool end2_open = VNEAR_EQUAL(inner_tgc.h, outer_tgc.h, RT_LEN_TOL);
 
-    {
-	const fastf_t length = MAGNITUDE(outer_tgc.h);
-	const fastf_t slant_length = std::sqrt(length * length + (radius2 - radius1) *
-					       (radius2 - radius1));
-	sin_angle = length / slant_length;
-    }
+    // sin_angle = length / slant_length
+    const fastf_t sin_angle = length / std::sqrt(length * length +
+			      (radius2 - radius1) * (radius2 - radius1));
 
-    fastf_t thickness = 0.0;
-    bool end1_open, end2_open;
+    bool known_thickness = false;
+    fastf_t thickness;
 
-    if (VNEAR_EQUAL(inner_tgc.v, outer_tgc.v, RT_LEN_TOL)) {
-	end1_open = true;
-	thickness = (radius1 - MAGNITUDE(inner_tgc.a)) * sin_angle;
-    } else {
-	end1_open = false;
-    }
+    if (end1_open) {
+	known_thickness = true;
+	thickness = (radius1 - inner_radius1) * sin_angle;
+    } else if (!NEAR_ZERO(inner_radius1, RT_LEN_TOL)) {
+	known_thickness = true;
+	thickness =
+	    (inner_radius1 - radius1) / ((radius2 - radius1) / length - 1.0 / sin_angle);
 
-    if (VNEAR_EQUAL(inner_tgc.h, outer_tgc.h, RT_LEN_TOL)) {
-	end2_open = true;
+	vect_t temp_base, h_dir;
+	VMOVE(h_dir, outer_tgc.h);
+	VUNITIZE(h_dir);
+	VJOIN1(temp_base, outer_tgc.v, thickness, h_dir);
 
-	const fastf_t temp_thickness = (radius2 - MAGNITUDE(inner_tgc.a)) * sin_angle;
-
-	if (!NEAR_EQUAL(thickness, temp_thickness, RT_LEN_TOL))
+	if (!VNEAR_EQUAL(temp_base, inner_tgc.v, RT_LEN_TOL))
 	    return false;
-
-    } else {
-	end2_open = false;
     }
+
+    if (end2_open) {
+	const fastf_t temp_thickness = (radius2 - inner_radius2) * sin_angle;
+
+	if (!known_thickness) {
+	    known_thickness = true;
+	    thickness = temp_thickness;
+	} else if (!NEAR_EQUAL(temp_thickness, thickness, RT_LEN_TOL))
+	    return false;
+    } else if (!NEAR_ZERO(inner_radius2, RT_LEN_TOL)) {
+	const fastf_t temp_thickness =
+	    (inner_radius2 - radius2) / ((radius1 - radius2) / length - 1.0 / sin_angle);
+
+	if (!known_thickness) {
+	    known_thickness = true;
+	    thickness = temp_thickness;
+	} else if (!NEAR_EQUAL(temp_thickness, thickness, RT_LEN_TOL))
+	    return false;
+    }
+
+    if (!known_thickness)
+	throw std::logic_error("unable to determine thickness of potential CCONE1");
 
     vect_t point_b;
     VADD2(point_b, outer_tgc.v, outer_tgc.h);
-
-    return false;
-
-    section.write_thin_cone(outer_tgc.a, point_b, radius1, radius2, thickness,
+    section.write_name(parent_dir.d_namep);
+    section.write_thin_cone(outer_tgc.v, point_b, radius1, radius2, thickness,
 			    end1_open, end2_open);
     return true;
 }
