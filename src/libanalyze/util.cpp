@@ -388,6 +388,14 @@ mp_flag(void *container)
     return &(d->valid);
 }
 
+struct solids_container {
+    fastf_t tol;
+    struct bu_ptbl *results;
+}
+
+// TODO - hit
+// TODO - miss
+// TODO - overlap
 
 int
 analyze_get_solid_partitions(struct bu_ptbl *results, const fastf_t *rays, int ray_cnt,
@@ -396,24 +404,33 @@ analyze_get_solid_partitions(struct bu_ptbl *results, const fastf_t *rays, int r
     int i, j;
     int ret = 0;
     int ncpus = bu_avail_cpus();
-    struct raydiff_container *state;
+    struct rt_gen_worker_vars *state;
+    struct solids_container *local_state;
     struct resource *resp;
     struct rt_i *rtip;
+    struct bu_ptbl temp_results = BU_PTBL_INIT_ZERO;
 
     if (!results || !rays || ray_cnt == 0 || !dbip || !obj || !tol) return 0;
 
-    state = (struct raydiff_container *)bu_calloc(ncpus+1, sizeof(struct raydiff_container), "state");
-    resp = (struct resource *)bu_calloc(ncpus+1, sizeof(struct resource), "resources");
+    state = (struct rt_gen_worker_vars *)bu_calloc(ncpus+1, sizeof(struct rt_gen_worker_vars), "state");
+    local_state = (struct solids_container *)bu_calloc(ncpus+1, sizeof(struct solids_container), "local state");
+
     rtip = rt_new_rti(dbip);
 
     for (i = 0; i < ncpus+1; i++) {
+	/* standard */
 	state[i].rtip = rtip;
-	state[i].tol = 0.5;
-	state[i].ncpus = ncpus;
+	state[i].fhit = raydiff_hit;
+	state[i].fmiss = raydiff_miss;
+	state[i].foverlap = raydiff_overlap;
 	state[i].resp = &resp[i];
-	rt_init_resource(state[i].resp, i, state->rtip);
-	BU_GET(state[i].both, struct bu_ptbl);
-	bu_ptbl_init(state[i].both, 64, "hits on both solids");
+	state[i].ind_src = &ind;
+	rt_init_resource(state[i].resp, i, rtip);
+	/* local */
+	local_state[i].tol = 0.5;
+	BU_GET(local_state[i].results, struct bu_ptbl);
+	bu_ptbl_init(local_state[i].results, 64, "hits on both solids");
+	state[i].ptr = (void *)&(local_state[i]);
     }
 
     if (rt_gettree(rtip, obj) < 0) {
@@ -433,12 +450,12 @@ analyze_get_solid_partitions(struct bu_ptbl *results, const fastf_t *rays, int r
 
     for (i = 0; i < ncpus+1; i++) {
 	for (j = 0; j < (int)BU_PTBL_LEN(state[i].both); j++) {
-	    bu_ptbl_ins(results, BU_PTBL_GET(state[i].both, j));
+	    bu_ptbl_ins(&temp_results, BU_PTBL_GET(state[i].both, j));
 	}
     }
-    analyze_seg_filter(results, &mp_ray, &mp_flag, rtip, resp, 0.5);
+    analyze_seg_filter(&temp_results, &mp_ray, &mp_flag, rtip, resp, 0.5);
 
-    // TODO - remove invalid results
+    // TODO - assign valid results to final results table and free invalid results
 
     ret = BU_PTBL_LEN(results);
 

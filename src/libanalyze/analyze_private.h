@@ -29,7 +29,8 @@
 #define ANALYZE_PRIVATE_H
 
 struct minimal_partitions {
-    fastf_t *t;
+    fastf_t *solids;
+    fastf_t *gaps;
     int cnt;
     struct xray ray;
     int valid;
