@@ -404,6 +404,8 @@ sp_hit(struct application *ap, struct partition *PartHeadp, struct seg *UNUSED(s
     }
     BU_GET(state->results[s->curr_ind], struct minimal_partitions);
     p = state->results[s->curr_ind];
+    VMOVE(p->ray.r_pt, ap->a_ray.r_pt);
+    VMOVE(p->ray.r_dir, ap->a_ray.r_dir);
     p->hit_cnt = 0;
     p->gap_cnt = 0;
     p->hits = (fastf_t *)bu_calloc(hit_cnt * 2, sizeof(fastf_t), "overlaps");
@@ -457,12 +459,13 @@ analyze_get_solid_partitions(struct bu_ptbl *results, struct rt_gen_worker_vars 
     int i;
     int ind = 0;
     int ret = 0;
+    size_t j;
     int ncpus = bu_avail_cpus();
     struct rt_gen_worker_vars *state;
     struct solids_container *local_state;
     struct resource *resp;
     struct rt_i *rtip;
-    //struct bu_ptbl temp_results = BU_PTBL_INIT_ZERO;
+    struct bu_ptbl temp_results = BU_PTBL_INIT_ZERO;
     struct minimal_partitions **ray_results;
 
     if (!results || !rays || ray_cnt == 0 || !dbip || !obj || !tol) return 0;
@@ -512,18 +515,23 @@ analyze_get_solid_partitions(struct bu_ptbl *results, struct rt_gen_worker_vars 
 
     bu_parallel(analyze_gen_worker, ncpus, (void *)state);
 
-#if 0
-    for (i = 0; i < ncpus+1; i++) {
-	for (j = 0; j < (int)BU_PTBL_LEN(local_state[i].results); j++) {
-	    bu_ptbl_ins(&temp_results, BU_PTBL_GET(local_state[i].results, j));
+    for (i = 0; i < ray_cnt; i++) {
+	struct minimal_partitions *p = ray_results[i];
+	if (p) {
+	    bu_ptbl_ins(&temp_results, (long *)p);
 	}
     }
     analyze_seg_filter(&temp_results, &mp_ray, &mp_flag, rtip, resp, 0.5);
 
     // TODO - assign valid results to final results table and free invalid results
+    for (j = 0; j < BU_PTBL_LEN(&temp_results); j++) {
+	struct minimal_partitions *p = (struct minimal_partitions *)BU_PTBL_GET(&temp_results, j);
+	if (p->valid) {
+	    bu_ptbl_ins(results, (long *)p);
+	}
+    }
 
     ret = BU_PTBL_LEN(results);
-#endif
 memfree:
 
     bu_free(ray_results, "free state");
@@ -532,6 +540,8 @@ memfree:
 	bu_free(state, "free state");
 	bu_free(resp, "free state");
     }
+    bu_log("ray_cnt: %d\n", ray_cnt);
+    bu_log("ret: %d\n", ret);
     return ret;
 
 }
