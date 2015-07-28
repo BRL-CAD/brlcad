@@ -13,74 +13,6 @@ extern "C" {
 #include "./analyze_private.h"
 }
 
-HIDDEN int
-find_missing_gaps(struct bu_ptbl *UNUSED(missing), struct bu_ptbl *p_brep, struct bu_ptbl *p_comb, int max_cnt)
-{
-    //1. Set up pointer arrays for both partition lists
-    struct minimal_partitions **brep = (struct minimal_partitions **)bu_calloc(max_cnt, sizeof(struct minimal_partitions *), "array1");
-    struct minimal_partitions **comb = (struct minimal_partitions **)bu_calloc(max_cnt, sizeof(struct minimal_partitions *), "array2");
-
-    //2. Iterate over the tbls and assign each array it's minimal partition pointer
-    //   based on the index stored in the minimal_partitions struct.
-    for (size_t i = 0; i < BU_PTBL_LEN(p_brep); i++) {
-	struct minimal_partitions *p = (struct minimal_partitions *)BU_PTBL_GET(p_brep, i);
-	brep[p->index] = p;
-    }
-    for (size_t i = 0; i < BU_PTBL_LEN(p_comb); i++) {
-	struct minimal_partitions *p = (struct minimal_partitions *)BU_PTBL_GET(p_comb, i);
-	comb[p->index] = p;
-    }
-
-    //3. Find brep gaps that are within comb solid segments.  These are the "missing" gaps.
-    for (int i = 0; i < max_cnt; i++) {
-	if (brep[i] && comb[i]) {
-	    std::vector<fastf_t> missing_gaps;
-	    if (brep[i]->gap_cnt > 0) {
-		// iterate over the gaps and see if any of them are inside comb solids on this ray
-		for (int j = 0; j < brep[i]->gap_cnt; j++) {
-		    fastf_t g1 = brep[i]->gaps[2*j];
-		    fastf_t g2 = brep[i]->gaps[2*j+1];
-		    for (int k = 0; k < comb[i]->hit_cnt; k++) {
-			fastf_t h1 = comb[i]->hits[2*k];
-			fastf_t h2 = comb[i]->hits[2*k+1];
-			// If the gap ends before the hit starts, we're done
-			if (g2 < h1) break;
-			// If the gap starts after the hit ends, skip to the next hit
-			if (g1 > h2) continue;
-			// If we've got some sort of overlap between a gap and a hit, something needs
-			// to be trimmed away
-			if ((NEAR_ZERO(g1 - h1, VUNITIZE_TOL) || h1 < g1) || (NEAR_ZERO(g2 - h2, VUNITIZE_TOL) || h2 > g2)) {
-			    fastf_t miss1, miss2;
-			    // All we need trimmed away from this comb is the portion of the possitive volume
-			    // being contributed by the comb - if the gap is bigger than the hit, the rest of
-			    // the removal from the parent is handled elsewhere
-			    if (g1 < h1 || NEAR_ZERO(g1 - h1, VUNITIZE_TOL)){
-				miss1 = h1;
-			    } else {
-				miss1 = g1;
-			    }
-			    if (g2 > h2 || NEAR_ZERO(g2 - h2, VUNITIZE_TOL)){
-				miss2 = h2;
-			    } else {
-				miss2 = g2;
-			    }
-			    missing_gaps.push_back(miss1);
-			    missing_gaps.push_back(miss2);
-			}
-		    }
-		}
-	    }
-	    if (missing_gaps.size() == 0) {
-		bu_log("no missing gaps\n");
-	    } else {
-		bu_log("found missing gaps\n");
-	    }
-	}
-    }
-
-    return 0;
-}
-
 HIDDEN void
 plot_min_partitions(struct bu_ptbl *p, const char *cname)
 {
@@ -118,6 +50,89 @@ plot_min_partitions(struct bu_ptbl *p, const char *cname)
     }
     fclose(plot_file);
     fclose(plot_file_gaps);
+}
+
+
+HIDDEN int
+find_missing_gaps(struct bu_ptbl *missing, struct bu_ptbl *p_brep, struct bu_ptbl *p_comb, int max_cnt)
+{
+    //1. Set up pointer arrays for both partition lists
+    struct minimal_partitions **brep = (struct minimal_partitions **)bu_calloc(max_cnt, sizeof(struct minimal_partitions *), "array1");
+    struct minimal_partitions **comb = (struct minimal_partitions **)bu_calloc(max_cnt, sizeof(struct minimal_partitions *), "array2");
+
+    //2. Iterate over the tbls and assign each array it's minimal partition pointer
+    //   based on the index stored in the minimal_partitions struct.
+    for (size_t i = 0; i < BU_PTBL_LEN(p_brep); i++) {
+	struct minimal_partitions *p = (struct minimal_partitions *)BU_PTBL_GET(p_brep, i);
+	brep[p->index] = p;
+    }
+    for (size_t i = 0; i < BU_PTBL_LEN(p_comb); i++) {
+	struct minimal_partitions *p = (struct minimal_partitions *)BU_PTBL_GET(p_comb, i);
+	comb[p->index] = p;
+    }
+
+    //3. Find brep gaps that are within comb solid segments.  These are the "missing" gaps.
+    for (int i = 0; i < max_cnt; i++) {
+	if (brep[i] && comb[i]) {
+	    std::vector<fastf_t> missing_gaps;
+	    if (brep[i]->gap_cnt > 0) {
+		// iterate over the gaps and see if any of them are inside comb solids on this ray
+		for (int j = 0; j < brep[i]->gap_cnt; j++) {
+		    fastf_t g1 = brep[i]->gaps[2*j];
+		    fastf_t g2 = brep[i]->gaps[2*j+1];
+		    for (int k = 0; k < comb[i]->hit_cnt; k++) {
+			fastf_t h1 = comb[i]->hits[2*k];
+			fastf_t h2 = comb[i]->hits[2*k+1];
+			// If the gap ends before the hit starts, we're done
+			if (g2 < h1) break;
+			// If the gap starts after the hit ends, skip to the next hit
+			if (g1 > h2) continue;
+			// If we've got some sort of overlap between a gap and a hit, something needs
+			// to be trimmed away - see if it's from this solid and has a reasonable length
+			if ((NEAR_ZERO(g1 - h1, VUNITIZE_TOL) || h1 < g1) || (NEAR_ZERO(g2 - h2, VUNITIZE_TOL) || h2 > g2)) {
+			    fastf_t miss1, miss2;
+			    // All we need trimmed away from this comb is the portion of the possitive volume
+			    // being contributed by the comb - if the gap is bigger than the hit, the rest of
+			    // the removal from the parent is handled elsewhere
+			    if (g1 < h1 || NEAR_ZERO(g1 - h1, VUNITIZE_TOL)){
+				miss1 = h1;
+			    } else {
+				miss1 = g1;
+			    }
+			    if (g2 > h2 || NEAR_ZERO(g2 - h2, VUNITIZE_TOL)){
+				miss2 = h2;
+			    } else {
+				miss2 = g2;
+			    }
+			    if (miss2 - miss1 > VUNITIZE_TOL) {
+				missing_gaps.push_back(miss1);
+				missing_gaps.push_back(miss2);
+			    }
+			}
+		    }
+		}
+	    }
+	    if (missing_gaps.size() == 0) {
+		bu_log("no missing gaps\n");
+	    } else {
+		std::vector<fastf_t>::iterator f_it;
+		struct minimal_partitions *np;
+		BU_GET(np, struct minimal_partitions);
+		VMOVE(np->ray.r_pt, brep[i]->ray.r_pt);
+		VMOVE(np->ray.r_dir, brep[i]->ray.r_dir);
+		np->index = brep[i]->index;
+		np->gap_cnt = (int)(missing_gaps.size()/2);
+		np->gaps = (fastf_t *)bu_calloc(np->gap_cnt * 2, sizeof(fastf_t), "missing gaps");
+		for (std::vector<fastf_t>::size_type vind = 0; vind != missing_gaps.size(); vind++) {
+		    np->gaps[vind] = missing_gaps[vind];
+		}
+		bu_ptbl_ins(missing, (long *)np);
+		bu_log("found missing gaps\n");
+	    }
+	}
+    }
+
+    return BU_PTBL_LEN(missing);
 }
 
 /* Pass in the parent brep rt prep and non-finalized comb prep to avoid doing them multiple times.
@@ -203,7 +218,10 @@ analyze_find_subtracted(struct bu_ptbl *UNUSED(results), struct db_i *dbip, cons
 	// 3. Compare the two partition/gap sets that result.
 	struct bu_ptbl missing = BU_PTBL_INIT_ZERO;
 	int missing_gaps = find_missing_gaps(&missing, &o_brep_results, &curr_comb_results, ray_cnt);
-	
+	if (missing_gaps > 0) {
+	    bu_vls_sprintf(&tmp_name, "%s-%s_%s-missing.pl", pbrep, bu_vls_addr(curr_union_data->name_root), bu_vls_addr(candidate->name_root));
+	    plot_min_partitions(&missing, bu_vls_addr(&tmp_name));
+	}
 	// 4.  If there are missing gaps in curr_comb, prep candidate and
 	// shoot the same rays against it.  If candidate 1) removes either all or a
 	// subset of the missing material and 2) does not remove material that is
