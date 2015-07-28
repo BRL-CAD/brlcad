@@ -75,6 +75,8 @@ analyze_find_subtracted(struct bu_ptbl *UNUSED(results), struct db_i *dbip, cons
 	fastf_t *candidate_rays = NULL;
 	struct subbrep_object_data *candidate = (struct subbrep_object_data *)BU_PTBL_GET(candidates, i);
 
+	bu_log("Testing %s against %s\n", bu_vls_addr(candidate->name_root), bu_vls_addr(curr_union_data->name_root));
+
 	// 1. Get the subbrep_bbox.
 
 	if (!candidate->bbox_set) {

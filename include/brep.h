@@ -1431,7 +1431,6 @@ struct subbrep_object_data {
     /* For some objects, additional post processing is needed
      * for a subtract/no-subtract determination */
     const char *obj_name;
-    void *wmember; /* If this ends up in libanalyze make this a struct wmember */
     struct bu_ptbl *subtraction_candidates;
 };
 

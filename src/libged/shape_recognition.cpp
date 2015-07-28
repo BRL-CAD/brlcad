@@ -402,35 +402,30 @@ finalize_comb(struct rt_wdb *wdbp, struct directory *brep_dp, struct rt_gen_work
     struct bu_ptbl *sc = curr_union->subtraction_candidates;
     if (sc && BU_PTBL_LEN(sc) > 0) {
 	struct directory *dp;
+	struct bu_external external;
 	struct bu_vls tmp_comb_name = BU_VLS_INIT_ZERO;
-	struct bu_ptbl cc = BU_PTBL_INIT_ZERO;
 	struct bu_ptbl results = BU_PTBL_INIT_ZERO;
 
-	bu_log("Working on %s...\n", curr_union->obj_name);
+	bu_log("Finalizing %s...\n", curr_union->obj_name);
 	bu_vls_sprintf(&tmp_comb_name, "%s-r", curr_union->obj_name);
 
 	// We've collected all the subtractions we know about - make a temp copy for raytracing.  Because
 	// overlaps are not desired here, make the temp comb a region
-	//mk_lcomb(wdbp, bu_vls_addr(&tmp_comb_name), (struct wmember *)curr_union->wmember, 1, NULL, NULL, NULL, 0);
+	dp = db_lookup(wdbp->dbip, curr_union->obj_name, LOOKUP_QUIET);
+	if (db_get_external(&external, dp, wdbp->dbip)) {
+	    bu_log("Database read error on object %s\n", dp->d_namep);
+	}
+	if (wdb_export_external(wdbp, &external, bu_vls_addr(&tmp_comb_name), dp->d_flags, dp->d_minor_type) < 0) {
+	    bu_log("Database write error on tmp object %s\n", bu_vls_addr(&tmp_comb_name));
+	}
+	// Now the region flag
+	dp = db_lookup(wdbp->dbip, bu_vls_addr(&tmp_comb_name), LOOKUP_QUIET);
+	dp->d_flags |= RT_DIR_REGION;
 
 	// Evaluate the candidate subtraction objects using solid raytracing, and add the ones
 	// that contribute gaps to the comb definition.
-	for (unsigned int j = 0; j < BU_PTBL_LEN(sc); j++) {
-	    struct subbrep_object_data *sobj = (struct subbrep_object_data *)BU_PTBL_GET(sc, j);
-	    bu_log("Need to test %s against %s\n", bu_vls_addr(sobj->name_root), bu_vls_addr(curr_union->name_root));
-	    // TODO make tmp region version of sobj and insert it into cc.  Don't prep here, as there may
-	    // be no need to prep all objects.
-	    //
-	    // Thought - should we be saving union combs with non-null sc tbls until after all
-	    // the other work, to make sure all the solid shapes we need for these combs are present?
-	}
+	analyze_find_subtracted(&results, wdbp->dbip, brep_dp->d_namep, pbrep_vars, bu_vls_addr(&tmp_comb_name), sc, (void *)curr_union);
 
-	analyze_find_subtracted(&results, wdbp->dbip, brep_dp->d_namep, pbrep_vars, bu_vls_addr(&tmp_comb_name), &cc, (void *)curr_union);
-	for (unsigned int j = 0; j < BU_PTBL_LEN(&results); j++) {
-	    struct subbrep_object_data *sobj = (struct subbrep_object_data *)BU_PTBL_GET(&results, j);
-	    bu_log("Subtract %s from %s\n", bu_vls_addr(sobj->name_root), bu_vls_addr(curr_union->name_root));
-	}
-#if 0
 	// kill the temp comb.
 	dp = db_lookup(wdbp->dbip, bu_vls_addr(&tmp_comb_name), LOOKUP_QUIET);
 	if (dp != RT_DIR_NULL) {
@@ -438,10 +433,11 @@ finalize_comb(struct rt_wdb *wdbp, struct directory *brep_dp, struct rt_gen_work
 		bu_log("error deleting temp object %s\n", bu_vls_addr(&tmp_comb_name));
 	    }
 	}
-#endif
+
 	// update the final comb definition with any new subtraction objects.
-	if (BU_PTBL_LEN(&results) > 0) {
-	    // Comb foo
+	for (unsigned int j = 0; j < BU_PTBL_LEN(&results); j++) {
+	    struct subbrep_object_data *sobj = (struct subbrep_object_data *)BU_PTBL_GET(&results, j);
+	    bu_log("Subtract %s from %s\n", bu_vls_addr(sobj->name_root), bu_vls_addr(curr_union->name_root));
 	}
     }
 }
@@ -558,10 +554,27 @@ brep_to_csg(struct ged *gedp, struct directory *dp, int verify)
 	bu_vls_free(&sub_comb_name);
 
 	/* finalize the combs that need it */
-	for (unsigned int i = 0; i < BU_PTBL_LEN(&finalize_combs); i++){
-	    struct subbrep_object_data *obj = (struct subbrep_object_data *)BU_PTBL_GET(&finalize_combs, i);
-	    bu_log("finalizing %s\n", obj->obj_name);
-	    finalize_comb(wdbp, dp, NULL, obj);
+	if (BU_PTBL_LEN(&finalize_combs) > 0) {
+	    /* If we have to do this step, we need to prep the original brep for raytracing */
+	    size_t ncpus = bu_avail_cpus();
+	    struct rt_gen_worker_vars *brep_vars = (struct rt_gen_worker_vars *)bu_calloc(ncpus+1, sizeof(struct rt_gen_worker_vars ), "brep state");
+	    struct resource *brep_resp = (struct resource *)bu_calloc(ncpus+1, sizeof(struct resource), "brep resources");
+	    struct rt_i *brep_rtip = rt_new_rti(wdbp->dbip);
+	    for (size_t i = 0; i < ncpus+1; i++) {
+		brep_vars[i].rtip = brep_rtip;
+		brep_vars[i].resp = &brep_resp[i];
+		rt_init_resource(brep_vars[i].resp, i, brep_rtip);
+	    }
+	    if (rt_gettree(brep_rtip, dp->d_namep) < 0) {
+		// TODO - free memory
+		return 0;
+	    }
+	    rt_prep_parallel(brep_rtip, ncpus);
+
+	    for (unsigned int i = 0; i < BU_PTBL_LEN(&finalize_combs); i++){
+		struct subbrep_object_data *obj = (struct subbrep_object_data *)BU_PTBL_GET(&finalize_combs, i);
+		finalize_comb(wdbp, dp, brep_vars, obj);
+	    }
 	}
 
 	bu_ptbl_free(&finalize_combs);
