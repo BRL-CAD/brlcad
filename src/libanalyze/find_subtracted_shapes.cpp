@@ -41,7 +41,7 @@ plot_min_partitions(struct bu_ptbl *p, const char *cname)
 {
     struct bu_vls name;
     bu_vls_init(&name);
-    bu_vls_printf(&name, "hits_%s.pl", cname);
+    bu_vls_printf(&name, "hits_%s", cname);
     FILE* plot_file = fopen(bu_vls_addr(&name), "w");
     int r = int(256*drand48() + 1.0);
     int g = int(256*drand48() + 1.0);
@@ -52,7 +52,7 @@ plot_min_partitions(struct bu_ptbl *p, const char *cname)
 	for (int j = 0; j < mp->hit_cnt * 2; j=j+2) {
 	    point_t p1, p2;
 	    VJOIN1(p1, mp->ray.r_pt, mp->hits[j], mp->ray.r_dir);
-	    VJOIN1(p2, mp->ray.r_pt, mp->hits[j+2], mp->ray.r_dir);
+	    VJOIN1(p2, mp->ray.r_pt, mp->hits[j+1], mp->ray.r_dir);
 	    pdv_3move(plot_file, p1);
 	    pdv_3cont(plot_file, p2);
 	}
@@ -130,12 +130,12 @@ analyze_find_subtracted(struct bu_ptbl *UNUSED(results), struct db_i *dbip, cons
 	struct bu_ptbl o_brep_results = BU_PTBL_INIT_ZERO;
 	struct bu_ptbl curr_comb_results = BU_PTBL_INIT_ZERO;
 
-	bu_log("Original brep:");
+	bu_log("Original brep:\n");
 	analyze_get_solid_partitions(&o_brep_results, pbrep_rtvars, candidate_rays, ray_cnt, dbip, pbrep, &tol, pcpus);
 	struct bu_vls tmp_name = BU_VLS_INIT_ZERO;
 	bu_vls_sprintf(&tmp_name, "%s-%s_%s.pl", pbrep, bu_vls_addr(curr_union_data->name_root), bu_vls_addr(candidate->name_root));
 	plot_min_partitions(&o_brep_results, bu_vls_addr(&tmp_name));
-	bu_log("Control comb: %s", curr_comb);
+	bu_log("Control comb: %s\n", curr_comb);
 	analyze_get_solid_partitions(&curr_comb_results, ccomb_vars, candidate_rays, ray_cnt, dbip, curr_comb, &tol, pcpus);
 	bu_vls_sprintf(&tmp_name, "%s-%s_%s-ccomb.pl", pbrep, bu_vls_addr(curr_union_data->name_root), bu_vls_addr(candidate->name_root));
 	plot_min_partitions(&curr_comb_results, bu_vls_addr(&tmp_name));
