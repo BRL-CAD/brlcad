@@ -424,7 +424,7 @@ finalize_comb(struct rt_wdb *wdbp, struct directory *brep_dp, struct rt_gen_work
 
 	// Evaluate the candidate subtraction objects using solid raytracing, and add the ones
 	// that contribute gaps to the comb definition.
-	analyze_find_subtracted(&results, wdbp->dbip, brep_dp->d_namep, pbrep_vars, bu_vls_addr(&tmp_comb_name), sc, (void *)curr_union, ncpus);
+	analyze_find_subtracted(&results, wdbp, brep_dp->d_namep, pbrep_vars, bu_vls_addr(&tmp_comb_name), sc, (void *)curr_union, ncpus);
 
 	// kill the temp comb.
 	dp = db_lookup(wdbp->dbip, bu_vls_addr(&tmp_comb_name), LOOKUP_QUIET);
