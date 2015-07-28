@@ -285,7 +285,7 @@ analyze_find_subtracted(struct bu_ptbl *UNUSED(results), struct rt_wdb *wdbp, co
 	//     the candidate is a subtraction to be added to the tree definition.
     }
 
-    rt_clean(ccomb_rtip);
+    //rt_clean(ccomb_rtip);
     bu_free(ccomb_vars, "free vars");
     bu_free(ccomb_resp, "free resp");
 
