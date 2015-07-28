@@ -397,7 +397,7 @@ make_shapes(struct bu_vls *msgs, struct subbrep_object_data *data, struct rt_wdb
 }
 
 void
-finalize_comb(struct rt_wdb *wdbp, struct directory *brep_dp, struct rt_gen_worker_vars *pbrep_vars, struct subbrep_object_data *curr_union)
+finalize_comb(struct rt_wdb *wdbp, struct directory *brep_dp, struct rt_gen_worker_vars *pbrep_vars, struct subbrep_object_data *curr_union, int ncpus)
 {
     struct bu_ptbl *sc = curr_union->subtraction_candidates;
     if (sc && BU_PTBL_LEN(sc) > 0) {
@@ -424,7 +424,7 @@ finalize_comb(struct rt_wdb *wdbp, struct directory *brep_dp, struct rt_gen_work
 
 	// Evaluate the candidate subtraction objects using solid raytracing, and add the ones
 	// that contribute gaps to the comb definition.
-	analyze_find_subtracted(&results, wdbp->dbip, brep_dp->d_namep, pbrep_vars, bu_vls_addr(&tmp_comb_name), sc, (void *)curr_union);
+	analyze_find_subtracted(&results, wdbp->dbip, brep_dp->d_namep, pbrep_vars, bu_vls_addr(&tmp_comb_name), sc, (void *)curr_union, ncpus);
 
 	// kill the temp comb.
 	dp = db_lookup(wdbp->dbip, bu_vls_addr(&tmp_comb_name), LOOKUP_QUIET);
@@ -556,8 +556,8 @@ brep_to_csg(struct ged *gedp, struct directory *dp, int verify)
 	/* finalize the combs that need it */
 	if (BU_PTBL_LEN(&finalize_combs) > 0) {
 	    /* If we have to do this step, we need to prep the original brep for raytracing */
-	    //size_t ncpus = bu_avail_cpus();
-	    size_t ncpus = 1;
+	    size_t ncpus = bu_avail_cpus();
+	    //size_t ncpus = 1;
 	    struct rt_gen_worker_vars *brep_vars = (struct rt_gen_worker_vars *)bu_calloc(ncpus+1, sizeof(struct rt_gen_worker_vars ), "brep state");
 	    struct resource *brep_resp = (struct resource *)bu_calloc(ncpus+1, sizeof(struct resource), "brep resources");
 	    struct rt_i *brep_rtip = rt_new_rti(wdbp->dbip);
@@ -574,7 +574,7 @@ brep_to_csg(struct ged *gedp, struct directory *dp, int verify)
 
 	    for (unsigned int i = 0; i < BU_PTBL_LEN(&finalize_combs); i++){
 		struct subbrep_object_data *obj = (struct subbrep_object_data *)BU_PTBL_GET(&finalize_combs, i);
-		finalize_comb(wdbp, dp, brep_vars, obj);
+		finalize_comb(wdbp, dp, brep_vars, obj, ncpus);
 	    }
 	}
 

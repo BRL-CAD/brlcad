@@ -334,11 +334,9 @@ segfilter_gen_worker(int cpu, void *ptr)
  * filter all rays surrouned by "similar" results (grab only grazing rays)
  */
 extern "C" void
-analyze_seg_filter(struct bu_ptbl *segs, getray_t gray, getflag_t gflag, struct rt_i *rtip, struct resource *resp, fastf_t tol)
+analyze_seg_filter(struct bu_ptbl *segs, getray_t gray, getflag_t gflag, struct rt_i *rtip, struct resource *resp, fastf_t tol, int ncpus)
 {
     int i = 0;
-    //int ncpus = bu_avail_cpus();
-    int ncpus = 1;
     struct segfilter_container *state;
 
     if (!segs || !rtip) return;
@@ -456,14 +454,12 @@ sp_overlap(struct application *ap,
 /* Will need the region flag set for this to work... */
 extern "C" int
 analyze_get_solid_partitions(struct bu_ptbl *results, struct rt_gen_worker_vars *pstate, const fastf_t *rays, int ray_cnt,
-	struct db_i *dbip, const char *obj, struct bn_tol *tol)
+	struct db_i *dbip, const char *obj, struct bn_tol *tol, int ncpus)
 {
     int i;
     int ind = 0;
     int ret = 0;
     size_t j;
-    //int ncpus = bu_avail_cpus();
-    int ncpus = 1;
     struct rt_gen_worker_vars *state;
     struct solids_container *local_state;
     struct resource *resp;
@@ -527,7 +523,7 @@ analyze_get_solid_partitions(struct bu_ptbl *results, struct rt_gen_worker_vars 
 	    bu_ptbl_ins(&temp_results, (long *)p);
 	}
     }
-    analyze_seg_filter(&temp_results, &mp_ray, &mp_flag, rtip, resp, 0.5);
+    analyze_seg_filter(&temp_results, &mp_ray, &mp_flag, rtip, resp, 0.5, ncpus);
 
     // TODO - assign valid results to final results table and free invalid results
     for (j = 0; j < BU_PTBL_LEN(&temp_results); j++) {

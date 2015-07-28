@@ -33,6 +33,7 @@ main(int argc, char **argv)
 {
     int count = 0;
     fastf_t *rays;
+    int ncpus = bu_avail_cpus();
     struct db_i *dbip = DBI_NULL;
     struct directory *dp = RT_DIR_NULL;
     struct bn_tol tol = {BN_TOL_MAGIC, BN_TOL_DIST, BN_TOL_DIST * BN_TOL_DIST, 1.0e-6, 1.0 - 1.0e-6 };
@@ -75,7 +76,7 @@ main(int argc, char **argv)
 
     count = analyze_get_bbox_rays(&rays, rtip->mdl_min, rtip->mdl_max, &rtol);
 
-    analyze_get_solid_partitions(&results, NULL, rays, count, dbip, argv[2], &tol);
+    analyze_get_solid_partitions(&results, NULL, rays, count, dbip, argv[2], &tol, ncpus);
 
     db_close(dbip);
     return 0;

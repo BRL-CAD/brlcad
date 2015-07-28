@@ -287,7 +287,7 @@ analyze_raydiff(struct analyze_raydiff_results **results, struct db_i *dbip,
 		bu_ptbl_ins(&test_tbl, BU_PTBL_GET(local_state[i].right, j));
 	    }
 	}
-	analyze_seg_filter(&test_tbl, &diff_ray, &diff_flag, rtip, resp, 0.5);
+	analyze_seg_filter(&test_tbl, &diff_ray, &diff_flag, rtip, resp, 0.5, ncpus);
     } else {
 	/* Not restricting to solids, all are valid */
 	for (i = 0; i < ncpus+1; i++) {

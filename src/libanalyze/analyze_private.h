@@ -47,12 +47,12 @@ int analyze_get_bbox_rays(fastf_t **rays, point_t min, point_t max, struct bn_to
 
 int
 analyze_get_solid_partitions(struct bu_ptbl *results, struct rt_gen_worker_vars *pstate, const fastf_t *rays, int ray_cnt,
-	        struct db_i *dbip, const char *obj, struct bn_tol *tol);
+	        struct db_i *dbip, const char *obj, struct bn_tol *tol, int ncpus);
 
 
 typedef struct xray * (*getray_t)(void *ptr);
 typedef int *         (*getflag_t)(void *ptr);
-void analyze_seg_filter(struct bu_ptbl *segs, getray_t gray, getflag_t gflag, struct rt_i *rtip, struct resource *resp, fastf_t tol);
+void analyze_seg_filter(struct bu_ptbl *segs, getray_t gray, getflag_t gflag, struct rt_i *rtip, struct resource *resp, fastf_t tol, int ncpus);
 
 #endif /* ANALYZE_PRIVATE_H */
 

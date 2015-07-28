@@ -39,13 +39,13 @@ find_missing_gaps(struct bu_ptbl *UNUSED(missing), struct bu_ptbl *UNUSED(p_orig
 /* Pass in the parent brep rt prep and non-finalized comb prep to avoid doing them multiple times.
  * */
 extern "C" int
-analyze_find_subtracted(struct bu_ptbl *UNUSED(results), struct db_i *dbip, const char *pbrep, struct rt_gen_worker_vars *pbrep_rtvars, const char *curr_comb, struct bu_ptbl *candidates, void *data)
+analyze_find_subtracted(struct bu_ptbl *UNUSED(results), struct db_i *dbip, const char *pbrep, struct rt_gen_worker_vars *pbrep_rtvars, const char *curr_comb, struct bu_ptbl *candidates, void *data, int pcpus)
 {
     struct rt_gen_worker_vars *ccomb_vars;
     struct resource *ccomb_resp;
     struct rt_i *ccomb_rtip;
     //size_t ncpus = bu_avail_cpus();
-    size_t ncpus = 1;
+    size_t ncpus = (size_t)pcpus;
     struct subbrep_object_data *curr_union_data = (struct subbrep_object_data *)data;
     //const ON_Brep *brep = curr_union_data->brep;
     size_t i = 0;
@@ -86,7 +86,12 @@ analyze_find_subtracted(struct bu_ptbl *UNUSED(results), struct db_i *dbip, cons
 	}
 	VMOVE(bmin, candidate->bbox->Min());
 	VMOVE(bmax, candidate->bbox->Max());
-    struct bn_tol tol = {BN_TOL_MAGIC, DIST_PT_PT(bmin,bmax)/10, DIST_PT_PT(bmin,bmax)/10 * DIST_PT_PT(bmin,bmax)/10, 1.0e-6, 1.0 - 1.0e-6 };
+	fastf_t x_dist = fabs(bmax[0] - bmin[0]);
+	fastf_t y_dist = fabs(bmax[1] - bmin[1]);
+	fastf_t z_dist = fabs(bmax[2] - bmin[2]);
+	fastf_t dmin = (x_dist < y_dist) ? x_dist : y_dist;
+	dmin = (z_dist < dmin) ? z_dist : dmin;
+	struct bn_tol tol = {BN_TOL_MAGIC, dmin/10, dmin/10 * dmin/10, 1.0e-6, 1.0 - 1.0e-6 };
 
 	// Construct the rays to shoot from the bbox  (TODO what tol?)
 	ray_cnt = analyze_get_bbox_rays(&candidate_rays, bmin, bmax, &tol);
@@ -101,8 +106,8 @@ analyze_find_subtracted(struct bu_ptbl *UNUSED(results), struct db_i *dbip, cons
 	struct bu_ptbl o_brep_results = BU_PTBL_INIT_ZERO;
 	struct bu_ptbl curr_comb_results = BU_PTBL_INIT_ZERO;
 
-	analyze_get_solid_partitions(&o_brep_results, pbrep_rtvars, candidate_rays, ray_cnt, dbip, pbrep, &tol);
-	analyze_get_solid_partitions(&curr_comb_results, ccomb_vars, candidate_rays, ray_cnt, dbip, curr_comb, &tol);
+	analyze_get_solid_partitions(&o_brep_results, pbrep_rtvars, candidate_rays, ray_cnt, dbip, pbrep, &tol, pcpus);
+	analyze_get_solid_partitions(&curr_comb_results, ccomb_vars, candidate_rays, ray_cnt, dbip, curr_comb, &tol, pcpus);
 	//
 	// 3. Compare the two partition/gap sets that result.
 	//
