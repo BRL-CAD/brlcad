@@ -400,24 +400,6 @@ void
 finalize_comb(struct rt_wdb *wdbp, struct directory *brep_dp, struct rt_gen_worker_vars *pbrep_vars, struct subbrep_object_data *curr_union)
 {
     struct bu_ptbl *sc = curr_union->subtraction_candidates;
-    struct bu_ptbl *ccomb_members = (struct bu_ptbl *)curr_union->wmembers;
-    struct wmember ccomb;
-    struct wmember rcomb;
-    BU_LIST_INIT(&ccomb.l);
-    BU_LIST_INIT(&rcomb.l);
-    for (size_t i = 0; i < BU_PTBL_LEN(ccomb_members); i++) {
-	char un = 'u';
-	char sub = '-';
-	const char *name = (const char *)BU_PTBL_GET(ccomb_members, i);
-	if (i == 0) {
-	    (void)mk_addmember(name, &(ccomb.l), NULL, db_str2op((const char *)&un));
-	    (void)mk_addmember(name, &(rcomb.l), NULL, db_str2op((const char *)&un));
-	} else {
-	    (void)mk_addmember(name, &(ccomb.l), NULL, db_str2op((const char *)&sub));
-	    (void)mk_addmember(name, &(rcomb.l), NULL, db_str2op((const char *)&sub));
-	}
-    }
-
     if (sc && BU_PTBL_LEN(sc) > 0) {
 	struct directory *dp;
 	struct bu_vls tmp_comb_name = BU_VLS_INIT_ZERO;
@@ -427,9 +409,9 @@ finalize_comb(struct rt_wdb *wdbp, struct directory *brep_dp, struct rt_gen_work
 	bu_log("Working on %s...\n", curr_union->obj_name);
 	bu_vls_sprintf(&tmp_comb_name, "%s-r", curr_union->obj_name);
 
-	// We've collected all the subtractions we know about - make a temp comb for raytracing.  Because
+	// We've collected all the subtractions we know about - make a temp copy for raytracing.  Because
 	// overlaps are not desired here, make the temp comb a region
-	mk_lcomb(wdbp, bu_vls_addr(&tmp_comb_name), &rcomb, 1, NULL, NULL, NULL, 0);
+	//mk_lcomb(wdbp, bu_vls_addr(&tmp_comb_name), (struct wmember *)curr_union->wmember, 1, NULL, NULL, NULL, 0);
 
 	// Evaluate the candidate subtraction objects using solid raytracing, and add the ones
 	// that contribute gaps to the comb definition.
@@ -448,7 +430,7 @@ finalize_comb(struct rt_wdb *wdbp, struct directory *brep_dp, struct rt_gen_work
 	    struct subbrep_object_data *sobj = (struct subbrep_object_data *)BU_PTBL_GET(&results, j);
 	    bu_log("Subtract %s from %s\n", bu_vls_addr(sobj->name_root), bu_vls_addr(curr_union->name_root));
 	}
-
+#if 0
 	// kill the temp comb.
 	dp = db_lookup(wdbp->dbip, bu_vls_addr(&tmp_comb_name), LOOKUP_QUIET);
 	if (dp != RT_DIR_NULL) {
@@ -456,16 +438,12 @@ finalize_comb(struct rt_wdb *wdbp, struct directory *brep_dp, struct rt_gen_work
 		bu_log("error deleting temp object %s\n", bu_vls_addr(&tmp_comb_name));
 	    }
 	}
-
-	// update the comb definition with any new subtraction objects.  TODO - should we actually be editing the
-	// subtraction comb?  Or maybe for easier debugging, should we make a second subtraction comb?
+#endif
+	// update the final comb definition with any new subtraction objects.
 	if (BU_PTBL_LEN(&results) > 0) {
 	    // Comb foo
 	}
     }
-
-    // Unlike the temp comb, the final comb is not a region
-    mk_lcomb(wdbp, curr_union->obj_name, &ccomb, 0, NULL, NULL, NULL, 0);
 }
 
 
@@ -522,7 +500,7 @@ brep_to_csg(struct ged *gedp, struct directory *dp, int verify)
 	struct bu_vls obj_comb_name = BU_VLS_INIT_ZERO;
 	struct bu_vls sub_comb_name = BU_VLS_INIT_ZERO;
 	struct subbrep_object_data *curr_union;
-	int ccomb = 0;
+	struct wmember *ccomb = NULL;
 	struct wmember *scomb = NULL;
 
 	struct bu_ptbl finalize_combs = BU_PTBL_INIT_ZERO;
@@ -534,34 +512,29 @@ brep_to_csg(struct ged *gedp, struct directory *dp, int verify)
 	    if (obj->params->bool_op == 'u') {
 		//print_subbrep_object(obj, "");
 		if (ccomb) {
-		    // May need to stash for later processing rahter than finalizing now...
 		    bu_ptbl_ins(&finalize_combs, (long *)curr_union);
-		    bu_log("inserting %s\n", curr_union->obj_name);
-		    ccomb = 0;
+		    mk_lcomb(wdbp, bu_vls_addr(&obj_comb_name), ccomb, 0, NULL, NULL, NULL, 0);
+		    BU_PUT(ccomb, struct wmember);
 		    if (scomb) {
 			mk_lcomb(wdbp, bu_vls_addr(&sub_comb_name), scomb, 0, NULL, NULL, NULL, 0);
 			BU_PUT(scomb, struct wmember);
 			scomb = NULL;
 		    }
 		}
-		BU_GET(obj->wmembers, struct bu_ptbl);
-		bu_ptbl_init(obj->wmembers, 8, "wmember");
-		ccomb = 1;
+		BU_GET(ccomb, struct wmember);
+		BU_LIST_INIT(&ccomb->l);
 		curr_union = obj;
 		bu_vls_sprintf(&obj_comb_name, "%s-_test_c_%s.c", bu_vls_addr(&comb_name), bu_vls_addr(obj->name_root));
-		bu_log("Working %s\n", bu_vls_addr(&obj_comb_name));
 		curr_union->obj_name = bu_strdup(bu_vls_addr(&obj_comb_name));
-		bu_ptbl_ins(curr_union->wmembers, (long *)bu_strdup(bu_vls_addr(&obj_name)));
 		bu_vls_sprintf(&sub_comb_name, "%s-s_%s.c", bu_vls_addr(&comb_name), bu_vls_addr(obj->name_root));
 		(void)mk_addmember(bu_vls_addr(&obj_comb_name), &(pcomb.l), NULL, db_str2op(&(obj->params->bool_op)));
-		//(void)mk_addmember(bu_vls_addr(&obj_name), &((*ccomb).l), NULL, db_str2op(&(obj->params->bool_op)));
+		(void)mk_addmember(bu_vls_addr(&obj_name), &((*ccomb).l), NULL, db_str2op(&(obj->params->bool_op)));
 	    } else {
 		char un = 'u';
 		if (!scomb) {
 		    BU_GET(scomb, struct wmember);
 		    BU_LIST_INIT(&scomb->l);
-		    bu_ptbl_ins(curr_union->wmembers, (long *)bu_strdup(bu_vls_addr(&sub_comb_name)));
-		    //(void)mk_addmember(bu_vls_addr(&sub_comb_name), &((*ccomb).l), NULL, db_str2op(&(obj->params->bool_op)));
+		    (void)mk_addmember(bu_vls_addr(&sub_comb_name), &((*ccomb).l), NULL, db_str2op(&(obj->params->bool_op)));
 		}
 		//print_subbrep_object(obj, "  ");
 		(void)mk_addmember(bu_vls_addr(&obj_name), &((*scomb).l), NULL, db_str2op((const char *)&un));
@@ -570,17 +543,18 @@ brep_to_csg(struct ged *gedp, struct directory *dp, int verify)
 	    //(void)mk_addmember(bu_vls_addr(&obj_name), &(pcomb.l), NULL, db_str2op(&(obj->params->bool_op)));
 	    bu_vls_free(&obj_name);
 	}
-	bu_vls_free(&obj_comb_name);
 
 	/* Make the last comb - TODO - should we also finalize all the other combs that need it now? */
 	if (ccomb) {
 	    bu_ptbl_ins(&finalize_combs, (long *)curr_union);
-	    bu_log("inserting %s\n", curr_union->obj_name);
+	    mk_lcomb(wdbp, bu_vls_addr(&obj_comb_name), ccomb, 0, NULL, NULL, NULL, 0);
+	    BU_PUT(ccomb, struct wmember);
 	    if (scomb) {
 		mk_lcomb(wdbp, bu_vls_addr(&sub_comb_name), scomb, 0, NULL, NULL, NULL, 0);
 		BU_PUT(scomb, struct wmember);
 	    }
 	}
+	bu_vls_free(&obj_comb_name);
 	bu_vls_free(&sub_comb_name);
 
 	/* finalize the combs that need it */
