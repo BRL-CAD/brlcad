@@ -156,7 +156,8 @@ rt_datum_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_
 
     BU_CK_LIST_HEAD(vhead);
 
-    point_size[X] = 2.0;
+    /* make sure plotted points are an odd selectable number of pixels with a center pixel, 5x5 */
+    point_size[X] = 5.0;
     RT_ADD_VLIST(vhead, point_size, BN_VLIST_POINT_SIZE);
 
     while (datum_ip) {
