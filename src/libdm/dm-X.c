@@ -31,7 +31,7 @@
 #include <stdio.h>
 #include <limits.h>
 #include <string.h>
-
+#include <math.h>
 
 #define class REDEFINE_CLASS_STRING_TO_AVOID_CXX_CONFLICT
 #include <X11/Xlib.h>
@@ -1081,17 +1081,26 @@ X_drawVList(struct dm_internal *dmp, struct bn_vlist *vp)
 		    }
 
 		    if (pointSize <= DM_X_DEFAULT_POINT_SIZE) {
+			/* draws a single pixel */
 			XDrawPoint(pubvars->dpy, privars->pix, privars->gc,
 				GED_TO_Xx(dmp, pnt[0]), GED_TO_Xy(dmp, pnt[1]));
 		    } else {
 			int upperLeft[2];
 
-			upperLeft[X] = GED_TO_Xx(dmp, pnt[0]) - pointSize / 2.0;
-			upperLeft[Y] = GED_TO_Xy(dmp, pnt[1]) - pointSize / 2.0;
+			/* need the upper-left adjusted a half-pixel
+			 * so points with odd size are centered.
+			 */
+			upperLeft[X] = (double)GED_TO_Xx(dmp, pnt[0]) - (pointSize / 2.0) + 0.5;
+			upperLeft[Y] = (double)GED_TO_Xy(dmp, pnt[1]) - (pointSize / 2.0) + 0.5;
 
-			XFillRectangle(pubvars->dpy, privars->pix, privars->gc,
-				upperLeft[X], upperLeft[Y], pointSize, pointSize);
-
+			/* NOTE: in order to get smooth circles,
+			 * especially for small radii, X11 requires
+			 * that you draw both the interior and the
+			 * exterior.  only filling small radius
+			 * circles will otherwise render as a square.
+			 */
+			XDrawArc(pubvars->dpy, privars->pix, privars->gc, upperLeft[X], upperLeft[Y], pointSize, pointSize, 0, 360*64);
+			XFillArc(pubvars->dpy, privars->pix, privars->gc, upperLeft[X], upperLeft[Y], pointSize, pointSize, 0, 360*64);
 		    }
 		    break;
 		case BN_VLIST_POINT_SIZE:
