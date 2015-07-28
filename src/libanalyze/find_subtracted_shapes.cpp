@@ -1,6 +1,7 @@
 #include "common.h"
 
 #include <string.h> /* for memset */
+#include <vector>
 
 extern "C" {
 #include "vmath.h"
@@ -12,27 +13,71 @@ extern "C" {
 #include "./analyze_private.h"
 }
 
-/* Note that we are only looking for gaps within the solid partitions of p - curr_comb is the
- * context we are examining for subtractions, and impacts beyond it are of no concern here.*/
 HIDDEN int
-find_missing_gaps(struct bu_ptbl *UNUSED(missing), struct bu_ptbl *UNUSED(p_brep), struct bu_ptbl *UNUSED(p_comb), int UNUSED(max_cnt))
+find_missing_gaps(struct bu_ptbl *UNUSED(missing), struct bu_ptbl *p_brep, struct bu_ptbl *p_comb, int max_cnt)
 {
-//1. Set up pointer arrays for both partition lists
-//
-//2. Iterate over the tbls and assign each array it's minimal partition pointer
-//   based on the index stored in the minimal_partitions struct.
-//
-//3. Look for pointers that are NULL in p_orig array but non-null in p array -
-//   that indicates removed material. For rays that have minimal_partitions in
-//   both arrays, compare their gaps.  If there is a p_orig gap that exits the
-//   gap at less than the smallest hit distance in p->hits or enters a gap at
-//   greater than the max in p->hits, it is out of scope.  Otherwise, look for
-//   it in the p->gaps array.  If it isn't there, it constitutes a missing
-//   gap.  A new minimal_partitions struct is created and all gaps not found
-//   are recorded in it (along with the ray information and index) and the
-//   process is repeated for all rays.
-//
-//4. return the length of the missing bu_ptbl.
+    //1. Set up pointer arrays for both partition lists
+    struct minimal_partitions **brep = (struct minimal_partitions **)bu_calloc(max_cnt, sizeof(struct minimal_partitions *), "array1");
+    struct minimal_partitions **comb = (struct minimal_partitions **)bu_calloc(max_cnt, sizeof(struct minimal_partitions *), "array2");
+
+    //2. Iterate over the tbls and assign each array it's minimal partition pointer
+    //   based on the index stored in the minimal_partitions struct.
+    for (size_t i = 0; i < BU_PTBL_LEN(p_brep); i++) {
+	struct minimal_partitions *p = (struct minimal_partitions *)BU_PTBL_GET(p_brep, i);
+	brep[p->index] = p;
+    }
+    for (size_t i = 0; i < BU_PTBL_LEN(p_comb); i++) {
+	struct minimal_partitions *p = (struct minimal_partitions *)BU_PTBL_GET(p_comb, i);
+	comb[p->index] = p;
+    }
+
+    //3. Find brep gaps that are within comb solid segments.  These are the "missing" gaps.
+    for (int i = 0; i < max_cnt; i++) {
+	if (brep[i] && comb[i]) {
+	    std::vector<fastf_t> missing_gaps;
+	    if (brep[i]->gap_cnt > 0) {
+		// iterate over the gaps and see if any of them are inside comb solids on this ray
+		for (int j = 0; j < brep[i]->gap_cnt; j++) {
+		    fastf_t g1 = brep[i]->gaps[2*j];
+		    fastf_t g2 = brep[i]->gaps[2*j+1];
+		    for (int k = 0; k < comb[i]->hit_cnt; k++) {
+			fastf_t h1 = comb[i]->hits[2*k];
+			fastf_t h2 = comb[i]->hits[2*k+1];
+			// If the gap ends before the hit starts, we're done
+			if (g2 < h1) break;
+			// If the gap starts after the hit ends, skip to the next hit
+			if (g1 > h2) break;
+			// If we've got some sort of overlap between a gap and a hit, something needs
+			// to be trimmed away
+			if ((NEAR_ZERO(g1 - h1, VUNITIZE_TOL) || h1 < g1) || (NEAR_ZERO(g2 - h2, VUNITIZE_TOL) || h2 > g2)) {
+			    fastf_t miss1, miss2;
+			    // All we need trimmed away from this comb is the portion of the possitive volume
+			    // being contributed by the comb - if the gap is bigger than the hit, the rest of
+			    // the removal from the parent is handled elsewhere
+			    if (g1 < h1 || NEAR_ZERO(g1 - h1, VUNITIZE_TOL)){
+				miss1 = h1;
+			    } else {
+				miss1 = g1;
+			    }
+			    if (g2 > h2 || NEAR_ZERO(g2 - h2, VUNITIZE_TOL)){
+				miss2 = h2;
+			    } else {
+				miss2 = g2;
+			    }
+			    missing_gaps.push_back(miss1);
+			    missing_gaps.push_back(miss2);
+			}
+		    }
+		}
+	    }
+	    if (missing_gaps.size() == 0) {
+		bu_log("no missing gaps\n");
+	    } else {
+		bu_log("found missing gaps\n");
+	    }
+	}
+    }
+
     return 0;
 }
 
