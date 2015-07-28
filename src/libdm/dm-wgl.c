@@ -1394,6 +1394,7 @@ wgl_drawPoint2D(dm *dmp, fastf_t x, fastf_t y)
 	bu_log("\tdmp: %p\tx - %lf\ty - %lf\n", (void *)dmp, x, y);
     }
 
+    glEnable(GL_POINT_SMOOTH);
     glBegin(GL_POINTS);
     glVertex2f(x, y);
     glEnd();
@@ -1413,6 +1414,7 @@ wgl_drawPoint3D(dm *dmp, point_t point)
 	bu_log("\tdmp: %llu\tpt - %lf %lf %lf\n", (unsigned long long)dmp, V3ARGS(point));
     }
 
+    glEnable(GL_POINT_SMOOTH);
     glBegin(GL_POINTS);
     glVertex3dv(point);
     glEnd();
@@ -1433,6 +1435,7 @@ wgl_drawPoints3D(dm *dmp, int npoints, point_t *points)
 	bu_log("wgl_drawPoint3D():\n");
     }
 
+    glEnable(GL_POINT_SMOOTH);
     glBegin(GL_POINTS);
     for (i = 0; i < npoints; ++i)
 	glVertex3dv(points[i]);

@@ -1177,6 +1177,7 @@ randShots(fastf_t *center, fastf_t radius, int flag)
 
 	    if (!flag) {
 		glPointSize(5);
+		glEnable(GL_POINT_SMOOTH);
 		glBegin(GL_POINTS);
 		glColor3d(0.0, 1.0, 0.0);
 		glVertex3dv(pt);
@@ -1458,6 +1459,8 @@ drawPoints(float *view, int pointSize)
 	for (BU_LIST_FOR (rtgljob.currItem, ptInfoList, head)) {
 	    used = rtgljob.currItem->used;
 
+	    /* might want to disable for performance */
+	    glEnable(GL_POINT_SMOOTH);
 	    glBegin(GL_POINTS);
 	    for (i = 0; i < used; i += 3) {
 
@@ -1942,6 +1945,7 @@ rtgl_drawPoint2D(dm *dmp, fastf_t x, fastf_t y)
 	bu_log("\tdmp: %lu\tx - %lf\ty - %lf\n", (unsigned long)dmp, x, y);
     }
 
+    glEnable(GL_POINT_SMOOTH);
     glBegin(GL_POINTS);
     glVertex2f(x, y);
     glEnd();
@@ -1961,6 +1965,7 @@ rtgl_drawPoint3D(dm *dmp, point_t point)
 	bu_log("\tdmp: %llu\tpt - %lf %lf %lf\n", (unsigned long long)dmp, V3ARGS(point));
     }
 
+    glEnable(GL_POINT_SMOOTH);
     glBegin(GL_POINTS);
     glVertex3dv(point);
     glEnd();
@@ -1981,6 +1986,7 @@ rtgl_drawPoints3D(dm *dmp, int npoints, point_t *points)
 	bu_log("rtgl_drawPoint3D():\n");
     }
 
+    glEnable(GL_POINT_SMOOTH);
     glBegin(GL_POINTS);
     for (i = 0; i < npoints; ++i)
 	glVertex3dv(points[i]);

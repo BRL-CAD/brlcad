@@ -1780,6 +1780,7 @@ ogl_drawVList(struct dm_internal *dmp, struct bn_vlist *vp)
 		    if (first == 0)
 			glEnd();
 		    first = 0;
+		    glEnable(GL_POINT_SMOOTH);
 		    glBegin(GL_POINTS);
 		    glVertex3dv(dpt);
 		    break;
