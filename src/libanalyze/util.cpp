@@ -461,7 +461,8 @@ analyze_get_solid_partitions(struct bu_ptbl *results, struct rt_gen_worker_vars 
     int ind = 0;
     int ret = 0;
     size_t j;
-    int ncpus = bu_avail_cpus();
+    //int ncpus = bu_avail_cpus();
+    int ncpus = 1;
     struct rt_gen_worker_vars *state;
     struct solids_container *local_state;
     struct resource *resp;

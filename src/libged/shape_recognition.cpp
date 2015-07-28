@@ -556,7 +556,8 @@ brep_to_csg(struct ged *gedp, struct directory *dp, int verify)
 	/* finalize the combs that need it */
 	if (BU_PTBL_LEN(&finalize_combs) > 0) {
 	    /* If we have to do this step, we need to prep the original brep for raytracing */
-	    size_t ncpus = bu_avail_cpus();
+	    //size_t ncpus = bu_avail_cpus();
+	    size_t ncpus = 1;
 	    struct rt_gen_worker_vars *brep_vars = (struct rt_gen_worker_vars *)bu_calloc(ncpus+1, sizeof(struct rt_gen_worker_vars ), "brep state");
 	    struct resource *brep_resp = (struct resource *)bu_calloc(ncpus+1, sizeof(struct resource), "brep resources");
 	    struct rt_i *brep_rtip = rt_new_rti(wdbp->dbip);
