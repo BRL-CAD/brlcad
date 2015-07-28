@@ -476,13 +476,14 @@ analyze_get_solid_partitions(struct bu_ptbl *results, struct rt_gen_worker_vars 
     if (!pstate) {
 	state = (struct rt_gen_worker_vars *)bu_calloc(ncpus+1, sizeof(struct rt_gen_worker_vars), "state");
 	resp = (struct resource *)bu_calloc(ncpus+1, sizeof(struct resource), "resources");
+	rtip = rt_new_rti(dbip);
     } else {
 	state = pstate;
+	resp = state->resp;
+	rtip = state->rtip;
     }
     local_state = (struct solids_container *)bu_calloc(ncpus+1, sizeof(struct solids_container), "local state");
     ray_results = (struct minimal_partitions **)bu_calloc(ray_cnt+1, sizeof(struct minimal_partitions *), "results");
-
-    rtip = rt_new_rti(dbip);
 
     if (!pstate) {
 	for (i = 0; i < ncpus+1; i++) {
