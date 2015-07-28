@@ -51,12 +51,10 @@ static size_t pageheight = 792;	/* 11 inches */
 static char *file_name;
 static FILE *infp;
 
-
 static char usage[] = "\
 Usage: pix-ps [-e] [-c|-l] [-L]\n\
 	[-s input_squaresize] [-w input_width] [-n input_height]\n\
 	[-S inches_square] [-W inches_width] [-N inches_height] [<] input.pix > output.ps\n";
-
 
 void
 prolog(FILE *fp, char *name, size_t w, size_t h)
@@ -264,7 +262,6 @@ main(int argc, char **argv)
     }
 
     postlog(ofp);
-
     return 0;
 }
 

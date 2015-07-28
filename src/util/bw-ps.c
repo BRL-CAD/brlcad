@@ -52,13 +52,64 @@ static char Stdin[] = "stdin";
 static char *file_name;
 static FILE *infp;
 
-void prolog(FILE *fp, char *name, int w, int h);
-void postlog(FILE *fp);
-
 static char usage[] = "\
 Usage: bw-ps [-e] [-c] [-L]\n\
 	[-s input_squaresize] [-w input_width] [-n input_height]\n\
 	[-S inches_square] [-W inches_width] [-N inches_height] [file.bw]\n";
+
+void
+prolog(FILE *fp, char *name, int w, int h)
+
+
+/* in points */
+{
+    time_t ltime;
+
+    ltime = time(0);
+
+    if (encapsulated) {
+	fputs("%!PS-Adobe-2.0 EPSF-1.2\n", fp);
+	fprintf(fp, "%%%%Title: %s\n", name);
+	fputs("%%Creator: BRL-CAD bw-ps\n", fp);
+	fprintf(fp, "%%%%CreationDate: %s", ctime(&ltime));
+	fputs("%%Pages: 0\n", fp);
+    } else {
+	fputs("%!PS-Adobe-1.0\n", fp);
+	fputs("%begin(plot)\n", fp);
+	fprintf(fp, "%%%%Title: %s\n", name);
+	fputs("%%Creator: BRL-CAD bw-ps\n", fp);
+	fprintf(fp, "%%%%CreationDate: %s", ctime(&ltime));
+    }
+    fprintf(fp, "%%%%BoundingBox: 0 0 %d %d\n", w, h);
+    fputs("%%EndComments\n\n", fp);
+
+    if (!encapsulated && landscape) {
+	int tmp;
+	tmp = pagewidth;
+	pagewidth = pageheight;
+	pageheight = tmp;
+	fprintf(fp, "90 rotate\n");
+	fprintf(fp, "0 -%lu translate\n", (unsigned long)pageheight);
+    }
+    if (!encapsulated && center) {
+	int xtrans, ytrans;
+	xtrans = (pagewidth - w)/2.0;
+	ytrans = (pageheight - h)/2.0;
+	fprintf(fp, "%d %d translate\n", xtrans, ytrans);
+    }
+    fprintf(fp, "%d %d scale\n\n", w, h);
+}
+
+
+void
+postlog(FILE *fp)
+{
+    if (!encapsulated)
+	fputs("%end(plot)\n", fp);
+
+    fputs("\nshowpage\n", fp);
+}
+
 
 int
 get_args(int argc, char **argv)
@@ -176,60 +227,6 @@ main(int argc, char **argv)
 
     postlog(ofp);
     return 0;
-}
-
-
-void
-prolog(FILE *fp, char *name, int w, int h)
-
-
-/* in points */
-{
-    time_t ltime;
-
-    ltime = time(0);
-
-    if (encapsulated) {
-	fputs("%!PS-Adobe-2.0 EPSF-1.2\n", fp);
-	fprintf(fp, "%%%%Title: %s\n", name);
-	fputs("%%Creator: BRL-CAD bw-ps\n", fp);
-	fprintf(fp, "%%%%CreationDate: %s", ctime(&ltime));
-	fputs("%%Pages: 0\n", fp);
-    } else {
-	fputs("%!PS-Adobe-1.0\n", fp);
-	fputs("%begin(plot)\n", fp);
-	fprintf(fp, "%%%%Title: %s\n", name);
-	fputs("%%Creator: BRL-CAD bw-ps\n", fp);
-	fprintf(fp, "%%%%CreationDate: %s", ctime(&ltime));
-    }
-    fprintf(fp, "%%%%BoundingBox: 0 0 %d %d\n", w, h);
-    fputs("%%EndComments\n\n", fp);
-
-    if (!encapsulated && landscape) {
-	int tmp;
-	tmp = pagewidth;
-	pagewidth = pageheight;
-	pageheight = tmp;
-	fprintf(fp, "90 rotate\n");
-	fprintf(fp, "0 -%lu translate\n", (unsigned long)pageheight);
-    }
-    if (!encapsulated && center) {
-	int xtrans, ytrans;
-	xtrans = (pagewidth - w)/2.0;
-	ytrans = (pageheight - h)/2.0;
-	fprintf(fp, "%d %d translate\n", xtrans, ytrans);
-    }
-    fprintf(fp, "%d %d scale\n\n", w, h);
-}
-
-
-void
-postlog(FILE *fp)
-{
-    if (!encapsulated)
-	fputs("%end(plot)\n", fp);
-
-    fputs("\nshowpage\n", fp);
 }
 
 
