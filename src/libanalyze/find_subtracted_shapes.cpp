@@ -39,14 +39,20 @@ find_missing_gaps(struct bu_ptbl *UNUSED(missing), struct bu_ptbl *UNUSED(p_brep
 HIDDEN void
 plot_min_partitions(struct bu_ptbl *p, const char *cname)
 {
-    struct bu_vls name;
-    bu_vls_init(&name);
+    struct bu_vls name = BU_VLS_INIT_ZERO;
+    struct bu_vls name2 = BU_VLS_INIT_ZERO;
     bu_vls_printf(&name, "hits_%s", cname);
+    bu_vls_printf(&name2, "gaps_%s", cname);
     FILE* plot_file = fopen(bu_vls_addr(&name), "w");
+    FILE* plot_file_gaps = fopen(bu_vls_addr(&name2), "w");
     int r = int(256*drand48() + 1.0);
     int g = int(256*drand48() + 1.0);
     int b = int(256*drand48() + 1.0);
     pl_color(plot_file, r, g, b);
+    int r2 = int(256*drand48() + 1.0);
+    int g2 = int(256*drand48() + 1.0);
+    int b2 = int(256*drand48() + 1.0);
+    pl_color(plot_file_gaps, r2, g2, b2);
     for (size_t i = 0; i < BU_PTBL_LEN(p); i++) {
 	struct minimal_partitions *mp = (struct minimal_partitions *)BU_PTBL_GET(p, i);
 	for (int j = 0; j < mp->hit_cnt * 2; j=j+2) {
@@ -56,8 +62,17 @@ plot_min_partitions(struct bu_ptbl *p, const char *cname)
 	    pdv_3move(plot_file, p1);
 	    pdv_3cont(plot_file, p2);
 	}
+	for (int j = 0; j < mp->gap_cnt * 2; j=j+2) {
+	    point_t p1, p2;
+	    VJOIN1(p1, mp->ray.r_pt, mp->gaps[j], mp->ray.r_dir);
+	    VJOIN1(p2, mp->ray.r_pt, mp->gaps[j+1], mp->ray.r_dir);
+	    pdv_3move(plot_file_gaps, p1);
+	    pdv_3cont(plot_file_gaps, p2);
+	}
+
     }
     fclose(plot_file);
+    fclose(plot_file_gaps);
 }
 
 /* Pass in the parent brep rt prep and non-finalized comb prep to avoid doing them multiple times.
