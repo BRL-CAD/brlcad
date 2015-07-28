@@ -134,6 +134,46 @@ color_from_floats(const float *float_color)
 }
 
 
+class Matrix
+{
+public:
+    Matrix();
+    explicit Matrix(const fastf_t *source);
+
+    bool equal(const Matrix &other, const bn_tol &tol) const;
+
+
+private:
+    mat_t m_value;
+};
+
+
+Matrix::Matrix() :
+    m_value()
+{
+    MAT_ZERO(m_value);
+}
+
+
+Matrix::Matrix(const fastf_t *source) :
+    m_value()
+{
+    if (source)
+	MAT_COPY(m_value, source);
+    else
+	MAT_IDN(m_value);
+}
+
+
+bool
+Matrix::equal(const Matrix &other, const bn_tol &tol) const
+{
+    BN_CK_TOL(&tol);
+
+    return bn_mat_is_equal(m_value, other.m_value, &tol);
+}
+
+
 class DBInternal
 {
 public:
@@ -1245,21 +1285,8 @@ tgc_is_ccone2(const rt_tgc_internal &tgc)
 }
 
 
-HIDDEN bool
-mat_equal(const mat_t vmat_a, const mat_t vmat_b, const bn_tol &tol)
-{
-    BN_CK_TOL(&tol);
-
-    const mat_t identity = MAT_INIT_IDN;
-    const fastf_t * const mat_a = vmat_a ? vmat_a : identity;
-    const fastf_t * const mat_b = vmat_b ? vmat_b : identity;
-
-    return bn_mat_is_equal(mat_a, mat_b, &tol);
-}
-
-
 HIDDEN void
-path_to_mat(const db_i &db, const db_full_path &path, mat_t result)
+path_to_mat(const db_i &db, const db_full_path &path, mat_t &result)
 {
     RT_CK_DBI(&db);
     RT_CK_FULL_PATH(&path);
@@ -1275,7 +1302,7 @@ path_to_mat(const db_i &db, const db_full_path &path, mat_t result)
 
 
 HIDDEN void
-apply_path_xform(const db_i &db, const mat_t matrix, rt_db_internal &internal)
+apply_path_xform(const db_i &db, const mat_t &matrix, rt_db_internal &internal)
 {
     RT_CK_DBI(&db);
     RT_CK_DB_INTERNAL(&internal);
@@ -1314,9 +1341,8 @@ get_parent_path(const db_full_path &path)
 
 // get the parent region's directory
 HIDDEN const directory &
-get_region_dir(const db_i &db, const db_full_path &path)
+get_region_dir(const db_full_path &path)
 {
-    RT_CK_DBI(&db);
     RT_CK_FULL_PATH(&path);
 
     for (std::size_t i = 0; i < path.fp_len; ++i)
@@ -1329,12 +1355,11 @@ get_region_dir(const db_i &db, const db_full_path &path)
 
 // get the parent region's path
 HIDDEN const db_full_path
-get_region_path(const db_i &db, const db_full_path &path)
+get_region_path(const db_full_path &path)
 {
-    RT_CK_DBI(&db);
     RT_CK_FULL_PATH(&path);
 
-    const directory &region_dir = get_region_dir(db, path);
+    const directory &region_dir = get_region_dir(path);
     db_full_path result = path;
 
     while (DB_FULL_PATH_CUR_DIR(&result) != &region_dir)
@@ -1625,21 +1650,16 @@ get_chex1(Section &section, const rt_bot_internal &bot)
 	}
     }
 
-    fastf_t hex_thickness = 0.0;
-    bool hex_grid_centered = true;
+    const fastf_t hex_thickness = bot.thickness ? bot.thickness[0] : 0.0;
+    const bool hex_grid_centered = bot.face_mode ? !BU_BITTEST(bot.face_mode,
+				   0) : true;
 
-    if (bot.thickness) {
-	hex_thickness = bot.thickness[0];
-
+    if (bot.thickness)
 	for (std::size_t i = 0; i < bot.num_faces; ++i)
 	    if (!NEAR_EQUAL(bot.thickness[i], hex_thickness, RT_LEN_TOL))
 		return false;
-    }
 
     if (bot.face_mode) {
-	const bool face_mode = BU_BITTEST(bot.face_mode, 0);
-	hex_grid_centered = !face_mode;
-
 	// check that all faces have a uniform face mode
 	std::size_t count = 0;
 	BU_BITV_LOOP_START(bot.face_mode) {
@@ -1647,10 +1667,10 @@ get_chex1(Section &section, const rt_bot_internal &bot)
 	}
 	BU_BITV_LOOP_END;
 
-	if (face_mode) {
-	    if (count != bot.num_faces)
+	if (hex_grid_centered) {
+	    if (count)
 		return false;
-	} else if (count)
+	} else if (count != bot.num_faces)
 	    return false;
     }
 
@@ -1664,7 +1684,7 @@ get_chex1(Section &section, const rt_bot_internal &bot)
 }
 
 
-typedef std::map<const directory *, const fastf_t *> LeafMap;
+typedef std::map<const directory *, Matrix> LeafMap;
 
 
 HIDDEN void
@@ -1764,7 +1784,7 @@ enum CompspltPartitionType {COMPSPLT_PARTITION_NONE, COMPSPLT_PARTITION_INTERSEC
 // Identifies which half of a COMPSPLT a given region represents.
 // Assumes that `half_dir` represents a COMPSPLT-compatible halfspace.
 // Returns the partition type and a pointer to the half's matrix within the region.
-HIDDEN std::pair<CompspltPartitionType, const fastf_t *>
+HIDDEN std::pair<CompspltPartitionType, Matrix>
 identify_compsplt(const db_i &db, const directory &parent_region_dir,
 		  const directory &half_dir)
 {
@@ -1779,7 +1799,6 @@ identify_compsplt(const db_i &db, const directory &parent_region_dir,
 
     LeafMap leaves;
     get_intersected(db, parent_region.tree, leaves);
-
     LeafMap::const_iterator found = leaves.find(&half_dir);
 
     if (found != leaves.end())
@@ -1808,8 +1827,8 @@ find_walls(const db_i &db, const directory &region_dir, const bn_tol &tol)
 
     std::pair<std::set<const directory *>, std::set<const directory *> > results;
     LeafMap subtracted;
-    DBInternal region_db_internal(db, region_dir);
     {
+	DBInternal region_db_internal(db, region_dir);
 	const rt_comb_internal &region = *static_cast<rt_comb_internal *>
 					 (region_db_internal.get().idb_ptr);
 	RT_CK_COMB(&region);
@@ -1820,39 +1839,40 @@ find_walls(const db_i &db, const directory &region_dir, const bn_tol &tol)
 	    return results;
     }
 
-    {
-	AutoPtr<directory *> region_dirs;
-	const std::size_t num_regions = db_ls(&db, DB_LS_REGION, NULL,
-					      &region_dirs.ptr);
+    AutoPtr<directory *> region_dirs;
+    const std::size_t num_regions = db_ls(&db, DB_LS_REGION, NULL,
+					  &region_dirs.ptr);
 
-	for (std::size_t i = 0; i < num_regions; ++i) {
+    for (std::size_t i = 0; i < num_regions; ++i) {
+	LeafMap leaves;
+	{
 	    DBInternal this_region_db_internal(db, *region_dirs.ptr[i]);
 	    const rt_comb_internal &region = *static_cast<rt_comb_internal *>
 					     (this_region_db_internal.get().idb_ptr);
 	    RT_CK_COMB(&region);
 
-	    LeafMap leaves;
 	    get_unioned(db, region.tree, leaves);
 	    get_intersected(db, region.tree, leaves);
-	    bool subset = !leaves.empty();
+	}
 
-	    for (LeafMap::const_iterator leaf_it = leaves.begin(); leaf_it != leaves.end();
-		 ++leaf_it) {
-		const LeafMap::const_iterator subtracted_it = subtracted.find(leaf_it->first);
+	bool subset = !leaves.empty();
 
-		if (subtracted_it == subtracted.end()
-		    || !mat_equal(leaf_it->second, subtracted_it->second, tol)) {
-		    subset = false;
-		    break;
-		}
+	for (LeafMap::const_iterator leaf_it = leaves.begin(); leaf_it != leaves.end();
+	     ++leaf_it) {
+	    const LeafMap::const_iterator subtracted_it = subtracted.find(leaf_it->first);
+
+	    if (subtracted_it == subtracted.end()
+		|| !leaf_it->second.equal(subtracted_it->second, tol)) {
+		subset = false;
+		break;
 	    }
+	}
 
-	    if (subset) {
-		results.first.insert(region_dirs.ptr[i]);
+	if (subset) {
+	    results.first.insert(region_dirs.ptr[i]);
 
-		for (LeafMap::const_iterator it = leaves.begin(); it != leaves.end(); ++it)
-		    results.second.insert(it->first);
-	    }
+	    for (LeafMap::const_iterator it = leaves.begin(); it != leaves.end(); ++it)
+		results.second.insert(it->first);
 	}
     }
 
@@ -2084,12 +2104,12 @@ find_compsplt(FastgenConversion &data, const db_full_path &half_path,
     const directory *parent_region_dir;
 
     try {
-	parent_region_dir = &get_region_dir(data.m_db, half_path);
+	parent_region_dir = &get_region_dir(half_path);
     } catch (const std::invalid_argument &) {
 	return false;
     }
 
-    const std::pair<CompspltPartitionType, const fastf_t *> this_compsplt =
+    const std::pair<CompspltPartitionType, Matrix> this_compsplt =
 	identify_compsplt(data.m_db, *parent_region_dir,
 			  *DB_FULL_PATH_CUR_DIR(&half_path));
 
@@ -2107,13 +2127,13 @@ find_compsplt(FastgenConversion &data, const db_full_path &half_path,
 	    if (region_dirs.ptr[i] == parent_region_dir)
 		continue;
 
-	    const std::pair<CompspltPartitionType, const fastf_t *> current =
+	    const std::pair<CompspltPartitionType, Matrix> current =
 		identify_compsplt(data.m_db, *region_dirs.ptr[i],
 				  *DB_FULL_PATH_CUR_DIR(&half_path));
 
 	    if (current.first != COMPSPLT_PARTITION_NONE
 		&& current.first != this_compsplt.first)
-		if (mat_equal(current.second, this_compsplt.second, data.m_tol)) {
+		if (current.second.equal(this_compsplt.second, data.m_tol)) {
 		    other_half_dir = region_dirs.ptr[i];
 		    break;
 		}
@@ -2213,13 +2233,13 @@ FastgenConversion::get_section(const db_full_path &path)
     const directory *region_dir;
 
     try {
-	region_dir = &get_region_dir(m_db, path);
+	region_dir = &get_region_dir(path);
     } catch (std::invalid_argument &) {
 	region_dir = NULL;
     }
 
     if (region_dir)
-	return get_region(*region_dir).get_section(get_region_path(m_db, path));
+	return get_region(*region_dir).get_section(get_region_path(path));
     else
 	return m_toplevels;
 
@@ -2393,7 +2413,7 @@ convert_leaf(db_tree_state *tree_state, const db_full_path *path,
     const directory *region_dir;
 
     try {
-	region_dir = &get_region_dir(data.m_db, *path);
+	region_dir = &get_region_dir(*path);
     } catch (const std::invalid_argument &) {
 	region_dir = NULL;
     }
