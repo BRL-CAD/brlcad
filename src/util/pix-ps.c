@@ -48,6 +48,7 @@ static size_t ypoints;
 static size_t pagewidth = 612;	/* page size in points - 8.5 inches */
 static size_t pageheight = 792;	/* 11 inches */
 
+char Stdin[] = "[stdin]";
 static char *file_name;
 static FILE *infp;
 
@@ -128,8 +129,6 @@ hexout(FILE *fp, int byte)
     putc(symbol[high], fp);
     putc(symbol[low], fp);
 }
-
-char Stdin[] = "[stdin]";
 
 int
 get_args(int argc, char **argv)
