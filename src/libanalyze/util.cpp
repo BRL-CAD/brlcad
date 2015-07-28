@@ -337,7 +337,8 @@ extern "C" void
 analyze_seg_filter(struct bu_ptbl *segs, getray_t gray, getflag_t gflag, struct rt_i *rtip, struct resource *resp, fastf_t tol)
 {
     int i = 0;
-    int ncpus = bu_avail_cpus();
+    //int ncpus = bu_avail_cpus();
+    int ncpus = 1;
     struct segfilter_container *state;
 
     if (!segs || !rtip) return;

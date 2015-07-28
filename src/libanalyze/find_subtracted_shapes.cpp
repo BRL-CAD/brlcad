@@ -49,7 +49,7 @@ analyze_find_subtracted(struct bu_ptbl *UNUSED(results), struct db_i *dbip, cons
     struct subbrep_object_data *curr_union_data = (struct subbrep_object_data *)data;
     //const ON_Brep *brep = curr_union_data->brep;
     size_t i = 0;
-    struct bn_tol tol = {BN_TOL_MAGIC, 0.5, 0.5 * 0.5, 1.0e-6, 1.0 - 1.0e-6 };
+    //struct bn_tol tol = {BN_TOL_MAGIC, 0.5, 0.5 * 0.5, 1.0e-6, 1.0 - 1.0e-6 };
 
     if (!curr_union_data) return 0;
 
@@ -86,6 +86,7 @@ analyze_find_subtracted(struct bu_ptbl *UNUSED(results), struct db_i *dbip, cons
 	}
 	VMOVE(bmin, candidate->bbox->Min());
 	VMOVE(bmax, candidate->bbox->Max());
+    struct bn_tol tol = {BN_TOL_MAGIC, DIST_PT_PT(bmin,bmax)/10, DIST_PT_PT(bmin,bmax)/10 * DIST_PT_PT(bmin,bmax)/10, 1.0e-6, 1.0 - 1.0e-6 };
 
 	// Construct the rays to shoot from the bbox  (TODO what tol?)
 	ray_cnt = analyze_get_bbox_rays(&candidate_rays, bmin, bmax, &tol);
