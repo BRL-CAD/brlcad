@@ -46,7 +46,7 @@ find_missing_gaps(struct bu_ptbl *UNUSED(missing), struct bu_ptbl *p_brep, struc
 			// If the gap ends before the hit starts, we're done
 			if (g2 < h1) break;
 			// If the gap starts after the hit ends, skip to the next hit
-			if (g1 > h2) break;
+			if (g1 > h2) continue;
 			// If we've got some sort of overlap between a gap and a hit, something needs
 			// to be trimmed away
 			if ((NEAR_ZERO(g1 - h1, VUNITIZE_TOL) || h1 < g1) || (NEAR_ZERO(g2 - h2, VUNITIZE_TOL) || h2 > g2)) {
