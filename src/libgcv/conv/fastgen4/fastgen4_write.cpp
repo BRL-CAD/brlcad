@@ -746,6 +746,9 @@ public:
 			  bool grid_centered = true);
 
 
+    std::set<const directory *> m_completed_cutouts;
+
+
 private:
     static const std::size_t MAX_NAME_SIZE = RecordWriter::Record::FIELD_WIDTH * 3;
     static const bool CHECK_MODE_ERRORS = false;
@@ -771,6 +774,7 @@ public:
 
 
 Section::Section() :
+    m_completed_cutouts(),
     m_volume_mode(false),
     m_material_id(1),
     m_color(false, Color()),
@@ -1313,18 +1317,6 @@ apply_path_xform(const db_i &db, const mat_t &matrix, rt_db_internal &internal)
 }
 
 
-HIDDEN const directory &
-get_parent_dir(const db_full_path &path)
-{
-    RT_CK_FULL_PATH(&path);
-
-    if (path.fp_len < 2)
-	throw std::invalid_argument("toplevel");
-
-    return *path.fp_names[path.fp_len - 2];
-}
-
-
 HIDDEN const db_full_path
 get_parent_path(const db_full_path &path)
 {
@@ -1397,8 +1389,8 @@ get_cutout(const db_i &db, const db_full_path &parent_path, DBInternal &outer,
     {
 	mat_t matrix;
 	db_full_path temp;
-	db_full_path_init(&temp);
 	AutoPtr<db_full_path, db_free_full_path> autofree_temp(&temp);
+	db_full_path_init(&temp);
 	db_dup_full_path(&temp, &parent_path);
 
 	db_add_node_to_full_path(&temp, const_cast<directory *>(&outer_dir));
@@ -1420,10 +1412,9 @@ get_cutout(const db_i &db, const db_full_path &parent_path, DBInternal &outer,
 // this handles the cases for which we can't do this.
 // note: CCONE1 is deprecated.
 HIDDEN bool
-get_ccone1_cutout_helper(Section &section, const directory &parent_dir,
+get_ccone1_cutout_helper(Section &section, const std::string &name,
 			 const rt_tgc_internal &outer_tgc, const rt_tgc_internal &inner_tgc)
 {
-    RT_CK_DIR(&parent_dir);
     RT_TGC_CK_MAGIC(&outer_tgc);
     RT_TGC_CK_MAGIC(&inner_tgc);
 
@@ -1484,7 +1475,7 @@ get_ccone1_cutout_helper(Section &section, const directory &parent_dir,
 
     vect_t point_b;
     VADD2(point_b, outer_tgc.v, outer_tgc.h);
-    section.write_name(parent_dir.d_namep);
+    section.write_name(name);
 
     if (known_thickness) {
 	section.write_thin_cone(outer_tgc.v, point_b, radius1, radius2, thickness,
@@ -1544,7 +1535,8 @@ find_ccone_cutout(Section &section, const db_i &db,
 
     if (!VNEAR_EQUAL(outer_tgc.v, inner_tgc.v, RT_LEN_TOL)
 	|| !VNEAR_EQUAL(outer_tgc.h, inner_tgc.h, RT_LEN_TOL)) {
-	if (!get_ccone1_cutout_helper(section, parent_dir, outer_tgc, inner_tgc))
+	if (!get_ccone1_cutout_helper(section, parent_dir.d_namep, outer_tgc,
+				      inner_tgc))
 	    return false;
 
 	// this was a CCONE1
@@ -1896,7 +1888,7 @@ struct FastgenConversion {
 
     const db_i &m_db;
     const bn_tol &m_tol;
-    std::set<const directory *> m_recorded_cutouts, m_failed_regions;
+    std::set<const directory *> m_failed_regions;
 
 
 private:
@@ -1931,7 +1923,7 @@ public:
     void set_compsplt(fastf_t z_coordinate);
 
     // returns true if the given member shouldn't be written
-    bool member_ignored(const directory &member_dir) const;
+    bool member_ignored(const db_full_path &member_path) const;
 
     void create_section(const db_full_path &region_instance_path);
     Section &get_section(const db_full_path &region_instance_path);
@@ -2043,11 +2035,11 @@ FastgenConversion::RegionManager::set_compsplt(fastf_t z_coordinate)
 
 bool
 FastgenConversion::RegionManager::member_ignored(
-    const directory &member_dir) const
+    const db_full_path &member_path) const
 {
-    RT_CK_DIR(&member_dir);
+    RT_CK_FULL_PATH(&member_path);
 
-    return !m_enabled || m_walls.second.count(&member_dir);
+    return !m_enabled || m_walls.second.count(DB_FULL_PATH_CUR_DIR(&member_path));
 }
 
 
@@ -2158,7 +2150,6 @@ FastgenConversion::FastgenConversion(const std::string &path, const db_i &db,
 				     const bn_tol &tol, const std::set<const directory *> &facetize_regions) :
     m_db(db),
     m_tol(tol),
-    m_recorded_cutouts(),
     m_failed_regions(),
     m_path(path),
     m_facetize_regions(facetize_regions),
@@ -2288,7 +2279,7 @@ convert_primitive(FastgenConversion &data, const db_full_path &path,
 
 	    if (path.fp_len > 1
 		&& find_csphere_cutout(section, data.m_db, get_parent_path(path),
-				       data.m_recorded_cutouts))
+				       section.m_completed_cutouts))
 		return true;
 
 	    section.write_name(DB_FULL_PATH_CUR_DIR(&path)->d_namep);
@@ -2306,7 +2297,7 @@ convert_primitive(FastgenConversion &data, const db_full_path &path,
 
 	    if (path.fp_len > 1
 		&& find_ccone_cutout(section, data.m_db, get_parent_path(path),
-				     data.m_recorded_cutouts))
+				     section.m_completed_cutouts))
 		return true;
 
 	    point_t v2;
@@ -2425,7 +2416,7 @@ convert_leaf(db_tree_state *tree_state, const db_full_path *path,
 	bool converted = false;
 
 	if (region_dir
-	    && data.get_region(*region_dir).member_ignored(get_parent_dir(*path)))
+	    && data.get_region(*region_dir).member_ignored(get_parent_path(*path)))
 	    converted = true;
 	else if (!facetize)
 	    converted = convert_primitive(data, *path, *internal, subtracted);
