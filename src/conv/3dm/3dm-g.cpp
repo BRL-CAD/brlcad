@@ -1176,7 +1176,7 @@ main(int argc, char **argv)
 
     int c;
 
-    while ((c = bu_getopt(argc, argv, "o:vruh")) != -1) {
+    while ((c = bu_getopt(argc, argv, "o:vruh?")) != -1) {
 	switch (c) {
 	    case 'o':
 		output_path = bu_optarg;

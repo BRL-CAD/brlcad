@@ -331,7 +331,7 @@ segfilter_gen_worker(int cpu, void *ptr)
  * filter all rays not "solid" (as in gdiff)
  * filter all rays not surrounded by "similar" results (need to keep subtractions)
  * filter all rays that are "solid"
- * filter all rays surrouned by "similar" results (grab only grazing rays)
+ * filter all rays surrounded by "similar" results (grab only grazing rays)
  */
 extern "C" void
 analyze_seg_filter(struct bu_ptbl *segs, getray_t gray, getflag_t gflag, struct rt_i *rtip, struct resource *resp, fastf_t tol, int ncpus)

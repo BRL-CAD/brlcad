@@ -2197,7 +2197,7 @@ static void mdEdgeCollapse(mdMesh *mesh, mdThreadData *tdata, mdi v0, mdi v1, md
     /* Redirect vertex1 to vertex0 */
     vertex1->redirectindex = newv;
 
-    /* Maximum theoritical count of triangle references for our new vertex, we need a chunk of memory that big */
+    /* Maximum theoretical count of triangle references for our new vertex, we need a chunk of memory that big */
     trirefmax = vertex0->trirefcount + vertex1->trirefcount;
 
     /* Buffer to temporarily store our new trirefs */

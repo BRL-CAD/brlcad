@@ -55,7 +55,7 @@ analyze_find_subtracted(struct bu_ptbl *UNUSED(results), struct db_i *dbip, cons
 
     // Parent brep prep is worth passing in, but curr_comb should be prepped here, since we're iterating
     // over all candidates.  Might be worth caching *all* preps on all objects for later more efficient
-    // diff validatiaon processing, but that needs more thought
+    // diff validation processing, but that needs more thought
     ccomb_vars = (struct rt_gen_worker_vars *)bu_calloc(ncpus+1, sizeof(struct rt_gen_worker_vars ), "ccomb state");
     ccomb_resp = (struct resource *)bu_calloc(ncpus+1, sizeof(struct resource), "ccomb resources");
     ccomb_rtip = rt_new_rti(dbip);
