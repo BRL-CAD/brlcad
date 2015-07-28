@@ -15,7 +15,7 @@ extern "C" {
 /* Note that we are only looking for gaps within the solid partitions of p - curr_comb is the
  * context we are examining for subtractions, and impacts beyond it are of no concern here.*/
 HIDDEN int
-find_missing_gaps(struct bu_ptbl *UNUSED(missing), struct bu_ptbl *UNUSED(p_orig), struct bu_ptbl *UNUSED(p), int UNUSED(max_cnt))
+find_missing_gaps(struct bu_ptbl *UNUSED(missing), struct bu_ptbl *UNUSED(p_brep), struct bu_ptbl *UNUSED(p_comb), int UNUSED(max_cnt))
 {
 //1. Set up pointer arrays for both partition lists
 //
@@ -34,6 +34,30 @@ find_missing_gaps(struct bu_ptbl *UNUSED(missing), struct bu_ptbl *UNUSED(p_orig
 //
 //4. return the length of the missing bu_ptbl.
     return 0;
+}
+
+HIDDEN void
+plot_min_partitions(struct bu_ptbl *p, const char *cname)
+{
+    struct bu_vls name;
+    bu_vls_init(&name);
+    bu_vls_printf(&name, "hits_%s.pl", cname);
+    FILE* plot_file = fopen(bu_vls_addr(&name), "w");
+    int r = int(256*drand48() + 1.0);
+    int g = int(256*drand48() + 1.0);
+    int b = int(256*drand48() + 1.0);
+    pl_color(plot_file, r, g, b);
+    for (size_t i = 0; i < BU_PTBL_LEN(p); i++) {
+	struct minimal_partitions *mp = (struct minimal_partitions *)BU_PTBL_GET(p, i);
+	for (int j = 0; j < mp->hit_cnt * 2; j=j+2) {
+	    point_t p1, p2;
+	    VJOIN1(p1, mp->ray.r_pt, mp->hits[j], mp->ray.r_dir);
+	    VJOIN1(p2, mp->ray.r_pt, mp->hits[j+2], mp->ray.r_dir);
+	    pdv_3move(plot_file, p1);
+	    pdv_3cont(plot_file, p2);
+	}
+    }
+    fclose(plot_file);
 }
 
 /* Pass in the parent brep rt prep and non-finalized comb prep to avoid doing them multiple times.
@@ -106,18 +130,27 @@ analyze_find_subtracted(struct bu_ptbl *UNUSED(results), struct db_i *dbip, cons
 	struct bu_ptbl o_brep_results = BU_PTBL_INIT_ZERO;
 	struct bu_ptbl curr_comb_results = BU_PTBL_INIT_ZERO;
 
+	bu_log("Original brep:");
 	analyze_get_solid_partitions(&o_brep_results, pbrep_rtvars, candidate_rays, ray_cnt, dbip, pbrep, &tol, pcpus);
+	struct bu_vls tmp_name = BU_VLS_INIT_ZERO;
+	bu_vls_sprintf(&tmp_name, "%s-%s_%s.pl", pbrep, bu_vls_addr(curr_union_data->name_root), bu_vls_addr(candidate->name_root));
+	plot_min_partitions(&o_brep_results, bu_vls_addr(&tmp_name));
+	bu_log("Control comb: %s", curr_comb);
 	analyze_get_solid_partitions(&curr_comb_results, ccomb_vars, candidate_rays, ray_cnt, dbip, curr_comb, &tol, pcpus);
+	bu_vls_sprintf(&tmp_name, "%s-%s_%s-ccomb.pl", pbrep, bu_vls_addr(curr_union_data->name_root), bu_vls_addr(candidate->name_root));
+	plot_min_partitions(&curr_comb_results, bu_vls_addr(&tmp_name));
 	//
 	// 3. Compare the two partition/gap sets that result.
-	//
-	// int missing_gaps = find_missing_gaps(o_brep_results, curr_comb_results, ray_cnt);
-	//
+	struct bu_ptbl missing = BU_PTBL_INIT_ZERO;
+	int missing_gaps = find_missing_gaps(&missing, &o_brep_results, &curr_comb_results, ray_cnt);
+	
 	// 4.  If there are missing gaps in curr_comb, prep candidate and
 	// shoot the same rays against it.  If candidate 1) removes either all or a
 	// subset of the missing material and 2) does not remove material that is
 	// present in the results from the original brep, it is subtracted.  Add it
 	// to the results set.
+	if (missing_gaps) {
+	}
     }
     // Once all candidates are processed, return the BU_PTBL_LEN of results.
     return 0;

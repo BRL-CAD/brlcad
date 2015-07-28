@@ -542,7 +542,6 @@ memfree:
 	bu_free(state, "free state");
 	bu_free(resp, "free state");
     }
-    bu_log("ray_cnt: %d\n", ray_cnt);
     bu_log("ret: %d\n", ret);
     return ret;
 
