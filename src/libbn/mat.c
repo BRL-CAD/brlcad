@@ -615,12 +615,18 @@ bn_eigen2x2(
 void
 bn_vec_perp(vect_t new_vec, const vect_t old_vec)
 {
-    register int i;
-    vect_t another_vec;	/* Another vector, different */
+    int i;
+    vect_t another_vec;
+
+    /* degenerate case goes up */
+    if (ZERO(old_vec[X]) && ZERO(old_vec[Y]) && ZERO(old_vec[Z])) {
+	VSET(new_vec, 0.0, 0.0, 1.0);
+	return;
+    }
 
     /* FIXME: switching to completely different axes when a component
      * exceeds another causes twitchy jumping when using these vectors
-     * to draw.  the method used needs to support smooth transitions.
+     * to draw.  a better method would support smooth transitions.
      */
 
     i = X;
@@ -632,11 +638,7 @@ bn_vec_perp(vect_t new_vec, const vect_t old_vec)
     }
     VSETALL(another_vec, 0);
     another_vec[i] = 1.0;
-    if (ZERO(old_vec[X]) && ZERO(old_vec[Y]) && ZERO(old_vec[Z])) {
-	VMOVE(new_vec, another_vec);
-    } else {
-	VCROSS(new_vec, another_vec, old_vec);
-    }
+    VCROSS(new_vec, another_vec, old_vec);
 }
 
 
