@@ -138,7 +138,7 @@ find_missing_gaps(struct bu_ptbl *missing, struct bu_ptbl *p_brep, struct bu_ptb
 /* Pass in the parent brep rt prep and non-finalized comb prep to avoid doing them multiple times.
  * */
 extern "C" int
-analyze_find_subtracted(struct bu_ptbl *UNUSED(results), struct db_i *dbip, const char *pbrep, struct rt_gen_worker_vars *pbrep_rtvars, const char *curr_comb, struct bu_ptbl *candidates, void *data, int pcpus)
+analyze_find_subtracted(struct bu_ptbl *UNUSED(results), struct rt_wdb *wdbp, const char *pbrep, struct rt_gen_worker_vars *pbrep_rtvars, const char *curr_comb, struct bu_ptbl *candidates, void *data, int pcpus)
 {
     struct rt_gen_worker_vars *ccomb_vars;
     struct resource *ccomb_resp;
@@ -157,7 +157,7 @@ analyze_find_subtracted(struct bu_ptbl *UNUSED(results), struct db_i *dbip, cons
     // diff validation processing, but that needs more thought
     ccomb_vars = (struct rt_gen_worker_vars *)bu_calloc(ncpus+1, sizeof(struct rt_gen_worker_vars ), "ccomb state");
     ccomb_resp = (struct resource *)bu_calloc(ncpus+1, sizeof(struct resource), "ccomb resources");
-    ccomb_rtip = rt_new_rti(dbip);
+    ccomb_rtip = rt_new_rti(wdbp->dbip);
     for (i = 0; i < ncpus+1; i++) {
 	ccomb_vars[i].rtip = ccomb_rtip;
 	ccomb_vars[i].resp = &ccomb_resp[i];
@@ -206,12 +206,12 @@ analyze_find_subtracted(struct bu_ptbl *UNUSED(results), struct db_i *dbip, cons
 	struct bu_ptbl curr_comb_results = BU_PTBL_INIT_ZERO;
 
 	bu_log("Original brep:\n");
-	analyze_get_solid_partitions(&o_brep_results, pbrep_rtvars, candidate_rays, ray_cnt, dbip, pbrep, &tol, pcpus);
+	analyze_get_solid_partitions(&o_brep_results, pbrep_rtvars, candidate_rays, ray_cnt, wdbp->dbip, pbrep, &tol, pcpus);
 	struct bu_vls tmp_name = BU_VLS_INIT_ZERO;
 	bu_vls_sprintf(&tmp_name, "%s-%s_%s.pl", pbrep, bu_vls_addr(curr_union_data->name_root), bu_vls_addr(candidate->name_root));
 	plot_min_partitions(&o_brep_results, bu_vls_addr(&tmp_name));
 	bu_log("Control comb: %s\n", curr_comb);
-	analyze_get_solid_partitions(&curr_comb_results, ccomb_vars, candidate_rays, ray_cnt, dbip, curr_comb, &tol, pcpus);
+	analyze_get_solid_partitions(&curr_comb_results, ccomb_vars, candidate_rays, ray_cnt, wdbp->dbip, curr_comb, &tol, pcpus);
 	bu_vls_sprintf(&tmp_name, "%s-%s_%s-ccomb.pl", pbrep, bu_vls_addr(curr_union_data->name_root), bu_vls_addr(candidate->name_root));
 	plot_min_partitions(&curr_comb_results, bu_vls_addr(&tmp_name));
 	//
