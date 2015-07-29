@@ -297,6 +297,7 @@ analyze_find_subtracted(struct bu_ptbl *UNUSED(results), struct rt_wdb *wdbp, co
     //const ON_Brep *brep = curr_union_data->brep;
     size_t i = 0;
     //struct bn_tol tol = {BN_TOL_MAGIC, 0.5, 0.5 * 0.5, 1.0e-6, 1.0 - 1.0e-6 };
+    struct bu_ptbl to_subtract = BU_PTBL_INIT_ZERO;
 
     if (!curr_union_data) return 0;
 
@@ -470,9 +471,59 @@ analyze_find_subtracted(struct bu_ptbl *UNUSED(results), struct rt_wdb *wdbp, co
 	    decision = subtraction_decision(missing, &candidate_results, ray_cnt);
 
 	}
-	bu_log("subtraction decision: %d\n\n", decision);
 	if (decision) {
-	    bu_log("TODO - subtract %s from %s\n", bu_vls_addr(candidate->obj_name), curr_comb);
+	    bu_log("Subtract %s from %s\n", bu_vls_addr(candidate->obj_name), bu_vls_addr(curr_union_data->obj_name));
+	    bu_ptbl_ins(&to_subtract, (long *)candidate);
+	}
+	bu_log("subtraction decision: %d\n\n", decision);
+    }
+
+    // blegh - can't do this through libged, since we're using it - is there a sane librt API to do this somewhere?
+    if (BU_PTBL_LEN(&to_subtract) > 0) {
+	struct bu_vls sub_comb_name = BU_VLS_INIT_ZERO;
+	bu_vls_sprintf(&sub_comb_name, "csg_%s-s_%s.c", pbrep, bu_vls_addr(curr_union_data->name_root));
+	struct directory *cdp = db_lookup(wdbp->dbip, bu_vls_addr(&sub_comb_name), LOOKUP_QUIET);
+	if (cdp == RT_DIR_NULL) {
+	    bu_log("error looking up subtraction object %s\n", bu_vls_addr(&sub_comb_name));
+	} else {
+	    struct rt_db_internal intern;
+	    struct rt_comb_internal *comb;
+	    union tree *tp;
+	    struct rt_tree_array *tree_list;
+	    size_t node_count;
+	    size_t actual_count;
+	    size_t curr_count;
+	    if (rt_db_get_internal(&intern, cdp, wdbp->dbip, NULL, &rt_uniresource) < 0) {
+		bu_log("error getting subtraction internal\n");
+	    }
+	    comb = (struct rt_comb_internal *)intern.idb_ptr;
+	    RT_CK_COMB(comb);
+	    if (comb->tree && db_ck_v4gift_tree(comb->tree) < 0) {
+		db_non_union_push(comb->tree, &rt_uniresource);
+	    }
+	    curr_count = db_tree_nleaves(comb->tree);
+	    node_count = curr_count + BU_PTBL_LEN(&to_subtract);
+	    tree_list = (struct rt_tree_array *)bu_calloc(node_count, sizeof(struct rt_tree_array), "tree list");
+	    if (comb->tree) {
+		actual_count = BU_PTBL_LEN(&to_subtract) + (struct rt_tree_array *)db_flatten_tree(tree_list, comb->tree, OP_UNION, 1, &rt_uniresource) - tree_list;
+		BU_ASSERT_SIZE_T(actual_count, ==, node_count);
+		comb->tree = TREE_NULL;
+	    }
+	    for (size_t si = 0; si < BU_PTBL_LEN(&to_subtract); si++) {
+		struct subbrep_object_data *s = (struct subbrep_object_data *)BU_PTBL_GET(&to_subtract, si);
+		tree_list[curr_count].tl_op = OP_UNION;
+		RT_GET_TREE(tp, &rt_uniresource);
+		tree_list[curr_count].tl_tree = tp;
+		tp->tr_l.tl_op = OP_DB_LEAF;
+		tp->tr_l.tl_name = bu_strdup(bu_vls_addr(s->obj_name));
+		tp->tr_l.tl_mat = (matp_t)NULL;
+
+		++curr_count;
+	    }
+	    comb->tree = (union tree *)db_mkgift_tree(tree_list, node_count, &rt_uniresource);
+	    if (rt_db_put_internal(cdp, wdbp->dbip, &intern, &rt_uniresource) < 0) {
+		bu_log("error writing out subtraction comb\n");
+	    }
 	}
     }
 
