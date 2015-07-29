@@ -618,6 +618,11 @@ bn_vec_perp(vect_t new_vec, const vect_t old_vec)
     register int i;
     vect_t another_vec;	/* Another vector, different */
 
+    /* FIXME: switching to completely different axes when a component
+     * exceeds another causes twitchy jumping when using these vectors
+     * to draw.  the method used needs to support smooth transitions.
+     */
+
     i = X;
     if (fabs(old_vec[Y]) < fabs(old_vec[i])) {
 	i = Y;
