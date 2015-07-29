@@ -56,8 +56,6 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
 
-* implement support for plotting point clouds to DM ps, plot, tk
-
 * start making use of the CMakePushCheckState macros - we are doing
   this manually in several places
 
@@ -205,9 +203,6 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
 * create a joint articulation (manually is good, automatic is probably
   impossible) for ktank so the turret can spin and the gun barrel may
   be raised up/down within a given range.
-
-* make Lighting enabled by default in mged and archer (this is a libdm
-  issue).  currently unable to set/override in .mgedrc either.
 
 * need ability to report the smallest feature in a given hierarchy
   (smallest edge?) and/or largest error in a given boundary model
@@ -712,9 +707,6 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
 * make bu_dirname not allocation memory.  have caller pass
   buffer in as a parameter with size ala snprintf/memcpy.
 
-* provide libdm mechanism for drawing spline curves (to help visualize
-  flight paths, show object trajectories, etc.).
-
 * provide option for displaying object bounding boxes while rotating.
   visualization feature to help with rotation operations, showing
   global object alignment with respect to its own coordinate space.
@@ -732,8 +724,6 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
 
 * vls name wrapping (reversible argv-to-vls, vls-to-argv).  look at
   src/libged/glob.c code, very similar.
-
-* release dm X get_color() memory
 
 * update g-xxx_facets to use libgcv
 
@@ -898,15 +888,6 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
 
 * implement -param support for 'search' command
 
-* mged crashes on Mac if using system Tcl/Tk with our incrTcl.
-  crashes with the following stack (same whether dm-X or dm-ogl):
-	XQueryExtension
-	...
-	glxGetConfig
-	ogl_choose_visual (dm-ogl.c:1359)
-	ogl_open (dm-ogl.c:401)
-	dm_open (dm-generic:82)
-
 * readd support for vrml v1 to g-vrml so that users can select whether
   they want v2 (default) or previous v1 output format via a
   command-line switch.  see http://brlcad.svn.sf.net/viewvc/brlcad/brlcad/trunk/conv/g-vrml.c?view=diff&pathrev=22798&r1=16900&r2=16901
@@ -1001,10 +982,6 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
 
 * better/consistent argument processing supporting both long and short
   option names, perhaps using argtable
-
-* decouple libdm from librt -- just one file in libdm uses librt,
-  including a whole nasty primitive switch statement.  need to push
-  that back over into librt.
 
 * Implement an optical shader for the new "pixelated" military
   camouflage style
