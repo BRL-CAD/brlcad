@@ -574,26 +574,34 @@ brep_to_csg(struct ged *gedp, struct directory *dp, int verify)
 
 	/* finalize the combs that need it */
 	if (BU_PTBL_LEN(&finalize_combs) > 0) {
+	    int have_work_to_do = 0;
 	    /* If we have to do this step, we need to prep the original brep for raytracing */
 	    size_t ncpus = bu_avail_cpus();
 	    //size_t ncpus = 1;
-	    struct rt_gen_worker_vars *brep_vars = (struct rt_gen_worker_vars *)bu_calloc(ncpus+1, sizeof(struct rt_gen_worker_vars ), "brep state");
-	    struct resource *brep_resp = (struct resource *)bu_calloc(ncpus+1, sizeof(struct resource), "brep resources");
-	    struct rt_i *brep_rtip = rt_new_rti(wdbp->dbip);
-	    for (size_t i = 0; i < ncpus+1; i++) {
-		brep_vars[i].rtip = brep_rtip;
-		brep_vars[i].resp = &brep_resp[i];
-		rt_init_resource(brep_vars[i].resp, i, brep_rtip);
-	    }
-	    if (rt_gettree(brep_rtip, dp->d_namep) < 0) {
-		// TODO - free memory
-		return 0;
-	    }
-	    rt_prep_parallel(brep_rtip, ncpus);
-
 	    for (unsigned int i = 0; i < BU_PTBL_LEN(&finalize_combs); i++){
 		struct subbrep_object_data *obj = (struct subbrep_object_data *)BU_PTBL_GET(&finalize_combs, i);
-		finalize_comb(wdbp, dp, brep_vars, obj, ncpus);
+		if (BU_PTBL_LEN(obj->subtraction_candidates) > 0) have_work_to_do++;
+	    }
+
+	    if (have_work_to_do) {
+		struct rt_gen_worker_vars *brep_vars = (struct rt_gen_worker_vars *)bu_calloc(ncpus+1, sizeof(struct rt_gen_worker_vars ), "brep state");
+		struct resource *brep_resp = (struct resource *)bu_calloc(ncpus+1, sizeof(struct resource), "brep resources");
+		struct rt_i *brep_rtip = rt_new_rti(wdbp->dbip);
+		for (size_t i = 0; i < ncpus+1; i++) {
+		    brep_vars[i].rtip = brep_rtip;
+		    brep_vars[i].resp = &brep_resp[i];
+		    rt_init_resource(brep_vars[i].resp, i, brep_rtip);
+		}
+		if (rt_gettree(brep_rtip, dp->d_namep) < 0) {
+		    // TODO - free memory
+		    return 0;
+		}
+		rt_prep_parallel(brep_rtip, ncpus);
+
+		for (unsigned int i = 0; i < BU_PTBL_LEN(&finalize_combs); i++){
+		    struct subbrep_object_data *obj = (struct subbrep_object_data *)BU_PTBL_GET(&finalize_combs, i);
+		    finalize_comb(wdbp, dp, brep_vars, obj, ncpus);
+		}
 	    }
 	}
 
