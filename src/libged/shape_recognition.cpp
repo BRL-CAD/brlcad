@@ -330,13 +330,12 @@ make_shapes(struct bu_vls *msgs, struct subbrep_object_data *data, struct rt_wdb
 {
     struct bu_vls spacer = BU_VLS_INIT_ZERO;
 
-    struct bu_vls obj_name = BU_VLS_INIT_ZERO;
-    subbrep_obj_name(data, name_root, &obj_name);
-    struct directory *dp = db_lookup(wdbp->dbip, bu_vls_addr(&obj_name), LOOKUP_QUIET);
+    subbrep_obj_name(data, name_root, data->obj_name);
+    struct directory *dp = db_lookup(wdbp->dbip, bu_vls_addr(data->obj_name), LOOKUP_QUIET);
 
     // Don't recreate it
     if (dp != RT_DIR_NULL) {
-	bu_log("already made %s\n", bu_vls_addr(&obj_name));
+	//bu_log("already made %s\n", bu_vls_addr(data->obj_name));
 	return 0;
     }
 
@@ -453,6 +452,18 @@ finalize_comb(struct rt_wdb *wdbp, struct directory *brep_dp, struct rt_gen_work
     }
 }
 
+// possibly unnecessary
+void make_subtraction_objects(struct ged *gedp, struct subbrep_object_data *obj, struct bu_vls *comb_name)
+{
+    struct bu_ptbl *sc = obj->subtraction_candidates;
+    if (BU_PTBL_LEN(sc) > 0) {
+	for (unsigned int k = 0; k < BU_PTBL_LEN(sc); k++){
+	    struct subbrep_object_data *sobj = (struct subbrep_object_data *)BU_PTBL_GET(sc, k);
+	    (void)make_shapes(gedp->ged_result_str, sobj, gedp->ged_wdbp, comb_name, NULL, 0);
+	    make_subtraction_objects(gedp, sobj, comb_name);
+	}
+    }
+}
 
 /* return codes:
  * -1 get internal failure
@@ -544,6 +555,8 @@ brep_to_csg(struct ged *gedp, struct directory *dp, int verify)
 		//print_subbrep_object(obj, "  ");
 		(void)mk_addmember(bu_vls_addr(obj->obj_name), &((*scomb).l), NULL, db_str2op((const char *)&un));
 	    }
+
+	    make_subtraction_objects(gedp, obj, &comb_name);
 	}
 
 	/* Make the last comb - TODO - should we also finalize all the other combs that need it now? */
