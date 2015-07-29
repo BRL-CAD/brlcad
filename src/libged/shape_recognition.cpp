@@ -329,6 +329,17 @@ HIDDEN int
 make_shapes(struct bu_vls *msgs, struct subbrep_object_data *data, struct rt_wdb *wdbp, struct bu_vls *name_root, struct wmember *pcomb, int depth)
 {
     struct bu_vls spacer = BU_VLS_INIT_ZERO;
+
+    struct bu_vls obj_name = BU_VLS_INIT_ZERO;
+    subbrep_obj_name(data, name_root, &obj_name);
+    struct directory *dp = db_lookup(wdbp->dbip, bu_vls_addr(&obj_name), LOOKUP_QUIET);
+
+    // Don't recreate it
+    if (dp != RT_DIR_NULL) {
+	bu_log("already made %s\n", bu_vls_addr(&obj_name));
+	return 0;
+    }
+
     for (int i = 0; i < depth; i++)
 	bu_vls_printf(&spacer, " ");
     //std::cout << bu_vls_addr(&spacer) << "Making shape for " << bu_vls_addr(data->name_root) << "\n";
@@ -535,6 +546,15 @@ brep_to_csg(struct ged *gedp, struct directory *dp, int verify)
 		//print_subbrep_object(obj, "  ");
 		(void)mk_addmember(bu_vls_addr(&obj_name), &((*scomb).l), NULL, db_str2op((const char *)&un));
 	    }
+
+	    struct bu_ptbl *sc = obj->subtraction_candidates;
+	    if (sc && BU_PTBL_LEN(sc) > 0) {
+		for (unsigned int k = 0; k < BU_PTBL_LEN(sc); k++){
+		    struct subbrep_object_data *sobj = (struct subbrep_object_data *)BU_PTBL_GET(sc, k);
+		    (void)make_shapes(gedp->ged_result_str, sobj, wdbp, &comb_name, NULL, 0);
+		}
+	    }
+
 	    //std::cout << bu_vls_addr(&obj_name) << ": " << obj->params->bool_op << "\n";
 	    //(void)mk_addmember(bu_vls_addr(&obj_name), &(pcomb.l), NULL, db_str2op(&(obj->params->bool_op)));
 	    bu_vls_free(&obj_name);
