@@ -162,37 +162,32 @@ rt_datum_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_
 
     while (datum_ip) {
 	if (!ZERO(datum_ip->w)) {
-	    vect_t plane_cent, xbase, ybase;
-	    vect_t x_1, x_2, y_1, y_2, tip;
+	    vect_t up, down, left, right, udir;
+	    point_t tip, ul, ll, ur, lr;
 
-	    VMOVE(plane_cent, datum_ip->pnt);
-	    VUNITIZE(plane_cent);
-	    VSCALE(plane_cent, datum_ip->pnt, 1/datum_ip->w);
-
-	    bn_vec_perp(xbase, datum_ip->dir);
-	    VCROSS(ybase, xbase, datum_ip->dir);
-	    VUNITIZE(xbase);
-	    VUNITIZE(ybase);
-
-	    VADD2(x_1, plane_cent, xbase);
-	    VSUB2(x_2, plane_cent, xbase);
-	    VADD2(y_1, plane_cent, ybase);
-	    VSUB2(y_2, plane_cent, ybase);
-
-	    /* TODO: rotate 45 degrees  */
-	    RT_ADD_VLIST(vhead, x_1, BN_VLIST_LINE_MOVE);	/* the cross */
-	    RT_ADD_VLIST(vhead, x_2, BN_VLIST_LINE_DRAW);
-	    RT_ADD_VLIST(vhead, y_1, BN_VLIST_LINE_MOVE);
-	    RT_ADD_VLIST(vhead, y_2, BN_VLIST_LINE_DRAW);
-	    RT_ADD_VLIST(vhead, x_2, BN_VLIST_LINE_DRAW);	/* the box */
-	    RT_ADD_VLIST(vhead, y_1, BN_VLIST_LINE_DRAW);
-	    RT_ADD_VLIST(vhead, x_1, BN_VLIST_LINE_DRAW);
-	    RT_ADD_VLIST(vhead, y_2, BN_VLIST_LINE_DRAW);
-
-	    VSCALE(tip, datum_ip->dir, 2.0);
-	    VADD2(tip, plane_cent, tip);
-	    RT_ADD_VLIST(vhead, plane_cent, BN_VLIST_LINE_MOVE);
+	    /* center */
+	    VADD2(tip, datum_ip->pnt, datum_ip->dir);
+	    RT_ADD_VLIST(vhead, datum_ip->pnt, BN_VLIST_POINT_DRAW);
 	    RT_ADD_VLIST(vhead, tip, BN_VLIST_LINE_DRAW);
+
+	    bn_vec_perp(up, datum_ip->dir);
+	    VREVERSE(down, up);
+	    VMOVE(udir, datum_ip->dir);
+	    VUNITIZE(udir);
+	    VCROSS(left, udir, up);
+	    VREVERSE(right, left);
+
+	    VJOIN2(ul, datum_ip->pnt, datum_ip->w, up, datum_ip->w, left);
+	    VJOIN2(ll, datum_ip->pnt, datum_ip->w, down, datum_ip->w, left);
+	    VJOIN2(ur, datum_ip->pnt, datum_ip->w, up, datum_ip->w, right);
+	    VJOIN2(lr, datum_ip->pnt, datum_ip->w, down, datum_ip->w, right);
+
+	    /* draw the box */
+	    RT_ADD_VLIST(vhead, ul, BN_VLIST_LINE_MOVE);
+	    RT_ADD_VLIST(vhead, ll, BN_VLIST_LINE_DRAW);
+	    RT_ADD_VLIST(vhead, lr, BN_VLIST_LINE_DRAW);
+	    RT_ADD_VLIST(vhead, ur, BN_VLIST_LINE_DRAW);
+	    RT_ADD_VLIST(vhead, ul, BN_VLIST_LINE_DRAW);
 
 	} else if (MAGNITUDE(datum_ip->dir) > 0.0 && ZERO(datum_ip->w)) {
 	    vect_t perp, cross1, cross2;
