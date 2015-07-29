@@ -147,6 +147,65 @@ find_missing_gaps(struct bu_ptbl *missing, struct bu_ptbl *p_brep, struct bu_ptb
     return BU_PTBL_LEN(missing);
 }
 
+HIDDEN int
+subtraction_decision(struct bu_ptbl *missing, struct bu_ptbl *candidate, int max_cnt)
+{
+    if (!missing || !candidate || max_cnt == 0) return 0;
+
+    //1. Set up pointer arrays for both partition lists
+    struct minimal_partitions **mp = (struct minimal_partitions **)bu_calloc(max_cnt, sizeof(struct minimal_partitions *), "array1");
+    struct minimal_partitions **cp = (struct minimal_partitions **)bu_calloc(max_cnt, sizeof(struct minimal_partitions *), "array2");
+
+    //2. Iterate over the tbls and assign each array it's minimal partition pointer
+    //   based on the index stored in the minimal_partitions struct.
+    for (size_t i = 0; i < BU_PTBL_LEN(missing); i++) {
+	struct minimal_partitions *p = (struct minimal_partitions *)BU_PTBL_GET(missing, i);
+	mp[p->index] = p;
+    }
+    for (size_t i = 0; i < BU_PTBL_LEN(candidate); i++) {
+	struct minimal_partitions *p = (struct minimal_partitions *)BU_PTBL_GET(candidate, i);
+	cp[p->index] = p;
+    }
+
+    //3. Test all candidate hit segments that share a ray with a missing gap to verify that they are within a gap.
+    std::vector<fastf_t> problem_hits;
+    std::vector<fastf_t> good_hits;
+    for (int i = 0; i < max_cnt; i++) {
+	if (mp[i] && cp[i]) {
+	    if (cp[i]->hit_cnt > 0) {
+		// iterate over the hits
+		for (int j = 0; j < cp[i]->hit_cnt; j++) {
+		    int inside = 0;
+		    fastf_t h1 = cp[i]->hits[2*j];
+		    fastf_t h2 = cp[i]->hits[2*j+1];
+		    for (int k = 0; k < mp[i]->gap_cnt; k++) {
+			fastf_t g1 = mp[i]->gaps[2*k];
+			fastf_t g2 = mp[i]->gaps[2*k+1];
+			// If the gap starts after the hit ends, we're done with this hit
+			if (g1 > h2) break;
+			// If the hit starts after the gap ends, skip to the next gap
+			if (h1 > g2) continue;
+			if ((NEAR_ZERO(g1 - h1, BN_TOL_DIST) || h1 > g1) && (NEAR_ZERO(g2 - h2, BN_TOL_DIST) || h2 < g2)) {
+			    inside = 1;
+			    break;
+			}
+		    }
+		    if (!inside) {
+			problem_hits.push_back(h1);
+			problem_hits.push_back(h2);
+		    } else {
+			good_hits.push_back(h1);
+			good_hits.push_back(h2);
+		    }
+		}	    
+	    }
+	}
+    }
+bu_log("missing size: %d, candidate size: %d, problem size: %d, good size: %d\n", BU_PTBL_LEN(missing), BU_PTBL_LEN(candidate), (int)(problem_hits.size()/2), (int)(good_hits.size()/2));
+    return ((size_t)(problem_hits.size()/2) > (size_t)(BU_PTBL_LEN(missing) * 0.1)) ? 0 : 1;
+}
+
+
 /* Pass in the parent brep rt prep and non-finalized comb prep to avoid doing them multiple times.
  * */
 extern "C" int
@@ -202,7 +261,7 @@ analyze_find_subtracted(struct bu_ptbl *UNUSED(results), struct rt_wdb *wdbp, co
 	fastf_t z_dist = fabs(bmax[2] - bmin[2]);
 	fastf_t dmin = (x_dist < y_dist) ? x_dist : y_dist;
 	dmin = (z_dist < dmin) ? z_dist : dmin;
-	struct bn_tol tol = {BN_TOL_MAGIC, dmin/10, dmin/10 * dmin/10, 1.0e-6, 1.0 - 1.0e-6 };
+	struct bn_tol tol = {BN_TOL_MAGIC, dmin/20, dmin/20 * dmin/20, 1.0e-6, 1.0 - 1.0e-6 };
 
 	// Construct the rays to shoot from the bbox  (TODO what tol?)
 	ray_cnt = analyze_get_bbox_rays(&candidate_rays, bmin, bmax, &tol);
@@ -241,6 +300,13 @@ analyze_find_subtracted(struct bu_ptbl *UNUSED(results), struct rt_wdb *wdbp, co
 	// subset of the missing material and 2) does not remove material that is
 	// present in the results from the original brep, it is subtracted.  Add it
 	// to the results set.
+
+	// TODO - If we do find missing gaps in the first pass, need to construct a bbox of those missing gaps and compare
+	// it to the size of the bbox used to generate the first set of rays.  If the bbox of the missing gaps is much smaller
+	// than the original bbox, the ray sample is going to be too rough to allow for a reliable determination and we need
+	// to re-shoot just the area of interest with a finer grid.  Might also be able to use missing gap count to trigger this...
+	// ideally, pass to an iterative function that adjusts until we have a reasonable data size
+
 	struct bu_ptbl candidate_results = BU_PTBL_INIT_ZERO;
 	if (missing_gaps > 0) {
 	    // Make a region copy of the candidate
@@ -297,11 +363,14 @@ analyze_find_subtracted(struct bu_ptbl *UNUSED(results), struct rt_wdb *wdbp, co
 		    bu_log("error deleting temp object %s\n", bu_vls_addr(&tmp_comb_name));
 		}
 	    }
-	}
 
-	// 5.  If we've got hits back from the candidate, evaluate them against the missing gaps and the ccomb hits.
-	//     If all candidate solid segments are within the missing gaps or are on rays that didn't report a ccomb hit,
-	//     the candidate is a subtraction to be added to the tree definition.
+	    // 5.  If we've got hits back from the candidate, evaluate them against the missing gaps and the ccomb hits.
+	    //     If all candidate solid segments are within the missing gaps or are on rays that didn't report a ccomb hit,
+	    //     the candidate is a subtraction to be added to the tree definition.
+	    int decision = subtraction_decision(&missing, &candidate_results, ray_cnt);
+
+	    bu_log("subtraction decision: %d\n", decision);
+	}
     }
 
     bu_free(ccomb_vars, "free vars");
