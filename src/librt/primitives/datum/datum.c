@@ -163,19 +163,28 @@ rt_datum_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_
     while (datum_ip) {
 	if (!ZERO(datum_ip->w)) {
 	    vect_t up, down, left, right, udir;
-	    point_t tip, ul, ll, ur, lr;
+	    point_t tip, ul, ll, ur, lr, ortho;
+	    const vect_t zup = {0.0, 0.0, 1.0};
 
 	    /* center */
 	    VADD2(tip, datum_ip->pnt, datum_ip->dir);
 	    RT_ADD_VLIST(vhead, datum_ip->pnt, BN_VLIST_POINT_DRAW);
 	    RT_ADD_VLIST(vhead, tip, BN_VLIST_LINE_DRAW);
 
-	    bn_vec_perp(up, datum_ip->dir);
-	    VREVERSE(down, up);
+	    VCROSS(left, datum_ip->dir, zup);
+	    VREVERSE(right, left);
 	    VMOVE(udir, datum_ip->dir);
 	    VUNITIZE(udir);
-	    VCROSS(left, udir, up);
-	    VREVERSE(right, left);
+	    VCROSS(up, udir, left);
+	    VREVERSE(down, up);
+
+	    VADD2(ortho, datum_ip->pnt, up);
+	    RT_ADD_VLIST(vhead, ortho, BN_VLIST_LINE_MOVE);
+	    VPRINT("line from", ortho);
+
+	    VSUB2(ortho, datum_ip->pnt, up);
+	    VPRINT("       to", ortho);
+	    RT_ADD_VLIST(vhead, ortho, BN_VLIST_LINE_DRAW);
 
 	    VJOIN2(ul, datum_ip->pnt, datum_ip->w, up, datum_ip->w, left);
 	    VJOIN2(ll, datum_ip->pnt, datum_ip->w, down, datum_ip->w, left);
@@ -310,7 +319,7 @@ rt_datum_export5(struct bu_external *ep, const struct rt_db_internal *ip, double
     /* we allocate potentially more than strictly necessary so we can
      * change datums in place. avoids growing the export unnecessarily.
      */
-    ep->ext_nbytes = SIZEOF_NETWORK_LONG /* #datums */ + (count * (MAX_VALS + 1 /* #vals */) * SIZEOF_NETWORK_DOUBLE);
+    ep->ext_nbytes = SIZEOF_NETWORK_LONG /* #datums */ + (count * MAX_VALS * SIZEOF_NETWORK_DOUBLE) + (count * SIZEOF_NETWORK_LONG /* #vals */);
     ep->ext_buf = (uint8_t *)bu_calloc(1, ep->ext_nbytes, "datum external");
     buf = (unsigned char *)ep->ext_buf;
 
@@ -379,11 +388,13 @@ rt_datum_import5(struct rt_db_internal *ip, const struct bu_external *ep, const 
 
     while (count-- > 0) {
 	struct rt_datum_internal *datum_ip;
-	size_t vals = ntohl(*(uint32_t *)buf);
 
+	size_t vals = ntohl(*(uint32_t *)buf);
 	buf += SIZEOF_NETWORK_LONG;
+
 	if (vals > MAX_VALS)
 	    return -1;
+
 	buf = datum_unpack_double(buf, (unsigned char *)vec, vals);
 
 	BU_ALLOC(datum_ip, struct rt_datum_internal);
