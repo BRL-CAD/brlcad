@@ -978,6 +978,9 @@ wgl_drawVListHiddenLine(dm *dmp, register struct bn_vlist *vp)
 	for (i = 0; i < nused; i++, cmd++, pt++) {
 	    if (dmp->dm_debugLevel > 2)
 		bu_log(" %d (%g %g %g)\n", *cmd, V3ARGS(pt));
+
+	    VMOVE(glpt, *pt);
+
 	    switch (*cmd) {
 		case BN_VLIST_LINE_MOVE:
 		case BN_VLIST_LINE_DRAW:
@@ -990,19 +993,16 @@ wgl_drawVListHiddenLine(dm *dmp, register struct bn_vlist *vp)
 
 		    glBegin(GL_POLYGON);
 		    /* Set surface normal (vl_pnt points outward) */
-		    VMOVE(glpt, *pt);
 		    glNormal3dv(glpt);
 		    break;
 		case BN_VLIST_POLY_MOVE:
 		case BN_VLIST_POLY_DRAW:
 		case BN_VLIST_TRI_MOVE:
 		case BN_VLIST_TRI_DRAW:
-		    VMOVE(glpt, *pt);
 		    glVertex3dv(glpt);
 		    break;
 		case BN_VLIST_POLY_END:
 		    /* Draw, End Polygon */
-		    VMOVE(glpt, *pt);
 		    glVertex3dv(glpt);
 		    glEnd();
 		    first = 1;
@@ -1010,7 +1010,6 @@ wgl_drawVListHiddenLine(dm *dmp, register struct bn_vlist *vp)
 		case BN_VLIST_POLY_VERTNORM:
 		case BN_VLIST_TRI_VERTNORM:
 		    /* Set per-vertex normal.  Given before vert. */
-		    VMOVE(glpt, *pt);
 		    glNormal3dv(glpt);
 		    break;
 		case BN_VLIST_TRI_START:
@@ -1020,7 +1019,6 @@ wgl_drawVListHiddenLine(dm *dmp, register struct bn_vlist *vp)
 		    first = 0;
 
 		    /* Set surface normal (vl_pnt points outward) */
-		    VMOVE(glpt, *pt);
 		    glNormal3dv(glpt);
 
 		    break;
@@ -1046,9 +1044,14 @@ wgl_drawVListHiddenLine(dm *dmp, register struct bn_vlist *vp)
 	register int	*cmd = tvp->cmd;
 	register point_t *pt = tvp->pt;
 	GLdouble glpt[3];
+
 	for (i = 0; i < nused; i++, cmd++, pt++) {
+
 	    if (dmp->dm_debugLevel > 2)
 		bu_log(" %d (%g %g %g)\n", *cmd, V3ARGS(pt));
+
+	    VMOVE(glpt, *pt);
+
 	    switch (*cmd) {
 		case BN_VLIST_LINE_MOVE:
 		    /* Move, start line */
@@ -1057,7 +1060,6 @@ wgl_drawVListHiddenLine(dm *dmp, register struct bn_vlist *vp)
 		    first = 0;
 
 		    glBegin(GL_LINE_STRIP);
-		    VMOVE(glpt, *pt);
 		    glVertex3dv(glpt);
 		    break;
 		case BN_VLIST_POLY_START:
@@ -1074,13 +1076,11 @@ wgl_drawVListHiddenLine(dm *dmp, register struct bn_vlist *vp)
 		case BN_VLIST_POLY_DRAW:
 		case BN_VLIST_TRI_MOVE:
 		case BN_VLIST_TRI_DRAW:
-		    VMOVE(glpt, *pt);
 		    glVertex3dv(glpt);
 		    break;
 		case BN_VLIST_POLY_END:
 		case BN_VLIST_TRI_END:
 		    /* Draw, End Polygon */
-		    VMOVE(glpt, *pt);
 		    glVertex3dv(glpt);
 		    glEnd();
 		    first = 1;
@@ -1088,7 +1088,6 @@ wgl_drawVListHiddenLine(dm *dmp, register struct bn_vlist *vp)
 		case BN_VLIST_POLY_VERTNORM:
 		case BN_VLIST_TRI_VERTNORM:
 		    /* Set per-vertex normal.  Given before vert. */
-		    VMOVE(glpt, glpt);
 		    glNormal3dv(*pt);
 		    break;
 	    }
@@ -1137,9 +1136,14 @@ wgl_drawVList(dm *dmp, struct bn_vlist *vp)
 	register int	*cmd = tvp->cmd;
 	register point_t *pt = tvp->pt;
 	GLdouble glpt[3];
+
 	for (i = 0; i < nused; i++, cmd++, pt++) {
+
 	    if (dmp->dm_debugLevel > 2)
 		bu_log(" %d (%g %g %g)\n", *cmd, V3ARGS(pt));
+
+	    VMOVE(glpt, *pt);
+
 	    switch (*cmd) {
 		case BN_VLIST_LINE_MOVE:
 		    /* Move, start line */
@@ -1159,7 +1163,6 @@ wgl_drawVList(dm *dmp, struct bn_vlist *vp)
 		    }
 
 		    glBegin(GL_LINE_STRIP);
-		    VMOVE(glpt, *pt);
 		    glVertex3dv(glpt);
 		    break;
 		case BN_VLIST_POLY_START:
@@ -1200,7 +1203,6 @@ wgl_drawVList(dm *dmp, struct bn_vlist *vp)
 			glBegin(GL_TRIANGLES);
 
 		    /* Set surface normal (vl_pnt points outward) */
-		    VMOVE(glpt, *pt);
 		    glNormal3dv(glpt);
 
 		    first = 0;
@@ -1211,12 +1213,10 @@ wgl_drawVList(dm *dmp, struct bn_vlist *vp)
 		case BN_VLIST_POLY_DRAW:
 		case BN_VLIST_TRI_MOVE:
 		case BN_VLIST_TRI_DRAW:
-		    VMOVE(glpt, *pt);
 		    glVertex3dv(glpt);
 		    break;
 		case BN_VLIST_POLY_END:
 		    /* Draw, End Polygon */
-		    VMOVE(glpt, *pt);
 		    glVertex3dv(glpt);
 		    glEnd();
 		    first = 1;
@@ -1226,7 +1226,6 @@ wgl_drawVList(dm *dmp, struct bn_vlist *vp)
 		case BN_VLIST_POLY_VERTNORM:
 		case BN_VLIST_TRI_VERTNORM:
 		    /* Set per-vertex normal.  Given before vert. */
-		    VMOVE(glpt, *pt);
 		    glNormal3dv(glpt);
 		    break;
 		case BN_VLIST_POINT_DRAW:

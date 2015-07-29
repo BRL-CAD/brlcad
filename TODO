@@ -18,6 +18,8 @@ tasks as they are completed.
 THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 -------------------------------------------------
 
+* make sure windows wireframes are not horked
+
 * make sure rt -I interactive mode still works... looks like code for
   it was removed.
 
@@ -53,6 +55,8 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
+
+* implement support for plotting point clouds to DM ps
 
 * start making use of the CMakePushCheckState macros - we are doing
   this manually in several places
