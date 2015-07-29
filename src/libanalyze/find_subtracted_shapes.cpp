@@ -60,6 +60,8 @@ find_missing_gaps(struct bu_ptbl *missing, struct bu_ptbl *p_brep, struct bu_ptb
 {
     ON_BoundingBox *bbox = candidate->bbox;
 
+    if (!missing || !p_brep || !p_comb || !candidate || max_cnt == 0) return 0;
+
     //1. Set up pointer arrays for both partition lists
     struct minimal_partitions **brep = (struct minimal_partitions **)bu_calloc(max_cnt, sizeof(struct minimal_partitions *), "array1");
     struct minimal_partitions **comb = (struct minimal_partitions **)bu_calloc(max_cnt, sizeof(struct minimal_partitions *), "array2");
@@ -245,6 +247,9 @@ refine_missing_rays(struct bu_ptbl *new_missing, fastf_t **candidate_rays, int *
        	const char *curr_comb, struct rt_gen_worker_vars *ccomb_vars,
 	struct subbrep_object_data *candidate, int pcpus, struct rt_wdb *wdbp, int depth)
 {
+    if (!new_missing || !candidate_rays || !ray_cnt || (*ray_cnt) == 0 || !old_missing) return 0;
+    if (!pbrep || !pbrep_rtvars || !curr_comb || !ccomb_vars || !candidate || !wdbp) return 0;
+
     point_t bmin, bmax;
     fastf_t *c_rays = NULL;
     fastf_t mult = depth * 2 + 10;

@@ -86,7 +86,7 @@ analyze_get_bbox_rays(fastf_t **rays, point_t min, point_t max, struct bn_tol *t
 {
     int ret, count;
     point_t mid;
-    struct rt_pattern_data *xdata, *ydata, *zdata;
+    struct rt_pattern_data *xdata, *ydata, *zdata = NULL;
 
     if (!rays || !tol) return 0;
 
@@ -184,12 +184,12 @@ analyze_get_bbox_rays(fastf_t **rays, point_t min, point_t max, struct bn_tol *t
 
 memfree:
     /* Free memory not stored in tables */
-    bu_free(xdata->rays, "x rays");
-    bu_free(ydata->rays, "y rays");
-    bu_free(zdata->rays, "z rays");
-    BU_PUT(xdata, struct rt_pattern_data);
-    BU_PUT(ydata, struct rt_pattern_data);
-    BU_PUT(zdata, struct rt_pattern_data);
+    if (xdata && xdata->rays) bu_free(xdata->rays, "x rays");
+    if (ydata && ydata->rays) bu_free(ydata->rays, "y rays");
+    if (zdata && zdata->rays) bu_free(zdata->rays, "z rays");
+    if (xdata) BU_PUT(xdata, struct rt_pattern_data);
+    if (ydata) BU_PUT(ydata, struct rt_pattern_data);
+    if (zdata) BU_PUT(zdata, struct rt_pattern_data);
     return ret;
 }
 
