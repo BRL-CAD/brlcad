@@ -54,8 +54,10 @@ plot_min_partitions(struct bu_ptbl *p, const char *cname)
 
 
 HIDDEN int
-find_missing_gaps(struct bu_ptbl *missing, struct bu_ptbl *p_brep, struct bu_ptbl *p_comb, int max_cnt)
+find_missing_gaps(struct bu_ptbl *missing, struct bu_ptbl *p_brep, struct bu_ptbl *p_comb, struct subbrep_object_data *candidate, int max_cnt)
 {
+    ON_BoundingBox *bbox = candidate->bbox;
+
     //1. Set up pointer arrays for both partition lists
     struct minimal_partitions **brep = (struct minimal_partitions **)bu_calloc(max_cnt, sizeof(struct minimal_partitions *), "array1");
     struct minimal_partitions **comb = (struct minimal_partitions **)bu_calloc(max_cnt, sizeof(struct minimal_partitions *), "array2");
@@ -105,8 +107,21 @@ find_missing_gaps(struct bu_ptbl *missing, struct bu_ptbl *p_brep, struct bu_ptb
 				miss2 = g2;
 			    }
 			    if (miss2 - miss1 > VUNITIZE_TOL) {
-				missing_gaps.push_back(miss1);
-				missing_gaps.push_back(miss2);
+				ON_3dPoint m1, m2;
+				point_t p1, p2;
+				VJOIN1(p1, brep[i]->ray.r_pt, miss1, brep[i]->ray.r_dir);
+				VJOIN1(p2, brep[i]->ray.r_pt, miss2, brep[i]->ray.r_dir);
+				// TODO - probably a better way to make this assignment...
+				m1.x = p1[0];
+				m1.y = p1[1];
+				m1.z = p1[2];
+				m2.x = p2[0];
+				m2.y = p2[1];
+				m2.z = p2[2];
+				if (bbox->IsPointIn(m1) || bbox->IsPointIn(m2)) {
+				    missing_gaps.push_back(miss1);
+				    missing_gaps.push_back(miss2);
+				}
 			    }
 			}
 		    }
@@ -216,7 +231,7 @@ analyze_find_subtracted(struct bu_ptbl *UNUSED(results), struct rt_wdb *wdbp, co
 	//
 	// TODO - incorporate a bbox filter into the missing gap results
 	struct bu_ptbl missing = BU_PTBL_INIT_ZERO;
-	int missing_gaps = find_missing_gaps(&missing, &o_brep_results, &curr_comb_results, ray_cnt);
+	int missing_gaps = find_missing_gaps(&missing, &o_brep_results, &curr_comb_results, candidate, ray_cnt);
 	if (missing_gaps > 0) {
 	    bu_vls_sprintf(&tmp_name, "%s-%s_%s-missing.pl", pbrep, bu_vls_addr(curr_union_data->name_root), bu_vls_addr(candidate->name_root));
 	    plot_min_partitions(&missing, bu_vls_addr(&tmp_name));
