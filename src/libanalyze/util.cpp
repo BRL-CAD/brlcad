@@ -542,9 +542,7 @@ memfree:
 	bu_free(state, "free state");
 	bu_free(resp, "free state");
     }
-    bu_log("ret: %d\n", ret);
     return ret;
-
 }
 
 /*

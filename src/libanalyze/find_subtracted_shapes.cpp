@@ -13,6 +13,8 @@ extern "C" {
 #include "./analyze_private.h"
 }
 
+#define MINIMUM_RAYS_FOR_DECISION 500
+
 HIDDEN void
 plot_min_partitions(struct bu_ptbl *p, const char *cname)
 {
@@ -197,14 +199,89 @@ subtraction_decision(struct bu_ptbl *missing, struct bu_ptbl *candidate, int max
 			good_hits.push_back(h1);
 			good_hits.push_back(h2);
 		    }
-		}	    
+		}
 	    }
 	}
     }
 bu_log("missing size: %d, candidate size: %d, problem size: %d, good size: %d\n", BU_PTBL_LEN(missing), BU_PTBL_LEN(candidate), (int)(problem_hits.size()/2), (int)(good_hits.size()/2));
-    return ((size_t)(problem_hits.size()/2) > (size_t)(BU_PTBL_LEN(missing) * 0.1)) ? 0 : 1;
+    return ((size_t)(problem_hits.size()/2) > (size_t)(good_hits.size() * 0.25)) ? 0 : 1;
 }
 
+HIDDEN int
+minimum_partitions_bbox(struct bu_ptbl *missing, point_t *bmin, point_t *bmax)
+{
+    if (!missing || !bmin || !bmax || BU_PTBL_LEN(missing) == 0) return 0;
+
+    ON_BoundingBox bbox;
+    bbox.m_min.x = ON_DBL_MAX;
+    bbox.m_min.y = ON_DBL_MAX;
+    bbox.m_min.z = ON_DBL_MAX;
+    bbox.m_max.x = -ON_DBL_MAX;
+    bbox.m_max.y = -ON_DBL_MAX;
+    bbox.m_max.z = -ON_DBL_MAX;
+
+    for (size_t i = 0; i < BU_PTBL_LEN(missing); i++) {
+	struct minimal_partitions *mp = (struct minimal_partitions *)BU_PTBL_GET(missing, i);
+	for (int j = 0; j < mp->gap_cnt; j++) {
+	    ON_3dPoint p;
+	    point_t p1;
+	    VJOIN1(p1, mp->ray.r_pt, mp->gaps[j], mp->ray.r_dir);
+	    p.x = p1[0];
+	    p.y = p1[1];
+	    p.z = p1[2];
+	    bbox.Set(p, true);
+	}
+    }
+
+    VMOVE((*bmin), bbox.Min());
+    VMOVE((*bmax), bbox.Max());
+
+    return 1;
+}
+
+HIDDEN int
+refine_missing_rays(struct bu_ptbl *new_missing, fastf_t **candidate_rays, int *ray_cnt, struct bu_ptbl *old_missing,
+       	const char *pbrep, struct rt_gen_worker_vars *pbrep_rtvars,
+       	const char *curr_comb, struct rt_gen_worker_vars *ccomb_vars,
+	struct subbrep_object_data *candidate, int pcpus, struct rt_wdb *wdbp, int depth)
+{
+    point_t bmin, bmax;
+    fastf_t *c_rays = NULL;
+    fastf_t mult = depth * 2 + 10;
+
+    struct bu_ptbl o_brep_results = BU_PTBL_INIT_ZERO;
+    struct bu_ptbl curr_comb_results = BU_PTBL_INIT_ZERO;
+
+    (void)minimum_partitions_bbox(old_missing, &bmin, &bmax);
+
+    fastf_t x_dist = fabs(bmax[0] - bmin[0]);
+    fastf_t y_dist = fabs(bmax[1] - bmin[1]);
+    fastf_t z_dist = fabs(bmax[2] - bmin[2]);
+    fastf_t dmin = (x_dist < y_dist) ? x_dist : y_dist;
+    dmin = (z_dist < dmin) ? z_dist : dmin;
+    struct bn_tol tol = {BN_TOL_MAGIC, dmin/mult, dmin/mult * dmin/mult, 1.0e-6, 1.0 - 1.0e-6 };
+
+    // Construct the rays to shoot from the bbox  (TODO what tol?)
+    (*ray_cnt) = analyze_get_bbox_rays(&c_rays, bmin, bmax, &tol);
+
+    (*candidate_rays) = c_rays;
+
+    analyze_get_solid_partitions(&o_brep_results, pbrep_rtvars, c_rays, (*ray_cnt), wdbp->dbip, pbrep, &tol, pcpus);
+    analyze_get_solid_partitions(&curr_comb_results, ccomb_vars, c_rays, (*ray_cnt), wdbp->dbip, curr_comb, &tol, pcpus);
+
+    //Compare the two partition/gap sets that result.
+    struct bu_ptbl missing = BU_PTBL_INIT_ZERO;
+    int missing_gaps = find_missing_gaps(&missing, &o_brep_results, &curr_comb_results, candidate, (*ray_cnt));
+
+    // copy missing gaps to new_missing
+    for (size_t i = 0; i < BU_PTBL_LEN(&missing); i++) {
+	bu_ptbl_ins(new_missing, BU_PTBL_GET(&missing, i));
+    }
+
+    bu_log("missing: %d\n", BU_PTBL_LEN(new_missing));
+
+    return missing_gaps;
+}
 
 /* Pass in the parent brep rt prep and non-finalized comb prep to avoid doing them multiple times.
  * */
@@ -243,10 +320,11 @@ analyze_find_subtracted(struct bu_ptbl *UNUSED(results), struct rt_wdb *wdbp, co
     for (i = 0; i < BU_PTBL_LEN(candidates); i++) {
 	point_t bmin, bmax;
 	int ray_cnt = 0;
+	fastf_t *c_rays = NULL;
 	fastf_t *candidate_rays = NULL;
 	struct subbrep_object_data *candidate = (struct subbrep_object_data *)BU_PTBL_GET(candidates, i);
 
-	bu_log("Testing %s against %s\n", bu_vls_addr(candidate->name_root), bu_vls_addr(curr_union_data->name_root));
+	bu_log("\nTesting %s against %s\n", bu_vls_addr(candidate->name_root), bu_vls_addr(curr_union_data->name_root));
 
 	// 1. Get the subbrep_bbox.
 
@@ -261,10 +339,11 @@ analyze_find_subtracted(struct bu_ptbl *UNUSED(results), struct rt_wdb *wdbp, co
 	fastf_t z_dist = fabs(bmax[2] - bmin[2]);
 	fastf_t dmin = (x_dist < y_dist) ? x_dist : y_dist;
 	dmin = (z_dist < dmin) ? z_dist : dmin;
-	struct bn_tol tol = {BN_TOL_MAGIC, dmin/20, dmin/20 * dmin/20, 1.0e-6, 1.0 - 1.0e-6 };
+	struct bn_tol tol = {BN_TOL_MAGIC, dmin/10, dmin/10 * dmin/10, 1.0e-6, 1.0 - 1.0e-6 };
 
 	// Construct the rays to shoot from the bbox  (TODO what tol?)
-	ray_cnt = analyze_get_bbox_rays(&candidate_rays, bmin, bmax, &tol);
+	ray_cnt = analyze_get_bbox_rays(&c_rays, bmin, bmax, &tol);
+	candidate_rays = c_rays;
 
 	// 2. The rays come from the dimensions of the candidate bbox, but
 	//    first check to see whether the original and the ccomb have any
@@ -289,24 +368,45 @@ analyze_find_subtracted(struct bu_ptbl *UNUSED(results), struct rt_wdb *wdbp, co
 	// 3. Compare the two partition/gap sets that result.
 	//
 	// TODO - incorporate a bbox filter into the missing gap results
-	struct bu_ptbl missing = BU_PTBL_INIT_ZERO;
-	int missing_gaps = find_missing_gaps(&missing, &o_brep_results, &curr_comb_results, candidate, ray_cnt);
-	if (missing_gaps > 0) {
+	struct bu_ptbl *missing = NULL;
+	struct bu_ptbl *fmissing;
+	BU_GET(fmissing, struct bu_ptbl);
+	bu_ptbl_init(fmissing, 8, "ptbl init");
+	missing = fmissing;
+	int missing_gaps = find_missing_gaps(fmissing, &o_brep_results, &curr_comb_results, candidate, ray_cnt);
+	if (missing_gaps > 0 && BU_PTBL_LEN(missing) >= MINIMUM_RAYS_FOR_DECISION) {
 	    bu_vls_sprintf(&tmp_name, "%s-%s_%s-missing.pl", pbrep, bu_vls_addr(curr_union_data->name_root), bu_vls_addr(candidate->name_root));
-	    plot_min_partitions(&missing, bu_vls_addr(&tmp_name));
+	    plot_min_partitions(missing, bu_vls_addr(&tmp_name));
 	}
 	// 4.  If there are missing gaps in curr_comb, prep candidate and
 	// shoot the same rays against it.  If candidate 1) removes either all or a
 	// subset of the missing material and 2) does not remove material that is
 	// present in the results from the original brep, it is subtracted.  Add it
 	// to the results set.
-
+#if 1
+	int depth = 1;
+	while (missing_gaps > 0 && BU_PTBL_LEN(missing) < MINIMUM_RAYS_FOR_DECISION) {
+	    struct bu_ptbl *nmissing;
+	    fmissing = missing;
+	    BU_GET(nmissing, struct bu_ptbl);
+	    bu_ptbl_init(nmissing, 8, "ptbl init");
+	    missing_gaps = refine_missing_rays(nmissing, &candidate_rays, &ray_cnt, fmissing, pbrep, pbrep_rtvars, curr_comb, ccomb_vars, candidate, pcpus, wdbp, depth);
+	    missing = nmissing;
+	    depth++;
+	}
+	if (missing_gaps > 0) {
+	    bu_vls_sprintf(&tmp_name, "%s-%s_%s-missing.pl", pbrep, bu_vls_addr(curr_union_data->name_root), bu_vls_addr(candidate->name_root));
+	    plot_min_partitions(missing, bu_vls_addr(&tmp_name));
+	    bu_log("refined to depth %d\n", depth);
+	}
+#endif
 	// TODO - If we do find missing gaps in the first pass, need to construct a bbox of those missing gaps and compare
 	// it to the size of the bbox used to generate the first set of rays.  If the bbox of the missing gaps is much smaller
 	// than the original bbox, the ray sample is going to be too rough to allow for a reliable determination and we need
 	// to re-shoot just the area of interest with a finer grid.  Might also be able to use missing gap count to trigger this...
 	// ideally, pass to an iterative function that adjusts until we have a reasonable data size
 
+	int decision = 0;
 	struct bu_ptbl candidate_results = BU_PTBL_INIT_ZERO;
 	if (missing_gaps > 0) {
 	    // Make a region copy of the candidate
@@ -323,7 +423,7 @@ analyze_find_subtracted(struct bu_ptbl *UNUSED(results), struct rt_wdb *wdbp, co
 		bu_log("Database read error on object %s\n", bu_vls_addr(candidate->obj_name));
 		break;
 	    }
-	    bu_vls_sprintf(&tmp_comb_name, "%s-r", candidate->obj_name);
+	    bu_vls_sprintf(&tmp_comb_name, "%s-r", bu_vls_addr(candidate->obj_name));
 	    if (wdb_export_external(wdbp, &external, bu_vls_addr(&tmp_comb_name), dp->d_flags, dp->d_minor_type) < 0) {
 		bu_log("Database write error on tmp object %s\n", bu_vls_addr(&tmp_comb_name));
 		break;
@@ -367,9 +467,12 @@ analyze_find_subtracted(struct bu_ptbl *UNUSED(results), struct rt_wdb *wdbp, co
 	    // 5.  If we've got hits back from the candidate, evaluate them against the missing gaps and the ccomb hits.
 	    //     If all candidate solid segments are within the missing gaps or are on rays that didn't report a ccomb hit,
 	    //     the candidate is a subtraction to be added to the tree definition.
-	    int decision = subtraction_decision(&missing, &candidate_results, ray_cnt);
+	    decision = subtraction_decision(missing, &candidate_results, ray_cnt);
 
-	    bu_log("subtraction decision: %d\n", decision);
+	}
+	bu_log("subtraction decision: %d\n\n", decision);
+	if (decision) {
+	    bu_log("TODO - subtract %s from %s\n", bu_vls_addr(candidate->obj_name), curr_comb);
 	}
     }
 
