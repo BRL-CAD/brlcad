@@ -48,38 +48,37 @@ subbrep_obj_name(struct subbrep_object_data *data, struct bu_vls *name_root, str
     switch (data->type) {
 	case ARB6:
 	    bu_vls_sprintf(name, "%s-arb6_%s.s", bu_vls_addr(name_root), bu_vls_addr(data->name_root));
-	    break;
+	    return;
 	case ARB8:
 	    bu_vls_sprintf(name, "%s-arb8_%s.s", bu_vls_addr(name_root), bu_vls_addr(data->name_root));
-	    break;
+	    return;
 	case PLANAR_VOLUME:
 	    bu_vls_sprintf(name, "%s-bot_%s.s", bu_vls_addr(name_root), bu_vls_addr(data->name_root));
-	    break;
+	    return;
 	case CYLINDER:
 	    bu_vls_sprintf(name, "%s-rcc_%s.s", bu_vls_addr(name_root), bu_vls_addr(data->name_root));
-	    break;
+	    return;
 	case CONE:
 	    bu_vls_sprintf(name, "%s-trc_%s.s", bu_vls_addr(name_root), bu_vls_addr(data->name_root));
 	    //std::cout << bu_vls_addr(name) << "\n";
 	    //std::cout << bu_vls_addr(data->key) << "\n";
-	    break;
+	    return;
 	case SPHERE:
 	    bu_vls_sprintf(name, "%s-sph_%s.s", bu_vls_addr(name_root), bu_vls_addr(data->name_root));
-	    break;
+	    return;
 	case ELLIPSOID:
 	    bu_vls_sprintf(name, "%s-ell_%s.s", bu_vls_addr(name_root), bu_vls_addr(data->name_root));
-	    break;
+	    return;
 	case TORUS:
 	    bu_vls_sprintf(name, "%s-tor_%s.s", bu_vls_addr(name_root), bu_vls_addr(data->name_root));
-	    break;
+	    return;
 	case COMB:
 	    bu_vls_sprintf(name, "%s-comb_%s.c", bu_vls_addr(name_root), bu_vls_addr(data->name_root));
-	    break;
+	    return;
 	default:
 	    bu_vls_sprintf(name, "%s-brep_%s.s", bu_vls_addr(name_root), bu_vls_addr(data->name_root));
 	    break;
     }
-    data->obj_name = bu_strdup(bu_vls_addr(name));
 }
 
 
@@ -330,22 +329,9 @@ HIDDEN int
 make_shapes(struct bu_vls *msgs, struct subbrep_object_data *data, struct rt_wdb *wdbp, struct bu_vls *name_root, struct wmember *pcomb, int depth)
 {
     struct bu_vls spacer = BU_VLS_INIT_ZERO;
-    struct bu_vls obj_name = BU_VLS_INIT_ZERO;
-    subbrep_obj_name(data, name_root, &obj_name);
-
-    struct directory *dp = db_lookup(wdbp->dbip, bu_vls_addr(&obj_name), LOOKUP_QUIET);
-
-    // Don't recreate it
-    if (dp != RT_DIR_NULL) {
-	bu_log("already made %s\n", bu_vls_addr(&obj_name));
-	return 0;
-    }
-
     for (int i = 0; i < depth; i++)
 	bu_vls_printf(&spacer, " ");
-    if (BU_STR_EQUAL(bu_vls_addr(data->name_root), "81")) {
-	std::cout << bu_vls_addr(&spacer) << "Making shape for " << bu_vls_addr(data->name_root) << "\n";
-    }
+    //std::cout << bu_vls_addr(&spacer) << "Making shape for " << bu_vls_addr(data->name_root) << "\n";
 #if 0
     if (data->planar_obj && data->planar_obj->local_brep) {
 	struct bu_vls brep_name = BU_VLS_INIT_ZERO;
@@ -438,7 +424,7 @@ finalize_comb(struct rt_wdb *wdbp, struct directory *brep_dp, struct rt_gen_work
 
 	// Evaluate the candidate subtraction objects using solid raytracing, and add the ones
 	// that contribute gaps to the comb definition.
-	analyze_find_subtracted(&results, wdbp, brep_dp->d_namep, pbrep_vars, bu_vls_addr(&tmp_comb_name), sc, (void *)curr_union, ncpus);
+	analyze_find_subtracted(&results, wdbp->dbip, brep_dp->d_namep, pbrep_vars, bu_vls_addr(&tmp_comb_name), sc, (void *)curr_union, ncpus);
 
 	// kill the temp comb.
 	dp = db_lookup(wdbp->dbip, bu_vls_addr(&tmp_comb_name), LOOKUP_QUIET);
@@ -549,15 +535,6 @@ brep_to_csg(struct ged *gedp, struct directory *dp, int verify)
 		//print_subbrep_object(obj, "  ");
 		(void)mk_addmember(bu_vls_addr(&obj_name), &((*scomb).l), NULL, db_str2op((const char *)&un));
 	    }
-
-	    struct bu_ptbl *sc = obj->subtraction_candidates;
-	    if (sc && BU_PTBL_LEN(sc) > 0) {
-		for (unsigned int k = 0; k < BU_PTBL_LEN(sc); k++){
-		    struct subbrep_object_data *sobj = (struct subbrep_object_data *)BU_PTBL_GET(sc, k);
-		    (void)make_shapes(gedp->ged_result_str, sobj, wdbp, &comb_name, NULL, 0);
-		}
-	    }
-
 	    //std::cout << bu_vls_addr(&obj_name) << ": " << obj->params->bool_op << "\n";
 	    //(void)mk_addmember(bu_vls_addr(&obj_name), &(pcomb.l), NULL, db_str2op(&(obj->params->bool_op)));
 	    bu_vls_free(&obj_name);

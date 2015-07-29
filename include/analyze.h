@@ -168,7 +168,7 @@ struct rt_gen_worker_vars {
 };
 
 ANALYZE_EXPORT int
-analyze_find_subtracted(struct bu_ptbl *results, struct rt_wdb *wdbp,
+analyze_find_subtracted(struct bu_ptbl *results, struct db_i *dbip,
 	const char *pbrep, struct rt_gen_worker_vars *pbrep_rtvars,
 	const char *curr_comb, struct bu_ptbl *candidates, void *curr_union_data, int ncpus);
 

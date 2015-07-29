@@ -112,7 +112,9 @@ find_missing_gaps(struct bu_ptbl *missing, struct bu_ptbl *p_brep, struct bu_ptb
 		    }
 		}
 	    }
-	    if (missing_gaps.size() > 0) {
+	    if (missing_gaps.size() == 0) {
+		bu_log("no missing gaps\n");
+	    } else {
 		std::vector<fastf_t>::iterator f_it;
 		struct minimal_partitions *np;
 		BU_GET(np, struct minimal_partitions);
@@ -125,6 +127,7 @@ find_missing_gaps(struct bu_ptbl *missing, struct bu_ptbl *p_brep, struct bu_ptb
 		    np->gaps[vind] = missing_gaps[vind];
 		}
 		bu_ptbl_ins(missing, (long *)np);
+		bu_log("found missing gaps\n");
 	    }
 	}
     }
@@ -135,7 +138,7 @@ find_missing_gaps(struct bu_ptbl *missing, struct bu_ptbl *p_brep, struct bu_ptb
 /* Pass in the parent brep rt prep and non-finalized comb prep to avoid doing them multiple times.
  * */
 extern "C" int
-analyze_find_subtracted(struct bu_ptbl *UNUSED(results), struct rt_wdb *wdbp, const char *pbrep, struct rt_gen_worker_vars *pbrep_rtvars, const char *curr_comb, struct bu_ptbl *candidates, void *data, int pcpus)
+analyze_find_subtracted(struct bu_ptbl *UNUSED(results), struct db_i *dbip, const char *pbrep, struct rt_gen_worker_vars *pbrep_rtvars, const char *curr_comb, struct bu_ptbl *candidates, void *data, int pcpus)
 {
     struct rt_gen_worker_vars *ccomb_vars;
     struct resource *ccomb_resp;
@@ -154,7 +157,7 @@ analyze_find_subtracted(struct bu_ptbl *UNUSED(results), struct rt_wdb *wdbp, co
     // diff validation processing, but that needs more thought
     ccomb_vars = (struct rt_gen_worker_vars *)bu_calloc(ncpus+1, sizeof(struct rt_gen_worker_vars ), "ccomb state");
     ccomb_resp = (struct resource *)bu_calloc(ncpus+1, sizeof(struct resource), "ccomb resources");
-    ccomb_rtip = rt_new_rti(wdbp->dbip);
+    ccomb_rtip = rt_new_rti(dbip);
     for (i = 0; i < ncpus+1; i++) {
 	ccomb_vars[i].rtip = ccomb_rtip;
 	ccomb_vars[i].resp = &ccomb_resp[i];
@@ -203,12 +206,12 @@ analyze_find_subtracted(struct bu_ptbl *UNUSED(results), struct rt_wdb *wdbp, co
 	struct bu_ptbl curr_comb_results = BU_PTBL_INIT_ZERO;
 
 	bu_log("Original brep:\n");
-	analyze_get_solid_partitions(&o_brep_results, pbrep_rtvars, candidate_rays, ray_cnt, wdbp->dbip, pbrep, &tol, pcpus);
+	analyze_get_solid_partitions(&o_brep_results, pbrep_rtvars, candidate_rays, ray_cnt, dbip, pbrep, &tol, pcpus);
 	struct bu_vls tmp_name = BU_VLS_INIT_ZERO;
 	bu_vls_sprintf(&tmp_name, "%s-%s_%s.pl", pbrep, bu_vls_addr(curr_union_data->name_root), bu_vls_addr(candidate->name_root));
 	plot_min_partitions(&o_brep_results, bu_vls_addr(&tmp_name));
 	bu_log("Control comb: %s\n", curr_comb);
-	analyze_get_solid_partitions(&curr_comb_results, ccomb_vars, candidate_rays, ray_cnt, wdbp->dbip, curr_comb, &tol, pcpus);
+	analyze_get_solid_partitions(&curr_comb_results, ccomb_vars, candidate_rays, ray_cnt, dbip, curr_comb, &tol, pcpus);
 	bu_vls_sprintf(&tmp_name, "%s-%s_%s-ccomb.pl", pbrep, bu_vls_addr(curr_union_data->name_root), bu_vls_addr(candidate->name_root));
 	plot_min_partitions(&curr_comb_results, bu_vls_addr(&tmp_name));
 	//
@@ -224,73 +227,9 @@ analyze_find_subtracted(struct bu_ptbl *UNUSED(results), struct rt_wdb *wdbp, co
 	// subset of the missing material and 2) does not remove material that is
 	// present in the results from the original brep, it is subtracted.  Add it
 	// to the results set.
-	//struct bu_ptbl candidate_results = BU_PTBL_INIT_ZERO;
 	if (missing_gaps) {
-#if 0
-	    // Make a region copy of the candidate
-	    struct directory *dp;
-	    struct bu_external external;
-	    struct bu_vls tmp_comb_name = BU_VLS_INIT_ZERO;
-	    struct rt_gen_worker_vars *candidate_vars;
-	    struct resource *candidate_resp;
-	    struct rt_i *candidate_rtip;
-	    bu_log("Testing missing gap candidate %s\n", candidate->obj_name);
-
-	    dp = db_lookup(wdbp->dbip, candidate->obj_name, LOOKUP_QUIET);
-	    if (db_get_external(&external, dp, wdbp->dbip)) {
-		bu_log("Database read error on object %s\n", dp->d_namep);
-	    }
-	    bu_vls_sprintf(&tmp_comb_name, "%s-r", candidate->obj_name);
-	    if (wdb_export_external(wdbp, &external, bu_vls_addr(&tmp_comb_name), dp->d_flags, dp->d_minor_type) < 0) {
-		bu_log("Database write error on tmp object %s\n", bu_vls_addr(&tmp_comb_name));
-	    }
-	    // Now the region flag
-	    dp = db_lookup(wdbp->dbip, bu_vls_addr(&tmp_comb_name), LOOKUP_QUIET);
-	    dp->d_flags |= RT_DIR_REGION;
-	    candidate_vars = (struct rt_gen_worker_vars *)bu_calloc(ncpus+1, sizeof(struct rt_gen_worker_vars ), "candidate state");
-	    candidate_resp = (struct resource *)bu_calloc(ncpus+1, sizeof(struct resource), "candidate resources");
-	    candidate_rtip = rt_new_rti(wdbp->dbip);
-	    for (size_t k = 0; k < ncpus+1; k++) {
-		candidate_vars[k].rtip = candidate_rtip;
-		candidate_vars[k].resp = &candidate_resp[k];
-		rt_init_resource(candidate_vars[k].resp, k, candidate_rtip);
-	    }
-	    if (rt_gettree(candidate_rtip, dp->d_namep) < 0) {
-		// TODO - free memory
-		return 0;
-	    }
-	    rt_prep_parallel(candidate_rtip, ncpus);
-
-	    analyze_get_solid_partitions(&candidate_results, candidate_vars, candidate_rays, ray_cnt, wdbp->dbip, dp->d_namep, &tol, pcpus);
-
-	    //rt_clean(candidate_rtip);
-	    bu_free(candidate_vars, "free vars");
-	    bu_free(candidate_resp, "free resp");
-
-	    bu_vls_sprintf(&tmp_name, "%s-%s_%s-candidate.pl", pbrep, bu_vls_addr(curr_union_data->name_root), bu_vls_addr(candidate->name_root));
-	    plot_min_partitions(&curr_comb_results, bu_vls_addr(&tmp_name));
-
-	    // remove the temp comb.
-	    dp = db_lookup(wdbp->dbip, dp->d_namep, LOOKUP_QUIET);
-	    if (dp != RT_DIR_NULL) {
-		if (db_delete(wdbp->dbip, dp) != 0 || db_dirdelete(wdbp->dbip, dp) != 0) {
-		    bu_log("error deleting temp object %s\n", bu_vls_addr(&tmp_comb_name));
-		}
-	    }
-#endif
 	}
-
-	// 5.  If we've got hits back from the candidate, evaluate them against the missing gaps and the ccomb hits.
-	//     If all candidate solid segments are within the missing gaps or are on rays that didn't report a ccomb hit,
-	//     the candidate is a subtraction to be added to the tree definition.
     }
-
-    //rt_clean(ccomb_rtip);
-    bu_free(ccomb_vars, "free vars");
-    bu_free(ccomb_resp, "free resp");
-
-    bu_log("fini\n");
-
     // Once all candidates are processed, return the BU_PTBL_LEN of results.
     return 0;
 }
