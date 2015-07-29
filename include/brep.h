@@ -1430,7 +1430,7 @@ struct subbrep_object_data {
     int obj_id;
     /* For some objects, additional post processing is needed
      * for a subtract/no-subtract determination */
-    const char *obj_name;
+    struct bu_vls *obj_name;
     struct bu_ptbl *subtraction_candidates;
 };
 

@@ -44,7 +44,7 @@ obj_add_attr_key(struct subbrep_object_data *data, struct rt_wdb *wdbp, const ch
 HIDDEN void
 subbrep_obj_name(struct subbrep_object_data *data, struct bu_vls *name_root, struct bu_vls *name)
 {
-    if (!data || !name) return;
+    if (!data || !name || !data->name_root) return;
     switch (data->type) {
 	case ARB6:
 	    bu_vls_sprintf(name, "%s-arb6_%s.s", bu_vls_addr(name_root), bu_vls_addr(data->name_root));
@@ -417,14 +417,14 @@ finalize_comb(struct rt_wdb *wdbp, struct directory *brep_dp, struct rt_gen_work
 	struct bu_vls tmp_comb_name = BU_VLS_INIT_ZERO;
 	struct bu_ptbl results = BU_PTBL_INIT_ZERO;
 
-	bu_log("Finalizing %s...\n", curr_union->obj_name);
-	bu_vls_sprintf(&tmp_comb_name, "%s-r", curr_union->obj_name);
+	bu_log("Finalizing %s...\n", bu_vls_addr(curr_union->obj_name));
+	bu_vls_sprintf(&tmp_comb_name, "%s-r", bu_vls_addr(curr_union->obj_name));
 
 	// We've collected all the subtractions we know about - make a temp copy for raytracing.  Because
 	// overlaps are not desired here, make the temp comb a region
-	dp = db_lookup(wdbp->dbip, curr_union->obj_name, LOOKUP_QUIET);
+	dp = db_lookup(wdbp->dbip, bu_vls_addr(curr_union->obj_name), LOOKUP_QUIET);
 	if (db_get_external(&external, dp, wdbp->dbip)) {
-	    bu_log("Database read error on object %s\n", dp->d_namep);
+	    bu_log("Database read error on object %s\n", bu_vls_addr(curr_union->obj_name));
 	}
 	if (wdb_export_external(wdbp, &external, bu_vls_addr(&tmp_comb_name), dp->d_flags, dp->d_minor_type) < 0) {
 	    bu_log("Database write error on tmp object %s\n", bu_vls_addr(&tmp_comb_name));
@@ -513,8 +513,7 @@ brep_to_csg(struct ged *gedp, struct directory *dp, int verify)
 	struct bu_ptbl finalize_combs = BU_PTBL_INIT_ZERO;
 	for (unsigned int i = 0; i < BU_PTBL_LEN(subbreps_tree); i++){
 	    struct subbrep_object_data *obj = (struct subbrep_object_data *)BU_PTBL_GET(subbreps_tree, i);
-	    struct bu_vls obj_name = BU_VLS_INIT_ZERO;
-	    subbrep_obj_name(obj, &comb_name, &obj_name);
+	    subbrep_obj_name(obj, &comb_name, obj->obj_name);
 
 	    if (obj->params->bool_op == 'u') {
 		//print_subbrep_object(obj, "");
@@ -532,10 +531,9 @@ brep_to_csg(struct ged *gedp, struct directory *dp, int verify)
 		BU_LIST_INIT(&ccomb->l);
 		curr_union = obj;
 		bu_vls_sprintf(&obj_comb_name, "%s-_test_c_%s.c", bu_vls_addr(&comb_name), bu_vls_addr(obj->name_root));
-		curr_union->obj_name = bu_strdup(bu_vls_addr(&obj_comb_name));
 		bu_vls_sprintf(&sub_comb_name, "%s-s_%s.c", bu_vls_addr(&comb_name), bu_vls_addr(obj->name_root));
 		(void)mk_addmember(bu_vls_addr(&obj_comb_name), &(pcomb.l), NULL, db_str2op(&(obj->params->bool_op)));
-		(void)mk_addmember(bu_vls_addr(&obj_name), &((*ccomb).l), NULL, db_str2op(&(obj->params->bool_op)));
+		(void)mk_addmember(bu_vls_addr(curr_union->obj_name), &((*ccomb).l), NULL, db_str2op(&(obj->params->bool_op)));
 	    } else {
 		char un = 'u';
 		if (!scomb) {
@@ -544,20 +542,8 @@ brep_to_csg(struct ged *gedp, struct directory *dp, int verify)
 		    (void)mk_addmember(bu_vls_addr(&sub_comb_name), &((*ccomb).l), NULL, db_str2op(&(obj->params->bool_op)));
 		}
 		//print_subbrep_object(obj, "  ");
-		(void)mk_addmember(bu_vls_addr(&obj_name), &((*scomb).l), NULL, db_str2op((const char *)&un));
+		(void)mk_addmember(bu_vls_addr(obj->obj_name), &((*scomb).l), NULL, db_str2op((const char *)&un));
 	    }
-
-	    struct bu_ptbl *sc = obj->subtraction_candidates;
-	    if (sc && BU_PTBL_LEN(sc) > 0) {
-		for (unsigned int k = 0; k < BU_PTBL_LEN(sc); k++){
-		    struct subbrep_object_data *sobj = (struct subbrep_object_data *)BU_PTBL_GET(sc, k);
-		    (void)make_shapes(gedp->ged_result_str, sobj, wdbp, &comb_name, NULL, 0);
-		}
-	    }
-
-	    //std::cout << bu_vls_addr(&obj_name) << ": " << obj->params->bool_op << "\n";
-	    //(void)mk_addmember(bu_vls_addr(&obj_name), &(pcomb.l), NULL, db_str2op(&(obj->params->bool_op)));
-	    bu_vls_free(&obj_name);
 	}
 
 	/* Make the last comb - TODO - should we also finalize all the other combs that need it now? */
