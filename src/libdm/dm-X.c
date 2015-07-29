@@ -1074,7 +1074,7 @@ X_drawVList(struct dm_internal *dmp, struct bn_vlist *vp)
 		    pnt[0] *= 2047;
 		    pnt[1] *= 2047 * dmp->dm_aspect;
 		    pnt[2] *= 2047;
-		    VMOVE(spnt, pnt);
+		    VMOVE(lpnt, pnt);
 
 		    if (dmp->dm_debugLevel > 2) {
 			bu_log("after clipping:\n");
