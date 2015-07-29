@@ -536,7 +536,7 @@ FastgenWriter::take_next_section_id()
 	if (++group_id > MAX_GROUP_ID)
 	    throw std::length_error("maximum number of sections");
 
-    return std::make_pair(group_id, m_next_section_id[group_id]++);
+    return SectionID(group_id, m_next_section_id[group_id]++);
 }
 
 
@@ -775,7 +775,7 @@ public:
 
 Section::Section() :
     m_completed_cutouts(),
-    m_volume_mode(false),
+    m_volume_mode(!CHECK_MODE_ERRORS),
     m_material_id(1),
     m_color(false, Color()),
     m_grids(),
@@ -1001,7 +1001,7 @@ Section::write_cone(const fastf_t *point_a, const fastf_t *point_b, fastf_t ro1,
 	RecordWriter::Record record1(m_elements);
 	record1 << "CCONE2" << m_next_element_id << m_material_id;
 	record1 << grids.at(0) << grids.at(1);
-	record1  << "" << "" << "" << ro1 << m_next_element_id;
+	record1 << "" << "" << "" << ro1 << m_next_element_id;
     }
 
     {
@@ -1358,6 +1358,27 @@ get_region_path(const db_full_path &path)
 	DB_FULL_PATH_POP(&result);
 
     return result;
+}
+
+
+HIDDEN bool
+path_is_subtracted(const db_i &db, const db_full_path &path)
+{
+    RT_CK_DBI(&db);
+    RT_CK_FULL_PATH(&path);
+
+    db_tree_state tree_state = rt_initial_tree_state;
+    tree_state.ts_resp = &rt_uniresource;
+    tree_state.ts_dbip = const_cast<db_i *>(&db);
+
+    db_full_path end_path;
+    AutoPtr<db_full_path, db_free_full_path> autofree_end_path(&end_path);
+    db_full_path_init(&end_path);
+
+    if (db_follow_path(&tree_state, &end_path, &path, false, 0))
+	throw std::runtime_error("db_follow_path() failed");
+
+    return tree_state.ts_sofar & (TS_SOFAR_MINUS | TS_SOFAR_INTER);
 }
 
 
@@ -1772,11 +1793,13 @@ get_subtracted(const db_i &db, const tree *tree, LeafMap &results)
 }
 
 
-enum CompspltPartitionType {COMPSPLT_PARTITION_NONE, COMPSPLT_PARTITION_INTERSECTED, COMPSPLT_PARTITION_SUBTRACTED};
 // Identifies which half of a COMPSPLT a given region represents.
 // Assumes that `half_dir` represents a COMPSPLT-compatible halfspace.
 // Returns the partition type and a pointer to the half's matrix within the region.
-HIDDEN std::pair<CompspltPartitionType, Matrix>
+enum CompspltPartitionType {COMPSPLT_PARTITION_NONE, COMPSPLT_PARTITION_INTERSECTED, COMPSPLT_PARTITION_SUBTRACTED};
+typedef std::pair<CompspltPartitionType, Matrix> CompspltID;
+
+HIDDEN CompspltID
 identify_compsplt(const db_i &db, const directory &parent_region_dir,
 		  const directory &half_dir)
 {
@@ -1794,30 +1817,33 @@ identify_compsplt(const db_i &db, const directory &parent_region_dir,
     LeafMap::const_iterator found = leaves.find(&half_dir);
 
     if (found != leaves.end())
-	return std::make_pair(COMPSPLT_PARTITION_INTERSECTED, found->second);
+	return CompspltID(COMPSPLT_PARTITION_INTERSECTED, found->second);
 
     leaves.clear();
     get_subtracted(db, parent_region.tree, leaves);
     found = leaves.find(&half_dir);
 
     if (found != leaves.end())
-	return std::make_pair(COMPSPLT_PARTITION_SUBTRACTED, found->second);
+	return CompspltID(COMPSPLT_PARTITION_SUBTRACTED, found->second);
 
-    return std::make_pair(COMPSPLT_PARTITION_NONE, static_cast<fastf_t *>(NULL));
+    return CompspltID(COMPSPLT_PARTITION_NONE, Matrix(NULL));
 }
 
 
 // returns:
 // - set of regions that are joined to the region by a WALL
 // - set of members to ignore
-HIDDEN std::pair<std::set<const directory *>, std::set<const directory *> >
+typedef std::pair<std::set<const directory *>, std::set<const directory *> >
+WallsInfo;
+
+HIDDEN WallsInfo
 find_walls(const db_i &db, const directory &region_dir, const bn_tol &tol)
 {
     RT_CK_DBI(&db);
     RT_CK_DIR(&region_dir);
     BN_CK_TOL(&tol);
 
-    std::pair<std::set<const directory *>, std::set<const directory *> > results;
+    WallsInfo results;
     LeafMap subtracted;
     {
 	DBInternal region_db_internal(db, region_dir);
@@ -1934,8 +1960,7 @@ private:
     RegionManager &operator=(const RegionManager &source);
 
     const directory &m_region_dir;
-    const std::pair<std::set<const directory *>, std::set<const directory *> >
-    m_walls;
+    const WallsInfo m_walls;
     bool m_enabled;
     std::pair<bool, fastf_t> m_compsplt;
     std::map<std::string, Section *> m_sections;
@@ -2039,7 +2064,14 @@ FastgenConversion::RegionManager::member_ignored(
 {
     RT_CK_FULL_PATH(&member_path);
 
-    return !m_enabled || m_walls.second.count(DB_FULL_PATH_CUR_DIR(&member_path));
+    if (!m_enabled)
+	return true;
+
+    for (db_full_path temp = member_path; temp.fp_len > 1; DB_FULL_PATH_POP(&temp))
+	if (m_walls.second.count(DB_FULL_PATH_CUR_DIR(&temp)))
+	    return true;
+
+    return false;
 }
 
 
@@ -2101,9 +2133,8 @@ find_compsplt(FastgenConversion &data, const db_full_path &half_path,
 	return false;
     }
 
-    const std::pair<CompspltPartitionType, Matrix> this_compsplt =
-	identify_compsplt(data.m_db, *parent_region_dir,
-			  *DB_FULL_PATH_CUR_DIR(&half_path));
+    const CompspltID this_compsplt = identify_compsplt(data.m_db,
+				     *parent_region_dir, *DB_FULL_PATH_CUR_DIR(&half_path));
 
     if (this_compsplt.first == COMPSPLT_PARTITION_NONE)
 	return false;
@@ -2119,9 +2150,8 @@ find_compsplt(FastgenConversion &data, const db_full_path &half_path,
 	    if (region_dirs.ptr[i] == parent_region_dir)
 		continue;
 
-	    const std::pair<CompspltPartitionType, Matrix> current =
-		identify_compsplt(data.m_db, *region_dirs.ptr[i],
-				  *DB_FULL_PATH_CUR_DIR(&half_path));
+	    const CompspltID current = identify_compsplt(data.m_db, *region_dirs.ptr[i],
+				       *DB_FULL_PATH_CUR_DIR(&half_path));
 
 	    if (current.first != COMPSPLT_PARTITION_NONE
 		&& current.first != this_compsplt.first)
@@ -2185,7 +2215,8 @@ FastgenConversion::~FastgenConversion()
     writer.write_comment("g -> fastgen4 conversion");
 
     if (!m_toplevels.empty())
-	m_toplevels.write(writer, writer.take_next_section_id(), "toplevels");
+	m_toplevels.write(writer.get_section_writer(), writer.take_next_section_id(),
+			  "toplevels");
 
     std::map<const directory *, std::vector<FastgenWriter::SectionID> > ids;
 
@@ -2253,6 +2284,9 @@ convert_primitive(FastgenConversion &data, const db_full_path &path,
 {
     RT_CK_FULL_PATH(&path);
     RT_CK_DB_INTERNAL(&internal);
+
+    if (subtracted && path_is_subtracted(data.m_db, get_parent_path(path)))
+	return false; // parent is subtracted; not a cutout
 
     Section &section = data.get_section(path);
 
@@ -2416,7 +2450,7 @@ convert_leaf(db_tree_state *tree_state, const db_full_path *path,
 	bool converted = false;
 
 	if (region_dir
-	    && data.get_region(*region_dir).member_ignored(get_parent_path(*path)))
+	    && data.get_region(*region_dir).member_ignored(*path))
 	    converted = true;
 	else if (!facetize)
 	    converted = convert_primitive(data, *path, *internal, subtracted);
