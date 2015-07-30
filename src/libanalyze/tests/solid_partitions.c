@@ -76,7 +76,7 @@ main(int argc, char **argv)
 
     count = analyze_get_bbox_rays(&rays, rtip->mdl_min, rtip->mdl_max, &rtol);
 
-    analyze_get_solid_partitions(&results, NULL, rays, count, dbip, argv[2], &tol, ncpus);
+    analyze_get_solid_partitions(&results, NULL, rays, count, dbip, argv[2], &tol, ncpus, 1);
 
     db_close(dbip);
     return 0;

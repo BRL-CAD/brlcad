@@ -454,7 +454,7 @@ sp_overlap(struct application *ap,
 /* Will need the region flag set for this to work... */
 extern "C" int
 analyze_get_solid_partitions(struct bu_ptbl *results, struct rt_gen_worker_vars *pstate, const fastf_t *rays, int ray_cnt,
-	struct db_i *dbip, const char *obj, struct bn_tol *tol, int ncpus)
+	struct db_i *dbip, const char *obj, struct bn_tol *tol, int ncpus, int filter)
 {
     int i;
     int ind = 0;
@@ -523,8 +523,14 @@ analyze_get_solid_partitions(struct bu_ptbl *results, struct rt_gen_worker_vars 
 	    bu_ptbl_ins(&temp_results, (long *)p);
 	}
     }
-    analyze_seg_filter(&temp_results, &mp_ray, &mp_flag, rtip, resp, 0.5, ncpus);
-
+    if (filter) {
+	analyze_seg_filter(&temp_results, &mp_ray, &mp_flag, rtip, resp, 0.5, ncpus);
+    } else {
+	for (j = 0; j < BU_PTBL_LEN(&temp_results); j++) {
+	    struct minimal_partitions *p = (struct minimal_partitions *)BU_PTBL_GET(&temp_results, j);
+	    p->valid = 1;
+	}
+    }
     // TODO - assign valid results to final results table and free invalid results
     for (j = 0; j < BU_PTBL_LEN(&temp_results); j++) {
 	struct minimal_partitions *p = (struct minimal_partitions *)BU_PTBL_GET(&temp_results, j);
