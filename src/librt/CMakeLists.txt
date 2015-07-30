@@ -99,9 +99,9 @@ set(LIBRT_SOURCES
   # primitives/bot/gct_decimation/auxiliary/mmbitmap.c
   # primitives/bot/gct_decimation/auxiliary/mm.c
   # primitives/bot/gct_decimation/auxiliary/mmhash.c
-  # primitives/bot/gct_decimation/meshdecimation.c
   # primitives/bot/gct_decimation/meshoptimization.c
   # primitives/bot/gct_decimation/meshoptimizer.c
+  # primitives/bot/gct_decimation/meshdecimation.c
   # primitives/bot/gct_decimation/meshdecimationSSE2.c
   # primitives/bot/gct_decimation/meshdecimationSSE3.c
   # primitives/bot/gct_decimation/meshdecimationSSE4p1.c
