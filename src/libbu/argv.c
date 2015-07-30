@@ -638,6 +638,10 @@ _bu_tcl_find_element(
      * element.
      */
 
+    if (bracePtr != NULL) {
+        *bracePtr = 0;
+    }
+
     limit = (list + listLength);
     while ((p < limit) && (isspace((unsigned char)(*p)))) { /* INTL: ISO space. */
         p++;
@@ -655,7 +659,7 @@ _bu_tcl_find_element(
         p++;
     }
     elemStart = p;
-    if (bracePtr != 0) {
+    if (bracePtr != NULL) {
         *bracePtr = openBraces;
     }
 
