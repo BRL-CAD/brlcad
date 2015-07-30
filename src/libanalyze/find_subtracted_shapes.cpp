@@ -1,3 +1,31 @@
+/*
+ * TODO
+ *
+ *
+ * better bbox rays function that accepts x, y and z tolerances so we can adaptively sample thin sides
+ * without blowing the ray count all out of proportion.  Got to get a handle on intelligently refining
+ * ray counts to sample "just enough" to make sure of the answer we need.  Current xyz common tolerance
+ * rapidly inflates ray counts to non-performant levels.
+ *
+ * see if there is a way to recognize a "partial missing gap" manifested by surface subtractions that
+ * remove material but don't have a starting "exit" point from another portion of the solid...
+ * it may be that rather than looking at just explicit "gaps" we'll also have to check for misaligned
+ * first in/last out hits between the parent NURB and the comb - i.e. any hit on the comb that doesn't
+ * have a corresponding hit in the parent NURBS object is a red flag.  This will help with thin subtractions
+ * from the surface of larger objects, where the dimensions that will report a full "gap" are very narrow
+ * compared to the available area on which to recognize a first hit that's "off".  That situation is not
+ * necessarily unique to first/last hit situtions - may also result in relatively few "exact" hit matches
+ * on a shape that should be subtracted, if the mating faces have their own large topologically isolated
+ * negative areas as well.  In that case, the parent nurb will report a hit on the second negative area,
+ * but the "implicit" first surface won't report anything at all from the parent.  Need to think about
+ * whether an "inside a gap entrance and exit" test could work, if we skip over gap pairs from the parent
+ * NURBS object that are also fully within the hit segment under consideration for subtraction...
+ *
+ * Need to look at notions of "solid" rays in this context and how we're filtering - may be some better
+ * ways to avoid grazing ray difference problems...
+*/
+
+
 #include "common.h"
 
 #include <string.h> /* for memset */
