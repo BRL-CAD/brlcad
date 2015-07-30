@@ -2081,7 +2081,7 @@ FastgenConversion::RegionManager::member_ignored(
     if (!m_enabled)
 	return true;
 
-    for (db_full_path temp = member_path; temp.fp_len > 1; DB_FULL_PATH_POP(&temp))
+    for (db_full_path temp = member_path; temp.fp_len; DB_FULL_PATH_POP(&temp))
 	if (m_walls.second.count(DB_FULL_PATH_CUR_DIR(&temp)))
 	    return true;
 
