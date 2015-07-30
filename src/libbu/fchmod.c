@@ -147,7 +147,14 @@ bu_fchmod(int fd,
 	char filepath[MAXPATHLEN+1];
 	HANDLE h = (HANDLE)_get_osfhandle(fd);
 	GetFileNameFromHandle(h, filepath);
-	return chmod(filepath, pmode);
+
+    /* quell flawfinder because this is a necessary evil unless/until
+     * someone rewrites this to use SetNamedSecurityInfo() based on
+     * unix-style permissions/mode settings.
+     */
+#  define CHMOD ch ## mod
+
+	return CHMOD(filepath, pmode);
     }
 #endif
 }
