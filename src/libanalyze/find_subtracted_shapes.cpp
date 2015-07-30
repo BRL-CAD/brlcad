@@ -171,42 +171,50 @@ subtraction_decision(struct bu_ptbl *missing, struct bu_ptbl *candidate, int max
 	cp[p->index] = p;
     }
 
-    //3. Test all candidate hit segments that share a ray with a missing gap to verify that they are within a gap.
-    std::vector<fastf_t> problem_hits;
-    std::vector<fastf_t> good_hits;
+    //3. If the candidate has a hit entry and an exit that correspond to a missing gap entry and exit (not necessarily
+    //   in pairs, because there may be intruding positive volumes in the final brep) it's a subtraction.
+    std::vector<fastf_t> entry_match;
+    std::vector<fastf_t> exit_match;
     for (int i = 0; i < max_cnt; i++) {
 	if (mp[i] && cp[i]) {
 	    if (cp[i]->hit_cnt > 0) {
-		// iterate over the hits
-		for (int j = 0; j < cp[i]->hit_cnt; j++) {
-		    int inside = 0;
-		    fastf_t h1 = cp[i]->hits[2*j];
-		    fastf_t h2 = cp[i]->hits[2*j+1];
-		    for (int k = 0; k < mp[i]->gap_cnt; k++) {
-			fastf_t g1 = mp[i]->gaps[2*k];
-			fastf_t g2 = mp[i]->gaps[2*k+1];
-			// If the gap starts after the hit ends, we're done with this hit
-			if (g1 > h2) break;
-			// If the hit starts after the gap ends, skip to the next gap
-			if (h1 > g2) continue;
-			if ((NEAR_ZERO(g1 - h1, BN_TOL_DIST) || h1 > g1) && (NEAR_ZERO(g2 - h2, BN_TOL_DIST) || h2 < g2)) {
-			    inside = 1;
-			    break;
+		// iterate over the entry hits
+		for (int j = 0; j < cp[i]->hit_cnt*2; j=j+2) {
+		    fastf_t h = cp[i]->hits[j];
+		    //point_t hp;
+		    //VJOIN1(hp, cp->ray.r_pt, cp->hits[j], cp->ray.r_dir);
+		    for (int k = 0; k < mp[i]->gap_cnt*2; k=k+2) {
+			fastf_t g = mp[i]->gaps[k];
+			if (h < g) continue;
+			//point_t gp;
+			//VJOIN1(mp, mp->ray.r_pt, mp->gaps[k], mp->ray.r_dir);
+			if (NEAR_ZERO(g - h,  VUNITIZE_TOL)) {
+			    entry_match.push_back(h);
 			}
+			if (g > h) break;
 		    }
-		    if (!inside) {
-			problem_hits.push_back(h1);
-			problem_hits.push_back(h2);
-		    } else {
-			good_hits.push_back(h1);
-			good_hits.push_back(h2);
+		}
+		// iterate over the exit hits
+		for (int j = 1; j < cp[i]->hit_cnt*2; j=j+2) {
+		    fastf_t h = cp[i]->hits[j];
+		    //point_t hp;
+		    //VJOIN1(hp, cp->ray.r_pt, cp->hits[j], cp->ray.r_dir);
+		    for (int k = 1; k < mp[i]->gap_cnt*2; k=k+2) {
+			fastf_t g = mp[i]->gaps[k];
+			if (h < g) continue;
+			//point_t gp;
+			//VJOIN1(mp, mp->ray.r_pt, mp->gaps[k], mp->ray.r_dir);
+			if (NEAR_ZERO(g - h, VUNITIZE_TOL)) {
+			    exit_match.push_back(h);
+			}
+			if (g > h) break;
 		    }
 		}
 	    }
 	}
     }
-bu_log("missing size: %d, candidate size: %d, problem size: %d, good size: %d\n", BU_PTBL_LEN(missing), BU_PTBL_LEN(candidate), (int)(problem_hits.size()/2), (int)(good_hits.size()/2));
-    return ((size_t)(problem_hits.size()/2) > (size_t)(good_hits.size() * 0.25)) ? 0 : 1;
+bu_log("missing size: %d, entry size: %d, exit size: %d\n", BU_PTBL_LEN(missing), (int)(entry_match.size()), (int)(exit_match.size()));
+    return ((size_t)((entry_match.size() + exit_match.size())/2) > 0) ? 1 : 0;
 }
 
 HIDDEN int
