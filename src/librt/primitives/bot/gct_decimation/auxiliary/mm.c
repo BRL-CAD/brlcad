@@ -44,10 +44,10 @@
 #  pragma clang diagnostic ignored "-Wunused-function"
 #endif
 
+#include "common.h"
+
 #define _GNU_SOURCE
 #include <sched.h>
-
-#include "common.h"
 
 #include "mm.h"
 

@@ -29,6 +29,8 @@ freely, subject to the following restrictions:
 extern "C" {
 #endif
 
+#include "common.h"
+
 /**
 * @file
 * @mainpage TinyCThread API Reference
