@@ -159,7 +159,7 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
 
 * BoT mesh editing command.  Subtasks:
 
-  - enumerate functions desireable
+  - enumerate functions desirable
   - catalog features of other mesh manipulation tools
   - investigate mesh editing libraries and/or relying on NMG editing
   - bind GUI editing to the BoT mesh editing command

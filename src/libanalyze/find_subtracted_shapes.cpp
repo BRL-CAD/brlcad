@@ -97,7 +97,7 @@ find_missing_gaps(struct bu_ptbl *missing, struct bu_ptbl *p_brep, struct bu_ptb
 			// to be trimmed away - see if it's from this solid and has a reasonable length
 			if ((NEAR_ZERO(g1 - h1, VUNITIZE_TOL) || h1 < g1) || (NEAR_ZERO(g2 - h2, VUNITIZE_TOL) || h2 > g2)) {
 			    fastf_t miss1, miss2;
-			    // All we need trimmed away from this comb is the portion of the possitive volume
+			    // All we need trimmed away from this comb is the portion of the positive volume
 			    // being contributed by the comb - if the gap is bigger than the hit, the rest of
 			    // the removal from the parent is handled elsewhere
 			    if (g1 < h1 || NEAR_ZERO(g1 - h1, VUNITIZE_TOL)){
