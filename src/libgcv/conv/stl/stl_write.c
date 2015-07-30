@@ -297,7 +297,7 @@ static struct gcv_region_end_data gcvwriter = {nmg_to_stl, NULL};
 
 
 HIDDEN int
-gcv_stl_write(const char *path, struct db_i *vdbip, const struct gcv_opts *UNUSED(options))
+gcv_stl_write(const char *path, struct db_i *source_dbip, const struct gcv_opts *UNUSED(options))
 {
     size_t num_objects;
     char **object_names;
@@ -307,7 +307,7 @@ gcv_stl_write(const char *path, struct db_i *vdbip, const struct gcv_opts *UNUSE
     int mutex;
 
     output_file = path;
-    dbip = vdbip;
+    dbip = source_dbip;
 
     bu_setlinebuf(stderr);
 

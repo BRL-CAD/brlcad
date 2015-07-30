@@ -2723,7 +2723,7 @@ read_fast4_colors(char *color_file)
 
 
 static int
-gcv_fastgen4_read(const char *path, struct rt_wdb *wdbp, const struct gcv_opts *UNUSED(options))
+gcv_fastgen4_read(const char *path, struct rt_wdb *dest_wdbp, const struct gcv_opts *UNUSED(options))
 {
     int result = 0;
     char *plot_file = NULL;
@@ -2738,7 +2738,7 @@ gcv_fastgen4_read(const char *path, struct rt_wdb *wdbp, const struct gcv_opts *
 	return 0;
     }
 
-    fpout = wdbp;
+    fpout = dest_wdbp;
 
     if (plot_file) {
 	if ((fp_plot=fopen(plot_file, "wb")) == NULL) {

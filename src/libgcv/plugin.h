@@ -38,9 +38,9 @@ __BEGIN_DECLS
 
 struct gcv_converter {
     const char *file_extensions;
-    int (*reader_fn)(const char *path, struct rt_wdb *wdbp,
+    int (*reader_fn)(const char *path, struct rt_wdb *dest_wdbp,
 		     const struct gcv_opts *options);
-    int (*writer_fn)(const char *path, struct db_i *dbip,
+    int (*writer_fn)(const char *path, struct db_i *source_dbip,
 		     const struct gcv_opts *options);
 };
 

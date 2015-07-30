@@ -414,6 +414,9 @@ RecordWriter::Record::truncate_float(fastf_t value)
     if (end_point >= result.size() - 1)
 	throw std::runtime_error("value too large");
 
+    if (result == "-0.0")
+	result.erase(0, 1);
+
     return result;
 }
 
@@ -492,14 +495,19 @@ protected:
 private:
     static const std::size_t MAX_GROUP_ID = 49;
     static const std::size_t MAX_SECTION_ID = 999;
+    static const std::size_t MAX_BOOLS = 40000;
 
     std::size_t m_next_section_id[MAX_GROUP_ID + 1];
+    std::size_t m_num_holes, m_num_walls;
     StringBuffer m_sections;
     std::ofstream m_ostream, m_colors_ostream;
 };
 
 
 FastgenWriter::FastgenWriter(const std::string &path) :
+    m_next_section_id(),
+    m_num_holes(0),
+    m_num_walls(0),
     m_sections(),
     m_ostream(path.c_str(), std::ofstream::out),
     m_colors_ostream((path + ".colors").c_str(), std::ofstream::out)
@@ -580,11 +588,17 @@ FastgenWriter::write_boolean(BooleanType type, const SectionID &section_a,
 {
     Record record(*this);
 
-    if (type == BOOL_HOLE)
+    if (type == BOOL_HOLE) {
+	if (++m_num_holes > MAX_BOOLS)
+	    throw std::length_error("MAX_BOOLS exceeded for HOLE");
+
 	record << "HOLE";
-    else if (type == BOOL_WALL)
+    } else if (type == BOOL_WALL) {
+	if (++m_num_walls > MAX_BOOLS)
+	    throw std::length_error("MAX_BOOLS exceeded for WALL");
+
 	record << "WALL";
-    else
+    } else
 	throw std::logic_error("unknown Boolean type");
 
     record << section_a.first << section_a.second;
@@ -2526,16 +2540,16 @@ do_conversion(db_i &db, const std::string &path,
 
 
 HIDDEN int
-gcv_fastgen4_write(const char *path, struct db_i *dbip,
+gcv_fastgen4_write(const char *path, struct db_i *source_dbip,
 		   const gcv_opts *UNUSED(options))
 {
-    RT_CK_DBI(dbip);
+    RT_CK_DBI(source_dbip);
 
-    std::set<const directory *> failed_regions = do_conversion(*dbip, path);
+    std::set<const directory *> failed_regions = do_conversion(*source_dbip, path);
 
     // facetize all regions that contain incompatible boolean operations
     if (!failed_regions.empty())
-	if (!do_conversion(*dbip, path, failed_regions).empty())
+	if (!do_conversion(*source_dbip, path, failed_regions).empty())
 	    throw std::runtime_error("failed to convert all regions");
 
     return 1;

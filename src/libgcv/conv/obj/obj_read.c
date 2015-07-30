@@ -3147,7 +3147,7 @@ process_nv_mode_option(struct ga_t *ga,
 
 
 HIDDEN int
-gcv_obj_read(const char *path, struct rt_wdb *wdbp, const struct gcv_opts *UNUSED(options))
+gcv_obj_read(const char *path, struct rt_wdb *dest_wdbp, const struct gcv_opts *UNUSED(options))
 {
     struct rt_wdb *fd_out;	     /* Resulting BRL-CAD file */
     int ret_val = 0;
@@ -3319,7 +3319,7 @@ gcv_obj_read(const char *path, struct rt_wdb *wdbp, const struct gcv_opts *UNUSE
 	return 0;
     }
 
-    fd_out = wdbp;
+    fd_out = dest_wdbp;
 
     if ((ret_val = obj_parser_create(&ga.parser)) != 0) {
 	if (ret_val == ENOMEM) {

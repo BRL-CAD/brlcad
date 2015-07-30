@@ -538,9 +538,9 @@ Convert_input()
 
 
 HIDDEN int
-gcv_stl_read(const char *path, struct rt_wdb *wdbp, const struct gcv_opts *UNUSED(options))
+gcv_stl_read(const char *path, struct rt_wdb *dest_wdbp, const struct gcv_opts *UNUSED(options))
 {
-    fd_out = wdbp;
+    fd_out = dest_wdbp;
     input_file = path;
 
     tol.magic = BN_TOL_MAGIC;
