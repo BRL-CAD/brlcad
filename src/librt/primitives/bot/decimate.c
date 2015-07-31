@@ -34,6 +34,7 @@
 #include <ctype.h>
 
 #include "bu.h"
+#include "rt/geom.h"
 #include "rt/primitives/bot.h"
 
 #include "./gct_decimation/meshdecimation.h"
