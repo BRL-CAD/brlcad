@@ -1727,7 +1727,7 @@ get_unioned(const db_i &db, const tree *tree, LeafMap &results)
     switch (tree->tr_op) {
 	case OP_DB_LEAF: {
 	    const directory &dir = DBInternal::lookup(db, tree->tr_l.tl_name);
-	    results.insert(std::make_pair(&dir, tree->tr_l.tl_mat));
+	    results.insert(std::make_pair(&dir, Matrix(tree->tr_l.tl_mat)));
 	    break;
 	}
 
