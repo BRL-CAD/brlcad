@@ -297,11 +297,8 @@ struct rt_nurb_internal {
 /* ID_BREP */
 struct rt_brep_internal {
     uint32_t magic;
-#ifdef __cplusplus
+
     ON_Brep* brep; /**< @brief An openNURBS brep object containing the solid */
-#else
-    void*    brep; /**< @brief An openNURBS brep object containing the solid */
-#endif
 };
 
 
