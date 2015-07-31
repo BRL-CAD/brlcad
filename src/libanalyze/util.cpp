@@ -195,8 +195,6 @@ memfree:
 
 
 struct segfilter_container {
-    struct rt_i *rtip;
-    struct resource *resp;
     int ray_dir;
     int ncpus;
     fastf_t tol;
@@ -214,7 +212,8 @@ segfilter_hit(struct application *ap, struct partition *PartHeadp, struct seg *U
     point_t in_pt, out_pt;
     struct partition *part;
     fastf_t part_len = 0.0;
-    struct segfilter_container *state = (struct segfilter_container *)(ap->a_uptr);
+    struct rt_gen_worker_vars *s = (struct rt_gen_worker_vars *)(ap->a_uptr);
+    struct segfilter_container *state = (struct segfilter_container *)(s->ptr);
 
     for (part = PartHeadp->pt_forw; part != PartHeadp; part = part->pt_forw) {
         VJOIN1(in_pt, ap->a_ray.r_pt, part->pt_inhit->hit_dist, ap->a_ray.r_dir);
@@ -248,83 +247,85 @@ segfilter_overlap(struct application *ap,
     return 0;
 }
 
-HIDDEN void
+extern "C" void
 segfilter_gen_worker(int cpu, void *ptr)
 {
     struct application ap;
-    struct segfilter_container *state = &(((struct segfilter_container *)ptr)[cpu]);
-    fastf_t si, ei;
+    struct rt_gen_worker_vars *s = &(((struct rt_gen_worker_vars *)ptr)[cpu]);
+    struct segfilter_container *state = (struct segfilter_container *)(s->ptr);
     int start_ind, end_ind, i;
-    if (cpu == 0) {
-        /* If we're serial, start at the beginning */
-        start_ind = 0;
-        end_ind = BU_PTBL_LEN(state->test) - 1;
-    } else {
-        si = (fastf_t)(cpu - 1)/(fastf_t)state->ncpus * (fastf_t) BU_PTBL_LEN(state->test);
-        ei = (fastf_t)cpu/(fastf_t)state->ncpus * (fastf_t) BU_PTBL_LEN(state->test) - 1;
-        start_ind = (int)si;
-        end_ind = (int)ei;
-        if (BU_PTBL_LEN(state->test) - end_ind < 3) end_ind = BU_PTBL_LEN(state->test) - 1;
-        /*
-        bu_log("start_ind (%d): %d\n", cpu, start_ind);
-        bu_log("end_ind (%d): %d\n", cpu, end_ind);
-        */
-    }
+    int state_jmp = 0;
 
     RT_APPLICATION_INIT(&ap);
-    ap.a_rt_i = state->rtip;
-    ap.a_hit = segfilter_hit;
-    ap.a_miss = segfilter_miss;
-    ap.a_overlap = segfilter_overlap;
+    ap.a_rt_i = s->rtip;
+    ap.a_hit = s->fhit;
+    ap.a_miss = s->fmiss;
+    ap.a_overlap = s->foverlap;
     ap.a_onehit = 0;
     ap.a_logoverlap = rt_silent_logoverlap;
-    ap.a_resource = state->resp;
-    ap.a_uptr = (void *)state;
+    ap.a_resource = s->resp;
+    ap.a_uptr = (void *)s;
 
-    for (i = start_ind; i <= end_ind; i++) {
-        point_t r_pt;
-        vect_t v1, v2;
-        int valid = 0;
-	struct xray *ray = (*state->g_ray)((void *)BU_PTBL_GET(state->test, i));
-	int *d_valid = (*state->g_flag)((void *)BU_PTBL_GET(state->test, i));
-        VMOVE(ap.a_ray.r_dir, ray->r_dir);
-        /* Construct 4 rays and test around the original hit.*/
-        bn_vec_perp(v1, ray->r_dir);
-        VCROSS(v2, v1, ray->r_dir);
-        VUNITIZE(v1);
-        VUNITIZE(v2);
+    /* Because a zero step means an infinite loop, ensure we are moving ahead
+     * at least 1 ray each step */
+    if (!s->step) state_jmp = 1;
 
-        valid = 0;
-        VJOIN2(r_pt, ray->r_pt, 0.5 * state->tol, v1, 0.5 * state->tol, v2);
-        state->cnt = 0;
-        VMOVE(ap.a_ray.r_pt, r_pt);
-        rt_shootray(&ap);
-        if (state->cnt) valid++;
-        state->cnt = 0;
-        VJOIN2(r_pt, ray->r_pt, -0.5 * state->tol, v1, -0.5 * state->tol, v2);
-        state->cnt = 0;
-        VMOVE(ap.a_ray.r_pt, r_pt);
-        rt_shootray(&ap);
-        if (state->cnt) valid++;
-        VJOIN2(r_pt, ray->r_pt, -0.5 * state->tol, v1, 0.5 * state->tol, v2);
-        state->cnt = 0;
-        VMOVE(ap.a_ray.r_pt, r_pt);
-        rt_shootray(&ap);
-        if (state->cnt) valid++;
-        state->cnt = 0;
-        VJOIN2(r_pt, ray->r_pt, 0.5 * state->tol, v1, -0.5 * state->tol, v2);
-        state->cnt = 0;
-        VMOVE(ap.a_ray.r_pt, r_pt);
-        rt_shootray(&ap);
-        if (state->cnt) valid++;
+    bu_semaphore_acquire(RT_SEM_WORKER);
+    start_ind = (*s->ind_src);
+    (*s->ind_src) = start_ind + s->step + state_jmp;
+    //bu_log("increment(%d): %d\n", cpu, start_ind);
+    bu_semaphore_release(RT_SEM_WORKER);
+    end_ind = start_ind + s->step + state_jmp - 1;
+    while (start_ind < (int)BU_PTBL_LEN(state->test)) {
+	for (i = start_ind; i <= end_ind && i < (int)BU_PTBL_LEN(state->test); i++) {
+	    point_t r_pt;
+	    vect_t v1, v2;
+	    int valid = 0;
+	    struct xray *ray = (*state->g_ray)((void *)BU_PTBL_GET(state->test, i));
+	    int *d_valid = (*state->g_flag)((void *)BU_PTBL_GET(state->test, i));
+	    VMOVE(ap.a_ray.r_dir, ray->r_dir);
+	    /* Construct 4 rays and test around the original hit.*/
+	    bn_vec_perp(v1, ray->r_dir);
+	    VCROSS(v2, v1, ray->r_dir);
+	    VUNITIZE(v1);
+	    VUNITIZE(v2);
 
-        if (valid == 4) {
-            *d_valid = 1;
-        }
+	    valid = 0;
+	    VJOIN2(r_pt, ray->r_pt, 0.5 * state->tol, v1, 0.5 * state->tol, v2);
+	    state->cnt = 0;
+	    VMOVE(ap.a_ray.r_pt, r_pt);
+	    rt_shootray(&ap);
+	    if (state->cnt) valid++;
+	    state->cnt = 0;
+	    VJOIN2(r_pt, ray->r_pt, -0.5 * state->tol, v1, -0.5 * state->tol, v2);
+	    state->cnt = 0;
+	    VMOVE(ap.a_ray.r_pt, r_pt);
+	    rt_shootray(&ap);
+	    if (state->cnt) valid++;
+	    VJOIN2(r_pt, ray->r_pt, -0.5 * state->tol, v1, 0.5 * state->tol, v2);
+	    state->cnt = 0;
+	    VMOVE(ap.a_ray.r_pt, r_pt);
+	    rt_shootray(&ap);
+	    if (state->cnt) valid++;
+	    state->cnt = 0;
+	    VJOIN2(r_pt, ray->r_pt, 0.5 * state->tol, v1, -0.5 * state->tol, v2);
+	    state->cnt = 0;
+	    VMOVE(ap.a_ray.r_pt, r_pt);
+	    rt_shootray(&ap);
+	    if (state->cnt) valid++;
+
+	    if (valid == 4) {
+		*d_valid = 1;
+	    }
+	}
+	bu_semaphore_acquire(RT_SEM_WORKER);
+	start_ind = (*s->ind_src);
+	(*s->ind_src) = start_ind + s->step + state_jmp;
+	//bu_log("increment(%d): %d\n", cpu, start_ind);
+	bu_semaphore_release(RT_SEM_WORKER);
+	end_ind = start_ind + s->step + state_jmp - 1;
     }
 }
-
-
 
 /* TODO - may be several possible operations here:
  *
@@ -337,22 +338,35 @@ extern "C" void
 analyze_seg_filter(struct bu_ptbl *segs, getray_t gray, getflag_t gflag, struct rt_i *rtip, struct resource *resp, fastf_t tol, int ncpus)
 {
     int i = 0;
-    struct segfilter_container *state;
+    int ind = 0;
+    int step = 0;
+    struct rt_gen_worker_vars *state;
+    struct segfilter_container *local_state;
 
     if (!segs || !rtip) return;
 
-    state = (struct segfilter_container *)bu_calloc(ncpus+1, sizeof(struct segfilter_container), "resources");
+    state = (struct rt_gen_worker_vars *)bu_calloc(ncpus+1, sizeof(struct rt_gen_worker_vars ), "state");
+    local_state = (struct segfilter_container *)bu_calloc(ncpus+1, sizeof(struct segfilter_container), "local resources");
+
+    step = (int)(BU_PTBL_LEN(segs)/ncpus * 0.1);
+
     /* Preparing rtip is the responsibility of the calling function - here we're just setting
      * up the resources.  The rays are contained in the individual segs structures and are
      * extracted by the gen_worker function. */
     for (i = 0; i < ncpus+1; i++) {
 	state[i].rtip = rtip;
-	state[i].tol = tol;
-	state[i].ncpus = ncpus;
 	state[i].resp = &resp[i];
-	state[i].g_ray = gray;
-	state[i].g_flag = gflag;
-	state[i].test = segs;
+	state[i].ind_src = &ind;
+	state[i].fhit = segfilter_hit;
+	state[i].fmiss = segfilter_miss;
+	state[i].foverlap = segfilter_overlap;
+	state[i].step = step;
+	local_state[i].tol = tol;
+	local_state[i].ncpus = ncpus;
+	local_state[i].g_ray = gray;
+	local_state[i].g_flag = gflag;
+	local_state[i].test = segs;
+	state[i].ptr = (void *)&(local_state[i]);
     }
 
     bu_parallel(segfilter_gen_worker, ncpus, (void *)state);
