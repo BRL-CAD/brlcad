@@ -1422,6 +1422,7 @@ dm_list_tcl(ClientData UNUSED(clientData),
 int
 Go_Init(Tcl_Interp *interp)
 {
+
     if (library_initialized(0))
 	return TCL_OK;
 
@@ -1670,6 +1671,7 @@ Usage: go_open\n\
 	Tcl_AppendResult(interp, "Unable to open geometry database: ", dbname, (char *)NULL);
 	return TCL_ERROR;
     }
+    gedp->ged_interp = interp;
 
     /* initialize tclcad_obj */
     BU_ALLOC(top, struct tclcad_obj);
