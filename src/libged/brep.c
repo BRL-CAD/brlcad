@@ -366,7 +366,7 @@ ged_brep(struct ged *gedp, int argc, const char *argv[])
 
 	rt_brep_boolean(&intern_res, &intern, &intern2, op);
 	bip = (struct rt_brep_internal*)intern_res.idb_ptr;
-	mk_brep(gedp->ged_wdbp, argv[4], bip->brep);
+	mk_brep(gedp->ged_wdbp, argv[4], (ON_Brep *)bip->brep);
 	rt_db_free_internal(&intern);
 	rt_db_free_internal(&intern2);
 	rt_db_free_internal(&intern_res);
@@ -444,7 +444,7 @@ ged_brep(struct ged *gedp, int argc, const char *argv[])
 		bu_vls_printf(gedp->ged_result_str, "%s cannot be converted "
 			"to brep correctly.", solid_name);
 	    } else {
-		brep = ((struct rt_brep_internal *)brep_db_internal.idb_ptr)->brep;
+		brep = (ON_Brep *)((struct rt_brep_internal *)brep_db_internal.idb_ptr)->brep;
 		ret = mk_brep(gedp->ged_wdbp, bu_vls_addr(&bname), brep);
 		if (ret == 0) {
 		    bu_vls_printf(gedp->ged_result_str, "%s is made.", bu_vls_addr(&bname));
@@ -482,7 +482,7 @@ ged_brep(struct ged *gedp, int argc, const char *argv[])
 
     if ((bs = (struct brep_specific*)stp->st_specific) == NULL) {
 	BU_ALLOC(bs, struct brep_specific);
-	bs->brep = bi->brep;
+	bs->brep = (ON_Brep *)bi->brep;
 	bi->brep = NULL;
 	stp->st_specific = (void *)bs;
     }
