@@ -946,7 +946,7 @@ hasSplit(const ON_Surface *surf, const int dir,const ON_Interval& interval,doubl
 	for(int i=0; i<2; i++) {
 	    span_cnt[p][i] = 0;
 	    if (span[p][i])
-		delete [] span[p][i];
+		bu_free(span[p][i], "surface span vector");
 	    span[p][i] = NULL;
 	    dom[p][i] = ON_Interval::EmptyInterval;
 	}
@@ -956,11 +956,11 @@ hasSplit(const ON_Surface *surf, const int dir,const ON_Interval& interval,doubl
     if (prev_surf[p] != surf ) {
 	// load new surf info
 	for(int i=0; i<2; i++) {
-	    if (span[p][i])
-		delete [] span[p][i];
 	    dom[p][i] = surf->Domain(i);
 	    span_cnt[p][i] = surf->SpanCount(i);
-	    span[p][i] = new double[span_cnt[p][i]+1];
+	    if (span[p][i])
+		bu_free(span[p][i], "surface span vector");
+	    span[p][i] = (double *)bu_malloc((unsigned)(span_cnt[p][i]+1) * sizeof(double), "surface span vector");
 	    surf->GetSpanVector(i, span[p][i]);
 	}
 
@@ -985,15 +985,15 @@ hasSplit(const ON_Surface *surf, const int dir,const ON_Interval& interval,doubl
     if (span_cnt[p][dir] > 1) {
 	int sum = 0;
 	int cnt = 0;
-	for(int i=0; i<span_cnt[p][i]+1; i++) {
+	for(int i=0; i<span_cnt[p][dir]+1; i++) {
 	    bool testOpen = true;
-	    if (interval.Includes(span[p][dir][i], testOpen)) { //crosses lower boundary
+	    if (interval.Includes((span[p][dir])[i], testOpen)) { //crosses lower boundary
 		sum = sum + i;
 		cnt++;
 	    }
 	}
 	if (cnt > 0) {
-	    split = span[p][dir][sum/cnt];
+	    split = (span[p][dir])[sum/cnt];
 	    return true;
 	}
     }
