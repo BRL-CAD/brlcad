@@ -2033,9 +2033,6 @@ rt_tcl_setup(Tcl_Interp *interp)
 
     Tcl_LinkVar(interp, "rt_bot_tri_per_piece",
 		(char *)&rt_bot_tri_per_piece, TCL_LINK_WIDE_INT);
-
-    /*XXX Use of brlcad_interp is temporary */
-    brlcad_interp = interp;
 }
 
 

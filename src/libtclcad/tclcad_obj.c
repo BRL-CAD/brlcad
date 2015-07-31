@@ -1430,9 +1430,6 @@ Go_Init(Tcl_Interp *interp)
 	tclcad_eval_noresult(interp, "set brlcad_version", 1, &version_str);
     }
 
-    /*XXX Use of brlcad_interp is temporary */
-    brlcad_interp = interp;
-
     BU_LIST_INIT(&HeadTclcadObj.l);
     (void)Tcl_CreateCommand(interp, (const char *)"go_open", to_open_tcl,
 			    (ClientData)NULL, (Tcl_CmdDeleteProc *)NULL);

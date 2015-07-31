@@ -74,6 +74,9 @@ __BEGIN_DECLS
 #define DG_GED_MAX 2047.0
 #define DG_GED_MIN -2048.0
 
+/* FIXME Temporary global interp.  Remove me.  */
+extern Tcl_Interp *brlcad_interp;
+
 struct _ged_funtab {
     char *ft_name;
     char *ft_parms;
