@@ -403,10 +403,7 @@ brep_build_bvh(struct brep_specific* bs)
      */
 
     start = bu_gettime();
-    /* FIXME - bu_parallel is hanging with a NURBS example if raytraced twice in the
-     * same MGED session... */
-    //bu_parallel(brep_build_bvh_surface_tree, 0, &bbbp);
-    brep_build_bvh_surface_tree(0, &bbbp);
+    bu_parallel(brep_build_bvh_surface_tree, 0, &bbbp);
 
     for (int i = 0; (size_t)i < faceCount; i++) {
 	ON_BrepFace& face = faces[i];
