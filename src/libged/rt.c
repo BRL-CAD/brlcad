@@ -189,7 +189,7 @@ _ged_rt_output_handler(ClientData clientData, int UNUSED(mask))
 	Tcl_DeleteChannelHandler(run_rtp->chan,
 				 _ged_rt_output_handler,
 				 (ClientData)drcdp);
-	Tcl_Close(gedp->ged_interp, run_rtp->chan);
+	Tcl_Close(drcdp->gedp->ged_interp, run_rtp->chan);
 
 	/* wait for the forked process
 	 * either EOF has been sent or there was a read error.
