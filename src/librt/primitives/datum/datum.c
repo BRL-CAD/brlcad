@@ -147,7 +147,7 @@ int
 rt_datum_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol), const struct rt_view_info *UNUSED(info))
 {
     struct rt_datum_internal *datum_ip;
-    point_t point_size;
+    point_t point_size = VINIT_ZERO;
 
     BU_CK_LIST_HEAD(vhead);
     RT_CK_DB_INTERNAL(ip);
