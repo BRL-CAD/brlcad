@@ -83,10 +83,9 @@ template <typename T>
 class Triple
 {
 public:
-    Triple()
-    {
-	VSETALL(m_value, 0);
-    }
+    Triple() :
+	m_value() // zero
+    {}
 
 
     Triple(T x, T y, T z)
@@ -138,7 +137,7 @@ class Matrix
 {
 public:
     Matrix();
-    explicit Matrix(const fastf_t *source);
+    explicit Matrix(const fastf_t *values);
 
     bool equal(const Matrix &other, const bn_tol &tol) const;
 
@@ -150,16 +149,13 @@ private:
 
 Matrix::Matrix() :
     m_value()
-{
-    MAT_ZERO(m_value);
-}
+{}
 
 
-Matrix::Matrix(const fastf_t *source) :
-    m_value()
+Matrix::Matrix(const fastf_t *values)
 {
-    if (source)
-	MAT_COPY(m_value, source);
+    if (values)
+	MAT_COPY(m_value, values);
     else
 	MAT_IDN(m_value);
 }
@@ -200,7 +196,7 @@ private:
 const directory &
 DBInternal::lookup(const db_i &db, const std::string &name)
 {
-    const directory *dir = db_lookup(&db, name.c_str(), LOOKUP_QUIET);
+    const directory * const dir = db_lookup(&db, name.c_str(), LOOKUP_QUIET);
 
     if (!dir)
 	throw std::invalid_argument("db_lookup() failed");
@@ -338,7 +334,8 @@ RecordWriter::Record::Record(RecordWriter &writer) :
 
 RecordWriter::Record::~Record()
 {
-    if (m_width) m_writer.get_ostream().put('\n');
+    if (m_width)
+	m_writer.get_ostream().put('\n');
 
     m_writer.m_record_open = false;
 }
@@ -497,7 +494,7 @@ private:
     static const std::size_t MAX_SECTION_ID = 999;
     static const std::size_t MAX_BOOLS = 40000;
 
-    std::size_t m_next_section_id[MAX_GROUP_ID + 1];
+    SectionID m_next_section_id;
     std::size_t m_num_holes, m_num_walls;
     StringBuffer m_sections;
     std::ofstream m_ostream, m_colors_ostream;
@@ -505,7 +502,7 @@ private:
 
 
 FastgenWriter::FastgenWriter(const std::string &path) :
-    m_next_section_id(),
+    m_next_section_id(0, 1),
     m_num_holes(0),
     m_num_walls(0),
     m_sections(),
@@ -514,9 +511,6 @@ FastgenWriter::FastgenWriter(const std::string &path) :
 {
     m_ostream.exceptions(std::ofstream::failbit | std::ofstream::badbit);
     m_colors_ostream.exceptions(std::ofstream::failbit | std::ofstream::badbit);
-
-    for (std::size_t i = 0; i <= MAX_GROUP_ID; ++i)
-	m_next_section_id[i] = 1;
 }
 
 
@@ -538,13 +532,17 @@ FastgenWriter::get_ostream()
 FastgenWriter::SectionID
 FastgenWriter::take_next_section_id()
 {
-    std::size_t group_id = 0;
+    const SectionID result = m_next_section_id;
 
-    while (m_next_section_id[group_id] > MAX_SECTION_ID)
-	if (++group_id > MAX_GROUP_ID)
-	    throw std::length_error("maximum number of sections");
+    if (result.first > MAX_GROUP_ID)
+	throw std::length_error("maximum number of Sections");
 
-    return SectionID(group_id, m_next_section_id[group_id]++);
+    if (++m_next_section_id.second > MAX_SECTION_ID) {
+	++m_next_section_id.first;
+	m_next_section_id.second = 1;
+    }
+
+    return result;
 }
 
 
@@ -570,9 +568,9 @@ FastgenWriter::write_section_color(const SectionID &section_id,
 FastgenWriter::SectionID
 FastgenWriter::write_compsplt(const SectionID &id, fastf_t z_coordinate)
 {
+    Record record(*this);
     const SectionID result = take_next_section_id();
 
-    Record record(*this);
     record << "COMPSPLT" << id.first << id.second;
     record << result.first << result.second;
     record << z_coordinate * INCHES_PER_MM;
@@ -641,18 +639,11 @@ bool
 GridManager::PointComparator::operator()(const Point &lhs,
 	const Point &rhs) const
 {
-#define COMPARE(a, b) \
-    do { \
-	if (!NEAR_EQUAL((a), (b), RT_LEN_TOL)) \
-	    return (a) < (b); \
-    } while (false)
+    for (int i = 0; i < 3; ++i)
+	if (!NEAR_EQUAL(lhs[i], rhs[i], RT_LEN_TOL))
+	    return lhs[i] < rhs[i];
 
-    COMPARE(lhs[X], rhs[X]);
-    COMPARE(lhs[Y], rhs[Y]);
-    COMPARE(lhs[Z], rhs[Z]);
     return false;
-
-#undef COMPARE
 }
 
 inline
@@ -1465,15 +1456,12 @@ get_ccone1_cutout_helper(Section &section, const std::string &name,
     const fastf_t sin_angle = length / std::sqrt(length * length +
 			      (radius2 - radius1) * (radius2 - radius1));
 
-    bool known_thickness = false;
-    fastf_t thickness;
+    fastf_t thickness = -1.0;
 
     if (!NEAR_ZERO(inner_radius1, RT_LEN_TOL)) {
-	if (end1_open) {
-	    known_thickness = true;
+	if (end1_open)
 	    thickness = (radius1 - inner_radius1) * sin_angle;
-	} else {
-	    known_thickness = true;
+	else {
 	    thickness =
 		(inner_radius1 - radius1) / ((radius2 - radius1) / length - 1.0 / sin_angle);
 
@@ -1491,19 +1479,17 @@ get_ccone1_cutout_helper(Section &section, const std::string &name,
 	if (end2_open) {
 	    const fastf_t temp_thickness = (radius2 - inner_radius2) * sin_angle;
 
-	    if (!known_thickness) {
-		known_thickness = true;
+	    if (thickness < 0.0)
 		thickness = temp_thickness;
-	    } else if (!NEAR_EQUAL(temp_thickness, thickness, RT_LEN_TOL))
+	    else if (!NEAR_EQUAL(temp_thickness, thickness, RT_LEN_TOL))
 		return false;
 	} else {
 	    const fastf_t temp_thickness =
 		(inner_radius2 - radius2) / ((radius1 - radius2) / length - 1.0 / sin_angle);
 
-	    if (!known_thickness) {
-		known_thickness = true;
+	    if (thickness < 0.0)
 		thickness = temp_thickness;
-	    } else if (!NEAR_EQUAL(temp_thickness, thickness, RT_LEN_TOL))
+	    else if (!NEAR_EQUAL(temp_thickness, thickness, RT_LEN_TOL))
 		return false;
 	}
     }
@@ -1512,13 +1498,11 @@ get_ccone1_cutout_helper(Section &section, const std::string &name,
     VADD2(point_b, outer_tgc.v, outer_tgc.h);
     section.write_name(name);
 
-    if (known_thickness) {
+    if (thickness < 0.0) // `inner_radius1` and `inner_radius2` are zero
+	section.write_cone(outer_tgc.v, point_b, radius1, radius2, 0.0, 0.0);
+    else
 	section.write_thin_cone(outer_tgc.v, point_b, radius1, radius2, thickness,
 				end1_open, end2_open);
-    } else {
-	// `inner_radius1` and `inner_radius2` are zero
-	section.write_cone(outer_tgc.v, point_b, radius1, radius2, 0.0, 0.0);
-    }
 
     return true;
 }
