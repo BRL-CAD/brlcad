@@ -251,7 +251,7 @@ __BEGIN_DECLS
     }
 
 /* FIXME Temporary global interp.  Remove me.  */
-RT_EXPORT extern Tcl_Interp *brlcad_interp;
+GED_EXPORT extern Tcl_Interp *brlcad_interp;
 
 /* From include/dm.h */
 #define GED_MAX 2047.0
