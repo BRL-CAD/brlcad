@@ -697,7 +697,10 @@ version if BRLCAD_BUNDLED_LIBS is also AUTO.
 ")
 THIRD_PARTY(PoissonRecon SPR PoissonRecon poissonrecon_DESCRIPTION ALIASES
   ${poissonrecon_ALIASES} FLAGS NOSYS)
-SetTargetFolder(PoissonRecon "Third Party Libraries")
+SetTargetFolder(PoissonRecon "Third Party Executables")
+SetTargetFolder(SurfaceTrimmer "Third Party Executables")
+SetTargetFolder(libSPR "Third Party Libraries")
+SetTargetFolder(libSPR-static "Third Party Libraries")
 
 # STEPcode
 # Need Lemon/Perplex to build STEP - conditionalize
