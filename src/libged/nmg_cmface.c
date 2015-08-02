@@ -54,7 +54,7 @@ ged_nmg_cmface(struct ged *gedp, int argc, const char *argv[])
     struct vertex ***face_verts;
     int idx, num_verts;
 
-    static const char *usage = "nmg_name x0 y0 z0 ... xn yn zn";
+    static const char *usage = "nmg_name cmface x0 y0 z0 ... xn yn zn";
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
     GED_CHECK_READ_ONLY(gedp, GED_ERROR);
@@ -69,7 +69,7 @@ ged_nmg_cmface(struct ged *gedp, int argc, const char *argv[])
     }
 
     /* attempt to resolve and verify */
-    name = argv[1];
+    name = argv[0];
 
     if ( (dp=db_lookup(gedp->ged_wdbp->dbip, name, LOOKUP_QUIET))
          == RT_DIR_NULL ) {
