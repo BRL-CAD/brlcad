@@ -1063,7 +1063,7 @@ bn_math_cmd(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 
 	bu_vls_printf(&result, "%g", dist);
     } else {
-	bu_vls_printf(&result, "libbn/tclcad_bn.c: math function %s not supported yet\n", argv[0]);
+	bu_vls_printf(&result, "libbn/bn_tcl.c: math function %s not supported yet\n", argv[0]);
 	goto error;
     }
 
@@ -1306,7 +1306,7 @@ bn_cmd_random(ClientData UNUSED(clientData),
 
 
 void
-tclcad_bn_mat_print(Tcl_Interp *interp,
+bn_tcl_mat_print(Tcl_Interp *interp,
 		 const char *title,
 		 const mat_t m)
 {
@@ -1318,7 +1318,7 @@ tclcad_bn_mat_print(Tcl_Interp *interp,
 
 
 void
-tclcad_bn_setup(Tcl_Interp *interp)
+bn_tcl_setup(Tcl_Interp *interp)
 {
     struct math_func_link *mp;
 
@@ -1354,7 +1354,7 @@ tclcad_bn_setup(Tcl_Interp *interp)
 int
 Bn_Init(Tcl_Interp *interp)
 {
-    tclcad_bn_setup(interp);
+    bn_tcl_setup(interp);
     return TCL_OK;
 }
 
@@ -1362,12 +1362,13 @@ Bn_Init(Tcl_Interp *interp)
 
 #define RT_FUNC_TCL_CAST(_func) ((int (*)(ClientData clientData, Tcl_Interp *interp, int argc, const char *const *argv))_func)
 
-static int tclcad_rt_shootray(ClientData clientData, Tcl_Interp *interp, int argc, const char *const *argv);
-static int tclcad_rt_onehit(ClientData clientData, Tcl_Interp *interp, int argc, const char *const *argv);
-static int tclcad_rt_no_bool(ClientData clientData, Tcl_Interp *interp, int argc, const char *const *argv);
-static int tclcad_rt_check(ClientData clientData, Tcl_Interp *interp, int argc, const char *const *argv);
-static int tclcad_rt_prep(ClientData clientData, Tcl_Interp *interp, int argc, const char *const *argv);
-static int tclcad_rt_set(ClientData clientData, Tcl_Interp *interp, int argc, const char *const*argv);
+static int rt_tcl_rt_shootray(ClientData clientData, Tcl_Interp *interp, int argc, const char *const *argv);
+static int rt_tcl_rt_onehit(ClientData clientData, Tcl_Interp *interp, int argc, const char *const *argv);
+static int rt_tcl_rt_no_bool(ClientData clientData, Tcl_Interp *interp, int argc, const char *const *argv);
+static int rt_tcl_rt_check(ClientData clientData, Tcl_Interp *interp, int argc, const char *const *argv);
+static int rt_tcl_rt_prep(ClientData clientData, Tcl_Interp *interp, int argc, const char *const *argv);
+static int rt_tcl_rt_cutter(ClientData clientData, Tcl_Interp *interp, int argc, const char *const*argv);
+static int rt_tcl_rt_set(ClientData clientData, Tcl_Interp *interp, int argc, const char *const*argv);
 
 
 /************************************************************************
@@ -1382,20 +1383,20 @@ struct dbcmdstruct {
 };
 
 
-static struct dbcmdstruct tclcad_rt_cmds[] = {
-    {"shootray",	RT_FUNC_TCL_CAST(tclcad_rt_shootray)},
-    {"onehit",		RT_FUNC_TCL_CAST(tclcad_rt_onehit)},
-    {"no_bool",		RT_FUNC_TCL_CAST(tclcad_rt_no_bool)},
-    {"check",		RT_FUNC_TCL_CAST(tclcad_rt_check)},
-    {"prep",		RT_FUNC_TCL_CAST(tclcad_rt_prep)},
-    {"cutter",		RT_FUNC_TCL_CAST(tclcad_rt_cutter)},
-    {"set",		RT_FUNC_TCL_CAST(tclcad_rt_set)},
+static struct dbcmdstruct rt_tcl_rt_cmds[] = {
+    {"shootray",	RT_FUNC_TCL_CAST(rt_tcl_rt_shootray)},
+    {"onehit",		RT_FUNC_TCL_CAST(rt_tcl_rt_onehit)},
+    {"no_bool",		RT_FUNC_TCL_CAST(rt_tcl_rt_no_bool)},
+    {"check",		RT_FUNC_TCL_CAST(rt_tcl_rt_check)},
+    {"prep",		RT_FUNC_TCL_CAST(rt_tcl_rt_prep)},
+    {"cutter",		RT_FUNC_TCL_CAST(rt_tcl_rt_cutter)},
+    {"set",		RT_FUNC_TCL_CAST(rt_tcl_rt_set)},
     {(char *)0,		RT_FUNC_TCL_CAST(0)}
 };
 
 
 int
-tclcad_rt_parse_ray(Tcl_Interp *interp, struct xray *rp, const char *const*argv)
+rt_tcl_parse_ray(Tcl_Interp *interp, struct xray *rp, const char *const*argv)
 {
     if (bn_decode_vect(rp->r_pt,  argv[0]) != 3) {
 	Tcl_AppendResult(interp,
@@ -1428,7 +1429,7 @@ tclcad_rt_parse_ray(Tcl_Interp *interp, struct xray *rp, const char *const*argv)
 
 
 void
-tclcad_rt_pr_cutter(Tcl_Interp *interp, const union cutter *cutp)
+rt_tcl_pr_cutter(Tcl_Interp *interp, const union cutter *cutp)
 {
     static const char xyz[4] = "XYZ";
     struct bu_vls str = BU_VLS_INIT_ZERO;
@@ -1481,7 +1482,7 @@ tclcad_rt_pr_cutter(Tcl_Interp *interp, const union cutter *cutp)
 	    }
 	    break;
 	default:
-	    bu_vls_printf(&str, "tclcad_rt_pr_cutter() bad pointer cutp=%p",
+	    bu_vls_printf(&str, "rt_tcl_pr_cutter() bad pointer cutp=%p",
 			  (void *)cutp);
 	    break;
     }
@@ -1497,8 +1498,8 @@ tclcad_rt_pr_cutter(Tcl_Interp *interp, const union cutter *cutp)
  * Example -
  *	.rt cutter 7 {0 0 0} dir {0 0 -1}
  */
-int
-tclcad_rt_cutter(ClientData clientData, Tcl_Interp *interp, int argc, const char *const*argv)
+static int
+rt_tcl_rt_cutter(ClientData clientData, Tcl_Interp *interp, int argc, const char *const*argv)
 {
     struct application *ap = (struct application *)clientData;
     struct rt_i *rtip;
@@ -1518,7 +1519,7 @@ tclcad_rt_cutter(ClientData clientData, Tcl_Interp *interp, int argc, const char
     RT_CK_RTI(rtip);
 
     n = atoi(argv[2]);
-    if (tclcad_rt_parse_ray(interp, &ap->a_ray, &argv[3]) == TCL_ERROR)
+    if (rt_tcl_parse_ray(interp, &ap->a_ray, &argv[3]) == TCL_ERROR)
 	return TCL_ERROR;
 
     cutp = rt_cell_n_on_ray(ap, n);
@@ -1526,13 +1527,13 @@ tclcad_rt_cutter(ClientData clientData, Tcl_Interp *interp, int argc, const char
 	Tcl_AppendResult(interp, "rt_cell_n_on_ray() failed to find cell ", argv[2], (char *)NULL);
 	return TCL_ERROR;
     }
-    tclcad_rt_pr_cutter(interp, cutp);
+    rt_tcl_pr_cutter(interp, cutp);
     return TCL_OK;
 }
 
 
 void
-tclcad_rt_pr_hit(Tcl_Interp *interp, struct hit *hitp, const struct seg *segp, int flipflag)
+rt_tcl_pr_hit(Tcl_Interp *interp, struct hit *hitp, const struct seg *segp, int flipflag)
 {
     struct bu_vls str = BU_VLS_INIT_ZERO;
     vect_t norm;
@@ -1572,7 +1573,7 @@ tclcad_rt_pr_hit(Tcl_Interp *interp, struct hit *hitp, const struct seg *segp, i
 
 
 int
-tclcad_rt_a_hit(struct application *ap,
+rt_tcl_a_hit(struct application *ap,
 	     struct partition *PartHeadp,
 	     struct seg *UNUSED(segHeadp))
 {
@@ -1584,9 +1585,9 @@ tclcad_rt_a_hit(struct application *ap,
     for (pp=PartHeadp->pt_forw; pp != PartHeadp; pp = pp->pt_forw) {
 	RT_CK_PT(pp);
 	Tcl_AppendResult(interp, "{in", (char *)NULL);
-	tclcad_rt_pr_hit(interp, pp->pt_inhit, pp->pt_inseg, pp->pt_inflip);
+	rt_tcl_pr_hit(interp, pp->pt_inhit, pp->pt_inseg, pp->pt_inflip);
 	Tcl_AppendResult(interp, "\nout", (char *)NULL);
-	tclcad_rt_pr_hit(interp, pp->pt_outhit, pp->pt_outseg, pp->pt_outflip);
+	rt_tcl_pr_hit(interp, pp->pt_outhit, pp->pt_outseg, pp->pt_outflip);
 	Tcl_AppendResult(interp,
 			 "\nregion ",
 			 pp->pt_regionp->reg_name,
@@ -1599,7 +1600,7 @@ tclcad_rt_a_hit(struct application *ap,
 
 
 int
-tclcad_rt_a_miss(struct application *ap)
+rt_tcl_a_miss(struct application *ap)
 {
     if (ap) RT_CK_APPLICATION(ap);
     return 0;
@@ -1630,7 +1631,7 @@ tclcad_rt_a_miss(struct application *ap)
  * associated value.
  */
 static int
-tclcad_rt_shootray(ClientData clientData, Tcl_Interp *interp, int argc, const char *const *argv)
+rt_tcl_rt_shootray(ClientData clientData, Tcl_Interp *interp, int argc, const char *const *argv)
 {
     struct application *ap = (struct application *)clientData;
     struct rt_i *rtip;
@@ -1655,10 +1656,10 @@ tclcad_rt_shootray(ClientData clientData, Tcl_Interp *interp, int argc, const ch
     rtip = ap->a_rt_i;
     RT_CK_RTI(rtip);
 
-    if (tclcad_rt_parse_ray(interp, &ap->a_ray, &argv[idx]) == TCL_ERROR)
+    if (rt_tcl_parse_ray(interp, &ap->a_ray, &argv[idx]) == TCL_ERROR)
 	return TCL_ERROR;
-    ap->a_hit = tclcad_rt_a_hit;
-    ap->a_miss = tclcad_rt_a_miss;
+    ap->a_hit = rt_tcl_a_hit;
+    ap->a_miss = rt_tcl_a_miss;
     ap->a_uptr = (void *)interp;
 
     (void)rt_shootray(ap);
@@ -1673,7 +1674,7 @@ tclcad_rt_shootray(ClientData clientData, Tcl_Interp *interp, int argc, const ch
  * procname onehit #
  */
 static int
-tclcad_rt_onehit(ClientData clientData, Tcl_Interp *interp, int argc, const char *const *argv)
+rt_tcl_rt_onehit(ClientData clientData, Tcl_Interp *interp, int argc, const char *const *argv)
 {
     struct application *ap = (struct application *)clientData;
     struct rt_i *rtip;
@@ -1706,7 +1707,7 @@ tclcad_rt_onehit(ClientData clientData, Tcl_Interp *interp, int argc, const char
  * procname no_bool #
  */
 int
-tclcad_rt_no_bool(ClientData clientData, Tcl_Interp *interp, int argc, const char *const *argv)
+rt_tcl_rt_no_bool(ClientData clientData, Tcl_Interp *interp, int argc, const char *const *argv)
 {
     struct application *ap = (struct application *)clientData;
     struct rt_i *rtip;
@@ -1741,7 +1742,7 @@ tclcad_rt_no_bool(ClientData clientData, Tcl_Interp *interp, int argc, const cha
  * procname check
  */
 int
-tclcad_rt_check(ClientData clientData, Tcl_Interp *interp, int argc, const char *const *argv)
+rt_tcl_rt_check(ClientData clientData, Tcl_Interp *interp, int argc, const char *const *argv)
 {
     struct application *ap = (struct application *)clientData;
     struct rt_i *rtip;
@@ -1772,7 +1773,7 @@ tclcad_rt_check(ClientData clientData, Tcl_Interp *interp, int argc, const char 
  * procname prep use_air [hasty_prep]
  */
 int
-tclcad_rt_prep(ClientData clientData, Tcl_Interp *interp, int argc, const char *const *argv)
+rt_tcl_rt_prep(ClientData clientData, Tcl_Interp *interp, int argc, const char *const *argv)
 {
     struct application *ap = (struct application *)clientData;
     struct rt_i *rtip;
@@ -1843,7 +1844,7 @@ tclcad_rt_prep(ClientData clientData, Tcl_Interp *interp, int argc, const char *
  * procname set vname val
  */
 int
-tclcad_rt_set(ClientData clientData, Tcl_Interp *interp, int argc, const char *const *argv)
+rt_tcl_rt_set(ClientData clientData, Tcl_Interp *interp, int argc, const char *const *argv)
 {
     struct application *ap = (struct application *)clientData;
     struct rt_i *rtip;
@@ -1914,7 +1915,7 @@ tclcad_rt_set(ClientData clientData, Tcl_Interp *interp, int argc, const char *c
 
 
 int
-tclcad_rt(ClientData clientData, Tcl_Interp *interp, int argc, const char **argv)
+rt_tcl_rt(ClientData clientData, Tcl_Interp *interp, int argc, const char **argv)
 {
     struct dbcmdstruct *dbcmd;
 
@@ -1926,7 +1927,7 @@ tclcad_rt(ClientData clientData, Tcl_Interp *interp, int argc, const char **argv
 	return TCL_ERROR;
     }
 
-    for (dbcmd = tclcad_rt_cmds; dbcmd->cmdname != NULL; dbcmd++) {
+    for (dbcmd = rt_tcl_rt_cmds; dbcmd->cmdname != NULL; dbcmd++) {
 	if (BU_STR_EQUAL(dbcmd->cmdname, argv[1])) {
 	    /* need proper cmd func pointer for actual call */
 	    int (*_cmdfunc)(void*, Tcl_Interp*, int, const char* const*);
@@ -1940,7 +1941,7 @@ tclcad_rt(ClientData clientData, Tcl_Interp *interp, int argc, const char **argv
     Tcl_AppendResult(interp, "unknown LIBRT command '",
 		     argv[1], "'; must be one of:",
 		     (char *)NULL);
-    for (dbcmd = tclcad_rt_cmds; dbcmd->cmdname != NULL; dbcmd++) {
+    for (dbcmd = rt_tcl_rt_cmds; dbcmd->cmdname != NULL; dbcmd++) {
 	Tcl_AppendResult(interp, " ", dbcmd->cmdname, (char *)NULL);
     }
     return TCL_ERROR;
@@ -1954,7 +1955,7 @@ tclcad_rt(ClientData clientData, Tcl_Interp *interp, int argc, const char **argv
  ************************************************************************/
 
 int
-tclcad_rt_import_from_path(Tcl_Interp *interp, struct rt_db_internal *ip, const char *path, struct rt_wdb *wdb)
+rt_tcl_import_from_path(Tcl_Interp *interp, struct rt_db_internal *ip, const char *path, struct rt_wdb *wdb)
 {
     struct db_i *dbip;
     int status;
@@ -1977,7 +1978,7 @@ tclcad_rt_import_from_path(Tcl_Interp *interp, struct rt_db_internal *ip, const 
 	db_full_path_init(&new_path);
 
 	if (db_string_to_path(&new_path, dbip, path) < 0) {
-	    Tcl_AppendResult(interp, "tclcad_rt_import_from_path: '",
+	    Tcl_AppendResult(interp, "rt_tcl_import_from_path: '",
 			     path, "' contains unknown object names\n", (char *)NULL);
 	    return TCL_ERROR;
 	}
@@ -1991,7 +1992,7 @@ tclcad_rt_import_from_path(Tcl_Interp *interp, struct rt_db_internal *ip, const 
 	db_free_full_path(&new_path);
 
 	if (ret < 0) {
-	    Tcl_AppendResult(interp, "tclcad_rt_import_from_path: '",
+	    Tcl_AppendResult(interp, "rt_tcl_import_from_path: '",
 			     path, "' is a bad path\n", (char *)NULL);
 	    return TCL_ERROR;
 	}
@@ -2026,7 +2027,7 @@ tclcad_rt_import_from_path(Tcl_Interp *interp, struct rt_db_internal *ip, const 
 
 
 void
-tclcad_rt_setup(Tcl_Interp *interp)
+rt_tcl_setup(Tcl_Interp *interp)
 {
     Tcl_LinkVar(interp, "rt_bot_minpieces", (char *)&rt_bot_minpieces, TCL_LINK_WIDE_INT);
 
@@ -2052,7 +2053,7 @@ Rt_Init(Tcl_Interp *interp)
 	}
     }
 
-    tclcad_rt_setup(interp);
+    rt_tcl_setup(interp);
 
     Tcl_PkgProvide(interp,  "Rt", brlcad_version());
 

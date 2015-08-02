@@ -1081,6 +1081,3 @@ s/rt_vlist_export/bn_vlist_export/g
 s/rt_vlblock_free/bn_vlblock_free/g
 s/rt_vlblock_find/bn_vlblock_find/g
         move vlist functions from librt to libbn [7.25]
-s/bn_tcl_/tclcad_bn_/g [7.25]
-s/rt_tcl/tclcad_rt/g [7.25]
-s/tclcad_rt_rt/tclcad_rt/g [7.25] (after running rt_tcl/tclcad_rt replacement)

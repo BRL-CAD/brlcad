@@ -12182,7 +12182,7 @@ to_rt_gettrees(struct ged *gedp,
 
     /* Instantiate the proc, with clientData of wdb */
     /* Beware, returns a "token", not TCL_OK. */
-    (void)Tcl_CreateCommand(current_top->to_interp, newprocname, tclcad_rt,
+    (void)Tcl_CreateCommand(current_top->to_interp, newprocname, rt_tcl_rt,
 			    (ClientData)ap, to_deleteProc_rt);
 
     /* Return new function name as result */
