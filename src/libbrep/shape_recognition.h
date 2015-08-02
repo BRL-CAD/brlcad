@@ -95,8 +95,6 @@ void subbrep_planar_init(struct subbrep_object_data *data);
 void subbrep_planar_close_obj(struct subbrep_object_data *data);
 void subbrep_add_planar_face(struct subbrep_object_data *data, ON_Plane *pcyl, ON_SimpleArray<const ON_BrepVertex *> *vert_loop, int neg_surf);
 
-void subbrep_bbox(struct subbrep_object_data *obj);
-
 //struct bu_ptbl *find_subbreps(const ON_Brep *brep);
 //struct bu_ptbl *find_top_level_hierarchy(struct bu_ptbl *subbreps);
 void print_subbrep_object(struct subbrep_object_data *data, const char *offset);

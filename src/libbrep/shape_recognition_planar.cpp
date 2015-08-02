@@ -496,7 +496,6 @@ subbrep_planar_init(struct subbrep_object_data *data)
 
     for (int i = 0; i < data->edges_cnt; i++) {
 	int c3i;
-	int new_edge_curve = 0;
 	const ON_BrepEdge *old_edge = &(data->brep->m_E[data->edges[i]]);
 	//std::cout << "old edge: " << old_edge->Vertex(0)->m_vertex_index << "," << old_edge->Vertex(1)->m_vertex_index << "\n";
 
@@ -515,7 +514,7 @@ subbrep_planar_init(struct subbrep_object_data *data)
 		vert_test = characterize_vert(data, old_edge->Vertex(vi));
 		if (vert_test) {
 		    skip_verts.insert(vert_ind);
-		    ON_3dPoint vp = old_edge->Vertex(vi)->Point();
+		    //ON_3dPoint vp = old_edge->Vertex(vi)->Point();
 		    //bu_log("vert %d (%f %f %f): %d\n", vert_ind, vp.x, vp.y, vp.z, vert_test);
 		} else {
 		    keep_verts.insert(vert_ind);
@@ -549,7 +548,6 @@ subbrep_planar_init(struct subbrep_object_data *data)
 		ON_Curve *c3 = new ON_LineCurve(old_edge->Vertex(0)->Point(), old_edge->Vertex(1)->Point());
 		c3i = data->planar_obj->local_brep->AddEdgeCurve(c3);
 		c3_map[old_edge->EdgeCurveIndexOf()] = c3i;
-		new_edge_curve = 1;
 	    }
 	} else {
 	    c3i = c3_map[old_edge->EdgeCurveIndexOf()];

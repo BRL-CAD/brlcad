@@ -480,7 +480,7 @@ view_init(struct application *ap, char *file, char *UNUSED(obj), int minus_o, in
 
 	bu_log("rtedge: loading occlusion geometry from %s.\n", file);
 
-	if (Tcl_SplitList(NULL, bu_vls_addr(&occlusion_objects), &split_argc, &objs) == TCL_ERROR) {
+	if (bu_argv_from_tcl_list(bu_vls_addr(&occlusion_objects), &split_argc, &objs) == TCL_ERROR) {
 	    bu_log("rtedge: occlusion list = %s\n",
 		   bu_vls_addr(&occlusion_objects));
 	    bu_exit(EXIT_FAILURE, "rtedge: could not parse occlusion objects list.\n");
@@ -520,6 +520,8 @@ view_init(struct application *ap, char *file, char *UNUSED(obj), int minus_o, in
 		bu_log("rtedge: gettree failed for %s\n", objs[i]);
 	    else
 		bu_log("rtedge: got tree for object %d = %s\n", i, objs[i]);
+
+	bu_free((char *)objs, "free occlusion objs array");
 
 	bu_log("rtedge: occlusion rt_gettrees done.\n");
 

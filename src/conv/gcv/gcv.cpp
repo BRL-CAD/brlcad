@@ -232,7 +232,7 @@ parse_model_string(struct bu_vls *format, struct bu_vls *log, const char *opt, c
     if (UNLIKELY(!input) || UNLIKELY(strlen(input) == 0)) return MIME_MODEL_UNKNOWN;
 
     /* If an external routine has specified a format string, that string will
-     * override the file extension (but not an explicit option or format prefix.
+     * override the file extension (but not an explicit option or format prefix).
      * Stash any local format string here for later processing.  The idea is
      * to allow some other routine (say, an introspection of a file looking for
      * some signature string) to override a file extension based type identification.

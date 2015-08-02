@@ -115,7 +115,9 @@ SET(EXPRESS_PRIVATE_HDRS
 
 SC_ADDLIB(express "${EXPRESS_SOURCES}" "base")
 add_dependencies(express express_verify)
-add_dependencies(express version_string)
+if(NOT SC_IS_SUBBUILD)
+  add_dependencies(express version_string)
+endif(NOT SC_IS_SUBBUILD)
 SC_ADDEXEC("check-express" "${CHECK_EXPRESS_SOURCES}" "express;base" )
 
 add_subdirectory(test)

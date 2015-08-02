@@ -107,16 +107,13 @@ gcv_converter_find(const char *path, enum gcv_conversion_type type)
 
 	if (!converter) continue;
 
-	while (converter->file_extensions) {
+	for (; converter->file_extensions; ++converter)
 	    if (gcv_extension_match(path, converter->file_extensions)) {
 		if (type == GCV_CONVERSION_READ && converter->reader_fn)
 		    return converter;
 		else if (type == GCV_CONVERSION_WRITE && converter->writer_fn)
 		    return converter;
 	    }
-
-	    ++converter;
-	}
     }
 
     return NULL;

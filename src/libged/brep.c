@@ -314,7 +314,21 @@ ged_brep(struct ged *gedp, int argc, const char *argv[])
 	    return GED_OK;
 	}
 	bu_vls_free(&bname_csg);
-	return _ged_brep_to_csg(gedp, argv[1]);
+	return _ged_brep_to_csg(gedp, argv[1], 0);
+    }
+
+    if (BU_STR_EQUAL(argv[2], "csgv")) {
+	/* Call csg conversion routine */
+	struct bu_vls bname_csg;
+	bu_vls_init(&bname_csg);
+	bu_vls_sprintf(&bname_csg, "csg_%s", solid_name);
+	if (db_lookup(gedp->ged_wdbp->dbip, bu_vls_addr(&bname_csg), LOOKUP_QUIET) != RT_DIR_NULL) {
+	    bu_vls_printf(gedp->ged_result_str, "%s already exists.", bu_vls_addr(&bname_csg));
+	    bu_vls_free(&bname_csg);
+	    return GED_OK;
+	}
+	bu_vls_free(&bname_csg);
+	return _ged_brep_to_csg(gedp, argv[1], 1);
     }
 
     /* make sure arg isn't --no-evaluate */

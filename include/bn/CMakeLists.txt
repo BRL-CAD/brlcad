@@ -17,7 +17,7 @@ set(bn_headers
   randmt.h
   spm.h
   tabdata.h
-  bn_tcl.h
+  str.h
   tol.h
   vectfont.h
   vector_fpu.h

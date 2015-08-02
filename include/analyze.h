@@ -149,6 +149,29 @@ analyze_raydiff_results_free(struct analyze_raydiff_results *results);
 ANALYZE_EXPORT int
 analyze_obj_inside(struct db_i *dbip, const char *outside, const char *inside, fastf_t tol);
 
+typedef int (*hitfunc_t)(struct application *, struct partition *, struct seg *);
+typedef int (*missfunc_t)(struct application *);
+typedef int (*overlapfunc_t)(struct application *, struct partition *, struct region *, struct region *, struct partition *);
+
+struct rt_gen_worker_vars {
+    struct rt_i *rtip;
+    struct resource *resp;
+    int rays_cnt;
+    const fastf_t *rays;
+    hitfunc_t fhit;
+    missfunc_t fmiss;
+    overlapfunc_t foverlap;
+    int step;       /* number of rays to be fired by this worker before calling back */
+    int *ind_src;   /* source of starting index */
+    int curr_ind;   /* current ray index */
+    void *ptr; /* application specific info */
+};
+
+ANALYZE_EXPORT int
+analyze_find_subtracted(struct bu_ptbl *results, struct rt_wdb *wdbp,
+	const char *pbrep, struct rt_gen_worker_vars *pbrep_rtvars,
+	const char *curr_comb, struct bu_ptbl *candidates, void *curr_union_data, int ncpus);
+
 
 __END_DECLS
 

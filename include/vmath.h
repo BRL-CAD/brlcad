@@ -1299,6 +1299,8 @@ typedef fastf_t plane_t[ELEMENTS_PER_PLANE];
  * @brief Project vector `a' onto `b'
  * vector `c' is the component of `a' parallel to `b'
  *     "    `d' "   "     "      "   "  orthogonal "   "
+ *
+ * FIXME: consistency, the result should come first
  */
 #define VPROJECT(a, b, c, d) do { \
     VSCALE(c, b, VDOT(a, b) / VDOT(b, b)); \

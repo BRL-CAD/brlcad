@@ -12,6 +12,11 @@ add_subdirectory(osgGA)
 add_subdirectory(osgText)
 add_subdirectory(osgViewer)
 add_subdirectory(osgPlugins)
+add_subdirectory(osgWidget)
+
+if(Qt5Widgets_FOUND)
+  add_subdirectory(osgQt)
+endif(Qt5Widgets_FOUND)
 
 # Local Variables:
 # tab-width: 8

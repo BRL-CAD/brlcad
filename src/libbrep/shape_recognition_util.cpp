@@ -156,7 +156,6 @@ highest_order_face(struct subbrep_object_data *data)
     int cone = 0;
     int torus = 0;
     int general = 0;
-    int hof = -1;
     surface_t hofo = SURFACE_PLANE;
     std::set<int> faces;
     std::set<int>::iterator f_it;
@@ -169,35 +168,30 @@ highest_order_face(struct subbrep_object_data *data)
 	    case SURFACE_PLANE:
 		planar++;
 		if (hofo < SURFACE_PLANE) {
-		    hof = ind;
 		    hofo = SURFACE_PLANE;
 		}
 		break;
 	    case SURFACE_SPHERE:
 		spherical++;
 		if (hofo < SURFACE_SPHERE) {
-		    hof = ind;
 		    hofo = SURFACE_SPHERE;
 		}
 		break;
 	    case SURFACE_CYLINDER:
 		cylindrical++;
 		if (hofo < SURFACE_CYLINDER) {
-		    hof = ind;
 		    hofo = SURFACE_CYLINDER;
 		}
 		break;
 	    case SURFACE_CONE:
 		cone++;
 		if (hofo < SURFACE_CONE) {
-		    hof = ind;
 		    hofo = SURFACE_CONE;
 		}
 		break;
 	    case SURFACE_TORUS:
 		torus++;
 		if (hofo < SURFACE_TORUS) {
-		    hof = ind;
 		    hofo = SURFACE_TORUS;
 		}
 		break;
@@ -342,13 +336,17 @@ subbrep_object_init(struct subbrep_object_data *obj, const ON_Brep *brep)
     BU_GET(obj->key, struct bu_vls);
     BU_GET(obj->name_root, struct bu_vls);
     BU_GET(obj->children, struct bu_ptbl);
+    BU_GET(obj->subtraction_candidates, struct bu_ptbl);
     BU_GET(obj->params, struct csg_object_params);
+    BU_GET(obj->obj_name, struct bu_vls);
     obj->params->planes = NULL;
     obj->params->bool_op = '\0';
     obj->planar_obj = NULL;
     bu_vls_init(obj->key);
     bu_vls_init(obj->name_root);
+    bu_vls_init(obj->obj_name);
     bu_ptbl_init(obj->children, 8, "children table");
+    bu_ptbl_init(obj->subtraction_candidates, 8, "children table");
     obj->parent = NULL;
     obj->brep = brep;
     obj->local_brep = NULL;
@@ -392,6 +390,12 @@ subbrep_object_free(struct subbrep_object_data *obj)
 	BU_PUT(obj->children, struct bu_ptbl);
     }
     obj->children = NULL;
+    if (obj->subtraction_candidates) {
+	bu_ptbl_free(obj->subtraction_candidates);
+	BU_PUT(obj->subtraction_candidates, struct bu_ptbl);
+    }
+    obj->subtraction_candidates = NULL;
+
     if (obj->faces) bu_free(obj->faces, "obj faces");
     obj->faces = NULL;
     if (obj->loops) bu_free(obj->loops, "obj loops");
@@ -408,6 +412,11 @@ subbrep_object_free(struct subbrep_object_data *obj)
     if (obj->parent && (obj->parent->local_brep == obj->local_brep)) obj->parent->local_brep = NULL;
     if (obj->local_brep) delete obj->local_brep;
     obj->local_brep = NULL;
+
+    if (obj->obj_name) {
+	bu_vls_free(obj->obj_name);
+	BU_PUT(obj->obj_name, struct bu_vls);
+    }
 
     obj->parent = NULL;
 }

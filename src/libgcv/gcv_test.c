@@ -149,8 +149,7 @@ gcv_convert(const char *in_file, const struct gcv_opts *in_opts,
 int
 main(int ac, char **av)
 {
-    if (ac < 3
-	|| (ac == 2 && av[1][0] == '-' && av[1][1] == 'h')) {
+    if (ac != 3) {
 	bu_log("Usage: %s [-h] [input[:options]] [output[:options]]\n", av[0]);
 	return 1;
     }

@@ -5,6 +5,7 @@ set(PC_INCLUDE_DIRS
   )
 
 set(pc_ignore_files
+  README
   solver_test.cpp
   vm_test.cpp
   )
