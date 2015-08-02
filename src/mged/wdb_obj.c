@@ -1659,7 +1659,7 @@ wdb_move_arb_edge_cmd(struct rt_wdb *wdbp,
 	return TCL_ERROR;
     }
 
-    if (rt_tcl_import_from_path(wdbp->wdb_interp, &intern, argv[1], wdbp) == TCL_ERROR)
+    if (tclcad_rt_import_from_path(wdbp->wdb_interp, &intern, argv[1], wdbp) == TCL_ERROR)
 	return TCL_ERROR;
 
     if (intern.idb_major_type != DB5_MAJORTYPE_BRLCAD ||
@@ -1836,7 +1836,7 @@ wdb_move_arb_face_cmd(struct rt_wdb *wdbp,
 	return TCL_ERROR;
     }
 
-    if (rt_tcl_import_from_path(wdbp->wdb_interp, &intern, argv[1], wdbp) == TCL_ERROR)
+    if (tclcad_rt_import_from_path(wdbp->wdb_interp, &intern, argv[1], wdbp) == TCL_ERROR)
 	return TCL_ERROR;
 
     if (intern.idb_major_type != DB5_MAJORTYPE_BRLCAD ||
@@ -1992,7 +1992,7 @@ wdb_rotate_arb_face_cmd(struct rt_wdb *wdbp,
 	return TCL_ERROR;
     }
 
-    if (rt_tcl_import_from_path(wdbp->wdb_interp, &intern, argv[1], wdbp) == TCL_ERROR)
+    if (tclcad_rt_import_from_path(wdbp->wdb_interp, &intern, argv[1], wdbp) == TCL_ERROR)
 	return TCL_ERROR;
 
     if (intern.idb_major_type != DB5_MAJORTYPE_BRLCAD ||
@@ -2355,7 +2355,7 @@ wdb_get_cmd(struct rt_wdb *wdbp,
 	return TCL_ERROR;
     }
 
-    if (rt_tcl_import_from_path(wdbp->wdb_interp, &intern, argv[1], wdbp) == TCL_ERROR)
+    if (tclcad_rt_import_from_path(wdbp->wdb_interp, &intern, argv[1], wdbp) == TCL_ERROR)
 	return TCL_ERROR;
 
     {
@@ -2424,7 +2424,7 @@ wdb_get_type_cmd(struct rt_wdb *wdbp,
 	return TCL_ERROR;
     }
 
-    if (rt_tcl_import_from_path(wdbp->wdb_interp, &intern, argv[1], wdbp) == TCL_ERROR)
+    if (tclcad_rt_import_from_path(wdbp->wdb_interp, &intern, argv[1], wdbp) == TCL_ERROR)
 	return TCL_ERROR;
 
     if (intern.idb_major_type != DB5_MAJORTYPE_BRLCAD) {
@@ -3022,7 +3022,7 @@ wdb_rt_gettrees_cmd(struct rt_wdb *wdbp,
 
     /* Instantiate the proc, with clientData of wdb */
     /* Beware, returns a "token", not TCL_OK. */
-    (void)Tcl_CreateCommand(wdbp->wdb_interp, newprocname, rt_tcl_rt,
+    (void)Tcl_CreateCommand(wdbp->wdb_interp, newprocname, tclcad_rt,
 			    (ClientData)ap, wdb_deleteProc_rt);
 
     /* Return new function name as result */
@@ -3090,7 +3090,7 @@ Do_showmats(struct db_i *dbip,
 	bu_vls_free(&vls);
     }
 
-    bn_tcl_mat_print(smdp->smd_interp, "", comb_leaf->tr_l.tl_mat);
+    tclcad_bn_mat_print(smdp->smd_interp, "", comb_leaf->tr_l.tl_mat);
     if (smdp->smd_count == 1) {
 	mat_t tmp_mat;
 	if (comb_leaf->tr_l.tl_mat) {
@@ -3170,7 +3170,7 @@ wdb_showmats_cmd(struct rt_wdb *wdbp,
     else
 	Tcl_AppendResult(wdbp->wdb_interp, "\nAccumulated matrix:\n", (char *)NULL);
 
-    bn_tcl_mat_print(wdbp->wdb_interp, "", sm_data.smd_mat);
+    tclcad_bn_mat_print(wdbp->wdb_interp, "", sm_data.smd_mat);
 
     return TCL_OK;
 }
@@ -10114,7 +10114,7 @@ int wdb_bot_face_sort_cmd(struct rt_wdb *wdbp,
  * procname
  */
 static int
-wdb_bot_face_sort_tcl(void *clientData,
+wdb_bot_face_sotclcad_rt(void *clientData,
 		      int argc,
 		      const char *argv[])
 {
@@ -10220,7 +10220,7 @@ static struct bu_cmdtab wdb_cmds[] = {
     {"arced",		wdb_newcmds_tcl},
     {"attr",		wdb_attr_tcl},
     {"bo",		wdb_bo_tcl},
-    {"bot_face_sort", 	wdb_bot_face_sort_tcl},
+    {"bot_face_sort", 	wdb_bot_face_sotclcad_rt},
     {"c",		wdb_comb_std_tcl},
     {"cat",		wdb_cat_tcl},
     {"comb",		wdb_comb_tcl},

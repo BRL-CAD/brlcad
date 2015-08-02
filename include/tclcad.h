@@ -129,9 +129,9 @@ TCLCAD_EXPORT extern int tclcad_tk_setup(Tcl_Interp *interp);
 TCLCAD_EXPORT extern void tclcad_auto_path(Tcl_Interp *interp);
 TCLCAD_EXPORT extern void tclcad_tcl_library(Tcl_Interp *interp);
 TCLCAD_EXPORT extern int Bu_Init(void *interp);
-TCLCAD_EXPORT extern void bn_tcl_setup(Tcl_Interp *interp);
+TCLCAD_EXPORT extern void tclcad_bn_setup(Tcl_Interp *interp);
 TCLCAD_EXPORT extern int Bn_Init(Tcl_Interp *interp);
-TCLCAD_EXPORT extern void bn_tcl_mat_print(Tcl_Interp *interp, const char *title, const mat_t m);
+TCLCAD_EXPORT extern void tclcad_bn_mat_print(Tcl_Interp *interp, const char *title, const mat_t m);
 
 
 /**
@@ -141,7 +141,7 @@ TCLCAD_EXPORT extern void bn_tcl_mat_print(Tcl_Interp *interp, const char *title
  * {0 0 0} dir {0 0 -1}
  * {20 -13.5 20} at {10 .5 3}
  */
-TCLCAD_EXPORT extern int rt_tcl_parse_ray(Tcl_Interp *interp,
+TCLCAD_EXPORT extern int tclcad_rt_parse_ray(Tcl_Interp *interp,
                                       struct xray *rp,
                                       const char *const*argv);
 
@@ -155,9 +155,9 @@ TCLCAD_EXPORT extern int rt_tcl_parse_ray(Tcl_Interp *interp,
  * type boxnode
  * type nugridnode
  */
-TCLCAD_EXPORT extern void rt_tcl_pr_cutter(Tcl_Interp *interp,
+TCLCAD_EXPORT extern void tclcad_rt_pr_cutter(Tcl_Interp *interp,
                                        const union cutter *cutp);
-TCLCAD_EXPORT extern int rt_tcl_cutter(ClientData clientData,
+TCLCAD_EXPORT extern int tclcad_rt_cutter(ClientData clientData,
                                    Tcl_Interp *interp,
                                    int argc,
                                    const char *const*argv);
@@ -173,7 +173,7 @@ TCLCAD_EXPORT extern int rt_tcl_cutter(ClientData clientData,
  * It might be beneficial to use some format other than %g to give the
  * user more precision.
  */
-TCLCAD_EXPORT extern void rt_tcl_pr_hit(Tcl_Interp *interp, struct hit *hitp, const struct seg *segp, int flipflag);
+TCLCAD_EXPORT extern void tclcad_rt_pr_hit(Tcl_Interp *interp, struct hit *hitp, const struct seg *segp, int flipflag);
 
 
 /**
@@ -190,7 +190,7 @@ TCLCAD_EXPORT extern void rt_tcl_pr_hit(Tcl_Interp *interp, struct hit *hitp, co
  *      .inmem rt_gettrees .rt all.g
  *      .rt shootray {0 0 0} dir {0 0 -1}
  */
-TCLCAD_EXPORT extern int rt_tcl_rt(ClientData clientData,
+TCLCAD_EXPORT extern int tclcad_rt(ClientData clientData,
                                Tcl_Interp *interp,
                                int argc,
                                const char **argv);
@@ -210,7 +210,7 @@ TCLCAD_EXPORT extern int rt_tcl_rt(ClientData clientData,
  * TCL_OK
  * TCL_ERROR
  */
-TCLCAD_EXPORT extern int rt_tcl_import_from_path(Tcl_Interp *interp,
+TCLCAD_EXPORT extern int tclcad_rt_import_from_path(Tcl_Interp *interp,
                                              struct rt_db_internal *ip,
                                              const char *path,
                                              struct rt_wdb *wdb);
@@ -230,7 +230,7 @@ TCLCAD_EXPORT extern int rt_tcl_import_from_path(Tcl_Interp *interp,
  * and "wdb_open .inmem" on behalf of the MGED user, which exposes all
  * of this power.
  */
-TCLCAD_EXPORT extern void rt_tcl_setup(Tcl_Interp *interp);
+TCLCAD_EXPORT extern void tclcad_rt_setup(Tcl_Interp *interp);
 TCLCAD_EXPORT extern int Sysv_Init(Tcl_Interp *interp);
 
 
