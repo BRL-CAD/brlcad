@@ -120,16 +120,18 @@ and new names should be listed for reference.
 all global variables
 	global variables are no longer considered published public API [deprecated 7.26]
 include/bn.h
-	bn_tcl_mat_print, removal of all tcl-specific API functions [deprecated 7.26]
 	tp_setup, no longer needs to be public API [deprecated 7.26]
 include/raytrace.h
-	curve_to_tcl_list rt_tcl_parse_ray rt_tcl_pr_cutter
-	rt_tcl_pr_hit rt_tcl_rt rt_tcl_import_from_path
+	curve_to_tcl_list
 	db_full_path_appendresult tcl_obj_to_int_array
 	tcl_obj_to_fastf_array tcl_list_to_int_array
 	tcl_list_to_fastf_array *_tcl_*, removal of all tcl-specific
 	API functions [deprecated 7.26]
 	db_regexp_match_all() -> db_ls() [deprecated 7.26]
+include/tclcad.h
+	tclcad_bn_mat_print tclcad_rt_parse_ray tclcad_rt_pr_cutter
+	tclcad_rt_pr_hit tclcad_rt_rt tclcad_rt_import_from_path, removal of all
+        tcl-specific API functions [deprecated 7.26]
 pixcut, pixpaste
         copyright cleanup [deprecated 7.26]
 librt, fast4-g
@@ -1081,3 +1083,6 @@ s/rt_vlist_export/bn_vlist_export/g
 s/rt_vlblock_free/bn_vlblock_free/g
 s/rt_vlblock_find/bn_vlblock_find/g
         move vlist functions from librt to libbn [7.25]
+s/([[:space:],\(,"])bn_tcl/\1tclcad_bn/g [7.25]
+s/([[:space:],\(,"])rt_tcl/\1tclcad_rt/g [7.25]
+s/tclcad_rt_rt/tclcad_rt/g (after above line) [7.25]
