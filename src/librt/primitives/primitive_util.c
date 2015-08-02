@@ -24,6 +24,8 @@
  * librt_private.h.
  */
 
+#include "bu/malloc.h"
+#include "bu/opt.h"
 #include "../librt_private.h"
 
 /**
@@ -377,3 +379,70 @@ plot_ellipse(
 	radian += radian_step;
     }
 }
+
+int
+rt_tcl_list_to_int_array(const char *list, int **array, int *array_len)
+{
+    int i, len;
+    const char **argv;
+
+    if (!list || !array || !array_len) return 0;
+
+    /* split initial list */
+    if (bu_argv_from_tcl_list(list, &len, (const char ***)&argv) != 0) {
+	return 0;
+    }
+
+    if (len < 1) return 0;
+
+    if (*array_len < 1) {
+	*array = (int *)bu_calloc(len, sizeof(int), "array");
+	*array_len = len;
+    }
+
+    for (i = 0; i < len && i < *array_len; i++) {
+	(void)bu_opt_int(NULL, 1, &argv[i], &((*array)[i]));
+    }
+
+    bu_free((char *)argv, "argv");
+    return len < *array_len ? len : *array_len;
+}
+
+
+int
+rt_tcl_list_to_fastf_array(const char *list, fastf_t **array, int *array_len)
+{
+    int i, len;
+    const char **argv;
+
+    if (!list || !array || !array_len) return 0;
+
+    /* split initial list */
+    if (bu_argv_from_tcl_list(list, &len, (const char ***)&argv) != 0) {
+	return 0;
+    }
+
+    if (len < 1) return 0;
+
+    if (*array_len < 1) {
+	*array = (fastf_t *)bu_calloc(len, sizeof(fastf_t), "array");
+	*array_len = len;
+    }
+
+    for (i = 0; i < len && i < *array_len; i++) {
+	(void)bu_opt_fastf_t(NULL, 1, &argv[i], &((*array)[i]));
+    }
+
+    bu_free((char *)argv, "argv");
+    return len < *array_len ? len : *array_len;
+}
+
+/*
+ * Local Variables:
+ * mode: C
+ * tab-width: 8
+ * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

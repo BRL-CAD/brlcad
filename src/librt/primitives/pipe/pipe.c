@@ -37,8 +37,6 @@
 #include <math.h>
 #include "bnetwork.h"
 
-#include "tcl.h"
-
 #include "bu/cv.h"
 #include "vmath.h"
 
@@ -4475,12 +4473,10 @@ rt_pipe_adjust(
 {
     struct rt_pipe_internal *pip;
     struct wdb_pipept *ptp;
-    Tcl_Obj *obj, *list;
     int seg_no;
     int num_segs;
     int curr_seg;
     fastf_t tmp;
-    char *v_str;
 
 
     RT_CK_DB_INTERNAL(intern);
@@ -4541,34 +4537,10 @@ rt_pipe_adjust(
 
 	switch (argv[0][0]) {
 	    case 'V':
-		obj = Tcl_NewStringObj(argv[1], -1);
-		list = Tcl_NewListObj(0, NULL);
-		Tcl_ListObjAppendList(brlcad_interp, list, obj);
-		v_str = Tcl_GetStringFromObj(list, NULL);
-		while (isspace((int)*v_str)) {
-		    v_str++;
-		}
-		if (*v_str == '\0') {
+		if (sscanf(argv[1], " %lf %lf %lf ", &(ptp->pp_coord[0]), &(ptp->pp_coord[1]), &(ptp->pp_coord[2])) != 3) {
 		    bu_vls_printf(logstr, "incomplete vertex specification");
-		    Tcl_DecrRefCount(list);
 		    return BRLCAD_ERROR;
 		}
-		ptp->pp_coord[0] = atof(v_str);
-		v_str = bu_next_token(v_str);
-		if (*v_str == '\0') {
-		    bu_vls_printf(logstr, "incomplete vertex specification");
-		    Tcl_DecrRefCount(list);
-		    return BRLCAD_ERROR;
-		}
-		ptp->pp_coord[1] = atof(v_str);
-		v_str = bu_next_token(v_str);
-		if (*v_str == '\0') {
-		    bu_vls_printf(logstr, "incomplete vertex specification");
-		    Tcl_DecrRefCount(list);
-		    return BRLCAD_ERROR;
-		}
-		ptp->pp_coord[2] = atof(v_str);
-		Tcl_DecrRefCount(list);
 		break;
 	    case 'I':
 		ptp->pp_id = atof(argv[1]);

@@ -2043,6 +2043,10 @@ db_walk_tree(struct db_i *dbip,
     RT_CK_DBTS(init_state);
     RT_CHECK_DBI(dbip);
 
+    if (rt_uniresource.re_magic != RESOURCE_MAGIC) {
+	rt_init_resource(&rt_uniresource, 0, NULL);
+    }
+
     if (init_state->ts_rtip == NULL || ncpu == 1) {
 	resp = &rt_uniresource;
     } else {
@@ -2573,21 +2577,20 @@ db_tree_parse(struct bu_vls *vls, const char *str, struct resource *resp)
     /* Skip over leading spaces in input */
     while (*str && isspace((int)*str)) str++;
 
-    /*XXX Temporarily use brlcad_interp until a replacement for Tcl_SplitList is created */
-    if (Tcl_SplitList(brlcad_interp, str, &argc, (const char ***)&argv) != TCL_OK)
+    if (bu_argv_from_tcl_list(str, &argc, (const char ***)&argv) != 0)
 	return TREE_NULL;
 
     if (argc <= 0 || argc > 3) {
 	bu_vls_printf(vls,
 		      "db_tree_parse: tree node does not have 1, 2 or 3 elements: %s\n",
 		      str);
-	Tcl_Free((char *)argv);		/* not bu_free(), not free() */
+	bu_free((char *)argv, "argv");
 	return TREE_NULL;
     }
 
     if (argv[0][1] != '\0') {
 	bu_vls_printf(vls, "db_tree_parse() operator is not single character: %s", argv[0]);
-	Tcl_Free((char *)argv);		/* not bu_free(), not free() */
+	bu_free((char *)argv, "argv");
 	return TREE_NULL;
     }
 
@@ -2711,8 +2714,7 @@ db_tree_parse(struct bu_vls *vls, const char *str, struct resource *resp)
 	}
     }
 
-    /*XXX Temporarily using tcl for its Tcl_SplitList */
-    Tcl_Free((char *)argv);		/* not bu_free(), not free() */
+    bu_free((char *)argv, "argv");
     return tp;
 }
 

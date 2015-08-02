@@ -78,13 +78,13 @@ static int regions_written = 0;
 static int inches = 0;
 
 HIDDEN int
-gcv_obj_write(const char *path, struct db_i *vdbip, const struct gcv_opts *UNUSED(options))
+gcv_obj_write(const char *path, struct db_i *source_dbip, const struct gcv_opts *UNUSED(options))
 {
     double percent;
     size_t num_objects;
     char **object_names;
 
-    dbip = vdbip;
+    dbip = source_dbip;
 
     bu_setprogname("obj_write");
     bu_setlinebuf(stderr);

@@ -11,6 +11,7 @@
 
 #include "vmath.h"
 #include "wdb.h"
+#include "analyze.h"
 #include "ged.h"
 #include "../libbrep/shape_recognition.h"
 
@@ -43,7 +44,7 @@ obj_add_attr_key(struct subbrep_object_data *data, struct rt_wdb *wdbp, const ch
 HIDDEN void
 subbrep_obj_name(struct subbrep_object_data *data, struct bu_vls *name_root, struct bu_vls *name)
 {
-    if (!data || !name) return;
+    if (!data || !name || !data->name_root) return;
     switch (data->type) {
 	case ARB6:
 	    bu_vls_sprintf(name, "%s-arb6_%s.s", bu_vls_addr(name_root), bu_vls_addr(data->name_root));
@@ -328,6 +329,16 @@ HIDDEN int
 make_shapes(struct bu_vls *msgs, struct subbrep_object_data *data, struct rt_wdb *wdbp, struct bu_vls *name_root, struct wmember *pcomb, int depth)
 {
     struct bu_vls spacer = BU_VLS_INIT_ZERO;
+
+    subbrep_obj_name(data, name_root, data->obj_name);
+    struct directory *dp = db_lookup(wdbp->dbip, bu_vls_addr(data->obj_name), LOOKUP_QUIET);
+
+    // Don't recreate it
+    if (dp != RT_DIR_NULL) {
+	//bu_log("already made %s\n", bu_vls_addr(data->obj_name));
+	return 0;
+    }
+
     for (int i = 0; i < depth; i++)
 	bu_vls_printf(&spacer, " ");
     //std::cout << bu_vls_addr(&spacer) << "Making shape for " << bu_vls_addr(data->name_root) << "\n";
@@ -395,6 +406,65 @@ make_shapes(struct bu_vls *msgs, struct subbrep_object_data *data, struct rt_wdb
     return 0;
 }
 
+void
+finalize_comb(struct rt_wdb *wdbp, struct directory *brep_dp, struct rt_gen_worker_vars *pbrep_vars, struct subbrep_object_data *curr_union, int ncpus)
+{
+    struct bu_ptbl *sc = curr_union->subtraction_candidates;
+    if (sc && BU_PTBL_LEN(sc) > 0) {
+	struct directory *dp;
+	struct bu_external external;
+	struct bu_vls tmp_comb_name = BU_VLS_INIT_ZERO;
+	struct bu_ptbl results = BU_PTBL_INIT_ZERO;
+
+	bu_log("Finalizing %s...\n", bu_vls_addr(curr_union->obj_name));
+	bu_vls_sprintf(&tmp_comb_name, "%s-r", bu_vls_addr(curr_union->obj_name));
+
+	// We've collected all the subtractions we know about - make a temp copy for raytracing.  Because
+	// overlaps are not desired here, make the temp comb a region
+	dp = db_lookup(wdbp->dbip, bu_vls_addr(curr_union->obj_name), LOOKUP_QUIET);
+	if (db_get_external(&external, dp, wdbp->dbip)) {
+	    bu_log("Database read error on object %s\n", bu_vls_addr(curr_union->obj_name));
+	}
+	if (wdb_export_external(wdbp, &external, bu_vls_addr(&tmp_comb_name), dp->d_flags, dp->d_minor_type) < 0) {
+	    bu_log("Database write error on tmp object %s\n", bu_vls_addr(&tmp_comb_name));
+	}
+	// Now the region flag
+	dp = db_lookup(wdbp->dbip, bu_vls_addr(&tmp_comb_name), LOOKUP_QUIET);
+	dp->d_flags |= RT_DIR_REGION;
+
+	// Evaluate the candidate subtraction objects using solid raytracing, and add the ones
+	// that contribute gaps to the comb definition.
+	analyze_find_subtracted(&results, wdbp, brep_dp->d_namep, pbrep_vars, bu_vls_addr(&tmp_comb_name), sc, (void *)curr_union, ncpus);
+
+	// kill the temp comb.
+	dp = db_lookup(wdbp->dbip, bu_vls_addr(&tmp_comb_name), LOOKUP_QUIET);
+	if (dp != RT_DIR_NULL) {
+	    if (db_delete(wdbp->dbip, dp) != 0 || db_dirdelete(wdbp->dbip, dp) != 0) {
+		bu_log("error deleting temp object %s\n", bu_vls_addr(&tmp_comb_name));
+	    }
+	}
+
+	// update the final comb definition with any new subtraction objects.
+	for (unsigned int j = 0; j < BU_PTBL_LEN(&results); j++) {
+	    struct subbrep_object_data *sobj = (struct subbrep_object_data *)BU_PTBL_GET(&results, j);
+	    bu_log("Subtract %s from %s\n", bu_vls_addr(sobj->name_root), bu_vls_addr(curr_union->name_root));
+	}
+    }
+}
+
+// possibly unnecessary
+void make_subtraction_objects(struct ged *gedp, struct subbrep_object_data *obj, struct bu_vls *comb_name)
+{
+    struct bu_ptbl *sc = obj->subtraction_candidates;
+    if (BU_PTBL_LEN(sc) > 0) {
+	for (unsigned int k = 0; k < BU_PTBL_LEN(sc); k++){
+	    struct subbrep_object_data *sobj = (struct subbrep_object_data *)BU_PTBL_GET(sc, k);
+	    (void)make_shapes(gedp->ged_result_str, sobj, gedp->ged_wdbp, comb_name, NULL, 0);
+	    make_subtraction_objects(gedp, sobj, comb_name);
+	}
+    }
+}
+
 /* return codes:
  * -1 get internal failure
  *  0 success
@@ -402,7 +472,7 @@ make_shapes(struct bu_vls *msgs, struct subbrep_object_data *data, struct rt_wdb
  *  2 not a valid brep
  */
 int
-brep_to_csg(struct ged *gedp, struct directory *dp)
+brep_to_csg(struct ged *gedp, struct directory *dp, int verify)
 {
     struct rt_db_internal intern;
     struct rt_brep_internal *brep_ip = NULL;
@@ -444,19 +514,22 @@ brep_to_csg(struct ged *gedp, struct directory *dp)
 	(void)make_shapes(gedp->ged_result_str, obj, wdbp, &comb_name, NULL, 0);
     }
 
-    struct wmember *ccomb = NULL;
-    struct wmember *scomb = NULL;
-    struct bu_vls obj_comb_name = BU_VLS_INIT_ZERO;
-    struct bu_vls sub_comb_name = BU_VLS_INIT_ZERO;
     if (subbreps_tree) {
+	struct bu_vls obj_comb_name = BU_VLS_INIT_ZERO;
+	struct bu_vls sub_comb_name = BU_VLS_INIT_ZERO;
+	struct subbrep_object_data *curr_union;
+	struct wmember *ccomb = NULL;
+	struct wmember *scomb = NULL;
+
+	struct bu_ptbl finalize_combs = BU_PTBL_INIT_ZERO;
 	for (unsigned int i = 0; i < BU_PTBL_LEN(subbreps_tree); i++){
 	    struct subbrep_object_data *obj = (struct subbrep_object_data *)BU_PTBL_GET(subbreps_tree, i);
-	    struct bu_vls obj_name = BU_VLS_INIT_ZERO;
-	    subbrep_obj_name(obj, &comb_name, &obj_name);
+	    subbrep_obj_name(obj, &comb_name, obj->obj_name);
 
 	    if (obj->params->bool_op == 'u') {
 		//print_subbrep_object(obj, "");
 		if (ccomb) {
+		    bu_ptbl_ins(&finalize_combs, (long *)curr_union);
 		    mk_lcomb(wdbp, bu_vls_addr(&obj_comb_name), ccomb, 0, NULL, NULL, NULL, 0);
 		    BU_PUT(ccomb, struct wmember);
 		    if (scomb) {
@@ -467,10 +540,11 @@ brep_to_csg(struct ged *gedp, struct directory *dp)
 		}
 		BU_GET(ccomb, struct wmember);
 		BU_LIST_INIT(&ccomb->l);
-		bu_vls_sprintf(&obj_comb_name, "%s-c_%s.c", bu_vls_addr(&comb_name), bu_vls_addr(obj->name_root));
+		curr_union = obj;
+		bu_vls_sprintf(&obj_comb_name, "%s-_test_c_%s.c", bu_vls_addr(&comb_name), bu_vls_addr(obj->name_root));
 		bu_vls_sprintf(&sub_comb_name, "%s-s_%s.c", bu_vls_addr(&comb_name), bu_vls_addr(obj->name_root));
 		(void)mk_addmember(bu_vls_addr(&obj_comb_name), &(pcomb.l), NULL, db_str2op(&(obj->params->bool_op)));
-		(void)mk_addmember(bu_vls_addr(&obj_name), &((*ccomb).l), NULL, db_str2op(&(obj->params->bool_op)));
+		(void)mk_addmember(bu_vls_addr(curr_union->obj_name), &((*ccomb).l), NULL, db_str2op(&(obj->params->bool_op)));
 	    } else {
 		char un = 'u';
 		if (!scomb) {
@@ -479,14 +553,15 @@ brep_to_csg(struct ged *gedp, struct directory *dp)
 		    (void)mk_addmember(bu_vls_addr(&sub_comb_name), &((*ccomb).l), NULL, db_str2op(&(obj->params->bool_op)));
 		}
 		//print_subbrep_object(obj, "  ");
-		(void)mk_addmember(bu_vls_addr(&obj_name), &((*scomb).l), NULL, db_str2op((const char *)&un));
+		(void)mk_addmember(bu_vls_addr(obj->obj_name), &((*scomb).l), NULL, db_str2op((const char *)&un));
 	    }
-	    //std::cout << bu_vls_addr(&obj_name) << ": " << obj->params->bool_op << "\n";
-	    //(void)mk_addmember(bu_vls_addr(&obj_name), &(pcomb.l), NULL, db_str2op(&(obj->params->bool_op)));
-	    bu_vls_free(&obj_name);
+
+	    make_subtraction_objects(gedp, obj, &comb_name);
 	}
-	/* Make the last comb */
+
+	/* Make the last comb - TODO - should we also finalize all the other combs that need it now? */
 	if (ccomb) {
+	    bu_ptbl_ins(&finalize_combs, (long *)curr_union);
 	    mk_lcomb(wdbp, bu_vls_addr(&obj_comb_name), ccomb, 0, NULL, NULL, NULL, 0);
 	    BU_PUT(ccomb, struct wmember);
 	    if (scomb) {
@@ -495,6 +570,42 @@ brep_to_csg(struct ged *gedp, struct directory *dp)
 	    }
 	}
 	bu_vls_free(&obj_comb_name);
+	bu_vls_free(&sub_comb_name);
+
+	/* finalize the combs that need it */
+	if (BU_PTBL_LEN(&finalize_combs) > 0) {
+	    int have_work_to_do = 0;
+	    /* If we have to do this step, we need to prep the original brep for raytracing */
+	    size_t ncpus = bu_avail_cpus();
+	    //size_t ncpus = 1;
+	    for (unsigned int i = 0; i < BU_PTBL_LEN(&finalize_combs); i++){
+		struct subbrep_object_data *obj = (struct subbrep_object_data *)BU_PTBL_GET(&finalize_combs, i);
+		if (BU_PTBL_LEN(obj->subtraction_candidates) > 0) have_work_to_do++;
+	    }
+
+	    if (have_work_to_do) {
+		struct rt_gen_worker_vars *brep_vars = (struct rt_gen_worker_vars *)bu_calloc(ncpus+1, sizeof(struct rt_gen_worker_vars ), "brep state");
+		struct resource *brep_resp = (struct resource *)bu_calloc(ncpus+1, sizeof(struct resource), "brep resources");
+		struct rt_i *brep_rtip = rt_new_rti(wdbp->dbip);
+		for (size_t i = 0; i < ncpus+1; i++) {
+		    brep_vars[i].rtip = brep_rtip;
+		    brep_vars[i].resp = &brep_resp[i];
+		    rt_init_resource(brep_vars[i].resp, i, brep_rtip);
+		}
+		if (rt_gettree(brep_rtip, dp->d_namep) < 0) {
+		    // TODO - free memory
+		    return 0;
+		}
+		rt_prep_parallel(brep_rtip, ncpus);
+
+		for (unsigned int i = 0; i < BU_PTBL_LEN(&finalize_combs); i++){
+		    struct subbrep_object_data *obj = (struct subbrep_object_data *)BU_PTBL_GET(&finalize_combs, i);
+		    finalize_comb(wdbp, dp, brep_vars, obj, ncpus);
+		}
+	    }
+	}
+
+	bu_ptbl_free(&finalize_combs);
     }
 
     // Free memory
@@ -519,13 +630,27 @@ brep_to_csg(struct ged *gedp, struct directory *dp)
     // TODO - probably should be region
     mk_lcomb(wdbp, bu_vls_addr(&comb_name), &pcomb, 0, NULL, NULL, NULL, 0);
 
+
+    // Verify that the resulting csg tree and the original B-Rep pass a difference test.
+    if (verify) {
+	ON_BoundingBox bbox;
+	struct bn_tol tol = {BN_TOL_MAGIC, BN_TOL_DIST, BN_TOL_DIST * BN_TOL_DIST, 1.0e-6, 1.0 - 1.0e-6 };
+	brep->GetBoundingBox(bbox);
+	tol.dist = (bbox.Diagonal().Length() / 100.0);
+	    bu_log("Analyzing %s csg conversion, tol %f...\n", dp->d_namep, tol.dist);
+	if (analyze_raydiff(NULL, gedp->ged_wdbp->dbip, dp->d_namep, bu_vls_addr(&comb_name), &tol, 1)) {
+	    /* TODO - kill tree if debugging flag isn't passed - not valid */
+	    bu_log("Warning - %s did not pass diff test at tol %f!\n", bu_vls_addr(&comb_name), tol.dist);
+	}
+    }
+
     return 0;
 }
 
-int comb_to_csg(struct ged *gedp, struct directory *dp);
+int comb_to_csg(struct ged *gedp, struct directory *dp, int verify);
 
 int
-brep_csg_conversion_tree(struct ged *gedp, const union tree *oldtree, union tree *newtree)
+brep_csg_conversion_tree(struct ged *gedp, const union tree *oldtree, union tree *newtree, int verify)
 {
     int ret = 0;
     *newtree = *oldtree;
@@ -538,7 +663,7 @@ brep_csg_conversion_tree(struct ged *gedp, const union tree *oldtree, union tree
 	    //bu_log("convert right\n");
 	    newtree->tr_b.tb_right = new tree;
 	    RT_TREE_INIT(newtree->tr_b.tb_right);
-	    ret = brep_csg_conversion_tree(gedp, oldtree->tr_b.tb_right, newtree->tr_b.tb_right);
+	    ret = brep_csg_conversion_tree(gedp, oldtree->tr_b.tb_right, newtree->tr_b.tb_right, verify);
 #if 0
 	    if (ret) {
 		delete newtree->tr_b.tb_right;
@@ -553,7 +678,7 @@ brep_csg_conversion_tree(struct ged *gedp, const union tree *oldtree, union tree
 	    //bu_log("convert left\n");
 	    BU_ALLOC(newtree->tr_b.tb_left, union tree);
 	    RT_TREE_INIT(newtree->tr_b.tb_left);
-	    ret = brep_csg_conversion_tree(gedp, oldtree->tr_b.tb_left, newtree->tr_b.tb_left);
+	    ret = brep_csg_conversion_tree(gedp, oldtree->tr_b.tb_left, newtree->tr_b.tb_left, verify);
 #if 0
 	    if (ret) {
 		delete newtree->tr_b.tb_left;
@@ -573,7 +698,7 @@ brep_csg_conversion_tree(struct ged *gedp, const union tree *oldtree, union tree
 
 		if (dir != RT_DIR_NULL) {
 		    if (dir->d_flags & RT_DIR_COMB) {
-			ret = comb_to_csg(gedp, dir);
+			ret = comb_to_csg(gedp, dir, verify);
 			if (ret) {
 			    bu_vls_free(&tmpname);
 			    break;
@@ -584,7 +709,7 @@ brep_csg_conversion_tree(struct ged *gedp, const union tree *oldtree, union tree
 		    }
 		    // It's a primitive. If it's a b-rep object, convert it. Otherwise,
 		    // just duplicate it. Might need better error codes from brep_to_csg for this...
-		    int brep_c = brep_to_csg(gedp, dir);
+		    int brep_c = brep_to_csg(gedp, dir, verify);
 		    int need_break = 0;
 		    switch (brep_c) {
 			case 0:
@@ -620,7 +745,7 @@ brep_csg_conversion_tree(struct ged *gedp, const union tree *oldtree, union tree
 }
 
 int
-comb_to_csg(struct ged *gedp, struct directory *dp)
+comb_to_csg(struct ged *gedp, struct directory *dp, int verify)
 {
     struct rt_db_internal intern;
     struct rt_comb_internal *comb_internal = NULL;
@@ -654,23 +779,23 @@ comb_to_csg(struct ged *gedp, struct directory *dp)
 
     union tree *newtree = new_internal->tree;
 
-    (void)brep_csg_conversion_tree(gedp, oldtree, newtree);
+    (void)brep_csg_conversion_tree(gedp, oldtree, newtree, verify);
     (void)wdb_export(wdbp, bu_vls_addr(&comb_name), (void *)new_internal, ID_COMBINATION, 1);
 
     return 0;
 }
 
 extern "C" int
-_ged_brep_to_csg(struct ged *gedp, const char *dp_name)
+_ged_brep_to_csg(struct ged *gedp, const char *dp_name, int verify)
 {
     struct rt_wdb *wdbp = gedp->ged_wdbp;
     struct directory *dp = db_lookup(wdbp->dbip, dp_name, LOOKUP_QUIET);
     if (dp == RT_DIR_NULL) return GED_ERROR;
 
     if (dp->d_flags & RT_DIR_COMB) {
-	return comb_to_csg(gedp, dp) ? GED_ERROR : GED_OK;
+	return comb_to_csg(gedp, dp, verify) ? GED_ERROR : GED_OK;
     } else {
-	return brep_to_csg(gedp, dp) ? GED_ERROR : GED_OK;
+	return brep_to_csg(gedp, dp, verify) ? GED_ERROR : GED_OK;
     }
 }
 

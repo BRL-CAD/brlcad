@@ -58,7 +58,7 @@
 #include "bsocket.h"
 #include "bio.h"
 
-#include "bu/bu_tcl.h"
+#include "tcl.h"
 #include "bu/magic.h"
 #include "bu/vls.h"
 

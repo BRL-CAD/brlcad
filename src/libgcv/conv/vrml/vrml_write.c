@@ -577,7 +577,7 @@ static void path_2_vrml_id(struct bu_vls *id, const char *path) {
 
 
 static int
-gcv_vrml_write(const char *path, struct db_i *vdbip, const struct gcv_opts *UNUSED(options))
+gcv_vrml_write(const char *path, struct db_i *source_dbip, const struct gcv_opts *UNUSED(options))
 {
     size_t i;
     struct plate_mode pm;
@@ -585,7 +585,7 @@ gcv_vrml_write(const char *path, struct db_i *vdbip, const struct gcv_opts *UNUS
     char **object_names = NULL;
 
     out_file = path;
-    dbip = vdbip;
+    dbip = source_dbip;
     bu_setlinebuf(stderr);
 
     the_model = nmg_mm();

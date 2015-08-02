@@ -67,6 +67,8 @@ rt_generate_mesh(int **faces, int *num_faces, point_t **points, int *num_pnts,
                                 struct db_i *dbip, const char *obj, fastf_t delta);
 
 
+RT_EXPORT extern void rt_generic_make(const struct rt_functab *ftp, struct rt_db_internal *intern);
+
 __END_DECLS
 
 #endif /* RT_MISC_H */

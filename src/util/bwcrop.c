@@ -66,12 +66,12 @@ Usage: bwcrop in.bw out.bw (I prompt!)\n\
  * XXX - CHECK FILE SIZE
  */
 void
-init_buffer(int len)
+init_buffer()
 {
-    int max;
+    ssize_t max;
 
     /* See how many we could buffer */
-    max = MAXBUFBYTES / len;
+    max = MAXBUFBYTES / scanlen;
 
     /*
      * Do a max of 4096.  We really should see how big
@@ -80,14 +80,12 @@ init_buffer(int len)
      */
     if (max > 4096) max = 4096;
 
-    buflines = max;
-
     if (max < scanlen)
 	buflines = max;
     else
 	buflines = scanlen;
 
-    buffer = (unsigned char *)bu_malloc(buflines * len, "buffer");
+    buffer = (unsigned char *)bu_malloc(buflines * scanlen, "buffer");
 }
 
 
@@ -103,7 +101,7 @@ fill_buffer(int y)
     buf_start = y - buflines/2;
     if (buf_start < 0) buf_start = 0;
 
-    bu_fseek(ifp, buf_start * scanlen, 0);
+    bu_fseek(ifp, 0, 0);
     ret = fread(buffer, scanlen, buflines, ifp);
     if (ret == 0)
 	perror("fread");
@@ -190,7 +188,7 @@ main(int argc, char **argv)
 	unsigned long len;
 	/* Get info */
 
-	printf("Scanline length in input file: ");
+	printf("Scanline length in input file?: ");
 	ret = scanf("%lu", &len);
 	if (ret != 1)
 	    perror("scanf");
@@ -199,7 +197,7 @@ main(int argc, char **argv)
 	    bu_exit(4, "bwcrop: scanlen = %zu, don't be ridiculous\n", scanlen);
 	}
 
-	printf("Line Length and Number of scan lines (in new file)?: ");
+	printf("Line Length and Number of scan lines in new file?: ");
 	ret = scanf("%lf%lf", &xval, &yval);
 	if (ret != 2) {
 	    perror("scanf");
@@ -217,7 +215,7 @@ main(int argc, char **argv)
 	    yval = INT_MAX-1;
 	ynum = yval;
 
-	printf("Upper left corner in input file (x, y)?: ");
+	printf("Upper left corner (in input file) (x, y)?: ");
 	ret = scanf("%f%f", &ulx, &uly);
 	if (ret != 2)
 	    perror("scanf");
@@ -227,19 +225,19 @@ main(int argc, char **argv)
 	if (ret != 2)
 	    perror("scanf");
 
-	printf("Lower right (x, y)?: ");
+	printf("Lower right corner (x, y)?: ");
 	ret = scanf("%f%f", &lrx, &lry);
 	if (ret != 2)
 	    perror("scanf");
 
-	printf("Lower left (x, y)?: ");
+	printf("Lower left corner (x, y)?: ");
 	ret = scanf("%f%f", &llx, &lly);
 	if (ret != 2)
 	    perror("scanf");
     }
 
     /* See how many lines we can buffer */
-    init_buffer(scanlen);
+    init_buffer();
 
     /* Check for silly buffer syndrome */
     if ((ssize_t)abs((int)(ury - uly)) > buflines/2 || (ssize_t)abs((int)(lry - lly)) > buflines/2) {
@@ -269,6 +267,7 @@ main(int argc, char **argv)
 		fill_buffer(round(y));
 		yindex = round(y) - buf_start;
 	    }
+	    yindex = yindex + buf_start;
 
 	    value = buffer[ yindex * scanlen + round(x) ];
 	    ret = fwrite(&value, sizeof(value), 1, ofp);

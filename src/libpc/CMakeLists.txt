@@ -14,6 +14,7 @@ BRLCAD_ADDEXEC(gecode_solver_test gecode_solver_test.cpp "${GECODE_LIBRARIES}" N
 BRLCAD_ADDEXEC(gecode_librt_test gecode_librt_test.cpp "${GECODE_LIBRARIES}" NO_INSTALL)
 
 set(pc_ignore_files
+  README
   solver_test.cpp
   vm_test.cpp
   perpendicular.fzn

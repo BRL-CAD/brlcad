@@ -315,6 +315,9 @@ rt_pattern_rect_orthogrid(fastf_t **rays, size_t *ray_cnt, const point_t center_
 
     if (!rays || !ray_cnt) return -1;
 
+    if (NEAR_ZERO(a_length, SMALL_FASTF) || NEAR_ZERO(b_length, SMALL_FASTF)) return -1;
+    if (NEAR_ZERO(da, SMALL_FASTF) || NEAR_ZERO(db, SMALL_FASTF)) return -1;
+
     VMOVE(a_dir, a_vec);
     VUNITIZE(a_dir);
 

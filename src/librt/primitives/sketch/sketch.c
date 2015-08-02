@@ -35,10 +35,10 @@
 #include <ctype.h>
 #include "bnetwork.h"
 
-#include "tcl.h"
+#include "vmath.h"
 #include "bu/debug.h"
 #include "bu/cv.h"
-#include "vmath.h"
+#include "bu/opt.h"
 #include "rt/db4.h"
 #include "nmg.h"
 #include "rt/geom.h"
@@ -2404,16 +2404,15 @@ rt_sketch_get(struct bu_vls *logstr, const struct rt_db_internal *intern, const 
 
 
 int
-get_tcl_curve(Tcl_Interp *interp, struct rt_curve *crv, Tcl_Obj *seg_list)
+get_tcl_curve(struct bu_vls *logstr, struct rt_curve *crv, const char *argv1)
 {
     int count;
-    int ret, j;
+    int j;
+    const char **seg_list = NULL;
 
-    /* get number of segments */
-    count = 0;
-    ret=Tcl_ListObjLength(interp, seg_list, &count);
-    if (ret) {
-	return ret;
+    /* split initial list */
+    if (bu_argv_from_tcl_list(argv1, &count, (const char ***)&seg_list) != 0) {
+	return -1;
     }
 
     if (count) {
@@ -2423,166 +2422,130 @@ get_tcl_curve(Tcl_Interp *interp, struct rt_curve *crv, Tcl_Obj *seg_list)
     }
 
     /* loop through all the segments */
-    for (j=0; j<count; j++) {
-	Tcl_Obj *seg, *seg_type, *seg_elem, *seg_val;
-	char *type, *elem;
-	int k, seg_len;
-
+    for (j = 0; j < count; j++) {
+	int seg_argc;
+	const char **seg_argv = NULL;
+	const char *elem, *sval;
+	int k;
 
 	/* get the next segment */
-	ret=Tcl_ListObjIndex(interp, seg_list, j, &seg);
-	if (ret)
-	    return ret;
+	if (bu_argv_from_tcl_list(seg_list[j], &seg_argc, (const char ***)&seg_argv) != 0) {
+	    return -1;
+	}
 
-	ret=Tcl_ListObjLength(interp, seg, &seg_len);
-	if (ret)
-	    return ret;
+	if (seg_argc < 1) return 0;
 
-	/* get the segment type */
-	ret=Tcl_ListObjIndex(interp, seg, 0, &seg_type);
-	if (ret)
-	    return ret;
-	type = Tcl_GetString(seg_type);
-
-	if (BU_STR_EQUAL(type, "line")) {
+	/* get the next segment */
+	if (BU_STR_EQUAL(seg_argv[0], "line")) {
 	    struct line_seg *lsg;
 
 	    BU_ALLOC(lsg, struct line_seg);
-	    for (k=1; k<seg_len; k += 2) {
-		ret=Tcl_ListObjIndex(interp, seg, k, &seg_elem);
-		if (ret)
-		    return ret;
-
-		ret=Tcl_ListObjIndex(interp, seg, k+1, &seg_val);
-		if (ret)
-		    return ret;
-
-		elem = Tcl_GetString(seg_elem);
+	    for (k=1; k<seg_argc; k += 2) {
+		elem = seg_argv[k];
+		sval = seg_argv[k+1];
 		switch (*elem) {
 		    case 'S':
-			Tcl_GetIntFromObj(interp, seg_val, &lsg->start);
+			(void)bu_opt_int(NULL, 1, &sval, (void *)&lsg->start);
 			break;
 		    case 'E':
-			Tcl_GetIntFromObj(interp, seg_val, &lsg->end);
+			(void)bu_opt_int(NULL, 1, &sval, (void *)&lsg->end);
 			break;
 		}
 	    }
 	    lsg->magic = CURVE_LSEG_MAGIC;
 	    crv->segment[j] = (void *)lsg;
-	} else if (BU_STR_EQUAL(type, "bezier")) {
+	} else if (BU_STR_EQUAL(seg_argv[0], "bezier")) {
 	    struct bezier_seg *bsg;
 	    int num_points;
 
 	    BU_ALLOC(bsg, struct bezier_seg);
-	    for (k=1; k<seg_len; k+= 2) {
-
-		ret=Tcl_ListObjIndex(interp, seg, k, &seg_elem);
-		if (ret)
-		    return ret;
-
-		ret=Tcl_ListObjIndex(interp, seg, k+1, &seg_val);
-		if (ret)
-		    return ret;
-
-		elem = Tcl_GetString(seg_elem);
+	    for (k=1; k<seg_argc; k+= 2) {
+		elem = seg_argv[k];
+		sval = seg_argv[k+1];
 		switch (*elem) {
 		    case 'D': /* degree */
-			Tcl_GetIntFromObj(interp, seg_val,
-					  &bsg->degree);
+			(void)bu_opt_int(NULL, 1, &sval, (void *)&bsg->degree);
 			break;
 		    case 'P': /* list of control points */
 			num_points = 0;
-			(void)tcl_obj_to_int_array(interp,
-						   seg_val, &bsg->ctl_points,
-						   &num_points);
-
+			(void)rt_tcl_list_to_int_array(sval, &bsg->ctl_points, &num_points);
 			if (num_points != bsg->degree + 1) {
-			    Tcl_SetResult(interp, "ERROR: degree and number of control points disagree for a Bezier segment\n", TCL_STATIC);
-			    return TCL_ERROR;
+			    bu_vls_printf(logstr, "ERROR: degree and number of control points disagree for a Bezier segment\n");
+			    bu_free((char *)seg_argv, "free seg argv");
+			    bu_free((char *)seg_list, "free seg argv");
+			    return 1;
 			}
 		}
 	    }
 	    bsg->magic = CURVE_BEZIER_MAGIC;
 	    crv->segment[j] = (void *)bsg;
-	} else if (BU_STR_EQUAL(type, "carc")) {
+	} else if (BU_STR_EQUAL(seg_argv[0], "carc")) {
 	    struct carc_seg *csg;
-	    double tmp;
 
 	    BU_ALLOC(csg, struct carc_seg);
-	    for (k=1; k<seg_len; k += 2) {
-		ret=Tcl_ListObjIndex(interp, seg, k, &seg_elem);
-		if (ret)
-		    return ret;
-
-		ret=Tcl_ListObjIndex(interp, seg, k+1, &seg_val);
-		if (ret)
-		    return ret;
-
-		elem = Tcl_GetString(seg_elem);
+	    for (k=1; k<seg_argc; k += 2) {
+		elem = seg_argv[k];
+		sval = seg_argv[k+1];
 		switch (*elem) {
 		    case 'S':
-			Tcl_GetIntFromObj(interp, seg_val, &csg->start);
+			(void)bu_opt_int(NULL, 1, &sval, (void *)&csg->start);
 			break;
 		    case 'E':
-			Tcl_GetIntFromObj(interp, seg_val, &csg->end);
+			(void)bu_opt_int(NULL, 1, &sval, (void *)&csg->end);
 			break;
 		    case 'R':
-			Tcl_GetDoubleFromObj(interp, seg_val, &tmp);
-			csg->radius = tmp;
+			(void)bu_opt_fastf_t(NULL, 1, &sval, (void *)&csg->radius);
 			break;
 		    case 'L' :
-			Tcl_GetBooleanFromObj(interp, seg_val, &csg->center_is_left);
+			(void)bu_opt_bool(NULL, 1, &sval, (void *)&csg->center_is_left);
 			break;
 		    case 'O':
-			Tcl_GetBooleanFromObj(interp, seg_val, &csg->orientation);
+			(void)bu_opt_bool(NULL, 1, &sval, (void *)&csg->orientation);
 			break;
 		}
 	    }
 	    csg->magic = CURVE_CARC_MAGIC;
 	    crv->segment[j] = (void *)csg;
-	} else if (BU_STR_EQUAL(type, "nurb")) {
+	} else if (BU_STR_EQUAL(seg_argv[0], "nurb")) {
 	    struct nurb_seg *nsg;
 
 	    BU_ALLOC(nsg, struct nurb_seg);
-	    for (k=1; k<seg_len; k += 2) {
-		ret=Tcl_ListObjIndex(interp, seg, k, &seg_elem);
-		if (ret)
-		    return ret;
-
-		ret=Tcl_ListObjIndex(interp, seg, k+1, &seg_val);
-		if (ret)
-		    return ret;
-
-		elem = Tcl_GetString(seg_elem);
+	    for (k=1; k<seg_argc; k += 2) {
+		elem = seg_argv[k];
+		sval = seg_argv[k+1];
 		switch (*elem) {
 		    case 'O':
-			Tcl_GetIntFromObj(interp, seg_val, &nsg->order);
+			(void)bu_opt_int(NULL, 1, &sval, (void *)&nsg->order);
 			break;
 		    case 'T':
-			Tcl_GetIntFromObj(interp, seg_val, &nsg->pt_type);
+			(void)bu_opt_int(NULL, 1, &sval, (void *)&nsg->pt_type);
 			break;
 		    case 'K':
-			tcl_obj_to_fastf_array(interp, seg_val, &nsg->k.knots, &nsg->k.k_size);
+			(void)rt_tcl_list_to_fastf_array(sval, &nsg->k.knots, &nsg->k.k_size);
 			break;
 		    case 'P' :
-			tcl_obj_to_int_array(interp, seg_val, &nsg->ctl_points, &nsg->c_size);
+			(void)rt_tcl_list_to_int_array(sval, &nsg->ctl_points, &nsg->c_size);
 			break;
 		    case 'W':
-			tcl_obj_to_fastf_array(interp, seg_val, &nsg->weights, &nsg->c_size);
+			(void)rt_tcl_list_to_fastf_array(sval, &nsg->weights, &nsg->c_size);
 			break;
 		}
 	    }
 	    nsg->magic = CURVE_NURB_MAGIC;
 	    crv->segment[j] = (void *)nsg;
 	} else {
-	    Tcl_ResetResult(interp);
-	    Tcl_AppendResult(interp, "ERROR: Unrecognized segment type: ",
-			     Tcl_GetString(seg), (char *)NULL);
-	    return TCL_ERROR;
+	    bu_vls_sprintf(logstr, "ERROR: Unrecognized segment type: %s\n", seg_argv[0]);
+	    bu_free((char *)seg_argv, "free seg argv");
+	    bu_free((char *)seg_list, "free seg argv");
+	    return 1;
 	}
+
+	bu_free((char *)seg_argv, "free seg argv");
     }
 
-    return TCL_OK;
+    bu_free((char *)seg_list, "free seg argv");
+
+    return 0;
 }
 
 
@@ -2601,7 +2564,7 @@ rt_sketch_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc,
 	if (BU_STR_EQUAL(argv[0], "V")) {
 	    newval = skt->V;
 	    array_len = 3;
-	    if (tcl_list_to_fastf_array(brlcad_interp, argv[1], &newval, &array_len) !=
+	    if (rt_tcl_list_to_fastf_array(argv[1], &newval, &array_len) !=
 		array_len) {
 		bu_vls_printf(logstr, "ERROR: Incorrect number of coordinates for vertex\n");
 		return BRLCAD_ERROR;
@@ -2609,7 +2572,7 @@ rt_sketch_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc,
 	} else if (BU_STR_EQUAL(argv[0], "A")) {
 	    newval = skt->u_vec;
 	    array_len = 3;
-	    if (tcl_list_to_fastf_array(brlcad_interp, argv[1], &newval, &array_len) !=
+	    if (rt_tcl_list_to_fastf_array(argv[1], &newval, &array_len) !=
 		array_len) {
 		bu_vls_printf(logstr, "ERROR: Incorrect number of coordinates for vertex\n");
 		return BRLCAD_ERROR;
@@ -2617,7 +2580,7 @@ rt_sketch_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc,
 	} else if (BU_STR_EQUAL(argv[0], "B")) {
 	    newval = skt->v_vec;
 	    array_len = 3;
-	    if (tcl_list_to_fastf_array(brlcad_interp, argv[1], &newval, &array_len) !=
+	    if (rt_tcl_list_to_fastf_array(argv[1], &newval, &array_len) !=
 		array_len) {
 		bu_vls_printf(logstr, "ERROR: Incorrect number of coordinates for vertex\n");
 		return BRLCAD_ERROR;
@@ -2642,7 +2605,7 @@ rt_sketch_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc,
 	    }
 
 	    len = 0;
-	    (void)tcl_list_to_fastf_array(brlcad_interp, dupstr, &new_verts, &len);
+	    (void)rt_tcl_list_to_fastf_array(dupstr, &new_verts, &len);
 	    bu_free(dupstr, "sketch adjust strdup");
 
 	    if (len%2) {
@@ -2656,18 +2619,14 @@ rt_sketch_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc,
 	    skt->vert_count = len / 2;
 	} else if (BU_STR_EQUAL(argv[0], "SL")) {
 	    /* the entire segment list */
-	    Tcl_Obj *tmp;
 	    struct rt_curve *crv;
-
-	    /* create a Tcl object */
-	    tmp = Tcl_NewStringObj(argv[1], -1);
 
 	    crv = &skt->curve;
 	    crv->count = 0;
 	    crv->reverse = (int *)NULL;
 	    crv->segment = (void **)NULL;
 
-	    if ((ret=get_tcl_curve(brlcad_interp, crv, tmp)) != TCL_OK)
+	    if ((ret=get_tcl_curve(logstr, crv, argv[1])) != 0)
 		return ret;
 	} else if (*argv[0] == 'V' && isdigit((int)*(argv[0]+1))) {
 	    /* changing a specific vertex */
@@ -2681,7 +2640,7 @@ rt_sketch_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc,
 		return BRLCAD_ERROR;
 	    }
 	    array_len = 2;
-	    if (tcl_list_to_fastf_array(brlcad_interp, argv[1], &new_vert, &array_len) != array_len) {
+	    if (rt_tcl_list_to_fastf_array(argv[1], &new_vert, &array_len) != array_len) {
 		bu_vls_printf(logstr, "ERROR: Incorrect number of coordinates for vertex\n");
 		return BRLCAD_ERROR;
 	    }

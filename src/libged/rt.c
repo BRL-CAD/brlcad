@@ -143,8 +143,7 @@ _ged_rt_output_handler(ClientData clientData, int UNUSED(mask))
 
     if (drcdp == (struct _ged_rt_client_data *)NULL ||
 	drcdp->gedp == (struct ged *)NULL ||
-	drcdp->rrtp == (struct ged_run_rt *)NULL ||
-	brlcad_interp == (Tcl_Interp *)NULL)
+	drcdp->rrtp == (struct ged_run_rt *)NULL)
 	return;
 
     run_rtp = drcdp->rrtp;
@@ -190,7 +189,7 @@ _ged_rt_output_handler(ClientData clientData, int UNUSED(mask))
 	Tcl_DeleteChannelHandler(run_rtp->chan,
 				 _ged_rt_output_handler,
 				 (ClientData)drcdp);
-	Tcl_Close(brlcad_interp, run_rtp->chan);
+	Tcl_Close(drcdp->gedp->ged_interp, run_rtp->chan);
 
 	/* wait for the forked process
 	 * either EOF has been sent or there was a read error.

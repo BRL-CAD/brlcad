@@ -30,44 +30,44 @@
 
 
 HIDDEN int
-gcv_brlcad_read(const char *path, struct rt_wdb *wdbp,
+gcv_brlcad_read(const char *path, struct rt_wdb *dest_wdbp,
 		const struct gcv_opts *UNUSED(options))
 {
     int ret;
-    struct db_i *dbip = db_open(path, DB_OPEN_READONLY);
+    struct db_i * const in_dbip = db_open(path, DB_OPEN_READONLY);
 
-    if (!dbip) {
+    if (!in_dbip) {
 	bu_log("db_open() failed for '%s'\n", path);
 	return 0;
     }
 
-    if (db_dirbuild(dbip)) {
+    if (db_dirbuild(in_dbip)) {
 	bu_log("db_dirbuild() failed for '%s'\n", path);
-	db_close(dbip);
+	db_close(in_dbip);
 	return 0;
     }
 
-    ret = db_dump(wdbp, dbip);
-    db_close(dbip);
+    ret = db_dump(dest_wdbp, in_dbip);
+    db_close(in_dbip);
 
     return ret == 0;
 }
 
 
 HIDDEN int
-gcv_brlcad_write(const char *path, struct db_i *dbip,
+gcv_brlcad_write(const char *path, struct db_i *source_dbip,
 		 const struct gcv_opts *UNUSED(options))
 {
     int ret;
-    struct rt_wdb *wdbp = wdb_fopen(path);
+    struct rt_wdb * const out_wdbp = wdb_fopen(path);
 
-    if (!wdbp) {
+    if (!out_wdbp) {
 	bu_log("wdb_fopen() failed for '%s'\n", path);
 	return 0;
     }
 
-    ret = db_dump(wdbp, dbip);
-    wdb_close(wdbp);
+    ret = db_dump(out_wdbp, source_dbip);
+    wdb_close(out_wdbp);
 
     return ret == 0;
 }

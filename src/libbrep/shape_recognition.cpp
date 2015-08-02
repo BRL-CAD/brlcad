@@ -103,10 +103,12 @@ find_subbreps(struct bu_vls *msgs, const ON_Brep *brep)
 		    // handle even as a breakdown into subbreps, and if we see it we need
 		    // to bail.  Ensuring reliable inside/outside testing in that case
 		    // is extremely difficult.
+#if 0
 		    if (edge_general_surfaces > 1) {
 			if (msgs) bu_vls_printf(msgs, "%*sError - edge %d is connected to more than one general surface - aborting.\n", L1_OFFSET, " ", trim->m_ei);
 			goto bail;
 		    }
+#endif
 		}
 	    }
 	}
@@ -223,9 +225,8 @@ bail:
  * 7.  add the union pointer to the subbreps_tree, and then add all all topologically connected subtractions
  *     and remove them from the local set.
  * 8.  For the remaining (non-topologically linked) subtractions, get a bounding box and see if it overlaps
- *     with the bounding box of the union object in question.  If yes, add the pointer to subbreps_tree, unless
- *     the union object's bbox is fully contained by the subtraction bbox - the latter implies that the subtraction
- *     completely eliminates the union object, which is not how B-Reps work.
+ *     with the bounding box of the union object in question.  If yes, we have to stash it for later
+ *     evaluation - only solid raytracing will suffice to properly resolve complex cases.
  *     If not, no action is needed.  Once evaluated, remove the subtraction pointer from the set.
  *
  * Initially the test will be axis aligned bounding boxes, but ideally we should use oriented bounding boxes
@@ -412,26 +413,27 @@ find_top_level_hierarchy(struct bu_vls *msgs, struct bu_ptbl *subbreps)
 
 	// Now, whatever is left in the local subtraction queue has to be ruled out based on volumetric
 	// intersection testing.
-
-	if (BU_STR_EQUAL(bu_vls_addr(pobj->key), "18_42_46_50")) {
-	    bu_log("handle it!\n");
-	}
-
-	// Construct bounding box for pobj
-	if (!pobj->bbox_set) subbrep_bbox(pobj);
-	// Iterate over the queue
-	for (sb_it2 = local_subtraction_queue.begin(); sb_it2 != local_subtraction_queue.end(); sb_it2++) {
-	    struct subbrep_object_data *sobj = (struct subbrep_object_data *)(*sb_it2);
-	    //std::cout << "Checking subbrep " << bu_vls_addr(sobj->key) << "\n";
-	    // Construct bounding box for sobj
-	    if (!sobj->bbox_set) subbrep_bbox(sobj);
-	    ON_BoundingBox isect;
-	    bool bbi = isect.Intersection(*pobj->bbox, *sobj->bbox);
-	    bool bbc = pobj->bbox->Includes(*sobj->bbox);
-	    bool bcb = sobj->bbox->Includes(*pobj->bbox);
-	    if (!bcb && (bbi || bbc)) {
-		//std::cout << " Found intersecting subbrep " << bu_vls_addr(sobj->key) << " under " << bu_vls_addr(pobj->key) << "\n";
-		bu_ptbl_ins(subbreps_tree, *sb_it2);
+	if (!local_subtraction_queue.empty()) {
+	    // Construct bounding box for pobj
+	    if (!pobj->bbox_set) subbrep_bbox(pobj);
+	    // Iterate over the queue
+	    for (sb_it2 = local_subtraction_queue.begin(); sb_it2 != local_subtraction_queue.end(); sb_it2++) {
+		struct subbrep_object_data *sobj = (struct subbrep_object_data *)(*sb_it2);
+		//std::cout << "Checking subbrep " << bu_vls_addr(sobj->key) << "\n";
+		// Construct bounding box for sobj
+		if (!sobj->bbox_set) subbrep_bbox(sobj);
+		ON_BoundingBox isect;
+		bool bbi = isect.Intersection(*pobj->bbox, *sobj->bbox);
+		// If there is overlap, we have a possible subtraction object.  It isn't currently possible
+		// to sort out reliably in the libbrep context if this object is really a net contributor
+		// to negative volume, so we store the candidates for post processing.  Not even surface/surface
+		// intersection testing will resolve this - a small arb in the center of a torus will not contribute
+		// a net negative volume, but a small arb in the center of a sphere will, and in both cases
+		// the bbox tests and the surface/surface tests will give the same answers.  At the moment the
+		// only practical approach requires solid raytracing.
+		if (bbi) {
+		    bu_ptbl_ins(pobj->subtraction_candidates, *sb_it2);
+		}
 	    }
 	}
     }
@@ -824,10 +826,12 @@ subbrep_make_brep(struct subbrep_object_data *data)
 	    if (face_map.find(old_trim->Face()->m_face_index) != face_map.end()) {
 		if (loops.find(old_loop->m_loop_index) != loops.end()) {
 		    if (loop_map.find(old_loop->m_loop_index) == loop_map.end()) {
-			// After the initial breakout, all loops in any given subbrep are outer loops,
+			// After the initial breakout, most of the loops in any given subbrep are outer loops,
 			// whatever they were in the original brep.
 			ON_BrepLoop &nl = data->local_brep->NewLoop(ON_BrepLoop::outer, data->local_brep->m_F[face_map[old_loop->m_fi]]);
 			loop_map[old_loop->m_loop_index] = nl.m_loop_index;
+			if (old_loop->m_type != ON_BrepLoop::outer && old_loop->m_type != ON_BrepLoop::inner)
+			    nl.m_type = old_loop->m_type;
 			//std::cout << "adding loop: " << old_loop->m_loop_index << "\n";
 		    }
 		} //else {
@@ -884,45 +888,45 @@ subbrep_make_brep(struct subbrep_object_data *data)
 	    }
 	}
     }
-#if 0
-    std::set<int>::iterator trims_it;
-    for (trims_it = isolated_trims.begin(); trims_it != isolated_trims.end(); trims_it++) {
-	const ON_BrepTrim *old_trim = &(data->brep->m_T[*trims_it]);
-	ON_BrepLoop &new_loop = data->local_brep->m_L[subloop_map[old_trim->Loop()->m_loop_index]];
-	ON_BrepEdge *o_edge = old_trim->Edge();
-	if (o_edge) {
-	    ON_BrepEdge &n_edge = data->local_brep->m_E[edge_map[o_edge->m_edge_index]];
-	    //std::cout << "edge(" << o_edge->m_edge_index << "," << n_edge.m_edge_index << ")\n";
-	    ON_BrepTrim &nt = data->local_brep->NewTrim(n_edge, old_trim->m_bRev3d, new_loop, c2_map[old_trim->TrimCurveIndexOf()]);
-	    nt.m_tolerance[0] = old_trim->m_tolerance[0];
-	    nt.m_tolerance[1] = old_trim->m_tolerance[1];
 
-	    nt.m_iso = old_trim->m_iso;
+    // Make sure all the loop directions and types are correct
+    for (int f = 0; f < data->local_brep->m_F.Count(); f++) {
+	ON_BrepFace *face = &(data->local_brep->m_F[f]);
+	if (face->m_li.Count() == 1) {
+	    ON_BrepLoop& loop = data->local_brep->m_L[face->m_li[0]];
+	    if (data->local_brep->LoopDirection(loop) != 1) {
+		data->local_brep->FlipLoop(loop);
+	    }
+	    loop.m_type = ON_BrepLoop::outer;
 	} else {
-	    /* If we didn't have an edge originally, we need to add the 2d curve here */
-	    if (c2_map.find(old_trim->TrimCurveIndexOf()) == c2_map.end()) {
-		ON_Curve *nc = old_trim->TrimCurveOf()->Duplicate();
-		int c2i = data->local_brep->AddTrimCurve(nc);
-		c2_map[old_trim->TrimCurveIndexOf()] = c2i;
-		//std::cout << "2D only c2i: " << c2i << "\n";
+	    int i1 = 0;
+	    int tmp;
+	    ON_BoundingBox o_bbox, c_bbox;
+	    int outer_loop_ind = face->m_li[0];
+	    data->local_brep->m_L[outer_loop_ind].GetBoundingBox(o_bbox);
+	    for (int l = 1; l < face->m_li.Count(); l++) {
+		ON_BrepLoop& loop = data->local_brep->m_L[face->m_li[l]];
+		loop.GetBoundingBox(c_bbox);
+
+		if (c_bbox.Includes(o_bbox)) {
+		    if (data->local_brep->m_L[outer_loop_ind].m_type == ON_BrepLoop::outer) {
+			data->local_brep->m_L[outer_loop_ind].m_type = ON_BrepLoop::inner;
+		    }
+		    o_bbox = c_bbox;
+		    outer_loop_ind = face->m_li[l];
+		    i1 = l;
+		}
 	    }
-	    if (vertex_map.find(old_trim->Vertex(0)->m_vertex_index) == vertex_map.end()) {
-		ON_BrepVertex& newvs = data->local_brep->NewVertex(old_trim->Vertex(0)->Point(), old_trim->Vertex(0)->m_tolerance);
-		ON_BrepTrim &nt = data->local_brep->NewSingularTrim(newvs, new_loop, old_trim->m_iso, c2_map[old_trim->TrimCurveIndexOf()]);
-		nt.m_tolerance[0] = old_trim->m_tolerance[0];
-		nt.m_tolerance[1] = old_trim->m_tolerance[1];
-	    } else {
-		ON_BrepTrim &nt = data->local_brep->NewSingularTrim(data->local_brep->m_V[vertex_map[old_trim->Vertex(0)->m_vertex_index]], new_loop, old_trim->m_iso, c2_map[old_trim->TrimCurveIndexOf()]);
-		nt.m_tolerance[0] = old_trim->m_tolerance[0];
-		nt.m_tolerance[1] = old_trim->m_tolerance[1];
+	    if (data->local_brep->m_L[outer_loop_ind].m_type != ON_BrepLoop::outer)
+		data->local_brep->m_L[outer_loop_ind].m_type = ON_BrepLoop::outer;
+	    tmp = face->m_li[0];
+	    face->m_li[0] = face->m_li[i1];
+	    face->m_li[i1] = tmp;
+	    for (int l = 1; l < face->m_li.Count(); l++) {
+		if (data->local_brep->m_L[face->m_li[l]].m_type != ON_BrepLoop::inner && data->local_brep->m_L[face->m_li[l]].m_type != ON_BrepLoop::slit) {
+		    data->local_brep->m_L[face->m_li[l]].m_type = ON_BrepLoop::inner;
+		}
 	    }
-	}
-    }
-#endif
-    // Make sure all the loop directions are correct
-    for (int l = 0; l < data->local_brep->m_L.Count(); l++) {
-	if (data->local_brep->LoopDirection(data->local_brep->m_L[l]) != 1) {
-	    data->local_brep->FlipLoop(data->local_brep->m_L[l]);
 	}
     }
 

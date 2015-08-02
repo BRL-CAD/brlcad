@@ -1,7 +1,6 @@
 set(bu_headers
   avs.h
   bitv.h
-  bu_tcl.h
   cmd.h
   color.h
   cv.h
@@ -18,6 +17,7 @@ set(bu_headers
   malloc.h
   mapped_file.h
   mime.h
+  observer.h
   opt.h
   parallel.h
   parse.h
