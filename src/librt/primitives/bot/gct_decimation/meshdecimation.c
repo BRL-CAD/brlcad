@@ -3712,8 +3712,8 @@ int mdMeshDecimation(mdOperation *operation, int flags)
     }
 
     threadcount = bu_avail_cpus();
-    threadcount = FMIN(threadcount, (int)operation->tricount / 1024);
-    threadcount = FMAX(threadcount, 1);
+    threadcount = fmin(threadcount, (int)operation->tricount / 1024);
+    threadcount = fmax(threadcount, 1);
 
     /* Get operation general settings */
     mesh.point = (mdf *)operation->vertex;

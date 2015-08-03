@@ -36,43 +36,18 @@
 
 #include "common.h"
 
+
+#if defined(__SSE2__) && (defined(__GNUC__) || defined(__INTEL_COMPILER) || defined(_MSC_VER))
+
 #include "auxiliary/mm.h"
 
 #include "vmath.h"
 
-
-#ifdef __SSE2__
 #include <emmintrin.h>
-#endif
-
-
-/****/
-
-
-#ifdef __SSE2__
-#define MD_CONFIG_SSE2_SUPPORT
-#else
-#warning "SSE2 wasn't enabled to compile this file."
-#endif
-
-
-#if defined(__GNUC__) || defined(__INTEL_COMPILER)
-#define RF_ALIGN16 __attribute__((aligned(16)))
-#elif defined(_MSC_VER)
-#define RF_ALIGN16 __declspec(align(16))
-#else
-#define RF_ALIGN16
-#warning "SSE Disabled: Unsupported Compiler."
-#ifdef MD_CONFIG_SSE2_SUPPORT
-#undef MD_CONFIG_SSE2_SUPPORT
-#endif
-#endif
 
 
 #define MD_CONFIG_SSE_APPROX
 
-
-#ifdef MD_CONFIG_SSE2_SUPPORT
 
 typedef union {
     __m128 v;
@@ -83,6 +58,7 @@ int mdPathSSE2 = 0x1 | 0x2;
 
 
 #define MD_COMPACTNESS_NORMALIZATION_FACTOR (0.5*4.0*1.732050808)
+
 
 float mdEdgeCollapsePenaltyTriangleSSE2f(float *newpoint, float *oldpoint, float *leftpoint, float *rightpoint, int *denyflag, float compactnesstarget)
 {
@@ -232,10 +208,12 @@ double mdEdgeCollapsePenaltyTriangleSSE2d(double *newpoint, double *oldpoint, do
 
 int mdPathSSE2 = 0x0;
 
+
 float mdEdgeCollapsePenaltyTriangleSSE2f(float *newpoint, float *oldpoint, float *leftpoint, float *rightpoint, int *denyflag)
 {
     return 0.0;
 }
+
 
 double mdEdgeCollapsePenaltyTriangleSSE2d(double *newpoint, double *oldpoint, double *leftpoint, double *rightpoint, int *denyflag)
 {
