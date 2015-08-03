@@ -88,12 +88,6 @@ public:
     {}
 
 
-    Triple(T x, T y, T z)
-    {
-	VSET(m_value, x, y, z);
-    }
-
-
     explicit Triple(const T *values)
     {
 	VMOVE(*this, values);
@@ -133,6 +127,7 @@ color_from_floats(const float *float_color)
 }
 
 
+// Assignable/CopyConstructible for use with STL containers.
 class Matrix
 {
 public:
@@ -148,7 +143,7 @@ private:
 
 
 Matrix::Matrix() :
-    m_value()
+    m_value() // zero
 {}
 
 
@@ -1303,7 +1298,7 @@ path_to_mat(const db_i &db, const db_full_path &path, mat_t &result)
     db_full_path temp;
     db_full_path_init(&temp);
     db_dup_full_path(&temp, &path);
-    AutoPtr<db_full_path, db_free_full_path> autofree_path(&temp);
+    const AutoPtr<db_full_path, db_free_full_path> autofree_path(&temp);
 
     if (!db_path_to_mat(const_cast<db_i *>(&db), &temp, result, 0, &rt_uniresource))
 	throw std::runtime_error("db_path_to_mat() failed");
@@ -1377,7 +1372,7 @@ path_is_subtracted(const db_i &db, const db_full_path &path)
     tree_state.ts_dbip = const_cast<db_i *>(&db);
 
     db_full_path end_path;
-    AutoPtr<db_full_path, db_free_full_path> autofree_end_path(&end_path);
+    const AutoPtr<db_full_path, db_free_full_path> autofree_end_path(&end_path);
     db_full_path_init(&end_path);
 
     if (db_follow_path(&tree_state, &end_path, &path, false, 0))
@@ -1415,7 +1410,7 @@ get_cutout(const db_i &db, const db_full_path &parent_path, DBInternal &outer,
     {
 	mat_t matrix;
 	db_full_path temp;
-	AutoPtr<db_full_path, db_free_full_path> autofree_temp(&temp);
+	const AutoPtr<db_full_path, db_free_full_path> autofree_temp(&temp);
 	db_full_path_init(&temp);
 	db_dup_full_path(&temp, &parent_path);
 
@@ -2397,7 +2392,7 @@ write_nmg_region(nmgregion *nmg_region, const db_full_path *path,
 
 	// fill in an rt_db_internal with our new bot so we can free it
 	rt_db_internal internal;
-	AutoPtr<rt_db_internal, rt_db_free_internal> autofree_internal(&internal);
+	const AutoPtr<rt_db_internal, rt_db_free_internal> autofree_internal(&internal);
 	RT_DB_INTERNAL_INIT(&internal);
 	internal.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 	internal.idb_minor_type = ID_BOT;
@@ -2507,7 +2502,7 @@ do_conversion(db_i &db, const std::string &path,
     AutoPtr<directory *> toplevel_dirs;
     const std::size_t num_objects = db_ls(&db, DB_LS_TOPS, NULL,
 					  &toplevel_dirs.ptr);
-    AutoPtr<char *> object_names(db_dpv_to_argv(toplevel_dirs.ptr));
+    const AutoPtr<char *> object_names(db_dpv_to_argv(toplevel_dirs.ptr));
     toplevel_dirs.free();
 
     nmg_model.ptr = nmg_mm();
