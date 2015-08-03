@@ -14,7 +14,7 @@
  * have a corresponding hit in the parent NURBS object is a red flag.  This will help with thin subtractions
  * from the surface of larger objects, where the dimensions that will report a full "gap" are very narrow
  * compared to the available area on which to recognize a first hit that's "off".  That situation is not
- * necessarily unique to first/last hit situtions - may also result in relatively few "exact" hit matches
+ * necessarily unique to first/last hit situations - may also result in relatively few "exact" hit matches
  * on a shape that should be subtracted, if the mating faces have their own large topologically isolated
  * negative areas as well.  In that case, the parent nurb will report a hit on the second negative area,
  * but the "implicit" first surface won't report anything at all from the parent.  Need to think about
