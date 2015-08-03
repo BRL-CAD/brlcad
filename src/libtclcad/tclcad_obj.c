@@ -1671,7 +1671,7 @@ Usage: go_open\n\
 	Tcl_AppendResult(interp, "Unable to open geometry database: ", dbname, (char *)NULL);
 	return TCL_ERROR;
     }
-    gedp->ged_interp = interp;
+    gedp->ged_interp = (void *)interp;
 
     /* initialize tclcad_obj */
     BU_ALLOC(top, struct tclcad_obj);
