@@ -474,17 +474,14 @@ edge_can_be_decimated(struct rt_bot_internal *bot,
 size_t
 rt_bot_decimate_gct(struct rt_bot_internal *bot, fastf_t feature_size)
 {
-#ifdef ENABLE_WHEN_PORTABLE
     const int opt_level = 3; /* maximum */
     mdOperation mdop;
-#endif
 
     RT_BOT_CK_MAGIC(bot);
 
     if (feature_size < 0.0)
 	bu_bomb("invalid feature_size");
 
-#ifdef ENABLE_WHEN_PORTABLE
     mdOperationInit(&mdop);
     mdOperationData(&mdop, bot->num_vertices, bot->vertices,
 		    sizeof(bot->vertices[0]), 3 * sizeof(bot->vertices[0]), bot->num_faces,
@@ -500,9 +497,6 @@ rt_bot_decimate_gct(struct rt_bot_internal *bot, fastf_t feature_size)
     mesh_optimization(bot->num_vertices, bot->num_faces, bot->faces, sizeof(bot->faces[0]), opt_level);
 
     return mdop.decimationcount;
-#else
-    return 0;
-#endif
 }
 
 

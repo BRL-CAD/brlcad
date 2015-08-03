@@ -178,7 +178,7 @@ typedef float mdqf;
 
 
 #ifdef MD_CONFIG_HIGH_QUADRICS
-#if ( __GNUC__ > 4 || ( __GNUC__ == 4 && __GNUC_MINOR__ >= 6 ) ) && !defined(__INTEL_COMPILER) && (defined CPUCONF_ARCH_AMD64 || defined(CPUCONF_ARCH_IA32))
+#if ( __GNUC__ > 4 || ( __GNUC__ == 4 && __GNUC_MINOR__ >= 6 ) ) && !defined(__INTEL_COMPILER) && (defined CPUCONF_ARCH_AMD64 || defined(CPUCONF_ARCH_IA32) || defined(__ia64__))
 typedef __float128 mdqfhigh;
 #else
 #undef MD_CONFIG_HIGH_QUADRICS
