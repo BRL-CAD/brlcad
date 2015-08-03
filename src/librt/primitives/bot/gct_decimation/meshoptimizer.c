@@ -1446,8 +1446,12 @@ int moOptimizeMesh(size_t vertexcount, size_t tricount, void *indices, int indic
 	return 1;
 
     threadcount = bu_avail_cpus();
-    threadcount = fmin(threadcount, (int)tricount / 1024);
-    threadcount = fmax(threadcount, 1);
+
+    if ((size_t)threadcount > tricount / 1024)
+	threadcount = tricount / 1024;
+
+    if (threadcount < 1)
+	threadcount = 1;
 
     mesh.vertexcount = vertexcount;
     mesh.tricount = tricount;
