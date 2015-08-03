@@ -383,6 +383,8 @@ static moi moMeshBuildTrirefs(moMesh *mesh, moThreadData *tdata, int threadcount
     moTriangle *tri;
     moVertex *vertex;
 
+    score = 0.0;
+
     triperthread = (mesh->tricount / threadcount) + 1;
     triindex = tdata->threadid * triperthread;
     triindexmax = triindex + triperthread;
@@ -669,6 +671,7 @@ static mof moLookAheadScore(moMesh *mesh, moThreadData *tdata, moTriangle *tri)
     moVertex *vertex;
     moTriangle *tricheck;
 
+    score = 0.0;
     bestscore = 0.0;
 
     for (axisindex = 0; axisindex < 3; axisindex++) {
@@ -786,6 +789,8 @@ static moi moFindSeedTriangle(moMesh *mesh, moThreadData *tdata)
     moi trinext;
 #endif
 
+    score = 0.0;
+
     testcount = 16384;
 
     if (mesh->operationflags & MO_FLAGS_FAST_SEED_SELECT)
@@ -857,6 +862,8 @@ static moi moFindNextStep(moMesh *mesh, moThreadData *tdata)
 #ifndef MM_ATOMIC_SUPPORT
     moi trinext;
 #endif
+
+    score = 0.0;
 
     cacheordercap = mesh->vertexcachesize;
 
@@ -986,6 +993,8 @@ static moi moFindNextStepLookAhead(moMesh *mesh, moThreadData *tdata)
 #ifndef MM_ATOMIC_SUPPORT
     moi trinext;
 #endif
+
+    score = 0.0;
 
     for (entry = &scorebuffer[MO_LOOK_AHEAD_BEST_BUFFER_SIZE - 1]; entry >= scorebuffer; entry--) {
 	entry->triindex = -1;
