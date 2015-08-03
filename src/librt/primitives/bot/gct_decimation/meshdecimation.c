@@ -1078,7 +1078,7 @@ static void mdUpdateBufferAdd(mdUpdateBuffer *updatebuffer, mdOp *op, int orflag
 
     if (updatebuffer->opcount >= updatebuffer->opalloc) {
 	updatebuffer->opalloc <<= 1;
-	updatebuffer->opbuffer = bu_realloc(updatebuffer->opbuffer, updatebuffer->opalloc * sizeof(mdOp *), "opbuffer");
+	updatebuffer->opbuffer = (void **)bu_realloc(updatebuffer->opbuffer, updatebuffer->opalloc * sizeof(mdOp *), "opbuffer");
     }
 
     updatebuffer->opbuffer[updatebuffer->opcount++] = op;
@@ -2652,7 +2652,7 @@ static void mdSortOp(mdMesh *mesh, mdThreadData *tdata, mdOp *op, int denyflag)
 	if (op->flags & MD_OP_FLAGS_DETACHED) {
 	    mmBinSortAdd(tdata->binsort, op, collapsecost);
 	    op->flags &= ~MD_OP_FLAGS_DETACHED;
-	} else if (op->collapsecost != collapsecost)
+	} else if (!EQUAL(op->collapsecost, collapsecost))
 	    mmBinSortUpdate(tdata->binsort, op, op->collapsecost, collapsecost);
 
 	mtSpinUnlock(&op->spinlock);
@@ -3382,11 +3382,11 @@ typedef struct {
 } mdThreadInit;
 
 #ifndef MM_ATOMIC_SUPPORT
-int mdFreeOpCallback(void *chunk, void *userpointer)
+int mdFreeOpCallback(void *chunk, void *UNUSED(userpointer))
 {
-    mdOp *op;
-    op = chunk;
+    mdOp *op = (mdOp *)chunk;
     mtSpinDestroy(&op->spinlock);
+    return 0;
 }
 #endif
 
