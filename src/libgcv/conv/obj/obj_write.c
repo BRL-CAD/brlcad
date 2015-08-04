@@ -78,7 +78,8 @@ static int regions_written = 0;
 static int inches = 0;
 
 HIDDEN int
-gcv_obj_write(const char *path, struct db_i *source_dbip, const struct gcv_opts *UNUSED(options))
+gcv_obj_write(const char *dest_path, struct db_i *source_dbip,
+        const struct gcv_opts *UNUSED(options), void *UNUSED(converter_options))
 {
     double percent;
     size_t num_objects;
@@ -111,9 +112,9 @@ gcv_obj_write(const char *path, struct db_i *source_dbip, const struct gcv_opts 
     BU_LIST_INIT(&RTG.rtg_vlfree);	/* for vlist macros */
 
     /* Open output file */
-    if ((fp=fopen(path, "wb+")) == NULL) {
+    if ((fp=fopen(dest_path, "wb+")) == NULL) {
 	perror("obj_write");
-	bu_exit(1, "Cannot open output file (%s) for writing\n", path);
+	bu_exit(1, "Cannot open output file (%s) for writing\n", dest_path);
     }
 
     /* Open g-obj error log file */
@@ -592,12 +593,8 @@ do_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union
 }
 
 
-static const struct gcv_converter converters[] = {
-    {MIME_MODEL_OBJ, NULL, gcv_obj_write},
-    {MIME_MODEL_UNKNOWN, NULL, NULL}
-};
-
-const struct gcv_plugin_info gcv_plugin_conv_obj_write = {converters};
+const struct gcv_converter gcv_conv_obj_write =
+{MIME_MODEL_OBJ, GCV_CONVERSION_WRITE, gcv_obj_write, NULL};
 
 
 /*

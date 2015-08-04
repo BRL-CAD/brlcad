@@ -112,7 +112,7 @@ private:
 
 
 typedef Triple<fastf_t> Point;
-typedef Triple<uint8_t> Color;
+typedef Triple<unsigned char> Color;
 
 
 HIDDEN Color
@@ -121,7 +121,7 @@ color_from_floats(const float *float_color)
     Color result;
 
     for (int i = 0; i < 3; ++i)
-	result[i] = static_cast<uint8_t>(float_color[i] * 255.0 + 0.5);
+	result[i] = static_cast<unsigned char>(float_color[i] * 255.0 + 0.5);
 
     return result;
 }
@@ -2519,26 +2519,21 @@ do_conversion(db_i &db, const std::string &path,
 
 
 HIDDEN int
-gcv_fastgen4_write(const char *path, struct db_i *source_dbip,
-		   const gcv_opts *UNUSED(options))
+gcv_fastgen4_write(const char *dest_path, struct db_i *source_dbip,
+		   const gcv_opts *UNUSED(options), void *UNUSED(converter_options))
 {
     RT_CK_DBI(source_dbip);
 
-    std::set<const directory *> failed_regions = do_conversion(*source_dbip, path);
+    std::set<const directory *> failed_regions = do_conversion(*source_dbip,
+	    dest_path);
 
     // facetize all regions that contain incompatible boolean operations
     if (!failed_regions.empty())
-	if (!do_conversion(*source_dbip, path, failed_regions).empty())
+	if (!do_conversion(*source_dbip, dest_path, failed_regions).empty())
 	    throw std::runtime_error("failed to convert all regions");
 
     return 1;
 }
-
-
-static const struct gcv_converter converters[] = {
-    {MIME_MODEL_VND_FASTGEN, NULL, gcv_fastgen4_write},
-    {MIME_MODEL_UNKNOWN, NULL, NULL}
-};
 
 
 }
@@ -2547,7 +2542,8 @@ static const struct gcv_converter converters[] = {
 extern "C" {
 
 
-    struct gcv_plugin_info gcv_plugin_conv_fastgen4_write = {converters};
+    struct gcv_converter gcv_conv_fastgen4_write =
+    {MIME_MODEL_VND_FASTGEN, GCV_CONVERSION_READ, gcv_fastgen4_write, NULL};
 
 
 }

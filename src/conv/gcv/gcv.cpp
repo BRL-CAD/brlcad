@@ -30,6 +30,8 @@
 
 #include "bu.h"
 
+#include "../../libgcv/plugin.h"
+
 struct gcv_fmt_opts {
     struct bu_ptbl *args;
     struct bu_opt_desc *ds;
@@ -374,6 +376,54 @@ gcv_help(struct bu_vls *UNUSED(msg), int argc, const char **argv, void *set_var)
     return 1;
 }
 
+
+HIDDEN int
+gcv_do_conversion(const char *in_path, mime_model_t in_type, const char *out_path, mime_model_t out_type)
+{
+    bu_ptbl in_converters = gcv_converter_find(in_type, GCV_CONVERSION_READ);
+    bu_ptbl out_converters = gcv_converter_find(out_type, GCV_CONVERSION_WRITE);
+
+    if (!BU_PTBL_LEN(&in_converters) || !BU_PTBL_LEN(&out_converters)) {
+        bu_log("No %s for given format\n", BU_PTBL_LEN(&in_converters) ? "writer" : "reader");
+        bu_ptbl_free(&in_converters);
+        bu_ptbl_free(&out_converters);
+        return 0;
+    }
+
+    {
+        const struct gcv_converter * const in_conv =
+            (struct gcv_converter *)BU_PTBL_GET(&in_converters, 0);
+
+        const struct gcv_converter * const out_conv =
+            (struct gcv_converter *)BU_PTBL_GET(&out_converters, 0);
+
+        db_i *dbi = db_open_inmem();
+        dbi->dbi_read_only = 1;
+
+        if (!in_conv->conversion_fn(in_path, dbi, NULL, NULL)) {
+            bu_log("Import failed\n");
+            db_close(dbi);
+            bu_ptbl_free(&in_converters);
+            bu_ptbl_free(&out_converters);
+            return 0;
+        }
+
+        if (!out_conv->conversion_fn(out_path, dbi, NULL, NULL)) {
+            bu_log("Export failed\n");
+            db_close(dbi);
+            bu_ptbl_free(&in_converters);
+            bu_ptbl_free(&out_converters);
+            return 0;
+        }
+
+        db_close(dbi);
+        bu_ptbl_free(&in_converters);
+        bu_ptbl_free(&out_converters);
+    }
+
+    return 1;
+}
+
 #define gcv_help_str "Print help and exit.  If a format is specified to --help, print help specific to that format"
 
 #define gcv_inopt_str "Options to apply only while processing input file.  Accepts options until another toplevel option is encountered."
@@ -413,6 +463,7 @@ main(int ac, const char **av)
     struct bu_vls parse_msgs = BU_VLS_INIT_ZERO;
     int uac = 0;
     int io_opt_cnt = io_opt_files(ac, av);
+
 
     struct bu_opt_desc gcv_opt_desc[] = {
 	{"h", "help",             "[format]",   &gcv_help,    (void *)&hs,            gcv_help_str,                 },
@@ -609,6 +660,13 @@ main(int ac, const char **av)
     bu_log("Input file path: %s\n", bu_vls_addr(&in_path));
     bu_log("Output file path: %s\n", bu_vls_addr(&out_path));
 
+
+    if (!gcv_do_conversion(bu_vls_addr(&in_path), in_type, bu_vls_addr(&out_path), out_type)) {
+	bu_log("Conversion failed\n");
+	ret = 1;
+	goto cleanup;
+    }
+
     switch (in_type) {
 	case MIME_MODEL_VND_FASTGEN:
 	    fast4_arg_process(BU_PTBL_LEN(&input_opts), (const char **)input_opts.buffer);
@@ -628,7 +686,6 @@ main(int ac, const char **av)
 	default:
 	    break;
     }
-
 
 
     /* Clean up */

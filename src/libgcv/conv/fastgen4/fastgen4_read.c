@@ -2723,7 +2723,8 @@ read_fast4_colors(char *color_file)
 
 
 static int
-gcv_fastgen4_read(const char *path, struct rt_wdb *dest_wdbp, const struct gcv_opts *UNUSED(options))
+gcv_fastgen4_read(const char *source_path, struct db_i *dest_dbip,
+        const struct gcv_opts *UNUSED(options), void *UNUSED(converter_options))
 {
     int result = 0;
     char *plot_file = NULL;
@@ -2732,13 +2733,13 @@ gcv_fastgen4_read(const char *path, struct rt_wdb *dest_wdbp, const struct gcv_o
     if (bu_debug & BU_DEBUG_MEM_CHECK)
 	bu_log("doing memory checking\n");
 
-    if ((fpin=fopen(path, "rb")) == (FILE *)NULL) {
+    if ((fpin=fopen(source_path, "rb")) == (FILE *)NULL) {
 	perror("fast4-g");
-	bu_log("Cannot open FASTGEN4 file (%s)\n", path);
+	bu_log("Cannot open FASTGEN4 file (%s)\n", source_path);
 	return 0;
     }
 
-    fpout = dest_wdbp;
+    fpout = dest_dbip->dbi_wdbp;
 
     if (plot_file) {
 	if ((fp_plot=fopen(plot_file, "wb")) == NULL) {
@@ -2796,7 +2797,7 @@ gcv_fastgen4_read(const char *path, struct rt_wdb *dest_wdbp, const struct gcv_o
 
 	/* Make an ID record if no vehicle card was found */
 	if (!vehicle[0])
-	    mk_id_units(fpout, path, "in");
+	    mk_id_units(fpout, source_path, "in");
 
 	if (!quiet)
 	    bu_log("Building components....\n");
@@ -2883,12 +2884,8 @@ gcv_fastgen4_read(const char *path, struct rt_wdb *dest_wdbp, const struct gcv_o
 }
 
 
-static const struct gcv_converter converters[] = {
-    {MIME_MODEL_VND_FASTGEN, gcv_fastgen4_read, NULL},
-    {MIME_MODEL_UNKNOWN, NULL, NULL}
-};
-
-const struct gcv_plugin_info gcv_plugin_conv_fastgen4_read = {converters};
+const struct gcv_converter gcv_conv_fastgen4_read =
+{MIME_MODEL_VND_FASTGEN, GCV_CONVERSION_READ, gcv_fastgen4_read, NULL};
 
 
 /*

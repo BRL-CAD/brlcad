@@ -36,26 +36,22 @@
 __BEGIN_DECLS
 
 
+enum gcv_conversion_type {GCV_CONVERSION_NONE, GCV_CONVERSION_READ, GCV_CONVERSION_WRITE};
+
+
 struct gcv_converter {
     mime_model_t mime_type;
+    enum gcv_conversion_type conversion_type;
 
-    int (*reader_fn)(const char *path, struct rt_wdb *dest_wdbp,
-		     const struct gcv_opts *options);
-    int (*writer_fn)(const char *path, struct db_i *source_dbip,
-		     const struct gcv_opts *options);
+    int (*conversion_fn)(const char *path, struct db_i *dbip,
+			 const struct gcv_opts *options, void *converter_options);
+
+    void * (*process_args_fn)(int argc, char **argv);
 };
 
 
-struct gcv_plugin_info {
-    const struct gcv_converter *converters;
-};
-
-
-enum gcv_conversion_type {GCV_CONVERSION_READ, GCV_CONVERSION_WRITE};
-
-
-const struct gcv_converter *
-gcv_converter_find(mime_model_t mime_type, enum gcv_conversion_type type);
+struct bu_ptbl gcv_converter_find(mime_model_t mime_type,
+				  enum gcv_conversion_type conversion_type);
 
 
 __END_DECLS
