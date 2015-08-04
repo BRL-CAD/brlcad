@@ -761,14 +761,6 @@ out:
 }
 
 
-static const struct gcv_converter converters[] = {
-    {"vrml", NULL, gcv_vrml_write},
-    {NULL, NULL, NULL}
-};
-
-const struct gcv_plugin_info gcv_plugin_conv_vrml_write = {converters};
-
-
 void
 nmg_2_vrml(struct db_tree_state *tsp, const struct db_full_path *pathp, struct model *m)
 {
@@ -1336,6 +1328,15 @@ nmg_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, unio
     curtree->tr_op = OP_NOP;
     return curtree;
 }
+
+
+static const struct gcv_converter converters[] = {
+    {MIME_MODEL_VRML, NULL, gcv_vrml_write},
+    {MIME_MODEL_UNKNOWN, NULL, NULL}
+};
+
+const struct gcv_plugin_info gcv_plugin_conv_vrml_write = {converters};
+
 
 /*
  * Local Variables:

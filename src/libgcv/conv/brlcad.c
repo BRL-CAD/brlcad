@@ -74,8 +74,8 @@ gcv_brlcad_write(const char *path, struct db_i *source_dbip,
 
 
 static const struct gcv_converter converters[] = {
-    {"g", gcv_brlcad_read, gcv_brlcad_write},
-    {NULL, NULL, NULL}
+    {MIME_MODEL_VND_BRLCAD_PLUS_BINARY, gcv_brlcad_read, gcv_brlcad_write},
+    {MIME_MODEL_UNKNOWN, NULL, NULL}
 };
 
 const struct gcv_plugin_info gcv_plugin_conv_brlcad = {converters};

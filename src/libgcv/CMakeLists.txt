@@ -52,7 +52,6 @@ set(LIBGCV_SOURCES
   )
 
 list(APPEND LIBGCV_SOURCES
-  setup.cpp
   conv/brlcad.c
   conv/fastgen4/fastgen4_read.c
   conv/fastgen4/fastgen4_write.cpp
@@ -71,8 +70,6 @@ list(APPEND LIBGCV_SOURCES
 BRLCAD_ADDLIB(libgcv "${LIBGCV_SOURCES}" "librt;libwdb;libbu")
 SET_TARGET_PROPERTIES(libgcv PROPERTIES VERSION 20.0.1 SOVERSION 20)
 
-BRLCAD_ADDEXEC(gcv_test gcv_test.c libgcv NO_INSTALL)
-
 enable_testing()
 BRLCAD_ADDEXEC(test_bottess test_bottess.c libgcv NO_INSTALL)
 if(CPP_DLL_DEFINES)
@@ -84,7 +81,6 @@ set(GCV_IGNORE_FILES
   NOTES
   conv/fastgen4/NOTES
   facetize.h
-  gcv_private.h
   plugin.h
   soup.h
   tri_intersect.h

@@ -2884,8 +2884,8 @@ gcv_fastgen4_read(const char *path, struct rt_wdb *dest_wdbp, const struct gcv_o
 
 
 static const struct gcv_converter converters[] = {
-    {"fg4", gcv_fastgen4_read, NULL},
-    {NULL, NULL, NULL}
+    {MIME_MODEL_VND_FASTGEN, gcv_fastgen4_read, NULL},
+    {MIME_MODEL_UNKNOWN, NULL, NULL}
 };
 
 const struct gcv_plugin_info gcv_plugin_conv_fastgen4_read = {converters};

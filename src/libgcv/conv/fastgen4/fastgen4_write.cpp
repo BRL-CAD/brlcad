@@ -2536,8 +2536,8 @@ gcv_fastgen4_write(const char *path, struct db_i *source_dbip,
 
 
 static const struct gcv_converter converters[] = {
-    {"fg4", NULL, gcv_fastgen4_write},
-    {NULL, NULL, NULL}
+    {MIME_MODEL_VND_FASTGEN, NULL, gcv_fastgen4_write},
+    {MIME_MODEL_UNKNOWN, NULL, NULL}
 };
 
 

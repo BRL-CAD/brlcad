@@ -37,7 +37,8 @@ __BEGIN_DECLS
 
 
 struct gcv_converter {
-    const char *file_extensions;
+    mime_model_t mime_type;
+
     int (*reader_fn)(const char *path, struct rt_wdb *dest_wdbp,
 		     const struct gcv_opts *options);
     int (*writer_fn)(const char *path, struct db_i *source_dbip,
@@ -48,6 +49,13 @@ struct gcv_converter {
 struct gcv_plugin_info {
     const struct gcv_converter *converters;
 };
+
+
+enum gcv_conversion_type {GCV_CONVERSION_READ, GCV_CONVERSION_WRITE};
+
+
+const struct gcv_converter *
+gcv_converter_find(mime_model_t mime_type, enum gcv_conversion_type type);
 
 
 __END_DECLS

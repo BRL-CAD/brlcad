@@ -3665,8 +3665,8 @@ gcv_obj_read(const char *path, struct rt_wdb *dest_wdbp, const struct gcv_opts *
 
 
 static const struct gcv_converter converters[] = {
-    {"obj", gcv_obj_read, NULL},
-    {NULL, NULL, NULL}
+    {MIME_MODEL_OBJ, gcv_obj_read, NULL},
+    {MIME_MODEL_UNKNOWN, NULL, NULL}
 };
 
 const struct gcv_plugin_info gcv_plugin_conv_obj_read = {converters};

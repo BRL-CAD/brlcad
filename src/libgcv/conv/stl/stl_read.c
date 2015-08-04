@@ -582,8 +582,8 @@ gcv_stl_read(const char *path, struct rt_wdb *dest_wdbp, const struct gcv_opts *
 
 
 static const struct gcv_converter converters[] = {
-    {"stl", gcv_stl_read, NULL},
-    {NULL, NULL, NULL}
+    {MIME_MODEL_STL, gcv_stl_read, NULL},
+    {MIME_MODEL_UNKNOWN, NULL, NULL}
 };
 
 const struct gcv_plugin_info gcv_plugin_conv_stl_read = {converters};

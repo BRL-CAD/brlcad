@@ -173,14 +173,6 @@ gcv_obj_write(const char *path, struct db_i *source_dbip, const struct gcv_opts 
 }
 
 
-static const struct gcv_converter converters[] = {
-    {"obj", NULL, gcv_obj_write},
-    {NULL, NULL, NULL}
-};
-
-const struct gcv_plugin_info gcv_plugin_conv_obj_write = {converters};
-
-
 static void
 nmg_to_obj(struct nmgregion *r, const struct db_full_path *pathp, int UNUSED(region_id), int aircode, int los, int material_id)
 {
@@ -598,6 +590,14 @@ do_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union
     curtree->tr_op = OP_NOP;
     return curtree;
 }
+
+
+static const struct gcv_converter converters[] = {
+    {MIME_MODEL_OBJ, NULL, gcv_obj_write},
+    {MIME_MODEL_UNKNOWN, NULL, NULL}
+};
+
+const struct gcv_plugin_info gcv_plugin_conv_obj_write = {converters};
 
 
 /*
