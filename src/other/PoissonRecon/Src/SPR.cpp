@@ -49,18 +49,63 @@ void DumpOutput( const char* format , ... ) {};
 void DumpOutput2( char* str , const char* format , ... ) {};
 #include "MultiGridOctreeData.h"
 
+struct spr_options {
+	const char *xform;
+	const char *voxelgrid;
+	const char *confidence;
+	const char *normalweights;
+	/* boolean */
+	int nonManifold;
+	int polygon;
+	/* int */
+	int depth;
+	int cgdepth;
+	int kerneldepth;
+	int adaptiveexponent;
+	int iters;
+	int voxeldepth;
+	int fulldepth;
+	int mindepth;
+	int maxsolvedepth;
+	int boundarytype;
+	int thread_cnt;
+
+	double samples_per_node;
+	double scale;
+	double cssolveraccuracy;
+	double pointweight;
+};
+
+//DEFAULT - LOW
+#define SPR_OPTIONS_LOW_INIT { NULL, NULL, NULL, NULL, 0, 0, 8, 0, 6, 1, 8, -1, 5, 0, 8, 1, 1, 1.0, 1.1, 0.001, 10.0 }
+//GOOD - MEDIUM
+#define SPR_OPTIONS_MED_INIT { NULL, NULL, NULL, NULL, 0, 0, 8, 0, 6, 1, 8, -1, 5, 0, 8, 1, 1, 1.0, 2.0, 0.001, 15.0 }
+//BEST (lots of fidelity) - HIGH
+#define SPR_OPTIONS_HIGH_INIT { NULL, NULL, NULL, NULL, 0, 0, 8, 0, 6, 1, 8, -1, 5, 0, 8, 1, 1, 0.25, 2.0, 0.001, 20.0 }
+
 
 extern "C" int
 spr_surface_build(int **faces, int *num_faces, double **points, int *num_pnts,
-		const struct cvertex **verts, int cnt, struct spr_options *opts)
+		const struct cvertex **verts, int cnt, int fidelity)
 {
     if (!num_pnts || !num_faces || !points || !faces) return -1;
+
+    //struct spr_options opts = SPR_OPTIONS_DEFAULT_INIT;
+    struct spr_options opts = SPR_OPTIONS_LOW_INIT;
+    if (fidelity == 1) {
+	struct spr_options tempopt = SPR_OPTIONS_MED_INIT;
+	memcpy(&opts, &tempopt, sizeof(struct spr_options));
+    } else if (fidelity == 2) {
+	struct spr_options tempopt = SPR_OPTIONS_HIGH_INIT;
+	memcpy(&opts, &tempopt, sizeof(struct spr_options));
+    }
+    
     // Probably unnecessary but here to be consistent with original code
     Reset< double >();
     XForm4x4< double > xForm;
     xForm = XForm4x4< double >::Identity();
     Octree< double > tree;
-    tree.threads = opts->thread_cnt;
+    tree.threads = opts.thread_cnt;
     OctNode< TreeNodeData >::SetAllocator( MEMORY_ALLOCATOR_BLOCK_SIZE );
     double maxMemoryUsage;
     Octree< double >::PointInfo* pointInfo = new Octree< double >::PointInfo();
@@ -68,15 +113,15 @@ spr_surface_build(int **faces, int *num_faces, double **points, int *num_pnts,
     std::vector< double >* kernelDensityWeights = new std::vector< double >();
     std::vector< double >* centerWeights = new std::vector< double >();
     PointStream< float >* pointStream = new CVertexPointStream< float >( cnt, verts );
-    int pointCount = tree.SetTree< float >(pointStream , opts->mindepth, opts->depth, opts->fulldepth, opts->kerneldepth,
-	    opts->samples_per_node, opts->scale, 0, 0, opts->pointweight, opts->adaptiveexponent, *pointInfo,
-	    *normalInfo , *kernelDensityWeights , *centerWeights , opts->boundarytype, xForm , 0);
+    int pointCount = tree.SetTree< float >(pointStream , opts.mindepth, opts.depth, opts.fulldepth, opts.kerneldepth,
+	    opts.samples_per_node, opts.scale, 0, 0, opts.pointweight, opts.adaptiveexponent, *pointInfo,
+	    *normalInfo , *kernelDensityWeights , *centerWeights , opts.boundarytype, xForm , 0);
     kernelDensityWeights->clear();
     delete kernelDensityWeights;
     kernelDensityWeights = NULL;
     Pointer( double ) constraints = tree.SetLaplacianConstraints( *normalInfo );
     delete normalInfo;
-    Pointer( double ) solution = tree.SolveSystem( *pointInfo , constraints , 0 , opts->iters , opts->maxsolvedepth , opts->cgdepth , float(opts->cssolveraccuracy) );
+    Pointer( double ) solution = tree.SolveSystem( *pointInfo , constraints , 0 , opts.iters , opts.maxsolvedepth , opts.cgdepth , float(opts.cssolveraccuracy) );
     delete pointInfo;
     FreePointer(constraints);
     CoredFileMeshData< PlyVertex <float> > mesh;
