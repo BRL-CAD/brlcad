@@ -769,7 +769,6 @@ rt_bot_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     struct shell *s;
     struct vertex **verts;
     point_t pt[3];
-    point_t center;
     size_t i;
 
     RT_CK_DB_INTERNAL(ip);
@@ -779,9 +778,10 @@ rt_bot_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 #define RT_BOT_TESS_MAX_FACES 1024
 	size_t faces[RT_BOT_TESS_MAX_FACES];
 	plane_t planes[RT_BOT_TESS_MAX_FACES];
+	point_t center;
 
 	rt_bot_centroid(&center, ip);
-	fprintf(stderr, "center pt = (%g %g %g)\n", V3ARGS(center));
+	bu_log("center pt = (%f %f %f)\n", V3ARGS(center));
 
 	/* get the faces that use each vertex */
 	for (i = 0; i < bot_ip->num_vertices; i++) {
@@ -798,7 +798,7 @@ rt_bot_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 		    }
 		}
 	    }
-	    fprintf(stderr, "Vertex #%lu appears in %lu faces\n", (long unsigned)i, (long unsigned)faceCount);
+	    bu_log("Vertex #%zu appears in %zu faces\n", i, faceCount);
 	    if (faceCount == 0) {
 		continue;
 	    }
@@ -812,7 +812,7 @@ rt_bot_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 			planes[i][3] = VDOT(planes[i], &bot_ip->vertices[bot_ip->faces[faces[i]*3]*3]);
 		    }
 		    plane = planes[i];
-		    fprintf(stderr, "\tplane #%lu = (%g %g %g %g)\n", (long unsigned)i, V4ARGS(plane));
+		    bu_log("\tplane #%zu = (%f %f %f %f)\n", i, V4ARGS(plane));
 		}
 	}
 	return -1;
