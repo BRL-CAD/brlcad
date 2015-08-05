@@ -209,13 +209,13 @@ double mdEdgeCollapsePenaltyTriangleSSE2d(double *newpoint, double *oldpoint, do
 int mdPathSSE2 = 0x0;
 
 
-float mdEdgeCollapsePenaltyTriangleSSE2f(float *newpoint, float *oldpoint, float *leftpoint, float *rightpoint, int *denyflag)
+float mdEdgeCollapsePenaltyTriangleSSE2f(float *UNUSED(newpoint), float *UNUSED(oldpoint), float *UNUSED(leftpoint), float *UNUSED(rightpoint), int *UNUSED(denyflag))
 {
     return 0.0;
 }
 
 
-double mdEdgeCollapsePenaltyTriangleSSE2d(double *newpoint, double *oldpoint, double *leftpoint, double *rightpoint, int *denyflag)
+double mdEdgeCollapsePenaltyTriangleSSE2d(double *UNUSED(newpoint), double *UNUSED(oldpoint), double *UNUSED(leftpoint), double *UNUSED(rightpoint), int *UNUSED(denyflag))
 {
     return 0.0;
 }
