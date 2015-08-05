@@ -7,7 +7,7 @@
 #endif
 
 
-__kernel void sph_shot(__global __write_only double3 *output,
+__kernel void sph_shot(__global __write_only double2 *output,
 	const double3 o, const double3 dir, const double3 V, const double radsq)
 {
     double3 ov;        // ray origin to center (V - P)
@@ -16,8 +16,8 @@ __kernel void sph_shot(__global __write_only double3 *output,
     double root;       // root of radical
 
     ov = V - o;
-    magsq_ov = ov[0]*ov[0] + ov[1]*ov[1] + ov[2]*ov[2];
-    //printf("TZ: ov: %0.30f\t%0.30f\t%0.30f\n", ov[0], ov[1], ov[2]);
+    magsq_ov = dot(ov, ov);
+    //printf("TZ: ov: %0.30f\t%0.30f\t%0.30f\n", ov.x, ov.y, ov.z);
     b = dot(dir, ov);
     //printf("TZ: b: %0.30f\n", b);
 
@@ -30,6 +30,7 @@ __kernel void sph_shot(__global __write_only double3 *output,
 	root = b*b - magsq_ov + radsq;
 	if (root <= 0) {
 	    // no real roots
+	    *output = (double2){0.0, 0.0};
 	    return;           // No hit
 	}
     } else {
@@ -37,8 +38,7 @@ __kernel void sph_shot(__global __write_only double3 *output,
     }
     root = sqrt(root);
 
-    (*output)[0] = b - root;
-    (*output)[1] = b + root;
+    *output = (double2){b - root, b + root};
     return;        // HIT
 }
 
