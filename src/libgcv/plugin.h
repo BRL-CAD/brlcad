@@ -50,8 +50,8 @@ struct gcv_converter {
 };
 
 
-struct bu_ptbl gcv_converter_find(mime_model_t mime_type,
-				  enum gcv_conversion_type conversion_type);
+GCV_EXPORT external struct bu_ptbl gcv_converter_find(mime_model_t mime_type,
+	enum gcv_conversion_type conversion_type);
 
 
 __END_DECLS
