@@ -36,6 +36,11 @@
 #include "rt/db4.h"
 #include "raytrace.h"
 
+#ifdef USE_OPENCL
+#include <limits.h>
+#include <CL/cl.h>
+#endif
+
 /* approximation formula for the circumference of an ellipse */
 #define ELL_CIRCUMFERENCE(a, b) M_PI * ((a) + (b)) * \
     (1.0 + (3.0 * ((((a) - b))/((a) + (b))) * ((((a) - b))/((a) + (b))))) \
@@ -176,6 +181,11 @@ extern int tcl_list_to_avs(const char *tcl_list, struct bu_attribute_value_set *
 
 extern int tcl_list_to_int_array(const char *list, int **array, int *array_len);
 extern int tcl_list_to_fastf_array(const char *list, fastf_t **array, int *array_len);
+
+#ifdef USE_OPENCL
+extern cl_device_id clt_get_cl_device(void);
+extern cl_program clt_get_program(cl_context context, cl_device_id device, const char *filename);
+#endif
 
 __END_DECLS
 
