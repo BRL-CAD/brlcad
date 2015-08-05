@@ -166,12 +166,6 @@ struct ell_specific {
 #define ELL_NULL ((struct ell_specific *)0)
 
 #ifdef USE_OPENCL
-#ifdef CLT_SINGLE_PRECISION
-#define cl_double cl_float
-#define cl_double3 cl_float3
-#endif
-
-
 static const int clt_semaphore = 12; /* FIXME: for testing; this isn't our semaphore */
 static int clt_initialized = 0;
 static cl_device_id clt_device;

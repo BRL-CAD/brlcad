@@ -39,6 +39,11 @@
 #ifdef USE_OPENCL
 #include <limits.h>
 #include <CL/cl.h>
+
+#ifdef CLT_SINGLE_PRECISION
+#define cl_double cl_float
+#define cl_double3 cl_float3
+#endif
 #endif
 
 /* approximation formula for the circumference of an ellipse */

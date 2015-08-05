@@ -189,12 +189,6 @@ const struct bu_structparse rt_ehy_parse[] = {
 static int ehy_is_valid(struct rt_ehy_internal *ehy);
 
 #ifdef USE_OPENCL
-#ifdef CLT_SINGLE_PRECISION
-#define cl_double cl_float
-#define cl_double3 cl_float3
-#endif
-
-
 static const int clt_semaphore = 12; /* FIXME: for testing; this isn't our semaphore */
 static int clt_initialized = 0;
 static cl_device_id clt_device;
