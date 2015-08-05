@@ -7,30 +7,31 @@
 #endif
 
 
-__kernel void sph_shot(__global __write_only double2 *output,
-	const double3 o, const double3 dir, const double3 V, const double radsq)
+__kernel void
+sph_shot(global __write_only double2 *dist, global __write_only int2 *surfno,
+const double3 r_pt, const double3 r_dir,
+const double3 V, const double radsq)
 {
     double3 ov;        // ray origin to center (V - P)
     double magsq_ov;   // length squared of ov
     double b;          // second term of quadratic eqn
     double root;       // root of radical
 
-    ov = V - o;
+    ov = V - r_pt;
+    b = dot(r_dir, ov);
     magsq_ov = dot(ov, ov);
-    //printf("TZ: ov: %0.30f\t%0.30f\t%0.30f\n", ov.x, ov.y, ov.z);
-    b = dot(dir, ov);
-    //printf("TZ: b: %0.30f\n", b);
 
     if (magsq_ov >= radsq) {
 	// ray origin is outside of sphere
 	if (b < 0) {
 	    // ray direction is away from sphere
+	    *surfno = (int2){INT_MAX, INT_MAX};
 	    return;           // No hit
 	}
 	root = b*b - magsq_ov + radsq;
 	if (root <= 0) {
 	    // no real roots
-	    *output = (double2){0.0, 0.0};
+	    *surfno = (int2){INT_MAX, INT_MAX};
 	    return;           // No hit
 	}
     } else {
@@ -38,7 +39,9 @@ __kernel void sph_shot(__global __write_only double2 *output,
     }
     root = sqrt(root);
 
-    *output = (double2){b - root, b + root};
+    // we know root is positive, so we know the smaller t
+    *surfno = (int2){0, 0};
+    *dist = (double2){b - root, b + root};
     return;        // HIT
 }
 
