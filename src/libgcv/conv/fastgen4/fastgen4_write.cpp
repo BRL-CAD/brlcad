@@ -2240,7 +2240,7 @@ FastgenConversion::get_region(const directory &region_dir)
 }
 
 
-HIDDEN Section &
+Section &
 FastgenConversion::get_section(const db_full_path &path)
 {
     RT_CK_FULL_PATH(&path);
