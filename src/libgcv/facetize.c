@@ -43,6 +43,9 @@ _gcv_facetize_region_end(struct db_tree_state *tree_state,
 
     if (*facetize_tree) {
 	union tree *temp;
+
+	RT_CK_TREE(*facetize_tree);
+
 	BU_ALLOC(temp, union tree);
 	RT_TREE_INIT(temp);
 	temp->tr_op = OP_UNION;
@@ -62,8 +65,16 @@ _gcv_facetize_region_end(struct db_tree_state *tree_state,
 HIDDEN struct rt_bot_internal *
 _gcv_facetize_cleanup(struct model *nmg_model, union tree *facetize_tree)
 {
-    nmg_km(nmg_model);
-    db_free_tree(facetize_tree, &rt_uniresource);
+    if (nmg_model) {
+	NMG_CK_MODEL(nmg_model);
+	nmg_km(nmg_model);
+    }
+
+    if (facetize_tree) {
+	RT_CK_TREE(facetize_tree);
+	db_free_tree(facetize_tree, &rt_uniresource);
+    }
+
     return NULL;
 }
 
@@ -73,6 +84,9 @@ _gcv_facetize_free_bot(struct rt_bot_internal *bot)
 {
     /* fill in an rt_db_internal so we can free it */
     struct rt_db_internal internal;
+
+    RT_BOT_CK_MAGIC(bot);
+
     RT_DB_INTERNAL_INIT(&internal);
     internal.idb_major_type = DB5_MAJORTYPE_BRLCAD;
     internal.idb_minor_type = ID_BOT;
@@ -83,13 +97,43 @@ _gcv_facetize_free_bot(struct rt_bot_internal *bot)
 }
 
 
+HIDDEN void
+_gcv_optimize_model(struct model *nmg_model)
+{
+    struct nmgregion *current_region;
+
+    NMG_CK_MODEL(nmg_model);
+
+    for (BU_LIST_FOR(current_region, nmgregion, &nmg_model->r_hd)) {
+	struct shell *current_shell;
+
+	NMG_CK_REGION(current_region);
+	current_shell = BU_LIST_FIRST(shell, &current_region->s_hd);
+
+	while (BU_LIST_NOT_HEAD(&current_shell->l, &current_region->s_hd)) {
+	    struct shell *next_shell;
+
+	    NMG_CK_SHELL(current_shell);
+	    next_shell = BU_LIST_PNEXT(shell, &current_shell->l);
+
+	    if (nmg_kill_cracks(current_shell))
+		nmg_ks(current_shell);
+
+	    current_shell = next_shell;
+	}
+    }
+
+    nmg_kill_zero_length_edgeuses(nmg_model);
+}
+
+
 struct rt_bot_internal *
 gcv_facetize(struct db_i *db, const struct db_full_path *path,
 	     const struct bn_tol *tol, const struct rt_tess_tol *tess_tol)
 {
     union tree *facetize_tree;
     struct model *nmg_model;
-    struct nmgregion *nmg_region;
+    struct nmgregion *current_region;
 
     /* static to silence warnings over longjmp  */
     static struct rt_bot_internal *result;
@@ -142,20 +186,15 @@ gcv_facetize(struct db_i *db, const struct db_full_path *path,
     NMG_CK_REGION(facetize_tree->tr_d.td_r);
     result = NULL;
 
-    for (BU_LIST_FOR(nmg_region, nmgregion, &nmg_model->r_hd)) {
-	/* static to silence warnings over longjmp */
-	static struct shell *current_shell;
+    _gcv_optimize_model(nmg_model);
 
-	current_shell = BU_LIST_FIRST(shell, &nmg_region->s_hd);
+    for (BU_LIST_FOR(current_region, nmgregion, &nmg_model->r_hd)) {
+	struct shell *current_shell;
 
-	while (BU_LIST_NOT_HEAD(&current_shell->l, &nmg_region->s_hd)) {
-	    struct shell *next_shell = BU_LIST_PNEXT(shell, &current_shell->l);
+	NMG_CK_REGION(current_region);
 
-	    if (nmg_kill_cracks(current_shell) && nmg_ks(current_shell))
-		continue;
-
-	    if (nmg_kill_zero_length_edgeuses(nmg_model))
-		return _gcv_facetize_cleanup(nmg_model, facetize_tree);
+	for (BU_LIST_FOR(current_shell, shell, &current_region->s_hd)) {
+	    NMG_CK_SHELL(current_shell);
 
 	    if (!BU_SETJUMP) {
 		/* try */
@@ -174,18 +213,23 @@ gcv_facetize(struct db_i *db, const struct db_full_path *path,
 		/* catch */
 		BU_UNSETJUMP;
 		bu_log("gcv_facetize(): conversion to BOT failed\n");
+
+		if (result)
+		    _gcv_facetize_free_bot(result);
+
 		return _gcv_facetize_cleanup(nmg_model, facetize_tree);
 	    }
 
-	    current_shell = next_shell;
+	    BU_UNSETJUMP;
 	}
-
-	BU_UNSETJUMP;
     }
 
-    rt_bot_vertex_fuse(result, tol);
-    rt_bot_face_fuse(result);
-    rt_bot_condense(result);
+    if (result) {
+	rt_bot_vertex_fuse(result, tol);
+	rt_bot_face_fuse(result);
+	rt_bot_condense(result);
+    }
+
     _gcv_facetize_cleanup(nmg_model, facetize_tree);
     return result;
 }

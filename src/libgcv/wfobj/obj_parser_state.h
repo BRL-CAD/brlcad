@@ -378,7 +378,6 @@ void set_working_groupset(basic_parser_extra<PrecisionT, charT, traits,
     typedef basic_parser_extra<PrecisionT, charT, traits, Allocator>
 	extra_type;
 
-    typedef typename extra_type::contents_type contents_type;
     typedef typename extra_type::parser_state_type parser_state_type;
 
     typename parser_state_type::groupset_index_map_type::const_iterator res =
@@ -808,7 +807,6 @@ void set_working_polygattributes(basic_parser_extra<PrecisionT, charT, traits,
 						    Allocator> &extra)
 {
     typedef basic_parser_extra<PrecisionT, charT, traits, Allocator> extra_type;
-    typedef typename extra_type::contents_type contents_type;
     typedef typename extra_type::parser_state_type parser_state_type;
 
     typename parser_state_type::polyattributes_index_map_type::iterator res =

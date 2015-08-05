@@ -27,99 +27,88 @@
 #include "common.h"
 
 #include "plugin.h"
-#include "gcv_private.h"
-
-#include <string.h>
 
 
-struct gcv_plugin {
+struct gcv_converter_entry {
     struct bu_list l;
 
-    const struct gcv_plugin_info *plugin_info;
+    struct gcv_converter converter;
 };
 
 
-static inline struct bu_list *
-gcv_get_plugin_list(void)
+static struct bu_list converter_list = {BU_LIST_HEAD_MAGIC, &converter_list, &converter_list};
+
+
+HIDDEN void
+gcv_plugin_register(const struct gcv_converter *converter)
 {
-    static struct bu_list plugin_list = BU_LIST_INIT_ZERO;
+    struct gcv_converter_entry *entry;
 
-    if (!BU_LIST_IS_INITIALIZED(&plugin_list))
-	BU_LIST_INIT(&plugin_list);
+    if (converter->mime_type == MIME_MODEL_AUTO
+	|| converter->mime_type == MIME_MODEL_UNKNOWN)
+	bu_bomb("invalid mime_type");
 
-    return &plugin_list;
-}
+    if (converter->conversion_type == GCV_CONVERSION_NONE)
+	bu_bomb("invalid gcv_conversion_type");
 
+    if (!converter->conversion_fn)
+	bu_bomb("null conversion_fn");
 
-void
-gcv_plugin_register(const struct gcv_plugin_info *plugin_info)
-{
-    struct bu_list * const plugin_list = gcv_get_plugin_list();
-
-    struct gcv_plugin *plugin;
-
-    BU_GET(plugin, struct gcv_plugin);
-    BU_LIST_PUSH(plugin_list, &plugin->l);
-    plugin->plugin_info = plugin_info;
+    BU_GET(entry, struct gcv_converter_entry);
+    BU_LIST_PUSH(&converter_list, &entry->l);
+    entry->converter = *converter;
 }
 
 
 HIDDEN void
-gcv_plugin_free(struct gcv_plugin *entry)
+gcv_register_static(void)
 {
-    BU_LIST_DEQUEUE(&entry->l);
-    BU_PUT(entry, struct gcv_plugin);
+    static int registered_static = 0;
+
+    if (!registered_static)
+	registered_static = 1;
+    else
+	return;
+
+#define PLUGIN(name) \
+    do { \
+	extern const struct gcv_converter name; \
+	gcv_plugin_register(&name); \
+    } while (0)
+
+    PLUGIN(gcv_conv_brlcad_write);
+    PLUGIN(gcv_conv_brlcad_read);
+    PLUGIN(gcv_conv_fastgen4_read);
+    PLUGIN(gcv_conv_fastgen4_write);
+    PLUGIN(gcv_conv_obj_read);
+    PLUGIN(gcv_conv_obj_write);
+    PLUGIN(gcv_conv_stl_read);
+    PLUGIN(gcv_conv_stl_write);
+    PLUGIN(gcv_conv_vrml_write);
+
+#undef PLUGIN
 }
 
 
-HIDDEN int
-gcv_extension_match(const char *path, const char *extension)
+struct bu_ptbl
+gcv_converter_find(mime_model_t mime_type,
+		   enum gcv_conversion_type conversion_type)
 {
-    if (!(path = strrchr(path, '.')))
-	return 0;
+    struct bu_ptbl result;
+    struct gcv_converter_entry *entry;
 
-    ++path;
+    gcv_register_static();
 
-    while (1) {
-	const char * const next = strchr(extension, ';');
+    bu_ptbl_init(&result, 8, "result");
 
-	if (!next) break;
-
-	if (bu_strncasecmp(path, extension, next - 1 - extension) == 0)
-	    return 1;
-
-	extension = next + 1;
+    for (BU_LIST_FOR(entry, gcv_converter_entry, &converter_list)) {
+	if (mime_type == MIME_MODEL_AUTO || entry->converter.mime_type == mime_type)
+	    if (conversion_type == GCV_CONVERSION_NONE
+		|| entry->converter.conversion_type == conversion_type)
+		bu_ptbl_ins(&result, (long *)&entry->converter);
     }
 
-    return bu_strcasecmp(path, extension) == 0;
-}
-
-
-const struct gcv_converter *
-gcv_converter_find(const char *path, enum gcv_conversion_type type)
-{
-    const struct bu_list * const plugin_list = gcv_get_plugin_list();
-
-    const struct gcv_plugin *entry;
-
-    for (BU_LIST_FOR(entry, gcv_plugin, plugin_list)) {
-	const struct gcv_converter *converter = entry->plugin_info->converters;
-
-	if (!converter) continue;
-
-	while (converter->file_extensions) {
-	    if (gcv_extension_match(path, converter->file_extensions)) {
-		if (type == GCV_CONVERSION_READ && converter->reader_fn)
-		    return converter;
-		else if (type == GCV_CONVERSION_WRITE && converter->writer_fn)
-		    return converter;
-	    }
-
-	    ++converter;
-	}
-    }
-
-    return NULL;
+    return result;
 }
 
 

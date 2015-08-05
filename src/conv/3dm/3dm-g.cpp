@@ -257,15 +257,15 @@ generate_uuid()
     // sufficient for our use here, but
     // officially UUIDv4 also requires certain bits to be set
     result.Data1 = static_cast<ON__UINT32>(drand48() *
-					   std::numeric_limits<ON__UINT32>::max());
+					   std::numeric_limits<ON__UINT32>::max() + 0.5);
     result.Data2 = static_cast<ON__UINT16>(drand48() *
-					   std::numeric_limits<ON__UINT16>::max());
+					   std::numeric_limits<ON__UINT16>::max() + 0.5);
     result.Data3 = static_cast<ON__UINT16>(drand48() *
-					   std::numeric_limits<ON__UINT16>::max());
+					   std::numeric_limits<ON__UINT16>::max() + 0.5);
 
     for (int i = 0; i < 8; ++i)
 	result.Data4[i] = static_cast<unsigned char>(drand48() *
-			  std::numeric_limits<unsigned char>::max());
+			  std::numeric_limits<unsigned char>::max() + 0.5);
 
     return result;
 }
@@ -1133,7 +1133,14 @@ RhinoConverter::create_object(const ON_Object &object,
     if (const ON_Geometry *geom = ON_Geometry::Cast(&object))
 	if (geom->HasBrepForm()) {
 	    ON_Brep *brep = geom->BrepForm();
-	    create_brep(*brep, object_attrs);
+
+	    try {
+		create_brep(*brep, object_attrs);
+	    } catch (const std::runtime_error &) {
+		delete brep;
+		throw;
+	    }
+
 	    delete brep;
 	    return;
 	}
@@ -1158,7 +1165,7 @@ RhinoConverter::create_object(const ON_Object &object,
 int
 main(int argc, char **argv)
 {
-    static const char * const usage =
+    const char * const usage =
 	"Usage: 3dm-g [-v] [-r] [-u] -o output_file.g input_file.3dm\n";
 
     bool verbose_mode = false;
@@ -1169,26 +1176,17 @@ main(int argc, char **argv)
 
     int c;
 
-    while ((c = bu_getopt(argc, argv, "o:dvt:s:ruh?")) != -1) {
+    while ((c = bu_getopt(argc, argv, "o:vruh?")) != -1) {
 	switch (c) {
-	    case 's':	/* scale factor */
-		break;
-
-	    case 'o':	/* specify output file name */
+	    case 'o':
 		output_path = bu_optarg;
 		break;
 
-	    case 'd':	/* debug */
-		break;
-
-	    case 't':	/* tolerance */
-		break;
-
-	    case 'v':	/* verbose */
+	    case 'v':
 		verbose_mode = true;
 		break;
 
-	    case 'r':  /* randomize colors */
+	    case 'r':
 		random_colors = true;
 		break;
 
@@ -1202,7 +1200,7 @@ main(int argc, char **argv)
 	}
     }
 
-    if (bu_optind == argc || !output_path) {
+    if (bu_optind != argc - 1 || !output_path) {
 	std::cerr << usage;
 	return 1;
     }
@@ -1243,6 +1241,7 @@ main()
 
 
 #endif
+
 
 // Local Variables:
 // tab-width: 8

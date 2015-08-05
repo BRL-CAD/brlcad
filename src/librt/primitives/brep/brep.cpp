@@ -102,10 +102,6 @@ int rt_brep_valid(struct rt_db_internal *ip, struct bu_vls *log);
 #endif
 
 
-/* FIXME: fugly */
-static int hit_count = 0;
-
-
 /********************************************************************************
  * Auxiliary functions
  ********************************************************************************/
@@ -342,7 +338,7 @@ brep_build_bvh_surface_tree(int cpu, void *data)
 	bu_semaphore_release(BU_SEM_LISTS);
 
 	if (index != -1) {
-	    bu_log("thread %d: preparing face %d of %d\n", cpu, index+1, faceCount);
+	    /* bu_log("thread %d: preparing face %d of %d\n", cpu, index+1, faceCount); */
 	    SurfaceTree* st = new SurfaceTree(&faces[index], true, 8);
 	    bbbp->faces[index] = st;
 	}
@@ -403,10 +399,7 @@ brep_build_bvh(struct brep_specific* bs)
      */
 
     start = bu_gettime();
-    /* FIXME - bu_parallel is hanging with a NURBS example if raytraced twice in the
-     * same MGED session... */
-    //bu_parallel(brep_build_bvh_surface_tree, 0, &bbbp);
-    brep_build_bvh_surface_tree(0, &bbbp);
+    bu_parallel(brep_build_bvh_surface_tree, 0, &bbbp);
 
     for (int i = 0; (size_t)i < faceCount; i++) {
 	ON_BrepFace& face = faces[i];
@@ -1082,7 +1075,6 @@ utah_brep_intersect(const BBNode* sbv, const ON_BrepFace* face, const ON_Surface
 		    _norm.Reverse();
 		}
 		VMOVE(vnorm, _norm);
-		hit_count += 1;
 		uv[0] = ouv[i].x;
 		uv[1] = ouv[i].y;
 		brep_hit bh(*face, t[i], ray, vpt, vnorm, uv);
@@ -1118,7 +1110,6 @@ utah_brep_intersect(const BBNode* sbv, const ON_BrepFace* face, const ON_Surface
 		    _norm.Reverse();
 		}
 		VMOVE(vnorm, _norm);
-		hit_count += 1;
 		uv[0] = ouv[i].x;
 		uv[1] = ouv[i].y;
 		brep_hit bh(*face, t[i], ray, vpt, vnorm, uv);
@@ -1214,7 +1205,7 @@ rt_brep_shot(struct soltab *stp, register struct xray *rp, struct application *a
     HitList all_hits; // record all hits
     MissList misses;
     int s = 0;
-    hit_count = 0;
+
     for (std::list<BBNode*>::iterator i = inters.begin(); i != inters.end(); i++) {
 	const BBNode* sbv = (*i);
 	const ON_BrepFace* f = sbv->m_face;
@@ -3092,7 +3083,6 @@ shift_loop_straddled_over_seam(const ON_Surface *surf,  ON_SimpleArray<BrepTrimP
 
 	int seam = 0;
 	int i;
-	ON_2dPoint *prev_pt = NULL;
 	BrepTrimPoint btp;
 	BrepTrimPoint end_btp;
 	ON_SimpleArray<BrepTrimPoint> part1;
@@ -3120,7 +3110,6 @@ shift_loop_straddled_over_seam(const ON_Surface *surf,  ON_SimpleArray<BrepTrimP
 		    part2.Append(btp);
 		}
 	    }
-	    prev_pt = &brep_loop_points[i].p2d;
 	}
 
 	brep_loop_points.Empty();

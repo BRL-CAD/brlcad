@@ -36,7 +36,6 @@
 #include <ctype.h>
 #include "bio.h"
 
-#include "tcl.h"
 #include "bu/parallel.h"
 #include "vmath.h"
 #include "rt/db4.h"
@@ -1638,7 +1637,7 @@ rt_ebm_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, co
 	    fastf_t array[16];
 	    fastf_t *ar_ptr;
 	    ar_ptr = array;
-	    if (rt_tcl_list_to_fastf_array(argv[1], &ar_ptr, &len) != len) {
+	    if (tcl_list_to_fastf_array(argv[1], &ar_ptr, &len) != len) {
 		bu_vls_printf(logstr, "ERROR: incorrect number of coefficients for matrix\n");
 		return BRLCAD_ERROR;
 	    }

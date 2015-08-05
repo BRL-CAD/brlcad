@@ -37,7 +37,7 @@
 #	include <sys/unistd.h>
 #	include <thread.h>
 #	include <synch.h>
-#	define SEMAPHORE_INIT DEFAULEMUTEX
+#	define SEMAPHORE_INIT DEFAULTMUTEX
 struct bu_semaphores {
     uint32_t magic;
     mutex_t mu;

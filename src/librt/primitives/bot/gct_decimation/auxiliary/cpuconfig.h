@@ -5,12 +5,11 @@
 #include "common.h"
 
 
-/* Automatically generated CPU information header -- FIXME */
-
+#if defined(__x86_64__)
 #define CPUCONF_ARCH_AMD64
-/* #define CPUCONF_ARCH_IA32 */
-
-#define CPUCONF_POINTER_BITS (64)
+#elif defined(__i386__)
+#define CPUCONF_ARCH_IA32
+#endif
 
 /* #define CPUCONF_CACHE_LINE_SIZE (64) (optional)*/
 

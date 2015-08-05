@@ -577,15 +577,16 @@ static void path_2_vrml_id(struct bu_vls *id, const char *path) {
 
 
 static int
-gcv_vrml_write(const char *path, struct db_i *vdbip, const struct gcv_opts *UNUSED(options))
+gcv_vrml_write(const char *dest_path, struct db_i *source_dbip,
+        const struct gcv_opts *UNUSED(options), void *UNUSED(converter_options))
 {
     size_t i;
     struct plate_mode pm;
     size_t num_objects = 0;
     char **object_names = NULL;
 
-    out_file = path;
-    dbip = vdbip;
+    out_file = dest_path;
+    dbip = source_dbip;
     bu_setlinebuf(stderr);
 
     the_model = nmg_mm();
@@ -759,14 +760,6 @@ out:
 
     return 1;
 }
-
-
-static const struct gcv_converter converters[] = {
-    {"vrml", NULL, gcv_vrml_write},
-    {NULL, NULL, NULL}
-};
-
-const struct gcv_plugin_info gcv_plugin_conv_vrml_write = {converters};
 
 
 void
@@ -1336,6 +1329,11 @@ nmg_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, unio
     curtree->tr_op = OP_NOP;
     return curtree;
 }
+
+
+const struct gcv_converter gcv_conv_vrml_write =
+{MIME_MODEL_VRML, GCV_CONVERSION_WRITE, gcv_vrml_write, NULL};
+
 
 /*
  * Local Variables:

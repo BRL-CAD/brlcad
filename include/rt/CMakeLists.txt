@@ -44,7 +44,6 @@ set(rt_headers
   region.h
   resource.h
   rt_instance.h
-  rt_tcl.h
   search.h
   seg.h
   shoot.h

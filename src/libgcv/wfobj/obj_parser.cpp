@@ -54,7 +54,6 @@ static int set_stream(FILE *stream, basic_parser_state<ObjContentsT> &state)
 {
     typedef basic_parser_state<ObjContentsT> state_type;
     typedef typename state_type::file_node file_node_type;
-    typedef typename state_type::string_type string_type;
 
     file_node_type node;
     node.dir = ".";

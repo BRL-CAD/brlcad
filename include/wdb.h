@@ -809,6 +809,8 @@ WDB_EXPORT int mk_write_color_table( struct rt_wdb *ofp );
  * the defaults, catch the pointer that is returned, and adjust the
  * structure to taste.
  *
+ * The name must be a non-zero length string.
+ *
  * The caller is responsible for initializing the header structures
  * forward and backward links.
  */

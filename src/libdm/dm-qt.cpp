@@ -405,6 +405,7 @@ qt_drawVList(dm *dmp, struct bn_vlist *vp)
 		    pnt[0] *= 2047;
 		    pnt[1] *= 2047 * dmp->dm_aspect;
 		    pnt[2] *= 2047;
+		    VMOVE(lpnt, pnt);
 
 		    if (dmp->dm_debugLevel > 2) {
 			bu_log("after clipping:\n");

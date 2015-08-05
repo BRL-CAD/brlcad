@@ -112,7 +112,7 @@ vo_update(struct view_obj *vop,
     if (vop->vo_callback)
 	(*vop->vo_callback)(vop->vo_clientData, vop);
     else if (oflag)
-	bu_observer_notify((void *)vop->interp, &(_vo_eval), &vop->vo_observers, bu_vls_addr(&vop->vo_name));
+	bu_observer_notify((void *)vop->interp, &vop->vo_observers, bu_vls_addr(&vop->vo_name), &(_vo_eval));
 }
 
 

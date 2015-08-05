@@ -380,6 +380,7 @@ struct ged {
     int (*add)(const struct ged_cmd *cmd);
     int (*del)(const char *name);
     int (*run)(int ac, char *av[]);
+    void *ged_interp; /* Temporary - do not rely on when designing new functionality */
 
     /* Interface to LIBDM */
     int ged_dm_width;

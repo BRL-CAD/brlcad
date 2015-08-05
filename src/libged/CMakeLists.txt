@@ -5,9 +5,6 @@
 if(BULLET_LIBRARIES)
   set(LIBGED_CMD_LIBS_LIST ${LIBGED_CMD_LIBS_LIST} ${BULLET_LIBRARIES})
   set(LIBGED_CMD_INCLUDE_DIRS ${LIBGED_CMD_INCLUDE_DIRS} ${CMAKE_CURRENT_SOURCE_DIR}/simulate ${BULLET_INCLUDE_DIR})
-  # The Bullet headers introduce a lot of shadow warnings - don't stop the
-  # build because of them
-  set(NO_STRICT_CXX_SETTING "NO_STRICT_CXX")
   add_definitions(-DHAVE_BULLET=1)
 endif(BULLET_LIBRARIES)
 
@@ -176,31 +173,11 @@ set(LIBGED_SOURCES
   nirt.c
   nmg.c
   nmg_mm.c
-  nmg_me.c
-  nmg_eins.c
-  nmg_esplit.c
-  nmg_eusplit.c
-  nmg_meonvu.c
-  nmg_mf.c
-  nmg_ml.c
-  nmg_mlv.c
-  nmg_mmr.c
-  nmg_mrsv.c
-  nmg_msv.c
-  nmg_mvu.c
-  nmg_mvvu.c
-  nmg_cface.c
   nmg_cmface.c
-  nmg_keu.c
-  nmg_kfu.c
-  nmg_klu.c
-  nmg_km.c
-  nmg_kr.c
-  nmg_ks.c
-  nmg_kvu.c
   nmg_collapse.c
   nmg_fix_normals.c
   nmg_simplify.c
+  nmg_kill_v.c
   ocenter.c
   open.c
   orient.c
@@ -368,7 +345,7 @@ if(CPP_DLL_DEFINES)
   add_definitions(-DCLIPPER_DLL_IMPORTS)
 endif(CPP_DLL_DEFINES)
 
-BRLCAD_ADDLIB(libged "${LIBGED_SOURCES}" "libwdb;librt;libfb;libbg;libbn;libbu;libicv;libanalyze;${LIBGED_CMD_LIBS_LIST};${REGEX_LIBRARY};${WINSOCK_LIB};${CLIPPER_LIBRARY};${M_LIBRARY}" ${NO_STRICT_CXX_SETTING})
+BRLCAD_ADDLIB(libged "${LIBGED_SOURCES}" "libwdb;librt;libfb;libbg;libbn;libbu;libicv;libanalyze;${LIBGED_CMD_LIBS_LIST};${REGEX_LIBRARY};${WINSOCK_LIB};${CLIPPER_LIBRARY};${M_LIBRARY}")
 SET_TARGET_PROPERTIES(libged PROPERTIES VERSION 20.0.1 SOVERSION 20)
 
 set(ged_ignore_files
@@ -391,3 +368,4 @@ CMAKEFILES(${ged_ignore_files})
 # indent-tabs-mode: t
 # End:
 # ex: shiftwidth=2 tabstop=8
+

@@ -87,7 +87,7 @@ BU_EXPORT extern int bu_observer_cmd(void *clientData, int argc, const char *arg
 /**
  * Notify observers.
  */
-BU_EXPORT extern void bu_observer_notify(void *context, bu_observer_eval_t *ofunc, struct bu_observer *headp, char *self);
+BU_EXPORT extern void bu_observer_notify(void *context, struct bu_observer *headp, char *self, bu_observer_eval_t *ofunc);
 
 /**
  * Free observers.

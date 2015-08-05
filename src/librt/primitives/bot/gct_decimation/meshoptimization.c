@@ -44,13 +44,6 @@
 
 #include "meshoptimizer.h"
 
-#include <stdio.h>
-
-
-#define OPTIMIZATION_FLAGS MO_FLAGS_DISABLE_LOOK_AHEAD | \
-  MO_FLAGS_ENABLE_LAZY_SEARCH | \
-  MO_FLAGS_FAST_SEED_SELECT
-
 
 void
 mesh_optimization(long vertexcount,
@@ -60,6 +53,10 @@ mesh_optimization(long vertexcount,
 		  int optimizationlevel
 		 )
 {
+    const int OPTIMIZATION_FLAGS = MO_FLAGS_DISABLE_LOOK_AHEAD
+				   | MO_FLAGS_ENABLE_LAZY_SEARCH
+				   | MO_FLAGS_FAST_SEED_SELECT;
+
     int depth, flags;
 
     switch (optimizationlevel) {

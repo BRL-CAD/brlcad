@@ -381,7 +381,7 @@ plot_ellipse(
 }
 
 int
-rt_tcl_list_to_int_array(const char *list, int **array, int *array_len)
+tcl_list_to_int_array(const char *list, int **array, int *array_len)
 {
     int i, len;
     const char **argv;
@@ -410,7 +410,7 @@ rt_tcl_list_to_int_array(const char *list, int **array, int *array_len)
 
 
 int
-rt_tcl_list_to_fastf_array(const char *list, fastf_t **array, int *array_len)
+tcl_list_to_fastf_array(const char *list, fastf_t **array, int *array_len)
 {
     int i, len;
     const char **argv;
@@ -436,6 +436,87 @@ rt_tcl_list_to_fastf_array(const char *list, fastf_t **array, int *array_len)
     bu_free((char *)argv, "argv");
     return len < *array_len ? len : *array_len;
 }
+
+
+#ifdef USE_OPENCL
+/**
+ * For now, just get the first device from the first platform.
+ */
+cl_device_id
+clt_get_cl_device(void)
+{
+    cl_int error;
+    cl_platform_id platform;
+    cl_device_id device;
+    int using_cpu = 0;
+
+    error = clGetPlatformIDs(1, &platform, NULL);
+    if (error != CL_SUCCESS) bu_bomb("failed to find an OpenCL platform");
+
+    error = clGetDeviceIDs(platform, CL_DEVICE_TYPE_GPU, 1, &device, NULL);
+    if (error == CL_DEVICE_NOT_FOUND) {
+        using_cpu = 1;
+        error = clGetDeviceIDs(platform, CL_DEVICE_TYPE_CPU, 1, &device, NULL);
+    }
+    if (error != CL_SUCCESS) bu_bomb("failed to find an OpenCL device (using this method)");
+
+    if (using_cpu) bu_log("clt: no GPU devices available; using CPU for OpenCL\n");
+
+    return device;
+}
+
+
+static char *
+clt_read_code(const char *filename, size_t *length)
+{
+    FILE *fp;
+    char *data;
+
+    fp = fopen(filename , "r");
+    if (!fp) bu_bomb("failed to read OpenCL code");
+
+    fseek(fp, 0, SEEK_END);
+    *length = ftell(fp);
+    rewind(fp);
+
+    data = (char*)bu_malloc((*length+1)*sizeof(char), "failed bu_malloc() in clt_read_code()");
+
+    if(fread(data, *length, 1, fp) != 1)
+    bu_bomb("failed to read OpenCL code");
+
+    fclose(fp);
+    return data;
+}
+
+cl_program
+clt_get_program(cl_context context, cl_device_id device, const char *filename)
+{
+    cl_int error;
+    cl_program program;
+    size_t code_length;
+    char *code = clt_read_code(filename, &code_length);
+    const char *pc_code = code;
+
+    program = clCreateProgramWithSource(context, 1, &pc_code, &code_length, &error);
+    if (error != CL_SUCCESS) bu_bomb("failed to create OpenCL program");
+
+    error = clBuildProgram(program, 1, &device, NULL, NULL, NULL);
+    if (error != CL_SUCCESS) {
+        size_t log_size;
+        char *log_data;
+
+        clGetProgramBuildInfo(program, device, CL_PROGRAM_BUILD_LOG, 0, NULL, &log_size);
+        log_data = (char*)bu_malloc(log_size*sizeof(char), "failed to allocate memory for log");
+        clGetProgramBuildInfo(program, device, CL_PROGRAM_BUILD_LOG, log_size, log_data, NULL);
+        bu_log("BUILD LOG:\n%s\n", log_data);
+        bu_bomb("failed to build OpenCL program");
+    }
+
+    bu_free(code, "failed bu_free() in clt_get_program()");
+    return program;
+}
+#endif
+
 
 /*
  * Local Variables:

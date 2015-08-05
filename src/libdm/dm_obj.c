@@ -2687,7 +2687,7 @@ dmo_fbs_callback(void *clientData)
     if (!dmop)
 	return;
 
-    bu_observer_notify((void *)dmop->interp, &(_dm_obj_eval), &dmop->dmo_observers, bu_vls_addr(&dmop->dmo_name));
+    bu_observer_notify((void *)dmop->interp, &dmop->dmo_observers, bu_vls_addr(&dmop->dmo_name), &(_dm_obj_eval));
 }
 #endif
 

@@ -80,28 +80,6 @@ struct sph_specific {
 #define cl_double3 cl_float3
 #endif
 
-struct AlignedPtr
-{
-    void *alloc;
-    void *ptr;
-};
-
-
-inline struct AlignedPtr
-aligned_malloc(size_t alignment, size_t size)
-{
-    struct AlignedPtr ap;
-    ap.alloc = bu_malloc(size + alignment - 1, "failed to allocate memory in aligned_malloc()");
-    ap.ptr = (void *)(((uintptr_t)ap.alloc + alignment - 1) / alignment*alignment);
-    return ap;
-}
-
-
-#define ALIGNED_SET(name, type, value) \
-        {(name) = aligned_malloc(sizeof(type), sizeof(type));\
-        *((type *)name.ptr) = (value);}
-
-
 
 const int clt_semaphore = 12; /* FIXME: for testing; this isn't our semaphore */
 static int clt_initialized = 0;
@@ -165,7 +143,7 @@ clt_read_code(size_t *length)
     *length = ftell(fp);
     rewind(fp);
 
-    data = bu_malloc((*length+1)*sizeof(char), "failed bu_malloc() in clt_read_code()");
+    data = (char*)bu_malloc((*length+1)*sizeof(char), "failed bu_malloc() in clt_read_code()");
 
     if(fread(data, *length, 1, fp) != 1)
 	bu_bomb("failed to read OpenCL code");
@@ -194,7 +172,7 @@ clt_get_program(cl_context context, cl_device_id device)
 	size_t log_size;
 	char *log_data;
 	clGetProgramBuildInfo(program, device, CL_PROGRAM_BUILD_LOG, 0, NULL, &log_size);
-	log_data = bu_malloc(log_size*sizeof(char), "failed to allocate memory for log");
+	log_data = (char*)bu_malloc(log_size*sizeof(char), "failed to allocate memory for log");
 	clGetProgramBuildInfo(program, device, CL_PROGRAM_BUILD_LOG, log_size+1, log_data, NULL);
 	bu_log("BUILD LOG:\n%s\n", log_data);
 	bu_bomb("failed to build OpenCL program");
@@ -212,71 +190,52 @@ clt_init()
     cl_int error;
 
     bu_semaphore_acquire(clt_semaphore);
-    if (clt_initialized) {
-	bu_semaphore_release(clt_semaphore);
-	return;
+    if (!clt_initialized) {
+        clt_initialized = 1;
+        atexit(clt_cleanup);
+
+        clt_device = clt_get_cl_device();
+
+        clt_context = clCreateContext(NULL, 1, &clt_device, NULL, NULL, &error);
+        if (error != CL_SUCCESS) bu_bomb("failed to create an OpenCL context");
+
+        clt_queue = clCreateCommandQueue(clt_context, clt_device, 0, &error);
+        if (error != CL_SUCCESS) bu_bomb("failed to create an OpenCL command queue");
+
+        clt_program = clt_get_program(clt_context, clt_device);
+
+        clt_kernel = clCreateKernel(clt_program, "sph_shot", &error);
+        if (error != CL_SUCCESS) bu_bomb("failed to create an OpenCL kernel");
     }
-
-    clt_initialized = 1;
-    atexit(clt_cleanup);
-
-    clt_device = clt_get_cl_device();
-
-    clt_context = clCreateContext(NULL, 1, &clt_device, NULL, NULL, &error);
-    if (error != CL_SUCCESS) bu_bomb("failed to create an OpenCL context");
-
-    clt_queue = clCreateCommandQueue(clt_context, clt_device, 0, &error);
-    if (error != CL_SUCCESS) bu_bomb("failed to create an OpenCL command queue");
-
-    clt_program = clt_get_program(clt_context, clt_device);
-
-    clt_kernel = clCreateKernel(clt_program, "sph_shot", &error);
-    if (error != CL_SUCCESS) bu_bomb("failed to create an OpenCL kernel");
-
     bu_semaphore_release(clt_semaphore);
 }
 
 
-static cl_double3
+static cl_double2
 clt_shot(cl_double3 o, cl_double3 dir, cl_double3 V, cl_double radsq, size_t hypersample)
 {
-    const char * const bu_free_error = "failed bu_free() in clt_shot()";
     cl_int error;
     cl_mem output;
-    cl_double3 result;
-    struct AlignedPtr a_result, a_o, a_dir, a_V, a_radsq;
+    cl_double2 result = {{0.0, 0.0}};
 
-    VSET(result.s, 0, 0, 0);
-    ALIGNED_SET(a_result, cl_double3, result);
-    ALIGNED_SET(a_o, cl_double3, o);
-    ALIGNED_SET(a_dir, cl_double3, dir);
-    ALIGNED_SET(a_V, cl_double3, V);
-    ALIGNED_SET(a_radsq, cl_double, radsq);
-
-    output = clCreateBuffer(clt_context, CL_MEM_COPY_HOST_PTR | CL_MEM_WRITE_ONLY,
-	    sizeof(cl_double3), a_result.ptr, &error);
+    output = clCreateBuffer(clt_context, CL_MEM_WRITE_ONLY, sizeof(result), NULL, &error);
     if (error != CL_SUCCESS) bu_bomb("failed to create OpenCL output buffer");
 
     bu_semaphore_acquire(clt_semaphore);
     error = clSetKernelArg(clt_kernel, 0, sizeof(cl_mem), &output);
-    error |= clSetKernelArg(clt_kernel, 1, sizeof(cl_double3), a_o.ptr);
-    error |= clSetKernelArg(clt_kernel, 2, sizeof(cl_double3), a_dir.ptr);
-    error |= clSetKernelArg(clt_kernel, 3, sizeof(cl_double3), a_V.ptr);
-    error |= clSetKernelArg(clt_kernel, 4, sizeof(cl_double), a_radsq.ptr);
+    error |= clSetKernelArg(clt_kernel, 1, sizeof(cl_double3), &o);
+    error |= clSetKernelArg(clt_kernel, 2, sizeof(cl_double3), &dir);
+    error |= clSetKernelArg(clt_kernel, 3, sizeof(cl_double3), &V);
+    error |= clSetKernelArg(clt_kernel, 4, sizeof(cl_double), &radsq);
     if (error != CL_SUCCESS) bu_bomb("failed to set OpenCL kernel arguments");
     error = clEnqueueNDRangeKernel(clt_queue, clt_kernel, 1, NULL, &hypersample, NULL, 0, NULL, NULL);
     bu_semaphore_release(clt_semaphore);
     if (error != CL_SUCCESS) bu_bomb("failed to enqueue OpenCL kernel");
 
     if (clFinish(clt_queue) != CL_SUCCESS) bu_bomb("failure in clFinish()");
-    clEnqueueReadBuffer(clt_queue, output, CL_TRUE, 0, sizeof(cl_double3), &result, 0, NULL, NULL);
+    clEnqueueReadBuffer(clt_queue, output, CL_TRUE, 0, sizeof(result), &result, 0, NULL, NULL);
     clReleaseMemObject(output);
-    bu_free(a_result.alloc, bu_free_error);
-    bu_free(a_o.alloc, bu_free_error);
-    bu_free(a_dir.alloc, bu_free_error);
-    bu_free(a_V.alloc, bu_free_error);
-    bu_free(a_radsq.alloc, bu_free_error);
-
+    
     return result;
 }
 #endif /* USE_OPENCL */
@@ -432,7 +391,7 @@ rt_sph_shot(struct soltab *stp, register struct xray *rp, struct application *ap
     cl_double3 dir;  /* ray direction (unit vector) */
     cl_double3 V;    /* vector to sphere  */
     cl_double radsq; /* sphere radius squared */
-    cl_double3 result;
+    cl_double2 result;
     struct seg *segp;
 
     (void)rp; (void)ap;

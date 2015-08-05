@@ -14,6 +14,10 @@ changes made.  See document footer for additional details.
 --- 2014-XX-XX  Release 7.26.XX                                    ---
 ----------------------------------------------------------------------
 
+* preliminary OpenCL-accelerated coherent ray tracing pipeline
+	- Jon Engbert, Vasco Alexandre da Silva Costa
+* improved point cloud plot visualization - Sean Morrison
+* initial support for datum points, lines, and planes - Sean Morrison
 * fixed program freezing bug in MGED grouper command - Bob Parker
 * improved help option consistency across numerous tools - Carl Moore
 * added prefatory FASTGEN4 geometry export support - Jon Engbert

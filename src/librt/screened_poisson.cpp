@@ -54,6 +54,11 @@ struct rt_parallel_container {
     int ray_dir;
     int ncpus;
     fastf_t delta;
+
+    point_t model_min;
+    point_t model_max;
+    fastf_t model_span[3];
+    fastf_t perCpuSlabWidth[3];
 };
 
 /* add all hit point info to info list */
@@ -129,8 +134,6 @@ _rt_gen_worker(int cpu, void *ptr)
     int i, j;
     struct application ap;
     struct rt_parallel_container *state = (struct rt_parallel_container *)ptr;
-    point_t min, max;
-    int ymin, ymax;
     int dir1, dir2, dir3;
     fastf_t d[3];
     int n[3];
@@ -143,54 +146,48 @@ _rt_gen_worker(int cpu, void *ptr)
     ap.a_resource = &state->resp[cpu];
     ap.a_uptr = (void *)(&state->npts[cpu]);
 
-    /* get min and max points of bounding box */
-    VMOVE(min, state->rtip->mdl_min);
-    VMOVE(max, state->rtip->mdl_max);
-
     /* Make sure we've got at least 10 steps in all 3 dimensions,
      * regardless of delta */
     for (i = 0; i < 3; i++) {
-	n[i] = (max[i] - min[i])/state->delta;
+	n[i] = state->model_span[i]/state->delta;
 	if(n[i] < 10) n[i] = 10;
-	d[i] = (max[i] - min[i])/n[i];
+	d[i] = state->model_span[i]/n[i];
     }
 
     dir1 = state->ray_dir;
     dir2 = (state->ray_dir+1)%3;
     dir3 = (state->ray_dir+2)%3;
 
-    if (state->ncpus == 1) {
-	ymin = 0;
-	ymax = n[dir3];
-    } else {
-	ymin = n[dir3]/state->ncpus * (cpu - 1) + 1;
-	ymax = n[dir3]/state->ncpus * (cpu);
-	if (cpu == 1) ymin = 0;
-	if (cpu == state->ncpus) ymax = n[dir3];
-    }
-
-    ap.a_ray.r_dir[dir1] = -1;
+    /* set ray direction */
+    ap.a_ray.r_dir[dir1] = 1;
     ap.a_ray.r_dir[dir2] = 0;
     ap.a_ray.r_dir[dir3] = 0;
-    VMOVE(ap.a_ray.r_pt, min);
-    ap.a_ray.r_pt[dir1] = max[dir1] + 100;
+    
+    ap.a_ray.r_pt[dir1] = state->model_min[dir1] -100;
+    double slabBottom = (cpu - 1) * state->perCpuSlabWidth[dir3];
+    double slabTop = cpu * state->perCpuSlabWidth[dir3];
 
-    for (i = 0; i < n[dir2]; i++) {
-	ap.a_ray.r_pt[dir3] = min[dir3] + d[dir3] * ymin;
-	for (j = ymin; j < ymax; j++) {
+    int slabStartLN = ceil(slabBottom / d[dir3]);
+    int slabEndLN = ceil(slabTop / d[dir3]);
+
+    for (j = slabStartLN; j <= slabEndLN; j++)
+    {
+	ap.a_ray.r_pt[dir3] = state->model_min[dir3] + (j * d[dir3]);
+
+	int iAxisSteps = ceil(state->model_span[dir2] / d[dir2]);
+	for (i = 0; i <= iAxisSteps; i++)
+	{
+	    ap.a_ray.r_pt[dir2] = state->model_min[dir2] + (i * d[dir2]);
 	    rt_shootray(&ap);
-	    ap.a_ray.r_pt[dir3] += d[dir3];
 	}
-	ap.a_ray.r_pt[dir2] += d[dir2];
     }
 }
 
 
 HIDDEN int
-_rt_generate_points(int **faces, int *num_faces, point_t **points, int *num_pnts, struct bu_ptbl *hit_pnts, struct db_i *dbip, const char *obj, fastf_t delta)
+_rt_generate_points(int **faces, int *num_faces, point_t **points, int *num_pnts, struct bu_ptbl *hit_pnts, struct db_i *dbip, const char *obj, fastf_t delta, int fidelity)
 {
     int i, dir1, j;
-    point_t min, max;
     int ncpus = bu_avail_cpus();
     struct rt_parallel_container *state;
     struct bu_vls vlsstr;
@@ -203,20 +200,28 @@ _rt_generate_points(int **faces, int *num_faces, point_t **points, int *num_pnts
     state->rtip = rt_new_rti(dbip);
     state->delta = delta;
 
+    /* load geometry object */
     if (rt_gettree(state->rtip, obj) < 0) return -1;
     rt_prep_parallel(state->rtip, 1);
 
+    /* initialize all the per-CPU resources that are going to be used */
     state->resp = (struct resource *)bu_calloc(ncpus+1, sizeof(struct resource), "resources");
     for (i = 0; i < ncpus+1; i++) {
 	rt_init_resource(&(state->resp[i]), i, state->rtip);
     }
 
+    /* allocate storage for the points */
     state->npts = (struct rt_point_container *)bu_calloc(ncpus+1, sizeof(struct rt_point_container), "point container arrays");
     int n[3];
-    VMOVE(min, state->rtip->mdl_min);
-    VMOVE(max, state->rtip->mdl_max);
+
+    /* get min and max points of bounding box */
+    VMOVE(state->model_min, state->rtip->mdl_min);
+    VMOVE(state->model_max, state->rtip->mdl_max);
+    VSUB2(state->model_span, state->model_max, state->model_min);
     for (i = 0; i < 3; i++) {
-	n[i] = (int)((max[i] - min[i])/state->delta) + 2;
+	state->perCpuSlabWidth[i] = state->model_span[i] / ncpus;
+	
+	n[i] = (int)(state->model_span[i]/state->delta) + 2;
 	if(n[i] < 12) n[i] = 12;
     }
     int total = 0;
@@ -228,6 +233,7 @@ _rt_generate_points(int **faces, int *num_faces, point_t **points, int *num_pnts
 	state->npts[i].capacity = total;
     }
 
+    /* perform raytracing from the 3 views */
     for (dir1 = 0; dir1 < 3; dir1++) {
 	state->ray_dir = dir1;
 	state->ncpus = ncpus;
@@ -235,6 +241,7 @@ _rt_generate_points(int **faces, int *num_faces, point_t **points, int *num_pnts
 	bu_parallel(_rt_gen_worker, ncpus, (void *)state);
     }
 
+    /* count the number of points */
     int out_cnt = 0;
     for (i = 0; i < ncpus+1; i++) {
 	bu_log("%d, pnt_cnt: %d\n", i, state->npts[i].pnt_cnt);
@@ -247,6 +254,7 @@ _rt_generate_points(int **faces, int *num_faces, point_t **points, int *num_pnts
 
     if (!out_cnt) return 1;
 
+    /* store points */
     struct rt_vert **rt_verts = (struct rt_vert **)bu_calloc(out_cnt, sizeof(struct rt_vert *), "output array");
     int curr_ind = 0;
     for (i = 0; i < ncpus+1; i++) {
@@ -263,15 +271,27 @@ _rt_generate_points(int **faces, int *num_faces, point_t **points, int *num_pnts
 	}
     }
 
-    struct spr_options opts = SPR_OPTIONS_DEFAULT_INIT;
-    (void)spr_surface_build(faces, num_faces, (double **)points, num_pnts, (const struct cvertex **)rt_verts, out_cnt, &opts);
+    /* perform SPR algorithm */
+    (void)spr_surface_build(faces, num_faces, (double **)points, num_pnts,
+			    (const struct cvertex **)rt_verts, out_cnt, fidelity);
 
+    /* free memory */
+    bu_free(rt_verts, "output array");
+    rt_verts = NULL;
+    for (i = 0; i < ncpus+1; i++) {
+	bu_free(state->npts[i].pts, "npoints arrays");
+    }
+    bu_free(state->npts, "point container arrays");
+    bu_free(state->resp, "resources");
+    BU_PUT(state, struct rt_parallel_container);
+    state = NULL;
+    
     return 0;
 }
 
 extern "C" void
 rt_generate_mesh(int **faces, int *num_faces, point_t **points, int *num_pnts,
-	struct db_i *dbip, const char *obj, fastf_t delta)
+		 struct db_i *dbip, const char *obj, fastf_t delta, int fidelity)
 {
     fastf_t d = delta;
     struct bu_ptbl *hit_pnts;
@@ -280,7 +300,7 @@ rt_generate_mesh(int **faces, int *num_faces, point_t **points, int *num_pnts,
     BU_GET(hit_pnts, struct bu_ptbl);
     bu_ptbl_init(hit_pnts, 64, "hit pnts");
     if (NEAR_ZERO(d, SMALL_FASTF)) d = 1;
-    if (_rt_generate_points(faces, num_faces, points, num_pnts, hit_pnts, dbip, obj, d)) {
+    if (_rt_generate_points(faces, num_faces, points, num_pnts, hit_pnts, dbip, obj, d, fidelity)) {
 	(*num_faces) = 0;
 	(*num_pnts) = 0;
 	return;
