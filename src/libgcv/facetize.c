@@ -137,6 +137,8 @@ gcv_facetize(struct db_i *db, const struct db_full_path *path,
 
     /* static to silence warnings over longjmp  */
     static struct rt_bot_internal *result;
+    static struct shell *current_shell;
+
 
     RT_CK_DBI(db);
     RT_CK_FULL_PATH(path);
@@ -189,8 +191,6 @@ gcv_facetize(struct db_i *db, const struct db_full_path *path,
     _gcv_optimize_model(nmg_model);
 
     for (BU_LIST_FOR(current_region, nmgregion, &nmg_model->r_hd)) {
-	struct shell *current_shell;
-
 	NMG_CK_REGION(current_region);
 
 	for (BU_LIST_FOR(current_shell, shell, &current_region->s_hd)) {
