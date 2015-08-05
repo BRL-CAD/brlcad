@@ -165,6 +165,108 @@ struct ell_specific {
 
 #define ELL_NULL ((struct ell_specific *)0)
 
+#ifdef USE_OPENCL
+#ifdef CLT_SINGLE_PRECISION
+#define cl_double cl_float
+#define cl_double3 cl_float3
+#endif
+
+
+static const int clt_semaphore = 12; /* FIXME: for testing; this isn't our semaphore */
+static int clt_initialized = 0;
+static cl_device_id clt_device;
+static cl_context clt_context;
+static cl_command_queue clt_queue;
+static cl_program clt_program;
+static cl_kernel clt_kernel;
+
+
+static void
+clt_cleanup()
+{
+    if (!clt_initialized) return;
+
+    clReleaseKernel(clt_kernel);
+    clReleaseCommandQueue(clt_queue);
+    clReleaseProgram(clt_program);
+    clReleaseContext(clt_context);
+
+    clt_initialized = 0;
+}
+
+
+static void
+clt_init()
+{
+    cl_int error;
+
+    bu_semaphore_acquire(clt_semaphore);
+    if (!clt_initialized) {
+        clt_initialized = 1;
+        atexit(clt_cleanup);
+
+        clt_device = clt_get_cl_device();
+
+        clt_context = clCreateContext(NULL, 1, &clt_device, NULL, NULL, &error);
+        if (error != CL_SUCCESS) bu_bomb("failed to create an OpenCL context");
+
+        clt_queue = clCreateCommandQueue(clt_context, clt_device, 0, &error);
+        if (error != CL_SUCCESS) bu_bomb("failed to create an OpenCL command queue");
+
+        clt_program = clt_get_program(clt_context, clt_device, "ell_shot.cl");
+
+        clt_kernel = clCreateKernel(clt_program, "ell_shot", &error);
+        if (error != CL_SUCCESS) bu_bomb("failed to create an OpenCL kernel");
+    }
+    bu_semaphore_release(clt_semaphore);
+}
+
+static void
+clt_shot(cl_double2 *dist, cl_int2 *surfno, struct xray *rp, struct soltab *stp)
+{
+    cl_double3 r_pt, r_dir;
+    const size_t hypersample = 1;
+    cl_int error;
+    cl_mem pdist, psurfno;
+
+    struct ell_specific *ell =
+	(struct ell_specific *)stp->st_specific;
+
+    cl_double3 V;
+    cl_double16 SoR;
+
+    VMOVE(r_pt.s, rp->r_pt);
+    VMOVE(r_dir.s, rp->r_dir);
+
+    VMOVE(V.s, ell->ell_V);
+    MAT_COPY(SoR.s, ell->ell_SoR);
+
+    pdist = clCreateBuffer(clt_context, CL_MEM_WRITE_ONLY, sizeof(*dist), NULL, &error);
+    if (error != CL_SUCCESS) bu_bomb("failed to create OpenCL ell output buffer");
+    psurfno = clCreateBuffer(clt_context, CL_MEM_WRITE_ONLY, sizeof(*surfno), NULL, &error);
+    if (error != CL_SUCCESS) bu_bomb("failed to create OpenCL ell output buffer");
+
+    bu_semaphore_acquire(clt_semaphore);
+    error = clSetKernelArg(clt_kernel, 0, sizeof(cl_mem), &pdist);
+    error |= clSetKernelArg(clt_kernel, 1, sizeof(cl_mem), &psurfno);
+    error |= clSetKernelArg(clt_kernel, 2, sizeof(cl_double3), &r_pt);
+    error |= clSetKernelArg(clt_kernel, 3, sizeof(cl_double3), &r_dir);
+    error |= clSetKernelArg(clt_kernel, 4, sizeof(cl_double3), &V);
+    error |= clSetKernelArg(clt_kernel, 5, sizeof(cl_double16), &SoR);
+    if (error != CL_SUCCESS) bu_bomb("failed to set OpenCL kernel arguments");
+    error = clEnqueueNDRangeKernel(clt_queue, clt_kernel, 1, NULL, &hypersample, NULL, 0, NULL, NULL);
+    bu_semaphore_release(clt_semaphore);
+    if (error != CL_SUCCESS) bu_bomb("failed to enqueue OpenCL kernel");
+
+    if (clFinish(clt_queue) != CL_SUCCESS) bu_bomb("failure in clFinish()");
+    clEnqueueReadBuffer(clt_queue, pdist, CL_TRUE, 0, sizeof(*dist), dist, 0, NULL, NULL);
+    clReleaseMemObject(pdist);
+    clEnqueueReadBuffer(clt_queue, psurfno, CL_TRUE, 0, sizeof(*surfno), surfno, 0, NULL, NULL);
+    clReleaseMemObject(psurfno);
+}
+#endif /* USE_OPENCL */
+
+
 /**
  * Compute the bounding RPP for an ellipsoid
  */
@@ -265,6 +367,10 @@ rt_ell_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     mat_t mtemp;
     vect_t Au, Bu, Cu;	/* A, B, C with unit length */
     fastf_t f;
+
+#ifdef USE_OPENCL
+    clt_init();
+#endif
 
     eip = (struct rt_ell_internal *)ip->idb_ptr;
     RT_ELL_CK_MAGIC(eip);
@@ -388,6 +494,27 @@ rt_ell_print(register const struct soltab *stp)
 int
 rt_ell_shot(struct soltab *stp, register struct xray *rp, struct application *ap, struct seg *seghead)
 {
+#ifdef USE_OPENCL
+    cl_double2 dist;
+    cl_int2 surfno;
+
+    clt_shot(&dist, &surfno, rp, stp);
+
+    if (surfno.s[0] == INT_MAX) {
+	return 0;		/* No hit */
+    } else {
+	struct seg *segp;
+
+	RT_GET_SEG(segp, ap->a_resource);
+	segp->seg_stp = stp;
+	segp->seg_in.hit_dist = dist.s[0];
+	segp->seg_out.hit_dist = dist.s[1];
+	segp->seg_in.hit_surfno = surfno.s[0];
+	segp->seg_out.hit_surfno = surfno.s[1];
+	BU_LIST_INSERT(&(seghead->l), &(segp->l));
+	return 2;		/* HIT */
+    }
+#else
     register struct ell_specific *ell =
 	(struct ell_specific *)stp->st_specific;
     register struct seg *segp;
@@ -426,6 +553,7 @@ rt_ell_shot(struct soltab *stp, register struct xray *rp, struct application *ap
     segp->seg_out.hit_surfno = 0;
     BU_LIST_INSERT(&(seghead->l), &(segp->l));
     return 2;			/* HIT */
+#endif
 }
 
 

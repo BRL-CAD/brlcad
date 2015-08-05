@@ -181,6 +181,117 @@ const short local_arb4_edge_vertex_mapping[6][2] = {
 };
 
 
+#ifdef USE_OPENCL
+#ifdef CLT_SINGLE_PRECISION
+#define cl_double cl_float
+#define cl_double3 cl_float3
+#endif
+
+
+static const int clt_semaphore = 12; /* FIXME: for testing; this isn't our semaphore */
+static int clt_initialized = 0;
+static cl_device_id clt_device;
+static cl_context clt_context;
+static cl_command_queue clt_queue;
+static cl_program clt_program;
+static cl_kernel clt_kernel;
+
+
+static void
+clt_cleanup()
+{
+    if (!clt_initialized) return;
+
+    clReleaseKernel(clt_kernel);
+    clReleaseCommandQueue(clt_queue);
+    clReleaseProgram(clt_program);
+    clReleaseContext(clt_context);
+
+    clt_initialized = 0;
+}
+
+static void
+clt_init()
+{
+    cl_int error;
+
+    bu_semaphore_acquire(clt_semaphore);
+    if (!clt_initialized) {
+        clt_initialized = 1;
+        atexit(clt_cleanup);
+
+        clt_device = clt_get_cl_device();
+
+        clt_context = clCreateContext(NULL, 1, &clt_device, NULL, NULL, &error);
+        if (error != CL_SUCCESS) bu_bomb("failed to create an OpenCL context");
+
+        clt_queue = clCreateCommandQueue(clt_context, clt_device, 0, &error);
+        if (error != CL_SUCCESS) bu_bomb("failed to create an OpenCL command queue");
+
+        clt_program = clt_get_program(clt_context, clt_device, "arb8_shot.cl");
+
+        clt_kernel = clCreateKernel(clt_program, "arb8_shot", &error);
+        if (error != CL_SUCCESS) bu_bomb("failed to create an OpenCL kernel");
+    }
+    bu_semaphore_release(clt_semaphore);
+}
+
+static void
+clt_shot(cl_double2 *dist, cl_int2 *surfno, struct xray *rp, struct soltab *stp)
+{
+    cl_double3 r_pt, r_dir;
+    const size_t hypersample = 1;
+    cl_int error;
+    cl_mem pdist, psurfno, ppeqns;
+
+    struct arb_specific *arb =
+	(struct arb_specific *)stp->st_specific;
+
+    cl_double peqns[4*6];
+    cl_int nmfaces;
+
+    const struct aface *afp;
+    cl_int j;
+
+    VMOVE(r_pt.s, rp->r_pt);
+    VMOVE(r_dir.s, rp->r_dir);
+
+    for (afp = &arb->arb_face[j=0]; j < 6; j++, afp++) {
+	HMOVE(peqns+4*j, afp->peqn);
+    }
+    nmfaces = arb->arb_nmfaces;
+
+    pdist = clCreateBuffer(clt_context, CL_MEM_WRITE_ONLY, sizeof(*dist), NULL, &error);
+    if (error != CL_SUCCESS) bu_bomb("failed to create OpenCL arb output buffer");
+    psurfno = clCreateBuffer(clt_context, CL_MEM_WRITE_ONLY, sizeof(*surfno), NULL, &error);
+    if (error != CL_SUCCESS) bu_bomb("failed to create OpenCL arb output buffer");
+
+    ppeqns = clCreateBuffer(clt_context, CL_MEM_READ_ONLY|CL_MEM_COPY_HOST_PTR, sizeof(peqns), peqns, &error);
+    if (error != CL_SUCCESS) bu_bomb("failed to create OpenCL arb input buffer");
+
+    bu_semaphore_acquire(clt_semaphore);
+    error = clSetKernelArg(clt_kernel, 0, sizeof(cl_mem), &pdist);
+    error |= clSetKernelArg(clt_kernel, 1, sizeof(cl_mem), &psurfno);
+    error |= clSetKernelArg(clt_kernel, 2, sizeof(cl_double3), &r_pt);
+    error |= clSetKernelArg(clt_kernel, 3, sizeof(cl_double3), &r_dir);
+    error |= clSetKernelArg(clt_kernel, 4, sizeof(cl_mem), &ppeqns);
+    error |= clSetKernelArg(clt_kernel, 5, sizeof(cl_int), &nmfaces);
+    if (error != CL_SUCCESS) bu_bomb("failed to set OpenCL kernel arguments");
+    error = clEnqueueNDRangeKernel(clt_queue, clt_kernel, 1, NULL, &hypersample, NULL, 0, NULL, NULL);
+    bu_semaphore_release(clt_semaphore);
+    if (error != CL_SUCCESS) bu_bomb("failed to enqueue OpenCL kernel");
+
+    if (clFinish(clt_queue) != CL_SUCCESS) bu_bomb("failure in clFinish()");
+    clEnqueueReadBuffer(clt_queue, pdist, CL_TRUE, 0, sizeof(*dist), dist, 0, NULL, NULL);
+    clReleaseMemObject(pdist);
+    clEnqueueReadBuffer(clt_queue, psurfno, CL_TRUE, 0, sizeof(*surfno), surfno, 0, NULL, NULL);
+    clReleaseMemObject(psurfno);
+
+    clReleaseMemObject(ppeqns);
+}
+#endif /* USE_OPENCL */
+
+
 /* rt_arb_get_cgtype(), rt_arb_std_type(), and rt_arb_centroid()
  * stolen from mged/arbs.c */
 
@@ -774,6 +885,10 @@ rt_arb_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 {
     struct rt_arb_internal *aip;
 
+#ifdef USE_OPENCL
+    clt_init();
+#endif
+
     aip = (struct rt_arb_internal *)ip->idb_ptr;
     RT_ARB_CK_MAGIC(aip);
 
@@ -827,6 +942,27 @@ rt_arb_print(register const struct soltab *stp)
 int
 rt_arb_shot(struct soltab *stp, register struct xray *rp, struct application *ap, struct seg *seghead)
 {
+#ifdef USE_OPENCL
+    cl_double2 dist;
+    cl_int2 surfno;
+
+    clt_shot(&dist, &surfno, rp, stp);
+
+    if (surfno.s[0] == INT_MAX) {
+	return 0;	/* MISS */
+    } else {
+	struct seg *segp;
+
+	RT_GET_SEG(segp, ap->a_resource);
+	segp->seg_stp = stp;
+	segp->seg_in.hit_dist = dist.s[0];
+	segp->seg_in.hit_surfno = surfno.s[0];
+	segp->seg_out.hit_dist = dist.s[1];
+	segp->seg_out.hit_surfno = surfno.s[1];
+	BU_LIST_INSERT(&(seghead->l), &(segp->l));
+	return 2;	/* HIT */
+    }
+#else
     struct arb_specific *arbp = (struct arb_specific *)stp->st_specific;
     int iplane, oplane;
     fastf_t in, out;	/* ray in/out distances */
@@ -905,6 +1041,7 @@ rt_arb_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 	BU_LIST_INSERT(&(seghead->l), &(segp->l));
     }
     return 2;			/* HIT */
+#endif
 }
 
 
