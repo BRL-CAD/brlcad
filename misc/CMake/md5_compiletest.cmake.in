@@ -31,6 +31,9 @@
 # NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
+# TODO - this test is not actually very helpful in many cases, since
+# it is plausible for the OS to pause file IO and get through this test
+# without things being "done".  Need to replace this with something better...
 ###
 
 macro(MD5 filename md5sum)
