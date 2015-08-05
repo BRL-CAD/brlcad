@@ -62,6 +62,11 @@ vo_deleteProc(void *clientData)
     BU_PUT(vop, struct view_obj);
 }
 
+HIDDEN void
+_vo_eval(void *context, const char *cmd) {
+    Tcl_Interp *interp = (Tcl_Interp *)context;
+    Tcl_Eval(interp, cmd);
+}
 
 void
 vo_update(struct view_obj *vop,
@@ -107,7 +112,7 @@ vo_update(struct view_obj *vop,
     if (vop->vo_callback)
 	(*vop->vo_callback)(vop->vo_clientData, vop);
     else if (oflag)
-	bu_observer_notify(vop->interp, &vop->vo_observers, bu_vls_addr(&vop->vo_name));
+	bu_observer_notify((void *)vop->interp, &(_vo_eval), &vop->vo_observers, bu_vls_addr(&vop->vo_name));
 }
 
 

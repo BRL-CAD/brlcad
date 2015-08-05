@@ -43,6 +43,7 @@
 
 #  if defined(_WIN32) && !defined(__CYGWIN__) && !defined(__MINGW32__) && !defined(CMAKE_HEADERS)
 #    include "config_win.h"
+#    include "brlcad_config.h"
 #  else
 #    include "brlcad_config.h"
 #  endif  /* _WIN32 */

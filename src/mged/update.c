@@ -69,6 +69,7 @@ f_update(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char
 
 
 #if defined(HAVE_TK)
+
 /*
  * Copied from libtk/generic/tkCmds.c. Used by
  * the f_wait() procedure.
@@ -86,10 +87,10 @@ WaitVariableProc(ClientData clientData,	/* Pointer to integer to set to 1. */
     return (char *) NULL;
 }
 
+
 /*
  * Copied from libtk/generic/tkCmds.c. Used by the f_wait() procedure.
  */
-#ifdef HAVE_X11_XLIB_H
 static void
 WaitVisibilityProc(ClientData clientData,
 		   XEvent *eventPtr)
@@ -103,18 +104,12 @@ WaitVisibilityProc(ClientData clientData,
 	*donePtr = 2;
     }
 }
-#else
-static void
-WaitVisibilityProc(ClientData clientData, void *eventPtr)
-{
-}
-#endif /* HAVE_X11_XLIB_H */
+
 
 /*
  * Copied from libtk/generic/tkCmds.c. Used by
  * the f_wait() procedure.
  */
-#ifdef HAVE_X11_XLIB_H
 static void
 WaitWindowProc(ClientData clientData,
 	       XEvent *eventPtr)
@@ -125,12 +120,7 @@ WaitWindowProc(ClientData clientData,
 	*donePtr = 1;
     }
 }
-#else
-static void
-WaitWindowProc(ClientData clientData, void *eventPtr)
-{
-}
-#endif /* HAVE_X11_XLIB_H */
+
 #endif /* HAVE_TK */
 
 /*

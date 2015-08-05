@@ -42,6 +42,7 @@
 #include "bn/tol.h"
 #include "rt/defines.h"
 #include "rt/application.h"
+#include "rt/functab.h"
 #include "rt/hit.h"
 #include "rt/piece.h"
 #include "rt/resource.h"
@@ -149,7 +150,7 @@ RT_EXPORT extern int rt_obj_get(struct bu_vls *logstr, const struct rt_db_intern
 /**
  * db object 'adjust' support, modify a tcl list representation
  */
-RT_EXPORT extern int rt_obj_adjust(struct bu_vls *logstr, struct rt_db_internal *ip, int argc, char **argv);
+RT_EXPORT extern int rt_obj_adjust(struct bu_vls *logstr, struct rt_db_internal *ip, int argc, const char **argv);
 
 /**
  * describe an object in text form (used by the 'l' command)
@@ -175,6 +176,13 @@ RT_EXPORT extern int rt_obj_params(struct pc_pc_set *ps, const struct rt_db_inte
  * mirror an object about a plane
  */
 RT_EXPORT extern int rt_obj_mirror(struct rt_db_internal *ip, const plane_t *plane);
+
+/**
+ * reduce an object into some form of simpler representation
+ */
+RT_EXPORT extern void rt_obj_reduce(struct rt_db_internal *dest, const struct rt_db_internal *ip, fastf_t reduction_level, unsigned flags);
+
+#define RT_OBJ_REDUCE_PRESERVE_VOLUME 0x1
 
 __END_DECLS
 

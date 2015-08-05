@@ -8,6 +8,9 @@
 #include "bu/malloc.h"
 #include "shape_recognition.h"
 
+#define L3_OFFSET 6
+#define L4_OFFSET 8
+
 /* Return -1 if the cylinder face is pointing in toward the cylinder axis,
  * 1 if it is pointing out, and 0 if there is some other problem */
 int
@@ -37,7 +40,7 @@ negative_cylinder(struct subbrep_object_data *data, int face_index, double cyl_t
 
 // Sort the curved edges into one of two circles.
 int
-categorize_arc_edges(ON_Circle *set1_c, ON_Circle *set2_c,
+categorize_arc_edges(struct bu_vls *msgs, ON_Circle *set1_c, ON_Circle *set2_c,
 	struct subbrep_object_data *data, std::set<int> *active_edges, double cyl_tol)
 {
     if (!set1_c || !set2_c || !data || !active_edges) return 0;
@@ -78,7 +81,7 @@ categorize_arc_edges(ON_Circle *set1_c, ON_Circle *set2_c,
 	    double d1 = fabs(circ.Center().DistanceTo(set1_c->Center()));
 	    double d2 = fabs(circ.Center().DistanceTo(set2_c->Center()));
 	    if (!NEAR_ZERO(d1, cyl_tol) && !NEAR_ZERO(d2, cyl_tol)) {
-		bu_log("found extra circle in %s - no go\n", bu_vls_addr(data->key));
+		if (msgs) bu_vls_printf(msgs, "%*sfound extra circle in %s - no go\n", L4_OFFSET, " ", bu_vls_addr(data->key));
 		delete ec;
 		return 0;
 	    }
@@ -130,7 +133,7 @@ categorize_arc_edges(ON_Circle *set1_c, ON_Circle *set2_c,
 
 
 int
-subbrep_is_cylinder(struct subbrep_object_data *data, fastf_t cyl_tol)
+subbrep_is_cylinder(struct bu_vls *msgs, struct subbrep_object_data *data, fastf_t cyl_tol)
 {
     std::set<int>::iterator f_it;
     std::set<int> planar_surfaces;
@@ -237,7 +240,7 @@ subbrep_is_cylinder(struct subbrep_object_data *data, fastf_t cyl_tol)
     // arc curves that survived the degeneracy test has already resulted in an
     // earlier rejection.
     ON_Circle set1_c, set2_c;
-    if (!categorize_arc_edges(&set1_c, &set2_c, data, &active_edges, cyl_tol)) {
+    if (!categorize_arc_edges(msgs, &set1_c, &set2_c, data, &active_edges, cyl_tol)) {
 	return 0;
     }
 
@@ -337,7 +340,7 @@ cylindrical_planar_vertices(struct subbrep_object_data *data, int face_index)
 }
 
 int
-cylinder_csg(struct subbrep_object_data *data, fastf_t cyl_tol)
+cylinder_csg(struct bu_vls *msgs, struct subbrep_object_data *data, fastf_t cyl_tol)
 {
     std::set<int> planar_surfaces;
     std::set<int> cylindrical_surfaces;
@@ -358,9 +361,11 @@ cylinder_csg(struct subbrep_object_data *data, fastf_t cyl_tol)
         }
     }
     data->params->bool_op = 'u'; // Initialize to union
+#if 0
     if (BU_STR_EQUAL(bu_vls_addr(data->key), "21_89_102")) {
 	bu_log("key found\n");
     }
+#endif
 
     // Check for multiple cylinders.  Can handle this, but for now punt.
     ON_Cylinder cylinder;
@@ -377,7 +382,7 @@ cylinder_csg(struct subbrep_object_data *data, fastf_t cyl_tol)
 	delete fcs;
 	//std::cout << "cyl_count: " << cyl_count << "\n";
 	if (f_cylinder.circle.Center().DistanceTo(cylinder.circle.Center()) > cyl_tol) {
-	    bu_log("Multiple cylinders found in %s - no go\n", bu_vls_addr(data->key));
+	    if (msgs) bu_vls_printf(msgs, "%*sMultiple cylinders found in %s - no go\n", L3_OFFSET, " ", bu_vls_addr(data->key));
 	    return 0;
 	}
     }
@@ -394,7 +399,7 @@ cylinder_csg(struct subbrep_object_data *data, fastf_t cyl_tol)
 	    ON_Plane eplane;
 	    ON_Curve *ecv2 = edge->EdgeCurveOf()->Duplicate();
 	    if (!ecv2->IsPlanar(&eplane, cyl_tol)) {
-		bu_log("Nonplanar edge in cylinder (%s) - no go\n", bu_vls_addr(data->key));
+		if (msgs) bu_vls_printf(msgs, "%*sNonplanar edge in cylinder (%s) - no go\n", L3_OFFSET, " ", bu_vls_addr(data->key));
 		delete ecv;
 		delete ecv2;
 		return 0;
@@ -512,7 +517,7 @@ cylinder_csg(struct subbrep_object_data *data, fastf_t cyl_tol)
 			}
 		    }
 		    if (!assigned) {
-			bu_log("found extra circle in %s - no go\n", bu_vls_addr(data->key));
+			if (msgs) bu_vls_printf(msgs, "%*sfound extra circle in %s - no go\n", L3_OFFSET, " ", bu_vls_addr(data->key));
 			//std::cout << "center 1 " << set1_c.Center().x << " " << set1_c.Center().y << " " << set1_c.Center().z << "\n";
 			//std::cout << "center 2 " << set2_c.Center().x << " " << set2_c.Center().y << " " << set2_c.Center().z << "\n";
 			//std::cout << "circ " << circ.Center().x << " " << circ.Center().y << " " << circ.Center().z << "\n";
@@ -535,6 +540,8 @@ cylinder_csg(struct subbrep_object_data *data, fastf_t cyl_tol)
 	data->negative_shape = negative_cylinder(data, *cylindrical_surfaces.begin(), cyl_tol);
 	data->params->bool_op = (data->negative_shape == -1) ? '-' : 'u';
 
+	// TODO -check for shared verts between nonlinear curves from different planes.
+	// If we have that case, we're looking at a "sliver" of a cylinder and need arbs
 
 	if (corner_verts.size() == 0) {
 	    //std::cout << "Full cylinder\n";
@@ -626,7 +633,7 @@ cylinder_csg(struct subbrep_object_data *data, fastf_t cyl_tol)
 	    ON_Plane b_plane = set1_c.Plane();
 	    ON_Plane t_plane = set2_c.Plane();
 	    if (subbrep_top_bottom_pnts(data, &corner_verts, &t_plane, &b_plane, &top_pnts, &bottom_pnts)) {
-		bu_log("Point top/bottom sorting failed in %s - no go\n", bu_vls_addr(arb_obj->key));
+		if (msgs) bu_vls_printf(msgs, "%*sPoint top/bottom sorting failed in %s - no go\n", L3_OFFSET, " ", bu_vls_addr(arb_obj->key));
 		return 0;
 	    }
 
@@ -801,7 +808,7 @@ cylinder_csg(struct subbrep_object_data *data, fastf_t cyl_tol)
 		bu_vls_sprintf(data->name_root, "%s_%d_comb", bu_vls_addr(data->parent->name_root), *(data->obj_cnt));
 
 
-		bu_log("TODO: Minus one or more end-cap arbs\n");
+		if (msgs) bu_vls_printf(msgs, "%*sTODO: Minus one or more end-cap arbs\n", L3_OFFSET, " ");
 		return 1;
 	    } else {
 		// We have non parallel faces and corners - at least one and possible
@@ -1056,6 +1063,9 @@ cylinder_csg(struct subbrep_object_data *data, fastf_t cyl_tol)
 			    pcyl.Flip();
 			}
 
+			/* If we don't have bottom points, bail */
+			if (!bottom_pnts[0] ||!bottom_pnts[1]) return -1;
+
 			// Third, construct the axis vector and determine the arb
 			// order of the bottom and top points
 
@@ -1221,7 +1231,7 @@ cylinder_csg(struct subbrep_object_data *data, fastf_t cyl_tol)
 		return 1;
 	    }
 	} else {
-	    bu_log("More than two capping planes (count is %d) - currently unhandled\n", cyl_planes.Count());
+	    if (msgs) bu_vls_printf(msgs, "%*sMore than two capping planes (count is %d) - currently unhandled\n", L3_OFFSET, " ", cyl_planes.Count());
 	    // Flag the cyl/arb comb according to the negative or positive status of the
 	    // cylinder surface.  Whether the comb is actually subtracted from the
 	    // global object or unioned into a comb lower down the tree (or vice versa)

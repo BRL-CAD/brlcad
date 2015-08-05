@@ -1880,7 +1880,7 @@ ged_tire(struct ged *gedp, int argc, const char *argv[])
     /* Skip first arg */
     argv++; argc--;
 
-    ret_ac = bu_opt_parse(&str, argc-1, argv+1, d);
+    ret_ac = bu_opt_parse(&str, argc, argv, d);
     if (ret_ac < 0) {
 	bu_vls_printf(gedp->ged_result_str, "%s\n", bu_vls_addr(&str));
 	bu_vls_free(&name);

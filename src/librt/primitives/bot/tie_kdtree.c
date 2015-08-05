@@ -153,7 +153,7 @@ tie_kdtree_prep_head(struct tie_s *tie, struct tie_tri_s *tri_list, unsigned int
     VSETALL(tie->min, +INFINITY);
     VSETALL(tie->max, -INFINITY);
 
-    g->tri_list = (struct tie_tri_s **)bu_calloc(tri_num, sizeof(struct tie_tri_s *), __FUNCTION__);
+    g->tri_list = (struct tie_tri_s **)bu_calloc(tri_num, sizeof(struct tie_tri_s *), "tie_kdtree_prep_head()");
 
     /* form bounding box of scene */
     for (i = 0; i < tri_num; i++) {
@@ -597,7 +597,7 @@ tie_kdtree_build(struct tie_s *tie, struct tie_kdtree_s *node, unsigned int dept
 	bu_bomb("Illegal tie kdtree method\n");
 
     /* Allocate 2 children nodes for the parent node */
-    node->data = bu_calloc(2, sizeof(struct tie_kdtree_s), __FUNCTION__);
+    node->data = bu_calloc(2, sizeof(struct tie_kdtree_s), "tie_kdtree_build()");
     node->b = 0;
 
     BU_ALLOC(((struct tie_kdtree_s *)(node->data))[0].data, struct tie_geom_s);
@@ -660,7 +660,7 @@ tie_kdtree_build(struct tie_s *tie, struct tie_kdtree_s *node, unsigned int dept
 		child[n]->tri_list = NULL;
 	    }
 	} else {
-	    child[n]->tri_list = (struct tie_tri_s **)bu_realloc(child[n]->tri_list, sizeof(struct tie_tri_s *)*child[n]->tri_num, __FUNCTION__);
+	    child[n]->tri_list = (struct tie_tri_s **)bu_realloc(child[n]->tri_list, sizeof(struct tie_tri_s *)*child[n]->tri_num, "tie_kdtree_build()");
 	}
     }
 

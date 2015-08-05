@@ -46,7 +46,6 @@
 #include "tcl.h"
 #include "bu/avs.h"
 #include "bu/bitv.h"
-#include "bu/bu_tcl.h"
 #include "bu/file.h"
 #include "bu/hash.h"
 #include "bu/hist.h"
@@ -118,6 +117,8 @@ __BEGIN_DECLS
 #include "./rt/rt_instance.h"
 
 #include "./rt/view.h"
+
+#include "./rt/func.h"
 
 #include "./rt/functab.h"
 

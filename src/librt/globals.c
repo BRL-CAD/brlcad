@@ -32,9 +32,13 @@
 
 #include "common.h"
 
+#include "tcl.h"
+
 #include "raytrace.h"
 #include "rt/db4.h"
 
+/*XXX Temporary global interp */
+Tcl_Interp *brlcad_interp = (Tcl_Interp *)0;
 
 struct rt_g RTG = RT_G_INIT_ZERO;
 

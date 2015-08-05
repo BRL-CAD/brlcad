@@ -61,7 +61,7 @@ main(int argc, char **argv)
 
     if (dp1 == RT_DIR_NULL || dp2 == RT_DIR_NULL) return 1;
 
-    analyze_raydiff(&results, dbip, dp1->d_namep, dp2->d_namep, &tol);
+    analyze_raydiff(&results, dbip, dp1->d_namep, dp2->d_namep, &tol, 1);
 
     /* Print results */
     for (i = 0; i < BU_PTBL_LEN(results->left); i++) {

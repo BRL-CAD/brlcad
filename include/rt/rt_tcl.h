@@ -35,8 +35,8 @@
 #define RT_RT_TCL_H
 
 #include "common.h"
+#include "tcl.h" /* for Tcl_Interp */
 #include "vmath.h"
-#include "bu/bu_tcl.h" /* for Tcl_Interp */
 #include "rt/defines.h"
 
 __BEGIN_DECLS

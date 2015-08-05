@@ -20,8 +20,7 @@
 
 #include "common.h"
 
-#include "raytrace.h"
-
+#include "rt/func.h"
 
 int
 rt_obj_xform(struct rt_db_internal *op, const mat_t mat, struct rt_db_internal *ip, int release, struct db_i *dbip, struct resource *resp)

@@ -66,12 +66,12 @@ Usage: bwcrop in.bw out.bw (I prompt!)\n\
  * XXX - CHECK FILE SIZE
  */
 void
-init_buffer(int len)
+init_buffer()
 {
-    int max;
+    ssize_t max;
 
     /* See how many we could buffer */
-    max = MAXBUFBYTES / len;
+    max = MAXBUFBYTES / scanlen;
 
     /*
      * Do a max of 4096.  We really should see how big
@@ -80,8 +80,12 @@ init_buffer(int len)
      */
     if (max > 4096) max = 4096;
 
-    buflines = max;
-    buffer = (unsigned char *)bu_malloc(buflines * len, "buffer");
+    if (max < scanlen)
+	buflines = max;
+    else
+	buflines = scanlen;
+
+    buffer = (unsigned char *)bu_malloc(buflines * scanlen, "buffer");
 }
 
 
@@ -184,7 +188,7 @@ main(int argc, char **argv)
 	unsigned long len;
 	/* Get info */
 
-	printf("Scanline length in input file: ");
+	printf("Scanline length in input file?: ");
 	ret = scanf("%lu", &len);
 	if (ret != 1)
 	    perror("scanf");
@@ -193,7 +197,7 @@ main(int argc, char **argv)
 	    bu_exit(4, "bwcrop: scanlen = %zu, don't be ridiculous\n", scanlen);
 	}
 
-	printf("Line Length and Number of scan lines (in new file)?: ");
+	printf("Line Length and Number of scan lines in new file?: ");
 	ret = scanf("%lf%lf", &xval, &yval);
 	if (ret != 2) {
 	    perror("scanf");
@@ -211,7 +215,7 @@ main(int argc, char **argv)
 	    yval = INT_MAX-1;
 	ynum = yval;
 
-	printf("Upper left corner in input file (x, y)?: ");
+	printf("Upper left corner (in input file) (x, y)?: ");
 	ret = scanf("%f%f", &ulx, &uly);
 	if (ret != 2)
 	    perror("scanf");
@@ -221,19 +225,19 @@ main(int argc, char **argv)
 	if (ret != 2)
 	    perror("scanf");
 
-	printf("Lower right (x, y)?: ");
+	printf("Lower right corner (x, y)?: ");
 	ret = scanf("%f%f", &lrx, &lry);
 	if (ret != 2)
 	    perror("scanf");
 
-	printf("Lower left (x, y)?: ");
+	printf("Lower left corner (x, y)?: ");
 	ret = scanf("%f%f", &llx, &lly);
 	if (ret != 2)
 	    perror("scanf");
     }
 
     /* See how many lines we can buffer */
-    init_buffer(scanlen);
+    init_buffer();
 
     /* Check for silly buffer syndrome */
     if ((ssize_t)abs((int)(ury - uly)) > buflines/2 || (ssize_t)abs((int)(lry - lly)) > buflines/2) {

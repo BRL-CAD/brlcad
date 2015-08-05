@@ -24,6 +24,7 @@
 #include <string.h>
 #include <stdlib.h> /* for strtol */
 #include <limits.h> /* for INT_MAX */
+#include <float.h> /* for FLT_MAX */
 #include <ctype.h> /* for isspace */
 #include <errno.h> /* for errno */
 
@@ -520,19 +521,14 @@ bu_opt_long(struct bu_vls *msg, int argc, const char **argv, void *set_var)
 int
 bu_opt_fastf_t(struct bu_vls *msg, int argc, const char **argv, void *set_var)
 {
+    double d;
     fastf_t f;
     fastf_t *f_set = (fastf_t *)set_var;
     char *endptr = NULL;
 
     BU_OPT_CHECK_ARGV0(msg, argc, argv, "bu_opt_fastf_t");
 
-    if (sizeof(fastf_t) == sizeof(float)) {
-	f = strtof(argv[0], &endptr);
-    }
-
-    if (sizeof(fastf_t) == sizeof(double)) {
-	f = strtod(argv[0], &endptr);
-    }
+    d = strtod(argv[0], &endptr);
 
     if (endptr != NULL && strlen(endptr) > 0) {
 	/* Had some invalid character in the input, fail */
@@ -544,6 +540,13 @@ bu_opt_fastf_t(struct bu_vls *msg, int argc, const char **argv, void *set_var)
 	if (msg) bu_vls_printf(msg, "Invalid input for fastf_t (range error): %s\n", argv[0]);
 	return -1;
     }
+
+    if (sizeof(fastf_t) == sizeof(float) && (d > FLT_MAX)) {
+	if (msg) bu_vls_printf(msg, "Invalid input for fastf_t (range error): %s\n", argv[0]);
+	return -1;
+    }
+
+    f = (fastf_t)d;
 
     if (f_set) (*f_set) = f;
     return 1;

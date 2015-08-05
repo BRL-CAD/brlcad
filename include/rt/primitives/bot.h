@@ -109,6 +109,9 @@ RT_EXPORT extern int rt_bot_tess(struct nmgregion **r,
                                  const struct rt_tess_tol *ttol,
                                  const struct bn_tol *tol);
 
+RT_EXPORT extern struct rt_bot_internal * rt_bot_merge(size_t num_bots, const struct rt_bot_internal * const *bots);
+
+
 /* defined in bot.c */
 /* TODO - these global variables need to be rolled in to the rt_i structure */
 RT_EXPORT extern size_t rt_bot_minpieces;
@@ -119,6 +122,8 @@ RT_EXPORT extern int rt_bot_decimate(struct rt_bot_internal *bot,
                                      fastf_t max_chord_error,
                                      fastf_t max_normal_error,
                                      fastf_t min_edge_length);
+RT_EXPORT extern  size_t rt_bot_decimate_gct(struct rt_bot_internal *bot, fastf_t feature_size);
+
 
 /** @} */
 

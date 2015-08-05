@@ -2,14 +2,6 @@
 CMAKE_MINIMUM_REQUIRED(VERSION 2.8.3)
 if(COMMAND CMAKE_POLICY)
   CMAKE_POLICY(SET CMP0003 NEW)
-  CMAKE_POLICY(SET CMP0007 OLD)
-  if("${CMAKE_VERSION}" VERSION_GREATER 2.8.3)
-    CMAKE_POLICY(SET CMP0017 OLD)
-  endif("${CMAKE_VERSION}" VERSION_GREATER 2.8.3)
-  if ("${CMAKE_VERSION}" VERSION_GREATER 2.99)
-    CMAKE_POLICY(SET CMP0026 OLD)
-  endif ("${CMAKE_VERSION}"
-    VERSION_GREATER 2.99)
 endif(COMMAND CMAKE_POLICY)
 
 # set CMake project name
@@ -34,10 +26,8 @@ find_package(Threads)
 add_subdirectory(Auxiliary)
 add_subdirectory(BRLCAD)
 add_subdirectory(Sampler)
-add_subdirectory(BallPivoting)
 add_subdirectory(MeshDecimation)
 add_subdirectory(psmain)
-add_subdirectory(bpmain)
 add_subdirectory(dcmain)
 
 # Local Variables:

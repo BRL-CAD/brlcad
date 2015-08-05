@@ -140,8 +140,8 @@ _rt_gettree_region_end(struct db_tree_state *tsp, const struct db_full_path *pat
     struct directory *dp = NULL;
     size_t shader_len=0;
     struct rt_i *rtip;
-    Tcl_HashTable *tbl = (Tcl_HashTable *)client_data;
-    Tcl_HashEntry *entry;
+    struct bu_hash_tbl *tbl = (struct bu_hash_tbl *)client_data;
+    struct bu_hash_entry *entry;
     matp_t inv_mat;
     struct bu_attribute_value_set avs;
     struct bu_attribute_value_pair *avpp;
@@ -225,7 +225,8 @@ _rt_gettree_region_end(struct db_tree_state *tsp, const struct db_full_path *pat
     if (tbl && bu_avs_get(&tsp->ts_attrs, "ORCA_Comp")) {
 	int newentry;
 	long int reg_bit = rp->reg_bit;
-	const char *key = (char *)reg_bit;
+	struct bu_vls key = BU_VLS_INIT_ZERO;
+	bu_vls_sprintf(&key, "%ld", reg_bit);
 
 	inv_mat = (matp_t)bu_calloc(16, sizeof(fastf_t), "inv_mat");
 	bn_mat_inv(inv_mat, tsp->ts_mat);
@@ -233,11 +234,12 @@ _rt_gettree_region_end(struct db_tree_state *tsp, const struct db_full_path *pat
 	/* enter critical section */
 	bu_semaphore_acquire(RT_SEM_RESULTS);
 
-	entry = Tcl_CreateHashEntry(tbl, key, &newentry);
-	Tcl_SetHashValue(entry, (ClientData)inv_mat);
+	entry = bu_hash_tbl_add(tbl, (unsigned char *)bu_vls_addr(&key), bu_vls_strlen(&key) + 1, &newentry);
+	bu_set_hash_value(entry, (unsigned char *)inv_mat);
 
 	/* leave critical section */
 	bu_semaphore_release(RT_SEM_RESULTS);
+	bu_vls_free(&key);
     }
 
     if (RT_G_DEBUG & DEBUG_REGIONS) {
@@ -703,7 +705,8 @@ rt_gettrees_muves(struct rt_i *rtip, const char **attrs, int argc, const char **
 {
     struct soltab *stp;
     struct region *regp;
-    Tcl_HashTable *tbl;
+    struct bu_hash_tbl *tbl;
+
     size_t prev_sol_count;
     int i;
     int num_attrs=0;
@@ -719,8 +722,7 @@ rt_gettrees_muves(struct rt_i *rtip, const char **attrs, int argc, const char **
 
     if (argc <= 0) return -1;	/* FAIL */
 
-    BU_ALLOC(tbl, Tcl_HashTable);
-    Tcl_InitHashTable(tbl, TCL_ONE_WORD_KEYS);
+    tbl = bu_hash_tbl_create(1);
     rtip->Orca_hash_tbl = (void *)tbl;
 
     prev_sol_count = rtip->nsolids;

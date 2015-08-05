@@ -135,11 +135,13 @@ struct analyze_raydiff_results {
 struct diff_seg {
     point_t in_pt;
     point_t out_pt;
+    struct xray ray;
+    int valid;
 };
 
 ANALYZE_EXPORT int
 analyze_raydiff(struct analyze_raydiff_results **results, struct db_i *dbip,
-	const char *left, const char *right, struct bn_tol *tol);
+	const char *left, const char *right, struct bn_tol *tol, int solidcheck);
 
 ANALYZE_EXPORT void
 analyze_raydiff_results_free(struct analyze_raydiff_results *results);

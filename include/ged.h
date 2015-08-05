@@ -1319,6 +1319,11 @@ GED_EXPORT extern int ged_nirt(struct ged *gedp, int argc, const char *argv[]);
 GED_EXPORT extern int ged_vnirt(struct ged *gedp, int argc, const char *argv[]);
 
 /**
+ * NMG command with subcommands for altering NMG datastructure.
+ */
+GED_EXPORT extern int ged_nmg(struct ged *gedp, int argc, const char *argv[]);
+
+/**
  * Decimate NMG primitive via edge collapse
  */
 GED_EXPORT extern int ged_nmg_collapse(struct ged *gedp, int argc, const char *argv[]);

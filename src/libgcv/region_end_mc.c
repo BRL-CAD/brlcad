@@ -101,7 +101,9 @@ gcv_region_end_mc(struct db_tree_state *tsp, const struct db_full_path *pathp, u
 
     /* empty region? */
     if (count == 0) {
-	bu_log("Region %s appears to be empty.\n", db_path_to_string(pathp));
+	char *str_path = db_path_to_string(pathp);
+	bu_log("Region %s appears to be empty.\n", str_path);
+	bu_free(str_path, "str_path");
 	return TREE_NULL;
     }
 

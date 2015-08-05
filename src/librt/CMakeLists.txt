@@ -92,6 +92,17 @@ set(LIBRT_SOURCES
   primitives/bot/bot_oriented_bbox.cpp
   primitives/bot/btg.c
   primitives/bot/btgf.c
+  primitives/bot/gct_decimation/auxiliary/tinycthread.c
+  primitives/bot/gct_decimation/auxiliary/mmbinsort.c
+  primitives/bot/gct_decimation/auxiliary/mmbitmap.c
+  primitives/bot/gct_decimation/auxiliary/mm.c
+  primitives/bot/gct_decimation/auxiliary/mmhash.c
+  primitives/bot/gct_decimation/meshdecimation.c
+  primitives/bot/gct_decimation/meshoptimization.c
+  primitives/bot/gct_decimation/meshoptimizer.c
+  primitives/bot/gct_decimation/meshdecimationSSE2.c
+  primitives/bot/gct_decimation/meshdecimationSSE3.c
+  primitives/bot/gct_decimation/meshdecimationSSE4p1.c
   primitives/brep/brep.cpp
   primitives/brep/brep_debug.cpp
   primitives/bspline/bspline.cpp
@@ -250,6 +261,7 @@ set(LIBRT_SOURCES
   primitives/vol/vol_brep.cpp
   primitives/vol/vol_mirror.c
   primitives/xxx/xxx.c
+  reduce.c
   regionfix.c
   roots.c
   screened_poisson.cpp
@@ -312,7 +324,7 @@ if(BRLCAD_ENABLE_OPENCL)
   set(OPENCL_LIBS ${OPENCL_LIBRARIES})
 endif(BRLCAD_ENABLE_OPENCL)
 
-BRLCAD_ADDLIB(librt "${LIBRT_SOURCES}" "${OPENCL_LIBS};${GDIAM_LIBRARY};${VDS_LIBRARY};libbrep;libbg;libbn;libbu;${OPENNURBS_LIBRARY};${P2T_LIBRARY};libSPR;${REGEX_LIBRARY};${ZLIB_LIBRARY};${WINSOCK_LIB};${RPCRT_LIB};${STDCXX_LIBRARIES}" NO_STRICT_CXX)
+BRLCAD_ADDLIB(librt "${LIBRT_SOURCES}" "${OPENCL_LIBS};${GDIAM_LIBRARY};${VDS_LIBRARY};libbrep;libbg;libbn;libbu;${OPENNURBS_LIBRARY};${P2T_LIBRARY};libSPR;${TCL_LIBRARY};${REGEX_LIBRARY};${ZLIB_LIBRARY};${WINSOCK_LIB};${RPCRT_LIB};${STDCXX_LIBRARIES}" NO_STRICT_CXX)
 
 SET_TARGET_PROPERTIES(librt PROPERTIES VERSION 20.0.1 SOVERSION 20)
 if(CPP_DLL_DEFINES)

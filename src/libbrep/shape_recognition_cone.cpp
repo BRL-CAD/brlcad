@@ -8,6 +8,8 @@
 #include "bu/malloc.h"
 #include "shape_recognition.h"
 
+#define L3_OFFSET 6
+
 /* Return -1 if the cone face is pointing in toward the axis,
  * 1 if it is pointing out, and 0 if there is some other problem */
 int
@@ -37,7 +39,7 @@ negative_cone(struct subbrep_object_data *data, int face_index, double cone_tol)
 
 
 int
-subbrep_is_cone(struct subbrep_object_data *data, fastf_t cone_tol)
+subbrep_is_cone(struct bu_vls *msgs, struct subbrep_object_data *data, fastf_t cone_tol)
 {
     std::set<int>::iterator f_it;
     std::set<int> planar_surfaces;
@@ -130,7 +132,7 @@ subbrep_is_cone(struct subbrep_object_data *data, fastf_t cone_tol)
                 circle = circ;
             }
             if (!NEAR_ZERO(circ.Center().DistanceTo(circle.Center()), 0.01)){
-                bu_log("found extra circle in %s - no go\n", bu_vls_addr(data->key));
+                if (msgs) bu_vls_printf(msgs, "%*sfound extra circle in %s - no go\n", L3_OFFSET, " ", bu_vls_addr(data->key));
 		delete ecurve;
                 return 0;
             }
@@ -176,7 +178,7 @@ subbrep_is_cone(struct subbrep_object_data *data, fastf_t cone_tol)
 }
 
 int
-cone_csg(struct subbrep_object_data *data, fastf_t cone_tol)
+cone_csg(struct bu_vls *msgs, struct subbrep_object_data *data, fastf_t cone_tol)
 {
     std::set<int>::iterator f_it;
     std::set<int> planar_surfaces;
@@ -255,7 +257,7 @@ cone_csg(struct subbrep_object_data *data, fastf_t cone_tol)
 		    }
 		}
 		if (!assigned) {
-		    bu_log("found extra circle in %s - no go\n", bu_vls_addr(data->key));
+		    if (msgs) bu_vls_printf(msgs, "%*sfound extra circle in %s - no go\n", L3_OFFSET, " ", bu_vls_addr(data->key));
 		    return 0;
 		}
 	    }
@@ -302,8 +304,11 @@ cone_csg(struct subbrep_object_data *data, fastf_t cone_tol)
 	if (corner_verts_cnt > 0) {
 	    array_to_set(&corner_verts, corner_verts_array, corner_verts_cnt);
 	    bu_free(corner_verts_array, "free tmp array");
-	    bu_log("Found partial TGC!\n");
+	    if (msgs) bu_vls_printf(msgs, "%*sFound partial TGC!\n", L3_OFFSET, " ");
 	}
+
+	// TODO -check for shared verts between nonlinear curves from different planes.
+	// If we have that case, we're looking at a "sliver" of a cone and need arbs
 
 	if (corner_verts_cnt == 0) {
 	    // Full TGC cone
@@ -346,7 +351,7 @@ cone_csg(struct subbrep_object_data *data, fastf_t cone_tol)
 	    bu_vls_sprintf(cone_obj->key, "%s", key.c_str());
 	    cone_obj->obj_cnt = data->parent->obj_cnt;
 	    (*cone_obj->obj_cnt)++;
-	    bu_log("obj_cnt: %d\n", *(cone_obj->obj_cnt));
+	    //bu_log("obj_cnt: %d\n", *(cone_obj->obj_cnt));
 	    bu_vls_sprintf(cone_obj->name_root, "%s_%d_cone", bu_vls_addr(data->parent->name_root), *(cone_obj->obj_cnt));
 	    cone_obj->type = CONE;
 
@@ -400,7 +405,7 @@ cone_csg(struct subbrep_object_data *data, fastf_t cone_tol)
             ON_Plane b_plane = set1_c.Plane();
             ON_Plane t_plane = set2_c.Plane();
             if (subbrep_top_bottom_pnts(data, &corner_verts, &t_plane, &b_plane, &top_pnts, &bottom_pnts)) {
-                bu_log("Point top/bottom sorting failed: %s\n", bu_vls_addr(arb_obj->key));
+                if (msgs) bu_vls_printf(msgs, "%*sPoint top/bottom sorting failed: %s\n", L3_OFFSET, " ", bu_vls_addr(arb_obj->key));
                 return 0;
             }
 
