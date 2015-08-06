@@ -1,17 +1,17 @@
-#ifdef cl_khr_fp64
-    #pragma OPENCL EXTENSION cl_khr_fp64 : enable
-#elif defined(cl_amd_fp64)
-    #pragma OPENCL EXTENSION cl_amd_fp64 : enable
-#else
-    #error "Double precision floating point not supported by OpenCL implementation."
-#endif
+#include "common.cl"
 
+struct ell_shot_specific {
+    double ell_SoR[16];
+    double ell_V[3];
+};
 
 __kernel void
-ell_shot(global __write_only double2 *dist, global __write_only int2 *surfno,
-const double3 r_pt, const double3 r_dir,
-const double3 V, const double16 SoR)
+ell_shot(global struct hit *res, const double3 r_pt, const double3 r_dir,
+global const struct ell_shot_specific *ell)
 {
+    const double16 SoR = vload16(0, &ell->ell_SoR[0]);
+    const double3 V = vload3(0, &ell->ell_V[0]);
+
     double3 dprime;	// D'
     double3 pprime;	// P'
     double3 xlated;	// translated vector
@@ -33,18 +33,21 @@ const double3 V, const double16 SoR)
     dd = dot(dprime, dprime);
 
     if ((root = dp*dp - dd * (dot(pprime, pprime)-1.0)) < 0) {
-	*surfno = (int2){INT_MAX, INT_MAX};
+	res[0].hit_surfno = INT_MAX;
 	return;		// No hit
     } else {
 	root = sqrt(root);
 	if ((k1=(-dp+root)/dd) <= (k2=(-dp-root)/dd)) {
 	    /* k1 is entry, k2 is exit */
-	    *dist = (double2){k1, k2};
+            res[0].hit_dist = k1;
+            res[1].hit_dist = k2;
 	} else {
 	    /* k2 is entry, k1 is exit */
-	    *dist = (double2){k2, k1};
+            res[0].hit_dist = k2;
+            res[1].hit_dist = k1;
 	}
-	*surfno = (int2){0, 0};
+        res[0].hit_surfno = 0;
+        res[1].hit_surfno = 0;
 	return;		// HIT
     }
 }

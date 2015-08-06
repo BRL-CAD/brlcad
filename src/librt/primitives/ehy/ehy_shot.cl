@@ -1,32 +1,24 @@
-#ifdef cl_khr_fp64
-    #pragma OPENCL EXTENSION cl_khr_fp64 : enable
-#elif defined(cl_amd_fp64)
-    #pragma OPENCL EXTENSION cl_amd_fp64 : enable
-#else
-    #error "Double precision floating point not supported by OpenCL implementation."
-#endif
-
-#define RT_PCOEF_TOL    (1.0e-10)
-#define SMALL_FASTF     (1.0e-77)
-
-#define NEAR_ZERO(val, epsilon)	(((val) > -epsilon) && ((val) < epsilon))
-#define ZERO(_a)	NEAR_ZERO((_a), SMALL_FASTF)
+#include "common.cl"
 
 /* hit_surfno is set to one of these */
 #define EHY_NORM_BODY	(1)		/* compute normal */
 #define EHY_NORM_TOP	(2)		/* copy ehy_N */
 
-struct hit {
-  double3 hit_vpriv;
-  double hit_dist;
-  int hit_surfno;
+
+struct ehy_shot_specific {
+    double ehy_SoR[16];
+    double ehy_V[3];
+    double ehy_cprime;
 };
 
 __kernel void
-ehy_shot(global __write_only double2 *dist, global __write_only int2 *surfno, global __write_only double3 *inv, global __write_only double3 *outv,
-const double3 r_pt, const double3 r_dir,
-const double3 V, const double16 SoR, const double cp)
+ehy_shot(global struct hit *res, const double3 r_pt, const double3 r_dir,
+global const struct ehy_shot_specific *ehy)
 {
+    const double16 SoR = vload16(0, &ehy->ehy_SoR[0]);
+    const double3 V = vload3(0, &ehy->ehy_V[0]);
+    const double cp = ehy->ehy_cprime;
+
     double3 dp;		// D'
     double3 pp;		// P'
     double k1, k2;	// distance constants of solution
@@ -111,22 +103,18 @@ const double3 V, const double16 SoR, const double cp)
     }
 
     if (hitp != &hits[2]) {
-	*surfno = (int2){INT_MAX, INT_MAX};
+	res[0].hit_surfno = INT_MAX;
         return; // MISS
     }
 
     if (hits[0].hit_dist < hits[1].hit_dist) {
 	// entry is [0], exit is [1]
-	*dist = (double2){ hits[0].hit_dist, hits[1].hit_dist };
-	*surfno = (int2){ hits[0].hit_surfno, hits[1].hit_surfno };
-	*inv = hits[0].hit_vpriv;
-	*outv = hits[1].hit_vpriv;
+        res[0] = hits[0];
+        res[1] = hits[1];
     } else {
 	// entry is [1], exit is [0]
-	*dist = (double2){ hits[1].hit_dist, hits[0].hit_dist };
-	*surfno = (int2){ hits[1].hit_surfno, hits[0].hit_surfno };
-	*inv = hits[1].hit_vpriv;
-	*outv = hits[0].hit_vpriv;
+        res[0] = hits[1];
+        res[1] = hits[0];
     }
     return; // HIT
 }
@@ -141,4 +129,3 @@ const double3 V, const double16 SoR, const double cp)
  * End:
  * ex: shiftwidth=4 tabstop=8
  */
-

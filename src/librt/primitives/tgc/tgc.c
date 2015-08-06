@@ -148,6 +148,17 @@ static const fastf_t nmg_uv_unitcircle[27] = {
 };
 
 #ifdef USE_OPENCL
+/* largest data members first */
+struct tgc_shot_specific {
+    cl_double tgc_ScShR[16];
+    cl_double tgc_V[3];
+    cl_double tgc_N[3];
+    cl_double tgc_sH, tgc_A, tgc_B;
+    cl_double tgc_CdAm1, tgc_DdBm1, tgc_AAdCC, tgc_BBdDD;
+    cl_char tgc_AD_CB;
+};
+
+
 static const int clt_semaphore = 12; /* FIXME: for testing; this isn't our semaphore */
 static int clt_initialized = 0;
 static cl_device_id clt_device;
@@ -169,7 +180,6 @@ clt_cleanup()
 
     clt_initialized = 0;
 }
-
 
 static void
 clt_init()
@@ -198,79 +208,52 @@ clt_init()
 }
 
 static void
-clt_shot(cl_double4 *dist, cl_int4 *surfno, cl_double8 *in, cl_double8 *out, struct xray *rp, struct soltab *stp)
+clt_shot(size_t size, struct cl_hit *hits, struct xray *rp, struct soltab *stp)
 {
     cl_double3 r_pt, r_dir;
     const size_t hypersample = 1;
     cl_int error;
-    cl_mem pdist, psurfno, pin, pout;
+    cl_mem pin, pout;
 
     struct tgc_specific *tgc =
 	(struct tgc_specific *)stp->st_specific;
     
-    cl_double3 V;
-    cl_double sH, A, B;
-    cl_double CdAm1, DdBm1, AAdCC, BBdDD;
-    cl_double3 N;
-    cl_double16 ScShR;
-    cl_char AD_CB;
+    struct tgc_shot_specific in;
 
     VMOVE(r_pt.s, rp->r_pt);
     VMOVE(r_dir.s, rp->r_dir);
     
-    VMOVE(V.s, tgc->tgc_V);
-    sH = tgc->tgc_sH;
-    A = tgc->tgc_A;
-    B = tgc->tgc_B;
-    CdAm1 = tgc->tgc_CdAm1;
-    DdBm1 = tgc->tgc_DdBm1;
-    AAdCC = tgc->tgc_AAdCC;
-    BBdDD = tgc->tgc_BBdDD;
-    VMOVE(N.s, tgc->tgc_N);
-    MAT_COPY(ScShR.s, tgc->tgc_ScShR);
-    AD_CB = tgc->tgc_AD_CB;
+    VMOVE(in.tgc_V, tgc->tgc_V);
+    in.tgc_sH = tgc->tgc_sH;
+    in.tgc_A = tgc->tgc_A;
+    in.tgc_B = tgc->tgc_B;
+    in.tgc_CdAm1 = tgc->tgc_CdAm1;
+    in.tgc_DdBm1 = tgc->tgc_DdBm1;
+    in.tgc_AAdCC = tgc->tgc_AAdCC;
+    in.tgc_BBdDD = tgc->tgc_BBdDD;
+    VMOVE(in.tgc_N, tgc->tgc_N);
+    MAT_COPY(in.tgc_ScShR, tgc->tgc_ScShR);
+    in.tgc_AD_CB = tgc->tgc_AD_CB;
 
-    pdist = clCreateBuffer(clt_context, CL_MEM_WRITE_ONLY, sizeof(*dist), NULL, &error);
-    if (error != CL_SUCCESS) bu_bomb("failed to create OpenCL tor output buffer");
-    psurfno = clCreateBuffer(clt_context, CL_MEM_WRITE_ONLY, sizeof(*surfno), NULL, &error);
-    if (error != CL_SUCCESS) bu_bomb("failed to create OpenCL tor output buffer");
-    pin = clCreateBuffer(clt_context, CL_MEM_WRITE_ONLY, sizeof(*in), NULL, &error);
-    if (error != CL_SUCCESS) bu_bomb("failed to create OpenCL tor output buffer");
-    pout = clCreateBuffer(clt_context, CL_MEM_WRITE_ONLY, sizeof(*out), NULL, &error);
-    if (error != CL_SUCCESS) bu_bomb("failed to create OpenCL tor output buffer");
+    pin = clCreateBuffer(clt_context, CL_MEM_READ_ONLY|CL_MEM_COPY_HOST_PTR, sizeof(in), &in, &error);
+    if (error != CL_SUCCESS) bu_bomb("failed to create OpenCL input buffer");
+    pout = clCreateBuffer(clt_context, CL_MEM_WRITE_ONLY, size, NULL, &error);
+    if (error != CL_SUCCESS) bu_bomb("failed to create OpenCL output buffer");
 
     bu_semaphore_acquire(clt_semaphore);
-    error = clSetKernelArg(clt_kernel, 0, sizeof(cl_mem), &pdist);
-    error |= clSetKernelArg(clt_kernel, 1, sizeof(cl_mem), &psurfno);
-    error |= clSetKernelArg(clt_kernel, 2, sizeof(cl_mem), &pin);
-    error |= clSetKernelArg(clt_kernel, 3, sizeof(cl_mem), &pout);
-    error |= clSetKernelArg(clt_kernel, 4, sizeof(cl_double3), &r_pt);
-    error |= clSetKernelArg(clt_kernel, 5, sizeof(cl_double3), &r_dir);
-    error |= clSetKernelArg(clt_kernel, 6, sizeof(cl_double3), &V);
-    error |= clSetKernelArg(clt_kernel, 7, sizeof(cl_double), &sH);
-    error |= clSetKernelArg(clt_kernel, 8, sizeof(cl_double), &A);
-    error |= clSetKernelArg(clt_kernel, 9, sizeof(cl_double), &B);
-    error |= clSetKernelArg(clt_kernel, 10, sizeof(cl_double), &CdAm1);
-    error |= clSetKernelArg(clt_kernel, 11, sizeof(cl_double), &DdBm1);
-    error |= clSetKernelArg(clt_kernel, 12, sizeof(cl_double), &AAdCC);
-    error |= clSetKernelArg(clt_kernel, 13, sizeof(cl_double), &BBdDD);
-    error |= clSetKernelArg(clt_kernel, 14, sizeof(cl_double3), &N);
-    error |= clSetKernelArg(clt_kernel, 15, sizeof(cl_double16), &ScShR);
-    error |= clSetKernelArg(clt_kernel, 16, sizeof(cl_char), &AD_CB);
+    error = clSetKernelArg(clt_kernel, 0, sizeof(cl_mem), &pout);
+    error |= clSetKernelArg(clt_kernel, 1, sizeof(cl_double3), &r_pt);
+    error |= clSetKernelArg(clt_kernel, 2, sizeof(cl_double3), &r_dir);
+    error |= clSetKernelArg(clt_kernel, 3, sizeof(cl_mem), &pin);
     if (error != CL_SUCCESS) bu_bomb("failed to set OpenCL kernel arguments");
     error = clEnqueueNDRangeKernel(clt_queue, clt_kernel, 1, NULL, &hypersample, NULL, 0, NULL, NULL);
     bu_semaphore_release(clt_semaphore);
     if (error != CL_SUCCESS) bu_bomb("failed to enqueue OpenCL kernel");
 
     if (clFinish(clt_queue) != CL_SUCCESS) bu_bomb("failure in clFinish()");
-    clEnqueueReadBuffer(clt_queue, pdist, CL_TRUE, 0, sizeof(*dist), dist, 0, NULL, NULL);
-    clReleaseMemObject(pdist);
-    clEnqueueReadBuffer(clt_queue, psurfno, CL_TRUE, 0, sizeof(*surfno), surfno, 0, NULL, NULL);
-    clReleaseMemObject(psurfno);
-    clEnqueueReadBuffer(clt_queue, pin, CL_TRUE, 0, sizeof(*in), in, 0, NULL, NULL);
-    clReleaseMemObject(pin);
-    clEnqueueReadBuffer(clt_queue, pout, CL_TRUE, 0, sizeof(*out), out, 0, NULL, NULL);
+    clEnqueueReadBuffer(clt_queue, pout, CL_TRUE, 0, size, hits, 0, NULL, NULL);
     clReleaseMemObject(pout);
+    clReleaseMemObject(pin);
 }
 #endif /* USE_OPENCL */
 
@@ -695,40 +678,38 @@ int
 rt_tgc_shot(struct soltab *stp, register struct xray *rp, struct application *ap, struct seg *seghead)
 {
 #ifdef USE_OPENCL
-    cl_double4 dist;
-    cl_int4 surfno;
-    cl_double8 in, out;
+    struct cl_hit hits[4];
 
-    clt_shot(&dist, &surfno, &in, &out, rp, stp);
+    clt_shot(sizeof(hits), hits, rp, stp);
 
-    if (surfno.s[0] == INT_MAX) {
+    if (hits[0].hit_surfno == INT_MAX) {
 	return 0;		/* No hit */
     } else {
 	struct seg *segp;
         
         RT_GET_SEG(segp, ap->a_resource);
         segp->seg_stp = stp;
-        segp->seg_in.hit_dist = dist.s[0];
-        segp->seg_out.hit_dist = dist.s[1];
-        segp->seg_in.hit_surfno = surfno.s[0];
-        segp->seg_out.hit_surfno = surfno.s[1];
+	segp->seg_in.hit_dist = hits[0].hit_dist;
+	segp->seg_in.hit_surfno = hits[0].hit_surfno;
+	segp->seg_out.hit_dist = hits[1].hit_dist;
+	segp->seg_out.hit_surfno = hits[1].hit_surfno;
         /* Set aside vector for rt_tor_norm() later */
-        VMOVE(segp->seg_in.hit_vpriv, &in.s[0]);
-        VMOVE(segp->seg_out.hit_vpriv, &out.s[0]);
+	VMOVE(segp->seg_in.hit_vpriv, hits[0].hit_vpriv.s);
+	VMOVE(segp->seg_out.hit_vpriv, hits[1].hit_vpriv.s);
         BU_LIST_INSERT(&(seghead->l), &(segp->l));
         
-        if (surfno.s[2] == INT_MAX) {
+        if (hits[2].hit_surfno == INT_MAX) {
             return 2;			/* HIT */
         }
 
         RT_GET_SEG(segp, ap->a_resource);
         segp->seg_stp = stp;
-        segp->seg_in.hit_dist = dist.s[2];
-        segp->seg_out.hit_dist = dist.s[3];
-        segp->seg_in.hit_surfno = surfno.s[2];
-        segp->seg_out.hit_surfno = surfno.s[3];
-        VMOVE(segp->seg_in.hit_vpriv, &in.s[3]);
-        VMOVE(segp->seg_out.hit_vpriv, &out.s[3]);
+	segp->seg_in.hit_dist = hits[2].hit_dist;
+	segp->seg_in.hit_surfno = hits[2].hit_surfno;
+	segp->seg_out.hit_dist = hits[3].hit_dist;
+	segp->seg_out.hit_surfno = hits[3].hit_surfno;
+	VMOVE(segp->seg_in.hit_vpriv, hits[2].hit_vpriv.s);
+	VMOVE(segp->seg_out.hit_vpriv, hits[3].hit_vpriv.s);
         BU_LIST_INSERT(&(seghead->l), &(segp->l));
         return 4;			/* HIT */
     }

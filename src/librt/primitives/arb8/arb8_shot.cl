@@ -1,19 +1,17 @@
-#ifdef cl_khr_fp64
-    #pragma OPENCL EXTENSION cl_khr_fp64 : enable
-#elif defined(cl_amd_fp64)
-    #pragma OPENCL EXTENSION cl_amd_fp64 : enable
-#else
-    #error "Double precision floating point not supported by OpenCL implementation."
-#endif
+#include "common.cl"
 
-#define SQRT_SMALL_FASTF 1.0e-39 /* This squared gives zero */
-
+struct arb_shot_specific {
+    double arb_peqns[4*6];
+    int arb_nmfaces;
+};
 
 __kernel void
-arb8_shot(global double2 *odist, global int2 *osurfno,
-const double3 r_pt, const double3 r_dir,
-global const double *peqns, const int nmfaces)
+arb8_shot(global struct hit *res, const double3 r_pt, const double3 r_dir,
+global const struct arb_shot_specific *arb)
 {
+    global const double *peqns = arb->arb_peqns;
+    const int nmfaces = arb->arb_nmfaces;
+
     int iplane, oplane;
     double in, out;	// ray in/out distances
 
@@ -48,27 +46,29 @@ global const double *peqns, const int nmfaces)
 	     * rays that lie very nearly in the plane of a face.
 	     */
 	    if (dxbdn > SQRT_SMALL_FASTF) {
-		*osurfno = (int2){INT_MAX, INT_MAX};
+        	res[0].hit_surfno = INT_MAX;
 		return;	// MISS
 	    }
 	}
 	if (in > out) {
-	    *osurfno = (int2){INT_MAX, INT_MAX};
+            res[0].hit_surfno = INT_MAX;
 	    return;	// MISS
 	}
     }
     /* Validate */
     if (iplane == -1 || oplane == -1) {
-	*osurfno = (int2){INT_MAX, INT_MAX};
+        res[0].hit_surfno = INT_MAX;
 	return;		// MISS
     }
     if (in >= out || out >= INFINITY) {
-	*osurfno = (int2){INT_MAX, INT_MAX};
+        res[0].hit_surfno = INT_MAX;
 	return;		// MISS
     }
 
-    *odist = (double2){in, out};
-    *osurfno = (int2){iplane, oplane};
+    res[0].hit_dist = in;
+    res[0].hit_surfno = iplane;
+    res[1].hit_dist = out;
+    res[1].hit_surfno = oplane;
     return;		// HIT
 }
 

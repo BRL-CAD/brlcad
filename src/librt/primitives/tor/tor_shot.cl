@@ -1,19 +1,23 @@
-#ifdef cl_khr_fp64
-    #pragma OPENCL EXTENSION cl_khr_fp64 : enable
-#elif defined(cl_amd_fp64)
-    #pragma OPENCL EXTENSION cl_amd_fp64 : enable
-#else
-    #error "Double precision floating point not supported by OpenCL implementation."
-#endif
+#include "common.cl"
 
 #include "solver.cl"
 
+
+struct tor_shot_specific {
+    double tor_SoR[16];
+    double tor_V[3];
+    double tor_alpha, tor_r1;
+};
+
 __kernel void
-tor_shot(global __write_only double4 *dist, global __write_only int4 *surfno,
-global __write_only double8 *inv, global __write_only double8 *outv,
-const double3 r_pt, const double3 r_dir,
-const double3 V, const double16 SoR, const double alpha, const double r1)
+tor_shot(global struct hit *res, const double3 r_pt, const double3 r_dir,
+global const struct tor_shot_specific *tor)
 {
+    const double3 V = vload3(0, &tor->tor_V[0]);
+    const double16 SoR = vload16(0, &tor->tor_SoR[0]);
+    const double alpha = tor->tor_alpha;
+    const double r1 = tor->tor_r1;
+
     double3 dprime;		// D'
     double3 pprime;		// P'
     double3 work;		// temporary vector
@@ -94,7 +98,7 @@ const double3 V, const double16 SoR, const double alpha, const double r1)
      * root finder returns other than 4 roots, error.
      */
     if ((i = rt_poly_roots(C, 4, val)) != 4) {
-	*surfno = (int4){INT_MAX, INT_MAX, INT_MAX, INT_MAX};
+        res[0].hit_surfno = INT_MAX;
 	return;			// MISS
     }
 
@@ -118,7 +122,7 @@ const double3 V, const double16 SoR, const double alpha, const double r1)
     switch (i) {
 	default:
 	case 0:
-	    *surfno = (int4){INT_MAX, INT_MAX, INT_MAX, INT_MAX};
+            res[0].hit_surfno = INT_MAX;
 	    return;		// No hit
 	case 2:
 	    {
@@ -153,28 +157,34 @@ const double3 V, const double16 SoR, const double alpha, const double r1)
     /* Now, t[0] > t[npts-1] */
     /* k[1] is entry point, and k[0] is farthest exit point */
     if (i == 2) {
-	*surfno = (int4){0, 0, INT_MAX, INT_MAX};
-	*dist = (double4){k[1]*r1, k[0]*r1, 0.0, 0.0};
-
+        res[0].hit_surfno = 0;
+        res[0].hit_dist = k[1]*r1;
+        res[1].hit_surfno = 0;
+        res[1].hit_dist = k[0]*r1;
 	/* Set aside vector for rt_tor_norm() later */
-	const double3 in = pprime + k[1] * dprime;
-	const double3 out = pprime + k[0] * dprime;
-	*inv = (double8){in.x, in.y, in.z, 0.0, 0.0, 0.0, 0.0, 0.0};
-	*outv = (double8){out.x, out.y, out.z, 0.0, 0.0, 0.0, 0.0, 0.0};
+        res[0].hit_vpriv = pprime + k[1] * dprime;
+        res[1].hit_vpriv = pprime + k[0] * dprime;
+
+        res[2].hit_surfno = INT_MAX;
     	return;			// HIT
     } else {
 	/* 4 points */
 	/* k[3] is entry point, and k[2] is exit point */
-	*surfno = (int4){1, 1, 0, 0};
-	*dist = (double4){k[3]*r1, k[2]*r1, k[1]*r1, k[0]*r1};
+        res[0].hit_surfno = 1;
+        res[0].hit_dist = k[3]*r1;
+        res[1].hit_surfno = 1;
+        res[1].hit_dist = k[2]*r1;
+
+        res[2].hit_surfno = 0;
+        res[2].hit_dist = k[1]*r1;
+        res[3].hit_surfno = 0;
+        res[3].hit_dist = k[0]*r1;
 
 	/* Set aside vector for rt_tor_norm() later */
-	const double3 in0 = pprime + k[3] * dprime;
-	const double3 out0 = pprime + k[2] * dprime;
-	const double3 in1 = pprime + k[1] * dprime;
-	const double3 out1 = pprime + k[0] * dprime;
-	*inv = (double8){in0.x, in0.y, in0.z, in1.x, in1.y, in1.z, 0.0, 0.0};
-	*outv = (double8){out0.x, out0.y, out0.z, out1.x, out1.y, out1.z, 0.0, 0.0};
+        res[0].hit_vpriv = pprime + k[3] * dprime;
+        res[1].hit_vpriv = pprime + k[2] * dprime;
+        res[2].hit_vpriv = pprime + k[1] * dprime;
+        res[3].hit_vpriv = pprime + k[0] * dprime;
     	return;			// HIT
     }
 }

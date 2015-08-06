@@ -1,10 +1,4 @@
-#ifdef cl_khr_fp64
-    #pragma OPENCL EXTENSION cl_khr_fp64 : enable
-#elif defined(cl_amd_fp64)
-    #pragma OPENCL EXTENSION cl_amd_fp64 : enable
-#else
-    #error "Double precision floating point not supported by OpenCL implementation."
-#endif
+#include "common.cl"
 
 #include "solver.cl"
 
@@ -15,14 +9,32 @@
 
 __constant double rti_tol_dist = 0.0005;
 
+
+struct tgc_shot_specific {
+    double tgc_ScShR[16];
+    double tgc_V[3];
+    double tgc_N[3];
+    double tgc_sH, tgc_A, tgc_B;
+    double tgc_CdAm1, tgc_DdBm1, tgc_AAdCC, tgc_BBdDD;
+    char tgc_AD_CB;
+};
+
 __kernel void
-tgc_shot(global __write_only double4 *dist, global __write_only int4 *surfno,
-global __write_only double8 *inv, global __write_only double8 *outv,
-const double3 r_pt, const double3 r_dir,
-const double3 V, const double sH, const double A, const double B,
-const double CdAm1, const double DdBm1, const double AAdCC, const double BBdDD,
-const double3 N, const double16 ScShR, const char AD_CB)
+tgc_shot(global struct hit *res, const double3 r_pt, const double3 r_dir,
+global const struct tgc_shot_specific *tgc)
 {
+    const double3 V = vload3(0, &tgc->tgc_V[0]);
+    const double sH = tgc->tgc_sH;
+    const double A = tgc->tgc_A;
+    const double B = tgc->tgc_B;
+    const double CdAm1 = tgc->tgc_CdAm1;
+    const double DdBm1 = tgc->tgc_DdBm1;
+    const double AAdCC = tgc->tgc_AAdCC;
+    const double BBdDD = tgc->tgc_BBdDD;
+    const double3 N = vload3(0, &tgc->tgc_N[0]);
+    const double16 ScShR = vload16(0, &tgc->tgc_ScShR[0]);
+    const char AD_CB = tgc->tgc_AD_CB;
+
     double3 pprime;
     double3 dprime;
     double3 work;
@@ -55,7 +67,7 @@ const double3 N, const double16 ScShR, const char AD_CB)
      */
     t_scale = length(dprime);
     if (ZERO(t_scale)) {
-	*surfno = (int4){INT_MAX, INT_MAX, INT_MAX, INT_MAX};
+        res[0].hit_surfno = INT_MAX;
 	return;
     }
     t_scale = 1.0/t_scale;
@@ -324,7 +336,7 @@ const double3 N, const double16 ScShR, const char AD_CB)
 	    double diff;
 
 	    diff = k[i-1] - k[i];	/* non-negative due to sorting */
-	    if (diff < 0.0/*rti_tol_dist*/) {
+	    if (diff < rti_tol_dist) {
 		/* remove this duplicate hit */
 		int j;
 
@@ -341,53 +353,48 @@ const double3 N, const double16 ScShR, const char AD_CB)
     }
 
     if (npts != 0 && npts != 2 && npts != 4) {
-	*surfno = (int4){INT_MAX, INT_MAX, INT_MAX, INT_MAX};
+        res[0].hit_surfno = INT_MAX;
 	return;			/* No hit */
     }
 
-    double3 in[2];
-    double3 out[2];
-
     intersect = 0;
+    int j = 0;
     for (i=npts-1; i>0; i -= 2) {
-	if (hit_type[i] == TGC_NORM_BODY){
-	    in[intersect] = pprime + k[i] * dprime;
+	res[j].hit_dist = k[i] * t_scale;
+	res[j].hit_surfno = hit_type[i];
+	if (res[j].hit_surfno == TGC_NORM_BODY) {
+	    res[j].hit_vpriv = pprime + k[i] * dprime;
 	} else {
 	    if (dir > 0.0) {
-		hit_type[i] = TGC_NORM_BOT;
+		res[j].hit_surfno = TGC_NORM_BOT;
 	    } else {
-		hit_type[i] = TGC_NORM_TOP;
+		res[j].hit_surfno = TGC_NORM_TOP;
 	    }
 	}
-	if (hit_type[i-1] == TGC_NORM_BODY){
-	    out[intersect] = pprime + k[i-1] * dprime;
+
+	res[j+1].hit_dist = k[i-1] * t_scale;
+	res[j+1].hit_surfno = hit_type[i-1];
+	if (res[j+1].hit_surfno == TGC_NORM_BODY) {
+	    res[j+1].hit_vpriv = pprime + k[i-1] * dprime;
 	} else {
 	    if (dir > 0.0) {
-		hit_type[i-1] = TGC_NORM_TOP;
+		res[j+1].hit_surfno = TGC_NORM_TOP;
 	    } else {
-		hit_type[i-1] = TGC_NORM_BOT;
+		res[j+1].hit_surfno = TGC_NORM_BOT;
 	    }
 	}
+        j += 2;
 	intersect++;
     }
 
     switch (intersect) {
     case 0:
-	*surfno = (int4){INT_MAX, INT_MAX, INT_MAX, INT_MAX};
+        res[0].hit_surfno = INT_MAX;
 	return;			/* No hit */
     case 1:
-	*surfno = (int4){hit_type[1], hit_type[0], INT_MAX, INT_MAX};
-	*dist = (double4){k[1] * t_scale, k[0] * t_scale, 0.0, 0.0};
-
-	*inv = (double8){in[0].x, in[0].y, in[0].z, 0.0, 0.0, 0.0, 0.0, 0.0};
-	*outv = (double8){out[0].x, out[0].y, out[0].z, 0.0, 0.0, 0.0, 0.0, 0.0};
+        res[2].hit_surfno = INT_MAX;
     	return;			// HIT
     case 2:
-	*surfno = (int4){hit_type[3], hit_type[2], hit_type[1], hit_type[0]};
-	*dist = (double4){k[3] * t_scale, k[2] * t_scale, k[1] * t_scale, k[0] * t_scale};
-
-	*inv = (double8){in[0].x, in[0].y, in[0].z, in[1].x, in[1].y, in[1].z, 0.0, 0.0};
-	*outv = (double8){out[0].x, out[0].y, out[0].z, out[1].x, out[1].y, out[1].z, 0.0, 0.0};
     	return;			// HIT
     }
 }

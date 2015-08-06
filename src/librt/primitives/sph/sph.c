@@ -70,6 +70,13 @@ struct sph_specific {
 };
 
 #ifdef USE_OPENCL
+/* largest data members first */
+struct sph_shot_specific {
+    cl_double sph_V[3];
+    cl_double sph_radsq;
+};
+
+
 const int clt_semaphore = 12; /* FIXME: for testing; this isn't our semaphore */
 static int clt_initialized = 0;
 static cl_device_id clt_device;
@@ -91,7 +98,6 @@ clt_cleanup()
 
     clt_initialized = 0;
 }
-
 
 static void
 clt_init()
@@ -119,49 +125,44 @@ clt_init()
     bu_semaphore_release(clt_semaphore);
 }
 
-
 static void
-clt_shot(cl_double2 *dist, cl_int2 *surfno, struct xray *rp, struct soltab *stp)
+clt_shot(size_t size, struct cl_hit *hits, struct xray *rp, struct soltab *stp)
 {
     cl_double3 r_pt, r_dir;
     const size_t hypersample = 1;
     cl_int error;
-    cl_mem pdist, psurfno;
+    cl_mem pin, pout;
 
     struct sph_specific *sph =
 	(struct sph_specific *)stp->st_specific;
 
-    cl_double3 V;
-    cl_double radsq;
+    struct sph_shot_specific in;
 
     VMOVE(r_pt.s, rp->r_pt);
     VMOVE(r_dir.s, rp->r_dir);
 
-    VMOVE(V.s, sph->sph_V);
-    radsq = sph->sph_radsq;
+    VMOVE(in.sph_V, sph->sph_V);
+    in.sph_radsq = sph->sph_radsq;
 
-    pdist = clCreateBuffer(clt_context, CL_MEM_WRITE_ONLY, sizeof(*dist), NULL, &error);
-    if (error != CL_SUCCESS) bu_bomb("failed to create OpenCL sph output buffer");
-    psurfno = clCreateBuffer(clt_context, CL_MEM_WRITE_ONLY, sizeof(*surfno), NULL, &error);
-    if (error != CL_SUCCESS) bu_bomb("failed to create OpenCL sph output buffer");
+    pin = clCreateBuffer(clt_context, CL_MEM_READ_ONLY|CL_MEM_COPY_HOST_PTR, sizeof(in), &in, &error);
+    if (error != CL_SUCCESS) bu_bomb("failed to create OpenCL input buffer");
+    pout = clCreateBuffer(clt_context, CL_MEM_WRITE_ONLY, size, NULL, &error);
+    if (error != CL_SUCCESS) bu_bomb("failed to create OpenCL output buffer");
 
     bu_semaphore_acquire(clt_semaphore);
-    error = clSetKernelArg(clt_kernel, 0, sizeof(cl_mem), &pdist);
-    error |= clSetKernelArg(clt_kernel, 1, sizeof(cl_mem), &psurfno);
-    error |= clSetKernelArg(clt_kernel, 2, sizeof(cl_double3), &r_pt);
-    error |= clSetKernelArg(clt_kernel, 3, sizeof(cl_double3), &r_dir);
-    error |= clSetKernelArg(clt_kernel, 4, sizeof(cl_double3), &V);
-    error |= clSetKernelArg(clt_kernel, 5, sizeof(cl_double), &radsq);
+    error = clSetKernelArg(clt_kernel, 0, sizeof(cl_mem), &pout);
+    error |= clSetKernelArg(clt_kernel, 1, sizeof(cl_double3), &r_pt);
+    error |= clSetKernelArg(clt_kernel, 2, sizeof(cl_double3), &r_dir);
+    error |= clSetKernelArg(clt_kernel, 3, sizeof(cl_mem), &pin);
     if (error != CL_SUCCESS) bu_bomb("failed to set OpenCL kernel arguments");
     error = clEnqueueNDRangeKernel(clt_queue, clt_kernel, 1, NULL, &hypersample, NULL, 0, NULL, NULL);
     bu_semaphore_release(clt_semaphore);
     if (error != CL_SUCCESS) bu_bomb("failed to enqueue OpenCL kernel");
 
     if (clFinish(clt_queue) != CL_SUCCESS) bu_bomb("failure in clFinish()");
-    clEnqueueReadBuffer(clt_queue, pdist, CL_TRUE, 0, sizeof(*dist), dist, 0, NULL, NULL);
-    clReleaseMemObject(pdist);
-    clEnqueueReadBuffer(clt_queue, psurfno, CL_TRUE, 0, sizeof(*surfno), surfno, 0, NULL, NULL);
-    clReleaseMemObject(psurfno);
+    clEnqueueReadBuffer(clt_queue, pout, CL_TRUE, 0, size, hits, 0, NULL, NULL);
+    clReleaseMemObject(pout);
+    clReleaseMemObject(pin);
 }
 #endif /* USE_OPENCL */
 
@@ -311,24 +312,23 @@ int
 rt_sph_shot(struct soltab *stp, register struct xray *rp, struct application *ap, struct seg *seghead)
 {
 #ifdef USE_OPENCL
-    cl_double2 dist;
-    cl_int2 surfno;
+    struct cl_hit hits[2];
 
-    clt_shot(&dist, &surfno, rp, stp);
+    clt_shot(sizeof(hits), hits, rp, stp);
 
-    if (surfno.s[0] == INT_MAX) {
-	return 0;		/* No hit */
+    if (hits[0].hit_surfno == INT_MAX) {
+	return 0;	/* MISS */
     } else {
 	struct seg *segp;
 
 	RT_GET_SEG(segp, ap->a_resource);
 	segp->seg_stp = stp;
-	segp->seg_in.hit_dist = dist.s[0];
-	segp->seg_out.hit_dist = dist.s[1];
-	segp->seg_in.hit_surfno = surfno.s[0];
-	segp->seg_out.hit_surfno = surfno.s[1];
+	segp->seg_in.hit_dist = hits[0].hit_dist;
+	segp->seg_in.hit_surfno = hits[0].hit_surfno;
+	segp->seg_out.hit_dist = hits[1].hit_dist;
+	segp->seg_out.hit_surfno = hits[1].hit_surfno;
 	BU_LIST_INSERT(&(seghead->l), &(segp->l));
-	return 2;		/* HIT */
+	return 2;	/* HIT */
     }
 #else
     register struct sph_specific *sph =

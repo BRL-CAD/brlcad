@@ -44,6 +44,13 @@
 #define cl_double cl_float
 #define cl_double3 cl_float3
 #endif
+
+
+struct cl_hit {
+  cl_double3 hit_vpriv;
+  cl_double hit_dist;
+  cl_int hit_surfno;
+};
 #endif
 
 /* approximation formula for the circumference of an ellipse */

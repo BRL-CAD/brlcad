@@ -1,17 +1,17 @@
-#ifdef cl_khr_fp64
-    #pragma OPENCL EXTENSION cl_khr_fp64 : enable
-#elif defined(cl_amd_fp64)
-    #pragma OPENCL EXTENSION cl_amd_fp64 : enable
-#else
-    #error "Double precision floating point not supported by OpenCL implementation."
-#endif
+#include "common.cl"
 
+struct sph_shot_specific {
+    double sph_V[3];
+    double sph_radsq;
+};
 
 __kernel void
-sph_shot(global __write_only double2 *dist, global __write_only int2 *surfno,
-const double3 r_pt, const double3 r_dir,
-const double3 V, const double radsq)
+sph_shot(global struct hit *res, const double3 r_pt, const double3 r_dir,
+global const struct sph_shot_specific *sph)
 {
+    const double3 V = vload3(0, &sph->sph_V[0]);
+    const double radsq = sph->sph_radsq;
+
     double3 ov;        // ray origin to center (V - P)
     double magsq_ov;   // length squared of ov
     double b;          // second term of quadratic eqn
@@ -25,13 +25,13 @@ const double3 V, const double radsq)
 	// ray origin is outside of sphere
 	if (b < 0) {
 	    // ray direction is away from sphere
-	    *surfno = (int2){INT_MAX, INT_MAX};
+            res[0].hit_surfno = INT_MAX;
 	    return;           // No hit
 	}
 	root = b*b - magsq_ov + radsq;
 	if (root <= 0) {
 	    // no real roots
-	    *surfno = (int2){INT_MAX, INT_MAX};
+            res[0].hit_surfno = INT_MAX;
 	    return;           // No hit
 	}
     } else {
@@ -40,8 +40,10 @@ const double3 V, const double radsq)
     root = sqrt(root);
 
     // we know root is positive, so we know the smaller t
-    *surfno = (int2){0, 0};
-    *dist = (double2){b - root, b + root};
+    res[0].hit_dist = b - root;
+    res[1].hit_dist = b + root;
+    res[0].hit_surfno = 0;
+    res[1].hit_surfno = 0;
     return;        // HIT
 }
 
