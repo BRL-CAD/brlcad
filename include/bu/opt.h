@@ -147,9 +147,9 @@ typedef int (*bu_opt_arg_process_t)(struct bu_vls *msg, int argc, const char **a
  * standard check.
  */
 #define BU_OPT_CHECK_ARGV0(_msg, _argc, _argv, _opt_name) \
-if (_argc < 1 || !_argv || !_argv[0] || _argv[0][0] == '\0') { \
-    if (_msg) { \
-	bu_vls_printf(_msg, "Error: missing required argument: " _opt_name "\n"); \
+if ((_argc) < 1 || !(_argv) || !(_argv)[0] || (_argv)[0][0] == '\0') { \
+    if ((_msg)) { \
+	bu_vls_printf((_msg), "Error: missing required argument: " _opt_name "\n"); \
     } \
     return -1; \
 }
@@ -174,22 +174,22 @@ struct bu_opt_desc {
 
 /** Macro for assigning values to bu_opt_desc array entries. */
 #define BU_OPT(_desc, _so, _lo, _ahelp, _aprocess, _var, _help) { \
-    _desc.shortopt = _so; \
-    _desc.longopt = _lo; \
-    _desc.arg_helpstr = _ahelp; \
-    _desc.arg_process = _aprocess; \
-    _desc.set_var = _var; \
-    _desc.help_string = _help; \
+    (_desc).shortopt = _so; \
+    (_desc).longopt = _lo; \
+    (_desc).arg_helpstr = _ahelp; \
+    (_desc).arg_process = _aprocess; \
+    (_desc).set_var = _var; \
+    (_desc).help_string = _help; \
 }
 
 /** Convenience macro for setting a bu_opt_desc struct to BU_OPT_DESC_NULL */
 #define BU_OPT_NULL(_desc) { \
-    _desc.shortopt = NULL; \
-    _desc.longopt = NULL; \
-    _desc.arg_helpstr = NULL; \
-    _desc.arg_process = NULL; \
-    _desc.set_var = NULL; \
-    _desc.help_string = NULL; \
+    (_desc).shortopt = NULL; \
+    (_desc).longopt = NULL; \
+    (_desc).arg_helpstr = NULL; \
+    (_desc).arg_process = NULL; \
+    (_desc).set_var = NULL; \
+    (_desc).help_string = NULL; \
 }
 
 /**
