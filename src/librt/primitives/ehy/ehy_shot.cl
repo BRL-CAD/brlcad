@@ -14,8 +14,8 @@ struct ehy_shot_specific {
 
 int ehy_shot(global struct hit *res, const double3 r_pt, const double3 r_dir, global const struct ehy_shot_specific *ehy)
 {
-    const double16 SoR = vload16(0, &ehy->ehy_SoR[0]);
-    const double3 V = vload3(0, &ehy->ehy_V[0]);
+    global const double *SoR = ehy->ehy_SoR;
+    global const double *V = ehy->ehy_V;
     const double cp = ehy->ehy_cprime;
 
     double3 dp;		// D'
@@ -32,14 +32,14 @@ int ehy_shot(global struct hit *res, const double3 r_pt, const double3 r_dir, gl
     hitp = &hits[0];
 
     // out, Mat, vect
-    const double f = 1.0/SoR.sf;
-    dp.x = dot(SoR.s012, r_dir) * f;
-    dp.y = dot(SoR.s456, r_dir) * f;
-    dp.z = dot(SoR.s89a, r_dir) * f;
-    xlated = r_pt - V;
-    pp.x = dot(SoR.s012, xlated) * f;
-    pp.y = dot(SoR.s456, xlated) * f;
-    pp.z = dot(SoR.s89a, xlated) * f;
+    const double f = 1.0/SoR[15];
+    dp.x = dot(vload3(0, &SoR[0]), r_dir) * f;
+    dp.y = dot(vload3(0, &SoR[4]), r_dir) * f;
+    dp.z = dot(vload3(0, &SoR[8]), r_dir) * f;
+    xlated = r_pt - vload3(0, V);
+    pp.x = dot(vload3(0, &SoR[0]), xlated) * f;
+    pp.y = dot(vload3(0, &SoR[4]), xlated) * f;
+    pp.z = dot(vload3(0, &SoR[8]), xlated) * f;
 
     // Find roots of the equation, using formula for quadratic
     a = dp.z * dp.z - (2 * cp + 1) * (dp.x * dp.x + dp.y * dp.y);

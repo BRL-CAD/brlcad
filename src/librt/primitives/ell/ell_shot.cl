@@ -8,8 +8,8 @@ struct ell_shot_specific {
 
 int ell_shot(global struct hit *res, const double3 r_pt, const double3 r_dir, global const struct ell_shot_specific *ell)
 {
-    const double16 SoR = vload16(0, &ell->ell_SoR[0]);
-    const double3 V = vload3(0, &ell->ell_V[0]);
+    global const double *SoR = ell->ell_SoR;
+    global const double *V = ell->ell_V;
 
     double3 dprime;	// D'
     double3 pprime;	// P'
@@ -19,14 +19,14 @@ int ell_shot(global struct hit *res, const double3 r_pt, const double3 r_dir, gl
     double root;	// root of radical
 
     /* out, Mat, vect */
-    const double f = 1.0/SoR.sf;
-    dprime.x = dot(SoR.s012, r_dir) * f;
-    dprime.y = dot(SoR.s456, r_dir) * f;
-    dprime.z = dot(SoR.s89a, r_dir) * f;
-    xlated = r_pt - V;
-    pprime.x = dot(SoR.s012, xlated) * f;
-    pprime.y = dot(SoR.s456, xlated) * f;
-    pprime.z = dot(SoR.s89a, xlated) * f;
+    const double f = 1.0/SoR[15];
+    dprime.x = dot(vload3(0, &SoR[0]), r_dir) * f;
+    dprime.y = dot(vload3(0, &SoR[4]), r_dir) * f;
+    dprime.z = dot(vload3(0, &SoR[8]), r_dir) * f;
+    xlated = r_pt - vload3(0, V);
+    pprime.x = dot(vload3(0, &SoR[0]), xlated) * f;
+    pprime.y = dot(vload3(0, &SoR[4]), xlated) * f;
+    pprime.z = dot(vload3(0, &SoR[8]), xlated) * f;
 
     dp = dot(dprime, pprime);
     dd = dot(dprime, dprime);

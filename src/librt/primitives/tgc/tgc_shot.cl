@@ -20,7 +20,9 @@ struct tgc_shot_specific {
 
 int tgc_shot(global struct hit *res, const double3 r_pt, const double3 r_dir, global const struct tgc_shot_specific *tgc)
 {
-    const double3 V = vload3(0, &tgc->tgc_V[0]);
+    global const double *ScShR = tgc->tgc_ScShR;
+    global const double *V = tgc->tgc_V;
+    global const double *N = tgc->tgc_N;
     const double sH = tgc->tgc_sH;
     const double A = tgc->tgc_A;
     const double B = tgc->tgc_B;
@@ -28,8 +30,6 @@ int tgc_shot(global struct hit *res, const double3 r_pt, const double3 r_dir, gl
     const double DdBm1 = tgc->tgc_DdBm1;
     const double AAdCC = tgc->tgc_AAdCC;
     const double BBdDD = tgc->tgc_BBdDD;
-    const double3 N = vload3(0, &tgc->tgc_N[0]);
-    const double16 ScShR = vload16(0, &tgc->tgc_ScShR[0]);
     const char AD_CB = tgc->tgc_AD_CB;
 
     double3 pprime;
@@ -50,13 +50,13 @@ int tgc_shot(global struct hit *res, const double3 r_pt, const double3 r_dir, gl
     double R[2], Rsqr[3];
 
     /* find rotated point and direction */
-    const double f = 1.0/ScShR.sf;
+    const double f = 1.0/ScShR[15];
 
 #define ALPHA(x, y, c, d)	((x)*(x)*(c) + (y)*(y)*(d))
 
-    dprime.x = dot(ScShR.s012, r_dir) * f;
-    dprime.y = dot(ScShR.s456, r_dir) * f;
-    dprime.z = dot(ScShR.s89a, r_dir) * f;
+    dprime.x = dot(vload3(0, &ScShR[0]), r_dir) * f;
+    dprime.y = dot(vload3(0, &ScShR[4]), r_dir) * f;
+    dprime.z = dot(vload3(0, &ScShR[8]), r_dir) * f;
 
     /* A vector of unit length in model space (r_dir) changes length
      * in the special unit-tgc space.  This scale factor will restore
@@ -73,10 +73,10 @@ int tgc_shot(global struct hit *res, const double3 r_pt, const double3 r_dir, gl
 	dprime.z = 0.0;	/* prevent rootfinder heartburn */
     }
 
-    work = r_pt - V;
-    pprime.x = dot(ScShR.s012, work) * f;
-    pprime.y = dot(ScShR.s456, work) * f;
-    pprime.z = dot(ScShR.s89a, work) * f;
+    work = r_pt - vload3(0, V);
+    pprime.x = dot(vload3(0, &ScShR[0]), work) * f;
+    pprime.y = dot(vload3(0, &ScShR[4]), work) * f;
+    pprime.z = dot(vload3(0, &ScShR[8]), work) * f;
 
     /* Translating ray origin along direction of ray to closest pt. to
      * origin of solids coordinate system, new ray origin is
@@ -268,7 +268,7 @@ int tgc_shot(global struct hit *res, const double3 r_pt, const double3 r_dir, gl
      * Consider intersections with the end ellipses
      */
     /* bu_log("npts before base is %d; ", npts); */
-    dir = dot(N, r_dir);
+    dir = dot(vload3(0, N), r_dir);
     if (!ZERO(dprime.z) && !NEAR_ZERO(dir, RT_DOT_TOL)) {
 	b = (-pprime.z)/dprime.z;
 	/* Height vector is unitized (tgc_sH == 1.0) */

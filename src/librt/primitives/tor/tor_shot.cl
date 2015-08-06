@@ -9,8 +9,8 @@ struct tor_shot_specific {
 
 int tor_shot(global struct hit *res, const double3 r_pt, const double3 r_dir, global const struct tor_shot_specific *tor)
 {
-    const double3 V = vload3(0, &tor->tor_V[0]);
-    const double16 SoR = vload16(0, &tor->tor_SoR[0]);
+    global const double *SoR = tor->tor_SoR;
+    global const double *V = tor->tor_V;
     const double alpha = tor->tor_alpha;
     const double r1 = tor->tor_r1;
 
@@ -29,16 +29,16 @@ int tor_shot(global struct hit *res, const double3 r_pt, const double3 r_dir, gl
     double cor_proj;
 
     /* Convert vector into the space of the unit torus */
-    const double f = 1.0/SoR.sf;
-    dprime.x = dot(SoR.s012, r_dir) * f;
-    dprime.y = dot(SoR.s456, r_dir) * f;
-    dprime.z = dot(SoR.s89a, r_dir) * f;
+    const double f = 1.0/SoR[15];
+    dprime.x = dot(vload3(0, &SoR[0]), r_dir) * f;
+    dprime.y = dot(vload3(0, &SoR[4]), r_dir) * f;
+    dprime.z = dot(vload3(0, &SoR[8]), r_dir) * f;
     dprime = normalize(dprime);
 
-    work = r_pt - V;
-    pprime.x = dot(SoR.s012, work) * f;
-    pprime.y = dot(SoR.s456, work) * f;
-    pprime.z = dot(SoR.s89a, work) * f;
+    work = r_pt - vload3(0, V);
+    pprime.x = dot(vload3(0, &SoR[0]), work) * f;
+    pprime.y = dot(vload3(0, &SoR[4]), work) * f;
+    pprime.z = dot(vload3(0, &SoR[8]), work) * f;
 
     /* normalize distance from torus.  substitute corrected pprime
      * which contains a translation along ray direction to closest

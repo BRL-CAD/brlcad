@@ -8,7 +8,7 @@ struct sph_shot_specific {
 
 int sph_shot(global struct hit *res, const double3 r_pt, const double3 r_dir, global const struct sph_shot_specific *sph)
 {
-    const double3 V = vload3(0, &sph->sph_V[0]);
+    global const double *V = sph->sph_V;
     const double radsq = sph->sph_radsq;
 
     double3 ov;        // ray origin to center (V - P)
@@ -16,7 +16,7 @@ int sph_shot(global struct hit *res, const double3 r_pt, const double3 r_dir, gl
     double b;          // second term of quadratic eqn
     double root;       // root of radical
 
-    ov = V - r_pt;
+    ov = vload3(0, V) - r_pt;
     b = dot(r_dir, ov);
     magsq_ov = dot(ov, ov);
 
