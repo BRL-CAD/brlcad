@@ -392,6 +392,7 @@ gcv_converter_process_arguments(
     if (!converter->create_opts_fn) {
 	const struct bu_opt_desc default_options_desc = BU_OPT_DESC_NULL;
 	ret_argc = bu_opt_parse(messages, argc, argv, &default_options_desc);
+	*options_data = NULL;
     } else {
 	struct bu_opt_desc *options_desc;
 	converter->create_opts_fn(&options_desc, options_data);
@@ -418,7 +419,7 @@ gcv_converter_process_arguments(
 	if (converter->create_opts_fn)
 	    converter->free_opts_fn(*options_data);
 
-	options_data = NULL;
+	*options_data = NULL;
 	return 0;
     }
 
