@@ -16,7 +16,7 @@ __kernel void
 solid_shot(global int *len, global struct hit *res, const double3 r_pt, const double3 r_dir, const int id, global const void *args)
 {
     int isect;
-    
+
     switch (id) {
     case ID_ARB8:	isect = arb_shot(res, r_pt, r_dir, args);	break;
     case ID_EHY:	isect = ehy_shot(res, r_pt, r_dir, args);	break;

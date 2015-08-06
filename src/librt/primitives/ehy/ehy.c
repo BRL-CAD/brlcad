@@ -407,7 +407,7 @@ rt_ehy_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct 
             segp->seg_out.hit_surfno = hits[1].hit_surfno;
             VMOVE(segp->seg_out.hit_vpriv, hits[1].hit_vpriv.s);
             BU_LIST_INSERT(&(seghead->l), &(segp->l));
-            return 2;	/* HIT */            
+            return 2;	/* HIT */
     }
 #else
     struct ehy_specific *ehy =
@@ -2018,7 +2018,7 @@ rt_ehy_surf_area(fastf_t *area, const struct rt_db_internal *ip)
     b = (eip->ehy_r1 * a) / sqrt(h * (h - 2 * a));
 
     /** Formula taken from : https://docs.google.com/file/d/0BydeQ6BPlVejRWt6NlJLVDl0d28/edit
-     * Area can be calculated by substracting integral of hyperbola from the area of the bounding rectangle
+     * Area can be calculated by subtracting integral of hyperbola from the area of the bounding rectangle
      */
     sqrt_rb = sqrt(eip->ehy_r1 * eip->ehy_r1 + b * b);
     integralArea = (a / b) * ((eip->ehy_r1 * sqrt_rb) + ((b * b / 2) * (log(sqrt_rb + eip->ehy_r1) - log(sqrt_rb - eip->ehy_r1))));

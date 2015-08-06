@@ -90,7 +90,7 @@ int ehy_shot(global struct hit *res, const double3 r_pt, const double3 r_dir, gl
     /* check top plate */
     if (hitp == &hits[1] && !ZERO(dp.z)) {
         // 1 hit so far, this is worthwhile
-        k1 = -pp.z/dp.z;    // top plate 
+        k1 = -pp.z/dp.z;    // top plate
 
 	hitp->hit_vpriv = pp + k1 * dp;   /* hit' */
         if (hitp->hit_vpriv.x * hitp->hit_vpriv.x +

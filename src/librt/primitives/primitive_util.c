@@ -515,7 +515,7 @@ clt_get_program(cl_context context, cl_device_id device, cl_uint count, const ch
     for (i=0; i<count; i++) {
         strings[i] = clt_read_code(filenames[i], &lengths[i]);
     }
-     
+
     program = clCreateProgramWithSource(context, count, pc_strings, pc_lengths, &error);
     if (error != CL_SUCCESS) bu_bomb("failed to create OpenCL program");
 
@@ -567,7 +567,7 @@ clt_init(void)
             "tgc_shot.cl",
             "tor_shot.cl",
 
-            "table.cl" 
+            "table.cl"
         };
 
         clt_initialized = 1;
@@ -608,7 +608,7 @@ clt_solid_shot(const size_t sz_hits, struct cl_hit *hits, struct xray *rp, const
     if (error != CL_SUCCESS) bu_bomb("failed to create OpenCL output buffer");
     plen = clCreateBuffer(clt_context, CL_MEM_WRITE_ONLY, sizeof(len), NULL, &error);
     if (error != CL_SUCCESS) bu_bomb("failed to create OpenCL output buffer");
-    
+
     bu_semaphore_acquire(clt_semaphore);
     error = clSetKernelArg(clt_kernel, 0, sizeof(cl_mem), &plen);
     error |= clSetKernelArg(clt_kernel, 1, sizeof(cl_mem), &pout);

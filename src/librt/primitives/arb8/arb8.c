@@ -874,7 +874,7 @@ rt_arb_shot(struct soltab *stp, register struct xray *rp, struct application *ap
             segp->seg_out.hit_dist = hits[1].hit_dist;
             segp->seg_out.hit_surfno = hits[1].hit_surfno;
             BU_LIST_INSERT(&(seghead->l), &(segp->l));
-            return 2;	/* HIT */            
+            return 2;	/* HIT */
     }
 #else
     struct arb_specific *arbp = (struct arb_specific *)stp->st_specific;

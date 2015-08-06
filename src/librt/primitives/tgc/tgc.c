@@ -164,7 +164,7 @@ clt_shot(size_t sz_hits, struct cl_hit *hits, struct xray *rp, struct soltab *st
 {
     struct tgc_specific *tgc =
 	(struct tgc_specific *)stp->st_specific;
-    
+
     struct tgc_shot_specific args;
 
     VMOVE(args.tgc_V, tgc->tgc_V);
@@ -620,7 +620,7 @@ rt_tgc_shot(struct soltab *stp, register struct xray *rp, struct application *ap
             VMOVE(segp->seg_in.hit_vpriv, hits[0].hit_vpriv.s);
             VMOVE(segp->seg_out.hit_vpriv, hits[1].hit_vpriv.s);
             BU_LIST_INSERT(&(seghead->l), &(segp->l));
-            return 1;	/* HIT */            
+            return 1;	/* HIT */
         default:
             RT_GET_SEG(segp, ap->a_resource);
             segp->seg_stp = stp;

@@ -430,7 +430,7 @@ rt_ell_shot(struct soltab *stp, register struct xray *rp, struct application *ap
             segp->seg_out.hit_dist = hits[1].hit_dist;
             segp->seg_out.hit_surfno = hits[1].hit_surfno;
             BU_LIST_INSERT(&(seghead->l), &(segp->l));
-            return 2;	/* HIT */            
+            return 2;	/* HIT */
     }
 #else
     register struct ell_specific *ell =

@@ -162,7 +162,7 @@ _rt_gen_worker(int cpu, void *ptr)
     ap.a_ray.r_dir[dir1] = 1;
     ap.a_ray.r_dir[dir2] = 0;
     ap.a_ray.r_dir[dir3] = 0;
-    
+
     ap.a_ray.r_pt[dir1] = state->model_min[dir1] -100;
     double slabBottom = (cpu - 1) * state->perCpuSlabWidth[dir3];
     double slabTop = cpu * state->perCpuSlabWidth[dir3];
@@ -220,7 +220,7 @@ _rt_generate_points(int **faces, int *num_faces, point_t **points, int *num_pnts
     VSUB2(state->model_span, state->model_max, state->model_min);
     for (i = 0; i < 3; i++) {
 	state->perCpuSlabWidth[i] = state->model_span[i] / ncpus;
-	
+
 	n[i] = (int)(state->model_span[i]/state->delta) + 2;
 	if(n[i] < 12) n[i] = 12;
     }
@@ -285,7 +285,7 @@ _rt_generate_points(int **faces, int *num_faces, point_t **points, int *num_pnts
     bu_free(state->resp, "resources");
     BU_PUT(state, struct rt_parallel_container);
     state = NULL;
-    
+
     return 0;
 }
 
