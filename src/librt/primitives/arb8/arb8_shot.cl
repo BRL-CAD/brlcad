@@ -1,13 +1,12 @@
 #include "common.cl"
 
+
 struct arb_shot_specific {
     double arb_peqns[4*6];
     int arb_nmfaces;
 };
 
-__kernel void
-arb8_shot(global struct hit *res, const double3 r_pt, const double3 r_dir,
-global const struct arb_shot_specific *arb)
+int arb_shot(global struct hit *res, const double3 r_pt, const double3 r_dir, global const struct arb_shot_specific *arb)
 {
     global const double *peqns = arb->arb_peqns;
     const int nmfaces = arb->arb_nmfaces;
@@ -46,30 +45,26 @@ global const struct arb_shot_specific *arb)
 	     * rays that lie very nearly in the plane of a face.
 	     */
 	    if (dxbdn > SQRT_SMALL_FASTF) {
-        	res[0].hit_surfno = INT_MAX;
-		return;	// MISS
+		return 0;	// MISS
 	    }
 	}
 	if (in > out) {
-            res[0].hit_surfno = INT_MAX;
-	    return;	// MISS
+	    return 0;	// MISS
 	}
     }
     /* Validate */
     if (iplane == -1 || oplane == -1) {
-        res[0].hit_surfno = INT_MAX;
-	return;		// MISS
+	return 0;	// MISS
     }
     if (in >= out || out >= INFINITY) {
-        res[0].hit_surfno = INT_MAX;
-	return;		// MISS
+	return 0;	// MISS
     }
 
     res[0].hit_dist = in;
     res[0].hit_surfno = iplane;
     res[1].hit_dist = out;
     res[1].hit_surfno = oplane;
-    return;		// HIT
+    return 2;		// HIT
 }
 
 

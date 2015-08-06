@@ -1,5 +1,6 @@
 #include "common.cl"
 
+
 /* hit_surfno is set to one of these */
 #define EHY_NORM_BODY	(1)		/* compute normal */
 #define EHY_NORM_TOP	(2)		/* copy ehy_N */
@@ -11,9 +12,7 @@ struct ehy_shot_specific {
     double ehy_cprime;
 };
 
-__kernel void
-ehy_shot(global struct hit *res, const double3 r_pt, const double3 r_dir,
-global const struct ehy_shot_specific *ehy)
+int ehy_shot(global struct hit *res, const double3 r_pt, const double3 r_dir, global const struct ehy_shot_specific *ehy)
 {
     const double16 SoR = vload16(0, &ehy->ehy_SoR[0]);
     const double3 V = vload3(0, &ehy->ehy_V[0]);
@@ -103,8 +102,7 @@ global const struct ehy_shot_specific *ehy)
     }
 
     if (hitp != &hits[2]) {
-	res[0].hit_surfno = INT_MAX;
-        return; // MISS
+        return 0; // MISS
     }
 
     if (hits[0].hit_dist < hits[1].hit_dist) {
@@ -116,7 +114,7 @@ global const struct ehy_shot_specific *ehy)
         res[0] = hits[1];
         res[1] = hits[0];
     }
-    return; // HIT
+    return 2; // HIT
 }
 
 

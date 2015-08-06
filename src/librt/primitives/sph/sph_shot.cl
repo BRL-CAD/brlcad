@@ -1,13 +1,12 @@
 #include "common.cl"
 
+
 struct sph_shot_specific {
     double sph_V[3];
     double sph_radsq;
 };
 
-__kernel void
-sph_shot(global struct hit *res, const double3 r_pt, const double3 r_dir,
-global const struct sph_shot_specific *sph)
+int sph_shot(global struct hit *res, const double3 r_pt, const double3 r_dir, global const struct sph_shot_specific *sph)
 {
     const double3 V = vload3(0, &sph->sph_V[0]);
     const double radsq = sph->sph_radsq;
@@ -25,14 +24,12 @@ global const struct sph_shot_specific *sph)
 	// ray origin is outside of sphere
 	if (b < 0) {
 	    // ray direction is away from sphere
-            res[0].hit_surfno = INT_MAX;
-	    return;           // No hit
+	    return 0;       // No hit
 	}
 	root = b*b - magsq_ov + radsq;
 	if (root <= 0) {
 	    // no real roots
-            res[0].hit_surfno = INT_MAX;
-	    return;           // No hit
+	    return 0;       // No hit
 	}
     } else {
 	root = b*b - magsq_ov + radsq;
@@ -44,7 +41,7 @@ global const struct sph_shot_specific *sph)
     res[1].hit_dist = b + root;
     res[0].hit_surfno = 0;
     res[1].hit_surfno = 0;
-    return;        // HIT
+    return 2;       // HIT
 }
 
 

@@ -1,7 +1,5 @@
-typedef union {
-    struct { double x, y; };
-    struct { double re, im; };
-} bn_complex_t;
+#include "common.cl"
+
 
 #define bn_cx_add(ap, bp)	{ (ap)->re += (bp)->re; (ap)->im += (bp)->im;}
 #define bn_cx_ampl(cp)		hypot((cp)->re, (cp)->im)
@@ -592,7 +590,7 @@ bn_poly_scale(double *eqn, uint dgr, double factor)
     return eqn;
 }
 
-static int
+int
 rt_poly_roots(double *eqn,	/* equation to be solved */
 uint dgr,
 bn_complex_t *roots)		/* space to put roots found */

@@ -1,13 +1,12 @@
 #include "common.cl"
 
+
 struct ell_shot_specific {
     double ell_SoR[16];
     double ell_V[3];
 };
 
-__kernel void
-ell_shot(global struct hit *res, const double3 r_pt, const double3 r_dir,
-global const struct ell_shot_specific *ell)
+int ell_shot(global struct hit *res, const double3 r_pt, const double3 r_dir, global const struct ell_shot_specific *ell)
 {
     const double16 SoR = vload16(0, &ell->ell_SoR[0]);
     const double3 V = vload3(0, &ell->ell_V[0]);
@@ -33,8 +32,7 @@ global const struct ell_shot_specific *ell)
     dd = dot(dprime, dprime);
 
     if ((root = dp*dp - dd * (dot(pprime, pprime)-1.0)) < 0) {
-	res[0].hit_surfno = INT_MAX;
-	return;		// No hit
+	return 0;	// No hit
     } else {
 	root = sqrt(root);
 	if ((k1=(-dp+root)/dd) <= (k2=(-dp-root)/dd)) {
@@ -48,7 +46,7 @@ global const struct ell_shot_specific *ell)
 	}
         res[0].hit_surfno = 0;
         res[1].hit_surfno = 0;
-	return;		// HIT
+	return 2;	// HIT
     }
 }
 

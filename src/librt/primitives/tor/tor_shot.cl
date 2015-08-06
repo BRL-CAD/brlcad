@@ -1,7 +1,5 @@
 #include "common.cl"
 
-#include "solver.cl"
-
 
 struct tor_shot_specific {
     double tor_SoR[16];
@@ -9,9 +7,7 @@ struct tor_shot_specific {
     double tor_alpha, tor_r1;
 };
 
-__kernel void
-tor_shot(global struct hit *res, const double3 r_pt, const double3 r_dir,
-global const struct tor_shot_specific *tor)
+int tor_shot(global struct hit *res, const double3 r_pt, const double3 r_dir, global const struct tor_shot_specific *tor)
 {
     const double3 V = vload3(0, &tor->tor_V[0]);
     const double16 SoR = vload16(0, &tor->tor_SoR[0]);
@@ -98,8 +94,7 @@ global const struct tor_shot_specific *tor)
      * root finder returns other than 4 roots, error.
      */
     if ((i = rt_poly_roots(C, 4, val)) != 4) {
-        res[0].hit_surfno = INT_MAX;
-	return;			// MISS
+	return 0;		// MISS
     }
 
     /* Only real roots indicate an intersection in real space.
@@ -122,8 +117,7 @@ global const struct tor_shot_specific *tor)
     switch (i) {
 	default:
 	case 0:
-            res[0].hit_surfno = INT_MAX;
-	    return;		// No hit
+	    return 0;		// No hit
 	case 2:
 	    {
 		/* Sort most distant to least distant. */
@@ -164,9 +158,7 @@ global const struct tor_shot_specific *tor)
 	/* Set aside vector for rt_tor_norm() later */
         res[0].hit_vpriv = pprime + k[1] * dprime;
         res[1].hit_vpriv = pprime + k[0] * dprime;
-
-        res[2].hit_surfno = INT_MAX;
-    	return;			// HIT
+    	return 2;		// HIT
     } else {
 	/* 4 points */
 	/* k[3] is entry point, and k[2] is exit point */
@@ -185,7 +177,7 @@ global const struct tor_shot_specific *tor)
         res[1].hit_vpriv = pprime + k[2] * dprime;
         res[2].hit_vpriv = pprime + k[1] * dprime;
         res[3].hit_vpriv = pprime + k[0] * dprime;
-    	return;			// HIT
+    	return 4;		// HIT
     }
 }
 

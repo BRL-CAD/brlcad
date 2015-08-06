@@ -1,3 +1,6 @@
+#ifndef COMMON_CL
+#define COMMON_CL
+
 #ifdef cl_khr_fp64
     #pragma OPENCL EXTENSION cl_khr_fp64 : enable
 #elif defined(cl_amd_fp64)
@@ -21,12 +24,21 @@
 #define ZERO(_a)        	NEAR_ZERO((_a), SMALL_FASTF)
 
 
+typedef union {
+    struct { double x, y; };
+    struct { double re, im; };
+} bn_complex_t;
+
+
 struct hit {
   double3 hit_vpriv;
   double hit_dist;
   int hit_surfno;
 };
 
+extern int rt_poly_roots(double *eqn, uint dgr, bn_complex_t *roots);
+
+#endif	/* COMMON_CL */
 
 /*
  * Local Variables:

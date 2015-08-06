@@ -163,94 +163,19 @@ struct tor_shot_specific {
 };
 
 
-static const int clt_semaphore = 12; /* FIXME: for testing; this isn't our semaphore */
-static int clt_initialized = 0;
-static cl_device_id clt_device;
-static cl_context clt_context;
-static cl_command_queue clt_queue;
-static cl_program clt_program;
-static cl_kernel clt_kernel;
-
-
-static void
-clt_cleanup()
+static cl_int
+clt_shot(size_t sz_hits, struct cl_hit *hits, struct xray *rp, struct soltab *stp)
 {
-    if (!clt_initialized) return;
-
-    clReleaseKernel(clt_kernel);
-    clReleaseCommandQueue(clt_queue);
-    clReleaseProgram(clt_program);
-    clReleaseContext(clt_context);
-
-    clt_initialized = 0;
-}
-
-static void
-clt_init()
-{
-    cl_int error;
-
-    bu_semaphore_acquire(clt_semaphore);
-    if (!clt_initialized) {
-        clt_initialized = 1;
-        atexit(clt_cleanup);
-
-        clt_device = clt_get_cl_device();
-
-        clt_context = clCreateContext(NULL, 1, &clt_device, NULL, NULL, &error);
-        if (error != CL_SUCCESS) bu_bomb("failed to create an OpenCL context");
-
-        clt_queue = clCreateCommandQueue(clt_context, clt_device, 0, &error);
-        if (error != CL_SUCCESS) bu_bomb("failed to create an OpenCL command queue");
-
-        clt_program = clt_get_program(clt_context, clt_device, "tor_shot.cl");
-
-        clt_kernel = clCreateKernel(clt_program, "tor_shot", &error);
-        if (error != CL_SUCCESS) bu_bomb("failed to create an OpenCL kernel");
-    }
-    bu_semaphore_release(clt_semaphore);
-}
-
-static void
-clt_shot(size_t size, struct cl_hit *hits, struct xray *rp, struct soltab *stp)
-{
-    cl_double3 r_pt, r_dir;
-    const size_t hypersample = 1;
-    cl_int error;
-    cl_mem pin, pout;
-
     struct tor_specific *tor =
 	(struct tor_specific *)stp->st_specific;
     
-    struct tor_shot_specific in;
-
-    VMOVE(r_pt.s, rp->r_pt);
-    VMOVE(r_dir.s, rp->r_dir);
+    struct tor_shot_specific args;
     
-    VMOVE(in.tor_V, tor->tor_V);
-    MAT_COPY(in.tor_SoR, tor->tor_SoR);
-    in.tor_alpha = tor->tor_alpha;
-    in.tor_r1 = tor->tor_r1;
-
-    pin = clCreateBuffer(clt_context, CL_MEM_READ_ONLY|CL_MEM_COPY_HOST_PTR, sizeof(in), &in, &error);
-    if (error != CL_SUCCESS) bu_bomb("failed to create OpenCL input buffer");
-    pout = clCreateBuffer(clt_context, CL_MEM_WRITE_ONLY, size, NULL, &error);
-    if (error != CL_SUCCESS) bu_bomb("failed to create OpenCL output buffer");
-
-    bu_semaphore_acquire(clt_semaphore);
-    error = clSetKernelArg(clt_kernel, 0, sizeof(cl_mem), &pout);
-    error |= clSetKernelArg(clt_kernel, 1, sizeof(cl_double3), &r_pt);
-    error |= clSetKernelArg(clt_kernel, 2, sizeof(cl_double3), &r_dir);
-    error |= clSetKernelArg(clt_kernel, 3, sizeof(cl_mem), &pin);
-    if (error != CL_SUCCESS) bu_bomb("failed to set OpenCL kernel arguments");
-    error = clEnqueueNDRangeKernel(clt_queue, clt_kernel, 1, NULL, &hypersample, NULL, 0, NULL, NULL);
-    bu_semaphore_release(clt_semaphore);
-    if (error != CL_SUCCESS) bu_bomb("failed to enqueue OpenCL kernel");
-
-    if (clFinish(clt_queue) != CL_SUCCESS) bu_bomb("failure in clFinish()");
-    clEnqueueReadBuffer(clt_queue, pout, CL_TRUE, 0, size, hits, 0, NULL, NULL);
-    clReleaseMemObject(pout);
-    clReleaseMemObject(pin);
+    VMOVE(args.tor_V, tor->tor_V);
+    MAT_COPY(args.tor_SoR, tor->tor_SoR);
+    args.tor_alpha = tor->tor_alpha;
+    args.tor_r1 = tor->tor_r1;
+    return clt_solid_shot(sz_hits, hits, rp, ID_TOR, sizeof(args), &args);
 }
 #endif /* USE_OPENCL */
 
@@ -451,39 +376,45 @@ rt_tor_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 {
 #ifdef USE_OPENCL
     struct cl_hit hits[4];
+    struct seg *segp;
 
-    clt_shot(sizeof(hits), hits, rp, stp);
+    switch (clt_shot(sizeof(hits), hits, rp, stp)) {
+        case 0:
+            return 0;	/* MISS */
+        case 2:
+            RT_GET_SEG(segp, ap->a_resource);
+            segp->seg_stp = stp;
+            segp->seg_in.hit_dist = hits[0].hit_dist;
+            segp->seg_in.hit_surfno = hits[0].hit_surfno;
+            segp->seg_out.hit_dist = hits[1].hit_dist;
+            segp->seg_out.hit_surfno = hits[1].hit_surfno;
+            /* Set aside vector for rt_tor_norm() later */
+            VMOVE(segp->seg_in.hit_vpriv, hits[0].hit_vpriv.s);
+            VMOVE(segp->seg_out.hit_vpriv, hits[1].hit_vpriv.s);
+            BU_LIST_INSERT(&(seghead->l), &(segp->l));
+            return 2;	/* HIT */            
+        default:
+            RT_GET_SEG(segp, ap->a_resource);
+            segp->seg_stp = stp;
+            segp->seg_in.hit_dist = hits[0].hit_dist;
+            segp->seg_in.hit_surfno = hits[0].hit_surfno;
+            segp->seg_out.hit_dist = hits[1].hit_dist;
+            segp->seg_out.hit_surfno = hits[1].hit_surfno;
+            /* Set aside vector for rt_tor_norm() later */
+            VMOVE(segp->seg_in.hit_vpriv, hits[0].hit_vpriv.s);
+            VMOVE(segp->seg_out.hit_vpriv, hits[1].hit_vpriv.s);
+            BU_LIST_INSERT(&(seghead->l), &(segp->l));
 
-    if (hits[0].hit_surfno == INT_MAX) {
-	return 0;		/* No hit */
-    } else {
-	struct seg *segp;
-        
-        RT_GET_SEG(segp, ap->a_resource);
-        segp->seg_stp = stp;
-	segp->seg_in.hit_dist = hits[0].hit_dist;
-	segp->seg_in.hit_surfno = hits[0].hit_surfno;
-	segp->seg_out.hit_dist = hits[1].hit_dist;
-	segp->seg_out.hit_surfno = hits[1].hit_surfno;
-        /* Set aside vector for rt_tor_norm() later */
-	VMOVE(segp->seg_in.hit_vpriv, hits[0].hit_vpriv.s);
-	VMOVE(segp->seg_out.hit_vpriv, hits[1].hit_vpriv.s);
-        BU_LIST_INSERT(&(seghead->l), &(segp->l));
-        
-        if (hits[2].hit_surfno == INT_MAX) {
-            return 2;			/* HIT */
-        }
-
-        RT_GET_SEG(segp, ap->a_resource);
-        segp->seg_stp = stp;
-	segp->seg_in.hit_dist = hits[2].hit_dist;
-	segp->seg_in.hit_surfno = hits[2].hit_surfno;
-	segp->seg_out.hit_dist = hits[3].hit_dist;
-	segp->seg_out.hit_surfno = hits[3].hit_surfno;
-	VMOVE(segp->seg_in.hit_vpriv, hits[2].hit_vpriv.s);
-	VMOVE(segp->seg_out.hit_vpriv, hits[3].hit_vpriv.s);
-        BU_LIST_INSERT(&(seghead->l), &(segp->l));
-        return 4;			/* HIT */
+            RT_GET_SEG(segp, ap->a_resource);
+            segp->seg_stp = stp;
+            segp->seg_in.hit_dist = hits[2].hit_dist;
+            segp->seg_in.hit_surfno = hits[2].hit_surfno;
+            segp->seg_out.hit_dist = hits[3].hit_dist;
+            segp->seg_out.hit_surfno = hits[3].hit_surfno;
+            VMOVE(segp->seg_in.hit_vpriv, hits[2].hit_vpriv.s);
+            VMOVE(segp->seg_out.hit_vpriv, hits[3].hit_vpriv.s);
+            BU_LIST_INSERT(&(seghead->l), &(segp->l));
+            return 4;	/* HIT */
     }
 #else
     register struct tor_specific *tor =

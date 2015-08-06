@@ -1,6 +1,5 @@
 #include "common.cl"
 
-#include "solver.cl"
 
 /* hit_surfno is set to one of these */
 #define TGC_NORM_BODY	(1)	/* compute normal */
@@ -19,9 +18,7 @@ struct tgc_shot_specific {
     char tgc_AD_CB;
 };
 
-__kernel void
-tgc_shot(global struct hit *res, const double3 r_pt, const double3 r_dir,
-global const struct tgc_shot_specific *tgc)
+int tgc_shot(global struct hit *res, const double3 r_pt, const double3 r_dir, global const struct tgc_shot_specific *tgc)
 {
     const double3 V = vload3(0, &tgc->tgc_V[0]);
     const double sH = tgc->tgc_sH;
@@ -67,8 +64,7 @@ global const struct tgc_shot_specific *tgc)
      */
     t_scale = length(dprime);
     if (ZERO(t_scale)) {
-        res[0].hit_surfno = INT_MAX;
-	return;
+	return 0;
     }
     t_scale = 1.0/t_scale;
     dprime *= t_scale;
@@ -353,8 +349,7 @@ global const struct tgc_shot_specific *tgc)
     }
 
     if (npts != 0 && npts != 2 && npts != 4) {
-        res[0].hit_surfno = INT_MAX;
-	return;			/* No hit */
+	return 0;		/* No hit */
     }
 
     intersect = 0;
@@ -386,17 +381,7 @@ global const struct tgc_shot_specific *tgc)
         j += 2;
 	intersect++;
     }
-
-    switch (intersect) {
-    case 0:
-        res[0].hit_surfno = INT_MAX;
-	return;			/* No hit */
-    case 1:
-        res[2].hit_surfno = INT_MAX;
-    	return;			// HIT
-    case 2:
-    	return;			// HIT
-    }
+    return intersect;
 }
 
 

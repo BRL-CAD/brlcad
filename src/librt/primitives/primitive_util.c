@@ -439,6 +439,15 @@ tcl_list_to_fastf_array(const char *list, fastf_t **array, int *array_len)
 
 
 #ifdef USE_OPENCL
+const int clt_semaphore = 12; /* FIXME: for testing; this isn't our semaphore */
+static int clt_initialized = 0;
+static cl_device_id clt_device;
+static cl_context clt_context;
+static cl_command_queue clt_queue;
+static cl_program clt_program;
+static cl_kernel clt_kernel;
+
+
 /**
  * For now, just get the first device from the first platform.
  */
@@ -489,15 +498,25 @@ clt_read_code(const char *filename, size_t *length)
 }
 
 cl_program
-clt_get_program(cl_context context, cl_device_id device, const char *filename)
+clt_get_program(cl_context context, cl_device_id device, cl_uint count, const char *filenames[])
 {
     cl_int error;
     cl_program program;
-    size_t code_length;
-    char *code = clt_read_code(filename, &code_length);
-    const char *pc_code = code;
+    char **strings;
+    const char **pc_strings;
+    size_t *lengths;
+    const size_t *pc_lengths;
+    cl_uint i;
 
-    program = clCreateProgramWithSource(context, 1, &pc_code, &code_length, &error);
+    strings = (char**)bu_calloc(count, sizeof(char*), "strings");
+    pc_strings = (const char**)strings;
+    lengths = (size_t*)bu_calloc(count, sizeof(size_t), "lengths");
+    pc_lengths = (const size_t*)lengths;
+    for (i=0; i<count; i++) {
+        strings[i] = clt_read_code(filenames[i], &lengths[i]);
+    }
+     
+    program = clCreateProgramWithSource(context, count, pc_strings, pc_lengths, &error);
     if (error != CL_SUCCESS) bu_bomb("failed to create OpenCL program");
 
     error = clBuildProgram(program, 1, &device, NULL, NULL, NULL);
@@ -512,8 +531,103 @@ clt_get_program(cl_context context, cl_device_id device, const char *filename)
         bu_bomb("failed to build OpenCL program");
     }
 
-    bu_free(code, "failed bu_free() in clt_get_program()");
+    bu_free(lengths, "failed bu_free() in clt_get_program()");
+    bu_free(strings, "failed bu_free() in clt_get_program()");
     return program;
+}
+
+
+static void
+clt_cleanup(void)
+{
+    if (!clt_initialized) return;
+
+    clReleaseKernel(clt_kernel);
+    clReleaseCommandQueue(clt_queue);
+    clReleaseProgram(clt_program);
+    clReleaseContext(clt_context);
+
+    clt_initialized = 0;
+}
+
+void
+clt_init(void)
+{
+    cl_int error;
+
+    bu_semaphore_acquire(clt_semaphore);
+    if (!clt_initialized) {
+        const char *filenames[] = {
+            "solver.cl",
+
+            "arb8_shot.cl",
+            "ehy_shot.cl",
+            "ell_shot.cl",
+            "sph_shot.cl",
+            "tgc_shot.cl",
+            "tor_shot.cl",
+
+            "table.cl" 
+        };
+
+        clt_initialized = 1;
+        atexit(clt_cleanup);
+
+        clt_device = clt_get_cl_device();
+
+        clt_context = clCreateContext(NULL, 1, &clt_device, NULL, NULL, &error);
+        if (error != CL_SUCCESS) bu_bomb("failed to create an OpenCL context");
+
+        clt_queue = clCreateCommandQueue(clt_context, clt_device, 0, &error);
+        if (error != CL_SUCCESS) bu_bomb("failed to create an OpenCL command queue");
+
+        clt_program = clt_get_program(clt_context, clt_device, sizeof(filenames)/sizeof(*filenames), filenames);
+
+        clt_kernel = clCreateKernel(clt_program, "solid_shot", &error);
+        if (error != CL_SUCCESS) bu_bomb("failed to create an OpenCL kernel");
+    }
+    bu_semaphore_release(clt_semaphore);
+}
+
+cl_int
+clt_solid_shot(const size_t sz_hits, struct cl_hit *hits, struct xray *rp, const cl_int id, const size_t sz_args, void *args)
+{
+    cl_int len;
+    cl_double3 r_pt, r_dir;
+
+    const size_t hypersample = 1;
+    cl_int error;
+    cl_mem pin, plen, pout;
+
+    VMOVE(r_pt.s, rp->r_pt);
+    VMOVE(r_dir.s, rp->r_dir);
+
+    pin = clCreateBuffer(clt_context, CL_MEM_READ_ONLY|CL_MEM_COPY_HOST_PTR, sz_args, args, &error);
+    if (error != CL_SUCCESS) bu_bomb("failed to create OpenCL input buffer");
+    pout = clCreateBuffer(clt_context, CL_MEM_WRITE_ONLY, sz_hits, NULL, &error);
+    if (error != CL_SUCCESS) bu_bomb("failed to create OpenCL output buffer");
+    plen = clCreateBuffer(clt_context, CL_MEM_WRITE_ONLY, sizeof(len), NULL, &error);
+    if (error != CL_SUCCESS) bu_bomb("failed to create OpenCL output buffer");
+    
+    bu_semaphore_acquire(clt_semaphore);
+    error = clSetKernelArg(clt_kernel, 0, sizeof(cl_mem), &plen);
+    error |= clSetKernelArg(clt_kernel, 1, sizeof(cl_mem), &pout);
+    error |= clSetKernelArg(clt_kernel, 2, sizeof(cl_double3), &r_pt);
+    error |= clSetKernelArg(clt_kernel, 3, sizeof(cl_double3), &r_dir);
+    error |= clSetKernelArg(clt_kernel, 4, sizeof(cl_int), &id);
+    error |= clSetKernelArg(clt_kernel, 5, sizeof(cl_mem), &pin);
+    if (error != CL_SUCCESS) bu_bomb("failed to set OpenCL kernel arguments");
+    error = clEnqueueNDRangeKernel(clt_queue, clt_kernel, 1, NULL, &hypersample, NULL, 0, NULL, NULL);
+    bu_semaphore_release(clt_semaphore);
+    if (error != CL_SUCCESS) bu_bomb("failed to enqueue OpenCL kernel");
+
+    if (clFinish(clt_queue) != CL_SUCCESS) bu_bomb("failure in clFinish()");
+    clEnqueueReadBuffer(clt_queue, plen, CL_TRUE, 0, sizeof(len), &len, 0, NULL, NULL);
+    clReleaseMemObject(plen);
+    clEnqueueReadBuffer(clt_queue, pout, CL_TRUE, 0, sz_hits, hits, 0, NULL, NULL);
+    clReleaseMemObject(pout);
+    clReleaseMemObject(pin);
+    return len;
 }
 #endif
 

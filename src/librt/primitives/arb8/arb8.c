@@ -189,97 +189,22 @@ struct arb_shot_specific {
 };
 
 
-static const int clt_semaphore = 12; /* FIXME: for testing; this isn't our semaphore */
-static int clt_initialized = 0;
-static cl_device_id clt_device;
-static cl_context clt_context;
-static cl_command_queue clt_queue;
-static cl_program clt_program;
-static cl_kernel clt_kernel;
-
-
-static void
-clt_cleanup()
+static cl_int
+clt_shot(size_t sz_hits, struct cl_hit *hits, struct xray *rp, struct soltab *stp)
 {
-    if (!clt_initialized) return;
-
-    clReleaseKernel(clt_kernel);
-    clReleaseCommandQueue(clt_queue);
-    clReleaseProgram(clt_program);
-    clReleaseContext(clt_context);
-
-    clt_initialized = 0;
-}
-
-static void
-clt_init()
-{
-    cl_int error;
-
-    bu_semaphore_acquire(clt_semaphore);
-    if (!clt_initialized) {
-        clt_initialized = 1;
-        atexit(clt_cleanup);
-
-        clt_device = clt_get_cl_device();
-
-        clt_context = clCreateContext(NULL, 1, &clt_device, NULL, NULL, &error);
-        if (error != CL_SUCCESS) bu_bomb("failed to create an OpenCL context");
-
-        clt_queue = clCreateCommandQueue(clt_context, clt_device, 0, &error);
-        if (error != CL_SUCCESS) bu_bomb("failed to create an OpenCL command queue");
-
-        clt_program = clt_get_program(clt_context, clt_device, "arb8_shot.cl");
-
-        clt_kernel = clCreateKernel(clt_program, "arb8_shot", &error);
-        if (error != CL_SUCCESS) bu_bomb("failed to create an OpenCL kernel");
-    }
-    bu_semaphore_release(clt_semaphore);
-}
-
-static void
-clt_shot(size_t size, struct cl_hit *hits, struct xray *rp, struct soltab *stp)
-{
-    cl_double3 r_pt, r_dir;
-    const size_t hypersample = 1;
-    cl_int error;
-    cl_mem pin, pout;
-
     struct arb_specific *arb =
 	(struct arb_specific *)stp->st_specific;
 
-    struct arb_shot_specific in;
+    struct arb_shot_specific args;
 
     const struct aface *afp;
     cl_int j;
 
-    VMOVE(r_pt.s, rp->r_pt);
-    VMOVE(r_dir.s, rp->r_dir);
-
     for (afp = &arb->arb_face[j=0]; j < 6; j++, afp++) {
-	HMOVE(in.arb_peqns+4*j, afp->peqn);
+	HMOVE(args.arb_peqns+4*j, afp->peqn);
     }
-    in.arb_nmfaces = arb->arb_nmfaces;
-
-    pin = clCreateBuffer(clt_context, CL_MEM_READ_ONLY|CL_MEM_COPY_HOST_PTR, sizeof(in), &in, &error);
-    if (error != CL_SUCCESS) bu_bomb("failed to create OpenCL input buffer");
-    pout = clCreateBuffer(clt_context, CL_MEM_WRITE_ONLY, size, NULL, &error);
-    if (error != CL_SUCCESS) bu_bomb("failed to create OpenCL output buffer");
-
-    bu_semaphore_acquire(clt_semaphore);
-    error = clSetKernelArg(clt_kernel, 0, sizeof(cl_mem), &pout);
-    error |= clSetKernelArg(clt_kernel, 1, sizeof(cl_double3), &r_pt);
-    error |= clSetKernelArg(clt_kernel, 2, sizeof(cl_double3), &r_dir);
-    error |= clSetKernelArg(clt_kernel, 3, sizeof(cl_mem), &pin);
-    if (error != CL_SUCCESS) bu_bomb("failed to set OpenCL kernel arguments");
-    error = clEnqueueNDRangeKernel(clt_queue, clt_kernel, 1, NULL, &hypersample, NULL, 0, NULL, NULL);
-    bu_semaphore_release(clt_semaphore);
-    if (error != CL_SUCCESS) bu_bomb("failed to enqueue OpenCL kernel");
-
-    if (clFinish(clt_queue) != CL_SUCCESS) bu_bomb("failure in clFinish()");
-    clEnqueueReadBuffer(clt_queue, pout, CL_TRUE, 0, size, hits, 0, NULL, NULL);
-    clReleaseMemObject(pout);
-    clReleaseMemObject(pin);
+    args.arb_nmfaces = arb->arb_nmfaces;
+    return clt_solid_shot(sz_hits, hits, rp, ID_ARB8, sizeof(args), &args);
 }
 #endif /* USE_OPENCL */
 
@@ -936,22 +861,20 @@ rt_arb_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 {
 #ifdef USE_OPENCL
     struct cl_hit hits[2];
+    struct seg *segp;
 
-    clt_shot(sizeof(hits), hits, rp, stp);
-
-    if (hits[0].hit_surfno == INT_MAX) {
-	return 0;	/* MISS */
-    } else {
-	struct seg *segp;
-
-	RT_GET_SEG(segp, ap->a_resource);
-	segp->seg_stp = stp;
-	segp->seg_in.hit_dist = hits[0].hit_dist;
-	segp->seg_in.hit_surfno = hits[0].hit_surfno;
-	segp->seg_out.hit_dist = hits[1].hit_dist;
-	segp->seg_out.hit_surfno = hits[1].hit_surfno;
-	BU_LIST_INSERT(&(seghead->l), &(segp->l));
-	return 2;	/* HIT */
+    switch (clt_shot(sizeof(hits), hits, rp, stp)) {
+        case 0:
+            return 0;	/* MISS */
+        default:
+            RT_GET_SEG(segp, ap->a_resource);
+            segp->seg_stp = stp;
+            segp->seg_in.hit_dist = hits[0].hit_dist;
+            segp->seg_in.hit_surfno = hits[0].hit_surfno;
+            segp->seg_out.hit_dist = hits[1].hit_dist;
+            segp->seg_out.hit_surfno = hits[1].hit_surfno;
+            BU_LIST_INSERT(&(seghead->l), &(segp->l));
+            return 2;	/* HIT */            
     }
 #else
     struct arb_specific *arbp = (struct arb_specific *)stp->st_specific;
