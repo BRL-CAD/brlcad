@@ -149,7 +149,7 @@ typedef int (*bu_opt_arg_process_t)(struct bu_vls *msg, int argc, const char **a
 #define BU_OPT_CHECK_ARGV0(_msg, _argc, _argv, _opt_name) \
 if ((_argc) < 1 || !(_argv) || !(_argv)[0] || (_argv)[0][0] == '\0') { \
     if ((_msg)) { \
-	bu_vls_printf((_msg), "Error: missing required argument: " _opt_name "\n"); \
+	bu_vls_printf((_msg), "Error: missing required argument: %s\n", (_opt_name)); \
     } \
     return -1; \
 }
@@ -211,7 +211,7 @@ struct bu_opt_desc {
  *                     reordered to move the indicated number of
  *                     unused args to the beginning of the array
  */
-BU_EXPORT extern int bu_opt_parse(struct bu_vls *msgs, int ac, const char **argv, struct bu_opt_desc *ds);
+BU_EXPORT extern int bu_opt_parse(struct bu_vls *msgs, int ac, const char **argv, const struct bu_opt_desc *ds);
 
 
 /** Output format options for bu_opt documentation generation */

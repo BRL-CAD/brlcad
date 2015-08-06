@@ -32,6 +32,8 @@
 
 #include "gcv.h"
 
+#include "bu/opt.h"
+
 
 __BEGIN_DECLS
 
@@ -43,14 +45,16 @@ struct gcv_converter {
     mime_model_t mime_type;
     enum gcv_conversion_type conversion_type;
 
-    int (*conversion_fn)(const char *path, struct db_i *dbip,
-			 const struct gcv_opts *options, void *converter_options);
+    void (*create_opts_fn)(struct bu_opt_desc **options_desc, void **options_data);
 
-    void * (*process_args_fn)(int argc, char **argv);
+    void (*free_opts_fn)(void *options_data);
+
+    int (*conversion_fn)(const char *path, struct db_i *dbip,
+			 const struct gcv_opts *gcv_options, const void *options_data);
 };
 
 
-GCV_EXPORT extern struct bu_ptbl gcv_converter_find(mime_model_t mime_type,
+GCV_EXPORT struct bu_ptbl gcv_converter_find(mime_model_t mime_type,
 	enum gcv_conversion_type conversion_type);
 
 

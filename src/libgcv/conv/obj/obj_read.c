@@ -3148,7 +3148,8 @@ process_nv_mode_option(struct ga_t *ga,
 
 HIDDEN int
 gcv_obj_read(const char *source_path, struct db_i *dest_dbip,
-        const struct gcv_opts *UNUSED(options), void *UNUSED(converter_options))
+	const struct gcv_opts *UNUSED(gcv_options),
+	const void *UNUSED(options_data))
 {
     struct rt_wdb *fd_out;	     /* Resulting BRL-CAD file */
     int ret_val = 0;
@@ -3666,7 +3667,7 @@ gcv_obj_read(const char *source_path, struct db_i *dest_dbip,
 
 
 const struct gcv_converter gcv_conv_obj_read =
-{MIME_MODEL_OBJ, GCV_CONVERSION_READ, gcv_obj_read, NULL};
+{MIME_MODEL_OBJ, GCV_CONVERSION_READ, NULL, NULL, gcv_obj_read};
 
 
 /*

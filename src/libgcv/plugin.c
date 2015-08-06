@@ -44,12 +44,18 @@ gcv_plugin_register(const struct gcv_converter *converter)
 {
     struct gcv_converter_entry *entry;
 
+    if (!converter)
+	bu_bomb("null converter");
+
     if (converter->mime_type == MIME_MODEL_AUTO
 	|| converter->mime_type == MIME_MODEL_UNKNOWN)
 	bu_bomb("invalid mime_type");
 
     if (converter->conversion_type == GCV_CONVERSION_NONE)
 	bu_bomb("invalid gcv_conversion_type");
+
+    if (!converter->create_opts_fn != !converter->free_opts_fn)
+	bu_bomb("must have either both or none of create_opts_fn and free_opts_fn");
 
     if (!converter->conversion_fn)
 	bu_bomb("null conversion_fn");
@@ -76,8 +82,8 @@ gcv_register_static(void)
 	gcv_plugin_register(&name); \
     } while (0)
 
-    PLUGIN(gcv_conv_brlcad_write);
     PLUGIN(gcv_conv_brlcad_read);
+    PLUGIN(gcv_conv_brlcad_write);
     PLUGIN(gcv_conv_fastgen4_read);
     PLUGIN(gcv_conv_fastgen4_write);
     PLUGIN(gcv_conv_obj_read);

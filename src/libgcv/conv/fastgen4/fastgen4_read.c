@@ -2724,7 +2724,8 @@ read_fast4_colors(char *color_file)
 
 static int
 gcv_fastgen4_read(const char *source_path, struct db_i *dest_dbip,
-        const struct gcv_opts *UNUSED(options), void *UNUSED(converter_options))
+	const struct gcv_opts *UNUSED(gcv_options),
+	const void *UNUSED(options_data))
 {
     int result = 0;
     char *plot_file = NULL;
@@ -2885,7 +2886,7 @@ gcv_fastgen4_read(const char *source_path, struct db_i *dest_dbip,
 
 
 const struct gcv_converter gcv_conv_fastgen4_read =
-{MIME_MODEL_VND_FASTGEN, GCV_CONVERSION_READ, gcv_fastgen4_read, NULL};
+{MIME_MODEL_VND_FASTGEN, GCV_CONVERSION_READ, NULL, NULL, gcv_fastgen4_read};
 
 
 /*

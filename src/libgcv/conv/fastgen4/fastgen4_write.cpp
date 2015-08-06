@@ -2520,7 +2520,8 @@ do_conversion(db_i &db, const std::string &path,
 
 HIDDEN int
 gcv_fastgen4_write(const char *dest_path, struct db_i *source_dbip,
-		   const gcv_opts *UNUSED(options), void *UNUSED(converter_options))
+		   const struct gcv_opts *UNUSED(gcv_options),
+		   const void *UNUSED(options_data))
 {
     RT_CK_DBI(source_dbip);
 
@@ -2543,7 +2544,7 @@ extern "C" {
 
 
     struct gcv_converter gcv_conv_fastgen4_write =
-    {MIME_MODEL_VND_FASTGEN, GCV_CONVERSION_READ, gcv_fastgen4_write, NULL};
+    {MIME_MODEL_VND_FASTGEN, GCV_CONVERSION_READ, NULL, NULL, gcv_fastgen4_write};
 
 
 }

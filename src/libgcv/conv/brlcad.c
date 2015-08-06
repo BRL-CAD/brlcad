@@ -31,7 +31,8 @@
 
 HIDDEN int
 gcv_brlcad_read(const char *source_path, struct db_i *dest_dbip,
-		const struct gcv_opts *UNUSED(options), void *UNUSED(converter_options))
+		const struct gcv_opts *UNUSED(gcv_options),
+		const void *UNUSED(options_data))
 {
     int ret;
     struct db_i * const in_dbip = db_open(source_path, DB_OPEN_READONLY);
@@ -56,7 +57,8 @@ gcv_brlcad_read(const char *source_path, struct db_i *dest_dbip,
 
 HIDDEN int
 gcv_brlcad_write(const char *dest_path, struct db_i *source_dbip,
-		 const struct gcv_opts *UNUSED(options), void *UNUSED(converter_options))
+		 const struct gcv_opts *UNUSED(gcv_options),
+		 const void *UNUSED(options_data))
 {
     int ret;
     struct rt_wdb * const out_wdbp = wdb_fopen(dest_path);
@@ -74,11 +76,11 @@ gcv_brlcad_write(const char *dest_path, struct db_i *source_dbip,
 
 
 const struct gcv_converter gcv_conv_brlcad_read =
-{MIME_MODEL_VND_BRLCAD_PLUS_BINARY, GCV_CONVERSION_READ, gcv_brlcad_read, NULL};
+{MIME_MODEL_VND_BRLCAD_PLUS_BINARY, GCV_CONVERSION_READ, NULL, NULL, gcv_brlcad_read};
 
 
 const struct gcv_converter gcv_conv_brlcad_write =
-{MIME_MODEL_VND_BRLCAD_PLUS_BINARY, GCV_CONVERSION_WRITE, gcv_brlcad_write, NULL};
+{MIME_MODEL_VND_BRLCAD_PLUS_BINARY, GCV_CONVERSION_WRITE, NULL, NULL, gcv_brlcad_write};
 
 
 /*

@@ -69,7 +69,7 @@ wrap_help(struct bu_vls *help, int indent, int offset, int len)
 }
 
 HIDDEN int
-opt_desc_is_null(struct bu_opt_desc *ds)
+opt_desc_is_null(const struct bu_opt_desc *ds)
 {
     int non_null = 0;
     if (!ds) return 1;
@@ -300,7 +300,7 @@ can_be_opt(const char *opt) {
 
 
 int
-bu_opt_parse(struct bu_vls *msgs, int argc, const char **argv, struct bu_opt_desc *ds)
+bu_opt_parse(struct bu_vls *msgs, int argc, const char **argv, const struct bu_opt_desc *ds)
 {
     int i = 0;
     int offset = 0;
@@ -315,7 +315,7 @@ bu_opt_parse(struct bu_vls *msgs, int argc, const char **argv, struct bu_opt_des
 	int desc_ind = 0;
 	char *opt = NULL;
 	const char *eq_arg = NULL;
-	struct bu_opt_desc *desc = NULL;
+	const struct bu_opt_desc *desc = NULL;
 	/* If argv[i] isn't an option, stick the argv entry (and any
 	 * immediately following non-option entries) into the
 	 * unknown args table */

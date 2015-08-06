@@ -28,6 +28,8 @@
 
 #include "common.h"
 
+#include "gcv/defines.h"
+
 #include "raytrace.h"
 
 __BEGIN_DECLS
