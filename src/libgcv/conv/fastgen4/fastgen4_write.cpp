@@ -2544,7 +2544,7 @@ extern "C" {
 
 
     struct gcv_converter gcv_conv_fastgen4_write =
-    {MIME_MODEL_VND_FASTGEN, GCV_CONVERSION_READ, NULL, NULL, gcv_fastgen4_write};
+    {MIME_MODEL_VND_FASTGEN, GCV_CONVERSION_WRITE, NULL, NULL, gcv_fastgen4_write};
 
 
 }

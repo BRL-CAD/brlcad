@@ -730,7 +730,7 @@ main(int ac, const char **av)
 
 	if (!gcv_do_conversion(&slog, bu_vls_addr(&in_path), in_type, bu_vls_addr(&out_path),
 		    out_type, in_argc, in_argv, out_argc, out_argv)) {
-	    bu_log("Conversion failed\n");
+	    bu_vls_printf(&slog, "Conversion failed\n");
 	    ret = 1;
 	    goto cleanup;
 	}
