@@ -168,9 +168,9 @@ clt_shot(size_t sz_hits, struct cl_hit *hits, struct xray *rp, struct soltab *st
 {
     struct tor_specific *tor =
 	(struct tor_specific *)stp->st_specific;
-    
+
     struct tor_shot_specific args;
-    
+
     VMOVE(args.tor_V, tor->tor_V);
     MAT_COPY(args.tor_SoR, tor->tor_SoR);
     args.tor_alpha = tor->tor_alpha;
@@ -392,7 +392,7 @@ rt_tor_shot(struct soltab *stp, register struct xray *rp, struct application *ap
             VMOVE(segp->seg_in.hit_vpriv, hits[0].hit_vpriv.s);
             VMOVE(segp->seg_out.hit_vpriv, hits[1].hit_vpriv.s);
             BU_LIST_INSERT(&(seghead->l), &(segp->l));
-            return 2;	/* HIT */            
+            return 2;	/* HIT */
         default:
             RT_GET_SEG(segp, ap->a_resource);
             segp->seg_stp = stp;

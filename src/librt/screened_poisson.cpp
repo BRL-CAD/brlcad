@@ -53,11 +53,11 @@ struct rt_ray_container {
 };
 
 struct rt_point_container {
-    struct rt_ray_container *rays;  /* list of rays for this cpu 
+    struct rt_ray_container *rays;  /* list of rays for this cpu
 				     * along the current view */
     int ray_cnt;
     int ray_capacity;
-    
+
     struct npoints *pts;  /* overall point array for this cpu */
     int pnt_cnt;
     int pnt_capacity;
@@ -76,7 +76,7 @@ struct rt_parallel_container {
     point_t model_max;
     fastf_t model_span[3];
     fastf_t per_cpu_slab_width[3];
-    
+
     /* edge sampling flags */
     int do_subsample;
     int sub_division;
@@ -103,7 +103,7 @@ add_hit_pnts(struct application *app, struct partition *partH, struct seg *UNUSE
     RT_CK_APPLICATION(app);
 
     /* iterate over each partition until we get back to the head.
-     * each partition corresponds to a specific homogenous region of
+     * each partition corresponds to a specific homogeneous region of
      * material. */
     for (pp = partH->pt_forw; pp != partH; pp = pp->pt_forw) {
 
@@ -118,7 +118,7 @@ add_hit_pnts(struct application *app, struct partition *partH, struct seg *UNUSE
 
 	/* entry hit point, so we type less */
 	hitp = pp->pt_inhit;
-	
+
 	/* primitive we encountered on entry */
 	stp = pp->pt_inseg->seg_stp;
 
@@ -143,12 +143,12 @@ add_hit_pnts(struct application *app, struct partition *partH, struct seg *UNUSE
 	/* save IN solid and surface number */
 	npt->in.solid_name = bu_strdup(stp->st_dp->d_namep);
 	npt->in.solid_surfno = hitp->hit_surfno;
-	
+
 	/* flag IN point as set */
 	npt->in.is_set = 1;
-	
+
 	//bu_vls_printf(fp, "%f %f %f %f %f %f\n", hit_pnt[0], hit_pnt[1], hit_pnt[2], hit_normal[0], hit_normal[1], hit_normal[2]);
-	
+
 	/* exit point, so we type less */
 	hitp = pp->pt_outhit;
 
@@ -167,7 +167,7 @@ add_hit_pnts(struct application *app, struct partition *partH, struct seg *UNUSE
 
 	/* flag OUT point as set */
 	npt->out.is_set = 1;
-	
+
 	c->pnt_cnt++;
     }
     return 1;
@@ -194,13 +194,13 @@ copy_ray_points_to_list(struct rt_point_container *cont,
 	    cont->pnt_capacity *= 4;
 	    cont->pts = (struct npoints *)bu_realloc((char *)cont->pts, cont->pnt_capacity * sizeof(struct npoints), "enlarge cpu npoints array");
 	}
-	
-	/* copy from ray into overall results array */ 
+
+	/* copy from ray into overall results array */
 	memcpy(&(cont->pts[cont->pnt_cnt]), &(ray->pts[i]), sizeof(struct npoints));
 	cont->pnt_cnt++;
     }
 }
-			
+
 /* checks to see if the results of 2 rays are different */
 /*  1 = different, 0 = same */
 int
@@ -241,7 +241,7 @@ sub_sample(struct rt_parallel_container *state,
 {
     struct application ap;
     struct rt_ray_container middle_ray;
-    
+
     if (depth >= state->sub_division) return;
 
     /* init raytracer */
@@ -252,7 +252,7 @@ sub_sample(struct rt_parallel_container *state,
     ap.a_onehit = 0;
     ap.a_logoverlap = rt_silent_logoverlap;
     ap.a_resource = &state->resp[cpu-1];
-    
+
     /* init ray */
     VADD2(middle_ray.p, currRay->p, prevRay->p);
     VSCALE(middle_ray.p, middle_ray.p, 0.5);
@@ -261,7 +261,7 @@ sub_sample(struct rt_parallel_container *state,
     middle_ray.y = -1;
     VMOVE(ap.a_ray.r_pt, middle_ray.p);
     VMOVE(ap.a_ray.r_dir, middle_ray.d);
-    int total_pts = 1e3;  	    /* allocate enough space to hold 1e3 segments along this ray 
+    int total_pts = 1e3;  	    /* allocate enough space to hold 1e3 segments along this ray
 				     * (probably overkill) */
     middle_ray.pts = (struct npoints *)bu_calloc(total_pts, sizeof(struct npoints), "subray npoints array");
     middle_ray.pnt_cnt = 0;
@@ -382,7 +382,7 @@ _rt_gen_worker(int cpu, void *ptr)
     pcont->rays = (struct rt_ray_container *)bu_calloc(total_rays, sizeof(struct rt_ray_container), "cpu ray container array");
     pcont->ray_cnt = 0;
     pcont->ray_capacity = total_rays;
-    
+
     dir1 = state->ray_dir;
     dir2 = (state->ray_dir+1)%3;  /* axis we step between rays */
     dir3 = (state->ray_dir+2)%3;  /* the slab axis */
@@ -413,7 +413,7 @@ _rt_gen_worker(int cpu, void *ptr)
 		pcont->ray_capacity *= 4;
 		pcont->rays = (struct rt_ray_container *)bu_realloc((char *)pcont->rays, pcont->ray_capacity * sizeof(struct rt_ray_container), "enlarge ray array");
 	    }
-	    
+
 	    /* set current ray info */
 	    currRay = &(pcont->rays[pcont->ray_cnt]);
 	    VMOVE(currRay->p, ap.a_ray.r_pt);
@@ -421,7 +421,7 @@ _rt_gen_worker(int cpu, void *ptr)
 	    currRay->x = i;
 	    currRay->y = j;
 
-	    /* allocate enough space to hold 1e3 segments along this ray 
+	    /* allocate enough space to hold 1e3 segments along this ray
 	     * (probably overkill) */
 	    int total_pts = 1e3;
 	    currRay->pts = (struct npoints *)bu_calloc(total_pts, sizeof(struct npoints), "ray npoints array");
@@ -524,7 +524,7 @@ _rt_generate_points(int **faces, int *num_faces, point_t **points, int *num_pnts
 		    width = state->model_span[i];
 	    }
 	    for (i = 0; i < 3; i++) {
-		state->spacing[i] = width / 15.0;  /* atleast 15 sections based on the SMALLEST side */
+		state->spacing[i] = width / 15.0;  /* at least 15 sections based on the SMALLEST side */
 	    }
 	}
 	break;
@@ -535,13 +535,13 @@ _rt_generate_points(int **faces, int *num_faces, point_t **points, int *num_pnts
 	return 1;
 	break;
     }
-    
+
     for (i = 0; i < 3; i++) {
 	state->per_cpu_slab_width[i] = state->model_span[i] / ncpus;
     }
 
 
-    /* allocate enough space for each cpu to hold 1e6 number of points 
+    /* allocate enough space for each cpu to hold 1e6 number of points
      * (probably overkill) */
     int total_pts = 1e6;
     for (i = 0; i < ncpus; i++) {
