@@ -35,8 +35,8 @@
 
 #include "common.h"
 
-#include <string.h>
 #include <stdlib.h>
+#include <string.h>
 #include <math.h>
 #include "bio.h"
 
@@ -80,7 +80,7 @@ main(int argc, char **argv)
 {
     int i, n, num;
     double d;
-    long num_pixels;
+    long num_pixels = 0L ;
     unsigned char *bp;
     FILE *fp;
 
@@ -107,9 +107,8 @@ main(int argc, char **argv)
     }
 
     /*
-     * Build the histogram.
+     * Build the histogram. (num_pixels initialized to 0)
      */
-    num_pixels = 0;
     while ((n = fread(&buf[0], sizeof(*buf), IBUFSIZE, fp)) > 0) {
 	num = n/3;
 	num_pixels += num;
