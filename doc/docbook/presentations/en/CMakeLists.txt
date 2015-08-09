@@ -19,6 +19,7 @@ ADD_DOC(docbook_presentations_EN_IMAGES html/presentations/en/images)
 
 DOCBOOK_TO_HTML(presentation docbook_presentations_EN html/presentations/en docbook_presentations_EN_IMAGES_cp)
 DOCBOOK_TO_PHP(presentation docbook_presentations_EN html/presentations/en docbook_presentations_EN_IMAGES_cp)
+DOCBOOK_TO_PPT(presentation docbook_presentations_EN html/presentations/en docbook_presentations_EN_IMAGES_cp)
 DOCBOOK_TO_PDF(presentation docbook_presentations_EN pdf/presentations/en docbook_presentations_EN_IMAGES_cp)
 
 # Local Variables:
