@@ -532,6 +532,9 @@ clt_get_program(cl_context context, cl_device_id device, cl_uint count, const ch
     }
 
     bu_free(lengths, "failed bu_free() in clt_get_program()");
+    for (i=0; i<count; i++) {
+        bu_free(strings[i], "failed bu_free() in clt_get_program()");
+    }
     bu_free(strings, "failed bu_free() in clt_get_program()");
     return program;
 }
