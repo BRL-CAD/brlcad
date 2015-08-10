@@ -199,7 +199,10 @@ extern cl_device_id clt_get_cl_device(void);
 extern cl_program clt_get_program(cl_context context, cl_device_id device, cl_uint count, const char *filename[]);
 
 extern void clt_init(void);
+
 extern cl_int clt_solid_shot(const size_t sz_hits, struct cl_hit *hits, struct xray *rp, const cl_int id, const size_t sz_args, void *args);
+
+extern void clt_inclusive_scan(cl_mem array, const cl_uint n);
 #endif
 
 __END_DECLS
