@@ -1,7 +1,7 @@
 /*                       S H _ B R D F . C
  * BRL-CAD
  *
- * Copyright (c) 1996-2013 United States Government as represented by
+ * Copyright (c) 1996-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -38,10 +38,9 @@
 #include <math.h>
 
 #include "vmath.h"
-#include "mater.h"
 #include "raytrace.h"
 #include "optical.h"
-#include "light.h"
+#include "optical/light.h"
 
 /* from view.c */
 extern double AmbientIntensity;
@@ -82,10 +81,10 @@ struct bu_structparse brdf_parse[] = {
 };
 
 
-HIDDEN int brdf_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, const struct mfuncs *mfp, struct rt_i *rtip);
-HIDDEN int brdf_render(register struct application *ap, const struct partition *pp, struct shadework *swp, genptr_t dp);
-HIDDEN void brdf_print(register struct region *rp, genptr_t dp);
-HIDDEN void brdf_free(genptr_t cp);
+HIDDEN int brdf_setup(register struct region *rp, struct bu_vls *matparm, void **dpp, const struct mfuncs *mfp, struct rt_i *rtip);
+HIDDEN int brdf_render(register struct application *ap, const struct partition *pp, struct shadework *swp, void *dp);
+HIDDEN void brdf_print(register struct region *rp, void *dp);
+HIDDEN void brdf_free(void *cp);
 
 struct mfuncs brdf_mfuncs[] = {
     {MF_MAGIC,	"brdf",		0,		MFI_NORMAL|MFI_LIGHT,	0,
@@ -98,11 +97,8 @@ struct mfuncs brdf_mfuncs[] = {
 
 #define RI_AIR 1.0    /* Refractive index of air.		*/
 
-/*
- * B R D F _ S E T U P
- */
 HIDDEN int
-brdf_setup(register struct region *UNUSED(rp), struct bu_vls *matparm, genptr_t *dpp, const struct mfuncs *UNUSED(mfp), struct rt_i *UNUSED(rtip))
+brdf_setup(register struct region *UNUSED(rp), struct bu_vls *matparm, void **dpp, const struct mfuncs *UNUSED(mfp), struct rt_i *UNUSED(rtip))
 {
     register struct brdf_specific *pp;
 
@@ -119,39 +115,31 @@ brdf_setup(register struct region *UNUSED(rp), struct bu_vls *matparm, genptr_t 
     pp->extinction = 0.0;
     pp->rms_slope = 0.05;
 
-    if (bu_struct_parse(matparm, brdf_parse, (char *)pp) < 0) {
+    if (bu_struct_parse(matparm, brdf_parse, (char *)pp, NULL) < 0) {
 	BU_PUT(pp, struct brdf_specific);
 	return -1;
     }
 
     pp->rms_sq = pp->rms_slope * pp->rms_slope;
-    pp->denom = 4.0 * bn_pi * pp->rms_sq;
+    pp->denom = 4.0 * M_PI * pp->rms_sq;
 
     return 1;
 }
-/*
- * B R D F _ P R I N T
- */
 HIDDEN void
-brdf_print(register struct region *rp, genptr_t dp)
+brdf_print(register struct region *rp, void *dp)
 {
     bu_struct_print(rp->reg_name, brdf_parse, (char *)dp);
 }
 
 
-/*
- * B R D F _ F R E E
- */
 HIDDEN void
-brdf_free(genptr_t cp)
+brdf_free(void *cp)
 {
     BU_PUT(cp, struct brdf_specific);
 }
 
 
 /*
- * B R D F _ R E N D E R
- *
  Color pixel based on the energy of a point light source (Eps)
  plus some diffuse illumination (Epd) reflected from the point
  <x, y> :
@@ -193,7 +181,7 @@ brdf_free(genptr_t cp)
 
 */
 HIDDEN int
-brdf_render(register struct application *ap, const struct partition *pp, struct shadework *swp, genptr_t dp)
+brdf_render(register struct application *ap, const struct partition *pp, struct shadework *swp, void *dp)
 {
     register struct light_specific *lp;
     register fastf_t *intensity, *to_light;

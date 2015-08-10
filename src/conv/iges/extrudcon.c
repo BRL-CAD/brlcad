@@ -1,7 +1,7 @@
 /*                     E X T R U D C O N . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2013 United States Government as represented by
+ * Copyright (c) 1990-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -89,8 +89,8 @@ Extrudcon(int entityno, int curve, vect_t evect)
     tmp = fabs(a);
     if (fabs(b) < tmp && !ZERO(b))
 	tmp = fabs(b);
-    if (fabs(c) < tmp)
-	tmp = fabs(c);
+    V_MIN(tmp, fabs(c));
+
     a = a/tmp;
     b = b/tmp;
     c = c/tmp;

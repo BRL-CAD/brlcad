@@ -1,7 +1,7 @@
 /*                           L G T . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2013 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -17,15 +17,15 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file lgt/lgt.h
-    Author:		Gary S. Moss
-*/
-#ifndef INCL_LGT
-#define INCL_LGT
+
+#ifndef LGT_LGT_H
+#define LGT_LGT_H
 
 #include "common.h"
 
 #include <string.h>
+
+#include "cursor.h"
 
 
 #define OVERLAPTOL	0.25	/* Thinner overlaps won't be reported. */
@@ -100,6 +100,8 @@ typedef struct
     double radius;	/* Radius of beam.				*/
     struct soltab *stp;	/* Solid table pointer to LIGHT solid.	*/
 }
+
+
     Lgt_Source;
 #define LGT_NULL (Lgt_Source *) NULL
 
@@ -127,8 +129,10 @@ typedef struct
     double m_pers_beg;
     double m_pers_end;
 }
+
+
     Movie;
-#define MovieSize(sz, nf)	(int)sqrt((double)(nf)+0.5)*(sz)
+#define MovieSize(sz, nf) lrint(sqrt((double)(nf)+0.5))*(sz)
 #define IK_INTENSITY	255.0
 #define RGB_INVERSE	(1.0 / IK_INTENSITY)
 #define EYE_SIZE	12.7
@@ -138,7 +142,7 @@ typedef struct
 extern Lgt_Source lgts[];
 extern Movie movie;
 
-#endif /* INCL_LGT */
+#endif /* LGT_LGT_H */
 char *get_Input();
 int setup_Lgts();
 void user_Input();
@@ -154,19 +158,11 @@ int write_Trie();
 int lgt_Save_Db();
 int read_Trie();
 int lgt_Rd_Db();
-int ClrText();
-int MvCursor();
-int InitTermCap();
-int SetScrlReg();
-int ClrEOL();
-int ResetScrlReg();
-int DeleteLn();
+
 int init_Temp_To_RGB();
 int do_More();
 int append_PtList();
 int delete_Node_OcList();
-int SetStandout();
-int ClrStandout();
 int save_Tty();
 int set_Raw();
 int ir_shootray_octree();

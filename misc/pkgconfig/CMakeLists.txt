@@ -8,7 +8,9 @@ set(includedir "\${prefix}/include")
 set(datarootdir "\${prefix}/share")
 set(datadir "\${datarootdir}")
 set(LIBTCL "-ltcl${TCL_VERSION_MAJOR}.${TCL_VERSION_MINOR}")
-set(LIBM "${M_LINKOPT}")
+if(M_LIBRARY)
+  set(LIBM "-l${M_LIBRARY}")
+endif(M_LIBRARY)
 #The CMake system relies on the C++ compiler to find
 #this, so we set it manually for pkgconfig
 set(LIBSTDCXX "-lstdc++")
@@ -23,6 +25,7 @@ set(LIBPNG "-lpng")
 
 set(pkgconfig_DATA
   libanalyze.pc.in
+  libgm.pc.in
   libbn.pc.in
   libbrlcad.pc.in
   libbu.pc.in

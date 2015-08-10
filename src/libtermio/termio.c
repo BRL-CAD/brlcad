@@ -1,7 +1,7 @@
 /*                        T E R M I O . C
  * BRL-CAD
  *
- * Copyright (c) 2007-2013 United States Government as represented by
+ * Copyright (c) 2007-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -22,8 +22,6 @@
  */
 
 #include "common.h"
-
-#include <fcntl.h>
 
 #ifdef HAVE_SYS_FILE_H
 #  include <sys/file.h>
@@ -124,7 +122,7 @@ static struct sgttyb save_tio[FOPEN_MAX], curr_tio[FOPEN_MAX];
 static int fileStatus[FOPEN_MAX];
 
 
-/* c l r _ C b r e a k ()
+/*
    Clear CBREAK mode, for file descriptor 'fd'.
 */
 void
@@ -149,7 +147,7 @@ clr_Cbreak(int fd)
     return;
 }
 
-/* s e t _ C b r e a k ()
+/*
    Set CBREAK mode, 'fd'.
 */
 void
@@ -174,7 +172,7 @@ set_Cbreak(int fd)
     return;
 }
 
-/* c l r _ R a w ()
+/*
    Set cooked mode, 'fd'.
 */
 void
@@ -201,7 +199,7 @@ clr_Raw(int fd)
     return;
 }
 
-/* s e t _ R a w ()
+/*
    Set raw mode, 'fd'.
 */
 void
@@ -228,7 +226,7 @@ set_Raw(int fd)
     return;
 }
 
-/* s e t _ E c h o ()
+/*
    Set echo mode, 'fd'.
 */
 void
@@ -249,7 +247,7 @@ set_Echo(int fd)
     return;
 }
 
-/* c l r _ E c h o ()
+/*
    Clear echo mode, 'fd'.
 */
 void
@@ -270,7 +268,7 @@ clr_Echo(int fd)
     return;
 }
 
-/* s e t _ T a b s ()
+/*
    Turn on tab expansion, 'fd'.
 */
 void
@@ -293,7 +291,7 @@ set_Tabs(int fd)
     return;
 }
 
-/* c l r _ T a b s ()
+/*
    Turn off tab expansion, 'fd'.
 */
 void
@@ -314,7 +312,7 @@ clr_Tabs(int fd)
     return;
 }
 
-/* s e t _ H U P C L ()
+/*
    Turn on "Hang up on last close", 'fd'.
 */
 void
@@ -336,7 +334,7 @@ set_HUPCL(int fd)
     return;
 }
 
-/* c l r _ C R N L ()
+/*
    Turn off CR/LF mapping, fd.
 */
 void
@@ -358,7 +356,7 @@ clr_CRNL(int fd)
 #endif
 }
 
-/* g e t _ O _ S p e e d ()
+/*
    Get the terminals output speed, 'fd'.
 */
 unsigned short
@@ -375,24 +373,22 @@ get_O_Speed(int fd)
 #endif
 }
 
-/* c o p y _ T i o ()						*/
 static void
-copy_Tio(to, from)
-#ifdef BSD
-    struct sgttyb *to, *from;
+copy_Tio(
+#if defined(BSD)
+    struct sgttyb *to, struct sgttyb *from
+#elif defined(SYSV)
+    struct termio *to, struct termio *from
+#elif defined(HAVE_TERMIOS_H)
+    struct termios *to, struct termios*from
 #endif
-#ifdef SYSV
-    struct termio *to, *from;
-#endif
-#ifdef HAVE_TERMIOS_H
-    struct termios *to, *from;
-#endif
+)
 {
     (void)memcpy((char *) to, (char *) from, sizeof(*from));
     return;
 }
 
-/* s a v e _ T t y ()
+/*
    Get and save terminal parameters, 'fd'.
 */
 void
@@ -411,7 +407,7 @@ save_Tty(int fd)
     return;
 }
 
-/* r e s e t _ T t y ()
+/*
    Set the terminal back to the mode that the user had last time
    save_Tty() was called for 'fd'.
 */
@@ -424,13 +420,13 @@ reset_Tty(int fd)
 #ifdef SYSV
     (void) ioctl(fd, TCSETA, &save_tio[fd]); /* Write setting.		*/
 #endif
-#if HAVE_TERMIOS_H
+#ifdef HAVE_TERMIOS_H
     (void)tcsetattr(fd, TCSAFLUSH, &save_tio[fd]);
 #endif
     return;
 }
 
-/* s a v e _ F i l _ S t a t ()
+/*
    Save file status flags for 'fd'.
 */
 int
@@ -439,7 +435,7 @@ save_Fil_Stat(int fd)
     return fileStatus[fd] = fcntl(fd, F_GETFL, 0);
 }
 
-/* r e s e t _ F i l _ S t a t ()
+/*
    Restore file status flags for file desc. 'fd' to what they were the
    last time saveFilStat(fd) was called.
 */
@@ -449,7 +445,7 @@ reset_Fil_Stat(int fd)
     return fcntl(fd, F_SETFL, fileStatus[fd]);
 }
 
-/* s e t _ O _ N D E L A Y ()
+/*
    Set non-blocking read on 'fd'.
 */
 int
@@ -458,59 +454,53 @@ set_O_NDELAY(int fd)
 #if defined(O_NDELAY)
     return fcntl(fd, F_SETFL, O_NDELAY);
 #else
-#if HAVE_TERMIOS_H
+#  if defined(HAVE_TERMIOS_H)
     return fcntl(fd, F_SETFL, FNDELAY);
-#endif
+#  endif
 #endif
 }
 
-/* p r n t _ T i o ()						*/
 void
-prnt_Tio(msg, tio_ptr)
-    char *msg;
-#ifdef BSD
-    struct sgttyb *tio_ptr;
+prnt_Tio(
+    char *msg,
+#if defined(BSD)
+    struct sgttyb *tio_ptr
+#elif defined(SYSV)
+    struct termio *tio_ptr
+#elif defined(HAVE_TERMIOS_H)
+    struct termios *tio_ptr
+#else
+    void *tio_ptr
 #endif
-#ifdef SYSV
-    struct termio *tio_ptr;
-#endif
-#ifdef HAVE_TERMIOS_H
-    struct termios *tio_ptr;
-#endif
+)
 {
     register int i;
     (void) fprintf(stderr, "%s :\n\r", msg);
-#ifdef BSD
+#if defined(BSD)
     (void) fprintf(stderr, "\tsg_ispeed=%d\n\r", (int) tio_ptr->sg_ispeed);
     (void) fprintf(stderr, "\tsg_ospeed=%d\n\r", (int) tio_ptr->sg_ospeed);
     (void) fprintf(stderr, "\tsg_erase='%c'\n\r", tio_ptr->sg_erase);
     (void) fprintf(stderr, "\tsg_kill='%c'\n\r", tio_ptr->sg_kill);
     (void) fprintf(stderr, "\tsg_flags=0x%x\n\r", tio_ptr->sg_flags);
-#endif
-#ifdef SYSV
-
+#elif defined(SYSV)
     (void) fprintf(stderr, "\tc_iflag=0x%x\n\r", tio_ptr->c_iflag);
     (void) fprintf(stderr, "\tc_oflag=0x%x\n\r", tio_ptr->c_oflag);
     (void) fprintf(stderr, "\tc_cflag=0x%x\n\r", tio_ptr->c_cflag);
     (void) fprintf(stderr, "\tc_lflag=0x%x\n\r", tio_ptr->c_lflag);
     (void) fprintf(stderr, "\tc_line=%c\n\r", tio_ptr->c_line);
-    for (i = 0; i < NCC; ++i)
-    {
+    for (i = 0; i < NCC; ++i) {
 	(void) fprintf(stderr,
 		       "\tc_cc[%d]=0%o\n\r",
 		       i,
 		       tio_ptr->c_cc[i]
 	    );
     }
-#endif
-#ifdef HAVE_TERMIOS_H
-
+#elif defined(HAVE_TERMIOS_H)
     (void) fprintf(stderr, "\tc_iflag=0x%x\n\r", (unsigned int)tio_ptr->c_iflag);
     (void) fprintf(stderr, "\tc_oflag=0x%x\n\r", (unsigned int)tio_ptr->c_oflag);
     (void) fprintf(stderr, "\tc_cflag=0x%x\n\r", (unsigned int)tio_ptr->c_cflag);
     (void) fprintf(stderr, "\tc_lflag=0x%x\n\r", (unsigned int)tio_ptr->c_lflag);
-    for (i = 0; i < NCCS; ++i)
-    {
+    for (i = 0; i < NCCS; ++i) {
 	(void) fprintf(stderr,
 		       "\tc_cc[%d]=0%o\n\r",
 		       i,

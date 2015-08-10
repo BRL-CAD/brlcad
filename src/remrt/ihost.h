@@ -1,7 +1,7 @@
 /*                         I H O S T . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2013 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -22,6 +22,9 @@
  *  Internal host table routines.
  *
  */
+
+#ifndef REMRT_IHOST_H
+#define REMRT_IHOST_H
 
 #include "common.h"
 
@@ -67,6 +70,8 @@ extern struct ihost	*host_lookup_by_hostent(const struct hostent * addr, int ent
 extern struct ihost	*make_default_host(const char* name);
 extern char		*get_our_hostname(void);
 extern struct ihost	*host_lookup_of_fd(int fd);
+
+#endif /* REMRT_IHOST_H */
 
 /*
  * Local Variables:

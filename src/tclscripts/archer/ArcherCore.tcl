@@ -1,7 +1,7 @@
 #                      A R C H E R C O R E . T C L
 # BRL-CAD
 #
-# Copyright (c) 2002-2013 United States Government as represented by
+# Copyright (c) 2002-2014 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -40,6 +40,7 @@ namespace eval ArcherCore {
 
     itk_option define -quitcmd quitCmd Command {}
     itk_option define -master master Master "."
+    itk_option define -geometry geometry Geometry ""
 
     constructor {{_viewOnly 0} {_noCopy 0} {_noTree 0} {_noToolbar 0} args} {}
     destructor {}
@@ -83,6 +84,7 @@ namespace eval ArcherCore {
 	common DISPLAY_MODE_SHADED_ALL 2
 	common DISPLAY_MODE_EVALUATED 3
 	common DISPLAY_MODE_HIDDEN 4
+	common DISPLAY_MODE_SHADED_EVAL 5
 
 	common MATRIX_ABOVE_MODE 0
 	common MATRIX_BELOW_MODE 1
@@ -170,6 +172,7 @@ namespace eval ArcherCore {
 	method putString           {_str}
 	method rtcntrl             {args}
 	method setStatusString     {_str}
+	method getSelectedTreePaths {}
 
 	# Commands exposed to the user via the command line.
 	# More to be added later...
@@ -247,8 +250,8 @@ namespace eval ArcherCore {
 	method killtree            {args}
 	method l                   {args}
 	method ls                  {args}
+	method lc                  {args}
 	method make		   {args}
-	method make_bb             {args}
 	method make_name           {args}
 	method make_pnts           {args}
 	method man                 {args}
@@ -271,6 +274,7 @@ namespace eval ArcherCore {
 	method protate             {args}
 	method pscale              {args}
 	method ptranslate          {args}
+	method pull                {args}
 	method push                {args}
 	method put                 {args}
 	method put_comb            {args}
@@ -286,6 +290,7 @@ namespace eval ArcherCore {
 	method rmater              {args}
 	method rotate              {args}
 	method rotate_arb_face     {args}
+	method saveview		   {args}
 	method scale		   {args}
 	method search		   {args}
 	method sed		   {_prim}
@@ -366,7 +371,6 @@ namespace eval ArcherCore {
 	variable mSelectedObjType ""
 	variable mMultiPane 0
 	variable mTransparency 0
-	variable mAllowDataClear 1
 
 	variable mHPaneFraction1 80
 	variable mHPaneFraction2 20
@@ -393,6 +397,7 @@ namespace eval ArcherCore {
 
 	# variables for preference state
 	variable mWindowGeometry ""
+	variable mCmdWindowGeometry ""
 	variable mEnableAffectedNodeHighlight 0
 	variable mEnableAffectedNodeHighlightPref ""
 	variable mEnableListView 0
@@ -427,9 +432,6 @@ namespace eval ArcherCore {
 	variable mSeparateCommandWindow 0
 	variable mSeparateCommandWindowPref ""
 	variable mSepCmdPrefix "sepcmd_"
-
-	variable mRtBotMintie 0
-	variable mRtBotMintiePref ""
 
 	variable mCompPickMode $COMP_PICK_TREE_SELECT_MODE
 	variable mCompSelectMode $COMP_SELECT_LIST_MODE
@@ -524,6 +526,8 @@ namespace eval ArcherCore {
 	variable mGroundPlaneMinorColor Grey
 	variable mGroundPlaneMinorColorPref ""
 
+	variable mViewAxesSizeOffsets
+	variable mViewAxesSizeValues
 	variable mViewAxesSize Small
 	variable mViewAxesSizePref ""
 	variable mViewAxesPosition "Lower Right"
@@ -535,6 +539,7 @@ namespace eval ArcherCore {
 	variable mViewAxesLabelColor Yellow
 	variable mViewAxesLabelColorPref ""
 
+	variable mModelAxesSizeValues
 	variable mModelAxesSize "View (1x)"
 	variable mModelAxesSizePref ""
 	variable mModelAxesPosition "0 0 0"
@@ -579,12 +584,12 @@ namespace eval ArcherCore {
 	    delete draw e E edarb edcodes edcolor edcomb edit edmater d erase ev exists \
 	    exit facetize fracture freezeGUI g get graph group hide human i igraph \
 	    importFg4Section in inside item kill killall killrefs \
-	    killtree l ls make make_bb make_name make_pnts man mater mirror move \
+	    killtree l lc ls make make_name make_pnts man mater mirror move \
 	    move_arb_edge move_arb_face mv mvall nmg_collapse \
 	    nmg_simplify ocenter opendb orotate oscale otranslate p q \
-	    quit packTree prefix protate pscale ptranslate push put \
+	    quit packTree prefix protate pscale ptranslate pull push put \
 	    put_comb putmat pwd r rcodes red rfarb rm rmater rotate \
-	    rotate_arb_face scale search sed shader shells tire title \
+	    rotate_arb_face saveview scale search sed shader shells tire title \
 	    track translate unhide units unpackTree vmake wmater xpush \
 	    Z zap
 	}
@@ -615,6 +620,9 @@ namespace eval ArcherCore {
 	variable mMouseRayCallbacks ""
 	variable mLastTags ""
 
+	variable mStandardViewsMenuCommands
+
+	method OpenTarget {target}
 	method handleMoreArgs {args}
 
 	method checkIfSelectedObjExists {}
@@ -628,8 +636,8 @@ namespace eval ArcherCore {
 
 	method colorMenuStatusCB {_w}
 	method menuStatusCB {_w}
-	method menuStatusCB_junk {_w}
 	method transparencyMenuStatusCB {_w}
+	method setViewTypeFromTreeMode {}
 
 	method updateSaveMode {}
 	method createTargetCopy {}
@@ -641,6 +649,8 @@ namespace eval ArcherCore {
 	method showPrimitiveLabels {}
 	method showViewParams {}
 	method showScale {}
+	method compareViewAxesSizes {a b}
+	method compareModelAxesSizes {a b}
 
 	method launchNirt {}
 	method launchRtApp {_app _size}
@@ -648,12 +658,13 @@ namespace eval ArcherCore {
 	method updateDisplaySettings {}
 	method updateLightingMode {}
 	method updatePerspective {_unused}
-	method updateZClipPlanes {_unused}
+	method updateZClipPlanes {_front _front_max _back _back_max}
+	method updateZClipPlanesFromSettings {}
+	method updateZClipPlanesFromPreferences {{_unused 0.0}}
 	method calculateZClipMax {}
 	method calculateZClipBackMax {}
 	method calculateZClipFrontMax {}
 	method pushPerspectiveSettings {}
-	method pushZClipSettings {}
 	method validateZClipMax {_d}
 
 	method shootRay_doit {_start _op _target _prep _no_bool _onehit _bot_dflag _objects}
@@ -688,10 +699,26 @@ namespace eval ArcherCore {
 	variable mImage_arb8Inter ""
 	variable mImage_arb8Sub ""
 	variable mImage_arb8Union ""
-	variable mImage_arb7Labeled ""
-	variable mImage_arb6Labeled ""
-	variable mImage_arb5Labeled ""
-	variable mImage_arb4Labeled ""
+ 	variable mImage_arb7 ""
+        variable mImage_arb7Labeled ""
+ 	variable mImage_arb7Inter ""
+ 	variable mImage_arb7Sub ""
+ 	variable mImage_arb7Union ""
+ 	variable mImage_arb6 ""
+        variable mImage_arb6Labeled ""
+ 	variable mImage_arb6Inter ""
+ 	variable mImage_arb6Sub ""
+ 	variable mImage_arb6Union ""
+ 	variable mImage_arb5 ""
+        variable mImage_arb5Labeled ""
+ 	variable mImage_arb5Inter ""
+ 	variable mImage_arb5Sub ""
+ 	variable mImage_arb5Union ""
+ 	variable mImage_arb4 ""
+        variable mImage_arb4Labeled ""
+ 	variable mImage_arb4Inter ""
+ 	variable mImage_arb4Sub ""
+ 	variable mImage_arb4Union ""
 	variable mImage_arbn ""
 	variable mImage_arbnLabeled ""
 	variable mImage_arbnInter ""
@@ -707,6 +734,11 @@ namespace eval ArcherCore {
 	variable mImage_botInter ""
 	variable mImage_botSub ""
 	variable mImage_botUnion ""
+	variable mImage_brep ""
+	variable mImage_brepLabeled ""
+	variable mImage_brepInter ""
+	variable mImage_brepSub ""
+	variable mImage_brepUnion ""
 	variable mImage_dsp ""
 	variable mImage_dspLabeled ""
 	variable mImage_dspInter ""
@@ -838,6 +870,7 @@ namespace eval ArcherCore {
 	method newDb             {}
 	method openDb            {}
 	method saveDb            {}
+	method exportDb          {}
 	method primaryToolbarAdd        {_type _name {args ""}}
 	method primaryToolbarRemove     {_index}
 
@@ -871,6 +904,7 @@ namespace eval ArcherCore {
 	method treeNodeIsOpen {_node}
 	method purgeNodeData {_node}
 	method updateTreeTopWithName {_name}
+	method handleCmdPopup {_X _Y}
 
 	# db/display commands
 	method getNodeChildren  {_node}
@@ -987,6 +1021,49 @@ namespace eval ArcherCore {
 	set mDisplayFontSizes {0 5 6 7 8 9 10 12}
     }
 
+    array set mViewAxesSizeOffsets {
+	"Small"   0.85
+	"Medium"  0.75
+	"Large"   0.55
+	"X-Large" 0.0
+    }
+    array set mViewAxesSizeValues {
+	"Small"   0.2
+	"Medium"  0.4
+	"Large"   0.8
+	"X-Large" 1.6
+    }
+    array set mModelAxesSizeValues {
+	"Small"      0.2
+	"Medium"     0.4
+	"Large"      0.8
+	"X-Large"    1.6
+	"View (1x)"  2.0
+	"View (2x)"  4.0
+	"View (4x)"  8.0
+	"View (8x)" 16.0
+    }
+
+    set mStandardViewsMenuCommands {
+	command front -label "Front" \
+	    -helpstr "Set view to front"
+	command rear -label "Rear" \
+	    -helpstr "Set view to rear"
+	command port -label "Port" \
+	    -helpstr "Set view to port/left"
+	command starboard -label "Starboard" \
+	    -helpstr "Set view to starboard/right"
+	command top -label "Top" \
+	    -helpstr "Set view to top"
+	command bottom -label "Bottom" \
+	    -helpstr "Set view to bottom"
+	separator sep0
+	command 35, 25 -label "35, 25" \
+	    -helpstr "Set view to az=35, el=25"
+	command 45, 45 -label "45, 45" \
+	    -helpstr "Set view to az=45, el=45"
+    }
+
     set mLastSelectedDir [pwd]
 
     set mFontText [list $SystemWindowFont 8]
@@ -1012,7 +1089,8 @@ namespace eval ArcherCore {
 	set args [lindex $args 0]
     }
 
-    set mDisplayType [dm_bestXType $env(DISPLAY)]
+    set dm_list [split [dm_list] ',']
+    set mDisplayType [lindex $dm_list 0]
 
     # horizontal panes
     itk_component add hpane {
@@ -1231,7 +1309,6 @@ namespace eval ArcherCore {
     trace add variable [::itcl::scope mRayColorVoid] write watchVar
 
     trace add variable [::itcl::scope mDisplayFontSize] write watchVar
-    trace add variable [::itcl::scope mRtBotMintie] write watchVar
 
     eval itk_initialize $args
 
@@ -1385,33 +1462,25 @@ namespace eval ArcherCore {
 
     $itk_component(advancedTabs) add $itk_component(cmd) -text "Command"
     $itk_component(advancedTabs) add $itk_component(history) -text "History"
+
+    itk_component add cmdpopup {
+	::menu $itk_component(advancedTabs).cmdmenu \
+	    -tearoff 0
+    } {}
+
+    $itk_component(cmdpopup) add command \
+	-label "Paste Selected Path" \
+	-command "[$itk_component(cmd) component text] insert insert \
+		  \[[::itcl::code $this getSelectedTreePaths]\]"
+
+    bind [$itk_component(cmd) component text] <Button-3> [::itcl::code $this handleCmdPopup %X %Y]
 }
 
 ::itcl::body ArcherCore::buildCanvasMenubar {}  {
     if {$mViewOnly && !$mNoToolbar} {
 	# View Menu
 	$itk_component(canvas_menu) add menubutton view \
-	    -text "View" -menu {
-		options -tearoff 0
-
-		command front -label "Front" \
-		    -helpstr "Set view to front"
-		command rear -label "Rear" \
-		    -helpstr "Set view to rear"
-		command port -label "Port" \
-		    -helpstr "Set view to port/left"
-		command starboard -label "Starboard" \
-		    -helpstr "Set view to starboard/right"
-		command top -label "Top" \
-		    -helpstr "Set view to top"
-		command bottom -label "Bottom" \
-		    -helpstr "Set view to bottom"
-		separator sep0
-		command 35,25 -label "35,25" \
-		    -helpstr "Set view to az=35, el=25"
-		command 45,45 -label "45,45" \
-		    -helpstr "Set view to az=45, el=45"
-	    }
+	    -text "View" -menu "options -tearoff 0 $mStandardViewsMenuCommands"
 
 	$itk_component(canvas_menu) menuconfigure .view.front \
 	    -command [::itcl::code $this doAe 0 0] \
@@ -1598,7 +1667,7 @@ namespace eval ArcherCore {
 	set rmode [lindex $rdata 0]
 	set rtrans [lindex $rdata 1]
 
-	if [ $rmode == $DISPLAY_MODE_HIDDEN ] {
+	if {$rmode == $DISPLAY_MODE_HIDDEN} {
 	    gedCmd draw -h $obj
 	} else {
 	    gedCmd draw -m$rmode -x$rtrans $obj
@@ -1769,10 +1838,29 @@ namespace eval ArcherCore {
     set mImage_arb8Sub [image create photo -file [file join $mImgDir arb8_subtract.png]]
     set mImage_arb8Union [image create photo -file [file join $mImgDir arb8_union.png]]
 
+    set mImage_arb7 [image create photo -file [file join $mImgDir arb7.png]]
     set mImage_arb7Labeled [image create photo -file [file join $mImgDir arb7_labeled.png]]
+    set mImage_arb7Inter [image create photo -file [file join $mImgDir arb7_intersect.png]]
+    set mImage_arb7Sub [image create photo -file [file join $mImgDir arb7_subtract.png]]
+    set mImage_arb7Union [image create photo -file [file join $mImgDir arb7_union.png]]
+
+    set mImage_arb6 [image create photo -file [file join $mImgDir arb6.png]]
     set mImage_arb6Labeled [image create photo -file [file join $mImgDir arb6_labeled.png]]
+    set mImage_arb6Inter [image create photo -file [file join $mImgDir arb6_intersect.png]]
+    set mImage_arb6Sub [image create photo -file [file join $mImgDir arb6_subtract.png]]
+    set mImage_arb6Union [image create photo -file [file join $mImgDir arb6_union.png]]
+
+    set mImage_arb5 [image create photo -file [file join $mImgDir arb5.png]]
     set mImage_arb5Labeled [image create photo -file [file join $mImgDir arb5_labeled.png]]
+    set mImage_arb5Inter [image create photo -file [file join $mImgDir arb5_intersect.png]]
+    set mImage_arb5Sub [image create photo -file [file join $mImgDir arb5_subtract.png]]
+    set mImage_arb5Union [image create photo -file [file join $mImgDir arb5_union.png]]
+
+    set mImage_arb4 [image create photo -file [file join $mImgDir arb4.png]]
     set mImage_arb4Labeled [image create photo -file [file join $mImgDir arb4_labeled.png]]
+    set mImage_arb4Inter [image create photo -file [file join $mImgDir arb4_intersect.png]]
+    set mImage_arb4Sub [image create photo -file [file join $mImgDir arb4_subtract.png]]
+    set mImage_arb4Union [image create photo -file [file join $mImgDir arb4_union.png]]
 
     set mImage_arbn [image create photo -file [file join $mImgDir arbn.png]]
     set mImage_arbnLabeled [image create photo -file [file join $mImgDir arbn_labeled.png]]
@@ -1791,6 +1879,12 @@ namespace eval ArcherCore {
     set mImage_botInter [image create photo -file [file join $mImgDir bot_intersect.png]]
     set mImage_botSub [image create photo -file [file join $mImgDir bot_subtract.png]]
     set mImage_botUnion [image create photo -file [file join $mImgDir bot_union.png]]
+
+    set mImage_brep [image create photo -file [file join $mImgDir brep.png]]
+    set mImage_brepLabeled [image create photo -file [file join $mImgDir brep_labeled.png]]
+    set mImage_brepInter [image create photo -file [file join $mImgDir brep_intersect.png]]
+    set mImage_brepSub [image create photo -file [file join $mImgDir brep_subtract.png]]
+    set mImage_brepUnion [image create photo -file [file join $mImgDir brep_union.png]]
 
     set mImage_dsp [image create photo -file [file join $mImgDir dsp.png]]
     set mImage_dspLabeled [image create photo -file [file join $mImgDir dsp_labeled.png]]
@@ -2110,26 +2204,33 @@ namespace eval ArcherCore {
 }
 
 ::itcl::body ArcherCore::openDb {} {
+
+    package require cadwidgets::GeometryIO
+
     set typelist {
-	{"BRL-CAD Database" {".g"}}
+	{"BRL-CAD Database" {".g" ".asc"}}
+	{"3dm (Rhino)" {".3dm"}}
+	{"FASTGEN 4" {".bdf" ".fas" ".fg" ".fg4"}}
+	{"STEP" {".stp" ".step"}}
+	{"STL" {".stl"}}
 	{"All Files" {*}}
     }
 
-    set target [tk_getOpenFile -parent $itk_interior \
+    set input_target [tk_getOpenFile -parent $itk_interior \
 		    -initialdir $mLastSelectedDir \
 		    -title "Open Database" \
 		    -filetypes $typelist]
 
-    if {$target == ""} {
+    if {$input_target == ""} {
 	return
     } else {
-	set mLastSelectedDir [file dirname $target]
+	set mLastSelectedDir [file dirname $input_target]
     }
+
+    set target [cadwidgets::geom_load $input_target 1]
 
     ::update
     Load $target
-
-    cd $mLastSelectedDir
 }
 
 ::itcl::body ArcherCore::saveDb {} {
@@ -2160,6 +2261,32 @@ namespace eval ArcherCore {
 
     set mTarget $target
     file copy -force $mTargetCopy $mTarget
+}
+
+::itcl::body ArcherCore::exportDb {} {
+
+    package require cadwidgets::GeometryIO
+
+    set typelist {
+	{"All Files" {*}}
+	{"STL" {".stl"}}
+	{"Wavefront OBJ" {".obj"}}
+    }
+
+    set target [tk_getSaveFile -parent $itk_interior \
+        -initialdir $mLastSelectedDir \
+        -title "Save the Database As..." \
+        -filetypes $typelist]
+
+    # Sanity
+    if {$target == "" ||
+	$mTargetCopy == "" ||
+	$mDbNoCopy} {
+	return
+    }
+
+    set mTarget $target
+    cadwidgets::geom_save $mTargetCopy $mTarget $itk_component(ged)
 }
 
 ::itcl::body ArcherCore::primaryToolbarAdd {type name {args ""}} {
@@ -2286,6 +2413,31 @@ namespace eval ArcherCore {
 # ------------------------------------------------------------
 #                     PUBLIC TREE COMMANDS
 # ------------------------------------------------------------
+::itcl::body ArcherCore::setViewTypeFromTreeMode {} {
+    switch -- $mTreeMode \
+	$TREE_MODE_TREE - \
+	$TREE_MODE_COLOR_OBJECTS {
+	    if {$mEnableColorListView} {
+		set mEnableListView 1
+	    } else {
+		set mEnableListView 0
+	    }
+	} \
+	$TREE_MODE_GHOST_OBJECTS {
+	    if {$mEnableGhostListView} {
+		set mEnableListView 1
+	    } else {
+		set mEnableListView 0
+	    }
+	} \
+	$TREE_MODE_EDGE_OBJECTS {
+	    if {$mEnableEdgeListView} {
+		set mEnableListView 1
+	    } else {
+		set mEnableListView 0
+	    }
+	}
+}
 
 ::itcl::body ArcherCore::rebuildTree {} {
     if {$mNoTree || $mFreezeGUI} {
@@ -2317,29 +2469,7 @@ namespace eval ArcherCore {
     set mNodeDrawList ""
     set mAffectedNodeList ""
 
-    switch -- $mTreeMode \
-	$TREE_MODE_TREE - \
-	$TREE_MODE_COLOR_OBJECTS {
-	    if {$mEnableColorListView} {
-		set mEnableListView 1
-	    } else {
-		set mEnableListView 0
-	    }
-	} \
-	$TREE_MODE_GHOST_OBJECTS {
-	    if {$mEnableGhostListView} {
-		set mEnableListView 1
-	    } else {
-		set mEnableListView 0
-	    }
-	} \
-	$TREE_MODE_EDGE_OBJECTS {
-	    if {$mEnableEdgeListView} {
-		set mEnableListView 1
-	    } else {
-		set mEnableListView 0
-	    }
-	}
+    setViewTypeFromTreeMode
 
     if {$mEnableListView} {
 	set items [lsort -dictionary [$itk_component(ged) ls]]
@@ -2462,7 +2592,7 @@ namespace eval ArcherCore {
 
 		    set mlist [lreplace $mlist $i $i]
 
-		    if {[catch {$itk_component(ged) get $ctext} cgdata]} {
+		    if {[catch {$itk_component(ged) get_type $ctext} cgdata]} {
 			# In here, the child node refers to non-existent geometry
 			# so update the image and remove any grandchildren etc.
 
@@ -2713,35 +2843,31 @@ namespace eval ArcherCore {
 ::itcl::body ArcherCore::setDefaultBindingMode {_mode} {
     set mDefaultBindingMode $_mode
 
-    set ret 0
+    set ret 1
     switch -- $mDefaultBindingMode \
-	$VIEW_ROTATE_MODE { \
-		beginViewRotate \
-		set ret 1
+	$VIEW_ROTATE_MODE {
+	    $itk_component(primaryToolbar) component rotate invoke
 	} \
-	$VIEW_TRANSLATE_MODE { \
-		beginViewTranslate \
-		set ret 1
+	$VIEW_TRANSLATE_MODE {
+	    $itk_component(primaryToolbar) component translate invoke
 	} \
-	$VIEW_SCALE_MODE { \
-		beginViewScale \
-		set ret 1
+	$VIEW_SCALE_MODE {
+	    $itk_component(primaryToolbar) component scale invoke
 	} \
-	$VIEW_CENTER_MODE { \
-		initViewCenterMode \
-		set ret 1
+	$VIEW_CENTER_MODE {
+	    $itk_component(primaryToolbar) component center invoke
 	} \
-	$COMP_PICK_MODE { \
-		initCompPick \
-		set ret 1
+	$COMP_PICK_MODE {
+	    $itk_component(primaryToolbar) component cpick invoke
 	} \
-	$COMP_SELECT_MODE { \
-		initCompSelect \
-		set ret 1
+	$COMP_SELECT_MODE {
+	    $itk_component(primaryToolbar) component cselect invoke
 	} \
-	$MEASURE_MODE { \
-		initViewMeasure \
-		set ret 1
+	$MEASURE_MODE {
+	    $itk_component(primaryToolbar) component measure invoke
+	} \
+	default {
+	    set ret 0
 	}
 
     return $ret
@@ -3724,6 +3850,9 @@ namespace eval ArcherCore {
 		$DISPLAY_MODE_SHADED_ALL {
 		    gedCmd draw -m2 -x$_trans $_node
 		} \
+		$DISPLAY_MODE_SHADED_EVAL {
+		    gedCmd draw -m3 -x$_trans $_node
+		} \
 		$DISPLAY_MODE_EVALUATED {
 		    gedCmd E $_node
 		} \
@@ -3747,6 +3876,10 @@ namespace eval ArcherCore {
 		    gedCmd draw -m2 -x$_trans \
 			-C$displayColor $_node
 		} \
+		$DISPLAY_MODE_SHADED_EVAL {
+		    gedCmd draw -m3 -x$_trans \
+			-C$displayColor $_node
+		} \
 		$DISPLAY_MODE_EVALUATED {
 		    gedCmd E -C$displayColor $_node
 		} \
@@ -3765,10 +3898,8 @@ namespace eval ArcherCore {
 	} else {
 	    gedCmd configure -primitiveLabels {}
 
-	    if {$mAllowDataClear} {
-		gedCmd data_axes points {}
-		gedCmd data_lines points {}
-	    }
+	    gedCmd data_axes points {}
+	    gedCmd data_lines points {}
 	}
     } else {
 	set soi -1
@@ -3781,10 +3912,8 @@ namespace eval ArcherCore {
 	if {$soi != -1} {
 	    gedCmd configure -primitiveLabels {}
 
-	    if {$mAllowDataClear} {
-		gedCmd data_axes points {}
-		gedCmd data_lines points {}
-	    }
+	    gedCmd data_axes points {}
+	    gedCmd data_lines points {}
 	}
     }
 
@@ -4131,12 +4260,18 @@ namespace eval ArcherCore {
 	return
     }
 
-    if {[catch {$itk_component(ged) get $_ctext} cgdata]} {
-	set ctype invalid
-	set isregion 0
-    } else {
-	set ctype [lindex $cgdata 0]
-	set isregion [isRegion $cgdata]
+    set ctype invalid
+    set isregion 0
+
+    if {![catch {$itk_component(ged) get_type $_ctext} ctype]} {
+	if {![catch {$itk_component(ged) form $ctype} cform]} {
+	    if {[lsearch $cform region] > -1} {
+		if {![catch {$itk_component(ged) get $_ctext} cgdata]} {
+		    set ctype [lindex $cgdata 0]
+		    set isregion [isRegion $cgdata]
+		}
+	    }
+	}
     }
 
     set ptext $mNode2Text($_pnode)
@@ -4278,6 +4413,11 @@ namespace eval ArcherCore {
 	$_menu add radiobutton -label "Shaded" \
 	    -indicatoron 1 -value 2 -variable [::itcl::scope mRenderMode] \
 	    -command [::itcl::code $this render $_node $DISPLAY_MODE_SHADED_ALL 1 1 1 $_node_id]
+
+	$_menu add radiobutton -label "Shaded (Evaluated)" \
+	    -indicatoron 1 -value 5 -variable [::itcl::scope mRenderMode] \
+	    -command [::itcl::code $this render $_node $DISPLAY_MODE_SHADED_EVAL 1 1 1 $_node_id]
+
 	$_menu add radiobutton -label "Hidden Line" \
 	    -indicatoron 1 -value 4 -variable [::itcl::scope mRenderMode] \
 	    -command [::itcl::code $this render $_node $DISPLAY_MODE_HIDDEN 1 1 1 $_node_id]
@@ -4300,6 +4440,10 @@ namespace eval ArcherCore {
 
 	$_menu add command -label "Shaded" \
 	    -command [::itcl::code $this render $_node $DISPLAY_MODE_SHADED_ALL 1 1 1 $_node_id]
+
+	$_menu add command -label "Shaded (Evaluated)" \
+	    -command [::itcl::code $this render $_node $DISPLAY_MODE_SHADED_EVAL 1 1 1 $_node_id]
+
 	$_menu add command -label "Hidden Line" \
 	    -command [::itcl::code $this render $_node $DISPLAY_MODE_HIDDEN 1 1 1 $_node_id]
 
@@ -4368,7 +4512,7 @@ namespace eval ArcherCore {
     $color add command -label "Select..." \
 	-command [::itcl::code $this selectDisplayColor $_node]
 
-    if {($mDisplayType == "wgl" || $mDisplayType == "ogl") && ($_nodeType != "leaf" || 0 < $mRenderMode)} {
+    if {($mDisplayType == "wgl" || $mDisplayType == "ogl" || $mDisplayType == "osgl") && ($_nodeType != "leaf" || 0 < $mRenderMode)} {
 	# Build transparency menu
 	$_menu add cascade -label "Transparency" \
 	    -menu $_menu.trans
@@ -4516,10 +4660,15 @@ namespace eval ArcherCore {
 		}
 	    }
 	}
+	arb4 -
+	arb5 -
+	arb6 -
+	arb7 -
 	arb8 -
 	arbn -
 	ars -
 	bot -
+	brep -
 	dsp -
 	ehy -
 	ell -
@@ -4664,6 +4813,10 @@ namespace eval ArcherCore {
     return [getTreePath $parent $_path]
 }
 
+::itcl::body ArcherCore::getSelectedTreePaths {} {
+    return [getTreePath [$itk_component(newtree) selection]]
+}
+
 ::itcl::body ArcherCore::handleTreeClose {} {
 }
 
@@ -4676,10 +4829,11 @@ namespace eval ArcherCore {
 
     set cnode [$itk_component(newtree) focus]
     set ctext [$itk_component(newtree) item $cnode -text]
-    set cgdata [$itk_component(ged) get $ctext]
+    set cgdata [$itk_component(ged) get_type $ctext]
     set ctype [lindex $cgdata 0]
 
     if {($ctype == "comb" ||
+	 $ctype == "region" ||
 	 $ctype == "dsp" ||
 	 $ctype == "ebm" ||
 	 $ctype == "extrude" ||
@@ -4694,10 +4848,11 @@ namespace eval ArcherCore {
 	    unset mPNode2CList($cnode)
 
 	    switch -- $ctype {
+		"region" -
 		"comb" {
 		    #set tree [getTreeFromGData $cgdata]
 		    foreach gctext [getTreeMembers $ctext 1] {
-			if {[catch {$itk_component(ged) get $gctext} gcgdata]} {
+			if {[catch {$itk_component(ged) get_type $gctext} gcgdata]} {
 			    set op [getTreeOp $ctext $gctext]
 			    set img [getTreeImage $gctext "invalid" $op]
 
@@ -4795,6 +4950,10 @@ namespace eval ArcherCore {
 
     loadMenu $itk_component(newtreepopup) $path $nodeType $item
     tk_popup $itk_component(newtreepopup) $_X $_Y
+}
+
+::itcl::body ArcherCore::handleCmdPopup {_X _Y} {
+    tk_popup $itk_component(cmdpopup) $_X $_Y
 }
 
 ::itcl::body ArcherCore::handleTreeSelect {} {
@@ -4970,12 +5129,15 @@ namespace eval ArcherCore {
     if {$_rflag} {
 	rebuildTree
 
-	if {$mEnableListView} {
-	    selectTreePath $mSelectedObj
-	} else {
-	    set paths [gedCmd search / -name $mSelectedObj]
-	    if {[llength $paths]} {
-		selectTreePath [lindex $paths 0]
+	if {$mSelectedObj != ""} {
+	    if {$mEnableListView} {
+		selectTreePath $mSelectedObj
+	    } else {
+		if {![catch {set paths [gedCmd search -Q / -name $mSelectedObj]}]} {
+		    if {[llength $paths]} {
+		       selectTreePath [lindex $paths 0]
+		    }
+		}
 	    }
 	}
     }
@@ -5017,29 +5179,7 @@ namespace eval ArcherCore {
 	}
     }
 
-    switch -- $mTreeMode \
-	$TREE_MODE_TREE - \
-	$TREE_MODE_COLOR_OBJECTS {
-	    if {$mEnableColorListView} {
-		set mEnableListView 1
-	    } else {
-		set mEnableListView 0
-	    }
-	} \
-	$TREE_MODE_GHOST_OBJECTS {
-	    if {$mEnableGhostListView} {
-		set mEnableListView 1
-	    } else {
-		set mEnableListView 0
-	    }
-	} \
-	$TREE_MODE_EDGE_OBJECTS {
-	    if {$mEnableEdgeListView} {
-		set mEnableListView 1
-	    } else {
-		set mEnableListView 0
-	    }
-	}
+    setViewTypeFromTreeMode
 
     if {$mTreeMode < $TREE_MODE_COLOR_OBJECTS} {
 	if {$mEnableListView} {
@@ -5139,7 +5279,7 @@ namespace eval ArcherCore {
 # Note -_name is expected to exist in the database.
 #
 ::itcl::body ArcherCore::updateTreeTopWithName {_name} {
-    # Check to see if its okay to add a toplevel node
+    # Check to see if it's okay to add a toplevel node
     set toplist {}
     foreach item [$itk_component(ged) tops] {
 	lappend toplist [regsub {/.*} $item {}]
@@ -5201,15 +5341,7 @@ namespace eval ArcherCore {
 # ------------------------------------------------------------
 #                         GENERAL
 # ------------------------------------------------------------
-::itcl::body ArcherCore::Load {target} {
-    SetWaitCursor $this
-    if {$mNeedSave} {
-	askToSave
-    }
-
-    set mNeedSave 0
-    updateSaveMode
-
+::itcl::body ArcherCore::OpenTarget {target} {
     set mTarget $target
     set mDbType "BRL-CAD"
     set mCopyObj ""
@@ -5219,7 +5351,8 @@ namespace eval ArcherCore {
 	set mDbShared 1
 	set mDbReadOnly 1
     } elseif {[file exists $mTarget]} {
-	if {[file writable $mTarget]} {
+	if {[file writable $mTarget] ||
+	    ($tcl_platform(platform) == "windows" && ![file attributes $mTarget -readonly])} {
 	    set mDbReadOnly 0
 	} else {
 	    set mDbReadOnly 1
@@ -5236,22 +5369,36 @@ namespace eval ArcherCore {
     }
 
     # Load MGED database
-    if {[info exists itk_component(ged)]} {
-	if {$mDbShared} {
-	    $itk_component(ged) sharedGed $mTarget
-	} elseif {$mDbNoCopy || $mDbReadOnly} {
-	    $itk_component(ged) open $mTarget
-	} else {
-	    $itk_component(ged) open $mTargetCopy
-	}
+    if {![info exists itk_component(ged)]} {
+	return false
+    }
 
-	if {$mAllowDataClear} {
-	    gedCmd data_axes points {}
-	    gedCmd data_lines points {}
-	}
-
-	gedCmd configure -primitiveLabels {}
+    if {$mDbShared} {
+	$itk_component(ged) sharedGed $mTarget
+    } elseif {$mDbNoCopy || $mDbReadOnly} {
+	$itk_component(ged) open $mTarget
     } else {
+	$itk_component(ged) open $mTargetCopy
+    }
+    gedCmd data_axes points {}
+    gedCmd data_lines points {}
+    gedCmd configure -primitiveLabels {}
+
+    return true
+}
+
+::itcl::body ArcherCore::Load {target} {
+    global tcl_platform
+
+    SetWaitCursor $this
+    if {$mNeedSave} {
+	askToSave
+    }
+
+    set mNeedSave 0
+    updateSaveMode
+
+    if {![OpenTarget $target]} {
 	initGed
 
 	grid forget $itk_component(canvas)
@@ -5510,120 +5657,6 @@ namespace eval ArcherCore {
     }
 }
 
-::itcl::body ArcherCore::menuStatusCB_junk {_w} {
-    if {$mDoStatus} {
-	# entry might not support -label (i.e. tearoffs)
-	if {[catch {$_w entrycget active -label} op]} {
-	    set op ""
-	}
-
-	switch -- $op {
-	    "Open..." {
-		set mStatusStr "Open a target description"
-	    }
-	    "Save" {
-		set mStatusStr "Save the current target description"
-	    }
-	    "Quit" {
-		set mStatusStr "Exit ArcherCore"
-	    }
-	    "Reset" {
-		set mStatusStr "Set view to default"
-	    }
-	    "Autoview" {
-		set mStatusStr "Set view size and center according to what's being displayed"
-	    }
-	    "Center..." {
-		set mStatusStr "Set the view center"
-	    }
-	    "Front" {
-		set mStatusStr "Set view to front"
-	    }
-	    "Rear" {
-		set mStatusStr "Set view to rear"
-	    }
-	    "Port" {
-		set mStatusStr "Set view to port/left"
-	    }
-	    "Starboard" {
-		set mStatusStr "Set view to starboard/right"
-	    }
-	    "Top" {
-		set mStatusStr "Set view to top"
-	    }
-	    "Bottom" {
-		set mStatusStr "Set view to bottom"
-	    }
-	    "35,25" {
-		set mStatusStr "Set view to az=35, el=25"
-	    }
-	    "45,45" {
-		set mStatusStr "Set view to az=45, el=45"
-	    }
-	    "Primary" {
-		set mStatusStr "Toggle on/off primary toolbar"
-	    }
-	    "View Controls" {
-		set mStatusStr "Toggle on/off view toolbar"
-	    }
-	    "Status Bar" {
-		set mStatusStr "Toggle on/off status bar"
-	    }
-	    "Command Window" {
-		set mStatusStr "Toggle on/off command window"
-	    }
-	    "Upper Left" {
-		set mStatusStr "Set the active pane to the upper left pane"
-	    }
-	    "Upper Right" {
-		set mStatusStr "Set the active pane to the upper right pane"
-	    }
-	    "Lower Left" {
-		set mStatusStr "Set the active pane to the lower left pane"
-	    }
-	    "Lower Right" {
-		set mStatusStr "Set the active pane to the lower right pane"
-	    }
-	    "Quad View" {
-		set mStatusStr "Toggle between single and multiple geometry pane mode"
-	    }
-	    "View Axes" {
-		set mStatusStr "Hide/Show view axes"
-	    }
-	    "Model Axes" {
-		set mStatusStr "Hide/Show model axes"
-	    }
-	    "File" {
-		set mStatusStr ""
-	    }
-	    "View" {
-		set mStatusStr ""
-	    }
-	    "Modes" {
-		set mStatusStr ""
-	    }
-	    "Help" {
-		set mStatusStr ""
-	    }
-	    "Wireframe" {
-		set mStatusStr "Draw object as wireframe"
-	    }
-	    "Shaded" {
-		set mStatusStr "Draw object as shaded if a bot or polysolid (unevaluated)"
-	    }
-	    "Hidden Line" {
-		set mStatusStr "Draw object as hidden line"
-	    }
-	    "Off" {
-		set mStatusStr "Erase object"
-	    }
-	    default {
-		set mStatusStr ""
-	    }
-	}
-    }
-}
-
 ::itcl::body ArcherCore::transparencyMenuStatusCB {_w} {
     if {$mDoStatus} {
 	# entry might not support -label (i.e. tearoffs)
@@ -5833,6 +5866,26 @@ namespace eval ArcherCore {
     refreshDisplay
 }
 
+::itcl::body ArcherCore::compareViewAxesSizes {a b} {
+    if {$mViewAxesSizeValues($a) < $mViewAxesSizeValues($b)} {
+	return -1
+    }
+    if {$mViewAxesSizeValues($a) > $mViewAxesSizeValues($b)} {
+	return 1
+    }
+    return 0
+}
+
+::itcl::body ArcherCore::compareModelAxesSizes {a b} {
+    if {$mModelAxesSizeValues($a) < $mModelAxesSizeValues($b)} {
+	return -1
+    }
+    if {$mModelAxesSizeValues($a) > $mModelAxesSizeValues($b)} {
+	return 1
+    }
+    return 0
+}
+
 ::itcl::body ArcherCore::launchNirt {} {
     putString "nirt -b"
     putString [$itk_component(ged) nirt -b]
@@ -5845,17 +5898,16 @@ namespace eval ArcherCore {
 	set size [winfo width $itk_component(ged)]
     }
 
-    if {$tcl_platform(platform) == "windows"} {
-	$itk_component(ged) $app -s $size -F /dev/wgll
-    } {
-	$itk_component(ged) $app -s $size -F /dev/ogll
-    }
+    set dm_list [split [dm_list] ',']
+    set devtype "/dev/"
+    append devtype [lindex $dm_list 0]
+    $itk_component(ged) $app -s $size -F $devtype
 }
 
 ::itcl::body ArcherCore::updateDisplaySettings {} {
     $itk_component(ged) refresh_off
 
-    updateZClipPlanes 0
+    updateZClipPlanesFromSettings
     updatePerspective 0
     doLighting
     gedCmd dlist_on $mDisplayListMode
@@ -5882,11 +5934,22 @@ namespace eval ArcherCore {
     $itk_component(ged) perspective_all $mPerspectivePref
 }
 
-::itcl::body ArcherCore::updateZClipPlanes {_unused} {
-    set near [expr {0.01 * $mZClipFrontPref * $mZClipFrontMaxPref}]
-    set far [expr {0.01 * $mZClipBackPref * $mZClipBackMaxPref}]
+::itcl::body ArcherCore::updateZClipPlanes {_front _front_max _back _back_max} {
+    set near [expr {0.01 * $_front * $_front_max}]
+    set far [expr {0.01 * $_back * $_back_max}]
     $itk_component(ged) bounds_all "-1.0 1.0 -1.0 1.0 -$near $far"
     $itk_component(ged) refresh_all
+}
+
+::itcl::body ArcherCore::updateZClipPlanesFromSettings {} {
+    updateZClipPlanes $mZClipFront $mZClipFrontMax $mZClipBack $mZClipBackMax
+}
+
+# Note: This method is used by scale widgets in the Archer Preferences
+# dialog, which is why it has an unused parameter.
+::itcl::body ArcherCore::updateZClipPlanesFromPreferences {{_unused 0.0}} {
+    updateZClipPlanes $mZClipFrontPref $mZClipFrontMaxPref $mZClipBackPref \
+	$mZClipBackMaxPref
 }
 
 ::itcl::body ArcherCore::calculateZClipMax {} {
@@ -5903,12 +5966,12 @@ namespace eval ArcherCore {
 
 ::itcl::body ArcherCore::calculateZClipBackMax {} {
     set mZClipBackMaxPref [calculateZClipMax]
-    updateZClipPlanes 0
+    updateZClipPlanesFromPreferences
 }
 
 ::itcl::body ArcherCore::calculateZClipFrontMax {} {
     set mZClipFrontMaxPref [calculateZClipMax]
-    updateZClipPlanes 0
+    updateZClipPlanesFromPreferences
 }
 
 ::itcl::body ArcherCore::validateZClipMax {_d} {
@@ -5922,7 +5985,7 @@ namespace eval ArcherCore {
 	    return 0
 	}
 
-	after idle [::itcl::code $this updateZClipPlanes 0]
+	after idle [::itcl::code $this updateZClipPlanesFromPreferences]
 	return 1
     }
 
@@ -5932,14 +5995,6 @@ namespace eval ArcherCore {
 ::itcl::body ArcherCore::pushPerspectiveSettings {} {
     set mPerspectivePref $mPerspective
     updatePerspective 0
-}
-
-::itcl::body ArcherCore::pushZClipSettings {} {
-    set mZClipBackMaxPref $mZClipBackMax
-    set mZClipFrontMaxPref $mZClipFrontMax
-    set mZClipBackPref $mZClipBack
-    set mZClipFrontPref $mZClipFront
-    updateZClipPlanes 0
 }
 
 ::itcl::body ArcherCore::shootRay_doit {_start _op _target _prep _no_bool _onehit _bot_dflag _objects} {
@@ -6385,10 +6440,8 @@ namespace eval ArcherCore {
     if {$soi != -1} {
 	gedCmd configure -primitiveLabels {}
 
-	if {$mAllowDataClear} {
-	    gedCmd data_axes points {}
-	    gedCmd data_lines points {}
-	}
+	gedCmd data_axes points {}
+	gedCmd data_lines points {}
     }
 
     updateTreeDrawLists
@@ -6513,6 +6566,9 @@ namespace eval ArcherCore {
 ::itcl::body ArcherCore::l {args} {
     eval gedWrapper l 1 0 0 0 $args
 }
+::itcl::body ArcherCore::lc {args} {
+    eval gedWrapper lc 1 0 0 0 $args
+}
 ::itcl::body ArcherCore::ls {args} {
     eval gedWrapper ls 1 0 0 0 $args
 }
@@ -6526,10 +6582,6 @@ namespace eval ArcherCore {
 
     set oname [lindex $args 0]
     selectTreePath $oname
-}
-
-::itcl::body ArcherCore::make_bb {args} {
-    eval gedWrapper make_bb 0 0 1 1 $args
 }
 
 ::itcl::body ArcherCore::make_name {args} {
@@ -6725,6 +6777,10 @@ namespace eval ArcherCore {
     eval gedWrapper ptranslate 0 0 1 0 $args
 }
 
+::itcl::body ArcherCore::pull {args} {
+    eval gedWrapper pull 0 1 1 0 $args
+}
+
 ::itcl::body ArcherCore::push {args} {
     eval gedWrapper push 0 1 1 0 $args
 }
@@ -6787,6 +6843,19 @@ namespace eval ArcherCore {
 
 ::itcl::body ArcherCore::rotate_arb_face {args} {
     eval gedWrapper rotate_arb_face 0 0 1 0 $args
+}
+
+::itcl::body ArcherCore::saveview {args} {
+    # If no input database is specified and the open database is a
+    # working copy, specify the name of the original database so that
+    # the saveview script remains valid after the working copy is
+    # deleted on program exit.
+    set i [lsearch $args "-i"]
+    if {$i == -1 && $mTargetCopy != "" && !$mDbNoCopy} {
+	set args [linsert $args 0 "$mTarget"]
+	set args [linsert $args 0 "-i"]
+    }
+    eval gedWrapper saveview 0 0 0 0 $args
 }
 
 ::itcl::body ArcherCore::scale {args} {
@@ -7209,7 +7278,6 @@ namespace eval ArcherCore {
 }
 
 ::itcl::body ArcherCore::watchVar {_name1 _name2 _op} {
-    global rt_bot_mintie
     global env
 
     if {![info exists itk_component(ged)]} {
@@ -7271,10 +7339,6 @@ namespace eval ArcherCore {
 	}
 	mRayColorVoid {
 	    $itk_component(ged) configure -rayColorVoid $mRayColorVoid
-	}
-	mRtBotMintie {
-	    set rt_bot_mintie $mRtBotMintie
-	    set env(LIBRT_BOT_MINTIE) $mRtBotMintie
 	}
     }
 }

@@ -1,7 +1,7 @@
 /*                         B B . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2013 United States Government as represented by
+ * Copyright (c) 2008-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -28,10 +28,11 @@
 #include "common.h"
 
 #include <string.h>
-#include "bio.h"
 
-#include "cmd.h"
-#include "rtgeom.h"
+#include "bu/cmd.h"
+#include "bu/getopt.h"
+#include "bu/units.h"
+#include "rt/geom.h"
 
 #include "./ged_private.h"
 
@@ -125,7 +126,7 @@ ged_bb(struct ged *gedp, int argc, const char *argv[])
 	VSETALL(rpp_min, INFINITY);
 	VSETALL(rpp_max, -INFINITY);
 	for (i = 0; i < argc; i++) {
-	    if (_ged_get_obj_bounds(gedp, argc - i, (const char **)argv+i, use_air, obj_min, obj_max) == GED_ERROR)
+	    if (ged_get_obj_bounds(gedp, argc - i, (const char **)argv+i, use_air, obj_min, obj_max) == GED_ERROR)
 		return GED_ERROR;
 	    VMINMAX(rpp_min, rpp_max, (double *)obj_min);
 	    VMINMAX(rpp_min, rpp_max, (double *)obj_max);
@@ -154,7 +155,7 @@ ged_bb(struct ged *gedp, int argc, const char *argv[])
 	    xlen = fabs(rpp_max[X] - rpp_min[X])*gedp->ged_wdbp->dbip->dbi_base2local;
 	    ylen = fabs(rpp_max[Y] - rpp_min[Y])*gedp->ged_wdbp->dbip->dbi_base2local;
 	    zlen = fabs(rpp_max[Z] - rpp_min[Z])*gedp->ged_wdbp->dbip->dbi_base2local;
-	    bu_vls_printf(gedp->ged_result_str, "X Length: %.1f %s\nY Length: %.1f %s\nZ Length: %.1f %s\n", xlen, str, ylen, str, zlen, str);
+	    bu_vls_printf(gedp->ged_result_str, "X Length: %g %s\nY Length: %g %s\nZ Length: %g %s\n", xlen, str, ylen, str, zlen, str);
 	}
 
 	if (print_vol == 1) {
@@ -162,7 +163,7 @@ ged_bb(struct ged *gedp, int argc, const char *argv[])
 	    ylen = fabs(rpp_max[Y] - rpp_min[Y])*gedp->ged_wdbp->dbip->dbi_base2local;
 	    zlen = fabs(rpp_max[Z] - rpp_min[Z])*gedp->ged_wdbp->dbip->dbi_base2local;
 	    vol = xlen * ylen * zlen;
-	    bu_vls_printf(gedp->ged_result_str, "Bounding Box Volume: %.1f %s^3\n", vol, str);
+	    bu_vls_printf(gedp->ged_result_str, "Bounding Box Volume: %g %s^3\n", vol, str);
 	}
 
 	if (make_bb == 1) {
@@ -186,9 +187,9 @@ ged_bb(struct ged *gedp, int argc, const char *argv[])
 	    new_intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 	    new_intern.idb_type = ID_ARB8;
 	    new_intern.idb_meth = &OBJ[ID_ARB8];
-	    new_intern.idb_ptr = (genptr_t)arb;
+	    new_intern.idb_ptr = (void *)arb;
 
-	    if ((dp=db_diradd(gedp->ged_wdbp->dbip, bbname, RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (genptr_t)&new_intern.idb_type)) == RT_DIR_NULL) {
+	    if ((dp=db_diradd(gedp->ged_wdbp->dbip, bbname, RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (void *)&new_intern.idb_type)) == RT_DIR_NULL) {
 		bu_vls_printf(gedp->ged_result_str, "Cannot add %s to directory\n", bbname);
 		return GED_ERROR;
 	    }
@@ -238,7 +239,7 @@ ged_bb(struct ged *gedp, int argc, const char *argv[])
 	new_intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 	new_intern.idb_type = ID_ARB8;
 	new_intern.idb_meth = &OBJ[ID_ARB8];
-	new_intern.idb_ptr = (genptr_t)arb;
+	new_intern.idb_ptr = (void *)arb;
 
 	if (intern.idb_meth->ft_oriented_bbox) {
 	    if (intern.idb_meth->ft_oriented_bbox(arb, &intern, oriented_bbox_tol) < 0) {
@@ -273,12 +274,14 @@ ged_bb(struct ged *gedp, int argc, const char *argv[])
 	    xlen = DIST_PT_PT(arb->pt[0], arb->pt[4])*gedp->ged_wdbp->dbip->dbi_base2local;
 	    ylen = DIST_PT_PT(arb->pt[0], arb->pt[1])*gedp->ged_wdbp->dbip->dbi_base2local;
 	    zlen = DIST_PT_PT(arb->pt[0], arb->pt[3])*gedp->ged_wdbp->dbip->dbi_base2local;
-	    bu_vls_printf(gedp->ged_result_str, "Length: %.1f %s\nWidth: %.1f %s\nHeight: %.1f %s\n", xlen, str, ylen, str, zlen, str);
+	    bu_vls_printf(gedp->ged_result_str, "Length: %g %s\nWidth: %g %s\nHeight: %g %s\n", xlen, str, ylen, str, zlen, str);
 	}
 
 	if (print_vol == 1) {
 	    new_intern.idb_meth->ft_volume(&vol, &new_intern);
-	    bu_vls_printf(gedp->ged_result_str, "Bounding Box Volume: %.1f %s^3\n", vol, str);
+	    /* convert to local units */
+	    vol *= pow(gedp->ged_wdbp->dbip->dbi_base2local,3.0);
+	    bu_vls_printf(gedp->ged_result_str, "Bounding Box Volume: %g %s^3\n", vol, str);
 	}
 
 	if (!make_bb) {
@@ -286,7 +289,7 @@ ged_bb(struct ged *gedp, int argc, const char *argv[])
 	    rt_db_free_internal(&new_intern);
 	} else {
 
-	    if ((dp=db_diradd(gedp->ged_wdbp->dbip, bbname, RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (genptr_t)&new_intern.idb_type)) == RT_DIR_NULL) {
+	    if ((dp=db_diradd(gedp->ged_wdbp->dbip, bbname, RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (void *)&new_intern.idb_type)) == RT_DIR_NULL) {
 		bu_vls_printf(gedp->ged_result_str, "Cannot add %s to directory\n", bbname);
 		return GED_ERROR;
 	    }

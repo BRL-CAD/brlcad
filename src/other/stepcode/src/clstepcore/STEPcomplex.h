@@ -14,7 +14,7 @@ typedef std::list<void *>            STEPcomplex_attr_data_list;
 typedef std::list<void *>::iterator  STEPcomplex_attr_data;
 
 class SC_CORE_EXPORT STEPcomplex : public SDAI_Application_instance {
-    public:
+    public: //TODO should this _really_ be public?!
         STEPcomplex * sc;
         STEPcomplex * head;
         Registry * _registry;
@@ -42,7 +42,7 @@ class SC_CORE_EXPORT STEPcomplex : public SDAI_Application_instance {
                                    istream & in = cin, const char * currSch = NULL,
                                    bool useTechCor = true, bool strict = true );
 
-        virtual void STEPread_error( char c, int index, istream & in );
+        virtual void STEPread_error( char c, int index, istream& in, const char * schnm );
 
 // WRITE
         virtual void STEPwrite( ostream & out = cout, const char * currSch = NULL,
@@ -58,11 +58,11 @@ class SC_CORE_EXPORT STEPcomplex : public SDAI_Application_instance {
         virtual void AppendEntity( STEPcomplex * stepc );
 
     protected:
-        virtual void CopyAs( SDAI_Application_instance * );
+        virtual void CopyAs( SDAI_Application_instance * se );
         void BuildAttrs( const char * s );
         void AddEntityPart( const char * name );
         void AssignDerives();
-        void Initialize( const char **, const char * );
+        void Initialize( const char ** names, const char * schnm );
 };
 
 #endif

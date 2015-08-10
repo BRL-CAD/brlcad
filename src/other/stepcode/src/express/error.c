@@ -177,13 +177,13 @@ void ERRORcreate_warning( char * name, Error error ) {
 }
 
 void ERRORset_warning( char * name, int set ) {
-    bool found = false;
 
     if( streq( name, "all" ) ) {
         ERRORset_all_warnings( set );
     } else if( streq( name, "none" ) ) {
         ERRORset_all_warnings( !set );
     } else {
+        bool found = false;
         LISTdo( ERRORwarnings, opt, Error_Warning )
         if( streq( opt->name, name ) ) {
             found = true;
@@ -199,6 +199,8 @@ void ERRORset_warning( char * name, int set ) {
         fprintf( stderr, "unknown warning: %s\n", name );
         if( ERRORusage_function ) {
             ( *ERRORusage_function )();
+        } else {
+            EXPRESSusage(1);
         }
     }
 }

@@ -1,7 +1,7 @@
 /*                          C Y - G . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2013 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -37,7 +37,7 @@
 
 #include "vmath.h"
 #include "nmg.h"
-#include "rtgeom.h"
+#include "rt/geom.h"
 #include "raytrace.h"
 #include "wdb.h"
 
@@ -395,7 +395,7 @@ main(int argc, char **argv)
     delta_z = (fastf_t)(ltincr)/scale;
 
     /* calculate angle between longitudinal measurements */
-    delta_angle = bn_twopi/(fastf_t)nlg;
+    delta_angle = M_2PI/(fastf_t)nlg;
 
     /* allocate memory to hold vertices */
     curves = (fastf_t **)bu_malloc((nlt+2)*sizeof(fastf_t *), "ars curve pointers");
@@ -441,7 +441,6 @@ main(int argc, char **argv)
 
 	for (y=0; y<nlt; y++) {
 	    short r;
-	    long radius;
 	    fastf_t rad;
 
 	    ptr = &curves[y+1][x*3];
@@ -454,12 +453,14 @@ main(int argc, char **argv)
 /*		bu_log("FOUND NEGATIVE VALUE at %d,%d\n", x, y);*/
 		rad = 0.0;
 	    } else {
-		if (y < first_non_zero)
-		    first_non_zero = y;
+		long radius;
+
+		V_MIN(first_non_zero, y);
+
 		radius = (long)(r) << rshift;
 		rad = (fastf_t)radius/rprop;
-		if (y > last_non_zero)
-		    last_non_zero = y;
+
+		V_MAX(last_non_zero, y);
 	    }
 	    *ptr = rad * coss[x];
 	    *(ptr+1) = rad * sins[x];

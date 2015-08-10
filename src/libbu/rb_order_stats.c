@@ -1,7 +1,7 @@
 /*                R B _ O R D E R _ S T A T S . C
  * BRL-CAD
  *
- * Copyright (c) 1998-2013 United States Government as represented by
+ * Copyright (c) 1998-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -24,20 +24,18 @@
 #include <stdio.h>
 #include <math.h>
 
-#include "bu.h"
-
+#include "bu/rb.h"
 #include "./rb_internals.h"
 
 
 /**
- * _ R B _ S E L E C T
- *
  * Retrieve the element of rank k in one order of a red-black tree
  *
  * This function has three parameters: the root of the tree to search,
  * the order on which to do the searching, and the rank of interest.
  * _rb_select() returns the discovered node.  It is an implementation
- * of the routine OS-SELECT on p. 282 of Cormen et al.
+ * of the routine OS-SELECT on p. 282 of Cormen et al. (p. 341 in the
+ * paperback version of the 2009 edition).
  */
 HIDDEN struct bu_rb_node *
 _rb_select(struct bu_rb_node *root, int order, int k)

@@ -226,7 +226,6 @@ void STEPcomplex::AddEntityPart( const char * name ) {
 
 STEPcomplex * STEPcomplex::EntityPart( const char * name, const char * currSch ) {
     STEPcomplex * scomp = head;
-    std::string s1, s2;
     while( scomp ) {
         if( scomp->eDesc ) {
             if( scomp->eDesc->CurrName( name, currSch ) ) {
@@ -305,7 +304,7 @@ Severity STEPcomplex::STEPread( int id, int addFileId, class InstMgr * instance_
                     "Missing open paren before entity attr values.\n" );
                 cout << "ERROR: missing open paren\n";
                 _error.GreaterSeverity( SEVERITY_INPUT_ERROR );
-                STEPread_error( c, 0, in );
+                STEPread_error( c, 0, in, currSch );
                 return _error.severity();
             }
 
@@ -320,7 +319,7 @@ Severity STEPcomplex::STEPread( int id, int addFileId, class InstMgr * instance_
                 _error.AppendToDetailMsg(
                     "Complex entity part of instance does not exist.\n" );
                 _error.GreaterSeverity( SEVERITY_INPUT_ERROR );
-                STEPread_error( c, 0, in );
+                STEPread_error( c, 0, in, currSch );
                 return _error.severity();
             }
             in >> ws;
@@ -371,7 +370,7 @@ Severity STEPcomplex::STEPread( int id, int addFileId, class InstMgr * instance_
                 "Missing open paren before entity attr values.\n" );
             cout << "ERROR: missing open paren\n";
             _error.GreaterSeverity( SEVERITY_INPUT_ERROR );
-            STEPread_error( c, 0, in );
+            STEPread_error( c, 0, in, currSch );
             return _error.severity();
         } else { // c == '('
             in.putback( c );
@@ -399,7 +398,7 @@ Severity STEPcomplex::STEPread( int id, int addFileId, class InstMgr * instance_
                     "Missing open paren before entity attr values.\n" );
                 cout << "ERROR: missing open paren\n";
                 _error.GreaterSeverity( SEVERITY_INPUT_ERROR );
-                STEPread_error( c, 0, in );
+                STEPread_error( c, 0, in, currSch );
                 return _error.severity();
             } else { // c == '('
                 in.putback( c );
@@ -543,7 +542,8 @@ void STEPcomplex::BuildAttrs( const char * s ) {
     }
 }
 
-void STEPcomplex::STEPread_error( char c, int index, istream & in ) {
+void STEPcomplex::STEPread_error( char c, int index, istream & in, const char * schnm ) {
+    (void) schnm; //unused
     cout << "STEPcomplex::STEPread_error(), index=" << index << ", entity #" << STEPfile_id << "." << endl;
     streampos p = in.tellg();
     std::string q, r;
@@ -565,7 +565,7 @@ void STEPcomplex::STEPwrite( ostream & out, const char * currSch, int writeComme
     if( writeComment && !p21Comment.empty() ) {
         out << p21Comment;
     }
-    out << "#" << STEPfile_id << "=(";
+    out << "#" << STEPfile_id << "=(\n";
     WriteExtMapEntities( out, currSch );
     out << ");\n";
 }
@@ -597,7 +597,7 @@ void STEPcomplex::WriteExtMapEntities( ostream & out, const char * currSch ) {
             out << ",";
         }
     }
-    out << ")";
+    out << ")\n";
     if( sc ) {
         sc->WriteExtMapEntities( out, currSch );
     }
@@ -620,7 +620,7 @@ const char * STEPcomplex::WriteExtMapEntities( std::string & buf, const char * c
             buf.append( "," );
         }
     }
-    buf.append( ")" );
+    buf.append( ")\n" );
 
     if( sc ) {
         sc->WriteExtMapEntities( buf, currSch );

@@ -11,45 +11,26 @@ string(REPLACE " " "%20" DOCBOOK_BINARY_DIR "${CMAKE_BINARY_DIR}")
 string(REPLACE " " "%20" DOCBOOK_SOURCE_DIR "${CMAKE_SOURCE_DIR}")
 
 # Common stylesheets for all DocBook sources
-if(BRLCAD_EXTRADOCS_HTML OR BRLCAD_EXTRADOCS_PDF OR BRLCAD_EXTRADOCS_MAN)
+if(BRLCAD_EXTRADOCS_HTML OR BRLCAD_EXTRADOCS_PDF OR BRLCAD_EXTRADOCS_MAN OR BRLCAD_EXTRADOCS_PHP OR BRLCAD_EXTRADOCS_PPT)
   configure_file(${CMAKE_CURRENT_SOURCE_DIR}/resources/brlcad/brlcad-common.xsl.in
     ${CMAKE_CURRENT_BINARY_DIR}/resources/brlcad/brlcad-common.xsl)
   # Fonts definition
   configure_file(${CMAKE_CURRENT_SOURCE_DIR}/resources/brlcad/brlcad-fonts.xsl.in
     ${CMAKE_CURRENT_BINARY_DIR}/resources/brlcad/brlcad-fonts.xsl)
-endif(BRLCAD_EXTRADOCS_HTML OR BRLCAD_EXTRADOCS_PDF OR BRLCAD_EXTRADOCS_MAN)
-
-# Style sheet for XSLT transformation to HTML pages
-if(BRLCAD_EXTRADOCS_HTML)
-  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/resources/brlcad/brlcad-xhtml-stylesheet.xsl.in
-    ${CMAKE_CURRENT_BINARY_DIR}/resources/brlcad/brlcad-xhtml-stylesheet.xsl)
-endif(BRLCAD_EXTRADOCS_HTML)
-
-# Style sheet for XSLT transformation to manual pages
-if(BRLCAD_EXTRADOCS_MAN)
-  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/resources/brlcad/brlcad-man-stylesheet.xsl.in
-    ${CMAKE_CURRENT_BINARY_DIR}/resources/brlcad/brlcad-man-stylesheet.xsl)
-endif(BRLCAD_EXTRADOCS_MAN)
+  # Wordpress
+  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/resources/brlcad/wordpress.xsl.in
+    ${CMAKE_CURRENT_BINARY_DIR}/resources/brlcad/wordpress.xsl)
+  #ppt
+  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/resources/brlcad/presentation.xsl.in
+    ${CMAKE_CURRENT_BINARY_DIR}/resources/brlcad/presentation.xsl)
+endif(BRLCAD_EXTRADOCS_HTML OR BRLCAD_EXTRADOCS_PDF OR BRLCAD_EXTRADOCS_MAN OR BRLCAD_EXTRADOCS_PHP OR BRLCAD_EXTRADOCS_PPT)
 
 # Files for PDF products
 if(BRLCAD_EXTRADOCS_PDF)
-  # Style sheet for XSLT transformation to PDF
-  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/resources/brlcad/brlcad-fo-stylesheet.xsl.in
-    ${CMAKE_CURRENT_BINARY_DIR}/resources/brlcad/brlcad-fo-stylesheet.xsl)
   # Apache FOP needs a couple of config files set up
   set(srcdir ${CMAKE_CURRENT_SOURCE_DIR})
   configure_file(${CMAKE_SOURCE_DIR}/doc/docbook/fop.xconf.in ${CMAKE_BINARY_DIR}/doc/docbook/fop.xconf)
 endif(BRLCAD_EXTRADOCS_PDF)
-
-# For HTML, MAN and FO (FO is an intermediate file used in the
-# XML->PDF transformation) we use variables to hold the full
-# stylesheet path. In the case we need to further
-# customize FO stylesheets we can have separate CMake logic in
-# appropriate directories to handle the customization (e.g., the
-# BRL-CAD manuals in books/en/CMakeLists.txt).
-set(XSL_XHTML_STYLESHEET "${CMAKE_CURRENT_BINARY_DIR}/resources/brlcad/brlcad-xhtml-stylesheet.xsl")
-set(XSL_MAN_STYLESHEET "${CMAKE_CURRENT_BINARY_DIR}/resources/brlcad/brlcad-man-stylesheet.xsl")
-set(XSL_FO_STYLESHEET "${CMAKE_CURRENT_BINARY_DIR}/resources/brlcad/brlcad-fo-stylesheet.xsl")
 
 # Include CMake macros for DocBook.
 include(${BRLCAD_SOURCE_DIR}/misc/CMake/DocBook.cmake)
@@ -76,22 +57,38 @@ add_subdirectory(system)
 # macros, define convenience targets
 if(BRLCAD_EXTRADOCS_HTML)
   get_property(BRLCAD_EXTRADOCS_HTML_TARGETS GLOBAL PROPERTY BRLCAD_EXTRADOCS_HTML_TARGETS)
-  add_custom_target(html DEPENDS ${BRLCAD_EXTRADOCS_HTML_TARGETS})
+  add_custom_target(doc_html DEPENDS ${BRLCAD_EXTRADOCS_HTML_TARGETS})
+  set_target_properties(doc_html PROPERTIES FOLDER "DocBook")
 endif(BRLCAD_EXTRADOCS_HTML)
+if(BRLCAD_EXTRADOCS_PHP)
+  get_property(BRLCAD_EXTRADOCS_PHP_TARGETS GLOBAL PROPERTY BRLCAD_EXTRADOCS_PHP_TARGETS)
+  add_custom_target(doc_php DEPENDS ${BRLCAD_EXTRADOCS_PHP_TARGETS})
+  set_target_properties(doc_php PROPERTIES FOLDER "DocBook")
+endif(BRLCAD_EXTRADOCS_PHP)
+if(BRLCAD_EXTRADOCS_PPT)
+  get_property(BRLCAD_EXTRADOCS_PPT_TARGETS GLOBAL PROPERTY BRLCAD_EXTRADOCS_PPT_TARGETS)
+  add_custom_target(doc_php DEPENDS ${BRLCAD_EXTRADOCS_PPT_TARGETS})
+  set_target_properties(doc_php PROPERTIES FOLDER "DocBook")
+endif(BRLCAD_EXTRADOCS_PPT)
 if(BRLCAD_EXTRADOCS_MAN)
   get_property(BRLCAD_EXTRADOCS_MAN_TARGETS GLOBAL PROPERTY BRLCAD_EXTRADOCS_MAN_TARGETS)
-  add_custom_target(man DEPENDS ${BRLCAD_EXTRADOCS_MAN_TARGETS})
+  add_custom_target(doc_man DEPENDS ${BRLCAD_EXTRADOCS_MAN_TARGETS})
+  set_target_properties(doc_man PROPERTIES FOLDER "DocBook")
 endif(BRLCAD_EXTRADOCS_MAN)
 if(BRLCAD_EXTRADOCS_PDF)
   get_property(BRLCAD_EXTRADOCS_PDF_TARGETS GLOBAL PROPERTY BRLCAD_EXTRADOCS_PDF_TARGETS)
-  add_custom_target(pdf DEPENDS ${BRLCAD_EXTRADOCS_PDF_TARGETS})
+  add_custom_target(doc_pdf DEPENDS ${BRLCAD_EXTRADOCS_PDF_TARGETS})
+  set_target_properties(doc_pdf PROPERTIES FOLDER "DocBook")
 endif(BRLCAD_EXTRADOCS_PDF)
-if(BRLCAD_EXTRADOCS_HTML OR BRLCAD_EXTRADOCS_MAN OR BRLCAD_EXTRADOCS_PDF)
-  add_custom_target(doc DEPENDS
+if(BRLCAD_EXTRADOCS_HTML OR BRLCAD_EXTRADOCS_MAN OR BRLCAD_EXTRADOCS_PDF OR BRLCAD_EXTRADOCS_PHP OR BRLCAD_EXTRADOCS_PPT )
+  add_custom_target(doc_all DEPENDS
 	${BRLCAD_EXTRADOCS_HTML_TARGETS}
-	${BRLCAD_EXTRADOCS_MAN_TARGETS}
+	 ${BRLCAD_EXTRADOCS_PHP_TARGETS}
+         ${BRLCAD_EXTRADOCS_PPT_TARGETS}
+  ${BRLCAD_EXTRADOCS_MAN_TARGETS}
 	${BRLCAD_EXTRADOCS_PDF_TARGETS})
-endif(BRLCAD_EXTRADOCS_HTML OR BRLCAD_EXTRADOCS_MAN OR BRLCAD_EXTRADOCS_PDF)
+  set_target_properties(doc_all PROPERTIES FOLDER "DocBook")
+endif(BRLCAD_EXTRADOCS_HTML OR BRLCAD_EXTRADOCS_MAN OR BRLCAD_EXTRADOCS_PDF OR BRLCAD_EXTRADOCS_PHP OR BRLCAD_EXTRADOCS_PPT)
 
 CMAKEFILES(README fop.xconf.in log4j.properties resources)
 CMAKEFILES(README.DB_authors_notes)

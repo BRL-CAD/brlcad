@@ -100,7 +100,7 @@ FunctionEnd
   ;Finished page configuration
   !define MUI_FINISHPAGE_NOAUTOCLOSE
   !define MUI_FINISHPAGE_SHOWREADME "..\..\README"
-  !define MUI_FINISHPAGE_SHOWREADME_TEXT "View Readme"
+  !define MUI_FINISHPAGE_SHOWREADME_TEXT "View ReadMe"
   !define MUI_FINISHPAGE_SHOWREADME_NOTCHECKED
 
   !define MUI_FINISHPAGE_LINK "BRL-CAD Website"

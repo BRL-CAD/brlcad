@@ -1,7 +1,7 @@
 /*                       H I S T O R Y . C
  * BRL-CAD
  *
- * Copyright (c) 1995-2013 United States Government as represented by
+ * Copyright (c) 1995-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -24,7 +24,6 @@
 #include "common.h"
 
 #include <stdlib.h>
-#include <stdio.h>
 #include <signal.h>
 #include <string.h>
 #include <time.h>
@@ -35,8 +34,6 @@
 
 #include "tcl.h"
 
-#include "bio.h"
-#include "bu.h"
 #include "vmath.h"
 #include "raytrace.h"
 #include "./mged.h"
@@ -50,8 +47,6 @@ int journal_delay = 0;
 void history_journalize(struct mged_hist *hptr);
 
 /*
- * H I S T O R Y _ R E C O R D
- *
  * Stores the given command with start and finish times in the
  * history vls'es.
  */
@@ -129,8 +124,6 @@ history_journalize(struct mged_hist *hptr)
 
 
 /*
- * F _ J O U R N A L
- *
  * Opens the journal file, so each command and the time since the previous
  * one will be recorded.  Or, if called with no arguments, closes the
  * journal file.
@@ -186,8 +179,6 @@ f_journal(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const cha
 
 
 /*
- * F _ H I S T O R Y
- *
  * Prints out the command history, either to bu_log or to a file.
  */
 
@@ -265,8 +256,6 @@ f_history(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const cha
 }
 
 
-/* H I S T O R Y _ P R E V
- */
 struct bu_vls *
 history_prev(const char *pat)
 {
@@ -288,8 +277,6 @@ history_prev(const char *pat)
 }
 
 
-/* H I S T O R Y _ C U R
- */
 struct bu_vls *
 history_cur(void)
 {
@@ -300,8 +287,6 @@ history_cur(void)
 }
 
 
-/* H I S T O R Y _ N E X T
- */
 struct bu_vls *
 history_next(const char *pat)
 {

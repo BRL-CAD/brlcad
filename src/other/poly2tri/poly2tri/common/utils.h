@@ -39,7 +39,7 @@ extern const double PI_3div4;
 extern const double PI_div2;
 extern const double EPSILON;
 
-enum Orientation { CW, CCW, COLLINEAR };
+enum Orientation { CW, CCW, COLLINEAR, INVALID_ORIENTATION };
 
 /**
  * Forumla to calculate signed area<br>
@@ -51,8 +51,9 @@ enum Orientation { CW, CCW, COLLINEAR };
  *              =  (x1-x3)*(y2-y3) - (y1-y3)*(x2-x3)
  * </pre>
  */
-extern Orientation Orient2d(Point& pa, Point& pb, Point& pc);
-extern bool InScanArea(Point& pa, Point& pb, Point& pc, Point& pd);
+extern Orientation Orient2d(Point *pa, Point *pb, Point *pc);
+extern bool InScanArea(Point *pa, Point *pb, Point *pc, Point *pd);
 }
 
 #endif
+

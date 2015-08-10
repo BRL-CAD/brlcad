@@ -1,7 +1,7 @@
 /*                           B I O . H
  * BRL-CAD
  *
- * Copyright (c) 2008-2013 United States Government as represented by
+ * Copyright (c) 2008-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -29,25 +29,19 @@
  * all of them.  Consider this header PRIVATE and subject to change,
  * NOT TO BE USED BY THIRD PARTIES.
  *
+ * The below logic should not rely on common.h's HAVE_* defines and
+ * should not be including the common.h header.  This is intended to
+ * be a stand-alone portability header intended to be independent of
+ * build system, reusable by external projects.
  */
 
-#ifndef __BIO_H__
-#define __BIO_H__
-
-/* Do not rely on common.h's HAVE_* defines.  Do not include the
- * common.h header.  This is a stand-alone portability header intended
- * to be independent of BRL-CAD and the BRL-CAD build system, reusable
- * by external projects.
- */
+#ifndef BIO_H
+#define BIO_H
 
 #include <stdio.h>
 
 #if defined(_WIN32) && !defined(__CYGWIN__)
 #  define NOMINMAX
-#  ifdef IGNORE
-#    define _BIO_IGNORE(x) IGNORE(x)
-#    undef IGNORE
-#  endif
 #  include <windows.h>
 #  include <io.h>
 
@@ -56,15 +50,11 @@
 #  undef small /* defined as part of the Microsoft Interface Definition Language (MIDL) */
 #  undef IN
 #  undef OUT
-/* In case windows.h squashed our ignore, reinstate it - see common.h */
-#  ifdef _BIO_IGNORE
-#    ifdef IGNORE
-#      undef IGNORE
-#    endif
-#    define IGNORE(x) _BIO_IGNORE(x)
-#  endif
 #else
 #  include <unistd.h>
+
+/* provide a stub so we don't need to wrap all setmode() calls */
+#  define setmode(a, b) /* poof */
 #endif
 
 /* needed for testing O_TEMPORARY and O_BINARY */
@@ -87,7 +77,7 @@
 #   define S_ISDIR(_st_mode) (((_st_mode) & S_IFMT) == S_IFDIR)
 #endif
 
-#endif /* __BIO_H__ */
+#endif /* BIO_H */
 
 /*
  * Local Variables:

@@ -1,5 +1,5 @@
 /*                   O B J _ R U L E S . R E
- * Copyright (c) 2010-2013 United States Government as represented by
+ * Copyright (c) 2010-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -19,12 +19,11 @@
 #include "common.h"
 #include <errno.h>
 #include <limits.h>
-#include <stdio.h>
 #include <stdlib.h>
 #include <iostream>
 #include <sys/types.h>
 
-#include "bu.h"
+#include "bu/str.h"
 #include "bio.h"
 #include "obj_grammar_decls.h"
 #include "obj_parser_state.h"

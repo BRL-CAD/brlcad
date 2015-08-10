@@ -18,14 +18,14 @@
 <cmdsynopsis>
   <command>pixcolors</command>
     <arg choice='opt'>-v </arg>
-    <arg choice='plain'><replaceable>&lt;</replaceable></arg>
+    <arg choice='plain'>&lt;</arg>
     <arg choice='plain'><replaceable>pixfile</replaceable></arg>
 </cmdsynopsis>
 </refsynopsisdiv>
 
 
 <refsect1 xml:id='description'><title>DESCRIPTION</title>
-<para><emphasis remap='I'>Pixcolors</emphasis>
+<para><command>pixcolors</command>
 reports on the standard output the number of distinct colors used in the
 <emphasis remap='I'>pix(5)</emphasis>
 format file on the standard input.</para>
@@ -50,7 +50,7 @@ used to be printed on standard output in addition to the count report.</para>
 </refsect1>
 
 <refsect1 xml:id='copyright'><title>COPYRIGHT</title>
-<para>This software is Copyright (c) 1989-2013 by the United States
+<para>This software is Copyright (c) 1989-2014 by the United States
 Government as represented by U.S. Army Research Laboratory.</para>
 
 </refsect1>

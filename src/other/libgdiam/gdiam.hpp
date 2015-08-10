@@ -23,6 +23,27 @@
 #ifndef  __GDIAM__H
 #define  __GDIAM__H
 
+/* for g++ to quell warnings */
+#if (defined(__GNUC__) && (__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 6)) && !defined(__clang__))
+#  pragma GCC diagnostic push /* start new diagnostic pragma */
+#  pragma GCC diagnostic ignored "-Wfloat-equal"
+#elif (defined(__clang__) && (__clang_major__ > 2 || (__clang_major__ == 2 && __clang_minor__ >= 8)))
+#  pragma clang diagnostic push /* start new diagnostic pragma */
+#  pragma clang diagnostic ignored "-Wfloat-equal"
+#endif
+
+#ifndef GDIAM_EXPORT
+#  if defined(GDIAM_DLL_EXPORTS) && defined(GDIAM_DLL_IMPORTS)
+#    error "Only GDIAM_DLL_EXPORTS or GDIAM_DLL_IMPORTS can be defined, not both."
+#  elif defined(GDIAM_DLL_EXPORTS)
+#    define GDIAM_EXPORT __declspec(dllexport)
+#  elif defined(GDIAM_DLL_IMPORTS)
+#    define GDIAM_EXPORT __declspec(dllimport)
+#  else
+#    define GDIAM_EXPORT
+#  endif
+#endif
+
 #define  GDIAM_DIM   3
 typedef  double  gdiam_real;
 typedef  gdiam_real    gdiam_point_t[ GDIAM_DIM ];
@@ -33,29 +54,11 @@ typedef  const gdiam_real  * gdiam_point_cnt;
 
 #ifndef __MINMAX_DEFINED
 #define __MINMAX_DEFINED
-/*
-template <class T> const inline   T& min( const T& t1, const T& t2 )
-{
-         return t1>t2 ? t2 : t1;
-}
 
-template <class T> inline  T& max( const T& t1, const T& t2 )
-{
-         return t1>t2 ? t1 : t2;
-}
-*/
+#include<algorithm>
+#define min std::min
+#define max std::max
 
-template <class T>
-inline T  min( T t1, T t2 )
-{
-         return t1>t2 ? t2 : t1;
-}
-
-template <class T>
-inline T  max( T t1, T t2 )
-{
-         return t1>t2 ? t1 : t2;
-}
 #endif /* MIN_MAX */
 
 template <class T>
@@ -673,33 +676,39 @@ public:
 
 };
 
-GPointPair   gdiam_approx_diam( gdiam_point  * start, int  size,
+GDIAM_EXPORT GPointPair   gdiam_approx_diam( gdiam_point  * start, int  size,
                                     gdiam_real  eps );
-GPointPair   gdiam_approx_diam( gdiam_point  * start, int  size,
+GDIAM_EXPORT GPointPair   gdiam_approx_diam( gdiam_point  * start, int  size,
                                 gdiam_real  eps );
-gdiam_real   gdiam_approx_diam( gdiam_real  * start, int  size,
+GDIAM_EXPORT gdiam_real   gdiam_approx_diam( gdiam_real  * start, int  size,
                                 gdiam_real  eps );
-GPointPair   gdiam_approx_diam_pair( gdiam_real  * start, int  size,
+GDIAM_EXPORT GPointPair   gdiam_approx_diam_pair( gdiam_real  * start, int  size,
                                      gdiam_real  eps );
-GPointPair   gdiam_approx_diam_pair_UDM( gdiam_real  * start, int  size,
+GDIAM_EXPORT GPointPair   gdiam_approx_diam_pair_UDM( gdiam_real  * start, int  size,
                                          gdiam_real  eps );
-gdiam_bbox   gdiam_approx_const_mvbb( gdiam_point  * start, int  size,
+GDIAM_EXPORT gdiam_bbox   gdiam_approx_const_mvbb( gdiam_point  * start, int  size,
                                       gdiam_real  eps, 
                                       GBBox  * p_ap_bbox );    
-gdiam_point  * gdiam_convert( gdiam_real  * start, int  size );
-gdiam_bbox   gdiam_approx_mvbb( gdiam_point  * start, int  size,
+GDIAM_EXPORT gdiam_point  * gdiam_convert( gdiam_real  * start, int  size );
+GDIAM_EXPORT gdiam_bbox   gdiam_approx_mvbb( gdiam_point  * start, int  size,
                                 gdiam_real  eps ) ;
-gdiam_bbox   gdiam_approx_mvbb_grid( gdiam_point  * start, int  size,
+GDIAM_EXPORT gdiam_bbox   gdiam_approx_mvbb_grid( gdiam_point  * start, int  size,
                                      int  grid_size );
-gdiam_bbox   gdiam_approx_mvbb_grid_sample( gdiam_point  * start, int  size,
+GDIAM_EXPORT gdiam_bbox   gdiam_approx_mvbb_grid_sample( gdiam_point  * start, int  size,
                                             int  grid_size, int  sample_size );
-gdiam_bbox   gdiam_approx_mvbb_grid_sample( gdiam_real  * start, int  size,
+GDIAM_EXPORT gdiam_bbox   gdiam_approx_mvbb_grid_sample( gdiam_real  * start, int  size,
                                             int  grid_size, int  sample_size );
 
 
-void  gdiam_generate_orthonormal_base( gdiam_point  in,
+GDIAM_EXPORT void  gdiam_generate_orthonormal_base( gdiam_point  in,
                                        gdiam_point  out1,
                                        gdiam_point  out2 );
+
+#if (defined(__GNUC__) && (__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 6)) && !defined(__clang__))
+#  pragma GCC diagnostic pop /* end ignoring warnings */
+#elif (defined(__clang__) && (__clang_major__ > 2 || (__clang_major__ == 2 && __clang_minor__ >= 8)))
+#  pragma clang diagnostic pop /* end ignoring warnings */
+#endif
 
 #else   /* __GDIAM__H */
 #error  Header file gdiam.h included twice

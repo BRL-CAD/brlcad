@@ -1,7 +1,7 @@
 /*                       G E N E R I C . C
  * BRL-CAD
  *
- * Copyright (c) 1989-2013 United States Government as represented by
+ * Copyright (c) 1989-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @addtogroup g_ */
+/** @addtogroup librt */
 /** @{ */
 /** @file primitives/generic.c
  *
@@ -30,14 +30,12 @@
 
 #include <string.h>
 
-#include "bu.h"
+
 #include "bn.h"
 #include "raytrace.h"
 
 
 /**
- * R T _ G E N E R I C _ X F O R M
- *
  * Apply a 4x4 transformation matrix to the internal form of a solid.
  *
  * If "free" flag is non-zero, storage for the original solid is
@@ -133,8 +131,6 @@ rt_generic_xform(
 
 
 /**
- * R T _ G E N E R I C _ G E T
- *
  * This is the generic routine to be listed in OBJ[].ft_get
  * for those solid types which are fully described by their
  * ft_parsetab entry.
@@ -173,10 +169,10 @@ rt_generic_get(struct bu_vls *logstr, const struct rt_db_internal *intern, const
 			       (char *)intern->idb_ptr, ' ');
 
 	    if (sp->sp_count < 2)
-		bu_vls_printf(logstr, " %V", &str);
+		bu_vls_printf(logstr, " %s", bu_vls_addr(&str));
 	    else {
 		bu_vls_printf(logstr, " {");
-		bu_vls_printf(logstr, "%V", &str);
+		bu_vls_printf(logstr, "%s", bu_vls_addr(&str));
 		bu_vls_printf(logstr, "} ");
 	    }
 
@@ -198,8 +194,6 @@ rt_generic_get(struct bu_vls *logstr, const struct rt_db_internal *intern, const
 
 
 /**
- * R T _ G E N E R I C _ M A K E
- *
  * This one assumes that making all the parameters null is fine.
  */
 void
@@ -216,8 +210,6 @@ rt_generic_make(const struct rt_functab *ftp, struct rt_db_internal *intern)
 
 
 /**
- * R T _ G E N E R I C _ A D J U S T
- *
  * For those solids entirely defined by their parsetab.  Invoked via
  * OBJ[].ft_adjust()
  */
@@ -235,13 +227,21 @@ rt_generic_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc
 	return BRLCAD_ERROR;
     }
 
-    return bu_structparse_argv(logstr, argc, argv, ftp->ft_parsetab, (char *)intern->idb_ptr);
+    return bu_structparse_argv(logstr, argc, argv, ftp->ft_parsetab, (char *)intern->idb_ptr, NULL);
 }
 
 
 /**
- * R T _ G E N E R I C _ F O R M
- *
+ * Invoked via OBJ[].ft_form() on solid types which are
+ * fully described by their bu_structparse table in ft_parsetab.
+ */
+int
+rt_generic_class(const struct soltab *UNUSED(s), const vect_t UNUSED(v0), const vect_t UNUSED(v2), const struct bn_tol *UNUSED(b))
+{
+    return 0;
+}
+
+/**
  * Invoked via OBJ[].ft_form() on solid types which are
  * fully described by their bu_structparse table in ft_parsetab.
  */

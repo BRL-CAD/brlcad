@@ -1,7 +1,7 @@
 /*                        E X T E R N . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2013 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -20,6 +20,9 @@
 /** @file lgt/extern.h
  *
  */
+
+#ifndef LGT_EXTERN_H
+#define LGT_EXTERN_H
 
 #include "common.h"
 
@@ -61,7 +64,7 @@ extern void prnt_Menu();
 extern void prnt_Octree();
 extern void prnt_Pixel();
 extern void prnt_Prompt();
-extern void prnt_Scroll( const char *, ... );
+extern void prnt_Scroll(const char *, ...);
 extern void prnt_Status();
 extern void prnt_Timer();
 extern void prnt_Title();
@@ -75,7 +78,7 @@ extern void update_Screen();
 extern void user_Interaction();
 
 /* variables */
-extern FBIO *fbiop;
+extern fb *fbiop;
 
 extern RGBpixel bgpixel;
 extern RGBpixel *ir_table;
@@ -156,23 +159,25 @@ extern int user_interrupt;
 extern int x_fb_origin, y_fb_origin;
 extern int zoom;
 
-extern struct vfont font;
+extern struct vfont_file font;
 
 extern unsigned char arrowcursor[];
 extern unsigned char menucursor[];
 extern unsigned char sweeportrack[];
 extern unsigned char target1[];
 
-extern struct resource resource[];
+extern struct resource resource[MAX_PSW];
 extern struct rt_i *rt_ip;
 
-#define C_TAGPIXEL	0
-#define C_SWEEPREC	1
-#define C_I_WINDOW	2
-#define C_O_WINDOW	3
-#define C_QUERYREG	4
+#define C_TAGPIXEL 0
+#define C_SWEEPREC 1
+#define C_I_WINDOW 2
+#define C_O_WINDOW 3
+#define C_QUERYREG 4
 #define XSCR2MEM(_x)	(_x)
 #define YSCR2MEM(_y)	(_y)
+
+#endif /* LGT_EXTERN_H */
 
 /*
  * Local Variables:

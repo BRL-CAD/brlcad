@@ -2,7 +2,7 @@
 #                          R U N . S H
 # BRL-CAD
 #
-# Copyright (c) 2004-2013 United States Government as represented by
+# Copyright (c) 2004-2014 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -247,8 +247,8 @@ if test "x$HELP" = "x1" ; then
     echo "  ELP=/path/to/time_tool (e.g., elapsed.sh)"
     echo "  TIMEFRAME=#seconds (default 32)"
     echo "  MAXTIME=#seconds (default 300)"
-    echo "  DEVIATION=%deviation (default 3)"
-    echo "  AVERAGE=#frames (default 3)"
+    echo "  DEVIATION=%deviation (default 2)"
+    echo "  AVERAGE=#frames (default 5)"
     echo ""
     echo "Available RT options:"
     echo "  -P# (e.g., -P1 to force single CPU)"
@@ -650,10 +650,10 @@ if test $MAXTIME -lt $TIMEFRAME ; then
 fi
 
 # maximum deviation percentage
-set_if_unset DEVIATION 3
+set_if_unset DEVIATION 2
 
 # maximum number of iterations to average
-set_if_unset AVERAGE 3
+set_if_unset AVERAGE 5
 
 # end of settings, separate the output
 $ECHO
@@ -1496,7 +1496,7 @@ else
     $ECHO
     blankit=no
 
-    # BSD
+    # BSD+
     look_for executable "a sysctl command" SYSCTL_CMD `echo "$PATH" | tr ":" "\n" | sed 's/$/\/sysctl/g'`
     if test ! "x$SYSCTL_CMD" = "x" ; then
 	$ECHO "Collecting system state information (via $SYSCTL_CMD)"
@@ -1558,6 +1558,19 @@ else
 	QUIET=1
 	$ECHO "==============================================================================="
 	$ECHO "`cat $CPUINFO_FILE 2>&1`"
+	$ECHO
+	QUIET="$preQUIET"
+	blankit=yes
+    fi
+
+    # Linux+
+    look_for executable "an lscpu command" LSCPU_CMD `echo $PATH | tr ":" "\n" | sed 's/$/\/lscpu/g'`
+    if test ! "x$LSCPU_CMD" = "x" ; then
+	$ECHO "Collecting system CPU information (via $LSCPU_CMD)"
+	preQUIET="$QUIET"
+	QUIET=1
+	$ECHO "==============================================================================="
+	$ECHO "`$LSCPU_CMD 2>&1`"
 	$ECHO
 	QUIET="$preQUIET"
 	blankit=yes

@@ -1,7 +1,7 @@
 /*                        G - V R M L . C
  * BRL-CAD
  *
- * Copyright (c) 1995-2013 United States Government as represented by
+ * Copyright (c) 1995-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -38,9 +38,10 @@
 
 /* interface headers */
 #include "vmath.h"
+#include "bu/getopt.h"
+#include "bu/units.h"
 #include "nmg.h"
-#include "rtgeom.h"
-#include "bu.h"
+#include "rt/geom.h"
 #include "raytrace.h"
 #include "wdb.h"
 
@@ -88,11 +89,13 @@ const struct bu_structparse vrml_mat_parse[]={
     {"",0, (char *)0,0,BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
 };
 
-extern union tree *do_region_end1(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, genptr_t client_data);
-extern union tree *do_region_end2(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, genptr_t client_data);
-extern union tree *nmg_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, genptr_t client_data);
+extern union tree *do_region_end1(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, void *client_data);
+extern union tree *do_region_end2(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, void *client_data);
+extern union tree *nmg_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, void *client_data);
 
-static const char usage[] = "Usage: %s [-b] [-e] [-v] [-xX lvl] [-d tolerance_distance (mm) ] [-a abs_tol (mm)] [-r rel_tol] [-n norm_tol] [-o out_file] [-u units] brlcad_db.g object(s)\n";
+static const char *usage =
+"[-b] [-e] [-v] [-xX lvl] [-d tolerance_distance] [-a abs_tol] [-r rel_tol] [-n norm_tol] [-o out_file] [-u units] brlcad_db.g object(s)\n"
+"(units default to mm)\n";
 
 static char *tok_sep = " \t";
 static int NMG_debug; /* saved arg of -X, for longjmp handling */
@@ -104,7 +107,7 @@ static struct rt_tess_tol ttol;
 static struct bn_tol tol;
 static struct model *the_model;
 
-static char *units = (char *)NULL;
+static char *units = "mm";
 static fastf_t scale_factor = 1.0;
 
 static struct db_tree_state tree_state;	/* includes tol & model */
@@ -115,6 +118,12 @@ static int bomb_cnt = 0;
 
 static int bot_dump = 0;
 static int eval_all = 0;
+
+static void
+print_usage(const char *progname)
+{
+    bu_exit(1, "Usage: %s %s", progname, usage);
+}
 
 static void
 clean_pmp(struct plate_mode *pmp)
@@ -203,7 +212,7 @@ dup_bot(struct rt_bot_internal *bot_in)
  * are skipped when this function returns 0.
  */
 static int
-select_lights(struct db_tree_state *UNUSED(tsp), const struct db_full_path *pathp, const struct rt_comb_internal *UNUSED(combp), genptr_t UNUSED(client_data))
+select_lights(struct db_tree_state *UNUSED(tsp), const struct db_full_path *pathp, const struct rt_comb_internal *UNUSED(combp), void *UNUSED(client_data))
 {
     struct directory *dp;
     struct rt_db_internal intern;
@@ -247,7 +256,7 @@ select_lights(struct db_tree_state *UNUSED(tsp), const struct db_full_path *path
  * when this function returns 0.
  */
 static int
-select_non_lights(struct db_tree_state *UNUSED(tsp), const struct db_full_path *pathp, const struct rt_comb_internal *UNUSED(combp), genptr_t UNUSED(client_data))
+select_non_lights(struct db_tree_state *UNUSED(tsp), const struct db_full_path *pathp, const struct rt_comb_internal *UNUSED(combp), void *UNUSED(client_data))
 {
     struct directory *dp;
     struct rt_db_internal intern;
@@ -283,7 +292,7 @@ select_non_lights(struct db_tree_state *UNUSED(tsp), const struct db_full_path *
  * want to output BOTs without boolean evaluation.
  */
 union tree *
-leaf_tess1(struct db_tree_state *tsp, const struct db_full_path *pathp, struct rt_db_internal *ip, genptr_t client_data)
+leaf_tess1(struct db_tree_state *tsp, const struct db_full_path *pathp, struct rt_db_internal *ip, void *client_data)
 {
     struct rt_bot_internal *bot;
     struct plate_mode *pmp = (struct plate_mode *)client_data;
@@ -299,7 +308,7 @@ leaf_tess1(struct db_tree_state *tsp, const struct db_full_path *pathp, struct r
     if (pmp->array_size <= pmp->num_bots) {
 	struct rt_bot_internal **bots_tmp;
 	pmp->array_size += 5;
-	bots_tmp = (struct rt_bot_internal **)bu_realloc((genptr_t)pmp->bots,
+	bots_tmp = (struct rt_bot_internal **)bu_realloc((void *)pmp->bots,
 		    pmp->array_size * sizeof(struct rt_bot_internal *), "pmp->bots");
 	pmp->bots = bots_tmp;
     }
@@ -317,7 +326,7 @@ leaf_tess1(struct db_tree_state *tsp, const struct db_full_path *pathp, struct r
  * evaluation.
  */
 union tree *
-leaf_tess2(struct db_tree_state *UNUSED(tsp), const struct db_full_path *UNUSED(pathp), struct rt_db_internal *ip, genptr_t client_data)
+leaf_tess2(struct db_tree_state *UNUSED(tsp), const struct db_full_path *UNUSED(pathp), struct rt_db_internal *ip, void *client_data)
 {
     struct rt_bot_internal *bot;
     struct plate_mode *pmp = (struct plate_mode *)client_data;
@@ -332,7 +341,7 @@ leaf_tess2(struct db_tree_state *UNUSED(tsp), const struct db_full_path *UNUSED(
     if (pmp->array_size <= pmp->num_bots) {
 	struct rt_bot_internal **bots_tmp;
 	pmp->array_size += 5;
-	bots_tmp = (struct rt_bot_internal **)bu_realloc((genptr_t)pmp->bots,
+	bots_tmp = (struct rt_bot_internal **)bu_realloc((void *)pmp->bots,
 		    pmp->array_size * sizeof(struct rt_bot_internal *), "pmp->bots");
 	pmp->bots = bots_tmp;
     }
@@ -575,9 +584,6 @@ static void path_2_vrml_id(struct bu_vls *id, const char *path) {
 }
 
 
-/*
- *			M A I N
- */
 int
 main(int argc, char **argv)
 {
@@ -611,12 +617,10 @@ main(int argc, char **argv)
 	nmg_eue_dist = 2.0;
     }
 
-    rt_init_resource(&rt_uniresource, 0, NULL);
-
     BU_LIST_INIT(&RTG.rtg_vlfree);	/* for vlist macros */
 
     /* Get command line arguments. */
-    while ((c = bu_getopt(argc, argv, "a:bd:en:o:r:vx:X:u:")) != -1) {
+    while ((c = bu_getopt(argc, argv, "a:bd:en:o:r:vx:X:u:h?")) != -1) {
 	switch (c) {
 	    case 'a':		/* Absolute tolerance. */
 		ttol.abs = atof(bu_optarg);
@@ -633,7 +637,7 @@ main(int argc, char **argv)
 		eval_all = 1;
 		break;
 	    case 'n':		/* Surface normal tolerance. */
-		ttol.norm = atof(bu_optarg)*bn_pi/180.0;
+		ttol.norm = atof(bu_optarg)*DEG2RAD;
 		ttol.rel = 0.0;
 		break;
 	    case 'o':		/* Output file name */
@@ -655,24 +659,17 @@ main(int argc, char **argv)
 	    case 'u':
 		units = bu_strdup(bu_optarg);
 		scale_factor = bu_units_conversion(units);
-		if (ZERO(scale_factor)) {
+		if (ZERO(scale_factor))
 		    bu_exit(1, "Unrecognized units (%s)\n", units);
-		}
 		scale_factor = 1.0 / scale_factor;
 		break;
 	    default:
-		bu_exit(1, usage, argv[0]);
-		break;
+		print_usage(argv[0]);
 	}
     }
 
-    if (bu_optind + 1 >= argc) {
-	bu_exit(1, usage, argv[0]);
-    }
-
-    if (!units) {
-	units = "mm";
-    }
+    if (bu_optind + 1 >= argc)
+	print_usage(argv[0]);
 
     if ((bot_dump == 1) && (eval_all == 1)) {
 	bu_exit(1, "BOT Dump and Evaluate All are mutually exclusive\n");
@@ -689,9 +686,7 @@ main(int argc, char **argv)
 
     if (out_file == NULL) {
 	fp_out = stdout;
-#if defined(_WIN32) && !defined(__CYGWIN__)
 	setmode(fileno(fp_out), O_BINARY);
-#endif
     } else {
 	if ((fp_out = fopen(out_file, "wb")) == NULL) {
 	    perror(argv[0]);
@@ -745,7 +740,7 @@ main(int argc, char **argv)
 	       0,
 	       nmg_region_end,
 	       nmg_booltree_leaf_tess,
-	       (genptr_t)&pm);	/* in librt/nmg_bool.c */
+	       (void *)&pm);	/* in librt/nmg_bool.c */
 	goto out;
     }
 
@@ -756,7 +751,7 @@ main(int argc, char **argv)
 	       0,
 	       do_region_end2,
 	       leaf_tess2,
-	       (genptr_t)&pm);	/* in librt/nmg_bool.c */
+	       (void *)&pm);	/* in librt/nmg_bool.c */
 	goto out;
     }
 
@@ -783,7 +778,7 @@ main(int argc, char **argv)
 			   select_lights,
 			   do_region_end1,
 			   leaf_tess1,
-			   (genptr_t)&pm);	/* in librt/nmg_bool.c */
+			   (void *)&pm);	/* in librt/nmg_bool.c */
     }
 
     /* Walk indicated tree(s).  Each non-light-source region will be output separately */
@@ -793,7 +788,7 @@ main(int argc, char **argv)
 		       select_non_lights,
 		       do_region_end1,
 		       leaf_tess1,
-		       (genptr_t)&pm);	/* in librt/nmg_bool.c */
+		       (void *)&pm);	/* in librt/nmg_bool.c */
 
     /* Release dynamic storage */
     nmg_km(the_model);
@@ -904,17 +899,17 @@ nmg_2_vrml(struct db_tree_state *tsp, const struct db_full_path *pathp, struct m
     mat.tx_w = -1;
     mat.tx_n = -1;
     bu_vls_strcpy(&vls, &mater->ma_shader[strlen(mat.shader)]);
-    (void)bu_struct_parse(&vls, vrml_mat_parse, (char *)&mat);
+    (void)bu_struct_parse(&vls, vrml_mat_parse, (char *)&mat, NULL);
 
     if (bu_strncmp("light", mat.shader, 5) == 0) {
 	/* this is a light source */
 	is_light = 1;
     } else {
 	path_2_vrml_id(&shape_name, full_path);
-	fprintf(fp_out, "\t\tDEF %s Shape { \n", bu_vls_addr(&shape_name));
+	fprintf(fp_out, "\t\tDEF %s Shape {\n", bu_vls_addr(&shape_name));
 
 	fprintf(fp_out, "\t\t\t# Component_ID: %ld   %s\n", comb->region_id, full_path);
-	fprintf(fp_out, "\t\t\tappearance Appearance { \n");
+	fprintf(fp_out, "\t\t\tappearance Appearance {\n");
 
 	if (bu_strncmp("plastic", mat.shader, 7) == 0) {
 	    if (mat.shininess < 0) {
@@ -955,15 +950,16 @@ nmg_2_vrml(struct db_tree_state *tsp, const struct db_full_path *pathp, struct m
 	    }
 	    if (strlen(mat.tx_file)) {
 		int tex_fd;
-		int nbytes;
-		long tex_len;
-		long bytes_read = 0;
 		unsigned char tex_buf[TXT_BUF_LEN * 3];
 
 		if ((tex_fd = open(mat.tx_file, O_RDONLY | O_BINARY)) == (-1)) {
 		    bu_log("Cannot open texture file (%s)\n", mat.tx_file);
 		    perror("g-vrml: ");
 		} else {
+		    long tex_len;
+		    long bytes_read = 0;
+		    long bytes_to_go = 0;
+
 		    /* Johns note - need to check (test) the texture stuff */
 		    fprintf(fp_out, "\t\t\t\ttextureTransform TextureTransform {\n");
 		    fprintf(fp_out, "\t\t\t\t\tscale 1.33333 1.33333\n\t\t\t\t}\n");
@@ -973,13 +969,12 @@ nmg_2_vrml(struct db_tree_state *tsp, const struct db_full_path *pathp, struct m
 		    fprintf(fp_out, "\t\t\t\t\timage %d %d %d\n", mat.tx_w, mat.tx_n, 3);
 		    tex_len = mat.tx_w*mat.tx_n * 3;
 		    while (bytes_read < tex_len) {
-			long bytes_to_go=tex_len;
+			int nbytes;
 			long readval;
 
 			bytes_to_go = tex_len - bytes_read;
-			if (bytes_to_go > TXT_BUF_LEN * 3) {
-			    bytes_to_go = TXT_BUF_LEN * 3;
-			}
+			CLAMP(bytes_to_go, 0, TXT_BUF_LEN * 3);
+
 			nbytes = 0;
 			while (nbytes < bytes_to_go) {
 			    readval = read(tex_fd, &tex_buf[nbytes], bytes_to_go-nbytes);
@@ -997,6 +992,8 @@ nmg_2_vrml(struct db_tree_state *tsp, const struct db_full_path *pathp, struct m
 			}
 		    }
 		    fprintf(fp_out, "\t\t\t\t}\n");
+
+		    close(tex_fd);
 		}
 	    }
 	} else if (mater->ma_color_valid) {
@@ -1021,9 +1018,9 @@ nmg_2_vrml(struct db_tree_state *tsp, const struct db_full_path *pathp, struct m
 
     if (!is_light) {
 	nmg_triangulate_model(m, tol2);
-	fprintf(fp_out, "\t\t\t} \n");
-	fprintf(fp_out, "\t\t\tgeometry IndexedFaceSet { \n");
-	fprintf(fp_out, "\t\t\t\tcoord Coordinate { \n");
+	fprintf(fp_out, "\t\t\t}\n");
+	fprintf(fp_out, "\t\t\tgeometry IndexedFaceSet {\n");
+	fprintf(fp_out, "\t\t\t\tcoord Coordinate {\n");
     }
 
     /* get list of vertices */
@@ -1205,13 +1202,12 @@ bot2vrml(struct plate_mode *pmp, const struct db_full_path *pathp, int region_id
 }
 
 
-/*	D O _ R E G I O N _ E N D 1
- *
+/*
  *  Called from db_walk_tree().
  *  This routine must be prepared to run in parallel.
  */
 union tree *
-do_region_end1(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, genptr_t client_data)
+do_region_end1(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, void *client_data)
 {
     struct plate_mode *pmp = (struct plate_mode *)client_data;
     char *name;
@@ -1240,15 +1236,14 @@ do_region_end1(struct db_tree_state *tsp, const struct db_full_path *pathp, unio
     }
 }
 
-/*	D O _ R E G I O N _ E N D 2
- *
+/*
  *  Called from db_walk_tree().
  *  This routine must be prepared to run in parallel.
  *
  *  Only send bots from structure outside tree to vrml file.
  */
 union tree *
-do_region_end2(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *UNUSED(curtree), genptr_t client_data)
+do_region_end2(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *UNUSED(curtree), void *client_data)
 {
     struct plate_mode *pmp = (struct plate_mode *)client_data;
     char *name;
@@ -1305,7 +1300,7 @@ process_boolean(union tree *curtree, struct db_tree_state *tsp, const struct db_
 }
 
 union tree *
-nmg_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, genptr_t UNUSED(client_data))
+nmg_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, void *UNUSED(client_data))
 {
     struct nmgregion *r;
     struct bu_list vhead;

@@ -84,13 +84,14 @@ extern fastf_t turb_table[20][20][20];
  * Sundry routine declarations
  */
 
-HIDDEN int wood_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, const struct mfuncs *mfp, struct rt_i *rtip);
-HIDDEN int wood_render(struct application *ap, const struct partition *partp, struct shadework *swp, genptr_t dp);
-HIDDEN void wood_print(register struct region *rp, genptr_t dp);
-HIDDEN void wood_free(genptr_t cp);
+HIDDEN int wood_setup(register struct region *rp, struct bu_vls *matparm, void **dpp, const struct mfuncs *mfp, struct rt_i *rtip);
+HIDDEN int wood_render(struct application *ap, const struct partition *partp, struct shadework *swp, void *dp);
+HIDDEN void wood_print(register struct region *rp, void *dp);
+HIDDEN void wood_free(void *cp);
 
-HIDDEN void wood_V_set(const struct bu_structparse *, const char *, const char *, char *);
-HIDDEN void wood_D_set(const struct bu_structparse *, const char *, const char *, char *);
+/* local sp_hook functions */
+HIDDEN void wood_V_set(const struct bu_structparse *, const char *, void *, const char *, void *);
+HIDDEN void wood_D_set(const struct bu_structparse *, const char *, void *, const char *, void *);
 
 /*
  * functions block for the shader
@@ -167,10 +168,10 @@ struct bu_structparse wood_parse[] = {
     {"%d",	1, "ns",		WOOD_O(ns),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%f",	1, "jitter",		WOOD_O(jitter),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%f",	1, "j",			WOOD_O(jitter),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%f",	3, "lt_rgb",		WOOD_O(lt_rgb),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%f",	3, "lt",		WOOD_O(lt_rgb),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%f",	3, "dk_rgb",		WOOD_O(dk_rgb),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%f",	3, "dk",		WOOD_O(dk_rgb),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f",	3, "lt_rgb",		WOOD_O(lt_rgb),	        BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f",	3, "lt",		WOOD_O(lt_rgb),	        BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f",	3, "dk_rgb",		WOOD_O(dk_rgb),	        BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f",	3, "dk",		WOOD_O(dk_rgb),	        BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%f",	1, "spacing",		WOOD_O(spacing),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%f",	1, "s",			WOOD_O(spacing),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%f",	1, "scale",		WOOD_O(scale),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
@@ -179,8 +180,8 @@ struct bu_structparse wood_parse[] = {
     {"%f",	1, "p",			WOOD_O(phase),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%f",	1, "qd",		WOOD_O(qd),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%f",	1, "qp",		WOOD_O(qp),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%f",	3, "dither",		WOOD_O(dither),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%f",	3, "di",		WOOD_O(dither),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f",	3, "dither",		WOOD_O(dither),	        BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f",	3, "di",		WOOD_O(dither),	        BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%f",	1, "depth",		WOOD_O(depth),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%f",	1, "de",		WOOD_O(depth),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%f",	1, "dd",		WOOD_O(dd),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
@@ -206,14 +207,16 @@ struct bu_structparse wood_parse[] = {
 
 
 /*
- * M I S C _ S E T U P _ F U N C T I O N S
- *
  * The following are miscellaneous routines which are invoked by the parser
  * to set flag bits, indicating the presence of actual parsed values.
  */
 
 HIDDEN void
-wood_V_set(const struct bu_structparse *UNUSED(sdp), const char *UNUSED(name), const char *base, char *UNUSED(value))
+wood_V_set(const struct bu_structparse *UNUSED(sdp),
+	   const char *UNUSED(name),
+	   void *base,
+	   const char *UNUSED(value),
+	   void *UNUSED(data))
 {
     register struct wood_specific *wd =
 	(struct wood_specific *)base;
@@ -223,7 +226,11 @@ wood_V_set(const struct bu_structparse *UNUSED(sdp), const char *UNUSED(name), c
 
 
 HIDDEN void
-wood_D_set(const struct bu_structparse *UNUSED(sdp), const char *UNUSED(name), const char *base, char *UNUSED(value))
+wood_D_set(const struct bu_structparse *UNUSED(sdp),
+	   const char *UNUSED(name),
+	   void *base,
+	   const char *UNUSED(value),
+	   void *UNUSED(data))
 {
     register struct wood_specific *wd =
 	(struct wood_specific *)base;
@@ -232,13 +239,8 @@ wood_D_set(const struct bu_structparse *UNUSED(sdp), const char *UNUSED(name), c
 }
 
 
-/*
- * W O O D _ S E T U P
- */
 HIDDEN int
-wood_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, const struct mfuncs *UNUSED(mfp), struct rt_i *UNUSED(rtip))
-
-
+wood_setup(register struct region *rp, struct bu_vls *matparm, void **dpp, const struct mfuncs *UNUSED(mfp), struct rt_i *UNUSED(rtip))
 /* New since 4.4 release */
 {
     register int i;
@@ -299,7 +301,7 @@ wood_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, co
      * Parse the MATPARM field
      */
 
-    if (bu_struct_parse(matparm, wood_parse, (char *)wd) < 0) {
+    if (bu_struct_parse(matparm, wood_parse, (char *)wd, NULL) < 0) {
 	BU_PUT(wd, struct wood_specific);
 	return -1;
     }
@@ -308,7 +310,7 @@ wood_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, co
      * Do some sundry range and misc. checking
      */
 
-    for (i=0; i<3; i++) {
+    for (i = 0; i < 3; i++) {
 	if (wd->dither[i] < 0 || wd->dither[i] > 1.0) {
 	    bu_log("wood_setup(%s):  dither is out of range.\n",
 		    rp->reg_name);
@@ -390,8 +392,8 @@ wood_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, co
      */
 
     for (i = 0; i < 3; i++) {
-	wd->lt_rgb[i] *= bn_inv255;
-	wd->dk_rgb[i] *= bn_inv255;
+	wd->lt_rgb[i] /= 255.0;
+	wd->dk_rgb[i] /= 255.0;
     }
 
     /*
@@ -405,7 +407,6 @@ wood_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, co
 /*
  * Phase 2 setup routine
  */
-
 HIDDEN void
 wood_setup_2(struct wood_specific *wd)
 {
@@ -427,7 +428,7 @@ wood_setup_2(struct wood_specific *wd)
 	MAT4X3PNT(wd->dir, xlate, wd->D);
     } else {
 	if (wd->dz > 0.0) {
-	    for (i=0; i<2; i++) {
+	    for (i = 0; i < 2; i++) {
 		a_vertex[i] = wd->b_min[i];
 		a_dir[i] = wd->b_max[i];
 	    }
@@ -437,7 +438,7 @@ wood_setup_2(struct wood_specific *wd)
 	    a_dir[2]    = ((wd->b_max[2] - wd->b_min[2]) *
 			   (bn_rand0to1(resp->re_randptr) * wd->dz)) + wd->b_min[2];
 	} else {
-	    for (i=0; i<3; i++) {
+	    for (i = 0; i < 3; i++) {
 		a_vertex[i] = ((wd->b_max[i] - wd->b_min[i]) *
 			       (bn_rand0to1(resp->re_randptr) * wd->dd)) + wd->b_min[i];
 		a_dir[i]    = ((wd->b_max[i] - wd->b_min[i]) *
@@ -453,25 +454,20 @@ wood_setup_2(struct wood_specific *wd)
 }
 
 
-/*
- * W O O D _ P R I N T
- */
 HIDDEN void
-wood_print(register struct region *rp, genptr_t UNUSED(dp))
+wood_print(register struct region *rp, void *UNUSED(dp))
 {
     bu_struct_print(rp->reg_name, wood_parse, (char *)rp->reg_udata);
 }
 
 
 /*
- * W O O D _ F R E E
- *
  * This routine is called to free up the user block at the end
  * of a frame, as well as clean up any references to objects on
  * the Wood_Chain list.
  */
 HIDDEN void
-wood_free(genptr_t cp)
+wood_free(void *cp)
 {
     register struct wood_specific *wd =
 	(struct wood_specific *)cp;
@@ -499,8 +495,6 @@ wood_free(genptr_t cp)
 
 
 /*
- * N O I S E  &  T U R B U L E N C E
- *
  * These are the noise and turbulence routines which the rendering routine
  * uses to perturb the rings.  They are lifted directly from the "sh_marble"
  * routine.  Eventually, they will be moved into a separate library for
@@ -548,7 +542,7 @@ wood_turb(double x, double y, double z, struct wood_specific *wd)
     int i;
     fastf_t a, b, c, turb = 0.0, scale;
 
-    for (i=0; i<wd->ns; i++) {
+    for (i = 0; i < wd->ns; i++) {
 	scale = (double)i / (double)wd->ns;
 
 	a = (x * scale) +
@@ -571,15 +565,13 @@ wood_turb(double x, double y, double z, struct wood_specific *wd)
 
 
 /*
- * W O O D _ R E N D E R
- *
  * Given an XYZ hit point, compute the concentric ring structure.  We do
  * this by computing the dot-product of the hit point vs. the ring vertex,
  * which is then used to compute the distance from the ring center.  This
  * distance is then multiplied by a velocity coefficient that is signed.
  */
 HIDDEN int
-wood_render(struct application *UNUSED(ap), const struct partition *UNUSED(partp), struct shadework *swp, genptr_t dp)
+wood_render(struct application *UNUSED(ap), const struct partition *UNUSED(partp), struct shadework *swp, void *dp)
 {
     register struct wood_specific *wd =
 	(struct wood_specific *)dp;
@@ -624,14 +616,14 @@ wood_render(struct application *UNUSED(ap), const struct partition *UNUSED(partp
      * compute the sine from that product.
      */
 
-    c = fabs(sin((C / wd->spacing) * bn_pi));
+    c = fabs(sin((C / wd->spacing) * M_PI));
 
     /*
      * Dither the "q" control
      */
 
-    pq = cos(((wd->qd * wt) + wd->qp + wd->phase) * bn_degtorad);
-    pp = cos(wd->phase * bn_degtorad);
+    pq = cos(((wd->qd * wt) + wd->qp + wd->phase) * DEG2RAD);
+    pp = cos(wd->phase * DEG2RAD);
 
     /*
      * Color the hit point based on the phase of the ring

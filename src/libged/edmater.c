@@ -1,7 +1,7 @@
 /*                       E D M A T E R . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2013 United States Government as represented by
+ * Copyright (c) 2008-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -31,6 +31,7 @@
 #   include <unistd.h>
 #endif
 
+#include "bu/getopt.h"
 #include "./ged_private.h"
 
 int
@@ -89,7 +90,7 @@ ged_edmater(struct ged *gedp, int argc, const char *argv[])
 
     if (ged_wmater(gedp, argc, av) == TCL_ERROR) {
 	bu_file_delete(tmpfil);
-	bu_free((genptr_t)av, "f_edmater: av");
+	bu_free((void *)av, "f_edmater: av");
 	return TCL_ERROR;
     }
 
@@ -102,7 +103,7 @@ ged_edmater(struct ged *gedp, int argc, const char *argv[])
     }
 
     bu_file_delete(tmpfil);
-    bu_free((genptr_t)av, "ged_edmater: av");
+    bu_free((void *)av, "ged_edmater: av");
 
     return status;
 }

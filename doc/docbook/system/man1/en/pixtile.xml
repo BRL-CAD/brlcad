@@ -17,7 +17,6 @@
 <refsynopsisdiv xml:id='synopsis'>
 <cmdsynopsis>
   <command>pixtile</command>
-    <arg choice='opt'>-h </arg>
     <arg choice='opt'>-s <replaceable>squareinsize</replaceable></arg>
     <arg choice='opt'>-w <replaceable>file_width</replaceable></arg>
     <arg choice='opt'>-n <replaceable>file_height</replaceable></arg>
@@ -26,12 +25,11 @@
     <arg choice='opt'>-N <replaceable>out_height</replaceable></arg>
     <arg choice='opt'>-o <replaceable>startframe</replaceable></arg>
     <arg choice='plain'><replaceable>basename</replaceable></arg>
-    <arg choice='plain'><replaceable>&gt;</replaceable></arg>
+    <arg choice='plain'>&gt;</arg>
     <arg choice='plain'><replaceable>file.pix</replaceable></arg>
 </cmdsynopsis>
 <cmdsynopsis>
   <command>pixtile</command>
-    <arg choice='opt'>-h </arg>
     <arg choice='opt'>-s <replaceable>squareinsize</replaceable></arg>
     <arg choice='opt'>-w <replaceable>file_width</replaceable></arg>
     <arg choice='opt'>-n <replaceable>file_height</replaceable></arg>
@@ -41,29 +39,26 @@
     <arg choice='plain'><replaceable>file1</replaceable></arg>
     <arg choice='plain' rep='repeat'><replaceable>file2</replaceable></arg>
     <arg choice='plain'><replaceable>fileN</replaceable></arg>
-    <arg choice='plain'><replaceable>&gt;</replaceable></arg>
+    <arg choice='plain'>&gt;</arg>
     <arg choice='plain'><replaceable>file.pix</replaceable></arg>
 </cmdsynopsis>
 </refsynopsisdiv>
 
 
 <refsect1 xml:id='description'><title>DESCRIPTION</title>
-<para><emphasis remap='I'>Pixtile</emphasis>
+<para><command>pixtile</command>
 takes a collection of numbered small images and places them side
 by side in one larger image.  The input and output files are
 assumed to be in
 <citerefentry><refentrytitle>pix</refentrytitle><manvolnum>5</manvolnum></citerefentry>
 format.
-By default, the output file will be made 512x512 pixels in size.
-Specifying the
-<option>-h</option>
-flag, changes the default size to 1024x1024 pixels.</para>
+By default, the output file will be made 512x512 pixels in size.</para>
 
 <para>The input files have a default width of 64 pixels per scanline
 and are usually square, i.e. have the same height as width.
 Specifying the
 <option>-s</option>
-flag, changes the default size to
+flag changes the default size to
 <emphasis remap='I'>squareinsize</emphasis>
 pixels per scanline and
 <emphasis remap='I'>squareinsize</emphasis>
@@ -93,14 +88,6 @@ flag sets the output height size to
 <emphasis remap='I'>out_height</emphasis>
 scanlines.</para>
 <variablelist remap='TP'>
-  <varlistentry>
-  <term><option>-h</option></term>
-  <listitem>
-<para>"hires" flag.
-Set both the height and width of the output to 1024.
-The default is 512x512.</para>
-  </listitem>
-  </varlistentry>
   <varlistentry>
   <term><option>-s </option><replaceable>squareinsize</replaceable></term>
   <listitem>
@@ -152,7 +139,7 @@ The default is 512.</para>
 is substituted for
 <emphasis remap='I'>num</emphasis>
 in
-<emphasis remap='I'>basename.num</emphasis></para>
+<emphasis remap='I'>basename.num</emphasis>.</para>
   </listitem>
   </varlistentry>
 </variablelist>
@@ -193,41 +180,39 @@ the names of the files being pasted together are assumed
 to be explicitly stated and the
 <option>-o</option>
 flag is not valid.  This allows files with different names to be
-used without having to change the name of the files.</para>
+used without having to change those names.</para>
 
 <para>This program is the companion of
-<citerefentry><refentrytitle>fbanim</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+<citerefentry><refentrytitle>fbanim</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
 which will step through these small images on a framebuffer capable
 of zooming and windowing.  Thus many small low resolution frames can
 be used as an animation "preview" for a higher resolution sequence,
 the latter of which would go onto video tape or film.</para>
 </refsect1>
 
-<refsect1 xml:id='example'><title>EXAMPLE</title>
-<para><userinput>pixtile -h -s 128 -o 2 anim &gt; out.pix</userinput>
-<!-- .br -->
-will read files
+<refsect1 xml:id='example'><title>EXAMPLES</title>
+<para>pixtile -S 1024 -s 128 -o 2 anim &gt; out.pix</para>
+<para>will read files
 <emphasis remap='I'>anim.2</emphasis>
 through
-<emphasis remap='I'>anim.65</emphasis>
+<emphasis remap='I'>anim.65</emphasis>,
 placing them from lower left to upper right in a 1024x1024 pixel
 file
 <emphasis remap='I'>out.pix</emphasis>.</para>
 
-<para><userinput>pixtile -s 256 lowerleft lowerright upperleft upperright &gt; out.pix</userinput>
-<!-- .br -->
-will read files
+<para>pixtile -s 256 lowerleft lowerright upperleft upperright &gt; out.pix</para>
+<para>will read files
 <emphasis remap='I'>lowerleft</emphasis>,
 <emphasis remap='I'>lowerright</emphasis>,
 <emphasis remap='I'>upperleft</emphasis>,
 and
-<emphasis remap='I'>upperright</emphasis>
+<emphasis remap='I'>upperright</emphasis>,
 placing them from lower left to upper right in a 512x512 file
 <emphasis remap='I'>out.pix</emphasis>.</para>
 </refsect1>
 
 <refsect1 xml:id='see_also'><title>SEE ALSO</title>
-<para><citerefentry><refentrytitle>brlcad</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>fbanim</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>pix</refentrytitle><manvolnum>5</manvolnum></citerefentry>.</para>
+<para><citerefentry><refentrytitle>brlcad</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>fbanim</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>pix</refentrytitle><manvolnum>5</manvolnum></citerefentry></para>
 
 </refsect1>
 
@@ -237,7 +222,7 @@ placing them from lower left to upper right in a 512x512 file
 </refsect1>
 
 <refsect1 xml:id='copyright'><title>COPYRIGHT</title>
-<para>This software is Copyright (c) 1989-2013 by the United States
+<para>This software is Copyright (c) 1989-2014 by the United States
 Government as represented by U.S. Army Research Laboratory.</para>
 </refsect1>
 

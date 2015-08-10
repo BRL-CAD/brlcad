@@ -1,7 +1,7 @@
 /*                         T O P S . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2013 United States Government as represented by
+ * Copyright (c) 2008-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -26,9 +26,9 @@
 #include "common.h"
 
 #include <string.h>
-#include "bio.h"
 
-#include "cmd.h"
+#include "bu/cmd.h"
+#include "bu/getopt.h"
 
 #include "./ged_private.h"
 
@@ -47,11 +47,6 @@ ged_tops(struct ged *gedp, int argc, const char *argv[])
     int hflag = 0;
     int pflag = 0;
 
-    /* DEPRECATED */
-    int gflag = 0;
-    /* DEPRECATED */
-    int uflag = 0;
-
     /* static const char *usage = "[-a|-h|-n|-p]"; */
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
@@ -62,7 +57,7 @@ ged_tops(struct ged *gedp, int argc, const char *argv[])
 
     /* process any options */
     bu_optind = 1;	/* re-init bu_getopt() */
-    while ((c = bu_getopt(argc, (char * const *)argv, "ahnpgu")) != -1) {
+    while ((c = bu_getopt(argc, (char * const *)argv, "ahnp")) != -1) {
 	switch (c) {
 	    case 'a':
 		aflag = 1;
@@ -75,14 +70,6 @@ ged_tops(struct ged *gedp, int argc, const char *argv[])
 		break;
 	    case 'p':
 		pflag = 1;
-		break;
-	    case 'g':
-		bu_log("WARNING: The -g option is deprecated.\n");
-		gflag = 1;
-		break;
-	    case 'u':
-		bu_log("WARNING: The -u option is deprecated.\n");
-		uflag = 1;
 		break;
 	    default:
 		break;
@@ -120,14 +107,12 @@ ged_tops(struct ged *gedp, int argc, const char *argv[])
 
 		if ((aflag) ||
 		    (hflag && (dp->d_flags & RT_DIR_HIDDEN)) ||
-		    (pflag && dp->d_addr == RT_DIR_PHONY_ADDR) ||
-		    (gflag && dp->d_major_type == DB5_MAJORTYPE_BRLCAD) ||
-		    (uflag && !(dp->d_flags & RT_DIR_HIDDEN))) {
+		    (pflag && dp->d_addr == RT_DIR_PHONY_ADDR)) {
 
 		    /* add object because it matches an option */
 		    *dirp++ = dp;
 
-		} else if (!aflag && !hflag && !pflag && !gflag && !uflag &&
+		} else if (!aflag && !hflag && !pflag &&
 			   !(dp->d_flags & RT_DIR_HIDDEN) &&
 			   (dp->d_addr != RT_DIR_PHONY_ADDR)) {
 
@@ -139,15 +124,13 @@ ged_tops(struct ged *gedp, int argc, const char *argv[])
     }
 
     _ged_vls_col_pr4v(gedp->ged_result_str, dirp0, (int)(dirp - dirp0), no_decorate);
-    bu_free((genptr_t)dirp0, "wdb_tops_cmd: wdb_dir_getspace");
+    bu_free((void *)dirp0, "wdb_tops_cmd: wdb_dir_getspace");
 
     return GED_OK;
 }
 
 
 /*
- * G E D _ D I R _ G E T S P A C E
- *
  * This routine walks through the directory entry list and mallocs enough
  * space for pointers to hold:
  * a) all of the entries if called with an argument of 0, or

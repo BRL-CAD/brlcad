@@ -1,7 +1,7 @@
 /*                       I F _ N U L L . C
  * BRL-CAD
  *
- * Copyright (c) 1989-2013 United States Government as represented by
+ * Copyright (c) 1989-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @addtogroup if */
+/** @addtogroup libfb */
 /** @{ */
 /** @file if_null.c
  *
@@ -32,13 +32,15 @@
 #include <stdlib.h>
 #include <stdio.h>
 
+#include "bu/log.h"
+#include "fb_private.h"
 #include "fb.h"
 
 
 HIDDEN int
-null_open(FBIO *ifp, const char *UNUSED(file), int width, int height)
+null_open(fb *ifp, const char *UNUSED(file), int width, int height)
 {
-    FB_CK_FBIO(ifp);
+    FB_CK_FB(ifp);
 
     if (width > 0)
 	ifp->if_width = width;
@@ -48,65 +50,101 @@ null_open(FBIO *ifp, const char *UNUSED(file), int width, int height)
     return 0;
 }
 
+HIDDEN struct fb_platform_specific *
+null_get_fbps(uint32_t UNUSED(magic))
+{
+        return NULL;
+}
+
+
+HIDDEN void
+null_put_fbps(struct fb_platform_specific *UNUSED(fbps))
+{
+        return;
+}
 
 HIDDEN int
-null_close(FBIO *ifp)
+null_open_existing(fb *UNUSED(ifp), int UNUSED(width), int UNUSED(height), struct fb_platform_specific *UNUSED(fb_p))
 {
-    FB_CK_FBIO(ifp);
+        return 0;
+}
+
+HIDDEN int
+null_close_existing(fb *UNUSED(ifp))
+{
+        return 0;
+}
+
+HIDDEN int
+null_configure_window(fb *UNUSED(ifp), int UNUSED(width), int UNUSED(height))
+{
+        return 0;
+}
+
+HIDDEN int
+null_refresh(fb *UNUSED(ifp), int UNUSED(x), int UNUSED(y), int UNUSED(w), int UNUSED(h))
+{
+        return 0;
+}
+
+HIDDEN int
+null_close(fb *ifp)
+{
+    FB_CK_FB(ifp);
 
     return 0;
 }
 
 
 HIDDEN int
-null_clear(FBIO *ifp, unsigned char *UNUSED(pp))
+null_clear(fb *ifp, unsigned char *UNUSED(pp))
 {
-    FB_CK_FBIO(ifp);
+    FB_CK_FB(ifp);
 
     return 0;
 }
 
 
 HIDDEN ssize_t
-null_read(FBIO *ifp, int UNUSED(x), int UNUSED(y), unsigned char *UNUSED(pixelp), size_t count)
+null_read(fb *ifp, int UNUSED(x), int UNUSED(y), unsigned char *UNUSED(pixelp), size_t count)
 {
-    FB_CK_FBIO(ifp);
+    FB_CK_FB(ifp);
 
     return count;
 }
 
 
 HIDDEN ssize_t
-null_write(FBIO *ifp, int UNUSED(x), int UNUSED(y), const unsigned char *UNUSED(pixelp), size_t count)
+null_write(fb *ifp, int UNUSED(x), int UNUSED(y), const unsigned char *UNUSED(pixelp), size_t count)
 {
-    FB_CK_FBIO(ifp);
+    FB_CK_FB(ifp);
 
     return count;
 }
 
 
 HIDDEN int
-null_rmap(FBIO *ifp, ColorMap *UNUSED(cmp))
+null_rmap(fb *ifp, ColorMap *UNUSED(cmp))
 {
-    FB_CK_FBIO(ifp);
+    FB_CK_FB(ifp);
 
     return 0;
 }
 
 
 HIDDEN int
-null_wmap(FBIO *ifp, const ColorMap *UNUSED(cmp))
+null_wmap(fb *ifp, const ColorMap *UNUSED(cmp))
 {
-    FB_CK_FBIO(ifp);
+    FB_CK_FB(ifp);
 
     return 0;
 }
 
 
 HIDDEN int
-null_view(FBIO *ifp, int UNUSED(xcenter), int UNUSED(ycenter), int UNUSED(xzoom), int UNUSED(yzoom))
+null_view(fb *ifp, int UNUSED(xcenter), int UNUSED(ycenter), int UNUSED(xzoom), int UNUSED(yzoom))
 {
-    FB_CK_FBIO(ifp);
+    FB_CK_FB(ifp);
 
     /*fb_sim_view(ifp, xcenter, ycenter, xzoom, yzoom);*/
     return 0;
@@ -114,9 +152,9 @@ null_view(FBIO *ifp, int UNUSED(xcenter), int UNUSED(ycenter), int UNUSED(xzoom)
 
 
 HIDDEN int
-null_getview(FBIO *ifp, int *UNUSED(xcenter), int *UNUSED(ycenter), int *UNUSED(xzoom), int *UNUSED(yzoom))
+null_getview(fb *ifp, int *UNUSED(xcenter), int *UNUSED(ycenter), int *UNUSED(xzoom), int *UNUSED(yzoom))
 {
-    FB_CK_FBIO(ifp);
+    FB_CK_FB(ifp);
 
     /*fb_sim_getview(ifp, xcenter, ycenter, xzoom, yzoom);*/
     return 0;
@@ -124,18 +162,18 @@ null_getview(FBIO *ifp, int *UNUSED(xcenter), int *UNUSED(ycenter), int *UNUSED(
 
 
 HIDDEN int
-null_setcursor(FBIO *ifp, const unsigned char *UNUSED(bits), int UNUSED(xbits), int UNUSED(ybits), int UNUSED(xorig), int UNUSED(yorig))
+null_setcursor(fb *ifp, const unsigned char *UNUSED(bits), int UNUSED(xbits), int UNUSED(ybits), int UNUSED(xorig), int UNUSED(yorig))
 {
-    FB_CK_FBIO(ifp);
+    FB_CK_FB(ifp);
 
     return 0;
 }
 
 
 HIDDEN int
-null_cursor(FBIO *ifp, int UNUSED(mode), int UNUSED(x), int UNUSED(y))
+null_cursor(fb *ifp, int UNUSED(mode), int UNUSED(x), int UNUSED(y))
 {
-    FB_CK_FBIO(ifp);
+    FB_CK_FB(ifp);
 
     /*fb_sim_cursor(ifp, mode, x, y);*/
     return 0;
@@ -143,9 +181,9 @@ null_cursor(FBIO *ifp, int UNUSED(mode), int UNUSED(x), int UNUSED(y))
 
 
 HIDDEN int
-null_getcursor(FBIO *ifp, int *UNUSED(mode), int *UNUSED(x), int *UNUSED(y))
+null_getcursor(fb *ifp, int *UNUSED(mode), int *UNUSED(x), int *UNUSED(y))
 {
-    FB_CK_FBIO(ifp);
+    FB_CK_FB(ifp);
 
     /*fb_sim_getcursor(ifp, mode, x, y);*/
     return 0;
@@ -153,54 +191,54 @@ null_getcursor(FBIO *ifp, int *UNUSED(mode), int *UNUSED(x), int *UNUSED(y))
 
 
 HIDDEN int
-null_readrect(FBIO *ifp, int UNUSED(xmin), int UNUSED(ymin), int width, int height, unsigned char *UNUSED(pp))
+null_readrect(fb *ifp, int UNUSED(xmin), int UNUSED(ymin), int width, int height, unsigned char *UNUSED(pp))
 {
-    FB_CK_FBIO(ifp);
+    FB_CK_FB(ifp);
 
     return width*height;
 }
 
 
 HIDDEN int
-null_writerect(FBIO *ifp, int UNUSED(xmin), int UNUSED(ymin), int width, int height, const unsigned char *UNUSED(pp))
+null_writerect(fb *ifp, int UNUSED(xmin), int UNUSED(ymin), int width, int height, const unsigned char *UNUSED(pp))
 {
-    FB_CK_FBIO(ifp);
+    FB_CK_FB(ifp);
 
     return width*height;
 }
 
 
 HIDDEN int
-null_poll(FBIO *ifp)
+null_poll(fb *ifp)
 {
-    FB_CK_FBIO(ifp);
+    FB_CK_FB(ifp);
 
     return 0;
 }
 
 
 HIDDEN int
-null_flush(FBIO *ifp)
+null_flush(fb *ifp)
 {
-    FB_CK_FBIO(ifp);
+    FB_CK_FB(ifp);
 
     return 0;
 }
 
 
 HIDDEN int
-null_free(FBIO *ifp)
+null_free(fb *ifp)
 {
-    FB_CK_FBIO(ifp);
+    FB_CK_FB(ifp);
 
     return 0;
 }
 
 
 HIDDEN int
-null_help(FBIO *ifp)
+null_help(fb *ifp)
 {
-    FB_CK_FBIO(ifp);
+    FB_CK_FB(ifp);
 
     fb_log("Description: %s\n", null_interface.if_type);
     fb_log("Device: %s\n", ifp->if_name);
@@ -216,9 +254,14 @@ null_help(FBIO *ifp)
 
 
 /* This is the ONLY thing that we normally "export" */
-FBIO null_interface =  {
+fb null_interface =  {
     0,
+    FB_NULL_MAGIC,
     null_open,		/* device_open */
+    null_open_existing,	/* existing device_open */
+    null_close_existing,/* existing device_close */
+    null_get_fbps,
+    null_put_fbps,
     null_close,		/* device_close */
     null_clear,		/* device_clear */
     null_read,		/* buffer_read */
@@ -234,6 +277,8 @@ FBIO null_interface =  {
     null_writerect,	/* rectangle write */
     null_readrect,	/* bw rectangle read */
     null_writerect,	/* bw rectangle write */
+    null_configure_window,
+    null_refresh,
     null_poll,		/* handle events */
     null_flush,		/* flush output */
     null_free,		/* free resources */
@@ -257,6 +302,7 @@ FBIO null_interface =  {
     0L,			/* page_curpos */
     0L,			/* page_pixels */
     0,			/* debug */
+    0,			/* refresh rate */
     {0}, /* u1 */
     {0}, /* u2 */
     {0}, /* u3 */

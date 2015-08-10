@@ -1,7 +1,7 @@
 /*                       W A V E L E T . C
  * BRL-CAD
  *
- * Copyright (c) 1998-2013 United States Government as represented by
+ * Copyright (c) 1998-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -43,10 +43,11 @@
 #include "common.h"
 
 #include <stdlib.h>
-#include "bio.h"
 
-#include "bu.h"
 #include "vmath.h"
+#include "bu/getopt.h"
+#include "bu/malloc.h"
+#include "bu/log.h"
 #include "bn.h"
 #include "fb.h"
 
@@ -62,7 +63,7 @@
 #define RECONSTRUCT -1
 
 /* declarations to support use of bu_getopt() system call */
-char *options = "W:S:s:w:n:t:#:D:12drR:";
+char *options = "W:S:s:w:n:t:#:D:12drR:h?";
 
 char *progname = "(noname)";
 int img_space=1;
@@ -71,15 +72,12 @@ size_t width = 512;
 size_t height = 512;
 size_t channels = 3;
 int value_type = CHAR;
-int value_size = sizeof(char);
-int avg_size = 0;
+size_t value_size = sizeof(char);
+size_t avg_size = 0;
 size_t limit = 0;
 int decomp_recon;
 
 
-/*
- * U S A G E --- tell user how to invoke this program, then exit
- */
 void
 usage(char *s)
 {
@@ -93,9 +91,6 @@ usage(char *s)
 }
 
 
-/*
- * P A R S E _ A R G S --- Parse through command line flags
- */
 int
 parse_args(int ac, char **av)
 {
@@ -112,7 +107,8 @@ parse_args(int ac, char **av)
     bu_opterr = 0;
 
     /* get all the option flags from the command line */
-    while ((c=bu_getopt(ac, av, options)) != -1)
+    while ((c=bu_getopt(ac, av, options)) != -1) {
+	if (bu_optopt == '?') c='h';
 	switch (c) {
 	    case '1': img_space=1; break;
 	    case '2': img_space=2; break;
@@ -124,7 +120,7 @@ parse_args(int ac, char **av)
 	    case 'R': avg_size = atoi(bu_optarg); break;
 	    case '#': channels = atoi(bu_optarg);
 		break;
-	    case 't': {
+	    case 't':
 		switch (*bu_optarg) {
 		    case 'c': value_type = CHAR;
 			value_size = sizeof(char);
@@ -146,17 +142,18 @@ parse_args(int ac, char **av)
 			break;
 		}
 		break;
-	    }
 	    case 'n': height = atoi(bu_optarg); break;
 	    case 'w': width = atoi(bu_optarg); break;
 	    case 's': width = height = atoi(bu_optarg); break;
 	    case 'W': limit = atoi(bu_optarg); break;
 	    case 'S': limit = atoi(bu_optarg); break;
-	    case '?':
 	    case 'h':
-	    default	: fprintf(stderr, "Bad or help flag specified %c\n", c);
 		usage("");
 		break;
+	    default: fprintf(stderr, "Bad flag specified %c\n", bu_optopt);
+		usage("");
+		break;
+	    }
 	}
 
     return bu_optind;
@@ -167,7 +164,8 @@ void
 wlt_decompose_1d(void)
 {
     size_t ret;
-    genptr_t buf, tbuf;
+    void *buf;
+    void *tbuf;
     size_t i, n;
     size_t sample_size;	/* size of data type x #values/sample */
     size_t scanline_size;	/* # bytes in a scanline */
@@ -179,7 +177,7 @@ wlt_decompose_1d(void)
     tbuf = bu_malloc(scanline_size >> 1, "wavelet buf");
 
     if (debug)
-	fprintf(stderr, "1D decompose:\n\tdatatype_size:%d channels:%lu width:%lu height:%lu limit:%lu\n", value_size, (long unsigned)channels, (long unsigned)width, (long unsigned)height, (long unsigned)limit);
+	fprintf(stderr, "1D decompose:\n\tdatatype_size:%lu channels:%lu width:%lu height:%lu limit:%lu\n", (long unsigned)value_size, (long unsigned)channels, (long unsigned)width, (long unsigned)height, (long unsigned)limit);
 
 
     for (i=0; i < height; i++) {
@@ -191,28 +189,22 @@ wlt_decompose_1d(void)
 
 	switch (value_type) {
 	    case DOUBLE:
-		bn_wlt_haar_1d_double_decompose(tbuf, buf, width,
-						channels, limit);
+		bn_wlt_haar_1d_double_decompose((double *)tbuf, (double *)buf, width, channels, limit);
 		break;
 	    case FLOAT:
-		bn_wlt_haar_1d_float_decompose(tbuf, buf, width,
-					       channels, limit);
+		bn_wlt_haar_1d_float_decompose((float *)tbuf, (float *)buf, width, channels, limit);
 		break;
 	    case CHAR:
-		bn_wlt_haar_1d_char_decompose(tbuf, buf, width,
-					      channels, limit);
+		bn_wlt_haar_1d_char_decompose((char *)tbuf, (char *)buf, width, channels, limit);
 		break;
 	    case SHORT:
-		bn_wlt_haar_1d_short_decompose(tbuf, buf, width,
-					       channels, limit);
+		bn_wlt_haar_1d_short_decompose((short int *)tbuf, (short int *)buf, width, channels, limit);
 		break;
 	    case INT:
-		bn_wlt_haar_1d_int_decompose(tbuf, buf, width,
-					     channels, limit);
+		bn_wlt_haar_1d_int_decompose((int *)tbuf, (int *)buf, width, channels, limit);
 		break;
 	    case LONG:
-		bn_wlt_haar_1d_long_decompose(tbuf, buf, width,
-					      channels, limit);
+		bn_wlt_haar_1d_long_decompose((long int *)tbuf, (long int *)buf, width, channels, limit);
 		break;
 	}
 
@@ -229,7 +221,8 @@ void
 wlt_decompose_2d(void)
 {
     size_t ret;
-    genptr_t buf, tbuf;
+    void *buf;
+    void *tbuf;
     size_t sample_size;
     size_t scanline_size;
 
@@ -240,7 +233,7 @@ wlt_decompose_2d(void)
     tbuf = bu_malloc(scanline_size, "wavelet buf");
 
     if (debug)
-	fprintf(stderr, "2D decompose:\n\tdatatype_size:%d channels:%lu width:%lu height:%lu limit:%lu\n", value_size, (long unsigned)channels, (long unsigned)width, (long unsigned)height, (long unsigned)limit);
+	fprintf(stderr, "2D decompose:\n\tdatatype_size:%lu channels:%lu width:%lu height:%lu limit:%lu\n", (long unsigned)value_size, (long unsigned)channels, (long unsigned)width, (long unsigned)height, (long unsigned)limit);
 
 
     if (width != height) {
@@ -254,28 +247,22 @@ wlt_decompose_2d(void)
 
     switch (value_type) {
 	case DOUBLE:
-	    bn_wlt_haar_2d_double_decompose(tbuf, buf, width,
-					    channels, limit);
+	    bn_wlt_haar_2d_double_decompose((double *)tbuf, (double *)buf, width, channels, limit);
 	    break;
 	case FLOAT:
-	    bn_wlt_haar_2d_float_decompose(tbuf, buf, width,
-					   channels, limit);
+	    bn_wlt_haar_2d_float_decompose((float *)tbuf, (float *)buf, width, channels, limit);
 	    break;
 	case CHAR:
-	    bn_wlt_haar_2d_char_decompose(tbuf, buf, width,
-					  channels, limit);
+	    bn_wlt_haar_2d_char_decompose((char *)tbuf, (char *)buf, width, channels, limit);
 	    break;
 	case SHORT:
-	    bn_wlt_haar_2d_short_decompose(tbuf, buf, width,
-					   channels, limit);
+	    bn_wlt_haar_2d_short_decompose((short int *)tbuf, (short int *)buf, width, channels, limit);
 	    break;
 	case INT:
-	    bn_wlt_haar_2d_int_decompose(tbuf, buf, width,
-					 channels, limit);
+	    bn_wlt_haar_2d_int_decompose((int *)tbuf, (int *)buf, width, channels, limit);
 	    break;
 	case LONG:
-	    bn_wlt_haar_2d_long_decompose(tbuf, buf, width,
-					  channels, limit);
+	    bn_wlt_haar_2d_long_decompose((long int *)tbuf, (long int *)buf, width, channels, limit);
 	    break;
     }
     ret = fwrite(buf, scanline_size, width, stdout);
@@ -289,7 +276,8 @@ void
 wlt_reconstruct_1d(void)
 {
     size_t ret;
-    genptr_t buf, tbuf;
+    void *buf;
+    void *tbuf;
     size_t i, n;
     size_t sample_size;	/* size of data type x #values/sample */
     size_t scanline_size;	/* # bytes in a scanline */
@@ -301,7 +289,7 @@ wlt_reconstruct_1d(void)
     tbuf = bu_malloc(scanline_size >> 1, "wavelet buf");
 
     if (debug)
-	fprintf(stderr, "1D reconstruct:\n\tdatatype_size:%d channels:%lu width:%lu height:%lu limit:%lu\n", value_size, (long unsigned)channels, (long unsigned)width, (long unsigned)height, (long unsigned)limit);
+	fprintf(stderr, "1D reconstruct:\n\tdatatype_size:%lu channels:%lu width:%lu height:%lu limit:%lu\n", (long unsigned)value_size, (long unsigned)channels, (long unsigned)width, (long unsigned)height, (long unsigned)limit);
 
 
     for (i=0; i < height; i++) {
@@ -314,28 +302,22 @@ wlt_reconstruct_1d(void)
 
 	switch (value_type) {
 	    case DOUBLE:
-		bn_wlt_haar_1d_double_reconstruct(tbuf, buf, width,
-						  channels, avg_size, limit);
+		bn_wlt_haar_1d_double_reconstruct((double *)tbuf, (double *)buf, width, channels, avg_size, limit);
 		break;
 	    case FLOAT:
-		bn_wlt_haar_1d_float_reconstruct(tbuf, buf, width,
-						 channels, avg_size, limit);
+		bn_wlt_haar_1d_float_reconstruct((float *)tbuf, (float *)buf, width, channels, avg_size, limit);
 		break;
 	    case CHAR:
-		bn_wlt_haar_1d_char_reconstruct(tbuf, buf, width,
-						channels, avg_size, limit);
+		bn_wlt_haar_1d_char_reconstruct((char *)tbuf, (char *)buf, width, channels, avg_size, limit);
 		break;
 	    case SHORT:
-		bn_wlt_haar_1d_short_reconstruct(tbuf, buf, width,
-						 channels, avg_size, limit);
+		bn_wlt_haar_1d_short_reconstruct((short int *)tbuf, (short int *)buf, width, channels, avg_size, limit);
 		break;
 	    case INT:
-		bn_wlt_haar_1d_int_reconstruct(tbuf, buf, width,
-					       channels, avg_size, limit);
+		bn_wlt_haar_1d_int_reconstruct((int *)tbuf, (int *)buf, width, channels, avg_size, limit);
 		break;
 	    case LONG:
-		bn_wlt_haar_1d_long_reconstruct(tbuf, buf, width,
-						channels, avg_size, limit);
+		bn_wlt_haar_1d_long_reconstruct((long int *)tbuf, (long int *)buf, width, channels, avg_size, limit);
 		break;
 	}
 
@@ -352,7 +334,8 @@ void
 wlt_reconstruct_2d(void)
 {
     size_t ret;
-    genptr_t buf, tbuf;
+    void *buf;
+    void *tbuf;
     size_t sample_size;
     size_t scanline_size;
 
@@ -363,7 +346,7 @@ wlt_reconstruct_2d(void)
     tbuf = bu_malloc(scanline_size, "wavelet buf");
 
     if (debug)
-	fprintf(stderr, "2D reconstruct:\n\tdatatype_size:%d channels:%lu width:%lu height:%lu limit:%lu\n", value_size, (long unsigned)channels, (long unsigned)width, (long unsigned)height, (long unsigned)limit);
+	fprintf(stderr, "2D reconstruct:\n\tdatatype_size:%lu channels:%lu width:%lu height:%lu limit:%lu\n", (long unsigned)value_size, (long unsigned)channels, (long unsigned)width, (long unsigned)height, (long unsigned)limit);
 
     if (width != height) {
 	fprintf(stderr, "Two dimensional decomposition requires square image\n");
@@ -376,28 +359,22 @@ wlt_reconstruct_2d(void)
 
     switch (value_type) {
 	case DOUBLE:
-	    bn_wlt_haar_2d_double_reconstruct((double *)tbuf, (double *)buf, width,
-					      channels, avg_size, limit);
+	    bn_wlt_haar_2d_double_reconstruct((double *)tbuf, (double *)buf, width, channels, avg_size, limit);
 	    break;
 	case FLOAT:
-	    bn_wlt_haar_2d_float_reconstruct(tbuf, buf, width,
-					     channels, avg_size, limit);
+	    bn_wlt_haar_2d_float_reconstruct((float *)tbuf, (float *)buf, width, channels, avg_size, limit);
 	    break;
 	case CHAR:
-	    bn_wlt_haar_2d_char_reconstruct(tbuf, buf, width,
-					    channels, avg_size, limit);
+	    bn_wlt_haar_2d_char_reconstruct((char *)tbuf, (char *)buf, width, channels, avg_size, limit);
 	    break;
 	case SHORT:
-	    bn_wlt_haar_2d_short_reconstruct(tbuf, buf, width,
-					     channels, avg_size, limit);
+	    bn_wlt_haar_2d_short_reconstruct((short int *)tbuf, (short int *)buf, width, channels, avg_size, limit);
 	    break;
 	case INT:
-	    bn_wlt_haar_2d_int_reconstruct(tbuf, buf, width,
-					   channels, avg_size, limit);
+	    bn_wlt_haar_2d_int_reconstruct((int *)tbuf, (int *)buf, width, channels, avg_size, limit);
 	    break;
 	case LONG:
-	    bn_wlt_haar_2d_long_reconstruct(tbuf, buf, width,
-					    channels, avg_size, limit);
+	    bn_wlt_haar_2d_long_reconstruct((long int *)tbuf, (long int *)buf, width, channels, avg_size, limit);
 	    break;
     }
     ret = fwrite(buf, scanline_size, width, stdout);
@@ -408,8 +385,6 @@ wlt_reconstruct_2d(void)
 
 
 /*
- * M A I N
- *
  * Call parse_args to handle command line arguments first, then
  * process input.
  */

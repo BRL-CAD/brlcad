@@ -1,7 +1,7 @@
 /*                        M I R R O R . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2013 United States Government as represented by
+ * Copyright (c) 2008-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -23,6 +23,7 @@
  *
  */
 
+#include "bu/getopt.h"
 #include "ged.h"
 
 
@@ -61,7 +62,8 @@ ged_mirror(struct ged *gedp, int argc, const char *argv[])
     }
 
     bu_optind = 1;
-    while ((k = bu_getopt(argc, (char * const *)argv, (const char *)"d:D:hHo:O:p:P:xXyYzZ")) != -1) {
+    while ((k = bu_getopt(argc, (char * const *)argv, (const char *)"d:D:hHo:O:p:P:xXyYzZ?")) != -1) {
+	if (bu_optopt == '?') k='h';
 	switch (k) {
 	    case 'p':
 	    case 'P':
@@ -186,7 +188,7 @@ ged_mirror(struct ged *gedp, int argc, const char *argv[])
     }
 
     /* add the mirrored object to the directory */
-    dp = db_diradd(gedp->ged_wdbp->dbip, argv[bu_optind+1], RT_DIR_PHONY_ADDR, 0, dp->d_flags, (genptr_t)&ip->idb_type);
+    dp = db_diradd(gedp->ged_wdbp->dbip, argv[bu_optind+1], RT_DIR_PHONY_ADDR, 0, dp->d_flags, (void *)&ip->idb_type);
     if (dp == RT_DIR_NULL) {
 	bu_vls_printf(gedp->ged_result_str, "Unable to add [%s] to the database directory", argv[bu_optind+1]);
 	return GED_ERROR;

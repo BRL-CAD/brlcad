@@ -1,7 +1,7 @@
 /*                        R L E - F B . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2013 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -28,9 +28,10 @@
 #include "common.h"
 
 #include <stdlib.h>
-#include "bio.h"
 
-#include "bu.h"
+#include "bu/getopt.h"
+#include "bu/log.h"
+#include "vmath.h"
 #include "fb.h"
 #include "rle.h"
 
@@ -58,14 +59,11 @@ static int r_debug = 0;
 
 static char usage[] = "\
 Usage: rle-fb [-c -d -O] [-F framebuffer]  [-C r/g/b]\n\
-	[-S squarescrsize] [-W scr_width] [-N scr_height]\n\
+	[-s|S squarescrsize] [-w|W scr_width] [-n|N scr_height]\n\
 	[-X scr_xoff] [-Y scr_yoff] [file.rle]\n\
 ";
 
 
-/*
- * G E T _ A R G S
- */
 static int
 get_args(int argc, char **argv)
 {
@@ -139,13 +137,10 @@ get_args(int argc, char **argv)
 }
 
 
-/*
- * M A I N
- */
 int
 main(int argc, char **argv)
 {
-    FBIO *fbp;
+    fb *fbp;
     int i;
     int file_width;		/* unclipped width of rectangle */
     int file_skiplen;		/* # of pixels to skip on l.h.s. */
@@ -161,7 +156,7 @@ main(int argc, char **argv)
 
     rle_dflt_hdr.rle_file = infp;
     if (rle_get_setup(&rle_dflt_hdr) < 0) {
-	fprintf(stderr, "rle-fb: Error reading setup information\n");
+	fprintf(stderr, "rle-fb:  Error reading setup information\n");
 	bu_exit(1, NULL);
     }
 
@@ -224,7 +219,7 @@ main(int argc, char **argv)
     rle_dflt_hdr.xmax -= screen_xbase;
     rle_dflt_hdr.xmin = 0;
 
-    if ((fbp = fb_open(framebuffer, screen_width, screen_height)) == FBIO_NULL)
+    if ((fbp = fb_open(framebuffer, screen_width, screen_height)) == FB_NULL)
 	bu_exit(12, NULL);
 
     /* Honor original screen size desires, if set, unless they shrank */
@@ -234,8 +229,7 @@ main(int argc, char **argv)
 	screen_height = fb_getheight(fbp);
 
     /* Discard any scanlines which exceed screen height */
-    if (rle_dflt_hdr.ymax > screen_height-1)
-	rle_dflt_hdr.ymax = screen_height-1;
+    V_MIN(rle_dflt_hdr.ymax, screen_height-1);
 
     /* Clip left edge */
     screen_xlen = rle_dflt_hdr.xmax + 1;
@@ -252,7 +246,7 @@ main(int argc, char **argv)
 	rle_dflt_hdr.ymin > screen_height ||
 	rle_dflt_hdr.ymax < 0) {
 	fprintf(stderr,
-		"rle-fb:  Warning:  RLE image rectangle entirely off screen\n");
+		"rle-fb:  Warning: RLE image rectangle entirely off screen\n");
 	goto done;
     }
 
@@ -289,7 +283,7 @@ main(int argc, char **argv)
 		cmap.cm_blue[i] <<= 8;
 	    }
 	    fprintf(stderr,
-		    "rle-fb: correcting for old style colormap\n");
+		    "rle-fb:  correcting for old style colormap\n");
 	}
     }
     if (rle_dflt_hdr.ncmap > 0 && !crunch)

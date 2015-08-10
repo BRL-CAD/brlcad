@@ -13,7 +13,7 @@ set(LIBSTEPDAI_SRCS
     sdaiString.cc
 )
 
-SET(LIBSTEPDAI_PRIVATE_HDRS
+SET(SC_CLDAI_HDRS
     sdaiApplication_instance_set.h
     sdaiBinary.h
     sdaiDaObject.h
@@ -25,7 +25,6 @@ SET(LIBSTEPDAI_PRIVATE_HDRS
     sdaiObject.h
     sdaiSession_instance.h
     sdaiString.h
-    StrUtil.hh
 )
 
 include_directories(
@@ -36,3 +35,6 @@ include_directories(
 )
 
 SC_ADDLIB(stepdai "${LIBSTEPDAI_SRCS}" "steputils;base")
+
+install(FILES ${SC_CLDAI_HDRS}
+	DESTINATION ${INCLUDE_INSTALL_DIR}/stepcode/cldai)

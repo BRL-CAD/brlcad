@@ -1,7 +1,7 @@
 /*                       B I N U N I F . C
  * BRL-CAD
  *
- * Copyright (c) 2001-2013 United States Government as represented by
+ * Copyright (c) 2001-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -32,7 +32,6 @@
 
 #include "common.h"
 
-#include <stdio.h>
 #include <sys/stat.h>
 #include <math.h>
 #include <string.h>
@@ -44,10 +43,10 @@
 
 #include "bio.h"
 
-#include "bu.h"
+
 #include "vmath.h"
 #include "bn.h"
-#include "rtgeom.h"
+#include "rt/geom.h"
 #include "raytrace.h"
 #include "wdb.h"
 
@@ -113,7 +112,7 @@ rt_mk_binunif(struct rt_wdb *wdbp, const char *obj_name, const char *file_name, 
     RT_DB_INTERNAL_INIT(&intern);
     intern.idb_major_type = major_type;
     intern.idb_minor_type = minor_type;
-    intern.idb_ptr = (genptr_t)bip;
+    intern.idb_ptr = (void *)bip;
     intern.idb_meth = &OBJ[ID_BINUNIF];
 
     /* create body portion of external form */

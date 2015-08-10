@@ -1,7 +1,7 @@
 /*                 B R L C A D _ B R E P . C P P
  * BRL-CAD
  *
- * Copyright (c) 2008-2013 United States Government as represented by
+ * Copyright (c) 2008-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -17,6 +17,8 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
+
+#include "common.h"
 
 #include <assert.h>
 
@@ -375,7 +377,7 @@ BRLCADBrepHandler::handleCircularArc(double radius,
     debug("a = " << a);
     debug("b = " << b);
     if (b < a) {
-	b = 2*M_PI+b;
+	b = M_2PI+b;
     }
     ON_Arc arc(circle, ON_Interval(a, b));
 

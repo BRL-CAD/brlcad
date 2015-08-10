@@ -24,6 +24,7 @@
     <arg choice='opt'>-a <replaceable>abs_tol</replaceable></arg>
     <arg choice='opt'>-r <replaceable>rel_tol</replaceable></arg>
     <arg choice='opt'>-n <replaceable>norm_tol</replaceable></arg>
+    <arg choice='opt'>-P <replaceable>dummy_arg</replaceable></arg>
     <arg choice='opt'>-o <replaceable>DXF_file</replaceable></arg>
     <arg choice='plain'><replaceable>database.g</replaceable></arg>
     <arg choice='plain'><replaceable>object(s)</replaceable></arg>
@@ -32,7 +33,7 @@
 
 
 <refsect1 xml:id='description'><title>DESCRIPTION</title>
-<para><emphasis remap='I'>g-dxf</emphasis>
+<para><command>g-dxf</command>
 converts the specified
 <emphasis remap='I'>object(s)</emphasis>
 from a BRL-CAD
@@ -49,7 +50,7 @@ option specifies an NMG debug flag. The
 option may be used to specify an absolute tessellation tolerance (in millimeters). This
 requires that the maximum absolute error from the tessellated surface to the actual
 surface must not be greater than
-<emphasis remap='I'>abs_tol.</emphasis>
+<emphasis remap='I'>abs_tol</emphasis>.
 The
 <option>-n</option>
 option specifies a surface normal error tolerance (in degrees) for the tessellation.
@@ -58,7 +59,7 @@ The
 option may be used to set a relative error tolerance. This effectively
 sets an absolute tolerance for each primitive solid by multiplying the
 overall size of the solid by
-<emphasis remap='I'>rel_tol.</emphasis>
+<emphasis remap='I'>rel_tol</emphasis>.
 The
 <option>-D</option>
 option specifies a calculational distance tolerance (mm). Any two vertices
@@ -68,10 +69,13 @@ The
 option requests verbose output.
 The
 <option>-i</option>
-option requests the output file units to be inches (the default is mm).The
+option requests the output file units to be inches (the default is mm). The
 <option>-p</option>
 option requests that the output consist entirely of POLYFACE MESH entities.
-(The default is all 3DFACE entities).
+(The default is all 3DFACE entities.)
+The
+<option>-P</option> option is to enable core dumps (dummy argument is for
+number of processors, currently disabled).
 The
 <option>-o</option>
 option specifies the name of the file to receive the output
@@ -80,7 +84,7 @@ option specifies the name of the file to receive the output
 
 <refsect1 xml:id='example'><title>EXAMPLE</title>
 <synopsis>
-$ <emphasis remap='I'>g-dxf -o sample.dxf sample.g sample_object</emphasis>
+$ g-dxf -o <emphasis remap='I'>sample.dxf sample.g sample_object</emphasis>
 </synopsis>
 </refsect1>
 
@@ -95,7 +99,7 @@ $ <emphasis remap='I'>g-dxf -o sample.dxf sample.g sample_object</emphasis>
 </refsect1>
 
 <refsect1 xml:id='copyright'><title>COPYRIGHT</title>
-<para>This software is Copyright (c) 2003-2013 by the United States
+<para>This software is Copyright (c) 2003-2014 by the United States
 Government as represented by U.S. Army Research Laboratory.</para>
 </refsect1>
 

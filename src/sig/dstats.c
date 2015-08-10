@@ -1,7 +1,7 @@
 /*                        D S T A T S . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2013 United States Government as represented by
+ * Copyright (c) 1986-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -29,34 +29,42 @@
 #include <string.h>
 #include <stdlib.h>
 #include <math.h>
+#include <float.h>
 #include "bio.h"
 
-#include "bu.h"
+#include "bu/log.h"
+#include "bu/str.h"
 
-#define IBUFSIZE 1024		/* Max read size */
-double buf[IBUFSIZE];		/* Input buffer */
 
-void printusage (void)
+static void
+printusage(void)
 {
-	bu_exit(1, "Usage: dstats [file.doubles]\n");
+    bu_exit(1, "Usage: dstats [file.doubles]\n");
 }
 
-int main(int ac, char *av[])
+
+int
+main(int ac, char *av[])
 {
+#define IBUFSIZE 1024		/* Max read size */
+    double buf[IBUFSIZE];		/* Input buffer */
+
     int i, n;
-    long num_values;
+    long num_values = 0;
     double *bp;
-    double sum, sum2;
-    double max, min;
+    double sum = 0.0;
+    double sum2 = 0.0;
+    double min = DBL_MAX;
+    double max = DBL_MIN;
     double mean, var;
     FILE *fp;
 
-    if ( ac == 1 && isatty(fileno(stdin)) && isatty(fileno(stdout)) )
+    if (ac == 1 && isatty(fileno(stdin)) && isatty(fileno(stdout)))
 	printusage();
 
     /* look for optional input file, after checking for -h and -? */
     if (ac > 1) {
-	if ( BU_STR_EQUAL(av[1], "-h") ||  BU_STR_EQUAL(av[1], "-?") )
+	if (BU_STR_EQUAL(av[1], "-h") ||  BU_STR_EQUAL(av[1], "-?"))
 	    printusage();
 	if ((fp = fopen(av[1], "r")) == 0) {
 	    bu_exit(1, "dstats: can't open \"%s\"\n", av[1]);
@@ -67,17 +75,8 @@ int main(int ac, char *av[])
 	fp = stdin;
 
     /*
-     * Find sum, min, max.
+     * Find min, max.
      */
-    num_values = 0;
-    sum = sum2 = 0;
-#if defined(HUGE_VAL)
-    min = HUGE_VAL;
-    max = -HUGE_VAL;
-#else
-    min = HUGE;
-    max = -HUGE;
-#endif
     while ((n = fread(buf, sizeof(*buf), IBUFSIZE, fp)) > 0) {
 	num_values += n;
 	bp = &buf[0];

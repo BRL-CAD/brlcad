@@ -1,0 +1,37 @@
+December 2014:
+
+The files in this directory are conversions of the NIST MBE PMI test models
+into the AP203 file format.  These conversions are also in the public domain.
+
+Originals are from http://www.nist.gov/el/msid/infotest/mbe-pmi-validation.cfm
+
+Models 7 through 10 have been assembled into a single file, guided by the example
+PDF provided with the original NIST data set.
+
+            MBE PMI Validation and Conformance Testing Models
+
+NIST has created a Test System to measure conformance of Computer-Aided Design
+(CAD) to American Society of Mechanical Engineers (ASME) standards for Product
+and Manufacturing Information (PMI), specifically geometric dimensioning and
+tolerancing (GD&T) information.
+
+As part of this Test System, CAD Models were prepared.
+
+For problems or questions about the MBE PMI CAD Models, contact: Robert Lipman
+
+Dataset 1 First Release:  December 2013
+Dataset 1 Update Release: December 2014  (Note: Dataset 1 files currently in
+                                          BRL-CAD repo are based off of the
+                                          2013 version.)
+Dataset 2 First Release:  June 2015
+
+These files were developed at the National Institute of Standards and
+Technology by employees of the Federal Government in the course of their
+official duties. Pursuant to Title 17 Section 105 of the United States Code
+these files are not subject to copyright protection and are in the public
+domain. These files are an experimental system. NIST assumes no responsibility
+whatsoever for their use by other parties, and makes no guarantees, expressed
+or implied, about their quality, reliability, or any other characteristic.
+
+Any mention of commercial products is for information only; it does not imply
+recommendation or endorsement by NIST.

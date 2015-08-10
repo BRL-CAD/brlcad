@@ -1,7 +1,7 @@
 /*                      H E A T G R A P H . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2013 United States Government as represented by
+ * Copyright (c) 1985-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -36,11 +36,12 @@
 #  include <sys/time.h>
 #endif
 
-#include "bu.h"
+#include "bu/log.h"
+#include "bu/parallel.h"
 #include "vmath.h"
 #include "raytrace.h"
 #include "fb.h"
-#include "plot3.h"
+#include "bn/plot3.h"
 #include "scanline.h"
 
 #include "./rtuif.h"
@@ -56,8 +57,6 @@ static void tvsub(struct timeval *tdiff, struct timeval *t1, struct timeval *t0)
 /* Time functions are copied almost verbatim from timer42.c */
 
 /**
- * P R E P _ P I X E L _ T I M E R
- *
  * Prep the timer for each pixel
  */
 void prep_pixel_timer(void)
@@ -66,10 +65,6 @@ void prep_pixel_timer(void)
     getrusage(RUSAGE_SELF, &ruA);
     getrusage(RUSAGE_CHILDREN, &ruAc);
 }
-
-/**
- * T V S U B
- */
 
 static void
 tvsub(struct timeval *tdiff, struct timeval *t1, struct timeval *t0)
@@ -82,8 +77,6 @@ tvsub(struct timeval *tdiff, struct timeval *t1, struct timeval *t0)
 }
 
 /**
- * G E T _ P I X E L _ T I M E R
- *
  * Get the length of time the pixel
  * was being made.
  */
@@ -121,8 +114,6 @@ get_pixel_timer(double *total)
 
 
 /**
- * T I M E T A B L E _ I N I T
- *
  * This function creates the table of values that will store the
  * time taken to complete pixels during a raytrace. Returns a
  * pointer to the table.
@@ -147,9 +138,9 @@ timeTable_init(int x, int y)
 	if (timeTable == NULL) {
 	    bu_log("X is %d, Y is %d\n", x, y);
 	    bu_log("Making time Table\n");
-	    timeTable = bu_malloc(x * sizeof(double *), "timeTable");
+	    timeTable = (fastf_t **)bu_malloc(x * sizeof(fastf_t *), "timeTable");
 	    for (i = 0; i < x; i++) {
-		timeTable[i] = bu_malloc(y * sizeof(double), "timeTable[i]");
+		timeTable[i] = (fastf_t *)bu_malloc(y * sizeof(fastf_t), "timeTable[i]");
 	    }
 	    for (i = 0; i < x; i++) {
 		for (w = 0; w < y; w++) {
@@ -165,8 +156,6 @@ timeTable_init(int x, int y)
 
 
 /**
- * T I M E T A B L E _ F R E E
- *
  * Frees up the time table array.
  */
 void
@@ -183,8 +172,6 @@ timeTable_free(fastf_t **timeTable)
 
 
 /**
- * T I M E T A B L E _ I N P U T
- *
  * This function inputs the time taken to complete a pixel during a
  * raytrace and places it into the timeTable for use in creating a
  * heat graph light model.
@@ -207,8 +194,6 @@ timeTable_input(int x, int y, fastf_t timeval, fastf_t **timeTable)
 
 
 /**
- * T I M E T A B L E _ S I N G L E P R O C E S S
- *
  * This function processes the time table 1 pixel at a time, as
  * opposed to all at once like timeTable_process. Heat values are
  * bracketed to certain values, instead of normalized.
@@ -257,13 +242,11 @@ timeTable_singleProcess(struct application *app, fastf_t **timeTable, fastf_t *t
 
 
 /**
- * T I M E T A B L E _ P R O C E S S
- *
  * This function takes the contents of the time table, and produces the
  * heat graph based on time taken for each pixel.
  */
 void
-timeTable_process(fastf_t **timeTable, struct application *UNUSED(app), FBIO *fbp)
+timeTable_process(fastf_t **timeTable, struct application *UNUSED(app), fb *fbp)
 {
     fastf_t maxTime = -MAX_FASTF;		/* The 255 value */
     fastf_t minTime = MAX_FASTF; 		/* The 1 value */
@@ -331,7 +314,7 @@ timeTable_process(fastf_t **timeTable, struct application *UNUSED(app), FBIO *fb
 	    p[1]=Gcolor;
 	    p[2]=Bcolor;
 
-	    if (fbp != FBIO_NULL) {
+	    if (fbp != FB_NULL) {
 		bu_semaphore_acquire(BU_SEM_SYSCALL);
 		npix = fb_write(fbp, x, y, (unsigned char *)p, 1);
 		bu_semaphore_release(BU_SEM_SYSCALL);
@@ -340,7 +323,7 @@ timeTable_process(fastf_t **timeTable, struct application *UNUSED(app), FBIO *fb
 	    }
 	}
     }
-    if (fbp != FBIO_NULL) {
+    if (fbp != FB_NULL) {
       zoomH = fb_getheight(fbp) / height;
       zoomW = fb_getwidth(fbp) / width;
       (void)fb_view(fbp, width/2, height/2, zoomH, zoomW);

@@ -1,7 +1,7 @@
 /*                      B W S H R I N K . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2013 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -32,17 +32,19 @@
 #include <string.h>
 #include "bio.h"
 
-#include "bu.h"
+#include "bu/getopt.h"
+#include "bu/file.h"
+#include "bu/malloc.h"
+#include "bu/log.h"
 
 
 /* declarations to support use of bu_getopt() system call */
-char *options = "us:w:n:f:h?";
+char options[] = "us:w:n:f:h?";
+char noname[]  = "(noname)";
+char Stdin[]   = "(stdin)";
+char *progname = noname;
+char *filename = Stdin;
 
-char *progname = "(noname)";
-char *filename = "(stdin)";
-
-/* S H R I N K _ I M A G E
- */
 void
 shrink_image(int w, int h, unsigned char *buffer, int Factor)
 {
@@ -99,10 +101,9 @@ int factor = 2;
 #define METH_UNDERSAMPLE 2
 int method = METH_BOXCAR;
 
-/*
- * U S A G E --- tell user how to invoke this program, then exit
- */
-void usage(void)
+
+void
+usage(void)
 {
     (void) fprintf(stderr,
 		   "Usage: %s [-u] [-w width] [-n scanlines] [-s squaresize]\n\
@@ -111,10 +112,8 @@ void usage(void)
 }
 
 
-/*
- * P A R S E _ A R G S --- Parse through command line flags
- */
-void parse_args(int ac, char **av)
+void
+parse_args(int ac, char **av)
 {
     int c;
 
@@ -169,8 +168,6 @@ void parse_args(int ac, char **av)
 
 
 /*
- * M A I N
- *
  * Call parse_args to handle command line arguments first, then
  * process input.
  */
@@ -182,24 +179,24 @@ int main(int ac, char **av)
     int t;
 
     (void)parse_args(ac, av);
-    if (isatty(fileno(stdin))) usage();
+    if (isatty(fileno(stdin)))
+	usage();
 
     /* process stdin */
 
     /* get buffer for image */
     size = width * height;
-    if ((buffer = (unsigned char *)malloc(width*height)) == (unsigned char *)NULL) {
-	fprintf(stderr, "%s: cannot allocate input buffer\n",
-		progname);
-	bu_free(buffer, "buffer alloc from malloc");
-	bu_exit (-1, NULL);
+    if (size > 0) {
+	buffer = (unsigned char *)bu_malloc(size, "alloc buffer");
+    } else {
+	bu_log("ERROR: zero dimension image\n");
+	usage();
     }
 
     /* read in entire image */
     for (t=0; t < size && (c=read(0, (char *)&buffer[t], size-t)) >= 0; t += c) {
 	/* do nothing */;
     }
-
 
     if (c < 0) {
 	perror (filename);

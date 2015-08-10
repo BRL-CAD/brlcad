@@ -1,7 +1,7 @@
 /*                     P I X E L S W A P . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2013 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -27,14 +27,15 @@
 
 #include <stdlib.h>
 #include <string.h>
-#include "bio.h"
 
-#include "bu.h"
+#include "bu/getopt.h"
+#include "bu/log.h"
 #include "fb.h"
 
 
-char *options = "hd:";
-char *progname = "(noname)";
+char options[] = "d:h?";
+char noname[] = "(noname)";
+char *progname = noname;
 
 int depth = 3;
 unsigned char ibuf[32767 * 3];
@@ -43,23 +44,20 @@ unsigned char obuf[32767 * 3];
 		      (a)[1] == (b)[1] && \
 		      (a)[2] == (b)[2])
 
-/*
- * U S A G E --- tell user how to invoke this program, then exit
- */
-void usage(char *s)
+
+void
+usage(const char *s)
 {
     if (s) (void)fputs(s, stderr);
 
-    (void) fprintf(stderr, "Usage: %s [ -%s ] r g b R G B [ < infile > outfile]\n",
-		   progname, options);
+    (void) fprintf(stderr, "Usage: %s [ -d  pixeldepth ] r g b R G B < infile > outfile\n",
+		   progname);
     bu_exit (1, NULL);
 }
 
 
-/*
- * P A R S E _ A R G S --- Parse through command line flags
- */
-int parse_args(int ac, char **av)
+int
+parse_args(int ac, char **av)
 {
     int c;
 
@@ -68,27 +66,21 @@ int parse_args(int ac, char **av)
     else
 	++progname;
 
-    /* Turn off bu_getopt's error messages */
-    bu_opterr = 0;
-
     /* get all the option flags from the command line */
-    while ((c=bu_getopt(ac, av, options)) != -1)
+    while ((c=bu_getopt(ac, av, options)) != -1) {
 	switch (c) {
 	    case 'd'	: if ((c=atoi(bu_optarg)) > 0)
 		depth = c;
 	    else
 		fprintf(stderr, "bad # of bytes per pixel (%d)\n", c);
 		break;
-	    case '?'	:
-	    case 'h'	:
-	    default		: usage("Bad or help flag specified\n"); break;
+	    default	: usage(""); break;
 	}
+    }
 
     return bu_optind;
 }
 /*
- * M A I N
- *
  * Call parse_args to handle command line arguments first, then
  * process input.
  */
@@ -98,11 +90,16 @@ int main(int ac, char **av)
     unsigned char r, g, b, R, G, B;
     size_t ret;
 
-    if ((i=parse_args(ac, av))+6 > ac)
+    i=parse_args(ac, av);
+/* if ac == 1, there is only 1 argument; i.e., run-with-no-arguments
+ */
+    if (ac == 1) usage("");
+
+    if (i+6 > ac)
 	usage("missing pixel value(s)\n");
 
     if (isatty(fileno(stdout)) || isatty(fileno(stdin)))
-	usage("Redirect standard output\n");
+	usage("Redirect standard input and output\n");
 
     /* get pixel values */
     r = atoi(av[i++]);

@@ -1,7 +1,7 @@
 /*                        S H _ T C L . C
  * BRL-CAD
  *
- * Copyright (c) 1997-2013 United States Government as represented by
+ * Copyright (c) 1997-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -36,11 +36,13 @@
 
 #include "tcl.h"
 
-#include "bu.h"
+#include "bu/log.h"
+#include "bu/malloc.h"
+#include "bu/vls.h"
 #include "vmath.h"
 #include "bn.h"
 #include "raytrace.h"
-#include "shadefuncs.h"
+#include "optical/shadefuncs.h"
 
 
 extern struct mfuncs	*mfHead;	/* view.c */
@@ -48,16 +50,15 @@ extern int get_args(int argc, const char *argv[]); /* opt.c */
 
 
 /*
- *			S H _ D I R E C T C H A N G E _ R G B
- *
  *  Go poke the rgb values of a region, on the fly.
- *  This does not update the inmemory database,
+ *  This does not update the in-memory database,
  *  so any changes will vanish on next re-prep unless other measures
  *  are taken.
  */
 int
 sh_directchange_rgb(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *argv[])
 {
+    long int rtip_val;
     struct rt_i	*rtip;
     struct region	*regp;
     struct directory *dp;
@@ -72,7 +73,8 @@ sh_directchange_rgb(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc,
     g = atoi(argv[3+1]) / 255.0;
     b = atoi(argv[3+2]) / 255.0;
 
-    rtip = (struct rt_i *)atol(argv[1]);
+    rtip_val = atol(argv[1]);
+    rtip = (struct rt_i *)rtip_val;
     RT_CK_RTI(rtip);
 
     if ( rtip->needprep )  {
@@ -87,11 +89,11 @@ sh_directchange_rgb(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc,
 
     /* Find all region names which match /comb/ pattern */
     for ( BU_LIST_FOR( regp, region, &rtip->HeadRegion ) )  {
-	if ( dp->d_flags & RT_DIR_REGION )  {
+/*	if ( dp->d_flags & RT_DIR_REGION )  {	*/
 	    /* name will occur at end of region string w/leading slash */
-	} else {
-	    /* name will occur anywhere, bracked by slashes */
-	}
+/*	} else {	*/
+	    /* name will occur anywhere, bracketed by slashes */
+/*	}	*/
 
 	/* XXX quick hack */
 	if ( strstr( regp->reg_name, argv[2] ) == NULL )  continue;
@@ -112,16 +114,15 @@ sh_directchange_rgb(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc,
 
 
 /*
- *			S H _ D I R E C T C H A N G E _ S H A D E R
- *
  *  Go poke the rgb values of a region, on the fly.
- *  This does not update the inmemory database,
+ *  This does not update the in-memory database,
  *  so any changes will vanish on next re-prep unless other measures
  *  are taken.
  */
 int
 sh_directchange_shader(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *argv[])
 {
+    long int rtip_val;
     struct rt_i	*rtip;
     struct region *regp;
     struct directory *dp;
@@ -132,7 +133,8 @@ sh_directchange_shader(ClientData UNUSED(clientData), Tcl_Interp *interp, int ar
 	return TCL_ERROR;
     }
 
-    rtip = (struct rt_i *)atol(argv[1]);
+    rtip_val = atol(argv[1]);
+    rtip = (struct rt_i *)rtip_val;
     RT_CK_RTI(rtip);
 
     if ( rtip->needprep )  {
@@ -150,11 +152,11 @@ sh_directchange_shader(ClientData UNUSED(clientData), Tcl_Interp *interp, int ar
 
     /* Find all region names which match /comb/ pattern */
     for ( BU_LIST_FOR( regp, region, &rtip->HeadRegion ) )  {
-	if ( dp->d_flags & RT_DIR_REGION )  {
+/*	if ( dp->d_flags & RT_DIR_REGION )  {	*/
 	    /* name will occur at end of region string w/leading slash */
-	} else {
-	    /* name will occur anywhere, bracked by slashes */
-	}
+/*	} else {	*/
+	    /* name will occur anywhere, bracketed by slashes */
+/*	}	*/
 
 	/* XXX quick hack */
 	if ( strstr( regp->reg_name, argv[2] ) == NULL )  continue;
@@ -162,7 +164,7 @@ sh_directchange_shader(ClientData UNUSED(clientData), Tcl_Interp *interp, int ar
 	/* Modify the region's shader string */
 	bu_log("sh_directchange_shader() changing %s\n", regp->reg_name);
 	if ( regp->reg_mater.ma_shader )
-	    bu_free( (genptr_t)regp->reg_mater.ma_shader, "reg_mater.ma_shader");
+	    bu_free( (void *)regp->reg_mater.ma_shader, "reg_mater.ma_shader");
 	regp->reg_mater.ma_shader = bu_vls_strdup(&shader);
 
 	/* Update the shader */
@@ -177,8 +179,6 @@ sh_directchange_shader(ClientData UNUSED(clientData), Tcl_Interp *interp, int ar
 }
 
 /*
- *			S H _ O P T
- *
  *  Process RT-style command-line options.
  */
 int
@@ -194,8 +194,6 @@ sh_opt(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *
 }
 
 /*
- *			S H _ T C L _ S E T U P
- *
  *  Add all the supported Tcl interfaces to RT material/shader routines to
  *  the list of commands known by the given interpreter.
  */

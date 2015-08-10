@@ -1,7 +1,7 @@
 /*                     P H O T O N M A P . C
  * BRL-CAD
  *
- * Copyright (c) 2002-2013 United States Government as represented by
+ * Copyright (c) 2002-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -25,6 +25,7 @@
 
 #include "common.h"
 
+#include <limits.h>
 #include <stdlib.h>
 #include <time.h>
 
@@ -35,6 +36,7 @@
 #  include <signal.h>
 #endif
 
+#include "bu/parallel.h"
 #include "photonmap.h"
 
 
@@ -60,7 +62,7 @@ int GPM_WIDTH;
 int GPM_HEIGHT;
 int GPM_RAYS;			/* Number of Sample Rays for each Direction in Irradiance Hemi */
 double GPM_ATOL;		/* Angular Tolerance for Photon Gathering */
-struct resource *GPM_RTAB;	/* Resource Table for Multi-threading */
+struct resource GPM_RTAB[MAX_PSW];	/* Resource Table for Multi-threading */
 int HitG, HitB;
 
 
@@ -385,7 +387,7 @@ GetMaterial(char *MS, vect_t spec, fastf_t *refi, fastf_t *transmit)
 
 	MS += 7;
 	bu_vls_printf(&matparm, "%s", MS);
-	if (bu_struct_parse(&matparm, phong_parse, (char *)phong_sp) < 0)
+	if (bu_struct_parse(&matparm, phong_parse, (char *)phong_sp, NULL) < 0)
 	  bu_log("Warning - bu_struct_parse failure (matparm, phone_parse, material = plastic) in GetMaterial!\n");
 	bu_vls_free(&matparm);
 
@@ -417,7 +419,7 @@ GetMaterial(char *MS, vect_t spec, fastf_t *refi, fastf_t *transmit)
 
 	MS += 5; /* move pointer past "pm " (3 characters) */
 	bu_vls_printf(&matparm, "%s", MS);
-	if (bu_struct_parse(&matparm, phong_parse, (char *)phong_sp) < 0)
+	if (bu_struct_parse(&matparm, phong_parse, (char *)phong_sp, NULL) < 0)
 	  bu_log("Warning - bu_struct_parse failure (matparm, phone_parse, material = glass) in GetMaterial!\n");
 	bu_vls_free(&matparm);
 
@@ -1034,10 +1036,10 @@ Irradiance(int pid, struct Photon *P, struct application *ap)
 	for (j = 1; j <= N; j++) {
 #ifndef HAVE_DRAND48
 	    theta = asin(sqrt((j-rand()/(double)RAND_MAX)/M));
-	    phi = (2.0*M_PI)*((i-rand()/(double)RAND_MAX)/N);
+	    phi = (M_2PI)*((i-rand()/(double)RAND_MAX)/N);
 #else
 	    theta = asin(sqrt((j-drand48())/M));
-	    phi = (2.0*M_PI)*((i-drand48())/N);
+	    phi = (M_2PI)*((i-drand48())/N);
 #endif
 
 	    /* Assign pt */
@@ -1049,7 +1051,7 @@ Irradiance(int pid, struct Photon *P, struct application *ap)
 	    Polar2Euclidian(lap->a_ray.r_dir, P->Normal, theta, phi);
 
 	    /* Utilize the purpose pointer as a pointer to the Irradiance Color */
-	    lap->a_purpose = (void*)P->Irrad;
+	    lap->a_purpose = (const char *)P->Irrad;
 
 	    /* bu_log("Vec: [%.3f, %.3f, %.3f]\n", ap->a_ray.r_dir[0], ap->a_ray.r_dir[1], ap->a_ray.r_dir[2]);*/
 	    rt_shootray(lap);
@@ -1126,7 +1128,7 @@ alarmhandler(int sig)
 #endif
 
 void
-IrradianceThread(int pid, genptr_t arg)
+IrradianceThread(int pid, void *arg)
 {
 #ifdef HAVE_ALARM
     starttime = time(NULL);
@@ -1363,7 +1365,7 @@ BuildPhotonMap(struct application *ap, point_t eye_pos, int cpus, int width, int
 
 
 	GPM_RAYS = Rays;
-	GPM_ATOL = cos(AngularTolerance*bn_degtorad);
+	GPM_ATOL = cos(AngularTolerance*DEG2RAD);
 
 	PInit = 1;
 
@@ -1447,7 +1449,6 @@ BuildPhotonMap(struct application *ap, point_t eye_pos, int cpus, int width, int
 		BuildTree(Emit[i], PMap[i]->StoredPhotons, PMap[i]->Root);
 
 
-	bu_semaphore_init(PM_SEM_INIT);
 	bu_log("  Building Irradiance Cache...\n");
 	ap->a_level = 1;
 	ap->a_onehit = 0;
@@ -1458,12 +1459,9 @@ BuildPhotonMap(struct application *ap, point_t eye_pos, int cpus, int width, int
 	ICSize = 0;
 
 	if (cpus > 1) {
-	    GPM_RTAB = (struct resource*)bu_calloc(cpus, sizeof(struct resource), "resource");
-	    for (i = 0; i < cpus; i++) {
-		GPM_RTAB[i].re_cpu = i;
-		GPM_RTAB[i].re_magic = RESOURCE_MAGIC;
-		BU_PTBL_SET(&ap->a_rt_i->rti_resources, i, &GPM_RTAB[i]);
-		rt_init_resource(&GPM_RTAB[i], GPM_RTAB[i].re_cpu, ap->a_rt_i);
+	    memset(GPM_RTAB, 0, sizeof(GPM_RTAB));
+	    for (i = 0; i < MAX_PSW; i++) {
+		rt_init_resource(&GPM_RTAB[i], i, ap->a_rt_i);
 	    }
 	    bu_parallel(IrradianceThread, cpus, ap);
 	} else {
@@ -1496,8 +1494,6 @@ BuildPhotonMap(struct application *ap, point_t eye_pos, int cpus, int width, int
 	}
 
     }
-    bu_free(GPM_RTAB, "resource");
-    GPM_RTAB = NULL;
 }
 
 

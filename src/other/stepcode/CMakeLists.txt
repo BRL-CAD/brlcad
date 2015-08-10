@@ -42,7 +42,11 @@ PROJECT(SC)
 
 # SC version
 SET(SC_VERSION_MAJOR 0)
-SET(SC_VERSION_MINOR 7-dev)
+if(NOT SC_IS_SUBBUILD)
+	SET(SC_VERSION_MINOR 7-dev)
+else(NOT SC_IS_SUBBUILD)
+	SET(SC_VERSION_MINOR 7)
+endif(NOT SC_IS_SUBBUILD)
 SET(SC_VERSION ${SC_VERSION_MAJOR}.${SC_VERSION_MINOR})
 
 # SC ABI version. SC_ABI_SOVERSION should be incremented
@@ -54,7 +58,33 @@ SET(SC_ABI_VERSION ${SC_ABI_SOVERSION}.0.0)
 CMAKE_MINIMUM_REQUIRED(VERSION 2.8.7)
 IF(COMMAND CMAKE_POLICY)
   CMAKE_POLICY(SET CMP0003 NEW)
+  if ("${CMAKE_VERSION}" VERSION_GREATER 2.99)
+	  CMAKE_POLICY(SET CMP0026 OLD)
+  endif ("${CMAKE_VERSION}" VERSION_GREATER 2.99)
+  if ("${CMAKE_VERSION}" VERSION_GREATER 3.0.9)
+	  CMAKE_POLICY(SET CMP0054 NEW)
+  endif ("${CMAKE_VERSION}" VERSION_GREATER 3.0.9)
 ENDIF(COMMAND CMAKE_POLICY)
+
+IF( NOT DEFINED INCLUDE_INSTALL_DIR )
+  SET( INCLUDE_INSTALL_DIR include )
+ENDIF( NOT DEFINED INCLUDE_INSTALL_DIR )
+
+IF( NOT DEFINED LIB_INSTALL_DIR )
+  SET( LIB_INSTALL_DIR lib )
+ENDIF( NOT DEFINED LIB_INSTALL_DIR )
+
+IF( NOT DEFINED BIN_INSTALL_DIR )
+  SET( BIN_INSTALL_DIR bin )
+ENDIF( NOT DEFINED BIN_INSTALL_DIR )
+
+if(NOT DEFINED BIN_DIR)
+  set(BIN_DIR bin)
+endif(NOT DEFINED BIN_DIR)
+
+if(NOT DEFINED LIB_DIR)
+  set(LIB_DIR lib)
+endif(NOT DEFINED LIB_DIR)
 
 IF( NOT DEFINED SC_BUILD_TYPE )
   SET( SC_BUILD_TYPE "Debug" CACHE STRING "Build type" ) # By default set debug build
@@ -79,15 +109,21 @@ OPTION_WITH_DEFAULT(SC_BUILD_SHARED_LIBS "Build shared libs" ON )
 # don't build static libs by default
 OPTION_WITH_DEFAULT(SC_BUILD_STATIC_LIBS "Build static libs" OFF)
 
-OPTION_WITH_DEFAULT(SC_PYTHON_GENERATOR "Compile fedex_python" ON)
-OPTION_WITH_DEFAULT(SC_CPP_GENERATOR "Compile fedex_plus" ON)
+OPTION_WITH_DEFAULT(SC_PYTHON_GENERATOR "Compile exp2python" ON)
+OPTION_WITH_DEFAULT(SC_CPP_GENERATOR "Compile exp2cxx" ON)
 
 OPTION_WITH_DEFAULT(SC_MEMMGR_ENABLE_CHECKS "Enable sc_memmgr's memory leak detection" OFF)
-OPTION_WITH_DEFAULT(SC_TRACE_FPRINTF "Enable extra comments in generated code so the code's source in fedex_plus may be located" OFF)
+OPTION_WITH_DEFAULT(SC_TRACE_FPRINTF "Enable extra comments in generated code so the code's source in exp2cxx may be located" OFF)
 
 if(NOT DEFINED SC_SDAI_ADDITIONAL_EXES_SRCS )
   set( SC_SDAI_ADDITIONAL_EXES_SRCS "" CACHE STRING "Source files for additional executables to be linked with SDAI libs" )
 endif(NOT DEFINED SC_SDAI_ADDITIONAL_EXES_SRCS )
+
+if( NOT DEFINED SC_BUILD_SCHEMAS )
+    message( "** CMake variable SC_BUILD_SCHEMAS not set. Defaults to building ALL schemas. This will take a while; see http://stepcode.org/mw/index.php?title=STEPcode_CMake_variables#SC_BUILD_SCHEMAS" )
+    #this makes SC_BUILD_SCHEMAS show up in cmake-gui
+    SET(SC_BUILD_SCHEMAS "ALL" CACHE string "Semicolon-separated list of paths to EXPRESS schemas to be built" )
+endif( NOT DEFINED SC_BUILD_SCHEMAS )
 
 # CMake derives much of its functionality from modules, typically
 # stored in one directory - let CMake know where to find them.
@@ -135,10 +171,9 @@ ENDIF(SC_ENABLE_COVERAGE)
 # Testing option
 OPTION_WITH_DEFAULT( SC_ENABLE_TESTING "Enable unittesting framework" OFF )
 IF(SC_ENABLE_TESTING)
-  #this makes SC_BUILD_SCHEMAS show up in cmake-gui
   if( NOT DEFINED SC_BUILD_SCHEMAS )
-    SET(SC_BUILD_SCHEMAS "ALL" CACHE string "Semicolon-separated list of paths to EXPRESS schemas to be built" )
-  endif( NOT DEFINED SC_BUILD_SCHEMAS )
+    set( SC_BUILD_SCHEMAS "ALL" ) #test all schemas, unless otherwise specified
+  endif()
   INCLUDE(CTest)
   ENABLE_TESTING()
 ENDIF(SC_ENABLE_TESTING)
@@ -183,15 +218,15 @@ ENDIF(NOT DEFINED CMAKE_RUNTIME_OUTPUT_DIRECTORY)
 
 FOREACH(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
   STRING(TOUPPER "${CFG_TYPE}" CFG_TYPE)
-  IF(NOT "CMAKE_LIBRARY_OUTPUT_DIRECTORY_${CFG_TYPE}")
+  IF(NOT DEFINED CMAKE_LIBRARY_OUTPUT_DIRECTORY_${CFG_TYPE})
     SET("CMAKE_LIBRARY_OUTPUT_DIRECTORY_${CFG_TYPE}" ${SC_BINARY_DIR}/lib CACHE INTERNAL "Single output directory for building all libraries.")
-  ENDIF(NOT "CMAKE_LIBRARY_OUTPUT_DIRECTORY_${CFG_TYPE}")
-  IF(NOT "CMAKE_ARCHIVE_OUTPUT_DIRECTORY_${CFG_TYPE}")
+ ENDIF(NOT DEFINED CMAKE_LIBRARY_OUTPUT_DIRECTORY_${CFG_TYPE})
+ IF(NOT DEFINED CMAKE_ARCHIVE_OUTPUT_DIRECTORY_${CFG_TYPE})
     SET("CMAKE_ARCHIVE_OUTPUT_DIRECTORY_${CFG_TYPE}" ${SC_BINARY_DIR}/lib CACHE INTERNAL "Single output directory for building all archives.")
-  ENDIF(NOT "CMAKE_ARCHIVE_OUTPUT_DIRECTORY_${CFG_TYPE}")
-  IF(NOT "CMAKE_RUNTIME_OUTPUT_DIRECTORY_${CFG_TYPE}")
+ ENDIF(NOT DEFINED CMAKE_ARCHIVE_OUTPUT_DIRECTORY_${CFG_TYPE})
+ IF(NOT DEFINED CMAKE_RUNTIME_OUTPUT_DIRECTORY_${CFG_TYPE})
     SET("CMAKE_RUNTIME_OUTPUT_DIRECTORY_${CFG_TYPE}" ${SC_BINARY_DIR}/bin CACHE INTERNAL "Single output directory for building all executables.")
-  ENDIF(NOT "CMAKE_RUNTIME_OUTPUT_DIRECTORY_${CFG_TYPE}")
+ ENDIF(NOT DEFINED CMAKE_RUNTIME_OUTPUT_DIRECTORY_${CFG_TYPE})
 ENDFOREACH()
 
 
@@ -343,24 +378,40 @@ cmake_pop_check_state()
 # Now that all the tests are done, configure the sc_cf.h file:
 get_property(CONFIG_H_FILE_CONTENTS GLOBAL PROPERTY SC_CONFIG_H_CONTENTS)
 file(WRITE ${CONFIG_H_FILE} "${CONFIG_H_FILE_CONTENTS}")
-configure_file(${CONFIG_H_FILE} ${SC_BINARY_DIR}/include/sc_cf.h)
+configure_file(${CONFIG_H_FILE} ${SC_BINARY_DIR}/${INCLUDE_INSTALL_DIR}/sc_cf.h)
 
-################ create sc_version_string.h, http://stackoverflow.com/questions/3780667
-# Using 'ver_string' instead of 'sc_version_string.h' is a trick to force the
-# command to always execute when the custom target is built. It works because
-# a file by that name never exists.
-configure_file(${SC_CMAKE_DIR}/sc_version_string.cmake ${SC_BINARY_DIR}/sc_version_string.cmake @ONLY)
-add_custom_target(version_string ALL DEPENDS ver_string )
-# creates sc_version_string.h using cmake script
-add_custom_command(OUTPUT ver_string ${CMAKE_CURRENT_BINARY_DIR}/include/sc_version_string.h
-                   COMMAND ${CMAKE_COMMAND} -DSOURCE_DIR=${SC_SOURCE_DIR}
-                                            -DBINARY_DIR=${SC_BINARY_DIR}
-                                            -P ${SC_BINARY_DIR}/sc_version_string.cmake)
-# sc_version_string.h is a generated file
-set_source_files_properties(${CMAKE_CURRENT_BINARY_DIR}/include/sc_version_string.h
-  PROPERTIES GENERATED TRUE
-  HEADER_FILE_ONLY TRUE )
-################
+if(NOT SC_IS_SUBBUILD)
+  ################ create sc_version_string.h, http://stackoverflow.com/questions/3780667
+  # Using 'ver_string' instead of 'sc_version_string.h' is a trick to force the
+  # command to always execute when the custom target is built. It works because
+  # a file by that name never exists.
+  configure_file(${SC_CMAKE_DIR}/sc_version_string.cmake ${SC_BINARY_DIR}/sc_version_string.cmake @ONLY)
+  add_custom_target(version_string ALL DEPENDS ver_string )
+  # creates sc_version_string.h using cmake script
+  add_custom_command(OUTPUT ver_string ${CMAKE_CURRENT_BINARY_DIR}/${INCLUDE_INSTALL_DIR}/sc_version_string.h
+    COMMAND ${CMAKE_COMMAND} -DSOURCE_DIR=${SC_SOURCE_DIR}
+    -DBINARY_DIR=${SC_BINARY_DIR}
+    -P ${SC_BINARY_DIR}/sc_version_string.cmake)
+  # sc_version_string.h is a generated file
+  set_source_files_properties(${CMAKE_CURRENT_BINARY_DIR}/${INCLUDE_INSTALL_DIR}/sc_version_string.h
+    PROPERTIES GENERATED TRUE
+    HEADER_FILE_ONLY TRUE )
+  ################
+else(NOT SC_IS_SUBBUILD)
+  set(vstring "
+//sc_version_string.h - written by cmake. Changes will be lost!\n
+#ifndef SC_VERSION_STRING\n
+#define SC_VERSION_STRING\n\n
+const char* sc_version() {\n
+return \"${SC_VERSION}\";\n
+}\n\n
+#endif\n"
+  )
+
+file(WRITE
+  ${CMAKE_CURRENT_BINARY_DIR}/${INCLUDE_INSTALL_DIR}/sc_version_string.h
+  "${vstring}")
+endif(NOT SC_IS_SUBBUILD)
 
 if(MSVC)
   # add_definitions( -Wall )
@@ -381,15 +432,15 @@ include_directories(
 ADD_SUBDIRECTORY(src/base)
 ADD_SUBDIRECTORY(src/express)
 ADD_SUBDIRECTORY(src/exppp)
-ADD_SUBDIRECTORY(src/fedex_plus)
-ADD_SUBDIRECTORY(src/fedex_python)
+ADD_SUBDIRECTORY(src/exp2cxx)
+ADD_SUBDIRECTORY(src/exp2python)
 ADD_SUBDIRECTORY(src/clstepcore)
 ADD_SUBDIRECTORY(src/cleditor)
 ADD_SUBDIRECTORY(src/cldai)
 ADD_SUBDIRECTORY(src/clutils)
-if(NOT WIN32)
-  ADD_SUBDIRECTORY(src/cllazyfile)
-endif(NOT WIN32)
+if( NOT WIN32 ) # don't build cllazyfile on windows until export/import macros are in place
+  ADD_SUBDIRECTORY( src/cllazyfile )
+endif( NOT WIN32 )
 ADD_SUBDIRECTORY(include)
 ADD_SUBDIRECTORY(data)
 IF(SC_ENABLE_TESTING)
@@ -399,7 +450,7 @@ ADD_SUBDIRECTORY(doc)
 
 # this is for testing - 'make core' builds everything that isn't generated
 add_custom_target( core )
-add_dependencies( core stepdai check-express stepeditor fedex_plus )
+add_dependencies( core stepdai check-express stepeditor exp2cxx )
 
 if(NOT SC_IS_SUBBUILD)
   ###############################################################################
@@ -430,3 +481,11 @@ if(NOT SC_IS_SUBBUILD)
     COMMAND ${CMAKE_COMMAND} -P ${CMAKE_CURRENT_BINARY_DIR}/cmake_uninstall.cmake)
 
 endif(NOT SC_IS_SUBBUILD)
+
+# Local Variables:
+# tab-width: 8
+# mode: cmake
+# indent-tabs-mode: t
+# End:
+# ex: shiftwidth=2 tabstop=8
+

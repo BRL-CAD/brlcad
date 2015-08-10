@@ -1,7 +1,7 @@
 /*                         Y P R . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2013 United States Government as represented by
+ * Copyright (c) 2008-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -28,7 +28,6 @@
 #include <stdlib.h>
 #include <ctype.h>
 #include <string.h>
-#include "bio.h"
 #include "./ged_private.h"
 
 
@@ -59,7 +58,7 @@ ged_ypr(struct ged *gedp, int argc, const char *argv[])
 	    return GED_ERROR;
 	}
 
-	VSCALE(pt, pt, bn_radtodeg);
+	VSCALE(pt, pt, RAD2DEG);
 	bu_vls_printf(gedp->ged_result_str, "%.12g %.12g %.12g", V3ARGS(pt));
 
 	return GED_OK;

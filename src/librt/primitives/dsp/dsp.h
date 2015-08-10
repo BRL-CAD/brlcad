@@ -1,7 +1,7 @@
 /*                           D S P . H
  * BRL-CAD
  *
- * Copyright (c) 2011-2013 United States Government as represented by
+ * Copyright (c) 2011-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -22,6 +22,9 @@
  *
  */
 
+#ifndef LIBRT_PRIMITIVES_DSP_DSP_H
+#define LIBRT_PRIMITIVES_DSP_DSP_H
+
 /* access to the DSP data array */
 # define DSP(_p, _x, _y) (						\
 	((_p) && (_p)->dsp_buf) ?					\
@@ -29,6 +32,7 @@
 	    (_y) * ((struct rt_dsp_internal *)_p)->dsp_xcnt + (_x)	\
 	    ] : 0)
 
+#endif /* LIBRT_PRIMITIVES_DSP_DSP_H */
 
 /*
  * Local Variables:

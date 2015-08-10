@@ -316,7 +316,7 @@ proc ::combobox::SetClassBindings {} {
 #    I'm not convinced these are the proper bindings. Ideally all
 #    bindings should be on "Combobox", but because of my juggling of
 #    bindtags I'm not convinced that's what I want to do. But, it all
-#    seems to work, its just not as robust as it could be.
+#    seems to work, it's just not as robust as it could be.
 #
 # Arguments:
 #
@@ -1317,7 +1317,7 @@ proc ::combobox::WidgetProc {w command args} {
 	    #
 	    # this isn't strictly necessary if the window is already
 	    # mapped, but we'll go ahead and set the geometry here
-	    # since its harmless and *may* actually reset the geometry
+	    # since it's harmless and *may* actually reset the geometry
 	    # to something better in some weird case.
 	    set geometry [::combobox::ComputeGeometry $widgets(this)]
 	    wm geometry $widgets(dropdown) $geometry
@@ -1343,7 +1343,7 @@ proc ::combobox::WidgetProc {w command args} {
 	    # events for traversal
 	    focus -force $widgets(entry)
 
-	    # select something by default, but only if its an
+	    # select something by default, but only if it's an
 	    # exact match...
 	    ::combobox::Find $widgets(this) 1
 

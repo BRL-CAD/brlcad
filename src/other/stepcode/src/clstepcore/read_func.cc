@@ -781,9 +781,9 @@ int FoundEndSecKywd( istream & in, ErrorDescriptor & err ) {
 // after the comment that is appended.
 const char * ReadComment( std::string & ss, const char * s ) {
     std::string ssTmp;
-    int endComment = 0;
 
     if( s ) {
+        int endComment = 0;
         while( *s && *s != '/' ) {
             s++;    // skip leading everything
         }
@@ -831,7 +831,6 @@ const char * ReadComment( std::string & ss, const char * s ) {
 ***************************/
 const char * ReadComment( istream & in, std::string & s ) {
     char c = '\0';
-    int commentLength = 0;
     in >> ws;
     in >> c;
 
@@ -840,6 +839,7 @@ const char * ReadComment( istream & in, std::string & s ) {
         in.get( c ); // won't skip space
         if( c == '*' ) { // it is a comment
             in >> ws; // skip leading comment space
+            int commentLength = 0;
 
             // only to keep it from completely gobbling up input
             while( commentLength <= MAX_COMMENT_LENGTH ) {

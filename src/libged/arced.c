@@ -1,7 +1,7 @@
 /*                         A R C E D . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2013 United States Government as represented by
+ * Copyright (c) 2008-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -115,7 +115,7 @@ ged_arced(struct ged *gedp, int argc, const char *argv[])
     }
 
     if (bn_mat_is_identity(tp->tr_l.tl_mat)) {
-	bu_free((genptr_t)tp->tr_l.tl_mat, "tl_mat");
+	bu_free((void *)tp->tr_l.tl_mat, "tl_mat");
 	tp->tr_l.tl_mat = (matp_t)NULL;
     }
 

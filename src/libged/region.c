@@ -1,7 +1,7 @@
 /*                         R E G I O N . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2013 United States Government as represented by
+ * Copyright (c) 2008-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -26,9 +26,8 @@
 #include "common.h"
 
 #include <string.h>
-#include "bio.h"
 
-#include "cmd.h"
+#include "bu/cmd.h"
 #include "wdb.h"
 
 #include "./ged_private.h"
@@ -40,7 +39,7 @@ ged_region(struct ged *gedp, int argc, const char *argv[])
     struct directory *dp;
     int i;
     int ident, air;
-    char oper;
+    db_op_t oper;
     static const char *usage = "reg_name <op obj ...>";
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
@@ -81,19 +80,14 @@ ged_region(struct ged *gedp, int argc, const char *argv[])
 
     /* Get operation and solid name for each solid */
     for (i = 2; i < argc; i += 2) {
-	if (argv[i][1] != '\0') {
-	    bu_vls_printf(gedp->ged_result_str, "bad operation: %s skip member: %s\n",  argv[i], argv[i+1]);
-	    continue;
-	}
-	oper = argv[i][0];
 	if ((dp = db_lookup(gedp->ged_wdbp->dbip,  argv[i+1], LOOKUP_NOISY)) == RT_DIR_NULL) {
 	    bu_vls_printf(gedp->ged_result_str, "skipping %s\n", argv[i+1]);
 	    continue;
 	}
 
-	if (oper != WMOP_UNION && oper != WMOP_SUBTRACT && oper != WMOP_INTERSECT) {
-	    bu_vls_printf(gedp->ged_result_str, "bad operation: %c skip member: %s\n",
-			  oper, dp->d_namep);
+	oper = db_str2op(argv[i]);
+	if (oper == DB_OP_NULL) {
+	    bu_vls_printf(gedp->ged_result_str, "bad operation: %c (0x%x) skip member: %s\n", argv[i][0], argv[i][0], dp->d_namep);
 	    continue;
 	}
 

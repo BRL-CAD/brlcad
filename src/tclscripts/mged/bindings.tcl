@@ -1,7 +1,7 @@
 #                    B I N D I N G S . T C L
 # BRL-CAD
 #
-# Copyright (c) 2004-2013 United States Government as represented by
+# Copyright (c) 2004-2014 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -109,6 +109,7 @@ if ![info exists mged_default(dm_key_bindings)] {
 
 proc default_key_bindings { w } {
     bind $w a "winset $w; adc; break"
+    bind $w c "open_cmd_win id_0"
     bind $w e "winset $w; rset ax edit_draw !;\
 	    update_gui $w edit_draw \[rset ax edit_draw\]; break"
     bind $w m "winset $w; rset ax model_draw !;\

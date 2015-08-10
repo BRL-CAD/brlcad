@@ -1,7 +1,7 @@
 /*                            F B . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2013 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -29,8 +29,8 @@
 #include <memory.h>
 #include <signal.h>
 
+#include "bu/str.h"
 #include "fb.h"
-#include "bu.h"
 
 #include "./burst.h"
 #include "./ascii.h"
@@ -54,11 +54,10 @@ imageInit()
     }
     if (zoom * gridsz == devwid)
 	zoom--;
-    if (zoom < 1)
-	zoom = 1;
+    V_MAX(zoom, 1);
 
     /* Determine whether it is necessary to open fbfile. */
-    if (fbiop == FBIO_NULL || fb_getwidth(fbiop) != devwid)
+    if (fbiop == FB_NULL || fb_getwidth(fbiop) != devwid)
 	needopen = 1; /* not currently open or size changed */
     else
 	if (lastfbfile[0] != NUL && !BU_STR_EQUAL(fbfile, lastfbfile))
@@ -89,7 +88,7 @@ openFbDevice(char *fbdev)
 	ret = 0;
 	goto safe_exit;
     }
-    if (((fbiop != FBIO_NULL && fb_getwidth(fbiop) != devwid)
+    if (((fbiop != FB_NULL && fb_getwidth(fbiop) != devwid)
 	 ||	pixgrid == NULL)
 	&&	(pixgrid = (unsigned char *) calloc(devwid*3, sizeof(unsigned char)))
 	== (unsigned char *) NULL) {
@@ -99,7 +98,7 @@ openFbDevice(char *fbdev)
 	goto safe_exit;
     }
     (void) memset((char *) pixgrid, NUL, sizeof(unsigned char)*devwid*3);
-    if (fbiop != FBIO_NULL) {
+    if (fbiop != FB_NULL) {
 	if (! closFbDevice()) {
 	    ret = 0;
 	    goto safe_exit;
@@ -132,7 +131,7 @@ closFbDevice()
 	ret = 0;
     else {
 	ret = 1;
-	fbiop = FBIO_NULL;
+	fbiop = FB_NULL;
     }
     notify(NULL, NOTIFY_DELETE);
     return ret;

@@ -1,7 +1,7 @@
 /*                 L I B R T _ P R I V A T E . H
  * BRL-CAD
  *
- * Copyright (c) 2011-2013 United States Government as represented by
+ * Copyright (c) 2011-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -28,11 +28,30 @@
  * accordingly (e.g., ell_*() for functions defined in primitives/ell)
  *
  */
+#ifndef LIBRT_LIBRT_PRIVATE_H
+#define LIBRT_LIBRT_PRIVATE_H
 
 #include "common.h"
 
-#include "db.h"
+#include "rt/db4.h"
 #include "raytrace.h"
+
+#ifdef USE_OPENCL
+#include <limits.h>
+#include <CL/cl.h>
+
+#ifdef CLT_SINGLE_PRECISION
+#define cl_double cl_float
+#define cl_double3 cl_float3
+#endif
+
+
+struct cl_hit {
+  cl_double3 hit_vpriv;
+  cl_double hit_dist;
+  cl_int hit_surfno;
+};
+#endif
 
 /* approximation formula for the circumference of an ellipse */
 #define ELL_CIRCUMFERENCE(a, b) M_PI * ((a) + (b)) * \
@@ -129,7 +148,67 @@ extern void plot_ellipse(
 	const vect_t b,
 	int num_points);
 
+
+/**
+ * Evaluate a Bezier curve at a particular parameter value. Fill in
+ * control points for resulting sub-curves if "Left" and "Right" are
+ * non-null.
+ */
+extern void bezier(point2d_t *V, int degree, double t, point2d_t *Left, point2d_t *Right, point2d_t eval_pt, point2d_t normal );
+
+/**
+ * Given an equation in Bernstein-Bezier form, find all of the roots
+ * in the interval [0, 1].  Return the number of roots found.
+ */
+extern int bezier_roots(point2d_t *w, int degree, point2d_t **intercept, point2d_t **normal, point2d_t ray_start, point2d_t ray_dir, point2d_t ray_perp, int depth, fastf_t epsilon);
+
+/**
+ * subdivide a 2D bezier curve at t=0.5
+ */
+extern struct bezier_2d_list *bezier_subdivide(struct bezier_2d_list *bezier_hd, int degree, fastf_t epsilon, int depth);
+
+
+/* db_fullpath.c */
+
+/**
+ * Function to test whether a path has a cyclic entry in it.
+ *
+ * @param fp [i] Full path to test
+ * @param name [i] String to use when checking path (optional).  If NULL, use the name of the current directory pointer in fp.
+ * @return 1 if the path is cyclic, 0 if it is not.
+ */
+extern int cyclic_path(const struct db_full_path *fp, const char *name);
+
+
+/* db_diff.c */
+
+/**
+ * Function to convert an ft_get list of parameters into an avs.
+ * @return 0 if the conversion succeeds, -1 if it does not.
+ */
+extern int tcl_list_to_avs(const char *tcl_list, struct bu_attribute_value_set *avs, int offset);
+
+
+/* primitive_util.c */
+
+extern int tcl_list_to_int_array(const char *list, int **array, int *array_len);
+extern int tcl_list_to_fastf_array(const char *list, fastf_t **array, int *array_len);
+
+#ifdef USE_OPENCL
+extern cl_device_id clt_get_cl_device(void);
+extern cl_program clt_get_program(cl_context context, cl_device_id device, cl_uint count, const char *filename[], const char *options);
+
+extern void clt_init(void);
+
+extern cl_int clt_solid_shot(const size_t sz_hits, struct cl_hit *hits, struct xray *rp, const cl_int id, const size_t sz_args, void *args);
+
+extern void clt_inclusive_scan(cl_mem array, const cl_uint n);
+extern void clt_exclusive_scan(cl_mem array, const cl_uint n);
+#endif
+
 __END_DECLS
+
+#endif /* LIBRT_LIBRT_PRIVATE_H */
 
 /*
  * Local Variables:

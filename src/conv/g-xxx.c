@@ -1,7 +1,7 @@
 /*                         G - X X X . C
  * BRL-CAD
  *
- * Copyright (c) 1993-2013 United States Government as represented by
+ * Copyright (c) 1993-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -36,200 +36,22 @@
 
 /* interface headers */
 #include "vmath.h"
+#include "bu/getopt.h"
 #include "nmg.h"
-#include "rtgeom.h"
-#include "bu.h"
+#include "rt/geom.h"
 #include "raytrace.h"
 #include "wdb.h"
 
 
-#define NUM_OF_CPUS_TO_USE 1
-
-#define DEBUG_NAMES 1
-#define DEBUG_STATS 2
-
-long debug = 0;
-int verbose = 0;
-
-static struct bn_tol tol;
-
-static const char usage[] = "Usage: %s [-v] [-xX lvl] [-a abs_tol] [-r rel_tol] [-n norm_tol] [-o out_file] brlcad_db.g object(s)\n";
-
-
-int region_start (struct db_tree_state *tsp, const struct db_full_path *pathp, const struct rt_comb_internal * combp, genptr_t client_data);
-union tree *region_end (struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, genptr_t client_data);
-union tree *primitive_func(struct db_tree_state *tsp, const struct db_full_path *pathp, struct rt_db_internal *ip, genptr_t client_data);
-void describe_tree(union tree *tree, struct bu_vls *str);
-
-
 /*
- *			M A I N
+ * data container for your data.  you create one of these with
+ * whatever fields you need.  it gets passed to all of the callback
+ * functions for your application use as a client_data pointer.
  */
-int
-main(int argc, char *argv[])
-{
-    struct user_data {
-	int info;
-    } user_data;
-
-    int		i;
-    int	c;
-    char idbuf[132];
-
-    struct rt_i *rtip;
-    struct db_tree_state init_state;
-
-    /*
-      rt_init_resource(&rt_uniresource, 0, NULL);
-      struct rt_db_internal intern;
-      struct directory *dp;
-    */
-    bu_setprogname(argv[0]);
-    bu_setlinebuf(stderr);
-
-    /* calculational tolerances
-     * mostly used by NMG routines
-     */
-    tol.magic = BN_TOL_MAGIC;
-    tol.dist = 0.0005;
-    tol.dist_sq = tol.dist * tol.dist;
-    tol.perp = 1e-6;
-    tol.para = 1 - tol.perp;
-
-    /* Get command line arguments. */
-    while ((c = bu_getopt(argc, argv, "t:a:n:o:r:vx:X:")) != -1) {
-	switch (c) {
-	    case 't':		/* calculational tolerance */
-		tol.dist = atof(bu_optarg);
-		tol.dist_sq = tol.dist * tol.dist;
-	    case 'o':		/* Output file name */
-		/* grab output file name */
-		break;
-	    case 'v':		/* verbosity */
-		verbose++;
-		break;
-	    case 'x':		/* librt debug flag */
-		sscanf(bu_optarg, "%x", &RTG.debug);
-		bu_printb("librt RT_G_DEBUG", RT_G_DEBUG, DEBUG_FORMAT);
-		bu_log("\n");
-		break;
-	    case 'X':		/* NMG debug flag */
-		sscanf(bu_optarg, "%x", &RTG.NMG_debug);
-		bu_printb("librt RTG.NMG_debug", RTG.NMG_debug, NMG_DEBUG_FORMAT);
-		bu_log("\n");
-		break;
-	    default:
-		bu_exit(1, usage, argv[0]);
-		break;
-	}
-    }
-
-    if (bu_optind+1 >= argc) {
-	bu_exit(1, usage, argv[0]);
-    }
-
-    /* Open BRL-CAD database */
-    /* Scan all the records in the database and build a directory */
-    /* rtip=rt_dirbuild(argv[bu_optind], idbuf, sizeof(idbuf)); */
-    rtip=rt_dirbuild(argv[bu_optind], idbuf, sizeof(idbuf));
-    if (rtip == RTI_NULL) {
-	bu_exit(1, "g-xxx: rt_dirbuild failure\n");
-    }
-
-    init_state = rt_initial_tree_state;
-
-    bu_optind++;
-
-    /* Walk the trees named on the command line
-     * outputting combinations and primitives
-     */
-    for (i=bu_optind; i<argc; i++) {
-	db_walk_tree(rtip->rti_dbip, argc - i, (const char **)&argv[i], NUM_OF_CPUS_TO_USE,
-		     &init_state, region_start, region_end, primitive_func, (genptr_t) &user_data);
-    }
-
-    return 0;
-}
-
-
-/**
- *      R E G I O N _ S T A R T
- *
- * @brief This routine is called when a region is first encountered in the
- * hierarchy when processing a tree
- *
- *      @param tsp tree state (for parsing the tree)
- *      @param pathp A listing of all the nodes traversed to get to this node in the database
- *      @param combp the combination record for this region
- */
-int
-region_start(struct db_tree_state *tsp,
-	     const struct db_full_path *pathp,
-	     const struct rt_comb_internal *combp,
-	     genptr_t UNUSED(client_data))
-{
-    struct directory *dp;
-    struct bu_vls str = BU_VLS_INIT_ZERO;
-
-    RT_CK_DBTS(tsp);
-
-    if (debug&DEBUG_NAMES) {
-	char *name = db_path_to_string(pathp);
-	bu_log("region_start %s\n", name);
-	bu_free(name, "reg_start name");
-    }
-
-    dp = DB_FULL_PATH_CUR_DIR(pathp);
-
-    /* here is where the conversion should be done */
-    if (combp->region_flag)
-	printf("Write this region (name=%s) as a part in your format:\n", dp->d_namep);
-    else
-	printf("Write this combination (name=%s) as an assembly in your format:\n", dp->d_namep);
-
-    describe_tree(combp->tree, &str);
-
-    printf("\t%s\n\n", bu_vls_addr(&str));
-
-    bu_vls_free(&str);
-
-    return 0;
-}
-
-
-/**
- *      R E G I O N _ E N D
- *
- *
- * @brief This is called when all sub-elements of a region have been processed by leaf_func.
- *
- *      @param tsp
- *      @param pathp
- *      @param curtree
- *
- *      @return TREE_NULL if data in curtree was "stolen", otherwise db_walk_tree will
- *      clean up the data in the union tree * that is returned
- *
- * If it wants to retain the data in curtree it can by returning TREE_NULL.  Otherwise
- * db_walk_tree will clean up the data in the union tree * that is returned.
- *
- */
-union tree *
-region_end (struct db_tree_state *tsp,
-	    const struct db_full_path *pathp,
-	    union tree *curtree,
-	    genptr_t UNUSED(client_data))
-{
-    RT_CK_DBTS(tsp);
-
-    if (debug&DEBUG_NAMES) {
-	char *name = db_path_to_string(pathp);
-	bu_log("region_end   %s\n", name);
-	bu_free(name, "region_end name");
-    }
-
-    return curtree;
-}
+struct user_data {
+    long int data;
+    struct bn_tol tol;
+};
 
 
 /* This routine just produces an ascii description of the Boolean tree.
@@ -241,11 +63,8 @@ describe_tree(union tree *tree,
 {
     struct bu_vls left = BU_VLS_INIT_ZERO;
     struct bu_vls right = BU_VLS_INIT_ZERO;
-    char *unionn=" u ";
-    char *sub=" - ";
-    char *inter=" + ";
-    char *xor=" ^ ";
-    char *op=NULL;
+    const char op_xor='^';
+    char op='\0';
 
     BU_CK_VLS(str);
 
@@ -269,22 +88,22 @@ describe_tree(union tree *tree,
 	    bu_vls_strcat(str,  tree->tr_l.tl_name);
 	    break;
 	case OP_UNION:		/* union operator node */
-	    op = unionn;
+	    op = DB_OP_UNION;
 	    goto binary;
 	case OP_INTERSECT:	/* intersection operator node */
-	    op = inter;
+	    op = DB_OP_INTERSECT;
 	    goto binary;
 	case OP_SUBTRACT:	/* subtraction operator node */
-	    op = sub;
+	    op = DB_OP_SUBTRACT;
 	    goto binary;
 	case OP_XOR:		/* exclusive "or" operator node */
-	    op = xor;
+	    op = op_xor;
 	binary:				/* common for all binary nodes */
 	    describe_tree(tree->tr_b.tb_left, &left);
 	    describe_tree(tree->tr_b.tb_right, &right);
 	    bu_vls_putc(str, '(');
 	    bu_vls_vlscatzap(str, &left);
-	    bu_vls_strcat(str, op);
+	    bu_vls_printf(str, " %c ", op);
 	    bu_vls_vlscatzap(str, &right);
 	    bu_vls_putc(str, ')');
 	    break;
@@ -312,26 +131,101 @@ describe_tree(union tree *tree,
 }
 
 
+/**
+ * @brief This routine is called when a region is first encountered in the
+ * hierarchy when processing a tree
+ *
+ *      @param tsp tree state (for parsing the tree)
+ *      @param pathp A listing of all the nodes traversed to get to this node in the database
+ *      @param combp the combination record for this region
+ */
+int
+region_start(struct db_tree_state *tsp,
+	     const struct db_full_path *pathp,
+	     const struct rt_comb_internal *combp,
+	     void *client_data)
+{
+    char *name;
+    struct directory *dp;
+    struct bu_vls str = BU_VLS_INIT_ZERO;
+    struct user_data *your_stuff = (struct user_data *)client_data;
+
+    RT_CK_DBTS(tsp);
+
+    name = db_path_to_string(pathp);
+    bu_log("region_start %s\n", name);
+    bu_free(name, "reg_start name");
+
+    bu_log("data = %ld\n", your_stuff->data);
+    rt_pr_tol(&your_stuff->tol);
+
+    dp = DB_FULL_PATH_CUR_DIR(pathp);
+
+    /* here is where the conversion should be done */
+    if (combp->region_flag)
+	printf("Write this region (name=%s) as a part in your format:\n", dp->d_namep);
+    else
+	printf("Write this combination (name=%s) as an assembly in your format:\n", dp->d_namep);
+
+    describe_tree(combp->tree, &str);
+
+    printf("\t%s\n\n", bu_vls_addr(&str));
+
+    bu_vls_free(&str);
+
+    return 0;
+}
+
+
+/**
+ * @brief This is called when all sub-elements of a region have been processed by leaf_func.
+ *
+ * @param tsp     tree state
+ * @param pathp   db path
+ * @param curtree current tree
+ *
+ * @return TREE_NULL if data in curtree was "stolen", otherwise db_walk_tree will
+ * clean up the data in the union tree * that is returned
+ *
+ * If it wants to retain the data in curtree it can by returning TREE_NULL.  Otherwise
+ * db_walk_tree will clean up the data in the union tree * that is returned.
+ *
+ */
+union tree *
+region_end (struct db_tree_state *tsp,
+	    const struct db_full_path *pathp,
+	    union tree *curtree,
+	    void *UNUSED(client_data))
+{
+    char *name;
+
+    RT_CK_DBTS(tsp);
+
+    name = db_path_to_string(pathp);
+    bu_log("region_end   %s\n", name);
+    bu_free(name, "region_end name");
+
+    return curtree;
+}
+
+
 /* This routine is called by the tree walker (db_walk_tree)
  * for every primitive encountered in the trees specified on the command line */
 union tree *
 primitive_func(struct db_tree_state *tsp,
 	       const struct db_full_path *pathp,
 	       struct rt_db_internal *ip,
-	       genptr_t UNUSED(client_data))
+	       void *UNUSED(client_data))
 {
-    int i;
-
     struct directory *dp;
+    char *name;
     dp = DB_FULL_PATH_CUR_DIR(pathp);
 
     RT_CK_DBTS(tsp);
 
-    if (debug&DEBUG_NAMES) {
-	char *name = db_path_to_string(pathp);
-	bu_log("leaf_func    %s\n", name);
-	bu_free(name, "region_end name");
-    }
+    name = db_path_to_string(pathp);
+    bu_log("leaf_func    %s\n", name);
+    bu_free(name, "region_end name");
 
     /* handle each type of primitive (see h/rtgeom.h) */
     if (ip->idb_major_type == DB5_MAJORTYPE_BRLCAD) {
@@ -380,6 +274,8 @@ primitive_func(struct db_tree_state *tsp,
 		}
 	    case ID_ARB8:	/* convex primitive with from four to six faces */
 		{
+		    int i;
+
 		    /* this primitive may have degenerate faces
 		     * faces are: 0123, 7654, 0347, 1562, 0451, 3267
 		     * (points listed above in counter-clockwise order)
@@ -456,6 +352,89 @@ primitive_func(struct db_tree_state *tsp,
     }
 
     return (union tree *) NULL;
+}
+
+static void
+print_usage(const char *progname)
+{
+    const char *usage = "[-xX lvl] [-a abs_tol] [-r rel_tol] [-n norm_tol] "
+	"[-o out_file] brlcad_db.g object(s)\n";
+    bu_exit(1, "Usage: %s %s", progname, usage);
+}
+
+int
+main(int argc, char *argv[])
+{
+    struct user_data your_data = {0, BN_TOL_INIT_ZERO};
+
+    int i;
+    int c;
+    char idbuf[132] = {0};
+
+    struct rt_i *rtip;
+    struct db_tree_state init_state;
+
+    bu_setprogname(argv[0]);
+    bu_setlinebuf(stderr);
+
+    /* calculational tolerances
+     * mostly used by NMG routines
+     */
+    your_data.tol.magic = BN_TOL_MAGIC;
+    your_data.tol.dist = BN_TOL_DIST;
+    your_data.tol.dist_sq = your_data.tol.dist * your_data.tol.dist;
+    your_data.tol.perp = 1e-6;
+    your_data.tol.para = 1 - your_data.tol.perp;
+
+    /* Get command line arguments. */
+    while ((c = bu_getopt(argc, argv, "t:a:n:o:r:x:X:")) != -1) {
+	switch (c) {
+	    case 't':		/* calculational tolerance */
+		your_data.tol.dist = atof(bu_optarg);
+		your_data.tol.dist_sq = your_data.tol.dist * your_data.tol.dist;
+	    case 'o':		/* Output file name */
+		/* grab output file name */
+		break;
+	    case 'x':		/* librt debug flag */
+		sscanf(bu_optarg, "%x", &RTG.debug);
+		bu_printb("librt RT_G_DEBUG", RT_G_DEBUG, DEBUG_FORMAT);
+		bu_log("\n");
+		break;
+	    case 'X':		/* NMG debug flag */
+		sscanf(bu_optarg, "%x", &RTG.NMG_debug);
+		bu_printb("librt RTG.NMG_debug", RTG.NMG_debug, NMG_DEBUG_FORMAT);
+		bu_log("\n");
+		break;
+	    default:
+		print_usage(argv[0]);
+		break;
+	}
+    }
+
+    if (bu_optind+1 >= argc) {
+	print_usage(argv[0]);
+    }
+
+    /* Open BRL-CAD database */
+    /* Scan all the records in the database and build a directory */
+    rtip=rt_dirbuild(argv[bu_optind], idbuf, sizeof(idbuf));
+    if (rtip == RTI_NULL) {
+	bu_exit(1, "g-xxx: rt_dirbuild failure\n");
+    }
+
+    init_state = rt_initial_tree_state;
+
+    bu_optind++;
+
+    /* Walk the trees named on the command line
+     * outputting combinations and primitives
+     */
+    for (i=bu_optind; i<argc; i++) {
+	db_walk_tree(rtip->rti_dbip, argc - i, (const char **)&argv[i], 1 /* bu_avail_cpus() */,
+		     &init_state, region_start, region_end, primitive_func, (void *) &your_data);
+    }
+
+    return 0;
 }
 
 

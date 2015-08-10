@@ -1,7 +1,7 @@
 /*                         B W M O D . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2013 United States Government as represented by
+ * Copyright (c) 1986-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -28,6 +28,10 @@
  * Note that this works on PIX files also but there is no distinction
  * made between colors.
  *
+ * WARNING, added 8 June 2015: SHIFT is done the way it is because I
+ * did not see << and >> working properly when attempted with negative
+ * arguments.
+ *
  */
 
 #include "common.h"
@@ -36,17 +40,21 @@
 #include <math.h>
 #include "bio.h"
 
-#include "bu.h"
 #include "vmath.h"
+#include "bu/log.h"
+#include "bu/file.h"
+#include "bu/malloc.h"
+#include "bu/getopt.h"
 
-
-char *progname = "(noname)";
+char hyphen[] = "-";
+char noname[] = "(noname)";
+char *progname = noname;
 
 char *file_name;
 
 char usage[] = "\
 Usage: bwmod [-c] {-a add -s sub -m mult -d div -A -e exp -r root\n\
-		   -S shift -M and -O or -X xor -t trunc} [file.bw] > file2.bw\n";
+		   -S shift -M and -O or -X xor -R -t} [file.bw] > file2.bw\n";
 
 #define ADD	1
 #define MULT	2
@@ -56,11 +64,13 @@ Usage: bwmod [-c] {-a add -s sub -m mult -d div -A -e exp -r root\n\
 #define AND	6
 #define OR	7
 #define XOR	8
-#define TRUNC	9
+#define ROUND	9 /* this was TRUNC, which is discontinued because
+                   * truncation is handled internally as "-S 0"
+                   */
 #define BUFLEN	(8192*2)	/* usually 2 pages of memory, 16KB */
 
-int numop = 0;		/* number of operations */
-int op[256];		/* operations */
+int numop = 0;			/* number of operations */
+int op[256];			/* operations */
 double val[256];		/* arguments to operations */
 unsigned char ibuf[BUFLEN];	/* input buffer */
 
@@ -68,82 +78,123 @@ unsigned char ibuf[BUFLEN];	/* input buffer */
 int mapbuf[MAPBUFLEN];		/* translation buffer/lookup table */
 int char_arith = 0;
 
+void
+checkpow(double x , double exponent)
+{
+    if (x > 0.0) {
+	return;
+    }
+
+    if (x < 0.0) {
+	double diff;
+	diff = exponent - (double)((int)exponent);
+	if (diff < 0.0 || diff > 0.0) {
+	    fprintf(stderr,
+		    "bwmod: negative number (%f) to non-integer power (%f)\n",
+		    x, exponent);
+	    bu_exit(-1, NULL);
+	}
+    }
+    /* We have x == 0.0, and we accept that 0 to 0 power is 1. */
+    if (exponent >= 0.0) {
+	return;
+    }
+
+    fprintf(stderr, "bwmod: zero to negative power (%f)\n", exponent);
+    bu_exit(-1, NULL);
+}
+
+
 int
 get_args(int argc, char **argv)
 {
-    int c = 0;
+    int c;
     double d = 0.0;
 
-    while ((c = bu_getopt(argc, argv, "a:s:m:d:Ae:r:cS:O:M:X:t:h?")) != -1) {
+    while ((c = bu_getopt(argc, argv, "a:s:m:d:Ae:r:cS:O:M:X:Rth?")) != -1) {
 	switch (c) {
-	    case 'a':
-		op[ numop ] = ADD;
-		val[ numop++ ] = atof(bu_optarg);
-		break;
-	    case 's':
-		op[ numop ] = ADD;
-		val[ numop++ ] = - atof(bu_optarg);
-		break;
-	    case 'm':
-		op[ numop ] = MULT;
-		val[ numop++ ] = atof(bu_optarg);
-		break;
-	    case 'd':
-		op[ numop ] = MULT;
-		d = atof(bu_optarg);
-
-		if (ZERO(d)) {
-		    bu_exit(2, "bwmod: cannot divide by zero!\n");
-		}
-		val[ numop++ ] = 1.0 / d;
-		break;
-	    case 'A':
-		op[ numop ] = ABS;
-		val[ numop++ ] = 0;
-		break;
-	    case 'e':
-		op[ numop ] = POW;
-		val[ numop++ ] = atof(bu_optarg);
-		break;
-	    case 'r':
-		op[ numop ] = POW;
-		d = atof(bu_optarg);
-		if (ZERO(d)) {
-		    bu_exit(2, "bwmod: zero root!\n");
-		}
-		val[ numop++ ] = 1.0 / d;
-		break;
-	    case 'c':
-		char_arith = !char_arith; break;
-	    case 'S':
-		op[ numop ] = SHIFT;
-		val[ numop++] = atof(bu_optarg);
-		break;
-	    case 'M':
-		op[ numop ] = AND;
-		val[ numop++] = atof(bu_optarg);
-		break;
-	    case 'O':
-		op[ numop ] = OR;
-		val[ numop++ ] = atof(bu_optarg);
-		break;
-	    case 'X':
-		op[ numop ] = XOR;
-		val[ numop++ ] = atof(bu_optarg);
-		break;
-	    case 't':
-		op[ numop ] = TRUNC;
-		val[ numop++ ] = atof(bu_optarg);
-		break;
-	    default:		/* '?' */
-		return 0;
+	case 'a':
+	    op[numop] = ADD;
+	    val[numop++] = atof(bu_optarg);
+	    break;
+	case 's':
+	    op[numop] = ADD;
+	    val[numop++] = - atof(bu_optarg);
+	    break;
+	case 'm':
+	    op[numop] = MULT;
+	    val[numop++] = atof(bu_optarg);
+	    break;
+	case 'd':
+	    d = atof(bu_optarg);
+	    if (ZERO(d)) {
+		bu_exit(2, "bwmod: cannot divide by zero!\n");
+	    }
+	    op[numop] = MULT;
+	    val[numop++] = 1.0 / d;
+	    break;
+	case 'A':
+	    op[numop] = ABS;
+	    /* If using ABS, don't care what val[numop] is, but still
+	     * must increment numop. (The following would increment
+	     * numop AFTER it's used as "val" subscript.)
+	     */
+	    /* val[numop++] = 0.0; */
+	    numop++;
+	    break;
+	case 'e':
+	    op[numop] = POW;
+	    val[numop++] = atof(bu_optarg);
+	    break;
+	case 'r':
+	    d = atof(bu_optarg);
+	    if (ZERO(d)) {
+		bu_exit(2, "bwmod: zero root!\n");
+	    }
+	    op[numop] = POW;
+	    val[numop++] = 1.0 / d;
+	    break;
+	case 'c':
+	    char_arith = !char_arith;
+	    break;
+	case 'S':
+	    op[numop] = SHIFT;
+	    val[numop++] = atof(bu_optarg);
+	    break;
+	case 'M':
+	    op[numop] = AND;
+	    val[numop++] = atof(bu_optarg);
+	    break;
+	case 'O':
+	    op[numop] = OR;
+	    val[numop++] = atof(bu_optarg);
+	    break;
+	case 'X':
+	    op[numop] = XOR;
+	    val[numop++] = atof(bu_optarg);
+	    break;
+	case 'R':
+	    op[numop] = ROUND;
+	    /* See above remark for case 'A' (don't care about
+	     * val[numop] but need numop++).
+	     */
+	    /* val[numop++] = 0.0; */
+	    numop++;
+	case 't':
+	    /* Notice that -S truncates, so we internally use -S 0 */
+	    op[numop] = SHIFT;
+	    val[numop++] = 0.0;
+	    break;
+	default:  /* '?' 'h' */
+	    return 0;
 	}
     }
 
     if (bu_optind >= argc) {
-	if (isatty((int)fileno(stdin)))
+	if (isatty((int)fileno(stdin))) {
 	    return 0;
-	file_name = "-";
+	}
+	file_name = hyphen;
     } else {
 	char *ifname;
 	file_name = argv[bu_optind];
@@ -158,107 +209,189 @@ get_args(int argc, char **argv)
 	bu_free(ifname, "ifname alloc from bu_realpath");
     }
 
-    if (argc > ++bu_optind)
+    if (argc > ++bu_optind) {
 	fprintf(stderr, "bwmod: excess argument(s) ignored\n");
+    }
 
-    return 1;		/* OK */
+    return 1; /* OK */
 }
 
 
-void mk_trans_tbl(void)
+void
+mk_trans_tbl(void)
 {
-    int j, i, tmp;
+    int j, i, tmp, intval;
     double d;
 
     /* create translation map */
     for (j = 0; j < MAPBUFLEN; ++j) {
 	d = j;
-	for (i=0; i < numop; i++) {
+	for (i = 0; i < numop; i++) {
 	    switch (op[i]) {
-		case ADD : d += val[i]; break;
-		case MULT: d *= val[i]; break;
-		case POW : d = pow(d, val[i]); break;
-		case ABS : if (d < 0.0) d = - d; break;
-		case SHIFT: tmp=d; tmp=tmp<<(int)val[i];d=tmp;break;
-		case OR  : tmp=d; tmp |= (int)val[i]; d=tmp;break;
-		case AND : tmp=d; tmp &= (int)val[i]; d=tmp;break;
-		case XOR : tmp=d; tmp ^= (int)val[i]; d= tmp; break;
-		    /* case TRUNC: tmp=((int)d/(int)val[i])*(int)val[i]; break; */
-		default  : fprintf(stderr, "%s: error in op\n", progname);
-		    bu_exit (-1, NULL);
-		    break;
+	    case ADD :
+		d += val[i];
+		break;
+	    case MULT:
+		d *= val[i];
+		break;
+	    case POW :
+		checkpow(d, val[i]);
+		d = pow(d, val[i]);
+		break;
+	    case ABS :
+		if (d < 0.0) {
+		    d = - d;
+		}
+		break;
+	    case SHIFT:
+		tmp = d;
+		intval = (int)val[i];
+		if (intval > 0) {
+		    tmp = tmp << intval;
+		} else if (intval < 0) {
+		    tmp = tmp >> (-intval);
+		}
+		d = tmp;
+		break;
+	    case OR  :
+		tmp = d;
+		tmp |= (int)val[i];
+		d = tmp;
+		break;
+	    case AND :
+		tmp = d;
+		tmp &= (int)val[i];
+		d = tmp;
+		break;
+	    case XOR :
+		tmp = d;
+		tmp ^= (int)val[i];
+		d = tmp;
+		break;
+	    /* case TRUNC:
+	     * tmp=((int)d/(int)val[i])*(int)val[i];
+	     * d=tmp;
+	     * break;
+	     */
+	    case ROUND:
+		if (d > 0) {
+		    d = (int)(d + 0.5);
+		} else if (d < 0) {
+		    d = (int)(d - 0.5);
+		}
+		break;
+	    default  :
+		fprintf(stderr, "%s: error in op\n", progname);
+		bu_exit(-1, NULL);
+		break;
 	    }
 	}
 	if (d > 255.0) {
 	    mapbuf[j] = 256;
 	} else if (d < 0.0) {
 	    mapbuf[j] = -1;
-	} else
+	} else {
 	    mapbuf[j] = d + 0.5;
+	}
     }
 }
-void mk_char_trans_tbl(void)
+
+
+void
+mk_char_trans_tbl(void)
 {
-    int j, i;
+    int j, i, intval;
     signed char d;
 
     /* create translation map */
     for (j = 0; j < MAPBUFLEN; ++j) {
 	d = j;
-	for (i=0; i < numop; i++) {
+	for (i = 0; i < numop; i++) {
 	    switch (op[i]) {
-		case ADD : d += val[i]; break;
-		case MULT: d *= val[i]; break;
-		case POW : d = pow((double)d, val[i]); break;
-		case ABS : if (d < 0.0) d = - d; break;
-		case SHIFT: d=d<<(int)val[i]; break;
-		case AND : d &= (int)val[i]; break;
-		case OR  : d |= (int)val[i]; break;
-		case XOR : d ^= (int)val[i]; break;
-		case TRUNC: d /= (int)val[i];d *= (int)val[i]; break;
-		default  : fprintf(stderr, "%s: error in op\n", progname);
-		    bu_exit (-1, NULL);
-		    break;
+	    case ADD :
+		d += val[i];
+		break;
+	    case MULT:
+		d *= val[i];
+		break;
+	    case POW :
+		checkpow((double)d, val[i]);
+		d = pow((double)d, val[i]);
+		break;
+	    case ABS :
+		if (d < 0.0) {
+		    d = - d;
+		}
+		break;
+	    case SHIFT:
+		intval = (int)val[i];
+		if (intval > 0) {
+		    d = d << intval;
+		} else if (intval < 0) {
+		    d = d >> (-intval);
+		}
+		break;
+	    case AND :
+		d &= (int)val[i];
+		break;
+	    case OR  :
+		d |= (int)val[i];
+		break;
+	    case XOR :
+		d ^= (int)val[i];
+		break;
+	    default  :
+		fprintf(stderr, "%s: error in op\n", progname);
+		bu_exit(-1, NULL);
+	    /* TRUNC and ROUND do nothing because we already have
+	     * integer value
+	     */
+	    /* case TRUNC: */
+	    case ROUND:
+		break;
 	    }
 	}
 	mapbuf[j] = d & 0x0ff;
     }
 }
-int main(int argc, char **argv)
+
+
+int
+main(int argc, char **argv)
 {
     unsigned char *p, *q;
     int tmp;
     int n;
-    unsigned long clip_high, clip_low;
+    unsigned long clip_high = 0L , clip_low = 0L ;
 
-#if defined(_WIN32) && !defined(__CYGWIN__)
     setmode(fileno(stdin), O_BINARY);
     setmode(fileno(stdout), O_BINARY);
     setmode(fileno(stderr), O_BINARY);
-#endif
 
     progname = *argv;
 
     if (!get_args(argc, argv) || isatty((int)fileno(stdin))
 	|| isatty((int)fileno(stdout))) {
 	(void)fputs(usage, stderr);
-	bu_exit (1, NULL);
+	bu_exit(1, NULL);
     }
 
-    if (char_arith)
+    if (char_arith) {
 	mk_char_trans_tbl();
-    else
+    } else {
 	mk_trans_tbl();
+    }
 
-    clip_high = clip_low = 0L;
-    while ((n=read(0, (void *)ibuf, (unsigned)sizeof(ibuf))) > 0) {
+    while ((n = read(0, (void *)ibuf, (unsigned)sizeof(ibuf))) > 0) {
 	/* translate */
 	for (p = ibuf, q = &ibuf[n]; p < q; ++p) {
 	    long i = *p;
-	    if (i < 0)
+	    if (i < 0) {
 		i = 0;
-	    if (i >= MAPBUFLEN)
+	    }
+	    if (i >= MAPBUFLEN) {
 		*p = i = MAPBUFLEN;
+	    }
 
 	    tmp = mapbuf[i];
 	    if (tmp > 255) {
@@ -275,7 +408,7 @@ int main(int argc, char **argv)
 	if (write(1, (void *)ibuf, (unsigned)n) != n) {
 	    fprintf(stderr, "%s: Error writing stdout\n",
 		    progname);
-	    bu_exit (-1, NULL);
+	    bu_exit(-1, NULL);
 	}
     }
     if (n < 0) {
@@ -283,11 +416,11 @@ int main(int argc, char **argv)
     }
 
     if (clip_high != 0 || clip_low != 0) {
-	fprintf(stderr, "bwmod: clipped %lu high, %lu low\n", (long unsigned)clip_high, (long unsigned)clip_low);
+	fprintf(stderr, "bwmod: clipped %lu high, %lu low\n",
+		(long unsigned)clip_high, (long unsigned)clip_low);
     }
     return 0;
 }
-
 
 /*
  * Local Variables:

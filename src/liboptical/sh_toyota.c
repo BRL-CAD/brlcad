@@ -1,7 +1,7 @@
 /*                     S H _ T O Y O T A . C
  * BRL-CAD
  *
- * Copyright (c) 1992-2013 United States Government as represented by
+ * Copyright (c) 1992-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -40,11 +40,10 @@
 #include <string.h>
 
 #include "vmath.h"
-#include "mater.h"
 #include "raytrace.h"
 #include "optical.h"
-#include "plot3.h"
-#include "light.h"
+#include "bn/plot3.h"
+#include "optical/light.h"
 
 
 /* Sky onditions for luminance calculations. */
@@ -86,12 +85,12 @@ struct bu_structparse toyota_parse[] = {
 };
 
 
-HIDDEN int toyota_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, const struct mfuncs *mfp, struct rt_i *rtip);
-HIDDEN int tmirror_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, const struct mfuncs *mfp, struct rt_i *rtip);
-HIDDEN int tglass_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, const struct mfuncs *mfp, struct rt_i *rtip);
-HIDDEN int toyota_render(register struct application *ap, const struct partition *pp, struct shadework *swp, genptr_t dp);
-HIDDEN void toyota_print(register struct region *rp, genptr_t dp);
-HIDDEN void toyota_free(genptr_t cp);
+HIDDEN int toyota_setup(register struct region *rp, struct bu_vls *matparm, void **dpp, const struct mfuncs *mfp, struct rt_i *rtip);
+HIDDEN int tmirror_setup(register struct region *rp, struct bu_vls *matparm, void **dpp, const struct mfuncs *mfp, struct rt_i *rtip);
+HIDDEN int tglass_setup(register struct region *rp, struct bu_vls *matparm, void **dpp, const struct mfuncs *mfp, struct rt_i *rtip);
+HIDDEN int toyota_render(register struct application *ap, const struct partition *pp, struct shadework *swp, void *dp);
+HIDDEN void toyota_print(register struct region *rp, void *dp);
+HIDDEN void toyota_free(void *cp);
 
 void lambda_to_rgb(fastf_t lambda, fastf_t irrad, fastf_t *rgb);
 void spectral_dist_table(fastf_t lambda, fastf_t *e_mean, fastf_t *v1, fastf_t *v2);
@@ -133,7 +132,7 @@ struct mfuncs toyota_mfuncs[] = {
  * Ltd.), Luminance meter (MINOLTA CS-100)
  */
 HIDDEN int
-toyota_setup(register struct region *UNUSED(rp), struct bu_vls *matparm, genptr_t *dpp, const struct mfuncs *UNUSED(mfp), struct rt_i *UNUSED(rtip))
+toyota_setup(register struct region *UNUSED(rp), struct bu_vls *matparm, void **dpp, const struct mfuncs *UNUSED(mfp), struct rt_i *UNUSED(rtip))
 
 
 /* New since 4.4 release */
@@ -154,18 +153,18 @@ toyota_setup(register struct region *UNUSED(rp), struct bu_vls *matparm, genptr_
     tp->atmos_trans = 0.772;/* atmospheric transmittance */
     tp->weather = CLEAR_SKY;/* no clouds */
 
-    /*            / 2*M_PI  / arctan(rs/d)
+    /*            /  M_2PI  / arctan(rs/d)
      * sun_sang = |         |
      *	          |         |     sin(theta) d-theta d-phi
      *	          /         /
      *
-     *	    = 2*M_PI*(1 - cos(arctan(rs/d)))
+     *	    = M_2PI*(1 - cos(arctan(rs/d)))
      *
-     *      = 2*M_PI*(1 - cos(arctan(695300/149000000)))
+     *      = M_2PI*(1 - cos(arctan(695300/149000000)))
      *
-     *	    = 2*M_PI*(1 - cos(.00466640908179121739))
+     *	    = M_2PI*(1 - cos(.00466640908179121739))
      *
-     *	    = 2*M_PI*(1 - .99998911233289762807)
+     *	    = M_2PI*(1 - .99998911233289762807)
      *
      *	    = .00006840922996708585320208283043854326275346156491
      *
@@ -179,7 +178,7 @@ toyota_setup(register struct region *UNUSED(rp), struct bu_vls *matparm, genptr_
     bu_strlcpy(tp->material, "junk", sizeof(tp->material));
     VSET(tp->Zenith, 0., 0., 1.0);
 
-    if (bu_struct_parse(matparm, toyota_parse, (char *)tp) < 0) {
+    if (bu_struct_parse(matparm, toyota_parse, (char *)tp, NULL) < 0) {
 	BU_PUT(tp, struct toyota_specific);
 	return -1;
     }
@@ -220,7 +219,7 @@ toyota_setup(register struct region *UNUSED(rp), struct bu_vls *matparm, genptr_
 
 
 HIDDEN int
-tmirror_setup(register struct region *UNUSED(rp), struct bu_vls *matparm, genptr_t *dpp, const struct mfuncs *UNUSED(mfp), struct rt_i *UNUSED(rtip))
+tmirror_setup(register struct region *UNUSED(rp), struct bu_vls *matparm, void **dpp, const struct mfuncs *UNUSED(mfp), struct rt_i *UNUSED(rtip))
 
 
 /* New since 4.4 release */
@@ -239,7 +238,7 @@ tmirror_setup(register struct region *UNUSED(rp), struct bu_vls *matparm, genptr
 
 
 HIDDEN int
-tglass_setup(register struct region *UNUSED(rp), struct bu_vls *matparm, genptr_t *dpp, const struct mfuncs *UNUSED(mfp), struct rt_i *UNUSED(rtip))
+tglass_setup(register struct region *UNUSED(rp), struct bu_vls *matparm, void **dpp, const struct mfuncs *UNUSED(mfp), struct rt_i *UNUSED(rtip))
 
 
 /* New since 4.4 release */
@@ -258,14 +257,14 @@ tglass_setup(register struct region *UNUSED(rp), struct bu_vls *matparm, genptr_
 
 
 HIDDEN void
-toyota_print(register struct region *rp, genptr_t dp)
+toyota_print(register struct region *rp, void *dp)
 {
     bu_struct_print(rp->reg_name, toyota_parse, (char *)dp);
 }
 
 
 HIDDEN void
-toyota_free(genptr_t cp)
+toyota_free(void *cp)
 {
     /* need to free cp->refl */
     BU_PUT(cp, struct toyota_specific);
@@ -1418,8 +1417,6 @@ atmos_irradiance(fastf_t lambda)
 
 
 /*
- * O Z O N E _ A B S O R P T I O N
- *
  * Return absorption coefficient due to ozone for a given wavelength
  * of light.
  * Units: m ^ -1 (inverse m)
@@ -2181,7 +2178,7 @@ background_light(fastf_t lambda, struct toyota_specific *ts, fastf_t *Refl, fast
 /* JUST INTEGRATE OVER HEMISPHERE - THIS IS CURRENTLY WRONG */
     for (ang = SPREAD; ang < alpha_c; ang += SPREAD) {
 	r = sin(ang);
-	for (phi = 0.0; phi < 2*M_PI; phi += SPREAD) {
+	for (phi = 0.0; phi < M_2PI; phi += SPREAD) {
 	    x = r*cos(phi);
 	    y = r*sin(phi);
 	    VJOIN2(Sky_elmnt, Ctr, x, Xaxis, y, Yaxis);
@@ -2200,7 +2197,7 @@ background_light(fastf_t lambda, struct toyota_specific *ts, fastf_t *Refl, fast
 		Sun, ts->weather, t_vl);
 	    /* XXX hack */		if (i_dot_n > 0.0) {
 		irradiance +=
-		    reflectance(lambda, acos(i_dot_n)*bn_radtodeg,
+		    reflectance(lambda, acos(i_dot_n)*RAD2DEG,
 				ts->refl, ts->refl_lines)
 		    * bg_radiance
 		    * i_dot_n
@@ -2218,7 +2215,7 @@ background_light(fastf_t lambda, struct toyota_specific *ts, fastf_t *Refl, fast
 	pdv_3line(stdout, swp->sw_hit.hit_point, work);
     }
     irradiance +=
-	reflectance(lambda, acos(i_dot_n)*bn_radtodeg, ts->refl, ts->refl_lines)
+	reflectance(lambda, acos(i_dot_n)*RAD2DEG, ts->refl, ts->refl_lines)
 	* bg_radiance
 	* VDOT(Sky_elmnt, swp->sw_hit.hit_normal)
 	* del_omega;
@@ -2238,7 +2235,7 @@ background_light(fastf_t lambda, struct toyota_specific *ts, fastf_t *Refl, fast
  * any weather conditions."
  */
 HIDDEN int
-toyota_render(register struct application *ap, const struct partition *UNUSED(pp), struct shadework *swp, genptr_t dp)
+toyota_render(register struct application *ap, const struct partition *UNUSED(pp), struct shadework *swp, void *dp)
 {
     fastf_t direct_sunlight,
 	dist,			/* Distance light travels (m). */
@@ -2302,7 +2299,7 @@ toyota_render(register struct application *ap, const struct partition *UNUSED(pp
 	/* Direct sunlight contribution. */
 	direct_sunlight =
 	    M_1_PI
-	    * reflectance(ts->wavelength, acos(i_dot_n)*bn_radtodeg,
+	    * reflectance(ts->wavelength, acos(i_dot_n)*RAD2DEG,
 			  ts->refl, ts->refl_lines)
 	    * sun_radiance(ts->wavelength, ts->alpha, ts->beta,
 			   sun_alt, ts->sun_sang)

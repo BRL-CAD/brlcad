@@ -1,7 +1,7 @@
 /*                          P O L Y . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2013 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -28,13 +28,14 @@
 
 #include "common.h"
 
+#include <stdlib.h>  /* for abs */
 #include <stdio.h>
 #include <math.h>
-#include <signal.h>
 
-#include "bu.h"
+#include "bu/log.h"
+#include "bu/parallel.h"
 #include "vmath.h"
-#include "bn.h"
+#include "bn/poly.h"
 
 
 #define CUBEROOT(a)	(((a) > 0.0) ? pow(a, THIRD) : -pow(-(a), THIRD))
@@ -42,22 +43,7 @@
 
 static const fastf_t THIRD = 1.0 / 3.0;
 static const fastf_t TWENTYSEVENTH = 1.0 / 27.0;
-
 static const struct bn_poly bn_Zero_poly = { BN_POLY_MAGIC, 0, {0.0} };
-static int bn_expecting_fpe = 0;
-static jmp_buf bn_abort_buf;
-
-
-HIDDEN void bn_catch_FPE(int sig)
-{
-    if (sig != SIGFPE)
-	bu_bomb("bn_catch_FPE() unexpected signal!");
-    if (!bn_expecting_fpe)
-	bu_bomb("bn_catch_FPE() unexpected SIGFPE!");
-    if (!bu_is_parallel())
-	(void)signal(SIGFPE, bn_catch_FPE);	/* Renew handler */
-    longjmp(bn_abort_buf, 1);	/* return error code */
-}
 
 
 struct bn_poly *
@@ -127,7 +113,7 @@ bn_poly_add(register struct bn_poly *sum, register const struct bn_poly *poly1, 
     struct bn_poly tmp;
     register size_t i, offset;
 
-    offset = abs((long)poly1->dgr - (long)poly2->dgr);
+    offset = labs((long)poly1->dgr - (long)poly2->dgr);
 
     tmp = bn_Zero_poly;
 
@@ -156,7 +142,7 @@ bn_poly_sub(register struct bn_poly *diff, register const struct bn_poly *poly1,
     struct bn_poly tmp;
     register size_t i, offset;
 
-    offset = abs((long)poly1->dgr - (long)poly2->dgr);
+    offset = labs((long)poly1->dgr - (long)poly2->dgr);
 
     *diff = bn_Zero_poly;
     tmp = bn_Zero_poly;
@@ -276,30 +262,15 @@ bn_poly_cubic_roots(register struct bn_complex *roots, register const struct bn_
 {
     fastf_t a, b, c1, c1_3rd, delta;
     register int i;
-    static int first_time = 1;
-
-    if (!bu_is_parallel()) {
-	/* bn_abort_buf is NOT parallel! */
-	if (first_time) {
-	    first_time = 0;
-	    (void)signal(SIGFPE, bn_catch_FPE);
-	}
-	bn_expecting_fpe = 1;
-	if (setjmp(bn_abort_buf)) {
-	    (void)signal(SIGFPE, bn_catch_FPE);
-	    bu_log("bn_poly_cubic_roots() Floating Point Error\n");
-	    return 0;	/* FAIL */
-	}
-    }
 
     c1 = eqn->cf[1];
-    if (abs(c1) > SQRT_MAX_FASTF)  return 0;	/* FAIL */
+    if (fabs(c1) > SQRT_MAX_FASTF) return 0;	/* FAIL */
 
     c1_3rd = c1 * THIRD;
     a = eqn->cf[2] - c1*c1_3rd;
-    if (abs(a) > SQRT_MAX_FASTF)  return 0;	/* FAIL */
+    if (fabs(a) > SQRT_MAX_FASTF) return 0;	/* FAIL */
     b = (2.0*c1*c1*c1 - 9.0*c1*eqn->cf[2] + 27.0*eqn->cf[3])*TWENTYSEVENTH;
-    if (abs(b) > SQRT_MAX_FASTF)  return 0;	/* FAIL */
+    if (fabs(b) > SQRT_MAX_FASTF) return 0;	/* FAIL */
 
     if ((delta = a*a) > SQRT_MAX_FASTF) return 0;	/* FAIL */
     delta = b*b*0.25 + delta*a*TWENTYSEVENTH;
@@ -345,7 +316,7 @@ bn_poly_cubic_roots(register struct bn_complex *roots, register const struct bn_
 		phi = M_PI_3;
 		cs_phi = cos(phi);
 		sn_phi_s3 = sin(phi) * M_SQRT3;
-	    }  else  {
+	    } else {
 		phi = acos(f) * THIRD;
 		cs_phi = cos(phi);
 		sn_phi_s3 = sin(phi) * M_SQRT3;
@@ -353,15 +324,12 @@ bn_poly_cubic_roots(register struct bn_complex *roots, register const struct bn_
 	}
 
 	roots[0].re = 2.0*fact*cs_phi;
-	roots[1].re = fact*( sn_phi_s3 - cs_phi);
+	roots[1].re = fact*(sn_phi_s3 - cs_phi);
 	roots[2].re = fact*(-sn_phi_s3 - cs_phi);
 	roots[2].im = roots[1].im = roots[0].im = 0.0;
     }
     for (i=0; i < 3; ++i)
 	roots[i].re -= c1_3rd;
-
-    if (!bu_is_parallel())
-	bn_expecting_fpe = 0;
 
     return 1;		/* OK */
 }
@@ -466,7 +434,7 @@ bn_pr_poly(const char *title, register const struct bn_poly *eqn)
 	    if (coeff < 0) {
 		bu_vls_strcat(&str, " - ");
 		coeff = -coeff;
-	    }  else  {
+	    } else {
 		bu_vls_strcat(&str, " + ");
 	    }
 	}
@@ -496,6 +464,7 @@ bn_pr_roots(const char *title, const struct bn_complex *roots, int n)
 	bu_log("%4d %e + i * %e\n", i, roots[i].re, roots[i].im);
     }
 }
+
 
 /** @} */
 /*

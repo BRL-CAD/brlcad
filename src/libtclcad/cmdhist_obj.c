@@ -1,7 +1,7 @@
 /*                   C M D H I S T _ O B J . C
  * BRL-CAD
  *
- * Copyright (c) 1998-2013 United States Government as represented by
+ * Copyright (c) 1998-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -21,10 +21,9 @@
 #include "common.h"
 
 #include <string.h>
-#include "bio.h"
 
 #include "tcl.h"
-#include "cmd.h"
+#include "bu/cmd.h"
 #include "tclcad.h"
 
 
@@ -50,7 +49,7 @@ cho_cmd(ClientData clientData, Tcl_Interp *interp, int argc, const char **argv)
 	{"history",	bu_cmdhist_history},
 	{"next",	bu_cmdhist_next},
 	{"prev",	bu_cmdhist_prev},
-	{(char *)NULL,	BU_CMD_NULL}
+	{(const char *)NULL, BU_CMD_NULL}
     };
 
     if (bu_cmd(cho_cmds, argc, argv, 1, clientData, &ret) == BRLCAD_OK) {
@@ -79,7 +78,7 @@ cho_deleteProc(ClientData clientData)
 	bu_vls_free(&curr->h_command);
 
 	BU_LIST_DEQUEUE(&curr->l);
-	bu_free((genptr_t)curr, "cho_deleteProc: curr");
+	bu_free((void *)curr, "cho_deleteProc: curr");
 	curr = next;
     }
 

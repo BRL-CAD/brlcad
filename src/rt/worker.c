@@ -1,7 +1,7 @@
 /*                        W O R K E R . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2013 United States Government as represented by
+ * Copyright (c) 1985-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -29,9 +29,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
-#include "bio.h"
 
-#include "bu.h"
+#include "bu/log.h"
 #include "vmath.h"
 #include "bn.h"
 #include "raytrace.h"
@@ -191,8 +190,8 @@ do_pixel(int cpu, int pat_num, int pixelnum)
 	a.a_x <<= (incr_nlevel-incr_level);
 	a.a_y <<= (incr_nlevel-incr_level);
     } else {
-	a.a_y = pixelnum/width;
-	a.a_x = pixelnum - (a.a_y * width);
+	a.a_y = (int)(pixelnum/width);
+	a.a_x = (int)(pixelnum - (a.a_y * width));
 	/* a.a_x = pixelnum%width; */
     }
 
@@ -449,8 +448,6 @@ do_pixel(int cpu, int pat_num, int pixelnum)
 
 
 /**
- * W O R K E R
- *
  * Compute some pixels, and store them.
  *
  * This uses a "self-dispatching" parallel algorithm.  Executes until
@@ -463,7 +460,7 @@ do_pixel(int cpu, int pat_num, int pixelnum)
  * For a general-purpose version, see LIBRT rt_shoot_many_rays()
  */
 void
-worker(int cpu, genptr_t UNUSED(arg))
+worker(int cpu, void *UNUSED(arg))
 {
     int pixel_start;
     int pixelnum;
@@ -550,8 +547,6 @@ pat_found:
 
 
 /**
- * G R I D _ S E T U P
- *
  * In theory, the grid can be specified by providing any two of
  * these sets of parameters:
  *
@@ -643,7 +638,7 @@ grid_setup(void)
     /* "Lower left" corner of viewing plane */
     if (rt_perspective > 0.0) {
 	fastf_t zoomout;
-	zoomout = 1.0 / tan(bn_degtorad * rt_perspective / 2.0);
+	zoomout = 1.0 / tan(DEG2RAD * rt_perspective / 2.0);
 	VSET(temp, -1, -1/aspect, -zoomout);	/* viewing plane */
 
 	/*
@@ -652,7 +647,7 @@ grid_setup(void)
 	 * perspective is a full angle while divergence is the tangent
 	 * (slope) of a half angle.
 	 */
-	APP.a_diverge = tan(bn_degtorad * rt_perspective * 0.5 / width);
+	APP.a_diverge = tan(DEG2RAD * rt_perspective * 0.5 / width);
 	APP.a_rbeam = 0;
     } else {
 	/* all rays go this direction */
@@ -673,7 +668,7 @@ grid_setup(void)
 	fastf_t ang;	/* radians */
 	fastf_t dx, dy;
 
-	ang = curframe * frame_delta_t * bn_twopi / 10;	/* 10 sec period */
+	ang = curframe * frame_delta_t * M_2PI / 10;	/* 10 sec period */
 	dx = cos(ang) * 0.5;	/* +/- 1/4 pixel width in amplitude */
 	dy = sin(ang) * 0.5;
 	VJOIN2(viewbase_model, viewbase_model,
@@ -696,8 +691,6 @@ grid_setup(void)
 
 
 /**
- * D O _ R U N
- *
  * Compute a run of pixels, in parallel if the hardware permits it.
  *
  * For a general-purpose version, see LIBRT rt_shoot_many_rays().
@@ -705,7 +698,7 @@ grid_setup(void)
 void
 do_run(int a, int b)
 {
-    int cpu;
+    size_t cpu;
 
 #ifdef USE_FORKED_THREADS
     int pid, wpid;

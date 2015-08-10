@@ -1,7 +1,7 @@
 /*                       T E A _ N M G . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2013 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -30,10 +30,11 @@
 #include <stdlib.h>
 #include <stdio.h>		/* Direct the output to stdout */
 
+#include "bu/getopt.h"
 #include "vmath.h"		/* BRL-CAD Vector macros */
 #include "nmg.h"
-#include "nurb.h"		/* BRL-CAD Spline data structures */
 #include "raytrace.h"
+#include "rt/nurb.h"		/* BRL-CAD Spline data structures */
 #include "wdb.h"
 
 #include "./tea.h"		/* Teapot Data */
@@ -174,21 +175,28 @@ main(int argc, char **argv)
     tol.perp = 1e-6;
     tol.para = 1 - tol.perp;
 
-    BU_LIST_INIT(&RTG.rtg_vlfree);
-
-    outfp = wdb_fopen("tea_nmg.g");
-
     RTG.debug |= DEBUG_ALLRAYS;	/* Cause core dumps on bu_bomb(), but no extra messages */
 
-    while ((i=bu_getopt(argc, argv, "d")) != -1) {
+    while ((i=bu_getopt(argc, argv, "dh?")) != -1) {
 	switch (i) {
-	    case 'd' : RTG.debug |= DEBUG_MEM | DEBUG_MEM_FULL; break;
-	    default	:
-		fprintf(stderr,
-			"Usage: %s [-d] > database.g\n", *argv);
+	    case 'd':
+		RTG.debug |= DEBUG_MEM | DEBUG_MEM_FULL;
+		 break;
+	    default:
+		fprintf(stderr,"Usage: %s [-d]\n", *argv);
 		return -1;
 	}
     }
+
+    if (argc == 1) {
+	fprintf(stderr,"Usage: %s [-d]\n", *argv);
+    	bu_log("       Program continues running:\n");
+    }
+
+
+    BU_LIST_INIT(&RTG.rtg_vlfree);
+
+    outfp = wdb_fopen("tea_nmg.g");
 
     mk_id(outfp, id_name);
 

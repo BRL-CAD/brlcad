@@ -1,7 +1,7 @@
 /*                        P R O E - G . C
  * BRL-CAD
  *
- * Copyright (c) 1994-2013 United States Government as represented by
+ * Copyright (c) 1994-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -37,10 +37,11 @@
 #include <errno.h>
 #include "bio.h"
 
-#include "bu.h"
 #include "vmath.h"
+#include "bu/getopt.h"
+#include "bu/units.h"
 #include "nmg.h"
-#include "rtgeom.h"
+#include "rt/geom.h"
 #include "raytrace.h"
 #include "wdb.h"
 
@@ -135,8 +136,8 @@ char *
 Build_unique_name(char *name)
 {
     struct name_conv_list *ptr;
-    int name_len;
-    int tries=0;
+    size_t name_len;
+    size_t tries=0;
 
     name_len = strlen(name);
     bu_vls_strcpy(&ret_name, name);
@@ -147,7 +148,7 @@ Build_unique_name(char *name)
 	    /* this name already exists, build a new one */
 	    ++tries;
 	    bu_vls_trunc(&ret_name, name_len);
-	    bu_vls_printf(&ret_name, "_%d", tries);
+	    bu_vls_printf(&ret_name, "_%ld", (long)tries);
 
 	    ptr = name_root;
 	}
@@ -481,43 +482,35 @@ do_modifiers(char *line1, int *start, struct wmember *head, char *name, fastf_t 
 	    dist = 0.0;
 	    VSET(rpp_corner, min[X], min[Y], min[Z]);
 	    tmp_dist = DIST_PT_PLANE(rpp_corner, plane) * (fastf_t)orient;
-	    if (tmp_dist > dist)
-		dist = tmp_dist;
+	    V_MAX(dist, tmp_dist);
 
 	    VSET(rpp_corner, min[X], min[Y], max[Z]);
 	    tmp_dist = DIST_PT_PLANE(rpp_corner, plane) * (fastf_t)orient;
-	    if (tmp_dist > dist)
-		dist = tmp_dist;
+	    V_MAX(dist, tmp_dist);
 
 	    VSET(rpp_corner, min[X], max[Y], min[Z]);
 	    tmp_dist = DIST_PT_PLANE(rpp_corner, plane) * (fastf_t)orient;
-	    if (tmp_dist > dist)
-		dist = tmp_dist;
+	    V_MAX(dist, tmp_dist);
 
 	    VSET(rpp_corner, min[X], max[Y], max[Z]);
 	    tmp_dist = DIST_PT_PLANE(rpp_corner, plane) * (fastf_t)orient;
-	    if (tmp_dist > dist)
-		dist = tmp_dist;
+	    V_MAX(dist, tmp_dist);
 
 	    VSET(rpp_corner, max[X], min[Y], min[Z]);
 	    tmp_dist = DIST_PT_PLANE(rpp_corner, plane) * (fastf_t)orient;
-	    if (tmp_dist > dist)
-		dist = tmp_dist;
+	    V_MAX(dist, tmp_dist);
 
 	    VSET(rpp_corner, max[X], min[Y], max[Z]);
 	    tmp_dist = DIST_PT_PLANE(rpp_corner, plane) * (fastf_t)orient;
-	    if (tmp_dist > dist)
-		dist = tmp_dist;
+	    V_MAX(dist, tmp_dist);
 
 	    VSET(rpp_corner, max[X], max[Y], min[Z]);
 	    tmp_dist = DIST_PT_PLANE(rpp_corner, plane) * (fastf_t)orient;
-	    if (tmp_dist > dist)
-		dist = tmp_dist;
+	    V_MAX(dist, tmp_dist);
 
 	    VSET(rpp_corner, max[X], max[Y], max[Z]);
 	    tmp_dist = DIST_PT_PLANE(rpp_corner, plane) * (fastf_t)orient;
-	    if (tmp_dist > dist)
-		dist = tmp_dist;
+	    V_MAX(dist, tmp_dist);
 
 	    for (i=0; i<4; i++) {
 		VJOIN1(arb_pt[i+4], arb_pt[i], dist*(fastf_t)orient, plane);
@@ -638,7 +631,7 @@ Convert_part(char *line)
 	/* build a name from the file name */
 	char tmp_str[512];
 	char *ptr;
-	int len, suff_len;
+	size_t len, suff_len;
 
 	obj_count++;
 	obj = obj_count;
@@ -1023,9 +1016,6 @@ proe_usage(const char *argv0)
     bu_log("	The -x option specifies an RT debug flags (see raytrace.h).\n");
 }
 
-/*
- *			M A I N
- */
 int
 main(int argc, char **argv)
 {
@@ -1038,7 +1028,7 @@ main(int argc, char **argv)
     /* this value selected as a reasonable compromise between eliminating
      * needed faces and keeping degenerate faces
      */
-    tol.dist = 0.0005;	/* default, same as MGED, RT, ... */
+    tol.dist = BN_TOL_DIST;	/* default, same as MGED, RT, ... */
     tol.dist_sq = tol.dist * tol.dist;
     tol.perp = 1e-6;
     tol.para = 1 - tol.perp;
@@ -1128,8 +1118,6 @@ main(int argc, char **argv)
 		break;
 	}
     }
-
-    rt_init_resource(&rt_uniresource, 0, NULL);
 
     input_file = argv[bu_optind];
     if ((fd_in=fopen(input_file, "rb")) == NULL) {

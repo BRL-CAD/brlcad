@@ -1,7 +1,7 @@
 /*                 P U L L B A C K C U R V E . H
  * BRL-CAD
  *
- * Copyright (c) 2011-2013 United States Government as represented by
+ * Copyright (c) 2011-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -18,13 +18,13 @@
  * information.
  */
 
-#ifndef PULLBACK_CURVE
-#define PULLBACK_CURVE
+#ifndef CONV_IGES_PULLBACK_CURVE_H
+#define CONV_IGES_PULLBACK_CURVE_H
 
 #include "opennurbs.h"
 
 
-/*                  p u l l b a c k _ c u r v e
+/*
 *
 * Pull an arbitrary model-space *curve* onto the given *surface* as a
 * curve within the surface's domain when, for each point c = C(t) on
@@ -57,7 +57,7 @@ double tolerance = 1.0e-6,
 double flatness = 1.0e-3);
 
 
-#endif
+#endif /* CONV_IGES_PULLBACK_CURVE_H */
 
 /*
  * Local Variables:

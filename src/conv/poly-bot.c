@@ -1,7 +1,7 @@
 /*                      P O L Y - B O T . C
  * BRL-CAD
  *
- * Copyright (c) 2000-2013 United States Government as represented by
+ * Copyright (c) 2000-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -30,13 +30,14 @@
 #include <stdlib.h>
 #include <math.h>
 #include <string.h>
+#include "bnetwork.h"
 #include "bio.h"
-#include "bin.h"
 
 #include "vmath.h"
+#include "bu/file.h"
 #include "nmg.h"
-#include "db.h"
-#include "rtgeom.h"
+#include "rt/db4.h"
+#include "rt/geom.h"
 #include "raytrace.h"
 #include "wdb.h"
 
@@ -73,7 +74,7 @@ main(int argc, char **argv)
 
     /* FIXME: These need to be improved */
     tol.magic = BN_TOL_MAGIC;
-    tol.dist = 0.0005;
+    tol.dist = BN_TOL_DIST;
     tol.dist_sq = tol.dist * tol.dist;
     tol.perp = 1e-6;
     tol.para = 1 - tol.perp;
@@ -90,11 +91,9 @@ main(int argc, char **argv)
 	if (ifp == NULL || ofp == NULL) {
 	    bu_exit(1, "poly-bot: can't open files.");
 	}
-#if defined(_WIN32) && !defined(__CYGWIN__)
     } else {
 	setmode(fileno(ifp), O_BINARY);
 	setmode(fileno(ofp), O_BINARY);
-#endif
     }
     if (isatty(fileno(ifp))) {
 	bu_exit(1, "%s", usage);

@@ -1,7 +1,7 @@
 /*                        D E M - G . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2013 United States Government as represented by
+ * Copyright (c) 2008-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -71,13 +71,12 @@
 #include <ctype.h>
 #include "bio.h"
 
-#include "bu.h"
 #include "bn.h"
 #include "vmath.h"
 #include "raytrace.h"
-#include "rtgeom.h"
+#include "rt/geom.h"
 #include "wdb.h"
-#include "db.h"
+#include "rt/db4.h"
 
 
 const char *progname ="dem-g";
@@ -163,12 +162,13 @@ flip_high_low_bytes(long int in_value, unsigned char *out_string)
 {
     /* it is expected the out_string points to */
     /* a string of at least 3 characters */
-    unsigned char highbyte = '\0';
-    unsigned char lowbyte = '\0';
     int status = BRLCAD_ERROR;
 
     if ((in_value >= 0) && (in_value <= 65535)) {
-	highbyte = (unsigned char)floor(in_value / 256);
+	unsigned char highbyte = '\0';
+	unsigned char lowbyte = '\0';
+
+	highbyte = (unsigned char)lrint(floor(in_value / 256));
 	lowbyte = (unsigned char)(in_value - (highbyte * 256));
 	out_string[0] = highbyte;
 	out_string[1] = lowbyte;
@@ -190,9 +190,7 @@ output_elevation(long int in_value, FILE *fp)
     int status = BRLCAD_ERROR;
 
     /* allow for clipping */
-    if (in_value > DSP_MAX_RAW_ELEVATION) {
-	in_value = DSP_MAX_RAW_ELEVATION;
-    }
+    CLAMP(in_value, 0, DSP_MAX_RAW_ELEVATION);
 
     if (flip_high_low_bytes(in_value, buf) == BRLCAD_OK) {
 	if (fwrite(buf, 2, 1, fp) == 1) {
@@ -213,11 +211,11 @@ output_elevation(long int in_value, FILE *fp)
  */
 void remove_whitespace(char *input_string)
 {
-    char *idx = '\0';
+    char *idx = NULL;
     int idx2 = 0;
-    int input_string_length = 0;
-    char *firstp = '\0';
-    char *lastp = '\0';
+    size_t input_string_length = 0;
+    char *firstp = NULL;
+    char *lastp = NULL;
     int found_start = 0;
     int found_end = 0;
     int cleaned_string_length = 0;
@@ -244,7 +242,7 @@ void remove_whitespace(char *input_string)
     }
     /* if found_start is 0 then string must be all whitespace */
     if (found_start == 0) {
-	/* set null to first character a do nothing more */
+	/* set null to first character and do nothing more */
 	input_string[0] = '\0';
 	return;
     }
@@ -296,10 +294,8 @@ int read_element(ResultStruct *io_struct)
     int sub_element = 0;
     char *search_result_uppercase;
     char *search_result_lowercase;
-    double tmp_dbl = 0;
-    long tmp_long = 0;
     char *endp;
-    char *buf = '\0';
+    char *buf = NULL;
     int status = BRLCAD_ERROR;
     logical_record_type record_type ;
     int start_character = 0;
@@ -376,6 +372,8 @@ int read_element(ResultStruct *io_struct)
      * --------------------------------------------------------------------
      */
     if (datatype == type_integer) {
+	long tmp_long = 0;
+
 	/* sub_element was defined as a integer */
 	tmp_long = strtol(tmp_str, &endp, 10);
 	if ((tmp_str != endp) && (*endp == '\0')) {
@@ -396,6 +394,8 @@ int read_element(ResultStruct *io_struct)
      * --------------------------------------------------------------------
      */
     if (datatype == type_double) {
+	double tmp_dbl = 0;
+
 	/* sub_element was defined as a double */
 	if ((search_result_uppercase = strchr(tmp_str, 'D')) != NULL) {
 	    /* uppercase 'D' found, replace with 'E' */
@@ -412,6 +412,7 @@ int read_element(ResultStruct *io_struct)
 		}
 	    }
 	}
+
 	/* convert to double */
 	tmp_dbl = strtod(tmp_str, &endp);
 	if ((tmp_str != endp) && (*endp == '\0')) {
@@ -766,8 +767,6 @@ int process_manual_scale_factor(
     double *in_z_spatial_resolution_ptr,
     double *in_datum_elevation_in_curr_b_record_ptr)
 {
-    long int dem_max_raw_clipped_elevation = 0;
-    double dem_max_real_clipped_elevation = 0;
     double raw_dem_2_raw_dsp_manual_scale_factor_lowerlimit = 0;
     double raw_dem_2_raw_dsp_manual_scale_factor_upperlimit = 0;
 
@@ -791,6 +790,9 @@ int process_manual_scale_factor(
 	bu_log("Entered scale factor '%g' matches the default computed scale factor.\n", *in_raw_dem_2_raw_dsp_manual_scale_factor_ptr);
     } else {
 	if (*in_raw_dem_2_raw_dsp_manual_scale_factor_ptr > *in_raw_dem_2_raw_dsp_auto_scale_factor_ptr) {
+	    long int dem_max_raw_clipped_elevation = 0;
+	    double dem_max_real_clipped_elevation = 0;
+
 	    /* clipping.  manual scale factor > auto scale factor
 	     * derived_dem_max_raw_elevation is any value 0-999999
 	     */
@@ -858,7 +860,6 @@ int process_manual_dem_max_raw_elevation(
     double *in_z_spatial_resolution_ptr,
     double *in_datum_elevation_in_curr_b_record_ptr)
 {
-    double dem_max_real_clipped_elevation = 0;
     long int manual_dem_max_raw_elevation_lowerlimit = 1;
     long int manual_dem_max_raw_elevation_upperlimit = 999999;
 
@@ -888,6 +889,8 @@ int process_manual_dem_max_raw_elevation(
 	bu_log("Entered DEM max raw elevation '%ld' matches actual DEM max raw elevation.\n", *in_manual_dem_max_raw_elevation_ptr);
     } else {
 	if (*in_manual_dem_max_raw_elevation_ptr < *in_derived_dem_max_raw_elevation_ptr) {
+	    double dem_max_real_clipped_elevation = 0;
+
 	    /* clipping.  user input 'dem max raw elevation' <
 	     * 'derived dem max raw elevation'
 	     * derived_dem_max_raw_elevation is any value 0-999999
@@ -1425,14 +1428,14 @@ read_dem(
 		    curr_elevation = 0;
 		}
 
-		if (output_elevation((long int)round_closest(curr_elevation * raw_dem_2_raw_dsp_scale_factor), fp2) == BRLCAD_ERROR) {
+		if (output_elevation(lrint(round_closest(curr_elevation * raw_dem_2_raw_dsp_scale_factor)), fp2) == BRLCAD_ERROR) {
 		    bu_log("Function 'output_elevation' failed on 'b' record# '%ld', record elevation# '%ld', dem elevation# '%ld', raw elevation value '%ld'.\n", curr_b_record, elevation_number_in_curr_b_record, elevation_number, curr_elevation);
 		    fclose(fp);
 		    fclose(fp2);
 		    return BRLCAD_ERROR;
 		}
 	    }
-	    additional_1024char_chunks = (long int)ceil((tot_elevations_in_curr_b_record - 146.0) / 170.0);
+	    additional_1024char_chunks = lrint(ceil((tot_elevations_in_curr_b_record - 146.0) / 170.0));
 
 	    if (additional_1024char_chunks > 0) {
 		for (indx2 = 1; indx2 < additional_1024char_chunks; indx2++) {
@@ -1464,7 +1467,7 @@ read_dem(
 			    curr_elevation = 0;
 			}
 
-			if (output_elevation((long int)round_closest(curr_elevation * raw_dem_2_raw_dsp_scale_factor), fp2) == BRLCAD_ERROR) {
+			if (output_elevation(lrint(round_closest(curr_elevation * raw_dem_2_raw_dsp_scale_factor)), fp2) == BRLCAD_ERROR) {
 			    bu_log("Function 'output_elevation' failed on 'b' record# '%ld', record elevation# '%ld', dem elevation# '%ld', raw elevation value '%ld'.\n", curr_b_record, elevation_number_in_curr_b_record, elevation_number, curr_elevation);
 			    fclose(fp);
 			    fclose(fp2);
@@ -1501,7 +1504,7 @@ read_dem(
 			curr_elevation = 0;
 		    }
 
-		    if (output_elevation((long int)round_closest(curr_elevation * raw_dem_2_raw_dsp_scale_factor), fp2) == BRLCAD_ERROR) {
+		    if (output_elevation(lrint(round_closest(curr_elevation * raw_dem_2_raw_dsp_scale_factor)), fp2) == BRLCAD_ERROR) {
 			bu_log("Function 'output_elevation' failed on 'b' record# '%ld', record elevation# '%ld', dem elevation# '%ld', raw elevation value '%ld'.\n", curr_b_record, elevation_number_in_curr_b_record, elevation_number, curr_elevation);
 			fclose(fp);
 			fclose(fp2);
@@ -1530,7 +1533,7 @@ read_dem(
 		    curr_elevation = 0;
 		}
 
-		if (output_elevation((long int)round_closest(curr_elevation * raw_dem_2_raw_dsp_scale_factor), fp2) == BRLCAD_ERROR) {
+		if (output_elevation(lrint(round_closest(curr_elevation * raw_dem_2_raw_dsp_scale_factor)), fp2) == BRLCAD_ERROR) {
 		    bu_log("Function 'output_elevation' failed on 'b' record# '%ld', record elevation# '%ld', dem elevation# '%ld', raw elevation value '%ld'.\n", curr_b_record, elevation_number_in_curr_b_record, elevation_number, curr_elevation);
 		    fclose(fp);
 		    fclose(fp2);
@@ -1564,7 +1567,7 @@ convert_load_order(
     unsigned short int buf4 = 0;
     size_t ret;
 
-    buf3 = bu_calloc(*in_ydim, sizeof(unsigned short int), "buf3");
+    buf3 = (short unsigned int *)bu_calloc(*in_ydim, sizeof(unsigned short int), "buf3");
 
     if ((fp4=fopen(in_dsp_output_filename, "wb")) == NULL) {
 	bu_log("Could not open '%s' for write.\n", in_dsp_output_filename);
@@ -2102,9 +2105,9 @@ main(int ac, char *av[])
     bu_vls_strcat(&model_output_filename, ".g");
 
     bu_log("input_filename '%s'\n", input_filename);
-    bu_log("temp_filename '%V'\n", &temp_filename);
-    bu_log("dsp_output_filename '%V'\n", &dsp_output_filename);
-    bu_log("model_output_filename '%V'\n", &model_output_filename);
+    bu_log("temp_filename '%s'\n", bu_vls_addr(&temp_filename));
+    bu_log("dsp_output_filename '%s'\n", bu_vls_addr(&dsp_output_filename));
+    bu_log("model_output_filename '%s'\n", bu_vls_addr(&model_output_filename));
 
     raw_dem_2_raw_dsp_manual_scale_factor = 0;
     manual_dem_max_raw_elevation = 0;

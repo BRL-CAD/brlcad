@@ -1,7 +1,7 @@
 /*                        F B F R E E . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2013 United States Government as represented by
+ * Copyright (c) 1986-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -28,9 +28,8 @@
 #include "common.h"
 
 #include <stdlib.h>
-#include "bio.h"
 
-#include "bu.h"
+#include "bu/getopt.h"
 #include "fb.h"
 
 
@@ -43,7 +42,7 @@ int
 main(int argc, char **argv)
 {
     int c;
-    FBIO *fbp;
+    fb *fbp;
 
     while ((c = bu_getopt(argc, argv, "F:h?")) != -1) {
 	switch (c) {
@@ -59,7 +58,7 @@ main(int argc, char **argv)
 	fprintf(stderr, "fbfree: excess argument(s) ignored\n");
     }
 
-    if ((fbp = fb_open(framebuffer, 0, 0)) == FBIO_NULL) {
+    if ((fbp = fb_open(framebuffer, 0, 0)) == FB_NULL) {
 	fprintf(stderr, "fbfree: Can't open frame buffer\n");
 	return 1;
     }

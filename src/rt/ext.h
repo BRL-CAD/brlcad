@@ -1,7 +1,7 @@
 /*                           E X T . H
  * BRL-CAD
  *
- * Copyright (c) 1989-2013 United States Government as represented by
+ * Copyright (c) 1989-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -22,6 +22,9 @@
  * External variable declarations for the RT family of analysis programs.
  *
  */
+
+#ifndef RT_EXT_H
+#define RT_EXT_H
 
 #include "optical.h"
 
@@ -74,7 +77,7 @@ extern int fullfloat_mode;
 extern int hypersample;			/* number of extra rays to fire */
 extern int incr_mode;			/* !0 for incremental resolution */
 extern int full_incr_mode;              /* !0 for fully incremental resolution */
-extern int npsw;			/* number of worker PSWs to run */
+extern size_t npsw;			/* number of worker PSWs to run */
 extern int reproj_cur;			/* number of pixels reprojected this frame */
 extern int reproj_max;			/* out of total number of pixels */
 extern int reproject_mode;
@@ -90,7 +93,7 @@ extern size_t full_incr_nsamples;       /* number of fully incremental samples *
 extern size_t width;			/* # of pixels in X */
 extern struct floatpixel *curr_float_frame;	/* buffer of full frame */
 extern struct floatpixel *prev_float_frame;
-extern struct resource resource[];	/* memory resources */
+extern struct resource resource[MAX_PSW];	/* memory resources */
 extern unsigned int jitter;		/* jitter (bit vector) */
 extern vect_t dx_model;			/* view delta-X as model-space vect (width of pixel as vector) */
 extern vect_t dx_unit;			/* unit-len dir vector of pixel side-to-side */
@@ -134,6 +137,8 @@ extern int get_args(int argc, const char *argv[]);
 
 /* view.c */
 extern void usage(const char *argv0);
+
+#endif /* RT_EXT_H */
 /*
  * Local Variables:
  * mode: C

@@ -1,7 +1,7 @@
 /*                      V I E W _ O B J . C
  * BRL-CAD
  *
- * Copyright (c) 1997-2013 United States Government as represented by
+ * Copyright (c) 1997-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -31,13 +31,13 @@
 
 #include <string.h>
 #include <math.h>
-#include "bio.h"
 
 #include "tcl.h"
 
-#include "bu.h"
+
 #include "bn.h"
-#include "cmd.h"
+#include "bu/cmd.h"
+#include "bu/units.h"
 #include "vmath.h"
 #include "ged.h"
 #include "obj.h"
@@ -62,6 +62,11 @@ vo_deleteProc(void *clientData)
     BU_PUT(vop, struct view_obj);
 }
 
+HIDDEN void
+_vo_eval(void *context, const char *cmd) {
+    Tcl_Interp *interp = (Tcl_Interp *)context;
+    Tcl_Eval(interp, cmd);
+}
 
 void
 vo_update(struct view_obj *vop,
@@ -107,7 +112,7 @@ vo_update(struct view_obj *vop,
     if (vop->vo_callback)
 	(*vop->vo_callback)(vop->vo_clientData, vop);
     else if (oflag)
-	bu_observer_notify(vop->interp, &vop->vo_observers, bu_vls_addr(&vop->vo_name));
+	bu_observer_notify((void *)vop->interp, &vop->vo_observers, bu_vls_addr(&vop->vo_name), &(_vo_eval));
 }
 
 
@@ -124,7 +129,7 @@ vo_mat_aet(struct view_obj *vop)
 		  0.0,
 		  270.0 - vop->vo_aet[0]);
 
-    twist = -vop->vo_aet[2] * bn_degtorad;
+    twist = -vop->vo_aet[2] * DEG2RAD;
     c_twist = cos(twist);
     s_twist = sin(twist);
     bn_mat_zrot(tmat, s_twist, c_twist);
@@ -665,106 +670,6 @@ vo_view2model_tcl(void *clientData,
     return vo_view2model_cmd(vop, argc-1, argv+1);
 }
 
-
-/**
- * P E R S P _ M A T
- *
- * Compute a perspective matrix for a right-handed coordinate system.
- * Reference: SGI Graphics Reference Appendix f
- *
- * (Note: SGI is left-handed, but the fix is done in the Display
- * Manager).
- */
-static void
-vo_persp_mat(mat_t m,
-	     fastf_t fovy,
-	     fastf_t aspect,
-	     fastf_t near1,
-	     fastf_t far1,
-	     fastf_t backoff)
-{
-    mat_t m2, tran;
-
-    fovy *= DEG2RAD;
-
-    MAT_IDN(m2);
-    m2[5] = cos(fovy/2.0) / sin(fovy/2.0);
-    m2[0] = m2[5]/aspect;
-    m2[10] = (far1+near1) / (far1-near1);
-    m2[11] = 2*far1*near1 / (far1-near1);	/* This should be negative */
-
-    m2[14] = -1;		/* XXX This should be positive */
-    m2[15] = 0;
-
-    /* Move eye to origin, then apply perspective */
-    MAT_IDN(tran);
-    tran[11] = -backoff;
-    bn_mat_mul(m, m2, tran);
-}
-
-
-/**
- * Create a perspective matrix that transforms the +/1 viewing cube,
- * with the acutal eye position (not at Z=+1) specified in viewing
- * coords, into a related space where the eye has been sheared onto
- * the Z axis and repositioned at Z=(0, 0, 1), with the same
- * perspective field of view as before.
- *
- * The Zbuffer clips off stuff with negative Z values.
- *
- * pmat = persp * xlate * shear
- */
-static void
-vo_mike_persp_mat(mat_t pmat,
-		  const point_t eye)
-{
-    mat_t shear;
-    mat_t persp;
-    mat_t xlate;
-    mat_t t1, t2;
-    point_t sheared_eye;
-
-    if (eye[Z] <= SMALL) {
-	VPRINT("mike_persp_mat(): ERROR, z<0, eye", eye);
-	return;
-    }
-
-    /* Shear "eye" to +Z axis */
-    MAT_IDN(shear);
-    shear[2] = -eye[X]/eye[Z];
-    shear[6] = -eye[Y]/eye[Z];
-
-    MAT4X3VEC(sheared_eye, shear, eye);
-    if (!NEAR_ZERO(sheared_eye[X], .01) || !NEAR_ZERO(sheared_eye[Y], .01)) {
-	VPRINT("ERROR sheared_eye", sheared_eye);
-	return;
-    }
-
-    /* Translate along +Z axis to put sheared_eye at (0, 0, 1). */
-    MAT_IDN(xlate);
-    /* XXX should I use MAT_DELTAS_VEC_NEG()?  X and Y should be 0 now */
-    MAT_DELTAS(xlate, 0, 0, 1-sheared_eye[Z]);
-
-    /* Build perspective matrix inline, substituting fov=2*atan(1, Z) */
-    MAT_IDN(persp);
-    /* From page 492 of Graphics Gems */
-    persp[0] = sheared_eye[Z];	/* scaling: fov aspect term */
-    persp[5] = sheared_eye[Z];	/* scaling: determines fov */
-
-    /* From page 158 of Rogers Mathematical Elements */
-    /* Z center of projection at Z=+1, r=-1/1 */
-    persp[14] = -1;
-
-    bn_mat_mul(t1, xlate, shear);
-    bn_mat_mul(t2, persp, t1);
-
-    /* Now, move eye from Z=1 to Z=0, for clipping purposes */
-    MAT_DELTAS(xlate, 0, 0, -1);
-
-    bn_mat_mul(pmat, xlate, t2);
-}
-
-
 int
 vo_perspective_cmd(struct view_obj *vop,
 		   int argc,
@@ -796,7 +701,7 @@ vo_perspective_cmd(struct view_obj *vop,
 	vop->vo_perspective = perspective;
 
 	/* This way works, with reasonable Z-clipping */
-	vo_persp_mat(vop->vo_pmat, vop->vo_perspective,
+	persp_mat(vop->vo_pmat, vop->vo_perspective,
 		     1.0, 0.01, 1.0e10, 1.0);
 	vo_update(vop, 1);
 
@@ -1010,7 +915,7 @@ vo_eye_pos_cmd(struct view_obj *vop,
     VMOVE(vop->vo_eye_pos, eye_pos);
 
     /* update perspective matrix */
-    vo_mike_persp_mat(vop->vo_pmat, vop->vo_eye_pos);
+    mike_persp_mat(vop->vo_pmat, vop->vo_eye_pos);
 
     /* update all other view related matrices */
     vo_update(vop, 1);
@@ -2039,8 +1944,6 @@ vo_keypoint_tcl(void *clientData,
 
 
 /*
- * V O _ S E T V I E W
- *
  * Set the view.  Angles are DOUBLES, in degrees.
  *
  * Given that viewvec = scale . rotate . (xlate to view center) . modelvec,
@@ -2169,7 +2072,7 @@ vo_arot_cmd(struct view_obj *vop,
     VSETALL(pt, 0.0);
     VUNITIZE(axis);
 
-    bn_mat_arb_rot(newrot, pt, axis, angle*bn_degtorad);
+    bn_mat_arb_rot(newrot, pt, axis, angle*DEG2RAD);
 
     return vo_rot(vop, vop->vo_coord, vop->vo_rotate_about, newrot, func);
 }
@@ -2756,8 +2659,8 @@ vo_ae2dir_cmd(struct view_obj *vop, int argc, const char *argv[])
 	iflag = 0;
     }
 
-    az *= bn_degtorad;
-    el *= bn_degtorad;
+    az *= DEG2RAD;
+    el *= DEG2RAD;
     V3DIR_FROM_AZEL(dir, az, el);
 
     if (iflag)
@@ -2910,7 +2813,7 @@ vo_cmd(ClientData clientData,
 	{"viewDir",		vo_viewDir_tcl},
 	{"vrot",		vo_vrot_tcl},
 	{"zoom",		vo_zoom_tcl},
-	{(char *)0,		(int (*)())0}
+	{(const char *)NULL, BU_CMD_NULL}
     };
 
     if (bu_cmd(vo_cmds, argc, argv, 1, clientData, &ret) == BRLCAD_OK)

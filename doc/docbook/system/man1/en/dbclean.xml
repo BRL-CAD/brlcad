@@ -24,14 +24,14 @@
 
 
 <refsect1 xml:id='description'><title>DESCRIPTION</title>
-<para><emphasis remap='I'>Dbclean</emphasis>
+<para><command>dbclean</command>
 operates on the indicated input database
 <emphasis remap='I'>in_model.g</emphasis>
-and produces a compacter version of the same
+and produces a compacter version of the same as
 <emphasis remap='I'>out_model.g.</emphasis></para>
 
-<para>The objective is to remove ``holes" left in the original database by using
-the <emphasis remap='I'>kill/killall</emphasis> command in
+<para>The objective is to remove "holes" in the original database which resulted from use of
+the <emphasis remap='I'>kill</emphasis>/<emphasis remap='I'>killall</emphasis> commands in
 <citerefentry><refentrytitle>mged</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
 Note that when a database is compacted in this manner, the compacting is
 dependent on the successful completion of the converters
@@ -39,24 +39,24 @@ dependent on the successful completion of the converters
 and
 <citerefentry><refentrytitle>asc2g</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
 The compacting will only be aborted if one of the conversions fails.  Thus,
-when either converter ``skips" solids, <command>dbclean</command> will continue, and
+when either converter "skips" solids, <command>dbclean</command> will continue, and
 <emphasis remap='I'>out_model.g</emphasis>
-will be written, albeit, without the skipped solids.  This will also
+will be written, albeit without the skipped solids.  This will also
 result in a smaller database.</para>
 </refsect1>
 
 <refsect1 xml:id='example'><title>EXAMPLE</title>
-<para>This section will acquaint the user with the ordinary usage of <command>dbclean</command>.</para>
+<para>This section will acquaint the user with the ordinary usage of <command>dbclean</command> .</para>
 
 <literallayout remap='.nf'>
-<emphasis remap='I'>dbclean in_model.g out_model.g</emphasis>
+dbclean <emphasis remap='I'>in_model.g out_model.g</emphasis>
 </literallayout> <!-- .fi -->
 
 <para>This will result in a compacted version of the input.</para>
 </refsect1>
 
 <refsect1 xml:id='see_also'><title>SEE ALSO</title>
-<para><citerefentry><refentrytitle>mged</refentrytitle><manvolnum>1</manvolnum></citerefentry>.</para>
+<para><citerefentry><refentrytitle>mged</refentrytitle><manvolnum>1</manvolnum></citerefentry></para>
 </refsect1>
 
 <refsect1 xml:id='diagnostics'><title>DIAGNOSTICS</title>
@@ -80,8 +80,8 @@ packages instead.</para>
 </refsect1>
 
 <refsect1 xml:id='copyright'><title>COPYRIGHT</title>
-<para>This software is Copyright (c) 1991-2013 United States Government as
-represented by the U.S. Army Research Laboratory. All rights reserved.</para>
+<para>This software is Copyright (c) 1991-2014 United States Government as
+represented by the U.S. Army Research Laboratory.</para>
 </refsect1>
 
 <refsect1 xml:id='bug_reports'><title>BUG REPORTS</title>

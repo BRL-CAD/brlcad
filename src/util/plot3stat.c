@@ -1,7 +1,7 @@
 /*                     P L O T 3 S T A T . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2013 United States Government as represented by
+ * Copyright (c) 1990-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -29,8 +29,9 @@
 #include <string.h>
 #include "bio.h"
 
-#include "bu.h"
-
+#include "bu/cv.h"
+#include "bu/log.h"
+#include "bu/str.h"
 
 #define TBAD	0	/* no such command */
 #define TNONE	1	/* no arguments */
@@ -43,7 +44,7 @@
 struct uplot {
     int targ;	/* type of args */
     int narg;	/* number or args */
-    char *desc;	/* description */
+    const char *desc;	/* description */
 };
 struct uplot uerror = { 0, 0, 0 };
 struct uplot letters[] = {
@@ -257,7 +258,7 @@ outfloat(int n)
     if (ret < (size_t)n)
 	perror("fread");
 
-    ntohd((unsigned char *)out, in, n);
+    bu_cv_ntohd((unsigned char *)out, in, n);
 
     for (i = 0; i < n; i++) {
 	/*printf("%g", out[i]);*/

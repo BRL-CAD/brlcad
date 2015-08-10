@@ -1,7 +1,7 @@
 /*                  P L O T 3 - P L O T 3 . C
  * BRL-CAD
  *
- * Copyright (c) 1988-2013 United States Government as represented by
+ * Copyright (c) 1988-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -31,13 +31,14 @@
 #include <string.h>
 #include "bio.h"
 
-#include "bu.h"
-
+#include "bu/str.h"
+#include "bu/log.h"
+#include "bu/cv.h"
 
 struct uplot {
     int targ;	/* type of args */
     int narg;	/* number or args */
-    char *desc;	/* description */
+    const char *desc;	/* description */
     int t3d;	/* non-zero if 3D */
 };
 
@@ -380,7 +381,7 @@ getieee(void)
     if (ret < 1)
 	perror("fread");
 
-    ntohd((unsigned char *)&d, (unsigned char *)in, 1);
+    bu_cv_ntohd((unsigned char *)&d, (unsigned char *)in, 1);
     return d;
 }
 
@@ -484,7 +485,7 @@ putieee(double d)
     unsigned char out[8];
     size_t ret;
 
-    htond(out, (unsigned char *)&d, 1);
+    bu_cv_htond(out, (unsigned char *)&d, 1);
     ret = fwrite(out, 1, 8, stdout);
     if (ret < 8)
 	perror("fwrite");

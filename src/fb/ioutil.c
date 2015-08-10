@@ -1,7 +1,7 @@
 /*                        I O U T I L . C
  * BRL-CAD
  *
- * Copyright (c) 2007-2013 United States Government as represented by
+ * Copyright (c) 2007-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -29,7 +29,10 @@
 #include <stdarg.h>
 #include <string.h>
 
-#include "bu.h"
+#include "bu/log.h"
+#include "bu/file.h"
+#include "bu/malloc.h"
+#include "bu/path.h"
 #include "fb.h"
 
 
@@ -37,12 +40,12 @@ HIDDEN void
 VMessage(const char *format, va_list ap)
 {
     struct bu_vls str = BU_VLS_INIT_ZERO;
-    char *tmp_basename = NULL;
+    char *tmp_basename = (char *)bu_calloc(strlen(bu_getprogname()), sizeof(char), "VMessage tmp_basename");
 
     bu_vls_printf(&str, format, ap);
-    tmp_basename = bu_basename(bu_getprogname());
+    bu_basename(tmp_basename, bu_getprogname());
 
-    bu_log("%s: %V\n", tmp_basename, &str);
+    bu_log("%s: %s\n", tmp_basename, bu_vls_addr(&str));
 
     bu_vls_free(&str);
     bu_free(tmp_basename, "bu_basename");
@@ -61,7 +64,7 @@ Message(const char *format, ...)
 
 
 void
-Fatal(FBIO *fbp, const char *format, ...)
+Fatal(fb *fbp, const char *format, ...)
 {
     va_list ap;
 
@@ -69,9 +72,9 @@ Fatal(FBIO *fbp, const char *format, ...)
     VMessage(format, ap);
     va_end(ap);
 
-    if (fbp != FBIO_NULL && fb_close(fbp) == -1) {
+    if (fbp != FB_NULL && fb_close(fbp) == -1) {
 	Message("Error closing frame buffer");
-	fbp = FBIO_NULL;
+	fbp = FB_NULL;
     }
 
     bu_exit(EXIT_FAILURE, NULL);

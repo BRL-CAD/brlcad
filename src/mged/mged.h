@@ -1,7 +1,7 @@
 /*                           M G E D . H
  * BRL-CAD
  *
- * Copyright (c) 1985-2013 United States Government as represented by
+ * Copyright (c) 1985-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -52,8 +52,8 @@
  *
  */
 
-#ifndef __MGED_H__
-#define __MGED_H__
+#ifndef MGED_MGED_H
+#define MGED_MGED_H
 
 #include "common.h"
 
@@ -63,8 +63,11 @@
 #include <time.h>
 
 #include "tcl.h"
+#include "bu/parallel.h"
+#include "bu/list.h"
+#include "bu/str.h"
+#include "bu/vls.h"
 #include "wdb.h"
-#include "dg.h"
 
 /* Needed to define struct menu_item */
 #include "./menu.h"
@@ -73,7 +76,7 @@
 #include "./mged_dm.h"
 
 /* Needed to define struct solid */
-#include "solid.h"
+#include "rt/solid.h"
 
 
 #define MGED_DB_NAME "db"
@@ -161,7 +164,6 @@ extern mat_t acc_rot_sol;	/* accumulate solid rotations */
 extern FILE *infile;
 extern FILE *outfile;
 extern jmp_buf jmp_env;
-extern struct solid MGED_FreeSolid;	/* Head of freelist */
 
 /* FIXME: ugh, main global interpreter */
 extern Tcl_Interp *ged_interp;
@@ -219,7 +221,7 @@ extern struct directory **dir_getspace();
 extern void ellipse();
 
 /* mged.c */
-extern void mged_view_callback(struct ged_view *gvp, genptr_t clientData);
+extern void mged_view_callback(struct bview *gvp, void *clientData);
 
 /* buttons.c */
 extern void button(int bnum);
@@ -242,7 +244,7 @@ void history_setup(void);
 #define ROTARROW 010 /* Object rotation enabled */
 extern int movedir;  /* RARROW | UARROW | SARROW | ROTARROW */
 
-extern struct ged_display_list *illum_gdlp; /* Pointer to solid in solid table to be illuminated */
+extern struct display_list *illum_gdlp; /* Pointer to solid in solid table to be illuminated */
 extern struct solid *illump; /* == 0 if none, else points to ill. solid */
 extern int ipathpos; /* path index of illuminated element */
 extern int sedraw; /* apply solid editing changes */
@@ -445,7 +447,7 @@ int mged_attach(struct w_dm *wp, int argc, const char *argv[]);
 void mged_link_vars(struct dm_list *p);
 void mged_slider_free_vls(struct dm_list *p);
 int gui_setup(const char *dstr);
-int gui_output(genptr_t clientData, genptr_t str);
+int gui_output(void *clientData, void *str);
 
 
 /* buttons.c */
@@ -477,9 +479,9 @@ int mged_cmd(int argc, const char *argv[], struct funtab in_functions[]);
 void mged_print_result(int status);
 
 /* color_scheme.c */
-void cs_set_bg(void);
-void cs_update(void);
-void cs_set_dirty_flag(void);
+void cs_set_bg(const struct bu_structparse *, const char *, void *, const char *, void *);
+void cs_update(const struct bu_structparse *, const char *, void *, const char *, void *);
+void cs_set_dirty_flag(const struct bu_structparse *, const char *, void *, const char *, void *);
 
 /* columns.c */
 void vls_col_item(struct bu_vls *str, const char *cp);
@@ -506,22 +508,19 @@ int cmd_killtree(
 /* dodraw.c */
 void cvt_vlblock_to_solids(struct bn_vlblock *vbp, const char *name, int copy);
 int drawtrees(int argc, const char *argv[], int kind);
-int invent_solid(const char *name, struct bu_list *vhead, long rgb, int copy);
-void pathHmat(struct solid *sp, matp_t matp, int depth);
 int replot_modified_solid(struct solid *sp, struct rt_db_internal *ip, const mat_t mat);
 int replot_original_solid(struct solid *sp);
 void add_solid_path_to_result(Tcl_Interp *interpreter, struct solid *sp);
 int redraw_visible_objects(void);
 
 /* dozoom.c */
-void createDList(struct solid *sp);
 void createDLists(struct bu_list *hdlp);
-void createDListAll(struct solid *sp);
+void createDListSolid(struct solid *sp);
+void createDListAll(struct display_list *gdlp);
 void freeDListsAll(unsigned int dlist, int range);
 
 /* edarb.c */
 int editarb(vect_t pos_model);
-int mv_edge(vect_t thru, int bp1, int bp2, int end1, int end2, const vect_t dir);
 extern int newedge;	/* new edge for arb editing */
 
 /* edars.c */
@@ -573,10 +572,10 @@ void zoom_rect_area(void);
 void paint_rect_area(void);
 void rt_rect_area(void);
 void draw_rect(void);
-void set_rect(void);
+void set_rect(const struct bu_structparse *, const char *, void *, const char *, void *);
 void rect_view2image(void);
 void rect_image2view(void);
-void rb_set_dirty_flag(void);
+void rb_set_dirty_flag(const struct bu_structparse *, const char *, void *, const char *, void *);
 
 
 /* track.c */
@@ -624,7 +623,7 @@ int epain(struct rt_db_internal *ip, fastf_t thick[2]);
 int etoin(struct rt_db_internal *ip, fastf_t thick[1]);
 
 /* set.c */
-extern void set_scroll_private(void);
+extern void set_scroll_private(const struct bu_structparse *, const char *, void *, const char *, void *);
 extern void mged_variable_setup(Tcl_Interp *interpreter);
 
 /* scroll.c */
@@ -653,13 +652,16 @@ extern void mged_vls_struct_parse_old(struct bu_vls *vls, const char *title, str
 int build_tops(char **start, char **end);
 
 /* mater.c */
-void color_soltab(void);
+void mged_color_soltab(void);
 
 /* utility1.c */
 int editit(const char *command, const char *tempfile);
 
+int Wdb_Init(Tcl_Interp *interp);
+int wdb_cmd(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[]);
+void wdb_deleteProc(ClientData clientData);
 
-#endif  /* __GED_H__ */
+#endif  /* MGED_MGED_H */
 
 /*
  * Local Variables:

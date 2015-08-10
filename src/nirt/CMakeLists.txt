@@ -1,6 +1,7 @@
 set(NIRT_INCLUDE_DIRS
   ${FB_INCLUDE_DIRS}
   ${RT_INCLUDE_DIRS}
+  ${SYSV_INCLUDE_DIRS}
   )
 LIST(REMOVE_DUPLICATES NIRT_INCLUDE_DIRS)
 include_directories(${NIRT_INCLUDE_DIRS})
@@ -17,7 +18,7 @@ set(NIRT_SRCS
   parse_fmt.c
   )
 
-BRLCAD_ADDEXEC(nirt "${NIRT_SRCS}" "librt;libfb;${M_LIBRARY}")
+BRLCAD_ADDEXEC(nirt "${NIRT_SRCS}" "librt;libfb;libsysv;${M_LIBRARY}")
 SET_PROPERTY(TARGET nirt APPEND PROPERTY COMPILE_DEFINITIONS "DFLT_SHELL=\"/bin/sh\"")
 
 BRLCAD_ADDEXEC(showshot showshot.c libbn)

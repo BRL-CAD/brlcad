@@ -1,4 +1,3 @@
-<!-- Converted by db4-upgrade version 1.0 -->
 <refentry xmlns="http://docbook.org/ns/docbook" version="5.0" xml:id="anim_keyread1">
   <refmeta>
     <refentrytitle>ANIM_KEYREAD</refentrytitle>
@@ -161,7 +160,7 @@ Warning: x and z rotations arbitrarily defined at time = 9.000000.
 
   <refsection xml:id="copyright"><title>COPYRIGHT</title>
 
-    <para>This software is Copyright (c) 1993-2013 by the United States
+    <para>This software is Copyright (c) 1993-2014 by the United States
     Government as represented by U.S. Army Research Laboratory.</para>
   </refsection>
 

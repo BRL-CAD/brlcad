@@ -1,7 +1,7 @@
 /*                   N M G _ E X T R U D E . C
  * BRL-CAD
  *
- * Copyright (c) 1994-2013 United States Government as represented by
+ * Copyright (c) 1994-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -28,21 +28,18 @@
 
 #include "common.h"
 
-#include <stdio.h>
 #include <math.h>
 #include <string.h>
 #include "bio.h"
 
 #include "vmath.h"
-#include "db.h"
+#include "rt/db4.h"
 #include "nmg.h"
-#include "rtgeom.h"
+#include "rt/geom.h"
 #include "raytrace.h"
 
 
 /**
- * v e r t s _ i n _ n m g _ l o o p
- *
  * Count number of vertices in an NMG loop.
  */
 static int
@@ -74,8 +71,6 @@ verts_in_nmg_loop(struct loopuse *lu)
 
 
 /**
- * v e r t s _ i n _ n m g _ f a c e
- *
  * Count number of vertices in an NMG face.
  */
 static int
@@ -92,8 +87,6 @@ verts_in_nmg_face(struct faceuse *fu)
 
 
 /**
- * n m g _ t r a n s l a t e _ f a c e
- *
  * Translate a face using a vector's magnitude and direction.
  */
 void
@@ -179,16 +172,14 @@ nmg_translate_face(struct faceuse *fu, const fastf_t *Vec)
 
 
 /**
- * n m g _ e x t r u d e _ f a c e
- *
  * Duplicate a given NMG face, move it by specified vector, and create
  * a solid bounded by these faces.
  */
 int
 nmg_extrude_face(struct faceuse *fu, const fastf_t *Vec, const struct bn_tol *tol)
-    /* Face to extrude. */
-    /* Magnitude and direction of extrusion. */
-    /* NMG tolerances. */
+/* Face to extrude. */
+/* Magnitude and direction of extrusion. */
+/* NMG tolerances. */
 {
     fastf_t cosang;
     int nfaces;
@@ -269,8 +260,6 @@ nmg_extrude_face(struct faceuse *fu, const fastf_t *Vec, const struct bn_tol *to
 
 
 /**
- * n m g _ f i n d _ v e r t e x _ i n _ l u
- *
  * find a use of vertex v in loopuse lu
  */
 struct vertexuse *
@@ -303,8 +292,6 @@ nmg_find_vertex_in_lu(const struct vertex *v, const struct loopuse *lu)
 
 
 /**
- * n m g _ s t a r t _ n e w _ l o o p
- *
  * recursive routine to build tables of edgeuse that may be used to
  * create new loopuses. lu1 and lu2 are overlapping edgeuses from the
  * same faceuse. This is a support routine for nmg_fix_overlapping
@@ -405,8 +392,6 @@ nmg_start_new_loop(struct edgeuse *start_eu, struct loopuse *lu1, struct loopuse
 
 
 /**
- * n m g _ f i x _ o v e r l a p p i n g _ l o o p s
- *
  * Looks at each faceuse in the shell and checks if loopuses in that
  * faceuse overlap each other. This code can only handle faceuses that
  * have at most one OT_SAME loopuse and one OT_OPPOSITE loopuse, so
@@ -436,7 +421,7 @@ nmg_fix_overlapping_loops(struct shell *s, const struct bn_tol *tol)
     NMG_CK_SHELL(s);
 
     if (RTG.NMG_debug & DEBUG_BASIC)
-	bu_log("nmg_fix_overlapping_loops: s = x%x\n", s);
+	bu_log("nmg_fix_overlapping_loops: s = %p\n", (void *)s);
 
     /* this routine needs simple faceuses */
     nmg_split_loops_into_faces(&s->l.magic, tol);
@@ -518,12 +503,12 @@ nmg_fix_overlapping_loops(struct shell *s, const struct bn_tol *tol)
 
 	    /* ignore vertices that are shared between the loops */
 	    if (!nmg_find_vertex_in_lu(vu->v_p, lu1)) {
-		int class;
+		int nmg_class;
 
-		class = nmg_classify_pt_loop(vu->v_p->vg_p->coord, lu1, tol);
-		if (class == NMG_CLASS_AoutB)
+		nmg_class = nmg_classify_pt_loop(vu->v_p->vg_p->coord, lu1, tol);
+		if (nmg_class == NMG_CLASS_AoutB)
 		    outside++;
-		else if (class == NMG_CLASS_AinB)
+		else if (nmg_class == NMG_CLASS_AinB)
 		    inside++;
 	    }
 	}
@@ -625,9 +610,9 @@ nmg_fix_overlapping_loops(struct shell *s, const struct bn_tol *tol)
 
 	if (!start_eu) {
 	    bu_log("nmg_fix_overlapping_loops: cannot find start point for new loops\n");
-	    bu_log("lu1=x%x, lu2=x%x\n", lu1, lu2);
+	    bu_log("lu1=%p, lu2=%p\n", (void *)lu1, (void *)lu2);
 	    nmg_pr_fu_briefly(fu, (char *)NULL);
-	    continue;;
+	    continue;
 	}
 
 	bu_ptbl_reset(&loops);
@@ -707,8 +692,6 @@ nmg_fix_overlapping_loops(struct shell *s, const struct bn_tol *tol)
 
 
 /**
- * n m g _ b r e a k _ c r o s s e d _ l o o p s
- *
  * Extrusion may create crossed loops within a face.  This routine
  * intersects each edge within a loop with every other edge in the
  * loop
@@ -810,8 +793,6 @@ nmg_break_crossed_loops(struct shell *is, const struct bn_tol *tol)
 
 
 /**
- * n m g _ e x t r u d e _ c l e a n u p
- *
  * Clean up after nmg_extrude_shell.  intersects each face with every
  * other face in the shell and makes new face boundaries at the
  * intersections.  decomposes the result into separate shells.  where
@@ -834,7 +815,7 @@ nmg_extrude_cleanup(struct shell *in_shell, const int is_void, const struct bn_t
     BN_CK_TOL(tol);
 
     if (RTG.NMG_debug & DEBUG_BASIC)
-	bu_log("nmg_extrude_cleanup(in_shell=x%x)\n", in_shell);
+	bu_log("nmg_extrude_cleanup(in_shell=%p)\n", (void *)in_shell);
 
     m = nmg_find_model(&in_shell->l.magic);
 
@@ -985,8 +966,6 @@ nmg_extrude_cleanup(struct shell *in_shell, const int is_void, const struct bn_t
 
 
 /**
- * n m g _ h o l l o w _ s h e l l
- *
  * Hollows out a shell producing a wall thickness of thickness "thick"
  * by creating a new "inner" shell and combining the two shells.
  *
@@ -1019,7 +998,7 @@ nmg_hollow_shell(struct shell *s, const fastf_t thick, const int approximate, co
     int s_tmp_is_closed;
 
     if (RTG.NMG_debug & DEBUG_BASIC)
-	bu_log("nmg_extrude_shell(s=x%x, thick=%f)\n", s, thick);
+	bu_log("nmg_extrude_shell(s=%p, thick=%f)\n", (void *)s, thick);
 
     NMG_CK_SHELL(s);
     BN_CK_TOL(tol);
@@ -1185,8 +1164,6 @@ nmg_hollow_shell(struct shell *s, const fastf_t thick, const int approximate, co
 
 
 /**
- * n m g _ e x t r u d e _ s h e l l
- *
  * Extrudes a shell (s) by a distance (dist) in the direction of the
  * face normals if normal_ward, or the opposite direction if
  * !normal_ward.  The shell (s) is modified by adjusting the plane
@@ -1299,8 +1276,8 @@ nmg_extrude_shell(struct shell *s, const fastf_t dist, const int normal_ward, co
 	    NMG_CK_VERTEX(new_v);
 
 	    if (nmg_in_vert(new_v, approximate, tol)) {
-		bu_log("nmg_extrude_shell: Failed to calculate new vertex at v=x%x was (%f %f %f)\n",
-		       new_v, V3ARGS(new_v->vg_p->coord));
+		bu_log("nmg_extrude_shell: Failed to calculate new vertex at v=%p was (%f %f %f)\n",
+		       (void *)new_v, V3ARGS(new_v->vg_p->coord));
 		failed = 1;
 		goto out;
 	    }
@@ -1350,7 +1327,7 @@ nmg_extrude_shell(struct shell *s, const fastf_t dist, const int normal_ward, co
 	(void)nmg_extrude_cleanup(s_tmp, is_void, tol);
     }
 
- out:
+out:
     bu_ptbl_free(&shells);
 
     /* put it all back together */

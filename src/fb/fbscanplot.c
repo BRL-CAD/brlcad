@@ -1,7 +1,7 @@
 /*                    F B S C A N P L O T . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2013 United States Government as represented by
+ * Copyright (c) 1986-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -27,9 +27,11 @@
 #include "common.h"
 
 #include <stdlib.h>
-#include "bio.h"
 
-#include "bu.h"
+#include "bu/color.h"
+#include "bu/log.h"
+#include "bu/getopt.h"
+#include "bu/malloc.h"
 #include "fb.h"
 #include "pkg.h"
 
@@ -45,11 +47,11 @@ int fb_overlay = 0;		/* plot on background, else black with grid */
 int cmap_crunch = 0;	/* Plot values after passing through color map */
 int reverse = 0;		/* highlight chosen line by inverting it */
 char *outframebuffer = NULL;
-FBIO *fbp, *fboutp;
+fb *fbp, *fboutp;
 ColorMap map;
 
 char usage[] = "\
-Usage: fbscanplot [-h] [-v] [-c] [-o] [-r]\n\
+Usage: fbscanplot [-H] [-v] [-c] [-o] [-r]\n\
 	[-W scr_width] [-F outframebuffer] yline\n";
 
 int
@@ -57,7 +59,7 @@ get_args(int argc, char **argv)
 {
     int c;
 
-    while ((c = bu_getopt(argc, argv, "cvhorW:F:")) != -1) {
+    while ((c = bu_getopt(argc, argv, "cvHorW:F:h?")) != -1) {
 	switch (c) {
 	    case 'c':
 		cmap_crunch++;
@@ -65,7 +67,7 @@ get_args(int argc, char **argv)
 	    case 'v':
 		verbose++;
 		break;
-	    case 'h':
+	    case 'H':
 		scr_width = scr_height = 1024;
 		break;
 	    case 'o':
@@ -80,7 +82,7 @@ get_args(int argc, char **argv)
 	    case 'F':
 		outframebuffer = bu_optarg;
 		break;
-	    default:		/* '?' */
+	    default:		/* '?' 'h' */
 		return 0;
 	}
     }

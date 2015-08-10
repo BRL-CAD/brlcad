@@ -735,7 +735,6 @@ const char * EnumTypeDescriptor::GenerateExpress( std::string & buf ) const {
     buf.append( " = ENUMERATION OF \n  (" );
     const char * desc = Description();
     const char * ptr = &( desc[16] );
-    int all_comments = 1;
 
     while( *ptr != '\0' ) {
         if( *ptr == ',' ) {
@@ -751,6 +750,7 @@ const char * EnumTypeDescriptor::GenerateExpress( std::string & buf ) const {
 ///////////////
     // count is # of WHERE rules
     if( _where_rules != 0 ) {
+        int all_comments = 1;
         int count = _where_rules->Count();
         for( int i = 0; i < count; i++ ) { // print out each UNIQUE rule
             if( !( *( _where_rules ) )[i]->_label.size() ) {
@@ -1356,7 +1356,6 @@ const char * TypeDescriptor::GenerateExpress( std::string & buf ) const {
     buf.append( " = " );
     const char * desc = Description();
     const char * ptr = desc;
-    int all_comments = 1;
 
     while( *ptr != '\0' ) {
         if( *ptr == ',' ) {
@@ -1374,6 +1373,7 @@ const char * TypeDescriptor::GenerateExpress( std::string & buf ) const {
 ///////////////
     // count is # of WHERE rules
     if( _where_rules != 0 ) {
+        int all_comments = 1;
         int count = _where_rules->Count();
         for( int i = 0; i < count; i++ ) { // print out each UNIQUE rule
             if( !( *( _where_rules ) )[i]->_label.size() ) {

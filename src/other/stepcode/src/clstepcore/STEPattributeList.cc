@@ -32,11 +32,12 @@ STEPattribute & STEPattributeList::operator []( int n ) {
     int x = 0;
     AttrListNode * a = ( AttrListNode * )head;
     int cnt =  EntryCount();
-    if( n < cnt )
+    if( n < cnt ) {
         while( a && ( x < n ) ) {
             a = ( AttrListNode * )( a->next );
             x++;
         }
+    }
     if( a ) {
         return *( a->attr );
     }
@@ -52,22 +53,16 @@ int STEPattributeList::list_length() {
 }
 
 void STEPattributeList::push( STEPattribute * a ) {
-    bool push = true;
-
-    // if the attribute already exists in the list, we don't push it
-    // TODO: does it break anything?
     AttrListNode * a2 = ( AttrListNode * )head;
-    while( a2 && push ) {
+
+    // if the attribute already exists in the list, don't push it
+    while( a2 ) {
         if( *a == *( a2 -> attr ) ) {
-            push = false;
-            break;
+            return;
         }
         a2 = ( AttrListNode * )( a2->next );
     }
-
-    if( push ) {
-        a->refCount ++;
-        AttrListNode * saln = new AttrListNode( a );
-        AppendNode( saln );
-    }
+    a->refCount ++;
+    AttrListNode * saln = new AttrListNode( a );
+    AppendNode( saln );
 }

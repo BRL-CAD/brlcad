@@ -1,7 +1,7 @@
 /*                       O V E R L A Y . C
  * BRL-CAD
  *
- * Copyright (c) 1988-2013 United States Government as represented by
+ * Copyright (c) 1988-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -25,12 +25,9 @@
 
 #include <math.h>
 #include <signal.h>
-#include <stdio.h>
-#include "bio.h"
 
 #include "vmath.h"
-#include "mater.h"
-#include "dg.h"
+#include "raytrace.h"
 
 #include "./mged.h"
 #include "./sedit.h"
@@ -87,8 +84,8 @@ cmd_overlay(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const c
 int
 f_labelvert(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *argv[])
 {
-    struct ged_display_list *gdlp;
-    struct ged_display_list *next_gdlp;
+    struct display_list *gdlp;
+    struct display_list *next_gdlp;
     int i;
     struct bn_vlblock*vbp;
     struct directory *dp;
@@ -116,11 +113,11 @@ f_labelvert(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const c
 	if ((dp = db_lookup(dbip, argv[i], LOOKUP_NOISY)) == RT_DIR_NULL)
 	    continue;
 	/* Find uses of this solid in the solid table */
-	gdlp = BU_LIST_NEXT(ged_display_list, gedp->ged_gdp->gd_headDisplay);
+	gdlp = BU_LIST_NEXT(display_list, gedp->ged_gdp->gd_headDisplay);
 	while (BU_LIST_NOT_HEAD(gdlp, gedp->ged_gdp->gd_headDisplay)) {
-	    next_gdlp = BU_LIST_PNEXT(ged_display_list, gdlp);
+	    next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
 
-	    FOR_ALL_SOLIDS(s, &gdlp->gdl_headSolid) {
+	    FOR_ALL_SOLIDS(s, &gdlp->dl_headSolid) {
 		if (db_full_path_search(&s->s_fullpath, dp)) {
 		    rt_label_vlist_verts(vbp, &s->s_vlist, mat, scale, base2local);
 		}
@@ -132,7 +129,7 @@ f_labelvert(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const c
 
     cvt_vlblock_to_solids(vbp, "_LABELVERT_", 0);
 
-    rt_vlblock_free(vbp);
+    bn_vlblock_free(vbp);
     update_views = 1;
     return TCL_OK;
 }

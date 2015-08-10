@@ -1,5 +1,3 @@
-<!-- Converted by db4-upgrade version 1.0 -->
-
 <refentry xmlns="http://docbook.org/ns/docbook" version="5.0" xml:id="bolt1">
 
 <refmeta>
@@ -51,7 +49,7 @@
       </listitem>
     </varlistentry>
     <varlistentry>
-      <term><option>-fname.g</option></term>
+      <term><option>-f </option><replaceable>name.g</replaceable></term>
       <listitem>
 	<para>
 	 BRL-CAD file name.
@@ -59,7 +57,7 @@
       </listitem>
     </varlistentry>
     <varlistentry>
-      <term><option>-n#</option></term>
+      <term><option>-n #</option></term>
       <listitem>
 	<para>
 	 The number of bolts to be created.  This number must be less than or equal to
@@ -68,15 +66,15 @@
       </listitem>
     </varlistentry>
     <varlistentry>
-      <term><option>-hd#</option></term>
+      <term><option>-hd #</option></term>
       <listitem>
 	<para>
-	 Diameter of bolt head flat edge to flat edge in millimeters.
+	 Diameter of bolt head, flat edge to flat edge, in millimeters.
 	</para>
       </listitem>
     </varlistentry>
     <varlistentry>
-      <term><option>-hh#</option></term>
+      <term><option>-hh #</option></term>
       <listitem>
 	<para>
 	 Height of bolt head in millimeters.
@@ -84,7 +82,7 @@
       </listitem>
     </varlistentry>
     <varlistentry>
-      <term><option>-wd#</option></term>
+      <term><option>-wd #</option></term>
       <listitem>
 	<para>
 	 Diameter of washer in millimeters.
@@ -92,7 +90,7 @@
       </listitem>
     </varlistentry>
     <varlistentry>
-      <term><option>-wh#</option></term>
+      <term><option>-wh #</option></term>
       <listitem>
 	<para>
 	 Height of washer in millimeters.
@@ -100,7 +98,7 @@
       </listitem>
     </varlistentry>
     <varlistentry>
-      <term><option>-sd#</option></term>
+      <term><option>-sd #</option></term>
       <listitem>
 	<para>
 	 Diameter of bolt stem in millimeters.
@@ -108,7 +106,7 @@
       </listitem>
     </varlistentry>
     <varlistentry>
-      <term><option>-sh#</option></term>
+      <term><option>-sh #</option></term>
       <listitem>
 	<para>
 	 Height of bolt stem in millimeters.
@@ -170,8 +168,8 @@ number of bolts:  3
 <refsection xml:id="copyright"><title>COPYRIGHT</title>
 
   <para>
-    This software is Copyright (c) 2005-2013 United States Government as
-    represented by the U.S. Army Research Laboratory. All rights reserved.
+    This software is Copyright (c) 2005-2014 United States Government as
+    represented by the U.S. Army Research Laboratory.
   </para>
 </refsection>
 

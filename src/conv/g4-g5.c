@@ -2,7 +2,7 @@
  * BRL-CAD
  *
  *
- * Copyright (c) 2004-2013 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -42,11 +42,11 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "bu.h"
 #include "vmath.h"
+#include "bu/debug.h"
 #include "bn.h"
 #include "raytrace.h"
-#include "rtgeom.h"
+#include "rt/geom.h"
 
 
 int
@@ -63,14 +63,12 @@ main(int argc, char **argv)
 
     /* FIXME: These need to be improved */
     tol.magic = BN_TOL_MAGIC;
-    tol.dist = 0.0005;
+    tol.dist = BN_TOL_DIST;
     tol.dist_sq = tol.dist * tol.dist;
     tol.perp = 1e-6;
     tol.para = 1 - tol.perp;
 
     bu_debug = BU_DEBUG_COREDUMP;
-
-    rt_init_resource( &rt_uniresource, 0, NULL );
 
     if ( argc != 3 )  {
 	fprintf(stderr, "Usage: %s v4.g v5.g\n", argv[0]);

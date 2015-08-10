@@ -1,7 +1,7 @@
 /*                     B R I C K W A L L . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2013 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -30,7 +30,9 @@
 #include <math.h>
 #include "bio.h"
 
-#include "bu.h"
+#include "bu/getopt.h"
+#include "bu/log.h"
+#include "bu/units.h"
 #include "vmath.h"
 
 /* declarations to support use of bu_getopt() */
@@ -53,9 +55,6 @@ char color[32] = "160 40 40";
 char mortar_color[32] = "190 190 190";
 
 
-/*
- * U S A G E --- tell user how to invoke this program, then exit
- */
 static void
 usage(char *s)
 {
@@ -73,10 +72,8 @@ usage(char *s)
 }
 
 
-/*
- * P A R S E _ A R G S --- Parse through command line flags
- */
-int parse_args(int ac, char **av)
+int
+parse_args(int ac, char **av)
 {
     int c;
     double d;
@@ -261,8 +258,6 @@ void gen_mortar(int horiz_bricks, int vert_bricks, double horiz_spacing, double 
 
 
 /*
- * G E N _ B R I C K S
- *
  * generate the brick solids, regions thereof, groups for rows
  * and a group for the wall as a whole.
  */
@@ -311,8 +306,6 @@ void gen_bricks(int horiz_bricks, int vert_bricks, double horiz_spacing, double 
 	    brick_name, "sh=40 di=0.9 sp=0.1", color);
 }
 /*
- * M A I N
- *
  * Call parse_args to handle command line arguments first, then
  * process input.
  */

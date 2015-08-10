@@ -1,7 +1,7 @@
 /*                      P R O E - B R L . C
  * BRL-CAD
  *
- * Copyright (c) 2001-2013 United States Government as represented by
+ * Copyright (c) 2001-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -58,7 +58,13 @@
 #include "ProNotify.h"
 #include "prodev_light.h"
 #include "vmath.h"
-#include "bu.h"
+#include "bu/hash.h"
+#include "bu/ptbl.h"
+#include "bu/malloc.h"
+#include "bu/log.h"
+#include "bu/rb.h"
+#include "bu/str.h"
+#include "bu/vls.h"
 #include "bn.h"
 
 int is_non_identity(ProMatrix xform);
@@ -622,7 +628,7 @@ get_brlcad_name( char *part_name )
     }
 
     /* find name for this part in hash table */
-    entry = bu_find_hash_entry( name_hash, (unsigned char *)name_copy, strlen( name_copy ), &prev, &index );
+    entry = bu_hash_tbl_find( name_hash, (unsigned char *)name_copy, strlen( name_copy ), &prev, &index );
 
     if ( entry ) {
 	if ( logger_type == LOGGER_TYPE_ALL ) {
@@ -634,7 +640,7 @@ get_brlcad_name( char *part_name )
 
 	/* must create a new name */
 	brlcad_name = create_unique_name( name_copy );
-	entry = bu_hash_add_entry( name_hash, (unsigned char *)name_copy, strlen( name_copy ), &new_entry );
+	entry = bu_hash_tbl_add( name_hash, (unsigned char *)name_copy, strlen( name_copy ), &new_entry );
 	bu_set_hash_value( entry, (unsigned char *)brlcad_name );
 	if ( logger_type == LOGGER_TYPE_ALL ) {
 	    fprintf( logger, "\tCreating new brlcad name (%s) for part (%s)\n", brlcad_name, name_copy );
@@ -2879,7 +2885,7 @@ create_name_hash( FILE *name_fd )
     int new_entry=0;
     long line_no=0;
 
-    htbl = bu_create_hash_tbl( NUM_HASH_TABLE_BINS );
+    htbl = bu_hash_tbl_create( NUM_HASH_TABLE_BINS );
 
     if ( logger_type == LOGGER_TYPE_ALL ) {
 	fprintf( logger, "name hash created, now filling it:\n" );
@@ -2908,7 +2914,7 @@ create_name_hash( FILE *name_fd )
 	    bu_log( "\tIgnoring\n" );
 	    continue;
 	}
-	entry = bu_hash_add_entry( htbl, (unsigned char *)part_no, strlen( part_no ), &new_entry );
+	entry = bu_hash_tbl_add( htbl, (unsigned char *)part_no, strlen( part_no ), &new_entry );
 	if ( !new_entry ) {
 	    if ( logger_type == LOGGER_TYPE_ALL ) {
 		fprintf( logger, "\t\t\tHash table entry already exists for part number (%s)\n", part_no );
@@ -3037,8 +3043,7 @@ doit( char *dialog, char *compnent, ProAppData appdata )
     ProWstringToString( astr, tmp_str );
     ProWstringFree( tmp_str );
     reg_id = atoi( astr );
-    if ( reg_id < 1 )
-	reg_id = 1;
+    V_MAX(reg_id, 1);
 
     /* get max error */
     status = ProUIInputpanelValueGet( "proe_brl", "max_error", &tmp_str );
@@ -3064,8 +3069,7 @@ doit( char *dialog, char *compnent, ProAppData appdata )
     ProWstringFree( tmp_str );
     min_error = atof( astr );
 
-    if (max_error < min_error)
-	max_error = min_error;
+    V_MAX(max_error, min_error);
 
     /* get the max angle control */
     status = ProUIInputpanelValueGet( "proe_brl", "max_angle_ctrl", &tmp_str );
@@ -3091,8 +3095,7 @@ doit( char *dialog, char *compnent, ProAppData appdata )
     ProWstringFree( tmp_str );
     min_angle_cntrl = atof( astr );
 
-    if (max_angle_cntrl < min_angle_cntrl)
-	max_angle_cntrl = min_angle_cntrl;
+    V_MAX(max_angle_cntrl, min_angle_cntrl);
 
     /* get the max to min steps */
     status = ProUIInputpanelValueGet( "proe_brl", "isteps", &tmp_str );
@@ -3161,8 +3164,7 @@ doit( char *dialog, char *compnent, ProAppData appdata )
 	ProWstringToString( astr, tmp_str );
 	ProWstringFree( tmp_str );
 	min_hole_diameter = atof( astr );
-	if ( min_hole_diameter < 0.0 )
-	    min_hole_diameter = 0.0;
+	V_MAX(min_hole_diameter, 0.0);
 
 	/* get the minimum chamfer dimension */
 	status = ProUIInputpanelValueGet( "proe_brl", "min_chamfer", &tmp_str );
@@ -3175,8 +3177,7 @@ doit( char *dialog, char *compnent, ProAppData appdata )
 	ProWstringToString( astr, tmp_str );
 	ProWstringFree( tmp_str );
 	min_chamfer_dim = atof( astr );
-	if ( min_chamfer_dim < 0.0 )
-	    min_chamfer_dim = 0.0;
+	V_MAX(min_chamfer_dim, 0.0);
 
 	/* get the minimum round radius */
 	status = ProUIInputpanelValueGet( "proe_brl", "min_round", &tmp_str );
@@ -3190,8 +3191,8 @@ doit( char *dialog, char *compnent, ProAppData appdata )
 	ProWstringFree( tmp_str );
 	min_round_radius = atof( astr );
 
-	if ( min_round_radius < 0.0 )
-	    min_round_radius = 0.0;
+	V_MAX(min_round_radius, 0.0);
+
     } else {
 	min_hole_diameter = 0.0;
 	min_round_radius = 0.0;
@@ -3306,7 +3307,7 @@ doit( char *dialog, char *compnent, ProAppData appdata )
 	    fprintf( logger, "No name hash used\n" );
 	}
 	/* create an empty hash table */
-	name_hash = bu_create_hash_tbl( 512 );
+	name_hash = bu_hash_tbl_create( 512 );
     }
 
     /* get the currently displayed model in Pro/E */

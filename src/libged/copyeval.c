@@ -1,7 +1,7 @@
 /*                         C O P Y E V A L . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2013 United States Government as represented by
+ * Copyright (c) 2008-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -26,9 +26,8 @@
 #include "common.h"
 
 #include <string.h>
-#include "bio.h"
 
-#include "cmd.h"
+#include "bu/cmd.h"
 
 #include "./ged_private.h"
 
@@ -106,7 +105,7 @@ ged_copyeval(struct ged *gedp, int argc, const char *argv[])
 	}
 
 	/* Accumulate the matrices */
-	_ged_trace(gtd.gtd_obj[0], 0, start_mat, &gtd, 1);
+	ged_trace(gtd.gtd_obj[0], 0, start_mat, &gtd, 1);
 
 	if (gtd.gtd_prflag == 0) {
 	    bu_vls_printf(gedp->ged_result_str, "PATH:  ");
@@ -138,7 +137,7 @@ ged_copyeval(struct ged *gedp, int argc, const char *argv[])
     /* should call GED_DB_DIRADD() but need to deal with freeing the
      * internals on failure.
      */
-    dp=db_diradd(gedp->ged_wdbp->dbip, argv[2], RT_DIR_PHONY_ADDR, 0, gtd.gtd_obj[endpos-1]->d_flags, (genptr_t)&ip->idb_type);
+    dp=db_diradd(gedp->ged_wdbp->dbip, argv[2], RT_DIR_PHONY_ADDR, 0, gtd.gtd_obj[endpos-1]->d_flags, (void *)&ip->idb_type);
     if (dp == RT_DIR_NULL) {
 	rt_db_free_internal(&internal);
 	if (ip == &new_int)

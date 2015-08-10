@@ -1,7 +1,7 @@
 #                       I L L U M . T C L
 # BRL-CAD
 #
-# Copyright (c) 2004-2013 United States Government as represented by
+# Copyright (c) 2004-2014 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -45,7 +45,7 @@ proc solid_illum {spath {ri 1}} {
 	}
     }
 
-    _mged_ill -n -i $ri $spath
+    _mged_ill -e -n -i $ri $spath
 }
 
 proc matrix_illum { spath path_pos {ri 1}} {
@@ -54,15 +54,15 @@ proc matrix_illum { spath path_pos {ri 1}} {
     switch $state {
 	VIEWING {
 	    _mged_press oill
-	    _mged_ill -i $ri $spath
+	    _mged_ill -e -i $ri $spath
 	}
 	"OBJ PICK" {
-	    _mged_ill -i $ri $spath
+	    _mged_ill -e -i $ri $spath
 	}
 	default {
 	    _mged_press reject
 	    _mged_press oill
-	    _mged_ill -i $ri $spath
+	    _mged_ill -e -i $ri $spath
 	}
     }
 

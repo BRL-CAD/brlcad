@@ -1,7 +1,7 @@
 /*                        P I X - P S . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2013 United States Government as represented by
+ * Copyright (c) 1986-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -29,9 +29,8 @@
 #include <math.h>
 #include <time.h> /* for ctime() */
 #include "bio.h"
-
-#include "bu.h"
-
+#include "bu/getopt.h"
+#include "bu/log.h"
 
 #define DEFAULT_SIZE 6.75	/* default output size in inches */
 #define MAX_BYTES (3*64*128)	/* max bytes per image chunk */
@@ -42,22 +41,21 @@ static int landscape = 0;	/* landscape mode */
 
 static size_t width = 512;		/* input size in pixels */
 static size_t height = 512;
-static double outwidth;		/* output image size in inches */
-static double outheight;
+static double outwidth = DEFAULT_SIZE;		/* output image size in inches */
+static double outheight = DEFAULT_SIZE;
 static size_t xpoints;		/* output image size in points */
 static size_t ypoints;
 static size_t pagewidth = 612;	/* page size in points - 8.5 inches */
 static size_t pageheight = 792;	/* 11 inches */
 
+char Stdin[] = "[stdin]";
 static char *file_name;
 static FILE *infp;
-
 
 static char usage[] = "\
 Usage: pix-ps [-e] [-c|-l] [-L]\n\
 	[-s input_squaresize] [-w input_width] [-n input_height]\n\
-	[-S inches_square] [-W inches_width] [-N inches_height] [file.pix]\n";
-
+	[-S inches_square] [-W inches_width] [-N inches_height] [<] input.pix > output.ps\n";
 
 void
 prolog(FILE *fp, char *name, size_t w, size_t h)
@@ -132,7 +130,6 @@ hexout(FILE *fp, int byte)
     putc(symbol[low], fp);
 }
 
-
 int
 get_args(int argc, char **argv)
 {
@@ -174,7 +171,7 @@ get_args(int argc, char **argv)
 		outheight = atof(bu_optarg);
 		break;
 
-	    default:		/* '?' */
+	    default:		/* 'h' '?' */
 		return 0;
 	}
     }
@@ -182,7 +179,7 @@ get_args(int argc, char **argv)
     if (bu_optind >= argc) {
 	if (isatty(fileno(stdin)))
 	    return 0;
-	file_name = "[stdin]";
+	file_name = Stdin;
 	infp = stdin;
     } else {
 	file_name = argv[bu_optind];
@@ -221,8 +218,6 @@ main(int argc, char **argv)
     if (!get_args(argc, argv))
 	printusage();
 
-    outwidth = outheight = DEFAULT_SIZE;
-
     if (encapsulated) {
 	xpoints = width;
 	ypoints = height;
@@ -245,10 +240,10 @@ main(int argc, char **argv)
 
 	/* start a patch */
 	fprintf(ofp, "save\n");
-	fprintf(ofp, "%lu %lu 8 [%lu 0 0 %lu 0 %lu] {<\n ",
+	fprintf(ofp, "%lu %lu 8 [%lu 0 0 %lu 0 %ld] {<\n ",
 		(unsigned long)width, (unsigned long)scans_per_patch,		/* patch size */
 		(unsigned long)width, (unsigned long)height,			/* total size = 1.0 */
-		(unsigned long)-y);				/* patch y origin */
+		-(long)y);				/* patch y origin */
 
 	/* data */
 	num = 0;
@@ -266,7 +261,6 @@ main(int argc, char **argv)
     }
 
     postlog(ofp);
-
     return 0;
 }
 

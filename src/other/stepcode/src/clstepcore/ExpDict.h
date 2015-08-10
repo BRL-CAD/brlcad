@@ -1247,7 +1247,7 @@ class SC_CORE_EXPORT TypeDescriptor {
         //
         // NOTE - memory is not allocated for this, or for _description
         // below.  It is assumed that at creation, _name will be made
-        // to point to a static location in memory.  The fedex_plus
+        // to point to a static location in memory.  The exp2cxx
         // generated code, for example, places a literal string in its
         // TypeDesc constructor calls.  This creates a location in me-
         // mory static throughout the lifetime of the calling program.
@@ -1690,7 +1690,7 @@ class SC_CORE_EXPORT AggrTypeDescriptor  :    public TypeDescriptor  {
         /// find bound type
         AggrBoundTypeEnum Bound1Type() const {
             return _bound1_type;
-        };
+        }
         /// get a constant bound
         SDAI_Integer Bound1( ) const {
             assert( _bound1_type == bound_constant );
@@ -1724,7 +1724,7 @@ class SC_CORE_EXPORT AggrTypeDescriptor  :    public TypeDescriptor  {
         /// find bound type
         AggrBoundTypeEnum Bound2Type() const {
             return _bound2_type;
-        };
+        }
         /// get a constant bound
         SDAI_Integer Bound2( ) const {
             assert( _bound2_type == bound_constant );

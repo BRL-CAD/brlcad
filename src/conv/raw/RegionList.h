@@ -1,7 +1,7 @@
 /*                     R E G I O N L I S T . H
  * BRL-CAD
  *
- * Copyright (c) 2012-2013 United States Government as represented by
+ * Copyright (c) 2012-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -26,8 +26,8 @@
  *	IABG mbH (Germany)
  */
 
-#ifndef REGIONLIST_INCLUDED
-#define REGIONLIST_INCLUDED
+#ifndef CONV_RAW_REGIONLIST_H
+#define CONV_RAW_REGIONLIST_H
 
 #include "common.h"
 
@@ -64,4 +64,4 @@ toValue(const char* string)
 }
 
 
-#endif // REGIONLIST_INCLUDED
+#endif /* CONV_RAW_REGIONLIST_H */

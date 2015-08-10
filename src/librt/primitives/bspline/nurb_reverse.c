@@ -1,7 +1,7 @@
 /*                  N U R B _ R E V E R S E . C
  * BRL-CAD
  *
- * Copyright (c) 1991-2013 United States Government as represented by
+ * Copyright (c) 1991-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -29,13 +29,12 @@
 
 #include "common.h"
 
-#include <stdio.h>
 #include "bio.h"
 
 #include "vmath.h"
 #include "nmg.h"
 #include "raytrace.h"
-#include "nurb.h"
+#include "rt/nurb.h"
 
 void
 rt_nurb_reverse_srf(struct face_g_snurb *srf)

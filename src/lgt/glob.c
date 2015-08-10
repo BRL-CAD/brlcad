@@ -1,7 +1,7 @@
 /*                          G L O B . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2013 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -24,6 +24,7 @@
 #include <math.h>
 #include <assert.h>
 
+#include "bu/parallel.h"
 #include "vmath.h"
 #include "raytrace.h"
 #include "fb.h"
@@ -31,11 +32,11 @@
 #include "./lgt.h"
 #include "./extern.h"
 #include "./tree.h"
-FBIO	*fbiop = FBIO_NULL;    /* Framebuffer interface ptr.	*/
+fb *fbiop = FB_NULL;    /* Framebuffer interface ptr.	*/
 
 /* Initialization for root of IR data base octree.			*/
-PtList	ir_ptlist = { {0.0, 0.0, 0.0}, PTLIST_NULL };
-Octree	ir_octree =
+PtList ir_ptlist = { {0.0, 0.0, 0.0}, PTLIST_NULL };
+Octree ir_octree =
 { 0, ABSOLUTE_ZERO, &ir_ptlist, TRIE_NULL, OCTREE_NULL, OCTREE_NULL };
 
 /* Light sources.
@@ -43,10 +44,10 @@ Octree	ir_octree =
    lgts[1]		primary lighting
    ...		user defined
 */
-Lgt_Source	lgts[MAX_LGTS];
+Lgt_Source lgts[MAX_LGTS];
 
 /* Animation control structure.						*/
-Movie	movie =
+Movie movie =
 {
     false,	/* m_fullscreen */
     true,	/* m_lgts */
@@ -60,60 +61,61 @@ Movie	movie =
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
 };
 
+
 /* Globals for line-buffering pixel I/O.				*/
-RGBpixel	bgpixel;		/* Background color.		*/
+RGBpixel bgpixel;		/* Background color.		*/
 
 /* IR data base region trie tree root.					*/
-Trie			*reg_triep = TRIE_NULL;
+Trie *reg_triep = TRIE_NULL;
 
 /* Optional files.							*/
-char	err_file[MAX_LN] = { 0 };    /* Error log (redirected stderr).	*/
-char	mat_db_file[MAX_LN] = { 0 }; /* Material database file.		*/
-char	lgt_db_file[MAX_LN] = { 0 }; /* Light source database file.	*/
-char	ir_db_file[MAX_LN] = { 0 };  /* IR database file.		*/
-char	fb_file[MAX_LN] = { 0 };     /* Raster image output.		*/
-char	ir_file[MAX_LN] = { 0 };     /* IR input data.			*/
+char err_file[MAX_LN] = { 0 };    /* Error log (redirected stderr).	*/
+char mat_db_file[MAX_LN] = { 0 }; /* Material database file.		*/
+char lgt_db_file[MAX_LN] = { 0 }; /* Light source database file.	*/
+char ir_db_file[MAX_LN] = { 0 };  /* IR database file.		*/
+char fb_file[MAX_LN] = { 0 };     /* Raster image output.		*/
+char ir_file[MAX_LN] = { 0 };     /* IR input data.			*/
 
 /* Global buffers and pointers.						*/
-char	input_ln[BUFSIZ] = {0};
-char	prefix[MAX_LN] = "frame";
-char	prompt[MAX_LN] = {0};
-char	title[TITLE_LEN] = {0};
-char	timer[TIMER_LEN] = {0};
-char	script_file[MAX_LN] = {0};
-char	*ged_file = NULL;
+char input_ln[BUFSIZ] = {0};
+char prefix[MAX_LN] = "frame";
+char prompt[MAX_LN] = {0};
+char title[TITLE_LEN] = {0};
+char timer[TIMER_LEN] = {0};
+char script_file[MAX_LN] = {0};
+char *ged_file = NULL;
 
-/* Unit vectors representing horizontal and vertical directions of grid	*/
-fastf_t	grid_hor[3], grid_ver[3];
+/* Unit vectors representing horizontal and vertical directions of grid */
+fastf_t grid_hor[3], grid_ver[3];
 
 /* Position of grid in model space.					*/
-fastf_t	grid_loc[3];
+fastf_t grid_loc[3];
 
 /* Unit vector representing the incident ray in model space.		*/
-fastf_t	modl_radius;		/* Radius of model (bounding sphere).	*/
+fastf_t modl_radius;		/* Radius of model (bounding sphere).	*/
 
 /* Location of center of model (calculated from bounding RPP).		*/
-fastf_t	modl_cntr[3];
+fastf_t modl_cntr[3];
 
 /* Conversion degrees to radians.					*/
-fastf_t	degtorad = 0.0174532925;
+fastf_t degtorad = DEG2RAD;
 
 /* Translations of grid in plane of view.				*/
-fastf_t	x_grid_offset = 0.0, y_grid_offset = 0.0;
+fastf_t x_grid_offset = 0.0, y_grid_offset = 0.0;
 
 /* Distance of grid from the model centroid measured in millimeters.	*/
-fastf_t	grid_dist = 0.0;
+fastf_t grid_dist = 0.0;
 
 /* Rotation of grid around viewing axis (radians).			*/
 fastf_t grid_roll = 0.0;
 
-fastf_t	bg_coefs[3];		/* Background RGB coefficients.		*/
-fastf_t	rel_perspective = 0.25;	/* Manual perspective adjustment.	*/
-fastf_t	sample_sz;		/* Over-sampling ratio (aperture^2).	*/
+fastf_t bg_coefs[3];		/* Background RGB coefficients.		*/
+fastf_t rel_perspective = 0.25;	/* Manual perspective adjustment.	*/
+fastf_t sample_sz;		/* Over-sampling ratio (aperture^2).	*/
 fastf_t view_rots[16];		/* Store 4x4 MGED saved view matrix.	*/
-fastf_t	view2model[16];		/* View-to-model matrix from view_rots.	*/
-fastf_t	view_size;		/* fabsolute grid size from MGED view.	*/
-fastf_t	cell_sz = 0.0;		/* Cell size of grid in target coords.	*/
+fastf_t view2model[16];		/* View-to-model matrix from view_rots.	*/
+fastf_t view_size;		/* fabsolute grid size from MGED view.	*/
+fastf_t cell_sz = 0.0;		/* Cell size of grid in target coords.	*/
 
 int anti_aliasing = false;	/* Anti-aliasing thru over-sampling.	*/
 int aperture_sz = 1;		/* Size of window for over-sampling.	*/
@@ -159,8 +161,8 @@ int type_grid = GT_RPP_CENTERED;
 int user_interrupt = false;	/* User-level interrupt of raytrace.	*/
 int x_fb_origin = 0;		/* Display origin left-most pixel.	*/
 int y_fb_origin = 0;		/* Display origin top-most pixel.	*/
-struct resource	resource[MAX_PSW]; /* Memory resources.			*/
-struct rt_i	*rt_ip;		/* Globals from RT library.		*/
+struct resource resource[MAX_PSW]; /* Memory resources.			*/
+struct rt_i *rt_ip;		/* Globals from RT library.		*/
 
 void (*norml_sig)(), (*abort_sig)();
 

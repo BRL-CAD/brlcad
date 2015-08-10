@@ -521,7 +521,7 @@ void STEPattribute::STEPwrite( ostream & out, const char * currSch ) {
                     // no value was assigned  <-- this would be a BUG
                     ( *( ptr.c ) == S_ENTITY_NULL ) ) {
                 out << "$";
-                cerr << "Internal error:  " << __FILE__ <<  __LINE__
+                cerr << "Internal error:  " << Name() << " of type \"" << TypeName() << "\" is missing a pointer value in ptr.c" << std::endl << "at " << __FILE__ << ":" << __LINE__
                      << "\n" << _POC_ "\n";
 
                 char errStr[BUFSIZ];

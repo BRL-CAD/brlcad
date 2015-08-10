@@ -1,7 +1,7 @@
 /*                    I S S T _ T C L T K . C
  * BRL-CAD
  *
- * Copyright (c) 2005-2013 United States Government as represented by
+ * Copyright (c) 2005-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -26,34 +26,29 @@
 
 #include "common.h"
 
-#include <stdio.h>
-
-#include "bio.h"
+#include "bnetwork.h"
 
 #include <GL/gl.h>
 
 #include "tcl.h"
 #include "tk.h"
 
-#include "bu.h"
+#include "bu/parallel.h"
+#include "bu/time.h"
 #include "dm.h"
 
-#include "tie.h"
+#include "rt/tie.h"
 #include "adrt.h"
 #include "adrt_struct.h"
 #include "camera.h"
 #include "isst.h"
 #include "raytrace.h"
 
-#ifdef HAVE_UNISTD_H
-#  include <unistd.h>
-#endif
-
 #ifdef HAVE_STRING_H
 #include <string.h>
 #endif
 
-static struct dm *dmp;
+static dm *dmp;
 static struct isst_s *isst;
 
 /* ISST functions */
@@ -92,7 +87,7 @@ reshape(ClientData UNUSED(clientData), Tcl_Interp *interp, int objc,
 void
 resize_isst(struct isst_s *isstp)
 {
-    switch(isstp->gs) {
+    switch (isstp->gs) {
 	case 0:
 	    isstp->camera.w = isstp->tile.size_x = isstp->w;
 	    isstp->camera.h = isstp->tile.size_y = isstp->h;
@@ -103,7 +98,7 @@ resize_isst(struct isst_s *isstp)
 	    break;
     }
     isstp->tile.format = RENDER_CAMERA_BIT_DEPTH_24;
-    TIENET_BUFFER_SIZE(isstp->buffer_image, (size_t)(3 * isstp->camera.w * isstp->camera.h));
+    TIENET_BUFFER_SIZE(isstp->buffer_image, (uint32_t)(3 * isstp->camera.w * isstp->camera.h));
     glClearColor (0.0, 0, 0.0, 1);
     glBindTexture (GL_TEXTURE_2D, isstp->texid);
     glPixelStorei (GL_UNPACK_ALIGNMENT, 1);
@@ -231,7 +226,7 @@ paint_window(ClientData UNUSED(clientData), Tcl_Interp *interp, int objc, Tcl_Ob
 
 	isst->t1 = bu_gettime();
 
-	DM_MAKE_CURRENT(dmp);
+	dm_make_current(dmp);
 
 	glClear(glclrbts);
 	glLoadIdentity();
@@ -250,7 +245,7 @@ paint_window(ClientData UNUSED(clientData), Tcl_Interp *interp, int objc, Tcl_Ob
 
 	isst->dirty = 0;
 
-	DM_DRAW_END(dmp);
+	dm_draw_end(dmp);
     }
     return TCL_OK;
 }
@@ -269,13 +264,12 @@ set_resolution(ClientData UNUSED(clientData), Tcl_Interp *interp, int objc, Tcl_
 	return TCL_ERROR;
     }
 
-    if (resolution < 1) resolution = 1;
-    if (resolution > 20) {
-	resolution = 20;
+    CLAMP(resolution, 1, 20);
+    if (resolution == 20)
 	isst->gs = 0;
-    } else {
-	isst->gs = (int)floor(isst->w * .05 * resolution);
-    }
+    else
+	isst->gs = lrint(floor(isst->w * .05 * resolution));
+
     resize_isst(isst);
 
     return TCL_OK;
@@ -283,7 +277,7 @@ set_resolution(ClientData UNUSED(clientData), Tcl_Interp *interp, int objc, Tcl_
 
 
 static int
-isst_init(ClientData UNUSED(clientData), Tcl_Interp *UNUSED(interp), int UNUSED(objc), Tcl_Obj *const *UNUSED(objv))
+isst_init(ClientData UNUSED(clientData), Tcl_Interp *interp, int UNUSED(objc), Tcl_Obj *const *UNUSED(objv))
 {
     BU_ALLOC(isst, struct isst_s);
     isst->ui = 0;
@@ -295,6 +289,13 @@ isst_init(ClientData UNUSED(clientData), Tcl_Interp *UNUSED(interp), int UNUSED(
 
     isst->camera.type = RENDER_CAMERA_PERSPECTIVE;
     isst->camera.fov = 25;
+
+    Tcl_LinkVar(interp, "pos_x", (char *)&isst->camera.pos[0], TCL_LINK_DOUBLE);
+    Tcl_LinkVar(interp, "pos_y", (char *)&isst->camera.pos[1], TCL_LINK_DOUBLE);
+    Tcl_LinkVar(interp, "pos_z", (char *)&isst->camera.pos[2], TCL_LINK_DOUBLE);
+    Tcl_LinkVar(interp, "focus_x", (char *)&isst->camera.focus[0], TCL_LINK_DOUBLE);
+    Tcl_LinkVar(interp, "focus_y", (char *)&isst->camera.focus[1], TCL_LINK_DOUBLE);
+    Tcl_LinkVar(interp, "focus_z", (char *)&isst->camera.focus[2], TCL_LINK_DOUBLE);
 
     return TCL_OK;
 }
@@ -316,20 +317,32 @@ isst_zap(ClientData UNUSED(clientData), Tcl_Interp *interp, int objc, Tcl_Obj *c
 static int
 render_mode(ClientData UNUSED(clientData), Tcl_Interp *interp, int objc, Tcl_Obj *const *objv)
 {
-    char buf[BUFSIZ];
+    char *buf = NULL;
+    char *mode;
 
     if (objc < 3) {
 	Tcl_WrongNumArgs(interp, 1, objv, "pathName mode [arguments]");
 	return TCL_ERROR;
     }
 
+    mode = Tcl_GetString(objv[2]);
+    if (objc == 4)
+	buf = Tcl_GetString(objv[3]);
+
     /* pack the 'rest' into buf - probably should use a vls for this*/
-    buf[0] = '\0';
+    if ( strlen(mode) == 3 && bu_strncmp("cut", mode, 3) == 0 ) {
+	struct adrt_mesh_s *mesh;
+
+	/* clear all the hit list */
+	for (BU_LIST_FOR(mesh, adrt_mesh_s, &isst->meshes->l))
+	    mesh->flags &= ~ADRT_MESH_HIT;
+    }
+
+    if (render_shader_init(&isst->camera.render, mode, buf) != 0)
+	return TCL_ERROR;
 
     isst->dirty = 1;
 
-    if(render_shader_init(&isst->camera.render, Tcl_GetString(objv[2]), *buf?buf:NULL) != 0)
-	return TCL_ERROR;
     return TCL_OK;
 }
 
@@ -480,10 +493,10 @@ aerotate(ClientData UNUSED(clientData), Tcl_Interp *interp, int objc, Tcl_Obj *c
     el = el * -DEG2RAD + y;
 
     /* clamp to sane values */
-    while(az > 2*M_PI) az -= 2*M_PI;
-    while(az < 0) az += 2*M_PI;
-    if(el>M_PI_2) el=M_PI_2 - 0.001;
-    if(el<-M_PI_2) el=-M_PI_2 + 0.001;
+    while (az > M_2PI) az -= M_2PI;
+    while (az < 0) az += M_2PI;
+    if (el>M_PI_2) el=M_PI_2 - 0.001;
+    if (el<-M_PI_2) el=-M_PI_2 + 0.001;
 
     V3DIR_FROM_AZEL(vecdpos, az, el);
     VSCALE(vecdpos, vecdpos, mag_pos);
@@ -496,10 +509,10 @@ aerotate(ClientData UNUSED(clientData), Tcl_Interp *interp, int objc, Tcl_Obj *c
 	el = el * -DEG2RAD + y;
 
 	/* clamp to sane values */
-	while(az > 2*M_PI) az -= 2*M_PI;
-	while(az < 0) az += 2*M_PI;
-	if(el>M_PI_2) el=M_PI_2 - 0.001;
-	if(el<-M_PI_2) el=-M_PI_2 + 0.001;
+	while (az > M_2PI) az -= M_2PI;
+	while (az < 0) az += M_2PI;
+	if (el>M_PI_2) el=M_PI_2 - 0.001;
+	if (el<-M_PI_2) el=-M_PI_2 + 0.001;
 
 	V3DIR_FROM_AZEL(vecdfoc, az, el);
 	VSCALE(vecdfoc, vecdfoc, mag_focus);
@@ -523,14 +536,14 @@ open_dm(ClientData UNUSED(cdata), Tcl_Interp *interp, int UNUSED(objc), Tcl_Obj 
 {
     char *av[] = { "Ogl_open", "-t", "0", "-n", ".w0", "-W", "800", "-N", "600", NULL };
 
-    dmp = DM_OPEN(interp, DM_TYPE_ISST, sizeof(av)/sizeof(void*)-1, (const char **)av);
+    dmp = dm_open(interp, DM_TYPE_ISST, sizeof(av)/sizeof(void*)-1, (const char **)av);
 
-    if(dmp == DM_NULL) {
+    if (dmp == DM_NULL) {
 	printf("dm failed?\n");
 	return TCL_ERROR;
     }
 
-    DM_SET_BGCOLOR(dmp, 0, 0, 0x30);
+    dm_set_bg(dmp, 0, 0, 0x30);
 
     return TCL_OK;
 

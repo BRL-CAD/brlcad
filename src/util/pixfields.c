@@ -1,7 +1,7 @@
 /*                     P I X F I E L D S . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2013 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -32,7 +32,9 @@
 #include <string.h>
 #include "bio.h"
 
-#include "bu.h"
+#include "bu/getopt.h"
+#include "bu/log.h"
+#include "bu/malloc.h"
 
 
 #define DEFAULT_WIDTH 512
@@ -54,7 +56,7 @@ get_args(int argc, char **argv)
 {
     int c;
 
-    while ((c = bu_getopt(argc, argv, "vw:n:s:")) != -1) {
+    while ((c = bu_getopt(argc, argv, "vw:n:s:h?")) != -1) {
 	switch (c) {
 	    case 'v':
 		verbose++;
@@ -68,35 +70,35 @@ get_args(int argc, char **argv)
 	    case 's':
 		width = height = atoi(bu_optarg);
 		break;
-	    default:		/* '?' */
+	    default:		/* '?' 'h' */
 		return 0;
 	}
     }
 
-    if (bu_optind >= argc + 1) {
-	(void) fprintf(stderr,
-		       "pixfields: must supply two file names\n");
+    if ((argc == 1) && isatty(fileno(stdout)))
 	return 0;
-    } else {
 
-	if ((fldonefp = fopen(argv[bu_optind], "r")) == NULL) {
-	    fprintf(stderr,
-		    "pixfields: cannot open \"%s\" for reading\n",
-		    argv[bu_optind]);
-	    return 0;
-	}
-
-	if ((fldtwofp = fopen(argv[++bu_optind], "r")) == NULL) {
-	    fprintf(stderr,
-		    "pixfields: cannot open \"%s\" for reading\n",
-		    argv[bu_optind]);
-	    return 0;
-	}
-
+    if (argc - bu_optind <= 1) {
+	(void) fprintf(stderr,"pixfields: must supply two file names\n");
+	return 0;
     }
 
-    if (isatty(fileno(stdout)))
+    if ((fldonefp = fopen(argv[bu_optind], "r")) == NULL) {
+	fprintf(stderr,
+		"pixfields: cannot open \"%s\" for reading\n",argv[bu_optind]);
 	return 0;
+    }
+
+    if ((fldtwofp = fopen(argv[++bu_optind], "r")) == NULL) {
+	fprintf(stderr,
+		"pixfields: cannot open \"%s\" for reading\n",argv[bu_optind]);
+	return 0;
+    }
+
+    if (isatty(fileno(stdout))) {
+	fprintf(stderr,"pixfields: must redirect standard output\n");
+	return 0;
+    }
 
     if (argc > ++bu_optind)
 	fprintf(stderr, "pixfields: excess argument(s) ignored\n");

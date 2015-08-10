@@ -22,7 +22,7 @@
 
 
 <refsect1 xml:id='description'><title>DESCRIPTION</title>
-<para><emphasis remap='I'>Buffer</emphasis>
+<para><command>buffer</command>
 is intended to be use as part of a complex pipeline.
 It serves somewhat the same purpose as the Prolog "cut" operator.
 Data from stdin is read and buffered until EOF is detected, and then
@@ -35,9 +35,9 @@ This can also be useful when processing data from and to the
 same framebuffer with a pipeline, without interfering.</para>
 </refsect1>
 
-<refsect1 xml:id='examples'><title>EXAMPLES</title>
+<refsect1 xml:id='examples'><title>EXAMPLE</title>
 <literallayout remap='.nf'>
-munch | crunch | buffer | grind | package
+(munch | crunch | buffer | grind | package)
 
 fb-pix | pixfilter -flo | buffer | pix-fb
 </literallayout> <!-- .fi -->
@@ -62,7 +62,7 @@ fb-pix | pixfilter -flo | buffer | pix-fb
 </refsect1>
 
 <refsect1 xml:id='copyright'><title>COPYRIGHT</title>
-<para>This software is Copyright (c) 1988-2013 by the United States
+<para>This software is Copyright (c) 1988-2014 by the United States
 Government as represented by U.S. Army Research Laboratory.</para>
 </refsect1>
 

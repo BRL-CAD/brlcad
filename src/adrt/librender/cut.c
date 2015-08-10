@@ -1,7 +1,7 @@
 /*                        C U T . C
  * BRL-CAD / ADRT
  *
- * Copyright (c) 2007-2013 United States Government as represented by
+ * Copyright (c) 2007-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -26,19 +26,25 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "bu.h"
+
+#include "bu/malloc.h"
+#include "bu/log.h"
 #include "vmath.h"
 
 #ifndef TIE_PRECISION
-# define TIE_PRECISION 0
+#  define TIE_PRECISION 0
 #endif
 
 #include "adrt.h"
 #include "adrt_struct.h"
 #include "render.h"
 
+
+extern struct tie_s *tie;
+
 void* render_cut_hit(struct tie_ray_s *ray, struct tie_id_s *id, struct tie_tri_s *tri, void *ptr);
 void render_cut(struct tie_s *tie, struct tie_ray_s *ray, TIE_3 *pixel);
+
 
 typedef struct render_cut_s {
     point_t ray_pos;
@@ -54,6 +60,7 @@ typedef struct render_cut_hit_s {
     tfloat mod;
 } render_cut_hit_t;
 
+
 void *
 render_cut_hit_cutline(struct tie_ray_s *UNUSED(ray), struct tie_id_s *UNUSED(id), struct tie_tri_s *tri, void *UNUSED(ptr))
 {
@@ -61,8 +68,6 @@ render_cut_hit_cutline(struct tie_ray_s *UNUSED(ray), struct tie_id_s *UNUSED(id
     return NULL;
 }
 
-
-extern struct tie_s *tie;
 
 void
 render_cut_free(render_t *render)
@@ -177,14 +182,14 @@ render_cut_init(render_t *render, const char *buf)
     struct tie_ray_s ray;
     double step, f[6];
 
-    if(buf == NULL)
+    if (buf == NULL)
 	return -1;
 
-    sscanf(buf, "#(%lf %lf %lf) #(%lf %lf %lf)",
-	   f, f+1, f+2,
-	   f+3, f+3+1, f+3+2);
+    bu_sscanf(buf, "#(%lf %lf %lf) #(%lf %lf %lf)",
+	      f, f+1, f+2,
+	      f+3, f+3+1, f+3+2);
     VMOVE(ray_pos, f);
-    VMOVE(ray_dir, f);
+    VMOVE(ray_dir, f+3);
     VUNITIZE(ray_dir);
 
     shot_width = 0.01 * render->tie->radius;
@@ -192,7 +197,7 @@ render_cut_init(render_t *render, const char *buf)
 	vect_t v;
 
 	VSUB2(v, ray_pos, render->tie->mid);
-	shot_len = 2.0 * render->tie->radius + MAGNITUDE(v) - render->tie->radius;;
+	shot_len = 2.0 * render->tie->radius + MAGNITUDE(v) - render->tie->radius;
     }
 
     /*
@@ -241,7 +246,7 @@ render_cut_init(render_t *render, const char *buf)
     VMOVE(list[5].v, ray_pos);
     list[5].v[2] += shot_width;
 
-    for(i=0;i<6;i++)
+    for (i=0;i<6;i++)
 	tlist[i] = &list[i];
 
     tie_push(&d->tie, tlist, 2, NULL, 0);

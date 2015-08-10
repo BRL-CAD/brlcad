@@ -1,7 +1,7 @@
 /*                         K I L L R E F S . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2013 United States Government as represented by
+ * Copyright (c) 2008-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -26,9 +26,8 @@
 #include "common.h"
 
 #include <string.h>
-#include "bio.h"
 
-#include "cmd.h"
+#include "bu/cmd.h"
 
 #include "./ged_private.h"
 
@@ -70,7 +69,7 @@ ged_killrefs(struct ged *gedp, int argc, const char *argv[])
 
     if (!nflag && !gedp->ged_internal_call) {
 	for (k = 1; k < argc; k++)
-	    _ged_eraseAllNamesFromDisplay(gedp, argv[k], 1);
+	    _dl_eraseAllNamesFromDisplay(gedp->ged_gdp->gd_headDisplay, gedp->ged_wdbp->dbip, gedp->ged_free_vlist_callback, argv[k], 1, gedp->freesolid);
     }
 
     ret = GED_OK;

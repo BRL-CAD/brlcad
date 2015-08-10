@@ -1,7 +1,7 @@
 /*                         B O T _ S Y N C . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2013 United States Government as represented by
+ * Copyright (c) 2008-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -28,8 +28,8 @@
 #include <stdlib.h>
 #include <ctype.h>
 #include <string.h>
-#include "bio.h"
 
+#include "bu/path.h"
 #include "raytrace.h"
 
 #include "./ged_private.h"
@@ -59,7 +59,8 @@ ged_bot_sync(struct ged *gedp, int argc, const char *argv[])
 
     for (i = 1; i < argc; ++i) {
 	/* Skip past any path elements */
-	char *obj = bu_basename(argv[i]);
+	char *obj = (char *)bu_calloc(strlen(argv[i]), sizeof(char), "ged_bot_sync obj");
+	bu_basename(obj, argv[i]);
 
 	if (BU_STR_EQUAL(obj, ".")) {
 	    /* malformed path, lookup using exactly what was provided */

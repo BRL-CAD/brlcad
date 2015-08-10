@@ -24,7 +24,7 @@
 
 
 <refsect1 xml:id='description'><title>DESCRIPTION</title>
-<para><emphasis remap='I'>Bwstat</emphasis>
+<para><command>bwstat</command>
 will take the given
 <citerefentry><refentrytitle>bw</refentrytitle><manvolnum>5</manvolnum></citerefentry>
 format file,
@@ -33,20 +33,20 @@ related to the pixel intensities is produced.
 <!-- .br -->
 These include:
 <!-- .br -->
-The number of pixels (and the square root of this which is the
-file dimensions if square).
+The number of pixels (and the square root of this, yielding the
+file dimension if it's square);
 <!-- .br -->
-The max and min values.
+the max and min values;
 <!-- .br -->
-The mean.
+the mean;
 <!-- .br -->
-The median (dividing line where half the pixels are above this
-value, half below).
+the median (dividing line where half the pixels are above this
+value, half below);
 <!-- .br -->
-The mode (most frequently occurring value) and the number of pixels
-at this value.
+the mode (most frequently occurring value) and the number of pixels
+at this value;
 <!-- .br -->
-The variance, standard deviation, and skew.</para>
+the variance, standard deviation, and skew.</para>
 
 <para>The
 <option>-v</option>
@@ -72,7 +72,7 @@ file sufficient.</para>
 </refsect1>
 
 <refsect1 xml:id='copyright'><title>COPYRIGHT</title>
-<para>This software is Copyright (c) 1989-2013 by the United States
+<para>This software is Copyright (c) 1989-2014 by the United States
 Government as represented by U.S. Army Research Laboratory.</para>
 </refsect1>
 

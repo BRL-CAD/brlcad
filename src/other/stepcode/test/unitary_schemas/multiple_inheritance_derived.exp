@@ -1,0 +1,60 @@
+-- github issue #232: missing asterisk for derived attribute / data lost
+
+-- #1=AB(.BEE.);
+
+SCHEMA multiple_inheritance_derived;
+
+TYPE b_name = ENUMERATION OF (B, bee);
+END_TYPE;
+
+ENTITY A;
+  DERIVE
+    name : STRING := 'entity a';
+END_ENTITY;
+
+ENTITY B;
+    name: b_name;
+END_ENTITY;
+
+ENTITY AB
+  SUBTYPE OF (A, B);
+END_ENTITY;
+
+ENTITY BA
+  SUBTYPE OF (B, A);
+END_ENTITY;
+
+ENTITY C;
+  DERIVE
+    name: REAL := 1.0;
+END_ENTITY;
+
+ENTITY AC
+  SUBTYPE OF (A, C);
+END_ENTITY;
+
+ENTITY D;
+    name: INTEGER;
+END_ENTITY;
+
+ENTITY DD
+  SUBTYPE OF (D);
+  DERIVE
+    SELF\D.name : INTEGER := 5;
+END_ENTITY;
+
+ENTITY AA
+  SUBTYPE OF (A);
+  n: INTEGER;
+END_ENTITY;
+
+ENTITY BB
+  SUBTYPE OF (B);
+  r: REAL;
+END_ENTITY;
+
+ENTITY AABB
+  SUBTYPE OF (AA, BB);
+END_ENTITY;
+
+END_SCHEMA;

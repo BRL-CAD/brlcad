@@ -1,7 +1,7 @@
 /*                   T C L C A D _ P R I V A T E . H
  * BRL-CAD
  *
- * Copyright (c) 2012-2013 United States Government as represented by
+ * Copyright (c) 2012-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -23,8 +23,12 @@
  *
  */
 
-#ifndef __TCLCAD_PRIVATE_H__
-#define __TCLCAD_PRIVATE_H__
+#ifndef LIBTCLCAD_TCLCAD_PRIVATE_H
+#define LIBTCLCAD_TCLCAD_PRIVATE_H
+
+#include "common.h"
+
+#include <tcl.h>
 
 __BEGIN_DECLS
 
@@ -36,9 +40,22 @@ __BEGIN_DECLS
  */
 extern int library_initialized(int setit);
 
+
+/**
+ * Evaluates a TCL command, escaping the list of arguments.
+ */
+extern int tclcad_eval(Tcl_Interp *interp, const char *command, size_t num_args, const char * const *args);
+
+
+/**
+ * Evaluates a TCL command, escaping the list of arguments and preserving the TCL result object.
+ */
+extern int tclcad_eval_noresult(Tcl_Interp *interp, const char *command, size_t num_args, const char * const *args);
+
+
 __END_DECLS
 
-#endif /* __TCLCAD_PRIVATE_H__ */
+#endif /* LIBTCLCAD_TCLCAD_PRIVATE_H */
 
 /** @} */
 /*

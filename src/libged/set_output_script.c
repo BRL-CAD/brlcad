@@ -1,7 +1,7 @@
 /*                         S E T _ O U T P U T _ S C R I P T . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2013 United States Government as represented by
+ * Copyright (c) 2008-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -59,7 +59,7 @@ ged_set_output_script(struct ged *gedp, int argc, const char *argv[])
     /* We're now going to set the output handler script */
     /* First, we zap any previous script */
     if (gedp->ged_output_script != NULL) {
-	bu_free((genptr_t)gedp->ged_output_script, "ged_set_output_script: zap");
+	bu_free((void *)gedp->ged_output_script, "ged_set_output_script: zap");
 	gedp->ged_output_script = NULL;
     }
 

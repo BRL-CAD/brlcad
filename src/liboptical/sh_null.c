@@ -1,7 +1,7 @@
 /*                       S H _ N U L L . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2013 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -36,10 +36,10 @@
 #include "optical.h"
 
 
-HIDDEN int sh_null_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, const struct mfuncs *mfp, struct rt_i *rtip);
-HIDDEN int sh_null_render(struct application *ap, const struct partition *pp, struct shadework *swp, genptr_t dp);
-HIDDEN void sh_null_print(register struct region *rp, genptr_t dp);
-HIDDEN void sh_null_free(genptr_t cp);
+HIDDEN int sh_null_setup(register struct region *rp, struct bu_vls *matparm, void **dpp, const struct mfuncs *mfp, struct rt_i *rtip);
+HIDDEN int sh_null_render(struct application *ap, const struct partition *pp, struct shadework *swp, void *dp);
+HIDDEN void sh_null_print(register struct region *rp, void *dp);
+HIDDEN void sh_null_free(void *cp);
 
 /* The "mfuncs" table describes what the user interface may call this shader.
  * The null shader may be referred to as null or invisible.  Note that the
@@ -52,8 +52,7 @@ struct mfuncs null_mfuncs[] = {
 };
 
 
-/* N U L L _ S E T U P
- *
+/*
  * This routine is called (at prep time) once for each region which uses this
  * shader.  Any shader-specific initialization should be done here.  It should
  * return 1 on success and -1 on failure.  Alternatively, this routine should
@@ -66,7 +65,7 @@ struct mfuncs null_mfuncs[] = {
  * get called.
  */
 HIDDEN int
-sh_null_setup(register struct region *UNUSED(rp), struct bu_vls *UNUSED(matparm), genptr_t *UNUSED(dpp), const struct mfuncs *UNUSED(mfp), struct rt_i *UNUSED(rtip))
+sh_null_setup(register struct region *UNUSED(rp), struct bu_vls *UNUSED(matparm), void **UNUSED(dpp), const struct mfuncs *UNUSED(mfp), struct rt_i *UNUSED(rtip))
 {
     /* no point to check the arguments since we do nothing with them.  we leave the error
      * checking to elsewhere when used.
@@ -78,8 +77,6 @@ sh_null_setup(register struct region *UNUSED(rp), struct bu_vls *UNUSED(matparm)
 
 
 /*
- * N U L L _ R E N D E R
- *
  * This is called (from viewshade() in shade.c) once for each hit point
  * to be shaded.  The purpose here is to fill in values in the shadework
  * structure.  This is, of course, not necessary when setup returns 0.
@@ -91,7 +88,7 @@ sh_null_setup(register struct region *UNUSED(rp), struct bu_vls *UNUSED(matparm)
  * though, since it shouldn't normally be called.
  */
 HIDDEN int
-sh_null_render(struct application *ap, const struct partition *pp, struct shadework *swp, genptr_t UNUSED(dp))
+sh_null_render(struct application *ap, const struct partition *pp, struct shadework *swp, void *UNUSED(dp))
 {
     /* check the validity of the arguments we got */
 
@@ -114,20 +111,16 @@ sh_null_render(struct application *ap, const struct partition *pp, struct shadew
 
 
 /*
- * N U L L _ P R I N T
- *
  * This routine is called if setup fails (which it never should).
  */
 HIDDEN void
-sh_null_print(register struct region *rp, genptr_t UNUSED(dp))
+sh_null_print(register struct region *rp, void *UNUSED(dp))
 {
-    bu_log("%V uses the null shader\n", rp->reg_name);
+    bu_log("%s uses the null shader\n", rp->reg_name);
 }
 
 
 /*
- * N U L L _ F R E E
- *
  * This routine is called after all rendering has completed.  The intent is
  * normally to release any specific structures that were allocated during
  * setup or rendering.
@@ -135,7 +128,7 @@ sh_null_print(register struct region *rp, genptr_t UNUSED(dp))
  * The null shader allocates nothing.  Therefore it releases nothing.
  */
 HIDDEN void
-sh_null_free(genptr_t UNUSED(cp))
+sh_null_free(void *UNUSED(cp))
 {
 }
 

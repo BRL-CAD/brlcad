@@ -1,7 +1,7 @@
 #                 F I N D S T L . C M A K E
 # BRL-CAD
 #
-# Copyright (c) 2011-2013 United States Government as represented by
+# Copyright (c) 2011-2014 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -55,36 +55,39 @@ main(int ac, char *av[])
 }
 ")
 
-set(CMAKE_REQUIRED_LIBRARIES_BAK "${CMAKE_REQUIRED_LIBRARIES}")
+# Only do this if we haven't done it already
+if(NOT DEFINED STL_LIB_TEST)
+  set(CMAKE_REQUIRED_LIBRARIES_BAK "${CMAKE_REQUIRED_LIBRARIES}")
 
-# first try with no library
-set(CMAKE_REQUIRED_LIBRARIES "")
-CHECK_C_SOURCE_RUNS("${stl_test_src}" STL_LIB_TEST)
-
-if("${STL_LIB_TEST}" EQUAL 1)
-  # succeeded - no STL needed
-  set(STDCXX_LIBRARIES "" CACHE STRING "STL not required" FORCE)
-else("${STL_LIB_TEST}" EQUAL 1)
-  # failed - try library
-  if(NOT STDCXX_LIBRARIES)
-    set(STDCXX_LIBRARIES "-lstdc++")
-  endif(NOT STDCXX_LIBRARIES)
-
-  set(CMAKE_REQUIRED_LIBRARIES "${STDCXX_LIBRARIES}")
+  # first try with no library
+  set(CMAKE_REQUIRED_LIBRARIES "")
   CHECK_C_SOURCE_RUNS("${stl_test_src}" STL_LIB_TEST)
 
   if("${STL_LIB_TEST}" EQUAL 1)
-    set(STDCXX_LIBRARIES "${STDCXX_LIBRARIES}" CACHE STRING "STL found" FORCE)
-  else()
-    set(STDCXX_LIBRARIES "" CACHE STRING "STL not found" FORCE)
-  endif()
+    # succeeded - no STL needed
+    set(STDCXX_LIBRARIES "" CACHE STRING "STL not required" FORCE)
+  else("${STL_LIB_TEST}" EQUAL 1)
+    # failed - try library
+    if(NOT STDCXX_LIBRARIES)
+      set(STDCXX_LIBRARIES "-lstdc++")
+    endif(NOT STDCXX_LIBRARIES)
 
-  set(CMAKE_REQUIRED_LIBRARIES "${CMAKE_REQUIRED_LIBRARIES_BAK}")
+    set(CMAKE_REQUIRED_LIBRARIES "${STDCXX_LIBRARIES}")
+    CHECK_C_SOURCE_RUNS("${stl_test_src}" STL_LIB_TEST)
 
-  # handle the QUIETLY and REQUIRED arguments
-  include(FindPackageHandleStandardArgs)
-  FIND_PACKAGE_HANDLE_STANDARD_ARGS(STL DEFAULT_MSG STDCXX_LIBRARIES)
-endif("${STL_LIB_TEST}" EQUAL 1)
+    if("${STL_LIB_TEST}" EQUAL 1)
+      set(STDCXX_LIBRARIES "${STDCXX_LIBRARIES}" CACHE STRING "STL found" FORCE)
+    else()
+      set(STDCXX_LIBRARIES "" CACHE STRING "STL not found" FORCE)
+    endif()
+
+    set(CMAKE_REQUIRED_LIBRARIES "${CMAKE_REQUIRED_LIBRARIES_BAK}")
+
+    # handle the QUIETLY and REQUIRED arguments
+    include(FindPackageHandleStandardArgs)
+    FIND_PACKAGE_HANDLE_STANDARD_ARGS(STL DEFAULT_MSG STDCXX_LIBRARIES)
+  endif("${STL_LIB_TEST}" EQUAL 1)
+endif(NOT DEFINED STL_LIB_TEST)
 mark_as_advanced(STDCXX_LIBRARIES)
 
 # Local Variables:

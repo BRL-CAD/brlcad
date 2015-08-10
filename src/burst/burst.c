@@ -1,7 +1,7 @@
 /*                         B U R S T . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2013 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -27,6 +27,11 @@
 #include <assert.h>
 #include <stdio.h>
 #include <signal.h>
+
+#include "bu/getopt.h"
+#include "bu/file.h"
+#include "bu/log.h"
+#include "bu/str.h"
 
 #include "./burst.h"
 #include "./trie.h"
@@ -116,14 +121,14 @@ setupSigs(void)
 
   Parse program command line.
 */
-
-static const char optstring[] = "bpPh?";
-
 static int
 parsArgv(int argc, char **argv)
 {
+    const char optstring[] = "bpPh?";
+
     int c;
-/* Parse options.						*/
+
+    /* Parse options.						*/
     while ((c = bu_getopt(argc, argv, optstring)) != -1) {
 	switch (c) {
 	    case 'b' :

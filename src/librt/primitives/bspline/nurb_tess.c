@@ -1,7 +1,7 @@
 /*                     N U R B _ T E S S . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2013 United States Government as represented by
+ * Copyright (c) 1990-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -30,13 +30,12 @@
 
 #include "common.h"
 
-#include <stdio.h>
 #include <math.h>
 #include "bio.h"
 
 #include "vmath.h"
 #include "raytrace.h"
-#include "nurb.h"
+#include "rt/nurb.h"
 
 /**
  * Algorithm -
@@ -142,8 +141,6 @@ rt_nurb_par_edge(const struct face_g_snurb *srf, fastf_t epsilon)
 
 
 /**
- * R T _ C N U R B _ P A R _ E D G E
- *
  * Calculate the maximum edge length (in parameter space) that will
  * keep the curve approximation within epsilon of the true curve
  *

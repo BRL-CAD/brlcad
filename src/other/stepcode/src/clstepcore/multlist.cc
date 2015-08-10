@@ -119,7 +119,7 @@ EntList * MultList::copyList( EntList * ent ) {
 
     switch( ent->join ) {
         case SIMPLE:
-            newlist = new SimpleList( ( ( SimpleList * )ent )->Name() );
+            newlist = new SimpleList( ( dynamic_cast<SimpleList * >(ent) )->Name() );            
             break;
         case AND:
             newlist = new AndList;
@@ -134,9 +134,9 @@ EntList * MultList::copyList( EntList * ent ) {
     appendList( newlist );
     if( ent->multiple() ) {
         // For the multlists, we must recurse for all their children:
-        child = ( ( MultList * )ent )->childList;
+        child = ( dynamic_cast< MultList * >(ent) )->childList;
         while( child ) {
-            ( ( MultList * )newlist )->copyList( child );
+            ( dynamic_cast< MultList * >(newlist) )->copyList( child );
             child = child->next;
         }
     }

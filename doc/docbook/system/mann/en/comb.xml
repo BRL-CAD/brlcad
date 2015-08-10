@@ -27,6 +27,9 @@
         <arg choice="opt" rep="norepeat">-f</arg>
         <arg choice="opt" rep="norepeat">-l</arg>
       </group>
+      <group choice="opt" rep="norepeat">
+        <arg choice="opt" rep="norepeat">-S</arg>
+      </group>
       <arg choice="req" rep="norepeat"><replaceable>combination_name</replaceable> </arg>
       <arg choice="opt" rep="repeat"><replaceable>&lt;operator object_name&gt;</replaceable> </arg>
     </cmdsynopsis>
@@ -142,7 +145,16 @@
         </listitem>
       </varlistentry>
 
-     </variablelist>
+      <varlistentry>
+        <term><option>-S</option></term>
+        <listitem>
+          <para>
+            Stop if the combination object already exists.
+          </para>
+        </listitem>
+      </varlistentry>
+
+    </variablelist>
   </refsection>
 
   <refsection xml:id="examples"><title>EXAMPLES</title>
@@ -185,7 +197,7 @@
 <prompt>mged&gt;</prompt> <userinput>tree region1.r</userinput>
 region1.r/R
         u region2.r/R
-	        u sph.s
+                u sph.s
         u comb.c/
                 u arb.s
       </computeroutput>
@@ -461,7 +473,7 @@ r3/R
 
       <literallayout>
       <computeroutput>
-<prompt>mged&gt;</prompt> <userinput>comb -l spheres.c</userinput>
+<prompt>mged&gt;</prompt> <userinput>comb -l r3</userinput>
 Comb region lift failed - the following combs in the tree contain
 regions and are also used outside the tree of r3:
 

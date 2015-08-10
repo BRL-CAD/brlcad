@@ -1,6 +1,10 @@
 ; CPack install script designed for a nmake build
 ; A customized version of the standard template included
 ; with CMake
+;
+; This file must be placed in the CPACK_MODULE_PATH directory
+; and named NSIS.template.in - CPack will then use this template
+; instead of the built-in default template.
 
 RequestExecutionLevel user
 

@@ -1,7 +1,7 @@
 /*                      G E T C U R V E . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2013 United States Government as represented by
+ * Copyright (c) 1990-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -126,8 +126,8 @@ Getcurve(int curve, struct ptlist **curv_pts)
 
 	    npts = (ang2 - ang1)/delta;
 	    npts++;
-	    if (npts < 3)
-		npts = 3;
+	    V_MAX(npts, 3);
+
 	    delta = (ang2 - ang1)/(npts-1);
 	    cosdel = cos(delta);
 	    sindel = sin(delta);
@@ -421,8 +421,8 @@ Getcurve(int curve, struct ptlist **curv_pts)
 		a = fabs(A);
 		if (fabs(B) < a && !ZERO(B))
 		    a = fabs(B);
-		if (fabs(C) < a)
-		    a = fabs(C);
+		V_MIN(a, fabs(C));
+
 		A = A/a;
 		B = B/a;
 		C = C/a;

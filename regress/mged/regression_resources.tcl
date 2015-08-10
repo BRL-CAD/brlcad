@@ -123,11 +123,11 @@ if {![info exists make_primitives_list]} {
      }
   }
 
-  # make_bb
-  proc make_bb_all {} {
+  # bb
+  proc bb_all {} {
      global make_primitives_list
      foreach x $make_primitives_list {
-	make_bb [format make_bb_box_%s.s $x] [format make_bb_%s.s $x]
+	bb -c [format bb_%s.s $x] [format make_bb_%s.s $x]
      }
   }
 

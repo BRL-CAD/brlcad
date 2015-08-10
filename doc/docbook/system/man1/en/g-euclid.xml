@@ -29,7 +29,7 @@
 
 
 <refsect1 xml:id='description'><title>DESCRIPTION</title>
-<para><emphasis remap='I'>g-euclid</emphasis>
+<para><command>g-euclid</command>
 converts the specified
 <emphasis remap='I'>object(s)</emphasis>
 from a BRL-CAD
@@ -59,7 +59,7 @@ option specifies the name of the file to receive the output
 
 <refsect1 xml:id='example'><title>EXAMPLE</title>
 <synopsis>
-$ <emphasis remap='I'>g-euclid -o sample.euclid sample.g sample_object</emphasis>
+$ g-euclid -o <emphasis remap='I'>sample.euclid sample.g sample_object</emphasis>
 </synopsis>
 </refsect1>
 
@@ -74,7 +74,7 @@ $ <emphasis remap='I'>g-euclid -o sample.euclid sample.g sample_object</emphasis
 </refsect1>
 
 <refsect1 xml:id='copyright'><title>COPYRIGHT</title>
-<para>This software is Copyright (c) 1994-2013 by the United States
+<para>This software is Copyright (c) 1994-2014 by the United States
 Government as represented by U.S. Army Research Laboratory.</para>
 </refsect1>
 

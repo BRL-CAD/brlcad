@@ -1,7 +1,7 @@
 /*                       P I X 2 A S C . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2013 United States Government as represented by
+ * Copyright (c) 1985-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -25,17 +25,15 @@
 #include <limits.h>
 
 #include "bio.h"
-#include "bu.h"
+#include "bu/log.h"
 
 int
 main(int UNUSED(ac), char **UNUSED(argv))
 {
     unsigned char pix[3]; /* RGB of one pixel */
 
-#if defined(_WIN32) && !defined(__CYGWIN__)
     setmode(fileno(stdin), O_BINARY);
     setmode(fileno(stdout), O_BINARY);
-#endif
 
     while (!feof(stdin)
 	   && fread((void *)pix, sizeof(unsigned char) * 3, 1, stdin) == 1) {

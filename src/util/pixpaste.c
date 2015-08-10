@@ -1,7 +1,7 @@
 /*                      P I X P A S T E . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2013 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -35,10 +35,12 @@
 
 #include <stdlib.h>
 #include <string.h>
-#include "bio.h"
 
-#include "bu.h"
 #include "vmath.h"
+#include "bu/getopt.h"
+#include "bu/malloc.h"
+#include "bu/str.h"
+#include "bu/log.h"
 #include "bn.h"
 #include "fb.h"
 
@@ -65,18 +67,18 @@ static long int num_bytes = 3L;
 static char usage[] = "\
 pixpaste: Copyright (C) 1992 Paladin Software\n\
 pixpaste: All rights reserved\n\
-pixpaste: Usage: pixpaste [-v] [-h] [-H] [-a] [-A] [-# num_bytes]\n\
+pixpaste: Usage: pixpaste [-v] [-a] [-A] [-# num_bytes]\n\
 		 [-s orig_square_size] [-w orig_width] [-n orig_height]\n\
 		 [-S paste_square_size] [-W paste_width] [-N paste_height]\n\
 		 [-x horizontal] [-y vertical] orig_file paste_file\n\
-	A '-' can be used to indicate stdin for orig_file or paste_file\n";
+	Can use '-' to indicate stdin for orig_file or paste_file .\n";
 
 int
 get_args(int argc, char **argv)
 {
     int c;
 
-    while ((c = bu_getopt(argc, argv, "vahHs:w:n:S:W:N:x:y:#:")) != -1) {
+    while ((c = bu_getopt(argc, argv, "vaAs:w:n:S:W:N:x:y:#:h?")) != -1) {
 	switch (c) {
 	    case 'v':
 		Verbose = 1;
@@ -86,14 +88,6 @@ get_args(int argc, char **argv)
 		break;
 	    case 'A':
 		paste_autosize = 1;
-		break;
-	    case 'h':
-		org_width = org_height = 1024L;
-		orig_autosize = 0;
-		break;
-	    case 'H':
-		paste_width = paste_height = 1024L;
-		paste_autosize = 0;
 		break;
 	    case 's':
 		org_width = org_height = atol(bu_optarg);
@@ -128,7 +122,7 @@ get_args(int argc, char **argv)
 	    case '#':
 		num_bytes = atol(bu_optarg);
 		break;
-	    default:		/* '?' */
+	    default:		/* '?' 'h' */
 		return 0;
 	}
     }
@@ -184,6 +178,8 @@ main(int argc, char **argv)
     unsigned char *buffer;
     long int i;
     long int row, result;
+
+    bu_log("DEPRECATED: pixpaste is no longer being maintained.\n\tContact devs@brlcad.org if you still use this tool.\n");
 
     if (!get_args(argc, argv)) {
 	fprintf(stderr, "%s", usage);

@@ -62,10 +62,10 @@ class SC_UTILS_EXPORT DirObj {
         // check for file in the currently loaded directory
         bool FileExists( const char * file ) {
             return Index( file ) ? 1 : 0;
-        };
+        }
         bool FileExists( const std::string & file ) {
             return Index( file.c_str() ) ? true : false;
-        };
+        }
         int Count();
 
         static bool IsADirectory( const char * );
@@ -101,3 +101,4 @@ inline const char * DirObj::File( int index ) {
 }
 
 #endif
+

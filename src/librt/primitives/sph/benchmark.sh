@@ -1,6 +1,5 @@
 #!/bin/sh
 
-
 for PROGRAM in rt "$PWD/opencl"; do
     LOG_FILE="data/$(basename "$PROGRAM").log"
     echo "$LOG_FILE"

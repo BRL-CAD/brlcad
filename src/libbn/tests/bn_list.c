@@ -1,7 +1,7 @@
 /*                  T E S T _ L I S T . C
  * BRL-CAD
  *
- * Copyright (c) 2011-2013 United States Government as represented by
+ * Copyright (c) 2011-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -26,7 +26,7 @@
 
 #include "bn.h"
 #include "bu.h"
-#include "plot3.h"
+#include "bn/plot3.h"
 
 #define BUFFER_SIZE 2000
 #define MAX_POINTS 30
@@ -46,7 +46,7 @@ initialise_buffers(char *expected_buf)
 
     temp = bu_temp_file(NULL, 0);
 
-    if(temp == NULL)
+    if (temp == NULL)
 	return 0;
 
     rewind(temp);
@@ -73,7 +73,7 @@ compare_result(char *expected_buf, FILE *result_fd)
 }
 
 /* Checks the result length and closes the result fd */
-int
+static size_t
 check_result_len(FILE *result_fd)
 {
     size_t ret;
@@ -340,15 +340,15 @@ automatic_2d_test(double *double_x, double *double_y, int npoints)
     convert_points(double_x, int_x, npoints);
     convert_points(double_y, int_y, npoints);
 
-    if (!test_tp_i2list(int_x, int_y, npoints)){
+    if (!test_tp_i2list(int_x, int_y, npoints)) {
 	printf("tp_i2list test failed\n");
 	return 0;
     }
-    if (!test_tp_2list(double_x, double_y, npoints)){
+    if (!test_tp_2list(double_x, double_y, npoints)) {
 	printf("tp_2list test failed\n");
 	return 0;
     }
-    if (!test_tp_2mlist(double_x, double_y, npoints)){
+    if (!test_tp_2mlist(double_x, double_y, npoints)) {
 	printf("tp_2mlist test failed\n");
 	return 0;
     }
@@ -360,7 +360,7 @@ automatic_2d_test(double *double_x, double *double_y, int npoints)
 int
 automatic_3d_test(double *double_x, double *double_y, double *double_z, int npoints)
 {
-    if (!test_tp_3list(double_x, double_y, double_z, npoints)){
+    if (!test_tp_3list(double_x, double_y, double_z, npoints)) {
 	printf("tp_3list test failed\n");
 	return 0;
     }
@@ -384,7 +384,7 @@ main(int argc, char *argv[])
 	return -1;
     }
 
-    /* If its a 2D test */
+    /* If it's a 2D test */
     if (*argv[1] == '2') {
 	while (i < (argc-2) && i < MAX_POINTS) {
 	    sscanf(argv[i+2], "%lg,%lg", &x, &y);

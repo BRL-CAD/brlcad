@@ -1,7 +1,7 @@
 /*                         W C O D E S . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2013 United States Government as represented by
+ * Copyright (c) 2008-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -28,7 +28,6 @@
 #include <stdlib.h>
 #include <ctype.h>
 #include <string.h>
-#include "bio.h"
 
 #include "./ged_private.h"
 
@@ -50,7 +49,7 @@ HIDDEN int wcodes_printcodes(struct ged *gedp, FILE *fp, struct directory *dp, s
 
 
 HIDDEN void
-wcodes_printnode(struct db_i *dbip, struct rt_comb_internal *UNUSED(comb), union tree *comb_leaf, genptr_t user_ptr1, genptr_t user_ptr2, genptr_t user_ptr3, genptr_t UNUSED(user_ptr4))
+wcodes_printnode(struct db_i *dbip, struct rt_comb_internal *UNUSED(comb), union tree *comb_leaf, void *user_ptr1, void *user_ptr2, void *user_ptr3, void *UNUSED(user_ptr4))
 {
     FILE *fp;
     size_t *pathpos;
@@ -113,11 +112,11 @@ wcodes_printcodes(struct ged *gedp, FILE *fp, struct directory *dp, size_t pathp
     if (comb->tree) {
 	if (pathpos >= path_capacity) {
 	    path_capacity += PATH_STEP;
-	    path = bu_realloc(path, sizeof(struct directory *) * path_capacity, "realloc path bigger");
+	    path = (struct directory **)bu_realloc(path, sizeof(struct directory *) * path_capacity, "realloc path bigger");
 	}
 	path[pathpos] = dp;
 	db_tree_funcleaf(gedp->ged_wdbp->dbip, comb, comb->tree, wcodes_printnode,
-			 (genptr_t)fp, (genptr_t)&pathpos, (genptr_t)gedp, (genptr_t)gedp);
+			 (void *)fp, (void *)&pathpos, (void *)gedp, (void *)gedp);
     }
 
     intern.idb_meth->ft_ifree(&intern);
@@ -141,13 +140,10 @@ ged_wcodes(struct ged *gedp, int argc, const char *argv[])
     bu_vls_trunc(gedp->ged_result_str, 0);
 
     /* must be wanting help */
-    if (argc == 1) {
+    if (argc < 3) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_HELP;
-    }
-
-    if (argc == 2) {
-	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+    	if (argc == 1)
+	    return GED_HELP;
 	return GED_ERROR;
     }
 
@@ -157,7 +153,7 @@ ged_wcodes(struct ged *gedp, int argc, const char *argv[])
 	return GED_ERROR;
     }
 
-    path = bu_calloc(PATH_STEP, sizeof(struct directory *), "alloc initial path");
+    path = (struct directory **)bu_calloc(PATH_STEP, sizeof(struct directory *), "alloc initial path");
     path_capacity = PATH_STEP;
 
     for (i = 2; i < argc; ++i) {

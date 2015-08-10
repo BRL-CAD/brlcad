@@ -1,7 +1,7 @@
 /*                       F A C E D E F . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2013 United States Government as represented by
+ * Copyright (c) 1986-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -24,14 +24,11 @@
 #include "common.h"
 
 #include <stdlib.h>
-#include <stdio.h>
 #include <math.h>
 #include <signal.h>
 
-#include "bio.h"
-#include "bu.h"
 #include "vmath.h"
-#include "rtgeom.h"
+#include "rt/geom.h"
 #include "raytrace.h"
 #include "./mged.h"
 #include "./sedit.h"
@@ -74,8 +71,6 @@ static void get_pleqn(fastf_t *plane, const char *argv[]), get_rotfb(fastf_t *pl
 static int get_3pts(fastf_t *plane, const char *argv[], const struct bn_tol *tol);
 
 /*
- * F _ F A C E D E F
- *
  * Redefines one of the defining planes for a GENARB8. Finds which
  * plane to redefine and gets input, then shuttles the process over to
  * one of four functions before calculating new vertices.
@@ -89,10 +84,8 @@ f_facedef(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const cha
     struct rt_arb_internal *arb;
     struct rt_arb_internal *arbo;
     plane_t planes[6];
-    int status = TCL_OK;
-    struct bu_vls error_msg = BU_VLS_INIT_ZERO;
-
-    RT_DB_INTERNAL_INIT(&intern);
+    int status;
+    struct bu_vls error_msg;
 
     if (argc < 2) {
 	struct bu_vls vls = BU_VLS_INIT_ZERO;
@@ -107,6 +100,10 @@ f_facedef(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const cha
 	(void)signal(SIGINT, sig3);  /* allow interrupts */
     else
 	return TCL_OK;
+
+    status = TCL_OK;
+    BU_VLS_INIT(&error_msg);
+    RT_DB_INTERNAL_INIT(&intern);
 
     if (STATE != ST_S_EDIT) {
 	Tcl_AppendResult(interp, "Facedef: must be in solid edit mode\n", (char *)NULL);
@@ -294,7 +291,7 @@ f_facedef(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const cha
     }
 
     /* find all vertices from the plane equations */
-    if (rt_arb_calc_points(arb, es_type, planes, &mged_tol) < 0) {
+    if (rt_arb_calc_points(arb, es_type, (const plane_t *)planes, &mged_tol) < 0) {
 	Tcl_AppendResult(interp, "facedef:  unable to find points\n", (char *)NULL);
 	status = TCL_ERROR;
 	goto end;
@@ -321,8 +318,6 @@ f_facedef(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const cha
 
 
 /*
- * G E T _ P L E Q N
- *
  * Gets the planar equation from the array argv[] and puts the result
  * into 'plane'.
  */
@@ -343,8 +338,6 @@ get_pleqn(fastf_t *plane, const char *argv[])
 
 
 /*
- * G E T _ 3 P T S
- *
  * Gets three definite points from the array argv[] and finds the
  * planar equation from these points.  The resulting plane equation is
  * stored in 'plane'.
@@ -377,8 +370,6 @@ get_3pts(fastf_t *plane, const char *argv[], const struct bn_tol *tol)
 
 
 /*
- * G E T _ R O T F B
- *
  * Gets information from the array argv[].  Finds the planar equation
  * given rotation and fallback angles, plus a fixed point. Result is
  * stored in 'plane'. The vertices pointed to by 's_recp' are used if
@@ -387,7 +378,7 @@ get_3pts(fastf_t *plane, const char *argv[], const struct bn_tol *tol)
 static void
 get_rotfb(fastf_t *plane, const char *argv[], const struct rt_arb_internal *arb)
 {
-    fastf_t rota, fb;
+    fastf_t rota, fb_a;
     short int i, temp;
     point_t pt;
 
@@ -395,12 +386,12 @@ get_rotfb(fastf_t *plane, const char *argv[], const struct rt_arb_internal *arb)
 	return;
 
     rota= atof(argv[0]) * DEG2RAD;
-    fb  = atof(argv[1]) * DEG2RAD;
+    fb_a  = atof(argv[1]) * DEG2RAD;
 
     /* calculate normal vector (length=1) from rot, fb */
-    plane[0] = cos(fb) * cos(rota);
-    plane[1] = cos(fb) * sin(rota);
-    plane[2] = sin(fb);
+    plane[0] = cos(fb_a) * cos(rota);
+    plane[1] = cos(fb_a) * sin(rota);
+    plane[2] = sin(fb_a);
 
     if (argv[2][0] == 'v') {
 	/* vertex given */
@@ -417,8 +408,6 @@ get_rotfb(fastf_t *plane, const char *argv[], const struct rt_arb_internal *arb)
 
 
 /*
- * G E T _ N U P N T
- *
  * Gets a point from the three strings in the 'argv' array.  The value
  * of D of 'plane' is changed such that the plane passes through the
  * input point.

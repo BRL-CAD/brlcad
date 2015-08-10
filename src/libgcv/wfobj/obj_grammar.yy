@@ -1,7 +1,7 @@
 /*                  O B J _ G R A M M A R . Y Y
  * BRL-CAD
  *
- * Copyright (c) 2010-2013 United States Government as represented by
+ * Copyright (c) 2010-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -21,7 +21,7 @@
 /*                  O B J _ G R A M M A R . Y Y
  * BRL-CAD
  *
- * Copyright (c) 2010-2013 United States Government as represented by
+ * Copyright (c) 2010-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -93,12 +93,6 @@ inline static parser_state_type & get_state(yyscan_t scanner)
 {
     return static_cast<objCombinedState*>(obj_parser_get_state(scanner))->
 	parser_state;
-}
-
-inline static objCombinedState::basic_parser_type &get_parser(yyscan_t scanner)
-{
-    return *(static_cast<objCombinedState*>(obj_parser_get_state(scanner))->
-	    basic_parser);
 }
 
 inline static contents_type & get_contents(yyscan_t scanner)

@@ -2,6 +2,7 @@ set(util_TCLSCRIPTS
   expand_int_ranges.tcl
   getopt.tcl
   luniq.tcl
+  regionstobots.tcl
   )
 BRLCAD_ADDDATA(util_TCLSCRIPTS tclscripts/util)
 pkgIndex_BUILD(tclscripts/util)

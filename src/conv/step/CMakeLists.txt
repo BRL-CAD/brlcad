@@ -1,513 +1,133 @@
-#
-# FIXME: massively parallel builds consistently fail building step
-#        sources.  presumably, something is wrong with the dependency
-#        declarations or file protections with multiple processes
-#        trying to run perplex or fedex simultaneously.
-#
+# Because the exp2cxx outputs are used by both step-g and g-step,
+# the logic both commands need is the same and is defined up front.
 
+set(STEPCODE_DIR ${BRLCAD_SOURCE_DIR}/src/other/stepcode)
 set(STEP_INCLUDE_DIRS
+  ${CMAKE_CURRENT_BINARY_DIR}
+  ${CMAKE_CURRENT_SOURCE_DIR}
   ${BU_INCLUDE_DIRS}
   ${RT_INCLUDE_DIRS}
   ${WDB_INCLUDE_DIRS}
-  )
-LIST(REMOVE_DUPLICATES STEP_INCLUDE_DIRS)
-include_directories(${STEP_INCLUDE_DIRS})
-
-# local includes
-include_directories(
-  ${CMAKE_CURRENT_BINARY_DIR}
-  ${CMAKE_CURRENT_SOURCE_DIR}
-  ${BRLCAD_SOURCE_DIR}/src/other/stepcode/include
-  ${BRLCAD_SOURCE_DIR}/src/other/stepcode/src/base
-  ${BRLCAD_SOURCE_DIR}/src/other/stepcode/src/clstepcore
-  ${BRLCAD_SOURCE_DIR}/src/other/stepcode/src/cleditor
-  ${BRLCAD_SOURCE_DIR}/src/other/stepcode/src/clutils
-  ${BRLCAD_SOURCE_DIR}/src/other/stepcode/src/cldai
-  ${BRLCAD_SOURCE_DIR}/src/other/stepcode/src/test
+  ${STEPCODE_DIR}/include
+  ${STEPCODE_DIR}/src/base
+  ${STEPCODE_DIR}/src/clstepcore
+  ${STEPCODE_DIR}/src/cleditor
+  ${STEPCODE_DIR}/src/clutils
+  ${STEPCODE_DIR}/src/cldai
+  ${STEPCODE_DIR}/src/test
   ${CMAKE_BINARY_DIR}/src/other/stepcode/include
-  ${TNT_INCLUDE_DIR}
   ${BRLCAD_SOURCE_DIR}/src/libbrep #Temporary until headers reworked
   )
+BRLCAD_INCLUDE_DIRS(STEP_INCLUDE_DIRS)
 
-set(SCHEMA_FILE ${BRLCAD_SOURCE_DIR}/src/other/stepcode/data/ap203/ap203.exp)
-#set(SCHEMA_FILE ${BRLCAD_SOURCE_DIR}/src/other/stepcode/data/ap203e2/ap203e2_mim_lf.exp)
+macro(GENERATE_SCHEMA_INPUTS SCHEMA_FILE TARGET_SUFFIX)
+  # This Schema determines which version of STEP the command will support
+  # TODO - see if there is some way to automatically support multiple versions
+  # read the schema name from a line like 'SCHEMA AUTOMOTIVE_DESIGN;'
+  file(STRINGS ${SCHEMA_FILE} SCHEMA_STATEMENT LIMIT_COUNT 1 REGEX "SCHEMA .*")
+  string(REGEX REPLACE "^SCHEMA \(.*\)\;$" "\\1" SCHEMA_N ${SCHEMA_STATEMENT} )
+  string(TOUPPER ${SCHEMA_N} SCHEMA_NAME) #exp2cxx always uses upper case for file names
 
-# read the schema name from a line like 'SCHEMA AUTOMOTIVE_DESIGN;'
-file(STRINGS ${SCHEMA_FILE} SCHEMA_STATEMENT LIMIT_COUNT 1 REGEX "SCHEMA .*")
-string(REGEX REPLACE "^SCHEMA \(.*\)\;$" "\\1" SCHEMA_N ${SCHEMA_STATEMENT} )
-string(TOUPPER ${SCHEMA_N} SCHEMA_NAME) #fedex_plus always uses upper case for file names
+  # Because SCHEMA_OUT_DIR is the working directory for exp2cxx, it must be
+  # created at configure time and be present when exp2cxx is run
+  set(SCHEMA_OUT_DIR ${CMAKE_CURRENT_BINARY_DIR}/${SCHEMA_NAME}_${TARGET_SUFFIX})
+  make_directory(${SCHEMA_OUT_DIR})
+  include_directories(${SCHEMA_OUT_DIR})
+  DISTCLEAN(${SCHEMA_OUT_DIR})
 
-set(SCHEMA_OUT_DIR ${CMAKE_CURRENT_BINARY_DIR}/${SCHEMA_NAME})
-make_directory(${SCHEMA_OUT_DIR})
-DISTCLEAN(${SCHEMA_OUT_DIR})
-include_directories(${SCHEMA_OUT_DIR})
-
-set(fedex_srcs
-	${SCHEMA_OUT_DIR}/Sdai${SCHEMA_NAME}.cc
-	${SCHEMA_OUT_DIR}/Sdai${SCHEMA_NAME}.init.cc
-	${SCHEMA_OUT_DIR}/SdaiAll.cc
-	${SCHEMA_OUT_DIR}/compstructs.cc
-	${SCHEMA_OUT_DIR}/schema.cc
-)
-
-set(FEDEX_OUTPUT
-	${fedex_srcs}
-	${SCHEMA_OUT_DIR}/Sdai${SCHEMA_NAME}.h
-	${SCHEMA_OUT_DIR}/Sdaiclasses.h
-	${SCHEMA_OUT_DIR}/schema.h
-	)
-
-add_custom_command(OUTPUT ${FEDEX_OUTPUT}
-	COMMAND ${FEDEX_PLUS_EXEC} ARGS ${SCHEMA_FILE}
-	DEPENDS ${SCHEMA_FILE} ${FEDEX_PLUS_EXECUTABLE_TARGET}
-	WORKING_DIRECTORY ${SCHEMA_OUT_DIR}
-	COMMENT "Generating C++ code to express ${SCHEMA_NAME}..."
-	VERBATIM)
-
-set(stepg_SOURCES
-  ${fedex_srcs}
-  AdvancedBrepShapeRepresentation.cpp
-  AdvancedFace.cpp
-  AmountOfSubstanceContextDependentUnit.cpp
-  AmountOfSubstanceConversionBasedUnit.cpp
-  AmountOfSubstanceSiUnit.cpp
-  AmountOfSubstanceUnit.cpp
-  ApplicationContext.cpp
-  ApplicationContextElement.cpp
-  AreaContextDependentUnit.cpp
-  AreaConversionBasedUnit.cpp
-  AreaSiUnit.cpp
-  AreaUnit.cpp
-  Axis1Placement.cpp
-  Axis2Placement.cpp
-  Axis2Placement2D.cpp
-  Axis2Placement3D.cpp
-  BRLCADWrapper.cpp
-  BSplineCurve.cpp
-  BSplineCurveWithKnots.cpp
-  BSplineSurface.cpp
-  BSplineSurfaceWithKnots.cpp
-  BezierCurve.cpp
-  BezierSurface.cpp
-  BoundaryCurve.cpp
-  BoundedCurve.cpp
-  BoundedPCurve.cpp
-  BoundedSurface.cpp
-  BoundedSurfaceCurve.cpp
-  BrepWithVoids.cpp
-  CartesianPoint.cpp
-  CartesianTransformationOperator.cpp
-  CartesianTransformationOperator2D.cpp
-  CartesianTransformationOperator3D.cpp
-  Circle.cpp
-  ClosedShell.cpp
-  CompositeCurve.cpp
-  CompositeCurveOnSurface.cpp
-  CompositeCurveSegment.cpp
-  Conic.cpp
-  ConicalSurface.cpp
-  ConnectedFaceSet.cpp
-  ContextDependentShapeRepresentation.cpp
-  ContextDependentUnit.cpp
-  ConversionBasedUnit.cpp
-  Curve.cpp
-  CurveBoundedSurface.cpp
-  CurveReplica.cpp
-  CylindricalSurface.cpp
-  DefinitionalRepresentation.cpp
-  DerivedUnit.cpp
-  DerivedUnitElement.cpp
-  DesignContext.cpp
-  DimensionalExponents.cpp
-  Direction.cpp
-  Edge.cpp
-  EdgeCurve.cpp
-  EdgeLoop.cpp
-  ElectricCurrentContextDependentUnit.cpp
-  ElectricCurrentConversionBasedUnit.cpp
-  ElectricCurrentSiUnit.cpp
-  ElectricCurrentUnit.cpp
-  ElementarySurface.cpp
-  Ellipse.cpp
-  Face.cpp
-  FaceBound.cpp
-  FaceOuterBound.cpp
-  FaceSurface.cpp
-  Factory.cpp
-  FoundedItem.cpp
-  FunctionallyDefinedTransformation.cpp
-  GeometricRepresentationContext.cpp
-  GeometricRepresentationItem.cpp
-  GlobalUncertaintyAssignedContext.cpp
-  GlobalUnitAssignedContext.cpp
-  Hyperbola.cpp
-  IntersectionCurve.cpp
-  ItemDefinedTransformation.cpp
-  LengthContextDependentUnit.cpp
-  LengthConversionBasedUnit.cpp
-  LengthMeasureWithUnit.cpp
-  LengthSiUnit.cpp
-  LengthUnit.cpp
-  Line.cpp
-  LocalUnits.cpp
-  Loop.cpp
-  LuminousIntensityContextDependentUnit.cpp
-  LuminousIntensityConversionBasedUnit.cpp
-  LuminousIntensitySiUnit.cpp
-  LuminousIntensityUnit.cpp
-  ManifoldSolidBrep.cpp
-  MassContextDependentUnit.cpp
-  MassConversionBasedUnit.cpp
-  MassSiUnit.cpp
-  MassUnit.cpp
-  MeasureValue.cpp
-  MeasureWithUnit.cpp
-  MechanicalContext.cpp
-  NamedUnit.cpp
-  OffsetCurve2D.cpp
-  OffsetCurve3D.cpp
-  OffsetSurface.cpp
-  OpenNurbsInterfaces.cpp
-  OrientedEdge.cpp
-  OrientedClosedShell.cpp
-  PCurve.cpp
-  PCurveOrSurface.cpp
-  Parabola.cpp
-  ParametricRepresentationContext.cpp
-  Path.cpp
-  Placement.cpp
-  Plane.cpp
-  PlaneAngleContextDependentUnit.cpp
-  PlaneAngleConversionBasedUnit.cpp
-  PlaneAngleMeasureWithUnit.cpp
-  PlaneAngleSiUnit.cpp
-  PlaneAngleUnit.cpp
-  Point.cpp
-  Polyline.cpp
-  Product.cpp
-  ProductCategory.cpp
-  ProductContext.cpp
-  ProductDefinition.cpp
-  ProductDefinitionContext.cpp
-  ProductDefinitionContextAssociation.cpp
-  ProductDefinitionContextRole.cpp
-  ProductDefinitionFormation.cpp
-  ProductDefinitionFormationWithSpecifiedSource.cpp
-  ProductDefinitionShape.cpp
-  ProductRelatedProductCategory.cpp
-  PropertyDefinition.cpp
-  QuasiUniformCurve.cpp
-  QuasiUniformSurface.cpp
-  RatioContextDependentUnit.cpp
-  RatioConversionBasedUnit.cpp
-  RatioSiUnit.cpp
-  RatioUnit.cpp
-  RationalBSplineCurve.cpp
-  RationalBSplineCurveWithKnots.cpp
-  RationalBSplineSurface.cpp
-  RationalBSplineSurfaceWithKnots.cpp
-  RationalBezierCurve.cpp
-  RationalBezierSurface.cpp
-  RationalQuasiUniformCurve.cpp
-  RationalQuasiUniformSurface.cpp
-  RationalUniformCurve.cpp
-  RationalUniformSurface.cpp
-  RectangularCompositeSurface.cpp
-  RectangularTrimmedSurface.cpp
-  Representation.cpp
-  RepresentationContext.cpp
-  RepresentationItem.cpp
-  RepresentationRelationship.cpp
-  RepresentationRelationshipWithTransformation.cpp
-  STEPEntity.cpp
-  STEPWrapper.cpp
-  SeamCurve.cpp
-  ShapeRepresentation.cpp
-  ShapeRepresentationRelationship.cpp
-  SiUnit.cpp
-  SolidAngleContextDependentUnit.cpp
-  SolidAngleConversionBasedUnit.cpp
-  SolidAngleSiUnit.cpp
-  SolidAngleUnit.cpp
-  SolidModel.cpp
-  SphericalSurface.cpp
-  Surface.cpp
-  SurfaceCurve.cpp
-  SurfaceOfLinearExtrusion.cpp
-  SurfaceOfRevolution.cpp
-  SurfacePatch.cpp
-  SurfaceReplica.cpp
-  SweptSurface.cpp
-  ThermodynamicTemperatureContextDependentUnit.cpp
-  ThermodynamicTemperatureConversionBasedUnit.cpp
-  ThermodynamicTemperatureSiUnit.cpp
-  ThermodynamicTemperatureUnit.cpp
-  TimeContextDependentUnit.cpp
-  TimeConversionBasedUnit.cpp
-  TimeSiUnit.cpp
-  TimeUnit.cpp
-  TopologicalRepresentationItem.cpp
-  ToroidalSurface.cpp
-  Transformation.cpp
-  TrimmedCurve.cpp
-  TrimmingSelect.cpp
-  UncertaintyMeasureWithUnit.cpp
-  UniformCurve.cpp
-  UniformSurface.cpp
-  Unit.cpp
-  Vector.cpp
-  Vertex.cpp
-  VertexLoop.cpp
-  VertexPoint.cpp
-  VolumeContextDependentUnit.cpp
-  VolumeConversionBasedUnit.cpp
-  VolumeSiUnit.cpp
-  VolumeUnit.cpp
-  step-g.cpp
-  )
-
-set(stepg_HDRS
-  AdvancedBrepShapeRepresentation.h
-  AdvancedFace.h
-  AmountOfSubstanceContextDependentUnit.h
-  AmountOfSubstanceConversionBasedUnit.h
-  AmountOfSubstanceSiUnit.h
-  AmountOfSubstanceUnit.h
-  ApplicationContext.h
-  ApplicationContextElement.h
-  AreaContextDependentUnit.h
-  AreaConversionBasedUnit.h
-  AreaSiUnit.h
-  AreaUnit.h
-  Axis1Placement.h
-  Axis2Placement.h
-  Axis2Placement2D.h
-  Axis2Placement3D.h
-  BRLCADWrapper.h
-  BSplineCurve.h
-  BSplineCurveWithKnots.h
-  BSplineSurface.h
-  BSplineSurfaceWithKnots.h
-  BezierCurve.h
-  BezierSurface.h
-  BoundaryCurve.h
-  BoundedCurve.h
-  BoundedPCurve.h
-  BoundedSurface.h
-  BoundedSurfaceCurve.h
-  BrepWithVoids.h
-  CartesianPoint.h
-  CartesianTransformationOperator.h
-  CartesianTransformationOperator2D.h
-  CartesianTransformationOperator3D.h
-  Circle.h
-  ClosedShell.h
-  CompositeCurve.h
-  CompositeCurveOnSurface.h
-  CompositeCurveSegment.h
-  Conic.h
-  ConicalSurface.h
-  ConnectedFaceSet.h
-  ContextDependentShapeRepresentation.h
-  ContextDependentUnit.h
-  ConversionBasedUnit.h
-  Curve.h
-  CurveBoundedSurface.h
-  CurveReplica.h
-  CylindricalSurface.h
-  DefinitionalRepresentation.h
-  DerivedUnit.h
-  DerivedUnitElement.h
-  DesignContext.h
-  DimensionalExponents.h
-  Direction.h
-  Edge.h
-  EdgeCurve.h
-  EdgeLoop.h
-  ElectricCurrentContextDependentUnit.h
-  ElectricCurrentConversionBasedUnit.h
-  ElectricCurrentSiUnit.h
-  ElectricCurrentUnit.h
-  ElementarySurface.h
-  Ellipse.h
-  Face.h
-  FaceBound.h
-  FaceOuterBound.h
-  FaceSurface.h
-  Factory.h
-  FoundedItem.h
-  FunctionallyDefinedTransformation.h
-  GeometricRepresentationContext.h
-  GeometricRepresentationItem.h
-  GlobalUncertaintyAssignedContext.h
-  GlobalUnitAssignedContext.h
-  Hyperbola.h
-  IntersectionCurve.h
-  ItemDefinedTransformation.h
-  LengthContextDependentUnit.h
-  LengthConversionBasedUnit.h
-  LengthMeasureWithUnit.h
-  LengthSiUnit.h
-  LengthUnit.h
-  Line.h
-  LocalUnits.h
-  Loop.h
-  LuminousIntensityContextDependentUnit.h
-  LuminousIntensityConversionBasedUnit.h
-  LuminousIntensitySiUnit.h
-  LuminousIntensityUnit.h
-  ManifoldSolidBrep.h
-  MassContextDependentUnit.h
-  MassConversionBasedUnit.h
-  MassSiUnit.h
-  MassUnit.h
-  MeasureValue.h
-  MeasureWithUnit.h
-  MechanicalContext.h
-  NamedUnit.h
-  OffsetCurve2D.h
-  OffsetCurve3D.h
-  OffsetSurface.h
-  OrientedEdge.h
-  OrientedClosedShell.h
-  PCurve.h
-  PCurveOrSurface.h
-  Parabola.h
-  ParametricRepresentationContext.h
-  Path.h
-  Placement.h
-  Plane.h
-  PlaneAngleContextDependentUnit.h
-  PlaneAngleConversionBasedUnit.h
-  PlaneAngleMeasureWithUnit.h
-  PlaneAngleSiUnit.h
-  PlaneAngleUnit.h
-  Point.h
-  Polyline.h
-  Product.h
-  ProductCategory.h
-  ProductContext.h
-  ProductDefinition.h
-  ProductDefinitionContext.h
-  ProductDefinitionContextAssociation.h
-  ProductDefinitionContextRole.h
-  ProductDefinitionFormation.h
-  ProductDefinitionFormationWithSpecifiedSource.h
-  ProductDefinitionShape.h
-  ProductRelatedProductCategory.h
-  PropertyDefinition.h
-  QuasiUniformCurve.h
-  QuasiUniformSurface.h
-  RatioContextDependentUnit.h
-  RatioConversionBasedUnit.h
-  RatioSiUnit.h
-  RatioUnit.h
-  RationalBSplineCurve.h
-  RationalBSplineCurveWithKnots.h
-  RationalBSplineSurface.h
-  RationalBSplineSurfaceWithKnots.h
-  RationalBezierCurve.h
-  RationalBezierSurface.h
-  RationalQuasiUniformCurve.h
-  RationalQuasiUniformSurface.h
-  RationalUniformCurve.h
-  RationalUniformSurface.h
-  RectangularCompositeSurface.h
-  RectangularTrimmedSurface.h
-  Representation.h
-  RepresentationContext.h
-  RepresentationItem.h
-  RepresentationRelationship.h
-  RepresentationRelationshipWithTransformation.h
-  STEPEntity.h
-  STEPWrapper.h
-  SeamCurve.h
-  ShapeRepresentation.h
-  ShapeRepresentationRelationship.h
-  SiUnit.h
-  SolidAngleContextDependentUnit.h
-  SolidAngleConversionBasedUnit.h
-  SolidAngleSiUnit.h
-  SolidAngleUnit.h
-  SolidModel.h
-  SphericalSurface.h
-  Surface.h
-  SurfaceCurve.h
-  SurfaceOfLinearExtrusion.h
-  SurfaceOfRevolution.h
-  SurfacePatch.h
-  SurfaceReplica.h
-  SweptSurface.h
-  ThermodynamicTemperatureContextDependentUnit.h
-  ThermodynamicTemperatureConversionBasedUnit.h
-  ThermodynamicTemperatureSiUnit.h
-  ThermodynamicTemperatureUnit.h
-  TimeContextDependentUnit.h
-  TimeConversionBasedUnit.h
-  TimeSiUnit.h
-  TimeUnit.h
-  TopologicalRepresentationItem.h
-  ToroidalSurface.h
-  Transformation.h
-  TrimmedCurve.h
-  TrimmingSelect.h
-  UncertaintyMeasureWithUnit.h
-  UniformCurve.h
-  UniformSurface.h
-  Unit.h
-  Vector.h
-  Vertex.h
-  VertexLoop.h
-  VertexPoint.h
-  VolumeContextDependentUnit.h
-  VolumeConversionBasedUnit.h
-  VolumeSiUnit.h
-  VolumeUnit.h
-  )
-CMAKEFILES(${stepg_HDRS})
-
-set(gstep_SOURCES
-  ${fedex_srcs}
-  BRLCADWrapper.cpp
-  g-step.cpp
-  )
-
-set(stepg_LIBS
-  libwdb
-  librt
-  libbu
-  libbrep
-  steputils
-  stepeditor
-  stepdai
-  stepcore
-  ${OPENNURBS_LIBRARY}
-  )
-list(APPEND stepg_LIBS ${stepg_LIBS})
-
-#add_definitions(-DAP203e2)
-
-BRLCAD_ADDEXEC(step-g "${stepg_SOURCES}" "${stepg_LIBS}" NO_STRICT)
-BRLCAD_ADDEXEC(g-step "${gstep_SOURCES}" "${stepg_LIBS}" NO_STRICT)
-
-if(MSVC)
-  set(stepg_IMPORTS
-    BU_DLL_IMPORTS
-    RT_DLL_IMPORTS
-    WDB_DLL_IMPORTS
-    SCL_CORE_DLL_IMPORTS
-    SCL_DAI_DLL_IMPORTS
-    SCL_EDITOR_DLL_IMPORTS
-    SCL_UTILS_DLL_IMPORTS
+  # These files are the standard exp2cxx outputs that need to be compiled.
+  set(express_srcs
+    ${SCHEMA_OUT_DIR}/Sdai${SCHEMA_NAME}.cc
+    ${SCHEMA_OUT_DIR}/Sdai${SCHEMA_NAME}.init.cc
+    ${SCHEMA_OUT_DIR}/SdaiAll.cc
+    ${SCHEMA_OUT_DIR}/compstructs.cc
+    ${SCHEMA_OUT_DIR}/schema.cc
     )
-  list(APPEND stepg_IMPORTS ${stepg_IMPORTS})
-  set_target_properties(step-g PROPERTIES COMPILE_DEFINITIONS
-			"${stepg_IMPORTS}")
-endif(MSVC)
+
+  # For the subdirectory add_custom_command definitions, need the generated
+  # headers as well.
+  set(EXPRESS_OUTPUT
+    ${express_srcs}
+    ${SCHEMA_OUT_DIR}/Sdai${SCHEMA_NAME}.h
+    ${SCHEMA_OUT_DIR}/Sdai${SCHEMA_NAME}Helpers.h
+    ${SCHEMA_OUT_DIR}/Sdai${SCHEMA_NAME}Names.h
+    ${SCHEMA_OUT_DIR}/Sdaiclasses.h
+    ${SCHEMA_OUT_DIR}/schema.h
+    )
+
+  # Define a common custom build target that ensures the exp2cxx outputs
+  # are present.
+  set(WATCHED_FILES ${EXPRESS_OUTPUT})
+  string(REPLACE " " "\\ " WATCHED_FILES "${WATCHED_FILES}")
+  set(STAMP_OUT_FILE ${SCHEMA_OUT_DIR}/step_express_${SCHEMA_NAME}.done)
+  configure_file(${BRLCAD_CMAKE_DIR}/md5_compiletest.cmake.in
+    ${SCHEMA_OUT_DIR}/md5_${SCHEMA_NAME}_test.cmake @ONLY)
+  add_custom_command(OUTPUT ${EXPRESS_OUTPUT} ${SCHEMA_OUT_DIR}/step_express_${SCHEMA_NAME}.done
+    COMMAND ${EXP2CXX_EXEC} ARGS ${SCHEMA_FILE} > ${SCHEMA_OUT_DIR}/step_express_${SCHEMA_NAME}.log 2>&1
+    COMMAND ${CMAKE_COMMAND} -P ${SCHEMA_OUT_DIR}/md5_${SCHEMA_NAME}_test.cmake
+    DEPENDS ${SCHEMA_FILE} ${EXP2CXX_EXECUTABLE_TARGET}
+    WORKING_DIRECTORY ${SCHEMA_OUT_DIR}
+    COMMENT "Generating C++ code to express ${SCHEMA_NAME}..."
+    VERBATIM)
+  add_custom_target(step-express-${SCHEMA_NAME}-${TARGET_SUFFIX}
+    DEPENDS ${EXP2CXX_EXECUTABLE_TARGET} ${EXPRESS_OUTPUT} ${SCHEMA_OUT_DIR}/step_express_${SCHEMA_NAME}.done)
+  set_target_properties(step-express-${SCHEMA_NAME}-${TARGET_SUFFIX} PROPERTIES FOLDER "Compilation Utilities")
+
+  set(clean_files
+    ${EXPRESS_OUTPUT}
+    ${SCHEMA_OUT_DIR}/step_express_${SCHEMA_NAME}.done
+    ${SCHEMA_OUT_DIR}/step_express_${SCHEMA_NAME}.log
+    )
+  set_property(DIRECTORY APPEND PROPERTY ADDITIONAL_MAKE_CLEAN_FILES "${clean_files}")
+endmacro(GENERATE_SCHEMA_INPUTS SCHEMA_FILE)
+
+# AP203
+add_subdirectory(step-g)
+add_subdirectory(g-step)
+
+# Support for AP203e2, AP214 and AP242 is under development and not
+# yet functional.  Since the large C++ files generated for these
+# tools take a hideously long time to build on Windows, and are
+# noticeable even on other platforms, wrap them with conditionals
+# until they do something useful.  It may be that work in STEPcode
+# to generate multiple files instead of single huge files will
+# help alleviate the issue - something to check into.
+if(BRLCAD_ENABLE_AP203E2)
+  add_subdirectory(g-ap203e2)
+  add_subdirectory(ap203e2-g)
+endif(BRLCAD_ENABLE_AP203E2)
+if(BRLCAD_ENABLE_AP214)
+  add_subdirectory(ap214-g)
+  add_subdirectory(g-ap214)
+endif(BRLCAD_ENABLE_AP214)
+if(BRLCAD_ENABLE_AP242)
+  add_subdirectory(ap242-g)
+  add_subdirectory(g-ap242)
+endif(BRLCAD_ENABLE_AP242)
+
+# IFC work is experimental
+if(BRLCAD_ENABLE_IFC)
+  add_subdirectory(ifc-g)
+endif(BRLCAD_ENABLE_IFC)
+
+CMAKEFILES(
+  AP_Common.h
+  BRLCADWrapper.h
+  STEPWrapper.h
+  ap_schema.h
+  ap203_elements.txt
+  ap203e2_elements.txt
+  ap214e3_elements.txt
+  ap203e2-g
+  ap214-g
+  ap242-g
+  g-ap203e2
+  g-ap214
+  g-ap242
+  ifc-g
+  )
 
 DISTCLEAN(${SCHEMA_OUT_DIR}/make_schema)
-
-CMAKEFILES(ON_Brep.cpp)
 
 # Local Variables:
 # tab-width: 8

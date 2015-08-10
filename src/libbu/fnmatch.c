@@ -1,7 +1,7 @@
 /*                       F N M A T C H . C
  * BRL-CAD
  *
- * Copyright (c) 1993-2013 United States Government as represented by
+ * Copyright (c) 1993-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -59,8 +59,10 @@
 #include <string.h>
 #include "bio.h"
 
-#include "bu.h"
-
+#include "bu/path.h"
+#include "bu/log.h"
+#include "bu/str.h"
+#include "bu/vls.h"
 
 #define FNMATCH_IGNORECASE  BU_FNMATCH_CASEFOLD
 #define FNMATCH_FILE_NAME   BU_FNMATCH_PATHNAME
@@ -70,6 +72,9 @@
 #define FNMATCH_RANGE_MATCH   1
 #define FNMATCH_RANGE_NOMATCH 0
 #define FNMATCH_RANGE_ERROR   (-1)
+
+#define FNMATCH_NOMATCH 1       /* Match failed. */
+
 
 /* isblank appears to be obsolete in newer ctype.h files so use
  * fnblank instead when looking for the "blank" character class.
@@ -163,7 +168,7 @@ fnxdigit(int c)
 
 
 typedef struct _charclass {
-    char *idstring;		/* identifying string */
+    const char *idstring;	/* identifying string */
     int (*checkfun)(int);	/* testing function */
 } CHARCLASS;
 
@@ -200,18 +205,19 @@ findclass(char *charclass)
 }
 
 
-static int
-charclassmatch(const char *pattern, char test, int *s)
+static size_t
+charclassmatch(const char *pattern, char test, size_t *s)
 {
     char c;
-    int counter = 0;
-    int resultholder = 0;
+    size_t counter = 0;
+    size_t resultholder = 0;
     struct bu_vls classname = BU_VLS_INIT_ZERO;
     CHARCLASS *ctclass;
 
     c = *pattern++;
-    while (c && (c != ':') && (resultholder != -1)) {
-	if (c == FNMATCH_EOS) resultholder = -1;
+    while (c && (c != ':') && (resultholder != (size_t)-1)) {
+	if (c == FNMATCH_EOS)
+	    resultholder = (size_t)-1;
 	counter++;
 
 	c = *pattern++; /* next */
@@ -222,7 +228,7 @@ charclassmatch(const char *pattern, char test, int *s)
     ctclass = findclass(bu_vls_addr(&classname));
     if (ctclass == NULL) {
 	bu_log("Unknown character class type: %s\n", bu_vls_addr(&classname));
-	resultholder = -1;
+	resultholder = (size_t)-1;
     } else {
 	/*bu_log("classname: %s, test char = %c, (class->checkfun)=%d\n", bu_vls_addr(&classname), test, (ctclass->checkfun)(test));*/
 	if ((ctclass->checkfun)(test) != 0) {
@@ -240,7 +246,9 @@ charclassmatch(const char *pattern, char test, int *s)
 static int
 _rangematch(const char *pattern, char test, int flags, char **newp)
 {
-    int negate, ok, s, incpattern;
+    size_t s;
+    int negate, ok;
+    size_t incpattern;
     char c, c2;
     /*
      * A bracket expression starting with an unquoted circumflex
@@ -275,7 +283,8 @@ _rangematch(const char *pattern, char test, int flags, char **newp)
 	if ((flags & BU_FNMATCH_CASEFOLD))
 	    c = (char)tolower((unsigned char)c);
 	if (*pattern == '-'
-	    && (c2 = *(pattern+1)) != FNMATCH_EOS && c2 != ']') {
+	    && (c2 = *(pattern+1)) != FNMATCH_EOS && c2 != ']')
+	{
 	    pattern += 2;
 	    if (c2 == '\\' && !(flags & BU_FNMATCH_NOESCAPE))
 		c2 = *pattern++;
@@ -289,8 +298,10 @@ _rangematch(const char *pattern, char test, int flags, char **newp)
 	    ok = 1;
 	} else if ((c == '[') && (*pattern == ':')) {
 	    incpattern = charclassmatch(pattern+1, test, &s);
-	    if (s == -1) return FNMATCH_RANGE_ERROR;
-	    if (s > 0) ok = 1;
+	    if (s == (size_t)-1)
+		return FNMATCH_RANGE_ERROR;
+	    if (s > 0)
+		ok = 1;
 	    pattern = pattern + incpattern + 3;
 	}
     } while ((c = *pattern++) != ']');
@@ -313,16 +324,16 @@ bu_fnmatch(const char *pattern, const char *string, int flags)
 	    case FNMATCH_EOS:
 		if ((flags & BU_FNMATCH_LEADING_DIR) && *string == '/')
 		    return 0;
-		return *string == FNMATCH_EOS ? 0 : BU_FNMATCH_NOMATCH;
+		return *string == FNMATCH_EOS ? 0 : FNMATCH_NOMATCH;
 	    case '?':
 		if (*string == FNMATCH_EOS)
-		    return BU_FNMATCH_NOMATCH;
+		    return FNMATCH_NOMATCH;
 		if (*string == '/' && (flags & BU_FNMATCH_PATHNAME))
-		    return BU_FNMATCH_NOMATCH;
+		    return FNMATCH_NOMATCH;
 		if (*string == '.' && (flags & BU_FNMATCH_PERIOD) &&
 		    (string == stringstart ||
 		     ((flags & BU_FNMATCH_PATHNAME) && *(string - 1) == '/')))
-		    return BU_FNMATCH_NOMATCH;
+		    return FNMATCH_NOMATCH;
 		++string;
 		break;
 	    case '*':
@@ -334,19 +345,19 @@ bu_fnmatch(const char *pattern, const char *string, int flags)
 		if (*string == '.' && (flags & BU_FNMATCH_PERIOD) &&
 		    (string == stringstart ||
 		     ((flags & BU_FNMATCH_PATHNAME) && *(string - 1) == '/')))
-		    return BU_FNMATCH_NOMATCH;
+		    return FNMATCH_NOMATCH;
 
 		/* Optimize for pattern with * at end or before /. */
 		if (c == FNMATCH_EOS) {
 		    if (flags & BU_FNMATCH_PATHNAME)
 			return ((flags & BU_FNMATCH_LEADING_DIR) ||
 				strchr(string, '/') == NULL ?
-				0 : BU_FNMATCH_NOMATCH);
+				0 : FNMATCH_NOMATCH);
 		    else
 			return 0;
 		} else if (c == '/' && (flags & BU_FNMATCH_PATHNAME)) {
 		    if ((string = strchr(string, '/')) == NULL)
-			return BU_FNMATCH_NOMATCH;
+			return FNMATCH_NOMATCH;
 		    break;
 		}
 
@@ -358,16 +369,16 @@ bu_fnmatch(const char *pattern, const char *string, int flags)
 			break;
 		    ++string;
 		}
-		return BU_FNMATCH_NOMATCH;
+		return FNMATCH_NOMATCH;
 	    case '[':
 		if (*string == FNMATCH_EOS)
-		    return BU_FNMATCH_NOMATCH;
+		    return FNMATCH_NOMATCH;
 		if (*string == '/' && (flags & BU_FNMATCH_PATHNAME))
-		    return BU_FNMATCH_NOMATCH;
+		    return FNMATCH_NOMATCH;
 		if (*string == '.' && (flags & BU_FNMATCH_PERIOD) &&
 		    (string == stringstart ||
 		     ((flags & BU_FNMATCH_PATHNAME) && *(string - 1) == '/')))
-		    return BU_FNMATCH_NOMATCH;
+		    return FNMATCH_NOMATCH;
 
 		switch (_rangematch(pattern, *string, flags, &newp)) {
 		    case FNMATCH_RANGE_ERROR:
@@ -377,7 +388,7 @@ bu_fnmatch(const char *pattern, const char *string, int flags)
 			pattern = newp;
 			break;
 		    case FNMATCH_RANGE_NOMATCH:
-			return BU_FNMATCH_NOMATCH;
+			return FNMATCH_NOMATCH;
 		}
 		++string;
 		break;
@@ -394,7 +405,7 @@ bu_fnmatch(const char *pattern, const char *string, int flags)
 		if (c != *string && !((flags & BU_FNMATCH_CASEFOLD) &&
 				      (tolower((unsigned char)c) ==
 				       tolower((unsigned char)*string))))
-		    return BU_FNMATCH_NOMATCH;
+		    return FNMATCH_NOMATCH;
 		++string;
 		break;
 	}

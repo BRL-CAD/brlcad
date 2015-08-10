@@ -1,7 +1,7 @@
 /*                  W R I T E _ B R L . C P P
  * BRL-CAD
  *
- * Copyright (c) 2008-2013 United States Government as represented by
+ * Copyright (c) 2008-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -28,7 +28,7 @@
  */
 
 #include "nmg.h"
-#include "rtgeom.h"
+#include "rt/geom.h"
 #include "write_brl.h"
 
 
@@ -48,47 +48,47 @@ void addTriangle
 (
     int*    faces,
     size_t& num_faces,
-    int     a,
-    int     b,
-    int     c
+    size_t a,
+    size_t b,
+    size_t c
 ) {
     // is it a triangle?
     if ((a == b) || (b == c) || (c == a))
 	return;
 
     // search for duplicate triangle
-    for(size_t i = 0; i < num_faces; ++i) {
-	if (faces[i * 3] == a) {
-	    if (faces[i * 3 + 1] == b) {
-		if (faces[i * 3 + 2] == c)
+    for (size_t i = 0; i < num_faces; ++i) {
+	if (faces[i * 3] == (int)a) {
+	    if (faces[i * 3 + 1] == (int)b) {
+		if (faces[i * 3 + 2] == (int)c)
 		    return;
-	    } else if (faces[i * 3 + 1] == c) {
-		if (faces[i * 3 + 2] == b)
-		    return;
-	    }
-	} else if (faces[i * 3] == b) {
-	    if (faces[i * 3 + 1] == a) {
-		if (faces[i * 3 + 2] == c)
-		    return;
-	    } else if (faces[i * 3 + 1] == c) {
-		if (faces[i * 3 + 2] == a)
+	    } else if (faces[i * 3 + 1] == (int)c) {
+		if (faces[i * 3 + 2] == (int)b)
 		    return;
 	    }
-	} else if (faces[i * 3] == c) {
-	    if (faces[i * 3 + 1] == b) {
-		if (faces[i * 3 + 2] == a)
+	} else if (faces[i * 3] == (int)b) {
+	    if (faces[i * 3 + 1] == (int)a) {
+		if (faces[i * 3 + 2] == (int)c)
 		    return;
-	    } else if (faces[i * 3 + 1] == a) {
-		if (faces[i * 3 + 2] == b)
+	    } else if (faces[i * 3 + 1] == (int)c) {
+		if (faces[i * 3 + 2] == (int)a)
+		    return;
+	    }
+	} else if (faces[i * 3] == (int)c) {
+	    if (faces[i * 3 + 1] == (int)b) {
+		if (faces[i * 3 + 2] == (int)a)
+		    return;
+	    } else if (faces[i * 3 + 1] == (int)a) {
+		if (faces[i * 3 + 2] == (int)b)
 		    return;
 	    }
 	}
     }
 
     // add a new triangle
-    faces[num_faces * 3]     = a;
-    faces[num_faces * 3 + 1] = b;
-    faces[num_faces * 3 + 2] = c;
+    faces[num_faces * 3 + 0] = (int)a;
+    faces[num_faces * 3 + 1] = (int)b;
+    faces[num_faces * 3 + 2] = (int)c;
 
     ++num_faces;
 }
@@ -205,13 +205,13 @@ void writeSolidBot
     fastf_t vertices[MAX_NPTS * 3];
 
     if (translate) {
-	for(size_t i = 0; i < form.data.bot.num_vertices; ++i) {
+	for (size_t i = 0; i < form.data.bot.num_vertices; ++i) {
 	    vertices[i * 3]     = (form.data.bot.vertices[i * 3] + form.tr_vec[0]) * IntavalUnitInMm;
 	    vertices[i * 3 + 1] = (form.data.bot.vertices[i * 3 + 1] + form.tr_vec[1]) * IntavalUnitInMm;
 	    vertices[i * 3 + 2] = (form.data.bot.vertices[i * 3 + 2] + form.tr_vec[2]) * IntavalUnitInMm;
 	}
     } else {
-	for(size_t i = 0; i < form.data.bot.num_vertices; ++i) {
+	for (size_t i = 0; i < form.data.bot.num_vertices; ++i) {
 	    vertices[i * 3]     = form.data.bot.vertices[i * 3] * IntavalUnitInMm;
 	    vertices[i * 3 + 1] = form.data.bot.vertices[i * 3 + 1] * IntavalUnitInMm;
 	    vertices[i * 3 + 2] = form.data.bot.vertices[i * 3 + 2] * IntavalUnitInMm;
@@ -252,10 +252,10 @@ void writeRingModeBox
     vect_t outer[MAX_NPTS];
 
     if (translate) {
-	for(size_t i = 0; i < form.npts; ++i)
+	for (size_t i = 0; i < form.npts; ++i)
 	  VADD2(outer[i], form.data.pt[i], form.tr_vec);
     } else {
-      for(size_t i = 0; i < form.npts; ++i) {
+      for (size_t i = 0; i < form.npts; ++i) {
 	  VMOVE(outer[i], form.data.pt[i]);
       }
     }
@@ -267,7 +267,7 @@ void writeRingModeBox
     // compute inner points
     vect_t inner[MAX_NPTS];
 
-    for(size_t i2 = 0; i2 < form.npts; ++i2) {
+    for (size_t i2 = 0; i2 < form.npts; ++i2) {
 	vect_t a, b, c;
 
 	VMOVE(a, outer[i2]);
@@ -337,16 +337,16 @@ void writeRingModeBox
     // bot parameters
     // vertices
     size_t num_vertices = 0;
-    int outer_i[MAX_NPTS];
-    int inner_i[MAX_NPTS];
+    size_t outer_i[MAX_NPTS];
+    size_t inner_i[MAX_NPTS];
     fastf_t vertices[MAX_NPTS * 3];
 
-    for(size_t i3 = 0; i3 < form.npts; ++i3) {
+    for (size_t i3 = 0; i3 < form.npts; ++i3) {
 	size_t i = 0;
 
 	// outer
 	// search for duplicate vertex
-	for(; i < num_vertices; ++i) {
+	for (; i < num_vertices; ++i) {
 	  if (NEAR_EQUAL(outer[i3][0], vertices[3 * i], VUNITIZE_TOL) &&
 	      NEAR_EQUAL(outer[i3][1], vertices[3 * i + 1], VUNITIZE_TOL) &&
 	      NEAR_EQUAL(outer[i3][2], vertices[3 * i + 2], VUNITIZE_TOL)) {
@@ -367,7 +367,7 @@ void writeRingModeBox
 
 	// inner
 	// search for duplicate vertex
-	for(i = 0; i < num_vertices; ++i) {
+	for (i = 0; i < num_vertices; ++i) {
 	    if (NEAR_EQUAL(inner[i3][0], vertices[3 * i], VUNITIZE_TOL) &&
 		NEAR_EQUAL(inner[i3][1], vertices[3 * i + 1], VUNITIZE_TOL) &&
 		NEAR_EQUAL(inner[i3][2], vertices[3 * i + 2], VUNITIZE_TOL)) {
@@ -391,7 +391,7 @@ void writeRingModeBox
     size_t num_faces = 0;
     int faces[MAX_TRIANGLES * 3];
 
-    for(size_t i4 = 0; i4 < form.npts; ++i4) {
+    for (size_t i4 = 0; i4 < form.npts; ++i4) {
 	size_t nextIndex = (i4 + 1) % form.npts;
 
 	addTriangle(faces, num_faces, outer_i[i4], outer_i[nextIndex], inner_i[i4]);
@@ -400,7 +400,7 @@ void writeRingModeBox
 
     fastf_t thickness[MAX_TRIANGLES];
 
-    for(size_t i5 = 0; i5 < num_faces; ++i5)
+    for (size_t i5 = 0; i5 < num_faces; ++i5)
 	thickness[i5] = form.thickness * IntavalUnitInMm;
 
     bu_bitv* faceMode = bu_bitv_new(num_faces);
@@ -439,13 +439,13 @@ void writePlateBot
     fastf_t vertices[MAX_NPTS * 3];
 
     if (translate) {
-	for(size_t i = 0; i < form.data.bot.num_vertices; ++i) {
+	for (size_t i = 0; i < form.data.bot.num_vertices; ++i) {
 	    vertices[i * 3]     = (form.data.bot.vertices[i * 3] + form.tr_vec[0]) * IntavalUnitInMm;
 	    vertices[i * 3 + 1] = (form.data.bot.vertices[i * 3 + 1] + form.tr_vec[1]) * IntavalUnitInMm;
 	    vertices[i * 3 + 2] = (form.data.bot.vertices[i * 3 + 2] + form.tr_vec[2]) * IntavalUnitInMm;
 	}
     } else {
-	for(size_t i = 0; i<form.data.bot.num_vertices; ++i) {
+	for (size_t i = 0; i<form.data.bot.num_vertices; ++i) {
 	    vertices[i * 3]     = form.data.bot.vertices[i * 3] * IntavalUnitInMm;
 	    vertices[i * 3 + 1] = form.data.bot.vertices[i * 3 + 1] * IntavalUnitInMm;
 	    vertices[i * 3 + 2] = form.data.bot.vertices[i * 3 + 2] * IntavalUnitInMm;
@@ -454,7 +454,7 @@ void writePlateBot
 
     fastf_t thickness[MAX_TRIANGLES];
 
-    for(size_t i = 0; i < form.data.bot.num_faces; ++i)
+    for (size_t i = 0; i < form.data.bot.num_faces; ++i)
 	thickness[i] = form.thickness * IntavalUnitInMm;
 
     bu_bitv* faceMode = bu_bitv_new(form.data.bot.num_faces);
@@ -585,3 +585,12 @@ void writeArb8
     if (form.s_compnr >= 1000)
 	excludeFromRegion(form.s_compnr, name);
 }
+
+// Local Variables:
+// tab-width: 8
+// mode: C++
+// c-basic-offset: 4
+// indent-tabs-mode: t
+// c-file-style: "stroustrup"
+// End:
+// ex: shiftwidth=4 tabstop=8

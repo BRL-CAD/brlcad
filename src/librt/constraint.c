@@ -1,7 +1,7 @@
 /*                      C O N S T R A I N T . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2013 United States Government as represented by
+ * Copyright (c) 2008-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -32,9 +32,9 @@
 
 #include <stdio.h>
 
-#include "bu.h"
+
 #include "bn.h"
-#include "db.h"
+#include "rt/db4.h"
 #include "pc.h"
 #include "raytrace.h"
 
@@ -48,8 +48,6 @@ static const struct bu_structparse rt_constraint_parse[] = {
 
 
 /**
- * R T _ C O N S T R A I N T _ I F R E E
- *
  * Free the storage associated with the rt_db_internal version of
  * constraint object.
  */
@@ -64,16 +62,12 @@ rt_constraint_ifree(struct rt_db_internal *ip)
     if (constraint) {
 	constraint->magic = 0;			/* sanity */
 	bu_vls_free(&constraint->expression);
-	bu_free((genptr_t)constraint, "constraint ifree");
+	bu_free((void *)constraint, "constraint ifree");
     }
-    ip->idb_ptr = GENPTR_NULL;	/* sanity */
+    ip->idb_ptr = ((void *)0);	/* sanity */
 }
 
 
-/**
- * R T _ C O N S T R A I N T _ E X P O R T 5
- *
- */
 int
 rt_constraint_export5(
     struct bu_external *ep,
@@ -106,10 +100,6 @@ rt_constraint_export5(
 }
 
 
-/**
- * R T _ C O N S T R A I N T _ I M P O R T 5
- *
- */
 int
 rt_constraint_import5(struct rt_db_internal *ip, const struct bu_external *ep, const mat_t UNUSED(mat), const struct db_i *dbip, struct resource *resp)
 {

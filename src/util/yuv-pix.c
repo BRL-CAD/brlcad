@@ -1,7 +1,7 @@
 /*                       Y U V - P I X . C
  * BRL-CAD
  *
- * Copyright (c) 1995-2013 United States Government as represented by
+ * Copyright (c) 1995-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -37,10 +37,12 @@
 #ifdef HAVE_SYS_TYPES_H
 #  include <sys/types.h>
 #endif
-#include "bio.h"
 
-#include "bu.h"
 #include "vmath.h"
+#include "bu/getopt.h"
+#include "bu/malloc.h"
+#include "bu/file.h"
+#include "bu/log.h"
 #include "bn.h"
 #include "fb.h"
 
@@ -57,24 +59,21 @@ static long int file_height = 485L;	/* default input height */
 void ab_rgb_to_yuv(unsigned char *yuv_buf, unsigned char *rgb_buf, long int len);
 void ab_yuv_to_rgb(unsigned char *rgb_buf, unsigned char *yuv_buf, long int len);
 
-static char usage[] = "\
-Usage: yuv-pix [-h] [-a]\n\
-	[-s squaresize] [-w file_width] [-n file_height] [file.yuv] > file.pix\n";
+static const char usage[] =
+  "Usage: yuv-pix [-a] [-s squaresize] [-w file_width] [-n file_height] [file.yuv] > file.pix\n"
+  ;
+
+static const char optstring[] = "as:w:n:h?";
 
 int
 get_args(int argc, char **argv)
 {
     int c;
 
-    while ((c = bu_getopt(argc, argv, "ahs:w:n:")) != -1) {
+    while ((c = bu_getopt(argc, argv, optstring)) != -1) {
 	switch (c) {
 	    case 'a':
 		autosize = 1;
-		break;
-	    case 'h':
-		/* high-res */
-		file_height = file_width = 1024L;
-		autosize = 0;
 		break;
 	    case 's':
 		/* square file size */
@@ -90,7 +89,7 @@ get_args(int argc, char **argv)
 		autosize = 0;
 		break;
 
-	    default:		/* '?' */
+	    default:		/* '?' 'h' */
 		return 0;
 	}
     }
@@ -124,9 +123,6 @@ get_args(int argc, char **argv)
 }
 
 
-/*
- * M A I N
- */
 int
 main(int argc, char **argv)
 {
@@ -136,7 +132,7 @@ main(int argc, char **argv)
 
     if (!get_args(argc, argv)) {
 	(void)fputs(usage, stderr);
-	bu_exit (1, NULL);
+	bu_exit(1, NULL);
     }
 
     /* autosize input? */
@@ -151,8 +147,8 @@ main(int argc, char **argv)
     }
 
     /* Allocate full size buffers for input and output */
-    inbuf = bu_malloc(2*file_width*file_height+8, "inbuf");
-    outbuf = bu_malloc(3*file_width*file_height+8, "outbuf");
+    inbuf = (unsigned char *)bu_malloc(2*file_width*file_height+8, "inbuf");
+    outbuf = (unsigned char *)bu_malloc(3*file_width*file_height+8, "outbuf");
 
     if (bu_mread(infd, inbuf, 2*file_width*file_height) < 2*file_width*file_height) {
 	perror("READ ERROR");
@@ -170,7 +166,7 @@ main(int argc, char **argv)
     if (write(1, (void *)outbuf, 3*file_width*file_height) < 3*file_width*file_height) {
 	perror("stdout");
 	fprintf(stderr, "yuv-pix: output write error, aborting\n");
-	bu_exit (2, NULL);
+	bu_exit(2, NULL);
     }
 
     bu_free(inbuf, "inbuf");
@@ -226,7 +222,7 @@ ab_rgb_to_yuv(unsigned char *yuv_buf, unsigned char *rgb_buf, long int len)
     unsigned char *cp;
     double *yp, *up, *vp;
     long int i;
-    static int first=1;
+    static int first = 1;
 
     if (first) {
 	/* SETUP */

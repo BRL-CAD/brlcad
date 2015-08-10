@@ -1,7 +1,7 @@
 /*                       S E C P A S S . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2013 United States Government as represented by
+ * Copyright (c) 1990-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -184,10 +184,7 @@ int main(int argc, char **argv)
 	ret = scanf("%d", &typeout);
 	if (ret == 0)
 	    perror("scanf");
-	if (typeout < 0)
-	    typeout = 0;
-	if (typeout > 1)
-	    typeout = 1;
+	CLAMP(typeout, 0, 1);
 
 	/* Read name of file to write conductivity information */
 	/* to for use in PRISM.  */

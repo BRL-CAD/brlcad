@@ -1,7 +1,7 @@
 /*                      U T I L I T Y 1 . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2013 United States Government as represented by
+ * Copyright (c) 1990-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -31,14 +31,12 @@
 #include <math.h>
 #include <time.h>
 #include <string.h>
-#include "bio.h"
 
-#include "bu.h"
 #include "vmath.h"
 #include "bn.h"
 #include "nmg.h"
 #include "raytrace.h"
-#include "db.h"
+#include "rt/db4.h"
 
 #include "./mged.h"
 #include "./sedit.h"
@@ -76,8 +74,6 @@ char ctemp[7];
 
 /*
  *
- * E D I T I T
- *
  * No-frills edit - opens an editor on the supplied
  * file name.
  *
@@ -108,8 +104,6 @@ editit(const char *command, const char *tempfile) {
 
 /*
  *
- * F _ E D C O L O R ()
- *
  * control routine for editing color
  */
 int
@@ -136,7 +130,7 @@ f_edcolor(ClientData UNUSED(clientData), Tcl_Interp *UNUSED(interpreter), int ar
     ged_edcolor(gedp, argc, (const char **)av);
 
     bu_vls_free(&editstring);
-    bu_free((genptr_t)av, "f_edcolor: av");
+    bu_free((void *)av, "f_edcolor: av");
     return TCL_OK;
 }
 
@@ -173,14 +167,12 @@ f_edcodes(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, cons
     ged_edcodes(gedp, argc, (const char **)av);
 
     bu_vls_free(&editstring);
-    bu_free((genptr_t)av, "f_edcodes: av");
+    bu_free((void *)av, "f_edcodes: av");
     return TCL_OK;
 }
 
 
 /*
- *
- * F _ E D M A T E R ()
  *
  * control routine for editing mater information
  */
@@ -213,14 +205,12 @@ f_edmater(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, cons
     ged_edmater(gedp, argc + 1, (const char **)av);
 
     bu_vls_free(&editstring);
-    bu_free((genptr_t)av, "f_edmater: av");
+    bu_free((void *)av, "f_edmater: av");
     return TCL_OK;
 }
 
 
 /*
- *
- * F _ R E D ()
  *
  * Get editing string and call ged_red
  */
@@ -253,13 +243,13 @@ f_red(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, const ch
     }
 
     bu_vls_free(&editstring);
-    bu_free((genptr_t)av, "f_red: av");
+    bu_free((void *)av, "f_red: av");
     return TCL_OK;
 }
 
 
 /* cyclic, for db_tree_funcleaf in printcodes() */
-HIDDEN void Do_printnode(struct db_i *dbip2, struct rt_comb_internal *comb, union tree *comb_leaf, genptr_t user_ptr1, genptr_t user_ptr2, genptr_t user_ptr3, genptr_t UNUSED(user_ptr4));
+HIDDEN void Do_printnode(struct db_i *dbip2, struct rt_comb_internal *comb, union tree *comb_leaf, void *user_ptr1, void *user_ptr2, void *user_ptr3, void *UNUSED(user_ptr4));
 
 
 HIDDEN int
@@ -308,7 +298,7 @@ printcodes(FILE *fp, struct directory *dp, int pathpos)
     if (comb->tree) {
 	path[pathpos] = dp;
 	db_tree_funcleaf(dbip, comb, comb->tree, Do_printnode,
-			 (genptr_t)fp, (genptr_t)&pathpos, (genptr_t)NULL, (genptr_t)NULL);
+			 (void *)fp, (void *)&pathpos, (void *)NULL, (void *)NULL);
     }
 
     intern.idb_meth->ft_ifree(&intern);
@@ -317,7 +307,7 @@ printcodes(FILE *fp, struct directory *dp, int pathpos)
 
 
 HIDDEN void
-Do_printnode(struct db_i *dbip2, struct rt_comb_internal *UNUSED(comb), union tree *comb_leaf, genptr_t user_ptr1, genptr_t user_ptr2, genptr_t UNUSED(user_ptr3), genptr_t UNUSED(user_ptr4))
+Do_printnode(struct db_i *dbip2, struct rt_comb_internal *UNUSED(comb), union tree *comb_leaf, void *user_ptr1, void *user_ptr2, void *UNUSED(user_ptr3), void *UNUSED(user_ptr4))
 {
     FILE *fp;
     int *pathpos;

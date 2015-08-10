@@ -26,7 +26,7 @@
 and converts it to
 <citerefentry><refentrytitle>plot3</refentrytitle><manvolnum>5</manvolnum></citerefentry>
 format.
-<emphasis remap='I'>Asc-plot3</emphasis>
+<command>asc-plot3</command>
 reads from standard input and writes to standard output
 if file names are not supplied.</para>
 
@@ -56,7 +56,7 @@ Optional white space and lines beginning with the comment character
 </refsect1>
 
 <refsect1 xml:id='copyright'><title>COPYRIGHT</title>
-<para>This software is Copyright (c) 1991-2013 by the United States
+<para>This software is Copyright (c) 1991-2014 by the United States
 Government as represented by U.S. Army Research Laboratory.</para>
 </refsect1>
 

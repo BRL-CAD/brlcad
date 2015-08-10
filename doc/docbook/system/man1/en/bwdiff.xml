@@ -26,11 +26,11 @@
 
 
 <refsect1 xml:id='description'><title>DESCRIPTION</title>
-<para><emphasis remap='I'>Bwdiff</emphasis>
+<para><command>bwdiff</command>
 compares two black and white
 <citerefentry><refentrytitle>bw</refentrytitle><manvolnum>5</manvolnum></citerefentry>
 format files in one of several ways,
-and writes the results on standard out
+and writes the results on standard out.
 The default method of comparison is to record the differences
 as offsets from neutral, half-intensity grey (128).
 The value written will be brighter than this neutral grey
@@ -72,16 +72,16 @@ This mode is useful for producing masks
 showing pixels which satisfy the given condition.
 The default background is black, unless the
 <option>-b</option>
-option is specified, is which case the background is file1, with a
+option is specified, is which case the background is
+<emphasis remap='I'>file1</emphasis>, with a
 lowered intensity.</para>
 
-<para><emphasis remap='I'>Bwdiff</emphasis>
+<para><command>bwdiff</command>
 accepts
 ``<option>-</option>''
 as a synonym for stdin, and
 ``<literal>.</literal>''
-as a synonym for
-/<emphasis remap='I'>dev</emphasis>/<emphasis remap='I'>null</emphasis>.</para>
+as a synonym for /dev/null .</para>
 
 <para>Note that this program also produces useful results on
 color
@@ -93,13 +93,13 @@ files.</para>
 <para>Suppose you ran
 <citerefentry><refentrytitle>pixstat</refentrytitle><manvolnum>1</manvolnum></citerefentry>
 on a file and found the modes to be red=107, green=93, blue=70.
-You could display those pixels whose colors are at these values by:
-<!-- .br -->
-<emphasis remap='I'>gencolor 107 93 70 | bwdiff -e file.pix - | pix-fb</emphasis></para>
+You could display those pixels whose colors are at these values by:</para>
+<para>
+gencolor 107 93 70 | bwdiff -e <emphasis remap='I'>file.pix</emphasis> - | pix-fb</para>
 </refsect1>
 
 <refsect1 xml:id='see_also'><title>SEE ALSO</title>
-<para><citerefentry><refentrytitle>brlcad</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>pixdiff</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>bwstat</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>bw</refentrytitle><manvolnum>5</manvolnum></citerefentry>, <citerefentry><refentrytitle>pix</refentrytitle><manvolnum>5</manvolnum></citerefentry>.</para>
+<para><citerefentry><refentrytitle>brlcad</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>pixdiff</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>bwstat</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>bw</refentrytitle><manvolnum>5</manvolnum></citerefentry>, <citerefentry><refentrytitle>pix</refentrytitle><manvolnum>5</manvolnum></citerefentry></para>
 
 </refsect1>
 
@@ -109,7 +109,7 @@ You could display those pixels whose colors are at these values by:
 </refsect1>
 
 <refsect1 xml:id='copyright'><title>COPYRIGHT</title>
-<para>This software is Copyright (c) 1989-2013 by the United States
+<para>This software is Copyright (c) 1989-2014 by the United States
 Government as represented by U.S. Army Research Laboratory.</para>
 </refsect1>
 

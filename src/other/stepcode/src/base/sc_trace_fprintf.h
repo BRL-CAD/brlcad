@@ -4,7 +4,7 @@
 /** \file sc_trace_fprintf.h
  * Used to track the source file and line where generated code is printed from
  * When enabled, comments are printed into the generated files for every 'fprintf':
- * / * source: scl/src/fedex_plus/selects.c:1375 * /
+ * / * source: scl/src/exp2cxx/selects.c:1375 * /
  * To enable, configure with 'cmake .. -DSC_TRACE_FPRINTF=ON'
  *
  * This header must be included *after* all other headers, otherwise the compiler will
@@ -14,7 +14,7 @@
 
 #include "sc_export.h"
 
-/** used to find where generated c++ originates from in fedex_plus
+/** used to find where generated c++ originates from in exp2cxx
  * To enable, configure with 'cmake .. -DSC_TRACE_FPRINTF=ON'
  */
 #ifdef __cplusplus

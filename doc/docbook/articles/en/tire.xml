@@ -1,6 +1,4 @@
-<!-- Converted by db4-upgrade version 1.0 -->
-
-<article xmlns="http://docbook.org/ns/docbook" version="5.0">
+<article xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink"  version="5.0">
   <info><title>Vehicle Tire and Wheel Creation in BRL-CAD</title>
 
     <author><personname><firstname>Clifford</firstname><surname>Yapp</surname></personname></author>
@@ -10,11 +8,11 @@
   <section><info><title>Overview</title></info>
 
     <para>
-      Traditionally, BRL-CAD tire models have been created using a single cylinder, a torus intersected
-      with a cylinder, or in some cases additional combinations of these primitives.  While these approximations
-      are often sufficient for analytical purposes the resulting model is typically a poor visual match
-      to the real tire when raytracing.  Creating more complex models to better approximate the tire's shape
-      almost always requires more resources than can be justified.
+      Traditionally, <link xlink:href="http://brlcad.org">BRL-CAD</link> tire models have been created using a
+      single cylinder, a torus intersected with a cylinder, or in some cases additional combinations of these
+      primitives.  While these approximations are often sufficient for analytical purposes the resulting model
+      is typically a poor visual match to the real tire when raytracing.  Creating more complex models to better
+      approximate the tire's shape almost always requires more resources than can be justified.
     </para>
 
     <para>
@@ -26,7 +24,7 @@
     </para>
 
     <para>
-      By default, a basic steel wheel (a.k.a "rim") is included in the model.  If this wheel
+      By default, a basic steel wheel (a.k.a. "rim") is included in the model.  If this wheel
       does not work for a given modeling purpose, it is quite simple to remove it and substitute
       in a user-defined wheel so long as the dimensions of the user supplied wheel match
       the standard wheel at the key points (radius and width).
@@ -53,7 +51,10 @@
 
     <informalfigure>
       <mediaobject>
-	<imageobject>
+	<imageobject role="html">
+	  <imagedata align="center" fileref="../../articles/en/images/tire_fig01.png" format="PNG"/>
+	</imageobject>
+	<imageobject role="fo">
 	  <imagedata align="center" fileref="../../articles/en/images/tire_fig01.png" format="PNG"/>
 	</imageobject>
 	<caption>
@@ -172,7 +173,10 @@
 
       <informalfigure>
 	<mediaobject>
-	  <imageobject>
+	  <imageobject role="html">
+	    <imagedata align="center" fileref="../../articles/en/images/tire_fig02.png" format="PNG"/>
+	  </imageobject>
+	  <imageobject role="fo">
 	    <imagedata align="center" fileref="../../articles/en/images/tire_fig02.png" format="PNG"/>
 	  </imageobject>
 	  <caption>
@@ -197,7 +201,10 @@
 
       <informalfigure>
 	<mediaobject>
-	  <imageobject>
+	  <imageobject role="html">
+	    <imagedata align="center" fileref="../../articles/en/images/tire_fig03.png" format="PNG"/>
+	  </imageobject>
+	  <imageobject role="fo">
 	    <imagedata align="center" fileref="../../articles/en/images/tire_fig03.png" format="PNG"/>
 	  </imageobject>
 	  <caption>
@@ -276,7 +283,10 @@
     <para>
       <informalfigure>
 	<mediaobject>
-	  <imageobject>
+	  <imageobject role="html">
+	    <imagedata align="center" fileref="../../articles/en/images/tire_fig04.png" format="PNG"/>
+	  </imageobject>
+	  <imageobject role="fo">
 	    <imagedata align="center" fileref="../../articles/en/images/tire_fig04.png" format="PNG"/>
 	  </imageobject>
 	  <caption>
@@ -296,7 +306,10 @@
     <para>
       <informalfigure>
 	<mediaobject>
-	  <imageobject>
+	  <imageobject role="html">
+	    <imagedata align="center" fileref="../../articles/en/images/tire_fig05.png" format="PNG"/>
+	  </imageobject>
+	  <imageobject role="fo">
 	    <imagedata align="center" fileref="../../articles/en/images/tire_fig05.png" format="PNG"/>
 	  </imageobject>
 	  <caption>
@@ -320,7 +333,10 @@
     <para>
       <informalfigure>
 	<mediaobject>
-	  <imageobject>
+	  <imageobject role="html">
+	    <imagedata align="center" fileref="../../articles/en/images/tire_fig06.png" format="PNG"/>
+	  </imageobject>
+	  <imageobject role="fo">
 	    <imagedata align="center" fileref="../../articles/en/images/tire_fig06.png" format="PNG"/>
 	  </imageobject>
 	  <caption>
@@ -347,7 +363,10 @@
     <para>
       <informalfigure>
 	<mediaobject>
-	  <imageobject>
+	  <imageobject role="html">
+	    <imagedata align="center" fileref="../../articles/en/images/tire_fig07.png" format="PNG"/>
+	  </imageobject>
+	  <imageobject role="fo">
 	    <imagedata align="center" fileref="../../articles/en/images/tire_fig07.png" format="PNG"/>
 	  </imageobject>
 	  <caption>
@@ -372,7 +391,10 @@
     <para>
       <informalfigure>
 	<mediaobject>
-	  <imageobject>
+	  <imageobject role="html">
+	    <imagedata align="center" fileref="../../articles/en/images/tire_fig08.png" format="PNG"/>
+	  </imageobject>
+	  <imageobject role="fo">
 	    <imagedata align="center" fileref="../../articles/en/images/tire_fig08.png" format="PNG"/>
 	  </imageobject>
 	  <caption>
@@ -428,7 +450,10 @@
     <para>
       <informalfigure>
 	<mediaobject>
-	  <imageobject>
+	  <imageobject role="html">
+	    <imagedata align="center" fileref="../../articles/en/images/tire_fig09.png" format="PNG"/>
+	  </imageobject>
+	  <imageobject role="fo">
 	    <imagedata align="center" fileref="../../articles/en/images/tire_fig09.png" format="PNG"/>
 	  </imageobject>
 	  <caption>
@@ -449,7 +474,10 @@
 
       <informalfigure>
 	<mediaobject>
-	  <imageobject>
+	  <imageobject role="html">
+	    <imagedata align="center" fileref="../../articles/en/images/tire_fig10.png" format="PNG"/>
+	  </imageobject>
+	  <imageobject role="fo">
 	    <imagedata align="center" fileref="../../articles/en/images/tire_fig10.png" format="PNG"/>
 	  </imageobject>
 	  <caption>
@@ -475,7 +503,10 @@
 
       <informalfigure>
 	<mediaobject>
-	  <imageobject>
+	  <imageobject role="html">
+	    <imagedata align="center" fileref="../../articles/en/images/tire_fig11.png" format="PNG"/>
+	  </imageobject>
+	  <imageobject role="fo">
 	    <imagedata align="center" fileref="../../articles/en/images/tire_fig11.png" format="PNG"/>
 	  </imageobject>
 	  <caption>
@@ -503,7 +534,10 @@
 
       <informalfigure>
 	<mediaobject>
-	  <imageobject>
+	  <imageobject role="html">
+	    <imagedata align="center" fileref="../../articles/en/images/tire_fig12.png" format="PNG"/>
+	  </imageobject>
+	  <imageobject role="fo">
 	    <imagedata align="center" fileref="../../articles/en/images/tire_fig12.png" format="PNG"/>
 	  </imageobject>
 	  <caption>
@@ -528,7 +562,10 @@
 
       <informalfigure>
 	<mediaobject>
-	  <imageobject>
+	  <imageobject role="html">
+	    <imagedata align="center" fileref="../../articles/en/images/tire_fig13.png" format="PNG"/>
+	  </imageobject>
+	  <imageobject role="fo">
 	    <imagedata align="center" fileref="../../articles/en/images/tire_fig13.png" format="PNG"/>
 	  </imageobject>
 	  <caption>
@@ -585,7 +622,10 @@
 
       <informalfigure>
 	<mediaobject>
-	  <imageobject>
+	  <imageobject role="html">
+	    <imagedata align="center" fileref="../../articles/en/images/tire_fig14.png" format="PNG"/>
+	  </imageobject>
+	  <imageobject role="fo">
 	    <imagedata align="center" fileref="../../articles/en/images/tire_fig14.png" format="PNG"/>
 	  </imageobject>
 	  <caption>

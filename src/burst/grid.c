@@ -1,7 +1,7 @@
 /*                          G R I D . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2013 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -30,26 +30,17 @@
 #include <fcntl.h>
 #include <math.h>
 
-#include "bu.h"
 #include "vmath.h"
 #include "bn.h"
 #include "raytrace.h"
 #include "fb.h"
-#include "plot3.h"
+#include "bn/plot3.h"
 
 #include "./ascii.h"
 #include "./extern.h"
 
 #define DEBUG_GRID	0
 #define DEBUG_SHOT	1
-#ifndef	EPSILON
-#  define EPSILON	0.000001
-#endif
-#define FABS(a)		((a) > 0 ? (a) : -(a))
-#define AproxEq(a, b, e)	(FABS((a)-(b)) < (e))
-#define AproxEqVec(A, B, e) (AproxEq((A)[X], (B)[X], (e)) && \
-			     AproxEq((A)[Y], (B)[Y], (e)) &&	\
-			     AproxEq((A)[Z], (B)[Z], (e)))
 
 /* local communication with multitasking process */
 static int currshot;	/* current shot index */
@@ -66,21 +57,21 @@ static struct application ag;	/* global application structure (zeroed out) */
 
 /* functions local to this module */
 static int doBursts();
-static int burstPoint();
+static int burstPoint(struct application *, fastf_t *, fastf_t *);
 static int burstRay();
 static int gridShot();
-static int f_BurstHit();
-static int f_BurstMiss();
-static int f_HushOverlap();
-static int f_Overlap();
-static int f_ShotHit();
-static int f_ShotMiss();
-static int getRayOrigin();
-static int readBurst();
-static int readShot();
-static void lgtModel();
+static int f_BurstHit(struct application *x, struct partition *, struct seg *);
+static int f_BurstMiss(struct application *ap);
+static int f_HushOverlap(struct application *ap, struct partition *, struct region *, struct region *, struct partition *);
+static int f_Overlap(struct application *, struct partition *, struct region *, struct region *, struct partition *);
+static int f_ShotHit(struct application *, struct partition *, struct seg *);
+static int f_ShotMiss(struct application *);
+static int getRayOrigin(struct application *);
+static int readBurst(fastf_t *);
+static int readShot(fastf_t *);
+static void lgtModel(struct application *, struct partition *, struct hit *, struct xray *, fastf_t surfnorm[3]);
 static void view_end();
-static void view_pix();
+static void view_pix(struct application *);
 
 /*
   void colorPartition(struct region *regp, int type)
@@ -423,7 +414,6 @@ f_ShotHit(struct application *ap, struct partition *pt_headp, struct seg *UNUSED
        and imagined (implicit).
     */
     for (pp = pt_headp->pt_forw; pp != pt_headp; pp = pp->pt_forw) {
-	fastf_t	los = 0.0;
 	int	voidflag = 0;
 	struct partition *np = pp->pt_forw;
 	struct partition *cp;
@@ -445,6 +435,8 @@ f_ShotHit(struct application *ap, struct partition *pt_headp, struct seg *UNUSED
 
 	/* Check for voids. */
 	if (np != pt_headp) {
+	    fastf_t los = 0.0;
+
 #if DEBUG_GRID
 	    brst_log("\tprocessing region '%s', \tid=%d\taircode=%d\n",
 		     pp->pt_regionp->reg_name,
@@ -568,7 +560,7 @@ f_ShotHit(struct application *ap, struct partition *pt_headp, struct seg *UNUSED
 		    if (bp == PT_NULL && ! reqburstair
 			&&	findIdents(regp->reg_regionid,
 					   &armorids)) {
-			/* Bursting on armor/void (ouchh). */
+			/* Bursting on armor/void (ouch). */
 			bp = pp;
 			VMOVE(burstnorm, exitnorm);
 		    }
@@ -726,7 +718,7 @@ chkEntryNorm(struct partition *pp, struct xray *rayp, fastf_t normvec[3], char *
     totalct++;
     /* Dot product of ray direction with normal *should* be negative. */
     f = VDOT(rayp->r_dir, normvec);
-    if (NEAR_ZERO(f, EPSILON)) {
+    if (ZERO(f)) {
 #ifdef DEBUG
 	brst_log("chkEntryNorm: near 90 degree obliquity.\n");
 	brst_log("\tPnt %g, %g, %g\n\tDir %g, %g, %g\n\tNorm %g, %g, %g.\n",
@@ -772,7 +764,7 @@ chkExitNorm(struct partition *pp, struct xray *rayp, fastf_t normvec[3], char *p
     totalct++;
     /* Dot product of ray direction with normal *should* be positive. */
     f = VDOT(rayp->r_dir, normvec);
-    if (NEAR_ZERO(f, EPSILON)) {
+    if (ZERO(f)) {
 #ifdef DEBUG
 	brst_log("chkExitNorm: near 90 degree obliquity.\n");
 	brst_log("\tPnt %g, %g, %g\n\tDir %g, %g, %g\n\tNorm %g, %g, %g.\n",
@@ -958,7 +950,7 @@ getRayOrigin(struct application *ap)
 }
 
 
-/*	c o n s _ V e c t o r ()
+/*
 	Construct a direction vector out of azimuth and elevation angles
 	in radians, allocating storage for it and returning its address.
 */
@@ -1477,11 +1469,11 @@ spallInit()
     }
 
     /* Compute sampling cone of rays which are equally spaced. */
-    theta = TWO_PI * (1.0 - cos(conehfangle)); /* solid angle */
+    theta = M_2PI * (1.0 - cos(conehfangle)); /* solid angle */
     delta = sqrt(theta/nspallrays); /* angular ray delta */
     n = conehfangle / delta;
     phiinc = conehfangle / n;
-    philast = conehfangle + EPSILON;
+    philast = conehfangle + VUNITIZE_TOL;
     /* Crank through spall cone generation once to count actual number
        generated.
     */
@@ -1489,10 +1481,10 @@ spallInit()
 	fastf_t	sinphi = sin(phi);
 	fastf_t	gammaval, gammainc, gammalast;
 	int m;
-	sinphi = FABS(sinphi);
-	m = (TWO_PI * sinphi)/delta + 1;
-	gammainc = TWO_PI / m;
-	gammalast = TWO_PI-gammainc+EPSILON;
+	sinphi = fabs(sinphi);
+	m = (M_2PI * sinphi)/delta + 1;
+	gammainc = M_2PI / m;
+	gammalast = M_2PI-gammainc + VUNITIZE_TOL;
 	for (gammaval = 0.0; gammaval <= gammalast; gammaval += gammainc)
 	    spallct++;
     }
@@ -1563,8 +1555,8 @@ spallVec(fastf_t *dvec, fastf_t *s_rdir, fastf_t phi, fastf_t gammaval)
     fastf_t			fvec[3];
     fastf_t			evec[3];
 
-    if (AproxEqVec(dvec, zaxis, VEC_TOL)
-	||	AproxEqVec(dvec, negzaxis, VEC_TOL)
+    if (VNEAR_EQUAL(dvec, zaxis, VEC_TOL)
+	||	VNEAR_EQUAL(dvec, negzaxis, VEC_TOL)
 	) {
 	VMOVE(evec, xaxis);
     } else {
@@ -1603,10 +1595,10 @@ burstRay()
 	if (done)
 	    break;
 	sinphi = sin(phi);
-	sinphi = FABS(sinphi);
-	m = (TWO_PI * sinphi)/delta + 1;
-	gammainc = TWO_PI / m;
-	gammalast = TWO_PI - gammainc + EPSILON;
+	sinphi = fabs(sinphi);
+	m = (M_2PI * sinphi)/delta + 1;
+	gammainc = M_2PI / m;
+	gammalast = M_2PI - gammainc + VUNITIZE_TOL;
 	for (gammaval = 0.0; gammaval <= gammalast; gammaval += gammainc) {
 	    int	ncrit;
 	    spallVec(a_burst.a_ray.r_dir, a_spall.a_ray.r_dir,
@@ -1656,7 +1648,6 @@ abort_RT(int UNUSED(sig))
 }
 
 
-/*	v i e w _ p i x () */
 static void
 view_pix(struct application *ap)
 {
@@ -1670,7 +1661,6 @@ view_pix(struct application *ap)
 }
 
 
-/*	v i e w _ e n d () */
 static void
 view_end()
 {

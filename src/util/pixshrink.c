@@ -1,7 +1,7 @@
 /*                     P I X S H R I N K . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2013 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -29,21 +29,24 @@
 #include <string.h>
 #include "bio.h"
 
-#include "bu.h"
-
+#include "bu/getopt.h"
+#include "bu/log.h"
+#include "bu/malloc.h"
+#include "bu/file.h"
 
 #define UCHAR unsigned char
 
 /* declarations to support use of bu_getopt() system call */
-char *options = "us:w:n:f:h?";
+char options[] = "us:w:n:f:h?";
 
-char *progname = "(noname)";
-char *filename = "(stdin)";
+char noname[]  = "(noname)";
+char Stdin[]   = "(stdin)";
+char *progname = noname;
+char *filename = Stdin;
 
 void shrink_image(int scanlen, int Width, int Height, unsigned char *buffer, int Factor), usample_image(int scanlen, int Width, int Height, unsigned char *buffer, int Factor);
 
-/* R E A D _ I M A G E
- *
+/*
  * read image into memory
  */
 UCHAR *read_image(int scanlen, int Width, int Height, unsigned char *buffer)
@@ -73,8 +76,6 @@ UCHAR *read_image(int scanlen, int Width, int Height, unsigned char *buffer)
 }
 
 
-/* W R I T E _ I M A G E
- */
 void write_image(int Width, int Height, unsigned char *buffer)
 {
     int count = 0;
@@ -94,8 +95,6 @@ void write_image(int Width, int Height, unsigned char *buffer)
 }
 
 
-/* S H R I N K _ I M A G E
- */
 void
 shrink_image(int scanlen, int Width, int Height, unsigned char *buffer, int Factor)
 {
@@ -168,10 +167,9 @@ int factor = 2;
 #define METH_UNDERSAMPLE 2
 int method = METH_BOXCAR;
 
-/*
- * U S A G E --- tell user how to invoke this program, then exit
- */
-void usage(void)
+
+void
+usage(void)
 {
     (void) fprintf(stderr,
 		   "Usage: %s [-u] [-w width] [-n scanlines] [-s squaresize]\n\
@@ -180,9 +178,6 @@ void usage(void)
 }
 
 
-/*
- * P A R S E _ A R G S --- Parse through command line flags
- */
 void
 parse_args(int ac, char **av)
 {
@@ -239,8 +234,6 @@ parse_args(int ac, char **av)
 
 
 /*
- * M A I N
- *
  * Call parse_args to handle command line arguments first, then
  * process input.
  */

@@ -1,7 +1,7 @@
 /*                        C O M M O N . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2013 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -17,13 +17,8 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @addtogroup fixme */
-/** @{ */
-/** @file common.h
- *
- * @brief
- *  Header file for the BRL-CAD common definitions.
- *
+
+/** @addtogroup common
  *  This header wraps the system-specific encapsulation of
  *  brlcad_config.h and removes need to conditionally include
  *  brlcad_config.h everywhere based on HAVE_CONFIG_H.  The common
@@ -32,9 +27,12 @@
  *  for the win32 platform.
  *
  */
+/** @{ */
+/** @brief Header file for the BRL-CAD common definitions. */
+/** @file common.h */
 
-#ifndef __COMMON_H__
-#define __COMMON_H__
+#ifndef COMMON_H
+#define COMMON_H
 
 /* include the venerable config.h file.  use a pregenerated one for
  * windows when we cannot autogenerate it easily. do not include
@@ -43,8 +41,9 @@
  */
 #if defined(BRLCADBUILD) && defined(HAVE_CONFIG_H)
 
-#  if defined(_WIN32) && !defined(__CYGWIN__) && !defined(CMAKE_HEADERS)
+#  if defined(_WIN32) && !defined(__CYGWIN__) && !defined(__MINGW32__) && !defined(CMAKE_HEADERS)
 #    include "config_win.h"
+#    include "brlcad_config.h"
 #  else
 #    include "brlcad_config.h"
 #  endif  /* _WIN32 */
@@ -55,21 +54,27 @@
 #  ifndef HAVE_DRAND48
 #    define drand48() ((double)rand() / (double)(RAND_MAX + 1))
 #    define HAVE_DRAND48 1
-#	 define srand48(seed) (srand(seed))
+#    define srand48(seed) (srand(seed))
+#  endif
+
+#  if !defined(__cplusplus) && !defined(HAVE_LRINT) && defined(HAVE_WORKING_LRINT_MACRO)
+#    define lrint(_x) ((long int)(((_x)<0)?(_x)-0.5:(_x)+0.5))
+#    define HAVE_LRINT 1
 #  endif
 
 #endif  /* BRLCADBUILD & HAVE_CONFIG_H */
 
 /* provide declaration markers for header externals */
 #ifdef __cplusplus
-#  define __BEGIN_DECLS   extern "C" {
-#  define __END_DECLS     }
+#  define __BEGIN_DECLS   extern "C" {   /**< if C++, set to extern "C" { */
+#  define __END_DECLS     }              /**< if C++, set to } */
 #else
-#  define __BEGIN_DECLS
-#  define __END_DECLS
+#  define __BEGIN_DECLS /**< if C++, set to extern "C" { */
+#  define __END_DECLS   /**< if C++, set to } */
 #endif
 
-/* Functions local to one file IN A LIBRARY should be declared HIDDEN.
+/**
+ * Functions local to one file IN A LIBRARY should be declared HIDDEN.
  * Disabling the static classifier is sometimes helpful for debugging.
  * It can help prevent some compilers from inlining functions that one
  * might want to set a breakpoint on.  Do not use on variables.
@@ -93,14 +98,17 @@
 #  endif
 #endif
 
+/** Find and return the maximum value */
 #ifndef FMAX
 #  define FMAX(a, b)	(((a)>(b))?(a):(b))
 #endif
+/** Find and return the minimum value */
 #ifndef FMIN
 #  define FMIN(a, b)	(((a)<(b))?(a):(b))
 #endif
 
-/* C99 does not provide a ssize_t even though it is provided by SUS97.
+/**
+ * C99 does not provide a ssize_t even though it is provided by SUS97.
  * regardless, we use it so make sure it's declared by using the
  * similar POSIX ptrdiff_t type.
  */
@@ -134,12 +142,15 @@ typedef ptrdiff_t ssize_t;
 #  endif
 #endif
 
-/* Provide a means to conveniently test the version of the GNU
+/**
+ * Provide a means to conveniently test the version of the GNU
  * compiler.  Use it like this:
  *
+ * @code
  * #if GCC_PREREQ(2,8)
  * ... code requiring gcc 2.8 or later ...
  * #endif
+ * @endcode
  *
  * WARNING: THIS MACRO IS CONSIDERED PRIVATE AND SHOULD NOT BE USED
  * OUTSIDE OF THIS HEADER FILE.  DO NOT RELY ON IT.
@@ -154,12 +165,15 @@ typedef ptrdiff_t ssize_t;
 #  define GCC_PREREQ(major, minor) 0
 #endif
 
-/* Provide a means to conveniently test the version of the Intel
+/**
+ * Provide a means to conveniently test the version of the Intel
  * compiler.  Use it like this:
  *
+ * @code
  * #if ICC_PREREQ(800)
  * ... code requiring icc 8.0 or later ...
  * #endif
+ * @endcode
  *
  * WARNING: THIS MACRO IS CONSIDERED PRIVATE AND SHOULD NOT BE USED
  * OUTSIDE OF THIS HEADER FILE.  DO NOT RELY ON IT.
@@ -234,27 +248,6 @@ typedef ptrdiff_t ssize_t;
 #    define UNUSED(parameter) (parameter)
 #  endif
 #endif
-
-/**
- * IGNORE provides a common mechanism for innocuously ignoring a
- * parameter that is sometimes used and sometimes not.  It should
- * "practically" result in nothing of concern happening.  It's
- * commonly used by macros that disable functionality based on
- * compilation settings (e.g., BU_ASSERT()) and shouldn't normally
- * need to be used directly by code.
- *
- * We can't use (void)(sizeof((parameter)) because MSVC2010 will
- * reportedly issue a warning about the value being unused.
- * (Consequently calls into question (void)(parameter) but untested.)
- *
- * Possible alternative:
- * ((void)(1 ? 0 : sizeof((parameter)) - sizeof((parameter))))
- */
-#ifdef IGNORE
-#  undef IGNORE
-#  warning "IGNORE unexpectedly defined.  Ensure common.h is included first."
-#endif
-#define IGNORE(parameter) (void)(parameter)
 
 /**
  * LIKELY provides a common mechanism for providing branch prediction
@@ -335,7 +328,36 @@ typedef ptrdiff_t ssize_t;
 #  define __STDC_VERSION__ 0
 #endif
 
-#endif  /* __COMMON_H__ */
+/**
+ * Provide macros to indicate availability of diagnostic pragmas for
+ * GCC and Clang.
+ */
+#define HAVE_GCC_DIAG_PRAGMAS \
+    (defined(__GNUC__) && (__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 6)) && !defined(__clang__))
+
+#define HAVE_CLANG_DIAG_PRAGMAS \
+    (defined(__clang__) && (__clang_major__ > 2 || (__clang_major__ == 2 && __clang_minor__ >= 8)))
+
+
+/**
+ * Provide a macro for different treatment of initialized extern const
+ * variables between C and C++.  In C the following initialization
+ * (definition) is acceptable for external linkage:
+ *
+ *   const int var = 10;
+ *
+ * but in C++ const is implicitly internal linkage so it must have
+ * extern qualifier:
+ *
+ *   extern const int var = 10;
+ */
+#if defined(__cplusplus)
+  #define EXTERNVARINIT extern
+#else
+  #define EXTERNVARINIT
+#endif
+
+#endif  /* COMMON_H */
 /** @} */
 /*
  * Local Variables:

@@ -1,7 +1,7 @@
 /*                         S P A L L . C
  * BRL-CAD / ADRT
  *
- * Copyright (c) 2007-2013 United States Government as represented by
+ * Copyright (c) 2007-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -27,8 +27,10 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "bu.h"
 
+
+#include "bu/malloc.h"
+#include "bu/log.h"
 #include "adrt_struct.h"
 #include "render.h"
 
@@ -191,16 +193,16 @@ render_spall_init(render_t *render, const char *buf)
     double ray_pos[3], ray_dir[3];
     double scan;
 
-    if(buf == NULL)
+    if (buf == NULL)
 	return -1;
 
     render->work = render_spall_work;
     render->free = render_spall_free;
 
-    sscanf(buf, "(%lg %lg %lg) (%lg %lg %lg) %lg",
-	   &ray_pos[0], &ray_pos[1], &ray_pos[2],
-	   &ray_dir[0], &ray_dir[1], &ray_dir[2],
-	   &scan);
+    bu_sscanf(buf, "(%lg %lg %lg) (%lg %lg %lg) %lg",
+	      &ray_pos[0], &ray_pos[1], &ray_pos[2],
+	      &ray_dir[0], &ray_dir[1], &ray_dir[2],
+	      &scan);
     angle = scan; /* double to fastf_t */
 
     BU_ALLOC(render->data, struct render_spall_s);

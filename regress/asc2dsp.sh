@@ -2,7 +2,7 @@
 #                      A S C 2 D S P . S H
 # BRL-CAD
 #
-# Copyright (c) 2010-2013 United States Government as represented by
+# Copyright (c) 2010-2014 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -92,7 +92,7 @@ ASC1="$1/regress/dsp/$BASE1.asc"
 $A2P < $ASC1 > $BASE1.pix 2>>$LOG
 # convert pix to bw format
 # take the blue pixel only
-$P2B -B $BASE1.pix > $BASE1.bw 2>>$LOG
+$P2B -B1.0 $BASE1.pix > $BASE1.bw 2>>$LOG
 # convert pix to dsp format
 $CV huc nu16 $BASE1.bw $BASE1.dsp 1>>$LOG 2>>$LOG
 

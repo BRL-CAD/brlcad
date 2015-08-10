@@ -73,7 +73,6 @@ struct Linked_List_ {
 extern SC_EXPRESS_EXPORT Error ERROR_empty_list;
 extern SC_EXPRESS_EXPORT struct freelist_head LINK_fl;
 extern SC_EXPRESS_EXPORT struct freelist_head LIST_fl;
-extern SC_EXPRESS_EXPORT Linked_List LINK__l;  /* for LISTcreate_with macro - ugh */
 
 /******************************/
 /* macro function definitions */
@@ -83,11 +82,6 @@ extern SC_EXPRESS_EXPORT Linked_List LINK__l;  /* for LISTcreate_with macro - ug
 #define LINK_destroy(x) MEM_destroy(&LINK_fl,(Freelist *)(Generic)x)
 #define LIST_new()  (struct Linked_List_ *)MEM_new(&LIST_fl)
 #define LIST_destroy(x) MEM_destroy(&LIST_fl,(Freelist *)(Generic)x)
-
-/** following could be optimized */
-#define LISTcreate_with(x)  (LINK__l = LISTcreate()),\
-                LISTadd(LINK__l,x),\
-                LINK_l)
 
 /** accessing links */
 #define LINKdata(link)  (link)->data

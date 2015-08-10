@@ -1,7 +1,7 @@
 /*                         V D R A W . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2013 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -100,15 +100,14 @@
 #include <string.h>
 #include <math.h>
 #include <signal.h>
-#include "bio.h"
 
 #include "tcl.h"
 
-#include "cmd.h"
+#include "bu/cmd.h"
+#include "bn.h"
 #include "vmath.h"
-#include "mater.h"
+#include "raytrace.h"
 #include "nmg.h"
-#include "dg.h"
 
 #include "./ged_private.h"
 
@@ -545,11 +544,7 @@ vdraw_send(void *data, int argc, const char *argv[])
     }
 
     /* 0 means OK, -1 means conflict with real solid name */
-    idx = _ged_invent_solid(gedp,
-			    solid_name,
-			    &(gedp->ged_gdp->gd_currVHead->vdc_vhd),
-			    gedp->ged_gdp->gd_currVHead->vdc_rgb,
-			    1, 0.0, 0);
+    idx = invent_solid(gedp->ged_gdp->gd_headDisplay, gedp->ged_wdbp->dbip, gedp->ged_create_vlist_solid_callback, gedp->ged_free_vlist_callback, solid_name, &(gedp->ged_gdp->gd_currVHead->vdc_vhd), gedp->ged_gdp->gd_currVHead->vdc_rgb, 1, 0.0, 0, gedp->freesolid, 0);
 
     bu_vls_printf(gedp->ged_result_str, "%d", idx);
 
@@ -747,7 +742,7 @@ vdraw_cmd(struct ged *gedp, int argc, const char *argv[])
 	{"params",		vdraw_params},
 	{"open",		vdraw_open},
 	{"vlist",		vdraw_vlist},
-	{(char *)0,		(int (*)())0 }
+	{(const char *)NULL, BU_CMD_NULL}
     };
 
     static const char *usage = "write|insert|delete|read|send|params|open|vlist [args]";

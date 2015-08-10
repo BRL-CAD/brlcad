@@ -1,7 +1,7 @@
 /*                         V F O N T . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2013 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -21,17 +21,90 @@
 #include "common.h"
 
 #include <stdio.h>
-#include "vfont-if.h"
-#include "bu.h"
+#include <string.h> /* for memset */
+#include "bu/file.h"
+#include "bu/malloc.h"
+#include "bu/vfont.h"
 
 #define FONTDIR2 "/usr/lib/vfont"
 #define DEFAULT_FONT "nonie.r.12"
 #define FONTNAMESZ 128
 
+#include "./vfont.h"
+
+
+struct vfont_file
+get_font(const char* fontname, void (*vfont_log)(const char *fmt, ...))
+{
+    struct vfont_file font;
+    struct header lochdr;
+    static char	fname[FONTNAMESZ];
+
+    /* Initialize vfont */
+    memset(&font, 0, sizeof(struct vfont_file));
+
+    if (fontname == NULL)
+	fontname = FONTNAME;
+
+    if (fontname[0] != '/') {
+	/* absolute path */
+	const char *vfont = bu_brlcad_data("vfont", 1);
+	if (vfont)
+	    snprintf(fname, FONTNAMESZ, "%s/%s", vfont, fontname);
+	else
+	    bu_strlcpy(fname, fontname, sizeof(fname));
+    } else
+	bu_strlcpy(fname, fontname, sizeof(fname));
+
+    /* Open the file and read in the header information. */
+    font.ffdes = fopen(fname, "rb");
+    if (font.ffdes == NULL) {
+	if (vfont_log)
+	    vfont_log("Error opening font file '%s'\n", fname);
+
+	font.ffdes = NULL;
+	return font;
+    }
+
+    if (fread((char *)&lochdr, (int)sizeof(struct header), 1, font.ffdes) != 1) {
+	if (vfont_log)
+	    vfont_log("get_Font() read failed!\n");
+	font.ffdes = NULL;
+	return font;
+    }
+
+    SWAB(lochdr.magic);
+    SWAB(lochdr.size);
+    SWAB(lochdr.maxx);
+    SWAB(lochdr.maxy);
+    SWAB(lochdr.xtend);
+
+    if (lochdr.magic != 0436) {
+	if (vfont_log)
+	    vfont_log("Not a font file \"%s\": magic=0%o\n", fname, (int)lochdr.magic);
+	font.ffdes = NULL;
+	return font;
+    }
+    font.hdr = lochdr;
+
+    /* Read in the directory for the font. */
+    if (fread((char *) font.dir, (int)sizeof(struct dispatch), 256, font.ffdes) != 256) {
+	if (vfont_log)
+	    vfont_log("get_Font() read failed!\n");
+	font.ffdes = NULL;
+	return font;
+    }
+
+    /* Addresses of characters in the file are relative to point in
+     * the file after the directory, so grab the current position.
+     */
+    font.offset = bu_ftell(font.ffdes);
+
+    return font;
+}
+
 
 /**
- * _ V A X _ G S H O R T
- *
  * Obtain a 16-bit signed integer from two adjacent characters, stored
  * in VAX order, regardless of word alignment.
  */
@@ -58,15 +131,15 @@ vfont_get(char *font)
     unsigned char dispatch[10*256];	/* 256 10-byte structs */
     uint16_t magic;
     int size;
+    const char *const_font;
 
-    if (font == NULL)
-	font = DEFAULT_FONT;
+    const_font = (font == NULL) ? DEFAULT_FONT : (const char *)font;
 
     /* Open the file and read in the header information. */
-    if ((fp = fopen(font, "rb")) == NULL) {
-	snprintf(fname, FONTNAMESZ, "%s/%s", (char *)bu_brlcad_data("vfont", 0), font);
+    if ((fp = fopen(const_font, "rb")) == NULL) {
+	snprintf(fname, FONTNAMESZ, "%s/%s", (char *)bu_brlcad_data("vfont", 0), const_font);
 	if ((fp = fopen(fname, "rb")) == NULL) {
-	    snprintf(fname, FONTNAMESZ, "%s/%s", FONTDIR2, font);
+	    snprintf(fname, FONTNAMESZ, "%s/%s", FONTDIR2, const_font);
 	    if ((fp = fopen(fname, "rb")) == NULL) {
 		return VFONT_NULL;
 	    }

@@ -22,13 +22,13 @@
 
 
 <refsect1 xml:id='descriptions'><title>DESCRIPTIONS</title>
-<para>Pictx is an interactive program that
-combines the two programs showtherm and ir-X.  Ultimately it can
+<para><command>pictx</command> is an interactive program that
+combines the two programs <command>showtherm</command> and <command>ir-X</command> .  Ultimately it can
 read a temperature output file and display the image on the screen
 without having the user call two different programs.</para>
 
-<para>Pictx is designed to be run in an X-windows environment since
-it does call the program ir-X.</para>
+<para><command>pictx</command> is designed to be run in an X-windows environment since
+it does call the program <command>ir-X</command> .</para>
 </refsect1>
 
 <refsect1 xml:id='example'><title>EXAMPLE</title>
@@ -97,7 +97,7 @@ it does call the program ir-X.</para>
 	azimuth:  35.000000 degrees
 	elevation:  25.000000 degrees
 
-	The program ir-X is now being run.  If option
+	The program <command>ir-X</command> is now being run.  If option
 	0 or 1 was used when the name of a file is asked
 	for enter the name of the file that was just
 	stored.
@@ -128,7 +128,9 @@ it does call the program ir-X.</para>
 </refsect1>
 
 <refsect1 xml:id='see_also'><title>SEE ALSO</title>
-<para><citerefentry><refentrytitle>firpass</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>secpass</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>shapefact</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>all_sf</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>showtherm</refentrytitle><manvolnum>1</manvolnum></citerefentry>, ir-X(1), <citerefentry><refentrytitle>ir-sgi</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+<para><citerefentry><refentrytitle>firpass</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>secpass</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>shapefact</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>all_sf</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>showtherm</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>ir-X</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>ir-sgi</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
 <citerefentry><refentrytitle>pictsgi</refentrytitle><manvolnum>1</manvolnum></citerefentry>, User's Manual for IRPREP (BRL-SP-96), Computer Programs
 for Generating an Input File for PRISM and Displaying PRISM Results
 (BRL report in progress)</para>
@@ -140,7 +142,7 @@ for Generating an Input File for PRISM and Displaying PRISM Results
 </refsect1>
 
 <refsect1 xml:id='copyright'><title>COPYRIGHT</title>
-<para>This software is Copyright (c) 1992-2013 by the United States
+<para>This software is Copyright (c) 1992-2014 by the United States
 Government as represented by U.S. Army Research Laboratory.</para>
 
 </refsect1>

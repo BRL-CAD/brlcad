@@ -1,7 +1,7 @@
 /*                         B E S E T . H
  * BRL-CAD
  *
- * Copyright (c) 2007-2013 United States Government as represented by
+ * Copyright (c) 2007-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -18,8 +18,8 @@
  * information.
  */
 
-#ifndef __BESET_H__
-#define __BESET_H__
+#ifndef GTOOLS_BESET_BESET_H
+#define GTOOLS_BESET_BESET_H
 
 #define MUTATE 1
 #define MUTATE_RAND 2
@@ -56,7 +56,7 @@ struct beset_options{
 #define NODES (fstate->nodes)
 #define INDEX (pop.size-i)
 
-#endif /* __BESET_H__ */
+#endif /* GTOOLS_BESET_BESET_H */
 /*
  * Local Variables:
  * tab-width: 8

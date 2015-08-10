@@ -1,0 +1,12 @@
+GRID record limit:
+    - FASTGEN permits 50k GRID records per SECTION, and this is enforced by the export plugin.
+    - This limit is exceeded by db/goliath.g, for which the "toplevels" SECTION accumulates a very large number of primitives existing outside of regions.
+    - TODO: Fix by treating each toplevel primitive as a region
+
+Boolean operations:
+    - The FASTGEN format can represent only a very limited subset of Boolean operations
+    - Objects subtracted using HOLE records must be completely enclosed within the containing object.
+
+Facetization is required when geometry can not be directly represented by the FASTGEN format:
+    - Primitives or Boolean operations that can't be represented
+    - Regions containing two or more objects that require different modes (Plate or Volume) for the SECTION

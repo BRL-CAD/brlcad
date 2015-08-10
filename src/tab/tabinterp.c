@@ -1,7 +1,7 @@
-/* T A B I N T E R P . C
+/*                        T A B I N T E R P . C
  * BRL-CAD
  *
- * Copyright (c) 1988-2013 United States Government as represented by
+ * Copyright (c) 1988-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -42,7 +42,8 @@
 #include <string.h>
 #include "bio.h"
 
-#include "bu.h"
+#include "bu/getopt.h"
+#include "bu/log.h"
 #include "vmath.h"
 #include "bn.h"
 #include "raytrace.h"
@@ -104,11 +105,8 @@ chan_not_loaded_or_specified(int ch)
 }
 
 
-/*
- * C R E A T E _ C H A N
- */
 HIDDEN int
-create_chan(char *num, int len, char *itag)
+create_chan(const char *num, int len, const char *itag)
 {
     int n;
 
@@ -152,14 +150,11 @@ create_chan(char *num, int len, char *itag)
 }
 
 
-/*
- * C M _ F I L E
- */
 HIDDEN int
-cm_file(int argc, char **argv)
+cm_file(const int argc, const char **argv)
 {
     FILE *fp;
-    char *file;
+    const char *file;
     char lbuf[512];	/* temporary label buffer */
     int *cnum;
     int i;
@@ -168,7 +163,7 @@ cm_file(int argc, char **argv)
     int nlines;		/* number of lines in input file */
     int nwords;		/* number of words on each input line */
     fastf_t *times;
-    auto double d;
+    double d;
     int errors = 0;
     struct bu_vls buf = BU_VLS_INIT_ZERO;	/* unlimited size input line buffer */
 
@@ -216,7 +211,7 @@ cm_file(int argc, char **argv)
 	chan[cnum[i]].c_itime = times;
     }
 
-    for (line=0; line < nlines; line++) {
+    for (line = 0; line < nlines; line++) {
 	char *bp;
 
 	bu_vls_trunc(&buf, 0);
@@ -256,7 +251,7 @@ cm_file(int argc, char **argv)
 	/* Obtain the desired values from the remaining columns, and
 	 * assign them to the channels indicated in cnum[]
 	 */
-	for (i=1; i < nwords; i++) {
+	for (i = 1; i < nwords; i++) {
 	    if (cnum[i] < 0)  continue;
 	    if (sscanf(iwords[i], "%lf", &d) != 1) {
 		bu_log("File '%s', Line %d:  scanf failure on '%s'\n",
@@ -282,8 +277,6 @@ cm_file(int argc, char **argv)
 
 
 /*
- * P R _ I C H A N S
- *
  * Print input channel values.
  */
 HIDDEN void
@@ -300,25 +293,23 @@ pr_ichan(int ch)
     if (cp->c_itag == (char *)0)  cp->c_itag = "_no_file_";
     bu_log("--- Channel %d, ilen=%d (%s):\n",
 	   ch, cp->c_ilen, cp->c_itag);
-    for (i=0; i < cp->c_ilen; i++) {
+    for (i = 0; i < cp->c_ilen; i++) {
 	bu_log(" %g\t%g\n", cp->c_itime[i], cp->c_ival[i]);
     }
 }
 
 
 /*
- * C M _ I D U M P
- *
  * Dump the indicated input channels, or all, if none specified.
  */
 HIDDEN int
-cm_idump(int argc, char **argv)
+cm_idump(const int argc, const char **argv)
 {
     int ch;
     int i;
 
     if (argc <= 1) {
-	for (ch=0; ch < nchans; ch++) {
+	for (ch = 0; ch < nchans; ch++) {
 	    pr_ichan(ch);
 	}
     } else {
@@ -330,9 +321,6 @@ cm_idump(int argc, char **argv)
 }
 
 
-/*
- * O U T P U T
- */
 HIDDEN void
 output()
 {
@@ -345,10 +333,10 @@ output()
 	return;
     }
 
-    for (t=0; t < o_len; t++) {
+    for (t = 0; t < o_len; t++) {
 	printf("%g", o_time[t]);
 
-	for (ch=0; ch < nchans; ch++) {
+	for (ch = 0; ch < nchans; ch++) {
 	    cp = &chan[ch];
 	    if (cp->c_ilen <= 0) {
 		printf("\t.");
@@ -361,11 +349,8 @@ output()
 }
 
 
-/*
- * C M _ T I M E S
- */
 HIDDEN int
-cm_times(int argc, char **argv)
+cm_times(const int argc, const char **argv)
 {
     double a, b;
     int i;
@@ -392,7 +377,7 @@ cm_times(int argc, char **argv)
     /*
      * Don't use an incremental algorithm, to avoid accruing error
      */
-    for (i=0; i<o_len; i++)
+    for (i = 0; i < o_len; i++)
 	o_time[i] = a + ((double)i)/fps;
 
 
@@ -400,11 +385,8 @@ cm_times(int argc, char **argv)
 }
 
 
-/*
- * C M _ I N T E R P
- */
 HIDDEN int
-cm_interp(int argc, char **argv)
+cm_interp(const int argc, const char **argv)
 {
     int interp = 0;
     int periodic = 0;
@@ -459,9 +441,6 @@ cm_interp(int argc, char **argv)
 }
 
 
-/*
- * N E X T _ I N T E R P O L A T E
- */
 HIDDEN void
 next_interpolate(struct chan *chp)
 {
@@ -471,7 +450,7 @@ next_interpolate(struct chan *chp)
 
     ip = &chan[chp->c_sourcechan];
 
-    for (t=0; t<o_len; t++) {
+    for (t = 0; t < o_len; t++) {
 	i = t + chp->c_offset;
 	if (i <= 0) {
 	    chp->c_oval[t] = ip->c_oval[0];
@@ -487,8 +466,6 @@ next_interpolate(struct chan *chp)
 
 
 /*
- * S T E P _ I N T E R P O L A T E
- *
  * Simply select the value at the beginning of the interval.  This
  * allows parameters to take instantaneous jumps in value at specified
  * times.
@@ -503,7 +480,7 @@ step_interpolate(struct chan *chp, fastf_t *times)
     int i;		/* input time index */
 
     i = 0;
-    for (t=0; t<o_len; t++) {
+    for (t = 0; t < o_len; t++) {
 	/* Check for below initial time */
 	if (times[t] < chp->c_itime[0]) {
 	    chp->c_oval[t] = chp->c_ival[0];
@@ -530,8 +507,6 @@ step_interpolate(struct chan *chp, fastf_t *times)
 }
 
 /*
- * L I N E A R _ I N T E R P O L A T E
- *
  * This routine takes advantage of (and depends on) the fact that the
  * input and output arrays are sorted in increasing time values.
  */
@@ -542,12 +517,12 @@ linear_interpolate(struct chan *chp, fastf_t *times)
     int i;		/* input time index */
 
     if (chp->c_ilen < 2) {
-	bu_log("lienar_interpolate:  need at least 2 points\n");
+	bu_log("linear_interpolate:  need at least 2 points\n");
 	return;
     }
 
     i = 0;
-    for (t=0; t<o_len; t++) {
+    for (t = 0; t < o_len; t++) {
 	/* Check for below initial time */
 	if (times[t] < chp->c_itime[0]) {
 	    chp->c_oval[t] = chp->c_ival[0];
@@ -577,8 +552,6 @@ linear_interpolate(struct chan *chp, fastf_t *times)
 }
 
 /*
- * R A T E _ I N T E R P O L A T E
- *
  * The one (and only) input value is interpreted as rate, in
  * unspecified units per second.  This is really just a hack to allow
  * multiplying the time by a constant.
@@ -597,15 +570,11 @@ rate_interpolate(struct chan *chp, fastf_t *UNUSED(times))
     ival = chp->c_ival[0];
     rate = chp->c_ival[1];
 
-    for (t=0; t < o_len; t++) {
+    for (t = 0; t < o_len; t++) {
 	chp->c_oval[t] = ival + rate * t;
     }
 }
 
-/*
- * A C C E L _ I N T E R P O L A T E
- *
- */
 HIDDEN void
 accel_interpolate(struct chan *chp, fastf_t *UNUSED(times))
 {
@@ -624,15 +593,13 @@ accel_interpolate(struct chan *chp, fastf_t *UNUSED(times))
     scale = exp(log(mul) / fps);
 
     chp->c_oval[0] = ival;
-    for (t=1; t < o_len; t++) {
+    for (t = 1; t < o_len; t++) {
 	chp->c_oval[t] = chp->c_oval[t-1] * scale;
     }
 }
 
 
 /*
- * Q U A T _ I N T E R P O L A T E
- *
  * Do linear interpolation for first and last span.  Use Bezier
  * interpolation for all the rest.
  *
@@ -650,7 +617,7 @@ quat_interpolate(struct chan *x, struct chan *y, struct chan *z, struct chan *w,
 			z->c_oval[t] = (_q)[Z]; w->c_oval[t] = (_q)[W]; }
 
     i = 0;
-    for (t=0; t<o_len; t++) {
+    for (t = 0; t < o_len; t++) {
 	fastf_t now = times[t];
 
 	/* Check for below initial time */
@@ -683,16 +650,14 @@ quat_interpolate(struct chan *x, struct chan *y, struct chan *z, struct chan *w,
 	}
 
 	/* Check for being in first or last time span */
-	if (i == 0 || i >= x->c_ilen-2)
-	{
+	if (i == 0 || i >= x->c_ilen-2) {
 	    fastf_t f;
 	    quat_t qout, q1, q2, q3, qtemp1, qtemp2, qtemp3;
 
 	    f = (now - x->c_itime[i]) /
 		(x->c_itime[i+1] - x->c_itime[i]);
 
-	    if (i==0)
-	    {
+	    if (i == 0) {
 		QIGET(q1, i);
 		QIGET(q2, i+1);
 		QIGET(q3, i+2);
@@ -701,9 +666,7 @@ quat_interpolate(struct chan *x, struct chan *y, struct chan *z, struct chan *w,
 		QUNITIZE(q3);
 		quat_make_nearest(q2, q1);
 		quat_make_nearest(q3, q2);
-	    }
-	    else
-	    {
+	    } else {
 		QIGET(q1, i+1);
 		QIGET(q2, i);
 		QIGET(q3, i-1);
@@ -768,8 +731,6 @@ quat_interpolate(struct chan *x, struct chan *y, struct chan *z, struct chan *w,
 
 
 /*
- * S P L I N E
- *
  * Fit an interpolating spline to the data points given.  Time in the
  * independent (x) variable, and the single channel of data values is
  * the dependent (y) variable.
@@ -792,7 +753,7 @@ spline(struct chan *chp, fastf_t *times)
     double a;
     int end;
     double corr;
-    double konst = 0.0;		/* derriv. at endpts, non-periodic */
+    double konst = 0.0;		/* deriv. at endpts, non-periodic */
     double *diag = (double *)0;
     double *rrr = (double *)0;
     int i;
@@ -827,16 +788,16 @@ spline(struct chan *chp, fastf_t *times)
     if (chp->c_periodic) konst = 0;
     d = 1;
     rrr[0] = 0;
-    s = chp->c_periodic?-1:0;
+    s = chp->c_periodic ? -1 : 0;
     /* triangularize */
-    for (i=0; ++i < chp->c_ilen - !chp->c_periodic;) {
+    for (i = 0; ++i < chp->c_ilen - !chp->c_periodic;) {
 	double rhs;
 
 	hi = chp->c_itime[i]-chp->c_itime[i-1];
-	hi1 = (i==chp->c_ilen-1) ?
+	hi1 = (i == chp->c_ilen-1) ?
 	    chp->c_itime[1] - chp->c_itime[0] :
 	    chp->c_itime[i+1] - chp->c_itime[i];
-	if (hi1*hi<=0) {
+	if (hi1 * hi <= 0) {
 	    bu_log(
 		"spline: Horiz. interval changed sign at i=%d, time=%g\n",
 		i, chp->c_itime[i]);
@@ -849,7 +810,7 @@ spline(struct chan *chp, fastf_t *times)
 	    v = v - s * rrr[i-1] / d;
 	}
 
-	rhs = (i==chp->c_ilen-1) ?
+	rhs = (i == chp->c_ilen-1) ?
 	    (chp->c_ival[1] - chp->c_ival[0]) /
 	    (chp->c_itime[1] - chp->c_itime[0]) :
 	    (chp->c_ival[i+1] - chp->c_ival[i]) /
@@ -862,42 +823,42 @@ spline(struct chan *chp, fastf_t *times)
 
 	s = -hi*s/d;
 	a = 2*(hi+hi1);
-	if (i==1) a += konst*hi;
-	if (i==chp->c_ilen-2) a += konst*hi1;
-	diag[i] = d = i==1? a:
+	if (i == 1) a += konst*hi;
+	if (i == chp->c_ilen-2) a += konst*hi1;
+	diag[i] = d = i == 1 ? a :
 	    a - hi*hi/d;
     }
     D2yi = D2yn1 = 0;
     /* back substitute */
     for (i = chp->c_ilen - !chp->c_periodic; --i >= 0;) {
-	end = i==chp->c_ilen-1;
+	end = i == chp->c_ilen-1;
 	/* hi1 is range of time covered in this interval */
 	hi1 = end ? chp->c_itime[1] - chp->c_itime[0]:
 	    chp->c_itime[i+1] - chp->c_itime[i];
 	D2yi1 = D2yi;
-	if (i>0) {
+	if (i > 0) {
 	    hi = chp->c_itime[i]-chp->c_itime[i-1];
-	    corr = end ? 2*s+u : 0.0;
+	    corr = end ? 2 * s + u : 0.0;
 	    D2yi = (end*v+rrr[i]-hi1*D2yi1-s*D2yn1)/
 		(diag[i]+corr);
 	    if (end) D2yn1 = D2yi;
-	    if (i>=1) {
+	    if (i >= 1) {
 		a = 2*(hi+hi1);
-		if (i==1) a += konst*hi;
-		if (i==chp->c_ilen-2) a += konst*hi1;
+		if (i == 1) a += konst*hi;
+		if (i == chp->c_ilen-2) a += konst*hi1;
 		d = diag[i-1];
 		s = -s*d/hi;
 	    }
 	}
 	else D2yi = D2yn1;
 	if (!chp->c_periodic) {
-	    if (i==0) D2yi = konst*D2yi1;
-	    if (i==chp->c_ilen-2) D2yi1 = konst*D2yi;
+	    if (i == 0) D2yi = konst*D2yi1;
+	    if (i == chp->c_ilen-2) D2yi1 = konst*D2yi;
 	}
 	if (end) continue;
 
 	/* Sweep downward in times[], looking for times in this span */
-	for (t=o_len-1; t>=0; t--) {
+	for (t = o_len - 1; t >= 0; t--) {
 	    double x0;	/* fraction from [i+0] */
 	    double x1;	/* fraction from [i+1] */
 	    double yy;
@@ -929,8 +890,6 @@ spline(struct chan *chp, fastf_t *times)
 
 
 /*
- * G O
- *
  * Perform the requested interpolation on each channel
  */
 HIDDEN void
@@ -949,7 +908,7 @@ go()
     times = (fastf_t *)bu_malloc(o_len*sizeof(fastf_t), "periodic times");
 
     /* First, get memory for all output channels */
-    for (ch=0; ch < nchans; ch++) {
+    for (ch = 0; ch < nchans; ch++) {
 	chp = &chan[ch];
 	if (chp->c_ilen <= 0)
 	    continue;
@@ -960,7 +919,7 @@ go()
     }
 
     /* Interpolate values for all "interp" channels */
-    for (ch=0; ch < nchans; ch++) {
+    for (ch = 0; ch < nchans; ch++) {
 	chp = &chan[ch];
 	if (chp->c_ilen <= 0)
 	    continue;
@@ -970,7 +929,7 @@ go()
 	 * interpolation, build the mapped time array.
 	 */
 	if (chp->c_periodic) {
-	    for (t=0; t < o_len; t++) {
+	    for (t = 0; t < o_len; t++) {
 		double cur_t;
 
 		cur_t = o_time[t];
@@ -986,7 +945,7 @@ go()
 		times[t] = cur_t;
 	    }
 	} else {
-	    for (t=0; t < o_len; t++) {
+	    for (t = 0; t < o_len; t++) {
 		times[t] = o_time[t];
 	    }
 	}
@@ -1024,7 +983,7 @@ go()
     }
 
     /* Copy out values for all "next" channels */
-    for (ch=0; ch < nchans; ch++) {
+    for (ch = 0; ch < nchans; ch++) {
 	chp = &chan[ch];
 	if (chp->c_ilen <= 0)
 	    continue;
@@ -1037,20 +996,18 @@ go()
 
 
 /*
- * C M _ R A T E
- *
  * Just to communicate with the "interpolator", use two input values.
  * First is initial value, second is change PER SECOND. Input time
  * values are meaningless.
  */
 HIDDEN int
-cm_rate(int argc, char **argv)
+cm_rate(const int argc, const char **argv)
 {
     struct chan *chp;
     int ch;
     int nvals = 2;
-
-    ch = create_chan(argv[1], nvals, argc>4?argv[4]:"rate chan");
+    const char rate_chan[] = "rate chan";
+    ch = create_chan(argv[1], nvals, (argc > 4 ? argv[4] : rate_chan));
     chp = &chan[ch];
     chp->c_interp = INTERP_RATE;
     chp->c_periodic = 0;
@@ -1063,20 +1020,18 @@ cm_rate(int argc, char **argv)
 
 
 /*
- * C M _ A C C E L
- *
  * Just to communicate with the "interpolator", use two input values.
  * First is initial value, second is change PER SECOND. Input time
  * values are meaningless.
  */
 HIDDEN int
-cm_accel(int argc, char **argv)
+cm_accel(const int argc, const char **argv)
 {
     struct chan *chp;
     int ch;
     int nvals = 2;
-
-    ch = create_chan(argv[1], nvals, argc>4?argv[4]:"accel chan");
+    const char accel_chan[] = "accel chan";
+    ch = create_chan(argv[1], nvals, (argc > 4 ? argv[4] : accel_chan));
     chp = &chan[ch];
     chp->c_interp = INTERP_ACCEL;
     chp->c_periodic = 0;
@@ -1089,7 +1044,7 @@ cm_accel(int argc, char **argv)
 
 
 HIDDEN int
-cm_next(int argc, char **argv)
+cm_next(const int argc, const char **argv)
 {
     int ochan, ichan;
     int offset = 1;
@@ -1142,7 +1097,7 @@ get_args(int argc, char **argv)
     return 1;
 }
 
-HIDDEN int cm_help(int argc, char **argv);
+HIDDEN int cm_help(const int argc, const char **argv);
 
 struct command_tab cmdtab[] = {
     {"file", "filename chan_num(s)", "load channels from file",
@@ -1170,7 +1125,7 @@ struct command_tab cmdtab[] = {
  * XXX this really should go in librt/cmd.c as rt_help_cmd().
  */
 HIDDEN int
-cm_help(int argc, char **argv)
+cm_help(const int argc, const char **argv)
 {
     struct command_tab *ctp;
 
@@ -1188,9 +1143,6 @@ cm_help(int argc, char **argv)
 }
 
 
-/*
- * M A I N
- */
 int
 main(int argc, char *argv[])
 {

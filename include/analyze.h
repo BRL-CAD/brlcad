@@ -1,7 +1,7 @@
 /*                       A N A L Y Z E . H
  * BRL-CAD
  *
- * Copyright (c) 2008-2013 United States Government as represented by
+ * Copyright (c) 2008-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -23,8 +23,10 @@
  *
  */
 
-#ifndef __ANALYZE_H__
-#define __ANALYZE_H__
+#ifndef ANALYZE_H
+#define ANALYZE_H
+
+#include "common.h"
 
 #include "raytrace.h"
 
@@ -121,12 +123,59 @@ ANALYZE_EXPORT extern struct region_pair *add_unique_pair(struct region_pair *li
  * voxelize function takes raytrace instance and user parameters as inputs
  */
 ANALYZE_EXPORT extern void
-voxelize(struct rt_i *rtip, fastf_t voxelSize[3], int levelOfDetail, void (*create_boxes)(genptr_t callBackData, int x, int y, int z, const char *regionName, fastf_t percentageFill), genptr_t callBackData);
+voxelize(struct rt_i *rtip, fastf_t voxelSize[3], int levelOfDetail, void (*create_boxes)(void *callBackData, int x, int y, int z, const char *regionName, fastf_t percentageFill), void *callBackData);
+
+
+struct analyze_raydiff_results {
+    struct bu_ptbl *left;
+    struct bu_ptbl *right;
+    struct bu_ptbl *both;
+};
+
+struct diff_seg {
+    point_t in_pt;
+    point_t out_pt;
+    struct xray ray;
+    int valid;
+};
+
+ANALYZE_EXPORT int
+analyze_raydiff(struct analyze_raydiff_results **results, struct db_i *dbip,
+	const char *left, const char *right, struct bn_tol *tol, int solidcheck);
+
+ANALYZE_EXPORT void
+analyze_raydiff_results_free(struct analyze_raydiff_results *results);
+
+ANALYZE_EXPORT int
+analyze_obj_inside(struct db_i *dbip, const char *outside, const char *inside, fastf_t tol);
+
+typedef int (*hitfunc_t)(struct application *, struct partition *, struct seg *);
+typedef int (*missfunc_t)(struct application *);
+typedef int (*overlapfunc_t)(struct application *, struct partition *, struct region *, struct region *, struct partition *);
+
+struct rt_gen_worker_vars {
+    struct rt_i *rtip;
+    struct resource *resp;
+    int rays_cnt;
+    const fastf_t *rays;
+    hitfunc_t fhit;
+    missfunc_t fmiss;
+    overlapfunc_t foverlap;
+    int step;       /* number of rays to be fired by this worker before calling back */
+    int *ind_src;   /* source of starting index */
+    int curr_ind;   /* current ray index */
+    void *ptr; /* application specific info */
+};
+
+ANALYZE_EXPORT int
+analyze_find_subtracted(struct bu_ptbl *results, struct rt_wdb *wdbp,
+	const char *pbrep, struct rt_gen_worker_vars *pbrep_rtvars,
+	const char *curr_comb, struct bu_ptbl *candidates, void *curr_union_data, int ncpus);
 
 
 __END_DECLS
 
-#endif /* __ANALYZE_H__ */
+#endif /* ANALYZE_H */
 
 /*
  * Local Variables:

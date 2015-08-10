@@ -1,0 +1,126 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<book xmlns="http://docbook.org/ns/docbook" version="5.0">
+  <info>
+    <title>Command History Object Documentation</title>
+    <author>
+      <personname>
+       <firstname>Mark </firstname>
+  <surname>L. Ulferts </surname>
+</personname>
+      <affiliation>
+  <address>
+    <email>mulferts@austin.dsccc.com</email>
+  </address>
+      </affiliation>
+    </author>
+    <author>
+      <personname>
+    <firstname>Glenn</firstname>
+  <surname>Durfee</surname>
+  </personname>
+  </author>
+</info>
+<chapter>
+  <section>
+    <title>Name</title>
+ <para>
+  ch_open - create and manipulate a command history object.
+ </para>
+</section>
+ <section>
+  <title>
+SYNOPSIS
+  </title>
+ <para>
+ <emphasis>ch_open</emphasis>[<emphasis>chName</emphasis>]
+ </para>
+</section>
+<section>
+  <title>
+    DESCRIPTION
+  </title>
+  <para>
+    The <emphasis role="bold">ch_open</emphasis> command creates a new command history object (given by the <emphasis>chName</emphasis> argument). The <emphasis role="bold">ch_open</emphasis> command returns its <emphasis>chName</emphasis> argument. At the time this command is invoked, there must not exist a command history object named <emphasis>chName</emphasis>.
+  </para>
+</section>
+<section>
+  <title>
+    METHODS
+  </title>
+  <para>
+    The <emphasis role="bold">ch_open</emphasis> command creates a new Tcl command whose name is <emphasis>chName</emphasis>. This command may be used to invoke various operations on the command history object. It has the following general form:
+  </para>
+  <para>
+    <emphasis>chName option ?arg arg ...?</emphasis>
+  </para>
+  <para>
+    <emphasis>Option</emphasis> and the<emphasis>args</emphasis> determine the exact behavior of the command. The following commands are possible for command history objects:
+  </para>
+  <para>
+    <emphasis>chName</emphasis> <emphasis role="bold"> add command_string
+    <emphasis>chName</emphasis> <emphasis role="bold"> addM</emphasis> command_string</emphasis>
+  </para>
+  <para>
+Add a command to the history and reset the current command pointer.
+  </para>
+  <para>
+<emphasis>chName</emphasis><emphasis role="bold">curr</emphasis>
+  </para>
+  <para>
+    Return the current command in the history.
+  </para>
+  <para>
+    <emphasis>chName</emphasis><emphasis role="bold">history</emphasis>
+  </para>
+  <para>
+    Return the entire history.
+  </para>
+  <para>
+    <emphasis>chName</emphasis><emphasis role="bold">next</emphasis>
+  </para>
+  <para>
+    Return the next command in the history making that the current command.
+  </para>
+  <para>
+    <emphasis>chName</emphasis><emphasis role="bold">prev</emphasis>
+  </para>
+  <para>
+    Return the previous command in the history making that the current command.
+  </para>
+  </section>
+  <section>
+    <title>
+      EXAMPLE
+    </title>
+    <para>
+The following sequence creates a command history object, adds commands and traverses the history.
+</para>
+<para>
+  <programlisting>
+cwish> ch_open ch
+ch
+cwish> ch add "cmd1"
+cwish> ch add "cmd2"
+cwish> ch prev
+cmd2
+cwish> ch prev
+cmd1
+cwish> ch curr
+cmd1
+cwish> ch add "cmd3"
+cwish> ch prev
+cmd3
+cwish> ch prev
+cmd2
+cwish> ch next
+cmd3
+cwish> ch next
+cwish> ch history
+cmd1
+cmd2
+cmd3
+</programlisting>
+    </para>
+  </section>
+</chapter>
+</book>

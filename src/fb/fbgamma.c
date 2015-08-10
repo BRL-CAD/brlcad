@@ -1,7 +1,7 @@
 /*                       F B G A M M A . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2013 United States Government as represented by
+ * Copyright (c) 1986-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -29,9 +29,10 @@
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
-#include "bio.h"
 
-#include "bu.h"
+#include "bu/malloc.h"
+#include "bu/getopt.h"
+#include "bu/log.h"
 #include "fb.h"
 #include "pkg.h"
 
@@ -49,7 +50,7 @@ int image = 0;
 static char usage[] = "\
 Usage: fbgamma [-H -o -i] [-F framebuffer] val [gval bval]\n";
 
-void mk_ramp(FBIO *fb, int r, int g, int b, int n)
+void mk_ramp(fb *fb_i, int r, int g, int b, int n)
 {
 
     /* grey ramp */
@@ -62,7 +63,7 @@ void mk_ramp(FBIO *fb, int r, int g, int b, int n)
 	else line[x*3+2] = 0;
     }
     for (y=patch_height*n; y < patch_height*(n+1) && y < scr_height; ++y) {
-	fb_write(fb, 0, y, line, scr_width);
+	fb_write(fb_i, 0, y, line, scr_width);
     }
 
     for (x=0; x < scr_width; ++x) {
@@ -74,17 +75,17 @@ void mk_ramp(FBIO *fb, int r, int g, int b, int n)
 	else line[x*3+2] = 0;
     }
     for (y=patch_height*(n+1); y < patch_height*(n+2) && y < scr_height; y += 2) {
-	fb_write(fb, 0, y, altline, scr_width);
-	fb_write(fb, 0, y+1, line, scr_width);
+	fb_write(fb_i, 0, y, altline, scr_width);
+	fb_write(fb_i, 0, y+1, line, scr_width);
     }
 }
 
 
-void disp_image(FBIO *fb)
+void disp_image(fb *fb_i)
 {
 
-    scr_width = fb_getwidth(fb);
-    scr_height = fb_getheight(fb);
+    scr_width = fb_getwidth(fb_i);
+    scr_height = fb_getheight(fb_i);
 
     patch_width = scr_width / 8;
     patch_height = scr_height / 14;
@@ -92,13 +93,13 @@ void disp_image(FBIO *fb)
     line = (unsigned char *) bu_malloc(scr_width*3, "line");
     altline = (unsigned char *) bu_calloc(scr_width*3, sizeof(unsigned char), "altline");
 
-    mk_ramp(fb, 1, 1, 1, 0);
-    mk_ramp(fb, 1, 0, 0, 2);
-    mk_ramp(fb, 1, 1, 0, 4);
-    mk_ramp(fb, 0, 1, 0, 6);
-    mk_ramp(fb, 0, 1, 1, 8);
-    mk_ramp(fb, 0, 0, 1, 10);
-    mk_ramp(fb, 1, 0, 1, 12);
+    mk_ramp(fb_i, 1, 1, 1, 0);
+    mk_ramp(fb_i, 1, 0, 0, 2);
+    mk_ramp(fb_i, 1, 1, 0, 4);
+    mk_ramp(fb_i, 0, 1, 0, 6);
+    mk_ramp(fb_i, 0, 1, 1, 8);
+    mk_ramp(fb_i, 0, 0, 1, 10);
+    mk_ramp(fb_i, 1, 0, 1, 12);
 
     (void)bu_free(line, "line");
     (void)bu_free(altline, "altline");
@@ -115,7 +116,7 @@ main(int argc, char **argv)
     double gamr = 0, gamg = 0, gamb = 0;	/* gamma's */
     double f;
     ColorMap cm;
-    FBIO *fbp;
+    fb *fbp;
 
     onegamma = 0;
 
@@ -152,7 +153,7 @@ main(int argc, char **argv)
 	bu_exit(1, "%s", usage);
     }
 
-    if ((fbp = fb_open(framebuffer, fbsize, fbsize)) == FBIO_NULL) {
+    if ((fbp = fb_open(framebuffer, fbsize, fbsize)) == FB_NULL) {
 	bu_exit(2, "Unable to open framebuffer\n");
     }
 

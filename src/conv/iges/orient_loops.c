@@ -1,7 +1,7 @@
 /*                  O R I E N T _ L O O P S . C
  * BRL-CAD
  *
- * Copyright (c) 1994-2013 United States Government as represented by
+ * Copyright (c) 1994-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -109,8 +109,7 @@ Find_inner_loops(struct faceuse *fu, struct loop_list *lptr)
 
 
 void
-Orient_face_loops(fu)
-    struct faceuse *fu;
+Orient_face_loops(struct faceuse *fu)
 {
     struct loopuse *lu;
     struct loopuse *lu_outer = NULL;
@@ -122,7 +121,8 @@ Orient_face_loops(fu)
 	fu = fu->fumate_p;
     if (fu->orientation != OT_SAME) {
 	bu_log("Orient_face_loops: fu %p has orient %s and mate (%p) has orient %s (no OT_SAME)\n",
-	       fu, nmg_orientation(fu->orientation), fu->fumate_p, nmg_orientation(fu->fumate_p->orientation));
+	       (void *)fu, nmg_orientation(fu->orientation),
+	       (void *)fu->fumate_p, nmg_orientation(fu->fumate_p->orientation));
 	bu_exit(1, "Face with no OT_SAME use\n");
     }
 
@@ -195,8 +195,7 @@ Orient_face_loops(fu)
 
 
 void
-Orient_nurb_face_loops(fu)
-    struct faceuse *fu;
+Orient_nurb_face_loops(struct faceuse *fu)
 {
     struct face *f;
     struct face_g_snurb *fg;
@@ -246,8 +245,7 @@ Orient_nurb_face_loops(fu)
 
 
 void
-Orient_loops(r)
-    struct nmgregion *r;
+Orient_loops(struct nmgregion *r)
 {
     struct shell *s;
 

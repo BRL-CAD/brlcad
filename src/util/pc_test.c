@@ -1,7 +1,7 @@
 /*                   	P C _ T E S T . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2013 United States Government as represented by
+ * Copyright (c) 2008-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -35,10 +35,10 @@
 
 #include "bio.h"
 
-#include "db.h"
+#include "rt/db4.h"
 #include "raytrace.h"
 #include "wdb.h"
-#include "rtgeom.h"
+#include "rt/geom.h"
 #include "pc.h"
 
 int
@@ -63,7 +63,6 @@ main(int argc, char **argv)
     solnam[7] = '1';
     solnam[8] = '\0';
 
-    /*rt_init_resource(&rt_uniresource, 0, NULL);*/
     if (argc!=2) {
 	bu_exit(1, "Too few arguments, Please provide output filename\n");
     }

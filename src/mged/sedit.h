@@ -1,7 +1,7 @@
 /*                         S E D I T . H
  * BRL-CAD
  *
- * Copyright (c) 1985-2013 United States Government as represented by
+ * Copyright (c) 1985-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -25,6 +25,9 @@
  *
  */
 
+#ifndef MGED_SEDIT_H
+#define MGED_SEDIT_H
+
 #define MGED_SMALL_SCALE 1.0e-10
 
 /* These EDIT_CLASS_ values go in es_edclass. */
@@ -36,9 +39,9 @@
 /* These ECMD_ values go in es_edflag.  Some names not changed yet */
 #define IDLE		0	/* edarb.c */
 #define STRANS		1	/* buttons.c */
-#define SSCALE		2	/* buttons.c */	/* Scale whole solid by scalor */
+#define SSCALE		2	/* buttons.c */	/* Scale whole solid by scalar */
 #define SROT		3	/* buttons.c */
-#define PSCALE		4	/* Scale one solid parameter by scalor */
+#define PSCALE		4	/* Scale one solid parameter by scalar */
 
 #define ECMD_TGC_MV_H	5
 #define ECMD_TGC_MV_HH	6
@@ -271,6 +274,9 @@ extern void get_solid_keypoint(fastf_t *pt,
 			       char **strp,
 			       struct rt_db_internal *ip,
 			       fastf_t *mat);
+
+#endif /* MGED_SEDIT_H */
+
 /*
  * Local Variables:
  * mode: C

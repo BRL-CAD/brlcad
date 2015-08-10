@@ -1,7 +1,7 @@
 /*                            P O L Y . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2013 United States Government as represented by
+ * Copyright (c) 1985-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -29,14 +29,13 @@
 
 #include "common.h"
 
-#include <stdio.h>
 #include <math.h>
 #include "bio.h"
 
 #include "vmath.h"
-#include "db.h"
+#include "rt/db4.h"
 #include "nmg.h"
-#include "rtgeom.h"
+#include "rt/geom.h"
 #include "raytrace.h"
 
 #include "../../librt_private.h"
@@ -49,8 +48,6 @@ HIDDEN int rt_pgface(struct soltab *stp, fastf_t *ap, fastf_t *bp, fastf_t *cp, 
 /* Describe algorithm here */
 
 /**
- * R T _ P G _ P L O T
- *
  * Calculate the bounding RPP for a poly
  */
 int
@@ -88,8 +85,6 @@ rt_pg_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struct b
 
 
 /**
- * R T _ P G _ P R E P
- *
  * This routine is used to prepare a list of planar faces for
  * being shot at by the triangle routines.
  *
@@ -127,7 +122,7 @@ rt_pg_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 	    VMOVE(work[1], work[2]);
 	}
     }
-    if (stp->st_specific == (genptr_t)0) {
+    if (stp->st_specific == (void *)0) {
 	bu_log("pg(%s):  no faces\n", stp->st_name);
 	return -1;		/* BAD */
     }
@@ -153,14 +148,12 @@ rt_pg_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 
 
 /**
- * R T _ P G F A C E
- *
  * This function is called with pointers to 3 points,
  * and is used to prepare PG faces.
  * ap, bp, cp point to vect_t points.
  *
  * Return -
- * 0 if the 3 points didn't form a plane (e.g., colinear, etc.).
+ * 0 if the 3 points didn't form a plane (e.g., collinear, etc.).
  * # pts (3) if a valid plane resulted.
  */
 HIDDEN int
@@ -199,14 +192,11 @@ rt_pgface(struct soltab *stp, fastf_t *ap, fastf_t *bp, fastf_t *cp, const struc
 
     /* Add this face onto the linked list for this solid */
     trip->tri_forw = (struct tri_specific *)stp->st_specific;
-    stp->st_specific = (genptr_t)trip;
+    stp->st_specific = (void *)trip;
     return 3;				/* OK */
 }
 
 
-/**
- * R T _ P G _ P R I N T
- */
 void
 rt_pg_print(const struct soltab *stp)
 {
@@ -231,8 +221,6 @@ rt_pg_print(const struct soltab *stp)
 
 
 /**
- * R T _ P G _ S H O T
- *
  * Function -
  * Shoot a ray at a polygonal object.
  *
@@ -454,9 +442,6 @@ rt_pg_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct s
 }
 
 
-/**
- * R T _ P G _ F R E E
- */
 void
 rt_pg_free(struct soltab *stp)
 {
@@ -472,9 +457,6 @@ rt_pg_free(struct soltab *stp)
 }
 
 
-/**
- * R T _ P G _ N O R M
- */
 void
 rt_pg_norm(struct hit *hitp, struct soltab *stp, struct xray *rp)
 {
@@ -488,9 +470,6 @@ rt_pg_norm(struct hit *hitp, struct soltab *stp, struct xray *rp)
 }
 
 
-/**
- * R T _ P G _ U V
- */
 void
 rt_pg_uv(struct application *ap, struct soltab *stp, struct hit *hitp, struct uvcoord *uvp)
 {
@@ -506,19 +485,6 @@ rt_pg_uv(struct application *ap, struct soltab *stp, struct hit *hitp, struct uv
 }
 
 
-/**
- * R T _ P G _ C L A S S
- */
-int
-rt_pg_class(void)
-{
-    return 0;
-}
-
-
-/**
- * R T _ P G _ P L O T
- */
 int
 rt_pg_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol), const struct rt_view_info *UNUSED(info))
 {
@@ -547,8 +513,6 @@ rt_pg_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tes
 
 
 /**
- * R T _ P G _ P L O T _ P O L Y
- *
  * Convert to vlist, draw as polygons.
  */
 int
@@ -586,9 +550,6 @@ rt_pg_plot_poly(struct bu_list *vhead, struct rt_db_internal *ip, const struct r
 }
 
 
-/**
- * R T _ P G _ C U R V E
- */
 void
 rt_pg_curve(struct curvature *cvp, struct hit *hitp, struct soltab *stp)
 {
@@ -602,9 +563,6 @@ rt_pg_curve(struct curvature *cvp, struct hit *hitp, struct soltab *stp)
 }
 
 
-/**
- * R T _ P G _ T E S S
- */
 int
 rt_pg_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct rt_tess_tol *UNUSED(ttol), const struct bn_tol *tol)
 {
@@ -677,8 +635,6 @@ rt_pg_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, con
 
 
 /**
- * R T _ P G _ I M P O R T
- *
  * Read all the polygons in as a complex dynamic structure.
  * The caller is responsible for freeing the dynamic memory.
  * (vid rt_pg_ifree).
@@ -762,8 +718,6 @@ rt_pg_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fas
 
 
 /**
- * R T _ P G _ E X P O R T
- *
  * The name will be added by the caller.
  * Generally, only libwdb will set conv2mm != 1.0
  */
@@ -785,7 +739,7 @@ rt_pg_export4(struct bu_external *ep, const struct rt_db_internal *ip, double lo
 
     BU_CK_EXTERNAL(ep);
     ep->ext_nbytes = (1 + pgp->npoly) * sizeof(union record);
-    ep->ext_buf = (genptr_t)bu_calloc(1, ep->ext_nbytes, "pg external");
+    ep->ext_buf = (uint8_t *)bu_calloc(1, ep->ext_nbytes, "pg external");
     rec = (union record *)ep->ext_buf;
 
     rec[0].p.p_id = ID_P_HEAD;
@@ -849,8 +803,6 @@ rt_pg_export5(struct bu_external *ep, const struct rt_db_internal *ip, double UN
 
 
 /**
- * R T _ P G _ D E S C R I B E
- *
  * Make human-readable formatted presentation of this solid.
  * First line describes type of solid.
  * Additional lines are indented one tab, and give parameter values.
@@ -908,8 +860,6 @@ rt_pg_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose,
 
 
 /**
- * R T _ P G _ I F R E E
- *
  * Free the storage associated with the rt_db_internal version of this solid.
  */
 void
@@ -935,12 +885,8 @@ rt_pg_ifree(struct rt_db_internal *ip)
     pgp->magic = 0;			/* sanity */
     pgp->npoly = 0;
     bu_free((char *)pgp, "pg ifree");
-    ip->idb_ptr = GENPTR_NULL;	/* sanity */
+    ip->idb_ptr = ((void *)0);	/* sanity */
 }
-/**
- * R T _ P G _ P A R A M S
- *
- */
 int
 rt_pg_params(struct pc_pc_set *UNUSED(ps), const struct rt_db_internal *ip)
 {
@@ -951,8 +897,6 @@ rt_pg_params(struct pc_pc_set *UNUSED(ps), const struct rt_db_internal *ip)
 
 
 /**
- * R T _ P G _ T O _ B O T
- *
  * Convert in-memory form of a polysolid (pg) to a bag of triangles (BoT)
  * There is no record in the V5 database for a polysolid.
  *

@@ -1,7 +1,7 @@
 /*                      V I E W C E L L . C
  * BRL-CAD
  *
- * Copyright (c) 1989-2013 United States Government as represented by
+ * Copyright (c) 1989-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -43,8 +43,6 @@
 extern fastf_t	gift_grid_rounding;
 extern point_t	viewbase_model;
 
-extern int	npsw;			/* number of worker PSWs to run */
-
 /* Viewing module specific "set" variables */
 struct bu_structparse view_parse[] = {
     {"",	0, (char *)0,	0,		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
@@ -78,8 +76,6 @@ int     raymiss(register struct application *ap);
 
 
 /*
- *  			V I E W _ I N I T
- *
  *  This routine is called by main().  It prints the overall shotline
  *  header. Furthermore, pointers to rayhit() and raymiss() are set up
  *  and are later called from do_run().
@@ -110,8 +106,6 @@ view_init(register struct application *ap, char *UNUSED(file), char *UNUSED(obj)
 }
 
 /*
- *			V I E W _ 2 I N I T
- *
  *  View_2init is called by do_frame(), which in turn is called by
  *  main() in rt.c.
  *
@@ -144,8 +138,6 @@ view_2init(struct application *UNUSED(ap), char *UNUSED(framename))
 }
 
 /*
- *			R A Y M I S S
- *
  *  Null function -- handle a miss
  *  This function is called by rt_shootray(), which is called by
  *  do_frame().
@@ -157,8 +149,6 @@ raymiss(register struct application *UNUSED(ap))
 }
 
 /*
- *			V I E W _ P I X E L
- *
  *  This routine is called from do_run(), and in this case does nothing.
  */
 void
@@ -168,8 +158,6 @@ view_pixel(struct application *UNUSED(ap))
 }
 
 /*
- *			R A Y H I T
- *
  *  Rayhit() is called by rt_shootray() when the ray hits one or more objects.
  *  Write information about this "cell".
  */
@@ -216,8 +204,6 @@ rayhit(struct application *ap, register struct partition *PartHeadp, struct seg 
 }
 
 /*
- *			V I E W _ E O L
- *
  *  View_eol() is called by rt_shootray() in do_run().  In this case,
  *  it does nothing.
  */
@@ -227,8 +213,6 @@ view_eol(struct application *UNUSED(ap))
 }
 
 /*
- *			V I E W _ E N D
- *
  *  View_end() is called by rt_shootray in do_run().
  */
 void

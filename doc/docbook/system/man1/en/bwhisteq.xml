@@ -19,20 +19,20 @@
   <command>bwhisteq</command>
     <arg choice='opt'>-v </arg>
     <arg choice='plain'><replaceable>file.bw</replaceable></arg>
-    <arg choice='plain'><replaceable>&gt;</replaceable></arg>
+    <arg choice='plain'>&gt;</arg>
     <arg choice='plain'><replaceable>file.equalized</replaceable></arg>
 </cmdsynopsis>
 </refsynopsisdiv>
 
 
 <refsect1 xml:id='description'><title>DESCRIPTION</title>
-<para><emphasis remap='I'>Bwhisteq</emphasis>
+<para><command>bwhisteq</command>
 automatically equalizes the histogram of a black and white
 <citerefentry><refentrytitle>bw</refentrytitle><manvolnum>5</manvolnum></citerefentry>
 format file.
 It reads the file
 <emphasis remap='I'>file.bw</emphasis>
-and writes a "remapped" version of it on its standard output.
+and writes a "remapped" version of it on standard output.
 The method used is to distribute the values of the histogram, as
 best as possible, in order to
 produce a constant average "density",
@@ -54,7 +54,7 @@ flag will output the old and new histogram values on the terminal.</para>
 </refsect1>
 
 <refsect1 xml:id='copyright'><title>COPYRIGHT</title>
-<para>This software is Copyright (c) 1989-2013 by the United States
+<para>This software is Copyright (c) 1989-2014 by the United States
 Government as represented by U.S. Army Research Laboratory.</para>
 </refsect1>
 

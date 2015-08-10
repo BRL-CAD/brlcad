@@ -23,7 +23,7 @@
 
 
 <refsect1 xml:id='description'><title>DESCRIPTION</title>
-<para><emphasis remap='I'>Bary</emphasis>
+<para><command>bary</command>
 computes weighted sums of a set of sites in Euclidean 3-space,
 writing them on the standard output.
 The site weights are read from
@@ -107,7 +107,7 @@ producing the following output:</para>
 </refsect1>
 
 <refsect1 xml:id='copyright'><title>COPYRIGHT</title>
-<para>This software is Copyright (c) 1995-2013 by the United States
+<para>This software is Copyright (c) 1995-2014 by the United States
 Government as represented by U.S. Army Research Laboratory.</para>
 
 </refsect1>

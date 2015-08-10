@@ -1,7 +1,7 @@
 /*                    E L L _ B R E P . C P P
  * BRL-CAD
  *
- * Copyright (c) 2008-2013 United States Government as represented by
+ * Copyright (c) 2008-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -26,13 +26,10 @@
 #include "common.h"
 
 #include "raytrace.h"
-#include "rtgeom.h"
+#include "rt/geom.h"
 #include "brep.h"
 
 
-/**
- * R T _ E T O _ B R E P
- */
 extern "C" void
 rt_eto_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *)
 {
@@ -60,6 +57,15 @@ rt_eto_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *)
     //  and scale it.
 
     VCROSS(v1, eip->eto_C, eip->eto_N);
+    if (NEAR_ZERO(MAGNITUDE(v1), VUNITIZE_TOL)) {
+	vect_t dir_vect;
+	VSET(dir_vect, 0, 1, 0);
+	VCROSS(v1, dir_vect, eip->eto_N);
+	if (NEAR_ZERO(MAGNITUDE(v1), VUNITIZE_TOL)) {
+	    VSET(dir_vect, 1, 0, 0);
+	    VCROSS(v1, dir_vect, eip->eto_N);
+	}
+    }
     point_t temp;
     VMOVE(temp, v1);
     VCROSS(v1a, v1, eip->eto_N);

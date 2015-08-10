@@ -1,7 +1,7 @@
 /*                    M K B U I L D I N G . H
  * BRL-CAD
  *
- * Copyright (c) 2009-2013 United States Government as represented by
+ * Copyright (c) 2009-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -17,29 +17,26 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file proc-db/mkbuilding.h
- *
- *
- *
- */
 
-#ifndef __MKBUILDING_H__
-#define __MKBUILDING_H__
+#ifndef PROC_DB_MKBUILDING_H
+#define PROC_DB_MKBUILDING_H
 
-#define USE2X4   1
-#define USE2X6   2
-
+#include "common.h"
 
 #include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
 
-#include "bu.h"
+#include "bu/vls.h"
 #include "vmath.h"
 #include "bn.h"
 #include "raytrace.h"
-#include "rtgeom.h"
+#include "rt/geom.h"
 #include "wdb.h"
+
+
+#define USE2X4   1
+#define USE2X6   2
 
 
 void mkbldg_makeWallSegment(char *name, struct rt_wdb *db_filepointer, point_t p1, point_t p2);

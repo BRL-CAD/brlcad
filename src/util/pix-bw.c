@@ -1,7 +1,7 @@
 /*                        P I X - B W . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2013 United States Government as represented by
+ * Copyright (c) 1986-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -36,8 +36,12 @@
 #include <string.h>
 #include "bio.h"
 
-#include "bu.h"
 #include "vmath.h"
+#include "bu/getopt.h"
+#include "bu/str.h"
+#include "bu/log.h"
+#include "bu/mime.h"
+#include "icv.h"
 
 
 unsigned char ibuf[3*1024], obuf[1024];
@@ -49,132 +53,144 @@ int blue  = 0;
 double rweight = 0.0;
 double gweight = 0.0;
 double bweight = 0.0;
+size_t inx = 0, iny = 0;
+ICV_COLOR color;
+
+char *out_file = NULL;
+char *in_file = NULL;
 
 static const char usage[] = "\
-Usage: pix-bw [-ntsc -crt -R[#] -G[#] -B[#]] [in.pix] > out.bw\n";
+Usage: pix-bw [-s squaresize] [-w width] [-n height]\n\
+              [ [-e ntsc|crt] [[-R red_weight] [-G green_weight] [-B blue_weight]] ]\n\
+              [-o out_file.bw] [[<] file.pix] [> out_file.bw]\n";
+
+int
+get_args(int argc, char **argv)
+{
+    int c;
+
+    bu_optind = 1;
+    while ((c = bu_getopt(argc, argv, "e:s:w:n:R:G:B:o:h?")) != -1) {
+	switch (c) {
+	    case 'e' :
+	        if (BU_STR_EQUAL(bu_optarg, "ntsc")) {
+		    rweight = 0.30;
+		    gweight = 0.59;
+		    bweight = 0.11;
+		}
+		else if (BU_STR_EQUAL(bu_optarg, "crt")) {
+		    rweight = 0.26;
+		    gweight = 0.66;
+		    bweight = 0.08;
+		}
+		else {
+		    fprintf(stderr,"pix-bw: invalid -e argument\n");
+		    return 0;
+		}
+		red = green = blue = 1;
+		break;
+	    case 'R' :
+		red++;
+		rweight = atof(bu_optarg);
+		break;
+	    case 'G' :
+		green++;
+		gweight = atof(bu_optarg);
+		break;
+	    case 'B' :
+		blue++;
+		bweight = atof(bu_optarg);
+		break;
+	    case 'o' :
+		out_file = bu_optarg;
+		break;
+            case 's' :
+               inx = iny = atoi(bu_optarg);
+               break;
+            case 'w' :
+               inx = atoi(bu_optarg);
+               break;
+            case 'n' :
+               iny = atoi(bu_optarg);
+               break;
+	    default:		/* '?' 'h' */
+		return 0;
+	}
+    }
+
+/* Eliminate the "cannot send output to a tty" message if we
+ * detect the run-with-no-arguments situation.  For an actual
+ * run, we would need a least a color-scheme argument.
+ */
+    if (isatty(fileno(stdout)) && out_file == NULL) {
+	if (argc != 1)
+    	    bu_log("pix-bw: cannot send output to a tty\n");
+	return 0;
+    }
+
+    if (bu_optind >= argc) {
+	if (isatty(fileno(stdin))) {
+	    bu_log("pix-bw: cannot receive input from a tty\n");
+	    return 0;
+	}
+    } else {
+	in_file = argv[bu_optind];
+	bu_optind++;
+	return 1;
+    }
+
+    if (argc > ++bu_optind) {
+	bu_log("pix-bw: excess argument(s) ignored\n");
+    }
+
+    return 1;		/* OK */
+}
 
 int
 main(int argc, char **argv)
 {
-    size_t in, out, num;
-    int multiple_colors, num_color_planes;
-    int clip_high, clip_low;
-    double value;
-    FILE *finp, *foutp;
-    size_t ret;
 
-    while (argc > 1 && argv[1][0] == '-') {
-	if (BU_STR_EQUAL(argv[1], "-ntsc")) {
-	    /* NTSC weights */
-	    rweight = 0.30;
-	    gweight = 0.59;
-	    bweight = 0.11;
-	    red = green = blue = 1;
-	} else if (BU_STR_EQUAL(argv[1], "-crt")) {
-	    /* CRT weights */
-	    rweight = 0.26;
-	    gweight = 0.66;
-	    bweight = 0.08;
-	    red = green = blue = 1;
-	} else {
-	    switch (argv[1][1]) {
-		case 'R':
-		    red++;
-		    if (argv[1][2] != '\0')
-			rweight = atof(&argv[1][2]);
-		    break;
-		case 'G':
-		    green++;
-		    if (argv[1][2] != '\0')
-			gweight = atof(&argv[1][2]);
-		    break;
-		case 'B':
-		    blue++;
-		    if (argv[1][2] != '\0')
-			bweight = atof(&argv[1][2]);
-		    break;
-		default:
-		    fprintf(stderr, "pix-bw: bad flag \"%s\"\n", argv[1]);
-		    bu_exit(1, "%s", usage);
-	    }
-	}
-	argc--;
-	argv++;
+    icv_image_t *img;
+    if (!get_args(argc, argv)) {
+	bu_log("%s", usage);
+	return 1;
     }
 
-    if (argc > 1) {
-	if ((finp = fopen(argv[1], "rb")) == NULL) {
-	    bu_exit(2, "pix-bw: can't open \"%s\"\n", argv[1]);
-	}
-    } else
-	finp = stdin;
-
-#if defined(_WIN32) && !defined(__CYGWIN__)
     setmode(fileno(stdin), O_BINARY);
     setmode(fileno(stdout), O_BINARY);
     setmode(fileno(stderr), O_BINARY);
-#endif
 
-    foutp = stdout;
+    img = icv_read(in_file, MIME_IMAGE_PIX, inx, iny);
 
-    if (isatty(fileno(finp)) || isatty(fileno(foutp))) {
-	bu_exit(2, "%s", usage);
-    }
+    if (img == NULL)
+	return 1;
 
-    /* Hack for multiple color planes */
-    if (red + green + blue > 1 || !ZERO(rweight) || !ZERO(gweight) || !ZERO(bweight))
-	multiple_colors = 1;
+    if (red && green && blue)
+	color = ICV_COLOR_RGB;
+    else if (blue && green)
+	color = ICV_COLOR_BG;
+    else if (red && blue)
+	color = ICV_COLOR_RB;
+    else if (red && green)
+	color = ICV_COLOR_RG;
+    else if (red)
+	color = ICV_COLOR_R;
+    else if (blue)
+	color = ICV_COLOR_B;
+    else if (green)
+	color = ICV_COLOR_G;
     else
-	multiple_colors = 0;
-
-    num_color_planes = red + green + blue;
-    if (red != 0 && ZERO(rweight))
-	rweight = 1.0 / (double)num_color_planes;
-    if (green != 0 && ZERO(gweight))
-	gweight = 1.0 / (double)num_color_planes;
-    if (blue != 0 && ZERO(bweight))
-	bweight = 1.0 / (double)num_color_planes;
-
-    clip_high = clip_low = 0;
-    while ((num = fread(ibuf, sizeof(char), 3*1024, finp)) > 0) {
-	/*
-	 * The loops are repeated for efficiency...
+	color = ICV_COLOR_RGB;
+    	/* no color scheme specified; rweight,gweight,bweight have
+	 * all remained zero, so weight the 3 colors equally.
 	 */
-	if (multiple_colors) {
-	    for (in = out = 0; out < num/3; out++, in += 3) {
-		value = rweight*ibuf[in] + gweight*ibuf[in+1] + bweight*ibuf[in+2];
-		if (value > 255.0) {
-		    obuf[out] = 255;
-		    clip_high++;
-		} else if (value < 0.0) {
-		    obuf[out] = 0;
-		    clip_low++;
-		} else
-		    obuf[out] = value;
-	    }
-	} else if (red) {
-	    for (in = out = 0; out < num/3; out++, in += 3)
-		obuf[out] = ibuf[in];
-	} else if (green) {
-	    for (in = out = 0; out < num/3; out++, in += 3)
-		obuf[out] = ibuf[in+1];
-	} else if (blue) {
-	    for (in = out = 0; out < num/3; out++, in += 3)
-		obuf[out] = ibuf[in+2];
-	} else {
-	    /* uniform weight */
-	    for (in = out = 0; out < num/3; out++, in += 3)
-		obuf[out] = ((int)ibuf[in] + (int)ibuf[in+1] +
-			     (int)ibuf[in+2]) / 3;
-	}
-	ret = fwrite(obuf, sizeof(char), num/3, foutp);
-	if (ret != (size_t)num/3)
-	    perror("fwrite");
-    }
 
-    if (clip_high != 0 || clip_low != 0) {
-	fprintf(stderr, "pix-bw: clipped %d high, %d, low\n",
-		clip_high, clip_low);
+    icv_rgb2gray(img, color, rweight, gweight, bweight);
+
+    icv_write(img, out_file, MIME_IMAGE_BW);
+
+    if (!isatty(fileno(stdout)) && out_file != NULL) {
+	icv_write(img, NULL, MIME_IMAGE_BW);
     }
 
     return 0;

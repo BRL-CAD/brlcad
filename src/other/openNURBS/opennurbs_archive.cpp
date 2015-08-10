@@ -15348,6 +15348,16 @@ const wchar_t* ON_FileIterator::NextFile()
   for(;;)
   {
     current_file_attributes = 0;
+#if defined(__MINGW32__)
+    struct dirent* dp = readdir(m_dir);
+    if ( 0 == dp )
+      break;
+    if ( 0 == dp->d_name[0] )
+      break;
+
+    if ( IsDotOrDotDotDir(dp->d_name) )
+      continue;
+#else
     struct dirent* dp = 0;
     int readdir_errno = readdir_r(m_dir, &m_dirent, &dp);
     if ( 0 !=  readdir_errno )
@@ -15359,6 +15369,7 @@ const wchar_t* ON_FileIterator::NextFile()
 
     if ( IsDotOrDotDotDir(m_dirent.d_name) )
       continue;
+#endif
 
     memset( current_name, 0, sizeof(current_name) );
     ON_ConvertUTF8ToWideChar(

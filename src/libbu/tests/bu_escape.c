@@ -1,7 +1,7 @@
 /*                   T E S T _ E S C A P E . C
  * BRL-CAD
  *
- * Copyright (c) 2011-2013 United States Government as represented by
+ * Copyright (c) 2011-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -46,7 +46,7 @@ main(int ac, char *av[])
     char buffer[32];
 
     if (ac < 3)
-	printf("Usage: %s function_to_test test_number\n", av[0]);
+	fprintf(stderr,"Usage: %s function_to_test test_number\n", av[0]);
 
     sscanf(av[1], "%d", &function_num);
     sscanf(av[2], "%d", &test_num);

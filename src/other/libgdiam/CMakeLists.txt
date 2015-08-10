@@ -2,6 +2,9 @@
 cmake_minimum_required(VERSION 2.8)
 if(COMMAND CMAKE_POLICY)
   CMAKE_POLICY(SET CMP0003 NEW)
+  if ("${CMAKE_VERSION}" VERSION_GREATER 2.99)
+    CMAKE_POLICY(SET CMP0026 OLD)
+  endif ("${CMAKE_VERSION}" VERSION_GREATER 2.99)
 endif(COMMAND CMAKE_POLICY)
 
 # Set CMake project name
@@ -23,6 +26,18 @@ install(TARGETS libgdiam
   RUNTIME DESTINATION ${BIN_DIR}
   LIBRARY DESTINATION ${LIB_DIR}
   ARCHIVE DESTINATION ${LIB_DIR})
+
+if(MSVC)
+   set_property(TARGET libgdiam APPEND PROPERTY COMPILE_DEFINITIONS "GDIAM_DLL_EXPORTS")
+endif(MSVC)
+
+if(BUILD_STATIC_LIBS)
+  add_library(libgdiam-static STATIC gdiam.cpp)
+  if(CMAKE_CL_64)
+    set_target_properties(libgdiam-static PROPERTIES STATIC_LIBRARY_FLAGS "/machine:x64")
+  endif(CMAKE_CL_64)
+endif(BUILD_STATIC_LIBS)
+
 
 if(ENABLE_GDIAM_TESTING)
   # Enable ctest

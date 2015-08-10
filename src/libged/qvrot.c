@@ -1,7 +1,7 @@
 /*                         Q V R O T . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2013 United States Government as represented by
+ * Copyright (c) 2008-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -28,7 +28,6 @@
 #include <stdlib.h>
 #include <ctype.h>
 #include <string.h>
-#include "bio.h"
 
 #include "./ged_private.h"
 
@@ -112,8 +111,8 @@ ged_qvrot(struct ged *gedp, int argc, const char *argv[])
 
     el = atan2(dz, sqrt(dx * dx + dy * dy));
 
-    bn_mat_angles(gedp->ged_gvp->gv_rotation, 270.0 + el * bn_radtodeg, 0.0, 270.0 - az * bn_radtodeg);
-    usejoy(gedp, 0.0, 0.0, theta*bn_degtorad);
+    bn_mat_angles(gedp->ged_gvp->gv_rotation, 270.0 + el * RAD2DEG, 0.0, 270.0 - az * RAD2DEG);
+    usejoy(gedp, 0.0, 0.0, theta*DEG2RAD);
     ged_view_update(gedp->ged_gvp);
 
     return GED_OK;

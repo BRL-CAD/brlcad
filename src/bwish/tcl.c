@@ -1,7 +1,7 @@
 /*                           T C L . C
  * BRL-CAD
  *
- * Copyright (c) 1998-2013 United States Government as represented by
+ * Copyright (c) 1998-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -44,7 +44,7 @@
 #  include <sys/select.h> /* for select */
 #endif
 
-#include "bu.h"
+#include "dm.h"
 
 /* We need to be careful about tty resetting - xcodebuild
  * and resetTty were locking up.  Add a tty check
@@ -100,7 +100,6 @@ Cad_Main(int argc, char **argv, Tcl_AppInitProc (*appInitProc), Tcl_Interp *inte
     char *filename = NULL;
     char *args = NULL;
     char buf[TCL_INTEGER_SPACE] = {0};
-    int status;
     Tcl_DString argString;
 
     bu_setprogname(argv[0]);
@@ -143,6 +142,8 @@ Cad_Main(int argc, char **argv, Tcl_AppInitProc (*appInitProc), Tcl_Interp *inte
     }
 
     if (filename != NULL) {
+	int status;
+
 	/* ??? need to arrange for a bu_log handler and or handlers
 	 * for stdout/stderr?
 	 */

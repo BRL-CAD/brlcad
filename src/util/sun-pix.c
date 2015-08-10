@@ -1,7 +1,7 @@
 /*                       S U N - P I X . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2013 United States Government as represented by
+ * Copyright (c) 1986-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -27,11 +27,13 @@
 #include "common.h"
 
 #include <stdlib.h>
+#include <limits.h>
 #include "bio.h"
 
-#include "bu.h"
 #include "vmath.h"
 
+#include "bu/getopt.h"
+#include "bu/log.h"
 
 /*
  * Description of Sun header for files containing raster images
@@ -87,10 +89,10 @@ char inbuf[sizeof(struct rasterfile)];
 
 int pixout = 1;		/* 0 = bw(5) output, 1 = pix(5) output */
 int colorout = 0;
-int hflag;
-int inverted;
-int pure;			/* No Sun header */
-int verbose;
+int hflag = 0;
+int inverted = 0;
+int pure = 0;			/* No Sun header if pure is 1 */
+int verbose = 0;
 struct colors {
     unsigned char CL_red;
     unsigned char CL_green;
@@ -101,11 +103,13 @@ struct colors {
 struct colors Cmap[256];
 static size_t CMAP_MAX_INDEX = sizeof(Cmap) - 1;
 
+static char hyphen[] = "-";
 static char *file_name;
 static FILE *fp;
 
 char usage[] = "\
-Usage: sun-pix [-b -h -i -P -v -C] [sun.bitmap]\n";
+Usage: sun-pix [-b -H -i -P -v -C] [sun.bitmap]\n\
+       (standard output must be redirected)\n";
 
 
 #define NET_LONG_LEN 4 /* # bytes to network long */
@@ -128,15 +132,15 @@ get_args(int argc, char **argv)
 {
     int c;
 
-    while ((c = bu_getopt(argc, argv, "bhiPvC")) != -1) {
+    while ((c = bu_getopt(argc, argv, "bHiPvCh?")) != -1) {
 	switch (c) {
 	    case 'b':
 		pixout = 0;	/* bw(5) */
 		break;
 	    case 'C':
-		colorout = 1;	/* output just the color map */
+		colorout = 1;	/* output the color map */
 		break;
-	    case 'h':
+	    case 'H':
 		hflag = 1;	/* print header */
 		break;
 	    case 'i':
@@ -149,7 +153,7 @@ get_args(int argc, char **argv)
 		verbose = 1;
 		break;
 
-	    default:		/* '?' */
+	    default:		/* '?' 'h' */
 		return 0;
 	}
     }
@@ -157,7 +161,7 @@ get_args(int argc, char **argv)
     if (bu_optind >= argc) {
 	if (isatty(fileno(stdin)))
 	    return 0;
-	file_name = "-";
+	file_name = hyphen;
 	fp = stdin;
     } else {
 	file_name = argv[bu_optind];

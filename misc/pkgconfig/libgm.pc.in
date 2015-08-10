@@ -1,0 +1,13 @@
+prefix=@prefix@
+exec_prefix=@exec_prefix@
+libdir=@libdir@
+includedir=@includedir@
+datarootdir=@datarootdir@
+datadir=@datadir@
+
+Name: libgm
+Description: BRL-CAD Geometry Library
+Version: @BRLCAD_VERSION@
+Requires: libbn libbu
+Libs: -L${libdir} -lgm -lbn -lbu @LIBTCL@ @LIBM@
+Cflags: -I${includedir}/brlcad -I${includedir}

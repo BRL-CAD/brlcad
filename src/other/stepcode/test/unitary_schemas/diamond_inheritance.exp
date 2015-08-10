@@ -1,0 +1,57 @@
+
+SCHEMA diamond_inheritance;
+
+TYPE bname = ENUMERATION OF (B, bee);
+END_TYPE;
+
+ENTITY A ABSTRACT SUPERTYPE OF (B ANDOR C);
+    a_name : STRING;
+END_ENTITY;
+
+ENTITY B SUPERTYPE OF (D) SUBTYPE OF (A);
+    b_name : bname;
+END_ENTITY;
+
+ENTITY C SUPERTYPE OF (D ANDOR E) SUBTYPE OF (A);
+    c_name : INTEGER;
+END_ENTITY;
+
+(* D exhibits 'standard' diamond inheritance:
+
+   A
+  / \
+ B   C
+  \ /
+   D
+
+ a_name appears twice in its attr list.
+*)
+ENTITY D SUBTYPE OF (B, C);
+    d_name: REAL;
+END_ENTITY;
+
+ENTITY E SUPERTYPE OF (F) SUBTYPE OF (C);
+    e_name: REAL;
+END_ENTITY;
+
+(* F has a long leg:
+
+   A
+  / \
+ |   C
+ B   |
+ |   E
+  \ /
+   F
+ a_name appears twice in its attr list.
+*)
+ENTITY F SUBTYPE OF (B, E);
+    f_name: REAL;
+END_ENTITY;
+
+(* G combines D and F, and as a result a_name appears four times in its attr list, while b_name and c_name each appear twice. *)
+ENTITY G SUBTYPE OF (D, F);
+    g_name: REAL;
+END_ENTITY;
+
+END_SCHEMA;

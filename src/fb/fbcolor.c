@@ -1,7 +1,7 @@
 /*                       F B C O L O R . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2013 United States Government as represented by
+ * Copyright (c) 1986-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -29,9 +29,10 @@
 
 #include <stdlib.h>
 #include <string.h>
-#include "bio.h"
 
-#include "bu.h"
+#include "bu/color.h"
+#include "bu/getopt.h"
+#include "bu/log.h"
 #include "fb.h"
 #include "libtermio.h"
 
@@ -47,7 +48,7 @@ ColorMap old_map;
 ColorMap cm;
 
 static char *framebuffer = NULL;
-static FBIO *fbp;
+static fb *fbp;
 static int scr_height;
 static int scr_width;
 
@@ -57,8 +58,7 @@ int doKeyPad(void);
 
 static char usage[] = "\
 Usage: fbcolor [-F framebuffer]\n\
-	[-s squarescrsize] [-w scr_width] [-n scr_height]\n\
-	[-S squarescrsize] [-W scr_width] [-N scr_height]\n";
+	[-s|S squarescrsize] [-w|W scr_width] [-n|N scr_height]\n";
 
 void
 printusage(void)
@@ -81,7 +81,7 @@ main(int argc, char **argv)
 	bu_exit(1, NULL);
     }
 
-    if ((fbp = fb_open(framebuffer, scr_width, scr_height)) == FBIO_NULL) {
+    if ((fbp = fb_open(framebuffer, scr_width, scr_height)) == FB_NULL) {
 	fprintf(stderr, "fbcolor:  fb_open(%s) failure\n", framebuffer);
 	return 1;
     }
@@ -234,7 +234,8 @@ doKeyPad(void)
 	    curchan = 5;
 	    break;
 	case '/':
-	    if (++curchan >= 6) curchan = 0;
+	    if (++curchan >= 6)
+		curchan = 0;
 	    break;
 
 	    /* unit changes with -+ or , . */
@@ -276,8 +277,6 @@ new_rgb(void) {
 }
 
 
-/* p a r s _ A r g v ()
- */
 int
 pars_Argv(int argc, char **argv)
 {

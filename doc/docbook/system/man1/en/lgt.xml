@@ -25,31 +25,31 @@
 </refsynopsisdiv>
 
 <refsect1><title>WARNING</title>
-<para><emphasis remap='I'>Lgt</emphasis> is deprecated.  Use
+<para><command>lgt</command> is deprecated.  Use
 <citerefentry><refentrytitle>rtedge</refentrytitle><manvolnum>1</manvolnum></citerefentry>
 instead.</para>
 </refsect1>
 
 <refsect1 xml:id='description'><title>DESCRIPTION</title>
-<para><emphasis remap='I'>Lgt</emphasis>
+<para><command>lgt</command>
 is an image rendering tool for the
 <citerefentry><refentrytitle>mged</refentrytitle><manvolnum>1</manvolnum></citerefentry>
 solids modeling data base.
 The program can run interactively or detached from a terminal session
 (batch mode).
-The interactive user interface consists of a terminal independent pop-up
+The interactive user interface consists of a terminal-independent pop-up
 hierarchical menu system (though IRIS users have the option of using the
 mouse-driven graphics menus instead).
 The experienced user may wish to exit this menu system (by typing a `q')
 and use the single-letter command interface as described below.
 For information on the hierarchical menus and detailed information on the
-commands and overall usage of <emphasis remap='I'>lgt</emphasis> please refer to the paper
-<emphasis remap='B'>The "lgt" Lighting Model</emphasis> which is included in the BRL-CAD
+commands and overall usage of <command>lgt</command> please refer to the paper
+<emphasis remap='B'>The "lgt" Lighting Model</emphasis>, which is included in the BRL-CAD
 documentation.
 <emphasis remap='B'>Note</emphasis>
 that specifying the
 <emphasis remap='B'>viewing direction</emphasis>
-involves setting up light source zero,
+involves setting up light source zero;
 see the
 <emphasis remap='B'>L</emphasis>
 command below for more information.
@@ -78,10 +78,10 @@ array of pixels and then outputs a linear average of the result.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term><option>-b</option><replaceable>"R G B"</replaceable><emphasis remap='B'></emphasis></term>
+  <term><option>-b</option>"<replaceable>R G B</replaceable>"<emphasis remap='B'></emphasis></term>
   <listitem>
 <para>Set the background color to
-<emphasis remap='I'>R G B</emphasis>
+<emphasis remap='I'>R G B</emphasis>,
 which are intensity values from 0 to 255 of the red, green, and blue
 channels respectively.</para>
   </listitem>
@@ -97,7 +97,7 @@ a graphics device is being used.  The default is to disable the tracking-cursor.
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term><option>-d</option><replaceable>"x y"</replaceable><emphasis remap='B'></emphasis></term>
+  <term><option>-d</option>"<replaceable>x y</replaceable>"<emphasis remap='B'></emphasis></term>
   <listitem>
 <para>Set automatic mapping offsets to
 <emphasis remap='I'>x</emphasis>
@@ -107,7 +107,7 @@ in the IR Module.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term><option>-t</option><replaceable>"x y"</replaceable><emphasis remap='B'></emphasis></term>
+  <term><option>-t</option>"<replaceable>x y</replaceable>"<emphasis remap='B'></emphasis></term>
   <listitem>
 <para>Set the grid translation to
 <emphasis remap='I'>x</emphasis>
@@ -117,7 +117,7 @@ This offsets the grid within the grid plane (perpendicular to the viewing axis).
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term><option>-D</option><replaceable>"x y"</replaceable><emphasis remap='B'></emphasis></term>
+  <term><option>-D</option>"<replaceable>x y</replaceable>"<emphasis remap='B'></emphasis></term>
   <listitem>
 <para>Set the image translation to
 <emphasis remap='I'>x</emphasis>
@@ -136,7 +136,7 @@ This flag is for the developer/maintainer of
 and
 <citerefentry><refentrytitle>librt</refentrytitle><manvolnum>3</manvolnum></citerefentry>,
 and sets a hexadecimal bitmask to
-turn on or off diagnostics.</para>
+turn diagnostics on or off.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
@@ -155,7 +155,7 @@ distances according to the desired degree of perspective.
 Conversely, if perspective is negative,
 the user-specified grid distance,
 coupled with the observer distance and the view size,
-will effect the apparent degree of perspective.
+will affect the apparent degree of perspective.
 If perspective is set to zero,
 the grid distance
 <emphasis remap='I'>will</emphasis>
@@ -167,7 +167,7 @@ only the portion of the model beyond the grid will be visible.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term><option>-G</option><replaceable>"n cflag gflag vsize"</replaceable><emphasis remap='B'></emphasis></term>
+  <term><option>-G</option>"<replaceable>n cflag gflag vsize</replaceable>"<emphasis remap='B'></emphasis></term>
   <listitem>
 <para>Configure the grid.  If
 <emphasis remap='I'>cflag</emphasis>
@@ -201,7 +201,7 @@ to zero (see the
 option), grid size times cell size equals view size.
 When perspective is non-zero, the grid and eye distance are also
 involved, so the relationship is less pertinent.
-The defaults for this command are;
+The defaults for this command are:
 <emphasis remap='I'>G 32 0 0 0.0</emphasis>,
 which means grid size of 32, centered WRT the model RPP and view size
 set relative to the model RPP.</para>
@@ -226,8 +226,8 @@ set relative to the model RPP.</para>
   <listitem>
 <para>Set hidden-line flag to
 <emphasis remap='I'>n</emphasis>.
-When set to non-zero, this causes a hidden-line drawing to be produced rather
-than the usual shaded color image.  If
+When set to non-zero, this causes a hidden-line drawing, rather
+than the usual shaded color image, to be produced.  If
 <emphasis remap='I'>n</emphasis>
 is set to 1, the drawing will be black-on-white, and if set to 2,
 white lines will be drawn on a black background.
@@ -242,7 +242,7 @@ For instance, it requires one bounce to get the first reflection off of
 a mirrored surface, and several to get through a transparent object.
 If no transparent objects or mirrors are modeled,
 it is more efficient to leave this at the default of zero,
-but, if such objects
+but if such objects
 <emphasis remap='I'>are</emphasis>
 modeled, it is best to be safe and use at least 6 bounces, better yet
 a dozen or so since multiple mirrors or critical angles encountered
@@ -351,7 +351,7 @@ is non-zero, enter the Infrared Module.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term><option>-x</option><replaceable>"a b"</replaceable><emphasis remap='B'></emphasis></term>
+  <term><option>-x</option>"<replaceable>a b</replaceable>"<emphasis remap='B'></emphasis></term>
   <listitem>
 <para>Set the starting and ending pixel to
 <emphasis remap='I'>a</emphasis>
@@ -374,7 +374,7 @@ The default is to report overlaps.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term><option>-y</option><replaceable>"a b"</replaceable><emphasis remap='B'></emphasis></term>
+  <term><option>-y</option>"<replaceable>a b</replaceable>"<emphasis remap='B'></emphasis></term>
   <listitem>
 <para>Set the starting and ending scan line to
 <emphasis remap='I'>a</emphasis>
@@ -395,7 +395,7 @@ This is useful when computing a view from inside the model.</para>
 </variablelist>
 
 <para>Required arguments to the program are
-<emphasis remap='I'>model.g</emphasis>
+<emphasis remap='I'>model.g</emphasis> ,
 which is the name of the
 <citerefentry><refentrytitle>mged</refentrytitle><manvolnum>1</manvolnum></citerefentry>
 data base, followed by one or more
@@ -574,7 +574,7 @@ so they can be any displayable size given you have the disk space.</para>
 The user will be prompted for information necessary to position and describe
 the light source.
 Light source zero has special significance and a dual purpose.
-It simulates an ambient light source and,
+It simulates an ambient light source, and
 its position specifies the position of the observer (the eye).  Note that only
 the program's (in-core) copy of the data base is modified until another command
 (see the
@@ -739,12 +739,12 @@ will restore the default behavior.</para>
 </refsect1>
 
 <refsect1 xml:id='hints'><title>HINTS</title>
-<para>This program is designed to be used in two modes; interactively for setting
+<para>This program is designed to be used in two modes: interactively for setting
 up parameters, and in batch mode for rendering high-resolution images.
 First, the user should invoke the program in the interactive mode without options.
 While in this mode,
 the user should set up parameters for a low resolution ray trace,
-perhaps by using the default resolution (32x32 grid),
+perhaps by using the default resolution (32x32 grid);
 ray trace that view, tweak parameters as necessary, and iterate.
 As the user converges on the acceptable combination of parameters,
 there is a command which will save a UNIX shell script.
@@ -791,25 +791,25 @@ and
 of the target description in file
 <emphasis remap='I'>tank.g</emphasis>.</para>
 <literallayout remap='RS'>
-$ <emphasis remap='I'>lgt -o fictitious.brlcad.org: tank.g hull turret</emphasis>
+$ lgt -o fictitious.brlcad.org: tank.g hull turret
 </literallayout> <!-- remap='RE' -->
 
 <para>This command will start up an interactive session on an alternate device
 on a remote host and will begin at the 251st scan line and complete a
 512x512 image (handy in the event that the computer goes down in the
-middle of ray tracing an image).  Note that since the
+middle of ray tracing an image).  Notice, in this example, that since the
 <option>-y</option>
 and
 <option>-G</option>
-options take multiple arguments, they must appear in double-quotes.</para>
+options take multiple arguments, their arguments must appear in double-quotes.</para>
 <literallayout remap='RS'>
-$ <emphasis remap='I'>lgt -G "512 0 0 0.0" -o fictitious.brlcad.org:/dev/ik1l -y "250 511" tank.g hull turret</emphasis>
+$ lgt -G "512 0 0 0.0" -o fictitious.brlcad.org:/dev/ik1l -y "250 511" tank.g hull turret
 </literallayout> <!-- remap='RE' -->
 
 <para>This will run the program as a detached process by executing a saved script called
 <emphasis remap='I'>tankscript</emphasis>.</para>
 <literallayout remap='RS'>
-$ <emphasis remap='I'>tankscript &lt; /dev/null &amp;</emphasis>
+$ tankscript &lt; /dev/null &amp;
 </literallayout> <!-- remap='RE' -->
 </refsect1>
 
@@ -824,7 +824,7 @@ $ <emphasis remap='I'>tankscript &lt; /dev/null &amp;</emphasis>
 </refsect1>
 
 <refsect1 xml:id='copyright'><title>COPYRIGHT</title>
-<para>This software is Copyright (c) 1987-2013 by the United States
+<para>This software is Copyright (c) 1987-2014 by the United States
 Government as represented by U.S. Army Research Laboratory.</para>
 
 </refsect1>

@@ -1,7 +1,7 @@
 /*                       O P T I O N S . C
  * BRL-CAD
  *
- * Copyright (c) 1999-2013 United States Government as represented by
+ * Copyright (c) 1999-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -24,18 +24,18 @@
  */
 
 #include "common.h"
-#include "bio.h"
 
 #include <stdlib.h>
 
 #include "tcl.h"
 
-#include "bu.h"
+#include "bu/getopt.h"
 #include "vmath.h"
 #include "dm.h"
+#include "dm_private.h"
 
 int
-dm_processOptions(struct dm *dmp, struct bu_vls *init_proc_vls, int argc, char **argv)
+dm_processOptions(dm *dmp, struct bu_vls *init_proc_vls, int argc, char **argv)
 {
     int c;
 

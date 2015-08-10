@@ -1,7 +1,7 @@
 /*          L I B B R E P _ B R E P _ T O O L S . C P P
  * BRL-CAD
  *
- * Copyright (c) 2013 United States Government as represented by
+ * Copyright (c) 2013-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -28,7 +28,7 @@
 #include <iostream>
 
 #include "opennurbs.h"
-#include "bu.h"
+#include "bu/log.h"
 #include "libbrep_brep_tools.h"
 
 bool ON_NearZero(double val, double epsilon) {
@@ -118,8 +118,8 @@ bool ON_Surface_IsFlat(ON_Plane *frames, double f_tol)
 {
     double Ndot=1.0;
 
-    for(int i=0; i<8; i++) {
-	for( int j=i+1; j<9; j++) {
+    for (int i=0; i<8; i++) {
+	for ( int j=i+1; j<9; j++) {
 	    if ((Ndot = Ndot * frames[i].zaxis * frames[j].zaxis) < f_tol) {
 		return false;
 	    }
@@ -191,8 +191,8 @@ bool ON_Surface_IsStraight(ON_Plane *frames, double s_tol)
 {
     double Xdot=1.0;
 
-    for(int i=0; i<8; i++) {
-	for( int j=i+1; j<9; j++) {
+    for (int i=0; i<8; i++) {
+	for ( int j=i+1; j<9; j++) {
 	    if ((Xdot = Xdot * frames[0].xaxis * frames[1].xaxis) < s_tol) {
 		return false;
 	    }
@@ -275,28 +275,28 @@ bool ON_Surface_SubSurface(
     ON_Surface_Create_Scratch_Surfaces(t1, t2, t3, t4);
     if (fabs(u_val->Min() - srf->Domain(0).m_t[0]) > ON_ZERO_TOLERANCE) {
 	if (last_split == 1) {target = t4;} else {target = t2;}
-	split = ssplit->Split(0, u_val->Min(), *t1, *target);
+	split = ssplit->Split(false, u_val->Min(), *t1, *target);
 	ssplit = *target;
     }
     if ((fabs(u_val->Max() - srf->Domain(0).m_t[1]) > ON_ZERO_TOLERANCE) && split) {
 	if (last_split == 2) {target = t4;} else {target = t1;}
-	split = ssplit->Split(0, u_val->Max(), *target, *t3);
+	split = ssplit->Split(false, u_val->Max(), *target, *t3);
 	ssplit = *target;
     }
     if ((fabs(v_val->Min() - srf->Domain(1).m_t[0]) > ON_ZERO_TOLERANCE) && split) {
 	if (last_split == 3) {target = t4;} else {target = t3;}
-	split = ssplit->Split(1, v_val->Min(), *t2, *target);
+	split = ssplit->Split(true, v_val->Min(), *t2, *target);
 	ssplit = *target;
     }
     if ((fabs(v_val->Max() - srf->Domain(1).m_t[1]) > ON_ZERO_TOLERANCE) && split) {
-	split = ssplit->Split(1, v_val->Max(), *t4, *t2);
+	split = ssplit->Split(true, v_val->Max(), *t4, *t2);
     }
     (*result) = *t4;
     if (t1_del) delete *t1;
     if (t2_del) delete *t2;
     if (t3_del) delete *t3;
-    (*result)->SetDomain(0,u_val->Min(), u_val->Max());
-    (*result)->SetDomain(1,v_val->Min(), v_val->Max());
+    (*result)->SetDomain(0, u_val->Min(), u_val->Max());
+    (*result)->SetDomain(1, v_val->Min(), v_val->Max());
     return split;
 }
 
@@ -320,12 +320,13 @@ bool ON_Surface_Quad_Split(
 
     // All four output surfaces should be NULL - the point of this function is to create them
     if ((*q0) || (*q1) || (*q2) || (*q3)) {
-	bu_log("ON_Surface_Quad_Split was supplied non-NULL surfaces as output targets: q0: %p, q1: %p, q2: %p, q3: %p\n", (*q0), (*q1), (*q2), (*q3));
+	bu_log("ON_Surface_Quad_Split was supplied non-NULL surfaces as output targets: q0: %p, q1: %p, q2: %p, q3: %p\n",
+	       static_cast<void *>(*q0), static_cast<void *>(*q1), static_cast<void *>(*q2), static_cast<void *>(*q3));
 	return false;
     }
 
     // First, get the north and south pieces
-    split_success = surf->Split(1, vpt, south, north);
+    split_success = surf->Split(true, vpt, south, north);
     if (!split_success || !south || !north) {
 	delete south;
 	delete north;
@@ -333,7 +334,7 @@ bool ON_Surface_Quad_Split(
     }
 
     // Split the south pieces to get q0 and q1
-    split_success = south->Split(0, upt, (*q0), (*q1));
+    split_success = south->Split(false, upt, (*q0), (*q1));
     if (!split_success || !(*q0) || !(*q1)) {
 	delete south;
 	delete north;

@@ -1,7 +1,7 @@
 /*                        M I R R O R . C
  * BRL-CAD
  *
- * Copyright (c) 2007-2013 United States Government as represented by
+ * Copyright (c) 2007-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -28,13 +28,13 @@
 #include <string.h>
 #include "bio.h"
 
-#include "rtgeom.h"
+#include "rt/geom.h"
 #include "raytrace.h"
 #include "wdb.h"
 #include "bn.h"
-#include "bu.h"
+
 #include "vmath.h"
-#include "nurb.h"
+#include "rt/nurb.h"
 
 
 /* FIXME: temporary until all mirror functions are migrated and the
@@ -48,6 +48,7 @@ RT_DECLARE_MIRROR(ell);
 RT_DECLARE_MIRROR(arb);
 RT_DECLARE_MIRROR(half);
 RT_DECLARE_MIRROR(grip);
+RT_DECLARE_MIRROR(joint);
 RT_DECLARE_MIRROR(poly);
 RT_DECLARE_MIRROR(bspline);
 RT_DECLARE_MIRROR(arbn);
@@ -83,6 +84,7 @@ RT_DECLARE_MIRROR(nurb);
   RT_DECLARE_MIRROR(revolve);
   RT_DECLARE_MIRROR(sketch);
   RT_DECLARE_MIRROR(submodel);
+  RT_DECLARE_MIRROR(datum);
 */
 
 
@@ -151,6 +153,10 @@ rt_mirror(struct db_i *dbip,
 	}
 	case ID_GRIP: {
 	    err = rt_grip_mirror(ip, plane);
+	    return err ? NULL : ip;
+	}
+	case ID_JOINT: {
+	    err = rt_joint_mirror(ip, plane);
 	    return err ? NULL : ip;
 	}
 	case ID_POLY: {

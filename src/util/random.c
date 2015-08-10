@@ -1,7 +1,7 @@
 /*                        R A N D O M . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2013 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -32,9 +32,18 @@
 #include "bio.h"
 
 #include "vmath.h"
-#include "bu.h"
+#include "bu/getopt.h"
+#include "bu/parallel.h"
+#include "bu/log.h"
 #include "bn.h"
 
+const char *usage = "Usage: random [-u] [-g [-c center]] [-s seed] [-v] low high";
+
+void
+printusage()
+{
+	bu_log("%s\n", usage);
+}
 
 int
 main(int argc, char *argv[])
@@ -50,9 +59,8 @@ main(int argc, char *argv[])
     int uniform = 0;
     int cdone = 0;
     int c;
-    const char *usage = "[-u] [-g [-c center]] [-s seed] [-v] low high";
 
-    while ((c = bu_getopt(argc, argv, "vugs:c:")) != -1) {
+    while ((c = bu_getopt(argc, argv, "vugs:c:h?")) != -1) {
 	switch (c) {
 	    case 's':
 		seed = atoi(bu_optarg);
@@ -70,19 +78,23 @@ main(int argc, char *argv[])
 	    case 'v':
 		verbose = 1;
 		break;
-	    case '?':
-		bu_exit(1, "%s %s\n", argv[0], usage);
+	    default:
+		printusage();
+		if (c == 'h' || bu_optopt == '?') {
+			bu_exit(1, "\tREQUIRED: low high\n");
+		}
+		bu_exit(1,NULL);
 	}
     }
-    if (gauss == 0 && uniform == 0) uniform = 1;
     if (gauss && uniform) {
-	bu_log("%s %s\n", argv[0], usage);
+	printusage();
 	bu_exit(1, "\tOnly one of gaussian or uniform may be used.\n");
     }
     if (argc - bu_optind != 2) {
-	bu_log("%s %s\n", argv[0], usage);
-	bu_exit(1, "\tLow High must be given.\n");
+	printusage();
+	bu_exit(1, "\tREQUIRED: low high\n");
     }
+    if (gauss == 0 && uniform == 0) uniform = 1;
     low = atoi(argv[bu_optind]);
     high = atoi(argv[bu_optind+1]);
     if (!cdone) {

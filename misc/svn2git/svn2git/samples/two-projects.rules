@@ -1,0 +1,32 @@
+#
+# Declare the repositories we know about:
+#
+
+create repository project1
+end repository
+
+create repository project2
+end repository
+
+#
+# Declare the rules
+# Note: rules must end in a slash
+#
+
+match /project1/trunk/
+  repository project1
+  branch master
+end match
+
+match /project2/trunk/
+  repository project2
+  branch master
+end match
+
+# Note how we can use regexp to capture the repository name
+match /([^/]+)/branches/([^/]+)/
+  repository \1
+  branch \2
+end match
+
+# No tag processing

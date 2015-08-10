@@ -70,6 +70,7 @@
 
 #include "sc_memmgr.h"
 #include "express/basic.h"
+#include "sc_version_string.h"
 #include <ctype.h>
 #include <stdlib.h>
 #include <setjmp.h>
@@ -87,6 +88,7 @@
 void * ParseAlloc( void * ( *mallocProc )( size_t ) );
 void ParseFree( void * parser, void ( *freeProc )( void * ) );
 void Parse( void * parser, int tokenID, YYSTYPE data, parse_data_t parseData );
+void ParseTrace(FILE *TraceFILE, char *zTracePrompt);
 
 Linked_List EXPRESS_path;
 int EXPRESSpass;
@@ -249,6 +251,33 @@ char * EXPRESSversion( void ) {
     return( "Express Language, IS (N65), October 24, 1994" );
 }
 
+void EXPRESSusage( int _exit ) {
+    fprintf( stderr, "usage: %s [-v] [-d #] [-p <object_type>] {-w|-i <warning>} express_file\n", EXPRESSprogram_name );
+    fprintf( stderr, "where\t-v produces the following version description:\n" );
+    fprintf( stderr, "Build info for %s: %s\nhttp://github.com/stepcode/stepcode\n", EXPRESSprogram_name, sc_version() );
+    fprintf( stderr, "\t-d turns on debugging (\"-d 0\" describes this further\n" );
+    fprintf( stderr, "\t-p turns on printing when processing certain objects (see below)\n" );
+    fprintf( stderr, "\t-w warning enable\n" );
+    fprintf( stderr, "\t-i warning ignore\n" );
+    fprintf( stderr, "and <warning> is one of:\n" );
+    fprintf( stderr, "\tnone\n\tall\n" );
+    LISTdo( ERRORwarnings, opt, Error_Warning )
+    fprintf( stderr, "\t%s\n", opt->name );
+    LISTod
+    fprintf( stderr, "and <object_type> is one or more of:\n" );
+    fprintf( stderr, "	e	entity\n" );
+    fprintf( stderr, "	p	procedure\n" );
+    fprintf( stderr, "	r	rule\n" );
+    fprintf( stderr, "	f	function\n" );
+    fprintf( stderr, "	t	type\n" );
+    fprintf( stderr, "	s	schema or file\n" );
+    fprintf( stderr, "	#	pass #\n" );
+    fprintf( stderr, "	E	everything (all of the above)\n" );
+    if( _exit ) {
+        exit( 2 );
+    }
+}
+
 int EXPRESS_fail( Express model ) {
     ERRORflush_messages();
 
@@ -299,7 +328,6 @@ typedef struct Dir {
 static void EXPRESS_PATHinit() {
     char * p;
     Dir * dir;
-    int done = 0;
 
     EXPRESS_path = LISTcreate();
     p = getenv( "EXPRESS_PATH" );
@@ -309,6 +337,7 @@ static void EXPRESS_PATHinit() {
         dir->leaf = dir->full;
         LISTadd( EXPRESS_path, ( Generic )dir );
     } else {
+        int done = 0;
         while( !done ) {
             char * start;   /* start of current dir */
             int length; /* length of dir */
@@ -604,6 +633,7 @@ static Express PARSERrun( char * filename, FILE * fp ) {
     parserInitState();
 
     yyerrstatus = 0;
+//     ParseTrace( stderr, "- expparse - " ); //NOTE uncomment this to enable parser tracing
     while( ( tokenID = yylex( scanner ) ) > 0 ) {
         Parse( parser, tokenID, yylval, parseData );
     }
@@ -718,7 +748,6 @@ static void RENAMEresolve( Rename * r, Schema s ) {
 
 #ifdef using_enum_items_is_a_pain
 static void RENAMEresolve_enum( Type t, Schema s ) {
-    Dictionary      d = TYPEget_enum_tags( t );
     DictionaryEntry de;
     Expression      x;
 

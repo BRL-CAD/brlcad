@@ -1,7 +1,7 @@
 /*                         F I N D . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2013 United States Government as represented by
+ * Copyright (c) 2008-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -26,9 +26,9 @@
 #include "common.h"
 
 #include <string.h>
-#include "bio.h"
 
-#include "cmd.h"
+#include "bu/cmd.h"
+#include "bu/getopt.h"
 
 #include "./ged_private.h"
 
@@ -37,10 +37,10 @@ HIDDEN void
 find_ref(struct db_i *dbip,
 	 struct rt_comb_internal *comb,
 	 union tree *comb_leaf,
-	 genptr_t object,
-	 genptr_t comb_name_ptr,
-	 genptr_t user_ptr3,
-	 genptr_t UNUSED(user_ptr4))
+	 void *object,
+	 void *comb_name_ptr,
+	 void *user_ptr3,
+	 void *UNUSED(user_ptr4))
 {
     char *obj_name;
     char *comb_name;
@@ -119,10 +119,10 @@ ged_find(struct ged *gedp, int argc, const char *argv[])
 				 comb,
 				 comb->tree,
 				 find_ref,
-				 (genptr_t)argv[k],
-				 (genptr_t)dp->d_namep,
-				 (genptr_t)gedp,
-				 (genptr_t)NULL);
+				 (void *)argv[k],
+				 (void *)dp->d_namep,
+				 (void *)gedp,
+				 (void *)NULL);
 
 	    rt_db_free_internal(&intern);
 	}

@@ -2,7 +2,7 @@
 #                         A R C H E R
 # BRL-CAD
 #
-# Copyright (c) 2002-2013 United States Government as represented by
+# Copyright (c) 2002-2014 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -278,7 +278,7 @@ proc main {} {
 	}
         set width [expr {$w - 8}]
         set height [expr {$h - 40}]
-	wm geometry $::ArcherCore::application "$width\x$height+0+0"
+	$::ArcherCore::application configure -geometry "$width\x$height+0+0"
 	wm protocol $::ArcherCore::application WM_DELETE_WINDOW {exitArcher $::ArcherCore::application}
     } else {
 	wm title . "Archer $brlcad_version"
@@ -299,13 +299,13 @@ proc main {} {
         set width [expr {$w - 8}]
         set height [expr {$h - 40}]
 	pack $::ArcherCore::application -expand yes -fill both
-	wm geometry . "$width\x$height+0+0"
+	$::ArcherCore::application configure -geometry "$width\x$height+0+0"
 	wm protocol . WM_DELETE_WINDOW [list exitArcher $::ArcherCore::application]
     }
 
     if {[info exists argv] && $argv != ""} {
-	set target [lindex $argv 0]
-	set ext [file extension $target]
+	package require cadwidgets::GeometryIO
+	set target [cadwidgets::geom_load [lindex $argv 0] 1]
 	$::ArcherCore::application Load $target
     }
 
@@ -319,6 +319,13 @@ wm withdraw .
 
 # start splash screen
 createSplashScreen
+if { $::argc eq 1 } {
+   set argv1 [lindex $argv 0]
+   set argv1_ext [file extension $argv1]
+   if {[string compare -nocase $argv1_ext ".g"] != 0} {
+    $::ArcherCore::splash deactivate
+   }
+}
 
 # do main procedure
 if { [catch {main} _runnable] } {

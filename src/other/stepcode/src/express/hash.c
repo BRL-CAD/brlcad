@@ -280,11 +280,11 @@ HASH_in_use( Hash_Table table, char * action ) {
 
 void
 HASHdestroy( Hash_Table table ) {
-    unsigned int i, j;
     Segment s;
     Element p, q;
 
     if( table != HASH_NULL ) {
+        unsigned int i, j;
 #if 0
         if( table->in_use ) {
             HASH_in_use( table, "destroy hash table" );
@@ -435,13 +435,13 @@ HASHhash( char * Key, Hash_Table table ) {
 static
 void
 HASHexpand_table( Hash_Table table ) {
-    Address NewAddress;
-    int     OldSegmentIndex, NewSegmentIndex;
-    int     OldSegmentDir, NewSegmentDir;
     Segment OldSegment, NewSegment;
     Element Current, *Previous, *LastOfNew;
 
     if( table->maxp + table->p < MUL( DIRECTORY_SIZE, SEGMENT_SIZE_SHIFT ) ) {
+        Address NewAddress;
+        int OldSegmentIndex, NewSegmentIndex;
+        int OldSegmentDir, NewSegmentDir;
         /*
         ** Locate the bucket to be split
         */

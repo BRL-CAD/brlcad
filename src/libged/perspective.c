@@ -1,7 +1,7 @@
 /*                         P E R S P E C T I V E . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2013 United States Government as represented by
+ * Copyright (c) 2008-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -28,7 +28,6 @@
 #include <stdlib.h>
 #include <ctype.h>
 #include <string.h>
-#include "bio.h"
 
 #include "./ged_private.h"
 
@@ -63,7 +62,7 @@ ged_perspective(struct ged *gedp, int argc, const char *argv[])
 	gedp->ged_gvp->gv_perspective = perspective;
 
 	if (SMALL_FASTF < gedp->ged_gvp->gv_perspective) {
-	    ged_persp_mat(gedp->ged_gvp->gv_pmat, gedp->ged_gvp->gv_perspective,
+	    persp_mat(gedp->ged_gvp->gv_pmat, gedp->ged_gvp->gv_perspective,
 			  (fastf_t)1.0f, (fastf_t)0.01f, (fastf_t)1.0e10f, (fastf_t)1.0f);
 	} else {
 	    MAT_COPY(gedp->ged_gvp->gv_pmat, bn_mat_identity);

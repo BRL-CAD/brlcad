@@ -1,7 +1,7 @@
 /*                            E B M . C
  * BRL-CAD
  *
- * Copyright (c) 1994-2013 United States Government as represented by
+ * Copyright (c) 1994-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -26,18 +26,14 @@
 #include <string.h>
 #include "bio.h"
 
-#include "bu.h"
 #include "vmath.h"
 #include "bn.h"
-#include "rtgeom.h"
+#include "rt/geom.h"
 #include "raytrace.h"
 #include "wdb.h"
-#include "db.h"
+#include "rt/db4.h"
 
 
-/*
- * M K _ E B M
- */
 int
 mk_ebm(struct rt_wdb *fp, const char *name, const char *file, size_t xdim, size_t ydim, fastf_t tallness, const matp_t mat)
     /* name of file containing bitmap */
@@ -56,7 +52,7 @@ mk_ebm(struct rt_wdb *fp, const char *name, const char *file, size_t xdim, size_
     ebm->tallness = tallness;
     MAT_COPY(ebm->mat, mat);
 
-    return wdb_export(fp, name, (genptr_t)ebm, ID_EBM, mk_conv2mm);
+    return wdb_export(fp, name, (void *)ebm, ID_EBM, mk_conv2mm);
 }
 
 

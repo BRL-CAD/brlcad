@@ -2903,7 +2903,7 @@ htmlCharOffsetCmd(
  * DLL file. I don't entirely understand the ins and outs of this, the
  * block below was copied verbatim from another program.
  */
-#if INTERFACE
+#ifdef INTERFACE
 #define DLL_EXPORT
 #endif
 #if defined(USE_TCL_STUBS) && defined(__WIN32__)

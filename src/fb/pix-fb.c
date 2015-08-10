@@ -1,7 +1,7 @@
 /*                        P I X - F B . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2013 United States Government as represented by
+ * Copyright (c) 1986-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -36,9 +36,12 @@
 #ifdef HAVE_WINSOCK_H
 #  include <winsock.h>
 #endif
-#include "bio.h"
 
-#include "bu.h"
+#include "bu/getopt.h"
+#include "bu/malloc.h"
+#include "bu/file.h"
+#include "bu/log.h"
+#include "vmath.h"
 #include "fb.h"
 
 #include "pkg.h"
@@ -166,9 +169,7 @@ get_args(int argc, char **argv)
 	    bu_exit(1, NULL);
 	}
 	bu_free(ifname, "ifname alloc from bu_realpath");
-#ifdef _WIN32
 	setmode(infd, O_BINARY);
-#endif
 	fileinput++;
     }
 
@@ -185,7 +186,7 @@ get_args(int argc, char **argv)
 int
 skipbytes(int fd, off_t num)
 {
-    int n, try;
+    int n, tries;
 
     if (fileinput) {
 	(void)lseek(fd, num, 1);
@@ -193,8 +194,8 @@ skipbytes(int fd, off_t num)
     }
 
     while (num > 0) {
-	try = num > scanbytes ? scanbytes : num;
-	n = read(fd, scanline, try);
+	tries = num > scanbytes ? scanbytes : num;
+	n = read(fd, scanline, tries);
 	if (n <= 0) {
 	    return -1;
 	}
@@ -208,7 +209,7 @@ int
 main(int argc, char **argv)
 {
     int y;
-    FBIO *fbp;
+    fb *fbp;
     int xout, yout, n, m, xstart, xskip;
 
     if (!get_args(argc, argv)) {
@@ -293,7 +294,8 @@ main(int argc, char **argv)
 	/* Zoom in, and center the display.  Use square zoom. */
 	int zoomit;
 	zoomit = scr_width/xout;
-	if (scr_height/yout < zoomit) zoomit = scr_height/yout;
+	V_MIN(zoomit, scr_height/yout);
+
 	if (inverse) {
 	    fb_view(fbp,
 		    scr_xoff+xout/2, scr_height-1-(scr_yoff+yout/2),

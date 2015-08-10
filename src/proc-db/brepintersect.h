@@ -1,7 +1,7 @@
 /*                         B R E P I N T E R S E C T . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2013 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -21,13 +21,15 @@
  *
  */
 
+#ifndef PROC_DB_BREPINTERSECT_H
+#define PROC_DB_BREPINTERSECT_H
+
 #include "common.h"
 
 #include "raytrace.h"
-#include "rtgeom.h"
+#include "rt/geom.h"
 #include "wdb.h"
 #include "bn.h"
-#include "bu.h"
 #include "vmath.h"
 #include "opennurbs_array.h"
 
@@ -73,6 +75,7 @@ int TriangleBrepIntersect(
     double tol
     );
 
+#endif /* PROC_DB_BREPINTERSECT_H */
 
 /** @} */
 /*

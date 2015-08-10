@@ -86,37 +86,12 @@
 extern int exp_yydebug;
 #endif /*YYDEBUG*/
 
-char EXPRESSgetopt_options[256] = "Bbd:e:i:w:p:rvz";
+char EXPRESSgetopt_options[256] = "Bbd:e:i:w:p:rvz"; //larger than the string because exp2cxx, exppp, etc may append their own options
 static int no_need_to_work = 0; /* TRUE if we can exit gracefully without doing any work */
 
 void print_fedex_version( void ) {
     fprintf( stderr, "Build info for %s: %s\nhttp://github.com/stepcode/stepcode\n", EXPRESSprogram_name, sc_version() );
     no_need_to_work = 1;
-}
-
-static void usage( void ) {
-    fprintf( stderr, "usage: %s [-v] [-d #] [-p <object_type>] {-w|-i <warning>} express_file\n", EXPRESSprogram_name );
-    fprintf( stderr, "where\t-v produces the following version description:\n" );
-    print_fedex_version();
-    fprintf( stderr, "\t-d turns on debugging (\"-d 0\" describes this further\n" );
-    fprintf( stderr, "\t-p turns on printing when processing certain objects (see below)\n" );
-    fprintf( stderr, "\t-w warning enable\n" );
-    fprintf( stderr, "\t-i warning ignore\n" );
-    fprintf( stderr, "and <warning> is one of:\n" );
-    fprintf( stderr, "\tnone\n\tall\n" );
-    LISTdo( ERRORwarnings, opt, Error_Warning )
-    fprintf( stderr, "\t%s\n", opt->name );
-    LISTod
-    fprintf( stderr, "and <object_type> is one or more of:\n" );
-    fprintf( stderr, "	e	entity\n" );
-    fprintf( stderr, "	p	procedure\n" );
-    fprintf( stderr, "	r	rule\n" );
-    fprintf( stderr, "	f	function\n" );
-    fprintf( stderr, "	t	type\n" );
-    fprintf( stderr, "	s	schema or file\n" );
-    fprintf( stderr, "	#	pass #\n" );
-    fprintf( stderr, "	E	everything (all of the above)\n" );
-    exit( 2 );
 }
 
 int main( int argc, char ** argv ) {
@@ -132,7 +107,7 @@ int main( int argc, char ** argv ) {
     Express model;
 
     EXPRESSprogram_name = argv[0];
-    ERRORusage_function = usage;
+    ERRORusage_function = 0;
 
     EXPRESSinit_init();
 
@@ -220,7 +195,11 @@ int main( int argc, char ** argv ) {
                     rc = ( *EXPRESSgetopt )( c, optarg );
                 }
                 if( rc == 1 ) {
-                    ( *ERRORusage_function )();
+                    if( ERRORusage_function ) {
+                        ( *ERRORusage_function )();
+                    } else {
+                        EXPRESSusage(1);
+                    }
                 }
                 break;
         }

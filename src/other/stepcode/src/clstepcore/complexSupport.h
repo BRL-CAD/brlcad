@@ -4,11 +4,11 @@
 /*****************************************************************************
  * complexSupport.h                                                          *
  *                                                                           *
- * Description: Slightly simplified version of fedex_plus's complexSupport.h.*
+ * Description: Slightly simplified version of exp2cxx's complexSupport.h.*
  *              This version works with the SCL and is used to validate      *
  *              complex entities (user requests to build them).  It does not *
  *              contain info for building these structures from a fedex      *
- *              Express object, as the fedex_plus version.                   *
+ *              Express object, as the exp2cxx version.                   *
  *                                                                           *
  * Created by:  David Rosenfeld                                              *
  * Date:        5/9/97                                                       *
@@ -372,7 +372,7 @@ class SC_CORE_EXPORT ComplexList {
             return ( strcmp( supertype(), name ) == 0 );
         }
         const char * supertype() {
-            return ( ( SimpleList * )head->childList )->name;
+            return ( dynamic_cast< SimpleList * >(head->childList ))->name ;
         }
         /** \fn supertype
          * Based on knowledge that ComplexList always created by ANDing supertype

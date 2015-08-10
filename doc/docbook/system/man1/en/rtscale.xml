@@ -21,15 +21,15 @@
     <arg choice='plain'><replaceable>units</replaceable></arg>
     <arg choice='plain'><replaceable>intervals</replaceable></arg>
     <arg choice='plain'><replaceable>file.log</replaceable></arg>
-    <arg choice='opt'><arg choice='plain'><replaceable>optional</replaceable></arg><arg choice='plain'><replaceable>string</replaceable></arg></arg>
-    <arg choice='plain'><replaceable>&gt;</replaceable></arg>
+    <arg choice='plain'><replaceable>optional_string</replaceable></arg>
+    <arg choice='plain'>&gt;</arg>
     <arg choice='plain'><replaceable>scale.plot3</replaceable></arg>
 </cmdsynopsis>
 </refsynopsisdiv>
 
 
 <refsect1 xml:id='description'><title>DESCRIPTION</title>
-<para><emphasis remap='I'>Rtscale</emphasis>
+<para><command>rtscale</command>
 supplements the use of <emphasis remap='B'>rthide</emphasis> by generating a UNIX-Plot of a scale that
 permits the accurate measuring of <emphasis remap='B'>rthide</emphasis> plots.  <emphasis remap='B'>rthide</emphasis> provides
 a hidden-line-removed plot of the geometry, and <command>rtscale</command> produces
@@ -37,7 +37,7 @@ an identical plot file containing just a scale.   The two files can then
 be concatenated making sure that the scale precedes the <emphasis remap='B'>rthide</emphasis> file
 to produce a finished plot with scale.</para>
 
-<para><emphasis remap='B'>Rtscale</emphasis> operates on the RT log file from the <emphasis remap='B'>rthide</emphasis> run and
+<para><command>Rtscale</command> operates on the RT log file from the <emphasis remap='B'>rthide</emphasis> run and
 produces a UNIX-Plot file of a scale with desired units and number
 of tick marks.  The scale's width is given in model units.  A descriptive
 string may be added.  The scale and the strings are plotted
@@ -99,7 +99,7 @@ plot3rot -a# -e# -g model.w.scale.plot3 | plot3-fb
 <refsect1 xml:id='see_also'><title>SEE ALSO</title>
 <para><citerefentry><refentrytitle>mged</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
 <citerefentry><refentrytitle>plot3rot</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>rt</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>rthide</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
-<citerefentry><refentrytitle>librt</refentrytitle><manvolnum>3</manvolnum></citerefentry>, <citerefentry><refentrytitle>libplot3</refentrytitle><manvolnum>3</manvolnum></citerefentry>, <citerefentry><refentrytitle>plot3</refentrytitle><manvolnum>5</manvolnum></citerefentry>, <citerefentry><refentrytitle>ray</refentrytitle><manvolnum>5V</manvolnum></citerefentry>.</para>
+<citerefentry><refentrytitle>librt</refentrytitle><manvolnum>3</manvolnum></citerefentry>, <citerefentry><refentrytitle>libplot3</refentrytitle><manvolnum>3</manvolnum></citerefentry>, <citerefentry><refentrytitle>plot3</refentrytitle><manvolnum>5</manvolnum></citerefentry>, <citerefentry><refentrytitle>ray</refentrytitle><manvolnum>5V</manvolnum></citerefentry></para>
 </refsect1>
 
 <refsect1 xml:id='diagnostics'><title>DIAGNOSTICS</title>
@@ -113,8 +113,8 @@ Descriptive messages are printed on standard error (file descriptor 2).</para>
 </refsect1>
 
 <refsect1 xml:id='copyright'><title>COPYRIGHT</title>
-<para>This software is Copyright (c) 1991-2013 United States Government as
-represented by the U.S. Army Research Laboratory. All rights reserved.</para>
+<para>This software is Copyright (c) 1991-2014 United States Government as
+represented by the U.S. Army Research Laboratory.</para>
 </refsect1>
 
 <refsect1 xml:id='bug_reports'><title>BUG REPORTS</title>

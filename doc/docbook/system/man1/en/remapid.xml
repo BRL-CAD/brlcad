@@ -27,10 +27,10 @@
 <refsect1 xml:id='description'><title>DESCRIPTION</title>
 <para>Performs batch modifications of region IDs for BRL-CAD
 (or TANKILL) geometry.
-The program reads a .g (or TANKILL) file and a spec file
+The program reads a <replaceable>.g</replaceable> (or TANKILL) file and a spec file
 indicating which region IDs to change to which new values.
-For a .g file, the specified changes are made to that file;
-For a TANKILL file, a modified model is written to stdout.
+For a <replaceable>.g</replaceable> file, the specified changes are made to that file;
+for a TANKILL file, a modified model is written to stdout.
 The remapping assignment is read from a specification file
 containing commands, the grammar for which looks something like:</para>
 
@@ -53,7 +53,7 @@ region ID to the value appearing after the ':'.</para>
 </refsect1>
 
 <refsect1 xml:id='copyright'><title>COPYRIGHT</title>
-<para>This software is Copyright (c) 2005-2013 by the United States
+<para>This software is Copyright (c) 2005-2014 by the United States
 Government as represented by U.S. Army Research Laboratory.</para>
 </refsect1>
 

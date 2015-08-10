@@ -230,6 +230,10 @@ std::string DirObj::Normalize( const std::string & path ) {
         buf.clear();
     } else {
         buf.assign( b );
+
+#if !defined(__WIN32__)
+	free(b);
+#endif
     }
 
     if( buf.empty() ) {
@@ -281,7 +285,7 @@ void DirObj::CheckIndex( int index ) {
         fileListSize = ( index + 1 ) * 2;
         newstrbuf = new char*[fileListSize];
         memmove( newstrbuf, fileList, fileCount * sizeof( char * ) );
-        delete fileList;
+        delete [] fileList;
         fileList = newstrbuf;
     }
 }

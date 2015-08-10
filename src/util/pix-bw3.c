@@ -1,7 +1,7 @@
 /*                       P I X - B W 3 . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2013 United States Government as represented by
+ * Copyright (c) 1986-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -30,8 +30,7 @@
 #include <string.h>
 #include "bio.h"
 
-#include "bu.h"
-
+#include "bu/log.h"
 
 unsigned char ibuf[3*1024];
 unsigned char red[1024], green[1024], blue[1024];
@@ -54,7 +53,7 @@ main(int argc, char **argv)
     bfp = fopen(argv[3], "w");
 
     if (rfp == NULL || gfp == NULL || bfp == NULL) {
-	bu_exit(2, "pix-bw3: Can't open output files\n");
+	bu_exit(2, "pix-bw3: Can't open output file(s)\n");
     }
 
     while ((num = fread(ibuf, sizeof(char), 3*1024, stdin)) > 0) {

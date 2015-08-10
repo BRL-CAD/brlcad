@@ -1,7 +1,7 @@
 /*                       R E F L E C T . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2013 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -28,8 +28,8 @@
 #include <math.h>
 #include <assert.h>
 #include <string.h>
-#include "bio.h"
 
+#include "bu/parallel.h"
 #include "vmath.h"
 #include "raytrace.h"
 #include "fb.h"
@@ -42,7 +42,6 @@
 #include "./screen.h"
 
 
-#define TWO_PI (2.0 * M_PI)
 #define RI_AIR 1.0  /* refractive index of air */
 
 /* These are used by the hidden-line drawing routines. */
@@ -270,8 +269,7 @@ render_Model(int frame)
     if (npsw > 1)
 	pix_buffered = B_LINE;
 
-    if (aperture_sz < 1)
-	aperture_sz = 1;
+    V_MAX(aperture_sz, 1);
     a_gridsz = anti_aliasing ? grid_sz * aperture_sz : grid_sz;
 
     if (ir_mapping & IR_OCTREE) {
@@ -352,10 +350,9 @@ render_Model(int frame)
     fatal_error = false;
 
     /* Get starting and ending scan line number. */
-    if (grid_x_fin >= fb_getwidth(fbiop))
-	grid_x_fin = fb_getwidth(fbiop) - 1;
-    if (grid_y_fin >= fb_getheight(fbiop))
-	grid_y_fin = fb_getheight(fbiop) - 1;
+    V_MIN(grid_x_fin, fb_getwidth(fbiop)-1);
+    V_MIN(grid_y_fin, fb_getheight(fbiop)-1);
+
     curr_scan = grid_y_org;
     last_scan = grid_y_fin;
 
@@ -397,11 +394,8 @@ render_Scan(int cpu, void *UNUSED(data))
        threads of execution, so make copy. */
     struct application a;
 
-    resource[cpu].re_cpu = cpu;
-#ifdef RESOURCE_MAGIC
-    if (!BU_LIST_IS_INITIALIZED(&resource[cpu].re_parthead))
-	rt_init_resource(&resource[cpu], cpu, rt_ip);
-#endif
+    memset(resource+cpu, 0, sizeof(struct resource));
+    rt_init_resource(&resource[cpu], cpu, ag.a_rt_i);
 
     for (; ! user_interrupt;) {
 	bu_semaphore_acquire(RT_SEM_WORKER);
@@ -661,7 +655,7 @@ getMaMID(struct mater_info *map, int *id)
 		while (++i < len && p[i] != '=');
 		if (p[i] != '=') {
 		    /* cannot find '=' */
-		    bu_free((genptr_t)copy, "getMaMID");
+		    bu_free((void *)copy, "getMaMID");
 		    return false;
 		}
 
@@ -669,17 +663,17 @@ getMaMID(struct mater_info *map, int *id)
 		while (++i < len && p[i] == '\0');
 		if (p[i] == '\0') {
 		    /* cannot find value */
-		    bu_free((genptr_t)copy, "getMaMID");
+		    bu_free((void *)copy, "getMaMID");
 		    return false;
 		}
 
 		*id = atoi(&p[i]);
-		bu_free((genptr_t)copy, "getMaMID");
+		bu_free((void *)copy, "getMaMID");
 		return true;
 	    }
 	}
     }
-    bu_free((genptr_t)copy, "getMaMID");
+    bu_free((void *)copy, "getMaMID");
     return false;
 
 }
@@ -839,7 +833,7 @@ f_Model(struct application *ap, struct partition *pt_headp, struct seg *UNUSED(u
 	/* Compute contribution from this surface. */
 	fastf_t f;
 	int i;
-	auto fastf_t view_dir[3];
+	fastf_t view_dir[3];
 
 	/* Calculate view direction. */
 	VREVERSE(view_dir, ap->a_ray.r_dir);
@@ -1079,8 +1073,8 @@ glass_Refract(struct application *ap, struct partition *pp, Mat_Db_Entry *entry,
     refrac_total++;
 
     /* Guard against zero refractive index. */
-    if (entry->refrac_index < 0.001)
-	entry->refrac_index = 1.0;
+    if (ZERO(entry->refrac_index))
+	entry->refrac_index = RI_AIR;
 
     if (ZERO(entry->refrac_index - RI_AIR)) {
 	/* No refraction necessary. */
@@ -1241,7 +1235,7 @@ f_Backgr(struct application *ap)
 	    )
 	    mdb_entry = &mat_dfl_entry;
 	for (i = 1; i < lgt_db_size; i++) {
-	    auto fastf_t real_l_1[3];
+	    fastf_t real_l_1[3];
 	    fastf_t specular;
 	    fastf_t cos_s;
 	    if (lgts[i].energy <= 0.0)
@@ -1511,7 +1505,7 @@ model_Reflectance(struct application *ap, struct partition *pp, Mat_Db_Entry *md
     fastf_t ff;		/* temporary */
     fastf_t lgt_energy;
     fastf_t cos_il; 	/* cosine incident angle */
-    auto fastf_t lgt_dir[3];
+    fastf_t lgt_dir[3];
 
     if (RT_G_DEBUG & DEBUG_RGB)
 	bu_log("\nmodel_Reflectance(): level %d grid <%d, %d>\n",
@@ -1563,7 +1557,7 @@ model_Reflectance(struct application *ap, struct partition *pp, Mat_Db_Entry *md
 	   Reflected ray = (2 * cos(i) * Normal) - Incident ray.
 	   Cos(s) = dot product of Reflected ray with Incident ray.
 	*/ {
-	auto fastf_t lgt_reflect[3], tmp_dir[3];
+	fastf_t lgt_reflect[3], tmp_dir[3];
 	fastf_t specular;
 	fastf_t cos_s;
 	ff = 2.0 * cos_il;

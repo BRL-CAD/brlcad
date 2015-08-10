@@ -1,7 +1,7 @@
 /*                    C L I N E _ B R E P . C P P
  * BRL-CAD
  *
- * Copyright (c) 2012-2013 United States Government as represented by
+ * Copyright (c) 2012-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -26,7 +26,7 @@
 #include "common.h"
 
 #include "raytrace.h"
-#include "rtgeom.h"
+#include "rt/geom.h"
 #include "brep.h"
 
 extern "C" {
@@ -34,9 +34,6 @@ extern "C" {
     void rt_pipe_brep(ON_Brep **b, struct rt_db_internal *ip, const struct bn_tol *tol);
 }
 
-/**
- * R T _ C L I N E _ B R E P
- */
 extern "C" void
 rt_cline_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *tol)
 {
@@ -53,7 +50,7 @@ rt_cline_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol 
     struct rt_db_internal tmp_internal;
     RT_DB_INTERNAL_INIT(&tmp_internal);
     tmp_internal.idb_major_type = DB5_MAJORTYPE_BRLCAD;
-    tmp_internal.idb_ptr = (genptr_t)pip;
+    tmp_internal.idb_ptr = (void *)pip;
     tmp_internal.idb_minor_type = ID_PIPE;
     tmp_internal.idb_meth = &OBJ[ID_PIPE];
     rt_pipe_brep(b, &tmp_internal, tol);

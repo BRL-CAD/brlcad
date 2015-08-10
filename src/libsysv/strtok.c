@@ -11,7 +11,8 @@
 #include "common.h"
 
 /* quell empty-compilation unit warnings */
-static const int unused = 0;
+const int strtok_unused = 0;
+
 
 /*
  *  This public domain version of strtok() made available to systems that

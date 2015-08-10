@@ -1,7 +1,7 @@
 /*                    T E S T _ V L S _ V P R I N T F. C
  * BRL-CAD
  *
- * Copyright (c) 2011-2013 United States Government as represented by
+ * Copyright (c) 2011-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -28,15 +28,15 @@
 #include <ctype.h>
 
 #include "bu.h"
-
-#include "./vls_internals.h"
+#include "../vls_internals.h"
+#include "./test_internals.h"
 
 
 /* Test against sprintf */
 int
 test_vls(const char *fmt, ...)
 {
-    int status        = 0; /* okay */
+    int status        = CTEST_PASS; /* okay */
     struct bu_vls vls = BU_VLS_INIT_ZERO;
     char output[80]   = {0};
     char buffer[1024] = {0};
@@ -58,7 +58,7 @@ test_vls(const char *fmt, ...)
 	printf("%-*s[PASS]\n", 60, output);
     } else {
 	printf("%-*s[FAIL]  (should be: '%s')\n", 60, output, buffer);
-	status = 1;
+	status = CTEST_FAIL;
     }
 
     bu_vls_free(&vls);
@@ -68,9 +68,9 @@ test_vls(const char *fmt, ...)
 
 
 int
-check_format_chars()
+check_format_chars(void)
 {
-  int status = 0; /* assume okay */
+  int status = CTEST_PASS; /* assume okay */
   int i, flags;
   vflags_t f;
 
@@ -90,14 +90,14 @@ check_format_chars()
       if (!handle_format_part(vp_part, &f, c, VP_NOPRINT)) {
 	/* tell user */
 	printf("Unhandled valid char '%c'                                    [FAIL]\n", c);
-	status = 1;
+	status = CTEST_FAIL;
       }
     } else if (flags & VP_OBSOLETE) {
       /* we need an obsolete part handler */
       if (!handle_obsolete_format_char(c, VP_NOPRINT)) {
 	/* tell user */
 	printf("Unhandled obsolete char '%c'                                 [FAIL]\n", c);
-	status = 1;
+	status = CTEST_FAIL;
       }
     }
   }
@@ -116,10 +116,9 @@ main(int argc, char *argv[])
     const char *word = "Lawyer";
 
     if (argc < 2) {
-	printf("Usage: %s test_num\n", argv[0]);
+	fprintf(stderr,"Usage: %s test_num\n", argv[0]);
 	return 1;
     }
-
 
     sscanf(argv[1], "%d", &test_num);
 
@@ -281,6 +280,26 @@ main(int argc, char *argv[])
 	    return test_vls("%'d", 123000);
 	case 57:
 	    return test_vls("%c", 'r');
+	case 58:
+	    return test_vls("%20s", "right");
+	case 59:
+	    return test_vls("%-20s", "left");
+	case 60:
+	    return test_vls("%10.20s", "12345");
+	case 61:
+	    return test_vls("%-10.20s", "12345");
+	case 62:
+	    return test_vls("%10.20s", "123456789012345");
+	case 63:
+	    return test_vls("%-10.20s", "123456789012345");
+	case 64:
+	    return test_vls("%20.10s", "123456789012345");
+	case 65:
+	    return test_vls("%-20.10s", "123456789012345");
+	case 66:
+	    return test_vls("%010d", 1);
+	case 67:
+	    return test_vls("%.030s", "1234567890123456789012345678901234567890");
 
 	/* this test needs a relook
 	    return test_vls("%H", 123);
@@ -318,7 +337,7 @@ main(int argc, char *argv[])
 	*/
     }
 
-    return 1;
+    return CTEST_FAIL;
 }
 
 

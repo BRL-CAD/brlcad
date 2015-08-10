@@ -1,7 +1,7 @@
 /*                        F B F A D E . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2013 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -28,7 +28,7 @@
  *
  * Options:
  *
- * "-h" assumes 1024x1024 default input size instead of 512x512
+ * "-H" assumes 1024x1024 default input size instead of 512x512
  *
  * "-f in_fb_file" reads from the specified frame buffer file instead
  * of assuming constant black ("fade out") value
@@ -58,9 +58,9 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdarg.h>
-#include "bio.h"
 
-#include "bu.h"
+#include "bu/getopt.h"
+#include "vmath.h"
 #include "fb.h"			/* BRL-CAD package libfb.a interface */
 #include "pkg.h"
 
@@ -72,10 +72,10 @@
 
 typedef int bool_t;
 
-static bool_t hires = 0;		/* set for 1Kx1K; clear for 512x512 */
+static bool_t hires = 0;		/* set for 1024x1024; clear for 512x512 */
 static char *in_fb_file = NULL;		/* input image name */
 static char *out_fb_file = NULL;	/* output frame buffer name */
-static FBIO *fbp = FBIO_NULL;		/* libfb input/output handle */
+static fb *fbp = FB_NULL;		/* libfb input/output handle */
 static int src_width = 0;		/* input image width */
 static int src_height = 0;		/* input image height */
 static int dst_width = 0;		/* output frame buffer size */
@@ -85,7 +85,7 @@ static RGBpixel bg = { 0, 0, 0 };	/* background */
 
 /* in ioutil.c */
 extern void Message(const char *format, ...);
-extern void Fatal(FBIO *fbiop, const char *format, ...);
+extern void Fatal(fb *fbiop, const char *format, ...);
 
 
 static void
@@ -215,7 +215,7 @@ main(int argc, char **argv)
 
     if (in_fb_file != NULL) {
 
-	if ((fbp = fb_open(in_fb_file, src_width, src_height)) == FBIO_NULL)
+	if ((fbp = fb_open(in_fb_file, src_width, src_height)) == FB_NULL)
 	    Fatal(fbp, "Couldn't open input frame buffer");
 	else {
 	    int y;
@@ -224,11 +224,8 @@ main(int argc, char **argv)
 
 	    /* Use smaller actual input size instead of request. */
 
-	    if (wt < src_width)
-		src_width = wt;
-
-	    if (ht < src_height)
-		src_height = ht;
+	    V_MIN(src_width, wt);
+	    V_MIN(src_height, ht);
 
 	    if ((pix = (RGBpixel *)malloc((size_t)src_width * (size_t)src_height * sizeof(RGBpixel))) == NULL)
 		Fatal(fbp, "Not enough memory for pixel array");
@@ -239,7 +236,7 @@ main(int argc, char **argv)
 	    }
 
 	    if (fb_close(fbp) == -1) {
-		fbp = FBIO_NULL;	/* avoid second try */
+		fbp = FB_NULL;	/* avoid second try */
 		Fatal(fbp, "Error closing input frame buffer");
 	    }
 	}
@@ -253,7 +250,7 @@ main(int argc, char **argv)
     if (dst_height == 0)
 	dst_height = src_height;	/* default */
 
-    if ((fbp = fb_open(out_fb_file, dst_width, dst_height)) == FBIO_NULL)
+    if ((fbp = fb_open(out_fb_file, dst_width, dst_height)) == FB_NULL)
 	Fatal(fbp, "Couldn't open output frame buffer");
     else {
 	int wt = fb_getwidth(fbp);
@@ -261,19 +258,13 @@ main(int argc, char **argv)
 
 	/* Use smaller actual frame buffer size for output. */
 
-	if (wt < dst_width)
-	    dst_width = wt;
-
-	if (ht < dst_height)
-	    dst_height = ht;
+	V_MIN(dst_width, wt);
+	V_MIN(dst_height, ht);
 
 	/* Avoid selecting pixels outside the input image. */
 
-	if (dst_width > src_width)
-	    dst_width = src_width;
-
-	if (dst_height > src_height)
-	    dst_height = src_height;
+	V_MIN(dst_width, src_width);
+	V_MIN(dst_height, src_height);
     }
 
     /* The following is probably an optimally fast shuffling
@@ -316,7 +307,7 @@ main(int argc, char **argv)
     /* Close the frame buffer. */
 
     if (fb_close(fbp) == -1) {
-	fbp = FBIO_NULL;	/* avoid second try */
+	fbp = FB_NULL;	/* avoid second try */
 	Fatal(fbp, "Error closing output frame buffer");
     }
 

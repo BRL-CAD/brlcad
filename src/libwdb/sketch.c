@@ -1,7 +1,7 @@
 /*                        S K E T C H . C
  * BRL-CAD
  *
- * Copyright (c) 2000-2013 United States Government as represented by
+ * Copyright (c) 2000-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -26,8 +26,7 @@
 
 #include "common.h"
 
-#include "bu.h"
-#include "rtgeom.h"
+#include "rt/geom.h"
 #include "raytrace.h"
 #include "wdb.h"
 
@@ -42,7 +41,7 @@ mk_sketch(struct rt_wdb *fp, const char *name, const struct rt_sketch_internal *
     /* copy the caller's struct */
     sketch = rt_copy_sketch(skt);
 
-    return wdb_export(fp, name, (genptr_t)sketch, ID_SKETCH, mk_conv2mm);
+    return wdb_export(fp, name, (void *)sketch, ID_SKETCH, mk_conv2mm);
 }
 
 

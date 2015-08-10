@@ -1,7 +1,7 @@
 /*                       C O M P N E T . C
  * BRL-CAD / ADRT
  *
- * Copyright (c) 2007-2013 United States Government as represented by
+ * Copyright (c) 2007-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -24,7 +24,6 @@
 /* interface header */
 #include "compnet.h"
 
-#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #ifdef HAVE_SYS_SOCKET_H
@@ -41,7 +40,7 @@
 #endif
 #include "bio.h"
 
-#include "tie.h"
+#include "rt/tie.h"
 #include "adrt.h"
 #include "tienet.h"
 
@@ -59,7 +58,7 @@ int master_compserv_active;
 #define SET_BASE_ATTS_01	7
 #define SET_BASE_ATTS_STATE	8
 #define RESET_BASE_ATTS		9
-#define	TERM			128
+#define TERM			128
 
 
 /*
@@ -113,6 +112,7 @@ void compnet_connect(char *host, int port) {
     master_compserv_active = 1;
 }
 
+
 /*
  * Update the status of a component
  */
@@ -123,7 +123,7 @@ void compnet_update(char *string, char status) {
 	return;
 
     /* format message */
-    snprintf(message, ADRT_NAME_SIZE, "%c%s,%d%c", SET_BASE_ATTS_STATE, string, status, TERM);
+    snprintf(message, ADRT_NAME_SIZE, "%c%s, %d%c", SET_BASE_ATTS_STATE, string, status, TERM);
 
     /* Send string */
     tienet_send(master_compserv_socket, message, strlen(message));
@@ -139,6 +139,7 @@ void compnet_reset() {
     message = RESET_BASE_ATTS;
     tienet_send(master_compserv_socket, &message, 1);
 }
+
 
 /*
  * Local Variables:

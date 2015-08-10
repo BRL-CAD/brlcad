@@ -1,7 +1,7 @@
 /*                       B U _ H E A P . C
  * BRL-CAD
  *
- * Copyright (c) 2013 United States Government as represented by
+ * Copyright (c) 2013-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -33,7 +33,7 @@
 #include "bu.h"
 
 /* this should match what is in heap.c */
-#define HEAP_BINS 1024
+#define HEAP_BINS 512
 
 
 /*
@@ -49,14 +49,14 @@ main (int ac, char *av[])
     size_t freecalls = 0;
 
     if (ac > 1) {
-	printf("Usage: %s\n", av[0]);
+	fprintf(stderr,"Usage: %s\n", av[0]);
 	return 1;
     }
 
     srand(time(0));
 
-    for (i=0; i<1024*1024*50; i++) {
-	size_t sz = (((double)rand() / (double)(RAND_MAX-1)) * (double)HEAP_BINS) + 1;
+    for (i=0; i<1024*1024*10; i++) {
+	size_t sz = ((rand() / (double)(RAND_MAX-1)) * (double)HEAP_BINS) + 1;
 	/* bu_log("allocating %d: %zd\n", i, sz); */
 #ifdef USE_MALLOC
 	ptr = malloc(sz);
@@ -65,24 +65,12 @@ main (int ac, char *av[])
 #endif
 	allocalls++;
 
-	if (i%3==0) {
-	    /* bu_log("freeing sz=%zd allocation\n", sz); */
 #ifdef USE_MALLOC
-	    free(ptr);
+	free(ptr);
 #else
-	    bu_heap_put(ptr, sz);
+	bu_heap_put(ptr, sz);
 #endif
-	    freecalls++;
-	}
-	if (i % (1024 * 1024) == 0) {
-#ifdef USE_MALLOC
-	    free(NULL);
-#else
-	    bu_heap_put(NULL, 1);
-#endif
-	    freecalls++;
-	}
-
+	freecalls++;
     }
 
 #ifdef USE_MALLOC

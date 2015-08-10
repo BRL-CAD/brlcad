@@ -36,7 +36,7 @@
 
 
 <refsect1 xml:id='description'><title>DESCRIPTION</title>
-<para><emphasis remap='I'>ug-g</emphasis>
+<para><command>ug-g</command>
 converts the specified
 <emphasis remap='I'>part_filename</emphasis>
 model to a BRL-CAD
@@ -47,7 +47,7 @@ is expected to be a Unigraphics part file.
 The
 <option>-d</option>
 specifies a debug
-<emphasis remap='I'>level.</emphasis>
+<emphasis remap='I'>level</emphasis>.
 Currently this is either on or off for levels 0 or 1.
 The
 <option>-i</option>
@@ -97,7 +97,7 @@ $ \fuug-g -o sample.g sample.prt
 </refsect1>
 
 <refsect1 xml:id='authors'><title>AUTHORS</title>
-<para>John Anderson
+<para>John Anderson ,
 <!-- .br -->
 Lee Butler</para>
 </refsect1>

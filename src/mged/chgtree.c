@@ -1,7 +1,7 @@
 /*                       C H G T R E E . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2013 United States Government as represented by
+ * Copyright (c) 1985-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -27,20 +27,16 @@
 #include "common.h"
 
 #include <signal.h>
-#include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
 #include <string.h>
 
 #include "tcl.h"
 
-#include "bio.h"
-#include "bu.h"
 #include "vmath.h"
 #include "bn.h"
-#include "dg.h"
 #include "wdb.h"
-#include "rtgeom.h"
+#include "rt/geom.h"
 
 #include "./sedit.h"
 #include "./mged.h"
@@ -135,25 +131,22 @@ f_copy_inv(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv
 }
 
 
-/**
- * F I N D _ S O L I D _ W I T H _ P A T H
- */
 struct solid *
 find_solid_with_path(struct db_full_path *pathp)
 {
-    struct ged_display_list *gdlp;
-    struct ged_display_list *next_gdlp;
+    struct display_list *gdlp;
+    struct display_list *next_gdlp;
     struct solid *sp;
     int count = 0;
     struct solid *ret = (struct solid *)NULL;
 
     RT_CK_FULL_PATH(pathp);
 
-    gdlp = BU_LIST_NEXT(ged_display_list, gedp->ged_gdp->gd_headDisplay);
+    gdlp = BU_LIST_NEXT(display_list, gedp->ged_gdp->gd_headDisplay);
     while (BU_LIST_NOT_HEAD(gdlp, gedp->ged_gdp->gd_headDisplay)) {
-	next_gdlp = BU_LIST_PNEXT(ged_display_list, gdlp);
+	next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
 
-	FOR_ALL_SOLIDS(sp, &gdlp->gdl_headSolid) {
+	FOR_ALL_SOLIDS(sp, &gdlp->dl_headSolid) {
 	    if (!db_identical_full_paths(pathp, &sp->s_fullpath)) continue;
 
 	    /* Paths are the same */
@@ -178,8 +171,6 @@ find_solid_with_path(struct db_full_path *pathp)
 
 
 /**
- * C M D _ O E D
- *
  * Transition from VIEW state to OBJECT EDIT state in a single
  * command, rather than requiring "press oill", "ill leaf", "matpick
  * a/b".
@@ -192,8 +183,8 @@ find_solid_with_path(struct db_full_path *pathp)
 int
 cmd_oed(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 {
-    struct ged_display_list *gdlp;
-    struct ged_display_list *next_gdlp;
+    struct display_list *gdlp;
+    struct display_list *next_gdlp;
     struct db_full_path lhs;
     struct db_full_path rhs;
     struct db_full_path both;
@@ -217,11 +208,11 @@ cmd_oed(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
     }
 
     /* Common part of illumination */
-    gdlp = BU_LIST_NEXT(ged_display_list, gedp->ged_gdp->gd_headDisplay);
+    gdlp = BU_LIST_NEXT(display_list, gedp->ged_gdp->gd_headDisplay);
     while (BU_LIST_NOT_HEAD(gdlp, gedp->ged_gdp->gd_headDisplay)) {
-	next_gdlp = BU_LIST_PNEXT(ged_display_list, gdlp);
+	next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
 
-	if (BU_LIST_NON_EMPTY(&gdlp->gdl_headSolid)) {
+	if (BU_LIST_NON_EMPTY(&gdlp->dl_headSolid)) {
 	    is_empty = 0;
 	    break;
 	}
@@ -256,7 +247,7 @@ cmd_oed(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 
     /* Patterned after ill_common() ... */
     illum_gdlp = gdlp;
-    illump = BU_LIST_NEXT(solid, &gdlp->gdl_headSolid);/* any valid solid would do */
+    illump = BU_LIST_NEXT(solid, &gdlp->dl_headSolid);/* any valid solid would do */
     edobj = 0;		/* sanity */
     movedir = 0;		/* No edit modes set */
     MAT_IDN(modelchanges);	/* No changes yet */
