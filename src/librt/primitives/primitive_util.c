@@ -446,7 +446,13 @@ static cl_context clt_context;
 static cl_command_queue clt_queue;
 static cl_program clt_program;
 static cl_kernel clt_kernel;
-static cl_kernel clt_final_update_kernel, clt_scan_intervals_kernel;
+
+static cl_program clt_inclusive_scan_program;
+static cl_kernel clt_inclusive_scan_final_update_kernel;
+static cl_kernel clt_inclusive_scan_intervals_kernel;
+static cl_program clt_exclusive_scan_program;
+static cl_kernel clt_exclusive_scan_final_update_kernel;
+static cl_kernel clt_exclusive_scan_intervals_kernel;
 
 static size_t max_wg_size;
 static cl_uint max_compute_units;
@@ -504,7 +510,7 @@ clt_read_code(const char *filename, size_t *length)
 }
 
 cl_program
-clt_get_program(cl_context context, cl_device_id device, cl_uint count, const char *filenames[])
+clt_get_program(cl_context context, cl_device_id device, cl_uint count, const char *filenames[], const char *options)
 {
     cl_int error;
     cl_program program;
@@ -525,7 +531,7 @@ clt_get_program(cl_context context, cl_device_id device, cl_uint count, const ch
     program = clCreateProgramWithSource(context, count, pc_strings, pc_lengths, &error);
     if (error != CL_SUCCESS) bu_bomb("failed to create OpenCL program");
 
-    error = clBuildProgram(program, 1, &device, NULL, NULL, NULL);
+    error = clBuildProgram(program, 1, &device, options, NULL, NULL);
     if (error != CL_SUCCESS) {
         size_t log_size;
         char *log_data;
@@ -551,8 +557,14 @@ clt_cleanup(void)
 {
     if (!clt_initialized) return;
 
-    clReleaseKernel(clt_final_update_kernel);
-    clReleaseKernel(clt_scan_intervals_kernel);
+    clReleaseKernel(clt_exclusive_scan_final_update_kernel);
+    clReleaseKernel(clt_exclusive_scan_intervals_kernel);
+    clReleaseProgram(clt_exclusive_scan_program);
+
+    clReleaseKernel(clt_inclusive_scan_final_update_kernel);
+    clReleaseKernel(clt_inclusive_scan_intervals_kernel);
+    clReleaseProgram(clt_inclusive_scan_program);
+
     clReleaseKernel(clt_kernel);
     clReleaseCommandQueue(clt_queue);
     clReleaseProgram(clt_program);
@@ -568,7 +580,7 @@ clt_init(void)
 
     bu_semaphore_acquire(clt_semaphore);
     if (!clt_initialized) {
-        const char *filenames[] = {
+        const char *main_files[] = {
             "solver.cl",
 
             "arb8_shot.cl",
@@ -579,9 +591,8 @@ clt_init(void)
             "tor_shot.cl",
 
             "table.cl",
-
-            "scan.cl"
         };
+        const char *scan_file = "scan.cl";
 
         clt_initialized = 1;
         atexit(clt_cleanup);
@@ -594,15 +605,23 @@ clt_init(void)
         clt_queue = clCreateCommandQueue(clt_context, clt_device, 0, &error);
         if (error != CL_SUCCESS) bu_bomb("failed to create an OpenCL command queue");
 
-        clt_program = clt_get_program(clt_context, clt_device, sizeof(filenames)/sizeof(*filenames), filenames);
+        clt_program = clt_get_program(clt_context, clt_device, sizeof(main_files)/sizeof(*main_files), main_files, NULL);
 
         clt_kernel = clCreateKernel(clt_program, "solid_shot", &error);
         if (error != CL_SUCCESS) bu_bomb("failed to create an OpenCL kernel");
 
-        clt_scan_intervals_kernel = clCreateKernel(clt_program, "scan_scan_intervals", &error);
+        clt_inclusive_scan_program = clt_get_program(clt_context, clt_device, 1, &scan_file,
+            "-D NAME_PREFIX(n)=inclusive_scan##n -D OUTPUT_STATEMENT=output[i]=item -D USE_LOOKBEHIND_UPDATE=0");
+        clt_inclusive_scan_intervals_kernel = clCreateKernel(clt_inclusive_scan_program, "inclusive_scan_intervals", &error);
+        if (error != CL_SUCCESS) bu_bomb("failed to create an OpenCL kernel");
+        clt_inclusive_scan_final_update_kernel = clCreateKernel(clt_inclusive_scan_program, "inclusive_scan_final_update", &error);
         if (error != CL_SUCCESS) bu_bomb("failed to create an OpenCL kernel");
 
-        clt_final_update_kernel = clCreateKernel(clt_program, "scan_final_update", &error);
+        clt_exclusive_scan_program = clt_get_program(clt_context, clt_device, 1, &scan_file,
+            "-D NAME_PREFIX(n)=exclusive_scan##n -D OUTPUT_STATEMENT=output[i]=prev_item -D USE_LOOKBEHIND_UPDATE=1");
+        clt_exclusive_scan_intervals_kernel = clCreateKernel(clt_exclusive_scan_program, "exclusive_scan_intervals", &error);
+        if (error != CL_SUCCESS) bu_bomb("failed to create an OpenCL kernel");
+        clt_exclusive_scan_final_update_kernel = clCreateKernel(clt_exclusive_scan_program, "exclusive_scan_final_update", &error);
         if (error != CL_SUCCESS) bu_bomb("failed to create an OpenCL kernel");
     }
     bu_semaphore_release(clt_semaphore);
@@ -684,8 +703,8 @@ uniform_interval_splitting(cl_uint n, cl_uint granularity, cl_uint max_intervals
     return;
 }
 
-void
-clt_inclusive_scan(cl_mem array, const cl_uint n)
+static void
+clt_scan(cl_kernel scan_intervals_kernel, cl_kernel final_update_kernel, cl_mem array, const cl_uint n)
 {
     uint interval_size;
     cl_uint scan_wg_size, update_wg_size, scan_wg_seq_batches;
@@ -712,46 +731,58 @@ clt_inclusive_scan(cl_mem array, const cl_uint n)
 
     /* first level scan of interval (one interval per block) */
     bu_semaphore_acquire(clt_semaphore);
-    error = clSetKernelArg(clt_scan_intervals_kernel, 0, sizeof(cl_mem), &array);
-    error |= clSetKernelArg(clt_scan_intervals_kernel, 1, sizeof(cl_mem), &array);
-    error |= clSetKernelArg(clt_scan_intervals_kernel, 2, sizeof(cl_uint), &n);
-    error |= clSetKernelArg(clt_scan_intervals_kernel, 3, sizeof(cl_uint), &interval_size);
-    error |= clSetKernelArg(clt_scan_intervals_kernel, 4, sizeof(cl_mem), &block_results);
+    error = clSetKernelArg(scan_intervals_kernel, 0, sizeof(cl_mem), &array);
+    error |= clSetKernelArg(scan_intervals_kernel, 1, sizeof(cl_mem), &array);
+    error |= clSetKernelArg(scan_intervals_kernel, 2, sizeof(cl_uint), &n);
+    error |= clSetKernelArg(scan_intervals_kernel, 3, sizeof(cl_uint), &interval_size);
+    error |= clSetKernelArg(scan_intervals_kernel, 4, sizeof(cl_mem), &block_results);
     if (error != CL_SUCCESS) bu_bomb("failed to set OpenCL kernel arguments");
     global_size1 = num_groups*scan_wg_size, local_size1 = scan_wg_size;
-    error = clEnqueueNDRangeKernel(clt_queue, clt_scan_intervals_kernel, 1, NULL, &global_size1, &local_size1, 0, NULL, NULL);
+    error = clEnqueueNDRangeKernel(clt_queue, scan_intervals_kernel, 1, NULL, &global_size1, &local_size1, 0, NULL, NULL);
     bu_semaphore_release(clt_semaphore);
     if (error != CL_SUCCESS) bu_bomb("failed to enqueue OpenCL kernel");
 
     /* second level inclusive scan of per-group results */
     bu_semaphore_acquire(clt_semaphore);
-    error = clSetKernelArg(clt_scan_intervals_kernel, 0, sizeof(cl_mem), &block_results);
-    error |= clSetKernelArg(clt_scan_intervals_kernel, 1, sizeof(cl_mem), &block_results);
-    error |= clSetKernelArg(clt_scan_intervals_kernel, 2, sizeof(cl_uint), &num_groups);
-    error |= clSetKernelArg(clt_scan_intervals_kernel, 3, sizeof(cl_uint), &interval_size);
-    error |= clSetKernelArg(clt_scan_intervals_kernel, 4, sizeof(cl_mem), &dummy_results);
+    error = clSetKernelArg(scan_intervals_kernel, 0, sizeof(cl_mem), &block_results);
+    error |= clSetKernelArg(scan_intervals_kernel, 1, sizeof(cl_mem), &block_results);
+    error |= clSetKernelArg(scan_intervals_kernel, 2, sizeof(cl_uint), &num_groups);
+    error |= clSetKernelArg(scan_intervals_kernel, 3, sizeof(cl_uint), &interval_size);
+    error |= clSetKernelArg(scan_intervals_kernel, 4, sizeof(cl_mem), &dummy_results);
     if (error != CL_SUCCESS) bu_bomb("failed to set OpenCL kernel arguments");
     global_size2 = scan_wg_size, local_size2 = scan_wg_size;
-    error = clEnqueueNDRangeKernel(clt_queue, clt_scan_intervals_kernel, 1, NULL, &global_size2, &local_size2, 0, NULL, NULL);
+    error = clEnqueueNDRangeKernel(clt_queue, scan_intervals_kernel, 1, NULL, &global_size2, &local_size2, 0, NULL, NULL);
     bu_semaphore_release(clt_semaphore);
     if (error != CL_SUCCESS) bu_bomb("failed to enqueue OpenCL kernel");
 
     /* update intervals with result of groupwise scan */
     bu_semaphore_acquire(clt_semaphore);
-    error = clSetKernelArg(clt_final_update_kernel, 0, sizeof(cl_mem), &array);
-    error |= clSetKernelArg(clt_final_update_kernel, 1, sizeof(cl_uint), &n);
-    error |= clSetKernelArg(clt_final_update_kernel, 2, sizeof(cl_uint), &interval_size);
-    error |= clSetKernelArg(clt_final_update_kernel, 3, sizeof(cl_mem), &block_results);
-    error |= clSetKernelArg(clt_final_update_kernel, 4, sizeof(cl_mem), &array);
+    error = clSetKernelArg(final_update_kernel, 0, sizeof(cl_mem), &array);
+    error |= clSetKernelArg(final_update_kernel, 1, sizeof(cl_uint), &n);
+    error |= clSetKernelArg(final_update_kernel, 2, sizeof(cl_uint), &interval_size);
+    error |= clSetKernelArg(final_update_kernel, 3, sizeof(cl_mem), &block_results);
+    error |= clSetKernelArg(final_update_kernel, 4, sizeof(cl_mem), &array);
     if (error != CL_SUCCESS) bu_bomb("failed to set OpenCL kernel arguments");
     global_size3 = num_groups*update_wg_size, local_size3 = update_wg_size;
-    error = clEnqueueNDRangeKernel(clt_queue, clt_final_update_kernel, 1, NULL, &global_size3, &local_size3, 0, NULL, NULL);
+    error = clEnqueueNDRangeKernel(clt_queue, final_update_kernel, 1, NULL, &global_size3, &local_size3, 0, NULL, NULL);
     bu_semaphore_release(clt_semaphore);
     if (error != CL_SUCCESS) bu_bomb("failed to enqueue OpenCL kernel");
 
     clReleaseMemObject(block_results);
     clReleaseMemObject(dummy_results);
     clFinish(clt_queue);
+}
+
+void
+clt_inclusive_scan(cl_mem array, const cl_uint n)
+{
+    clt_scan(clt_inclusive_scan_intervals_kernel, clt_inclusive_scan_final_update_kernel, array, n);
+}
+
+void
+clt_exclusive_scan(cl_mem array, const cl_uint n)
+{
+    clt_scan(clt_exclusive_scan_intervals_kernel, clt_exclusive_scan_final_update_kernel, array, n);
 }
 #endif
 

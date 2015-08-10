@@ -27,14 +27,10 @@ https://code.google.com/p/thrust/source/browse/thrust/detail/backend/cuda/detail
 #define INPUT_EXPR(i)                       (input[i])
 #define SCAN_EXPR(a,b,across_seg_boundary)  (a+b)
 #define NEUTRAL                             0
-#define OUTPUT_STATEMENT                    output[i]=item
-
-#define NAME_PREFIX(n)                      scan##n
 
 #define SCAN_DTYPE                          uint
 #define INDEX_DTYPE                         uint
 
-#define USE_LOOKBEHIND_UPDATE               1
 #define IS_FIRST_LEVEL                      1
 
 #define IS_SEGMENTED                        0
@@ -167,7 +163,7 @@ void NAME_PREFIX(_final_update)(
 
 __kernel
 REQD_WG_SIZE(SWG_SIZE, 1, 1)
-void NAME_PREFIX(_scan_intervals)(
+void NAME_PREFIX(_intervals)(
   __global scan_type *input,
   __global scan_type *restrict partial_scan_buffer,
   const index_type N,
