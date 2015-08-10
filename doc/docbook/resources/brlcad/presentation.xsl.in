@@ -35,7 +35,7 @@
             <!-- Any section element inside of this container is displayed as a slide -->
             <div class="slides">
 
-    <xsl:apply-templates/> 
+    <xsl:apply-templates/>
     </div>
 </div>
         <script src="../../wp-content/themes/brlcad/js/head.min.js"></script>
@@ -82,16 +82,16 @@
  </xsl:template>
 
 	<xsl:template match="d:para">
- <p> 
+ <p>
     <xsl:apply-templates/> </p>
  </xsl:template>
  	<xsl:template match="d:itemizedlist">
- <ul> 
+ <ul>
     <xsl:apply-templates/> </ul>
  </xsl:template>
 
  	<xsl:template match="d:listitem">
- <li> 
+ <li>
     <xsl:apply-templates/> </li>
  </xsl:template>
 
@@ -109,47 +109,47 @@
  </xsl:template>
 
  	<xsl:template match="d:table">
- <table> 
+ <table>
     <xsl:apply-templates/> </table>
  </xsl:template>
 
  	<xsl:template match="d:thead">
- <thead> 
+ <thead>
     <xsl:apply-templates/> </thead>
  </xsl:template>
 
     <xsl:template match="d:row">
- <tr> 
+ <tr>
     <xsl:apply-templates/> </tr>
  </xsl:template>
 
     <xsl:template match="d:entry">
- <td> 
+ <td>
     <xsl:apply-templates/> </td>
  </xsl:template>
 
     <xsl:template match="d:tbody">
- <tbody> 
+ <tbody>
     <xsl:apply-templates/> </tbody>
  </xsl:template>
 
     <xsl:template match="d:programlisting">
- <pre> 
+ <pre>
     <xsl:apply-templates/> </pre>
  </xsl:template>
 
     <xsl:template match="d:filename">
- <code> 
+ <code>
     <xsl:apply-templates/> </code>
  </xsl:template>
 
     <xsl:template match="d:emphasis[@role='bold']">
- <b> 
+ <b>
     <xsl:apply-templates/> </b>
  </xsl:template>
 
      <xsl:template match="d:emphasis">
- <i> 
+ <i>
     <xsl:apply-templates/> </i>
  </xsl:template>
 
@@ -171,38 +171,38 @@
 
 
     <xsl:template match="d:section">
- <section> 
+ <section>
     <xsl:apply-templates/> </section>
  </xsl:template>
 
     <xsl:template match="d:info">
- <section> 
+ <section>
     <xsl:apply-templates/> </section>
  </xsl:template>
 
     <xsl:template match="d:personname">
- <p> 
+ <p>
     <xsl:apply-templates/> </p>
  </xsl:template>
 
     <xsl:template match="d:imageobject[@role]">
- <section> 
+ <section>
     <xsl:apply-templates/> </section>
  </xsl:template>
 
 
     <xsl:template match="d:firstname">
- <h5> 
+ <h5>
     <xsl:apply-templates/> </h5>
  </xsl:template>
 
     <xsl:template match="d:surname">
- <h5> 
+ <h5>
     <xsl:apply-templates/> </h5>
  </xsl:template>
 
     <xsl:template match="d:legalnotice">
- <p> 
+ <p>
     <xsl:apply-templates/> </p>
  </xsl:template>
 
@@ -231,7 +231,7 @@
    <xsl:attribute name="align">
       <xsl:value-of select="."/>
    </xsl:attribute>
-  </xsl:template> 
+  </xsl:template>
 <xsl:template match="@scalefit">
    <xsl:attribute name="scalefit">
       <xsl:value-of select="."/>
@@ -239,17 +239,17 @@
 
 </xsl:template>
     <xsl:template match="d:literallayout">
- <pre> 
+ <pre>
     <xsl:apply-templates/> </pre>
  </xsl:template>
 
     <xsl:template match="d:imageobject[@role='fo']">
- <hide> 
+ <hide>
     <xsl:apply-templates/> </hide>
  </xsl:template>
 
     <xsl:template match="d:section/figure/title">
- <p> 
+ <p>
     <xsl:apply-templates/> </p>
  </xsl:template>
 
