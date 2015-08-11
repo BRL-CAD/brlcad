@@ -691,7 +691,7 @@ uniform_interval_splitting(cl_uint n, cl_uint granularity, cl_uint max_intervals
         return;
     }
 
-    /* 
+    /*
      * ensures that:
      *     num_intervals * interval_size is >= n
      *   and
