@@ -58,9 +58,9 @@ struct kernels {
     { NULL, NULL, {0, 0, 0, 0, 0, 0, 0, 0, 0}, 0, 0, ICV_FILTER_NULL },
 };
 
+int *kern;
 int kerndiv;
 int kernoffset;
-int *kern;
 ICV_FILTER filter_type;
 int kernel_index;
 int inx = 512;
@@ -152,7 +152,7 @@ get_args(int argc, char **argv)
 	    case 's':
 		inx = iny = atoi(bu_optarg);
 		break;
-	    default:		/* '?' */
+	    default:		/* 'h' '?' */
 		return 0;
 	}
     }
