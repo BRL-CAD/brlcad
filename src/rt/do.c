@@ -511,7 +511,20 @@ def_tree(register struct rt_i *rtip)
 
 
 /*********************************************************************************/
-typedef unsigned cl_uint;
+#include <limits.h>
+#include <CL/cl.h>
+
+#ifdef CLT_SINGLE_PRECISION
+#define cl_double cl_float
+#define cl_double3 cl_float3
+#endif
+
+
+struct cl_hit {
+    cl_double3 hit_vpriv;
+    cl_double hit_dist;
+    cl_int hit_surfno;
+};
 
 static point_t lo, hi;
 
@@ -542,6 +555,11 @@ struct bboxi {
 
 #define MY_CLAMP(x, min, max)   ((x < min) ? min : ((x > max) ? max : x))
 #define MY_SIGN(x)              ((x < 0) ? -1 : 1)
+
+extern void clt_db_store(size_t count, struct soltab *solids[]);
+extern void clt_db_release(void);
+
+extern cl_int clt_solid_shot2(const size_t sz_hits, struct cl_hit *hits, struct xray *rp, const cl_uint index);
 
 static void
 alloc_grid(const struct boxnode *fromp)
@@ -581,6 +599,8 @@ alloc_grid(const struct boxnode *fromp)
 
     /* TODO: do a deep copy here in case it ain't safe. */
     S = fromp->bn_list;
+
+    clt_db_store(NS, S);
     
     printf("%dx%dx%d\n", M[X], M[Y], M[Z]);
 
@@ -693,6 +713,22 @@ simple_prep(struct rt_i *rtip)
     alloc_grid(&finp->bn);
     
     bu_free(finp, "union cutter");
+}
+
+int
+clt_accelerated(const struct soltab *stp)
+{
+    switch (stp->st_id) {
+	case ID_TOR:
+	case ID_TGC:
+	case ID_ELL:
+	case ID_ARB8:
+	case ID_SPH:
+	case ID_EHY:
+	    return 1;
+	default:
+	    return 0;
+    }
 }
 
 int
@@ -868,9 +904,40 @@ simple_shootray(struct resource *resp, struct xray *a_ray, struct rt_i *rtip, re
 
                     ret = -1;
 
-                    if (stp->st_meth->ft_shot) {
-                        ret = stp->st_meth->ft_shot(stp, &ss.newray, ap, &new_segs);
-                    }
+		    if (clt_accelerated(stp)) {
+			struct seg *seghead = &new_segs;
+			struct cl_hit hits[4];
+
+			ret = clt_solid_shot2(sizeof(hits), hits, &ss.newray, L[k]);
+			if (ret > 0) {
+			    struct seg *segp;
+			    RT_GET_SEG(segp, ap->a_resource);
+			    segp->seg_stp = stp;
+			    segp->seg_in.hit_dist = hits[0].hit_dist;
+			    segp->seg_in.hit_surfno = hits[0].hit_surfno;
+			    segp->seg_out.hit_dist = hits[1].hit_dist;
+			    segp->seg_out.hit_surfno = hits[1].hit_surfno;
+			    /* Set aside vector for rt_tor_norm() later */
+			    VMOVE(segp->seg_in.hit_vpriv, hits[0].hit_vpriv.s);
+			    VMOVE(segp->seg_out.hit_vpriv, hits[1].hit_vpriv.s);
+			    BU_LIST_INSERT(&(seghead->l), &(segp->l));
+			}
+			if (ret > 2) {
+			    struct seg *segp;
+			    RT_GET_SEG(segp, ap->a_resource);
+			    segp->seg_stp = stp;
+			    segp->seg_in.hit_dist = hits[2].hit_dist;
+			    segp->seg_in.hit_surfno = hits[2].hit_surfno;
+			    segp->seg_out.hit_dist = hits[3].hit_dist;
+			    segp->seg_out.hit_surfno = hits[3].hit_surfno;
+			    VMOVE(segp->seg_in.hit_vpriv, hits[2].hit_vpriv.s);
+			    VMOVE(segp->seg_out.hit_vpriv, hits[3].hit_vpriv.s);
+			    BU_LIST_INSERT(&(seghead->l), &(segp->l));
+			}
+		    } else if (stp->st_meth->ft_shot) {
+			ret = stp->st_meth->ft_shot(stp, &ss.newray, ap, &new_segs);
+		    }
+
                     if (ret <= 0) {
                         resp->re_shot_miss++;
                         continue;	/* MISS */

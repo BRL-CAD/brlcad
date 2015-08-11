@@ -445,7 +445,7 @@ static cl_device_id clt_device;
 static cl_context clt_context;
 static cl_command_queue clt_queue;
 static cl_program clt_program;
-static cl_kernel clt_kernel;
+static cl_kernel clt_kernel, clt_kernel2;
 
 static cl_program clt_inclusive_scan_program;
 static cl_kernel clt_inclusive_scan_final_update_kernel;
@@ -565,6 +565,7 @@ clt_cleanup(void)
     clReleaseKernel(clt_inclusive_scan_intervals_kernel);
     clReleaseProgram(clt_inclusive_scan_program);
 
+    clReleaseKernel(clt_kernel2);
     clReleaseKernel(clt_kernel);
     clReleaseCommandQueue(clt_queue);
     clReleaseProgram(clt_program);
@@ -609,6 +610,9 @@ clt_init(void)
 
         clt_kernel = clCreateKernel(clt_program, "solid_shot", &error);
         if (error != CL_SUCCESS) bu_bomb("failed to create an OpenCL kernel");
+        clt_kernel2 = clCreateKernel(clt_program, "solid_shot2", &error);
+        if (error != CL_SUCCESS) bu_bomb("failed to create an OpenCL kernel");
+
 
         clt_inclusive_scan_program = clt_get_program(clt_context, clt_device, 1, &scan_file,
             "-D NAME_PREFIX(n)=inclusive_scan##n -D OUTPUT_STATEMENT=output[i]=item -D USE_LOOKBEHIND_UPDATE=0");
@@ -784,6 +788,332 @@ clt_exclusive_scan(cl_mem array, const cl_uint n)
 {
     clt_scan(clt_exclusive_scan_intervals_kernel, clt_exclusive_scan_final_update_kernel, array, n);
 }
+
+
+/* Optionally, one of these for each face.  (Lazy evaluation) */
+struct oface {
+    fastf_t arb_UVorig[3];	/* origin of UV coord system */
+    fastf_t arb_U[3];		/* unit U vector (along B-A) */
+    fastf_t arb_V[3];		/* unit V vector (perp to N and U) */
+    fastf_t arb_Ulen;		/* length of U basis (for du) */
+    fastf_t arb_Vlen;		/* length of V basis (for dv) */
+};
+
+
+/* One of these for each face */
+struct aface {
+    fastf_t A[3];		/* "A" point */
+    plane_t peqn;		/* Plane equation, unit normal */
+};
+
+
+/* One of these for each ARB, custom allocated to size */
+struct arb_specific {
+    int arb_nmfaces;		/* number of faces */
+    struct oface *arb_opt;	/* pointer to optional info */
+    struct aface arb_face[6];	/* May really be up to [6] faces */
+};
+
+
+/* These hold temp values for the face being prep'ed */
+struct prep_arb {
+    vect_t pa_center;		/* center point */
+    int pa_faces;		/* Number of faces done so far */
+    int pa_npts[6];		/* # of points on face's plane */
+    int pa_pindex[4][6];	/* subscr in arbi_pt[] */
+    int pa_clockwise[6];	/* face normal was flipped */
+    struct aface pa_face[6];	/* required face info work area */
+    struct oface pa_opt[6];	/* optional face info work area */
+    /* These elements must be initialized before using */
+    fastf_t pa_tol_sq;		/* points-are-equal tol sq */
+    int pa_doopt;		/* compute pa_opt[] stuff */
+};
+
+
+struct ehy_specific {
+    point_t ehy_V;	/* vector to ehy origin */
+    vect_t ehy_Hunit;	/* unit H vector */
+    vect_t ehy_Aunit;	/* unit vector along semi-major axis */
+    vect_t ehy_Bunit;	/* unit vector, A x H, semi-minor axis */
+    mat_t ehy_SoR;	/* Scale(Rot(vect)) */
+    mat_t ehy_invRoS;	/* invRot(Scale(vect)) */
+    fastf_t ehy_cprime;	/* c / |H| */
+};
+
+
+struct ell_specific {
+    vect_t ell_V;	/* Vector to center of ellipsoid */
+    vect_t ell_Au;	/* unit-length A vector */
+    vect_t ell_Bu;
+    vect_t ell_Cu;
+    vect_t ell_invsq;	/* [ 1/(|A|**2), 1/(|B|**2), 1/(|C|**2) ] */
+    mat_t ell_SoR;	/* Scale(Rot(vect)) */
+    mat_t ell_invRSSR;	/* invRot(Scale(Scale(Rot(vect)))) */
+};
+
+
+struct sph_specific {
+    vect_t sph_V;	/* Vector to center of sphere */
+    fastf_t sph_radsq;	/* Radius squared */
+    fastf_t sph_invrad;	/* Inverse radius (for normal) */
+    fastf_t sph_rad;	/* Radius */
+    mat_t sph_SoR;	/* Rotate and scale for UV mapping */
+};
+
+
+struct tgc_specific {
+    vect_t tgc_V;		/* Vector to center of base of TGC */
+    fastf_t tgc_sH;		/* magnitude of sheared H vector */
+    fastf_t tgc_A;		/* magnitude of A vector */
+    fastf_t tgc_B;		/* magnitude of B vector */
+    fastf_t tgc_C;		/* magnitude of C vector */
+    fastf_t tgc_D;		/* magnitude of D vector */
+    fastf_t tgc_CdAm1;		/* (C/A - 1) */
+    fastf_t tgc_DdBm1;		/* (D/B - 1) */
+    fastf_t tgc_AAdCC;		/* (|A|**2)/(|C|**2) */
+    fastf_t tgc_BBdDD;		/* (|B|**2)/(|D|**2) */
+    vect_t tgc_N;		/* normal at 'top' of cone */
+    mat_t tgc_ScShR;		/* Scale(Shear(Rot(vect))) */
+    mat_t tgc_invRtShSc;	/* invRot(trnShear(Scale(vect))) */
+    char tgc_AD_CB;		/* boolean:  A*D == C*B */
+};
+
+
+struct tor_specific {
+    fastf_t tor_alpha;	/* 0 < (R2/R1) <= 1 */
+    fastf_t tor_r1;		/* for inverse scaling of k values. */
+    fastf_t tor_r2;		/* for curvature */
+    vect_t tor_V;		/* Vector to center of torus */
+    vect_t tor_N;		/* unit normal to plane of torus */
+    mat_t tor_SoR;	/* Scale(Rot(vect)) */
+    mat_t tor_invR;	/* invRot(vect') */
+};
+
+
+
+struct arb_shot_specific {
+    cl_double arb_peqns[4*6];
+    cl_int arb_nmfaces;
+};
+
+struct ehy_shot_specific {
+    cl_double ehy_SoR[16];
+    cl_double ehy_V[3];
+    cl_double ehy_cprime;
+};
+
+struct ell_shot_specific {
+    cl_double ell_SoR[16];
+    cl_double ell_V[3];
+};
+
+struct sph_shot_specific {
+    cl_double sph_V[3];
+    cl_double sph_radsq;
+};
+
+struct tgc_shot_specific {
+    cl_double tgc_ScShR[16];
+    cl_double tgc_V[3];
+    cl_double tgc_N[3];
+    cl_double tgc_sH, tgc_A, tgc_B;
+    cl_double tgc_CdAm1, tgc_DdBm1, tgc_AAdCC, tgc_BBdDD;
+    cl_char tgc_AD_CB;
+};
+
+struct tor_shot_specific {
+    cl_double tor_SoR[16];
+    cl_double tor_V[3];
+    cl_double tor_alpha, tor_r1;
+};
+
+static cl_mem clt_db_ids, clt_db_indexes, clt_db_prims;
+
+void
+clt_db_store(size_t count, struct soltab *solids[])
+{
+    cl_int error;
+    cl_int *ids;
+    cl_uint *indexes;
+    char *prims;
+    size_t i;
+
+    ids = (cl_int*)bu_calloc(count, sizeof(cl_int), "ids");
+    for (i=0; i < count; i++) {
+        const struct soltab *stp = solids[i];
+    	ids[i] = stp->st_id;
+    }
+
+    indexes = (cl_uint*)bu_calloc(count+1, sizeof(cl_uint), "indexes");
+    indexes[0] = 0;
+    for (i=1; i <= count; i++) {
+        const struct soltab *stp = solids[i-1];
+	size_t size;
+	switch (stp->st_id) {
+	case ID_TOR:	size = sizeof(struct tor_shot_specific);	break;
+	case ID_TGC:	size = sizeof(struct tgc_shot_specific);	break;
+	case ID_ELL:	size = sizeof(struct ell_shot_specific);	break;
+	case ID_ARB8:	size = sizeof(struct arb_shot_specific);	break;
+	case ID_SPH:	size = sizeof(struct sph_shot_specific);	break;
+	case ID_EHY:	size = sizeof(struct ehy_shot_specific);	break;
+	default:	size = 0;					break;
+	}
+	indexes[i] = indexes[i-1] + size;
+    }
+
+    prims = (char*)bu_malloc(indexes[count], "prims");
+    for (i=0; i<count; i++) {
+        const struct soltab *stp = solids[i];
+	void *ptr = prims+indexes[i];
+	switch (ids[i]) {
+	    case ID_TOR:
+		{
+		    struct tor_specific *tor =
+			(struct tor_specific *)stp->st_specific;
+		    struct tor_shot_specific *args =
+			(struct tor_shot_specific *)ptr;
+
+		    VMOVE(args->tor_V, tor->tor_V);
+		    MAT_COPY(args->tor_SoR, tor->tor_SoR);
+		    args->tor_alpha = tor->tor_alpha;
+		    args->tor_r1 = tor->tor_r1;
+		}
+		break;
+	    case ID_TGC:
+		{
+		    struct tgc_specific *tgc =
+			(struct tgc_specific *)stp->st_specific;
+		    struct tgc_shot_specific *args =
+			(struct tgc_shot_specific *)ptr;
+
+		    VMOVE(args->tgc_V, tgc->tgc_V);
+		    args->tgc_sH = tgc->tgc_sH;
+		    args->tgc_A = tgc->tgc_A;
+		    args->tgc_B = tgc->tgc_B;
+		    args->tgc_CdAm1 = tgc->tgc_CdAm1;
+		    args->tgc_DdBm1 = tgc->tgc_DdBm1;
+		    args->tgc_AAdCC = tgc->tgc_AAdCC;
+		    args->tgc_BBdDD = tgc->tgc_BBdDD;
+		    VMOVE(args->tgc_N, tgc->tgc_N);
+		    MAT_COPY(args->tgc_ScShR, tgc->tgc_ScShR);
+		    args->tgc_AD_CB = tgc->tgc_AD_CB;
+		}
+		break;
+	    case ID_ELL:
+		{
+		    struct ell_specific *ell =
+			(struct ell_specific *)stp->st_specific;
+		    struct ell_shot_specific *args =
+			(struct ell_shot_specific *)ptr;
+
+		    VMOVE(args->ell_V, ell->ell_V);
+		    MAT_COPY(args->ell_SoR, ell->ell_SoR);
+		}
+		break;
+	    case ID_ARB8:
+		{
+		    struct arb_specific *arb =
+			(struct arb_specific *)stp->st_specific;
+		    struct arb_shot_specific *args =
+			(struct arb_shot_specific *)ptr;
+
+		    const struct aface *afp;
+		    cl_int j;
+
+		    for (afp = &arb->arb_face[j=0]; j < 6; j++, afp++) {
+			HMOVE(args->arb_peqns+4*j, afp->peqn);
+		    }
+		    args->arb_nmfaces = arb->arb_nmfaces;
+		}
+		break;
+	    case ID_SPH:
+		{
+		    struct sph_specific *sph =
+			(struct sph_specific *)stp->st_specific;
+		    struct sph_shot_specific *args =
+			(struct sph_shot_specific *)ptr;
+
+		    VMOVE(args->sph_V, sph->sph_V);
+		    args->sph_radsq = sph->sph_radsq;
+		}
+		break;
+	    case ID_EHY:
+		{
+		    struct ehy_specific *ehy =
+			(struct ehy_specific *)stp->st_specific;
+		    struct ehy_shot_specific *args =
+			(struct ehy_shot_specific *)ptr;
+
+		    VMOVE(args->ehy_V, ehy->ehy_V);
+		    MAT_COPY(args->ehy_SoR, ehy->ehy_SoR);
+		    args->ehy_cprime = ehy->ehy_cprime;
+		}
+		break;
+	    default:
+		break;
+	}
+    }
+
+    clt_db_ids = clCreateBuffer(clt_context, CL_MEM_READ_ONLY|CL_MEM_COPY_HOST_PTR, sizeof(cl_int)*count, ids, &error);
+    if (error != CL_SUCCESS) bu_bomb("failed to create OpenCL ids buffer");
+    clt_db_indexes = clCreateBuffer(clt_context, CL_MEM_READ_ONLY|CL_MEM_COPY_HOST_PTR, sizeof(cl_uint)*(count+1), indexes, &error);
+    if (error != CL_SUCCESS) bu_bomb("failed to create OpenCL indexes buffer");
+
+    clt_db_prims = clCreateBuffer(clt_context, CL_MEM_READ_ONLY|CL_MEM_COPY_HOST_PTR, indexes[count], prims, &error);
+    if (error != CL_SUCCESS) bu_bomb("failed to create OpenCL indexes buffer");
+
+    bu_free(prims, "failed bu_free() in clt_db_store()");
+    bu_free(indexes, "failed bu_free() in clt_db_store()");
+    bu_free(ids, "failed bu_free() in clt_db_store()");
+}
+
+void
+clt_db_release(void)
+{
+    clReleaseMemObject(clt_db_prims);
+    clReleaseMemObject(clt_db_indexes);
+    clReleaseMemObject(clt_db_ids);
+}
+
+cl_int
+clt_solid_shot2(const size_t sz_hits, struct cl_hit *hits, struct xray *rp, const cl_uint index)
+{
+    cl_int len;
+    cl_double3 r_pt, r_dir;
+
+    const size_t hypersample = 1;
+    cl_int error;
+    cl_mem plen, pout;
+
+    VMOVE(r_pt.s, rp->r_pt);
+    VMOVE(r_dir.s, rp->r_dir);
+
+    pout = clCreateBuffer(clt_context, CL_MEM_WRITE_ONLY, sz_hits, NULL, &error);
+    if (error != CL_SUCCESS) bu_bomb("failed to create OpenCL output buffer");
+    plen = clCreateBuffer(clt_context, CL_MEM_WRITE_ONLY, sizeof(len), NULL, &error);
+    if (error != CL_SUCCESS) bu_bomb("failed to create OpenCL output buffer");
+
+    bu_semaphore_acquire(clt_semaphore);
+    error = clSetKernelArg(clt_kernel2, 0, sizeof(cl_mem), &plen);
+    error |= clSetKernelArg(clt_kernel2, 1, sizeof(cl_mem), &pout);
+    error |= clSetKernelArg(clt_kernel2, 2, sizeof(cl_double3), &r_pt);
+    error |= clSetKernelArg(clt_kernel2, 3, sizeof(cl_double3), &r_dir);
+    error |= clSetKernelArg(clt_kernel2, 4, sizeof(cl_uint), &index);
+    error |= clSetKernelArg(clt_kernel2, 5, sizeof(cl_mem), &clt_db_ids);
+    error |= clSetKernelArg(clt_kernel2, 6, sizeof(cl_mem), &clt_db_indexes);
+    error |= clSetKernelArg(clt_kernel2, 7, sizeof(cl_mem), &clt_db_prims);
+    if (error != CL_SUCCESS) bu_bomb("failed to set OpenCL kernel arguments");
+    error = clEnqueueNDRangeKernel(clt_queue, clt_kernel2, 1, NULL, &hypersample, NULL, 0, NULL, NULL);
+    bu_semaphore_release(clt_semaphore);
+    if (error != CL_SUCCESS) bu_bomb("failed to enqueue OpenCL kernel");
+
+    if (clFinish(clt_queue) != CL_SUCCESS) bu_bomb("failure in clFinish()");
+    clEnqueueReadBuffer(clt_queue, plen, CL_TRUE, 0, sizeof(len), &len, 0, NULL, NULL);
+    clReleaseMemObject(plen);
+    clEnqueueReadBuffer(clt_queue, pout, CL_TRUE, 0, sz_hits, hits, 0, NULL, NULL);
+    clReleaseMemObject(pout);
+    return len;
+}
 #endif
 
 
@@ -796,3 +1126,4 @@ clt_exclusive_scan(cl_mem array, const cl_uint n)
  * End:
  * ex: shiftwidth=4 tabstop=8
  */
+

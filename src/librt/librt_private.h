@@ -204,6 +204,9 @@ extern cl_int clt_solid_shot(const size_t sz_hits, struct cl_hit *hits, struct x
 
 extern void clt_inclusive_scan(cl_mem array, const cl_uint n);
 extern void clt_exclusive_scan(cl_mem array, const cl_uint n);
+
+extern void clt_db_store(size_t count, struct soltab *solids[]);
+extern void clt_db_release(void);
 #endif
 
 __END_DECLS
