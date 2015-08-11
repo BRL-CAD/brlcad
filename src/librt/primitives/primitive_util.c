@@ -445,7 +445,7 @@ static cl_device_id clt_device;
 static cl_context clt_context;
 static cl_command_queue clt_queue;
 static cl_program clt_program;
-static cl_kernel clt_kernel, clt_kernel2;
+static cl_kernel clt_shot_kernel, clt_db_shot_kernel;
 
 static cl_program clt_inclusive_scan_program;
 static cl_kernel clt_inclusive_scan_final_update_kernel;
@@ -565,8 +565,8 @@ clt_cleanup(void)
     clReleaseKernel(clt_inclusive_scan_intervals_kernel);
     clReleaseProgram(clt_inclusive_scan_program);
 
-    clReleaseKernel(clt_kernel2);
-    clReleaseKernel(clt_kernel);
+    clReleaseKernel(clt_db_shot_kernel);
+    clReleaseKernel(clt_shot_kernel);
     clReleaseCommandQueue(clt_queue);
     clReleaseProgram(clt_program);
     clReleaseContext(clt_context);
@@ -608,9 +608,9 @@ clt_init(void)
 
         clt_program = clt_get_program(clt_context, clt_device, sizeof(main_files)/sizeof(*main_files), main_files, NULL);
 
-        clt_kernel = clCreateKernel(clt_program, "solid_shot", &error);
+        clt_shot_kernel = clCreateKernel(clt_program, "solid_shot", &error);
         if (error != CL_SUCCESS) bu_bomb("failed to create an OpenCL kernel");
-        clt_kernel2 = clCreateKernel(clt_program, "solid_shot2", &error);
+        clt_db_shot_kernel = clCreateKernel(clt_program, "db_solid_shot", &error);
         if (error != CL_SUCCESS) bu_bomb("failed to create an OpenCL kernel");
 
 
@@ -653,14 +653,14 @@ clt_solid_shot(const size_t sz_hits, struct cl_hit *hits, struct xray *rp, const
     if (error != CL_SUCCESS) bu_bomb("failed to create OpenCL output buffer");
 
     bu_semaphore_acquire(clt_semaphore);
-    error = clSetKernelArg(clt_kernel, 0, sizeof(cl_mem), &plen);
-    error |= clSetKernelArg(clt_kernel, 1, sizeof(cl_mem), &pout);
-    error |= clSetKernelArg(clt_kernel, 2, sizeof(cl_double3), &r_pt);
-    error |= clSetKernelArg(clt_kernel, 3, sizeof(cl_double3), &r_dir);
-    error |= clSetKernelArg(clt_kernel, 4, sizeof(cl_int), &id);
-    error |= clSetKernelArg(clt_kernel, 5, sizeof(cl_mem), &pin);
+    error = clSetKernelArg(clt_shot_kernel, 0, sizeof(cl_mem), &plen);
+    error |= clSetKernelArg(clt_shot_kernel, 1, sizeof(cl_mem), &pout);
+    error |= clSetKernelArg(clt_shot_kernel, 2, sizeof(cl_double3), &r_pt);
+    error |= clSetKernelArg(clt_shot_kernel, 3, sizeof(cl_double3), &r_dir);
+    error |= clSetKernelArg(clt_shot_kernel, 4, sizeof(cl_int), &id);
+    error |= clSetKernelArg(clt_shot_kernel, 5, sizeof(cl_mem), &pin);
     if (error != CL_SUCCESS) bu_bomb("failed to set OpenCL kernel arguments");
-    error = clEnqueueNDRangeKernel(clt_queue, clt_kernel, 1, NULL, &hypersample, NULL, 0, NULL, NULL);
+    error = clEnqueueNDRangeKernel(clt_queue, clt_shot_kernel, 1, NULL, &hypersample, NULL, 0, NULL, NULL);
     bu_semaphore_release(clt_semaphore);
     if (error != CL_SUCCESS) bu_bomb("failed to enqueue OpenCL kernel");
 
@@ -1076,7 +1076,7 @@ clt_db_release(void)
 }
 
 cl_int
-clt_solid_shot2(const size_t sz_hits, struct cl_hit *hits, struct xray *rp, const cl_uint index)
+clt_db_solid_shot(const size_t sz_hits, struct cl_hit *hits, struct xray *rp, const cl_uint index)
 {
     cl_int len;
     cl_double3 r_pt, r_dir;
@@ -1094,16 +1094,16 @@ clt_solid_shot2(const size_t sz_hits, struct cl_hit *hits, struct xray *rp, cons
     if (error != CL_SUCCESS) bu_bomb("failed to create OpenCL output buffer");
 
     bu_semaphore_acquire(clt_semaphore);
-    error = clSetKernelArg(clt_kernel2, 0, sizeof(cl_mem), &plen);
-    error |= clSetKernelArg(clt_kernel2, 1, sizeof(cl_mem), &pout);
-    error |= clSetKernelArg(clt_kernel2, 2, sizeof(cl_double3), &r_pt);
-    error |= clSetKernelArg(clt_kernel2, 3, sizeof(cl_double3), &r_dir);
-    error |= clSetKernelArg(clt_kernel2, 4, sizeof(cl_uint), &index);
-    error |= clSetKernelArg(clt_kernel2, 5, sizeof(cl_mem), &clt_db_ids);
-    error |= clSetKernelArg(clt_kernel2, 6, sizeof(cl_mem), &clt_db_indexes);
-    error |= clSetKernelArg(clt_kernel2, 7, sizeof(cl_mem), &clt_db_prims);
+    error = clSetKernelArg(clt_db_shot_kernel, 0, sizeof(cl_mem), &plen);
+    error |= clSetKernelArg(clt_db_shot_kernel, 1, sizeof(cl_mem), &pout);
+    error |= clSetKernelArg(clt_db_shot_kernel, 2, sizeof(cl_double3), &r_pt);
+    error |= clSetKernelArg(clt_db_shot_kernel, 3, sizeof(cl_double3), &r_dir);
+    error |= clSetKernelArg(clt_db_shot_kernel, 4, sizeof(cl_uint), &index);
+    error |= clSetKernelArg(clt_db_shot_kernel, 5, sizeof(cl_mem), &clt_db_ids);
+    error |= clSetKernelArg(clt_db_shot_kernel, 6, sizeof(cl_mem), &clt_db_indexes);
+    error |= clSetKernelArg(clt_db_shot_kernel, 7, sizeof(cl_mem), &clt_db_prims);
     if (error != CL_SUCCESS) bu_bomb("failed to set OpenCL kernel arguments");
-    error = clEnqueueNDRangeKernel(clt_queue, clt_kernel2, 1, NULL, &hypersample, NULL, 0, NULL, NULL);
+    error = clEnqueueNDRangeKernel(clt_queue, clt_db_shot_kernel, 1, NULL, &hypersample, NULL, 0, NULL, NULL);
     bu_semaphore_release(clt_semaphore);
     if (error != CL_SUCCESS) bu_bomb("failed to enqueue OpenCL kernel");
 

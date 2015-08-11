@@ -30,23 +30,11 @@ solid_shot(global int *len, global struct hit *res, const double3 r_pt, const do
 }
 
 __kernel void
-solid_shot2(global int *len, global struct hit *res, const double3 r_pt, const double3 r_dir, const uint index, global int *ids, global uint *indexes, global char *prims)
+db_solid_shot(global int *len, global struct hit *res, const double3 r_pt, const double3 r_dir, const uint index, global int *ids, global uint *indexes, global char *prims)
 {
-    int isect;
-
     global const void *args;
     args = prims + indexes[index];
-
-    switch (ids[index]) {
-    case ID_ARB8:	isect = arb_shot(res, r_pt, r_dir, args);	break;
-    case ID_EHY:	isect = ehy_shot(res, r_pt, r_dir, args);	break;
-    case ID_ELL:	isect = ell_shot(res, r_pt, r_dir, args);	break;
-    case ID_SPH:	isect = sph_shot(res, r_pt, r_dir, args);	break;
-    case ID_TGC:	isect = tgc_shot(res, r_pt, r_dir, args);	break;
-    case ID_TOR:	isect = tor_shot(res, r_pt, r_dir, args);	break;
-    default:		isect = 0;                			break;
-    };
-    *len = isect;
+    solid_shot(len, res, r_pt, r_dir, ids[index], args);
 }
 
 /*

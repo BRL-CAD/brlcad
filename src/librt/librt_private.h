@@ -36,23 +36,6 @@
 #include "rt/db4.h"
 #include "raytrace.h"
 
-#ifdef USE_OPENCL
-#include <limits.h>
-#include <CL/cl.h>
-
-#ifdef CLT_SINGLE_PRECISION
-#define cl_double cl_float
-#define cl_double3 cl_float3
-#endif
-
-
-struct cl_hit {
-  cl_double3 hit_vpriv;
-  cl_double hit_dist;
-  cl_int hit_surfno;
-};
-#endif
-
 /* approximation formula for the circumference of an ellipse */
 #define ELL_CIRCUMFERENCE(a, b) M_PI * ((a) + (b)) * \
     (1.0 + (3.0 * ((((a) - b))/((a) + (b))) * ((((a) - b))/((a) + (b))))) \
@@ -204,9 +187,6 @@ extern cl_int clt_solid_shot(const size_t sz_hits, struct cl_hit *hits, struct x
 
 extern void clt_inclusive_scan(cl_mem array, const cl_uint n);
 extern void clt_exclusive_scan(cl_mem array, const cl_uint n);
-
-extern void clt_db_store(size_t count, struct soltab *solids[]);
-extern void clt_db_release(void);
 #endif
 
 __END_DECLS
