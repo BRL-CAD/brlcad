@@ -610,7 +610,7 @@ clt_init(void)
         clt_queue = clCreateCommandQueue(clt_context, clt_device, 0, &error);
         if (error != CL_SUCCESS) bu_bomb("failed to create an OpenCL command queue");
 
-        clt_program = clt_get_program(clt_context, clt_device, sizeof(main_files)/sizeof(*main_files), main_files, NULL);
+        clt_program = clt_get_program(clt_context, clt_device, sizeof(main_files)/sizeof(*main_files), main_files, "-I.");
 
         clt_shot_kernel = clCreateKernel(clt_program, "solid_shot", &error);
         if (error != CL_SUCCESS) bu_bomb("failed to create an OpenCL kernel");
