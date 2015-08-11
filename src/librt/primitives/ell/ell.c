@@ -172,18 +172,23 @@ struct ell_shot_specific {
     cl_double ell_V[3];
 };
 
+size_t
+clt_ell_length(struct soltab *stp)
+{
+    (void)stp;
+    return sizeof(struct ell_shot_specific);
+}
 
-static cl_int
-clt_shot(size_t sz_hits, struct cl_hit *hits, struct xray *rp, struct soltab *stp)
+void
+clt_ell_pack(void *dst, struct soltab *src)
 {
     struct ell_specific *ell =
-	(struct ell_specific *)stp->st_specific;
+        (struct ell_specific *)src->st_specific;
+    struct ell_shot_specific *args =
+        (struct ell_shot_specific *)dst;
 
-    struct ell_shot_specific args;
-
-    VMOVE(args.ell_V, ell->ell_V);
-    MAT_COPY(args.ell_SoR, ell->ell_SoR);
-    return clt_solid_shot(sz_hits, hits, rp, ID_ELL, sizeof(args), &args);
+    VMOVE(args->ell_V, ell->ell_V);
+    MAT_COPY(args->ell_SoR, ell->ell_SoR);
 }
 #endif /* USE_OPENCL */
 
@@ -417,21 +422,8 @@ rt_ell_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 {
 #ifdef USE_OPENCL
     struct cl_hit hits[2];
-    struct seg *segp;
 
-    switch (clt_shot(sizeof(hits), hits, rp, stp)) {
-        case 0:
-            return 0;	/* MISS */
-        default:
-            RT_GET_SEG(segp, ap->a_resource);
-            segp->seg_stp = stp;
-            segp->seg_in.hit_dist = hits[0].hit_dist;
-            segp->seg_in.hit_surfno = hits[0].hit_surfno;
-            segp->seg_out.hit_dist = hits[1].hit_dist;
-            segp->seg_out.hit_surfno = hits[1].hit_surfno;
-            BU_LIST_INSERT(&(seghead->l), &(segp->l));
-            return 2;	/* HIT */
-    }
+    return clt_shot(sizeof(hits), hits, rp, stp, ap, seghead);
 #else
     register struct ell_specific *ell =
 	(struct ell_specific *)stp->st_specific;

@@ -188,23 +188,28 @@ struct arb_shot_specific {
     cl_int arb_nmfaces;
 };
 
+size_t
+clt_arb_length(struct soltab *stp)
+{
+    (void)stp;
+    return sizeof(struct arb_shot_specific);
+}
 
-static cl_int
-clt_shot(size_t sz_hits, struct cl_hit *hits, struct xray *rp, struct soltab *stp)
+void
+clt_arb_pack(void *dst, struct soltab *src)
 {
     struct arb_specific *arb =
-	(struct arb_specific *)stp->st_specific;
-
-    struct arb_shot_specific args;
+        (struct arb_specific *)src->st_specific;
+    struct arb_shot_specific *args =
+        (struct arb_shot_specific *)dst;
 
     const struct aface *afp;
     cl_int j;
 
     for (afp = &arb->arb_face[j=0]; j < 6; j++, afp++) {
-	HMOVE(args.arb_peqns+4*j, afp->peqn);
+        HMOVE(args->arb_peqns+4*j, afp->peqn);
     }
-    args.arb_nmfaces = arb->arb_nmfaces;
-    return clt_solid_shot(sz_hits, hits, rp, ID_ARB8, sizeof(args), &args);
+    args->arb_nmfaces = arb->arb_nmfaces;
 }
 #endif /* USE_OPENCL */
 
@@ -861,21 +866,8 @@ rt_arb_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 {
 #ifdef USE_OPENCL
     struct cl_hit hits[2];
-    struct seg *segp;
 
-    switch (clt_shot(sizeof(hits), hits, rp, stp)) {
-        case 0:
-            return 0;	/* MISS */
-        default:
-            RT_GET_SEG(segp, ap->a_resource);
-            segp->seg_stp = stp;
-            segp->seg_in.hit_dist = hits[0].hit_dist;
-            segp->seg_in.hit_surfno = hits[0].hit_surfno;
-            segp->seg_out.hit_dist = hits[1].hit_dist;
-            segp->seg_out.hit_surfno = hits[1].hit_surfno;
-            BU_LIST_INSERT(&(seghead->l), &(segp->l));
-            return 2;	/* HIT */
-    }
+    return clt_shot(sizeof(hits), hits, rp, stp, ap, seghead);
 #else
     struct arb_specific *arbp = (struct arb_specific *)stp->st_specific;
     int iplane, oplane;

@@ -158,27 +158,32 @@ struct tgc_shot_specific {
     cl_char tgc_AD_CB;
 };
 
+size_t
+clt_tgc_length(struct soltab *stp)
+{
+    (void)stp;
+    return sizeof(struct tgc_shot_specific);
+}
 
-static cl_int
-clt_shot(size_t sz_hits, struct cl_hit *hits, struct xray *rp, struct soltab *stp)
+void
+clt_tgc_pack(void *dst, struct soltab *src)
 {
     struct tgc_specific *tgc =
-	(struct tgc_specific *)stp->st_specific;
+        (struct tgc_specific *)src->st_specific;
+    struct tgc_shot_specific *args =
+        (struct tgc_shot_specific *)dst;
 
-    struct tgc_shot_specific args;
-
-    VMOVE(args.tgc_V, tgc->tgc_V);
-    args.tgc_sH = tgc->tgc_sH;
-    args.tgc_A = tgc->tgc_A;
-    args.tgc_B = tgc->tgc_B;
-    args.tgc_CdAm1 = tgc->tgc_CdAm1;
-    args.tgc_DdBm1 = tgc->tgc_DdBm1;
-    args.tgc_AAdCC = tgc->tgc_AAdCC;
-    args.tgc_BBdDD = tgc->tgc_BBdDD;
-    VMOVE(args.tgc_N, tgc->tgc_N);
-    MAT_COPY(args.tgc_ScShR, tgc->tgc_ScShR);
-    args.tgc_AD_CB = tgc->tgc_AD_CB;
-    return clt_solid_shot(sz_hits, hits, rp, ID_TGC, sizeof(args), &args);
+    VMOVE(args->tgc_V, tgc->tgc_V);
+    args->tgc_sH = tgc->tgc_sH;
+    args->tgc_A = tgc->tgc_A;
+    args->tgc_B = tgc->tgc_B;
+    args->tgc_CdAm1 = tgc->tgc_CdAm1;
+    args->tgc_DdBm1 = tgc->tgc_DdBm1;
+    args->tgc_AAdCC = tgc->tgc_AAdCC;
+    args->tgc_BBdDD = tgc->tgc_BBdDD;
+    VMOVE(args->tgc_N, tgc->tgc_N);
+    MAT_COPY(args->tgc_ScShR, tgc->tgc_ScShR);
+    args->tgc_AD_CB = tgc->tgc_AD_CB;
 }
 #endif /* USE_OPENCL */
 
@@ -604,46 +609,8 @@ rt_tgc_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 {
 #ifdef USE_OPENCL
     struct cl_hit hits[4];
-    struct seg *segp;
 
-    switch (clt_shot(sizeof(hits), hits, rp, stp)) {
-        case 0:
-            return 0;	/* MISS */
-        case 1:
-            RT_GET_SEG(segp, ap->a_resource);
-            segp->seg_stp = stp;
-            segp->seg_in.hit_dist = hits[0].hit_dist;
-            segp->seg_in.hit_surfno = hits[0].hit_surfno;
-            segp->seg_out.hit_dist = hits[1].hit_dist;
-            segp->seg_out.hit_surfno = hits[1].hit_surfno;
-            /* Set aside vector for rt_tor_norm() later */
-            VMOVE(segp->seg_in.hit_vpriv, hits[0].hit_vpriv.s);
-            VMOVE(segp->seg_out.hit_vpriv, hits[1].hit_vpriv.s);
-            BU_LIST_INSERT(&(seghead->l), &(segp->l));
-            return 1;	/* HIT */
-        default:
-            RT_GET_SEG(segp, ap->a_resource);
-            segp->seg_stp = stp;
-            segp->seg_in.hit_dist = hits[0].hit_dist;
-            segp->seg_in.hit_surfno = hits[0].hit_surfno;
-            segp->seg_out.hit_dist = hits[1].hit_dist;
-            segp->seg_out.hit_surfno = hits[1].hit_surfno;
-            /* Set aside vector for rt_tor_norm() later */
-            VMOVE(segp->seg_in.hit_vpriv, hits[0].hit_vpriv.s);
-            VMOVE(segp->seg_out.hit_vpriv, hits[1].hit_vpriv.s);
-            BU_LIST_INSERT(&(seghead->l), &(segp->l));
-
-            RT_GET_SEG(segp, ap->a_resource);
-            segp->seg_stp = stp;
-            segp->seg_in.hit_dist = hits[2].hit_dist;
-            segp->seg_in.hit_surfno = hits[2].hit_surfno;
-            segp->seg_out.hit_dist = hits[3].hit_dist;
-            segp->seg_out.hit_surfno = hits[3].hit_surfno;
-            VMOVE(segp->seg_in.hit_vpriv, hits[2].hit_vpriv.s);
-            VMOVE(segp->seg_out.hit_vpriv, hits[3].hit_vpriv.s);
-            BU_LIST_INSERT(&(seghead->l), &(segp->l));
-            return 2;	/* HIT */
-    }
+    return clt_shot(sizeof(hits), hits, rp, stp, ap, seghead);
 #else
     register const struct tgc_specific *tgc =
 	(struct tgc_specific *)stp->st_specific;
