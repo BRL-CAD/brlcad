@@ -196,19 +196,24 @@ struct ehy_shot_specific {
     cl_double ehy_cprime;
 };
 
+size_t
+clt_ehy_length(struct soltab *stp)
+{
+    (void)stp;
+    return sizeof(struct ehy_shot_specific);
+}
 
-static cl_int
-clt_shot(size_t sz_hits, struct cl_hit *hits, struct xray *rp, struct soltab *stp)
+void
+clt_ehy_pack(void *dst, struct soltab *src)
 {
     struct ehy_specific *ehy =
-	(struct ehy_specific *)stp->st_specific;
+        (struct ehy_specific *)src->st_specific;
+    struct ehy_shot_specific *args =
+        (struct ehy_shot_specific *)dst;
 
-    struct ehy_shot_specific args;
-
-    VMOVE(args.ehy_V, ehy->ehy_V);
-    MAT_COPY(args.ehy_SoR, ehy->ehy_SoR);
-    args.ehy_cprime = ehy->ehy_cprime;
-    return clt_solid_shot(sz_hits, hits, rp, ID_EHY, sizeof(args), &args);
+    VMOVE(args->ehy_V, ehy->ehy_V);
+    MAT_COPY(args->ehy_SoR, ehy->ehy_SoR);
+    args->ehy_cprime = ehy->ehy_cprime;
 }
 #endif /* USE_OPENCL */
 
@@ -392,23 +397,8 @@ rt_ehy_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct 
 {
 #ifdef USE_OPENCL
     struct cl_hit hits[2];
-    struct seg *segp;
 
-    switch (clt_shot(sizeof(hits), hits, rp, stp)) {
-        case 0:
-            return 0;	/* MISS */
-        default:
-            RT_GET_SEG(segp, ap->a_resource);
-            segp->seg_stp = stp;
-            segp->seg_in.hit_dist = hits[0].hit_dist;
-            segp->seg_in.hit_surfno = hits[0].hit_surfno;
-            VMOVE(segp->seg_in.hit_vpriv, hits[0].hit_vpriv.s);
-            segp->seg_out.hit_dist = hits[1].hit_dist;
-            segp->seg_out.hit_surfno = hits[1].hit_surfno;
-            VMOVE(segp->seg_out.hit_vpriv, hits[1].hit_vpriv.s);
-            BU_LIST_INSERT(&(seghead->l), &(segp->l));
-            return 2;	/* HIT */
-    }
+    return clt_shot(sizeof(hits), hits, rp, stp, ap, seghead);
 #else
     struct ehy_specific *ehy =
 	(struct ehy_specific *)stp->st_specific;

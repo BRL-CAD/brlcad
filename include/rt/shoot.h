@@ -53,6 +53,23 @@
 
 __BEGIN_DECLS
 
+#ifdef USE_OPENCL
+#include <limits.h>
+#include <CL/cl.h>
+
+#ifdef CLT_SINGLE_PRECISION
+#define cl_double cl_float
+#define cl_double3 cl_float3
+#endif
+
+
+struct cl_hit {
+  cl_double3 hit_vpriv;
+  cl_double hit_dist;
+  cl_int hit_surfno;
+};
+#endif
+
 /**
  * @brief
  * Shoot a ray
@@ -160,6 +177,13 @@ RT_EXPORT extern void rt_vstub(struct soltab *stp[],
                                struct  seg segp[],
                                int n,
                                struct application       *ap);
+
+#ifdef USE_OPENCL
+RT_EXPORT extern void clt_db_store(size_t count, struct soltab *solids[]);
+RT_EXPORT extern void clt_db_release(void);
+
+RT_EXPORT extern cl_int clt_db_solid_shot(const size_t sz_hits, struct cl_hit *hits, struct xray *rp, const cl_uint index);
+#endif
 
 __END_DECLS
 

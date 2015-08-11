@@ -36,23 +36,6 @@
 #include "rt/db4.h"
 #include "raytrace.h"
 
-#ifdef USE_OPENCL
-#include <limits.h>
-#include <CL/cl.h>
-
-#ifdef CLT_SINGLE_PRECISION
-#define cl_double cl_float
-#define cl_double3 cl_float3
-#endif
-
-
-struct cl_hit {
-  cl_double3 hit_vpriv;
-  cl_double hit_dist;
-  cl_int hit_surfno;
-};
-#endif
-
 /* approximation formula for the circumference of an ellipse */
 #define ELL_CIRCUMFERENCE(a, b) M_PI * ((a) + (b)) * \
     (1.0 + (3.0 * ((((a) - b))/((a) + (b))) * ((((a) - b))/((a) + (b))))) \
@@ -200,10 +183,46 @@ extern cl_program clt_get_program(cl_context context, cl_device_id device, cl_ui
 
 extern void clt_init(void);
 
-extern cl_int clt_solid_shot(const size_t sz_hits, struct cl_hit *hits, struct xray *rp, const cl_int id, const size_t sz_args, void *args);
+extern cl_int clt_shot(size_t sz_hits, struct cl_hit *hits, struct xray *rp, struct soltab *stp, struct application *ap, struct seg *seghead);
 
 extern void clt_inclusive_scan(cl_mem array, const cl_uint n);
 extern void clt_exclusive_scan(cl_mem array, const cl_uint n);
+
+
+/* primitives/tor/tor.c */
+
+extern size_t clt_tor_length(struct soltab *stp);
+extern void clt_tor_pack(void *dst, struct soltab *src);
+
+
+/* primitives/tgc/tgc.c */
+
+extern size_t clt_tgc_length(struct soltab *stp);
+extern void clt_tgc_pack(void *dst, struct soltab *src);
+
+
+/* primitives/ell/ell.c */
+
+extern size_t clt_ell_length(struct soltab *stp);
+extern void clt_ell_pack(void *dst, struct soltab *src);
+
+
+/* primitives/arb8/arb8.c */
+
+extern size_t clt_arb_length(struct soltab *stp);
+extern void clt_arb_pack(void *dst, struct soltab *src);
+
+
+/* primitives/sph/sph.c */
+
+extern size_t clt_sph_length(struct soltab *stp);
+extern void clt_sph_pack(void *dst, struct soltab *src);
+
+
+/* primitives/ehy/ehy.c */
+
+extern size_t clt_ehy_length(struct soltab *stp);
+extern void clt_ehy_pack(void *dst, struct soltab *src);
 #endif
 
 __END_DECLS

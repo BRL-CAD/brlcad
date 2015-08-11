@@ -29,6 +29,14 @@ solid_shot(global int *len, global struct hit *res, const double3 r_pt, const do
     *len = isect;
 }
 
+__kernel void
+db_solid_shot(global int *len, global struct hit *res, const double3 r_pt, const double3 r_dir, const uint index, global int *ids, global uint *indexes, global char *prims)
+{
+    global const void *args;
+    args = prims + indexes[index];
+    solid_shot(len, res, r_pt, r_dir, ids[index], args);
+}
+
 /*
  * Local Variables:
  * mode: C
