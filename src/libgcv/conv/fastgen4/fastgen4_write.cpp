@@ -54,18 +54,15 @@ autoptr_wrap_bu_free(T *ptr)
 
 template <typename T, void free_fn(T *) = autoptr_wrap_bu_free>
 struct AutoPtr {
-    explicit AutoPtr(T *vptr = NULL) : ptr(vptr) {}
+    explicit AutoPtr(T *vptr = NULL) :
+	ptr(vptr)
+    {}
+
 
     ~AutoPtr()
     {
-	free();
-    }
-
-    void free()
-    {
-	if (ptr) free_fn(ptr);
-
-	ptr = NULL;
+	if (ptr)
+	    free_fn(ptr);
     }
 
 
@@ -858,14 +855,14 @@ Section::write_line(const fastf_t *point_a, const fastf_t *point_b,
     radius *= INCHES_PER_MM;
     thickness *= INCHES_PER_MM;
 
-    if (thickness < 0.0)
-	throw std::invalid_argument("negative thickness");
+    if (thickness < 0.0 || thickness > radius)
+	throw std::invalid_argument("invalid thickness");
 
     if (CHECK_MODE_ERRORS)
 	if (!m_volume_mode && NEAR_ZERO(thickness, RT_LEN_TOL))
 	    throw SectionModeError("line with zero thickness in a plate-mode component");
 
-    if (radius <= 0.0 || radius < thickness)
+    if (radius <= 0.0)
 	throw std::invalid_argument("invalid radius");
 
     std::vector<Point> points(2);
@@ -902,7 +899,7 @@ Section::write_sphere(const fastf_t *center, fastf_t radius,
 	    throw SectionModeError("Sphere with thickness in a volume-mode Section");
 
     if (radius < thickness || thickness <= 0.0)
-	throw std::invalid_argument("invalid thickness");
+	throw std::invalid_argument("invalid value");
 
     std::vector<Point> points(1);
     points.at(0) = Point(center);
@@ -1020,7 +1017,7 @@ Section::write_triangle(const fastf_t *point_a, const fastf_t *point_b,
     thickness *= INCHES_PER_MM;
 
     if (thickness < 0.0)
-	throw std::invalid_argument("negative thickness");
+	throw std::invalid_argument("invalid thickness");
 
     if (CHECK_MODE_ERRORS)
 	if (NEAR_ZERO(thickness, RT_LEN_TOL) != m_volume_mode) {
@@ -1059,7 +1056,7 @@ Section::write_quad(const fastf_t *point_a, const fastf_t *point_b,
     thickness *= INCHES_PER_MM;
 
     if (thickness < 0.0)
-	throw std::invalid_argument("negative thickness");
+	throw std::invalid_argument("invalid thickness");
 
     if (CHECK_MODE_ERRORS)
 	if (NEAR_ZERO(thickness, RT_LEN_TOL) != m_volume_mode) {
@@ -1906,7 +1903,7 @@ struct FastgenConversion {
     bool do_force_facetize_region(const directory *region_dir) const;
 
     const db_i &m_db;
-    const bn_tol &m_tol;
+    const bn_tol m_tol;
     std::set<const directory *> m_failed_regions;
 
 
@@ -2349,7 +2346,6 @@ convert_primitive(FastgenConversion &data, const db_full_path &path,
 
 	    section.write_name(DB_FULL_PATH_CUR_DIR(&path)->d_namep);
 
-	    // FIXME Section section(bot.mode == RT_BOT_SOLID);
 	    if (!get_chex1(section, bot))
 		write_bot(section, bot);
 
@@ -2498,12 +2494,14 @@ do_conversion(db_i &db, const std::string &path,
     initial_tree_state.ts_ttol = &ttol;
     initial_tree_state.ts_m = &nmg_model.ptr;
 
-    db_update_nref(&db, &rt_uniresource);
-    AutoPtr<directory *> toplevel_dirs;
-    const std::size_t num_objects = db_ls(&db, DB_LS_TOPS, NULL,
-					  &toplevel_dirs.ptr);
-    const AutoPtr<char *> object_names(db_dpv_to_argv(toplevel_dirs.ptr));
-    toplevel_dirs.free();
+    AutoPtr<char *> object_names;
+    std::size_t num_objects;
+    {
+	AutoPtr<directory *> toplevel_dirs;
+	db_update_nref(&db, &rt_uniresource);
+	num_objects = db_ls(&db, DB_LS_TOPS, NULL, &toplevel_dirs.ptr);
+	object_names.ptr = db_dpv_to_argv(toplevel_dirs.ptr);
+    }
 
     nmg_model.ptr = nmg_mm();
     FastgenConversion data(path, db, tol, facetize_regions);
