@@ -20,8 +20,9 @@
 #define M_PI_3			(1.04719755119659774615421446109316763)   /**< pi/3 */
 #define M_SQRT3			(1.73205080756887729352744634150587237)   /**< sqrt(3) */
 
-#define NEAR_ZERO(val, epsilon)	(((val) > -epsilon) && ((val) < epsilon))
-#define ZERO(_a)        	NEAR_ZERO((_a), SMALL_FASTF)
+#define NEAR_ZERO(val, epsilon)		(((val) > -epsilon) && ((val) < epsilon))
+#define ZERO(_a)        		NEAR_ZERO((_a), SMALL_FASTF)
+#define NEAR_EQUAL(_a, _b, _tol)	NEAR_ZERO((_a) - (_b), (_tol))
 
 
 typedef union {
@@ -36,7 +37,11 @@ struct hit {
   int hit_surfno;
 };
 
+/* solver.cl */
 extern int rt_poly_roots(double *eqn, uint dgr, bn_complex_t *roots);
+
+/* table.cl */
+extern constant double rti_tol_dist;
 
 #endif	/* COMMON_CL */
 

@@ -446,7 +446,7 @@ static cl_device_id clt_device;
 static cl_context clt_context;
 static cl_command_queue clt_queue;
 static cl_program clt_program;
-static cl_kernel clt_shot_kernel, clt_db_shot_kernel;
+static cl_kernel clt_shot_kernel, clt_db_shot_kernel, clt_pixel_kernel;
 
 static cl_program clt_inclusive_scan_program;
 static cl_kernel clt_inclusive_scan_final_update_kernel;
@@ -459,6 +459,7 @@ static size_t max_wg_size;
 static cl_uint max_compute_units;
 
 static cl_mem clt_db_ids, clt_db_indexes, clt_db_prims;
+static cl_uint clt_db_nprims;
 
 
 
@@ -569,8 +570,11 @@ clt_cleanup(void)
     clReleaseKernel(clt_inclusive_scan_intervals_kernel);
     clReleaseProgram(clt_inclusive_scan_program);
 
+    clReleaseKernel(clt_pixel_kernel);
+
     clReleaseKernel(clt_db_shot_kernel);
     clReleaseKernel(clt_shot_kernel);
+
     clReleaseCommandQueue(clt_queue);
     clReleaseProgram(clt_program);
     clReleaseContext(clt_context);
@@ -592,6 +596,7 @@ clt_init(void)
             "ehy_shot.cl",
             "ell_shot.cl",
             "sph_shot.cl",
+            "rec_shot.cl",
             "tgc_shot.cl",
             "tor_shot.cl",
 
@@ -615,6 +620,9 @@ clt_init(void)
         clt_shot_kernel = clCreateKernel(clt_program, "solid_shot", &error);
         if (error != CL_SUCCESS) bu_bomb("failed to create an OpenCL kernel");
         clt_db_shot_kernel = clCreateKernel(clt_program, "db_solid_shot", &error);
+        if (error != CL_SUCCESS) bu_bomb("failed to create an OpenCL kernel");
+
+        clt_pixel_kernel = clCreateKernel(clt_program, "do_pixel", &error);
         if (error != CL_SUCCESS) bu_bomb("failed to create an OpenCL kernel");
 
 
@@ -644,6 +652,7 @@ clt_solid_length(struct soltab *stp)
         case ID_TGC:    return clt_tgc_length(stp);
         case ID_ELL:    return clt_ell_length(stp);
         case ID_ARB8:   return clt_arb_length(stp);
+        case ID_REC:    return clt_rec_length(stp);
         case ID_SPH:    return clt_sph_length(stp);
         case ID_EHY:    return clt_ehy_length(stp);
         default:        return 0;
@@ -658,6 +667,7 @@ clt_solid_pack(void *dst, struct soltab *src)
         case ID_TGC:    clt_tgc_pack(dst, src);     break;
         case ID_ELL:    clt_ell_pack(dst, src);     break;
         case ID_ARB8:   clt_arb_pack(dst, src);     break;
+        case ID_REC:    clt_rec_pack(dst, src);     break;
         case ID_SPH:    clt_sph_pack(dst, src);     break;
         case ID_EHY:    clt_ehy_pack(dst, src);     break;
         default:                                    break;
@@ -752,7 +762,7 @@ uniform_interval_splitting(cl_uint n, cl_uint granularity, cl_uint max_intervals
         return;
     }
 
-    /*
+    /* 
      * ensures that:
      *     num_intervals * interval_size is >= n
      *   and
@@ -856,36 +866,43 @@ clt_db_store(size_t count, struct soltab *solids[])
     char *prims;
     size_t i;
 
-    ids = (cl_int*)bu_calloc(count, sizeof(cl_int), "ids");
-    for (i=0; i < count; i++) {
-        const struct soltab *stp = solids[i];
-    	ids[i] = stp->st_id;
+    if (count != 0) {
+	ids = (cl_int*)bu_calloc(count, sizeof(cl_int), "ids");
+	for (i=0; i < count; i++) {
+	    const struct soltab *stp = solids[i];
+	    ids[i] = stp->st_id;
+	}
+
+	indexes = (cl_uint*)bu_calloc(count+1, sizeof(cl_uint), "indexes");
+	indexes[0] = 0;
+	for (i=1; i <= count; i++) {
+	    size_t size;
+	    size = clt_solid_length(solids[i-1]);
+	    indexes[i] = indexes[i-1] + size;
+	}
+
+	if (indexes[count] != 0) {
+	    prims = (char*)bu_malloc(indexes[count], "prims");
+	    for (i=0; i<count; i++) {
+		clt_solid_pack(prims+indexes[i], solids[i]);
+	    }
+
+	    clt_db_prims = clCreateBuffer(clt_context, CL_MEM_READ_ONLY|CL_MEM_COPY_HOST_PTR, indexes[count], prims, &error);
+	    if (error != CL_SUCCESS) bu_bomb("failed to create OpenCL indexes buffer");
+
+	    bu_free(prims, "failed bu_free() in clt_db_store()");
+	}
+
+	clt_db_ids = clCreateBuffer(clt_context, CL_MEM_READ_ONLY|CL_MEM_COPY_HOST_PTR, sizeof(cl_int)*count, ids, &error);
+	if (error != CL_SUCCESS) bu_bomb("failed to create OpenCL ids buffer");
+	clt_db_indexes = clCreateBuffer(clt_context, CL_MEM_READ_ONLY|CL_MEM_COPY_HOST_PTR, sizeof(cl_uint)*(count+1), indexes, &error);
+	if (error != CL_SUCCESS) bu_bomb("failed to create OpenCL indexes buffer");
+
+	bu_free(indexes, "failed bu_free() in clt_db_store()");
+	bu_free(ids, "failed bu_free() in clt_db_store()");
     }
-
-    indexes = (cl_uint*)bu_calloc(count+1, sizeof(cl_uint), "indexes");
-    indexes[0] = 0;
-    for (i=1; i <= count; i++) {
-	size_t size;
-        size = clt_solid_length(solids[i-1]);
-	indexes[i] = indexes[i-1] + size;
-    }
-
-    prims = (char*)bu_malloc(indexes[count], "prims");
-    for (i=0; i<count; i++) {
-        clt_solid_pack(prims+indexes[i], solids[i]);
-    }
-
-    clt_db_ids = clCreateBuffer(clt_context, CL_MEM_READ_ONLY|CL_MEM_COPY_HOST_PTR, sizeof(cl_int)*count, ids, &error);
-    if (error != CL_SUCCESS) bu_bomb("failed to create OpenCL ids buffer");
-    clt_db_indexes = clCreateBuffer(clt_context, CL_MEM_READ_ONLY|CL_MEM_COPY_HOST_PTR, sizeof(cl_uint)*(count+1), indexes, &error);
-    if (error != CL_SUCCESS) bu_bomb("failed to create OpenCL indexes buffer");
-
-    clt_db_prims = clCreateBuffer(clt_context, CL_MEM_READ_ONLY|CL_MEM_COPY_HOST_PTR, indexes[count], prims, &error);
-    if (error != CL_SUCCESS) bu_bomb("failed to create OpenCL indexes buffer");
-
-    bu_free(prims, "failed bu_free() in clt_db_store()");
-    bu_free(indexes, "failed bu_free() in clt_db_store()");
-    bu_free(ids, "failed bu_free() in clt_db_store()");
+    
+    clt_db_nprims = count;
 }
 
 void
@@ -894,6 +911,8 @@ clt_db_release(void)
     clReleaseMemObject(clt_db_prims);
     clReleaseMemObject(clt_db_indexes);
     clReleaseMemObject(clt_db_ids);
+
+    clt_db_nprims = 0;
 }
 
 cl_int
@@ -934,6 +953,46 @@ clt_db_solid_shot(const size_t sz_hits, struct cl_hit *hits, struct xray *rp, co
     clEnqueueReadBuffer(clt_queue, pout, CL_TRUE, 0, sz_hits, hits, 0, NULL, NULL);
     clReleaseMemObject(pout);
     return len;
+}
+
+void
+clt_run(unsigned char *pixels, cl_uint pwidth, cl_int cur_pixel, cl_int last_pixel, cl_int width,
+        point_t viewbase_model, vect_t dx_model, vect_t dy_model, vect_t r_dir)
+{
+    const size_t npix = last_pixel-cur_pixel+1;
+    cl_mem ppixels;
+    cl_double3 viewbase_model_, dx_model_, dy_model_, r_dir_;
+    cl_int error;
+
+    VMOVE(viewbase_model_.s, viewbase_model);
+    VMOVE(dx_model_.s, dx_model);
+    VMOVE(dy_model_.s, dy_model);
+
+    VMOVE(r_dir_.s, r_dir);
+
+    ppixels = clCreateBuffer(clt_context, CL_MEM_WRITE_ONLY, npix*pwidth, NULL, &error);
+    if (error != CL_SUCCESS) bu_bomb("failed to create OpenCL output buffer");
+
+    bu_semaphore_acquire(clt_semaphore);
+    error = clSetKernelArg(clt_pixel_kernel, 0, sizeof(cl_mem), &ppixels);
+    error |= clSetKernelArg(clt_pixel_kernel, 1, sizeof(cl_uint), &pwidth);
+    error |= clSetKernelArg(clt_pixel_kernel, 2, sizeof(cl_int), &cur_pixel);
+    error |= clSetKernelArg(clt_pixel_kernel, 3, sizeof(cl_int), &last_pixel);
+    error |= clSetKernelArg(clt_pixel_kernel, 4, sizeof(cl_int), &width);
+    error |= clSetKernelArg(clt_pixel_kernel, 5, sizeof(cl_double3), &viewbase_model_);
+    error |= clSetKernelArg(clt_pixel_kernel, 6, sizeof(cl_double3), &dx_model_);
+    error |= clSetKernelArg(clt_pixel_kernel, 7, sizeof(cl_double3), &dy_model_);
+    error |= clSetKernelArg(clt_pixel_kernel, 8, sizeof(cl_double3), &r_dir_);
+    error |= clSetKernelArg(clt_pixel_kernel, 9, sizeof(cl_uint), &clt_db_nprims);
+    error |= clSetKernelArg(clt_pixel_kernel, 10, sizeof(cl_mem), &clt_db_ids);
+    error |= clSetKernelArg(clt_pixel_kernel, 11, sizeof(cl_mem), &clt_db_indexes);
+    error |= clSetKernelArg(clt_pixel_kernel, 12, sizeof(cl_mem), &clt_db_prims);
+    if (error != CL_SUCCESS) bu_bomb("failed to set OpenCL kernel arguments");
+    error = clEnqueueNDRangeKernel(clt_queue, clt_pixel_kernel, 1, NULL, &npix, NULL, 0, NULL, NULL);
+    bu_semaphore_release(clt_semaphore);
+
+    clEnqueueReadBuffer(clt_queue, ppixels, CL_TRUE, 0, npix*pwidth, pixels, 0, NULL, NULL);
+    clReleaseMemObject(ppixels);
 }
 #endif
 

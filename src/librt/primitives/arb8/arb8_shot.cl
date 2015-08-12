@@ -60,6 +60,10 @@ int arb_shot(global struct hit *res, const double3 r_pt, const double3 r_dir, gl
 	return 0;	// MISS
     }
 
+    if (res == NULL) {
+	return 2;       // HIT
+    }
+
     res[0].hit_dist = in;
     res[0].hit_surfno = iplane;
     res[1].hit_dist = out;

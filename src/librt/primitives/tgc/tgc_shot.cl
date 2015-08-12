@@ -6,8 +6,6 @@
 #define TGC_NORM_TOP	(2)	/* copy tgc_N */
 #define TGC_NORM_BOT	(3)	/* copy reverse tgc_N */
 
-__constant double rti_tol_dist = 0.0005;
-
 
 struct tgc_shot_specific {
     double tgc_ScShR[16];
@@ -350,6 +348,10 @@ int tgc_shot(global struct hit *res, const double3 r_pt, const double3 r_dir, gl
 
     if (npts != 0 && npts != 2 && npts != 4) {
 	return 0;		/* No hit */
+    }
+
+    if (res == NULL) {
+	return npts/2;
     }
 
     intersect = 0;

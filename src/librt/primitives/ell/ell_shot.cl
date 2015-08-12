@@ -34,6 +34,10 @@ int ell_shot(global struct hit *res, const double3 r_pt, const double3 r_dir, gl
     if ((root = dp*dp - dd * (dot(pprime, pprime)-1.0)) < 0) {
 	return 0;	// No hit
     } else {
+	if (res == NULL) {
+	    return 2;       // HIT
+	}
+
 	root = sqrt(root);
 	if ((k1=(-dp+root)/dd) <= (k2=(-dp-root)/dd)) {
 	    /* k1 is entry, k2 is exit */
