@@ -39,8 +39,9 @@ db_solid_shot(global int *len, global struct hit *res, const double3 r_pt, const
 }
 
 
-constant int3 ibackground = {0, 0, 50};       /* integer 0..255 version */
-constant int3 inonbackground = {0, 0, 51};    /* integer non-background */
+constant uchar3 ibackground = {0, 0, 50};	/* integer 0..255 version */
+constant uchar3 inonbackground = {0, 0, 51};	/* integer non-background */
+constant uchar3 iblack = {0, 0, 0};		/* integer black */
 
 __kernel void
 do_pixel(global unsigned char *pixels, const uint pwidth, const int cur_pixel, const int last_pixel, const int width,
@@ -48,53 +49,41 @@ do_pixel(global unsigned char *pixels, const uint pwidth, const int cur_pixel, c
          const double3 r_dir, /* all rays go this direction */
          const uint nprims, global int *ids, global uint *indexes, global char *prims)
 {
-    double3 a_color = (double3){1,1,1};
-    int3 rgb;
+    const int pixelnum = cur_pixel+get_global_id(0);
 
-    bool hit;
-    int pixelnum;
-    int a_x, a_y;
-
-    hit = false;
-
-    pixelnum = cur_pixel+get_global_id(0);
-
-    a_y = (int)(pixelnum/width);
-    a_x = (int)(pixelnum - (a_y * width));
+    const int a_y = (int)(pixelnum/width);
+    const int a_x = (int)(pixelnum - (a_y * width));
     
     /* our starting point, used for non-jitter */
-    double3 point;
-    point = viewbase_model + dx_model * a_x + dy_model * a_y;
-
-    double3 r_pt;
-    r_pt = point;
+    const double3 point = viewbase_model + dx_model * a_x + dy_model * a_y;
+    const double3 r_pt = point;
 
     int ret = 0;
     for (uint index=0; index<nprims; index++) {
-        global const void *args;
-        args = prims + indexes[index];
+        global const void *args = prims + indexes[index];
         ret += shot(NULL, r_pt, r_dir, ids[index], args);
     }
+
+
+    double3 a_color = (double3){1.0, 1.0, 1.0};
+    uchar3 rgb;
 
     if (ret <= 0) {
 	/* Shot missed the model, don't dither */
         rgb = ibackground;
 	a_color = -1e-20;	/* background flag */
     } else {
-        rgb = convert_int3(a_color*255);
-        rgb = clamp(rgb, 0, 255);
+        rgb = convert_uchar3_sat(a_color*255);
 
 	if (all(rgb == ibackground)) {
             rgb = inonbackground;
-	}
-
-	/* Make sure it's never perfect black */
-        if (all(rgb == 0))
+	} else if (all(rgb == iblack)) { /* Make sure it's never perfect black */
             rgb.z = 1;
+	}
     }
 
     global unsigned char *pixelp = pixels+pwidth*(a_y*width+a_x);
-    vstore3(convert_uchar3(rgb), 0, pixelp);
+    vstore3(rgb, 0, pixelp);
 }
 
 /*
