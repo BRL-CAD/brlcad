@@ -148,6 +148,10 @@ int tor_shot(global struct hit *res, const double3 r_pt, const double3 r_dir, gl
 	    break;
     }
 
+    if (res == NULL) {
+	return i;       // HIT
+    }
+
     /* Now, t[0] > t[npts-1] */
     /* k[1] is entry point, and k[0] is farthest exit point */
     if (i == 2) {

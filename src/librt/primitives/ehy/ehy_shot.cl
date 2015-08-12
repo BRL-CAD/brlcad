@@ -105,6 +105,10 @@ int ehy_shot(global struct hit *res, const double3 r_pt, const double3 r_dir, gl
         return 0; // MISS
     }
 
+    if (res == NULL) {
+	return 2;       // HIT
+    }
+
     if (hits[0].hit_dist < hits[1].hit_dist) {
 	// entry is [0], exit is [1]
         res[0] = hits[0];

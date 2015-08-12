@@ -36,6 +36,10 @@ int sph_shot(global struct hit *res, const double3 r_pt, const double3 r_dir, gl
     }
     root = sqrt(root);
 
+    if (res == NULL) {
+	return 2;       // HIT
+    }
+
     // we know root is positive, so we know the smaller t
     res[0].hit_dist = b - root;
     res[1].hit_dist = b + root;

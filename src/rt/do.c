@@ -1153,6 +1153,7 @@ simple_view_pixel(int a_x, int a_y, int a_user, point_t a_color)
     }
 }
 
+
 /**
  * Call the material-specific shading function, after making certain
  * that all shadework fields desired have been provided.
@@ -1329,7 +1330,7 @@ simple_run(int cur_pixel, int last_pixel)
     if (per_processor_chunk <= 0) per_processor_chunk = npsw;
 
     bu_semaphore_acquire(RT_SEM_WORKER);
-    
+#if 0
 /*#pragma omp parallel for*/
     for (pixelnum = cur_pixel; pixelnum <= last_pixel; pixelnum++) {
         int cpu;
@@ -1341,7 +1342,27 @@ simple_run(int cur_pixel, int last_pixel)
 
         simple_pixel(resp, pixelnum);
     }
+#else
+    (void)pixelnum;
+    /* TODO: support render of part of a screen  */
+    if (cur_pixel == 0) {
+        unsigned char *pixels;
+        int npix2, npix;
 
+        npix = last_pixel-cur_pixel+1;
+        pixels = (unsigned char *)bu_calloc(npix, pwidth, "image buffer");
+
+        clt_run(pixels, pwidth, cur_pixel, last_pixel, width, viewbase_model, dx_model, dy_model, APP.a_ray.r_dir);
+
+        bu_semaphore_acquire(BU_SEM_SYSCALL);
+        npix2 = fb_write(fbp, 0, 0, pixels, npix);
+        bu_semaphore_release(BU_SEM_SYSCALL);
+        if (npix2 < npix)
+            bu_exit(EXIT_FAILURE, "scanline fb_write error");
+
+        bu_free(pixels, "image buffer");
+    }
+#endif
     bu_semaphore_release(RT_SEM_WORKER);
 
     /* Tally up the statistics */
