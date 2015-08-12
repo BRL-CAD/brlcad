@@ -672,7 +672,7 @@ clt_shot(size_t sz_hits, struct cl_hit *hits, struct xray *rp, struct soltab *st
     char *args;
 
     const cl_int id = stp->st_id;
-    
+
     cl_int i, len;
     cl_double3 r_pt, r_dir;
 
