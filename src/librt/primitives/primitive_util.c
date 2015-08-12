@@ -863,36 +863,41 @@ clt_db_store(size_t count, struct soltab *solids[])
     char *prims;
     size_t i;
 
-    ids = (cl_int*)bu_calloc(count, sizeof(cl_int), "ids");
-    for (i=0; i < count; i++) {
-        const struct soltab *stp = solids[i];
-    	ids[i] = stp->st_id;
+    if (count != 0) {
+	ids = (cl_int*)bu_calloc(count, sizeof(cl_int), "ids");
+	for (i=0; i < count; i++) {
+	    const struct soltab *stp = solids[i];
+	    ids[i] = stp->st_id;
+	}
+
+	indexes = (cl_uint*)bu_calloc(count+1, sizeof(cl_uint), "indexes");
+	indexes[0] = 0;
+	for (i=1; i <= count; i++) {
+	    size_t size;
+	    size = clt_solid_length(solids[i-1]);
+	    indexes[i] = indexes[i-1] + size;
+	}
+
+	if (indexes[count] != 0) {
+	    prims = (char*)bu_malloc(indexes[count], "prims");
+	    for (i=0; i<count; i++) {
+		clt_solid_pack(prims+indexes[i], solids[i]);
+	    }
+
+	    clt_db_prims = clCreateBuffer(clt_context, CL_MEM_READ_ONLY|CL_MEM_COPY_HOST_PTR, indexes[count], prims, &error);
+	    if (error != CL_SUCCESS) bu_bomb("failed to create OpenCL indexes buffer");
+
+	    bu_free(prims, "failed bu_free() in clt_db_store()");
+	}
+
+	clt_db_ids = clCreateBuffer(clt_context, CL_MEM_READ_ONLY|CL_MEM_COPY_HOST_PTR, sizeof(cl_int)*count, ids, &error);
+	if (error != CL_SUCCESS) bu_bomb("failed to create OpenCL ids buffer");
+	clt_db_indexes = clCreateBuffer(clt_context, CL_MEM_READ_ONLY|CL_MEM_COPY_HOST_PTR, sizeof(cl_uint)*(count+1), indexes, &error);
+	if (error != CL_SUCCESS) bu_bomb("failed to create OpenCL indexes buffer");
+
+	bu_free(indexes, "failed bu_free() in clt_db_store()");
+	bu_free(ids, "failed bu_free() in clt_db_store()");
     }
-
-    indexes = (cl_uint*)bu_calloc(count+1, sizeof(cl_uint), "indexes");
-    indexes[0] = 0;
-    for (i=1; i <= count; i++) {
-	size_t size;
-        size = clt_solid_length(solids[i-1]);
-	indexes[i] = indexes[i-1] + size;
-    }
-
-    prims = (char*)bu_malloc(indexes[count], "prims");
-    for (i=0; i<count; i++) {
-        clt_solid_pack(prims+indexes[i], solids[i]);
-    }
-
-    clt_db_ids = clCreateBuffer(clt_context, CL_MEM_READ_ONLY|CL_MEM_COPY_HOST_PTR, sizeof(cl_int)*count, ids, &error);
-    if (error != CL_SUCCESS) bu_bomb("failed to create OpenCL ids buffer");
-    clt_db_indexes = clCreateBuffer(clt_context, CL_MEM_READ_ONLY|CL_MEM_COPY_HOST_PTR, sizeof(cl_uint)*(count+1), indexes, &error);
-    if (error != CL_SUCCESS) bu_bomb("failed to create OpenCL indexes buffer");
-
-    clt_db_prims = clCreateBuffer(clt_context, CL_MEM_READ_ONLY|CL_MEM_COPY_HOST_PTR, indexes[count], prims, &error);
-    if (error != CL_SUCCESS) bu_bomb("failed to create OpenCL indexes buffer");
-
-    bu_free(prims, "failed bu_free() in clt_db_store()");
-    bu_free(indexes, "failed bu_free() in clt_db_store()");
-    bu_free(ids, "failed bu_free() in clt_db_store()");
     
     clt_db_nprims = count;
 }

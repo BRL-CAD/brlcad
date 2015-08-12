@@ -353,7 +353,7 @@ int tgc_shot(global struct hit *res, const double3 r_pt, const double3 r_dir, gl
     }
 
     if (res == NULL) {
-	return (npts/2);
+	return npts;
     }
 
     intersect = 0;

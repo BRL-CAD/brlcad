@@ -580,8 +580,6 @@ alloc_grid(const struct boxnode *fromp)
     /* TODO: do a deep copy here in case it ain't safe. */
     S = fromp->bn_list;
 
-    clt_db_store(NS, S);
-    
     printf("%dx%dx%d\n", M[X], M[Y], M[Z]);
 
     B = (struct bboxi *)bu_calloc(fromp->bn_len, sizeof(struct bboxi), "B");
@@ -692,7 +690,9 @@ simple_prep(struct rt_i *rtip)
 
     alloc_grid(&finp->bn);
     
-    bu_free(finp, "union cutter");
+    clt_db_store(finp->bn.bn_len, finp->bn.bn_list);
+    
+/*    bu_free(finp, "union cutter");*/
 }
 
 int
