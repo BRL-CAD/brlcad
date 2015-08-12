@@ -213,6 +213,12 @@ extern size_t clt_arb_length(struct soltab *stp);
 extern void clt_arb_pack(void *dst, struct soltab *src);
 
 
+/* primitives/rec/rec.c */
+
+extern size_t clt_rec_length(struct soltab *stp);
+extern void clt_rec_pack(void *dst, struct soltab *src);
+
+
 /* primitives/sph/sph.c */
 
 extern size_t clt_sph_length(struct soltab *stp);

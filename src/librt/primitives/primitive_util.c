@@ -596,6 +596,7 @@ clt_init(void)
             "ehy_shot.cl",
             "ell_shot.cl",
             "sph_shot.cl",
+            "rec_shot.cl",
             "tgc_shot.cl",
             "tor_shot.cl",
 
@@ -614,7 +615,7 @@ clt_init(void)
         clt_queue = clCreateCommandQueue(clt_context, clt_device, 0, &error);
         if (error != CL_SUCCESS) bu_bomb("failed to create an OpenCL command queue");
 
-        clt_program = clt_get_program(clt_context, clt_device, sizeof(main_files)/sizeof(*main_files), main_files, NULL);
+        clt_program = clt_get_program(clt_context, clt_device, sizeof(main_files)/sizeof(*main_files), main_files, "-I.");
 
         clt_shot_kernel = clCreateKernel(clt_program, "solid_shot", &error);
         if (error != CL_SUCCESS) bu_bomb("failed to create an OpenCL kernel");
@@ -651,6 +652,7 @@ clt_solid_length(struct soltab *stp)
         case ID_TGC:    return clt_tgc_length(stp);
         case ID_ELL:    return clt_ell_length(stp);
         case ID_ARB8:   return clt_arb_length(stp);
+        case ID_REC:    return clt_rec_length(stp);
         case ID_SPH:    return clt_sph_length(stp);
         case ID_EHY:    return clt_ehy_length(stp);
         default:        return 0;
@@ -665,6 +667,7 @@ clt_solid_pack(void *dst, struct soltab *src)
         case ID_TGC:    clt_tgc_pack(dst, src);     break;
         case ID_ELL:    clt_ell_pack(dst, src);     break;
         case ID_ARB8:   clt_arb_pack(dst, src);     break;
+        case ID_REC:    clt_rec_pack(dst, src);     break;
         case ID_SPH:    clt_sph_pack(dst, src);     break;
         case ID_EHY:    clt_ehy_pack(dst, src);     break;
         default:                                    break;

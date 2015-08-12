@@ -1,6 +1,5 @@
 #include "common.cl"
 
-
 /*
  * Values for Solid ID.
  */
@@ -8,18 +7,24 @@
 #define ID_TGC          2       /**< @brief Generalized Truncated General Cone */
 #define ID_ELL          3       /**< @brief Ellipsoid */
 #define ID_ARB8         4       /**< @brief Generalized ARB.  V + 7 vectors */
+#define ID_REC          7       /**< @brief Right Elliptical Cylinder [TGC special] */
 #define ID_SPH          10      /**< @brief Sphere */
 #define ID_EHY          20      /**< @brief Elliptical Hyperboloid  */
+
+
+constant double rti_tol_dist = 0.0005;
+
 
 inline int shot(global struct hit *res, const double3 r_pt, const double3 r_dir, const int id, global const void *args)
 {
     switch (id) {
-    case ID_ARB8:	return arb_shot(res, r_pt, r_dir, args);
-    case ID_EHY:	return ehy_shot(res, r_pt, r_dir, args);
-    case ID_ELL:	return ell_shot(res, r_pt, r_dir, args);
-    case ID_SPH:	return sph_shot(res, r_pt, r_dir, args);
-    case ID_TGC:	return tgc_shot(res, r_pt, r_dir, args);
     case ID_TOR:	return tor_shot(res, r_pt, r_dir, args);
+    case ID_TGC:	return tgc_shot(res, r_pt, r_dir, args);
+    case ID_ELL:	return ell_shot(res, r_pt, r_dir, args);
+    case ID_ARB8:	return arb_shot(res, r_pt, r_dir, args);
+    case ID_REC:	return rec_shot(res, r_pt, r_dir, args);
+    case ID_SPH:	return sph_shot(res, r_pt, r_dir, args);
+    case ID_EHY:	return ehy_shot(res, r_pt, r_dir, args);
     default:		return 0;
     };
 }

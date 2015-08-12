@@ -143,6 +143,8 @@
 #include "rt/geom.h"
 #include "raytrace.h"
 
+#include "../../librt_private.h"
+
 
 struct rec_specific {
     vect_t rec_V;		/* Vector to center of base of cylinder */
@@ -154,6 +156,35 @@ struct rec_specific {
     fastf_t rec_iAsq;	/* 1/MAGSQ(A) */
     fastf_t rec_iBsq;	/* 1/MAGSQ(B) */
 };
+
+
+#ifdef USE_OPENCL
+/* largest data members first */
+struct rec_shot_specific {
+    cl_double rec_SoR[16];
+    cl_double rec_V[3];
+};
+
+size_t
+clt_rec_length(struct soltab *stp)
+{
+    (void)stp;
+    return sizeof(struct rec_shot_specific);
+}
+
+void
+clt_rec_pack(void *dst, struct soltab *src)
+{
+    struct rec_specific *rec =
+        (struct rec_specific *)src->st_specific;
+    struct rec_shot_specific *args =
+        (struct rec_shot_specific *)dst;
+
+    VMOVE(args->rec_V, rec->rec_V);
+    MAT_COPY(args->rec_SoR, rec->rec_SoR);
+}
+#endif /* USE_OPENCL */
+
 
 /**
  * Calculate the RPP for an REC
@@ -284,6 +315,10 @@ rt_rec_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     vect_t invsq;	/* [ 1/(|A|**2), 1/(|B|**2), 1/(|Hv|**2) ] */
     vect_t work;
     fastf_t f;
+
+#ifdef USE_OPENCL
+    clt_init();
+#endif
 
     if (!stp || !ip)
 	return -1;
@@ -427,6 +462,11 @@ rt_rec_print(const struct soltab *stp)
 int
 rt_rec_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct seg *seghead)
 {
+#ifdef USE_OPENCL
+    struct cl_hit hits[2];
+
+    return clt_shot(sizeof(hits), hits, rp, stp, ap, seghead);
+#else
     struct rec_specific *rec;
     vect_t dprime;		/* D' */
     vect_t pprime;		/* P' */
@@ -622,6 +662,7 @@ rt_rec_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct 
 	BU_LIST_INSERT(&(seghead->l), &(segp->l));
     }
     return 2;			/* HIT */
+#endif
 }
 
 
