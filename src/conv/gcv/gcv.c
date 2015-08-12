@@ -443,7 +443,7 @@ gcv_do_conversion(
 	struct bu_ptbl out_converters = gcv_converter_find(out_type, GCV_CONVERSION_WRITE);
 
 	if (!BU_PTBL_LEN(&in_converters) || !BU_PTBL_LEN(&out_converters)) {
-	    bu_log("No %s for given format\n", BU_PTBL_LEN(&in_converters) ? "writer" : "reader");
+	    bu_log("No %s for given format\n", !BU_PTBL_LEN(&in_converters) ? "reader" : "writer");
 	    bu_ptbl_free(&in_converters);
 	    bu_ptbl_free(&out_converters);
 	    return 0;
@@ -451,32 +451,41 @@ gcv_do_conversion(
 
 	in_conv = (struct gcv_converter *)BU_PTBL_GET(&in_converters, 0);
 	out_conv = (struct gcv_converter *)BU_PTBL_GET(&out_converters, 0);
+	bu_ptbl_free(&in_converters);
+	bu_ptbl_free(&out_converters);
+    }
+
+    if (!gcv_converter_process_arguments(messages, in_conv, &in_options_data, in_argc, in_argv))
+	return 0;
+
+    if (!gcv_converter_process_arguments(messages, out_conv, &out_options_data, out_argc, out_argv)) {
+	if (in_conv->create_opts_fn)
+	    in_conv->free_opts_fn(in_options_data);
+	return 0;
     }
 
     {
-	int ret = gcv_converter_process_arguments(messages, in_conv,
-		&in_options_data, in_argc, in_argv);
-
-	ret = ret && gcv_converter_process_arguments(messages, out_conv,
-		&out_options_data, out_argc, out_argv);
-
-	if (!ret)
-	    return 0;
-    }
-
-    {
-	struct db_i *dbi = db_open_inmem();
-	dbi->dbi_read_only = 1;
+	struct db_i * const dbi = db_create_inmem();
 
 	if (!in_conv->conversion_fn(in_path, dbi, NULL, NULL)) {
 	    bu_log("Import failed\n");
 	    db_close(dbi);
+	    if (in_conv->create_opts_fn)
+		in_conv->free_opts_fn(in_options_data);
+	    if (out_conv->create_opts_fn)
+		out_conv->free_opts_fn(out_options_data);
 	    return 0;
 	}
+
+	dbi->dbi_read_only = 1;
 
 	if (!out_conv->conversion_fn(out_path, dbi, NULL, NULL)) {
 	    bu_log("Export failed\n");
 	    db_close(dbi);
+	    if (in_conv->create_opts_fn)
+		in_conv->free_opts_fn(in_options_data);
+	    if (out_conv->create_opts_fn)
+		out_conv->free_opts_fn(out_options_data);
 	    return 0;
 	}
 
