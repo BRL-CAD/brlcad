@@ -386,18 +386,17 @@ gcv_converter_process_arguments(
 {
     int ret_argc;
 
-    if (!argc)
-	return 1;
-
-    if (!converter->create_opts_fn) {
+    if (converter->create_opts_fn) {
+	struct bu_opt_desc *options_desc;
+	converter->create_opts_fn(&options_desc, options_data);
+	ret_argc = argc ? bu_opt_parse(messages, argc, argv, options_desc) : 0;
+	bu_free(options_desc, "options_desc");
+    } else if (argc) {
 	const struct bu_opt_desc default_options_desc = BU_OPT_DESC_NULL;
 	ret_argc = bu_opt_parse(messages, argc, argv, &default_options_desc);
 	*options_data = NULL;
     } else {
-	struct bu_opt_desc *options_desc;
-	converter->create_opts_fn(&options_desc, options_data);
-	ret_argc = bu_opt_parse(messages, argc, argv, options_desc);
-	bu_free(options_desc, "options_desc");
+	ret_argc = 0;
     }
 
     if (ret_argc) {
@@ -436,7 +435,7 @@ gcv_do_conversion(
 	size_t out_argc, const char **out_argv)
 {
     const struct gcv_converter *in_conv, *out_conv;
-    void *in_options_data, *out_options_data;
+    void *in_options_data = NULL, *out_options_data = NULL;
 
     {
 	struct bu_ptbl in_converters = gcv_converter_find(in_type, GCV_CONVERSION_READ);
@@ -467,7 +466,7 @@ gcv_do_conversion(
     {
 	struct db_i * const dbi = db_create_inmem();
 
-	if (!in_conv->conversion_fn(in_path, dbi, NULL, NULL)) {
+	if (!in_conv->conversion_fn(in_path, dbi, NULL, in_options_data)) {
 	    bu_log("Import failed\n");
 	    db_close(dbi);
 	    if (in_conv->create_opts_fn)
@@ -479,7 +478,7 @@ gcv_do_conversion(
 
 	dbi->dbi_read_only = 1;
 
-	if (!out_conv->conversion_fn(out_path, dbi, NULL, NULL)) {
+	if (!out_conv->conversion_fn(out_path, dbi, NULL, out_options_data)) {
 	    bu_log("Export failed\n");
 	    db_close(dbi);
 	    if (in_conv->create_opts_fn)
