@@ -57,7 +57,7 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-    RT_EXPORT extern int brep_command(struct bu_vls *vls, const char *solid_name, const struct rt_tess_tol* ttol, const struct bn_tol* tol, struct brep_specific* bs, struct rt_brep_internal* bi, struct bn_vlblock *vbp, int argc, const char *argv[], char *commtag);
+    RT_EXPORT extern int brep_command(struct bu_vls *vls, const char *solid_name, struct bu_color *color, const struct rt_tess_tol* ttol, const struct bn_tol* tol, struct brep_specific* bs, struct rt_brep_internal* bi, struct bn_vlblock *vbp, int argc, const char *argv[], char *commtag);
     extern int single_conversion(struct rt_db_internal* intern, ON_Brep** brep, const struct db_i *dbip);
     RT_EXPORT extern int brep_conversion(struct rt_db_internal* in, struct rt_db_internal* out, const struct db_i *dbip);
     RT_EXPORT extern int brep_conversion_comb(struct rt_db_internal *old_internal, const char *name, const char *suffix, struct rt_wdb *wdbp, fastf_t local2mm);
@@ -1412,7 +1412,7 @@ int brep_facecdt_plot(struct bu_vls *vls, const char *solid_name,
 
 
 int
-brep_facetrim_plot(struct bu_vls *vls, struct brep_specific* bs, struct rt_brep_internal*, struct bn_vlblock *vbp, int index, int plotres, bool dim3d)
+brep_facetrim_plot(struct bu_vls *vls, struct brep_specific* bs, struct rt_brep_internal*, struct bn_vlblock *vbp, int index, struct bu_color *UNUSED(color), int plotres, bool dim3d)
 {
     ON_wString wstr;
     ON_TextLog tl(wstr);
@@ -1577,7 +1577,7 @@ brep_surface_uv_plot(struct bu_vls *vls, struct brep_specific* bs, struct rt_bre
 
 
 int
-brep_surface_plot(struct bu_vls *vls, struct brep_specific* bs, struct rt_brep_internal*, struct bn_vlblock *vbp, int index, int plotres)
+brep_surface_plot(struct bu_vls *vls, struct brep_specific* bs, struct rt_brep_internal*, struct bn_vlblock *vbp, int index, struct bu_color *UNUSED(color), int plotres)
 {
     ON_wString wstr;
     ON_TextLog tl(wstr);
@@ -1670,7 +1670,7 @@ brep_surface_knot_plot(struct bu_vls *vls, struct brep_specific* bs, struct rt_b
 
 
 int
-brep_edge3d_plot(struct bu_vls *vls, struct brep_specific* bs, struct rt_brep_internal*, struct bn_vlblock *vbp, int index, int plotres)
+brep_edge3d_plot(struct bu_vls *vls, struct brep_specific* bs, struct rt_brep_internal*, struct bn_vlblock *vbp, struct bu_color *UNUSED(color), int index, int plotres)
 {
     ON_wString wstr;
     ON_TextLog tl(wstr);
@@ -1739,7 +1739,7 @@ plot_nurbs_cv(struct bn_vlblock *vbp, int ucount, int vcount, ON_NurbsSurface *n
 
 
 int
-brep_trim_plot(struct bu_vls *vls, struct brep_specific* bs, struct rt_brep_internal*, struct bn_vlblock *vbp, int index, int plotres, bool dim3d)
+brep_trim_plot(struct bu_vls *vls, struct brep_specific* bs, struct rt_brep_internal*, struct bn_vlblock *vbp, int index, struct bu_color *UNUSED(color), int plotres, bool dim3d)
 {
     ON_wString wstr;
     ON_TextLog tl(wstr);
@@ -2818,7 +2818,7 @@ translate_command(
 
 
 int
-brep_command(struct bu_vls *vls, const char *solid_name, const struct rt_tess_tol *ttol, const struct bn_tol *tol, struct brep_specific* bs, struct rt_brep_internal* bi, struct bn_vlblock *vbp, int argc, const char *argv[], char *commtag)
+brep_command(struct bu_vls *vls, const char *solid_name, struct bu_color *color, const struct rt_tess_tol *ttol, const struct bn_tol *tol, struct brep_specific* bs, struct rt_brep_internal* bi, struct bn_vlblock *vbp, int argc, const char *argv[], char *commtag)
 {
     const char *command;
     int ret = 0;
@@ -3083,7 +3083,7 @@ brep_command(struct bu_vls *vls, const char *solid_name, const struct rt_tess_to
 	    if (BU_STR_EQUAL(part, "S")) {
 		snprintf(commtag, 64, "_BC_S_");
 		for (e_it = elements.begin(); e_it != elements.end(); e_it++) {
-		    ret = brep_surface_plot(vls, bs, bi, vbp, (*e_it), plotres);
+		    ret = brep_surface_plot(vls, bs, bi, vbp, (*e_it), color, plotres);
 		}
 	    } else if (BU_STR_EQUAL(part, "Suv")) {
 		double u = 0.0;
@@ -3141,13 +3141,13 @@ brep_command(struct bu_vls *vls, const char *solid_name, const struct rt_tess_to
 	    } else if (BU_STR_EQUAL(part, "F")) {
 		snprintf(commtag, 64, "_BC_F_");
 		for (e_it = elements.begin(); e_it != elements.end(); e_it++) {
-		    ret = brep_facetrim_plot(vls, bs, bi, vbp, (*e_it), plotres,
+		    ret = brep_facetrim_plot(vls, bs, bi, vbp, (*e_it), color, plotres,
 					     true);
 		}
 	    } else if (BU_STR_EQUAL(part, "F2d")) {
 		snprintf(commtag, 64, "_BC_F2d_");
 		for (e_it = elements.begin(); e_it != elements.end(); e_it++) {
-		    ret = brep_facetrim_plot(vls, bs, bi, vbp, (*e_it), plotres,
+		    ret = brep_facetrim_plot(vls, bs, bi, vbp, (*e_it), color, plotres,
 					     false);
 		}
 	    } else if (BU_STR_EQUAL(part, "FCDT")) {
@@ -3196,12 +3196,12 @@ brep_command(struct bu_vls *vls, const char *solid_name, const struct rt_tess_to
 	    } else if (BU_STR_EQUAL(part, "T")) {
 		snprintf(commtag, 64, "_BC_T_");
 		for (e_it = elements.begin(); e_it != elements.end(); e_it++) {
-		    ret = brep_trim_plot(vls, bs, bi, vbp, (*e_it), plotres, true);
+		    ret = brep_trim_plot(vls, bs, bi, vbp, (*e_it), color, plotres, true);
 		}
 	    } else if (BU_STR_EQUAL(part, "T2d")) {
 		snprintf(commtag, 64, "_BC_T2d_");
 		for (e_it = elements.begin(); e_it != elements.end(); e_it++) {
-		    ret = brep_trim_plot(vls, bs, bi, vbp, (*e_it), plotres, false);
+		    ret = brep_trim_plot(vls, bs, bi, vbp, (*e_it), color, plotres, false);
 		}
 	    } else if (BU_STR_EQUAL(part, "L")) {
 		snprintf(commtag, 64, "_BC_L_");
@@ -3228,7 +3228,7 @@ brep_command(struct bu_vls *vls, const char *solid_name, const struct rt_tess_to
 	    } else if (BU_STR_EQUAL(part, "E")) {
 		snprintf(commtag, 64, "_BC_E_");
 		for (e_it = elements.begin(); e_it != elements.end(); e_it++) {
-		    ret = brep_edge3d_plot(vls, bs, bi, vbp, (*e_it), plotres);
+		    ret = brep_edge3d_plot(vls, bs, bi, vbp, color, (*e_it), plotres);
 		}
 	    } else if (BU_STR_EQUAL(part, "SCV")) {
 		snprintf(commtag, 64, "_BC_SCV_");

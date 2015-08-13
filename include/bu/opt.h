@@ -323,6 +323,8 @@ BU_EXPORT extern int bu_opt_fastf_t(struct bu_vls *msg, int argc, const char **a
 BU_EXPORT extern int bu_opt_str(struct bu_vls *msg, int argc, const char **argv, void *set_var);
 /** Process 1 argument to append to a vls (places a space before the new entry if the target vls is not empty) */
 BU_EXPORT extern int bu_opt_vls(struct bu_vls *msg, int argc, const char **argv, void *set_var);
+/** Process 1 or 3 arguments to set a bu_color */
+BU_EXPORT extern int bu_opt_color(struct bu_vls *msg, int argc, const char **argv, void *set_var);
 /** @} */
 
 
