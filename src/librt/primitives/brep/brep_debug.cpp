@@ -1577,7 +1577,7 @@ brep_surface_uv_plot(struct bu_vls *vls, struct brep_specific* bs, struct rt_bre
 
 
 int
-brep_surface_plot(struct bu_vls *vls, struct brep_specific* bs, struct rt_brep_internal*, struct bn_vlblock *vbp, int index, struct bu_color *UNUSED(color), int plotres)
+brep_surface_plot(struct bu_vls *vls, struct brep_specific* bs, struct rt_brep_internal*, struct bn_vlblock *vbp, int index, struct bu_color *color, int plotres)
 {
     ON_wString wstr;
     ON_TextLog tl(wstr);
@@ -1593,12 +1593,20 @@ brep_surface_plot(struct bu_vls *vls, struct brep_specific* bs, struct rt_brep_i
     if (index == -1) {
 	for (index = 0; index < brep->m_S.Count(); index++) {
 	    ON_Surface *surf = brep->m_S[index];
-	    plotsurface(*surf, vbp, plotres, 10);
+	    if (color) {
+		plotsurface(*surf, vbp, plotres, 10, (int)color->buc_rgb[0], (int)color->buc_rgb[1], (int)color->buc_rgb[2]);
+	    } else {
+		plotsurface(*surf, vbp, plotres, 10);
+	    }
 	}
     } else if (index < brep->m_S.Count()) {
 	ON_Surface *surf = brep->m_S[index];
 	surf->Dump(tl);
-	plotsurface(*surf, vbp, plotres, 10);
+	if (color) {
+	    plotsurface(*surf, vbp, plotres, 10, (int)color->buc_rgb[0], (int)color->buc_rgb[1], (int)color->buc_rgb[2]);
+	} else {
+	    plotsurface(*surf, vbp, plotres, 10);
+	}
     }
 
     bu_vls_printf(vls, ON_String(wstr).Array());

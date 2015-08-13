@@ -194,7 +194,7 @@ ged_brep(struct ged *gedp, int argc, const char *argv[])
     db_op_t op = DB_OP_NULL;
     int opt_ret = 0;
     struct bu_opt_desc d[2];
-    BU_OPT(d[1], "C", "color", "r/g/b", &bu_opt_color, (void *)&color, "Set color");
+    BU_OPT(d[0], "C", "color", "r/g/b", &bu_opt_color, (void *)&color, "Set color");
     BU_OPT_NULL(d[1]);
 
     opt_ret = bu_opt_parse(NULL, argc, argv, d);
@@ -498,7 +498,11 @@ ged_brep(struct ged *gedp, int argc, const char *argv[])
 
     vbp = rt_vlblock_init();
 
-    brep_command(gedp->ged_result_str, solid_name, &color, (const struct rt_tess_tol *)&gedp->ged_wdbp->wdb_ttol, &gedp->ged_wdbp->wdb_tol, bs, bi, vbp, argc, argv, commtag);
+    if ((int)color.buc_rgb[0] == 0 && (int)color.buc_rgb[0] == 0 && (int)color.buc_rgb[0] == 0) {
+	brep_command(gedp->ged_result_str, solid_name, NULL, (const struct rt_tess_tol *)&gedp->ged_wdbp->wdb_ttol, &gedp->ged_wdbp->wdb_tol, bs, bi, vbp, argc, argv, commtag);
+    } else {
+	brep_command(gedp->ged_result_str, solid_name, &color, (const struct rt_tess_tol *)&gedp->ged_wdbp->wdb_ttol, &gedp->ged_wdbp->wdb_tol, bs, bi, vbp, argc, argv, commtag);
+    }
 
     if (BU_STR_EQUAL(argv[2], "translate")) {
 	bi->brep = bs->brep;
