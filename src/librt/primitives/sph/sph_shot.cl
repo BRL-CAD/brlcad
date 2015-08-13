@@ -2,24 +2,23 @@
 
 
 struct sph_shot_specific {
-    double sph_V[3];
-    double sph_radsq;
+    double sph_V[3];     /* Vector to center of sphere */
+    double sph_radsq;    /* Radius squared */
+    double sph_invrad;   /* Inverse radius (for normal) */
 };
 
 int sph_shot(global struct hit *res, const double3 r_pt, const double3 r_dir, global const struct sph_shot_specific *sph)
 {
-    global const double *V = sph->sph_V;
-    const double radsq = sph->sph_radsq;
-
     double3 ov;        // ray origin to center (V - P)
     double magsq_ov;   // length squared of ov
     double b;          // second term of quadratic eqn
     double root;       // root of radical
 
-    ov = vload3(0, V) - r_pt;
+    ov = vload3(0, sph->sph_V) - r_pt;
     b = dot(r_dir, ov);
     magsq_ov = dot(ov, ov);
 
+    const double radsq = sph->sph_radsq;
     if (magsq_ov >= radsq) {
 	// ray origin is outside of sphere
 	if (b < 0) {
@@ -46,6 +45,14 @@ int sph_shot(global struct hit *res, const double3 r_pt, const double3 r_dir, gl
     res[0].hit_surfno = 0;
     res[1].hit_surfno = 0;
     return 2;       // HIT
+}
+
+
+void sph_norm(global struct hit *hitp, const double3 r_pt, const double3 r_dir, global const struct sph_shot_specific *sph)
+{
+    hitp->hit_point = r_pt + r_dir * hitp->hit_dist;
+    hitp->hit_normal = hitp->hit_point - vload3(0, sph->sph_V);
+    hitp->hit_normal = hitp->hit_normal * sph->sph_invrad;
 }
 
 

@@ -157,9 +157,11 @@ struct tor_specific {
 #ifdef USE_OPENCL
 /* largest data members first */
 struct tor_shot_specific {
-    cl_double tor_SoR[16];
-    cl_double tor_V[3];
-    cl_double tor_alpha, tor_r1;
+    cl_double tor_alpha;	/* 0 < (R2/R1) <= 1 */
+    cl_double tor_r1;		/* for inverse scaling of k values. */
+    cl_double tor_V[3];		/* Vector to center of torus */
+    cl_double tor_SoR[16];	/* Scale(Rot(vect)) */
+    cl_double tor_invR[16];	/* invRot(vect') */
 };
 
 size_t
@@ -177,10 +179,11 @@ clt_tor_pack(void *dst, struct soltab *src)
     struct tor_shot_specific *args =
         (struct tor_shot_specific *)dst;
 
-    VMOVE(args->tor_V, tor->tor_V);
-    MAT_COPY(args->tor_SoR, tor->tor_SoR);
     args->tor_alpha = tor->tor_alpha;
     args->tor_r1 = tor->tor_r1;
+    VMOVE(args->tor_V, tor->tor_V);
+    MAT_COPY(args->tor_SoR, tor->tor_SoR);
+    MAT_COPY(args->tor_invR, tor->tor_invR);
 }
 #endif /* USE_OPENCL */
 
@@ -848,6 +851,9 @@ rt_tor_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, str
 void
 rt_tor_norm(register struct hit *hitp, struct soltab *stp, register struct xray *rp)
 {
+#ifdef USE_OPENCL
+    clt_norm(hitp, stp, rp);
+#else
     register struct tor_specific *tor =
 	(struct tor_specific *)stp->st_specific;
 
@@ -866,6 +872,7 @@ rt_tor_norm(register struct hit *hitp, struct soltab *stp, register struct xray 
     VUNITIZE(work);
 
     MAT3X3VEC(hitp->hit_normal, tor->tor_invR, work);
+#endif
 }
 
 

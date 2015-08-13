@@ -64,6 +64,8 @@ __BEGIN_DECLS
 
 
 struct cl_hit {
+  cl_double3 hit_point;
+  cl_double3 hit_normal;
   cl_double3 hit_vpriv;
   cl_double hit_dist;
   cl_int hit_surfno;

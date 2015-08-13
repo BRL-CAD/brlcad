@@ -191,9 +191,11 @@ static int ehy_is_valid(struct rt_ehy_internal *ehy);
 #ifdef USE_OPENCL
 /* largest data members first */
 struct ehy_shot_specific {
-    cl_double ehy_SoR[16];
-    cl_double ehy_V[3];
-    cl_double ehy_cprime;
+    cl_double ehy_V[3];		/* vector to ehy origin */
+    cl_double ehy_Hunit[3];	/* unit H vector */
+    cl_double ehy_SoR[16];	/* Scale(Rot(vect)) */
+    cl_double ehy_invRoS[16];	/* invRot(Scale(vect)) */
+    cl_double ehy_cprime;	/* c / |H| */
 };
 
 size_t
@@ -212,7 +214,9 @@ clt_ehy_pack(void *dst, struct soltab *src)
         (struct ehy_shot_specific *)dst;
 
     VMOVE(args->ehy_V, ehy->ehy_V);
+    VMOVE(args->ehy_Hunit, ehy->ehy_Hunit);
     MAT_COPY(args->ehy_SoR, ehy->ehy_SoR);
+    MAT_COPY(args->ehy_invRoS, ehy->ehy_invRoS);
     args->ehy_cprime = ehy->ehy_cprime;
 }
 #endif /* USE_OPENCL */
@@ -527,6 +531,9 @@ check_plates:
 void
 rt_ehy_norm(struct hit *hitp, struct soltab *stp, struct xray *rp)
 {
+#ifdef USE_OPENCL
+    clt_norm(hitp, stp, rp);
+#else
     vect_t can_normal;	/* normal to canonical ehy */
     fastf_t cp, scale;
     struct ehy_specific *ehy =
@@ -554,6 +561,7 @@ rt_ehy_norm(struct hit *hitp, struct soltab *stp, struct xray *rp)
 	    bu_log("rt_ehy_norm: surfno=%d bad\n", hitp->hit_surfno);
 	    break;
     }
+#endif
 }
 
 

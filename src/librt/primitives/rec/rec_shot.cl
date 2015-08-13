@@ -8,15 +8,14 @@
 
 
 struct rec_shot_specific {
-    double rec_SoR[16];
-    double rec_V[3];
+    double rec_V[3];		/* Vector to center of base of cylinder */
+    double rec_Hunit[3];	/* Unit H vector */
+    double rec_SoR[16];		/* Scale(Rot(vect)) */
+    double rec_invRoS[16];	/* invRot(Scale(vect)) */
 };
 
 int rec_shot(global struct hit *res, const double3 r_pt, const double3 r_dir, global const struct rec_shot_specific *rec)
 {
-    global const double *SoR = rec->rec_SoR;
-    global const double *V = rec->rec_V;
-
     double3 dprime;		// D'
     double3 pprime;		// P'
     double k1, k2;		// distance constants of solution
@@ -27,15 +26,9 @@ int rec_shot(global struct hit *res, const double3 r_pt, const double3 r_dir, gl
 
     hitp = &hits[0];
 
-    /* out, Mat, vect */
-    const double f = 1.0/SoR[15];
-    dprime.x = dot(vload3(0, &SoR[0]), r_dir) * f;
-    dprime.y = dot(vload3(0, &SoR[4]), r_dir) * f;
-    dprime.z = dot(vload3(0, &SoR[8]), r_dir) * f;
-    xlated = r_pt - vload3(0, V);
-    pprime.x = dot(vload3(0, &SoR[0]), xlated) * f;
-    pprime.y = dot(vload3(0, &SoR[4]), xlated) * f;
-    pprime.z = dot(vload3(0, &SoR[8]), xlated) * f;
+    dprime = MAT4X3VEC(rec->rec_SoR, r_dir);
+    xlated = r_pt - vload3(0, rec->rec_V);
+    pprime = MAT4X3VEC(rec->rec_SoR, xlated);
 
     /*
      * Check for hitting the end plates.
@@ -172,6 +165,28 @@ int rec_shot(global struct hit *res, const double3 r_pt, const double3 r_dir, gl
 	res[1] = hits[0];
     }
     return 2;		// HIT
+}
+
+
+void rec_norm(global struct hit *hitp, const double3 r_pt, const double3 r_dir, global const struct rec_shot_specific *rec)
+{
+    hitp->hit_point = r_pt + r_dir * hitp->hit_dist;
+    switch (hitp->hit_surfno) {
+	case REC_NORM_BODY:
+	    /* compute it */
+	    hitp->hit_vpriv.z = 0.0;
+	    hitp->hit_normal = MAT4X3VEC(rec->rec_invRoS, hitp->hit_vpriv);
+            hitp->hit_normal = normalize(hitp->hit_normal);
+	    break;
+	case REC_NORM_TOP:
+	    hitp->hit_normal = vload3(0, rec->rec_Hunit);
+	    break;
+	case REC_NORM_BOT:
+	    hitp->hit_normal = -vload3(0, rec->rec_Hunit);
+	    break;
+	default:
+	    break;
+    }
 }
 
 

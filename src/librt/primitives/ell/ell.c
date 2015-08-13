@@ -168,8 +168,9 @@ struct ell_specific {
 #ifdef USE_OPENCL
 /* largest data members first */
 struct ell_shot_specific {
-    cl_double ell_SoR[16];
-    cl_double ell_V[3];
+    cl_double ell_V[3];         /* Vector to center of ellipsoid */
+    cl_double ell_SoR[16];      /* Scale(Rot(vect)) */
+    cl_double ell_invRSSR[16];  /* invRot(Scale(Scale(Rot(vect)))) */
 };
 
 size_t
@@ -189,6 +190,7 @@ clt_ell_pack(void *dst, struct soltab *src)
 
     VMOVE(args->ell_V, ell->ell_V);
     MAT_COPY(args->ell_SoR, ell->ell_SoR);
+    MAT_COPY(args->ell_invRSSR, ell->ell_invRSSR);
 }
 #endif /* USE_OPENCL */
 
@@ -533,6 +535,9 @@ rt_ell_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, str
 void
 rt_ell_norm(register struct hit *hitp, struct soltab *stp, register struct xray *rp)
 {
+#ifdef USE_OPENCL
+    clt_norm(hitp, stp, rp);
+#else
     register struct ell_specific *ell =
 	(struct ell_specific *)stp->st_specific;
     vect_t xlated;
@@ -546,6 +551,7 @@ rt_ell_norm(register struct hit *hitp, struct soltab *stp, register struct xray 
 
     /* tuck away this scale for the curvature routine */
     hitp->hit_vpriv[X] = scale;
+#endif
 }
 
 

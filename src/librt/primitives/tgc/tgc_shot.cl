@@ -8,28 +8,19 @@
 
 
 struct tgc_shot_specific {
-    double tgc_ScShR[16];
-    double tgc_V[3];
-    double tgc_N[3];
-    double tgc_sH, tgc_A, tgc_B;
-    double tgc_CdAm1, tgc_DdBm1, tgc_AAdCC, tgc_BBdDD;
-    char tgc_AD_CB;
+    double tgc_V[3];             /* Vector to center of base of TGC */
+    double tgc_CdAm1;            /* (C/A - 1) */
+    double tgc_DdBm1;            /* (D/B - 1) */
+    double tgc_AAdCC;            /* (|A|**2)/(|C|**2) */
+    double tgc_BBdDD;            /* (|B|**2)/(|D|**2) */
+    double tgc_N[3];             /* normal at 'top' of cone */
+    double tgc_ScShR[16];        /* Scale(Shear(Rot(vect))) */
+    double tgc_invRtShSc[16];    /* invRot(trnShear(Scale(vect))) */
+    char tgc_AD_CB;              /* boolean:  A*D == C*B */
 };
 
 int tgc_shot(global struct hit *res, const double3 r_pt, const double3 r_dir, global const struct tgc_shot_specific *tgc)
 {
-    global const double *ScShR = tgc->tgc_ScShR;
-    global const double *V = tgc->tgc_V;
-    global const double *N = tgc->tgc_N;
-    const double sH = tgc->tgc_sH;
-    const double A = tgc->tgc_A;
-    const double B = tgc->tgc_B;
-    const double CdAm1 = tgc->tgc_CdAm1;
-    const double DdBm1 = tgc->tgc_DdBm1;
-    const double AAdCC = tgc->tgc_AAdCC;
-    const double BBdDD = tgc->tgc_BBdDD;
-    const char AD_CB = tgc->tgc_AD_CB;
-
     double3 pprime;
     double3 dprime;
     double3 work;
@@ -47,14 +38,10 @@ int tgc_shot(global struct hit *res, const double3 r_pt, const double3 r_dir, gl
     double Xsqr[3], Ysqr[3];
     double R[2], Rsqr[3];
 
-    /* find rotated point and direction */
-    const double f = 1.0/ScShR[15];
-
 #define ALPHA(x, y, c, d)	((x)*(x)*(c) + (y)*(y)*(d))
 
-    dprime.x = dot(vload3(0, &ScShR[0]), r_dir) * f;
-    dprime.y = dot(vload3(0, &ScShR[4]), r_dir) * f;
-    dprime.z = dot(vload3(0, &ScShR[8]), r_dir) * f;
+    /* find rotated point and direction */
+    dprime = MAT4X3VEC(tgc->tgc_ScShR, r_dir);
 
     /* A vector of unit length in model space (r_dir) changes length
      * in the special unit-tgc space.  This scale factor will restore
@@ -71,10 +58,8 @@ int tgc_shot(global struct hit *res, const double3 r_pt, const double3 r_dir, gl
 	dprime.z = 0.0;	/* prevent rootfinder heartburn */
     }
 
-    work = r_pt - vload3(0, V);
-    pprime.x = dot(vload3(0, &ScShR[0]), work) * f;
-    pprime.y = dot(vload3(0, &ScShR[4]), work) * f;
-    pprime.z = dot(vload3(0, &ScShR[8]), work) * f;
+    work = r_pt - vload3(0, tgc->tgc_V);
+    pprime = MAT4X3VEC(tgc->tgc_ScShR, work);
 
     /* Translating ray origin along direction of ray to closest pt. to
      * origin of solids coordinate system, new ray origin is
@@ -125,9 +110,9 @@ int tgc_shot(global struct hit *res, const double3 r_pt, const double3 r_dir, gl
     Ysqr[1] = 2.0 * dprime.y * cor_pprime.y;
     Ysqr[2] = cor_pprime.y * cor_pprime.y;
 
-    R[0] = dprime.z * CdAm1;
-    /* A vector is unitized (tgc_A == 1.0) */
-    R[1] = (cor_pprime.z * CdAm1) + 1.0;
+    R[0] = dprime.z * tgc->tgc_CdAm1;
+    /* A vector is unitized (tgc->tgc_A == 1.0) */
+    R[1] = (cor_pprime.z * tgc->tgc_CdAm1) + 1.0;
 
     /* (void) rt_poly_mul(&Rsqr, &R, &R); */
     Rsqr[0] = R[0] * R[0];
@@ -141,7 +126,7 @@ int tgc_shot(global struct hit *res, const double3 r_pt, const double3 r_dir, gl
      * this can only be done when C0 is not too small! (JRA)
      */
     C0 = Xsqr[0] + Ysqr[0] - Rsqr[0];
-    if (AD_CB && !NEAR_ZERO(C0, 1.0e-10)) {
+    if (tgc->tgc_AD_CB && !NEAR_ZERO(C0, 1.0e-10)) {
 	double C[3];	/* final equation */
 	double roots;
 
@@ -172,9 +157,9 @@ int tgc_shot(global struct hit *res, const double3 r_pt, const double3 r_dir, gl
 	int l;
 	int nroots;
 
-	Q[0] = dprime.z * DdBm1;
+	Q[0] = dprime.z * tgc->tgc_DdBm1;
 	/* B vector is unitized (tgc_B == 1.0) */
-	Q[1] = (cor_pprime.z * DdBm1) + 1.0;
+	Q[1] = (cor_pprime.z * tgc->tgc_DdBm1) + 1.0;
 
 	/* (void) bn_poly_mul(&Qsqr, &Q, &Q); */
 	Qsqr[0] = Q[0] * Q[0];
@@ -266,7 +251,7 @@ int tgc_shot(global struct hit *res, const double3 r_pt, const double3 r_dir, gl
      * Consider intersections with the end ellipses
      */
     /* bu_log("npts before base is %d; ", npts); */
-    dir = dot(vload3(0, N), r_dir);
+    dir = dot(vload3(0, tgc->tgc_N), r_dir);
     if (!ZERO(dprime.z) && !NEAR_ZERO(dir, RT_DOT_TOL)) {
 	b = (-pprime.z)/dprime.z;
 	/* Height vector is unitized (tgc_sH == 1.0) */
@@ -281,12 +266,8 @@ int tgc_shot(global struct hit *res, const double3 r_pt, const double3 r_dir, gl
 	/* the bottom end */
 	work = pprime + t * dprime;
 	/* Must scale C and D vectors */
-	alf2 = ALPHA(work.x, work.y, AAdCC, BBdDD);
+	alf2 = ALPHA(work.x, work.y, tgc->tgc_AAdCC, tgc->tgc_BBdDD);
 
-	/*
-	   bu_log("alf1 is %f, alf2 is %f\n", alf1, alf2);
-	   bu_log("work[x]=%f, work[y]=%f, aadcc=%f, bbddd=%f\n", work.x, work.y, tgc_AAdCC, tgc_BBdDD);
-	 */
 	if (alf1 <= 1.0) {
 	    hit_type[npts] = TGC_NORM_BOT;
 	    k[npts++] = b;
@@ -296,8 +277,6 @@ int tgc_shot(global struct hit *res, const double3 r_pt, const double3 r_dir, gl
 	    k[npts++] = t;
 	}
     }
-
-    /* bu_log("npts FINAL is %d\n", npts); */
 
     /* Sort Most distant to least distant: rt_pt_sort(k, npts) */
     {
@@ -387,6 +366,43 @@ int tgc_shot(global struct hit *res, const double3 r_pt, const double3 r_dir, gl
 }
 
 
+void tgc_norm(global struct hit *hitp, const double3 r_pt, const double3 r_dir, global const struct tgc_shot_specific *tgc)
+{
+    double Q;
+    double R;
+    double3 stdnorm;
+
+    /* Hit point */
+    hitp->hit_point = r_pt + r_dir * hitp->hit_dist;
+
+    /* Hits on the end plates are easy */
+    switch (hitp->hit_surfno) {
+	case TGC_NORM_TOP:
+	    hitp->hit_normal = vload3(0, tgc->tgc_N);
+	    break;
+	case TGC_NORM_BOT:
+	    hitp->hit_normal = -vload3(0, tgc->tgc_N);
+	    break;
+	case TGC_NORM_BODY:
+	    /* Compute normal, given hit point on standard (unit) cone */
+	    R = 1 + tgc->tgc_CdAm1 * hitp->hit_vpriv.z;
+	    Q = 1 + tgc->tgc_DdBm1 * hitp->hit_vpriv.z;
+	    stdnorm.x = hitp->hit_vpriv.x * Q * Q;
+	    stdnorm.y = hitp->hit_vpriv.y * R * R;
+	    stdnorm.z = (hitp->hit_vpriv.x*hitp->hit_vpriv.x - R*R)
+		* Q * tgc->tgc_DdBm1
+		+ (hitp->hit_vpriv.y*hitp->hit_vpriv.y - Q*Q)
+		* R * tgc->tgc_CdAm1;
+	    hitp->hit_normal = MAT4X3VEC(tgc->tgc_invRtShSc, stdnorm);
+	    /*XXX - save scale */
+	    hitp->hit_normal = normalize(hitp->hit_normal);
+	    break;
+	default:
+	    break;
+    }
+}
+
+
 /*
  * Local Variables:
  * mode: C
@@ -396,4 +412,3 @@ int tgc_shot(global struct hit *res, const double3 r_pt, const double3 r_dir, gl
  * End:
  * ex: shiftwidth=4 tabstop=8
  */
-

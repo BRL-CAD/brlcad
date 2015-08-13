@@ -7,15 +7,15 @@
 
 
 struct ehy_shot_specific {
-    double ehy_SoR[16];
-    double ehy_V[3];
-    double ehy_cprime;
+    double ehy_V[3];		/* vector to ehy origin */
+    double ehy_Hunit[3];	/* unit H vector */
+    double ehy_SoR[16];		/* Scale(Rot(vect)) */
+    double ehy_invRoS[16];	/* invRot(Scale(vect)) */
+    double ehy_cprime;		/* c / |H| */
 };
 
 int ehy_shot(global struct hit *res, const double3 r_pt, const double3 r_dir, global const struct ehy_shot_specific *ehy)
 {
-    global const double *SoR = ehy->ehy_SoR;
-    global const double *V = ehy->ehy_V;
     const double cp = ehy->ehy_cprime;
 
     double3 dp;		// D'
@@ -31,15 +31,9 @@ int ehy_shot(global struct hit *res, const double3 r_pt, const double3 r_dir, gl
 
     hitp = &hits[0];
 
-    // out, Mat, vect
-    const double f = 1.0/SoR[15];
-    dp.x = dot(vload3(0, &SoR[0]), r_dir) * f;
-    dp.y = dot(vload3(0, &SoR[4]), r_dir) * f;
-    dp.z = dot(vload3(0, &SoR[8]), r_dir) * f;
-    xlated = r_pt - vload3(0, V);
-    pp.x = dot(vload3(0, &SoR[0]), xlated) * f;
-    pp.y = dot(vload3(0, &SoR[4]), xlated) * f;
-    pp.z = dot(vload3(0, &SoR[8]), xlated) * f;
+    dp = MAT4X3VEC(ehy->ehy_SoR, r_dir);
+    xlated = r_pt - vload3(0, ehy->ehy_V);
+    pp = MAT4X3VEC(ehy->ehy_SoR, xlated);
 
     // Find roots of the equation, using formula for quadratic
     a = dp.z * dp.z - (2 * cp + 1) * (dp.x * dp.x + dp.y * dp.y);
@@ -119,6 +113,35 @@ int ehy_shot(global struct hit *res, const double3 r_pt, const double3 r_dir, gl
         res[1] = hits[0];
     }
     return 2; // HIT
+}
+
+
+void ehy_norm(global struct hit *hitp, const double3 r_pt, const double3 r_dir, global const struct ehy_shot_specific *ehy)
+{
+    double3 can_normal;	/* normal to canonical ehy */
+    double cp, scale;
+
+    hitp->hit_point = r_pt + r_dir * hitp->hit_dist;
+    switch (hitp->hit_surfno) {
+	case EHY_NORM_BODY:
+	    cp = ehy->ehy_cprime;
+	    can_normal = (double3){
+		 hitp->hit_vpriv.x * (2 * cp + 1),
+		 hitp->hit_vpriv.y * (2 * cp + 1),
+		 -(hitp->hit_vpriv.z + cp + 1)};
+	    hitp->hit_normal = MAT4X3VEC(ehy->ehy_invRoS, can_normal);
+	    scale = 1.0 / length(hitp->hit_normal);
+	    hitp->hit_normal = hitp->hit_normal * scale;
+
+	    /* tuck away this scale for the curvature routine */
+	    hitp->hit_vpriv.x = scale;
+	    break;
+	case EHY_NORM_TOP:
+	    hitp->hit_normal = -vload3(0, ehy->ehy_Hunit);
+	    break;
+	default:
+	    break;
+    }
 }
 
 

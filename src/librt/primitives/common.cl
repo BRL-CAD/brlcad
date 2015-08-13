@@ -32,10 +32,28 @@ typedef union {
 
 
 struct hit {
+  double3 hit_point;
+  double3 hit_normal;
   double3 hit_vpriv;
   double hit_dist;
   int hit_surfno;
 };
+
+
+inline double3 MAT3X3VEC(global const double *m, double3 i) {
+    double3 o;
+    o.x = dot(vload3(0, &m[0]), i);
+    o.y = dot(vload3(0, &m[4]), i);
+    o.z = dot(vload3(0, &m[8]), i);
+    return o;
+}
+
+inline double3 MAT4X3VEC(global const double *m, double3 i) {
+    double3 o;
+    o = MAT3X3VEC(m, i) * (1.0/m[15]);
+    return o;
+}
+
 
 /* solver.cl */
 extern int rt_poly_roots(double *eqn, uint dgr, bn_complex_t *roots);
