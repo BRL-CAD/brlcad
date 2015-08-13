@@ -9,7 +9,7 @@ struct tor_shot_specific {
     double tor_invR[16];    /* invRot(vect') */
 };
 
-int tor_shot(global struct hit *res, const double3 r_pt, const double3 r_dir, global const struct tor_shot_specific *tor)
+int tor_shot(global struct hit *res, const double3 r_pt, const double3 r_dir, const uint idx, global const struct tor_shot_specific *tor)
 {
     double3 dprime;		// D'
     double3 pprime;		// P'
@@ -146,35 +146,40 @@ int tor_shot(global struct hit *res, const double3 r_pt, const double3 r_dir, gl
 
     /* Now, t[0] > t[npts-1] */
     /* k[1] is entry point, and k[0] is farthest exit point */
+    struct hit hits[2];
+
+    hits[0].hit_dist = k[1]*tor->tor_r1;
+    hits[0].hit_surfno = 0;
+    hits[1].hit_dist = k[0]*tor->tor_r1;
+    hits[1].hit_surfno = 0;
+
+    /* Set aside vector for rt_tor_norm() later */
+    hits[0].hit_vpriv = pprime + k[1] * dprime;
+    hits[1].hit_vpriv = pprime + k[0] * dprime;
+
     if (i == 2) {
-        res[0].hit_surfno = 0;
-        res[0].hit_dist = k[1]*tor->tor_r1;
-        res[1].hit_surfno = 0;
-        res[1].hit_dist = k[0]*tor->tor_r1;
-	/* Set aside vector for rt_tor_norm() later */
-        res[0].hit_vpriv = pprime + k[1] * dprime;
-        res[1].hit_vpriv = pprime + k[0] * dprime;
+	do_hitp(res, 0, idx, &hits[0]);
+	do_hitp(res, 1, idx, &hits[1]);
     	return 2;		// HIT
-    } else {
-	/* 4 points */
-	/* k[3] is entry point, and k[2] is exit point */
-        res[0].hit_surfno = 1;
-        res[0].hit_dist = k[3]*tor->tor_r1;
-        res[1].hit_surfno = 1;
-        res[1].hit_dist = k[2]*tor->tor_r1;
-
-        res[2].hit_surfno = 0;
-        res[2].hit_dist = k[1]*tor->tor_r1;
-        res[3].hit_surfno = 0;
-        res[3].hit_dist = k[0]*tor->tor_r1;
-
-	/* Set aside vector for rt_tor_norm() later */
-        res[0].hit_vpriv = pprime + k[3] * dprime;
-        res[1].hit_vpriv = pprime + k[2] * dprime;
-        res[2].hit_vpriv = pprime + k[1] * dprime;
-        res[3].hit_vpriv = pprime + k[0] * dprime;
-    	return 4;		// HIT
     }
+
+    /* 4 points */
+    do_hitp(res, 2, idx, &hits[0]);
+    do_hitp(res, 3, idx, &hits[1]);
+
+    /* k[3] is entry point, and k[2] is exit point */
+    hits[0].hit_surfno = 1;
+    hits[0].hit_dist = k[3]*tor->tor_r1;
+    hits[1].hit_surfno = 1;
+    hits[1].hit_dist = k[2]*tor->tor_r1;
+
+    /* Set aside vector for rt_tor_norm() later */
+    hits[0].hit_vpriv = pprime + k[3] * dprime;
+    hits[1].hit_vpriv = pprime + k[2] * dprime;
+
+    do_hitp(res, 0, idx, &hits[0]);
+    do_hitp(res, 1, idx, &hits[1]);
+    return 4;		// HIT
 }
 
 

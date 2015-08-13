@@ -7,7 +7,7 @@ struct sph_shot_specific {
     double sph_invrad;   /* Inverse radius (for normal) */
 };
 
-int sph_shot(global struct hit *res, const double3 r_pt, const double3 r_dir, global const struct sph_shot_specific *sph)
+int sph_shot(global struct hit *res, const double3 r_pt, const double3 r_dir, const uint idx, global const struct sph_shot_specific *sph)
 {
     double3 ov;        // ray origin to center (V - P)
     double magsq_ov;   // length squared of ov
@@ -39,11 +39,16 @@ int sph_shot(global struct hit *res, const double3 r_pt, const double3 r_dir, gl
 	return 2;       // HIT
     }
 
+    struct hit hits[2];
+    
     // we know root is positive, so we know the smaller t
-    res[0].hit_dist = b - root;
-    res[1].hit_dist = b + root;
-    res[0].hit_surfno = 0;
-    res[1].hit_surfno = 0;
+    hits[0].hit_dist = b - root;
+    hits[0].hit_surfno = 0;
+    hits[1].hit_dist = b + root;
+    hits[1].hit_surfno = 0;
+
+    do_hitp(res, 0, idx, &hits[0]);
+    do_hitp(res, 1, idx, &hits[1]);
     return 2;       // HIT
 }
 

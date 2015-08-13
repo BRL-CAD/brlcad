@@ -1330,7 +1330,7 @@ simple_run(int cur_pixel, int last_pixel)
     if (per_processor_chunk <= 0) per_processor_chunk = npsw;
 
     bu_semaphore_acquire(RT_SEM_WORKER);
-#if 1
+#if 0
 /*#pragma omp parallel for*/
     for (pixelnum = cur_pixel; pixelnum <= last_pixel; pixelnum++) {
         int cpu;

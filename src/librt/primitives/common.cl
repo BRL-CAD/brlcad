@@ -37,6 +37,7 @@ struct hit {
   double3 hit_vpriv;
   double hit_dist;
   int hit_surfno;
+  uint hit_index;
 };
 
 
@@ -60,6 +61,8 @@ extern int rt_poly_roots(double *eqn, uint dgr, bn_complex_t *roots);
 
 /* table.cl */
 extern constant double rti_tol_dist;
+
+extern void do_hitp(global struct hit *res, const uint i, const uint hit_index, const struct hit *hitp);
 
 #endif	/* COMMON_CL */
 

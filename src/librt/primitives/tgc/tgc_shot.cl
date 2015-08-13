@@ -19,7 +19,7 @@ struct tgc_shot_specific {
     char tgc_AD_CB;              /* boolean:  A*D == C*B */
 };
 
-int tgc_shot(global struct hit *res, const double3 r_pt, const double3 r_dir, global const struct tgc_shot_specific *tgc)
+int tgc_shot(global struct hit *res, const double3 r_pt, const double3 r_dir, const uint idx, global const struct tgc_shot_specific *tgc)
 {
     double3 pprime;
     double3 dprime;
@@ -336,30 +336,34 @@ int tgc_shot(global struct hit *res, const double3 r_pt, const double3 r_dir, gl
     intersect = 0;
     int j = 0;
     for (i=npts-1; i>0; i -= 2) {
-	res[j].hit_dist = k[i] * t_scale;
-	res[j].hit_surfno = hit_type[i];
-	if (res[j].hit_surfno == TGC_NORM_BODY) {
-	    res[j].hit_vpriv = pprime + k[i] * dprime;
+        struct hit hits[2];
+
+	hits[0].hit_dist = k[i] * t_scale;
+	hits[0].hit_surfno = hit_type[i];
+	if (hits[0].hit_surfno == TGC_NORM_BODY) {
+	    hits[0].hit_vpriv = pprime + k[i] * dprime;
 	} else {
 	    if (dir > 0.0) {
-		res[j].hit_surfno = TGC_NORM_BOT;
+		hits[0].hit_surfno = TGC_NORM_BOT;
 	    } else {
-		res[j].hit_surfno = TGC_NORM_TOP;
+		hits[0].hit_surfno = TGC_NORM_TOP;
 	    }
 	}
 
-	res[j+1].hit_dist = k[i-1] * t_scale;
-	res[j+1].hit_surfno = hit_type[i-1];
-	if (res[j+1].hit_surfno == TGC_NORM_BODY) {
-	    res[j+1].hit_vpriv = pprime + k[i-1] * dprime;
+	hits[1].hit_dist = k[i-1] * t_scale;
+	hits[1].hit_surfno = hit_type[i-1];
+	if (hits[1].hit_surfno == TGC_NORM_BODY) {
+	    hits[1].hit_vpriv = pprime + k[i-1] * dprime;
 	} else {
 	    if (dir > 0.0) {
-		res[j+1].hit_surfno = TGC_NORM_TOP;
+		hits[1].hit_surfno = TGC_NORM_TOP;
 	    } else {
-		res[j+1].hit_surfno = TGC_NORM_BOT;
+		hits[1].hit_surfno = TGC_NORM_BOT;
 	    }
 	}
-        j += 2;
+
+        do_hitp(res, j++, idx, &hits[0]);
+        do_hitp(res, j++, idx, &hits[1]);
 	intersect++;
     }
     return intersect;

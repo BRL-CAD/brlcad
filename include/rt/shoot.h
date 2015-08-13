@@ -69,6 +69,7 @@ struct cl_hit {
   cl_double3 hit_vpriv;
   cl_double hit_dist;
   cl_int hit_surfno;
+  cl_uint hit_index;
 };
 #endif
 
