@@ -59,7 +59,7 @@ do_pixel(global unsigned char *pixels, const uint pwidth, const int cur_pixel, c
     const int a_x = (int)(pixelnum - (a_y * width));
 
     double3 r_pt, r_dir;
-    
+
     /* ray generation */
     double3 tmp;
     double f;

@@ -762,7 +762,7 @@ uniform_interval_splitting(cl_uint n, cl_uint granularity, cl_uint max_intervals
         return;
     }
 
-    /* 
+    /*
      * ensures that:
      *     num_intervals * interval_size is >= n
      *   and
@@ -901,7 +901,7 @@ clt_db_store(size_t count, struct soltab *solids[])
 	bu_free(indexes, "failed bu_free() in clt_db_store()");
 	bu_free(ids, "failed bu_free() in clt_db_store()");
     }
-    
+
     clt_db_nprims = count;
 }
 
