@@ -90,8 +90,8 @@ gcv_get_converters(void)
 
 
 struct bu_ptbl
-gcv_converter_find(mime_model_t mime_type,
-		   enum gcv_conversion_type conversion_type)
+gcv_find_converters(mime_model_t mime_type,
+		    enum gcv_conversion_type conversion_type)
 {
     struct bu_ptbl result;
     struct gcv_converter **entry;

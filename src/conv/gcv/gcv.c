@@ -391,12 +391,10 @@ gcv_converter_process_arguments(
 	converter->create_opts_fn(&options_desc, options_data);
 	ret_argc = argc ? bu_opt_parse(messages, argc, argv, options_desc) : 0;
 	bu_free(options_desc, "options_desc");
-    } else if (argc) {
-	const struct bu_opt_desc default_options_desc = BU_OPT_DESC_NULL;
-	ret_argc = bu_opt_parse(messages, argc, argv, &default_options_desc);
-	*options_data = NULL;
     } else {
-	ret_argc = 0;
+	const struct bu_opt_desc default_options_desc = BU_OPT_DESC_NULL;
+	ret_argc = argc ? bu_opt_parse(messages, argc, argv, &default_options_desc) : 0;
+	*options_data = NULL;
     }
 
     if (ret_argc) {
@@ -438,18 +436,21 @@ gcv_do_conversion(
     void *in_options_data = NULL, *out_options_data = NULL;
 
     {
-	struct bu_ptbl in_converters = gcv_converter_find(in_type, GCV_CONVERSION_READ);
-	struct bu_ptbl out_converters = gcv_converter_find(out_type, GCV_CONVERSION_WRITE);
+	struct bu_ptbl in_converters = gcv_find_converters(in_type, GCV_CONVERSION_READ);
+	struct bu_ptbl out_converters = gcv_find_converters(out_type, GCV_CONVERSION_WRITE);
 
 	if (!BU_PTBL_LEN(&in_converters) || !BU_PTBL_LEN(&out_converters)) {
 	    bu_log("No %s for given format\n", !BU_PTBL_LEN(&in_converters) ? "reader" : "writer");
+
 	    bu_ptbl_free(&in_converters);
 	    bu_ptbl_free(&out_converters);
+
 	    return 0;
 	}
 
 	in_conv = (struct gcv_converter *)BU_PTBL_GET(&in_converters, 0);
 	out_conv = (struct gcv_converter *)BU_PTBL_GET(&out_converters, 0);
+
 	bu_ptbl_free(&in_converters);
 	bu_ptbl_free(&out_converters);
     }
@@ -460,6 +461,7 @@ gcv_do_conversion(
     if (!gcv_converter_process_arguments(messages, out_conv, &out_options_data, out_argc, out_argv)) {
 	if (in_conv->create_opts_fn)
 	    in_conv->free_opts_fn(in_options_data);
+
 	return 0;
     }
 
@@ -468,11 +470,15 @@ gcv_do_conversion(
 
 	if (!in_conv->conversion_fn(in_path, dbi, NULL, in_options_data)) {
 	    bu_log("Import failed\n");
+
 	    db_close(dbi);
+
 	    if (in_conv->create_opts_fn)
 		in_conv->free_opts_fn(in_options_data);
+
 	    if (out_conv->create_opts_fn)
 		out_conv->free_opts_fn(out_options_data);
+
 	    return 0;
 	}
 
@@ -480,19 +486,30 @@ gcv_do_conversion(
 
 	if (!out_conv->conversion_fn(out_path, dbi, NULL, out_options_data)) {
 	    bu_log("Export failed\n");
+
 	    db_close(dbi);
+
 	    if (in_conv->create_opts_fn)
 		in_conv->free_opts_fn(in_options_data);
+
 	    if (out_conv->create_opts_fn)
 		out_conv->free_opts_fn(out_options_data);
+
 	    return 0;
 	}
 
 	db_close(dbi);
     }
 
+    if (in_conv->create_opts_fn)
+	in_conv->free_opts_fn(in_options_data);
+
+    if (out_conv->create_opts_fn)
+	out_conv->free_opts_fn(out_options_data);
+
     return 1;
 }
+
 
 #define gcv_help_str "Print help and exit.  If a format is specified to --help, print help specific to that format"
 

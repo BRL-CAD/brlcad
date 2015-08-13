@@ -57,8 +57,7 @@ struct gcv_converter {
 
 GCV_EXPORT const struct bu_ptbl *gcv_get_converters(void);
 
-
-GCV_EXPORT struct bu_ptbl gcv_converter_find(mime_model_t mime_type,
+GCV_EXPORT struct bu_ptbl gcv_find_converters(mime_model_t mime_type,
 	enum gcv_conversion_type conversion_type);
 
 
