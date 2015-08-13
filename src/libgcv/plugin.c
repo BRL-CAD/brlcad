@@ -29,30 +29,22 @@
 #include "plugin.h"
 
 
-struct gcv_converter_entry {
-    struct bu_list l;
-
-    struct gcv_converter converter;
-};
-
-
-static struct bu_list converter_list = {BU_LIST_HEAD_MAGIC, &converter_list, &converter_list};
+HIDDEN inline int
+_gcv_mime_is_valid(mime_model_t mime_type)
+{
+    return mime_type != MIME_MODEL_AUTO && mime_type != MIME_MODEL_UNKNOWN;
+}
 
 
 HIDDEN void
-gcv_plugin_register(const struct gcv_converter *converter)
+_gcv_converter_insert(struct bu_ptbl *table,
+		      const struct gcv_converter *converter)
 {
-    struct gcv_converter_entry *entry;
-
     if (!converter)
 	bu_bomb("null converter");
 
-    if (converter->mime_type == MIME_MODEL_AUTO
-	|| converter->mime_type == MIME_MODEL_UNKNOWN)
+    if (!_gcv_mime_is_valid(converter->mime_type))
 	bu_bomb("invalid mime_type");
-
-    if (converter->conversion_type == GCV_CONVERSION_NONE)
-	bu_bomb("invalid gcv_conversion_type");
 
     if (!converter->create_opts_fn != !converter->free_opts_fn)
 	bu_bomb("must have either both or none of create_opts_fn and free_opts_fn");
@@ -60,39 +52,40 @@ gcv_plugin_register(const struct gcv_converter *converter)
     if (!converter->conversion_fn)
 	bu_bomb("null conversion_fn");
 
-    BU_GET(entry, struct gcv_converter_entry);
-    BU_LIST_PUSH(&converter_list, &entry->l);
-    entry->converter = *converter;
+    if (bu_ptbl_ins_unique(table, (long *)converter) != -1)
+	bu_bomb("converter already registered");
 }
 
 
-HIDDEN void
-gcv_register_static(void)
+const struct bu_ptbl *
+gcv_get_converters(void)
 {
+    static struct bu_ptbl converter_table = BU_PTBL_INIT_ZERO;
     static int registered_static = 0;
 
-    if (!registered_static)
+    if (!registered_static) {
 	registered_static = 1;
-    else
-	return;
 
 #define PLUGIN(name) \
     do { \
 	extern const struct gcv_converter name; \
-	gcv_plugin_register(&name); \
+	_gcv_converter_insert(&converter_table, &name); \
     } while (0)
 
-    PLUGIN(gcv_conv_brlcad_read);
-    PLUGIN(gcv_conv_brlcad_write);
-    PLUGIN(gcv_conv_fastgen4_read);
-    PLUGIN(gcv_conv_fastgen4_write);
-    PLUGIN(gcv_conv_obj_read);
-    PLUGIN(gcv_conv_obj_write);
-    PLUGIN(gcv_conv_stl_read);
-    PLUGIN(gcv_conv_stl_write);
-    PLUGIN(gcv_conv_vrml_write);
+	PLUGIN(gcv_conv_brlcad_read);
+	PLUGIN(gcv_conv_brlcad_write);
+	PLUGIN(gcv_conv_fastgen4_read);
+	PLUGIN(gcv_conv_fastgen4_write);
+	PLUGIN(gcv_conv_obj_read);
+	PLUGIN(gcv_conv_obj_write);
+	PLUGIN(gcv_conv_stl_read);
+	PLUGIN(gcv_conv_stl_write);
+	PLUGIN(gcv_conv_vrml_write);
 
 #undef PLUGIN
+    }
+
+    return &converter_table;
 }
 
 
@@ -101,18 +94,20 @@ gcv_converter_find(mime_model_t mime_type,
 		   enum gcv_conversion_type conversion_type)
 {
     struct bu_ptbl result;
-    struct gcv_converter_entry *entry;
+    struct gcv_converter **entry;
+    const struct bu_ptbl *converters;
 
-    gcv_register_static();
+    if (!_gcv_mime_is_valid(mime_type))
+	bu_bomb("invalid mime_type");
+
+    converters = gcv_get_converters();
 
     bu_ptbl_init(&result, 8, "result");
 
-    for (BU_LIST_FOR(entry, gcv_converter_entry, &converter_list)) {
-	if (mime_type == MIME_MODEL_AUTO || entry->converter.mime_type == mime_type)
-	    if (conversion_type == GCV_CONVERSION_NONE
-		|| entry->converter.conversion_type == conversion_type)
-		bu_ptbl_ins(&result, (long *)&entry->converter);
-    }
+    for (BU_PTBL_FOR(entry, (struct gcv_converter **), converters))
+	if ((*entry)->mime_type == mime_type)
+	    if ((*entry)->conversion_type == conversion_type)
+		bu_ptbl_ins(&result, (long *)*entry);
 
     return result;
 }

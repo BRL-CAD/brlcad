@@ -38,20 +38,24 @@
 __BEGIN_DECLS
 
 
-enum gcv_conversion_type {GCV_CONVERSION_NONE, GCV_CONVERSION_READ, GCV_CONVERSION_WRITE};
+enum gcv_conversion_type {GCV_CONVERSION_READ, GCV_CONVERSION_WRITE};
 
 
 struct gcv_converter {
-    mime_model_t mime_type;
-    enum gcv_conversion_type conversion_type;
+    const mime_model_t mime_type;
+    const enum gcv_conversion_type conversion_type;
 
-    void (*create_opts_fn)(struct bu_opt_desc **options_desc, void **options_data);
+    void (* const create_opts_fn)(struct bu_opt_desc **options_desc,
+				  void **options_data);
 
-    void (*free_opts_fn)(void *options_data);
+    void (* const free_opts_fn)(void *options_data);
 
-    int (*conversion_fn)(const char *path, struct db_i *dbip,
-			 const struct gcv_opts *gcv_options, const void *options_data);
+    int (* const conversion_fn)(const char *path, struct db_i *dbip,
+				const struct gcv_opts *gcv_options, const void *options_data);
 };
+
+
+GCV_EXPORT const struct bu_ptbl *gcv_get_converters(void);
 
 
 GCV_EXPORT struct bu_ptbl gcv_converter_find(mime_model_t mime_type,
