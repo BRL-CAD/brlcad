@@ -4,12 +4,16 @@ set(en_pres_ignore_files
 CMAKEFILES(${en_pres_ignore_files})
 
 set(docbook_presentations_EN
-  intro-to-tcltk.xml
+  to-tcltk.xml
   brlcad-app-devel.xml
+  Introduction-to-tcltk.xml
+  Introduction-brlcad-app-devel.xml
   )
 
 set(docbook_presentations_EN_IMAGES
   images/copy-sph-part-left.png
+  images/brlcad_app_devel.png
+  images/intro_tcl_tk.png
   images/copy-sph-part-right.png
   images/mged-defaults.png
   images/special-character-interpretation.png
