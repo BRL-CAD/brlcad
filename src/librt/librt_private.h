@@ -190,46 +190,17 @@ extern void clt_inclusive_scan(cl_mem array, const cl_uint n);
 extern void clt_exclusive_scan(cl_mem array, const cl_uint n);
 
 
-/* primitives/tor/tor.c */
+#define CLT_DECLARE_INTERFACE(name) \
+    extern size_t clt_##name##_length(struct soltab *stp); \
+    extern void clt_##name##_pack(void *dst, struct soltab *src)
 
-extern size_t clt_tor_length(struct soltab *stp);
-extern void clt_tor_pack(void *dst, struct soltab *src);
-
-
-/* primitives/tgc/tgc.c */
-
-extern size_t clt_tgc_length(struct soltab *stp);
-extern void clt_tgc_pack(void *dst, struct soltab *src);
-
-
-/* primitives/ell/ell.c */
-
-extern size_t clt_ell_length(struct soltab *stp);
-extern void clt_ell_pack(void *dst, struct soltab *src);
-
-
-/* primitives/arb8/arb8.c */
-
-extern size_t clt_arb_length(struct soltab *stp);
-extern void clt_arb_pack(void *dst, struct soltab *src);
-
-
-/* primitives/rec/rec.c */
-
-extern size_t clt_rec_length(struct soltab *stp);
-extern void clt_rec_pack(void *dst, struct soltab *src);
-
-
-/* primitives/sph/sph.c */
-
-extern size_t clt_sph_length(struct soltab *stp);
-extern void clt_sph_pack(void *dst, struct soltab *src);
-
-
-/* primitives/ehy/ehy.c */
-
-extern size_t clt_ehy_length(struct soltab *stp);
-extern void clt_ehy_pack(void *dst, struct soltab *src);
+CLT_DECLARE_INTERFACE(tor);
+CLT_DECLARE_INTERFACE(tgc);
+CLT_DECLARE_INTERFACE(ell);
+CLT_DECLARE_INTERFACE(arb);
+CLT_DECLARE_INTERFACE(rec);
+CLT_DECLARE_INTERFACE(sph);
+CLT_DECLARE_INTERFACE(ehy);
 #endif
 
 __END_DECLS
