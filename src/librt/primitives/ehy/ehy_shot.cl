@@ -14,7 +14,7 @@ struct ehy_shot_specific {
     double ehy_cprime;		/* c / |H| */
 };
 
-int ehy_shot(global struct hit *res, const double3 r_pt, const double3 r_dir, global const struct ehy_shot_specific *ehy)
+int ehy_shot(global struct hit *res, const double3 r_pt, const double3 r_dir, const uint idx, global const struct ehy_shot_specific *ehy)
 {
     const double cp = ehy->ehy_cprime;
 
@@ -105,12 +105,12 @@ int ehy_shot(global struct hit *res, const double3 r_pt, const double3 r_dir, gl
 
     if (hits[0].hit_dist < hits[1].hit_dist) {
 	// entry is [0], exit is [1]
-        res[0] = hits[0];
-        res[1] = hits[1];
+	do_hitp(res, 0, idx, &hits[0]);
+	do_hitp(res, 1, idx, &hits[1]);
     } else {
 	// entry is [1], exit is [0]
-        res[0] = hits[1];
-        res[1] = hits[0];
+	do_hitp(res, 0, idx, &hits[1]);
+	do_hitp(res, 1, idx, &hits[0]);
     }
     return 2; // HIT
 }

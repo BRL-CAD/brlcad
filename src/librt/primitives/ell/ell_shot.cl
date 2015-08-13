@@ -7,7 +7,7 @@ struct ell_shot_specific {
     double ell_invRSSR[16];  /* invRot(Scale(Scale(Rot(vect)))) */
 };
 
-int ell_shot(global struct hit *res, const double3 r_pt, const double3 r_dir, global const struct ell_shot_specific *ell)
+int ell_shot(global struct hit *res, const double3 r_pt, const double3 r_dir, const uint idx, global const struct ell_shot_specific *ell)
 {
     double3 dprime;	// D'
     double3 pprime;	// P'
@@ -30,18 +30,25 @@ int ell_shot(global struct hit *res, const double3 r_pt, const double3 r_dir, gl
 	    return 2;       // HIT
 	}
 
+	struct hit hits[2];
+
 	root = sqrt(root);
 	if ((k1=(-dp+root)/dd) <= (k2=(-dp-root)/dd)) {
 	    /* k1 is entry, k2 is exit */
-            res[0].hit_dist = k1;
-            res[1].hit_dist = k2;
+            hits[0].hit_dist = k1;
+            hits[0].hit_surfno = 0;
+            hits[1].hit_dist = k2;
+            hits[1].hit_surfno = 0;
 	} else {
 	    /* k2 is entry, k1 is exit */
-            res[0].hit_dist = k2;
-            res[1].hit_dist = k1;
+            hits[0].hit_dist = k2;
+            hits[0].hit_surfno = 0;
+            hits[1].hit_dist = k1;
+            hits[1].hit_surfno = 0;
 	}
-        res[0].hit_surfno = 0;
-        res[1].hit_surfno = 0;
+
+        do_hitp(res, 0, idx, &hits[0]);
+        do_hitp(res, 1, idx, &hits[1]);
 	return 2;	// HIT
     }
 }

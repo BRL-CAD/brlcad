@@ -6,9 +6,8 @@ struct arb_shot_specific {
     int arb_nmfaces;
 };
 
-int arb_shot(global struct hit *res, const double3 r_pt, const double3 r_dir, global const struct arb_shot_specific *arb)
+int arb_shot(global struct hit *res, const double3 r_pt, const double3 r_dir, const uint idx, global const struct arb_shot_specific *arb)
 {
-    global const double *peqns = arb->arb_peqns;
     const int nmfaces = arb->arb_nmfaces;
 
     int iplane, oplane;
@@ -20,7 +19,7 @@ int arb_shot(global struct hit *res, const double3 r_pt, const double3 r_dir, gl
 
     // consider each face
     for (int j = 0; j < nmfaces; j++) {
-	const double4 peqn = vload4(j, peqns);
+	const double4 peqn = vload4(j, arb->arb_peqns);
 	double s;
 
 	const double dxbdn = dot(peqn.xyz, r_pt) - peqn.w;
@@ -64,10 +63,15 @@ int arb_shot(global struct hit *res, const double3 r_pt, const double3 r_dir, gl
 	return 2;       // HIT
     }
 
-    res[0].hit_dist = in;
-    res[0].hit_surfno = iplane;
-    res[1].hit_dist = out;
-    res[1].hit_surfno = oplane;
+    struct hit hits[2];
+
+    hits[0].hit_dist = in;
+    hits[0].hit_surfno = iplane;
+    hits[1].hit_dist = out;
+    hits[1].hit_surfno = oplane;
+
+    do_hitp(res, 0, idx, &hits[0]);
+    do_hitp(res, 1, idx, &hits[1]);
     return 2;		// HIT
 }
 
