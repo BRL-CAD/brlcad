@@ -161,8 +161,10 @@ struct rec_specific {
 #ifdef USE_OPENCL
 /* largest data members first */
 struct rec_shot_specific {
-    cl_double rec_SoR[16];
-    cl_double rec_V[3];
+    cl_double rec_V[3];		/* Vector to center of base of cylinder */
+    cl_double rec_Hunit[3];	/* Unit H vector */
+    cl_double rec_SoR[16];	/* Scale(Rot(vect)) */
+    cl_double rec_invRoS[16];	/* invRot(Scale(vect)) */
 };
 
 size_t
@@ -181,7 +183,9 @@ clt_rec_pack(void *dst, struct soltab *src)
         (struct rec_shot_specific *)dst;
 
     VMOVE(args->rec_V, rec->rec_V);
+    VMOVE(args->rec_Hunit, rec->rec_Hunit);
     MAT_COPY(args->rec_SoR, rec->rec_SoR);
+    MAT_COPY(args->rec_invRoS, rec->rec_invRoS);
 }
 #endif /* USE_OPENCL */
 
@@ -796,6 +800,9 @@ rt_rec_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, str
 void
 rt_rec_norm(struct hit *hitp, struct soltab *stp, struct xray *rp)
 {
+#ifdef USE_OPENCL
+    clt_norm(hitp, stp, rp);
+#else
     struct rec_specific *rec =
 	(struct rec_specific *)stp->st_specific;
 
@@ -818,6 +825,7 @@ rt_rec_norm(struct hit *hitp, struct soltab *stp, struct xray *rp)
 	    bu_log("rt_rec_norm: surfno=%d bad\n", hitp->hit_surfno);
 	    break;
     }
+#endif
 }
 
 

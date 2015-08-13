@@ -2,18 +2,15 @@
 
 
 struct tor_shot_specific {
-    double tor_SoR[16];
-    double tor_V[3];
-    double tor_alpha, tor_r1;
+    double tor_alpha;       /* 0 < (R2/R1) <= 1 */
+    double tor_r1;          /* for inverse scaling of k values. */
+    double tor_V[3];        /* Vector to center of torus */
+    double tor_SoR[16];     /* Scale(Rot(vect)) */
+    double tor_invR[16];    /* invRot(vect') */
 };
 
 int tor_shot(global struct hit *res, const double3 r_pt, const double3 r_dir, global const struct tor_shot_specific *tor)
 {
-    global const double *SoR = tor->tor_SoR;
-    global const double *V = tor->tor_V;
-    const double alpha = tor->tor_alpha;
-    const double r1 = tor->tor_r1;
-
     double3 dprime;		// D'
     double3 pprime;		// P'
     double3 work;		// temporary vector
@@ -28,17 +25,11 @@ int tor_shot(global struct hit *res, const double3 r_pt, const double3 r_dir, gl
     double3 cor_pprime;		// new ray origin
     double cor_proj;
 
-    /* Convert vector into the space of the unit torus */
-    const double f = 1.0/SoR[15];
-    dprime.x = dot(vload3(0, &SoR[0]), r_dir) * f;
-    dprime.y = dot(vload3(0, &SoR[4]), r_dir) * f;
-    dprime.z = dot(vload3(0, &SoR[8]), r_dir) * f;
+    dprime = MAT4X3VEC(tor->tor_SoR, r_dir);
     dprime = normalize(dprime);
 
-    work = r_pt - vload3(0, V);
-    pprime.x = dot(vload3(0, &SoR[0]), work) * f;
-    pprime.y = dot(vload3(0, &SoR[4]), work) * f;
-    pprime.z = dot(vload3(0, &SoR[8]), work) * f;
+    work = r_pt - vload3(0, tor->tor_V);
+    pprime = MAT4X3VEC(tor->tor_SoR, work);
 
     /* normalize distance from torus.  substitute corrected pprime
      * which contains a translation along ray direction to closest
@@ -71,7 +62,8 @@ int tor_shot(global struct hit *res, const double3 r_pt, const double3 r_dir, gl
     /* A = X2_Y2 + Z2 */
     A[0] = X2_Y2[0] + dprime.z * dprime.z;
     A[1] = X2_Y2[1] + 2.0 * dprime.z * cor_pprime.z;
-    A[2] = X2_Y2[2] + cor_pprime.z * cor_pprime.z + 1.0 - alpha * alpha;
+    A[2] = X2_Y2[2] + cor_pprime.z * cor_pprime.z
+        + 1.0 - tor->tor_alpha * tor->tor_alpha;
 
     /* Inline expansion of (void) bn_poly_mul(&Asqr, &A, &A) */
     /* Both polys have degree two */
@@ -156,9 +148,9 @@ int tor_shot(global struct hit *res, const double3 r_pt, const double3 r_dir, gl
     /* k[1] is entry point, and k[0] is farthest exit point */
     if (i == 2) {
         res[0].hit_surfno = 0;
-        res[0].hit_dist = k[1]*r1;
+        res[0].hit_dist = k[1]*tor->tor_r1;
         res[1].hit_surfno = 0;
-        res[1].hit_dist = k[0]*r1;
+        res[1].hit_dist = k[0]*tor->tor_r1;
 	/* Set aside vector for rt_tor_norm() later */
         res[0].hit_vpriv = pprime + k[1] * dprime;
         res[1].hit_vpriv = pprime + k[0] * dprime;
@@ -167,14 +159,14 @@ int tor_shot(global struct hit *res, const double3 r_pt, const double3 r_dir, gl
 	/* 4 points */
 	/* k[3] is entry point, and k[2] is exit point */
         res[0].hit_surfno = 1;
-        res[0].hit_dist = k[3]*r1;
+        res[0].hit_dist = k[3]*tor->tor_r1;
         res[1].hit_surfno = 1;
-        res[1].hit_dist = k[2]*r1;
+        res[1].hit_dist = k[2]*tor->tor_r1;
 
         res[2].hit_surfno = 0;
-        res[2].hit_dist = k[1]*r1;
+        res[2].hit_dist = k[1]*tor->tor_r1;
         res[3].hit_surfno = 0;
-        res[3].hit_dist = k[0]*r1;
+        res[3].hit_dist = k[0]*tor->tor_r1;
 
 	/* Set aside vector for rt_tor_norm() later */
         res[0].hit_vpriv = pprime + k[3] * dprime;
@@ -183,6 +175,24 @@ int tor_shot(global struct hit *res, const double3 r_pt, const double3 r_dir, gl
         res[3].hit_vpriv = pprime + k[0] * dprime;
     	return 4;		// HIT
     }
+}
+
+
+void tor_norm(global struct hit *hitp, const double3 r_pt, const double3 r_dir, global const struct tor_shot_specific *tor)
+{
+    double w;
+    double3 work;
+
+    hitp->hit_point = r_pt + r_dir * hitp->hit_dist;
+    w = dot(hitp->hit_vpriv, hitp->hit_vpriv) +
+	1.0 - tor->tor_alpha*tor->tor_alpha;
+    work = (double3){
+	 (w - 2.0) * hitp->hit_vpriv.x,
+	 (w - 2.0) * hitp->hit_vpriv.y,
+	 w * hitp->hit_vpriv.z};
+    work = normalize(work);
+
+    hitp->hit_normal = MAT3X3VEC(tor->tor_invR, work);
 }
 
 
@@ -195,4 +205,3 @@ int tor_shot(global struct hit *res, const double3 r_pt, const double3 r_dir, gl
  * End:
  * ex: shiftwidth=4 tabstop=8
  */
-

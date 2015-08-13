@@ -446,7 +446,7 @@ static cl_device_id clt_device;
 static cl_context clt_context;
 static cl_command_queue clt_queue;
 static cl_program clt_program;
-static cl_kernel clt_shot_kernel, clt_db_shot_kernel, clt_pixel_kernel;
+static cl_kernel clt_shot_kernel, clt_norm_kernel, clt_db_shot_kernel, clt_pixel_kernel;
 
 static cl_program clt_inclusive_scan_program;
 static cl_kernel clt_inclusive_scan_final_update_kernel;
@@ -573,6 +573,7 @@ clt_cleanup(void)
     clReleaseKernel(clt_pixel_kernel);
 
     clReleaseKernel(clt_db_shot_kernel);
+    clReleaseKernel(clt_norm_kernel);
     clReleaseKernel(clt_shot_kernel);
 
     clReleaseCommandQueue(clt_queue);
@@ -618,6 +619,8 @@ clt_init(void)
         clt_program = clt_get_program(clt_context, clt_device, sizeof(main_files)/sizeof(*main_files), main_files, "-I.");
 
         clt_shot_kernel = clCreateKernel(clt_program, "solid_shot", &error);
+        if (error != CL_SUCCESS) bu_bomb("failed to create an OpenCL kernel");
+        clt_norm_kernel = clCreateKernel(clt_program, "solid_norm", &error);
         if (error != CL_SUCCESS) bu_bomb("failed to create an OpenCL kernel");
         clt_db_shot_kernel = clCreateKernel(clt_program, "db_solid_shot", &error);
         if (error != CL_SUCCESS) bu_bomb("failed to create an OpenCL kernel");
@@ -738,6 +741,60 @@ clt_shot(size_t sz_hits, struct cl_hit *hits, struct xray *rp, struct soltab *st
         BU_LIST_INSERT(&(seghead->l), &(segp->l));
     }
     return len;
+}
+
+
+void
+clt_norm(struct hit *hitp, struct soltab *stp, struct xray *rp)
+{
+    const size_t sz_args = clt_solid_length(stp);
+    char *args;
+
+    const cl_int id = stp->st_id;
+
+    cl_double3 r_pt, r_dir;
+
+    const size_t hypersample = 1;
+    cl_int error;
+    cl_mem pin, pout;
+    struct cl_hit hit; 
+
+    VMOVE(r_pt.s, rp->r_pt);
+    VMOVE(r_dir.s, rp->r_dir);
+
+    VMOVE(hit.hit_vpriv.s, hitp->hit_vpriv);
+    hit.hit_dist = hitp->hit_dist;
+    hit.hit_surfno = hitp->hit_surfno;
+
+    args = (char*)bu_malloc(sz_args, "clt_norm");
+    clt_solid_pack(args, stp);
+
+    pin = clCreateBuffer(clt_context, CL_MEM_READ_ONLY|CL_MEM_COPY_HOST_PTR, sz_args, args, &error);
+    if (error != CL_SUCCESS) bu_bomb("failed to create OpenCL input buffer");
+    pout = clCreateBuffer(clt_context, CL_MEM_READ_WRITE|CL_MEM_COPY_HOST_PTR, sizeof(hit), &hit, &error);
+    if (error != CL_SUCCESS) bu_bomb("failed to create OpenCL output buffer");
+
+    bu_semaphore_acquire(clt_semaphore);
+    error = clSetKernelArg(clt_norm_kernel, 0, sizeof(cl_mem), &pout);
+    error |= clSetKernelArg(clt_norm_kernel, 1, sizeof(cl_double3), &r_pt);
+    error |= clSetKernelArg(clt_norm_kernel, 2, sizeof(cl_double3), &r_dir);
+    error |= clSetKernelArg(clt_norm_kernel, 3, sizeof(cl_int), &id);
+    error |= clSetKernelArg(clt_norm_kernel, 4, sizeof(cl_mem), &pin);
+    if (error != CL_SUCCESS) bu_bomb("failed to set OpenCL kernel arguments");
+    error = clEnqueueNDRangeKernel(clt_queue, clt_norm_kernel, 1, NULL, &hypersample, NULL, 0, NULL, NULL);
+    bu_semaphore_release(clt_semaphore);
+    if (error != CL_SUCCESS) bu_bomb("failed to enqueue OpenCL kernel");
+
+    if (clFinish(clt_queue) != CL_SUCCESS) bu_bomb("failure in clFinish()");
+    clEnqueueReadBuffer(clt_queue, pout, CL_TRUE, 0, sizeof(hit), &hit, 0, NULL, NULL);
+    clReleaseMemObject(pout);
+    clReleaseMemObject(pin);
+
+    bu_free(args, "clt_norm");
+
+    VMOVE(hitp->hit_normal, hit.hit_normal.s);
+    VMOVE(hitp->hit_point, hit.hit_point.s);
+    VMOVE(hitp->hit_vpriv, hit.hit_vpriv.s);
 }
 
 

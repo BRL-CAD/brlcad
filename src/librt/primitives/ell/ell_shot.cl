@@ -2,15 +2,13 @@
 
 
 struct ell_shot_specific {
-    double ell_SoR[16];
-    double ell_V[3];
+    double ell_V[3];         /* Vector to center of ellipsoid */
+    double ell_SoR[16];      /* Scale(Rot(vect)) */
+    double ell_invRSSR[16];  /* invRot(Scale(Scale(Rot(vect)))) */
 };
 
 int ell_shot(global struct hit *res, const double3 r_pt, const double3 r_dir, global const struct ell_shot_specific *ell)
 {
-    global const double *SoR = ell->ell_SoR;
-    global const double *V = ell->ell_V;
-
     double3 dprime;	// D'
     double3 pprime;	// P'
     double3 xlated;	// translated vector
@@ -18,15 +16,9 @@ int ell_shot(global struct hit *res, const double3 r_pt, const double3 r_dir, gl
     double k1, k2;	// distance constants of solution
     double root;	// root of radical
 
-    /* out, Mat, vect */
-    const double f = 1.0/SoR[15];
-    dprime.x = dot(vload3(0, &SoR[0]), r_dir) * f;
-    dprime.y = dot(vload3(0, &SoR[4]), r_dir) * f;
-    dprime.z = dot(vload3(0, &SoR[8]), r_dir) * f;
-    xlated = r_pt - vload3(0, V);
-    pprime.x = dot(vload3(0, &SoR[0]), xlated) * f;
-    pprime.y = dot(vload3(0, &SoR[4]), xlated) * f;
-    pprime.z = dot(vload3(0, &SoR[8]), xlated) * f;
+    dprime = MAT4X3VEC(ell->ell_SoR, r_dir);
+    xlated = r_pt - vload3(0, ell->ell_V);
+    pprime = MAT4X3VEC(ell->ell_SoR, xlated);
 
     dp = dot(dprime, pprime);
     dd = dot(dprime, dprime);
@@ -52,6 +44,22 @@ int ell_shot(global struct hit *res, const double3 r_pt, const double3 r_dir, gl
         res[1].hit_surfno = 0;
 	return 2;	// HIT
     }
+}
+
+
+void ell_norm(global struct hit *hitp, const double3 r_pt, const double3 r_dir, global const struct ell_shot_specific *ell)
+{
+    double3 xlated;
+    double scale;
+
+    hitp->hit_point = r_pt + r_dir * hitp->hit_dist;
+    xlated = hitp->hit_point - vload3(0, ell->ell_V);
+    hitp->hit_normal = MAT4X3VEC(ell->ell_invRSSR, xlated);
+    scale = 1.0 / length(hitp->hit_normal);
+    hitp->hit_normal = hitp->hit_normal * scale;
+
+    /* tuck away this scale for the curvature routine */
+    hitp->hit_vpriv.x = scale;
 }
 
 

@@ -15,6 +15,10 @@
 constant double rti_tol_dist = 0.0005;
 
 
+extern inline double3 MAT3X3VEC(global const double *m, double3 i);
+extern inline double3 MAT4X3VEC(global const double *m, double3 i);
+
+
 inline int shot(global struct hit *res, const double3 r_pt, const double3 r_dir, const int id, global const void *args)
 {
     switch (id) {
@@ -27,6 +31,26 @@ inline int shot(global struct hit *res, const double3 r_pt, const double3 r_dir,
     case ID_EHY:	return ehy_shot(res, r_pt, r_dir, args);
     default:		return 0;
     };
+}
+
+inline void norm(global struct hit *hitp, const double3 r_pt, const double3 r_dir, const int id, global const void *args)
+{
+    switch (id) {
+    case ID_TOR:	tor_norm(hitp, r_pt, r_dir, args);	break;
+    case ID_TGC:	tgc_norm(hitp, r_pt, r_dir, args);	break;
+    case ID_ELL:	ell_norm(hitp, r_pt, r_dir, args);	break;
+    case ID_ARB8:	arb_norm(hitp, r_pt, r_dir, args);	break;
+    case ID_REC:	rec_norm(hitp, r_pt, r_dir, args);	break;
+    case ID_EHY:	ehy_norm(hitp, r_pt, r_dir, args);	break;
+    case ID_SPH:	sph_norm(hitp, r_pt, r_dir, args);	break;
+    default:							break;
+    };
+}
+
+__kernel void
+solid_norm(global struct hit *hitp, const double3 r_pt, const double3 r_dir, const int id, global const void *args)
+{
+    norm(hitp, r_pt, r_dir, id, args);
 }
 
 __kernel void

@@ -72,8 +72,9 @@ struct sph_specific {
 #ifdef USE_OPENCL
 /* largest data members first */
 struct sph_shot_specific {
-    cl_double sph_V[3];
-    cl_double sph_radsq;
+    cl_double sph_V[3];     /* Vector to center of sphere */
+    cl_double sph_radsq;    /* Radius squared */
+    cl_double sph_invrad;   /* Inverse radius (for normal) */
 };
 
 size_t
@@ -93,6 +94,7 @@ clt_sph_pack(void *dst, struct soltab *src)
 
     VMOVE(args->sph_V, sph->sph_V);
     args->sph_radsq = sph->sph_radsq;
+    args->sph_invrad = sph->sph_invrad;
 }
 #endif /* USE_OPENCL */
 
@@ -355,12 +357,16 @@ rt_sph_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, str
 void
 rt_sph_norm(register struct hit *hitp, struct soltab *stp, register struct xray *rp)
 {
+#ifdef USE_OPENCL
+    clt_norm(hitp, stp, rp);
+#else
     register struct sph_specific *sph =
 	(struct sph_specific *)stp->st_specific;
 
     VJOIN1(hitp->hit_point, rp->r_pt, hitp->hit_dist, rp->r_dir);
     VSUB2(hitp->hit_normal, hitp->hit_point, sph->sph_V);
     VSCALE(hitp->hit_normal, hitp->hit_normal, sph->sph_invrad);
+#endif
 }
 
 

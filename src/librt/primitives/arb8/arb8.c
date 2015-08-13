@@ -1045,6 +1045,9 @@ rt_arb_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, str
 void
 rt_arb_norm(register struct hit *hitp, struct soltab *stp, register struct xray *rp)
 {
+#ifdef USE_OPENCL
+    clt_norm(hitp, stp, rp);
+#else
     register struct arb_specific *arbp =
 	(struct arb_specific *)stp->st_specific;
     register int h;
@@ -1052,6 +1055,7 @@ rt_arb_norm(register struct hit *hitp, struct soltab *stp, register struct xray 
     VJOIN1(hitp->hit_point, rp->r_pt, hitp->hit_dist, rp->r_dir);
     h = hitp->hit_surfno;
     VMOVE(hitp->hit_normal, arbp->arb_face[h].peqn);
+#endif
 }
 
 

@@ -72,6 +72,16 @@ int arb_shot(global struct hit *res, const double3 r_pt, const double3 r_dir, gl
 }
 
 
+void arb_norm(global struct hit *hitp, const double3 r_pt, const double3 r_dir, global const struct arb_shot_specific *arb)
+{
+    int h;
+
+    hitp->hit_point = r_pt + r_dir * hitp->hit_dist;
+    h = hitp->hit_surfno;
+    hitp->hit_normal = vload4(h, arb->arb_peqns).xyz;
+}
+
+
 /*
  * Local Variables:
  * mode: C
