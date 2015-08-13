@@ -957,18 +957,14 @@ clt_db_solid_shot(const size_t sz_hits, struct cl_hit *hits, struct xray *rp, co
 
 void
 clt_run(unsigned char *pixels, cl_uint pwidth, cl_int cur_pixel, cl_int last_pixel, cl_int width,
-        point_t viewbase_model, vect_t dx_model, vect_t dy_model, vect_t r_dir)
+        mat_t view2model, fastf_t cell_width, fastf_t cell_height, fastf_t aspect)
 {
     const size_t npix = last_pixel-cur_pixel+1;
     cl_mem ppixels;
-    cl_double3 viewbase_model_, dx_model_, dy_model_, r_dir_;
+    cl_double16 v2m;
     cl_int error;
 
-    VMOVE(viewbase_model_.s, viewbase_model);
-    VMOVE(dx_model_.s, dx_model);
-    VMOVE(dy_model_.s, dy_model);
-
-    VMOVE(r_dir_.s, r_dir);
+    MAT_COPY(v2m.s, view2model);
 
     ppixels = clCreateBuffer(clt_context, CL_MEM_WRITE_ONLY, npix*pwidth, NULL, &error);
     if (error != CL_SUCCESS) bu_bomb("failed to create OpenCL output buffer");
@@ -979,10 +975,10 @@ clt_run(unsigned char *pixels, cl_uint pwidth, cl_int cur_pixel, cl_int last_pix
     error |= clSetKernelArg(clt_pixel_kernel, 2, sizeof(cl_int), &cur_pixel);
     error |= clSetKernelArg(clt_pixel_kernel, 3, sizeof(cl_int), &last_pixel);
     error |= clSetKernelArg(clt_pixel_kernel, 4, sizeof(cl_int), &width);
-    error |= clSetKernelArg(clt_pixel_kernel, 5, sizeof(cl_double3), &viewbase_model_);
-    error |= clSetKernelArg(clt_pixel_kernel, 6, sizeof(cl_double3), &dx_model_);
-    error |= clSetKernelArg(clt_pixel_kernel, 7, sizeof(cl_double3), &dy_model_);
-    error |= clSetKernelArg(clt_pixel_kernel, 8, sizeof(cl_double3), &r_dir_);
+    error |= clSetKernelArg(clt_pixel_kernel, 5, sizeof(cl_double16), &v2m);
+    error |= clSetKernelArg(clt_pixel_kernel, 6, sizeof(cl_double), &cell_width);
+    error |= clSetKernelArg(clt_pixel_kernel, 7, sizeof(cl_double), &cell_height);
+    error |= clSetKernelArg(clt_pixel_kernel, 8, sizeof(cl_double), &aspect);
     error |= clSetKernelArg(clt_pixel_kernel, 9, sizeof(cl_uint), &clt_db_nprims);
     error |= clSetKernelArg(clt_pixel_kernel, 10, sizeof(cl_mem), &clt_db_ids);
     error |= clSetKernelArg(clt_pixel_kernel, 11, sizeof(cl_mem), &clt_db_indexes);

@@ -50,18 +50,43 @@ constant uchar3 iblack = {0, 0, 0};		/* integer black */
 
 __kernel void
 do_pixel(global unsigned char *pixels, const uint pwidth, const int cur_pixel, const int last_pixel, const int width,
-         const double3 viewbase_model, const double3 dx_model, const double3 dy_model,
-         const double3 r_dir, /* all rays go this direction */
+         const double16 view2model, const double cell_width, const double cell_height, const double aspect,
          const uint nprims, global int *ids, global uint *indexes, global char *prims)
 {
     const int pixelnum = cur_pixel+get_global_id(0);
 
     const int a_y = (int)(pixelnum/width);
     const int a_x = (int)(pixelnum - (a_y * width));
+
+    double3 r_pt, r_dir;
     
+    /* ray generation */
+    double3 tmp;
+    double f;
+
+    /* create basis vectors dx and dy for emanation plane (grid) */
+    tmp = (double3){1.0, 0.0, 0.0};
+    const double3 dx_unit = view2model.s048*tmp.x + view2model.s159*tmp.y + view2model.s26a*tmp.z;
+    const double3 dx_model = dx_unit * cell_width;
+
+    tmp = (double3){0.0, 1.0, 0.0};
+    const double3 dy_unit = view2model.s048*tmp.x + view2model.s159*tmp.y + view2model.s26a*tmp.z;
+    const double3 dy_model = dy_unit * cell_height;
+
+    /* "lower left" corner of viewing plane.  all rays go this direction */
+    tmp = (double3){0.0, 0.0, -1.0};
+    f = 1.0/view2model.sf;
+    r_dir = (view2model.s048*tmp.x + view2model.s159*tmp.y + view2model.s26a*tmp.z)*f;
+    r_dir = normalize(r_dir);
+
+    tmp = (double3){-1.0, -1.0/aspect, 0.0};	// eye plane
+    double3 viewbase_model;
+    f = 1.0/(dot(view2model.scde, tmp) + view2model.sf);
+    viewbase_model = (view2model.s048*tmp.x + view2model.s159*tmp.y + view2model.s26a*tmp.z + view2model.s37b)*f;
+
     /* our starting point, used for non-jitter */
-    const double3 point = viewbase_model + dx_model * a_x + dy_model * a_y;
-    const double3 r_pt = point;
+    r_pt = viewbase_model + dx_model * a_x + dy_model * a_y;
+
 
     int ret = 0;
     for (uint index=0; index<nprims; index++) {
@@ -74,15 +99,15 @@ do_pixel(global unsigned char *pixels, const uint pwidth, const int cur_pixel, c
     uchar3 rgb;
 
     if (ret <= 0) {
-	/* Shot missed the model, don't dither */
+	/* shot missed the model, don't dither */
         rgb = ibackground;
-	a_color = -1e-20;	/* background flag */
+	a_color = -1e-20;	// background flag
     } else {
         rgb = convert_uchar3_sat(a_color*255);
 
 	if (all(rgb == ibackground)) {
             rgb = inonbackground;
-	} else if (all(rgb == iblack)) { /* Make sure it's never perfect black */
+	} else if (all(rgb == iblack)) { // make sure it's never perfect black
             rgb.z = 1;
 	}
     }
