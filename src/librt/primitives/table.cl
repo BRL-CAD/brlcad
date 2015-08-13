@@ -81,7 +81,14 @@ db_solid_shot(global int *len, global struct hit *res, const double3 r_pt, const
 void do_hitp(global struct hit *res, const uint i, const uint hit_index, const struct hit *hitp)
 {
     if (res) {
+#ifdef RT_SINGLE_HIT
+        if (hitp->hit_dist < res->hit_dist) {
+            *res = *hitp;
+            res->hit_index = hit_index;
+        }
+#else
         res[i] = *hitp;
+#ednfi
     }
 }
 
