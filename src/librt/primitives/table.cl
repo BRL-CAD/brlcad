@@ -89,7 +89,7 @@ void do_hitp(global struct hit *res, const uint i, const uint hit_index, const s
         }
 #else
         res[i] = *hitp;
-endif
+#endif
     }
 }
 
