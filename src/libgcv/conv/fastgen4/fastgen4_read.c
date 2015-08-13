@@ -2778,24 +2778,12 @@ gcv_fastgen4_options_data
 {
     int quiet_mode;
     int debug_mode;
-    unsigned libbu_debug_mode;
+    int libbu_debug_mode;
     const char *colors_path;
     const char *muves_path;
     const char *plot_path;
     const char *create_regions;
 };
-
-
-static int
-opt_hex_int(struct bu_vls *messages, int argc, const char **argv, void *set_var)
-{
-    BU_OPT_CHECK_ARGV0(messages, argc, argv, "opt_hex_int()");
-
-    if (set_var)
-	sscanf(argv[0], "%x", (unsigned *)set_var);
-
-    return 1;
-}
 
 
 static void
@@ -2807,7 +2795,7 @@ gcv_fastgen4_create_opts(struct bu_opt_desc **options_desc, void **dest_options_
 
     BU_OPT((*options_desc)[0], "q", "quiet", NULL, NULL, &options_data->quiet_mode, "quiet mode (don't say anything except error messages)");
     BU_OPT((*options_desc)[1], "d", "debug", NULL, NULL, &options_data->debug_mode, "print debugging info");
-    BU_OPT((*options_desc)[2], "b", "libbu-debug", "flag", opt_hex_int, &options_data->libbu_debug_mode, "set LIBBU debug flag");
+    BU_OPT((*options_desc)[2], "b", "libbu-debug", "flag", bu_opt_int, &options_data->libbu_debug_mode, "set LIBBU debug flag");
     BU_OPT((*options_desc)[3], "C", "colors", "path to colors file", bu_opt_str, &options_data->colors_path, "path to file specifying component colors");
     BU_OPT((*options_desc)[4], "m", "muves", "path to output file", bu_opt_str, &options_data->muves_path, "create a MUVES input file containing CHGCOMP and CBACKING elements");
     BU_OPT((*options_desc)[5], "o", "plot-file", "path to output file", bu_opt_str, &options_data->plot_path, "create a 'plot_file' containing a libplot3 plot file of all CTRI and CQUAD elements processed");
