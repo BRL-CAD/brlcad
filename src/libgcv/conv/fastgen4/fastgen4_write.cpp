@@ -34,7 +34,6 @@
 #include <stdexcept>
 #include <map>
 
-#include "rt/func.h"
 #include "../../plugin.h"
 
 
@@ -340,9 +339,8 @@ RecordWriter::Record::operator<<(const T &value)
 	throw std::logic_error("invalid record width");
 
     std::ostringstream sstream;
-
-    if (!(sstream << value))
-	throw std::invalid_argument("failed to convert value");
+    sstream.exceptions(std::ostream::failbit | std::ostream::badbit);
+    sstream << value;
 
     const std::string str_val = sstream.str();
 
@@ -390,6 +388,7 @@ std::string
 RecordWriter::Record::truncate_float(fastf_t value)
 {
     std::ostringstream sstream;
+    sstream.exceptions(std::ostream::failbit | std::ostream::badbit);
     sstream.precision(FIELD_WIDTH);
     sstream << std::fixed << value;
     std::string result = sstream.str().substr(0, FIELD_WIDTH);
@@ -430,21 +429,23 @@ protected:
 
 
 private:
-    std::ostringstream m_ostringstream;
+    std::ostringstream m_ostream;
 };
 
 
 inline
 StringBuffer::StringBuffer() :
-    m_ostringstream()
-{}
+    m_ostream()
+{
+    m_ostream.exceptions(std::ostream::failbit | std::ostream::badbit);
+}
 
 
 inline void
 StringBuffer::write(RecordWriter &writer) const
 {
     RecordWriter::Record record(writer);
-    record.text(m_ostringstream.str());
+    record.text(m_ostream.str());
 }
 
 
@@ -452,7 +453,7 @@ inline
 std::ostream &
 StringBuffer::get_ostream()
 {
-    return m_ostringstream;
+    return m_ostream;
 }
 
 
@@ -498,11 +499,11 @@ FastgenWriter::FastgenWriter(const std::string &path) :
     m_num_holes(0),
     m_num_walls(0),
     m_sections(),
-    m_ostream(path.c_str(), std::ofstream::out),
-    m_colors_ostream((path + ".colors").c_str(), std::ofstream::out)
+    m_ostream(path.c_str(), std::ostream::out),
+    m_colors_ostream((path + ".colors").c_str(), std::ostream::out)
 {
-    m_ostream.exceptions(std::ofstream::failbit | std::ofstream::badbit);
-    m_colors_ostream.exceptions(std::ofstream::failbit | std::ofstream::badbit);
+    m_ostream.exceptions(std::ostream::failbit | std::ostream::badbit);
+    m_colors_ostream.exceptions(std::ostream::failbit | std::ostream::badbit);
 }
 
 
@@ -2523,7 +2524,7 @@ gcv_fastgen4_write(const char *dest_path, struct db_i *source_dbip,
 {
     RT_CK_DBI(source_dbip);
 
-    std::set<const directory *> failed_regions = do_conversion(*source_dbip,
+    const std::set<const directory *> failed_regions = do_conversion(*source_dbip,
 	    dest_path);
 
     // facetize all regions that contain incompatible boolean operations
