@@ -78,7 +78,7 @@ db_solid_shot(global int *len, global struct hit *res, const double3 r_pt, const
 }
 
 
-#define RT_SINGLE_HIT 1
+//#define RT_SINGLE_HIT 1
 void do_hitp(global struct hit *res, const uint i, const uint hit_index, const struct hit *hitp)
 {
     if (res) {
