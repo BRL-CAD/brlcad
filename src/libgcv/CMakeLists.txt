@@ -64,7 +64,7 @@ set(LIBGCV_SOURCES
   ${CMAKE_CURRENT_BINARY_DIR}/OBJ_libgcv_SRCS/obj_libgcv_rules.cpp
   )
 
-list(APPEND LIBGCV_SOURCES
+set(LIBGCV_CONVERTER_SOURCES
   conv/brlcad.c
   conv/fastgen4/fastgen4_read.c
   conv/fastgen4/fastgen4_write.cpp
@@ -77,6 +77,8 @@ list(APPEND LIBGCV_SOURCES
   wfobj/obj_parser.cpp
   wfobj/tri_face.c
   )
+
+list(APPEND LIBGCV_SOURCES ${LIBGCV_CONVERTER_SOURCES})
 
 BRLCAD_ADDLIB(libgcv "${LIBGCV_SOURCES}" "librt;libwdb;libbu")
 SET_TARGET_PROPERTIES(libgcv PROPERTIES VERSION 20.0.1 SOVERSION 20)

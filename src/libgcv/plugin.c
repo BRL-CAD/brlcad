@@ -66,23 +66,23 @@ gcv_get_converters(void)
     if (!registered_static) {
 	registered_static = 1;
 
-#define PLUGIN(name) \
+#define CONVERTER(name) \
     do { \
 	extern const struct gcv_converter name; \
 	_gcv_converter_insert(&converter_table, &name); \
     } while (0)
 
-	PLUGIN(gcv_conv_brlcad_read);
-	PLUGIN(gcv_conv_brlcad_write);
-	PLUGIN(gcv_conv_fastgen4_read);
-	PLUGIN(gcv_conv_fastgen4_write);
-	PLUGIN(gcv_conv_obj_read);
-	PLUGIN(gcv_conv_obj_write);
-	PLUGIN(gcv_conv_stl_read);
-	PLUGIN(gcv_conv_stl_write);
-	PLUGIN(gcv_conv_vrml_write);
+	CONVERTER(gcv_conv_brlcad_read);
+	CONVERTER(gcv_conv_brlcad_write);
+	CONVERTER(gcv_conv_fastgen4_read);
+	CONVERTER(gcv_conv_fastgen4_write);
+	CONVERTER(gcv_conv_obj_read);
+	CONVERTER(gcv_conv_obj_write);
+	CONVERTER(gcv_conv_stl_read);
+	CONVERTER(gcv_conv_stl_write);
+	CONVERTER(gcv_conv_vrml_write);
 
-#undef PLUGIN
+#undef CONVERTER
     }
 
     return &converter_table;
@@ -110,6 +110,56 @@ gcv_find_converters(mime_model_t mime_type,
 		bu_ptbl_ins(&result, (long *)*entry);
 
     return result;
+}
+
+
+void
+gcv_converter_create_options(const struct gcv_converter *converter,
+			     struct bu_opt_desc **options_desc, void **options_data)
+{
+    if (!converter || !options_desc || !options_data)
+	bu_bomb("missing required arguments");
+
+    if (converter->create_opts_fn) {
+	converter->create_opts_fn(options_desc, options_data);
+
+	if (!*options_desc || !*options_data)
+	    bu_bomb("converter->create_opts_fn() set null result");
+    } else {
+	*options_desc = (struct bu_opt_desc *)bu_malloc(sizeof(struct bu_opt_desc),
+			"options_desc");
+	BU_OPT_NULL(**options_desc);
+	*options_data = NULL;
+    }
+}
+
+
+void
+gcv_converter_free_options(const struct gcv_converter *converter,
+			   void *options_data)
+{
+    if (!converter || !converter->create_opts_fn != !options_data)
+	bu_bomb("missing arguments");
+
+    if (converter->create_opts_fn)
+	converter->free_opts_fn(options_data);
+}
+
+
+int
+gcv_converter_convert(const struct gcv_converter *converter, const char *path,
+		      struct db_i *dbip, const struct gcv_opts *gcv_options, const void *options_data)
+{
+    if (!converter || !path || !dbip
+	|| (!converter->create_opts_fn != !options_data))
+	bu_bomb("missing arguments");
+
+    if (gcv_options)
+	bu_bomb("struct gcv_options unimplemented");
+
+    RT_CK_DBI(dbip);
+
+    return converter->conversion_fn(path, dbip, gcv_options, options_data);
 }
 
 

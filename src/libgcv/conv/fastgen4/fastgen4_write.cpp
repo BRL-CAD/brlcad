@@ -26,6 +26,9 @@
 
 #include "common.h"
 
+#include "gcv/util.h"
+#include "../../plugin.h"
+
 #include <cmath>
 #include <fstream>
 #include <iomanip>
@@ -33,8 +36,6 @@
 #include <sstream>
 #include <stdexcept>
 #include <map>
-
-#include "../../plugin.h"
 
 
 namespace

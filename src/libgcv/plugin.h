@@ -30,15 +30,10 @@
 
 #include "common.h"
 
-#include "gcv.h"
-
-#include "bu/opt.h"
+#include "gcv/api.h"
 
 
 __BEGIN_DECLS
-
-
-enum gcv_conversion_type {GCV_CONVERSION_READ, GCV_CONVERSION_WRITE};
 
 
 struct gcv_converter {
@@ -53,12 +48,6 @@ struct gcv_converter {
     int (* const conversion_fn)(const char *path, struct db_i *dbip,
 				const struct gcv_opts *gcv_options, const void *options_data);
 };
-
-
-GCV_EXPORT const struct bu_ptbl *gcv_get_converters(void);
-
-GCV_EXPORT struct bu_ptbl gcv_find_converters(mime_model_t mime_type,
-	enum gcv_conversion_type conversion_type);
 
 
 __END_DECLS

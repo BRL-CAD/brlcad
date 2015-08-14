@@ -29,7 +29,7 @@
 
 #include "bu.h"
 
-#include "../../libgcv/plugin.h"
+#include "gcv/api.h"
 
 struct gcv_fmt_opts {
     struct bu_ptbl *args;
@@ -385,17 +385,11 @@ gcv_converter_process_arguments(
 	size_t argc, const char **argv)
 {
     int ret_argc;
+    struct bu_opt_desc *options_desc;
 
-    if (converter->create_opts_fn) {
-	struct bu_opt_desc *options_desc;
-	converter->create_opts_fn(&options_desc, options_data);
-	ret_argc = argc ? bu_opt_parse(messages, argc, argv, options_desc) : 0;
-	bu_free(options_desc, "options_desc");
-    } else {
-	const struct bu_opt_desc default_options_desc = BU_OPT_DESC_NULL;
-	ret_argc = argc ? bu_opt_parse(messages, argc, argv, &default_options_desc) : 0;
-	*options_data = NULL;
-    }
+    gcv_converter_create_options(converter, &options_desc, options_data);
+    ret_argc = argc ? bu_opt_parse(messages, argc, argv, options_desc) : 0;
+    bu_free(options_desc, "options_desc");
 
     if (ret_argc) {
 	if (messages) {
@@ -413,9 +407,7 @@ gcv_converter_process_arguments(
 	    }
 	}
 
-	if (converter->create_opts_fn)
-	    converter->free_opts_fn(*options_data);
-
+	gcv_converter_free_options(converter, *options_data);
 	*options_data = NULL;
 	return 0;
     }
@@ -441,10 +433,8 @@ gcv_do_conversion(
 
 	if (!BU_PTBL_LEN(&in_converters) || !BU_PTBL_LEN(&out_converters)) {
 	    bu_log("No %s for given format\n", !BU_PTBL_LEN(&in_converters) ? "reader" : "writer");
-
 	    bu_ptbl_free(&in_converters);
 	    bu_ptbl_free(&out_converters);
-
 	    return 0;
 	}
 
@@ -459,54 +449,36 @@ gcv_do_conversion(
 	return 0;
 
     if (!gcv_converter_process_arguments(messages, out_conv, &out_options_data, out_argc, out_argv)) {
-	if (in_conv->create_opts_fn)
-	    in_conv->free_opts_fn(in_options_data);
-
+	gcv_converter_free_options(in_conv, in_options_data);
 	return 0;
     }
 
     {
 	struct db_i * const dbi = db_create_inmem();
 
-	if (!in_conv->conversion_fn(in_path, dbi, NULL, in_options_data)) {
+	if (!gcv_converter_convert(in_conv, in_path, dbi, NULL, in_options_data)) {
 	    bu_log("Import failed\n");
-
 	    db_close(dbi);
-
-	    if (in_conv->create_opts_fn)
-		in_conv->free_opts_fn(in_options_data);
-
-	    if (out_conv->create_opts_fn)
-		out_conv->free_opts_fn(out_options_data);
-
+	    gcv_converter_free_options(in_conv, in_options_data);
+	    gcv_converter_free_options(out_conv, out_options_data);
 	    return 0;
 	}
 
 	dbi->dbi_read_only = 1;
 
-	if (!out_conv->conversion_fn(out_path, dbi, NULL, out_options_data)) {
+	if (!gcv_converter_convert(out_conv, out_path, dbi, NULL, out_options_data)) {
 	    bu_log("Export failed\n");
-
 	    db_close(dbi);
-
-	    if (in_conv->create_opts_fn)
-		in_conv->free_opts_fn(in_options_data);
-
-	    if (out_conv->create_opts_fn)
-		out_conv->free_opts_fn(out_options_data);
-
+	    gcv_converter_free_options(in_conv, in_options_data);
+	    gcv_converter_free_options(out_conv, out_options_data);
 	    return 0;
 	}
 
 	db_close(dbi);
     }
 
-    if (in_conv->create_opts_fn)
-	in_conv->free_opts_fn(in_options_data);
-
-    if (out_conv->create_opts_fn)
-	out_conv->free_opts_fn(out_options_data);
-
+    gcv_converter_free_options(in_conv, in_options_data);
+    gcv_converter_free_options(out_conv, out_options_data);
     return 1;
 }
 
