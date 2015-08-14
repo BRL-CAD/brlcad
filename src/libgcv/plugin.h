@@ -45,7 +45,7 @@ struct gcv_converter {
      * create_opts_fn and free_opts_fn must either both be NULL or both be set.
      *
      * Must set *options_desc to point to a block of bu_opt_desc's suitable for freeing with bu_free().
-     * Must set *options_data to converter-specific options suitable for freeing with free_opts_fn().
+     * Must set *options_data to point to converter-specific options suitable for freeing with free_opts_fn().
      * */
     void (* const create_opts_fn)(struct bu_opt_desc **options_desc,
 				  void **options_data);
