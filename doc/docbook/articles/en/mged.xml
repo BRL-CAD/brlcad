@@ -9440,7 +9440,7 @@ x 					delete character
     </listitem>
     <listitem>
       <para>
-        S – Draw tNURBs with trimming curves only, no surfaces.
+        S – Draw tNURBS with trimming curves only, no surfaces.
       </para>
     </listitem>
     <listitem>
@@ -19895,7 +19895,7 @@ The right parabolic cylinder (also referred to as RPC) is a solid built by extru
 spline
 </emphasis></para>
 <para>
-The spline solid is defined by a set of non­uniform rational B­spline surfaces (NURBs). There are no trimming curves in the spline solid, so each NURB surface must exactly adjoin its neighbor so that the interior of the spline solid is completely enclosed and no parts of any NURB surface are dangling outside the solid.
+The spline solid is defined by a set of non­uniform rational B­spline surfaces (NURBS). There are no trimming curves in the spline solid, so each NURB surface must exactly adjoin its neighbor so that the interior of the spline solid is completely enclosed and no parts of any NURB surface are dangling outside the solid.
 </para>
 <para xml:id="torus"><emphasis role="bold">
 torus
