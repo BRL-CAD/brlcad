@@ -534,10 +534,6 @@ def_tree(register struct rt_i *rtip)
     (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
     OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  ********************************************************************************/
-struct Bounds3f {
-    cl_double pMin[3], pMax[3];
-};
-
 struct BVHBuildNode {
     struct Bounds3f bounds;
     struct BVHBuildNode *children[2];
@@ -552,17 +548,6 @@ struct MortonPrimitive {
 struct LBVHTreelet {
     cl_int startIndex, nPrimitives;
     struct BVHBuildNode *buildNodes;
-};
-
-struct LinearBVHNode {
-    struct Bounds3f bounds;
-    union {
-        cl_int primitivesOffset;   /* leaf */
-        cl_int secondChildOffset;  /* interior */
-    }u;
-    cl_ushort nPrimitives;  /* 0 -> interior node */
-    cl_uchar axis;          /* interior node: xyz */
-    cl_uchar pad[1];        /* ensure 32 byte total size */
 };
 
 /* BVHAccel Declarations */
@@ -1052,24 +1037,25 @@ struct bboxi {
 
 
 static void
-alloc_grid(const struct boxnode *fromp)
+alloc_grid(fastf_t bn_min[3], fastf_t bn_max[3], size_t solids_sz, struct soltab **solids)
 {
     const fastf_t density = 4.0;
     fastf_t V, factor;
-    int N;
+    size_t N;
 
-    ssize_t i, j;
+    size_t i;
+    ssize_t j;
     cl_uint x, y, z;
     struct bboxi *B;
 
-    NS = fromp->bn_len;
-    VMOVE(lo, fromp->bn_min);
-    VMOVE(hi, fromp->bn_max);
+    NS = solids_sz;
+    VMOVE(lo, bn_min);
+    VMOVE(hi, bn_max);
 
     VSUB2(size, hi, lo);
 
     V = size[X]*size[Y]*size[Z];
-    factor = pow((density * (fastf_t)fromp->bn_len) / V, (1.0/3.0));
+    factor = pow((density * (fastf_t)solids_sz) / V, (1.0/3.0));
 
     for (i=0; i<3; i++) {
         M[i] = (int)(factor * size[i] + 0.5);
@@ -1088,14 +1074,14 @@ alloc_grid(const struct boxnode *fromp)
 
 
     /* TODO: do a deep copy here in case it ain't safe. */
-    S = fromp->bn_list;
+    S = solids;
 
     printf("%dx%dx%d\n", M[X], M[Y], M[Z]);
 
-    B = (struct bboxi *)bu_calloc(fromp->bn_len, sizeof(struct bboxi), "B");
+    B = (struct bboxi *)bu_calloc(solids_sz, sizeof(struct bboxi), "B");
 
-    for (i=0; i<(ssize_t)fromp->bn_len; ++i) {
-        const struct soltab *stp = fromp->bn_list[i];
+    for (i=0; i<solids_sz; ++i) {
+        const struct soltab *stp = solids[i];
         point_t min, max;
         struct bboxi boundi;
         cl_uint k;
@@ -1122,8 +1108,8 @@ alloc_grid(const struct boxnode *fromp)
     }
     
     /* insert objects in the cells that intersect the object's bounding box. */
-    for (j=0; j<(ssize_t)fromp->bn_len; ++j) {
-        struct bboxi boundi = B[j];
+    for (i=0; i<solids_sz; ++i) {
+        struct bboxi boundi = B[i];
 
         for (z=boundi.min[2]; z<=boundi.max[2]; ++z) {
             for (y=boundi.min[1]; y<=boundi.max[1]; ++y) {
@@ -1141,15 +1127,15 @@ alloc_grid(const struct boxnode *fromp)
 
     L = (cl_uint *)bu_calloc(C[N-1], sizeof(cl_uint), "L");
 
-    for (i=(ssize_t)fromp->bn_len-1; i>=0; --i) {
+    for (j=solids_sz-1; j>=0; --j) {
         /* for each cell j overlapped by object i. */
-        struct bboxi boundi = B[i];
+        struct bboxi boundi = B[j];
 
         for (z=boundi.min[2]; z<=boundi.max[2]; ++z) {
             for (y=boundi.min[1]; y<=boundi.max[1]; ++y) {
                 for (x=boundi.min[0]; x<=boundi.max[0]; ++x) {
                     cl_uint jj = simple_index(x, y, z);
-                    L[--C[jj]] = i;
+                    L[--C[jj]] = j;
                 }
             }
         }
@@ -1200,8 +1186,6 @@ simple_prep(struct rt_i *rtip)
         }
     } RT_VISIT_ALL_SOLTABS_END;
 
-    alloc_grid(&finp->bn);
-
     accel.maxPrimsInNode = 255;
     accel.primitives = finp->bn.bn_list;
 
@@ -1219,7 +1203,7 @@ simple_prep(struct rt_i *rtip)
         accel.primitives = t;
 
         /* Compute representation of depth-first traversal of BVH tree */
-        accel.nodes = (struct LinearBVHNode*)bu_calloc(totalNodes, sizeof(struct LinearBVHNode), "");
+        accel.nodes = (struct LinearBVHNode*)bu_calloc(totalNodes, sizeof(struct LinearBVHNode), "simple_prep");
         flattenBVHTree(&accel, root, &offset, 0);
 
         for (j=0; j<totalNodes; j++) {
@@ -1242,10 +1226,13 @@ simple_prep(struct rt_i *rtip)
             bu_log(":%ld\n", accel.primitives[j]->st_bit);
         }
         */
-    }
 
-    clt_db_store(finp->bn.bn_len, finp->bn.bn_list);
+        clt_db_store_bvh(totalNodes, accel.nodes);
+    }
+    clt_db_store(finp->bn.bn_len, accel.primitives);
+/*    clt_db_store(finp->bn.bn_len, finp->bn.bn_list);*/
     
+    alloc_grid(finp->bn.bn_min, finp->bn.bn_max, finp->bn.bn_len, accel.primitives);
 /*    bu_free(finp, "union cutter");*/
 }
 
@@ -1995,7 +1982,7 @@ simple_run(int cur_pixel, int last_pixel)
     if (per_processor_chunk <= 0) per_processor_chunk = npsw;
 
     bu_semaphore_acquire(RT_SEM_WORKER);
-#if 1
+#if 0
 /*#pragma omp parallel for*/
     for (pixelnum = cur_pixel; pixelnum <= last_pixel; pixelnum++) {
         int cpu;

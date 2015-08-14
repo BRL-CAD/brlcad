@@ -71,6 +71,21 @@ struct cl_hit {
   cl_int hit_surfno;
   cl_uint hit_index;
 };
+
+struct Bounds3f {
+    cl_double pMin[3], pMax[3];
+};
+
+struct LinearBVHNode {
+    struct Bounds3f bounds;
+    union {
+        cl_int primitivesOffset;   /* leaf */
+        cl_int secondChildOffset;  /* interior */
+    }u;
+    cl_ushort nPrimitives;  /* 0 -> interior node */
+    cl_uchar axis;          /* interior node: xyz */
+    cl_uchar pad[1];        /* ensure 32 byte total size */
+};
 #endif
 
 /**
@@ -183,6 +198,7 @@ RT_EXPORT extern void rt_vstub(struct soltab *stp[],
 
 #ifdef USE_OPENCL
 RT_EXPORT extern void clt_db_store(size_t count, struct soltab *solids[]);
+RT_EXPORT extern void clt_db_store_bvh(size_t count, struct LinearBVHNode *nodes);
 RT_EXPORT extern void clt_db_release(void);
 
 RT_EXPORT extern cl_int clt_db_solid_shot(const size_t sz_hits, struct cl_hit *hits, struct xray *rp, const cl_uint index);

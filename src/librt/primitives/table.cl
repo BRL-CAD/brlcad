@@ -78,7 +78,7 @@ db_solid_shot(global int *len, global struct hit *res, const double3 r_pt, const
 }
 
 
-//#define RT_SINGLE_HIT 1
+#define RT_SINGLE_HIT 1
 void do_hitp(global struct hit *res, const uint i, const uint hit_index, const struct hit *hitp)
 {
     if (res) {
@@ -124,12 +124,110 @@ inline void gen_ray(double3 *r_pt, double3 *r_dir, const int a_x, const int a_y,
 }
 
 
+struct Bounds3f {
+    double pMin[3], pMax[3];
+};
+struct LinearBVHNode {
+    struct Bounds3f bounds;
+    union {
+        int primitivesOffset;   /* leaf */
+        int secondChildOffset;  /* interior */
+    }u;
+    ushort nPrimitives;  /* 0 -> interior node */
+    uchar axis;          /* interior node: xyz */
+    uchar pad[1];        /* ensure 32 byte total size */
+};
+
+int
+rt_in_rpp(const double *r_pt, const double3 r_dir,
+	  const double *invdir,	/* inverses of rp->r_dir[] */
+	  global const double *min,
+	  global const double *max)
+{
+    const double *pt = r_pt;
+    double sv;
+#define st sv			/* reuse the register */
+    double rmin = -MAX_FASTF;
+    double rmax =  MAX_FASTF;
+
+    /* Start with infinite ray, and trim it down */
+
+    /* X axis */
+    if (*invdir < -SMALL_FASTF) {
+	/* Heading towards smaller numbers */
+	/* if (*min > *pt) miss */
+	if (rmax > (sv = (*min - *pt) * *invdir))
+	    rmax = sv;
+	if (rmin < (st = (*max - *pt) * *invdir))
+	    rmin = st;
+    }  else if (*invdir > SMALL_FASTF) {
+	/* Heading towards larger numbers */
+	/* if (*max < *pt) miss */
+	if (rmax > (st = (*max - *pt) * *invdir))
+	    rmax = st;
+	if (rmin < ((sv = (*min - *pt) * *invdir)))
+	    rmin = sv;
+    } else {
+	/*
+	 * Direction cosines along this axis is NEAR 0,
+	 * which implies that the ray is perpendicular to the axis,
+	 * so merely check position against the boundaries.
+	 */
+	if ((*min > *pt) || (*max < *pt))
+	    return 0;	/* MISS */
+    }
+
+    /* Y axis */
+    pt++; invdir++; max++; min++;
+    if (*invdir < -SMALL_FASTF) {
+	if (rmax > (sv = (*min - *pt) * *invdir))
+	    rmax = sv;
+	if (rmin < (st = (*max - *pt) * *invdir))
+	    rmin = st;
+    }  else if (*invdir > SMALL_FASTF) {
+	if (rmax > (st = (*max - *pt) * *invdir))
+	    rmax = st;
+	if (rmin < ((sv = (*min - *pt) * *invdir)))
+	    rmin = sv;
+    } else {
+	if ((*min > *pt) || (*max < *pt))
+	    return 0;	/* MISS */
+    }
+
+    /* Z axis */
+    pt++; invdir++; max++; min++;
+    if (*invdir < -SMALL_FASTF) {
+	if (rmax > (sv = (*min - *pt) * *invdir))
+	    rmax = sv;
+	if (rmin < (st = (*max - *pt) * *invdir))
+	    rmin = st;
+    }  else if (*invdir > SMALL_FASTF) {
+	if (rmax > (st = (*max - *pt) * *invdir))
+	    rmax = st;
+	if (rmin < ((sv = (*min - *pt) * *invdir)))
+	    rmin = sv;
+    } else {
+	if ((*min > *pt) || (*max < *pt))
+	    return 0;	/* MISS */
+    }
+
+    /* If equal, RPP is actually a plane */
+    if (rmin > rmax)
+	return 0;	/* MISS */
+
+    /* HIT.  Only now do rp->r_min and rp->r_max have to be written *//*
+    rp->r_min = rmin;
+    rp->r_max = rmax;*/
+    return 1;		/* HIT */
+}
+
 __kernel void
 do_pixel(global unsigned char *pixels, global struct hit *hits, 
          const uint pwidth, const int cur_pixel, const int last_pixel, const int width,
          const double16 view2model, const double cell_width, const double cell_height, const double aspect,
          const int lightmodel,
-         const uint nprims, global int *ids, global uint *indexes, global char *prims)
+         const uint nprims, global int *ids, global struct LinearBVHNode *nodes,
+         global uint *indexes, global char *prims)
 {
     const int pixelnum = cur_pixel+get_global_id(0);
 
@@ -143,11 +241,84 @@ do_pixel(global unsigned char *pixels, global struct hit *hits,
     hitp->hit_dist = INFINITY;
 
     int ret = 0;
-    for (uint idx=0; idx<nprims; idx++) {
-        ret += shot(hitp, r_pt, r_dir, idx, ids[idx], prims + indexes[idx]);
+
+    double inv_dir[3];
+    if (r_dir.x < -SQRT_SMALL_FASTF) {
+	inv_dir[0]=1.0/r_dir.x;
+    } else if (r_dir.x > SQRT_SMALL_FASTF) {
+	inv_dir[0]=1.0/r_dir.x;
+    } else {
+	r_dir.x = 0.0;
+	inv_dir[0] = INFINITY;
+    }
+    if (r_dir.y < -SQRT_SMALL_FASTF) {
+	inv_dir[1]=1.0/r_dir.y;
+    } else if (r_dir.y > SQRT_SMALL_FASTF) {
+	inv_dir[1]=1.0/r_dir.y;
+    } else {
+	r_dir.y = 0.0;
+	inv_dir[1] = INFINITY;
+    }
+    if (r_dir.z < -SQRT_SMALL_FASTF) {
+	inv_dir[2]=1.0/r_dir.z;
+    } else if (r_dir.z > SQRT_SMALL_FASTF) {
+	inv_dir[2]=1.0/r_dir.z;
+    } else {
+	r_dir.z = 0.0;
+	inv_dir[2] = INFINITY;
     }
 
-    double3 a_color;
+    const double rr_pt[3] = {r_pt.x, r_pt.y, r_pt.z};
+    if (nodes) {
+        int dirIsNeg[3];
+        int toVisitOffset = 0, currentNodeIndex = 0;
+        int nodesToVisit[64];
+
+        dirIsNeg[0] = (inv_dir[0] < 0);
+        dirIsNeg[1] = (inv_dir[1] < 0);
+        dirIsNeg[2] = (inv_dir[2] < 0);
+
+        /* Follow ray through BVH nodes to find primitive intersections */
+        for (;;) {
+            const global struct LinearBVHNode *node = &nodes[currentNodeIndex];
+            const global struct Bounds3f *bounds = &node->bounds;
+
+            /* Check ray against BVH node */
+            if (rt_in_rpp(rr_pt, r_dir, inv_dir, bounds->pMin, bounds->pMax)) {
+                if (node->nPrimitives > 0) {
+                    int i;
+
+                    /* Intersect ray with primitives in leaf BVH node */
+                    for (i = 0; i < node->nPrimitives; ++i) {
+                        const uint idx = node->u.primitivesOffset + i;
+                        ret += shot(hitp, r_pt, r_dir, idx, ids[idx], prims + indexes[idx]);
+                    }
+                    if (toVisitOffset == 0) break;
+                    currentNodeIndex = nodesToVisit[--toVisitOffset];
+                } else {
+                    /* Put far BVH node on _nodesToVisit_ stack, advance to near
+                     * node
+                     */
+                    if (dirIsNeg[node->axis]) {
+                        nodesToVisit[toVisitOffset++] = currentNodeIndex + 1;
+                        currentNodeIndex = node->u.secondChildOffset;
+                    } else {
+                        nodesToVisit[toVisitOffset++] = node->u.secondChildOffset;
+                        currentNodeIndex = currentNodeIndex + 1;
+                    }
+                }
+            } else {
+                if (toVisitOffset == 0) break;
+                currentNodeIndex = nodesToVisit[--toVisitOffset];
+            }
+        }
+    } else {
+        for (uint idx=0; idx<nprims; idx++) {
+            ret += shot(hitp, r_pt, r_dir, idx, ids[idx], prims + indexes[idx]);
+        }
+    }
+
+    double3 a_color = 1.0;
 
     if (ret != 0) {
         double diffuse0 = 0;
