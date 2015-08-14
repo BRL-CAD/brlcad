@@ -681,11 +681,12 @@ static struct BVHBuildNode *emitLBVH(struct BVHAccel *accel,
 
         for (i = 0; i < nPrimitives; ++i) {
             struct Bounds3f bounds2;
-
             cl_int primitiveIndex = mortonPrims[i].primitiveIndex;
-            orderedPrims[firstPrimOffset + i] = accel->primitives[primitiveIndex];
-            VMOVE(bounds2.pMin, accel->primitives[primitiveIndex]->st_min);
-            VMOVE(bounds2.pMax, accel->primitives[primitiveIndex]->st_max);
+            struct soltab *primitive = accel->primitives[primitiveIndex];
+            orderedPrims[firstPrimOffset + i] = primitive;
+
+            VMOVE(bounds2.pMin, primitive->st_min);
+            VMOVE(bounds2.pMax, primitive->st_max);
             bounds = Union(bounds, bounds2);
         }
         InitLeaf(node, firstPrimOffset, nPrimitives, bounds);
@@ -925,8 +926,9 @@ struct BVHBuildNode *HLBVHBuild(struct BVHAccel *accel,
     treeletsToBuild = (struct LBVHTreelet*)bu_calloc(nPrimitives, sizeof(struct LBVHTreelet), "HLBVHBuild");
     
     for (i = 0; i<nPrimitives; i++) {
-        VMIN(bounds.pMin, accel->primitives[i]->st_center);
-        VMAX(bounds.pMax, accel->primitives[i]->st_center);
+        struct soltab *primitive = accel->primitives[i];
+        VMIN(bounds.pMin, primitive->st_center);
+        VMAX(bounds.pMax, primitive->st_center);
     }
 
     /* Compute Morton indices of primitives */
@@ -936,10 +938,11 @@ struct BVHBuildNode *HLBVHBuild(struct BVHAccel *accel,
         const cl_uint mortonBits = 10;
         const cl_uint mortonScale = 1 << mortonBits;
         cl_double o[3];
+        struct soltab *primitive = accel->primitives[i];
 
         mortonPrims[i].primitiveIndex = i;
-        
-        VSUB2(o, accel->primitives[i]->st_center, bounds.pMin);
+
+        VSUB2(o, primitive->st_center, bounds.pMin);
         if (bounds.pMax[X] > bounds.pMin[X]) o[X] /= bounds.pMax[X] - bounds.pMin[X];
         if (bounds.pMax[Y] > bounds.pMin[Y]) o[Y] /= bounds.pMax[Y] - bounds.pMin[Y];
         if (bounds.pMax[Z] > bounds.pMin[Z]) o[Z] /= bounds.pMax[Z] - bounds.pMin[Z];
@@ -1176,14 +1179,10 @@ simple_prep(struct rt_i *rtip)
     RT_VISIT_ALL_SOLTABS_START(stp, rtip) {
         /* Ignore "dead" solids in the list.  (They failed prep) */
         if (stp->st_aradius <= 0) continue;
+        /* Infinite solids make the BVH construction explode. */
+        if (stp->st_aradius >= INFINITY) continue;
 
-        /* Infinite and finite solids all get lumped together */
-        rt_cut_extend(finp, stp, rtip);
-
-        if (stp->st_aradius >= INFINITY) {
-            /* Also add infinite solids to a special BOXNODE */
-            rt_cut_extend(&rtip->rti_inf_box, stp, rtip);
-        }
+        rt_cut_extend(finp, stp, rtip);            
     } RT_VISIT_ALL_SOLTABS_END;
 
     accel.maxPrimsInNode = 255;
