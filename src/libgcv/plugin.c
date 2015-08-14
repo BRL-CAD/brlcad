@@ -118,9 +118,12 @@ gcv_converter_create_options(const struct gcv_converter *converter,
 			     struct bu_opt_desc **options_desc, void **options_data)
 {
     if (!converter || !options_desc || !options_data)
-	bu_bomb("missing required arguments");
+	bu_bomb("missing arguments");
 
     if (converter->create_opts_fn) {
+	*options_desc = NULL;
+	*options_data = NULL;
+
 	converter->create_opts_fn(options_desc, options_data);
 
 	if (!*options_desc || !*options_data)
@@ -138,7 +141,7 @@ void
 gcv_converter_free_options(const struct gcv_converter *converter,
 			   void *options_data)
 {
-    if (!converter || !converter->create_opts_fn != !options_data)
+    if (!converter || (!converter->create_opts_fn != !options_data))
 	bu_bomb("missing arguments");
 
     if (converter->create_opts_fn)

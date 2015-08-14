@@ -111,9 +111,11 @@ enum gcv_conversion_type {GCV_CONVERSION_READ, GCV_CONVERSION_WRITE};
 struct gcv_converter;
 
 
+/* returns pointer table of `const struct gcv_converter *` */
 GCV_EXPORT const struct bu_ptbl *gcv_get_converters(void);
 
 
+/* returns pointer table of `const struct gcv_converter *` */
 GCV_EXPORT struct bu_ptbl gcv_find_converters(mime_model_t mime_type,
 	enum gcv_conversion_type conversion_type);
 
