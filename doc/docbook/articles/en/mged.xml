@@ -4947,7 +4947,7 @@ Control-w		backward delete word
 </programlisting>
 </para>
 </section>
-<section xml:id="Insert_Mode"> 
+<section xml:id="Insert_Mode">
 <title>
 Insert Mode
 </title>

@@ -110,12 +110,12 @@
       <para>First word on the command line is the command name, any additional words are arguments.</para>
 </listitem>
 </itemizedlist>
-<programlisting> 
+<programlisting>
       -- command [arg1 ... argn
       mged&gt; puts "Hello World"
       Hello World
     </programlisting>
-       <itemizedlist> 
+       <itemizedlist>
  <listitem>
   <para>
       Words can be grouped with double quotes (" ") or curly braces ({}).
@@ -424,7 +424,7 @@
 <section>
 <title>
 Control Flow (cont'd)
-</title>  
+</title>
 <!-- slide 16 -->
 
 <programlisting>
@@ -512,7 +512,7 @@ Control Flow (cont'd)
 <itemizedlist>
   <listitem>
 <para>
-      adjust obj attr value[attr value] 
+      adjust obj attr value[attr value]
 </para>
 <itemizedlist>
   <listitem>
@@ -569,7 +569,7 @@ Control Flow (cont'd)
       </listitem>
     </itemizedlist>
       <para>Task:  Print all regions with nonzero air codes.</para>
-    <programlisting> 
+    <programlisting>
 
       mged&gt;
       foreach reg [ls -r] {
@@ -590,7 +590,7 @@ Control Flow (cont'd)
     </listitem>
   </itemizedlist>
   <programlisting>
-      
+
       mged&gt; foreach obj [ls -c] {
       if {[get $obj inherit] == "yes"} {
       puts "$obj"
@@ -611,7 +611,7 @@ Control Flow (cont'd)
       <para>proc</para>
     </listitem>
   </itemizedlist>
-<programlisting> 
+<programlisting>
       procName{args} {body}
       mged&gt;
       proc add {x y} {
@@ -707,7 +707,7 @@ sph-part s1.s s2.s part.s
 </figure>
 
 </section>
- <section> 
+ <section>
    <title>
     The "source" Command
      </title>

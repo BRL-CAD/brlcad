@@ -757,7 +757,7 @@ clt_norm(struct hit *hitp, struct soltab *stp, struct xray *rp)
     const size_t hypersample = 1;
     cl_int error;
     cl_mem pin, pout;
-    struct cl_hit hit; 
+    struct cl_hit hit;
 
     VMOVE(r_pt.s, rp->r_pt);
     VMOVE(r_dir.s, rp->r_dir);

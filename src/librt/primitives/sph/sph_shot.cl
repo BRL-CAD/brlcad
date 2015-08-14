@@ -40,7 +40,7 @@ int sph_shot(global struct hit *res, const double3 r_pt, const double3 r_dir, co
     }
 
     struct hit hits[2];
-    
+
     // we know root is positive, so we know the smaller t
     hits[0].hit_dist = b - root;
     hits[0].hit_surfno = 0;

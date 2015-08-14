@@ -631,8 +631,8 @@ should be opened, else 0.</para>
 </section>
 
 <!-- Next 'div' was a 'draw:page'. -->
-<section xml:id="Preped_Representation">
-  <title>Prep'ed Representation</title>
+<section xml:id="Prepped_Representation">
+  <title>Prepped Representation</title>
 
 <itemizedlist>
       <listitem>
@@ -660,7 +660,7 @@ should be opened, else 0.</para>
     </itemizedlist>
   </section>
 
- 
+
 <!-- Next 'div' was a 'draw:page'. -->
 <section xml:id="Simple_Database_Application">
   <title>Simple Database Application</title>
@@ -1013,8 +1013,8 @@ rt_prep(rtip);   /* now rtip has valid information */</programlisting>
 </section>
 
 <!-- Next 'div' was a 'draw:page'. -->
-<section xml:id="Accessing_Preped_Regions">
-  <title>Accessing Prep'ed Regions</title>
+<section xml:id="Accessing_Prepped_Regions">
+  <title>Accessing Prepped Regions</title>
 
 <itemizedlist>
       <listitem>

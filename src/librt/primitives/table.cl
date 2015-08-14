@@ -124,7 +124,7 @@ inline void gen_ray(double3 *r_pt, double3 *r_dir, const int a_x, const int a_y,
 
 
 __kernel void
-do_pixel(global unsigned char *pixels, global struct hit *hits, 
+do_pixel(global unsigned char *pixels, global struct hit *hits,
          const uint pwidth, const int cur_pixel, const int last_pixel, const int width,
          const double16 view2model, const double cell_width, const double cell_height, const double aspect,
          const int lightmodel,
