@@ -333,7 +333,7 @@
       <para>set glob_compat_mode 1 (for object name matching)</para>
     </listitem>
     <listitem>
-      <para>Meu: File-&gt;Preferences-&gt;Special Characters</para>
+      <para>Menu: File-&gt;Preferences-&gt;Special Characters</para>
     </listitem>
   </itemizedlist>
 </listitem>
