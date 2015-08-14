@@ -6975,7 +6975,7 @@ x 					delete character
 
 <literal>mged&gt;</literal>
     <emphasis role="strong">attach -t 0 -S 800 -n .t.ogl ogl</emphasis>
-     – Open a 800x800 OpenGl display window named .t.ogl
+     – Open a 800x800 OpenGL display window named .t.ogl
     that is not a top-level window.
   </para>
   <para>
