@@ -59,10 +59,6 @@ int arb_shot(global struct hit *res, const double3 r_pt, const double3 r_dir, co
 	return 0;	// MISS
     }
 
-    if (res == NULL) {
-	return 2;       // HIT
-    }
-
     struct hit hits[2];
 
     hits[0].hit_dist = in;

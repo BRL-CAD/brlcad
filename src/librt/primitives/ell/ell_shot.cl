@@ -26,10 +26,6 @@ int ell_shot(global struct hit *res, const double3 r_pt, const double3 r_dir, co
     if ((root = dp*dp - dd * (dot(pprime, pprime)-1.0)) < 0) {
 	return 0;	// No hit
     } else {
-	if (res == NULL) {
-	    return 2;       // HIT
-	}
-
 	struct hit hits[2];
 
 	root = sqrt(root);

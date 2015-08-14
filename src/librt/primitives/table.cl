@@ -124,18 +124,19 @@ inline void gen_ray(double3 *r_pt, double3 *r_dir, const int a_x, const int a_y,
 }
 
 
-struct Bounds3f {
-    double pMin[3], pMax[3];
+struct bvh_bounds {
+    double p_min[3], p_max[3];
 };
-struct LinearBVHNode {
-    struct Bounds3f bounds;
+
+struct linear_bvh_node {
+    struct bvh_bounds bounds;
     union {
-        int primitivesOffset;   /* leaf */
-        int secondChildOffset;  /* interior */
-    }u;
-    ushort nPrimitives;  /* 0 -> interior node */
-    uchar axis;          /* interior node: xyz */
-    uchar pad[1];        /* ensure 32 byte total size */
+        int primitives_offset;		/* leaf */
+        int second_child_offset;	/* interior */
+    } u;
+    ushort n_primitives;		/* 0 -> interior node */
+    uchar axis;				/* interior node: xyz */
+    uchar pad[1];			/* ensure 32 byte total size */
 };
 
 int
@@ -174,7 +175,7 @@ rt_in_rpp(const double *pt,
 
 int
 shootray(global struct hit *hitp, const double3 r_pt, const double3 r_dir,
-         const uint nprims, global int *ids, global struct LinearBVHNode *nodes,
+         const uint nprims, global int *ids, global struct linear_bvh_node *nodes,
          global uint *indexes, global char *prims)
 {
     int ret = 0;
@@ -206,41 +207,41 @@ shootray(global struct hit *hitp, const double3 r_pt, const double3 r_dir,
     }
 
     if (nodes) {
-        const uchar dirIsNeg[3] = {inv_dir[0]<0, inv_dir[1]<0, inv_dir[2]<0};
-        int toVisitOffset = 0, currentNodeIndex = 0;
-        int nodesToVisit[64];
+        const uchar dir_is_neg[3] = {inv_dir[0]<0, inv_dir[1]<0, inv_dir[2]<0};
+        int to_visit_offset = 0, current_node_index = 0;
+        int nodes_to_visit[64];
 
         const double rr_pt[3] = {r_pt.x, r_pt.y, r_pt.z};
         /* Follow ray through BVH nodes to find primitive intersections */
         for (;;) {
-            const global struct LinearBVHNode *node = &nodes[currentNodeIndex];
-            const global struct Bounds3f *bounds = &node->bounds;
+            const global struct linear_bvh_node *node = &nodes[current_node_index];
+            const global struct bvh_bounds *bounds = &node->bounds;
 
             /* Check ray against BVH node */
-            if (rt_in_rpp(rr_pt, inv_dir, bounds->pMin, bounds->pMax)) {
-                if (node->nPrimitives > 0) {
+            if (rt_in_rpp(rr_pt, inv_dir, bounds->p_min, bounds->p_max)) {
+                if (node->n_primitives > 0) {
                     /* Intersect ray with primitives in leaf BVH node */
-                    for (int i = 0; i < node->nPrimitives; ++i) {
-                        const uint idx = node->u.primitivesOffset + i;
+                    for (int i = 0; i < node->n_primitives; ++i) {
+                        const uint idx = node->u.primitives_offset + i;
                         ret += shot(hitp, r_pt, r_dir, idx, ids[idx], prims + indexes[idx]);
                     }
-                    if (toVisitOffset == 0) break;
-                    currentNodeIndex = nodesToVisit[--toVisitOffset];
+                    if (to_visit_offset == 0) break;
+                    current_node_index = nodes_to_visit[--to_visit_offset];
                 } else {
-                    /* Put far BVH node on _nodesToVisit_ stack, advance to near
+                    /* Put far BVH node on nodes_to_visit stack, advance to near
                      * node
                      */
-                    if (dirIsNeg[node->axis]) {
-                        nodesToVisit[toVisitOffset++] = currentNodeIndex + 1;
-                        currentNodeIndex = node->u.secondChildOffset;
+                    if (dir_is_neg[node->axis]) {
+                        nodes_to_visit[to_visit_offset++] = current_node_index + 1;
+                        current_node_index = node->u.second_child_offset;
                     } else {
-                        nodesToVisit[toVisitOffset++] = node->u.secondChildOffset;
-                        currentNodeIndex = currentNodeIndex + 1;
+                        nodes_to_visit[to_visit_offset++] = node->u.second_child_offset;
+                        current_node_index = current_node_index + 1;
                     }
                 }
             } else {
-                if (toVisitOffset == 0) break;
-                currentNodeIndex = nodesToVisit[--toVisitOffset];
+                if (to_visit_offset == 0) break;
+                current_node_index = nodes_to_visit[--to_visit_offset];
             }
         }
     } else {
@@ -257,7 +258,7 @@ do_pixel(global unsigned char *pixels, global struct hit *hits,
          const uint pwidth, const int cur_pixel, const int last_pixel, const int width,
          const double16 view2model, const double cell_width, const double cell_height, const double aspect,
          const int lightmodel,
-         const uint nprims, global int *ids, global struct LinearBVHNode *nodes,
+         const uint nprims, global int *ids, global struct linear_bvh_node *nodes,
          global uint *indexes, global char *prims)
 {
     const int pixelnum = cur_pixel+get_global_id(0);
