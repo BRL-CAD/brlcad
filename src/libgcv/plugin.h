@@ -42,21 +42,19 @@ struct gcv_converter {
 
 
     /* Allocates and initializes data for bu_opt argument parsing.
-     * create_opts_fn() and free_opts_fn() must either both be NULL or both be set.
+     * create_opts_fn and free_opts_fn must either both be NULL or both be set.
      *
-     * Must set *options_desc to a valid pointer to a block of bu_opt_desc's suitable for freeing with bu_free().
-     * Must set *options_data to converter-specific arguments that can later be freed by free_opts_fn().
+     * Must set *options_desc to point to a block of bu_opt_desc's suitable for freeing with bu_free().
+     * Must set *options_data to converter-specific options suitable for freeing with free_opts_fn().
      * */
     void (* const create_opts_fn)(struct bu_opt_desc **options_desc,
 				  void **options_data);
 
-
-    /* free the converter-specific arguments allocated by create_opts_fn() */
     void (* const free_opts_fn)(void *options_data);
 
 
     /* Perform the conversion operation.
-     * options_data must be set if create_opts_fn() exists, or NULL otherwise. */
+     * options_data must be set if create_opts_fn is set, or NULL otherwise. */
     int (* const conversion_fn)(const char *path, struct db_i *dbip,
 				const struct gcv_opts *gcv_options, const void *options_data);
 };
