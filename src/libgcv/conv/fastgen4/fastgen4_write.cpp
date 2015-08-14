@@ -2381,12 +2381,15 @@ write_nmg_region(nmgregion *nmg_region, const db_full_path *path,
 
     FastgenConversion &data = *static_cast<FastgenConversion *>(client_data);
     Section &section = data.get_section(*path);
-    shell *vshell;
+    shell *current_shell;
 
-    for (BU_LIST_FOR(vshell, shell, &nmg_region->s_hd)) {
-	NMG_CK_SHELL(vshell);
+    if (BU_LIST_NON_EMPTY(&nmg_region->s_hd))
+	section.write_name("facetized");
 
-	rt_bot_internal * const bot = nmg_bot(vshell, &data.m_tol);
+    for (BU_LIST_FOR(current_shell, shell, &nmg_region->s_hd)) {
+	NMG_CK_SHELL(current_shell);
+
+	rt_bot_internal * const bot = nmg_bot(current_shell, &data.m_tol);
 
 	// fill in an rt_db_internal with our new bot so we can free it
 	rt_db_internal internal;
