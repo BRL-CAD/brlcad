@@ -815,7 +815,7 @@ pred(const struct bvh_build_node *node, struct bvh_bounds *centroid_bounds,
 }
 
 static struct bvh_build_node *
-build_upper_sah(struct bvh_accel *accel, struct bvh_build_node **treelet_roots,
+build_upper_sah(struct bvh_accel *accel, struct bu_pool *pool, struct bvh_build_node **treelet_roots,
 	        int start, int end, int *total_nodes)
 {
     int n_nodes;
@@ -847,7 +847,7 @@ build_upper_sah(struct bvh_accel *accel, struct bvh_build_node **treelet_roots,
 	struct bvh_build_node *lbvh[2];
 	int mid;
 
-	node = (struct bvh_build_node*)bu_malloc(sizeof(struct bvh_build_node), "build_upper_sah");
+	node = (struct bvh_build_node*)bu_pool_alloc(pool, 1, sizeof(struct bvh_build_node));
 
 	for (i = 0; i<n_buckets; i++) {
 	    buckets[i].count = 0;
@@ -948,8 +948,8 @@ out:
 	BU_ASSERT(mid > start && mid < end);
 
 	++*total_nodes;
-	lbvh[0] = build_upper_sah(accel, treelet_roots, start, mid, total_nodes);
-	lbvh[1] = build_upper_sah(accel, treelet_roots, mid, end, total_nodes);
+	lbvh[0] = build_upper_sah(accel, pool, treelet_roots, start, mid, total_nodes);
+	lbvh[1] = build_upper_sah(accel, pool, treelet_roots, mid, end, total_nodes);
 	init_interior(node, dim, lbvh[0], lbvh[1]);
 	return node;
     }
@@ -957,7 +957,7 @@ out:
 }
 
 struct bvh_build_node *
-hlbvh_create(struct bvh_accel *accel, int *total_nodes, const int n_primitives,
+hlbvh_create(struct bvh_accel *accel, struct bu_pool *pool, int *total_nodes, const int n_primitives,
     struct soltab ***ordered_prims)
 {
     struct bvh_bounds bounds = {{INFINITY,INFINITY,INFINITY}, {-INFINITY,-INFINITY,-INFINITY}};
@@ -1020,7 +1020,7 @@ hlbvh_create(struct bvh_accel *accel, int *total_nodes, const int n_primitives,
             int n_prims = end - start;
             int max_bvh_nodes = 2 * n_prims;
             struct bvh_build_node *nodes;
-            nodes = (struct bvh_build_node*)bu_calloc(max_bvh_nodes, sizeof(struct bvh_build_node), "hlbvh_create");
+            nodes = (struct bvh_build_node*)bu_pool_alloc(pool, max_bvh_nodes, sizeof(struct bvh_build_node));
             treelets_to_build_end->start_index = start;
             treelets_to_build_end->n_primitives = n_prims;
             treelets_to_build_end->build_nodes = nodes;
@@ -1050,15 +1050,9 @@ hlbvh_create(struct bvh_accel *accel, int *total_nodes, const int n_primitives,
         *finished_treelets_last++ = treelet->build_nodes;
     }
     bu_free(treelets_to_build, "hlbvh_create");
-    ret = build_upper_sah(accel, finished_treelets, 0, finished_treelets_last-finished_treelets, total_nodes);
+    ret = build_upper_sah(accel, pool, finished_treelets, 0, finished_treelets_last-finished_treelets, total_nodes);
     bu_free(finished_treelets, "hlbvh_create");
     return ret;
-}
-
-void
-hlbvh_delete(struct bvh_build_node *node)
-{
-    (void)node;
 }
 
 
@@ -1273,6 +1267,7 @@ simple_prep(struct rt_i *rtip)
 
     if (finp->bn.bn_len != 0) {
         /* Build BVH tree for primitives */
+	struct bu_pool *pool;
         cl_int total_nodes = 0, j, k;
         struct soltab **ordered_prims, **t;
         struct bvh_build_node *root;
@@ -1280,7 +1275,8 @@ simple_prep(struct rt_i *rtip)
 
 	accel.max_prims_in_node = 4;
 
-        root = hlbvh_create(&accel, &total_nodes, finp->bn.bn_len, &ordered_prims);
+	pool = bu_pool_create(1024 * 1024);
+        root = hlbvh_create(&accel, pool, &total_nodes, finp->bn.bn_len, &ordered_prims);
 
         t = ordered_prims;
         ordered_prims = accel.primitives;
@@ -1289,7 +1285,7 @@ simple_prep(struct rt_i *rtip)
         /* Compute representation of depth-first traversal of BVH tree */
         accel.nodes = (struct clt_linear_bvh_node*)bu_calloc(total_nodes, sizeof(struct clt_linear_bvh_node), "simple_prep");
         flatten_bvh_tree(&accel, root, &offset, 0);
-        hlbvh_delete(root);
+	bu_pool_delete(pool);
 
         for (j=0; j<offset; j++) {
             if (accel.nodes[j].n_primitives != 0) {
