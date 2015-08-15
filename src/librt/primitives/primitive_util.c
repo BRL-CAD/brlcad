@@ -1024,12 +1024,11 @@ clt_db_solid_shot(const size_t sz_hits, struct cl_hit *hits, struct xray *rp, co
 
 void
 clt_run(unsigned char *pixels, cl_uint pwidth, cl_int cur_pixel, cl_int last_pixel, cl_int width,
-        mat_t view2model, fastf_t cell_width, fastf_t cell_height, fastf_t aspect)
+        mat_t view2model, fastf_t cell_width, fastf_t cell_height, fastf_t aspect, cl_int lightmodel)
 {
     const size_t npix = last_pixel-cur_pixel+1;
 
     cl_double16 v2m;
-    cl_int lightmodel = 2;
 
     cl_mem ppixels, phits;
     cl_int error;

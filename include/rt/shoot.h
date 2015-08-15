@@ -204,7 +204,7 @@ RT_EXPORT extern void clt_db_release(void);
 RT_EXPORT extern cl_int clt_db_solid_shot(const size_t sz_hits, struct cl_hit *hits, struct xray *rp, const cl_uint index);
 
 RT_EXPORT extern void clt_run(unsigned char *pixels, cl_uint pwidth, cl_int cur_pixel, cl_int last_pixel, cl_int width,
-			      mat_t view2model, fastf_t cell_width, fastf_t cell_height, fastf_t aspect);
+			      mat_t view2model, fastf_t cell_width, fastf_t cell_height, fastf_t aspect, cl_int lightmodel);
 #endif
 
 __END_DECLS

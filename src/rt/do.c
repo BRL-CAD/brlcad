@@ -2026,7 +2026,7 @@ simple_run(int cur_pixel, int last_pixel)
         npix = last_pixel-cur_pixel+1;
         pixels = (unsigned char *)bu_calloc(npix, pwidth, "image buffer");
 
-        clt_run(pixels, pwidth, cur_pixel, last_pixel, width, view2model, cell_width, cell_height, aspect);
+        clt_run(pixels, pwidth, cur_pixel, last_pixel, width, view2model, cell_width, cell_height, aspect, lightmodel);
 
         bu_semaphore_acquire(BU_SEM_SYSCALL);
         npix2 = fb_write(fbp, 0, 0, pixels, npix);
