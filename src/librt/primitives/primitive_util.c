@@ -963,11 +963,11 @@ clt_db_store(size_t count, struct soltab *solids[])
 }
 
 void
-clt_db_store_bvh(size_t count, struct linear_bvh_node *nodes)
+clt_db_store_bvh(size_t count, struct clt_linear_bvh_node *nodes)
 {
     cl_int error;
 
-    clt_db_bvh = clCreateBuffer(clt_context, CL_MEM_READ_ONLY|CL_MEM_COPY_HOST_PTR, sizeof(struct linear_bvh_node)*count, nodes, &error);
+    clt_db_bvh = clCreateBuffer(clt_context, CL_MEM_READ_ONLY|CL_MEM_COPY_HOST_PTR, sizeof(struct clt_linear_bvh_node)*count, nodes, &error);
     if (error != CL_SUCCESS) bu_bomb("failed to create OpenCL bvh buffer");
 }
 

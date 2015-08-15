@@ -72,12 +72,12 @@ struct cl_hit {
   cl_uint hit_index;
 };
 
-struct bvh_bounds {
+struct clt_bvh_bounds {
     cl_double p_min[3], p_max[3];
 };
 
-struct linear_bvh_node {
-    struct bvh_bounds bounds;
+struct clt_linear_bvh_node {
+    struct clt_bvh_bounds bounds;
     union {
         cl_int primitives_offset;	/* leaf */
         cl_int second_child_offset;	/* interior */
@@ -198,7 +198,7 @@ RT_EXPORT extern void rt_vstub(struct soltab *stp[],
 
 #ifdef USE_OPENCL
 RT_EXPORT extern void clt_db_store(size_t count, struct soltab *solids[]);
-RT_EXPORT extern void clt_db_store_bvh(size_t count, struct linear_bvh_node *nodes);
+RT_EXPORT extern void clt_db_store_bvh(size_t count, struct clt_linear_bvh_node *nodes);
 RT_EXPORT extern void clt_db_release(void);
 
 RT_EXPORT extern cl_int clt_db_solid_shot(const size_t sz_hits, struct cl_hit *hits, struct xray *rp, const cl_uint index);
