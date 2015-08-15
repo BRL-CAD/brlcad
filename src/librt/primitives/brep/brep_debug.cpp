@@ -338,7 +338,7 @@ plotleafuv(BBNode* bb)
 
 
 void
-plottrim(ON_BrepFace &face, struct bn_vlblock *vbp, int plotres, bool dim3d)
+plottrim(ON_BrepFace &face, struct bn_vlblock *vbp, int plotres, bool dim3d, const int red = 255, const int green = 255, const int blue = 0)
 {
     register struct bu_list *vhead;
     const ON_Surface* surf = face.SurfaceOf();
@@ -348,7 +348,7 @@ plottrim(ON_BrepFace &face, struct bn_vlblock *vbp, int plotres, bool dim3d)
 
     ON_TextLog tl(stderr);
 
-    vhead = bn_vlblock_find(vbp, YELLOW);
+    vhead = bn_vlblock_find(vbp, red, green, blue);
 
     surf->GetDomain(0, &umin, &umax);
     for (int i = 0; i < face.LoopCount(); i++) {
@@ -481,7 +481,7 @@ plotUVDomain2d(ON_BrepFace &face, struct bn_vlblock *vbp)
 
 
 void
-plottrim(ON_BrepTrim& trim, struct bn_vlblock *vbp, int plotres, bool dim3d)
+plottrim(ON_BrepTrim& trim, struct bn_vlblock *vbp, int plotres, bool dim3d, const int red = 255, const int green = 255, const int blue = 0)
 {
     register struct bu_list *vhead;
     ON_BrepFace *face = trim.Face();
@@ -489,7 +489,7 @@ plottrim(ON_BrepTrim& trim, struct bn_vlblock *vbp, int plotres, bool dim3d)
 
     ON_TextLog tl(stderr);
 
-    vhead = bn_vlblock_find(vbp, YELLOW);
+    vhead = bn_vlblock_find(vbp, red, green, blue);
 
     const ON_Curve* trimCurve = trim.TrimCurveOf();
     ON_Interval dom = trimCurve->Domain();
@@ -1412,7 +1412,7 @@ int brep_facecdt_plot(struct bu_vls *vls, const char *solid_name,
 
 
 int
-brep_facetrim_plot(struct bu_vls *vls, struct brep_specific* bs, struct rt_brep_internal*, struct bn_vlblock *vbp, int index, struct bu_color *UNUSED(color), int plotres, bool dim3d)
+brep_facetrim_plot(struct bu_vls *vls, struct brep_specific* bs, struct rt_brep_internal*, struct bn_vlblock *vbp, int index, struct bu_color *color, int plotres, bool dim3d)
 {
     ON_wString wstr;
     ON_TextLog tl(wstr);
@@ -1430,7 +1430,11 @@ brep_facetrim_plot(struct bu_vls *vls, struct brep_specific* bs, struct rt_brep_
 	    ON_BrepFace& face = brep->m_F[index];
 	    if (!dim3d)
 		plotUVDomain2d(face, vbp);
-	    plottrim(face, vbp, plotres, dim3d);
+	    if (color) {
+		plottrim(face, vbp, plotres, dim3d, (int)color->buc_rgb[0], (int)color->buc_rgb[1], (int)color->buc_rgb[2]);
+	    } else {
+		plottrim(face, vbp, plotres, dim3d);
+	    }
 	}
     } else if (index < brep->m_F.Count()) {
 	ON_BrepFaceArray& faces = brep->m_F;
@@ -1439,7 +1443,12 @@ brep_facetrim_plot(struct bu_vls *vls, struct brep_specific* bs, struct rt_brep_
 	    face.Dump(tl);
 	    if (!dim3d)
 		plotUVDomain2d(face, vbp);
-	    plottrim(face, vbp, plotres, dim3d);
+	    if (color) {
+		plottrim(face, vbp, plotres, dim3d, (int)color->buc_rgb[0], (int)color->buc_rgb[1], (int)color->buc_rgb[2]);
+	    } else {
+		plottrim(face, vbp, plotres, dim3d);
+	    }
+
 	}
     }
 
@@ -1678,7 +1687,7 @@ brep_surface_knot_plot(struct bu_vls *vls, struct brep_specific* bs, struct rt_b
 
 
 int
-brep_edge3d_plot(struct bu_vls *vls, struct brep_specific* bs, struct rt_brep_internal*, struct bn_vlblock *vbp, struct bu_color *UNUSED(color), int index, int plotres)
+brep_edge3d_plot(struct bu_vls *vls, struct brep_specific* bs, struct rt_brep_internal*, struct bn_vlblock *vbp, struct bu_color *color, int index, int plotres)
 {
     ON_wString wstr;
     ON_TextLog tl(wstr);
@@ -1695,12 +1704,20 @@ brep_edge3d_plot(struct bu_vls *vls, struct brep_specific* bs, struct rt_brep_in
 	int num_curves = brep->m_C3.Count();
 	for (index = 0; index < num_curves; index++) {
 	    ON_Curve *curve = brep->m_C3[index];
-	    plotcurve(*curve, vbp, plotres);
+	    if (color) {
+		plotcurve(*curve, vbp, plotres, (int)color->buc_rgb[0], (int)color->buc_rgb[1], (int)color->buc_rgb[2]);
+	    } else {
+		plotcurve(*curve, vbp, plotres);
+	    }
 	}
     } else if (index < brep->m_C3.Count()) {
 	ON_Curve *curve = brep->m_C3[index];
 	curve->Dump(tl);
-	plotcurve(*curve, vbp, plotres);
+	if (color) {
+	    plotcurve(*curve, vbp, plotres, (int)color->buc_rgb[0], (int)color->buc_rgb[1], (int)color->buc_rgb[2]);
+	} else {
+	    plotcurve(*curve, vbp, plotres);
+	}
     }
 
     bu_vls_printf(vls, ON_String(wstr).Array());
@@ -1747,7 +1764,7 @@ plot_nurbs_cv(struct bn_vlblock *vbp, int ucount, int vcount, ON_NurbsSurface *n
 
 
 int
-brep_trim_plot(struct bu_vls *vls, struct brep_specific* bs, struct rt_brep_internal*, struct bn_vlblock *vbp, int index, struct bu_color *UNUSED(color), int plotres, bool dim3d)
+brep_trim_plot(struct bu_vls *vls, struct brep_specific* bs, struct rt_brep_internal*, struct bn_vlblock *vbp, int index, struct bu_color *color, int plotres, bool dim3d)
 {
     ON_wString wstr;
     ON_TextLog tl(wstr);
@@ -1764,11 +1781,19 @@ brep_trim_plot(struct bu_vls *vls, struct brep_specific* bs, struct rt_brep_inte
 	int num_trims = brep->m_T.Count();
 	for (index = 0; index < num_trims; index++) {
 	    ON_BrepTrim &trim = brep->m_T[index];
-	    plottrim(trim, vbp, plotres, dim3d);
+	    if (color) {
+		plottrim(trim, vbp, plotres, dim3d, (int)color->buc_rgb[0], (int)color->buc_rgb[1], (int)color->buc_rgb[2]);
+	    } else {
+		plottrim(trim, vbp, plotres, dim3d);
+	    }
 	}
     } else if (index < brep->m_T.Count()) {
 	ON_BrepTrim &trim = brep->m_T[index];
-	plottrim(trim, vbp, plotres, dim3d);
+	if (color) {
+	    plottrim(trim, vbp, plotres, dim3d, (int)color->buc_rgb[0], (int)color->buc_rgb[1], (int)color->buc_rgb[2]);
+	} else {
+	    plottrim(trim, vbp, plotres, dim3d);
+	}
     }
 
     bu_vls_printf(vls, ON_String(wstr).Array());
@@ -3046,45 +3071,49 @@ brep_command(struct bu_vls *vls, const char *solid_name, struct bu_color *color,
 		} else if (BU_STR_EQUAL(str, "?")) {
 		    plot_usage(vls);
 		} else {
-		    const char *dash = strchr(str, '-');
-		    const char *comma = strchr(str, ',');
-		    if (dash) {
-			int startindex = -1;
-			int endindex = -1;
-			struct bu_vls tmpstr = BU_VLS_INIT_ZERO;
-			bu_vls_strcpy(&tmpstr, str);
-			bu_vls_trunc(&tmpstr, dash - str);
-			startindex = atoi(bu_vls_addr(&tmpstr));
-			bu_vls_strcpy(&tmpstr, ++dash);
-			endindex = atoi(bu_vls_addr(&tmpstr));
-			bu_vls_free(&tmpstr);
-			for (int elem = startindex; elem <= endindex; elem++) {
-			    elements.insert(elem);
-			}
-		    } else if (comma) {
-			struct bu_vls tmpstr = BU_VLS_INIT_ZERO;
-			bu_vls_strcpy(&tmpstr, str);
-			while (strlen(bu_vls_addr(&tmpstr)) > 0) {
-			    struct bu_vls tmpstr2 = BU_VLS_INIT_ZERO;
-			    int idx = 0;
-			    bu_vls_strcpy(&tmpstr2, bu_vls_addr(&tmpstr));
-			    bu_vls_trunc(&tmpstr2, comma - bu_vls_addr(&tmpstr));
-			    idx = atoi(bu_vls_addr(&tmpstr2));
-			    bu_vls_free(&tmpstr2);
-			    elements.insert(idx);
-			    int stp = 0;
-			    while (idx >= 10) {
-				int idx2 = idx / 10;
-				idx = idx2;
-				stp++;
-			    }
-			    bu_vls_nibble(&tmpstr, stp+2);
-			    comma = strchr(bu_vls_addr(&tmpstr), ',');
-			}
-			bu_vls_free(&tmpstr);
+		    if (!str || strlen(str) == 0) {
+			plot_usage(vls);
 		    } else {
-			int idx = atoi(str);
-			elements.insert(idx);
+			const char *dash = strchr(str, '-');
+			const char *comma = strchr(str, ',');
+			if (dash) {
+			    int startindex = -1;
+			    int endindex = -1;
+			    struct bu_vls tmpstr = BU_VLS_INIT_ZERO;
+			    bu_vls_strcpy(&tmpstr, str);
+			    bu_vls_trunc(&tmpstr, dash - str);
+			    startindex = atoi(bu_vls_addr(&tmpstr));
+			    bu_vls_strcpy(&tmpstr, ++dash);
+			    endindex = atoi(bu_vls_addr(&tmpstr));
+			    bu_vls_free(&tmpstr);
+			    for (int elem = startindex; elem <= endindex; elem++) {
+				elements.insert(elem);
+			    }
+			} else if (comma) {
+			    struct bu_vls tmpstr = BU_VLS_INIT_ZERO;
+			    bu_vls_strcpy(&tmpstr, str);
+			    while (strlen(bu_vls_addr(&tmpstr)) > 0) {
+				struct bu_vls tmpstr2 = BU_VLS_INIT_ZERO;
+				int idx = 0;
+				bu_vls_strcpy(&tmpstr2, bu_vls_addr(&tmpstr));
+				bu_vls_trunc(&tmpstr2, comma - bu_vls_addr(&tmpstr));
+				idx = atoi(bu_vls_addr(&tmpstr2));
+				bu_vls_free(&tmpstr2);
+				elements.insert(idx);
+				int stp = 0;
+				while (idx >= 10) {
+				    int idx2 = idx / 10;
+				    idx = idx2;
+				    stp++;
+				}
+				bu_vls_nibble(&tmpstr, stp+2);
+				comma = strchr(bu_vls_addr(&tmpstr), ',');
+			    }
+			    bu_vls_free(&tmpstr);
+			} else {
+			    int idx = atoi(str);
+			    elements.insert(idx);
+			}
 		    }
 		}
 	    }

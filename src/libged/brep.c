@@ -498,7 +498,7 @@ ged_brep(struct ged *gedp, int argc, const char *argv[])
 
     vbp = rt_vlblock_init();
 
-    if ((int)color.buc_rgb[0] == 0 && (int)color.buc_rgb[0] == 0 && (int)color.buc_rgb[0] == 0) {
+    if ((int)color.buc_rgb[0] == 0 && (int)color.buc_rgb[1] == 0 && (int)color.buc_rgb[2] == 0) {
 	brep_command(gedp->ged_result_str, solid_name, NULL, (const struct rt_tess_tol *)&gedp->ged_wdbp->wdb_ttol, &gedp->ged_wdbp->wdb_tol, bs, bi, vbp, argc, argv, commtag);
     } else {
 	brep_command(gedp->ged_result_str, solid_name, &color, (const struct rt_tess_tol *)&gedp->ged_wdbp->wdb_ttol, &gedp->ged_wdbp->wdb_tol, bs, bi, vbp, argc, argv, commtag);
