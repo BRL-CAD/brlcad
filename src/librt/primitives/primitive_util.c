@@ -458,7 +458,7 @@ static cl_kernel clt_exclusive_scan_intervals_kernel;
 static size_t max_wg_size;
 static cl_uint max_compute_units;
 
-static cl_mem clt_db_ids, clt_db_indexes, clt_db_prims;
+static cl_mem clt_db_ids, clt_db_indexes, clt_db_prims, clt_db_bvh;
 static cl_uint clt_db_nprims;
 
 
@@ -757,7 +757,7 @@ clt_norm(struct hit *hitp, struct soltab *stp, struct xray *rp)
     const size_t hypersample = 1;
     cl_int error;
     cl_mem pin, pout;
-    struct cl_hit hit;
+    struct cl_hit hit; 
 
     VMOVE(r_pt.s, rp->r_pt);
     VMOVE(r_dir.s, rp->r_dir);
@@ -819,7 +819,7 @@ uniform_interval_splitting(cl_uint n, cl_uint granularity, cl_uint max_intervals
         return;
     }
 
-    /*
+    /* 
      * ensures that:
      *     num_intervals * interval_size is >= n
      *   and
@@ -963,8 +963,18 @@ clt_db_store(size_t count, struct soltab *solids[])
 }
 
 void
+clt_db_store_bvh(size_t count, struct clt_linear_bvh_node *nodes)
+{
+    cl_int error;
+
+    clt_db_bvh = clCreateBuffer(clt_context, CL_MEM_READ_ONLY|CL_MEM_COPY_HOST_PTR, sizeof(struct clt_linear_bvh_node)*count, nodes, &error);
+    if (error != CL_SUCCESS) bu_bomb("failed to create OpenCL bvh buffer");
+}
+
+void
 clt_db_release(void)
 {
+    clReleaseMemObject(clt_db_bvh);
     clReleaseMemObject(clt_db_prims);
     clReleaseMemObject(clt_db_indexes);
     clReleaseMemObject(clt_db_ids);
@@ -1014,12 +1024,11 @@ clt_db_solid_shot(const size_t sz_hits, struct cl_hit *hits, struct xray *rp, co
 
 void
 clt_run(unsigned char *pixels, cl_uint pwidth, cl_int cur_pixel, cl_int last_pixel, cl_int width,
-        mat_t view2model, fastf_t cell_width, fastf_t cell_height, fastf_t aspect)
+        mat_t view2model, fastf_t cell_width, fastf_t cell_height, fastf_t aspect, cl_int lightmodel)
 {
     const size_t npix = last_pixel-cur_pixel+1;
 
     cl_double16 v2m;
-    cl_int lightmodel = 2;
 
     cl_mem ppixels, phits;
     cl_int error;
@@ -1045,8 +1054,9 @@ clt_run(unsigned char *pixels, cl_uint pwidth, cl_int cur_pixel, cl_int last_pix
     error |= clSetKernelArg(clt_pixel_kernel, 10, sizeof(cl_int), &lightmodel);
     error |= clSetKernelArg(clt_pixel_kernel, 11, sizeof(cl_uint), &clt_db_nprims);
     error |= clSetKernelArg(clt_pixel_kernel, 12, sizeof(cl_mem), &clt_db_ids);
-    error |= clSetKernelArg(clt_pixel_kernel, 13, sizeof(cl_mem), &clt_db_indexes);
-    error |= clSetKernelArg(clt_pixel_kernel, 14, sizeof(cl_mem), &clt_db_prims);
+    error |= clSetKernelArg(clt_pixel_kernel, 13, sizeof(cl_mem), &clt_db_bvh);
+    error |= clSetKernelArg(clt_pixel_kernel, 14, sizeof(cl_mem), &clt_db_indexes);
+    error |= clSetKernelArg(clt_pixel_kernel, 15, sizeof(cl_mem), &clt_db_prims);
     if (error != CL_SUCCESS) bu_bomb("failed to set OpenCL kernel arguments");
     error = clEnqueueNDRangeKernel(clt_queue, clt_pixel_kernel, 1, NULL, &npix, NULL, 0, NULL, NULL);
     bu_semaphore_release(clt_semaphore);

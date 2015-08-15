@@ -13,8 +13,9 @@
 #define RT_DOT_TOL              (0.001)
 #define RT_PCOEF_TOL		(1.0e-10)
 
-#define SMALL_FASTF		(1.0e-77)
+#define MAX_FASTF               (1.0e73)        /* Very close to the largest number */
 #define SQRT_MAX_FASTF		(1.0e36)	/* This squared just avoids overflow */
+#define SMALL_FASTF		(1.0e-77)
 #define SQRT_SMALL_FASTF	(1.0e-39)	/* This squared gives zero */
 
 #define M_PI_3			(1.04719755119659774615421446109316763)   /**< pi/3 */

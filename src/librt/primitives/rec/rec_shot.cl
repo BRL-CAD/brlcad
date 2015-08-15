@@ -151,10 +151,6 @@ int rec_shot(global struct hit *res, const double3 r_pt, const double3 r_dir, co
 	nhits++; // replicate [0] to [1]
     }
 
-    if (res == NULL) {
-	return 2;	// HIT
-    }
-
     if (hits[0].hit_dist < hits[1].hit_dist) {
 	// entry is [0], exit is [1]
 	do_hitp(res, 0, idx, &hits[0]);

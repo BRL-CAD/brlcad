@@ -78,6 +78,7 @@ db_solid_shot(global int *len, global struct hit *res, const double3 r_pt, const
 }
 
 
+//#define RT_SINGLE_HIT 1
 void do_hitp(global struct hit *res, const uint i, const uint hit_index, const struct hit *hitp)
 {
     if (res) {
@@ -123,12 +124,142 @@ inline void gen_ray(double3 *r_pt, double3 *r_dir, const int a_x, const int a_y,
 }
 
 
+struct bvh_bounds {
+    double p_min[3], p_max[3];
+};
+
+struct linear_bvh_node {
+    struct bvh_bounds bounds;
+    union {
+        int primitives_offset;		/* leaf */
+        int second_child_offset;	/* interior */
+    } u;
+    ushort n_primitives;		/* 0 -> interior node */
+    uchar axis;				/* interior node: xyz */
+    uchar pad[1];			/* ensure 32 byte total size */
+};
+
+int
+rt_in_rpp(const double *pt,
+	  const double *invdir,
+	  global const double *min,
+	  global const double *max)
+{
+    /* Start with infinite ray, and trim it down */
+    double x0 = (min[0] - pt[0]) * invdir[0];
+    double y0 = (min[1] - pt[1]) * invdir[1];
+    double z0 = (min[2] - pt[2]) * invdir[2];
+    double x1 = (max[0] - pt[0]) * invdir[0];
+    double y1 = (max[1] - pt[1]) * invdir[1];
+    double z1 = (max[2] - pt[2]) * invdir[2];
+
+    /*
+     * Direction cosines along this axis is NEAR 0,
+     * which implies that the ray is perpendicular to the axis,
+     * so merely check position against the boundaries.
+     */
+    if ((fabs(invdir[0]) <= SMALL_FASTF && ((min[0] - pt[0])>0.0 || (max[0] - pt[0])<0.0))
+     || (fabs(invdir[1]) <= SMALL_FASTF && ((min[1] - pt[1])>0.0 || (max[0] - pt[1])<0.0))
+     || (fabs(invdir[2]) <= SMALL_FASTF && ((min[2] - pt[2])>0.0 || (max[0] - pt[2])<0.0)))
+        return 0;   /* MISS */
+
+    double rmin = 0.0;
+    double rmax = MAX_FASTF;
+    rmin = fmax(rmin, fmax(fmax(fmin(x0, x1), fmin(y0, y1)), fmin(z0, z1)));
+    rmax = fmin(rmax, fmin(fmin(fmax(x0, x1), fmax(y0, y1)), fmax(z0, z1)));
+
+    /* If equal, RPP is actually a plane */
+    return (rmin <= rmax);
+}
+
+
+int
+shootray(global struct hit *hitp, const double3 r_pt, const double3 r_dir,
+         const uint nprims, global int *ids, global struct linear_bvh_node *nodes,
+         global uint *indexes, global char *prims)
+{
+    int ret = 0;
+
+    double inv_dir[3];
+    if (r_dir.x < -SQRT_SMALL_FASTF) {
+        inv_dir[0]=1.0/r_dir.x;
+    } else if (r_dir.x > SQRT_SMALL_FASTF) {
+        inv_dir[0]=1.0/r_dir.x;
+    } else {
+        r_dir.x = 0.0;
+        inv_dir[0] = INFINITY;
+    }
+    if (r_dir.y < -SQRT_SMALL_FASTF) {
+        inv_dir[1]=1.0/r_dir.y;
+    } else if (r_dir.y > SQRT_SMALL_FASTF) {
+        inv_dir[1]=1.0/r_dir.y;
+    } else {
+        r_dir.y = 0.0;
+        inv_dir[1] = INFINITY;
+    }
+    if (r_dir.z < -SQRT_SMALL_FASTF) {
+        inv_dir[2]=1.0/r_dir.z;
+    } else if (r_dir.z > SQRT_SMALL_FASTF) {
+        inv_dir[2]=1.0/r_dir.z;
+    } else {
+        r_dir.z = 0.0;
+        inv_dir[2] = INFINITY;
+    }
+
+    if (nodes) {
+        const uchar dir_is_neg[3] = {inv_dir[0]<0, inv_dir[1]<0, inv_dir[2]<0};
+        int to_visit_offset = 0, current_node_index = 0;
+        int nodes_to_visit[64];
+
+        const double rr_pt[3] = {r_pt.x, r_pt.y, r_pt.z};
+        /* Follow ray through BVH nodes to find primitive intersections */
+        for (;;) {
+            const global struct linear_bvh_node *node = &nodes[current_node_index];
+            const global struct bvh_bounds *bounds = &node->bounds;
+
+            /* Check ray against BVH node */
+            if (rt_in_rpp(rr_pt, inv_dir, bounds->p_min, bounds->p_max)) {
+                if (node->n_primitives > 0) {
+                    /* Intersect ray with primitives in leaf BVH node */
+                    for (int i = 0; i < node->n_primitives; ++i) {
+                        const uint idx = node->u.primitives_offset + i;
+                        ret += shot(hitp, r_pt, r_dir, idx, ids[idx], prims + indexes[idx]);
+                    }
+                    if (to_visit_offset == 0) break;
+                    current_node_index = nodes_to_visit[--to_visit_offset];
+                } else {
+                    /* Put far BVH node on nodes_to_visit stack, advance to near
+                     * node
+                     */
+                    if (dir_is_neg[node->axis]) {
+                        nodes_to_visit[to_visit_offset++] = current_node_index + 1;
+                        current_node_index = node->u.second_child_offset;
+                    } else {
+                        nodes_to_visit[to_visit_offset++] = node->u.second_child_offset;
+                        current_node_index = current_node_index + 1;
+                    }
+                }
+            } else {
+                if (to_visit_offset == 0) break;
+                current_node_index = nodes_to_visit[--to_visit_offset];
+            }
+        }
+    } else {
+        for (uint idx=0; idx<nprims; idx++) {
+            ret += shot(hitp, r_pt, r_dir, idx, ids[idx], prims + indexes[idx]);
+        }
+    }
+    return ret;
+}
+
+
 __kernel void
-do_pixel(global unsigned char *pixels, global struct hit *hits,
+do_pixel(global unsigned char *pixels, global struct hit *hits, 
          const uint pwidth, const int cur_pixel, const int last_pixel, const int width,
          const double16 view2model, const double cell_width, const double cell_height, const double aspect,
          const int lightmodel,
-         const uint nprims, global int *ids, global uint *indexes, global char *prims)
+         const uint nprims, global int *ids, global struct linear_bvh_node *nodes,
+         global uint *indexes, global char *prims)
 {
     const int pixelnum = cur_pixel+get_global_id(0);
 
@@ -141,12 +272,9 @@ do_pixel(global unsigned char *pixels, global struct hit *hits,
     global struct hit *hitp = hits+(a_y*width+a_x);
     hitp->hit_dist = INFINITY;
 
-    int ret = 0;
-    for (uint idx=0; idx<nprims; idx++) {
-        ret += shot(hitp, r_pt, r_dir, idx, ids[idx], prims + indexes[idx]);
-    }
+    int ret = shootray(hitp, r_pt, r_dir, nprims, ids, nodes, indexes, prims);
 
-    double3 a_color;
+    double3 a_color = 1.0;
 
     if (ret != 0) {
         double diffuse0 = 0;
