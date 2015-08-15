@@ -558,7 +558,6 @@ struct lbvh_treelet {
 struct bvh_accel {
     int max_prims_in_node;
     struct soltab **primitives;
-    struct clt_linear_bvh_node *nodes;
 };
 
 
@@ -678,6 +677,7 @@ static void radix_sort(size_t v_len, struct morton_primitive **v)
 #undef n_buckets
 }
 
+
 static struct bvh_build_node *
 emit_lbvh(struct bvh_accel *accel,
     struct bvh_build_node **build_nodes,
@@ -709,26 +709,6 @@ emit_lbvh(struct bvh_accel *accel,
             VMOVE(bounds2.p_max, primitive->st_max);
             bounds = bvh_bounds_union(&bounds, &bounds2);
         }
-
-	/* In case everything is a halfspace, set a minimum space */
-	if (bounds.p_min[X] >= INFINITY) {
-	    VSETALL(bounds.p_min, -1);
-	}
-	if (bounds.p_max[X] <= -INFINITY) {
-	    VSETALL(bounds.p_max, 1);
-	}
-
-	/*
-	 * Enlarge the model RPP just slightly, to avoid nasty effects
-	 * with a solid's face being exactly on the edge
-	 */
-	bounds.p_min[X] = floor(bounds.p_min[X]);
-	bounds.p_min[Y] = floor(bounds.p_min[Y]);
-	bounds.p_min[Z] = floor(bounds.p_min[Z]);
-	bounds.p_max[X] = ceil(bounds.p_max[X]);
-	bounds.p_max[Y] = ceil(bounds.p_max[Y]);
-	bounds.p_max[Z] = ceil(bounds.p_max[Z]);
-
         init_leaf(node, first_prim_offset, n_primitives, &bounds);
         return node;
     } else {
@@ -780,14 +760,17 @@ emit_lbvh(struct bvh_accel *accel,
     }
 }
 
-static fastf_t surface_area(const struct bvh_bounds *b)
+
+static inline fastf_t
+surface_area(const struct bvh_bounds *b)
 {
     vect_t d;
     VSUB2(d, b->p_max, b->p_min);
     return (2.0 * (d[X] * d[Y] + d[X] * d[Z] + d[Y] * d[Z]));
 }
 
-static unsigned char maximum_extent(const struct bvh_bounds *b)
+static inline unsigned char
+maximum_extent(const struct bvh_bounds *b)
 {
     vect_t d;
     VSUB2(d, b->p_max, b->p_min);
@@ -799,7 +782,7 @@ static unsigned char maximum_extent(const struct bvh_bounds *b)
         return 2;
 }
 
-static int
+static inline int
 pred(const struct bvh_build_node *node, struct bvh_bounds *centroid_bounds,
      unsigned char dim, int min_cost_split_bucket)
 {
@@ -956,6 +939,7 @@ out:
 #undef n_buckets
 }
 
+
 struct bvh_build_node *
 hlbvh_create(struct bvh_accel *accel, struct bu_pool *pool, int *total_nodes, const int n_primitives,
     struct soltab ***ordered_prims)
@@ -1057,13 +1041,14 @@ hlbvh_create(struct bvh_accel *accel, struct bu_pool *pool, int *total_nodes, co
 
 
 cl_int
-flatten_bvh_tree(struct bvh_accel *accel, struct bvh_build_node *node, cl_int *offset, cl_int depth)
+flatten_bvh_tree(cl_int *offset, struct clt_linear_bvh_node *nodes, int total_nodes, const struct bvh_build_node *node, int depth)
 {
     cl_int my_offset = *offset;
     struct clt_linear_bvh_node *linear_node;
 
+    BU_ASSERT(my_offset < total_nodes);
     ++*offset;
-    linear_node = &accel->nodes[my_offset];
+    linear_node = &nodes[my_offset];
 
     VMOVE(linear_node->bounds.p_min, node->bounds.p_min);
     VMOVE(linear_node->bounds.p_max, node->bounds.p_max);
@@ -1076,24 +1061,14 @@ flatten_bvh_tree(struct bvh_accel *accel, struct bvh_build_node *node, cl_int *o
         /* Create interior flattened BVH node */
         linear_node->axis = node->split_axis;
         linear_node->n_primitives = 0;
-	flatten_bvh_tree(accel, node->children[0], offset, depth + 1);
-        linear_node->u.second_child_offset = flatten_bvh_tree(accel, node->children[1], offset, depth + 1);
+	flatten_bvh_tree(offset, nodes, total_nodes, node->children[0], depth + 1);
+        linear_node->u.second_child_offset = flatten_bvh_tree(offset, nodes, total_nodes, node->children[1], depth + 1);
     }
     return my_offset;
 }
 
 
 /*********************************************************************************/
-static point_t lo, hi;
-
-static vect_t size, isize;
-static int M[3];
-
-static cl_uint *C;
-static cl_uint *L;
-static struct soltab **S;
-static cl_uint NS;
-
 static int ibackground[3] = {0, 0, 50};         /* integer 0..255 version */
 static int inonbackground[3] = {0, 0, 51};	/* integer non-background */
 static size_t pwidth = 3;                       /* Width of each pixel (in bytes) */
@@ -1101,137 +1076,8 @@ extern fb *fbp;                                 /* Framebuffer handle */
 static struct scanline scanline;
 
 
-static inline
-int simple_index(const int x, const int y, const int z)
-{
-    return (((M[Y] * z) + y) * M[X]) + x;
-}
-
-struct bboxi {
-    cl_uint min[3], max[3];
-};
-
-#define MY_CLAMP(x, min, max)   ((x < min) ? min : ((x > max) ? max : x))
-#define MY_SIGN(x)              ((x < 0) ? -1 : 1)
-
-
-static void
-alloc_grid(fastf_t bn_min[3], fastf_t bn_max[3], size_t solids_sz, struct soltab **solids)
-{
-    const fastf_t density = 4.0;
-    fastf_t V, factor;
-    size_t N;
-
-    size_t i;
-    ssize_t j;
-    cl_uint x, y, z;
-    struct bboxi *B;
-
-    NS = solids_sz;
-    VMOVE(lo, bn_min);
-    VMOVE(hi, bn_max);
-
-    VSUB2(size, hi, lo);
-
-    V = size[X]*size[Y]*size[Z];
-    factor = pow((density * (fastf_t)solids_sz) / V, (1.0/3.0));
-
-    for (i=0; i<3; i++) {
-        M[i] = (int)(factor * size[i] + 0.5);
-    }
-
-    if (M[X] == 1 && M[Y] == 1 && M[Z] == 1) {
-        return;
-    }
-
-    VELDIV(size, size, M);
-
-    VSETALL(isize, 1.0);
-    VELDIV(isize, isize, size);
-
-    N = M[X] * M[Y] * M[Z];
-
-
-    /* TODO: do a deep copy here in case it ain't safe. */
-    S = solids;
-
-    printf("%dx%dx%d\n", M[X], M[Y], M[Z]);
-
-    B = (struct bboxi *)bu_calloc(solids_sz, sizeof(struct bboxi), "B");
-
-    for (i=0; i<solids_sz; ++i) {
-        const struct soltab *stp = solids[i];
-        point_t min, max;
-        struct bboxi boundi;
-        cl_uint k;
-
-        VSUB2(min, stp->st_min, lo);
-        VELMUL(min, min, isize);
-
-        VSUB2(max, stp->st_max, lo);
-        VELMUL(max, max, isize);
-
-        for (k=0; k<3; ++k) {
-            boundi.max[k] = MY_CLAMP((int)max[k], 0, M[k]-1);
-            boundi.min[k] = MY_CLAMP((int)min[k], 0, M[k]-1);
-        }
-        B[i] = boundi;
-    }
-
-
-
-    C = (cl_uint *)bu_calloc(N+1, sizeof(cl_uint), "C");
-    
-    for (i=0; i<=N; ++i) {
-        C[i] = 0;
-    }
-    
-    /* insert objects in the cells that intersect the object's bounding box. */
-    for (i=0; i<solids_sz; ++i) {
-        struct bboxi boundi = B[i];
-
-        for (z=boundi.min[2]; z<=boundi.max[2]; ++z) {
-            for (y=boundi.min[1]; y<=boundi.max[1]; ++y) {
-                for (x=boundi.min[0]; x<=boundi.max[0]; ++x) {
-                    cl_uint ii = simple_index(x, y, z);
-                    C[ii]++;
-                }
-            }
-        }
-    }
-
-    for (i=1; i<=N; ++i) {
-        C[i] += C[i-1];
-    }
-
-    L = (cl_uint *)bu_calloc(C[N-1], sizeof(cl_uint), "L");
-
-    for (j=solids_sz-1; j>=0; --j) {
-        /* for each cell j overlapped by object i. */
-        struct bboxi boundi = B[j];
-
-        for (z=boundi.min[2]; z<=boundi.max[2]; ++z) {
-            for (y=boundi.min[1]; y<=boundi.max[1]; ++y) {
-                for (x=boundi.min[0]; x<=boundi.max[0]; ++x) {
-                    cl_uint jj = simple_index(x, y, z);
-                    L[--C[jj]] = j;
-                }
-            }
-        }
-    }
-
-    bu_free((struct bboxi *)B, "B");
-}
-/*
-static void
-free_grid(void)
-{
-    bu_free((cl_uint *)C, "C");
-    bu_free((cl_uint *)L, "L");
-}
-*/
-
-static struct bvh_accel accel;
+struct bvh_accel accel;
+struct clt_linear_bvh_node *nodes;
 
 void
 simple_prep(struct rt_i *rtip)
@@ -1268,10 +1114,10 @@ simple_prep(struct rt_i *rtip)
     if (finp->bn.bn_len != 0) {
         /* Build BVH tree for primitives */
 	struct bu_pool *pool;
-        cl_int total_nodes = 0, j, k;
+        int total_nodes = 0, j, k;
         struct soltab **ordered_prims, **t;
         struct bvh_build_node *root;
-        cl_int offset = 0;
+        cl_int total_nodes2 = 0;
 
 	accel.max_prims_in_node = 4;
 
@@ -1283,23 +1129,22 @@ simple_prep(struct rt_i *rtip)
         accel.primitives = t;
 
         /* Compute representation of depth-first traversal of BVH tree */
-        accel.nodes = (struct clt_linear_bvh_node*)bu_calloc(total_nodes, sizeof(struct clt_linear_bvh_node), "simple_prep");
-        flatten_bvh_tree(&accel, root, &offset, 0);
+        nodes = (struct clt_linear_bvh_node*)bu_calloc(total_nodes, sizeof(struct clt_linear_bvh_node), "simple_prep");
+        flatten_bvh_tree(&total_nodes2, nodes, total_nodes, root, 0);
 	bu_pool_delete(pool);
 
-        for (j=0; j<offset; j++) {
-            if (accel.nodes[j].n_primitives != 0) {
-                bu_log("#%d: %d\n", j, accel.nodes[j].n_primitives);
-                for (k=0; k<accel.nodes[j].n_primitives; k++) {
-                    bu_log("  %ld\n", accel.primitives[accel.nodes[j].u.primitives_offset + k]->st_bit);
+        for (j=0; j<total_nodes2; j++) {
+            if (nodes[j].n_primitives != 0) {
+                bu_log("#%d: %d\n", j, nodes[j].n_primitives);
+                for (k=0; k<nodes[j].n_primitives; k++) {
+                    bu_log("  %ld\n", accel.primitives[nodes[j].u.primitives_offset + k]->st_bit);
                 }
             } else {
-                bu_log("#%d> #%d\n", j, accel.nodes[j].u.second_child_offset);
+                bu_log("#%d> #%d\n", j, nodes[j].u.second_child_offset);
                 
             }
         }
 
-	BU_ASSERT(offset == total_nodes);
         bu_log("BVH created with %d nodes for %d primitives (%.2f MB)\n", total_nodes,
              (int)finp->bn.bn_len,
              (double)(sizeof(struct clt_linear_bvh_node) * total_nodes) / (1024.0 * 1024.0));
@@ -1309,13 +1154,12 @@ simple_prep(struct rt_i *rtip)
         }
         */
 
-        clt_db_store_bvh(total_nodes, accel.nodes);
+        clt_db_store_bvh(total_nodes, nodes);
     }
     clt_db_store(finp->bn.bn_len, accel.primitives);
 /*    clt_db_store(finp->bn.bn_len, finp->bn.bn_list);*/
-    
-    alloc_grid(finp->bn.bn_min, finp->bn.bn_max, finp->bn.bn_len, accel.primitives);
-/*    bu_free(finp, "union cutter");*/
+
+    bu_free(finp, "union cutter");
 }
 
 int
@@ -1449,8 +1293,7 @@ simple_shootray(struct resource *resp, struct xray *a_ray, struct rt_i *rtip, re
         }
     }
 
-#if 1
-    if (accel.nodes) {
+    if (nodes) {
         unsigned char dir_is_neg[3];
         int to_visit_offset = 0, current_node_index = 0;
         int nodes_to_visit[64];
@@ -1466,7 +1309,7 @@ simple_shootray(struct resource *resp, struct xray *a_ray, struct rt_i *rtip, re
 
         /* Follow ray through BVH nodes to find primitive intersections */
         for (;;) {
-            const struct clt_linear_bvh_node *node = &accel.nodes[current_node_index];
+            const struct clt_linear_bvh_node *node = &nodes[current_node_index];
             const struct clt_bvh_bounds *bounds = &node->bounds;
 
             /* Check ray against BVH node */
@@ -1514,30 +1357,7 @@ simple_shootray(struct resource *resp, struct xray *a_ray, struct rt_i *rtip, re
                         }
                         resp->re_shot_hit++;
                     }
-#if 0
-                    /*
-                     * If a_onehit == 0 and a_ray_length <= 0, then the ray is
-                     * traced to +infinity.
-                     *
-                     * If a_onehit != 0, then it indicates how many hit points
-                     * (which are greater than the ray start point of 0.0) the
-                     * application requires, i.e., partitions with inhit >= 0.  (If
-                     * negative, indicates number of non-air hits needed).  If
-                     * this box yielded additional segments, immediately weave
-                     * them into the partition list, and perform final boolean
-                     * evaluation.  If this results in the required number of
-                     * final partitions, then cease ray-tracing and hand the
-                     * partitions over to the application.  All partitions will
-                     * have valid in and out distances.  a_ray_length is treated
-                     * similarly to a_onehit.
-                     */
-                    if (BU_LIST_NON_EMPTY(&(waiting_segs.l))) {
-                        if (ap->a_onehit != 0) {
-                            /* Weave these segments into partition list */
-                            rt_boolweave(pfinished_segs, &waiting_segs, &initial_part, ap);
-                        }
-                    }
-#endif
+
                     if (to_visit_offset == 0) break;
                     current_node_index = nodes_to_visit[--to_visit_offset];
                 } else {
@@ -1558,178 +1378,7 @@ simple_shootray(struct resource *resp, struct xray *a_ray, struct rt_i *rtip, re
             }
         }
     }
-#else
-    {
-        vect_t d; /* ray distance from axis. */
-        vect_t ddist; /* ray distance between sub-voxel faces. */
-        signed char rd[3]; /* {-1, 1} depends on ray direction. */
-        int id[3]; /* current voxel index. */
-        int ip[3]; /* array index increment. */
-        int i; /* current voxel index into 3D array. */
-        point_t p; /* voxel intersection point. */
 
-        ss.newray = *a_ray;
-        ss.dist_corr = 0.0;
-
-        VJOIN1(p, ss.newray.r_pt, ss.newray.r_min, ss.newray.r_dir);
-        VSUB2(p, p, rtip->mdl_min);
-
-        for (i=0; i<3; i++) {
-            d[i] = p[i]*isize[i];
-
-            id[i] = MY_CLAMP((int)d[i], 0, M[i]-1);
-            rd[i] = MY_SIGN(ss.newray.r_dir[i]);
-            d[i] -= id[i];
-
-            if (rd[i] > 0)  d[i] = 1.0 - d[i];
-        }
-
-        VELMUL(ddist, size, ss.abs_inv_dir);
-        VELMUL(d, d, ddist);
-
-        ip[X] = rd[X];
-        ip[Y] = M[X]*rd[Y];
-        ip[Z] = M[Y]*M[X]*rd[Z];
-
-        i = simple_index(V3ARGS(id));
-
-        for (;;) {
-            int j;
-
-            if (C[i] < C[i+1] && ss.box_end >= BACKING_DIST) {
-                unsigned k;
-
-                for (k = C[i]; k < C[i+1]; ++k) {
-                    struct soltab *stp;
-                    int ret;
-                    
-                    stp = S[L[k]];
-
-                    if (BU_BITTEST(solidbits, stp->st_bit)) {
-                        resp->re_ndup++;
-                        continue;	/* already shot */
-                    }
-
-                    /* Shoot a ray */
-                    BU_BITSET(solidbits, stp->st_bit);
-
-    		    resp->re_shots++;
-                    BU_LIST_INIT(&(new_segs.l));
-
-                    ret = -1;
-
-		    if (clt_accelerated(stp)) {
-			struct seg *seghead = &new_segs;
-			int ii;
-			struct cl_hit hits[4];
-
-			ret = clt_db_solid_shot(sizeof(hits), hits, &ss.newray, L[k]);
-			for (ii = 0; ii < ret; ii += 2) {
-			    struct seg *segp;
-			    RT_GET_SEG(segp, ap->a_resource);
-			    segp->seg_stp = stp;
-			    segp->seg_in.hit_dist = hits[ii].hit_dist;
-			    segp->seg_in.hit_surfno = hits[ii].hit_surfno;
-			    segp->seg_out.hit_dist = hits[ii+1].hit_dist;
-			    segp->seg_out.hit_surfno = hits[ii+1].hit_surfno;
-			    /* Set aside vector for rt_tor_norm() later */
-			    VMOVE(segp->seg_in.hit_vpriv, hits[ii].hit_vpriv.s);
-			    VMOVE(segp->seg_out.hit_vpriv, hits[ii+1].hit_vpriv.s);
-			    BU_LIST_INSERT(&(seghead->l), &(segp->l));
-			}
-		    } else if (stp->st_meth->ft_shot) {
-			ret = stp->st_meth->ft_shot(stp, &ss.newray, ap, &new_segs);
-		    }
-
-                    if (ret <= 0) {
-                        resp->re_shot_miss++;
-                        continue;	/* MISS */
-                    }
-                    {
-                        register struct seg *s2;
-                        while (BU_LIST_WHILE(s2, seg, &(new_segs.l))) {
-                            BU_LIST_DEQUEUE(&(s2->l));
-                            /* Restore to original distance */
-                            s2->seg_in.hit_dist += ss.dist_corr;
-                            s2->seg_out.hit_dist += ss.dist_corr;
-                            s2->seg_in.hit_rayp = s2->seg_out.hit_rayp = a_ray;
-                            BU_LIST_INSERT(&(waiting_segs.l), &(s2->l));
-                        }
-                    }
-                    resp->re_shot_hit++;
-                }
-            }
-
-            /*
-             * If a_onehit == 0 and a_ray_length <= 0, then the ray is
-             * traced to +infinity.
-             *
-             * If a_onehit != 0, then it indicates how many hit points
-             * (which are greater than the ray start point of 0.0) the
-             * application requires, i.e., partitions with inhit >= 0.  (If
-             * negative, indicates number of non-air hits needed).  If
-             * this box yielded additional segments, immediately weave
-             * them into the partition list, and perform final boolean
-             * evaluation.  If this results in the required number of
-             * final partitions, then cease ray-tracing and hand the
-             * partitions over to the application.  All partitions will
-             * have valid in and out distances.  a_ray_length is treated
-             * similarly to a_onehit.
-             */
-            if (BU_LIST_NON_EMPTY(&(waiting_segs.l))) {
-                if (ap->a_onehit != 0) {
-                    int done;
-
-                    /* Weave these segments into partition list */
-                    rt_boolweave(pfinished_segs, &waiting_segs, &InitialPart, ap);
-
-                    if (BU_PTBL_LEN(&resp->re_pieces_pending) > 0) {
-
-                        /* Find the lowest pending mindist, that's as far
-                         * as boolfinal can progress to.
-                         */
-                        struct rt_piecestate **psp;
-                        for (BU_PTBL_FOR(psp, (struct rt_piecestate **), &resp->re_pieces_pending)) {
-                            register fastf_t dist;
-
-                            dist = (*psp)->mindist;
-                            if (dist < pending_hit) {
-                                pending_hit = dist;
-                            }
-                        }
-                    }
-
-                    /* Evaluate regions up to end of good segs */
-                    if (ss.box_end < pending_hit) pending_hit = ss.box_end;
-                    done = rt_boolfinal(&InitialPart, pFinalPart, last_bool_start, pending_hit, regionbits, ap, solidbits);
-                    last_bool_start = pending_hit;
-
-                    /* See if enough partitions have been acquired */
-                    if (done > 0) goto hitit;
-                }
-            }
-
-            if (ap->a_ray_length > 0.0 &&
-                ss.box_end >= ap->a_ray_length &&
-                ap->a_ray_length < pending_hit)
-                break;
-
-            /* Push ray onwards to next box */
-            ss.box_start = ss.box_end;
-
-
-            j = (d[0]<d[1] && d[0]<d[2]) ? 0 : (d[1]<d[2] ? 1 : 2);
-
-            id[j] += rd[j];
-
-            if ((id[j] < 0) || (id[j] >= M[j]))
-                break;
-
-            d[j] += ddist[j];
-            i += ip[j];    
-        }
-    }
-#endif
     /*
      * Ray has finally left known space -- Weave any remaining
      * segments into the partition list.
@@ -1783,7 +1432,6 @@ simple_shootray(struct resource *resp, struct xray *a_ray, struct rt_i *rtip, re
      *
      * VJOIN1(hitp->hit_point, rp->r_pt, hitp->hit_dist, rp->r_dir);
      */
-/*hitit:*/
     /*
      * Before recursing, release storage for unused Initial
      * partitions.  finished_segs can not be released yet, because
