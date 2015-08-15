@@ -2353,6 +2353,17 @@ fill_out_bsp(struct rt_i *rtip, union cutter *cutp, struct resource *resp, fastf
     THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
     (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
     OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+    Derived from src/accelerators/bvh.cpp
+    within the pbrt-v3 project, https://github.com/mmp/pbrt-v3/
+
+    Direct browse link:
+    https://github.com/mmp/pbrt-v3/blob/master/src/accelerators/bvh.cpp
+
+    Implements the HLBVH construction algorithm as in:
+      "Simpler and Faster HLBVH with Work Queues" by
+      Kirill Garanzha, Jacopo Pantaleoni, David McAllister.
+      (Proc. High Performance Graphics 2011, pg 59)
  ********************************************************************************/
 struct bvh_build_node {
     fastf_t bounds[6];
