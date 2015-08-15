@@ -618,10 +618,10 @@ static void radix_sort(size_t v_len, struct morton_primitive **v) {
         /* Perform one pass of radix sort, sorting bits_per_pass bits */
         cl_uint low_bit = pass * bits_per_pass;
 #define n_buckets (1 << bits_per_pass)
-        cl_int bucket_count[n_buckets];
+        cl_uint bucket_count[n_buckets];
         /* Compute starting index in output array for each bucket */
-        cl_int out_index[n_buckets];
-        cl_int i;
+        cl_uint out_index[n_buckets];
+        cl_uint i;
         size_t j;
 
         /* Set in and out vector pointers for radix sort pass */
@@ -631,13 +631,14 @@ static void radix_sort(size_t v_len, struct morton_primitive **v) {
         /* Count number of zero bits in array for current radix sort bit */
         const cl_uint bit_mask = (1 << bits_per_pass) - 1;
 
-	memset(bucket_count, 0, sizeof(bucket_count));
-
+	for (i = 0; i<n_buckets; i++) {
+	    bucket_count[i] = 0;
+	}
         for (j=0; j<v_len; j++) {
             const struct morton_primitive *mp = &in[j];
             cl_uint bucket = (mp->morton_code >> low_bit) & bit_mask;
 	    BU_ASSERT(bucket < n_buckets);
-            ++bucket_count[bucket];
+            bucket_count[bucket]++;
         }
 
         out_index[0] = 0;
@@ -663,25 +664,25 @@ static void radix_sort(size_t v_len, struct morton_primitive **v) {
 #undef n_buckets
 }
 
-
 static struct bvh_build_node *emit_lbvh(struct bvh_accel *accel,
-    struct bvh_build_node *build_nodes,
+    struct bvh_build_node **build_nodes,
     struct morton_primitive *morton_prims, cl_int n_primitives, cl_int *total_nodes,
     struct soltab **ordered_prims,
     cl_int *ordered_prims_offset, cl_int bit_index) {
 
     BU_ASSERT(n_primitives > 0);
-    if (bit_index < 0 || n_primitives < accel->max_prims_in_node) {
-        struct bvh_build_node *node = build_nodes++;
+    if (bit_index == -1 || n_primitives < accel->max_prims_in_node) {
+        struct bvh_build_node *node;
         struct bvh_bounds bounds = {{INFINITY,INFINITY,INFINITY}, {-INFINITY,-INFINITY,-INFINITY}};
         cl_int first_prim_offset;
         cl_int i;
 
+        /* Create and return leaf node of LBVH treelet */
+        ++*total_nodes;
+        node = (*build_nodes)++;
+
         first_prim_offset = *ordered_prims_offset;
         (*ordered_prims_offset) += n_primitives; /* atomic_add */
-        
-        /* Create and return leaf node of LBVH treelet */
-        (*total_nodes)++;
 
         for (i = 0; i < n_primitives; ++i) {
             struct bvh_bounds bounds2;
@@ -693,16 +694,36 @@ static struct bvh_build_node *emit_lbvh(struct bvh_accel *accel,
             VMOVE(bounds2.p_max, primitive->st_max);
             bounds = bvh_bounds_union(bounds, bounds2);
         }
+
+	/* In case everything is a halfspace, set a minimum space */
+	if (bounds.p_min[X] >= INFINITY) {
+	    VSETALL(bounds.p_min, -1);
+	}
+	if (bounds.p_max[X] <= -INFINITY) {
+	    VSETALL(bounds.p_max, 1);
+	}
+
+	/*
+	 * Enlarge the model RPP just slightly, to avoid nasty effects
+	 * with a solid's face being exactly on the edge
+	 */
+	bounds.p_min[X] = floor(bounds.p_min[X]);
+	bounds.p_min[Y] = floor(bounds.p_min[Y]);
+	bounds.p_min[Z] = floor(bounds.p_min[Z]);
+	bounds.p_max[X] = ceil(bounds.p_max[X]);
+	bounds.p_max[Y] = ceil(bounds.p_max[Y]);
+	bounds.p_max[Z] = ceil(bounds.p_max[Z]);
+
         init_leaf(node, first_prim_offset, n_primitives, bounds);
         return node;
     } else {
-        cl_uint mask = 1 << bit_index;
+        const cl_uint mask = (1 << bit_index);
         cl_int search_start = 0, search_end = n_primitives - 1;
         cl_int split_offset;
-        struct bvh_build_node *node = build_nodes++;
+        struct bvh_build_node *node;
         struct bvh_build_node *lbvh[2];
-        cl_uchar axis = bit_index % 3;
-        
+        cl_uchar axis = (bit_index % 3);
+
         /* Advance to next subtree level if there's no LBVH split for this bit */
         if ((morton_prims[0].morton_code & mask) ==
             (morton_prims[n_primitives - 1].morton_code & mask))
@@ -731,7 +752,8 @@ static struct bvh_build_node *emit_lbvh(struct bvh_accel *accel,
 		(morton_prims[split_offset].morton_code & mask));
 
         /* Create and return interior LBVH node */
-        (*total_nodes)++;
+        ++*total_nodes;
+        node = (*build_nodes)++;
         lbvh[0] = emit_lbvh(accel, build_nodes, morton_prims, split_offset,
                      total_nodes, ordered_prims, ordered_prims_offset,
                      bit_index - 1);
@@ -744,8 +766,11 @@ static struct bvh_build_node *emit_lbvh(struct bvh_accel *accel,
 }
 
 static cl_int flatten_bvh_tree(struct bvh_accel *accel, struct bvh_build_node *node, cl_int *offset, cl_int depth) {
-    struct linear_bvh_node *linear_node = &accel->nodes[*offset];
-    cl_int my_offset = (*offset)++;
+    cl_int my_offset = *offset;
+    struct linear_bvh_node *linear_node;
+
+    ++*offset;
+    linear_node = &accel->nodes[my_offset];
     linear_node->bounds = node->bounds;
     if (node->n_primitives > 0) {
 	BU_ASSERT(!node->children[0] && !node->children[1]);
@@ -803,7 +828,7 @@ struct bvh_build_node *build_upper_sah(struct bvh_accel *accel,
     if (n_nodes == 1) {
 	return treelet_roots[start];
     } else {
-	struct bvh_build_node *node = (struct bvh_build_node*)bu_calloc(1, sizeof(struct bvh_build_node), "build_upper_sah");
+	struct bvh_build_node *node;
 	struct bvh_bounds bounds = {{INFINITY,INFINITY,INFINITY}, {-INFINITY,-INFINITY,-INFINITY}};
 	cl_int i;
 	cl_uchar dim;
@@ -822,14 +847,15 @@ struct bvh_build_node *build_upper_sah(struct bvh_accel *accel,
 	cl_int min_cost_split_bucket;
 
 	struct bvh_build_node **pmid;
+	struct bvh_build_node *lbvh[2];
 	cl_int mid;
+
+	node = (struct bvh_build_node*)bu_malloc(sizeof(struct bvh_build_node), "build_upper_sah");
 
 	for (i = 0; i<n_buckets; i++) {
 	    buckets[i].count = 0;
 	}
 	
-	(*total_nodes)++;
-
 	/* Compute bounds of all nodes under this HLBVH node */
 	for (i = start; i < end; ++i)
 	    bounds = bvh_bounds_union(bounds, treelet_roots[i]->bounds);
@@ -895,65 +921,71 @@ struct bvh_build_node *build_upper_sah(struct bvh_accel *accel,
 	    first = &treelet_roots[start];
 	    last = &treelet_roots[end - 1] + 1;
 
-	    while (first!=last) {
-		while (pred((*first), &centroid_bounds, dim, min_cost_split_bucket)) {
-		  ++first;
-		  if (first==last) goto out;
-		}
-		do {
-		  --last;
-		  if (first==last) goto out;
-		} while (!pred((*last), &centroid_bounds, dim, min_cost_split_bucket));
+	    for (;;) {
+		for (;;)
+		    if (first == last)
+			goto out;
+		    else if (pred(*first, &centroid_bounds, dim, min_cost_split_bucket))
+			++first;
+		    else
+			break;
+		--last;
+		for (;;)
+		    if (first == last)
+			goto out;
+		    else if (!pred(*last, &centroid_bounds, dim, min_cost_split_bucket))
+			--last;
+		    else
+			break;
+		t = *first;
+		*first = *last;
+		*last = t;
 
-		t = *last;
-		*last = *first;
-		*first = t;
 		++first;
 	    }
-    out:
+out:
 	    pmid = first;
 	}
 
-	mid = pmid - &treelet_roots[0];
+	mid = pmid - treelet_roots;
 	BU_ASSERT(mid > start && mid < end);
-	init_interior(node,
-	    dim, build_upper_sah(accel, treelet_roots, start, mid, total_nodes),
-	    build_upper_sah(accel, treelet_roots, mid, end, total_nodes));
+
+	++*total_nodes;
+	lbvh[0] = build_upper_sah(accel, treelet_roots, start, mid, total_nodes);
+	lbvh[1] = build_upper_sah(accel, treelet_roots, mid, end, total_nodes);
+	init_interior(node, dim, lbvh[0], lbvh[1]);
 	return node;
     }
 #undef n_buckets
 }
 
-
 struct bvh_build_node *hlbvh_build(struct bvh_accel *accel,
     cl_int *total_nodes,
-    cl_int n_primitives,
+    const cl_int n_primitives,
     struct soltab ***ordered_prims) {
-    /* Compute bounding box of all primitive centroids */
     struct bvh_bounds bounds = {{INFINITY,INFINITY,INFINITY}, {-INFINITY,-INFINITY,-INFINITY}};
     cl_int i;
     struct morton_primitive *morton_prims;
 
     struct lbvh_treelet *treelets_to_build;
     struct lbvh_treelet *treelets_to_build_end;
-    struct lbvh_treelet *tr;
+    struct lbvh_treelet *treelet;
 
     struct bvh_build_node *ret;
 
     struct bvh_build_node **finished_treelets, **finished_treelets_last;
     cl_int start, end;
-    cl_int atomic_total = 0, ordered_prims_offset = 0;
+    cl_int ordered_prims_offset = 0;
 
-    treelets_to_build = (struct lbvh_treelet*)bu_calloc(n_primitives, sizeof(struct lbvh_treelet), "hlbvh_build");
-    
+    /* Compute bounding box of all primitive centroids */
     for (i = 0; i<n_primitives; i++) {
         struct soltab *primitive = accel->primitives[i];
         VMIN(bounds.p_min, primitive->st_center);
         VMAX(bounds.p_max, primitive->st_center);
     }
 
-    /* Compute Morton indices of primitives */
     morton_prims = (struct morton_primitive*)bu_calloc(n_primitives, sizeof(struct morton_primitive), "hlbvh_build");
+    /* Compute Morton indices of primitives */
     for (i = 0; i<n_primitives; i++) {
         /* Initialize morton_prims[i] for ith primitive */
         const cl_uint morton_bits = 10;
@@ -964,9 +996,9 @@ struct bvh_build_node *hlbvh_build(struct bvh_accel *accel,
         morton_prims[i].primitive_index = i;
 
         VSUB2(o, primitive->st_center, bounds.p_min);
-        if (bounds.p_max[X] > bounds.p_min[X]) o[X] /= bounds.p_max[X] - bounds.p_min[X];
-        if (bounds.p_max[Y] > bounds.p_min[Y]) o[Y] /= bounds.p_max[Y] - bounds.p_min[Y];
-        if (bounds.p_max[Z] > bounds.p_min[Z]) o[Z] /= bounds.p_max[Z] - bounds.p_min[Z];
+        if (bounds.p_max[X] > bounds.p_min[X]) o[X] /= (bounds.p_max[X] - bounds.p_min[X]);
+        if (bounds.p_max[Y] > bounds.p_min[Y]) o[Y] /= (bounds.p_max[Y] - bounds.p_min[Y]);
+        if (bounds.p_max[Z] > bounds.p_min[Z]) o[Z] /= (bounds.p_max[Z] - bounds.p_min[Z]);
         
         o[X] *= morton_scale;
         o[Y] *= morton_scale;
@@ -980,6 +1012,7 @@ struct bvh_build_node *hlbvh_build(struct bvh_accel *accel,
     /* Create LBVH treelets at bottom of BVH */
 
     /* Find intervals of primitives for each treelet */
+    treelets_to_build = (struct lbvh_treelet*)bu_calloc(n_primitives, sizeof(struct lbvh_treelet), "hlbvh_build");
     treelets_to_build_end = treelets_to_build;
     for (start = 0, end = 1; end <= n_primitives; ++end) {
         cl_uint mask = 0x3ffc0000;
@@ -1001,25 +1034,23 @@ struct bvh_build_node *hlbvh_build(struct bvh_accel *accel,
 
     /* Create LBVHs for treelets in parallel */
     *ordered_prims = (struct soltab **)bu_calloc(n_primitives, sizeof(struct soltab *), "hlbvh_build");
-    for (tr = treelets_to_build; tr != treelets_to_build_end; tr++) {
-        /* Generate _i_th LBVH treelet */
-        cl_int nodes_created = 0;
+    for (treelet = treelets_to_build; treelet != treelets_to_build_end; treelet++) {
+        /* Generate i_th LBVH treelet */
+	cl_int nodes_created = 0;
         const cl_int first_bit_index = 29 - 12;
-        tr->build_nodes =
-            emit_lbvh(accel, tr->build_nodes, &morton_prims[tr->start_index],
-                     tr->n_primitives, &nodes_created, *ordered_prims,
-                     &ordered_prims_offset, first_bit_index);
-        atomic_total += nodes_created;
+        treelet->build_nodes =
+            emit_lbvh(accel, &treelet->build_nodes, &morton_prims[treelet->start_index],
+                      treelet->n_primitives, &nodes_created, *ordered_prims,
+                      &ordered_prims_offset, first_bit_index);
+	*total_nodes += nodes_created;
     }
-    *total_nodes = atomic_total;
     bu_free(morton_prims, "hlbvh_build");
 
     /* Create and return SAH BVH from LBVH treelets */
     finished_treelets = (struct bvh_build_node**)bu_calloc(treelets_to_build_end-treelets_to_build, sizeof(struct bvh_build_node*), "hlbvh_build");
     finished_treelets_last = finished_treelets;
-    for (tr = treelets_to_build; tr != treelets_to_build_end; tr++) {
-        *finished_treelets_last = tr->build_nodes;
-        finished_treelets_last++;
+    for (treelet = treelets_to_build; treelet != treelets_to_build_end; treelet++) {
+        *finished_treelets_last++ = treelet->build_nodes;
     }
     bu_free(treelets_to_build, "hlbvh_build");
     ret = build_upper_sah(accel, finished_treelets, 0, finished_treelets_last-finished_treelets, total_nodes);
@@ -1184,6 +1215,8 @@ simple_prep(struct rt_i *rtip)
     struct soltab *stp;
     union cutter *finp;	/* holds the finite solids */
 
+    RT_CK_RTI(rtip);
+
     /* Make a list of all solids into one special boxnode, then refine. */
     BU_ALLOC(finp, union cutter);
     finp->cut_type = CUT_BOXNODE;
@@ -1215,7 +1248,7 @@ simple_prep(struct rt_i *rtip)
         struct bvh_build_node *root;
         cl_int offset = 0;
 
-	accel.max_prims_in_node = 255;
+	accel.max_prims_in_node = 4;
 
         root = hlbvh_build(&accel, &total_nodes, finp->bn.bn_len, &ordered_prims);
 
@@ -1226,9 +1259,8 @@ simple_prep(struct rt_i *rtip)
         /* Compute representation of depth-first traversal of BVH tree */
         accel.nodes = (struct linear_bvh_node*)bu_calloc(total_nodes, sizeof(struct linear_bvh_node), "simple_prep");
         flatten_bvh_tree(&accel, root, &offset, 0);
-	BU_ASSERT(offset == total_nodes);
 
-        for (j=0; j<total_nodes; j++) {
+        for (j=0; j<offset; j++) {
             if (accel.nodes[j].n_primitives != 0) {
                 bu_log("#%d: %d\n", j, accel.nodes[j].n_primitives);
                 for (k=0; k<accel.nodes[j].n_primitives; k++) {
@@ -1240,6 +1272,7 @@ simple_prep(struct rt_i *rtip)
             }
         }
 
+	BU_ASSERT(offset == total_nodes);
         bu_log("BVH created with %d nodes for %d primitives (%.2f MB)\n", total_nodes,
              (int)finp->bn.bn_len,
              (double)(sizeof(struct linear_bvh_node) * total_nodes) / (1024.0 * 1024.0));
