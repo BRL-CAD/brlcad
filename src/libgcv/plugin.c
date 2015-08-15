@@ -61,15 +61,12 @@ const struct bu_ptbl *
 gcv_get_converters(void)
 {
     static struct bu_ptbl converter_table = BU_PTBL_INIT_ZERO;
-    static int registered_static = 0;
 
-    if (!registered_static) {
-	registered_static = 1;
-
+    if (!BU_PTBL_LEN(&converter_table)) {
 #define CONVERTER(name) \
     do { \
-	extern const struct gcv_converter name; \
-	_gcv_converter_insert(&converter_table, &name); \
+	extern const struct gcv_converter (name); \
+	_gcv_converter_insert(&converter_table, &(name)); \
     } while (0)
 
 	CONVERTER(gcv_conv_brlcad_read);
@@ -94,7 +91,7 @@ gcv_find_converters(mime_model_t mime_type,
 		    enum gcv_conversion_type conversion_type)
 {
     struct bu_ptbl result;
-    struct gcv_converter **entry;
+    const struct gcv_converter * const *entry;
     const struct bu_ptbl *converters;
 
     if (!_gcv_mime_is_valid(mime_type))
@@ -104,7 +101,7 @@ gcv_find_converters(mime_model_t mime_type,
 
     bu_ptbl_init(&result, 8, "result");
 
-    for (BU_PTBL_FOR(entry, (struct gcv_converter **), converters))
+    for (BU_PTBL_FOR(entry, (const struct gcv_converter * const *), converters))
 	if ((*entry)->mime_type == mime_type)
 	    if ((*entry)->conversion_type == conversion_type)
 		bu_ptbl_ins(&result, (long *)*entry);
@@ -158,7 +155,7 @@ gcv_converter_convert(const struct gcv_converter *converter, const char *path,
 	bu_bomb("missing arguments");
 
     if (gcv_options)
-	bu_bomb("struct gcv_options unimplemented");
+	bu_bomb("struct gcv_opts unimplemented");
 
     RT_CK_DBI(dbip);
 
