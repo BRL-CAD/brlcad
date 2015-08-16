@@ -92,7 +92,10 @@ if(NOT CMAKE_FIND_FRAMEWORKS_INCLUDED)
 endif()
 
 if(CYGWIN)
-  find_program(TCL_TCLSH NAMES cygtclsh83 cygtclsh80)
+  find_program(TCL_TCLSH
+	  NAMES cygtclsh83 cygtclsh80
+	  NO_CMAKE_PATH
+	  )
 endif()
 
 get_filename_component(TK_WISH_PATH "${TK_WISH}" PATH)
@@ -151,6 +154,7 @@ set(TCL_TCLSH_NAMES
 find_program(TCL_TCLSH
   NAMES ${TCL_TCLSH_NAMES}
   HINTS ${TCLTK_POSSIBLE_BIN_PATHS}
+  NO_CMAKE_PATH
   )
 
 if(TCL_TCLSH)
@@ -172,7 +176,9 @@ mark_as_advanced(TCL_TCLSH)
 
 
 if(UNIX)
-  find_program(TK_WISH cygwish80 )
+  find_program(TK_WISH cygwish80
+	  NO_CMAKE_PATH
+	  )
 endif()
 
 get_filename_component(TCL_TCLSH_PATH "${TCL_TCLSH}" PATH)
@@ -231,6 +237,7 @@ set(TK_WISH_NAMES
 find_program(TK_WISH
   NAMES ${TK_WISH_NAMES}
   HINTS ${TCLTK_POSSIBLE_BIN_PATHS}
+  NO_CMAKE_PATH
   )
 
 mark_as_advanced(TK_WISH)
@@ -306,6 +313,7 @@ find_library(TCL_LIBRARY
   tcl82 tcl8.2
   tcl80 tcl8.0
   PATHS ${TCLTK_POSSIBLE_LIB_PATHS}
+  NO_CMAKE_PATH
   )
 
 find_library(TK_LIBRARY
@@ -319,6 +327,7 @@ find_library(TK_LIBRARY
   tk82 tk8.2
   tk80 tk8.0
   PATHS ${TCLTK_POSSIBLE_LIB_PATHS}
+  NO_CMAKE_PATH
   )
 
 CMAKE_FIND_FRAMEWORKS(Tcl)
