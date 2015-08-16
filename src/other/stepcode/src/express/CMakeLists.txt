@@ -10,12 +10,6 @@ set(BASELINE_INFORMATION_FILE "${CMAKE_CURRENT_SOURCE_DIR}/generated/verificatio
 set(PROJECT_CMAKE_DIR "${SC_SOURCE_DIR}/cmake")
 set(INPUT_FILELIST expscan.l expparse.y)
 set(TEMPLATE_FILELIST ${LEMON_TEMPLATE} ${PERPLEX_TEMPLATE})
-set(BUILD_OUTPUT_FILELIST
-  ${CMAKE_CURRENT_BINARY_DIR}/expscan.c
-  ${CMAKE_CURRENT_BINARY_DIR}/expscan.h
-  ${CMAKE_CURRENT_BINARY_DIR}/expparse.c
-  ${CMAKE_CURRENT_BINARY_DIR}/expparse.h
-  )
 set(CACHED_FILES_DIR "${CMAKE_CURRENT_SOURCE_DIR}/generated")
 string(REPLACE "${CMAKE_CURRENT_BINARY_DIR}" "${CACHED_FILES_DIR}" CACHED_FILELIST "${BUILD_OUTPUT_FILELIST}")
 set(SYNC_SCRIPT "${CMAKE_CURRENT_BINARY_DIR}/express_sync_generated.cmake")
@@ -30,6 +24,12 @@ if(SC_GENERATE_LP_SOURCES)
   set(EXPRESS_GENERATED_SRCS
     ${LEMON_ExpParser_OUTPUT_SOURCE}
     ${PERPLEX_ExpScanner_OUTPUTS}
+    )
+  set(BUILD_OUTPUT_FILELIST
+    ${PERPLEX_ExpScanner_OUTPUTS}
+    ${PERPLEX_ExpScanner_INCLUDE_DIR}/expscan.h
+    ${CMAKE_CURRENT_BINARY_DIR}/expparse.c
+    ${CMAKE_CURRENT_BINARY_DIR}/expparse.h
     )
   configure_file(${SC_SOURCE_DIR}/cmake/manage_generated.cmake.in
     ${CMAKE_CURRENT_BINARY_DIR}/express_manage_generated.cmake @ONLY)
