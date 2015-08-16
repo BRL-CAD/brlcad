@@ -314,7 +314,8 @@ do_pixel(write_only image2d_t image, global struct hit *hits,
     if (ret <= 0) {
 	a_color = -1e-20;	// background flag
     }
-    write_imagef(image, (int2){a_x, a_y}, convert_float4(a_color));
+    write_imageui(image, (int2){a_x, a_y*2+0}, as_uint4(a_color.xy));
+    write_imageui(image, (int2){a_x, a_y*2+1}, as_uint4(a_color.zw));
 }
 
 /*
