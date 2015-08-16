@@ -123,28 +123,28 @@ inline void gen_ray(double3 *r_pt, double3 *r_dir, double3 *r_idir, const int a_
     *r_pt = viewbase_model + dx_model * a_x + dy_model * a_y;
 
     double idir[3];
-    if (r_dir.x < -SQRT_SMALL_FASTF) {
-        idir[0] = 1.0/r_dir.x;
-    } else if (r_dir.x > SQRT_SMALL_FASTF) {
-        idir[0] = 1.0/r_dir.x;
+    if (dir.x < -SQRT_SMALL_FASTF) {
+        idir[0] = 1.0/dir.x;
+    } else if (dir.x > SQRT_SMALL_FASTF) {
+        idir[0] = 1.0/dir.x;
     } else {
-        r_dir.x = 0.0;
+        dir.x = 0.0;
         idir[0] = INFINITY;
     }
-    if (r_dir.y < -SQRT_SMALL_FASTF) {
-        idir[1] = 1.0/r_dir.y;
-    } else if (r_dir.y > SQRT_SMALL_FASTF) {
-        idir[1] = 1.0/r_dir.y;
+    if (dir.y < -SQRT_SMALL_FASTF) {
+        idir[1] = 1.0/dir.y;
+    } else if (dir.y > SQRT_SMALL_FASTF) {
+        idir[1] = 1.0/dir.y;
     } else {
-        r_dir.y = 0.0;
+        dir.y = 0.0;
         idir[1] = INFINITY;
     }
-    if (r_dir.z < -SQRT_SMALL_FASTF) {
-        idir[2] = 1.0/r_dir.z;
-    } else if (r_dir.z > SQRT_SMALL_FASTF) {
-        idir[2] = 1.0/r_dir.z;
+    if (dir.z < -SQRT_SMALL_FASTF) {
+        idir[2] = 1.0/dir.z;
+    } else if (dir.z > SQRT_SMALL_FASTF) {
+        idir[2] = 1.0/dir.z;
     } else {
-        r_dir.z = 0.0;
+        dir.z = 0.0;
         idir[2] = INFINITY;
     }
     *r_dir = dir;
