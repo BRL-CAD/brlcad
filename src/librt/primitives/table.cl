@@ -83,7 +83,7 @@ void do_hitp(global struct hit *res, const uint i, const uint hit_index, const s
 {
     if (res) {
 #ifdef RT_SINGLE_HIT
-        if (hitp->hit_dist < res->hit_dist) {
+        if (hitp->hit_dist >= 0.0 && hitp->hit_dist < res->hit_dist) {
             *res = *hitp;
             res->hit_index = hit_index;
         }
@@ -94,10 +94,10 @@ void do_hitp(global struct hit *res, const uint i, const uint hit_index, const s
 }
 
 
-inline void gen_ray(double3 *r_pt, double3 *r_dir, const int a_x, const int a_y,
+inline void gen_ray(double3 *r_pt, double3 *r_dir, double3 *r_idir, const int a_x, const int a_y,
 		    const double16 view2model, const double cell_width, const double cell_height, const double aspect)
 {
-    double3 tmp;
+    double3 tmp, dir;
     double f;
 
     /* create basis vectors dx and dy for emanation plane (grid) */
@@ -112,7 +112,7 @@ inline void gen_ray(double3 *r_pt, double3 *r_dir, const int a_x, const int a_y,
     /* "lower left" corner of viewing plane.  all rays go this direction */
     tmp = (double3){0.0, 0.0, -1.0};
     f = 1.0/view2model.sf;
-    *r_dir = normalize((view2model.s048*tmp.x + view2model.s159*tmp.y + view2model.s26a*tmp.z)*f);
+    dir = normalize((view2model.s048*tmp.x + view2model.s159*tmp.y + view2model.s26a*tmp.z)*f);
 
     tmp = (double3){-1.0, -1.0/aspect, 0.0};	// eye plane
     double3 viewbase_model;
@@ -121,6 +121,34 @@ inline void gen_ray(double3 *r_pt, double3 *r_dir, const int a_x, const int a_y,
 
     /* our starting point, used for non-jitter */
     *r_pt = viewbase_model + dx_model * a_x + dy_model * a_y;
+
+    double idir[3];
+    if (r_dir.x < -SQRT_SMALL_FASTF) {
+        idir[0] = 1.0/r_dir.x;
+    } else if (r_dir.x > SQRT_SMALL_FASTF) {
+        idir[0] = 1.0/r_dir.x;
+    } else {
+        r_dir.x = 0.0;
+        idir[0] = INFINITY;
+    }
+    if (r_dir.y < -SQRT_SMALL_FASTF) {
+        idir[1] = 1.0/r_dir.y;
+    } else if (r_dir.y > SQRT_SMALL_FASTF) {
+        idir[1] = 1.0/r_dir.y;
+    } else {
+        r_dir.y = 0.0;
+        idir[1] = INFINITY;
+    }
+    if (r_dir.z < -SQRT_SMALL_FASTF) {
+        idir[2] = 1.0/r_dir.z;
+    } else if (r_dir.z > SQRT_SMALL_FASTF) {
+        idir[2] = 1.0/r_dir.z;
+    } else {
+        r_dir.z = 0.0;
+        idir[2] = INFINITY;
+    }
+    *r_dir = dir;
+    *r_idir = vload3(0, idir);
 }
 
 
@@ -139,32 +167,28 @@ struct linear_bvh_node {
     uchar pad[1];			/* ensure 32 byte total size */
 };
 
-int
-rt_in_rpp(const double *pt,
-	  const double *invdir,
+inline int
+rt_in_rpp(const double3 pt,
+	  const double3 invdir,
 	  global const double *min,
 	  global const double *max)
 {
     /* Start with infinite ray, and trim it down */
-    double x0 = (min[0] - pt[0]) * invdir[0];
-    double y0 = (min[1] - pt[1]) * invdir[1];
-    double z0 = (min[2] - pt[2]) * invdir[2];
-    double x1 = (max[0] - pt[0]) * invdir[0];
-    double y1 = (max[1] - pt[1]) * invdir[1];
-    double z1 = (max[2] - pt[2]) * invdir[2];
+    double x0 = (min[0] - pt.x) * invdir.x;
+    double y0 = (min[1] - pt.y) * invdir.y;
+    double z0 = (min[2] - pt.z) * invdir.z;
+    double x1 = (max[0] - pt.x) * invdir.x;
+    double y1 = (max[1] - pt.y) * invdir.y;
+    double z1 = (max[2] - pt.z) * invdir.z;
 
     /*
      * Direction cosines along this axis is NEAR 0,
      * which implies that the ray is perpendicular to the axis,
      * so merely check position against the boundaries.
      */
-    if ((fabs(invdir[0]) <= SMALL_FASTF && ((min[0] - pt[0])>0.0 || (max[0] - pt[0])<0.0))
-     || (fabs(invdir[1]) <= SMALL_FASTF && ((min[1] - pt[1])>0.0 || (max[0] - pt[1])<0.0))
-     || (fabs(invdir[2]) <= SMALL_FASTF && ((min[2] - pt[2])>0.0 || (max[0] - pt[2])<0.0)))
-        return 0;   /* MISS */
+    double rmin = -MAX_FASTF;
+    double rmax =  MAX_FASTF;
 
-    double rmin = 0.0;
-    double rmax = MAX_FASTF;
     rmin = fmax(rmin, fmax(fmax(fmin(x0, x1), fmin(y0, y1)), fmin(z0, z1)));
     rmax = fmin(rmax, fmin(fmin(fmax(x0, x1), fmax(y0, y1)), fmax(z0, z1)));
 
@@ -174,51 +198,26 @@ rt_in_rpp(const double *pt,
 
 
 int
-shootray(global struct hit *hitp, const double3 r_pt, const double3 r_dir,
+shootray(global struct hit *hitp, const double3 r_pt, const double3 r_dir, const double3 r_idir,
          const uint nprims, global int *ids, global struct linear_bvh_node *nodes,
          global uint *indexes, global char *prims)
 {
     int ret = 0;
 
-    double inv_dir[3];
-    if (r_dir.x < -SQRT_SMALL_FASTF) {
-        inv_dir[0]=1.0/r_dir.x;
-    } else if (r_dir.x > SQRT_SMALL_FASTF) {
-        inv_dir[0]=1.0/r_dir.x;
-    } else {
-        r_dir.x = 0.0;
-        inv_dir[0] = INFINITY;
-    }
-    if (r_dir.y < -SQRT_SMALL_FASTF) {
-        inv_dir[1]=1.0/r_dir.y;
-    } else if (r_dir.y > SQRT_SMALL_FASTF) {
-        inv_dir[1]=1.0/r_dir.y;
-    } else {
-        r_dir.y = 0.0;
-        inv_dir[1] = INFINITY;
-    }
-    if (r_dir.z < -SQRT_SMALL_FASTF) {
-        inv_dir[2]=1.0/r_dir.z;
-    } else if (r_dir.z > SQRT_SMALL_FASTF) {
-        inv_dir[2]=1.0/r_dir.z;
-    } else {
-        r_dir.z = 0.0;
-        inv_dir[2] = INFINITY;
-    }
-
     if (nodes) {
-        const uchar dir_is_neg[3] = {inv_dir[0]<0, inv_dir[1]<0, inv_dir[2]<0};
+        uchar dir_is_neg[3];
         int to_visit_offset = 0, current_node_index = 0;
         int nodes_to_visit[64];
 
-        const double rr_pt[3] = {r_pt.x, r_pt.y, r_pt.z};
+	vstore3(convert_uchar(r_idir < 0), 0, dir_is_neg);
+
         /* Follow ray through BVH nodes to find primitive intersections */
         for (;;) {
             const global struct linear_bvh_node *node = &nodes[current_node_index];
             const global struct bvh_bounds *bounds = &node->bounds;
 
             /* Check ray against BVH node */
-            if (rt_in_rpp(rr_pt, inv_dir, bounds->p_min, bounds->p_max)) {
+            if (rt_in_rpp(r_pt, r_idir, bounds->p_min, bounds->p_max)) {
                 if (node->n_primitives > 0) {
                     /* Intersect ray with primitives in leaf BVH node */
                     for (int i = 0; i < node->n_primitives; ++i) {
@@ -265,13 +264,13 @@ do_pixel(write_only image2d_t image, global struct hit *hits,
     const int a_y = (int)(pixelnum/width);
     const int a_x = (int)(pixelnum - (a_y * width));
 
-    double3 r_pt, r_dir;
-    gen_ray(&r_pt, &r_dir, a_x, a_y, view2model, cell_width, cell_height, aspect);
+    double3 r_pt, r_dir, r_idir;
+    gen_ray(&r_pt, &r_dir, &r_idir, a_x,a_y, view2model, cell_width, cell_height, aspect);
 
     global struct hit *hitp = hits+get_global_id(0);
     hitp->hit_dist = INFINITY;
 
-    int ret = shootray(hitp, r_pt, r_dir, nprims, ids, nodes, indexes, prims);
+    int ret = shootray(hitp, r_pt, r_dir, r_idir, nprims, ids, nodes, indexes, prims);
 
     double4 a_color;
     a_color.w = hitp->hit_dist;
@@ -311,8 +310,9 @@ do_pixel(write_only image2d_t image, global struct hit *hits,
         }
     }
 
+    a_color.xyz = a_color.xyz;
     if (ret <= 0) {
-	a_color = -1e-20;	// background flag
+	a_color.xyz = -1e-20;	// background flag
     }
     write_imageui(image, (int2){a_x, a_y*2+0}, as_uint4(a_color.xy));
     write_imageui(image, (int2){a_x, a_y*2+1}, as_uint4(a_color.zw));

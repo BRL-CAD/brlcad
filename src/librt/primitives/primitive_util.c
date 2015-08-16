@@ -546,6 +546,37 @@ clt_get_program(cl_context context, cl_device_id device, cl_uint count, const ch
         clGetProgramBuildInfo(program, device, CL_PROGRAM_BUILD_LOG, log_size, log_data, NULL);
         bu_log("BUILD LOG:\n%s\n", log_data);
         bu_bomb("failed to build OpenCL program");
+    } else {
+#if 0
+	cl_uint n;
+	size_t *sizes;
+	char **buffers;
+
+	clGetProgramInfo(program, CL_PROGRAM_NUM_DEVICES, sizeof(n), &n, NULL);
+
+	sizes = (size_t*)bu_calloc(n, sizeof(size_t), "sizes");
+
+	clGetProgramInfo(program, CL_PROGRAM_BINARY_SIZES, sizeof(size_t)*n, sizes,NULL);
+
+	buffers = (char**)bu_calloc(n, sizeof(char*), "buffers");
+	for (i=0; i<n; ++i) {
+	   buffers[i] = (char*)bu_calloc(sizes[i], sizeof(char), "buffers");
+	}
+	clGetProgramInfo(program, CL_PROGRAM_BINARIES, sizeof(char*)*n, buffers, NULL);
+
+	for (i=0; i<n; ++i) {
+	  FILE *fp;
+	  char outfile[64];
+
+	  snprintf(outfile, sizeof(outfile), "rt%u.ptx", i);
+	  fp = fopen(outfile, "w");
+	  if (!fp) bu_exit(-1, "failed to write OpenCL code file (%s)\n", outfile);
+
+	  if (fwrite(buffers[i], sizes[i], 1, fp) != 1)
+	      bu_bomb("failed to write OpenCL binaries");
+	  fclose(fp);
+	}
+#endif
     }
 
     bu_free(lengths, "failed bu_free() in clt_get_program()");

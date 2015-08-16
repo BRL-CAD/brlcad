@@ -11,7 +11,6 @@
 
 #define RT_PCOEF_TOL            (1.0e-10)
 #define RT_DOT_TOL              (0.001)
-#define RT_PCOEF_TOL		(1.0e-10)
 
 #define MAX_FASTF               (1.0e73)        /* Very close to the largest number */
 #define SQRT_MAX_FASTF		(1.0e36)	/* This squared just avoids overflow */
