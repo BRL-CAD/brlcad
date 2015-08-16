@@ -511,7 +511,7 @@ def_tree(register struct rt_i *rtip)
 /*********************************************************************************/
 #ifdef USE_OPENCL
 void
-do_opencl_run(int cur_pixel, int last_pixel)
+do_run_opencl(int cur_pixel, int last_pixel)
 {
     int npix, j, rowspan, a_x, a_y;
     cl_float *pixels;
@@ -885,7 +885,7 @@ do_frame(int framenumber)
 
 #ifdef USE_OPENCL
     if (opencl_mode) {
-	do_opencl_run(pix_start, pix_end);
+	do_run_opencl(pix_start, pix_end);
 
 	/* Reset values to full size, for next frame (if any) */
 	pix_start = 0;
