@@ -514,18 +514,19 @@ void
 do_run_opencl(int cur_pixel, int last_pixel)
 {
     int npix, j, rowspan, a_x, a_y;
-    cl_float *pixels;
+    cl_double *pixels;
     size_t cpu = 0;
     struct application a;
+    const cl_image_format fmt = {CL_RGBA, CL_UNSIGNED_INT32};
 
     npix = last_pixel-cur_pixel+1;
 
     a_y = (int)(cur_pixel/width);
     a_x = (int)(cur_pixel - (a_y * width));
 
-    pixels = (cl_float*)bu_calloc(width*height, sizeof(cl_float)*4, "image buffer");
+    pixels = (cl_double*)bu_calloc(width*height, sizeof(cl_double)*4, "image buffer");
 
-    clt_run(pixels, cur_pixel, last_pixel, width, height, view2model, cell_width,
+    clt_run(pixels, &fmt, cur_pixel, last_pixel, width, height*2, view2model, cell_width,
 	    cell_height, aspect, lightmodel);
 
     /* Obtain fresh copy of global application struct */
@@ -542,15 +543,18 @@ do_run_opencl(int cur_pixel, int last_pixel)
 
 	/* Framebuffer output. */
         for (j=0; j<rowspan; j++) {
-	    int i = a_y*width+a_x;
+	    int xy = (a_y*2+0)*width+a_x;
+	    int zw = (a_y*2+1)*width+a_x;
+
 	    a_x++;
 	    a.a_x = a_x;
 	    a.a_y = a_y;
-	    a.a_color[0] = pixels[4*i+0];
-	    a.a_color[1] = pixels[4*i+1];
-	    a.a_color[2] = pixels[4*i+2];
-	    a.a_dist = pixels[4*i+3];
-	    a.a_user = !NEAR_EQUAL(a.a_color[0], -1e-20, RT_PCOEF_TOL);
+	    a.a_color[0] = pixels[2*xy+0];
+	    a.a_color[1] = pixels[2*xy+1];
+	    a.a_color[2] = pixels[2*zw+0];
+	    a.a_dist = pixels[2*zw+1];
+
+	    a.a_user = (a.a_color[0] >= 0.0);
 	    view_pixel(&a);
         }
 	view_eol(&a);

@@ -185,9 +185,9 @@ clt_norm(struct hit *hitp, struct soltab *stp, struct xray *rp);
 
 
 RT_EXPORT extern void
-clt_run(cl_float *pixels, cl_int cur_pixel, cl_int last_pixel, cl_int width,
-        cl_int height, mat_t view2model, fastf_t cell_width, fastf_t cell_height,
-	fastf_t aspect, cl_int lightmodel);
+clt_run(void *pixels, const cl_image_format *fmt, cl_int cur_pixel, cl_int last_pixel,
+	cl_int width, cl_int height, mat_t view2model, fastf_t cell_width,
+	fastf_t cell_height, fastf_t aspect, cl_int lightmodel);
 #endif
 
 
