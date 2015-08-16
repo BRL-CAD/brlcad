@@ -173,14 +173,21 @@ struct cl_hit {
 
 
 RT_EXPORT extern cl_int
+clt_shot(size_t sz_hits, struct cl_hit *hits, struct xray *rp, struct soltab *stp,
+	 struct application *ap, struct seg *seghead);
+
+RT_EXPORT extern cl_int
 clt_db_solid_shot(const size_t sz_hits, struct cl_hit *hits,
 		  struct xray *rp, const cl_uint index);
 
 RT_EXPORT extern void
-clt_run(unsigned char *pixels, cl_uint pwidth, cl_int cur_pixel,
-	cl_int last_pixel, cl_int width, mat_t view2model,
-	fastf_t cell_width, fastf_t cell_height, fastf_t aspect,
-	cl_int lightmodel);
+clt_norm(struct hit *hitp, struct soltab *stp, struct xray *rp);
+
+
+RT_EXPORT extern void
+clt_run(cl_float *pixels, cl_int cur_pixel, cl_int last_pixel, cl_int width,
+        cl_int height, mat_t view2model, fastf_t cell_width, fastf_t cell_height,
+	fastf_t aspect, cl_int lightmodel);
 #endif
 
 
