@@ -148,6 +148,7 @@ RT_EXPORT extern const union cutter *rt_cell_n_on_ray(struct application *ap,
  */
 RT_EXPORT extern void rt_cut_clean(struct rt_i *rtip);
 
+
 #ifdef USE_OPENCL
 struct clt_bvh_bounds {
     cl_double p_min[3], p_max[3];
@@ -164,14 +165,6 @@ struct clt_linear_bvh_node {
     cl_uchar pad[1];			/* ensure 32 byte total size */
 };
 
-
-RT_EXPORT extern void
-clt_db_store(size_t count, struct soltab *solids[]);
-
-RT_EXPORT extern void
-clt_db_store_bvh(size_t count, struct clt_linear_bvh_node *nodes);
-
-RT_EXPORT extern void clt_db_release(void);
 
 RT_EXPORT extern void
 clt_linear_bvh_create(long n_primitives, struct clt_linear_bvh_node **nodes_p,

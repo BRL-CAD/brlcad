@@ -444,6 +444,99 @@ rt_prep(register struct rt_i *rtip)
 }
 
 
+#ifdef USE_OPENCL
+void
+clt_prep(struct rt_i *rtip)
+{
+    struct soltab *stp;
+    union cutter *finp;	/* holds the finite solids */
+
+    struct soltab **primitives;
+    long n_primitives;
+
+    clt_init();
+
+    RT_CK_RTI(rtip);
+
+    /* Make a list of all solids into one special boxnode, then refine. */
+    BU_ALLOC(finp, union cutter);
+    finp->cut_type = CUT_BOXNODE;
+    VMOVE(finp->bn.bn_min, rtip->mdl_min);
+    VMOVE(finp->bn.bn_max, rtip->mdl_max);
+    finp->bn.bn_len = 0;
+    finp->bn.bn_maxlen = rtip->nsolids+1;
+    finp->bn.bn_list = (struct soltab **)bu_calloc(
+        finp->bn.bn_maxlen, sizeof(struct soltab *),
+        "clt_prep: initial list alloc");
+
+    rtip->rti_inf_box.cut_type = CUT_BOXNODE;
+
+    RT_VISIT_ALL_SOLTABS_START(stp, rtip) {
+        /* Ignore "dead" solids in the list.  (They failed prep) */
+        if (stp->st_aradius <= 0) continue;
+        /* Infinite solids make the BVH construction explode. */
+        if (stp->st_aradius >= INFINITY) continue;
+
+        rt_cut_extend(finp, stp, rtip);            
+    } RT_VISIT_ALL_SOLTABS_END;
+
+    primitives = finp->bn.bn_list;
+    n_primitives = finp->bn.bn_len;
+    bu_free(finp, "union cutter");
+
+    if (n_primitives != 0) {
+        /* Build BVH tree for primitives */
+        cl_int total_nodes = 0;
+	struct clt_linear_bvh_node *nodes;
+	long *ordered_prims;
+	fastf_t *centroids;
+	fastf_t *bounds;
+	long i;
+
+	centroids = (fastf_t*)bu_calloc(n_primitives, sizeof(fastf_t)*3, "clt_prep");
+	for (i=0; i<n_primitives; i++) {
+	    const struct soltab *primitive = primitives[i];
+	    VMOVE(&centroids[i*3], primitive->st_center);
+	}
+	bounds = (fastf_t*)bu_calloc(n_primitives, sizeof(fastf_t)*6, "clt_prep");
+	for (i=0; i<n_primitives; i++) {
+	    const struct soltab *primitive = primitives[i];
+	    VMOVE(&bounds[i*6+0], primitive->st_min);
+	    VMOVE(&bounds[i*6+3], primitive->st_max);
+	}
+
+	ordered_prims = NULL;
+	nodes = NULL;
+	clt_linear_bvh_create(n_primitives, &nodes, &ordered_prims, centroids, bounds,
+			      &total_nodes);
+
+	bu_free(bounds, "clt_prep");
+	bu_free(centroids, "clt_prep");
+
+        clt_db_store_bvh(total_nodes, nodes);
+	bu_free(nodes, "clt_prep");
+
+	if (ordered_prims) {
+	    struct soltab **ordered_primitives;
+
+	    ordered_primitives = (struct soltab **)bu_calloc(n_primitives,
+							     sizeof(struct soltab *),
+							     "clt_prep");
+	    for (i=0; i<n_primitives; i++) {
+		ordered_primitives[i] = primitives[ordered_prims[i]];
+	    }
+	    bu_free(ordered_prims, "clt_prep");
+	    bu_free(primitives, "clt_prep");
+	    primitives = ordered_primitives;
+	}
+
+	clt_db_store(n_primitives, primitives);
+	bu_free(primitives, "clt_prep");
+    }
+}
+#endif
+
+
 /**
  * Plot the bounding boxes of all the active solids.  Color may be set
  * in advance by the caller.
