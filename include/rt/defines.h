@@ -38,6 +38,8 @@
 #  endif
 #endif
 
+#include "common.h"
+
 #ifdef USE_OPENCL
 #include <limits.h>
 #include <CL/cl.h>
