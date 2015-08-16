@@ -409,8 +409,14 @@ return \"${SC_VERSION}\";\n
   )
 
 file(WRITE
-  ${CMAKE_CURRENT_BINARY_DIR}/${INCLUDE_INSTALL_DIR}/sc_version_string.h
+  ${CMAKE_CURRENT_BINARY_DIR}/${INCLUDE_INSTALL_DIR}/sc_version_string.h.tmp
   "${vstring}")
+execute_process(COMMAND ${CMAKE_COMMAND} -E copy_if_different
+  ${CMAKE_CURRENT_BINARY_DIR}/${INCLUDE_INSTALL_DIR}/sc_version_string.h.tmp
+  ${CMAKE_CURRENT_BINARY_DIR}/${INCLUDE_INSTALL_DIR}/sc_version_string.h)
+execute_process(COMMAND ${CMAKE_COMMAND} -E remove
+  ${CMAKE_CURRENT_BINARY_DIR}/${INCLUDE_INSTALL_DIR}/sc_version_string.h.tmp)
+
 endif(NOT SC_IS_SUBBUILD)
 
 if(MSVC)
