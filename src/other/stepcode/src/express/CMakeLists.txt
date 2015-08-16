@@ -25,7 +25,7 @@ set(SYNC_TARGET_NAME "express_sync_generated_files")
 # the fly, set up targets and source lists.
 if(SC_GENERATE_LP_SOURCES)
   LEMON_TARGET(ExpParser expparse.y expparse.c expparse.h)
-  PERPLEX_TARGET(ExpScanner expscan.l ${CMAKE_CURRENT_BINARY_DIR}/expscan.c ${CMAKE_CURRENT_BINARY_DIR}/expscan.h)
+  PERPLEX_TARGET(ExpScanner expscan.l)
   ADD_PERPLEX_LEMON_DEPENDENCY(ExpScanner ExpParser)
   set(EXPRESS_GENERATED_SRCS
     ${LEMON_ExpParser_OUTPUT_SOURCE}
@@ -114,6 +114,10 @@ SET(EXPRESS_PRIVATE_HDRS
   )
 
 SC_ADDLIB(express "${EXPRESS_SOURCES}" "base")
+if(SC_GENERATE_LP_SOURCES)
+  set_property(TARGET express APPEND PROPERTY INCLUDE_DIRECTORIES "${PERPLEX_ExpScanner_INCLUDE_DIR}")
+endif(SC_GENERATE_LP_SOURCES)
+
 add_dependencies(express express_verify)
 if(NOT SC_IS_SUBBUILD)
   add_dependencies(express version_string)

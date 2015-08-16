@@ -8,10 +8,9 @@ include_directories(
 # since this will be the common pattern.
 macro(GEN_OBJ_SRCS targetname)
   file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/OBJ_${targetname}_SRCS)
-  include_directories(${CMAKE_CURRENT_BINARY_DIR}/OBJ_${targetname}_SRCS)
   DISTCLEAN(${CMAKE_CURRENT_BINARY_DIR}/OBJ_${targetname}_SRCS)
   PERPLEX_TARGET(OBJ_${targetname}_Scanner wfobj/obj_rules.l
-    ${CMAKE_CURRENT_BINARY_DIR}/OBJ_${targetname}_SRCS/obj_${targetname}_rules.cpp ${CMAKE_CURRENT_BINARY_DIR}/OBJ_${targetname}_SRCS/obj_scanner.h)
+    OUT_SRC_FILE obj_${targetname}_rules.cpp OUT_HDR_FILE obj_scanner.h)
   LEMON_TARGET(OBJ_${targetname}_Parser wfobj/obj_grammar.yy
     ${CMAKE_CURRENT_BINARY_DIR}/OBJ_${targetname}_SRCS/obj_${targetname}_grammar.cpp ${CMAKE_CURRENT_BINARY_DIR}/OBJ_${targetname}_SRCS/obj_grammar.hpp)
   ADD_PERPLEX_LEMON_DEPENDENCY(OBJ_${targetname}_Scanner OBJ_${targetname}_Parser)
@@ -20,13 +19,15 @@ endmacro(GEN_OBJ_SRCS)
 GEN_OBJ_SRCS(obj-g)
 set(OBJ_G_SRCS
   ${CMAKE_CURRENT_BINARY_DIR}/OBJ_obj-g_SRCS/obj_obj-g_grammar.cpp
-  ${CMAKE_CURRENT_BINARY_DIR}/OBJ_obj-g_SRCS/obj_obj-g_rules.cpp
+  ${PERPLEX_OBJ_obj-g_Scanner_OUTPUTS}
   wfobj/obj_parser.cpp
   ../conv/obj-g.c
   wfobj/tri_face.c
   )
 
 BRLCAD_ADDEXEC(obj-g "${OBJ_G_SRCS}" "libbu;libbn;librt;libwdb")
+set_property(TARGET obj-g APPEND PROPERTY INCLUDE_DIRECTORIES "${PERPLEX_OBJ_obj-g_Scanner_INCLUDE_DIR}")
+set_property(TARGET obj-g APPEND PROPERTY INCLUDE_DIRECTORIES "${CMAKE_CURRENT_BINARY_DIR}/OBJ_obj-g_SRCS")
 
 set(wfobj_ignore_files
   wfobj/obj_grammar_decls.h
@@ -61,7 +62,7 @@ set(LIBGCV_SOURCES
   tri_intersect.c
   bot_solidity.c
   ${CMAKE_CURRENT_BINARY_DIR}/OBJ_libgcv_SRCS/obj_libgcv_grammar.cpp
-  ${CMAKE_CURRENT_BINARY_DIR}/OBJ_libgcv_SRCS/obj_libgcv_rules.cpp
+  ${PERPLEX_OBJ_libgcv_Scanner_OUTPUTS}
   )
 
 set(LIBGCV_CONVERTER_SOURCES
@@ -81,12 +82,14 @@ set(LIBGCV_CONVERTER_SOURCES
 list(APPEND LIBGCV_SOURCES ${LIBGCV_CONVERTER_SOURCES})
 
 BRLCAD_ADDLIB(libgcv "${LIBGCV_SOURCES}" "librt;libwdb;libbu")
-SET_TARGET_PROPERTIES(libgcv PROPERTIES VERSION 20.0.1 SOVERSION 20)
+set_target_properties(libgcv PROPERTIES VERSION 20.0.1 SOVERSION 20)
+set_property(TARGET libgcv APPEND PROPERTY INCLUDE_DIRECTORIES "${PERPLEX_OBJ_libgcv_Scanner_INCLUDE_DIR}")
+set_property(TARGET libgcv APPEND PROPERTY INCLUDE_DIRECTORIES "${CMAKE_CURRENT_BINARY_DIR}/OBJ_libgcv_SRCS")
 
 enable_testing()
 BRLCAD_ADDEXEC(test_bottess test_bottess.c libgcv NO_INSTALL)
 if(CPP_DLL_DEFINES)
-  SET_PROPERTY(TARGET test_bottess APPEND PROPERTY COMPILE_DEFINITIONS "BOTTESS_DLL_IMPORTS")
+  set_property(TARGET test_bottess APPEND PROPERTY COMPILE_DEFINITIONS "BOTTESS_DLL_IMPORTS")
 endif(CPP_DLL_DEFINES)
 add_test(NAME bottess_test COMMAND test_bottess)
 
