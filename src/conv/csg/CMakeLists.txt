@@ -11,19 +11,18 @@ include_directories(
   )
 
 PERPLEX_TARGET(csg_scanner csg_scanner.perplex)
-LEMON_TARGET(csg_parser csg_parser.lemon
-  ${CMAKE_CURRENT_BINARY_DIR}/csg_parser.c
-  ${CMAKE_CURRENT_BINARY_DIR}/csg_parser.h)
+LEMON_TARGET(csg_parser csg_parser.lemon)
 ADD_PERPLEX_LEMON_DEPENDENCY(csg_scanner csg_parser)
 
 set(CSG_SRCS
   csg.c
-  ${PERPLEX_csg_scanner_OUTPUTS}
-  ${CMAKE_CURRENT_BINARY_DIR}/csg_parser.c
+  ${PERPLEX_csg_scanner_SRC}
+  ${LEMON_csg_parser_SRC}
   )
 
 BRLCAD_ADDEXEC(csg "${CSG_SRCS}" "libgcv;libbu" NO_INSTALL)
 set_property(TARGET csg APPEND PROPERTY INCLUDE_DIRECTORIES "${PERPLEX_csg_scanner_INCLUDE_DIR}")
+set_property(TARGET csg APPEND PROPERTY INCLUDE_DIRECTORIES "${LEMON_csg_parser_INCLUDE_DIR}")
 
 
 CMAKEFILES(csg.h csg_parser.lemon csg_scanner.perplex)

@@ -153,8 +153,8 @@ macro(PERPLEX_TARGET Name Input)
   endif(NOT DEBUGGING_GENERATED_SOURCES)
 
   set(PERPLEX_${Name}_DEFINED TRUE)
-  set(PERPLEX_${Name}_OUTPUTS ${${PVAR_PREFIX}_OUT_SRC_FILE})
-  set(PERPLEX_${Name}_INPUT ${Input})
+  set(PERPLEX_${Name}_SRC ${${PVAR_PREFIX}_OUT_SRC_FILE})
+  set(PERPLEX_${Name}_HDR ${${PVAR_PREFIX}_OUT_HDR_FILE})
   set(PERPLEX_${Name}_INCLUDE_DIR ${${PVAR_PREFIX}_WORKING_DIR})
 endmacro(PERPLEX_TARGET)
 
@@ -163,16 +163,16 @@ endmacro(PERPLEX_TARGET)
 #============================================================
 macro(ADD_PERPLEX_LEMON_DEPENDENCY PERPLEXTarget LemonTarget)
 
-  if(NOT PERPLEX_${PERPLEXTarget}_OUTPUTS)
+  if(NOT PERPLEX_${PERPLEXTarget}_SRC)
     message(SEND_ERROR "PERPLEX target `${PERPLEXTarget}' does not exists.")
   endif()
 
-  if(NOT LEMON_${LemonTarget}_OUTPUT_HEADER)
+  if(NOT LEMON_${LemonTarget}_HDR)
     message(SEND_ERROR "Lemon target `${LemonTarget}' does not exists.")
   endif()
 
-  set_source_files_properties(${PERPLEX_${PERPLEXTarget}_OUTPUTS}
-    PROPERTIES OBJECT_DEPENDS ${LEMON_${LemonTarget}_OUTPUT_HEADER})
+  set_source_files_properties(${PERPLEX_${PERPLEXTarget}_SRC}
+    PROPERTIES OBJECT_DEPENDS ${LEMON_${LemonTarget}_HDR})
 endmacro(ADD_PERPLEX_LEMON_DEPENDENCY)
 
 # Local Variables:

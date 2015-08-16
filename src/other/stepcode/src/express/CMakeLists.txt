@@ -18,18 +18,18 @@ set(SYNC_TARGET_NAME "express_sync_generated_files")
 # Depending on whether we're using pre-generated sources or building them on
 # the fly, set up targets and source lists.
 if(SC_GENERATE_LP_SOURCES)
-  LEMON_TARGET(ExpParser expparse.y expparse.c expparse.h)
+  LEMON_TARGET(ExpParser expparse.y)
   PERPLEX_TARGET(ExpScanner expscan.l)
   ADD_PERPLEX_LEMON_DEPENDENCY(ExpScanner ExpParser)
   set(EXPRESS_GENERATED_SRCS
-    ${LEMON_ExpParser_OUTPUT_SOURCE}
-    ${PERPLEX_ExpScanner_OUTPUTS}
+    ${LEMON_ExpParser_SRC}
+    ${PERPLEX_ExpScanner_SRC}
     )
   set(BUILD_OUTPUT_FILELIST
-    ${PERPLEX_ExpScanner_OUTPUTS}
-    ${PERPLEX_ExpScanner_INCLUDE_DIR}/expscan.h
-    ${CMAKE_CURRENT_BINARY_DIR}/expparse.c
-    ${CMAKE_CURRENT_BINARY_DIR}/expparse.h
+    ${PERPLEX_ExpScanner_SRC}
+    ${PERPLEX_ExpScanner_HDR}
+    ${LEMON_ExpParser_SRC}
+    ${LEMON_ExpParser_HDR}
     )
   configure_file(${SC_SOURCE_DIR}/cmake/manage_generated.cmake.in
     ${CMAKE_CURRENT_BINARY_DIR}/express_manage_generated.cmake @ONLY)
@@ -37,7 +37,7 @@ if(SC_GENERATE_LP_SOURCES)
     OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/express_manage_generated.sentinel
     COMMAND ${CMAKE_COMMAND} -P ${CMAKE_CURRENT_BINARY_DIR}/express_manage_generated.cmake
     COMMAND ${CMAKE_COMMAND} -E touch ${CMAKE_CURRENT_BINARY_DIR}/express_manage_generated.sentinel
-    DEPENDS ${INPUT_FILELIST} ${TEMPLATE_FILELIST} ${CACHED_FILELIST} ${PERPLEX_ExpScanner_OUTPUTS} ${LEMON_ExpParser_OUTPUT_SOURCE} generated/verification_info.cmake ${PROJECT_CMAKE_DIR}/Generated_Source_Utils.cmake
+    DEPENDS ${INPUT_FILELIST} ${TEMPLATE_FILELIST} ${CACHED_FILELIST} ${PERPLEX_ExpScanner_SRC} ${LEMON_ExpParser_SRC} generated/verification_info.cmake ${PROJECT_CMAKE_DIR}/Generated_Source_Utils.cmake
     )
   add_custom_target(express_verify DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/express_manage_generated.sentinel)
 
@@ -47,7 +47,7 @@ if(SC_GENERATE_LP_SOURCES)
     OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/express_sync_generated.sentinel
     COMMAND ${CMAKE_COMMAND} -P ${CMAKE_CURRENT_BINARY_DIR}/express_sync_generated.cmake
     COMMAND ${CMAKE_COMMAND} -E touch ${CMAKE_CURRENT_BINARY_DIR}/express_sync_generated.sentinel
-    DEPENDS ${INPUT_FILELIST} ${TEMPLATE_FILELIST} ${PERPLEX_ExpScanner_OUTPUTS} ${LEMON_ExpParser_OUTPUT_SOURCE} ${PROJECT_CMAKE_DIR}/Generated_Source_Utils.cmake
+    DEPENDS ${INPUT_FILELIST} ${TEMPLATE_FILELIST} ${PERPLEX_ExpScanner_SRC} ${LEMON_ExpParser_SRC} ${PROJECT_CMAKE_DIR}/Generated_Source_Utils.cmake
     )
   add_custom_target(express_sync_generated_files DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/express_sync_generated.sentinel)
 
@@ -116,6 +116,7 @@ SET(EXPRESS_PRIVATE_HDRS
 SC_ADDLIB(express "${EXPRESS_SOURCES}" "base")
 if(SC_GENERATE_LP_SOURCES)
   set_property(TARGET express APPEND PROPERTY INCLUDE_DIRECTORIES "${PERPLEX_ExpScanner_INCLUDE_DIR}")
+  set_property(TARGET express APPEND PROPERTY INCLUDE_DIRECTORIES "${LEMON_ExpParser_INCLUDE_DIR}")
 endif(SC_GENERATE_LP_SOURCES)
 
 add_dependencies(express express_verify)
