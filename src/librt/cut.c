@@ -2506,7 +2506,7 @@ emit_lbvh(int max_prims_in_node,
     BU_ASSERT(n_primitives > 0);
     if (bit_index < 0 || n_primitives < max_prims_in_node) {
         struct bvh_build_node *node;
-        fastf_t bounds[6] = {INFINITY,INFINITY,INFINITY, -INFINITY,-INFINITY,-INFINITY};
+        fastf_t bounds[6] = {MAX_FASTF,MAX_FASTF,MAX_FASTF, -MAX_FASTF,-MAX_FASTF,-MAX_FASTF};
         long first_prim_offset;
         long i;
 
@@ -2628,7 +2628,7 @@ build_upper_sah(struct bu_pool *pool, struct bvh_build_node **treelet_roots,
     } else {
 	struct bvh_build_node *node;
 	fastf_t bounds[6] =
-		{INFINITY,INFINITY,INFINITY, -INFINITY,-INFINITY,-INFINITY};
+		{MAX_FASTF,MAX_FASTF,MAX_FASTF, -MAX_FASTF,-MAX_FASTF,-MAX_FASTF};
 	long i;
 	uint8_t dim;
 
@@ -2640,7 +2640,7 @@ build_upper_sah(struct bu_pool *pool, struct bvh_build_node **treelet_roots,
 	};
 	struct bucket_info buckets[n_buckets];
 	fastf_t centroid_bounds[6] =
-		{INFINITY,INFINITY,INFINITY, -INFINITY,-INFINITY,-INFINITY};
+		{MAX_FASTF,MAX_FASTF,MAX_FASTF, -MAX_FASTF,-MAX_FASTF,-MAX_FASTF};
 
 	fastf_t cost[n_buckets - 1];
 	fastf_t min_cost;
@@ -2690,9 +2690,9 @@ build_upper_sah(struct bu_pool *pool, struct bvh_build_node **treelet_roots,
 	/* Compute costs for splitting after each bucket */
 	for (i = 0; i < n_buckets - 1; ++i) {
 	    fastf_t b0[6] =
-		{INFINITY,INFINITY,INFINITY, -INFINITY,-INFINITY,-INFINITY};
+		{MAX_FASTF,MAX_FASTF,MAX_FASTF, -MAX_FASTF,-MAX_FASTF,-MAX_FASTF};
 	    fastf_t b1[6] =
-		{INFINITY,INFINITY,INFINITY, -INFINITY,-INFINITY,-INFINITY};
+		{MAX_FASTF,MAX_FASTF,MAX_FASTF, -MAX_FASTF,-MAX_FASTF,-MAX_FASTF};
 	    long count0 = 0, count1 = 0;
 	    long j;
 
@@ -2768,7 +2768,7 @@ hlbvh_create(int max_prims_in_node, struct bu_pool *pool, const fastf_t *centroi
 	     const fastf_t *bounds_prims, long *total_nodes,
 	     const long n_primitives, long **ordered_prims)
 {
-    fastf_t bounds[6] = {INFINITY,INFINITY,INFINITY, -INFINITY,-INFINITY,-INFINITY};
+    fastf_t bounds[6] = {MAX_FASTF,MAX_FASTF,MAX_FASTF, -MAX_FASTF,-MAX_FASTF,-MAX_FASTF};
     long i;
     struct morton_primitive *morton_prims;
 
@@ -2921,6 +2921,17 @@ clt_linear_bvh_create(long n_primitives, struct clt_linear_bvh_node **nodes_p,
 	pool = bu_pool_create(1024 * 1024);
         root = hlbvh_create(4, pool, centroids_prims, bounds_prims, &nodes_created,
 			    n_primitives, ordered_prims);
+
+	/*
+	 * Enlarge the model RPP just slightly, to avoid nasty effects
+	 * with a solid's face being exactly on the edge
+	 */
+	root[0].bounds[0] = floor(root[0].bounds[0]);
+	root[0].bounds[1] = floor(root[0].bounds[1]);
+	root[0].bounds[2] = floor(root[0].bounds[2]);
+	root[0].bounds[3] = ceil(root[0].bounds[3]);
+	root[0].bounds[4] = ceil(root[0].bounds[4]);
+	root[0].bounds[5] = ceil(root[0].bounds[5]);
 
         /* Compute representation of depth-first traversal of BVH tree */
         nodes = (struct clt_linear_bvh_node*)bu_calloc(nodes_created, sizeof(*nodes),

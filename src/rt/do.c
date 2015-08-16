@@ -524,14 +524,20 @@ do_run_opencl(int cur_pixel, int last_pixel)
     a_y = (int)(cur_pixel/width);
     a_x = (int)(cur_pixel - (a_y * width));
 
+    /* Obtain fresh copy of global application struct */
+    a = APP;
+    a.a_resource = &resource[cpu];
+    a.a_level = 0;
+
     pixels = (cl_double*)bu_calloc(width*height, sizeof(cl_double)*4, "image buffer");
 
     clt_run(pixels, &fmt, cur_pixel, last_pixel, width, height*2, view2model, cell_width,
 	    cell_height, aspect, lightmodel);
 
-    /* Obtain fresh copy of global application struct */
-    a = APP;
-    a.a_resource = &resource[cpu];
+    bu_log("sub_grid_mode: %d, fullfloat_mode: %d, hypersample: %d, jitter: %d\n"
+	   "prism: %d, perspective: %e, stereo: %d\n",
+	   sub_grid_mode, fullfloat_mode, hypersample, jitter & JITTER_CELL,
+	   a.a_rt_i->rti_prismtrace, rt_perspective, stereo);
 
     /* This really needs to be optimized. The GPU can push those pixels faster */
     while (npix > 0) {
@@ -553,8 +559,7 @@ do_run_opencl(int cur_pixel, int last_pixel)
 	    a.a_color[1] = pixels[2*xy+1];
 	    a.a_color[2] = pixels[2*zw+0];
 	    a.a_dist = pixels[2*zw+1];
-
-	    a.a_user = (a.a_color[0] >= 0.0);
+	    a.a_user = !signbit(a.a_color[0]);
 	    view_pixel(&a);
         }
 	view_eol(&a);
@@ -597,7 +602,9 @@ do_prep(struct rt_i *rtip)
 	rt_prep_parallel(rtip, npsw);
 
 #ifdef USE_OPENCL
-        clt_prep(rtip);
+	if (opencl_mode) {
+	    clt_prep(rtip);
+	}
 #endif
 
 	(void)rt_get_timer(&times, NULL);
