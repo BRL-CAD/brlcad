@@ -2468,7 +2468,7 @@ get_tcl_curve(struct bu_vls *logstr, struct rt_curve *crv, const char *argv1)
 			break;
 		    case 'P': /* list of control points */
 			num_points = 0;
-			(void)rt_tcl_list_to_int_array(sval, &bsg->ctl_points, &num_points);
+			(void)_rt_tcl_list_to_int_array(sval, &bsg->ctl_points, &num_points);
 			if (num_points != bsg->degree + 1) {
 			    bu_vls_printf(logstr, "ERROR: degree and number of control points disagree for a Bezier segment\n");
 			    bu_free((char *)seg_argv, "free seg argv");
@@ -2521,13 +2521,13 @@ get_tcl_curve(struct bu_vls *logstr, struct rt_curve *crv, const char *argv1)
 			(void)bu_opt_int(NULL, 1, &sval, (void *)&nsg->pt_type);
 			break;
 		    case 'K':
-			(void)rt_tcl_list_to_fastf_array(sval, &nsg->k.knots, &nsg->k.k_size);
+			(void)_rt_tcl_list_to_fastf_array(sval, &nsg->k.knots, &nsg->k.k_size);
 			break;
 		    case 'P' :
-			(void)rt_tcl_list_to_int_array(sval, &nsg->ctl_points, &nsg->c_size);
+			(void)_rt_tcl_list_to_int_array(sval, &nsg->ctl_points, &nsg->c_size);
 			break;
 		    case 'W':
-			(void)rt_tcl_list_to_fastf_array(sval, &nsg->weights, &nsg->c_size);
+			(void)_rt_tcl_list_to_fastf_array(sval, &nsg->weights, &nsg->c_size);
 			break;
 		}
 	    }
@@ -2564,7 +2564,7 @@ rt_sketch_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc,
 	if (BU_STR_EQUAL(argv[0], "V")) {
 	    newval = skt->V;
 	    array_len = 3;
-	    if (rt_tcl_list_to_fastf_array(argv[1], &newval, &array_len) !=
+	    if (_rt_tcl_list_to_fastf_array(argv[1], &newval, &array_len) !=
 		array_len) {
 		bu_vls_printf(logstr, "ERROR: Incorrect number of coordinates for vertex\n");
 		return BRLCAD_ERROR;
@@ -2572,7 +2572,7 @@ rt_sketch_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc,
 	} else if (BU_STR_EQUAL(argv[0], "A")) {
 	    newval = skt->u_vec;
 	    array_len = 3;
-	    if (rt_tcl_list_to_fastf_array(argv[1], &newval, &array_len) !=
+	    if (_rt_tcl_list_to_fastf_array(argv[1], &newval, &array_len) !=
 		array_len) {
 		bu_vls_printf(logstr, "ERROR: Incorrect number of coordinates for vertex\n");
 		return BRLCAD_ERROR;
@@ -2580,7 +2580,7 @@ rt_sketch_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc,
 	} else if (BU_STR_EQUAL(argv[0], "B")) {
 	    newval = skt->v_vec;
 	    array_len = 3;
-	    if (rt_tcl_list_to_fastf_array(argv[1], &newval, &array_len) !=
+	    if (_rt_tcl_list_to_fastf_array(argv[1], &newval, &array_len) !=
 		array_len) {
 		bu_vls_printf(logstr, "ERROR: Incorrect number of coordinates for vertex\n");
 		return BRLCAD_ERROR;
@@ -2605,7 +2605,7 @@ rt_sketch_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc,
 	    }
 
 	    len = 0;
-	    (void)rt_tcl_list_to_fastf_array(dupstr, &new_verts, &len);
+	    (void)_rt_tcl_list_to_fastf_array(dupstr, &new_verts, &len);
 	    bu_free(dupstr, "sketch adjust strdup");
 
 	    if (len%2) {
@@ -2640,7 +2640,7 @@ rt_sketch_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc,
 		return BRLCAD_ERROR;
 	    }
 	    array_len = 2;
-	    if (rt_tcl_list_to_fastf_array(argv[1], &new_vert, &array_len) != array_len) {
+	    if (_rt_tcl_list_to_fastf_array(argv[1], &new_vert, &array_len) != array_len) {
 		bu_vls_printf(logstr, "ERROR: Incorrect number of coordinates for vertex\n");
 		return BRLCAD_ERROR;
 	    }

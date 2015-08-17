@@ -2914,7 +2914,7 @@ rt_nmg_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, co
 	    for (j = 0; j < num_verts; j++) {
 		len = 3;
 		tmp = &verts[j].pt[0];
-		if (rt_tcl_list_to_fastf_array(obj_array[j], &tmp, &len) != 3) {
+		if (_rt_tcl_list_to_fastf_array(obj_array[j], &tmp, &len) != 3) {
 		    bu_vls_printf(logstr, "ERROR: incorrect number of coordinates for vertex\n");
 		    return BRLCAD_ERROR;
 		}
@@ -2955,7 +2955,7 @@ rt_nmg_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, co
 		/* struct faceuse fu is initialized in earlier scope */
 
 		loop_len = 0;
-		(void)rt_tcl_list_to_int_array(obj_array[i], &loop, &loop_len);
+		(void)_rt_tcl_list_to_int_array(obj_array[i], &loop, &loop_len);
 		if (!loop_len) {
 		    bu_vls_printf(logstr,
 				  "ERROR: unable to parse face list\n");
