@@ -8,14 +8,14 @@ are permitted provided that the following conditions are met:
 Redistributions of source code must retain the above copyright notice, this list of
 conditions and the following disclaimer. Redistributions in binary form must reproduce
 the above copyright notice, this list of conditions and the following disclaimer
-in the documentation and/or other materials provided with the distribution.
+in the documentation and/or other materials provided with the distribution. 
 
 Neither the name of the Johns Hopkins University nor the names of its contributors
 may be used to endorse or promote products derived from this software without specific
-prior written permission.
+prior written permission. 
 
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY
-EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO THE IMPLIED WARRANTIES
+EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO THE IMPLIED WARRANTIES 
 OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT
 SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED
@@ -183,7 +183,7 @@ double BSplineData< Degree >::CornerEvaluator< Radius >::value( int depth , int 
 template< int Degree >
 void BSplineData< Degree >::set( int maxDepth , int boundaryType )
 {
-	_boundaryType = boundaryType;
+	_boundaryType = boundaryType>0 ? 1 : ( boundaryType<0 ? -1 : 0 );
 
 	depth = maxDepth;
 	// [Warning] This assumes that the functions spacing is dual
@@ -378,17 +378,17 @@ template< int Degree >
 template< class Real >
 BSplineData< Degree >::DotTables< Real >::DotTables( void )
 {
-	vvDotTable = NullPointer< Real >();
-	dvDotTable = NullPointer< Real >();
-	ddDotTable = NullPointer< Real >();
+	vvDotTable = NullPointer( Real );	
+	dvDotTable = NullPointer( Real );	
+	ddDotTable = NullPointer( Real );	
 }
 template< int Degree >
 template< class Real >
 BSplineData< Degree >::DotTables< Real >::~DotTables( void )
 {
-	DeletePointer( vvDotTable );
-	DeletePointer( dvDotTable );
-	DeletePointer( ddDotTable );
+	DeletePointer( vvDotTable ); 
+	DeletePointer( dvDotTable ); 
+	DeletePointer( ddDotTable ); 
 }
 template< int Degree >
 template< class Real >
@@ -533,15 +533,15 @@ template< int Degree >
 template< class Real >
 BSplineData< Degree >::ValueTables< Real >::ValueTables( void )
 {
-	valueTable = NullPointer< Real >();
-	dValueTable = NullPointer< Real >();
+	valueTable = NullPointer( Real );
+	dValueTable = NullPointer( Real );
 }
 template< int Degree >
 template< class Real >
 BSplineData< Degree >::ValueTables< Real >::~ValueTables( void )
 {
-	DeletePointer( valueTable );
-	DeletePointer( dValueTable );
+	DeletePointer( valueTable ); 
+	DeletePointer( dValueTable ); 
 }
 template< int Degree >
 template< class Real >

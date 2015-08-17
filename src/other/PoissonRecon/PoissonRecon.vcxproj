@@ -187,7 +187,6 @@
     <ClCompile Include="Src\MarchingCubes.cpp" />
     <ClCompile Include="Src\PlyFile.cpp" />
     <ClCompile Include="Src\PoissonRecon.cpp" />
-    <ClCompile Include="Src\Time.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Src\Allocator.h" />
@@ -202,14 +201,13 @@
     <ClInclude Include="Src\MAT.h" />
     <ClInclude Include="Src\MemoryUsage.h" />
     <ClInclude Include="Src\MultiGridOctreeData.h" />
+    <ClInclude Include="Src\MyTime.h" />
     <ClInclude Include="Src\Octree.h" />
     <ClInclude Include="Src\Ply.h" />
-    <ClInclude Include="Src\PlyFile.h" />
     <ClInclude Include="Src\PointStream.h" />
     <ClInclude Include="Src\Polynomial.h" />
     <ClInclude Include="Src\PPolynomial.h" />
     <ClInclude Include="Src\SparseMatrix.h" />
-    <ClInclude Include="Src\Time.h" />
     <ClInclude Include="Src\Vector.h" />
   </ItemGroup>
   <ItemGroup>

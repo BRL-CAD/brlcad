@@ -275,7 +275,7 @@ sub_sample(struct rt_parallel_container *state,
 
     /* NOTE: There should be a way to check and see if we do or don't need points for this ray
      *  In previous PointSampler code of GCT we wouldn't keep points that did not provide
-     *  new value as to limit the # of points we were dealing with.  Right now we o ahead and
+     *  new value as to limit the # of points we were dealing with.  Right now we go ahead and
      *  save them because it is not hurting us and is easier */
 #if 0
     if (differLeft && diffRight) {
