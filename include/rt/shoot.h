@@ -176,18 +176,14 @@ RT_EXPORT extern cl_int
 clt_shot(size_t sz_hits, struct cl_hit *hits, struct xray *rp, struct soltab *stp,
 	 struct application *ap, struct seg *seghead);
 
-RT_EXPORT extern cl_int
-clt_db_solid_shot(const size_t sz_hits, struct cl_hit *hits,
-		  struct xray *rp, const cl_uint index);
-
 RT_EXPORT extern void
 clt_norm(struct hit *hitp, struct soltab *stp, struct xray *rp);
 
 
 RT_EXPORT extern void
-clt_run(void *pixels, const cl_image_format *fmt, cl_int cur_pixel, cl_int last_pixel,
-	cl_int width, cl_int height, mat_t view2model, fastf_t cell_width,
-	fastf_t cell_height, fastf_t aspect, cl_int lightmodel);
+clt_frame(void *pixels, size_t pwidth, int cur_pixel, int last_pixel,
+	  int width, int background[3], int nonbackground[3], mat_t view2model,
+          fastf_t cell_width, fastf_t cell_height, fastf_t aspect, int lightmodel);
 #endif
 
 

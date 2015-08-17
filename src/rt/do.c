@@ -510,16 +510,47 @@ def_tree(register struct rt_i *rtip)
 
 /*********************************************************************************/
 #ifdef USE_OPENCL
+static unsigned int clt_mode;           /* Active render buffers */
+static size_t clt_pwidth;		/* Width of each pixel (in bytes) */
+
+static fb *clt_fbp;
+
+
 void
-do_run_opencl(int cur_pixel, int last_pixel)
+clt_connect_fb(fb *fbp)
 {
-    int npix, j, rowspan, a_x, a_y;
-    cl_double *pixels;
+    clt_fbp = fbp;
+}
+
+void
+clt_view_init(unsigned int mode)
+{
+    clt_mode = mode;
+
+    clt_pwidth = 0;
+    if (mode & CLT_COLOR)
+        clt_pwidth += 3;
+    if (mode & CLT_DEPTH)
+        clt_pwidth += 8;
+
+}
+
+void
+clt_run(int cur_pixel, int last_pixel)
+{
+    int ibackground[3];      /* integer 0..255 version */
+    int inonbackground[3];   /* integer non-background */
+
+    int npix, a_x, a_y, i;
+    uint8_t *pixels, *pixelp;
     size_t cpu = 0;
     struct application a;
-    const cl_image_format fmt = {CL_RGBA, CL_UNSIGNED_INT32};
+
+    ssize_t size;
+    ssize_t count;
 
     npix = last_pixel-cur_pixel+1;
+    size = clt_pwidth * npix;
 
     a_y = (int)(cur_pixel/width);
     a_x = (int)(cur_pixel - (a_y * width));
@@ -529,47 +560,69 @@ do_run_opencl(int cur_pixel, int last_pixel)
     a.a_resource = &resource[cpu];
     a.a_level = 0;
 
-    pixels = (cl_double*)bu_calloc(width*height, sizeof(cl_double)*4, "image buffer");
 
-    clt_run(pixels, &fmt, cur_pixel, last_pixel, width, height*2, view2model, cell_width,
-	    cell_height, aspect, lightmodel);
+    if (lightmodel == 2)
+        VSETALL(background, 0);
+
+    /* Create integer version of background color */
+    inonbackground[0] = ibackground[0] = background[0] * 255.0 + 0.5;
+    inonbackground[1] = ibackground[1] = background[1] * 255.0 + 0.5;
+    inonbackground[2] = ibackground[2] = background[2] * 255.0 + 0.5;
+
+    /*
+     * If a non-background pixel comes out the same color as the
+     * background, modify it slightly, to permit compositing.  Perturb
+     * the background color channel with the largest intensity.
+     */
+    if (inonbackground[0] > inonbackground[1]) {
+        if (inonbackground[0] > inonbackground[2]) i = 0;
+        else i = 2;
+    } else {
+        if (inonbackground[1] > inonbackground[2]) i = 1;
+        else i = 2;
+    }
+    if (inonbackground[i] < 127) inonbackground[i]++;
+    else inonbackground[i]--;
+
+
+    pixels = (uint8_t*)bu_calloc(size, sizeof(uint8_t), "image buffer");
+
+    clt_frame(pixels, clt_pwidth, cur_pixel, last_pixel, width,
+              ibackground, inonbackground, view2model, cell_width,
+              cell_height, aspect, lightmodel);
+
+    pixelp = pixels + clt_pwidth * cur_pixel;
+
+    if (clt_fbp) {
+        bu_semaphore_acquire(BU_SEM_SYSCALL);
+        count = fb_write(clt_fbp, a_x, a_y, pixelp, size);
+        bu_semaphore_release(BU_SEM_SYSCALL);
+        if (count < size)
+            bu_exit(EXIT_FAILURE, "pixel fb_write error");
+    }
+    if (outfp) {
+        bu_semaphore_acquire(BU_SEM_SYSCALL);
+        if (bu_fseek(outfp, clt_pwidth*cur_pixel, 0) != 0)
+            fprintf(stderr, "fseek error\n");
+        if (fwrite(pixelp, size, 1, outfp) != 1)
+            bu_exit(EXIT_FAILURE, "pixel fwrite error");
+        bu_semaphore_release(BU_SEM_SYSCALL);
+    }
+    if (bif) {
+        int span = clt_pwidth*width;;
+
+        BU_ASSERT(a_x == 0);
+        while (pixelp < pixels+size) {
+            icv_writeline(bif, a_y++, pixelp, ICV_DATA_UCHAR);
+            pixelp += span;
+        }
+    }
+    bu_free(pixels, "image buffer");
 
     bu_log("sub_grid_mode: %d, fullfloat_mode: %d, hypersample: %d, jitter: %d\n"
 	   "prism: %d, perspective: %e, stereo: %d\n",
 	   sub_grid_mode, fullfloat_mode, hypersample, jitter & JITTER_CELL,
 	   a.a_rt_i->rti_prismtrace, rt_perspective, stereo);
-
-    /* This really needs to be optimized. The GPU can push those pixels faster */
-    while (npix > 0) {
-	if ((a_x + npix) >= (int)width) {
-	   rowspan = width - a_x;
-	} else {
-	   rowspan = a_x + npix;
-	}
-
-	/* Framebuffer output. */
-        for (j=0; j<rowspan; j++) {
-	    int xy = (a_y*2+0)*width+a_x;
-	    int zw = (a_y*2+1)*width+a_x;
-
-	    a_x++;
-	    a.a_x = a_x;
-	    a.a_y = a_y;
-	    a.a_color[0] = pixels[2*xy+0];
-	    a.a_color[1] = pixels[2*xy+1];
-	    a.a_color[2] = pixels[2*zw+0];
-	    a.a_dist = pixels[2*zw+1];
-	    a.a_user = !signbit(a.a_color[0]);
-	    view_pixel(&a);
-        }
-	view_eol(&a);
-
-	a_x = 0;
-	a_y++;
-	npix -= rowspan;
-	if (npix <= 0) break;
-    }
-    bu_free(pixels, "image buffer");
 
     /* Tally up the statistics */
     for (cpu=0; cpu < npsw; cpu++) {
@@ -871,6 +924,18 @@ do_frame(int framenumber)
     /* initialize lighting, may update pix_start */
     view_2init(&APP, framename);
 
+#ifdef USE_OPENCL
+    if (opencl_mode) {
+        unsigned int mode = 0;
+
+                            mode |= CLT_COLOR;
+        if (rpt_dist)       mode |= CLT_DEPTH;
+        if (full_incr_mode) mode |= CLT_ACCUM;
+
+        clt_view_init(mode);
+    }
+#endif
+
     /* Just while doing the ray-tracing */
     if (R_DEBUG&RDEBUG_RTMEM)
 	bu_debug |= (BU_DEBUG_MEM_CHECK|BU_DEBUG_MEM_LOG);
@@ -896,7 +961,7 @@ do_frame(int framenumber)
 
 #ifdef USE_OPENCL
     if (opencl_mode) {
-	do_run_opencl(pix_start, pix_end);
+	clt_run(pix_start, pix_end);
 
 	/* Reset values to full size, for next frame (if any) */
 	pix_start = 0;
