@@ -459,7 +459,6 @@ set(stepg_LIBS
 list(APPEND stepg_LIBS ${stepg_LIBS})
 
 BRLCAD_ADDEXEC(step-g "${stepg_SOURCES}" "${stepg_LIBS}" NO_STRICT)
-add_dependencies(step-g step-express-${SCHEMA_NAME}-stepg)
 
 if(MSVC)
   set(stepg_IMPORTS
