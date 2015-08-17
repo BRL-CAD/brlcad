@@ -252,7 +252,7 @@ bu_rand0to1(const uint id, global float *bnrandhalftab, const uint randhalftabsi
 }
 
 __kernel void
-do_pixel(global uchar *pixels, const uint pwidth, global struct hit *hits, 
+do_pixel(global uchar *pixels, const uint pwidth, global struct hit *hits,
          const int cur_pixel, const int last_pixel, const int width,
 	 global float *rand_halftab, const uint randhalftabsize,
 	 const uchar3 background, const uchar3 nonbackground,

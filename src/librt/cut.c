@@ -2460,7 +2460,7 @@ static void radix_sort(size_t v_len, struct morton_primitive **v)
         /* Set in and out vector pointers for radix sort pass */
         struct morton_primitive *in = (pass & 1) ? temp_vector : *v;
         struct morton_primitive *out = (pass & 1) ? *v : temp_vector;
-        
+
         /* Count number of zero bits in array for current radix sort bit */
         const uint32_t bit_mask = (1 << bits_per_pass) - 1;
 
@@ -2499,7 +2499,7 @@ static void radix_sort(size_t v_len, struct morton_primitive **v)
 
 static struct bvh_build_node *
 emit_lbvh(int max_prims_in_node,
-    struct bvh_build_node **build_nodes, const fastf_t *bounds_prims, 
+    struct bvh_build_node **build_nodes, const fastf_t *bounds_prims,
     struct morton_primitive *morton_prims, long n_primitives, long *total_nodes,
     long *ordered_prims, long *ordered_prims_offset, int bit_index) {
 
@@ -2804,7 +2804,7 @@ hlbvh_create(int max_prims_in_node, struct bu_pool *pool, const fastf_t *centroi
         if (bounds[3+X] > bounds[0+X]) o[X] /= (bounds[3+X] - bounds[0+X]);
         if (bounds[3+Y] > bounds[0+Y]) o[Y] /= (bounds[3+Y] - bounds[0+Y]);
         if (bounds[3+Z] > bounds[0+Z]) o[Z] /= (bounds[3+Z] - bounds[0+Z]);
-        
+
         o[X] *= morton_scale;
         o[Y] *= morton_scale;
         o[Z] *= morton_scale;
@@ -2953,7 +2953,7 @@ clt_linear_bvh_create(long n_primitives, struct clt_linear_bvh_node **nodes_p,
 		    }
 		} else {
 		    bu_log("#%ld> #%ld\n", i, nodes[i].u.second_child_offset);
-		    
+
 		}
 	    }
 

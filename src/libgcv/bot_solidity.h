@@ -38,7 +38,7 @@ __BEGIN_DECLS
 
 
 /*
- * Topological test for determing whether the given BoT satisfies
+ * Topological test for determining whether the given BoT satisfies
  * the conditions for solidity.
  *
  * Equivalent to bot_is_closed_fan() && bot_is_orientable()

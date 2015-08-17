@@ -477,7 +477,7 @@ clt_prep(struct rt_i *rtip)
         /* Infinite solids make the BVH construction explode. */
         if (stp->st_aradius >= INFINITY) continue;
 
-        rt_cut_extend(finp, stp, rtip);            
+        rt_cut_extend(finp, stp, rtip);
     } RT_VISIT_ALL_SOLTABS_END;
 
     primitives = finp->bn.bn_list;
