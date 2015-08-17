@@ -370,7 +370,6 @@ macro(BRLCAD_ADDLIB libname srcslist libslist)
   if(BUILD_SHARED_LIBS)
 
     set(so_srcs ${srcslist} ${${LIBNAME_UPPER}_SO_SRCS})
-    message("${LIBNAME_UPPER}_SO_SRCS: ${${LIBNAME_UPPER}_SO_SRCS}")
 
     add_library(${libname} SHARED ${so_srcs})
 
@@ -458,8 +457,9 @@ macro(BRLCAD_ADDLIB libname srcslist libslist)
   # Handle static libraries (renaming requirements to both allow unique targets and
   # respect standard naming conventions.)
   if(BUILD_STATIC_LIBS)
+
     set(static_srcs ${srcslist} ${${LIBNAME_UPPER}_STATIC_SRCS})
-    message("${LIBNAME_UPPER}_STATIC_SRCS: ${${LIBNAME_UPPER}_STATIC_SRCS}")
+
     add_library(${libname}-static STATIC ${static_srcs})
     set_target_properties(${libname}-static PROPERTIES FOLDER "BRL-CAD Static Libs")
     if(NOT BUILD_SHARED_LIBS)
