@@ -511,7 +511,7 @@ def_tree(register struct rt_i *rtip)
 /*********************************************************************************/
 #ifdef USE_OPENCL
 static unsigned int clt_mode;           /* Active render buffers */
-static size_t clt_pwidth;		/* Width of each pixel (in bytes) */
+static uint8_t clt_o[3];		/* Sub buffer offsets in bytes: {CLT_COLOR, CLT_DEPTH, MAX} */
 
 static fb *clt_fbp;
 
@@ -525,14 +525,19 @@ clt_connect_fb(fb *fbp)
 void
 clt_view_init(unsigned int mode)
 {
+    uint8_t o[3];
+    int i;
+
     clt_mode = mode;
 
-    clt_pwidth = 0;
-    if (mode & CLT_COLOR)
-        clt_pwidth += 3;
-    if (mode & CLT_DEPTH)
-        clt_pwidth += 8;
+    o[0] = (mode & CLT_COLOR) ? 3 : 0;	/* uchar rgb[3] */
+    o[1] = (mode & CLT_DEPTH) ? 8 : 0;  /* double depth */
+    o[2] = 0;
 
+    clt_o[0] = 0;
+    for (i=1; i<3; i++) {
+	clt_o[i] = o[i-1] + clt_o[i-1];
+    }
 }
 
 void
@@ -550,7 +555,7 @@ clt_run(int cur_pixel, int last_pixel)
     ssize_t count;
 
     npix = last_pixel-cur_pixel+1;
-    size = clt_pwidth * npix;
+    size = npix * clt_o[2];
 
     a_y = (int)(cur_pixel/width);
     a_x = (int)(cur_pixel - (a_y * width));
@@ -587,11 +592,11 @@ clt_run(int cur_pixel, int last_pixel)
 
     pixels = (uint8_t*)bu_calloc(size, sizeof(uint8_t), "image buffer");
 
-    clt_frame(pixels, clt_pwidth, cur_pixel, last_pixel, width,
+    clt_frame(pixels, clt_o, cur_pixel, last_pixel, width,
               ibackground, inonbackground, view2model, cell_width,
               cell_height, aspect, lightmodel);
 
-    pixelp = pixels + clt_pwidth * cur_pixel;
+    pixelp = pixels + cur_pixel*clt_o[2];
 
     if (clt_fbp) {
         bu_semaphore_acquire(BU_SEM_SYSCALL);
@@ -602,14 +607,14 @@ clt_run(int cur_pixel, int last_pixel)
     }
     if (outfp) {
         bu_semaphore_acquire(BU_SEM_SYSCALL);
-        if (bu_fseek(outfp, clt_pwidth*cur_pixel, 0) != 0)
+        if (bu_fseek(outfp, cur_pixel*clt_o[2], 0) != 0)
             fprintf(stderr, "fseek error\n");
         if (fwrite(pixelp, size, 1, outfp) != 1)
             bu_exit(EXIT_FAILURE, "pixel fwrite error");
         bu_semaphore_release(BU_SEM_SYSCALL);
     }
     if (bif) {
-        int span = clt_pwidth*width;;
+        int span = width*clt_o[2];
 
         BU_ASSERT(a_x == 0);
         while (pixelp < pixels+size) {

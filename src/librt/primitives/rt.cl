@@ -186,11 +186,10 @@ rt_in_rpp(const double3 pt,
     return (rmin <= rmax);
 }
 
-
 int
 shootray(global struct hit *hitp, const double3 r_pt, const double3 r_dir, const double3 r_idir,
          const uint nprims, global int *ids, global struct linear_bvh_node *nodes,
-         global uint *indexes, global char *prims)
+         global uint *indexes, global uchar *prims)
 {
     int ret = 0;
 
@@ -251,14 +250,27 @@ bu_rand0to1(const uint id, global float *bnrandhalftab, const uint randhalftabsi
     return ret;
 }
 
+inline ulong
+bu_cv_htond(const ulong d)
+{
+    return ((d & 0xFF00000000000000UL) >> 56)
+	 | ((d & 0x00FF000000000000UL) >> 40)
+	 | ((d & 0x0000FF0000000000UL) >> 24)
+	 | ((d & 0x000000FF00000000UL) >>  8)
+	 | ((d & 0x00000000FF000000UL) <<  8)
+	 | ((d & 0x0000000000FF0000UL) << 24)
+	 | ((d & 0x000000000000FF00UL) << 40)
+	 | ((d & 0x00000000000000FFUL) << 56);
+}
+
 __kernel void
-do_pixel(global uchar *pixels, const uint pwidth, global struct hit *hits,
+do_pixel(global uchar *pixels, const uchar3 o, global struct hit *hits,
          const int cur_pixel, const int last_pixel, const int width,
 	 global float *rand_halftab, const uint randhalftabsize,
 	 const uchar3 background, const uchar3 nonbackground,
 	 const double16 view2model, const double cell_width, const double cell_height,
 	 const double aspect, const int lightmodel, const uint nprims, global int *ids,
-	 global struct linear_bvh_node *nodes, global uint *indexes, global char *prims)
+	 global struct linear_bvh_node *nodes, global uint *indexes, global uchar *prims)
 {
     const size_t id = get_global_id(0);
     const int pixelnum = cur_pixel+id;
@@ -327,24 +339,23 @@ do_pixel(global uchar *pixels, const uint pwidth, global struct hit *hits,
 	 * values.
 	 */
         t_color = a_color*255.+bu_rand0to1(id, rand_halftab, randhalftabsize);
-
 	rgb = convert_uchar3_sat(t_color);
 
-	if (all(rgb == background)) {
-	    rgb = nonbackground;
-	} else if (all(rgb == iblack)) { // make sure it's never perfect black
-	    rgb.z = 1;
-	}
+
+	rgb = select(rgb, nonbackground, (uchar3)all(rgb == background));
+	// make sure it's never perfect black
+	rgb = select(rgb, (uchar3){rgb.xy, 1}, (uchar3)all(rgb == iblack));
     }
 
-    /* write color */
-    global uchar *colorp = pixels+id*pwidth+0;
-    vstore3(rgb, 0, colorp);
-
-    if (pwidth == 8+3) { /* write depth */
-	ulong depth = as_ulong(hitp->hit_dist);
-
-	global ulong *depthp = pixels+id*pwidth+3;
+    if (o.s0 != o.s1) {
+	/* write color */
+	global uchar *colorp = pixels+id*o.s2+o.s0;
+	vstore3(rgb, 0, colorp);
+    }
+    if (o.s1 != o.s2) {
+	/* write depth */
+	ulong depth = bu_cv_htond(as_ulong(hitp->hit_dist));
+	global ulong *depthp = pixels+id*o.s2+o.s1;
 	*depthp = depth;
     }
 }
