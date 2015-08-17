@@ -54,6 +54,15 @@ BRLCAD_LIB_INCLUDE_DIRS(gcv GCV_INCLUDE_DIRS "")
 
 
 GEN_OBJ_SRCS(libgcv)
+set(GCV_SO_SRCS
+  ${LEMON_OBJ_libgcv_Parser_SRC}
+  ${PERPLEX_OBJ_libgcv_Scanner_SRC}
+  )
+GEN_OBJ_SRCS(libgcv-static)
+set(GCV_STATIC_SRCS
+  ${LEMON_OBJ_libgcv-static_Parser_SRC}
+  ${PERPLEX_OBJ_libgcv-static_Scanner_SRC}
+  )
 set(LIBGCV_SOURCES
   bottess.c
   facetize.c
@@ -62,8 +71,6 @@ set(LIBGCV_SOURCES
   region_end_mc.c
   tri_intersect.c
   bot_solidity.c
-  ${LEMON_OBJ_libgcv_Parser_SRC}
-  ${PERPLEX_OBJ_libgcv_Scanner_SRC}
   )
 
 set(LIBGCV_CONVERTER_SOURCES
@@ -82,13 +89,13 @@ set(LIBGCV_CONVERTER_SOURCES
 
 list(APPEND LIBGCV_SOURCES ${LIBGCV_CONVERTER_SOURCES})
 
-BRLCAD_ADDLIB(libgcv "${LIBGCV_SOURCES}" "librt;libwdb;libbu")
+BRLCAD_ADDLIB(libgcv "${LIBGCV_SOURCES}" "librt;libwdb;libbu" SO_SRCS "${GCV_SO_SRCS}" STATIC_SRCS "${GCV_STATIC_SRCS}")
 set_target_properties(libgcv PROPERTIES VERSION 20.0.1 SOVERSION 20)
 set_property(TARGET libgcv APPEND PROPERTY INCLUDE_DIRECTORIES "${PERPLEX_OBJ_libgcv_Scanner_INCLUDE_DIR}")
 set_property(TARGET libgcv APPEND PROPERTY INCLUDE_DIRECTORIES "${LEMON_OBJ_libgcv_Parser_INCLUDE_DIR}")
 if(TARGET libgcv-static)
-  set_property(TARGET libgcv APPEND PROPERTY INCLUDE_DIRECTORIES "${PERPLEX_OBJ_libgcv_Scanner_INCLUDE_DIR}")
-  set_property(TARGET libgcv APPEND PROPERTY INCLUDE_DIRECTORIES "${LEMON_OBJ_libgcv_Parser_INCLUDE_DIR}")
+  set_property(TARGET libgcv-static APPEND PROPERTY INCLUDE_DIRECTORIES "${PERPLEX_OBJ_libgcv-static_Scanner_INCLUDE_DIR}")
+  set_property(TARGET libgcv-static APPEND PROPERTY INCLUDE_DIRECTORIES "${LEMON_OBJ_libgcv-static_Parser_INCLUDE_DIR}")
 endif(TARGET libgcv-static)
 
 enable_testing()
