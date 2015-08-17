@@ -540,7 +540,7 @@ brep_to_csg(struct ged *gedp, struct directory *dp, int verify)
     if (subbreps_tree) {
 	struct bu_vls obj_comb_name = BU_VLS_INIT_ZERO;
 	struct bu_vls sub_comb_name = BU_VLS_INIT_ZERO;
-	struct subbrep_object_data *curr_union;
+	struct subbrep_object_data *curr_union = NULL;
 	struct wmember *ccomb = NULL;
 	struct wmember *scomb = NULL;
 
