@@ -381,7 +381,7 @@ plot_ellipse(
 }
 
 int
-tcl_list_to_int_array(const char *list, int **array, int *array_len)
+rt_tcl_list_to_int_array(const char *list, int **array, int *array_len)
 {
     int i, len;
     const char **argv;
@@ -410,7 +410,7 @@ tcl_list_to_int_array(const char *list, int **array, int *array_len)
 
 
 int
-tcl_list_to_fastf_array(const char *list, fastf_t **array, int *array_len)
+rt_tcl_list_to_fastf_array(const char *list, fastf_t **array, int *array_len)
 {
     int i, len;
     const char **argv;

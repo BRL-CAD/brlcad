@@ -174,8 +174,8 @@ extern int tcl_list_to_avs(const char *tcl_list, struct bu_attribute_value_set *
 
 /* primitive_util.c */
 
-extern int tcl_list_to_int_array(const char *list, int **array, int *array_len);
-extern int tcl_list_to_fastf_array(const char *list, fastf_t **array, int *array_len);
+extern int rt_tcl_list_to_int_array(const char *list, int **array, int *array_len);
+extern int rt_tcl_list_to_fastf_array(const char *list, fastf_t **array, int *array_len);
 
 #ifdef USE_OPENCL
 extern cl_device_id clt_get_cl_device(void);
