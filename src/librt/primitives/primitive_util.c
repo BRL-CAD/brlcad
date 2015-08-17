@@ -635,7 +635,7 @@ clt_init(void)
             "tgc_shot.cl",
             "tor_shot.cl",
 
-            "table.cl",
+            "rt.cl",
         };
         const char *scan_file = "scan.cl";
 
@@ -1018,7 +1018,7 @@ clt_db_release(void)
 }
 
 void
-clt_frame(void *pixels, size_t pwidth, int cur_pixel, int last_pixel,
+clt_frame(void *pixels, uint8_t o[3], int cur_pixel, int last_pixel,
 	  int width, int ibackground[3], int inonbackground[3],
           mat_t view2model, fastf_t cell_width, fastf_t cell_height,
           fastf_t aspect, int lightmodel)
@@ -1031,24 +1031,24 @@ clt_frame(void *pixels, size_t pwidth, int cur_pixel, int last_pixel,
     struct {
         cl_double16 view2model;
         cl_double cell_width, cell_height, aspect;
-        cl_uint pwidth;
 	cl_uint randhalftabsize;
         cl_int cur_pixel, last_pixel, width;
         cl_int lightmodel;
+        cl_uchar3 o;
         cl_uchar3 ibackground, inonbackground;
     }p;
 
     cl_mem ppixels, phits;
     cl_int error;
 
-    sz_pixels = sizeof(cl_uchar)*pwidth*npix;
+    sz_pixels = sizeof(cl_uchar)*o[2]*npix;
     sz_hits = sizeof(struct cl_hit)*npix;
 
-    p.pwidth = pwidth;
     p.randhalftabsize = bn_randhalftabsize;
     p.cur_pixel = cur_pixel;
     p.last_pixel = last_pixel;
     p.width = width;
+    VMOVE(p.o.s, o);
     VMOVE(p.ibackground.s, ibackground);
     VMOVE(p.inonbackground.s, inonbackground);
     MAT_COPY(p.view2model.s, view2model);
@@ -1064,7 +1064,7 @@ clt_frame(void *pixels, size_t pwidth, int cur_pixel, int last_pixel,
 
     bu_semaphore_acquire(clt_semaphore);
     error = clSetKernelArg(clt_frame_kernel, 0, sizeof(cl_mem), &ppixels);
-    error |= clSetKernelArg(clt_frame_kernel, 1, sizeof(cl_uint), &p.pwidth);
+    error |= clSetKernelArg(clt_frame_kernel, 1, sizeof(cl_uchar3), &p.o);
     error |= clSetKernelArg(clt_frame_kernel, 2, sizeof(cl_mem), &phits);
     error |= clSetKernelArg(clt_frame_kernel, 3, sizeof(cl_int), &p.cur_pixel);
     error |= clSetKernelArg(clt_frame_kernel, 4, sizeof(cl_int), &p.last_pixel);
