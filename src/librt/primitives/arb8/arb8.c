@@ -2256,6 +2256,61 @@ rt_arb_params(struct pc_pc_set * UNUSED(ps), const struct rt_db_internal *ip)
 
 
 /**
+ * compute surface area of an arb8 by dividing it into
+ * it's component faces and summing the face areas.
+ */
+void
+rt_arb_surf_area(fastf_t *area, const struct rt_db_internal *ip)
+{
+    const int arb_faces[5][24] = rt_arb_faces;
+    int i, a, b, c, type;
+    vect_t b_a, c_a, area_;
+    plane_t plane;
+    struct bn_tol tmp_tol, tol;
+    struct rt_arb_internal *aip = (struct rt_arb_internal *)ip->idb_ptr;
+    RT_ARB_CK_MAGIC(aip);
+
+    /* set up tolerance for rt_arb_std_type */
+    tol.magic = BN_TOL_MAGIC;
+    tol.dist = 0.0001; /* to get old behavior of rt_arb_std_type() */
+    tol.dist_sq = tol.dist * tol.dist;
+    tol.perp = 1e-5;
+    tol.para = 1 - tol.perp;
+
+    type = rt_arb_std_type(ip, &tol) - 4;
+
+    /* tol struct needed for bn_mk_plane_3pts,
+     * can't be passed to the function since it
+     * must fit into the rt_functab interface */
+    tmp_tol.magic = BN_TOL_MAGIC;
+    tmp_tol.dist = RT_LEN_TOL;
+    tmp_tol.dist_sq = tmp_tol.dist * tmp_tol.dist;
+
+    for (i = 0; i < 6; i++) {
+	if (arb_faces[type][i*4] == -1)
+	    break;	/* faces are done */
+
+	/* a, b, c = face of the GENARB8 */
+	a = arb_faces[type][i*4];
+	b = arb_faces[type][i*4+1];
+	c = arb_faces[type][i*4+2];
+
+	/* create a plane from a, b, c */
+	if (bn_mk_plane_3pts(plane, aip->pt[a], aip->pt[b], aip->pt[c], &tmp_tol) < 0) {
+	    continue;
+	}
+
+	/* calculate area of the face */
+	VSUB2(b_a, aip->pt[b], aip->pt[a]);
+	VSUB2(c_a, aip->pt[c], aip->pt[a]);
+	VCROSS(area_, b_a, c_a);
+
+	*area += MAGNITUDE(area_);
+    }
+}
+
+
+/**
  * compute volume of an arb8 by dividing it into
  * 6 arb4 and summing the volumes.
  */
