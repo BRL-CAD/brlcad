@@ -2884,7 +2884,7 @@ hlbvh_create(int max_prims_in_node, struct bu_pool *pool, const fastf_t *centroi
     ret = build_upper_sah(pool, finished_treelets, 0, treelets_size, total_nodes);
     bu_free(finished_treelets, "hlbvh_create");
 
-    bu_log("HLBVH: elapsed = %f ms (%d threads)", (omp_get_wtime()-start_time)*1e3,
+    bu_log("HLBVH: elapsed = %f ms (%d threads)\n", (omp_get_wtime()-start_time)*1e3,
 	   omp_get_max_threads());
     return ret;
 }
