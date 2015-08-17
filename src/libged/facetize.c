@@ -90,7 +90,9 @@ ged_facetize(struct ged *gedp, int argc, const char *argv[])
     static int make_bot;
     static int marching_cube;
     static int screened_poisson;
+#ifdef ENABLE_SPR
     int sp_fidelity = 0;  /* default to LOW fidelity */
+#endif
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
     GED_CHECK_READ_ONLY(gedp, GED_ERROR);
@@ -140,6 +142,7 @@ ged_facetize(struct ged *gedp, int argc, const char *argv[])
 		triangulate = 1;
 		make_bot = 1;
 		break;
+#ifdef ENABLE_SPR
 	    case 'L':
 		sp_fidelity = 0;
 		break;
@@ -149,6 +152,7 @@ ged_facetize(struct ged *gedp, int argc, const char *argv[])
 	    case 'H':
 		sp_fidelity = 2;
 		break;
+#endif
 	    case 'T':
 		triangulate = 1;
 		break;
