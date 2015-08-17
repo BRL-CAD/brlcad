@@ -7,8 +7,6 @@ constant double3 ambient_color = {1, 1, 1};     /* Ambient white light */
 
 constant double AmbientIntensity = 0.4;
 
-constant uchar3 ibackground = {0, 0, 50};	/* integer 0..255 version */
-constant uchar3 inonbackground = {0, 0, 51};	/* integer non-background */
 constant uchar3 iblack = {0, 0, 0};		/* integer black */
 
 
@@ -67,14 +65,6 @@ __kernel void
 solid_shot(global int *len, global struct hit *res, const double3 r_pt, const double3 r_dir, const int id, global const void *args)
 {
     *len = shot(res, r_pt, r_dir, UINT_MAX, id, args);
-}
-
-__kernel void
-db_solid_shot(global int *len, global struct hit *res, const double3 r_pt, const double3 r_dir, const uint idx, global int *ids, global uint *indexes, global char *prims)
-{
-    global const void *args;
-    args = prims + indexes[idx];
-    *len = shot(res, r_pt, r_dir, idx, ids[idx], args);
 }
 
 
@@ -251,15 +241,27 @@ shootray(global struct hit *hitp, const double3 r_pt, const double3 r_dir, const
     return ret;
 }
 
+inline double3
+bu_rand0to1(const uint id, global float *bnrandhalftab, const uint randhalftabsize)
+{
+    double3 ret;
+    ret.x = (bnrandhalftab[(id*3+0) % randhalftabsize]+0.5);
+    ret.y = (bnrandhalftab[(id*3+1) % randhalftabsize]+0.5);
+    ret.z = (bnrandhalftab[(id*3+2) % randhalftabsize]+0.5);
+    return ret;
+}
 
 __kernel void
-do_pixel(write_only image2d_t image, global struct hit *hits, 
+do_pixel(global uchar *pixels, const uint pwidth, global struct hit *hits, 
          const int cur_pixel, const int last_pixel, const int width,
-         const double16 view2model, const double cell_width, const double cell_height,
+	 global float *rand_halftab, const uint randhalftabsize,
+	 const uchar3 background, const uchar3 nonbackground,
+	 const double16 view2model, const double cell_width, const double cell_height,
 	 const double aspect, const int lightmodel, const uint nprims, global int *ids,
 	 global struct linear_bvh_node *nodes, global uint *indexes, global char *prims)
 {
-    const int pixelnum = cur_pixel+get_global_id(0);
+    const size_t id = get_global_id(0);
+    const int pixelnum = cur_pixel+id;
 
     const int a_y = (int)(pixelnum/width);
     const int a_x = (int)(pixelnum - (a_y * width));
@@ -267,13 +269,12 @@ do_pixel(write_only image2d_t image, global struct hit *hits,
     double3 r_pt, r_dir, r_idir;
     gen_ray(&r_pt, &r_dir, &r_idir, a_x,a_y, view2model, cell_width, cell_height, aspect);
 
-    global struct hit *hitp = hits+get_global_id(0);
+    global struct hit *hitp = hits+id;
     hitp->hit_dist = INFINITY;
 
     int ret = shootray(hitp, r_pt, r_dir, r_idir, nprims, ids, nodes, indexes, prims);
 
-    double4 a_color;
-    a_color.w = hitp->hit_dist;
+    double3 a_color;
 
     if (ret != 0) {
         double diffuse0 = 0;
@@ -300,22 +301,52 @@ do_pixel(write_only image2d_t image, global struct hit *hits,
 
                 /* Add in contribution from ambient light */
                 work1 = ambient_color * AmbientIntensity;
-                a_color.xyz = work0 + work1;
+                a_color = work0 + work1;
                 break;
             case 2:
                 /* Store surface normals pointing inwards */
                 /* (For Spencer's moving light program) */
-                a_color.xyz = (normal * (-.5)) + .5;
+                a_color = (normal * (-.5)) + .5;
                 break;
         }
     }
 
-    a_color.xyz = a_color.xyz;
+    uchar3 rgb;
     if (ret <= 0) {
-	a_color.xyz = -1e-20;	// background flag
+	/* shot missed the model, don't dither */
+        rgb = background;
+	a_color = -1e-20;	// background flag
+    } else {
+        double3 t_color;
+
+	/*
+	 * To prevent bad color aliasing, add some color dither.  Be
+	 * certain to NOT output the background color here.  Random
+	 * numbers in the range 0 to 1 are used, so that integer
+	 * valued colors (e.g., from texture maps) retain their original
+	 * values.
+	 */
+        t_color = a_color*255.+bu_rand0to1(id, rand_halftab, randhalftabsize);
+
+	rgb = convert_uchar3_sat(t_color);
+
+	if (all(rgb == background)) {
+	    rgb = nonbackground;
+	} else if (all(rgb == iblack)) { // make sure it's never perfect black
+	    rgb.z = 1;
+	}
     }
-    write_imageui(image, (int2){a_x, a_y*2+0}, as_uint4(a_color.xy));
-    write_imageui(image, (int2){a_x, a_y*2+1}, as_uint4(a_color.zw));
+
+    /* write color */
+    global uchar *colorp = pixels+id*pwidth+0;
+    vstore3(rgb, 0, colorp);
+
+    if (pwidth == 8+3) { /* write depth */
+	ulong depth = as_ulong(hitp->hit_dist);
+
+	global ulong *depthp = pixels+id*pwidth+3;
+	*depthp = depth;
+    }
 }
 
 /*

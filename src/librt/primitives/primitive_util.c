@@ -446,7 +446,7 @@ static cl_device_id clt_device;
 static cl_context clt_context;
 static cl_command_queue clt_queue;
 static cl_program clt_program;
-static cl_kernel clt_shot_kernel, clt_norm_kernel, clt_db_shot_kernel, clt_pixel_kernel;
+static cl_kernel clt_shot_kernel, clt_norm_kernel, clt_frame_kernel;
 
 static cl_program clt_inclusive_scan_program;
 static cl_kernel clt_inclusive_scan_final_update_kernel;
@@ -457,6 +457,8 @@ static cl_kernel clt_exclusive_scan_intervals_kernel;
 
 static size_t max_wg_size;
 static cl_uint max_compute_units;
+
+static cl_mem clt_rand_halftab;
 
 static cl_mem clt_db_ids, clt_db_indexes, clt_db_prims, clt_db_bvh;
 static cl_uint clt_db_nprims;
@@ -593,6 +595,8 @@ clt_cleanup(void)
 {
     if (!clt_initialized) return;
 
+    clReleaseMemObject(clt_rand_halftab);
+
     clReleaseKernel(clt_exclusive_scan_final_update_kernel);
     clReleaseKernel(clt_exclusive_scan_intervals_kernel);
     clReleaseProgram(clt_exclusive_scan_program);
@@ -601,9 +605,8 @@ clt_cleanup(void)
     clReleaseKernel(clt_inclusive_scan_intervals_kernel);
     clReleaseProgram(clt_inclusive_scan_program);
 
-    clReleaseKernel(clt_pixel_kernel);
+    clReleaseKernel(clt_frame_kernel);
 
-    clReleaseKernel(clt_db_shot_kernel);
     clReleaseKernel(clt_norm_kernel);
     clReleaseKernel(clt_shot_kernel);
 
@@ -653,10 +656,8 @@ clt_init(void)
         if (error != CL_SUCCESS) bu_bomb("failed to create an OpenCL kernel");
         clt_norm_kernel = clCreateKernel(clt_program, "solid_norm", &error);
         if (error != CL_SUCCESS) bu_bomb("failed to create an OpenCL kernel");
-        clt_db_shot_kernel = clCreateKernel(clt_program, "db_solid_shot", &error);
-        if (error != CL_SUCCESS) bu_bomb("failed to create an OpenCL kernel");
 
-        clt_pixel_kernel = clCreateKernel(clt_program, "do_pixel", &error);
+        clt_frame_kernel = clCreateKernel(clt_program, "do_pixel", &error);
         if (error != CL_SUCCESS) bu_bomb("failed to create an OpenCL kernel");
 
 
@@ -673,6 +674,9 @@ clt_init(void)
         if (error != CL_SUCCESS) bu_bomb("failed to create an OpenCL kernel");
         clt_exclusive_scan_final_update_kernel = clCreateKernel(clt_exclusive_scan_program, "exclusive_scan_final_update", &error);
         if (error != CL_SUCCESS) bu_bomb("failed to create an OpenCL kernel");
+
+	clt_rand_halftab = clCreateBuffer(clt_context, CL_MEM_READ_ONLY|CL_MEM_COPY_HOST_PTR, sizeof(bn_rand_halftab), bn_rand_halftab, &error);
+	if (error != CL_SUCCESS) bu_bomb("failed to create OpenCL rand_haltab buffer");
     }
     bu_semaphore_release(clt_semaphore);
 }
@@ -1013,95 +1017,79 @@ clt_db_release(void)
     clt_db_nprims = 0;
 }
 
-cl_int
-clt_db_solid_shot(const size_t sz_hits, struct cl_hit *hits, struct xray *rp, const cl_uint index)
-{
-    cl_int len;
-    cl_double3 r_pt, r_dir;
-
-    const size_t hypersample = 1;
-    cl_int error;
-    cl_mem plen, pout;
-
-    VMOVE(r_pt.s, rp->r_pt);
-    VMOVE(r_dir.s, rp->r_dir);
-
-    pout = clCreateBuffer(clt_context, CL_MEM_WRITE_ONLY, sz_hits, NULL, &error);
-    if (error != CL_SUCCESS) bu_bomb("failed to create OpenCL output buffer");
-    plen = clCreateBuffer(clt_context, CL_MEM_WRITE_ONLY, sizeof(len), NULL, &error);
-    if (error != CL_SUCCESS) bu_bomb("failed to create OpenCL output buffer");
-
-    bu_semaphore_acquire(clt_semaphore);
-    error = clSetKernelArg(clt_db_shot_kernel, 0, sizeof(cl_mem), &plen);
-    error |= clSetKernelArg(clt_db_shot_kernel, 1, sizeof(cl_mem), &pout);
-    error |= clSetKernelArg(clt_db_shot_kernel, 2, sizeof(cl_double3), &r_pt);
-    error |= clSetKernelArg(clt_db_shot_kernel, 3, sizeof(cl_double3), &r_dir);
-    error |= clSetKernelArg(clt_db_shot_kernel, 4, sizeof(cl_uint), &index);
-    error |= clSetKernelArg(clt_db_shot_kernel, 5, sizeof(cl_mem), &clt_db_ids);
-    error |= clSetKernelArg(clt_db_shot_kernel, 6, sizeof(cl_mem), &clt_db_indexes);
-    error |= clSetKernelArg(clt_db_shot_kernel, 7, sizeof(cl_mem), &clt_db_prims);
-    if (error != CL_SUCCESS) bu_bomb("failed to set OpenCL kernel arguments");
-    error = clEnqueueNDRangeKernel(clt_queue, clt_db_shot_kernel, 1, NULL, &hypersample, NULL, 0, NULL, NULL);
-    bu_semaphore_release(clt_semaphore);
-    if (error != CL_SUCCESS) bu_bomb("failed to enqueue OpenCL kernel");
-
-    if (clFinish(clt_queue) != CL_SUCCESS) bu_bomb("failure in clFinish()");
-    clEnqueueReadBuffer(clt_queue, plen, CL_TRUE, 0, sizeof(len), &len, 0, NULL, NULL);
-    clReleaseMemObject(plen);
-    clEnqueueReadBuffer(clt_queue, pout, CL_TRUE, 0, sz_hits, hits, 0, NULL, NULL);
-    clReleaseMemObject(pout);
-    return len;
-}
-
 void
-clt_run(void *pixels, const cl_image_format *fmt, cl_int cur_pixel, cl_int last_pixel,
-	cl_int width, cl_int height, mat_t view2model, fastf_t cell_width,
-	fastf_t cell_height, fastf_t aspect, cl_int lightmodel)
+clt_frame(void *pixels, size_t pwidth, int cur_pixel, int last_pixel,
+	  int width, int ibackground[3], int inonbackground[3],
+          mat_t view2model, fastf_t cell_width, fastf_t cell_height,
+          fastf_t aspect, int lightmodel)
 {
     const size_t npix = last_pixel-cur_pixel+1;
 
-    cl_double16 v2m;
+    size_t sz_pixels;
+    size_t sz_hits;
+
+    struct {
+        cl_double16 view2model;
+        cl_double cell_width, cell_height, aspect;
+        cl_uint pwidth;
+	cl_uint randhalftabsize;
+        cl_int cur_pixel, last_pixel, width;
+        cl_int lightmodel;
+        cl_uchar3 ibackground, inonbackground;
+    }p;
 
     cl_mem ppixels, phits;
     cl_int error;
-    const size_t origin[3] = {0,0,0};
-    size_t region[3];
 
-    MAT_COPY(v2m.s, view2model);
+    sz_pixels = sizeof(cl_uchar)*pwidth*npix;
+    sz_hits = sizeof(struct cl_hit)*npix;
 
-    ppixels = clCreateImage2D(clt_context, CL_MEM_WRITE_ONLY, fmt, width, height, 0,
-			      NULL, &error);
-    if (error != CL_SUCCESS) bu_bomb("failed to create OpenCL image");
-    phits = clCreateBuffer(clt_context, CL_MEM_WRITE_ONLY, sizeof(struct cl_hit)*npix,
-			   NULL, &error);
+    p.pwidth = pwidth;
+    p.randhalftabsize = bn_randhalftabsize;
+    p.cur_pixel = cur_pixel;
+    p.last_pixel = last_pixel;
+    p.width = width;
+    VMOVE(p.ibackground.s, ibackground);
+    VMOVE(p.inonbackground.s, inonbackground);
+    MAT_COPY(p.view2model.s, view2model);
+    p.cell_width = cell_width;
+    p.cell_height = cell_height;
+    p.aspect = aspect;
+    p.lightmodel = lightmodel;
+
+    ppixels = clCreateBuffer(clt_context, CL_MEM_WRITE_ONLY, sz_pixels, NULL, &error);
     if (error != CL_SUCCESS) bu_bomb("failed to create OpenCL output buffer");
+    phits = clCreateBuffer(clt_context, CL_MEM_READ_WRITE, sz_hits, NULL, &error);
+    if (error != CL_SUCCESS) bu_bomb("failed to create OpenCL hits buffer");
 
     bu_semaphore_acquire(clt_semaphore);
-    error = clSetKernelArg(clt_pixel_kernel, 0, sizeof(cl_mem), &ppixels);
-    error |= clSetKernelArg(clt_pixel_kernel, 1, sizeof(cl_mem), &phits);
-    error |= clSetKernelArg(clt_pixel_kernel, 2, sizeof(cl_int), &cur_pixel);
-    error |= clSetKernelArg(clt_pixel_kernel, 3, sizeof(cl_int), &last_pixel);
-    error |= clSetKernelArg(clt_pixel_kernel, 4, sizeof(cl_int), &width);
-    error |= clSetKernelArg(clt_pixel_kernel, 5, sizeof(cl_double16), &v2m);
-    error |= clSetKernelArg(clt_pixel_kernel, 6, sizeof(cl_double), &cell_width);
-    error |= clSetKernelArg(clt_pixel_kernel, 7, sizeof(cl_double), &cell_height);
-    error |= clSetKernelArg(clt_pixel_kernel, 8, sizeof(cl_double), &aspect);
-    error |= clSetKernelArg(clt_pixel_kernel, 9, sizeof(cl_int), &lightmodel);
-    error |= clSetKernelArg(clt_pixel_kernel, 10, sizeof(cl_uint), &clt_db_nprims);
-    error |= clSetKernelArg(clt_pixel_kernel, 11, sizeof(cl_mem), &clt_db_ids);
-    error |= clSetKernelArg(clt_pixel_kernel, 12, sizeof(cl_mem), &clt_db_bvh);
-    error |= clSetKernelArg(clt_pixel_kernel, 13, sizeof(cl_mem), &clt_db_indexes);
-    error |= clSetKernelArg(clt_pixel_kernel, 14, sizeof(cl_mem), &clt_db_prims);
+    error = clSetKernelArg(clt_frame_kernel, 0, sizeof(cl_mem), &ppixels);
+    error |= clSetKernelArg(clt_frame_kernel, 1, sizeof(cl_uint), &p.pwidth);
+    error |= clSetKernelArg(clt_frame_kernel, 2, sizeof(cl_mem), &phits);
+    error |= clSetKernelArg(clt_frame_kernel, 3, sizeof(cl_int), &p.cur_pixel);
+    error |= clSetKernelArg(clt_frame_kernel, 4, sizeof(cl_int), &p.last_pixel);
+    error |= clSetKernelArg(clt_frame_kernel, 5, sizeof(cl_int), &p.width);
+    error |= clSetKernelArg(clt_frame_kernel, 6, sizeof(cl_mem), &clt_rand_halftab);
+    error |= clSetKernelArg(clt_frame_kernel, 7, sizeof(cl_uint), &p.randhalftabsize);
+    error |= clSetKernelArg(clt_frame_kernel, 8, sizeof(cl_uchar3), &p.ibackground);
+    error |= clSetKernelArg(clt_frame_kernel, 9, sizeof(cl_uchar3), &p.inonbackground);
+    error |= clSetKernelArg(clt_frame_kernel, 10, sizeof(cl_double16), &p.view2model);
+    error |= clSetKernelArg(clt_frame_kernel, 11, sizeof(cl_double), &p.cell_width);
+    error |= clSetKernelArg(clt_frame_kernel, 12, sizeof(cl_double), &p.cell_height);
+    error |= clSetKernelArg(clt_frame_kernel, 13, sizeof(cl_double), &p.aspect);
+    error |= clSetKernelArg(clt_frame_kernel, 14, sizeof(cl_int), &lightmodel);
+    error |= clSetKernelArg(clt_frame_kernel, 15, sizeof(cl_uint), &clt_db_nprims);
+    error |= clSetKernelArg(clt_frame_kernel, 16, sizeof(cl_mem), &clt_db_ids);
+    error |= clSetKernelArg(clt_frame_kernel, 17, sizeof(cl_mem), &clt_db_bvh);
+    error |= clSetKernelArg(clt_frame_kernel, 18, sizeof(cl_mem), &clt_db_indexes);
+    error |= clSetKernelArg(clt_frame_kernel, 19, sizeof(cl_mem), &clt_db_prims);
     if (error != CL_SUCCESS) bu_bomb("failed to set OpenCL kernel arguments");
-    error = clEnqueueNDRangeKernel(clt_queue, clt_pixel_kernel, 1, NULL, &npix, NULL, 0,
-				   NULL, NULL);
+    error = clEnqueueNDRangeKernel(clt_queue, clt_frame_kernel, 1, NULL, &npix,
+                                   NULL, 0, NULL, NULL);
     bu_semaphore_release(clt_semaphore);
 
-    region[0] = width;
-    region[1] = height;
-    region[2] = 1;
-    clEnqueueReadImage(clt_queue, ppixels, CL_TRUE, origin, region, 0, 0, pixels, 0,
-		       NULL, NULL);
+    clEnqueueReadBuffer(clt_queue, ppixels, CL_TRUE, 0, sz_pixels, pixels, 0,
+                        NULL, NULL);
     clReleaseMemObject(ppixels);
     clReleaseMemObject(phits);
 }
