@@ -7,8 +7,6 @@ constant double3 ambient_color = {1, 1, 1};     /* Ambient white light */
 
 constant double AmbientIntensity = 0.4;
 
-constant uchar3 iblack = {0, 0, 0};		/* integer black */
-
 
 extern inline double3 MAT3X3VEC(global const double *m, double3 i);
 extern inline double3 MAT4X3VEC(global const double *m, double3 i);
@@ -344,7 +342,7 @@ do_pixel(global uchar *pixels, const uchar3 o, global struct hit *hits,
 
 	rgb = select(rgb, nonbackground, (uchar3)all(rgb == background));
 	// make sure it's never perfect black
-	rgb = select(rgb, (uchar3){rgb.xy, 1}, (uchar3)all(rgb == iblack));
+	rgb = select(rgb, (uchar3){rgb.xy, 1}, (uchar3)all(!rgb));
     }
 
     if (o.s0 != o.s1) {
