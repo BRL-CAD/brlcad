@@ -1118,6 +1118,10 @@ if(BRLCAD_ENABLE_OPENCL)
   endif(NOT OPENCL_FOUND)
 endif(BRLCAD_ENABLE_OPENCL)
 
+# Enable features requiring Screened Poisson Surface Reconstruction
+option(BRLCAD_ENABLE_SPR "Enable features requiring Screened Poisson Surface Reconstruction" OFF)
+mark_as_advanced(BRLCAD_ENABLE_SPR)
+
 #----------------------------------------------------------------------
 # The following are fine-grained options for enabling/disabling compiler
 # and source code definition settings.  Typically these are set to
@@ -1940,6 +1944,9 @@ if(HAVE_EMMINTRIN_H)
   endif(HAVE_EMMINTRIN)
 endif(HAVE_EMMINTRIN_H)
 
+if(BRLCAD_ENABLE_SPR)
+  CONFIG_H_APPEND(BRLCAD "#define ENABLE_SPR 1\n")
+endif(BRLCAD_ENABLE_SPR)
 
 # *******************************************************************
 if(NOT EXISTS ${CMAKE_BINARY_DIR}/CMakeCache.txt.prev)

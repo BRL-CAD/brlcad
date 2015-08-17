@@ -24,6 +24,8 @@
  */
 #include "common.h"
 
+#ifdef ENABLE_SPR
+
 #include "vmath.h"
 #include "raytrace.h"
 #include "../other/PoissonRecon/Src/SPR.h"
@@ -624,6 +626,9 @@ rt_generate_mesh(int **faces, int *num_faces, point_t **points, int *num_pnts,
 	return;
     }
 }
+
+#endif
+
 // Local Variables:
 // tab-width: 8
 // mode: C++
