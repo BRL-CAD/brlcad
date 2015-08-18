@@ -41,12 +41,12 @@
 #include "common.h"
 
 #ifdef USE_OPENCL
+#include <limits.h>
+#include <CL/cl.h>
+
 #if __OPENCL_VERSION__ < 120
 #  error "OpenCL 1.2 required."
 #endif
-
-#include <limits.h>
-#include <CL/cl.h>
 
 #ifdef CLT_SINGLE_PRECISION
 #define cl_double cl_float
