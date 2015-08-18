@@ -40,6 +40,7 @@
 #include <stdlib.h>
 #include <math.h>
 #include <string.h>
+#include <omp.h>
 #include "bio.h"
 
 #include "bu/parallel.h"
