@@ -175,8 +175,6 @@ bn_poly_cubic_roots(bn_complex_t *roots, const double *eqn)
     const double THIRD = 1.0 / 3.0;
     const double TWENTYSEVENTH = 1.0 / 27.0;
 
-#define CUBEROOT(a)	(((a) > 0.0) ? pow(a, THIRD) : -pow(-(a), THIRD))
-
     double a, b, c1, c1_3rd, delta;
     int i;
 
@@ -200,8 +198,8 @@ bn_poly_cubic_roots(bn_complex_t *roots, const double *eqn)
 	A += r_delta;
 	B -= r_delta;
 
-	A = CUBEROOT(A);
-	B = CUBEROOT(B);
+	A = cbrt(A);
+	B = cbrt(B);
 
 	roots[2].re = roots[1].re = -0.5 * (roots[0].re = A + B);
 
@@ -211,7 +209,7 @@ bn_poly_cubic_roots(bn_complex_t *roots, const double *eqn)
 	double b_2;
 	b_2 = -0.5 * b;
 
-	roots[0].re = 2.0* CUBEROOT(b_2);
+	roots[0].re = 2.0* cbrt(b_2);
 	roots[2].re = roots[1].re = -0.5 * roots[0].re;
 	roots[2].im = roots[1].im = roots[0].im = 0.0;
     } else {
@@ -261,7 +259,7 @@ bn_poly_quartic_roots(bn_complex_t *roots, const double *eqn)
     /* something considerably larger than squared floating point fuss */
     const double small = 1.0e-8;
 
-#define Max3(a, b, c) ((c)>((a)>(b)?(a):(b)) ? (c) : ((a)>(b)?(a):(b)))
+#define Max3(a, b, c) (fmax(fmax(a, b), c))
 
     cube[0] = 1.0;
     cube[1] = -eqn[2];
