@@ -65,21 +65,12 @@ bn_cx_sqrt(bn_complex_t *op, const bn_complex_t *ip)
     if (ZERO(re)) {
 	if (ZERO(im)) {
 	    op->re = op->im = 0.0;
-	} else if (im > 0.0) {
-	    op->re = op->im = sqrt(im * 0.5);
 	} else {
-	    /* ip->im < 0.0 */
-	    op->re = -(op->im = sqrt(im * -0.5));
+	    op->re = copysign(op->im = sqrt(im * copysign(0.5, im)), im);
 	}
     } else if (ZERO(im)) {
-	if (re > 0.0) {
-	    op->re = sqrt(re);
-	    op->im = 0.0;
-	} else {
-	    /* ip->re < 0.0 */
-	    op->im = sqrt(-re);
-	    op->re = 0.0;
-	}
+	op->im = sqrt(copysign(re));
+	op->re = 0.0;
     } else {
 	double ampl, temp;
 
@@ -99,12 +90,7 @@ bn_cx_sqrt(bn_complex_t *op, const bn_complex_t *ip)
 	if ((temp = (ampl + re) * 0.5) < 0.0) {
 	    op->re = 0.0;
 	} else {
-	    if (im > 0.0) {
-		op->re = sqrt(temp);
-	    } else {
-		/* ip->im < 0.0 */
-		op->re = -sqrt(temp);
-	    }
+	    op->re = copysign(sqrt(temp), im);
 	}
     }
 }
@@ -142,11 +128,7 @@ bn_poly_quadratic_roots(bn_complex_t *roots, const double *quadrat)
 	} else {
 	    double t, r1, r2;
 
-	    if (quadrat[1] > 0.0) {
-		t = -0.5 * (quadrat[1] + rad);
-	    } else {
-		t = -0.5 * (quadrat[1] - rad);
-	    }
+	    t = -0.5 * (quadrat[1] + copysign(rad, quadrat[1]));
 	    r1 = t / quadrat[0];
 	    r2 = quadrat[2] / t;
 
@@ -229,12 +211,10 @@ bn_poly_cubic_roots(bn_complex_t *roots, const double *eqn)
 		sn_phi_s3 = 0.0;	/* sin(phi) * M_SQRT3; */
 	    }  else if (f <= -1.0) {
 		phi = M_PI_3;
-		cs_phi = cos(phi);
-		sn_phi_s3 = sin(phi) * M_SQRT3;
+		sn_phi_s3 = sincos(phi, &cs_phi) * M_SQRT3;
 	    } else {
 		phi = acos(f) * THIRD;
-		cs_phi = cos(phi);
-		sn_phi_s3 = sin(phi) * M_SQRT3;
+		sn_phi_s3 = sincos(phi, &cs_phi) * M_SQRT3;
 	    }
 	}
 
