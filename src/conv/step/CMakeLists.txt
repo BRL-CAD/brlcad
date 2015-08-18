@@ -31,8 +31,8 @@ macro(GENERATE_SCHEMA_INPUTS SCHEMA_FILE TARGET_SUFFIX)
   # Because SCHEMA_OUT_DIR is the working directory for exp2cxx, it must be
   # created at configure time and be present when exp2cxx is run
   set(SCHEMA_OUT_DIR ${CMAKE_CURRENT_BINARY_DIR}/${SCHEMA_NAME}_${TARGET_SUFFIX})
+  set(${TARGET_SUFFIX}_SCHEMA_OUT_DIR ${SCHEMA_OUT_DIR})
   file(MAKE_DIRECTORY ${SCHEMA_OUT_DIR})
-  include_directories(${SCHEMA_OUT_DIR})
   DISTCLEAN(${SCHEMA_OUT_DIR})
 
   # These files are the standard exp2cxx outputs that need to be compiled.
@@ -55,7 +55,7 @@ macro(GENERATE_SCHEMA_INPUTS SCHEMA_FILE TARGET_SUFFIX)
     ${SCHEMA_OUT_DIR}/schema.h
     )
 
-  add_custom_command(OUTPUT ${SCHEMA_OUT_DIR}/step_express_${SCHEMA_NAME}.done
+  add_custom_command(OUTPUT ${EXPRESS_OUTPUT} ${SCHEMA_OUT_DIR}/step_express_${SCHEMA_NAME}.done
     COMMAND ${EXP2CXX_EXEC} ARGS ${SCHEMA_FILE} > ${SCHEMA_OUT_DIR}/step_express_${SCHEMA_NAME}.log 2>&1
     COMMAND ${CMAKE_COMMAND} -E touch ${SCHEMA_OUT_DIR}/step_express_${SCHEMA_NAME}.done
     DEPENDS ${SCHEMA_FILE} ${EXP2CXX_EXECUTABLE_TARGET}
