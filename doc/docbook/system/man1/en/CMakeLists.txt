@@ -149,7 +149,7 @@ set(docbook_man1_EN
   pixclump.xml
   pixcmp.xml
   pixcolors.xml
-  #pixcrop.xml
+  pixcrop.xml
   pixcut.xml
   pixdiff.xml
   pixdsplit.xml

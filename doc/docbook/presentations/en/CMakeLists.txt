@@ -4,7 +4,7 @@ set(en_pres_ignore_files
 CMAKEFILES(${en_pres_ignore_files})
 
 set(docbook_presentations_EN
-  to-tcltk.xml
+  intro-to-tcltk.xml
   brlcad-app-devel.xml
   Introduction-to-tcltk.xml
   Introduction-brlcad-app-devel.xml
