@@ -21,7 +21,7 @@
 <title>
 Introduction
 </title>
-<section>
+<section xml:id="Introduction">
 <title>Introduction</title>
 <para>Moving pictures are created by presenting the viewer with a sequence of still images in quick succession. Objects which occur in an orderly succession of slightly different locations within a sequence of images appear to be in motion to the viewer. Such an object is said to be ``animated.'' Preparing a moving picture of animated objects requires a large number of still images (often called ``frames'').
 </para>
@@ -29,7 +29,7 @@ Introduction
 Still images of computer models are relatively easy to create within BRL-CAD. *|* The program rt uses the technique of ray-tracing to create images of geometric models. *|* A moving picture or ``animation'' of the model can be created by using rt to create a series of still images, each of which forms a frame of the final moving picture. The difficulty arises in specifying each frame for rt to create. Some tools have been created to help make this process easier.
 </para>
 </section>
-<section>
+<section xml:id="Preliminaries">
 <title>Preliminaries</title>
 <para>
 Before there can be motion there must first be form. This means a description of geometry to be animated must exist. To keep things simple, we will use the ``moss'' database distributed with BRL-CAD. Assuming that the distribution is stored in the directory /cadsrc the following command will create a local copy of the database for use with the examples presented here:
@@ -41,11 +41,11 @@ Before there can be motion there must first be form. This means a description of
 Examples such as the one above are presented with the portion typed by the user shown in <emphasis role="bold">bold</emphasis> typeface.
 </para>
 </section>
-<section>
+<section xml:id="Simple_Camera_Motion">
 <title>
 Simple Camera Motion
 </title>
-<section>
+<section xml:id="Key_Frames">
 <title>Key Frames</title>
 <para>
 The first step in creating an animation sequence is the definition of ``key-frames.'' These are descriptions of what the scene should look like at ``key'' moments in the animation sequence. Some key-frames are readily recognized. The frame in which the camera or an object starts or stops moving is important. Likewise, the moment when an object changes direction or velocity is also important. It is good to define one or two key-frames before and after each of these points of change.
@@ -57,7 +57,7 @@ Generating key-frames with mged is easy. The user displays the wireframe of the 
 To keep things orderly and make later processing easier, it is recommended that the user specify key-frame filenames which have a common prefix followed by a number indicating the time in the animation sequence at which the key-frame occurs.
 </para>
 </section>
-<section>
+<section xml:id="Generating_Key_Frames_with_MGED">
 <title>Generating Key Frames with MGED</title>
 <para>
 For our first example, we will create a simple animation with the ``moss.g'' model. The objective is to begin the animation sequence with a view of the geometry from the front corner of the platform. As time goes by, the viewer's location (the ``eye point'' or ``eye_pt'') moves upward in an arc over the geometry until the viewer is looking directly down on the center of the platform. To give a natural feeling of flight, the eye point should accelerate and decelerate at the beginning and end of its travel respectively. This is achieved by adjusting the number of degrees of elevation the eye will raise in each second of the animation. In the first (and last) three quarters of a second of the animation, the eye raises only 2 degrees of elevation above the plane. In the following second 8 degrees of arc are covered. At the 4 second mark the eye is looking down at a 45 degree angle.
@@ -114,7 +114,7 @@ Recall that these key-frames do not represent all of the images necessary to pro
 </para>
 </section>
 
-<section>
+<section xml:id="Key_Frame_Interpolation">
 <title>Key Frame Interpolation</title>
 <para>
 The first step in creating an animation sequence is the definition of ``key-frames.'' These are descriptions of what the scene should look like at ``key'' moments in the animation sequence. Some key-frames are readily recognized. The frame in which the camera or an object starts or stops moving is important. Likewise, the moment when an object changes direction or velocity is also important. It is good to define one or two key-frames before and after each of these points of change.
@@ -214,7 +214,7 @@ Each column in chans.all represents one channel from the <link linkend='tabinter
 This example used only spline interpolation. There are other interpolation techniques available including step, linear, and circular spline (cspline). With step interpolation, a channel value is simply copied to intermediate time points until a new value is encountered. The circular spline technique makes certain that the starting and stopping conditions of the time sequence are identical. The second derivative of the curve at the endpoints are made to be the same. This is useful when a seamless loop of values is desired.
 </para>
 </section>
-<section>
+<section xml:id="Building_the_RT_Animation_Script">
 <title>Building the RT Animation Script</title>
 <para>
 The program tabsub uses the output from a run of <link linkend='tabinterp'>tabinterp</link> along with a template file to write an animation script for rt. There are many types of ``macros'' which tabsub recognizes in the template. An understanding of two of these is necessary for the current example. The character ``@'' followed by an integer (such as @2) is replaced by data from the interpolation channel of that number. Note that ``@0'' refers to values from the first data channel from the interpolation. It does not refer to the time channel. The macro ``@(line)'' is replaced with the line number of the file from which the data was read. The @(line) macro serves primarily to indicate the animation frame number. A template file (``moss.proto'' for this example) should be created:
@@ -255,7 +255,7 @@ end;
 </programlisting>
 </para>
 </section>
-<section>
+<section xml:id="Previewing_Animations_with_MGED">
 <title>Previewing Animations with MGED</title>
 <para>Under a future version of BRL-CAD and beyond, the user will have the ability to preview animations using mged. Users running a 4.[012] release should skip this section. This is a useful check to run before expending the CPU time to compute the images with rt.
 </para>
@@ -288,7 +288,7 @@ Don't let the ``db_lookup'' message frighten you. This is just mged telling you 
 Look carefully at the path the eye will take during the animation. In this instance we want the path to form an arc from near one of the corners of the platform to a point directly over the top of the platform. Does it look like what was intended? Does the arc seem to pass through any of the objects? On a machine which supports fast polygon rendering, such as the Silicon Graphics Iris, displaying the geometry with the ``ev'' command instead of the ``e'' command will make finding eye/geometry collisions much easier.
 </para>
 </section>
-<section>
+<section xml:id="Creating_Postage_Stamp_Animations">
 <title>Creating Postage Stamp Animations</title>
 <para>
 Once you are convinced that the eye path is correct you are ready to produce a test animation. The file ``moss.rtanim'' can be fed directly to rt either from the command line or in a shell script. The invocation of moss.rt shown below will generate images that are 200 pixels square. This is a good size to use for an initial rendering. It will let us preview our animation before committing the resources to generate the complete animation.
@@ -317,22 +317,21 @@ Once the frames have been computed, they can be turned into a ``postage stamp an
 </para>
 <para>
 <figure>
-
 <mediaobject>
   <imageobject>
-    <imagedata fileref="images/moss_sm.gif" width="300"/>
+    <imagedata fileref="../../articles/en/images/moss_sm.gif" width="300"/>
   </imageobject>
   <textobject><phrase>An illustration of the Pythagorean Theorem</phrase></textobject>
 </mediaobject>
 </figure>
 
-<link  xlink:href="images/moss.mpg">
+<link  xlink:href="../../articles/en/images/moss.mpg">
 moss.mpg
 </link>
 </para>
 </section>
 </section>
-<section>
+<section xml:id="Object_Motion">
 <title>
 Object Motion
 </title>
@@ -340,7 +339,7 @@ Object Motion
 <para>
 For a variety of applications, the true value of animation is realized only when the geometric objects themselves have motion. Perhaps a vehicle drives past a familiar stationary landmark and the eye follows the vehicle away after it enters the scene. As the vehicle drives over a bump in the road the suspension system is seen to flex and energy is transferred to the frame. Things which cannot ordinarily be seen can be made more visible by watching them change over time. As our vehicle crosses a bridge, its weight causes it to flex and vibrate even after the vehicle is gone. These effects could be made visible by amplifying them until they are readily observable.
 </para>
-<section>
+<section xml:id="Matrix_Manipulations">
 <title>Matrix Manipulations</title>
 <para>
 The animation of objects is accomplished by specifying matrix transformations to be applied to database elements before each image is calculated. This allows any solid or combination in the model to have its definition independently rotated, moved, or re-sized as the animation proceeds.
@@ -352,7 +351,7 @@ In BRL-CAD matrices are stored in a traditional mathematics form. This is differ
 <figure>
 <mediaobject>
   <imageobject>
-    <imagedata fileref="images/matrix.gif" width="100" />
+    <imagedata fileref="../../articles/en/images/matrix.gif" width="100" />
   </imageobject>
 </mediaobject>
 </figure>
@@ -365,7 +364,7 @@ As a result, points and vectors in 3 dimensional space are represented as 4-tupl
 <figure>
 <mediaobject>
   <imageobject>
-    <imagedata fileref="images/equation.gif" width="300"/>
+    <imagedata fileref="../../articles/en/images/equation.gif" width="300"/>
   </imageobject>
 </mediaobject>
 </figure>
@@ -380,7 +379,7 @@ The matrix operations in a BRL-CAD database can be thought of as living in the a
 <figure>
 <mediaobject>
   <imageobject>
-    <imagedata fileref="images/dagtbl.gif" width="400" />
+    <imagedata fileref="../../articles/en/images/dagtbl.gif" width="400" />
   </imageobject>
 </mediaobject>
 </figure>
@@ -395,13 +394,13 @@ The program rt would transform the origin (and other parameters) of ``tor'' with
 <figure>
 <mediaobject>
   <imageobject>
-    <imagedata fileref="images/trans.gif"/>
+    <imagedata fileref="../../articles/en/images/trans.gif"/>
   </imageobject>
 </mediaobject>
 </figure>
 </para>
 </section>
-<section>
+<section xml:id="The_RT_Matrix_Operations_for_Animation">
 <title>The RT Matrix Operations for Animation</title>
 <para>
 Each of the matrices in the database can be altered individually during the animation. It is also possible to replace the ``stack'' matrix which has been accumulated. These operations are achieved with the ``anim'' command in the input script to rt. The command has the form:
@@ -413,7 +412,7 @@ where Path specifies the arc where the operation takes place. Either a specific 
 <figure>
 <mediaobject>
   <imageobject>
-    <imagedata fileref="images/animtbl.gif"/>
+    <imagedata fileref="../../articles/en/images/animtbl.gif"/>
   </imageobject>
 </mediaobject>
 </figure>
@@ -485,7 +484,7 @@ EOF
 <figure>
 <mediaobject>
   <imageobject>
-    <imagedata fileref="images/transboth.gif"/>
+    <imagedata fileref="../../articles/en/images/transboth.gif"/>
   </imageobject>
 </mediaobject>
 </figure>
@@ -494,7 +493,7 @@ The second image is saved in ``trans.pix.2'' and is the same except that the mat
 
 </para>
 </section>
-<section>
+<section xml:id="Preparing_an_Animation_with_Motion">
 <title>Preparing an Animation with Motion</title>
 <para>
 It is time to re-visit the animation sequence we developed in Section 2. We are going to add animation of the objects in the scene to the existing eye-point movement already created. The ellipsoid will be given a constant velocity along a vector which will take it through the center of the torus.
@@ -564,11 +563,11 @@ Doing a little vector math we find the vertex of the ``ellipse.s'' as it is foun
 <figure>
 <mediaobject>
   <imageobject>
-    <imagedata fileref="images/v_eqn1.gif" width="300"/>
+    <imagedata fileref="../../articles/en/images/v_eqn1.gif" width="300"/>
   </imageobject>
 </mediaobject>
 </figure>
-<link  xlink:href="images/ell.mpg">
+<link  xlink:href="../../articles/en/images/ell.mpg">
 ell.mpg
 </link>
 
@@ -579,7 +578,7 @@ Now we subtract this from the origin of ``tor'' to get a vector that will transl
 <figure>
 <mediaobject>
   <imageobject>
-    <imagedata fileref="images/v_eqn2.gif" width="400"/>
+    <imagedata fileref="../../articles/en/images/v_eqn2.gif" width="400"/>
   </imageobject>
 </mediaobject>
 </figure>
@@ -703,7 +702,7 @@ Once again, a postage stamp animation can be created to view the positioning and
 <figure>
 <mediaobject>
   <imageobject>
-    <imagedata fileref="images/ell_sm.gif" scale="50"/>
+    <imagedata fileref="../../articles/en/images/ell_sm.gif" scale="50"/>
   </imageobject>
 </mediaobject>
 </figure>
@@ -714,7 +713,7 @@ The pixtile program creates a mosaic of the smaller image on the framebuffer. Th
 </para>
 </section>
 </section>
-<section>
+<section xml:id="Computing_Video_Frames">
 <title>Computing Video Frames</title>
 <section>
 <title>Computing Video Frames</title>
@@ -786,7 +785,7 @@ For instance it took almost ten hours to compute and process the 241 1440x972 im
 </para>
 </section>
 </section>
-<section>
+<section xml:id="Recording_Videotape">
 <title>Recording Videotape</title>
 <section>
 <title>Recording Videotape</title>
@@ -831,7 +830,7 @@ Once the entire sequence (or a 25 second segment) has been loaded into the A60, 
 </para>
 </section>
 </section>
-<section>
+<section xml:id="Conclusion">
 <title>Conclusion</title>
 <section>
 <para>Visualization of models in BRL-CAD need not be restricted to viewing static images. With the use of tabinterp and tabsub the task of creating motion picture sequences becomes quite manageable. The result is that models can be viewed from a variety of positions as they move, change, and evolve over time.
@@ -1074,18 +1073,18 @@ The authors wish to thank Mike Muuss and Phil Dykstra for creating the animation
 </bibliodiv>
 </bibliography>
 </section>
-<section>
+<section xml:id="Appendix_A">
 <title>Appendix A</title>
 <section xml:id='tabinterp'>
 
 <title>NAME</title>
 <para>tabinterp - combine and interpolate multiple data files to create an animation script</para>
 </section>
-<section>
+<section xml:id="SYNOPSIS1">
 <title>SYNOPSIS</title>
 <para><emphasis role="bold">tabinterp > table.final</emphasis></para>
 </section>
-<section>
+<section xml:id="DESCRIPTION1">
 <title>DESCRIPTION</title>
 <para>tabinterp reads a series of commands from standard input which designate what parts of various data files should be used as input tables for various channels of animation parameters. Commands may extend across multiple lines, and are semi-colon (';') terminated. Each channel is then interpolated using one of a variety of interpolation techniques to provide an output table which has one line for each time step.</para>
 <para>
@@ -1202,7 +1201,7 @@ The help command can be given to get a list of all available commands. (Don't fo
 </para>
 
 </section>
-<section>
+<section xml:id="EXAMPLE1">
 <title>EXAMPLE</title>
 <para>
 What follows here is a Bourne shell script which will generate two input tables using "here documents", and will then produce an interpolated output table of 8 channels.
@@ -1253,7 +1252,7 @@ EOF
 Try clipping this example out of the manual page (usually found in /usr/brlcad/man/man1/tabinterp.1) and running it. This example will be continued in the manual page for tabsub (1).
 </para>
 </section>
-<section>
+<section xml:id="POST_PROCESSING">
 <title>POST PROCESSING</title>
 <para>Because both the input and output tables consist of a single line of text for each time step, many of the standard UNIX tools can be brought to bear to assist in creating an animation. To visualize the exact position taken by the aim point in the example (output channels 3, 4, 5), a UNIX-plot file of that trajectory can be created with:
 </para>
@@ -1281,7 +1280,7 @@ The plot file just created can be viewed using pl-fb (1) or pl-sgi (1), or it ca
 to mged. If the model geometry is brought into view using the mged e command, then the camera aim track (or any other spatial parameter) can be viewed in direct relationship to the three dimensional geometry which is going to be animated.
 </para>
 </section>
-<section>
+<section xml:id="PREPARING_INPUT_TABLES">
 <title>PREPARING INPUT TABLES</title>
 <para>The mged (1) savekey and saveview commands can be very useful for creating the input tables necessary for driving tabinterp. The details of doing this are beyond the scope of this manual page.
 </para>
@@ -1289,30 +1288,30 @@ to mged. If the model geometry is brought into view using the mged e command, th
 The awk (1) command can also be useful for routing through the output files of existing scientific analysis programs, and extracting the few gems of data buried in the heaps of "printout".
 </para>
 </section>
-<section>
+<section xml:id="SEE_ALSO">
 <title>SEE ALSO</title>
 <para>
 tabsub(1), xyz-pl(1), txyz-pl(1), cut(1), paste(1), rt(1), mged(1)</para>
 </section>
-<section>
+<section xml:id="DIAGNOSTICS">
 <title>DIAGNOSTICS</title>
 <para>
 In its present form, the program is a bit verbose, reporting on the progress of each command on standard error. This behavior will probably be placed under control of a -v flag in a future version.
 </para>
 </section>
-<section>
+<section xml:id="BUGS">
 <title>BUGS</title>
 <para>
 You can't grep dead trees.
 </para>
 </section>
-<section>
+<section xml:id="AUTHOR">
 <title>AUTHOR</title>
 <para>
 Michael John Muuss
 </para>
 </section>
-<section>
+<section xml:id="SOURCE">
 <title>SOURCE</title>
 <para>
 The U. S. Army Research Laboratory
@@ -1320,26 +1319,26 @@ Aberdeen Proving Ground, Maryland  21005
 </para>
 </section>
 
-<section>
+<section xml:id="BUG_REPORTS">
 <title>BUG REPORTS</title>
 <para>
 Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org
 </para>
 </section>
 </section>
-<section>
+<section xml:id="Appendix_B">
 <title>Appendix B</title>
-<section>
+<section xml:id="NAME">
 <title>NAME</title>
 <para>tabsub - macro expand an input table into an animation script</para>
 </section>
-<section>
+<section xml:id="SYNOPSIS">
 <title>SYNOPSIS</title>
 <para>
 <emphasis role="bold">tabsub template_file &#60; table.final &#62;&#62; script</emphasis>
 </para>
 </section>
-<section>
+<section xml:id="DESCRIPTION">
 <title>DESCRIPTION</title>
 <para>
 tabsub takes as input a data table on standard input (such as might have been produced by tabinterp (1) or similar tool), and a template file named on the command line. For each row (line) of the input table, one complete copy of the template file is output on standard output. As the template is output, any macro invocations in the template file are replaced with the data values from the input table's current row. In the input table, any blank lines or lines with a pound sign ('#') as the first character are ignored, allowing comments to be added to the input table.
@@ -1457,7 +1456,7 @@ The fromto command is used to rotate the given axis to point in the same directi
 The axis argument must be one of these six strings: +X, -X, +Y, -Y, +Z, -Z, where the axis letter is capitalized. The matrix is generated by calling the librt (3) routine mat_fromto where the 'from' argument is derived from the axis given, and the 'to' argument is the unit-length difference 'next'-'cur'.
 </para>
 </section>
-<section>
+<section xml:id="Example">
 <title>Example</title>
 <para>Based upon the example started in the manual page for tabinterp (1), here is a Bourne shell script which will generate the necessary template file using a "here document", and then process the 8-channel output table left in the file "table.final".
 </para>
@@ -1505,7 +1504,7 @@ The frame number is taken from the input table line number, and substituted into
 Try clipping this example out of the manual page (usually found in /usr/brlcad/man/man1/tabsub.1) and running it.
 </para>
 </section>
-<section>
+<section xml:id="EXAMPLE2">
 <title>EXAMPLE2</title>
 <para>
 In the tabinterp (1) manual page, mention was made of animating the flight of a rocket. This partial example outlines how that might be accomplished.
@@ -1547,7 +1546,7 @@ tabsub ./rocket.template &#60; rocket.final >> script
 The items worthy of note are the use of the tabinterp (1) next command to place the position look-ahead into channels 3,4,5 and the matching use of the tabsub fromto macro to convert the current and next positions into an appropriate rotation. In this case, the central axis of the rocket as found in the mged (1) database rises up the +Z axis. Translating the rocket into position is handled one matrix higher up the tree, using the xlate macro.
 </para>
 </section>
-<section>
+<section xml:id="POST_PROCESSING2">
 <title>POST PROCESSING</title>
 <para>
 rt style animation scripts can be processed by rt (1) and remrt (1) by giving the -M option on the command line, and providing the script on standard input. For example, the rocket animation might be run like this:
@@ -1578,39 +1577,39 @@ followed by attaching to an appropriate display device. Then, these commands wou
 mged (1) will process each frame as fast as it can, and update the screen.
 </para>
 </section>
-<section>
+<section xml:id="SEE_ALSO2">
 <title>SEE ALSO</title>
 <para>
 tabinterp(1), xyz-pl(1), txyz-pl(1), cut(1), paste(1), rt(1), mged(1)
 </para>
 </section>
-<section>
+<section xml:id="BUGS2">
 <title>BUGS</title>
 <para>
 There is presently a compiled-in limit of 1023 channels in the input table.
 </para>
 </section>
-<section>
+<section xml:id="AUTHOR2">
 <title>AUTHOR</title>
 <para>
 Michael John Muuss
 </para>
 </section>
-<section>
+<section xml:id="SOURCE2">
 <title>SOURCE</title>
 <para>
 The U. S. Army Research Laboratory
 Aberdeen Proving Ground, Maryland  21005
 </para>
 </section>
-<section>
+<section xml:id="BUG_REPORTS2">
 <title>BUG REPORTS</title>
 <para>
 Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org
 </para>
 </section>
 </section>
-<section>
+<section xml:id="Chains">
 <title>
 Chains
 </title>

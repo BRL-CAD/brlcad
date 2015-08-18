@@ -11,7 +11,7 @@
   </info>
 
 
-  <section><info><title><command>oed</command> - Basic Syntax and Operations</title></info>
+  <section xml:id="oed_Basic_Syntax_and_Operations"><info><title><command>oed</command> - Basic Syntax and Operations</title></info>
 
 
     <para> The syntax of <command>oed</command> is fairly
@@ -473,7 +473,7 @@ cube.s:  ARB8
 
   </section>
 
-  <section><info><title>Right Hand Path Selection - Reasons and
+  <section xml:id="Right_Hand_Path_Section"><info><title>Right Hand Path Selection - Reasons and
     Implications</title></info>
 
 
@@ -587,7 +587,7 @@ object2.c:  --
   </section>
 
 
-  <section><info><title>Flexible Manipulation with <emphasis>keypoint</emphasis>
+  <section xml:id="Flexible_Manipulation"><info><title>Flexible Manipulation with <emphasis>keypoint</emphasis>
     </title></info>
 
 
@@ -663,7 +663,7 @@ object2.c:  --
 
   </section>
 
-  <section><info><title>Sub-Combination Editing - using Left Hand Path
+  <section xml:id="sub_combination_editing"><info><title>Sub-Combination Editing - using Left Hand Path
     Selection</title></info>
 
 
@@ -885,7 +885,7 @@ object1.c:  --
     </para>
   </section>
 
-  <section><info><title>Summary</title></info>
+  <section xml:id="Summary"><info><title>Summary</title></info>
 
     <para>
       The major points of the <command>oed</command> command are:

@@ -172,8 +172,10 @@ typedef float mdf;
 
 #ifdef MD_CONF_QUADRICS_DOUBLE_PRECISION
 typedef double mdqf;
+#define mdqfabs(x) fabs(x)
 #else
 typedef float mdqf;
+#define mdqfabs(x) fabsf(x)
 #endif
 
 
@@ -282,7 +284,7 @@ static int mathQuadricSolve(mathQuadric *q, mdf *v)
     mathQuadricToMatrix3x3(m, q);
     det = mathMatrix3x3Determinant(m);
 
-    if (mdfabs(det) < 0.00001) {
+    if (mdqfabs(det) < 0.00001) {
 	/* det fail */
 	return 0;
     }

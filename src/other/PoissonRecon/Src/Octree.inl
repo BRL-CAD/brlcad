@@ -8,14 +8,14 @@ are permitted provided that the following conditions are met:
 Redistributions of source code must retain the above copyright notice, this list of
 conditions and the following disclaimer. Redistributions in binary form must reproduce
 the above copyright notice, this list of conditions and the following disclaimer
-in the documentation and/or other materials provided with the distribution.
+in the documentation and/or other materials provided with the distribution. 
 
 Neither the name of the Johns Hopkins University nor the names of its contributors
 may be used to endorse or promote products derived from this software without specific
-prior written permission.
+prior written permission. 
 
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY
-EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO THE IMPLIED WARRANTIES
+EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO THE IMPLIED WARRANTIES 
 OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT
 SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED
@@ -1242,7 +1242,7 @@ bool OctNode< NodeData >::NeighborKey3::getChildNeighbors( Point3D< Real > p , i
 	i=x1<<1;
 	if( neighbors[d].neighbors[i][1][1] && neighbors[d].neighbors[i][1][1]->children )
 		for( j=0 ; j<2 ; j++ ) for( k=0 ; k<2 ; k++ ) childNeighbors.neighbors[i][y2+j][z2+k] = &neighbors[d].neighbors[i][1][1]->children[Cube::CornerIndex(x2,j,k)];
-	else
+	else 
 		for( j=0 ; j<2 ; j++ ) for( k=0 ; k<2 ; k++ ) childNeighbors.neighbors[i][y2+j][z2+k] = NULL;
 	j=y1<<1;
 	if( neighbors[d].neighbors[1][j][1] && neighbors[d].neighbors[1][j][1]->children )
@@ -1648,7 +1648,7 @@ void OctNode< NodeData >::NeighborKey3::setNeighbors( OctNode< NodeData >* node 
 	else
 	{
 		int c = int( node - node->parent->children );
-		const Neighbors3& _neighbors = setNeighbors( node->parent );
+		const OctNode< NodeData >::Neighbors3& _neighbors = setNeighbors( node->parent );
 		switch( c )
 		{
 		case 0:
@@ -1751,7 +1751,7 @@ void OctNode< NodeData >::NeighborKey3::getNeighbors( OctNode< NodeData >* node 
 	else
 	{
 		int c = int( node - node->parent->children );
-		const Neighbors3& _neighbors = getNeighbors( node->parent );
+		const OctNode< NodeData >::Neighbors3& _neighbors = getNeighbors( node->parent );
 		OctNode< NodeData >* const * _nodes = &_neighbors.neighbors[0][0][0];
 		const OctNode< NodeData >* const * _node;
 		const OctNode< NodeData >* __node;
@@ -1830,7 +1830,7 @@ void OctNode< NodeData >::ConstNeighborKey3::getNeighbors( const OctNode< NodeDa
 	else
 	{
 		int c = int( node - node->parent->children );
-		const ConstNeighbors3& _neighbors = getNeighbors( node->parent );
+		const OctNode< NodeData >::ConstNeighbors3& _neighbors = getNeighbors( node->parent );
 		switch( c )
 		{
 		case 0:
@@ -2003,7 +2003,7 @@ typename OctNode< NodeData >::ConstNeighbors3& OctNode< NodeData >::ConstNeighbo
 
 			ConstNeighbors3& temp=getNeighbors( node->parent , minDepth );
 
-			//  Set the siblings
+			//  Set the syblings
 			for( i=0 ; i<2 ; i++ ) for( j=0 ; j<2 ; j++ ) for( k=0 ; k<2 ; k++ )
 				neighbors[d].neighbors[x2+i][y2+j][z2+k] = node->parent->children + Cube::CornerIndex(i,j,k);
 
@@ -2122,7 +2122,7 @@ typename OctNode< NodeData >::Neighbors5& OctNode< NodeData >::NeighborKey5::get
 			int fx1 = x1*3 , fy1 = y1*3 , fz1 = z1*3;
 			int fx2 = x2*4 , fy2 = y2*4 , fz2 = z2*4;
 
-			//  Set the siblings
+			//  Set the syblings
 			for( i=0 ; i<2 ; i++ ) for( j=0 ; j<2 ; j++ ) for( k=0 ; k<2 ; k++ )
 				n.neighbors[fx0+i][fy0+j][fz0+k] = node->parent->children + Cube::CornerIndex( i , j , k );
 
@@ -2338,7 +2338,7 @@ int OctNode< NodeData >::read(FILE* fp){
 template< class NodeData >
 int OctNode< NodeData >::width(int maxDepth) const {
 	int d=depth();
-	return 1<<(maxDepth-d);
+	return 1<<(maxDepth-d); 
 }
 template< class NodeData >
 void OctNode< NodeData >::centerIndex(int maxDepth,int index[DIMENSION]) const

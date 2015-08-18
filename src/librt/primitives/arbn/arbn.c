@@ -1212,7 +1212,7 @@ rt_arbn_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, c
 		c++;
 	    }
 	    len = 0;
-	    (void)tcl_list_to_fastf_array(argv[1], &new_planes, &len);
+	    (void)_rt_tcl_list_to_fastf_array(argv[1], &new_planes, &len);
 
 	    if (len%ELEMENTS_PER_PLANE) {
 		bu_vls_printf(logstr,
@@ -1247,7 +1247,7 @@ rt_arbn_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, c
 	    }
 	    len = ELEMENTS_PER_PLANE;
 	    array = (fastf_t *)&arbn->eqn[i];
-	    if (tcl_list_to_fastf_array(argv[1], &array, &len) != ELEMENTS_PER_PLANE) {
+	    if (_rt_tcl_list_to_fastf_array(argv[1], &array, &len) != ELEMENTS_PER_PLANE) {
 		bu_vls_printf(logstr,
 			      "ERROR: incorrect number of coefficients for a plane\n");
 		return BRLCAD_ERROR;
