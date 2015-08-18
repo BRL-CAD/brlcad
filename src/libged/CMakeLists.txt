@@ -167,6 +167,7 @@ set(LIBGED_SOURCES
   nmg_fix_normals.c
   nmg_simplify.c
   nmg_kill_v.c
+  nmg_kill_f.c
   ocenter.c
   open.c
   orient.c
@@ -355,4 +356,3 @@ CMAKEFILES(${ged_ignore_files})
 # indent-tabs-mode: t
 # End:
 # ex: shiftwidth=2 tabstop=8
-
