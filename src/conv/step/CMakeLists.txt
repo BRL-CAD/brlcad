@@ -57,7 +57,7 @@ macro(GENERATE_SCHEMA_INPUTS SCHEMA_FILE TARGET_SUFFIX)
 
   add_custom_command(OUTPUT ${EXPRESS_OUTPUT} ${SCHEMA_OUT_DIR}/step_express_${SCHEMA_NAME}.done
     COMMAND ${EXP2CXX_EXEC} ARGS ${SCHEMA_FILE} > ${SCHEMA_OUT_DIR}/step_express_${SCHEMA_NAME}.log 2>&1
-    COMMAND ${CMAKE_COMMAND} -E touch ${SCHEMA_OUT_DIR}/step_express_${schema_name}.done
+    COMMAND ${CMAKE_COMMAND} -E touch ${SCHEMA_OUT_DIR}/step_express_${SCHEMA_NAME}.done
     DEPENDS ${SCHEMA_FILE} ${EXP2CXX_EXECUTABLE_TARGET}
     WORKING_DIRECTORY ${SCHEMA_OUT_DIR}
     COMMENT "Generating C++ code to express ${SCHEMA_NAME}..."
