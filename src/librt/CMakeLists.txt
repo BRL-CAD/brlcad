@@ -319,7 +319,6 @@ set(librt_ignored_files
   primitives/rec/rec_shot.cl
   primitives/revolve/revolve.h
   primitives/rt.cl
-  primitives/scan.cl
   primitives/solver.cl
   primitives/sph/benchmark.sh
   primitives/sph/sph_shot.cl
