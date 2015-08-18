@@ -196,7 +196,7 @@ shootray(global struct hit *hitp, const double3 r_pt, const double3 r_dir, const
         int to_visit_offset = 0, current_node_index = 0;
         int nodes_to_visit[64];
 
-	vstore3(convert_uchar(r_idir < 0), 0, dir_is_neg);
+	vstore3(convert_uchar3(r_idir < 0), 0, dir_is_neg);
 
         /* Follow ray through BVH nodes to find primitive intersections */
         for (;;) {
@@ -342,18 +342,18 @@ do_pixel(global uchar *pixels, const uchar3 o, global struct hit *hits,
 
 	rgb = select(rgb, nonbackground, (uchar3)all(rgb == background));
 	// make sure it's never perfect black
-	rgb = select(rgb, (uchar3){rgb.xy, 1}, (uchar3)all(!rgb));
+	rgb = select(rgb, (uchar3){rgb.x, rgb.y, 1}, (uchar3)all(!rgb));
     }
 
     if (o.s0 != o.s1) {
 	/* write color */
-	global uchar *colorp = pixels+id*o.s2+o.s0;
+	global uchar *colorp = (global uchar*)pixels+id*o.s2+o.s0;
 	vstore3(rgb, 0, colorp);
     }
     if (o.s1 != o.s2) {
 	/* write depth */
 	ulong depth = bu_cv_htond(as_ulong(hitp->hit_dist));
-	global ulong *depthp = pixels+id*o.s2+o.s1;
+	global ulong *depthp = (global ulong*)pixels+id*o.s2+o.s1;
 	*depthp = depth;
     }
 }

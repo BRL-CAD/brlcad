@@ -69,8 +69,14 @@ bn_cx_sqrt(bn_complex_t *op, const bn_complex_t *ip)
 	    op->re = copysign(op->im = sqrt(im * copysign(0.5, im)), im);
 	}
     } else if (ZERO(im)) {
-	op->im = sqrt(copysign(re));
-	op->re = 0.0;
+	if (re > 0.0) {
+	    op->re = sqrt(re);
+	    op->im = 0.0;
+	} else {
+	    /* ip->re < 0.0 */
+	    op->im = sqrt(-re);
+	    op->re = 0.0;
+	}
     } else {
 	double ampl, temp;
 

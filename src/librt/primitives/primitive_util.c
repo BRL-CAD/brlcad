@@ -645,7 +645,7 @@ clt_init(void)
         if (error != CL_SUCCESS) bu_bomb("failed to create an OpenCL kernel");
 
 
-	clt_rand_halftab = clCreateBuffer(clt_context, CL_MEM_READ_ONLY|CL_MEM_COPY_HOST_PTR, sizeof(bn_rand_halftab), bn_rand_halftab, &error);
+	clt_rand_halftab = clCreateBuffer(clt_context, CL_MEM_READ_ONLY|CL_MEM_HOST_WRITE_ONLY|CL_MEM_COPY_HOST_PTR, sizeof(bn_rand_halftab), bn_rand_halftab, &error);
 	if (error != CL_SUCCESS) bu_bomb("failed to create OpenCL rand_haltab buffer");
     }
     bu_semaphore_release(clt_semaphore);
@@ -704,11 +704,11 @@ clt_shot(size_t sz_hits, struct cl_hit *hits, struct xray *rp, struct soltab *st
     args = (char*)bu_malloc(sz_args, "clt_shot");
     clt_solid_pack(args, stp);
 
-    pin = clCreateBuffer(clt_context, CL_MEM_READ_ONLY|CL_MEM_COPY_HOST_PTR, sz_args, args, &error);
+    pin = clCreateBuffer(clt_context, CL_MEM_READ_ONLY|CL_MEM_HOST_WRITE_ONLY|CL_MEM_COPY_HOST_PTR, sz_args, args, &error);
     if (error != CL_SUCCESS) bu_bomb("failed to create OpenCL input buffer");
-    pout = clCreateBuffer(clt_context, CL_MEM_WRITE_ONLY, sz_hits, NULL, &error);
+    pout = clCreateBuffer(clt_context, CL_MEM_WRITE_ONLY|CL_MEM_HOST_READ_ONLY, sz_hits, NULL, &error);
     if (error != CL_SUCCESS) bu_bomb("failed to create OpenCL output buffer");
-    plen = clCreateBuffer(clt_context, CL_MEM_WRITE_ONLY, sizeof(len), NULL, &error);
+    plen = clCreateBuffer(clt_context, CL_MEM_WRITE_ONLY|CL_MEM_HOST_READ_ONLY, sizeof(len), NULL, &error);
     if (error != CL_SUCCESS) bu_bomb("failed to create OpenCL output buffer");
 
     bu_semaphore_acquire(clt_semaphore);
@@ -774,9 +774,9 @@ clt_norm(struct hit *hitp, struct soltab *stp, struct xray *rp)
     args = (char*)bu_malloc(sz_args, "clt_norm");
     clt_solid_pack(args, stp);
 
-    pin = clCreateBuffer(clt_context, CL_MEM_READ_ONLY|CL_MEM_COPY_HOST_PTR, sz_args, args, &error);
+    pin = clCreateBuffer(clt_context, CL_MEM_READ_ONLY|CL_MEM_HOST_WRITE_ONLY|CL_MEM_COPY_HOST_PTR, sz_args, args, &error);
     if (error != CL_SUCCESS) bu_bomb("failed to create OpenCL input buffer");
-    pout = clCreateBuffer(clt_context, CL_MEM_READ_WRITE|CL_MEM_COPY_HOST_PTR, sizeof(hit), &hit, &error);
+    pout = clCreateBuffer(clt_context, CL_MEM_READ_WRITE|CL_MEM_HOST_READ_WRITE|CL_MEM_COPY_HOST_PTR, sizeof(hit), &hit, &error);
     if (error != CL_SUCCESS) bu_bomb("failed to create OpenCL output buffer");
 
     bu_semaphore_acquire(clt_semaphore);
@@ -833,15 +833,15 @@ clt_db_store(size_t count, struct soltab *solids[])
 		clt_solid_pack(prims+indexes[i], solids[i]);
 	    }
 
-	    clt_db_prims = clCreateBuffer(clt_context, CL_MEM_READ_ONLY|CL_MEM_COPY_HOST_PTR, indexes[count], prims, &error);
+	    clt_db_prims = clCreateBuffer(clt_context, CL_MEM_READ_ONLY|CL_MEM_HOST_WRITE_ONLY|CL_MEM_COPY_HOST_PTR, indexes[count], prims, &error);
 	    if (error != CL_SUCCESS) bu_bomb("failed to create OpenCL indexes buffer");
 
 	    bu_free(prims, "failed bu_free() in clt_db_store()");
 	}
 
-	clt_db_ids = clCreateBuffer(clt_context, CL_MEM_READ_ONLY|CL_MEM_COPY_HOST_PTR, sizeof(cl_int)*count, ids, &error);
+	clt_db_ids = clCreateBuffer(clt_context, CL_MEM_READ_ONLY|CL_MEM_HOST_WRITE_ONLY|CL_MEM_COPY_HOST_PTR, sizeof(cl_int)*count, ids, &error);
 	if (error != CL_SUCCESS) bu_bomb("failed to create OpenCL ids buffer");
-	clt_db_indexes = clCreateBuffer(clt_context, CL_MEM_READ_ONLY|CL_MEM_COPY_HOST_PTR, sizeof(cl_uint)*(count+1), indexes, &error);
+	clt_db_indexes = clCreateBuffer(clt_context, CL_MEM_READ_ONLY|CL_MEM_HOST_WRITE_ONLY|CL_MEM_COPY_HOST_PTR, sizeof(cl_uint)*(count+1), indexes, &error);
 	if (error != CL_SUCCESS) bu_bomb("failed to create OpenCL indexes buffer");
 
 	bu_free(indexes, "failed bu_free() in clt_db_store()");
@@ -856,7 +856,7 @@ clt_db_store_bvh(size_t count, struct clt_linear_bvh_node *nodes)
 {
     cl_int error;
 
-    clt_db_bvh = clCreateBuffer(clt_context, CL_MEM_READ_ONLY|CL_MEM_COPY_HOST_PTR, sizeof(struct clt_linear_bvh_node)*count, nodes, &error);
+    clt_db_bvh = clCreateBuffer(clt_context, CL_MEM_READ_ONLY|CL_MEM_HOST_WRITE_ONLY|CL_MEM_COPY_HOST_PTR, sizeof(struct clt_linear_bvh_node)*count, nodes, &error);
     if (error != CL_SUCCESS) bu_bomb("failed to create OpenCL bvh buffer");
 }
 
@@ -911,9 +911,9 @@ clt_frame(void *pixels, uint8_t o[3], int cur_pixel, int last_pixel,
     p.aspect = aspect;
     p.lightmodel = lightmodel;
 
-    ppixels = clCreateBuffer(clt_context, CL_MEM_WRITE_ONLY, sz_pixels, NULL, &error);
+    ppixels = clCreateBuffer(clt_context, CL_MEM_WRITE_ONLY|CL_MEM_HOST_READ_ONLY, sz_pixels, NULL, &error);
     if (error != CL_SUCCESS) bu_bomb("failed to create OpenCL output buffer");
-    phits = clCreateBuffer(clt_context, CL_MEM_READ_WRITE, sz_hits, NULL, &error);
+    phits = clCreateBuffer(clt_context, CL_MEM_READ_WRITE|CL_MEM_HOST_NO_ACCESS, sz_hits, NULL, &error);
     if (error != CL_SUCCESS) bu_bomb("failed to create OpenCL hits buffer");
 
     bu_semaphore_acquire(clt_semaphore);
