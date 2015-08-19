@@ -1,12 +1,12 @@
 #include "common.cl"
 
 
-struct arb_shot_specific {
+struct arb_specific {
     double arb_peqns[4*6];
     int arb_nmfaces;
 };
 
-int arb_shot(global struct hit *res, const double3 r_pt, const double3 r_dir, const uint idx, global const struct arb_shot_specific *arb)
+int arb_shot(global struct hit *res, const double3 r_pt, const double3 r_dir, const uint idx, global const struct arb_specific *arb)
 {
     const int nmfaces = arb->arb_nmfaces;
 
@@ -72,7 +72,7 @@ int arb_shot(global struct hit *res, const double3 r_pt, const double3 r_dir, co
 }
 
 
-void arb_norm(global struct hit *hitp, const double3 r_pt, const double3 r_dir, global const struct arb_shot_specific *arb)
+void arb_norm(global struct hit *hitp, const double3 r_pt, const double3 r_dir, global const struct arb_specific *arb)
 {
     int h;
 

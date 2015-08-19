@@ -1,7 +1,7 @@
 #include "common.cl"
 
 
-struct tor_shot_specific {
+struct tor_specific {
     double tor_alpha;       /* 0 < (R2/R1) <= 1 */
     double tor_r1;          /* for inverse scaling of k values. */
     double tor_V[3];        /* Vector to center of torus */
@@ -9,7 +9,7 @@ struct tor_shot_specific {
     double tor_invR[16];    /* invRot(vect') */
 };
 
-int tor_shot(global struct hit *res, const double3 r_pt, const double3 r_dir, const uint idx, global const struct tor_shot_specific *tor)
+int tor_shot(global struct hit *res, const double3 r_pt, const double3 r_dir, const uint idx, global const struct tor_specific *tor)
 {
     double3 dprime;		// D'
     double3 pprime;		// P'
@@ -179,7 +179,7 @@ int tor_shot(global struct hit *res, const double3 r_pt, const double3 r_dir, co
 }
 
 
-void tor_norm(global struct hit *hitp, const double3 r_pt, const double3 r_dir, global const struct tor_shot_specific *tor)
+void tor_norm(global struct hit *hitp, const double3 r_pt, const double3 r_dir, global const struct tor_specific *tor)
 {
     double w;
     double3 work;

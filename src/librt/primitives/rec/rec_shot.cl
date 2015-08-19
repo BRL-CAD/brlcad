@@ -7,14 +7,14 @@
 #define REC_NORM_BOT	(3)		/* copy reverse tgc_N */
 
 
-struct rec_shot_specific {
+struct rec_specific {
     double rec_V[3];		/* Vector to center of base of cylinder */
     double rec_Hunit[3];	/* Unit H vector */
     double rec_SoR[16];		/* Scale(Rot(vect)) */
     double rec_invRoS[16];	/* invRot(Scale(vect)) */
 };
 
-int rec_shot(global struct hit *res, const double3 r_pt, const double3 r_dir, const uint idx, global const struct rec_shot_specific *rec)
+int rec_shot(global struct hit *res, const double3 r_pt, const double3 r_dir, const uint idx, global const struct rec_specific *rec)
 {
     double3 dprime;		// D'
     double3 pprime;		// P'
@@ -164,7 +164,7 @@ int rec_shot(global struct hit *res, const double3 r_pt, const double3 r_dir, co
 }
 
 
-void rec_norm(global struct hit *hitp, const double3 r_pt, const double3 r_dir, global const struct rec_shot_specific *rec)
+void rec_norm(global struct hit *hitp, const double3 r_pt, const double3 r_dir, global const struct rec_specific *rec)
 {
     hitp->hit_point = r_pt + r_dir * hitp->hit_dist;
     switch (hitp->hit_surfno) {

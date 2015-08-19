@@ -658,14 +658,21 @@ clt_solid_pack(struct bu_pool *pool, struct soltab *stp)
 {
     size_t size;
 
-    size = 0;
-    if (stp->st_id == ID_BOT || stp->st_id == ID_ARS) {
-        size = clt_bot_pack(pool, stp);
-    } else {
-        void *data;
-        size = clt_solid_length(stp);
-        data = (void *)bu_pool_alloc(pool, 1, size);
-        clt_solid_pack(data, stp);
+    switch (stp->st_id) {
+	case ID_TOR:
+	case ID_TGC:
+	case ID_ELL:
+	case ID_ARB8:
+	case ID_ARS:
+	case ID_REC:
+	case ID_SPH:
+	case ID_EHY:
+	case ID_BOT:
+	    size = clt_bot_pack(pool, stp);
+	    break;
+	default:
+	    size = 0;
+	    break;
     }
     return size;
 }
@@ -694,7 +701,7 @@ clt_db_store(size_t count, struct soltab *solids[])
 	pool = bu_pool_create(1024 * 1024);
 	for (i=1; i <= count; i++) {
 	    size_t size;
-	    size = clt_solid_packp(pool, solids[i-1]);
+	    size = clt_solid_pack(pool, solids[i-1]);
 	    indexes[i] = indexes[i-1] + size;
 	}
 
