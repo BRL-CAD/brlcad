@@ -44,7 +44,7 @@
 #include <limits.h>
 #include <CL/cl.h>
 
-#if __OPENCL_VERSION__ < 120
+#ifndef CL_VERSION_1_2
 #  error "OpenCL 1.2 required."
 #endif
 

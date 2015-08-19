@@ -19,9 +19,11 @@ extern inline double3 MAT4X3VEC(global const double *m, double3 i);
 #define ID_TGC          2       /**< @brief Generalized Truncated General Cone */
 #define ID_ELL          3       /**< @brief Ellipsoid */
 #define ID_ARB8         4       /**< @brief Generalized ARB.  V + 7 vectors */
+#define ID_ARS          5       /**< @brief ARS */
 #define ID_REC          7       /**< @brief Right Elliptical Cylinder [TGC special] */
 #define ID_SPH          10      /**< @brief Sphere */
 #define ID_EHY          20      /**< @brief Elliptical Hyperboloid  */
+#define ID_BOT          30      /**< @brief Bag o' triangles */
 
 
 inline int shot(global struct hit *res, const double3 r_pt, const double3 r_dir, const uint idx, const int id, global const void *args)
@@ -34,6 +36,8 @@ inline int shot(global struct hit *res, const double3 r_pt, const double3 r_dir,
     case ID_REC:	return rec_shot(res, r_pt, r_dir, idx, args);
     case ID_SPH:	return sph_shot(res, r_pt, r_dir, idx, args);
     case ID_EHY:	return ehy_shot(res, r_pt, r_dir, idx, args);
+    case ID_ARS:
+    case ID_BOT:	return bot_shot(res, r_pt, r_dir, idx, args);
     default:		return 0;
     };
 }
@@ -48,6 +52,8 @@ inline void norm(global struct hit *hitp, const double3 r_pt, const double3 r_di
     case ID_REC:	rec_norm(hitp, r_pt, r_dir, args);	break;
     case ID_EHY:	ehy_norm(hitp, r_pt, r_dir, args);	break;
     case ID_SPH:	sph_norm(hitp, r_pt, r_dir, args);	break;
+    case ID_ARS:
+    case ID_BOT:	bot_norm(hitp, r_pt, r_dir, args);	break;
     default:							break;
     };
 }

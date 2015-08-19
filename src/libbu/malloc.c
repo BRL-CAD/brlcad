@@ -75,14 +75,6 @@ struct memqdebug {
 };
 
 
-struct bu_pool
-{
-    size_t block_size;
-    size_t block_pos, alloc_size;
-    uint8_t *block;
-};
-
-
 static struct bu_list *bu_memq = BU_LIST_NULL;
 static struct bu_list bu_memqhd = BU_LIST_INIT_ZERO;
 #define MEMQDEBUG_NULL ((struct memqdebug *)0)

@@ -613,6 +613,7 @@ clt_init(void)
             "solver.cl",
 
             "arb8_shot.cl",
+            "bot_shot.cl",
             "ehy_shot.cl",
             "ell_shot.cl",
             "sph_shot.cl",
@@ -653,153 +654,20 @@ clt_init(void)
 
 
 size_t
-clt_solid_length(struct soltab *stp)
+clt_solid_pack(struct bu_pool *pool, struct soltab *stp)
 {
-    switch (stp->st_id) {
-        case ID_TOR:    return clt_tor_length(stp);
-        case ID_TGC:    return clt_tgc_length(stp);
-        case ID_ELL:    return clt_ell_length(stp);
-        case ID_ARB8:   return clt_arb_length(stp);
-        case ID_REC:    return clt_rec_length(stp);
-        case ID_SPH:    return clt_sph_length(stp);
-        case ID_EHY:    return clt_ehy_length(stp);
-        default:        return 0;
+    size_t size;
+
+    size = 0;
+    if (stp->st_id == ID_BOT || stp->st_id == ID_ARS) {
+        size = clt_bot_pack(pool, stp);
+    } else {
+        void *data;
+        size = clt_solid_length(stp);
+        data = (void *)bu_pool_alloc(pool, 1, size);
+        clt_solid_pack(data, stp);
     }
-}
-
-void
-clt_solid_pack(void *dst, struct soltab *src)
-{
-    switch (src->st_id) {
-        case ID_TOR:    clt_tor_pack(dst, src);     break;
-        case ID_TGC:    clt_tgc_pack(dst, src);     break;
-        case ID_ELL:    clt_ell_pack(dst, src);     break;
-        case ID_ARB8:   clt_arb_pack(dst, src);     break;
-        case ID_REC:    clt_rec_pack(dst, src);     break;
-        case ID_SPH:    clt_sph_pack(dst, src);     break;
-        case ID_EHY:    clt_ehy_pack(dst, src);     break;
-        default:                                    break;
-    }
-}
-
-
-cl_int
-clt_shot(size_t sz_hits, struct cl_hit *hits, struct xray *rp, struct soltab *stp, struct application *ap, struct seg *seghead)
-{
-    const size_t sz_args = clt_solid_length(stp);
-    char *args;
-
-    const cl_int id = stp->st_id;
-
-    cl_int i, len;
-    cl_double3 r_pt, r_dir;
-
-    const size_t hypersample = 1;
-    cl_int error;
-    cl_mem pin, plen, pout;
-
-    VMOVE(r_pt.s, rp->r_pt);
-    VMOVE(r_dir.s, rp->r_dir);
-
-    args = (char*)bu_malloc(sz_args, "clt_shot");
-    clt_solid_pack(args, stp);
-
-    pin = clCreateBuffer(clt_context, CL_MEM_READ_ONLY|CL_MEM_HOST_WRITE_ONLY|CL_MEM_COPY_HOST_PTR, sz_args, args, &error);
-    if (error != CL_SUCCESS) bu_bomb("failed to create OpenCL input buffer");
-    pout = clCreateBuffer(clt_context, CL_MEM_WRITE_ONLY|CL_MEM_HOST_READ_ONLY, sz_hits, NULL, &error);
-    if (error != CL_SUCCESS) bu_bomb("failed to create OpenCL output buffer");
-    plen = clCreateBuffer(clt_context, CL_MEM_WRITE_ONLY|CL_MEM_HOST_READ_ONLY, sizeof(len), NULL, &error);
-    if (error != CL_SUCCESS) bu_bomb("failed to create OpenCL output buffer");
-
-    bu_semaphore_acquire(clt_semaphore);
-    error = clSetKernelArg(clt_shot_kernel, 0, sizeof(cl_mem), &plen);
-    error |= clSetKernelArg(clt_shot_kernel, 1, sizeof(cl_mem), &pout);
-    error |= clSetKernelArg(clt_shot_kernel, 2, sizeof(cl_double3), &r_pt);
-    error |= clSetKernelArg(clt_shot_kernel, 3, sizeof(cl_double3), &r_dir);
-    error |= clSetKernelArg(clt_shot_kernel, 4, sizeof(cl_int), &id);
-    error |= clSetKernelArg(clt_shot_kernel, 5, sizeof(cl_mem), &pin);
-    if (error != CL_SUCCESS) bu_bomb("failed to set OpenCL kernel arguments");
-    error = clEnqueueNDRangeKernel(clt_queue, clt_shot_kernel, 1, NULL, &hypersample, NULL, 0, NULL, NULL);
-    bu_semaphore_release(clt_semaphore);
-    if (error != CL_SUCCESS) bu_bomb("failed to enqueue OpenCL kernel");
-
-    if (clFinish(clt_queue) != CL_SUCCESS) bu_bomb("failure in clFinish()");
-    clEnqueueReadBuffer(clt_queue, plen, CL_TRUE, 0, sizeof(len), &len, 0, NULL, NULL);
-    clReleaseMemObject(plen);
-    clEnqueueReadBuffer(clt_queue, pout, CL_TRUE, 0, sz_hits, hits, 0, NULL, NULL);
-    clReleaseMemObject(pout);
-    clReleaseMemObject(pin);
-
-    bu_free(args, "clt_shot");
-
-    for (i=0; i<len; i+=2) {
-        struct seg *segp;
-        RT_GET_SEG(segp, ap->a_resource);
-        segp->seg_stp = stp;
-        segp->seg_in.hit_dist = hits[i].hit_dist;
-        segp->seg_in.hit_surfno = hits[i].hit_surfno;
-        segp->seg_out.hit_dist = hits[i+1].hit_dist;
-        segp->seg_out.hit_surfno = hits[i+1].hit_surfno;
-        /* Set aside vector for rt_tor_norm() later */
-        VMOVE(segp->seg_in.hit_vpriv, hits[i].hit_vpriv.s);
-        VMOVE(segp->seg_out.hit_vpriv, hits[i+1].hit_vpriv.s);
-        BU_LIST_INSERT(&(seghead->l), &(segp->l));
-    }
-    return len;
-}
-
-
-void
-clt_norm(struct hit *hitp, struct soltab *stp, struct xray *rp)
-{
-    const size_t sz_args = clt_solid_length(stp);
-    char *args;
-
-    const cl_int id = stp->st_id;
-
-    cl_double3 r_pt, r_dir;
-
-    const size_t hypersample = 1;
-    cl_int error;
-    cl_mem pin, pout;
-    struct cl_hit hit;
-
-    VMOVE(r_pt.s, rp->r_pt);
-    VMOVE(r_dir.s, rp->r_dir);
-
-    VMOVE(hit.hit_vpriv.s, hitp->hit_vpriv);
-    hit.hit_dist = hitp->hit_dist;
-    hit.hit_surfno = hitp->hit_surfno;
-
-    args = (char*)bu_malloc(sz_args, "clt_norm");
-    clt_solid_pack(args, stp);
-
-    pin = clCreateBuffer(clt_context, CL_MEM_READ_ONLY|CL_MEM_HOST_WRITE_ONLY|CL_MEM_COPY_HOST_PTR, sz_args, args, &error);
-    if (error != CL_SUCCESS) bu_bomb("failed to create OpenCL input buffer");
-    pout = clCreateBuffer(clt_context, CL_MEM_READ_WRITE|CL_MEM_HOST_READ_WRITE|CL_MEM_COPY_HOST_PTR, sizeof(hit), &hit, &error);
-    if (error != CL_SUCCESS) bu_bomb("failed to create OpenCL output buffer");
-
-    bu_semaphore_acquire(clt_semaphore);
-    error = clSetKernelArg(clt_norm_kernel, 0, sizeof(cl_mem), &pout);
-    error |= clSetKernelArg(clt_norm_kernel, 1, sizeof(cl_double3), &r_pt);
-    error |= clSetKernelArg(clt_norm_kernel, 2, sizeof(cl_double3), &r_dir);
-    error |= clSetKernelArg(clt_norm_kernel, 3, sizeof(cl_int), &id);
-    error |= clSetKernelArg(clt_norm_kernel, 4, sizeof(cl_mem), &pin);
-    if (error != CL_SUCCESS) bu_bomb("failed to set OpenCL kernel arguments");
-    error = clEnqueueNDRangeKernel(clt_queue, clt_norm_kernel, 1, NULL, &hypersample, NULL, 0, NULL, NULL);
-    bu_semaphore_release(clt_semaphore);
-    if (error != CL_SUCCESS) bu_bomb("failed to enqueue OpenCL kernel");
-
-    if (clFinish(clt_queue) != CL_SUCCESS) bu_bomb("failure in clFinish()");
-    clEnqueueReadBuffer(clt_queue, pout, CL_TRUE, 0, sizeof(hit), &hit, 0, NULL, NULL);
-    clReleaseMemObject(pout);
-    clReleaseMemObject(pin);
-
-    bu_free(args, "clt_norm");
-
-    VMOVE(hitp->hit_normal, hit.hit_normal.s);
-    VMOVE(hitp->hit_point, hit.hit_point.s);
-    VMOVE(hitp->hit_vpriv, hit.hit_vpriv.s);
+    return size;
 }
 
 
@@ -807,12 +675,13 @@ void
 clt_db_store(size_t count, struct soltab *solids[])
 {
     cl_int error;
-    cl_int *ids;
-    cl_uint *indexes;
-    char *prims;
-    size_t i;
 
     if (count != 0) {
+        cl_int *ids;
+        cl_uint *indexes;
+        struct bu_pool *pool;
+        size_t i;
+
 	ids = (cl_int*)bu_calloc(count, sizeof(cl_int), "ids");
 	for (i=0; i < count; i++) {
 	    const struct soltab *stp = solids[i];
@@ -821,23 +690,19 @@ clt_db_store(size_t count, struct soltab *solids[])
 
 	indexes = (cl_uint*)bu_calloc(count+1, sizeof(cl_uint), "indexes");
 	indexes[0] = 0;
+
+	pool = bu_pool_create(1024 * 1024);
 	for (i=1; i <= count; i++) {
 	    size_t size;
-	    size = clt_solid_length(solids[i-1]);
+	    size = clt_solid_packp(pool, solids[i-1]);
 	    indexes[i] = indexes[i-1] + size;
 	}
 
 	if (indexes[count] != 0) {
-	    prims = (char*)bu_malloc(indexes[count], "prims");
-	    for (i=0; i<count; i++) {
-		clt_solid_pack(prims+indexes[i], solids[i]);
-	    }
-
-	    clt_db_prims = clCreateBuffer(clt_context, CL_MEM_READ_ONLY|CL_MEM_HOST_WRITE_ONLY|CL_MEM_COPY_HOST_PTR, indexes[count], prims, &error);
+	    clt_db_prims = clCreateBuffer(clt_context, CL_MEM_READ_ONLY|CL_MEM_HOST_WRITE_ONLY|CL_MEM_COPY_HOST_PTR, indexes[count], pool->block, &error);
 	    if (error != CL_SUCCESS) bu_bomb("failed to create OpenCL indexes buffer");
-
-	    bu_free(prims, "failed bu_free() in clt_db_store()");
 	}
+        bu_pool_delete(pool);
 
 	clt_db_ids = clCreateBuffer(clt_context, CL_MEM_READ_ONLY|CL_MEM_HOST_WRITE_ONLY|CL_MEM_COPY_HOST_PTR, sizeof(cl_int)*count, ids, &error);
 	if (error != CL_SUCCESS) bu_bomb("failed to create OpenCL ids buffer");
