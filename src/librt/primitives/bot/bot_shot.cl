@@ -2,8 +2,8 @@
 
 
 struct bot_specific {
+    ulong offsets[3];    // To: BVH, Triangles, Normals.
     uint ntri;
-    uint offsets[3];    // To: BVH, Triangles, Normals.
 };
 
 struct tri_specific {

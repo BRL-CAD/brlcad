@@ -131,12 +131,11 @@ rt_botface_w_normals(struct soltab *stp,
 #undef NORMAL_SCALE
 #undef ONE_OVER_SCALE
 
-/*#define USE_OPENCL*/
 #ifdef USE_OPENCL
 /* largest data members first */
 struct clt_bot_specific {
+    cl_ulong offsets[3]; /* To: BVH, Triangles, Normals. */
     cl_uint ntri;
-    cl_uint offsets[3]; /* To: BVH, Triangles, Normals. */
 };
 
 struct clt_tri_specific {

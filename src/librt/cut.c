@@ -2501,7 +2501,7 @@ static struct bvh_build_node *
 emit_lbvh(int max_prims_in_node,
     struct bvh_build_node **build_nodes, const fastf_t *bounds_prims,
     struct morton_primitive *morton_prims, long n_primitives, long *total_nodes,
-    long *ordered_prims, volatile long *ordered_prims_offset, int bit_index) {
+    long *ordered_prims, long *ordered_prims_offset, int bit_index) {
 
     BU_ASSERT(n_primitives > 0);
     if (bit_index < 0 || n_primitives < max_prims_in_node) {
@@ -2514,10 +2514,8 @@ emit_lbvh(int max_prims_in_node,
         ++*total_nodes;
         node = (*build_nodes)++;
 
-	{
-	    first_prim_offset = *ordered_prims_offset;
-	    (*ordered_prims_offset) += n_primitives; /* atomic_add */
-	}
+        first_prim_offset = *ordered_prims_offset;
+        (*ordered_prims_offset) += n_primitives; /* atomic_add */
 
         for (i = 0; i < n_primitives; ++i) {
             fastf_t bounds2[6];
@@ -2764,6 +2762,7 @@ out:
 #undef n_buckets
 }
 
+
 struct bvh_build_node *
 hlbvh_create(int max_prims_in_node, struct bu_pool *pool, const fastf_t *centroids_prims,
 	     const fastf_t *bounds_prims, long *total_nodes,
@@ -2775,14 +2774,13 @@ hlbvh_create(int max_prims_in_node, struct bu_pool *pool, const fastf_t *centroi
 
     struct lbvh_treelet *treelets_to_build;
     struct lbvh_treelet *treelets_to_build_end;
+    struct lbvh_treelet *treelet;
 
     struct bvh_build_node *ret;
 
-    struct bvh_build_node **finished_treelets;
+    struct bvh_build_node **finished_treelets, **finished_treelets_last;
     long start, end;
-    volatile long ordered_prims_offset = 0;
-    long atomic_total = 0;
-    long treelets_size;
+    long ordered_prims_offset = 0;
 
     /* Compute bounding box of all primitive centroids */
     for (i = 0; i<n_primitives; i++) {
@@ -2844,37 +2842,32 @@ hlbvh_create(int max_prims_in_node, struct bu_pool *pool, const fastf_t *centroi
 
     /* Create LBVHs for treelets in parallel */
     *ordered_prims = (long*)bu_calloc(n_primitives, sizeof(long), "hlbvh_create");
-
-    treelets_size = treelets_to_build_end-treelets_to_build;
-    for (i=0; i<treelets_size; i++) {
-	struct lbvh_treelet *treelet;
+    for (treelet = treelets_to_build; treelet != treelets_to_build_end; treelet++) {
         /* Generate i_th LBVH treelet */
 	long nodes_created = 0;
         const int first_bit_index = 29 - 12;
-
-        treelet = &treelets_to_build[i];
         treelet->build_nodes = emit_lbvh(max_prims_in_node, &treelet->build_nodes,
 					 bounds_prims,
 					 &morton_prims[treelet->start_index],
 					 treelet->n_primitives, &nodes_created,
 					 *ordered_prims, &ordered_prims_offset,
 					 first_bit_index);
-	atomic_total += nodes_created;
+	*total_nodes += nodes_created;
     }
     bu_free(morton_prims, "hlbvh_create");
-    *total_nodes = atomic_total;
 
     /* Create and return SAH BVH from LBVH treelets */
     finished_treelets =
-	(struct bvh_build_node**)bu_calloc(treelets_size, sizeof(struct bvh_build_node*),
+	(struct bvh_build_node**)bu_calloc(treelets_to_build_end-treelets_to_build,
+					   sizeof(struct bvh_build_node*),
 					   "hlbvh_create");
-    for (i=0; i<treelets_size; i++) {
-	struct lbvh_treelet *treelet;
-	treelet = &treelets_to_build[i];
-        finished_treelets[i] = treelet->build_nodes;
+    finished_treelets_last = finished_treelets;
+    for (treelet = treelets_to_build; treelet != treelets_to_build_end; treelet++) {
+        *finished_treelets_last++ = treelet->build_nodes;
     }
     bu_free(treelets_to_build, "hlbvh_create");
-    ret = build_upper_sah(pool, finished_treelets, 0, treelets_size, total_nodes);
+    ret = build_upper_sah(pool, finished_treelets, 0,
+			  finished_treelets_last-finished_treelets, total_nodes);
     bu_free(finished_treelets, "hlbvh_create");
     return ret;
 }
@@ -2928,6 +2921,17 @@ clt_linear_bvh_create(long n_primitives, struct clt_linear_bvh_node **nodes_p,
 	pool = bu_pool_create(1024 * 1024);
         root = hlbvh_create(4, pool, centroids_prims, bounds_prims, &nodes_created,
 			    n_primitives, ordered_prims);
+
+	/*
+	 * Enlarge the model RPP just slightly, to avoid nasty effects
+	 * with a solid's face being exactly on the edge
+	 */
+	root[0].bounds[0] = floor(root[0].bounds[0]);
+	root[0].bounds[1] = floor(root[0].bounds[1]);
+	root[0].bounds[2] = floor(root[0].bounds[2]);
+	root[0].bounds[3] = ceil(root[0].bounds[3]);
+	root[0].bounds[4] = ceil(root[0].bounds[4]);
+	root[0].bounds[5] = ceil(root[0].bounds[5]);
 
         /* Compute representation of depth-first traversal of BVH tree */
         nodes = (struct clt_linear_bvh_node*)bu_calloc(nodes_created, sizeof(*nodes),
