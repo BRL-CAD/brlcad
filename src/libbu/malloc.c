@@ -750,7 +750,7 @@ bu_pool_alloc(struct bu_pool *pool, size_t nelem, size_t elsize)
     void *ret;
 
     if (pool->block_pos + n_bytes > pool->alloc_size) {
-    	pool->alloc_size += n_bytes < pool->block_size ? pool->block_size : n_bytes;
+    	pool->alloc_size += (n_bytes < pool->block_size ? pool->block_size : n_bytes);
 	pool->block = (uint8_t*)bu_realloc(pool->block, pool->alloc_size, "bu_pool_alloc");
     }
 

@@ -136,6 +136,7 @@ rt_botface_w_normals(struct soltab *stp,
 struct clt_bot_specific {
     cl_ulong offsets[3]; /* To: BVH, Triangles, Normals. */
     cl_uint ntri;
+    cl_uchar pad[4];
 };
 
 struct clt_tri_specific {
@@ -143,6 +144,7 @@ struct clt_tri_specific {
     cl_double v1[3];
     cl_double v2[3];
     cl_int surfno;
+    cl_uchar pad[4];
 };
 
 size_t
@@ -154,30 +156,88 @@ clt_bot_pack(struct bu_pool *pool, struct soltab *stp)
     struct clt_tri_specific *facearray;
     size_t i, total, size;
     uint ntri;
-
-    bu_log("bot_flags : %d\n",bot->bot_flags & RT_BOT_USE_FLOATS);
+    long *ordered_prims;
+    cl_int total_nodes = 0;
+    struct clt_linear_bvh_node *nodes, *bnodes;
+    fastf_t *centroids;
+    fastf_t *bounds;
 
     BU_ASSERT(!(bot->bot_flags & RT_BOT_USE_FLOATS));
 
-    total = 0;
     ntri = bot->bot_ntri;
+
+    if (ntri == 0) {
+        return 0;
+    }
+
+    total = 0;
 
     size = sizeof(*header);
     header = (struct clt_bot_specific*)bu_pool_alloc(pool, 1, size);
     header->ntri = ntri;
     total += size;
+    VSETALL(header->offsets, total);
 
-    header->offsets[0] = total;
-    /* Build BVH for triangles in bot if it is large enough. */
+    ordered_prims = NULL;
 
+    /* Build BVH for bot. */
+    centroids = (fastf_t*)bu_calloc(ntri, sizeof(fastf_t)*3, "bot centroids");
+    for (i=0; i<ntri; i++) {
+        const tri_specific_double *trip = (tri_specific_double *)bot->bot_facearray[i];
+        point_t v1;
+        point_t v2;
+
+        VMOVE(&centroids[i*3], trip->tri_A);
+        VADD2(v1, trip->tri_BA, trip->tri_A);
+        VADD2(v2, trip->tri_CA, trip->tri_A);
+        VADD3(&centroids[i*3], &centroids[i*3], v1, v2);
+        VSCALE(&centroids[i*3], &centroids[i*3], 1.0/3.0);
+    }
+    bounds = (fastf_t*)bu_calloc(ntri, sizeof(fastf_t)*6, "bot bounds");
+    for (i=0; i<ntri; i++) {
+        const tri_specific_double *trip = (tri_specific_double *)bot->bot_facearray[i];
+        point_t v1;
+        point_t v2;
+
+        VMOVE(&bounds[i*6+0], trip->tri_A);
+        VMOVE(&bounds[i*6+3], trip->tri_A);
+        VADD2(v1, trip->tri_BA, trip->tri_A);
+        VADD2(v2, trip->tri_CA, trip->tri_A);
+        VMINMAX(&bounds[i*6+0], &bounds[i*6+3], v1);
+        VMINMAX(&bounds[i*6+0], &bounds[i*6+3], v2);
+
+        /* Prevent the RPP from being 0 thickness */
+        bounds[i*6+0] -= SMALL_FASTF;
+        bounds[i*6+1] -= SMALL_FASTF;
+        bounds[i*6+2] -= SMALL_FASTF;
+        bounds[i*6+3] += SMALL_FASTF;
+        bounds[i*6+4] += SMALL_FASTF;
+        bounds[i*6+5] += SMALL_FASTF;
+    }
+    nodes = NULL;
+    bu_log("gonna try building bvh with %d\n", ntri);
+    clt_linear_bvh_create(ntri, &nodes, &ordered_prims, centroids, bounds,
+                          &total_nodes);
+    bu_free(centroids, "bot centroids");
+    bu_free(bounds, "bot bounds");
+
+    size = sizeof(struct clt_linear_bvh_node)*total_nodes;
+    bnodes = (struct clt_linear_bvh_node*)bu_pool_alloc(pool, 1, size);
+    memcpy(bnodes, nodes, size);
+    total += size;
+    bu_free(nodes, "bot nodes");
+
+    header = (struct clt_bot_specific*)pool->block;
     header->offsets[1] = total;
+
     size = sizeof(*facearray)*ntri;
     facearray = (struct clt_tri_specific*)bu_pool_alloc(pool, 1, size);
     total += size;
 
     /* consider each face */
     for (i=0; i<ntri; i++) {
-        const tri_specific_double *trip = (tri_specific_double *)bot->bot_facearray[i];
+        const tri_specific_double *trip =
+            (tri_specific_double *)bot->bot_facearray[ordered_prims[i]];
         struct clt_tri_specific *tri = &facearray[i];
 
         VMOVE(tri->v0, trip->tri_A);
@@ -185,9 +245,12 @@ clt_bot_pack(struct bu_pool *pool, struct soltab *stp)
         VADD2(tri->v2, trip->tri_CA, trip->tri_A);
         tri->surfno = trip->tri_surfno;
     }
+    bu_free(ordered_prims, "bot ordered prims");
+
+    header = (struct clt_bot_specific*)pool->block;
     header->offsets[2] = total;
 
-    bu_log("packed bot with %d%d pieces in %f bytes.\n", ntri, stp->st_npieces, total / (1024.0 * 1024.0));
+    bu_log("packed bot with %d,%d pieces (%f MB).\n", ntri, stp->st_npieces, total / (1024.0 * 1024.0));
     return total;
 }
 #endif
