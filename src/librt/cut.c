@@ -2932,7 +2932,7 @@ clt_linear_bvh_create(long n_primitives, struct clt_linear_bvh_node **nodes_p,
          * realloc would make the pointers invalid.
          * 
          * total_nodes = treelets_size + upper_sah_size,  where:
-         *  tree_size < 2*n_primitives
+         *  treelets_size < 2*n_primitives
          *  upper_sah_size < 2*2^popcnt(0x3ffc0000)   i.e. 2*4096
          */
 	pool = bu_pool_create(sizeof(struct bvh_build_node)*(2*n_primitives+2*4096));
