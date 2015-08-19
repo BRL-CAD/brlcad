@@ -442,7 +442,7 @@ rt_prep(register struct rt_i *rtip)
     RT_CK_RTI(rtip);
     rt_prep_parallel(rtip, 1);
 }
-/*#define USE_OPENCL*/
+
 
 #ifdef USE_OPENCL
 void

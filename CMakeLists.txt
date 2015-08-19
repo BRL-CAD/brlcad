@@ -1511,15 +1511,6 @@ CHECK_CXX_FLAG(ftemplate-depth-128)
 # CHECK_C_FLAG(msse2)
 CHECK_C_FLAG(msse3 BUILD_TYPES Debug)
 
-# OpenMP.
-find_package(OpenMP)
-if (OPENMP_FOUND)
-  CHECK_CXX_FLAG(fopenmp)
-  CHECK_C_FLAG(fopenmp)
-#  set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
-#  set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
-endif()
-
 # Check for c90 support with gnu extensions if we're not building for
 # a release so we get more broad portability testing.  Since the
 # default is debug, it will be the more difficult to keep working

@@ -281,7 +281,7 @@ HIDDEN int
 refine_missing_rays(struct bu_ptbl *new_missing, fastf_t **candidate_rays, int *ray_cnt, struct bu_ptbl *old_missing,
        	const char *pbrep, struct rt_gen_worker_vars *pbrep_rtvars,
        	const char *curr_comb, struct rt_gen_worker_vars *ccomb_vars,
-	struct subbrep_object_data *candidate, int pcpus, struct rt_wdb *wdbp, point_t bmin, point_t bmax, int depth, fastf_t dmin)
+	struct subbrep_object_data *candidate, int pcpus, struct rt_wdb *wdbp, point_t bmin, point_t bmax, int depth, fastf_t ratio, struct bn_tol *tol)
 {
     if (!new_missing || !candidate_rays || !ray_cnt || (*ray_cnt) == 0 || !old_missing) return 0;
     if (!pbrep || !pbrep_rtvars || !curr_comb || !ccomb_vars || !candidate || !wdbp) return 0;
@@ -289,17 +289,14 @@ refine_missing_rays(struct bu_ptbl *new_missing, fastf_t **candidate_rays, int *
     struct bu_ptbl o_brep_results = BU_PTBL_INIT_ZERO;
     struct bu_ptbl curr_comb_results = BU_PTBL_INIT_ZERO;
     fastf_t *c_rays = NULL;
-    fastf_t mult = depth * 10;
 
-    struct bn_tol tol = {BN_TOL_MAGIC, dmin/mult, dmin/mult * dmin/mult, 1.0e-6, 1.0 - 1.0e-6 };
-
-    // Construct the rays to shoot from the bbox  (TODO what tol?)
-    (*ray_cnt) = analyze_get_bbox_rays(&c_rays, bmin, bmax, &tol);
+    // Construct the rays to shoot from the bbox
+    (*ray_cnt) = analyze_get_scaled_bbox_rays(&c_rays, bmin, bmax, ratio*((fastf_t)1/depth));
 
     (*candidate_rays) = c_rays;
 
-    analyze_get_solid_partitions(&o_brep_results, pbrep_rtvars, c_rays, (*ray_cnt), wdbp->dbip, pbrep, &tol, pcpus, 0);
-    analyze_get_solid_partitions(&curr_comb_results, ccomb_vars, c_rays, (*ray_cnt), wdbp->dbip, curr_comb, &tol, pcpus, 0);
+    analyze_get_solid_partitions(&o_brep_results, pbrep_rtvars, c_rays, (*ray_cnt), wdbp->dbip, pbrep, tol, pcpus, 0);
+    analyze_get_solid_partitions(&curr_comb_results, ccomb_vars, c_rays, (*ray_cnt), wdbp->dbip, curr_comb, tol, pcpus, 0);
 
     //Compare the two partition/gap sets that result.
     struct bu_ptbl missing = BU_PTBL_INIT_ZERO;
@@ -384,20 +381,18 @@ analyze_find_subtracted(struct bu_ptbl *UNUSED(results), struct rt_wdb *wdbp, co
 	VMOVE(bmin, wbbox.Min());
 	VMOVE(bmax, wbbox.Max());
 	bu_log("in %s.s rpp %f %f %f %f %f %f\n", bu_vls_addr(candidate->name_root), bmin[0], bmax[0], bmin[1], bmax[1], bmin[2], bmax[2]);
-	/*
+
+	/* tol will be used when checking solidity - go with a value based on the smallest of the bbox dimensions. */
 	fastf_t x_dist = fabs(bmax[0] - bmin[0]);
 	fastf_t y_dist = fabs(bmax[1] - bmin[1]);
 	fastf_t z_dist = fabs(bmax[2] - bmin[2]);
 	fastf_t dmin = (x_dist < y_dist) ? x_dist : y_dist;
 	dmin = (z_dist < dmin) ? z_dist : dmin;
-	*/
-	// TODO - need an adaptive refinement here - don't want to shoot any more test rays than necessary, but need
-	// to make sure we have enough that we don't miss something...
-	fastf_t dmin = DIST_PT_PT(bmin, bmax)/50;
-	struct bn_tol tol = {BN_TOL_MAGIC, dmin, dmin * dmin, 1.0e-6, 1.0 - 1.0e-6 };
+	struct bn_tol tol = {BN_TOL_MAGIC, dmin/100, dmin/100 * dmin/100, 1.0e-6, 1.0 - 1.0e-6 };
 
-	// Construct the rays to shoot from the bbox  (TODO what tol?)
-	ray_cnt = analyze_get_bbox_rays(&c_rays, bmin, bmax, &tol);
+	// Construct the rays to shoot from the bbox
+	fastf_t ratio = (fastf_t)1/50;
+	ray_cnt = analyze_get_scaled_bbox_rays(&c_rays, bmin, bmax, ratio);
 	candidate_rays = c_rays;
 
 	// 2. The rays come from the dimensions of the candidate bbox, but
@@ -439,14 +434,14 @@ analyze_find_subtracted(struct bu_ptbl *UNUSED(results), struct rt_wdb *wdbp, co
 	// present in the results from the original brep, it is subtracted.  Add it
 	// to the results set.
 #if 1
-	int depth = 1;
+	int depth = 2;
 	bu_log("missing: %d\n", BU_PTBL_LEN(missing));
 	while (missing_gaps > 0 && BU_PTBL_LEN(missing) < MINIMUM_RAYS_FOR_DECISION) {
 	    struct bu_ptbl *nmissing;
 	    fmissing = missing;
 	    BU_GET(nmissing, struct bu_ptbl);
 	    bu_ptbl_init(nmissing, 8, "ptbl init");
-	    missing_gaps = refine_missing_rays(nmissing, &candidate_rays, &ray_cnt, fmissing, pbrep, pbrep_rtvars, curr_comb, ccomb_vars, candidate, pcpus, wdbp, bmin, bmax, depth, dmin);
+	    missing_gaps = refine_missing_rays(nmissing, &candidate_rays, &ray_cnt, fmissing, pbrep, pbrep_rtvars, curr_comb, ccomb_vars, candidate, pcpus, wdbp, bmin, bmax, depth, ratio, &tol);
 	    bu_log("refining: %d\n", ray_cnt);
 	    missing = nmissing;
 	    depth++;

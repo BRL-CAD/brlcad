@@ -18,6 +18,15 @@
 #define ptout(p)  p.x << " " << p.y << " " << p.z
 
 HIDDEN void
+assemble_vls_str(struct bu_vls *vls, int *edges, int cnt)
+{
+    bu_vls_sprintf(vls, "%d", edges[0]);
+    for (int i = 1; i < cnt; i++) {
+	bu_vls_printf(vls, ",%d", edges[i]);
+    }
+}
+
+HIDDEN void
 obj_add_attr_key(struct subbrep_object_data *data, struct rt_wdb *wdbp, const char *obj_name)
 {
     struct bu_attribute_value_set avs;
@@ -34,6 +43,12 @@ obj_add_attr_key(struct subbrep_object_data *data, struct rt_wdb *wdbp, const ch
     if (db5_get_attributes(wdbp->dbip, &avs, dp)) return;
 
     (void)bu_avs_add(&avs, "bfaces", bu_vls_addr(data->key));
+    if (data->edges_cnt > 0) {
+	struct bu_vls val = BU_VLS_INIT_ZERO;
+	assemble_vls_str(&val, data->edges, data->edges_cnt);
+	(void)bu_avs_add(&avs, "bedges", bu_vls_addr(&val));
+	bu_vls_free(&val);
+    }
 
     if (db5_replace_attributes(dp, &avs, wdbp->dbip)) {
 	bu_avs_free(&avs);
@@ -323,7 +338,6 @@ process_params(struct bu_vls *msgs, struct subbrep_object_data *data, struct rt_
 	    break;
     }
 }
-
 
 HIDDEN int
 make_shapes(struct bu_vls *msgs, struct subbrep_object_data *data, struct rt_wdb *wdbp, struct bu_vls *name_root, struct wmember *pcomb, int depth)
