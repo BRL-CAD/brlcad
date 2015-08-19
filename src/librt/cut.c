@@ -2939,17 +2939,6 @@ clt_linear_bvh_create(long n_primitives, struct clt_linear_bvh_node **nodes_p,
         root = hlbvh_create(4, pool, centroids_prims, bounds_prims, &nodes_created,
 			    n_primitives, ordered_prims);
 
-	/*
-	 * Enlarge the model RPP just slightly, to avoid nasty effects
-	 * with a solid's face being exactly on the edge
-	 */
-	root[0].bounds[0] = floor(root[0].bounds[0]);
-	root[0].bounds[1] = floor(root[0].bounds[1]);
-	root[0].bounds[2] = floor(root[0].bounds[2]);
-	root[0].bounds[3] = ceil(root[0].bounds[3]);
-	root[0].bounds[4] = ceil(root[0].bounds[4]);
-	root[0].bounds[5] = ceil(root[0].bounds[5]);
-
         /* Compute representation of depth-first traversal of BVH tree */
         nodes = (struct clt_linear_bvh_node*)bu_calloc(nodes_created, sizeof(*nodes),
 						       "bvh create");

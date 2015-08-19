@@ -156,6 +156,8 @@ clt_bot_pack(struct bu_pool *pool, struct soltab *stp)
     struct clt_tri_specific *facearray;
     size_t i, total, size;
 
+    bu_log("bot_flags : %d\n",bot->bot_flags & RT_BOT_USE_FLOATS);
+
     BU_ASSERT(!(bot->bot_flags & RT_BOT_USE_FLOATS));
 
     total = 0;
@@ -178,6 +180,7 @@ clt_bot_pack(struct bu_pool *pool, struct soltab *stp)
         VADD2(tri->v2, trip->tri_CA, trip->tri_A);
         tri->surfno = trip->tri_surfno;
     }
+    bu_log("packed bot with %d triangles in %f bytes.\n", bot->bot_ntri, total / (1024.0 * 1024.0));
     return total;
 }
 #endif
