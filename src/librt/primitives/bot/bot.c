@@ -167,10 +167,17 @@ clt_bot_pack(struct bu_pool *pool, struct soltab *stp)
     header->ntri = ntri;
     total += size;
 
+    header = (struct clt_bot_specific*)pool->block;
     header->offsets[0] = total;
-    /* Build BVH for triangles in bot if it is large enough. */
 
+    /* Build BVH for triangles in bot if it is large enough. */
+    size = sizeof(cl_double)*5;
+    (void)bu_pool_alloc(pool, 1, size);
+    total += size;
+
+    header = (struct clt_bot_specific*)pool->block;
     header->offsets[1] = total;
+
     size = sizeof(*facearray)*ntri;
     facearray = (struct clt_tri_specific*)bu_pool_alloc(pool, 1, size);
     total += size;
@@ -185,6 +192,8 @@ clt_bot_pack(struct bu_pool *pool, struct soltab *stp)
         VADD2(tri->v2, trip->tri_CA, trip->tri_A);
         tri->surfno = trip->tri_surfno;
     }
+
+    header = (struct clt_bot_specific*)pool->block;
     header->offsets[2] = total;
 
     bu_log("packed bot with %d%d pieces in %f bytes.\n", ntri, stp->st_npieces, total / (1024.0 * 1024.0));

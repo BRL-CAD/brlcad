@@ -18,8 +18,7 @@ int bot_shot(global struct hit *res, const double3 r_pt, const double3 r_dir, co
     global const struct bot_specific *bot = args;
     const uint ntri = bot->ntri;
 
-    args += sizeof(struct bot_specific);
-    global const struct tri_specific *tri = args;
+    global const struct tri_specific *tri = args+bot->offsets[1];
 
     struct hit hits[256];
     uint hit_count;
@@ -122,8 +121,7 @@ void bot_norm(global struct hit *hitp, const double3 r_pt, const double3 r_dir, 
     global const struct bot_specific *bot = args;
     const uint ntri = bot->ntri;
 
-    args += sizeof(struct bot_specific);
-    global const struct tri_specific *tri = args+sizeof(struct tri_specific)*h;
+    global const struct tri_specific *tri = args+bot->offsets[1]+sizeof(struct tri_specific)*h;
     const double3 V0 = vload3(0, tri->v0);
     const double3 V1 = vload3(0, tri->v1);
     const double3 V2 = vload3(0, tri->v2);
