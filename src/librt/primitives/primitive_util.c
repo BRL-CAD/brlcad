@@ -446,7 +446,7 @@ static cl_device_id clt_device;
 static cl_context clt_context;
 static cl_command_queue clt_queue;
 static cl_program clt_program;
-static cl_kernel clt_shot_kernel, clt_norm_kernel, clt_frame_kernel;
+static cl_kernel clt_frame_kernel;
 
 static size_t max_wg_size;
 static cl_uint max_compute_units;
@@ -592,9 +592,6 @@ clt_cleanup(void)
 
     clReleaseKernel(clt_frame_kernel);
 
-    clReleaseKernel(clt_norm_kernel);
-    clReleaseKernel(clt_shot_kernel);
-
     clReleaseCommandQueue(clt_queue);
     clReleaseProgram(clt_program);
     clReleaseContext(clt_context);
@@ -636,11 +633,6 @@ clt_init(void)
         if (error != CL_SUCCESS) bu_bomb("failed to create an OpenCL command queue");
 
         clt_program = clt_get_program(clt_context, clt_device, sizeof(main_files)/sizeof(*main_files), main_files, "-I.");
-
-        clt_shot_kernel = clCreateKernel(clt_program, "solid_shot", &error);
-        if (error != CL_SUCCESS) bu_bomb("failed to create an OpenCL kernel");
-        clt_norm_kernel = clCreateKernel(clt_program, "solid_norm", &error);
-        if (error != CL_SUCCESS) bu_bomb("failed to create an OpenCL kernel");
 
         clt_frame_kernel = clCreateKernel(clt_program, "do_pixel", &error);
         if (error != CL_SUCCESS) bu_bomb("failed to create an OpenCL kernel");
