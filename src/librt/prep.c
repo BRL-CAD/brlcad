@@ -449,40 +449,31 @@ void
 clt_prep(struct rt_i *rtip)
 {
     struct soltab *stp;
-    union cutter *finp;	/* holds the finite solids */
+    long i;
 
     struct soltab **primitives;
     long n_primitives;
 
-    clt_init();
-
     RT_CK_RTI(rtip);
 
-    /* Make a list of all solids into one special boxnode, then refine. */
-    BU_ALLOC(finp, union cutter);
-    finp->cut_type = CUT_BOXNODE;
-    VMOVE(finp->bn.bn_min, rtip->mdl_min);
-    VMOVE(finp->bn.bn_max, rtip->mdl_max);
-    finp->bn.bn_len = 0;
-    finp->bn.bn_maxlen = rtip->nsolids+1;
-    finp->bn.bn_list = (struct soltab **)bu_calloc(
-        finp->bn.bn_maxlen, sizeof(struct soltab *),
-        "clt_prep: initial list alloc");
+    clt_init();
 
-    rtip->rti_inf_box.cut_type = CUT_BOXNODE;
+    n_primitives = rtip->nsolids+1;
+    primitives = (struct soltab **)bu_calloc(n_primitives,
+        sizeof(struct soltab *), "clt_prep: initial list alloc");
 
+    i = 0;
     RT_VISIT_ALL_SOLTABS_START(stp, rtip) {
         /* Ignore "dead" solids in the list.  (They failed prep) */
         if (stp->st_aradius <= 0) continue;
         /* Infinite solids make the BVH construction explode. */
         if (stp->st_aradius >= INFINITY) continue;
 
-        rt_cut_extend(finp, stp, rtip);
+        primitives[i++] = stp;
     } RT_VISIT_ALL_SOLTABS_END;
 
-    primitives = finp->bn.bn_list;
-    n_primitives = finp->bn.bn_len;
-    bu_free(finp, "union cutter");
+    n_primitives = i;
+    bu_log("nprimitives: %d of %d\n", n_primitives, rtip->nsolids);
 
     if (n_primitives != 0) {
         /* Build BVH tree for primitives */
@@ -491,7 +482,6 @@ clt_prep(struct rt_i *rtip)
 	long *ordered_prims;
 	fastf_t *centroids;
 	fastf_t *bounds;
-	long i;
 
 	centroids = (fastf_t*)bu_calloc(n_primitives, sizeof(fastf_t)*3, "clt_prep");
 	for (i=0; i<n_primitives; i++) {

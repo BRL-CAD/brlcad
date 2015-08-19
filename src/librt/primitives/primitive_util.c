@@ -446,7 +446,7 @@ static cl_device_id clt_device;
 static cl_context clt_context;
 static cl_command_queue clt_queue;
 static cl_program clt_program;
-static cl_kernel clt_shot_kernel, clt_norm_kernel, clt_frame_kernel;
+static cl_kernel clt_frame_kernel;
 
 static size_t max_wg_size;
 static cl_uint max_compute_units;
@@ -592,9 +592,6 @@ clt_cleanup(void)
 
     clReleaseKernel(clt_frame_kernel);
 
-    clReleaseKernel(clt_norm_kernel);
-    clReleaseKernel(clt_shot_kernel);
-
     clReleaseCommandQueue(clt_queue);
     clReleaseProgram(clt_program);
     clReleaseContext(clt_context);
@@ -636,11 +633,6 @@ clt_init(void)
         if (error != CL_SUCCESS) bu_bomb("failed to create an OpenCL command queue");
 
         clt_program = clt_get_program(clt_context, clt_device, sizeof(main_files)/sizeof(*main_files), main_files, "-I.");
-
-        clt_shot_kernel = clCreateKernel(clt_program, "solid_shot", &error);
-        if (error != CL_SUCCESS) bu_bomb("failed to create an OpenCL kernel");
-        clt_norm_kernel = clCreateKernel(clt_program, "solid_norm", &error);
-        if (error != CL_SUCCESS) bu_bomb("failed to create an OpenCL kernel");
 
         clt_frame_kernel = clCreateKernel(clt_program, "do_pixel", &error);
         if (error != CL_SUCCESS) bu_bomb("failed to create an OpenCL kernel");
@@ -698,8 +690,10 @@ clt_db_store(size_t count, struct soltab *solids[])
 	for (i=1; i <= count; i++) {
 	    size_t size;
 	    size = clt_solid_pack(pool, solids[i-1]);
+            bu_log("#%d:\tst_id: %s\t(%ld KB)\n", i, OBJ[ids[i-1]].ft_name, size / 1024.0);
 	    indexes[i] = indexes[i-1] + size;
 	}
+        bu_log("total:\t%d primitives (%f MB)\n", count, indexes[count] / (1024.0 * 1024.0));
 
 	if (indexes[count] != 0) {
 	    clt_db_prims = clCreateBuffer(clt_context, CL_MEM_READ_ONLY|CL_MEM_HOST_WRITE_ONLY|CL_MEM_COPY_HOST_PTR, indexes[count], pool->block, &error);

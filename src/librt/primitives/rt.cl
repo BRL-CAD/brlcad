@@ -59,19 +59,6 @@ inline void norm(global struct hit *hitp, const double3 r_pt, const double3 r_di
 }
 
 
-__kernel void
-solid_norm(global struct hit *hitp, const double3 r_pt, const double3 r_dir, const int id, global const void *args)
-{
-    norm(hitp, r_pt, r_dir, id, args);
-}
-
-__kernel void
-solid_shot(global int *len, global struct hit *res, const double3 r_pt, const double3 r_dir, const int id, global const void *args)
-{
-    *len = shot(res, r_pt, r_dir, UINT_MAX, id, args);
-}
-
-
 #define RT_SINGLE_HIT 1
 void do_hitp(global struct hit *res, const uint i, const uint hit_index, const struct hit *hitp)
 {
