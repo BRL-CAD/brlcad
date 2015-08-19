@@ -7,7 +7,7 @@
 #define TGC_NORM_BOT	(3)	/* copy reverse tgc_N */
 
 
-struct tgc_shot_specific {
+struct tgc_specific {
     double tgc_V[3];             /* Vector to center of base of TGC */
     double tgc_CdAm1;            /* (C/A - 1) */
     double tgc_DdBm1;            /* (D/B - 1) */
@@ -19,7 +19,7 @@ struct tgc_shot_specific {
     char tgc_AD_CB;              /* boolean:  A*D == C*B */
 };
 
-int tgc_shot(global struct hit *res, const double3 r_pt, const double3 r_dir, const uint idx, global const struct tgc_shot_specific *tgc)
+int tgc_shot(global struct hit *res, const double3 r_pt, const double3 r_dir, const uint idx, global const struct tgc_specific *tgc)
 {
     double3 pprime;
     double3 dprime;
@@ -366,7 +366,7 @@ int tgc_shot(global struct hit *res, const double3 r_pt, const double3 r_dir, co
 }
 
 
-void tgc_norm(global struct hit *hitp, const double3 r_pt, const double3 r_dir, global const struct tgc_shot_specific *tgc)
+void tgc_norm(global struct hit *hitp, const double3 r_pt, const double3 r_dir, global const struct tgc_specific *tgc)
 {
     double Q;
     double R;

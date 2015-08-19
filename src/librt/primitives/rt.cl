@@ -19,9 +19,11 @@ extern inline double3 MAT4X3VEC(global const double *m, double3 i);
 #define ID_TGC          2       /**< @brief Generalized Truncated General Cone */
 #define ID_ELL          3       /**< @brief Ellipsoid */
 #define ID_ARB8         4       /**< @brief Generalized ARB.  V + 7 vectors */
+#define ID_ARS          5       /**< @brief ARS */
 #define ID_REC          7       /**< @brief Right Elliptical Cylinder [TGC special] */
 #define ID_SPH          10      /**< @brief Sphere */
 #define ID_EHY          20      /**< @brief Elliptical Hyperboloid  */
+#define ID_BOT          30      /**< @brief Bag o' triangles */
 
 
 inline int shot(global struct hit *res, const double3 r_pt, const double3 r_dir, const uint idx, const int id, global const void *args)
@@ -34,6 +36,8 @@ inline int shot(global struct hit *res, const double3 r_pt, const double3 r_dir,
     case ID_REC:	return rec_shot(res, r_pt, r_dir, idx, args);
     case ID_SPH:	return sph_shot(res, r_pt, r_dir, idx, args);
     case ID_EHY:	return ehy_shot(res, r_pt, r_dir, idx, args);
+    case ID_ARS:
+    case ID_BOT:	return bot_shot(res, r_pt, r_dir, idx, args);
     default:		return 0;
     };
 }
@@ -48,6 +52,8 @@ inline void norm(global struct hit *hitp, const double3 r_pt, const double3 r_di
     case ID_REC:	rec_norm(hitp, r_pt, r_dir, args);	break;
     case ID_EHY:	ehy_norm(hitp, r_pt, r_dir, args);	break;
     case ID_SPH:	sph_norm(hitp, r_pt, r_dir, args);	break;
+    case ID_ARS:
+    case ID_BOT:	bot_norm(hitp, r_pt, r_dir, args);	break;
     default:							break;
     };
 }
@@ -196,7 +202,7 @@ shootray(global struct hit *hitp, const double3 r_pt, const double3 r_dir, const
         int to_visit_offset = 0, current_node_index = 0;
         int nodes_to_visit[64];
 
-	vstore3(convert_uchar(r_idir < 0), 0, dir_is_neg);
+	vstore3(convert_uchar3(r_idir < 0), 0, dir_is_neg);
 
         /* Follow ray through BVH nodes to find primitive intersections */
         for (;;) {
@@ -342,18 +348,18 @@ do_pixel(global uchar *pixels, const uchar3 o, global struct hit *hits,
 
 	rgb = select(rgb, nonbackground, (uchar3)all(rgb == background));
 	// make sure it's never perfect black
-	rgb = select(rgb, (uchar3){rgb.xy, 1}, (uchar3)all(!rgb));
+	rgb = select(rgb, (uchar3){rgb.x, rgb.y, 1}, (uchar3)all(!rgb));
     }
 
     if (o.s0 != o.s1) {
 	/* write color */
-	global uchar *colorp = pixels+id*o.s2+o.s0;
+	global uchar *colorp = (global uchar*)pixels+id*o.s2+o.s0;
 	vstore3(rgb, 0, colorp);
     }
     if (o.s1 != o.s2) {
 	/* write depth */
 	ulong depth = bu_cv_htond(as_ulong(hitp->hit_dist));
-	global ulong *depthp = pixels+id*o.s2+o.s1;
+	global ulong *depthp = (global ulong*)pixels+id*o.s2+o.s1;
 	*depthp = depth;
     }
 }

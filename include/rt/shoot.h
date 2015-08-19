@@ -172,14 +172,6 @@ struct cl_hit {
 };
 
 
-RT_EXPORT extern cl_int
-clt_shot(size_t sz_hits, struct cl_hit *hits, struct xray *rp, struct soltab *stp,
-	 struct application *ap, struct seg *seghead);
-
-RT_EXPORT extern void
-clt_norm(struct hit *hitp, struct soltab *stp, struct xray *rp);
-
-
 RT_EXPORT extern void
 clt_frame(void *pixels, uint8_t o[3], int cur_pixel, int last_pixel,
 	  int width, int background[3], int nonbackground[3], mat_t view2model,

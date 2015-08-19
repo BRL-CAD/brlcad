@@ -132,6 +132,58 @@ rt_botface_w_normals(struct soltab *stp,
 #undef ONE_OVER_SCALE
 
 
+#ifdef USE_OPENCL
+/* largest data members first */
+struct clt_bot_specific {
+    cl_uint ntri;
+    cl_uint offsets[3]; /* To: BVH, Triangles, Normals. */
+};
+
+struct clt_tri_specific {
+    cl_double v0[3];
+    cl_double v1[3];
+    cl_double v2[3];
+    cl_int surfno;
+};
+
+size_t
+clt_bot_pack(struct bu_pool *pool, struct soltab *stp)
+{
+    struct bot_specific *bot = (struct bot_specific *)stp->st_specific;
+    tri_specific_double *trip = (tri_specific_double*)bot->bot_facelist;
+
+    struct clt_bot_specific *header;
+    struct clt_tri_specific *facearray;
+    size_t i, total, size;
+
+    BU_ASSERT(!(bot->bot_flags & RT_BOT_USE_FLOATS));
+
+    total = 0;
+
+    size = sizeof(*header);
+    header = (struct clt_bot_specific*)bu_pool_alloc(pool, 1, size);
+    header->ntri = bot->bot_ntri;
+    total += size;
+
+    size = sizeof(*facearray)*bot->bot_ntri;
+    facearray = (struct clt_tri_specific*)bu_pool_alloc(pool, 1, size);
+    total += size;
+
+    /* consider each face */
+    for (i=0; trip; trip = trip->tri_forw, i++) {
+        struct clt_tri_specific *tri = &facearray[i];
+
+        VMOVE(tri->v0, trip->tri_A);
+        VADD2(tri->v1, trip->tri_BA, trip->tri_A);
+        VADD2(tri->v2, trip->tri_CA, trip->tri_A);
+        tri->surfno = trip->tri_surfno;
+    }
+    return total;
+}
+#endif
+
+
+
 /**
  * This function is called with pointers to 3 points, and is used to
  * prepare BOT faces.  ap, bp, cp point to vect_t points.

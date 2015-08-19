@@ -149,7 +149,7 @@ static const fastf_t nmg_uv_unitcircle[27] = {
 
 #ifdef USE_OPENCL
 /* largest data members first */
-struct tgc_shot_specific {
+struct clt_tgc_specific {
     cl_double tgc_V[3];             /* Vector to center of base of TGC */
     cl_double tgc_CdAm1;            /* (C/A - 1) */
     cl_double tgc_DdBm1;            /* (D/B - 1) */
@@ -162,19 +162,14 @@ struct tgc_shot_specific {
 };
 
 size_t
-clt_tgc_length(struct soltab *stp)
-{
-    (void)stp;
-    return sizeof(struct tgc_shot_specific);
-}
-
-void
-clt_tgc_pack(void *dst, struct soltab *src)
+clt_tgc_pack(struct bu_pool *pool, struct soltab *stp)
 {
     struct tgc_specific *tgc =
-        (struct tgc_specific *)src->st_specific;
-    struct tgc_shot_specific *args =
-        (struct tgc_shot_specific *)dst;
+        (struct tgc_specific *)stp->st_specific;
+    struct clt_tgc_specific *args;
+
+    const size_t size = sizeof(*args);
+    args = (struct clt_tgc_specific*)bu_pool_alloc(pool, 1, size);
 
     VMOVE(args->tgc_V, tgc->tgc_V);
     args->tgc_CdAm1 = tgc->tgc_CdAm1;
@@ -185,7 +180,9 @@ clt_tgc_pack(void *dst, struct soltab *src)
     MAT_COPY(args->tgc_ScShR, tgc->tgc_ScShR);
     MAT_COPY(args->tgc_invRtShSc, tgc->tgc_invRtShSc);
     args->tgc_AD_CB = tgc->tgc_AD_CB;
+    return size;
 }
+
 #endif /* USE_OPENCL */
 
 /**

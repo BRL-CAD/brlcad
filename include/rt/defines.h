@@ -44,6 +44,10 @@
 #include <limits.h>
 #include <CL/cl.h>
 
+#ifndef CL_VERSION_1_2
+#  error "OpenCL 1.2 required."
+#endif
+
 #ifdef CLT_SINGLE_PRECISION
 #define cl_double cl_float
 #define cl_double3 cl_float3
