@@ -77,9 +77,9 @@ struct spr_options {
 };
 
 //DEFAULT - LOW
-#define SPR_OPTIONS_LOW_INIT { NULL, NULL, NULL, NULL, 0, 0, 8, 0, 6, 1, 8, -1, 5, 0, 8, 1, 1, 1.0, 1.1, 0.001, 10.0 }
+#define SPR_OPTIONS_LOW_INIT { NULL, NULL, NULL, NULL, 0, 0, 8, 0, 6, 1, 8, -1, 5, 0, 8, 1, 1, 1.0, 2.0, 0.001, 15.0 }
 //GOOD - MEDIUM
-#define SPR_OPTIONS_MED_INIT { NULL, NULL, NULL, NULL, 0, 0, 8, 0, 6, 1, 8, -1, 5, 0, 8, 1, 1, 1.0, 2.0, 0.001, 15.0 }
+#define SPR_OPTIONS_MED_INIT { NULL, NULL, NULL, NULL, 0, 0, 8, 0, 6, 1, 8, -1, 5, 0, 8, 1, 1, 0.75, 2.0, 0.001, 17.0 }
 //BEST (lots of fidelity) - HIGH
 #define SPR_OPTIONS_HIGH_INIT { NULL, NULL, NULL, NULL, 0, 0, 8, 0, 6, 1, 8, -1, 5, 0, 8, 1, 1, 0.25, 2.0, 0.001, 20.0 }
 

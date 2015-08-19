@@ -444,7 +444,7 @@ main(int argc, char *argv[])
 static union tree *
 process_boolean(struct db_tree_state *tsp, union tree *curtree, const struct db_full_path *pathp)
 {
-    union tree *result = NULL;
+    static union tree *result = NULL;
 
     /* Begin bomb protection */
     if (!BU_SETJUMP) {
