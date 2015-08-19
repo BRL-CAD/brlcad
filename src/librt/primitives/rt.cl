@@ -11,6 +11,9 @@ constant double AmbientIntensity = 0.4;
 extern inline double3 MAT3X3VEC(global const double *m, double3 i);
 extern inline double3 MAT4X3VEC(global const double *m, double3 i);
 
+extern inline int rt_in_rpp(const double3 pt, const double3 invdir,
+                            global const double *min, global const double *max);
+
 
 /*
  * Values for Solid ID.
@@ -132,50 +135,6 @@ inline void gen_ray(double3 *r_pt, double3 *r_dir, double3 *r_idir, const int a_
     *r_idir = vload3(0, idir);
 }
 
-
-struct bvh_bounds {
-    double p_min[3], p_max[3];
-};
-
-struct linear_bvh_node {
-    struct bvh_bounds bounds;
-    union {
-        int primitives_offset;		/* leaf */
-        int second_child_offset;	/* interior */
-    } u;
-    ushort n_primitives;		/* 0 -> interior node */
-    uchar axis;				/* interior node: xyz */
-    uchar pad[1];			/* ensure 32 byte total size */
-};
-
-inline int
-rt_in_rpp(const double3 pt,
-	  const double3 invdir,
-	  global const double *min,
-	  global const double *max)
-{
-    /* Start with infinite ray, and trim it down */
-    double x0 = (min[0] - pt.x) * invdir.x;
-    double y0 = (min[1] - pt.y) * invdir.y;
-    double z0 = (min[2] - pt.z) * invdir.z;
-    double x1 = (max[0] - pt.x) * invdir.x;
-    double y1 = (max[1] - pt.y) * invdir.y;
-    double z1 = (max[2] - pt.z) * invdir.z;
-
-    /*
-     * Direction cosines along this axis is NEAR 0,
-     * which implies that the ray is perpendicular to the axis,
-     * so merely check position against the boundaries.
-     */
-    double rmin = -MAX_FASTF;
-    double rmax =  MAX_FASTF;
-
-    rmin = fmax(rmin, fmax(fmax(fmin(x0, x1), fmin(y0, y1)), fmin(z0, z1)));
-    rmax = fmin(rmax, fmin(fmin(fmax(x0, x1), fmax(y0, y1)), fmax(z0, z1)));
-
-    /* If equal, RPP is actually a plane */
-    return (rmin <= rmax);
-}
 
 int
 shootray(global struct hit *hitp, const double3 r_pt, const double3 r_dir, const double3 r_idir,

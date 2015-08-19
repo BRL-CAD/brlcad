@@ -2868,7 +2868,6 @@ hlbvh_create(int max_prims_in_node, struct bu_pool *pool, const fastf_t *centroi
     finished_treelets =
 	(struct bvh_build_node**)bu_calloc(treelets_size, sizeof(struct bvh_build_node*),
  					   "hlbvh_create");
-    printf("treelets_size: %ld\n", treelets_size);
     for (i=0; i<treelets_size; i++) {
 	struct lbvh_treelet *treelet;
 	treelet = &treelets_to_build[i];
