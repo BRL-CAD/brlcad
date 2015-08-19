@@ -698,10 +698,10 @@ clt_db_store(size_t count, struct soltab *solids[])
 	for (i=1; i <= count; i++) {
 	    size_t size;
 	    size = clt_solid_pack(pool, solids[i-1]);
-            bu_log("#%d:\tst_id: %s\t(%ld bytes)\n", i, OBJ[ids[i-1]].ft_name, size);
+            bu_log("#%d:\tst_id: %s\t(%ld kB)\n", i, OBJ[ids[i-1]].ft_name, size / 1024.0);
 	    indexes[i] = indexes[i-1] + size;
 	}
-        bu_log("total:\t%d primitives (%ld bytes)\n", count, indexes[count]);
+        bu_log("total:\t%d primitives (%f MB)\n", count, indexes[count] / (1024.0 * 1024.0);
 
 	if (indexes[count] != 0) {
 	    clt_db_prims = clCreateBuffer(clt_context, CL_MEM_READ_ONLY|CL_MEM_HOST_WRITE_ONLY|CL_MEM_COPY_HOST_PTR, indexes[count], pool->block, &error);
