@@ -205,6 +205,14 @@ clt_bot_pack(struct bu_pool *pool, struct soltab *stp)
         VADD2(v2, trip->tri_CA, trip->tri_A);
         VMINMAX(&bounds[i*6+0], &bounds[i*6+3], v1);
         VMINMAX(&bounds[i*6+0], &bounds[i*6+3], v2);
+
+        /* Prevent the RPP from being 0 thickness */
+        bounds[i*6+0] -= SMALL_FASTF;
+        bounds[i*6+1] -= SMALL_FASTF;
+        bounds[i*6+2] -= SMALL_FASTF;
+        bounds[i*6+3] += SMALL_FASTF;
+        bounds[i*6+4] += SMALL_FASTF;
+        bounds[i*6+5] += SMALL_FASTF;
     }
     nodes = NULL;
     bu_log("gonna try building bvh with %d\n", ntri);
