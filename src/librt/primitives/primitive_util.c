@@ -659,20 +659,16 @@ clt_solid_pack(struct bu_pool *pool, struct soltab *stp)
     size_t size;
 
     switch (stp->st_id) {
-	case ID_TOR:
-	case ID_TGC:
-	case ID_ELL:
-	case ID_ARB8:
+	case ID_TOR:    size = clt_tor_pack(pool, stp);	break;
+	case ID_TGC:    size = clt_tgc_pack(pool, stp);	break;
+	case ID_ELL:    size = clt_ell_pack(pool, stp);	break;
+	case ID_ARB8:   size = clt_arb_pack(pool, stp);	break;
+	case ID_REC:    size = clt_rec_pack(pool, stp);	break;
+	case ID_SPH:    size = clt_sph_pack(pool, stp);	break;
+	case ID_EHY:    size = clt_ehy_pack(pool, stp);	break;
 	case ID_ARS:
-	case ID_REC:
-	case ID_SPH:
-	case ID_EHY:
-	case ID_BOT:
-	    size = clt_bot_pack(pool, stp);
-	    break;
-	default:
-	    size = 0;
-	    break;
+	case ID_BOT:    size = clt_bot_pack(pool, stp);	break;
+	default:	size = 0;			break;
     }
     return size;
 }
