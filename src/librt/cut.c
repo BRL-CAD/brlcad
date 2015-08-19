@@ -40,7 +40,6 @@
 #include <stdlib.h>
 #include <math.h>
 #include <string.h>
-#include <omp.h>
 #include "bio.h"
 
 #include "bu/parallel.h"
@@ -2515,7 +2514,6 @@ emit_lbvh(int max_prims_in_node,
         ++*total_nodes;
         node = (*build_nodes)++;
 
-#pragma omp atomic capture
 	{
 	    first_prim_offset = *ordered_prims_offset;
 	    (*ordered_prims_offset) += n_primitives; /* atomic_add */
@@ -2785,9 +2783,6 @@ hlbvh_create(int max_prims_in_node, struct bu_pool *pool, const fastf_t *centroi
     volatile long ordered_prims_offset = 0;
     long atomic_total = 0;
     long treelets_size;
-    double start_time;
-
-    start_time = omp_get_wtime();
 
     /* Compute bounding box of all primitive centroids */
     for (i = 0; i<n_primitives; i++) {
@@ -2799,7 +2794,6 @@ hlbvh_create(int max_prims_in_node, struct bu_pool *pool, const fastf_t *centroi
 						       sizeof(struct morton_primitive),
 						       "hlbvh_create");
     /* Compute Morton indices of primitives */
-#pragma omp parallel for
     for (i = 0; i<n_primitives; i++) {
         /* Initialize morton_prims[i] for ith primitive */
         const uint32_t morton_bits = 10;
@@ -2852,7 +2846,6 @@ hlbvh_create(int max_prims_in_node, struct bu_pool *pool, const fastf_t *centroi
     *ordered_prims = (long*)bu_calloc(n_primitives, sizeof(long), "hlbvh_create");
 
     treelets_size = treelets_to_build_end-treelets_to_build;
-#pragma omp parallel for reduction (+:atomic_total)
     for (i=0; i<treelets_size; i++) {
 	struct lbvh_treelet *treelet;
         /* Generate i_th LBVH treelet */
@@ -2883,9 +2876,6 @@ hlbvh_create(int max_prims_in_node, struct bu_pool *pool, const fastf_t *centroi
     bu_free(treelets_to_build, "hlbvh_create");
     ret = build_upper_sah(pool, finished_treelets, 0, treelets_size, total_nodes);
     bu_free(finished_treelets, "hlbvh_create");
-
-    bu_log("HLBVH: elapsed = %f ms (%d threads)\n", (omp_get_wtime()-start_time)*1e3,
-	   omp_get_max_threads());
     return ret;
 }
 

@@ -131,7 +131,7 @@ rt_botface_w_normals(struct soltab *stp,
 #undef NORMAL_SCALE
 #undef ONE_OVER_SCALE
 
-
+/*#define USE_OPENCL*/
 #ifdef USE_OPENCL
 /* largest data members first */
 struct clt_bot_specific {
@@ -150,29 +150,35 @@ size_t
 clt_bot_pack(struct bu_pool *pool, struct soltab *stp)
 {
     struct bot_specific *bot = (struct bot_specific *)stp->st_specific;
-    tri_specific_double *trip = (tri_specific_double*)bot->bot_facelist;
 
     struct clt_bot_specific *header;
     struct clt_tri_specific *facearray;
     size_t i, total, size;
+    uint ntri;
 
     bu_log("bot_flags : %d\n",bot->bot_flags & RT_BOT_USE_FLOATS);
 
     BU_ASSERT(!(bot->bot_flags & RT_BOT_USE_FLOATS));
 
     total = 0;
+    ntri = bot->bot_ntri;
 
     size = sizeof(*header);
     header = (struct clt_bot_specific*)bu_pool_alloc(pool, 1, size);
-    header->ntri = bot->bot_ntri;
+    header->ntri = ntri;
     total += size;
 
-    size = sizeof(*facearray)*bot->bot_ntri;
+    header->offsets[0] = total;
+    /* Build BVH for triangles in bot if it is large enough. */
+
+    header->offsets[1] = total;
+    size = sizeof(*facearray)*ntri;
     facearray = (struct clt_tri_specific*)bu_pool_alloc(pool, 1, size);
     total += size;
 
     /* consider each face */
-    for (i=0; trip; trip = trip->tri_forw, i++) {
+    for (i=0; i<ntri; i++) {
+        const tri_specific_double *trip = (tri_specific_double *)bot->bot_facearray[i];
         struct clt_tri_specific *tri = &facearray[i];
 
         VMOVE(tri->v0, trip->tri_A);
@@ -180,11 +186,12 @@ clt_bot_pack(struct bu_pool *pool, struct soltab *stp)
         VADD2(tri->v2, trip->tri_CA, trip->tri_A);
         tri->surfno = trip->tri_surfno;
     }
-    bu_log("packed bot with %d triangles in %f bytes.\n", bot->bot_ntri, total / (1024.0 * 1024.0));
+    header->offsets[2] = total;
+
+    bu_log("packed bot with %d%d pieces in %f bytes.\n", ntri, stp->st_npieces, total / (1024.0 * 1024.0));
     return total;
 }
 #endif
-
 
 
 /**
