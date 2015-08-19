@@ -510,6 +510,11 @@ def_tree(register struct rt_i *rtip)
 
 /*********************************************************************************/
 #ifdef USE_OPENCL
+/* from opt.c */
+extern double haze[3];	
+extern double airdensity;
+
+
 static unsigned int clt_mode;           /* Active render buffers */
 static uint8_t clt_o[3];		/* Sub buffer offsets in bytes: {CLT_COLOR, CLT_DEPTH, MAX} */
 
@@ -545,6 +550,7 @@ clt_run(int cur_pixel, int last_pixel)
 {
     int ibackground[3];      /* integer 0..255 version */
     int inonbackground[3];   /* integer non-background */
+    const double gamma_corr = 0.0;
 
     int npix, a_x, a_y, i;
     uint8_t *pixels, *pixelp;
@@ -593,7 +599,8 @@ clt_run(int cur_pixel, int last_pixel)
     pixels = (uint8_t*)bu_calloc(size, sizeof(uint8_t), "image buffer");
 
     clt_frame(pixels, clt_o, cur_pixel, last_pixel, width,
-              ibackground, inonbackground, view2model, cell_width,
+              ibackground, inonbackground,
+	      airdensity, haze, gamma_corr, view2model, cell_width,
               cell_height, aspect, lightmodel);
 
     pixelp = pixels + cur_pixel*clt_o[2];

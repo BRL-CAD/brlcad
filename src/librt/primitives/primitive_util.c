@@ -736,6 +736,7 @@ clt_db_release(void)
 void
 clt_frame(void *pixels, uint8_t o[3], int cur_pixel, int last_pixel,
 	  int width, int ibackground[3], int inonbackground[3],
+	  double airdensity, double haze[3], fastf_t gamma,
           mat_t view2model, fastf_t cell_width, fastf_t cell_height,
           fastf_t aspect, int lightmodel)
 {
@@ -746,7 +747,9 @@ clt_frame(void *pixels, uint8_t o[3], int cur_pixel, int last_pixel,
 
     struct {
         cl_double16 view2model;
+	cl_double3 haze;
         cl_double cell_width, cell_height, aspect;
+	cl_double airdensity, gamma;
 	cl_uint randhalftabsize;
         cl_int cur_pixel, last_pixel, width;
         cl_int lightmodel;
@@ -767,6 +770,9 @@ clt_frame(void *pixels, uint8_t o[3], int cur_pixel, int last_pixel,
     VMOVE(p.o.s, o);
     VMOVE(p.ibackground.s, ibackground);
     VMOVE(p.inonbackground.s, inonbackground);
+    p.airdensity = airdensity;
+    VMOVE(p.haze.s, haze);
+    p.gamma = gamma;
     MAT_COPY(p.view2model.s, view2model);
     p.cell_width = cell_width;
     p.cell_height = cell_height;
@@ -789,16 +795,19 @@ clt_frame(void *pixels, uint8_t o[3], int cur_pixel, int last_pixel,
     error |= clSetKernelArg(clt_frame_kernel, 7, sizeof(cl_uint), &p.randhalftabsize);
     error |= clSetKernelArg(clt_frame_kernel, 8, sizeof(cl_uchar3), &p.ibackground);
     error |= clSetKernelArg(clt_frame_kernel, 9, sizeof(cl_uchar3), &p.inonbackground);
-    error |= clSetKernelArg(clt_frame_kernel, 10, sizeof(cl_double16), &p.view2model);
-    error |= clSetKernelArg(clt_frame_kernel, 11, sizeof(cl_double), &p.cell_width);
-    error |= clSetKernelArg(clt_frame_kernel, 12, sizeof(cl_double), &p.cell_height);
-    error |= clSetKernelArg(clt_frame_kernel, 13, sizeof(cl_double), &p.aspect);
-    error |= clSetKernelArg(clt_frame_kernel, 14, sizeof(cl_int), &lightmodel);
-    error |= clSetKernelArg(clt_frame_kernel, 15, sizeof(cl_uint), &clt_db_nprims);
-    error |= clSetKernelArg(clt_frame_kernel, 16, sizeof(cl_mem), &clt_db_ids);
-    error |= clSetKernelArg(clt_frame_kernel, 17, sizeof(cl_mem), &clt_db_bvh);
-    error |= clSetKernelArg(clt_frame_kernel, 18, sizeof(cl_mem), &clt_db_indexes);
-    error |= clSetKernelArg(clt_frame_kernel, 19, sizeof(cl_mem), &clt_db_prims);
+    error |= clSetKernelArg(clt_frame_kernel, 10, sizeof(cl_double), &p.airdensity);
+    error |= clSetKernelArg(clt_frame_kernel, 11, sizeof(cl_double3), &p.haze);
+    error |= clSetKernelArg(clt_frame_kernel, 12, sizeof(cl_double), &p.gamma);
+    error |= clSetKernelArg(clt_frame_kernel, 13, sizeof(cl_double16), &p.view2model);
+    error |= clSetKernelArg(clt_frame_kernel, 14, sizeof(cl_double), &p.cell_width);
+    error |= clSetKernelArg(clt_frame_kernel, 15, sizeof(cl_double), &p.cell_height);
+    error |= clSetKernelArg(clt_frame_kernel, 16, sizeof(cl_double), &p.aspect);
+    error |= clSetKernelArg(clt_frame_kernel, 17, sizeof(cl_int), &lightmodel);
+    error |= clSetKernelArg(clt_frame_kernel, 18, sizeof(cl_uint), &clt_db_nprims);
+    error |= clSetKernelArg(clt_frame_kernel, 19, sizeof(cl_mem), &clt_db_ids);
+    error |= clSetKernelArg(clt_frame_kernel, 20, sizeof(cl_mem), &clt_db_bvh);
+    error |= clSetKernelArg(clt_frame_kernel, 21, sizeof(cl_mem), &clt_db_indexes);
+    error |= clSetKernelArg(clt_frame_kernel, 22, sizeof(cl_mem), &clt_db_prims);
     if (error != CL_SUCCESS) bu_bomb("failed to set OpenCL kernel arguments");
     error = clEnqueueNDRangeKernel(clt_queue, clt_frame_kernel, 1, NULL, &npix,
                                    NULL, 0, NULL, NULL);

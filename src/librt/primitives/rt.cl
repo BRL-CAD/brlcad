@@ -218,6 +218,7 @@ do_pixel(global uchar *pixels, const uchar3 o, global struct hit *hits,
          const int cur_pixel, const int last_pixel, const int width,
 	 global float *rand_halftab, const uint randhalftabsize,
 	 const uchar3 background, const uchar3 nonbackground,
+	 const double airdensity, const double3 haze, const double gamma,
 	 const double16 view2model, const double cell_width, const double cell_height,
 	 const double aspect, const int lightmodel, const uint nprims, global int *ids,
 	 global struct linear_bvh_node *nodes, global uint *indexes, global uchar *prims)
@@ -254,7 +255,9 @@ do_pixel(global uchar *pixels, const uchar3 o, global struct hit *hits,
          * Diffuse reflectance from each light source
          */
         switch (lightmodel) {
-            default:
+	    default:
+		break;
+            case 1:
                 /* Light from the "eye" (ray source).  Note sign change */
                 diffuse0 = 0;
                 if ((cosI0 = -dot(normal, r_dir)) >= 0.0)
@@ -273,6 +276,16 @@ do_pixel(global uchar *pixels, const uchar3 o, global struct hit *hits,
         }
     }
 
+    /*
+     * e ^(-density * distance)
+     */
+    if (!ZERO(airdensity)) {
+        double g;
+        double f = exp(-hitp->hit_dist * airdensity);
+        g = (1.0 - f);
+	a_color = a_color * f + haze * g;
+    }
+
     uchar3 rgb;
     if (ret <= 0) {
 	/* shot missed the model, don't dither */
@@ -281,14 +294,25 @@ do_pixel(global uchar *pixels, const uchar3 o, global struct hit *hits,
     } else {
         double3 t_color;
 
-	/*
-	 * To prevent bad color aliasing, add some color dither.  Be
-	 * certain to NOT output the background color here.  Random
-	 * numbers in the range 0 to 1 are used, so that integer
-	 * valued colors (e.g., from texture maps) retain their original
-	 * values.
-	 */
-        t_color = a_color*255.+bu_rand0to1(id, rand_halftab, randhalftabsize);
+        /*
+         * To prevent bad color aliasing, add some color dither.  Be
+         * certain to NOT output the background color here.  Random
+         * numbers in the range 0 to 1 are used, so that integer
+         * valued colors (e.g., from texture maps) retain their original
+         * values.
+         */
+        if (!ZERO(gamma)) {
+            /*
+             * Perform gamma correction in floating-point space, and
+             * avoid nasty mach bands in dark areas from doing it in
+             * 0..255 space later.
+             */
+            const double ex = 1.0/gamma;
+	    t_color = floor(pow(a_color, ex) * 255. +
+			bu_rand0to1(id, rand_halftab, randhalftabsize) + 0.5);
+        } else {
+	    t_color = a_color * 255. + bu_rand0to1(id, rand_halftab, randhalftabsize);
+        }
 	rgb = convert_uchar3_sat(t_color);
 
 
