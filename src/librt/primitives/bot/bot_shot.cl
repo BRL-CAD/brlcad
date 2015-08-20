@@ -1,10 +1,17 @@
 #include "common.cl"
 
 
+/* orientations for BOT */
+#define RT_BOT_UNORIENTED 1	/**< @brief unoriented triangles */
+#define RT_BOT_CCW 2 		/**< @brief oriented counter-clockwise */
+#define RT_BOT_CW 3		/**< @brief oriented clockwise */
+
+
 struct bot_specific {
     ulong offsets[4];    // To: BVH, Triangles, Normals.
     uint ntri;
-    uchar pad[4];
+    uchar orientation;
+    uchar pad[3];
 };
 
 struct tri_specific {
@@ -70,7 +77,6 @@ int bot_shot(global struct hit *res, const double3 r_pt, double3 r_dir, const ui
                     const double det = dot(e1, P);
 
                     // Backface culling.
-
                     if (ZERO(det)) {
                         continue;   // No hit
                     }
@@ -170,7 +176,9 @@ void bot_norm(global struct hit *hitp, const double3 r_pt, const double3 r_dir, 
     const double3 V0 = vload3(0, tri[h].v0);
     const double3 V1 = vload3(0, tri[h].v1);
     const double3 V2 = vload3(0, tri[h].v2);
-    hitp->hit_normal = normalize(cross(V1-V0, V2-V0));
+
+    const double3 normal = normalize(cross(V1-V0, V2-V0));
+    hitp->hit_normal = select(normal, -normal, (ulong3)(bot->orientation == RT_BOT_CW));
 }
 
 

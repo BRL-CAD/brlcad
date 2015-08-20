@@ -145,7 +145,8 @@ clt_bot_prep(struct soltab *stp, struct rt_bot_internal *bip, struct rt_i *rtip)
 
     ntri = bip->num_faces;
 
-    bot->header.ntri = ntri;
+    bot->header.ntri = bip->num_faces;
+    bot->header.orientation = bip->orientation;
     bot->header.offsets[0] = sizeof(bot->header);
     bot->header.offsets[1] = bot->header.offsets[2] = bot->header.offsets[3] = 0;
 

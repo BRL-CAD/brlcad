@@ -34,13 +34,13 @@
 #include "rt/soltab.h"
 
 __BEGIN_DECLS
-
 #ifdef USE_OPENCL
 /* largest data members first */
 struct clt_bot_specific {
     cl_ulong offsets[4]; /* To: BVH, Triangles, Normals. */
     cl_uint ntri;
-    cl_uchar pad[4];
+    cl_uchar orientation;
+    cl_uchar pad[3];
 };
 
 struct clt_tri_specific {
