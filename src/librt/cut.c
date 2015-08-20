@@ -2429,7 +2429,7 @@ inline uint32_t left_shift3(uint32_t x)
     return x;
 }
 
-inline uint32_t encode_morton3(const point_t v)
+uint32_t encode_morton3(const point_t v)
 {
     BU_ASSERT(v[X] >= 0 && v[X] <= (1 << 10));
     BU_ASSERT(v[Y] >= 0 && v[Y] <= (1 << 10));
