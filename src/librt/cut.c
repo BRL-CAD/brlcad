@@ -2414,7 +2414,7 @@ init_interior(struct bvh_build_node *node, uint8_t axis, struct bvh_build_node *
 
 
 /* utility functions */
-inline uint32_t left_shift3(uint32_t x)
+static inline uint32_t left_shift3(uint32_t x)
 {
     BU_ASSERT(x <= (1 << 10));
     if (x == (1 << 10)) --x;
@@ -2429,7 +2429,7 @@ inline uint32_t left_shift3(uint32_t x)
     return x;
 }
 
-uint32_t encode_morton3(const point_t v)
+static inline uint32_t encode_morton3(const point_t v)
 {
     BU_ASSERT(v[X] >= 0 && v[X] <= (1 << 10));
     BU_ASSERT(v[Y] >= 0 && v[Y] <= (1 << 10));
