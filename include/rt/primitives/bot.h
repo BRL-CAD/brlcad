@@ -37,10 +37,11 @@ __BEGIN_DECLS
 #ifdef USE_OPENCL
 /* largest data members first */
 struct clt_bot_specific {
-    cl_ulong offsets[4]; /* To: BVH, Triangles, Normals. */
+    cl_ulong offsets[5]; /* header, bvh, tris, norms. */
     cl_uint ntri;
     cl_uchar orientation;
-    cl_uchar pad[3];
+    cl_uchar flags;
+    cl_uchar pad[2];
 };
 
 struct clt_tri_specific {
@@ -66,8 +67,9 @@ struct bot_specific {
     void *tie; /* FIXME: horrible blind cast, points to one in rt_bot_internal */
 
 #ifdef USE_OPENCL
-    struct clt_bot_specific header;
-    struct clt_tri_specific *triangles;
+    struct clt_bot_specific clt_header;
+    struct clt_tri_specific *clt_triangles;
+    cl_double *clt_normals;
 #endif
 };
 

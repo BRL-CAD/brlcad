@@ -6,12 +6,16 @@
 #define RT_BOT_CCW 2 		/**< @brief oriented counter-clockwise */
 #define RT_BOT_CW 3		/**< @brief oriented clockwise */
 
+/* flags for bot_flags */
+#define RT_BOT_HAS_SURFACE_NORMALS 0x1 /**< @brief This primitive may have surface normals at each face vertex */
+#define RT_BOT_USE_NORMALS 0x2         /**< @brief Use the surface normals if they exist */
 
 struct bot_specific {
-    ulong offsets[4];    // To: BVH, Triangles, Normals.
+    ulong offsets[5];    // To: BVH, Triangles, Normals.
     uint ntri;
     uchar orientation;
-    uchar pad[3];
+    uchar flags;
+    uchar pad[2];
 };
 
 struct tri_specific {
@@ -171,14 +175,26 @@ void bot_norm(global struct hit *hitp, const double3 r_pt, const double3 r_dir, 
 
     global const struct bot_specific *bot =
         (global const struct bot_specific *)(args);
-    global const struct tri_specific *tri =
-        (global const struct tri_specific *)(args+bot->offsets[2]);
-    const double3 V0 = vload3(0, tri[h].v0);
-    const double3 V1 = vload3(0, tri[h].v1);
-    const double3 V2 = vload3(0, tri[h].v2);
 
-    const double3 normal = normalize(cross(V1-V0, V2-V0));
-    hitp->hit_normal = select(normal, -normal, (ulong3)(bot->orientation == RT_BOT_CW));
+    double3 normal;
+    if (bot->offsets[3] == bot->offsets[4]) {
+	global const struct tri_specific *tri =
+		(global const struct tri_specific*)(args+bot->offsets[2]);
+	const double3 v0 = vload3(0, tri[h].v0);
+	const double3 v1 = vload3(0, tri[h].v1);
+	const double3 v2 = vload3(0, tri[h].v2);
+	normal = normalize(cross(v1-v0, v2-v0));
+	normal = select(normal, -normal, (ulong3)(bot->orientation == RT_BOT_CW));
+    } else {
+	global const double *normals = (global const double*)(args+bot->offsets[3]);
+	const size_t base = h*9;
+	double3 n0 = vload3(0, normals+base);
+	double3 n1 = vload3(1, normals+base);
+	double3 n2 = vload3(2, normals+base);
+	const double3 mix = clamp(hitp->hit_vpriv, 0.0, 1.0);
+	normal = normalize(n0*mix.x + n1*mix.y + n2*mix.z);
+    }
+    hitp->hit_normal = normal;
 }
 
 
@@ -191,3 +207,4 @@ void bot_norm(global struct hit *hitp, const double3 r_pt, const double3 r_dir, 
  * End:
  * ex: shiftwidth=4 tabstop=8
  */
+
