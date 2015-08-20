@@ -932,7 +932,7 @@ rt_tgc_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 	    }
 	}
     }
-#if 0
+
     if (npts != 0 && npts != 2 && npts != 4) {
 	static size_t tgc_msgs = 0;
 	/* these are printed in 'mm' regardless of local units */
@@ -952,7 +952,6 @@ rt_tgc_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 
 	return 0;			/* No hit */
     }
-#endif
 
     intersect = 0;
     for (i=npts-1; i>0; i -= 2) {

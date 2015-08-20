@@ -354,15 +354,15 @@ brep_build_bvh(struct brep_specific* bs)
     // First, run the openNURBS validity check on the brep in question
     ON_TextLog tl(stderr);
     ON_Brep* brep = bs->brep;
-    //int64_t start;
+    int64_t start;
 
     if (brep == NULL) {
 	bu_log("NULL Brep");
 	return -1;
     } else {
-	//start = bu_gettime();
-	//if (!brep->IsValid(&tl)) bu_log("brep is NOT valid\n");
-	//bu_log("!!! BREP ISVALID: %.2f sec\n", (bu_gettime() - start) / 1000000.0);
+	start = bu_gettime();
+	if (!brep->IsValid(&tl)) bu_log("brep is NOT valid\n");
+	bu_log("!!! BREP ISVALID: %.2f sec\n", (bu_gettime() - start) / 1000000.0);
     }
 
     /* Initialize the top level Bounding Box node for the entire
@@ -398,7 +398,7 @@ brep_build_bvh(struct brep_specific* bs)
      * raytracing.
      */
 
-    //start = bu_gettime();
+    start = bu_gettime();
     bu_parallel(brep_build_bvh_surface_tree, 0, &bbbp);
 
     for (int i = 0; (size_t)i < faceCount; i++) {
@@ -406,7 +406,7 @@ brep_build_bvh(struct brep_specific* bs)
 	face.m_face_user.p = bbbp.faces[i];
 	bs->bvh->addChild(bbbp.faces[i]->getRootNode());
     }
-    //bu_log("!!! PREP FACES: %.2f sec\n", (bu_gettime() - start) / 1000000.0);
+    bu_log("!!! PREP FACES: %.2f sec\n", (bu_gettime() - start) / 1000000.0);
 
     bu_free(bbbp.faces, "free face array");
 
@@ -451,7 +451,7 @@ rt_brep_bbox(struct rt_db_internal *ip, point_t *min, point_t *max)
 int
 rt_brep_prep(struct soltab *stp, struct rt_db_internal* ip, struct rt_i* rtip)
 {
-    //int64_t start;
+    int64_t start;
 
     TRACE1("rt_brep_prep");
     /* This prepares the NURBS specific data structures to be used
@@ -475,11 +475,11 @@ rt_brep_prep(struct soltab *stp, struct rt_db_internal* ip, struct rt_i* rtip)
 
     /* The workhorse routines of BREP prep are called by brep_build_bvh
      */
-    //start = bu_gettime();
+    start = bu_gettime();
     if (brep_build_bvh(bs) < 0) {
 	return -1;
     }
-    //bu_log("!!! BUILD BVH: %.2f sec\n", (bu_gettime() - start) / 1000000.0);
+    bu_log("!!! BUILD BVH: %.2f sec\n", (bu_gettime() - start) / 1000000.0);
 
     /* Once a proper SurfaceTree is built, finalize the bounding
      * volumes.  This takes no time. */
