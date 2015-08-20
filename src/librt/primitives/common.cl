@@ -67,6 +67,30 @@ inline double3 MAT4X3VEC(global const double *m, double3 i) {
 }
 
 
+inline double3
+bu_rand0to1(const uint id, global float *bnrandhalftab, const uint randhalftabsize)
+{
+    double3 ret;
+    ret.x = (bnrandhalftab[(id*3+0) % randhalftabsize]+0.5);
+    ret.y = (bnrandhalftab[(id*3+1) % randhalftabsize]+0.5);
+    ret.z = (bnrandhalftab[(id*3+2) % randhalftabsize]+0.5);
+    return ret;
+}
+
+inline ulong
+bu_cv_htond(const ulong d)
+{
+    return ((d & 0xFF00000000000000UL) >> 56)
+	 | ((d & 0x00FF000000000000UL) >> 40)
+	 | ((d & 0x0000FF0000000000UL) >> 24)
+	 | ((d & 0x000000FF00000000UL) >>  8)
+	 | ((d & 0x00000000FF000000UL) <<  8)
+	 | ((d & 0x0000000000FF0000UL) << 24)
+	 | ((d & 0x000000000000FF00UL) << 40)
+	 | ((d & 0x00000000000000FFUL) << 56);
+}
+
+
 inline int
 rt_in_rpp(const double3 pt,
 	  const double3 invdir,

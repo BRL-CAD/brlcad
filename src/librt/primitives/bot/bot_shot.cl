@@ -1,10 +1,21 @@
 #include "common.cl"
 
 
+/* orientations for BOT */
+#define RT_BOT_UNORIENTED 1	/**< @brief unoriented triangles */
+#define RT_BOT_CCW 2 		/**< @brief oriented counter-clockwise */
+#define RT_BOT_CW 3		/**< @brief oriented clockwise */
+
+/* flags for bot_flags */
+#define RT_BOT_HAS_SURFACE_NORMALS 0x1 /**< @brief This primitive may have surface normals at each face vertex */
+#define RT_BOT_USE_NORMALS 0x2         /**< @brief Use the surface normals if they exist */
+
 struct bot_specific {
-    ulong offsets[3];    // To: BVH, Triangles, Normals.
+    ulong offsets[5];    // To: BVH, Triangles, Normals.
     uint ntri;
-    uchar pad[4];
+    uchar orientation;
+    uchar flags;
+    uchar pad[2];
 };
 
 struct tri_specific {
@@ -15,52 +26,24 @@ struct tri_specific {
     uchar pad[4];
 };
 
-int bot_shot(global struct hit *res, const double3 r_pt, const double3 r_dir, const uint idx, global const uchar *args)
+int bot_shot(global struct hit *res, const double3 r_pt, double3 r_dir, const uint idx, global const uchar *args)
 {
     global const struct bot_specific *bot =
         (global const struct bot_specific *)(args);
     global struct linear_bvh_node *nodes =
-        (global struct linear_bvh_node *)(args+bot->offsets[0]);
+        (global struct linear_bvh_node *)(args+bot->offsets[1]);
     global const struct tri_specific *tri =
-        (global const struct tri_specific *)(args+bot->offsets[1]);
+        (global const struct tri_specific *)(args+bot->offsets[2]);
 
     const uint ntri = bot->ntri;
-
-    if (ntri <= 0) {
-        return 0;   // No hit
-    }
 
     struct hit hits[256];
     uint hit_count;
     hit_count = 0;
 
-    double idir[3];
-    double3 r_idir;
-    if (r_dir.x < -SQRT_SMALL_FASTF) {
-        idir[0] = 1.0/r_dir.x;
-    } else if (r_dir.x > SQRT_SMALL_FASTF) {
-        idir[0] = 1.0/r_dir.x;
-    } else {
-        r_dir.x = 0.0;
-        idir[0] = INFINITY;
-    }
-    if (r_dir.y < -SQRT_SMALL_FASTF) {
-        idir[1] = 1.0/r_dir.y;
-    } else if (r_dir.y > SQRT_SMALL_FASTF) {
-        idir[1] = 1.0/r_dir.y;
-    } else {
-        r_dir.y = 0.0;
-        idir[1] = INFINITY;
-    }
-    if (r_dir.z < -SQRT_SMALL_FASTF) {
-        idir[2] = 1.0/r_dir.z;
-    } else if (r_dir.z > SQRT_SMALL_FASTF) {
-        idir[2] = 1.0/r_dir.z;
-    } else {
-        r_dir.z = 0.0;
-        idir[2] = INFINITY;
-    }
-    r_idir = vload3(0, idir);
+    const long3 oblique = isgreaterequal(fabs(r_dir), SQRT_SMALL_FASTF);
+    const double3 r_idir = select(INFINITY, 1.0/r_dir, oblique);
+    r_dir = select(0.0, r_dir, oblique);
 
     uchar dir_is_neg[3];
     int to_visit_offset = 0, current_node_index = 0;
@@ -98,7 +81,6 @@ int bot_shot(global struct hit *res, const double3 r_pt, const double3 r_dir, co
                     const double det = dot(e1, P);
 
                     // Backface culling.
-
                     if (ZERO(det)) {
                         continue;   // No hit
                     }
@@ -193,14 +175,26 @@ void bot_norm(global struct hit *hitp, const double3 r_pt, const double3 r_dir, 
 
     global const struct bot_specific *bot =
         (global const struct bot_specific *)(args);
-    const uint ntri = bot->ntri;
 
-    global const struct tri_specific *tri =
-        (global const struct tri_specific *)(args+bot->offsets[1]+sizeof(struct tri_specific)*h);
-    const double3 V0 = vload3(0, tri->v0);
-    const double3 V1 = vload3(0, tri->v1);
-    const double3 V2 = vload3(0, tri->v2);
-    hitp->hit_normal = normalize(cross(V1-V0, V2-V0));
+    double3 normal;
+    if (bot->offsets[3] == bot->offsets[4]) {
+	global const struct tri_specific *tri =
+		(global const struct tri_specific*)(args+bot->offsets[2]);
+	const double3 v0 = vload3(0, tri[h].v0);
+	const double3 v1 = vload3(0, tri[h].v1);
+	const double3 v2 = vload3(0, tri[h].v2);
+	normal = normalize(cross(v1-v0, v2-v0));
+	normal = select(normal, -normal, (ulong3)(bot->orientation == RT_BOT_CW));
+    } else {
+	global const double *normals = (global const double*)(args+bot->offsets[3]);
+	const size_t base = h*9;
+	double3 n0 = vload3(0, normals+base);
+	double3 n1 = vload3(1, normals+base);
+	double3 n2 = vload3(2, normals+base);
+	const double3 mix = clamp(hitp->hit_vpriv, 0.0, 1.0);
+	normal = normalize(n0*mix.x + n1*mix.y + n2*mix.z);
+    }
+    hitp->hit_normal = normal;
 }
 
 
@@ -213,3 +207,4 @@ void bot_norm(global struct hit *hitp, const double3 r_pt, const double3 r_dir, 
  * End:
  * ex: shiftwidth=4 tabstop=8
  */
+
