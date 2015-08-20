@@ -280,7 +280,7 @@ sub_sample(struct rt_parallel_container *state,
      *  new value as to limit the # of points we were dealing with.  Right now we go ahead and
      *  save them because it is not hurting us and is easier */
 #if 0
-    if (differLeft && diffRight) {
+    if (diffLeft && diffRight) {
 	/* sample the the left and right of the middle ray */
 	sub_sample(state, prevRay, &middle_ray, pcont, depth+1, cpu);
 	sub_sample(state, &middle_ray, currRay, pcont, depth+1, cpu);
