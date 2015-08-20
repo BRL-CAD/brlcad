@@ -39,6 +39,8 @@ struct minimal_partitions {
     struct xray ray;
     int index;
     int valid;
+    fastf_t missing_in;
+    fastf_t missing_out;
 };
 
 
