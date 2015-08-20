@@ -2674,86 +2674,89 @@ build_upper_sah(struct bu_pool *pool, struct bvh_build_node **treelet_roots,
 	/* FIXME: if this hits, what do we need to do?
 	 * Make sure the SAH split below does something... ?
 	 */
-	BU_ASSERT(!ZERO(centroid_bounds[3+dim] - centroid_bounds[0+dim]));
+	if (!ZERO(centroid_bounds[3+dim] - centroid_bounds[0+dim])) {
+            /* Initialize bucket_info for HLBVH SAH partition buckets */
+            for (i = start; i < end; ++i) {
+                fastf_t centroid = (treelet_roots[i]->bounds[0+dim] +
+                                    treelet_roots[i]->bounds[3+dim]) * 0.5;
+                long b = n_buckets * ((centroid - centroid_bounds[0+dim]) /
+                                      (centroid_bounds[3+dim] - centroid_bounds[0+dim]));
+                if (b == n_buckets) b = n_buckets - 1;
+                BU_ASSERT(b >= 0 && b < n_buckets);
+                buckets[b].count++;
+                bvh_bounds_union(buckets[b].bounds, buckets[b].bounds,
+                                 treelet_roots[i]->bounds);
+            }
 
-	/* Initialize bucket_info for HLBVH SAH partition buckets */
-	for (i = start; i < end; ++i) {
-	    fastf_t centroid = (treelet_roots[i]->bounds[0+dim] +
-			        treelet_roots[i]->bounds[3+dim]) * 0.5;
-	    long b = n_buckets * ((centroid - centroid_bounds[0+dim]) /
-			          (centroid_bounds[3+dim] - centroid_bounds[0+dim]));
-	    if (b == n_buckets) b = n_buckets - 1;
-	    BU_ASSERT(b >= 0 && b < n_buckets);
-	    buckets[b].count++;
-	    bvh_bounds_union(buckets[b].bounds, buckets[b].bounds,
-			     treelet_roots[i]->bounds);
-	}
+            /* Compute costs for splitting after each bucket */
+            for (i = 0; i < n_buckets - 1; ++i) {
+                fastf_t b0[6] =
+                    {MAX_FASTF,MAX_FASTF,MAX_FASTF, -MAX_FASTF,-MAX_FASTF,-MAX_FASTF};
+                fastf_t b1[6] =
+                    {MAX_FASTF,MAX_FASTF,MAX_FASTF, -MAX_FASTF,-MAX_FASTF,-MAX_FASTF};
+                long count0 = 0, count1 = 0;
+                long j;
 
-	/* Compute costs for splitting after each bucket */
-	for (i = 0; i < n_buckets - 1; ++i) {
-	    fastf_t b0[6] =
-		{MAX_FASTF,MAX_FASTF,MAX_FASTF, -MAX_FASTF,-MAX_FASTF,-MAX_FASTF};
-	    fastf_t b1[6] =
-		{MAX_FASTF,MAX_FASTF,MAX_FASTF, -MAX_FASTF,-MAX_FASTF,-MAX_FASTF};
-	    long count0 = 0, count1 = 0;
-	    long j;
+                for (j = 0; j <= i; ++j) {
+                    bvh_bounds_union(b0, b0, buckets[j].bounds);
+                    count0 += buckets[j].count;
+                }
+                for (j = i + 1; j < n_buckets; ++j) {
+                    bvh_bounds_union(b1, b1, buckets[j].bounds);
+                    count1 += buckets[j].count;
+                }
+                cost[i] = .125 + (count0 * surface_area(b0) + count1 * surface_area(b1)) /
+                    surface_area(bounds);
+            }
 
-	    for (j = 0; j <= i; ++j) {
-		bvh_bounds_union(b0, b0, buckets[j].bounds);
-		count0 += buckets[j].count;
-	    }
-	    for (j = i + 1; j < n_buckets; ++j) {
-		bvh_bounds_union(b1, b1, buckets[j].bounds);
-		count1 += buckets[j].count;
-	    }
-	    cost[i] = .125 + (count0 * surface_area(b0) + count1 * surface_area(b1)) /
-		surface_area(bounds);
-	}
+            /* Find bucket to split at that minimizes SAH metric */
+            min_cost = cost[0];
+            min_cost_split_bucket = 0;
+            for (i = 1; i < n_buckets - 1; ++i) {
+                if (cost[i] < min_cost) {
+                    min_cost = cost[i];
+                    min_cost_split_bucket = i;
+                }
+            }
 
-	/* Find bucket to split at that minimizes SAH metric */
-	min_cost = cost[0];
-	min_cost_split_bucket = 0;
-	for (i = 1; i < n_buckets - 1; ++i) {
-	    if (cost[i] < min_cost) {
-		min_cost = cost[i];
-		min_cost_split_bucket = i;
-	    }
-	}
+            /* Split nodes and create interior HLBVH SAH node */
+            {
+                struct bvh_build_node **first, **last, *t;
+                first = &treelet_roots[start];
+                last = &treelet_roots[end - 1] + 1;
 
-	/* Split nodes and create interior HLBVH SAH node */
-	{
-	    struct bvh_build_node **first, **last, *t;
-	    first = &treelet_roots[start];
-	    last = &treelet_roots[end - 1] + 1;
+                for (;;) {
+                    for (;;)
+                        if (first == last)
+                            goto out;
+                        else if (pred(*first, centroid_bounds, dim, min_cost_split_bucket))
+                            ++first;
+                        else
+                            break;
+                    --last;
+                    for (;;)
+                        if (first == last)
+                            goto out;
+                        else if (!pred(*last, centroid_bounds, dim, min_cost_split_bucket))
+                            --last;
+                        else
+                            break;
+                    t = *first;
+                    *first = *last;
+                    *last = t;
 
-	    for (;;) {
-		for (;;)
-		    if (first == last)
-			goto out;
-		    else if (pred(*first, centroid_bounds, dim, min_cost_split_bucket))
-			++first;
-		    else
-			break;
-		--last;
-		for (;;)
-		    if (first == last)
-			goto out;
-		    else if (!pred(*last, centroid_bounds, dim, min_cost_split_bucket))
-			--last;
-		    else
-			break;
-		t = *first;
-		*first = *last;
-		*last = t;
+                    ++first;
+                }
+    out:
+                pmid = first;
+            }
 
-		++first;
-	    }
-out:
-	    pmid = first;
-	}
+            mid = pmid - treelet_roots;
+        } else {
+            mid = start+(end-start)/2;
+        }
 
-	mid = pmid - treelet_roots;
-	BU_ASSERT(mid > start && mid < end);
+        BU_ASSERT(mid > start && mid < end);
 
 	++*total_nodes;
 	lbvh[0] = build_upper_sah(pool, treelet_roots, start, mid, total_nodes);
