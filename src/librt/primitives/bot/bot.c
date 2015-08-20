@@ -280,7 +280,6 @@ clt_bot_pack(struct bu_pool *pool, struct soltab *stp)
 
     if (nodes) bu_free(nodes, "bot nodes");
 
-    bu_log("packed bot with %d,%d pieces (%f MB).\n", ntri, stp->st_npieces, header.offsets[3] / (1024.0 * 1024.0));
     return header.offsets[3];
 }
 #endif

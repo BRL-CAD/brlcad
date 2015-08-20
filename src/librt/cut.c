@@ -2498,7 +2498,7 @@ static void radix_sort(size_t v_len, struct morton_primitive **v)
 
 
 static struct bvh_build_node *
-emit_lbvh(int max_prims_in_node,
+emit_lbvh(long max_prims_in_node,
     struct bvh_build_node **build_nodes, const fastf_t *bounds_prims,
     struct morton_primitive *morton_prims, long n_primitives, long *total_nodes,
     long *ordered_prims, long *ordered_prims_offset, int bit_index) {
@@ -2769,7 +2769,7 @@ build_upper_sah(struct bu_pool *pool, struct bvh_build_node **treelet_roots,
 
 
 struct bvh_build_node *
-hlbvh_create(int max_prims_in_node, struct bu_pool *pool, const fastf_t *centroids_prims,
+hlbvh_create(long max_prims_in_node, struct bu_pool *pool, const fastf_t *centroids_prims,
 	     const fastf_t *bounds_prims, long *total_nodes,
 	     const long n_primitives, long **ordered_prims)
 {
