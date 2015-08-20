@@ -287,6 +287,7 @@ set(librt_ignored_files
   prcomb.c
   primitives/arb8/arb8_shot.cl
   primitives/bot/bot_edge.h
+  primitives/bot/bot_shot.cl
   primitives/bot/bot_wireframe.cpp
   primitives/bot/btg.h
   primitives/bot/g_bot_include.c
