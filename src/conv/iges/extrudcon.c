@@ -38,7 +38,7 @@ Extrudcon(int entityno, int curve, vect_t evect)
     point_t start, stop;	/* starting and stopping points on arc */
     int sol_num;	/* Solid number */
     fastf_t q1, q2, q3;	/* terms for determining type of conic */
-    int ellipse;	/* flag to indicate ellipse */
+    int ellipse = 1;	/* flag to indicate ellipse */
     fastf_t tmp;		/* scratch */
     point_t center;		/* center of ellipse */
     fastf_t theta;		/* angle that ellipse is rotated */
@@ -111,7 +111,6 @@ Extrudcon(int entityno, int curve, vect_t evect)
     /* Check type of conic */
 
     q2 = a*c - b*b/4.0;
-    ellipse = 1;
     if (q2 <= 0.0)
 	ellipse = 0;
     else {

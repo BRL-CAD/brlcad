@@ -79,8 +79,8 @@ DAMAGE.
 #include "PointStream.h"
 
 #ifndef _OPENMP
-int omp_get_num_procs( void ){ return 1; }
-int omp_get_thread_num( void ){ return 0; }
+inline int omp_get_num_procs( void ){ return 1; }
+inline int omp_get_thread_num( void ){ return 0; }
 #endif // _OPENMP
 
 class TreeNodeData

@@ -29,14 +29,14 @@ DAMAGE.
 /////////////////////
 // SortedTreeNodes //
 /////////////////////
-SortedTreeNodes::SortedTreeNodes( void )
+inline SortedTreeNodes::SortedTreeNodes( void )
 {
 	nodeCount = NULL;
 	treeNodes = NullPointer( TreeOctNode* );
 	maxDepth = 0;
 	sliceOffsets = NullPointer( Pointer( int ) );
 }
-SortedTreeNodes::~SortedTreeNodes( void )
+inline SortedTreeNodes::~SortedTreeNodes( void )
 {
 	if( nodeCount ) delete[] nodeCount , nodeCount = NULL;
 	if( treeNodes ) DeletePointer( treeNodes );
@@ -46,7 +46,7 @@ SortedTreeNodes::~SortedTreeNodes( void )
 		FreePointer( sliceOffsets );
 	}
 }
-void SortedTreeNodes::set( TreeOctNode& root , std::vector< int >* map )
+inline void SortedTreeNodes::set( TreeOctNode& root , std::vector< int >* map )
 {
 	if( nodeCount ) delete[] nodeCount;
 	if( treeNodes ) DeletePointer( treeNodes );
@@ -79,13 +79,13 @@ void SortedTreeNodes::set( TreeOctNode& root , std::vector< int >* map )
 	}
 	for( int i=0 ; i<nodeCount[maxDepth] ; i++ ) treeNodes[i]->nodeData.nodeIndex = i;
 }
-int SortedTreeNodes::Slices( int depth ){ return 1<<depth; }
-std::pair< int , int > SortedTreeNodes::sliceSpan( int depth , int off , int d ) const
+inline int SortedTreeNodes::Slices( int depth ){ return 1<<depth; }
+inline std::pair< int , int > SortedTreeNodes::sliceSpan( int depth , int off , int d ) const
 {
 	int dd = d-depth;
 	return std::pair< int , int >( nodeCount[d] + sliceOffsets[d][off<<dd] , nodeCount[d] + sliceOffsets[d][(off+1)<<dd] );
 }
-void SortedTreeNodes::_sortByZCoordinate( void )
+inline void SortedTreeNodes::_sortByZCoordinate( void )
 {
 	sliceOffsets = AllocPointer< Pointer( int ) >( maxDepth );
 	for( int d=0 ; d<maxDepth ;  d++ )
@@ -116,29 +116,29 @@ void SortedTreeNodes::_sortByZCoordinate( void )
 		sliceOffsets[d][0] = 0;
 	}
 }
-SortedTreeNodes::SquareCornerIndices& SortedTreeNodes::SliceTableData::cornerIndices( const TreeOctNode* node ) { return cTable[ node->nodeData.nodeIndex - nodeOffset ]; }
-SortedTreeNodes::SquareCornerIndices& SortedTreeNodes::SliceTableData::cornerIndices( int idx ) { return cTable[ idx - nodeOffset ]; }
-const SortedTreeNodes::SquareCornerIndices& SortedTreeNodes::SliceTableData::cornerIndices( const TreeOctNode* node ) const { return cTable[ node->nodeData.nodeIndex - nodeOffset ]; }
-const SortedTreeNodes::SquareCornerIndices& SortedTreeNodes::SliceTableData::cornerIndices( int idx ) const { return cTable[ idx - nodeOffset ]; }
-SortedTreeNodes::SquareEdgeIndices& SortedTreeNodes::SliceTableData::edgeIndices( const TreeOctNode* node ) { return eTable[ node->nodeData.nodeIndex - nodeOffset ]; }
-SortedTreeNodes::SquareEdgeIndices& SortedTreeNodes::SliceTableData::edgeIndices( int idx ) { return eTable[ idx - nodeOffset ]; }
-const SortedTreeNodes::SquareEdgeIndices& SortedTreeNodes::SliceTableData::edgeIndices( const TreeOctNode* node ) const { return eTable[ node->nodeData.nodeIndex - nodeOffset ]; }
-const SortedTreeNodes::SquareEdgeIndices& SortedTreeNodes::SliceTableData::edgeIndices( int idx ) const { return eTable[ idx - nodeOffset ]; }
-SortedTreeNodes::SquareFaceIndices& SortedTreeNodes::SliceTableData::faceIndices( const TreeOctNode* node ) { return fTable[ node->nodeData.nodeIndex - nodeOffset ]; }
-SortedTreeNodes::SquareFaceIndices& SortedTreeNodes::SliceTableData::faceIndices( int idx ) { return fTable[ idx - nodeOffset ]; }
-const SortedTreeNodes::SquareFaceIndices& SortedTreeNodes::SliceTableData::faceIndices( const TreeOctNode* node ) const { return fTable[ node->nodeData.nodeIndex - nodeOffset ]; }
-const SortedTreeNodes::SquareFaceIndices& SortedTreeNodes::SliceTableData::faceIndices( int idx ) const { return fTable[ idx - nodeOffset ]; }
-SortedTreeNodes::SquareCornerIndices& SortedTreeNodes::XSliceTableData::edgeIndices( const TreeOctNode* node ) { return eTable[ node->nodeData.nodeIndex - nodeOffset ]; }
-SortedTreeNodes::SquareCornerIndices& SortedTreeNodes::XSliceTableData::edgeIndices( int idx ) { return eTable[ idx - nodeOffset ]; }
-const SortedTreeNodes::SquareCornerIndices& SortedTreeNodes::XSliceTableData::edgeIndices( const TreeOctNode* node ) const { return eTable[ node->nodeData.nodeIndex - nodeOffset ]; }
-const SortedTreeNodes::SquareCornerIndices& SortedTreeNodes::XSliceTableData::edgeIndices( int idx ) const { return eTable[ idx - nodeOffset ]; }
-SortedTreeNodes::SquareEdgeIndices& SortedTreeNodes::XSliceTableData::faceIndices( const TreeOctNode* node ) { return fTable[ node->nodeData.nodeIndex - nodeOffset ]; }
-SortedTreeNodes::SquareEdgeIndices& SortedTreeNodes::XSliceTableData::faceIndices( int idx ) { return fTable[ idx - nodeOffset ]; }
-const SortedTreeNodes::SquareEdgeIndices& SortedTreeNodes::XSliceTableData::faceIndices( const TreeOctNode* node ) const { return fTable[ node->nodeData.nodeIndex - nodeOffset ]; }
-const SortedTreeNodes::SquareEdgeIndices& SortedTreeNodes::XSliceTableData::faceIndices( int idx ) const { return fTable[ idx - nodeOffset ]; }
+inline SortedTreeNodes::SquareCornerIndices& SortedTreeNodes::SliceTableData::cornerIndices( const TreeOctNode* node ) { return cTable[ node->nodeData.nodeIndex - nodeOffset ]; }
+inline SortedTreeNodes::SquareCornerIndices& SortedTreeNodes::SliceTableData::cornerIndices( int idx ) { return cTable[ idx - nodeOffset ]; }
+inline const SortedTreeNodes::SquareCornerIndices& SortedTreeNodes::SliceTableData::cornerIndices( const TreeOctNode* node ) const { return cTable[ node->nodeData.nodeIndex - nodeOffset ]; }
+inline const SortedTreeNodes::SquareCornerIndices& SortedTreeNodes::SliceTableData::cornerIndices( int idx ) const { return cTable[ idx - nodeOffset ]; }
+inline SortedTreeNodes::SquareEdgeIndices& SortedTreeNodes::SliceTableData::edgeIndices( const TreeOctNode* node ) { return eTable[ node->nodeData.nodeIndex - nodeOffset ]; }
+inline SortedTreeNodes::SquareEdgeIndices& SortedTreeNodes::SliceTableData::edgeIndices( int idx ) { return eTable[ idx - nodeOffset ]; }
+inline const SortedTreeNodes::SquareEdgeIndices& SortedTreeNodes::SliceTableData::edgeIndices( const TreeOctNode* node ) const { return eTable[ node->nodeData.nodeIndex - nodeOffset ]; }
+inline const SortedTreeNodes::SquareEdgeIndices& SortedTreeNodes::SliceTableData::edgeIndices( int idx ) const { return eTable[ idx - nodeOffset ]; }
+inline SortedTreeNodes::SquareFaceIndices& SortedTreeNodes::SliceTableData::faceIndices( const TreeOctNode* node ) { return fTable[ node->nodeData.nodeIndex - nodeOffset ]; }
+inline SortedTreeNodes::SquareFaceIndices& SortedTreeNodes::SliceTableData::faceIndices( int idx ) { return fTable[ idx - nodeOffset ]; }
+inline const SortedTreeNodes::SquareFaceIndices& SortedTreeNodes::SliceTableData::faceIndices( const TreeOctNode* node ) const { return fTable[ node->nodeData.nodeIndex - nodeOffset ]; }
+inline const SortedTreeNodes::SquareFaceIndices& SortedTreeNodes::SliceTableData::faceIndices( int idx ) const { return fTable[ idx - nodeOffset ]; }
+inline SortedTreeNodes::SquareCornerIndices& SortedTreeNodes::XSliceTableData::edgeIndices( const TreeOctNode* node ) { return eTable[ node->nodeData.nodeIndex - nodeOffset ]; }
+inline SortedTreeNodes::SquareCornerIndices& SortedTreeNodes::XSliceTableData::edgeIndices( int idx ) { return eTable[ idx - nodeOffset ]; }
+inline const SortedTreeNodes::SquareCornerIndices& SortedTreeNodes::XSliceTableData::edgeIndices( const TreeOctNode* node ) const { return eTable[ node->nodeData.nodeIndex - nodeOffset ]; }
+inline const SortedTreeNodes::SquareCornerIndices& SortedTreeNodes::XSliceTableData::edgeIndices( int idx ) const { return eTable[ idx - nodeOffset ]; }
+inline SortedTreeNodes::SquareEdgeIndices& SortedTreeNodes::XSliceTableData::faceIndices( const TreeOctNode* node ) { return fTable[ node->nodeData.nodeIndex - nodeOffset ]; }
+inline SortedTreeNodes::SquareEdgeIndices& SortedTreeNodes::XSliceTableData::faceIndices( int idx ) { return fTable[ idx - nodeOffset ]; }
+inline const SortedTreeNodes::SquareEdgeIndices& SortedTreeNodes::XSliceTableData::faceIndices( const TreeOctNode* node ) const { return fTable[ node->nodeData.nodeIndex - nodeOffset ]; }
+inline const SortedTreeNodes::SquareEdgeIndices& SortedTreeNodes::XSliceTableData::faceIndices( int idx ) const { return fTable[ idx - nodeOffset ]; }
 
 
-void SortedTreeNodes::setSliceTableData( SliceTableData& sData , int depth , int offset , int threads ) const
+inline void SortedTreeNodes::setSliceTableData( SliceTableData& sData , int depth , int offset , int threads ) const
 {
 	if( offset<0 || offset>(1<<depth) ) return;
 	if( threads<=0 ) threads = 1;
@@ -259,7 +259,7 @@ void SortedTreeNodes::setSliceTableData( SliceTableData& sData , int depth , int
 
 	sData.cCount = cCount , sData.eCount = eCount , sData.fCount = fCount;
 }
-void SortedTreeNodes::setXSliceTableData( XSliceTableData& sData , int depth , int offset , int threads ) const
+inline void SortedTreeNodes::setXSliceTableData( XSliceTableData& sData , int depth , int offset , int threads ) const
 {
 	if( offset<0 || offset>=(1<<depth) ) return;
 	if( threads<=0 ) threads = 1;

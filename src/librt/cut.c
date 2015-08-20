@@ -2414,7 +2414,7 @@ init_interior(struct bvh_build_node *node, uint8_t axis, struct bvh_build_node *
 
 
 /* utility functions */
-inline uint32_t left_shift3(uint32_t x)
+static inline uint32_t left_shift3(uint32_t x)
 {
     BU_ASSERT(x <= (1 << 10));
     if (x == (1 << 10)) --x;
@@ -2429,7 +2429,7 @@ inline uint32_t left_shift3(uint32_t x)
     return x;
 }
 
-inline uint32_t encode_morton3(const point_t v)
+static inline uint32_t encode_morton3(const point_t v)
 {
     BU_ASSERT(v[X] >= 0 && v[X] <= (1 << 10));
     BU_ASSERT(v[Y] >= 0 && v[Y] <= (1 << 10));
@@ -2932,7 +2932,7 @@ clt_linear_bvh_create(long n_primitives, struct clt_linear_bvh_node **nodes_p,
          * This pool must have enough size to fit the whole tree or the
          * algorithm will fail. It stores pointers to itself and a
          * realloc would make the pointers invalid.
-         * 
+         *
          * total_nodes = treelets_size + upper_sah_size,  where:
          *  treelets_size < 2*n_primitives
          *  upper_sah_size < 2*2^popcnt(0x3ffc0000)   i.e. 2*4096

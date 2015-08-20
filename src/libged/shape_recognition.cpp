@@ -629,7 +629,8 @@ brep_to_csg(struct ged *gedp, struct directory *dp, int verify)
 		    brep_vars[i].resp = &brep_resp[i];
 		    rt_init_resource(brep_vars[i].resp, i, brep_rtip);
 		}
-		if (rt_gettree(brep_rtip, dp->d_namep) < 0) {
+		if (rt_gettrees(brep_rtip, 1, (const char **)&dp->d_namep, ncpus) < 0) {
+		//if (rt_gettree(brep_rtip, dp->d_namep) < 0) {
 		    // TODO - free memory
 		    return 0;
 		}
