@@ -15,7 +15,7 @@ struct tri_specific {
     uchar pad[4];
 };
 
-int bot_shot(global struct hit *res, const double3 r_pt, const double3 r_dir, const uint idx, global const uchar *args)
+int bot_shot(global struct hit *res, const double3 r_pt, double3 r_dir, const uint idx, global const uchar *args)
 {
     global const struct bot_specific *bot =
         (global const struct bot_specific *)(args);
@@ -34,33 +34,9 @@ int bot_shot(global struct hit *res, const double3 r_pt, const double3 r_dir, co
     uint hit_count;
     hit_count = 0;
 
-    double idir[3];
-    double3 r_idir;
-    if (r_dir.x < -SQRT_SMALL_FASTF) {
-        idir[0] = 1.0/r_dir.x;
-    } else if (r_dir.x > SQRT_SMALL_FASTF) {
-        idir[0] = 1.0/r_dir.x;
-    } else {
-        r_dir.x = 0.0;
-        idir[0] = INFINITY;
-    }
-    if (r_dir.y < -SQRT_SMALL_FASTF) {
-        idir[1] = 1.0/r_dir.y;
-    } else if (r_dir.y > SQRT_SMALL_FASTF) {
-        idir[1] = 1.0/r_dir.y;
-    } else {
-        r_dir.y = 0.0;
-        idir[1] = INFINITY;
-    }
-    if (r_dir.z < -SQRT_SMALL_FASTF) {
-        idir[2] = 1.0/r_dir.z;
-    } else if (r_dir.z > SQRT_SMALL_FASTF) {
-        idir[2] = 1.0/r_dir.z;
-    } else {
-        r_dir.z = 0.0;
-        idir[2] = INFINITY;
-    }
-    r_idir = vload3(0, idir);
+    const long3 oblique = isgreaterequal(fabs(r_dir), SQRT_SMALL_FASTF);
+    const double3 r_idir = select(INFINITY, 1.0/r_dir, oblique);
+    r_dir = select(0.0, r_dir, oblique);
 
     uchar dir_is_neg[3];
     int to_visit_offset = 0, current_node_index = 0;

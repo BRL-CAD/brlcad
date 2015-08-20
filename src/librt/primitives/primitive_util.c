@@ -690,7 +690,7 @@ clt_db_store(size_t count, struct soltab *solids[])
 	for (i=1; i <= count; i++) {
 	    size_t size;
 	    size = clt_solid_pack(pool, solids[i-1]);
-            bu_log("#%d:\tst_id: %s\t(%ld KB)\n", i, OBJ[ids[i-1]].ft_name, size / 1024.0);
+            bu_log("#%d:\t %s\t(%ld bytes)\n", i, OBJ[ids[i-1]].ft_name, size);
 	    indexes[i] = indexes[i-1] + size;
 	}
         bu_log("total:\t%d primitives (%f MB)\n", count, indexes[count] / (1024.0 * 1024.0));

@@ -8,8 +8,24 @@ constant double3 ambient_color = {1, 1, 1};     /* Ambient white light */
 constant double AmbientIntensity = 0.4;
 
 
+inline double3 MAT4X3PNT(const double16 m, double3 i) {
+    double4 j;
+
+    j.xyz = i;
+    j.w = (1.0/(m.sc*i.x+m.sd*i.y+m.se*i.z+m.sf));
+
+    double3 o;
+    o.x = dot(m.s0123, j);
+    o.y = dot(m.s4567, j);
+    o.z = dot(m.s98ab, j);
+    return o;
+}
+
 extern inline double3 MAT3X3VEC(global const double *m, double3 i);
 extern inline double3 MAT4X3VEC(global const double *m, double3 i);
+
+extern inline double3 bu_rand0to1(const uint id, global float *bnrandhalftab, const uint randhalftabsize);
+extern inline ulong bu_cv_htond(const ulong d);
 
 extern inline int rt_in_rpp(const double3 pt, const double3 invdir,
                             global const double *min, global const double *max);
@@ -78,7 +94,7 @@ void do_hitp(global struct hit *res, const uint i, const uint hit_index, const s
 }
 
 
-inline void gen_ray(double3 *r_pt, double3 *r_dir, double3 *r_idir, const int a_x, const int a_y,
+inline void gen_ray(double3 *r_pt, double3 *r_dir, const int a_x, const int a_y,
 		    const double16 view2model, const double cell_width, const double cell_height, const double aspect)
 {
     double3 tmp, dir;
@@ -105,43 +121,19 @@ inline void gen_ray(double3 *r_pt, double3 *r_dir, double3 *r_idir, const int a_
 
     /* our starting point, used for non-jitter */
     *r_pt = viewbase_model + dx_model * a_x + dy_model * a_y;
-
-    double idir[3];
-    if (dir.x < -SQRT_SMALL_FASTF) {
-        idir[0] = 1.0/dir.x;
-    } else if (dir.x > SQRT_SMALL_FASTF) {
-        idir[0] = 1.0/dir.x;
-    } else {
-        dir.x = 0.0;
-        idir[0] = INFINITY;
-    }
-    if (dir.y < -SQRT_SMALL_FASTF) {
-        idir[1] = 1.0/dir.y;
-    } else if (dir.y > SQRT_SMALL_FASTF) {
-        idir[1] = 1.0/dir.y;
-    } else {
-        dir.y = 0.0;
-        idir[1] = INFINITY;
-    }
-    if (dir.z < -SQRT_SMALL_FASTF) {
-        idir[2] = 1.0/dir.z;
-    } else if (dir.z > SQRT_SMALL_FASTF) {
-        idir[2] = 1.0/dir.z;
-    } else {
-        dir.z = 0.0;
-        idir[2] = INFINITY;
-    }
     *r_dir = dir;
-    *r_idir = vload3(0, idir);
 }
 
-
 int
-shootray(global struct hit *hitp, const double3 r_pt, const double3 r_dir, const double3 r_idir,
+shootray(global struct hit *hitp, double3 r_pt, double3 r_dir,
          const uint nprims, global int *ids, global struct linear_bvh_node *nodes,
          global uint *indexes, global uchar *prims)
 {
     int ret = 0;
+
+    const long3 oblique = isgreaterequal(fabs(r_dir), SQRT_SMALL_FASTF);
+    const double3 r_idir = select(INFINITY, 1.0/r_dir, oblique);
+    r_dir = select(0.0, r_dir, oblique);
 
     if (nodes) {
         uchar dir_is_neg[3];
@@ -190,28 +182,57 @@ shootray(global struct hit *hitp, const double3 r_pt, const double3 r_dir, const
     return ret;
 }
 
-inline double3
-bu_rand0to1(const uint id, global float *bnrandhalftab, const uint randhalftabsize)
+
+struct shade_work {
+    double3 sw_color;		/**< @brief  shaded color */
+    double3 sw_basecolor;	/**< @brief  base color */
+};
+
+struct phong_specific {
+    double wgt_specular;
+    double wgt_diffuse;
+    int	shine;
+};
+
+void
+phong_setup(struct phong_specific *sp)
 {
-    double3 ret;
-    ret.x = (bnrandhalftab[(id*3+0) % randhalftabsize]+0.5);
-    ret.y = (bnrandhalftab[(id*3+1) % randhalftabsize]+0.5);
-    ret.z = (bnrandhalftab[(id*3+2) % randhalftabsize]+0.5);
-    return ret;
+    sp->wgt_specular = 0.7;
+    sp->wgt_diffuse = 0.3;
+    sp->shine = 10;
 }
 
-inline ulong
-bu_cv_htond(const ulong d)
+static inline
+double3 reflect(double3 I, double3 N)
 {
-    return ((d & 0xFF00000000000000UL) >> 56)
-	 | ((d & 0x00FF000000000000UL) >> 40)
-	 | ((d & 0x0000FF0000000000UL) >> 24)
-	 | ((d & 0x000000FF00000000UL) >>  8)
-	 | ((d & 0x00000000FF000000UL) <<  8)
-	 | ((d & 0x0000000000FF0000UL) << 24)
-	 | ((d & 0x000000000000FF00UL) << 40)
-	 | ((d & 0x00000000000000FFUL) << 56);
+    return I - 2.0 * dot(N, I) * N;
 }
+
+void
+phong_render(struct shade_work *swp, double3 r_dir, double3 normal, double3 to_light, const struct phong_specific *sp)
+{
+    double3 matcolor;
+    double intensity;
+
+    matcolor = swp->sw_color;
+
+    double3 L = normalize(to_light);
+
+    /* Diffuse reflectance from "Ambient" light source (at eye) */
+    double ambient = max(-dot(normal, r_dir), 0.0);
+    double diffuse = max(dot(L, normal), 0.0);
+    double specular = 0.0;
+
+    if (diffuse > 0.0) {
+        double3 R = reflect(-r_dir, normal);
+        double NH = max(dot(R, r_dir), 0.0);
+        specular = pow(NH, sp->shine);
+    }
+    swp->sw_color = matcolor * AmbientIntensity * ambient
+        + matcolor * lt_color * sp->wgt_diffuse * diffuse
+        + matcolor * lt_color * sp->wgt_specular * specular;
+}
+
 
 __kernel void
 do_pixel(global uchar *pixels, const uchar3 o, global struct hit *hits,
@@ -230,12 +251,13 @@ do_pixel(global uchar *pixels, const uchar3 o, global struct hit *hits,
     const int a_x = (int)(pixelnum - (a_y * width));
 
     double3 r_pt, r_dir, r_idir;
-    gen_ray(&r_pt, &r_dir, &r_idir, a_x,a_y, view2model, cell_width, cell_height, aspect);
+    gen_ray(&r_pt, &r_dir, a_x, a_y, view2model, cell_width, cell_height, aspect);
+    const double3 orig_dir = r_dir;
 
     global struct hit *hitp = hits+id;
     hitp->hit_dist = INFINITY;
 
-    int ret = shootray(hitp, r_pt, r_dir, r_idir, nprims, ids, nodes, indexes, prims);
+    int ret = shootray(hitp, r_pt, r_dir, nprims, ids, nodes, indexes, prims);
 
     double3 a_color;
 
@@ -245,10 +267,15 @@ do_pixel(global uchar *pixels, const uchar3 o, global struct hit *hits,
         double3 work0, work1;
         double3 normal;
 
-        const uint idx = hitp->hit_index;
-        if (idx<nprims) {
-            norm(hitp, r_pt, r_dir, ids[idx], prims + indexes[idx]);
-            normal = hitp->hit_normal;
+	if (hitp->hit_dist < 0.0) {
+	    /* Eye inside solid, orthoview */
+	    normal = -r_dir;
+        } else {
+            const uint idx = hitp->hit_index;
+            if (idx<nprims) {
+                norm(hitp, r_pt, r_dir, ids[idx], prims + indexes[idx]);
+                normal = hitp->hit_normal;
+            }
         }
 
         /*
@@ -256,6 +283,21 @@ do_pixel(global uchar *pixels, const uchar3 o, global struct hit *hits,
          */
         switch (lightmodel) {
 	    default:
+                {
+                    /* Determine the Light location(s) in view space */
+                    /* 0:  At left edge, 1/2 high */
+                    const double3 lt_pos = MAT4X3PNT(view2model, (double3){-1,0,1});
+                    const double3 to_light = lt_pos - hitp->hit_point;
+
+                    struct phong_specific sp;
+                    phong_setup(&sp);
+
+                    struct shade_work sw;
+                    sw.sw_color = 1.0;
+                    sw.sw_basecolor = 1.0;
+                    phong_render(&sw, r_dir, normal, to_light, &sp);
+                    a_color = sw.sw_color;
+                }
 		break;
             case 1:
                 /* Light from the "eye" (ray source).  Note sign change */
