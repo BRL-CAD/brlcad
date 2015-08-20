@@ -643,13 +643,13 @@ void BSplineElements< Degree >::_addRight( int offset , int boundary )
 	if( set ) _addRight( offset+2*res , boundary );
 }
 template< int Degree >
-void BSplineElements< Degree >::upSample( BSplineElements< Degree >& high ) const
+inline void BSplineElements< Degree >::upSample( BSplineElements< Degree >& high ) const
 {
 	fprintf( stderr , "[ERROR] B-spline up-sampling not supported for degree %d\n" , Degree );
 	exit( 0 );
 }
 template<>
-void BSplineElements< 1 >::upSample( BSplineElements< 1 >& high ) const
+inline void BSplineElements< 1 >::upSample( BSplineElements< 1 >& high ) const
 {
 	high.resize( size()*2 );
 	high.assign( high.size() , BSplineElementCoefficients<1>() );
@@ -668,7 +668,7 @@ void BSplineElements< 1 >::upSample( BSplineElements< 1 >& high ) const
 	high.denominator = denominator * 2;
 }
 template<>
-void BSplineElements< 2 >::upSample( BSplineElements< 2 >& high ) const
+inline void BSplineElements< 2 >::upSample( BSplineElements< 2 >& high ) const
 {
 	//    /----\
 	//   /      \
