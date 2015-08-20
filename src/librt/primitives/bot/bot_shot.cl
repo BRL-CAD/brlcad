@@ -2,7 +2,7 @@
 
 
 struct bot_specific {
-    ulong offsets[3];    // To: BVH, Triangles, Normals.
+    ulong offsets[4];    // To: BVH, Triangles, Normals.
     uint ntri;
     uchar pad[4];
 };
@@ -20,15 +20,11 @@ int bot_shot(global struct hit *res, const double3 r_pt, double3 r_dir, const ui
     global const struct bot_specific *bot =
         (global const struct bot_specific *)(args);
     global struct linear_bvh_node *nodes =
-        (global struct linear_bvh_node *)(args+bot->offsets[0]);
+        (global struct linear_bvh_node *)(args+bot->offsets[1]);
     global const struct tri_specific *tri =
-        (global const struct tri_specific *)(args+bot->offsets[1]);
+        (global const struct tri_specific *)(args+bot->offsets[2]);
 
     const uint ntri = bot->ntri;
-
-    if (ntri <= 0) {
-        return 0;   // No hit
-    }
 
     struct hit hits[256];
     uint hit_count;
@@ -169,13 +165,11 @@ void bot_norm(global struct hit *hitp, const double3 r_pt, const double3 r_dir, 
 
     global const struct bot_specific *bot =
         (global const struct bot_specific *)(args);
-    const uint ntri = bot->ntri;
-
     global const struct tri_specific *tri =
-        (global const struct tri_specific *)(args+bot->offsets[1]+sizeof(struct tri_specific)*h);
-    const double3 V0 = vload3(0, tri->v0);
-    const double3 V1 = vload3(0, tri->v1);
-    const double3 V2 = vload3(0, tri->v2);
+        (global const struct tri_specific *)(args+bot->offsets[2]);
+    const double3 V0 = vload3(0, tri[h].v0);
+    const double3 V1 = vload3(0, tri[h].v1);
+    const double3 V2 = vload3(0, tri[h].v2);
     hitp->hit_normal = normalize(cross(V1-V0, V2-V0));
 }
 
