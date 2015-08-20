@@ -2929,7 +2929,7 @@ clt_linear_bvh_create(long n_primitives, struct clt_linear_bvh_node **nodes_p,
          * This pool must have enough size to fit the whole tree or the
          * algorithm will fail. It stores pointers to itself and a
          * realloc would make the pointers invalid.
-         * 
+         *
          * total_nodes = treelets_size + upper_sah_size,  where:
          *  treelets_size < 2*n_primitives
          *  upper_sah_size < 2*2^popcnt(0x3ffc0000)   i.e. 2*4096
