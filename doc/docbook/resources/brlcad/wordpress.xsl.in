@@ -7,7 +7,7 @@
    <xsl:template match="*" mode="process.root">
     <xsl:variable name="doc" select="self::*"/>
     <xsl:processing-instruction name="php">
-      require('../../wp-blog-header.php'); 
+      require('../../wp-blog-header.php');
       class MyPost { var $post_title = "<xsl:apply-templates select="$doc" mode="object.title.markup.textonly"/>"; }
       $wp_query->is_home = false;
       $wp_query->is_single = true;
@@ -18,7 +18,7 @@
     <xsl:processing-instruction name="php">
   search_document();    main_menu();
 </xsl:processing-instruction>
-</div></div>      
+</div></div>
 
   <div id="content-side">
   <div id="primary" class="content-area">
@@ -26,7 +26,7 @@
       <div class="row3">
       <a name="top"></a>
       <xsl:apply-templates select="."/>
-      </div>    
+      </div>
     </main>
       </div>
   </div>
@@ -58,7 +58,7 @@
 </div>
 </div>
     <xsl:processing-instruction name="php">
-      get_footer(); 
+      get_footer();
     </xsl:processing-instruction>
   </xsl:template>
 

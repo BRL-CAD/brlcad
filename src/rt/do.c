@@ -511,7 +511,7 @@ def_tree(register struct rt_i *rtip)
 /*********************************************************************************/
 #ifdef USE_OPENCL
 /* from opt.c */
-extern double haze[3];	
+extern double haze[3];
 extern double airdensity;
 
 
