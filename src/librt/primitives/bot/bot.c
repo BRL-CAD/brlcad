@@ -157,9 +157,20 @@ clt_bot_prep(struct soltab *stp, struct rt_bot_internal *bip, struct rt_i *rtip)
         for (idx=0; idx<bip->num_faces; idx++) {
             size_t i0, i1, i2;
 
-            i0 = bip->faces[idx*3];
-            i1 = bip->faces[idx*3 + 1];
-            i2 = bip->faces[idx*3 + 2];
+	    switch (bip->orientation) {
+	    case RT_BOT_CW:
+		i0 = bip->faces[idx*3];
+		i2 = bip->faces[idx*3 + 1];
+		i1 = bip->faces[idx*3 + 2];
+		break;
+	    case RT_BOT_CCW:
+	    case RT_BOT_UNORIENTED:
+		i0 = bip->faces[idx*3];
+		i1 = bip->faces[idx*3 + 1];
+		i2 = bip->faces[idx*3 + 2];
+		break;
+	    }
+
             if (i0 >= bip->num_vertices
                 || i1 >= bip->num_vertices
                 || i2 >= bip->num_vertices)
@@ -188,9 +199,20 @@ clt_bot_prep(struct soltab *stp, struct rt_bot_internal *bip, struct rt_i *rtip)
         for (idx=0; idx<bip->num_face_normals; idx++) {
             size_t i0, i1, i2;
 
-            i0 = bip->face_normals[idx*3];
-            i1 = bip->face_normals[idx*3 + 1];
-            i2 = bip->face_normals[idx*3 + 2];
+	    switch (bip->orientation) {
+	    case RT_BOT_CW:
+		i0 = bip->face_normals[idx*3];
+		i2 = bip->face_normals[idx*3 + 1];
+		i1 = bip->face_normals[idx*3 + 2];
+		break;
+	    case RT_BOT_CCW:
+	    case RT_BOT_UNORIENTED:
+		i0 = bip->face_normals[idx*3];
+		i1 = bip->face_normals[idx*3 + 1];
+		i2 = bip->face_normals[idx*3 + 2];
+		break;
+	    }
+
             if (i0 >= bip->num_normals
                 || i1 >= bip->num_normals
                 || i2 >= bip->num_normals)
