@@ -690,7 +690,11 @@ bu_mem_barriercheck(void)
 
 
 int
+#ifdef HAVE_SYS_SHM_H
 bu_shmget(int *shmid, char **shared_memory, int key, size_t size)
+#else
+bu_shmget(int *UNUSED(shmid), char **UNUSED(shared_memory), int UNUSED(key), size_t UNUSED(size))
+#endif
 {
     int ret = 1;
 #ifdef HAVE_SYS_SHM_H
