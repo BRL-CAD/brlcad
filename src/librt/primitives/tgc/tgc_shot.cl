@@ -19,7 +19,7 @@ struct tgc_specific {
     char tgc_AD_CB;              /* boolean:  A*D == C*B */
 };
 
-int tgc_shot(global struct hit *res, const double3 r_pt, const double3 r_dir, const uint idx, global const struct tgc_specific *tgc)
+int tgc_shot(global struct hit **res, const double3 r_pt, const double3 r_dir, const uint idx, global const struct tgc_specific *tgc)
 {
     double3 pprime;
     double3 dprime;
@@ -329,8 +329,6 @@ int tgc_shot(global struct hit *res, const double3 r_pt, const double3 r_dir, co
 	return 0;		/* No hit */
     }
 
-    intersect = 0;
-    int j = 0;
     for (i=npts-1; i>0; i -= 2) {
         struct hit hits[2];
 
@@ -358,11 +356,10 @@ int tgc_shot(global struct hit *res, const double3 r_pt, const double3 r_dir, co
 	    }
 	}
 
-        do_hitp(res, j++, idx, &hits[0]);
-        do_hitp(res, j++, idx, &hits[1]);
-	intersect++;
+        do_hitp(res, idx, &hits[0]);
+        do_hitp(res, idx, &hits[1]);
     }
-    return intersect;
+    return npts;
 }
 
 

@@ -9,7 +9,7 @@ struct tor_specific {
     double tor_invR[16];    /* invRot(vect') */
 };
 
-int tor_shot(global struct hit *res, const double3 r_pt, const double3 r_dir, const uint idx, global const struct tor_specific *tor)
+int tor_shot(global struct hit **res, const double3 r_pt, const double3 r_dir, const uint idx, global const struct tor_specific *tor)
 {
     double3 dprime;		// D'
     double3 pprime;		// P'
@@ -154,14 +154,14 @@ int tor_shot(global struct hit *res, const double3 r_pt, const double3 r_dir, co
     hits[1].hit_vpriv = pprime + k[0] * dprime;
 
     if (i == 2) {
-	do_hitp(res, 0, idx, &hits[0]);
-	do_hitp(res, 1, idx, &hits[1]);
+	do_hitp(res, idx, &hits[0]);
+	do_hitp(res, idx, &hits[1]);
     	return 2;		// HIT
     }
 
     /* 4 points */
-    do_hitp(res, 2, idx, &hits[0]);
-    do_hitp(res, 3, idx, &hits[1]);
+    do_hitp(res, idx, &hits[0]);
+    do_hitp(res, idx, &hits[1]);
 
     /* k[3] is entry point, and k[2] is exit point */
     hits[0].hit_surfno = 1;
@@ -173,8 +173,8 @@ int tor_shot(global struct hit *res, const double3 r_pt, const double3 r_dir, co
     hits[0].hit_vpriv = pprime + k[3] * dprime;
     hits[1].hit_vpriv = pprime + k[2] * dprime;
 
-    do_hitp(res, 0, idx, &hits[0]);
-    do_hitp(res, 1, idx, &hits[1]);
+    do_hitp(res, idx, &hits[0]);
+    do_hitp(res, idx, &hits[1]);
     return 4;		// HIT
 }
 
