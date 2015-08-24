@@ -704,7 +704,7 @@ clt_db_store(size_t count, struct soltab *solids[])
 	for (i=0; i < count; i++) {
 	    const struct soltab *stp = solids[i];
 	    const struct region **rpp;
-	    struct clt_mater_info mater = {{1.0, 0.0, 0.0}, 1};
+	    struct clt_mater_info mater = {{1.0, 0.0, 0.0}, 0};
 
             regions[i].mater = mater;
             regions[i].mf_id = SH_PHONG;
@@ -740,6 +740,7 @@ clt_db_store(size_t count, struct soltab *solids[])
                             bu_log("unknown shader: %s\n", mfp->mf_name);
                         }
                     }
+                    break;
                 }
 
 	    }
@@ -903,28 +904,32 @@ clt_frame(void *pixels, uint8_t o[3], int cur_pixel, int last_pixel,
 	    sz_hits = sizeof(struct cl_hit)*h[npix];
 	    bu_free(h, "h");
 
-	    phits = clCreateBuffer(clt_context, CL_MEM_READ_WRITE|CL_MEM_HOST_NO_ACCESS, sz_hits, NULL, &error);
-	    if (error != CL_SUCCESS) bu_bomb("failed to create OpenCL hits buffer");
+	    if (sz_hits != 0) {
+		phits = clCreateBuffer(clt_context, CL_MEM_READ_WRITE|CL_MEM_HOST_NO_ACCESS, sz_hits, NULL, &error);
+		if (error != CL_SUCCESS) bu_bomb("failed to create OpenCL hits buffer");
 
-	    bu_semaphore_acquire(clt_semaphore);
-	    error = clSetKernelArg(clt_store_hits_kernel, 0, sizeof(cl_mem), &phits);
-	    error |= clSetKernelArg(clt_store_hits_kernel, 1, sizeof(cl_mem), &ph);
-	    error |= clSetKernelArg(clt_store_hits_kernel, 2, sizeof(cl_int), &p.cur_pixel);
-	    error |= clSetKernelArg(clt_store_hits_kernel, 3, sizeof(cl_int), &p.last_pixel);
-	    error |= clSetKernelArg(clt_store_hits_kernel, 4, sizeof(cl_int), &p.width);
-	    error |= clSetKernelArg(clt_store_hits_kernel, 5, sizeof(cl_double16), &p.view2model);
-	    error |= clSetKernelArg(clt_store_hits_kernel, 6, sizeof(cl_double), &p.cell_width);
-	    error |= clSetKernelArg(clt_store_hits_kernel, 7, sizeof(cl_double), &p.cell_height);
-	    error |= clSetKernelArg(clt_store_hits_kernel, 8, sizeof(cl_double), &p.aspect);
-	    error |= clSetKernelArg(clt_store_hits_kernel, 9, sizeof(cl_uint), &clt_db_nprims);
-	    error |= clSetKernelArg(clt_store_hits_kernel, 10, sizeof(cl_mem), &clt_db_ids);
-	    error |= clSetKernelArg(clt_store_hits_kernel, 11, sizeof(cl_mem), &clt_db_bvh);
-	    error |= clSetKernelArg(clt_store_hits_kernel, 12, sizeof(cl_mem), &clt_db_indexes);
-	    error |= clSetKernelArg(clt_store_hits_kernel, 13, sizeof(cl_mem), &clt_db_prims);
-	    if (error != CL_SUCCESS) bu_bomb("failed to set OpenCL kernel arguments");
-	    error = clEnqueueNDRangeKernel(clt_queue, clt_store_hits_kernel, 1, NULL, &npix,
-		    NULL, 0, NULL, NULL);
-	    bu_semaphore_release(clt_semaphore);
+		bu_semaphore_acquire(clt_semaphore);
+		error = clSetKernelArg(clt_store_hits_kernel, 0, sizeof(cl_mem), &phits);
+		error |= clSetKernelArg(clt_store_hits_kernel, 1, sizeof(cl_mem), &ph);
+		error |= clSetKernelArg(clt_store_hits_kernel, 2, sizeof(cl_int), &p.cur_pixel);
+		error |= clSetKernelArg(clt_store_hits_kernel, 3, sizeof(cl_int), &p.last_pixel);
+		error |= clSetKernelArg(clt_store_hits_kernel, 4, sizeof(cl_int), &p.width);
+		error |= clSetKernelArg(clt_store_hits_kernel, 5, sizeof(cl_double16), &p.view2model);
+		error |= clSetKernelArg(clt_store_hits_kernel, 6, sizeof(cl_double), &p.cell_width);
+		error |= clSetKernelArg(clt_store_hits_kernel, 7, sizeof(cl_double), &p.cell_height);
+		error |= clSetKernelArg(clt_store_hits_kernel, 8, sizeof(cl_double), &p.aspect);
+		error |= clSetKernelArg(clt_store_hits_kernel, 9, sizeof(cl_uint), &clt_db_nprims);
+		error |= clSetKernelArg(clt_store_hits_kernel, 10, sizeof(cl_mem), &clt_db_ids);
+		error |= clSetKernelArg(clt_store_hits_kernel, 11, sizeof(cl_mem), &clt_db_bvh);
+		error |= clSetKernelArg(clt_store_hits_kernel, 12, sizeof(cl_mem), &clt_db_indexes);
+		error |= clSetKernelArg(clt_store_hits_kernel, 13, sizeof(cl_mem), &clt_db_prims);
+		if (error != CL_SUCCESS) bu_bomb("failed to set OpenCL kernel arguments");
+		error = clEnqueueNDRangeKernel(clt_queue, clt_store_hits_kernel, 1, NULL, &npix,
+			NULL, 0, NULL, NULL);
+		bu_semaphore_release(clt_semaphore);
+            } else {
+		phits = NULL;
+            }
 
 	    bu_semaphore_acquire(clt_semaphore);
 	    error = clSetKernelArg(clt_shade_hits_kernel, 0, sizeof(cl_mem), &ppixels);

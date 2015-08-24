@@ -489,9 +489,9 @@ store_hits(global struct hit *hits, global uint *h,
         int ret = shootray(&hitp, r_pt, r_dir, nprims, ids, nodes, indexes, prims);
 
         // If we hit something, then sort the hits on demand.
-        for (uint i=h[id]; i!=h[id+1]; i++) {
+        for (uint i=h[id]; i<h[id+1]; i++) {
             // Sort the list so that HitList is in order wrt [i].
-            for (uint n = i; n!=h[id+1]; n++) {
+            for (uint n = i; n<h[id+1]; n++) {
                 if (hits[n].hit_dist < hits[i].hit_dist) {
                     struct hit tmp;
                     // Swap.
@@ -515,6 +515,49 @@ double3 MAT4X3PNT(const double16 m, double3 i) {
     o.y = dot(m.s4567, j);
     o.z = dot(m.s98ab, j);
     return o;
+}
+
+inline double3
+shade(const double3 r_pt, const double3 r_dir, global struct hit *hitp, const double3 haze, const double airdensity, const double3 lt_pos,
+      const uint nprims, global int *ids, global uint *indexes, global uchar *prims, global struct region *regions)
+
+{
+    double3 color;
+    double3 normal;
+    const uint idx = hitp->hit_index;
+
+    if (hitp->hit_dist < 0.0) {
+	/* Eye inside solid, orthoview */
+	normal = -r_dir;
+    } else {
+	if (idx<nprims) {
+	    norm(hitp, r_pt, r_dir, ids[idx], prims + indexes[idx]);
+	    normal = hitp->hit_normal;
+	}
+    }
+
+    /*
+     * Diffuse reflectance from each light source
+     */
+    const double3 to_light = lt_pos - hitp->hit_point;
+
+    struct shade_work sw;
+    sw.sw_color = 1.0;
+    sw.sw_basecolor = 1.0;
+
+    viewshade(&sw, r_dir, normal, to_light, &regions[idx]);
+    color = sw.sw_color;
+
+    /*
+     * e ^(-density * distance)
+     */
+    if (!ZERO(airdensity)) {
+	double g;
+	double f = exp(-hitp->hit_dist * airdensity);
+	g = (1.0 - f);
+	color = color * f + haze * g;
+    }
+    return color;
 }
 
 __kernel void
@@ -548,59 +591,34 @@ shade_hits(global uchar *pixels, const uchar3 o, global struct hit *hits, global
 
     a_color = 0.0;
     if (h[id] != h[id+1]) {
-        for (int k=h[id+1]; k>h[id]; k--) {
-            global struct hit *hitp;
-            double3 color;
-            hitp = hits+k;
+	if (lightmodel == 0) {
+	    for (long k=h[id]; k<=h[id+1]; k++) {
+		global struct hit *hitp;
+		hitp = hits+k;
 
-            if (hitp->hit_dist < 0.0)
-                continue;
+		if (hitp->hit_dist < 0.0)
+		    continue;
 
-            double3 normal;
-            const uint idx = hitp->hit_index;
+		a_color = shade(r_pt, r_dir, hitp, haze, airdensity, lt_pos, nprims, ids, indexes, prims, regions);
+		hit_dist = hitp->hit_dist;
+		break;
+	    }
+	} else {
+	    for (long k=h[id+1]-1; k>=h[id]; k--) {
+		global struct hit *hitp;
+		double3 color;
+		hitp = hits+k;
 
-            if (hitp->hit_dist < 0.0) {
-                /* Eye inside solid, orthoview */
-                normal = -r_dir;
-            } else {
-                if (idx<nprims) {
-                    norm(hitp, r_pt, r_dir, ids[idx], prims + indexes[idx]);
-                    normal = hitp->hit_normal;
-                }
-            }
+		if (hitp->hit_dist < 0.0)
+		    break;
 
-            /*
-             * Diffuse reflectance from each light source
-             */
-            const double3 to_light = lt_pos - hitp->hit_point;
+		color = shade(r_pt, r_dir, hitp, haze, airdensity, lt_pos, nprims, ids, indexes, prims, regions);
+		const double R = 1.0/3.0;
+		a_color = a_color*(DOUBLE_C(1.0)-R) + color*R;
+		hit_dist = hitp->hit_dist;
+	    }
+	}        
 
-            struct shade_work sw;
-            sw.sw_color = 1.0;
-            sw.sw_basecolor = 1.0;
-
-            viewshade(&sw, r_dir, normal, to_light, &regions[idx]);
-            color = sw.sw_color;
-
-            /*
-             * e ^(-density * distance)
-             */
-            if (!ZERO(airdensity)) {
-                double g;
-                double f = exp(-hitp->hit_dist * airdensity);
-                g = (1.0 - f);
-                color = color * f + haze * g;
-            }
-
-            if (lightmodel == 0) {
-                a_color = color;
-                hit_dist = hitp->hit_dist;
-                break;
-            } else {
-                const double R = 1.0/16.0;
-                a_color = a_color*(DOUBLE_C(1.0)-R) + color*R;
-            }
-        }
-        
         double3 t_color;
 
         /*
