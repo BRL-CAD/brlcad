@@ -225,14 +225,6 @@ struct shade_work {
 #define SH_NONE 	0
 #define SH_PHONG	1
 
-/**
- * Container for material information
- */
-struct mater_info {
-    double color[3];		/**< @brief explicit color:  0..1  */
-    uchar color_valid;		/**< @brief non-0 ==> ma_color is non-default */
-};
-
 struct phong_specific {
     double wgt_specular;
     double wgt_diffuse;
@@ -243,7 +235,7 @@ struct phong_specific {
  * The region structure.
  */
 struct region {
-    struct mater_info mater;
+    double color[3];		/**< @brief explicit color:  0..1  */
     int mf_id;
     union {
 	struct phong_specific phg_spec;
@@ -284,8 +276,7 @@ phong_render(struct shade_work *swp, double3 r_dir, double3 normal, double3 to_l
 inline void
 viewshade(struct shade_work *swp, const double3 r_dir, const double3 normal, const double3 to_light, global const struct region *rp)
 {
-    if (rp->mater.color_valid)
-	swp->sw_color = vload3(0, rp->mater.color);
+    swp->sw_color = vload3(0, rp->color);
     swp->sw_basecolor = swp->sw_color;
 
     switch (rp->mf_id) {
@@ -591,7 +582,7 @@ shade_hits(global uchar *pixels, const uchar3 o, global struct hit *hits, global
     a_color = 0.0;
     if (h[id] != h[id+1]) {
 	if (lightmodel == 0) {
-	    for (long k=h[id]; k<=h[id+1]; k++) {
+	    for (long k=h[id]; k<h[id+1]; k++) {
 		global struct hit *hitp;
 		hitp = hits+k;
 
@@ -612,7 +603,7 @@ shade_hits(global uchar *pixels, const uchar3 o, global struct hit *hits, global
 		    break;
 
 		color = shade(r_pt, r_dir, hitp, haze, airdensity, lt_pos, nprims, ids, indexes, prims, regions);
-		const double R = 1.0/3.0;
+		const double R = 1.0/16.0;
 		a_color = a_color*(DOUBLE_C(1.0)-R) + color*R;
 		hit_dist = hitp->hit_dist;
 	    }

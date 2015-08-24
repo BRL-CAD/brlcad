@@ -659,13 +659,6 @@ clt_solid_pack(struct bu_pool *pool, struct soltab *stp)
 #define SH_NONE 	0
 #define SH_PHONG	1
 
-/**
- * Container for material information
- */
-struct clt_mater_info {
-    cl_double color[3];		/**< @brief explicit color:  0..1  */
-    cl_uchar color_valid;	/**< @brief non-0 ==> ma_color is non-default */
-};
 
 struct clt_phong_specific {
     cl_double wgt_specular;
@@ -677,7 +670,7 @@ struct clt_phong_specific {
  * The region structure.
  */
 struct clt_region {
-    struct clt_mater_info mater;
+    cl_double color[3];		/**< @brief explicit color:  0..1  */
     cl_int mf_id;
     union {
 	struct clt_phong_specific phg_spec;
@@ -704,45 +697,43 @@ clt_db_store(size_t count, struct soltab *solids[])
 	for (i=0; i < count; i++) {
 	    const struct soltab *stp = solids[i];
 	    const struct region **rpp;
-	    struct clt_mater_info mater = {{1.0, 0.0, 0.0}, 0};
+	    cl_double unset[3] = {1.0, 1.0, 1.0};
 
-            regions[i].mater = mater;
+	    VMOVE(regions[i].color, unset);
             regions[i].mf_id = SH_PHONG;
 
             ids[i] = stp->st_id;
             for (BU_PTBL_FOR(rpp, (const struct region **), &stp->st_regions)) {
+		const struct mfuncs *mfp;
 		RT_CK_REGION(*rpp);
 
-                if ((*rpp)->reg_mater.ma_color_valid) {
-                    const struct mfuncs *mfp;
-                    VMOVE(regions[i].mater.color, (*rpp)->reg_mater.ma_color);
-                    regions[i].mater.color_valid = 1;
-                    regions[i].mf_id = SH_PHONG;
+		if ((*rpp)->reg_mater.ma_color_valid) {
+		    VMOVE(regions[i].color, (*rpp)->reg_mater.ma_color);
+		    regions[i].mf_id = SH_PHONG;
+		}
 
-                    mfp = (const struct mfuncs*)(*rpp)->reg_mfuncs;
-                    if (mfp) {
-                        if (bu_strcmp(mfp->mf_name, "default") ||
-                            bu_strcmp(mfp->mf_name, "phong") ||
-                            bu_strcmp(mfp->mf_name, "plastic") ||
-                            bu_strcmp(mfp->mf_name, "mirror") ||
-                            bu_strcmp(mfp->mf_name, "glass")) {
-                            struct phong_specific *src =
-                                (struct phong_specific*)(*rpp)->reg_udata;
-                            struct clt_phong_specific *dst =
-                                &regions[i].udata.phg_spec;
+		mfp = (const struct mfuncs*)(*rpp)->reg_mfuncs;
+		if (mfp) {
+		    if (bu_strcmp(mfp->mf_name, "default") ||
+			bu_strcmp(mfp->mf_name, "phong") ||
+			bu_strcmp(mfp->mf_name, "plastic") ||
+			bu_strcmp(mfp->mf_name, "mirror") ||
+			bu_strcmp(mfp->mf_name, "glass")) {
+			struct phong_specific *src =
+			    (struct phong_specific*)(*rpp)->reg_udata;
+			struct clt_phong_specific *dst =
+			    &regions[i].udata.phg_spec;
 
-                            dst->shine = src->shine;
-                            dst->wgt_diffuse = src->wgt_diffuse;
-                            dst->wgt_specular = src->wgt_specular;
+			dst->shine = src->shine;
+			dst->wgt_diffuse = src->wgt_diffuse;
+			dst->wgt_specular = src->wgt_specular;
 
-                            regions[i].mf_id = SH_PHONG;
-                        } else {
-                            bu_log("unknown shader: %s\n", mfp->mf_name);
-                        }
-                    }
-                    break;
-                }
-
+			regions[i].mf_id = SH_PHONG;
+		    } else {
+			bu_log("unknown shader: %s\n", mfp->mf_name);
+		    }
+		}
+		break;
 	    }
 	}
         fclose(fp);

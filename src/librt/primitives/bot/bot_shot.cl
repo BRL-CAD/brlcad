@@ -60,10 +60,10 @@ int bot_shot(global struct hit **res, const double3 r_pt, double3 r_dir, const u
             if (node->n_primitives > 0) {
                 /* Intersect ray with primitives in leaf BVH node */
                 for (uint i=0; i<node->n_primitives; i++) {
-                    const uint idx = node->u.primitives_offset + i;
-                    const double3 V0 = vload3(0, tri[idx].v0);
-                    const double3 V1 = vload3(0, tri[idx].v1);
-                    const double3 V2 = vload3(0, tri[idx].v2);
+                    const uint id = node->u.primitives_offset + i;
+                    const double3 V0 = vload3(0, tri[id].v0);
+                    const double3 V1 = vload3(0, tri[id].v1);
+                    const double3 V2 = vload3(0, tri[id].v2);
 
                     // Find vectors for two edges sharing V0.
                     const double3 e1 = V1-V0;
@@ -120,7 +120,7 @@ int bot_shot(global struct hit **res, const double3 r_pt, double3 r_dir, const u
                     // Triangle Intersected, append it in the list.
                     if (hit_count < 0xFF) {
                         hits[hit_count].hit_dist = t;
-                        hits[hit_count].hit_surfno = idx;     // HACK
+                        hits[hit_count].hit_surfno = id;     // HACK
                         hits[hit_count].hit_vpriv = mix;
                         hit_count++;
                     }
