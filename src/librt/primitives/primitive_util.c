@@ -704,54 +704,46 @@ clt_db_store(size_t count, struct soltab *solids[])
 	for (i=0; i < count; i++) {
 	    const struct soltab *stp = solids[i];
 	    const struct region **rpp;
-	    struct clt_mater_info mater = {{1.0, 0.0, 0.0}, 1};
-int j;
+	    struct clt_mater_info mater = {{1.0, 0.0, 0.0}, 0};
 
             regions[i].mater = mater;
-            regions[i].mf_id = SH_NONE;
+            regions[i].mf_id = SH_PHONG;
 
             ids[i] = stp->st_id;
-j=0;
-            for (rpp = (const struct region**)BU_PTBL_LASTADDR(&stp->st_regions); rpp>=(const struct region**)BU_PTBL_BASEADDR(&stp->st_regions); rpp--) {
-		    const struct mfuncs *mfp;
-union tree *treetop;
+            for (BU_PTBL_FOR(rpp, (const struct region **), &stp->st_regions)) {
 		RT_CK_REGION(*rpp);
-if (stp->st_id == ID_REC)
-{
-bu_log("#%d: %f, %f, %f, (%d,%s) (%d,%d), %d\n", stp->st_bit, (*rpp)->reg_mater.ma_color[0],(*rpp)->reg_mater.ma_color[1],(*rpp)->reg_mater.ma_color[2],
-(*rpp)->reg_mater.ma_color_valid, (*rpp)->reg_name, (*rpp)->reg_all_unions, (*rpp)->reg_regionid, ((*rpp)->reg_treetop->tr_a.tu_op));
 
-}
-treetop = (*rpp)->reg_treetop;
-if (treetop->tr_a.tu_op == OP_SOLID && treetop->tr_a.tu_stp == stp && j==0) {
-			VMOVE(regions[i].mater.color, (*rpp)->reg_mater.ma_color);
-			regions[i].mater.color_valid = 1;
-			regions[i].mf_id = SH_PHONG;
-		    mfp = (const struct mfuncs*)(*rpp)->reg_mfuncs;
-		    BU_ASSERT(mfp != NULL);
+                if ((*rpp)->reg_mater.ma_color_valid) {
+                    const struct mfuncs *mfp;
+                    VMOVE(regions[i].mater.color, (*rpp)->reg_mater.ma_color);
+                    regions[i].mater.color_valid = 1;
+                    regions[i].mf_id = SH_PHONG;
 
-		    if (bu_strcmp(mfp->mf_name, "default") ||
-			    bu_strcmp(mfp->mf_name, "phong") ||
-			    bu_strcmp(mfp->mf_name, "plastic") ||
-			    bu_strcmp(mfp->mf_name, "mirror") ||
-			    bu_strcmp(mfp->mf_name, "glass")) {
-			struct phong_specific *src =
-			    (struct phong_specific*)(*rpp)->reg_udata;
-			struct clt_phong_specific *dst =
-			    &regions[i].udata.phg_spec;
+                    mfp = (const struct mfuncs*)(*rpp)->reg_mfuncs;
+                    if (mfp) {
+                        if (bu_strcmp(mfp->mf_name, "default") ||
+                            bu_strcmp(mfp->mf_name, "phong") ||
+                            bu_strcmp(mfp->mf_name, "plastic") ||
+                            bu_strcmp(mfp->mf_name, "mirror") ||
+                            bu_strcmp(mfp->mf_name, "glass")) {
+                            struct phong_specific *src =
+                                (struct phong_specific*)(*rpp)->reg_udata;
+                            struct clt_phong_specific *dst =
+                                &regions[i].udata.phg_spec;
 
-			dst->shine = src->shine;
-			dst->wgt_diffuse = src->wgt_diffuse;
-			dst->wgt_specular = src->wgt_specular;
+                            dst->shine = src->shine;
+                            dst->wgt_diffuse = src->wgt_diffuse;
+                            dst->wgt_specular = src->wgt_specular;
 
-			regions[i].mf_id = SH_PHONG;
-		    } else {
-			bu_log("unknown shader: %s\n", mfp->mf_name);
-		    }
-			j++;
-}
+                            regions[i].mf_id = SH_PHONG;
+                        } else {
+                            bu_log("unknown shader: %s\n", mfp->mf_name);
+                        }
+                    }
+                    break;
+                }
+
 	    }
-bu_log("---\n");
 	}
         fclose(fp);
 
