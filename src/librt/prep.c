@@ -456,11 +456,9 @@ clt_prep(struct rt_i *rtip)
 
     RT_CK_RTI(rtip);
 
-    clt_init();
-
     n_primitives = rtip->nsolids+1;
     primitives = (struct soltab **)bu_calloc(n_primitives,
-        sizeof(struct soltab *), "clt_prep: initial list alloc");
+        sizeof(struct soltab *), "primitives");
 
     i = 0;
     RT_VISIT_ALL_SOLTABS_START(stp, rtip) {
@@ -473,7 +471,6 @@ clt_prep(struct rt_i *rtip)
     } RT_VISIT_ALL_SOLTABS_END;
 
     n_primitives = i;
-    bu_log("nprimitives: %d of %d\n", n_primitives, rtip->nsolids);
 
     if (n_primitives != 0) {
         /* Build BVH tree for primitives */
@@ -483,12 +480,12 @@ clt_prep(struct rt_i *rtip)
 	fastf_t *centroids;
 	fastf_t *bounds;
 
-	centroids = (fastf_t*)bu_calloc(n_primitives, sizeof(fastf_t)*3, "clt_prep");
+	centroids = (fastf_t*)bu_calloc(n_primitives, sizeof(fastf_t)*3, "centroids");
 	for (i=0; i<n_primitives; i++) {
 	    const struct soltab *primitive = primitives[i];
 	    VMOVE(&centroids[i*3], primitive->st_center);
 	}
-	bounds = (fastf_t*)bu_calloc(n_primitives, sizeof(fastf_t)*6, "clt_prep");
+	bounds = (fastf_t*)bu_calloc(n_primitives, sizeof(fastf_t)*6, "bounds");
 	for (i=0; i<n_primitives; i++) {
 	    const struct soltab *primitive = primitives[i];
 	    VMOVE(&bounds[i*6+0], primitive->st_min);
@@ -500,28 +497,28 @@ clt_prep(struct rt_i *rtip)
 	clt_linear_bvh_create(n_primitives, &nodes, &ordered_prims, centroids, bounds,
 			      &total_nodes);
 
-	bu_free(bounds, "clt_prep");
-	bu_free(centroids, "clt_prep");
+	bu_free(bounds, "bounds");
+	bu_free(centroids, "centroids");
 
         clt_db_store_bvh(total_nodes, nodes);
-	bu_free(nodes, "clt_prep");
+	bu_free(nodes, "nodes");
 
 	if (ordered_prims) {
 	    struct soltab **ordered_primitives;
 
 	    ordered_primitives = (struct soltab **)bu_calloc(n_primitives,
 							     sizeof(struct soltab *),
-							     "clt_prep");
+							     "ordered primitives");
 	    for (i=0; i<n_primitives; i++) {
 		ordered_primitives[i] = primitives[ordered_prims[i]];
 	    }
-	    bu_free(ordered_prims, "clt_prep");
-	    bu_free(primitives, "clt_prep");
+	    bu_free(ordered_prims, "ordered prims");
+	    bu_free(primitives, "primitives");
 	    primitives = ordered_primitives;
 	}
 
 	clt_db_store(n_primitives, primitives);
-	bu_free(primitives, "clt_prep");
+	bu_free(primitives, "ordered primitives");
     }
 }
 #endif

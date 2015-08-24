@@ -2947,9 +2947,11 @@ clt_linear_bvh_create(long n_primitives, struct clt_linear_bvh_node **nodes_p,
         flatten_bvh_tree(&lnodes_created, nodes, nodes_created, root, 0);
 	bu_pool_delete(pool);
 
-	bu_log("HLBVH: %ld nodes, %ld primitives (%.2f MB)\n",
-	       nodes_created, n_primitives,
-	       (double)(sizeof(*nodes) * nodes_created) / (1024.0 * 1024.0));
+	if (RT_G_DEBUG&DEBUG_CUT) {
+	    bu_log("HLBVH: %ld nodes, %ld primitives (%.2f KB)\n",
+		   nodes_created, n_primitives,
+		   (double)(sizeof(*nodes) * nodes_created) / (1024.0));
+	}
 
 	if (RT_G_DEBUG&DEBUG_CUT) {
 	    long i, j;

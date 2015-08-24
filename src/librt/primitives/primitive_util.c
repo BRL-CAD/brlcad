@@ -607,8 +607,6 @@ clt_init(void)
         clt_queue = clCreateCommandQueue(clt_context, clt_device, 0, &error);
         if (error != CL_SUCCESS) bu_bomb("failed to create an OpenCL command queue");
 
-        bu_log("Compiling OpenCL kernels...");
-        
         clt_sh_program = clt_get_program(clt_context, clt_device, sizeof(main_files)/sizeof(*main_files), main_files, "-I. -DRT_SINGLE_HIT=1");
         clt_mh_program = clt_get_program(clt_context, clt_device, sizeof(main_files)/sizeof(*main_files), main_files, "-I. -DRT_SINGLE_HIT=0");
 
@@ -621,8 +619,6 @@ clt_init(void)
         if (error != CL_SUCCESS) bu_bomb("failed to create an OpenCL kernel");
         clt_shade_hits_kernel = clCreateKernel(clt_mh_program, "shade_hits", &error);
         if (error != CL_SUCCESS) bu_bomb("failed to create an OpenCL kernel");
-
-        bu_log("  done!\n");
 
 
 	clt_rand_halftab = clCreateBuffer(clt_context, CL_MEM_READ_ONLY|CL_MEM_HOST_WRITE_ONLY|CL_MEM_COPY_HOST_PTR, sizeof(bn_rand_halftab), bn_rand_halftab, &error);
@@ -688,10 +684,7 @@ clt_db_store(size_t count, struct soltab *solids[])
         cl_uint *indexes;
         struct bu_pool *pool;
         size_t i;
-        FILE *fp;
         
-        fp=fopen("shaders.txt", "w");
-
 	ids = (cl_int*)bu_calloc(count, sizeof(cl_int), "ids");
 	regions = (struct clt_region*)bu_calloc(count, sizeof(struct clt_region), "regions");
 	for (i=0; i < count; i++) {
@@ -730,13 +723,12 @@ clt_db_store(size_t count, struct soltab *solids[])
 
 			regions[i].mf_id = SH_PHONG;
 		    } else {
-			bu_log("unknown shader: %s\n", mfp->mf_name);
+			bu_log("Unknown OCL shader: %s\n", mfp->mf_name);
 		    }
 		}
 		break;
 	    }
 	}
-        fclose(fp);
 
 	indexes = (cl_uint*)bu_calloc(count+1, sizeof(cl_uint), "indexes");
 	indexes[0] = 0;
@@ -749,7 +741,8 @@ clt_db_store(size_t count, struct soltab *solids[])
             /*bu_log("\t(%ld bytes)\n",size);*/
 	    indexes[i] = indexes[i-1] + size;
 	}
-        bu_log("total:\t%d primitives (%f MB)\n", count, indexes[count] / (1024.0 * 1024.0));
+        bu_log("OCLDB:\t%ld primitives\n\t%.2f KB indexes, %.2f KB ids, %.2f KB prims, %.2f KB regions\n", count,
+		(sizeof(cl_uint)*(count+1))/1024.0, (sizeof(cl_int)*count)/1024.0, indexes[count]/1024.0, (sizeof(struct clt_region)*count)/1024.0);
 
 	if (indexes[count] != 0) {
 	    clt_db_prims = clCreateBuffer(clt_context, CL_MEM_READ_ONLY|CL_MEM_HOST_WRITE_ONLY|CL_MEM_COPY_HOST_PTR, indexes[count], pool->block, &error);
@@ -764,9 +757,9 @@ clt_db_store(size_t count, struct soltab *solids[])
 	clt_db_indexes = clCreateBuffer(clt_context, CL_MEM_READ_ONLY|CL_MEM_HOST_WRITE_ONLY|CL_MEM_COPY_HOST_PTR, sizeof(cl_uint)*(count+1), indexes, &error);
 	if (error != CL_SUCCESS) bu_bomb("failed to create OpenCL indexes buffer");
 
-	bu_free(indexes, "failed bu_free() in clt_db_store()");
-	bu_free(ids, "failed bu_free() in clt_db_store()");
-	bu_free(regions, "failed bu_free() in clt_db_store()");
+	bu_free(indexes, "indexes");
+	bu_free(ids, "ids");
+	bu_free(regions, "regions");
     }
 
     clt_db_nprims = count;
@@ -777,6 +770,7 @@ clt_db_store_bvh(size_t count, struct clt_linear_bvh_node *nodes)
 {
     cl_int error;
 
+    bu_log("OCLBVH:\t%ld nodes\n\t%.2f KB total\n", (sizeof(struct clt_linear_bvh_node)*count)/1024.0);
     clt_db_bvh = clCreateBuffer(clt_context, CL_MEM_READ_ONLY|CL_MEM_HOST_WRITE_ONLY|CL_MEM_COPY_HOST_PTR, sizeof(struct clt_linear_bvh_node)*count, nodes, &error);
     if (error != CL_SUCCESS) bu_bomb("failed to create OpenCL bvh buffer");
 }
@@ -999,8 +993,7 @@ clt_frame(void *pixels, uint8_t o[3], int cur_pixel, int last_pixel,
 	    }
 	    break;
     }
-    clEnqueueReadBuffer(clt_queue, ppixels, CL_TRUE, 0, sz_pixels, pixels, 0,
-                        NULL, NULL);
+    clEnqueueReadBuffer(clt_queue, ppixels, CL_TRUE, 0, sz_pixels, pixels, 0, NULL, NULL);
     clReleaseMemObject(ppixels);
 }
 #endif
