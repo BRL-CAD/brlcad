@@ -515,17 +515,18 @@ clt_read_code(const char *filename, size_t *length)
 cl_program
 clt_get_program(cl_context context, cl_device_id device, cl_uint count, const char *filenames[], const char *options)
 {
-    cl_int error;
-    cl_program program;
-    cl_program *programs;
     const char *pc_string;
     size_t pc_length;
+    cl_program program;
+    cl_program *programs;
+    cl_int error;
     cl_uint i;
 
-    programs = (cl_program*)bu_calloc(count, sizeof(cl_program), "program");
+    programs = (cl_program*)bu_calloc(count, sizeof(cl_program), "programs");
     for (i=0; i<count; i++) {
         pc_string = clt_read_code(filenames[i], &pc_length);
         programs[i] = clCreateProgramWithSource(context, 1, &pc_string, &pc_length, &error);
+        bu_free((char*)pc_string, "code");
         if (error != CL_SUCCESS) bu_bomb("failed to create OpenCL program");
         error = clCompileProgram(programs[i], 1, &device, options, 0, NULL, NULL, NULL, NULL);
         if (error != CL_SUCCESS) {
@@ -539,10 +540,15 @@ clt_get_program(cl_context context, cl_device_id device, cl_uint count, const ch
             bu_bomb("failed to compile OpenCL program");
         }
     }
+
     program = clLinkProgram(context, 1, &device, " ", count, programs, NULL, NULL, &error);
     if (error != CL_SUCCESS) bu_bomb("failed to link OpenCL program");
 
-    bu_free(programs, "failed bu_free() in clt_get_program()");
+    for (i=0; i<count; i++) {
+        clReleaseProgram(programs[i]);
+    }
+
+    bu_free(programs, "programs");
     return program;
 }
 
