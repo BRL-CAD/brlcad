@@ -516,24 +516,18 @@ cl_program
 clt_get_program(cl_context context, cl_device_id device, cl_uint count, const char *filenames[], const char *options)
 {
     cl_int error;
-    cl_program header;
-    const char *headername = "common.cl";
     cl_program program;
     cl_program *programs;
     const char *pc_string;
     size_t pc_length;
     cl_uint i;
 
-    pc_string = clt_read_code(headername, &pc_length);
-    header = clCreateProgramWithSource(context, 1, &pc_string, &pc_length, &error);
-    if (error != CL_SUCCESS) bu_bomb("failed to create OpenCL program");
-
     programs = (cl_program*)bu_calloc(count, sizeof(cl_program), "program");
     for (i=0; i<count; i++) {
         pc_string = clt_read_code(filenames[i], &pc_length);
         programs[i] = clCreateProgramWithSource(context, 1, &pc_string, &pc_length, &error);
         if (error != CL_SUCCESS) bu_bomb("failed to create OpenCL program");
-        error = clCompileProgram(programs[i], 1, &device, options, 1, &header, &headername, NULL, NULL);
+        error = clCompileProgram(programs[i], 1, &device, options, 0, NULL, NULL, NULL, NULL);
         if (error != CL_SUCCESS) {
             size_t log_size;
             char *log_data;
@@ -545,7 +539,7 @@ clt_get_program(cl_context context, cl_device_id device, cl_uint count, const ch
             bu_bomb("failed to compile OpenCL program");
         }
     }
-    program = clLinkProgram(context, 1, &device, options, count, programs, NULL, NULL, &error);
+    program = clLinkProgram(context, 1, &device, " ", count, programs, NULL, NULL, &error);
     if (error != CL_SUCCESS) bu_bomb("failed to link OpenCL program");
 
     bu_free(programs, "failed bu_free() in clt_get_program()");
@@ -609,8 +603,8 @@ clt_init(void)
 
         bu_log("Compiling OpenCL kernels...");
         
-        clt_sh_program = clt_get_program(clt_context, clt_device, sizeof(main_files)/sizeof(*main_files), main_files, "-DRT_SINGLE_HIT=1");
-        clt_mh_program = clt_get_program(clt_context, clt_device, sizeof(main_files)/sizeof(*main_files), main_files, "-DRT_SINGLE_HIT=0");
+        clt_sh_program = clt_get_program(clt_context, clt_device, sizeof(main_files)/sizeof(*main_files), main_files, "-I. -DRT_SINGLE_HIT=1");
+        clt_mh_program = clt_get_program(clt_context, clt_device, sizeof(main_files)/sizeof(*main_files), main_files, "-I. -DRT_SINGLE_HIT=0");
 
         clt_frame_kernel = clCreateKernel(clt_sh_program, "do_pixel", &error);
         if (error != CL_SUCCESS) bu_bomb("failed to create an OpenCL kernel");
@@ -704,42 +698,44 @@ clt_db_store(size_t count, struct soltab *solids[])
 	for (i=0; i < count; i++) {
 	    const struct soltab *stp = solids[i];
 	    const struct region **rpp;
-	    struct clt_mater_info mater = {{1.0, 0.0, 0.0}, 0};
+	    struct clt_mater_info mater = {{1.0, 0.0, 0.0}, 1};
 
             regions[i].mater = mater;
-            regions[i].mf_id = SH_NONE;
+            regions[i].mf_id = SH_PHONG;
 
             ids[i] = stp->st_id;
-	    for (BU_PTBL_FOR(rpp, (const struct region**), &stp->st_regions)) {
-		const struct mfuncs *mfp;
+            for (BU_PTBL_FOR(rpp, (const struct region **), &stp->st_regions)) {
 		RT_CK_REGION(*rpp);
 
-		VMOVE(regions[i].mater.color, (*rpp)->reg_mater.ma_color);
-		regions[i].mater.color_valid = (*rpp)->reg_mater.ma_color_valid;
-                regions[i].mf_id = SH_NONE;
+                if ((*rpp)->reg_mater.ma_color_valid) {
+                    const struct mfuncs *mfp;
+                    VMOVE(regions[i].mater.color, (*rpp)->reg_mater.ma_color);
+                    regions[i].mater.color_valid = 1;
+                    regions[i].mf_id = SH_PHONG;
 
-		mfp = (const struct mfuncs*)(*rpp)->reg_mfuncs;
-                if (mfp) {
-                    if (bu_strcmp(mfp->mf_name, "default") ||
-                        bu_strcmp(mfp->mf_name, "phong") ||
-                        bu_strcmp(mfp->mf_name, "plastic") ||
-                        bu_strcmp(mfp->mf_name, "mirror") ||
-                        bu_strcmp(mfp->mf_name, "glass")) {
-                        struct phong_specific *src =
-                            (struct phong_specific*)(*rpp)->reg_udata;
-                        struct clt_phong_specific *dst =
-                            &regions[i].udata.phg_spec;
+                    mfp = (const struct mfuncs*)(*rpp)->reg_mfuncs;
+                    if (mfp) {
+                        if (bu_strcmp(mfp->mf_name, "default") ||
+                            bu_strcmp(mfp->mf_name, "phong") ||
+                            bu_strcmp(mfp->mf_name, "plastic") ||
+                            bu_strcmp(mfp->mf_name, "mirror") ||
+                            bu_strcmp(mfp->mf_name, "glass")) {
+                            struct phong_specific *src =
+                                (struct phong_specific*)(*rpp)->reg_udata;
+                            struct clt_phong_specific *dst =
+                                &regions[i].udata.phg_spec;
 
-                        dst->shine = src->shine;
-                        dst->wgt_diffuse = src->wgt_diffuse;
-                        dst->wgt_specular = src->wgt_specular;
+                            dst->shine = src->shine;
+                            dst->wgt_diffuse = src->wgt_diffuse;
+                            dst->wgt_specular = src->wgt_specular;
 
-                        regions[i].mf_id = SH_PHONG;
-                    } else {
-                        bu_log("unknown shader: %s\n", mfp->mf_name);
+                            regions[i].mf_id = SH_PHONG;
+                        } else {
+                            bu_log("unknown shader: %s\n", mfp->mf_name);
+                        }
                     }
                 }
-                break;
+
 	    }
 	}
         fclose(fp);

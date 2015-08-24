@@ -8,14 +8,75 @@ constant double3 ambient_color = {1, 1, 1};     /* Ambient white light */
 constant double AmbientIntensity = 0.4;
 
 
-extern inline double3 MAT3X3VEC(global const double *m, double3 i);
-extern inline double3 MAT4X3VEC(global const double *m, double3 i);
+double3 MAT3X3VEC(global const double *m, double3 i)
+{
+    double3 o;
+    o.x = dot(vload3(0, &m[0]), i);
+    o.y = dot(vload3(0, &m[4]), i);
+    o.z = dot(vload3(0, &m[8]), i);
+    return o;
+}
 
-extern inline double3 bu_rand0to1(const uint id, global float *bnrandhalftab, const uint randhalftabsize);
-extern inline ulong bu_cv_htond(const ulong d);
+double3 MAT4X3VEC(global const double *m, double3 i)
+{
+    double3 o;
+    o = MAT3X3VEC(m, i) * (DOUBLE_C(1.0)/m[15]);
+    return o;
+}
 
-extern inline int rt_in_rpp(const double3 pt, const double3 invdir,
-                            global const double *min, global const double *max);
+
+double3
+bu_rand0to1(const uint id, global float *bnrandhalftab, const uint randhalftabsize)
+{
+    double3 ret;
+    ret.x = (bnrandhalftab[(id*3+0) % randhalftabsize]+0.5);
+    ret.y = (bnrandhalftab[(id*3+1) % randhalftabsize]+0.5);
+    ret.z = (bnrandhalftab[(id*3+2) % randhalftabsize]+0.5);
+    return ret;
+}
+
+ulong
+bu_cv_htond(const ulong d)
+{
+    return ((d & 0xFF00000000000000UL) >> 56)
+	 | ((d & 0x00FF000000000000UL) >> 40)
+	 | ((d & 0x0000FF0000000000UL) >> 24)
+	 | ((d & 0x000000FF00000000UL) >>  8)
+	 | ((d & 0x00000000FF000000UL) <<  8)
+	 | ((d & 0x0000000000FF0000UL) << 24)
+	 | ((d & 0x000000000000FF00UL) << 40)
+	 | ((d & 0x00000000000000FFUL) << 56);
+}
+
+
+int
+rt_in_rpp(const double3 pt,
+	  const double3 invdir,
+	  global const double *min,
+	  global const double *max)
+{
+    /* Start with infinite ray, and trim it down */
+    double x0 = (min[0] - pt.x) * invdir.x;
+    double y0 = (min[1] - pt.y) * invdir.y;
+    double z0 = (min[2] - pt.z) * invdir.z;
+    double x1 = (max[0] - pt.x) * invdir.x;
+    double y1 = (max[1] - pt.y) * invdir.y;
+    double z1 = (max[2] - pt.z) * invdir.z;
+
+    /*
+     * Direction cosines along this axis is NEAR 0,
+     * which implies that the ray is perpendicular to the axis,
+     * so merely check position against the boundaries.
+     */
+    double rmin = -MAX_FASTF;
+    double rmax =  MAX_FASTF;
+
+    rmin = fmax(rmin, fmax(fmax(fmin(x0, x1), fmin(y0, y1)), fmin(z0, z1)));
+    rmax = fmin(rmax, fmin(fmin(fmax(x0, x1), fmax(y0, y1)), fmax(z0, z1)));
+
+    /* If equal, RPP is actually a plane */
+    return (rmin <= rmax);
+}
 
 
 /*
@@ -199,7 +260,6 @@ void
 phong_render(struct shade_work *swp, double3 r_dir, double3 normal, double3 to_light, global const struct phong_specific *sp)
 {
     double3 matcolor;
-    double intensity;
 
     matcolor = swp->sw_color;
 
@@ -268,9 +328,8 @@ do_pixel(global uchar *pixels, const uchar3 o, global struct hit *hits,
     const int a_y = (int)(pixelnum/width);
     const int a_x = (int)(pixelnum - (a_y * width));
 
-    double3 r_pt, r_dir, r_idir;
+    double3 r_pt, r_dir;
     gen_ray(&r_pt, &r_dir, a_x, a_y, view2model, cell_width, cell_height, aspect);
-    const double3 orig_dir = r_dir;
 
     global struct hit *hitp = hits+id;
     hitp->hit_dist = INFINITY;
@@ -401,11 +460,10 @@ count_hits(global int *counts,
     const int a_y = (int)(pixelnum/width);
     const int a_x = (int)(pixelnum - (a_y * width));
 
-    double3 r_pt, r_dir, r_idir;
+    double3 r_pt, r_dir;
     gen_ray(&r_pt, &r_dir, a_x, a_y, view2model, cell_width, cell_height, aspect);
-    const double3 orig_dir = r_dir;
 
-    int ret = shootray(NULL, r_pt, r_dir, nprims, ids, nodes, indexes, prims);
+    int ret = shootray(0, r_pt, r_dir, nprims, ids, nodes, indexes, prims);
 
     counts[id] = ret;
 }
@@ -423,9 +481,8 @@ store_hits(global struct hit *hits, global uint *h,
     const int a_y = (int)(pixelnum/width);
     const int a_x = (int)(pixelnum - (a_y * width));
 
-    double3 r_pt, r_dir, r_idir;
+    double3 r_pt, r_dir;
     gen_ray(&r_pt, &r_dir, a_x, a_y, view2model, cell_width, cell_height, aspect);
-    const double3 orig_dir = r_dir;
 
     if (h[id] != h[id+1]) {
         global struct hit *hitp = hits+h[id];
@@ -447,7 +504,7 @@ store_hits(global struct hit *hits, global uint *h,
     }
 }
 
-inline double3 MAT4X3PNT(const double16 m, double3 i) {
+double3 MAT4X3PNT(const double16 m, double3 i) {
     double4 j;
 
     j.xyz = i;
@@ -477,9 +534,8 @@ shade_hits(global uchar *pixels, const uchar3 o, global struct hit *hits, global
     const int a_y = (int)(pixelnum/width);
     const int a_x = (int)(pixelnum - (a_y * width));
 
-    double3 r_pt, r_dir, r_idir;
+    double3 r_pt, r_dir;
     gen_ray(&r_pt, &r_dir, a_x, a_y, view2model, cell_width, cell_height, aspect);
-    const double3 orig_dir = r_dir;
 
     /* Determine the Light location(s) in view space */
     /* 0:  At left edge, 1/2 high */

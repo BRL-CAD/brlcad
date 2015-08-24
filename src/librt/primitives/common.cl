@@ -65,82 +65,50 @@ struct linear_bvh_node {
 };
 
 
-inline double3 MAT3X3VEC(global const double *m, double3 i) {
-    double3 o;
-    o.x = dot(vload3(0, &m[0]), i);
-    o.y = dot(vload3(0, &m[4]), i);
-    o.z = dot(vload3(0, &m[8]), i);
-    return o;
-}
-
-inline double3 MAT4X3VEC(global const double *m, double3 i) {
-    double3 o;
-    o = MAT3X3VEC(m, i) * (DOUBLE_C(1.0)/m[15]);
-    return o;
-}
-
-
-inline double3
-bu_rand0to1(const uint id, global float *bnrandhalftab, const uint randhalftabsize)
-{
-    double3 ret;
-    ret.x = (bnrandhalftab[(id*3+0) % randhalftabsize]+0.5);
-    ret.y = (bnrandhalftab[(id*3+1) % randhalftabsize]+0.5);
-    ret.z = (bnrandhalftab[(id*3+2) % randhalftabsize]+0.5);
-    return ret;
-}
-
-inline ulong
-bu_cv_htond(const ulong d)
-{
-    return ((d & 0xFF00000000000000UL) >> 56)
-	 | ((d & 0x00FF000000000000UL) >> 40)
-	 | ((d & 0x0000FF0000000000UL) >> 24)
-	 | ((d & 0x000000FF00000000UL) >>  8)
-	 | ((d & 0x00000000FF000000UL) <<  8)
-	 | ((d & 0x0000000000FF0000UL) << 24)
-	 | ((d & 0x000000000000FF00UL) << 40)
-	 | ((d & 0x00000000000000FFUL) << 56);
-}
-
-
-inline int
-rt_in_rpp(const double3 pt,
-	  const double3 invdir,
-	  global const double *min,
-	  global const double *max)
-{
-    /* Start with infinite ray, and trim it down */
-    double x0 = (min[0] - pt.x) * invdir.x;
-    double y0 = (min[1] - pt.y) * invdir.y;
-    double z0 = (min[2] - pt.z) * invdir.z;
-    double x1 = (max[0] - pt.x) * invdir.x;
-    double y1 = (max[1] - pt.y) * invdir.y;
-    double z1 = (max[2] - pt.z) * invdir.z;
-
-    /*
-     * Direction cosines along this axis is NEAR 0,
-     * which implies that the ray is perpendicular to the axis,
-     * so merely check position against the boundaries.
-     */
-    double rmin = -MAX_FASTF;
-    double rmax =  MAX_FASTF;
-
-    rmin = fmax(rmin, fmax(fmax(fmin(x0, x1), fmin(y0, y1)), fmin(z0, z1)));
-    rmax = fmin(rmax, fmin(fmin(fmax(x0, x1), fmax(y0, y1)), fmax(z0, z1)));
-
-    /* If equal, RPP is actually a plane */
-    return (rmin <= rmax);
-}
-
-
 /* solver.cl */
 extern int rt_poly_roots(double *eqn, uint dgr, bn_complex_t *roots);
 
-/* table.cl */
+
+/* rt.cl */
+extern double3 MAT3X3VEC(global const double *m, double3 i);
+extern double3 MAT4X3VEC(global const double *m, double3 i);
+
+extern double3 bu_rand0to1(const uint id, global float *bnrandhalftab, const uint randhalftabsize);
+extern ulong bu_cv_htond(const ulong d);
+
 extern constant double rti_tol_dist;
 
+extern int rt_in_rpp(const double3 pt, const double3 invdir, global const double *min, global const double *max);
 extern void do_hitp(global struct hit **res, const uint hit_index, const struct hit *hitp);
+
+
+/* *_shot.cl */
+struct arb_specific;
+struct ehy_specific;
+struct ell_specific;
+struct rec_specific;
+struct sph_specific;
+struct tgc_specific;
+struct tor_specific;
+
+extern int arb_shot(global struct hit **res, const double3 r_pt, const double3 r_dir, const uint idx, global const struct arb_specific *arb);
+extern int bot_shot(global struct hit **res, const double3 r_pt, double3 r_dir, const uint idx, global const uchar *args);
+extern int ehy_shot(global struct hit **res, const double3 r_pt, const double3 r_dir, const uint idx, global const struct ehy_specific *ehy);
+extern int ell_shot(global struct hit **res, const double3 r_pt, const double3 r_dir, const uint idx, global const struct ell_specific *ell);
+extern int rec_shot(global struct hit **res, const double3 r_pt, const double3 r_dir, const uint idx, global const struct rec_specific *rec);
+extern int sph_shot(global struct hit **res, const double3 r_pt, const double3 r_dir, const uint idx, global const struct sph_specific *sph);
+extern int tgc_shot(global struct hit **res, const double3 r_pt, const double3 r_dir, const uint idx, global const struct tgc_specific *tgc);
+extern int tor_shot(global struct hit **res, const double3 r_pt, const double3 r_dir, const uint idx, global const struct tor_specific *tor);
+
+extern void arb_norm(global struct hit *hitp, const double3 r_pt, const double3 r_dir, global const struct arb_specific *arb);
+extern void bot_norm(global struct hit *hitp, const double3 r_pt, const double3 r_dir, global const uchar *args);
+extern void ehy_norm(global struct hit *hitp, const double3 r_pt, const double3 r_dir, global const struct ehy_specific *ehy);
+extern void ell_norm(global struct hit *hitp, const double3 r_pt, const double3 r_dir, global const struct ell_specific *ell);
+extern void rec_norm(global struct hit *hitp, const double3 r_pt, const double3 r_dir, global const struct rec_specific *rec);
+extern void sph_norm(global struct hit *hitp, const double3 r_pt, const double3 r_dir, global const struct sph_specific *sph);
+extern void tgc_norm(global struct hit *hitp, const double3 r_pt, const double3 r_dir, global const struct tgc_specific *tgc);
+extern void tor_norm(global struct hit *hitp, const double3 r_pt, const double3 r_dir, global const struct tor_specific *tor);
+
 
 #endif	/* COMMON_CL */
 
