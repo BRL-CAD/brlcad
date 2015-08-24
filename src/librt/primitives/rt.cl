@@ -304,9 +304,8 @@ viewshade(struct shade_work *swp, const double3 r_dir, const double3 normal, con
   */
 void do_hitp(global struct hit **res, const uint hit_index, const struct hit *hitp)
 {
-    if (!res) return;
     if (hitp->hit_dist >= 0.0 && hitp->hit_dist < (*res)[0].hit_dist) {
-        (*res)[0]= *hitp;
+        (*res)[0] = *hitp;
         (*res)[0].hit_index = hit_index;
     }
 }
@@ -441,7 +440,7 @@ do_pixel(global uchar *pixels, const uchar3 o, global struct hit *hits,
 void do_hitp(global struct hit **res, const uint hit_index, const struct hit *hitp)
 {
     if (!res) return;
-    (*res)[0]= *hitp;
+    (*res)[0] = *hitp;
     (*res)[0].hit_index = hit_index;
     (*res)++;
 }
