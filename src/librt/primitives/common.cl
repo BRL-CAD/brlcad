@@ -5,6 +5,19 @@
     #error "OpenCL 1.2 required."
 #endif
 
+#ifdef CLT_SINGLE_PRECISION
+#define double float
+#define double3 float3
+#define double4 float4
+#define double16 float16
+
+#define DOUBLE_C(value) \
+	value ## f
+#else
+#define DOUBLE_C(value) \
+	value
+#endif
+
 #define RT_PCOEF_TOL            (1.0e-10)
 #define RT_DOT_TOL              (0.001)
 
@@ -62,7 +75,7 @@ inline double3 MAT3X3VEC(global const double *m, double3 i) {
 
 inline double3 MAT4X3VEC(global const double *m, double3 i) {
     double3 o;
-    o = MAT3X3VEC(m, i) * (1.0/m[15]);
+    o = MAT3X3VEC(m, i) * (DOUBLE_C(1.0)/m[15]);
     return o;
 }
 

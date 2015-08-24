@@ -102,9 +102,8 @@ shootray(global struct hit **hitp, double3 r_pt, double3 r_dir,
 {
     int ret = 0;
 
-    const long3 oblique = isgreaterequal(fabs(r_dir), SQRT_SMALL_FASTF);
-    const double3 r_idir = select(INFINITY, 1.0/r_dir, oblique);
-    r_dir = select(0.0, r_dir, oblique);
+    const double3 r_idir = select(INFINITY, DOUBLE_C(1.0)/r_dir, isgreaterequal(fabs(r_dir), SQRT_SMALL_FASTF));
+    r_dir = select(0, r_dir, isgreaterequal(fabs(r_dir), SQRT_SMALL_FASTF));
 
     if (nodes) {
         uchar dir_is_neg[3];
@@ -193,7 +192,7 @@ struct region {
 static inline
 double3 reflect(double3 I, double3 N)
 {
-    return I - 2.0 * dot(N, I) * N;
+    return I - dot(N, I) * N * 2;
 }
 
 void
@@ -207,13 +206,13 @@ phong_render(struct shade_work *swp, double3 r_dir, double3 normal, double3 to_l
     double3 L = normalize(to_light);
 
     /* Diffuse reflectance from "Ambient" light source (at eye) */
-    double ambient = max(-dot(normal, r_dir), 0.0);
-    double diffuse = max(dot(L, normal), 0.0);
-    double specular = 0.0;
+    double ambient = max(-dot(normal, r_dir), DOUBLE_C(0.0));
+    double diffuse = max(dot(L, normal), DOUBLE_C(0.0));
+    double specular = 0;
 
     if (diffuse > 0.0) {
         double3 R = reflect(-r_dir, normal);
-        double NH = max(dot(R, r_dir), 0.0);
+        double NH = max(dot(R, r_dir), DOUBLE_C(0.0));
         specular = pow(NH, sp->shine);
     }
     swp->sw_color = matcolor * AmbientIntensity * ambient
@@ -225,7 +224,8 @@ phong_render(struct shade_work *swp, double3 r_dir, double3 normal, double3 to_l
 inline void
 viewshade(struct shade_work *swp, const double3 r_dir, const double3 normal, const double3 to_light, global const struct region *rp)
 {
-    swp->sw_color = select(swp->sw_color, vload3(0, rp->mater.color), (ulong3)rp->mater.color_valid != 0);
+    if (rp->mater.color_valid)
+	swp->sw_color = vload3(0, rp->mater.color);
     swp->sw_basecolor = swp->sw_color;
 
     switch (rp->mf_id) {
@@ -316,7 +316,7 @@ do_pixel(global uchar *pixels, const uchar3 o, global struct hit *hits,
             case 2:
                 /* Store surface normals pointing inwards */
                 /* (For Spencer's moving light program) */
-                a_color = (normal * (-.5)) + .5;
+                a_color = (normal * DOUBLE_C(-.5)) + DOUBLE_C(.5);
                 break;
         }
 
@@ -346,10 +346,10 @@ do_pixel(global uchar *pixels, const uchar3 o, global struct hit *hits,
              * 0..255 space later.
              */
             const double ex = 1.0/gamma;
-	    t_color = floor(pow(a_color, ex) * 255. +
-			bu_rand0to1(id, rand_halftab, randhalftabsize) + 0.5);
+	    t_color = floor(pow(a_color, ex) * DOUBLE_C(255.) +
+			bu_rand0to1(id, rand_halftab, randhalftabsize) + DOUBLE_C(0.5));
         } else {
-	    t_color = a_color * 255. + bu_rand0to1(id, rand_halftab, randhalftabsize);
+	    t_color = a_color * DOUBLE_C(255.) + bu_rand0to1(id, rand_halftab, randhalftabsize);
         }
 	rgb = convert_uchar3_sat(t_color);
 
@@ -541,7 +541,7 @@ shade_hits(global uchar *pixels, const uchar3 o, global struct hit *hits, global
                 break;
             } else {
                 const double R = 1.0/16.0;
-                a_color = a_color*(1.0-R) + color*R;
+                a_color = a_color*(DOUBLE_C(1.0)-R) + color*R;
             }
         }
         
@@ -561,10 +561,10 @@ shade_hits(global uchar *pixels, const uchar3 o, global struct hit *hits, global
              * 0..255 space later.
              */
             const double ex = 1.0/gamma;
-	    t_color = floor(pow(a_color, ex) * 255. +
-			bu_rand0to1(id, rand_halftab, randhalftabsize) + 0.5);
+	    t_color = floor(pow(a_color, ex) * DOUBLE_C(255.) +
+			bu_rand0to1(id, rand_halftab, randhalftabsize) + DOUBLE_C(0.5));
         } else {
-	    t_color = a_color * 255. + bu_rand0to1(id, rand_halftab, randhalftabsize);
+	    t_color = a_color * DOUBLE_C(255.) + bu_rand0to1(id, rand_halftab, randhalftabsize);
         }
 	rgb = convert_uchar3_sat(t_color);
 

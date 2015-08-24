@@ -77,9 +77,9 @@ int tgc_shot(global struct hit **res, const double3 r_pt, const double3 r_dir, c
      * difficulties.
      */
     /* Direction cosines */
-    dprime = select(dprime, 0, NEAR_ZERO(dprime, 1e-10));
+    dprime = select(dprime, 0, NEAR_ZERO(dprime, DOUBLE_C(1e-10)));
     /* Position in -1..+1 coordinates */
-    cor_pprime = select(cor_pprime, 0, NEAR_ZERO(cor_pprime, 1e-20));
+    cor_pprime = select(cor_pprime, 0, NEAR_ZERO(cor_pprime, DOUBLE_C(1e-20)));
 
     /* Given a line and the parameters for a standard cone, finds the
      * roots of the equation for that cone and line.  Returns the
@@ -126,7 +126,7 @@ int tgc_shot(global struct hit **res, const double3 r_pt, const double3 r_dir, c
      * this can only be done when C0 is not too small! (JRA)
      */
     C0 = Xsqr[0] + Ysqr[0] - Rsqr[0];
-    if (tgc->tgc_AD_CB && !NEAR_ZERO(C0, 1.0e-10)) {
+    if (tgc->tgc_AD_CB && !NEAR_ZERO(C0, DOUBLE_C(1.0e-10))) {
 	double C[3];	/* final equation */
 	double roots;
 

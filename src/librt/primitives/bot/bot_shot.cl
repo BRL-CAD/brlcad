@@ -41,9 +41,8 @@ int bot_shot(global struct hit **res, const double3 r_pt, double3 r_dir, const u
     uint hit_count;
     hit_count = 0;
 
-    const long3 oblique = isgreaterequal(fabs(r_dir), SQRT_SMALL_FASTF);
-    const double3 r_idir = select(INFINITY, 1.0/r_dir, oblique);
-    r_dir = select(0.0, r_dir, oblique);
+    const double3 r_idir = select(INFINITY, DOUBLE_C(1.0)/r_dir, isgreaterequal(fabs(r_dir), SQRT_SMALL_FASTF));
+    r_dir = select(0, r_dir, isgreaterequal(fabs(r_dir), SQRT_SMALL_FASTF));
 
     uchar dir_is_neg[3];
     int to_visit_offset = 0, current_node_index = 0;
@@ -190,7 +189,7 @@ void bot_norm(global struct hit *hitp, const double3 r_pt, const double3 r_dir, 
 	double3 n0 = vload3(0, normals+base);
 	double3 n1 = vload3(1, normals+base);
 	double3 n2 = vload3(2, normals+base);
-	const double3 mix = clamp(hitp->hit_vpriv, 0.0, 1.0);
+	const double3 mix = clamp(hitp->hit_vpriv, DOUBLE_C(0.0), DOUBLE_C(1.0));
 	normal = normalize(n0*mix.x + n1*mix.y + n2*mix.z);
     }
 

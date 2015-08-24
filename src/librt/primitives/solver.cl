@@ -66,7 +66,7 @@ bn_cx_sqrt(bn_complex_t *op, const bn_complex_t *ip)
 	if (ZERO(im)) {
 	    op->re = op->im = 0.0;
 	} else {
-	    op->re = copysign(op->im = sqrt(im * copysign(0.5, im)), im);
+	    op->re = copysign(op->im = sqrt(fabs(im) * 0.5), im);
 	}
     } else if (ZERO(im)) {
 	if (re > 0.0) {
