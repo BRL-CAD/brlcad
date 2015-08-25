@@ -265,7 +265,7 @@ phong_render(struct shade_work *swp, double3 r_dir, double3 normal, double3 to_l
     if (diffuse > 0.0) {
         double3 R = reflect(-r_dir, normal);
         double NH = max(dot(R, r_dir), DOUBLE_C(0.0));
-        specular = pow(NH, sp->shine);
+        specular = pown(NH, sp->shine);
     }
     swp->sw_color = matcolor * AmbientIntensity * ambient
         + matcolor * lt_color * sp->wgt_diffuse * diffuse
