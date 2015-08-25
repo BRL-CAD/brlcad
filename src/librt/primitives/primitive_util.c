@@ -796,6 +796,10 @@ clt_frame(void *pixels, uint8_t o[3], int cur_pixel, int last_pixel,
 {
     const size_t npix = last_pixel-cur_pixel+1;
 
+    size_t wxh[2];
+    size_t swxh[2];
+    size_t i;
+
     struct {
         cl_double16 view2model;
 	cl_double3 haze;
@@ -832,6 +836,16 @@ clt_frame(void *pixels, uint8_t o[3], int cur_pixel, int last_pixel,
     ppixels = clCreateBuffer(clt_context, CL_MEM_WRITE_ONLY|CL_MEM_HOST_READ_ONLY, sz_pixels, NULL, &error);
     if (error != CL_SUCCESS) bu_bomb("failed to create OpenCL pixels buffer");
 
+    wxh[0] = (size_t)width;
+    wxh[1] = (size_t)npix/width;
+
+    swxh[0] = swxh[1] = 1;
+    for (i=wxh[0]; (i % 2) == 0 && swxh[0] < 8; i/=2)
+	swxh[0] *= 2;
+    for (i=wxh[1]; (i % 2) == 0 && swxh[1] < 8; i/=2)
+	swxh[1] *= 2;
+
+    bu_log("%ldx%ld grid, %ldx%ld subgrids\n", wxh[0], wxh[1], swxh[0], swxh[1]);
 
     switch (lightmodel) {
 	case 0:
@@ -845,7 +859,7 @@ clt_frame(void *pixels, uint8_t o[3], int cur_pixel, int last_pixel,
 	    cl_mem ph;
 	    size_t sz_hits;
 	    cl_mem phits;
-	    size_t i;
+	    size_t snpix = swxh[0]*swxh[1];
 
 	    sz_counts = sizeof(cl_int)*npix;
 	    pcounts = clCreateBuffer(clt_context, CL_MEM_WRITE_ONLY|CL_MEM_HOST_READ_ONLY, sz_counts, NULL, &error);
@@ -866,8 +880,8 @@ clt_frame(void *pixels, uint8_t o[3], int cur_pixel, int last_pixel,
 	    error |= clSetKernelArg(clt_count_hits_kernel, 11, sizeof(cl_mem), &clt_db_indexes);
 	    error |= clSetKernelArg(clt_count_hits_kernel, 12, sizeof(cl_mem), &clt_db_prims);
 	    if (error != CL_SUCCESS) bu_bomb("failed to set OpenCL kernel arguments");
-	    error = clEnqueueNDRangeKernel(clt_queue, clt_count_hits_kernel, 1, NULL, &npix,
-		    NULL, 0, NULL, NULL);
+	    error = clEnqueueNDRangeKernel(clt_queue, clt_count_hits_kernel, 2, NULL, wxh,
+		    swxh, 0, NULL, NULL);
 	    bu_semaphore_release(clt_semaphore);
 
 	    /* once we can do the scan on the device we won't need these transfers */
@@ -909,8 +923,8 @@ clt_frame(void *pixels, uint8_t o[3], int cur_pixel, int last_pixel,
 		error |= clSetKernelArg(clt_store_hits_kernel, 12, sizeof(cl_mem), &clt_db_indexes);
 		error |= clSetKernelArg(clt_store_hits_kernel, 13, sizeof(cl_mem), &clt_db_prims);
 		if (error != CL_SUCCESS) bu_bomb("failed to set OpenCL kernel arguments");
-		error = clEnqueueNDRangeKernel(clt_queue, clt_store_hits_kernel, 1, NULL, &npix,
-			NULL, 0, NULL, NULL);
+		error = clEnqueueNDRangeKernel(clt_queue, clt_store_hits_kernel, 2, NULL, wxh,
+			swxh, 0, NULL, NULL);
 		bu_semaphore_release(clt_semaphore);
             } else {
 		phits = NULL;
@@ -944,7 +958,7 @@ clt_frame(void *pixels, uint8_t o[3], int cur_pixel, int last_pixel,
 	    error |= clSetKernelArg(clt_shade_hits_kernel, 24, sizeof(cl_mem), &clt_db_regions);
 	    if (error != CL_SUCCESS) bu_bomb("failed to set OpenCL kernel arguments");
 	    error = clEnqueueNDRangeKernel(clt_queue, clt_shade_hits_kernel, 1, NULL, &npix,
-		    NULL, 0, NULL, NULL);
+		    &snpix, 0, NULL, NULL);
 	    bu_semaphore_release(clt_semaphore);
 
 	    clReleaseMemObject(ph);
@@ -985,8 +999,8 @@ clt_frame(void *pixels, uint8_t o[3], int cur_pixel, int last_pixel,
 	    error |= clSetKernelArg(clt_frame_kernel, 21, sizeof(cl_mem), &clt_db_indexes);
 	    error |= clSetKernelArg(clt_frame_kernel, 22, sizeof(cl_mem), &clt_db_prims);
 	    if (error != CL_SUCCESS) bu_bomb("failed to set OpenCL kernel arguments");
-	    error = clEnqueueNDRangeKernel(clt_queue, clt_frame_kernel, 1, NULL, &npix,
-		    NULL, 0, NULL, NULL);
+	    error = clEnqueueNDRangeKernel(clt_queue, clt_frame_kernel, 2, NULL, wxh,
+		    swxh, 0, NULL, NULL);
 	    bu_semaphore_release(clt_semaphore);
 
 	    clReleaseMemObject(phits);

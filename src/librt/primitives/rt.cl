@@ -312,7 +312,11 @@ do_pixel(global uchar *pixels, const uchar3 o, global struct hit *hits,
 	 const double aspect, const int lightmodel, const uint nprims, global int *ids,
 	 global struct linear_bvh_node *nodes, global uint *indexes, global uchar *prims)
 {
-    const size_t id = get_global_id(0);
+    const size_t id = get_global_size(0)*get_global_id(1)+get_global_id(0);
+
+    if (id >= (last_pixel-cur_pixel+1))
+      return;
+
     const int pixelnum = cur_pixel+id;
 
     const int a_y = (int)(pixelnum/width);
@@ -444,7 +448,11 @@ count_hits(global int *counts,
 	 const double aspect, const uint nprims, global int *ids,
 	 global struct linear_bvh_node *nodes, global uint *indexes, global uchar *prims)
 {
-    const size_t id = get_global_id(0);
+    const size_t id = get_global_size(0)*get_global_id(1)+get_global_id(0);
+
+    if (id >= (last_pixel-cur_pixel+1))
+      return;
+
     const int pixelnum = cur_pixel+id;
 
     const int a_y = (int)(pixelnum/width);
@@ -465,7 +473,11 @@ store_hits(global struct hit *hits, global uint *h,
 	 const double aspect, const uint nprims, global int *ids,
 	 global struct linear_bvh_node *nodes, global uint *indexes, global uchar *prims)
 {
-    const size_t id = get_global_id(0);
+    const size_t id = get_global_size(0)*get_global_id(1)+get_global_id(0);
+
+    if (id >= (last_pixel-cur_pixel+1))
+      return;
+
     const int pixelnum = cur_pixel+id;
 
     const int a_y = (int)(pixelnum/width);
@@ -561,7 +573,11 @@ shade_hits(global uchar *pixels, const uchar3 o, global struct hit *hits, global
 	 global struct linear_bvh_node *nodes, global uint *indexes, global uchar *prims,
 	 global struct region *regions)
 {
-    const size_t id = get_global_id(0);
+    const size_t id = get_global_size(0)*get_global_id(1)+get_global_id(0);
+
+    if (id >= (last_pixel-cur_pixel+1))
+      return;
+
     const int pixelnum = cur_pixel+id;
 
     const int a_y = (int)(pixelnum/width);
