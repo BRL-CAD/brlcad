@@ -58,32 +58,20 @@ int rec_shot(global struct hit **res, const double3 r_pt, const double3 r_dir, c
      * using formula for quadratic w/ a=1
      */
     if (nhits != 2) {
-	double b;		// coeff of polynomial
-	double discriminant;	// root of radical, the discriminant
+	double b;	// coeff of polynomial
+	double disc;	// root of radical, the discriminant
 	double dx2dy2;
 
 	dx2dy2 = 1 / (dprime.x*dprime.x + dprime.y*dprime.y);
 	b = 2 * (dprime.x*pprime.x + dprime.y*pprime.y) * dx2dy2;
-	discriminant = b*b - 4 * dx2dy2 * (pprime.x*pprime.x + pprime.y*pprime.y - 1);
+	disc = b*b - 4.0 * dx2dy2*(pprime.x*pprime.x + pprime.y*pprime.y - 1);
 
-	/* might want compare against tol_dist here? */
-
-	if (NEAR_ZERO(discriminant, SMALL_FASTF)) {
-	    /* if the discriminant is zero, it's a double-root grazer */
-	    k1 = -b * 0.5;
-	    hitp->hit_vpriv = pprime + k1 * dprime;	// hit'
-	    if (hitp->hit_vpriv.z > -SMALL_FASTF && hitp->hit_vpriv.z < (1.0 + SMALL_FASTF)) {
-		hitp->hit_dist = k1;
-		hitp->hit_surfno = REC_NORM_BODY;	// compute N
-		hitp++; nhits++;
-	    }
-
-	} else if (discriminant > SMALL_FASTF) {
+	if (disc > 0.0) {
 	    /* if the discriminant is positive, there are two roots */
 
-	    discriminant = sqrt(discriminant);
-	    k1 = (-b+discriminant) * 0.5;
-	    k2 = (-b-discriminant) * 0.5;
+	    disc = sqrt(disc);
+	    k1 = (-b+disc) * 0.5;
+	    k2 = (-b-disc) * 0.5;
 
 	    /*
 	     * k1 and k2 are potential solutions to intersection with side.
@@ -99,6 +87,15 @@ int rec_shot(global struct hit **res, const double3 r_pt, const double3 r_dir, c
 	    hitp->hit_vpriv = pprime + k2 * dprime;	// hit'
 	    if (hitp->hit_vpriv.z > -SMALL_FASTF && hitp->hit_vpriv.z < (1.0 + SMALL_FASTF)) {
 		hitp->hit_dist = k2;
+		hitp->hit_surfno = REC_NORM_BODY;	// compute N
+		hitp++; nhits++;
+	    }
+	} else if (ZERO(disc)) {
+	    /* if the discriminant is zero, it's a double-root grazer */
+	    k1 = -b * 0.5;
+	    hitp->hit_vpriv = pprime + k1 * dprime;	// hit'
+	    if (hitp->hit_vpriv.z > -SMALL_FASTF && hitp->hit_vpriv.z < (1.0 + SMALL_FASTF)) {
+		hitp->hit_dist = k1;
 		hitp->hit_surfno = REC_NORM_BODY;	// compute N
 		hitp++; nhits++;
 	    }

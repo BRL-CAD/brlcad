@@ -41,7 +41,7 @@ int ehy_shot(global struct hit **res, const double3 r_pt, const double3 r_dir, c
     c = pp.z * pp.z - (2 * cp + 1) * (pp.x * pp.x + pp.y * pp.y - 1.0) + 2 * (cp + 1) * pp.z;
     if (!NEAR_ZERO(a, RT_PCOEF_TOL)) {
         disc = b*b - 4 * a * c;
-        if (!(disc <= 0)) {
+        if (disc > 0.0) {
             disc = sqrt(disc);
 
             k1 = (-b + disc) / (2.0 * a);

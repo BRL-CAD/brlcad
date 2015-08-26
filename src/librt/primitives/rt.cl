@@ -158,7 +158,7 @@ inline void gen_ray(double3 *r_pt, double3 *r_dir, const int a_x, const int a_y,
 
 int
 shootray(global struct hit **hitp, double3 r_pt, double3 r_dir,
-         const uint nprims, global int *ids, global struct linear_bvh_node *nodes,
+         const uint nprims, global uchar *ids, global struct linear_bvh_node *nodes,
          global uint *indexes, global uchar *prims)
 {
     int ret = 0;
@@ -235,7 +235,7 @@ struct phong_specific {
  * The region structure.
  */
 struct region {
-    double color[3];		/**< @brief explicit color:  0..1  */
+    float color[3];		/**< @brief explicit color:  0..1  */
     int mf_id;
     union {
 	struct phong_specific phg_spec;
@@ -276,7 +276,7 @@ phong_render(struct shade_work *swp, double3 r_dir, double3 normal, double3 to_l
 inline void
 viewshade(struct shade_work *swp, const double3 r_dir, const double3 normal, const double3 to_light, global const struct region *rp)
 {
-    swp->sw_color = vload3(0, rp->color);
+    swp->sw_color = convert_double3(vload3(0, rp->color));
     swp->sw_basecolor = swp->sw_color;
 
     switch (rp->mf_id) {
@@ -309,7 +309,7 @@ do_pixel(global uchar *pixels, const uchar3 o, global struct hit *hits,
 	 const uchar3 background, const uchar3 nonbackground,
 	 const double airdensity, const double3 haze, const double gamma,
 	 const double16 view2model, const double cell_width, const double cell_height,
-	 const double aspect, const int lightmodel, const uint nprims, global int *ids,
+	 const double aspect, const int lightmodel, const uint nprims, global uchar *ids,
 	 global struct linear_bvh_node *nodes, global uint *indexes, global uchar *prims)
 {
     const size_t id = get_global_size(0)*get_global_id(1)+get_global_id(0);
@@ -445,7 +445,7 @@ __kernel void
 count_hits(global int *counts,
          const int cur_pixel, const int last_pixel, const int width,
 	 const double16 view2model, const double cell_width, const double cell_height,
-	 const double aspect, const uint nprims, global int *ids,
+	 const double aspect, const uint nprims, global uchar *ids,
 	 global struct linear_bvh_node *nodes, global uint *indexes, global uchar *prims)
 {
     const size_t id = get_global_size(0)*get_global_id(1)+get_global_id(0);
@@ -470,7 +470,7 @@ __kernel void
 store_hits(global struct hit *hits, global uint *h,
          const int cur_pixel, const int last_pixel, const int width,
 	 const double16 view2model, const double cell_width, const double cell_height,
-	 const double aspect, const uint nprims, global int *ids,
+	 const double aspect, const uint nprims, global uchar *ids,
 	 global struct linear_bvh_node *nodes, global uint *indexes, global uchar *prims)
 {
     const size_t id = get_global_size(0)*get_global_id(1)+get_global_id(0);
@@ -521,7 +521,7 @@ double3 MAT4X3PNT(const double16 m, double3 i) {
 
 inline double3
 shade(const double3 r_pt, const double3 r_dir, global struct hit *hitp, const double3 haze, const double airdensity, const double3 lt_pos,
-      const uint nprims, global int *ids, global uint *indexes, global uchar *prims, global struct region *regions)
+      const uint nprims, global uchar *ids, global uint *indexes, global uchar *prims, global struct region *regions)
 
 {
     double3 color;
@@ -569,7 +569,7 @@ shade_hits(global uchar *pixels, const uchar3 o, global struct hit *hits, global
 	 const uchar3 background, const uchar3 nonbackground,
 	 const double airdensity, const double3 haze, const double gamma,
 	 const double16 view2model, const double cell_width, const double cell_height,
-	 const double aspect, const int lightmodel, const uint nprims, global int *ids,
+	 const double aspect, const int lightmodel, const uint nprims, global uchar *ids,
 	 global struct linear_bvh_node *nodes, global uint *indexes, global uchar *prims,
 	 global struct region *regions)
 {

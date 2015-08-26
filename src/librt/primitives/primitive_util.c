@@ -666,7 +666,7 @@ struct clt_phong_specific {
  * The region structure.
  */
 struct clt_region {
-    cl_double color[3];		/**< @brief explicit color:  0..1  */
+    cl_float color[3];		/**< @brief explicit color:  0..1  */
     cl_int mf_id;
     union {
 	struct clt_phong_specific phg_spec;
@@ -679,18 +679,18 @@ clt_db_store(size_t count, struct soltab *solids[])
     cl_int error;
 
     if (count != 0) {
-        cl_int *ids;
+        cl_uchar *ids;
         struct clt_region *regions;
         cl_uint *indexes;
         struct bu_pool *pool;
         size_t i;
         
-	ids = (cl_int*)bu_calloc(count, sizeof(cl_int), "ids");
-	regions = (struct clt_region*)bu_calloc(count, sizeof(struct clt_region), "regions");
+	ids = (cl_uchar*)bu_calloc(count, sizeof(*ids), "ids");
+	regions = (struct clt_region*)bu_calloc(count, sizeof(*regions), "regions");
 	for (i=0; i < count; i++) {
 	    const struct soltab *stp = solids[i];
 	    const struct region **rpp;
-	    cl_double unset[3] = {1.0, 1.0, 1.0};
+	    cl_float unset[3] = {1.0f, 1.0f, 1.0f};
 
 	    VMOVE(regions[i].color, unset);
             regions[i].mf_id = SH_PHONG;
@@ -730,7 +730,7 @@ clt_db_store(size_t count, struct soltab *solids[])
 	    }
 	}
 
-	indexes = (cl_uint*)bu_calloc(count+1, sizeof(cl_uint), "indexes");
+	indexes = (cl_uint*)bu_calloc(count+1, sizeof(*indexes), "indexes");
 	indexes[0] = 0;
 
 	pool = bu_pool_create(1024 * 1024);
@@ -742,7 +742,7 @@ clt_db_store(size_t count, struct soltab *solids[])
 	    indexes[i] = indexes[i-1] + size;
 	}
         bu_log("OCLDB:\t%ld primitives\n\t%.2f KB indexes, %.2f KB ids, %.2f KB prims, %.2f KB regions\n", count,
-		(sizeof(cl_uint)*(count+1))/1024.0, (sizeof(cl_int)*count)/1024.0, indexes[count]/1024.0, (sizeof(struct clt_region)*count)/1024.0);
+		(sizeof(*indexes)*(count+1))/1024.0, (sizeof(*ids)*count)/1024.0, indexes[count]/1024.0, (sizeof(*regions)*count)/1024.0);
 
 	if (indexes[count] != 0) {
 	    clt_db_prims = clCreateBuffer(clt_context, CL_MEM_READ_ONLY|CL_MEM_HOST_WRITE_ONLY|CL_MEM_COPY_HOST_PTR, indexes[count], pool->block, &error);
@@ -750,7 +750,7 @@ clt_db_store(size_t count, struct soltab *solids[])
 	}
         bu_pool_delete(pool);
 
-	clt_db_ids = clCreateBuffer(clt_context, CL_MEM_READ_ONLY|CL_MEM_HOST_WRITE_ONLY|CL_MEM_COPY_HOST_PTR, sizeof(cl_int)*count, ids, &error);
+	clt_db_ids = clCreateBuffer(clt_context, CL_MEM_READ_ONLY|CL_MEM_HOST_WRITE_ONLY|CL_MEM_COPY_HOST_PTR, sizeof(cl_uchar)*count, ids, &error);
 	if (error != CL_SUCCESS) bu_bomb("failed to create OpenCL ids buffer");
 	clt_db_regions = clCreateBuffer(clt_context, CL_MEM_READ_ONLY|CL_MEM_HOST_WRITE_ONLY|CL_MEM_COPY_HOST_PTR, sizeof(struct clt_region)*count, regions, &error);
 	if (error != CL_SUCCESS) bu_bomb("failed to create OpenCL regions buffer");
