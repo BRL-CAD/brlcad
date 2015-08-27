@@ -66,8 +66,10 @@ struct linear_bvh_node {
 
 
 /* solver.cl */
-extern int rt_poly_roots(double *eqn, uint dgr, bn_complex_t *roots);
+extern double *bn_poly_scale(double *eqn, uint dgr, double factor);
+extern int bn_poly_quartic_roots(bn_complex_t *roots, const double *eqn);
 
+extern int rt_poly_roots(double *eqn, uint dgr, bn_complex_t *roots);
 
 /* rt.cl */
 extern double3 MAT3X3VEC(global const double *m, double3 i);

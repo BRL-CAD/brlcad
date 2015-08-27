@@ -102,46 +102,39 @@ bn_cx_sqrt(bn_complex_t *op, const bn_complex_t *ip)
 }
 
 
-static int
-bn_poly_quadratic_roots(bn_complex_t *roots, const double *quadrat)
+static inline int
+bn_poly_quadratic_roots(bn_complex_t *roots, const double *eqn)
 {
     double disc, denom;
 
-    if (!NEAR_ZERO(quadrat[0], RT_PCOEF_TOL)) {
-	disc = quadrat[1]*quadrat[1] - 4.0 * quadrat[0]*quadrat[2];
-	denom = 0.5 / quadrat[0];
+    if (!NEAR_ZERO(eqn[0], RT_PCOEF_TOL)) {
+	disc = eqn[1]*eqn[1] - 4.0 * eqn[0]*eqn[2];
+	denom = 0.5 / eqn[0];
 
 	if (disc > 0.0) {
+	    double q, r1, r2;
+
 	    disc = sqrt(disc);
 
-	    if (NEAR_ZERO(quadrat[1], RT_PCOEF_TOL)) {
-		double r = fabs(disc * denom);
-		roots[0].re = r;
-		roots[1].re = -r;
-	    } else {
-		double q, r1, r2;
+	    q = -0.5 * (eqn[1] + copysign(disc, eqn[1]));
+	    r1 = q / eqn[0];
+	    r2 = eqn[2] / q;
 
-		q = -0.5 * (quadrat[1] + copysign(disc, quadrat[1]));
-		r1 = q / quadrat[0];
-		r2 = quadrat[2] / q;
-
-		roots[0].re = fmin(r1, r2);
-		roots[1].re = fmax(r1, r2);
-	    }
+	    roots[0].re = fmin(r1, r2);
+	    roots[1].re = fmax(r1, r2);
 	    roots[1].im = roots[0].im = 0.0;
 	} else if (ZERO(disc)) {
-	    roots[1].re = roots[0].re = -quadrat[1] * denom;
+	    roots[1].re = roots[0].re = -eqn[1] * denom;
 	    roots[1].im = roots[0].im = 0.0;
 	} else {
-	    roots[1].re = roots[0].re = -quadrat[1] * denom;
+	    roots[1].re = roots[0].re = -eqn[1] * denom;
 	    roots[1].im = -(roots[0].im = sqrt(-disc) * denom);
 	}
+	return 2;	/* OK */
+    } else if (!NEAR_ZERO(eqn[1], RT_PCOEF_TOL)) {
+	roots[0].re = -eqn[2]/eqn[1];
+	roots[0].im = 0.0;
 	return 1;	/* OK */
-    } else if (!NEAR_ZERO(quadrat[1], RT_PCOEF_TOL)) {
-	/* Fake it as a repeated root. */
-	roots[0].re = roots[1].re = -quadrat[2]/quadrat[1];
-	roots[0].im = roots[1].im = 0.0;
-	return 1;	/* OK - repeated root */
     } else {
 	/* No solution.  Now what? */
 	/* bu_log("bn_poly_quadratic_roots(): ERROR, no solution\n"); */
@@ -149,90 +142,55 @@ bn_poly_quadratic_roots(bn_complex_t *roots, const double *quadrat)
     }
 }
 
-static int
+static inline int
 bn_poly_cubic_roots(bn_complex_t *roots, const double *eqn)
 {
     const double THIRD = 1.0 / 3.0;
-    const double TWENTYSEVENTH = 1.0 / 27.0;
+    const double FIFTYFOURTH = 1.0 / 54.0;
 
-    double a, b, c1, c1_3rd, delta;
-    int i;
+    const double c1 = eqn[1];
+    double Q, R, delta;
 
-    c1 = eqn[1];
-    if (fabs(c1) > SQRT_MAX_FASTF) return 0;	/* FAIL */
+    Q = (1.0/9.0)*c1*c1 - (3.0/9.0)*eqn[2];
+    R = (2.0*c1*c1*c1 - 9.0*c1*eqn[2] + 27.0*eqn[3])*FIFTYFOURTH;
 
-    c1_3rd = c1 * THIRD;
-    a = eqn[2] - c1*c1_3rd;
-    if (fabs(a) > SQRT_MAX_FASTF) return 0;	/* FAIL */
-    b = (2.0*c1*c1*c1 - 9.0*c1*eqn[2] + 27.0*eqn[3])*TWENTYSEVENTH;
-    if (fabs(b) > SQRT_MAX_FASTF) return 0;	/* FAIL */
+    delta = R*R - Q*Q*Q;
 
-    if ((delta = a*a) > SQRT_MAX_FASTF) return 0;	/* FAIL */
-    delta = b*b*0.25 + delta*a*TWENTYSEVENTH;
-
-    if (delta > 0.0) {
-	double r_delta, A, B;
-
-	r_delta = sqrt(delta);
-	A = B = -0.5 * b;
-	A += r_delta;
-	B -= r_delta;
-
-	A = cbrt(A);
-	B = cbrt(B);
-
-	roots[2].re = roots[1].re = -0.5 * (roots[0].re = A + B);
-
+    if (delta >= 0.0) {
+	double A, B;
+	A = -copysign(cbrt(fabs(R) + sqrt(delta)), R);
+	B = select(0.0, Q/A, (ulong)!ZERO(A));
+	roots[0].re = (A+B);
 	roots[0].im = 0.0;
-	roots[2].im = -(roots[1].im = (A - B)*M_SQRT3*0.5);
-    } else if (ZERO(delta)) {
-	double b_2;
-	b_2 = -0.5 * b;
-
-	roots[0].re = 2.0* cbrt(b_2);
-	roots[2].re = roots[1].re = -0.5 * roots[0].re;
-	roots[2].im = roots[1].im = roots[0].im = 0.0;
+	roots[2].re = roots[1].re = -0.5*(A+B);
+	roots[2].im = -(roots[1].im = M_SQRT3*0.5*(A-B));
     } else {
-	double phi, fact;
+	double phi, fact, c1_3rd;
 	double cs_phi, sn_phi_s3;
 
-	if (a >= 0.0) {
-	    fact = 0.0;
-	    cs_phi = 1.0;		/* cos(phi); */
-	    sn_phi_s3 = 0.0;	/* sin(phi) * M_SQRT3; */
-	} else {
-	    double f;
-	    a *= -THIRD;
-	    fact = sqrt(a);
-	    if ((f = b * (-0.5) / (a*fact)) >= 1.0) {
-		cs_phi = 1.0;		/* cos(phi); */
-		sn_phi_s3 = 0.0;	/* sin(phi) * M_SQRT3; */
-	    }  else if (f <= -1.0) {
-		phi = M_PI_3;
-		sn_phi_s3 = sincos(phi, &cs_phi) * M_SQRT3;
-	    } else {
-		phi = acos(f) * THIRD;
-		sn_phi_s3 = sincos(phi, &cs_phi) * M_SQRT3;
-	    }
-	}
+	fact = -sqrt(Q);
+	phi = acos(R/(-Q*fact)) * THIRD;
+	sn_phi_s3 = sincos(phi, &cs_phi) * M_SQRT3;
 
 	roots[0].re = 2.0*fact*cs_phi;
-	roots[1].re = fact*(sn_phi_s3 - cs_phi);
-	roots[2].re = fact*(-sn_phi_s3 - cs_phi);
-	roots[2].im = roots[1].im = roots[0].im = 0.0;
+	roots[1].re = 2.0*fact*(-sn_phi_s3 - cs_phi);
+	roots[2].re = 2.0*fact*(sn_phi_s3 - cs_phi);
+	roots[0].im = roots[1].im = roots[2].im = 0.0;
     }
-    for (i=0; i < 3; ++i)
-	roots[i].re -= c1_3rd;
-
-    return 1;		/* OK */
+    const double c1_3rd = c1 * THIRD;
+    roots[0].re -= c1_3rd;
+    roots[1].re -= c1_3rd;
+    roots[2].re -= c1_3rd;
+    return 3;	/* OK */
 }
 
-static int
+int
 bn_poly_quartic_roots(bn_complex_t *roots, const double *eqn)
 {
     double cube[4], quad1[3], quad2[3];
     bn_complex_t u[3];
     double U, p, q, q1, q2;
+    int nroots;
 
     /* something considerably larger than squared floating point fuss */
     const double small = 1.0e-8;
@@ -295,9 +253,10 @@ bn_poly_quartic_roots(bn_complex_t *roots, const double *eqn)
 	}
     }
 
-    bn_poly_quadratic_roots(&roots[0], quad1);
-    bn_poly_quadratic_roots(&roots[2], quad2);
-    return 1;		/* SUCCESS */
+    nroots = 0;
+    nroots += bn_poly_quadratic_roots(&roots[nroots], quad1);
+    nroots += bn_poly_quadratic_roots(&roots[nroots], quad2);
+    return nroots;	/* SUCCESS */
 }
 
 /**
@@ -557,12 +516,13 @@ rt_poly_deflate(double *oldP, uint *oldP_dgr, bn_complex_t *root)
     bn_poly_synthetic_division(oldP, oldP_dgr, rem, &rem_dgr, oldP, oldP_dgr, divisor, &divisor_dgr);
 }
 
-static inline void
+double *
 bn_poly_scale(double *eqn, uint dgr, double factor)
 {
     for (uint cnt=0; cnt <= dgr; ++cnt) {
 	eqn[cnt] *= factor;
     }
+    return eqn;
 }
 
 int
@@ -588,7 +548,7 @@ bn_complex_t *roots)		/* space to put roots found */
      * for ease of handling.
      */
     factor = 1.0 / eqn[0];
-    bn_poly_scale(eqn, dgr, factor);
+    (void)bn_poly_scale(eqn, dgr, factor);
     n = 0;		/* Number of roots found */
 
     /* A trailing coefficient of zero indicates that zero
