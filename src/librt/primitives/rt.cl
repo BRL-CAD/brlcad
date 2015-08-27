@@ -610,6 +610,7 @@ shade_hits(global uchar *pixels, const uchar3 o, global struct hit *hits, global
 		break;
 	    }
 	} else {
+	    double a_hit_dist = 0.0;
 	    for (long k=h[id+1]-1; k>=h[id]; k--) {
 		global struct hit *hitp;
 		double3 color;
@@ -619,10 +620,12 @@ shade_hits(global uchar *pixels, const uchar3 o, global struct hit *hits, global
 		    break;
 
 		color = shade(r_pt, r_dir, hitp, haze, airdensity, lt_pos, nprims, ids, indexes, prims, regions);
-		const double R = 1.0/16.0;
-		a_color = a_color*(DOUBLE_C(1.0)-R) + color*R;
 		hit_dist = hitp->hit_dist;
+		double att = exp(-hit_dist*1e-3);
+		a_hit_dist += att;
+		a_color = a_color + color*att;
 	    }
+	    a_color = a_color * (1.0/a_hit_dist);
 	}        
 
         double3 t_color;
