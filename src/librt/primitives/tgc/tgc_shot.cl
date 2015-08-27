@@ -30,7 +30,6 @@ int tgc_shot(global struct hit **res, const double3 r_pt, const double3 r_dir, c
     double t_scale;
     double alf1, alf2;
     int npts;
-    int intersect;
     double3 cor_pprime;		/* corrected P prime */
     double cor_proj = 0.0;	/* corrected projected dist */
     int i;
@@ -211,12 +210,14 @@ int tgc_shot(global struct hit **res, const double3 r_pt, const double3 r_dir, c
 	}
 	/* bu_log("npts rooted is %d; ", npts); */
 
+#ifdef DEBUG
 	/* Here, 'npts' is number of points being returned */
 	if (npts != 0 && npts != 2 && npts != 4 && npts > 0) {
 	    /* LOG */
 	} else if (nroots < 0) {
 	    /* LOG */
 	}
+#endif
     }
 
     /*
