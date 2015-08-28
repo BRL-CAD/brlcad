@@ -128,10 +128,10 @@
  */
 
 #define nextafter _nextafter
-#cmakedefine nextafterf(x,y) ((y)>0?(x)+FLT_EPSILON:(x)-FLT_EPSILON)
-#cmakedefine nextafterl(x,y) ((y)>0?(x)+DBL_EPSILON:(x)-DBL_EPSILON)
-#cmakedefine isnan _isnan
-#cmakedefine isinf(x) (!_finite(x))
+#define nextafterf(x,y) ((y)>0?(x)+FLT_EPSILON:(x)-FLT_EPSILON)
+#define nextafterl(x,y) ((y)>0?(x)+DBL_EPSILON:(x)-DBL_EPSILON)
+#define	isnan _isnan
+#define isinf(x) (!_finite(x))
 #cmakedefine asinh(x) (log(x + sqrt(x * x + 1)))
 #define execvp _execvp
 #define fdopen _fdopen
@@ -150,7 +150,6 @@
 #define strdup _strdup
 #define sys_errlist _sys_errlist
 #define sys_nerr _sys_nerr
-#define getcwd _getcwd
 
 /* set up stat */
 #if defined(SIZEOF_VOID_P) && SIZEOF_VOID_P == 8
@@ -173,7 +172,7 @@
 #   define lseek _lseek
 #endif
 
-#cmakedefine fmax __max
+#define fmax __max
 #define ioctl ioctlsocket
 
 #define SHARED_PTR_BOOST	1
@@ -294,7 +293,7 @@ typedef int mode_t;
 
 #define fork() -1
 #define getprogname() _pgmptr
-#cmakedefine rint(_X) (floor((_X) + 0.5))
+#define rint(_X) (floor((_X) + 0.5))
 #define sleep(_SECONDS) (Sleep(1000 * (_SECONDS)))
 
 #ifndef __cplusplus

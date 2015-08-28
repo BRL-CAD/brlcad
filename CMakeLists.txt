@@ -1804,42 +1804,6 @@ if(WIN32)
     set(asinh 1)
   endif(NOT HAVE_ASINH)
 
-  CHECK_SYMBOL_EXISTS(isnan "math.h" HAVE_ISNAN)
-  #If we don't have it, need to define it in config_win
-  if(NOT HAVE_ISNAN)
-    set(isnan 1)
-  endif(NOT HAVE_ISNAN)
-
-  CHECK_SYMBOL_EXISTS(isinf "math.h" HAVE_ISINF)
-  #If we don't have it, need to define it in config_win
-  if(NOT HAVE_ISINF)
-    set(isinf 1)
-  endif(NOT HAVE_ISINF)
-
-  CHECK_SYMBOL_EXISTS(rint "math.h" HAVE_RINT)
-  #If we don't have it, need to define it in config_win
-  if(NOT HAVE_RINT)
-    set(rint 1)
-  endif(NOT HAVE_RINT)
-
-  CHECK_SYMBOL_EXISTS(fmax "math.h" HAVE_FMAX)
-  #If we don't have it, need to define it in config_win
-  if(NOT HAVE_FMAX)
-    set(fmax 1)
-  endif(NOT HAVE_FMAX)
-
-  CHECK_SYMBOL_EXISTS(nextafterf "math.h" HAVE_NEXTAFTERF)
-  #If we don't have it, need to define it in config_win
-  if(NOT HAVE_NEXTAFTERF)
-    set(nextafterf 1)
-  endif(NOT HAVE_NEXTAFTERF)
-
-  CHECK_SYMBOL_EXISTS(nextafterl "math.h" HAVE_NEXTAFTERL)
-  #If we don't have it, need to define it in config_win
-  if(NOT HAVE_NEXTAFTERL)
-    set(nextafterl 1)
-  endif(NOT HAVE_NEXTAFTERL)
-
   BRLCAD_FUNCTION_EXISTS(_fseeki64 HAVE__FSEEKI64)
   BRLCAD_FUNCTION_EXISTS(_ftelli64 HAVE__FTELLI64)
 
