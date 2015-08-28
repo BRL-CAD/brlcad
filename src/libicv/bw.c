@@ -42,7 +42,7 @@ extern unsigned char *data2uchar(const icv_image_t *bif);
 
 #define WRMODE S_IRUSR|S_IRGRP|S_IROTH
 
-HIDDEN int
+int
 bw_write(icv_image_t *bif, const char *filename)
 {
 
