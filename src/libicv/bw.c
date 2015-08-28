@@ -37,8 +37,8 @@
 
 
 /* defined in encoding.c */
-extern HIDDEN double *uchar2double(unsigned char *data, long int size);
-extern HIDDEN unsigned char *data2uchar(const icv_image_t *bif);
+extern double *uchar2double(unsigned char *data, long int size);
+extern unsigned char *data2uchar(const icv_image_t *bif);
 
 #define WRMODE S_IRUSR|S_IRGRP|S_IROTH
 
@@ -80,7 +80,7 @@ bw_write(icv_image_t *bif, const char *filename)
     return 0;
 }
 
-HIDDEN icv_image_t *
+icv_image_t *
 bw_read(const char *filename, int width, int height)
 {
     int fd;
