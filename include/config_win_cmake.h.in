@@ -128,10 +128,22 @@
  */
 
 #define nextafter _nextafter
-#define nextafterf(x,y) ((y)>0?(x)+FLT_EPSILON:(x)-FLT_EPSILON)
-#define nextafterl(x,y) ((y)>0?(x)+DBL_EPSILON:(x)-DBL_EPSILON)
-#define	isnan _isnan
-#define isinf(x) (!_finite(x))
+/* Per https://msdn.microsoft.com/en-us/library/hh308249.aspx
+ * nextafterf was introduced in VS2012 */
+#if (_MSC_VER < 1700)
+#  define nextafterf(x,y) ((y)>0?(x)+FLT_EPSILON:(x)-FLT_EPSILON)
+#endif
+/* Per https://msdn.microsoft.com/en-us/library/h0dff77w%28v=vs.120%29.aspx
+ * nextafterl was introduced in VS2013 */
+#if (_MSC_VER < 1800)
+#  define nextafterl(x,y) ((y)>0?(x)+DBL_EPSILON:(x)-DBL_EPSILON)
+#endif
+/* Per https://msdn.microsoft.com/en-us/library/hh308421.aspx isnan
+ * and isinf were introduced in VS2012 */
+#if (_MSC_VER < 1700)
+#  define	isnan _isnan
+#  define isinf(x) (!_finite(x))
+#endif
 #cmakedefine asinh(x) (log(x + sqrt(x * x + 1)))
 #define execvp _execvp
 #define fdopen _fdopen
@@ -172,7 +184,11 @@
 #   define lseek _lseek
 #endif
 
-#define fmax __max
+/* Per https://msdn.microsoft.com/en-us/library/hh308439.aspx
+ * fmax was introduced in VS 2012 */
+#if (_MSC_VER < 1700)
+# define fmax __max
+#endif
 #define ioctl ioctlsocket
 
 #define SHARED_PTR_BOOST	1
@@ -293,7 +309,11 @@ typedef int mode_t;
 
 #define fork() -1
 #define getprogname() _pgmptr
-#define rint(_X) (floor((_X) + 0.5))
+/* Per https://msdn.microsoft.com/en-us/library/dn465165.aspx rint
+ * was introduced in VS2013 */
+#if (_MSC_VER < 1800)
+#  define rint(_X) (floor((_X) + 0.5))
+#endif
 #define sleep(_SECONDS) (Sleep(1000 * (_SECONDS)))
 
 #ifndef __cplusplus
