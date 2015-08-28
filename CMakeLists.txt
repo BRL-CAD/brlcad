@@ -1930,62 +1930,20 @@ execute_process(COMMAND ${CMAKE_COMMAND} -E copy_if_different ${BRLCAD_BINARY_DI
 execute_process(COMMAND ${CMAKE_COMMAND} -E remove ${BRLCAD_BINARY_DIR}/include/conf/USER.tmp)
 DISTCLEAN(${BRLCAD_BINARY_DIR}/include/conf/USER)
 
-# PATH
-if(CMAKE_CONFIGURATION_TYPES)
-
-  # if we have stale cmake_install.cmake.orig files around, clear them now.
-  file(GLOB_RECURSE ALL_CMAKE_INSTALL_FILES_ORIG "*cmake_install.cmake.orig")
-  if(ALL_CMAKE_INSTALL_FILES_ORIG)
-    file(REMOVE ${ALL_CMAKE_INSTALL_FILES_ORIG})
-  endif(ALL_CMAKE_INSTALL_FILES_ORIG)
-  # need a build target for this one - install directory may be dependent on configuration, but that won't
-  # do for BRL-CAD reporting purposes - must get the fully qualified path at build time.
-  string(REPLACE "\${BUILD_TYPE}" "----BUILD_TYPE----" CMAKE_INSTALL_PREFIX_CFG "${CMAKE_INSTALL_PREFIX}")
-  configure_file(${BRLCAD_CMAKE_DIR}/multiconfig_path_clean.cmake.in ${CMAKE_BINARY_DIR}/CMakeTmp/multiconfig_path_clean.cmake @ONLY)
-  configure_file(${BRLCAD_CMAKE_DIR}/multiconfig_path_read.cmake.in ${CMAKE_BINARY_DIR}/CMakeTmp/multiconfig_path_read.cmake @ONLY)
-  if(EXISTS ${CMAKE_BINARY_DIR}/CMakeTmp/CURRENT_PATH)
-    file(REMOVE_RECURSE ${CMAKE_BINARY_DIR}/CMakeTmp/CURRENT_PATH)
-  endif(EXISTS ${CMAKE_BINARY_DIR}/CMakeTmp/CURRENT_PATH)
-  file(MAKE_DIRECTORY ${CMAKE_BINARY_DIR}/CMakeTmp/CURRENT_PATH)
-  add_custom_command(
-    OUTPUT "${CMAKE_BINARY_DIR}/CMakeTmp/CURRENT_PATH/${CMAKE_CFG_INTDIR}.done"
-    COMMAND "${CMAKE_COMMAND}" -P "${CMAKE_BINARY_DIR}/CMakeTmp/multiconfig_path_clean.cmake"
-    COMMAND "${CMAKE_COMMAND}" -E touch "${CMAKE_BINARY_DIR}/CMakeTmp/CURRENT_PATH/${CMAKE_CFG_INTDIR}"
-    COMMAND "${CMAKE_COMMAND}" -P "${CMAKE_BINARY_DIR}/CMakeTmp/multiconfig_path_read.cmake"
-    COMMAND "${CMAKE_COMMAND}" -E copy_if_different "${CMAKE_BINARY_DIR}/CMakeTmp/CURRENT_PATH/PATH.tmp" "${CMAKE_BINARY_DIR}/include/conf/PATH"
-    COMMAND "${CMAKE_COMMAND}" -E touch "${CMAKE_BINARY_DIR}/CMakeTmp/CURRENT_PATH/${CMAKE_CFG_INTDIR}.done"
-    )
-  add_custom_target(multiconfig_path DEPENDS "${CMAKE_BINARY_DIR}/CMakeTmp/CURRENT_PATH/${CMAKE_CFG_INTDIR}.done")
-  # To make sure this command runs in time for the source code builds it might impact, we will need to add the output file as a dependency
-  # to the first target to run - the timestamp printing.
-  add_dependencies(timestamp multiconfig_path)
-
-else(CMAKE_CONFIGURATION_TYPES)
-
-  file(WRITE ${BRLCAD_BINARY_DIR}/include/conf/PATH.tmp "\"${CMAKE_INSTALL_PREFIX}\"\n")
-  execute_process(COMMAND ${CMAKE_COMMAND} -E copy_if_different ${BRLCAD_BINARY_DIR}/include/conf/PATH.tmp ${BRLCAD_BINARY_DIR}/include/conf/PATH)
-  execute_process(COMMAND ${CMAKE_COMMAND} -E remove	${BRLCAD_BINARY_DIR}/include/conf/PATH.tmp)
-
-endif(CMAKE_CONFIGURATION_TYPES)
-DISTCLEAN(${BRLCAD_BINARY_DIR}/include/conf/PATH)
-
 # Write out version and compilation information
 
 file(READ ${BRLCAD_BINARY_DIR}/include/conf/DATE BRLCAD_COMPILE_DATE)
 file(READ ${BRLCAD_BINARY_DIR}/include/conf/HOST BRLCAD_COMPILE_HOST)
-file(READ ${BRLCAD_BINARY_DIR}/include/conf/PATH BRLCAD_COMPILE_PATH)
 file(READ ${BRLCAD_BINARY_DIR}/include/conf/USER BRLCAD_COMPILE_USER)
 file(READ ${BRLCAD_BINARY_DIR}/include/conf/COUNT BRLCAD_COMPILE_COUNT)
 
 string(STRIP ${BRLCAD_COMPILE_DATE} BRLCAD_COMPILE_DATE)
 string(STRIP ${BRLCAD_COMPILE_HOST} BRLCAD_COMPILE_HOST)
-string(STRIP ${BRLCAD_COMPILE_PATH} BRLCAD_COMPILE_PATH)
 string(STRIP ${BRLCAD_COMPILE_USER} BRLCAD_COMPILE_USER)
 string(STRIP ${BRLCAD_COMPILE_COUNT} BRLCAD_COMPILE_COUNT)
 
 CONFIG_H_APPEND(BRLCAD "#define BRLCAD_COMPILE_DATE ${BRLCAD_COMPILE_DATE}\n")
 CONFIG_H_APPEND(BRLCAD "#define BRLCAD_COMPILE_HOST ${BRLCAD_COMPILE_HOST}\n")
-CONFIG_H_APPEND(BRLCAD "#define BRLCAD_COMPILE_PATH ${BRLCAD_COMPILE_PATH}\n")
 CONFIG_H_APPEND(BRLCAD "#define BRLCAD_COMPILE_USER ${BRLCAD_COMPILE_USER}\n")
 CONFIG_H_APPEND(BRLCAD "#define BRLCAD_COMPILE_COUNT ${BRLCAD_COMPILE_COUNT}\n")
 
@@ -2098,16 +2056,10 @@ if(NOT BRLCAD_IS_SUBBUILD)
     list(REMOVE_DUPLICATES CMAKE_EXTERNAL_TARGET_LIST)
   endif(CMAKE_EXTERNAL_TARGET_LIST)
   foreach(libtarget ${CMAKE_LIBRARY_TARGET_LIST})
-    #TODO - can this locate test be replaced with if(TARGET ${libtarget}) ?
-    if(NOT CMAKE_BUILD_TYPE)
-      get_target_property(target_location ${libtarget} LOCATION)
-    else(NOT CMAKE_BUILD_TYPE)
-      get_target_property(target_location ${libtarget} LOCATION_${CMAKE_BUILD_TYPE})
-    endif(NOT CMAKE_BUILD_TYPE)
-    if(target_location)
+    if(TARGET ${libtarget})
       add_dependencies(${libtarget} timestamp)
       add_dependencies(buildtimedelta ${libtarget})
-    endif(target_location)
+    endif(TARGET ${libtarget})
   endforeach(libtarget ${CMAKE_LIBRARY_TARGET_LIST})
   foreach(exectarget ${CMAKE_EXEC_TARGET_LIST})
     if(NOT CMAKE_BUILD_TYPE)
@@ -2128,9 +2080,10 @@ if(NOT BRLCAD_IS_SUBBUILD)
     endif()
     if(NOT ${custtarget} MATCHES "buildtimedelta")
       get_target_property(not_in_all ${custtarget} EXCLUDE_FROM_ALL)
-      if(NOT not_in_all)
+      get_target_property(not_in_default ${custtarget} EXCLUDE_FROM_DEFAULT_BUILD)
+      if(NOT not_in_all AND NOT not_in_default)
 	add_dependencies(buildtimedelta ${custtarget})
-      endif(NOT not_in_all)
+      endif(NOT not_in_all AND NOT not_in_default)
     endif(NOT ${custtarget} MATCHES "buildtimedelta")
   endforeach(custtarget ${CMAKE_CUSTOM_TARGET_LIST})
   foreach(externaltarget ${CMAKE_EXTERNAL_TARGET_LIST})
@@ -2141,6 +2094,42 @@ if(NOT BRLCAD_IS_SUBBUILD)
     endif(target_confcmd)
   endforeach(externaltarget ${CMAKE_EXTERNAL_TARGET_LIST})
 endif(NOT BRLCAD_IS_SUBBUILD)
+
+# To set correct install paths for CMake at build time, rather than CMake
+# time, some rather special logic is necessary - a build target that needs
+# to be run when the current build type changes, and introspective scripting
+# that updates the CMake files themselves to have the correct path.
+# Unfortunately, there does not appear to be a way to control this well enough
+# from the CMake level - a build-type aware path is technically possible, but
+# it does not conform to BRL-CAD's conventions for installation directory
+# naming.
+if(CMAKE_CONFIGURATION_TYPES AND NOT BRLCAD_IS_SUBBUILD)
+  # if we have stale cmake_install.cmake.orig files around, clear them now.
+  file(GLOB_RECURSE ALL_CMAKE_INSTALL_FILES_ORIG "*cmake_install.cmake.orig")
+  if(ALL_CMAKE_INSTALL_FILES_ORIG)
+    file(REMOVE ${ALL_CMAKE_INSTALL_FILES_ORIG})
+  endif(ALL_CMAKE_INSTALL_FILES_ORIG)
+  # need a build target for this one - install directory may be dependent on configuration, but that won't
+  # do for BRL-CAD reporting purposes - must get the fully qualified path at build time.
+  string(REPLACE "\${BUILD_TYPE}" "----BUILD_TYPE----" CMAKE_INSTALL_PREFIX_CFG "${CMAKE_INSTALL_PREFIX}")
+  configure_file(${BRLCAD_CMAKE_DIR}/multiconfig_path_clean.cmake.in ${CMAKE_BINARY_DIR}/CMakeTmp/multiconfig_path_clean.cmake @ONLY)
+  configure_file(${BRLCAD_CMAKE_DIR}/multiconfig_path_read.cmake.in ${CMAKE_BINARY_DIR}/CMakeTmp/multiconfig_path_read.cmake @ONLY)
+  if(EXISTS ${CMAKE_BINARY_DIR}/CMakeTmp/CURRENT_PATH)
+    file(REMOVE_RECURSE ${CMAKE_BINARY_DIR}/CMakeTmp/CURRENT_PATH)
+  endif(EXISTS ${CMAKE_BINARY_DIR}/CMakeTmp/CURRENT_PATH)
+  file(MAKE_DIRECTORY ${CMAKE_BINARY_DIR}/CMakeTmp/CURRENT_PATH)
+  add_custom_command(
+    OUTPUT "${CMAKE_BINARY_DIR}/CMakeTmp/CURRENT_PATH/${CMAKE_CFG_INTDIR}.done"
+    COMMAND "${CMAKE_COMMAND}" -P "${CMAKE_BINARY_DIR}/CMakeTmp/multiconfig_path_clean.cmake"
+    COMMAND "${CMAKE_COMMAND}" -E touch "${CMAKE_BINARY_DIR}/CMakeTmp/CURRENT_PATH/${CMAKE_CFG_INTDIR}"
+    COMMAND "${CMAKE_COMMAND}" -P "${CMAKE_BINARY_DIR}/CMakeTmp/multiconfig_path_read.cmake"
+    COMMAND "${CMAKE_COMMAND}" -E touch "${CMAKE_BINARY_DIR}/CMakeTmp/CURRENT_PATH/${CMAKE_CFG_INTDIR}.done"
+    )
+  # To make sure multiconfig_path runs in time for the source code builds it might impact, we will need to add the output file as a dependency
+  # to the first target to run - the timestamp printing.
+  add_custom_target(multiconfig_path DEPENDS "${CMAKE_BINARY_DIR}/CMakeTmp/CURRENT_PATH/${CMAKE_CFG_INTDIR}.done")
+  add_dependencies(timestamp multiconfig_path)
+endif(CMAKE_CONFIGURATION_TYPES AND NOT BRLCAD_IS_SUBBUILD)
 
 # CPack is used to produce tgz files, RPMS, etc.  If SUBBUILD is enabled this
 # becomes the responsibility of the parent project.
@@ -2269,24 +2258,26 @@ if(NOT BRLCAD_IS_SUBBUILD)
     DISTCLEAN(${CMAKE_BINARY_DIR}/.ninja_log)
   endif("${CMAKE_GENERATOR}" MATCHES "Ninja")
 
-  # ----------------------------------------------------------------------------
-  # Define a distcheck target.  This performs a variety of tests to determine
-  # whether BRL-CAD is in a distribution ready state.  Default to the standard
-  # set of tests - Debug and Release build configurations
-  include(${BRLCAD_CMAKE_DIR}/Distcheck.cmake)
+  if(NOT MSVC)
+    # ----------------------------------------------------------------------------
+    # Define a distcheck target.  This performs a variety of tests to determine
+    # whether BRL-CAD is in a distribution ready state.  Default to the standard
+    # set of tests - Debug and Release build configurations
+    include(${BRLCAD_CMAKE_DIR}/Distcheck.cmake)
 
-  # Define some custom distcheck targets for distcheck-full (not run by default)
-  #
-  # CREATE_DISTCHECK(TARGET_SUFFIX CMAKE_OPTS source_dir build_dir install_dir [custom_template])
-  CREATE_DISTCHECK(default_build_type "-DBRLCAD_BUNDLED_LIBS=AUTO" "${CPACK_SOURCE_PACKAGE_FILE_NAME}" "build" "install")
-  CREATE_DISTCHECK(no_tk "-DCMAKE_BUILD_TYPE=Debug -DBRLCAD_BUNDLED_LIBS=BUNDLED -DBRLCAD_ENABLE_TK=OFF" "${CPACK_SOURCE_PACKAGE_FILE_NAME}" "build" "install")
-  CREATE_DISTCHECK(autodetect_debug "-DCMAKE_BUILD_TYPE=Debug -DBRLCAD_BUNDLED_LIBS=AUTO" "${CPACK_SOURCE_PACKAGE_FILE_NAME}" "build" "install")
-  CREATE_DISTCHECK(autodetect_release "-DCMAKE_BUILD_TYPE=Release -DBRLCAD_BUNDLED_LIBS=AUTO" "${CPACK_SOURCE_PACKAGE_FILE_NAME}" "build" "install")
-  CREATE_DISTCHECK(odd_pathnames "-DCMAKE_BUILD_TYPE=Debug -DBRLCAD_BUNDLED_LIBS=BUNDLED" "1 Odd_ source dir ++" "1 Odd_ build dir ++" "1 Odd_ install dir ++")
-  CREATE_DISTCHECK(in_src_dir "-DCMAKE_BUILD_TYPE=Debug -DBRLCAD_BUNDLED_LIBS=BUNDLED" "${CPACK_SOURCE_PACKAGE_FILE_NAME}" "${CPACK_SOURCE_PACKAGE_FILE_NAME}" "install" distcheck_in_src_dir.cmake.in)
+    # Define some custom distcheck targets for distcheck-full (not run by default)
+    #
+    # CREATE_DISTCHECK(TARGET_SUFFIX CMAKE_OPTS source_dir build_dir install_dir [custom_template])
+    CREATE_DISTCHECK(default_build_type "-DBRLCAD_BUNDLED_LIBS=AUTO" "${CPACK_SOURCE_PACKAGE_FILE_NAME}" "build" "install")
+    CREATE_DISTCHECK(no_tk "-DCMAKE_BUILD_TYPE=Debug -DBRLCAD_BUNDLED_LIBS=BUNDLED -DBRLCAD_ENABLE_TK=OFF" "${CPACK_SOURCE_PACKAGE_FILE_NAME}" "build" "install")
+    CREATE_DISTCHECK(autodetect_debug "-DCMAKE_BUILD_TYPE=Debug -DBRLCAD_BUNDLED_LIBS=AUTO" "${CPACK_SOURCE_PACKAGE_FILE_NAME}" "build" "install")
+    CREATE_DISTCHECK(autodetect_release "-DCMAKE_BUILD_TYPE=Release -DBRLCAD_BUNDLED_LIBS=AUTO" "${CPACK_SOURCE_PACKAGE_FILE_NAME}" "build" "install")
+    CREATE_DISTCHECK(odd_pathnames "-DCMAKE_BUILD_TYPE=Debug -DBRLCAD_BUNDLED_LIBS=BUNDLED" "1 Odd_ source dir ++" "1 Odd_ build dir ++" "1 Odd_ install dir ++")
+    CREATE_DISTCHECK(in_src_dir "-DCMAKE_BUILD_TYPE=Debug -DBRLCAD_BUNDLED_LIBS=BUNDLED" "${CPACK_SOURCE_PACKAGE_FILE_NAME}" "${CPACK_SOURCE_PACKAGE_FILE_NAME}" "install" distcheck_in_src_dir.cmake.in)
 
-  # Now that we're set up and have added the extra targets we want for distcheck-full, define the build targets
-  DEFINE_DISTCHECK_TARGET(STD)
+    # Now that we're set up and have added the extra targets we want for distcheck-full, define the build targets
+    DEFINE_DISTCHECK_TARGET(STD)
+  endif(NOT MSVC)
 endif(NOT BRLCAD_IS_SUBBUILD)
 
 # ----------------------------------------------------------------------------
