@@ -1330,7 +1330,7 @@ rt_grow_boolstack(register struct resource *resp)
  *  0 tree is BOOL_FALSE
  * -1 tree is in error (GUARD)
  */
-int
+static int
 rt_booleval(register union tree *treep, struct partition *partp, struct region **trueregp, struct resource *resp)
 /* Tree to evaluate */
 /* Partition to evaluate */
