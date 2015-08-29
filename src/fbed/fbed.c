@@ -114,7 +114,7 @@ HIDDEN int pars_Argv(int argc, char **argv);
 HIDDEN int push_Macro(char *buf);
 HIDDEN void general_Handler(int sig);
 HIDDEN void init_Try(void);
-HIDDEN void fb_Paint(int x0, int y0, int x1, int y1, RGBpixel (*color));
+HIDDEN void fb_Paint(int x0, int y0, int x_1, int y_1, RGBpixel (*color));
 HIDDEN void fb_Wind(void);
 HIDDEN void get_Point(char *msg, Point *pointp);
 HIDDEN void clip_Rect2D(Rect2D *rectp);
@@ -1941,13 +1941,13 @@ fb_Wind(void)
 
 /*	f b _ P a i n t ( ) */
 HIDDEN void
-fb_Paint(int x0, int y0, int x1, int y1, RGBpixel (*color))
+fb_Paint(int x_0, int y_0, int x_1, int y_1, RGBpixel (*color))
 {
     Rect2D clipped_rect;
-    clipped_rect.r_origin.p_x = x0;
-    clipped_rect.r_corner.p_x = x1;
-    clipped_rect.r_origin.p_y = y0;
-    clipped_rect.r_corner.p_y = y1;
+    clipped_rect.r_origin.p_x = x_0;
+    clipped_rect.r_corner.p_x = x_1;
+    clipped_rect.r_origin.p_y = y_0;
+    clipped_rect.r_corner.p_y = y_1;
     clip_Rect2D( &clipped_rect );
     fillRect2D( &clipped_rect, color );
     return;
