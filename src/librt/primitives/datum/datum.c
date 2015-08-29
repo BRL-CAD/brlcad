@@ -1,7 +1,7 @@
 /*                         D A T U M . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2014 United States Government as represented by
+ * Copyright (c) 2015 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -22,7 +22,7 @@
 /** @file primitives/datum/datum.c
  *
  * Implement support for datum reference entities.  The basic
- * structural container supports fairely arbitrary collections of
+ * structural container supports fairly arbitrary collections of
  * points, lines, or planes which can be used to represent reference
  * features, axes, and coordinate systems.
  *
@@ -147,7 +147,7 @@ int
 rt_datum_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol), const struct rt_view_info *UNUSED(info))
 {
     struct rt_datum_internal *datum_ip;
-    point_t point_size;
+    point_t point_size = VINIT_ZERO;
 
     BU_CK_LIST_HEAD(vhead);
     RT_CK_DB_INTERNAL(ip);
@@ -156,47 +156,84 @@ rt_datum_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_
 
     BU_CK_LIST_HEAD(vhead);
 
-    point_size[X] = 2.0;
+    /* make sure plotted points are an odd selectable number of pixels with a center pixel, 5x5 */
+    point_size[X] = 5.0;
     RT_ADD_VLIST(vhead, point_size, BN_VLIST_POINT_SIZE);
 
     while (datum_ip) {
 	if (!ZERO(datum_ip->w)) {
-	    vect_t plane_cent, xbase, ybase;
-	    vect_t x_1, x_2, y_1, y_2, tip;
+	    vect_t up, down, left, right, udir;
+	    point_t tip, ul, ll, ur, lr, ortho;
+	    const vect_t zup = {0.0, 0.0, 1.0};
 
-	    VADD2(plane_cent, datum_ip->pnt, datum_ip->dir);
-	    VUNITIZE(plane_cent);
-	    VSCALE(plane_cent, plane_cent, 1/datum_ip->w);
-
-	    bn_vec_perp(xbase, &datum_ip->dir[X]);
-	    VCROSS(ybase, xbase, datum_ip->dir);
-	    VUNITIZE(xbase);
-	    VUNITIZE(ybase);
-	    VSCALE(xbase, xbase, 1000.0);
-	    VSCALE(ybase, ybase, 1000.0);
-
-	    VADD2(x_1, plane_cent, xbase);
-	    VSUB2(x_2, plane_cent, xbase);
-	    VADD2(y_1, plane_cent, ybase);
-	    VSUB2(y_2, plane_cent, ybase);
-
-	    RT_ADD_VLIST(vhead, x_1, BN_VLIST_LINE_MOVE);	/* the cross */
-	    RT_ADD_VLIST(vhead, x_2, BN_VLIST_LINE_DRAW);
-	    RT_ADD_VLIST(vhead, y_1, BN_VLIST_LINE_MOVE);
-	    RT_ADD_VLIST(vhead, y_2, BN_VLIST_LINE_DRAW);
-	    RT_ADD_VLIST(vhead, x_2, BN_VLIST_LINE_DRAW);	/* the box */
-	    RT_ADD_VLIST(vhead, y_1, BN_VLIST_LINE_DRAW);
-	    RT_ADD_VLIST(vhead, x_1, BN_VLIST_LINE_DRAW);
-	    RT_ADD_VLIST(vhead, y_2, BN_VLIST_LINE_DRAW);
-
-	    VSCALE(tip, datum_ip->dir, 500.0);
-	    VADD2(tip, plane_cent, tip);
-	    RT_ADD_VLIST(vhead, plane_cent, BN_VLIST_LINE_MOVE);
+	    /* center */
+	    VADD2(tip, datum_ip->pnt, datum_ip->dir);
+	    RT_ADD_VLIST(vhead, datum_ip->pnt, BN_VLIST_POINT_DRAW);
 	    RT_ADD_VLIST(vhead, tip, BN_VLIST_LINE_DRAW);
 
+	    VCROSS(left, datum_ip->dir, zup);
+	    VREVERSE(right, left);
+	    VMOVE(udir, datum_ip->dir);
+	    VUNITIZE(udir);
+	    VCROSS(up, udir, left);
+	    VREVERSE(down, up);
+
+	    VADD2(ortho, datum_ip->pnt, up);
+	    RT_ADD_VLIST(vhead, ortho, BN_VLIST_LINE_MOVE);
+
+	    VSUB2(ortho, datum_ip->pnt, up);
+	    RT_ADD_VLIST(vhead, ortho, BN_VLIST_LINE_DRAW);
+
+	    VJOIN2(ul, datum_ip->pnt, datum_ip->w, up, datum_ip->w, left);
+	    VJOIN2(ll, datum_ip->pnt, datum_ip->w, down, datum_ip->w, left);
+	    VJOIN2(ur, datum_ip->pnt, datum_ip->w, up, datum_ip->w, right);
+	    VJOIN2(lr, datum_ip->pnt, datum_ip->w, down, datum_ip->w, right);
+
+	    /* draw the box */
+	    RT_ADD_VLIST(vhead, ul, BN_VLIST_LINE_MOVE);
+	    RT_ADD_VLIST(vhead, ll, BN_VLIST_LINE_DRAW);
+	    RT_ADD_VLIST(vhead, lr, BN_VLIST_LINE_DRAW);
+	    RT_ADD_VLIST(vhead, ur, BN_VLIST_LINE_DRAW);
+	    RT_ADD_VLIST(vhead, ul, BN_VLIST_LINE_DRAW);
+
 	} else if (MAGNITUDE(datum_ip->dir) > 0.0 && ZERO(datum_ip->w)) {
+	    vect_t perp, cross1, cross2;
+	    point_t right, left, front, back, tip, endpt;
+	    fastf_t arrowhead_percentage = 0.05;
+	    fastf_t arrowhead_ratio = 0.3;
+
+	    /* draw main segment minus a smidgen for an arrowhead */
+	    VJOIN1(endpt, datum_ip->pnt, 1.0 - arrowhead_percentage, datum_ip->dir);
 	    RT_ADD_VLIST(vhead, datum_ip->pnt, BN_VLIST_LINE_MOVE);
-	    RT_ADD_VLIST(vhead, datum_ip->dir, BN_VLIST_LINE_DRAW);
+	    RT_ADD_VLIST(vhead, endpt, BN_VLIST_LINE_DRAW);
+
+	    /* calculate arrowhead points */
+	    VADD2(tip, datum_ip->pnt, datum_ip->dir);
+	    bn_vec_perp(perp, datum_ip->dir);
+	    VCROSS(cross1, perp, datum_ip->dir);
+	    VCROSS(cross2, datum_ip->dir, perp);
+	    VJOIN1(left, endpt, arrowhead_percentage * arrowhead_ratio, cross1);
+	    VJOIN1(right, endpt, arrowhead_percentage * arrowhead_ratio, cross2);
+
+	    /* draw arrowhead */
+	    RT_ADD_VLIST(vhead, left, BN_VLIST_LINE_DRAW);
+	    RT_ADD_VLIST(vhead, tip, BN_VLIST_LINE_DRAW);
+	    RT_ADD_VLIST(vhead, right, BN_VLIST_LINE_DRAW);
+	    RT_ADD_VLIST(vhead, endpt, BN_VLIST_LINE_DRAW);
+
+	    /* calculate ortho arrowhead points */
+	    VJOIN1(front, endpt, arrowhead_percentage * arrowhead_ratio, perp);
+	    VJOIN1(back, endpt, -arrowhead_percentage * arrowhead_ratio, perp);
+
+	    /* draw circular base + ortho arrowhead */
+	    RT_ADD_VLIST(vhead, front, BN_VLIST_LINE_DRAW);
+	    RT_ADD_VLIST(vhead, left, BN_VLIST_LINE_DRAW);
+	    RT_ADD_VLIST(vhead, back, BN_VLIST_LINE_DRAW);
+	    RT_ADD_VLIST(vhead, right, BN_VLIST_LINE_DRAW);
+	    RT_ADD_VLIST(vhead, front, BN_VLIST_LINE_DRAW);
+	    RT_ADD_VLIST(vhead, tip, BN_VLIST_LINE_DRAW);
+	    RT_ADD_VLIST(vhead, back, BN_VLIST_LINE_DRAW);
+	    RT_ADD_VLIST(vhead, endpt, BN_VLIST_LINE_DRAW);
 
 	} else {
 	    RT_ADD_VLIST(vhead, datum_ip->pnt, BN_VLIST_POINT_DRAW);
@@ -276,7 +313,11 @@ rt_datum_export5(struct bu_external *ep, const struct rt_db_internal *ip, double
     datum_ip = (struct rt_datum_internal *)ip->idb_ptr;
 
     BU_CK_EXTERNAL(ep);
-    ep->ext_nbytes = count * MAX_VALS * SIZEOF_NETWORK_DOUBLE;
+
+    /* we allocate potentially more than strictly necessary so we can
+     * change datums in place. avoids growing the export unnecessarily.
+     */
+    ep->ext_nbytes = SIZEOF_NETWORK_LONG /* #datums */ + (count * MAX_VALS * SIZEOF_NETWORK_DOUBLE) + (count * SIZEOF_NETWORK_LONG /* #vals */);
     ep->ext_buf = (uint8_t *)bu_calloc(1, ep->ext_nbytes, "datum external");
     buf = (unsigned char *)ep->ext_buf;
 
@@ -345,11 +386,13 @@ rt_datum_import5(struct rt_db_internal *ip, const struct bu_external *ep, const 
 
     while (count-- > 0) {
 	struct rt_datum_internal *datum_ip;
-	size_t vals = ntohl(*(uint32_t *)buf);
 
+	size_t vals = ntohl(*(uint32_t *)buf);
 	buf += SIZEOF_NETWORK_LONG;
+
 	if (vals > MAX_VALS)
 	    return -1;
+
 	buf = datum_unpack_double(buf, (unsigned char *)vec, vals);
 
 	BU_ALLOC(datum_ip, struct rt_datum_internal);

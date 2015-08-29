@@ -13,6 +13,7 @@ changes made.  See document footer for additional details.
 --- 2015-08-31  Release 7.24.4                                     ---
 ----------------------------------------------------------------------
 
+* initial support for datum points, lines, and planes - Sean Morrison
 
 
 ----------------------------------------------------------------------
