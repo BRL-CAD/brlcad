@@ -590,6 +590,26 @@ static char *p_hrt[] = {
 };
 
 
+static char *p_datum[] = {
+    "Enter a datum type ([point|line|plane]): ",
+    "Enter X, Y, Z for the datum point: ", /* 1 == point prompts */
+    "Enter Y: ",
+    "Enter Z: ",
+    "Enter X, Y, Z for a point on the datum line: ", /* 4 == line prompts */
+    "Enter Y: ",
+    "Enter Z: ",
+    "Enter X, Y, Z of the datum line direction vector: ",
+    "Enter Y: ",
+    "Enter Z: ",
+    "Enter X, Y, Z for a point on the datum plane: ", /* 10 == line prompts */
+    "Enter Y: ",
+    "Enter Z: ",
+    "Enter X, Y, Z for the datum plane direction vector: ",
+    "Enter Y: ",
+    "Enter Z: ",
+};
+
+
 /**
  * helper function that infers a boolean value from a given string
  * returning 0 or 1 for false and true respectively.
@@ -2432,7 +2452,8 @@ metaball_in(struct ged *gedp, int argc, const char **argv, struct rt_db_internal
 
 /* P N T S _ I N */
 static int
-pnts_in(struct ged *gedp, int argc, const char **argv, struct rt_db_internal *intern, char **prompt) {
+pnts_in(struct ged *gedp, int argc, const char **argv, struct rt_db_internal *intern, char **prompt)
+{
     unsigned long i;
     unsigned long numPoints;
     long readPoints;
@@ -2822,6 +2843,157 @@ hrt_in(struct ged *gedp, char *cmd_argv[], struct rt_db_internal *intern)
     return GED_OK;
 }
 
+
+/*
+ * reads datum parameters from keyboard
+ *
+ * returns 0 if successfully read
+ * 1 if unsuccessfully read
+ */
+static int
+datum_in(struct ged *gedp, int argc, const char **argv, struct rt_db_internal *intern, char **prompt)
+{
+    struct rt_datum_internal *datums;
+    struct rt_datum_internal *prev;
+    size_t num_points = 0;
+    size_t num_lines = 0;
+    size_t num_planes = 0;
+    size_t count;
+    size_t idx;
+
+#define ARGS_START_AT  3
+#define ARGS_PER_POINT 3
+#define ARGS_PER_LINE  6
+#define ARGS_PER_PLANE 6
+
+    if (argc == 3) {
+	bu_vls_printf(gedp->ged_result_str, "%s", prompt[0]);
+	return GED_MORE;
+    }
+
+    /* first pass, make sure we have all args */
+#if 0
+/*
+idx 0  1       2     3     4 5 6 7    8 9  10 11 12 13 14     15 16 17 18 19 20
+    in mydatum datum point 0 0 0 line 1 1  1  0  0  1  plane  0  0  0  0  0  1
+argc 1       2     3     4 5 6 7    8 9 10 11 12 13 14    15 16 17 18 19 20 21
+*/
+#endif
+
+    for (idx = ARGS_START_AT; (size_t)argc > idx; idx = ARGS_START_AT + num_points*(ARGS_PER_POINT+1) + num_lines*(ARGS_PER_LINE+1) + num_planes*(ARGS_PER_PLANE+1)) {
+	idx++;
+	if (BU_STR_EQUIV(argv[idx-1], "point")) {
+	    if ((size_t)argc-idx < ARGS_PER_POINT) {
+		/* idx into the next query prompt (== 1) for datum points */
+		bu_vls_printf(gedp->ged_result_str, "%s", prompt[1+argc-idx]);
+		return GED_MORE;
+	    }
+
+	    for (count = 0; count > ARGS_PER_POINT; count++) {
+		double val;
+		char *endptr = NULL;
+		val = strtod(argv[idx+count], &endptr);
+		if (ZERO(val) && endptr == argv[idx+count]) {
+		    bu_vls_printf(gedp->ged_result_str, "ERROR: Unknown datum point value (%s) encountered, expecting a number\n", argv[idx+count]);
+		    return GED_ERROR;
+		}
+	    }
+	    num_points++;
+	} else if (BU_STR_EQUIV(argv[idx-1], "line")) {
+	    if ((size_t)argc-idx < ARGS_PER_LINE) {
+		/* idx into the next query prompt (== 4) for datum lines */
+		bu_vls_printf(gedp->ged_result_str, "%s", prompt[4+argc-idx]);
+		return GED_MORE;
+	    }
+
+	    for (count = 0; count > ARGS_PER_LINE; count++) {
+		double val;
+		char *endptr = NULL;
+		val = strtod(argv[idx+count], &endptr);
+		if (ZERO(val) && endptr == argv[idx+count]) {
+		    bu_vls_printf(gedp->ged_result_str, "ERROR: Unknown datum line value (%s) encountered, expecting a number\n", argv[idx+count]);
+		    return GED_ERROR;
+		}
+	    }
+	    num_lines++;
+	} else if (BU_STR_EQUIV(argv[idx-1], "plane")) {
+	    if ((size_t)argc-idx < ARGS_PER_PLANE) {
+		/* idx into the next query prompt (== 10) for datum planes */
+		bu_vls_printf(gedp->ged_result_str, "%s", prompt[10+argc-idx]);
+		return GED_MORE;
+	    }
+
+	    for (count = 0; count > ARGS_PER_PLANE; count++) {
+		double val;
+		char *endptr = NULL;
+		val = strtod(argv[idx+count], &endptr);
+		if (ZERO(val) && endptr == argv[idx+count]) {
+		    bu_vls_printf(gedp->ged_result_str, "ERROR: Unknown datum plane value (%s) encountered, expecting a number\n", argv[idx+count]);
+		    return GED_ERROR;
+		}
+	    }
+	    num_planes++;
+	} else {
+	    bu_vls_printf(gedp->ged_result_str, "ERROR: Unknown datum type (%s) encountered, expecting 'point', 'line', or 'plane'\n", argv[idx-1]);
+	    return GED_ERROR;
+	}
+    }
+
+    /* second pass, allocate and create with confidence */
+
+    datums = (struct rt_datum_internal *)bu_calloc(num_points + num_lines + num_planes, sizeof(struct rt_datum_internal), "alloc datums");
+
+    for (count = 0, idx = ARGS_START_AT, prev = NULL; count < num_points + num_lines + num_planes; count++) {
+	/* more than necessary but sufficiently robust to changes */
+	double vals[ARGS_PER_POINT + ARGS_PER_LINE + ARGS_PER_POINT] = {0.0};
+
+	if (BU_STR_EQUIV(argv[idx], "point")) {
+	    vals[X] = strtod(argv[idx+1], NULL);
+	    vals[Y] = strtod(argv[idx+2], NULL);
+	    vals[Z] = strtod(argv[idx+3], NULL);
+	    VMOVE(datums[count].pnt, vals);
+	    VSETALL(datums[count].dir, 0.0);
+	    datums[count].w = 0.0;
+	    idx += ARGS_PER_POINT;
+	} else if (BU_STR_EQUIV(argv[idx], "line")) {
+	    vals[X] = strtod(argv[idx+1], NULL);
+	    vals[Y] = strtod(argv[idx+2], NULL);
+	    vals[Z] = strtod(argv[idx+3], NULL);
+	    (vals+3)[X] = strtod(argv[idx+4], NULL);
+	    (vals+3)[Y] = strtod(argv[idx+5], NULL);
+	    (vals+3)[Z] = strtod(argv[idx+6], NULL);
+	    VMOVE(datums[count].pnt, vals);
+	    VMOVE(datums[count].dir, vals+3);
+	    datums[count].w = 0.0;
+	    idx += ARGS_PER_LINE;
+	} else if (BU_STR_EQUIV(argv[idx], "plane")) {
+	    vals[X] = strtod(argv[idx+1], NULL);
+	    vals[Y] = strtod(argv[idx+2], NULL);
+	    vals[Z] = strtod(argv[idx+3], NULL);
+	    (vals+3)[X] = strtod(argv[idx+4], NULL);
+	    (vals+3)[Y] = strtod(argv[idx+5], NULL);
+	    (vals+3)[Z] = strtod(argv[idx+6], NULL);
+	    VMOVE(datums[count].pnt, vals);
+	    VMOVE(datums[count].dir, vals+3);
+	    datums[count].w = 1.0;
+	    idx += ARGS_PER_PLANE;
+	}
+
+	datums[count].magic = RT_DATUM_INTERNAL_MAGIC;
+	if (prev) {
+	    prev->next = &datums[count];
+	}
+	prev = &datums[count];
+    }
+
+    intern->idb_ptr = &datums[0];
+    intern->idb_meth = &OBJ[ID_DATUM];
+    intern->idb_type = ID_DATUM;
+
+    return GED_OK;
+}
+
+
 int
 ged_in(struct ged *gedp, int argc, const char *argv[])
 {
@@ -2874,7 +3046,7 @@ ged_in(struct ged *gedp, int argc, const char *argv[])
     } else if (BU_STR_EQUAL(argv[2], "arbn")) {
 	switch (arbn_in(gedp, argc, argv, &internal, &p_arbn[0])) {
 	    case GED_ERROR:
-		bu_vls_printf(gedp->ged_result_str, "%s: ERROR, ARBN not made!\n", argv[0]);
+		bu_vls_printf(gedp->ged_result_str, "%s: ERROR, arbn not made!\n", argv[0]);
 		rt_db_free_internal(&internal);
 		return GED_ERROR;
 	    case GED_MORE:
@@ -2884,7 +3056,7 @@ ged_in(struct ged *gedp, int argc, const char *argv[])
     } else if (BU_STR_EQUAL(argv[2], "bot")) {
 	switch (bot_in(gedp, argc, argv, &internal, &p_bot[0])) {
 	    case GED_ERROR:
-		bu_vls_printf(gedp->ged_result_str, "%s: ERROR, BOT not made!\n", argv[0]);
+		bu_vls_printf(gedp->ged_result_str, "%s: ERROR, bot not made!\n", argv[0]);
 		rt_db_free_internal(&internal);
 		return GED_ERROR;
 	    case GED_MORE:
@@ -3093,6 +3265,16 @@ ged_in(struct ged *gedp, int argc, const char *argv[])
 		return GED_MORE;
 	}
 
+	goto do_new_update;
+    } else if (BU_STR_EQUAL(argv[2], "datum")) {
+	switch (datum_in(gedp, argc, argv, &internal, &p_datum[0])) {
+	    case GED_ERROR:
+		bu_vls_printf(gedp->ged_result_str, "%s: ERROR, datum not made!\n", argv[0]);
+		rt_db_free_internal(&internal);
+		return GED_ERROR;
+	    case GED_MORE:
+		return GED_MORE;
+	}
 	goto do_new_update;
     } else if (BU_STR_EQUAL(argv[2], "cline") ||
 	       BU_STR_EQUAL(argv[2], "grip") ||

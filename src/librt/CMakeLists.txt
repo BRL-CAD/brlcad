@@ -112,6 +112,7 @@ set(LIBRT_SOURCES
   primitives/bspline/nurb_xsplit.c
   primitives/cline/cline.c
   primitives/cline/cline_brep.cpp
+  primitives/datum/datum.c
   primitives/dsp/dsp.c
   primitives/dsp/dsp_brep.cpp
   primitives/dsp/dsp_mirror.c
