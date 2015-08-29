@@ -28,11 +28,11 @@
 
 
 int
-test_str_isprint(char *inp , int exp)
+test_str_isprint(char *inp , int expected)
 {
     int res;
     res = bu_str_isprint(inp);
-    if (res == exp) {
+    if (res == expected) {
 	if (res) {
 	    printf("Testing with string : %10s is printable->PASSED!\n", inp);
 	    return 1;
