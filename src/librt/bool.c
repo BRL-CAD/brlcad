@@ -1034,36 +1034,33 @@ rt_default_multioverlap(struct application *ap, struct partition *pp, struct bu_
 	 */
 	if (lastregion->reg_aircode != 0 && regp->reg_aircode == 0) {
 	    /* last region is air, replace with solid regp */
-	    goto code2;
+	    code = 2;
 	} else if (lastregion->reg_aircode == 0 && regp->reg_aircode != 0) {
 	    /* last region solid, regp is air, keep last */
-	    goto code1;
+	    code = 1;
 	} else if (lastregion->reg_aircode != 0 &&
 		   regp->reg_aircode != 0 &&
 		   regp->reg_aircode == lastregion->reg_aircode) {
 	    /* both are same air, keep last */
-	    goto code1;
-	}
+	    code = 1;
 
-	/*
-	 * If a FASTGEN region overlaps a non-FASTGEN region, the
-	 * non-FASTGEN ("traditional BRL-CAD") region wins.  No
-	 * mixed-mode geometry like this will be built by the
-	 * fastgen-to-BRL-CAD converters, only by human editors.
-	 */
-	if (lastregion->reg_is_fastgen != regp->reg_is_fastgen) {
-	    if (lastregion->reg_is_fastgen)
-		goto code2;		/* keep regp */
-	    if (regp->reg_is_fastgen)
-		goto code1;		/* keep lastregion */
-	}
+	    /*
+	     * If a FASTGEN region overlaps a non-FASTGEN region, the
+	     * non-FASTGEN ("traditional BRL-CAD") region wins.  No
+	     * mixed-mode geometry like this will be built by the
+	     * fastgen-to-BRL-CAD converters, only by human editors.
+	     */
+	} else if (lastregion->reg_is_fastgen != regp->reg_is_fastgen && lastregion->reg_is_fastgen) {
+	    code = 2;		/* keep regp */
+	} else if (lastregion->reg_is_fastgen != regp->reg_is_fastgen && regp->reg_is_fastgen) {
+	    code = 1;		/* keep lastregion */
 
-	/*
-	 * To support ray bundles, find partition with the lower
-	 * contributing ray number (closer to center of bundle), and
-	 * retain that one.
-	 */
-	{
+	    /*
+	     * To support ray bundles, find partition with the lower
+	     * contributing ray number (closer to center of bundle), and
+	     * retain that one.
+	     */
+	} else {
 	    int r1 = rt_tree_max_raynum(lastregion->reg_treetop, pp);
 	    int r2 = rt_tree_max_raynum(regp->reg_treetop, pp);
 
@@ -1074,45 +1071,47 @@ rt_default_multioverlap(struct application *ap, struct partition *pp, struct bu_
 			   (r1<r2)?lastregion->reg_name:regp->reg_name);
 		}
 		if (r1 < r2) {
-		    goto code1;	/* keep lastregion */
+		    code = 1;	/* keep lastregion */
+		} else {
+		    code = 2;	/* keep regp */
 		}
-		goto code2;		/* keep regp */
+	    } else {
+		/*
+		 * Hand overlap to old-style application-specific
+		 * overlap handler, or default.
+		 * 0 = destroy partition,
+		 * 1 = keep part, claiming region=lastregion
+		 * 2 = keep part, claiming region=regp
+		 */
+		code = ap->a_overlap(ap, pp, lastregion, regp, InputHdp);
 	    }
 	}
 
-	/*
-	 * Hand overlap to old-style application-specific
-	 * overlap handler, or default.
-	 * 0 = destroy partition,
-	 * 1 = keep part, claiming region=lastregion
-	 * 2 = keep part, claiming region=regp
-	 */
-	code = ap->a_overlap(ap, pp, lastregion, regp, InputHdp);
-
 	/* Implement the policy in "code" */
-	if (code == 0) {
-	    /*
-	     * Destroy the whole partition.
-	     */
-	    if (RT_G_DEBUG&DEBUG_PARTITION)
-		bu_log("rt_default_multioverlap:  overlap code=0, partition=%p deleted\n", (void *)pp);
-	    bu_ptbl_reset(regiontable);
-	    return;
-	} else if (code == 1) {
-	code1:
-	    /* Keep partition, claiming region = lastregion */
-	    if (RT_G_DEBUG&DEBUG_PARTITION)
-		bu_log("rt_default_multioverlap:  overlap policy=1, code=%d, p retained in region=%s\n",
-		       code, lastregion->reg_name);
-	    BU_PTBL_CLEAR_I(regiontable, i);
-	} else {
-	code2:
-	    /* Keep partition, claiming region = regp */
-	    bu_ptbl_zero(regiontable, (long *)lastregion);
-	    lastregion = regp;
-	    if (RT_G_DEBUG&DEBUG_PARTITION)
-		bu_log("rt_default_multioverlap:  overlap policy!=(0, 1) code=%d, p retained in region=%s\n",
-		       code, lastregion->reg_name);
+	switch (code) {
+	    case 0:
+		/*
+		 * Destroy the whole partition.
+		 */
+		if (RT_G_DEBUG&DEBUG_PARTITION)
+		    bu_log("rt_default_multioverlap:  overlap code=0, partition=%p deleted\n", (void *)pp);
+		bu_ptbl_reset(regiontable);
+		return;
+	    case 1:
+		/* Keep partition, claiming region = lastregion */
+		if (RT_G_DEBUG&DEBUG_PARTITION)
+		    bu_log("rt_default_multioverlap:  overlap policy=1, code=%d, p retained in region=%s\n",
+			    code, lastregion->reg_name);
+		BU_PTBL_CLEAR_I(regiontable, i);
+		break;
+	    case 2:
+		/* Keep partition, claiming region = regp */
+		bu_ptbl_zero(regiontable, (long *)lastregion);
+		lastregion = regp;
+		if (RT_G_DEBUG&DEBUG_PARTITION)
+		    bu_log("rt_default_multioverlap:  overlap policy!=(0, 1) code=%d, p retained in region=%s\n",
+			    code, lastregion->reg_name);
+		break;
 	}
     }
 }
