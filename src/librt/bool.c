@@ -359,7 +359,68 @@ rt_boolweave(struct seg *out_hd, struct seg *in_hd, struct partition *PartHdp, s
 		continue;
 	    }
 
-	    if (diff <= -(tol_dist)) {
+	    /*
+	     * diff < ~~0
+	     * Seg starts before current partition ends
+	     *	PPPPPPPPPPP
+	     *	  SSSS...
+	     */
+	    if (diff >= tol_dist) {
+		/*
+		 * lasthit->hit_dist > pp->pt_inhit->hit_dist
+		 * pp->pt_inhit->hit_dist < lasthit->hit_dist
+		 *
+		 * Segment starts after partition starts,
+		 * but before the end of the partition.
+		 * Note:  pt_seglist will be updated in equal_start.
+		 *	PPPPPPPPPPPP
+		 *	     SSSS...
+		 *	newpp|pp
+		 */
+		RT_DUP_PT(rtip, newpp, pp, res);
+		/* new partition is the span before seg joins partition */
+		pp->pt_inseg = segp;
+		pp->pt_inhit = &segp->seg_in;
+		pp->pt_inflip = 0;
+		newpp->pt_outseg = segp;
+		newpp->pt_outhit = &segp->seg_in;
+		newpp->pt_outflip = 1;
+		INSERT_PT(newpp, pp);
+		if (RT_G_DEBUG&DEBUG_PARTITION) {
+		    bu_log("seg starts within p. Split p at seg start, advance. (diff = %g)\n", diff);
+		    bu_log("newpp starts at %.12e, pp starts at %.12e\n",
+			    newpp->pt_inhit->hit_dist,
+			    pp->pt_inhit->hit_dist);
+		    bu_log("newpp = %p, pp = %p\n", (void *)newpp, (void *)pp);
+		}
+	    } else if (diff > -(tol_dist)) {
+		/*
+		 * Make a subtle but important distinction here.  Even
+		 * though the two distances are "equal" within
+		 * tolerance, they are not exactly the same.  If the
+		 * new segment is slightly closer to the ray origin,
+		 * then use its IN point.
+		 *
+		 * This is an attempt to reduce the deflected normals
+		 * sometimes seen along the edges of e.g. a cylinder
+		 * unioned with an ARB8, where the ray hits the top of
+		 * the cylinder and the *side* face of the ARB8 rather
+		 * than the top face of the ARB8.
+		 */
+		diff = segp->seg_in.hit_dist - pp->pt_inhit->hit_dist;
+		if (!pp->pt_back ||
+			pp->pt_back == PartHdp ||
+			pp->pt_back->pt_outhit->hit_dist <=
+			segp->seg_in.hit_dist) {
+		    if (NEAR_ZERO(diff, tol_dist) &&
+			    diff < 0) {
+			if (RT_G_DEBUG&DEBUG_PARTITION) bu_log("changing partition start point to segment start point\n");
+			pp->pt_inseg = segp;
+			pp->pt_inhit = &segp->seg_in;
+			pp->pt_inflip = 0;
+		    }
+		}
+	    } else {
 		/*
 		 * diff < ~~0
 		 *
@@ -429,67 +490,6 @@ rt_boolweave(struct seg *out_hd, struct seg *in_hd, struct partition *PartHdp, s
 		lastflip = newpp->pt_outflip;
 		INSERT_PT(newpp, pp);
 		if (RT_G_DEBUG&DEBUG_PARTITION) bu_log("insert seg before p start, ends after p ends.  Making new partition for initial portion.\n");
-	    } else if (diff > tol_dist) {
-		/*
-		 * diff < ~~0
-		 * Seg starts before current partition ends
-		 *	PPPPPPPPPPP
-		 *	  SSSS...
-		 */
-		/*
-		 * lasthit->hit_dist > pp->pt_inhit->hit_dist
-		 * pp->pt_inhit->hit_dist < lasthit->hit_dist
-		 *
-		 * Segment starts after partition starts,
-		 * but before the end of the partition.
-		 * Note:  pt_seglist will be updated in equal_start.
-		 *	PPPPPPPPPPPP
-		 *	     SSSS...
-		 *	newpp|pp
-		 */
-		RT_DUP_PT(rtip, newpp, pp, res);
-		/* new partition is the span before seg joins partition */
-		pp->pt_inseg = segp;
-		pp->pt_inhit = &segp->seg_in;
-		pp->pt_inflip = 0;
-		newpp->pt_outseg = segp;
-		newpp->pt_outhit = &segp->seg_in;
-		newpp->pt_outflip = 1;
-		INSERT_PT(newpp, pp);
-		if (RT_G_DEBUG&DEBUG_PARTITION) {
-		    bu_log("seg starts within p. Split p at seg start, advance. (diff = %g)\n", diff);
-		    bu_log("newpp starts at %.12e, pp starts at %.12e\n",
-			    newpp->pt_inhit->hit_dist,
-			    pp->pt_inhit->hit_dist);
-		    bu_log("newpp = %p, pp = %p\n", (void *)newpp, (void *)pp);
-		}
-	    } else if (diff > -(tol_dist)) {
-		/*
-		 * Make a subtle but important distinction here.  Even
-		 * though the two distances are "equal" within
-		 * tolerance, they are not exactly the same.  If the
-		 * new segment is slightly closer to the ray origin,
-		 * then use its IN point.
-		 *
-		 * This is an attempt to reduce the deflected normals
-		 * sometimes seen along the edges of e.g. a cylinder
-		 * unioned with an ARB8, where the ray hits the top of
-		 * the cylinder and the *side* face of the ARB8 rather
-		 * than the top face of the ARB8.
-		 */
-		diff = segp->seg_in.hit_dist - pp->pt_inhit->hit_dist;
-		if (!pp->pt_back ||
-			pp->pt_back == PartHdp ||
-			pp->pt_back->pt_outhit->hit_dist <=
-			segp->seg_in.hit_dist) {
-		    if (NEAR_ZERO(diff, tol_dist) &&
-			    diff < 0) {
-			if (RT_G_DEBUG&DEBUG_PARTITION) bu_log("changing partition start point to segment start point\n");
-			pp->pt_inseg = segp;
-			pp->pt_inhit = &segp->seg_in;
-			pp->pt_inflip = 0;
-		    }
-		}
 	    }
 
 	    if (RT_G_DEBUG&DEBUG_PARTITION) bu_log("equal_start\n");
@@ -557,7 +557,7 @@ rt_boolweave(struct seg *out_hd, struct seg *in_hd, struct partition *PartHdp, s
 		goto done_weave;
 	    }
 	    /* NOTREACHED */
-	}	    /* NOTREACHED */
+	}
 
 	/*
 	 * Segment has portion which extends beyond the end
