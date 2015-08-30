@@ -70,6 +70,8 @@ BRLCAD_ADDEXEC(test_point_intersect test_point_intersect.cpp "libbrep" NO_STRICT
 
 BRLCAD_ADDEXEC(test_curve_intersect test_curve_intersect.cpp "libbrep" NO_STRICT NO_INSTALL)
 
+add_subdirectory(tests)
+
 # Local Variables:
 # tab-width: 8
 # mode: cmake
