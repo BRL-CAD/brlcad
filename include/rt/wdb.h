@@ -26,8 +26,6 @@
 
 #include "common.h"
 
-#include "tcl.h" /* for Tcl_Interp */
-
 #include "vmath.h"
 #include "bu/magic.h"
 #include "bu/list.h"
@@ -71,8 +69,7 @@ struct rt_wdb {
     /* These members are marked for removal */
     struct bu_vls       wdb_name;       /**< @brief  database object name */
     struct bu_observer  wdb_observers;
-    Tcl_Interp *        wdb_interp;
-
+    void *              wdb_interp; /**< @brief Tcl_Interp */
 };
 
 

@@ -1858,7 +1858,7 @@ cmd_rt_gettrees(ClientData UNUSED(clientData), Tcl_Interp *UNUSED(interpreter), 
 
         bu_vls_init(&vls);
         bu_vls_printf(&vls, "helplib_alias wdb_rt_gettrees %s", argv[0]);
-        Tcl_Eval(wdbp->wdb_interp, bu_vls_addr(&vls));
+        Tcl_Eval((Tcl_Interp *)wdbp->wdb_interp, bu_vls_addr(&vls));
         bu_vls_free(&vls);
         return TCL_ERROR;
     }
@@ -1867,7 +1867,7 @@ cmd_rt_gettrees(ClientData UNUSED(clientData), Tcl_Interp *UNUSED(interpreter), 
     newprocname = argv[1];
 
     /* Delete previous proc (if any) to release all that memory, first */
-    (void)Tcl_DeleteCommand(wdbp->wdb_interp, newprocname);
+    (void)Tcl_DeleteCommand((Tcl_Interp *)wdbp->wdb_interp, newprocname);
 
     while (argc > 2 && argv[2][0] == '-') {
         if (BU_STR_EQUAL(argv[2], "-i")) {
@@ -1886,13 +1886,13 @@ cmd_rt_gettrees(ClientData UNUSED(clientData), Tcl_Interp *UNUSED(interpreter), 
     }
 
     if (argc-2 < 1) {
-        Tcl_AppendResult(wdbp->wdb_interp,
+        Tcl_AppendResult((Tcl_Interp *)wdbp->wdb_interp,
                          "rt_gettrees(): no geometry has been specified ", (char *)NULL);
         return TCL_ERROR;
     }
 
     if (rt_gettrees(rtip, argc-2, (const char **)&argv[2], 1) < 0) {
-        Tcl_AppendResult(wdbp->wdb_interp,
+        Tcl_AppendResult((Tcl_Interp *)wdbp->wdb_interp,
                          "rt_gettrees() returned error", (char *)NULL);
         rt_free_rti(rtip);
         return TCL_ERROR;
@@ -1925,11 +1925,11 @@ cmd_rt_gettrees(ClientData UNUSED(clientData), Tcl_Interp *UNUSED(interpreter), 
 
     /* Instantiate the proc, with clientData of wdb */
     /* Beware, returns a "token", not TCL_OK. */
-    (void)Tcl_CreateCommand(wdbp->wdb_interp, newprocname, tclcad_rt,
+    (void)Tcl_CreateCommand((Tcl_Interp *)wdbp->wdb_interp, newprocname, tclcad_rt,
                             (ClientData)ap, wdb_deleteProc_rt);
 
     /* Return new function name as result */
-    Tcl_AppendResult(wdbp->wdb_interp, newprocname, (char *)NULL);
+    Tcl_AppendResult((Tcl_Interp *)wdbp->wdb_interp, newprocname, (char *)NULL);
 
     return TCL_OK;
 
@@ -2310,12 +2310,12 @@ cmd_stub(ClientData UNUSED(clientData), Tcl_Interp *UNUSED(interpreter), int arg
         struct bu_vls vls;
         bu_vls_init(&vls);
         bu_vls_printf(&vls, "helplib_alias wdb_%s %s", argv[0], argv[0]);
-        Tcl_Eval(wdbp->wdb_interp, bu_vls_addr(&vls));
+        Tcl_Eval((Tcl_Interp *)wdbp->wdb_interp, bu_vls_addr(&vls));
         bu_vls_free(&vls);
         return TCL_ERROR;
     }
 
-    Tcl_AppendResult(wdbp->wdb_interp, "%s: no database is currently opened!", argv[0], (char *)NULL);
+    Tcl_AppendResult((Tcl_Interp *)wdbp->wdb_interp, "%s: no database is currently opened!", argv[0], (char *)NULL);
     return TCL_ERROR;
 }
 
