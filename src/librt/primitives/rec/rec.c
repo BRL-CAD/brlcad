@@ -469,7 +469,7 @@ rt_rec_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct 
 
 	VJOIN1(hitp->hit_vpriv, pprime, k1, dprime);	/* hit' */
 	if (hitp->hit_vpriv[X] * hitp->hit_vpriv[X] +
-	    hitp->hit_vpriv[Y] * hitp->hit_vpriv[Y] < (1.0 + SMALL_FASTF)) {
+	    hitp->hit_vpriv[Y] * hitp->hit_vpriv[Y] - 1.0 < SMALL_FASTF) {
 	    hitp->hit_magic = RT_HIT_MAGIC;
 	    hitp->hit_dist = k1;
 	    hitp->hit_surfno = REC_NORM_BOT;	/* -H */
@@ -478,7 +478,7 @@ rt_rec_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct 
 
 	VJOIN1(hitp->hit_vpriv, pprime, k2, dprime);	/* hit' */
 	if (hitp->hit_vpriv[X] * hitp->hit_vpriv[X] +
-	    hitp->hit_vpriv[Y] * hitp->hit_vpriv[Y] < (1.0 + SMALL_FASTF)) {
+	    hitp->hit_vpriv[Y] * hitp->hit_vpriv[Y] - 1.0 < SMALL_FASTF) {
 	    hitp->hit_magic = RT_HIT_MAGIC;
 	    hitp->hit_dist = k2;
 	    hitp->hit_surfno = REC_NORM_TOP;	/* +H */
@@ -504,7 +504,7 @@ rt_rec_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct 
 	    /* if the descriminant is zero, it's a double-root grazer */
 	    k1 = -b * 0.5;
 	    VJOIN1(hitp->hit_vpriv, pprime, k1, dprime); /* hit' */
-	    if (hitp->hit_vpriv[Z] > -SMALL_FASTF && hitp->hit_vpriv[Z] < (1.0 + SMALL_FASTF)) {
+	    if (hitp->hit_vpriv[Z] > -SMALL_FASTF && hitp->hit_vpriv[Z] - 1.0 < SMALL_FASTF) {
 		hitp->hit_magic = RT_HIT_MAGIC;
 		hitp->hit_dist = k1;
 		hitp->hit_surfno = REC_NORM_BODY; /* compute N */
@@ -523,8 +523,7 @@ rt_rec_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct 
 	     * See if they fall in range.
 	     */
 	    VJOIN1(hitp->hit_vpriv, pprime, k1, dprime); /* hit' */
-/*	    if (hitp->hit_vpriv[Z] > -SMALL_FASTF && hitp->hit_vpriv[Z] < (1.0 + SMALL_FASTF)) {*/
-	    if (hitp->hit_vpriv[Z] > -SMALL_FASTF && hitp->hit_vpriv[Z] <= 1.0) { /*!!! this is sensitive when grazing the edge */
+	    if (hitp->hit_vpriv[Z] > -SMALL_FASTF && hitp->hit_vpriv[Z] - 1.0 < SMALL_FASTF) {
 		hitp->hit_magic = RT_HIT_MAGIC;
 		hitp->hit_dist = k1;
 		hitp->hit_surfno = REC_NORM_BODY; /* compute N */
@@ -532,7 +531,7 @@ rt_rec_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct 
 	    }
 
 	    VJOIN1(hitp->hit_vpriv, pprime, k2, dprime); /* hit' */
-	    if (hitp->hit_vpriv[Z] > -SMALL_FASTF && hitp->hit_vpriv[Z] < (1.0 + SMALL_FASTF)) {
+	    if (hitp->hit_vpriv[Z] > -SMALL_FASTF && hitp->hit_vpriv[Z] - 1.0 < SMALL_FASTF) {
 		hitp->hit_magic = RT_HIT_MAGIC;
 		hitp->hit_dist = k2;
 		hitp->hit_surfno = REC_NORM_BODY; /* compute N */
