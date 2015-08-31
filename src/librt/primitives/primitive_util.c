@@ -689,44 +689,43 @@ clt_db_store(size_t count, struct soltab *solids[])
 	regions = (struct clt_region*)bu_calloc(count, sizeof(*regions), "regions");
 	for (i=0; i < count; i++) {
 	    const struct soltab *stp = solids[i];
-	    const struct region **rpp;
-	    cl_float unset[3] = {1.0f, 1.0f, 1.0f};
-
-	    VMOVE(regions[i].color, unset);
-            regions[i].mf_id = SH_PHONG;
+	    const struct region *regp;
+	    const struct mfuncs *mfp;
 
             ids[i] = stp->st_id;
-            for (BU_PTBL_FOR(rpp, (const struct region **), &stp->st_regions)) {
-		const struct mfuncs *mfp;
-		RT_CK_REGION(*rpp);
 
-		if ((*rpp)->reg_mater.ma_color_valid) {
-		    VMOVE(regions[i].color, (*rpp)->reg_mater.ma_color);
-		    regions[i].mf_id = SH_PHONG;
-		}
+	    regp = (const struct region*)BU_PTBL_GET(&stp->st_regions, 0);
+	    RT_CK_REGION(regp);
 
-		mfp = (const struct mfuncs*)(*rpp)->reg_mfuncs;
-		if (mfp) {
-		    if (bu_strcmp(mfp->mf_name, "default") ||
+	    if (regp->reg_mater.ma_color_valid) {
+		VMOVE(regions[i].color, regp->reg_mater.ma_color);
+		regions[i].mf_id = SH_PHONG;
+	    } else {
+		const cl_float unset[3] = {1.0f, 1.0f, 1.0f};
+		VMOVE(regions[i].color, unset);
+		regions[i].mf_id = SH_PHONG;
+            }
+
+	    mfp = (const struct mfuncs*)regp->reg_mfuncs;
+	    if (mfp) {
+		if (bu_strcmp(mfp->mf_name, "default") ||
 			bu_strcmp(mfp->mf_name, "phong") ||
 			bu_strcmp(mfp->mf_name, "plastic") ||
 			bu_strcmp(mfp->mf_name, "mirror") ||
 			bu_strcmp(mfp->mf_name, "glass")) {
-			struct phong_specific *src =
-			    (struct phong_specific*)(*rpp)->reg_udata;
-			struct clt_phong_specific *dst =
-			    &regions[i].udata.phg_spec;
+		    struct phong_specific *src =
+			(struct phong_specific*)regp->reg_udata;
+		    struct clt_phong_specific *dst =
+			&regions[i].udata.phg_spec;
 
-			dst->shine = src->shine;
-			dst->wgt_diffuse = src->wgt_diffuse;
-			dst->wgt_specular = src->wgt_specular;
+		    dst->shine = src->shine;
+		    dst->wgt_diffuse = src->wgt_diffuse;
+		    dst->wgt_specular = src->wgt_specular;
 
-			regions[i].mf_id = SH_PHONG;
-		    } else {
-			bu_log("Unknown OCL shader: %s\n", mfp->mf_name);
-		    }
+		    regions[i].mf_id = SH_PHONG;
+		} else {
+		    bu_log("Unknown OCL shader: %s\n", mfp->mf_name);
 		}
-		break;
 	    }
 	}
 
