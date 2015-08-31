@@ -114,6 +114,7 @@ RT_DECLARE_INTERFACE(constraint);
 /* RT_DECLARE_INTERFACE(binunif); */
 RT_DECLARE_INTERFACE(pnts);
 RT_DECLARE_INTERFACE(hrt);
+RT_DECLARE_INTERFACE(datum);
 
 #if OBJ_BREP
 RT_DECLARE_INTERFACE(brep);
@@ -2046,6 +2047,49 @@ const struct rt_functab OBJ[] = {
 	rt_hrt_surf_area,
 	rt_hrt_centroid,
 	NULL,
+    },
+
+
+    {
+	/* 44 */
+	RT_FUNCTAB_MAGIC, "ID_DATUM", "datum",
+	1,
+	rt_datum_prep,
+	rt_datum_shot,
+	rt_datum_print,
+	rt_datum_norm,
+	NULL,
+	NULL,
+	rt_datum_uv,
+	rt_datum_curve,
+	NULL,
+	rt_datum_free,
+	rt_datum_plot,
+	NULL,
+	NULL, /* vshot */
+	rt_datum_tess,
+	NULL,
+	NULL,
+	rt_datum_import5,
+	rt_datum_export5,
+	NULL,
+	NULL,
+	rt_datum_ifree,
+	rt_datum_describe,
+	rt_generic_xform,
+	NULL, /* parse */
+	sizeof(struct rt_datum_internal),
+	RT_DATUM_INTERNAL_MAGIC,
+	rt_generic_get,
+	rt_generic_adjust,
+	rt_generic_form,
+	NULL,
+	NULL, /* params */
+	NULL, /* bbox */
+	NULL, /* volume */
+	NULL, /* surface */
+	NULL, /* centroid */
+	NULL
     },
 
     {

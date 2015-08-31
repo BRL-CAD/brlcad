@@ -83,6 +83,7 @@ RT_DECLARE_MIRROR(nurb);
   RT_DECLARE_MIRROR(revolve);
   RT_DECLARE_MIRROR(sketch);
   RT_DECLARE_MIRROR(submodel);
+  RT_DECLARE_MIRROR(datum);
 */
 
 

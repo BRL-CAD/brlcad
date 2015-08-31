@@ -87,6 +87,9 @@
 #include <stdlib.h>
 #include <sys/types.h>
 
+/* INFINITY */
+#include <math.h>
+
 __BEGIN_DECLS
 
 #ifndef BU_EXPORT

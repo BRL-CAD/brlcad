@@ -2340,6 +2340,16 @@ get_solid_keypoint(fastf_t *pt, char **strp, struct rt_db_internal *ip, fastf_t 
 		}
 		break;
 	    }
+	case ID_DATUM:
+	    {
+		struct rt_datum_internal *datum = (struct rt_datum_internal *)ip->idb_ptr;
+		RT_DATUM_CK_MAGIC(datum);
+
+		/* Default */
+		VMOVE(mpt, datum->pnt);
+		*strp = "V";
+		break;
+	    }
 	case ID_NMG:
 	    {
 		struct vertex *v;

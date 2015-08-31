@@ -101,6 +101,7 @@
 #define RT_BOT_INTERNAL_MAGIC		0x626f7472 /**< botr */
 #define RT_BREP_INTERNAL_MAGIC		0x42524550 /**< BREP */
 #define RT_CLINE_INTERNAL_MAGIC		0x43767378 /**< CLIN */
+#define RT_DATUM_INTERNAL_MAGIC		0x6461746d /**< datm */
 #define RT_DSP_INTERNAL_MAGIC		0x00000de6 /**< ???? */
 #define RT_EBM_INTERNAL_MAGIC		0xf901b231 /**< ???1 */
 #define RT_EHY_INTERNAL_MAGIC		0xaaccee91 /**< ???? */
@@ -129,6 +130,7 @@
 #define RT_PNTS_INTERNAL_MAGIC          0x706e7473 /**< pnts */
 #define RT_ANNOTATION_INTERNAL_MAGIC    0x616e6e6f /**< anno */
 #define RT_HRT_INTERNAL_MAGIC		0x6872743f /**< hrt? */
+
 /* n-manifold geometry */
 
 #define NMG_EDGEUSE2_MAGIC		0x91919191 /**< ???? => used in eu->l2.magic */

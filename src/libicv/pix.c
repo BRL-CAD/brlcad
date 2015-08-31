@@ -38,10 +38,10 @@
 #define WRMODE S_IRUSR|S_IRGRP|S_IROTH
 
 /* defined in encoding.c */
-extern HIDDEN double *uchar2double(unsigned char *data, long int size);
-extern HIDDEN unsigned char *data2uchar(const icv_image_t *bif);
+extern double *uchar2double(unsigned char *data, long int size);
+extern unsigned char *data2uchar(const icv_image_t *bif);
 
-HIDDEN int
+int
 pix_write(icv_image_t *bif, const char *filename)
 {
     unsigned char *data;
@@ -77,7 +77,7 @@ pix_write(icv_image_t *bif, const char *filename)
 }
 
 
-HIDDEN icv_image_t *
+icv_image_t *
 pix_read(const char* filename, int width, int height)
 {
     int fd;

@@ -812,6 +812,53 @@ struct rt_annotation_internal
  */
 #define RT_ANNOTATION_CK_MAGIC(_p) BU_CKMAG(_p, RT_ANNOTATION_INTERNAL_MAGIC, "rt_annotation_internal")
 
+/*
+ * ID_DATUM
+ *
+ * Datums provide basic geometric reference entities such as reference
+ * frames, planes, lines, and/or points.  A datum reference frame is
+ * generally a Cartesian coordinate system that consists of three
+ * mutually perpendicular axes, three mutually perpendicular base
+ * planes, and a point representing the origin.
+ *
+ * Planes distinguished by (!ZERO(w)) utilize 'pnt', 'dir', and 'w' to
+ * define an unoriented plane.  The plane is defined by the vector
+ * from 'pnt' in 'dir' direction multiplied by the 'w' scalar value.
+ *
+ * Lines distinguished by (MAGNITUDE(dir) > 0.0 && ZERO(w)) utilize
+ * 'pnt' and 'dir' to define a line.
+ *
+ * Points only use the 'pnt' field to define an unoriented point.
+ *
+ * Datum references are stored as a simple NULL-terminated linked list
+ * manually accessed through the 'next' pointer.
+ * 
+ * This characterization is derived from ASME Y14.5M
+ *
+ * TODO:
+ * - edsol needs to do more than move the first datum
+ * - tedit is untested
+ * - wdb needs to support more than one datum
+ * - validate the datum during prep
+ * - add CK validation checks to all loops
+ */
+struct rt_datum_internal
+{
+    uint32_t magic;
+
+    point_t pnt;
+    vect_t dir;
+    fastf_t w;
+
+    struct rt_datum_internal *next;
+};
+
+/**
+ * validation macro to make sure an rt_datum_internal has the proper magic identifier.
+ */
+#define RT_DATUM_CK_MAGIC(_p) BU_CKMAG(_p, RT_DATUM_INTERNAL_MAGIC, "rt_datum_internal")
+
+
 struct rt_hrt_internal
 {
     uint32_t hrt_magic;

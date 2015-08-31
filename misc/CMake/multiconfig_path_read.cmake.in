@@ -59,7 +59,6 @@ endif(NOT BUILD_TYPE_NEW)
 # just configuration changes - if CMAKE_INSTALL_PREFIX is not defined based on the build configuration,
 # PATH is constant.
 string(REPLACE "----BUILD_TYPE----" "${BUILD_TYPE_NEW}" CMAKE_INSTALL_PREFIX_CFG "@CMAKE_INSTALL_PREFIX_CFG@")
-file(WRITE "@CMAKE_BINARY_DIR@/CMakeTmp/CURRENT_PATH/PATH.tmp" "\"${CMAKE_INSTALL_PREFIX_CFG}\"\n")
 
 # We have no way to tell the build tool at build time what string we want
 # it to use for the installation path - it only knows its build configuration

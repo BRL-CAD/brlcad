@@ -42,7 +42,7 @@
  * @return double array.
  *
  */
-HIDDEN double *
+double *
 uchar2double(unsigned char *data, long int size)
 {
     double *double_data, *double_p;
@@ -70,7 +70,7 @@ uchar2double(unsigned char *data, long int size)
  * Gamma correction prevents bad color aliasing.
  *
  */
-HIDDEN unsigned char *
+unsigned char *
 data2uchar(const icv_image_t *bif)
 {
     long int size;
