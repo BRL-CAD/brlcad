@@ -704,7 +704,7 @@ rt_rec_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, str
 	    (dx2dy2 = 1 / (dprime[X]*dprime[X] + dprime[Y]*dprime[Y]));
 	root = b*b - 4 * dx2dy2 *
 	    (pprime[X]*pprime[X] + pprime[Y]*pprime[Y] - 1);
-	if (root <= 0.0)
+	if (root < SMALL_FASTF)
 	    goto check_plates;
 
 	root = sqrt(root);
