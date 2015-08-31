@@ -682,6 +682,10 @@ rt_rec_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, str
     fastf_t root;		/* root of radical */
     fastf_t dx2dy2;
 
+    /* FIXME: this vectorized version logic is now substantially out
+     * of sync with the non-vectorized implementation.
+     */
+
     if (ap) RT_CK_APPLICATION(ap);
 
     /* for each ray/right_elliptical_cylinder pair */
