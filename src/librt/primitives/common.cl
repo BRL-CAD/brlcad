@@ -72,7 +72,7 @@ struct accum {
 
 typedef struct accum *RESULT_TYPE;
 #else
-typedef global struct hit *RESULT_TYPE;
+typedef global struct seg *RESULT_TYPE;
 #endif
 
 struct bvh_bounds {
@@ -106,7 +106,7 @@ extern constant double rti_tol_dist;
 
 extern bool rt_in_rpp(const double3 pt, const double3 invdir,
 		      global const double *min, global const double *max);
-extern void do_segp(RESULT_TYPE *res, const uint hit_index,
+extern void do_segp(RESULT_TYPE *res, const uint idx,
 		    struct hit *seg_in, struct hit *seg_out);
 
 

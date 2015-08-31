@@ -488,7 +488,6 @@ do_pixel(global uchar *pixels, const uchar3 o, const int cur_pixel,
         }
 	rgb = convert_uchar3_sat(t_color);
 
-
 	rgb = select(rgb, nonbackground, (uchar3)all(rgb == background));
 	// make sure it's never perfect black
 	rgb = select(rgb, (uchar3){rgb.x, rgb.y, 1}, (uchar3)all(!rgb));
@@ -514,12 +513,16 @@ do_pixel(global uchar *pixels, const uchar3 o, const int cur_pixel,
 /**
   * Multi-hit.
   */
-void do_segp(RESULT_TYPE *res, const uint hit_index,
+void do_segp(RESULT_TYPE *res, const uint idx,
 	     struct hit *seg_in, struct hit *seg_out)
 {
-    if (!res) return;
-//    (*res)[0] = *hitp;
-    (*res)++;
+    if (res) {
+	RESULT_TYPE segp = *res;
+	segp->seg_in = *seg_in;
+	segp->seg_out = *seg_out;
+	segp->seg_sti = idx;
+	++*res;
+    }
 }
 
 
@@ -549,7 +552,7 @@ count_hits(global int *counts,
 }
 
 __kernel void
-store_hits(RESULT_TYPE hits, global uint *h,
+store_segs(RESULT_TYPE segs, global uint *h,
          const int cur_pixel, const int last_pixel, const int width,
 	 const double16 view2model, const double cell_width, const double cell_height,
 	 const double aspect, const uint nprims, global uchar *ids,
@@ -569,27 +572,15 @@ store_hits(RESULT_TYPE hits, global uint *h,
     gen_ray(&r_pt, &r_dir, a_x, a_y, view2model, cell_width, cell_height, aspect);
 
     if (h[id] != h[id+1]) {
-        RESULT_TYPE hitp = hits+h[id];
-        int ret = shootray(&hitp, r_pt, r_dir, nprims, ids, nodes, indexes, prims);
-
-        // If we hit something, then sort the hits on demand.
-        for (uint i=h[id]; i<h[id+1]; i++) {
-            // Sort the list so that HitList is in order wrt [i].
-            for (uint n = i; n<h[id+1]; n++) {
-                if (hits[n].hit_dist < hits[i].hit_dist) {
-                    struct hit tmp;
-                    // Swap.
-                    tmp = hits[i];
-                    hits[i] = hits[n];
-                    hits[n] = tmp;
-                }
-            }
-        }
+        RESULT_TYPE start, end;
+        start = segs+h[id];
+	end = start;
+        int ret = shootray(&end, r_pt, r_dir, nprims, ids, nodes, indexes, prims);
     }
 }
 
 __kernel void
-shade_hits(global uchar *pixels, const uchar3 o, RESULT_TYPE hits, global uint *h,
+shade_segs(global uchar *pixels, const uchar3 o, RESULT_TYPE segs, global uint *h,
          const int cur_pixel, const int last_pixel, const int width,
 	 global float *rand_halftab, const uint randhalftabsize,
 	 const uchar3 background, const uchar3 nonbackground,
@@ -616,43 +607,48 @@ shade_hits(global uchar *pixels, const uchar3 o, RESULT_TYPE hits, global uint *
     /* 0:  At left edge, 1/2 high */
     const double3 lt_pos = MAT4X3PNT(view2model, (double3){-1,0,1});
 
-
     double3 a_color;
-    double hit_dist;
     uchar3 rgb;
+    struct hit hitp;
 
     a_color = 0.0;
+    hitp.hit_dist = INFINITY;
     if (h[id] != h[id+1]) {
-	if (lightmodel == 0) {
-	    for (long k=h[id]; k<h[id+1]; k++) {
-		RESULT_TYPE hitp;
-		hitp = hits+k;
+	uint idx;
 
-		if (hitp->hit_dist < 0.0)
-		    continue;
+	idx = UINT_MAX;
+	for (uint k=h[id]; k!=h[id+1]; k++) {
+	    RESULT_TYPE segp = segs+k;
 
-		a_color = shade(r_pt, r_dir, hitp, 0, lt_pos, ids, indexes, prims, regions);
-		hit_dist = hitp->hit_dist;
-		break;
+	    if (segp->seg_in.hit_dist < hitp.hit_dist) {
+		hitp = segp->seg_in;
+		idx = segp->seg_sti;
 	    }
-	} else {
-	    double a_hit_dist = 0.0;
-	    for (long k=h[id+1]-1; k>=h[id]; k--) {
-		RESULT_TYPE hitp;
-		double3 color;
-		hitp = hits+k;
+	}
+        double3 normal;
 
-		if (hitp->hit_dist < 0.0)
-		    break;
+	if (hitp.hit_dist < 0.0) {
+	    /* Eye inside solid, orthoview */
+	    normal = -r_dir;
+        } else {
+	    norm(&hitp, r_pt, r_dir, ids[idx], prims + indexes[idx]);
+	    normal = hitp.hit_normal;
+        }
 
-		color = shade(r_pt, r_dir, hitp, 0, lt_pos, ids, indexes, prims, regions);
-		hit_dist = hitp->hit_dist;
-		double att = exp(-hit_dist*1e-3);
-		a_hit_dist += att;
-		a_color = a_color + color*att;
-	    }
-	    a_color = a_color * (1.0/a_hit_dist);
-	}        
+        /*
+         * Diffuse reflectance from each light source
+         */
+	a_color = shade(r_pt, r_dir, &hitp, idx, lt_pos, ids, indexes, prims, regions);
+
+        /*
+         * e ^(-density * distance)
+         */
+        if (!ZERO(airdensity)) {
+            double g;
+            double f = exp(-hitp.hit_dist * airdensity);
+            g = (1.0 - f);
+            a_color = a_color * f + haze * g;
+        }
 
         double3 t_color;
 
@@ -677,7 +673,6 @@ shade_hits(global uchar *pixels, const uchar3 o, RESULT_TYPE hits, global uint *
         }
 	rgb = convert_uchar3_sat(t_color);
 
-
 	rgb = select(rgb, nonbackground, (uchar3)all(rgb == background));
 	// make sure it's never perfect black
 	rgb = select(rgb, (uchar3){rgb.x, rgb.y, 1}, (uchar3)all(!rgb));
@@ -685,7 +680,7 @@ shade_hits(global uchar *pixels, const uchar3 o, RESULT_TYPE hits, global uint *
 	/* shot missed the model, don't dither */
         rgb = background;
 	a_color = -1e-20;	// background flag
-        hit_dist = INFINITY;
+        hitp.hit_dist = INFINITY;
     }
 
     if (o.s0 != o.s1) {
@@ -695,7 +690,7 @@ shade_hits(global uchar *pixels, const uchar3 o, RESULT_TYPE hits, global uint *
     }
     if (o.s1 != o.s2) {
 	/* write depth */
-	ulong depth = bu_cv_htond(as_ulong(hit_dist));
+	ulong depth = bu_cv_htond(as_ulong(hitp.hit_dist));
 	global ulong *depthp = (global ulong*)pixels+id*o.s2+o.s1;
 	*depthp = depth;
     }
