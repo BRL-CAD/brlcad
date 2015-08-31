@@ -9,7 +9,7 @@ struct tor_specific {
     double tor_invR[16];    /* invRot(vect') */
 };
 
-int tor_shot(global struct hit **res, const double3 r_pt, const double3 r_dir, const uint idx, global const struct tor_specific *tor)
+int tor_shot(RESULT_TYPE *res, const double3 r_pt, const double3 r_dir, const uint idx, global const struct tor_specific *tor)
 {
     double3 dprime;		// D'
     double3 pprime;		// P'
@@ -147,14 +147,13 @@ int tor_shot(global struct hit **res, const double3 r_pt, const double3 r_dir, c
 	/* Set aside vector for rt_tor_norm() later */
 	hits[1].hit_vpriv = pprime + k[i-1] * dprime;
 
-        do_hitp(res, idx, &hits[0]);
-        do_hitp(res, idx, &hits[1]);
+	do_segp(res, idx, &hits[0], &hits[1]);
     }
     return npts;
 }
 
 
-void tor_norm(global struct hit *hitp, const double3 r_pt, const double3 r_dir, global const struct tor_specific *tor)
+void tor_norm(struct hit *hitp, const double3 r_pt, const double3 r_dir, global const struct tor_specific *tor)
 {
     double w;
     double3 work;

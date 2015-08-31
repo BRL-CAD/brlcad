@@ -6,7 +6,7 @@ struct arb_specific {
     int arb_nmfaces;
 };
 
-int arb_shot(global struct hit **res, const double3 r_pt, const double3 r_dir, const uint idx, global const struct arb_specific *arb)
+int arb_shot(RESULT_TYPE *res, const double3 r_pt, const double3 r_dir, const uint idx, global const struct arb_specific *arb)
 {
     const int nmfaces = arb->arb_nmfaces;
 
@@ -66,13 +66,12 @@ int arb_shot(global struct hit **res, const double3 r_pt, const double3 r_dir, c
     hits[1].hit_dist = out;
     hits[1].hit_surfno = oplane;
 
-    do_hitp(res, idx, &hits[0]);
-    do_hitp(res, idx, &hits[1]);
+    do_segp(res, idx, &hits[0], &hits[1]);
     return 2;		// HIT
 }
 
 
-void arb_norm(global struct hit *hitp, const double3 r_pt, const double3 r_dir, global const struct arb_specific *arb)
+void arb_norm(struct hit *hitp, const double3 r_pt, const double3 r_dir, global const struct arb_specific *arb)
 {
     int h;
 

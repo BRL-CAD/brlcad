@@ -14,7 +14,7 @@ struct ehy_specific {
     double ehy_cprime;		/* c / |H| */
 };
 
-int ehy_shot(global struct hit **res, const double3 r_pt, const double3 r_dir, const uint idx, global const struct ehy_specific *ehy)
+int ehy_shot(RESULT_TYPE *res, const double3 r_pt, const double3 r_dir, const uint idx, global const struct ehy_specific *ehy)
 {
     const double cp = ehy->ehy_cprime;
 
@@ -101,18 +101,16 @@ int ehy_shot(global struct hit **res, const double3 r_pt, const double3 r_dir, c
 
     if (hits[0].hit_dist < hits[1].hit_dist) {
 	// entry is [0], exit is [1]
-	do_hitp(res, idx, &hits[0]);
-	do_hitp(res, idx, &hits[1]);
+	do_segp(res, idx, &hits[0], &hits[1]);
     } else {
 	// entry is [1], exit is [0]
-	do_hitp(res, idx, &hits[1]);
-	do_hitp(res, idx, &hits[0]);
+	do_segp(res, idx, &hits[1], &hits[0]);
     }
     return 2; // HIT
 }
 
 
-void ehy_norm(global struct hit *hitp, const double3 r_pt, const double3 r_dir, global const struct ehy_specific *ehy)
+void ehy_norm(struct hit *hitp, const double3 r_pt, const double3 r_dir, global const struct ehy_specific *ehy)
 {
     double3 can_normal;	/* normal to canonical ehy */
     double cp, scale;

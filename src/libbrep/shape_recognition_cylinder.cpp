@@ -52,7 +52,19 @@ categorize_arc_edges(struct bu_vls *msgs, ON_Circle *set1_c, ON_Circle *set2_c,
     ON_Arc arc;
     (void)sc->IsArc(NULL, &arc, cyl_tol);
     delete sc;
-    (*set1_c) = ON_Circle(arc.StartPoint(), arc.MidPoint(), arc.EndPoint());
+    {
+	ON_3dPoint acenter(0,0,0);
+	fastf_t aradius;
+	if (arc.IsCircle()) {
+	    acenter = (arc.StartPoint() + arc.MidPoint())/2.0;
+	    aradius = arc.StartPoint().DistanceTo(arc.MidPoint()) * 0.5;
+	} else {
+	    ON_Circle circ(arc.StartPoint(), arc.MidPoint(), arc.EndPoint());
+	    acenter = circ.Center();
+	    aradius = circ.Radius();
+	}
+	(*set1_c) = ON_Circle(acenter, aradius);
+    }
 
     // Find the arc edge furthest from the set1_c arc - this will define the
     // "opposite circle" for the cylinder
@@ -61,10 +73,20 @@ categorize_arc_edges(struct bu_vls *msgs, ON_Circle *set1_c, ON_Circle *set2_c,
 	if (edge != cedge) {
 	    ON_Curve *ec = cedge->EdgeCurveOf()->Duplicate();
 	    if (ec->IsArc(NULL, &arc, cyl_tol)) {
-		ON_Circle circ(arc.StartPoint(), arc.MidPoint(), arc.EndPoint());
-		if (fabs(circ.Center().DistanceTo(set1_c->Center())) > max_height) {
-		    max_height = fabs(circ.Center().DistanceTo(set1_c->Center()));
-		    (*set2_c) = circ;
+		ON_3dPoint acenter(0,0,0);
+		fastf_t aradius;
+		if (arc.IsCircle()) {
+		    acenter = (arc.StartPoint() + arc.MidPoint())/2.0;
+		    aradius = arc.StartPoint().DistanceTo(arc.MidPoint()) * 0.5;
+		} else {
+		    ON_Circle circ(arc.StartPoint(), arc.MidPoint(), arc.EndPoint());
+		    acenter = circ.Center();
+		    aradius = circ.Radius();
+		}
+
+		if (fabs(acenter.DistanceTo(set1_c->Center())) > max_height) {
+		    max_height = fabs(acenter.DistanceTo(set1_c->Center()));
+		    (*set2_c) = ON_Circle(acenter, aradius);
 		}
 	    }
 	    delete ec;
@@ -77,9 +99,21 @@ categorize_arc_edges(struct bu_vls *msgs, ON_Circle *set1_c, ON_Circle *set2_c,
         const ON_BrepEdge *cedge = &(data->brep->m_E[*e_it]);
 	ON_Curve *ec = cedge->EdgeCurveOf()->Duplicate();
 	if (ec->IsArc(NULL, &arc, cyl_tol)) {
-	    ON_Circle circ(arc.StartPoint(), arc.MidPoint(), arc.EndPoint());
+	    ON_3dPoint acenter(0,0,0);
+	    fastf_t aradius;
+	    if (arc.IsCircle()) {
+		acenter = (arc.StartPoint() + arc.MidPoint())/2.0;
+		aradius = arc.StartPoint().DistanceTo(arc.MidPoint()) * 0.5;
+	    } else {
+		ON_Circle circ(arc.StartPoint(), arc.MidPoint(), arc.EndPoint());
+		acenter = circ.Center();
+		aradius = circ.Radius();
+	    }
+	    ON_Circle circ(acenter,aradius);
 	    double d1 = fabs(circ.Center().DistanceTo(set1_c->Center()));
 	    double d2 = fabs(circ.Center().DistanceTo(set2_c->Center()));
+	    bu_log("d1: %f\n", d1);
+	    bu_log("d2: %f\n", d2);
 	    if (!NEAR_ZERO(d1, cyl_tol) && !NEAR_ZERO(d2, cyl_tol)) {
 		if (msgs) bu_vls_printf(msgs, "%*sfound extra circle in %s - no go\n", L4_OFFSET, " ", bu_vls_addr(data->key));
 		delete ec;
@@ -98,14 +132,22 @@ categorize_arc_edges(struct bu_vls *msgs, ON_Circle *set1_c, ON_Circle *set2_c,
     // values for the cylinder.
     double avg_radius = 0.0;
     ON_3dPoint avg_center = ON_3dPoint(0.0, 0.0, 0.0);
-    int cnt = arc_set_1.size();
+    fastf_t cnt = (fastf_t)arc_set_1.size();
     for (e_it = arc_set_1.begin(); e_it != arc_set_1.end(); e_it++) {
 	const ON_BrepEdge *cedge = &(data->brep->m_E[*e_it]);
 	ON_Curve *ec = cedge->EdgeCurveOf()->Duplicate();
-	(void)ec->IsArc(NULL, &arc, cyl_tol);
-	ON_Circle circ(arc.StartPoint(), arc.MidPoint(), arc.EndPoint());
-	avg_radius += circ.Radius();
-	avg_center = avg_center + circ.Center();
+	if(ec->IsArc(NULL, &arc, cyl_tol)) {
+	    if (arc.IsCircle()) {
+		avg_center = avg_center + (arc.StartPoint() + arc.MidPoint())/2.0;
+		avg_radius += arc.StartPoint().DistanceTo(arc.MidPoint()) * 0.5;
+	    } else {
+		ON_Circle circ(arc.StartPoint(), arc.MidPoint(), arc.EndPoint());
+		avg_radius += circ.Radius();
+		avg_center = avg_center + circ.Center();
+	    }
+	} else {
+	    cnt = cnt - 1;
+	}
 	delete ec;
     }
     avg_radius = avg_radius/cnt;
@@ -114,14 +156,20 @@ categorize_arc_edges(struct bu_vls *msgs, ON_Circle *set1_c, ON_Circle *set2_c,
 
     avg_radius = 0.0;
     avg_center = ON_3dPoint(0.0, 0.0, 0.0);
-    cnt = arc_set_2.size();
+    cnt = (fastf_t)arc_set_2.size();
     for (e_it = arc_set_2.begin(); e_it != arc_set_2.end(); e_it++) {
 	const ON_BrepEdge *cedge = &(data->brep->m_E[*e_it]);
 	ON_Curve *ec = cedge->EdgeCurveOf()->Duplicate();
-	(void)ec->IsArc(NULL, &arc, cyl_tol);
-	ON_Circle circ(arc.StartPoint(), arc.MidPoint(), arc.EndPoint());
-	avg_radius += circ.Radius();
-	avg_center = avg_center + circ.Center();
+	if(ec->IsArc(NULL, &arc, cyl_tol)) {
+	    if (arc.IsCircle()) {
+		avg_center = avg_center + (arc.StartPoint() + arc.MidPoint())/2.0;
+		avg_radius += arc.StartPoint().DistanceTo(arc.MidPoint()) * 0.5;
+	    } else {
+		ON_Circle circ(arc.StartPoint(), arc.MidPoint(), arc.EndPoint());
+		avg_radius += circ.Radius();
+		avg_center = avg_center + circ.Center();
+	    }
+	}
 	delete ec;
     }
     avg_radius = avg_radius/cnt;
@@ -192,7 +240,15 @@ subbrep_is_cylinder(struct bu_vls *msgs, struct subbrep_object_data *data, fastf
         return 0;
     }
 
-    // Fifth, remove from the active edge set all linear edges that have both faces
+    // Fifth, check that the two planes are perpendicular to the cylinder axis.
+    if (p1.Normal().IsParallelTo(cylinder.Axis(), VUNITIZE_TOL) == 0) {
+	return 0;
+    }
+    if (p2.Normal().IsParallelTo(cylinder.Axis(), VUNITIZE_TOL) == 0) {
+	return 0;
+    }
+
+    // Sixth, remove from the active edge set all linear edges that have both faces
     // present in the subbrep data set.  For a whole cylinder, the circular edges
     // govern.
     std::set<int> active_edges;
@@ -220,7 +276,7 @@ subbrep_is_cylinder(struct bu_vls *msgs, struct subbrep_object_data *data, fastf
 /* This test is a problem with faces using one cylindrical surface to describe
  * the entirity of the cylinder - need to rethink */
 #if 0
-    // Sixth, check for any remaining linear segments.  For partial rcc
+    // Check for any remaining linear segments.  For partial rcc
     // primitives (e.g. a single surface that defines part of a cylinder but
     // has no mating faces to complete the shape) those are expected, but for a
     // true cylinder the linear segments should all wash out in the degenerate

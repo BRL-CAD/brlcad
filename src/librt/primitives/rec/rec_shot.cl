@@ -14,7 +14,7 @@ struct rec_specific {
     double rec_invRoS[16];	/* invRot(Scale(vect)) */
 };
 
-int rec_shot(global struct hit **res, const double3 r_pt, const double3 r_dir, const uint idx, global const struct rec_specific *rec)
+int rec_shot(RESULT_TYPE *res, const double3 r_pt, const double3 r_dir, const uint idx, global const struct rec_specific *rec)
 {
     double3 dprime;		// D'
     double3 pprime;		// P'
@@ -150,18 +150,16 @@ int rec_shot(global struct hit **res, const double3 r_pt, const double3 r_dir, c
 
     if (hits[0].hit_dist < hits[1].hit_dist) {
 	// entry is [0], exit is [1]
-	do_hitp(res, idx, &hits[0]);
-	do_hitp(res, idx, &hits[1]);
+	do_segp(res, idx, &hits[0], &hits[1]);
     } else {
 	// entry is [1], exit is [0]
-	do_hitp(res, idx, &hits[1]);
-	do_hitp(res, idx, &hits[0]);
+	do_segp(res, idx, &hits[1], &hits[0]);
     }
     return 2;		// HIT
 }
 
 
-void rec_norm(global struct hit *hitp, const double3 r_pt, const double3 r_dir, global const struct rec_specific *rec)
+void rec_norm(struct hit *hitp, const double3 r_pt, const double3 r_dir, global const struct rec_specific *rec)
 {
     hitp->hit_point = r_pt + r_dir * hitp->hit_dist;
     switch (hitp->hit_surfno) {

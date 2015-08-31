@@ -107,13 +107,15 @@ subbrep_is_cone(struct bu_vls *msgs, struct subbrep_object_data *data, fastf_t c
     // Sixth, check for any remaining linear segments.  If we have a real
     // cone and not just a partial, all the linear segments should have
     // washed out.
-    for (e_it = active_edges.begin(); e_it != active_edges.end(); e_it++) {
-        ON_Curve *cv = data->brep->m_E[*e_it].EdgeCurveOf()->Duplicate();
-        if (cv->IsLinear()) {
+    if (conic_surfaces.size() > 1) {
+	for (e_it = active_edges.begin(); e_it != active_edges.end(); e_it++) {
+	    ON_Curve *cv = data->brep->m_E[*e_it].EdgeCurveOf()->Duplicate();
+	    if (cv->IsLinear()) {
+		delete cv;
+		return 0;
+	    }
 	    delete cv;
-	    return 0;
 	}
-	delete cv;
     }
 
     // Seventh, make sure all the curved edges are on the same circle.
@@ -122,17 +124,29 @@ subbrep_is_cone(struct bu_vls *msgs, struct subbrep_object_data *data, fastf_t c
     ON_Circle circle;
     int circle_set= 0;
     for (e_it = active_edges.begin(); e_it != active_edges.end(); e_it++) {
-        const ON_BrepEdge *edge = &(data->brep->m_E[*e_it]);
-        ON_Curve *ecurve = edge->EdgeCurveOf()->Duplicate();
-        ON_Arc arc;
-        if (ecurve->IsArc(NULL, &arc, 0.01)) {
-            ON_Circle circ(arc.StartPoint(), arc.MidPoint(), arc.EndPoint());
+	const ON_BrepEdge *edge = &(data->brep->m_E[*e_it]);
+	ON_Curve *ecurve = edge->EdgeCurveOf()->Duplicate();
+	ON_Arc arc;
+	if (ecurve->IsArc(NULL, &arc, 0.01)) {
+	    ON_3dPoint acenter(0,0,0);
+	    fastf_t aradius;
+	    if (arc.IsCircle()) {
+		acenter = (arc.StartPoint() + arc.MidPoint())/2.0;
+		aradius = arc.StartPoint().DistanceTo(arc.MidPoint()) * 0.5;
+	    } else {
+		ON_Circle lcirc(arc.StartPoint(), arc.MidPoint(), arc.EndPoint());
+		acenter = lcirc.Center();
+		aradius = lcirc.Radius();
+	    }
+            ON_Circle circ(acenter, aradius);
             if (!circle_set) {
                 circle_set = 1;
                 circle = circ;
+		continue;
             }
+	    fastf_t d = circ.Center().DistanceTo(circle.Center());
             if (!NEAR_ZERO(circ.Center().DistanceTo(circle.Center()), 0.01)){
-                if (msgs) bu_vls_printf(msgs, "%*sfound extra circle in %s - no go\n", L3_OFFSET, " ", bu_vls_addr(data->key));
+                if (msgs) bu_vls_printf(msgs, "%*sfound extra circle in %s (d = %f) - not treating as cone\n", L3_OFFSET, " ", bu_vls_addr(data->key), d);
 		delete ecurve;
                 return 0;
             }
@@ -231,7 +245,18 @@ cone_csg(struct bu_vls *msgs, struct subbrep_object_data *data, fastf_t cone_tol
 	    ON_Arc arc;
 	    if (edge->EdgeCurveOf()->IsArc(NULL, &arc, cone_tol)) {
 		int assigned = 0;
-		ON_Circle circ(arc.StartPoint(), arc.MidPoint(), arc.EndPoint());
+		ON_3dPoint acenter(0,0,0);
+		fastf_t aradius;
+		if (arc.IsCircle()) {
+		    acenter = (arc.StartPoint() + arc.MidPoint())/2.0;
+		    aradius = arc.StartPoint().DistanceTo(arc.MidPoint()) * 0.5;
+		} else {
+		    ON_Circle lcirc(arc.StartPoint(), arc.MidPoint(), arc.EndPoint());
+		    acenter = lcirc.Center();
+		    aradius = lcirc.Radius();
+		}
+
+		ON_Circle circ(acenter,aradius);
 		//std::cout << "circ " << circ.Center().x << " " << circ.Center().y << " " << circ.Center().z << "\n";
 		if (!arc1_circle_set) {
 		    arc1_circle_set = 1;
