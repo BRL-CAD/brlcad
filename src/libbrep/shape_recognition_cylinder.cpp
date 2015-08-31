@@ -192,7 +192,15 @@ subbrep_is_cylinder(struct bu_vls *msgs, struct subbrep_object_data *data, fastf
         return 0;
     }
 
-    // Fifth, remove from the active edge set all linear edges that have both faces
+    // Fifth, check that the two planes are perpendicular to the cylinder axis.
+    if (p1.Normal().IsParallelTo(cylinder.Axis(), VUNITIZE_TOL) == 0) {
+	return 0;
+    }
+    if (p2.Normal().IsParallelTo(cylinder.Axis(), VUNITIZE_TOL) == 0) {
+	return 0;
+    }
+
+    // Sixth, remove from the active edge set all linear edges that have both faces
     // present in the subbrep data set.  For a whole cylinder, the circular edges
     // govern.
     std::set<int> active_edges;
@@ -220,7 +228,7 @@ subbrep_is_cylinder(struct bu_vls *msgs, struct subbrep_object_data *data, fastf
 /* This test is a problem with faces using one cylindrical surface to describe
  * the entirity of the cylinder - need to rethink */
 #if 0
-    // Sixth, check for any remaining linear segments.  For partial rcc
+    // Check for any remaining linear segments.  For partial rcc
     // primitives (e.g. a single surface that defines part of a cylinder but
     // has no mating faces to complete the shape) those are expected, but for a
     // true cylinder the linear segments should all wash out in the degenerate
