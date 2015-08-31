@@ -511,7 +511,7 @@ def_tree(register struct rt_i *rtip)
 /*********************************************************************************/
 #ifdef USE_OPENCL
 /* from opt.c */
-extern double haze[3];	
+extern double haze[3];
 extern double airdensity;
 
 
@@ -666,16 +666,22 @@ do_prep(struct rt_i *rtip)
 	rt_prep_timer();
 	rt_prep_parallel(rtip, npsw);
 
-#ifdef USE_OPENCL
-	if (opencl_mode) {
-	    clt_prep(rtip);
-	}
-#endif
-
 	(void)rt_get_timer(&times, NULL);
 	if (rt_verbosity & VERBOSE_STATS)
 	    bu_log("PREP: %s\n", bu_vls_addr(&times));
 	bu_vls_free(&times);
+
+#ifdef USE_OPENCL
+	if (opencl_mode) {
+	    rt_prep_timer();
+	    clt_prep(rtip);
+
+	    (void)rt_get_timer(&times, NULL);
+	    if (rt_verbosity & VERBOSE_STATS)
+		bu_log("OCLPREP: %s\n", bu_vls_addr(&times));
+	    bu_vls_free(&times);
+	}
+#endif
     }
     memory_summary();
     if (rt_verbosity & VERBOSE_STATS) {

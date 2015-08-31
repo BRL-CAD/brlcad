@@ -4565,7 +4565,7 @@ rt_pipe_adjust(
 	argv += 2;
     }
 
-    return (rt_pipe_ck(&pip->pipe_segs_head) == 0) ? TCL_OK : BRLCAD_ERROR;
+    return (rt_pipe_ck(&pip->pipe_segs_head) == 0) ? BRLCAD_OK : BRLCAD_ERROR;
 }
 
 

@@ -557,7 +557,7 @@ bu_parallel(void (*func)(int, void *), size_t ncpu, void *arg)
 	/* single cpu case bypasses nearly everything, just invoke */
 	(*func)(0, arg);
 
-	parallel_mapping(PARALLEL_PUT, bu_parallel_id(), 0);
+	parallel_mapping(PARALLEL_PUT, bu_parallel_id(), 0); /* correct? we never got. */
 	return;
     }
 
@@ -776,8 +776,6 @@ bu_parallel(void (*func)(int, void *), size_t ncpu, void *arg)
 	thread_tbl[x] = (rt_thread_t)-1;
     }
 #  endif /* end if Win32 threads */
-
-    parallel_mapping(PARALLEL_PUT, bu_parallel_id(), 0);
 
     if (UNLIKELY(bu_debug & BU_DEBUG_PARALLEL))
 	bu_log("bu_parallel(%zd) complete\n", ncpu);

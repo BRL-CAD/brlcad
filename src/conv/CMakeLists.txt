@@ -63,7 +63,7 @@ BRLCAD_ADDEXEC(dem-g dem-g.c "libwdb;${M_LIBRARY}")
 
 BRLCAD_ADDEXEC(dxf-g dxf/dxf-g.c "libwdb;librt;libbn;libbu;${M_LIBRARY}")
 
-BRLCAD_ADDEXEC(enf-g enf-g.c "libwdb;${M_LIBRARY}")
+BRLCAD_ADDEXEC(enf-g enf-g.c "libwdb;${TCL_LIBRARY};${M_LIBRARY}")
 
 BRLCAD_ADDEXEC(euclid_format euclid/euclid_format.c librt)
 

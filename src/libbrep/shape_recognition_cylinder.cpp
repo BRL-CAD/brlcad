@@ -217,6 +217,9 @@ subbrep_is_cylinder(struct bu_vls *msgs, struct subbrep_object_data *data, fastf
 	delete ec;
     }
 
+/* This test is a problem with faces using one cylindrical surface to describe
+ * the entirity of the cylinder - need to rethink */
+#if 0
     // Sixth, check for any remaining linear segments.  For partial rcc
     // primitives (e.g. a single surface that defines part of a cylinder but
     // has no mating faces to complete the shape) those are expected, but for a
@@ -232,6 +235,7 @@ subbrep_is_cylinder(struct bu_vls *msgs, struct subbrep_object_data *data, fastf
 	}
 	delete ec;
     }
+#endif
 
     // Seventh, sort the curved edges into one of two circles.  Again, in more
     // general cases we might have other curves but a true cylinder should have

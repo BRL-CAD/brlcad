@@ -161,6 +161,7 @@ set(LIBGED_SOURCES
   mrot.c
   nirt.c
   nmg.c
+  nmg_make_v.c
   nmg_mm.c
   nmg_cmface.c
   nmg_collapse.c

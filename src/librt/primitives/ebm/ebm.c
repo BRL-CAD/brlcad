@@ -1660,7 +1660,7 @@ rt_ebm_form(struct bu_vls *logstr, const struct rt_functab *ftp)
 
     bu_vls_printf(logstr, "F %%s W %%d N %%d H %%f M { %%f %%f %%f %%f %%f %%f %%f %%f %%f %%f %%f %%f %%f %%f %%f %%f }");
 
-    return TCL_OK;
+    return BRLCAD_OK;
 
 }
 

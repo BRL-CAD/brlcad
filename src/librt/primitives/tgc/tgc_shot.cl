@@ -19,7 +19,7 @@ struct tgc_specific {
     char tgc_AD_CB;              /* boolean:  A*D == C*B */
 };
 
-int tgc_shot(global struct hit *res, const double3 r_pt, const double3 r_dir, const uint idx, global const struct tgc_specific *tgc)
+int tgc_shot(global struct hit **res, const double3 r_pt, const double3 r_dir, const uint idx, global const struct tgc_specific *tgc)
 {
     double3 pprime;
     double3 dprime;
@@ -30,7 +30,6 @@ int tgc_shot(global struct hit *res, const double3 r_pt, const double3 r_dir, co
     double t_scale;
     double alf1, alf2;
     int npts;
-    int intersect;
     double3 cor_pprime;		/* corrected P prime */
     double cor_proj = 0.0;	/* corrected projected dist */
     int i;
@@ -77,9 +76,9 @@ int tgc_shot(global struct hit *res, const double3 r_pt, const double3 r_dir, co
      * difficulties.
      */
     /* Direction cosines */
-    dprime = select(dprime, 0, NEAR_ZERO(dprime, 1e-10));
+    dprime = select(dprime, 0, NEAR_ZERO(dprime, DOUBLE_C(1e-10)));
     /* Position in -1..+1 coordinates */
-    cor_pprime = select(cor_pprime, 0, NEAR_ZERO(cor_pprime, 1e-20));
+    cor_pprime = select(cor_pprime, 0, NEAR_ZERO(cor_pprime, DOUBLE_C(1e-20)));
 
     /* Given a line and the parameters for a standard cone, finds the
      * roots of the equation for that cone and line.  Returns the
@@ -126,7 +125,7 @@ int tgc_shot(global struct hit *res, const double3 r_pt, const double3 r_dir, co
      * this can only be done when C0 is not too small! (JRA)
      */
     C0 = Xsqr[0] + Ysqr[0] - Rsqr[0];
-    if (tgc->tgc_AD_CB && !NEAR_ZERO(C0, 1.0e-10)) {
+    if (tgc->tgc_AD_CB && !NEAR_ZERO(C0, DOUBLE_C(1.0e-10))) {
 	double C[3];	/* final equation */
 	double roots;
 
@@ -211,12 +210,14 @@ int tgc_shot(global struct hit *res, const double3 r_pt, const double3 r_dir, co
 	}
 	/* bu_log("npts rooted is %d; ", npts); */
 
+#ifdef DEBUG
 	/* Here, 'npts' is number of points being returned */
 	if (npts != 0 && npts != 2 && npts != 4 && npts > 0) {
 	    /* LOG */
 	} else if (nroots < 0) {
 	    /* LOG */
 	}
+#endif
     }
 
     /*
@@ -329,8 +330,6 @@ int tgc_shot(global struct hit *res, const double3 r_pt, const double3 r_dir, co
 	return 0;		/* No hit */
     }
 
-    intersect = 0;
-    int j = 0;
     for (i=npts-1; i>0; i -= 2) {
         struct hit hits[2];
 
@@ -358,11 +357,10 @@ int tgc_shot(global struct hit *res, const double3 r_pt, const double3 r_dir, co
 	    }
 	}
 
-        do_hitp(res, j++, idx, &hits[0]);
-        do_hitp(res, j++, idx, &hits[1]);
-	intersect++;
+        do_hitp(res, idx, &hits[0]);
+        do_hitp(res, idx, &hits[1]);
     }
-    return intersect;
+    return npts;
 }
 
 

@@ -26,7 +26,7 @@ struct tri_specific {
     uchar pad[4];
 };
 
-int bot_shot(global struct hit *res, const double3 r_pt, double3 r_dir, const uint idx, global const uchar *args)
+int bot_shot(global struct hit **res, const double3 r_pt, double3 r_dir, const uint idx, global const uchar *args)
 {
     global const struct bot_specific *bot =
         (global const struct bot_specific *)(args);
@@ -41,9 +41,8 @@ int bot_shot(global struct hit *res, const double3 r_pt, double3 r_dir, const ui
     uint hit_count;
     hit_count = 0;
 
-    const long3 oblique = isgreaterequal(fabs(r_dir), SQRT_SMALL_FASTF);
-    const double3 r_idir = select(INFINITY, 1.0/r_dir, oblique);
-    r_dir = select(0.0, r_dir, oblique);
+    const double3 r_idir = select(INFINITY, DOUBLE_C(1.0)/r_dir, isgreaterequal(fabs(r_dir), SQRT_SMALL_FASTF));
+    r_dir = select(0, r_dir, isgreaterequal(fabs(r_dir), SQRT_SMALL_FASTF));
 
     uchar dir_is_neg[3];
     int to_visit_offset = 0, current_node_index = 0;
@@ -61,10 +60,10 @@ int bot_shot(global struct hit *res, const double3 r_pt, double3 r_dir, const ui
             if (node->n_primitives > 0) {
                 /* Intersect ray with primitives in leaf BVH node */
                 for (uint i=0; i<node->n_primitives; i++) {
-                    const uint idx = node->u.primitives_offset + i;
-                    const double3 V0 = vload3(0, tri[idx].v0);
-                    const double3 V1 = vload3(0, tri[idx].v1);
-                    const double3 V2 = vload3(0, tri[idx].v2);
+                    const uint id = node->u.primitives_offset + i;
+                    const double3 V0 = vload3(0, tri[id].v0);
+                    const double3 V1 = vload3(0, tri[id].v1);
+                    const double3 V2 = vload3(0, tri[id].v2);
 
                     // Find vectors for two edges sharing V0.
                     const double3 e1 = V1-V0;
@@ -121,7 +120,7 @@ int bot_shot(global struct hit *res, const double3 r_pt, double3 r_dir, const ui
                     // Triangle Intersected, append it in the list.
                     if (hit_count < 0xFF) {
                         hits[hit_count].hit_dist = t;
-                        hits[hit_count].hit_surfno = idx;     // HACK
+                        hits[hit_count].hit_surfno = id;     // HACK
                         hits[hit_count].hit_vpriv = mix;
                         hit_count++;
                     }
@@ -161,7 +160,7 @@ int bot_shot(global struct hit *res, const double3 r_pt, double3 r_dir, const ui
     }
 
     for (uint i=0; i < hit_count; i++) {
-        do_hitp(res, i, idx, &hits[i]);
+        do_hitp(res, idx, &hits[i]);
     }
     return hit_count;
 }
@@ -190,7 +189,7 @@ void bot_norm(global struct hit *hitp, const double3 r_pt, const double3 r_dir, 
 	double3 n0 = vload3(0, normals+base);
 	double3 n1 = vload3(1, normals+base);
 	double3 n2 = vload3(2, normals+base);
-	const double3 mix = clamp(hitp->hit_vpriv, 0.0, 1.0);
+	const double3 mix = clamp(hitp->hit_vpriv, DOUBLE_C(0.0), DOUBLE_C(1.0));
 	normal = normalize(n0*mix.x + n1*mix.y + n2*mix.z);
     }
 
