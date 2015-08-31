@@ -232,6 +232,8 @@ rt_boolweave(struct seg *out_hd, struct seg *in_hd, struct partition *PartHdp, s
 	    continue;
 	}
 
+	diff = segp->seg_in.hit_dist - segp->seg_out.hit_dist;
+
 	/*
 	 * Weave this segment into the existing partitions, creating
 	 * new partitions as necessary.
@@ -246,10 +248,7 @@ rt_boolweave(struct seg *out_hd, struct seg *in_hd, struct partition *PartHdp, s
 	    pp->pt_outhit = &segp->seg_out;
 	    APPEND_PT(pp, PartHdp);
 	    if (RT_G_DEBUG&DEBUG_PARTITION) bu_log("No partitions yet, segment forms first partition\n");
-	    goto done_weave;
-	}
-
-	if (ap->a_no_booleans) {
+	} else if (ap->a_no_booleans) {
 	    lastseg = segp;
 	    lasthit = &segp->seg_in;
 	    lastflip = 0;
@@ -275,17 +274,10 @@ rt_boolweave(struct seg *out_hd, struct seg *in_hd, struct partition *PartHdp, s
 	    newpp->pt_outseg = segp;
 	    newpp->pt_outhit = &segp->seg_out;
 	    INSERT_PT(newpp, PartHdp);
-	    goto done_weave;
-	}
-
-	/* Check for zero-thickness segment, within tol */
-	diff = segp->seg_in.hit_dist - segp->seg_out.hit_dist;
-	if (NEAR_ZERO(diff, tol_dist)) {
+	} else if (NEAR_ZERO(diff, tol_dist)) {
+	    /* Check for zero-thickness segment, within tol */
 	    rt_weave0seg(segp, PartHdp, ap);
-	    goto done_weave;
-	}
-
-	if (segp->seg_in.hit_dist >= PartHdp->pt_back->pt_outhit->hit_dist) {
+	} else if (segp->seg_in.hit_dist >= PartHdp->pt_back->pt_outhit->hit_dist) {
 	    /*
 	     * Segment starts exactly at last partition's end, or
 	     * beyond last partitions end.  Make new partition.
@@ -302,280 +294,280 @@ rt_boolweave(struct seg *out_hd, struct seg *in_hd, struct partition *PartHdp, s
 	    pp->pt_outseg = segp;
 	    pp->pt_outhit = &segp->seg_out;
 	    APPEND_PT(pp, PartHdp->pt_back);
-	    goto done_weave;
-	}
+	} else {
+	    /* Loop through current partition list weaving the current
+	     * input segment into the list. The following three variables
+	     * keep track of the current starting point of the input
+	     * segment. The starting point of the segment moves to higher
+	     * hit_dist values (as it is woven in) until it is entirely
+	     * consumed.
+	     */
+	    lastseg = segp;
+	    lasthit = &segp->seg_in;
+	    lastflip = 0;
+	    for (pp=PartHdp->pt_forw; pp != PartHdp; pp=pp->pt_forw) {
 
-	/* Loop through current partition list weaving the current
-	 * input segment into the list. The following three variables
-	 * keep track of the current starting point of the input
-	 * segment. The starting point of the segment moves to higher
-	 * hit_dist values (as it is woven in) until it is entirely
-	 * consumed.
-	 */
-	lastseg = segp;
-	lasthit = &segp->seg_in;
-	lastflip = 0;
-	for (pp=PartHdp->pt_forw; pp != PartHdp; pp=pp->pt_forw) {
-
-	    if (RT_G_DEBUG&DEBUG_PARTITION) {
-		bu_log("At start of loop:\n");
-		bu_log("	remaining input segment: (%.12e - %.12e)\n",
-			lasthit->hit_dist, segp->seg_out.hit_dist);
-		bu_log("	current partition: (%.12e - %.12e)\n",
-			pp->pt_inhit->hit_dist, pp->pt_outhit->hit_dist);
-		rt_pr_partitions(rtip, PartHdp, "At start of loop");
-	    }
-
-	    diff_se = lasthit->hit_dist - pp->pt_outhit->hit_dist;
-	    if (diff_se > tol_dist) {
-		/* Seg starts beyond the END of the
-		 * current partition.
-		 *	PPPP
-		 *	        SSSS
-		 * Advance to next partition.
-		 */
 		if (RT_G_DEBUG&DEBUG_PARTITION) {
-		    bu_log("seg start beyond partition end, skipping.  (%g, %g)\n",
-			    pp->pt_inhit->hit_dist,
-			    pp->pt_outhit->hit_dist);
+		    bu_log("At start of loop:\n");
+		    bu_log("	remaining input segment: (%.12e - %.12e)\n",
+			    lasthit->hit_dist, segp->seg_out.hit_dist);
+		    bu_log("	current partition: (%.12e - %.12e)\n",
+			    pp->pt_inhit->hit_dist, pp->pt_outhit->hit_dist);
+		    rt_pr_partitions(rtip, PartHdp, "At start of loop");
 		}
-		continue;
-	    }
-	    if (RT_G_DEBUG&DEBUG_PARTITION) rt_pr_pt(rtip, pp);
-	    diff = lasthit->hit_dist - pp->pt_inhit->hit_dist;
-	    if (diff_se > -(tol_dist) && diff > tol_dist) {
+
+		diff_se = lasthit->hit_dist - pp->pt_outhit->hit_dist;
+		if (diff_se > tol_dist) {
+		    /* Seg starts beyond the END of the
+		     * current partition.
+		     *	PPPP
+		     *	        SSSS
+		     * Advance to next partition.
+		     */
+		    if (RT_G_DEBUG&DEBUG_PARTITION) {
+			bu_log("seg start beyond partition end, skipping.  (%g, %g)\n",
+				pp->pt_inhit->hit_dist,
+				pp->pt_outhit->hit_dist);
+		    }
+		    continue;
+		}
+		if (RT_G_DEBUG&DEBUG_PARTITION) rt_pr_pt(rtip, pp);
+		diff = lasthit->hit_dist - pp->pt_inhit->hit_dist;
+		if (diff_se > -(tol_dist) && diff > tol_dist) {
+		    /*
+		     * Seg starts almost "precisely" at the
+		     * end of the current partition.
+		     *	PPPP
+		     *	    SSSS
+		     * FUSE an exact match of the endpoints,
+		     * advance to next partition.
+		     */
+		    lasthit->hit_dist = pp->pt_outhit->hit_dist;
+		    if (RT_G_DEBUG&DEBUG_PARTITION) {
+			bu_log("seg start fused to partition end, diff=%g\n", diff);
+		    }
+		    continue;
+		}
+
 		/*
-		 * Seg starts almost "precisely" at the
-		 * end of the current partition.
-		 *	PPPP
-		 *	    SSSS
-		 * FUSE an exact match of the endpoints,
-		 * advance to next partition.
+		 * diff < ~~0
+		 * Seg starts before current partition ends
+		 *	PPPPPPPPPPP
+		 *	  SSSS...
 		 */
-		lasthit->hit_dist = pp->pt_outhit->hit_dist;
-		if (RT_G_DEBUG&DEBUG_PARTITION) {
-		    bu_log("seg start fused to partition end, diff=%g\n", diff);
+		if (diff >= tol_dist) {
+		    /*
+		     * lasthit->hit_dist > pp->pt_inhit->hit_dist
+		     * pp->pt_inhit->hit_dist < lasthit->hit_dist
+		     *
+		     * Segment starts after partition starts,
+		     * but before the end of the partition.
+		     * Note:  pt_seglist will be updated in equal_start.
+		     *	PPPPPPPPPPPP
+		     *	     SSSS...
+		     *	newpp|pp
+		     */
+		    RT_DUP_PT(rtip, newpp, pp, res);
+		    /* new partition is the span before seg joins partition */
+		    pp->pt_inseg = segp;
+		    pp->pt_inhit = &segp->seg_in;
+		    pp->pt_inflip = 0;
+		    newpp->pt_outseg = segp;
+		    newpp->pt_outhit = &segp->seg_in;
+		    newpp->pt_outflip = 1;
+		    INSERT_PT(newpp, pp);
+		    if (RT_G_DEBUG&DEBUG_PARTITION) {
+			bu_log("seg starts within p. Split p at seg start, advance. (diff = %g)\n", diff);
+			bu_log("newpp starts at %.12e, pp starts at %.12e\n",
+				newpp->pt_inhit->hit_dist,
+				pp->pt_inhit->hit_dist);
+			bu_log("newpp = %p, pp = %p\n", (void *)newpp, (void *)pp);
+		    }
+		} else if (diff > -(tol_dist)) {
+		    /*
+		     * Make a subtle but important distinction here.  Even
+		     * though the two distances are "equal" within
+		     * tolerance, they are not exactly the same.  If the
+		     * new segment is slightly closer to the ray origin,
+		     * then use its IN point.
+		     *
+		     * This is an attempt to reduce the deflected normals
+		     * sometimes seen along the edges of e.g. a cylinder
+		     * unioned with an ARB8, where the ray hits the top of
+		     * the cylinder and the *side* face of the ARB8 rather
+		     * than the top face of the ARB8.
+		     */
+		    diff = segp->seg_in.hit_dist - pp->pt_inhit->hit_dist;
+		    if (!pp->pt_back ||
+			    pp->pt_back == PartHdp ||
+			    pp->pt_back->pt_outhit->hit_dist <=
+			    segp->seg_in.hit_dist) {
+			if (NEAR_ZERO(diff, tol_dist) &&
+				diff < 0) {
+			    if (RT_G_DEBUG&DEBUG_PARTITION) bu_log("changing partition start point to segment start point\n");
+			    pp->pt_inseg = segp;
+			    pp->pt_inhit = &segp->seg_in;
+			    pp->pt_inflip = 0;
+			}
+		    }
+		} else {
+		    /*
+		     * diff < ~~0
+		     *
+		     * Seg starts before current partition starts,
+		     * but after the previous partition ends.
+		     *	SSSSSSSS...
+		     *	     PPPPP...
+		     *	newpp|pp
+		     */
+		    GET_PT_INIT(rtip, newpp, res);
+		    bu_ptbl_ins_unique(&newpp->pt_seglist, (long *)segp);
+		    newpp->pt_inseg = lastseg;
+		    newpp->pt_inhit = lasthit;
+		    newpp->pt_inflip = lastflip;
+		    diff = segp->seg_out.hit_dist - pp->pt_inhit->hit_dist;
+		    if (diff < -(tol_dist)) {
+			/*
+			 * diff < ~0
+			 * Seg starts and ends before current
+			 * partition, but after previous
+			 * partition ends (diff < 0).
+			 *		SSSS
+			 *	pppp		PPPPP...
+			 *		newpp	pp
+			 */
+			newpp->pt_outseg = segp;
+			newpp->pt_outhit = &segp->seg_out;
+			newpp->pt_outflip = 0;
+			INSERT_PT(newpp, pp);
+			if (RT_G_DEBUG&DEBUG_PARTITION) bu_log("seg between 2 partitions\n");
+			break;
+		    } else if (diff < tol_dist) {
+			/*
+			 * diff ~= 0
+			 *
+			 * Seg starts before current
+			 * partition starts, and ends at or
+			 * near the start of the partition.
+			 * (diff == 0).  FUSE the points.
+			 *	SSSSSS
+			 *	     PPPPP
+			 *	newpp|pp
+			 * NOTE: only copy hit point, not
+			 * normals or norm private stuff.
+			 */
+			newpp->pt_outseg = segp;
+			newpp->pt_outhit = &segp->seg_out;
+			newpp->pt_outhit->hit_dist = pp->pt_inhit->hit_dist;
+			newpp->pt_outflip = 0;
+			INSERT_PT(newpp, pp);
+			if (RT_G_DEBUG&DEBUG_PARTITION) bu_log("seg ends at partition start, fuse\n");
+			break;
+		    }
+		    /*
+		     * Seg starts before current partition
+		     * starts, and ends after the start of the
+		     * partition.  (diff > 0).
+		     *	SSSSSSSSSS
+		     *	      PPPPPPP
+		     *	newpp| pp | ...
+		     */
+		    newpp->pt_outseg = pp->pt_inseg;
+		    newpp->pt_outhit = pp->pt_inhit;
+		    newpp->pt_outflip = 1;
+		    lastseg = pp->pt_inseg;
+		    lasthit = pp->pt_inhit;
+		    lastflip = newpp->pt_outflip;
+		    INSERT_PT(newpp, pp);
+		    if (RT_G_DEBUG&DEBUG_PARTITION) bu_log("insert seg before p start, ends after p ends.  Making new partition for initial portion.\n");
 		}
-		continue;
+
+		if (RT_G_DEBUG&DEBUG_PARTITION) bu_log("equal_start\n");
+		/*
+		 * Segment and partition start at (roughly) the same
+		 * point.  When fusing 2 points together i.e., when
+		 * NEAR_ZERO(diff, tol) is true, the two points MUST
+		 * be forced to become exactly equal!
+		 */
+		diff = segp->seg_out.hit_dist - pp->pt_outhit->hit_dist;
+		if (diff > tol_dist) {
+		    /*
+		     * Seg & partition start at roughly
+		     * the same spot,
+		     * seg extends beyond partition end.
+		     *	PPPP
+		     *	SSSSSSSS
+		     *	pp  |  newpp
+		     */
+		    bu_ptbl_ins_unique(&pp->pt_seglist, (long *)segp);
+		    lasthit = pp->pt_outhit;
+		    lastseg = pp->pt_outseg;
+		    lastflip = 1;
+		    if (RT_G_DEBUG&DEBUG_PARTITION) bu_log("seg spans partition and extends beyond it\n");
+		    continue;
+		}
+		if (diff > -(tol_dist)) {
+		    /*
+		     * diff ~= 0
+		     * Segment and partition start & end
+		     * (nearly) together.
+		     *	PPPP
+		     *	SSSS
+		     */
+		    bu_ptbl_ins_unique(&pp->pt_seglist, (long *)segp);
+		    if (RT_G_DEBUG&DEBUG_PARTITION) bu_log("same start&end\n");
+		    break;
+		} else {
+		    /*
+		     * diff < ~0
+		     *
+		     * Segment + Partition start together,
+		     * segment ends before partition ends.
+		     *	PPPPPPPPPP
+		     *	SSSSSS
+		     *	newpp| pp
+		     */
+		    RT_DUP_PT(rtip, newpp, pp, res);
+		    /* new partition contains segment */
+		    bu_ptbl_ins_unique(&newpp->pt_seglist, (long *)segp);
+		    newpp->pt_outseg = segp;
+		    newpp->pt_outhit = &segp->seg_out;
+		    newpp->pt_outflip = 0;
+		    pp->pt_inseg = segp;
+		    pp->pt_inhit = &segp->seg_out;
+		    pp->pt_inflip = 1;
+		    INSERT_PT(newpp, pp);
+		    if (RT_G_DEBUG&DEBUG_PARTITION) {
+			bu_log("start together, seg shorter than partition\n");
+			bu_log("newpp starts at %.12e, pp starts at %.12e\n",
+				newpp->pt_inhit->hit_dist,
+				pp->pt_inhit->hit_dist);
+			bu_log("newpp = %p, pp = %p\n", (void *)newpp, (void *)pp);
+		    }
+		    break;
+		}
+		/* NOTREACHED */
 	    }
 
 	    /*
-	     * diff < ~~0
-	     * Seg starts before current partition ends
-	     *	PPPPPPPPPPP
-	     *	  SSSS...
+	     * Segment has portion which extends beyond the end
+	     * of the last partition.  Tack on the remainder.
+	     *  	PPPPP
+	     *  	     SSSSS
 	     */
-	    if (diff >= tol_dist) {
-		/*
-		 * lasthit->hit_dist > pp->pt_inhit->hit_dist
-		 * pp->pt_inhit->hit_dist < lasthit->hit_dist
-		 *
-		 * Segment starts after partition starts,
-		 * but before the end of the partition.
-		 * Note:  pt_seglist will be updated in equal_start.
-		 *	PPPPPPPPPPPP
-		 *	     SSSS...
-		 *	newpp|pp
-		 */
-		RT_DUP_PT(rtip, newpp, pp, res);
-		/* new partition is the span before seg joins partition */
-		pp->pt_inseg = segp;
-		pp->pt_inhit = &segp->seg_in;
-		pp->pt_inflip = 0;
-		newpp->pt_outseg = segp;
-		newpp->pt_outhit = &segp->seg_in;
-		newpp->pt_outflip = 1;
-		INSERT_PT(newpp, pp);
-		if (RT_G_DEBUG&DEBUG_PARTITION) {
-		    bu_log("seg starts within p. Split p at seg start, advance. (diff = %g)\n", diff);
-		    bu_log("newpp starts at %.12e, pp starts at %.12e\n",
-			    newpp->pt_inhit->hit_dist,
-			    pp->pt_inhit->hit_dist);
-		    bu_log("newpp = %p, pp = %p\n", (void *)newpp, (void *)pp);
-		}
-	    } else if (diff > -(tol_dist)) {
-		/*
-		 * Make a subtle but important distinction here.  Even
-		 * though the two distances are "equal" within
-		 * tolerance, they are not exactly the same.  If the
-		 * new segment is slightly closer to the ray origin,
-		 * then use its IN point.
-		 *
-		 * This is an attempt to reduce the deflected normals
-		 * sometimes seen along the edges of e.g. a cylinder
-		 * unioned with an ARB8, where the ray hits the top of
-		 * the cylinder and the *side* face of the ARB8 rather
-		 * than the top face of the ARB8.
-		 */
-		diff = segp->seg_in.hit_dist - pp->pt_inhit->hit_dist;
-		if (!pp->pt_back ||
-			pp->pt_back == PartHdp ||
-			pp->pt_back->pt_outhit->hit_dist <=
-			segp->seg_in.hit_dist) {
-		    if (NEAR_ZERO(diff, tol_dist) &&
-			    diff < 0) {
-			if (RT_G_DEBUG&DEBUG_PARTITION) bu_log("changing partition start point to segment start point\n");
-			pp->pt_inseg = segp;
-			pp->pt_inhit = &segp->seg_in;
-			pp->pt_inflip = 0;
-		    }
-		}
-	    } else {
-		/*
-		 * diff < ~~0
-		 *
-		 * Seg starts before current partition starts,
-		 * but after the previous partition ends.
-		 *	SSSSSSSS...
-		 *	     PPPPP...
-		 *	newpp|pp
-		 */
+	    if (pp == PartHdp) {
+		if (RT_G_DEBUG&DEBUG_PARTITION) bu_log("seg extends beyond partition end\n");
 		GET_PT_INIT(rtip, newpp, res);
 		bu_ptbl_ins_unique(&newpp->pt_seglist, (long *)segp);
 		newpp->pt_inseg = lastseg;
 		newpp->pt_inhit = lasthit;
 		newpp->pt_inflip = lastflip;
-		diff = segp->seg_out.hit_dist - pp->pt_inhit->hit_dist;
-		if (diff < -(tol_dist)) {
-		    /*
-		     * diff < ~0
-		     * Seg starts and ends before current
-		     * partition, but after previous
-		     * partition ends (diff < 0).
-		     *		SSSS
-		     *	pppp		PPPPP...
-		     *		newpp	pp
-		     */
-		    newpp->pt_outseg = segp;
-		    newpp->pt_outhit = &segp->seg_out;
-		    newpp->pt_outflip = 0;
-		    INSERT_PT(newpp, pp);
-		    if (RT_G_DEBUG&DEBUG_PARTITION) bu_log("seg between 2 partitions\n");
-		    goto done_weave;
-		} else if (diff < tol_dist) {
-		    /*
-		     * diff ~= 0
-		     *
-		     * Seg starts before current
-		     * partition starts, and ends at or
-		     * near the start of the partition.
-		     * (diff == 0).  FUSE the points.
-		     *	SSSSSS
-		     *	     PPPPP
-		     *	newpp|pp
-		     * NOTE: only copy hit point, not
-		     * normals or norm private stuff.
-		     */
-		    newpp->pt_outseg = segp;
-		    newpp->pt_outhit = &segp->seg_out;
-		    newpp->pt_outhit->hit_dist = pp->pt_inhit->hit_dist;
-		    newpp->pt_outflip = 0;
-		    INSERT_PT(newpp, pp);
-		    if (RT_G_DEBUG&DEBUG_PARTITION) bu_log("seg ends at partition start, fuse\n");
-		    goto done_weave;
-		}
-		/*
-		 * Seg starts before current partition
-		 * starts, and ends after the start of the
-		 * partition.  (diff > 0).
-		 *	SSSSSSSSSS
-		 *	      PPPPPPP
-		 *	newpp| pp | ...
-		 */
-		newpp->pt_outseg = pp->pt_inseg;
-		newpp->pt_outhit = pp->pt_inhit;
-		newpp->pt_outflip = 1;
-		lastseg = pp->pt_inseg;
-		lasthit = pp->pt_inhit;
-		lastflip = newpp->pt_outflip;
-		INSERT_PT(newpp, pp);
-		if (RT_G_DEBUG&DEBUG_PARTITION) bu_log("insert seg before p start, ends after p ends.  Making new partition for initial portion.\n");
-	    }
-
-	    if (RT_G_DEBUG&DEBUG_PARTITION) bu_log("equal_start\n");
-	    /*
-	     * Segment and partition start at (roughly) the same
-	     * point.  When fusing 2 points together i.e., when
-	     * NEAR_ZERO(diff, tol) is true, the two points MUST
-	     * be forced to become exactly equal!
-	     */
-	    diff = segp->seg_out.hit_dist - pp->pt_outhit->hit_dist;
-	    if (diff > tol_dist) {
-		/*
-		 * Seg & partition start at roughly
-		 * the same spot,
-		 * seg extends beyond partition end.
-		 *	PPPP
-		 *	SSSSSSSS
-		 *	pp  |  newpp
-		 */
-		bu_ptbl_ins_unique(&pp->pt_seglist, (long *)segp);
-		lasthit = pp->pt_outhit;
-		lastseg = pp->pt_outseg;
-		lastflip = 1;
-		if (RT_G_DEBUG&DEBUG_PARTITION) bu_log("seg spans partition and extends beyond it\n");
-		continue;
-	    }
-	    if (diff > -(tol_dist)) {
-		/*
-		 * diff ~= 0
-		 * Segment and partition start & end
-		 * (nearly) together.
-		 *	PPPP
-		 *	SSSS
-		 */
-		bu_ptbl_ins_unique(&pp->pt_seglist, (long *)segp);
-		if (RT_G_DEBUG&DEBUG_PARTITION) bu_log("same start&end\n");
-		goto done_weave;
-	    } else {
-		/*
-		 * diff < ~0
-		 *
-		 * Segment + Partition start together,
-		 * segment ends before partition ends.
-		 *	PPPPPPPPPP
-		 *	SSSSSS
-		 *	newpp| pp
-		 */
-		RT_DUP_PT(rtip, newpp, pp, res);
-		/* new partition contains segment */
-		bu_ptbl_ins_unique(&newpp->pt_seglist, (long *)segp);
 		newpp->pt_outseg = segp;
 		newpp->pt_outhit = &segp->seg_out;
-		newpp->pt_outflip = 0;
-		pp->pt_inseg = segp;
-		pp->pt_inhit = &segp->seg_out;
-		pp->pt_inflip = 1;
-		INSERT_PT(newpp, pp);
-		if (RT_G_DEBUG&DEBUG_PARTITION) {
-		    bu_log("start together, seg shorter than partition\n");
-		    bu_log("newpp starts at %.12e, pp starts at %.12e\n",
-			    newpp->pt_inhit->hit_dist,
-			    pp->pt_inhit->hit_dist);
-		    bu_log("newpp = %p, pp = %p\n", (void *)newpp, (void *)pp);
-		}
-		goto done_weave;
+		APPEND_PT(newpp, PartHdp->pt_back);
 	    }
-	    /* NOTREACHED */
 	}
 
-	/*
-	 * Segment has portion which extends beyond the end
-	 * of the last partition.  Tack on the remainder.
-	 *  	PPPPP
-	 *  	     SSSSS
-	 */
-	if (RT_G_DEBUG&DEBUG_PARTITION) bu_log("seg extends beyond partition end\n");
-	GET_PT_INIT(rtip, newpp, res);
-	bu_ptbl_ins_unique(&newpp->pt_seglist, (long *)segp);
-	newpp->pt_inseg = lastseg;
-	newpp->pt_inhit = lasthit;
-	newpp->pt_inflip = lastflip;
-	newpp->pt_outseg = segp;
-	newpp->pt_outhit = &segp->seg_out;
-	APPEND_PT(newpp, PartHdp->pt_back);
-
-    done_weave:	; /* Sorry about the goto's, but they give clarity */
 	if (RT_G_DEBUG&DEBUG_PARTITION)
 	    rt_pr_partitions(rtip, PartHdp, "After weave");
     }
