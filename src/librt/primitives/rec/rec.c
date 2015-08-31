@@ -545,7 +545,8 @@ rt_rec_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct 
 	     * See if they fall in range.
 	     */
 	    VJOIN1(hitp->hit_vpriv, pprime, k1, dprime); /* hit' */
-	    if (hitp->hit_vpriv[Z] > -SMALL_FASTF && hitp->hit_vpriv[Z] < (1.0 + SMALL_FASTF)) {
+/*	    if (hitp->hit_vpriv[Z] > -SMALL_FASTF && hitp->hit_vpriv[Z] < (1.0 + SMALL_FASTF)) {*/
+	    if (hitp->hit_vpriv[Z] > -SMALL_FASTF && hitp->hit_vpriv[Z] <= 1.0) { /*!!! this is sensitive when grazing the edge */
 		hitp->hit_magic = RT_HIT_MAGIC;
 		hitp->hit_dist = k1;
 		hitp->hit_surfno = REC_NORM_BODY; /* compute N */
@@ -701,8 +702,9 @@ rt_rec_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, str
 	/* Find roots of eqn, using formula for quadratic w/ a=1 */
 	b = 2 * (dprime[X]*pprime[X] + dprime[Y]*pprime[Y]) *
 	    (dx2dy2 = 1 / (dprime[X]*dprime[X] + dprime[Y]*dprime[Y]));
-	if ((root = b*b - 4 * dx2dy2 *
-	     (pprime[X]*pprime[X] + pprime[Y]*pprime[Y] - 1)) <= 0)
+	root = b*b - 4 * dx2dy2 *
+	    (pprime[X]*pprime[X] + pprime[Y]*pprime[Y] - 1);
+	if (root <= 0.0)
 	    goto check_plates;
 
 	root = sqrt(root);
