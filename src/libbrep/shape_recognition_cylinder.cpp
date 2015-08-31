@@ -52,7 +52,19 @@ categorize_arc_edges(struct bu_vls *msgs, ON_Circle *set1_c, ON_Circle *set2_c,
     ON_Arc arc;
     (void)sc->IsArc(NULL, &arc, cyl_tol);
     delete sc;
-    (*set1_c) = ON_Circle(arc.StartPoint(), arc.MidPoint(), arc.EndPoint());
+    {
+	ON_3dPoint acenter(0,0,0);
+	fastf_t aradius;
+	if (arc.IsCircle()) {
+	    acenter = (arc.StartPoint() + arc.MidPoint())/2.0;
+	    aradius = arc.StartPoint().DistanceTo(arc.MidPoint()) * 0.5;
+	} else {
+	    ON_Circle circ(arc.StartPoint(), arc.MidPoint(), arc.EndPoint());
+	    acenter = circ.Center();
+	    aradius = circ.Radius();
+	}
+	(*set1_c) = ON_Circle(acenter, aradius);
+    }
 
     // Find the arc edge furthest from the set1_c arc - this will define the
     // "opposite circle" for the cylinder
@@ -61,10 +73,20 @@ categorize_arc_edges(struct bu_vls *msgs, ON_Circle *set1_c, ON_Circle *set2_c,
 	if (edge != cedge) {
 	    ON_Curve *ec = cedge->EdgeCurveOf()->Duplicate();
 	    if (ec->IsArc(NULL, &arc, cyl_tol)) {
-		ON_Circle circ(arc.StartPoint(), arc.MidPoint(), arc.EndPoint());
-		if (fabs(circ.Center().DistanceTo(set1_c->Center())) > max_height) {
-		    max_height = fabs(circ.Center().DistanceTo(set1_c->Center()));
-		    (*set2_c) = circ;
+		ON_3dPoint acenter(0,0,0);
+		fastf_t aradius;
+		if (arc.IsCircle()) {
+		    acenter = (arc.StartPoint() + arc.MidPoint())/2.0;
+		    aradius = arc.StartPoint().DistanceTo(arc.MidPoint()) * 0.5;
+		} else {
+		    ON_Circle circ(arc.StartPoint(), arc.MidPoint(), arc.EndPoint());
+		    acenter = circ.Center();
+		    aradius = circ.Radius();
+		}
+
+		if (fabs(acenter.DistanceTo(set1_c->Center())) > max_height) {
+		    max_height = fabs(acenter.DistanceTo(set1_c->Center()));
+		    (*set2_c) = ON_Circle(acenter, aradius);
 		}
 	    }
 	    delete ec;
@@ -77,9 +99,21 @@ categorize_arc_edges(struct bu_vls *msgs, ON_Circle *set1_c, ON_Circle *set2_c,
         const ON_BrepEdge *cedge = &(data->brep->m_E[*e_it]);
 	ON_Curve *ec = cedge->EdgeCurveOf()->Duplicate();
 	if (ec->IsArc(NULL, &arc, cyl_tol)) {
-	    ON_Circle circ(arc.StartPoint(), arc.MidPoint(), arc.EndPoint());
+	    ON_3dPoint acenter(0,0,0);
+	    fastf_t aradius;
+	    if (arc.IsCircle()) {
+		acenter = (arc.StartPoint() + arc.MidPoint())/2.0;
+		aradius = arc.StartPoint().DistanceTo(arc.MidPoint()) * 0.5;
+	    } else {
+		ON_Circle circ(arc.StartPoint(), arc.MidPoint(), arc.EndPoint());
+		acenter = circ.Center();
+		aradius = circ.Radius();
+	    }
+	    ON_Circle circ(acenter,aradius);
 	    double d1 = fabs(circ.Center().DistanceTo(set1_c->Center()));
 	    double d2 = fabs(circ.Center().DistanceTo(set2_c->Center()));
+	    bu_log("d1: %f\n", d1);
+	    bu_log("d2: %f\n", d2);
 	    if (!NEAR_ZERO(d1, cyl_tol) && !NEAR_ZERO(d2, cyl_tol)) {
 		if (msgs) bu_vls_printf(msgs, "%*sfound extra circle in %s - no go\n", L4_OFFSET, " ", bu_vls_addr(data->key));
 		delete ec;
