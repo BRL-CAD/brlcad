@@ -254,6 +254,20 @@ struct rt_tree_array
 
 #define TREE_LIST_NULL  ((struct tree_list *)0)
 
+/**
+ * Flattened RPN version of the infix union tree.
+ */
+#define UOP_NOP		-1
+#define UOP_UNION	-2
+#define UOP_INTERSECT	-3
+#define UOP_SUBTRACT	-4
+#define UOP_XOR		-5
+
+union tree_rpn {			/* UOPs are negative. SOLIDs are non-negative */
+    long uop;
+    long st_bit;
+};
+
 /* Print an expr tree */
 RT_EXPORT extern void rt_pr_tree(const union tree *tp,
 	                         int lvl);
@@ -266,6 +280,8 @@ RT_EXPORT extern void rt_pr_tree_val(const union tree *tp,
                                      const struct partition *partp,
                                      int pr_name,
                                      int lvl);
+/* Print an RPN expr tree */
+RT_EXPORT void rt_pr_rtree(const union tree_rpn *rtree, size_t rlen);
 
 /**
  * Duplicate the contents of a db_tree_state structure, including a
@@ -748,9 +764,21 @@ RT_EXPORT extern union tree *db_mkgift_tree(struct rt_tree_array *trees,
                                             size_t subtreecount,
                                             struct resource *resp);
 
+/**
+ * Increase the size of re_boolstack to double the previous size.
+ * Depend on bu_realloc() to copy the previous data to the new area
+ * when the size is increased.
+ *
+ * Return the new pointer for what was previously the last element.
+ */
+RT_EXPORT extern void rt_grow_boolstack(struct resource *res);
+
 
 RT_EXPORT extern void rt_optim_tree(union tree *tp,
 	                            struct resource *resp);
+
+RT_EXPORT extern void rt_tree_rpn(union tree_rpn *rtree, const union tree *treep,
+				  size_t *len);
 
 
 

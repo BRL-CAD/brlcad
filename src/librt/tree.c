@@ -1003,6 +1003,19 @@ rt_find_solid(const struct rt_i *rtip, const char *name)
 
 
 void
+rt_grow_boolstack(struct resource *resp)
+{
+    if (resp->re_boolstack == (union tree **)0 || resp->re_boolslen <= 0) {
+	resp->re_boolslen = 128;	/* default len */
+	resp->re_boolstack = (union tree **)bu_malloc(sizeof(union tree *) * resp->re_boolslen,	"initial boolstack");
+    } else {
+	resp->re_boolslen <<= 1;
+	resp->re_boolstack = (union tree **)bu_realloc((char *)resp->re_boolstack, sizeof(union tree *) * resp->re_boolslen, "extend boolstack");
+    }
+}
+
+
+void
 rt_optim_tree(union tree *tp, struct resource *resp)
 {
     union tree **sp;
@@ -1060,6 +1073,43 @@ rt_optim_tree(union tree *tp, struct resource *resp)
 		bu_log("rt_optim_tree: bad op x%x\n", tp->tr_op);
 		break;
 	}
+    }
+}
+
+
+void
+rt_tree_rpn(union tree_rpn *rtree, const union tree *treep, size_t *len)
+{
+    if (treep == TREE_NULL)
+	return;
+
+    switch (treep->tr_op) {
+	case OP_SOLID:
+	    if (rtree) rtree[*len].st_bit = treep->tr_a.tu_stp->st_bit;
+	    ++*len;
+	    break;
+	case OP_UNION:
+	    rt_tree_rpn(rtree, treep->tr_b.tb_left, len);
+	    rt_tree_rpn(rtree, treep->tr_b.tb_right, len);
+	    if (rtree) rtree[*len].uop = UOP_UNION;
+	    ++*len;
+	    break;
+	case OP_INTERSECT:
+	    rt_tree_rpn(rtree, treep->tr_b.tb_left, len);
+	    rt_tree_rpn(rtree, treep->tr_b.tb_right, len);
+	    if (rtree) rtree[*len].uop = UOP_INTERSECT;
+	    ++*len;
+	    break;
+	case OP_SUBTRACT:
+	    rt_tree_rpn(rtree, treep->tr_b.tb_left, len);
+	    rt_tree_rpn(rtree, treep->tr_b.tb_right, len);
+	    if (rtree) rtree[*len].uop = UOP_SUBTRACT;
+	    ++*len;
+	    break;
+	default:
+	    bu_log("rt_tree_rpn:  bad op [%d]\n", treep->tr_op);
+	    exit(1);
+	    break;
     }
 }
 

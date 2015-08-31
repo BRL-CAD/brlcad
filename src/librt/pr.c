@@ -579,8 +579,6 @@ rt_pr_tree_val(register const union tree *tp, const struct partition *partp, int
 		    break;
 	    }
 	    break;
-
-
 	case OP_UNION:
 	    bu_log("(");
 	    rt_pr_tree_val(tp->tr_b.tb_left,  partp, pr_name, lvl+1);
@@ -622,6 +620,43 @@ rt_pr_tree_val(register const union tree *tp, const struct partition *partp, int
 
 out:
     if (lvl == 0) bu_log("\n");
+}
+
+
+/**
+ * Produce representations of this postfix bool tree.
+ */
+void
+rt_pr_rtree(const union tree_rpn *rtree, size_t rlen)
+{
+    size_t i;
+
+    bu_log("\npostfix: ");
+    for (i=0; i<rlen; i++) {
+	switch (rtree[i].uop) {
+	    case UOP_UNION:
+		bu_log("%c", DB_OP_UNION);
+		break;
+	    case UOP_INTERSECT:
+		bu_log("%c", DB_OP_INTERSECT);
+		break;
+	    case UOP_SUBTRACT:
+		bu_log("%c", DB_OP_SUBTRACT);
+		break;
+	    case UOP_XOR:
+		bu_log("XOR");
+		break;
+	    case UOP_NOP:
+		bu_log("!");
+		break;
+	    default:
+		bu_log("%ld", rtree[i].st_bit);
+		break;
+	}
+	if (i != rlen-1)
+	    bu_log(" ");
+    }
+    bu_log("\n");
 }
 
 

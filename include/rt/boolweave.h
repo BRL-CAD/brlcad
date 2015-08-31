@@ -160,15 +160,6 @@ RT_EXPORT extern int rt_boolfinal(struct partition *InputHdp,
                                   struct application *ap,
                                   const struct bu_bitv *solidbits);
 
-/**
- * Increase the size of re_boolstack to double the previous size.
- * Depend on bu_realloc() to copy the previous data to the new area
- * when the size is increased.
- *
- * Return the new pointer for what was previously the last element.
- */
-RT_EXPORT extern void rt_grow_boolstack(struct resource *res);
-
 __END_DECLS
 
 #endif /* RT_BOOLWEAVE_H */
