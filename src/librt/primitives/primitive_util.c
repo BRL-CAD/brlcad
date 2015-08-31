@@ -847,8 +847,7 @@ clt_frame(void *pixels, uint8_t o[3], int cur_pixel, int last_pixel,
     bu_log("%ldx%ld grid, %ldx%ld subgrids\n", wxh[0], wxh[1], swxh[0], swxh[1]);
 
     switch (lightmodel) {
-	case 0:
-	case 4:
+	case 5:
 	    {
 	    size_t sz_counts;
 	    cl_int *counts;
@@ -966,43 +965,34 @@ clt_frame(void *pixels, uint8_t o[3], int cur_pixel, int last_pixel,
 	    break;
 	default:
 	    {
-	    size_t sz_hits;
-	    cl_mem phits;
-
-	    sz_hits = sizeof(struct cl_hit)*npix;
-	    phits = clCreateBuffer(clt_context, CL_MEM_READ_WRITE|CL_MEM_HOST_NO_ACCESS, sz_hits, NULL, &error);
-	    if (error != CL_SUCCESS) bu_bomb("failed to create OpenCL hits buffer");
-
 	    bu_semaphore_acquire(clt_semaphore);
 	    error = clSetKernelArg(clt_frame_kernel, 0, sizeof(cl_mem), &ppixels);
 	    error |= clSetKernelArg(clt_frame_kernel, 1, sizeof(cl_uchar3), &p.o);
-	    error |= clSetKernelArg(clt_frame_kernel, 2, sizeof(cl_mem), &phits);
-	    error |= clSetKernelArg(clt_frame_kernel, 3, sizeof(cl_int), &p.cur_pixel);
-	    error |= clSetKernelArg(clt_frame_kernel, 4, sizeof(cl_int), &p.last_pixel);
-	    error |= clSetKernelArg(clt_frame_kernel, 5, sizeof(cl_int), &p.width);
-	    error |= clSetKernelArg(clt_frame_kernel, 6, sizeof(cl_mem), &clt_rand_halftab);
-	    error |= clSetKernelArg(clt_frame_kernel, 7, sizeof(cl_uint), &p.randhalftabsize);
-	    error |= clSetKernelArg(clt_frame_kernel, 8, sizeof(cl_uchar3), &p.ibackground);
-	    error |= clSetKernelArg(clt_frame_kernel, 9, sizeof(cl_uchar3), &p.inonbackground);
-	    error |= clSetKernelArg(clt_frame_kernel, 10, sizeof(cl_double), &p.airdensity);
-	    error |= clSetKernelArg(clt_frame_kernel, 11, sizeof(cl_double3), &p.haze);
-	    error |= clSetKernelArg(clt_frame_kernel, 12, sizeof(cl_double), &p.gamma);
-	    error |= clSetKernelArg(clt_frame_kernel, 13, sizeof(cl_double16), &p.view2model);
-	    error |= clSetKernelArg(clt_frame_kernel, 14, sizeof(cl_double), &p.cell_width);
-	    error |= clSetKernelArg(clt_frame_kernel, 15, sizeof(cl_double), &p.cell_height);
-	    error |= clSetKernelArg(clt_frame_kernel, 16, sizeof(cl_double), &p.aspect);
-	    error |= clSetKernelArg(clt_frame_kernel, 17, sizeof(cl_int), &lightmodel);
-	    error |= clSetKernelArg(clt_frame_kernel, 18, sizeof(cl_uint), &clt_db_nprims);
-	    error |= clSetKernelArg(clt_frame_kernel, 19, sizeof(cl_mem), &clt_db_ids);
-	    error |= clSetKernelArg(clt_frame_kernel, 20, sizeof(cl_mem), &clt_db_bvh);
-	    error |= clSetKernelArg(clt_frame_kernel, 21, sizeof(cl_mem), &clt_db_indexes);
-	    error |= clSetKernelArg(clt_frame_kernel, 22, sizeof(cl_mem), &clt_db_prims);
+	    error |= clSetKernelArg(clt_frame_kernel, 2, sizeof(cl_int), &p.cur_pixel);
+	    error |= clSetKernelArg(clt_frame_kernel, 3, sizeof(cl_int), &p.last_pixel);
+	    error |= clSetKernelArg(clt_frame_kernel, 4, sizeof(cl_int), &p.width);
+	    error |= clSetKernelArg(clt_frame_kernel, 5, sizeof(cl_mem), &clt_rand_halftab);
+	    error |= clSetKernelArg(clt_frame_kernel, 6, sizeof(cl_uint), &p.randhalftabsize);
+	    error |= clSetKernelArg(clt_frame_kernel, 7, sizeof(cl_uchar3), &p.ibackground);
+	    error |= clSetKernelArg(clt_frame_kernel, 8, sizeof(cl_uchar3), &p.inonbackground);
+	    error |= clSetKernelArg(clt_frame_kernel, 9, sizeof(cl_double), &p.airdensity);
+	    error |= clSetKernelArg(clt_frame_kernel, 10, sizeof(cl_double3), &p.haze);
+	    error |= clSetKernelArg(clt_frame_kernel, 11, sizeof(cl_double), &p.gamma);
+	    error |= clSetKernelArg(clt_frame_kernel, 12, sizeof(cl_double16), &p.view2model);
+	    error |= clSetKernelArg(clt_frame_kernel, 13, sizeof(cl_double), &p.cell_width);
+	    error |= clSetKernelArg(clt_frame_kernel, 14, sizeof(cl_double), &p.cell_height);
+	    error |= clSetKernelArg(clt_frame_kernel, 15, sizeof(cl_double), &p.aspect);
+	    error |= clSetKernelArg(clt_frame_kernel, 16, sizeof(cl_int), &lightmodel);
+	    error |= clSetKernelArg(clt_frame_kernel, 17, sizeof(cl_uint), &clt_db_nprims);
+	    error |= clSetKernelArg(clt_frame_kernel, 18, sizeof(cl_mem), &clt_db_ids);
+	    error |= clSetKernelArg(clt_frame_kernel, 19, sizeof(cl_mem), &clt_db_bvh);
+	    error |= clSetKernelArg(clt_frame_kernel, 20, sizeof(cl_mem), &clt_db_indexes);
+	    error |= clSetKernelArg(clt_frame_kernel, 21, sizeof(cl_mem), &clt_db_prims);
+	    error |= clSetKernelArg(clt_frame_kernel, 22, sizeof(cl_mem), &clt_db_regions);
 	    if (error != CL_SUCCESS) bu_bomb("failed to set OpenCL kernel arguments");
 	    error = clEnqueueNDRangeKernel(clt_queue, clt_frame_kernel, 2, NULL, wxh,
 		    swxh, 0, NULL, NULL);
 	    bu_semaphore_release(clt_semaphore);
-
-	    clReleaseMemObject(phits);
 	    }
 	    break;
     }

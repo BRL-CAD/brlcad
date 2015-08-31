@@ -26,7 +26,7 @@ struct tri_specific {
     uchar pad[4];
 };
 
-int bot_shot(global struct hit **res, const double3 r_pt, double3 r_dir, const uint idx, global const uchar *args)
+int bot_shot(RESULT_TYPE *res, const double3 r_pt, double3 r_dir, const uint idx, global const uchar *args)
 {
     global const struct bot_specific *bot =
         (global const struct bot_specific *)(args);
@@ -160,13 +160,13 @@ int bot_shot(global struct hit **res, const double3 r_pt, double3 r_dir, const u
     }
 
     for (uint i=0; i < hit_count; i++) {
-        do_hitp(res, idx, &hits[i]);
+        do_segp(res, idx, &hits[i], &hits[i]);
     }
     return hit_count;
 }
 
 
-void bot_norm(global struct hit *hitp, const double3 r_pt, const double3 r_dir, global const uchar *args)
+void bot_norm(struct hit *hitp, const double3 r_pt, const double3 r_dir, global const uchar *args)
 {
     hitp->hit_point = r_pt + r_dir * hitp->hit_dist;
 

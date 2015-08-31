@@ -49,7 +49,7 @@ bu_cv_htond(const ulong d)
 }
 
 
-int
+bool
 rt_in_rpp(const double3 pt,
 	  const double3 invdir,
 	  global const double *min,
@@ -93,7 +93,7 @@ rt_in_rpp(const double3 pt,
 #define ID_BOT          30      /**< @brief Bag o' triangles */
 
 
-inline int shot(global struct hit **res, const double3 r_pt, const double3 r_dir, const uint idx, const int id, global const void *args)
+inline int shot(RESULT_TYPE *res, const double3 r_pt, const double3 r_dir, const uint idx, const int id, global const void *args)
 {
     switch (id) {
     case ID_TOR:	return tor_shot(res, r_pt, r_dir, idx, args);
@@ -109,7 +109,7 @@ inline int shot(global struct hit **res, const double3 r_pt, const double3 r_dir
     };
 }
 
-inline void norm(global struct hit *hitp, const double3 r_pt, const double3 r_dir, const int id, global const void *args)
+inline void norm(struct hit *hitp, const double3 r_pt, const double3 r_dir, const int id, global const void *args)
 {
     switch (id) {
     case ID_TOR:	tor_norm(hitp, r_pt, r_dir, args);	break;
@@ -157,7 +157,7 @@ inline void gen_ray(double3 *r_pt, double3 *r_dir, const int a_x, const int a_y,
 }
 
 int
-shootray(global struct hit **hitp, double3 r_pt, double3 r_dir,
+shootray(RESULT_TYPE *res, double3 r_pt, double3 r_dir,
          const uint nprims, global uchar *ids, global struct linear_bvh_node *nodes,
          global uint *indexes, global uchar *prims)
 {
@@ -184,7 +184,7 @@ shootray(global struct hit **hitp, double3 r_pt, double3 r_dir,
                     /* Intersect ray with primitives in leaf BVH node */
                     for (int i = 0; i < node->n_primitives; ++i) {
                         const uint idx = node->u.primitives_offset + i;
-                        ret += shot(hitp, r_pt, r_dir, idx, ids[idx], prims + indexes[idx]);
+                        ret += shot(res, r_pt, r_dir, idx, ids[idx], prims + indexes[idx]);
                     }
                     if (to_visit_offset == 0) break;
                     current_node_index = nodes_to_visit[--to_visit_offset];
@@ -207,7 +207,7 @@ shootray(global struct hit **hitp, double3 r_pt, double3 r_dir,
         }
     } else {
         for (uint idx=0; idx<nprims; idx++) {
-            ret += shot(hitp, r_pt, r_dir, idx, ids[idx], prims + indexes[idx]);
+            ret += shot(res, r_pt, r_dir, idx, ids[idx], prims + indexes[idx]);
         }
     }
     return ret;
@@ -288,29 +288,87 @@ viewshade(struct shade_work *swp, const double3 r_dir, const double3 normal, con
     }
 }
 
+double3 MAT4X3PNT(const double16 m, double3 i) {
+    double4 j;
+
+    j.xyz = i;
+    j.w = (1.0/(m.sc*i.x+m.sd*i.y+m.se*i.z+m.sf));
+
+    double3 o;
+    o.x = dot(m.s0123, j);
+    o.y = dot(m.s4567, j);
+    o.z = dot(m.s98ab, j);
+    return o;
+}
+
+inline double3
+shade(const double3 r_pt, const double3 r_dir, struct hit *hitp, const uint idx, const double3 lt_pos,
+      global uchar *ids, global uint *indexes, global uchar *prims, global struct region *regions)
+
+{
+    double3 color;
+    double3 normal;
+
+    if (hitp->hit_dist < 0.0) {
+	/* Eye inside solid, orthoview */
+	normal = -r_dir;
+    } else {
+	norm(hitp, r_pt, r_dir, ids[idx], prims + indexes[idx]);
+	normal = hitp->hit_normal;
+    }
+
+    /*
+     * Diffuse reflectance from each light source
+     */
+    const double3 to_light = lt_pos - hitp->hit_point;
+
+    struct shade_work sw;
+    sw.sw_color = 1.0;
+    sw.sw_basecolor = 1.0;
+
+    viewshade(&sw, r_dir, normal, to_light, &regions[idx]);
+    color = sw.sw_color;
+    return color;
+}
+
 
 #if RT_SINGLE_HIT
 /**
   * Single-hit.
   */
-void do_hitp(global struct hit **res, const uint hit_index, const struct hit *hitp)
+void do_segp(RESULT_TYPE *res, const uint idx,
+	     struct hit *seg_in, struct hit *seg_out)
 {
-    if (hitp->hit_dist >= 0.0 && hitp->hit_dist < (*res)[0].hit_dist) {
-        (*res)[0] = *hitp;
-        (*res)[0].hit_index = hit_index;
+    struct accum *acc = *res;
+    struct seg *segp = &acc->s;
+
+    if (seg_in->hit_dist < segp->seg_in.hit_dist) {
+	segp->seg_in = *seg_in;
+	segp->seg_sti = idx;
+    }
+
+    if (acc->lightmodel == 4) {
+	if (seg_in->hit_dist >= 0.0) {
+	    const double3 color = shade(acc->r_pt, acc->r_dir, seg_in, idx,
+		    acc->lt_pos, acc->ids, acc->indexes,
+		    acc->prims, acc->regions);
+	    double f = exp(-seg_in->hit_dist*1e-10);
+	    acc->a_color += color * f;
+	    acc->a_total += f;
+	}
     }
 }
 
 
 __kernel void
-do_pixel(global uchar *pixels, const uchar3 o, global struct hit *hits,
-         const int cur_pixel, const int last_pixel, const int width,
-	 global float *rand_halftab, const uint randhalftabsize,
-	 const uchar3 background, const uchar3 nonbackground,
+do_pixel(global uchar *pixels, const uchar3 o, const int cur_pixel,
+	 const int last_pixel, const int width, global float *rand_halftab,
+	 const uint randhalftabsize, const uchar3 background,const uchar3 nonbackground,
 	 const double airdensity, const double3 haze, const double gamma,
 	 const double16 view2model, const double cell_width, const double cell_height,
 	 const double aspect, const int lightmodel, const uint nprims, global uchar *ids,
-	 global struct linear_bvh_node *nodes, global uint *indexes, global uchar *prims)
+	 global struct linear_bvh_node *nodes, global uint *indexes,global uchar *prims,
+	 global struct region *regions)
 {
     const size_t id = get_global_size(0)*get_global_id(1)+get_global_id(0);
 
@@ -325,29 +383,48 @@ do_pixel(global uchar *pixels, const uchar3 o, global struct hit *hits,
     double3 r_pt, r_dir;
     gen_ray(&r_pt, &r_dir, a_x, a_y, view2model, cell_width, cell_height, aspect);
 
-    global struct hit *hitp = hits+id;
-    hitp->hit_dist = INFINITY;
+    /* Determine the Light location(s) in view space */
+    /* 0:  At left edge, 1/2 high */
+    const double3 lt_pos = MAT4X3PNT(view2model, (double3){-1,0,1});
 
-    int ret = shootray(&hitp, r_pt, r_dir, nprims, ids, nodes, indexes, prims);
+    struct accum a;
+    a.lightmodel = lightmodel;
+    a.r_pt = r_pt;
+    a.r_dir = r_dir;
+    a.lt_pos = lt_pos;
+    a.a_color = 0.0;
+    a.a_total = 0.0;
+    a.ids = ids;
+    a.indexes = indexes;
+    a.prims = prims;
+    a.regions = regions;
+
+    struct seg *segp = &a.s;
+    segp->seg_in.hit_dist = INFINITY;
+    segp->seg_out.hit_dist = -INFINITY;
+    segp->seg_sti = 0;
+
+    int ret = shootray(&segp, r_pt, r_dir, nprims, ids, nodes, indexes, prims);
 
     double3 a_color;
     uchar3 rgb;
+
+    struct hit *hitp;
+    hitp = &segp->seg_in;
 
     if (ret != 0) {
         double diffuse0 = 0;
         double cosI0 = 0;
         double3 work0, work1;
         double3 normal;
-	const uint idx = hitp->hit_index;
+	const uint idx = segp->seg_sti;
 
 	if (hitp->hit_dist < 0.0) {
 	    /* Eye inside solid, orthoview */
 	    normal = -r_dir;
         } else {
-            if (idx<nprims) {
-                norm(hitp, r_pt, r_dir, ids[idx], prims + indexes[idx]);
-                normal = hitp->hit_normal;
-            }
+	    norm(hitp, r_pt, r_dir, ids[idx], prims + indexes[idx]);
+	    normal = hitp->hit_normal;
         }
 
         /*
@@ -355,6 +432,8 @@ do_pixel(global uchar *pixels, const uchar3 o, global struct hit *hits,
          */
         switch (lightmodel) {
 	    default:
+		a_color = shade(r_pt, r_dir, hitp, idx, lt_pos, ids, indexes, prims, regions);
+	    	break;
             case 1:
                 /* Light from the "eye" (ray source).  Note sign change */
                 diffuse0 = 0;
@@ -371,6 +450,9 @@ do_pixel(global uchar *pixels, const uchar3 o, global struct hit *hits,
                 /* (For Spencer's moving light program) */
                 a_color = (normal * DOUBLE_C(-.5)) + DOUBLE_C(.5);
                 break;
+	    case 4:
+	    	a_color = a.a_color * (1.0/a.a_total);
+		break;
         }
 
         /*
@@ -432,11 +514,11 @@ do_pixel(global uchar *pixels, const uchar3 o, global struct hit *hits,
 /**
   * Multi-hit.
   */
-void do_hitp(global struct hit **res, const uint hit_index, const struct hit *hitp)
+void do_segp(RESULT_TYPE *res, const uint hit_index,
+	     struct hit *seg_in, struct hit *seg_out)
 {
     if (!res) return;
-    (*res)[0] = *hitp;
-    (*res)[0].hit_index = hit_index;
+//    (*res)[0] = *hitp;
     (*res)++;
 }
 
@@ -467,7 +549,7 @@ count_hits(global int *counts,
 }
 
 __kernel void
-store_hits(global struct hit *hits, global uint *h,
+store_hits(RESULT_TYPE hits, global uint *h,
          const int cur_pixel, const int last_pixel, const int width,
 	 const double16 view2model, const double cell_width, const double cell_height,
 	 const double aspect, const uint nprims, global uchar *ids,
@@ -487,7 +569,7 @@ store_hits(global struct hit *hits, global uint *h,
     gen_ray(&r_pt, &r_dir, a_x, a_y, view2model, cell_width, cell_height, aspect);
 
     if (h[id] != h[id+1]) {
-        global struct hit *hitp = hits+h[id];
+        RESULT_TYPE hitp = hits+h[id];
         int ret = shootray(&hitp, r_pt, r_dir, nprims, ids, nodes, indexes, prims);
 
         // If we hit something, then sort the hits on demand.
@@ -506,64 +588,8 @@ store_hits(global struct hit *hits, global uint *h,
     }
 }
 
-double3 MAT4X3PNT(const double16 m, double3 i) {
-    double4 j;
-
-    j.xyz = i;
-    j.w = (1.0/(m.sc*i.x+m.sd*i.y+m.se*i.z+m.sf));
-
-    double3 o;
-    o.x = dot(m.s0123, j);
-    o.y = dot(m.s4567, j);
-    o.z = dot(m.s98ab, j);
-    return o;
-}
-
-inline double3
-shade(const double3 r_pt, const double3 r_dir, global struct hit *hitp, const double3 haze, const double airdensity, const double3 lt_pos,
-      const uint nprims, global uchar *ids, global uint *indexes, global uchar *prims, global struct region *regions)
-
-{
-    double3 color;
-    double3 normal;
-    const uint idx = hitp->hit_index;
-
-    if (hitp->hit_dist < 0.0) {
-	/* Eye inside solid, orthoview */
-	normal = -r_dir;
-    } else {
-	if (idx<nprims) {
-	    norm(hitp, r_pt, r_dir, ids[idx], prims + indexes[idx]);
-	    normal = hitp->hit_normal;
-	}
-    }
-
-    /*
-     * Diffuse reflectance from each light source
-     */
-    const double3 to_light = lt_pos - hitp->hit_point;
-
-    struct shade_work sw;
-    sw.sw_color = 1.0;
-    sw.sw_basecolor = 1.0;
-
-    viewshade(&sw, r_dir, normal, to_light, &regions[idx]);
-    color = sw.sw_color;
-
-    /*
-     * e ^(-density * distance)
-     */
-    if (!ZERO(airdensity)) {
-	double g;
-	double f = exp(-hitp->hit_dist * airdensity);
-	g = (1.0 - f);
-	color = color * f + haze * g;
-    }
-    return color;
-}
-
 __kernel void
-shade_hits(global uchar *pixels, const uchar3 o, global struct hit *hits, global uint *h,
+shade_hits(global uchar *pixels, const uchar3 o, RESULT_TYPE hits, global uint *h,
          const int cur_pixel, const int last_pixel, const int width,
 	 global float *rand_halftab, const uint randhalftabsize,
 	 const uchar3 background, const uchar3 nonbackground,
@@ -599,27 +625,27 @@ shade_hits(global uchar *pixels, const uchar3 o, global struct hit *hits, global
     if (h[id] != h[id+1]) {
 	if (lightmodel == 0) {
 	    for (long k=h[id]; k<h[id+1]; k++) {
-		global struct hit *hitp;
+		RESULT_TYPE hitp;
 		hitp = hits+k;
 
 		if (hitp->hit_dist < 0.0)
 		    continue;
 
-		a_color = shade(r_pt, r_dir, hitp, haze, airdensity, lt_pos, nprims, ids, indexes, prims, regions);
+		a_color = shade(r_pt, r_dir, hitp, 0, lt_pos, ids, indexes, prims, regions);
 		hit_dist = hitp->hit_dist;
 		break;
 	    }
 	} else {
 	    double a_hit_dist = 0.0;
 	    for (long k=h[id+1]-1; k>=h[id]; k--) {
-		global struct hit *hitp;
+		RESULT_TYPE hitp;
 		double3 color;
 		hitp = hits+k;
 
 		if (hitp->hit_dist < 0.0)
 		    break;
 
-		color = shade(r_pt, r_dir, hitp, haze, airdensity, lt_pos, nprims, ids, indexes, prims, regions);
+		color = shade(r_pt, r_dir, hitp, 0, lt_pos, ids, indexes, prims, regions);
 		hit_dist = hitp->hit_dist;
 		double att = exp(-hit_dist*1e-3);
 		a_hit_dist += att;
