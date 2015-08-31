@@ -98,14 +98,22 @@ categorize_arc_edges(struct bu_vls *msgs, ON_Circle *set1_c, ON_Circle *set2_c,
     // values for the cylinder.
     double avg_radius = 0.0;
     ON_3dPoint avg_center = ON_3dPoint(0.0, 0.0, 0.0);
-    int cnt = arc_set_1.size();
+    fastf_t cnt = (fastf_t)arc_set_1.size();
     for (e_it = arc_set_1.begin(); e_it != arc_set_1.end(); e_it++) {
 	const ON_BrepEdge *cedge = &(data->brep->m_E[*e_it]);
 	ON_Curve *ec = cedge->EdgeCurveOf()->Duplicate();
-	(void)ec->IsArc(NULL, &arc, cyl_tol);
-	ON_Circle circ(arc.StartPoint(), arc.MidPoint(), arc.EndPoint());
-	avg_radius += circ.Radius();
-	avg_center = avg_center + circ.Center();
+	if(ec->IsArc(NULL, &arc, cyl_tol)) {
+	    if (arc.IsCircle()) {
+		avg_center = avg_center + (arc.StartPoint() + arc.MidPoint())/2.0;
+		avg_radius += arc.StartPoint().DistanceTo(arc.MidPoint()) * 0.5;
+	    } else {
+		ON_Circle circ(arc.StartPoint(), arc.MidPoint(), arc.EndPoint());
+		avg_radius += circ.Radius();
+		avg_center = avg_center + circ.Center();
+	    }
+	} else {
+	    cnt = cnt - 1;
+	}
 	delete ec;
     }
     avg_radius = avg_radius/cnt;
@@ -114,14 +122,20 @@ categorize_arc_edges(struct bu_vls *msgs, ON_Circle *set1_c, ON_Circle *set2_c,
 
     avg_radius = 0.0;
     avg_center = ON_3dPoint(0.0, 0.0, 0.0);
-    cnt = arc_set_2.size();
+    cnt = (fastf_t)arc_set_2.size();
     for (e_it = arc_set_2.begin(); e_it != arc_set_2.end(); e_it++) {
 	const ON_BrepEdge *cedge = &(data->brep->m_E[*e_it]);
 	ON_Curve *ec = cedge->EdgeCurveOf()->Duplicate();
-	(void)ec->IsArc(NULL, &arc, cyl_tol);
-	ON_Circle circ(arc.StartPoint(), arc.MidPoint(), arc.EndPoint());
-	avg_radius += circ.Radius();
-	avg_center = avg_center + circ.Center();
+	if(ec->IsArc(NULL, &arc, cyl_tol)) {
+	    if (arc.IsCircle()) {
+		avg_center = avg_center + (arc.StartPoint() + arc.MidPoint())/2.0;
+		avg_radius += arc.StartPoint().DistanceTo(arc.MidPoint()) * 0.5;
+	    } else {
+		ON_Circle circ(arc.StartPoint(), arc.MidPoint(), arc.EndPoint());
+		avg_radius += circ.Radius();
+		avg_center = avg_center + circ.Center();
+	    }
+	}
 	delete ec;
     }
     avg_radius = avg_radius/cnt;
