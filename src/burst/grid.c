@@ -301,8 +301,6 @@ f_HushOverlap(struct application *ap, struct partition *pp, struct region *reg1,
 
   Do report diagnostics and keep count of individual overlaps
   that are at least as thick as OVERLAP_TOL.
-  Some of this code is from librt/bool.c:rt_defoverlap() for
-  consistency of which region is picked.
 
   Returns -
   0	to eliminate partition with overlap entirely
@@ -335,21 +333,7 @@ f_Overlap(struct application *ap, struct partition *pp, struct region *reg1, str
 	    );
     }
 
-    /* Apply heuristics as to which region should claim partition. */
-    if (reg1->reg_aircode != 0)
-	/* reg1 was air, replace with reg2 */
-	return 2;
-    if (pp->pt_back != pheadp) {
-	/* Repeat a prev region, if that is a choice */
-	if (pp->pt_back->pt_regionp == reg1)
-	    return 1;
-	if (pp->pt_back->pt_regionp == reg2)
-	    return 2;
-    }
-    /* To provide some consistency from ray to ray, use lowest bit # */
-    if (reg1->reg_bit < reg2->reg_bit)
-	return 1;
-    return 2;
+    return rt_defoverlap(ap, pp, reg1, reg2, pheadp);
 }
 
 
