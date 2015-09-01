@@ -69,15 +69,17 @@ GetCurveType(ON_Curve *curve)
 }
 
 surface_t
-GetSurfaceType(const ON_Surface *in_surface, struct filter_obj *obj)
+GetSurfaceType(const ON_Surface *orig_surface, struct filter_obj *obj)
 {
+    ON_Surface *surface;
     surface_t ret = SURFACE_GENERAL;
-    ON_Surface *surface = in_surface->Duplicate();
+    ON_Surface *in_surface = orig_surface->Duplicate();
     // Make things a bit larger so small surfaces can be identified
     ON_Xform sf(1000);
-    surface->Transform(sf);
+    in_surface->Transform(sf);
     if (obj) {
 	filter_obj_init(obj);
+	surface = in_surface->Duplicate();
 	if (surface->IsPlanar(obj->plane, BREP_PLANAR_TOL)) {
 	    ret = SURFACE_PLANE;
 	    obj->stype = SURFACE_PLANE;
@@ -112,6 +114,7 @@ GetSurfaceType(const ON_Surface *in_surface, struct filter_obj *obj)
 	    goto st_done;
 	}
     } else {
+	surface = in_surface->Duplicate();
 	if (surface->IsPlanar(NULL, BREP_PLANAR_TOL)) {
 	    ret = SURFACE_PLANE;
 	    goto st_done;
@@ -143,6 +146,7 @@ GetSurfaceType(const ON_Surface *in_surface, struct filter_obj *obj)
     }
 st_done:
     delete surface;
+    delete in_surface;
     return ret;
 }
 
