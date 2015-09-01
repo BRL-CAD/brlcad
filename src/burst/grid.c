@@ -55,9 +55,6 @@ static fastf_t cantdelta[3];	/* delta ray specified by yaw and pitch */
 
 static struct application ag;	/* global application structure (zeroed out) */
 
-/* unpublished handler from librt/bool.c */
-RT_EXPORT extern int rt_defoverlap(register struct application *ap, register struct partition *pp, struct region *reg1, struct region *reg2, struct partition *pheadp);
-
 /* functions local to this module */
 static int doBursts();
 static int burstPoint(struct application *, fastf_t *, fastf_t *);
