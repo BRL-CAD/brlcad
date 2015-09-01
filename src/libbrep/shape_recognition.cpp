@@ -35,169 +35,219 @@
 // positive and negative volume.  Probably convex/concave testing is what
 // will be needed to resolve this.
 
-struct bu_ptbl *
-find_subbreps(struct bu_vls *msgs, const ON_Brep *brep)
+#define TOO_MANY_CSG_OBJS(_obj_cnt, _msgs) \
+    if (_obj_cnt > CSG_BREP_MAX_OBJS && _msgs) \
+	bu_vls_printf(_msgs, "Error - brep converted to more than %d implicits - not currently a good CSG candidate\n", obj_cnt - 1); \
+    if (_obj_cnt > CSG_BREP_MAX_OBJS) \
+	goto bail
+
+
+void
+get_face_set_from_loops(struct subbrep_object_data *sb)
 {
-    std::map<int, surface_t> fstypes;
-    std::map<int, surface_t>::iterator fs_it;
-    int successful_splits = 0;
-    struct bu_ptbl *subbreps;
-    std::set<std::string> subbrep_keys;
-    BU_GET(subbreps, struct bu_ptbl);
-    bu_ptbl_init(subbreps, 8, "subbrep table");
+    const ON_Brep *brep = sb->brep;
+    std::set<int> faces;
+    std::set<int> fol;
+    std::set<int> fil;
+    std::set<int> loops;
+    std::set<int>::iterator l_it;
 
-    int obj_cnt = 0;
+    // unpack loop info
+    array_to_set(&loops, sb->loops, sb->loops_cnt);
 
-    /* For each face, build the topologically connected subset.  If that
-     * subset has not already been seen, add it to the brep's set of
-     * subbreps */
-    for (int i = 0; i < brep->m_F.Count(); i++) {
-	std::string key;
-	std::set<int> faces;
-	std::set<int> loops;
-	std::set<int> edges;
-	std::set<int> fol; /* Faces with outer loops in object loop network */
-	std::set<int> fil; /* Faces with only inner loops in object loop network */
-	std::queue<int> local_loops;
-	std::set<int> processed_loops;
-	std::set<int>::iterator s_it;
-
-	const ON_BrepFace *face = &(brep->m_F[i]);
-	faces.insert(i);
-	fol.insert(i);
-	local_loops.push(face->OuterLoop()->m_loop_index);
-	processed_loops.insert(face->OuterLoop()->m_loop_index);
-	while(!local_loops.empty()) {
-	    const ON_BrepLoop *loop = &(brep->m_L[local_loops.front()]);
-	    loops.insert(local_loops.front());
-	    local_loops.pop();
-	    for (int ti = 0; ti < loop->m_ti.Count(); ti++) {
-		const ON_BrepTrim *trim = &(face->Brep()->m_T[loop->m_ti[ti]]);
-		const ON_BrepEdge *edge = &(face->Brep()->m_E[trim->m_ei]);
-		if (trim->m_ei != -1 && edge->TrimCount() > 0) {
-		    int edge_general_surfaces = 0;
-		    edges.insert(trim->m_ei);
-		    for (int j = 0; j < edge->TrimCount(); j++) {
-			int fio = edge->Trim(j)->FaceIndexOf();
-			if (edge->m_ti[j] != ti && fio != -1) {
-			    surface_t stype;
-			    int li = edge->Trim(j)->Loop()->m_loop_index;
-			    faces.insert(fio);
-			    fs_it = fstypes.find(fio);
-			    if (fs_it == fstypes.end()) {
-				stype = GetSurfaceType(brep->m_F[fio].SurfaceOf(), NULL);
-				fstypes.insert(std::pair<int, surface_t>(fio, stype));
-			    } else {
-				stype = fs_it->second;
-			    }
-			    if (stype == SURFACE_GENERAL) edge_general_surfaces++;
-			    if (processed_loops.find(li) == processed_loops.end()) {
-				local_loops.push(li);
-				processed_loops.insert(li);
-			    }
-			    if (li == brep->m_F[fio].OuterLoop()->m_loop_index) {
-				fol.insert(fio);
-			    }
-			}
-		    }
-		    // Need to watch for an edge that has two general surfaces associated
-		    // with it.  That situation is currently too problematic for us to
-		    // handle even as a breakdown into subbreps, and if we see it we need
-		    // to bail.  Ensuring reliable inside/outside testing in that case
-		    // is extremely difficult.
-#if 0
-		    if (edge_general_surfaces > 1) {
-			if (msgs) bu_vls_printf(msgs, "%*sError - edge %d is connected to more than one general surface - aborting.\n", L1_OFFSET, " ", trim->m_ei);
-			goto bail;
-		    }
-#endif
-		}
-	    }
-	}
-	for (s_it = faces.begin(); s_it != faces.end(); s_it++) {
-	    if (fol.find(*s_it) == fol.end()) {
-		fil.insert(*s_it);
-	    }
-	}
-	key = set_key(faces);
-
-	/* If we haven't seen this particular subset before, add it */
-	if (subbrep_keys.find(key) == subbrep_keys.end()) {
-	    subbrep_keys.insert(key);
-	    struct subbrep_object_data *new_obj = NULL;
-	    BU_GET(new_obj, struct subbrep_object_data);
-	    subbrep_object_init(new_obj, brep);
-	    new_obj->obj_cnt = &obj_cnt;
-	    obj_cnt++;
-	    if (obj_cnt > CSG_BREP_MAX_OBJS) {
-		if (msgs) bu_vls_printf(msgs, "%*sError - brep converted to more than %d implicits - not currently a good CSG candidate\n", L1_OFFSET, " ", CSG_BREP_MAX_OBJS, obj_cnt);
-		goto bail;
-	    }
-	    bu_vls_sprintf(new_obj->key, "%s", key.c_str());
-	    bu_vls_sprintf(new_obj->name_root, "%d", obj_cnt);
-	    set_to_array(&(new_obj->faces), &(new_obj->faces_cnt), &faces);
-	    set_to_array(&(new_obj->loops), &(new_obj->loops_cnt), &loops);
-	    set_to_array(&(new_obj->edges), &(new_obj->edges_cnt), &edges);
-	    set_to_array(&(new_obj->fol), &(new_obj->fol_cnt), &fol);
-	    set_to_array(&(new_obj->fil), &(new_obj->fil_cnt), &fil);
-	    // Here and only here, we are isolating topological "islands"
-	    // Below this level, everything will be connected in some fashion
-	    // by the edge network.
-	    new_obj->is_island = 1;
-	    new_obj->parent = NULL;
-	    surface_t hof = highest_order_face(new_obj);
-	    if (hof >= SURFACE_GENERAL) {
-		if (msgs) bu_vls_printf(msgs, "%*sNote - general surface present: %s\n", L1_OFFSET, " ", bu_vls_addr(new_obj->key));
-		new_obj->type = BREP;
-		(void)subbrep_make_brep(new_obj);
-	    } else {
-		int split = 0;
-		volume_t vtype = subbrep_shape_recognize(msgs, new_obj);
-		switch (vtype) {
-		    case BREP:
-			/* No general surfaces and it's not all planar - have at it */
-			split = subbrep_split(msgs, new_obj);
-			if (obj_cnt > CSG_BREP_MAX_OBJS) {
-			    if (msgs) bu_vls_printf(msgs, "%*sError: brep converted to more than %d implicits - not currently a good CSG candidate\n", L1_OFFSET, " ", CSG_BREP_MAX_OBJS, obj_cnt);
-			    goto bail;
-			}
-			if (!split) {
-			    if (msgs) bu_vls_printf(msgs, "%*sNote - split unsuccessful, making brep: %s\n", L1_OFFSET, " ", bu_vls_addr(new_obj->key));
-			    (void)subbrep_make_brep(new_obj);
-			} else {
-			    // If we did successfully split the brep, do some post-split
-			    // clean-up
-			    new_obj->type = COMB;
-			    if (new_obj->planar_obj) {
-				subbrep_planar_close_obj(new_obj);
-			    }
-#if WRITE_ISLAND_BREPS
-			    (void)subbrep_make_brep(new_obj);
-#endif
-			    successful_splits++;
-			}
-			break;
-		    case PLANAR_VOLUME:
-			/* Planar volumes are exactly representable as BoTs, which will most likely raytrace faster */
-			subbrep_planar_init(new_obj);
-			subbrep_planar_close_obj(new_obj);
-			new_obj->local_brep = new_obj->planar_obj->local_brep;
-			successful_splits++;
-			break;
-		    default:
-#if WRITE_ISLAND_BREPS
-			    (void)subbrep_make_brep(new_obj);
-#endif
-			break;
-		}
-	    }
-
-	    bu_ptbl_ins(subbreps, (long *)new_obj);
+    for (l_it = loops.begin(); l_it != loops.end(); l_it++) {
+	const ON_BrepLoop *loop = &(brep->m_L[*l_it]);
+	const ON_BrepFace *face = loop->Face();
+	bool is_outer = (face->OuterLoop()->m_loop_index == loop->m_loop_index) ? true : false;
+	faces.insert(face->m_face_index);
+	if (is_outer) {
+	    fol.insert(face->m_face_index);
+	} else {
+	    fil.insert(face->m_face_index);
 	}
     }
 
+    // Pack up results
+    set_to_array(&(sb->faces), &(sb->faces_cnt), &faces);
+    set_to_array(&(sb->fol), &(sb->fol_cnt), &fol);
+    set_to_array(&(sb->fil), &(sb->fil_cnt), &fil);
+}
+
+void
+get_edge_set_from_loops(struct subbrep_object_data *sb)
+{
+    const ON_Brep *brep = sb->brep;
+    std::set<int> edges;
+    std::set<int> loops;
+    std::set<int>::iterator l_it;
+
+    // unpack loop info
+    array_to_set(&loops, sb->loops, sb->loops_cnt);
+
+    for (l_it = loops.begin(); l_it != loops.end(); l_it++) {
+	const ON_BrepLoop *loop = &(brep->m_L[*l_it]);
+	for (int ti = 0; ti < loop->m_ti.Count(); ti++) {
+	    const ON_BrepTrim *trim = &(brep->m_T[loop->m_ti[ti]]);
+	    const ON_BrepEdge *edge = &(brep->m_E[trim->m_ei]);
+	    if (trim->m_ei != -1 && edge->TrimCount() > 0) {
+		edges.insert(trim->m_ei);
+	    }
+	}
+    }
+
+    // Pack up results
+    set_to_array(&(sb->edges), &(sb->edges_cnt), &edges);
+}
+
+struct bu_ptbl *
+find_subbreps(struct bu_vls *msgs, const ON_Brep *brep)
+{
+    /* Number of successful conversion operations */
+    int successes = 0;
+    /* Overall object counter */
+    int obj_cnt = 0;
+    /* Container to hold island data structures */
+    struct bu_ptbl *subbreps;
+    BU_GET(subbreps, struct bu_ptbl);
+    bu_ptbl_init(subbreps, 8, "subbrep table");
+
+    // Characterize all face surface types once
+    std::map<int, surface_t> fstypes;
+    surface_t *face_surface_types = (surface_t *)bu_calloc(brep->m_F.Count(), sizeof(surface_t), "surface type array");
+    for (int i = 0; i < brep->m_F.Count(); i++) {
+	face_surface_types[i] = GetSurfaceType(brep->m_F[i].SurfaceOf(), NULL);
+    }
+
+    // Use the loops to identify subbreps
+    std::set<int> brep_loops;
+    /* Build a set of loops.  All loops will be assigned to a subbrep */
+    for (int i = 0; i < brep->m_L.Count(); i++) {
+	brep_loops.insert(i);
+    }
+
+    while (!brep_loops.empty()) {
+	std::set<int> loops;
+	std::queue<int> todo;
+
+	/* For each iteration, we have a new island */
+	struct subbrep_object_data *sb = NULL;
+	BU_GET(sb, struct subbrep_object_data);
+	subbrep_object_init(sb, brep);
+
+	// Seed the queue with the first loop in the set
+	std::set<int>::iterator top = brep_loops.begin();
+	todo.push(*top);
+
+	// Process the queue
+	while(!todo.empty()) {
+	    const ON_BrepLoop *loop = &(brep->m_L[todo.front()]);
+	    loops.insert(todo.front());
+	    brep_loops.erase(todo.front());
+	    todo.pop();
+	    for (int ti = 0; ti < loop->m_ti.Count(); ti++) {
+		const ON_BrepTrim *trim = &(brep->m_T[loop->m_ti[ti]]);
+		const ON_BrepEdge *edge = &(brep->m_E[trim->m_ei]);
+		if (trim->m_ei != -1 && edge->TrimCount() > 0) {
+		    for (int j = 0; j < edge->TrimCount(); j++) {
+			int li = edge->Trim(j)->Loop()->m_loop_index;
+			if (loops.find(li) == loops.end()) {
+			    todo.push(li);
+			    loops.insert(li);
+			    brep_loops.erase(li);
+			}
+		    }
+		}
+	    }
+	}
+
+	// Use the counter to assign a numerical ID to the object:
+	obj_cnt++;
+	sb->obj_id = obj_cnt;
+	bu_vls_sprintf(sb->id, "%d", sb->obj_id);
+	// Use the counter to assign a numerical ID to the object:
+
+	// If our object count is growing beyond reason, bail
+	TOO_MANY_CSG_OBJS(obj_cnt, msgs);
+
+	// Pass the counter pointer through in case sub-objects need
+	// to generate IDs as well.
+	sb->obj_cnt = &obj_cnt;
+
+	// Pass along shared data
+	sb->brep = brep;
+	sb->face_surface_types = (void *)face_surface_types;
+
+	// Get key based on loop indicies
+	std::string key = set_key(loops);
+	bu_vls_sprintf(sb->key, "%s", key.c_str());
+
+	// Assign loop set to island
+	set_to_array(&(sb->loops), &(sb->loops_cnt), &loops);
+
+	// Assemble the set of faces
+	get_face_set_from_loops(sb);
+
+	// Assemble the set of edges
+	get_edge_set_from_loops(sb);
+
+	// Check to see if we have a general surface that precludes conversion
+	surface_t hof = highest_order_face(sb);
+	if (hof >= SURFACE_GENERAL) {
+	    if (msgs) bu_vls_printf(msgs, "Note - general surface present in island %s, representing as B-Rep\n", bu_vls_addr(sb->key));
+	    sb->type = BREP;
+	    (void)subbrep_make_brep(msgs, sb);
+	    continue;
+	}
+
+	// Here and only here, we are isolating topological "islands"
+	// Below this level everything will be connected in some fashion
+	// by the edge network, but at this "top" level the subbrep is an
+	// island and there is no parent object.
+	sb->is_island = 1;
+	sb->parent = NULL;
+
+	// See if the shape is representable by a single CSG implicit
+	sb->type = (int)subbrep_shape_recognize(msgs, sb);
+
+	// Handle the cases where more work is needed.
+	int split = 0;
+	switch(sb->type) {
+	    case PLANAR_VOLUME:
+		subbrep_planar_init(sb);
+		subbrep_planar_close_obj(sb);
+		sb->local_brep = sb->planar_obj->local_brep;
+		successes++;
+		break;
+	    case BREP:
+		/* No general surfaces and it's not all planar - have at it */
+		split = subbrep_split(msgs, sb);
+		TOO_MANY_CSG_OBJS(obj_cnt, msgs);
+		if (!split) {
+		    if (msgs) bu_vls_printf(msgs, "Note - split of %s unsuccessful, making brep\n", bu_vls_addr(sb->key));
+		    sb->type = BREP;
+		    (void)subbrep_make_brep(msgs, sb);
+		} else {
+		    // If we did successfully split the brep, do some post-split clean-up
+		    sb->type = COMB;
+		    if (sb->planar_obj) subbrep_planar_close_obj(sb);
+		    successes++;
+#if WRITE_ISLAND_BREPS
+		    (void)subbrep_make_brep(msgs, sb);
+#endif
+		}
+		break;
+	    default:
+#if WRITE_ISLAND_BREPS
+		(void)subbrep_make_brep(msgs, sb);
+#endif
+		successes++;
+		break;
+	}
+	bu_ptbl_ins(subbreps, (long *)sb);
+    }
+
     /* If we didn't do anything to simplify the shape, we're stuck with the original */
-    if (!successful_splits) {
+    if (!successes) {
 	if (msgs) bu_vls_printf(msgs, "%*sNote - no successful simplifications\n", L1_OFFSET, " ");
 	goto bail;
     }
@@ -219,6 +269,9 @@ bail:
     BU_PUT(subbreps, struct bu_ptbl);
     return NULL;
 }
+
+
+
 
 /* This is the critical point at which we take a pile of shapes and actually reconstruct a
  * valid boolean tree.  The stages are as follows:
@@ -718,7 +771,7 @@ csg_abort:
 }
 
 int
-subbrep_make_brep(struct subbrep_object_data *data)
+subbrep_make_brep(struct bu_vls *UNUSED(msgs), struct subbrep_object_data *data)
 {
     if (data->local_brep) return 0;
     data->local_brep = ON_Brep::New();

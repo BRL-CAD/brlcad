@@ -156,14 +156,11 @@ highest_order_face(struct subbrep_object_data *data)
     int cone = 0;
     int torus = 0;
     int general = 0;
+    surface_t *fstypes = (surface_t *)data->face_surface_types;
     surface_t hofo = SURFACE_PLANE;
-    std::set<int> faces;
-    std::set<int>::iterator f_it;
-    array_to_set(&faces, data->faces, data->faces_cnt);
-    for (f_it = faces.begin(); f_it != faces.end(); f_it++) {
-	int ind = *f_it;
-	ON_Surface *s = data->brep->m_F[ind].SurfaceOf()->Duplicate();
-	int surface_type = (int)GetSurfaceType(s, NULL);
+    for (int i = 0; i < data->faces_cnt; i++) {
+	int ind = data->faces[i];
+	int surface_type = (int)fstypes[ind];
 	switch (surface_type) {
 	    case SURFACE_PLANE:
 		planar++;
@@ -334,7 +331,7 @@ subbrep_object_init(struct subbrep_object_data *obj, const ON_Brep *brep)
 {
     if (!obj) return;
     BU_GET(obj->key, struct bu_vls);
-    BU_GET(obj->name_root, struct bu_vls);
+    BU_GET(obj->id, struct bu_vls);
     BU_GET(obj->children, struct bu_ptbl);
     BU_GET(obj->subtraction_candidates, struct bu_ptbl);
     BU_GET(obj->params, struct csg_object_params);
@@ -343,7 +340,7 @@ subbrep_object_init(struct subbrep_object_data *obj, const ON_Brep *brep)
     obj->params->bool_op = '\0';
     obj->planar_obj = NULL;
     bu_vls_init(obj->key);
-    bu_vls_init(obj->name_root);
+    bu_vls_init(obj->id);
     bu_vls_init(obj->obj_name);
     bu_ptbl_init(obj->children, 8, "children table");
     bu_ptbl_init(obj->subtraction_candidates, 8, "children table");
@@ -376,9 +373,9 @@ subbrep_object_free(struct subbrep_object_data *obj)
 	bu_vls_free(obj->key);
 	BU_PUT(obj->key, struct bu_vls);
     }
-    if (obj->name_root) {
-	bu_vls_free(obj->name_root);
-	BU_PUT(obj->name_root, struct bu_vls);
+    if (obj->id) {
+	bu_vls_free(obj->id);
+	BU_PUT(obj->id, struct bu_vls);
     }
     if (obj->children) {
 	for (unsigned int i = 0; i < BU_PTBL_LEN(obj->children); i++){

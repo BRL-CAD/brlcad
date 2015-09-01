@@ -615,7 +615,7 @@ cylinder_csg(struct bu_vls *msgs, struct subbrep_object_data *data, fastf_t cyl_
 
 	    data->obj_cnt = data->parent->obj_cnt;
 	    (*data->obj_cnt)++;
-	    bu_vls_sprintf(data->name_root, "%s_%d_cyl", bu_vls_addr(data->parent->name_root), *(data->obj_cnt));
+	    bu_vls_sprintf(data->id, "%s_%d_cyl", bu_vls_addr(data->parent->id), *(data->obj_cnt));
 
 	    // If there are faces in the planar volume data matching a planar
 	    // face associated with this cylinder, remove them - a full cylinder
@@ -631,7 +631,7 @@ cylinder_csg(struct bu_vls *msgs, struct subbrep_object_data *data, fastf_t cyl_
 
 	    data->obj_cnt = data->parent->obj_cnt;
 	    (*data->obj_cnt)++;
-	    bu_vls_sprintf(data->name_root, "%s_%d_comb", bu_vls_addr(data->parent->name_root), *(data->obj_cnt));
+	    bu_vls_sprintf(data->id, "%s_%d_comb", bu_vls_addr(data->parent->id), *(data->obj_cnt));
 
 	    struct subbrep_object_data *cyl_obj;
 	    BU_GET(cyl_obj, struct subbrep_object_data);
@@ -640,7 +640,7 @@ cylinder_csg(struct bu_vls *msgs, struct subbrep_object_data *data, fastf_t cyl_
 	    bu_vls_sprintf(cyl_obj->key, "%s", key.c_str());
 	    cyl_obj->obj_cnt = data->parent->obj_cnt;
 	    (*cyl_obj->obj_cnt)++;
-	    bu_vls_sprintf(cyl_obj->name_root, "%s_%d_cyl", bu_vls_addr(data->parent->name_root), *(cyl_obj->obj_cnt));
+	    bu_vls_sprintf(cyl_obj->id, "%s_%d_cyl", bu_vls_addr(data->parent->id), *(cyl_obj->obj_cnt));
 	    cyl_obj->type = CYLINDER;
 
 	    // cylinder - positive object in this sub-comb
@@ -681,7 +681,7 @@ cylinder_csg(struct bu_vls *msgs, struct subbrep_object_data *data, fastf_t cyl_
 	    bu_vls_sprintf(arb_obj->key, "%s_arb8", key.c_str());
 	    arb_obj->obj_cnt = data->parent->obj_cnt;
 	    (*arb_obj->obj_cnt)++;
-	    bu_vls_sprintf(arb_obj->name_root, "%s_%d_arb8", bu_vls_addr(data->parent->name_root), *(arb_obj->obj_cnt));
+	    bu_vls_sprintf(arb_obj->id, "%s_%d_arb8", bu_vls_addr(data->parent->id), *(arb_obj->obj_cnt));
 	    arb_obj->type = ARB8;
 
 
@@ -863,7 +863,7 @@ cylinder_csg(struct bu_vls *msgs, struct subbrep_object_data *data, fastf_t cyl_
 		data->type = COMB;
 		data->obj_cnt = data->parent->obj_cnt;
 		(*data->obj_cnt)++;
-		bu_vls_sprintf(data->name_root, "%s_%d_comb", bu_vls_addr(data->parent->name_root), *(data->obj_cnt));
+		bu_vls_sprintf(data->id, "%s_%d_comb", bu_vls_addr(data->parent->id), *(data->obj_cnt));
 
 
 		if (msgs) bu_vls_printf(msgs, "%*sTODO: Minus one or more end-cap arbs\n", L3_OFFSET, " ");
@@ -876,7 +876,7 @@ cylinder_csg(struct bu_vls *msgs, struct subbrep_object_data *data, fastf_t cyl_
 
 		data->obj_cnt = data->parent->obj_cnt;
 		(*data->obj_cnt)++;
-		bu_vls_sprintf(data->name_root, "%s_%d_comb", bu_vls_addr(data->parent->name_root), *(data->obj_cnt));
+		bu_vls_sprintf(data->id, "%s_%d_comb", bu_vls_addr(data->parent->id), *(data->obj_cnt));
 
 
 
@@ -922,7 +922,7 @@ cylinder_csg(struct bu_vls *msgs, struct subbrep_object_data *data, fastf_t cyl_
 		data->type = COMB;
 		data->obj_cnt = data->parent->obj_cnt;
 		(*data->obj_cnt)++;
-		bu_vls_sprintf(data->name_root, "%s_%d_comb", bu_vls_addr(data->parent->name_root), *(data->obj_cnt));
+		bu_vls_sprintf(data->id, "%s_%d_comb", bu_vls_addr(data->parent->id), *(data->obj_cnt));
 
 
 		// First order of business - find the intersection between the axis and the capping
@@ -943,7 +943,7 @@ cylinder_csg(struct bu_vls *msgs, struct subbrep_object_data *data, fastf_t cyl_
 		bu_vls_sprintf(cyl_obj->key, "%s", key.c_str());
 		cyl_obj->obj_cnt = data->parent->obj_cnt;
 		(*cyl_obj->obj_cnt)++;
-		bu_vls_sprintf(cyl_obj->name_root, "%s_%d_cyl", bu_vls_addr(data->parent->name_root), *(cyl_obj->obj_cnt));
+		bu_vls_sprintf(cyl_obj->id, "%s_%d_cyl", bu_vls_addr(data->parent->id), *(cyl_obj->obj_cnt));
 		cyl_obj->type = CYLINDER;
 
 		// Flag the cyl/arb comb according to the negative or positive status of the
@@ -1026,7 +1026,7 @@ cylinder_csg(struct bu_vls *msgs, struct subbrep_object_data *data, fastf_t cyl_
 		    bu_vls_sprintf(arb_obj_1->key, "%s_cap_1", key.c_str());
 		    arb_obj_1->obj_cnt = data->parent->obj_cnt;
 		    (*arb_obj_1->obj_cnt)++;
-		    bu_vls_sprintf(arb_obj_1->name_root, "%s_%d_cap_1", bu_vls_addr(data->parent->name_root), *(arb_obj_1->obj_cnt));
+		    bu_vls_sprintf(arb_obj_1->id, "%s_%d_cap_1", bu_vls_addr(data->parent->id), *(arb_obj_1->obj_cnt));
 		    arb_obj_1->type = ARB6;
 		    arb_obj_1->params->bool_op = '-';
 		    arb_obj_1->params->arb_type = 8;
@@ -1070,7 +1070,7 @@ cylinder_csg(struct bu_vls *msgs, struct subbrep_object_data *data, fastf_t cyl_
 		    bu_vls_sprintf(arb_obj_2->key, "%s_cap_2", key.c_str());
 		    arb_obj_2->obj_cnt = data->parent->obj_cnt;
 		    (*arb_obj_2->obj_cnt)++;
-		    bu_vls_sprintf(arb_obj_2->name_root, "%s_%d_cap_2", bu_vls_addr(data->parent->name_root), *(arb_obj_2->obj_cnt));
+		    bu_vls_sprintf(arb_obj_2->id, "%s_%d_cap_2", bu_vls_addr(data->parent->id), *(arb_obj_2->obj_cnt));
 		    arb_obj_2->type = ARB6;
 		    arb_obj_2->params->bool_op = '-';
 		    arb_obj_2->params->arb_type = 8;
@@ -1090,7 +1090,7 @@ cylinder_csg(struct bu_vls *msgs, struct subbrep_object_data *data, fastf_t cyl_
 		    bu_vls_sprintf(arb_obj_3->key, "%s_back_face", key.c_str());
 		    arb_obj_3->obj_cnt = data->parent->obj_cnt;
 		    (*arb_obj_3->obj_cnt)++;
-		    bu_vls_sprintf(arb_obj_3->name_root, "%s_%d_back_face", bu_vls_addr(data->parent->name_root), *(arb_obj_3->obj_cnt));
+		    bu_vls_sprintf(arb_obj_3->id, "%s_%d_back_face", bu_vls_addr(data->parent->id), *(arb_obj_3->obj_cnt));
 		    arb_obj_3->type = ARB8;
 
 

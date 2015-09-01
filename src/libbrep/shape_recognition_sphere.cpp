@@ -206,7 +206,7 @@ sphere_csg(struct subbrep_object_data *data, fastf_t sph_tol)
 	data->type = COMB;
 	data->obj_cnt = data->parent->obj_cnt;
 	(*data->obj_cnt)++;
-	bu_vls_sprintf(data->name_root, "%s_%d_comb", bu_vls_addr(data->parent->name_root), *(data->obj_cnt));
+	bu_vls_sprintf(data->id, "%s_%d_comb", bu_vls_addr(data->parent->id), *(data->obj_cnt));
 
 
 	struct subbrep_object_data *sph_obj;
@@ -216,7 +216,7 @@ sphere_csg(struct subbrep_object_data *data, fastf_t sph_tol)
 	bu_vls_sprintf(sph_obj->key, "%s_sph", key.c_str());
 	sph_obj->obj_cnt = data->parent->obj_cnt;
 	(*sph_obj->obj_cnt)++;
-	bu_vls_sprintf(sph_obj->name_root, "%s_%d_sph", bu_vls_addr(data->parent->name_root), *(sph_obj->obj_cnt));
+	bu_vls_sprintf(sph_obj->id, "%s_%d_sph", bu_vls_addr(data->parent->id), *(sph_obj->obj_cnt));
 	sph_obj->type = SPHERE;
 
 	// Flag the sph/arb comb according to the negative or positive status of the
@@ -277,7 +277,7 @@ sphere_csg(struct subbrep_object_data *data, fastf_t sph_tol)
 	    bu_vls_sprintf(arb_obj->key, "%s_arb8_b", key.c_str());
 	    arb_obj->obj_cnt = data->parent->obj_cnt;
 	    (*arb_obj->obj_cnt)++;
-	    bu_vls_sprintf(arb_obj->name_root, "%s_%d_arb8_b", bu_vls_addr(data->parent->name_root), *(arb_obj->obj_cnt));
+	    bu_vls_sprintf(arb_obj->id, "%s_%d_arb8_b", bu_vls_addr(data->parent->id), *(arb_obj->obj_cnt));
 	    arb_obj->type = ARB8;
 
 	    arb_obj->params->bool_op = '-';
@@ -317,7 +317,7 @@ sphere_csg(struct subbrep_object_data *data, fastf_t sph_tol)
 	    bu_vls_sprintf(earb_obj->key, "%s_arb8_%d", key.c_str(), i);
 	    earb_obj->obj_cnt = data->parent->obj_cnt;
 	    (*earb_obj->obj_cnt)++;
-	    bu_vls_sprintf(earb_obj->name_root, "%s_%d_arb8_%d", bu_vls_addr(data->parent->name_root), *(earb_obj->obj_cnt), i);
+	    bu_vls_sprintf(earb_obj->id, "%s_%d_arb8_%d", bu_vls_addr(data->parent->id), *(earb_obj->obj_cnt), i);
 	    earb_obj->type = ARB8;
 
 	    earb_obj->params->bool_op = '-';

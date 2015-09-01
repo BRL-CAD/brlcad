@@ -1416,7 +1416,7 @@ struct subbrep_object_data {
 
     /* subbrep metadata */
     struct bu_vls *key;
-    struct bu_vls *name_root;
+    struct bu_vls *id;
     struct bu_vls *obj_name;
     int obj_id;
     int is_island;
@@ -1424,6 +1424,7 @@ struct subbrep_object_data {
     int bbox_set;
 
     /* Working information - should probably be in private struct */
+    void *face_surface_types;
     int *obj_cnt;
     int *faces;
     int *loops;

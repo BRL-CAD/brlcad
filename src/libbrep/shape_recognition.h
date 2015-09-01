@@ -84,7 +84,7 @@ void subbrep_object_init(struct subbrep_object_data *obj, const ON_Brep *brep);
 //void subbrep_object_free(struct subbrep_object_data *obj);
 
 int subbrep_split(struct bu_vls *msgs, struct subbrep_object_data *data);
-int subbrep_make_brep(struct subbrep_object_data *data);
+int subbrep_make_brep(struct bu_vls *msgs, struct subbrep_object_data *data);
 int subbrep_make_planar(struct subbrep_object_data *data);
 
 int subbrep_determine_boolean(struct subbrep_object_data *data);

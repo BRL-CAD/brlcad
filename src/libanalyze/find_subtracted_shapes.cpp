@@ -409,9 +409,9 @@ analyze_find_subtracted(struct bu_ptbl *UNUSED(results), struct rt_wdb *wdbp, co
 	fastf_t *candidate_rays = NULL;
 	struct subbrep_object_data *candidate = (struct subbrep_object_data *)BU_PTBL_GET(candidates, i);
 
-	//if (!BU_STR_EQUAL(bu_vls_addr(candidate->name_root), "209") || !BU_STR_EQUAL(bu_vls_addr(curr_union_data->name_root), "107")) continue;
+	//if (!BU_STR_EQUAL(bu_vls_addr(candidate->id), "209") || !BU_STR_EQUAL(bu_vls_addr(curr_union_data->id), "107")) continue;
 
-	bu_log("\nTesting %s against %s\n", bu_vls_addr(candidate->name_root), bu_vls_addr(curr_union_data->name_root));
+	bu_log("\nTesting %s against %s\n", bu_vls_addr(candidate->id), bu_vls_addr(curr_union_data->id));
 
 
 	// 1. Get the subbrep_bbox.
@@ -431,11 +431,11 @@ analyze_find_subtracted(struct bu_ptbl *UNUSED(results), struct rt_wdb *wdbp, co
 
 	VMOVE(bmin, curr_union_data->bbox->Min());
 	VMOVE(bmax, curr_union_data->bbox->Max());
-	bu_log("in %s.s rpp %f %f %f %f %f %f\n", bu_vls_addr(curr_union_data->name_root), bmin[0], bmax[0], bmin[1], bmax[1], bmin[2], bmax[2]);
+	bu_log("in %s.s rpp %f %f %f %f %f %f\n", bu_vls_addr(curr_union_data->id), bmin[0], bmax[0], bmin[1], bmax[1], bmin[2], bmax[2]);
 
 	VMOVE(bmin, wbbox.Min());
 	VMOVE(bmax, wbbox.Max());
-	bu_log("in %s.s rpp %f %f %f %f %f %f\n", bu_vls_addr(candidate->name_root), bmin[0], bmax[0], bmin[1], bmax[1], bmin[2], bmax[2]);
+	bu_log("in %s.s rpp %f %f %f %f %f %f\n", bu_vls_addr(candidate->id), bmin[0], bmax[0], bmin[1], bmax[1], bmin[2], bmax[2]);
 
 	/* tol will be used when checking solidity - go with a value based on the smallest of the bbox dimensions. */
 	fastf_t x_dist = fabs(bmax[0] - bmin[0]);
@@ -463,11 +463,11 @@ analyze_find_subtracted(struct bu_ptbl *UNUSED(results), struct rt_wdb *wdbp, co
 	bu_log("Original brep:\n");
 	analyze_get_solid_partitions(&o_brep_results, pbrep_rtvars, candidate_rays, ray_cnt, wdbp->dbip, pbrep, &tol, pcpus, 0);
 	struct bu_vls tmp_name = BU_VLS_INIT_ZERO;
-	bu_vls_sprintf(&tmp_name, "%s-%s_%s.pl", pbrep, bu_vls_addr(curr_union_data->name_root), bu_vls_addr(candidate->name_root));
+	bu_vls_sprintf(&tmp_name, "%s-%s_%s.pl", pbrep, bu_vls_addr(curr_union_data->id), bu_vls_addr(candidate->id));
 	plot_min_partitions(&o_brep_results, bu_vls_addr(&tmp_name));
 	bu_log("Control comb: %s\n", curr_comb);
 	analyze_get_solid_partitions(&curr_comb_results, ccomb_vars, candidate_rays, ray_cnt, wdbp->dbip, curr_comb, &tol, pcpus, 0);
-	bu_vls_sprintf(&tmp_name, "%s-%s_%s-ccomb.pl", pbrep, bu_vls_addr(curr_union_data->name_root), bu_vls_addr(candidate->name_root));
+	bu_vls_sprintf(&tmp_name, "%s-%s_%s-ccomb.pl", pbrep, bu_vls_addr(curr_union_data->id), bu_vls_addr(candidate->id));
 	plot_min_partitions(&curr_comb_results, bu_vls_addr(&tmp_name));
 	//
 	// 3. Compare the two partition/gap sets that result.
@@ -480,7 +480,7 @@ analyze_find_subtracted(struct bu_ptbl *UNUSED(results), struct rt_wdb *wdbp, co
 	missing = fmissing;
 	int missing_gaps = find_missing_gaps(fmissing, &o_brep_results, &curr_comb_results, candidate, ray_cnt);
 	if (missing_gaps > 0 && BU_PTBL_LEN(missing) >= MINIMUM_RAYS_FOR_DECISION) {
-	    bu_vls_sprintf(&tmp_name, "%s-%s_%s-missing.pl", pbrep, bu_vls_addr(curr_union_data->name_root), bu_vls_addr(candidate->name_root));
+	    bu_vls_sprintf(&tmp_name, "%s-%s_%s-missing.pl", pbrep, bu_vls_addr(curr_union_data->id), bu_vls_addr(candidate->id));
 	    plot_min_partitions(missing, bu_vls_addr(&tmp_name));
 	}
 	// 4.  If there are missing gaps in curr_comb, prep candidate and
@@ -502,7 +502,7 @@ analyze_find_subtracted(struct bu_ptbl *UNUSED(results), struct rt_wdb *wdbp, co
 	    depth++;
 	}
 	if (missing_gaps > 0) {
-	    bu_vls_sprintf(&tmp_name, "%s-%s_%s-missing.pl", pbrep, bu_vls_addr(curr_union_data->name_root), bu_vls_addr(candidate->name_root));
+	    bu_vls_sprintf(&tmp_name, "%s-%s_%s-missing.pl", pbrep, bu_vls_addr(curr_union_data->id), bu_vls_addr(candidate->id));
 	    plot_min_partitions(missing, bu_vls_addr(&tmp_name));
 	    bu_log("refined to depth %d\n", depth);
 	}
@@ -564,7 +564,7 @@ analyze_find_subtracted(struct bu_ptbl *UNUSED(results), struct rt_wdb *wdbp, co
 	    bu_free(candidate_vars, "free vars");
 	    bu_free(candidate_resp, "free resp");
 
-	    bu_vls_sprintf(&tmp_name, "%s-%s_%s-candidate.pl", pbrep, bu_vls_addr(curr_union_data->name_root), bu_vls_addr(candidate->name_root));
+	    bu_vls_sprintf(&tmp_name, "%s-%s_%s-candidate.pl", pbrep, bu_vls_addr(curr_union_data->id), bu_vls_addr(candidate->id));
 	    plot_min_partitions(&candidate_results, bu_vls_addr(&tmp_name));
 
 	    // remove the temp comb.
@@ -591,7 +591,7 @@ analyze_find_subtracted(struct bu_ptbl *UNUSED(results), struct rt_wdb *wdbp, co
     // blegh - can't do this through libged, since we're using it - is there a sane librt API to do this somewhere?
     if (BU_PTBL_LEN(&to_subtract) > 0) {
 	struct bu_vls sub_comb_name = BU_VLS_INIT_ZERO;
-	bu_vls_sprintf(&sub_comb_name, "csg_%s-s_%s.c", pbrep, bu_vls_addr(curr_union_data->name_root));
+	bu_vls_sprintf(&sub_comb_name, "csg_%s-s_%s.c", pbrep, bu_vls_addr(curr_union_data->id));
 	struct directory *cdp = db_lookup(wdbp->dbip, bu_vls_addr(&sub_comb_name), LOOKUP_QUIET);
 	if (cdp == RT_DIR_NULL) {
 	    bu_log("error looking up subtraction object %s\n", bu_vls_addr(&sub_comb_name));
