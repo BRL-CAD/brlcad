@@ -178,7 +178,7 @@ dozoom(int which_eye)
 
 	/* Second, draw transparent stuff */
 
-	ndrawn = dm_draw_display_list(dmp, gedp->ged_gdp->gd_headDisplay, 1.0 - SMALL_FASTF, inv_viewsize,
+	ndrawn = dm_draw_display_list(dmp, gedp->ged_gdp->gd_headDisplay, nextafter(1.0, 0.0), inv_viewsize,
 	       	r, g, b, mged_variables->mv_linewidth, mged_variables->mv_dlist, 0,
 	       	geometry_default_color, 0, mged_variables->mv_dlist);
 
