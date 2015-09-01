@@ -192,21 +192,22 @@ find_subbreps(struct bu_vls *msgs, const ON_Brep *brep)
 	std::string key = set_key(faces);
 	bu_vls_sprintf(sb->key, "%s", key.c_str());
 
-	// Check to see if we have a general surface that precludes conversion
-	surface_t hof = highest_order_face(sb);
-	if (hof >= SURFACE_GENERAL) {
-	    if (msgs) bu_vls_printf(msgs, "Note - general surface present in island %s, representing as B-Rep\n", bu_vls_addr(sb->key));
-	    sb->type = BREP;
-	    (void)subbrep_make_brep(msgs, sb);
-	    continue;
-	}
-
 	// Here and only here, we are isolating topological "islands"
 	// Below this level everything will be connected in some fashion
 	// by the edge network, but at this "top" level the subbrep is an
 	// island and there is no parent object.
 	sb->is_island = 1;
 	sb->parent = NULL;
+
+	// Check to see if we have a general surface that precludes conversion
+	surface_t hof = highest_order_face(sb);
+	if (hof >= SURFACE_GENERAL) {
+	    if (msgs) bu_vls_printf(msgs, "Note - general surface present in island %s, representing as B-Rep\n", bu_vls_addr(sb->key));
+	    sb->type = BREP;
+	    (void)subbrep_make_brep(msgs, sb);
+	    bu_ptbl_ins(subbreps, (long *)sb);
+	    continue;
+	}
 
 	// See if the shape is representable by a single CSG implicit
 	sb->type = (int)subbrep_shape_recognize(msgs, sb);
