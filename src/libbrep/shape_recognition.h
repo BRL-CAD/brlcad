@@ -113,7 +113,7 @@ int sphere_csg(struct subbrep_object_data *data, fastf_t cone_tol);
 
 int torus_csg(struct subbrep_object_data *data, fastf_t cone_tol);
 
-std::string face_set_key(std::set<int> fset);
+std::string set_key(std::set<int> intset);
 surface_t highest_order_face(struct subbrep_object_data *data);
 void set_to_array(int **array, int *array_cnt, std::set<int> *set);
 void array_to_set(std::set<int> *set, int *array, int array_cnt);

@@ -119,7 +119,7 @@ find_subbreps(struct bu_vls *msgs, const ON_Brep *brep)
 		fil.insert(*s_it);
 	    }
 	}
-	key = face_set_key(faces);
+	key = set_key(faces);
 
 	/* If we haven't seen this particular subset before, add it */
 	if (subbrep_keys.find(key) == subbrep_keys.end()) {
@@ -640,7 +640,7 @@ subbrep_split(struct bu_vls *msgs, struct subbrep_object_data *data)
 		}
 	    }
 	}
-	key = face_set_key(faces);
+	key = set_key(faces);
 
 	/* If we haven't seen this particular subset before, add it */
 	if (subbrep_keys.find(key) == subbrep_keys.end()) {

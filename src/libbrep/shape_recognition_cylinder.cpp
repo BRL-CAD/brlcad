@@ -636,7 +636,7 @@ cylinder_csg(struct bu_vls *msgs, struct subbrep_object_data *data, fastf_t cyl_
 	    struct subbrep_object_data *cyl_obj;
 	    BU_GET(cyl_obj, struct subbrep_object_data);
 	    subbrep_object_init(cyl_obj, data->brep);
-	    std::string key = face_set_key(cylindrical_surfaces);
+	    std::string key = set_key(cylindrical_surfaces);
 	    bu_vls_sprintf(cyl_obj->key, "%s", key.c_str());
 	    cyl_obj->obj_cnt = data->parent->obj_cnt;
 	    (*cyl_obj->obj_cnt)++;
@@ -939,7 +939,7 @@ cylinder_csg(struct bu_vls *msgs, struct subbrep_object_data *data, fastf_t cyl_
 		struct subbrep_object_data *cyl_obj;
 		BU_GET(cyl_obj, struct subbrep_object_data);
 		subbrep_object_init(cyl_obj, data->brep);
-		std::string key = face_set_key(cylindrical_surfaces);
+		std::string key = set_key(cylindrical_surfaces);
 		bu_vls_sprintf(cyl_obj->key, "%s", key.c_str());
 		cyl_obj->obj_cnt = data->parent->obj_cnt;
 		(*cyl_obj->obj_cnt)++;

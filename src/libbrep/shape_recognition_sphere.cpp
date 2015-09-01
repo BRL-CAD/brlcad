@@ -212,7 +212,7 @@ sphere_csg(struct subbrep_object_data *data, fastf_t sph_tol)
 	struct subbrep_object_data *sph_obj;
 	BU_GET(sph_obj, struct subbrep_object_data);
 	subbrep_object_init(sph_obj, data->brep);
-	std::string key = face_set_key(spherical_surfaces);
+	std::string key = set_key(spherical_surfaces);
 	bu_vls_sprintf(sph_obj->key, "%s_sph", key.c_str());
 	sph_obj->obj_cnt = data->parent->obj_cnt;
 	(*sph_obj->obj_cnt)++;

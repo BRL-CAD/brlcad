@@ -368,7 +368,7 @@ cone_csg(struct bu_vls *msgs, struct subbrep_object_data *data, fastf_t cone_tol
 	    struct subbrep_object_data *cone_obj;
 	    BU_GET(cone_obj, struct subbrep_object_data);
 	    subbrep_object_init(cone_obj, data->brep);
-	    std::string key = face_set_key(conic_surfaces);
+	    std::string key = set_key(conic_surfaces);
 	    bu_vls_sprintf(cone_obj->key, "%s", key.c_str());
 	    cone_obj->obj_cnt = data->parent->obj_cnt;
 	    (*cone_obj->obj_cnt)++;
