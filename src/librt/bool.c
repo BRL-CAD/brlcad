@@ -1121,8 +1121,8 @@ rt_default_logoverlap(struct application *ap, const struct partition *pp, const 
  * 1 The tables match
  * 0 The tables do not match
  */
-int
-rt_overlap_tables_equal(struct region *const*a, struct region *const*b)
+HIDDEN int
+bool_equal_overlap_tables(struct region *const*a, struct region *const*b)
 {
     int alen=0, blen=0;
     register struct region *const*app;
@@ -1162,8 +1162,8 @@ rt_overlap_tables_equal(struct region *const*a, struct region *const*b)
  * !0 Region is ready for (correct) evaluation.
  *  0 Region is not ready
  */
-int
-rt_tree_test_ready(register const union tree *tp, register const struct bu_bitv *solidbits, register const struct region *regionp, register const struct partition *pp)
+HIDDEN int
+bool_test_tree(register const union tree *tp, register const struct bu_bitv *solidbits, register const struct region *regionp, register const struct partition *pp)
 {
     RT_CK_TREE(tp);
     BU_CK_BITV(solidbits);
@@ -1186,18 +1186,18 @@ rt_tree_test_ready(register const union tree *tp, register const struct bu_bitv 
 	    return 0;
 
 	case OP_NOT:
-	    return !rt_tree_test_ready(tp->tr_b.tb_left, solidbits, regionp, pp);
+	    return !bool_test_tree(tp->tr_b.tb_left, solidbits, regionp, pp);
 
 	case OP_UNION:
 	case OP_INTERSECT:
 	case OP_SUBTRACT:
 	case OP_XOR:
-	    if (!rt_tree_test_ready(tp->tr_b.tb_left, solidbits, regionp, pp))
+	    if (!bool_test_tree(tp->tr_b.tb_left, solidbits, regionp, pp))
 		return 0;
-	    return rt_tree_test_ready(tp->tr_b.tb_right, solidbits, regionp, pp);
+	    return bool_test_tree(tp->tr_b.tb_right, solidbits, regionp, pp);
 
 	default:
-	    bu_bomb("rt_tree_test_ready: bad op\n");
+	    bu_bomb("bool_test_tree: bad op\n");
     }
     return 0;
 }
@@ -1228,7 +1228,7 @@ bool_partition_eligible(register const struct bu_ptbl *regiontable, register con
 	RT_CK_REGION(regp);
 
 	/* Check region prerequisites */
-	if (!rt_tree_test_ready(regp->reg_treetop, solidbits, regp, pp)) {
+	if (!bool_test_tree(regp->reg_treetop, solidbits, regp, pp)) {
 	    return 0;
 	}
     }
@@ -1780,9 +1780,7 @@ rt_boolfinal(struct partition *InputHdp, struct partition *FinalHdp, fastf_t sta
 			   lastpp->pt_outhit->hit_dist,
 			   ap->a_rt_i->rti_tol.dist) &&
 		(ap->a_rt_i->rti_save_overlaps == 0 ||
-		 rt_overlap_tables_equal(
-		     lastpp->pt_overlap_reg,
-		     newpp->pt_overlap_reg))
+		 bool_equal_overlap_tables(lastpp->pt_overlap_reg, newpp->pt_overlap_reg))
 		) {
 		/* same region, merge by extending last final partition */
 		if (RT_G_DEBUG&DEBUG_PARTITION)
@@ -1839,26 +1837,6 @@ out:
 	bu_log("rt_boolfinal() ret=%d, %s\n", ret, reason);
     }
     return ret;
-}
-
-
-double
-rt_reldiff(double a, double b)
-{
-    register fastf_t d;
-    register fastf_t diff;
-
-    /* d = Max(Abs(a), Abs(b)) */
-    d = (a >= 0.0) ? a : -a;
-    if (b >= 0.0) {
-	if (b > d) d = b;
-    } else {
-	if ((-b) > d) d = (-b);
-    }
-    if (ZERO(d))
-	return 0.0;
-    if ((diff = a - b) < 0.0) diff = -diff;
-    return diff / d;
 }
 
 
