@@ -1392,8 +1392,38 @@ struct csg_object_params {
 };
 
 struct subbrep_object_data {
+    /* Context information */
+    const ON_Brep *brep;
+    subbrep_object_data *parent;
+
+    /* Shape representation data */
+    ON_Brep *local_brep;
+    csg_object_params *params;
+    subbrep_object_data *planar_obj;
+    struct bu_ptbl *children;
+    /* Irrespective of the broader context, is the shape
+     * itself negative?  This is not meaningful for general
+     * combs, but individual shapes like cylinders and spheres
+     * (even when they are "trimmed down" by other CSG primitives
+     * are "negative" if their normals point inward.
+     * -1 = negative
+     *  1 = positive
+     *  0 = unknown/unset */
+    int negative_shape;
+    /* For some objects, additional post processing is needed
+     * for a subtract/no-subtract determination */
+    struct bu_ptbl *subtraction_candidates;
+
+    /* subbrep metadata */
     struct bu_vls *key;
     struct bu_vls *name_root;
+    struct bu_vls *obj_name;
+    int obj_id;
+    int is_island;
+    ON_BoundingBox *bbox;
+    int bbox_set;
+
+    /* Working information - should probably be in private struct */
     int *obj_cnt;
     int *faces;
     int *loops;
@@ -1405,33 +1435,9 @@ struct subbrep_object_data {
     int edges_cnt;
     int fol_cnt;
     int fil_cnt;
-
-    const ON_Brep *brep;
-    ON_Brep *local_brep;
-    int type;
-    csg_object_params *params;
-    subbrep_object_data *planar_obj;
     int planar_obj_vert_cnt;
     int *planar_obj_vert_map;
-    subbrep_object_data *parent;
-    struct bu_ptbl *children;
-    int is_island;
-    /* Irrespective of the broader context, is the shape
-     * itself negative?  This is not meaningful for general
-     * combs, but individual shapes like cylinders and spheres
-     * (even when they are "trimmed down" by other CSG primitives
-     * are "negative" if their normals point inward.
-     * -1 = negative
-     *  1 = positive
-     *  0 = unknown/unset */
-    int negative_shape;
-    ON_BoundingBox *bbox;
-    int bbox_set;
-    int obj_id;
-    /* For some objects, additional post processing is needed
-     * for a subtract/no-subtract determination */
-    struct bu_vls *obj_name;
-    struct bu_ptbl *subtraction_candidates;
+    int type;
 };
 
 extern BREP_EXPORT void subbrep_bbox(struct subbrep_object_data *obj);
