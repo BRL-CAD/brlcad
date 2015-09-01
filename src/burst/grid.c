@@ -55,6 +55,9 @@ static fastf_t cantdelta[3];	/* delta ray specified by yaw and pitch */
 
 static struct application ag;	/* global application structure (zeroed out) */
 
+/* unpublished handler from librt/bool.c */
+RT_EXPORT extern int rt_defoverlap(register struct application *ap, register struct partition *pp, struct region *reg1, struct region *reg2, struct partition *pheadp);
+
 /* functions local to this module */
 static int doBursts();
 static int burstPoint(struct application *, fastf_t *, fastf_t *);
@@ -272,8 +275,6 @@ f_BurstHit(struct application *ap, struct partition *pt_headp, struct seg *UNUSE
 
   Do not report diagnostics about individual overlaps, but keep count
   of significant ones (at least as thick as OVERLAP_TOL).
-  Some of this code is from librt/bool.c:rt_defoverlap() for
-  consistency of which region is picked.
 
   Returns -
   0	to eliminate partition with overlap entirely
@@ -282,28 +283,14 @@ f_BurstHit(struct application *ap, struct partition *pt_headp, struct seg *UNUSE
 */
 /*ARGSUSED*/
 static int
-f_HushOverlap(struct application *UNUSED(ap), struct partition *pp, struct region *reg1, struct region *reg2, struct partition *pheadp)
+f_HushOverlap(struct application *ap, struct partition *pp, struct region *reg1, struct region *reg2, struct partition *pheadp)
 {
     fastf_t depth;
     depth = pp->pt_outhit->hit_dist - pp->pt_inhit->hit_dist;
     if (depth >= OVERLAP_TOL)
 	noverlaps++;
 
-    /* Apply heuristics as to which region should claim partition. */
-    if (reg1->reg_aircode != 0)
-	/* reg1 was air, replace with reg2 */
-	return 2;
-    if (pp->pt_back != pheadp) {
-	/* Repeat a prev region, if that is a choice */
-	if (pp->pt_back->pt_regionp == reg1)
-	    return 1;
-	if (pp->pt_back->pt_regionp == reg2)
-	    return 2;
-    }
-    /* To provide some consistency from ray to ray, use lowest bit # */
-    if (reg1->reg_bit < reg2->reg_bit)
-	return 1;
-    return 2;
+    return rt_defoverlap(ap, pp, reg1, reg2, pheadp);
 }
 
 
