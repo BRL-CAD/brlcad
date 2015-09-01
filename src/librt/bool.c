@@ -1237,7 +1237,7 @@ bool_partition_eligible(register const struct bu_ptbl *regiontable, register con
 
 
 void
-rt_grow_boolstack(register struct resource *resp)
+rt_bool_growstack(register struct resource *resp)
 {
     if (resp->re_boolstack == (union tree **)0 || resp->re_boolslen <= 0) {
 	resp->re_boolslen = 128;	/* default len */
@@ -1283,7 +1283,7 @@ bool_eval(register union tree *treep, struct partition *partp, struct region **t
     else
 	trueregp[0] = trueregp[1] = REGION_NULL;
     while ((sp = resp->re_boolstack) == (union tree **)0)
-	rt_grow_boolstack(resp);
+	rt_bool_growstack(resp);
     stackend = &(resp->re_boolstack[resp->re_boolslen]);
     *sp++ = TREE_NULL;
 stack:
@@ -1311,7 +1311,7 @@ stack:
 	    *sp++ = treep;
 	    if (sp >= stackend) {
 		register int off = sp - resp->re_boolstack;
-		rt_grow_boolstack(resp);
+		rt_bool_growstack(resp);
 		sp = &(resp->re_boolstack[off]);
 		stackend = &(resp->re_boolstack[resp->re_boolslen]);
 	    }
