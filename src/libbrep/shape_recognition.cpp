@@ -177,10 +177,6 @@ find_subbreps(struct bu_vls *msgs, const ON_Brep *brep)
 	sb->brep = brep;
 	sb->face_surface_types = (void *)face_surface_types;
 
-	// Get key based on loop indicies
-	std::string key = set_key(loops);
-	bu_vls_sprintf(sb->key, "%s", key.c_str());
-
 	// Assign loop set to island
 	set_to_array(&(sb->loops), &(sb->loops_cnt), &loops);
 
@@ -189,6 +185,12 @@ find_subbreps(struct bu_vls *msgs, const ON_Brep *brep)
 
 	// Assemble the set of edges
 	get_edge_set_from_loops(sb);
+
+	// Get key based on face indicies
+	std::set<int> faces;
+	array_to_set(&faces, sb->faces, sb->faces_cnt);
+	std::string key = set_key(faces);
+	bu_vls_sprintf(sb->key, "%s", key.c_str());
 
 	// Check to see if we have a general surface that precludes conversion
 	surface_t hof = highest_order_face(sb);
