@@ -768,55 +768,6 @@ bool_vol_vol_overlap(struct region **fr1, struct region **fr2, const struct part
     bu_ptbl_free(&sl2);
 }
 
-int
-rt_fdiff(double a, double b)
-{
-    register double diff;
-    register double d;
-    register int ret;
-
-    /* d = Max(Abs(a), Abs(b)) */
-    d = (a >= 0.0) ? a : -a;
-    if (b >= 0.0) {
-	if (b > d) d = b;
-    } else {
-	if ((-b) > d) d = (-b);
-    }
-    if (d <= 1.0e-6) {
-	ret = 0;	/* both nearly zero */
-	goto out;
-    }
-    if (d >= INFINITY) {
-	if (ZERO(a - b)) {
-	    ret = 0;
-	    goto out;
-	}
-	if (a < b) {
-	    ret = -1;
-	    goto out;
-	}
-	ret = 1;
-	goto out;
-    }
-    if ((diff = a - b) < 0.0) diff = -diff;
-    if (diff < 0.001) {
-	ret = 0;	/* absolute difference is small, < 1/1000mm */
-	goto out;
-    }
-    if (diff < 0.000001 * d) {
-	ret = 0;	/* relative difference is small, < 1ppm */
-	goto out;
-    }
-    if (a < b) {
-	ret = -1;
-	goto out;
-    }
-    ret = 1;
-out:
-    if (RT_G_DEBUG&DEBUG_FDIFF) bu_log("rt_fdiff(%.18e, %.18e)=%d\n", a, b, ret);
-    return ret;
-}
-
 
 /**
  * Handle FASTGEN plate/volume overlap.
@@ -851,10 +802,7 @@ bool_plate_vol_overlap(struct region **fr1, struct region **fr2, struct partitio
 	return;
     }
 
-    /* arbitrary tolerance is the dominant absolute tolerance from the
-     * now-deprecated rt_fdiff().  need to test sensitivity before
-     * changing to the distance tolerance.
-     */
+    /* need to test sensitivity before changing to distance tolerance. */
     if (!NEAR_EQUAL(prev->pt_outhit->hit_dist, pp->pt_inhit->hit_dist, 0.001)) {
 	/* There is a gap between previous partition and this one.  So
 	 * both plate and vol start at same place, d=0, plate wins.
