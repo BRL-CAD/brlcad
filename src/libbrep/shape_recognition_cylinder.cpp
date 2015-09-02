@@ -181,7 +181,7 @@ categorize_arc_edges(struct bu_vls *msgs, ON_Circle *set1_c, ON_Circle *set2_c,
 
 
 int
-subbrep_is_cylinder(struct bu_vls *msgs, struct subbrep_object_data *data, fastf_t cyl_tol)
+subbrep_is_cylinder(struct bu_vls *UNUSED(msgs), struct subbrep_object_data *data, fastf_t cyl_tol)
 {
     std::set<int>::iterator f_it;
     std::set<int> planar_surfaces;
@@ -219,6 +219,7 @@ subbrep_is_cylinder(struct bu_vls *msgs, struct subbrep_object_data *data, fastf
 	delete fcs;
 	if (f_cylinder.circle.Center().DistanceTo(cylinder.circle.Center()) > BREP_CYLINDRICAL_TOL) return 0;
     }
+
     // Third, see if all planes are coplanar with two and only two planes.
     ON_Plane p1, p2;
     int p2_set = 0;
@@ -235,8 +236,6 @@ subbrep_is_cylinder(struct bu_vls *msgs, struct subbrep_object_data *data, fastf
 
     // Fourth, check that the two planes are parallel to each other.
     if (p1.Normal().IsParallelTo(p2.Normal(), cyl_tol) == 0) {
-        //std::cout << "p1 Normal: " << p1.Normal().x << "," << p1.Normal().y << "," << p1.Normal().z << "\n";
-        //std::cout << "p2 Normal: " << p2.Normal().x << "," << p2.Normal().y << "," << p2.Normal().z << "\n";
         return 0;
     }
 
@@ -248,69 +247,16 @@ subbrep_is_cylinder(struct bu_vls *msgs, struct subbrep_object_data *data, fastf
 	return 0;
     }
 
-    // Sixth, remove from the active edge set all linear edges that have both faces
-    // present in the subbrep data set.  For a whole cylinder, the circular edges
-    // govern.
-    std::set<int> active_edges;
-    std::set<int>::iterator e_it;
-    std::set<int> faces;
-    array_to_set(&active_edges, data->edges, data->edges_cnt);
-    array_to_set(&faces , data->faces, data->faces_cnt);
-    for (e_it = active_edges.begin(); e_it != active_edges.end(); e_it++) {
-	std::set<int> faces_found;
-	const ON_BrepEdge *edge = &(data->brep->m_E[*e_it]);
-	ON_Curve *ec = edge->EdgeCurveOf()->Duplicate();
-	if (ec->IsLinear()) {
-	    for (int i = 0; i < edge->TrimCount(); i++) {
-		const ON_BrepTrim *trim = edge->Trim(i);
-		int f_ind = trim->Face()->m_face_index;
-		if (faces.find(f_ind) != faces.end()) faces_found.insert(f_ind);
-	    }
-	    if (faces_found.size() == 2) {
-		active_edges.erase(*e_it);
-	    }
-	}
-	delete ec;
-    }
-
-/* This test is a problem with faces using one cylindrical surface to describe
- * the entirity of the cylinder - need to rethink */
-#if 0
-    // Check for any remaining linear segments.  For partial rcc
-    // primitives (e.g. a single surface that defines part of a cylinder but
-    // has no mating faces to complete the shape) those are expected, but for a
-    // true cylinder the linear segments should all wash out in the degenerate
-    // pass.  In principle this may not be necessary, since any such surfaces
-    // shouldn't show up isolated in a proper brep...
-    for (e_it = active_edges.begin(); e_it != active_edges.end(); e_it++) {
-        const ON_BrepEdge *edge = &(data->brep->m_E[*e_it]);
-	ON_Curve *ec = edge->EdgeCurveOf()->Duplicate();
-        if (ec->IsLinear()) {
-	    delete ec;
-	    return 0;
-	}
-	delete ec;
-    }
-#endif
-
-    // Seventh, sort the curved edges into one of two circles.  Again, in more
-    // general cases we might have other curves but a true cylinder should have
-    // all of its arcs on these two circles.  We don't need to check for closed
-    // loops because we are assuming that in the input Brep; any curve except
-    // arc curves that survived the degeneracy test has already resulted in an
-    // earlier rejection.
-    ON_Circle set1_c, set2_c;
-    if (!categorize_arc_edges(msgs, &set1_c, &set2_c, data, &active_edges, cyl_tol)) {
-	return 0;
-    }
-
-    // TODO - should probably average the centers of the arc set arcs to get better
-    // values for the cylinder.
-
+    // Populate the primitive data
     data->type = CYLINDER;
+    double height[2];
+    height[0] = (NEAR_ZERO(cylinder.height[0], VUNITIZE_TOL)) ? -1000 : 2*cylinder.height[0];
+    height[1] = (NEAR_ZERO(cylinder.height[1], VUNITIZE_TOL)) ? 1000 : 2*cylinder.height[1];
+    ON_Circle c = cylinder.circle;
+    ON_Line l(c.plane.origin + height[0]*c.plane.zaxis, c.plane.origin + height[1]*c.plane.zaxis);
 
-    ON_3dPoint center_bottom = set1_c.Center();
-    ON_3dPoint center_top = set2_c.Center();
+    ON_3dPoint center_bottom = ON_LinePlaneIntersect(l, p1);
+    ON_3dPoint center_top = ON_LinePlaneIntersect(l, p2);
 
     // Flag the cylinder according to the negative or positive status of the
     // cylinder surface.  Whether it is actually subtracted from the
@@ -334,13 +280,13 @@ subbrep_is_cylinder(struct bu_vls *msgs, struct subbrep_object_data *data, fastf
     ON_3dVector hvect(center_top - center_bottom);
 
     data->params->bool_op = (data->negative_shape == -1) ? '-' : 'u';
-    data->params->origin[0] = set1_c.Center().x;
-    data->params->origin[1] = set1_c.Center().y;
-    data->params->origin[2] = set1_c.Center().z;
+    data->params->origin[0] = center_bottom.x;
+    data->params->origin[1] = center_bottom.y;
+    data->params->origin[2] = center_bottom.z;
     data->params->hv[0] = hvect.x;
     data->params->hv[1] = hvect.y;
     data->params->hv[2] = hvect.z;
-    data->params->radius = set1_c.Radius();
+    data->params->radius = cylinder.circle.Radius();
 
     return 1;
 }
