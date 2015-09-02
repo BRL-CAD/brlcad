@@ -235,6 +235,7 @@ subbrep_is_cylinder(struct bu_vls *UNUSED(msgs), struct subbrep_object_data *dat
     }
 
     // Fourth, check that the two planes are parallel to each other.
+    // TODO - doesn't the next test make this one unnecessary?
     if (p1.Normal().IsParallelTo(p2.Normal(), cyl_tol) == 0) {
         return 0;
     }
