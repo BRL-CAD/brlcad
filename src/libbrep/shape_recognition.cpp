@@ -781,15 +781,10 @@ subbrep_make_brep(struct bu_vls *UNUSED(msgs), struct subbrep_object_data *data)
     data->local_brep = ON_Brep::New();
     const ON_Brep *brep = data->brep;
     ON_Brep *nbrep = data->local_brep;
-    // For each edge in data, find the corresponding loop in data and construct
-    // a new face in the brep with the surface from the original face and the
-    // loop in data as the new outer loop.  Trim down the surface for the new
-    // role.  Add the corresponding 3D edges and sync things up.
 
-    // Each edge will map to two faces in the original Brep.  We only want the
-    // subset of data that is part of this particular subobject - to do that,
-    // we need to map elements from their indices in the old Brep to their
-    // locations in the new.
+    // We only want the subset of data that is part of this particular
+    // subobject - to do that, we need to map elements from their indices in
+    // the old Brep to their locations in the new.
     std::map<int, int> face_map;
     std::map<int, int> surface_map;
     std::map<int, int> edge_map;
@@ -802,7 +797,8 @@ subbrep_make_brep(struct bu_vls *UNUSED(msgs), struct subbrep_object_data *data)
     array_to_set(&faces, data->faces, data->faces_cnt);
     array_to_set(&fil, data->fil, data->fil_cnt);
 
-    // Use the set of loops to collect loops, trims, vertices, edges, faces, 2D and 3D curves
+    // Use the set of loops to collect loops, trims, vertices, edges, faces, 2D
+    // and 3D curves
     for (int i = 0; i < data->loops_cnt; i++) {
 	const ON_BrepLoop *loop = &(brep->m_L[data->loops[i]]);
 	const ON_BrepFace *face = loop->Face();
