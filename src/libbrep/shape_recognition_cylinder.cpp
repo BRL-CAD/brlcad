@@ -234,13 +234,7 @@ subbrep_is_cylinder(struct bu_vls *UNUSED(msgs), struct subbrep_object_data *dat
         if (f_p != p1 && f_p != p2) return 0;
     }
 
-    // Fourth, check that the two planes are parallel to each other.
-    // TODO - doesn't the next test make this one unnecessary?
-    if (p1.Normal().IsParallelTo(p2.Normal(), cyl_tol) == 0) {
-        return 0;
-    }
-
-    // Fifth, check that the two planes are perpendicular to the cylinder axis.
+    // Fourth, check that the two planes are perpendicular to the cylinder axis.
     if (p1.Normal().IsParallelTo(cylinder.Axis(), VUNITIZE_TOL) == 0) {
 	return 0;
     }
