@@ -30,8 +30,24 @@
 #  include <sys/time.h>
 #endif
 
+/* this ugly hack overcomes a c89 + -pedantic-errors bug in glibc <2.9
+ * where it raises a warning for a trailing comma when including the
+ * sys/resource.h system header.
+ *
+ * need a better solution that preserves pedantic c89 compilation,
+ * ideally without resorting to a sys/resource.h compilation feature
+ * test (which will vary with build flags).
+ */
+#if !defined(__USE_GNU) && defined(__GLIBC__) && (__GLIBC__ == 2) && (__GLIBC_MINOR__ < 9)
+#  define __USE_GNU 1
+#  define DEFINED_USE_GNU 1
+#endif
 #ifdef HAVE_SYS_RESOURCE_H
 #  include <sys/resource.h>
+#endif
+#ifdef DEFINED_USE_GNU
+#  undef __USE_GNU
+#  undef DEFINED_USE_GNU
 #endif
 
 #ifdef linux
@@ -40,7 +56,6 @@
 #    include <sys/wait.h>
 #  endif
 #  include <sys/stat.h>
-#  include <sys/sysinfo.h>
 #endif
 
 #if defined(__FreeBSD__) || defined(__OpenBSD__)
