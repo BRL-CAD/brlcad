@@ -1,6 +1,5 @@
 set(distcheck_files
-  brep_csg_1.g
-  brep_csg_2.g
+  nurbs_csg.g
   )
 
 CMAKEFILES(${distcheck_files})
