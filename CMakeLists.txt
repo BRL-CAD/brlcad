@@ -2130,20 +2130,28 @@ if("${HAVE_PROGRAM_INVOCATION_NAME}" MATCHES "^${HAVE_PROGRAM_INVOCATION_NAME}$"
   endif(HAVE_PROGRAM_INVOCATION_NAME)
 endif("${HAVE_PROGRAM_INVOCATION_NAME}" MATCHES "^${HAVE_PROGRAM_INVOCATION_NAME}$")
 
-# test for lrint
-set(lrint_test "#include <math.h>\nint main() {return lrint(3.14);}")
-# this second test is mainly a test for BRLCAD_FUNCTION_EXISTS - can go away
-# once behavior of the macro is solid
-set(lrint_test_negative "#include <math.h>\nint main() {return lrint(-1);}")
+# test for lrint existence
+set(lrint_test "long int lrint(double); int main() {return lrint(3.14);}")
+# this second test is mainly a test for BRLCAD_FUNCTION_EXISTS - can
+# go away once behavior of the macro is solid
+set(lrint_test_negative "long int lrint(double); int main() {return lrint(-1);}")
 BRLCAD_FUNCTION_EXISTS(lrint HAVE_LRINT
   COMPILE_TEST_SRCS lrint_test lrint_test_negative
   REQUIRED_LIBS ${M_LIBRARY})
-if(NOT HAVE_LRINT AND "${HAVE_LRINT_WORKING_MACRO}" MATCHES "^${HAVE_LRINT_WORKING_MACRO}$")
-    check_c_source_compiles("#include \"${CMAKE_CURRENT_SOURCE_DIR}/misc/CMake/test_srcs/lrint_macro.h\"\n#include <math.h>\nint main() {return lrint(3.14);}" HAVE_WORKING_LRINT_MACRO)
+if(NOT HAVE_LRINT AND "${HAVE_WORKING_LRINT_MACRO}" MATCHES "^${HAVE_WORKING_LRINT_MACRO}$")
+    check_c_source_compiles("#include \"${CMAKE_CURRENT_SOURCE_DIR}/misc/CMake/test_srcs/lrint_macro.h\"\nlong int lrint(double); int main() {return lrint(3.14);}" HAVE_WORKING_LRINT_MACRO)
     if(HAVE_WORKING_LRINT_MACRO)
       CONFIG_H_APPEND(BRLCAD "#cmakedefine HAVE_WORKING_LRINT_MACRO 1\n")
     endif(HAVE_WORKING_LRINT_MACRO)
-endif(NOT HAVE_LRINT AND "${HAVE_LRINT_WORKING_MACRO}" MATCHES "^${HAVE_LRINT_WORKING_MACRO}$")
+endif(NOT HAVE_LRINT AND "${HAVE_WORKING_LRINT_MACRO}" MATCHES "^${HAVE_WORKING_LRINT_MACRO}$")
+
+# test for lrint() declaration
+if(HAVE_LRINT AND "${HAVE_DECL_LRINT}" MATCHES "^${HAVE_DECL_LRINT}$")
+  check_c_source_compiles("#include <math.h>\nint main() { (void)lrint(0); return 0; }" HAVE_DECL_LRINT)
+  if(HAVE_DECL_LRINT)
+    CONFIG_H_APPEND(BRLCAD "#cmakedefine HAVE_DECL_LRINT 1\n")
+  endif(HAVE_DECL_LRINT)
+endif(HAVE_LRINT AND "${HAVE_DECL_LRINT}" MATCHES "^${HAVE_DECL_LRINT}$")
 
 # test for tgamma
 set(tgamma_test "#include <math.h>\nint main() {double tga = tgamma(3.14); return 0;}")
