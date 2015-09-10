@@ -84,7 +84,7 @@ plot_min_partitions(struct bu_ptbl *p, const char *cname)
 
 
 HIDDEN int
-find_missing_gaps(struct bu_ptbl *missing, struct bu_ptbl *p_brep, struct bu_ptbl *p_comb, struct subbrep_object_data *candidate, int max_cnt)
+find_missing_gaps(struct bu_ptbl *missing, struct bu_ptbl *p_brep, struct bu_ptbl *p_comb, struct subbrep_island_data *candidate, int max_cnt)
 {
     ON_BoundingBox *bbox = candidate->bbox;
 
@@ -332,7 +332,7 @@ HIDDEN int
 refine_missing_rays(struct bu_ptbl *new_missing, fastf_t **candidate_rays, int *ray_cnt, struct bu_ptbl *old_missing,
        	const char *pbrep, struct rt_gen_worker_vars *pbrep_rtvars,
        	const char *curr_comb, struct rt_gen_worker_vars *ccomb_vars,
-	struct subbrep_object_data *candidate, int pcpus, struct rt_wdb *wdbp, point_t bmin, point_t bmax, int depth, fastf_t ratio, struct bn_tol *tol)
+	struct subbrep_island_data *candidate, int pcpus, struct rt_wdb *wdbp, point_t bmin, point_t bmax, int depth, fastf_t ratio, struct bn_tol *tol)
 {
     if (!new_missing || !candidate_rays || !ray_cnt || (*ray_cnt) == 0 || !old_missing) return 0;
     if (!pbrep || !pbrep_rtvars || !curr_comb || !ccomb_vars || !candidate || !wdbp) return 0;
@@ -373,7 +373,7 @@ analyze_find_subtracted(struct bu_ptbl *UNUSED(results), struct rt_wdb *wdbp, co
     struct rt_i *ccomb_rtip;
     //size_t ncpus = bu_avail_cpus();
     size_t ncpus = (size_t)pcpus;
-    struct subbrep_object_data *curr_union_data = (struct subbrep_object_data *)data;
+    struct subbrep_island_data *curr_union_data = (struct subbrep_island_data *)data;
     //const ON_Brep *brep = curr_union_data->brep;
     size_t i = 0;
     //struct bn_tol tol = {BN_TOL_MAGIC, 0.5, 0.5 * 0.5, 1.0e-6, 1.0 - 1.0e-6 };
@@ -407,7 +407,7 @@ analyze_find_subtracted(struct bu_ptbl *UNUSED(results), struct rt_wdb *wdbp, co
 	int ray_cnt = 0;
 	fastf_t *c_rays = NULL;
 	fastf_t *candidate_rays = NULL;
-	struct subbrep_object_data *candidate = (struct subbrep_object_data *)BU_PTBL_GET(candidates, i);
+	struct subbrep_island_data *candidate = (struct subbrep_island_data *)BU_PTBL_GET(candidates, i);
 
 	//if (!BU_STR_EQUAL(bu_vls_addr(candidate->id), "209") || !BU_STR_EQUAL(bu_vls_addr(curr_union_data->id), "107")) continue;
 
@@ -620,7 +620,7 @@ analyze_find_subtracted(struct bu_ptbl *UNUSED(results), struct rt_wdb *wdbp, co
 		comb->tree = TREE_NULL;
 	    }
 	    for (size_t si = 0; si < BU_PTBL_LEN(&to_subtract); si++) {
-		struct subbrep_object_data *s = (struct subbrep_object_data *)BU_PTBL_GET(&to_subtract, si);
+		struct subbrep_island_data *s = (struct subbrep_island_data *)BU_PTBL_GET(&to_subtract, si);
 		tree_list[curr_count].tl_op = OP_UNION;
 		RT_GET_TREE(tp, &rt_uniresource);
 		tree_list[curr_count].tl_tree = tp;

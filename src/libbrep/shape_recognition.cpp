@@ -43,7 +43,7 @@
 
 
 void
-get_face_set_from_loops(struct subbrep_object_data *sb)
+get_face_set_from_loops(struct subbrep_island_data *sb)
 {
     const ON_Brep *brep = sb->brep;
     std::set<int> faces;
@@ -74,7 +74,7 @@ get_face_set_from_loops(struct subbrep_object_data *sb)
 }
 
 void
-get_edge_set_from_loops(struct subbrep_object_data *sb)
+get_edge_set_from_loops(struct subbrep_island_data *sb)
 {
     const ON_Brep *brep = sb->brep;
     std::set<int> edges;
@@ -130,8 +130,8 @@ find_subbreps(struct bu_vls *msgs, const ON_Brep *brep)
 	std::queue<int> todo;
 
 	/* For each iteration, we have a new island */
-	struct subbrep_object_data *sb = NULL;
-	BU_GET(sb, struct subbrep_object_data);
+	struct subbrep_island_data *sb = NULL;
+	BU_GET(sb, struct subbrep_island_data);
 	subbrep_object_init(sb, brep);
 
 	// Seed the queue with the first loop in the set
@@ -216,9 +216,9 @@ find_subbreps(struct bu_vls *msgs, const ON_Brep *brep)
 	int split = 0;
 	switch(sb->type) {
 	    case PLANAR_VOLUME:
-		subbrep_planar_init(sb);
-		subbrep_planar_close_obj(sb);
-		sb->local_brep = sb->planar_obj->local_brep;
+		//subbrep_planar_init(sb);
+		//subbrep_planar_close_obj(sb);
+		//sb->local_brep = sb->planar_obj->local_brep;
 		successes++;
 		break;
 	    case BREP:
@@ -232,7 +232,7 @@ find_subbreps(struct bu_vls *msgs, const ON_Brep *brep)
 		} else {
 		    // If we did successfully split the brep, do some post-split clean-up
 		    sb->type = COMB;
-		    if (sb->planar_obj) subbrep_planar_close_obj(sb);
+		    //if (sb->planar_obj) subbrep_planar_close_obj(sb);
 		    successes++;
 #if WRITE_ISLAND_BREPS
 		    (void)subbrep_make_brep(msgs, sb);
@@ -260,13 +260,13 @@ find_subbreps(struct bu_vls *msgs, const ON_Brep *brep)
 bail:
     // Free memory
     for (unsigned int i = 0; i < BU_PTBL_LEN(subbreps); i++){
-	struct subbrep_object_data *obj = (struct subbrep_object_data *)BU_PTBL_GET(subbreps, i);
+	struct subbrep_island_data *obj = (struct subbrep_island_data *)BU_PTBL_GET(subbreps, i);
 	for (unsigned int j = 0; j < BU_PTBL_LEN(obj->children); j++){
-	    struct subbrep_object_data *cdata = (struct subbrep_object_data *)BU_PTBL_GET(obj->children,j);
+	    struct subbrep_island_data *cdata = (struct subbrep_island_data *)BU_PTBL_GET(obj->children,j);
 	    subbrep_object_free(cdata);
 	}
 	subbrep_object_free(obj);
-	BU_PUT(obj, struct subbrep_object_data);
+	BU_PUT(obj, struct subbrep_island_data);
     }
     bu_ptbl_free(subbreps);
     BU_PUT(subbreps, struct bu_ptbl);
@@ -326,7 +326,7 @@ find_top_level_hierarchy(struct bu_vls *msgs, struct bu_ptbl *subbreps)
 
     /* Separate out top level unions */
     for (sb_it = subbrep_set.begin(); sb_it != subbrep_set.end(); sb_it++) {
-	struct subbrep_object_data *obj = (struct subbrep_object_data *)*sb_it;
+	struct subbrep_island_data *obj = (struct subbrep_island_data *)*sb_it;
 	//std::cout << bu_vls_addr(obj->key) << " bool: " << obj->params->bool_op << "\n";
 	if (obj->fil_cnt == 0) {
 	    if (!(obj->params->bool_op == '-')) {
@@ -352,14 +352,14 @@ find_top_level_hierarchy(struct bu_vls *msgs, struct bu_ptbl *subbreps)
 	std::set<long *> subbrep_set_b;
 	for (sb_it = subbrep_seed_set.begin(); sb_it != subbrep_seed_set.end(); sb_it++) {
 	    std::set<int> tu_fol;
-	    struct subbrep_object_data *tu = (struct subbrep_object_data *)*sb_it;
+	    struct subbrep_island_data *tu = (struct subbrep_island_data *)*sb_it;
 	    array_to_set(&tu_fol, tu->fol, tu->fol_cnt);
 	    subbrep_set_b = subbrep_set;
 	    for (sb_it2 = subbrep_set.begin(); sb_it2 != subbrep_set.end(); sb_it2++) {
-		struct subbrep_object_data *cobj = (struct subbrep_object_data *)*sb_it2;
+		struct subbrep_island_data *cobj = (struct subbrep_island_data *)*sb_it2;
 		for (int i = 0; i < cobj->fil_cnt; i++) {
 		    if (tu_fol.find(cobj->fil[i]) != tu_fol.end()) {
-			struct subbrep_object_data *up;
+			struct subbrep_island_data *up;
 			//std::cout << "Object " << bu_vls_addr(cobj->key) << " connected to " << bu_vls_addr(tu->key) << "\n";
 			subbrep_seed_set_2.insert(*sb_it2);
 			subbrep_set_b.erase(*sb_it2);
@@ -430,7 +430,7 @@ find_top_level_hierarchy(struct bu_vls *msgs, struct bu_ptbl *subbreps)
 			// children of this subbrep.
 			if (bool_test == -1 && !already_flipped) {
 			    for (unsigned int j = 0; j < BU_PTBL_LEN(cobj->children); j++){
-				struct subbrep_object_data *cdata = (struct subbrep_object_data *)BU_PTBL_GET(cobj->children,j);
+				struct subbrep_island_data *cdata = (struct subbrep_island_data *)BU_PTBL_GET(cobj->children,j);
 				if (cdata && cdata->params) {
 				    cdata->params->bool_op = (cdata->params->bool_op == '-') ? 'u' : '-';
 				} else {
@@ -462,7 +462,7 @@ find_top_level_hierarchy(struct bu_vls *msgs, struct bu_ptbl *subbreps)
     bu_ptbl_init(subbreps_tree, 8, "subbrep tree table");
 
     for (sb_it = unions.begin(); sb_it != unions.end(); sb_it++) {
-	struct subbrep_object_data *pobj = (struct subbrep_object_data *)(*sb_it);
+	struct subbrep_island_data *pobj = (struct subbrep_island_data *)(*sb_it);
 	bu_ptbl_ins(subbreps_tree, (long *)pobj);
 	std::set<long *> topological_subtractions = subbrep_subobjs[(long *)pobj];
 	std::set<long *> local_subtraction_queue = subtractions;
@@ -482,7 +482,7 @@ find_top_level_hierarchy(struct bu_vls *msgs, struct bu_ptbl *subbreps)
 	    if (!pobj->bbox_set) subbrep_bbox(pobj);
 	    // Iterate over the queue
 	    for (sb_it2 = local_subtraction_queue.begin(); sb_it2 != local_subtraction_queue.end(); sb_it2++) {
-		struct subbrep_object_data *sobj = (struct subbrep_object_data *)(*sb_it2);
+		struct subbrep_island_data *sobj = (struct subbrep_island_data *)(*sb_it2);
 		//std::cout << "Checking subbrep " << bu_vls_addr(sobj->key) << "\n";
 		// Construct bounding box for sobj
 		if (!sobj->bbox_set) subbrep_bbox(sobj);
@@ -596,7 +596,7 @@ filter_done:
 }
 
 void
-add_loops_from_face(int f_ind, struct subbrep_object_data *data, std::set<int> *loops, std::queue<int> *local_loops, std::set<int> *processed_loops)
+add_loops_from_face(int f_ind, struct subbrep_island_data *data, std::set<int> *loops, std::queue<int> *local_loops, std::set<int> *processed_loops)
 {
     for (int j = 0; j < data->brep->m_F[f_ind].m_li.Count(); j++) {
 	int loop_in_set = 0;
@@ -619,10 +619,11 @@ add_loops_from_face(int f_ind, struct subbrep_object_data *data, std::set<int> *
  * function will identify such subsets, if possible.  If a subbrep
  * can be successfully decomposed into primitive candidates, the
  * type of the subbrep is set to COMB and the children bu_ptbl is
- * populated with subbrep_object_data sets. */
+ * populated with subbrep_island_data sets. */
 int
-subbrep_split(struct bu_vls *msgs, struct subbrep_object_data *data)
+subbrep_split(struct bu_vls *msgs, struct subbrep_island_data *data)
 {
+    bu_log("splitting\n");
     //if (BU_STR_EQUAL(bu_vls_addr(data->key), "325_326_441_527_528")) {
     //	std::cout << "looking at 325_326_441_527_528\n";
     //}
@@ -701,8 +702,9 @@ subbrep_split(struct bu_vls *msgs, struct subbrep_object_data *data)
 	/* If we haven't seen this particular subset before, add it */
 	if (subbrep_keys.find(key) == subbrep_keys.end()) {
 	    subbrep_keys.insert(key);
-	    struct subbrep_object_data *new_obj;
-	    BU_GET(new_obj, struct subbrep_object_data);
+	    // TODO - change to shoal
+	    struct subbrep_island_data *new_obj;
+	    BU_GET(new_obj, struct subbrep_island_data);
 	    subbrep_object_init(new_obj, data->brep);
 	    bu_vls_sprintf(new_obj->key, "%s", key.c_str());
 	    set_to_array(&(new_obj->faces), &(new_obj->faces_cnt), &faces);
@@ -711,6 +713,8 @@ subbrep_split(struct bu_vls *msgs, struct subbrep_object_data *data)
 	    new_obj->fol_cnt = 0;
 	    new_obj->fil_cnt = 0;
 	    new_obj->parent = data;
+	    new_obj->face_surface_types = data->face_surface_types;
+	    bu_log("here point 1\n");
 
 	    new_obj->type = filters->type;
 	    switch (new_obj->type) {
@@ -721,16 +725,16 @@ subbrep_split(struct bu_vls *msgs, struct subbrep_object_data *data)
 		    }
 		    break;
 		case CONE:
-		    if (!cone_csg(msgs, new_obj, BREP_CONIC_TOL)) {
+		    //if (!cone_csg(msgs, new_obj, BREP_CONIC_TOL)) {
 			if (msgs) bu_vls_printf(msgs, "%*sError - cone csg failure: %s\n", L2_OFFSET, " ", key.c_str());
 			csg_fail++;
-		    }
+		    //}
 		    break;
 		case SPHERE:
-		    if (!sphere_csg(new_obj, BREP_SPHERICAL_TOL)) {
+		    //if (!sphere_csg(new_obj, BREP_SPHERICAL_TOL)) {
 			if (msgs) bu_vls_printf(msgs, "%*sError - sphere csg failure: %s\n", L2_OFFSET, " ", key.c_str());
 			csg_fail++;
-		    }
+		    //}
 		    break;
 		case ELLIPSOID:
 		    if (msgs) bu_vls_printf(msgs, "%*sTODO: process partial ellipsoid\n", L2_OFFSET, " ");
@@ -767,7 +771,7 @@ csg_abort:
      * CSG conversion of this subbrep */
     data->type = BREP;
     for (unsigned int i = 0; i < BU_PTBL_LEN(data->children); i++) {
-	struct subbrep_object_data *cdata = (struct subbrep_object_data *)BU_PTBL_GET(data->children,i);
+	struct subbrep_island_data *cdata = (struct subbrep_island_data *)BU_PTBL_GET(data->children,i);
 	subbrep_object_free(cdata);
     }
     return 0;
@@ -775,7 +779,7 @@ csg_abort:
 
 
 int
-subbrep_make_brep(struct bu_vls *UNUSED(msgs), struct subbrep_object_data *data)
+subbrep_make_brep(struct bu_vls *UNUSED(msgs), struct subbrep_island_data *data)
 {
     if (data->local_brep) return 0;
     data->local_brep = ON_Brep::New();

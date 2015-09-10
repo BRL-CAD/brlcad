@@ -152,7 +152,7 @@ st_done:
 
 
 surface_t
-highest_order_face(struct subbrep_object_data *data)
+highest_order_face(struct subbrep_island_data *data)
 {
     int planar = 0;
     int spherical = 0;
@@ -266,11 +266,11 @@ filter_objs_equal(struct filter_obj *obj1, struct filter_obj *obj2)
 }
 
 volume_t
-subbrep_shape_recognize(struct bu_vls *msgs, struct subbrep_object_data *data)
+subbrep_shape_recognize(struct bu_vls *msgs, struct subbrep_island_data *data)
 {
     if (subbrep_is_planar(msgs, data)) return PLANAR_VOLUME;
     if (subbrep_is_cylinder(msgs, data, BREP_CYLINDRICAL_TOL)) return CYLINDER;
-    if (subbrep_is_cone(msgs, data, BREP_CONIC_TOL)) return CONE;
+    //if (subbrep_is_cone(msgs, data, BREP_CONIC_TOL)) return CONE;
     return BREP;
 }
 
@@ -286,7 +286,7 @@ ON_MinMaxInit(ON_3dPoint *min, ON_3dPoint *max)
 }
 
 void
-subbrep_bbox(struct subbrep_object_data *obj)
+subbrep_bbox(struct subbrep_island_data *obj)
 {
     for (int i = 0; i < obj->fol_cnt; i++) {
 	ON_3dPoint min, max;
@@ -331,7 +331,7 @@ subbrep_bbox(struct subbrep_object_data *obj)
 }
 
 void
-subbrep_object_init(struct subbrep_object_data *obj, const ON_Brep *brep)
+subbrep_object_init(struct subbrep_island_data *obj, const ON_Brep *brep)
 {
     if (!obj) return;
     BU_GET(obj->key, struct bu_vls);
@@ -342,7 +342,7 @@ subbrep_object_init(struct subbrep_object_data *obj, const ON_Brep *brep)
     BU_GET(obj->obj_name, struct bu_vls);
     obj->params->planes = NULL;
     obj->params->bool_op = '\0';
-    obj->planar_obj = NULL;
+    obj->nucleus = NULL;
     bu_vls_init(obj->key);
     bu_vls_init(obj->id);
     bu_vls_init(obj->obj_name);
@@ -361,18 +361,16 @@ subbrep_object_init(struct subbrep_object_data *obj, const ON_Brep *brep)
 }
 
 void
-subbrep_object_free(struct subbrep_object_data *obj)
+subbrep_object_free(struct subbrep_island_data *obj)
 {
     if (!obj) return;
     if (obj->params && obj->params->planes) bu_free(obj->params->planes, "csg planes");
     if (obj->params) BU_PUT(obj->params, struct csg_object_params);
     obj->params = NULL;
-    if (obj->planar_obj && (obj->local_brep == obj->planar_obj->local_brep)) obj->local_brep = NULL;
-    if (obj->planar_obj) {
-	subbrep_object_free(obj->planar_obj);
-	BU_PUT(obj->planar_obj, struct subbrep_object_data);
+    if (obj->nucleus) {
+	BU_PUT(obj->nucleus, struct csg_obj_params);
     }
-    obj->planar_obj = NULL;
+    obj->nucleus = NULL;
     if (obj->key) {
 	bu_vls_free(obj->key);
 	BU_PUT(obj->key, struct bu_vls);
@@ -383,9 +381,9 @@ subbrep_object_free(struct subbrep_object_data *obj)
     }
     if (obj->children) {
 	for (unsigned int i = 0; i < BU_PTBL_LEN(obj->children); i++){
-	    struct subbrep_object_data *cobj = (struct subbrep_object_data *)BU_PTBL_GET(obj->children, i);
+	    struct subbrep_island_data *cobj = (struct subbrep_island_data *)BU_PTBL_GET(obj->children, i);
 	    subbrep_object_free(cobj);
-	    BU_PUT(cobj, struct subbrep_object_data);
+	    BU_PUT(cobj, struct subbrep_island_data);
 	}
 	bu_ptbl_free(obj->children);
 	BU_PUT(obj->children, struct bu_ptbl);
@@ -407,9 +405,8 @@ subbrep_object_free(struct subbrep_object_data *obj)
     obj->fol = NULL;
     if (obj->fil) bu_free(obj->fil, "obj fil");
     obj->fil = NULL;
-    if (obj->planar_obj_vert_map) bu_free(obj->planar_obj_vert_map, "obj fil");
-    obj->planar_obj_vert_map = NULL;
-    if (obj->planar_obj && (obj->local_brep == obj->planar_obj->local_brep)) obj->local_brep = NULL;
+    if (obj->null_verts) bu_free(obj->null_verts, "ignore verts");
+    obj->null_verts = NULL;
     if (obj->parent && (obj->parent->local_brep == obj->local_brep)) obj->parent->local_brep = NULL;
     if (obj->local_brep) delete obj->local_brep;
     obj->local_brep = NULL;
@@ -490,7 +487,7 @@ array_to_map(std::map<int,int> *map, int *array, int array_cnt)
 }
 
 void
-print_subbrep_object(struct subbrep_object_data *data, const char *offset)
+print_subbrep_object(struct subbrep_island_data *data, const char *offset)
 {
     struct bu_vls log = BU_VLS_INIT_ZERO;
     bu_vls_printf(&log, "\n");
@@ -570,7 +567,7 @@ print_subbrep_object(struct subbrep_object_data *data, const char *offset)
  * reporting subdivision necessity when there isn't any unless we
  * follow up with a more rigorous test.  This needs more thought. */
 int
-subbrep_determine_boolean(struct subbrep_object_data *data)
+subbrep_determine_boolean(struct subbrep_island_data *data)
 {
    int pos_cnt = 0;
    int neg_cnt = 0;
@@ -647,7 +644,7 @@ subbrep_determine_boolean(struct subbrep_object_data *data)
  * return -1 if failed, number of corner verts if successful
  */
 int
-subbrep_find_corners(struct subbrep_object_data *data, int **corner_verts_array, ON_Plane *pcyl)
+subbrep_find_corners(struct subbrep_island_data *data, int **corner_verts_array, ON_Plane *pcyl)
 {
     std::set<int> candidate_verts;
     std::set<int> corner_verts;
@@ -743,7 +740,7 @@ subbrep_find_corners(struct subbrep_object_data *data, int **corner_verts_array,
 
 /* Return 1 if determination fails, else return 0 and top_pnts and bottom_pnts */
 int
-subbrep_top_bottom_pnts(struct subbrep_object_data *data, std::set<int> *corner_verts, ON_Plane *top_plane, ON_Plane *bottom_plane, ON_SimpleArray<const ON_BrepVertex *> *top_pnts, ON_SimpleArray<const ON_BrepVertex *> *bottom_pnts)
+subbrep_top_bottom_pnts(struct subbrep_island_data *data, std::set<int> *corner_verts, ON_Plane *top_plane, ON_Plane *bottom_plane, ON_SimpleArray<const ON_BrepVertex *> *top_pnts, ON_SimpleArray<const ON_BrepVertex *> *bottom_pnts)
 {
     double offset = 0.0;
     double pdist = INT_MAX;

@@ -13,7 +13,7 @@
 /* Return -1 if the cone face is pointing in toward the axis,
  * 1 if it is pointing out, and 0 if there is some other problem */
 int
-negative_cone(struct subbrep_object_data *data, int face_index, double cone_tol) {
+negative_cone(struct subbrep_island_data *data, int face_index, double cone_tol) {
     int ret = 0;
     const ON_Surface *surf = data->brep->m_F[face_index].SurfaceOf();
     ON_Cone cone;
@@ -39,7 +39,7 @@ negative_cone(struct subbrep_object_data *data, int face_index, double cone_tol)
 
 
 int
-subbrep_is_cone(struct bu_vls *UNUSED(msgs), struct subbrep_object_data *data, fastf_t cone_tol)
+subbrep_is_cone(struct bu_vls *UNUSED(msgs), struct subbrep_island_data *data, fastf_t cone_tol)
 {
     std::set<int>::iterator f_it;
     std::set<int> planar_surfaces;
@@ -172,7 +172,7 @@ subbrep_is_cone(struct bu_vls *UNUSED(msgs), struct subbrep_object_data *data, f
 }
 
 int
-cone_csg(struct bu_vls *msgs, struct subbrep_object_data *data, fastf_t cone_tol)
+cone_csg(struct bu_vls *msgs, struct subbrep_island_data *data, fastf_t cone_tol)
 {
     std::set<int>::iterator f_it;
     std::set<int> planar_surfaces;
@@ -345,8 +345,8 @@ cone_csg(struct bu_vls *msgs, struct subbrep_object_data *data, fastf_t cone_tol
 	    data->negative_shape = negative_cone(data, *conic_surfaces.begin(), cone_tol);
 	    data->params->bool_op = (data->negative_shape == -1) ? '-' : 'u';
 
-	    struct subbrep_object_data *cone_obj;
-	    BU_GET(cone_obj, struct subbrep_object_data);
+	    struct subbrep_island_data *cone_obj;
+	    BU_GET(cone_obj, struct subbrep_island_data);
 	    subbrep_object_init(cone_obj, data->brep);
 	    std::string key = set_key(conic_surfaces);
 	    bu_vls_sprintf(cone_obj->key, "%s", key.c_str());
@@ -390,8 +390,8 @@ cone_csg(struct bu_vls *msgs, struct subbrep_object_data *data, fastf_t cone_tol
             //                                          2
             //
 
-            struct subbrep_object_data *arb_obj;
-            BU_GET(arb_obj, struct subbrep_object_data);
+            struct subbrep_island_data *arb_obj;
+            BU_GET(arb_obj, struct subbrep_island_data);
             subbrep_object_init(arb_obj, data->brep);
             bu_vls_sprintf(arb_obj->key, "%s_arb8", key.c_str());
 	    arb_obj->obj_cnt = data->parent->obj_cnt;
