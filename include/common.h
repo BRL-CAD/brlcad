@@ -61,7 +61,7 @@
 #  if !defined(__cplusplus) && !defined(HAVE_LRINT) && defined(HAVE_WORKING_LRINT_MACRO)
 #    define lrint(_x) ((long int)(((_x)<0)?(_x)-0.5:(_x)+0.5))
 #    define HAVE_LRINT 1
-#  elif defined(HAVE_LRINT) && !defined(HAVE_DECL_LRINT)
+#  elif !defined(__cplusplus) && defined(HAVE_LRINT) && !defined(HAVE_DECL_LRINT)
 long int lrint(double x);
 #    define HAVE_LRINT 1
 #  endif
