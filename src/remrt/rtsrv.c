@@ -34,7 +34,6 @@
 #endif
 #ifdef HAVE_SYS_IOCTL_H
 #  include <sys/ioctl.h>
-#  include <sys/resource.h>
 #endif
 #ifdef HAVE_SYS_SOCKET_H
 #  include <sys/socket.h>
@@ -42,9 +41,7 @@
 #ifdef HAVE_SYS_TYPES_H
 #  include <sys/types.h>
 #endif
-#ifdef HAVE_SYS_WAIT_H
-#  include <sys/wait.h>
-#endif
+#include "bresource.h"
 #include "bsocket.h"
 
 #ifdef VMIN

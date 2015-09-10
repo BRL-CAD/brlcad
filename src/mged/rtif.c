@@ -36,9 +36,7 @@
 #  include <sys/types.h>
 #endif
 #include <sys/stat.h>
-#ifdef HAVE_SYS_WAIT_H
-#  include <sys/wait.h>
-#endif
+#include "bresource.h"
 
 #include "tcl.h"
 

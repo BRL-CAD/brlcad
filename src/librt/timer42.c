@@ -23,13 +23,8 @@
 #include <stdio.h>
 #include <string.h>
 #include <sys/types.h>
-#include <sys/resource.h>
 
-#ifdef HAVE_SYS_TIME_H
-#  include <sys/time.h>
-#endif
-
-
+#include "bresource.h"
 
 #include "vmath.h"
 #include "raytrace.h"

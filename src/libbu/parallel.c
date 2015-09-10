@@ -30,31 +30,8 @@
 #  include <sys/time.h>
 #endif
 
-/* this ugly hack overcomes a c89 + -pedantic-errors bug in glibc <2.9
- * where it raises a warning for a trailing comma when including the
- * sys/resource.h system header.
- *
- * need a better solution that preserves pedantic c89 compilation,
- * ideally without resorting to a sys/resource.h compilation feature
- * test (which will vary with build flags).
- */
-#if !defined(__USE_GNU) && defined(__GLIBC__) && (__GLIBC__ == 2) && (__GLIBC_MINOR__ < 9)
-#  define __USE_GNU 1
-#  define DEFINED_USE_GNU 1
-#endif
-#ifdef HAVE_SYS_RESOURCE_H
-#  include <sys/resource.h>
-#endif
-#ifdef DEFINED_USE_GNU
-#  undef __USE_GNU
-#  undef DEFINED_USE_GNU
-#endif
-
 #ifdef linux
 #  include <sys/types.h>
-#  ifdef HAVE_SYS_WAIT_H
-#    include <sys/wait.h>
-#  endif
 #  include <sys/stat.h>
 #endif
 
@@ -62,17 +39,11 @@
 #  include <sys/types.h>
 #  include <sys/param.h>
 #  include <sys/sysctl.h>
-#  ifdef HAVE_SYS_WAIT_H
-#    include <sys/wait.h>
-#  endif
 #  include <sys/stat.h>
 #endif
 
 #ifdef __APPLE__
 #  include <sys/types.h>
-#  ifdef HAVE_SYS_WAIT_H
-#    include <sys/wait.h>
-#  endif
 #  include <sys/stat.h>
 #  include <sys/param.h>
 #  include <sys/sysctl.h>
@@ -94,10 +65,6 @@
 #  include <sys/sysmp.h> /* for sysmp() */
 #endif
 
-#ifdef HAVE_SYS_WAIT_H
-#  include <sys/wait.h>
-#endif
-
 #ifdef HAVE_SCHED_H
 #  include <sched.h>
 #else
@@ -105,6 +72,8 @@
 #    include <sys/sched.h>
 #  endif
 #endif
+
+#include "bresource.h"
 
 /*
  * multithreading support for SunOS 5.X / Solaris 2.x
