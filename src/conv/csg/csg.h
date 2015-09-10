@@ -30,8 +30,9 @@ typedef struct {
     struct bu_vls value;
 } token_t;
 
-/* this structure is the dom2dox app_data_t structure with some useless fields
-deleted */
+/* this structure is the dom2dox app_data_t structure with some
+ * useless fields deleted
+ */
 typedef struct {
     token_t *tokenData;
     FILE *outfile;
@@ -53,10 +54,21 @@ void ParseTrace(FILE *fp, char *s);
 #include "csg_scanner.h"
 
 /* utils */
-#define END_EXAMPLE \
-if (appData->example_text) { \
-    bu_vls_strcat(&appData->description, "\n\\endcode\n\n"); \
-    appData->example_text = 0; \
-}
+#define END_EXAMPLE							\
+    if (appData->example_text) {					\
+	bu_vls_strcat(&appData->description, "\n\\endcode\n\n");	\
+	appData->example_text = 0;					\
+    }
+
 
 #endif /* CONV_CSG_CSG_H */
+
+/*
+ * Local Variables:
+ * tab-width: 8
+ * mode: C
+ * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */
