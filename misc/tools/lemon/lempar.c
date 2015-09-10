@@ -307,6 +307,7 @@ static void yy_destructor(
 %%
     default:  break;   /* If no destructor action specified: do nothing */
   }
+  ParseARG_STORE; /* Suppress warning about unused %extra_argument variable */
 }
 
 /*
@@ -635,6 +636,8 @@ static void yy_reduce(
     assert( yyact == YYNSTATE + YYNRULE + 1 );
     yy_accept(yypParser);
   }
+
+  ParseARG_STORE; /* Suppress warning about unused %extra_argument variable */
 }
 
 /*
