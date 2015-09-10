@@ -9,6 +9,7 @@ add_subdirectory(fb)
 
 set(public_hdrs
   bio.h
+  bresource.h
   bsocket.h
   RtServerImpl.h
   bn.h
