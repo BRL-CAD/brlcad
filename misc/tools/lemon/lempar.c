@@ -305,7 +305,10 @@ static void yy_destructor(
     ** inside the C code.
     */
 %%
-    default:  break;   /* If no destructor action specified: do nothing */
+    default:
+      if (!yypminor)
+        return;
+      break;   /* If no destructor action specified: do nothing */
   }
   ParseARG_STORE; /* Suppress warning about unused %extra_argument variable */
 }
@@ -487,9 +490,10 @@ static void yyStackOverflow(yyParser *yypParser, YYMINORTYPE *yypMinor){
 #endif
    while( yypParser->yyidx>=0 ) yy_pop_parser_stack(yypParser);
    /* Here code is inserted which will execute if the parser
-   ** stack every overflows */
+   ** stack ever overflows */
 %%
    ParseARG_STORE; /* Suppress warning about unused %extra_argument var */
+   yypMinor = NULL; /* quellage */
 }
 
 /*
@@ -673,6 +677,8 @@ static void yy_syntax_error(
 #define TOKEN (yyminor.yy0)
 %%
   ParseARG_STORE; /* Suppress warning about unused %extra_argument variable */
+  yymajor = 0; /* quellage */
+  yyminor.yyinit = 0; /* quellage */
 }
 
 /*
