@@ -473,12 +473,8 @@ cylinder_csg(struct bu_vls *msgs, struct subbrep_shoal_data *data, fastf_t cyl_t
     // is determined later.
     data->params->negative = negative_cylinder(brep, *cylindrical_surfaces.begin(), cyl_tol);
 
-    data->params->origin[0] = axis_pts[0].x;
-    data->params->origin[1] = axis_pts[0].y;
-    data->params->origin[2] = axis_pts[0].z;
-    data->params->hv[0] = cyl_axis_prim.x;
-    data->params->hv[1] = cyl_axis_prim.y;
-    data->params->hv[2] = cyl_axis_prim.z;
+    VMOVE(data->params->origin, axis_pts[0]);
+    VMOVE(data->params->hav, cyl_axis_prim);
     data->params->radius = cylinder.circle.Radius();
 
     bu_log("in rcc.s rcc %f %f %f %f %f %f %f \n", axis_pts[0].x, axis_pts[0].y, axis_pts[0].z, cyl_axis_prim.x, cyl_axis_prim.y, cyl_axis_prim.z, cylinder.circle.Radius());
@@ -581,8 +577,8 @@ cylinder_csg(struct bu_vls *msgs, struct subbrep_shoal_data *data, fastf_t cyl_t
 	    ON_Plane p = arbn_planes[i];
 	    double d = p.DistanceTo(ON_3dPoint(0,0,0));
 	    sub_param->planes[i][0] = p.Normal().x;
-	    sub_param->planes[i][1] = p.Normal().x;
-	    sub_param->planes[i][2] = p.Normal().x;
+	    sub_param->planes[i][1] = p.Normal().y;
+	    sub_param->planes[i][2] = p.Normal().z;
 	    sub_param->planes[i][3] = -1 * d;
 	}
 	sub_param->bool_op = '+'; // arbn is intersected with primary primitive

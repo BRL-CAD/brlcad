@@ -73,11 +73,6 @@ subbrep_polygon_tri(struct bu_vls *msgs, struct subbrep_island_data *data, int *
     const ON_Brep *brep = data->brep;
 
 
-    point_t *all_verts = (point_t *)bu_calloc(data->brep->m_V.Count(), sizeof(point_t), "bot verts");
-    for (int vi = 0; vi < data->brep->m_V.Count(); vi++) {
-        VMOVE(all_verts[vi], data->brep->m_V[vi].Point());
-    }
-
 
     // Accumulate faces in a std::vector, since we don't know how many we're going to get
     std::vector<int> all_faces;
@@ -95,7 +90,7 @@ subbrep_polygon_tri(struct bu_vls *msgs, struct subbrep_island_data *data, int *
     std::map<int, int> local_to_verts;
 
     /* Sanity check */
-    if (loop_cnt < 1 || !data || !all_verts || !loops || !ffaces) return 0;
+    if (loop_cnt < 1 || !data || !loops || !ffaces) return 0;
 
     /* Only one loop is easier */
     if (loop_cnt == 1) {
