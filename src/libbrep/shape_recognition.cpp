@@ -195,7 +195,12 @@ find_subbreps(struct bu_vls *msgs, const ON_Brep *brep)
 	// Here and only here, we are isolating topological "islands"
 	// Below this level everything will be connected in some fashion
 	// by the edge network, but at this "top" level the subbrep is an
-	// island and there is no parent object.
+	// island and there is no parent object.  Note that there are
+	// "parents" for most islands when rebuilding the boolean tree -
+	// those relationships are identified based on other criteria.
+	//
+	// Face whose outermost loop in the island face is an inner loop means
+	// the island will be booleaned into one of the toplevel island parents.
 	sb->is_island = 1;
 	sb->parent = NULL;
 
@@ -276,6 +281,231 @@ bail:
 
 
 
+
+int
+connected_loop_set(int **c_loops, const int loop_index, const ON_Brep *brep)
+{
+    int cnt;
+    std::set<int> connected_loops;
+    const ON_BrepLoop *loop = &(brep->m_L[loop_index]);
+    for (int ti = 0; ti < loop->m_ti.Count(); ti++) {
+	const ON_BrepTrim *trim = &(brep->m_T[loop->m_ti[ti]]);
+	const ON_BrepEdge *edge = &(brep->m_E[trim->m_ei]);
+	if (trim->m_ei != -1 && edge) {
+	    for (int j = 0; j < edge->m_ti.Count(); j++) {
+		const ON_BrepTrim *t = &(brep->m_T[edge->m_ti[ti]]);
+		connected_loops.insert(t->Loop()->m_loop_index);
+	    }
+	}
+    }
+    set_to_array(c_loops, &(cnt), &connected_loops);
+    return cnt;
+}
+
+int cyl_validate_face(ON_Cylinder *c, surface_t surface_type, const ON_Brep *brep, const int loop_index)
+{
+    int ret = 1;
+    if (surface_type == SURFACE_PLANE) {
+	ON_Plane p;
+	brep->m_L[loop_index].Face()->SurfaceOf()->IsPlanar(&p);
+	if (!c->Axis().IsParallelTo(p.Normal(), BREP_PLANAR_TOL)) ret = 0;
+    }
+    if (surface_type == SURFACE_CYLINDER || surface_type == SURFACE_CYLINDRICAL_SECTION ) {
+	ON_Cylinder lc;
+	ON_Surface *cs = brep->m_L[loop_index].Face()->SurfaceOf()->Duplicate();
+	cs->IsCylinder(&lc);
+	delete cs;
+	// Make sure the surfaces are on the same cylinder
+	if (c->circle.Center().DistanceTo(lc.circle.Center()) > BREP_CYLINDRICAL_TOL) ret = 0;
+    }
+    return ret;
+}
+
+int
+shoal_filter_loops(int **s_loops, int c_loop_cnt, int *c_loops, surface_t type, const int loop_index, const ON_Brep *brep, surface_t *face_surface_types)
+{
+    std::set<int> connected_loops;
+    std::set<surface_t> allowed;
+    std::set<int> excluded;
+    ON_Cylinder cylinder;
+    int s_loops_cnt = 0;
+    array_to_set(&connected_loops, c_loops, c_loop_cnt);
+
+    if (type == SURFACE_CYLINDRICAL_SECTION || type == SURFACE_CYLINDER) {
+	ON_Surface *cs = brep->m_L[loop_index].Face()->SurfaceOf()->Duplicate();
+	cs->IsCylinder(&cylinder);
+	delete cs;
+
+	allowed.insert(SURFACE_CYLINDRICAL_SECTION);
+	allowed.insert(SURFACE_CYLINDER);
+	allowed.insert(SURFACE_PLANE);
+    }
+
+    if (type == SURFACE_CONE) {
+	allowed.insert(SURFACE_CONE);
+	allowed.insert(SURFACE_PLANE);
+    }
+
+    if (type == SURFACE_SPHERICAL_SECTION || type == SURFACE_SPHERE) {
+	allowed.insert(SURFACE_SPHERICAL_SECTION);
+	allowed.insert(SURFACE_SPHERE);
+	allowed.insert(SURFACE_PLANE);
+    }
+
+    if (type == SURFACE_TORUS) {
+	allowed.insert(SURFACE_TORUS);
+	allowed.insert(SURFACE_PLANE);
+    }
+
+    for (int i = 0; i < c_loop_cnt; i++) {
+	if (c_loops[i] == loop_index) continue;
+	surface_t ltype = face_surface_types[brep->m_L[c_loops[i]].Face()->m_face_index];
+	if (allowed.find(face_surface_types[brep->m_L[c_loops[i]].Face()->m_face_index]) == allowed.end()) {
+	    excluded.insert(c_loops[i]);
+	} else {
+	    switch (type) {
+		case SURFACE_CYLINDRICAL_SECTION:
+		case SURFACE_CYLINDER:
+		    if (!cyl_validate_face(&cylinder, ltype, brep, c_loops[i])) {
+			excluded.insert(c_loops[i]);
+		    }
+		    break;
+		case SURFACE_CONE :
+		    break;
+		case SURFACE_SPHERICAL_SECTION:
+		case SURFACE_SPHERE:
+		    break;
+		case SURFACE_TORUS:
+		    break;
+		default:
+		    break;
+	    }
+	}
+    }
+
+    std::set<int>::iterator l_it;
+    for (l_it = excluded.begin(); l_it != excluded.end(); l_it++) {
+	connected_loops.erase((int)*l_it);
+    }
+
+    set_to_array(s_loops, &(s_loops_cnt), &connected_loops);
+
+    return s_loops_cnt;
+}
+
+/* In order to represent complex shapes, it is necessary to identify
+ * subsets of subbreps that can be represented as primitives.  This
+ * function will identify such subsets, if possible.  If a subbrep
+ * can be successfully decomposed into primitive candidates, the
+ * type of the subbrep is set to COMB and the children bu_ptbl is
+ * populated with subbrep_island_data sets. */
+int
+subbrep_split(struct bu_vls *msgs, struct subbrep_island_data *data)
+{
+    bu_log("splitting\n");
+    int csg_fail = 0;
+    std::set<int> loops;
+    std::set<int> active;
+    std::set<int> fully_planar;
+    std::set<int> partly_planar;
+    std::set<int>::iterator l_it, e_it;
+
+    array_to_set(&loops, data->loops, data->loops_cnt);
+    array_to_set(&active, data->loops, data->loops_cnt);
+
+    for (l_it = loops.begin(); l_it != loops.end(); l_it++) {
+	const ON_BrepLoop *loop = &(data->brep->m_L[*l_it]);
+	const ON_BrepFace *face = loop->Face();
+	surface_t surface_type = ((surface_t *)data->face_surface_types)[face->m_face_index];
+	// Characterize the planar faces. TODO - see if we actually need this or not...
+	if (surface_type == SURFACE_PLANE) {
+	    int nonlinear_loop = 0;
+	    for (int ti = 0; ti < loop->m_ti.Count(); ti++) {
+		const ON_BrepTrim *trim = &(data->brep->m_T[loop->m_ti[ti]]);
+		const ON_BrepEdge *edge = &(data->brep->m_E[trim->m_ei]);
+		if (trim->m_ei != -1 && edge) {
+		    ON_Curve *ecv = edge->EdgeCurveOf()->Duplicate();
+		    bool is_linear = ecv->IsLinear();
+		    delete ecv;
+		    if (!is_linear) {
+			nonlinear_loop = 1;
+			break;
+		    }
+		}
+	    }
+	    if (nonlinear_loop) {
+		partly_planar.insert(*l_it);
+	    } else {
+		fully_planar.insert(*l_it);
+	    }
+	} else {
+	// non-planar face - check to see whether it's already part of a shoal.  If not,
+	// create a new one - otherwise, skip.
+	if (active.find(face->m_face_index) != active.end()) {
+	    std::set<int> shoal_loops;
+	    struct subbrep_shoal_data *sh;
+	    BU_GET(sh, struct subbrep_shoal_data);
+	    BU_GET(sh->params, struct csg_object_params);
+	    sh->i = data;
+	    int *c_loops;
+	    int c_loop_cnt = connected_loop_set(&c_loops, loop->m_loop_index, data->brep);
+	    sh->loops_cnt = shoal_filter_loops(&(sh->loops), c_loop_cnt, c_loops, surface_type, loop->m_loop_index, data->brep, (surface_t *)data->face_surface_types);
+	    for (int i = 0; i < sh->loops_cnt; i++) {
+		active.erase(sh->loops[i]);
+	    }
+	    switch (surface_type) {
+		case SURFACE_CYLINDRICAL_SECTION:
+		case SURFACE_CYLINDER:
+		    if (!cylinder_csg(msgs, sh, BREP_CYLINDRICAL_TOL)) csg_fail++;
+		    break;
+		case SURFACE_CONE:
+		    csg_fail++;
+		    break;
+		case SURFACE_SPHERICAL_SECTION:
+		case SURFACE_SPHERE:
+		    csg_fail++;
+		    break;
+		case SURFACE_TORUS:
+		    csg_fail++;
+		    break;
+		default:
+		    break;
+	    }
+	    bu_ptbl_ins(data->children, (long *)sh);
+	}
+	}
+    }
+
+    if (csg_fail > 0) {
+	goto csg_abort;
+    } else {
+	// We had a successful conversion - now generate a nucleus.  Need to
+	// characterize the nucleus as positive or negative volume.  Can also
+	// be degenerate if all planar faces are coplanar or if there are no
+	// planar faces at all (perfect cylinder, for example) so will need
+	// rules for those situations...
+	island_nucleus(msgs, data);
+
+	// Note is is possible to have degenerate *edges*, not just vertices -
+	// if a shoal shares part of an outer loop (possible when connected
+	// only by a vertex - see example) then the edges in the parent loop
+	// that are part of that shoal are degenerate for the purposes of the
+	// "parent" shape.  May have to limit our inputs to
+	// non-self-intersecting loops for now...
+    }
+    return 1;
+csg_abort:
+    /* Clear children - we found something we can't handle, so there will be no
+     * CSG conversion of this subbrep */
+    for (unsigned int i = 0; i < BU_PTBL_LEN(data->children); i++) {
+	//struct subbrep_shoal_data *cdata = (struct subbrep_shoal_data *)BU_PTBL_GET(data->children,i);
+	//subbrep_shoal_free(cdata);
+    }
+    return 0;
+
+}
+
+
 /* This is the critical point at which we take a pile of shapes and actually reconstruct a
  * valid boolean tree.  The stages are as follows:
  *
@@ -304,13 +534,12 @@ bail:
  * unions and subtractions mean we'll have to go all the way up that particular chain...
  */
 struct bu_ptbl *
-find_top_level_hierarchy(struct bu_vls *msgs, struct bu_ptbl *subbreps)
+find_top_level_hierarchy(struct bu_vls *msgs, struct bu_ptbl *islands)
 {
     // Now that we have the subbreps (or their substructures) and their boolean status we need to
     // construct the top level tree.
 
-    std::set<long *> subbrep_set;
-    std::set<long *> subbrep_seed_set;
+    std::set<long *> island_set;
     std::set<long *> unions;
     std::set<long *> subtractions;
     std::set<long *>::iterator sb_it, sb_it2;
@@ -318,14 +547,14 @@ find_top_level_hierarchy(struct bu_vls *msgs, struct bu_ptbl *subbreps)
     std::map<long *, std::set<long *> > subbrep_ignoreobjs;
     struct bu_ptbl *subbreps_tree;
 
-    if (!subbreps) return NULL;
+    if (!islands) return NULL;
 
-    for (unsigned int i = 0; i < BU_PTBL_LEN(subbreps); i++) {
-	subbrep_set.insert(BU_PTBL_GET(subbreps, i));
+    for (unsigned int i = 0; i < BU_PTBL_LEN(islands); i++) {
+	island_set.insert(BU_PTBL_GET(islands, i));
     }
 
     /* Separate out top level unions */
-    for (sb_it = subbrep_set.begin(); sb_it != subbrep_set.end(); sb_it++) {
+    for (sb_it = island_set.begin(); sb_it != island_set.end(); sb_it++) {
 	struct subbrep_island_data *obj = (struct subbrep_island_data *)*sb_it;
 	//std::cout << bu_vls_addr(obj->key) << " bool: " << obj->params->bool_op << "\n";
 	if (obj->fil_cnt == 0) {
@@ -333,36 +562,36 @@ find_top_level_hierarchy(struct bu_vls *msgs, struct bu_ptbl *subbreps)
 		//std::cout << "Top union found: " << bu_vls_addr(obj->key) << "\n";
 		obj->params->bool_op = 'u';
 		unions.insert((long *)obj);
-		subbrep_set.erase((long *)obj);
+		island_set.erase((long *)obj);
 	    } else {
 		if (obj->params->bool_op == '-') {
-		    //std::cout << "zero fills, but a negative shape - " << bu_vls_addr(obj->key) << " added to subtractions\n";
+		    std::cout << "zero fils, but a negative shape - " << bu_vls_addr(obj->key) << " added to subtractions\n";
 		    subtractions.insert((long *)obj);
 		}
 	    }
 	}
     }
 
-    subbrep_seed_set = unions;
+    std::set<long *> subbrep_seed_set = unions;
 
     int iterate = 1;
     while (subbrep_seed_set.size() > 0) {
 	//std::cout << "iterate: " << iterate << "\n";
 	std::set<long *> subbrep_seed_set_2;
-	std::set<long *> subbrep_set_b;
+	std::set<long *> island_set_b;
 	for (sb_it = subbrep_seed_set.begin(); sb_it != subbrep_seed_set.end(); sb_it++) {
 	    std::set<int> tu_fol;
 	    struct subbrep_island_data *tu = (struct subbrep_island_data *)*sb_it;
 	    array_to_set(&tu_fol, tu->fol, tu->fol_cnt);
-	    subbrep_set_b = subbrep_set;
-	    for (sb_it2 = subbrep_set.begin(); sb_it2 != subbrep_set.end(); sb_it2++) {
+	    island_set_b = island_set;
+	    for (sb_it2 = island_set.begin(); sb_it2 != island_set.end(); sb_it2++) {
 		struct subbrep_island_data *cobj = (struct subbrep_island_data *)*sb_it2;
 		for (int i = 0; i < cobj->fil_cnt; i++) {
 		    if (tu_fol.find(cobj->fil[i]) != tu_fol.end()) {
 			struct subbrep_island_data *up;
 			//std::cout << "Object " << bu_vls_addr(cobj->key) << " connected to " << bu_vls_addr(tu->key) << "\n";
 			subbrep_seed_set_2.insert(*sb_it2);
-			subbrep_set_b.erase(*sb_it2);
+			island_set_b.erase(*sb_it2);
 			// Determine boolean relationship to parent here, and use parent boolean
 			// to decide this object's (cobj) status.  If tu is negative and cobj is unioned
 			// relative to tu, then cobj is also negative.
@@ -453,8 +682,8 @@ find_top_level_hierarchy(struct bu_vls *msgs, struct bu_ptbl *subbreps)
 	}
 	subbrep_seed_set.clear();
 	subbrep_seed_set = subbrep_seed_set_2;
-	subbrep_set.clear();
-	subbrep_set = subbrep_set_b;
+	island_set.clear();
+	island_set = island_set_b;
 	iterate++;
     }
 
@@ -504,278 +733,6 @@ find_top_level_hierarchy(struct bu_vls *msgs, struct bu_ptbl *subbreps)
     return subbreps_tree;
 }
 
-void
-set_filter_obj(const ON_Surface *surface, struct filter_obj *obj)
-{
-    if (!obj) return;
-    filter_obj_init(obj);
-    obj->stype = GetSurfaceType(surface, obj);
-    // If we've got a planar face, we can stop now - planar faces
-    // are determinative of volume type only when *all* faces are planar,
-    // and that case is handled elsewhere - anything is "allowed".
-    if (obj->stype == SURFACE_PLANE) obj->type = BREP;
-
-    // If we've got a general surface, anything is allowed
-    if (obj->stype == SURFACE_GENERAL) obj->type = BREP;
-
-    if (obj->stype == SURFACE_CYLINDRICAL_SECTION || obj->stype == SURFACE_CYLINDER) obj->type = CYLINDER;
-
-    if (obj->stype == SURFACE_CONE) obj->type = CONE;
-
-    if (obj->stype == SURFACE_SPHERICAL_SECTION || obj->stype == SURFACE_SPHERE) obj->type = SPHERE;
-
-    if (obj->stype == SURFACE_TORUS) obj->type = TORUS;
-}
-
-int
-apply_filter_obj(const ON_Surface *surf, int UNUSED(loop_index), struct filter_obj *obj)
-{
-    int ret = 1;
-    struct filter_obj *local_obj;
-    BU_GET(local_obj, struct filter_obj);
-    int surface_type = (int)GetSurfaceType(surf, local_obj);
-
-    std::set<int> allowed;
-
-    if (obj->type == CYLINDER) {
-	allowed.insert(SURFACE_CYLINDRICAL_SECTION);
-	allowed.insert(SURFACE_CYLINDER);
-	allowed.insert(SURFACE_PLANE);
-    }
-
-    if (obj->type == CONE) {
-	allowed.insert(SURFACE_CONE);
-	allowed.insert(SURFACE_PLANE);
-    }
-
-    if (obj->type == SPHERE) {
-	allowed.insert(SURFACE_SPHERICAL_SECTION);
-	allowed.insert(SURFACE_SPHERE);
-	allowed.insert(SURFACE_PLANE);
-    }
-
-    if (obj->type == TORUS) {
-	allowed.insert(SURFACE_TORUS);
-	allowed.insert(SURFACE_PLANE);
-    }
-
-
-    // If the face's surface type is not part of the allowed set for
-    // this object type, we're done
-    if (allowed.find(surface_type) == allowed.end()) {
-	ret = 0;
-	goto filter_done;
-    }
-    if (obj->type == CYLINDER) {
-	if (surface_type == SURFACE_PLANE) {
-	    int is_parallel = obj->cylinder->Axis().IsParallelTo(local_obj->plane->Normal(), BREP_PLANAR_TOL);
-	    if (is_parallel == 0) {
-	       ret = 0;
-	       goto filter_done;
-	    }
-	}
-	if (surface_type == SURFACE_CYLINDER || surface_type == SURFACE_CYLINDRICAL_SECTION ) {
-	    // Make sure the surfaces are on the same cylinder
-	    if (obj->cylinder->circle.Center().DistanceTo(local_obj->cylinder->circle.Center()) > BREP_CYLINDRICAL_TOL) {
-	       ret = 0;
-	       goto filter_done;
-	    }
-	}
-    }
-    if (obj->type == CONE) {
-    }
-    if (obj->type == SPHERE) {
-    }
-    if (obj->type == TORUS) {
-    }
-
-filter_done:
-    filter_obj_free(local_obj);
-    BU_PUT(local_obj, struct filter_obj);
-    return ret;
-}
-
-void
-add_loops_from_face(int f_ind, struct subbrep_island_data *data, std::set<int> *loops, std::queue<int> *local_loops, std::set<int> *processed_loops)
-{
-    for (int j = 0; j < data->brep->m_F[f_ind].m_li.Count(); j++) {
-	int loop_in_set = 0;
-	int loop_ind = data->brep->m_F[f_ind].m_li[j];
-	int k = 0;
-	while (k < data->loops_cnt) {
-	    if (data->loops[k] == loop_ind) loop_in_set = 1;
-	    k++;
-	}
-	if (loop_in_set) loops->insert(loop_ind);
-	if (loop_in_set && processed_loops->find(loop_ind) == processed_loops->end()) {
-	    local_loops->push(loop_ind);
-	}
-    }
-}
-
-
-/* In order to represent complex shapes, it is necessary to identify
- * subsets of subbreps that can be represented as primitives.  This
- * function will identify such subsets, if possible.  If a subbrep
- * can be successfully decomposed into primitive candidates, the
- * type of the subbrep is set to COMB and the children bu_ptbl is
- * populated with subbrep_island_data sets. */
-int
-subbrep_split(struct bu_vls *msgs, struct subbrep_island_data *data)
-{
-    bu_log("splitting\n");
-    //if (BU_STR_EQUAL(bu_vls_addr(data->key), "325_326_441_527_528")) {
-    //	std::cout << "looking at 325_326_441_527_528\n";
-    //}
-    int csg_fail = 0;
-    std::set<int> processed_faces;
-    std::set<std::string> subbrep_keys;
-    /* For each face, identify the candidate solid type.  If that
-     * subset has not already been seen, add it to the brep's set of
-     * subbreps */
-    for (int i = 0; i < data->faces_cnt; i++) {
-	std::string key;
-	std::set<int> faces;
-	std::set<int> loops;
-	std::set<int> edges;
-	std::queue<int> local_loops;
-	std::set<int> processed_loops;
-	std::set<int>::iterator s_it;
-	struct filter_obj *filters;
-	BU_GET(filters, struct filter_obj);
-	std::set<int> locally_processed_faces;
-
-	set_filter_obj(data->brep->m_F[data->faces[i]].SurfaceOf(), filters);
-	if (filters->type == BREP) {
-	    filter_obj_free(filters);
-	    BU_PUT(filters, struct filter_obj);
-	    continue;
-	}
-	if (filters->stype == SURFACE_PLANE) {
-	    filter_obj_free(filters);
-	    BU_PUT(filters, struct filter_obj);
-	    continue;
-	}
-	faces.insert(data->faces[i]);
-	//std::cout << "working: " << data->faces[i] << "\n";
-	locally_processed_faces.insert(data->faces[i]);
-	add_loops_from_face(data->faces[i], data, &loops, &local_loops, &processed_loops);
-
-	while(!local_loops.empty()) {
-	    int curr_loop = local_loops.front();
-	    local_loops.pop();
-	    if (processed_loops.find(curr_loop) == processed_loops.end()) {
-		loops.insert(curr_loop);
-		processed_loops.insert(curr_loop);
-		for (int ti = 0; ti < data->brep->m_L[curr_loop].m_ti.Count(); ti++) {
-		    const ON_BrepTrim *trim = &(data->brep->m_T[data->brep->m_L[curr_loop].m_ti[ti]]);
-		    const ON_BrepEdge *edge = &(data->brep->m_E[trim->m_ei]);
-		    if (trim->m_ei != -1 && edge->TrimCount() > 1) {
-			edges.insert(trim->m_ei);
-			for (int j = 0; j < edge->TrimCount(); j++) {
-			    int fio = edge->Trim(j)->FaceIndexOf();
-			    if (fio != -1 && locally_processed_faces.find(fio) == locally_processed_faces.end()) {
-				surface_t stype = GetSurfaceType(data->brep->m_F[fio].SurfaceOf(), NULL);
-				// If fio meets the criteria for the candidate shape, add it.  Otherwise,
-				// it's not part of this shape candidate
-				if (apply_filter_obj(data->brep->m_F[fio].SurfaceOf(), curr_loop, filters)) {
-				    // TODO - more testing needs to be done here...  get_allowed_surface_types
-				    // returns the volume_t, use it to do some testing to evaluate
-				    // things like normals and shared axis
-				    //std::cout << "accept: " << fio << "\n";
-				    faces.insert(fio);
-				    locally_processed_faces.insert(fio);
-				    // The planar faces will always share edges with the non-planar
-				    // faces, which drive the primary shape.  Also, planar faces are
-				    // more likely to have other edges that relate to other shapes.
-				    if (stype != SURFACE_PLANE)
-					add_loops_from_face(fio, data, &loops, &local_loops, &processed_loops);
-				}
-			    }
-			}
-		    }
-		}
-	    }
-	}
-	key = set_key(faces);
-
-	/* If we haven't seen this particular subset before, add it */
-	if (subbrep_keys.find(key) == subbrep_keys.end()) {
-	    subbrep_keys.insert(key);
-	    // TODO - change to shoal
-	    struct subbrep_island_data *new_obj;
-	    BU_GET(new_obj, struct subbrep_island_data);
-	    subbrep_object_init(new_obj, data->brep);
-	    bu_vls_sprintf(new_obj->key, "%s", key.c_str());
-	    set_to_array(&(new_obj->faces), &(new_obj->faces_cnt), &faces);
-	    set_to_array(&(new_obj->loops), &(new_obj->loops_cnt), &loops);
-	    set_to_array(&(new_obj->edges), &(new_obj->edges_cnt), &edges);
-	    new_obj->fol_cnt = 0;
-	    new_obj->fil_cnt = 0;
-	    new_obj->parent = data;
-	    new_obj->face_surface_types = data->face_surface_types;
-	    bu_log("here point 1\n");
-
-	    new_obj->type = filters->type;
-	    switch (new_obj->type) {
-		case CYLINDER:
-		    if (!cylinder_csg(msgs, new_obj, BREP_CYLINDRICAL_TOL)) {
-			if (msgs) bu_vls_printf(msgs, "%*sError - cylinder csg failure: %s\n", L2_OFFSET, " ", key.c_str());
-			csg_fail++;
-		    }
-		    break;
-		case CONE:
-		    //if (!cone_csg(msgs, new_obj, BREP_CONIC_TOL)) {
-			if (msgs) bu_vls_printf(msgs, "%*sError - cone csg failure: %s\n", L2_OFFSET, " ", key.c_str());
-			csg_fail++;
-		    //}
-		    break;
-		case SPHERE:
-		    //if (!sphere_csg(new_obj, BREP_SPHERICAL_TOL)) {
-			if (msgs) bu_vls_printf(msgs, "%*sError - sphere csg failure: %s\n", L2_OFFSET, " ", key.c_str());
-			csg_fail++;
-		    //}
-		    break;
-		case ELLIPSOID:
-		    if (msgs) bu_vls_printf(msgs, "%*sTODO: process partial ellipsoid\n", L2_OFFSET, " ");
-		    /* TODO - Until we properly handle these shapes, this is a failure case */
-		    csg_fail++;
-		    break;
-		case TORUS:
-		    if (msgs) bu_vls_printf(msgs, "%*sTODO: process partial torus\n", L2_OFFSET, " ");
-		    /*
-		    if (!torus_csg(new_obj, BREP_TOROIDAL_TOL)) {
-			bu_log("torus csg failure: %s\n", key.c_str());
-		    }*/
-		    csg_fail++;
-		    break;
-		default:
-		    /* Unknown object type - can't convert to csg */
-		    csg_fail++;
-		    break;
-	    }
-
-	    bu_ptbl_ins(data->children, (long *)new_obj);
-	}
-	filter_obj_free(filters);
-	BU_PUT(filters, struct filter_obj);
-	if ((*data->obj_cnt) > CSG_BREP_MAX_OBJS) goto csg_abort;
-    }
-    if (subbrep_keys.size() == 0 || csg_fail > 0) {
-	goto csg_abort;
-    }
-    data->type = COMB;
-    return 1;
-csg_abort:
-    /* Clear children - we found something we can't handle, so there will be no
-     * CSG conversion of this subbrep */
-    data->type = BREP;
-    for (unsigned int i = 0; i < BU_PTBL_LEN(data->children); i++) {
-	struct subbrep_island_data *cdata = (struct subbrep_island_data *)BU_PTBL_GET(data->children,i);
-	subbrep_object_free(cdata);
-    }
-    return 0;
-}
 
 
 int

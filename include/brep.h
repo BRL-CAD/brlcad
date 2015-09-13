@@ -1381,6 +1381,7 @@ sub_surface(const ON_Surface *in, int dir, double a, double b);
  * be matched by the shape recognition logic */
 struct csg_object_params {
     int type;
+    int negative;
     int id;
     char bool_op; /* Boolean operator - u = union (default), - = subtraction, + = intersection */
     point_t origin;
@@ -1407,7 +1408,7 @@ struct subbrep_shoal_data {
     struct subbrep_island_data *i;
     int negative_shape;
     struct csg_object_params *params;
-    struct bu_ptbl *subtraction_obj_params;
+    struct bu_ptbl *sub_params;
 
     /* Working information */
     int *loops;
@@ -1480,7 +1481,7 @@ extern BREP_EXPORT void subbrep_bbox(struct subbrep_island_data *obj);
 extern BREP_EXPORT void subbrep_object_free(struct subbrep_island_data *obj);
 extern BREP_EXPORT struct bu_ptbl *find_subbreps(struct bu_vls *msgs, const ON_Brep *brep);
 extern BREP_EXPORT struct bu_ptbl *find_top_level_hierarchy(struct bu_vls *msgs, struct bu_ptbl *subbreps);
-extern BREP_EXPORT int subbrep_polygon_tri(struct bu_vls *msgs, const ON_Brep *brep, const point_t *all_verts, int *loops, int loop_cnt, int **ffaces);
+extern BREP_EXPORT int subbrep_polygon_tri(struct bu_vls *msgs, struct subbrep_island_data *data, const point_t *all_verts, int *loops, int loop_cnt, int **ffaces);
 
 
 } /* extern C++ */

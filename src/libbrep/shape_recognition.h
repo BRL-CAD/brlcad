@@ -101,10 +101,11 @@ void print_subbrep_object(struct subbrep_island_data *data, const char *offset);
 volume_t subbrep_shape_recognize(struct bu_vls *msgs, struct subbrep_island_data *data);
 
 int subbrep_is_planar(struct bu_vls *msgs, struct subbrep_island_data *data);
+int island_nucleus(struct bu_vls *msgs, struct subbrep_island_data *data);
 
 int cylindrical_loop_planar_vertices(ON_BrepFace *face, int loop_index);
 int subbrep_is_cylinder(struct bu_vls *msgs, struct subbrep_island_data *data, fastf_t cyl_tol);
-int cylinder_csg(struct bu_vls *msgs, struct subbrep_island_data *data, fastf_t cyl_tol);
+int cylinder_csg(struct bu_vls *msgs, struct subbrep_shoal_data *data, fastf_t cyl_tol);
 
 //int subbrep_is_cone(struct bu_vls *msgs, struct subbrep_island_data *data, fastf_t cone_tol);
 //int cone_csg(struct bu_vls *msgs, struct subbrep_island_data *data, fastf_t cone_tol);
