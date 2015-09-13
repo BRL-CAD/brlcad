@@ -474,7 +474,7 @@ cylinder_csg(struct bu_vls *msgs, struct subbrep_shoal_data *data, fastf_t cyl_t
     data->params->negative = negative_cylinder(brep, *cylindrical_surfaces.begin(), cyl_tol);
 
     VMOVE(data->params->origin, axis_pts[0]);
-    VMOVE(data->params->hav, cyl_axis_prim);
+    VMOVE(data->params->hv, cyl_axis_prim);
     data->params->radius = cylinder.circle.Radius();
 
     bu_log("in rcc.s rcc %f %f %f %f %f %f %f \n", axis_pts[0].x, axis_pts[0].y, axis_pts[0].z, cyl_axis_prim.x, cyl_axis_prim.y, cyl_axis_prim.z, cylinder.circle.Radius());
