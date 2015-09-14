@@ -1401,7 +1401,7 @@ struct csg_object_params {
     int face_cnt;
     int vert_cnt;
     int *faces;
-    int *verts;
+    point_t *verts;
 };
 
 /* Forward declarations */

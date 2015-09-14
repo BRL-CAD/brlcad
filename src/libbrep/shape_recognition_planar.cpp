@@ -424,71 +424,27 @@ shoal_polygon_tri(struct bu_vls *UNUSED(msgs), struct subbrep_shoal_data *data, 
  */
 
 int
-negative_polygon(struct bu_vls *msgs, struct subbrep_island_data *data)
+negative_polygon(struct bu_vls *UNUSED(msgs), struct csg_object_params *data)
 {
-    int io_state = 0;
-    int all_faces_cnt = 0;
-    std::vector<int> all_faces;
-    int *final_faces = NULL;
-    std::set<int> fol_faces;
 
-    array_to_set(&fol_faces, data->fol, data->fol_cnt);
-
-
-    point_t *all_verts = (point_t *)bu_calloc(data->brep->m_V.Count(), sizeof(point_t), "bot verts");
-    for (int vi = 0; vi < data->brep->m_V.Count(); vi++) {
-        VMOVE(all_verts[vi], data->brep->m_V[vi].Point());
-    }
-
-    // Check each face to see if it is fil or fol - the first fol face, stash its
-    // normal - don't even need the triangle face normal, we can just use the face's normal and
-    // a point from the center of one of the fol triangles on that particular face.
-    ON_3dPoint origin_pnt;
-    ON_3dVector triangle_normal;
-    int have_hit_pnt = 0;
-
-    /* Get triangles from the faces */
+    /* Get bounding box from the vertices */
     ON_BoundingBox vert_bbox;
     ON_MinMaxInit(&vert_bbox.m_min, &vert_bbox.m_max);
-    for (int i = 0; i < data->loops_cnt; i++) {
-	const ON_BrepLoop *b_loop = &(data->brep->m_L[data->loops[i]]);
-	int *ffaces = NULL;
-	int num_faces = subbrep_polygon_tri(msgs, data, (int *)&(b_loop->m_loop_index), 1, &ffaces);
-	if (!num_faces) {
-	    if (msgs) bu_vls_printf(msgs, "%*sError - triangulation failed for loop %d!\n", L2_OFFSET, " ", b_loop->m_loop_index);
-	    return 0;
-	}
-	if (!have_hit_pnt) {
-	    const ON_BrepFace *b_face = b_loop->Face();
-	    if (fol_faces.find(b_face->m_face_index) != fol_faces.end()) {
-		ON_3dPoint p1 = data->brep->m_V[ffaces[0]].Point();
-		ON_3dPoint p2 = data->brep->m_V[ffaces[1]].Point();
-		ON_3dPoint p3 = data->brep->m_V[ffaces[2]].Point();
-		ON_Plane fp;
-		ON_Surface *ts = b_face->SurfaceOf()->Duplicate();
-		(void)ts->IsPlanar(&fp, BREP_PLANAR_TOL);
-		delete ts;
-		triangle_normal = fp.Normal();
-		if (b_face->m_bRev) triangle_normal = triangle_normal * -1;
-		origin_pnt = (p1 + p2 + p3) / 3;
-		have_hit_pnt = 1;
-	    }
-	}
-
-	for (int f_ind = 0; f_ind < num_faces*3; f_ind++) {
-	    all_faces.push_back(ffaces[f_ind]);
-	    vert_bbox.Set(data->brep->m_V[ffaces[f_ind]].Point(), true);
-	}
-	if (ffaces) bu_free(ffaces, "free polygon face array");
-	all_faces_cnt += num_faces;
-
+    for (int i = 0; i < data->vert_cnt; i++) {
+	ON_3dPoint p;
+	VMOVE(p, data->verts[i]);
+	vert_bbox.Set(p, true);
     }
 
-    /* Now we can build the final faces array */
-    final_faces = (int *)bu_calloc(all_faces_cnt * 3, sizeof(int), "final bot verts");
-    for (int i = 0; i < all_faces_cnt*3; i++) {
-	final_faces[i] = all_faces[i];
-    }
+    /* Get normal from first triangle in array - TODO - fiddle with this to get the correct normal... */
+    ON_3dPoint tp1, tp2, tp3;
+    VMOVE(tp1, data->verts[data->faces[0]]);
+    VMOVE(tp2, data->verts[data->faces[1]]);
+    VMOVE(tp3, data->verts[data->faces[2]]);
+    ON_3dVector v1 = tp2 - tp1;
+    ON_3dVector v2 = tp3 - tp1;
+    ON_3dVector triangle_normal = ON_CrossProduct(v1, v2);
+    ON_3dPoint origin_pnt = (tp1 + tp2 + tp3) / 3;
 
     // Scale bounding box to make sure corners are away from the volume
     vert_bbox.m_min = vert_bbox.m_min * 1.1;
@@ -523,20 +479,14 @@ negative_polygon(struct bu_vls *msgs, struct subbrep_island_data *data)
     int hit_cnt = 0;
     point_t p1, p2, p3, isect;
     ON_3dPointArray hit_pnts;
-    for (int i = 0; i < all_faces_cnt; i++) {
+    for (int i = 0; i < data->face_cnt; i++) {
 	ON_3dPoint onp1, onp2, onp3, hit_pnt;
-	VMOVE(p1, all_verts[all_faces[i*3+0]]);
-	VMOVE(p2, all_verts[all_faces[i*3+1]]);
-	VMOVE(p3, all_verts[all_faces[i*3+2]]);
-	onp1.x = p1[0];
-	onp1.y = p1[1];
-	onp1.z = p1[2];
-	onp2.x = p2[0];
-	onp2.y = p2[1];
-	onp2.z = p2[2];
-	onp3.x = p3[0];
-	onp3.y = p3[1];
-	onp3.z = p3[2];
+	VMOVE(p1, data->verts[data->faces[i*3+0]]);
+	VMOVE(p2, data->verts[data->faces[i*3+1]]);
+	VMOVE(p3, data->verts[data->faces[i*3+2]]);
+	VMOVE(onp1, p1);
+	VMOVE(onp2, p2);
+	VMOVE(onp3, p3);
 	ON_Plane fplane(onp1, onp2, onp3);
 	int is_hit = bg_isect_tri_ray(origin, dir, p1, p2, p3, &isect);
 	VMOVE(hit_pnt, isect);
@@ -554,9 +504,10 @@ negative_polygon(struct bu_vls *msgs, struct subbrep_island_data *data)
 	}
     }
     hit_cnt = hit_pnts.Count();
-    //bu_log("hit count: %d\n", hit_cnt);
-    //bu_log("dotp : %f\n", dotp);
+    bu_log("hit count: %d\n", hit_cnt);
+    bu_log("dotp : %f\n", dotp);
 
+    int io_state;
     // Final inside/outside determination
     if (hit_cnt % 2) {
 	io_state = (dotp > 0) ? -1 : 1;
@@ -564,10 +515,8 @@ negative_polygon(struct bu_vls *msgs, struct subbrep_island_data *data)
 	io_state = (dotp < 0) ? -1 : 1;
     }
 
-    //bu_log("inside out state: %d\n", io_state);
+    bu_log("inside out state: %d\n", io_state);
 
-    bu_free(all_verts, "free top level vertex array");
-    bu_free(final_faces, "free face array");
     return io_state;
 }
 
@@ -636,10 +585,17 @@ island_nucleus(struct bu_vls *msgs, struct subbrep_island_data *data)
 	}
     }
 
-    // Third, generate compact vertex list for csg params
+    // Third, generate compact vertex list for csg params and create the final
+    // vertex array for the bot
+    std::set<int> all_used_verts;
+    std::vector<int> all_faces;
+    std::set<int>::iterator auv_it;
     for (unsigned int i = 0; i < face_arrays.size(); i++) {
 	int *fa = face_arrays[i];
 	int fc = face_cnts[i];
+	for (int j = 0; j < fc*3; j++) all_used_verts.insert(fa[j]);
+	for (int j = 0; j < fc*3; j++) all_faces.push_back(fa[j]);
+	// Debugging printing...
 	struct bu_vls face_desc = BU_VLS_INIT_ZERO;
 	bu_vls_sprintf(&face_desc, "face %d:  ", i);
 	for (int j = 0; j < fc*3; j=j+3) {
@@ -648,15 +604,41 @@ island_nucleus(struct bu_vls *msgs, struct subbrep_island_data *data)
 	bu_log("%s\n", bu_vls_addr(&face_desc));
 	bu_vls_free(&face_desc);
     }
+    std::map<int,int> vert_map;
+    int curr_vert = 0;
+    BU_GET(data->nucleus, struct csg_object_params);
+    data->nucleus->verts = (point_t *)bu_calloc(all_used_verts.size(), sizeof(point_t), "final verts array");
+    for (auv_it = all_used_verts.begin(); auv_it != all_used_verts.end(); auv_it++) {
+	ON_3dPoint vp = data->brep->m_V[(int)(*auv_it)].Point();
+	VMOVE(data->nucleus->verts[curr_vert], vp);
+	vert_map.insert(std::pair<int,int>((int)*auv_it, curr_vert));
+	curr_vert++;
+    }
+    data->nucleus->vert_cnt = all_used_verts.size();
 
-    // Fourth, map old vertex indices to new
-    // Fifth, update face arrays to use the new indices
+    // Fourth, create final face arrays using the new indices
+    data->nucleus->faces = (int *)bu_calloc(all_faces.size(), sizeof(int), "final faces array");
+    for (unsigned int i = 0; i < all_faces.size(); i++) {
+	int nv = vert_map.find(all_faces[i])->second;
+	data->nucleus->faces[i] = nv;
+    }
+    data->nucleus->face_cnt = all_faces.size() / 3;
 
-    // Sixth, test for a negative polyhedron - if negative, handle accordingly
-    if (negative_polygon(msgs, data) == -1) {
+    for (int j = 0; j < data->nucleus->face_cnt; j++) {
+	bu_log("data->nucleus->face %d: (%d,%d,%d)\n", j, data->nucleus->faces[j*3], data->nucleus->faces[j*3+1], data->nucleus->faces[j*3+2]);
+    }
+
+    // Fifth, test for a negative polyhedron - if negative, handle accordingly
+    if (negative_polygon(msgs, data->nucleus) == -1) {
 	data->params->bool_op = '-';
 	// Flip triangles so BoT/arbn is a positive shape
     }
+
+    // Sixth, check the polyhedron nucleus for special cases:
+    //
+    // 1. degenerate
+    // 2. inside a shoal (shape + arbn) (nucleus is subtracted from shoal)
+
 
     // Lastly, check to see if we have a convex polyhedron.  If so, define the arbn.
     if (is_convex) {
@@ -669,7 +651,7 @@ island_nucleus(struct bu_vls *msgs, struct subbrep_island_data *data)
 }
 
 int
-subbrep_is_planar(struct bu_vls *msgs, struct subbrep_island_data *data)
+subbrep_is_planar(struct bu_vls *UNUSED(msgs), struct subbrep_island_data *data)
 {
     int i = 0;
     // Check surfaces.  If a surface is anything other than a plane the verdict is no.
@@ -682,7 +664,7 @@ subbrep_is_planar(struct bu_vls *msgs, struct subbrep_island_data *data)
     }
     data->type = PLANAR_VOLUME;
 
-    if (negative_polygon(msgs, data) == -1) data->params->bool_op = '-';
+    //if (negative_polygon(msgs, data) == -1) data->params->bool_op = '-';
 
     return 1;
 }
