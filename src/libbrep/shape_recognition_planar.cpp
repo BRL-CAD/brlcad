@@ -301,19 +301,26 @@ shoal_polygon_tri(struct bu_vls *UNUSED(msgs), struct subbrep_shoal_data *data, 
     // Walk the edges collecting non-ignored verts.
     int curr_vert = seed_vert;
     int curr_edge = -1;
+    bu_log("first edge: %d\n", first_edge->m_edge_index);
     while (curr_edge != first_edge->m_edge_index) {
 	// Once we're past the first edge, initialize our terminating condition if not already set.
 	if (curr_edge == -1) curr_edge = first_edge->m_edge_index;
 
 	for (int i = 0; i < brep->m_V[curr_vert].m_ei.Count(); i++) {
-	    const ON_BrepEdge *e = &(brep->m_E[brep->m_V[i].m_ei[i]]);
+	    const ON_BrepEdge *e = &(brep->m_E[brep->m_V[curr_vert].m_ei[i]]);
 	    int ce = e->m_edge_index;
+	    bu_log("considering : %d\n", ce);
 	    if (ce != curr_edge && ignored_edges.find(ce) == ignored_edges.end()) {
 		// Have a viable edge - find our new vert.
+		bu_log("  passed: %d\n", ce);
 		int nv = (e->Vertex(0)->m_vertex_index == curr_vert) ? e->Vertex(1)->m_vertex_index : e->Vertex(0)->m_vertex_index;
-		if (ignored_verts.find(nv) == ignored_verts.end()) polygon_verts.push_back(nv);
+		if (ignored_verts.find(nv) == ignored_verts.end()) {
+		    bu_log("  next vert: %d\n", curr_vert);
+		    polygon_verts.push_back(nv);
+		}
 		curr_vert = nv;
 		curr_edge = ce;
+		bu_log("  next edge: %d\n", curr_edge);
 		break;
 	    }
 	}
