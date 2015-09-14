@@ -257,8 +257,9 @@ subbrep_polygon_tri(struct bu_vls *msgs, struct subbrep_island_data *data, int *
 // 2D implicit plane from the shoal. Check the new 2D loop to determine if it is
 // counterclockwise - if not, reverse it.
 int
-shoal_polygon_tri(struct bu_vls *UNUSED(msgs), struct subbrep_shoal_data *data, int **UNUSED(ffaces))
+shoal_polygon_tri(struct bu_vls *msgs, struct subbrep_shoal_data *data, int **ffaces)
 {
+    int num_faces;
     const ON_Brep *brep = data->i->brep;
 
     // polygon verts
@@ -274,6 +275,7 @@ shoal_polygon_tri(struct bu_vls *UNUSED(msgs), struct subbrep_shoal_data *data, 
 
     // Get the set of edges associated with the shoal's loops.
     std::set<int> shoal_edges;
+    std::set<int>::iterator se_it;
     for (int i = 0; i < data->loops_cnt; i++) {
 	const ON_BrepLoop *loop = &(data->i->brep->m_L[data->loops[i]]);
 	for (int ti = 0; ti < loop->m_ti.Count(); ti++) {
@@ -285,18 +287,28 @@ shoal_polygon_tri(struct bu_vls *UNUSED(msgs), struct subbrep_shoal_data *data, 
 	}
     }
 
-    // seed vert
-    int seed_vert;
-    const ON_BrepEdge *first_edge = &(brep->m_E[(int)(*shoal_edges.begin())]);
-    if (ignored_verts.find(first_edge->Vertex(0)->m_vertex_index) == ignored_verts.end()) {
-	seed_vert = first_edge->Vertex(0)->m_vertex_index;
-    } else {
-	seed_vert = first_edge->Vertex(1)->m_vertex_index;
+    // Find a suitable seed vert
+    int seed_vert = -1;
+    const ON_BrepEdge *first_edge;
+    for (se_it = shoal_edges.begin(); se_it != shoal_edges.end(); se_it++) {
+	first_edge = &(brep->m_E[(int)(*se_it)]);
+	int ce = first_edge->m_edge_index;
+	if (ignored_edges.find(ce) == ignored_edges.end()) {
+	    if (ignored_verts.find(first_edge->Vertex(0)->m_vertex_index) == ignored_verts.end()) {
+		seed_vert = first_edge->Vertex(0)->m_vertex_index;
+		break;
+	    }
+	    if (ignored_verts.find(first_edge->Vertex(1)->m_vertex_index) == ignored_verts.end()) {
+		seed_vert = first_edge->Vertex(1)->m_vertex_index;
+		break;
+	    }
+	}
     }
-    polygon_verts.push_back(seed_vert);
 
     // If we have the degenerate case, there is no triangulation.
-    if (brep->m_V[seed_vert].m_ei.Count() == 1) return 0;
+    if (seed_vert == -1) return 0;
+
+    polygon_verts.push_back(seed_vert);
 
     // Walk the edges collecting non-ignored verts.
     int curr_vert = seed_vert;
@@ -325,10 +337,69 @@ shoal_polygon_tri(struct bu_vls *UNUSED(msgs), struct subbrep_shoal_data *data, 
 	    }
 	}
     }
+    // Don't double count the start/end vertex
+    polygon_verts.pop_back();
 
     std::vector<int>::iterator v_it;
     for(v_it = polygon_verts.begin(); v_it != polygon_verts.end(); v_it++) {
 	bu_log("shoal vert found: %d\n", (int)*v_it);
+    }
+
+    // Have the verts - now we need 2d coordinates in the implicit plane
+    ON_3dPoint imp_origin;
+    ON_3dVector imp_normal;
+    VMOVE(imp_origin, data->params->implicit_plane_origin);
+    VMOVE(imp_normal, data->params->implicit_plane_normal);
+    ON_Plane p(imp_origin, imp_normal);
+    ON_3dVector xaxis = p.Xaxis();
+    ON_3dVector yaxis = p.Yaxis();
+    bu_log("implicit origin: %f, %f, %f\n", p.Origin().x, p.Origin().y, p.Origin().z);
+    bu_log("implicit normal: %f, %f, %f\n", p.Normal().x, p.Normal().y, p.Normal().z);
+    ON_2dPointArray on2dpts;
+    for(v_it = polygon_verts.begin(); v_it != polygon_verts.end(); v_it++) {
+	const ON_BrepVertex *v = &(brep->m_V[(int)*v_it]);
+	ON_3dVector v3d = v->Point() - p.Origin();
+	double xcoord = ON_DotProduct(v3d, xaxis);
+	double ycoord = ON_DotProduct(v3d, yaxis);
+	on2dpts.Append(ON_2dPoint(xcoord,ycoord));
+	bu_log("x,y: %f,%f\n", xcoord, ycoord);
+    }
+    int *pt_ind = (int *)bu_calloc(on2dpts.Count(), sizeof(int), "pt_ind");
+    point2d_t *verts2d = (point2d_t *)bu_calloc(on2dpts.Count(), sizeof(point2d_t), "bot verts");
+    for (int i = 0; i < on2dpts.Count(); i++) {
+	V2MOVE(verts2d[i], on2dpts[i]);
+	pt_ind[i] = i;
+    }
+
+    int ccw = bg_polygon_clockwise(on2dpts.Count(), verts2d, pt_ind);
+    if (ccw == 0) {
+	bu_log("degenerate loop - skip\n");
+	return 0;
+    }
+    if (ccw == 1) {
+	for (int i = on2dpts.Count() - 1; i >= 0; i--) {
+	    int d = on2dpts.Count() - 1 - i;
+	    V2MOVE(verts2d[d], on2dpts[i]);
+	}
+    }
+
+
+    if (bg_polygon_triangulate(ffaces, &num_faces, NULL, NULL, (const point2d_t *)verts2d, on2dpts.Count(), EAR_CLIPPING)) {
+	if (msgs) bu_log("shoal triangulation failure\n");
+	return 0;
+    }
+
+    // fix up vertex indices
+    for (int i = 0; i < num_faces*3; i++) {
+	int old_ind = (*ffaces)[i];
+	if (ccw) {
+	    (*ffaces)[i] = polygon_verts[polygon_verts.size() - 1 - old_ind];
+	} else {
+	    (*ffaces)[i] = polygon_verts[old_ind];
+	}
+    }
+    for (int i = 0; i < num_faces; i++) {
+	bu_log("face %d: %d, %d, %d\n", i, (*ffaces)[i*3], (*ffaces)[i*3+1], (*ffaces)[i*3+2]);
     }
 
     return 0;

@@ -1395,7 +1395,8 @@ struct csg_object_params {
     plane_t *planes;
     /* An implicit plane, if present, may close a face on a parent solid */
     int have_implicit_plane;
-    plane_t implicit_plane;
+    point_t implicit_plane_origin;
+    vect_t implicit_plane_normal;
     /* bot */
     int face_cnt;
     int vert_cnt;

@@ -342,6 +342,13 @@ cylinder_csg(struct bu_vls *msgs, struct subbrep_shoal_data *data, fastf_t cyl_t
 
     if (implicit_plane_ind != -1) {
 	bu_log("have implicit plane\n");
+	ON_Plane p = cyl_planes[implicit_plane_ind];
+	p.Flip();
+	bu_log("implicit plane origin: %f, %f, %f\n", p.Origin().x, p.Origin().y, p.Origin().z);
+	bu_log("implicit plane normal: %f, %f, %f\n", p.Normal().x, p.Normal().y, p.Normal().z);
+	VMOVE(data->params->implicit_plane_origin, p.Origin());
+	VMOVE(data->params->implicit_plane_normal, p.Normal());
+	data->params->have_implicit_plane = 1;
     }
 
     // Make a starting cylinder from one of the cylindrical surfaces and construct the axis line
