@@ -224,6 +224,22 @@ find_subbreps(struct bu_vls *msgs, const ON_Brep *brep)
 		//subbrep_planar_init(sb);
 		//subbrep_planar_close_obj(sb);
 		//sb->local_brep = sb->planar_obj->local_brep;
+		split = subbrep_split(msgs, sb);
+		TOO_MANY_CSG_OBJS(obj_cnt, msgs);
+		if (!split) {
+		    if (msgs) bu_vls_printf(msgs, "Note - split of %s unsuccessful, making brep\n", bu_vls_addr(sb->key));
+		    sb->type = BREP;
+		    (void)subbrep_make_brep(msgs, sb);
+		} else {
+		    // If we did successfully split the brep, do some post-split clean-up
+		    sb->type = COMB;
+		    //if (sb->planar_obj) subbrep_planar_close_obj(sb);
+		    successes++;
+#if WRITE_ISLAND_BREPS
+		    (void)subbrep_make_brep(msgs, sb);
+#endif
+		}
+
 		successes++;
 		break;
 	    case BREP:
@@ -472,6 +488,10 @@ subbrep_split(struct bu_vls *msgs, struct subbrep_island_data *data)
 	// that are part of that shoal are degenerate for the purposes of the
 	// "parent" shape.  May have to limit our inputs to
 	// non-self-intersecting loops for now...
+
+	// Can have a nucleus that is entirely within a single shoal volume, in which
+	// case it is no longer the nucleus...
+	//nucleus_vs_shoals(mss,data);
     }
     return 1;
 csg_abort:
