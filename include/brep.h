@@ -1393,6 +1393,9 @@ struct csg_object_params {
     point_t p[8];
     int plane_cnt;
     plane_t *planes;
+    /* An implicit plane, if present, may close a face on a parent solid */
+    int have_implicit_plane;
+    plane_t implicit_plane;
     /* bot */
     int face_cnt;
     int vert_cnt;
@@ -1472,6 +1475,8 @@ struct subbrep_island_data {
     int fil_cnt;
     int null_vert_cnt;
     int *null_verts;
+    int null_edge_cnt;
+    int *null_edges;
     int planar_obj_vert_cnt;
     int *planar_obj_vert_map;
     int type;

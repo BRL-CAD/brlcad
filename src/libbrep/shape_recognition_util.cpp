@@ -358,6 +358,13 @@ subbrep_object_init(struct subbrep_island_data *obj, const ON_Brep *brep)
     ON_MinMaxInit(&(obj->bbox->m_min), &(obj->bbox->m_max));
     obj->bbox_set = 0;
     obj->obj_cnt = NULL;
+    obj->faces = NULL;
+    obj->loops = NULL;
+    obj->edges = NULL;
+    obj->fol = NULL;
+    obj->fil = NULL;
+    obj->null_verts = NULL;
+    obj->null_edges = NULL;
 }
 
 void
@@ -443,6 +450,7 @@ set_to_array(int **array, int *array_cnt, std::set<int> *set)
 {
     std::set<int>::iterator s_it;
     int i = 0;
+    if (*array) bu_free((*array), "free old array");
     (*array_cnt) = set->size();
     if ((*array_cnt) > 0) {
 	(*array) = (int *)bu_calloc((*array_cnt), sizeof(int), "array");
@@ -467,6 +475,7 @@ map_to_array(int **array, int *array_cnt, std::map<int,int> *map)
 {
     std::map<int,int>::iterator m_it;
     int i = 0;
+    if (*array) bu_free((*array), "free old array");
     (*array_cnt) = map->size();
     if ((*array_cnt) > 0) {
 	(*array) = (int *)bu_calloc((*array_cnt)*2, sizeof(int), "array");

@@ -149,6 +149,8 @@ subbrep_is_cylinder(struct bu_vls *UNUSED(msgs), struct subbrep_island_data *dat
 int
 cylinder_csg(struct bu_vls *msgs, struct subbrep_shoal_data *data, fastf_t cyl_tol)
 {
+    int implicit_plane_ind = -1;
+
     const ON_Brep *brep = data->i->brep;
     std::set<int> planar_surfaces;
     std::set<int> cylindrical_surfaces;
@@ -267,8 +269,16 @@ cylinder_csg(struct bu_vls *msgs, struct subbrep_shoal_data *data, fastf_t cyl_t
 	    }
 	}
 	if (have_both_faces) {
+	    std::set<int> nullv;
+	    std::set<int> nulle;
 	    bu_log("edge %d is degenerate\n", *s_it);
-	    //TODO log verts as null verts for nucleus
+	    array_to_set(&nullv, data->i->null_verts, data->i->null_vert_cnt);
+	    array_to_set(&nulle, data->i->null_edges, data->i->null_edge_cnt);
+	    nullv.insert(edge->Vertex(0)->m_vertex_index);
+	    nullv.insert(edge->Vertex(1)->m_vertex_index);
+	    nulle.insert(*s_it);
+	    set_to_array(&(data->i->null_verts), &(data->i->null_vert_cnt), &nullv);
+	    set_to_array(&(data->i->null_edges), &(data->i->null_edge_cnt), &nulle);
 	}
     }
 
@@ -293,6 +303,7 @@ cylinder_csg(struct bu_vls *msgs, struct subbrep_shoal_data *data, fastf_t cyl_t
 
 	ON_Plane pf(points[0], points[1], points[2]);
 	cyl_planes.Append(pf);
+	implicit_plane_ind = cyl_planes.Count() - 1;
     }
 
 
@@ -329,6 +340,10 @@ cylinder_csg(struct bu_vls *msgs, struct subbrep_shoal_data *data, fastf_t cyl_t
     }
 #endif
 
+    if (implicit_plane_ind != -1) {
+	bu_log("have implicit plane\n");
+    }
+
     // Make a starting cylinder from one of the cylindrical surfaces and construct the axis line
     ON_Cylinder cylinder;
     ON_Surface *cs = brep->m_F[*cylindrical_surfaces.begin()].SurfaceOf()->Duplicate();
@@ -343,15 +358,11 @@ cylinder_csg(struct bu_vls *msgs, struct subbrep_shoal_data *data, fastf_t cyl_t
 
     // If we have only two cylinder planes and both are perpendicular to the axis, we have
     // an rcc and do not need an intersecting arbn.
-    if (planar_surfaces.size() == 2) {
+    if (cyl_planes.Count() == 2) {
 	ON_Plane p1, p2;
 	int perpendicular = 2;
-	std::set<int>::iterator f_it = planar_surfaces.begin();
-	f_it++;
-	brep->m_F[*planar_surfaces.begin()].SurfaceOf()->IsPlanar(&p1);
-	brep->m_F[(*f_it)].SurfaceOf()->IsPlanar(&p2);
-	if (p1.Normal().IsParallelTo(cylinder.Axis(), VUNITIZE_TOL) == 0) perpendicular--;
-	if (p2.Normal().IsParallelTo(cylinder.Axis(), VUNITIZE_TOL) == 0) perpendicular--;
+	if (cyl_planes[0].Normal().IsParallelTo(cylinder.Axis(), VUNITIZE_TOL) == 0) perpendicular--;
+	if (cyl_planes[1].Normal().IsParallelTo(cylinder.Axis(), VUNITIZE_TOL) == 0) perpendicular--;
 	if (perpendicular == 2) {
 	    // TODO define csg params and exit.
 	}
@@ -369,7 +380,8 @@ cylinder_csg(struct bu_vls *msgs, struct subbrep_shoal_data *data, fastf_t cyl_t
     // Grab all the intersections
     ON_3dPointArray axis_pts_init;
     for (int i = 0; i < cyl_planes.Count(); i++) {
-	if (!cyl_planes[i].Normal().IsPerpendicularTo(cylinder.Axis(), VUNITIZE_TOL)) {
+	// Note - don't intersect the implicit plane, since it doesn't play a role in defining the main cylinder
+	if (!cyl_planes[i].Normal().IsPerpendicularTo(cylinder.Axis(), VUNITIZE_TOL) && i != implicit_plane_ind) {
 	    axis_pts_init.Append(ON_LinePlaneIntersect(l, cyl_planes[i]));
 	}
     }
@@ -379,11 +391,15 @@ cylinder_csg(struct bu_vls *msgs, struct subbrep_shoal_data *data, fastf_t cyl_t
     for (int i = 0; i < axis_pts_init.Count(); i++) {
 	int trimmed = 0;
 	for (int j = 0; j < cyl_planes.Count(); j++) {
-	    ON_3dVector v = axis_pts_init[i] - cyl_planes[j].origin;
-	    double dotp = ON_DotProduct(v, cyl_planes[j].Normal());
-	    if (dotp > 0 && !NEAR_ZERO(dotp, VUNITIZE_TOL)) {
-		trimmed = 1;
-		break;
+	    // Don't trim with the implicit plane - the implicit plane is defined "after" the
+	    // primary shapes are formed, so it doesn't get a vote in removing capping points
+	    if (j != implicit_plane_ind) {
+		ON_3dVector v = axis_pts_init[i] - cyl_planes[j].origin;
+		double dotp = ON_DotProduct(v, cyl_planes[j].Normal());
+		if (dotp > 0 && !NEAR_ZERO(dotp, VUNITIZE_TOL)) {
+		    trimmed = 1;
+		    break;
+		}
 	    }
 	}
 	if (!trimmed) axis_pts_2nd.Append(axis_pts_init[i]);
@@ -407,7 +423,7 @@ cylinder_csg(struct bu_vls *msgs, struct subbrep_shoal_data *data, fastf_t cyl_t
 
     // If, after all that, we still have more than two cap points, we've got a problem
     if (axis_pts.Count() != 2) {
-	bu_log("more than two axis points on caps??\n");
+	bu_log("incorrect number of axis points for caps (%d)??\n", axis_pts.Count());
 	return 0;
     }
 

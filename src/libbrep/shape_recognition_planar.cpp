@@ -14,10 +14,9 @@
 #define L3_OFFSET 6
 
 HIDDEN void
-verts_assemble(ON_2dPointArray &on2dpts, int *index, std::map<int, int> *local_to_verts, struct subbrep_island_data *data, const ON_BrepLoop *b_loop, int dir, int verts_offset)
+verts_assemble(ON_2dPointArray &on2dpts, int *index, int *verts_to_local, struct subbrep_island_data *data, const ON_BrepLoop *b_loop, int dir)
 {
     const ON_Brep *brep = data->brep;
-    ON_2dPointArray points2d;
 
     if (!data || !b_loop) return;
 
@@ -42,8 +41,8 @@ verts_assemble(ON_2dPointArray &on2dpts, int *index, std::map<int, int> *local_t
 		const ON_Curve *trim_curve = trim->TrimCurveOf();
 		ON_2dPoint cp = trim_curve->PointAt(trim_curve->Domain().Min());
 		on2dpts.Append(cp);
-		(*local_to_verts)[ti+verts_offset] = vert_ind;
-		if (index) index[ti] = ti+verts_offset;
+		verts_to_local[vert_ind] = on2dpts.Count() - 1;
+		if (index) index[ti] = on2dpts.Count() - 1;
 	    }
 	}
     } else {
@@ -60,19 +59,18 @@ verts_assemble(ON_2dPointArray &on2dpts, int *index, std::map<int, int> *local_t
 		const ON_Curve *trim_curve = trim->TrimCurveOf();
 		ON_2dPoint cp = trim_curve->PointAt(trim_curve->Domain().Max());
 		on2dpts.Append(cp);
-		(*local_to_verts)[ti+verts_offset] = vert_ind;
-		if (index) index[ti] = ti+verts_offset;
+		verts_to_local[vert_ind] = on2dpts.Count() - 1;
+		if (index) index[ti] = on2dpts.Count() - 1;
 	    }
 	}
     }
 }
 
+/* TODO -rename to planar_polygon_tri */
 int
 subbrep_polygon_tri(struct bu_vls *msgs, struct subbrep_island_data *data, int *loops, int loop_cnt, int **ffaces)
 {
     const ON_Brep *brep = data->brep;
-
-
 
     // Accumulate faces in a std::vector, since we don't know how many we're going to get
     std::vector<int> all_faces;
@@ -84,13 +82,14 @@ subbrep_polygon_tri(struct bu_vls *msgs, struct subbrep_island_data *data, int *
     ON_2dPointArray on2dpts;
     point2d_t *verts2d = NULL;
 
+    /* Sanity check */
+    if (loop_cnt < 1 || !data || !loops || !ffaces) return 0;
+
     /* The triangulation will use only the points in the temporary verts2d
      * array and return with faces indexed accordingly, so we need a map to
      * translate them back to our final vert array */
-    std::map<int, int> local_to_verts;
-
-    /* Sanity check */
-    if (loop_cnt < 1 || !data || !loops || !ffaces) return 0;
+    int *vert_to_local = (int *)bu_calloc(brep->m_V.Count(), sizeof(int), "vert_to_local");
+    for (int i = 0; i < brep->m_V.Count(); i++) { vert_to_local[i] = -1; }
 
     /* Only one loop is easier */
     if (loop_cnt == 1) {
@@ -111,27 +110,41 @@ subbrep_polygon_tri(struct bu_vls *msgs, struct subbrep_island_data *data, int *
 	}
 
 
-	verts_assemble(on2dpts, NULL, &local_to_verts, data, b_loop, 1, 0);
-
-#if 0
-	if (!bn_polygon_clockwise(b_loop->m_ti.Count(), verts2d)) {
-	    bu_log("degenerate loop %d for face %d - no go\n", b_loop->m_loop_index, b_face->m_face_index);
-	    //return 0;
-	}
-#endif
+	verts_assemble(on2dpts, NULL, vert_to_local, data, b_loop, 1);
 
 	/* The real work - triangulate the 2D polygon to find out triangles for
 	 * this particular B-Rep face */
+	int *pt_ind = (int *)bu_calloc(on2dpts.Count(), sizeof(int), "pt_ind");
 	verts2d = (point2d_t *)bu_calloc(on2dpts.Count(), sizeof(point2d_t), "bot verts");
 	for (int i = 0; i < on2dpts.Count(); i++) {
 	    V2MOVE(verts2d[i], on2dpts[i]);
+	    pt_ind[i] = i;
 	}
+
+#if 1
+	int ccw = bg_polygon_clockwise(on2dpts.Count(), verts2d, pt_ind);
+	if (ccw == 0) {
+	    bu_log("degenerate loop %d for face %d - skip\n", b_loop->m_loop_index, b_face->m_face_index);
+	    return 0;
+	}
+	if (ccw == 1) {
+	    bu_log("warning: loop %d for face %d is clockwise ordered - loop assembly must not have worked correctly\n", b_loop->m_loop_index, b_face->m_face_index);
+	}
+#endif
+
+
 	face_error = bg_polygon_triangulate(&faces, &num_faces, NULL, NULL, (const point2d_t *)verts2d, b_loop->m_ti.Count(), EAR_CLIPPING);
 
     } else {
 
 	/* We've got multiple loops - more complex setup since we need to define a polygon
 	 * with holes */
+
+	// First, check each loop individually to see if any of them are degenerate.
+	// If the outer loop is degenerate and any of the inner loops are not, we've
+	// got an error.
+
+
 	size_t poly_npts, nholes, total_pnts;
 	int *poly;
 	int **holes_array;
@@ -159,12 +172,12 @@ subbrep_polygon_tri(struct bu_vls *msgs, struct subbrep_island_data *data, int *
 	}
 
 	/* Use the loop definitions to assemble the final input arrays */
-	verts_assemble(on2dpts, poly, &local_to_verts, data, b_oloop, 1, 0);
-	int offset = on2dpts.Count();;
+	verts_assemble(on2dpts, poly, vert_to_local, data, b_oloop, 1);
+	int offset = on2dpts.Count();
 	for (int i = 1; i < loop_cnt; i++) {
 	    const ON_BrepLoop *b_loop = &(brep->m_L[loops[i]]);
 	    holes_array[i-1] = (int *)bu_calloc(b_loop->m_ti.Count(), sizeof(int), "hole array");
-	    verts_assemble(on2dpts, holes_array[i-1], &local_to_verts, data, b_loop, -1, offset);
+	    verts_assemble(on2dpts, holes_array[i-1], vert_to_local, data, b_loop, -1);
 	    offset += b_loop->m_ti.Count();
 	}
 
@@ -204,10 +217,23 @@ subbrep_polygon_tri(struct bu_vls *msgs, struct subbrep_island_data *data, int *
 	/* Now that we have our faces, map them from the local vertex
 	 * indices to the global ones and insert the faces into the
 	 * all_faces array */
+	int local_cnt = 0;
+	for (int i = 0; i < brep->m_V.Count(); i++) {
+	    if (vert_to_local[i] != -1) local_cnt++;
+	}
+	int *local_to_verts = (int *)bu_calloc(local_cnt, sizeof(int), "local_to_vert");
+	local_cnt = 0;
+	for (int i = 0; i < brep->m_V.Count(); i++) {
+	    if (vert_to_local[i] != -1) {
+		local_to_verts[local_cnt] = vert_to_local[i];
+		local_cnt++;
+	    }
+	}
 	for (int f_ind = 0; f_ind < num_faces*3; f_ind++) {
 	    all_faces.push_back(local_to_verts[faces[f_ind]]);
 	}
 	bu_free(verts2d, "free tmp 2d vertex array");
+	bu_free(local_to_verts, "free tmp 2d vertex array");
     }
 
     /* Now we can build the final faces array */
@@ -215,8 +241,90 @@ subbrep_polygon_tri(struct bu_vls *msgs, struct subbrep_island_data *data, int *
     for (int i = 0; i < num_faces*3; i++) {
 	(*ffaces)[i] = all_faces[i];
     }
+    bu_free(vert_to_local, "free tmp 2d vertex map");
 
+    bu_log("got here\n");
     return num_faces;
+}
+
+// A shoal, unlike a planar face, may define it's bounding planar loop using
+// data from multiple face loops.  For this situation we walk the edges, and if
+// we hit a null vertex we need to use that vertex to find the next edge that
+// is not null.  The opposite vertex is then checked - if it is also null, continue
+// to the next non-null edge.  Otherwise, resume the loop building with that vertex.
+//
+// This will generate a loop using 3d points.  Next, project those points into the
+// 2D implicit plane from the shoal. Check the new 2D loop to determine if it is
+// counterclockwise - if not, reverse it.
+int
+shoal_polygon_tri(struct bu_vls *UNUSED(msgs), struct subbrep_shoal_data *data, int **UNUSED(ffaces))
+{
+    const ON_Brep *brep = data->i->brep;
+
+    // polygon verts
+    std::vector<int> polygon_verts;
+
+    // Get the set of ignored edges
+    std::set<int> ignored_edges;
+    array_to_set(&ignored_edges, data->i->null_edges, data->i->null_edge_cnt);
+
+    // Get the set of ignored verts
+    std::set<int> ignored_verts;
+    array_to_set(&ignored_verts, data->i->null_verts, data->i->null_vert_cnt);
+
+    // Get the set of edges associated with the shoal's loops.
+    std::set<int> shoal_edges;
+    for (int i = 0; i < data->loops_cnt; i++) {
+	const ON_BrepLoop *loop = &(data->i->brep->m_L[data->loops[i]]);
+	for (int ti = 0; ti < loop->m_ti.Count(); ti++) {
+	    const ON_BrepTrim *trim = &(brep->m_T[loop->m_ti[ti]]);
+	    const ON_BrepEdge *edge = &(brep->m_E[trim->m_ei]);
+	    if (ignored_edges.find(edge->m_edge_index) == ignored_edges.end()) {
+		shoal_edges.insert(edge->m_edge_index);
+	    }
+	}
+    }
+
+    // seed vert
+    int seed_vert;
+    const ON_BrepEdge *first_edge = &(brep->m_E[(int)(*shoal_edges.begin())]);
+    if (ignored_verts.find(first_edge->Vertex(0)->m_vertex_index) == ignored_verts.end()) {
+	seed_vert = first_edge->Vertex(0)->m_vertex_index;
+    } else {
+	seed_vert = first_edge->Vertex(1)->m_vertex_index;
+    }
+    polygon_verts.push_back(seed_vert);
+
+    // If we have the degenerate case, there is no triangulation.
+    if (brep->m_V[seed_vert].m_ei.Count() == 1) return 0;
+
+    // Walk the edges collecting non-ignored verts.
+    int curr_vert = seed_vert;
+    int curr_edge = -1;
+    while (curr_edge != first_edge->m_edge_index) {
+	// Once we're past the first edge, initialize our terminating condition if not already set.
+	if (curr_edge == -1) curr_edge = first_edge->m_edge_index;
+
+	for (int i = 0; i < brep->m_V[curr_vert].m_ei.Count(); i++) {
+	    const ON_BrepEdge *e = &(brep->m_E[brep->m_V[i].m_ei[i]]);
+	    int ce = e->m_edge_index;
+	    if (ce != curr_edge && ignored_edges.find(ce) == ignored_edges.end()) {
+		// Have a viable edge - find our new vert.
+		int nv = (e->Vertex(0)->m_vertex_index == curr_vert) ? e->Vertex(1)->m_vertex_index : e->Vertex(0)->m_vertex_index;
+		if (ignored_verts.find(nv) == ignored_verts.end()) polygon_verts.push_back(nv);
+		curr_vert = nv;
+		curr_edge = ce;
+		break;
+	    }
+	}
+    }
+
+    std::vector<int>::iterator v_it;
+    for(v_it = polygon_verts.begin(); v_it != polygon_verts.end(); v_it++) {
+	bu_log("shoal vert found: %d\n", (int)*v_it);
+    }
+
+    return 0;
 }
 
 /*
@@ -423,7 +531,7 @@ island_nucleus(struct bu_vls *msgs, struct subbrep_island_data *data)
     std::set<int>::iterator p_it;
     for (p_it = planar_faces.begin(); p_it != planar_faces.end(); p_it++) {
 	int f_lcnt;
-	int *f_loops;
+	int *f_loops = NULL;
 	std::set<int> active_loops;
 	const ON_BrepFace *face = &(data->brep->m_F[(int)*p_it]);
 	// Determine if we have 1 or a set of loops.
@@ -441,7 +549,15 @@ island_nucleus(struct bu_vls *msgs, struct subbrep_island_data *data)
     }
 
     // Second, deal with non-planar shoals.
-
+    for (size_t i = 0; i < BU_PTBL_LEN(data->children); i++) {
+	struct subbrep_shoal_data *d = (struct subbrep_shoal_data *)BU_PTBL_GET(data->children, i);
+	int *faces;
+	int face_cnt = shoal_polygon_tri(msgs, d, &faces);
+	if (face_cnt > 0) {
+	    face_cnts.push_back(face_cnt);
+	    face_arrays.push_back(faces);
+	}
+    }
 
     // Third, generate compact vertex list for csg params
     // Fourth, map old vertex indices to new

@@ -293,7 +293,7 @@ connected_loop_set(int **c_loops, const int loop_index, const ON_Brep *brep)
 	const ON_BrepEdge *edge = &(brep->m_E[trim->m_ei]);
 	if (trim->m_ei != -1 && edge) {
 	    for (int j = 0; j < edge->m_ti.Count(); j++) {
-		const ON_BrepTrim *t = &(brep->m_T[edge->m_ti[ti]]);
+		const ON_BrepTrim *t = &(brep->m_T[edge->m_ti[j]]);
 		connected_loops.insert(t->Loop()->m_loop_index);
 	    }
 	}
@@ -418,61 +418,41 @@ subbrep_split(struct bu_vls *msgs, struct subbrep_island_data *data)
 	const ON_BrepFace *face = loop->Face();
 	surface_t surface_type = ((surface_t *)data->face_surface_types)[face->m_face_index];
 	// Characterize the planar faces. TODO - see if we actually need this or not...
-	if (surface_type == SURFACE_PLANE) {
-	    int nonlinear_loop = 0;
-	    for (int ti = 0; ti < loop->m_ti.Count(); ti++) {
-		const ON_BrepTrim *trim = &(data->brep->m_T[loop->m_ti[ti]]);
-		const ON_BrepEdge *edge = &(data->brep->m_E[trim->m_ei]);
-		if (trim->m_ei != -1 && edge) {
-		    ON_Curve *ecv = edge->EdgeCurveOf()->Duplicate();
-		    bool is_linear = ecv->IsLinear();
-		    delete ecv;
-		    if (!is_linear) {
-			nonlinear_loop = 1;
-			break;
-		    }
+	if (surface_type != SURFACE_PLANE) {
+	    // non-planar face - check to see whether it's already part of a shoal.  If not,
+	    // create a new one - otherwise, skip.
+	    if (active.find(face->m_face_index) != active.end()) {
+		std::set<int> shoal_loops;
+		struct subbrep_shoal_data *sh;
+		BU_GET(sh, struct subbrep_shoal_data);
+		BU_GET(sh->params, struct csg_object_params);
+		sh->i = data;
+		int *c_loops = NULL;
+		int c_loop_cnt = connected_loop_set(&c_loops, loop->m_loop_index, data->brep);
+		sh->loops_cnt = shoal_filter_loops(&(sh->loops), c_loop_cnt, c_loops, surface_type, loop->m_loop_index, data->brep, (surface_t *)data->face_surface_types);
+		for (int i = 0; i < sh->loops_cnt; i++) {
+		    active.erase(sh->loops[i]);
 		}
+		switch (surface_type) {
+		    case SURFACE_CYLINDRICAL_SECTION:
+		    case SURFACE_CYLINDER:
+			if (!cylinder_csg(msgs, sh, BREP_CYLINDRICAL_TOL)) csg_fail++;
+			break;
+		    case SURFACE_CONE:
+			csg_fail++;
+			break;
+		    case SURFACE_SPHERICAL_SECTION:
+		    case SURFACE_SPHERE:
+			csg_fail++;
+			break;
+		    case SURFACE_TORUS:
+			csg_fail++;
+			break;
+		    default:
+			break;
+		}
+		bu_ptbl_ins(data->children, (long *)sh);
 	    }
-	    if (nonlinear_loop) {
-		partly_planar.insert(*l_it);
-	    } else {
-		fully_planar.insert(*l_it);
-	    }
-	} else {
-	// non-planar face - check to see whether it's already part of a shoal.  If not,
-	// create a new one - otherwise, skip.
-	if (active.find(face->m_face_index) != active.end()) {
-	    std::set<int> shoal_loops;
-	    struct subbrep_shoal_data *sh;
-	    BU_GET(sh, struct subbrep_shoal_data);
-	    BU_GET(sh->params, struct csg_object_params);
-	    sh->i = data;
-	    int *c_loops;
-	    int c_loop_cnt = connected_loop_set(&c_loops, loop->m_loop_index, data->brep);
-	    sh->loops_cnt = shoal_filter_loops(&(sh->loops), c_loop_cnt, c_loops, surface_type, loop->m_loop_index, data->brep, (surface_t *)data->face_surface_types);
-	    for (int i = 0; i < sh->loops_cnt; i++) {
-		active.erase(sh->loops[i]);
-	    }
-	    switch (surface_type) {
-		case SURFACE_CYLINDRICAL_SECTION:
-		case SURFACE_CYLINDER:
-		    if (!cylinder_csg(msgs, sh, BREP_CYLINDRICAL_TOL)) csg_fail++;
-		    break;
-		case SURFACE_CONE:
-		    csg_fail++;
-		    break;
-		case SURFACE_SPHERICAL_SECTION:
-		case SURFACE_SPHERE:
-		    csg_fail++;
-		    break;
-		case SURFACE_TORUS:
-		    csg_fail++;
-		    break;
-		default:
-		    break;
-	    }
-	    bu_ptbl_ins(data->children, (long *)sh);
-	}
 	}
     }
 
