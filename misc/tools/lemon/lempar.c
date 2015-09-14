@@ -4,6 +4,7 @@
 /* First off, code is included that follows the "include" declaration
 ** in the input grammar file. */
 #include <stdio.h>
+#include <assert.h>
 %%
 /* Next is all token values, in a form suitable for use by makeheaders.
 ** This section will be null unless lemon is run with the -m switch.
@@ -494,6 +495,7 @@ static void yyStackOverflow(yyParser *yypParser, YYMINORTYPE *yypMinor){
 %%
    ParseARG_STORE; /* Suppress warning about unused %extra_argument var */
    yypMinor = NULL; /* quellage */
+   assert(yypMinor == NULL);
 }
 
 /*
@@ -679,6 +681,7 @@ static void yy_syntax_error(
   ParseARG_STORE; /* Suppress warning about unused %extra_argument variable */
   yymajor = 0; /* quellage */
   yyminor.yyinit = 0; /* quellage */
+  assert(yymajor == 0 && yyminor.yyinit == 0);
 }
 
 /*
