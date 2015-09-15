@@ -638,13 +638,8 @@ island_nucleus(struct bu_vls *msgs, struct subbrep_island_data *data)
 	for (unsigned int i = 0; i < all_faces.size(); i++) {
 	    int nv = vert_map.find(all_faces[i])->second;
 	    data->nucleus->faces[i] = nv;
-	    bu_log("%d->%d\n", all_faces[i], nv);
 	}
 	data->nucleus->face_cnt = all_faces.size() / 3;
-
-	for (int j = 0; j < data->nucleus->face_cnt; j++) {
-	    bu_log("data->nucleus->face %d: (%d,%d,%d)\n", j, data->nucleus->faces[j*3], data->nucleus->faces[j*3+1], data->nucleus->faces[j*3+2]);
-	}
 
 	// Fifth, test for a negative polyhedron - if negative, handle accordingly
 	if (negative_polygon(msgs, data->nucleus) == -1) {
