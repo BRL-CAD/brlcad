@@ -56,7 +56,7 @@ convex_plane_usage(ON_SimpleArray<ON_Plane> *planes, int **pu)
 
 
 int
-triangulate_array(ON_2dPointArray &on2dpts, int *verts_map, int **ffaces)
+triangulate_array(ON_2dPointArray &on2dpts, int *verts_map, int **ffaces, int loop_dir, int *rev_status)
 {
     int num_faces = 0;
 
@@ -68,6 +68,12 @@ triangulate_array(ON_2dPointArray &on2dpts, int *verts_map, int **ffaces)
     }
 
     int ccw = bg_polygon_clockwise(on2dpts.Count(), verts2d, pt_ind);
+
+    if (loop_dir && ccw == loop_dir) {
+	bu_log("loop direction flipped - has consequences.\n");
+	(*rev_status) = 1;
+    }
+
     if (ccw == 0) {
 	bu_log("degenerate loop - skip\n");
 	bu_free(verts2d, "free verts2d");
@@ -211,7 +217,7 @@ triangulate_array_with_holes(ON_2dPointArray &on2dpts, int *verts_map, int loop_
 
 /* TODO -rename to planar_polygon_tri */
 int
-subbrep_polygon_tri(struct bu_vls *UNUSED(msgs), struct subbrep_island_data *data, int *loops, int loop_cnt, int **ffaces)
+subbrep_polygon_tri(struct bu_vls *UNUSED(msgs), struct subbrep_island_data *data, int *loops, int loop_cnt, int *rev_status, int **ffaces)
 {
     const ON_Brep *brep = data->brep;
     int num_faces;
@@ -227,6 +233,7 @@ subbrep_polygon_tri(struct bu_vls *UNUSED(msgs), struct subbrep_island_data *dat
     if (loop_cnt == 1) {
 	ON_2dPointArray on2dpts;
 	const ON_BrepLoop *b_loop = &(brep->m_L[loops[0]]);
+	int loop_dir = 0;
 
 	/* We need to build a 2D vertex list for the triangulation, and as long
 	 * as we make sure the vertex mapping accounts for flipped trims in 3D,
@@ -251,7 +258,8 @@ subbrep_polygon_tri(struct bu_vls *UNUSED(msgs), struct subbrep_island_data *dat
 		vert_array.push_back(vert_ind);
 		bu_log("%d vertex: %d\n", b_loop->m_loop_index, vert_ind);
 	    } else {
-		bu_log("%d vertex %d ignored\n", b_loop->m_loop_index, vert_ind);
+		bu_log("%d vertex %d ignored - need to check if loop dir changed\n", b_loop->m_loop_index, vert_ind);
+		loop_dir = brep->LoopDirection(brep->m_L[b_loop->m_loop_index]);
 	    }
 	}
 
@@ -260,7 +268,7 @@ subbrep_polygon_tri(struct bu_vls *UNUSED(msgs), struct subbrep_island_data *dat
 	    vert_map[i] = vert_array[i];
 	}
 
-	num_faces = triangulate_array(on2dpts, vert_map, ffaces);
+	num_faces = triangulate_array(on2dpts, vert_map, ffaces, loop_dir, rev_status);
 
     } else {
 
@@ -436,7 +444,7 @@ shoal_polygon_tri(struct bu_vls *UNUSED(msgs), struct subbrep_shoal_data *data, 
 	vert_map[i] = polygon_verts[i];
     }
 
-    num_faces = triangulate_array(on2dpts, vert_map, ffaces);
+    num_faces = triangulate_array(on2dpts, vert_map, ffaces, NULL, 0);
 
 
     return num_faces;
@@ -588,10 +596,13 @@ island_nucleus(struct bu_vls *msgs, struct subbrep_island_data *data)
     std::set<int> island_loops;
     array_to_set(&island_loops, data->loops, data->loops_cnt);
 
+    int have_flipped_loops = 0;
+
     // First, deal with planar faces
     std::set<int>::iterator p_it;
     for (p_it = planar_faces.begin(); p_it != planar_faces.end(); p_it++) {
 	int f_lcnt;
+	int loop_rev = 0; // Check if loop flips when ignored verts are removed
 	int *f_loops = NULL;
 	std::set<int> active_loops;
 	const ON_BrepFace *face = &(data->brep->m_F[(int)*p_it]);
@@ -602,9 +613,10 @@ island_nucleus(struct bu_vls *msgs, struct subbrep_island_data *data)
 	if (f_lcnt > 1) is_convex = 0;
 	set_to_array(&f_loops, &f_lcnt, &active_loops);
 	int *faces;
-	int face_cnt = subbrep_polygon_tri(msgs, data, f_loops, f_lcnt, &faces);
+	int face_cnt = subbrep_polygon_tri(msgs, data, f_loops, f_lcnt, &loop_rev, &faces);
+	if (loop_rev) have_flipped_loops++;
 	// If the face is flipped, flip the triangles so their normals are correct
-	if (face->m_bRev) {
+	if ((face->m_bRev && !loop_rev) || (!face->m_bRev && loop_rev)) {
 	    for (int i = 0; i < face_cnt; i++) {
 		int tmp = faces[i*3+1];
 		faces[i*3+1] = faces[i*3+2];
@@ -617,7 +629,7 @@ island_nucleus(struct bu_vls *msgs, struct subbrep_island_data *data)
 	    face_arrays.push_back(faces);
 	    ON_Plane p;
 	    face->SurfaceOf()->IsPlanar(&p, BREP_PLANAR_TOL);
-	    if (face->m_bRev) p.Flip();
+	    if ((face->m_bRev && !loop_rev) || (!face->m_bRev && loop_rev)) p.Flip();
 	    planes.Append(p);
 	}
     }
@@ -791,56 +803,17 @@ island_nucleus(struct bu_vls *msgs, struct subbrep_island_data *data)
 	// inside a shoal (shape + arbn).  In this situation, the nucleus is subtracted from the shoal
 	// shape.
 
-	// First, see if we have more than one shoal.  If so, this isn't an issue (* I think *)?
-	if (BU_PTBL_LEN(data->children) == 1) {
-	    struct subbrep_shoal_data *d = (struct subbrep_shoal_data *)BU_PTBL_GET(data->children, 0);
-	    // If we don't have an implicit plane (huh??) stop
-	    if (d->params->have_implicit_plane) {
-		ON_3dPoint o;
-		ON_3dVector n;
-		ON_VMOVE(o, d->params->implicit_plane_origin);
-		ON_VMOVE(n, d->params->implicit_plane_normal);
-		ON_Plane p(o, n);
-		// If all vertex points in the island aren't on one side of this plane, stop - else continue.
-		// Collect all vertex points in nucleus
-		std::set<int> island_verts;
-		for (int i = 0; i < data->faces_cnt; i++) {
-		    const ON_BrepFace *face = &(data->brep->m_F[data->faces[i]]);
-		    for (int j = 0; j < face->LoopCount(); j++) {
-			if (island_loops.find(face->m_li[j]) != island_loops.end()) {
-			    const ON_BrepLoop *b_loop = &(data->brep->m_L[face->m_li[j]]);
-			    for (int ti = 0; ti < b_loop->m_ti.Count(); ti++) {
-				const ON_BrepTrim *trim = &(data->brep->m_T[b_loop->m_ti[ti]]);
-				const ON_BrepEdge *edge = &(data->brep->m_E[trim->m_ei]);
-				island_verts.insert(edge->Vertex(0)->m_vertex_index);
-				island_verts.insert(edge->Vertex(1)->m_vertex_index);
-			    }
-			}
-		    }
-		}
-		// See if all vertices in the island are on one side of the implicit plane.  Necessary
-		// but not sufficient.
-		int points_on_same_side = 1;
-		std::set<int>::iterator iv_it;
-		for (iv_it = island_verts.begin(); iv_it != island_verts.end(); iv_it++) {
-		    ON_3dPoint p3d = data->brep->m_V[(int)*iv_it].Point();
-		    double dp = ON_DotProduct(p3d - p.origin, p.Normal());
-		    if (dp < 0 && !NEAR_ZERO(dp, VUNITIZE_TOL)) {
-			points_on_same_side = 0;
-			//break;
-		    }
-		}
-		bu_log("points_on_same_side: %d\n", points_on_same_side);
-
-
-		// Final test - are all nucleus vertex points inside the primary shoal shape?  If so,
-		// we have to swap the nucleus with the child.
-
-		// Rebuild the plane set with this new knowledge.  Normals for faces involved in the polyhedron
-		// that used non-linear edges will be reversed, so we need to construct a new set.  Retest convexity
+	if (have_flipped_loops > 0) {
+	    bu_log("flip nucleus and child\n");
+	    if (BU_PTBL_LEN(data->children) != 1) {
+		bu_log("huh? flipped loops and child count != 1?\n");
+	    } else {
+		struct subbrep_shoal_data *d = (struct subbrep_shoal_data *)BU_PTBL_GET(data->children, 0);
+		struct csg_object_params *tmp = data->nucleus;
+		data->nucleus = d->params;
+		d->params = tmp;
 	    }
 	}
-
     }
 
     return 1;
