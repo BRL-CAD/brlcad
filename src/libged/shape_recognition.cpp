@@ -212,39 +212,14 @@ subbrep_to_csg_planar(struct bu_vls *msgs, struct csg_object_params *data, struc
 {
     if (!msgs || !data || !wdbp || !id || !wcomb) return 0;
     if (data->type == PLANAR_VOLUME) {
-	// BRL-CAD's arbn primitive does not support concave shapes, and we want to use
-	// simpler primitives than the generic nmg if the opportunity arises.  A heuristic
-	// along the following lines may help:
-	//
-	// Step 1.  Check the number of vertices.  If the number is small enough that the
-	//          volume might conceivably be expressed by an arb4-arb8, try that first.
-	//
-	// Step 2.  If the arb4-arb8 test fails, do the convex hull and see if all points
-	//          are used by the hull.  If so, the shape is convex and may be expressed
-	//          as an arbn.
-	//
-	// Step 3.  If the arbn test fails, construct sets of contiguous concave faces using
-	//          the set of edges with one or more vertices not in the convex hull.  If
-	//          those shapes are all convex, construct an arbn tree (or use simpler arb
-	//          shapes if the subtractions may be so expressed).
-	//
-	// Step 4.  If the subtraction volumes in Step 3 are still not convex, cut our losses
-	//          and proceed to the nmg primitive.  It may conceivably be worth some
-	//          additional searches to spot convex subsets of shapes that can be more
-	//          simply represented, but that is not particularly simple to do well
-	//          and should wait until it is clear we would get a benefit from it.  Look
-	//          at the arbn tessellation routine for a guide on how to set up the
-	//          nmg - that's the most general of the arb* primitives and should be
-	//          relatively close to what is needed here.
-#if 0
-	if (!brep_to_bot(msgs, data, wdbp, id)) return 0;
-	struct csg_object_params *params = data->params;
+	/* Make the bot, using the data key for a unique name */
 	struct bu_vls prim_name = BU_VLS_INIT_ZERO;
 	subbrep_obj_name(data, id, &prim_name);
-	//std::cout << bu_vls_addr(&prim_name) << ": " << params->bool_op << "\n";
-	if (wcomb) (void)mk_addmember(bu_vls_addr(&prim_name), &((*wcomb).l), NULL, db_str2op(&(params->bool_op)));
-	bu_vls_free(&prim_name);
-#endif
+	if (mk_bot(wdbp, bu_vls_addr(&prim_name), RT_BOT_SOLID, RT_BOT_UNORIENTED, 0, data->vert_cnt, data->face_cnt, (fastf_t *)data->verts, data->faces, (fastf_t *)NULL, (struct bu_bitv *)NULL)) {
+	    if (msgs) bu_vls_printf(msgs, "mk_bot failed for overall bot\n");
+	} else {
+	    //obj_add_attr_key(data, wdbp, bu_vls_addr(&prim_name));
+	}
 	return 1;
     } else {
 	return 0;

@@ -38,6 +38,11 @@ triangulate_array(ON_2dPointArray &on2dpts, int *verts_map, int **ffaces)
 	    int d = on2dpts.Count() - 1 - i;
 	    V2MOVE(verts2d[d], on2dpts[i]);
 	}
+	bu_log("flip loop\n");
+	std::vector<int> vert_map;
+	for (int i = 0; i < on2dpts.Count(); i++) vert_map.push_back(verts_map[i]);
+	std::reverse(vert_map.begin(), vert_map.end());
+	for (int i = 0; i < on2dpts.Count(); i++) verts_map[i] = vert_map[i];
     }
 
     if (bg_polygon_triangulate(ffaces, &num_faces, NULL, NULL, (const point2d_t *)verts2d, on2dpts.Count(), EAR_CLIPPING)) {
@@ -49,11 +54,7 @@ triangulate_array(ON_2dPointArray &on2dpts, int *verts_map, int **ffaces)
     // fix up vertex indices
     for (int i = 0; i < num_faces*3; i++) {
 	int old_ind = (*ffaces)[i];
-	if (ccw) {
-	    (*ffaces)[i] = verts_map[on2dpts.Count() - 1 - old_ind];
-	} else {
-	    (*ffaces)[i] = verts_map[old_ind];
-	}
+	(*ffaces)[i] = verts_map[old_ind];
     }
     for (int i = 0; i < num_faces; i++) {
 	bu_log("face %d: %d, %d, %d\n", i, (*ffaces)[i*3], (*ffaces)[i*3+1], (*ffaces)[i*3+2]);
@@ -66,7 +67,7 @@ triangulate_array(ON_2dPointArray &on2dpts, int *verts_map, int **ffaces)
 }
 
 int
-triangulate_array_with_holes(ON_2dPointArray &on2dpts, int *verts_map, int loop_cnt, int *loop_starts, int **ffaces)
+triangulate_array_with_holes(ON_2dPointArray &on2dpts, int *verts_map, int loop_cnt, int *loop_starts, int **ffaces, const ON_Brep *brep)
 {
     int ccw;
     int num_faces;
@@ -80,7 +81,8 @@ triangulate_array_with_holes(ON_2dPointArray &on2dpts, int *verts_map, int loop_
     }
 
     for (int i = 0; i < 8; i++) {
-	bu_log("vert: %d\n", verts_map[i]);
+	ON_3dPoint p = brep->m_V[verts_map[i]].Point();
+	bu_log("vert(%d): %f, %f, %f\n", verts_map[i], p.x, p.y, p.z);
     }
 
     // Outer loop first
@@ -107,12 +109,6 @@ triangulate_array_with_holes(ON_2dPointArray &on2dpts, int *verts_map, int loop_
 	for (unsigned int i = 0; i < outer_npts; i++) verts_map[i] = vert_map[i];
 	bu_log("flip outer loop\n");
     }
-
-
-    for (int i = 0; i < 8; i++) {
-	bu_log("vert post outer: %d\n", verts_map[i]);
-    }
-
 
     // Now, holes
     std::vector<int *> holes_arrays;
@@ -203,9 +199,9 @@ subbrep_polygon_tri(struct bu_vls *UNUSED(msgs), struct subbrep_island_data *dat
 	    const ON_BrepEdge *edge = &(brep->m_E[trim->m_ei]);
 	    int vert_ind;
 	    if (trim->m_bRev3d) {
-		vert_ind = edge->Vertex(1)->m_vertex_index;
-	    } else {
 		vert_ind = edge->Vertex(0)->m_vertex_index;
+	    } else {
+		vert_ind = edge->Vertex(1)->m_vertex_index;
 	    }
 	    if (ignored_verts.find(vert_ind) == ignored_verts.end()) {
 		const ON_Curve *trim_curve = trim->TrimCurveOf();
@@ -248,9 +244,9 @@ subbrep_polygon_tri(struct bu_vls *UNUSED(msgs), struct subbrep_island_data *dat
 		const ON_BrepEdge *edge = &(brep->m_E[trim->m_ei]);
 		int vert_ind;
 		if (trim->m_bRev3d) {
-		    vert_ind = edge->Vertex(1)->m_vertex_index;
-		} else {
 		    vert_ind = edge->Vertex(0)->m_vertex_index;
+		} else {
+		    vert_ind = edge->Vertex(1)->m_vertex_index;
 		}
 		if (ignored_verts.find(vert_ind) == ignored_verts.end()) {
 		    const ON_Curve *trim_curve = trim->TrimCurveOf();
@@ -269,7 +265,7 @@ subbrep_polygon_tri(struct bu_vls *UNUSED(msgs), struct subbrep_island_data *dat
 	    vert_map[i] = vert_array[i];
 	}
 
-	num_faces = triangulate_array_with_holes(on2dpts, vert_map, loop_cnt, loop_starts, ffaces);
+	num_faces = triangulate_array_with_holes(on2dpts, vert_map, loop_cnt, loop_starts, ffaces, brep);
     }
     bu_log("got here\n");
     return num_faces;
@@ -542,9 +538,6 @@ island_nucleus(struct bu_vls *msgs, struct subbrep_island_data *data)
 	const ON_BrepFace *face = &(data->brep->m_F[data->faces[i]]);
 	surface_t surface_type = ((surface_t *)data->face_surface_types)[face->m_face_index];
 	if (surface_type == SURFACE_PLANE) {
-	    ON_Plane p;
-	    face->SurfaceOf()->IsPlanar(&p, BREP_PLANAR_TOL);
-	    planes.Append(p);
 	    planar_faces.insert(face->m_face_index);
 	}
     }
@@ -568,76 +561,103 @@ island_nucleus(struct bu_vls *msgs, struct subbrep_island_data *data)
 	set_to_array(&f_loops, &f_lcnt, &active_loops);
 	int *faces;
 	int face_cnt = subbrep_polygon_tri(msgs, data, f_loops, f_lcnt, &faces);
+	// If the face is flipped, flip the triangles so their normals are correct
+	if (face->m_bRev) {
+	    for (int i = 0; i < face_cnt; i++) {
+		int tmp = faces[i*3+1];
+		faces[i*3+1] = faces[i*3+2];
+		faces[i*3+2] = tmp;
+	    }
+	}
+	// If the face is not degenerate in the nucleus, record it.
 	if (face_cnt > 0) {
 	    face_cnts.push_back(face_cnt);
 	    face_arrays.push_back(faces);
+	    ON_Plane p;
+	    face->SurfaceOf()->IsPlanar(&p, BREP_PLANAR_TOL);
+	    planes.Append(p);
 	}
     }
 
     // Second, deal with non-planar shoals.
     for (size_t i = 0; i < BU_PTBL_LEN(data->children); i++) {
 	struct subbrep_shoal_data *d = (struct subbrep_shoal_data *)BU_PTBL_GET(data->children, i);
-	int *faces;
-	int face_cnt = shoal_polygon_tri(msgs, d, &faces);
-	if (face_cnt > 0) {
-	    face_cnts.push_back(face_cnt);
-	    face_arrays.push_back(faces);
+	if (d->params->have_implicit_plane) {
+	    int *faces;
+	    int face_cnt = shoal_polygon_tri(msgs, d, &faces);
+	    // If the face is not degenerate in the nucleus, record it.
+	    if (face_cnt > 0) {
+		face_cnts.push_back(face_cnt);
+		face_arrays.push_back(faces);
+		ON_3dPoint o;
+		ON_3dVector n;
+		VMOVE(o, data->params->implicit_plane_origin);
+		VMOVE(n, data->params->implicit_plane_normal);
+		ON_Plane p(o, n);
+		planes.Append(p);
+	    }
 	}
     }
 
-    // Third, generate compact vertex list for csg params and create the final
-    // vertex array for the bot
-    std::set<int> all_used_verts;
-    std::vector<int> all_faces;
-    std::set<int>::iterator auv_it;
-    for (unsigned int i = 0; i < face_arrays.size(); i++) {
-	int *fa = face_arrays[i];
-	int fc = face_cnts[i];
-	for (int j = 0; j < fc*3; j++) all_used_verts.insert(fa[j]);
-	for (int j = 0; j < fc*3; j++) all_faces.push_back(fa[j]);
-	// Debugging printing...
-	struct bu_vls face_desc = BU_VLS_INIT_ZERO;
-	bu_vls_sprintf(&face_desc, "face %d:  ", i);
-	for (int j = 0; j < fc*3; j=j+3) {
-	    bu_vls_printf(&face_desc, "(%d,%d,%d)", fa[j], fa[j+1], fa[j+2]);
+    if (planes.Count() > 0) {
+	// Third, generate compact vertex list for csg params and create the final
+	// vertex array for the bot
+
+	std::set<int> all_used_verts;
+	std::vector<int> all_faces;
+	std::set<int>::iterator auv_it;
+	for (unsigned int i = 0; i < face_arrays.size(); i++) {
+	    int *fa = face_arrays[i];
+	    int fc = face_cnts[i];
+	    for (int j = 0; j < fc*3; j++) all_used_verts.insert(fa[j]);
+	    for (int j = 0; j < fc*3; j++) all_faces.push_back(fa[j]);
+	    // Debugging printing...
+	    struct bu_vls face_desc = BU_VLS_INIT_ZERO;
+	    bu_vls_sprintf(&face_desc, "face %d:  ", i);
+	    for (int j = 0; j < fc*3; j=j+3) {
+		bu_vls_printf(&face_desc, "(%d,%d,%d)", fa[j], fa[j+1], fa[j+2]);
+	    }
+	    bu_log("%s\n", bu_vls_addr(&face_desc));
+	    bu_vls_free(&face_desc);
 	}
-	bu_log("%s\n", bu_vls_addr(&face_desc));
-	bu_vls_free(&face_desc);
-    }
-    std::map<int,int> vert_map;
-    int curr_vert = 0;
-    BU_GET(data->nucleus, struct csg_object_params);
-    data->nucleus->verts = (point_t *)bu_calloc(all_used_verts.size(), sizeof(point_t), "final verts array");
-    for (auv_it = all_used_verts.begin(); auv_it != all_used_verts.end(); auv_it++) {
-	ON_3dPoint vp = data->brep->m_V[(int)(*auv_it)].Point();
-	VMOVE(data->nucleus->verts[curr_vert], vp);
-	vert_map.insert(std::pair<int,int>((int)*auv_it, curr_vert));
-	curr_vert++;
-    }
-    data->nucleus->vert_cnt = all_used_verts.size();
+	std::map<int,int> vert_map;
+	int curr_vert = 0;
+	BU_GET(data->nucleus, struct csg_object_params);
+	data->nucleus->type = PLANAR_VOLUME;
+	data->nucleus->verts = (point_t *)bu_calloc(all_used_verts.size(), sizeof(point_t), "final verts array");
+	for (auv_it = all_used_verts.begin(); auv_it != all_used_verts.end(); auv_it++) {
+	    ON_3dPoint vp = data->brep->m_V[(int)(*auv_it)].Point();
+	    VMOVE(data->nucleus->verts[curr_vert], vp);
+	    vert_map.insert(std::pair<int,int>((int)*auv_it, curr_vert));
+	    curr_vert++;
+	}
+	data->nucleus->vert_cnt = all_used_verts.size();
 
-    // Fourth, create final face arrays using the new indices
-    data->nucleus->faces = (int *)bu_calloc(all_faces.size(), sizeof(int), "final faces array");
-    for (unsigned int i = 0; i < all_faces.size(); i++) {
-	int nv = vert_map.find(all_faces[i])->second;
-	data->nucleus->faces[i] = nv;
-    }
-    data->nucleus->face_cnt = all_faces.size() / 3;
+	// Fourth, create final face arrays using the new indices
+	data->nucleus->faces = (int *)bu_calloc(all_faces.size(), sizeof(int), "final faces array");
+	for (unsigned int i = 0; i < all_faces.size(); i++) {
+	    int nv = vert_map.find(all_faces[i])->second;
+	    data->nucleus->faces[i] = nv;
+	    bu_log("%d->%d\n", all_faces[i], nv);
+	}
+	data->nucleus->face_cnt = all_faces.size() / 3;
 
-    for (int j = 0; j < data->nucleus->face_cnt; j++) {
-	bu_log("data->nucleus->face %d: (%d,%d,%d)\n", j, data->nucleus->faces[j*3], data->nucleus->faces[j*3+1], data->nucleus->faces[j*3+2]);
-    }
+	for (int j = 0; j < data->nucleus->face_cnt; j++) {
+	    bu_log("data->nucleus->face %d: (%d,%d,%d)\n", j, data->nucleus->faces[j*3], data->nucleus->faces[j*3+1], data->nucleus->faces[j*3+2]);
+	}
 
-    // Fifth, test for a negative polyhedron - if negative, handle accordingly
-    if (negative_polygon(msgs, data->nucleus) == -1) {
-	data->params->bool_op = '-';
-	// Flip triangles so BoT/arbn is a positive shape
+	// Fifth, test for a negative polyhedron - if negative, handle accordingly
+	if (negative_polygon(msgs, data->nucleus) == -1) {
+	    data->params->bool_op = '-';
+	    // Flip triangles so BoT/arbn is a positive shape
+	}
     }
 
     // Sixth, check the polyhedron nucleus for special cases:
     //
     // 1. degenerate
-    // 2. inside a shoal (shape + arbn) (nucleus is subtracted from shoal)
+    // 2. convex polyhedron
+    // 3. inside a shoal (shape + arbn) (nucleus is subtracted from shoal)
 
 
     // Lastly, check to see if we have a convex polyhedron.  If so, define the arbn.
