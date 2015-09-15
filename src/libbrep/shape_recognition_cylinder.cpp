@@ -581,6 +581,7 @@ cylinder_csg(struct bu_vls *msgs, struct subbrep_shoal_data *data, fastf_t cyl_t
 	bu_ptbl_init(data->sub_params, 8, "sub_params table");
 	BU_GET(sub_param, struct csg_object_params);
 	sub_param->planes = (plane_t *)bu_calloc(arbn_planes.Count(), sizeof(plane_t), "planes");
+	sub_param->plane_cnt = arbn_planes.Count();
 	for (int i = 0; i < arbn_planes.Count(); i++) {
 	    ON_Plane p = arbn_planes[i];
 	    double d = p.DistanceTo(ON_3dPoint(0,0,0));
@@ -589,6 +590,7 @@ cylinder_csg(struct bu_vls *msgs, struct subbrep_shoal_data *data, fastf_t cyl_t
 	    sub_param->planes[i][2] = p.Normal().z;
 	    sub_param->planes[i][3] = -1 * d;
 	}
+	sub_param->type = ARBN;
 	sub_param->bool_op = '+'; // arbn is intersected with primary primitive
 	bu_ptbl_ins(data->sub_params, (long *)sub_param);
 

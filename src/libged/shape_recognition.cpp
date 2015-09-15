@@ -310,6 +310,16 @@ subbrep_to_csg_sphere(struct subbrep_island_data *data, struct rt_wdb *wdbp, str
 HIDDEN void
 csg_obj_process(struct bu_vls *msgs, struct csg_object_params *data, struct rt_wdb *wdbp, struct bu_vls *id, struct wmember *wcomb)
 {
+    struct bu_vls obj_name = BU_VLS_INIT_ZERO;
+    subbrep_obj_name(data, id, &obj_name);
+    struct directory *dp = db_lookup(wdbp->dbip, bu_vls_addr(&obj_name), LOOKUP_QUIET);
+
+    // Don't recreate it
+    if (dp != RT_DIR_NULL) {
+	//bu_log("already made %s\n", bu_vls_addr(data->obj_name));
+	return;
+    }
+
     switch (data->type) {
 	case ARB6:
 	    //subbrep_to_csg_arb6(data, wdbp, id, wcomb);
@@ -341,23 +351,6 @@ csg_obj_process(struct bu_vls *msgs, struct csg_object_params *data, struct rt_w
     }
 }
 
-
-HIDDEN int
-make_shapes(struct bu_vls *msgs, struct csg_object_params *data, struct rt_wdb *wdbp, struct bu_vls *id, struct wmember *pcomb, int UNUSED(depth))
-{
-    struct bu_vls obj_name = BU_VLS_INIT_ZERO;
-    subbrep_obj_name(data, id, &obj_name);
-    struct directory *dp = db_lookup(wdbp->dbip, bu_vls_addr(&obj_name), LOOKUP_QUIET);
-
-    // Don't recreate it
-    if (dp != RT_DIR_NULL) {
-	//bu_log("already made %s\n", bu_vls_addr(data->obj_name));
-	return 0;
-    }
-
-    csg_obj_process(msgs, data, wdbp, id, pcomb);
-    return 0;
-}
 
 HIDDEN int
 make_island(struct bu_vls *msgs, struct subbrep_island_data *data, struct rt_wdb *wdbp, struct bu_vls *id, struct wmember *pcomb, int depth)
@@ -437,7 +430,7 @@ make_island(struct bu_vls *msgs, struct subbrep_island_data *data, struct rt_wdb
 	    for (unsigned int i = 0; i < BU_PTBL_LEN(data->children); i++){
 		struct csg_object_params *cdata = (struct csg_object_params *)BU_PTBL_GET(data->children,i);
 		//struct subbrep_shoal_data *sdata = (struct subbrep_shoal_data *)BU_PTBL_GET(data->children,i);
-		make_shapes(msgs, cdata, wdbp, id, &wcomb, depth+1);
+		csg_obj_process(msgs, cdata, wdbp, id, &wcomb);
 	    }
 	    if (data->nucleus && data->negative_nucleus) {
 	    //bu_log("%smake planar obj %s\n", bu_vls_addr(&spacer), bu_vls_addr(data->id));
@@ -553,7 +546,19 @@ brep_to_csg(struct ged *gedp, struct directory *dp, int UNUSED(verify))
 	if (d->nucleus) {
 	    struct bu_vls id = BU_VLS_INIT_ZERO;
 	    bu_vls_sprintf(&id, "csg_%s-%d_nucleus.s", dp->d_namep, d->obj_id);
+	    bu_log("nucleus type : %d, bool_op: %c\n", d->nucleus->type, d->nucleus->bool_op);
 	    csg_obj_process(gedp->ged_result_str, d->nucleus, wdbp, &id, &pcomb);
+	    for (unsigned int j = 0; j < BU_PTBL_LEN(d->children); j++){
+		struct subbrep_shoal_data *sdata = (struct subbrep_shoal_data *)BU_PTBL_GET(d->children,j);
+		struct csg_object_params *cdata = sdata->params;
+		bu_log(" object type: %d, bool_op: %c\n", cdata->type, cdata->bool_op);
+		csg_obj_process(gedp->ged_result_str, cdata, wdbp, &id, &pcomb);
+		for (unsigned int k = 0; k < BU_PTBL_LEN(sdata->sub_params); k++){
+		    struct csg_object_params *ccd = (struct csg_object_params *)BU_PTBL_GET(sdata->sub_params,k);
+		    bu_log("   object type: %d, bool_op: %c\n", ccd->type, ccd->bool_op);
+		    csg_obj_process(gedp->ged_result_str, ccd, wdbp, &id, &pcomb);
+		}
+	    }
 	}
     }
 
