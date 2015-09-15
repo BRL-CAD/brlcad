@@ -14,6 +14,48 @@
 #define L2_OFFSET 4
 #define L3_OFFSET 6
 
+
+// Check for plane intersection points that are inside/outside the
+// arb.  If a set of three planes defines a point that is inside, those
+// planes are part of the final arb.  Based on the arbn prep test.
+void
+convex_plane_usage(ON_SimpleArray<ON_Plane> *planes, int **pu)
+{
+    int *planes_used = (*pu);
+
+    for (int i = 0; i < planes->Count()-2; i++) {
+        for (int j = i + 1; j < planes->Count()-1; j++) {
+            // If normals are parallel, no intersection
+            if ((*planes)[i].Normal().IsParallelTo((*planes)[j].Normal(), 0.0005)) continue;
+            ON_Line l_plane;
+            ON_Intersect((*planes)[i], (*planes)[j], l_plane);
+            for (int k = j + 1; k < planes->Count(); k++) {
+                if ((*planes)[k].Normal().IsPerpendicularTo(l_plane.Direction(), 0.0005)) continue;
+                int not_used = 0;
+                double l_param;
+		ON_Line l;
+		ON_Plane p3 = (*planes)[k];
+                ON_Intersect(l, (*planes)[k], &l_param);
+                ON_3dPoint p3d = l_plane.PointAt(l_param);
+                /* See if point is outside arb */
+                for (int m = 0; m < planes->Count(); m++) {
+                    if (m == i || m == j || m == k) continue;
+                    if (ON_DotProduct(p3d - (*planes)[m].origin, (*planes)[m].Normal()) > 0) {
+                        not_used = 1;
+                        break;
+                    }
+                }
+                if (not_used) continue;
+                planes_used[i]++;
+                planes_used[j]++;
+                planes_used[k]++;
+            }
+        }
+    }
+}
+
+
+
 int
 triangulate_array(ON_2dPointArray &on2dpts, int *verts_map, int **ffaces)
 {
@@ -576,6 +618,7 @@ island_nucleus(struct bu_vls *msgs, struct subbrep_island_data *data)
 	    face_arrays.push_back(faces);
 	    ON_Plane p;
 	    face->SurfaceOf()->IsPlanar(&p, BREP_PLANAR_TOL);
+	    if (face->m_bRev) p.Flip();
 	    planes.Append(p);
 	}
     }
@@ -641,18 +684,11 @@ island_nucleus(struct bu_vls *msgs, struct subbrep_island_data *data)
 	    data->nucleus->faces[i] = nv;
 	}
 	data->nucleus->face_cnt = all_faces.size() / 3;
-
-	// Fifth, test for a negative polyhedron - if negative, handle accordingly
-	if (negative_polygon(msgs, data->nucleus) == -1) {
-	    data->params->bool_op = '-';
-	    // Flip triangles so BoT/arbn is a positive shape
-	}
     }
 
-    // Sixth, check the polyhedron nucleus for special cases:
-    //
-    // 1. degenerate
+    // Sixth, check the polyhedron nucleus is degenerate
     int parallel_planes = 0;
+    int degenerate_nucleus = 0;
     if (planes.Count() > 0) {
 	ON_Plane seed_plane = planes[0];
 	parallel_planes++;
@@ -660,18 +696,65 @@ island_nucleus(struct bu_vls *msgs, struct subbrep_island_data *data)
 	    if (planes[i].Normal().IsParallelTo(seed_plane.Normal(), VUNITIZE_TOL)) parallel_planes++;
 	}
     }
+
     if (parallel_planes == planes.Count()) {
 	bu_log("degenerate nucleus\n");
-    }
-    // 2. convex polyhedron
-    // 3. inside a shoal (shape + arbn) (nucleus is subtracted from shoal)
-
-
-    // Lastly, check to see if we have a convex polyhedron.  If so, define the arbn.
-    if (is_convex) {
-	//TODO: is_convex = is_convex(planes, verts);
-	if (is_convex) {
+	// If the polyhedron nucleus is degenerate, one of the shoals is the nucleus.
+	//
+	// First, check whether the shoal negative/positive flags are the same.
+	int shoal_same_status = 1;
+	struct subbrep_shoal_data *cn = (struct subbrep_shoal_data *)BU_PTBL_GET(data->children, 0);
+	for (size_t i = 1; i < BU_PTBL_LEN(data->children); i++) {
+	    struct subbrep_shoal_data *d = (struct subbrep_shoal_data *)BU_PTBL_GET(data->children, i);
+	    if (cn->params->negative != d->params->negative) shoal_same_status = 0;
 	}
+	if (shoal_same_status) {
+	    // If they all are the same, then any of them may serve as the
+	    // nucleus and whether the nucleus is negative be based on the
+	    // negative shape status of the shoal.  The island's children
+	    // will be unioned.
+
+	    // TODO - set new nucleus, remove it from children table
+	} else {
+	    // If we've got shoals with different boolean status, then we have
+	    // to decide which shape is "inside" the other to make a call.  If
+	    // two cylinders the smaller radius is the new nucleus, for
+	    // example. cyl/cone is also possible - any others? sph/cyl with
+	    // sph as end cap will be degenerate...  Need to give this some
+	    // thought, but suspect a general solution isn't possible unless
+	    // based on raytracing.  For the time being, use type
+	    // specific rules.  Probably need to break this bit out into
+	    // separate functions/routines.
+	    //
+	    // Other option is to flag this island's shoals as all top-level
+	    // objects.  The subtractions and then the unions will be made
+	    // after all other csg logic has been built up.  Bad for locality
+	    // but may serve as a fall-back if nucleus resolution doesn't resolve...
+	}
+    }
+
+
+    // If we're not degenerate, test for a negative polyhedron - if negative, handle accordingly
+    if (!degenerate_nucleus) {
+	if (negative_polygon(msgs, data->nucleus) == -1) {
+	    data->nucleus->negative = -1;
+	    data->nucleus->bool_op = '-';
+	    // Flip triangles and planes so BoT/arbn is a positive shape.  All csg params need
+	    // to describe positive shapes for primitive creation - their "negative" flag preserves
+	    // their original role per their original B-Rep face normals
+	} else {
+	    data->nucleus->negative = 1;
+	    data->nucleus->bool_op = 'u';
+	}
+
+
+	// 2. convex polyhedron
+	//int convex_polyhedron = 1;
+
+
+
+
+	// 3. inside a shoal (shape + arbn) (nucleus is subtracted from shoal)
     }
 
     return 1;

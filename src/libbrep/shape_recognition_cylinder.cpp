@@ -117,11 +117,10 @@ subbrep_is_cylinder(struct bu_vls *UNUSED(msgs), struct subbrep_island_data *dat
     // cylinder surface.  Whether it is actually subtracted from the
     // global object or unioned into a comb lower down the tree (or vice versa)
     // is determined later.
-    data->negative_shape = negative_cylinder(data->brep, *cylindrical_surfaces.begin(), cyl_tol);
+    int negative_shape = negative_cylinder(data->brep, *cylindrical_surfaces.begin(), cyl_tol);
 
     // If we've got a negative cylinder, bump the center points out very slightly
-    // to avoid problems with raytracing - without this, NIST 2 sometimes shows
-    // a half-circle of shading in what should be a subtraction.
+    // to avoid problems with raytracing.
     if (data->negative_shape == -1) {
 	ON_3dVector cvector(center_top - center_bottom);
 	double len = cvector.Length();
@@ -134,14 +133,20 @@ subbrep_is_cylinder(struct bu_vls *UNUSED(msgs), struct subbrep_island_data *dat
 
     ON_3dVector hvect(center_top - center_bottom);
 
-    data->params->bool_op = (data->negative_shape == -1) ? '-' : 'u';
-    data->params->origin[0] = center_bottom.x;
-    data->params->origin[1] = center_bottom.y;
-    data->params->origin[2] = center_bottom.z;
-    data->params->hv[0] = hvect.x;
-    data->params->hv[1] = hvect.y;
-    data->params->hv[2] = hvect.z;
-    data->params->radius = cylinder.circle.Radius();
+    struct csg_object_params *cyl;
+    BU_GET(cyl, struct csg_object_params);
+
+    cyl->negative = negative_shape;
+    cyl->bool_op = (negative_shape == -1) ? '-' : 'u';
+    cyl->origin[0] = center_bottom.x;
+    cyl->origin[1] = center_bottom.y;
+    cyl->origin[2] = center_bottom.z;
+    cyl->hv[0] = hvect.x;
+    cyl->hv[1] = hvect.y;
+    cyl->hv[2] = hvect.z;
+    cyl->radius = cylinder.circle.Radius();
+
+    bu_ptbl_ins(data->children, (long *)cyl);
 
     return 1;
 }
@@ -365,13 +370,15 @@ cylinder_csg(struct bu_vls *msgs, struct subbrep_shoal_data *data, fastf_t cyl_t
 
     // If we have only two cylinder planes and both are perpendicular to the axis, we have
     // an rcc and do not need an intersecting arbn.
+    int need_arbn = 1;
     if (cyl_planes.Count() == 2) {
 	ON_Plane p1, p2;
 	int perpendicular = 2;
 	if (cyl_planes[0].Normal().IsParallelTo(cylinder.Axis(), VUNITIZE_TOL) == 0) perpendicular--;
 	if (cyl_planes[1].Normal().IsParallelTo(cylinder.Axis(), VUNITIZE_TOL) == 0) perpendicular--;
 	if (perpendicular == 2) {
-	    // TODO define csg params and exit.
+	    bu_log("perfect cylinder\n");
+	    need_arbn = 0;
 	}
     }
 
@@ -472,22 +479,6 @@ cylinder_csg(struct bu_vls *msgs, struct subbrep_shoal_data *data, fastf_t cyl_t
     bu_log("extension 1: %f\n", extensions[0]);
     bu_log("extension 2: %f\n", extensions[1]);
 
-    // Now we decide (arbitrarily) what the vector will be for our final cylinder
-    // and calculate the true minimum and maximum points along the axis
-    ON_3dVector cyl_axis = axis_pts[1] - axis_pts[0];
-    ON_3dVector cyl_axis_unit = cyl_axis;
-    cyl_axis_unit.Unitize();
-    ON_3dVector extv0 = -1 *cyl_axis;
-    ON_3dVector extv1 = cyl_axis;
-    extv0.Unitize();
-    extv1.Unitize();
-    extv0 = extv0 * (extensions[0] + 0.00001 * cyl_axis.Length());
-    extv1 = extv1 * (extensions[1] + 0.00001 * cyl_axis.Length());
-
-    axis_pts[0] = axis_pts[0] + extv0;
-    axis_pts[1] = axis_pts[1] + extv1;
-    ON_3dVector cyl_axis_prim = axis_pts[1] - axis_pts[0];
-
     // Populate the primitive data
     data->params->type = CYLINDER;
     // Flag the cylinder according to the negative or positive status of the
@@ -496,14 +487,36 @@ cylinder_csg(struct bu_vls *msgs, struct subbrep_shoal_data *data, fastf_t cyl_t
     // is determined later.
     data->params->negative = negative_cylinder(brep, *cylindrical_surfaces.begin(), cyl_tol);
 
+    // Now we decide (arbitrarily) what the vector will be for our final cylinder
+    // and calculate the true minimum and maximum points along the axis
+    ON_3dVector cyl_axis_unit = axis_pts[1] - axis_pts[0];
+    size_t cyl_axis_length = cyl_axis_unit.Length();
+    cyl_axis_unit.Unitize();
+    ON_3dVector extv0 = -1 *cyl_axis_unit;
+    ON_3dVector extv1 = cyl_axis_unit;
+    extv0.Unitize();
+    extv1.Unitize();
+    if (data->params->negative == -1) {
+	extv0 = extv0 * (extensions[0] + 0.00001 * cyl_axis_length);
+	extv1 = extv1 * (extensions[1] + 0.00001 * cyl_axis_length);
+    } else {
+	extv0 = extv0 * extensions[0];
+	extv1 = extv1 * extensions[1];
+    }
+
+    axis_pts[0] = axis_pts[0] + extv0;
+    axis_pts[1] = axis_pts[1] + extv1;
+    ON_3dVector cyl_axis = axis_pts[1] - axis_pts[0];
+
     BN_VMOVE(data->params->origin, axis_pts[0]);
-    BN_VMOVE(data->params->hv, cyl_axis_prim);
+    BN_VMOVE(data->params->hv, cyl_axis);
     data->params->radius = cylinder.circle.Radius();
 
-    bu_log("in rcc.s rcc %f %f %f %f %f %f %f \n", axis_pts[0].x, axis_pts[0].y, axis_pts[0].z, cyl_axis_prim.x, cyl_axis_prim.y, cyl_axis_prim.z, cylinder.circle.Radius());
+    bu_log("in rcc.s rcc %f %f %f %f %f %f %f \n", axis_pts[0].x, axis_pts[0].y, axis_pts[0].z, cyl_axis.x, cyl_axis.y, cyl_axis.z, cylinder.circle.Radius());
 
-    // TODO: Need to identify no-arb case here and stop.
-
+    if (!need_arbn) {
+	bu_log("TODO - Perfect cylinder - we should stop here...\n");
+    }
 
     // Use avg normal to constructed oriented bounding box planes around cylinder
     ON_3dVector v1 = cylinder.circle.Plane().xaxis;

@@ -1432,10 +1432,6 @@ struct subbrep_island_data {
     struct csg_object_params *nucleus;
     int negative_nucleus;
 
-    /* CSG shape parameters, if island is a single shape
-     * or the nucleus shape is not planar */
-    struct csg_object_params *params;
-
     /* struct subbrep_shoal_data */
     struct bu_ptbl *children;
 

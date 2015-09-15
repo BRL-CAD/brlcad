@@ -341,7 +341,7 @@ make_island(struct bu_vls *msgs, struct subbrep_island_data *data, struct rt_wdb
 {
     struct bu_vls spacer = BU_VLS_INIT_ZERO;
 
-    subbrep_obj_name(data->params, id, data->obj_name);
+    subbrep_obj_name(data->nucleus, id, data->obj_name);
     struct directory *dp = db_lookup(wdbp->dbip, bu_vls_addr(data->obj_name), LOOKUP_QUIET);
 
     // Don't recreate it
@@ -387,14 +387,14 @@ make_island(struct bu_vls *msgs, struct subbrep_island_data *data, struct rt_wdb
     if (data->type == BREP) {
 	if (data->local_brep) {
 	    struct bu_vls brep_name = BU_VLS_INIT_ZERO;
-	    subbrep_obj_name(data->params, id, &brep_name);
+	    subbrep_obj_name(data->nucleus, id, &brep_name);
 	    if (!data->local_brep->IsValid()) {
 		if (msgs) bu_vls_printf(msgs, "Warning - data->local_brep is not valid for %s\n", bu_vls_addr(&brep_name));
 	    }
 	    mk_brep(wdbp, bu_vls_addr(&brep_name), data->local_brep);
 	    // TODO - almost certainly need to do more work to get correct booleans
 	    //std::cout << bu_vls_addr(&brep_name) << ": " << data->params->bool_op << "\n";
-	    if (pcomb) (void)mk_addmember(bu_vls_addr(&brep_name), &(pcomb->l), NULL, db_str2op(&(data->params->bool_op)));
+	    if (pcomb) (void)mk_addmember(bu_vls_addr(&brep_name), &(pcomb->l), NULL, db_str2op(&(data->nucleus->bool_op)));
 	    bu_vls_free(&brep_name);
 	} else {
 	    if (msgs) bu_vls_printf(msgs, "Warning - mk_brep called but data->local_brep is empty\n");
@@ -404,7 +404,7 @@ make_island(struct bu_vls *msgs, struct subbrep_island_data *data, struct rt_wdb
 	    struct wmember wcomb;
 	    struct bu_vls comb_name = BU_VLS_INIT_ZERO;
 	    struct bu_vls member_name = BU_VLS_INIT_ZERO;
-	    subbrep_obj_name(data->params, id, &comb_name);
+	    subbrep_obj_name(data->nucleus, id, &comb_name);
 	    BU_LIST_INIT(&wcomb.l);
 	    if (data->nucleus && !data->negative_nucleus) {
 	    //bu_log("%smake planar obj %s\n", bu_vls_addr(&spacer), bu_vls_addr(data->id));
@@ -426,14 +426,14 @@ make_island(struct bu_vls *msgs, struct subbrep_island_data *data, struct rt_wdb
 
 	    // TODO - almost certainly need to do more work to get correct booleans
 	    //std::cout << bu_vls_addr(&comb_name) << ": " << data->params->bool_op << "\n";
-	    if (pcomb) (void)mk_addmember(bu_vls_addr(&comb_name), &(pcomb->l), NULL, db_str2op(&(data->params->bool_op)));
+	    if (pcomb) (void)mk_addmember(bu_vls_addr(&comb_name), &(pcomb->l), NULL, db_str2op(&(data->nucleus->bool_op)));
 
 	    bu_vls_free(&member_name);
 	    bu_vls_free(&comb_name);
 	} else {
 	    //std::cout << "type: " << data->type << "\n";
 	    //bu_log("%smake solid %s\n", bu_vls_addr(&spacer), bu_vls_addr(data->id));
-	    process_params(msgs, data->params, wdbp, id, pcomb);
+	    process_params(msgs, data->nucleus, wdbp, id, pcomb);
 	}
     }
     return 0;
@@ -544,9 +544,9 @@ brep_to_csg(struct ged *gedp, struct directory *dp, int verify)
 	struct bu_ptbl finalize_combs = BU_PTBL_INIT_ZERO;
 	for (unsigned int i = 0; i < BU_PTBL_LEN(subbreps_tree); i++){
 	    struct subbrep_island_data *obj = (struct subbrep_island_data *)BU_PTBL_GET(subbreps_tree, i);
-	    subbrep_obj_name(obj->params, &comb_name, obj->obj_name);
+	    subbrep_obj_name(obj->nucleus, &comb_name, obj->obj_name);
 
-	    if (obj->params->bool_op == 'u') {
+	    if (obj->nucleus->bool_op == 'u') {
 		//print_subbrep_object(obj, "");
 		if (ccomb) {
 		    bu_ptbl_ins(&finalize_combs, (long *)curr_union);
@@ -563,14 +563,14 @@ brep_to_csg(struct ged *gedp, struct directory *dp, int verify)
 		curr_union = obj;
 		bu_vls_sprintf(&obj_comb_name, "%s-_test_c_%s.c", bu_vls_addr(&comb_name), bu_vls_addr(obj->id));
 		bu_vls_sprintf(&sub_comb_name, "%s-s_%s.c", bu_vls_addr(&comb_name), bu_vls_addr(obj->id));
-		(void)mk_addmember(bu_vls_addr(&obj_comb_name), &(pcomb.l), NULL, db_str2op(&(obj->params->bool_op)));
-		(void)mk_addmember(bu_vls_addr(curr_union->obj_name), &((*ccomb).l), NULL, db_str2op(&(obj->params->bool_op)));
+		(void)mk_addmember(bu_vls_addr(&obj_comb_name), &(pcomb.l), NULL, db_str2op(&(obj->nucleus->bool_op)));
+		(void)mk_addmember(bu_vls_addr(curr_union->obj_name), &((*ccomb).l), NULL, db_str2op(&(obj->nucleus->bool_op)));
 	    } else {
 		char un = 'u';
 		if (!scomb) {
 		    BU_GET(scomb, struct wmember);
 		    BU_LIST_INIT(&scomb->l);
-		    (void)mk_addmember(bu_vls_addr(&sub_comb_name), &((*ccomb).l), NULL, db_str2op(&(obj->params->bool_op)));
+		    (void)mk_addmember(bu_vls_addr(&sub_comb_name), &((*ccomb).l), NULL, db_str2op(&(obj->nucleus->bool_op)));
 		}
 		//print_subbrep_object(obj, "  ");
 		(void)mk_addmember(bu_vls_addr(obj->obj_name), &((*scomb).l), NULL, db_str2op((const char *)&un));

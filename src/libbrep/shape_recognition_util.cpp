@@ -338,10 +338,7 @@ subbrep_object_init(struct subbrep_island_data *obj, const ON_Brep *brep)
     BU_GET(obj->id, struct bu_vls);
     BU_GET(obj->children, struct bu_ptbl);
     BU_GET(obj->subtraction_candidates, struct bu_ptbl);
-    BU_GET(obj->params, struct csg_object_params);
     BU_GET(obj->obj_name, struct bu_vls);
-    obj->params->planes = NULL;
-    obj->params->bool_op = '\0';
     obj->nucleus = NULL;
     bu_vls_init(obj->key);
     bu_vls_init(obj->id);
@@ -371,9 +368,6 @@ void
 subbrep_object_free(struct subbrep_island_data *obj)
 {
     if (!obj) return;
-    if (obj->params && obj->params->planes) bu_free(obj->params->planes, "csg planes");
-    if (obj->params) BU_PUT(obj->params, struct csg_object_params);
-    obj->params = NULL;
     if (obj->nucleus) {
 	BU_PUT(obj->nucleus, struct csg_obj_params);
     }

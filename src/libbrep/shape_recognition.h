@@ -98,6 +98,8 @@ int subbrep_split(struct bu_vls *msgs, struct subbrep_island_data *data);
 int subbrep_make_brep(struct bu_vls *msgs, struct subbrep_island_data *data);
 int subbrep_make_planar(struct subbrep_island_data *data);
 
+void convex_plane_usage(ON_SimpleArray<ON_Plane> *planes, int **pu);
+
 int subbrep_determine_boolean(struct subbrep_island_data *data);
 
 

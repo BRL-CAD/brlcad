@@ -558,13 +558,13 @@ find_top_level_hierarchy(struct bu_vls *msgs, struct bu_ptbl *islands)
 	struct subbrep_island_data *obj = (struct subbrep_island_data *)*sb_it;
 	//std::cout << bu_vls_addr(obj->key) << " bool: " << obj->params->bool_op << "\n";
 	if (obj->fil_cnt == 0) {
-	    if (!(obj->params->bool_op == '-')) {
+	    if (!(obj->nucleus->bool_op == '-')) {
 		//std::cout << "Top union found: " << bu_vls_addr(obj->key) << "\n";
-		obj->params->bool_op = 'u';
+		obj->nucleus->bool_op = 'u';
 		unions.insert((long *)obj);
 		island_set.erase((long *)obj);
 	    } else {
-		if (obj->params->bool_op == '-') {
+		if (obj->nucleus->bool_op == '-') {
 		    std::cout << "zero fils, but a negative shape - " << bu_vls_addr(obj->key) << " added to subtractions\n";
 		    subtractions.insert((long *)obj);
 		}
@@ -606,7 +606,7 @@ find_top_level_hierarchy(struct bu_vls *msgs, struct bu_ptbl *islands)
 
 			int bool_test = 0;
 			int already_flipped = 0;
-			if (cobj->params->bool_op == '\0') {
+			if (cobj->nucleus->bool_op == '\0') {
 			    /* First, check the boolean relationship to the parent solid */
 			    cobj->parent = tu;
 			    bool_test = subbrep_determine_boolean(cobj);
@@ -628,24 +628,24 @@ find_top_level_hierarchy(struct bu_vls *msgs, struct bu_ptbl *islands)
 			    }
 			} else {
 			    //std::cout << "Boolean status of " << bu_vls_addr(cobj->key) << " already determined\n";
-			    bool_test = (cobj->params->bool_op == '-') ? -1 : 1;
+			    bool_test = (cobj->nucleus->bool_op == '-') ? -1 : 1;
 			    already_flipped = 1;
 			}
 
 			switch (bool_test) {
 			    case -1:
-				cobj->params->bool_op = '-';
+				cobj->nucleus->bool_op = '-';
 				subtractions.insert((long *)cobj);
 				subbrep_subobjs[*sb_it].insert((long *)cobj);
 				break;
 			    case 1:
-				cobj->params->bool_op = 'u';
+				cobj->nucleus->bool_op = 'u';
 				unions.insert((long *)cobj);
 				/* We've got a union - any subtractions that are parents of this
 				 * object go in its ignore list */
 				up = cobj->parent;
 				while (up) {
-				    if (up->params->bool_op == '-') subbrep_ignoreobjs[(long *)cobj].insert((long *)up);
+				    if (up->nucleus->bool_op == '-') subbrep_ignoreobjs[(long *)cobj].insert((long *)up);
 				    up = up->parent;
 				}
 				break;
@@ -660,15 +660,15 @@ find_top_level_hierarchy(struct bu_vls *msgs, struct bu_ptbl *islands)
 			if (bool_test == -1 && !already_flipped) {
 			    for (unsigned int j = 0; j < BU_PTBL_LEN(cobj->children); j++){
 				struct subbrep_island_data *cdata = (struct subbrep_island_data *)BU_PTBL_GET(cobj->children,j);
-				if (cdata && cdata->params) {
-				    cdata->params->bool_op = (cdata->params->bool_op == '-') ? 'u' : '-';
+				if (cdata && cdata->nucleus) {
+				    cdata->nucleus->bool_op = (cdata->nucleus->bool_op == '-') ? 'u' : '-';
 				} else {
 				    //std::cout << "Child without params??: " << bu_vls_addr(cdata->key) << ", parent: " << bu_vls_addr(cobj->key) << "\n";
 				}
 			    }
 
 			    /* If we're a B-Rep and a subtraction, the B-Rep will be inside out */
-			    if (cobj->type == BREP && cobj->params->bool_op == '-') {
+			    if (cobj->type == BREP && cobj->nucleus->bool_op == '-') {
 				for (int l = 0; l < cobj->local_brep->m_F.Count(); l++) {
 				    ON_BrepFace &face = cobj->local_brep->m_F[l];
 				    cobj->local_brep->FlipFace(face);
