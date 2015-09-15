@@ -749,6 +749,7 @@ island_nucleus(struct bu_vls *msgs, struct subbrep_island_data *data)
 	    }
 	    for (int i = 0; i < planes.Count(); i++) {
 		planes[i].Flip();
+		bu_log("in rcc_%d.s rcc %f %f %f %f %f %f 0.1\n", planes[i].origin.x, planes[i].origin.y, planes[i].origin.z, planes[i].Normal().x, planes[i].Normal().y, planes[i].Normal().z);
 	    }
 	} else {
 	    data->nucleus->negative = 1;
@@ -802,8 +803,6 @@ island_nucleus(struct bu_vls *msgs, struct subbrep_island_data *data)
 		ON_Plane p(o, n);
 		// If all vertex points in the island aren't on one side of this plane, stop - else continue.
 		// Collect all vertex points in nucleus
-		//std::set<int> ignored_verts;
-		//array_to_set(&ignored_verts, data->null_verts, data->null_vert_cnt);
 		std::set<int> island_verts;
 		for (int i = 0; i < data->faces_cnt; i++) {
 		    const ON_BrepFace *face = &(data->brep->m_F[data->faces[i]]);
@@ -813,16 +812,14 @@ island_nucleus(struct bu_vls *msgs, struct subbrep_island_data *data)
 			    for (int ti = 0; ti < b_loop->m_ti.Count(); ti++) {
 				const ON_BrepTrim *trim = &(data->brep->m_T[b_loop->m_ti[ti]]);
 				const ON_BrepEdge *edge = &(data->brep->m_E[trim->m_ei]);
-				int v1 = edge->Vertex(0)->m_vertex_index;
-				int v2 = edge->Vertex(1)->m_vertex_index;
-				//if (ignored_verts.find(v1) == ignored_verts.end()) island_verts.insert(v1);
-				//if (ignored_verts.find(v2) == ignored_verts.end()) island_verts.insert(v2);
-				island_verts.insert(v1);
-				island_verts.insert(v2);
+				island_verts.insert(edge->Vertex(0)->m_vertex_index);
+				island_verts.insert(edge->Vertex(1)->m_vertex_index);
 			    }
 			}
 		    }
 		}
+		// See if all vertices in the island are on one side of the implicit plane.  Necessary
+		// but not sufficient.
 		int points_on_same_side = 1;
 		std::set<int>::iterator iv_it;
 		for (iv_it = island_verts.begin(); iv_it != island_verts.end(); iv_it++) {
@@ -838,6 +835,9 @@ island_nucleus(struct bu_vls *msgs, struct subbrep_island_data *data)
 
 		// Final test - are all nucleus vertex points inside the primary shoal shape?  If so,
 		// we have to swap the nucleus with the child.
+
+		// Rebuild the plane set with this new knowledge.  Normals for faces involved in the polyhedron
+		// that used non-linear edges will be reversed, so we need to construct a new set.  Retest convexity
 	    }
 	}
 
