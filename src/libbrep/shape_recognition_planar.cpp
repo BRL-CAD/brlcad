@@ -373,8 +373,8 @@ shoal_polygon_tri(struct bu_vls *UNUSED(msgs), struct subbrep_shoal_data *data, 
     // Have the verts - now we need 2d coordinates in the implicit plane
     ON_3dPoint imp_origin;
     ON_3dVector imp_normal;
-    VMOVE(imp_origin, data->params->implicit_plane_origin);
-    VMOVE(imp_normal, data->params->implicit_plane_normal);
+    ON_VMOVE(imp_origin, data->params->implicit_plane_origin);
+    ON_VMOVE(imp_normal, data->params->implicit_plane_normal);
     ON_Plane p(imp_origin, imp_normal);
     ON_3dVector xaxis = p.Xaxis();
     ON_3dVector yaxis = p.Yaxis();
@@ -429,15 +429,15 @@ negative_polygon(struct bu_vls *UNUSED(msgs), struct csg_object_params *data)
     ON_MinMaxInit(&vert_bbox.m_min, &vert_bbox.m_max);
     for (int i = 0; i < data->vert_cnt; i++) {
 	ON_3dPoint p;
-	VMOVE(p, data->verts[i]);
+	ON_VMOVE(p, data->verts[i]);
 	vert_bbox.Set(p, true);
     }
 
     /* Get normal from first triangle in array - TODO - fiddle with this to get the correct normal... */
     ON_3dPoint tp1, tp2, tp3;
-    VMOVE(tp1, data->verts[data->faces[0]]);
-    VMOVE(tp2, data->verts[data->faces[1]]);
-    VMOVE(tp3, data->verts[data->faces[2]]);
+    ON_VMOVE(tp1, data->verts[data->faces[0]]);
+    ON_VMOVE(tp2, data->verts[data->faces[1]]);
+    ON_VMOVE(tp3, data->verts[data->faces[2]]);
     ON_3dVector v1 = tp2 - tp1;
     ON_3dVector v2 = tp3 - tp1;
     ON_3dVector triangle_normal = ON_CrossProduct(v1, v2);
@@ -464,8 +464,8 @@ negative_polygon(struct bu_vls *UNUSED(msgs), struct csg_object_params *data)
 	return 0;
     }
     point_t origin, dir;
-    VMOVE(origin, origin_pnt);
-    VMOVE(dir, rdir);
+    BN_VMOVE(origin, origin_pnt);
+    BN_VMOVE(dir, rdir);
 #if 0
     std::cout << "working: " << bu_vls_addr(data->key) << "\n";
     bu_log("in origin.s sph %f %f %f 1\n", origin[0], origin[1], origin[2]);
@@ -481,12 +481,12 @@ negative_polygon(struct bu_vls *UNUSED(msgs), struct csg_object_params *data)
 	VMOVE(p1, data->verts[data->faces[i*3+0]]);
 	VMOVE(p2, data->verts[data->faces[i*3+1]]);
 	VMOVE(p3, data->verts[data->faces[i*3+2]]);
-	VMOVE(onp1, p1);
-	VMOVE(onp2, p2);
-	VMOVE(onp3, p3);
+	ON_VMOVE(onp1, p1);
+	ON_VMOVE(onp2, p2);
+	ON_VMOVE(onp3, p3);
 	ON_Plane fplane(onp1, onp2, onp3);
 	int is_hit = bg_isect_tri_ray(origin, dir, p1, p2, p3, &isect);
-	VMOVE(hit_pnt, isect);
+	ON_VMOVE(hit_pnt, isect);
 	// Don't count the point on the ray origin
 	if (hit_pnt.DistanceTo(origin_pnt) < 0.0001) is_hit = 0;
 	if (is_hit) {
@@ -592,8 +592,8 @@ island_nucleus(struct bu_vls *msgs, struct subbrep_island_data *data)
 		face_arrays.push_back(faces);
 		ON_3dPoint o;
 		ON_3dVector n;
-		VMOVE(o, data->params->implicit_plane_origin);
-		VMOVE(n, data->params->implicit_plane_normal);
+		ON_VMOVE(o, d->params->implicit_plane_origin);
+		ON_VMOVE(n, d->params->implicit_plane_normal);
 		ON_Plane p(o, n);
 		planes.Append(p);
 	    }
@@ -628,7 +628,7 @@ island_nucleus(struct bu_vls *msgs, struct subbrep_island_data *data)
 	data->nucleus->verts = (point_t *)bu_calloc(all_used_verts.size(), sizeof(point_t), "final verts array");
 	for (auv_it = all_used_verts.begin(); auv_it != all_used_verts.end(); auv_it++) {
 	    ON_3dPoint vp = data->brep->m_V[(int)(*auv_it)].Point();
-	    VMOVE(data->nucleus->verts[curr_vert], vp);
+	    BN_VMOVE(data->nucleus->verts[curr_vert], vp);
 	    vert_map.insert(std::pair<int,int>((int)*auv_it, curr_vert));
 	    curr_vert++;
 	}

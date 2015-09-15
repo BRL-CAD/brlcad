@@ -346,8 +346,8 @@ cylinder_csg(struct bu_vls *msgs, struct subbrep_shoal_data *data, fastf_t cyl_t
 	p.Flip();
 	bu_log("implicit plane origin: %f, %f, %f\n", p.Origin().x, p.Origin().y, p.Origin().z);
 	bu_log("implicit plane normal: %f, %f, %f\n", p.Normal().x, p.Normal().y, p.Normal().z);
-	VMOVE(data->params->implicit_plane_origin, p.Origin());
-	VMOVE(data->params->implicit_plane_normal, p.Normal());
+	BN_VMOVE(data->params->implicit_plane_origin, p.Origin());
+	BN_VMOVE(data->params->implicit_plane_normal, p.Normal());
 	data->params->have_implicit_plane = 1;
     }
 
@@ -496,8 +496,8 @@ cylinder_csg(struct bu_vls *msgs, struct subbrep_shoal_data *data, fastf_t cyl_t
     // is determined later.
     data->params->negative = negative_cylinder(brep, *cylindrical_surfaces.begin(), cyl_tol);
 
-    VMOVE(data->params->origin, axis_pts[0]);
-    VMOVE(data->params->hv, cyl_axis_prim);
+    BN_VMOVE(data->params->origin, axis_pts[0]);
+    BN_VMOVE(data->params->hv, cyl_axis_prim);
     data->params->radius = cylinder.circle.Radius();
 
     bu_log("in rcc.s rcc %f %f %f %f %f %f %f \n", axis_pts[0].x, axis_pts[0].y, axis_pts[0].z, cyl_axis_prim.x, cyl_axis_prim.y, cyl_axis_prim.z, cylinder.circle.Radius());

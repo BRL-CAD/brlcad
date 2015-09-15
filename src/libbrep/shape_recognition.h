@@ -16,6 +16,17 @@
 
 #define pout(p)  p.x << " " << p.y << " " << p.z
 
+#define ON_VMOVE(on, bn) { \
+    on.x = bn[0]; \
+    on.y = bn[1]; \
+    on.z = bn[2]; \
+}
+#define BN_VMOVE(bn, on) { \
+    bn[0] = on.x; \
+    bn[1] = on.y; \
+    bn[2] = on.z; \
+}
+
 typedef enum {
     CURVE_POINT = 0,
     CURVE_LINE,
