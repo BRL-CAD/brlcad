@@ -576,7 +576,7 @@ cylinder_csg(struct bu_vls *msgs, struct subbrep_shoal_data *data, fastf_t cyl_t
 		int not_used = 0;
 		double l_param;
 		ON_Plane p3 = uniq_planes[k];
-		ON_Intersect(l, uniq_planes[k], &l_param);
+		ON_Intersect(l_plane, uniq_planes[k], &l_param);
 		ON_3dPoint p3d = l_plane.PointAt(l_param);
 		/* See if point is outside arb */
 		for (int m = 0; m < uniq_planes.Count(); m++) {

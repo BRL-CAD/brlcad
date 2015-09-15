@@ -33,9 +33,8 @@ convex_plane_usage(ON_SimpleArray<ON_Plane> *planes, int **pu)
                 if ((*planes)[k].Normal().IsPerpendicularTo(l_plane.Direction(), 0.0005)) continue;
                 int not_used = 0;
                 double l_param;
-		ON_Line l;
 		ON_Plane p3 = (*planes)[k];
-                ON_Intersect(l, (*planes)[k], &l_param);
+                ON_Intersect(l_plane, (*planes)[k], &l_param);
                 ON_3dPoint p3d = l_plane.PointAt(l_param);
                 /* See if point is outside arb */
                 for (int m = 0; m < planes->Count(); m++) {
