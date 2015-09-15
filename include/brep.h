@@ -1391,7 +1391,7 @@ struct csg_object_params {
     fastf_t height;
     int arb_type;
     point_t p[8];
-    int plane_cnt;
+    size_t plane_cnt;
     plane_t *planes;
     /* An implicit plane, if present, may close a face on a parent solid */
     int have_implicit_plane;

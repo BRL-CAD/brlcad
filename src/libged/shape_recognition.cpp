@@ -207,6 +207,26 @@ subbrep_to_csg_arb8(struct subbrep_island_data *data, struct rt_wdb *wdbp, struc
     }
 }
 #endif
+
+HIDDEN int
+subbrep_to_csg_arbn(struct bu_vls *msgs, struct csg_object_params *data, struct rt_wdb *wdbp, struct bu_vls *id, struct wmember *wcomb)
+{
+    if (!msgs || !data || !wdbp || !id || !wcomb) return 0;
+    if (data->type == ARBN) {
+	/* Make the arbn, using the data key for a unique name */
+	struct bu_vls prim_name = BU_VLS_INIT_ZERO;
+	subbrep_obj_name(data, id, &prim_name);
+	if (mk_arbn(wdbp, bu_vls_addr(&prim_name), data->plane_cnt, data->planes)) {
+	    if (msgs) bu_vls_printf(msgs, "mk_arbn failed for %s\n", bu_vls_addr(&prim_name));
+	} else {
+	    //obj_add_attr_key(data, wdbp, bu_vls_addr(&prim_name));
+	}
+	return 1;
+    } else {
+	return 0;
+    }
+}
+    
 HIDDEN int
 subbrep_to_csg_planar(struct bu_vls *msgs, struct csg_object_params *data, struct rt_wdb *wdbp, struct bu_vls *id, struct wmember *wcomb)
 {
@@ -288,7 +308,7 @@ subbrep_to_csg_sphere(struct subbrep_island_data *data, struct rt_wdb *wdbp, str
 #endif
 
 HIDDEN void
-process_params(struct bu_vls *msgs, struct csg_object_params *data, struct rt_wdb *wdbp, struct bu_vls *id, struct wmember *wcomb)
+csg_obj_process(struct bu_vls *msgs, struct csg_object_params *data, struct rt_wdb *wdbp, struct bu_vls *id, struct wmember *wcomb)
 {
     switch (data->type) {
 	case ARB6:
@@ -296,6 +316,9 @@ process_params(struct bu_vls *msgs, struct csg_object_params *data, struct rt_wd
 	    break;
 	case ARB8:
 	    //subbrep_to_csg_arb8(data, wdbp, id, wcomb);
+	    break;
+	case ARBN:
+	    subbrep_to_csg_arbn(msgs, data, wdbp, id, wcomb);
 	    break;
 	case PLANAR_VOLUME:
 	    subbrep_to_csg_planar(msgs, data, wdbp, id, wcomb);
@@ -332,7 +355,7 @@ make_shapes(struct bu_vls *msgs, struct csg_object_params *data, struct rt_wdb *
 	return 0;
     }
 
-    process_params(msgs, data, wdbp, id, pcomb);
+    csg_obj_process(msgs, data, wdbp, id, pcomb);
     return 0;
 }
 
@@ -408,7 +431,7 @@ make_island(struct bu_vls *msgs, struct subbrep_island_data *data, struct rt_wdb
 	    BU_LIST_INIT(&wcomb.l);
 	    if (data->nucleus && !data->negative_nucleus) {
 	    //bu_log("%smake planar obj %s\n", bu_vls_addr(&spacer), bu_vls_addr(data->id));
-		process_params(msgs, data->nucleus, wdbp, id, &wcomb);
+		csg_obj_process(msgs, data->nucleus, wdbp, id, &wcomb);
 	    }
 	    //bu_log("make comb %s\n", bu_vls_addr(data->id));
 	    for (unsigned int i = 0; i < BU_PTBL_LEN(data->children); i++){
@@ -418,7 +441,7 @@ make_island(struct bu_vls *msgs, struct subbrep_island_data *data, struct rt_wdb
 	    }
 	    if (data->nucleus && data->negative_nucleus) {
 	    //bu_log("%smake planar obj %s\n", bu_vls_addr(&spacer), bu_vls_addr(data->id));
-		process_params(msgs, data->nucleus, wdbp, id, &wcomb);
+		csg_obj_process(msgs, data->nucleus, wdbp, id, &wcomb);
 	    }
 
 	    mk_lcomb(wdbp, bu_vls_addr(&comb_name), &wcomb, 0, NULL, NULL, NULL, 0);
@@ -433,7 +456,7 @@ make_island(struct bu_vls *msgs, struct subbrep_island_data *data, struct rt_wdb
 	} else {
 	    //std::cout << "type: " << data->type << "\n";
 	    //bu_log("%smake solid %s\n", bu_vls_addr(&spacer), bu_vls_addr(data->id));
-	    process_params(msgs, data->nucleus, wdbp, id, pcomb);
+	    csg_obj_process(msgs, data->nucleus, wdbp, id, pcomb);
 	}
     }
     return 0;
@@ -492,20 +515,17 @@ finalize_comb(struct rt_wdb *wdbp, struct directory *brep_dp, struct rt_gen_work
  *  2 not a valid brep
  */
 int
-brep_to_csg(struct ged *gedp, struct directory *dp, int verify)
+brep_to_csg(struct ged *gedp, struct directory *dp, int UNUSED(verify))
 {
+    /* Unpack B-Rep */
     struct rt_db_internal intern;
     struct rt_brep_internal *brep_ip = NULL;
-
     struct rt_wdb *wdbp = gedp->ged_wdbp;
-
     RT_DB_INTERNAL_INIT(&intern)
-
     if (rt_db_get_internal(&intern, dp, wdbp->dbip, NULL, &rt_uniresource) < 0) {
 	return -1;
     }
     bu_vls_printf(gedp->ged_result_str, "processing %s\n", dp->d_namep);
-
     if (intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_BREP) {
 	bu_vls_printf(gedp->ged_result_str, "%s is not a B-Rep - aborting\n", dp->d_namep);
 	return 1;
@@ -520,151 +540,35 @@ brep_to_csg(struct ged *gedp, struct directory *dp, int verify)
     }
 #endif
     ON_Brep *brep = brep_ip->brep;
+
     struct wmember pcomb;
     struct bu_vls comb_name = BU_VLS_INIT_ZERO;
     bu_vls_sprintf(&comb_name, "csg_%s", dp->d_namep);
     BU_LIST_INIT(&pcomb.l);
 
-    struct bu_ptbl *subbreps = find_subbreps(gedp->ged_result_str, brep);
-    struct bu_ptbl *subbreps_tree = find_top_level_hierarchy(gedp->ged_result_str, subbreps);
-    if (!subbreps) return 2;
-    if (!subbreps_tree) return 2;
-    for (unsigned int i = 0; i < BU_PTBL_LEN(subbreps); i++){
-	struct subbrep_island_data *obj = (struct subbrep_island_data *)BU_PTBL_GET(subbreps, i);
-	(void)make_island(gedp->ged_result_str, obj, wdbp, &comb_name, NULL, 0);
-    }
+    struct bu_ptbl *subbreps_tree = find_subbreps(gedp->ged_result_str, brep);
 
-    if (subbreps_tree) {
-	struct bu_vls obj_comb_name = BU_VLS_INIT_ZERO;
-	struct bu_vls sub_comb_name = BU_VLS_INIT_ZERO;
-	struct subbrep_island_data *curr_union = NULL;
-	struct wmember *ccomb = NULL;
-	struct wmember *scomb = NULL;
-
-	struct bu_ptbl finalize_combs = BU_PTBL_INIT_ZERO;
-	for (unsigned int i = 0; i < BU_PTBL_LEN(subbreps_tree); i++){
-	    struct subbrep_island_data *obj = (struct subbrep_island_data *)BU_PTBL_GET(subbreps_tree, i);
-	    subbrep_obj_name(obj->nucleus, &comb_name, obj->obj_name);
-
-	    if (obj->nucleus->bool_op == 'u') {
-		//print_subbrep_object(obj, "");
-		if (ccomb) {
-		    bu_ptbl_ins(&finalize_combs, (long *)curr_union);
-		    mk_lcomb(wdbp, bu_vls_addr(&obj_comb_name), ccomb, 0, NULL, NULL, NULL, 0);
-		    BU_PUT(ccomb, struct wmember);
-		    if (scomb) {
-			mk_lcomb(wdbp, bu_vls_addr(&sub_comb_name), scomb, 0, NULL, NULL, NULL, 0);
-			BU_PUT(scomb, struct wmember);
-			scomb = NULL;
-		    }
-		}
-		BU_GET(ccomb, struct wmember);
-		BU_LIST_INIT(&ccomb->l);
-		curr_union = obj;
-		bu_vls_sprintf(&obj_comb_name, "%s-_test_c_%s.c", bu_vls_addr(&comb_name), bu_vls_addr(obj->id));
-		bu_vls_sprintf(&sub_comb_name, "%s-s_%s.c", bu_vls_addr(&comb_name), bu_vls_addr(obj->id));
-		(void)mk_addmember(bu_vls_addr(&obj_comb_name), &(pcomb.l), NULL, db_str2op(&(obj->nucleus->bool_op)));
-		(void)mk_addmember(bu_vls_addr(curr_union->obj_name), &((*ccomb).l), NULL, db_str2op(&(obj->nucleus->bool_op)));
-	    } else {
-		char un = 'u';
-		if (!scomb) {
-		    BU_GET(scomb, struct wmember);
-		    BU_LIST_INIT(&scomb->l);
-		    (void)mk_addmember(bu_vls_addr(&sub_comb_name), &((*ccomb).l), NULL, db_str2op(&(obj->nucleus->bool_op)));
-		}
-		//print_subbrep_object(obj, "  ");
-		(void)mk_addmember(bu_vls_addr(obj->obj_name), &((*scomb).l), NULL, db_str2op((const char *)&un));
-	    }
-	}
-
-	/* Make the last comb - TODO - should we also finalize all the other combs that need it now? */
-	if (ccomb) {
-	    bu_ptbl_ins(&finalize_combs, (long *)curr_union);
-	    mk_lcomb(wdbp, bu_vls_addr(&obj_comb_name), ccomb, 0, NULL, NULL, NULL, 0);
-	    BU_PUT(ccomb, struct wmember);
-	    if (scomb) {
-		mk_lcomb(wdbp, bu_vls_addr(&sub_comb_name), scomb, 0, NULL, NULL, NULL, 0);
-		BU_PUT(scomb, struct wmember);
-	    }
-	}
-	bu_vls_free(&obj_comb_name);
-	bu_vls_free(&sub_comb_name);
-
-	/* finalize the combs that need it */
-	if (BU_PTBL_LEN(&finalize_combs) > 0) {
-	    int have_work_to_do = 0;
-	    /* If we have to do this step, we need to prep the original brep for raytracing */
-	    size_t ncpus = bu_avail_cpus();
-	    //size_t ncpus = 1;
-	    for (unsigned int i = 0; i < BU_PTBL_LEN(&finalize_combs); i++){
-		struct subbrep_island_data *obj = (struct subbrep_island_data *)BU_PTBL_GET(&finalize_combs, i);
-		if (BU_PTBL_LEN(obj->subtraction_candidates) > 0) have_work_to_do++;
-	    }
-
-	    if (have_work_to_do) {
-		struct rt_gen_worker_vars *brep_vars = (struct rt_gen_worker_vars *)bu_calloc(ncpus+1, sizeof(struct rt_gen_worker_vars ), "brep state");
-		struct resource *brep_resp = (struct resource *)bu_calloc(ncpus+1, sizeof(struct resource), "brep resources");
-		struct rt_i *brep_rtip = rt_new_rti(wdbp->dbip);
-		for (size_t i = 0; i < ncpus+1; i++) {
-		    brep_vars[i].rtip = brep_rtip;
-		    brep_vars[i].resp = &brep_resp[i];
-		    rt_init_resource(brep_vars[i].resp, i, brep_rtip);
-		}
-		if (rt_gettrees(brep_rtip, 1, (const char **)&dp->d_namep, ncpus) < 0) {
-		//if (rt_gettree(brep_rtip, dp->d_namep) < 0) {
-		    // TODO - free memory
-		    return 0;
-		}
-		rt_prep_parallel(brep_rtip, ncpus);
-
-		for (unsigned int i = 0; i < BU_PTBL_LEN(&finalize_combs); i++){
-		    struct subbrep_island_data *obj = (struct subbrep_island_data *)BU_PTBL_GET(&finalize_combs, i);
-		    finalize_comb(wdbp, dp, brep_vars, obj, ncpus);
-		}
-	    }
-	}
-
-	bu_ptbl_free(&finalize_combs);
-    }
-
-    // Free memory
-    for (unsigned int i = 0; i < BU_PTBL_LEN(subbreps); i++){
-	struct subbrep_island_data *obj = (struct subbrep_island_data *)BU_PTBL_GET(subbreps, i);
-	for (unsigned int j = 0; j < BU_PTBL_LEN(obj->children); j++){
-	    struct subbrep_island_data *cdata = (struct subbrep_island_data *)BU_PTBL_GET(obj->children,j);
-	    subbrep_object_free(cdata);
-	}
-	subbrep_object_free(obj);
-	BU_PUT(obj, struct subbrep_island_data);
-    }
-
-    if (subbreps) {
-	bu_ptbl_free(subbreps);
-	BU_PUT(subbreps, struct bu_ptbl);
-    }
-    if (subbreps_tree) {
-	bu_ptbl_free(subbreps_tree);
-	BU_PUT(subbreps_tree, struct bu_ptbl);
-    }
-    // TODO - probably should be region
-    mk_lcomb(wdbp, bu_vls_addr(&comb_name), &pcomb, 0, NULL, NULL, NULL, 0);
-
-
-    // Verify that the resulting csg tree and the original B-Rep pass a difference test.
-    if (verify) {
-	ON_BoundingBox bbox;
-	struct bn_tol tol = {BN_TOL_MAGIC, BN_TOL_DIST, BN_TOL_DIST * BN_TOL_DIST, 1.0e-6, 1.0 - 1.0e-6 };
-	brep->GetBoundingBox(bbox);
-	tol.dist = (bbox.Diagonal().Length() / 100.0);
-	    bu_log("Analyzing %s csg conversion, tol %f...\n", dp->d_namep, tol.dist);
-	if (analyze_raydiff(NULL, gedp->ged_wdbp->dbip, dp->d_namep, bu_vls_addr(&comb_name), &tol, 1)) {
-	    /* TODO - kill tree if debugging flag isn't passed - not valid */
-	    bu_log("Warning - %s did not pass diff test at tol %f!\n", bu_vls_addr(&comb_name), tol.dist);
+    for (unsigned int i = 0; i < BU_PTBL_LEN(subbreps_tree); i++) {
+	struct subbrep_island_data *d = (struct subbrep_island_data *)BU_PTBL_GET(subbreps_tree, i);
+	if (d->nucleus) {
+	    struct bu_vls id = BU_VLS_INIT_ZERO;
+	    bu_vls_sprintf(&id, "csg_%s-%d_nucleus.s", dp->d_namep, d->obj_id);
+	    csg_obj_process(gedp->ged_result_str, d->nucleus, wdbp, &id, &pcomb);
 	}
     }
 
     return 0;
 }
+
+
+
+
+
+
+
+/*************************************************/
+/*               Tree walking, etc.              */
+/*************************************************/
 
 int comb_to_csg(struct ged *gedp, struct directory *dp, int verify);
 
@@ -762,6 +666,7 @@ brep_csg_conversion_tree(struct ged *gedp, const union tree *oldtree, union tree
     }
     return 1;
 }
+
 
 int
 comb_to_csg(struct ged *gedp, struct directory *dp, int verify)

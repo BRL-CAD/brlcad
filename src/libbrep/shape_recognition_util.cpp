@@ -781,6 +781,178 @@ subbrep_top_bottom_pnts(struct subbrep_island_data *data, std::set<int> *corner_
     return 0;
 }
 
+
+int
+subbrep_make_brep(struct bu_vls *UNUSED(msgs), struct subbrep_island_data *data)
+{
+    if (data->local_brep) return 0;
+    data->local_brep = ON_Brep::New();
+    const ON_Brep *brep = data->brep;
+    ON_Brep *nbrep = data->local_brep;
+
+    // We only want the subset of data that is part of this particular
+    // subobject - to do that, we need to map elements from their indices in
+    // the old Brep to their locations in the new.
+    std::map<int, int> face_map;
+    std::map<int, int> surface_map;
+    std::map<int, int> edge_map;
+    std::map<int, int> vertex_map;
+    std::map<int, int> c3_map;
+    std::map<int, int> trim_map;
+
+    std::set<int> faces;
+    std::set<int> fil;
+    array_to_set(&faces, data->faces, data->faces_cnt);
+    array_to_set(&fil, data->fil, data->fil_cnt);
+
+    // Use the set of loops to collect loops, trims, vertices, edges, faces, 2D
+    // and 3D curves
+    for (int i = 0; i < data->loops_cnt; i++) {
+	const ON_BrepLoop *loop = &(brep->m_L[data->loops[i]]);
+	const ON_BrepFace *face = loop->Face();
+	// Face
+	if (face_map.find(face->m_face_index) == face_map.end()) {
+	    // Get Surface of Face
+	    ON_Surface *ns = face->SurfaceOf()->Duplicate();
+	    int nsid = nbrep->AddSurface(ns);
+	    surface_map[face->SurfaceIndexOf()] = nsid;
+	    // Get Face
+	    ON_BrepFace &new_face = nbrep->NewFace(nsid);
+	    face_map[face->m_face_index] = new_face.m_face_index;
+	    if (fil.find(face->m_face_index) != fil.end()) nbrep->FlipFace(new_face);
+	    if (face->m_bRev) nbrep->FlipFace(new_face);
+	}
+	// Loop
+	ON_BrepLoop &nl = nbrep->NewLoop(ON_BrepLoop::outer, nbrep->m_F[face_map[face->m_face_index]]);
+	if (loop->m_type != ON_BrepLoop::outer && loop->m_type != ON_BrepLoop::inner)
+	    nl.m_type = loop->m_type;
+	// Trims, etc.
+	for (int ti = 0; ti < loop->m_ti.Count(); ti++) {
+	    int v0i, v1i;
+	    int c2i, c3i;
+	    const ON_BrepTrim *trim = &(brep->m_T[loop->m_ti[ti]]);
+	    const ON_BrepEdge *edge = &(brep->m_E[trim->m_ei]);
+	    const ON_BrepEdge *nedge = NULL;
+
+	    // Get the 2D curve from the trim.
+	    ON_Curve *nc = trim->TrimCurveOf()->Duplicate();
+	    c2i = nbrep->AddTrimCurve(nc);
+
+	    // Edges, etc.
+	    if (trim->m_ei != -1 && edge) {
+		// Get the 3D curve from the edge
+		if (c3_map.find(edge->EdgeCurveIndexOf()) == c3_map.end()) {
+		    ON_Curve *nec = edge->EdgeCurveOf()->Duplicate();
+		    c3i = nbrep->AddEdgeCurve(nec);
+		    c3_map[edge->EdgeCurveIndexOf()] = c3i;
+		} else {
+		    c3i = c3_map[edge->EdgeCurveIndexOf()];
+		}
+
+		// Get the vertices from the edges
+		if (vertex_map.find(edge->Vertex(0)->m_vertex_index) == vertex_map.end()) {
+		    ON_BrepVertex& newv0 = nbrep->NewVertex(edge->Vertex(0)->Point(), edge->Vertex(0)->m_tolerance);
+		    v0i = newv0.m_vertex_index;
+		    vertex_map[edge->Vertex(0)->m_vertex_index] = v0i;
+		} else {
+		    v0i = vertex_map[edge->Vertex(0)->m_vertex_index];
+		}
+		if (vertex_map.find(edge->Vertex(1)->m_vertex_index) == vertex_map.end()) {
+		    ON_BrepVertex& newv1 = nbrep->NewVertex(edge->Vertex(1)->Point(), edge->Vertex(1)->m_tolerance);
+		    v1i = newv1.m_vertex_index;
+		    vertex_map[edge->Vertex(1)->m_vertex_index] = v1i;
+		} else {
+		    v1i = vertex_map[edge->Vertex(1)->m_vertex_index];
+		}
+
+		// Edge
+		if (edge_map.find(edge->m_edge_index) == edge_map.end()) {
+		    ON_BrepEdge& new_edge = nbrep->NewEdge(nbrep->m_V[v0i], nbrep->m_V[v1i], c3i, NULL ,0);
+		    edge_map[edge->m_edge_index] = new_edge.m_edge_index;
+		}
+		nedge = &(nbrep->m_E[edge_map[edge->m_edge_index]]);
+	    }
+
+	    // Now set up the Trim
+	    if (trim->m_ei != -1 && nedge) {
+		ON_BrepEdge &n_edge = nbrep->m_E[nedge->m_edge_index];
+		ON_BrepTrim &nt = nbrep->NewTrim(n_edge, trim->m_bRev3d, nl, c2i);
+		nt.m_tolerance[0] = trim->m_tolerance[0];
+		nt.m_tolerance[1] = trim->m_tolerance[1];
+		nt.m_type = trim->m_type;
+		nt.m_iso = trim->m_iso;
+	    } else {
+		if (vertex_map.find(trim->Vertex(0)->m_vertex_index) == vertex_map.end()) {
+		    ON_BrepVertex& newvs = nbrep->NewVertex(trim->Vertex(0)->Point(), trim->Vertex(0)->m_tolerance);
+		    vertex_map[trim->Vertex(0)->m_vertex_index] = newvs.m_vertex_index;
+		    ON_BrepTrim &nt = nbrep->NewSingularTrim(newvs, nl, trim->m_iso, c2i);
+		    nt.m_type = trim->m_type;
+		    nt.m_tolerance[0] = trim->m_tolerance[0];
+		    nt.m_tolerance[1] = trim->m_tolerance[1];
+		} else {
+		    ON_BrepTrim &nt = nbrep->NewSingularTrim(nbrep->m_V[vertex_map[trim->Vertex(0)->m_vertex_index]], nl, trim->m_iso, c2i);
+		    nt.m_type = trim->m_type;
+		    nt.m_tolerance[0] = trim->m_tolerance[0];
+		    nt.m_tolerance[1] = trim->m_tolerance[1];
+		}
+
+	    }
+	}
+    }
+
+    // Make sure all the loop directions and types are correct
+    for (int f = 0; f < nbrep->m_F.Count(); f++) {
+	ON_BrepFace *face = &(nbrep->m_F[f]);
+	if (face->m_li.Count() == 1) {
+	    ON_BrepLoop& loop = nbrep->m_L[face->m_li[0]];
+	    if (nbrep->LoopDirection(loop) != 1) {
+		nbrep->FlipLoop(loop);
+	    }
+	    loop.m_type = ON_BrepLoop::outer;
+	} else {
+	    int i1 = 0;
+	    int tmp;
+	    ON_BoundingBox o_bbox, c_bbox;
+	    int outer_loop_ind = face->m_li[0];
+	    nbrep->m_L[outer_loop_ind].GetBoundingBox(o_bbox);
+	    for (int l = 1; l < face->m_li.Count(); l++) {
+		ON_BrepLoop& loop = nbrep->m_L[face->m_li[l]];
+		loop.GetBoundingBox(c_bbox);
+
+		if (c_bbox.Includes(o_bbox)) {
+		    if (nbrep->m_L[outer_loop_ind].m_type == ON_BrepLoop::outer) {
+			nbrep->m_L[outer_loop_ind].m_type = ON_BrepLoop::inner;
+		    }
+		    o_bbox = c_bbox;
+		    outer_loop_ind = face->m_li[l];
+		    i1 = l;
+		}
+	    }
+	    if (nbrep->m_L[outer_loop_ind].m_type != ON_BrepLoop::outer)
+		nbrep->m_L[outer_loop_ind].m_type = ON_BrepLoop::outer;
+	    tmp = face->m_li[0];
+	    face->m_li[0] = face->m_li[i1];
+	    face->m_li[i1] = tmp;
+	    for (int l = 1; l < face->m_li.Count(); l++) {
+		if (nbrep->m_L[face->m_li[l]].m_type != ON_BrepLoop::inner && nbrep->m_L[face->m_li[l]].m_type != ON_BrepLoop::slit) {
+		    nbrep->m_L[face->m_li[l]].m_type = ON_BrepLoop::inner;
+		}
+	    }
+	}
+    }
+
+    nbrep->ShrinkSurfaces();
+    nbrep->CullUnusedSurfaces();
+
+    //std::cout << "new brep done: " << bu_vls_addr(data->key) << "\n";
+
+    return 1;
+}
+
+
+
+
+
 // Local Variables:
 // tab-width: 8
 // mode: C++

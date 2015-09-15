@@ -785,6 +785,7 @@ island_nucleus(struct bu_vls *msgs, struct subbrep_island_data *data)
 	    // If we do in fact have a convex polyhedron, we can create an arbn
 	    // instead of a BoT for this nucleus shape
 	    data->nucleus->type = ARBN;
+	    data->nucleus->plane_cnt = planes.Count();
 	    data->nucleus->planes = (plane_t *)bu_calloc(planes.Count(), sizeof(plane_t), "planes");
 	    for (int i = 0; i < planes.Count(); i++) {
 		ON_Plane p = planes[i];
