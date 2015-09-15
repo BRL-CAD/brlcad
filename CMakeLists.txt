@@ -2141,7 +2141,7 @@ BRLCAD_FUNCTION_EXISTS(lrint HAVE_LRINT
 if(NOT HAVE_LRINT AND "${HAVE_WORKING_LRINT_MACRO}" MATCHES "^${HAVE_WORKING_LRINT_MACRO}$")
   set(CMAKE_REQUIRED_LIBRARIES_BAK ${CMAKE_REQUIRED_LIBRARIES})
   set(CMAKE_REQUIRED_LIBRARIES ${M_LIBRARY})
-  check_c_source_compiles("#include \"${CMAKE_CURRENT_SOURCE_DIR}/misc/CMake/test_srcs/lrint_macro.h\"\nlong int lrint(double); int main() {return lrint(3.14);}" HAVE_WORKING_LRINT_MACRO)
+  check_c_source_compiles("#include \"${CMAKE_CURRENT_SOURCE_DIR}/misc/CMake/test_srcs/lrint_macro.h\"\nint main() {return lrint(3.14);}" HAVE_WORKING_LRINT_MACRO)
   set(CMAKE_REQUIRED_LIBRARIES ${CMAKE_REQUIRED_LIBRARIES_BAK})
   if(HAVE_WORKING_LRINT_MACRO)
     CONFIG_H_APPEND(BRLCAD "#cmakedefine HAVE_WORKING_LRINT_MACRO 1\n")
