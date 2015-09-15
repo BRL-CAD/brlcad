@@ -1429,7 +1429,7 @@ struct subbrep_island_data {
     ON_Brep *local_brep;
 
     /* Nucleus, if it exists */
-    struct csg_object_params *nucleus;
+    struct subbrep_shoal_data *nucleus;
     int negative_nucleus;
 
     /* struct subbrep_shoal_data */

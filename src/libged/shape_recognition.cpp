@@ -357,7 +357,7 @@ make_island(struct bu_vls *msgs, struct subbrep_island_data *data, struct rt_wdb
 {
     struct bu_vls spacer = BU_VLS_INIT_ZERO;
 
-    subbrep_obj_name(data->nucleus, id, data->obj_name);
+    subbrep_obj_name(data->nucleus->params, id, data->obj_name);
     struct directory *dp = db_lookup(wdbp->dbip, bu_vls_addr(data->obj_name), LOOKUP_QUIET);
 
     // Don't recreate it
@@ -403,14 +403,14 @@ make_island(struct bu_vls *msgs, struct subbrep_island_data *data, struct rt_wdb
     if (data->type == BREP) {
 	if (data->local_brep) {
 	    struct bu_vls brep_name = BU_VLS_INIT_ZERO;
-	    subbrep_obj_name(data->nucleus, id, &brep_name);
+	    subbrep_obj_name(data->nucleus->params, id, &brep_name);
 	    if (!data->local_brep->IsValid()) {
 		if (msgs) bu_vls_printf(msgs, "Warning - data->local_brep is not valid for %s\n", bu_vls_addr(&brep_name));
 	    }
 	    mk_brep(wdbp, bu_vls_addr(&brep_name), data->local_brep);
 	    // TODO - almost certainly need to do more work to get correct booleans
 	    //std::cout << bu_vls_addr(&brep_name) << ": " << data->params->bool_op << "\n";
-	    if (pcomb) (void)mk_addmember(bu_vls_addr(&brep_name), &(pcomb->l), NULL, db_str2op(&(data->nucleus->bool_op)));
+	    if (pcomb) (void)mk_addmember(bu_vls_addr(&brep_name), &(pcomb->l), NULL, db_str2op(&(data->nucleus->params->bool_op)));
 	    bu_vls_free(&brep_name);
 	} else {
 	    if (msgs) bu_vls_printf(msgs, "Warning - mk_brep called but data->local_brep is empty\n");
@@ -420,11 +420,11 @@ make_island(struct bu_vls *msgs, struct subbrep_island_data *data, struct rt_wdb
 	    struct wmember wcomb;
 	    struct bu_vls comb_name = BU_VLS_INIT_ZERO;
 	    struct bu_vls member_name = BU_VLS_INIT_ZERO;
-	    subbrep_obj_name(data->nucleus, id, &comb_name);
+	    subbrep_obj_name(data->nucleus->params, id, &comb_name);
 	    BU_LIST_INIT(&wcomb.l);
-	    if (data->nucleus && !data->negative_nucleus) {
+	    if (data->nucleus->params && !data->negative_nucleus) {
 	    //bu_log("%smake planar obj %s\n", bu_vls_addr(&spacer), bu_vls_addr(data->id));
-		csg_obj_process(msgs, data->nucleus, wdbp, id, &wcomb);
+		csg_obj_process(msgs, data->nucleus->params, wdbp, id, &wcomb);
 	    }
 	    //bu_log("make comb %s\n", bu_vls_addr(data->id));
 	    for (unsigned int i = 0; i < BU_PTBL_LEN(data->children); i++){
@@ -434,7 +434,7 @@ make_island(struct bu_vls *msgs, struct subbrep_island_data *data, struct rt_wdb
 	    }
 	    if (data->nucleus && data->negative_nucleus) {
 	    //bu_log("%smake planar obj %s\n", bu_vls_addr(&spacer), bu_vls_addr(data->id));
-		csg_obj_process(msgs, data->nucleus, wdbp, id, &wcomb);
+		csg_obj_process(msgs, data->nucleus->params, wdbp, id, &wcomb);
 	    }
 
 	    mk_lcomb(wdbp, bu_vls_addr(&comb_name), &wcomb, 0, NULL, NULL, NULL, 0);
@@ -442,14 +442,14 @@ make_island(struct bu_vls *msgs, struct subbrep_island_data *data, struct rt_wdb
 
 	    // TODO - almost certainly need to do more work to get correct booleans
 	    //std::cout << bu_vls_addr(&comb_name) << ": " << data->params->bool_op << "\n";
-	    if (pcomb) (void)mk_addmember(bu_vls_addr(&comb_name), &(pcomb->l), NULL, db_str2op(&(data->nucleus->bool_op)));
+	    if (pcomb) (void)mk_addmember(bu_vls_addr(&comb_name), &(pcomb->l), NULL, db_str2op(&(data->nucleus->params->bool_op)));
 
 	    bu_vls_free(&member_name);
 	    bu_vls_free(&comb_name);
 	} else {
 	    //std::cout << "type: " << data->type << "\n";
 	    //bu_log("%smake solid %s\n", bu_vls_addr(&spacer), bu_vls_addr(data->id));
-	    csg_obj_process(msgs, data->nucleus, wdbp, id, pcomb);
+	    csg_obj_process(msgs, data->nucleus->params, wdbp, id, pcomb);
 	}
     }
     return 0;
@@ -546,20 +546,32 @@ brep_to_csg(struct ged *gedp, struct directory *dp, int UNUSED(verify))
 	if (d->nucleus) {
 	    struct bu_vls id = BU_VLS_INIT_ZERO;
 	    bu_vls_sprintf(&id, "csg_%s-%d_nucleus.s", dp->d_namep, d->obj_id);
-	    bu_log("nucleus type : %d, bool_op: %c\n", d->nucleus->type, d->nucleus->bool_op);
-	    csg_obj_process(gedp->ged_result_str, d->nucleus, wdbp, &id, &pcomb);
-	    for (unsigned int j = 0; j < BU_PTBL_LEN(d->children); j++){
-		struct subbrep_shoal_data *sdata = (struct subbrep_shoal_data *)BU_PTBL_GET(d->children,j);
-		struct csg_object_params *cdata = sdata->params;
-		bu_log(" object type: %d, bool_op: %c\n", cdata->type, cdata->bool_op);
-		csg_obj_process(gedp->ged_result_str, cdata, wdbp, &id, &pcomb);
-		for (unsigned int k = 0; k < BU_PTBL_LEN(sdata->sub_params); k++){
-		    struct csg_object_params *ccd = (struct csg_object_params *)BU_PTBL_GET(sdata->sub_params,k);
-		    bu_log("   object type: %d, bool_op: %c\n", ccd->type, ccd->bool_op);
+	    bu_log("nucleus type : %d, bool_op: %c\n", d->nucleus->params->type, d->nucleus->params->bool_op);
+	    csg_obj_process(gedp->ged_result_str, d->nucleus->params, wdbp, &id, &pcomb);
+	    if (d->nucleus->sub_params) {
+		for (unsigned int k = 0; k < BU_PTBL_LEN(d->nucleus->sub_params); k++){
+		    struct csg_object_params *ccd = (struct csg_object_params *)BU_PTBL_GET(d->nucleus->sub_params,k);
+		    bu_log("   nucleus subobject type: %d, bool_op: %c\n", ccd->type, ccd->bool_op);
 		    csg_obj_process(gedp->ged_result_str, ccd, wdbp, &id, &pcomb);
 		}
 	    }
 	}
+	struct bu_vls id = BU_VLS_INIT_ZERO;
+	bu_vls_sprintf(&id, "csg_%s-%d_child.s", dp->d_namep, d->obj_id);
+	for (unsigned int j = 0; j < BU_PTBL_LEN(d->children); j++){
+	    struct subbrep_shoal_data *sdata = (struct subbrep_shoal_data *)BU_PTBL_GET(d->children,j);
+	    struct csg_object_params *cdata = sdata->params;
+	    bu_log(" object type: %d, bool_op: %c\n", cdata->type, cdata->bool_op);
+	    csg_obj_process(gedp->ged_result_str, cdata, wdbp, &id, &pcomb);
+	    if (sdata->sub_params) {
+		for (unsigned int k = 0; k < BU_PTBL_LEN(sdata->sub_params); k++){
+		    struct csg_object_params *ccd = (struct csg_object_params *)BU_PTBL_GET(sdata->sub_params,k);
+		    bu_log("   subobject type: %d, bool_op: %c\n", ccd->type, ccd->bool_op);
+		    csg_obj_process(gedp->ged_result_str, ccd, wdbp, &id, &pcomb);
+		}
+	    }
+	}
+
     }
 
     return 0;

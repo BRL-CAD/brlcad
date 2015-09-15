@@ -677,24 +677,25 @@ island_nucleus(struct bu_vls *msgs, struct subbrep_island_data *data)
 	}
 	std::map<int,int> vert_map;
 	int curr_vert = 0;
-	BU_GET(data->nucleus, struct csg_object_params);
-	data->nucleus->type = PLANAR_VOLUME;
-	data->nucleus->verts = (point_t *)bu_calloc(all_used_verts.size(), sizeof(point_t), "final verts array");
+	BU_GET(data->nucleus, struct subbrep_shoal_data);
+	BU_GET(data->nucleus->params, struct csg_object_params);
+	data->nucleus->params->type = PLANAR_VOLUME;
+	data->nucleus->params->verts = (point_t *)bu_calloc(all_used_verts.size(), sizeof(point_t), "final verts array");
 	for (auv_it = all_used_verts.begin(); auv_it != all_used_verts.end(); auv_it++) {
 	    ON_3dPoint vp = data->brep->m_V[(int)(*auv_it)].Point();
-	    BN_VMOVE(data->nucleus->verts[curr_vert], vp);
+	    BN_VMOVE(data->nucleus->params->verts[curr_vert], vp);
 	    vert_map.insert(std::pair<int,int>((int)*auv_it, curr_vert));
 	    curr_vert++;
 	}
-	data->nucleus->vert_cnt = all_used_verts.size();
+	data->nucleus->params->vert_cnt = all_used_verts.size();
 
 	// Fourth, create final face arrays using the new indices
-	data->nucleus->faces = (int *)bu_calloc(all_faces.size(), sizeof(int), "final faces array");
+	data->nucleus->params->faces = (int *)bu_calloc(all_faces.size(), sizeof(int), "final faces array");
 	for (unsigned int i = 0; i < all_faces.size(); i++) {
 	    int nv = vert_map.find(all_faces[i])->second;
-	    data->nucleus->faces[i] = nv;
+	    data->nucleus->params->faces[i] = nv;
 	}
-	data->nucleus->face_cnt = all_faces.size() / 3;
+	data->nucleus->params->face_cnt = all_faces.size() / 3;
     }
 
     // Sixth, check the polyhedron nucleus is degenerate
@@ -748,24 +749,24 @@ island_nucleus(struct bu_vls *msgs, struct subbrep_island_data *data)
 
     // If we're not degenerate, test for a negative polyhedron - if negative, handle accordingly
     if (!degenerate_nucleus) {
-	if (negative_polygon(msgs, data->nucleus) == -1) {
-	    data->nucleus->negative = -1;
-	    data->nucleus->bool_op = '-';
+	if (negative_polygon(msgs, data->nucleus->params) == -1) {
+	    data->nucleus->params->negative = -1;
+	    data->nucleus->params->bool_op = '-';
 	    // Flip triangles and planes so BoT/arbn is a positive shape.  All csg params need
 	    // to describe positive shapes for primitive creation - their "negative" flag preserves
 	    // their original role per their original B-Rep face normals
-	    for (int i = 0; i < data->nucleus->face_cnt; i++) {
-		int tmp = data->nucleus->faces[i*3+1];
-		data->nucleus->faces[i*3+1] = data->nucleus->faces[i*3+2];
-		data->nucleus->faces[i*3+2] = tmp;
+	    for (int i = 0; i < data->nucleus->params->face_cnt; i++) {
+		int tmp = data->nucleus->params->faces[i*3+1];
+		data->nucleus->params->faces[i*3+1] = data->nucleus->params->faces[i*3+2];
+		data->nucleus->params->faces[i*3+2] = tmp;
 	    }
 	    for (int i = 0; i < planes.Count(); i++) {
 		planes[i].Flip();
 		bu_log("in rcc_%d.s rcc %f %f %f %f %f %f 0.1\n", planes[i].origin.x, planes[i].origin.y, planes[i].origin.z, planes[i].Normal().x, planes[i].Normal().y, planes[i].Normal().z);
 	    }
 	} else {
-	    data->nucleus->negative = 1;
-	    data->nucleus->bool_op = 'u';
+	    data->nucleus->params->negative = 1;
+	    data->nucleus->params->bool_op = 'u';
 	}
 
 
@@ -784,20 +785,20 @@ island_nucleus(struct bu_vls *msgs, struct subbrep_island_data *data)
 	if (convex_polyhedron) {
 	    // If we do in fact have a convex polyhedron, we can create an arbn
 	    // instead of a BoT for this nucleus shape
-	    data->nucleus->type = ARBN;
-	    data->nucleus->plane_cnt = planes.Count();
-	    data->nucleus->planes = (plane_t *)bu_calloc(planes.Count(), sizeof(plane_t), "planes");
+	    data->nucleus->params->type = ARBN;
+	    data->nucleus->params->plane_cnt = planes.Count();
+	    data->nucleus->params->planes = (plane_t *)bu_calloc(planes.Count(), sizeof(plane_t), "planes");
 	    for (int i = 0; i < planes.Count(); i++) {
 		ON_Plane p = planes[i];
 		double d = p.DistanceTo(ON_3dPoint(0,0,0));
-		data->nucleus->planes[i][0] = p.Normal().x;
-		data->nucleus->planes[i][1] = p.Normal().y;
-		data->nucleus->planes[i][2] = p.Normal().z;
-		data->nucleus->planes[i][3] = -1 * d;
+		data->nucleus->params->planes[i][0] = p.Normal().x;
+		data->nucleus->params->planes[i][1] = p.Normal().y;
+		data->nucleus->params->planes[i][2] = p.Normal().z;
+		data->nucleus->params->planes[i][3] = -1 * d;
 	    }
 	} else {
 	    // Otherwise, confirm as BoT
-	    data->nucleus->type = PLANAR_VOLUME;
+	    data->nucleus->params->type = PLANAR_VOLUME;
 	}
 
 	// 3. There is one final wrinkle.  It is possible for a polyhedron nucleus to be volumetrically
@@ -810,9 +811,12 @@ island_nucleus(struct bu_vls *msgs, struct subbrep_island_data *data)
 		bu_log("huh? flipped loops and child count != 1?\n");
 	    } else {
 		struct subbrep_shoal_data *d = (struct subbrep_shoal_data *)BU_PTBL_GET(data->children, 0);
-		struct csg_object_params *tmp = data->nucleus;
-		data->nucleus = d->params;
+		struct bu_ptbl *tmp_sub = data->nucleus->sub_params;
+		struct csg_object_params *tmp = data->nucleus->params;
+		data->nucleus->params = d->params;
+		data->nucleus->sub_params = d->sub_params;
 		d->params = tmp;
+		d->sub_params = tmp_sub;
 	    }
 	}
     }
