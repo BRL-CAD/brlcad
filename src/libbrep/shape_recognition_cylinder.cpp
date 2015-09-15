@@ -564,36 +564,7 @@ cylinder_csg(struct bu_vls *msgs, struct subbrep_shoal_data *data, fastf_t cyl_t
     // arb.  If a set of three planes defines a point that is inside, those
     // planes are part of the final arb.  Based on the arbn prep test.
     int *planes_used = (int *)bu_calloc(uniq_planes.Count(), sizeof(int), "usage flags");
-
-    for (int i = 0; i < uniq_planes.Count()-2; i++) {
-	for (int j = i + 1; j < uniq_planes.Count()-1; j++) {
-	    // If normals are parallel, no intersection
-	    if (uniq_planes[i].Normal().IsParallelTo(uniq_planes[j].Normal(), 0.0005)) continue;
-	    ON_Line l_plane;
-	    ON_Intersect(uniq_planes[i], uniq_planes[j], l_plane);
-	    for (int k = j + 1; k < uniq_planes.Count(); k++) {
-		if (uniq_planes[k].Normal().IsPerpendicularTo(l_plane.Direction(), 0.0005)) continue;
-		int not_used = 0;
-		double l_param;
-		ON_Plane p3 = uniq_planes[k];
-		ON_Intersect(l_plane, uniq_planes[k], &l_param);
-		ON_3dPoint p3d = l_plane.PointAt(l_param);
-		/* See if point is outside arb */
-		for (int m = 0; m < uniq_planes.Count(); m++) {
-		    if (m == i || m == j || m == k) continue;
-		    if (ON_DotProduct(p3d - uniq_planes[m].origin, uniq_planes[m].Normal()) > 0) {
-			not_used = 1;
-			break;
-		    }
-		}
-		if (not_used) continue;
-		planes_used[i]++;
-		planes_used[j]++;
-		planes_used[k]++;
-	    }
-	}
-    }
-
+    convex_plane_usage(&uniq_planes, &planes_used);
     // Finally, based on usage tests, construct the set of planes that will define the arbn
     ON_SimpleArray<ON_Plane> arbn_planes;
     for (int i = 0; i < uniq_planes.Count(); i++) {
