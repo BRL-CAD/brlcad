@@ -570,6 +570,7 @@ cylinder_csg(struct bu_vls *msgs, struct subbrep_shoal_data *data, fastf_t cyl_t
     for (int i = 0; i < uniq_planes.Count(); i++) {
 	if (planes_used[i] != 0) arbn_planes.Append(uniq_planes[i]);
     }
+    bu_free(planes_used, "planes_used");
 
 
     // Construct the arbn to intersect with the cylinder to form the final shape

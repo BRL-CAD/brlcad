@@ -214,58 +214,20 @@ find_subbreps(struct bu_vls *msgs, const ON_Brep *brep)
 	    continue;
 	}
 
-	// See if the shape is representable by a single CSG implicit
-	sb->type = (int)subbrep_shape_recognize(msgs, sb);
-
-	// Handle the cases where more work is needed.
-	int split = 0;
-	switch(sb->type) {
-	    case PLANAR_VOLUME:
-		//subbrep_planar_init(sb);
-		//subbrep_planar_close_obj(sb);
-		//sb->local_brep = sb->planar_obj->local_brep;
-		split = subbrep_split(msgs, sb);
-		TOO_MANY_CSG_OBJS(obj_cnt, msgs);
-		if (!split) {
-		    if (msgs) bu_vls_printf(msgs, "Note - split of %s unsuccessful, making brep\n", bu_vls_addr(sb->key));
-		    sb->type = BREP;
-		    (void)subbrep_make_brep(msgs, sb);
-		} else {
-		    // If we did successfully split the brep, do some post-split clean-up
-		    sb->type = COMB;
-		    //if (sb->planar_obj) subbrep_planar_close_obj(sb);
-		    successes++;
+	int split = subbrep_split(msgs, sb);
+	TOO_MANY_CSG_OBJS(obj_cnt, msgs);
+	if (!split) {
+	    if (msgs) bu_vls_printf(msgs, "Note - split of %s unsuccessful, making brep\n", bu_vls_addr(sb->key));
+	    sb->type = BREP;
+	    (void)subbrep_make_brep(msgs, sb);
+	} else {
+	    // If we did successfully split the brep, do some post-split clean-up
+	    sb->type = COMB;
+	    //if (sb->planar_obj) subbrep_planar_close_obj(sb);
+	    successes++;
 #if WRITE_ISLAND_BREPS
-		    (void)subbrep_make_brep(msgs, sb);
+	    (void)subbrep_make_brep(msgs, sb);
 #endif
-		}
-
-		successes++;
-		break;
-	    case BREP:
-		/* No general surfaces and it's not all planar - have at it */
-		split = subbrep_split(msgs, sb);
-		TOO_MANY_CSG_OBJS(obj_cnt, msgs);
-		if (!split) {
-		    if (msgs) bu_vls_printf(msgs, "Note - split of %s unsuccessful, making brep\n", bu_vls_addr(sb->key));
-		    sb->type = BREP;
-		    (void)subbrep_make_brep(msgs, sb);
-		} else {
-		    // If we did successfully split the brep, do some post-split clean-up
-		    sb->type = COMB;
-		    //if (sb->planar_obj) subbrep_planar_close_obj(sb);
-		    successes++;
-#if WRITE_ISLAND_BREPS
-		    (void)subbrep_make_brep(msgs, sb);
-#endif
-		}
-		break;
-	    default:
-#if WRITE_ISLAND_BREPS
-		(void)subbrep_make_brep(msgs, sb);
-#endif
-		successes++;
-		break;
 	}
 	bu_ptbl_ins(subbreps, (long *)sb);
     }
@@ -296,118 +258,98 @@ bail:
 
 
 
+int cyl_validate_face(const ON_BrepFace *forig, const ON_BrepFace *fcand)
+{
+    ON_Cylinder corig;
+    ON_Surface *csorig = forig->SurfaceOf()->Duplicate();
+    csorig->IsCylinder(&corig);
+    delete csorig;
+
+    ON_Cylinder ccand;
+    ON_Surface *cscand = fcand->SurfaceOf()->Duplicate();
+    cscand->IsCylinder(&ccand);
+    delete cscand;
+
+    // Make sure the surfaces are on the same cylinder
+    if (corig.circle.Center().DistanceTo(ccand.circle.Center()) > BREP_CYLINDRICAL_TOL) return 0;
+
+    // Make sure the radii are the same
+    if (!NEAR_ZERO(corig.circle.Radius() - ccand.circle.Radius(), VUNITIZE_TOL)) return 0;
+
+    return 1;
+}
 
 
 int
-connected_loop_set(int **c_loops, const int loop_index, const ON_Brep *brep)
+shoal_filter_loop(int control_loop, int candidate_loop, struct subbrep_island_data *data)
 {
-    int cnt;
-    std::set<int> connected_loops;
-    const ON_BrepLoop *loop = &(brep->m_L[loop_index]);
-    for (int ti = 0; ti < loop->m_ti.Count(); ti++) {
-	const ON_BrepTrim *trim = &(brep->m_T[loop->m_ti[ti]]);
-	const ON_BrepEdge *edge = &(brep->m_E[trim->m_ei]);
-	if (trim->m_ei != -1 && edge) {
-	    for (int j = 0; j < edge->m_ti.Count(); j++) {
-		const ON_BrepTrim *t = &(brep->m_T[edge->m_ti[j]]);
-		connected_loops.insert(t->Loop()->m_loop_index);
-	    }
-	}
-    }
-    set_to_array(c_loops, &(cnt), &connected_loops);
-    return cnt;
-}
+    const ON_Brep *brep = data->brep;
+    surface_t *face_surface_types = (surface_t *)data->face_surface_types;
+    const ON_BrepFace *forig = brep->m_L[control_loop].Face();
+    const ON_BrepFace *fcand = brep->m_L[candidate_loop].Face();
+    surface_t otype  = face_surface_types[forig->m_face_index];
+    surface_t ctype  = face_surface_types[fcand->m_face_index];
 
-int cyl_validate_face(ON_Cylinder *c, surface_t surface_type, const ON_Brep *brep, const int loop_index)
-{
-    int ret = 1;
-    if (surface_type == SURFACE_PLANE) {
-	ON_Plane p;
-	brep->m_L[loop_index].Face()->SurfaceOf()->IsPlanar(&p);
-	if (!c->Axis().IsParallelTo(p.Normal(), BREP_PLANAR_TOL)) ret = 0;
+    switch (otype) {
+	case SURFACE_CYLINDRICAL_SECTION:
+	case SURFACE_CYLINDER:
+	    if (ctype != SURFACE_CYLINDRICAL_SECTION && ctype != SURFACE_CYLINDER) return 0;
+	    if (!cyl_validate_face(forig, fcand)) return 0;
+	    break;
+	case SURFACE_SPHERICAL_SECTION:
+	case SURFACE_SPHERE:
+	    if (ctype != SURFACE_SPHERICAL_SECTION && ctype != SURFACE_SPHERE) return 0;
+	    break;
+	default:
+	    if (otype != ctype) return 0;
+	    break;
     }
-    if (surface_type == SURFACE_CYLINDER || surface_type == SURFACE_CYLINDRICAL_SECTION ) {
-	ON_Cylinder lc;
-	ON_Surface *cs = brep->m_L[loop_index].Face()->SurfaceOf()->Duplicate();
-	cs->IsCylinder(&lc);
-	delete cs;
-	// Make sure the surfaces are on the same cylinder
-	if (c->circle.Center().DistanceTo(lc.circle.Center()) > BREP_CYLINDRICAL_TOL) ret = 0;
-    }
-    return ret;
+
+    return 1;
 }
 
 int
-shoal_filter_loops(int **s_loops, int c_loop_cnt, int *c_loops, surface_t type, const int loop_index, const ON_Brep *brep, surface_t *face_surface_types)
+shoal_build(int **s_loops, int loop_index, struct subbrep_island_data *data)
 {
-    std::set<int> connected_loops;
-    std::set<surface_t> allowed;
-    std::set<int> excluded;
-    ON_Cylinder cylinder;
     int s_loops_cnt = 0;
-    array_to_set(&connected_loops, c_loops, c_loop_cnt);
+    const ON_Brep *brep = data->brep;
+    std::set<int> processed_loops;
+    std::set<int> shoal_loops;
+    std::queue<int> todo;
 
-    if (type == SURFACE_CYLINDRICAL_SECTION || type == SURFACE_CYLINDER) {
-	ON_Surface *cs = brep->m_L[loop_index].Face()->SurfaceOf()->Duplicate();
-	cs->IsCylinder(&cylinder);
-	delete cs;
+    shoal_loops.insert(loop_index);
+    todo.push(loop_index);
 
-	allowed.insert(SURFACE_CYLINDRICAL_SECTION);
-	allowed.insert(SURFACE_CYLINDER);
-	allowed.insert(SURFACE_PLANE);
-    }
-
-    if (type == SURFACE_CONE) {
-	allowed.insert(SURFACE_CONE);
-	allowed.insert(SURFACE_PLANE);
-    }
-
-    if (type == SURFACE_SPHERICAL_SECTION || type == SURFACE_SPHERE) {
-	allowed.insert(SURFACE_SPHERICAL_SECTION);
-	allowed.insert(SURFACE_SPHERE);
-	allowed.insert(SURFACE_PLANE);
-    }
-
-    if (type == SURFACE_TORUS) {
-	allowed.insert(SURFACE_TORUS);
-	allowed.insert(SURFACE_PLANE);
-    }
-
-    for (int i = 0; i < c_loop_cnt; i++) {
-	if (c_loops[i] == loop_index) continue;
-	surface_t ltype = face_surface_types[brep->m_L[c_loops[i]].Face()->m_face_index];
-	if (allowed.find(face_surface_types[brep->m_L[c_loops[i]].Face()->m_face_index]) == allowed.end()) {
-	    excluded.insert(c_loops[i]);
-	} else {
-	    switch (type) {
-		case SURFACE_CYLINDRICAL_SECTION:
-		case SURFACE_CYLINDER:
-		    if (!cyl_validate_face(&cylinder, ltype, brep, c_loops[i])) {
-			excluded.insert(c_loops[i]);
+    while(!todo.empty()) {
+	int lc = todo.front();
+	const ON_BrepLoop *loop = &(brep->m_L[lc]);
+	processed_loops.insert(lc);
+	todo.pop();
+	for (int ti = 0; ti < loop->m_ti.Count(); ti++) {
+	    const ON_BrepTrim *trim = &(brep->m_T[loop->m_ti[ti]]);
+	    const ON_BrepEdge *edge = &(brep->m_E[trim->m_ei]);
+	    if (trim->m_ei != -1 && edge) {
+		for (int j = 0; j < edge->m_ti.Count(); j++) {
+		    const ON_BrepTrim *t = &(brep->m_T[edge->m_ti[j]]);
+		    int li = t->Loop()->m_loop_index;
+		    if (processed_loops.find(li) == processed_loops.end()) {
+			if (shoal_filter_loop(lc, li, data)) {
+			    shoal_loops.insert(li);
+			    todo.push(li);
+			} else {
+			    processed_loops.insert(li);
+			}
 		    }
-		    break;
-		case SURFACE_CONE :
-		    break;
-		case SURFACE_SPHERICAL_SECTION:
-		case SURFACE_SPHERE:
-		    break;
-		case SURFACE_TORUS:
-		    break;
-		default:
-		    break;
+		}
 	    }
 	}
     }
 
-    std::set<int>::iterator l_it;
-    for (l_it = excluded.begin(); l_it != excluded.end(); l_it++) {
-	connected_loops.erase((int)*l_it);
-    }
-
-    set_to_array(s_loops, &(s_loops_cnt), &connected_loops);
-
+    set_to_array(s_loops, &(s_loops_cnt), &shoal_loops);
     return s_loops_cnt;
 }
+
+
 
 /* In order to represent complex shapes, it is necessary to identify
  * subsets of subbreps that can be represented as primitives.  This
@@ -443,9 +385,7 @@ subbrep_split(struct bu_vls *msgs, struct subbrep_island_data *data)
 		BU_GET(sh, struct subbrep_shoal_data);
 		BU_GET(sh->params, struct csg_object_params);
 		sh->i = data;
-		int *c_loops = NULL;
-		int c_loop_cnt = connected_loop_set(&c_loops, loop->m_loop_index, data->brep);
-		sh->loops_cnt = shoal_filter_loops(&(sh->loops), c_loop_cnt, c_loops, surface_type, loop->m_loop_index, data->brep, (surface_t *)data->face_surface_types);
+		sh->loops_cnt = shoal_build(&(sh->loops), loop->m_loop_index, data);
 		for (int i = 0; i < sh->loops_cnt; i++) {
 		    active.erase(sh->loops[i]);
 		}

@@ -698,6 +698,7 @@ island_nucleus(struct bu_vls *msgs, struct subbrep_island_data *data)
 
     if (parallel_planes == planes.Count()) {
 	bu_log("degenerate nucleus\n");
+	degenerate_nucleus = 1;
 	// If the polyhedron nucleus is degenerate, one of the shoals is the nucleus.
 	//
 	// First, check whether the shoal negative/positive flags are the same.
@@ -741,6 +742,14 @@ island_nucleus(struct bu_vls *msgs, struct subbrep_island_data *data)
 	    // Flip triangles and planes so BoT/arbn is a positive shape.  All csg params need
 	    // to describe positive shapes for primitive creation - their "negative" flag preserves
 	    // their original role per their original B-Rep face normals
+	    for (int i = 0; i < data->nucleus->face_cnt; i++) {
+		int tmp = data->nucleus->faces[i*3+1];
+		data->nucleus->faces[i*3+1] = data->nucleus->faces[i*3+2];
+		data->nucleus->faces[i*3+2] = tmp;
+	    }
+	    for (int i = 0; i < planes.Count(); i++) {
+		planes[i].Flip();
+	    }
 	} else {
 	    data->nucleus->negative = 1;
 	    data->nucleus->bool_op = 'u';
@@ -748,12 +757,90 @@ island_nucleus(struct bu_vls *msgs, struct subbrep_island_data *data)
 
 
 	// 2. convex polyhedron
-	//int convex_polyhedron = 1;
+	int convex_polyhedron = 1;
+	int *planes_used = (int *)bu_calloc(planes.Count(), sizeof(int), "usage flags");
+	convex_plane_usage(&planes, &planes_used);
+	for (int i = 0; i < planes.Count(); i++) {
+	    if (planes_used[i] == 0) {
+		convex_polyhedron = 0;
+		break;
+	    }
+	}
+	bu_free(planes_used, "free used array");
+	bu_log("convex polyhedron: %d\n", convex_polyhedron);
+	if (convex_polyhedron) {
+	    // If we do in fact have a convex polyhedron, we can create an arbn
+	    // instead of a BoT for this nucleus shape
+	    data->nucleus->type = ARBN;
+	    data->nucleus->planes = (plane_t *)bu_calloc(planes.Count(), sizeof(plane_t), "planes");
+	    for (int i = 0; i < planes.Count(); i++) {
+		ON_Plane p = planes[i];
+		double d = p.DistanceTo(ON_3dPoint(0,0,0));
+		data->nucleus->planes[i][0] = p.Normal().x;
+		data->nucleus->planes[i][1] = p.Normal().y;
+		data->nucleus->planes[i][2] = p.Normal().z;
+		data->nucleus->planes[i][3] = -1 * d;
+	    }
+	} else {
+	    // Otherwise, confirm as BoT
+	    data->nucleus->type = PLANAR_VOLUME;
+	}
+
+	// 3. There is one final wrinkle.  It is possible for a polyhedron nucleus to be volumetrically
+	// inside a shoal (shape + arbn).  In this situation, the nucleus is subtracted from the shoal
+	// shape.
+
+	// First, see if we have more than one shoal.  If so, this isn't an issue (* I think *)?
+	if (BU_PTBL_LEN(data->children) == 1) {
+	    struct subbrep_shoal_data *d = (struct subbrep_shoal_data *)BU_PTBL_GET(data->children, 0);
+	    // If we don't have an implicit plane (huh??) stop
+	    if (d->params->have_implicit_plane) {
+		ON_3dPoint o;
+		ON_3dVector n;
+		ON_VMOVE(o, d->params->implicit_plane_origin);
+		ON_VMOVE(n, d->params->implicit_plane_normal);
+		ON_Plane p(o, n);
+		// If all vertex points in the island aren't on one side of this plane, stop - else continue.
+		// Collect all vertex points in nucleus
+		//std::set<int> ignored_verts;
+		//array_to_set(&ignored_verts, data->null_verts, data->null_vert_cnt);
+		std::set<int> island_verts;
+		for (int i = 0; i < data->faces_cnt; i++) {
+		    const ON_BrepFace *face = &(data->brep->m_F[data->faces[i]]);
+		    for (int j = 0; j < face->LoopCount(); j++) {
+			if (island_loops.find(face->m_li[j]) != island_loops.end()) {
+			    const ON_BrepLoop *b_loop = &(data->brep->m_L[face->m_li[j]]);
+			    for (int ti = 0; ti < b_loop->m_ti.Count(); ti++) {
+				const ON_BrepTrim *trim = &(data->brep->m_T[b_loop->m_ti[ti]]);
+				const ON_BrepEdge *edge = &(data->brep->m_E[trim->m_ei]);
+				int v1 = edge->Vertex(0)->m_vertex_index;
+				int v2 = edge->Vertex(1)->m_vertex_index;
+				//if (ignored_verts.find(v1) == ignored_verts.end()) island_verts.insert(v1);
+				//if (ignored_verts.find(v2) == ignored_verts.end()) island_verts.insert(v2);
+				island_verts.insert(v1);
+				island_verts.insert(v2);
+			    }
+			}
+		    }
+		}
+		int points_on_same_side = 1;
+		std::set<int>::iterator iv_it;
+		for (iv_it = island_verts.begin(); iv_it != island_verts.end(); iv_it++) {
+		    ON_3dPoint p3d = data->brep->m_V[(int)*iv_it].Point();
+		    double dp = ON_DotProduct(p3d - p.origin, p.Normal());
+		    if (dp < 0 && !NEAR_ZERO(dp, VUNITIZE_TOL)) {
+			points_on_same_side = 0;
+			//break;
+		    }
+		}
+		bu_log("points_on_same_side: %d\n", points_on_same_side);
 
 
+		// Final test - are all nucleus vertex points inside the primary shoal shape?  If so,
+		// we have to swap the nucleus with the child.
+	    }
+	}
 
-
-	// 3. inside a shoal (shape + arbn) (nucleus is subtracted from shoal)
     }
 
     return 1;
