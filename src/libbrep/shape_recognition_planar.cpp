@@ -335,12 +335,13 @@ shoal_polygon_tri(struct bu_vls *UNUSED(msgs), struct subbrep_shoal_data *data, 
     polygon_verts.push_back(seed_vert);
 
     // Walk the edges collecting non-ignored verts.
-    int curr_vert = seed_vert;
+    int curr_vert = -1;
     int curr_edge = -1;
     bu_log("first edge: %d\n", first_edge->m_edge_index);
-    while (curr_edge != first_edge->m_edge_index) {
+    while (curr_edge != first_edge->m_edge_index && curr_vert != seed_vert) {
 	// Once we're past the first edge, initialize our terminating condition if not already set.
 	if (curr_edge == -1) curr_edge = first_edge->m_edge_index;
+	if (curr_vert == -1) curr_vert = seed_vert;
 
 	for (int i = 0; i < brep->m_V[curr_vert].m_ei.Count(); i++) {
 	    const ON_BrepEdge *e = &(brep->m_E[brep->m_V[curr_vert].m_ei[i]]);
@@ -651,6 +652,17 @@ island_nucleus(struct bu_vls *msgs, struct subbrep_island_data *data)
     // Sixth, check the polyhedron nucleus for special cases:
     //
     // 1. degenerate
+    int parallel_planes = 0;
+    if (planes.Count() > 0) {
+	ON_Plane seed_plane = planes[0];
+	parallel_planes++;
+	for (int i = 1; i < planes.Count(); i++) {
+	    if (planes[i].Normal().IsParallelTo(seed_plane.Normal(), VUNITIZE_TOL)) parallel_planes++;
+	}
+    }
+    if (parallel_planes == planes.Count()) {
+	bu_log("degenerate nucleus\n");
+    }
     // 2. convex polyhedron
     // 3. inside a shoal (shape + arbn) (nucleus is subtracted from shoal)
 
