@@ -350,7 +350,6 @@ subbrep_object_init(struct subbrep_island_data *obj, const ON_Brep *brep)
     obj->local_brep = NULL;
     obj->type = BREP;
     obj->is_island = 0;
-    obj->negative_shape = 0;
     obj->bbox = new ON_BoundingBox();
     ON_MinMaxInit(&(obj->bbox->m_min), &(obj->bbox->m_max));
     obj->bbox_set = 0;

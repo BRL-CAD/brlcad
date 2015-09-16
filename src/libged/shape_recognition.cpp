@@ -545,7 +545,7 @@ brep_to_csg(struct ged *gedp, struct directory *dp, int UNUSED(verify))
 	struct subbrep_island_data *d = (struct subbrep_island_data *)BU_PTBL_GET(subbreps_tree, i);
 	if (d->nucleus) {
 	    struct bu_vls id = BU_VLS_INIT_ZERO;
-	    bu_vls_sprintf(&id, "csg_%s-%d_nucleus.s", dp->d_namep, d->obj_id);
+	    bu_vls_sprintf(&id, "csg_%s-%d_nucleus.s", dp->d_namep, d->nucleus->params->id);
 	    bu_log("nucleus type : %d, bool_op: %c\n", d->nucleus->params->type, d->nucleus->params->bool_op);
 	    csg_obj_process(gedp->ged_result_str, d->nucleus->params, wdbp, &id, &pcomb);
 	    if (d->nucleus->sub_params) {
@@ -557,7 +557,7 @@ brep_to_csg(struct ged *gedp, struct directory *dp, int UNUSED(verify))
 	    }
 	}
 	struct bu_vls id = BU_VLS_INIT_ZERO;
-	bu_vls_sprintf(&id, "csg_%s-%d_child.s", dp->d_namep, d->obj_id);
+	bu_vls_sprintf(&id, "csg_%s-%d_child.s", dp->d_namep, d->nucleus->params->id);
 	for (unsigned int j = 0; j < BU_PTBL_LEN(d->children); j++){
 	    struct subbrep_shoal_data *sdata = (struct subbrep_shoal_data *)BU_PTBL_GET(d->children,j);
 	    struct csg_object_params *cdata = sdata->params;

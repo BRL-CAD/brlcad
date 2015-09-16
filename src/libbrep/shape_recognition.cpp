@@ -100,6 +100,17 @@ get_edge_set_from_loops(struct subbrep_island_data *sb)
 }
 
 
+void subbrep_tree_node_init(struct subbrep_tree_node **node)
+{
+    BU_GET((*node), struct subbrep_tree_node);
+    BU_GET((*node)->subtractions, struct bu_ptbl);
+    BU_GET((*node)->unions, struct bu_ptbl);
+    bu_ptbl_init((*node)->subtractions, 8, "init table");
+    bu_ptbl_init((*node)->unions, 8, "init table");
+    (*node)->parent = NULL;
+    (*node)->island = NULL;
+}
+
 /* This is the critical point at which we take a pile of shapes and actually reconstruct a
  * valid boolean tree.  The stages are as follows:
  *
@@ -127,14 +138,92 @@ get_edge_set_from_loops(struct subbrep_island_data *sb)
  * parent subtraction, that subtraction's parent if it is a subtraction, and so on up to the top level union.  Nested
  * unions and subtractions mean we'll have to go all the way up that particular chain...
  */
-struct bu_ptbl *
-find_top_level_hierarchy(struct bu_vls *UNUSED(msgs), struct bu_ptbl *islands)
+void
+find_hierarchy(struct bu_vls *UNUSED(msgs), struct subbrep_tree_node *node, struct bu_ptbl *islands)
 {
+    int depth = 0;
+    if (!node) return;
+
+    std::map<int, long*> fol_to_i;
+    for (unsigned int i = 0; i < BU_PTBL_LEN(islands); i++) {
+	struct subbrep_island_data *id = (struct subbrep_island_data *)BU_PTBL_GET(islands, i);
+	for (int j = 0; j < id->fol_cnt; j++) {
+	    fol_to_i.insert(std::make_pair(id->fol[j], (long *)id));
+	}
+    }
+
+    /* Separate out top level unions */
+    if (node->parent == NULL) {
+	int top_cnt = 0;
+	for (unsigned int i = 0; i < BU_PTBL_LEN(islands); i++) {
+	    struct subbrep_island_data *obj = (struct subbrep_island_data *)BU_PTBL_GET(islands, i);
+	    if (obj->fil_cnt == 0) {
+		std::cout << "Top union found: " << bu_vls_addr(obj->key) << "\n";
+		top_cnt++;
+		node->island = obj;
+		obj->nucleus->params->bool_op = 'u';
+	    }
+	}
+	if (top_cnt != 1) {
+	    bu_log("Error - incorrect toplevel union count: %d\n", top_cnt);
+	    return;
+	}
+    } else {
+	struct subbrep_tree_node *n = node->parent;
+	while (n) {
+	    depth++;
+	    n = n->parent;
+	}
+    }
+
+
+    for (unsigned int i = 0; i < BU_PTBL_LEN(islands); i++) {
+	struct subbrep_island_data *id = (struct subbrep_island_data *)BU_PTBL_GET(islands, i);
+	if (id == node->island) continue;
+	bu_log("%*schecking island %s\n", depth, " ", bu_vls_addr(id->key));
+	for (int j = 0; j < id->fil_cnt; j++) {
+	    long *ip = fol_to_i.find(id->fil[j])->second;
+	    if (ip != (long *)id) {
+		struct subbrep_island_data *ipd = (struct subbrep_island_data *)ip;
+		struct subbrep_tree_node *n = NULL;
+		if (ipd->nucleus->params->bool_op == 'u') {
+		    bu_log("%*sadding union %s\n", depth, " ", bu_vls_addr(ipd->key));
+		    subbrep_tree_node_init(&n);
+		    n->island = ipd;
+		    n->parent = node;
+		    n->fil = id->fil[j]; // Will probably need the plane from this face for later testing.
+		    bu_ptbl_ins(node->unions, (long *)n);
+		}
+		if (ipd->nucleus->params->bool_op == '-') {
+		    bu_log("%*sadding subtraction %s\n", depth, " ", bu_vls_addr(ipd->key));
+		    subbrep_tree_node_init(&n);
+		    n->island = ipd;
+		    n->parent = node;
+		    n->fil = id->fil[j]; // Will probably need the plane from this face for later testing.
+		    bu_ptbl_ins(node->subtractions, (long *)n);
+		}
+		if (!n) {
+		    bu_log("Erk! island without nucleus info: %s\n", bu_vls_addr(ipd->key));
+		    return;
+		}
+	    }
+	}
+    }
+
+    for (unsigned int i = 0; i < BU_PTBL_LEN(node->unions); i++) {
+	struct subbrep_tree_node *n = (struct subbrep_tree_node *)BU_PTBL_GET(node->unions, i);
+	(void)find_hierarchy(NULL, n, islands);
+    }
+
+    for (unsigned int i = 0; i < BU_PTBL_LEN(node->unions); i++) {
+	struct subbrep_tree_node *n = (struct subbrep_tree_node *)BU_PTBL_GET(node->subtractions, i);
+	(void)find_hierarchy(NULL, n, islands);
+    }
+       
 #if 0
     // Now that we have the subbreps (or their substructures) and their boolean status we need to
     // construct the top level tree.
 
-    std::set<long *> island_set;
     std::set<long *> unions;
     std::set<long *> subtractions;
     std::set<long *>::iterator sb_it, sb_it2;
@@ -327,7 +416,7 @@ find_top_level_hierarchy(struct bu_vls *UNUSED(msgs), struct bu_ptbl *islands)
     }
     return subbreps_tree;
 #endif
-    return islands;
+    return;
 }
 
 
@@ -458,6 +547,8 @@ subbrep_split(struct bu_vls *msgs, struct subbrep_island_data *data)
 		struct subbrep_shoal_data *sh;
 		BU_GET(sh, struct subbrep_shoal_data);
 		BU_GET(sh->params, struct csg_object_params);
+		(*(data->obj_cnt))++;
+		sh->params->id = (*(data->obj_cnt));
 		sh->i = data;
 		sh->loops_cnt = shoal_build(&(sh->loops), loop->m_loop_index, data);
 		for (int i = 0; i < sh->loops_cnt; i++) {
@@ -576,12 +667,6 @@ find_subbreps(struct bu_vls *msgs, const ON_Brep *brep)
 	    }
 	}
 
-	// Use the counter to assign a numerical ID to the object:
-	obj_cnt++;
-	sb->obj_id = obj_cnt;
-	bu_vls_sprintf(sb->id, "%d", sb->obj_id);
-	// Use the counter to assign a numerical ID to the object:
-
 	// If our object count is growing beyond reason, bail
 	TOO_MANY_CSG_OBJS(obj_cnt, msgs);
 
@@ -652,6 +737,12 @@ find_subbreps(struct bu_vls *msgs, const ON_Brep *brep)
     if (!successes) {
 	if (msgs) bu_vls_printf(msgs, "%*sNote - no successful simplifications\n", L1_OFFSET, " ");
 	goto bail;
+    } else {
+	bu_log("find us some hierarchy...\n");
+	struct subbrep_tree_node *root = NULL;
+	subbrep_tree_node_init(&root);
+	find_hierarchy(NULL, root, subbreps);
+	if (!root) bu_log("no hierarchy found yet...\n");
     }
 
     return subbreps;

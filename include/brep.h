@@ -1428,22 +1428,13 @@ struct subbrep_island_data {
     /* Shape representation data */
     ON_Brep *local_brep;
 
-    /* Nucleus, if it exists */
+    /* Nucleus */
     struct subbrep_shoal_data *nucleus;
     int negative_nucleus;
 
     /* struct subbrep_shoal_data */
     struct bu_ptbl *children;
 
-    /* Irrespective of the broader context, is the shape
-     * itself negative?  This is not meaningful for general
-     * combs, but individual shapes like cylinders and spheres
-     * (even when they are "trimmed down" by other CSG primitives
-     * are "negative" if their normals point inward.
-     * -1 = negative
-     *  1 = positive
-     *  0 = unknown/unset */
-    int negative_shape;
     /* For some objects, additional post processing is needed
      * for a subtract/no-subtract determination */
     struct bu_ptbl *subtraction_candidates;
@@ -1452,7 +1443,6 @@ struct subbrep_island_data {
     struct bu_vls *key;
     struct bu_vls *id;
     struct bu_vls *obj_name;
-    int obj_id;
     int is_island;
     ON_BoundingBox *bbox;
     int bbox_set;
@@ -1479,10 +1469,20 @@ struct subbrep_island_data {
     int type;
 };
 
+struct subbrep_tree_node {
+    struct subbrep_tree_node *parent;
+    struct subbrep_island_data *island;
+    int fil;
+    /* subbrep_tree_node */
+    struct bu_ptbl *subtractions;
+    /* subbrep_tree_node */
+    struct bu_ptbl *unions;
+};
+
 extern BREP_EXPORT void subbrep_bbox(struct subbrep_island_data *obj);
 extern BREP_EXPORT void subbrep_object_free(struct subbrep_island_data *obj);
 extern BREP_EXPORT struct bu_ptbl *find_subbreps(struct bu_vls *msgs, const ON_Brep *brep);
-extern BREP_EXPORT struct bu_ptbl *find_top_level_hierarchy(struct bu_vls *msgs, struct bu_ptbl *subbreps);
+extern BREP_EXPORT void find_hierarchy(struct bu_vls *msgs, struct subbrep_tree_node *node, struct bu_ptbl *subbreps);
 extern BREP_EXPORT int subbrep_polygon_tri(struct bu_vls *msgs, struct subbrep_island_data *data, const point_t *all_verts, int *loops, int loop_cnt, int **ffaces);
 
 

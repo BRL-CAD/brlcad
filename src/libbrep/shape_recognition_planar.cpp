@@ -263,6 +263,9 @@ subbrep_polygon_tri(struct bu_vls *UNUSED(msgs), struct subbrep_island_data *dat
 	    }
 	}
 
+	// Degenerate - no triangulation
+	if (vert_array.size() == 0) return 0;
+
 	int *vert_map = (int *)bu_calloc(vert_array.size(), sizeof(int), "vertex map");
 	for (unsigned int i = 0; i < vert_array.size(); i++) {
 	    vert_map[i] = vert_array[i];
@@ -308,6 +311,9 @@ subbrep_polygon_tri(struct bu_vls *UNUSED(msgs), struct subbrep_island_data *dat
 		}
 	    }
 	}
+
+	// Degenerate - no triangulation
+	if (vert_array.size() == 0) return 0;
 
 	int *vert_map = (int *)bu_calloc(vert_array.size(), sizeof(int), "vertex map");
 	for (unsigned int i = 0; i < vert_array.size(); i++) {
@@ -679,6 +685,8 @@ island_nucleus(struct bu_vls *msgs, struct subbrep_island_data *data)
 	int curr_vert = 0;
 	BU_GET(data->nucleus, struct subbrep_shoal_data);
 	BU_GET(data->nucleus->params, struct csg_object_params);
+	(*(data->obj_cnt))++;
+	data->nucleus->params->id = (*(data->obj_cnt));
 	data->nucleus->params->type = PLANAR_VOLUME;
 	data->nucleus->params->verts = (point_t *)bu_calloc(all_used_verts.size(), sizeof(point_t), "final verts array");
 	for (auv_it = all_used_verts.begin(); auv_it != all_used_verts.end(); auv_it++) {
@@ -726,8 +734,11 @@ island_nucleus(struct bu_vls *msgs, struct subbrep_island_data *data)
 	    // nucleus and whether the nucleus is negative be based on the
 	    // negative shape status of the shoal.  The island's children
 	    // will be unioned.
-
-	    // TODO - set new nucleus, remove it from children table
+	    bu_log("shoal same\n");
+	    BU_GET(data->nucleus, struct subbrep_shoal_data);
+	    data->nucleus->params = cn->params;
+	    data->nucleus->sub_params = cn->sub_params;
+	    bu_ptbl_rm(data->children, (long *)cn);
 	} else {
 	    // If we've got shoals with different boolean status, then we have
 	    // to decide which shape is "inside" the other to make a call.  If
@@ -743,6 +754,7 @@ island_nucleus(struct bu_vls *msgs, struct subbrep_island_data *data)
 	    // objects.  The subtractions and then the unions will be made
 	    // after all other csg logic has been built up.  Bad for locality
 	    // but may serve as a fall-back if nucleus resolution doesn't resolve...
+	    bu_log("\n\n\nshoal different - currently unhandled!\n\n\n");
 	}
     }
 

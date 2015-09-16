@@ -121,7 +121,7 @@ subbrep_is_cylinder(struct bu_vls *UNUSED(msgs), struct subbrep_island_data *dat
 
     // If we've got a negative cylinder, bump the center points out very slightly
     // to avoid problems with raytracing.
-    if (data->negative_shape == -1) {
+    if (negative_shape == -1) {
 	ON_3dVector cvector(center_top - center_bottom);
 	double len = cvector.Length();
 	cvector.Unitize();
@@ -253,22 +253,22 @@ cylinder_csg(struct bu_vls *msgs, struct subbrep_shoal_data *data, fastf_t cyl_t
     // If we have linear edges, filter out edges that a) have two non-planar
     // faces and b) link to faces under consideration in the island.
     std::set<int> le;
-    std::set<int>::iterator s_it, s2_it;
+    std::set<int>::iterator s_it;
     for (s_it = linear_edges.begin(); s_it != linear_edges.end(); s_it++) {
-	std::set<int> faces;
+	std::vector<int> faces;
 	const ON_BrepEdge *edge = &(brep->m_E[*s_it]);
 	for (int i = 0; i < edge->m_ti.Count(); i++) {
 	    const ON_BrepTrim *trim = &(brep->m_T[edge->m_ti[i]]);
 	    if (((surface_t *)data->i->face_surface_types)[trim->Face()->m_face_index] == SURFACE_PLANE) break;
-	    faces.insert(trim->Face()->m_face_index);
+	    faces.push_back(trim->Face()->m_face_index);
 	}
 	if (faces.size() != 2) {
 	    le.insert(*s_it);
 	    continue;
 	}
 	int have_both_faces = 1;
-	for (s2_it = faces.begin(); s2_it != faces.end(); s2_it++) {
-	    if (cylindrical_surfaces.find(*s2_it) == cylindrical_surfaces.end()) {
+	for (unsigned int i = 0; i < faces.size(); i++) {
+	    if (cylindrical_surfaces.find(faces[i]) == cylindrical_surfaces.end()) {
 		have_both_faces = 0;
 		break;
 	    }
@@ -580,6 +580,10 @@ cylinder_csg(struct bu_vls *msgs, struct subbrep_shoal_data *data, fastf_t cyl_t
 	BU_GET(data->sub_params, struct bu_ptbl);
 	bu_ptbl_init(data->sub_params, 8, "sub_params table");
 	BU_GET(sub_param, struct csg_object_params);
+	(*(data->i->obj_cnt))++;
+	sub_param->id = (*(data->i->obj_cnt));
+	sub_param->type = ARBN;
+	sub_param->bool_op = '+'; // arbn is intersected with primary primitive
 	sub_param->planes = (plane_t *)bu_calloc(arbn_planes.Count(), sizeof(plane_t), "planes");
 	sub_param->plane_cnt = arbn_planes.Count();
 	for (int i = 0; i < arbn_planes.Count(); i++) {
@@ -590,8 +594,6 @@ cylinder_csg(struct bu_vls *msgs, struct subbrep_shoal_data *data, fastf_t cyl_t
 	    sub_param->planes[i][2] = p.Normal().z;
 	    sub_param->planes[i][3] = -1 * d;
 	}
-	sub_param->type = ARBN;
-	sub_param->bool_op = '+'; // arbn is intersected with primary primitive
 	bu_ptbl_ins(data->sub_params, (long *)sub_param);
 
 	struct bu_vls arbn = BU_VLS_INIT_ZERO;
