@@ -681,6 +681,11 @@ island_nucleus(struct bu_vls *msgs, struct subbrep_island_data *data)
     // them have points on both sides of one of the implicit planes,
     // we have a complex situation.
     if (!degenerate_nucleus) {
+
+	// Get ignored vertices reported from shoal building - this is where they'll matter
+	std::set<int> ignored_verts;
+	array_to_set(&ignored_verts, data->null_verts, data->null_vert_cnt);
+
 	int is_complex = 0;
 	std::set<int> complex_face_ind;
 	for (int i = 0; i < data->loops_cnt; i++) {
@@ -698,8 +703,10 @@ island_nucleus(struct bu_vls *msgs, struct subbrep_island_data *data)
 		    for (int ti = 0; ti < loop->m_ti.Count(); ti++) {
 			const ON_BrepTrim *trim = &(data->brep->m_T[loop->m_ti[ti]]);
 			const ON_BrepEdge *edge = &(data->brep->m_E[trim->m_ei]);
-			verts.insert(edge->Vertex(0)->m_vertex_index);
-			verts.insert(edge->Vertex(1)->m_vertex_index);
+			int v1 = edge->Vertex(0)->m_vertex_index;
+			int v2 = edge->Vertex(0)->m_vertex_index;
+			if (ignored_verts.find(v1) == ignored_verts.end()) verts.insert(v1);
+			if (ignored_verts.find(v2) == ignored_verts.end()) verts.insert(v2);
 		    }
 		    for (v_it = verts.begin(); v_it != verts.end(); v_it++) {
 			pnts.Append(data->brep->m_V[(int)*v_it].Point());
