@@ -353,10 +353,12 @@ shoal_polygon_tri(struct bu_vls *UNUSED(msgs), struct subbrep_shoal_data *data, 
     array_to_set(&ignored_verts, data->i->null_verts, data->i->null_vert_cnt);
 
     // Get the set of edges associated with the shoal's loops.
+    std::set<int> faces;
     std::set<int> shoal_edges;
     std::set<int>::iterator se_it;
     for (int i = 0; i < data->loops_cnt; i++) {
 	const ON_BrepLoop *loop = &(data->i->brep->m_L[data->loops[i]]);
+	faces.insert(loop->Face()->m_face_index);
 	for (int ti = 0; ti < loop->m_ti.Count(); ti++) {
 	    const ON_BrepTrim *trim = &(brep->m_T[loop->m_ti[ti]]);
 	    const ON_BrepEdge *edge = &(brep->m_E[trim->m_ei]);
@@ -403,16 +405,29 @@ shoal_polygon_tri(struct bu_vls *UNUSED(msgs), struct subbrep_shoal_data *data, 
 	    int ce = e->m_edge_index;
 	    bu_log("considering : %d\n", ce);
 	    if (ce != curr_edge && ignored_edges.find(ce) == ignored_edges.end()) {
-		// Have a viable edge - find our new vert.
-		bu_log("  passed: %d\n", ce);
-		int nv = (e->Vertex(0)->m_vertex_index == curr_vert) ? e->Vertex(1)->m_vertex_index : e->Vertex(0)->m_vertex_index;
-		if (ignored_verts.find(nv) == ignored_verts.end()) {
-		    bu_log("  next vert: %d\n", curr_vert);
-		    polygon_verts.push_back(nv);
+		int has_face_in_shoal = 0;
+		for (int j = 0; j < e->m_ti.Count(); j++) {
+		    const ON_BrepTrim *trim = &(brep->m_T[e->m_ti[j]]);
+		    const ON_BrepFace *f = trim->Face();
+		    if (faces.find(f->m_face_index) != faces.end()) {
+			has_face_in_shoal = 1;
+			break;
+		    } else {
+			bu_log("face %d not in shoal\n", f->m_face_index);
+		    }
 		}
-		curr_vert = nv;
-		curr_edge = ce;
-		bu_log("  next edge: %d\n", curr_edge);
+		if (has_face_in_shoal) {
+		    // Have a viable edge - find our new vert.
+		    bu_log("  passed: %d\n", ce);
+		    int nv = (e->Vertex(0)->m_vertex_index == curr_vert) ? e->Vertex(1)->m_vertex_index : e->Vertex(0)->m_vertex_index;
+		    if (ignored_verts.find(nv) == ignored_verts.end()) {
+			bu_log("  next vert: %d\n", curr_vert);
+			polygon_verts.push_back(nv);
+		    }
+		    curr_vert = nv;
+		    curr_edge = ce;
+		    bu_log("  next edge: %d\n", curr_edge);
+		}
 		break;
 	    }
 	}
@@ -444,6 +459,8 @@ shoal_polygon_tri(struct bu_vls *UNUSED(msgs), struct subbrep_shoal_data *data, 
 	on2dpts.Append(ON_2dPoint(xcoord,ycoord));
 	bu_log("x,y: %f,%f\n", xcoord, ycoord);
     }
+
+    if (polygon_verts.size() == 0) return 0;
 
     int *vert_map = (int *)bu_calloc(polygon_verts.size(), sizeof(int), "vertex map");
     for (unsigned int i = 0; i < polygon_verts.size(); i++) {
@@ -717,7 +734,7 @@ island_nucleus(struct bu_vls *msgs, struct subbrep_island_data *data)
 	}
     }
 
-    if (parallel_planes == planes.Count()) {
+    if (parallel_planes == planes.Count() || planes.Count() < 4) {
 	bu_log("degenerate nucleus\n");
 	degenerate_nucleus = 1;
 	// If the polyhedron nucleus is degenerate, one of the shoals is the nucleus.
