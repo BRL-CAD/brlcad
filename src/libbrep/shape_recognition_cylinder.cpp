@@ -155,27 +155,10 @@ int
 cylinder_csg(struct bu_vls *msgs, struct subbrep_shoal_data *data, fastf_t cyl_tol)
 {
     int implicit_plane_ind = -1;
-
-    const ON_Brep *brep = data->i->brep;
-    std::set<int> planar_surfaces;
     std::set<int> cylindrical_surfaces;
     std::set<int>::iterator c_it;
-    for (int i = 0; i < data->loops_cnt; i++) {
-	int l_ind = data->loops[i];
-        int surface_type = (int)(((surface_t *)data->i->face_surface_types)[brep->m_L[l_ind].Face()->m_face_index]);
-        switch (surface_type) {
-            case SURFACE_PLANE:
-                planar_surfaces.insert(l_ind);
-                break;
-            case SURFACE_CYLINDER:
-                cylindrical_surfaces.insert(l_ind);
-                break;
-            default:
-		bu_log("what???\n");
-                return 0;
-                break;
-        }
-    }
+
+    const ON_Brep *brep = data->i->brep;
     data->params->bool_op = 'u'; // Initialize to union
 
     // Characterize the planes of the non-linear edges.
@@ -183,8 +166,9 @@ cylinder_csg(struct bu_vls *msgs, struct subbrep_shoal_data *data, fastf_t cyl_t
     ON_SimpleArray<ON_3dPoint> edge_midpnts;
     std::set<int> edges;
     std::set<int> linear_edges;
-    for (c_it = cylindrical_surfaces.begin(); c_it != cylindrical_surfaces.end(); c_it++) {
-	const ON_BrepLoop *loop = &(brep->m_L[*c_it]);
+    for (int i = 0; i < data->loops_cnt; i++) {
+	const ON_BrepLoop *loop = &(brep->m_L[data->loops[i]]);
+	cylindrical_surfaces.insert(loop->Face()->m_face_index);
 	for (int ti = 0; ti < loop->m_ti.Count(); ti++) {
 	    const ON_BrepTrim *trim = &(brep->m_T[loop->m_ti[ti]]);
 	    const ON_BrepEdge *edge = &(brep->m_E[trim->m_ei]);
@@ -193,6 +177,7 @@ cylinder_csg(struct bu_vls *msgs, struct subbrep_shoal_data *data, fastf_t cyl_t
 	    }
 	}
     }
+
     for (c_it = edges.begin(); c_it != edges.end(); c_it++) {
 	const ON_BrepEdge *edge = &(brep->m_E[*c_it]);
 	ON_Curve *ecv = edge->EdgeCurveOf()->Duplicate();
@@ -358,8 +343,8 @@ cylinder_csg(struct bu_vls *msgs, struct subbrep_shoal_data *data, fastf_t cyl_t
 
     // Make a starting cylinder from one of the cylindrical surfaces and construct the axis line
     ON_Cylinder cylinder;
-    ON_Surface *cs = brep->m_F[*cylindrical_surfaces.begin()].SurfaceOf()->Duplicate();
-    cs->IsCylinder(&cylinder);
+    ON_Surface *cs = brep->m_L[data->loops[0]].Face()->SurfaceOf()->Duplicate();
+    cs->IsCylinder(&cylinder, BREP_CYLINDRICAL_TOL);
     delete cs;
     double height[2];
     height[0] = (NEAR_ZERO(cylinder.height[0], VUNITIZE_TOL)) ? -1000 : 2*cylinder.height[0];
@@ -515,7 +500,9 @@ cylinder_csg(struct bu_vls *msgs, struct subbrep_shoal_data *data, fastf_t cyl_t
     bu_log("in rcc.s rcc %f %f %f %f %f %f %f \n", axis_pts[0].x, axis_pts[0].y, axis_pts[0].z, cyl_axis.x, cyl_axis.y, cyl_axis.z, cylinder.circle.Radius());
 
     if (!need_arbn) {
-	bu_log("TODO - Perfect cylinder - we should stop here...\n");
+	// TODO - may need bbox for subsequent testing...
+	bu_log("Perfect cylinder\n");
+	return 1;
     }
 
     // Use avg normal to constructed oriented bounding box planes around cylinder

@@ -741,8 +741,8 @@ find_subbreps(struct bu_vls *msgs, const ON_Brep *brep)
 	bu_log("find us some hierarchy...\n");
 	struct subbrep_tree_node *root = NULL;
 	subbrep_tree_node_init(&root);
-	find_hierarchy(NULL, root, subbreps);
-	if (!root) bu_log("no hierarchy found yet...\n");
+	//find_hierarchy(NULL, root, subbreps);
+	if (!root->island) bu_log("no hierarchy found yet...\n");
     }
 
     return subbreps;
