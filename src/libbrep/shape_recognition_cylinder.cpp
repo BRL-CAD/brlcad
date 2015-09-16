@@ -466,11 +466,15 @@ cylinder_csg(struct bu_vls *msgs, struct subbrep_shoal_data *data, fastf_t cyl_t
 
     // Populate the primitive data
     data->params->type = CYLINDER;
+
     // Flag the cylinder according to the negative or positive status of the
-    // cylinder surface.  Whether it is actually subtracted from the
-    // global object or unioned into a comb lower down the tree (or vice versa)
-    // is determined later.
+    // cylinder surface.
     data->params->negative = negative_cylinder(brep, *cylindrical_surfaces.begin(), cyl_tol);
+    data->params->bool_op = (data->params->negative == -1) ? '-' : 'u';
+
+    // Assign an object id
+    (*(data->i->obj_cnt))++;
+    data->params->id = (*(data->i->obj_cnt));
 
     // Now we decide (arbitrarily) what the vector will be for our final cylinder
     // and calculate the true minimum and maximum points along the axis
@@ -500,7 +504,6 @@ cylinder_csg(struct bu_vls *msgs, struct subbrep_shoal_data *data, fastf_t cyl_t
     bu_log("in rcc.s rcc %f %f %f %f %f %f %f \n", axis_pts[0].x, axis_pts[0].y, axis_pts[0].z, cyl_axis.x, cyl_axis.y, cyl_axis.z, cylinder.circle.Radius());
 
     if (!need_arbn) {
-	// TODO - may need bbox for subsequent testing...
 	bu_log("Perfect cylinder\n");
 	return 1;
     }
