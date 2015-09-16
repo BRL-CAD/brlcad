@@ -195,6 +195,7 @@ cylinder_csg(struct bu_vls *msgs, struct subbrep_shoal_data *data, fastf_t cyl_t
 		if (st == SURFACE_PLANE) {
 		    f->SurfaceOf()->IsPlanar(&eplane);
 		    have_planar_face = 1;
+		    if (f->m_bRev) eplane.Flip();
 		    break;
 		}
 	    }
@@ -303,17 +304,19 @@ cylinder_csg(struct bu_vls *msgs, struct subbrep_shoal_data *data, fastf_t cyl_t
     // known to be present.  If both directions do so, we have a concave situation and we're done.
     for (int i = 0; i < cyl_planes.Count(); i++) {
 	ON_Plane p = cyl_planes[i];
+	bu_log("in rcc_%d.s rcc %f, %f, %f %f, %f, %f 0.1\n", i, p.origin.x, p.origin.y, p.origin.z, p.Normal().x, p.Normal().y, p.Normal().z);
 	int flipped = 0;
 	for (int j = 0; j < edge_midpnts.Count(); j++) {
 	    ON_3dVector v = edge_midpnts[j] - p.origin;
 	    double dotp = ON_DotProduct(v, p.Normal());
-	    if (dotp > 0 && !NEAR_ZERO(dotp, VUNITIZE_TOL)) {
+	    bu_log("dotp: %f\n", dotp);
+	    if (dotp > 0 && !NEAR_ZERO(dotp, BREP_PLANAR_TOL)) {
 		if (!flipped) {
 		    j = -1; // Check all points again
 		    p.Flip();
 		    flipped = 1;
 		} else {
-		    if (msgs) bu_vls_printf(msgs, "%*sConcave planes in %s - no go\n", L3_OFFSET, " ", bu_vls_addr(data->i->key));
+		    bu_log("%*sConcave planes in %s - no go\n", L3_OFFSET, " ", bu_vls_addr(data->i->key));
 		    return 0;
 		}
 	    }
@@ -334,8 +337,8 @@ cylinder_csg(struct bu_vls *msgs, struct subbrep_shoal_data *data, fastf_t cyl_t
 	bu_log("have implicit plane\n");
 	ON_Plane p = cyl_planes[implicit_plane_ind];
 	p.Flip();
-	bu_log("implicit plane origin: %f, %f, %f\n", p.Origin().x, p.Origin().y, p.Origin().z);
-	bu_log("implicit plane normal: %f, %f, %f\n", p.Normal().x, p.Normal().y, p.Normal().z);
+	bu_log("implicit plane origin: %f, %f, %f\n", p.origin.x, p.origin.y, p.origin.z);
+	bu_log("implicit plane Normal: %f, %f, %f\n", p.Normal().x, p.Normal().y, p.Normal().z);
 	BN_VMOVE(data->params->implicit_plane_origin, p.Origin());
 	BN_VMOVE(data->params->implicit_plane_normal, p.Normal());
 	data->params->have_implicit_plane = 1;
