@@ -1760,9 +1760,11 @@ plot_bbnode(BBNode* node, struct bu_list* vhead, int depth, int start, int limit
 
     }
 
-    for (size_t i = 0; i < node->m_children.size(); i++) {
-	if (i < 1)
-	    plot_bbnode(node->m_children[i], vhead, depth + 1, start, limit);
+    for (size_t i = 0; i < node->m_children->size(); i++) {
+	if (i < 1) {
+	    std::vector<brlcad::BBNode*> *nodes = node->m_children;
+	    plot_bbnode((*nodes)[i], vhead, depth + 1, start, limit);
+	}
     }
 }
 
@@ -2140,10 +2142,10 @@ plot_BBNode(struct bu_list *vhead, SurfaceTree* st, BBNode * node, int isocurver
 	    return;
 	}
     } else {
-	if (node->m_children.size() > 0) {
+	if (node->m_children->size() > 0) {
 	    for (std::vector<BBNode*>::iterator childnode =
-		     node->m_children.begin(); childnode
-		 != node->m_children.end(); childnode++) {
+		     node->m_children->begin(); childnode
+		 != node->m_children->end(); childnode++) {
 		plot_BBNode(vhead, st, *childnode, isocurveres, gridres);
 	    }
 	}

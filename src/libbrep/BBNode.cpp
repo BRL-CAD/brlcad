@@ -29,9 +29,10 @@ namespace brlcad {
 BBNode::~BBNode()
 {
     /* delete the children */
-    for (size_t i = 0; i < m_children.size(); i++) {
-	delete m_children[i];
+    for (size_t i = 0; i < m_children->size(); i++) {
+	delete (*m_children)[i];
     }
+    delete m_children;
 }
 
 bool
@@ -42,8 +43,8 @@ BBNode::intersectsHierarchy(ON_Ray &ray, std::list<BBNode *> &results_opt)
     if (intersects && isLeaf()) {
 	results_opt.push_back(this);
     } else if (intersects) {
-	for (size_t i = 0; i < m_children.size(); i++) {
-	    m_children[i]->intersectsHierarchy(ray, results_opt);
+	for (size_t i = 0; i < m_children->size(); i++) {
+	    (*m_children)[i]->intersectsHierarchy(ray, results_opt);
 	}
     }
     return intersects;
@@ -63,8 +64,8 @@ int
 BBNode::depth()
 {
     int d = 0;
-    for (size_t i = 0; i < m_children.size(); i++) {
-	d = 1 + std::max(d, m_children[i]->depth());
+    for (size_t i = 0; i < m_children->size(); i++) {
+	d = 1 + std::max(d, (*m_children)[i]->depth());
     }
     return d;
 }
@@ -72,9 +73,9 @@ BBNode::depth()
 void
 BBNode::getLeaves(std::list<BBNode *> &out_leaves)
 {
-    if (m_children.size() > 0) {
-	for (size_t i = 0; i < m_children.size(); i++) {
-	    m_children[i]->getLeaves(out_leaves);
+    if (m_children->size() > 0) {
+	for (size_t i = 0; i < m_children->size(); i++) {
+	    (*m_children)[i]->getLeaves(out_leaves);
 	}
     } else {
 	out_leaves.push_back(this);
@@ -142,10 +143,10 @@ BBNode::getClosestPointEstimate(const ON_3dPoint &pt, ON_Interval &u, ON_Interva
 	TRACE("Closest: " << mindist << "; " << PT2(uvs[mini]));
 	return ON_2dPoint(uvs[mini][0], uvs[mini][1]);
     } else {
-	if (m_children.size() > 0) {
-	    BBNode *closestNode = m_children[0];
-	    for (size_t i = 1; i < m_children.size(); i++) {
-		closestNode = closer(pt, closestNode, m_children[i]);
+	if (m_children->size() > 0) {
+	    BBNode *closestNode = (*m_children)[0];
+	    for (size_t i = 1; i < m_children->size(); i++) {
+		closestNode = closer(pt, closestNode, (*m_children)[i]);
 		TRACE("\t" << PT(closestNode->m_estimate));
 	    }
 	    return closestNode->getClosestPointEstimate(pt, u, v);
@@ -171,8 +172,8 @@ BBNode::getLeavesBoundingPoint(const ON_3dPoint &pt, std::list<BBNode *> &out)
 	return 0;
     } else {
 	int sum = 0;
-	for (size_t i = 0; i < m_children.size(); i++) {
-	    sum += m_children[i]->getLeavesBoundingPoint(pt, out);
+	for (size_t i = 0; i < m_children->size(); i++) {
+	    sum += (*m_children)[i]->getLeavesBoundingPoint(pt, out);
 	}
 	return sum;
     }
@@ -311,12 +312,12 @@ BBNode::getTrimsAbove(const ON_2dPoint &uv, std::list<BRNode *> &out_leaves) con
 
 void BBNode::BuildBBox()
 {
-    if (m_children.size() > 0) {
-	for (std::vector<BBNode *>::iterator childnode = m_children.begin(); childnode != m_children.end(); childnode++) {
+    if (m_children->size() > 0) {
+	for (std::vector<BBNode *>::iterator childnode = m_children->begin(); childnode != m_children->end(); childnode++) {
 	    if (!(*childnode)->isLeaf()) {
 		(*childnode)->BuildBBox();
 	    }
-	    if (childnode == m_children.begin()) {
+	    if (childnode == m_children->begin()) {
 		m_node = ON_BoundingBox((*childnode)->m_node.m_min, (*childnode)->m_node.m_max);
 	    } else {
 		for (int j = 0; j < 3; j++) {
