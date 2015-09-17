@@ -589,27 +589,32 @@ subbrep_split(struct bu_vls *msgs, struct subbrep_island_data *data)
     }
 
     if (csg_fail > 0) {
-	goto csg_abort;
-    } else {
-	// We had a successful conversion - now generate a nucleus.  Need to
-	// characterize the nucleus as positive or negative volume.  Can also
-	// be degenerate if all planar faces are coplanar or if there are no
-	// planar faces at all (perfect cylinder, for example) so will need
-	// rules for those situations...
-	if (!island_nucleus(msgs, data)) goto csg_abort;
-
-	// Note is is possible to have degenerate *edges*, not just vertices -
-	// if a shoal shares part of an outer loop (possible when connected
-	// only by a vertex - see example) then the edges in the parent loop
-	// that are part of that shoal are degenerate for the purposes of the
-	// "parent" shape.  May have to limit our inputs to
-	// non-self-intersecting loops for now...
+	/* Clear children - we found something we can't handle, so there will be no
+	 * CSG conversion of this subbrep. Cleanup is handled one level up. */
+	return 0;
     }
+    // We had a successful conversion - now generate a nucleus.  Need to
+    // characterize the nucleus as positive or negative volume.  Can also
+    // be degenerate if all planar faces are coplanar or if there are no
+    // planar faces at all (perfect cylinder, for example) so will need
+    // rules for those situations...
+    if (!island_nucleus(msgs, data)) return 0;
+
+    // If we've got a single nucleus shape and no children, set the island
+    // type to be that of the nucleus type.  Otherwise, it's a comb.
+    if (BU_PTBL_LEN(data->children) == 0) {
+	data->type = data->nucleus->params->type;
+    } else {
+	data->type = COMB;
+    }
+
+    // Note is is possible to have degenerate *edges*, not just vertices -
+    // if a shoal shares part of an outer loop (possible when connected
+    // only by a vertex - see example) then the edges in the parent loop
+    // that are part of that shoal are degenerate for the purposes of the
+    // "parent" shape.  May have to limit our inputs to
+    // non-self-intersecting loops for now...
     return 1;
-csg_abort:
-    /* Clear children - we found something we can't handle, so there will be no
-     * CSG conversion of this subbrep. Cleanup is handled one level up. */
-    return 0;
 }
 
 struct subbrep_tree_node *
@@ -718,14 +723,13 @@ find_subbreps(struct bu_vls *msgs, const ON_Brep *brep)
 	    sb->type = BREP;
 	    (void)subbrep_make_brep(msgs, sb);
 	} else {
-	    // If we did successfully split the brep, do some post-split clean-up
-	    sb->type = COMB;
-	    //if (sb->planar_obj) subbrep_planar_close_obj(sb);
 	    successes++;
 #if WRITE_ISLAND_BREPS
 	    (void)subbrep_make_brep(msgs, sb);
 #endif
 	}
+
+
 	bu_ptbl_ins(subbreps, (long *)sb);
     }
 

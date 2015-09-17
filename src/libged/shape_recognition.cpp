@@ -212,7 +212,7 @@ subbrep_to_csg_arb8(struct subbrep_island_data *data, struct rt_wdb *wdbp, struc
 HIDDEN int
 subbrep_to_csg_arbn(struct bu_vls *msgs, struct csg_object_params *data, struct rt_wdb *wdbp, const char *pname, struct wmember *wcomb)
 {
-    if (!msgs || !data || !wdbp || !pname || !wcomb) return 0;
+    if (!msgs || !data || !wdbp || !pname) return 0;
     if (data->type == ARBN) {
 	/* Make the arbn, using the data key for a unique name */
 	struct bu_vls prim_name = BU_VLS_INIT_ZERO;
@@ -233,7 +233,7 @@ subbrep_to_csg_arbn(struct bu_vls *msgs, struct csg_object_params *data, struct 
 HIDDEN int
 subbrep_to_csg_planar(struct bu_vls *msgs, struct csg_object_params *data, struct rt_wdb *wdbp, const char *pname, struct wmember *wcomb)
 {
-    if (!msgs || !data || !wdbp || !pname || !wcomb) return 0;
+    if (!msgs || !data || !wdbp || !pname) return 0;
     if (data->type == PLANAR_VOLUME) {
 	/* Make the bot, using the data key for a unique name */
 	struct bu_vls prim_name = BU_VLS_INIT_ZERO;
@@ -254,7 +254,7 @@ subbrep_to_csg_planar(struct bu_vls *msgs, struct csg_object_params *data, struc
 HIDDEN int
 subbrep_to_csg_cylinder(struct bu_vls *msgs, struct csg_object_params *data, struct rt_wdb *wdbp, const char *pname, struct wmember *wcomb)
 {
-    if (!msgs || !data || !wdbp || !pname || !wcomb) return 0;
+    if (!msgs || !data || !wdbp || !pname) return 0;
     if (data->type == CYLINDER) {
 	struct bu_vls prim_name = BU_VLS_INIT_ZERO;
 	subbrep_obj_name(data->type, data->id, pname, &prim_name);
@@ -390,6 +390,7 @@ make_shoal(struct bu_vls *msgs, struct subbrep_shoal_data *data, struct rt_wdb *
 HIDDEN int
 make_island(struct bu_vls *msgs, struct subbrep_island_data *data, struct rt_wdb *wdbp, const char *rname, int *island_id, struct wmember *pcomb)
 {
+    char *bool_op = &(data->nucleus->params->bool_op);
     int failed = 0;
     struct wmember wcomb;
     struct subbrep_shoal_data *sd;
@@ -439,6 +440,7 @@ make_island(struct bu_vls *msgs, struct subbrep_island_data *data, struct rt_wdb
 	    mk_brep(wdbp, bu_vls_addr(&island_name), data->local_brep);
 	    // TODO - almost certainly need to do more work to get correct booleans
 	    //std::cout << bu_vls_addr(&brep_name) << ": " << data->params->bool_op << "\n";
+	    if (!failed && pcomb) (void)mk_addmember(bu_vls_addr(&island_name), &(pcomb->l), NULL, db_str2op(bool_op));
 	    break;
 	case COMB:
 	    BU_LIST_INIT(&wcomb.l);
@@ -448,12 +450,12 @@ make_island(struct bu_vls *msgs, struct subbrep_island_data *data, struct rt_wdb
 		if (!make_shoal(msgs, sd, wdbp, rname, &wcomb)) failed = 1;
 	    }
 	    mk_lcomb(wdbp, bu_vls_addr(&island_name), &wcomb, 0, NULL, NULL, NULL, 0);
+	    if (!failed && pcomb) (void)mk_addmember(bu_vls_addr(&island_name), &(pcomb->l), NULL, db_str2op(bool_op));
 	    break;
 	default:
-	    csg_obj_process(msgs, data->nucleus->params, wdbp, rname, &wcomb);
+	    csg_obj_process(msgs, data->nucleus->params, wdbp, rname, pcomb);
 	    break;
     }
-    if (!failed && pcomb) (void)mk_addmember(bu_vls_addr(&island_name), &(pcomb->l), NULL, db_str2op(&(data->nucleus->params->bool_op)));
     return 0;
 }
 
