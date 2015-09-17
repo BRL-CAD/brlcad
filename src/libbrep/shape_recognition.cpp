@@ -181,38 +181,39 @@ find_hierarchy(struct bu_vls *UNUSED(msgs), struct subbrep_tree_node *node, stru
     for (s_it = subislands.begin(); s_it != subislands.end(); s_it++) {
 	struct subbrep_island_data *id = (struct subbrep_island_data *)(*s_it);
 	struct subbrep_tree_node *n = NULL;
-	if (depth > 1) {
-	    bu_log("We're deep (%d) - need to check this island against parent shapes.\n", depth);
-	}
-	if (id->nucleus->params->bool_op == 'u') {
-	    bu_log("%*sadding union %s\n", depth, " ", bu_vls_addr(id->key));
-	    BU_GET(n, struct subbrep_tree_node);
-	    subbrep_tree_init(n);
-	    n->island = id;
-	    n->parent = node;
-	    bu_ptbl_ins(node->unions, (long *)n);
-	}
+	BU_GET(n, struct subbrep_tree_node);
+	subbrep_tree_init(n);
+	n->island = id;
+	n->parent = node;
+	bu_ptbl_ins(node->children, (long *)n);
+
 	if (id->nucleus->params->bool_op == '-') {
 	    bu_log("%*sadding subtraction %s\n", depth, " ", bu_vls_addr(id->key));
-	    BU_GET(n, struct subbrep_tree_node);
-	    subbrep_tree_init(n);
-	    n->island = id;
-	    n->parent = node;
-	    bu_ptbl_ins(node->subtractions, (long *)n);
-	}
-	if (!n) {
-	    bu_log("Erk! island without nucleus info: %s\n", bu_vls_addr(id->key));
-	    return;
+	    bu_ptbl_ins_unique(node->island->subtractions, (long *)id);
+	    // A subtraction must also be checked against positive parent islands.
+	    struct subbrep_tree_node *pn = node->parent;
+	    while (pn) {
+		if (pn->island->nucleus->params->bool_op == 'u') {
+		    bu_log("check bboxes\n");
+		    ON_BoundingBox isect;
+		    bool bbi = isect.Intersection(*pn->island->bbox, *id->bbox);
+		    // If we have overlap, we have a possible subtraction operation
+		    // between this island and the parent.  It's not guaranteed that
+		    // there is an interaction, but to make sure will require ray testing
+		    // so for speed we accept that there may be extra subtractions in
+		    // the tree.
+		    if (bbi) {
+			bu_log("found one: %s!\n", bu_vls_addr(id->key));
+			bu_ptbl_ins_unique(pn->island->subtractions, (long *)id);
+		    }
+		}
+		pn = pn->parent;
+	    }
 	}
     }
 
-    for (unsigned int i = 0; i < BU_PTBL_LEN(node->unions); i++) {
-	struct subbrep_tree_node *n = (struct subbrep_tree_node *)BU_PTBL_GET(node->unions, i);
-	(void)find_hierarchy(NULL, n, islands);
-    }
-
-    for (unsigned int i = 0; i < BU_PTBL_LEN(node->subtractions); i++) {
-	struct subbrep_tree_node *n = (struct subbrep_tree_node *)BU_PTBL_GET(node->subtractions, i);
+    for (unsigned int i = 0; i < BU_PTBL_LEN(node->children); i++) {
+	struct subbrep_tree_node *n = (struct subbrep_tree_node *)BU_PTBL_GET(node->children, i);
 	(void)find_hierarchy(NULL, n, islands);
     }
 }
@@ -408,7 +409,7 @@ subbrep_split(struct bu_vls *msgs, struct subbrep_island_data *data)
     return 1;
 }
 
-struct subbrep_tree_node *
+struct bu_ptbl *
 find_subbreps(struct bu_vls *msgs, const ON_Brep *brep)
 {
     /* Number of successful conversion operations */
@@ -419,6 +420,10 @@ find_subbreps(struct bu_vls *msgs, const ON_Brep *brep)
     struct subbrep_tree_node *root = NULL;
     /* Container to hold island data structures */
     struct bu_ptbl *subbreps;
+    std::set<struct subbrep_island_data *> islands;
+    std::set<struct subbrep_island_data *>::iterator is_it;
+    struct bu_ptbl *final_brep_array;
+
     BU_GET(subbreps, struct bu_ptbl);
     bu_ptbl_init(subbreps, 8, "subbrep table");
 
@@ -498,7 +503,7 @@ find_subbreps(struct bu_vls *msgs, const ON_Brep *brep)
 	bu_vls_sprintf(sb->key, "%s", key.c_str());
 
 	// Check to see if we have a general surface that precludes conversion
-	surface_t hof = highest_order_face(sb);
+	surface_t hof = subbrep_highest_order_face(sb);
 	if (hof >= SURFACE_GENERAL) {
 	    if (msgs) bu_vls_printf(msgs, "Note - general surface present in island %s, representing as B-Rep\n", bu_vls_addr(sb->key));
 	    sb->type = BREP;
@@ -530,13 +535,43 @@ find_subbreps(struct bu_vls *msgs, const ON_Brep *brep)
 	goto bail;
     }
 
+    /* Build the bounding boxes for all islands once */
+    for (unsigned int i = 0; i < BU_PTBL_LEN(subbreps); i++) {
+	struct subbrep_island_data *island = (struct subbrep_island_data *)BU_PTBL_GET(subbreps, i);
+	subbrep_bbox(island);
+    }
+
     bu_log("find us some hierarchy...\n");
     BU_GET(root, struct subbrep_tree_node);
     subbrep_tree_init(root);
     find_hierarchy(NULL, root, subbreps);
-    if (!root->island) bu_log("no hierarchy found yet...\n");
+    if (!root->island) {
+	bu_log("no hierarchy found ??...\n");
+	return NULL;
+    }
 
-    return root;
+    // Assign island IDs, populate set
+    for (unsigned int i = 0; i < BU_PTBL_LEN(subbreps); i++) {
+	struct subbrep_island_data *si = (struct subbrep_island_data *)BU_PTBL_GET(subbreps, i);
+	si->id = (si != root->island) ? si->id = i + 1 : 0;
+	islands.insert(si);
+    }
+
+    // Build the final subbrep array so the root node is the first entry in the array
+    // TODO: Probably a more efficient way to do all this, if it even matters...
+    BU_GET(final_brep_array, struct bu_ptbl);
+    bu_ptbl_init(final_brep_array, 8, "init array");
+    // Start with the root
+    bu_ptbl_ins(final_brep_array, (long *)root->island);
+    islands.erase(root->island);
+    for (is_it = islands.begin(); is_it != islands.end(); is_it++) {
+	bu_ptbl_ins(final_brep_array, (long *)*is_it);
+	islands.erase(is_it);
+    }
+    bu_ptbl_free(subbreps);
+    BU_PUT(subbreps, struct bu_ptbl);
+
+    return final_brep_array;
 
 bail:
     // Free memory

@@ -125,7 +125,7 @@ st_done:
 
 
 surface_t
-highest_order_face(struct subbrep_island_data *data)
+subbrep_highest_order_face(struct subbrep_island_data *data)
 {
     int planar = 0;
     int spherical = 0;
@@ -190,7 +190,6 @@ subbrep_shape_recognize(struct bu_vls *msgs, struct subbrep_island_data *data)
 }
 #endif
 
-#if 0
 void
 subbrep_bbox(struct subbrep_island_data *obj)
 {
@@ -233,9 +232,7 @@ subbrep_bbox(struct subbrep_island_data *obj)
 	ON_Interval v(min.y, max.y);
 	surface_GetBoundingBox(face->SurfaceOf(), u, v, *(obj->bbox), true);
     }
-    obj->bbox_set = 1;
 }
-#endif
 
 void
 csg_object_params_init(struct csg_object_params *csg)
@@ -300,14 +297,17 @@ subbrep_island_init(struct subbrep_island_data *obj, const ON_Brep *brep)
     obj->brep = brep;
     obj->local_brep = NULL;
 
+    obj->bbox = new ON_BoundingBox();
+    ON_MinMaxInit(&(obj->bbox->m_min), &(obj->bbox->m_max));
+
     BU_GET(obj->nucleus, struct subbrep_shoal_data);
     subbrep_shoal_init(obj->nucleus, obj);
 
     BU_GET(obj->children, struct bu_ptbl);
     bu_ptbl_init(obj->children, 8, "children table");
 
-    BU_GET(obj->subtraction_candidates, struct bu_ptbl);
-    bu_ptbl_init(obj->subtraction_candidates, 8, "children table");
+    BU_GET(obj->subtractions, struct bu_ptbl);
+    bu_ptbl_init(obj->subtractions, 8, "children table");
 
     BU_GET(obj->key, struct bu_vls);
     bu_vls_init(obj->key);
@@ -331,6 +331,8 @@ subbrep_island_free(struct subbrep_island_data *obj)
     if (obj->local_brep) delete obj->local_brep;
     obj->local_brep = NULL;
 
+    delete obj->bbox;
+
     subbrep_shoal_free(obj->nucleus);
     BU_PUT(obj->nucleus, struct csg_obj_params);
     obj->nucleus = NULL;
@@ -348,12 +350,12 @@ subbrep_island_free(struct subbrep_island_data *obj)
     BU_PUT(obj->children, struct bu_ptbl);
     obj->children = NULL;
 
-    /* Anything in here will already have been freed in the children tbl */
-    if (obj->subtraction_candidates) {
-	bu_ptbl_free(obj->subtraction_candidates);
-	BU_PUT(obj->subtraction_candidates, struct bu_ptbl);
+    /* Anything in here will be freed elsewhere */
+    if (obj->subtractions) {
+	bu_ptbl_free(obj->subtractions);
+	BU_PUT(obj->subtractions, struct bu_ptbl);
     }
-    obj->subtraction_candidates = NULL;
+    obj->subtractions = NULL;
 
     if (obj->faces) bu_free(obj->faces, "obj faces");
     obj->faces = NULL;
@@ -373,35 +375,16 @@ subbrep_island_free(struct subbrep_island_data *obj)
 
 void subbrep_tree_init(struct subbrep_tree_node *node)
 {
-    BU_GET(node->subtractions, struct bu_ptbl);
-    BU_GET(node->extra_subtractions, struct bu_ptbl);
-    BU_GET(node->unions, struct bu_ptbl);
-    bu_ptbl_init(node->subtractions, 8, "init table");
-    bu_ptbl_init(node->extra_subtractions, 8, "init table");
-    bu_ptbl_init(node->unions, 8, "init table");
+    BU_GET(node->children, struct bu_ptbl);
+    bu_ptbl_init(node->children, 8, "init table");
     node->parent = NULL;
     node->island = NULL;
 }
 
 void subbrep_tree_free(struct subbrep_tree_node *node)
 {
-    for (unsigned int i = 0; i < BU_PTBL_LEN(node->subtractions); i++) {
-	struct subbrep_tree_node *sn = (struct subbrep_tree_node *)BU_PTBL_GET(node->subtractions, i);
-	subbrep_tree_free(sn);
-	BU_GET(sn, struct subbrep_tree_node);
-    }
-    for (unsigned int i = 0; i < BU_PTBL_LEN(node->unions); i++) {
-	struct subbrep_tree_node *sn = (struct subbrep_tree_node *)BU_PTBL_GET(node->unions, i);
-	subbrep_tree_free(sn);
-	BU_GET(sn, struct subbrep_tree_node);
-    }
-    if (node->island) subbrep_island_free(node->island);
-    bu_ptbl_free(node->subtractions);
-    bu_ptbl_free(node->extra_subtractions);
-    bu_ptbl_free(node->unions);
-    BU_PUT(node->subtractions, struct bu_ptbl);
-    BU_PUT(node->extra_subtractions, struct bu_ptbl);
-    BU_PUT(node->unions, struct bu_ptbl);
+    bu_ptbl_free(node->children);
+    BU_PUT(node->children, struct bu_ptbl);
     node->parent = NULL;
     node->island = NULL;
 }

@@ -1435,6 +1435,8 @@ struct subbrep_island_data {
      * implicit primitive */
     int type;
 
+    int id;
+
     /* Context information */
     const ON_Brep *brep;
 
@@ -1446,14 +1448,12 @@ struct subbrep_island_data {
     /* struct subbrep_shoal_data */
     struct bu_ptbl *children;
 
-    /* For some objects, additional post processing is needed
-     * for a subtract/no-subtract determination */
-    struct bu_ptbl *subtraction_candidates;
+    /* For union objects, we list the subtractions it needs */
+    struct bu_ptbl *subtractions;
 
     /* subbrep metadata */
     struct bu_vls *key;
-    /*ON_BoundingBox *bbox;
-    int bbox_set;*/
+    ON_BoundingBox *bbox;
 
     /* Working information - should probably be in private struct */
     void *face_surface_types;
@@ -1474,23 +1474,9 @@ struct subbrep_island_data {
     int *null_edges;
 };
 
-struct subbrep_tree_node {
-    struct subbrep_tree_node *parent;
-    struct subbrep_island_data *island;
-    /* subbrep_tree_node */
-    struct bu_ptbl *subtractions;
-    /* subbrep_tree_node */
-    struct bu_ptbl *unions;
-    /* In case of protruding subtractions,
-     * we need a place to store them that
-     * will not disrupt iteration over the
-     * main subtraction table */
-    struct bu_ptbl *extra_subtractions;
-};
 
-extern BREP_EXPORT void subbrep_bbox(struct subbrep_island_data *obj);
-extern BREP_EXPORT void subbrep_tree_free(struct subbrep_tree_node *node);
-extern BREP_EXPORT struct subbrep_tree_node *find_subbreps(struct bu_vls *msgs, const ON_Brep *brep);
+/*extern BREP_EXPORT void subbrep_bbox(struct subbrep_island_data *obj);*/
+extern BREP_EXPORT struct bu_ptbl *find_subbreps(struct bu_vls *msgs, const ON_Brep *brep);
 /*extern BREP_EXPORT void find_hierarchy(struct bu_vls *msgs, struct subbrep_tree_node *node, struct bu_ptbl *subbreps);*/
 extern BREP_EXPORT int subbrep_polygon_tri(struct bu_vls *msgs, struct subbrep_island_data *data, const point_t *all_verts, int *loops, int loop_cnt, int **ffaces);
 

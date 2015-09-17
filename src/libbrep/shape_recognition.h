@@ -77,7 +77,8 @@ typedef enum {
 
 curve_t GetCurveType(ON_Curve *curve);
 surface_t GetSurfaceType(const ON_Surface *surface);
-surface_t highest_order_face(struct subbrep_island_data *data);
+surface_t subbrep_highest_order_face(struct subbrep_island_data *data);
+void subbrep_bbox(struct subbrep_island_data *obj);
 
 void ON_MinMaxInit(ON_3dPoint *min, ON_3dPoint *max);
 ON_3dPoint ON_LinePlaneIntersect(ON_Line &line, ON_Plane &plane);
@@ -87,8 +88,16 @@ int island_nucleus(struct bu_vls *msgs, struct subbrep_island_data *data);
 
 int subbrep_make_brep(struct bu_vls *msgs, struct subbrep_island_data *data);
 
+
+struct subbrep_tree_node {
+    struct subbrep_tree_node *parent;
+    struct subbrep_island_data *island;
+    /* subbrep_tree_node */
+    struct bu_ptbl *children;
+};
+
 void subbrep_tree_init(struct subbrep_tree_node *node);
-// Note: The subbrep_tree_free function is public in include/brep.h so libged can clean up the results.
+void subbrep_tree_free(struct subbrep_tree_node *node);
 void subbrep_island_init(struct subbrep_island_data *obj, const ON_Brep *brep);
 void subbrep_island_free(struct subbrep_island_data *obj);
 void subbrep_shoal_init(struct subbrep_shoal_data *obj, struct subbrep_island_data *island);
