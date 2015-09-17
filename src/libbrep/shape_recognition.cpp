@@ -99,18 +99,6 @@ get_edge_set_from_loops(struct subbrep_island_data *sb)
     set_to_array(&(sb->edges), &(sb->edges_cnt), &edges);
 }
 
-
-void subbrep_tree_node_init(struct subbrep_tree_node **node)
-{
-    BU_GET((*node), struct subbrep_tree_node);
-    BU_GET((*node)->subtractions, struct bu_ptbl);
-    BU_GET((*node)->unions, struct bu_ptbl);
-    bu_ptbl_init((*node)->subtractions, 8, "init table");
-    bu_ptbl_init((*node)->unions, 8, "init table");
-    (*node)->parent = NULL;
-    (*node)->island = NULL;
-}
-
 /* This is the critical point at which we take a pile of shapes and actually reconstruct a
  * valid boolean tree.  The stages are as follows:
  *
@@ -198,14 +186,16 @@ find_hierarchy(struct bu_vls *UNUSED(msgs), struct subbrep_tree_node *node, stru
 	}
 	if (id->nucleus->params->bool_op == 'u') {
 	    bu_log("%*sadding union %s\n", depth, " ", bu_vls_addr(id->key));
-	    subbrep_tree_node_init(&n);
+	    BU_GET(n, struct subbrep_tree_node);
+	    subbrep_tree_init(n);
 	    n->island = id;
 	    n->parent = node;
 	    bu_ptbl_ins(node->unions, (long *)n);
 	}
 	if (id->nucleus->params->bool_op == '-') {
 	    bu_log("%*sadding subtraction %s\n", depth, " ", bu_vls_addr(id->key));
-	    subbrep_tree_node_init(&n);
+	    BU_GET(n, struct subbrep_tree_node);
+	    subbrep_tree_init(n);
 	    n->island = id;
 	    n->parent = node;
 	    bu_ptbl_ins(node->subtractions, (long *)n);
@@ -225,206 +215,7 @@ find_hierarchy(struct bu_vls *UNUSED(msgs), struct subbrep_tree_node *node, stru
 	struct subbrep_tree_node *n = (struct subbrep_tree_node *)BU_PTBL_GET(node->subtractions, i);
 	(void)find_hierarchy(NULL, n, islands);
     }
-       
-#if 0
-    // Now that we have the subbreps (or their substructures) and their boolean status we need to
-    // construct the top level tree.
-
-    std::set<long *> unions;
-    std::set<long *> subtractions;
-    std::set<long *>::iterator sb_it, sb_it2;
-    std::map<long *, std::set<long *> > subbrep_subobjs;
-    std::map<long *, std::set<long *> > subbrep_ignoreobjs;
-    struct bu_ptbl *subbreps_tree;
-
-    if (!islands) return NULL;
-
-    for (unsigned int i = 0; i < BU_PTBL_LEN(islands); i++) {
-	island_set.insert(BU_PTBL_GET(islands, i));
-    }
-
-    /* Separate out top level unions */
-    for (sb_it = island_set.begin(); sb_it != island_set.end(); sb_it++) {
-	struct subbrep_island_data *obj = (struct subbrep_island_data *)*sb_it;
-	//std::cout << bu_vls_addr(obj->key) << " bool: " << obj->params->bool_op << "\n";
-	if (obj->fil_cnt == 0) {
-	    if (!(obj->nucleus->bool_op == '-')) {
-		//std::cout << "Top union found: " << bu_vls_addr(obj->key) << "\n";
-		obj->nucleus->bool_op = 'u';
-		unions.insert((long *)obj);
-		island_set.erase((long *)obj);
-	    } else {
-		if (obj->nucleus->bool_op == '-') {
-		    std::cout << "zero fils, but a negative shape - " << bu_vls_addr(obj->key) << " added to subtractions\n";
-		    subtractions.insert((long *)obj);
-		}
-	    }
-	}
-    }
-
-    std::set<long *> subbrep_seed_set = unions;
-
-    int iterate = 1;
-    while (subbrep_seed_set.size() > 0) {
-	//std::cout << "iterate: " << iterate << "\n";
-	std::set<long *> subbrep_seed_set_2;
-	std::set<long *> island_set_b;
-	for (sb_it = subbrep_seed_set.begin(); sb_it != subbrep_seed_set.end(); sb_it++) {
-	    std::set<int> tu_fol;
-	    struct subbrep_island_data *tu = (struct subbrep_island_data *)*sb_it;
-	    array_to_set(&tu_fol, tu->fol, tu->fol_cnt);
-	    island_set_b = island_set;
-	    for (sb_it2 = island_set.begin(); sb_it2 != island_set.end(); sb_it2++) {
-		struct subbrep_island_data *cobj = (struct subbrep_island_data *)*sb_it2;
-		for (int i = 0; i < cobj->fil_cnt; i++) {
-		    if (tu_fol.find(cobj->fil[i]) != tu_fol.end()) {
-			struct subbrep_island_data *up;
-			//std::cout << "Object " << bu_vls_addr(cobj->key) << " connected to " << bu_vls_addr(tu->key) << "\n";
-			subbrep_seed_set_2.insert(*sb_it2);
-			island_set_b.erase(*sb_it2);
-			// Determine boolean relationship to parent here, and use parent boolean
-			// to decide this object's (cobj) status.  If tu is negative and cobj is unioned
-			// relative to tu, then cobj is also negative.
-
-			// This is a make-or-break step of the algorithm - if we cannot determine whether
-			// a subbrep is added or subtracted, the whole B-Rep conversion process fails.
-			//
-			// TODO - In theory a partial conversion might still be achieved by re-inserting the
-			// problem subbrep back into the parent B-Rep and proceeding with the rest, but
-			// we are not currently set up for that - as of right now, a single failure on
-			// this level of logic results in a completely failed csg conversion.
-
-			int bool_test = 0;
-			int already_flipped = 0;
-			if (cobj->nucleus->bool_op == '\0') {
-			    /* First, check the boolean relationship to the parent solid */
-			    cobj->parent = tu;
-			    bool_test = subbrep_determine_boolean(cobj);
-			    //std::cout << "Initial boolean test for " << bu_vls_addr(cobj->key) << ": " << bool_test << "\n";
-			    switch (bool_test) {
-				case -2:
-				    if (msgs) {
-					bu_vls_printf(msgs, "%*sGame over - self intersecting shape reported with subbrep %s\n", L1_OFFSET, " ", bu_vls_addr(cobj->key));
-					bu_vls_printf(msgs, "%*sUntil breakdown logic for this situation is available, this is a conversion stopper.\n", L1_OFFSET, " ");
-				    }
-				    return NULL;
-				case 2:
-				    /* Test relative to parent inconclusive - fall back on surface test, if available */
-				    if (cobj->negative_shape == -1) bool_test = -1;
-				    if (cobj->negative_shape == 1) bool_test = 1;
-				    break;
-				default:
-				    break;
-			    }
-			} else {
-			    //std::cout << "Boolean status of " << bu_vls_addr(cobj->key) << " already determined\n";
-			    bool_test = (cobj->nucleus->bool_op == '-') ? -1 : 1;
-			    already_flipped = 1;
-			}
-
-			switch (bool_test) {
-			    case -1:
-				cobj->nucleus->bool_op = '-';
-				subtractions.insert((long *)cobj);
-				subbrep_subobjs[*sb_it].insert((long *)cobj);
-				break;
-			    case 1:
-				cobj->nucleus->bool_op = 'u';
-				unions.insert((long *)cobj);
-				/* We've got a union - any subtractions that are parents of this
-				 * object go in its ignore list */
-				up = cobj->parent;
-				while (up) {
-				    if (up->nucleus->bool_op == '-') subbrep_ignoreobjs[(long *)cobj].insert((long *)up);
-				    up = up->parent;
-				}
-				break;
-			    default:
-				if (msgs) bu_vls_printf(msgs, "%*sBoolean status of %s could not be determined - conversion failure.\n", L1_OFFSET, " ", bu_vls_addr(cobj->key));
-				return NULL;
-				break;
-			}
-
-			// If the parent ended up subtracted, we need to propagate the change down the
-			// children of this subbrep.
-			if (bool_test == -1 && !already_flipped) {
-			    for (unsigned int j = 0; j < BU_PTBL_LEN(cobj->children); j++){
-				struct subbrep_island_data *cdata = (struct subbrep_island_data *)BU_PTBL_GET(cobj->children,j);
-				if (cdata && cdata->nucleus) {
-				    cdata->nucleus->bool_op = (cdata->nucleus->bool_op == '-') ? 'u' : '-';
-				} else {
-				    //std::cout << "Child without params??: " << bu_vls_addr(cdata->key) << ", parent: " << bu_vls_addr(cobj->key) << "\n";
-				}
-			    }
-
-			    /* If we're a B-Rep and a subtraction, the B-Rep will be inside out */
-			    if (cobj->type == BREP && cobj->nucleus->bool_op == '-') {
-				for (int l = 0; l < cobj->local_brep->m_F.Count(); l++) {
-				    ON_BrepFace &face = cobj->local_brep->m_F[l];
-				    cobj->local_brep->FlipFace(face);
-				}
-			    }
-			}
-			//std::cout << "Boolean status of " << bu_vls_addr(cobj->key) << ": " << cobj->params->bool_op << "\n";
-		    }
-		}
-	    }
-	}
-	subbrep_seed_set.clear();
-	subbrep_seed_set = subbrep_seed_set_2;
-	island_set.clear();
-	island_set = island_set_b;
-	iterate++;
-    }
-
-    BU_GET(subbreps_tree, struct bu_ptbl);
-    bu_ptbl_init(subbreps_tree, 8, "subbrep tree table");
-
-    for (sb_it = unions.begin(); sb_it != unions.end(); sb_it++) {
-	struct subbrep_island_data *pobj = (struct subbrep_island_data *)(*sb_it);
-	bu_ptbl_ins(subbreps_tree, (long *)pobj);
-	std::set<long *> topological_subtractions = subbrep_subobjs[(long *)pobj];
-	std::set<long *> local_subtraction_queue = subtractions;
-	for (sb_it2 = topological_subtractions.begin(); sb_it2 != topological_subtractions.end(); sb_it2++) {
-	    bu_ptbl_ins(subbreps_tree, *sb_it2);
-	    local_subtraction_queue.erase(*sb_it2);
-	}
-	std::set<long *> ignore_queue = subbrep_ignoreobjs[(long *)pobj];
-	for (sb_it2 = ignore_queue.begin(); sb_it2 != ignore_queue.end(); sb_it2++) {
-	    local_subtraction_queue.erase(*sb_it2);
-	}
-
-	// Now, whatever is left in the local subtraction queue has to be ruled out based on volumetric
-	// intersection testing.
-	if (!local_subtraction_queue.empty()) {
-	    // Construct bounding box for pobj
-	    if (!pobj->bbox_set) subbrep_bbox(pobj);
-	    // Iterate over the queue
-	    for (sb_it2 = local_subtraction_queue.begin(); sb_it2 != local_subtraction_queue.end(); sb_it2++) {
-		struct subbrep_island_data *sobj = (struct subbrep_island_data *)(*sb_it2);
-		//std::cout << "Checking subbrep " << bu_vls_addr(sobj->key) << "\n";
-		// Construct bounding box for sobj
-		if (!sobj->bbox_set) subbrep_bbox(sobj);
-		ON_BoundingBox isect;
-		bool bbi = isect.Intersection(*pobj->bbox, *sobj->bbox);
-		// If there is overlap, we have a possible subtraction object.  It isn't currently possible
-		// to sort out reliably in the libbrep context if this object is really a net contributor
-		// to negative volume, so we store the candidates for post processing.  Not even surface/surface
-		// intersection testing will resolve this - a small arb in the center of a torus will not contribute
-		// a net negative volume, but a small arb in the center of a sphere will, and in both cases
-		// the bbox tests and the surface/surface tests will give the same answers.  At the moment the
-		// only practical approach requires solid raytracing.
-		if (bbi) {
-		    bu_ptbl_ins(pobj->subtraction_candidates, *sb_it2);
-		}
-	    }
-	}
-    }
-    return subbreps_tree;
-#endif
-    return;
 }
-
 
 
 int cyl_validate_face(const ON_BrepFace *forig, const ON_BrepFace *fcand)
@@ -740,7 +531,8 @@ find_subbreps(struct bu_vls *msgs, const ON_Brep *brep)
     }
 
     bu_log("find us some hierarchy...\n");
-    subbrep_tree_node_init(&root);
+    BU_GET(root, struct subbrep_tree_node);
+    subbrep_tree_init(root);
     find_hierarchy(NULL, root, subbreps);
     if (!root->island) bu_log("no hierarchy found yet...\n");
 

@@ -87,6 +87,8 @@ int island_nucleus(struct bu_vls *msgs, struct subbrep_island_data *data);
 
 int subbrep_make_brep(struct bu_vls *msgs, struct subbrep_island_data *data);
 
+void subbrep_tree_init(struct subbrep_tree_node *node);
+// Note: The subbrep_tree_free function is public in include/brep.h so libged can clean up the results.
 void subbrep_island_init(struct subbrep_island_data *obj, const ON_Brep *brep);
 void subbrep_island_free(struct subbrep_island_data *obj);
 void subbrep_shoal_init(struct subbrep_shoal_data *obj, struct subbrep_island_data *island);

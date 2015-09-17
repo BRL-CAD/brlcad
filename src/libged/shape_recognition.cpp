@@ -97,117 +97,6 @@ subbrep_obj_name(int type, int id, const char *root, struct bu_vls *name)
     }
 }
 
-#if 0
-HIDDEN int
-brep_to_bot(struct bu_vls *msgs, struct subbrep_island_data *data, struct rt_wdb *wdbp, struct bu_vls *id)
-{
-    /* Triangulate faces and write out as a bot */
-    struct bu_vls prim_name = BU_VLS_INIT_ZERO;
-    int all_faces_cnt = 0;
-    int *final_faces = NULL;
-
-    if (!data->local_brep) {
-	if (msgs) bu_vls_printf(msgs, "No valid local brep?? bot %s failed\n", bu_vls_addr(data->id));
-	return 0;
-    }
-
-    // Accumulate faces in a std::vector, since we don't know how many we're going to get
-    std::vector<int> all_faces;
-
-    /* Set up an initial comprehensive vertex array that will be used in
-     * the final BoT build - all face definitions will ultimately index
-     * into this array */
-    if (data->local_brep->m_V.Count() == 0) {
-	if (msgs) bu_vls_printf(msgs, "No verts in brep?? bot %s failed\n", bu_vls_addr(data->id));
-	return 0;
-    }
-    point_t *all_verts = (point_t *)bu_calloc(data->local_brep->m_V.Count(), sizeof(point_t), "bot verts");
-    for (int vi = 0; vi < data->local_brep->m_V.Count(); vi++) {
-	VMOVE(all_verts[vi], data->local_brep->m_V[vi].Point());
-    }
-
-    // Iterate over all faces in the brep.  TODO - should probably protect this with some planar checks...
-    int contributing_faces = 0;
-    for (int s_it = 0; s_it < data->local_brep->m_F.Count(); s_it++) {
-	const ON_BrepFace *b_face = &(data->local_brep->m_F[s_it]);
-	/* If we've got multiple loops - rare but not impossible - handle it */
-	int *loop_inds = (int *)bu_calloc(b_face->LoopCount(), sizeof(int), "loop index array");
-	const ON_BrepLoop *b_oloop = b_face->OuterLoop();
-	loop_inds[0] = b_oloop->m_loop_index;
-	for (int j = 1; j < b_face->LoopCount(); j++) {
-	    const ON_BrepLoop *b_loop = b_face->Loop(j);
-	    if (b_loop != b_oloop) loop_inds[j] = b_loop->m_loop_index;
-	}
-	int *ffaces = NULL;
-	int num_faces = subbrep_polygon_tri(msgs, data->local_brep, all_verts, loop_inds, b_face->LoopCount(), &ffaces);
-	if (num_faces > 0) contributing_faces++;
-	for (int f_ind = 0; f_ind < num_faces*3; f_ind++) {
-	    all_faces.push_back(ffaces[f_ind]);
-	}
-	if (ffaces) bu_free(ffaces, "free polygon face array");
-	all_faces_cnt += num_faces;
-    }
-
-    if (contributing_faces < 4) {
-	bu_free(all_verts, "all_verts");
-	return 0;
-    }
-
-    /* Now we can build the final faces array for mk_bot */
-    final_faces = (int *)bu_calloc(all_faces_cnt * 3, sizeof(int), "final bot verts");
-    for (int i = 0; i < all_faces_cnt*3; i++) {
-	final_faces[i] = all_faces[i];
-    }
-
-    /* Make the bot, using the data key for a unique name */
-    subbrep_obj_name(data, id, &prim_name);
-    if (mk_bot(wdbp, bu_vls_addr(&prim_name), RT_BOT_SOLID, RT_BOT_UNORIENTED, 0, data->brep->m_V.Count(), all_faces_cnt, (fastf_t *)all_verts, final_faces, (fastf_t *)NULL, (struct bu_bitv *)NULL)) {
-	if (msgs) bu_vls_printf(msgs, "mk_bot failed for overall bot\n");
-    } else {
-	obj_add_attr_key(data, wdbp, bu_vls_addr(&prim_name));
-    }
-    return 1;
-}
-#endif
-#if 0
-int
-subbrep_to_csg_arb6(struct subbrep_island_data *data, struct rt_wdb *wdbp, struct bu_vls *id, struct wmember *wcomb)
-{
-    struct csg_object_params *params = data->params;
-    if (data->type == ARB6) {
-	struct bu_vls prim_name = BU_VLS_INIT_ZERO;
-	subbrep_obj_name(data, id, &prim_name);
-
-	mk_arb6(wdbp, bu_vls_addr(&prim_name), (const fastf_t *)params->p);
-	obj_add_attr_key(data, wdbp, bu_vls_addr(&prim_name));
-	//std::cout << bu_vls_addr(&prim_name) << ": " << params->bool_op << "\n";
-	if (wcomb) (void)mk_addmember(bu_vls_addr(&prim_name), &((*wcomb).l), NULL, db_str2op(&(params->bool_op)));
-	bu_vls_free(&prim_name);
-	return 1;
-    } else {
-	return 0;
-    }
-}
-
-HIDDEN int
-subbrep_to_csg_arb8(struct subbrep_island_data *data, struct rt_wdb *wdbp, struct bu_vls *id, struct wmember *wcomb)
-{
-    struct csg_object_params *params = data->params;
-    if (data->type == ARB8) {
-	struct bu_vls prim_name = BU_VLS_INIT_ZERO;
-	subbrep_obj_name(data, id, &prim_name);
-
-	mk_arb8(wdbp, bu_vls_addr(&prim_name), (const fastf_t *)params->p);
-	obj_add_attr_key(data, wdbp, bu_vls_addr(&prim_name));
-	//std::cout << bu_vls_addr(&prim_name) << ": " << params->bool_op << "\n";
-	if (wcomb) (void)mk_addmember(bu_vls_addr(&prim_name), &((*wcomb).l), NULL, db_str2op(&(params->bool_op)));
-	bu_vls_free(&prim_name);
-	return 1;
-    } else {
-	return 0;
-    }
-}
-#endif
 
 HIDDEN int
 subbrep_to_csg_arbn(struct bu_vls *msgs, struct csg_object_params *data, struct rt_wdb *wdbp, const char *pname, struct wmember *wcomb)
@@ -274,43 +163,6 @@ subbrep_to_csg_cylinder(struct bu_vls *msgs, struct csg_object_params *data, str
     return 0;
 }
 
-#if 0
-HIDDEN int
-subbrep_to_csg_conic(struct subbrep_island_data *data, struct rt_wdb *wdbp, struct bu_vls *id, struct wmember *wcomb)
-{
-    struct csg_object_params *params = data->params;
-    if (data->type == CONE) {
-	struct bu_vls prim_name = BU_VLS_INIT_ZERO;
-	subbrep_obj_name(data, id, &prim_name);
-
-	mk_cone(wdbp, bu_vls_addr(&prim_name), params->origin, params->hv, params->height, params->radius, params->r2);
-	obj_add_attr_key(data, wdbp, bu_vls_addr(&prim_name));
-	//std::cout << bu_vls_addr(&prim_name) << ": " << params->bool_op << "\n";
-	if (wcomb) (void)mk_addmember(bu_vls_addr(&prim_name), &((*wcomb).l), NULL, db_str2op(&(params->bool_op)));
-	bu_vls_free(&prim_name);
-	return 1;
-    }
-    return 0;
-}
-
-HIDDEN int
-subbrep_to_csg_sphere(struct subbrep_island_data *data, struct rt_wdb *wdbp, struct bu_vls *id, struct wmember *wcomb)
-{
-    struct csg_object_params *params = data->params;
-    if (data->type == SPHERE) {
-	struct bu_vls prim_name = BU_VLS_INIT_ZERO;
-	subbrep_obj_name(data, id, &prim_name);
-
-	mk_sph(wdbp, bu_vls_addr(&prim_name), params->origin, params->radius);
-	obj_add_attr_key(data, wdbp, bu_vls_addr(&prim_name));
-	//std::cout << bu_vls_addr(&prim_name) << ": " << params->bool_op << "\n";
-	if (wcomb) (void)mk_addmember(bu_vls_addr(&prim_name), &((*wcomb).l), NULL, db_str2op(&(params->bool_op)));
-	bu_vls_free(&prim_name);
-	return 1;
-    }
-    return 0;
-}
-#endif
 
 HIDDEN void
 csg_obj_process(struct bu_vls *msgs, struct csg_object_params *data, struct rt_wdb *wdbp, const char *pname, struct wmember *wcomb)
@@ -459,84 +311,20 @@ make_island(struct bu_vls *msgs, struct subbrep_island_data *data, struct rt_wdb
     return 0;
 }
 
-#if 0
-void
-finalize_comb(struct rt_wdb *wdbp, struct directory *brep_dp, struct rt_gen_worker_vars *pbrep_vars, struct subbrep_island_data *curr_union, int ncpus)
-{
-    struct bu_ptbl *sc = curr_union->subtraction_candidates;
-    if (sc && BU_PTBL_LEN(sc) > 0) {
-	struct directory *dp;
-	struct bu_external external;
-	struct bu_vls tmp_comb_name = BU_VLS_INIT_ZERO;
-	struct bu_ptbl results = BU_PTBL_INIT_ZERO;
-
-	bu_log("Finalizing %s...\n", bu_vls_addr(curr_union->obj_name));
-	bu_vls_sprintf(&tmp_comb_name, "%s-r", bu_vls_addr(curr_union->obj_name));
-
-	// We've collected all the subtractions we know about - make a temp copy for raytracing.  Because
-	// overlaps are not desired here, make the temp comb a region
-	dp = db_lookup(wdbp->dbip, bu_vls_addr(curr_union->obj_name), LOOKUP_QUIET);
-	if (db_get_external(&external, dp, wdbp->dbip)) {
-	    bu_log("Database read error on object %s\n", bu_vls_addr(curr_union->obj_name));
-	}
-	if (wdb_export_external(wdbp, &external, bu_vls_addr(&tmp_comb_name), dp->d_flags, dp->d_minor_type) < 0) {
-	    bu_log("Database write error on tmp object %s\n", bu_vls_addr(&tmp_comb_name));
-	}
-	// Now the region flag
-	dp = db_lookup(wdbp->dbip, bu_vls_addr(&tmp_comb_name), LOOKUP_QUIET);
-	dp->d_flags |= RT_DIR_REGION;
-
-	// Evaluate the candidate subtraction objects using solid raytracing, and add the ones
-	// that contribute gaps to the comb definition.
-	analyze_find_subtracted(&results, wdbp, brep_dp->d_namep, pbrep_vars, bu_vls_addr(&tmp_comb_name), sc, (void *)curr_union, ncpus);
-
-	// kill the temp comb.
-	dp = db_lookup(wdbp->dbip, bu_vls_addr(&tmp_comb_name), LOOKUP_QUIET);
-	if (dp != RT_DIR_NULL) {
-	    if (db_delete(wdbp->dbip, dp) != 0 || db_dirdelete(wdbp->dbip, dp) != 0) {
-		bu_log("error deleting temp object %s\n", bu_vls_addr(&tmp_comb_name));
-	    }
-	}
-
-	// update the final comb definition with any new subtraction objects.
-	for (unsigned int j = 0; j < BU_PTBL_LEN(&results); j++) {
-	    struct subbrep_island_data *sobj = (struct subbrep_island_data *)BU_PTBL_GET(&results, j);
-	    bu_log("Subtract %s from %s\n", bu_vls_addr(sobj->id), bu_vls_addr(curr_union->id));
-	}
-    }
-}
-#endif
-
 HIDDEN int
 make_node(struct bu_vls *msgs, struct subbrep_tree_node *node, struct rt_wdb *wdbp, const char *rname, int *node_id, struct wmember *pcomb)
 {
-    struct wmember wcomb;
-    struct bu_vls node_comb_name = BU_VLS_INIT_ZERO;
-    bu_log("island %s: %d, %d\n", bu_vls_addr(node->island->key), BU_PTBL_LEN(node->subtractions), BU_PTBL_LEN(node->unions));
     make_island(msgs, node->island, wdbp, rname, node_id, pcomb);
-
-    if (BU_PTBL_LEN(node->subtractions) > 0 || BU_PTBL_LEN(node->unions) > 0) {
-	BU_LIST_INIT(&wcomb.l);
-	subbrep_obj_name(COMB, (*node_id), rname, &node_comb_name);
-	(*node_id)++;
-    }
 
     for (unsigned int i = 0; i < BU_PTBL_LEN(node->subtractions); i++) {
 	struct subbrep_tree_node *n = (struct subbrep_tree_node *)BU_PTBL_GET(node->subtractions, i);
-	make_node(msgs, n, wdbp, rname, node_id, &wcomb);
+	make_node(msgs, n, wdbp, rname, node_id, pcomb);
     }
 
     for (unsigned int i = 0; i < BU_PTBL_LEN(node->unions); i++) {
 	struct subbrep_tree_node *n = (struct subbrep_tree_node *)BU_PTBL_GET(node->unions, i);
-	make_node(msgs, n, wdbp, rname, node_id, &wcomb);
+	make_node(msgs, n, wdbp, rname, node_id, pcomb);
     }
-
-    if (BU_PTBL_LEN(node->subtractions) > 0 || BU_PTBL_LEN(node->unions) > 0) {
-	mk_lcomb(wdbp, bu_vls_addr(&node_comb_name), &wcomb, 0, NULL, NULL, NULL, 0);
-	mk_addmember(bu_vls_addr(&node_comb_name), &(pcomb->l), NULL, db_str2op(&(node->island->nucleus->params->bool_op)));
-    }
-
-    bu_vls_free(&node_comb_name);
 
     return 1;
 }
@@ -588,6 +376,9 @@ brep_to_csg(struct ged *gedp, struct directory *dp, int UNUSED(verify))
 
 	// This should probably be a region.
 	mk_lcomb(wdbp, bu_vls_addr(&comb_name), &pcomb, 0, NULL, NULL, NULL, 0);
+
+	subbrep_tree_free(root);
+	BU_GET(root, struct subbrep_tree_node);
     }
     return 0;
 }

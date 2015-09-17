@@ -371,6 +371,41 @@ subbrep_island_free(struct subbrep_island_data *obj)
     obj->null_edges = NULL;
 }
 
+void subbrep_tree_init(struct subbrep_tree_node *node)
+{
+    BU_GET(node->subtractions, struct bu_ptbl);
+    BU_GET(node->extra_subtractions, struct bu_ptbl);
+    BU_GET(node->unions, struct bu_ptbl);
+    bu_ptbl_init(node->subtractions, 8, "init table");
+    bu_ptbl_init(node->extra_subtractions, 8, "init table");
+    bu_ptbl_init(node->unions, 8, "init table");
+    node->parent = NULL;
+    node->island = NULL;
+}
+
+void subbrep_tree_free(struct subbrep_tree_node *node)
+{
+    for (unsigned int i = 0; i < BU_PTBL_LEN(node->subtractions); i++) {
+	struct subbrep_tree_node *sn = (struct subbrep_tree_node *)BU_PTBL_GET(node->subtractions, i);
+	subbrep_tree_free(sn);
+	BU_GET(sn, struct subbrep_tree_node);
+    }
+    for (unsigned int i = 0; i < BU_PTBL_LEN(node->unions); i++) {
+	struct subbrep_tree_node *sn = (struct subbrep_tree_node *)BU_PTBL_GET(node->unions, i);
+	subbrep_tree_free(sn);
+	BU_GET(sn, struct subbrep_tree_node);
+    }
+    if (node->island) subbrep_island_free(node->island);
+    bu_ptbl_free(node->subtractions);
+    bu_ptbl_free(node->extra_subtractions);
+    bu_ptbl_free(node->unions);
+    BU_PUT(node->subtractions, struct bu_ptbl);
+    BU_PUT(node->extra_subtractions, struct bu_ptbl);
+    BU_PUT(node->unions, struct bu_ptbl);
+    node->parent = NULL;
+    node->island = NULL;
+}
+
 
 std::string
 set_key(std::set<int> intset)

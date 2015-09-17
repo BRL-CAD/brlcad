@@ -1473,10 +1473,15 @@ struct subbrep_tree_node {
     struct bu_ptbl *subtractions;
     /* subbrep_tree_node */
     struct bu_ptbl *unions;
+    /* In case of protruding subtractions,
+     * we need a place to store them that
+     * will not disrupt iteration over the
+     * main subtraction table */
+    struct bu_ptbl *extra_subtractions;
 };
 
 extern BREP_EXPORT void subbrep_bbox(struct subbrep_island_data *obj);
-extern BREP_EXPORT void subbrep_object_free(struct subbrep_island_data *obj);
+extern BREP_EXPORT void subbrep_tree_free(struct subbrep_tree_node *node);
 extern BREP_EXPORT struct subbrep_tree_node *find_subbreps(struct bu_vls *msgs, const ON_Brep *brep);
 /*extern BREP_EXPORT void find_hierarchy(struct bu_vls *msgs, struct subbrep_tree_node *node, struct bu_ptbl *subbreps);*/
 extern BREP_EXPORT int subbrep_polygon_tri(struct bu_vls *msgs, struct subbrep_island_data *data, const point_t *all_verts, int *loops, int loop_cnt, int **ffaces);
