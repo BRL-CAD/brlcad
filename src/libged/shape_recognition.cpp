@@ -388,14 +388,15 @@ make_shoal(struct bu_vls *msgs, struct subbrep_shoal_data *data, struct rt_wdb *
 }
 
 HIDDEN int
-make_island(struct bu_vls *msgs, struct subbrep_island_data *data, struct rt_wdb *wdbp, const char *rname, int island_id, struct wmember *pcomb)
+make_island(struct bu_vls *msgs, struct subbrep_island_data *data, struct rt_wdb *wdbp, const char *rname, int *island_id, struct wmember *pcomb)
 {
     int failed = 0;
     struct wmember wcomb;
     struct subbrep_shoal_data *sd;
 
     struct bu_vls island_name = BU_VLS_INIT_ZERO;
-    subbrep_obj_name(data->type, island_id, rname, &island_name);
+    subbrep_obj_name(data->type, *island_id, rname, &island_name);
+    (*island_id)++;
 #if 0
     struct directory *dp = db_lookup(wdbp->dbip, bu_vls_addr(&island_name), LOOKUP_QUIET);
 
@@ -504,6 +505,40 @@ finalize_comb(struct rt_wdb *wdbp, struct directory *brep_dp, struct rt_gen_work
 }
 #endif
 
+HIDDEN int
+make_node(struct bu_vls *msgs, struct subbrep_tree_node *node, struct rt_wdb *wdbp, const char *rname, int *node_id, struct wmember *pcomb)
+{
+    struct wmember wcomb;
+    struct bu_vls node_comb_name = BU_VLS_INIT_ZERO;
+    bu_log("island %s: %d, %d\n", bu_vls_addr(node->island->key), BU_PTBL_LEN(node->subtractions), BU_PTBL_LEN(node->unions));
+    make_island(msgs, node->island, wdbp, rname, node_id, pcomb);
+
+    if (BU_PTBL_LEN(node->subtractions) > 0 || BU_PTBL_LEN(node->unions) > 0) {
+	BU_LIST_INIT(&wcomb.l);
+	subbrep_obj_name(COMB, (*node_id), rname, &node_comb_name);
+	(*node_id)++;
+    }
+
+    for (unsigned int i = 0; i < BU_PTBL_LEN(node->subtractions); i++) {
+	struct subbrep_tree_node *n = (struct subbrep_tree_node *)BU_PTBL_GET(node->subtractions, i);
+	make_node(msgs, n, wdbp, rname, node_id, &wcomb);
+    }
+
+    for (unsigned int i = 0; i < BU_PTBL_LEN(node->unions); i++) {
+	struct subbrep_tree_node *n = (struct subbrep_tree_node *)BU_PTBL_GET(node->unions, i);
+	make_node(msgs, n, wdbp, rname, node_id, &wcomb);
+    }
+
+    if (BU_PTBL_LEN(node->subtractions) > 0 || BU_PTBL_LEN(node->unions) > 0) {
+	mk_lcomb(wdbp, bu_vls_addr(&node_comb_name), &wcomb, 0, NULL, NULL, NULL, 0);
+	mk_addmember(bu_vls_addr(&node_comb_name), &(pcomb->l), NULL, db_str2op(&(node->island->nucleus->params->bool_op)));
+    }
+
+    bu_vls_free(&node_comb_name);
+
+    return 1;
+}
+
 /* return codes:
  * -1 get internal failure
  *  0 success
@@ -513,6 +548,8 @@ finalize_comb(struct rt_wdb *wdbp, struct directory *brep_dp, struct rt_gen_work
 int
 brep_to_csg(struct ged *gedp, struct directory *dp, int UNUSED(verify))
 {
+    int node_id = 0;
+
     /* Unpack B-Rep */
     struct rt_db_internal intern;
     struct rt_brep_internal *brep_ip = NULL;
@@ -542,13 +579,10 @@ brep_to_csg(struct ged *gedp, struct directory *dp, int UNUSED(verify))
     bu_vls_sprintf(&comb_name, "csg_%s", dp->d_namep);
     BU_LIST_INIT(&pcomb.l);
 
-    struct bu_ptbl *subbreps_tree = find_subbreps(gedp->ged_result_str, brep);
+    struct subbrep_tree_node *root = find_subbreps(gedp->ged_result_str, brep);
 
-    if (subbreps_tree) {
-	for (unsigned int i = 0; i < BU_PTBL_LEN(subbreps_tree); i++) {
-	    struct subbrep_island_data *d = (struct subbrep_island_data *)BU_PTBL_GET(subbreps_tree, i);
-	    make_island(gedp->ged_result_str, d, wdbp, bu_vls_addr(&comb_name), i + 1, &pcomb);
-	}
+    if (root) {
+	make_node(gedp->ged_result_str, root, wdbp, bu_vls_addr(&comb_name), &node_id, &pcomb);
 
 	// This should probably be a region.
 	mk_lcomb(wdbp, bu_vls_addr(&comb_name), &pcomb, 0, NULL, NULL, NULL, 0);

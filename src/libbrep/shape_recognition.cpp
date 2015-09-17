@@ -193,8 +193,8 @@ find_hierarchy(struct bu_vls *UNUSED(msgs), struct subbrep_tree_node *node, stru
     for (s_it = subislands.begin(); s_it != subislands.end(); s_it++) {
 	struct subbrep_island_data *id = (struct subbrep_island_data *)(*s_it);
 	struct subbrep_tree_node *n = NULL;
-	if (depth > 0) {
-	    bu_log("We're deep - need to check this island against parent shapes.\n");
+	if (depth > 1) {
+	    bu_log("We're deep (%d) - need to check this island against parent shapes.\n", depth);
 	}
 	if (id->nucleus->params->bool_op == 'u') {
 	    bu_log("%*sadding union %s\n", depth, " ", bu_vls_addr(id->key));
@@ -612,13 +612,15 @@ csg_abort:
     return 0;
 }
 
-struct bu_ptbl *
+struct subbrep_tree_node *
 find_subbreps(struct bu_vls *msgs, const ON_Brep *brep)
 {
     /* Number of successful conversion operations */
     int successes = 0;
     /* Overall object counter */
     int obj_cnt = 0;
+    /* Return node */
+    struct subbrep_tree_node *root = NULL;
     /* Container to hold island data structures */
     struct bu_ptbl *subbreps;
     BU_GET(subbreps, struct bu_ptbl);
@@ -731,15 +733,14 @@ find_subbreps(struct bu_vls *msgs, const ON_Brep *brep)
     if (!successes) {
 	if (msgs) bu_vls_printf(msgs, "%*sNote - no successful simplifications\n", L1_OFFSET, " ");
 	goto bail;
-    } else {
-	bu_log("find us some hierarchy...\n");
-	struct subbrep_tree_node *root = NULL;
-	subbrep_tree_node_init(&root);
-	find_hierarchy(NULL, root, subbreps);
-	if (!root->island) bu_log("no hierarchy found yet...\n");
     }
 
-    return subbreps;
+    bu_log("find us some hierarchy...\n");
+    subbrep_tree_node_init(&root);
+    find_hierarchy(NULL, root, subbreps);
+    if (!root->island) bu_log("no hierarchy found yet...\n");
+
+    return root;
 
 bail:
     // Free memory
