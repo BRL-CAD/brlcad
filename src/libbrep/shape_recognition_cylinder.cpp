@@ -42,12 +42,13 @@ negative_cylinder(const ON_Brep *brep, int face_index, double cyl_tol) {
 int
 cylinder_csg(struct bu_vls *msgs, struct subbrep_shoal_data *data, fastf_t cyl_tol)
 {
+    bu_log("cyl processing %s\n", bu_vls_addr(data->i->key));
+
     int implicit_plane_ind = -1;
     std::set<int> cylindrical_surfaces;
     std::set<int>::iterator c_it;
 
     const ON_Brep *brep = data->i->brep;
-    data->params->bool_op = 'u'; // Initialize to union
 
     // Characterize the planes of the non-linear edges.
     ON_SimpleArray<ON_Plane> non_linear_edge_planes;
@@ -84,6 +85,8 @@ cylinder_csg(struct bu_vls *msgs, struct subbrep_shoal_data *data, fastf_t cyl_t
 		    f->SurfaceOf()->IsPlanar(&eplane);
 		    have_planar_face = 1;
 		    if (f->m_bRev) eplane.Flip();
+		    // TODO - if the loop associated with this trim is a fil loop in the
+		    // island, should probably flip the face again...
 		    break;
 		}
 	    }
@@ -150,7 +153,7 @@ cylinder_csg(struct bu_vls *msgs, struct subbrep_shoal_data *data, fastf_t cyl_t
 	if (have_both_faces) {
 	    std::set<int> nullv;
 	    std::set<int> nulle;
-	    bu_log("edge %d is degenerate\n", *s_it);
+	    //bu_log("edge %d is degenerate\n", *s_it);
 	    array_to_set(&nullv, data->i->null_verts, data->i->null_vert_cnt);
 	    array_to_set(&nulle, data->i->null_edges, data->i->null_edge_cnt);
 	    nullv.insert(edge->Vertex(0)->m_vertex_index);
@@ -168,7 +171,7 @@ cylinder_csg(struct bu_vls *msgs, struct subbrep_shoal_data *data, fastf_t cyl_t
 	std::set<int> verts;
 	// If both edges share a pre-existing face that is planar, use the inverse of that
 	// plane.  Otherwise, construct a plane from the vertex points.
-	bu_log("found two linear edges\n");
+	//bu_log("found two linear edges\n");
 	for (s_it = le.begin(); s_it != le.end(); s_it++) {
 	    const ON_BrepEdge *edge = &(brep->m_E[*s_it]);
 	    verts.insert(edge->m_vi[0]);
@@ -192,12 +195,12 @@ cylinder_csg(struct bu_vls *msgs, struct subbrep_shoal_data *data, fastf_t cyl_t
     // known to be present.  If both directions do so, we have a concave situation and we're done.
     for (int i = 0; i < cyl_planes.Count(); i++) {
 	ON_Plane p = cyl_planes[i];
-	bu_log("in rcc_%d.s rcc %f, %f, %f %f, %f, %f 0.1\n", i, p.origin.x, p.origin.y, p.origin.z, p.Normal().x, p.Normal().y, p.Normal().z);
+	//bu_log("in rcc_%d.s rcc %f, %f, %f %f, %f, %f 0.1\n", i, p.origin.x, p.origin.y, p.origin.z, p.Normal().x, p.Normal().y, p.Normal().z);
 	int flipped = 0;
 	for (int j = 0; j < edge_midpnts.Count(); j++) {
 	    ON_3dVector v = edge_midpnts[j] - p.origin;
 	    double dotp = ON_DotProduct(v, p.Normal());
-	    bu_log("dotp: %f\n", dotp);
+	    //bu_log("dotp: %f\n", dotp);
 	    if (dotp > 0 && !NEAR_ZERO(dotp, BREP_PLANAR_TOL)) {
 		if (!flipped) {
 		    j = -1; // Check all points again
@@ -222,11 +225,11 @@ cylinder_csg(struct bu_vls *msgs, struct subbrep_shoal_data *data, fastf_t cyl_t
 #endif
 
     if (implicit_plane_ind != -1) {
-	bu_log("have implicit plane\n");
+	//bu_log("have implicit plane\n");
 	ON_Plane p = cyl_planes[implicit_plane_ind];
 	p.Flip();
-	bu_log("implicit plane origin: %f, %f, %f\n", p.origin.x, p.origin.y, p.origin.z);
-	bu_log("implicit plane Normal: %f, %f, %f\n", p.Normal().x, p.Normal().y, p.Normal().z);
+	//bu_log("implicit plane origin: %f, %f, %f\n", p.origin.x, p.origin.y, p.origin.z);
+	//bu_log("implicit plane Normal: %f, %f, %f\n", p.Normal().x, p.Normal().y, p.Normal().z);
 	BN_VMOVE(data->params->implicit_plane_origin, p.Origin());
 	BN_VMOVE(data->params->implicit_plane_normal, p.Normal());
 	data->params->have_implicit_plane = 1;
@@ -253,7 +256,7 @@ cylinder_csg(struct bu_vls *msgs, struct subbrep_shoal_data *data, fastf_t cyl_t
 	if (cyl_planes[0].Normal().IsParallelTo(cylinder.Axis(), VUNITIZE_TOL) == 0) perpendicular--;
 	if (cyl_planes[1].Normal().IsParallelTo(cylinder.Axis(), VUNITIZE_TOL) == 0) perpendicular--;
 	if (perpendicular == 2) {
-	    bu_log("perfect cylinder\n");
+	    //bu_log("perfect cylinder\n");
 	    need_arbn = 0;
 	}
     }
@@ -336,7 +339,7 @@ cylinder_csg(struct bu_vls *msgs, struct subbrep_shoal_data *data, fastf_t cyl_t
 	    }
 	}
     }
-    bu_log("end cap planes: %d,%d\n", end_caps[0], end_caps[1]);
+    //bu_log("end cap planes: %d,%d\n", end_caps[0], end_caps[1]);
 
 
     // Construct "large enough" cylinder based on end cap planes
@@ -345,15 +348,15 @@ cylinder_csg(struct bu_vls *msgs, struct subbrep_shoal_data *data, fastf_t cyl_t
 	double dpc = fabs(ON_DotProduct(cyl_planes[end_caps[i]].Normal(), cylinder.Axis()));
 	if (!NEAR_ZERO(dpc, VUNITIZE_TOL)) {
 	    double theta = acos(dpc);
-	    bu_log("theta: %f\n", theta);
+	    //bu_log("theta: %f\n", theta);
 	    double radius = cylinder.circle.Radius();
-	    bu_log("radius: %f\n", radius);
+	    //bu_log("radius: %f\n", radius);
 	    double hypotenuse = radius / dpc;
 	    extensions[i] = fabs(sin(theta) * hypotenuse);
 	}
     }
-    bu_log("extension 1: %f\n", extensions[0]);
-    bu_log("extension 2: %f\n", extensions[1]);
+    //bu_log("extension 1: %f\n", extensions[0]);
+    //bu_log("extension 2: %f\n", extensions[1]);
 
     // Populate the primitive data
     data->params->type = CYLINDER;
@@ -377,6 +380,8 @@ cylinder_csg(struct bu_vls *msgs, struct subbrep_shoal_data *data, fastf_t cyl_t
     extv0.Unitize();
     extv1.Unitize();
     if (data->params->negative == -1) {
+	// TODO - should only nudge out for the capping face (if any) that is mated to
+	// the parent with an inner loop in the parent curve.
 	extv0 = extv0 * (extensions[0] + 0.00001 * cyl_axis_length);
 	extv1 = extv1 * (extensions[1] + 0.00001 * cyl_axis_length);
     } else {
@@ -392,10 +397,10 @@ cylinder_csg(struct bu_vls *msgs, struct subbrep_shoal_data *data, fastf_t cyl_t
     BN_VMOVE(data->params->hv, cyl_axis);
     data->params->radius = cylinder.circle.Radius();
 
-    bu_log("in rcc.s rcc %f %f %f %f %f %f %f \n", axis_pts[0].x, axis_pts[0].y, axis_pts[0].z, cyl_axis.x, cyl_axis.y, cyl_axis.z, cylinder.circle.Radius());
+    //bu_log("in rcc.s rcc %f %f %f %f %f %f %f \n", axis_pts[0].x, axis_pts[0].y, axis_pts[0].z, cyl_axis.x, cyl_axis.y, cyl_axis.z, cylinder.circle.Radius());
 
     if (!need_arbn) {
-	bu_log("Perfect cylinder\n");
+	bu_log("Perfect cylinder shoal found in %s\n", bu_vls_addr(data->i->key));
 	return 1;
     }
 

@@ -89,7 +89,7 @@ subbrep_obj_name(int type, int id, const char *root, struct bu_vls *name)
 	    bu_vls_printf(name, "%s-tor_%d.s", root, id);
 	    return;
 	case COMB:
-	    bu_vls_printf(name, "%s-comb_%d.s", root, id);
+	    bu_vls_printf(name, "%s-comb_%d.c", root, id);
 	    return;
 	default:
 	    bu_vls_printf(name, "%s-brep_%d.s", root, id);
@@ -361,6 +361,10 @@ csg_obj_process(struct bu_vls *msgs, struct csg_object_params *data, struct rt_w
 HIDDEN int
 make_shoal(struct bu_vls *msgs, struct subbrep_shoal_data *data, struct rt_wdb *wdbp, const char *rname, struct wmember *pcomb)
 {
+    if (!data || !data->params) {
+	if (msgs) bu_vls_printf(msgs, "Error! invalid shoal.\n");
+	return 0;
+    }
 #if 0
     struct bu_vls csg_name = BU_VLS_INIT_ZERO;
     subbrep_obj_name(data->params->type, data->params->id, rname, &csg_name);
@@ -380,7 +384,7 @@ make_shoal(struct bu_vls *msgs, struct subbrep_shoal_data *data, struct rt_wdb *
 	csg_obj_process(msgs, c, wdbp, rname, pcomb);
     }
 
-    return 0;
+    return 1;
 }
 
 HIDDEN int
@@ -437,7 +441,7 @@ make_island(struct bu_vls *msgs, struct subbrep_island_data *data, struct rt_wdb
 	    break;
 	case COMB:
 	    BU_LIST_INIT(&wcomb.l);
-	    make_shoal(msgs, data->nucleus, wdbp, rname, &wcomb);
+	    if (!make_shoal(msgs, data->nucleus, wdbp, rname, &wcomb)) failed = 1;
 	    for (unsigned i = 0; i < BU_PTBL_LEN(data->children); i++) {
 		sd = (struct subbrep_shoal_data *)BU_PTBL_GET(data->children, i);
 		if (!make_shoal(msgs, sd, wdbp, rname, &wcomb)) failed = 1;
@@ -448,7 +452,7 @@ make_island(struct bu_vls *msgs, struct subbrep_island_data *data, struct rt_wdb
 	    csg_obj_process(msgs, data->nucleus->params, wdbp, rname, &wcomb);
 	    break;
     }
-    if (pcomb) (void)mk_addmember(bu_vls_addr(&island_name), &(pcomb->l), NULL, db_str2op(&(data->nucleus->params->bool_op)));
+    if (!failed && pcomb) (void)mk_addmember(bu_vls_addr(&island_name), &(pcomb->l), NULL, db_str2op(&(data->nucleus->params->bool_op)));
     return 0;
 }
 

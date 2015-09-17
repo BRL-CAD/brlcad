@@ -161,7 +161,6 @@ find_hierarchy(struct bu_vls *UNUSED(msgs), struct subbrep_tree_node *node, stru
 		std::cout << "Top union found: " << bu_vls_addr(obj->key) << "\n";
 		top_cnt++;
 		node->island = obj;
-		obj->nucleus->params->bool_op = 'u';
 	    }
 	}
 	if (top_cnt != 1) {
@@ -177,36 +176,43 @@ find_hierarchy(struct bu_vls *UNUSED(msgs), struct subbrep_tree_node *node, stru
     }
 
 
+    std::set<long *> subislands;
+    std::set<long *>::iterator s_it;
     for (unsigned int i = 0; i < BU_PTBL_LEN(islands); i++) {
 	struct subbrep_island_data *id = (struct subbrep_island_data *)BU_PTBL_GET(islands, i);
-	if (id == node->island) continue;
+	if (BU_STR_EQUAL(bu_vls_addr(id->key), bu_vls_addr(node->island->key))) continue;
 	bu_log("%*schecking island %s\n", depth, " ", bu_vls_addr(id->key));
+	// For this node's inner loops, find the corresponding islands.
 	for (int j = 0; j < id->fil_cnt; j++) {
-	    long *ip = fol_to_i.find(id->fil[j])->second;
-	    if (ip != (long *)id) {
-		struct subbrep_island_data *ipd = (struct subbrep_island_data *)ip;
-		struct subbrep_tree_node *n = NULL;
-		if (ipd->nucleus->params->bool_op == 'u') {
-		    bu_log("%*sadding union %s\n", depth, " ", bu_vls_addr(ipd->key));
-		    subbrep_tree_node_init(&n);
-		    n->island = ipd;
-		    n->parent = node;
-		    n->fil = id->fil[j]; // Will probably need the plane from this face for later testing.
-		    bu_ptbl_ins(node->unions, (long *)n);
-		}
-		if (ipd->nucleus->params->bool_op == '-') {
-		    bu_log("%*sadding subtraction %s\n", depth, " ", bu_vls_addr(ipd->key));
-		    subbrep_tree_node_init(&n);
-		    n->island = ipd;
-		    n->parent = node;
-		    n->fil = id->fil[j]; // Will probably need the plane from this face for later testing.
-		    bu_ptbl_ins(node->subtractions, (long *)n);
-		}
-		if (!n) {
-		    bu_log("Erk! island without nucleus info: %s\n", bu_vls_addr(ipd->key));
-		    return;
-		}
+	    struct subbrep_island_data *idparent = (struct subbrep_island_data *)fol_to_i.find(id->fil[j])->second;
+	    if (BU_STR_EQUAL(bu_vls_addr(node->island->key), bu_vls_addr(idparent->key))) {
+		subislands.insert((long *)id);
 	    }
+	}
+    }
+    for (s_it = subislands.begin(); s_it != subislands.end(); s_it++) {
+	struct subbrep_island_data *id = (struct subbrep_island_data *)(*s_it);
+	struct subbrep_tree_node *n = NULL;
+	if (depth > 0) {
+	    bu_log("We're deep - need to check this island against parent shapes.\n");
+	}
+	if (id->nucleus->params->bool_op == 'u') {
+	    bu_log("%*sadding union %s\n", depth, " ", bu_vls_addr(id->key));
+	    subbrep_tree_node_init(&n);
+	    n->island = id;
+	    n->parent = node;
+	    bu_ptbl_ins(node->unions, (long *)n);
+	}
+	if (id->nucleus->params->bool_op == '-') {
+	    bu_log("%*sadding subtraction %s\n", depth, " ", bu_vls_addr(id->key));
+	    subbrep_tree_node_init(&n);
+	    n->island = id;
+	    n->parent = node;
+	    bu_ptbl_ins(node->subtractions, (long *)n);
+	}
+	if (!n) {
+	    bu_log("Erk! island without nucleus info: %s\n", bu_vls_addr(id->key));
+	    return;
 	}
     }
 
@@ -215,7 +221,7 @@ find_hierarchy(struct bu_vls *UNUSED(msgs), struct subbrep_tree_node *node, stru
 	(void)find_hierarchy(NULL, n, islands);
     }
 
-    for (unsigned int i = 0; i < BU_PTBL_LEN(node->unions); i++) {
+    for (unsigned int i = 0; i < BU_PTBL_LEN(node->subtractions); i++) {
 	struct subbrep_tree_node *n = (struct subbrep_tree_node *)BU_PTBL_GET(node->subtractions, i);
 	(void)find_hierarchy(NULL, n, islands);
     }
@@ -523,7 +529,7 @@ shoal_build(int **s_loops, int loop_index, struct subbrep_island_data *data)
 int
 subbrep_split(struct bu_vls *msgs, struct subbrep_island_data *data)
 {
-    bu_log("splitting\n");
+    bu_log("splitting %s\n", bu_vls_addr(data->key));
     int csg_fail = 0;
     std::set<int> loops;
     std::set<int> active;
@@ -542,7 +548,7 @@ subbrep_split(struct bu_vls *msgs, struct subbrep_island_data *data)
 	if (surface_type != SURFACE_PLANE) {
 	    // non-planar face - check to see whether it's already part of a shoal.  If not,
 	    // create a new one - otherwise, skip.
-	    if (active.find(face->m_face_index) != active.end()) {
+	    if (active.find(loop->m_loop_index) != active.end()) {
 		std::set<int> shoal_loops;
 		struct subbrep_shoal_data *sh;
 		BU_GET(sh, struct subbrep_shoal_data);
@@ -729,7 +735,7 @@ find_subbreps(struct bu_vls *msgs, const ON_Brep *brep)
 	bu_log("find us some hierarchy...\n");
 	struct subbrep_tree_node *root = NULL;
 	subbrep_tree_node_init(&root);
-	//find_hierarchy(NULL, root, subbreps);
+	find_hierarchy(NULL, root, subbreps);
 	if (!root->island) bu_log("no hierarchy found yet...\n");
     }
 

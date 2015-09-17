@@ -255,7 +255,7 @@ subbrep_polygon_tri(struct bu_vls *UNUSED(msgs), struct subbrep_island_data *dat
 		ON_2dPoint cp = trim_curve->PointAt(trim_curve->Domain().Max());
 		on2dpts.Append(cp);
 		vert_array.push_back(vert_ind);
-		bu_log("%d vertex: %d\n", b_loop->m_loop_index, vert_ind);
+		//bu_log("%d vertex: %d\n", b_loop->m_loop_index, vert_ind);
 	    } else {
 		bu_log("%d vertex %d ignored - need to check if loop dir changed\n", b_loop->m_loop_index, vert_ind);
 		loop_dir = brep->LoopDirection(brep->m_L[b_loop->m_loop_index]);
@@ -304,7 +304,7 @@ subbrep_polygon_tri(struct bu_vls *UNUSED(msgs), struct subbrep_island_data *dat
 		    ON_2dPoint cp = trim_curve->PointAt(trim_curve->Domain().Max());
 		    on2dpts.Append(cp);
 		    vert_array.push_back(vert_ind);
-		    bu_log("%d vertex: %d\n", b_loop->m_loop_index, vert_ind);
+		    //bu_log("%d vertex: %d\n", b_loop->m_loop_index, vert_ind);
 		} else {
 		    bu_log("%d vertex %d ignored\n", b_loop->m_loop_index, vert_ind);
 		}
@@ -321,7 +321,6 @@ subbrep_polygon_tri(struct bu_vls *UNUSED(msgs), struct subbrep_island_data *dat
 
 	num_faces = triangulate_array_with_holes(on2dpts, vert_map, loop_cnt, loop_starts, ffaces, brep);
     }
-    bu_log("got here\n");
     return num_faces;
 }
 
@@ -393,7 +392,7 @@ shoal_polygon_tri(struct bu_vls *UNUSED(msgs), struct subbrep_shoal_data *data, 
     // Walk the edges collecting non-ignored verts.
     int curr_vert = -1;
     int curr_edge = -1;
-    bu_log("first edge: %d\n", first_edge->m_edge_index);
+    //bu_log("first edge: %d\n", first_edge->m_edge_index);
     while (curr_edge != first_edge->m_edge_index && curr_vert != seed_vert) {
 	// Once we're past the first edge, initialize our terminating condition if not already set.
 	if (curr_edge == -1) curr_edge = first_edge->m_edge_index;
@@ -402,7 +401,7 @@ shoal_polygon_tri(struct bu_vls *UNUSED(msgs), struct subbrep_shoal_data *data, 
 	for (int i = 0; i < brep->m_V[curr_vert].m_ei.Count(); i++) {
 	    const ON_BrepEdge *e = &(brep->m_E[brep->m_V[curr_vert].m_ei[i]]);
 	    int ce = e->m_edge_index;
-	    bu_log("considering : %d\n", ce);
+	    //bu_log("considering : %d\n", ce);
 	    if (ce != curr_edge && ignored_edges.find(ce) == ignored_edges.end()) {
 		int has_face_in_shoal = 0;
 		for (int j = 0; j < e->m_ti.Count(); j++) {
@@ -412,20 +411,20 @@ shoal_polygon_tri(struct bu_vls *UNUSED(msgs), struct subbrep_shoal_data *data, 
 			has_face_in_shoal = 1;
 			break;
 		    } else {
-			bu_log("face %d not in shoal\n", f->m_face_index);
+			//bu_log("face %d not in shoal\n", f->m_face_index);
 		    }
 		}
 		if (has_face_in_shoal) {
 		    // Have a viable edge - find our new vert.
-		    bu_log("  passed: %d\n", ce);
+		    //bu_log("  passed: %d\n", ce);
 		    int nv = (e->Vertex(0)->m_vertex_index == curr_vert) ? e->Vertex(1)->m_vertex_index : e->Vertex(0)->m_vertex_index;
 		    if (ignored_verts.find(nv) == ignored_verts.end()) {
-			bu_log("  next vert: %d\n", curr_vert);
+			//bu_log("  next vert: %d\n", curr_vert);
 			polygon_verts.push_back(nv);
 		    }
 		    curr_vert = nv;
 		    curr_edge = ce;
-		    bu_log("  next edge: %d\n", curr_edge);
+		    //bu_log("  next edge: %d\n", curr_edge);
 		}
 		break;
 	    }
@@ -436,7 +435,7 @@ shoal_polygon_tri(struct bu_vls *UNUSED(msgs), struct subbrep_shoal_data *data, 
 
     std::vector<int>::iterator v_it;
     for(v_it = polygon_verts.begin(); v_it != polygon_verts.end(); v_it++) {
-	bu_log("shoal vert found: %d\n", (int)*v_it);
+	//bu_log("shoal vert found: %d\n", (int)*v_it);
     }
 
     // Have the verts - now we need 2d coordinates in the implicit plane
@@ -447,8 +446,8 @@ shoal_polygon_tri(struct bu_vls *UNUSED(msgs), struct subbrep_shoal_data *data, 
     ON_Plane p(imp_origin, imp_normal);
     ON_3dVector xaxis = p.Xaxis();
     ON_3dVector yaxis = p.Yaxis();
-    bu_log("implicit origin: %f, %f, %f\n", p.Origin().x, p.Origin().y, p.Origin().z);
-    bu_log("implicit normal: %f, %f, %f\n", p.Normal().x, p.Normal().y, p.Normal().z);
+    //bu_log("implicit origin: %f, %f, %f\n", p.Origin().x, p.Origin().y, p.Origin().z);
+    //bu_log("implicit normal: %f, %f, %f\n", p.Normal().x, p.Normal().y, p.Normal().z);
     ON_2dPointArray on2dpts;
     for(v_it = polygon_verts.begin(); v_it != polygon_verts.end(); v_it++) {
 	const ON_BrepVertex *v = &(brep->m_V[(int)*v_it]);
@@ -456,7 +455,7 @@ shoal_polygon_tri(struct bu_vls *UNUSED(msgs), struct subbrep_shoal_data *data, 
 	double xcoord = ON_DotProduct(v3d, xaxis);
 	double ycoord = ON_DotProduct(v3d, yaxis);
 	on2dpts.Append(ON_2dPoint(xcoord,ycoord));
-	bu_log("x,y: %f,%f\n", xcoord, ycoord);
+	//bu_log("x,y: %f,%f\n", xcoord, ycoord);
     }
 
     if (polygon_verts.size() == 0) return 0;
@@ -572,8 +571,8 @@ negative_polygon(struct bu_vls *UNUSED(msgs), struct csg_object_params *data)
 	}
     }
     hit_cnt = hit_pnts.Count();
-    bu_log("hit count: %d\n", hit_cnt);
-    bu_log("dotp : %f\n", dotp);
+    //bu_log("hit count: %d\n", hit_cnt);
+    //bu_log("dotp : %f\n", dotp);
 
     int io_state;
     // Final inside/outside determination
@@ -583,7 +582,7 @@ negative_polygon(struct bu_vls *UNUSED(msgs), struct csg_object_params *data)
 	io_state = (dotp < 0) ? -1 : 1;
     }
 
-    bu_log("inside out state: %d\n", io_state);
+    //bu_log("inside out state: %d\n", io_state);
 
     return io_state;
 }
@@ -592,6 +591,8 @@ negative_polygon(struct bu_vls *UNUSED(msgs), struct csg_object_params *data)
 int
 island_nucleus(struct bu_vls *msgs, struct subbrep_island_data *data)
 {
+    bu_log("island processing %s\n", bu_vls_addr(data->key));
+
     int degenerate_nucleus = 0;
     int have_flipped_loops = 0;
 
@@ -696,6 +697,8 @@ island_nucleus(struct bu_vls *msgs, struct subbrep_island_data *data)
 		    ON_Plane p;
 		    face->SurfaceOf()->IsPlanar(&p, BREP_PLANAR_TOL);
 		    if (face->m_bRev) p.Flip();
+		    // TODO - if the loop is a fil loop in the
+		    // island, do we need to flip the face again...
 		    std::set<int> verts;
 		    std::set<int>::iterator v_it;
 		    ON_3dPointArray pnts;
@@ -738,7 +741,7 @@ island_nucleus(struct bu_vls *msgs, struct subbrep_island_data *data)
 	    for(f_it = complex_face_ind.begin(); f_it != complex_face_ind.end(); f_it++) {
 		bu_vls_printf(&msg, " %d", *f_it);
 	    }
-	    bu_log("%s\n", bu_vls_addr(&msg));
+	    //bu_log("%s\n", bu_vls_addr(&msg));
 	    bu_vls_free(&msg);
 	    return 0;
 	}
@@ -755,7 +758,7 @@ island_nucleus(struct bu_vls *msgs, struct subbrep_island_data *data)
 	    ON_Plane p;
 	    face->SurfaceOf()->IsPlanar(&p, BREP_PLANAR_TOL);
 	    if ((face->m_bRev && !loop_rev) || (!face->m_bRev && loop_rev)) p.Flip();
-	    bu_log("face(%d): %f,%f,%f %f,%f,%f\n", face->m_face_index,  p.origin.x, p.origin.y, p.origin.z, p.Normal().x, p.Normal().y, p.Normal().z);
+	    //bu_log("face(%d): %f,%f,%f %f,%f,%f\n", face->m_face_index,  p.origin.x, p.origin.y, p.origin.z, p.Normal().x, p.Normal().y, p.Normal().z);
 
 	    // Check for face coplanarity with shoal arbns.
 	    for (int i = 0; i < arbn_planes.Count(); i++) {

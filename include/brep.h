@@ -1469,7 +1469,6 @@ struct subbrep_island_data {
 struct subbrep_tree_node {
     struct subbrep_tree_node *parent;
     struct subbrep_island_data *island;
-    int fil;
     /* subbrep_tree_node */
     struct bu_ptbl *subtractions;
     /* subbrep_tree_node */
