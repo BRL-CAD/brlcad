@@ -9,6 +9,17 @@
 #include "brep.h"
 #include "shape_recognition.h"
 
+void
+ON_MinMaxInit(ON_3dPoint *min, ON_3dPoint *max)
+{
+    min->x = ON_DBL_MAX;
+    min->y = ON_DBL_MAX;
+    min->z = ON_DBL_MAX;
+    max->x = -ON_DBL_MAX;
+    max->y = -ON_DBL_MAX;
+    max->z = -ON_DBL_MAX;
+}
+
 ON_3dPoint
 ON_LinePlaneIntersect(ON_Line &line, ON_Plane &plane)
 {
@@ -69,7 +80,7 @@ GetCurveType(ON_Curve *curve)
 }
 
 surface_t
-GetSurfaceType(const ON_Surface *orig_surface, struct filter_obj *obj)
+GetSurfaceType(const ON_Surface *orig_surface)
 {
     ON_Surface *surface;
     surface_t ret = SURFACE_GENERAL;
@@ -77,72 +88,34 @@ GetSurfaceType(const ON_Surface *orig_surface, struct filter_obj *obj)
     // Make things a bit larger so small surfaces can be identified
     ON_Xform sf(1000);
     in_surface->Transform(sf);
-    if (obj) {
-	filter_obj_init(obj);
-	surface = in_surface->Duplicate();
-	if (surface->IsPlanar(obj->plane, BREP_PLANAR_TOL)) {
-	    ret = SURFACE_PLANE;
-	    obj->stype = SURFACE_PLANE;
-	    goto st_done;
-	}
-	delete surface;
-	surface = in_surface->Duplicate();
-	if (surface->IsSphere(obj->sphere , BREP_SPHERICAL_TOL)) {
-	    ret = SURFACE_SPHERE;
-	    obj->stype = SURFACE_SPHERE;
-	    goto st_done;
-	}
-	delete surface;
-	surface = in_surface->Duplicate();
-	if (surface->IsCylinder(obj->cylinder , BREP_CYLINDRICAL_TOL)) {
-	    ret = SURFACE_CYLINDER;
-	    obj->stype = SURFACE_CYLINDER;
-	    goto st_done;
-	}
-	delete surface;
-	surface = in_surface->Duplicate();
-	if (surface->IsCone(obj->cone, BREP_CONIC_TOL)) {
-	    ret = SURFACE_CONE;
-	    obj->stype = SURFACE_CONE;
-	    goto st_done;
-	}
-	delete surface;
-	surface = in_surface->Duplicate();
-	if (surface->IsTorus(obj->torus, BREP_TOROIDAL_TOL)) {
-	    ret = SURFACE_TORUS;
-	    obj->stype = SURFACE_TORUS;
-	    goto st_done;
-	}
-    } else {
-	surface = in_surface->Duplicate();
-	if (surface->IsPlanar(NULL, BREP_PLANAR_TOL)) {
-	    ret = SURFACE_PLANE;
-	    goto st_done;
-	}
-	delete surface;
-	surface = in_surface->Duplicate();
-	if (surface->IsSphere(NULL, BREP_SPHERICAL_TOL)) {
-	    ret = SURFACE_SPHERE;
-	    goto st_done;
-	}
-	delete surface;
-	surface = in_surface->Duplicate();
-	if (surface->IsCylinder(NULL, BREP_CYLINDRICAL_TOL)) {
-	    ret = SURFACE_CYLINDER;
-	    goto st_done;
-	}
-	delete surface;
-	surface = in_surface->Duplicate();
-	if (surface->IsCone(NULL, BREP_CONIC_TOL)) {
-	    ret = SURFACE_CONE;
-	    goto st_done;
-	}
-	delete surface;
-	surface = in_surface->Duplicate();
-	if (surface->IsTorus(NULL, BREP_TOROIDAL_TOL)) {
-	    ret = SURFACE_TORUS;
-	    goto st_done;
-	}
+    surface = in_surface->Duplicate();
+    if (surface->IsPlanar(NULL, BREP_PLANAR_TOL)) {
+	ret = SURFACE_PLANE;
+	goto st_done;
+    }
+    delete surface;
+    surface = in_surface->Duplicate();
+    if (surface->IsSphere(NULL, BREP_SPHERICAL_TOL)) {
+	ret = SURFACE_SPHERE;
+	goto st_done;
+    }
+    delete surface;
+    surface = in_surface->Duplicate();
+    if (surface->IsCylinder(NULL, BREP_CYLINDRICAL_TOL)) {
+	ret = SURFACE_CYLINDER;
+	goto st_done;
+    }
+    delete surface;
+    surface = in_surface->Duplicate();
+    if (surface->IsCone(NULL, BREP_CONIC_TOL)) {
+	ret = SURFACE_CONE;
+	goto st_done;
+    }
+    delete surface;
+    surface = in_surface->Duplicate();
+    if (surface->IsTorus(NULL, BREP_TOROIDAL_TOL)) {
+	ret = SURFACE_TORUS;
+	goto st_done;
     }
 st_done:
     delete surface;
@@ -206,65 +179,7 @@ highest_order_face(struct subbrep_island_data *data)
     return hofo;
 }
 
-void
-filter_obj_init(struct filter_obj *obj)
-{
-    if (!obj) return;
-    if (!obj->plane) obj->plane = new ON_Plane;
-    if (!obj->sphere) obj->sphere = new ON_Sphere;
-    if (!obj->cylinder) obj->cylinder = new ON_Cylinder;
-    if (!obj->cone) obj->cone = new ON_Cone;
-    if (!obj->torus) obj->torus = new ON_Torus;
-    obj->type = BREP;
-}
-
-void
-filter_obj_free(struct filter_obj *obj)
-{
-    if (!obj) return;
-    delete obj->plane;
-    delete obj->sphere;
-    delete obj->cylinder;
-    delete obj->cone;
-    delete obj->torus;
-}
-
-int
-filter_objs_equal(struct filter_obj *obj1, struct filter_obj *obj2)
-{
-    ON_Line l1;
-    ON_3dPoint p1, p2;
-    double d1, d2;
-    int ret = 0;
-    if (obj1->stype != obj2->stype) return 0;
-    switch (obj1->stype) {
-	case SURFACE_PLANE:
-	    break;
-	case SURFACE_CYLINDRICAL_SECTION:
-	case SURFACE_CYLINDER:
-	    if (NEAR_ZERO(obj1->cylinder->circle.Radius() - obj2->cylinder->circle.Radius(), 0.001)) {
-		l1 = ON_Line(obj1->cylinder->Center(), obj1->cylinder->Center() + obj1->cylinder->Axis());
-		d1 = l1.DistanceTo(obj2->cylinder->Center());
-		d2 = l1.DistanceTo(obj2->cylinder->Center() + obj2->cylinder->Axis());
-		if (NEAR_ZERO(d1, 0.001) && NEAR_ZERO(d2, 0.001)) ret = 1;
-	    }
-	    break;
-	case SURFACE_CONE:
-	    break;
-	case SURFACE_SPHERICAL_SECTION:
-	case SURFACE_SPHERE:
-	    break;
-	case SURFACE_ELLIPSOIDAL_SECTION:
-	case SURFACE_ELLIPSOID:
-	    break;
-	case SURFACE_TORUS:
-	    break;
-	default:
-	    break;
-    }
-    return ret;
-}
-
+#if 0
 volume_t
 subbrep_shape_recognize(struct bu_vls *msgs, struct subbrep_island_data *data)
 {
@@ -273,18 +188,9 @@ subbrep_shape_recognize(struct bu_vls *msgs, struct subbrep_island_data *data)
     //if (subbrep_is_cone(msgs, data, BREP_CONIC_TOL)) return CONE;
     return BREP;
 }
+#endif
 
-void
-ON_MinMaxInit(ON_3dPoint *min, ON_3dPoint *max)
-{
-    min->x = ON_DBL_MAX;
-    min->y = ON_DBL_MAX;
-    min->z = ON_DBL_MAX;
-    max->x = -ON_DBL_MAX;
-    max->y = -ON_DBL_MAX;
-    max->z = -ON_DBL_MAX;
-}
-
+#if 0
 void
 subbrep_bbox(struct subbrep_island_data *obj)
 {
@@ -329,30 +235,83 @@ subbrep_bbox(struct subbrep_island_data *obj)
     }
     obj->bbox_set = 1;
 }
+#endif
 
 void
-subbrep_object_init(struct subbrep_island_data *obj, const ON_Brep *brep)
+csg_object_params_init(struct csg_object_params *csg)
+{
+    csg->type = 0;
+    csg->negative = 0;
+    csg->id = -1;
+    csg->bool_op = '\0';
+    csg->planes = NULL;
+    csg->faces = NULL;
+    csg->verts = NULL;
+}
+
+void
+csg_object_params_free(struct csg_object_params *csg)
+{
+    if (!csg) return;
+    if (csg->planes) bu_free(csg->planes, "free planes");
+    if (csg->faces) bu_free(csg->faces , "free faces");
+    if (csg->verts) bu_free(csg->verts , "free verts");
+}
+
+
+void
+subbrep_shoal_init(struct subbrep_shoal_data *data, struct subbrep_island_data *i)
+{
+    data->i = i;
+    BU_GET(data->params, struct csg_object_params);
+    csg_object_params_init(data->params);
+    BU_GET(data->sub_params, struct bu_ptbl);
+    bu_ptbl_init(data->sub_params, 8, "sub_params table");
+    data->loops = NULL;
+    data->loops_cnt = 0;
+}
+
+void
+subbrep_shoal_free(struct subbrep_shoal_data *data)
+{
+    if (!data) return;
+    csg_object_params_free(data->params);
+    BU_PUT(data->params, struct csg_object_params);
+    data->params = NULL;
+    for (unsigned int i = 0; i < BU_PTBL_LEN(data->sub_params); i++) {
+	struct csg_object_params *c = (struct csg_object_params *)BU_PTBL_GET(data->sub_params, i);
+	csg_object_params_free(c);
+	BU_PUT(c, struct csg_object_params);
+    }
+    bu_ptbl_free(data->sub_params);
+    BU_PUT(data->sub_params, struct bu_ptbl);
+    if (data->loops) bu_free(data->loops, "free loop array");
+}
+
+
+void
+subbrep_island_init(struct subbrep_island_data *obj, const ON_Brep *brep)
 {
     if (!obj) return;
-    BU_GET(obj->key, struct bu_vls);
-    BU_GET(obj->id, struct bu_vls);
-    BU_GET(obj->children, struct bu_ptbl);
-    BU_GET(obj->subtraction_candidates, struct bu_ptbl);
-    BU_GET(obj->obj_name, struct bu_vls);
-    obj->nucleus = NULL;
-    bu_vls_init(obj->key);
-    bu_vls_init(obj->id);
-    bu_vls_init(obj->obj_name);
-    bu_ptbl_init(obj->children, 8, "children table");
-    bu_ptbl_init(obj->subtraction_candidates, 8, "children table");
-    obj->parent = NULL;
+
+    /* We're a B-Rep until proven otherwise */
+    obj->type = BREP;
+
     obj->brep = brep;
     obj->local_brep = NULL;
-    obj->type = BREP;
-    obj->is_island = 0;
-    obj->bbox = new ON_BoundingBox();
-    ON_MinMaxInit(&(obj->bbox->m_min), &(obj->bbox->m_max));
-    obj->bbox_set = 0;
+
+    BU_GET(obj->nucleus, struct subbrep_shoal_data);
+    subbrep_shoal_init(obj->nucleus, obj);
+
+    BU_GET(obj->children, struct bu_ptbl);
+    bu_ptbl_init(obj->children, 8, "children table");
+
+    BU_GET(obj->subtraction_candidates, struct bu_ptbl);
+    bu_ptbl_init(obj->subtraction_candidates, 8, "children table");
+
+    BU_GET(obj->key, struct bu_vls);
+    bu_vls_init(obj->key);
+
     obj->obj_cnt = NULL;
     obj->faces = NULL;
     obj->loops = NULL;
@@ -364,31 +323,32 @@ subbrep_object_init(struct subbrep_island_data *obj, const ON_Brep *brep)
 }
 
 void
-subbrep_object_free(struct subbrep_island_data *obj)
+subbrep_island_free(struct subbrep_island_data *obj)
 {
     if (!obj) return;
-    if (obj->nucleus) {
-	BU_PUT(obj->nucleus, struct csg_obj_params);
-    }
+
+    obj->brep = NULL;
+    if (obj->local_brep) delete obj->local_brep;
+    obj->local_brep = NULL;
+
+    subbrep_shoal_free(obj->nucleus);
+    BU_PUT(obj->nucleus, struct csg_obj_params);
     obj->nucleus = NULL;
-    if (obj->key) {
-	bu_vls_free(obj->key);
-	BU_PUT(obj->key, struct bu_vls);
+
+    bu_vls_free(obj->key);
+    BU_PUT(obj->key, struct bu_vls);
+    obj->key = NULL;
+
+    for (unsigned int i = 0; i < BU_PTBL_LEN(obj->children); i++){
+	struct subbrep_shoal_data *cobj = (struct subbrep_shoal_data *)BU_PTBL_GET(obj->children, i);
+	subbrep_shoal_free(cobj);
+	BU_PUT(cobj, struct subbrep_shoal_data);
     }
-    if (obj->id) {
-	bu_vls_free(obj->id);
-	BU_PUT(obj->id, struct bu_vls);
-    }
-    if (obj->children) {
-	for (unsigned int i = 0; i < BU_PTBL_LEN(obj->children); i++){
-	    struct subbrep_island_data *cobj = (struct subbrep_island_data *)BU_PTBL_GET(obj->children, i);
-	    subbrep_object_free(cobj);
-	    BU_PUT(cobj, struct subbrep_island_data);
-	}
-	bu_ptbl_free(obj->children);
-	BU_PUT(obj->children, struct bu_ptbl);
-    }
+    bu_ptbl_free(obj->children);
+    BU_PUT(obj->children, struct bu_ptbl);
     obj->children = NULL;
+
+    /* Anything in here will already have been freed in the children tbl */
     if (obj->subtraction_candidates) {
 	bu_ptbl_free(obj->subtraction_candidates);
 	BU_PUT(obj->subtraction_candidates, struct bu_ptbl);
@@ -407,16 +367,8 @@ subbrep_object_free(struct subbrep_island_data *obj)
     obj->fil = NULL;
     if (obj->null_verts) bu_free(obj->null_verts, "ignore verts");
     obj->null_verts = NULL;
-    if (obj->parent && (obj->parent->local_brep == obj->local_brep)) obj->parent->local_brep = NULL;
-    if (obj->local_brep) delete obj->local_brep;
-    obj->local_brep = NULL;
-
-    if (obj->obj_name) {
-	bu_vls_free(obj->obj_name);
-	BU_PUT(obj->obj_name, struct bu_vls);
-    }
-
-    obj->parent = NULL;
+    if (obj->null_edges) bu_free(obj->null_edges, "ignore edges");
+    obj->null_edges = NULL;
 }
 
 
@@ -580,7 +532,7 @@ subbrep_determine_boolean(struct subbrep_island_data *data)
        // Get face with inner loop
        const ON_BrepFace *face = &(data->brep->m_F[data->fil[i]]);
        const ON_Surface *surf = face->SurfaceOf();
-       surface_t stype = GetSurfaceType(surf, NULL);
+       surface_t stype = ((surface_t *)data->face_surface_types)[face->m_face_index];
        ON_Plane face_plane;
        if (stype == SURFACE_PLANE) {
 	   ON_Surface *ts = surf->Duplicate();

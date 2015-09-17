@@ -546,7 +546,7 @@ subbrep_split(struct bu_vls *msgs, struct subbrep_island_data *data)
 		std::set<int> shoal_loops;
 		struct subbrep_shoal_data *sh;
 		BU_GET(sh, struct subbrep_shoal_data);
-		BU_GET(sh->params, struct csg_object_params);
+		subbrep_shoal_init(sh, data);
 		(*(data->obj_cnt))++;
 		sh->params->id = (*(data->obj_cnt));
 		sh->i = data;
@@ -554,25 +554,30 @@ subbrep_split(struct bu_vls *msgs, struct subbrep_island_data *data)
 		for (int i = 0; i < sh->loops_cnt; i++) {
 		    active.erase(sh->loops[i]);
 		}
+		int local_fail = 0;
 		switch (surface_type) {
 		    case SURFACE_CYLINDRICAL_SECTION:
 		    case SURFACE_CYLINDER:
-			if (!cylinder_csg(msgs, sh, BREP_CYLINDRICAL_TOL)) csg_fail++;
+			if (!cylinder_csg(msgs, sh, BREP_CYLINDRICAL_TOL)) local_fail++;
 			break;
 		    case SURFACE_CONE:
-			csg_fail++;
+			local_fail++;
 			break;
 		    case SURFACE_SPHERICAL_SECTION:
 		    case SURFACE_SPHERE:
-			csg_fail++;
+			local_fail++;
 			break;
 		    case SURFACE_TORUS:
-			csg_fail++;
+			local_fail++;
 			break;
 		    default:
 			break;
 		}
-		bu_ptbl_ins(data->children, (long *)sh);
+		if (!local_fail) {
+		    bu_ptbl_ins(data->children, (long *)sh);
+		} else {
+		    csg_fail++;
+		}
 	    }
 	}
     }
@@ -585,7 +590,7 @@ subbrep_split(struct bu_vls *msgs, struct subbrep_island_data *data)
 	// be degenerate if all planar faces are coplanar or if there are no
 	// planar faces at all (perfect cylinder, for example) so will need
 	// rules for those situations...
-	island_nucleus(msgs, data);
+	if (!island_nucleus(msgs, data)) goto csg_abort;
 
 	// Note is is possible to have degenerate *edges*, not just vertices -
 	// if a shoal shares part of an outer loop (possible when connected
@@ -597,13 +602,8 @@ subbrep_split(struct bu_vls *msgs, struct subbrep_island_data *data)
     return 1;
 csg_abort:
     /* Clear children - we found something we can't handle, so there will be no
-     * CSG conversion of this subbrep */
-    for (unsigned int i = 0; i < BU_PTBL_LEN(data->children); i++) {
-	//struct subbrep_shoal_data *cdata = (struct subbrep_shoal_data *)BU_PTBL_GET(data->children,i);
-	//subbrep_shoal_free(cdata);
-    }
+     * CSG conversion of this subbrep. Cleanup is handled one level up. */
     return 0;
-
 }
 
 struct bu_ptbl *
@@ -622,7 +622,7 @@ find_subbreps(struct bu_vls *msgs, const ON_Brep *brep)
     std::map<int, surface_t> fstypes;
     surface_t *face_surface_types = (surface_t *)bu_calloc(brep->m_F.Count(), sizeof(surface_t), "surface type array");
     for (int i = 0; i < brep->m_F.Count(); i++) {
-	face_surface_types[i] = GetSurfaceType(brep->m_F[i].SurfaceOf(), NULL);
+	face_surface_types[i] = GetSurfaceType(brep->m_F[i].SurfaceOf());
     }
 
     // Use the loops to identify subbreps
@@ -639,7 +639,7 @@ find_subbreps(struct bu_vls *msgs, const ON_Brep *brep)
 	/* For each iteration, we have a new island */
 	struct subbrep_island_data *sb = NULL;
 	BU_GET(sb, struct subbrep_island_data);
-	subbrep_object_init(sb, brep);
+	subbrep_island_init(sb, brep);
 
 	// Seed the queue with the first loop in the set
 	std::set<int>::iterator top = brep_loops.begin();
@@ -693,18 +693,6 @@ find_subbreps(struct bu_vls *msgs, const ON_Brep *brep)
 	std::string key = set_key(faces);
 	bu_vls_sprintf(sb->key, "%s", key.c_str());
 
-	// Here and only here, we are isolating topological "islands"
-	// Below this level everything will be connected in some fashion
-	// by the edge network, but at this "top" level the subbrep is an
-	// island and there is no parent object.  Note that there are
-	// "parents" for most islands when rebuilding the boolean tree -
-	// those relationships are identified based on other criteria.
-	//
-	// Face whose outermost loop in the island face is an inner loop means
-	// the island will be booleaned into one of the toplevel island parents.
-	sb->is_island = 1;
-	sb->parent = NULL;
-
 	// Check to see if we have a general surface that precludes conversion
 	surface_t hof = highest_order_face(sb);
 	if (hof >= SURFACE_GENERAL) {
@@ -751,11 +739,7 @@ bail:
     // Free memory
     for (unsigned int i = 0; i < BU_PTBL_LEN(subbreps); i++){
 	struct subbrep_island_data *obj = (struct subbrep_island_data *)BU_PTBL_GET(subbreps, i);
-	for (unsigned int j = 0; j < BU_PTBL_LEN(obj->children); j++){
-	    struct subbrep_island_data *cdata = (struct subbrep_island_data *)BU_PTBL_GET(obj->children,j);
-	    subbrep_object_free(cdata);
-	}
-	subbrep_object_free(obj);
+	subbrep_island_free(obj);
 	BU_PUT(obj, struct subbrep_island_data);
     }
     bu_ptbl_free(subbreps);

@@ -1410,8 +1410,8 @@ struct subbrep_island_data;
 /* Topological shoal */
 struct subbrep_shoal_data {
     struct subbrep_island_data *i;
-    int negative_shape;
     struct csg_object_params *params;
+    /* struct csg_obj_params */
     struct bu_ptbl *sub_params;
 
     /* Working information */
@@ -1421,17 +1421,20 @@ struct subbrep_shoal_data {
 
 /* Topological island */
 struct subbrep_island_data {
+
+    /* Overall type of island - typically comb or brep, but may
+     * be an actual type if the nucleus corresponds to a single
+     * implicit primitive */
+    int type;
+
     /* Context information */
     const ON_Brep *brep;
-    struct subbrep_island_data *parent;
 
     /* Shape representation data */
     ON_Brep *local_brep;
 
     /* Nucleus */
     struct subbrep_shoal_data *nucleus;
-    int negative_nucleus;
-
     /* struct subbrep_shoal_data */
     struct bu_ptbl *children;
 
@@ -1441,11 +1444,8 @@ struct subbrep_island_data {
 
     /* subbrep metadata */
     struct bu_vls *key;
-    struct bu_vls *id;
-    struct bu_vls *obj_name;
-    int is_island;
-    ON_BoundingBox *bbox;
-    int bbox_set;
+    /*ON_BoundingBox *bbox;
+    int bbox_set;*/
 
     /* Working information - should probably be in private struct */
     void *face_surface_types;
@@ -1464,9 +1464,6 @@ struct subbrep_island_data {
     int *null_verts;
     int null_edge_cnt;
     int *null_edges;
-    int planar_obj_vert_cnt;
-    int *planar_obj_vert_map;
-    int type;
 };
 
 struct subbrep_tree_node {

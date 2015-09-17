@@ -837,7 +837,7 @@ island_nucleus(struct bu_vls *msgs, struct subbrep_island_data *data)
 	    std::map<int,int> vert_map;
 	    int curr_vert = 0;
 	    BU_GET(data->nucleus, struct subbrep_shoal_data);
-	    BU_GET(data->nucleus->params, struct csg_object_params);
+	    subbrep_shoal_init(data->nucleus, data);
 	    (*(data->obj_cnt))++;
 	    data->nucleus->params->id = (*(data->obj_cnt));
 	    data->nucleus->params->type = PLANAR_VOLUME;
@@ -891,9 +891,8 @@ island_nucleus(struct bu_vls *msgs, struct subbrep_island_data *data)
 	    // negative shape status of the shoal.  The island's children
 	    // will be unioned.
 	    bu_log("shoal same\n");
-	    BU_GET(data->nucleus, struct subbrep_shoal_data);
-	    data->nucleus->params = cn->params;
-	    data->nucleus->sub_params = cn->sub_params;
+	    subbrep_shoal_free(data->nucleus);
+	    data->nucleus = cn;
 	    bu_ptbl_rm(data->children, (long *)cn);
 	} else {
 	    // If we've got shoals with different boolean status, then we have

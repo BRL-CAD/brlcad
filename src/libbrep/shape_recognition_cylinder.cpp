@@ -40,118 +40,6 @@ negative_cylinder(const ON_Brep *brep, int face_index, double cyl_tol) {
 
 
 int
-subbrep_is_cylinder(struct bu_vls *UNUSED(msgs), struct subbrep_island_data *data, fastf_t cyl_tol)
-{
-    std::set<int>::iterator f_it;
-    std::set<int> planar_surfaces;
-    std::set<int> cylindrical_surfaces;
-    // First, check surfaces.  If a surface is anything other than a plane or cylindrical,
-    // the verdict is no.  If we don't have at least two planar surfaces and one
-    // cylindrical, the verdict is no.
-    for (int i = 0; i < data->faces_cnt; i++) {
-	int f_ind = data->faces[i];
-        int surface_type = (int)GetSurfaceType(data->brep->m_F[f_ind].SurfaceOf(), NULL);
-        switch (surface_type) {
-            case SURFACE_PLANE:
-                planar_surfaces.insert(f_ind);
-                break;
-            case SURFACE_CYLINDER:
-                cylindrical_surfaces.insert(f_ind);
-                break;
-            default:
-                return 0;
-                break;
-        }
-    }
-    if (planar_surfaces.size() < 2) return 0;
-    if (cylindrical_surfaces.size() < 1) return 0;
-
-    // Second, check if all cylindrical surfaces share the same axis.
-    ON_Cylinder cylinder;
-    ON_Surface *cs = data->brep->m_F[*cylindrical_surfaces.begin()].SurfaceOf()->Duplicate();
-    cs->IsCylinder(&cylinder);
-    delete cs;
-    for (f_it = cylindrical_surfaces.begin(); f_it != cylindrical_surfaces.end(); f_it++) {
-        ON_Cylinder f_cylinder;
-	ON_Surface *fcs = data->brep->m_F[(*f_it)].SurfaceOf()->Duplicate();
-        fcs->IsCylinder(&f_cylinder);
-	delete fcs;
-	if (f_cylinder.circle.Center().DistanceTo(cylinder.circle.Center()) > BREP_CYLINDRICAL_TOL) return 0;
-    }
-
-    // Third, see if all planes are coplanar with two and only two planes.
-    ON_Plane p1, p2;
-    int p2_set = 0;
-    data->brep->m_F[*planar_surfaces.begin()].SurfaceOf()->IsPlanar(&p1);
-    for (f_it = planar_surfaces.begin(); f_it != planar_surfaces.end(); f_it++) {
-        ON_Plane f_p;
-        data->brep->m_F[(*f_it)].SurfaceOf()->IsPlanar(&f_p);
-        if (!p2_set && f_p != p1) {
-            p2 = f_p;
-	    p2_set = 1;
-            continue;
-        };
-        if (f_p != p1 && f_p != p2) return 0;
-    }
-
-    // Fourth, check that the two planes are perpendicular to the cylinder axis.
-    if (p1.Normal().IsParallelTo(cylinder.Axis(), VUNITIZE_TOL) == 0) {
-	return 0;
-    }
-    if (p2.Normal().IsParallelTo(cylinder.Axis(), VUNITIZE_TOL) == 0) {
-	return 0;
-    }
-
-    // Populate the primitive data
-    data->type = CYLINDER;
-    double height[2];
-    height[0] = (NEAR_ZERO(cylinder.height[0], VUNITIZE_TOL)) ? -1000 : 2*cylinder.height[0];
-    height[1] = (NEAR_ZERO(cylinder.height[1], VUNITIZE_TOL)) ? 1000 : 2*cylinder.height[1];
-    ON_Circle c = cylinder.circle;
-    ON_Line l(c.plane.origin + height[0]*c.plane.zaxis, c.plane.origin + height[1]*c.plane.zaxis);
-
-    ON_3dPoint center_bottom = ON_LinePlaneIntersect(l, p1);
-    ON_3dPoint center_top = ON_LinePlaneIntersect(l, p2);
-
-    // Flag the cylinder according to the negative or positive status of the
-    // cylinder surface.  Whether it is actually subtracted from the
-    // global object or unioned into a comb lower down the tree (or vice versa)
-    // is determined later.
-    int negative_shape = negative_cylinder(data->brep, *cylindrical_surfaces.begin(), cyl_tol);
-
-    // If we've got a negative cylinder, bump the center points out very slightly
-    // to avoid problems with raytracing.
-    if (negative_shape == -1) {
-	ON_3dVector cvector(center_top - center_bottom);
-	double len = cvector.Length();
-	cvector.Unitize();
-	cvector = cvector * (len * 0.001);
-
-	center_top = center_top + cvector;
-	center_bottom = center_bottom - cvector;
-    }
-
-    ON_3dVector hvect(center_top - center_bottom);
-
-    struct csg_object_params *cyl;
-    BU_GET(cyl, struct csg_object_params);
-
-    cyl->negative = negative_shape;
-    cyl->bool_op = (negative_shape == -1) ? '-' : 'u';
-    cyl->origin[0] = center_bottom.x;
-    cyl->origin[1] = center_bottom.y;
-    cyl->origin[2] = center_bottom.z;
-    cyl->hv[0] = hvect.x;
-    cyl->hv[1] = hvect.y;
-    cyl->hv[2] = hvect.z;
-    cyl->radius = cylinder.circle.Radius();
-
-    bu_ptbl_ins(data->children, (long *)cyl);
-
-    return 1;
-}
-
-int
 cylinder_csg(struct bu_vls *msgs, struct subbrep_shoal_data *data, fastf_t cyl_tol)
 {
     int implicit_plane_ind = -1;
@@ -570,9 +458,8 @@ cylinder_csg(struct bu_vls *msgs, struct subbrep_shoal_data *data, fastf_t cyl_t
 
     if (arbn_planes.Count() > 3) {
 	struct csg_object_params *sub_param;
-	BU_GET(data->sub_params, struct bu_ptbl);
-	bu_ptbl_init(data->sub_params, 8, "sub_params table");
 	BU_GET(sub_param, struct csg_object_params);
+	csg_object_params_init(sub_param);
 	(*(data->i->obj_cnt))++;
 	sub_param->id = (*(data->i->obj_cnt));
 	sub_param->type = ARBN;
