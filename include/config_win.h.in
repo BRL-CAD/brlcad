@@ -127,6 +127,7 @@
 #define read _read
 #define setmode _setmode
 /* #define tell _tell */
+#define tzset _tzset
 #define umask _umask
 #define write _write
 
