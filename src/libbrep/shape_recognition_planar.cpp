@@ -466,7 +466,7 @@ shoal_polygon_tri(struct bu_vls *UNUSED(msgs), struct subbrep_shoal_data *data, 
 	vert_map[i] = polygon_verts[i];
     }
 
-    num_faces = triangulate_array(on2dpts, vert_map, ffaces, NULL, 0);
+    num_faces = triangulate_array(on2dpts, vert_map, ffaces, 0, NULL);
 
 
     return num_faces;
