@@ -601,7 +601,6 @@ island_nucleus(struct bu_vls *msgs, struct subbrep_island_data *data)
 
     // Collect the set of all planes for convexity testing - if convex, we'll use an arbn
     // instead of a triangle mesh
-    int is_convex = 1;
     ON_SimpleArray<ON_Plane> planes;
 
     // For this step, loops alone are not enough.  It's quite possible to have
@@ -772,7 +771,6 @@ island_nucleus(struct bu_vls *msgs, struct subbrep_island_data *data)
 	    for (int i = 0; i < face->LoopCount(); i++) {
 		if (island_loops.find(face->m_li[i]) != island_loops.end()) active_loops.insert(face->m_li[i]);
 	    }
-	    if (f_lcnt > 1) is_convex = 0;
 	    set_to_array(&f_loops, &f_lcnt, &active_loops);
 	    int *faces;
 	    int face_cnt = subbrep_polygon_tri(msgs, data, f_loops, f_lcnt, &loop_rev, &faces);
