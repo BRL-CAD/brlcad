@@ -396,6 +396,8 @@ brep_to_csg(struct ged *gedp, struct directory *dp, int UNUSED(verify))
 	if (comb_objs > 1) {
 	    // This should probably be a region.
 	    mk_lcomb(wdbp, bu_vls_addr(&comb_name), &pcomb, 0, NULL, NULL, NULL, 0);
+	} else {
+	    // TODO - Fix up name of first item in list to reflect top level naming.
 	}
     }
     return 0;
