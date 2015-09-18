@@ -137,6 +137,7 @@ cylinder_csg(struct bu_vls *msgs, struct subbrep_shoal_data *data, fastf_t cyl_t
 	for (int i = 0; i < edge->m_ti.Count(); i++) {
 	    const ON_BrepTrim *trim = &(brep->m_T[edge->m_ti[i]]);
 	    if (((surface_t *)data->i->face_surface_types)[trim->Face()->m_face_index] == SURFACE_PLANE) break;
+	    if (cylindrical_surfaces.find(trim->Face()->m_face_index) == cylindrical_surfaces.end()) break;
 	    faces.push_back(trim->Face()->m_face_index);
 	}
 	if (faces.size() != 2) {
@@ -367,8 +368,8 @@ cylinder_csg(struct bu_vls *msgs, struct subbrep_shoal_data *data, fastf_t cyl_t
     data->params->bool_op = (data->params->negative == -1) ? '-' : 'u';
 
     // Assign an object id
-    (*(data->i->obj_cnt))++;
-    data->params->id = (*(data->i->obj_cnt));
+    data->params->id = (*(data->i->obj_cnt))++;
+    bu_log("rcc id: %d\n", data->params->id);
 
     // Now we decide (arbitrarily) what the vector will be for our final cylinder
     // and calculate the true minimum and maximum points along the axis
@@ -465,8 +466,7 @@ cylinder_csg(struct bu_vls *msgs, struct subbrep_shoal_data *data, fastf_t cyl_t
 	struct csg_object_params *sub_param;
 	BU_GET(sub_param, struct csg_object_params);
 	csg_object_params_init(sub_param);
-	(*(data->i->obj_cnt))++;
-	sub_param->id = (*(data->i->obj_cnt));
+	sub_param->id = (*(data->i->obj_cnt))++;
 	sub_param->type = ARBN;
 	sub_param->bool_op = '+'; // arbn is intersected with primary primitive
 	sub_param->planes = (plane_t *)bu_calloc(arbn_planes.Count(), sizeof(plane_t), "planes");

@@ -348,10 +348,8 @@ subbrep_split(struct bu_vls *msgs, struct subbrep_island_data *data)
 		struct subbrep_shoal_data *sh;
 		BU_GET(sh, struct subbrep_shoal_data);
 		subbrep_shoal_init(sh, data);
-		sh->params->id = (*(data->obj_cnt));
-		(*(data->obj_cnt))++;
-		sh->id = (*(data->obj_cnt));
-		(*(data->obj_cnt))++;
+		sh->params->id = (*(data->obj_cnt))++;
+		sh->id = (*(data->obj_cnt))++;
 		sh->i = data;
 		sh->loops_cnt = shoal_build(&(sh->loops), loop->m_loop_index, data);
 		for (int i = 0; i < sh->loops_cnt; i++) {

@@ -626,7 +626,7 @@ island_nucleus(struct bu_vls *msgs, struct subbrep_island_data *data)
 	struct subbrep_shoal_data *d = (struct subbrep_shoal_data *)BU_PTBL_GET(data->children, i);
 	if (d->sub_params) {
 	    for (size_t j = 0; j < BU_PTBL_LEN(d->sub_params); j++) {
-		struct csg_object_params *c = (struct csg_object_params *)BU_PTBL_GET(d->sub_params, i);
+		struct csg_object_params *c = (struct csg_object_params *)BU_PTBL_GET(d->sub_params, j);
 		if (c->plane_cnt > 0) {
 		    for (size_t k = 0; k < c->plane_cnt; k++) {
 			ON_3dVector n;
@@ -839,11 +839,9 @@ island_nucleus(struct bu_vls *msgs, struct subbrep_island_data *data)
 	    int curr_vert = 0;
 	    BU_GET(data->nucleus, struct subbrep_shoal_data);
 	    subbrep_shoal_init(data->nucleus, data);
-	    data->nucleus->params->id = (*(data->obj_cnt));
-	    (*(data->obj_cnt))++;
+	    data->nucleus->params->id = (*(data->obj_cnt))++;
 	    data->nucleus->type = PLANAR_VOLUME;
-	    data->nucleus->id = (*(data->obj_cnt));
-	    (*(data->obj_cnt))++;
+	    data->nucleus->id = data->nucleus->params->id;
 	    data->nucleus->params->type = PLANAR_VOLUME;
 	    data->nucleus->params->verts = (point_t *)bu_calloc(all_used_verts.size(), sizeof(point_t), "final verts array");
 	    for (auv_it = all_used_verts.begin(); auv_it != all_used_verts.end(); auv_it++) {
