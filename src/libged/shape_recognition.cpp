@@ -255,6 +255,7 @@ make_island(struct bu_vls *msgs, struct subbrep_island_data *data, struct rt_wdb
     int failed = 0;
     struct wmember wcomb;
     int type = -1;
+    char un = 'u';
 
     struct bu_vls shoal_name = BU_VLS_INIT_ZERO;
     struct bu_vls island_name = BU_VLS_INIT_ZERO;
@@ -279,20 +280,34 @@ make_island(struct bu_vls *msgs, struct subbrep_island_data *data, struct rt_wdb
 	    mk_brep(wdbp, bu_vls_addr(&island_name), data->local_brep);
 	    break;
 	case COMB:
-	    // TODO - need to reverse booleans here for a negative nucleus island...
 	    bu_vls_trunc(&shoal_name, 0);
 	    subbrep_obj_name(data->nucleus->type, data->nucleus->id, rname, &shoal_name);
 	    if (!make_shoal(msgs, data->nucleus, wdbp, rname)) failed++;
-	    (void)mk_addmember(bu_vls_addr(&shoal_name), &(wcomb.l), NULL, db_str2op(&(data->nucleus->params->bool_op)));
+	    // In a comb, the first element is always unioned.  The nucleus bool op is applied
+	    // to the overall shoal in the pcomb assembly.
+	    (void)mk_addmember(bu_vls_addr(&shoal_name), &(wcomb.l), NULL, db_str2op(&un));
+	    // Find and handle subtracted shoals first.  At the island interaction level, we have
+	    // only unions and subtractions.
 	    if (data->children && BU_PTBL_LEN(data->children) > 0) {
 		for (unsigned int i = 0; i < BU_PTBL_LEN(data->children); i++) {
 		    struct subbrep_shoal_data *d = (struct subbrep_shoal_data *)BU_PTBL_GET(data->children, i);
-		    bu_vls_trunc(&shoal_name, 0);
-		    subbrep_obj_name(d->type, d->id, rname, &shoal_name);
-		    if (!make_shoal(msgs, d, wdbp, rname)) failed++;
-		    (void)mk_addmember(bu_vls_addr(&shoal_name), &(wcomb.l), NULL, db_str2op(&(data->nucleus->params->bool_op)));
-
+		    if (d->params->bool_op == '-') {
+			bu_vls_trunc(&shoal_name, 0);
+			subbrep_obj_name(d->type, d->id, rname, &shoal_name);
+			if (!make_shoal(msgs, d, wdbp, rname)) failed++;
+			(void)mk_addmember(bu_vls_addr(&shoal_name), &(wcomb.l), NULL, db_str2op(&(d->params->bool_op)));
+		    }
 		}
+		for (unsigned int i = 0; i < BU_PTBL_LEN(data->children); i++) {
+		    struct subbrep_shoal_data *d = (struct subbrep_shoal_data *)BU_PTBL_GET(data->children, i);
+		    if (d->params->bool_op == 'u') {
+			bu_vls_trunc(&shoal_name, 0);
+			subbrep_obj_name(d->type, d->id, rname, &shoal_name);
+			if (!make_shoal(msgs, d, wdbp, rname)) failed++;
+			(void)mk_addmember(bu_vls_addr(&shoal_name), &(wcomb.l), NULL, db_str2op(&(d->params->bool_op)));
+		    }
+		}
+
 	    }
 	    mk_lcomb(wdbp, bu_vls_addr(&island_name), &wcomb, 0, NULL, NULL, NULL, 0);
 	    break;
@@ -323,9 +338,10 @@ make_island(struct bu_vls *msgs, struct subbrep_island_data *data, struct rt_wdb
     } else {
 	if (msgs) bu_vls_printf(msgs, "shoal build failed\n");
     }
-#if 1
+
+    // Debugging B-Reps - generates a B-Rep object for each island
+#if 0
     if (data->local_brep) {
-	char un = 'u';
 	unsigned char rgb[3];
 	struct wmember bcomb;
 	struct bu_vls bcomb_name = BU_VLS_INIT_ZERO;
