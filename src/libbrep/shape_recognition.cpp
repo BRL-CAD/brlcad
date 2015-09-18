@@ -240,10 +240,8 @@ int cyl_validate_face(const ON_BrepFace *forig, const ON_BrepFace *fcand)
     ON_Surface *cscand = fcand->SurfaceOf()->Duplicate();
     cscand->IsCylinder(&ccand, BREP_CYLINDRICAL_TOL);
     delete cscand;
-    ON_3dPoint pcand = ccand.circle.Center() + ccand.Axis();
-    ON_Line lcand(ccand.circle.Center(), pcand);
     double d1 = lorig.DistanceTo(ccand.circle.Center());
-    double d2 = lorig.DistanceTo(pcand);
+    double d2 = lorig.DistanceTo(ccand.circle.Center() + ccand.Axis());
 
     // Make sure the cylinder axes are colinear
     if (corig.Axis().IsParallelTo(ccand.Axis(), VUNITIZE_TOL) == 0) return 0;
