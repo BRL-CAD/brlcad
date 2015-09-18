@@ -550,6 +550,7 @@ find_subbreps(struct bu_vls *msgs, const ON_Brep *brep)
 	    if (msgs) bu_vls_printf(msgs, "Note - split of %s unsuccessful, making brep\n", bu_vls_addr(sb->key));
 	    sb->type = BREP;
 	    (void)subbrep_make_brep(msgs, sb);
+	    //TODO - need to determine boolean of subbrep as well.  Also check for self intersection...
 	} else {
 	    successes++;
 #if WRITE_ISLAND_BREPS

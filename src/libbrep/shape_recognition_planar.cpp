@@ -596,7 +596,7 @@ negative_polygon(struct bu_vls *UNUSED(msgs), struct csg_object_params *data)
     return io_state;
 }
 
-
+// TODO - somewhere in all this, check for a self-intersecting nucleus...
 int
 island_nucleus(struct bu_vls *msgs, struct subbrep_island_data *data)
 {
