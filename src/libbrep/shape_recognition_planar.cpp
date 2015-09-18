@@ -700,8 +700,8 @@ island_nucleus(struct bu_vls *msgs, struct subbrep_island_data *data)
 	    }
 	    // Get all edges that share a vertex with the shoal loops
 	    for (int li = 0; li < d->loops_cnt; li++) {
-		bu_log("shoal loop: %d\n", data->loops[li]);
-		const ON_BrepLoop *loop = &(data->brep->m_L[data->loops[li]]);
+		bu_log("shoal loop (%d of %d): %d\n", li, d->loops_cnt, d->loops[li]);
+		const ON_BrepLoop *loop = &(data->brep->m_L[d->loops[li]]);
 		for (int ti = 0; ti < loop->m_ti.Count(); ti++) {
 		    int vert_ind;
 		    const ON_BrepTrim *trim = &(data->brep->m_T[loop->m_ti[ti]]);
