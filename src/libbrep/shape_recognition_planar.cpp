@@ -655,34 +655,36 @@ island_nucleus(struct bu_vls *msgs, struct subbrep_island_data *data)
     // fashion, the nucleus is degenerate.
     std::set<int> arbn_coplanar_faces;
     std::set<int> noncoplanar_faces;
-    for (p_it = planar_faces.begin(); p_it != planar_faces.end(); p_it++) {
-	int is_coplanar = 0;
-	const ON_BrepFace *face = &(data->brep->m_F[(int)*p_it]);
-	ON_Plane p;
-	face->SurfaceOf()->IsPlanar(&p, BREP_PLANAR_TOL);
-	if (face->m_bRev) p.Flip();
-	// Check for face coplanarity with shoal arbns.
-	for (int i = 0; i < arbn_planes.Count(); i++) {
-	    if (arbn_planes[i].Normal().IsParallelTo(p.Normal(), BREP_PLANAR_TOL)) {
-		if (fabs(arbn_planes[i].DistanceTo(p.origin)) < BREP_PLANAR_TOL) {
-		    arbn_coplanar_faces.insert(face->m_face_index);
-		    is_coplanar = 1;
-		    //bu_log("found coplanar face: %d\n", face->m_face_index);
-		    break;
+    if (arbn_planes.Count() > 0) {
+	for (p_it = planar_faces.begin(); p_it != planar_faces.end(); p_it++) {
+	    int is_coplanar = 0;
+	    const ON_BrepFace *face = &(data->brep->m_F[(int)*p_it]);
+	    ON_Plane p;
+	    face->SurfaceOf()->IsPlanar(&p, BREP_PLANAR_TOL);
+	    if (face->m_bRev) p.Flip();
+	    // Check for face coplanarity with shoal arbns.
+	    for (int i = 0; i < arbn_planes.Count(); i++) {
+		if (arbn_planes[i].Normal().IsParallelTo(p.Normal(), BREP_PLANAR_TOL)) {
+		    if (fabs(arbn_planes[i].DistanceTo(p.origin)) < BREP_PLANAR_TOL) {
+			arbn_coplanar_faces.insert(face->m_face_index);
+			is_coplanar = 1;
+			//bu_log("found coplanar face: %d\n", face->m_face_index);
+			break;
+		    }
 		}
 	    }
+	    if (!is_coplanar) noncoplanar_faces.insert(face->m_face_index);
 	}
-	if (!is_coplanar) noncoplanar_faces.insert(face->m_face_index);
+
+	// Check for a hard-to-spot degenerate nucleus case
+	if (arbn_coplanar_faces.size() == planar_faces.size() && BU_PTBL_LEN(data->children) == 1) degenerate_nucleus = 1;
     }
 
-    // Check for a hard-to-spot degenerate nucleus case
-    if (arbn_coplanar_faces.size() == planar_faces.size() && BU_PTBL_LEN(data->children) == 1) degenerate_nucleus = 1;
-
-    // If they are *not* all degenerate, the ones that *are* need
-    // to check their vertices against the shoal imlicit planes.  If any of
-    // them have points on both sides of one of the implicit planes,
-    // we have a complex situation.
-    if (!degenerate_nucleus) {
+    // If they are *not* all degenerate, for all shoals check the edges
+    // connected by at least one vertex to the shoal loops against the shoal
+    // imlicit plane.  If any of them have points on both sides of one of the
+    // implicit planes, we have a complex situation.
+    if (!degenerate_nucleus && BU_PTBL_LEN(data->children) > 0) {
 
 	// Get ignored vertices reported from shoal building - this is where they'll matter
 	std::set<int> ignored_verts;
@@ -747,7 +749,9 @@ island_nucleus(struct bu_vls *msgs, struct subbrep_island_data *data)
 		}
 	    }
 	}
+    }
 
+    if (!degenerate_nucleus) {
 	// First, deal with planar faces
 	std::set<int> island_loops;
 	array_to_set(&island_loops, data->loops, data->loops_cnt);
@@ -759,18 +763,7 @@ island_nucleus(struct bu_vls *msgs, struct subbrep_island_data *data)
 	    const ON_BrepFace *face = &(data->brep->m_F[(int)*p_it]);
 	    ON_Plane p;
 	    face->SurfaceOf()->IsPlanar(&p, BREP_PLANAR_TOL);
-	    if ((face->m_bRev && !loop_rev) || (!face->m_bRev && loop_rev)) p.Flip();
 	    //bu_log("face(%d): %f,%f,%f %f,%f,%f\n", face->m_face_index,  p.origin.x, p.origin.y, p.origin.z, p.Normal().x, p.Normal().y, p.Normal().z);
-
-	    // Check for face coplanarity with shoal arbns.
-	    for (int i = 0; i < arbn_planes.Count(); i++) {
-		if (arbn_planes[i].Normal().IsParallelTo(p.Normal(), BREP_PLANAR_TOL)) {
-		    if (fabs(arbn_planes[i].DistanceTo(p.origin)) < BREP_PLANAR_TOL) {
-			arbn_coplanar_faces.insert(face->m_face_index);
-			//bu_log("found coplanar face: %d\n", face->m_face_index);
-		    }
-		}
-	    }
 
 	    // Determine if we have 1 or a set of loops.
 	    for (int i = 0; i < face->LoopCount(); i++) {
@@ -780,14 +773,30 @@ island_nucleus(struct bu_vls *msgs, struct subbrep_island_data *data)
 	    int *faces;
 	    int face_cnt = subbrep_polygon_tri(msgs, data, f_loops, f_lcnt, &loop_rev, &faces);
 	    if (loop_rev) have_flipped_loops++;
-	    // If the face is flipped, flip the triangles so their normals are correct
+	    // If the face is flipped, flip the triangles and the plane so their normals are correct
 	    if ((face->m_bRev && !loop_rev) || (!face->m_bRev && loop_rev)) {
+		bu_log("face %d is reversed - flip the plane.\n", face->m_face_index);
 		for (int i = 0; i < face_cnt; i++) {
 		    int tmp = faces[i*3+1];
 		    faces[i*3+1] = faces[i*3+2];
 		    faces[i*3+2] = tmp;
 		}
+		p.Flip();
 	    }
+
+	    // One more possible flip - if this face comes to the island via a fil connection, flip it.
+	    std::set<int> fil;
+	    array_to_set(&fil, data->fil, data->fil_cnt);
+	    if (fil.find(face->m_face_index) != fil.end()) {
+		bu_log("face %d came to us via inner loop - flip the plane.\n", face->m_face_index);
+		for (int i = 0; i < face_cnt; i++) {
+		    int tmp = faces[i*3+1];
+		    faces[i*3+1] = faces[i*3+2];
+		    faces[i*3+2] = tmp;
+		}
+		p.Flip();
+	    }
+
 	    // If the face is not degenerate in the nucleus, record it.
 	    if (face_cnt > 0) {
 		face_cnts.push_back(face_cnt);
@@ -811,6 +820,9 @@ island_nucleus(struct bu_vls *msgs, struct subbrep_island_data *data)
 		    ON_VMOVE(o, d->params->implicit_plane_origin);
 		    ON_VMOVE(n, d->params->implicit_plane_normal);
 		    ON_Plane p(o, n);
+
+		    if (d->params->bool_op == '-') p.Flip();
+
 		    planes.Append(p);
 		}
 	    }
