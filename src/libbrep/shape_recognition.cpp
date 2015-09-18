@@ -42,9 +42,10 @@
 	goto bail
 
 
-void
-get_face_set_from_loops(struct subbrep_island_data *sb)
+int
+island_faces_characterize(struct subbrep_island_data *sb)
 {
+    int loops_planar = 1;
     const ON_Brep *brep = sb->brep;
     std::set<int> faces;
     std::set<int> fol;
@@ -63,7 +64,10 @@ get_face_set_from_loops(struct subbrep_island_data *sb)
 	if (is_outer) {
 	    fol.insert(face->m_face_index);
 	} else {
+	    // TODO - check if fil loops are planar.  If not, it's currently grounds for haulting the conversion
+	    // of the island.
 	    fil.insert(face->m_face_index);
+	    if (!face->SurfaceOf()->IsPlanar(NULL, BREP_PLANAR_TOL)) loops_planar = 0;
 	}
     }
 
@@ -71,6 +75,8 @@ get_face_set_from_loops(struct subbrep_island_data *sb)
     set_to_array(&(sb->faces), &(sb->faces_cnt), &faces);
     set_to_array(&(sb->fol), &(sb->fol_cnt), &fol);
     set_to_array(&(sb->fil), &(sb->fil_cnt), &fil);
+
+    return loops_planar;
 }
 
 void
@@ -499,8 +505,11 @@ find_subbreps(struct bu_vls *msgs, const ON_Brep *brep)
 	// Assign loop set to island
 	set_to_array(&(sb->loops), &(sb->loops_cnt), &loops);
 
-	// Assemble the set of faces
-	get_face_set_from_loops(sb);
+	// Assemble the set of faces, characterize face-from-outer-loop (fol)
+	// and face-from-inner-loop (fil) faces in the island.  Test planarity
+	// of fil loops - needed for processing.
+	int planar_fils = island_faces_characterize(sb);
+
 
 	// Assemble the set of edges
 	get_edge_set_from_loops(sb);
@@ -510,6 +519,14 @@ find_subbreps(struct bu_vls *msgs, const ON_Brep *brep)
 	array_to_set(&faces, sb->faces, sb->faces_cnt);
 	std::string key = set_key(faces);
 	bu_vls_sprintf(sb->key, "%s", key.c_str());
+
+	if (!planar_fils) {
+	    if (msgs) bu_vls_printf(msgs, "Note - non-planer island mating loop in %s, representing as B-Rep\n", bu_vls_addr(sb->key));
+	    sb->type = BREP;
+	    (void)subbrep_make_brep(msgs, sb);
+	    bu_ptbl_ins(subbreps, (long *)sb);
+	    continue;
+	}
 
 	// Check to see if we have a general surface that precludes conversion
 	surface_t hof = subbrep_highest_order_face(sb);
