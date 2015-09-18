@@ -232,16 +232,23 @@ int cyl_validate_face(const ON_BrepFace *forig, const ON_BrepFace *fcand)
 {
     ON_Cylinder corig;
     ON_Surface *csorig = forig->SurfaceOf()->Duplicate();
-    csorig->IsCylinder(&corig);
+    csorig->IsCylinder(&corig, BREP_CYLINDRICAL_TOL);
     delete csorig;
+    ON_Line lorig(corig.circle.Center(), corig.circle.Center() + corig.Axis());
 
     ON_Cylinder ccand;
     ON_Surface *cscand = fcand->SurfaceOf()->Duplicate();
-    cscand->IsCylinder(&ccand);
+    cscand->IsCylinder(&ccand, BREP_CYLINDRICAL_TOL);
     delete cscand;
+    ON_3dPoint pcand = ccand.circle.Center() + ccand.Axis();
+    ON_Line lcand(ccand.circle.Center(), pcand);
+    double d1 = lorig.DistanceTo(ccand.circle.Center());
+    double d2 = lorig.DistanceTo(pcand);
 
-    // Make sure the surfaces are on the same cylinder
-    if (corig.circle.Center().DistanceTo(ccand.circle.Center()) > BREP_CYLINDRICAL_TOL) return 0;
+    // Make sure the cylinder axes are colinear
+    if (corig.Axis().IsParallelTo(ccand.Axis(), VUNITIZE_TOL) == 0) return 0;
+    if (fabs(d1) > BREP_CYLINDRICAL_TOL) return 0;
+    if (fabs(d2) > BREP_CYLINDRICAL_TOL) return 0;
 
     // Make sure the radii are the same
     if (!NEAR_ZERO(corig.circle.Radius() - ccand.circle.Radius(), VUNITIZE_TOL)) return 0;
@@ -398,6 +405,7 @@ subbrep_split(struct bu_vls *msgs, struct subbrep_island_data *data)
     if (csg_fail > 0) {
 	/* Clear children - we found something we can't handle, so there will be no
 	 * CSG conversion of this subbrep. Cleanup is handled one level up. */
+	bu_log("non-planar splitting subroutines failed\n");
 	return 0;
     }
     // We had a successful conversion - now generate a nucleus.  Need to
@@ -405,7 +413,10 @@ subbrep_split(struct bu_vls *msgs, struct subbrep_island_data *data)
     // be degenerate if all planar faces are coplanar or if there are no
     // planar faces at all (perfect cylinder, for example) so will need
     // rules for those situations...
-    if (!island_nucleus(msgs, data)) return 0;
+    if (!island_nucleus(msgs, data)) {
+	bu_log("failed to find island nucleus\n");
+	return 0;
+    }
 
     // If we've got a single nucleus shape and no children, set the island
     // type to be that of the nucleus type.  Otherwise, it's a comb.
