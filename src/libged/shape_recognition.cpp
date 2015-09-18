@@ -209,6 +209,8 @@ csg_obj_process(struct bu_vls *msgs, struct csg_object_params *data, struct rt_w
 HIDDEN int
 make_shoal(struct bu_vls *msgs, struct subbrep_shoal_data *data, struct rt_wdb *wdbp, const char *rname)
 {
+
+
     struct wmember wcomb;
     struct bu_vls prim_name = BU_VLS_INIT_ZERO;
     struct bu_vls comb_name = BU_VLS_INIT_ZERO;
@@ -217,22 +219,31 @@ make_shoal(struct bu_vls *msgs, struct subbrep_shoal_data *data, struct rt_wdb *
 	return 0;
     }
 
+    struct bu_vls key = BU_VLS_INIT_ZERO;
+    set_key(&key, data->loops_cnt, data->loops);
+    bu_log("Processing shoal %s from island %s\n", bu_vls_addr(&key), bu_vls_addr(data->i->key));
+
     if (data->type == COMB) {
 	BU_LIST_INIT(&wcomb.l);
 	subbrep_obj_name(data->type, data->id, rname, &comb_name);
+	bu_log("Created %s\n", bu_vls_addr(&comb_name));
 	csg_obj_process(msgs, data->params, wdbp, rname);
 	subbrep_obj_name(data->params->type, data->params->id, rname, &prim_name);
+	bu_log("  %c %s\n", data->params->bool_op, bu_vls_addr(&prim_name));
 	(void)mk_addmember(bu_vls_addr(&prim_name), &(wcomb.l), NULL, db_str2op(&(data->params->bool_op)));
 	for (unsigned int i = 0; i < BU_PTBL_LEN(data->sub_params); i++) {
 	    struct csg_object_params *c = (struct csg_object_params *)BU_PTBL_GET(data->sub_params, i);
 	    csg_obj_process(msgs, c, wdbp, rname);
 	    bu_vls_trunc(&prim_name, 0);
 	    subbrep_obj_name(c->type, c->id, rname, &prim_name);
+	    bu_log("     %c %s\n", c->bool_op, bu_vls_addr(&prim_name));
 	    (void)mk_addmember(bu_vls_addr(&prim_name), &(wcomb.l), NULL, db_str2op(&(c->bool_op)));
 	}
 	mk_lcomb(wdbp, bu_vls_addr(&comb_name), &wcomb, 0, NULL, NULL, NULL, 0);
     } else {
+	subbrep_obj_name(data->params->type, data->params->id, rname, &prim_name);
 	csg_obj_process(msgs, data->params, wdbp, rname);
+	bu_log("Created %s\n", bu_vls_addr(&prim_name));
     }
     return 1;
 }
@@ -284,6 +295,7 @@ make_island(struct bu_vls *msgs, struct subbrep_island_data *data, struct rt_wdb
 		}
 	    }
 	    mk_lcomb(wdbp, bu_vls_addr(&island_name), &wcomb, 0, NULL, NULL, NULL, 0);
+	    break;
 	default:
 	    if (!make_shoal(msgs, data->nucleus, wdbp, rname)) failed++;
 	    break;
