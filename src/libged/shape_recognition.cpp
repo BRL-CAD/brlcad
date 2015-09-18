@@ -275,7 +275,7 @@ make_island(struct bu_vls *msgs, struct subbrep_island_data *data, struct rt_wdb
 	    (void)mk_addmember(bu_vls_addr(&shoal_name), &(wcomb.l), NULL, db_str2op(&(data->nucleus->params->bool_op)));
 	    if (data->children && BU_PTBL_LEN(data->children) > 0) {
 		for (unsigned int i = 0; i < BU_PTBL_LEN(data->children); i++) {
-		    struct subbrep_shoal_data *d = (struct subbrep_shoal_data *)BU_PTBL_GET(data->children, 0);
+		    struct subbrep_shoal_data *d = (struct subbrep_shoal_data *)BU_PTBL_GET(data->children, i);
 		    bu_vls_trunc(&shoal_name, 0);
 		    subbrep_obj_name(d->type, d->id, rname, &shoal_name);
 		    if (!make_shoal(msgs, d, wdbp, rname)) failed++;
