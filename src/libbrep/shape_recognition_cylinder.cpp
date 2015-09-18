@@ -134,13 +134,15 @@ cylinder_csg(struct bu_vls *msgs, struct subbrep_shoal_data *data, fastf_t cyl_t
     for (s_it = linear_edges.begin(); s_it != linear_edges.end(); s_it++) {
 	std::vector<int> faces;
 	const ON_BrepEdge *edge = &(brep->m_E[*s_it]);
+	bu_log("checking edge %d\n", edge->m_edge_index);
 	for (int i = 0; i < edge->m_ti.Count(); i++) {
 	    const ON_BrepTrim *trim = &(brep->m_T[edge->m_ti[i]]);
-	    if (((surface_t *)data->i->face_surface_types)[trim->Face()->m_face_index] == SURFACE_PLANE) break;
+	    if (((surface_t *)data->i->face_surface_types)[trim->Face()->m_face_index] == SURFACE_PLANE) continue;
 	    if (cylindrical_surfaces.find(trim->Face()->m_face_index) == cylindrical_surfaces.end()) break;
 	    faces.push_back(trim->Face()->m_face_index);
+	    bu_log("pushing back face %d\n", trim->Face()->m_face_index);
 	}
-	if (faces.size() != 2) {
+	if (faces.size() == 1) {
 	    le.insert(*s_it);
 	    continue;
 	}
@@ -442,8 +444,6 @@ cylinder_csg(struct bu_vls *msgs, struct subbrep_shoal_data *data, fastf_t cyl_t
 	}
 	if (keep_plane) {
 	    uniq_planes.Append(p1);
-	} else {
-	    bu_log("rejecting plane %d\n", i);
 	}
     }
 
@@ -481,6 +481,7 @@ cylinder_csg(struct bu_vls *msgs, struct subbrep_shoal_data *data, fastf_t cyl_t
 	}
 	bu_ptbl_ins(data->sub_params, (long *)sub_param);
 
+#if 0
 	struct bu_vls arbn = BU_VLS_INIT_ZERO;
 	bu_vls_printf(&arbn, "in arbn.s arbn %d ", arbn_planes.Count());
 	for (int i = 0; i < arbn_planes.Count(); i++) {
@@ -490,6 +491,7 @@ cylinder_csg(struct bu_vls *msgs, struct subbrep_shoal_data *data, fastf_t cyl_t
 	    bu_log("in half_%d.s half %f %f %f %f\n", i, p.Normal().x, p.Normal().y, p.Normal().z, -1*d);
 	}
 	bu_log("%s\n", bu_vls_addr(&arbn));
+#endif
     }
 
 

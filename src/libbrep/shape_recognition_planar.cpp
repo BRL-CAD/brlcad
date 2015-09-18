@@ -69,12 +69,12 @@ triangulate_array(ON_2dPointArray &on2dpts, int *verts_map, int **ffaces, int lo
     int ccw = bg_polygon_clockwise(on2dpts.Count(), verts2d, pt_ind);
 
     if (loop_dir && ccw == loop_dir) {
-	bu_log("loop direction flipped - has consequences.\n");
+	//bu_log("loop direction flipped - has consequences.\n");
 	(*rev_status) = 1;
     }
 
     if (ccw == 0) {
-	bu_log("degenerate loop - skip\n");
+	//bu_log("degenerate loop - skip\n");
 	bu_free(verts2d, "free verts2d");
 	bu_free(pt_ind, "free verts2d");
 	return 0;
@@ -84,7 +84,7 @@ triangulate_array(ON_2dPointArray &on2dpts, int *verts_map, int **ffaces, int lo
 	    int d = on2dpts.Count() - 1 - i;
 	    V2MOVE(verts2d[d], on2dpts[i]);
 	}
-	bu_log("flip loop\n");
+	//bu_log("flip loop\n");
 	std::vector<int> vert_map;
 	for (int i = 0; i < on2dpts.Count(); i++) vert_map.push_back(verts_map[i]);
 	std::reverse(vert_map.begin(), vert_map.end());
@@ -102,9 +102,11 @@ triangulate_array(ON_2dPointArray &on2dpts, int *verts_map, int **ffaces, int lo
 	int old_ind = (*ffaces)[i];
 	(*ffaces)[i] = verts_map[old_ind];
     }
+#if 0
     for (int i = 0; i < num_faces; i++) {
 	bu_log("face %d: %d, %d, %d\n", i, (*ffaces)[i*3], (*ffaces)[i*3+1], (*ffaces)[i*3+2]);
     }
+#endif
 
     bu_free(verts2d, "free verts2d");
     bu_free(pt_ind, "free verts2d");
@@ -113,7 +115,7 @@ triangulate_array(ON_2dPointArray &on2dpts, int *verts_map, int **ffaces, int lo
 }
 
 int
-triangulate_array_with_holes(ON_2dPointArray &on2dpts, int *verts_map, int loop_cnt, int *loop_starts, int **ffaces, const ON_Brep *brep)
+triangulate_array_with_holes(ON_2dPointArray &on2dpts, int *verts_map, int loop_cnt, int *loop_starts, int **ffaces, const ON_Brep *UNUSED(brep))
 {
     int ccw;
     int num_faces;
@@ -126,10 +128,12 @@ triangulate_array_with_holes(ON_2dPointArray &on2dpts, int *verts_map, int loop_
 	V2MOVE(verts2d[i], on2dpts[i]);
     }
 
+#if 0
     for (int i = 0; i < 8; i++) {
 	ON_3dPoint p = brep->m_V[verts_map[i]].Point();
 	bu_log("vert(%d): %f, %f, %f\n", verts_map[i], p.x, p.y, p.z);
     }
+#endif
 
     // Outer loop first
     size_t outer_npts = loop_starts[1] - loop_starts[0];
@@ -153,7 +157,7 @@ triangulate_array_with_holes(ON_2dPointArray &on2dpts, int *verts_map, int loop_
 	for (unsigned int i = 0; i < outer_npts; i++) vert_map.push_back(verts_map[i]);
 	std::reverse(vert_map.begin(), vert_map.end());
 	for (unsigned int i = 0; i < outer_npts; i++) verts_map[i] = vert_map[i];
-	bu_log("flip outer loop\n");
+	//bu_log("flip outer loop\n");
     }
 
     // Now, holes
@@ -203,14 +207,16 @@ triangulate_array_with_holes(ON_2dPointArray &on2dpts, int *verts_map, int loop_
 	int old_ind = (*ffaces)[i];
 	(*ffaces)[i] = verts_map[old_ind];
     }
+#if 0
     for (int i = 0; i < num_faces; i++) {
 	bu_log("face %d: %d, %d, %d\n", i, (*ffaces)[i*3], (*ffaces)[i*3+1], (*ffaces)[i*3+2]);
     }
+#endif
 
     bu_free(verts2d, "free verts2d");
 
     return num_faces;
-} 
+}
 
 
 
@@ -257,7 +263,7 @@ subbrep_polygon_tri(struct bu_vls *UNUSED(msgs), struct subbrep_island_data *dat
 		vert_array.push_back(vert_ind);
 		//bu_log("%d vertex: %d\n", b_loop->m_loop_index, vert_ind);
 	    } else {
-		bu_log("%d vertex %d ignored - need to check if loop dir changed\n", b_loop->m_loop_index, vert_ind);
+		//bu_log("%d vertex %d ignored - need to check if loop dir changed\n", b_loop->m_loop_index, vert_ind);
 		loop_dir = brep->LoopDirection(brep->m_L[b_loop->m_loop_index]);
 	    }
 	}
@@ -306,7 +312,7 @@ subbrep_polygon_tri(struct bu_vls *UNUSED(msgs), struct subbrep_island_data *dat
 		    vert_array.push_back(vert_ind);
 		    //bu_log("%d vertex: %d\n", b_loop->m_loop_index, vert_ind);
 		} else {
-		    bu_log("%d vertex %d ignored\n", b_loop->m_loop_index, vert_ind);
+		    //bu_log("%d vertex %d ignored\n", b_loop->m_loop_index, vert_ind);
 		}
 	    }
 	}
@@ -661,7 +667,7 @@ island_nucleus(struct bu_vls *msgs, struct subbrep_island_data *data)
 		if (fabs(arbn_planes[i].DistanceTo(p.origin)) < BREP_PLANAR_TOL) {
 		    arbn_coplanar_faces.insert(face->m_face_index);
 		    is_coplanar = 1;
-		    bu_log("found coplanar face: %d\n", face->m_face_index);
+		    //bu_log("found coplanar face: %d\n", face->m_face_index);
 		    break;
 		}
 	    }
@@ -700,7 +706,7 @@ island_nucleus(struct bu_vls *msgs, struct subbrep_island_data *data)
 	    }
 	    // Get all edges that share a vertex with the shoal loops
 	    for (int li = 0; li < d->loops_cnt; li++) {
-		bu_log("shoal loop (%d of %d): %d\n", li, d->loops_cnt, d->loops[li]);
+		//bu_log("shoal loop (%d of %d): %d\n", li, d->loops_cnt, d->loops[li]);
 		const ON_BrepLoop *loop = &(data->brep->m_L[d->loops[li]]);
 		for (int ti = 0; ti < loop->m_ti.Count(); ti++) {
 		    int vert_ind;
@@ -716,7 +722,7 @@ island_nucleus(struct bu_vls *msgs, struct subbrep_island_data *data)
 			const ON_BrepVertex *v = &(data->brep->m_V[vert_ind]);
 			for (int ei = 0; ei < v->EdgeCount(); ei++) {
 			    const ON_BrepEdge *e = &(data->brep->m_E[v->m_ei[ei]]);
-			    bu_log("insert edge %d\n", e->m_edge_index);
+			    //bu_log("insert edge %d\n", e->m_edge_index);
 			    shoal_connected_edges.insert(e->m_edge_index);
 			}
 		    }
@@ -724,7 +730,7 @@ island_nucleus(struct bu_vls *msgs, struct subbrep_island_data *data)
 	    }
 	    for (scl_it = shoal_connected_edges.begin(); scl_it != shoal_connected_edges.end(); scl_it++) {
 		const ON_BrepEdge *edge= &(data->brep->m_E[(int)*scl_it]);
-		bu_log("Edge: %d\n", edge->m_edge_index);
+		//bu_log("Edge: %d\n", edge->m_edge_index);
 		ON_3dPoint p1 = data->brep->m_V[edge->Vertex(0)->m_vertex_index].Point();
 		ON_3dPoint p2 = data->brep->m_V[edge->Vertex(1)->m_vertex_index].Point();
 		double dotp1 = ON_DotProduct(p1 - shoal_implicit_plane.origin, shoal_implicit_plane.Normal());
@@ -761,7 +767,7 @@ island_nucleus(struct bu_vls *msgs, struct subbrep_island_data *data)
 		if (arbn_planes[i].Normal().IsParallelTo(p.Normal(), BREP_PLANAR_TOL)) {
 		    if (fabs(arbn_planes[i].DistanceTo(p.origin)) < BREP_PLANAR_TOL) {
 			arbn_coplanar_faces.insert(face->m_face_index);
-			bu_log("found coplanar face: %d\n", face->m_face_index);
+			//bu_log("found coplanar face: %d\n", face->m_face_index);
 		    }
 		}
 	    }
@@ -823,6 +829,7 @@ island_nucleus(struct bu_vls *msgs, struct subbrep_island_data *data)
 		for (int j = 0; j < fc*3; j++) all_used_verts.insert(fa[j]);
 		for (int j = 0; j < fc*3; j++) all_faces.push_back(fa[j]);
 		// Debugging printing...
+#if 0
 		struct bu_vls face_desc = BU_VLS_INIT_ZERO;
 		bu_vls_sprintf(&face_desc, "face %d:  ", i);
 		for (int j = 0; j < fc*3; j=j+3) {
@@ -830,6 +837,7 @@ island_nucleus(struct bu_vls *msgs, struct subbrep_island_data *data)
 		}
 		bu_log("%s\n", bu_vls_addr(&face_desc));
 		bu_vls_free(&face_desc);
+#endif
 	    }
 	    std::map<int,int> vert_map;
 	    int curr_vert = 0;
