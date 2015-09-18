@@ -624,7 +624,6 @@ island_nucleus(struct bu_vls *msgs, struct subbrep_island_data *data)
 
     // Build the set of all arbn shoal planes
     ON_SimpleArray<ON_Plane> arbn_planes;
-    ON_SimpleArray<ON_Plane> arbn_implicit_planes;
     for (size_t i = 0; i < BU_PTBL_LEN(data->children); i++) {
 	struct subbrep_shoal_data *d = (struct subbrep_shoal_data *)BU_PTBL_GET(data->children, i);
 	if (d->sub_params) {
@@ -642,14 +641,6 @@ island_nucleus(struct bu_vls *msgs, struct subbrep_island_data *data)
 		    }
 		}
 	    }
-	}
-	if (d->params->have_implicit_plane) {
-	    ON_3dPoint o;
-	    ON_3dVector n;
-	    ON_VMOVE(o, d->params->implicit_plane_origin);
-	    ON_VMOVE(n, d->params->implicit_plane_normal);
-	    ON_Plane p(o, n);
-	    arbn_implicit_planes.Append(p);
 	}
     }
 
@@ -691,64 +682,64 @@ island_nucleus(struct bu_vls *msgs, struct subbrep_island_data *data)
 	std::set<int> ignored_verts;
 	array_to_set(&ignored_verts, data->null_verts, data->null_vert_cnt);
 
-	int is_complex = 0;
-	std::set<int> complex_face_ind;
-	for (int i = 0; i < data->loops_cnt; i++) {
-	    const ON_BrepLoop *loop = &(data->brep->m_L[data->loops[i]]);
-	    const ON_BrepFace *face = loop->Face();
-	    surface_t surface_type = ((surface_t *)data->face_surface_types)[face->m_face_index];
-	    if (surface_type == SURFACE_PLANE) {
-		if (arbn_coplanar_faces.find(face->m_face_index) != arbn_coplanar_faces.end()) {
-		    ON_Plane p;
-		    face->SurfaceOf()->IsPlanar(&p, BREP_PLANAR_TOL);
-		    if (face->m_bRev) p.Flip();
-		    // TODO - if the loop is a fil loop in the
-		    // island, do we need to flip the face again...
-		    std::set<int> verts;
-		    std::set<int>::iterator v_it;
-		    ON_3dPointArray pnts;
-		    for (int ti = 0; ti < loop->m_ti.Count(); ti++) {
-			const ON_BrepTrim *trim = &(data->brep->m_T[loop->m_ti[ti]]);
-			const ON_BrepEdge *edge = &(data->brep->m_E[trim->m_ei]);
-			int v1 = edge->Vertex(0)->m_vertex_index;
-			int v2 = edge->Vertex(0)->m_vertex_index;
-			if (ignored_verts.find(v1) == ignored_verts.end()) verts.insert(v1);
-			if (ignored_verts.find(v2) == ignored_verts.end()) verts.insert(v2);
+
+	// Check for edges that cross implicit planes
+	for (size_t i = 0; i < BU_PTBL_LEN(data->children); i++) {
+	    ON_Plane shoal_implicit_plane;
+	    std::set<int> shoal_connected_edges;
+	    std::set<int>::iterator scl_it;
+	    struct subbrep_shoal_data *d = (struct subbrep_shoal_data *)BU_PTBL_GET(data->children, i);
+	    if (d->params->have_implicit_plane) {
+		ON_3dPoint o;
+		ON_3dVector n;
+		ON_VMOVE(o, d->params->implicit_plane_origin);
+		ON_VMOVE(n, d->params->implicit_plane_normal);
+		shoal_implicit_plane = ON_Plane(o, n);
+	    } else {
+		continue;
+	    }
+	    // Get all edges that share a vertex with the shoal loops
+	    for (int li = 0; li < d->loops_cnt; li++) {
+		bu_log("shoal loop: %d\n", data->loops[li]);
+		const ON_BrepLoop *loop = &(data->brep->m_L[data->loops[li]]);
+		for (int ti = 0; ti < loop->m_ti.Count(); ti++) {
+		    int vert_ind;
+		    const ON_BrepTrim *trim = &(data->brep->m_T[loop->m_ti[ti]]);
+		    const ON_BrepEdge *edge = &(data->brep->m_E[trim->m_ei]);
+		    if (trim->m_bRev3d) {
+			vert_ind = edge->Vertex(0)->m_vertex_index;
+		    } else {
+			vert_ind = edge->Vertex(1)->m_vertex_index;
 		    }
-		    for (v_it = verts.begin(); v_it != verts.end(); v_it++) {
-			pnts.Append(data->brep->m_V[(int)*v_it].Point());
-		    }
-		    for (int j = 0; j < arbn_implicit_planes.Count(); j++) {
-			ON_Plane ap = arbn_implicit_planes[j];
-			int l = 0;
-			int g = 0;
-			for (int k = 0; k < pnts.Count(); k++) {
-			    double dotp = ON_DotProduct(pnts[k] - ap.origin, ap.Normal());
-			    if (NEAR_ZERO(dotp, BREP_PLANAR_TOL)) continue;
-			    if(dotp < 0) l++;
-			    if(dotp > 0) g++;
-			    if (l && g) {
-				bu_log("Complicated face: %d\n", face->m_face_index);
-				complex_face_ind.insert(face->m_face_index);
-				is_complex = 1;
-				break;
-			    }
+		    if (ignored_verts.find(vert_ind) == ignored_verts.end()) {
+			// Get vertex edges.
+			const ON_BrepVertex *v = &(data->brep->m_V[vert_ind]);
+			for (int ei = 0; ei < v->EdgeCount(); ei++) {
+			    const ON_BrepEdge *e = &(data->brep->m_E[v->m_ei[ei]]);
+			    bu_log("insert edge %d\n", e->m_edge_index);
+			    shoal_connected_edges.insert(e->m_edge_index);
 			}
 		    }
 		}
 	    }
-	}
-	// There are things we can do to handle this, but they're unimplemented.  Bail.
-	if (is_complex) {
-	    struct bu_vls msg = BU_VLS_INIT_ZERO;
-	    bu_vls_sprintf(&msg, "Unhandled complex implicit nucleus scenario. Faces");
-	    std::set<int>::iterator f_it;
-	    for(f_it = complex_face_ind.begin(); f_it != complex_face_ind.end(); f_it++) {
-		bu_vls_printf(&msg, " %d", *f_it);
+	    for (scl_it = shoal_connected_edges.begin(); scl_it != shoal_connected_edges.end(); scl_it++) {
+		const ON_BrepEdge *edge= &(data->brep->m_E[(int)*scl_it]);
+		bu_log("Edge: %d\n", edge->m_edge_index);
+		ON_3dPoint p1 = data->brep->m_V[edge->Vertex(0)->m_vertex_index].Point();
+		ON_3dPoint p2 = data->brep->m_V[edge->Vertex(1)->m_vertex_index].Point();
+		double dotp1 = ON_DotProduct(p1 - shoal_implicit_plane.origin, shoal_implicit_plane.Normal());
+		double dotp2 = ON_DotProduct(p2 - shoal_implicit_plane.origin, shoal_implicit_plane.Normal());
+		if (NEAR_ZERO(dotp1, BREP_PLANAR_TOL) || NEAR_ZERO(dotp2, BREP_PLANAR_TOL)) continue;
+		if ((dotp1 < 0 && dotp2 > 0) || (dotp1 > 0 && dotp2 < 0)) {
+		    // There are things we can do to handle this, but they're unimplemented.  Bail.
+		    bu_log("Unhandled complex implicit nucleus scenario: island %s, edge %d\n", bu_vls_addr(data->key), edge->m_edge_index);
+		    bu_log("dotp1 %f  dotp2 %f\n", dotp1, dotp2);
+		    bu_log("in sph.1 sph %f %f %f 1\n", p1.x, p1.y, p1.z);
+		    bu_log("in sph.2 sph %f %f %f 1\n", p2.x, p2.y, p2.z);
+		    bu_log("int implicit.s rcc  %f %f %f %f %f %f 0.1\n", shoal_implicit_plane.origin.x, shoal_implicit_plane.origin.y, shoal_implicit_plane.origin.z, shoal_implicit_plane.Normal().x, shoal_implicit_plane.Normal().y, shoal_implicit_plane.Normal().z);
+		    return 0;
+		}
 	    }
-	    //bu_log("%s\n", bu_vls_addr(&msg));
-	    bu_vls_free(&msg);
-	    return 0;
 	}
 
 	// First, deal with planar faces
@@ -847,6 +838,11 @@ island_nucleus(struct bu_vls *msgs, struct subbrep_island_data *data)
 	    data->nucleus->params->id = (*(data->obj_cnt))++;
 	    data->nucleus->type = PLANAR_VOLUME;
 	    data->nucleus->id = data->nucleus->params->id;
+
+	    data->nucleus->loops_cnt = data->loops_cnt;
+	    data->nucleus->loops = (int *)bu_calloc(data->loops_cnt, sizeof(int), "shoal loops");
+	    for (int m = 0; m != data->loops_cnt; m++) data->nucleus->loops[m] = data->loops[m];
+
 	    data->nucleus->params->type = PLANAR_VOLUME;
 	    data->nucleus->params->verts = (point_t *)bu_calloc(all_used_verts.size(), sizeof(point_t), "final verts array");
 	    for (auv_it = all_used_verts.begin(); auv_it != all_used_verts.end(); auv_it++) {
