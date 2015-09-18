@@ -585,7 +585,7 @@ find_subbreps(struct bu_vls *msgs, const ON_Brep *brep)
     // Assign island IDs, populate set
     for (unsigned int i = 0; i < BU_PTBL_LEN(subbreps); i++) {
 	struct subbrep_island_data *si = (struct subbrep_island_data *)BU_PTBL_GET(subbreps, i);
-	si->id = (si != root->island) ? i + 1 : 0;
+	si->id = obj_cnt++;
 	islands.insert(si);
     }
 
