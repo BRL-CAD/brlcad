@@ -187,6 +187,11 @@ cylinder_csg(struct bu_vls *msgs, struct subbrep_shoal_data *data, fastf_t cyl_t
 	}
 
 	ON_Plane pf(points[0], points[1], points[2]);
+
+	// If the fourth point is not coplanar with the other three, we've hit a case
+	// that we don't currently handle - hault. (TODO - need test case)
+	if (pf.DistanceTo(points[3]) > BREP_PLANAR_TOL) return 0;
+
 	cyl_planes.Append(pf);
 	implicit_plane_ind = cyl_planes.Count() - 1;
     }
