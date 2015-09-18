@@ -128,7 +128,7 @@ cylinder_csg(struct bu_vls *msgs, struct subbrep_shoal_data *data, fastf_t cyl_t
     }
 
     // If we have linear edges, filter out edges that a) have two non-planar
-    // faces and b) link to faces under consideration in the island.
+    // faces and b) link to faces in the same shoal.
     std::set<int> le;
     std::set<int>::iterator s_it;
     for (s_it = linear_edges.begin(); s_it != linear_edges.end(); s_it++) {
@@ -154,7 +154,7 @@ cylinder_csg(struct bu_vls *msgs, struct subbrep_shoal_data *data, fastf_t cyl_t
 	if (have_both_faces) {
 	    std::set<int> nullv;
 	    std::set<int> nulle;
-	    //bu_log("edge %d is degenerate\n", *s_it);
+	    bu_log("edge %d is degenerate\n", *s_it);
 	    array_to_set(&nullv, data->i->null_verts, data->i->null_vert_cnt);
 	    array_to_set(&nulle, data->i->null_edges, data->i->null_edge_cnt);
 	    nullv.insert(edge->Vertex(0)->m_vertex_index);

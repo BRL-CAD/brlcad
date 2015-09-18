@@ -371,16 +371,13 @@ shoal_polygon_tri(struct bu_vls *UNUSED(msgs), struct subbrep_shoal_data *data, 
     const ON_BrepEdge *first_edge;
     for (se_it = shoal_edges.begin(); se_it != shoal_edges.end(); se_it++) {
 	first_edge = &(brep->m_E[(int)(*se_it)]);
-	int ce = first_edge->m_edge_index;
-	if (ignored_edges.find(ce) == ignored_edges.end()) {
-	    if (ignored_verts.find(first_edge->Vertex(0)->m_vertex_index) == ignored_verts.end()) {
-		seed_vert = first_edge->Vertex(0)->m_vertex_index;
-		break;
-	    }
-	    if (ignored_verts.find(first_edge->Vertex(1)->m_vertex_index) == ignored_verts.end()) {
-		seed_vert = first_edge->Vertex(1)->m_vertex_index;
-		break;
-	    }
+	if (ignored_verts.find(first_edge->Vertex(0)->m_vertex_index) == ignored_verts.end()) {
+	    seed_vert = first_edge->Vertex(0)->m_vertex_index;
+	    break;
+	}
+	if (ignored_verts.find(first_edge->Vertex(1)->m_vertex_index) == ignored_verts.end()) {
+	    seed_vert = first_edge->Vertex(1)->m_vertex_index;
+	    break;
 	}
     }
 
@@ -392,6 +389,7 @@ shoal_polygon_tri(struct bu_vls *UNUSED(msgs), struct subbrep_shoal_data *data, 
     // Walk the edges collecting non-ignored verts.
     int curr_vert = -1;
     int curr_edge = -1;
+    int prev_edge = -1;
     //bu_log("first edge: %d\n", first_edge->m_edge_index);
     while (curr_edge != first_edge->m_edge_index && curr_vert != seed_vert) {
 	// Once we're past the first edge, initialize our terminating condition if not already set.
@@ -423,11 +421,16 @@ shoal_polygon_tri(struct bu_vls *UNUSED(msgs), struct subbrep_shoal_data *data, 
 			polygon_verts.push_back(nv);
 		    }
 		    curr_vert = nv;
+		    prev_edge = curr_edge;
 		    curr_edge = ce;
+		    break;
 		    //bu_log("  next edge: %d\n", curr_edge);
 		}
-		break;
 	    }
+	}
+	if (curr_edge == prev_edge) {
+	    bu_log("infinite loop?? - couldn't find next edge, fatal error\n");
+	    return 0;
 	}
     }
     // Don't double count the start/end vertex
@@ -674,7 +677,9 @@ island_nucleus(struct bu_vls *msgs, struct subbrep_island_data *data)
 	}
 	if (!is_coplanar) noncoplanar_faces.insert(face->m_face_index);
     }
-    if (arbn_coplanar_faces.size() == planar_faces.size()) degenerate_nucleus = 1;
+
+    // Check for a hard-to-spot degenerate nucleus case
+    if (arbn_coplanar_faces.size() == planar_faces.size() && BU_PTBL_LEN(data->children) == 1) degenerate_nucleus = 1;
 
     // If they are *not* all degenerate, the ones that *are* need
     // to check their vertices against the shoal imlicit planes.  If any of
