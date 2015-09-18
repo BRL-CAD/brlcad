@@ -515,10 +515,7 @@ find_subbreps(struct bu_vls *msgs, const ON_Brep *brep)
 	get_edge_set_from_loops(sb);
 
 	// Get key based on face indicies
-	std::set<int> faces;
-	array_to_set(&faces, sb->faces, sb->faces_cnt);
-	std::string key = set_key(faces);
-	bu_vls_sprintf(sb->key, "%s", key.c_str());
+	set_key(sb->key, sb->faces_cnt, sb->faces);
 
 	if (!planar_fils) {
 	    if (msgs) bu_vls_printf(msgs, "Note - non-planer island mating loop in %s, representing as B-Rep\n", bu_vls_addr(sb->key));

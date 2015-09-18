@@ -389,23 +389,13 @@ void subbrep_tree_free(struct subbrep_tree_node *node)
     node->island = NULL;
 }
 
-
-std::string
-set_key(std::set<int> intset)
+void
+set_key(struct bu_vls *key, int k_cnt, int *k_array)
 {
-    std::set<int>::iterator s_it;
-    std::set<int>::iterator s_it2;
-    std::string key;
-    struct bu_vls vls_key = BU_VLS_INIT_ZERO;
-    for (s_it = intset.begin(); s_it != intset.end(); s_it++) {
-	bu_vls_printf(&vls_key, "%d", (*s_it));
-	s_it2 = s_it;
-	s_it2++;
-	if (s_it2 != intset.end()) bu_vls_printf(&vls_key, ",");
+    for (int i = 0; i < k_cnt; i++) {
+	bu_vls_printf(key, "%d", k_array[i]);
+	if (i != k_cnt - 1) bu_vls_printf(key, ",");
     }
-    key.append(bu_vls_addr(&vls_key));
-    bu_vls_free(&vls_key);
-    return key;
 }
 
 void

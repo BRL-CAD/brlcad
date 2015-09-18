@@ -18,8 +18,7 @@
 
 void set_to_array(int **array, int *array_cnt, std::set<int> *set);
 void array_to_set(std::set<int> *set, int *array, int array_cnt);
-//void map_to_array(int **array, int *array_cnt, std::map<int,int> *map);
-//void array_to_map(std::map<int,int> *map, int *array, int array_cnt);
+void set_key(struct bu_vls *key, int k, int *karray);
 
 #define ON_VMOVE(on, bn) { \
     on.x = bn[0]; \
@@ -141,7 +140,6 @@ void print_subbrep_object(struct subbrep_island_data *data, const char *offset);
 
 //int torus_csg(struct subbrep_island_data *data, fastf_t cone_tol);
 
-std::string set_key(std::set<int> intset);
 
 //int subbrep_find_corners(struct subbrep_island_data *data, int **corner_verts_array, ON_Plane *pcyl);
 //int subbrep_top_bottom_pnts(struct subbrep_island_data *data, std::set<int> *corner_verts, ON_Plane *top_plane, ON_Plane *bottom_plane, ON_SimpleArray<const ON_BrepVertex *> *top_pnts, ON_SimpleArray<const ON_BrepVertex *> *bottom_pnts);
