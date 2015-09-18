@@ -1389,6 +1389,7 @@ sub_surface(const ON_Surface *in, int dir, double a, double b);
  * be matched by the shape recognition logic */
 struct csg_object_params {
     int type;
+    struct subbrep_shoal_data *s;
     int negative;
     int id;
     char bool_op; /* Boolean operator - u = union (default), - = subtraction, + = intersection */
@@ -1417,6 +1418,8 @@ struct subbrep_island_data;
 
 /* Topological shoal */
 struct subbrep_shoal_data {
+    int type;
+    int id;
     struct subbrep_island_data *i;
     struct csg_object_params *params;
     /* struct csg_obj_params */

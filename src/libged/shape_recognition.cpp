@@ -206,33 +206,34 @@ csg_obj_process(struct bu_vls *msgs, struct csg_object_params *data, struct rt_w
     }
 }
 
-
 HIDDEN int
 make_shoal(struct bu_vls *msgs, struct subbrep_shoal_data *data, struct rt_wdb *wdbp, const char *rname)
 {
+    struct wmember wcomb;
+    struct bu_vls prim_name = BU_VLS_INIT_ZERO;
+    struct bu_vls comb_name = BU_VLS_INIT_ZERO;
     if (!data || !data->params) {
 	if (msgs) bu_vls_printf(msgs, "Error! invalid shoal.\n");
 	return 0;
     }
-#if 0
-    struct bu_vls csg_name = BU_VLS_INIT_ZERO;
-    subbrep_obj_name(data->params->type, data->params->id, rname, &csg_name);
-    struct directory *dp = db_lookup(wdbp->dbip, bu_vls_addr(&csg_name), LOOKUP_QUIET);
 
-    // Don't recreate it
-    if (dp != RT_DIR_NULL) {
-	//bu_log("nucleus already made %s\n", bu_vls_addr(&csg_name));
-	bu_vls_free(&island_name);
-	return 0;
+    if (data->type == COMB) {
+	BU_LIST_INIT(&wcomb.l);
+	subbrep_obj_name(data->type, data->id, rname, &comb_name);
+	csg_obj_process(msgs, data->params, wdbp, rname);
+	subbrep_obj_name(data->params->type, data->params->id, rname, &prim_name);
+	(void)mk_addmember(bu_vls_addr(&prim_name), &(wcomb.l), NULL, db_str2op(&(data->params->bool_op)));
+	for (unsigned int i = 0; i < BU_PTBL_LEN(data->sub_params); i++) {
+	    struct csg_object_params *c = (struct csg_object_params *)BU_PTBL_GET(data->sub_params, i);
+	    csg_obj_process(msgs, c, wdbp, rname);
+	    bu_vls_trunc(&prim_name, 0);
+	    subbrep_obj_name(c->type, c->id, rname, &prim_name);
+	    (void)mk_addmember(bu_vls_addr(&prim_name), &(wcomb.l), NULL, db_str2op(&(c->bool_op)));
+	}
+	mk_lcomb(wdbp, bu_vls_addr(&comb_name), &wcomb, 0, NULL, NULL, NULL, 0);
+    } else {
+	csg_obj_process(msgs, data->params, wdbp, rname);
     }
-#endif
-
-    csg_obj_process(msgs, data->params, wdbp, rname);
-    for (unsigned int i = 0; i < BU_PTBL_LEN(data->sub_params); i++) {
-	struct csg_object_params *c = (struct csg_object_params *)BU_PTBL_GET(data->sub_params, i);
-	csg_obj_process(msgs, c, wdbp, rname);
-    }
-
     return 1;
 }
 
@@ -242,25 +243,74 @@ make_island(struct bu_vls *msgs, struct subbrep_island_data *data, struct rt_wdb
     char *bool_op = &(data->nucleus->params->bool_op);
     int failed = 0;
     struct wmember wcomb;
-    struct subbrep_shoal_data *sd;
+    int type = -1;
 
+    struct bu_vls shoal_name = BU_VLS_INIT_ZERO;
     struct bu_vls island_name = BU_VLS_INIT_ZERO;
-    if (data->type == BREP || data->type == COMB) {
+    if (data->type == BREP) {
+	type = BREP;
 	subbrep_obj_name(data->type, data->id, rname, &island_name);
+    }
+    if ( data->type == COMB && BU_PTBL_LEN(data->children) > 0) {
+	type = COMB;
+	BU_LIST_INIT(&wcomb.l);
+	subbrep_obj_name(data->type, data->id, rname, &island_name);
+    }
+    if (type == -1) {
+	subbrep_obj_name(data->nucleus->type, data->nucleus->id, rname, &island_name);
+    }
+
+    switch (type) {
+	case BREP:
+	    if (!data->local_brep->IsValid()) {
+		if (msgs) bu_vls_printf(msgs, "Warning - data->local_brep is not valid for %s\n", bu_vls_addr(&island_name));
+	    }
+	    mk_brep(wdbp, bu_vls_addr(&island_name), data->local_brep);
+	    break;
+	case COMB:
+	    // TODO - need to reverse booleans here for a negative nucleus island...
+	    bu_vls_trunc(&shoal_name, 0);
+	    subbrep_obj_name(data->nucleus->type, data->nucleus->id, rname, &shoal_name);
+	    if (!make_shoal(msgs, data->nucleus, wdbp, rname)) failed++;
+	    (void)mk_addmember(bu_vls_addr(&shoal_name), &(wcomb.l), NULL, db_str2op(&(data->nucleus->params->bool_op)));
+	    if (data->children && BU_PTBL_LEN(data->children) > 0) {
+		for (unsigned int i = 0; i < BU_PTBL_LEN(data->children); i++) {
+		    struct subbrep_shoal_data *d = (struct subbrep_shoal_data *)BU_PTBL_GET(data->children, 0);
+		    bu_vls_trunc(&shoal_name, 0);
+		    subbrep_obj_name(d->type, d->id, rname, &shoal_name);
+		    if (!make_shoal(msgs, d, wdbp, rname)) failed++;
+		    (void)mk_addmember(bu_vls_addr(&shoal_name), &(wcomb.l), NULL, db_str2op(&(data->nucleus->params->bool_op)));
+
+		}
+	    }
+	    mk_lcomb(wdbp, bu_vls_addr(&island_name), &wcomb, 0, NULL, NULL, NULL, 0);
+	default:
+	    if (!make_shoal(msgs, data->nucleus, wdbp, rname)) failed++;
+	    break;
+    }
+
+    if (!failed) {
+	if (*bool_op == 'u' && pcomb) (void)mk_addmember(bu_vls_addr(&island_name), &(pcomb->l), NULL, db_str2op(bool_op));
+
+	// Handle subtractions
+	for (unsigned int i = 0; i < BU_PTBL_LEN(data->subtractions); i++) {
+	    char sub = '-';
+	    struct subbrep_island_data *n = (struct subbrep_island_data *)BU_PTBL_GET(data->subtractions, i);
+	    struct bu_vls subtraction_name = BU_VLS_INIT_ZERO;
+	    bu_log("subtraction found for %s: %s\n", bu_vls_addr(data->key), bu_vls_addr(n->key));
+	    if (n->type == BREP || n->type == COMB) {
+		// TODO - need unique ids for each island too for this to work.
+		subbrep_obj_name(n->type, n->id, rname, &subtraction_name);
+	    } else {
+		subbrep_obj_name(n->nucleus->params->type, n->nucleus->params->id, rname, &subtraction_name);
+	    }
+	    bu_log("subtracting %s\n", bu_vls_addr(n->key));
+	    if (pcomb) (void)mk_addmember(bu_vls_addr(&subtraction_name), &(pcomb->l), NULL, db_str2op(&sub));
+	    bu_vls_free(&subtraction_name);
+	}
     } else {
-	subbrep_obj_name(data->nucleus->params->type, data->nucleus->params->id, rname, &island_name);
+	if (msgs) bu_vls_printf(msgs, "shoal build failed\n");
     }
-#if 0
-    struct directory *dp = db_lookup(wdbp->dbip, bu_vls_addr(&island_name), LOOKUP_QUIET);
-
-    // Don't recreate it
-    if (dp != RT_DIR_NULL) {
-	//bu_log("island already made (??) %s\n", bu_vls_addr(&island_name));
-	bu_vls_free(&island_name);
-	return 0;
-    }
-#endif
-
 #if 1
     if (data->local_brep) {
 	char un = 'u';
@@ -284,60 +334,7 @@ make_island(struct bu_vls *msgs, struct subbrep_island_data *data, struct rt_wdb
 	bu_vls_free(&bcomb_name);
     }
 #endif
-    struct bu_vls prim_name = BU_VLS_INIT_ZERO;
-    switch (data->type) {
-	case BREP:
-	    if (!data->local_brep->IsValid()) {
-		if (msgs) bu_vls_printf(msgs, "Warning - data->local_brep is not valid for %s\n", bu_vls_addr(&island_name));
-	    }
-	    mk_brep(wdbp, bu_vls_addr(&island_name), data->local_brep);
-	    // TODO - almost certainly need to do more work to get correct booleans
-	    //std::cout << bu_vls_addr(&brep_name) << ": " << data->params->bool_op << "\n";
-	bu_log("n: adding %s\n", bu_vls_addr(&island_name));
-	    break;
-	case COMB:
-	    BU_LIST_INIT(&wcomb.l);
-	    if (!make_shoal(msgs, data->nucleus, wdbp, rname)) {
-		failed = 1;
-	    } else {
-		bu_vls_trunc(&prim_name, 0);
-		subbrep_obj_name(data->nucleus->params->type, data->nucleus->params->id, rname, &prim_name);
-		(void)mk_addmember(bu_vls_addr(&prim_name), &(wcomb.l), NULL, db_str2op(&(data->nucleus->params->bool_op)));
-	    }
-	    for (unsigned i = 0; i < BU_PTBL_LEN(data->children); i++) {
-		sd = (struct subbrep_shoal_data *)BU_PTBL_GET(data->children, i);
-		if (!make_shoal(msgs, sd, wdbp, rname)) {
-		    failed = 1;
-		} else {
-		    bu_vls_trunc(&prim_name, 0);
-		    subbrep_obj_name(sd->params->type, sd->params->id, rname, &prim_name);
-		    (void)mk_addmember(bu_vls_addr(&prim_name), &(wcomb.l), NULL, db_str2op(&(sd->params->bool_op)));
-		}
-	    }
-	    mk_lcomb(wdbp, bu_vls_addr(&island_name), &wcomb, 0, NULL, NULL, NULL, 0);
-	    break;
-	default:
-	    csg_obj_process(msgs, data->nucleus->params, wdbp, rname);
-	    break;
-    }
-    if (*bool_op == 'u' && pcomb) (void)mk_addmember(bu_vls_addr(&island_name), &(pcomb->l), NULL, db_str2op(bool_op));
 
-    // Handle subtractions
-    for (unsigned int i = 0; i < BU_PTBL_LEN(data->subtractions); i++) {
-	char sub = '-';
-	struct subbrep_island_data *n = (struct subbrep_island_data *)BU_PTBL_GET(data->subtractions, i);
-	struct bu_vls subtraction_name = BU_VLS_INIT_ZERO;
-	bu_log("subtraction found for %s: %s\n", bu_vls_addr(data->key), bu_vls_addr(n->key));
-	if (n->type == BREP || n->type == COMB) {
-	    // TODO - need unique ids for each island too for this to work.
-	    subbrep_obj_name(n->type, n->id, rname, &subtraction_name);
-	} else {
-	    subbrep_obj_name(n->nucleus->params->type, n->nucleus->params->id, rname, &subtraction_name);
-	}
-	bu_log("subtracting %s\n", bu_vls_addr(n->key));
-	if (pcomb) (void)mk_addmember(bu_vls_addr(&subtraction_name), &(pcomb->l), NULL, db_str2op(&sub));
-	bu_vls_free(&subtraction_name);
-    }
 
     bu_vls_free(&island_name);
     return 0;
@@ -383,15 +380,23 @@ brep_to_csg(struct ged *gedp, struct directory *dp, int UNUSED(verify))
 
     struct bu_ptbl *subbreps = find_subbreps(gedp->ged_result_str, brep);
 
-    for (unsigned int i = 0; i < BU_PTBL_LEN(subbreps); i++) {
-	struct subbrep_island_data *sb = (struct subbrep_island_data *)BU_PTBL_GET(subbreps, i);
-	make_island(gedp->ged_result_str, sb, wdbp, bu_vls_addr(&comb_name), &pcomb);
+    if (subbreps) {
+	for (unsigned int i = 0; i < BU_PTBL_LEN(subbreps); i++) {
+	    struct subbrep_island_data *sb = (struct subbrep_island_data *)BU_PTBL_GET(subbreps, i);
+	    make_island(gedp->ged_result_str, sb, wdbp, bu_vls_addr(&comb_name), &pcomb);
+	}
+	for (unsigned int i = 0; i < BU_PTBL_LEN(subbreps); i++) {
+	    // free islands;
+	}
 
-	// This should probably be a region.
-	mk_lcomb(wdbp, bu_vls_addr(&comb_name), &pcomb, 0, NULL, NULL, NULL, 0);
-    }
-    for (unsigned int i = 0; i < BU_PTBL_LEN(subbreps); i++) {
-	// free islands;
+	// Only do a combination if the comb structure has more than one entry in the list.
+	struct bu_list *olist;
+	int comb_objs = 0;
+	for (BU_LIST_FOR(olist, bu_list, &pcomb.l)) comb_objs++;
+	if (comb_objs > 1) {
+	    // This should probably be a region.
+	    mk_lcomb(wdbp, bu_vls_addr(&comb_name), &pcomb, 0, NULL, NULL, NULL, 0);
+	}
     }
     return 0;
 }

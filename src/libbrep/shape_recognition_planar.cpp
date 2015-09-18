@@ -839,8 +839,11 @@ island_nucleus(struct bu_vls *msgs, struct subbrep_island_data *data)
 	    int curr_vert = 0;
 	    BU_GET(data->nucleus, struct subbrep_shoal_data);
 	    subbrep_shoal_init(data->nucleus, data);
-	    (*(data->obj_cnt))++;
 	    data->nucleus->params->id = (*(data->obj_cnt));
+	    (*(data->obj_cnt))++;
+	    data->nucleus->type = PLANAR_VOLUME;
+	    data->nucleus->id = (*(data->obj_cnt));
+	    (*(data->obj_cnt))++;
 	    data->nucleus->params->type = PLANAR_VOLUME;
 	    data->nucleus->params->verts = (point_t *)bu_calloc(all_used_verts.size(), sizeof(point_t), "final verts array");
 	    for (auv_it = all_used_verts.begin(); auv_it != all_used_verts.end(); auv_it++) {
@@ -954,6 +957,7 @@ island_nucleus(struct bu_vls *msgs, struct subbrep_island_data *data)
 	    // If we do in fact have a convex polyhedron, we can create an arbn
 	    // instead of a BoT for this nucleus shape
 	    data->nucleus->params->type = ARBN;
+	    data->nucleus->type = ARBN;
 	    data->nucleus->params->plane_cnt = planes.Count();
 	    data->nucleus->params->planes = (plane_t *)bu_calloc(planes.Count(), sizeof(plane_t), "planes");
 	    for (int i = 0; i < planes.Count(); i++) {

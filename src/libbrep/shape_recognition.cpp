@@ -188,13 +188,16 @@ find_hierarchy(struct bu_vls *UNUSED(msgs), struct subbrep_tree_node *node, stru
 	bu_ptbl_ins(node->children, (long *)n);
 
 	if (id->nucleus->params->bool_op == '-') {
-	    bu_log("%*sadding subtraction %s\n", depth, " ", bu_vls_addr(id->key));
-	    bu_ptbl_ins_unique(node->island->subtractions, (long *)id);
+	    if (node->island->nucleus->params->bool_op == 'u') {
+		bu_log("%*sadding subtraction %s\n", depth, " ", bu_vls_addr(id->key));
+		bu_ptbl_ins_unique(node->island->subtractions, (long *)id);
+	    }
 	    // A subtraction must also be checked against positive parent islands.
 	    struct subbrep_tree_node *pn = node->parent;
 	    while (pn) {
+		depth--;
 		if (pn->island->nucleus->params->bool_op == 'u') {
-		    bu_log("check bboxes\n");
+		    bu_log("%*schecking bboxes\n", depth, " ");
 		    ON_BoundingBox isect;
 		    bool bbi = isect.Intersection(*pn->island->bbox, *id->bbox);
 		    // If we have overlap, we have a possible subtraction operation
@@ -203,7 +206,7 @@ find_hierarchy(struct bu_vls *UNUSED(msgs), struct subbrep_tree_node *node, stru
 		    // so for speed we accept that there may be extra subtractions in
 		    // the tree.
 		    if (bbi) {
-			bu_log("found one: %s!\n", bu_vls_addr(id->key));
+			bu_log("%*sfound one: %s!\n", depth, " ", bu_vls_addr(id->key));
 			bu_ptbl_ins_unique(pn->island->subtractions, (long *)id);
 		    }
 		}
@@ -345,8 +348,10 @@ subbrep_split(struct bu_vls *msgs, struct subbrep_island_data *data)
 		struct subbrep_shoal_data *sh;
 		BU_GET(sh, struct subbrep_shoal_data);
 		subbrep_shoal_init(sh, data);
-		(*(data->obj_cnt))++;
 		sh->params->id = (*(data->obj_cnt));
+		(*(data->obj_cnt))++;
+		sh->id = (*(data->obj_cnt));
+		(*(data->obj_cnt))++;
 		sh->i = data;
 		sh->loops_cnt = shoal_build(&(sh->loops), loop->m_loop_index, data);
 		for (int i = 0; i < sh->loops_cnt; i++) {
@@ -372,6 +377,12 @@ subbrep_split(struct bu_vls *msgs, struct subbrep_island_data *data)
 			break;
 		}
 		if (!local_fail) {
+		    if (BU_PTBL_LEN(sh->sub_params) > 0) {
+			sh->type = COMB;
+		    } else {
+			sh->type = sh->params->type;
+			sh->id = sh->params->id;
+		    }
 		    bu_ptbl_ins(data->children, (long *)sh);
 		} else {
 		    csg_fail++;
@@ -395,7 +406,7 @@ subbrep_split(struct bu_vls *msgs, struct subbrep_island_data *data)
     // If we've got a single nucleus shape and no children, set the island
     // type to be that of the nucleus type.  Otherwise, it's a comb.
     if (BU_PTBL_LEN(data->children) == 0) {
-	data->type = data->nucleus->params->type;
+	data->type = data->nucleus->type;
     } else {
 	data->type = COMB;
     }
