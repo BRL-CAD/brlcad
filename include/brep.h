@@ -1440,6 +1440,7 @@ struct subbrep_island_data {
 
     /* Shape representation data */
     ON_Brep *local_brep;
+    char local_brep_bool_op; /* Boolean operator - u = union (default), - = subtraction, + = intersection */
 
     /* Nucleus */
     struct subbrep_shoal_data *nucleus;

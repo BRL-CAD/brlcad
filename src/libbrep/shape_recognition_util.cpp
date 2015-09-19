@@ -515,25 +515,22 @@ print_subbrep_object(struct subbrep_island_data *data, const char *offset)
     bu_vls_free(&log);
 }
 
-/* This routine is used when there is uncertainty about whether a
- * particular solid or combination is to be subtracted or unioned
- * into a parent.  For planar on planar cases, the check is whether every
- * vertex of the candidate solid is either on or one of above/below
- * the shared face plane.  If some vertices are above and some
- * are below, the candidate solid is self intersecting and must be
- * further subdivided.
+/* This routine is used when there is uncertainty about whether a particular
+ * solid or combination is to be subtracted or unioned into a parent.  For
+ * planar on planar cases, the check is whether every vertex of the candidate
+ * solid is either on or one of above/below the shared face plane.  If some
+ * vertices are above and some are below, the candidate solid is self
+ * intersecting.
  *
- * For non-planar situations, we're probably looking at a surface
- * surface intersection test.  A possible test short of that might
- * be vertices of bounding boxes, but that will result in situations
- * reporting subdivision necessity when there isn't any unless we
- * follow up with a more rigorous test.  This needs more thought. */
+ * We've filtered out non-planar connecting loop situations elsewhere in the
+ * pipeline - they aren't handled here. */
 int
-subbrep_determine_boolean(struct subbrep_island_data *data)
+subbrep_brep_boolean(struct subbrep_island_data *data)
 {
    int pos_cnt = 0;
    int neg_cnt = 0;
 
+   /* Top level breps are unions */
    if (data->fil_cnt == 0) return 1;
 
    for (int i = 0; i < data->fil_cnt; i++) {
@@ -541,13 +538,16 @@ subbrep_determine_boolean(struct subbrep_island_data *data)
        const ON_BrepFace *face = &(data->brep->m_F[data->fil[i]]);
        const ON_Surface *surf = face->SurfaceOf();
        surface_t stype = ((surface_t *)data->face_surface_types)[face->m_face_index];
+       if (stype != SURFACE_PLANE) return -2;
+
+       // Get face plane
        ON_Plane face_plane;
-       if (stype == SURFACE_PLANE) {
-	   ON_Surface *ts = surf->Duplicate();
-	   (void)ts->IsPlanar(&face_plane, BREP_PLANAR_TOL);
-	   delete ts;
-	   if (face->m_bRev) face_plane.Flip();
-       }
+       ON_Surface *ts = surf->Duplicate();
+       (void)ts->IsPlanar(&face_plane, BREP_PLANAR_TOL);
+       delete ts;
+       if (face->m_bRev) face_plane.Flip();
+
+       // Collecte all vertices in the island
        std::set<int> verts;
        for (int j = 0; j < data->island_edges_cnt; j++) {
 	   verts.insert(data->brep->m_E[data->island_edges[j]].Vertex(0)->m_vertex_index);
@@ -556,26 +556,10 @@ subbrep_determine_boolean(struct subbrep_island_data *data)
        for (std::set<int>::iterator s_it = verts.begin(); s_it != verts.end(); s_it++) {
 	   // For each vertex in the subbrep, determine
 	   // if it is above, below or on the face
-	   if (stype == SURFACE_PLANE) {
 	       ON_3dPoint p = data->brep->m_V[*s_it].Point();
 	       double distance = face_plane.DistanceTo(p);
 	       if (distance > BREP_PLANAR_TOL) pos_cnt++;
 	       if (distance < -1*BREP_PLANAR_TOL) neg_cnt++;
-	   } else {
-	       // TODO - this doesn't seem to work...
-	       if (face->m_bRev) {
-		   // do something...
-	       }
-	       double current_distance = 0;
-	       ON_3dPoint p = data->brep->m_V[*s_it].Point();
-	       ON_3dPoint p3d;
-	       ON_2dPoint p2d;
-	       if (surface_GetClosestPoint3dFirstOrder(surf,p,p2d,p3d,current_distance)) {
-		   if (current_distance > 0.001) pos_cnt++;
-	       } else {
-		   neg_cnt++;
-	       }
-	   }
        }
    }
 

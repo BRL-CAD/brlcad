@@ -285,6 +285,7 @@ make_island(struct bu_vls *msgs, struct subbrep_island_data *data, struct rt_wdb
 		if (msgs) bu_vls_printf(msgs, "Warning - data->local_brep is not valid for %s\n", bu_vls_addr(&island_name));
 	    }
 	    mk_brep(wdbp, bu_vls_addr(&island_name), data->local_brep);
+	    n_bool_op = &(data->local_brep_bool_op);
 	    break;
 	case COMB:
 	    bu_vls_trunc(&shoal_name, 0);

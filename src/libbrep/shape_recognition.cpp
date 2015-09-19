@@ -251,6 +251,8 @@ int cyl_validate_face(const ON_BrepFace *forig, const ON_BrepFace *fcand)
     // Make sure the radii are the same
     if (!NEAR_ZERO(corig.circle.Radius() - ccand.circle.Radius(), VUNITIZE_TOL)) return 0;
 
+    // TODO - make sure negative/positive status for both cyl faces is the same.
+
     return 1;
 }
 
@@ -350,7 +352,6 @@ subbrep_split(struct bu_vls *msgs, struct subbrep_island_data *data)
 	const ON_BrepLoop *loop = &(data->brep->m_L[*l_it]);
 	const ON_BrepFace *face = loop->Face();
 	surface_t surface_type = ((surface_t *)data->face_surface_types)[face->m_face_index];
-	// Characterize the planar faces. TODO - see if we actually need this or not...
 	if (surface_type != SURFACE_PLANE) {
 	    // non-planar face - check to see whether it's already part of a shoal.  If not,
 	    // create a new one - otherwise, skip.
@@ -527,11 +528,22 @@ find_subbreps(struct bu_vls *msgs, const ON_Brep *brep)
 	set_key(sb->key, sb->island_faces_cnt, sb->island_faces);
 
 	if (!planar_fils) {
-	    if (msgs) bu_vls_printf(msgs, "Note - non-planer island mating loop in %s, representing as B-Rep\n", bu_vls_addr(sb->key));
-	    sb->island_type = BREP;
-	    (void)subbrep_make_brep(msgs, sb);
-	    bu_ptbl_ins(subbreps, (long *)sb);
-	    continue;
+	    if (msgs) bu_vls_printf(msgs, "Note - non-planer island mating loop in %s, haulting conversion\n", bu_vls_addr(sb->key));
+	    goto bail;
+	}
+
+	// The boolean test of the subbrep serves several functions:
+	//
+	// 1.  Determines what to do boolean wise with B-Rep islands
+	// 2.  Identifies self intersecting subbrep shapes, which trigger a conversion hault.
+	// 3.  Serve as a sanity check for the CSG routines, which do their own boolean resolution
+	//     tests as well.
+	int bool_flag = subbrep_brep_boolean(sb);
+
+	// Self intersection is fatal;
+	if (bool_flag == -2) {
+	    if (msgs) bu_vls_printf(msgs, "Self intersecting island %s, haulting conversion\n", bu_vls_addr(sb->key));
+	    goto bail;
 	}
 
 	// Check to see if we have a general surface that precludes conversion
@@ -540,7 +552,7 @@ find_subbreps(struct bu_vls *msgs, const ON_Brep *brep)
 	    if (msgs) bu_vls_printf(msgs, "Note - general surface present in island %s, representing as B-Rep\n", bu_vls_addr(sb->key));
 	    sb->island_type = BREP;
 	    (void)subbrep_make_brep(msgs, sb);
-	    //TODO - need to determine boolean of subbrep as well.  Also check for self intersection...
+	    sb->local_brep_bool_op = (bool_flag == -1) ? '-' : 'u';
 	    bu_ptbl_ins(subbreps, (long *)sb);
 	    continue;
 	}
@@ -551,9 +563,12 @@ find_subbreps(struct bu_vls *msgs, const ON_Brep *brep)
 	    if (msgs) bu_vls_printf(msgs, "Note - split of %s unsuccessful, making brep\n", bu_vls_addr(sb->key));
 	    sb->island_type = BREP;
 	    (void)subbrep_make_brep(msgs, sb);
-	    //TODO - need to determine boolean of subbrep as well.  Also check for self intersection...
+	    sb->local_brep_bool_op = (bool_flag == -1) ? '-' : 'u';
 	} else {
 	    successes++;
+	    // Make sure the CSG routines and the B-Rep boolean check reached the same conclusion.
+	    if ((bool_flag == -1 && sb->nucleus->params->bool_op == 'u') || (bool_flag == 1 && sb->nucleus->params->bool_op == '-'))
+		bu_log("Warning - csg and brep boolean determinations do not match: %s\n", bu_vls_addr(sb->key));
 #if WRITE_ISLAND_BREPS
 	    (void)subbrep_make_brep(msgs, sb);
 #endif

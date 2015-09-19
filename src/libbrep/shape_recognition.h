@@ -108,7 +108,7 @@ void csg_object_params_free(struct csg_object_params *obj);
 int cylinder_csg(struct bu_vls *msgs, struct subbrep_shoal_data *data, fastf_t cyl_tol);
 
 
-int subbrep_determine_boolean(struct subbrep_island_data *data);
+int subbrep_brep_boolean(struct subbrep_island_data *data);
 
 
 //int subbrep_split(struct bu_vls *msgs, struct subbrep_island_data *data);
