@@ -354,7 +354,7 @@ cylinder_csg(struct bu_vls *msgs, struct subbrep_shoal_data *data, fastf_t cyl_t
     double extensions[2] = {0.0, 0.0};
     for (int i = 0; i < 2; i++) {
 	double dpc = fabs(ON_DotProduct(cyl_planes[end_caps[i]].Normal(), cylinder.Axis()));
-	if (!NEAR_ZERO(dpc, VUNITIZE_TOL)) {
+	if (!NEAR_ZERO(1-dpc, VUNITIZE_TOL)) {
 	    double theta = acos(dpc);
 	    //bu_log("theta: %f\n", theta);
 	    double radius = cylinder.circle.Radius();
@@ -420,6 +420,7 @@ cylinder_csg(struct bu_vls *msgs, struct subbrep_shoal_data *data, fastf_t cyl_t
     v1 = v1 * cylinder.circle.Radius();
     v2 = v2 * cylinder.circle.Radius();
     ON_3dPoint arbmid = (axis_pts[1] + axis_pts[0]) * 0.5;
+
     cyl_planes.Append(ON_Plane(axis_pts[0], -1 * cyl_axis_unit));
     cyl_planes.Append(ON_Plane(axis_pts[1], cyl_axis_unit));
     cyl_planes.Append(ON_Plane(arbmid + v1, cylinder.circle.Plane().xaxis));
