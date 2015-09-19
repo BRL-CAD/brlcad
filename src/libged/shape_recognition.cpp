@@ -17,43 +17,35 @@
 
 #define ptout(p)  p.x << " " << p.y << " " << p.z
 
-HIDDEN void
-assemble_vls_str(struct bu_vls *vls, int *edges, int cnt)
-{
-    bu_vls_sprintf(vls, "%d", edges[0]);
-    for (int i = 1; i < cnt; i++) {
-	bu_vls_printf(vls, ",%d", edges[i]);
-    }
-}
+#define INFORMATION_ATTRS_ON 1
 
 HIDDEN void
-obj_add_attr_key(struct subbrep_island_data *data, struct rt_wdb *wdbp, const char *obj_name)
+set_attr_key(struct rt_wdb *wdbp, const char *obj_name, const char *key, int array_cnt, int *array)
 {
+    struct bu_vls val = BU_VLS_INIT_ZERO;
     struct bu_attribute_value_set avs;
     struct directory *dp;
 
-    if (!data || !wdbp || !obj_name) return;
+    if (!wdbp || !obj_name || !key || !array) return;
 
     dp = db_lookup(wdbp->dbip, obj_name, LOOKUP_QUIET);
 
     if (dp == RT_DIR_NULL) return;
 
+    set_key(&val, array_cnt, array);
+
     bu_avs_init_empty(&avs);
 
     if (db5_get_attributes(wdbp->dbip, &avs, dp)) return;
 
-    (void)bu_avs_add(&avs, "bfaces", bu_vls_addr(data->key));
-    if (data->island_edges_cnt > 0) {
-	struct bu_vls val = BU_VLS_INIT_ZERO;
-	assemble_vls_str(&val, data->island_edges, data->island_edges_cnt);
-	(void)bu_avs_add(&avs, "bedges", bu_vls_addr(&val));
-	bu_vls_free(&val);
-    }
+    (void)bu_avs_add(&avs, key, bu_vls_addr(&val));
 
-    if (db5_replace_attributes(dp, &avs, wdbp->dbip)) {
-	bu_avs_free(&avs);
-	return;
-    }
+#ifdef INFORMATION_ATTRS_ON
+    (void)db5_replace_attributes(dp, &avs, wdbp->dbip);
+#endif
+
+    bu_avs_free(&avs);
+    bu_vls_free(&val);
 }
 
 HIDDEN void
@@ -109,7 +101,7 @@ subbrep_to_csg_arbn(struct bu_vls *msgs, struct csg_object_params *data, struct 
 	if (mk_arbn(wdbp, bu_vls_addr(&prim_name), data->plane_cnt, data->planes)) {
 	    if (msgs) bu_vls_printf(msgs, "mk_arbn failed for %s\n", bu_vls_addr(&prim_name));
 	} else {
-	    //obj_add_attr_key(data, wdbp, bu_vls_addr(&prim_name));
+	    set_attr_key(wdbp, bu_vls_addr(&prim_name), "loops", data->s->shoal_loops_cnt, data->s->shoal_loops);
 	}
 	bu_vls_free(&prim_name);
 	return 1;
@@ -127,9 +119,9 @@ subbrep_to_csg_planar(struct bu_vls *msgs, struct csg_object_params *data, struc
 	struct bu_vls prim_name = BU_VLS_INIT_ZERO;
 	subbrep_obj_name(data->csg_type, data->csg_id, pname, &prim_name);
 	if (mk_bot(wdbp, bu_vls_addr(&prim_name), RT_BOT_SOLID, RT_BOT_UNORIENTED, 0, data->csg_vert_cnt, data->csg_face_cnt, (fastf_t *)data->csg_verts, data->csg_faces, (fastf_t *)NULL, (struct bu_bitv *)NULL)) {
-	    if (msgs) bu_vls_printf(msgs, "mk_bot failed for overall bot\n");
+	    if (msgs) bu_vls_printf(msgs, "mk_bot failed for %s\n", bu_vls_addr(&prim_name));
 	} else {
-	    //obj_add_attr_key(data, wdbp, bu_vls_addr(&prim_name));
+	    set_attr_key(wdbp, bu_vls_addr(&prim_name), "loops", data->s->shoal_loops_cnt, data->s->shoal_loops);
 	}
 	bu_vls_free(&prim_name);
 	return 1;
@@ -145,15 +137,11 @@ subbrep_to_csg_cylinder(struct bu_vls *msgs, struct csg_object_params *data, str
     if (data->csg_type == CYLINDER) {
 	struct bu_vls prim_name = BU_VLS_INIT_ZERO;
 	subbrep_obj_name(data->csg_type, data->csg_id, pname, &prim_name);
-	int ret = mk_rcc(wdbp, bu_vls_addr(&prim_name), data->origin, data->hv, data->radius);
-	if (ret) {
-	    //std::cout << "problem making " << bu_vls_addr(&prim_name) << "\n";
+	if (mk_rcc(wdbp, bu_vls_addr(&prim_name), data->origin, data->hv, data->radius)) {
+	    if (msgs) bu_vls_printf(msgs, "mk_rcc failed for %s\n", bu_vls_addr(&prim_name));
+	} else {
+	    set_attr_key(wdbp, bu_vls_addr(&prim_name), "loops", data->s->shoal_loops_cnt, data->s->shoal_loops);
 	}
-#if 0
-       	else {
-	    obj_add_attr_key(params, wdbp, bu_vls_addr(&prim_name));
-	}
-#endif
 	bu_vls_free(&prim_name);
 	return 1;
     }
@@ -166,11 +154,11 @@ csg_obj_process(struct bu_vls *msgs, struct csg_object_params *data, struct rt_w
 {
 #if 0
     struct bu_vls prim_name = BU_VLS_INIT_ZERO;
-    subbrep_obj_name(data->type, data->id, pname, &prim_name);
+    subbrep_obj_name(data->csg_type, data->csg_id, pname, &prim_name);
     struct directory *dp = db_lookup(wdbp->dbip, bu_vls_addr(&prim_name), LOOKUP_QUIET);
     // Don't recreate it
     if (dp != RT_DIR_NULL) {
-	//bu_log("already made %s\n", bu_vls_addr(data->obj_name));
+	bu_log("already made %s\n", bu_vls_addr(data->obj_name));
 	return;
     }
 #endif
@@ -245,6 +233,7 @@ make_shoal(struct bu_vls *msgs, struct subbrep_shoal_data *data, struct rt_wdb *
 	    (void)mk_addmember(bu_vls_addr(&prim_name), &(wcomb.l), NULL, db_str2op(bool_op));
 	}
 	mk_lcomb(wdbp, bu_vls_addr(&comb_name), &wcomb, 0, NULL, NULL, NULL, 0);
+	set_attr_key(wdbp, bu_vls_addr(&comb_name), "loops", data->shoal_loops_cnt, data->shoal_loops);
     } else {
 	subbrep_obj_name(data->params->csg_type, data->params->csg_id, rname, &prim_name);
 	csg_obj_process(msgs, data->params, wdbp, rname);
@@ -321,6 +310,8 @@ make_island(struct bu_vls *msgs, struct subbrep_island_data *data, struct rt_wdb
 
 	    }
 	    mk_lcomb(wdbp, bu_vls_addr(&island_name), &wcomb, 0, NULL, NULL, NULL, 0);
+	    set_attr_key(wdbp, bu_vls_addr(&island_name), "loops", data->island_loops_cnt, data->island_loops);
+	    set_attr_key(wdbp, bu_vls_addr(&island_name), "faces", data->island_faces_cnt, data->island_faces);
 	    break;
 	default:
 	    if (!make_shoal(msgs, data->nucleus, wdbp, rname)) failed++;

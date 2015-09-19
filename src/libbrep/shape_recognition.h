@@ -101,7 +101,7 @@ void subbrep_island_init(struct subbrep_island_data *obj, const ON_Brep *brep);
 void subbrep_island_free(struct subbrep_island_data *obj);
 void subbrep_shoal_init(struct subbrep_shoal_data *obj, struct subbrep_island_data *island);
 void subbrep_shoal_free(struct subbrep_shoal_data *obj);
-void csg_object_params_init(struct csg_object_params *obj);
+void csg_object_params_init(struct csg_object_params *obj, struct subbrep_shoal_data *shoal);
 void csg_object_params_free(struct csg_object_params *obj);
 
 // TODO - will this become a general pattern with primitive specific sub-functions?

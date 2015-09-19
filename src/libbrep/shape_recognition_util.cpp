@@ -235,8 +235,9 @@ subbrep_bbox(struct subbrep_island_data *obj)
 }
 
 void
-csg_object_params_init(struct csg_object_params *csg)
+csg_object_params_init(struct csg_object_params *csg, struct subbrep_shoal_data *d)
 {
+    csg->s = d;
     csg->csg_type = 0;
     csg->negative = 0;
     csg->csg_id = -1;
@@ -261,7 +262,7 @@ subbrep_shoal_init(struct subbrep_shoal_data *data, struct subbrep_island_data *
 {
     data->i = i;
     BU_GET(data->params, struct csg_object_params);
-    csg_object_params_init(data->params);
+    csg_object_params_init(data->params, data);
     BU_GET(data->shoal_children , struct bu_ptbl);
     bu_ptbl_init(data->shoal_children, 8, "sub_params table");
     data->shoal_loops = NULL;

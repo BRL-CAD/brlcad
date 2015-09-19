@@ -470,7 +470,7 @@ cylinder_csg(struct bu_vls *msgs, struct subbrep_shoal_data *data, fastf_t cyl_t
     if (arbn_planes.Count() > 3) {
 	struct csg_object_params *sub_param;
 	BU_GET(sub_param, struct csg_object_params);
-	csg_object_params_init(sub_param);
+	csg_object_params_init(sub_param, data);
 	sub_param->csg_id = (*(data->i->obj_cnt))++;
 	sub_param->csg_type = ARBN;
 	sub_param->bool_op = '+'; // arbn is intersected with primary primitive
