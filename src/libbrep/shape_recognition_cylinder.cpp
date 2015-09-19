@@ -134,26 +134,17 @@ cylinder_csg(struct bu_vls *msgs, struct subbrep_shoal_data *data, fastf_t cyl_t
     for (s_it = linear_edges.begin(); s_it != linear_edges.end(); s_it++) {
 	std::vector<int> faces;
 	const ON_BrepEdge *edge = &(brep->m_E[*s_it]);
-	//bu_log("checking edge %d\n", edge->m_edge_index);
 	for (int i = 0; i < edge->m_ti.Count(); i++) {
 	    const ON_BrepTrim *trim = &(brep->m_T[edge->m_ti[i]]);
 	    if (((surface_t *)data->i->face_surface_types)[trim->Face()->m_face_index] == SURFACE_PLANE) continue;
-	    if (cylindrical_surfaces.find(trim->Face()->m_face_index) == cylindrical_surfaces.end()) break;
-	    faces.push_back(trim->Face()->m_face_index);
-	    //bu_log("pushing back face %d\n", trim->Face()->m_face_index);
+	    if (cylindrical_surfaces.find(trim->Face()->m_face_index) != cylindrical_surfaces.end())
+		faces.push_back(trim->Face()->m_face_index);
 	}
 	if (faces.size() == 1) {
 	    le.insert(*s_it);
 	    continue;
 	}
-	int have_both_faces = 1;
-	for (unsigned int i = 0; i < faces.size(); i++) {
-	    if (cylindrical_surfaces.find(faces[i]) == cylindrical_surfaces.end()) {
-		have_both_faces = 0;
-		break;
-	    }
-	}
-	if (have_both_faces) {
+	if (faces.size() == 2) {
 	    std::set<int> nullv;
 	    std::set<int> nulle;
 	    //bu_log("edge %d is degenerate\n", *s_it);
@@ -169,7 +160,8 @@ cylinder_csg(struct bu_vls *msgs, struct subbrep_shoal_data *data, fastf_t cyl_t
 
     // If we have two non-linear edges remaining, construct a plane from them.
     // If we have a count other than two or zero, return.
-    if (le.size() != 2 && le.size() != 0) return 0;
+    if (le.size() != 2 && le.size() != 0)
+       	return 0;
     if (le.size() == 2 ) {
 	std::set<int> verts;
 	// If both edges share a pre-existing face that is planar, use the inverse of that
