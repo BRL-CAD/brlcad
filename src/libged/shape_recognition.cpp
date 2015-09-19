@@ -10,6 +10,7 @@
 #include <algorithm>
 
 #include "vmath.h"
+#include "bu/path.h"
 #include "wdb.h"
 #include "analyze.h"
 #include "ged.h"
@@ -87,7 +88,7 @@ subbrep_obj_name(int type, int id, const char *root, struct bu_vls *name)
 	    bu_vls_printf(name, "%s-brep_%d.s", root, id);
 	    break;
 	default:
-	    bu_vls_printf(name, "%s-%d.s", root, id);
+	    bu_vls_printf(name, "%s-%d.c", root, id);
 	    break;
     }
 }
@@ -419,8 +420,12 @@ brep_to_csg(struct ged *gedp, struct directory *dp, int UNUSED(verify))
     ON_Brep *brep = brep_ip->brep;
 
     struct wmember pcomb;
+    struct bu_vls core_name = BU_VLS_INIT_ZERO;
     struct bu_vls comb_name = BU_VLS_INIT_ZERO;
-    bu_vls_sprintf(&comb_name, "csg_%s", dp->d_namep);
+    struct bu_vls root_name = BU_VLS_INIT_ZERO;
+    bu_path_component(&core_name, dp->d_namep, PATH_BASENAME_CORE);
+    bu_vls_sprintf(&root_name, "%s-csg", bu_vls_addr(&core_name));
+    bu_vls_sprintf(&comb_name, "csg_%s.r", bu_vls_addr(&core_name));
     BU_LIST_INIT(&pcomb.l);
 
     struct bu_ptbl *subbreps = find_subbreps(gedp->ged_result_str, brep);
@@ -428,7 +433,7 @@ brep_to_csg(struct ged *gedp, struct directory *dp, int UNUSED(verify))
     if (subbreps) {
 	for (unsigned int i = 0; i < BU_PTBL_LEN(subbreps); i++) {
 	    struct subbrep_island_data *sb = (struct subbrep_island_data *)BU_PTBL_GET(subbreps, i);
-	    make_island(gedp->ged_result_str, sb, wdbp, bu_vls_addr(&comb_name), &pcomb);
+	    make_island(gedp->ged_result_str, sb, wdbp, bu_vls_addr(&root_name), &pcomb);
 	}
 	for (unsigned int i = 0; i < BU_PTBL_LEN(subbreps); i++) {
 	    // free islands;
@@ -439,10 +444,12 @@ brep_to_csg(struct ged *gedp, struct directory *dp, int UNUSED(verify))
 	int comb_objs = 0;
 	for (BU_LIST_FOR(olist, bu_list, &pcomb.l)) comb_objs++;
 	if (comb_objs > 1) {
-	    // This should probably be a region.
-	    mk_lcomb(wdbp, bu_vls_addr(&comb_name), &pcomb, 0, NULL, NULL, NULL, 0);
+	    // Toplevel comb is a region
+	    mk_lcomb(wdbp, bu_vls_addr(&comb_name), &pcomb, 1, NULL, NULL, NULL, 0);
 	} else {
-	    // TODO - Fix up name of first item in list to reflect top level naming.
+	    // TODO - Fix up name of first item in list to reflect top level naming to
+	    // avoid an unnecessary level of hierarchy.
+	    mk_lcomb(wdbp, bu_vls_addr(&comb_name), &pcomb, 1, NULL, NULL, NULL, 0);
 	}
     }
     return 0;
