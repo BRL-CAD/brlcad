@@ -164,7 +164,6 @@ find_hierarchy(struct bu_vls *UNUSED(msgs), struct bu_ptbl *islands)
 	    //bu_log("negative island - skipping %d\n", id->island_id);
 	    continue;
 	}
-	bu_log("checking island %d\n", id->island_id);
 	std::pair <IslandMap::iterator, IslandMap::iterator> p2c_ret;
 	p2c_ret = p2c.equal_range(id);
 
@@ -177,7 +176,6 @@ find_hierarchy(struct bu_vls *UNUSED(msgs), struct bu_ptbl *islands)
 	    // At the top level for a union, any negative shape is joined by a loop and hence
 	    // guaranteed to be a subtraction
 	    if (subisland->nucleus->params->bool_op == '-' || subisland->local_brep_bool_op == '-') {
-		bu_log("%d connected to %d, adding to subtractions\n", subisland->island_id, id->island_id);
 		bu_ptbl_ins_unique(id->subtractions, (long *)subisland);
 	    }
 
@@ -198,7 +196,8 @@ find_hierarchy(struct bu_vls *UNUSED(msgs), struct bu_ptbl *islands)
 
 	    std::pair <IslandMap::iterator, IslandMap::iterator> sp2c_ret = p2c.equal_range(sid);
 	    for (IslandMap::iterator sp2c_it = sp2c_ret.first; sp2c_it != sp2c_ret.second; ++sp2c_it) {
-		subislands.push(sp2c_it->second);
+		if (sp2c_it->second != id)
+		    subislands.push(sp2c_it->second);
 	    }
 
 	    if (sid->nucleus->params->bool_op == '-' || sid->local_brep_bool_op == '-') {
@@ -210,7 +209,6 @@ find_hierarchy(struct bu_vls *UNUSED(msgs), struct bu_ptbl *islands)
 		// so for speed we accept that there may be extra subtractions in
 		// the tree.
 		if (bbi) {
-		    bu_log("%d overlaps %d, adding to subtractions\n", sid->island_id, id->island_id);
 		    bu_ptbl_ins_unique(id->subtractions, (long *)sid);
 		}
 	    }
