@@ -182,7 +182,9 @@ bu_path_component(struct bu_vls *component, const char *path, path_component_t t
 		if (component) {
 		    period_pos = strrchr(basename, '.');
 		    bu_vls_sprintf(component, "%s", basename);
-		    bu_vls_trunc(component, -1 * strlen(period_pos));
+		    if (period_pos) {
+			bu_vls_trunc(component, -1 * strlen(period_pos));
+		    }
 		}
 	    }
 	    break;
