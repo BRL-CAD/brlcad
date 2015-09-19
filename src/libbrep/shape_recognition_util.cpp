@@ -135,8 +135,8 @@ subbrep_highest_order_face(struct subbrep_island_data *data)
     int general = 0;
     surface_t *fstypes = (surface_t *)data->face_surface_types;
     surface_t hofo = SURFACE_PLANE;
-    for (int i = 0; i < data->faces_cnt; i++) {
-	int ind = data->faces[i];
+    for (int i = 0; i < data->island_faces_cnt; i++) {
+	int ind = data->island_faces[i];
 	int surface_type = (int)fstypes[ind];
 	switch (surface_type) {
 	    case SURFACE_PLANE:
@@ -207,7 +207,7 @@ subbrep_bbox(struct subbrep_island_data *obj)
 	surface_GetBoundingBox(face->SurfaceOf(), u, v, *(obj->bbox), true);
     }
     std::set<int> loops;
-    array_to_set(&loops, obj->loops, obj->loops_cnt);
+    array_to_set(&loops, obj->island_loops, obj->island_loops_cnt);
     for (int i = 0; i < obj->fil_cnt; i++) {
 	ON_3dPoint min, max;
 	ON_MinMaxInit(&min, &max);
@@ -237,13 +237,13 @@ subbrep_bbox(struct subbrep_island_data *obj)
 void
 csg_object_params_init(struct csg_object_params *csg)
 {
-    csg->type = 0;
+    csg->csg_type = 0;
     csg->negative = 0;
-    csg->id = -1;
+    csg->csg_id = -1;
     csg->bool_op = '\0';
     csg->planes = NULL;
-    csg->faces = NULL;
-    csg->verts = NULL;
+    csg->csg_faces = NULL;
+    csg->csg_verts = NULL;
 }
 
 void
@@ -251,8 +251,8 @@ csg_object_params_free(struct csg_object_params *csg)
 {
     if (!csg) return;
     if (csg->planes) bu_free(csg->planes, "free planes");
-    if (csg->faces) bu_free(csg->faces , "free faces");
-    if (csg->verts) bu_free(csg->verts , "free verts");
+    if (csg->csg_faces) bu_free(csg->csg_faces , "free faces");
+    if (csg->csg_verts) bu_free(csg->csg_verts , "free verts");
 }
 
 
@@ -262,10 +262,10 @@ subbrep_shoal_init(struct subbrep_shoal_data *data, struct subbrep_island_data *
     data->i = i;
     BU_GET(data->params, struct csg_object_params);
     csg_object_params_init(data->params);
-    BU_GET(data->sub_params, struct bu_ptbl);
-    bu_ptbl_init(data->sub_params, 8, "sub_params table");
-    data->loops = NULL;
-    data->loops_cnt = 0;
+    BU_GET(data->shoal_children , struct bu_ptbl);
+    bu_ptbl_init(data->shoal_children, 8, "sub_params table");
+    data->shoal_loops = NULL;
+    data->shoal_loops_cnt = 0;
 }
 
 void
@@ -275,14 +275,14 @@ subbrep_shoal_free(struct subbrep_shoal_data *data)
     csg_object_params_free(data->params);
     BU_PUT(data->params, struct csg_object_params);
     data->params = NULL;
-    for (unsigned int i = 0; i < BU_PTBL_LEN(data->sub_params); i++) {
-	struct csg_object_params *c = (struct csg_object_params *)BU_PTBL_GET(data->sub_params, i);
+    for (unsigned int i = 0; i < BU_PTBL_LEN(data->shoal_children); i++) {
+	struct csg_object_params *c = (struct csg_object_params *)BU_PTBL_GET(data->shoal_children, i);
 	csg_object_params_free(c);
 	BU_PUT(c, struct csg_object_params);
     }
-    bu_ptbl_free(data->sub_params);
-    BU_PUT(data->sub_params, struct bu_ptbl);
-    if (data->loops) bu_free(data->loops, "free loop array");
+    bu_ptbl_free(data->shoal_children);
+    BU_PUT(data->shoal_children, struct bu_ptbl);
+    if (data->shoal_loops) bu_free(data->shoal_loops, "free loop array");
 }
 
 
@@ -292,7 +292,7 @@ subbrep_island_init(struct subbrep_island_data *obj, const ON_Brep *brep)
     if (!obj) return;
 
     /* We're a B-Rep until proven otherwise */
-    obj->type = BREP;
+    obj->island_type = BREP;
 
     obj->brep = brep;
     obj->local_brep = NULL;
@@ -303,8 +303,8 @@ subbrep_island_init(struct subbrep_island_data *obj, const ON_Brep *brep)
     BU_GET(obj->nucleus, struct subbrep_shoal_data);
     subbrep_shoal_init(obj->nucleus, obj);
 
-    BU_GET(obj->children, struct bu_ptbl);
-    bu_ptbl_init(obj->children, 8, "children table");
+    BU_GET(obj->island_children, struct bu_ptbl);
+    bu_ptbl_init(obj->island_children, 8, "children table");
 
     BU_GET(obj->subtractions, struct bu_ptbl);
     bu_ptbl_init(obj->subtractions, 8, "children table");
@@ -313,9 +313,9 @@ subbrep_island_init(struct subbrep_island_data *obj, const ON_Brep *brep)
     bu_vls_init(obj->key);
 
     obj->obj_cnt = NULL;
-    obj->faces = NULL;
-    obj->loops = NULL;
-    obj->edges = NULL;
+    obj->island_faces = NULL;
+    obj->island_loops = NULL;
+    obj->island_edges = NULL;
     obj->fol = NULL;
     obj->fil = NULL;
     obj->null_verts = NULL;
@@ -341,14 +341,14 @@ subbrep_island_free(struct subbrep_island_data *obj)
     BU_PUT(obj->key, struct bu_vls);
     obj->key = NULL;
 
-    for (unsigned int i = 0; i < BU_PTBL_LEN(obj->children); i++){
-	struct subbrep_shoal_data *cobj = (struct subbrep_shoal_data *)BU_PTBL_GET(obj->children, i);
+    for (unsigned int i = 0; i < BU_PTBL_LEN(obj->island_children); i++){
+	struct subbrep_shoal_data *cobj = (struct subbrep_shoal_data *)BU_PTBL_GET(obj->island_children, i);
 	subbrep_shoal_free(cobj);
 	BU_PUT(cobj, struct subbrep_shoal_data);
     }
-    bu_ptbl_free(obj->children);
-    BU_PUT(obj->children, struct bu_ptbl);
-    obj->children = NULL;
+    bu_ptbl_free(obj->island_children);
+    BU_PUT(obj->island_children, struct bu_ptbl);
+    obj->island_children = NULL;
 
     /* Anything in here will be freed elsewhere */
     if (obj->subtractions) {
@@ -357,12 +357,12 @@ subbrep_island_free(struct subbrep_island_data *obj)
     }
     obj->subtractions = NULL;
 
-    if (obj->faces) bu_free(obj->faces, "obj faces");
-    obj->faces = NULL;
-    if (obj->loops) bu_free(obj->loops, "obj loops");
-    obj->loops = NULL;
-    if (obj->edges) bu_free(obj->edges, "obj edges");
-    obj->edges = NULL;
+    if (obj->island_faces) bu_free(obj->island_faces, "obj faces");
+    obj->island_faces = NULL;
+    if (obj->island_loops) bu_free(obj->island_loops, "obj loops");
+    obj->island_loops = NULL;
+    if (obj->island_edges) bu_free(obj->island_edges, "obj edges");
+    obj->island_edges = NULL;
     if (obj->fol) bu_free(obj->fol, "obj fol");
     obj->fol = NULL;
     if (obj->fil) bu_free(obj->fil, "obj fil");
@@ -455,7 +455,7 @@ print_subbrep_object(struct subbrep_island_data *data, const char *offset)
     bu_vls_printf(&log, "\n");
     bu_vls_printf(&log, "%sObject %s:\n", offset, bu_vls_addr(data->key));
     bu_vls_printf(&log, "%sType: ", offset);
-    switch (data->type) {
+    switch (data->island_type) {
 	case COMB:
 	    bu_vls_printf(&log, "comb\n");
 	    break;
@@ -481,21 +481,21 @@ print_subbrep_object(struct subbrep_island_data *data, const char *offset)
 	    bu_vls_printf(&log, "brep\n");
     }
     bu_vls_printf(&log, "%sFace set: ", offset);
-    for (int i = 0; i < data->faces_cnt; i++) {
-	bu_vls_printf(&log, "%d", data->faces[i]);
-	if (i + 1 != data->faces_cnt) bu_vls_printf(&log, ",");
+    for (int i = 0; i < data->island_faces_cnt; i++) {
+	bu_vls_printf(&log, "%d", data->island_faces[i]);
+	if (i + 1 != data->island_faces_cnt) bu_vls_printf(&log, ",");
     }
     bu_vls_printf(&log, "\n");
     bu_vls_printf(&log, "%sLoop set: ", offset);
-    for (int i = 0; i < data->loops_cnt; i++) {
-	bu_vls_printf(&log, "%d", data->loops[i]);
-	if (i + 1 != data->loops_cnt) bu_vls_printf(&log, ",");
+    for (int i = 0; i < data->island_loops_cnt; i++) {
+	bu_vls_printf(&log, "%d", data->island_loops[i]);
+	if (i + 1 != data->island_loops_cnt) bu_vls_printf(&log, ",");
     }
     bu_vls_printf(&log, "\n");
     bu_vls_printf(&log, "%sEdge set: ", offset);
-    for (int i = 0; i < data->edges_cnt; i++) {
-	bu_vls_printf(&log, "%d", data->edges[i]);
-	if (i + 1 != data->edges_cnt) bu_vls_printf(&log, ",");
+    for (int i = 0; i < data->island_edges_cnt; i++) {
+	bu_vls_printf(&log, "%d", data->island_edges[i]);
+	if (i + 1 != data->island_edges_cnt) bu_vls_printf(&log, ",");
     }
     bu_vls_printf(&log, "\n");
     bu_vls_printf(&log, "%sFaces with outer loop set: ", offset);
@@ -549,9 +549,9 @@ subbrep_determine_boolean(struct subbrep_island_data *data)
 	   if (face->m_bRev) face_plane.Flip();
        }
        std::set<int> verts;
-       for (int j = 0; j < data->edges_cnt; j++) {
-	   verts.insert(data->brep->m_E[data->edges[j]].Vertex(0)->m_vertex_index);
-	   verts.insert(data->brep->m_E[data->edges[j]].Vertex(1)->m_vertex_index);
+       for (int j = 0; j < data->island_edges_cnt; j++) {
+	   verts.insert(data->brep->m_E[data->island_edges[j]].Vertex(0)->m_vertex_index);
+	   verts.insert(data->brep->m_E[data->island_edges[j]].Vertex(1)->m_vertex_index);
        }
        for (std::set<int>::iterator s_it = verts.begin(); s_it != verts.end(); s_it++) {
 	   // For each vertex in the subbrep, determine
@@ -614,10 +614,10 @@ subbrep_find_corners(struct subbrep_island_data *data, int **corner_verts_array,
     std::set<int>::iterator v_it, e_it;
     std::set<int> edges;
     if (!data || !corner_verts_array || !pcyl) return -1;
-    array_to_set(&edges, data->edges, data->edges_cnt);
+    array_to_set(&edges, data->island_edges, data->island_edges_cnt);
     // collect all candidate vertices
-    for (int i = 0; i < data->edges_cnt; i++) {
-	int ei = data->edges[i];
+    for (int i = 0; i < data->island_edges_cnt; i++) {
+	int ei = data->island_edges[i];
 	const ON_BrepEdge *edge = &(data->brep->m_E[ei]);
 	candidate_verts.insert(edge->Vertex(0)->m_vertex_index);
 	candidate_verts.insert(edge->Vertex(1)->m_vertex_index);
@@ -761,13 +761,13 @@ subbrep_make_brep(struct bu_vls *UNUSED(msgs), struct subbrep_island_data *data)
 
     std::set<int> faces;
     std::set<int> fil;
-    array_to_set(&faces, data->faces, data->faces_cnt);
+    array_to_set(&faces, data->island_faces, data->island_faces_cnt);
     array_to_set(&fil, data->fil, data->fil_cnt);
 
     // Use the set of loops to collect loops, trims, vertices, edges, faces, 2D
     // and 3D curves
-    for (int i = 0; i < data->loops_cnt; i++) {
-	const ON_BrepLoop *loop = &(brep->m_L[data->loops[i]]);
+    for (int i = 0; i < data->island_loops_cnt; i++) {
+	const ON_BrepLoop *loop = &(brep->m_L[data->island_loops[i]]);
 	const ON_BrepFace *face = loop->Face();
 	// Face
 	if (face_map.find(face->m_face_index) == face_map.end()) {

@@ -55,8 +55,8 @@ cylinder_csg(struct bu_vls *msgs, struct subbrep_shoal_data *data, fastf_t cyl_t
     ON_SimpleArray<ON_3dPoint> edge_midpnts;
     std::set<int> edges;
     std::set<int> linear_edges;
-    for (int i = 0; i < data->loops_cnt; i++) {
-	const ON_BrepLoop *loop = &(brep->m_L[data->loops[i]]);
+    for (int i = 0; i < data->shoal_loops_cnt; i++) {
+	const ON_BrepLoop *loop = &(brep->m_L[data->shoal_loops[i]]);
 	cylindrical_surfaces.insert(loop->Face()->m_face_index);
 	for (int ti = 0; ti < loop->m_ti.Count(); ti++) {
 	    const ON_BrepTrim *trim = &(brep->m_T[loop->m_ti[ti]]);
@@ -245,7 +245,7 @@ cylinder_csg(struct bu_vls *msgs, struct subbrep_shoal_data *data, fastf_t cyl_t
 
     // Make a starting cylinder from one of the cylindrical surfaces and construct the axis line
     ON_Cylinder cylinder;
-    ON_Surface *cs = brep->m_L[data->loops[0]].Face()->SurfaceOf()->Duplicate();
+    ON_Surface *cs = brep->m_L[data->shoal_loops[0]].Face()->SurfaceOf()->Duplicate();
     cs->IsCylinder(&cylinder, BREP_CYLINDRICAL_TOL);
     delete cs;
     double height[2];
@@ -367,7 +367,7 @@ cylinder_csg(struct bu_vls *msgs, struct subbrep_shoal_data *data, fastf_t cyl_t
     //bu_log("extension 2: %f\n", extensions[1]);
 
     // Populate the primitive data
-    data->params->type = CYLINDER;
+    data->params->csg_type = CYLINDER;
 
     // Flag the cylinder according to the negative or positive status of the
     // cylinder surface.
@@ -375,8 +375,8 @@ cylinder_csg(struct bu_vls *msgs, struct subbrep_shoal_data *data, fastf_t cyl_t
     data->params->bool_op = (data->params->negative == -1) ? '-' : 'u';
 
     // Assign an object id
-    data->params->id = (*(data->i->obj_cnt))++;
-    bu_log("rcc id: %d\n", data->params->id);
+    data->params->csg_id = (*(data->i->obj_cnt))++;
+    bu_log("rcc id: %d\n", data->params->csg_id);
 
     // Now we decide (arbitrarily) what the vector will be for our final cylinder
     // and calculate the true minimum and maximum points along the axis
@@ -471,8 +471,8 @@ cylinder_csg(struct bu_vls *msgs, struct subbrep_shoal_data *data, fastf_t cyl_t
 	struct csg_object_params *sub_param;
 	BU_GET(sub_param, struct csg_object_params);
 	csg_object_params_init(sub_param);
-	sub_param->id = (*(data->i->obj_cnt))++;
-	sub_param->type = ARBN;
+	sub_param->csg_id = (*(data->i->obj_cnt))++;
+	sub_param->csg_type = ARBN;
 	sub_param->bool_op = '+'; // arbn is intersected with primary primitive
 	sub_param->planes = (plane_t *)bu_calloc(arbn_planes.Count(), sizeof(plane_t), "planes");
 	sub_param->plane_cnt = arbn_planes.Count();
@@ -484,7 +484,7 @@ cylinder_csg(struct bu_vls *msgs, struct subbrep_shoal_data *data, fastf_t cyl_t
 	    sub_param->planes[i][2] = p.Normal().z;
 	    sub_param->planes[i][3] = -1 * d;
 	}
-	bu_ptbl_ins(data->sub_params, (long *)sub_param);
+	bu_ptbl_ins(data->shoal_children, (long *)sub_param);
 
 #if 0
 	struct bu_vls arbn = BU_VLS_INIT_ZERO;

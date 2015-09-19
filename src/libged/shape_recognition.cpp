@@ -43,9 +43,9 @@ obj_add_attr_key(struct subbrep_island_data *data, struct rt_wdb *wdbp, const ch
     if (db5_get_attributes(wdbp->dbip, &avs, dp)) return;
 
     (void)bu_avs_add(&avs, "bfaces", bu_vls_addr(data->key));
-    if (data->edges_cnt > 0) {
+    if (data->island_edges_cnt > 0) {
 	struct bu_vls val = BU_VLS_INIT_ZERO;
-	assemble_vls_str(&val, data->edges, data->edges_cnt);
+	assemble_vls_str(&val, data->island_edges, data->island_edges_cnt);
 	(void)bu_avs_add(&avs, "bedges", bu_vls_addr(&val));
 	bu_vls_free(&val);
     }
@@ -102,10 +102,10 @@ HIDDEN int
 subbrep_to_csg_arbn(struct bu_vls *msgs, struct csg_object_params *data, struct rt_wdb *wdbp, const char *pname)
 {
     if (!msgs || !data || !wdbp || !pname) return 0;
-    if (data->type == ARBN) {
+    if (data->csg_type == ARBN) {
 	/* Make the arbn, using the data key for a unique name */
 	struct bu_vls prim_name = BU_VLS_INIT_ZERO;
-	subbrep_obj_name(data->type, data->id, pname, &prim_name);
+	subbrep_obj_name(data->csg_type, data->csg_id, pname, &prim_name);
 	if (mk_arbn(wdbp, bu_vls_addr(&prim_name), data->plane_cnt, data->planes)) {
 	    if (msgs) bu_vls_printf(msgs, "mk_arbn failed for %s\n", bu_vls_addr(&prim_name));
 	} else {
@@ -122,11 +122,11 @@ HIDDEN int
 subbrep_to_csg_planar(struct bu_vls *msgs, struct csg_object_params *data, struct rt_wdb *wdbp, const char *pname)
 {
     if (!msgs || !data || !wdbp || !pname) return 0;
-    if (data->type == PLANAR_VOLUME) {
+    if (data->csg_type == PLANAR_VOLUME) {
 	/* Make the bot, using the data key for a unique name */
 	struct bu_vls prim_name = BU_VLS_INIT_ZERO;
-	subbrep_obj_name(data->type, data->id, pname, &prim_name);
-	if (mk_bot(wdbp, bu_vls_addr(&prim_name), RT_BOT_SOLID, RT_BOT_UNORIENTED, 0, data->vert_cnt, data->face_cnt, (fastf_t *)data->verts, data->faces, (fastf_t *)NULL, (struct bu_bitv *)NULL)) {
+	subbrep_obj_name(data->csg_type, data->csg_id, pname, &prim_name);
+	if (mk_bot(wdbp, bu_vls_addr(&prim_name), RT_BOT_SOLID, RT_BOT_UNORIENTED, 0, data->csg_vert_cnt, data->csg_face_cnt, (fastf_t *)data->csg_verts, data->csg_faces, (fastf_t *)NULL, (struct bu_bitv *)NULL)) {
 	    if (msgs) bu_vls_printf(msgs, "mk_bot failed for overall bot\n");
 	} else {
 	    //obj_add_attr_key(data, wdbp, bu_vls_addr(&prim_name));
@@ -142,9 +142,9 @@ HIDDEN int
 subbrep_to_csg_cylinder(struct bu_vls *msgs, struct csg_object_params *data, struct rt_wdb *wdbp, const char *pname)
 {
     if (!msgs || !data || !wdbp || !pname) return 0;
-    if (data->type == CYLINDER) {
+    if (data->csg_type == CYLINDER) {
 	struct bu_vls prim_name = BU_VLS_INIT_ZERO;
-	subbrep_obj_name(data->type, data->id, pname, &prim_name);
+	subbrep_obj_name(data->csg_type, data->csg_id, pname, &prim_name);
 	int ret = mk_rcc(wdbp, bu_vls_addr(&prim_name), data->origin, data->hv, data->radius);
 	if (ret) {
 	    //std::cout << "problem making " << bu_vls_addr(&prim_name) << "\n";
@@ -175,7 +175,7 @@ csg_obj_process(struct bu_vls *msgs, struct csg_object_params *data, struct rt_w
     }
 #endif
 
-    switch (data->type) {
+    switch (data->csg_type) {
 	case ARB6:
 	    //subbrep_to_csg_arb6(data, wdbp, pname, wcomb);
 	    break;
@@ -224,29 +224,29 @@ make_shoal(struct bu_vls *msgs, struct subbrep_shoal_data *data, struct rt_wdb *
     }
 
     struct bu_vls key = BU_VLS_INIT_ZERO;
-    set_key(&key, data->loops_cnt, data->loops);
+    set_key(&key, data->shoal_loops_cnt, data->shoal_loops);
     bu_log("Processing shoal %s from island %s\n", bu_vls_addr(&key), bu_vls_addr(data->i->key));
 
-    if (data->type == COMB) {
+    if (data->shoal_type == COMB) {
 	BU_LIST_INIT(&wcomb.l);
-	subbrep_obj_name(data->type, data->id, rname, &comb_name);
+	subbrep_obj_name(data->shoal_type, data->shoal_id, rname, &comb_name);
 	bu_log("Created %s\n", bu_vls_addr(&comb_name));
 	csg_obj_process(msgs, data->params, wdbp, rname);
-	subbrep_obj_name(data->params->type, data->params->id, rname, &prim_name);
+	subbrep_obj_name(data->params->csg_type, data->params->csg_id, rname, &prim_name);
 	bu_log("  %c %s\n", data->params->bool_op, bu_vls_addr(&prim_name));
 	(void)mk_addmember(bu_vls_addr(&prim_name), &(wcomb.l), NULL, db_str2op(&(data->params->bool_op)));
-	for (unsigned int i = 0; i < BU_PTBL_LEN(data->sub_params); i++) {
-	    struct csg_object_params *c = (struct csg_object_params *)BU_PTBL_GET(data->sub_params, i);
+	for (unsigned int i = 0; i < BU_PTBL_LEN(data->shoal_children); i++) {
+	    struct csg_object_params *c = (struct csg_object_params *)BU_PTBL_GET(data->shoal_children, i);
 	    char *bool_op = BOOL_RESOLVE(data->params->bool_op, c->bool_op);
 	    csg_obj_process(msgs, c, wdbp, rname);
 	    bu_vls_trunc(&prim_name, 0);
-	    subbrep_obj_name(c->type, c->id, rname, &prim_name);
+	    subbrep_obj_name(c->csg_type, c->csg_id, rname, &prim_name);
 	    bu_log("     %c(%c) %s\n", c->bool_op, *bool_op, bu_vls_addr(&prim_name));
 	    (void)mk_addmember(bu_vls_addr(&prim_name), &(wcomb.l), NULL, db_str2op(bool_op));
 	}
 	mk_lcomb(wdbp, bu_vls_addr(&comb_name), &wcomb, 0, NULL, NULL, NULL, 0);
     } else {
-	subbrep_obj_name(data->params->type, data->params->id, rname, &prim_name);
+	subbrep_obj_name(data->params->csg_type, data->params->csg_id, rname, &prim_name);
 	csg_obj_process(msgs, data->params, wdbp, rname);
 	bu_log("Created %s\n", bu_vls_addr(&prim_name));
     }
@@ -266,17 +266,17 @@ make_island(struct bu_vls *msgs, struct subbrep_island_data *data, struct rt_wdb
 
     struct bu_vls shoal_name = BU_VLS_INIT_ZERO;
     struct bu_vls island_name = BU_VLS_INIT_ZERO;
-    if (data->type == BREP) {
+    if (data->island_type == BREP) {
 	type = BREP;
-	subbrep_obj_name(data->type, data->id, rname, &island_name);
+	subbrep_obj_name(data->island_type, data->island_id, rname, &island_name);
     }
-    if ( data->type == COMB && BU_PTBL_LEN(data->children) > 0) {
+    if (data->island_type == COMB && BU_PTBL_LEN(data->island_children) > 0) {
 	type = COMB;
 	BU_LIST_INIT(&wcomb.l);
-	subbrep_obj_name(data->type, data->id, rname, &island_name);
+	subbrep_obj_name(data->island_type, data->island_id, rname, &island_name);
     }
     if (type == -1) {
-	subbrep_obj_name(data->nucleus->type, data->nucleus->id, rname, &island_name);
+	subbrep_obj_name(data->nucleus->shoal_type, data->nucleus->shoal_id, rname, &island_name);
     }
 
     switch (type) {
@@ -288,30 +288,31 @@ make_island(struct bu_vls *msgs, struct subbrep_island_data *data, struct rt_wdb
 	    break;
 	case COMB:
 	    bu_vls_trunc(&shoal_name, 0);
-	    subbrep_obj_name(data->nucleus->type, data->nucleus->id, rname, &shoal_name);
+	    subbrep_obj_name(data->nucleus->shoal_type, data->nucleus->shoal_id, rname, &shoal_name);
 	    if (!make_shoal(msgs, data->nucleus, wdbp, rname)) failed++;
 	    // In a comb, the first element is always unioned.  The nucleus bool op is applied
 	    // to the overall shoal in the pcomb assembly.
 	    (void)mk_addmember(bu_vls_addr(&shoal_name), &(wcomb.l), NULL, db_str2op(&un));
-	    // Find and handle union shoals first.
 	    char *bool_op;
-	    if (data->children && BU_PTBL_LEN(data->children) > 0) {
-		for (unsigned int i = 0; i < BU_PTBL_LEN(data->children); i++) {
-		    struct subbrep_shoal_data *d = (struct subbrep_shoal_data *)BU_PTBL_GET(data->children, i);
+	    if (data->island_children && BU_PTBL_LEN(data->island_children) > 0) {
+		// Find and handle union shoals first.
+		for (unsigned int i = 0; i < BU_PTBL_LEN(data->island_children); i++) {
+		    struct subbrep_shoal_data *d = (struct subbrep_shoal_data *)BU_PTBL_GET(data->island_children, i);
 		    bool_op = BOOL_RESOLVE(*n_bool_op, d->params->bool_op);
 		    if (*bool_op == 'u') {
 			bu_vls_trunc(&shoal_name, 0);
-			subbrep_obj_name(d->type, d->id, rname, &shoal_name);
+			subbrep_obj_name(d->shoal_type, d->shoal_id, rname, &shoal_name);
 			if (!make_shoal(msgs, d, wdbp, rname)) failed++;
 			(void)mk_addmember(bu_vls_addr(&shoal_name), &(wcomb.l), NULL, db_str2op(bool_op));
 		    }
 		}
-		for (unsigned int i = 0; i < BU_PTBL_LEN(data->children); i++) {
-		    struct subbrep_shoal_data *d = (struct subbrep_shoal_data *)BU_PTBL_GET(data->children, i);
+		// Have unions, get subtractions.
+		for (unsigned int i = 0; i < BU_PTBL_LEN(data->island_children); i++) {
+		    struct subbrep_shoal_data *d = (struct subbrep_shoal_data *)BU_PTBL_GET(data->island_children, i);
 		    bool_op = BOOL_RESOLVE(*n_bool_op, d->params->bool_op);
 		    if (*bool_op == '-') {
 			bu_vls_trunc(&shoal_name, 0);
-			subbrep_obj_name(d->type, d->id, rname, &shoal_name);
+			subbrep_obj_name(d->shoal_type, d->shoal_id, rname, &shoal_name);
 			if (!make_shoal(msgs, d, wdbp, rname)) failed++;
 			(void)mk_addmember(bu_vls_addr(&shoal_name), &(wcomb.l), NULL, db_str2op(bool_op));
 		    }
@@ -333,11 +334,10 @@ make_island(struct bu_vls *msgs, struct subbrep_island_data *data, struct rt_wdb
 	    struct subbrep_island_data *n = (struct subbrep_island_data *)BU_PTBL_GET(data->subtractions, i);
 	    struct bu_vls subtraction_name = BU_VLS_INIT_ZERO;
 	    bu_log("subtraction found for %s: %s\n", bu_vls_addr(data->key), bu_vls_addr(n->key));
-	    if (n->type == BREP || n->type == COMB) {
-		// TODO - need unique ids for each island too for this to work.
-		subbrep_obj_name(n->type, n->id, rname, &subtraction_name);
+	    if (n->island_type == BREP || n->island_type == COMB) {
+		subbrep_obj_name(n->island_type, n->island_id, rname, &subtraction_name);
 	    } else {
-		subbrep_obj_name(n->nucleus->params->type, n->nucleus->params->id, rname, &subtraction_name);
+		subbrep_obj_name(n->nucleus->params->csg_type, n->nucleus->params->csg_id, rname, &subtraction_name);
 	    }
 	    bu_log("subtracting %s\n", bu_vls_addr(n->key));
 	    if (pcomb) (void)mk_addmember(bu_vls_addr(&subtraction_name), &(pcomb->l), NULL, db_str2op(&sub));

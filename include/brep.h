@@ -1380,10 +1380,11 @@ sub_surface(const ON_Surface *in, int dir, double a, double b);
  * enough data slots to describe any primitive that may
  * be matched by the shape recognition logic */
 struct csg_object_params {
-    int type;
     struct subbrep_shoal_data *s;
+    int csg_type;
     int negative;
-    int id;
+    /* Unique id number */
+    int csg_id;
     char bool_op; /* Boolean operator - u = union (default), - = subtraction, + = intersection */
     point_t origin;
     vect_t hv;
@@ -1399,10 +1400,10 @@ struct csg_object_params {
     point_t implicit_plane_origin;
     vect_t implicit_plane_normal;
     /* bot */
-    int face_cnt;
-    int vert_cnt;
-    int *faces;
-    point_t *verts;
+    int csg_face_cnt;
+    int csg_vert_cnt;
+    int *csg_faces;
+    point_t *csg_verts;
 };
 
 /* Forward declarations */
@@ -1410,16 +1411,17 @@ struct subbrep_island_data;
 
 /* Topological shoal */
 struct subbrep_shoal_data {
-    int type;
-    int id;
     struct subbrep_island_data *i;
+    int shoal_type;
+    /* Unique id number */
+    int shoal_id;
     struct csg_object_params *params;
     /* struct csg_obj_params */
-    struct bu_ptbl *sub_params;
+    struct bu_ptbl *shoal_children;
 
     /* Working information */
-    int *loops;
-    int loops_cnt;
+    int *shoal_loops;
+    int shoal_loops_cnt;
 };
 
 /* Topological island */
@@ -1428,9 +1430,10 @@ struct subbrep_island_data {
     /* Overall type of island - typically comb or brep, but may
      * be an actual type if the nucleus corresponds to a single
      * implicit primitive */
-    int type;
+    int island_type;
 
-    int id;
+    /* Unique id number */
+    int island_id;
 
     /* Context information */
     const ON_Brep *brep;
@@ -1441,7 +1444,7 @@ struct subbrep_island_data {
     /* Nucleus */
     struct subbrep_shoal_data *nucleus;
     /* struct subbrep_shoal_data */
-    struct bu_ptbl *children;
+    struct bu_ptbl *island_children;
 
     /* For union objects, we list the subtractions it needs */
     struct bu_ptbl *subtractions;
@@ -1453,14 +1456,14 @@ struct subbrep_island_data {
     /* Working information - should probably be in private struct */
     void *face_surface_types;
     int *obj_cnt;
-    int *faces;
-    int *loops;
-    int *edges;
+    int *island_faces;
+    int *island_loops;
+    int *island_edges;
     int *fol; /* Faces with outer loops in object loop network */
     int *fil; /* Faces with only inner loops in object loop network */
-    int faces_cnt;
-    int loops_cnt;
-    int edges_cnt;
+    int island_faces_cnt;
+    int island_loops_cnt;
+    int island_edges_cnt;
     int fol_cnt;
     int fil_cnt;
     int null_vert_cnt;

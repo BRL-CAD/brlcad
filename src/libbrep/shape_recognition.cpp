@@ -54,7 +54,7 @@ island_faces_characterize(struct subbrep_island_data *sb)
     std::set<int>::iterator l_it;
 
     // unpack loop info
-    array_to_set(&loops, sb->loops, sb->loops_cnt);
+    array_to_set(&loops, sb->island_loops, sb->island_loops_cnt);
 
     for (l_it = loops.begin(); l_it != loops.end(); l_it++) {
 	const ON_BrepLoop *loop = &(brep->m_L[*l_it]);
@@ -72,7 +72,7 @@ island_faces_characterize(struct subbrep_island_data *sb)
     }
 
     // Pack up results
-    set_to_array(&(sb->faces), &(sb->faces_cnt), &faces);
+    set_to_array(&(sb->island_faces), &(sb->island_faces_cnt), &faces);
     set_to_array(&(sb->fol), &(sb->fol_cnt), &fol);
     set_to_array(&(sb->fil), &(sb->fil_cnt), &fil);
 
@@ -88,7 +88,7 @@ get_edge_set_from_loops(struct subbrep_island_data *sb)
     std::set<int>::iterator l_it;
 
     // unpack loop info
-    array_to_set(&loops, sb->loops, sb->loops_cnt);
+    array_to_set(&loops, sb->island_loops, sb->island_loops_cnt);
 
     for (l_it = loops.begin(); l_it != loops.end(); l_it++) {
 	const ON_BrepLoop *loop = &(brep->m_L[*l_it]);
@@ -102,7 +102,7 @@ get_edge_set_from_loops(struct subbrep_island_data *sb)
     }
 
     // Pack up results
-    set_to_array(&(sb->edges), &(sb->edges_cnt), &edges);
+    set_to_array(&(sb->island_edges), &(sb->island_edges_cnt), &edges);
 }
 
 /* This is the critical point at which we take a pile of shapes and actually reconstruct a
@@ -343,8 +343,8 @@ subbrep_split(struct bu_vls *msgs, struct subbrep_island_data *data)
     std::set<int> partly_planar;
     std::set<int>::iterator l_it, e_it;
 
-    array_to_set(&loops, data->loops, data->loops_cnt);
-    array_to_set(&active, data->loops, data->loops_cnt);
+    array_to_set(&loops, data->island_loops, data->island_loops_cnt);
+    array_to_set(&active, data->island_loops, data->island_loops_cnt);
 
     for (l_it = loops.begin(); l_it != loops.end(); l_it++) {
 	const ON_BrepLoop *loop = &(data->brep->m_L[*l_it]);
@@ -359,12 +359,12 @@ subbrep_split(struct bu_vls *msgs, struct subbrep_island_data *data)
 		struct subbrep_shoal_data *sh;
 		BU_GET(sh, struct subbrep_shoal_data);
 		subbrep_shoal_init(sh, data);
-		sh->params->id = (*(data->obj_cnt))++;
-		sh->id = (*(data->obj_cnt))++;
+		sh->params->csg_id = (*(data->obj_cnt))++;
+		sh->shoal_id = (*(data->obj_cnt))++;
 		sh->i = data;
-		sh->loops_cnt = shoal_build(&(sh->loops), loop->m_loop_index, data);
-		for (int i = 0; i < sh->loops_cnt; i++) {
-		    active.erase(sh->loops[i]);
+		sh->shoal_loops_cnt = shoal_build(&(sh->shoal_loops), loop->m_loop_index, data);
+		for (int i = 0; i < sh->shoal_loops_cnt; i++) {
+		    active.erase(sh->shoal_loops[i]);
 		}
 		int local_fail = 0;
 		switch (surface_type) {
@@ -386,13 +386,13 @@ subbrep_split(struct bu_vls *msgs, struct subbrep_island_data *data)
 			break;
 		}
 		if (!local_fail) {
-		    if (BU_PTBL_LEN(sh->sub_params) > 0) {
-			sh->type = COMB;
+		    if (BU_PTBL_LEN(sh->shoal_children) > 0) {
+			sh->shoal_type = COMB;
 		    } else {
-			sh->type = sh->params->type;
-			sh->id = sh->params->id;
+			sh->shoal_type = sh->params->csg_type;
+			sh->shoal_id = sh->params->csg_id;
 		    }
-		    bu_ptbl_ins(data->children, (long *)sh);
+		    bu_ptbl_ins(data->island_children, (long *)sh);
 		} else {
 		    csg_fail++;
 		}
@@ -401,8 +401,8 @@ subbrep_split(struct bu_vls *msgs, struct subbrep_island_data *data)
     }
 
     if (csg_fail > 0) {
-	/* Clear children - we found something we can't handle, so there will be no
-	 * CSG conversion of this subbrep. Cleanup is handled one level up. */
+	/* We found something we can't handle, so there will be no CSG
+	 * conversion of this subbrep. Cleanup is handled one level up. */
 	bu_log("non-planar splitting subroutines failed\n");
 	return 0;
     }
@@ -418,10 +418,10 @@ subbrep_split(struct bu_vls *msgs, struct subbrep_island_data *data)
 
     // If we've got a single nucleus shape and no children, set the island
     // type to be that of the nucleus type.  Otherwise, it's a comb.
-    if (BU_PTBL_LEN(data->children) == 0) {
-	data->type = data->nucleus->type;
+    if (BU_PTBL_LEN(data->island_children) == 0) {
+	data->island_type = data->nucleus->shoal_type;
     } else {
-	data->type = COMB;
+	data->island_type = COMB;
     }
 
     // Note is is possible to have degenerate *edges*, not just vertices -
@@ -512,7 +512,7 @@ find_subbreps(struct bu_vls *msgs, const ON_Brep *brep)
 	sb->face_surface_types = (void *)face_surface_types;
 
 	// Assign loop set to island
-	set_to_array(&(sb->loops), &(sb->loops_cnt), &loops);
+	set_to_array(&(sb->island_loops), &(sb->island_loops_cnt), &loops);
 
 	// Assemble the set of faces, characterize face-from-outer-loop (fol)
 	// and face-from-inner-loop (fil) faces in the island.  Test planarity
@@ -524,11 +524,11 @@ find_subbreps(struct bu_vls *msgs, const ON_Brep *brep)
 	get_edge_set_from_loops(sb);
 
 	// Get key based on face indicies
-	set_key(sb->key, sb->faces_cnt, sb->faces);
+	set_key(sb->key, sb->island_faces_cnt, sb->island_faces);
 
 	if (!planar_fils) {
 	    if (msgs) bu_vls_printf(msgs, "Note - non-planer island mating loop in %s, representing as B-Rep\n", bu_vls_addr(sb->key));
-	    sb->type = BREP;
+	    sb->island_type = BREP;
 	    (void)subbrep_make_brep(msgs, sb);
 	    bu_ptbl_ins(subbreps, (long *)sb);
 	    continue;
@@ -538,8 +538,9 @@ find_subbreps(struct bu_vls *msgs, const ON_Brep *brep)
 	surface_t hof = subbrep_highest_order_face(sb);
 	if (hof >= SURFACE_GENERAL) {
 	    if (msgs) bu_vls_printf(msgs, "Note - general surface present in island %s, representing as B-Rep\n", bu_vls_addr(sb->key));
-	    sb->type = BREP;
+	    sb->island_type = BREP;
 	    (void)subbrep_make_brep(msgs, sb);
+	    //TODO - need to determine boolean of subbrep as well.  Also check for self intersection...
 	    bu_ptbl_ins(subbreps, (long *)sb);
 	    continue;
 	}
@@ -548,7 +549,7 @@ find_subbreps(struct bu_vls *msgs, const ON_Brep *brep)
 	TOO_MANY_CSG_OBJS(obj_cnt, msgs);
 	if (!split) {
 	    if (msgs) bu_vls_printf(msgs, "Note - split of %s unsuccessful, making brep\n", bu_vls_addr(sb->key));
-	    sb->type = BREP;
+	    sb->island_type = BREP;
 	    (void)subbrep_make_brep(msgs, sb);
 	    //TODO - need to determine boolean of subbrep as well.  Also check for self intersection...
 	} else {
@@ -557,7 +558,6 @@ find_subbreps(struct bu_vls *msgs, const ON_Brep *brep)
 	    (void)subbrep_make_brep(msgs, sb);
 #endif
 	}
-
 
 	bu_ptbl_ins(subbreps, (long *)sb);
     }
@@ -586,7 +586,7 @@ find_subbreps(struct bu_vls *msgs, const ON_Brep *brep)
     // Assign island IDs, populate set
     for (unsigned int i = 0; i < BU_PTBL_LEN(subbreps); i++) {
 	struct subbrep_island_data *si = (struct subbrep_island_data *)BU_PTBL_GET(subbreps, i);
-	si->id = obj_cnt++;
+	si->island_id = obj_cnt++;
 	islands.insert(si);
     }
 

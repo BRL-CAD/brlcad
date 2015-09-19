@@ -360,8 +360,8 @@ shoal_polygon_tri(struct bu_vls *UNUSED(msgs), struct subbrep_shoal_data *data, 
     std::set<int> faces;
     std::set<int> shoal_edges;
     std::set<int>::iterator se_it;
-    for (int i = 0; i < data->loops_cnt; i++) {
-	const ON_BrepLoop *loop = &(data->i->brep->m_L[data->loops[i]]);
+    for (int i = 0; i < data->shoal_loops_cnt; i++) {
+	const ON_BrepLoop *loop = &(data->i->brep->m_L[data->shoal_loops[i]]);
 	faces.insert(loop->Face()->m_face_index);
 	for (int ti = 0; ti < loop->m_ti.Count(); ti++) {
 	    const ON_BrepTrim *trim = &(brep->m_T[loop->m_ti[ti]]);
@@ -506,17 +506,17 @@ negative_polygon(struct bu_vls *UNUSED(msgs), struct csg_object_params *data)
     /* Get bounding box from the vertices */
     ON_BoundingBox vert_bbox;
     ON_MinMaxInit(&vert_bbox.m_min, &vert_bbox.m_max);
-    for (int i = 0; i < data->vert_cnt; i++) {
+    for (int i = 0; i < data->csg_vert_cnt; i++) {
 	ON_3dPoint p;
-	ON_VMOVE(p, data->verts[i]);
+	ON_VMOVE(p, data->csg_verts[i]);
 	vert_bbox.Set(p, true);
     }
 
     /* Get normal from first triangle in array - TODO - fiddle with this to get the correct normal... */
     ON_3dPoint tp1, tp2, tp3;
-    ON_VMOVE(tp1, data->verts[data->faces[0]]);
-    ON_VMOVE(tp2, data->verts[data->faces[1]]);
-    ON_VMOVE(tp3, data->verts[data->faces[2]]);
+    ON_VMOVE(tp1, data->csg_verts[data->csg_faces[0]]);
+    ON_VMOVE(tp2, data->csg_verts[data->csg_faces[1]]);
+    ON_VMOVE(tp3, data->csg_verts[data->csg_faces[2]]);
     ON_3dVector v1 = tp2 - tp1;
     ON_3dVector v2 = tp3 - tp1;
     ON_3dVector triangle_normal = ON_CrossProduct(v1, v2);
@@ -555,11 +555,11 @@ negative_polygon(struct bu_vls *UNUSED(msgs), struct csg_object_params *data)
     int hit_cnt = 0;
     point_t p1, p2, p3, isect;
     ON_3dPointArray hit_pnts;
-    for (int i = 0; i < data->face_cnt; i++) {
+    for (int i = 0; i < data->csg_face_cnt; i++) {
 	ON_3dPoint onp1, onp2, onp3, hit_pnt;
-	VMOVE(p1, data->verts[data->faces[i*3+0]]);
-	VMOVE(p2, data->verts[data->faces[i*3+1]]);
-	VMOVE(p3, data->verts[data->faces[i*3+2]]);
+	VMOVE(p1, data->csg_verts[data->csg_faces[i*3+0]]);
+	VMOVE(p2, data->csg_verts[data->csg_faces[i*3+1]]);
+	VMOVE(p3, data->csg_verts[data->csg_faces[i*3+2]]);
 	ON_VMOVE(onp1, p1);
 	ON_VMOVE(onp2, p2);
 	ON_VMOVE(onp3, p3);
@@ -619,8 +619,8 @@ island_nucleus(struct bu_vls *msgs, struct subbrep_island_data *data)
     // island.
     std::set<int> planar_faces;
     std::set<int>::iterator p_it;
-    for (int i = 0; i < data->loops_cnt; i++) {
-	const ON_BrepLoop *loop = &(data->brep->m_L[data->loops[i]]);
+    for (int i = 0; i < data->island_loops_cnt; i++) {
+	const ON_BrepLoop *loop = &(data->brep->m_L[data->island_loops[i]]);
 	const ON_BrepFace *face = loop->Face();
 	surface_t surface_type = ((surface_t *)data->face_surface_types)[face->m_face_index];
 	if (surface_type == SURFACE_PLANE) {
@@ -630,11 +630,11 @@ island_nucleus(struct bu_vls *msgs, struct subbrep_island_data *data)
 
     // Build the set of all arbn shoal planes
     ON_SimpleArray<ON_Plane> arbn_planes;
-    for (size_t i = 0; i < BU_PTBL_LEN(data->children); i++) {
-	struct subbrep_shoal_data *d = (struct subbrep_shoal_data *)BU_PTBL_GET(data->children, i);
-	if (d->sub_params) {
-	    for (size_t j = 0; j < BU_PTBL_LEN(d->sub_params); j++) {
-		struct csg_object_params *c = (struct csg_object_params *)BU_PTBL_GET(d->sub_params, j);
+    for (size_t i = 0; i < BU_PTBL_LEN(data->island_children); i++) {
+	struct subbrep_shoal_data *d = (struct subbrep_shoal_data *)BU_PTBL_GET(data->island_children, i);
+	if (d->shoal_children) {
+	    for (size_t j = 0; j < BU_PTBL_LEN(d->shoal_children); j++) {
+		struct csg_object_params *c = (struct csg_object_params *)BU_PTBL_GET(d->shoal_children, j);
 		if (c->plane_cnt > 0) {
 		    for (size_t k = 0; k < c->plane_cnt; k++) {
 			ON_3dVector n;
@@ -677,14 +677,14 @@ island_nucleus(struct bu_vls *msgs, struct subbrep_island_data *data)
 	}
 
 	// Check for a hard-to-spot degenerate nucleus case
-	if (arbn_coplanar_faces.size() == planar_faces.size() && BU_PTBL_LEN(data->children) == 1) degenerate_nucleus = 1;
+	if (arbn_coplanar_faces.size() == planar_faces.size() && BU_PTBL_LEN(data->island_children) == 1) degenerate_nucleus = 1;
     }
 
     // If they are *not* all degenerate, for all shoals check the edges
     // connected by at least one vertex to the shoal loops against the shoal
     // imlicit plane.  If any of them have points on both sides of one of the
     // implicit planes, we have a complex situation.
-    if (!degenerate_nucleus && BU_PTBL_LEN(data->children) > 0) {
+    if (!degenerate_nucleus && BU_PTBL_LEN(data->island_children) > 0) {
 
 	// Get ignored vertices reported from shoal building - this is where they'll matter
 	std::set<int> ignored_verts;
@@ -692,11 +692,11 @@ island_nucleus(struct bu_vls *msgs, struct subbrep_island_data *data)
 
 
 	// Check for edges that cross implicit planes
-	for (size_t i = 0; i < BU_PTBL_LEN(data->children); i++) {
+	for (size_t i = 0; i < BU_PTBL_LEN(data->island_children); i++) {
 	    ON_Plane shoal_implicit_plane;
 	    std::set<int> shoal_connected_edges;
 	    std::set<int>::iterator scl_it;
-	    struct subbrep_shoal_data *d = (struct subbrep_shoal_data *)BU_PTBL_GET(data->children, i);
+	    struct subbrep_shoal_data *d = (struct subbrep_shoal_data *)BU_PTBL_GET(data->island_children, i);
 	    if (d->params->have_implicit_plane) {
 		ON_3dPoint o;
 		ON_3dVector n;
@@ -707,9 +707,9 @@ island_nucleus(struct bu_vls *msgs, struct subbrep_island_data *data)
 		continue;
 	    }
 	    // Get all edges that share a vertex with the shoal loops
-	    for (int li = 0; li < d->loops_cnt; li++) {
+	    for (int li = 0; li < d->shoal_loops_cnt; li++) {
 		//bu_log("shoal loop (%d of %d): %d\n", li, d->loops_cnt, d->loops[li]);
-		const ON_BrepLoop *loop = &(data->brep->m_L[d->loops[li]]);
+		const ON_BrepLoop *loop = &(data->brep->m_L[d->shoal_loops[li]]);
 		for (int ti = 0; ti < loop->m_ti.Count(); ti++) {
 		    int vert_ind;
 		    const ON_BrepTrim *trim = &(data->brep->m_T[loop->m_ti[ti]]);
@@ -754,7 +754,7 @@ island_nucleus(struct bu_vls *msgs, struct subbrep_island_data *data)
     if (!degenerate_nucleus) {
 	// First, deal with planar faces
 	std::set<int> island_loops;
-	array_to_set(&island_loops, data->loops, data->loops_cnt);
+	array_to_set(&island_loops, data->island_loops, data->island_loops_cnt);
 	for (p_it = planar_faces.begin(); p_it != planar_faces.end(); p_it++) {
 	    int f_lcnt;
 	    int loop_rev = 0; // Check if loop flips when ignored verts are removed
@@ -806,8 +806,8 @@ island_nucleus(struct bu_vls *msgs, struct subbrep_island_data *data)
 	}
 
 	// Second, deal with non-planar shoals.
-	for (size_t i = 0; i < BU_PTBL_LEN(data->children); i++) {
-	    struct subbrep_shoal_data *d = (struct subbrep_shoal_data *)BU_PTBL_GET(data->children, i);
+	for (size_t i = 0; i < BU_PTBL_LEN(data->island_children); i++) {
+	    struct subbrep_shoal_data *d = (struct subbrep_shoal_data *)BU_PTBL_GET(data->island_children, i);
 	    if (d->params->have_implicit_plane) {
 		int *faces;
 		int face_cnt = shoal_polygon_tri(msgs, d, &faces);
@@ -855,31 +855,35 @@ island_nucleus(struct bu_vls *msgs, struct subbrep_island_data *data)
 	    int curr_vert = 0;
 	    BU_GET(data->nucleus, struct subbrep_shoal_data);
 	    subbrep_shoal_init(data->nucleus, data);
-	    data->nucleus->params->id = (*(data->obj_cnt))++;
-	    data->nucleus->type = PLANAR_VOLUME;
-	    data->nucleus->id = data->nucleus->params->id;
+	    data->nucleus->params->csg_id = (*(data->obj_cnt))++;
+	    data->nucleus->params->csg_type = PLANAR_VOLUME;
+	    data->nucleus->shoal_id = data->nucleus->params->csg_id;
+	    data->nucleus->shoal_type = PLANAR_VOLUME;
 
-	    data->nucleus->loops_cnt = data->loops_cnt;
-	    data->nucleus->loops = (int *)bu_calloc(data->loops_cnt, sizeof(int), "shoal loops");
-	    for (int m = 0; m != data->loops_cnt; m++) data->nucleus->loops[m] = data->loops[m];
+	    // The nucleus shoal in this configuration will have the same
+	    // number of loops in play as the island itself.
+	    data->nucleus->shoal_loops_cnt = data->island_loops_cnt;
+	    data->nucleus->shoal_loops = (int *)bu_calloc(data->island_loops_cnt, sizeof(int), "shoal loops");
+	    for (int m = 0; m != data->island_loops_cnt; m++) {
+		data->nucleus->shoal_loops[m] = data->island_loops[m];
+	    }
 
-	    data->nucleus->params->type = PLANAR_VOLUME;
-	    data->nucleus->params->verts = (point_t *)bu_calloc(all_used_verts.size(), sizeof(point_t), "final verts array");
+	    data->nucleus->params->csg_verts = (point_t *)bu_calloc(all_used_verts.size(), sizeof(point_t), "final verts array");
 	    for (auv_it = all_used_verts.begin(); auv_it != all_used_verts.end(); auv_it++) {
 		ON_3dPoint vp = data->brep->m_V[(int)(*auv_it)].Point();
-		BN_VMOVE(data->nucleus->params->verts[curr_vert], vp);
+		BN_VMOVE(data->nucleus->params->csg_verts[curr_vert], vp);
 		vert_map.insert(std::pair<int,int>((int)*auv_it, curr_vert));
 		curr_vert++;
 	    }
-	    data->nucleus->params->vert_cnt = all_used_verts.size();
+	    data->nucleus->params->csg_vert_cnt = all_used_verts.size();
 
 	    // Fourth, create final face arrays using the new indices
-	    data->nucleus->params->faces = (int *)bu_calloc(all_faces.size(), sizeof(int), "final faces array");
+	    data->nucleus->params->csg_faces = (int *)bu_calloc(all_faces.size(), sizeof(int), "final faces array");
 	    for (unsigned int i = 0; i < all_faces.size(); i++) {
 		int nv = vert_map.find(all_faces[i])->second;
-		data->nucleus->params->faces[i] = nv;
+		data->nucleus->params->csg_faces[i] = nv;
 	    }
-	    data->nucleus->params->face_cnt = all_faces.size() / 3;
+	    data->nucleus->params->csg_face_cnt = all_faces.size() / 3;
 	}
 
 	// Sixth, check the polyhedron nucleus is degenerate
@@ -903,9 +907,9 @@ island_nucleus(struct bu_vls *msgs, struct subbrep_island_data *data)
 	//
 	// First, check whether the shoal negative/positive flags are the same.
 	int shoal_same_status = 1;
-	struct subbrep_shoal_data *cn = (struct subbrep_shoal_data *)BU_PTBL_GET(data->children, 0);
-	for (size_t i = 1; i < BU_PTBL_LEN(data->children); i++) {
-	    struct subbrep_shoal_data *d = (struct subbrep_shoal_data *)BU_PTBL_GET(data->children, i);
+	struct subbrep_shoal_data *cn = (struct subbrep_shoal_data *)BU_PTBL_GET(data->island_children, 0);
+	for (size_t i = 1; i < BU_PTBL_LEN(data->island_children); i++) {
+	    struct subbrep_shoal_data *d = (struct subbrep_shoal_data *)BU_PTBL_GET(data->island_children, i);
 	    if (cn->params->negative != d->params->negative) shoal_same_status = 0;
 	}
 	if (shoal_same_status) {
@@ -913,10 +917,10 @@ island_nucleus(struct bu_vls *msgs, struct subbrep_island_data *data)
 	    // nucleus and whether the nucleus is negative be based on the
 	    // negative shape status of the shoal.  The island's children
 	    // will be unioned.
-	    bu_log("shoal same\n");
+	    bu_log("shoal negative status is uniform\n");
 	    subbrep_shoal_free(data->nucleus);
 	    data->nucleus = cn;
-	    bu_ptbl_rm(data->children, (long *)cn);
+	    bu_ptbl_rm(data->island_children, (long *)cn);
 	} else {
 	    // If we've got shoals with different boolean status, then we have
 	    // to decide which shape is "inside" the other to make a call.  If
@@ -932,7 +936,7 @@ island_nucleus(struct bu_vls *msgs, struct subbrep_island_data *data)
 	    // objects.  The subtractions and then the unions will be made
 	    // after all other csg logic has been built up.  Bad for locality
 	    // but may serve as a fall-back if nucleus resolution doesn't resolve...
-	    bu_log("\n\n\nshoal different - currently unhandled!\n\n\n");
+	    bu_log("\n\n\nshoals have different negative status - currently unhandled!\n\n\n");
 	}
     }
 
@@ -945,10 +949,10 @@ island_nucleus(struct bu_vls *msgs, struct subbrep_island_data *data)
 	    // Flip triangles and planes so BoT/arbn is a positive shape.  All csg params need
 	    // to describe positive shapes for primitive creation - their "negative" flag preserves
 	    // their original role per their original B-Rep face normals
-	    for (int i = 0; i < data->nucleus->params->face_cnt; i++) {
-		int tmp = data->nucleus->params->faces[i*3+1];
-		data->nucleus->params->faces[i*3+1] = data->nucleus->params->faces[i*3+2];
-		data->nucleus->params->faces[i*3+2] = tmp;
+	    for (int i = 0; i < data->nucleus->params->csg_face_cnt; i++) {
+		int tmp = data->nucleus->params->csg_faces[i*3+1];
+		data->nucleus->params->csg_faces[i*3+1] = data->nucleus->params->csg_faces[i*3+2];
+		data->nucleus->params->csg_faces[i*3+2] = tmp;
 	    }
 	    for (int i = 0; i < planes.Count(); i++) {
 		planes[i].Flip();
@@ -975,8 +979,8 @@ island_nucleus(struct bu_vls *msgs, struct subbrep_island_data *data)
 	if (convex_polyhedron) {
 	    // If we do in fact have a convex polyhedron, we can create an arbn
 	    // instead of a BoT for this nucleus shape
-	    data->nucleus->params->type = ARBN;
-	    data->nucleus->type = ARBN;
+	    data->nucleus->params->csg_type = ARBN;
+	    data->nucleus->shoal_type = ARBN;
 	    data->nucleus->params->plane_cnt = planes.Count();
 	    data->nucleus->params->planes = (plane_t *)bu_calloc(planes.Count(), sizeof(plane_t), "planes");
 	    for (int i = 0; i < planes.Count(); i++) {
@@ -989,7 +993,7 @@ island_nucleus(struct bu_vls *msgs, struct subbrep_island_data *data)
 	    }
 	} else {
 	    // Otherwise, confirm as BoT
-	    data->nucleus->params->type = PLANAR_VOLUME;
+	    data->nucleus->params->csg_type = PLANAR_VOLUME;
 	}
 
 	// 3. There is one final wrinkle.  It is possible for a polyhedron nucleus to be volumetrically
@@ -998,16 +1002,14 @@ island_nucleus(struct bu_vls *msgs, struct subbrep_island_data *data)
 
 	if (have_flipped_loops > 0) {
 	    bu_log("flip nucleus and child\n");
-	    if (BU_PTBL_LEN(data->children) != 1) {
+	    if (BU_PTBL_LEN(data->island_children) != 1) {
 		bu_log("huh? flipped loops and child count != 1?\n");
 	    } else {
-		struct subbrep_shoal_data *d = (struct subbrep_shoal_data *)BU_PTBL_GET(data->children, 0);
-		struct bu_ptbl *tmp_sub = data->nucleus->sub_params;
-		struct csg_object_params *tmp = data->nucleus->params;
-		data->nucleus->params = d->params;
-		data->nucleus->sub_params = d->sub_params;
-		d->params = tmp;
-		d->sub_params = tmp_sub;
+		struct subbrep_shoal_data *tmp_n = data->nucleus;
+		struct subbrep_shoal_data *d = (struct subbrep_shoal_data *)BU_PTBL_GET(data->island_children, 0);
+		data->nucleus = d;
+		bu_ptbl_rm(data->island_children, (long *)d);
+		bu_ptbl_ins(data->island_children, (long *)tmp_n);
 	    }
 	}
     }
@@ -1022,12 +1024,12 @@ subbrep_is_planar(struct bu_vls *UNUSED(msgs), struct subbrep_island_data *data)
     // Check surfaces.  If a surface is anything other than a plane the verdict is no.
     // If any face has more than one loop, the verdict is no.
     // If all surfaces are planes and the faces have only outer loops, then the verdict is yes.
-    for (i = 0; i < data->faces_cnt; i++) {
+    for (i = 0; i < data->island_faces_cnt; i++) {
 	const ON_BrepFace *face = &(data->brep->m_F[i]);
 	surface_t stype = ((surface_t *)data->face_surface_types)[face->m_face_index];
 	if (stype != SURFACE_PLANE) return 0;
     }
-    data->type = PLANAR_VOLUME;
+    data->island_type = PLANAR_VOLUME;
 
     //if (negative_polygon(msgs, data) == -1) data->params->bool_op = '-';
 
