@@ -32,17 +32,6 @@ void set_key(struct bu_vls *key, int k, int *karray);
 }
 
 typedef enum {
-    CURVE_POINT = 0,
-    CURVE_LINE,
-    CURVE_ARC,
-    CURVE_CIRCLE,
-    CURVE_PARABOLA,
-    CURVE_ELLIPSE,
-    //Insert any new types here
-    CURVE_GENERAL  /* A curve that does not fit in any of the previous categories */
-} curve_t;
-
-typedef enum {
     SURFACE_PLANE = 0,
     SURFACE_CYLINDRICAL_SECTION,
     SURFACE_CYLINDER,
@@ -74,7 +63,6 @@ typedef enum {
     BREP /* A brep is a complex solid that cannot be represented by CSG */
 } volume_t;
 
-curve_t GetCurveType(ON_Curve *curve);
 surface_t GetSurfaceType(const ON_Surface *surface);
 surface_t subbrep_highest_order_face(struct subbrep_island_data *data);
 void subbrep_bbox(struct subbrep_island_data *obj);
@@ -99,43 +87,6 @@ int cylinder_csg(struct bu_vls *msgs, struct subbrep_shoal_data *data, fastf_t c
 
 
 int subbrep_brep_boolean(struct subbrep_island_data *data);
-
-
-//int subbrep_split(struct bu_vls *msgs, struct subbrep_island_data *data);
-//int subbrep_make_planar(struct subbrep_island_data *data);
-
-
-
-
-// Functions for defining a simplified planar subvolume
-//void subbrep_planar_init(struct subbrep_island_data *data);
-//void subbrep_planar_close_obj(struct subbrep_island_data *data);
-//void subbrep_add_planar_face(struct subbrep_island_data *data, ON_Plane *pcyl, ON_SimpleArray<const ON_BrepVertex *> *vert_loop, int neg_surf);
-
-//struct bu_ptbl *find_subbreps(const ON_Brep *brep);
-//struct bu_ptbl *find_top_level_hierarchy(struct bu_ptbl *subbreps);
-void print_subbrep_object(struct subbrep_island_data *data, const char *offset);
-
-//volume_t subbrep_shape_recognize(struct bu_vls *msgs, struct subbrep_island_data *data);
-
-//int subbrep_is_planar(struct bu_vls *msgs, struct subbrep_island_data *data);
-
-//int cylindrical_loop_planar_vertices(ON_BrepFace *face, int loop_index);
-//int subbrep_is_cylinder(struct bu_vls *msgs, struct subbrep_island_data *data, fastf_t cyl_tol);
-
-//int subbrep_is_cone(struct bu_vls *msgs, struct subbrep_island_data *data, fastf_t cone_tol);
-//int cone_csg(struct bu_vls *msgs, struct subbrep_island_data *data, fastf_t cone_tol);
-
-//int sphere_csg(struct subbrep_island_data *data, fastf_t cone_tol);
-
-//int torus_csg(struct subbrep_island_data *data, fastf_t cone_tol);
-
-
-//int subbrep_find_corners(struct subbrep_island_data *data, int **corner_verts_array, ON_Plane *pcyl);
-//int subbrep_top_bottom_pnts(struct subbrep_island_data *data, std::set<int> *corner_verts, ON_Plane *top_plane, ON_Plane *bottom_plane, ON_SimpleArray<const ON_BrepVertex *> *top_pnts, ON_SimpleArray<const ON_BrepVertex *> *bottom_pnts);
-
-
-//int subbrep_polygon_tri(const ON_Brep *brep, const point_t *all_verts, int *loops, int loop_cnt, int **ffaces);
 
 #endif /* SHAPE_RECOGNITION_H */
 
