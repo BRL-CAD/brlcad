@@ -393,7 +393,7 @@ make_island(struct bu_vls *msgs, struct subbrep_island_data *data, struct rt_wdb
  *  2 not a valid brep
  */
 int
-brep_to_csg(struct ged *gedp, struct directory *dp, int UNUSED(verify))
+brep_to_csg(struct ged *gedp, struct directory *dp, int UNUSED(verify), struct bu_vls *retname)
 {
     /* Unpack B-Rep */
     struct rt_db_internal intern;
@@ -426,6 +426,7 @@ brep_to_csg(struct ged *gedp, struct directory *dp, int UNUSED(verify))
     bu_path_component(&core_name, dp->d_namep, PATH_BASENAME_CORE);
     bu_vls_sprintf(&root_name, "%s-csg", bu_vls_addr(&core_name));
     bu_vls_sprintf(&comb_name, "csg_%s.r", bu_vls_addr(&core_name));
+    if (retname) bu_vls_sprintf(retname, "%s", bu_vls_addr(&comb_name));
     BU_LIST_INIT(&pcomb.l);
 
     struct bu_ptbl *subbreps = find_subbreps(gedp->ged_result_str, brep);
@@ -444,12 +445,13 @@ brep_to_csg(struct ged *gedp, struct directory *dp, int UNUSED(verify))
 	int comb_objs = 0;
 	for (BU_LIST_FOR(olist, bu_list, &pcomb.l)) comb_objs++;
 	if (comb_objs > 1) {
-	    // Toplevel comb is a region
-	    mk_lcomb(wdbp, bu_vls_addr(&comb_name), &pcomb, 1, NULL, NULL, NULL, 0);
+	    // We're not setting the region flag here in case there is a hierarchy above us that
+	    // takes care of it.  TODO - support knowing whether that's true and doing the right thing. 
+	    mk_lcomb(wdbp, bu_vls_addr(&comb_name), &pcomb, 0, NULL, NULL, NULL, 0);
 	} else {
 	    // TODO - Fix up name of first item in list to reflect top level naming to
 	    // avoid an unnecessary level of hierarchy.
-	    mk_lcomb(wdbp, bu_vls_addr(&comb_name), &pcomb, 1, NULL, NULL, NULL, 0);
+	    mk_lcomb(wdbp, bu_vls_addr(&comb_name), &pcomb, 0, NULL, NULL, NULL, 0);
 	}
     }
     return 0;
@@ -508,9 +510,6 @@ brep_csg_conversion_tree(struct ged *gedp, const union tree *oldtree, union tree
 	    struct bu_vls tmpname = BU_VLS_INIT_ZERO;
 	    char *oldname = oldtree->tr_l.tl_name;
 	    bu_vls_sprintf(&tmpname, "csg_%s", oldname);
-	    newtree->tr_l.tl_name = (char*)bu_malloc(strlen(bu_vls_addr(&tmpname))+1, "char");
-	    //bu_log("have leaf: %s\n", oldtree->tr_l.tl_name);
-	    //bu_log("checking for: %s\n", bu_vls_addr(&tmpname));
 	    if (db_lookup(gedp->ged_wdbp->dbip, bu_vls_addr(&tmpname), LOOKUP_QUIET) == RT_DIR_NULL) {
 		struct directory *dir = db_lookup(gedp->ged_wdbp->dbip, oldname, LOOKUP_QUIET);
 
@@ -521,25 +520,31 @@ brep_csg_conversion_tree(struct ged *gedp, const union tree *oldtree, union tree
 			    bu_vls_free(&tmpname);
 			    break;
 			}
+			newtree->tr_l.tl_name = (char*)bu_malloc(strlen(bu_vls_addr(&tmpname))+1, "char");
 			bu_strlcpy(newtree->tr_l.tl_name, bu_vls_addr(&tmpname), strlen(bu_vls_addr(&tmpname))+1);
 			bu_vls_free(&tmpname);
 			break;
 		    }
 		    // It's a primitive. If it's a b-rep object, convert it. Otherwise,
 		    // just duplicate it. Might need better error codes from brep_to_csg for this...
-		    int brep_c = brep_to_csg(gedp, dir, verify);
+		    struct bu_vls newname = BU_VLS_INIT_ZERO;
+		    int brep_c = brep_to_csg(gedp, dir, verify, &newname);
 		    int need_break = 0;
 		    switch (brep_c) {
 			case 0:
-			    bu_vls_printf(gedp->ged_result_str, "processed brep %s.\n", bu_vls_addr(&tmpname));
-			    bu_strlcpy(newtree->tr_l.tl_name, bu_vls_addr(&tmpname), strlen(bu_vls_addr(&tmpname))+1);
+			    bu_vls_printf(gedp->ged_result_str, "processed brep %s.\n", bu_vls_addr(&newname));
+			    newtree->tr_l.tl_name = (char*)bu_malloc(strlen(bu_vls_addr(&newname))+1, "char");
+			    bu_strlcpy(newtree->tr_l.tl_name, bu_vls_addr(&newname), strlen(bu_vls_addr(&newname))+1);
+			    bu_vls_free(&newname);
 			    break;
 			case 1:
 			    bu_vls_printf(gedp->ged_result_str, "non brep solid %s.\n", bu_vls_addr(&tmpname));
+			    newtree->tr_l.tl_name = (char*)bu_malloc(strlen(bu_vls_addr(&tmpname))+1, "char");
 			    bu_strlcpy(newtree->tr_l.tl_name, oldname, strlen(oldname)+1);
 			    break;
 			case 2:
 			    bu_vls_printf(gedp->ged_result_str, "skipped invalid brep %s.\n", bu_vls_addr(&tmpname));
+			    newtree->tr_l.tl_name = (char*)bu_malloc(strlen(bu_vls_addr(&tmpname))+1, "char");
 			    bu_strlcpy(newtree->tr_l.tl_name, oldname, strlen(oldname)+1);
 			default:
 			    bu_vls_free(&tmpname);
@@ -554,6 +559,7 @@ brep_csg_conversion_tree(struct ged *gedp, const union tree *oldtree, union tree
 		}
 	    } else {
 		bu_vls_printf(gedp->ged_result_str, "%s already exists.\n", bu_vls_addr(&tmpname));
+		newtree->tr_l.tl_name = (char*)bu_malloc(strlen(bu_vls_addr(&tmpname))+1, "char");
 		bu_strlcpy(newtree->tr_l.tl_name, bu_vls_addr(&tmpname), strlen(bu_vls_addr(&tmpname))+1);
 	    }
 	    bu_vls_free(&tmpname);
@@ -614,7 +620,7 @@ _ged_brep_to_csg(struct ged *gedp, const char *dp_name, int verify)
     if (dp->d_flags & RT_DIR_COMB) {
 	return comb_to_csg(gedp, dp, verify) ? GED_ERROR : GED_OK;
     } else {
-	return brep_to_csg(gedp, dp, verify) ? GED_ERROR : GED_OK;
+	return brep_to_csg(gedp, dp, verify, NULL) ? GED_ERROR : GED_OK;
     }
 }
 
