@@ -105,32 +105,20 @@ get_edge_set_from_loops(struct subbrep_island_data *sb)
     set_to_array(&(sb->island_edges), &(sb->island_edges_cnt), &edges);
 }
 
-/* This is the critical point at which we take a pile of shapes and actually reconstruct a
- * valid boolean tree.  The stages are as follows:
+/*
+ * This is the point at which we characterize the relationships between islands.  Assuming our determination
+ * of positive and negative shapes is trustworthy, all positive islands are unioned into the toplevel comb.
+ * The only question is what needs to be subtracted.  Part of this information is available via the shared
+ * loop information from the initial island partitioning, but that by itself is not enough.  It is possible
+ * to have protruding subtractions that also remove volume from other shapes.
  *
- * 1.  Identify the top level union objects (they will have no fil faces in their structure).
- * 2.  Using the fil faces, build up a queue of subbreps that are topologically connected
- *     by a loop to the top level union objects.
- * 3.  Determine the boolean status of the 2nd layer of objects.
- * 4.  For each sub-object, if that object in turn has fil faces, queue up those objects and goto 3.
- * 5.  Continue iterating until all objects have a boolean operation assigned.
- * 6.  For each unioned object, build a set of all subtraction objects (topologically connected or not.)
- * 7.  add the union pointer to the subbreps_tree, and then add all all topologically connected subtractions
- *     and remove them from the local set.
- * 8.  For the remaining (non-topologically linked) subtractions, get a bounding box and see if it overlaps
- *     with the bounding box of the union object in question.  If yes, we have to stash it for later
- *     evaluation - only solid raytracing will suffice to properly resolve complex cases.
- *     If not, no action is needed.  Once evaluated, remove the subtraction pointer from the set.
+ * To identify what subtractions may do this, we use the loop connectivity for each island to walk the
+ * "child" islands of a union island.  These child islands are where additional subtractions may come from.
+ * So the top level union, for example, must be checked against all subtractions.  However, a union nested
+ * inside a subtraction should *not* have its "parent" negative island subtracted from it.
  *
- * Initially the test will be axis aligned bounding boxes, but ideally we should use oriented bounding boxes
- * or even tighter tests.  There's a catch here - a positive object overall may be within the bounding box
- * of a subtracting object (like a positive cone at the bottom of a negative cylinder).  First guess at a rule - subtractions
- * may propagate back up the topological tree to unions above the subtraction or in other isolated topological
- * trees, but never to unions below the subtraction
- * object itself.  Which means we'll need an above/below test for union objects relative to a given
- * subtraction object, or an "ignore" list for unions which overrides any bbox tests - that list would include the
- * parent subtraction, that subtraction's parent if it is a subtraction, and so on up to the top level union.  Nested
- * unions and subtractions mean we'll have to go all the way up that particular chain...
+ * Currently the intrusion test uses axis aligned bounding boxes, but ideally we should use oriented bounding boxes
+ * or even tighter tests.
  */
 void
 find_hierarchy(struct bu_vls *UNUSED(msgs), struct bu_ptbl *islands)
