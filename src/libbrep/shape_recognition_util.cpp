@@ -297,6 +297,7 @@ subbrep_island_init(struct subbrep_island_data *obj, const ON_Brep *brep)
 
     obj->brep = brep;
     obj->local_brep = NULL;
+    obj->local_brep_bool_op = '\0';
 
     obj->bbox = new ON_BoundingBox();
     ON_MinMaxInit(&(obj->bbox->m_min), &(obj->bbox->m_max));
@@ -372,22 +373,6 @@ subbrep_island_free(struct subbrep_island_data *obj)
     obj->null_verts = NULL;
     if (obj->null_edges) bu_free(obj->null_edges, "ignore edges");
     obj->null_edges = NULL;
-}
-
-void subbrep_tree_init(struct subbrep_tree_node *node)
-{
-    BU_GET(node->children, struct bu_ptbl);
-    bu_ptbl_init(node->children, 8, "init table");
-    node->parent = NULL;
-    node->island = NULL;
-}
-
-void subbrep_tree_free(struct subbrep_tree_node *node)
-{
-    bu_ptbl_free(node->children);
-    BU_PUT(node->children, struct bu_ptbl);
-    node->parent = NULL;
-    node->island = NULL;
 }
 
 void

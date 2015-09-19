@@ -42,7 +42,7 @@ negative_cylinder(const ON_Brep *brep, int face_index, double cyl_tol) {
 int
 cylinder_csg(struct bu_vls *msgs, struct subbrep_shoal_data *data, fastf_t cyl_tol)
 {
-    bu_log("cyl processing %s\n", bu_vls_addr(data->i->key));
+    //bu_log("cyl processing %s\n", bu_vls_addr(data->i->key));
 
     int implicit_plane_ind = -1;
     std::set<int> cylindrical_surfaces;
@@ -134,13 +134,13 @@ cylinder_csg(struct bu_vls *msgs, struct subbrep_shoal_data *data, fastf_t cyl_t
     for (s_it = linear_edges.begin(); s_it != linear_edges.end(); s_it++) {
 	std::vector<int> faces;
 	const ON_BrepEdge *edge = &(brep->m_E[*s_it]);
-	bu_log("checking edge %d\n", edge->m_edge_index);
+	//bu_log("checking edge %d\n", edge->m_edge_index);
 	for (int i = 0; i < edge->m_ti.Count(); i++) {
 	    const ON_BrepTrim *trim = &(brep->m_T[edge->m_ti[i]]);
 	    if (((surface_t *)data->i->face_surface_types)[trim->Face()->m_face_index] == SURFACE_PLANE) continue;
 	    if (cylindrical_surfaces.find(trim->Face()->m_face_index) == cylindrical_surfaces.end()) break;
 	    faces.push_back(trim->Face()->m_face_index);
-	    bu_log("pushing back face %d\n", trim->Face()->m_face_index);
+	    //bu_log("pushing back face %d\n", trim->Face()->m_face_index);
 	}
 	if (faces.size() == 1) {
 	    le.insert(*s_it);
@@ -156,7 +156,7 @@ cylinder_csg(struct bu_vls *msgs, struct subbrep_shoal_data *data, fastf_t cyl_t
 	if (have_both_faces) {
 	    std::set<int> nullv;
 	    std::set<int> nulle;
-	    bu_log("edge %d is degenerate\n", *s_it);
+	    //bu_log("edge %d is degenerate\n", *s_it);
 	    array_to_set(&nullv, data->i->null_verts, data->i->null_vert_cnt);
 	    array_to_set(&nulle, data->i->null_edges, data->i->null_edge_cnt);
 	    nullv.insert(edge->Vertex(0)->m_vertex_index);
@@ -215,7 +215,7 @@ cylinder_csg(struct bu_vls *msgs, struct subbrep_shoal_data *data, fastf_t cyl_t
 		    p.Flip();
 		    flipped = 1;
 		} else {
-		    bu_log("%*sConcave planes in %s - no go\n", L3_OFFSET, " ", bu_vls_addr(data->i->key));
+		    //bu_log("%*sConcave planes in %s - no go\n", L3_OFFSET, " ", bu_vls_addr(data->i->key));
 		    return 0;
 		}
 	    }
@@ -376,7 +376,7 @@ cylinder_csg(struct bu_vls *msgs, struct subbrep_shoal_data *data, fastf_t cyl_t
 
     // Assign an object id
     data->params->csg_id = (*(data->i->obj_cnt))++;
-    bu_log("rcc id: %d\n", data->params->csg_id);
+    //bu_log("rcc id: %d\n", data->params->csg_id);
 
     // Now we decide (arbitrarily) what the vector will be for our final cylinder
     // and calculate the true minimum and maximum points along the axis
@@ -408,7 +408,7 @@ cylinder_csg(struct bu_vls *msgs, struct subbrep_shoal_data *data, fastf_t cyl_t
     //bu_log("in rcc.s rcc %f %f %f %f %f %f %f \n", axis_pts[0].x, axis_pts[0].y, axis_pts[0].z, cyl_axis.x, cyl_axis.y, cyl_axis.z, cylinder.circle.Radius());
 
     if (!need_arbn) {
-	bu_log("Perfect cylinder shoal found in %s\n", bu_vls_addr(data->i->key));
+	//bu_log("Perfect cylinder shoal found in %s\n", bu_vls_addr(data->i->key));
 	return 1;
     }
 

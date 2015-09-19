@@ -133,11 +133,11 @@ get_edge_set_from_loops(struct subbrep_island_data *sb)
  * unions and subtractions mean we'll have to go all the way up that particular chain...
  */
 void
-find_hierarchy(struct bu_vls *UNUSED(msgs), struct subbrep_tree_node *node, struct bu_ptbl *islands)
+find_hierarchy(struct bu_vls *UNUSED(msgs), struct bu_ptbl *islands)
 {
-    int depth = 0;
-    if (!node) return;
+    if (!islands) return;
 
+    // Map outer loop face inclusions to islands for easy lookup
     std::map<int, long*> fol_to_i;
     for (unsigned int i = 0; i < BU_PTBL_LEN(islands); i++) {
 	struct subbrep_island_data *id = (struct subbrep_island_data *)BU_PTBL_GET(islands, i);
@@ -145,85 +145,76 @@ find_hierarchy(struct bu_vls *UNUSED(msgs), struct subbrep_tree_node *node, stru
 	    fol_to_i.insert(std::make_pair(id->fol[j], (long *)id));
 	}
     }
-
-    /* Separate out top level unions */
-    if (node->parent == NULL) {
-	int top_cnt = 0;
-	for (unsigned int i = 0; i < BU_PTBL_LEN(islands); i++) {
-	    struct subbrep_island_data *obj = (struct subbrep_island_data *)BU_PTBL_GET(islands, i);
-	    if (obj->fil_cnt == 0) {
-		std::cout << "Top union found: " << bu_vls_addr(obj->key) << "\n";
-		top_cnt++;
-		node->island = obj;
-	    }
-	}
-	if (top_cnt != 1) {
-	    bu_log("Error - incorrect toplevel union count: %d\n", top_cnt);
-	    return;
-	}
-    } else {
-	struct subbrep_tree_node *n = node->parent;
-	while (n) {
-	    depth++;
-	    n = n->parent;
-	}
-    }
-
-
-    std::set<long *> subislands;
-    std::set<long *>::iterator s_it;
+    typedef std::multimap<struct subbrep_island_data *, struct subbrep_island_data *> IslandMap;
+    IslandMap p2c;
+    IslandMap::iterator p2c_it;
     for (unsigned int i = 0; i < BU_PTBL_LEN(islands); i++) {
 	struct subbrep_island_data *id = (struct subbrep_island_data *)BU_PTBL_GET(islands, i);
-	if (BU_STR_EQUAL(bu_vls_addr(id->key), bu_vls_addr(node->island->key))) continue;
-	bu_log("%*schecking island %s\n", depth, " ", bu_vls_addr(id->key));
-	// For this node's inner loops, find the corresponding islands.
 	for (int j = 0; j < id->fil_cnt; j++) {
-	    struct subbrep_island_data *idparent = (struct subbrep_island_data *)fol_to_i.find(id->fil[j])->second;
-	    if (BU_STR_EQUAL(bu_vls_addr(node->island->key), bu_vls_addr(idparent->key))) {
-		subislands.insert((long *)id);
-	    }
+	    struct subbrep_island_data *sid = (struct subbrep_island_data *)fol_to_i.find(id->fil[j])->second;
+	    p2c.insert(std::make_pair(sid, id));
 	}
     }
-    for (s_it = subislands.begin(); s_it != subislands.end(); s_it++) {
-	struct subbrep_island_data *id = (struct subbrep_island_data *)(*s_it);
-	struct subbrep_tree_node *n = NULL;
-	BU_GET(n, struct subbrep_tree_node);
-	subbrep_tree_init(n);
-	n->island = id;
-	n->parent = node;
-	bu_ptbl_ins(node->children, (long *)n);
 
-	if (id->nucleus->params->bool_op == '-') {
-	    if (node->island->nucleus->params->bool_op == 'u') {
-		bu_log("%*sadding subtraction %s\n", depth, " ", bu_vls_addr(id->key));
-		bu_ptbl_ins_unique(node->island->subtractions, (long *)id);
+    // Process all islands for subtractions
+    for (unsigned int i = 0; i < BU_PTBL_LEN(islands); i++) {
+	std::queue<struct subbrep_island_data *> subislands;
+	struct subbrep_island_data *id = (struct subbrep_island_data *)BU_PTBL_GET(islands, i);
+	if (id->nucleus->params->bool_op == '-' || id->local_brep_bool_op == '-') {
+	    //bu_log("negative island - skipping %d\n", id->island_id);
+	    continue;
+	}
+	bu_log("checking island %d\n", id->island_id);
+	std::pair <IslandMap::iterator, IslandMap::iterator> p2c_ret;
+	p2c_ret = p2c.equal_range(id);
+
+	// For this node's inner loops, find the corresponding sub-islands and initialize.
+	for (p2c_it = p2c_ret.first; p2c_it != p2c_ret.second; ++p2c_it) {
+	    std::pair <IslandMap::iterator, IslandMap::iterator> sp2c_ret;
+	    IslandMap::iterator sp2c_it;
+	    struct subbrep_island_data *subisland = p2c_it->second;
+
+	    // At the top level for a union, any negative shape is joined by a loop and hence
+	    // guaranteed to be a subtraction
+	    if (subisland->nucleus->params->bool_op == '-' || subisland->local_brep_bool_op == '-') {
+		bu_log("%d connected to %d, adding to subtractions\n", subisland->island_id, id->island_id);
+		bu_ptbl_ins_unique(id->subtractions, (long *)subisland);
 	    }
-	    // A subtraction must also be checked against positive parent islands.
-	    struct subbrep_tree_node *pn = node->parent;
-	    while (pn) {
-		depth--;
-		if (pn->island->nucleus->params->bool_op == 'u') {
-		    bu_log("%*schecking bboxes\n", depth, " ");
-		    ON_BoundingBox isect;
-		    bool bbi = isect.Intersection(*pn->island->bbox, *id->bbox);
-		    // If we have overlap, we have a possible subtraction operation
-		    // between this island and the parent.  It's not guaranteed that
-		    // there is an interaction, but to make sure will require ray testing
-		    // so for speed we accept that there may be extra subtractions in
-		    // the tree.
-		    if (bbi) {
-			bu_log("%*sfound one: %s!\n", depth, " ", bu_vls_addr(id->key));
-			bu_ptbl_ins_unique(pn->island->subtractions, (long *)id);
-		    }
+
+	    // Initialize the queue with the next level down, whether or not subisland is a union -
+	    // there may be more subtractions below.
+	    sp2c_ret = p2c.equal_range(subisland);
+	    for (sp2c_it = sp2c_ret.first; sp2c_it != sp2c_ret.second; ++sp2c_it) {
+		subislands.push(sp2c_it->second);
+	    }
+	}
+
+	// Work through the layers of islands, adding any subtractions that overlap with the original
+	// island's bbox to the subtraction list.
+	while(!subislands.empty()) {
+
+	    struct subbrep_island_data *sid= subislands.front();
+	    subislands.pop();
+
+	    std::pair <IslandMap::iterator, IslandMap::iterator> sp2c_ret = p2c.equal_range(sid);
+	    for (IslandMap::iterator sp2c_it = sp2c_ret.first; sp2c_it != sp2c_ret.second; ++sp2c_it) {
+		subislands.push(sp2c_it->second);
+	    }
+
+	    if (sid->nucleus->params->bool_op == '-' || sid->local_brep_bool_op == '-') {
+		ON_BoundingBox isect;
+		bool bbi = isect.Intersection(*sid->bbox, *id->bbox);
+		// If we have overlap, we have a possible subtraction operation
+		// between this island and the parent.  It's not guaranteed that
+		// there is an interaction, but to make sure will require ray testing
+		// so for speed we accept that there may be extra subtractions in
+		// the tree.
+		if (bbi) {
+		    bu_log("%d overlaps %d, adding to subtractions\n", sid->island_id, id->island_id);
+		    bu_ptbl_ins_unique(id->subtractions, (long *)sid);
 		}
-		pn = pn->parent;
 	    }
 	}
-    }
-
-    for (unsigned int i = 0; i < BU_PTBL_LEN(node->children); i++) {
-	struct subbrep_tree_node *n = (struct subbrep_tree_node *)BU_PTBL_GET(node->children, i);
-	(void)find_hierarchy(NULL, n, islands);
     }
 }
 
@@ -337,7 +328,6 @@ shoal_build(int **s_loops, int loop_index, struct subbrep_island_data *data)
 int
 subbrep_split(struct bu_vls *msgs, struct subbrep_island_data *data)
 {
-    bu_log("splitting %s\n", bu_vls_addr(data->key));
     int csg_fail = 0;
     std::set<int> loops;
     std::set<int> active;
@@ -404,7 +394,7 @@ subbrep_split(struct bu_vls *msgs, struct subbrep_island_data *data)
     if (csg_fail > 0) {
 	/* We found something we can't handle, so there will be no CSG
 	 * conversion of this subbrep. Cleanup is handled one level up. */
-	bu_log("non-planar splitting subroutines failed\n");
+	//bu_log("non-planar splitting subroutines failed: %s\n", bu_vls_addr(data->key));
 	return 0;
     }
     // We had a successful conversion - now generate a nucleus.  Need to
@@ -413,7 +403,7 @@ subbrep_split(struct bu_vls *msgs, struct subbrep_island_data *data)
     // planar faces at all (perfect cylinder, for example) so will need
     // rules for those situations...
     if (!island_nucleus(msgs, data)) {
-	bu_log("failed to find island nucleus\n");
+	bu_log("failed to find island nucleus: %s\n", bu_vls_addr(data->key));
 	return 0;
     }
 
@@ -441,13 +431,10 @@ find_subbreps(struct bu_vls *msgs, const ON_Brep *brep)
     int successes = 0;
     /* Overall object counter */
     int obj_cnt = 0;
-    /* Return node */
-    struct subbrep_tree_node *root = NULL;
     /* Container to hold island data structures */
     struct bu_ptbl *subbreps;
     std::set<struct subbrep_island_data *> islands;
     std::set<struct subbrep_island_data *>::iterator is_it;
-    struct bu_ptbl *final_brep_array;
 
     BU_GET(subbreps, struct bu_ptbl);
     bu_ptbl_init(subbreps, 8, "subbrep table");
@@ -553,6 +540,7 @@ find_subbreps(struct bu_vls *msgs, const ON_Brep *brep)
 	    sb->island_type = BREP;
 	    (void)subbrep_make_brep(msgs, sb);
 	    sb->local_brep_bool_op = (bool_flag == -1) ? '-' : 'u';
+	    if (bool_flag == -1) sb->local_brep->Flip();
 	    bu_ptbl_ins(subbreps, (long *)sb);
 	    continue;
 	}
@@ -564,6 +552,7 @@ find_subbreps(struct bu_vls *msgs, const ON_Brep *brep)
 	    sb->island_type = BREP;
 	    (void)subbrep_make_brep(msgs, sb);
 	    sb->local_brep_bool_op = (bool_flag == -1) ? '-' : 'u';
+	    if (bool_flag == -1) sb->local_brep->Flip();
 	} else {
 	    successes++;
 	    // Make sure the CSG routines and the B-Rep boolean check reached the same conclusion.
@@ -589,15 +578,6 @@ find_subbreps(struct bu_vls *msgs, const ON_Brep *brep)
 	subbrep_bbox(island);
     }
 
-    bu_log("find us some hierarchy...\n");
-    BU_GET(root, struct subbrep_tree_node);
-    subbrep_tree_init(root);
-    find_hierarchy(NULL, root, subbreps);
-    if (!root->island) {
-	bu_log("no hierarchy found ??...\n");
-	return NULL;
-    }
-
     // Assign island IDs, populate set
     for (unsigned int i = 0; i < BU_PTBL_LEN(subbreps); i++) {
 	struct subbrep_island_data *si = (struct subbrep_island_data *)BU_PTBL_GET(subbreps, i);
@@ -605,21 +585,10 @@ find_subbreps(struct bu_vls *msgs, const ON_Brep *brep)
 	islands.insert(si);
     }
 
-    // Build the final subbrep array so the root node is the first entry in the array
-    // TODO: Probably a more efficient way to do all this, if it even matters...
-    BU_GET(final_brep_array, struct bu_ptbl);
-    bu_ptbl_init(final_brep_array, 8, "init array");
-    // Start with the root
-    bu_ptbl_ins(final_brep_array, (long *)root->island);
-    islands.erase(root->island);
-    for (is_it = islands.begin(); is_it != islands.end(); is_it++) {
-	bu_ptbl_ins(final_brep_array, (long *)*is_it);
-	islands.erase(is_it);
-    }
-    bu_ptbl_free(subbreps);
-    BU_PUT(subbreps, struct bu_ptbl);
+    //bu_log("Characterize subtractions...\n");
+    find_hierarchy(msgs, subbreps);
 
-    return final_brep_array;
+    return subbreps;
 
 bail:
     // Free memory

@@ -141,7 +141,7 @@ triangulate_array_with_holes(ON_2dPointArray &on2dpts, int *verts_map, int loop_
     for (unsigned int i = 0; i < outer_npts; i++) { outer_pt_ind[i] = i; }
     ccw = bg_polygon_clockwise(outer_npts, verts2d, outer_pt_ind);
     if (ccw == 0) {
-	bu_log("outer loop is degenerate - skip\n");
+	//bu_log("outer loop is degenerate - skip\n");
 	bu_free(verts2d, "free verts2d");
 	bu_free(outer_pt_ind, "free verts2d");
 	return 0;
@@ -152,7 +152,7 @@ triangulate_array_with_holes(ON_2dPointArray &on2dpts, int *verts_map, int loop_
 	    V2MOVE(verts2d[d], on2dpts[i]);
 	}
 	ccw = bg_polygon_clockwise(outer_npts, verts2d, outer_pt_ind);
-	if (ccw == 1) bu_log("huh??\n");
+	if (ccw == 1) bu_log("huh?? loop ccw after flip??\n");
 	std::vector<int> vert_map;
 	for (unsigned int i = 0; i < outer_npts; i++) vert_map.push_back(verts_map[i]);
 	std::reverse(vert_map.begin(), vert_map.end());
@@ -172,7 +172,7 @@ triangulate_array_with_holes(ON_2dPointArray &on2dpts, int *verts_map, int loop_
 	for (unsigned int j = 0; j < nhole_pts; j++) { holes_array[j] = array_start + j; }
 	ccw = bg_polygon_clockwise(nhole_pts, verts2d, holes_array);
 	if (ccw == 0) {
-	    bu_log("inner loop is degenerate - skip\n");
+	    //bu_log("inner loop is degenerate - skip\n");
 	    bu_free(holes_array, "free holes array");
 	    nholes--;
 	    continue;
@@ -187,7 +187,7 @@ triangulate_array_with_holes(ON_2dPointArray &on2dpts, int *verts_map, int loop_
 	    std::reverse(vert_map.begin(), vert_map.end());
 	    for (unsigned int j = 0; j <= array_end - array_start; j++) verts_map[array_start + j] = vert_map[j];
 
-	    bu_log("flip inner loop\n");
+	    //bu_log("flip inner loop\n");
 	}
 	holes_arrays.push_back(holes_array);
 	holes_npts.push_back(nhole_pts);
@@ -600,7 +600,7 @@ negative_polygon(struct bu_vls *UNUSED(msgs), struct csg_object_params *data)
 int
 island_nucleus(struct bu_vls *msgs, struct subbrep_island_data *data)
 {
-    bu_log("island processing %s\n", bu_vls_addr(data->key));
+    //bu_log("island processing %s\n", bu_vls_addr(data->key));
 
     int degenerate_nucleus = 0;
     int have_flipped_loops = 0;
@@ -740,11 +740,11 @@ island_nucleus(struct bu_vls *msgs, struct subbrep_island_data *data)
 		if (NEAR_ZERO(dotp1, BREP_PLANAR_TOL) || NEAR_ZERO(dotp2, BREP_PLANAR_TOL)) continue;
 		if ((dotp1 < 0 && dotp2 > 0) || (dotp1 > 0 && dotp2 < 0)) {
 		    // There are things we can do to handle this, but they're unimplemented.  Bail.
-		    bu_log("Unhandled complex implicit nucleus scenario: island %s, edge %d\n", bu_vls_addr(data->key), edge->m_edge_index);
-		    bu_log("dotp1 %f  dotp2 %f\n", dotp1, dotp2);
-		    bu_log("in sph.1 sph %f %f %f 1\n", p1.x, p1.y, p1.z);
-		    bu_log("in sph.2 sph %f %f %f 1\n", p2.x, p2.y, p2.z);
-		    bu_log("int implicit.s rcc  %f %f %f %f %f %f 0.1\n", shoal_implicit_plane.origin.x, shoal_implicit_plane.origin.y, shoal_implicit_plane.origin.z, shoal_implicit_plane.Normal().x, shoal_implicit_plane.Normal().y, shoal_implicit_plane.Normal().z);
+		    //bu_log("Unhandled complex implicit nucleus scenario: island %s, edge %d\n", bu_vls_addr(data->key), edge->m_edge_index);
+		    //bu_log("dotp1 %f  dotp2 %f\n", dotp1, dotp2);
+		    //bu_log("in sph.1 sph %f %f %f 1\n", p1.x, p1.y, p1.z);
+		    //bu_log("in sph.2 sph %f %f %f 1\n", p2.x, p2.y, p2.z);
+		    //bu_log("int implicit.s rcc  %f %f %f %f %f %f 0.1\n", shoal_implicit_plane.origin.x, shoal_implicit_plane.origin.y, shoal_implicit_plane.origin.z, shoal_implicit_plane.Normal().x, shoal_implicit_plane.Normal().y, shoal_implicit_plane.Normal().z);
 		    return 0;
 		}
 	    }
@@ -775,7 +775,7 @@ island_nucleus(struct bu_vls *msgs, struct subbrep_island_data *data)
 	    if (loop_rev) have_flipped_loops++;
 	    // If the face is flipped, flip the triangles and the plane so their normals are correct
 	    if ((face->m_bRev && !loop_rev) || (!face->m_bRev && loop_rev)) {
-		bu_log("face %d is reversed - flip the plane.\n", face->m_face_index);
+		//bu_log("face %d is reversed - flip the plane.\n", face->m_face_index);
 		for (int i = 0; i < face_cnt; i++) {
 		    int tmp = faces[i*3+1];
 		    faces[i*3+1] = faces[i*3+2];
@@ -788,7 +788,7 @@ island_nucleus(struct bu_vls *msgs, struct subbrep_island_data *data)
 	    std::set<int> fil;
 	    array_to_set(&fil, data->fil, data->fil_cnt);
 	    if (fil.find(face->m_face_index) != fil.end()) {
-		bu_log("face %d came to us via inner loop - flip the plane.\n", face->m_face_index);
+		//bu_log("face %d came to us via inner loop - flip the plane.\n", face->m_face_index);
 		for (int i = 0; i < face_cnt; i++) {
 		    int tmp = faces[i*3+1];
 		    faces[i*3+1] = faces[i*3+2];
@@ -897,7 +897,7 @@ island_nucleus(struct bu_vls *msgs, struct subbrep_island_data *data)
 	}
 
 	if (parallel_planes == planes.Count() || planes.Count() < 4) {
-	    bu_log("degenerate nucleus\n");
+	    //bu_log("degenerate nucleus\n");
 	    degenerate_nucleus = 1;
 	}
     }
@@ -917,7 +917,7 @@ island_nucleus(struct bu_vls *msgs, struct subbrep_island_data *data)
 	    // nucleus and whether the nucleus is negative be based on the
 	    // negative shape status of the shoal.  The island's children
 	    // will be unioned.
-	    bu_log("shoal negative status is uniform\n");
+	    //bu_log("shoal negative status is uniform\n");
 	    subbrep_shoal_free(data->nucleus);
 	    data->nucleus = cn;
 	    bu_ptbl_rm(data->island_children, (long *)cn);
@@ -956,7 +956,6 @@ island_nucleus(struct bu_vls *msgs, struct subbrep_island_data *data)
 	    }
 	    for (int i = 0; i < planes.Count(); i++) {
 		planes[i].Flip();
-		bu_log("in rcc_%d.s rcc %f %f %f %f %f %f 0.1\n", planes[i].origin.x, planes[i].origin.y, planes[i].origin.z, planes[i].Normal().x, planes[i].Normal().y, planes[i].Normal().z);
 	    }
 	} else {
 	    data->nucleus->params->negative = 1;
@@ -965,6 +964,7 @@ island_nucleus(struct bu_vls *msgs, struct subbrep_island_data *data)
 
 
 	// 2. convex polyhedron
+#if 0
 	int convex_polyhedron = 1;
 	int *planes_used = (int *)bu_calloc(planes.Count(), sizeof(int), "usage flags");
 	convex_plane_usage(&planes, &planes_used);
@@ -975,7 +975,7 @@ island_nucleus(struct bu_vls *msgs, struct subbrep_island_data *data)
 	    }
 	}
 	bu_free(planes_used, "free used array");
-	bu_log("convex polyhedron: %d\n", convex_polyhedron);
+	//bu_log("convex polyhedron: %d\n", convex_polyhedron);
 	if (convex_polyhedron) {
 	    // If we do in fact have a convex polyhedron, we can create an arbn
 	    // instead of a BoT for this nucleus shape
@@ -993,15 +993,16 @@ island_nucleus(struct bu_vls *msgs, struct subbrep_island_data *data)
 	    }
 	} else {
 	    // Otherwise, confirm as BoT
+#endif
 	    data->nucleus->params->csg_type = PLANAR_VOLUME;
-	}
+//	}
 
 	// 3. There is one final wrinkle.  It is possible for a polyhedron nucleus to be volumetrically
 	// inside a shoal (shape + arbn).  In this situation, the nucleus is subtracted from the shoal
 	// shape.
 
 	if (have_flipped_loops > 0) {
-	    bu_log("flip nucleus and child\n");
+	    //bu_log("flip nucleus and child\n");
 	    if (BU_PTBL_LEN(data->island_children) != 1) {
 		bu_log("huh? flipped loops and child count != 1?\n");
 	    } else {

@@ -87,16 +87,6 @@ int island_nucleus(struct bu_vls *msgs, struct subbrep_island_data *data);
 
 int subbrep_make_brep(struct bu_vls *msgs, struct subbrep_island_data *data);
 
-
-struct subbrep_tree_node {
-    struct subbrep_tree_node *parent;
-    struct subbrep_island_data *island;
-    /* subbrep_tree_node */
-    struct bu_ptbl *children;
-};
-
-void subbrep_tree_init(struct subbrep_tree_node *node);
-void subbrep_tree_free(struct subbrep_tree_node *node);
 void subbrep_island_init(struct subbrep_island_data *obj, const ON_Brep *brep);
 void subbrep_island_free(struct subbrep_island_data *obj);
 void subbrep_shoal_init(struct subbrep_shoal_data *obj, struct subbrep_island_data *island);
