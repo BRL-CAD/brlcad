@@ -391,8 +391,13 @@ subbrep_split(struct bu_vls *msgs, struct subbrep_island_data *data)
 
     if (csg_fail > 0) {
 	/* We found something we can't handle, so there will be no CSG
-	 * conversion of this subbrep. Cleanup is handled one level up. */
-	//bu_log("non-planar splitting subroutines failed: %s\n", bu_vls_addr(data->key));
+	 * conversion of this subbrep. */
+	bu_log("non-planar splitting subroutines failed: %s\n", bu_vls_addr(data->key));
+	for (unsigned int i = 0; i < BU_PTBL_LEN(data->island_children); i++) {
+	    struct subbrep_shoal_data *d = (struct subbrep_shoal_data *)BU_PTBL_GET(data->island_children, i);
+	    subbrep_shoal_free(d);
+	}
+	bu_ptbl_trunc(data->island_children, 0);
 	return 0;
     }
     // We had a successful conversion - now generate a nucleus.  Need to
@@ -402,6 +407,12 @@ subbrep_split(struct bu_vls *msgs, struct subbrep_island_data *data)
     // rules for those situations...
     if (!island_nucleus(msgs, data)) {
 	bu_log("failed to find island nucleus: %s\n", bu_vls_addr(data->key));
+	for (unsigned int i = 0; i < BU_PTBL_LEN(data->island_children); i++) {
+	    struct subbrep_shoal_data *d = (struct subbrep_shoal_data *)BU_PTBL_GET(data->island_children, i);
+	    subbrep_shoal_free(d);
+	}
+	bu_ptbl_trunc(data->island_children, 0);
+
 	return 0;
     }
 
