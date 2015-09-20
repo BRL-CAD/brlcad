@@ -499,6 +499,9 @@ shoal_polygon_tri(struct bu_vls *UNUSED(msgs), struct subbrep_shoal_data *data, 
  * 5.  Do the test as determined by #4.
  */
 
+// How close to paralle will we tolerate before moving to another corner?
+#define NPOLY_DOTP_TOL 0.01
+
 int
 negative_polygon(struct bu_vls *UNUSED(msgs), struct csg_object_params *data)
 {
@@ -536,7 +539,7 @@ negative_polygon(struct bu_vls *UNUSED(msgs), struct csg_object_params *data)
     while (!have_dir && corner < 8) {
 	rdir = box_corners[corner] - origin_pnt;
 	dotp = ON_DotProduct(triangle_normal, rdir);
-	(NEAR_ZERO(dotp, 0.01)) ? corner++ : have_dir = 1;
+	(NEAR_ZERO(dotp, NPOLY_DOTP_TOL)) ? corner++ : have_dir = 1;
     }
     if (!have_dir) {
 	bu_log("Error: NONE of the corners worked??\n");

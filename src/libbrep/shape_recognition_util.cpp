@@ -20,6 +20,7 @@ ON_MinMaxInit(ON_3dPoint *min, ON_3dPoint *max)
     max->z = -ON_DBL_MAX;
 }
 
+#define LN_DOTP_TOL 0.000001
 ON_3dPoint
 ON_LinePlaneIntersect(ON_Line &line, ON_Plane &plane)
 {
@@ -35,14 +36,13 @@ ON_LinePlaneIntersect(ON_Line &line, ON_Plane &plane)
     ON_3dVector p0l0 = p0 - l0;
     double p0l0n = ON_DotProduct(p0l0, n);
     double ln = ON_DotProduct(l, n);
-    if (NEAR_ZERO(ln, 0.000001) && NEAR_ZERO(p0l0n, 0.000001)) {
+    if (NEAR_ZERO(ln, LN_DOTP_TOL) && NEAR_ZERO(p0l0n, LN_DOTP_TOL)) {
 	result.x = -ON_DBL_MAX;
 	result.y = -ON_DBL_MAX;
 	result.z = -ON_DBL_MAX;
 	return result;
     }
-    if (NEAR_ZERO(ln, 0.000001)) return result;
-
+    if (NEAR_ZERO(ln, LN_DOTP_TOL)) return result;
     double d = p0l0n/ln;
 
     result = d*l + l0;

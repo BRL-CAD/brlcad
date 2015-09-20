@@ -32,7 +32,7 @@ negative_cylinder(const ON_Brep *brep, int face_index, double cyl_tol) {
     ON_3dVector axis_vect = pnt - axis_pnt;
     double dotp = ON_DotProduct(axis_vect, normal);
 
-    if (NEAR_ZERO(dotp, 0.000001)) return 0;
+    if (NEAR_ZERO(dotp, VUNITIZE_TOL)) return 0;
     ret = (dotp < 0) ? -1 : 1;
     if (brep->m_F[face_index].m_bRev) ret = -1 * ret;
     return ret;
