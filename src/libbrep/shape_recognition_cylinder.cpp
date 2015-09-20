@@ -450,10 +450,12 @@ cylinder_csg(struct bu_vls *msgs, struct subbrep_shoal_data *data, fastf_t cyl_t
     // planes are part of the final arb.  Based on the arbn prep test.
     int *planes_used = (int *)bu_calloc(uniq_planes.Count(), sizeof(int), "usage flags");
     convex_plane_usage(&uniq_planes, &planes_used);
-    // Finally, based on usage tests, construct the set of planes that will define the arbn
+    // Finally, based on usage tests, construct the set of planes that will define the arbn.
+    // If it doesn't have 3 or more uses, it's not a net contributor to the shape.
     ON_SimpleArray<ON_Plane> arbn_planes;
     for (int i = 0; i < uniq_planes.Count(); i++) {
-	if (planes_used[i] != 0) arbn_planes.Append(uniq_planes[i]);
+	//if (planes_used[i] != 0 && planes_used[i] < 3) bu_log("%d: have %d uses for plane %d\n", *data->i->obj_cnt + 1, planes_used[i], i);
+	if (planes_used[i] != 0 && planes_used[i] > 2) arbn_planes.Append(uniq_planes[i]);
     }
     bu_free(planes_used, "planes_used");
 
