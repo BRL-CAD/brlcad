@@ -308,8 +308,9 @@ make_island(struct bu_vls *msgs, struct subbrep_island_data *data, struct rt_wdb
 	if (*bool_op == 'u') {
 	    bu_vls_trunc(&shoal_name, 0);
 	    subbrep_obj_name(d->shoal_type, d->shoal_id, rname, &shoal_name);
-	    if (*n_bool_op == 'u')
-		//bu_log("  unioning: %s: %s\n", bu_vls_addr(&island_name), bu_vls_addr(&shoal_name));
+	    //if (*n_bool_op == 'u') {
+	    //  bu_log("  unioning: %s: %s\n", bu_vls_addr(&island_name), bu_vls_addr(&shoal_name));
+	    //}
 	    if (!make_shoal(msgs, d, wdbp, rname)) failed++;
 	    (void)mk_addmember(bu_vls_addr(&shoal_name), &(ucomb.l), NULL, db_str2op(bool_op));
 	}
@@ -321,8 +322,9 @@ make_island(struct bu_vls *msgs, struct subbrep_island_data *data, struct rt_wdb
 	if (*bool_op == '-') {
 	    bu_vls_trunc(&shoal_name, 0);
 	    subbrep_obj_name(d->shoal_type, d->shoal_id, rname, &shoal_name);
-	    if (*n_bool_op == 'u')
+	    //if (*n_bool_op == 'u') {
 		//bu_log("  subtracting: %s: %s\n", bu_vls_addr(&island_name), bu_vls_addr(&shoal_name));
+	    //}
 	    if (!make_shoal(msgs, d, wdbp, rname)) failed++;
 	    (void)mk_addmember(bu_vls_addr(&shoal_name), &(scomb.l), NULL, db_str2op(&un));
 	    have_subtractions++;
@@ -333,9 +335,10 @@ make_island(struct bu_vls *msgs, struct subbrep_island_data *data, struct rt_wdb
 	struct subbrep_island_data *n = (struct subbrep_island_data *)BU_PTBL_GET(data->subtractions, i);
 	struct bu_vls subtraction_name = BU_VLS_INIT_ZERO;
 	subbrep_obj_name(-1, n->island_id, rname, &subtraction_name);
-	if (*n_bool_op == 'u')
-	    //bu_log("  subtraction found for %s: %s\n", bu_vls_addr(&island_name), bu_vls_addr(&subtraction_name));
-	if (pcomb) (void)mk_addmember(bu_vls_addr(&subtraction_name), &(scomb.l), NULL, db_str2op(&un));
+	//if (*n_bool_op == 'u') {
+	//  bu_log("  subtraction found for %s: %s\n", bu_vls_addr(&island_name), bu_vls_addr(&subtraction_name));
+	//}
+	(void)mk_addmember(bu_vls_addr(&subtraction_name), &(scomb.l), NULL, db_str2op(&un));
 	bu_vls_free(&subtraction_name);
 	have_subtractions++;
     }
