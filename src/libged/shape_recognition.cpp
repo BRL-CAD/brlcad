@@ -215,8 +215,8 @@ make_shoal(struct bu_vls *msgs, struct subbrep_shoal_data *data, struct rt_wdb *
 	return 0;
     }
 
-    struct bu_vls key = BU_VLS_INIT_ZERO;
-    set_key(&key, data->shoal_loops_cnt, data->shoal_loops);
+    //struct bu_vls key = BU_VLS_INIT_ZERO;
+    //set_key(&key, data->shoal_loops_cnt, data->shoal_loops);
     //bu_log("Processing shoal %s from island %s\n", bu_vls_addr(&key), bu_vls_addr(data->i->key));
 
     if (data->shoal_type == COMB) {
@@ -267,11 +267,13 @@ make_island(struct bu_vls *msgs, struct subbrep_island_data *data, struct rt_wdb
     struct bu_vls island_name = BU_VLS_INIT_ZERO;
     subbrep_obj_name(-1, data->island_id, rname, &island_name);
 
+#if 0
     if (*n_bool_op == 'u') {
 	bu_log("Processing island %s\n", bu_vls_addr(&island_name));
     } else {
 	bu_log("Making negative island %s\n", bu_vls_addr(&island_name));
     }
+#endif
 
     struct bu_vls shoal_name = BU_VLS_INIT_ZERO;
     struct bu_vls union_name = BU_VLS_INIT_ZERO;
@@ -293,11 +295,6 @@ make_island(struct bu_vls *msgs, struct subbrep_island_data *data, struct rt_wdb
 	if (!make_shoal(msgs, data->nucleus, wdbp, rname)) failed++;
     }
 
-
-    if (*n_bool_op == 'u')
-	bu_log("Processing island %s\n", bu_vls_addr(&island_name));
-
-
     // In a comb, the first element is always unioned.  The nucleus bool op is applied
     // to the overall shoal in the pcomb assembly.
     (void)mk_addmember(bu_vls_addr(&shoal_name), &(ucomb.l), NULL, db_str2op(&un));
@@ -312,7 +309,7 @@ make_island(struct bu_vls *msgs, struct subbrep_island_data *data, struct rt_wdb
 	    bu_vls_trunc(&shoal_name, 0);
 	    subbrep_obj_name(d->shoal_type, d->shoal_id, rname, &shoal_name);
 	    if (*n_bool_op == 'u')
-		bu_log("  unioning: %s: %s\n", bu_vls_addr(&island_name), bu_vls_addr(&shoal_name));
+		//bu_log("  unioning: %s: %s\n", bu_vls_addr(&island_name), bu_vls_addr(&shoal_name));
 	    if (!make_shoal(msgs, d, wdbp, rname)) failed++;
 	    (void)mk_addmember(bu_vls_addr(&shoal_name), &(ucomb.l), NULL, db_str2op(bool_op));
 	}
@@ -325,7 +322,7 @@ make_island(struct bu_vls *msgs, struct subbrep_island_data *data, struct rt_wdb
 	    bu_vls_trunc(&shoal_name, 0);
 	    subbrep_obj_name(d->shoal_type, d->shoal_id, rname, &shoal_name);
 	    if (*n_bool_op == 'u')
-		bu_log("  subtracting: %s: %s\n", bu_vls_addr(&island_name), bu_vls_addr(&shoal_name));
+		//bu_log("  subtracting: %s: %s\n", bu_vls_addr(&island_name), bu_vls_addr(&shoal_name));
 	    if (!make_shoal(msgs, d, wdbp, rname)) failed++;
 	    (void)mk_addmember(bu_vls_addr(&shoal_name), &(scomb.l), NULL, db_str2op(&un));
 	    have_subtractions++;
@@ -337,8 +334,7 @@ make_island(struct bu_vls *msgs, struct subbrep_island_data *data, struct rt_wdb
 	struct bu_vls subtraction_name = BU_VLS_INIT_ZERO;
 	subbrep_obj_name(-1, n->island_id, rname, &subtraction_name);
 	if (*n_bool_op == 'u')
-	    bu_log("  subtraction found for %s: %s\n", bu_vls_addr(&island_name), bu_vls_addr(&subtraction_name));
-	//bu_log("subtracting %s\n", bu_vls_addr(n->key));
+	    //bu_log("  subtraction found for %s: %s\n", bu_vls_addr(&island_name), bu_vls_addr(&subtraction_name));
 	if (pcomb) (void)mk_addmember(bu_vls_addr(&subtraction_name), &(scomb.l), NULL, db_str2op(&un));
 	bu_vls_free(&subtraction_name);
 	have_subtractions++;

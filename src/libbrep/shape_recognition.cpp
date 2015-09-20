@@ -380,7 +380,7 @@ subbrep_split(struct bu_vls *msgs, struct subbrep_island_data *data)
     if (csg_fail > 0) {
 	/* We found something we can't handle, so there will be no CSG
 	 * conversion of this subbrep. */
-	bu_log("non-planar splitting subroutines failed: %s\n", bu_vls_addr(data->key));
+	//bu_log("non-planar splitting subroutines failed: %s\n", bu_vls_addr(data->key));
 	for (unsigned int i = 0; i < BU_PTBL_LEN(data->island_children); i++) {
 	    struct subbrep_shoal_data *d = (struct subbrep_shoal_data *)BU_PTBL_GET(data->island_children, i);
 	    subbrep_shoal_free(d);
@@ -508,8 +508,8 @@ find_subbreps(struct bu_vls *msgs, const ON_Brep *brep)
 	// Assemble the set of edges
 	get_edge_set_from_loops(sb);
 
-	// Get key based on face indicies
-	set_key(sb->key, sb->island_faces_cnt, sb->island_faces);
+	// Get key based on loop indicies
+	set_key(sb->key, sb->island_loops_cnt, sb->island_loops);
 
 	if (!planar_fils) {
 	    if (msgs) bu_vls_printf(msgs, "Note - non-planer island mating loop in %s, haulting conversion\n", bu_vls_addr(sb->key));
@@ -533,7 +533,7 @@ find_subbreps(struct bu_vls *msgs, const ON_Brep *brep)
 	// Check to see if we have a general surface that precludes conversion
 	surface_t hof = subbrep_highest_order_face(sb);
 	if (hof >= SURFACE_GENERAL) {
-	    if (msgs) bu_vls_printf(msgs, "Note - general surface present in island %s, representing as B-Rep\n", bu_vls_addr(sb->key));
+	    if (msgs) bu_vls_printf(msgs, "Note - general surface present in island %s - representing as B-Rep\n", bu_vls_addr(sb->key));
 	    sb->island_type = BREP;
 	    (void)subbrep_make_brep(msgs, sb);
 	    sb->local_brep_bool_op = (bool_flag == -1) ? '-' : 'u';
