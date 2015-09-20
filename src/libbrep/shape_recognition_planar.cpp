@@ -11,9 +11,8 @@
 #include "bg/tri_ray.h"
 #include "shape_recognition.h"
 
-#define L2_OFFSET 4
-#define L3_OFFSET 6
 
+#define MAX_CNT_CONVEX_PLANE_TEST 15
 
 // Check for plane intersection points that are inside/outside the
 // arb.  If a set of three planes defines a point that is inside, those
@@ -970,15 +969,21 @@ island_nucleus(struct bu_vls *msgs, struct subbrep_island_data *data)
 
 	// 2. convex polyhedron
 	int convex_polyhedron = 1;
-	int *planes_used = (int *)bu_calloc(planes.Count(), sizeof(int), "usage flags");
-	convex_plane_usage(&planes, &planes_used);
-	for (int i = 0; i < planes.Count(); i++) {
-	    if (planes_used[i] == 0) {
-		convex_polyhedron = 0;
-		break;
+
+	// This can be an expensive test, so only do it for a small number of planes
+	if (planes.Count() > MAX_CNT_CONVEX_PLANE_TEST) convex_polyhedron = 0;
+
+	if (convex_polyhedron) {
+	    int *planes_used = (int *)bu_calloc(planes.Count(), sizeof(int), "usage flags");
+	    convex_plane_usage(&planes, &planes_used);
+	    for (int i = 0; i < planes.Count(); i++) {
+		if (planes_used[i] == 0) {
+		    convex_polyhedron = 0;
+		    break;
+		}
 	    }
+	    bu_free(planes_used, "free used array");
 	}
-	bu_free(planes_used, "free used array");
 
 	// If the planes can form an arbn, we still need to make sure that none of the known vertices
 	// from the planar faces are trimmed away by any of the arbn planes
@@ -999,7 +1004,6 @@ island_nucleus(struct bu_vls *msgs, struct subbrep_island_data *data)
 	    }
 	}
 
-	//bu_log("convex polyhedron: %d\n", convex_polyhedron);
 	if (convex_polyhedron) {
 	    // If we do in fact have a convex polyhedron, we can create an arbn
 	    // instead of a BoT for this nucleus shape
