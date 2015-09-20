@@ -402,7 +402,6 @@ brep_to_csg(struct ged *gedp, struct directory *dp, int UNUSED(verify), struct b
     if (rt_db_get_internal(&intern, dp, wdbp->dbip, NULL, &rt_uniresource) < 0) {
 	return -1;
     }
-    bu_vls_printf(gedp->ged_result_str, "processing %s\n", dp->d_namep);
     if (intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_BREP) {
 	bu_vls_printf(gedp->ged_result_str, "%s is not a B-Rep - aborting\n", dp->d_namep);
 	return 1;
@@ -424,34 +423,43 @@ brep_to_csg(struct ged *gedp, struct directory *dp, int UNUSED(verify), struct b
     struct bu_vls root_name = BU_VLS_INIT_ZERO;
     bu_path_component(&core_name, dp->d_namep, PATH_BASENAME_CORE);
     bu_vls_sprintf(&root_name, "%s-csg", bu_vls_addr(&core_name));
-    bu_vls_sprintf(&comb_name, "csg_%s.r", bu_vls_addr(&core_name));
+    bu_vls_sprintf(&comb_name, "csg_%s.c", bu_vls_addr(&core_name));
     if (retname) bu_vls_sprintf(retname, "%s", bu_vls_addr(&comb_name));
-    BU_LIST_INIT(&pcomb.l);
 
-    struct bu_ptbl *subbreps = find_subbreps(gedp->ged_result_str, brep);
+    // Only do this if we haven't already done it - tree walking may
+    // result in multiple references to a single object
+    if (db_lookup(gedp->ged_wdbp->dbip, bu_vls_addr(&comb_name), LOOKUP_QUIET) == RT_DIR_NULL) {
+	bu_vls_printf(gedp->ged_result_str, "Converting %s to %s\n", dp->d_namep, bu_vls_addr(&comb_name));
 
-    if (subbreps) {
-	for (unsigned int i = 0; i < BU_PTBL_LEN(subbreps); i++) {
-	    struct subbrep_island_data *sb = (struct subbrep_island_data *)BU_PTBL_GET(subbreps, i);
-	    make_island(gedp->ged_result_str, sb, wdbp, bu_vls_addr(&root_name), &pcomb);
-	}
-	for (unsigned int i = 0; i < BU_PTBL_LEN(subbreps); i++) {
-	    // free islands;
-	}
+	BU_LIST_INIT(&pcomb.l);
 
-	// Only do a combination if the comb structure has more than one entry in the list.
-	struct bu_list *olist;
-	int comb_objs = 0;
-	for (BU_LIST_FOR(olist, bu_list, &pcomb.l)) comb_objs++;
-	if (comb_objs > 1) {
-	    // We're not setting the region flag here in case there is a hierarchy above us that
-	    // takes care of it.  TODO - support knowing whether that's true and doing the right thing. 
-	    mk_lcomb(wdbp, bu_vls_addr(&comb_name), &pcomb, 0, NULL, NULL, NULL, 0);
-	} else {
-	    // TODO - Fix up name of first item in list to reflect top level naming to
-	    // avoid an unnecessary level of hierarchy.
-	    mk_lcomb(wdbp, bu_vls_addr(&comb_name), &pcomb, 0, NULL, NULL, NULL, 0);
+	struct bu_ptbl *subbreps = find_subbreps(gedp->ged_result_str, brep);
+
+	if (subbreps) {
+	    for (unsigned int i = 0; i < BU_PTBL_LEN(subbreps); i++) {
+		struct subbrep_island_data *sb = (struct subbrep_island_data *)BU_PTBL_GET(subbreps, i);
+		make_island(gedp->ged_result_str, sb, wdbp, bu_vls_addr(&root_name), &pcomb);
+	    }
+	    for (unsigned int i = 0; i < BU_PTBL_LEN(subbreps); i++) {
+		// free islands;
+	    }
+
+	    // Only do a combination if the comb structure has more than one entry in the list.
+	    struct bu_list *olist;
+	    int comb_objs = 0;
+	    for (BU_LIST_FOR(olist, bu_list, &pcomb.l)) comb_objs++;
+	    if (comb_objs > 1) {
+		// We're not setting the region flag here in case there is a hierarchy above us that
+		// takes care of it.  TODO - support knowing whether that's true and doing the right thing. 
+		mk_lcomb(wdbp, bu_vls_addr(&comb_name), &pcomb, 0, NULL, NULL, NULL, 0);
+	    } else {
+		// TODO - Fix up name of first item in list to reflect top level naming to
+		// avoid an unnecessary level of hierarchy.
+		mk_lcomb(wdbp, bu_vls_addr(&comb_name), &pcomb, 0, NULL, NULL, NULL, 0);
+	    }
 	}
+    } else {
+	bu_vls_printf(gedp->ged_result_str, "Conversion object %s for %s already exists, skipping.\n", bu_vls_addr(&comb_name), dp->d_namep);
     }
     return 0;
 }
