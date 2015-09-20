@@ -600,7 +600,9 @@ negative_polygon(struct bu_vls *UNUSED(msgs), struct csg_object_params *data)
 int
 island_nucleus(struct bu_vls *msgs, struct subbrep_island_data *data)
 {
-    //bu_log("island processing %s\n", bu_vls_addr(data->key));
+    const ON_Brep *brep = data->brep;
+    std::set<int> island_loops;
+    array_to_set(&island_loops, data->island_loops, data->island_loops_cnt);
 
     int degenerate_nucleus = 0;
     int have_flipped_loops = 0;
@@ -620,7 +622,7 @@ island_nucleus(struct bu_vls *msgs, struct subbrep_island_data *data)
     std::set<int> planar_faces;
     std::set<int>::iterator p_it;
     for (int i = 0; i < data->island_loops_cnt; i++) {
-	const ON_BrepLoop *loop = &(data->brep->m_L[data->island_loops[i]]);
+	const ON_BrepLoop *loop = &(brep->m_L[data->island_loops[i]]);
 	const ON_BrepFace *face = loop->Face();
 	surface_t surface_type = ((surface_t *)data->face_surface_types)[face->m_face_index];
 	if (surface_type == SURFACE_PLANE) {
@@ -658,7 +660,7 @@ island_nucleus(struct bu_vls *msgs, struct subbrep_island_data *data)
     if (arbn_planes.Count() > 0) {
 	for (p_it = planar_faces.begin(); p_it != planar_faces.end(); p_it++) {
 	    int is_coplanar = 0;
-	    const ON_BrepFace *face = &(data->brep->m_F[(int)*p_it]);
+	    const ON_BrepFace *face = &(brep->m_F[(int)*p_it]);
 	    ON_Plane p;
 	    face->SurfaceOf()->IsPlanar(&p, BREP_PLANAR_TOL);
 	    if (face->m_bRev) p.Flip();
@@ -709,11 +711,11 @@ island_nucleus(struct bu_vls *msgs, struct subbrep_island_data *data)
 	    // Get all edges that share a vertex with the shoal loops
 	    for (int li = 0; li < d->shoal_loops_cnt; li++) {
 		//bu_log("shoal loop (%d of %d): %d\n", li, d->loops_cnt, d->loops[li]);
-		const ON_BrepLoop *loop = &(data->brep->m_L[d->shoal_loops[li]]);
+		const ON_BrepLoop *loop = &(brep->m_L[d->shoal_loops[li]]);
 		for (int ti = 0; ti < loop->m_ti.Count(); ti++) {
 		    int vert_ind;
-		    const ON_BrepTrim *trim = &(data->brep->m_T[loop->m_ti[ti]]);
-		    const ON_BrepEdge *edge = &(data->brep->m_E[trim->m_ei]);
+		    const ON_BrepTrim *trim = &(brep->m_T[loop->m_ti[ti]]);
+		    const ON_BrepEdge *edge = &(brep->m_E[trim->m_ei]);
 		    if (trim->m_bRev3d) {
 			vert_ind = edge->Vertex(0)->m_vertex_index;
 		    } else {
@@ -721,9 +723,9 @@ island_nucleus(struct bu_vls *msgs, struct subbrep_island_data *data)
 		    }
 		    if (ignored_verts.find(vert_ind) == ignored_verts.end()) {
 			// Get vertex edges.
-			const ON_BrepVertex *v = &(data->brep->m_V[vert_ind]);
+			const ON_BrepVertex *v = &(brep->m_V[vert_ind]);
 			for (int ei = 0; ei < v->EdgeCount(); ei++) {
-			    const ON_BrepEdge *e = &(data->brep->m_E[v->m_ei[ei]]);
+			    const ON_BrepEdge *e = &(brep->m_E[v->m_ei[ei]]);
 			    //bu_log("insert edge %d\n", e->m_edge_index);
 			    shoal_connected_edges.insert(e->m_edge_index);
 			}
@@ -731,10 +733,10 @@ island_nucleus(struct bu_vls *msgs, struct subbrep_island_data *data)
 		}
 	    }
 	    for (scl_it = shoal_connected_edges.begin(); scl_it != shoal_connected_edges.end(); scl_it++) {
-		const ON_BrepEdge *edge= &(data->brep->m_E[(int)*scl_it]);
+		const ON_BrepEdge *edge= &(brep->m_E[(int)*scl_it]);
 		//bu_log("Edge: %d\n", edge->m_edge_index);
-		ON_3dPoint p1 = data->brep->m_V[edge->Vertex(0)->m_vertex_index].Point();
-		ON_3dPoint p2 = data->brep->m_V[edge->Vertex(1)->m_vertex_index].Point();
+		ON_3dPoint p1 = brep->m_V[edge->Vertex(0)->m_vertex_index].Point();
+		ON_3dPoint p2 = brep->m_V[edge->Vertex(1)->m_vertex_index].Point();
 		double dotp1 = ON_DotProduct(p1 - shoal_implicit_plane.origin, shoal_implicit_plane.Normal());
 		double dotp2 = ON_DotProduct(p2 - shoal_implicit_plane.origin, shoal_implicit_plane.Normal());
 		if (NEAR_ZERO(dotp1, BREP_PLANAR_TOL) || NEAR_ZERO(dotp2, BREP_PLANAR_TOL)) continue;
@@ -753,14 +755,12 @@ island_nucleus(struct bu_vls *msgs, struct subbrep_island_data *data)
 
     if (!degenerate_nucleus) {
 	// First, deal with planar faces
-	std::set<int> island_loops;
-	array_to_set(&island_loops, data->island_loops, data->island_loops_cnt);
 	for (p_it = planar_faces.begin(); p_it != planar_faces.end(); p_it++) {
 	    int f_lcnt;
 	    int loop_rev = 0; // Check if loop flips when ignored verts are removed
 	    int *f_loops = NULL;
 	    std::set<int> active_loops;
-	    const ON_BrepFace *face = &(data->brep->m_F[(int)*p_it]);
+	    const ON_BrepFace *face = &(brep->m_F[(int)*p_it]);
 	    ON_Plane p;
 	    face->SurfaceOf()->IsPlanar(&p, BREP_PLANAR_TOL);
 	    //bu_log("face(%d): %f,%f,%f %f,%f,%f\n", face->m_face_index,  p.origin.x, p.origin.y, p.origin.z, p.Normal().x, p.Normal().y, p.Normal().z);
@@ -870,7 +870,7 @@ island_nucleus(struct bu_vls *msgs, struct subbrep_island_data *data)
 
 	    data->nucleus->params->csg_verts = (point_t *)bu_calloc(all_used_verts.size(), sizeof(point_t), "final verts array");
 	    for (auv_it = all_used_verts.begin(); auv_it != all_used_verts.end(); auv_it++) {
-		ON_3dPoint vp = data->brep->m_V[(int)(*auv_it)].Point();
+		ON_3dPoint vp = brep->m_V[(int)(*auv_it)].Point();
 		BN_VMOVE(data->nucleus->params->csg_verts[curr_vert], vp);
 		vert_map.insert(std::pair<int,int>((int)*auv_it, curr_vert));
 		curr_vert++;
@@ -964,7 +964,6 @@ island_nucleus(struct bu_vls *msgs, struct subbrep_island_data *data)
 
 
 	// 2. convex polyhedron
-#if 0
 	int convex_polyhedron = 1;
 	int *planes_used = (int *)bu_calloc(planes.Count(), sizeof(int), "usage flags");
 	convex_plane_usage(&planes, &planes_used);
@@ -975,6 +974,26 @@ island_nucleus(struct bu_vls *msgs, struct subbrep_island_data *data)
 	    }
 	}
 	bu_free(planes_used, "free used array");
+
+	// If the planes can form an arbn, we still need to make sure that none of the known vertices
+	// from the planar faces are trimmed away by any of the arbn planes
+	if (convex_polyhedron) {
+	    for (int v = 0; v < data->nucleus->params->csg_vert_cnt; v++) {
+		ON_3dPoint p3d;
+		ON_VMOVE(p3d, data->nucleus->params->csg_verts[v]);
+		/* See if point is outside arb */
+		for (int m = 0; m < planes.Count(); m++) {
+		    double dotp = ON_DotProduct(p3d - planes[m].origin, planes[m].Normal());
+		    if (dotp > 0 && !NEAR_ZERO(dotp, VUNITIZE_TOL)) {
+			bu_log("Found trimmed point, we're done\n");
+			convex_polyhedron = 0;
+			break;
+		    }
+		}
+		if (!convex_polyhedron) break;
+	    }
+	}
+
 	//bu_log("convex polyhedron: %d\n", convex_polyhedron);
 	if (convex_polyhedron) {
 	    // If we do in fact have a convex polyhedron, we can create an arbn
@@ -993,9 +1012,8 @@ island_nucleus(struct bu_vls *msgs, struct subbrep_island_data *data)
 	    }
 	} else {
 	    // Otherwise, confirm as BoT
-#endif
 	    data->nucleus->params->csg_type = PLANAR_VOLUME;
-//	}
+	}
 
 	// 3. There is one final wrinkle.  It is possible for a polyhedron nucleus to be volumetrically
 	// inside a shoal (shape + arbn).  In this situation, the nucleus is subtracted from the shoal
@@ -1017,26 +1035,6 @@ island_nucleus(struct bu_vls *msgs, struct subbrep_island_data *data)
 
     return 1;
 }
-
-int
-subbrep_is_planar(struct bu_vls *UNUSED(msgs), struct subbrep_island_data *data)
-{
-    int i = 0;
-    // Check surfaces.  If a surface is anything other than a plane the verdict is no.
-    // If any face has more than one loop, the verdict is no.
-    // If all surfaces are planes and the faces have only outer loops, then the verdict is yes.
-    for (i = 0; i < data->island_faces_cnt; i++) {
-	const ON_BrepFace *face = &(data->brep->m_F[i]);
-	surface_t stype = ((surface_t *)data->face_surface_types)[face->m_face_index];
-	if (stype != SURFACE_PLANE) return 0;
-    }
-    data->island_type = PLANAR_VOLUME;
-
-    //if (negative_polygon(msgs, data) == -1) data->params->bool_op = '-';
-
-    return 1;
-}
-
 
 // Local Variables:
 // tab-width: 8
