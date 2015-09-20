@@ -358,19 +358,19 @@ make_island(struct bu_vls *msgs, struct subbrep_island_data *data, struct rt_wdb
 	(void)mk_addmember(bu_vls_addr(&island_name), &(pcomb->l), NULL, db_str2op(n_bool_op));
 
     // Debugging B-Reps - generates a B-Rep object for each island
-#if 0
+#if 1
     if (data->local_brep) {
 	unsigned char rgb[3];
 	struct wmember bcomb;
 	struct bu_vls bcomb_name = BU_VLS_INIT_ZERO;
 	struct bu_vls brep_name = BU_VLS_INIT_ZERO;
-	bu_vls_sprintf(&bcomb_name, "brep_obj_%d.r", data->id);
+	bu_vls_sprintf(&bcomb_name, "brep_obj_%d.r", data->island_id);
 	BU_LIST_INIT(&bcomb.l);
 
 	for (int i = 0; i < 3; ++i)
 	    rgb[i] = static_cast<unsigned char>(255.0 * drand48() + 0.5);
 
-	bu_vls_sprintf(&brep_name, "brep_obj_%d.s", data->id);
+	bu_vls_sprintf(&brep_name, "brep_obj_%d.s", data->island_id);
 	mk_brep(wdbp, bu_vls_addr(&brep_name), data->local_brep);
 
 	(void)mk_addmember(bu_vls_addr(&brep_name), &(bcomb.l), NULL, db_str2op((const char *)&un));
