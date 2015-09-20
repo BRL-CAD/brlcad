@@ -787,10 +787,12 @@ island_nucleus(struct bu_vls *msgs, struct subbrep_island_data *data)
 		p.Flip();
 	    }
 
-	    // One more possible flip - if this face comes to the island via a fil connection, flip it.
+	    // One more possible flip - if this face comes to the island via a
+	    // fil connection, flip it.  Don't flip a face with multiple loops
+	    // active, since that face is not a mating face.
 	    std::set<int> fil;
 	    array_to_set(&fil, data->fil, data->fil_cnt);
-	    if (fil.find(face->m_face_index) != fil.end()) {
+	    if (active_loops.size() == 1 && fil.find(face->m_face_index) != fil.end()) {
 		//bu_log("face %d came to us via inner loop - flip the plane.\n", face->m_face_index);
 		for (int i = 0; i < face_cnt; i++) {
 		    int tmp = faces[i*3+1];

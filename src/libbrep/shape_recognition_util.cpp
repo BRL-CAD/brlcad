@@ -382,15 +382,26 @@ subbrep_brep_boolean(struct subbrep_island_data *data)
    int pos_cnt = 0;
    int neg_cnt = 0;
 
+   std::set<int> island_loops;
+   array_to_set(&island_loops, data->island_loops, data->island_loops_cnt);
+
    /* Top level breps are unions */
    if (data->fil_cnt == 0) return 1;
 
    for (int i = 0; i < data->fil_cnt; i++) {
+       std::set<int> active_loops;
        // Get face with inner loop
        const ON_BrepFace *face = &(data->brep->m_F[data->fil[i]]);
        const ON_Surface *surf = face->SurfaceOf();
        surface_t stype = ((surface_t *)data->face_surface_types)[face->m_face_index];
        if (stype != SURFACE_PLANE) return -2;
+
+       // If we have a face with multiple loops active, assume a toplevel union
+       // TODO - is this always true?
+       for (int j = 0; j < face->LoopCount(); j++) {
+	   if (island_loops.find(face->m_li[j]) != island_loops.end()) active_loops.insert(face->m_li[j]);
+       }
+       if (active_loops.size() > 1) return 1;
 
        // Get face plane
        ON_Plane face_plane;
