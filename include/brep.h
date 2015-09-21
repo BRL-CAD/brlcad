@@ -1474,11 +1474,7 @@ struct subbrep_island_data {
 };
 
 
-/*extern BREP_EXPORT void subbrep_bbox(struct subbrep_island_data *obj);*/
-extern BREP_EXPORT struct bu_ptbl *find_subbreps(struct bu_vls *msgs, const ON_Brep *brep);
-/*extern BREP_EXPORT void find_hierarchy(struct bu_vls *msgs, struct subbrep_tree_node *node, struct bu_ptbl *subbreps);*/
-extern BREP_EXPORT int subbrep_polygon_tri(struct bu_vls *msgs, struct subbrep_island_data *data, const point_t *all_verts, int *loops, int loop_cnt, int **ffaces);
-
+extern BREP_EXPORT struct bu_ptbl *brep_to_csg(struct bu_vls *msgs, const ON_Brep *brep);
 
 } /* extern C++ */
 #endif

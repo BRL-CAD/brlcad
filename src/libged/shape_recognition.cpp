@@ -357,7 +357,7 @@ make_island(struct bu_vls *msgs, struct subbrep_island_data *data, struct rt_wdb
 	(void)mk_addmember(bu_vls_addr(&island_name), &(pcomb->l), NULL, db_str2op(n_bool_op));
 
     // Debugging B-Reps - generates a B-Rep object for each island
-#if 1
+#if 0
     if (data->local_brep) {
 	unsigned char rgb[3];
 	struct wmember bcomb;
@@ -392,7 +392,7 @@ make_island(struct bu_vls *msgs, struct subbrep_island_data *data, struct rt_wdb
  *  2 not a valid brep
  */
 int
-brep_to_csg(struct ged *gedp, struct directory *dp, int verify, struct bu_vls *retname)
+_obj_brep_to_csg(struct ged *gedp, struct directory *dp, int verify, struct bu_vls *retname)
 {
     /* Unpack B-Rep */
     struct rt_db_internal intern;
@@ -433,9 +433,16 @@ brep_to_csg(struct ged *gedp, struct directory *dp, int verify, struct bu_vls *r
 
 	BU_LIST_INIT(&pcomb.l);
 
-	struct bu_ptbl *subbreps = find_subbreps(gedp->ged_result_str, brep);
+	struct bu_ptbl *subbreps = brep_to_csg(gedp->ged_result_str, brep);
 
 	if (subbreps) {
+	    int have_non_breps = 0;
+	    for (unsigned int i = 0; i < BU_PTBL_LEN(subbreps); i++) {
+		struct subbrep_island_data *sb = (struct subbrep_island_data *)BU_PTBL_GET(subbreps, i);
+		if (sb->island_type != BREP) have_non_breps++;
+	    }
+	    if (!have_non_breps) return 2;
+
 	    for (unsigned int i = 0; i < BU_PTBL_LEN(subbreps); i++) {
 		struct subbrep_island_data *sb = (struct subbrep_island_data *)BU_PTBL_GET(subbreps, i);
 		make_island(gedp->ged_result_str, sb, wdbp, bu_vls_addr(&root_name), &pcomb);
@@ -464,7 +471,7 @@ brep_to_csg(struct ged *gedp, struct directory *dp, int verify, struct bu_vls *r
 		struct bn_tol tol = {BN_TOL_MAGIC, BN_TOL_DIST, BN_TOL_DIST * BN_TOL_DIST, 1.0e-6, 1.0 - 1.0e-6 };
 		brep->GetBoundingBox(bbox);
 		tol.dist = (bbox.Diagonal().Length() / 100.0);
-		bu_log("Analyzing %s csg conversion, tol %f...\n", dp->d_namep, tol.dist);
+		bu_vls_printf(gedp->ged_result_str, "Analyzing %s csg conversion, tol %f...\n", dp->d_namep, tol.dist);
 		if (analyze_raydiff(NULL, gedp->ged_wdbp->dbip, dp->d_namep, bu_vls_addr(&comb_name), &tol, 1)) {
 		    /* remove generated tree if debugging flag isn't passed - not valid */
 		    int ac = 3;
@@ -482,6 +489,8 @@ brep_to_csg(struct ged *gedp, struct directory *dp, int verify, struct bu_vls *r
     } else {
 	bu_vls_printf(gedp->ged_result_str, "Conversion object %s for %s already exists, skipping.\n", bu_vls_addr(&comb_name), dp->d_namep);
     }
+    // This string is getting overwritten somewhere???
+    bu_log("result_str: \n\n\n%s\n\n\n\n", bu_vls_addr(gedp->ged_result_str));
     return 0;
 }
 
@@ -554,9 +563,9 @@ brep_csg_conversion_tree(struct ged *gedp, const union tree *oldtree, union tree
 			break;
 		    }
 		    // It's a primitive. If it's a b-rep object, convert it. Otherwise,
-		    // just duplicate it. Might need better error codes from brep_to_csg for this...
+		    // just duplicate it. Might need better error codes from _obj_brep_to_csg for this...
 		    struct bu_vls newname = BU_VLS_INIT_ZERO;
-		    int brep_c = brep_to_csg(gedp, dir, verify, &newname);
+		    int brep_c = _obj_brep_to_csg(gedp, dir, verify, &newname);
 		    int need_break = 0;
 		    switch (brep_c) {
 			case 0:
@@ -648,7 +657,7 @@ _ged_brep_to_csg(struct ged *gedp, const char *dp_name, int verify)
     if (dp->d_flags & RT_DIR_COMB) {
 	return comb_to_csg(gedp, dp, verify) ? GED_ERROR : GED_OK;
     } else {
-	return brep_to_csg(gedp, dp, verify, NULL) ? GED_ERROR : GED_OK;
+	return _obj_brep_to_csg(gedp, dp, verify, NULL) ? GED_ERROR : GED_OK;
     }
 }
 

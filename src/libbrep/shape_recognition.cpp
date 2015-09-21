@@ -545,7 +545,7 @@ subbrep_split(struct bu_vls *msgs, struct subbrep_island_data *data)
 }
 
 struct bu_ptbl *
-find_subbreps(struct bu_vls *msgs, const ON_Brep *brep)
+brep_to_csg(struct bu_vls *msgs, const ON_Brep *brep)
 {
     /* Number of successful conversion operations */
     int successes = 0;
