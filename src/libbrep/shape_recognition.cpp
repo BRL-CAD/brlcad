@@ -608,8 +608,6 @@ brep_to_csg(struct bu_vls *msgs, const ON_Brep *brep)
 	    }
 	}
 
-	// If our object count is growing beyond reason, bail
-	TOO_MANY_CSG_OBJS(obj_cnt, msgs);
 
 	// Pass the counter pointer through in case sub-objects need
 	// to generate IDs as well.
@@ -666,7 +664,10 @@ brep_to_csg(struct bu_vls *msgs, const ON_Brep *brep)
 	}
 
 	int split = subbrep_split(msgs, sb);
+
+	// If our object count is growing beyond reason, bail
 	TOO_MANY_CSG_OBJS(obj_cnt, msgs);
+
 	if (!split) {
 	    if (msgs) bu_vls_printf(msgs, "Note - split of %s unsuccessful, making brep\n", bu_vls_addr(sb->key));
 	    sb->island_type = BREP;
