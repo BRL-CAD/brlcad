@@ -125,6 +125,13 @@ find_hierarchy(struct bu_vls *UNUSED(msgs), struct bu_ptbl *islands)
 {
     if (!islands) return;
 
+    // Get the top level islands
+    std::set<struct subbrep_island_data *> top_islands;
+    for (unsigned int i = 0; i < BU_PTBL_LEN(islands); i++) {
+	struct subbrep_island_data *id = (struct subbrep_island_data *)BU_PTBL_GET(islands, i);
+	if (id->fil_cnt == 0) top_islands.insert(id);
+    }
+
     // Map outer loop face inclusions to islands for easy lookup
     std::map<int, long*> fol_to_i;
     for (unsigned int i = 0; i < BU_PTBL_LEN(islands); i++) {
@@ -133,14 +140,17 @@ find_hierarchy(struct bu_vls *UNUSED(msgs), struct bu_ptbl *islands)
 	    fol_to_i.insert(std::make_pair(id->fol[j], (long *)id));
 	}
     }
-    typedef std::multimap<struct subbrep_island_data *, struct subbrep_island_data *> IslandMap;
-    IslandMap p2c;
-    IslandMap::iterator p2c_it;
+
+    // We need a quick and easy way to look up parents and children
+    typedef std::multimap<struct subbrep_island_data *, struct subbrep_island_data *> IslandMultiMap;
+    IslandMultiMap p2c, c2p;
+    IslandMultiMap::iterator p2c_it, c2p_it;
     for (unsigned int i = 0; i < BU_PTBL_LEN(islands); i++) {
 	struct subbrep_island_data *id = (struct subbrep_island_data *)BU_PTBL_GET(islands, i);
 	for (int j = 0; j < id->fil_cnt; j++) {
 	    struct subbrep_island_data *sid = (struct subbrep_island_data *)fol_to_i.find(id->fil[j])->second;
 	    p2c.insert(std::make_pair(sid, id));
+	    c2p.insert(std::make_pair(id, sid));
 	}
     }
 
@@ -149,16 +159,15 @@ find_hierarchy(struct bu_vls *UNUSED(msgs), struct bu_ptbl *islands)
 	std::queue<struct subbrep_island_data *> subislands;
 	struct subbrep_island_data *id = (struct subbrep_island_data *)BU_PTBL_GET(islands, i);
 	if (id->nucleus->params->bool_op == '-' || id->local_brep_bool_op == '-') {
-	    //bu_log("negative island - skipping %d\n", id->island_id);
 	    continue;
 	}
-	std::pair <IslandMap::iterator, IslandMap::iterator> p2c_ret;
+	std::pair <IslandMultiMap::iterator, IslandMultiMap::iterator> p2c_ret;
 	p2c_ret = p2c.equal_range(id);
 
 	// For this node's inner loops, find the corresponding sub-islands and initialize.
 	for (p2c_it = p2c_ret.first; p2c_it != p2c_ret.second; ++p2c_it) {
-	    std::pair <IslandMap::iterator, IslandMap::iterator> sp2c_ret;
-	    IslandMap::iterator sp2c_it;
+	    std::pair <IslandMultiMap::iterator, IslandMultiMap::iterator> sp2c_ret;
+	    IslandMultiMap::iterator sp2c_it;
 	    struct subbrep_island_data *subisland = p2c_it->second;
 
 	    // At the top level for a union, any negative shape is joined by a loop and hence
@@ -182,10 +191,11 @@ find_hierarchy(struct bu_vls *UNUSED(msgs), struct bu_ptbl *islands)
 	    struct subbrep_island_data *sid= subislands.front();
 	    subislands.pop();
 
-	    std::pair <IslandMap::iterator, IslandMap::iterator> sp2c_ret = p2c.equal_range(sid);
-	    for (IslandMap::iterator sp2c_it = sp2c_ret.first; sp2c_it != sp2c_ret.second; ++sp2c_it) {
-		if (sp2c_it->second != id)
+	    std::pair <IslandMultiMap::iterator, IslandMultiMap::iterator> sp2c_ret = p2c.equal_range(sid);
+	    for (IslandMultiMap::iterator sp2c_it = sp2c_ret.first; sp2c_it != sp2c_ret.second; ++sp2c_it) {
+		if (sp2c_it->second != id) {
 		    subislands.push(sp2c_it->second);
+		}
 	    }
 
 	    if (sid->nucleus->params->bool_op == '-' || sid->local_brep_bool_op == '-') {
@@ -200,6 +210,119 @@ find_hierarchy(struct bu_vls *UNUSED(msgs), struct bu_ptbl *islands)
 		    bu_ptbl_ins_unique(id->subtractions, (long *)sid);
 		}
 	    }
+	}
+    }
+
+    // If we have multiple top level islands, loop over them and check everybody's subtractions
+    // to make sure all toplevel islands have all the subtractions they need.
+    std::set<struct subbrep_island_data *>::iterator top_it_1, top_it_2;
+    if (top_islands.size() > 1) {
+	for (top_it_1 = top_islands.begin(); top_it_1 != top_islands.end(); top_it_1++) {
+	    struct subbrep_island_data *t1 = *top_it_1;
+	    for (top_it_2 = top_islands.begin(); top_it_2 != top_islands.end(); top_it_2++) {
+		struct subbrep_island_data *t2 = *top_it_2;
+		if (t1->island_id == t2->island_id) continue;
+		for (unsigned int i = 0; i < BU_PTBL_LEN(t2->subtractions); i++) {
+		    struct subbrep_island_data *sub_candidate = (struct subbrep_island_data *)BU_PTBL_GET(t2->subtractions, i);
+		    ON_BoundingBox isect;
+		    bool bbi = isect.Intersection(*t1->bbox, *sub_candidate->bbox);
+		    if (bbi) {
+			bu_ptbl_ins_unique(t1->subtractions, (long *)sub_candidate);
+		    }
+		}
+	    }
+	}
+    }
+
+    // If a union has a parent that is also a union, some of that parent's
+    // subtractions may also be needed in this union. The only unions that will
+    // know all of its subtractions with certainty after the above procedures are
+    // the top level unions.  So, starting with the toplevels, we iterate over
+    // all children of the parent.  If any of the parent subtractions
+    // overlap the union child and are not on the direct inheritance line from
+    // child to parent, subtract them.  Queue chilren up for processing, but for
+    // negative node the only purpose is to look for deeper unions.
+    std::queue<struct subbrep_island_data *> union_queue;
+    std::set<struct subbrep_island_data *>::iterator top_it;
+    for (top_it = top_islands.begin(); top_it != top_islands.end(); top_it++) {
+	// If we've got union children, queue 'em up
+	std::pair <IslandMultiMap::iterator, IslandMultiMap::iterator> p2c_ret;
+	p2c_ret = p2c.equal_range(*top_it);
+	for (p2c_it = p2c_ret.first; p2c_it != p2c_ret.second; ++p2c_it) {
+	    struct subbrep_island_data *subisland = p2c_it->second;
+	    // If the child is a union, we need to check
+	    if (subisland->nucleus->params->bool_op == 'u' || subisland->local_brep_bool_op == 'u') {
+		union_queue.push(subisland);
+	    }
+	}
+    }
+
+    // Now, see if we need to pull anything in from the parent subtractions.
+    while(!union_queue.empty()) {
+	struct subbrep_island_data *uid= union_queue.front();
+	union_queue.pop();
+	if (uid->nucleus->params->bool_op == 'u' || uid->local_brep_bool_op == 'u') {
+
+	    // Get the node's immediate parents
+	    std::pair <IslandMultiMap::iterator, IslandMultiMap::iterator> sc2p_ret;
+	    IslandMultiMap::iterator sc2p_it;
+	    sc2p_ret = c2p.equal_range(uid);
+
+	    // Build a set of any subtractions in the full parent linkage of this node, (for all parents)
+	    // so we know not to subtract those.  If negative islands are in the direct ancestoral
+	    // connectivity graph, they can't be subtractions of that node.
+	    std::set<struct subbrep_island_data *> ignore_islands;
+	    std::set<struct subbrep_island_data *> union_parents;
+	    std::queue<struct subbrep_island_data *> pqueue;
+	    for (sc2p_it = sc2p_ret.first; sc2p_it != sc2p_ret.second; ++sc2p_it) {
+		struct subbrep_island_data *pid = sc2p_it->second;
+		if (pid != uid) pqueue.push(pid);
+		if (pid->nucleus->params->bool_op == '-' || pid->local_brep_bool_op == '-') {
+		    ignore_islands.insert(pid);
+		} else {
+		    union_parents.insert(pid);
+		}
+	    }
+	    while(!pqueue.empty()) {
+		struct subbrep_island_data *pid= pqueue.front();
+		pqueue.pop();
+		std::pair <IslandMultiMap::iterator, IslandMultiMap::iterator> pchain_ret;
+		IslandMultiMap::iterator pchain_it;
+		pchain_ret = c2p.equal_range(pid);
+		for (pchain_it = pchain_ret.first; pchain_it != pchain_ret.second; ++pchain_it) {
+		    struct subbrep_island_data *gpid = pchain_it->second;
+		    if (gpid != pid) pqueue.push(gpid);
+		    if (gpid->nucleus->params->bool_op == '-' || gpid->local_brep_bool_op == '-') {
+			ignore_islands.insert(gpid);
+		    } else {
+			union_parents.insert(pid);
+		    }
+		}
+	    }
+
+	    // Now, check the parents' subtractions against this child
+	    std::set<struct subbrep_island_data *>::iterator up_it;
+	    for (up_it = union_parents.begin(); up_it != union_parents.end(); up_it++) {
+		struct subbrep_island_data *sid = *up_it;
+		for (unsigned int i = 0; i < BU_PTBL_LEN(sid->subtractions); i++) {
+		    struct subbrep_island_data *sub_candidate = (struct subbrep_island_data *)BU_PTBL_GET(sid->subtractions, i);
+		    if (ignore_islands.find(sub_candidate) == ignore_islands.end()) {
+			ON_BoundingBox isect;
+			bool bbi = isect.Intersection(*uid->bbox, *sub_candidate->bbox);
+			if (bbi) {
+			    bu_ptbl_ins_unique(uid->subtractions, (long *)sub_candidate);
+			}
+		    }
+		}
+	    }
+	}
+
+	// If we've got children, union or subtraction, queue 'em up
+	std::pair <IslandMultiMap::iterator, IslandMultiMap::iterator> p2c_ret;
+	p2c_ret = p2c.equal_range(uid);
+	for (p2c_it = p2c_ret.first; p2c_it != p2c_ret.second; ++p2c_it) {
+	    struct subbrep_island_data *subisland = p2c_it->second;
+	    if (subisland != uid) union_queue.push(subisland);
 	}
     }
 }
