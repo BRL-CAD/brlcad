@@ -235,6 +235,10 @@ cylinder_csg(struct bu_vls *msgs, struct subbrep_shoal_data *data, fastf_t cyl_t
 	data->params->have_implicit_plane = 1;
     }
 
+
+    ////////////// Cylinder specific stuff - break into function //////////////////////////
+
+
     // Make a starting cylinder from one of the cylindrical surfaces and construct the axis line
     ON_Cylinder cylinder;
     ON_Surface *cs = brep->m_L[data->shoal_loops[0]].Face()->SurfaceOf()->Duplicate();
@@ -315,32 +319,51 @@ cylinder_csg(struct bu_vls *msgs, struct subbrep_shoal_data *data, fastf_t cyl_t
     }
 
     // If, after all that, we still have more than two cap points, we've got a problem
-    if (axis_pts.Count() != 2) {
+    if (axis_pts.Count() > 2 || (axis_pts.Count() < 2 && cyl_planes.Count() != 2)) {
 	bu_log("incorrect number of axis points for caps (%d)??\n", axis_pts.Count());
 	return 0;
     }
 
-    // Try to handle the situation where multiple end caps all end up
-    // with the same intersection on the axis - we need to pick the "flattest"
-    // plane for each cap so the cylinder is no larger than it needs to be.
     int end_caps[2] = {-1,-1};
-    for (int i = 0; i < axis_pts.Count(); i++) {
-	std::set<int> candidates;
-	double dp = 2.0;
-	for (int j = 0; j < cyl_planes.Count(); j++) {
-	    double d = cyl_planes[j].DistanceTo(axis_pts[i]);
-	    if (NEAR_ZERO(d, VUNITIZE_TOL)) candidates.insert(j);
+    if (axis_pts.Count() < 2) {
+	// If we have a "sliver" where all the axis points got trimmed or the top
+	// and bottom planes intersect the same point on the axis, need different logic
+	// Go back to axis_pts_init points - they'll be sufficent if extended.
+	axis_pts.Append(axis_pts_init[0]);
+	(axis_pts_init.Count() == 2) ? axis_pts.Append(axis_pts_init[1]) :  axis_pts.Append(axis_pts_init[0]);
+	if (axis_pts[0].DistanceTo(axis_pts[1]) > VUNITIZE_TOL) {
+	    end_caps[0] = 1;
+	    end_caps[1] = 0;
+	} else {
+	    double dpc = fabs(ON_DotProduct(cyl_planes[0].Normal(), cylinder.Axis()));
+	    if (dpc < 0) {
+		end_caps[0] = 0;
+		end_caps[1] = 1;
+	    } else {
+		end_caps[0] = 0;
+		end_caps[1] = 1;
+	    }
 	}
-	for (c_it = candidates.begin(); c_it != candidates.end(); c_it++) {
-	    double dpv = fabs(ON_DotProduct(cyl_planes[*c_it].Normal(), cylinder.Axis()));
-	    if (fabs(1-dpv) < fabs(1-dp)) {
-		dp = dpv;
-		end_caps[i] = *c_it;
+    } else {
+	// Try to handle the situation where multiple end caps on the same end all end up
+	// with the same intersection on the axis - we need to pick the "flattest"
+	// plane for each cap so the cylinder is no larger than it needs to be.
+	for (int i = 0; i < axis_pts.Count(); i++) {
+	    std::set<int> candidates;
+	    double dp = 2.0;
+	    for (int j = 0; j < cyl_planes.Count(); j++) {
+		double d = cyl_planes[j].DistanceTo(axis_pts[i]);
+		if (NEAR_ZERO(d, VUNITIZE_TOL)) candidates.insert(j);
+	    }
+	    for (c_it = candidates.begin(); c_it != candidates.end(); c_it++) {
+		double dpv = fabs(ON_DotProduct(cyl_planes[*c_it].Normal(), cylinder.Axis()));
+		if (fabs(1-dpv) < fabs(1-dp)) {
+		    dp = dpv;
+		    end_caps[i] = *c_it;
+		}
 	    }
 	}
     }
-    //bu_log("end cap planes: %d,%d\n", end_caps[0], end_caps[1]);
-
 
     // Construct "large enough" cylinder based on end cap planes
     double extensions[2] = {0.0, 0.0};
@@ -372,7 +395,12 @@ cylinder_csg(struct bu_vls *msgs, struct subbrep_shoal_data *data, fastf_t cyl_t
 
     // Now we decide (arbitrarily) what the vector will be for our final cylinder
     // and calculate the true minimum and maximum points along the axis
-    ON_3dVector cyl_axis_unit = axis_pts[1] - axis_pts[0];
+    ON_3dVector cyl_axis_unit;
+    if (axis_pts[0].DistanceTo(axis_pts[1]) > VUNITIZE_TOL) {
+	cyl_axis_unit = axis_pts[1] - axis_pts[0];
+    } else {
+	cyl_axis_unit = cylinder.Axis();
+    }
     size_t cyl_axis_length = cyl_axis_unit.Length();
     cyl_axis_unit.Unitize();
     ON_3dVector extv0 = -1 *cyl_axis_unit;
@@ -399,11 +427,14 @@ cylinder_csg(struct bu_vls *msgs, struct subbrep_shoal_data *data, fastf_t cyl_t
 
     //bu_log("in rcc.s rcc %f %f %f %f %f %f %f \n", axis_pts[0].x, axis_pts[0].y, axis_pts[0].z, cyl_axis.x, cyl_axis.y, cyl_axis.z, cylinder.circle.Radius());
 
+    ////////////// END Cylinder specific stuff - break into function //////////////////////////
+
     if (!need_arbn) {
 	//bu_log("Perfect cylinder shoal found in %s\n", bu_vls_addr(data->i->key));
 	return 1;
     }
 
+    ////////////// Cylinder specific stuff - break into function //////////////////////////
     // Use avg normal to constructed oriented bounding box planes around cylinder
     ON_3dVector v1 = cylinder.circle.Plane().xaxis;
     ON_3dVector v2 = cylinder.circle.Plane().yaxis;
@@ -419,6 +450,7 @@ cylinder_csg(struct bu_vls *msgs, struct subbrep_shoal_data *data, fastf_t cyl_t
     cyl_planes.Append(ON_Plane(arbmid - v1, -1 *cylinder.circle.Plane().xaxis));
     cyl_planes.Append(ON_Plane(arbmid + v2, cylinder.circle.Plane().yaxis));
     cyl_planes.Append(ON_Plane(arbmid - v2, -1 * cylinder.circle.Plane().yaxis));
+    ////////////// END Cylinder specific stuff - break into function //////////////////////////
 
 
     /* "Cull" any planes that are not needed to form a bounding arbn.  We do this
