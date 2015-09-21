@@ -392,7 +392,7 @@ make_island(struct bu_vls *msgs, struct subbrep_island_data *data, struct rt_wdb
  *  2 not a valid brep
  */
 int
-brep_to_csg(struct ged *gedp, struct directory *dp, int UNUSED(verify), struct bu_vls *retname)
+brep_to_csg(struct ged *gedp, struct directory *dp, int verify, struct bu_vls *retname)
 {
     /* Unpack B-Rep */
     struct rt_db_internal intern;
@@ -456,6 +456,27 @@ brep_to_csg(struct ged *gedp, struct directory *dp, int UNUSED(verify), struct b
 		// TODO - Fix up name of first item in list to reflect top level naming to
 		// avoid an unnecessary level of hierarchy.
 		mk_lcomb(wdbp, bu_vls_addr(&comb_name), &pcomb, 0, NULL, NULL, NULL, 0);
+	    }
+
+	    // Verify that the resulting csg tree and the original B-Rep pass a difference test.
+	    if (verify) {
+		ON_BoundingBox bbox;
+		struct bn_tol tol = {BN_TOL_MAGIC, BN_TOL_DIST, BN_TOL_DIST * BN_TOL_DIST, 1.0e-6, 1.0 - 1.0e-6 };
+		brep->GetBoundingBox(bbox);
+		tol.dist = (bbox.Diagonal().Length() / 100.0);
+		bu_log("Analyzing %s csg conversion, tol %f...\n", dp->d_namep, tol.dist);
+		if (analyze_raydiff(NULL, gedp->ged_wdbp->dbip, dp->d_namep, bu_vls_addr(&comb_name), &tol, 1)) {
+		    /* remove generated tree if debugging flag isn't passed - not valid */
+		    int ac = 3;
+		    const char **av = (const char **)bu_calloc(4, sizeof(char *), "killtree argv");
+		    av[0] = "killtree";
+		    av[1] = "-f";
+		    av[2] = bu_vls_addr(&comb_name);
+		    av[3] = (char *)0;
+		    (void)ged_killtree(gedp, ac, av);
+		    bu_free(av, "free av array");
+		    bu_vls_printf(gedp->ged_result_str, "Error: %s did not pass diff test at tol %f, rejecting\n", bu_vls_addr(&comb_name), tol.dist);
+		}
 	    }
 	}
     } else {
