@@ -295,7 +295,7 @@ subbrep_island_free(struct subbrep_island_data *obj)
     delete obj->bbox;
 
     subbrep_shoal_free(obj->nucleus);
-    BU_PUT(obj->nucleus, struct csg_obj_params);
+    if (obj->nucleus) BU_PUT(obj->nucleus, struct csg_obj_params);
     obj->nucleus = NULL;
 
     bu_vls_free(obj->key);

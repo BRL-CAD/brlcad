@@ -516,7 +516,7 @@ subbrep_split(struct bu_vls *msgs, struct subbrep_island_data *data)
     // be degenerate if all planar faces are coplanar or if there are no
     // planar faces at all (perfect cylinder, for example) so will need
     // rules for those situations...
-    if (!island_nucleus(msgs, data)) {
+    if (!island_nucleus(msgs, data) || !data->nucleus) {
 	bu_log("failed to find island nucleus: %s\n", bu_vls_addr(data->key));
 	for (unsigned int i = 0; i < BU_PTBL_LEN(data->island_children); i++) {
 	    struct subbrep_shoal_data *d = (struct subbrep_shoal_data *)BU_PTBL_GET(data->island_children, i);
