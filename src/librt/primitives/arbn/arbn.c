@@ -283,8 +283,7 @@ rt_arbn_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct
 
     /* Validate */
     if (iplane == -1 || oplane == -1) {
-	bu_log("rt_arbn_shoot(%s): 1 hit => MISS\n",
-	       stp->st_name);
+	/*bu_log("rt_arbn_shoot(%s): 1 hit => MISS\n", stp->st_name);*/
 	return 0;	/* MISS */
     }
     if (in >= out || out >= INFINITY)
