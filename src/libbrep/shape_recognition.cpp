@@ -144,7 +144,6 @@ find_hierarchy(struct bu_vls *UNUSED(msgs), struct bu_ptbl *islands)
     // We need a quick and easy way to look up parents and children
     typedef std::multimap<struct subbrep_island_data *, struct subbrep_island_data *> IslandMultiMap;
     IslandMultiMap p2c, c2p;
-    IslandMultiMap::iterator p2c_it, c2p_it;
     for (unsigned int i = 0; i < BU_PTBL_LEN(islands); i++) {
 	struct subbrep_island_data *id = (struct subbrep_island_data *)BU_PTBL_GET(islands, i);
 	for (int j = 0; j < id->fil_cnt; j++) {
@@ -162,37 +161,74 @@ find_hierarchy(struct bu_vls *UNUSED(msgs), struct bu_ptbl *islands)
 	    continue;
 	}
 
-	// Get the node's immediate parents
-	std::pair <IslandMultiMap::iterator, IslandMultiMap::iterator> sc2p_ret;
-	IslandMultiMap::iterator sc2p_it;
-	sc2p_ret = c2p.equal_range(id);
+	// We need to ignore any subtractions in the parent linkages of this node and any other parent linkages (that is,
+	// inheritance changes independent of the one above the current node) of any children below this node.  First
+	// step, build the set of children
+	std::set<struct subbrep_island_data *> node_children;
+	std::set<struct subbrep_island_data *>::iterator nc_it;
+	std::queue<struct subbrep_island_data *> cq;
+	cq.push(id);
 
-	// Build a set of any subtractions in the full parent linkage of this node, (for all parents)
-	// so we know not to subtract those.  If negative islands are in the direct ancestoral
-	// connectivity graph, they can't be subtractions of that node.
-	std::set<struct subbrep_island_data *> ignore_islands;
-	std::queue<struct subbrep_island_data *> pqueue;
-	for (sc2p_it = sc2p_ret.first; sc2p_it != sc2p_ret.second; ++sc2p_it) {
-	    struct subbrep_island_data *pid = sc2p_it->second;
-	    if (pid != id) pqueue.push(pid);
-	    if (pid->local_brep_bool_op == '-' || (pid->nucleus && pid->nucleus->params->bool_op == '-')) {
-		ignore_islands.insert(pid);
+	// Get the node's immediate children
+	std::pair <IslandMultiMap::iterator, IslandMultiMap::iterator> p2c_ret;
+	IslandMultiMap::iterator p2c_it;
+	p2c_ret = p2c.equal_range(id);
+	for (p2c_it = p2c_ret.first; p2c_it != p2c_ret.second; ++p2c_it) {
+	    cq.push(p2c_it->second);
+	    // At the top level for a union, any negative shape joined by a loop is
+	    // guaranteed to be a subtraction from that node - go ahead and add it
+	    // here for insurance.  The bbox test *should* catch all of these, but
+	    // since we happen to *know* the answer for these particular objects...
+	    if (p2c_it->second->local_brep_bool_op == '-' || (p2c_it->second->nucleus && p2c_it->second->nucleus->params->bool_op == '-')) {
+		bu_ptbl_ins_unique(id->subtractions, (long *)p2c_it->second);
 	    }
 	}
-	while(!pqueue.empty()) {
-	    struct subbrep_island_data *pid= pqueue.front();
-	    pqueue.pop();
-	    std::pair <IslandMultiMap::iterator, IslandMultiMap::iterator> pchain_ret;
-	    IslandMultiMap::iterator pchain_it;
-	    pchain_ret = c2p.equal_range(pid);
-	    for (pchain_it = pchain_ret.first; pchain_it != pchain_ret.second; ++pchain_it) {
-		struct subbrep_island_data *gpid = pchain_it->second;
-		if (gpid != pid) pqueue.push(gpid);
-		if (gpid->local_brep_bool_op == '-' || (gpid->nucleus && gpid->nucleus->params->bool_op == '-')) {
-		    ignore_islands.insert(gpid);
+	while (!cq.empty()) {
+	    p2c_ret = p2c.equal_range(cq.front());
+	    node_children.insert(cq.front());
+	    cq.pop();
+	    for (p2c_it = p2c_ret.first; p2c_it != p2c_ret.second; ++p2c_it) {
+		cq.push(p2c_it->second);
+	    }
+	}
+
+	std::set<struct subbrep_island_data *> ignore_islands;
+	for (nc_it = node_children.begin(); nc_it != node_children.end(); nc_it++) {
+	    // Get the node's immediate parents
+	    std::pair <IslandMultiMap::iterator, IslandMultiMap::iterator> sc2p_ret;
+	    IslandMultiMap::iterator sc2p_it;
+	    sc2p_ret = c2p.equal_range(*nc_it);
+
+	    // Build a set of any subtractions in the full parent linkage of this node, (for all parents)
+	    // so we know not to subtract those.  If negative islands are in the direct ancestoral
+	    // connectivity graph, they can't be subtractions of that node.
+	    std::queue<struct subbrep_island_data *> pqueue;
+	    for (sc2p_it = sc2p_ret.first; sc2p_it != sc2p_ret.second; ++sc2p_it) {
+		struct subbrep_island_data *pid = sc2p_it->second;
+		if (pid != *nc_it) pqueue.push(pid);
+		if (pid->local_brep_bool_op == '-' || (pid->nucleus && pid->nucleus->params->bool_op == '-')) {
+		    // Don't ignore known node children of this node
+		    if (node_children.find(pid) == node_children.end()) ignore_islands.insert(pid);
+		}
+	    }
+	    while(!pqueue.empty()) {
+		struct subbrep_island_data *pid= pqueue.front();
+		pqueue.pop();
+		std::pair <IslandMultiMap::iterator, IslandMultiMap::iterator> pchain_ret;
+		IslandMultiMap::iterator pchain_it;
+		pchain_ret = c2p.equal_range(pid);
+		for (pchain_it = pchain_ret.first; pchain_it != pchain_ret.second; ++pchain_it) {
+		    struct subbrep_island_data *gpid = pchain_it->second;
+		    if (gpid != pid) pqueue.push(gpid);
+		    if (gpid->local_brep_bool_op == '-' || (gpid->nucleus && gpid->nucleus->params->bool_op == '-')) {
+			// Don't ignore known node children of this node
+			if (node_children.find(gpid) == node_children.end()) ignore_islands.insert(gpid);
+		    }
 		}
 	    }
 	}
+
+
 
 	// Check all subtractions that aren't in the ignore list.
 	for (unsigned int j = 0; j < BU_PTBL_LEN(islands); j++) {
