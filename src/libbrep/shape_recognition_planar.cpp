@@ -486,18 +486,15 @@ shoal_polygon_tri(struct bu_vls *UNUSED(msgs), struct subbrep_shoal_data *data, 
  * test.  We will assume that determining the positive/negative status of one
  * face is sufficient - i.e., we will not check for flipped normals on faces.
  *
- * 1.  Iterate over the loops, and construct polygons.  Flip as needed per
- *     reversed faces.
- 2.  Triangulate those polygons, and accumulate the triangulations
- 3.  Construct a ray with a point outside the bounding box and
+   1.  Construct a ray with a point outside the bounding box and
  *     a point on one of the faces (try to make sure the face normal is not
  *     close to perpendicular relative to the constructed ray.)  Intersect this
  *     ray with all triangles in the BoT (unless BoTs regularly appear that are
  *     *far* larger than expected here, it's not worth building acceleration
  *     structures for a one time, one ray conversion process.
- * 4.  Count the intersections, and determine whether to test for an angle
+ * 2.  Count the intersections, and determine whether to test for an angle
  *     between the face normal and the ray of >ON_PI or <ON_PI.
- * 5.  Do the test as determined by #4.
+ * 3.  Do the test as determined by #2.
  */
 
 // How close to paralle will we tolerate before moving to another corner?
@@ -549,12 +546,7 @@ negative_polygon(struct bu_vls *UNUSED(msgs), struct csg_object_params *data)
     point_t origin, dir;
     BN_VMOVE(origin, origin_pnt);
     BN_VMOVE(dir, rdir);
-#if 0
-    std::cout << "working: " << bu_vls_addr(data->key) << "\n";
-    bu_log("in origin.s sph %f %f %f 1\n", origin[0], origin[1], origin[2]);
-    bu_log("in triangle_normal.s rcc %f %f %f %f %f %f 1 \n", origin_pnt.x, origin_pnt.y, origin_pnt.z, triangle_normal.x, triangle_normal.y, triangle_normal.z);
-    bu_log("in ray.s rcc %f %f %f %f %f %f 1 \n", origin[0], origin[1], origin[2], dir[0], dir[1], dir[2]);
-#endif
+
     // Test the ray against the triangle set
     int hit_cnt = 0;
     point_t p1, p2, p3, isect;
