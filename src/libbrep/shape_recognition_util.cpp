@@ -10,6 +10,179 @@
 #include "shape_recognition.h"
 
 void
+set_key(struct bu_vls *key, int k_cnt, int *k_array)
+{
+    for (int i = 0; i < k_cnt; i++) {
+	bu_vls_printf(key, "%d", k_array[i]);
+	if (i != k_cnt - 1) bu_vls_printf(key, ",");
+    }
+}
+
+void
+set_to_array(int **array, int *array_cnt, std::set<int> *set)
+{
+    std::set<int>::iterator s_it;
+    int i = 0;
+    if (*array) bu_free((*array), "free old array");
+    (*array_cnt) = set->size();
+    if ((*array_cnt) > 0) {
+	(*array) = (int *)bu_calloc((*array_cnt), sizeof(int), "array");
+	for (s_it = set->begin(); s_it != set->end(); s_it++) {
+	    (*array)[i] = *s_it;
+	    i++;
+	}
+    }
+}
+
+void
+array_to_set(std::set<int> *set, int *array, int array_cnt)
+{
+    for (int i = 0; i < array_cnt; i++) {
+	set->insert(array[i]);
+    }
+}
+
+
+void
+csg_object_params_init(struct csg_object_params *csg, struct subbrep_shoal_data *d)
+{
+    csg->s = d;
+    csg->csg_type = 0;
+    csg->negative = 0;
+    csg->csg_id = -1;
+    csg->bool_op = '\0';
+    csg->planes = NULL;
+    csg->csg_faces = NULL;
+    csg->csg_verts = NULL;
+}
+
+void
+csg_object_params_free(struct csg_object_params *csg)
+{
+    if (!csg) return;
+    if (csg->planes) bu_free(csg->planes, "free planes");
+    if (csg->csg_faces) bu_free(csg->csg_faces , "free faces");
+    if (csg->csg_verts) bu_free(csg->csg_verts , "free verts");
+}
+
+
+void
+subbrep_shoal_init(struct subbrep_shoal_data *data, struct subbrep_island_data *i)
+{
+    data->i = i;
+    BU_GET(data->params, struct csg_object_params);
+    csg_object_params_init(data->params, data);
+    BU_GET(data->shoal_children , struct bu_ptbl);
+    bu_ptbl_init(data->shoal_children, 8, "sub_params table");
+    data->shoal_loops = NULL;
+    data->shoal_loops_cnt = 0;
+}
+
+void
+subbrep_shoal_free(struct subbrep_shoal_data *data)
+{
+    if (!data) return;
+    csg_object_params_free(data->params);
+    BU_PUT(data->params, struct csg_object_params);
+    data->params = NULL;
+    for (unsigned int i = 0; i < BU_PTBL_LEN(data->shoal_children); i++) {
+	struct csg_object_params *c = (struct csg_object_params *)BU_PTBL_GET(data->shoal_children, i);
+	csg_object_params_free(c);
+	BU_PUT(c, struct csg_object_params);
+    }
+    bu_ptbl_free(data->shoal_children);
+    BU_PUT(data->shoal_children, struct bu_ptbl);
+    if (data->shoal_loops) bu_free(data->shoal_loops, "free loop array");
+}
+
+void
+subbrep_island_init(struct subbrep_island_data *obj, const ON_Brep *brep)
+{
+    if (!obj) return;
+
+    /* We're a B-Rep until proven otherwise */
+    obj->island_type = BREP;
+
+    obj->brep = brep;
+    obj->local_brep = NULL;
+    obj->local_brep_bool_op = '\0';
+
+    obj->bbox = new ON_BoundingBox();
+    ON_MinMaxInit(&(obj->bbox->m_min), &(obj->bbox->m_max));
+
+    BU_GET(obj->nucleus, struct subbrep_shoal_data);
+    subbrep_shoal_init(obj->nucleus, obj);
+
+    BU_GET(obj->island_children, struct bu_ptbl);
+    bu_ptbl_init(obj->island_children, 8, "children table");
+
+    BU_GET(obj->subtractions, struct bu_ptbl);
+    bu_ptbl_init(obj->subtractions, 8, "children table");
+
+    BU_GET(obj->key, struct bu_vls);
+    bu_vls_init(obj->key);
+
+    obj->obj_cnt = NULL;
+    obj->island_faces = NULL;
+    obj->island_loops = NULL;
+    obj->fol = NULL;
+    obj->fil = NULL;
+    obj->null_verts = NULL;
+    obj->null_edges = NULL;
+}
+
+void
+subbrep_island_free(struct subbrep_island_data *obj)
+{
+    if (!obj) return;
+
+    obj->brep = NULL;
+    if (obj->local_brep) delete obj->local_brep;
+    obj->local_brep = NULL;
+
+    delete obj->bbox;
+
+    subbrep_shoal_free(obj->nucleus);
+    if (obj->nucleus) BU_PUT(obj->nucleus, struct csg_obj_params);
+    obj->nucleus = NULL;
+
+    bu_vls_free(obj->key);
+    BU_PUT(obj->key, struct bu_vls);
+    obj->key = NULL;
+
+    for (unsigned int i = 0; i < BU_PTBL_LEN(obj->island_children); i++){
+	struct subbrep_shoal_data *cobj = (struct subbrep_shoal_data *)BU_PTBL_GET(obj->island_children, i);
+	subbrep_shoal_free(cobj);
+	BU_PUT(cobj, struct subbrep_shoal_data);
+    }
+    bu_ptbl_free(obj->island_children);
+    BU_PUT(obj->island_children, struct bu_ptbl);
+    obj->island_children = NULL;
+
+    /* Anything in here will be freed elsewhere */
+    if (obj->subtractions) {
+	bu_ptbl_free(obj->subtractions);
+	BU_PUT(obj->subtractions, struct bu_ptbl);
+    }
+    obj->subtractions = NULL;
+
+    if (obj->island_faces) bu_free(obj->island_faces, "obj faces");
+    obj->island_faces = NULL;
+    if (obj->island_loops) bu_free(obj->island_loops, "obj loops");
+    obj->island_loops = NULL;
+    if (obj->fol) bu_free(obj->fol, "obj fol");
+    obj->fol = NULL;
+    if (obj->fil) bu_free(obj->fil, "obj fil");
+    obj->fil = NULL;
+    if (obj->null_verts) bu_free(obj->null_verts, "ignore verts");
+    obj->null_verts = NULL;
+    if (obj->null_edges) bu_free(obj->null_edges, "ignore edges");
+    obj->null_edges = NULL;
+}
+
+/* Geometry utilities */
+
+void
 ON_MinMaxInit(ON_3dPoint *min, ON_3dPoint *max)
 {
     min->x = ON_DBL_MAX;
@@ -193,176 +366,6 @@ subbrep_bbox(struct subbrep_island_data *obj)
     }
 }
 
-void
-csg_object_params_init(struct csg_object_params *csg, struct subbrep_shoal_data *d)
-{
-    csg->s = d;
-    csg->csg_type = 0;
-    csg->negative = 0;
-    csg->csg_id = -1;
-    csg->bool_op = '\0';
-    csg->planes = NULL;
-    csg->csg_faces = NULL;
-    csg->csg_verts = NULL;
-}
-
-void
-csg_object_params_free(struct csg_object_params *csg)
-{
-    if (!csg) return;
-    if (csg->planes) bu_free(csg->planes, "free planes");
-    if (csg->csg_faces) bu_free(csg->csg_faces , "free faces");
-    if (csg->csg_verts) bu_free(csg->csg_verts , "free verts");
-}
-
-
-void
-subbrep_shoal_init(struct subbrep_shoal_data *data, struct subbrep_island_data *i)
-{
-    data->i = i;
-    BU_GET(data->params, struct csg_object_params);
-    csg_object_params_init(data->params, data);
-    BU_GET(data->shoal_children , struct bu_ptbl);
-    bu_ptbl_init(data->shoal_children, 8, "sub_params table");
-    data->shoal_loops = NULL;
-    data->shoal_loops_cnt = 0;
-}
-
-void
-subbrep_shoal_free(struct subbrep_shoal_data *data)
-{
-    if (!data) return;
-    csg_object_params_free(data->params);
-    BU_PUT(data->params, struct csg_object_params);
-    data->params = NULL;
-    for (unsigned int i = 0; i < BU_PTBL_LEN(data->shoal_children); i++) {
-	struct csg_object_params *c = (struct csg_object_params *)BU_PTBL_GET(data->shoal_children, i);
-	csg_object_params_free(c);
-	BU_PUT(c, struct csg_object_params);
-    }
-    bu_ptbl_free(data->shoal_children);
-    BU_PUT(data->shoal_children, struct bu_ptbl);
-    if (data->shoal_loops) bu_free(data->shoal_loops, "free loop array");
-}
-
-
-void
-subbrep_island_init(struct subbrep_island_data *obj, const ON_Brep *brep)
-{
-    if (!obj) return;
-
-    /* We're a B-Rep until proven otherwise */
-    obj->island_type = BREP;
-
-    obj->brep = brep;
-    obj->local_brep = NULL;
-    obj->local_brep_bool_op = '\0';
-
-    obj->bbox = new ON_BoundingBox();
-    ON_MinMaxInit(&(obj->bbox->m_min), &(obj->bbox->m_max));
-
-    BU_GET(obj->nucleus, struct subbrep_shoal_data);
-    subbrep_shoal_init(obj->nucleus, obj);
-
-    BU_GET(obj->island_children, struct bu_ptbl);
-    bu_ptbl_init(obj->island_children, 8, "children table");
-
-    BU_GET(obj->subtractions, struct bu_ptbl);
-    bu_ptbl_init(obj->subtractions, 8, "children table");
-
-    BU_GET(obj->key, struct bu_vls);
-    bu_vls_init(obj->key);
-
-    obj->obj_cnt = NULL;
-    obj->island_faces = NULL;
-    obj->island_loops = NULL;
-    obj->fol = NULL;
-    obj->fil = NULL;
-    obj->null_verts = NULL;
-    obj->null_edges = NULL;
-}
-
-void
-subbrep_island_free(struct subbrep_island_data *obj)
-{
-    if (!obj) return;
-
-    obj->brep = NULL;
-    if (obj->local_brep) delete obj->local_brep;
-    obj->local_brep = NULL;
-
-    delete obj->bbox;
-
-    subbrep_shoal_free(obj->nucleus);
-    if (obj->nucleus) BU_PUT(obj->nucleus, struct csg_obj_params);
-    obj->nucleus = NULL;
-
-    bu_vls_free(obj->key);
-    BU_PUT(obj->key, struct bu_vls);
-    obj->key = NULL;
-
-    for (unsigned int i = 0; i < BU_PTBL_LEN(obj->island_children); i++){
-	struct subbrep_shoal_data *cobj = (struct subbrep_shoal_data *)BU_PTBL_GET(obj->island_children, i);
-	subbrep_shoal_free(cobj);
-	BU_PUT(cobj, struct subbrep_shoal_data);
-    }
-    bu_ptbl_free(obj->island_children);
-    BU_PUT(obj->island_children, struct bu_ptbl);
-    obj->island_children = NULL;
-
-    /* Anything in here will be freed elsewhere */
-    if (obj->subtractions) {
-	bu_ptbl_free(obj->subtractions);
-	BU_PUT(obj->subtractions, struct bu_ptbl);
-    }
-    obj->subtractions = NULL;
-
-    if (obj->island_faces) bu_free(obj->island_faces, "obj faces");
-    obj->island_faces = NULL;
-    if (obj->island_loops) bu_free(obj->island_loops, "obj loops");
-    obj->island_loops = NULL;
-    if (obj->fol) bu_free(obj->fol, "obj fol");
-    obj->fol = NULL;
-    if (obj->fil) bu_free(obj->fil, "obj fil");
-    obj->fil = NULL;
-    if (obj->null_verts) bu_free(obj->null_verts, "ignore verts");
-    obj->null_verts = NULL;
-    if (obj->null_edges) bu_free(obj->null_edges, "ignore edges");
-    obj->null_edges = NULL;
-}
-
-void
-set_key(struct bu_vls *key, int k_cnt, int *k_array)
-{
-    for (int i = 0; i < k_cnt; i++) {
-	bu_vls_printf(key, "%d", k_array[i]);
-	if (i != k_cnt - 1) bu_vls_printf(key, ",");
-    }
-}
-
-void
-set_to_array(int **array, int *array_cnt, std::set<int> *set)
-{
-    std::set<int>::iterator s_it;
-    int i = 0;
-    if (*array) bu_free((*array), "free old array");
-    (*array_cnt) = set->size();
-    if ((*array_cnt) > 0) {
-	(*array) = (int *)bu_calloc((*array_cnt), sizeof(int), "array");
-	for (s_it = set->begin(); s_it != set->end(); s_it++) {
-	    (*array)[i] = *s_it;
-	    i++;
-	}
-    }
-}
-
-void
-array_to_set(std::set<int> *set, int *array, int array_cnt)
-{
-    for (int i = 0; i < array_cnt; i++) {
-	set->insert(array[i]);
-    }
-}
 
 /* This routine is used when there is uncertainty about whether a particular
  * solid or combination is to be subtracted or unioned into a parent.  For
@@ -611,9 +614,6 @@ subbrep_make_brep(struct bu_vls *UNUSED(msgs), struct subbrep_island_data *data)
 }
 
 
-
-
-
 // Local Variables:
 // tab-width: 8
 // mode: C++
@@ -622,3 +622,4 @@ subbrep_make_brep(struct bu_vls *UNUSED(msgs), struct subbrep_island_data *data)
 // c-file-style: "stroustrup"
 // End:
 // ex: shiftwidth=4 tabstop=8
+
