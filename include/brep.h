@@ -1459,12 +1459,10 @@ struct subbrep_island_data {
     int *obj_cnt;
     int *island_faces;
     int *island_loops;
-    int *island_edges;
     int *fol; /* Faces with outer loops in object loop network */
     int *fil; /* Faces with only inner loops in object loop network */
     int island_faces_cnt;
     int island_loops_cnt;
-    int island_edges_cnt;
     int fol_cnt;
     int fil_cnt;
     int null_vert_cnt;

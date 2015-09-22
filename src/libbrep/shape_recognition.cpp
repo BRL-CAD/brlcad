@@ -79,32 +79,6 @@ island_faces_characterize(struct subbrep_island_data *sb)
     return loops_planar;
 }
 
-void
-get_edge_set_from_loops(struct subbrep_island_data *sb)
-{
-    const ON_Brep *brep = sb->brep;
-    std::set<int> edges;
-    std::set<int> loops;
-    std::set<int>::iterator l_it;
-
-    // unpack loop info
-    array_to_set(&loops, sb->island_loops, sb->island_loops_cnt);
-
-    for (l_it = loops.begin(); l_it != loops.end(); l_it++) {
-	const ON_BrepLoop *loop = &(brep->m_L[*l_it]);
-	for (int ti = 0; ti < loop->m_ti.Count(); ti++) {
-	    const ON_BrepTrim *trim = &(brep->m_T[loop->m_ti[ti]]);
-	    const ON_BrepEdge *edge = &(brep->m_E[trim->m_ei]);
-	    if (trim->m_ei != -1 && edge->TrimCount() > 0) {
-		edges.insert(trim->m_ei);
-	    }
-	}
-    }
-
-    // Pack up results
-    set_to_array(&(sb->island_edges), &(sb->island_edges_cnt), &edges);
-}
-
 /*
  * This is the point at which we characterize the relationships between islands.  Assuming our determination
  * of positive and negative shapes is trustworthy, all positive islands are unioned into the toplevel comb.
@@ -174,13 +148,15 @@ find_hierarchy(struct bu_vls *UNUSED(msgs), struct bu_ptbl *islands)
 	IslandMultiMap::iterator p2c_it;
 	p2c_ret = p2c.equal_range(id);
 	for (p2c_it = p2c_ret.first; p2c_it != p2c_ret.second; ++p2c_it) {
-	    cq.push(p2c_it->second);
-	    // At the top level for a union, any negative shape joined by a loop is
-	    // guaranteed to be a subtraction from that node - go ahead and add it
-	    // here for insurance.  The bbox test *should* catch all of these, but
-	    // since we happen to *know* the answer for these particular objects...
-	    if (p2c_it->second->local_brep_bool_op == '-' || (p2c_it->second->nucleus && p2c_it->second->nucleus->params->bool_op == '-')) {
-		bu_ptbl_ins_unique(id->subtractions, (long *)p2c_it->second);
+	    if (p2c_it->second != id) {
+		cq.push(p2c_it->second);
+		// At the top level for a union, any negative shape joined by a loop is
+		// guaranteed to be a subtraction from that node - go ahead and add it
+		// here for insurance.  The bbox test *should* catch all of these, but
+		// since we happen to *know* the answer for these particular objects...
+		if (p2c_it->second->local_brep_bool_op == '-' || (p2c_it->second->nucleus && p2c_it->second->nucleus->params->bool_op == '-')) {
+		    bu_ptbl_ins_unique(id->subtractions, (long *)p2c_it->second);
+		}
 	    }
 	}
 	while (!cq.empty()) {
@@ -188,7 +164,7 @@ find_hierarchy(struct bu_vls *UNUSED(msgs), struct bu_ptbl *islands)
 	    node_children.insert(cq.front());
 	    cq.pop();
 	    for (p2c_it = p2c_ret.first; p2c_it != p2c_ret.second; ++p2c_it) {
-		cq.push(p2c_it->second);
+	    if (p2c_it->second != id) cq.push(p2c_it->second);
 	    }
 	}
 
@@ -550,10 +526,6 @@ brep_to_csg(struct bu_vls *msgs, const ON_Brep *brep)
 	// and face-from-inner-loop (fil) faces in the island.  Test planarity
 	// of fil loops - needed for processing.
 	int planar_fils = island_faces_characterize(sb);
-
-
-	// Assemble the set of edges
-	get_edge_set_from_loops(sb);
 
 	// Get key based on loop indicies
 	set_key(sb->key, sb->island_loops_cnt, sb->island_loops);

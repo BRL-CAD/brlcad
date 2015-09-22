@@ -276,7 +276,6 @@ subbrep_island_init(struct subbrep_island_data *obj, const ON_Brep *brep)
     obj->obj_cnt = NULL;
     obj->island_faces = NULL;
     obj->island_loops = NULL;
-    obj->island_edges = NULL;
     obj->fol = NULL;
     obj->fil = NULL;
     obj->null_verts = NULL;
@@ -322,8 +321,6 @@ subbrep_island_free(struct subbrep_island_data *obj)
     obj->island_faces = NULL;
     if (obj->island_loops) bu_free(obj->island_loops, "obj loops");
     obj->island_loops = NULL;
-    if (obj->island_edges) bu_free(obj->island_edges, "obj edges");
-    obj->island_edges = NULL;
     if (obj->fol) bu_free(obj->fol, "obj fol");
     obj->fol = NULL;
     if (obj->fil) bu_free(obj->fil, "obj fil");
@@ -379,62 +376,71 @@ array_to_set(std::set<int> *set, int *array, int array_cnt)
 int
 subbrep_brep_boolean(struct subbrep_island_data *data)
 {
-   int pos_cnt = 0;
-   int neg_cnt = 0;
+    const ON_Brep *brep = data->brep;
+    int pos_cnt = 0;
+    int neg_cnt = 0;
 
-   std::set<int> island_loops;
-   array_to_set(&island_loops, data->island_loops, data->island_loops_cnt);
+    /* Top level breps are unions */
+    if (data->fil_cnt == 0) return 1;
 
-   /* Top level breps are unions */
-   if (data->fil_cnt == 0) return 1;
+    std::set<int> island_loops;
+    array_to_set(&island_loops, data->island_loops, data->island_loops_cnt);
 
-   for (int i = 0; i < data->fil_cnt; i++) {
-       std::set<int> active_loops;
-       // Get face with inner loop
-       const ON_BrepFace *face = &(data->brep->m_F[data->fil[i]]);
-       const ON_Surface *surf = face->SurfaceOf();
-       surface_t stype = ((surface_t *)data->face_surface_types)[face->m_face_index];
-       if (stype != SURFACE_PLANE) return -2;
+    // Collecte all vertices in the island
+    std::set<int> verts;
+    for (int i = 0; i < data->island_loops_cnt; i++) {
+	const ON_BrepLoop *loop = &(brep->m_L[data->island_loops[i]]);
+	for (int ti = 0; ti < loop->m_ti.Count(); ti++) {
+	    const ON_BrepTrim *trim = &(brep->m_T[loop->m_ti[ti]]);
+	    const ON_BrepEdge *edge = &(brep->m_E[trim->m_ei]);
+	    if (trim->m_ei != -1 && edge->TrimCount() > 0) {
+		verts.insert(edge->Vertex(0)->m_vertex_index);
+		verts.insert(edge->Vertex(1)->m_vertex_index);
+	    }
+	}
+    }
 
-       // If we have a face with multiple loops active, assume a toplevel union
-       // TODO - is this always true?
-       for (int j = 0; j < face->LoopCount(); j++) {
-	   if (island_loops.find(face->m_li[j]) != island_loops.end()) active_loops.insert(face->m_li[j]);
-       }
-       if (active_loops.size() > 1) return 1;
 
-       // Get face plane
-       ON_Plane face_plane;
-       ON_Surface *ts = surf->Duplicate();
-       (void)ts->IsPlanar(&face_plane, BREP_PLANAR_TOL);
-       delete ts;
-       if (face->m_bRev) face_plane.Flip();
+    for (int i = 0; i < data->fil_cnt; i++) {
+	std::set<int> active_loops;
+	// Get face with inner loop
+	const ON_BrepFace *face = &(brep->m_F[data->fil[i]]);
+	const ON_Surface *surf = face->SurfaceOf();
+	surface_t stype = ((surface_t *)data->face_surface_types)[face->m_face_index];
+	if (stype != SURFACE_PLANE) return -2;
 
-       // Collecte all vertices in the island
-       std::set<int> verts;
-       for (int j = 0; j < data->island_edges_cnt; j++) {
-	   verts.insert(data->brep->m_E[data->island_edges[j]].Vertex(0)->m_vertex_index);
-	   verts.insert(data->brep->m_E[data->island_edges[j]].Vertex(1)->m_vertex_index);
-       }
-       for (std::set<int>::iterator s_it = verts.begin(); s_it != verts.end(); s_it++) {
-	   // For each vertex in the subbrep, determine
-	   // if it is above, below or on the face
-	       ON_3dPoint p = data->brep->m_V[*s_it].Point();
-	       double distance = face_plane.DistanceTo(p);
-	       if (distance > BREP_PLANAR_TOL) pos_cnt++;
-	       if (distance < -1*BREP_PLANAR_TOL) neg_cnt++;
-       }
-   }
+	// An island with both inner and outer loops in a single face
+	// is defined to be self intersecting in this context
+	for (int j = 0; j < face->LoopCount(); j++) {
+	    if (island_loops.find(face->m_li[j]) != island_loops.end()) active_loops.insert(face->m_li[j]);
+	}
+	if (active_loops.size() > 1) return -2;
 
-   // Determine what we have.  If we have both pos and neg counts > 0,
-   // the proposed brep needs to be broken down further.  all pos
-   // counts is a union, all neg counts is a subtraction
-   if (pos_cnt && neg_cnt) return -2;
-   if (pos_cnt) return 1;
-   if (neg_cnt) return -1;
-   if (!pos_cnt && !neg_cnt) return 2;
+	// Get face plane
+	ON_Plane face_plane;
+	ON_Surface *ts = surf->Duplicate();
+	(void)ts->IsPlanar(&face_plane, BREP_PLANAR_TOL);
+	delete ts;
+	if (face->m_bRev) face_plane.Flip();
 
-   return -1;
+	// For each vertex in the subbrep, determine if it is above, below or on the face
+	for (std::set<int>::iterator s_it = verts.begin(); s_it != verts.end(); s_it++) {
+	    ON_3dPoint p = brep->m_V[*s_it].Point();
+	    double distance = face_plane.DistanceTo(p);
+	    if (distance > BREP_PLANAR_TOL) pos_cnt++;
+	    if (distance < -1*BREP_PLANAR_TOL) neg_cnt++;
+	}
+    }
+
+    // Determine what we have.  If we have both pos and neg counts > 0,
+    // the proposed brep needs to be broken down further.  all pos
+    // counts is a union, all neg counts is a subtraction
+    if (pos_cnt && neg_cnt) return -2;
+    if (pos_cnt) return 1;
+    if (neg_cnt) return -1;
+    if (!pos_cnt && !neg_cnt) return 2;
+
+    return -1;
 }
 
 int

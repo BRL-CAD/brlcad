@@ -113,6 +113,7 @@ triangulate_array(ON_2dPointArray &on2dpts, int *verts_map, int **ffaces, int lo
     return num_faces;
 }
 
+// This shouldn't actually be needed if we don't have self intersecting islands...
 int
 triangulate_array_with_holes(ON_2dPointArray &on2dpts, int *verts_map, int loop_cnt, int *loop_starts, int **ffaces, const ON_Brep *UNUSED(brep))
 {
@@ -280,7 +281,8 @@ subbrep_polygon_tri(struct bu_vls *UNUSED(msgs), struct subbrep_island_data *dat
     } else {
 
 	/* We've got multiple loops - more complex setup since we need to define a polygon
-	 * with holes */
+	 * with holes.  This shouldn't happen if we're restricting ourselves to non-self-intersecting
+	 * islands. */
 	ON_2dPointArray on2dpts;
 	std::vector<int> vert_array;
 	int *loop_starts = (int *)bu_calloc(loop_cnt, sizeof(int), "start of loop indicies");
