@@ -600,16 +600,84 @@ negative_polygon(struct bu_vls *UNUSED(msgs), struct csg_object_params *data)
     return io_state;
 }
 
-// TODO - somewhere in all this, check for a self-intersecting nucleus...
+// Check for a hard-to-spot degenerate nucleus case that can crop up if we
+// have an island with one child.
+//
+// Return 1 if degenerate, 0 otherwise
+int
+arbn_nucleus_degeneracy(struct subbrep_island_data *data, std::set<int> *planar_faces)
+{
+    const ON_Brep *brep = data->brep;
+    if (BU_PTBL_LEN(data->island_children) == 1) {
+
+	// Build the set of all arbn shoal planes
+	ON_SimpleArray<ON_Plane> arbn_planes;
+	for (size_t i = 0; i < BU_PTBL_LEN(data->island_children); i++) {
+	    struct subbrep_shoal_data *d = (struct subbrep_shoal_data *)BU_PTBL_GET(data->island_children, i);
+	    if (d->shoal_children) {
+		for (size_t j = 0; j < BU_PTBL_LEN(d->shoal_children); j++) {
+		    struct csg_object_params *c = (struct csg_object_params *)BU_PTBL_GET(d->shoal_children, j);
+		    if (c->plane_cnt > 0) {
+			for (size_t k = 0; k < c->plane_cnt; k++) {
+			    ON_3dVector n;
+			    n.x = c->planes[k][0];
+			    n.y = c->planes[k][1];
+			    n.z = c->planes[k][2];
+			    ON_3dPoint o = n * c->planes[k][3];
+			    ON_Plane ap(o, n);
+			    arbn_planes.Append(ap);
+			}
+		    }
+		}
+	    }
+	}
+	if (arbn_planes.Count() > 0) {
+	    // Check if the island planar faces are coplanar with one of the shoal
+	    // arbn planes (if any).  If *all* the island planes are coplanar in
+	    // that fashion, the nucleus is degenerate.
+	    std::set<int> arbn_coplanar_faces;
+	    std::set<int>::iterator p_it;
+	    for (p_it = planar_faces->begin(); p_it != planar_faces->end(); p_it++) {
+		int is_coplanar = 0;
+		const ON_BrepFace *face = &(brep->m_F[(int)*p_it]);
+		ON_Plane p;
+		face->SurfaceOf()->IsPlanar(&p, BREP_PLANAR_TOL);
+		if (face->m_bRev) p.Flip();
+		// Check for face coplanarity with shoal arbns.
+		for (int i = 0; i < arbn_planes.Count(); i++) {
+		    if (arbn_planes[i].Normal().IsParallelTo(p.Normal(), BREP_PLANAR_TOL)) {
+			if (fabs(arbn_planes[i].DistanceTo(p.origin)) < BREP_PLANAR_TOL) {
+			    arbn_coplanar_faces.insert(face->m_face_index);
+			    is_coplanar = 1;
+			    //bu_log("found coplanar face: %d\n", face->m_face_index);
+			    break;
+			}
+		    }
+		}
+	    }
+	    if (arbn_coplanar_faces.size() == planar_faces->size()) return 1;
+	}
+    }
+
+    return 0;
+}
+
 int
 island_nucleus(struct bu_vls *msgs, struct subbrep_island_data *data)
 {
+    int negative_nucleus = 0;
+    int convex_polyhedron = 1;
+    int parallel_planes = 0;
+    int curr_vert = 0;
+    ON_Plane seed_plane;
+    std::map<int,int> vert_map;
+    std::vector<int> all_faces;
+    std::set<int> all_used_verts;
+    std::set<int>::iterator auv_it;
+
     const ON_Brep *brep = data->brep;
     std::set<int> island_loops;
     array_to_set(&island_loops, data->island_loops, data->island_loops_cnt);
-
-    int degenerate_nucleus = 0;
-    int have_flipped_loops = 0;
 
     // Accumulate per face triangle information
     std::vector< int * > face_arrays;
@@ -634,415 +702,270 @@ island_nucleus(struct bu_vls *msgs, struct subbrep_island_data *data)
 	}
     }
 
-    // Build the set of all arbn shoal planes
-    ON_SimpleArray<ON_Plane> arbn_planes;
+    // Start out by checking for a single shoal island with all planar faces
+    // accounted for by the shoal - in that situation, no polyhedron nucleus is
+    // needed.
+    if (arbn_nucleus_degeneracy(data, &planar_faces)) goto degenerate;
+
+    // First, deal with planar faces
+    for (p_it = planar_faces.begin(); p_it != planar_faces.end(); p_it++) {
+	int f_lcnt;
+	int loop_rev = 0; // Check if loop flips when ignored verts are removed
+	int *f_loops = NULL;
+	std::set<int> active_loops;
+	const ON_BrepFace *face = &(brep->m_F[(int)*p_it]);
+	ON_Plane p;
+	face->SurfaceOf()->IsPlanar(&p, BREP_PLANAR_TOL);
+	//bu_log("face(%d): %f,%f,%f %f,%f,%f\n", face->m_face_index,  p.origin.x, p.origin.y, p.origin.z, p.Normal().x, p.Normal().y, p.Normal().z);
+
+	// Determine if we have 1 or a set of loops.
+	for (int i = 0; i < face->LoopCount(); i++) {
+	    if (island_loops.find(face->m_li[i]) != island_loops.end()) active_loops.insert(face->m_li[i]);
+	}
+	set_to_array(&f_loops, &f_lcnt, &active_loops);
+	int *faces;
+	int face_cnt = subbrep_polygon_tri(msgs, data, f_loops, f_lcnt, &loop_rev, &faces);
+	if (loop_rev) negative_nucleus++;
+	// If the face is flipped, flip the triangles and the plane so their normals are correct
+	if ((face->m_bRev && !loop_rev) || (!face->m_bRev && loop_rev)) {
+	    //bu_log("face %d is reversed - flip the plane.\n", face->m_face_index);
+	    for (int i = 0; i < face_cnt; i++) {
+		int tmp = faces[i*3+1];
+		faces[i*3+1] = faces[i*3+2];
+		faces[i*3+2] = tmp;
+	    }
+	    p.Flip();
+	}
+
+	// One more possible flip - if this face comes to the island via a
+	// fil connection, flip it.  Don't flip a face with multiple loops
+	// active, since that face is not a mating face.
+	std::set<int> fil;
+	array_to_set(&fil, data->fil, data->fil_cnt);
+	if (active_loops.size() == 1 && fil.find(face->m_face_index) != fil.end()) {
+	    //bu_log("face %d came to us via inner loop - flip the plane.\n", face->m_face_index);
+	    for (int i = 0; i < face_cnt; i++) {
+		int tmp = faces[i*3+1];
+		faces[i*3+1] = faces[i*3+2];
+		faces[i*3+2] = tmp;
+	    }
+	    p.Flip();
+	}
+
+	// If the face is not degenerate in the nucleus, record it.
+	if (face_cnt > 0) {
+	    face_cnts.push_back(face_cnt);
+	    face_arrays.push_back(faces);
+	    planes.Append(p);
+	}
+    }
+
+    // Second, deal with non-planar shoals.
     for (size_t i = 0; i < BU_PTBL_LEN(data->island_children); i++) {
 	struct subbrep_shoal_data *d = (struct subbrep_shoal_data *)BU_PTBL_GET(data->island_children, i);
-	if (d->shoal_children) {
-	    for (size_t j = 0; j < BU_PTBL_LEN(d->shoal_children); j++) {
-		struct csg_object_params *c = (struct csg_object_params *)BU_PTBL_GET(d->shoal_children, j);
-		if (c->plane_cnt > 0) {
-		    for (size_t k = 0; k < c->plane_cnt; k++) {
-			ON_3dVector n;
-			n.x = c->planes[k][0];
-			n.y = c->planes[k][1];
-			n.z = c->planes[k][2];
-			ON_3dPoint o = n * c->planes[k][3];
-			ON_Plane ap(o, n);
-			arbn_planes.Append(ap);
-		    }
-		}
-	    }
-	}
-    }
-
-    // Check if the island planar faces are coplanar with one of the shoal arbn
-    // planes (if any).  If *all* the island planes are coplanar in that
-    // fashion, the nucleus is degenerate.
-    std::set<int> arbn_coplanar_faces;
-    std::set<int> noncoplanar_faces;
-    if (arbn_planes.Count() > 0) {
-	for (p_it = planar_faces.begin(); p_it != planar_faces.end(); p_it++) {
-	    int is_coplanar = 0;
-	    const ON_BrepFace *face = &(brep->m_F[(int)*p_it]);
-	    ON_Plane p;
-	    face->SurfaceOf()->IsPlanar(&p, BREP_PLANAR_TOL);
-	    if (face->m_bRev) p.Flip();
-	    // Check for face coplanarity with shoal arbns.
-	    for (int i = 0; i < arbn_planes.Count(); i++) {
-		if (arbn_planes[i].Normal().IsParallelTo(p.Normal(), BREP_PLANAR_TOL)) {
-		    if (fabs(arbn_planes[i].DistanceTo(p.origin)) < BREP_PLANAR_TOL) {
-			arbn_coplanar_faces.insert(face->m_face_index);
-			is_coplanar = 1;
-			//bu_log("found coplanar face: %d\n", face->m_face_index);
-			break;
-		    }
-		}
-	    }
-	    if (!is_coplanar) noncoplanar_faces.insert(face->m_face_index);
-	}
-
-	// Check for a hard-to-spot degenerate nucleus case
-	if (arbn_coplanar_faces.size() == planar_faces.size() && BU_PTBL_LEN(data->island_children) == 1) degenerate_nucleus = 1;
-    }
-
-    // If they are *not* all degenerate, for all shoals check the edges
-    // connected by at least one vertex to the shoal loops against the shoal
-    // imlicit plane.  If any of them have points on both sides of one of the
-    // implicit planes, we have a complex situation.
-    if (!degenerate_nucleus && BU_PTBL_LEN(data->island_children) > 0) {
-
-	// Get ignored vertices reported from shoal building - this is where they'll matter
-	std::set<int> ignored_verts;
-	array_to_set(&ignored_verts, data->null_verts, data->null_vert_cnt);
-
-
-	// Check for edges that cross implicit planes
-	for (size_t i = 0; i < BU_PTBL_LEN(data->island_children); i++) {
-	    ON_Plane shoal_implicit_plane;
-	    std::set<int> shoal_connected_edges;
-	    std::set<int>::iterator scl_it;
-	    struct subbrep_shoal_data *d = (struct subbrep_shoal_data *)BU_PTBL_GET(data->island_children, i);
-	    if (d->params->have_implicit_plane) {
-		ON_3dPoint o;
-		ON_3dVector n;
-		ON_VMOVE(o, d->params->implicit_plane_origin);
-		ON_VMOVE(n, d->params->implicit_plane_normal);
-		shoal_implicit_plane = ON_Plane(o, n);
-	    } else {
-		continue;
-	    }
-	    // Get all edges that share a vertex with the shoal loops
-	    for (int li = 0; li < d->shoal_loops_cnt; li++) {
-		//bu_log("shoal loop (%d of %d): %d\n", li, d->loops_cnt, d->loops[li]);
-		const ON_BrepLoop *loop = &(brep->m_L[d->shoal_loops[li]]);
-		for (int ti = 0; ti < loop->m_ti.Count(); ti++) {
-		    int vert_ind;
-		    const ON_BrepTrim *trim = &(brep->m_T[loop->m_ti[ti]]);
-		    const ON_BrepEdge *edge = &(brep->m_E[trim->m_ei]);
-		    if (trim->m_bRev3d) {
-			vert_ind = edge->Vertex(0)->m_vertex_index;
-		    } else {
-			vert_ind = edge->Vertex(1)->m_vertex_index;
-		    }
-		    if (ignored_verts.find(vert_ind) == ignored_verts.end()) {
-			// Get vertex edges.
-			const ON_BrepVertex *v = &(brep->m_V[vert_ind]);
-			for (int ei = 0; ei < v->EdgeCount(); ei++) {
-			    const ON_BrepEdge *e = &(brep->m_E[v->m_ei[ei]]);
-			    //bu_log("insert edge %d\n", e->m_edge_index);
-			    shoal_connected_edges.insert(e->m_edge_index);
-			}
-		    }
-		}
-	    }
-	    for (scl_it = shoal_connected_edges.begin(); scl_it != shoal_connected_edges.end(); scl_it++) {
-		const ON_BrepEdge *edge= &(brep->m_E[(int)*scl_it]);
-		//bu_log("Edge: %d\n", edge->m_edge_index);
-		ON_3dPoint p1 = brep->m_V[edge->Vertex(0)->m_vertex_index].Point();
-		ON_3dPoint p2 = brep->m_V[edge->Vertex(1)->m_vertex_index].Point();
-		double dotp1 = ON_DotProduct(p1 - shoal_implicit_plane.origin, shoal_implicit_plane.Normal());
-		double dotp2 = ON_DotProduct(p2 - shoal_implicit_plane.origin, shoal_implicit_plane.Normal());
-		if (NEAR_ZERO(dotp1, BREP_PLANAR_TOL) || NEAR_ZERO(dotp2, BREP_PLANAR_TOL)) continue;
-		if ((dotp1 < 0 && dotp2 > 0) || (dotp1 > 0 && dotp2 < 0)) {
-		    // There are things we can do to handle this, but they're unimplemented.  Bail.
-		    //bu_log("Unhandled complex implicit nucleus scenario: island %s, edge %d\n", bu_vls_addr(data->key), edge->m_edge_index);
-		    //bu_log("dotp1 %f  dotp2 %f\n", dotp1, dotp2);
-		    //bu_log("in sph.1 sph %f %f %f 1\n", p1.x, p1.y, p1.z);
-		    //bu_log("in sph.2 sph %f %f %f 1\n", p2.x, p2.y, p2.z);
-		    //bu_log("int implicit.s rcc  %f %f %f %f %f %f 0.1\n", shoal_implicit_plane.origin.x, shoal_implicit_plane.origin.y, shoal_implicit_plane.origin.z, shoal_implicit_plane.Normal().x, shoal_implicit_plane.Normal().y, shoal_implicit_plane.Normal().z);
-		    return 0;
-		}
-	    }
-	}
-    }
-
-    if (!degenerate_nucleus) {
-	// First, deal with planar faces
-	for (p_it = planar_faces.begin(); p_it != planar_faces.end(); p_it++) {
-	    int f_lcnt;
-	    int loop_rev = 0; // Check if loop flips when ignored verts are removed
-	    int *f_loops = NULL;
-	    std::set<int> active_loops;
-	    const ON_BrepFace *face = &(brep->m_F[(int)*p_it]);
-	    ON_Plane p;
-	    face->SurfaceOf()->IsPlanar(&p, BREP_PLANAR_TOL);
-	    //bu_log("face(%d): %f,%f,%f %f,%f,%f\n", face->m_face_index,  p.origin.x, p.origin.y, p.origin.z, p.Normal().x, p.Normal().y, p.Normal().z);
-
-	    // Determine if we have 1 or a set of loops.
-	    for (int i = 0; i < face->LoopCount(); i++) {
-		if (island_loops.find(face->m_li[i]) != island_loops.end()) active_loops.insert(face->m_li[i]);
-	    }
-	    set_to_array(&f_loops, &f_lcnt, &active_loops);
+	if (d->params->have_implicit_plane) {
 	    int *faces;
-	    int face_cnt = subbrep_polygon_tri(msgs, data, f_loops, f_lcnt, &loop_rev, &faces);
-	    if (loop_rev) have_flipped_loops++;
-	    // If the face is flipped, flip the triangles and the plane so their normals are correct
-	    if ((face->m_bRev && !loop_rev) || (!face->m_bRev && loop_rev)) {
-		//bu_log("face %d is reversed - flip the plane.\n", face->m_face_index);
-		for (int i = 0; i < face_cnt; i++) {
-		    int tmp = faces[i*3+1];
-		    faces[i*3+1] = faces[i*3+2];
-		    faces[i*3+2] = tmp;
-		}
-		p.Flip();
-	    }
-
-	    // One more possible flip - if this face comes to the island via a
-	    // fil connection, flip it.  Don't flip a face with multiple loops
-	    // active, since that face is not a mating face.
-	    std::set<int> fil;
-	    array_to_set(&fil, data->fil, data->fil_cnt);
-	    if (active_loops.size() == 1 && fil.find(face->m_face_index) != fil.end()) {
-		//bu_log("face %d came to us via inner loop - flip the plane.\n", face->m_face_index);
-		for (int i = 0; i < face_cnt; i++) {
-		    int tmp = faces[i*3+1];
-		    faces[i*3+1] = faces[i*3+2];
-		    faces[i*3+2] = tmp;
-		}
-		p.Flip();
-	    }
-
+	    int face_cnt = shoal_polygon_tri(msgs, d, &faces);
 	    // If the face is not degenerate in the nucleus, record it.
 	    if (face_cnt > 0) {
 		face_cnts.push_back(face_cnt);
 		face_arrays.push_back(faces);
+		ON_3dPoint o;
+		ON_3dVector n;
+		ON_VMOVE(o, d->params->implicit_plane_origin);
+		ON_VMOVE(n, d->params->implicit_plane_normal);
+		ON_Plane p(o, n);
+
+		if (d->params->bool_op == '-') p.Flip();
+
 		planes.Append(p);
 	    }
 	}
+    }
+    if (planes.Count() < 4) goto degenerate;
 
-	// Second, deal with non-planar shoals.
-	for (size_t i = 0; i < BU_PTBL_LEN(data->island_children); i++) {
-	    struct subbrep_shoal_data *d = (struct subbrep_shoal_data *)BU_PTBL_GET(data->island_children, i);
-	    if (d->params->have_implicit_plane) {
-		int *faces;
-		int face_cnt = shoal_polygon_tri(msgs, d, &faces);
-		// If the face is not degenerate in the nucleus, record it.
-		if (face_cnt > 0) {
-		    face_cnts.push_back(face_cnt);
-		    face_arrays.push_back(faces);
-		    ON_3dPoint o;
-		    ON_3dVector n;
-		    ON_VMOVE(o, d->params->implicit_plane_origin);
-		    ON_VMOVE(n, d->params->implicit_plane_normal);
-		    ON_Plane p(o, n);
-
-		    if (d->params->bool_op == '-') p.Flip();
-
-		    planes.Append(p);
-		}
-	    }
-	}
-
-	if (planes.Count() > 0) {
-	    // Third, generate compact vertex list for csg params and create the final
-	    // vertex array for the bot
-
-	    std::set<int> all_used_verts;
-	    std::vector<int> all_faces;
-	    std::set<int>::iterator auv_it;
-	    for (unsigned int i = 0; i < face_arrays.size(); i++) {
-		int *fa = face_arrays[i];
-		int fc = face_cnts[i];
-		for (int j = 0; j < fc*3; j++) all_used_verts.insert(fa[j]);
-		for (int j = 0; j < fc*3; j++) all_faces.push_back(fa[j]);
-		// Debugging printing...
-#if 0
-		struct bu_vls face_desc = BU_VLS_INIT_ZERO;
-		bu_vls_sprintf(&face_desc, "face %d:  ", i);
-		for (int j = 0; j < fc*3; j=j+3) {
-		    bu_vls_printf(&face_desc, "(%d,%d,%d)", fa[j], fa[j+1], fa[j+2]);
-		}
-		bu_log("%s\n", bu_vls_addr(&face_desc));
-		bu_vls_free(&face_desc);
-#endif
-	    }
-	    std::map<int,int> vert_map;
-	    int curr_vert = 0;
-	    BU_GET(data->nucleus, struct subbrep_shoal_data);
-	    subbrep_shoal_init(data->nucleus, data);
-	    data->nucleus->params->csg_id = (*(data->obj_cnt))++;
-	    data->nucleus->params->csg_type = PLANAR_VOLUME;
-	    data->nucleus->shoal_id = data->nucleus->params->csg_id;
-	    data->nucleus->shoal_type = PLANAR_VOLUME;
-
-	    // The nucleus shoal in this configuration will have the same
-	    // number of loops in play as the island itself.
-	    data->nucleus->shoal_loops_cnt = data->island_loops_cnt;
-	    data->nucleus->shoal_loops = (int *)bu_calloc(data->island_loops_cnt, sizeof(int), "shoal loops");
-	    for (int m = 0; m != data->island_loops_cnt; m++) {
-		data->nucleus->shoal_loops[m] = data->island_loops[m];
-	    }
-
-	    data->nucleus->params->csg_verts = (point_t *)bu_calloc(all_used_verts.size(), sizeof(point_t), "final verts array");
-	    for (auv_it = all_used_verts.begin(); auv_it != all_used_verts.end(); auv_it++) {
-		ON_3dPoint vp = brep->m_V[(int)(*auv_it)].Point();
-		BN_VMOVE(data->nucleus->params->csg_verts[curr_vert], vp);
-		vert_map.insert(std::pair<int,int>((int)*auv_it, curr_vert));
-		curr_vert++;
-	    }
-	    data->nucleus->params->csg_vert_cnt = all_used_verts.size();
-
-	    // Fourth, create final face arrays using the new indices
-	    data->nucleus->params->csg_faces = (int *)bu_calloc(all_faces.size(), sizeof(int), "final faces array");
-	    for (unsigned int i = 0; i < all_faces.size(); i++) {
-		int nv = vert_map.find(all_faces[i])->second;
-		data->nucleus->params->csg_faces[i] = nv;
-	    }
-	    data->nucleus->params->csg_face_cnt = all_faces.size() / 3;
-	}
-
-	// Sixth, check the polyhedron nucleus is degenerate
-	int parallel_planes = 0;
-	if (planes.Count() > 0) {
-	    ON_Plane seed_plane = planes[0];
-	    parallel_planes++;
-	    for (int i = 1; i < planes.Count(); i++) {
-		if (planes[i].Normal().IsParallelTo(seed_plane.Normal(), VUNITIZE_TOL)) parallel_planes++;
-	    }
-	}
-
-	if (parallel_planes == planes.Count() || planes.Count() < 4) {
-	    //bu_log("degenerate nucleus\n");
-	    degenerate_nucleus = 1;
-	}
+    // Third, generate compact vertex list for csg params and create the final
+    // vertex array for the w
+    for (unsigned int i = 0; i < face_arrays.size(); i++) {
+	int *fa = face_arrays[i];
+	int fc = face_cnts[i];
+	for (int j = 0; j < fc*3; j++) all_used_verts.insert(fa[j]);
+	for (int j = 0; j < fc*3; j++) all_faces.push_back(fa[j]);
     }
 
-    if (degenerate_nucleus) {
-	// If the polyhedron nucleus is degenerate, one of the shoals is the nucleus.
-	//
-	// First, check whether the shoal negative/positive flags are the same.
-	int shoal_same_status = 1;
-	struct subbrep_shoal_data *cn = (struct subbrep_shoal_data *)BU_PTBL_GET(data->island_children, 0);
-	for (size_t i = 1; i < BU_PTBL_LEN(data->island_children); i++) {
-	    struct subbrep_shoal_data *d = (struct subbrep_shoal_data *)BU_PTBL_GET(data->island_children, i);
-	    if (cn->params->negative != d->params->negative) shoal_same_status = 0;
-	}
-	if (shoal_same_status) {
-	    // If they all are the same, then any of them may serve as the
-	    // nucleus and whether the nucleus is negative be based on the
-	    // negative shape status of the shoal.  The island's children
-	    // will be unioned.
-	    //bu_log("shoal negative status is uniform\n");
-	    subbrep_shoal_free(data->nucleus);
-	    data->nucleus = cn;
-	    bu_ptbl_rm(data->island_children, (long *)cn);
-	} else {
-	    // If we've got shoals with different boolean status, then we have
-	    // to decide which shape is "inside" the other to make a call.  If
-	    // two cylinders the smaller radius is the new nucleus, for
-	    // example. cyl/cone is also possible - any others? sph/cyl with
-	    // sph as end cap will be degenerate...  Need to give this some
-	    // thought, but suspect a general solution isn't possible unless
-	    // based on raytracing.  For the time being, use type
-	    // specific rules.  Probably need to break this bit out into
-	    // separate functions/routines.
-	    //
-	    // Other option is to flag this island's shoals as all top-level
-	    // objects.  The subtractions and then the unions will be made
-	    // after all other csg logic has been built up.  Bad for locality
-	    // but may serve as a fall-back if nucleus resolution doesn't resolve...
-	    bu_log("\n\n\nshoals have different negative status - currently unhandled!\n\n\n");
-	}
+    // Allocate and initialize nucleus
+    BU_GET(data->nucleus, struct subbrep_shoal_data);
+    subbrep_shoal_init(data->nucleus, data);
+    data->nucleus->params->csg_id = (*(data->obj_cnt))++;
+    data->nucleus->params->csg_type = PLANAR_VOLUME;
+    data->nucleus->shoal_id = data->nucleus->params->csg_id;
+    data->nucleus->shoal_type = PLANAR_VOLUME;
+
+    // The nucleus shoal in this configuration will have the same
+    // number of loops in play as the island itself.
+    data->nucleus->shoal_loops_cnt = data->island_loops_cnt;
+    data->nucleus->shoal_loops = (int *)bu_calloc(data->island_loops_cnt, sizeof(int), "shoal loops");
+    for (int m = 0; m != data->island_loops_cnt; m++) {
+	data->nucleus->shoal_loops[m] = data->island_loops[m];
+    }
+
+    // Assign the verts and faces to the csg parameters structure
+    data->nucleus->params->csg_verts = (point_t *)bu_calloc(all_used_verts.size(), sizeof(point_t), "final verts array");
+    data->nucleus->params->csg_vert_cnt = all_used_verts.size();
+    data->nucleus->params->csg_faces = (int *)bu_calloc(all_faces.size(), sizeof(int), "final faces array");
+    data->nucleus->params->csg_face_cnt = all_faces.size() / 3;
+    curr_vert = 0;
+    for (auv_it = all_used_verts.begin(); auv_it != all_used_verts.end(); auv_it++) {
+	ON_3dPoint vp = brep->m_V[(int)(*auv_it)].Point();
+	BN_VMOVE(data->nucleus->params->csg_verts[curr_vert], vp);
+	vert_map.insert(std::pair<int,int>((int)*auv_it, curr_vert));
+	curr_vert++;
+    }
+    for (unsigned int i = 0; i < all_faces.size(); i++) {
+	data->nucleus->params->csg_faces[i] = vert_map.find(all_faces[i])->second;
     }
 
 
-    // If we're not degenerate, test for a negative polyhedron - if negative, handle accordingly
-    if (!degenerate_nucleus) {
-	if (negative_polygon(msgs, data->nucleus->params) == -1) {
-	    data->nucleus->params->negative = -1;
-	    data->nucleus->params->bool_op = '-';
-	    // Flip triangles and planes so BoT/arbn is a positive shape.  All csg params need
-	    // to describe positive shapes for primitive creation - their "negative" flag preserves
-	    // their original role per their original B-Rep face normals
-	    for (int i = 0; i < data->nucleus->params->csg_face_cnt; i++) {
-		int tmp = data->nucleus->params->csg_faces[i*3+1];
-		data->nucleus->params->csg_faces[i*3+1] = data->nucleus->params->csg_faces[i*3+2];
-		data->nucleus->params->csg_faces[i*3+2] = tmp;
-	    }
-	    for (int i = 0; i < planes.Count(); i++) {
-		planes[i].Flip();
-	    }
-	} else {
-	    data->nucleus->params->negative = 1;
-	    data->nucleus->params->bool_op = 'u';
+    // Check whether the polyhedron nucleus is degenerate
+    seed_plane = planes[0];
+    parallel_planes++;
+    for (int i = 1; i < planes.Count(); i++) {
+	if (planes[i].Normal().IsParallelTo(seed_plane.Normal(), VUNITIZE_TOL)) parallel_planes++;
+    }
+    if (parallel_planes == planes.Count()) goto degenerate;
+
+
+    // Test for a negative polyhedron - if negative, handle accordingly
+    if (negative_polygon(msgs, data->nucleus->params) == -1) {
+	data->nucleus->params->negative = -1;
+	data->nucleus->params->bool_op = '-';
+	// Flip triangles and planes so the resulting BoT/arbn is a positive
+	// shape.  All csg params need to describe positive shapes for
+	// primitive creation - their "negative" flag preserves their original
+	// role per their original B-Rep face normals
+	for (int i = 0; i < data->nucleus->params->csg_face_cnt; i++) {
+	    int tmp = data->nucleus->params->csg_faces[i*3+1];
+	    data->nucleus->params->csg_faces[i*3+1] = data->nucleus->params->csg_faces[i*3+2];
+	    data->nucleus->params->csg_faces[i*3+2] = tmp;
 	}
+	for (int i = 0; i < planes.Count(); i++) {
+	    planes[i].Flip();
+	}
+    } else {
+	data->nucleus->params->negative = 1;
+	data->nucleus->params->bool_op = 'u';
+    }
 
 
-	// 2. convex polyhedron
-	int convex_polyhedron = 1;
+    // Test for a convex polyhedron. This can be an expensive test, so only do
+    // it for a small number of planes
+    if (planes.Count() > MAX_CNT_CONVEX_PLANE_TEST) {
+	int *planes_used = (int *)bu_calloc(planes.Count(), sizeof(int), "usage flags");
+	convex_plane_usage(&planes, &planes_used);
+	for (int i = 0; i < planes.Count(); i++) {
+	    if (planes_used[i] == 0) {
+		convex_polyhedron = 0;
+		break;
+	    }
+	}
+	bu_free(planes_used, "free used array");
+    } else {
+	convex_polyhedron = 0;
+    }
 
-	// This can be an expensive test, so only do it for a small number of planes
-	if (planes.Count() > MAX_CNT_CONVEX_PLANE_TEST) convex_polyhedron = 0;
-
-	if (convex_polyhedron) {
-	    int *planes_used = (int *)bu_calloc(planes.Count(), sizeof(int), "usage flags");
-	    convex_plane_usage(&planes, &planes_used);
-	    for (int i = 0; i < planes.Count(); i++) {
-		if (planes_used[i] == 0) {
+    // If the planes can form an arbn, we still need to make sure that none of the known vertices
+    // from the planar faces are trimmed away by any of the arbn planes
+    if (convex_polyhedron) {
+	for (int v = 0; v < data->nucleus->params->csg_vert_cnt; v++) {
+	    ON_3dPoint p3d;
+	    ON_VMOVE(p3d, data->nucleus->params->csg_verts[v]);
+	    /* See if point is outside arb */
+	    for (int m = 0; m < planes.Count(); m++) {
+		double dotp = ON_DotProduct(p3d - planes[m].origin, planes[m].Normal());
+		if (dotp > 0 && !NEAR_ZERO(dotp, VUNITIZE_TOL)) {
 		    convex_polyhedron = 0;
 		    break;
 		}
 	    }
-	    bu_free(planes_used, "free used array");
-	}
-
-	// If the planes can form an arbn, we still need to make sure that none of the known vertices
-	// from the planar faces are trimmed away by any of the arbn planes
-	if (convex_polyhedron) {
-	    for (int v = 0; v < data->nucleus->params->csg_vert_cnt; v++) {
-		ON_3dPoint p3d;
-		ON_VMOVE(p3d, data->nucleus->params->csg_verts[v]);
-		/* See if point is outside arb */
-		for (int m = 0; m < planes.Count(); m++) {
-		    double dotp = ON_DotProduct(p3d - planes[m].origin, planes[m].Normal());
-		    if (dotp > 0 && !NEAR_ZERO(dotp, VUNITIZE_TOL)) {
-			bu_log("Found trimmed point, we're done\n");
-			convex_polyhedron = 0;
-			break;
-		    }
-		}
-		if (!convex_polyhedron) break;
-	    }
-	}
-
-	if (convex_polyhedron) {
-	    // If we do in fact have a convex polyhedron, we can create an arbn
-	    // instead of a BoT for this nucleus shape
-	    data->nucleus->params->csg_type = ARBN;
-	    data->nucleus->shoal_type = ARBN;
-	    data->nucleus->params->plane_cnt = planes.Count();
-	    data->nucleus->params->planes = (plane_t *)bu_calloc(planes.Count(), sizeof(plane_t), "planes");
-	    for (int i = 0; i < planes.Count(); i++) {
-		ON_Plane p = planes[i];
-		double d = p.DistanceTo(ON_3dPoint(0,0,0));
-		data->nucleus->params->planes[i][0] = p.Normal().x;
-		data->nucleus->params->planes[i][1] = p.Normal().y;
-		data->nucleus->params->planes[i][2] = p.Normal().z;
-		data->nucleus->params->planes[i][3] = -1 * d;
-	    }
-	} else {
-	    // Otherwise, confirm as BoT
-	    data->nucleus->params->csg_type = PLANAR_VOLUME;
-	}
-
-	// 3. There is one final wrinkle.  It is possible for a polyhedron nucleus to be volumetrically
-	// inside a shoal (shape + arbn).  In this situation, the nucleus is subtracted from the shoal
-	// shape.
-
-	if (have_flipped_loops > 0) {
-	    //bu_log("flip nucleus and child\n");
-	    if (BU_PTBL_LEN(data->island_children) != 1) {
-		bu_log("huh? flipped loops and child count != 1?\n");
-	    } else {
-		struct subbrep_shoal_data *tmp_n = data->nucleus;
-		struct subbrep_shoal_data *d = (struct subbrep_shoal_data *)BU_PTBL_GET(data->island_children, 0);
-		data->nucleus = d;
-		bu_ptbl_rm(data->island_children, (long *)d);
-		bu_ptbl_ins(data->island_children, (long *)tmp_n);
-	    }
+	    if (!convex_polyhedron) break;
 	}
     }
+
+    if (convex_polyhedron) {
+	// If we do in fact have a convex polyhedron, we can create an arbn
+	// instead of a BoT for this nucleus shape
+	data->nucleus->params->csg_type = ARBN;
+	data->nucleus->shoal_type = ARBN;
+	data->nucleus->params->plane_cnt = planes.Count();
+	data->nucleus->params->planes = (plane_t *)bu_calloc(planes.Count(), sizeof(plane_t), "planes");
+	for (int i = 0; i < planes.Count(); i++) {
+	    ON_Plane p = planes[i];
+	    double d = p.DistanceTo(ON_3dPoint(0,0,0));
+	    data->nucleus->params->planes[i][0] = p.Normal().x;
+	    data->nucleus->params->planes[i][1] = p.Normal().y;
+	    data->nucleus->params->planes[i][2] = p.Normal().z;
+	    data->nucleus->params->planes[i][3] = -1 * d;
+	}
+    } else {
+	// Otherwise, confirm as BoT
+	data->nucleus->params->csg_type = PLANAR_VOLUME;
+    }
+
+    // There is one final wrinkle.  It is possible for a polyhedron nucleus to
+    // be volumetrically inside a shoal (shape + arbn).  In this situation, the
+    // nucleus is subtracted from the shoal shape.
+    if (negative_nucleus > 0) {
+	//bu_log("flip nucleus and child\n");
+	if (BU_PTBL_LEN(data->island_children) != 1) {
+	    bu_log("huh? flipped loops and child count != 1?\n");
+	} else {
+	    struct subbrep_shoal_data *tmp_n = data->nucleus;
+	    struct subbrep_shoal_data *d = (struct subbrep_shoal_data *)BU_PTBL_GET(data->island_children, 0);
+	    data->nucleus = d;
+	    bu_ptbl_rm(data->island_children, (long *)d);
+	    bu_ptbl_ins(data->island_children, (long *)tmp_n);
+	}
+    }
+
+    return 1;
+
+degenerate:
+    // If the polyhedron nucleus is degenerate, one of the shoals is the nucleus.
+    //
+    // First, check whether the shoal negative/positive flags are the same.
+    int shoal_same_status = 1;
+    struct subbrep_shoal_data *cn = (struct subbrep_shoal_data *)BU_PTBL_GET(data->island_children, 0);
+    for (size_t i = 1; i < BU_PTBL_LEN(data->island_children); i++) {
+	struct subbrep_shoal_data *d = (struct subbrep_shoal_data *)BU_PTBL_GET(data->island_children, i);
+	if (cn->params->negative != d->params->negative) shoal_same_status = 0;
+    }
+    if (shoal_same_status) {
+	// If they all are the same, then any of them may serve as the
+	// nucleus and whether the nucleus is negative be based on the
+	// negative shape status of the shoal.  The island's children
+	// will be unioned.
+	//bu_log("shoal negative status is uniform\n");
+	subbrep_shoal_free(data->nucleus);
+	data->nucleus = cn;
+	bu_ptbl_rm(data->island_children, (long *)cn);
+    } else {
+	// If we've got shoals with different boolean status, then we have
+	// to decide which shape is "inside" the other to make a call.  If
+	// two cylinders the smaller radius is the new nucleus, for
+	// example. cyl/cone is also possible - any others? sph/cyl with
+	// sph as end cap will be degenerate...  Need to give this some
+	// thought, but suspect a general solution isn't possible unless
+	// based on raytracing.  For the time being, use type
+	// specific rules.  Probably need to break this bit out into
+	// separate functions/routines.
+	//
+	// Other option is to flag this island's shoals as all top-level
+	// objects.  The subtractions and then the unions will be made
+	// after all other csg logic has been built up.  Bad for locality
+	// but may serve as a fall-back if nucleus resolution doesn't resolve...
+	bu_log("\n\n\nshoals have different negative status - currently unhandled!\n\n\n");
+    }
+
 
     return 1;
 }

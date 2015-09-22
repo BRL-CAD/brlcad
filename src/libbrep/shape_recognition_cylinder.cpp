@@ -67,6 +67,9 @@ cylinder_csg(struct bu_vls *msgs, struct subbrep_shoal_data *data, fastf_t cyl_t
 	}
     }
 
+
+    // TODO - possibly degenerate edges need not be linear (spheres) - can
+    // we do that test here without trouble?
     for (c_it = edges.begin(); c_it != edges.end(); c_it++) {
 	const ON_BrepEdge *edge = &(brep->m_E[*c_it]);
 	ON_Curve *ecv = edge->EdgeCurveOf()->Duplicate();
@@ -226,13 +229,48 @@ cylinder_csg(struct bu_vls *msgs, struct subbrep_shoal_data *data, fastf_t cyl_t
 
     if (implicit_plane_ind != -1) {
 	//bu_log("have implicit plane\n");
-	ON_Plane p = cyl_planes[implicit_plane_ind];
-	p.Flip();
-	//bu_log("implicit plane origin: %f, %f, %f\n", p.origin.x, p.origin.y, p.origin.z);
-	//bu_log("implicit plane Normal: %f, %f, %f\n", p.Normal().x, p.Normal().y, p.Normal().z);
-	BN_VMOVE(data->params->implicit_plane_origin, p.Origin());
-	BN_VMOVE(data->params->implicit_plane_normal, p.Normal());
+	ON_Plane shoal_implicit_plane = cyl_planes[implicit_plane_ind];
+	shoal_implicit_plane.Flip();
+	BN_VMOVE(data->params->implicit_plane_origin, shoal_implicit_plane.Origin());
+	BN_VMOVE(data->params->implicit_plane_normal, shoal_implicit_plane.Normal());
 	data->params->have_implicit_plane = 1;
+
+	// All well and good to have an implicit plane, but if we have face edges being cut by it 
+	// we've got a no-go.
+	std::set<int> shoal_connected_edges;
+	std::set<int>::iterator scl_it;
+	for (int i = 0; i < data->shoal_loops_cnt; i++) {
+	    const ON_BrepLoop *loop = &(brep->m_L[data->shoal_loops[i]]);
+	    for (int ti = 0; ti < loop->m_ti.Count(); ti++) {
+		int vert_ind;
+		const ON_BrepTrim *trim = &(brep->m_T[loop->m_ti[ti]]);
+		const ON_BrepEdge *edge = &(brep->m_E[trim->m_ei]);
+		if (trim->m_bRev3d) {
+		    vert_ind = edge->Vertex(0)->m_vertex_index;
+		} else {
+		    vert_ind = edge->Vertex(1)->m_vertex_index;
+		}
+		// Get vertex edges.
+		const ON_BrepVertex *v = &(brep->m_V[vert_ind]);
+		for (int ei = 0; ei < v->EdgeCount(); ei++) {
+		    const ON_BrepEdge *e = &(brep->m_E[v->m_ei[ei]]);
+		    //bu_log("insert edge %d\n", e->m_edge_index);
+		    shoal_connected_edges.insert(e->m_edge_index);
+		}
+	    }
+	}
+	for (scl_it = shoal_connected_edges.begin(); scl_it != shoal_connected_edges.end(); scl_it++) {
+	    const ON_BrepEdge *edge= &(brep->m_E[(int)*scl_it]);
+	    //bu_log("Edge: %d\n", edge->m_edge_index);
+	    ON_3dPoint p1 = brep->m_V[edge->Vertex(0)->m_vertex_index].Point();
+	    ON_3dPoint p2 = brep->m_V[edge->Vertex(1)->m_vertex_index].Point();
+	    double dotp1 = ON_DotProduct(p1 - shoal_implicit_plane.origin, shoal_implicit_plane.Normal());
+	    double dotp2 = ON_DotProduct(p2 - shoal_implicit_plane.origin, shoal_implicit_plane.Normal());
+	    if (NEAR_ZERO(dotp1, BREP_PLANAR_TOL) || NEAR_ZERO(dotp2, BREP_PLANAR_TOL)) continue;
+	    if ((dotp1 < 0 && dotp2 > 0) || (dotp1 > 0 && dotp2 < 0)) {
+		return 0;
+	    }
+	}
     }
 
 
