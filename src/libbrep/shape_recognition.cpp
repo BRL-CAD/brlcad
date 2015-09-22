@@ -158,7 +158,7 @@ find_hierarchy(struct bu_vls *UNUSED(msgs), struct bu_ptbl *islands)
     for (unsigned int i = 0; i < BU_PTBL_LEN(islands); i++) {
 	std::queue<struct subbrep_island_data *> subislands;
 	struct subbrep_island_data *id = (struct subbrep_island_data *)BU_PTBL_GET(islands, i);
-	if (id->nucleus->params->bool_op == '-' || id->local_brep_bool_op == '-') {
+	if (id->local_brep_bool_op == '-' || (id->nucleus && id->nucleus->params->bool_op == '-')) {
 	    continue;
 	}
 
@@ -175,7 +175,7 @@ find_hierarchy(struct bu_vls *UNUSED(msgs), struct bu_ptbl *islands)
 	for (sc2p_it = sc2p_ret.first; sc2p_it != sc2p_ret.second; ++sc2p_it) {
 	    struct subbrep_island_data *pid = sc2p_it->second;
 	    if (pid != id) pqueue.push(pid);
-	    if (pid->nucleus->params->bool_op == '-' || pid->local_brep_bool_op == '-') {
+	    if (pid->local_brep_bool_op == '-' || (pid->nucleus && pid->nucleus->params->bool_op == '-')) {
 		ignore_islands.insert(pid);
 	    }
 	}
@@ -188,7 +188,7 @@ find_hierarchy(struct bu_vls *UNUSED(msgs), struct bu_ptbl *islands)
 	    for (pchain_it = pchain_ret.first; pchain_it != pchain_ret.second; ++pchain_it) {
 		struct subbrep_island_data *gpid = pchain_it->second;
 		if (gpid != pid) pqueue.push(gpid);
-		if (gpid->nucleus->params->bool_op == '-' || gpid->local_brep_bool_op == '-') {
+		if (gpid->local_brep_bool_op == '-' || (gpid->nucleus && gpid->nucleus->params->bool_op == '-')) {
 		    ignore_islands.insert(gpid);
 		}
 	    }
@@ -197,7 +197,7 @@ find_hierarchy(struct bu_vls *UNUSED(msgs), struct bu_ptbl *islands)
 	// Check all subtractions that aren't in the ignore list.
 	for (unsigned int j = 0; j < BU_PTBL_LEN(islands); j++) {
 	    struct subbrep_island_data *sid = (struct subbrep_island_data *)BU_PTBL_GET(islands, j);
-	    if (sid->nucleus->params->bool_op == 'u' || sid->local_brep_bool_op == 'u') {
+	    if (sid->local_brep_bool_op == 'u' || (sid->nucleus && sid->nucleus->params->bool_op == 'u')) {
 		continue;
 	    }
 
