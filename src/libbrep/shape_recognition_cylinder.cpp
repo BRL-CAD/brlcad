@@ -196,7 +196,10 @@ cylinder_csg(struct bu_vls *msgs, struct subbrep_shoal_data *data, fastf_t cyl_t
 	cyl_planes.Append(pf);
 	implicit_plane_ind = cyl_planes.Count() - 1;
     }
-    ////////// Cylinder (and cone) specific /////////////////////////////////////
+    ////////// END Cylinder (and cone) specific /////////////////////////////////////
+
+    // Spheres will need their own thing here, based on walking the non-degenerate
+    // edge loop and collecting unique planes from sequential coplanar points.
 
 
     // Need to make sure the normals are pointed the "right way"
