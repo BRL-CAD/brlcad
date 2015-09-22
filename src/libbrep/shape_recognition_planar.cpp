@@ -851,7 +851,7 @@ island_nucleus(struct bu_vls *msgs, struct subbrep_island_data *data)
 
     // Test for a convex polyhedron. This can be an expensive test, so only do
     // it for a small number of planes
-    if (planes.Count() > MAX_CNT_CONVEX_PLANE_TEST) {
+    if (planes.Count() < MAX_CNT_CONVEX_PLANE_TEST) {
 	int *planes_used = (int *)bu_calloc(planes.Count(), sizeof(int), "usage flags");
 	convex_plane_usage(&planes, &planes_used);
 	for (int i = 0; i < planes.Count(); i++) {
