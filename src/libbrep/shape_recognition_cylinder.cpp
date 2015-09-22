@@ -50,11 +50,9 @@ cylinder_csg(struct bu_vls *msgs, struct subbrep_shoal_data *data, fastf_t cyl_t
 
     const ON_Brep *brep = data->i->brep;
 
-    // Characterize the planes of the non-linear edges.
-    ON_SimpleArray<ON_Plane> non_linear_edge_planes;
+    // Collect faces, edges and edge midpoints.
     ON_SimpleArray<ON_3dPoint> edge_midpnts;
     std::set<int> edges;
-    std::set<int> linear_edges;
     for (int i = 0; i < data->shoal_loops_cnt; i++) {
 	const ON_BrepLoop *loop = &(brep->m_L[data->shoal_loops[i]]);
 	cylindrical_surfaces.insert(loop->Face()->m_face_index);
@@ -63,18 +61,59 @@ cylinder_csg(struct bu_vls *msgs, struct subbrep_shoal_data *data, fastf_t cyl_t
 	    const ON_BrepEdge *edge = &(brep->m_E[trim->m_ei]);
 	    if (trim->m_ei != -1 && edge->TrimCount() > 0) {
 		edges.insert(trim->m_ei);
+		ON_3dPoint midpt = edge->EdgeCurveOf()->PointAt(edge->EdgeCurveOf()->Domain().Mid());
+		edge_midpnts.Append(midpt);
 	    }
 	}
     }
 
 
-    // TODO - possibly degenerate edges need not be linear (spheres) - can
-    // we do that test here without trouble?
+    // Collect edges that link to one plane in the shoal.  Two non-planar faces
+    // both in the shoal means a culled edge and verts
+    std::set<int> nondegen_edges;
+    std::set<int> degen_edges;
     for (c_it = edges.begin(); c_it != edges.end(); c_it++) {
 	const ON_BrepEdge *edge = &(brep->m_E[*c_it]);
+	std::vector<int> faces;
+	for (int i = 0; i < edge->m_ti.Count(); i++) {
+	    const ON_BrepTrim *trim = &(brep->m_T[edge->m_ti[i]]);
+	    if (((surface_t *)data->i->face_surface_types)[trim->Face()->m_face_index] == SURFACE_PLANE) continue;
+	    if (cylindrical_surfaces.find(trim->Face()->m_face_index) != cylindrical_surfaces.end())
+		faces.push_back(trim->Face()->m_face_index);
+	}
+	if (faces.size() == 2) {
+	    degen_edges.insert(*c_it);
+	    //bu_log("edge %d is degenerate\n", *s_it);
+	} else {
+	    nondegen_edges.insert(*c_it);
+	}
+    }
+
+    // Update the island's info on degenerate edges and vertices
+    std::set<int> nullv;
+    std::set<int> nulle;
+    array_to_set(&nullv, data->i->null_verts, data->i->null_vert_cnt);
+    array_to_set(&nulle, data->i->null_edges, data->i->null_edge_cnt);
+    for (c_it = degen_edges.begin(); c_it != degen_edges.end(); c_it++) {
+	const ON_BrepEdge *edge = &(brep->m_E[*c_it]);
+	nullv.insert(edge->Vertex(0)->m_vertex_index);
+	nullv.insert(edge->Vertex(1)->m_vertex_index);
+	nulle.insert(*c_it);
+    }	
+    set_to_array(&(data->i->null_verts), &(data->i->null_vert_cnt), &nullv);
+    set_to_array(&(data->i->null_edges), &(data->i->null_edge_cnt), &nulle);
+
+
+    // Now, any non-linear edge that isn't degenerate should be supplying a
+    // plane.  (We don't currently handle non-planar edges like those from a
+    // sphere subtracted from a cylinder.)  Liner curves are saved - they need
+    // special interpretation for cylinders and cones (spheres shouldn't have
+    // any.)
+    ON_SimpleArray<ON_Plane> non_linear_edge_planes;
+    std::set<int> linear_edges;
+    for (c_it = nondegen_edges.begin(); c_it != nondegen_edges.end(); c_it++) {
+	const ON_BrepEdge *edge = &(brep->m_E[*c_it]);
 	ON_Curve *ecv = edge->EdgeCurveOf()->Duplicate();
-	ON_3dPoint midpt = ecv->PointAt(ecv->Domain().Mid());
-	edge_midpnts.Append(midpt);
 	if (!ecv->IsLinear()) {
 	    ON_Plane eplane;
 	    int have_planar_face = 0;
@@ -85,11 +124,8 @@ cylinder_csg(struct bu_vls *msgs, struct subbrep_shoal_data *data, fastf_t cyl_t
 		const ON_BrepFace *f = t->Face();
 		surface_t st = ((surface_t *)data->i->face_surface_types)[f->m_face_index];
 		if (st == SURFACE_PLANE) {
-		    f->SurfaceOf()->IsPlanar(&eplane);
+		    f->SurfaceOf()->IsPlanar(&eplane, BREP_PLANAR_TOL);
 		    have_planar_face = 1;
-		    if (f->m_bRev) eplane.Flip();
-		    // TODO - if the loop associated with this trim is a fil loop in the
-		    // island, should probably flip the face again...
 		    break;
 		}
 	    }
@@ -130,72 +166,44 @@ cylinder_csg(struct bu_vls *msgs, struct subbrep_shoal_data *data, fastf_t cyl_t
 	}
     }
 
-    // If we have linear edges, filter out edges that a) have two non-planar
-    // faces and b) link to faces in the same shoal.
-    std::set<int> le;
-    std::set<int>::iterator s_it;
-    for (s_it = linear_edges.begin(); s_it != linear_edges.end(); s_it++) {
-	std::vector<int> faces;
-	const ON_BrepEdge *edge = &(brep->m_E[*s_it]);
-	for (int i = 0; i < edge->m_ti.Count(); i++) {
-	    const ON_BrepTrim *trim = &(brep->m_T[edge->m_ti[i]]);
-	    if (((surface_t *)data->i->face_surface_types)[trim->Face()->m_face_index] == SURFACE_PLANE) continue;
-	    if (cylindrical_surfaces.find(trim->Face()->m_face_index) != cylindrical_surfaces.end())
-		faces.push_back(trim->Face()->m_face_index);
-	}
-	if (faces.size() == 1) {
-	    le.insert(*s_it);
-	    continue;
-	}
-	if (faces.size() == 2) {
-	    std::set<int> nullv;
-	    std::set<int> nulle;
-	    //bu_log("edge %d is degenerate\n", *s_it);
-	    array_to_set(&nullv, data->i->null_verts, data->i->null_vert_cnt);
-	    array_to_set(&nulle, data->i->null_edges, data->i->null_edge_cnt);
-	    nullv.insert(edge->Vertex(0)->m_vertex_index);
-	    nullv.insert(edge->Vertex(1)->m_vertex_index);
-	    nulle.insert(*s_it);
-	    set_to_array(&(data->i->null_verts), &(data->i->null_vert_cnt), &nullv);
-	    set_to_array(&(data->i->null_edges), &(data->i->null_edge_cnt), &nulle);
-	}
-    }
-
+    ////////// Cylinder (and cone) specific /////////////////////////////////////
     // If we have two non-linear edges remaining, construct a plane from them.
     // If we have a count other than two or zero, return.
-    if (le.size() != 2 && le.size() != 0)
+    if (linear_edges.size() != 2 && linear_edges.size() != 0)
        	return 0;
-    if (le.size() == 2 ) {
+    if (linear_edges.size() == 2 ) {
 	std::set<int> verts;
 	// If both edges share a pre-existing face that is planar, use the inverse of that
 	// plane.  Otherwise, construct a plane from the vertex points.
 	//bu_log("found two linear edges\n");
-	for (s_it = le.begin(); s_it != le.end(); s_it++) {
-	    const ON_BrepEdge *edge = &(brep->m_E[*s_it]);
+	for (c_it = linear_edges.begin(); c_it != linear_edges.end(); c_it++) {
+	    const ON_BrepEdge *edge = &(brep->m_E[*c_it]);
 	    verts.insert(edge->m_vi[0]);
 	    verts.insert(edge->m_vi[1]);
 	}
 	ON_3dPointArray points;
-	for (s_it = verts.begin(); s_it != verts.end(); s_it++) {
-	    const ON_BrepVertex *v = &(brep->m_V[*s_it]);
+	for (c_it = verts.begin(); c_it != verts.end(); c_it++) {
+	    const ON_BrepVertex *v = &(brep->m_V[*c_it]);
 	    points.Append(v->Point());
 	}
 
 	ON_Plane pf(points[0], points[1], points[2]);
 
 	// If the fourth point is not coplanar with the other three, we've hit a case
-	// that we don't currently handle - hault. (TODO - need test case)
+	// that we don't currently handlinear_edges.- hault. (TODO - need test case)
 	if (pf.DistanceTo(points[3]) > BREP_PLANAR_TOL) return 0;
 
 	cyl_planes.Append(pf);
 	implicit_plane_ind = cyl_planes.Count() - 1;
     }
+    ////////// Cylinder (and cone) specific /////////////////////////////////////
 
 
     // Need to make sure the normals are pointed the "right way"
     //
-    // Check each normal direction to see whether it would trim away any edge midpoints
-    // known to be present.  If both directions do so, we have a concave situation and we're done.
+    // Check each normal direction to see whether it would trim away any edge
+    // midpoints known to be present.  If both directions do so, we have a
+    // concave situation and we're done.
     for (int i = 0; i < cyl_planes.Count(); i++) {
 	ON_Plane p = cyl_planes[i];
 	//bu_log("in rcc_%d.s rcc %f, %f, %f %f, %f, %f 0.1\n", i, p.origin.x, p.origin.y, p.origin.z, p.Normal().x, p.Normal().y, p.Normal().z);
@@ -531,7 +539,6 @@ cylinder_csg(struct bu_vls *msgs, struct subbrep_shoal_data *data, fastf_t cyl_t
 
 
     // Construct the arbn to intersect with the cylinder to form the final shape
-
     if (arbn_planes.Count() > 3) {
 	struct csg_object_params *sub_param;
 	BU_GET(sub_param, struct csg_object_params);
@@ -550,18 +557,6 @@ cylinder_csg(struct bu_vls *msgs, struct subbrep_shoal_data *data, fastf_t cyl_t
 	    sub_param->planes[i][3] = -1 * d;
 	}
 	bu_ptbl_ins(data->shoal_children, (long *)sub_param);
-
-#if 0
-	struct bu_vls arbn = BU_VLS_INIT_ZERO;
-	bu_vls_printf(&arbn, "in arbn.s arbn %d ", arbn_planes.Count());
-	for (int i = 0; i < arbn_planes.Count(); i++) {
-	    ON_Plane p = arbn_planes[i];
-	    double d = p.DistanceTo(ON_3dPoint(0,0,0));
-	    bu_vls_printf(&arbn, "%f %f %f %f ", p.Normal().x, p.Normal().y, p.Normal().z, -1*d);
-	    bu_log("in half_%d.s half %f %f %f %f\n", i, p.Normal().x, p.Normal().y, p.Normal().z, -1*d);
-	}
-	bu_log("%s\n", bu_vls_addr(&arbn));
-#endif
     }
 
 
