@@ -389,16 +389,17 @@ subbrep_brep_boolean(struct subbrep_island_data *data)
     std::set<int> island_loops;
     array_to_set(&island_loops, data->island_loops, data->island_loops_cnt);
 
-    // Collecte all vertices in the island
+    // Collecte midpoints from all edges in the island
+    ON_3dPointArray mid_points;
     std::set<int> verts;
     for (int i = 0; i < data->island_loops_cnt; i++) {
 	const ON_BrepLoop *loop = &(brep->m_L[data->island_loops[i]]);
 	for (int ti = 0; ti < loop->m_ti.Count(); ti++) {
 	    const ON_BrepTrim *trim = &(brep->m_T[loop->m_ti[ti]]);
 	    const ON_BrepEdge *edge = &(brep->m_E[trim->m_ei]);
-	    if (trim->m_ei != -1 && edge->TrimCount() > 0) {
-		verts.insert(edge->Vertex(0)->m_vertex_index);
-		verts.insert(edge->Vertex(1)->m_vertex_index);
+	    if (trim->m_ei != -1) {
+		ON_3dPoint midpt = edge->EdgeCurveOf()->PointAt(edge->EdgeCurveOf()->Domain().Mid());
+		mid_points.Append(midpt);
 	    }
 	}
     }
@@ -427,11 +428,43 @@ subbrep_brep_boolean(struct subbrep_island_data *data)
 	if (face->m_bRev) face_plane.Flip();
 
 	// For each vertex in the subbrep, determine if it is above, below or on the face
-	for (std::set<int>::iterator s_it = verts.begin(); s_it != verts.end(); s_it++) {
-	    ON_3dPoint p = brep->m_V[*s_it].Point();
-	    double distance = face_plane.DistanceTo(p);
+	for (int j = 0; j < mid_points.Count(); j++) {
+	    double distance = face_plane.DistanceTo(mid_points[j]);
 	    if (distance > BREP_PLANAR_TOL) pos_cnt++;
 	    if (distance < -1*BREP_PLANAR_TOL) neg_cnt++;
+	}
+    }
+
+    // If we didn't get *anything* from the edge midpoints, as a last resort try the control
+    // points of the surfaces included in the island via their outer loops.
+    if (!pos_cnt && !neg_cnt) {
+	for (int i = 0; i < data->fil_cnt; i++) {
+	    std::set<int> active_loops;
+	    // Get face with inner loop
+	    const ON_BrepFace *face = &(brep->m_F[data->fil[i]]);
+	    const ON_Surface *surf = face->SurfaceOf();
+	    // Get face plane
+	    ON_Plane face_plane;
+	    ON_Surface *ts = surf->Duplicate();
+	    (void)ts->IsPlanar(&face_plane, BREP_PLANAR_TOL);
+	    delete ts;
+	    if (face->m_bRev) face_plane.Flip();
+
+	    for (int fo = 0; fo < data->fol_cnt; fo++) {
+		const ON_BrepFace *oface = &(brep->m_F[data->fil[fo]]);
+		const ON_Surface *osurf = oface->SurfaceOf();
+		ON_NurbsSurface onsurf;
+		if (!osurf->GetNurbForm(onsurf)) continue;
+		for (int j = 0; j < onsurf.m_cv_count[0]; j++) {
+		    for (int k = 0; k < onsurf.m_cv_count[1]; k++) {
+			ON_3dPoint cp;
+			onsurf.GetCV(j, k, cp);
+			double distance = face_plane.DistanceTo(cp);
+			if (distance > BREP_PLANAR_TOL) pos_cnt++;
+			if (distance < -1*BREP_PLANAR_TOL) neg_cnt++;
+		    }
+		}
+	    }
 	}
     }
 
@@ -441,9 +474,9 @@ subbrep_brep_boolean(struct subbrep_island_data *data)
     if (pos_cnt && neg_cnt) return -2;
     if (pos_cnt) return 1;
     if (neg_cnt) return -1;
-    if (!pos_cnt && !neg_cnt) return 2;
 
-    return -1;
+    // If we couldn't deduce anything, return zero - caller will have to decide what to do.
+    return 0;
 }
 
 int
