@@ -954,9 +954,7 @@ typedef struct pbc_data {
     const ON_Curve *curve;
     const ON_Surface *surf;
     brlcad::SurfaceTree *surftree;
-    std::list<ON_2dPointArray *> segments;
-    const ON_BrepEdge *edge;
-    bool order_reversed;
+    std::list<ON_2dPointArray *> *segments;
 } PBCData;
 
 struct BrepTrimPoint
