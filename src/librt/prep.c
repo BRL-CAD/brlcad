@@ -722,14 +722,13 @@ rt_init_resource(struct resource *resp,
 
     /* Ensure that this CPU's resource structure is registered in rt_i */
     /* It may already be there when we're called from rt_clean_resource */
-    {
+    if (resp != &rt_uniresource) {
 	struct resource *ores = (struct resource *)BU_PTBL_GET(&rtip->rti_resources, cpu_num);
 	if (ores != NULL && ores != resp) {
 	    bu_log("rt_init_resource(cpu=%d) re-registering resource, had %p, new=%p\n",
 		   cpu_num,
 		   (void *)ores,
 		   (void *)resp);
-	    return;
 	}
 	BU_PTBL_SET(&rtip->rti_resources, cpu_num, resp);
     }
