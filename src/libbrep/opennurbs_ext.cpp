@@ -243,12 +243,9 @@ CurveTree::CurveTree(const ON_BrepFace* face) :
     }
 
     m_sortedX = new std::list<BRNode *>();
-    m_sortedY = new std::list<BRNode *>();
 
     getLeaves(*m_sortedX);
     m_sortedX->sort(sortX);
-    getLeaves(*m_sortedY);
-    m_sortedY->sort(sortY);
 
     return;
 }
@@ -258,7 +255,6 @@ CurveTree::~CurveTree()
 {
     delete m_root;
     delete m_sortedX;
-    delete m_sortedY;
 }
 
 
