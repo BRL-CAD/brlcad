@@ -292,7 +292,7 @@ public:
     ~BRNode();
 
     /** List of all children of a given node */
-    std::vector<BRNode *> m_children;
+    std::vector<BRNode *> *m_children;
 
     /** Bounding Box */
     ON_BoundingBox m_node;
@@ -367,6 +367,7 @@ BRNode::BRNode()
 {
     m_start = ON_3dPoint::UnsetPoint;
     m_end = ON_3dPoint::UnsetPoint;
+    m_children = new std::vector<BRNode *>();
 }
 
 inline
@@ -434,6 +435,7 @@ BRNode::BRNode(
 	m_slope = (m_end[Y] - m_start[Y]) / (m_end[X] - m_start[X]);
     }
     m_bb_diag = DIST_PT_PT(m_start, m_end);
+    m_children = new std::vector<BRNode *>();
 }
 
 inline
@@ -464,19 +466,20 @@ BRNode::BRNode(const ON_BoundingBox &node)
     }
     m_start = m_node.m_min;
     m_end = m_node.m_max;
+    m_children = new std::vector<BRNode *>();
 }
 
 inline void
 BRNode::addChild(const ON_BoundingBox &child)
 {
-    m_children.push_back(new BRNode(child));
+    m_children->push_back(new BRNode(child));
 }
 
 inline void
 BRNode::addChild(BRNode *child)
 {
     if (LIKELY(child != NULL)) {
-	m_children.push_back(child);
+	m_children->push_back(child);
     }
 }
 
@@ -484,10 +487,10 @@ inline void
 BRNode::removeChild(BRNode *child)
 {
     std::vector<BRNode *>::iterator i;
-    for (i = m_children.begin(); i < m_children.end(); ++i) {
+    for (i = m_children->begin(); i < m_children->end(); ++i) {
 	if (*i == child) {
 	    delete *i;
-	    m_children.erase(i);
+	    m_children->erase(i);
 	}
     }
 }
@@ -495,7 +498,7 @@ BRNode::removeChild(BRNode *child)
 inline bool
 BRNode::isLeaf()
 {
-    if (m_children.size() == 0) {
+    if (m_children->size() == 0) {
 	return true;
     }
     return false;
@@ -584,7 +587,7 @@ public:
     ~BBNode();
 
     /** List of all children of a given node */
-    std::vector<BBNode *> m_children;
+    std::vector<BBNode *> *m_children;
 
     /** Curve Tree associated with the parent Surface Tree */
     CurveTree *m_ctree;
@@ -674,6 +677,7 @@ inline
 BBNode::BBNode()
     : m_ctree(NULL), m_face(NULL), m_checkTrim(true), m_trimmed(false)
 {
+    m_children = new std::vector<BBNode *>();
 }
 
 inline
@@ -687,12 +691,14 @@ BBNode::BBNode(const ON_BoundingBox &node)
 	    m_node.m_max[i] += 0.001;
 	}
     }
+    m_children = new std::vector<BBNode *>();
 }
 
 inline
 BBNode::BBNode(CurveTree *ct)
     : m_ctree(ct), m_face(NULL), m_checkTrim(true), m_trimmed(false)
 {
+    m_children = new std::vector<BBNode *>();
 }
 
 inline
@@ -706,6 +712,7 @@ BBNode::BBNode(CurveTree *ct, const ON_BoundingBox &node)
 	    m_node.m_max[i] += 0.001;
 	}
     }
+    m_children = new std::vector<BBNode *>();
 }
 
 inline
@@ -728,19 +735,20 @@ BBNode::BBNode(
 	    m_node.m_max[i] += 0.001;
 	}
     }
+    m_children = new std::vector<BBNode *>();
 }
 
 inline void
 BBNode::addChild(const ON_BoundingBox &child)
 {
-    m_children.push_back(new BBNode(child));
+    m_children->push_back(new BBNode(child));
 }
 
 inline void
 BBNode::addChild(BBNode *child)
 {
     if (LIKELY(child != NULL)) {
-	m_children.push_back(child);
+	m_children->push_back(child);
     }
 }
 
@@ -748,10 +756,10 @@ inline void
 BBNode::removeChild(BBNode *child)
 {
     std::vector<BBNode *>::iterator i;
-    for (i = m_children.begin(); i < m_children.end(); ++i) {
+    for (i = m_children->begin(); i < m_children->end(); ++i) {
 	if (*i == child) {
 	    delete *i;
-	    m_children.erase(i);
+	    m_children->erase(i);
 	}
     }
 }
@@ -759,7 +767,7 @@ BBNode::removeChild(BBNode *child)
 inline bool
 BBNode::isLeaf()
 {
-    if (m_children.size() == 0) {
+    if (m_children->size() == 0) {
 	return true;
     }
     return false;
