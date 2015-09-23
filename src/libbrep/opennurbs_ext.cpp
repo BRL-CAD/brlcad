@@ -241,10 +241,14 @@ CurveTree::CurveTree(const ON_BrepFace* face) :
 	    }
 	}
     }
-    getLeaves(m_sortedX);
-    m_sortedX.sort(sortX);
-    getLeaves(m_sortedY);
-    m_sortedY.sort(sortY);
+
+    m_sortedX = new std::list<BRNode *>();
+    m_sortedY = new std::list<BRNode *>();
+
+    getLeaves(*m_sortedX);
+    m_sortedX->sort(sortX);
+    getLeaves(*m_sortedY);
+    m_sortedY->sort(sortY);
 
     return;
 }
@@ -253,6 +257,8 @@ CurveTree::CurveTree(const ON_BrepFace* face) :
 CurveTree::~CurveTree()
 {
     delete m_root;
+    delete m_sortedX;
+    delete m_sortedY;
 }
 
 
@@ -296,7 +302,7 @@ CurveTree::getLeavesAbove(std::list<BRNode*>& out_leaves, const ON_Interval& u, 
 {
     point_t bmin, bmax;
     double dist;
-    for (std::list<BRNode*>::iterator i = m_sortedX.begin(); i != m_sortedX.end(); i++) {
+    for (std::list<BRNode*>::iterator i = m_sortedX->begin(); i != m_sortedX->end(); i++) {
 	BRNode* br = dynamic_cast<BRNode*>(*i);
 	br->GetBBox(bmin, bmax);
 
@@ -316,7 +322,7 @@ void
 CurveTree::getLeavesAbove(std::list<BRNode*>& out_leaves, const ON_2dPoint& pt, fastf_t tol)
 {
     point_t bmin, bmax;
-    for (std::list<BRNode*>::iterator i = m_sortedX.begin(); i != m_sortedX.end(); i++) {
+    for (std::list<BRNode*>::iterator i = m_sortedX->begin(); i != m_sortedX->end(); i++) {
 	BRNode* br = dynamic_cast<BRNode*>(*i);
 	br->GetBBox(bmin, bmax);
 
@@ -336,7 +342,7 @@ CurveTree::getLeavesRight(std::list<BRNode*>& out_leaves, const ON_Interval& u, 
 {
     point_t bmin, bmax;
     double dist;
-    for (std::list<BRNode*>::iterator i = m_sortedX.begin(); i != m_sortedX.end(); i++) {
+    for (std::list<BRNode*>::iterator i = m_sortedX->begin(); i != m_sortedX->end(); i++) {
 	BRNode* br = dynamic_cast<BRNode*>(*i);
 	br->GetBBox(bmin, bmax);
 
@@ -356,7 +362,7 @@ void
 CurveTree::getLeavesRight(std::list<BRNode*>& out_leaves, const ON_2dPoint& pt, fastf_t tol)
 {
     point_t bmin, bmax;
-    for (std::list<BRNode*>::iterator i = m_sortedX.begin(); i != m_sortedX.end(); i++) {
+    for (std::list<BRNode*>::iterator i = m_sortedX->begin(); i != m_sortedX->end(); i++) {
 	BRNode* br = dynamic_cast<BRNode*>(*i);
 	br->GetBBox(bmin, bmax);
 

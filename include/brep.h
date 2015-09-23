@@ -564,8 +564,8 @@ private:
 
     const ON_BrepFace *m_face;
     BRNode *m_root;
-    std::list<BRNode *> m_sortedX;
-    std::list<BRNode *> m_sortedY;
+    std::list<BRNode *> *m_sortedX;
+    std::list<BRNode *> *m_sortedY;
 };
 
 /*--------------------------------------------------------------------------------
