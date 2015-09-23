@@ -1710,7 +1710,7 @@ view_2init(struct application *ap, char *UNUSED(framename))
 
     switch (buf_mode) {
 	case BUFMODE_UNBUF:
-	    bu_log("Single pixel I/O, unbuffered\n");
+	    bu_log("Mode: Single pixel I/O, unbuffered\n");
 	    break;
 	case BUFMODE_FULLFLOAT:
 	    if (!curr_float_frame) {
@@ -1780,11 +1780,11 @@ view_2init(struct application *ap, char *UNUSED(framename))
 	    break;
 
 	case BUFMODE_SCANLINE:
-	    bu_log("Low overhead scanline-per-CPU buffering\n");
+	    bu_log("Mode: scanline-per-CPU buffering\n");
 	    /* Fall through... */
 	case BUFMODE_DYNAMIC:
 	    if ((buf_mode == BUFMODE_DYNAMIC) && (rt_verbosity & VERBOSE_OUTPUTFILE)) {
-		bu_log("Dynamic scanline buffering\n");
+		bu_log("Mode: dynamic scanline buffering\n");
 	    }
 
 	    if (sub_grid_mode) {
@@ -1799,10 +1799,10 @@ view_2init(struct application *ap, char *UNUSED(framename))
 	case BUFMODE_ACC:
 	    for (i=0; i<height; i++)
 		scanline[i].sl_left = width;
-	    bu_log("Multiple-sample, average buffering\n");
+	    bu_log("Mode: Multiple-sample, average buffering\n");
 	    break;
 	default:
-	    bu_exit(EXIT_FAILURE, "bad buf_mode: %d", buf_mode);
+	    bu_exit(EXIT_FAILURE, "ERROR: bad buffering mode (%d), try -i", buf_mode);
     }
 
     /* This is where we do Preparations for each Lighting Model if it
