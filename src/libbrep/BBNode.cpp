@@ -34,7 +34,6 @@ BBNode::~BBNode()
     }
     delete m_children;
     delete m_trims_above;
-    delete m_trims_vertical;
 }
 
 bool

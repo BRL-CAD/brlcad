@@ -669,7 +669,6 @@ public:
 private:
     BBNode *closer(const ON_3dPoint &pt, BBNode *left, BBNode *right);
     std::list<BRNode *> *m_trims_above;
-    std::list<BRNode *> *m_trims_vertical;
 };
 
 inline
@@ -678,7 +677,6 @@ BBNode::BBNode()
 {
     m_children = new std::vector<BBNode *>();
     m_trims_above = new std::list<BRNode *>();
-    m_trims_vertical = new std::list<BRNode *>();
 }
 
 inline
@@ -694,7 +692,6 @@ BBNode::BBNode(const ON_BoundingBox &node)
     }
     m_children = new std::vector<BBNode *>();
     m_trims_above = new std::list<BRNode *>();
-    m_trims_vertical = new std::list<BRNode *>();
 }
 
 inline
@@ -703,7 +700,6 @@ BBNode::BBNode(CurveTree *ct)
 {
     m_children = new std::vector<BBNode *>();
     m_trims_above = new std::list<BRNode *>();
-    m_trims_vertical = new std::list<BRNode *>();
 }
 
 inline
@@ -719,7 +715,6 @@ BBNode::BBNode(CurveTree *ct, const ON_BoundingBox &node)
     }
     m_children = new std::vector<BBNode *>();
     m_trims_above = new std::list<BRNode *>();
-    m_trims_vertical = new std::list<BRNode *>();
 }
 
 inline
@@ -744,7 +739,6 @@ BBNode::BBNode(
     }
     m_children = new std::vector<BBNode *>();
     m_trims_above = new std::list<BRNode *>();
-    m_trims_vertical = new std::list<BRNode *>();
 }
 
 inline void
