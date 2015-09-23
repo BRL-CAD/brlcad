@@ -33,6 +33,8 @@ BBNode::~BBNode()
 	delete (*m_children)[i];
     }
     delete m_children;
+    delete m_trims_above;
+    delete m_trims_vertical;
 }
 
 bool
@@ -300,7 +302,7 @@ BBNode::getTrimsAbove(const ON_2dPoint &uv, std::list<BRNode *> &out_leaves) con
 {
     point_t bmin, bmax;
     double dist;
-    for (std::list<BRNode *>::const_iterator i = m_trims_above.begin(); i != m_trims_above.end(); i++) {
+    for (std::list<BRNode *>::const_iterator i = m_trims_above->begin(); i != m_trims_above->end(); i++) {
 	BRNode *br = dynamic_cast<BRNode *>(*i);
 	br->GetBBox(bmin, bmax);
 	dist = 0.000001; /* 0.03*DIST_PT_PT(bmin, bmax); */
@@ -339,17 +341,17 @@ BBNode::prepTrims()
     double dist = 0.000001;
     bool trim_already_assigned = false;
 
-    m_trims_above.clear();
+    m_trims_above->clear();
 
     if (LIKELY(ct != NULL)) {
-	ct->getLeavesAbove(m_trims_above, m_u, m_v);
+	ct->getLeavesAbove(*m_trims_above, m_u, m_v);
     }
 
-    m_trims_above.sort(sortY);
+    m_trims_above->sort(sortY);
 
-    if (!m_trims_above.empty()) {
-	i = m_trims_above.begin();
-	while (i != m_trims_above.end()) {
+    if (!m_trims_above->empty()) {
+	i = m_trims_above->begin();
+	while (i != m_trims_above->end()) {
 	    br = dynamic_cast<BRNode *>(*i);
 	    if (br->m_Vertical) { /* check V to see if trim possibly overlaps */
 		br->GetBBox(curvemin, curvemax);
@@ -360,7 +362,7 @@ BBNode::prepTrims()
 		    trim_already_assigned = true;
 		    i++;
 		} else {
-		    i = m_trims_above.erase(i);
+		    i = m_trims_above->erase(i);
 		}
 	    } else {
 		i++;
@@ -369,18 +371,18 @@ BBNode::prepTrims()
     }
 
     if (!trim_already_assigned) { /* already contains possible vertical trim */
-	if (m_trims_above.empty() /*|| m_trims_right.empty()*/) {
+	if (m_trims_above->empty() /*|| m_trims_right.empty()*/) {
 	    m_trimmed = true;
 	    m_checkTrim = false;
-	} else if (!m_trims_above.empty()) { /*trimmed above check contains */
-	    i = m_trims_above.begin();
+	} else if (!m_trims_above->empty()) { /*trimmed above check contains */
+	    i = m_trims_above->begin();
 	    br = dynamic_cast<BRNode *>(*i);
 	    br->GetBBox(curvemin, curvemax);
 	    dist = 0.000001; /* 0.03*DIST_PT_PT(curvemin, curvemax); */
 	    if (curvemin[Y] - dist > m_v[1]) {
 		i++;
 
-		if (i == m_trims_above.end()) { /* easy only trim in above list */
+		if (i == m_trims_above->end()) { /* easy only trim in above list */
 		    if (br->m_XIncreasing) {
 			m_trimmed = true;
 			m_checkTrim = false;
