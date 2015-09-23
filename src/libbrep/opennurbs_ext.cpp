@@ -559,6 +559,7 @@ SurfaceTree::SurfaceTree()
       m_face(NULL),
       m_root(NULL)
 {
+    f_queue = new std::queue<ON_Plane *>();
 }
 
 
@@ -633,6 +634,7 @@ SurfaceTree::SurfaceTree(const ON_BrepFace* face, bool removeTrimmed, int depthL
     surf->FrameAt(u.Mid() + uq, v.Mid() - vq, frames[7]);
     surf->FrameAt(u.Mid() + uq, v.Mid() + vq, frames[8]);
 
+    f_queue = new std::queue<ON_Plane *>();
     m_root = subdivideSurface(surf, u, v, frames, 0, depthLimit, 1, within_distance_tol);
 
     if (m_root) {
@@ -641,9 +643,9 @@ SurfaceTree::SurfaceTree(const ON_BrepFace* face, bool removeTrimmed, int depthL
     TRACE("u: [" << u[0] << ", " << u[1] << "]");
     TRACE("v: [" << v[0] << ", " << v[1] << "]");
     TRACE("m_root: " << m_root);
-    while (!f_queue.empty()) {
-	bu_free(f_queue.front(), "free subsurface frames array");
-	f_queue.pop();
+    while (!f_queue->empty()) {
+	bu_free(f_queue->front(), "free subsurface frames array");
+	f_queue->pop();
     }
 }
 
@@ -652,6 +654,7 @@ SurfaceTree::~SurfaceTree()
 {
     delete ctree;
     delete m_root;
+    delete f_queue;
 }
 
 
@@ -1217,7 +1220,11 @@ SurfaceTree::subdivideSurface(const ON_Surface *localsurf,
 	if (prev_knot) localsurf->FrameAt(usplit, vsplit, frames[4]);
 
 	ON_Plane *newframes;
-	if (!f_queue.empty()) {newframes = f_queue.front(); f_queue.pop();} else {newframes = (ON_Plane *)bu_malloc(9*sizeof(ON_Plane), "new frames");}
+	if (!f_queue->empty()) {
+	    newframes = f_queue->front(); f_queue->pop();
+	} else {
+	    newframes = (ON_Plane *)bu_malloc(9*sizeof(ON_Plane), "new frames");
+	}
 	newframes[0] = frames[0];
 	newframes[1] = sharedframes[0];
 	newframes[2] = frames[4];
@@ -1255,7 +1262,7 @@ SurfaceTree::subdivideSurface(const ON_Surface *localsurf,
 	delete q3surf;
 #endif
 	memset(newframes, 0, 9 * sizeof(ON_Plane *));
-	f_queue.push(newframes);
+	f_queue->push(newframes);
 
 	parent->m_trimmed = true;
 	parent->m_checkTrim = false;
@@ -1402,7 +1409,11 @@ SurfaceTree::subdivideSurface(const ON_Surface *localsurf,
 	localsurf->FrameAt(usplit, v.Max(), sharedframes[1]);
 
 	ON_Plane *newframes;
-	if (!f_queue.empty()) {newframes = f_queue.front(); f_queue.pop();} else {newframes = (ON_Plane *)bu_malloc(9*sizeof(ON_Plane), "new frames");}
+	if (!f_queue->empty()) {
+	    newframes = f_queue->front(); f_queue->pop();
+	} else {
+	    newframes = (ON_Plane *)bu_malloc(9*sizeof(ON_Plane), "new frames");
+	}
 	newframes[0] = frames[0];
 	newframes[1] = sharedframes[0];
 	newframes[2] = sharedframes[1];
@@ -1438,7 +1449,7 @@ SurfaceTree::subdivideSurface(const ON_Surface *localsurf,
 #endif
 
 	memset(newframes, 0, 9 * sizeof(ON_Plane *));
-	f_queue.push(newframes);
+	f_queue->push(newframes);
 
 	parent->m_trimmed = true;
 	parent->m_checkTrim = false;
@@ -1568,7 +1579,11 @@ SurfaceTree::subdivideSurface(const ON_Surface *localsurf,
 	localsurf->FrameAt(u.Max(), vsplit, sharedframes[1]);
 
 	ON_Plane *newframes;
-	if (!f_queue.empty()) {newframes = f_queue.front(); f_queue.pop();} else {newframes = (ON_Plane *)bu_malloc(9*sizeof(ON_Plane), "new frames");}
+	if (!f_queue->empty()) {
+	    newframes = f_queue->front(); f_queue->pop();
+	} else {
+	    newframes = (ON_Plane *)bu_malloc(9*sizeof(ON_Plane), "new frames");
+	}
 	newframes[0] = frames[0];
 	newframes[1] = frames[1];
 	newframes[2] = sharedframes[1];
@@ -1603,7 +1618,7 @@ SurfaceTree::subdivideSurface(const ON_Surface *localsurf,
 #endif
 
 	memset(newframes, 0, 9 * sizeof(ON_Plane *));
-	f_queue.push(newframes);
+	f_queue->push(newframes);
 
 	parent->m_trimmed = true;
 	parent->m_checkTrim = false;
