@@ -1,24 +1,33 @@
-# Minimum required version of CMake
 CMAKE_MINIMUM_REQUIRED(VERSION 2.8)
-IF(COMMAND CMAKE_POLICY)
+
+if (COMMAND CMAKE_POLICY)
   CMAKE_POLICY(SET CMP0003 NEW)
   if ("${CMAKE_VERSION}" VERSION_GREATER 2.99)
     CMAKE_POLICY(SET CMP0026 OLD)
   endif ("${CMAKE_VERSION}" VERSION_GREATER 2.99)
-ENDIF(COMMAND CMAKE_POLICY)
+endif (COMMAND CMAKE_POLICY)
 
-# Set CMake project name
+# set project name
 PROJECT(LEMON)
 
+# build the lemon binary
 add_executable(lemon lemon.c)
-# Install
-if(NOT BIN_DIR)
-  set(BIN_DIR bin)
-endif(NOT BIN_DIR)
-if(NOT LEMON_SKIP_INSTALL)
-  install(TARGETS lemon DESTINATION ${BIN_DIR})
-endif(NOT LEMON_SKIP_INSTALL)
 
+# install the binary
+if (NOT BIN_DIR)
+  set (BIN_DIR bin)
+endif (NOT BIN_DIR)
+if (NOT LEMON_SKIP_INSTALL)
+  install(TARGETS lemon DESTINATION ${BIN_DIR})
+endif (NOT LEMON_SKIP_INSTALL)
+
+# install the template
+if (NOT DATA_DIR)
+   set (DATA_DIR share)
+endif (NOT DATA_DIR)
+if (NOT LEMON_SKIP_INSTALL)
+  install(FILES lempar.c DESTINATION ${DATA_DIR}/lemon)
+endif (NOT LEMON_SKIP_INSTALL)
 
 # Local Variables:
 # tab-width: 8
