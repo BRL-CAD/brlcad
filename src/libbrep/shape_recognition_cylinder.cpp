@@ -74,14 +74,14 @@ cylinder_csg(struct bu_vls *msgs, struct subbrep_shoal_data *data, fastf_t cyl_t
     std::set<int> degen_edges;
     for (c_it = edges.begin(); c_it != edges.end(); c_it++) {
 	const ON_BrepEdge *edge = &(brep->m_E[*c_it]);
-	std::vector<int> faces;
+	int face_cnt = 0;
 	for (int i = 0; i < edge->m_ti.Count(); i++) {
 	    const ON_BrepTrim *trim = &(brep->m_T[edge->m_ti[i]]);
 	    if (((surface_t *)data->i->face_surface_types)[trim->Face()->m_face_index] == SURFACE_PLANE) continue;
 	    if (cylindrical_surfaces.find(trim->Face()->m_face_index) != cylindrical_surfaces.end())
-		faces.push_back(trim->Face()->m_face_index);
+		face_cnt++;
 	}
-	if (faces.size() == 2) {
+	if (face_cnt == 2) {
 	    degen_edges.insert(*c_it);
 	    //bu_log("edge %d is degenerate\n", *s_it);
 	} else {
