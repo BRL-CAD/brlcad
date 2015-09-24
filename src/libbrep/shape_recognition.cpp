@@ -93,6 +93,20 @@ island_faces_characterize(struct subbrep_island_data *sb)
  *
  * Currently the intrusion test uses axis aligned bounding boxes, but ideally we should use oriented bounding boxes
  * or even tighter tests.
+ *
+ *
+ * For each subtraction island, check that island against parent island(s) to see if there is a bbox
+ * overlap. If the parent is negative, jump up to the parent above that parent.  If the parent is postivie and
+ * there is an overlap, subtract it. Then, check any direct union children of that parent island. If
+ * there is an overlap, subtract and check any direct union parents and childrn of that island not already checked.
+ *
+ * If and only if there is an overlap with those parents, subtract and queue up the next level of union parents/children.  If any
+ * parent does *not* overlap with the negative bbox, the chain is broken and we're done.  If any negative parent is encountered
+ * other than when dealing with the negative island's direct parents, the chain is broken. Follow negative children to
+ * see if there are any unions below, so long as the current negative island is not in the direct parental chains of a
+ * given union.
+ *
+ *
  */
 void
 find_hierarchy(struct bu_vls *UNUSED(msgs), struct bu_ptbl *islands)
@@ -202,6 +216,9 @@ find_hierarchy(struct bu_vls *UNUSED(msgs), struct bu_ptbl *islands)
 		    }
 		}
 	    }
+
+	    // TODO - if the parent has union children other than the current child node, they need to
+	    // be checked for parentes, their own union children and those children for parents.
 	}
 
 

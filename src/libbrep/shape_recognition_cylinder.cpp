@@ -246,29 +246,12 @@ cylinder_csg(struct bu_vls *msgs, struct subbrep_shoal_data *data, fastf_t cyl_t
 	BN_VMOVE(data->params->implicit_plane_normal, shoal_implicit_plane.Normal());
 	data->params->have_implicit_plane = 1;
 
-	// All well and good to have an implicit plane, but if we have faces being cut by it
+	// All well and good to have an implicit plane, but if we have face edges being cut by it 
 	// we've got a no-go.
-	std::set<int> shoal_connected_loops;
+	std::set<int> shoal_connected_edges;
 	std::set<int>::iterator scl_it;
 	for (int i = 0; i < data->shoal_loops_cnt; i++) {
 	    const ON_BrepLoop *loop = &(brep->m_L[data->shoal_loops[i]]);
-	    for (int ti = 0; ti < loop->m_ti.Count(); ti++) {
-		const ON_BrepTrim *trim = &(brep->m_T[loop->m_ti[ti]]);
-		const ON_BrepEdge *edge = &(brep->m_E[trim->m_ei]);
-	        for (int tie = 0; tie < edge->m_ti.Count(); tie++) {
-		   const ON_BrepTrim *etrim = &(brep->m_T[edge->m_ti[tie]]);
-		   const ON_BrepLoop *tloop = etrim->Loop();
-		   if (tloop->m_loop_index != loop->m_loop_index) {
-		       if (((surface_t *)data->i->face_surface_types)[etrim->Face()->m_face_index] != SURFACE_PLANE) continue;
-		       shoal_connected_loops.insert(tloop->m_loop_index);
-		   }
-		}
-	    }
-	}
-	for (scl_it = shoal_connected_loops.begin(); scl_it != shoal_connected_loops.end(); scl_it++) {
-	    int dplus = 0;
-	    int dminus = 0;
-	    const ON_BrepLoop *loop = &(brep->m_L[*scl_it]);
 	    for (int ti = 0; ti < loop->m_ti.Count(); ti++) {
 		int vert_ind;
 		const ON_BrepTrim *trim = &(brep->m_T[loop->m_ti[ti]]);
@@ -278,12 +261,24 @@ cylinder_csg(struct bu_vls *msgs, struct subbrep_shoal_data *data, fastf_t cyl_t
 		} else {
 		    vert_ind = edge->Vertex(1)->m_vertex_index;
 		}
+		// Get vertex edges.
 		const ON_BrepVertex *v = &(brep->m_V[vert_ind]);
-		double dotp = ON_DotProduct(v->Point() - shoal_implicit_plane.origin, shoal_implicit_plane.Normal());
-		if (NEAR_ZERO(dotp, BREP_PLANAR_TOL)) continue;
-		(dotp < 0) ? dminus++ : dplus++;
+		for (int ei = 0; ei < v->EdgeCount(); ei++) {
+		    const ON_BrepEdge *e = &(brep->m_E[v->m_ei[ei]]);
+		    //bu_log("insert edge %d\n", e->m_edge_index);
+		    shoal_connected_edges.insert(e->m_edge_index);
+		}
 	    }
-	    if ((dplus > 0 && dminus != 0) || (dminus > 0 && dplus != 0)) {
+	}
+	for (scl_it = shoal_connected_edges.begin(); scl_it != shoal_connected_edges.end(); scl_it++) {
+	    const ON_BrepEdge *edge= &(brep->m_E[(int)*scl_it]);
+	    //bu_log("Edge: %d\n", edge->m_edge_index);
+	    ON_3dPoint p1 = brep->m_V[edge->Vertex(0)->m_vertex_index].Point();
+	    ON_3dPoint p2 = brep->m_V[edge->Vertex(1)->m_vertex_index].Point();
+	    double dotp1 = ON_DotProduct(p1 - shoal_implicit_plane.origin, shoal_implicit_plane.Normal());
+	    double dotp2 = ON_DotProduct(p2 - shoal_implicit_plane.origin, shoal_implicit_plane.Normal());
+	    if (NEAR_ZERO(dotp1, BREP_PLANAR_TOL) || NEAR_ZERO(dotp2, BREP_PLANAR_TOL)) continue;
+	    if ((dotp1 < 0 && dotp2 > 0) || (dotp1 > 0 && dotp2 < 0)) {
 		return 0;
 	    }
 	}
