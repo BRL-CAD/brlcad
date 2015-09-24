@@ -384,14 +384,8 @@ cylinder_csg(struct bu_vls *msgs, struct subbrep_shoal_data *data, fastf_t cyl_t
 	    end_caps[0] = 1;
 	    end_caps[1] = 0;
 	} else {
-	    double dpc = fabs(ON_DotProduct(cyl_planes[0].Normal(), cylinder.Axis()));
-	    if (dpc < 0) {
-		end_caps[0] = 0;
-		end_caps[1] = 1;
-	    } else {
-		end_caps[0] = 0;
-		end_caps[1] = 1;
-	    }
+	    end_caps[0] = 0;
+	    end_caps[1] = 1;
 	}
     } else {
 	// Try to handle the situation where multiple end caps on the same end all end up
