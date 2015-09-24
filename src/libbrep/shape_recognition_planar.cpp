@@ -630,7 +630,6 @@ arbn_nucleus_degeneracy(struct subbrep_island_data *data, std::set<int> *planar_
 	    std::set<int> arbn_coplanar_faces;
 	    std::set<int>::iterator p_it;
 	    for (p_it = planar_faces->begin(); p_it != planar_faces->end(); p_it++) {
-		int is_coplanar = 0;
 		const ON_BrepFace *face = &(brep->m_F[(int)*p_it]);
 		ON_Plane p;
 		face->SurfaceOf()->IsPlanar(&p, BREP_PLANAR_TOL);
@@ -640,7 +639,6 @@ arbn_nucleus_degeneracy(struct subbrep_island_data *data, std::set<int> *planar_
 		    if (arbn_planes[i].Normal().IsParallelTo(p.Normal(), BREP_PLANAR_TOL)) {
 			if (fabs(arbn_planes[i].DistanceTo(p.origin)) < BREP_PLANAR_TOL) {
 			    arbn_coplanar_faces.insert(face->m_face_index);
-			    is_coplanar = 1;
 			    //bu_log("found coplanar face: %d\n", face->m_face_index);
 			    break;
 			}
