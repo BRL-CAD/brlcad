@@ -2,6 +2,7 @@
 
 #include <set>
 #include <map>
+#include <limits>
 
 #include "bu/log.h"
 #include "bu/str.h"
@@ -111,6 +112,7 @@ cylinder_csg(struct bu_vls *msgs, struct subbrep_shoal_data *data, fastf_t cyl_t
     // any.)
     ON_SimpleArray<ON_Plane> non_linear_edge_planes;
     std::set<int> linear_edges;
+    std::map<int, int> p_2_ei_a;
     for (c_it = nondegen_edges.begin(); c_it != nondegen_edges.end(); c_it++) {
 	const ON_BrepEdge *edge = &(brep->m_E[*c_it]);
 	ON_Curve *ecv = edge->EdgeCurveOf()->Duplicate();
@@ -141,6 +143,7 @@ cylinder_csg(struct bu_vls *msgs, struct subbrep_shoal_data *data, fastf_t cyl_t
 		delete ecv2;
 	    }
 	    non_linear_edge_planes.Append(eplane);
+	    p_2_ei_a[non_linear_edge_planes.Count() - 1] = edge->m_edge_index;
 	} else {
 	    linear_edges.insert(*c_it);
 	}
@@ -149,6 +152,7 @@ cylinder_csg(struct bu_vls *msgs, struct subbrep_shoal_data *data, fastf_t cyl_t
 
     // Now, build a list of unique planes
     ON_SimpleArray<ON_Plane> cyl_planes;
+    std::map<int, int> p_to_ei;
     for (int i = 0; i < non_linear_edge_planes.Count(); i++) {
 	int have_plane = 0;
 	ON_Plane p1 = non_linear_edge_planes[i];
@@ -163,6 +167,7 @@ cylinder_csg(struct bu_vls *msgs, struct subbrep_shoal_data *data, fastf_t cyl_t
 	}
 	if (!have_plane) {
 	    cyl_planes.Append(p1);
+	    p_to_ei[cyl_planes.Count() - 1] = p_2_ei_a[i];
 	}
     }
 
@@ -323,12 +328,26 @@ cylinder_csg(struct bu_vls *msgs, struct subbrep_shoal_data *data, fastf_t cyl_t
     // Given those two points, find the planes that contain them.  If a point is contained by two
     // or more planes, pick the one with the surface normal most parallel to the cylinder axis.
 
-    // Grab all the intersections
+    // Use the intersection and a vector to an edge midpoint associated with
+    // the plane to calculate min and max points on the cylinder from this
+    // plane.
     ON_3dPointArray axis_pts_init;
     for (int i = 0; i < cyl_planes.Count(); i++) {
 	// Note - don't intersect the implicit plane, since it doesn't play a role in defining the main cylinder
 	if (!cyl_planes[i].Normal().IsPerpendicularTo(cylinder.Axis(), VUNITIZE_TOL) && i != implicit_plane_ind) {
-	    axis_pts_init.Append(ON_LinePlaneIntersect(l, cyl_planes[i]));
+	    ON_3dPoint ipoint = ON_LinePlaneIntersect(l, cyl_planes[i]);
+	    const ON_BrepEdge *edge = &(brep->m_E[p_to_ei[i]]);
+	    ON_3dPoint midpt = edge->EdgeCurveOf()->PointAt(edge->EdgeCurveOf()->Domain().Mid());
+	    ON_3dVector pvect = midpt - ipoint;
+	    pvect.Unitize();
+	    double dpc = fabs(ON_DotProduct(cyl_planes[i].Normal(), cylinder.Axis()));
+	    if (!NEAR_ZERO(dpc, VUNITIZE_TOL)) {
+		double hypotenuse = cylinder.circle.Radius() / dpc;
+		ON_3dPoint p1 = ipoint + pvect * hypotenuse;
+		ON_3dPoint p2 = ipoint + -1*pvect * hypotenuse;
+		axis_pts_init.Append(p1);
+		axis_pts_init.Append(p2);
+	    }
 	}
     }
 
@@ -351,124 +370,32 @@ cylinder_csg(struct bu_vls *msgs, struct subbrep_shoal_data *data, fastf_t cyl_t
 	if (!trimmed) axis_pts_2nd.Append(axis_pts_init[i]);
     }
 
-    // Need to merge points that are "close" so we don't
-    // end up with more than two points when multiple planes
-    // end up with the same axis intersection. (TODO - need
-    // to create a test case for this...)
-    ON_3dPointArray axis_pts;
+    // For everything that's left, project it back onto the central axis line and see
+    // if it's further up or down the line than anything previously checked.  We want
+    // the min and the max points on the centeral axis.
+    double tmin = std::numeric_limits<double>::max();
+    double tmax = std::numeric_limits<double>::min();
     for (int i = 0; i < axis_pts_2nd.Count(); i++) {
-	int has_duplicate = 0;
-	for (int j = 0; j < axis_pts.Count(); j++) {
-	    if (axis_pts_2nd[i].DistanceTo(axis_pts[j]) < VUNITIZE_TOL) {
-		has_duplicate = 1;
-		break;
-	    }
-	}
-	if (!has_duplicate) axis_pts.Append(axis_pts_2nd[i]);
-    }
-
-    // If, after all that, we still have more than two cap points, we've got a problem
-    if (axis_pts.Count() > 2 || (axis_pts.Count() < 2 && cyl_planes.Count() != 2)) {
-	bu_log("incorrect number of axis points for caps (%d)??\n", axis_pts.Count());
-	return 0;
-    }
-
-    int end_caps[2] = {-1,-1};
-    if (axis_pts.Count() < 2) {
-	// If we have a "sliver" where all the axis points got trimmed or the top
-	// and bottom planes intersect the same point on the axis, need different logic
-	// Go back to axis_pts_init points - they'll be sufficent if extended.
-	axis_pts.Append(axis_pts_init[0]);
-	(axis_pts_init.Count() == 2) ? axis_pts.Append(axis_pts_init[1]) :  axis_pts.Append(axis_pts_init[0]);
-	if (axis_pts[0].DistanceTo(axis_pts[1]) > VUNITIZE_TOL) {
-	    end_caps[0] = 1;
-	    end_caps[1] = 0;
-	} else {
-	    end_caps[0] = 0;
-	    end_caps[1] = 1;
-	}
-    } else {
-	// Try to handle the situation where multiple end caps on the same end all end up
-	// with the same intersection on the axis - we need to pick the "flattest"
-	// plane for each cap so the cylinder is no larger than it needs to be.
-	for (int i = 0; i < axis_pts.Count(); i++) {
-	    std::set<int> candidates;
-	    double dp = 2.0;
-	    for (int j = 0; j < cyl_planes.Count(); j++) {
-		double d = cyl_planes[j].DistanceTo(axis_pts[i]);
-		if (NEAR_ZERO(d, VUNITIZE_TOL)) candidates.insert(j);
-	    }
-	    for (c_it = candidates.begin(); c_it != candidates.end(); c_it++) {
-		double dpv = fabs(ON_DotProduct(cyl_planes[*c_it].Normal(), cylinder.Axis()));
-		if (fabs(1-dpv) < fabs(1-dp)) {
-		    dp = dpv;
-		    end_caps[i] = *c_it;
-		}
-	    }
+	double t;
+	if (l.ClosestPointTo(axis_pts_2nd[i], &t)) {
+	    if (t < tmin) tmin = t;
+	    if (t > tmax) tmax = t;
 	}
     }
 
-    // Construct "large enough" cylinder based on end cap planes
-    double extensions[2] = {0.0, 0.0};
-    for (int i = 0; i < 2; i++) {
-	double dpc = fabs(ON_DotProduct(cyl_planes[end_caps[i]].Normal(), cylinder.Axis()));
-	if (!NEAR_ZERO(1-dpc, VUNITIZE_TOL)) {
-	    double theta = acos(dpc);
-	    //bu_log("theta: %f\n", theta);
-	    double radius = cylinder.circle.Radius();
-	    //bu_log("radius: %f\n", radius);
-	    double hypotenuse = radius / dpc;
-	    extensions[i] = fabs(sin(theta) * hypotenuse);
-	}
-    }
-    //bu_log("extension 1: %f\n", extensions[0]);
-    //bu_log("extension 2: %f\n", extensions[1]);
-
-    // Populate the primitive data
+    // Populate the CSG implicit primitive data
     data->params->csg_type = CYLINDER;
-
     // Flag the cylinder according to the negative or positive status of the
     // cylinder surface.
     data->params->negative = negative_cylinder(brep, *cylindrical_surfaces.begin(), cyl_tol);
     data->params->bool_op = (data->params->negative == -1) ? '-' : 'u';
-
     // Assign an object id
     data->params->csg_id = (*(data->i->obj_cnt))++;
-    //bu_log("rcc id: %d\n", data->params->csg_id);
-
-    // Now we decide (arbitrarily) what the vector will be for our final cylinder
-    // and calculate the true minimum and maximum points along the axis
-    ON_3dVector cyl_axis_unit;
-    if (axis_pts[0].DistanceTo(axis_pts[1]) > VUNITIZE_TOL) {
-	cyl_axis_unit = axis_pts[1] - axis_pts[0];
-    } else {
-	cyl_axis_unit = cylinder.Axis();
-    }
-    size_t cyl_axis_length = cyl_axis_unit.Length();
-    cyl_axis_unit.Unitize();
-    ON_3dVector extv0 = -1 *cyl_axis_unit;
-    ON_3dVector extv1 = cyl_axis_unit;
-    extv0.Unitize();
-    extv1.Unitize();
-    if (data->params->negative == -1) {
-	// TODO - should only nudge out for the capping face (if any) that is mated to
-	// the parent with an inner loop in the parent curve.
-	extv0 = extv0 * (extensions[0] + 0.00001 * cyl_axis_length);
-	extv1 = extv1 * (extensions[1] + 0.00001 * cyl_axis_length);
-    } else {
-	extv0 = extv0 * extensions[0];
-	extv1 = extv1 * extensions[1];
-    }
-
-    axis_pts[0] = axis_pts[0] + extv0;
-    axis_pts[1] = axis_pts[1] + extv1;
-    ON_3dVector cyl_axis = axis_pts[1] - axis_pts[0];
-
-    BN_VMOVE(data->params->origin, axis_pts[0]);
+    // Cylinder geometric data
+    ON_3dVector cyl_axis = l.PointAt(tmax) - l.PointAt(tmin);
+    BN_VMOVE(data->params->origin, l.PointAt(tmin));
     BN_VMOVE(data->params->hv, cyl_axis);
     data->params->radius = cylinder.circle.Radius();
-
-    //bu_log("in rcc.s rcc %f %f %f %f %f %f %f \n", axis_pts[0].x, axis_pts[0].y, axis_pts[0].z, cyl_axis.x, cyl_axis.y, cyl_axis.z, cylinder.circle.Radius());
 
     ////////////// END Cylinder specific stuff - break into function //////////////////////////
 
@@ -485,10 +412,12 @@ cylinder_csg(struct bu_vls *msgs, struct subbrep_shoal_data *data, fastf_t cyl_t
     v2.Unitize();
     v1 = v1 * cylinder.circle.Radius();
     v2 = v2 * cylinder.circle.Radius();
-    ON_3dPoint arbmid = (axis_pts[1] + axis_pts[0]) * 0.5;
+    ON_3dPoint arbmid = (l.PointAt(tmax) + l.PointAt(tmin)) * 0.5;
+    ON_3dVector cyl_axis_unit = l.PointAt(tmax) - l.PointAt(tmin);
+    cyl_axis_unit.Unitize();
 
-    cyl_planes.Append(ON_Plane(axis_pts[0], -1 * cyl_axis_unit));
-    cyl_planes.Append(ON_Plane(axis_pts[1], cyl_axis_unit));
+    cyl_planes.Append(ON_Plane(l.PointAt(tmin), -1 * cyl_axis_unit));
+    cyl_planes.Append(ON_Plane(l.PointAt(tmax), cyl_axis_unit));
     cyl_planes.Append(ON_Plane(arbmid + v1, cylinder.circle.Plane().xaxis));
     cyl_planes.Append(ON_Plane(arbmid - v1, -1 *cylinder.circle.Plane().xaxis));
     cyl_planes.Append(ON_Plane(arbmid + v2, cylinder.circle.Plane().yaxis));
