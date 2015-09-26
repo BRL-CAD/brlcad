@@ -10,23 +10,23 @@
 #
 # Originally based off of FindBISON.cmake from Kitware's CMake distribution
 #
-# Copyright (c) 2010-2012 United States Government as represented by
+# Copyright (c) 2010-2014 United States Government as represented by
 #                the U.S. Army Research Laboratory.
 # Copyright 2009 Kitware, Inc.
 # Copyright 2006 Tristan Carel
 # All rights reserved.
-# 
+#
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions
 # are met:
-#  
+#
 # * Redistributions of source code must retain the above copyright
 #   notice, this list of conditions and the following disclaimer.
-# 
+#
 # * Redistributions in binary form must reproduce the above copyright
 #   notice, this list of conditions and the following disclaimer in the
 #   documentation and/or other materials provided with the distribution.
-# 
+#
 # * The names of the authors may not be used to endorse or promote
 #   products derived from this software without specific prior written
 #   permission.
@@ -47,21 +47,42 @@
 find_program(LEMON_EXECUTABLE lemon DOC "path to the lemon executable")
 mark_as_advanced(LEMON_EXECUTABLE)
 
-if(LEMON_EXECUTABLE AND NOT LEMON_TEMPLATE)
+if (LEMON_EXECUTABLE AND NOT LEMON_TEMPLATE)
+  # look for the template in share
+  if (DATA_DIR AND EXISTS "${DATA_DIR}/lemon/lempar.c")
+    set (LEMON_TEMPLATE "${DATA_DIR}/lemon/lempar.c")
+  elseif (EXISTS "share/lemon/lempar.c")
+    set (LEMON_TEMPLATE "share/lemon/lempar.c")
+  elseif (EXISTS "/usr/share/lemon/lempar.c")
+    set (LEMON_TEMPLATE "/usr/share/lemon/lempar.c")
+  endif (DATA_DIR AND EXISTS "${DATA_DIR}/lemon/lempar.c")
+endif (LEMON_EXECUTABLE AND NOT LEMON_TEMPLATE)
+
+if (LEMON_EXECUTABLE AND NOT LEMON_TEMPLATE)
+  # look for the template in bin dir
   get_filename_component(lemon_path ${LEMON_EXECUTABLE} PATH)
-  if(lemon_path)
-    set(LEMON_TEMPLATE "")
-    if(EXISTS ${lemon_path}/lempar.c)
-      set(LEMON_TEMPLATE "${lemon_path}/lempar.c")
-    endif(EXISTS ${lemon_path}/lempar.c)
-    if(EXISTS /usr/share/lemon/lempar.c)
-      set(LEMON_TEMPLATE "/usr/share/lemon/lempar.c")
-    endif(EXISTS /usr/share/lemon/lempar.c)
-  endif(lemon_path)
+  if (lemon_path)
+    if (EXISTS ${lemon_path}/lempar.c)
+      set (LEMON_TEMPLATE "${lemon_path}/lempar.c")
+    endif (EXISTS ${lemon_path}/lempar.c)
+    if (EXISTS /usr/share/lemon/lempar.c)
+      set (LEMON_TEMPLATE "/usr/share/lemon/lempar.c")
+    endif (EXISTS /usr/share/lemon/lempar.c)
+  endif (lemon_path)
 endif(LEMON_EXECUTABLE AND NOT LEMON_TEMPLATE)
+
+if (LEMON_EXECUTABLE AND NOT LEMON_TEMPLATE)
+  # fallback
+  set (LEMON_TEMPLATE "lempar.c")
+  if (NOT EXISTS ${LEMON_TEMPLATE})
+    message(WARNING "Lemon's lempar.c template file could not be found automatically, set LEMON_TEMPLATE")
+  endif (NOT EXISTS ${LEMON_TEMPLATE})
+endif (LEMON_EXECUTABLE AND NOT LEMON_TEMPLATE)
+
+mark_as_advanced(LEMON_TEMPLATE)
+
 include(FindPackageHandleStandardArgs)
 FIND_PACKAGE_HANDLE_STANDARD_ARGS(LEMON DEFAULT_MSG LEMON_EXECUTABLE LEMON_TEMPLATE)
-mark_as_advanced(LEMON_TEMPLATE)
 
 #============================================================
 # FindLEMON.cmake ends here
