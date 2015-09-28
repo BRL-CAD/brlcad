@@ -112,7 +112,6 @@ cylinder_csg(struct bu_vls *msgs, struct subbrep_shoal_data *data, fastf_t cyl_t
     // any.)
     ON_SimpleArray<ON_Plane> non_linear_edge_planes;
     std::set<int> linear_edges;
-    std::map<int, int> p_2_ei_a;
     for (c_it = nondegen_edges.begin(); c_it != nondegen_edges.end(); c_it++) {
 	const ON_BrepEdge *edge = &(brep->m_E[*c_it]);
 	ON_Curve *ecv = edge->EdgeCurveOf()->Duplicate();
@@ -143,7 +142,6 @@ cylinder_csg(struct bu_vls *msgs, struct subbrep_shoal_data *data, fastf_t cyl_t
 		delete ecv2;
 	    }
 	    non_linear_edge_planes.Append(eplane);
-	    p_2_ei_a[non_linear_edge_planes.Count() - 1] = edge->m_edge_index;
 	} else {
 	    linear_edges.insert(*c_it);
 	}
@@ -152,7 +150,6 @@ cylinder_csg(struct bu_vls *msgs, struct subbrep_shoal_data *data, fastf_t cyl_t
 
     // Now, build a list of unique planes
     ON_SimpleArray<ON_Plane> cyl_planes;
-    std::map<int, int> p_to_ei;
     for (int i = 0; i < non_linear_edge_planes.Count(); i++) {
 	int have_plane = 0;
 	ON_Plane p1 = non_linear_edge_planes[i];
@@ -167,7 +164,6 @@ cylinder_csg(struct bu_vls *msgs, struct subbrep_shoal_data *data, fastf_t cyl_t
 	}
 	if (!have_plane) {
 	    cyl_planes.Append(p1);
-	    p_to_ei[cyl_planes.Count() - 1] = p_2_ei_a[i];
 	}
     }
 
@@ -320,33 +316,34 @@ cylinder_csg(struct bu_vls *msgs, struct subbrep_shoal_data *data, fastf_t cyl_t
     }
 
 
-    // Find end cap planes via intersection points between planes and cylinder axis.
-    //
-    // Intersect all planes not parallel with the cylindrical axis to get a set of intersection
-    // points along the axis.  Then, trim out all points that would be "clipped" by other planes.
-    // This *should* leave us with two points, since we're restricting ourselves to convex shapes.
-    // Given those two points, find the planes that contain them.  If a point is contained by two
-    // or more planes, pick the one with the surface normal most parallel to the cylinder axis.
-
-    // Use the intersection and a vector to an edge midpoint associated with
-    // the plane to calculate min and max points on the cylinder from this
-    // plane.
+    // We need a cylinder large enough to bound the positive volume we are describing -
+    // find all the limits from the various planes and edges
     ON_3dPointArray axis_pts_init;
+    // Add in all the nondegenerate edge vertices
+    for (c_it = nondegen_edges.begin(); c_it != nondegen_edges.end(); c_it++) {
+	const ON_BrepEdge *edge = &(brep->m_E[*c_it]);
+	axis_pts_init.Append(edge->Vertex(0)->Point());
+	axis_pts_init.Append(edge->Vertex(1)->Point());
+    }
+    // Use the intersection and the projection of the cylinder axis onto the plane
+    // to calculate min and max points on the cylinder from this plane.
     for (int i = 0; i < cyl_planes.Count(); i++) {
 	// Note - don't intersect the implicit plane, since it doesn't play a role in defining the main cylinder
 	if (!cyl_planes[i].Normal().IsPerpendicularTo(cylinder.Axis(), VUNITIZE_TOL) && i != implicit_plane_ind) {
 	    ON_3dPoint ipoint = ON_LinePlaneIntersect(l, cyl_planes[i]);
-	    const ON_BrepEdge *edge = &(brep->m_E[p_to_ei[i]]);
-	    ON_3dPoint midpt = edge->EdgeCurveOf()->PointAt(edge->EdgeCurveOf()->Domain().Mid());
-	    ON_3dVector pvect = midpt - ipoint;
-	    pvect.Unitize();
-	    double dpc = fabs(ON_DotProduct(cyl_planes[i].Normal(), cylinder.Axis()));
-	    if (!NEAR_ZERO(dpc, VUNITIZE_TOL)) {
-		double hypotenuse = cylinder.circle.Radius() / dpc;
-		ON_3dPoint p1 = ipoint + pvect * hypotenuse;
-		ON_3dPoint p2 = ipoint + -1*pvect * hypotenuse;
-		axis_pts_init.Append(p1);
-		axis_pts_init.Append(p2);
+	    if (cyl_planes[i].Normal().IsParallelTo(cylinder.Axis(), VUNITIZE_TOL)) {
+		axis_pts_init.Append(ipoint);
+	    } else {
+		double dpc = ON_DotProduct(cylinder.Axis(), cyl_planes[i].Normal());
+		ON_3dVector pvect = cylinder.Axis() - (cyl_planes[i].Normal() * dpc);
+		pvect.Unitize();
+		if (!NEAR_ZERO(dpc, VUNITIZE_TOL)) {
+		    double hypotenuse = cylinder.circle.Radius() / dpc;
+		    ON_3dPoint p1 = ipoint + pvect * hypotenuse;
+		    ON_3dPoint p2 = ipoint + -1*pvect * hypotenuse;
+		    axis_pts_init.Append(p1);
+		    axis_pts_init.Append(p2);
+		}
 	    }
 	}
     }
