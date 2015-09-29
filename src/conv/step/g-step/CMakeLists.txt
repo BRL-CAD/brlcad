@@ -74,6 +74,8 @@ set(IGNORE_FILES
   )
 CMAKEFILES(${IGNORE_FILES})
 
+GENERATE_SCHEMA_INPUTS(${STEP_SCHEMA_FILE} list_elements)
+
 set(list_elements_srcs ${express_srcs} list_elements.cpp)
 BRLCAD_ADDEXEC(list_elements "${list_elements_srcs}" "${gstep_LIBS}" NO_STRICT NO_INSTALL)
 if(MSVC)

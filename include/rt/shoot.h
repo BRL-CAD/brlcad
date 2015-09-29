@@ -157,9 +157,40 @@ RT_EXPORT extern void rt_res_pieces_init(struct resource *resp,
                                          struct rt_i *rtip);
 RT_EXPORT extern void rt_vstub(struct soltab *stp[],
                                struct xray *rp[],
-                               struct  seg segp[],
+                               struct seg segp[],
                                int n,
-                               struct application       *ap);
+                               struct application *ap);
+
+#ifdef USE_OPENCL
+struct cl_hit {
+    cl_double3 hit_point;
+    cl_double3 hit_normal;
+    cl_double3 hit_vpriv;
+    cl_double hit_dist;
+    cl_int hit_surfno;
+    cl_uint hit_index;
+};
+
+
+RT_EXPORT extern cl_int
+clt_shot(size_t sz_hits, struct cl_hit *hits, struct xray *rp, struct soltab *stp,
+	 struct application *ap, struct seg *seghead);
+
+RT_EXPORT extern cl_int
+clt_db_solid_shot(const size_t sz_hits, struct cl_hit *hits,
+		  struct xray *rp, const cl_uint index);
+
+RT_EXPORT extern void
+clt_norm(struct hit *hitp, struct soltab *stp, struct xray *rp);
+
+
+RT_EXPORT extern void
+clt_run(cl_float *pixels, cl_int cur_pixel, cl_int last_pixel, cl_int width,
+        cl_int height, mat_t view2model, fastf_t cell_width, fastf_t cell_height,
+	fastf_t aspect, cl_int lightmodel);
+#endif
+
+
 
 __END_DECLS
 

@@ -30,7 +30,7 @@ macro(GENERATE_SCHEMA_INPUTS SCHEMA_FILE TARGET_SUFFIX)
 
   # Because SCHEMA_OUT_DIR is the working directory for exp2cxx, it must be
   # created at configure time and be present when exp2cxx is run
-  set(SCHEMA_OUT_DIR ${CMAKE_CURRENT_BINARY_DIR}/${SCHEMA_NAME})
+  set(SCHEMA_OUT_DIR ${CMAKE_CURRENT_BINARY_DIR}/${SCHEMA_NAME}_${TARGET_SUFFIX})
   make_directory(${SCHEMA_OUT_DIR})
   include_directories(${SCHEMA_OUT_DIR})
   DISTCLEAN(${SCHEMA_OUT_DIR})
@@ -56,10 +56,7 @@ macro(GENERATE_SCHEMA_INPUTS SCHEMA_FILE TARGET_SUFFIX)
     )
 
   # Define a common custom build target that ensures the exp2cxx outputs
-  # are present.  Do this rather than relying on custom commands in the
-  # subdirectories to avoid multiple build targets trying to run exp2cxx
-  # simultaneously to generate identical inputs (unknown if that is problematic)
-  # and to add extra robustness for parallel build target ordering.
+  # are present.
   set(WATCHED_FILES ${EXPRESS_OUTPUT})
   string(REPLACE " " "\\ " WATCHED_FILES "${WATCHED_FILES}")
   set(STAMP_OUT_FILE ${SCHEMA_OUT_DIR}/step_express_${SCHEMA_NAME}.done)

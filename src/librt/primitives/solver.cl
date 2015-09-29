@@ -1,20 +1,5 @@
-#define RT_DOT_TOL              (0.001)
-#define RT_PCOEF_TOL		(1.0e-10)
+#include "common.cl"
 
-#define SMALL_FASTF		(1.0e-77)
-#define SQRT_MAX_FASTF		(1.0e36)	/* This squared just avoids overflow */
-#define SQRT_SMALL_FASTF	(1.0e-39)	/* This squared gives zero */
-
-#define M_PI_3			(1.04719755119659774615421446109316763)   /**< pi/3 */
-#define M_SQRT3			(1.73205080756887729352744634150587237)   /**< sqrt(3) */
-
-#define NEAR_ZERO(val, epsilon)	(((val) > -epsilon) && ((val) < epsilon))
-#define ZERO(_a)		NEAR_ZERO((_a), SMALL_FASTF)
-
-typedef union {
-    struct { double x, y; };
-    struct { double re, im; };
-} bn_complex_t;
 
 #define bn_cx_add(ap, bp)	{ (ap)->re += (bp)->re; (ap)->im += (bp)->im;}
 #define bn_cx_ampl(cp)		hypot((cp)->re, (cp)->im)
@@ -605,7 +590,7 @@ bn_poly_scale(double *eqn, uint dgr, double factor)
     return eqn;
 }
 
-static int
+int
 rt_poly_roots(double *eqn,	/* equation to be solved */
 uint dgr,
 bn_complex_t *roots)		/* space to put roots found */

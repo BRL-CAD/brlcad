@@ -1,27 +1,25 @@
-#ifdef cl_khr_fp64
-    #pragma OPENCL EXTENSION cl_khr_fp64 : enable
-#elif defined(cl_amd_fp64)
-    #pragma OPENCL EXTENSION cl_amd_fp64 : enable
-#else
-    #error "Double precision floating point not supported by OpenCL implementation."
-#endif
+#include "common.cl"
 
-#include "solver.cl"
 
 /* hit_surfno is set to one of these */
 #define TGC_NORM_BODY	(1)	/* compute normal */
 #define TGC_NORM_TOP	(2)	/* copy tgc_N */
 #define TGC_NORM_BOT	(3)	/* copy reverse tgc_N */
 
-__constant double rti_tol_dist = 0.0005;
 
-__kernel void
-tgc_shot(global __write_only double4 *dist, global __write_only int4 *surfno,
-global __write_only double8 *inv, global __write_only double8 *outv,
-const double3 r_pt, const double3 r_dir,
-const double3 V, const double sH, const double A, const double B,
-const double CdAm1, const double DdBm1, const double AAdCC, const double BBdDD,
-const double3 N, const double16 ScShR, const char AD_CB)
+struct tgc_shot_specific {
+    double tgc_V[3];             /* Vector to center of base of TGC */
+    double tgc_CdAm1;            /* (C/A - 1) */
+    double tgc_DdBm1;            /* (D/B - 1) */
+    double tgc_AAdCC;            /* (|A|**2)/(|C|**2) */
+    double tgc_BBdDD;            /* (|B|**2)/(|D|**2) */
+    double tgc_N[3];             /* normal at 'top' of cone */
+    double tgc_ScShR[16];        /* Scale(Shear(Rot(vect))) */
+    double tgc_invRtShSc[16];    /* invRot(trnShear(Scale(vect))) */
+    char tgc_AD_CB;              /* boolean:  A*D == C*B */
+};
+
+int tgc_shot(global struct hit *res, const double3 r_pt, const double3 r_dir, const uint idx, global const struct tgc_shot_specific *tgc)
 {
     double3 pprime;
     double3 dprime;
@@ -40,14 +38,10 @@ const double3 N, const double16 ScShR, const char AD_CB)
     double Xsqr[3], Ysqr[3];
     double R[2], Rsqr[3];
 
-    /* find rotated point and direction */
-    const double f = 1.0/ScShR.sf;
-
 #define ALPHA(x, y, c, d)	((x)*(x)*(c) + (y)*(y)*(d))
 
-    dprime.x = dot(ScShR.s012, r_dir) * f;
-    dprime.y = dot(ScShR.s456, r_dir) * f;
-    dprime.z = dot(ScShR.s89a, r_dir) * f;
+    /* find rotated point and direction */
+    dprime = MAT4X3VEC(tgc->tgc_ScShR, r_dir);
 
     /* A vector of unit length in model space (r_dir) changes length
      * in the special unit-tgc space.  This scale factor will restore
@@ -55,8 +49,7 @@ const double3 N, const double16 ScShR, const char AD_CB)
      */
     t_scale = length(dprime);
     if (ZERO(t_scale)) {
-	*surfno = (int4){INT_MAX, INT_MAX, INT_MAX, INT_MAX};
-	return;
+	return 0;
     }
     t_scale = 1.0/t_scale;
     dprime *= t_scale;
@@ -65,10 +58,8 @@ const double3 N, const double16 ScShR, const char AD_CB)
 	dprime.z = 0.0;	/* prevent rootfinder heartburn */
     }
 
-    work = r_pt - V;
-    pprime.x = dot(ScShR.s012, work) * f;
-    pprime.y = dot(ScShR.s456, work) * f;
-    pprime.z = dot(ScShR.s89a, work) * f;
+    work = r_pt - vload3(0, tgc->tgc_V);
+    pprime = MAT4X3VEC(tgc->tgc_ScShR, work);
 
     /* Translating ray origin along direction of ray to closest pt. to
      * origin of solids coordinate system, new ray origin is
@@ -119,9 +110,9 @@ const double3 N, const double16 ScShR, const char AD_CB)
     Ysqr[1] = 2.0 * dprime.y * cor_pprime.y;
     Ysqr[2] = cor_pprime.y * cor_pprime.y;
 
-    R[0] = dprime.z * CdAm1;
-    /* A vector is unitized (tgc_A == 1.0) */
-    R[1] = (cor_pprime.z * CdAm1) + 1.0;
+    R[0] = dprime.z * tgc->tgc_CdAm1;
+    /* A vector is unitized (tgc->tgc_A == 1.0) */
+    R[1] = (cor_pprime.z * tgc->tgc_CdAm1) + 1.0;
 
     /* (void) rt_poly_mul(&Rsqr, &R, &R); */
     Rsqr[0] = R[0] * R[0];
@@ -135,7 +126,7 @@ const double3 N, const double16 ScShR, const char AD_CB)
      * this can only be done when C0 is not too small! (JRA)
      */
     C0 = Xsqr[0] + Ysqr[0] - Rsqr[0];
-    if (AD_CB && !NEAR_ZERO(C0, 1.0e-10)) {
+    if (tgc->tgc_AD_CB && !NEAR_ZERO(C0, 1.0e-10)) {
 	double C[3];	/* final equation */
 	double roots;
 
@@ -166,9 +157,9 @@ const double3 N, const double16 ScShR, const char AD_CB)
 	int l;
 	int nroots;
 
-	Q[0] = dprime.z * DdBm1;
+	Q[0] = dprime.z * tgc->tgc_DdBm1;
 	/* B vector is unitized (tgc_B == 1.0) */
-	Q[1] = (cor_pprime.z * DdBm1) + 1.0;
+	Q[1] = (cor_pprime.z * tgc->tgc_DdBm1) + 1.0;
 
 	/* (void) bn_poly_mul(&Qsqr, &Q, &Q); */
 	Qsqr[0] = Q[0] * Q[0];
@@ -260,7 +251,7 @@ const double3 N, const double16 ScShR, const char AD_CB)
      * Consider intersections with the end ellipses
      */
     /* bu_log("npts before base is %d; ", npts); */
-    dir = dot(N, r_dir);
+    dir = dot(vload3(0, tgc->tgc_N), r_dir);
     if (!ZERO(dprime.z) && !NEAR_ZERO(dir, RT_DOT_TOL)) {
 	b = (-pprime.z)/dprime.z;
 	/* Height vector is unitized (tgc_sH == 1.0) */
@@ -275,12 +266,8 @@ const double3 N, const double16 ScShR, const char AD_CB)
 	/* the bottom end */
 	work = pprime + t * dprime;
 	/* Must scale C and D vectors */
-	alf2 = ALPHA(work.x, work.y, AAdCC, BBdDD);
+	alf2 = ALPHA(work.x, work.y, tgc->tgc_AAdCC, tgc->tgc_BBdDD);
 
-	/*
-	   bu_log("alf1 is %f, alf2 is %f\n", alf1, alf2);
-	   bu_log("work[x]=%f, work[y]=%f, aadcc=%f, bbddd=%f\n", work.x, work.y, tgc_AAdCC, tgc_BBdDD);
-	 */
 	if (alf1 <= 1.0) {
 	    hit_type[npts] = TGC_NORM_BOT;
 	    k[npts++] = b;
@@ -290,8 +277,6 @@ const double3 N, const double16 ScShR, const char AD_CB)
 	    k[npts++] = t;
 	}
     }
-
-    /* bu_log("npts FINAL is %d\n", npts); */
 
     /* Sort Most distant to least distant: rt_pt_sort(k, npts) */
     {
@@ -324,7 +309,7 @@ const double3 N, const double16 ScShR, const char AD_CB)
 	    double diff;
 
 	    diff = k[i-1] - k[i];	/* non-negative due to sorting */
-	    if (diff < 0.0/*rti_tol_dist*/) {
+	    if (diff < rti_tol_dist) {
 		/* remove this duplicate hit */
 		int j;
 
@@ -341,54 +326,79 @@ const double3 N, const double16 ScShR, const char AD_CB)
     }
 
     if (npts != 0 && npts != 2 && npts != 4) {
-	*surfno = (int4){INT_MAX, INT_MAX, INT_MAX, INT_MAX};
-	return;			/* No hit */
+	return 0;		/* No hit */
     }
-
-    double3 in[2];
-    double3 out[2];
 
     intersect = 0;
+    int j = 0;
     for (i=npts-1; i>0; i -= 2) {
-	if (hit_type[i] == TGC_NORM_BODY){
-	    in[intersect] = pprime + k[i] * dprime;
+        struct hit hits[2];
+
+	hits[0].hit_dist = k[i] * t_scale;
+	hits[0].hit_surfno = hit_type[i];
+	if (hits[0].hit_surfno == TGC_NORM_BODY) {
+	    hits[0].hit_vpriv = pprime + k[i] * dprime;
 	} else {
 	    if (dir > 0.0) {
-		hit_type[i] = TGC_NORM_BOT;
+		hits[0].hit_surfno = TGC_NORM_BOT;
 	    } else {
-		hit_type[i] = TGC_NORM_TOP;
+		hits[0].hit_surfno = TGC_NORM_TOP;
 	    }
 	}
-	if (hit_type[i-1] == TGC_NORM_BODY){
-	    out[intersect] = pprime + k[i-1] * dprime;
+
+	hits[1].hit_dist = k[i-1] * t_scale;
+	hits[1].hit_surfno = hit_type[i-1];
+	if (hits[1].hit_surfno == TGC_NORM_BODY) {
+	    hits[1].hit_vpriv = pprime + k[i-1] * dprime;
 	} else {
 	    if (dir > 0.0) {
-		hit_type[i-1] = TGC_NORM_TOP;
+		hits[1].hit_surfno = TGC_NORM_TOP;
 	    } else {
-		hit_type[i-1] = TGC_NORM_BOT;
+		hits[1].hit_surfno = TGC_NORM_BOT;
 	    }
 	}
+
+        do_hitp(res, j++, idx, &hits[0]);
+        do_hitp(res, j++, idx, &hits[1]);
 	intersect++;
     }
+    return intersect;
+}
 
-    switch (intersect) {
-    case 0:
-	*surfno = (int4){INT_MAX, INT_MAX, INT_MAX, INT_MAX};
-	return;			/* No hit */
-    case 1:
-	*surfno = (int4){hit_type[1], hit_type[0], INT_MAX, INT_MAX};
-	*dist = (double4){k[1] * t_scale, k[0] * t_scale, 0.0, 0.0};
 
-	*inv = (double8){in[0].x, in[0].y, in[0].z, 0.0, 0.0, 0.0, 0.0, 0.0};
-	*outv = (double8){out[0].x, out[0].y, out[0].z, 0.0, 0.0, 0.0, 0.0, 0.0};
-    	return;			// HIT
-    case 2:
-	*surfno = (int4){hit_type[3], hit_type[2], hit_type[1], hit_type[0]};
-	*dist = (double4){k[3] * t_scale, k[2] * t_scale, k[1] * t_scale, k[0] * t_scale};
+void tgc_norm(global struct hit *hitp, const double3 r_pt, const double3 r_dir, global const struct tgc_shot_specific *tgc)
+{
+    double Q;
+    double R;
+    double3 stdnorm;
 
-	*inv = (double8){in[0].x, in[0].y, in[0].z, in[1].x, in[1].y, in[1].z, 0.0, 0.0};
-	*outv = (double8){out[0].x, out[0].y, out[0].z, out[1].x, out[1].y, out[1].z, 0.0, 0.0};
-    	return;			// HIT
+    /* Hit point */
+    hitp->hit_point = r_pt + r_dir * hitp->hit_dist;
+
+    /* Hits on the end plates are easy */
+    switch (hitp->hit_surfno) {
+	case TGC_NORM_TOP:
+	    hitp->hit_normal = vload3(0, tgc->tgc_N);
+	    break;
+	case TGC_NORM_BOT:
+	    hitp->hit_normal = -vload3(0, tgc->tgc_N);
+	    break;
+	case TGC_NORM_BODY:
+	    /* Compute normal, given hit point on standard (unit) cone */
+	    R = 1 + tgc->tgc_CdAm1 * hitp->hit_vpriv.z;
+	    Q = 1 + tgc->tgc_DdBm1 * hitp->hit_vpriv.z;
+	    stdnorm.x = hitp->hit_vpriv.x * Q * Q;
+	    stdnorm.y = hitp->hit_vpriv.y * R * R;
+	    stdnorm.z = (hitp->hit_vpriv.x*hitp->hit_vpriv.x - R*R)
+		* Q * tgc->tgc_DdBm1
+		+ (hitp->hit_vpriv.y*hitp->hit_vpriv.y - Q*Q)
+		* R * tgc->tgc_CdAm1;
+	    hitp->hit_normal = MAT4X3VEC(tgc->tgc_invRtShSc, stdnorm);
+	    /*XXX - save scale */
+	    hitp->hit_normal = normalize(hitp->hit_normal);
+	    break;
+	default:
+	    break;
     }
 }
 
@@ -402,4 +412,3 @@ const double3 N, const double16 ScShR, const char AD_CB)
  * End:
  * ex: shiftwidth=4 tabstop=8
  */
-

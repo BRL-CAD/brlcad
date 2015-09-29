@@ -1,18 +1,15 @@
-#ifdef cl_khr_fp64
-    #pragma OPENCL EXTENSION cl_khr_fp64 : enable
-#elif defined(cl_amd_fp64)
-    #pragma OPENCL EXTENSION cl_amd_fp64 : enable
-#else
-    #error "Double precision floating point not supported by OpenCL implementation."
-#endif
+#include "common.cl"
 
-#include "solver.cl"
 
-__kernel void
-tor_shot(global __write_only double4 *dist, global __write_only int4 *surfno,
-global __write_only double8 *inv, global __write_only double8 *outv,
-const double3 r_pt, const double3 r_dir,
-const double3 V, const double16 SoR, const double alpha, const double r1)
+struct tor_shot_specific {
+    double tor_alpha;       /* 0 < (R2/R1) <= 1 */
+    double tor_r1;          /* for inverse scaling of k values. */
+    double tor_V[3];        /* Vector to center of torus */
+    double tor_SoR[16];     /* Scale(Rot(vect)) */
+    double tor_invR[16];    /* invRot(vect') */
+};
+
+int tor_shot(global struct hit *res, const double3 r_pt, const double3 r_dir, const uint idx, global const struct tor_shot_specific *tor)
 {
     double3 dprime;		// D'
     double3 pprime;		// P'
@@ -28,17 +25,11 @@ const double3 V, const double16 SoR, const double alpha, const double r1)
     double3 cor_pprime;		// new ray origin
     double cor_proj;
 
-    /* Convert vector into the space of the unit torus */
-    const double f = 1.0/SoR.sf;
-    dprime.x = dot(SoR.s012, r_dir) * f;
-    dprime.y = dot(SoR.s456, r_dir) * f;
-    dprime.z = dot(SoR.s89a, r_dir) * f;
+    dprime = MAT4X3VEC(tor->tor_SoR, r_dir);
     dprime = normalize(dprime);
 
-    work = r_pt - V;
-    pprime.x = dot(SoR.s012, work) * f;
-    pprime.y = dot(SoR.s456, work) * f;
-    pprime.z = dot(SoR.s89a, work) * f;
+    work = r_pt - vload3(0, tor->tor_V);
+    pprime = MAT4X3VEC(tor->tor_SoR, work);
 
     /* normalize distance from torus.  substitute corrected pprime
      * which contains a translation along ray direction to closest
@@ -71,7 +62,8 @@ const double3 V, const double16 SoR, const double alpha, const double r1)
     /* A = X2_Y2 + Z2 */
     A[0] = X2_Y2[0] + dprime.z * dprime.z;
     A[1] = X2_Y2[1] + 2.0 * dprime.z * cor_pprime.z;
-    A[2] = X2_Y2[2] + cor_pprime.z * cor_pprime.z + 1.0 - alpha * alpha;
+    A[2] = X2_Y2[2] + cor_pprime.z * cor_pprime.z
+        + 1.0 - tor->tor_alpha * tor->tor_alpha;
 
     /* Inline expansion of (void) bn_poly_mul(&Asqr, &A, &A) */
     /* Both polys have degree two */
@@ -94,8 +86,7 @@ const double3 V, const double16 SoR, const double alpha, const double r1)
      * root finder returns other than 4 roots, error.
      */
     if ((i = rt_poly_roots(C, 4, val)) != 4) {
-	*surfno = (int4){INT_MAX, INT_MAX, INT_MAX, INT_MAX};
-	return;			// MISS
+	return 0;		// MISS
     }
 
     /* Only real roots indicate an intersection in real space.
@@ -118,8 +109,7 @@ const double3 V, const double16 SoR, const double alpha, const double r1)
     switch (i) {
 	default:
 	case 0:
-	    *surfno = (int4){INT_MAX, INT_MAX, INT_MAX, INT_MAX};
-	    return;		// No hit
+	    return 0;		// No hit
 	case 2:
 	    {
 		/* Sort most distant to least distant. */
@@ -152,31 +142,58 @@ const double3 V, const double16 SoR, const double alpha, const double r1)
 
     /* Now, t[0] > t[npts-1] */
     /* k[1] is entry point, and k[0] is farthest exit point */
+    struct hit hits[2];
+
+    hits[0].hit_dist = k[1]*tor->tor_r1;
+    hits[0].hit_surfno = 0;
+    hits[1].hit_dist = k[0]*tor->tor_r1;
+    hits[1].hit_surfno = 0;
+
+    /* Set aside vector for rt_tor_norm() later */
+    hits[0].hit_vpriv = pprime + k[1] * dprime;
+    hits[1].hit_vpriv = pprime + k[0] * dprime;
+
     if (i == 2) {
-	*surfno = (int4){0, 0, INT_MAX, INT_MAX};
-	*dist = (double4){k[1]*r1, k[0]*r1, 0.0, 0.0};
-
-	/* Set aside vector for rt_tor_norm() later */
-	const double3 in = pprime + k[1] * dprime;
-	const double3 out = pprime + k[0] * dprime;
-	*inv = (double8){in.x, in.y, in.z, 0.0, 0.0, 0.0, 0.0, 0.0};
-	*outv = (double8){out.x, out.y, out.z, 0.0, 0.0, 0.0, 0.0, 0.0};
-    	return;			// HIT
-    } else {
-	/* 4 points */
-	/* k[3] is entry point, and k[2] is exit point */
-	*surfno = (int4){1, 1, 0, 0};
-	*dist = (double4){k[3]*r1, k[2]*r1, k[1]*r1, k[0]*r1};
-
-	/* Set aside vector for rt_tor_norm() later */
-	const double3 in0 = pprime + k[3] * dprime;
-	const double3 out0 = pprime + k[2] * dprime;
-	const double3 in1 = pprime + k[1] * dprime;
-	const double3 out1 = pprime + k[0] * dprime;
-	*inv = (double8){in0.x, in0.y, in0.z, in1.x, in1.y, in1.z, 0.0, 0.0};
-	*outv = (double8){out0.x, out0.y, out0.z, out1.x, out1.y, out1.z, 0.0, 0.0};
-    	return;			// HIT
+	do_hitp(res, 0, idx, &hits[0]);
+	do_hitp(res, 1, idx, &hits[1]);
+    	return 2;		// HIT
     }
+
+    /* 4 points */
+    do_hitp(res, 2, idx, &hits[0]);
+    do_hitp(res, 3, idx, &hits[1]);
+
+    /* k[3] is entry point, and k[2] is exit point */
+    hits[0].hit_surfno = 1;
+    hits[0].hit_dist = k[3]*tor->tor_r1;
+    hits[1].hit_surfno = 1;
+    hits[1].hit_dist = k[2]*tor->tor_r1;
+
+    /* Set aside vector for rt_tor_norm() later */
+    hits[0].hit_vpriv = pprime + k[3] * dprime;
+    hits[1].hit_vpriv = pprime + k[2] * dprime;
+
+    do_hitp(res, 0, idx, &hits[0]);
+    do_hitp(res, 1, idx, &hits[1]);
+    return 4;		// HIT
+}
+
+
+void tor_norm(global struct hit *hitp, const double3 r_pt, const double3 r_dir, global const struct tor_shot_specific *tor)
+{
+    double w;
+    double3 work;
+
+    hitp->hit_point = r_pt + r_dir * hitp->hit_dist;
+    w = dot(hitp->hit_vpriv, hitp->hit_vpriv) +
+	1.0 - tor->tor_alpha*tor->tor_alpha;
+    work = (double3){
+	 (w - 2.0) * hitp->hit_vpriv.x,
+	 (w - 2.0) * hitp->hit_vpriv.y,
+	 w * hitp->hit_vpriv.z};
+    work = normalize(work);
+
+    hitp->hit_normal = MAT3X3VEC(tor->tor_invR, work);
 }
 
 
@@ -189,4 +206,3 @@ const double3 V, const double16 SoR, const double alpha, const double r1)
  * End:
  * ex: shiftwidth=4 tabstop=8
  */
-

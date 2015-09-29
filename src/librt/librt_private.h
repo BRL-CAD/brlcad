@@ -36,11 +36,6 @@
 #include "rt/db4.h"
 #include "raytrace.h"
 
-#ifdef USE_OPENCL
-#include <limits.h>
-#include <CL/cl.h>
-#endif
-
 /* approximation formula for the circumference of an ellipse */
 #define ELL_CIRCUMFERENCE(a, b) M_PI * ((a) + (b)) * \
     (1.0 + (3.0 * ((((a) - b))/((a) + (b))) * ((((a) - b))/((a) + (b))))) \
@@ -184,7 +179,23 @@ extern int tcl_list_to_fastf_array(const char *list, fastf_t **array, int *array
 
 #ifdef USE_OPENCL
 extern cl_device_id clt_get_cl_device(void);
-extern cl_program clt_get_program(cl_context context, cl_device_id device, const char *filename);
+extern cl_program clt_get_program(cl_context context, cl_device_id device, cl_uint count, const char *filename[], const char *options);
+
+extern void clt_inclusive_scan(cl_mem array, const cl_uint n);
+extern void clt_exclusive_scan(cl_mem array, const cl_uint n);
+
+
+#define CLT_DECLARE_INTERFACE(name) \
+    extern size_t clt_##name##_length(struct soltab *stp); \
+    extern void clt_##name##_pack(void *dst, struct soltab *src)
+
+CLT_DECLARE_INTERFACE(tor);
+CLT_DECLARE_INTERFACE(tgc);
+CLT_DECLARE_INTERFACE(ell);
+CLT_DECLARE_INTERFACE(arb);
+CLT_DECLARE_INTERFACE(rec);
+CLT_DECLARE_INTERFACE(sph);
+CLT_DECLARE_INTERFACE(ehy);
 #endif
 
 __END_DECLS

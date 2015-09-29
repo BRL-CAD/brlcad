@@ -768,7 +768,6 @@ rt_bot_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     struct rt_bot_internal *bot_ip;
     struct shell *s;
     struct vertex **verts;
-    point_t pt[3];
     size_t i;
 
     RT_CK_DB_INTERNAL(ip);
@@ -825,6 +824,7 @@ rt_bot_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     for (i = 0; i < bot_ip->num_faces; i++) {
 	struct faceuse *fu;
 	struct vertex **corners[3];
+	point_t pt[3];
 
 	if (bot_ip->faces[i*3+2] < 0 || (size_t)bot_ip->faces[i*3+2] > bot_ip->num_vertices)
 	    continue; /* sanity */

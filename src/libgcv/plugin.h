@@ -30,28 +30,37 @@
 
 #include "common.h"
 
-#include "gcv.h"
+#include "gcv/api.h"
 
 
 __BEGIN_DECLS
 
 
-enum gcv_conversion_type {GCV_CONVERSION_NONE, GCV_CONVERSION_READ, GCV_CONVERSION_WRITE};
-
-
 struct gcv_converter {
-    mime_model_t mime_type;
-    enum gcv_conversion_type conversion_type;
+    const mime_model_t mime_type;
+    const enum gcv_conversion_type conversion_type;
 
-    int (*conversion_fn)(const char *path, struct db_i *dbip,
-			 const struct gcv_opts *options, void *converter_options);
 
-    void * (*process_args_fn)(int argc, char **argv);
+    /**
+     * Allocates and initializes data for bu_opt argument parsing.
+     * create_opts_fn and free_opts_fn must either both be NULL or both be set.
+     *
+     * Must set *options_desc to point to a block of bu_opt_desc's suitable for freeing with bu_free().
+     * Must set *options_data to point to converter-specific options suitable for freeing with free_opts_fn().
+     */
+    void (* const create_opts_fn)(struct bu_opt_desc **options_desc,
+				  void **options_data);
+
+    void (* const free_opts_fn)(void *options_data);
+
+
+    /**
+     * Perform the conversion operation.
+     * options_data must be set if create_opts_fn is set, or NULL otherwise.
+     */
+    int (* const conversion_fn)(const char *path, struct db_i *dbip,
+				const struct gcv_opts *gcv_options, const void *options_data);
 };
-
-
-GCV_EXPORT extern struct bu_ptbl gcv_converter_find(mime_model_t mime_type,
-	enum gcv_conversion_type conversion_type);
 
 
 __END_DECLS

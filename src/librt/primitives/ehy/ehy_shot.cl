@@ -1,32 +1,23 @@
-#ifdef cl_khr_fp64
-    #pragma OPENCL EXTENSION cl_khr_fp64 : enable
-#elif defined(cl_amd_fp64)
-    #pragma OPENCL EXTENSION cl_amd_fp64 : enable
-#else
-    #error "Double precision floating point not supported by OpenCL implementation."
-#endif
+#include "common.cl"
 
-#define RT_PCOEF_TOL    (1.0e-10)
-#define SMALL_FASTF     (1.0e-77)
-
-#define NEAR_ZERO(val, epsilon)	(((val) > -epsilon) && ((val) < epsilon))
-#define ZERO(_a)	NEAR_ZERO((_a), SMALL_FASTF)
 
 /* hit_surfno is set to one of these */
 #define EHY_NORM_BODY	(1)		/* compute normal */
 #define EHY_NORM_TOP	(2)		/* copy ehy_N */
 
-struct hit {
-  double3 hit_vpriv;
-  double hit_dist;
-  int hit_surfno;
+
+struct ehy_shot_specific {
+    double ehy_V[3];		/* vector to ehy origin */
+    double ehy_Hunit[3];	/* unit H vector */
+    double ehy_SoR[16];		/* Scale(Rot(vect)) */
+    double ehy_invRoS[16];	/* invRot(Scale(vect)) */
+    double ehy_cprime;		/* c / |H| */
 };
 
-__kernel void
-ehy_shot(global __write_only double2 *dist, global __write_only int2 *surfno, global __write_only double3 *inv, global __write_only double3 *outv,
-const double3 r_pt, const double3 r_dir,
-const double3 V, const double16 SoR, const double cp)
+int ehy_shot(global struct hit *res, const double3 r_pt, const double3 r_dir, const uint idx, global const struct ehy_shot_specific *ehy)
 {
+    const double cp = ehy->ehy_cprime;
+
     double3 dp;		// D'
     double3 pp;		// P'
     double k1, k2;	// distance constants of solution
@@ -40,15 +31,9 @@ const double3 V, const double16 SoR, const double cp)
 
     hitp = &hits[0];
 
-    // out, Mat, vect
-    const double f = 1.0/SoR.sf;
-    dp.x = dot(SoR.s012, r_dir) * f;
-    dp.y = dot(SoR.s456, r_dir) * f;
-    dp.z = dot(SoR.s89a, r_dir) * f;
-    xlated = r_pt - V;
-    pp.x = dot(SoR.s012, xlated) * f;
-    pp.y = dot(SoR.s456, xlated) * f;
-    pp.z = dot(SoR.s89a, xlated) * f;
+    dp = MAT4X3VEC(ehy->ehy_SoR, r_dir);
+    xlated = r_pt - vload3(0, ehy->ehy_V);
+    pp = MAT4X3VEC(ehy->ehy_SoR, xlated);
 
     // Find roots of the equation, using formula for quadratic
     a = dp.z * dp.z - (2 * cp + 1) * (dp.x * dp.x + dp.y * dp.y);
@@ -99,7 +84,7 @@ const double3 V, const double16 SoR, const double cp)
     /* check top plate */
     if (hitp == &hits[1] && !ZERO(dp.z)) {
         // 1 hit so far, this is worthwhile
-        k1 = -pp.z/dp.z;    // top plate 
+        k1 = -pp.z/dp.z;    // top plate
 
 	hitp->hit_vpriv = pp + k1 * dp;   /* hit' */
         if (hitp->hit_vpriv.x * hitp->hit_vpriv.x +
@@ -111,24 +96,48 @@ const double3 V, const double16 SoR, const double cp)
     }
 
     if (hitp != &hits[2]) {
-	*surfno = (int2){INT_MAX, INT_MAX};
-        return; // MISS
+        return 0; // MISS
     }
 
     if (hits[0].hit_dist < hits[1].hit_dist) {
 	// entry is [0], exit is [1]
-	*dist = (double2){ hits[0].hit_dist, hits[1].hit_dist };
-	*surfno = (int2){ hits[0].hit_surfno, hits[1].hit_surfno };
-	*inv = hits[0].hit_vpriv;
-	*outv = hits[1].hit_vpriv;
+	do_hitp(res, 0, idx, &hits[0]);
+	do_hitp(res, 1, idx, &hits[1]);
     } else {
 	// entry is [1], exit is [0]
-	*dist = (double2){ hits[1].hit_dist, hits[0].hit_dist };
-	*surfno = (int2){ hits[1].hit_surfno, hits[0].hit_surfno };
-	*inv = hits[1].hit_vpriv;
-	*outv = hits[0].hit_vpriv;
+	do_hitp(res, 0, idx, &hits[1]);
+	do_hitp(res, 1, idx, &hits[0]);
     }
-    return; // HIT
+    return 2; // HIT
+}
+
+
+void ehy_norm(global struct hit *hitp, const double3 r_pt, const double3 r_dir, global const struct ehy_shot_specific *ehy)
+{
+    double3 can_normal;	/* normal to canonical ehy */
+    double cp, scale;
+
+    hitp->hit_point = r_pt + r_dir * hitp->hit_dist;
+    switch (hitp->hit_surfno) {
+	case EHY_NORM_BODY:
+	    cp = ehy->ehy_cprime;
+	    can_normal = (double3){
+		 hitp->hit_vpriv.x * (2 * cp + 1),
+		 hitp->hit_vpriv.y * (2 * cp + 1),
+		 -(hitp->hit_vpriv.z + cp + 1)};
+	    hitp->hit_normal = MAT4X3VEC(ehy->ehy_invRoS, can_normal);
+	    scale = 1.0 / length(hitp->hit_normal);
+	    hitp->hit_normal = hitp->hit_normal * scale;
+
+	    /* tuck away this scale for the curvature routine */
+	    hitp->hit_vpriv.x = scale;
+	    break;
+	case EHY_NORM_TOP:
+	    hitp->hit_normal = -vload3(0, ehy->ehy_Hunit);
+	    break;
+	default:
+	    break;
+    }
 }
 
 
@@ -141,4 +150,3 @@ const double3 V, const double16 SoR, const double cp)
  * End:
  * ex: shiftwidth=4 tabstop=8
  */
-

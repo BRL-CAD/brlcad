@@ -180,10 +180,8 @@ rt_datum_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_
 
 	    VADD2(ortho, datum_ip->pnt, up);
 	    RT_ADD_VLIST(vhead, ortho, BN_VLIST_LINE_MOVE);
-	    VPRINT("line from", ortho);
 
 	    VSUB2(ortho, datum_ip->pnt, up);
-	    VPRINT("       to", ortho);
 	    RT_ADD_VLIST(vhead, ortho, BN_VLIST_LINE_DRAW);
 
 	    VJOIN2(ul, datum_ip->pnt, datum_ip->w, up, datum_ip->w, left);

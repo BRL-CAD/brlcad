@@ -189,115 +189,35 @@ const struct bu_structparse rt_ehy_parse[] = {
 static int ehy_is_valid(struct rt_ehy_internal *ehy);
 
 #ifdef USE_OPENCL
-#ifdef CLT_SINGLE_PRECISION
-#define cl_double cl_float
-#define cl_double3 cl_float3
-#endif
+/* largest data members first */
+struct ehy_shot_specific {
+    cl_double ehy_V[3];		/* vector to ehy origin */
+    cl_double ehy_Hunit[3];	/* unit H vector */
+    cl_double ehy_SoR[16];	/* Scale(Rot(vect)) */
+    cl_double ehy_invRoS[16];	/* invRot(Scale(vect)) */
+    cl_double ehy_cprime;	/* c / |H| */
+};
 
-
-static const int clt_semaphore = 12; /* FIXME: for testing; this isn't our semaphore */
-static int clt_initialized = 0;
-static cl_device_id clt_device;
-static cl_context clt_context;
-static cl_command_queue clt_queue;
-static cl_program clt_program;
-static cl_kernel clt_kernel;
-
-
-static void
-clt_cleanup()
+size_t
+clt_ehy_length(struct soltab *stp)
 {
-    if (!clt_initialized) return;
-
-    clReleaseKernel(clt_kernel);
-    clReleaseCommandQueue(clt_queue);
-    clReleaseProgram(clt_program);
-    clReleaseContext(clt_context);
-    
-    clt_initialized = 0;
+    (void)stp;
+    return sizeof(struct ehy_shot_specific);
 }
 
-static void
-clt_init()
+void
+clt_ehy_pack(void *dst, struct soltab *src)
 {
-    cl_int error;
-
-    bu_semaphore_acquire(clt_semaphore);
-    if (!clt_initialized) {
-        clt_initialized = 1;
-        atexit(clt_cleanup);
-        
-        clt_device = clt_get_cl_device();
-
-        clt_context = clCreateContext(NULL, 1, &clt_device, NULL, NULL, &error);
-        if (error != CL_SUCCESS) bu_bomb("failed to create an OpenCL context");
-
-        clt_queue = clCreateCommandQueue(clt_context, clt_device, 0, &error);
-        if (error != CL_SUCCESS) bu_bomb("failed to create an OpenCL command queue");
-
-        clt_program = clt_get_program(clt_context, clt_device, "ehy_shot.cl");
-
-        clt_kernel = clCreateKernel(clt_program, "ehy_shot", &error);
-        if (error != CL_SUCCESS) bu_bomb("failed to create an OpenCL kernel");
-    }
-    bu_semaphore_release(clt_semaphore);
-}
-
-static void
-clt_shot(cl_double2 *dist, cl_int2 *surfno, cl_double3 *in, cl_double3 *out, struct xray *rp, struct soltab *stp)
-{
-    cl_double3 r_pt, r_dir;
-    const size_t hypersample = 1;
-    cl_int error;
-    cl_mem pdist, psurfno, pin, pout;
-
     struct ehy_specific *ehy =
-	(struct ehy_specific *)stp->st_specific;
-    
-    cl_double3 V;
-    cl_double16 SoR;
-    cl_double cprime;
+        (struct ehy_specific *)src->st_specific;
+    struct ehy_shot_specific *args =
+        (struct ehy_shot_specific *)dst;
 
-    VMOVE(r_pt.s, rp->r_pt);
-    VMOVE(r_dir.s, rp->r_dir);
-
-    VMOVE(V.s, ehy->ehy_V);
-    MAT_COPY(SoR.s, ehy->ehy_SoR);
-    cprime = ehy->ehy_cprime;
-
-    pdist = clCreateBuffer(clt_context, CL_MEM_WRITE_ONLY, sizeof(*dist), NULL, &error);
-    if (error != CL_SUCCESS) bu_bomb("failed to create OpenCL ehy output buffer");
-    psurfno = clCreateBuffer(clt_context, CL_MEM_WRITE_ONLY, sizeof(*surfno), NULL, &error);
-    if (error != CL_SUCCESS) bu_bomb("failed to create OpenCL ehy output buffer");
-    pin = clCreateBuffer(clt_context, CL_MEM_WRITE_ONLY, sizeof(*in), NULL, &error);
-    if (error != CL_SUCCESS) bu_bomb("failed to create OpenCL ehy output buffer");
-    pout = clCreateBuffer(clt_context, CL_MEM_WRITE_ONLY, sizeof(*out), NULL, &error);
-    if (error != CL_SUCCESS) bu_bomb("failed to create OpenCL ehy output buffer");
-
-    bu_semaphore_acquire(clt_semaphore);
-    error = clSetKernelArg(clt_kernel, 0, sizeof(cl_mem), &pdist);
-    error |= clSetKernelArg(clt_kernel, 1, sizeof(cl_mem), &psurfno);
-    error |= clSetKernelArg(clt_kernel, 2, sizeof(cl_mem), &pin);
-    error |= clSetKernelArg(clt_kernel, 3, sizeof(cl_mem), &pout);
-    error |= clSetKernelArg(clt_kernel, 4, sizeof(cl_double3), &r_pt);
-    error |= clSetKernelArg(clt_kernel, 5, sizeof(cl_double3), &r_dir);
-    error |= clSetKernelArg(clt_kernel, 6, sizeof(cl_double3), &V);
-    error |= clSetKernelArg(clt_kernel, 7, sizeof(cl_double16), &SoR);
-    error |= clSetKernelArg(clt_kernel, 8, sizeof(cl_double), &cprime);
-    if (error != CL_SUCCESS) bu_bomb("failed to set OpenCL kernel arguments");
-    error = clEnqueueNDRangeKernel(clt_queue, clt_kernel, 1, NULL, &hypersample, NULL, 0, NULL, NULL);
-    bu_semaphore_release(clt_semaphore);
-    if (error != CL_SUCCESS) bu_bomb("failed to enqueue OpenCL kernel");
-
-    if (clFinish(clt_queue) != CL_SUCCESS) bu_bomb("failure in clFinish()");
-    clEnqueueReadBuffer(clt_queue, pdist, CL_TRUE, 0, sizeof(*dist), dist, 0, NULL, NULL);
-    clReleaseMemObject(pdist);
-    clEnqueueReadBuffer(clt_queue, psurfno, CL_TRUE, 0, sizeof(*surfno), surfno, 0, NULL, NULL);
-    clReleaseMemObject(psurfno);
-    clEnqueueReadBuffer(clt_queue, pin, CL_TRUE, 0, sizeof(*in), in, 0, NULL, NULL);
-    clReleaseMemObject(pin);
-    clEnqueueReadBuffer(clt_queue, pout, CL_TRUE, 0, sizeof(*out), out, 0, NULL, NULL);
-    clReleaseMemObject(pout);
+    VMOVE(args->ehy_V, ehy->ehy_V);
+    VMOVE(args->ehy_Hunit, ehy->ehy_Hunit);
+    MAT_COPY(args->ehy_SoR, ehy->ehy_SoR);
+    MAT_COPY(args->ehy_invRoS, ehy->ehy_invRoS);
+    args->ehy_cprime = ehy->ehy_cprime;
 }
 #endif /* USE_OPENCL */
 
@@ -379,10 +299,6 @@ rt_ehy_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     mat_t R;
     mat_t Rinv;
     mat_t S;
-
-#ifdef USE_OPENCL
-    clt_init();
-#endif
 
     RT_CK_DB_INTERNAL(ip);
 
@@ -479,30 +395,6 @@ rt_ehy_print(const struct soltab *stp)
 int
 rt_ehy_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct seg *seghead)
 {
-#ifdef USE_OPENCL
-    cl_double2 dist;
-    cl_int2 surfno;
-    cl_double3 in, out;
-
-    clt_shot(&dist, &surfno, &in, &out, rp, stp);
-
-    if (surfno.s[0] == INT_MAX) {
-	return 0;	/* MISS */
-    } else {
-	struct seg *segp;
-
-	RT_GET_SEG(segp, ap->a_resource);
-	segp->seg_stp = stp;
-	VMOVE(segp->seg_in.hit_vpriv, in.s);
-	segp->seg_in.hit_dist = dist.s[0];
-	segp->seg_in.hit_surfno = surfno.s[0];
-	VMOVE(segp->seg_out.hit_vpriv, out.s);
-	segp->seg_out.hit_dist = dist.s[1];
-	segp->seg_out.hit_surfno = surfno.s[1];
-	BU_LIST_INSERT(&(seghead->l), &(segp->l));
-	return 2;	/* HIT */
-    }
-#else
     struct ehy_specific *ehy =
 	(struct ehy_specific *)stp->st_specific;
     vect_t dp;		/* D' */
@@ -620,7 +512,6 @@ check_plates:
 	BU_LIST_INSERT(&(seghead->l), &(segp->l));
     }
     return 2;			/* HIT */
-#endif
 }
 
 
@@ -2111,7 +2002,7 @@ rt_ehy_surf_area(fastf_t *area, const struct rt_db_internal *ip)
     b = (eip->ehy_r1 * a) / sqrt(h * (h - 2 * a));
 
     /** Formula taken from : https://docs.google.com/file/d/0BydeQ6BPlVejRWt6NlJLVDl0d28/edit
-     * Area can be calculated by substracting integral of hyperbola from the area of the bounding rectangle
+     * Area can be calculated by subtracting integral of hyperbola from the area of the bounding rectangle
      */
     sqrt_rb = sqrt(eip->ehy_r1 * eip->ehy_r1 + b * b);
     integralArea = (a / b) * ((eip->ehy_r1 * sqrt_rb) + ((b * b / 2) * (log(sqrt_rb + eip->ehy_r1) - log(sqrt_rb - eip->ehy_r1))));

@@ -28,6 +28,9 @@
 
 #include "common.h"
 
+#include "gcv/defines.h"
+
+#include "bu/opt.h"
 #include "raytrace.h"
 
 __BEGIN_DECLS
@@ -102,6 +105,31 @@ gcv_execute(struct gcv_context *cxt, const struct gcv_filter *filter);
  */
 GCV_EXPORT int
 gcv_convert(const char *in_file, const struct gcv_opts *in_opts, const char *out_file, const struct gcv_opts *out_opts);
+
+
+enum gcv_conversion_type {GCV_CONVERSION_READ, GCV_CONVERSION_WRITE};
+struct gcv_converter;
+
+
+/* returns pointer table of `const struct gcv_converter *` */
+GCV_EXPORT const struct bu_ptbl *gcv_get_converters(void);
+
+
+/* returns pointer table of `const struct gcv_converter *` */
+GCV_EXPORT struct bu_ptbl gcv_find_converters(mime_model_t mime_type,
+	enum gcv_conversion_type conversion_type);
+
+
+GCV_EXPORT void gcv_converter_create_options(const struct gcv_converter *converter,
+	struct bu_opt_desc **options_desc, void **options_data);
+
+
+GCV_EXPORT void gcv_converter_free_options(const struct gcv_converter *converter, void *options_data);
+
+
+GCV_EXPORT int gcv_converter_convert(const struct gcv_converter *converter,
+	const char *path, struct db_i *dbip, const struct gcv_opts *gcv_options,
+	const void *options_data);
 
 
 __END_DECLS

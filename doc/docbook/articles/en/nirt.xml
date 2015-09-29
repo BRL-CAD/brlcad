@@ -5,7 +5,7 @@
   </info>
 
 
-  <section><info><title>About <application>NIRT</application></title></info>
+  <section xml:id="About_NIRT"><info><title>About <application>NIRT</application></title></info>
 
     <para>
       The <application>NIRT</application> (Natalie's Interactive Ray-Tracer) command line tool provides a user-level interface to the low-level routines
@@ -18,7 +18,7 @@
 
   </section>
 
-  <section><info><title><application>NIRT</application>:  Basic Syntax and Operations</title></info>
+  <section xml:id="NIRT_Basic_Syntax_and_operations"><info><title><application>NIRT</application>:  Basic Syntax and Operations</title></info>
 
 
     <para>
@@ -55,7 +55,7 @@
     </para>
 
 
-    <section><info><title>Command Line Help</title></info>
+    <section xml:id="Command_Line_Help"><info><title>Command Line Help</title></info>
 
       <para>
 	<application>NIRT</application> provides an <emphasis>h</emphasis> option
@@ -82,7 +82,7 @@ Options:
       </para>
     </section>
 
-    <section><info><title>Loading a Model</title></info>
+    <section xml:id="Loading_a_Model"><info><title>Loading a Model</title></info>
 
 
       <para>
@@ -169,7 +169,7 @@ nirt&gt;
       </para>
     </section>
 
-    <section><info><title>Shooting a Ray</title></info>
+    <section xml:id="Shooting_a_Ray"><info><title>Shooting a Ray</title></info>
 
       <para>
 	With the example loaded into <application>NIRT</application>, the <command>s</command>
@@ -241,7 +241,7 @@ center_cube.r        (   1.0000    0.0000    0.0000)   2.0000   0.0000
       Many examples of real world <application>NIRT</application> usage will have much more complex geometries and hence longer reports.
       </para>
     </section>
-    <section><info><title>Moving the Origination Point</title></info>
+    <section xml:id="Moving_the_Origination_Point"><info><title>Moving the Origination Point</title></info>
 
       <para>
 	If we move the origin to some point other than the
@@ -264,7 +264,7 @@ center_cube.r        (   1.0000    0.0000    0.5000)   2.0000   0.0000
 
       </para>
     </section>
-    <section><info><title>Backing Out of a Model</title></info>
+    <section xml:id="Backing_Out_of_a_Model"><info><title>Backing Out of a Model</title></info>
 
       <para>
 	Although in both previous cases the ray's origin was inside the cube,
@@ -373,7 +373,7 @@ nirt&gt;
       </para>
     </section>
 
-    <section><info><title>Changing the Direction of the Ray</title></info>
+    <section xml:id="Changing_the_Direction_of_the_Ray"><info><title>Changing the Direction of the Ray</title></info>
 
       <para>
 	The other fundamental operation needed to make <application>NIRT</application> usable
@@ -420,7 +420,7 @@ nirt&gt;
       </para>
     </section>
 
-    <section><info><title>Reporting of Overlaps</title></info>
+    <section xml:id="Reporting_of_Overlaps"><info><title>Reporting of Overlaps</title></info>
 
       <para>
 	In many cases, a geometry will have overlaps:  errors where a model is
@@ -500,7 +500,7 @@ nirt&gt;
      </section>
    </section>
 
-   <section><info><title>Graphical Visualization: <application>NIRT</application> in <application>MGED</application></title></info>
+   <section xml:id="Graphical_Visualization"><info><title>Graphical Visualization: <application>NIRT</application> in <application>MGED</application></title></info>
 
      <para>
        The command line interaction provided by <application>NIRT</application> has few options
@@ -511,7 +511,7 @@ nirt&gt;
        information allowing <application>MGED</application> to graphically plot the ray on its wireframe view.
      </para>
 
-     <section><info><title>Basic Usage</title></info>
+     <section xml:id="Basic_Usage"><info><title>Basic Usage</title></info>
 
        <para>
 	 The most important thing to remember when starting to use
@@ -598,7 +598,7 @@ mged&gt;
        </para>
      </section>
 
-     <section><info><title>Backing Out with <application>NIRT</application> in <application>MGED</application></title></info>
+     <section xml:id="Backing_Out_with_NIRT_in_MGED"><info><title>Backing Out with <application>NIRT</application> in <application>MGED</application></title></info>
 
        <para>
 	  Because <application>NIRT</application>'s interactive mode cannot be used while in <application>MGED</application>,
@@ -681,7 +681,7 @@ mged&gt; ae 90 0
       </para>
      </section>
 
-     <section><info><title>Ray Segment Coloring with <application>NIRT</application> and <application>MGED</application></title></info>
+     <section xml:id="Ray_Segment_Coloring_with_Nirt"><info><title>Ray Segment Coloring with <application>NIRT</application> and <application>MGED</application></title></info>
 
        <para>
 	 <application>NIRT</application> uses colors to visually represent the information seen
@@ -865,7 +865,7 @@ mged&gt; ae 90 0
       </para>
     </section>
 
-    <section><info><title>Mouse-Based <application>NIRT</application> Usage</title></info>
+    <section xml:id="Mouse-Based"><info><title>Mouse-Based <application>NIRT</application> Usage</title></info>
 
       <para>
 	In addition to providing a <command>nirt</command> command on the <application>MGED</application>
@@ -958,7 +958,7 @@ right_cube.r         (    2.000    -1.000     0.000)     2.00    0.000
       </para>
     </section>
 
-    <section><info><title>Configuring <application>NIRT</application> with the Query Ray Control Panel</title></info>
+    <section xml:id="Configuring_NIRT"><info><title>Configuring <application>NIRT</application> with the Query Ray Control Panel</title></info>
 
 
       <para>
@@ -968,7 +968,7 @@ right_cube.r         (    2.000    -1.000     0.000)     2.00    0.000
 	options.  More advanced settings will be covered later.
       </para>
 
-      <section><info><title>Enabling and Disabling Mouse-Based <application>nirt</application> Ray Casting</title></info>
+      <section xml:id="Enabling_and_Disabling_Mouse_Based"><info><title>Enabling and Disabling Mouse-Based <application>nirt</application> Ray Casting</title></info>
 
 	<para>
 	  Earlier, mouse-based <application>NIRT</application> ray casting was enabled via a menu option.  The
@@ -997,7 +997,7 @@ right_cube.r         (    2.000    -1.000     0.000)     2.00    0.000
 	</para>
       </section>
 
-      <section><info><title>Customizing <application>NIRT</application> Coloring in <application>MGED</application></title></info>
+      <section xml:id="Customizing_NIRT_Coloring"><info><title>Customizing <application>NIRT</application> Coloring in <application>MGED</application></title></info>
 
 
 	<para>
@@ -1068,7 +1068,7 @@ right_cube.r         (    2.000    -1.000     0.000)     2.00    0.000
 	</para>
       </section>
 
-      <section><info><title>Customizing the Pseudo-Primitive Base Name</title></info>
+      <section xml:id="Customizing_The_Pseudo"><info><title>Customizing the Pseudo-Primitive Base Name</title></info>
 
 	<para>
 	  <application>MGED</application> and <application>NIRT</application> use "pseudo" primitives to describe the
@@ -1167,7 +1167,7 @@ mged&gt; who p
 	</para>
       </section>
 
-      <section><info><title>Echoing the Internal <command>nirt</command> Command</title></info>
+      <section xml:id="Echoing_the_internal"><info><title>Echoing the Internal <command>nirt</command> Command</title></info>
 
 	<para>
 	  The <emphasis role="bold">Echo Cmd</emphasis> check box in the <emphasis role="bold">Effects</emphasis>
@@ -1223,7 +1223,7 @@ left_cube.r          (   -1.000     0.022     0.011)     2.00    0.000
 	</para>
       </section>
 
-      <section><info><title>Selecting Graphical and Textual Output</title></info>
+      <section xml:id="Selecting_Graphical"><info><title>Selecting Graphical and Textual Output</title></info>
 
 	<para>
 	  By default, <application>NIRT</application> in <application>MGED</application> outputs both graphical
@@ -1254,7 +1254,7 @@ left_cube.r          (   -1.000     0.022     0.011)     2.00    0.000
     </section>
   </section>
 
-  <section><info><title>Reporting Options</title></info>
+  <section xml:id="Reporting_Options"><info><title>Reporting Options</title></info>
 
     <para>
       Up until this point, only the default output configuration of
@@ -1263,7 +1263,7 @@ left_cube.r          (   -1.000     0.022     0.011)     2.00    0.000
       information to supply precisely what is needed for any given purpose.
     </para>
 
-    <section><info><title>How to Change the Reporting Format</title></info>
+    <section xml:id="How_to_Change_the_Reporting_Format"><info><title>How to Change the Reporting Format</title></info>
 
       <para>
 	The <emphasis>f</emphasis> option allows <application>NIRT</application> to load
@@ -1394,7 +1394,7 @@ left_and_right_cubes.r (  -1.0000    0.0000    0.0000)   2.0000   0.0000
 	</para>
     </section>
 
-    <section><info><title>Handling Attribute Reporting</title></info>
+    <section xml:id="Handling_Attribute_Reporting"><info><title>Handling Attribute Reporting</title></info>
 
       <para>
 	The default command line reporting format lists an <emphasis role="bold">Attrib</emphasis> column
@@ -1486,7 +1486,7 @@ left_cube_color.r    (  -1.0000    0.0000    0.0000)   2.0000   0.0000 rgb=0/0/2
       </note>
     </section>
 
-    <section><info><title>Changing Units</title></info>
+    <section xml:id="Changing_Units"><info><title>Changing Units</title></info>
 
       <para>
 	By default <application>NIRT</application>'s interactive command line mode reads and writes all
@@ -1530,11 +1530,11 @@ center_cube.r        (   0.0033    0.0000    0.0000)   0.0066   0.0000
 
   </section>
 
-  <section><info><title>Other Options</title></info>
+  <section xml:id="Other_Options"><info><title>Other Options</title></info>
 
     <para>
     </para>
-    <section><info><title>Silent and Verbose Modes</title></info>
+    <section xml:id="Silent_and_Verbose_Modes"><info><title>Silent and Verbose Modes</title></info>
 
       <para>
 	<application>NIRT</application> supports two behaviors associated with output verbosity.
@@ -1552,7 +1552,7 @@ center_cube.r        (   0.0033    0.0000    0.0000)   0.0066   0.0000
 	output of <application>NIRT</application>'s interactive mode in the <application>MGED</application> window.
       </para>
     </section>
-    <section><info><title>Using Air Regions</title></info>
+    <section xml:id="Using_Air_Regions"><info><title>Using Air Regions</title></info>
 
       <para>
 	Air regions have a special status in BRL-CAD, and by default
@@ -1609,7 +1609,7 @@ left_and_right_cubes.r (  -1.0000    0.0000    0.0000)   2.0000   0.0000
 
 	</para>
     </section>
-    <section><info><title>Reading an Orientation Matrix and Commands</title></info>
+    <section xml:id="Reading_an_Orientation"><info><title>Reading an Orientation Matrix and Commands</title></info>
 
       <para>
 	This option is seldom used manually from the command line. Its primary purpose is to allow <application>MGED</application>'s <command>saveview</command> command to generate scripts
@@ -1648,7 +1648,7 @@ left_cube.r          (  -1.0000   -0.7002   -0.5693)   0.5767  42.0634
     </section>
   </section>
 
-  <section><info><title>Scripting <application>NIRT</application></title></info>
+  <section xml:id="Scripting_NIRT"><info><title>Scripting <application>NIRT</application></title></info>
 
     <para>
       As mentioned in the output formatting section, hand-copying <application>NIRT</application>
@@ -1657,7 +1657,7 @@ left_cube.r          (  -1.0000   -0.7002   -0.5693)   0.5767  42.0634
       <application>NIRT</application> usage with scripting.
     </para>
 
-    <section><info><title>Command Line Scripts:  The <emphasis>e</emphasis> Option</title></info>
+    <section xml:id="Command_Line_Scripts"><info><title>Command Line Scripts:  The <emphasis>e</emphasis> Option</title></info>
 
       <para>
 	The most straightforward approach to supplying <application>NIRT</application> with a
@@ -1727,7 +1727,7 @@ left_and_right_cubes.r (  -1.0000    0.0000    0.0000)   2.0000   0.0000
       </para>
     </section>
 
-    <section><info><title>Script Files: Other Uses of the <emphasis>f</emphasis> Option</title></info>
+    <section xml:id="Script_Files"><info><title>Script Files: Other Uses of the <emphasis>f</emphasis> Option</title></info>
 
       <para>
 	Earlier, the <emphasis>f</emphasis> option was used to change the output formatting
@@ -1822,7 +1822,7 @@ reg_name,path_name,reg_id,x_in,y_in,z_in,d_in,x_out,y_out,z_out,d_out,los,scaled
       </para>
     </section>
 
-    <section><info><title>Defining a Custom Reporting Format</title></info>
+    <section xml:id="Defining_a_Custom"><info><title>Defining a Custom Reporting Format</title></info>
 
       <para>
 	A final example of the use of the scripting mechanism is constructing a custom-tailored report
@@ -1898,7 +1898,7 @@ center_cube.r        (   1.0000,   0.0000,   0.0000)   2.0000   0.0000
 
     </section>
 
-    <section><info><title>Customizing Report Output in <application>MGED</application></title></info>
+    <section xml:id="Customizing_Report_Output_in_MGED"><info><title>Customizing Report Output in <application>MGED</application></title></info>
 
       <para>
 	The Query Ray Control Panel discussed earlier also provides access to
@@ -1935,7 +1935,7 @@ center_cube.r        (   1.0000,   0.0000,   0.0000)   2.0000   0.0000
       </para>
     </section>
 
-    <section><info><title>Reporting Attributes in <application>MGED</application>:  Advanced Formatting and Scripting</title></info>
+    <section xml:id="Reporting_Attributes_in_MGED"><info><title>Reporting Attributes in <application>MGED</application>:  Advanced Formatting and Scripting</title></info>
 
       <para>
 	As mentioned earlier,
@@ -2006,7 +2006,7 @@ center_cube.r        (   1.0000,   0.0000,   0.0000)   2.0000   0.0000
 
     </section>
 
-    <section><info><title>Available Information for Inclusion in Reports</title></info>
+    <section xml:id="Available_Information_for_Inclusion_in_Reports"><info><title>Available Information for Inclusion in Reports</title></info>
 
       <para>
 	There are many cases where the user may want to change <emphasis>what</emphasis>
@@ -2074,7 +2074,7 @@ center_cube.r        (   1.0000,   0.0000,   0.0000)   2.0000   0.0000
     </section>
   </section>
 
-  <section><info><title>Summary</title></info>
+  <section xml:id="Summary"><info><title>Summary</title></info>
 
     <para>
 
@@ -2437,7 +2437,7 @@ center_cube.r        (   1.0000,   0.0000,   0.0000)   2.0000   0.0000
       process.  <application>NIRT</application> exposes two levels of debugging:
       the core raytracing library and <application>NIRT</application> itself.
     </para>
-    <section><info><title>librt Debugging Information</title></info>
+    <section xml:id="librt_Debugging_Information"><info><title>librt Debugging Information</title></info>
 
       <para>
 	In cases where detailed behavior of the core raytracing routines is of interest,
@@ -2473,7 +2473,7 @@ center_cube.r        (   1.0000    0.0000    0.0000)   2.0000   0.0000
 
       </para>
     </section>
-    <section><info><title><application>NIRT</application> Debugging Information</title></info>
+    <section xml:id="Debugging_Information"><info><title><application>NIRT</application> Debugging Information</title></info>
 
       <para>
 	<application>NIRT</application> itself also provides debugging information. It is accessed using

@@ -26,6 +26,9 @@
 
 #include "common.h"
 
+#include "gcv/util.h"
+#include "../../plugin.h"
+
 #include <cmath>
 #include <fstream>
 #include <iomanip>
@@ -33,9 +36,6 @@
 #include <sstream>
 #include <stdexcept>
 #include <map>
-
-#include "rt/func.h"
-#include "../../plugin.h"
 
 
 namespace
@@ -54,18 +54,15 @@ autoptr_wrap_bu_free(T *ptr)
 
 template <typename T, void free_fn(T *) = autoptr_wrap_bu_free>
 struct AutoPtr {
-    explicit AutoPtr(T *vptr = NULL) : ptr(vptr) {}
+    explicit AutoPtr(T *vptr = NULL) :
+	ptr(vptr)
+    {}
+
 
     ~AutoPtr()
     {
-	free();
-    }
-
-    void free()
-    {
-	if (ptr) free_fn(ptr);
-
-	ptr = NULL;
+	if (ptr)
+	    free_fn(ptr);
     }
 
 
@@ -343,9 +340,8 @@ RecordWriter::Record::operator<<(const T &value)
 	throw std::logic_error("invalid record width");
 
     std::ostringstream sstream;
-
-    if (!(sstream << value))
-	throw std::invalid_argument("failed to convert value");
+    sstream.exceptions(std::ostream::failbit | std::ostream::badbit);
+    sstream << value;
 
     const std::string str_val = sstream.str();
 
@@ -393,6 +389,7 @@ std::string
 RecordWriter::Record::truncate_float(fastf_t value)
 {
     std::ostringstream sstream;
+    sstream.exceptions(std::ostream::failbit | std::ostream::badbit);
     sstream.precision(FIELD_WIDTH);
     sstream << std::fixed << value;
     std::string result = sstream.str().substr(0, FIELD_WIDTH);
@@ -433,21 +430,23 @@ protected:
 
 
 private:
-    std::ostringstream m_ostringstream;
+    std::ostringstream m_ostream;
 };
 
 
 inline
 StringBuffer::StringBuffer() :
-    m_ostringstream()
-{}
+    m_ostream()
+{
+    m_ostream.exceptions(std::ostream::failbit | std::ostream::badbit);
+}
 
 
 inline void
 StringBuffer::write(RecordWriter &writer) const
 {
     RecordWriter::Record record(writer);
-    record.text(m_ostringstream.str());
+    record.text(m_ostream.str());
 }
 
 
@@ -455,7 +454,7 @@ inline
 std::ostream &
 StringBuffer::get_ostream()
 {
-    return m_ostringstream;
+    return m_ostream;
 }
 
 
@@ -501,11 +500,11 @@ FastgenWriter::FastgenWriter(const std::string &path) :
     m_num_holes(0),
     m_num_walls(0),
     m_sections(),
-    m_ostream(path.c_str(), std::ofstream::out),
-    m_colors_ostream((path + ".colors").c_str(), std::ofstream::out)
+    m_ostream(path.c_str(), std::ostream::out),
+    m_colors_ostream((path + ".colors").c_str(), std::ostream::out)
 {
-    m_ostream.exceptions(std::ofstream::failbit | std::ofstream::badbit);
-    m_colors_ostream.exceptions(std::ofstream::failbit | std::ofstream::badbit);
+    m_ostream.exceptions(std::ostream::failbit | std::ostream::badbit);
+    m_colors_ostream.exceptions(std::ostream::failbit | std::ostream::badbit);
 }
 
 
@@ -858,14 +857,14 @@ Section::write_line(const fastf_t *point_a, const fastf_t *point_b,
     radius *= INCHES_PER_MM;
     thickness *= INCHES_PER_MM;
 
-    if (thickness < 0.0)
-	throw std::invalid_argument("negative thickness");
+    if (thickness < 0.0 || thickness > radius)
+	throw std::invalid_argument("invalid thickness");
 
     if (CHECK_MODE_ERRORS)
 	if (!m_volume_mode && NEAR_ZERO(thickness, RT_LEN_TOL))
 	    throw SectionModeError("line with zero thickness in a plate-mode component");
 
-    if (radius <= 0.0 || radius < thickness)
+    if (radius <= 0.0)
 	throw std::invalid_argument("invalid radius");
 
     std::vector<Point> points(2);
@@ -902,7 +901,7 @@ Section::write_sphere(const fastf_t *center, fastf_t radius,
 	    throw SectionModeError("Sphere with thickness in a volume-mode Section");
 
     if (radius < thickness || thickness <= 0.0)
-	throw std::invalid_argument("invalid thickness");
+	throw std::invalid_argument("invalid value");
 
     std::vector<Point> points(1);
     points.at(0) = Point(center);
@@ -1020,7 +1019,7 @@ Section::write_triangle(const fastf_t *point_a, const fastf_t *point_b,
     thickness *= INCHES_PER_MM;
 
     if (thickness < 0.0)
-	throw std::invalid_argument("negative thickness");
+	throw std::invalid_argument("invalid thickness");
 
     if (CHECK_MODE_ERRORS)
 	if (NEAR_ZERO(thickness, RT_LEN_TOL) != m_volume_mode) {
@@ -1059,7 +1058,7 @@ Section::write_quad(const fastf_t *point_a, const fastf_t *point_b,
     thickness *= INCHES_PER_MM;
 
     if (thickness < 0.0)
-	throw std::invalid_argument("negative thickness");
+	throw std::invalid_argument("invalid thickness");
 
     if (CHECK_MODE_ERRORS)
 	if (NEAR_ZERO(thickness, RT_LEN_TOL) != m_volume_mode) {
@@ -1906,7 +1905,7 @@ struct FastgenConversion {
     bool do_force_facetize_region(const directory *region_dir) const;
 
     const db_i &m_db;
-    const bn_tol &m_tol;
+    const bn_tol m_tol;
     std::set<const directory *> m_failed_regions;
 
 
@@ -2349,7 +2348,6 @@ convert_primitive(FastgenConversion &data, const db_full_path &path,
 
 	    section.write_name(DB_FULL_PATH_CUR_DIR(&path)->d_namep);
 
-	    // FIXME Section section(bot.mode == RT_BOT_SOLID);
 	    if (!get_chex1(section, bot))
 		write_bot(section, bot);
 
@@ -2383,12 +2381,15 @@ write_nmg_region(nmgregion *nmg_region, const db_full_path *path,
 
     FastgenConversion &data = *static_cast<FastgenConversion *>(client_data);
     Section &section = data.get_section(*path);
-    shell *vshell;
+    shell *current_shell;
 
-    for (BU_LIST_FOR(vshell, shell, &nmg_region->s_hd)) {
-	NMG_CK_SHELL(vshell);
+    if (BU_LIST_NON_EMPTY(&nmg_region->s_hd))
+	section.write_name("facetized");
 
-	rt_bot_internal * const bot = nmg_bot(vshell, &data.m_tol);
+    for (BU_LIST_FOR(current_shell, shell, &nmg_region->s_hd)) {
+	NMG_CK_SHELL(current_shell);
+
+	rt_bot_internal * const bot = nmg_bot(current_shell, &data.m_tol);
 
 	// fill in an rt_db_internal with our new bot so we can free it
 	rt_db_internal internal;
@@ -2498,12 +2499,14 @@ do_conversion(db_i &db, const std::string &path,
     initial_tree_state.ts_ttol = &ttol;
     initial_tree_state.ts_m = &nmg_model.ptr;
 
-    db_update_nref(&db, &rt_uniresource);
-    AutoPtr<directory *> toplevel_dirs;
-    const std::size_t num_objects = db_ls(&db, DB_LS_TOPS, NULL,
-					  &toplevel_dirs.ptr);
-    const AutoPtr<char *> object_names(db_dpv_to_argv(toplevel_dirs.ptr));
-    toplevel_dirs.free();
+    AutoPtr<char *> object_names;
+    std::size_t num_objects;
+    {
+	AutoPtr<directory *> toplevel_dirs;
+	db_update_nref(&db, &rt_uniresource);
+	num_objects = db_ls(&db, DB_LS_TOPS, NULL, &toplevel_dirs.ptr);
+	object_names.ptr = db_dpv_to_argv(toplevel_dirs.ptr);
+    }
 
     nmg_model.ptr = nmg_mm();
     FastgenConversion data(path, db, tol, facetize_regions);
@@ -2520,11 +2523,12 @@ do_conversion(db_i &db, const std::string &path,
 
 HIDDEN int
 gcv_fastgen4_write(const char *dest_path, struct db_i *source_dbip,
-		   const gcv_opts *UNUSED(options), void *UNUSED(converter_options))
+		   const struct gcv_opts *UNUSED(gcv_options),
+		   const void *UNUSED(options_data))
 {
     RT_CK_DBI(source_dbip);
 
-    std::set<const directory *> failed_regions = do_conversion(*source_dbip,
+    const std::set<const directory *> failed_regions = do_conversion(*source_dbip,
 	    dest_path);
 
     // facetize all regions that contain incompatible boolean operations
@@ -2543,7 +2547,7 @@ extern "C" {
 
 
     struct gcv_converter gcv_conv_fastgen4_write =
-    {MIME_MODEL_VND_FASTGEN, GCV_CONVERSION_READ, gcv_fastgen4_write, NULL};
+    {MIME_MODEL_VND_FASTGEN, GCV_CONVERSION_WRITE, NULL, NULL, gcv_fastgen4_write};
 
 
 }

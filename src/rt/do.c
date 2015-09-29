@@ -507,6 +507,74 @@ def_tree(register struct rt_i *rtip)
 }
 
 
+
+/*********************************************************************************/
+#ifdef USE_OPENCL
+void
+do_opencl_run(int cur_pixel, int last_pixel)
+{
+    int npix, j, rowspan, a_x, a_y;
+    cl_float *pixels;
+    size_t cpu = 0;
+    struct application a;
+
+    npix = last_pixel-cur_pixel+1;
+
+    a_y = (int)(cur_pixel/width);
+    a_x = (int)(cur_pixel - (a_y * width));
+
+    pixels = (cl_float*)bu_calloc(width*height, sizeof(cl_float)*4, "image buffer");
+
+    clt_run(pixels, cur_pixel, last_pixel, width, height, view2model, cell_width,
+	    cell_height, aspect, lightmodel);
+
+    /* Obtain fresh copy of global application struct */
+    a = APP;
+    a.a_resource = &resource[cpu];
+
+    /* This really needs to be optimized. The GPU can push those pixels faster */
+    while (npix > 0) {
+	if ((a_x + npix) >= (int)width) {
+	   rowspan = width - a_x;
+	} else {
+	   rowspan = a_x + npix;
+	}
+
+	/* Framebuffer output. */
+        for (j=0; j<rowspan; j++) {
+	    int i = a_y*width+a_x;
+	    a_x++;
+	    a.a_x = a_x;
+	    a.a_y = a_y;
+	    a.a_color[0] = pixels[4*i+0];
+	    a.a_color[1] = pixels[4*i+1];
+	    a.a_color[2] = pixels[4*i+2];
+	    a.a_dist = pixels[4*i+3];
+	    a.a_user = !NEAR_EQUAL(a.a_color[0], -1e-20, RT_PCOEF_TOL);
+	    view_pixel(&a);
+        }
+	view_eol(&a);
+
+	a_x = 0;
+	a_y++;
+	npix -= rowspan;
+	if (npix <= 0) break;
+    }
+    bu_free(pixels, "image buffer");
+
+    /* Tally up the statistics */
+    for (cpu=0; cpu < npsw; cpu++) {
+	if (resource[cpu].re_magic != RESOURCE_MAGIC) {
+	    bu_log("ERROR: CPU %d resources corrupted, statistics bad\n", cpu);
+	    continue;
+	}
+	rt_add_res_stats(APP.a_rt_i, &resource[cpu]);
+    }
+    bu_log("SHOT: opencl\n");
+}
+#endif
+
+
 /**
  * This is a separate function primarily as a service to REMRT.
  */
@@ -523,6 +591,10 @@ do_prep(struct rt_i *rtip)
 	/* Allow RT library to prepare itself */
 	rt_prep_timer();
 	rt_prep_parallel(rtip, npsw);
+
+#ifdef USE_OPENCL
+        clt_prep(rtip);
+#endif
 
 	(void)rt_get_timer(&times, NULL);
 	if (rt_verbosity & VERBOSE_STATS)
@@ -811,6 +883,16 @@ do_frame(int framenumber)
      */
     rt_prep_timer();
 
+#ifdef USE_OPENCL
+    if (opencl_mode) {
+	do_opencl_run(pix_start, pix_end);
+
+	/* Reset values to full size, for next frame (if any) */
+	pix_start = 0;
+	pix_end = (int)(height*width - 1);
+    }
+    else
+#endif
     if (incr_mode) {
 	for (incr_level = 1; incr_level <= incr_nlevel; incr_level++) {
 	    if (incr_level > 1)

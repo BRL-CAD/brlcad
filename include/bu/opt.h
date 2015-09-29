@@ -147,9 +147,9 @@ typedef int (*bu_opt_arg_process_t)(struct bu_vls *msg, int argc, const char **a
  * standard check.
  */
 #define BU_OPT_CHECK_ARGV0(_msg, _argc, _argv, _opt_name) \
-if (_argc < 1 || !_argv || !_argv[0] || _argv[0][0] == '\0') { \
-    if (_msg) { \
-	bu_vls_printf(_msg, "Error: missing required argument: " _opt_name "\n"); \
+if ((_argc) < 1 || !(_argv) || !(_argv)[0] || (_argv)[0][0] == '\0') { \
+    if ((_msg)) { \
+	bu_vls_printf((_msg), "Error: missing required argument: %s\n", (_opt_name)); \
     } \
     return -1; \
 }
@@ -174,22 +174,22 @@ struct bu_opt_desc {
 
 /** Macro for assigning values to bu_opt_desc array entries. */
 #define BU_OPT(_desc, _so, _lo, _ahelp, _aprocess, _var, _help) { \
-    _desc.shortopt = _so; \
-    _desc.longopt = _lo; \
-    _desc.arg_helpstr = _ahelp; \
-    _desc.arg_process = _aprocess; \
-    _desc.set_var = _var; \
-    _desc.help_string = _help; \
+    (_desc).shortopt = _so; \
+    (_desc).longopt = _lo; \
+    (_desc).arg_helpstr = _ahelp; \
+    (_desc).arg_process = _aprocess; \
+    (_desc).set_var = _var; \
+    (_desc).help_string = _help; \
 }
 
 /** Convenience macro for setting a bu_opt_desc struct to BU_OPT_DESC_NULL */
 #define BU_OPT_NULL(_desc) { \
-    _desc.shortopt = NULL; \
-    _desc.longopt = NULL; \
-    _desc.arg_helpstr = NULL; \
-    _desc.arg_process = NULL; \
-    _desc.set_var = NULL; \
-    _desc.help_string = NULL; \
+    (_desc).shortopt = NULL; \
+    (_desc).longopt = NULL; \
+    (_desc).arg_helpstr = NULL; \
+    (_desc).arg_process = NULL; \
+    (_desc).set_var = NULL; \
+    (_desc).help_string = NULL; \
 }
 
 /**
@@ -211,7 +211,7 @@ struct bu_opt_desc {
  *                     reordered to move the indicated number of
  *                     unused args to the beginning of the array
  */
-BU_EXPORT extern int bu_opt_parse(struct bu_vls *msgs, int ac, const char **argv, struct bu_opt_desc *ds);
+BU_EXPORT extern int bu_opt_parse(struct bu_vls *msgs, int ac, const char **argv, const struct bu_opt_desc *ds);
 
 
 /** Output format options for bu_opt documentation generation */
@@ -323,6 +323,8 @@ BU_EXPORT extern int bu_opt_fastf_t(struct bu_vls *msg, int argc, const char **a
 BU_EXPORT extern int bu_opt_str(struct bu_vls *msg, int argc, const char **argv, void *set_var);
 /** Process 1 argument to append to a vls (places a space before the new entry if the target vls is not empty) */
 BU_EXPORT extern int bu_opt_vls(struct bu_vls *msg, int argc, const char **argv, void *set_var);
+/** Process 1 or 3 arguments to set a bu_color */
+BU_EXPORT extern int bu_opt_color(struct bu_vls *msg, int argc, const char **argv, void *set_var);
 /** @} */
 
 

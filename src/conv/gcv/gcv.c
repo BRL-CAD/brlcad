@@ -29,7 +29,7 @@
 
 #include "bu.h"
 
-#include "../../libgcv/plugin.h"
+#include "gcv/api.h"
 
 struct gcv_fmt_opts {
     struct bu_ptbl *args;
@@ -378,51 +378,110 @@ gcv_help(struct bu_vls *UNUSED(msg), int argc, const char **argv, void *set_var)
 
 
 HIDDEN int
-gcv_do_conversion(const char *in_path, mime_model_t in_type, const char *out_path, mime_model_t out_type)
+gcv_converter_process_arguments(
+	struct bu_vls *messages,
+	const struct gcv_converter *converter,
+	void **options_data,
+	size_t argc, const char **argv)
 {
-    struct bu_ptbl in_converters = gcv_converter_find(in_type, GCV_CONVERSION_READ);
-    struct bu_ptbl out_converters = gcv_converter_find(out_type, GCV_CONVERSION_WRITE);
+    int ret_argc;
+    struct bu_opt_desc *options_desc;
 
-    if (!BU_PTBL_LEN(&in_converters) || !BU_PTBL_LEN(&out_converters)) {
-	bu_log("No %s for given format\n", BU_PTBL_LEN(&in_converters) ? "writer" : "reader");
-	bu_ptbl_free(&in_converters);
-	bu_ptbl_free(&out_converters);
+    gcv_converter_create_options(converter, &options_desc, options_data);
+    ret_argc = argc ? bu_opt_parse(messages, argc, argv, options_desc) : 0;
+    bu_free(options_desc, "options_desc");
+
+    if (ret_argc) {
+	if (messages) {
+	    if (ret_argc == -1)
+		bu_vls_printf(messages, "Fatal error in bu_opt_parse()\n");
+	    else {
+		int i;
+
+		bu_vls_printf(messages, "Unknown arguments: ");
+
+		for (i = 0; i < ret_argc - 1; ++i)
+		    bu_vls_printf(messages, "%s, ", argv[i]);
+
+		bu_vls_printf(messages, "%s\n", argv[ret_argc - 1]);
+	    }
+	}
+
+	gcv_converter_free_options(converter, *options_data);
+	*options_data = NULL;
 	return 0;
-    }
-
-    {
-	const struct gcv_converter * const in_conv =
-	    (struct gcv_converter *)BU_PTBL_GET(&in_converters, 0);
-
-	const struct gcv_converter * const out_conv =
-	    (struct gcv_converter *)BU_PTBL_GET(&out_converters, 0);
-
-	struct db_i *dbi = db_open_inmem();
-	dbi->dbi_read_only = 1;
-
-	if (!in_conv->conversion_fn(in_path, dbi, NULL, NULL)) {
-	    bu_log("Import failed\n");
-	    db_close(dbi);
-	    bu_ptbl_free(&in_converters);
-	    bu_ptbl_free(&out_converters);
-	    return 0;
-	}
-
-	if (!out_conv->conversion_fn(out_path, dbi, NULL, NULL)) {
-	    bu_log("Export failed\n");
-	    db_close(dbi);
-	    bu_ptbl_free(&in_converters);
-	    bu_ptbl_free(&out_converters);
-	    return 0;
-	}
-
-	db_close(dbi);
-	bu_ptbl_free(&in_converters);
-	bu_ptbl_free(&out_converters);
     }
 
     return 1;
 }
+
+
+HIDDEN int
+gcv_do_conversion(
+	struct bu_vls *messages,
+	const char *in_path, mime_model_t in_type,
+	const char *out_path, mime_model_t out_type,
+	size_t in_argc, const char **in_argv,
+	size_t out_argc, const char **out_argv)
+{
+    const struct gcv_converter *in_conv, *out_conv;
+    void *in_options_data = NULL, *out_options_data = NULL;
+
+    {
+	struct bu_ptbl in_converters = gcv_find_converters(in_type, GCV_CONVERSION_READ);
+	struct bu_ptbl out_converters = gcv_find_converters(out_type, GCV_CONVERSION_WRITE);
+
+	if (!BU_PTBL_LEN(&in_converters) || !BU_PTBL_LEN(&out_converters)) {
+	    bu_log("No %s for given format\n", !BU_PTBL_LEN(&in_converters) ? "reader" : "writer");
+	    bu_ptbl_free(&in_converters);
+	    bu_ptbl_free(&out_converters);
+	    return 0;
+	}
+
+	in_conv = (struct gcv_converter *)BU_PTBL_GET(&in_converters, 0);
+	out_conv = (struct gcv_converter *)BU_PTBL_GET(&out_converters, 0);
+
+	bu_ptbl_free(&in_converters);
+	bu_ptbl_free(&out_converters);
+    }
+
+    if (!gcv_converter_process_arguments(messages, in_conv, &in_options_data, in_argc, in_argv))
+	return 0;
+
+    if (!gcv_converter_process_arguments(messages, out_conv, &out_options_data, out_argc, out_argv)) {
+	gcv_converter_free_options(in_conv, in_options_data);
+	return 0;
+    }
+
+    {
+	struct db_i * const dbi = db_create_inmem();
+
+	if (!gcv_converter_convert(in_conv, in_path, dbi, NULL, in_options_data)) {
+	    bu_log("Import failed\n");
+	    db_close(dbi);
+	    gcv_converter_free_options(in_conv, in_options_data);
+	    gcv_converter_free_options(out_conv, out_options_data);
+	    return 0;
+	}
+
+	dbi->dbi_read_only = 1;
+
+	if (!gcv_converter_convert(out_conv, out_path, dbi, NULL, out_options_data)) {
+	    bu_log("Export failed\n");
+	    db_close(dbi);
+	    gcv_converter_free_options(in_conv, in_options_data);
+	    gcv_converter_free_options(out_conv, out_options_data);
+	    return 0;
+	}
+
+	db_close(dbi);
+    }
+
+    gcv_converter_free_options(in_conv, in_options_data);
+    gcv_converter_free_options(out_conv, out_options_data);
+    return 1;
+}
+
 
 #define gcv_help_str "Print help and exit.  If a format is specified to --help, print help specific to that format"
 
@@ -661,12 +720,21 @@ main(int ac, const char **av)
     bu_log("Output file path: %s\n", bu_vls_addr(&out_path));
 
 
-    if (!gcv_do_conversion(bu_vls_addr(&in_path), in_type, bu_vls_addr(&out_path), out_type)) {
-	bu_log("Conversion failed\n");
-	ret = 1;
-	goto cleanup;
+#if 1
+    {
+	const size_t in_argc = BU_PTBL_LEN(&input_opts), out_argc = BU_PTBL_LEN(&output_opts);
+	const char ** const in_argv = (const char **)input_opts.buffer;
+	const char ** const out_argv = (const char **)output_opts.buffer;
+
+	if (!gcv_do_conversion(&slog, bu_vls_addr(&in_path), in_type, bu_vls_addr(&out_path),
+		    out_type, in_argc, in_argv, out_argc, out_argv)) {
+	    bu_vls_printf(&slog, "Conversion failed\n");
+	    ret = 1;
+	    goto cleanup;
+	}
     }
 
+#else
     switch (in_type) {
 	case MIME_MODEL_VND_FASTGEN:
 	    fast4_arg_process(BU_PTBL_LEN(&input_opts), (const char **)input_opts.buffer);
@@ -686,6 +754,7 @@ main(int ac, const char **av)
 	default:
 	    break;
     }
+#endif
 
 
     /* Clean up */

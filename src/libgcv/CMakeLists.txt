@@ -3,15 +3,24 @@ include_directories(
   ${CMAKE_CURRENT_BINARY_DIR}
   )
 
-PERPLEX_TARGET(OBJ_Scanner wfobj/obj_rules.l
-  ${CMAKE_CURRENT_BINARY_DIR}/obj_rules.cpp ${CMAKE_CURRENT_BINARY_DIR}/obj_scanner.h)
-LEMON_TARGET(OBJ_Parser wfobj/obj_grammar.yy
-  ${CMAKE_CURRENT_BINARY_DIR}/obj_grammar.cpp ${CMAKE_CURRENT_BINARY_DIR}/obj_grammar.hpp)
-ADD_PERPLEX_LEMON_DEPENDENCY(OBJ_Scanner OBJ_Parser)
+# For parallel safety, need separate names and files for each target.
+# Should probably rework this whole perplex/lemon combo into one macro,
+# since this will be the common pattern.
+macro(GEN_OBJ_SRCS targetname)
+  file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/OBJ_${targetname}_SRCS)
+  include_directories(${CMAKE_CURRENT_BINARY_DIR}/OBJ_${targetname}_SRCS)
+  DISTCLEAN(${CMAKE_CURRENT_BINARY_DIR}/OBJ_${targetname}_SRCS)
+  PERPLEX_TARGET(OBJ_${targetname}_Scanner wfobj/obj_rules.l
+    ${CMAKE_CURRENT_BINARY_DIR}/OBJ_${targetname}_SRCS/obj_${targetname}_rules.cpp ${CMAKE_CURRENT_BINARY_DIR}/OBJ_${targetname}_SRCS/obj_scanner.h)
+  LEMON_TARGET(OBJ_${targetname}_Parser wfobj/obj_grammar.yy
+    ${CMAKE_CURRENT_BINARY_DIR}/OBJ_${targetname}_SRCS/obj_${targetname}_grammar.cpp ${CMAKE_CURRENT_BINARY_DIR}/OBJ_${targetname}_SRCS/obj_grammar.hpp)
+  ADD_PERPLEX_LEMON_DEPENDENCY(OBJ_${targetname}_Scanner OBJ_${targetname}_Parser)
+endmacro(GEN_OBJ_SRCS)
 
+GEN_OBJ_SRCS(obj-g)
 set(OBJ_G_SRCS
-  ${CMAKE_CURRENT_BINARY_DIR}/obj_grammar.cpp
-  ${CMAKE_CURRENT_BINARY_DIR}/obj_rules.cpp
+  ${CMAKE_CURRENT_BINARY_DIR}/OBJ_obj-g_SRCS/obj_obj-g_grammar.cpp
+  ${CMAKE_CURRENT_BINARY_DIR}/OBJ_obj-g_SRCS/obj_obj-g_rules.cpp
   wfobj/obj_parser.cpp
   ../conv/obj-g.c
   wfobj/tri_face.c
@@ -41,6 +50,8 @@ set(GCV_INCLUDE_DIRS
   )
 BRLCAD_LIB_INCLUDE_DIRS(gcv GCV_INCLUDE_DIRS "")
 
+
+GEN_OBJ_SRCS(libgcv)
 set(LIBGCV_SOURCES
   bottess.c
   facetize.c
@@ -49,9 +60,11 @@ set(LIBGCV_SOURCES
   region_end_mc.c
   tri_intersect.c
   bot_solidity.c
+  ${CMAKE_CURRENT_BINARY_DIR}/OBJ_libgcv_SRCS/obj_libgcv_grammar.cpp
+  ${CMAKE_CURRENT_BINARY_DIR}/OBJ_libgcv_SRCS/obj_libgcv_rules.cpp
   )
 
-list(APPEND LIBGCV_SOURCES
+set(LIBGCV_CONVERTER_SOURCES
   conv/brlcad.c
   conv/fastgen4/fastgen4_read.c
   conv/fastgen4/fastgen4_write.cpp
@@ -63,9 +76,9 @@ list(APPEND LIBGCV_SOURCES
   conv/obj/obj_read.c
   wfobj/obj_parser.cpp
   wfobj/tri_face.c
-  ${CMAKE_CURRENT_BINARY_DIR}/obj_grammar.cpp
-  ${CMAKE_CURRENT_BINARY_DIR}/obj_rules.cpp
   )
+
+list(APPEND LIBGCV_SOURCES ${LIBGCV_CONVERTER_SOURCES})
 
 BRLCAD_ADDLIB(libgcv "${LIBGCV_SOURCES}" "librt;libwdb;libbu")
 SET_TARGET_PROPERTIES(libgcv PROPERTIES VERSION 20.0.1 SOVERSION 20)

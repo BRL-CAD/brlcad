@@ -12,6 +12,8 @@
 #define L1_OFFSET 2
 #define L2_OFFSET 4
 
+#define WRITE_ISLAND_BREPS 1
+
 // TODO - the topological test by itself is not guaranteed to isolate volumes that
 // are uniquely positive or uniquely negative contributions to the overall volume.
 // It may be that a candidate subbrep has both positive and
@@ -169,6 +171,9 @@ find_subbreps(struct bu_vls *msgs, const ON_Brep *brep)
 			    if (new_obj->planar_obj) {
 				subbrep_planar_close_obj(new_obj);
 			    }
+#if WRITE_ISLAND_BREPS
+			    (void)subbrep_make_brep(new_obj);
+#endif
 			    successful_splits++;
 			}
 			break;
@@ -180,6 +185,9 @@ find_subbreps(struct bu_vls *msgs, const ON_Brep *brep)
 			successful_splits++;
 			break;
 		    default:
+#if WRITE_ISLAND_BREPS
+			    (void)subbrep_make_brep(new_obj);
+#endif
 			break;
 		}
 	    }

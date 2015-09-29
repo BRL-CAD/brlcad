@@ -3,7 +3,7 @@
     <title>Camouflage shader</title>
   </info>
 
-<section>
+<section xml:id="Introduction">
 <title>Introduction</title>
 <para>The "camo" shader creates a pseudo-random tri-color camouflage pattern on the object using a fractal noise pattern. This is a procedural shader based upon a fractal noise function known as fractional brownian motion or fBm.
 </para>
@@ -137,7 +137,7 @@ The fractal pattern has infinite resolution. As a result, the borders of the col
 <para><emphasis role='bold'>Delta</emphasis></para>
 <para>This specifies a translation in noise space for the origin of region space. Since the origin of noise space is reflected 8 ways, it is undesirable to have that portion of noise space overlap with region space.</para>
 </section>
- <section>
+ <section xml:id="Limitations">
  <title>Limitations</title>
  <para>Because of the continuous nature of the fractal noise space, it is impossible to get a splash of color1 directly adjacent to a splash of color3. </para>
 </section>

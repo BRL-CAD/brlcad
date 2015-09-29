@@ -201,7 +201,7 @@ ged_facetize(struct ged *gedp, int argc, const char *argv[])
 	(void)rt_generate_mesh(&(bot->faces), (int *)&(bot->num_faces),
 			       (point_t **)&(bot->vertices),
 			       (int *)&(bot->num_vertices),
-			       dbip, argv[0], 15, sp_fidelity);
+			       dbip, argv[0], sp_fidelity);
 
 	/* Export BOT as a new solid */
 	RT_DB_INTERNAL_INIT(&intern);

@@ -181,6 +181,39 @@ const short local_arb4_edge_vertex_mapping[6][2] = {
 };
 
 
+#ifdef USE_OPENCL
+/* largest data members first */
+struct arb_shot_specific {
+    cl_double arb_peqns[4*6];
+    cl_int arb_nmfaces;
+};
+
+size_t
+clt_arb_length(struct soltab *stp)
+{
+    (void)stp;
+    return sizeof(struct arb_shot_specific);
+}
+
+void
+clt_arb_pack(void *dst, struct soltab *src)
+{
+    struct arb_specific *arb =
+        (struct arb_specific *)src->st_specific;
+    struct arb_shot_specific *args =
+        (struct arb_shot_specific *)dst;
+
+    const struct aface *afp;
+    cl_int j;
+
+    for (afp = &arb->arb_face[j=0]; j < 6; j++, afp++) {
+        HMOVE(args->arb_peqns+4*j, afp->peqn);
+    }
+    args->arb_nmfaces = arb->arb_nmfaces;
+}
+#endif /* USE_OPENCL */
+
+
 /* rt_arb_get_cgtype(), rt_arb_std_type(), and rt_arb_centroid()
  * stolen from mged/arbs.c */
 

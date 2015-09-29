@@ -201,7 +201,7 @@
     <section xml:id="viewing_system_elements"><info><title>Identifying Elements of the <application>MGED</application> Viewing System</title></info>
 
 
-      <section><info><title>Center of View</title></info>
+      <section xml:id="Center_of_view"><info><title>Center of View</title></info>
 
 	<para>
 	  The first set of information tells you the center of what you are viewing.
@@ -228,7 +228,7 @@
 	</para>
       </section>
 
-      <section><info><title>Size of View</title></info>
+      <section xml:id="Size_of_view"><info><title>Size of View</title></info>
 
 
 	<para>
@@ -304,7 +304,7 @@
 	</note>
       </section>
 
-      <section><info><title>Angle of View</title></info>
+      <section xml:id="Angle_of_view"><info><title>Angle of View</title></info>
 
 
 	<para>
