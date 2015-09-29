@@ -502,9 +502,11 @@ void mmInit()
 #elif defined(MM_UNIX)
 	mmcontext.pagesize = sysconf(_SC_PAGESIZE);
 #elif defined(MM_WIN32)
-	SYSTEM_INFO sysinfo;
-	GetSystemInfo(&sysinfo);
-	mmcontext.pagesize = sysinfo.dwPageSize;
+	{
+	    SYSTEM_INFO sysinfo;
+	    GetSystemInfo(&sysinfo);
+	    mmcontext.pagesize = sysinfo.dwPageSize;
+	}
 #endif
 #if defined(MM_UNIX) && defined(_SC_PHYS_PAGES)
 	sysmemory = sysconf(_SC_PHYS_PAGES);

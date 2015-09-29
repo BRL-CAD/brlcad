@@ -66,7 +66,7 @@ bn_cx_sqrt(bn_complex_t *op, const bn_complex_t *ip)
 	if (ZERO(im)) {
 	    op->re = op->im = 0.0;
 	} else {
-	    op->re = copysign(op->im = sqrt(im * copysign(0.5, im)), im);
+	    op->re = copysign(op->im = sqrt(fabs(im) * 0.5), im);
 	}
     } else if (ZERO(im)) {
 	if (re > 0.0) {
@@ -102,59 +102,44 @@ bn_cx_sqrt(bn_complex_t *op, const bn_complex_t *ip)
 }
 
 
-static int
-bn_poly_quadratic_roots(bn_complex_t *roots, const double *quadrat)
+static inline int
+bn_poly_quadratic_roots(bn_complex_t *roots, const double *eqn)
 {
-    double discrim, denom, rad;
-    const double small = SMALL_FASTF;
+    double disc, denom;
 
-    if (NEAR_ZERO(quadrat[0], small)) {
-	/* root = -cf[2] / cf[1] */
-	if (NEAR_ZERO(quadrat[1], small)) {
-	    /* No solution.  Now what? */
-	    /* bu_log("bn_poly_quadratic_roots(): ERROR, no solution\n"); */
-	    return 0;
-	}
-	/* Fake it as a repeated root. */
-	roots[0].re = roots[1].re = -quadrat[2]/quadrat[1];
-	roots[0].im = roots[1].im = 0.0;
-	return 1;	/* OK - repeated root */
-    }
+    if (!NEAR_ZERO(eqn[0], RT_PCOEF_TOL)) {
+	disc = eqn[1]*eqn[1] - 4.0 * eqn[0]*eqn[2];
+	denom = 0.5 / eqn[0];
 
-    discrim = quadrat[1]*quadrat[1] - 4.0* quadrat[0]*quadrat[2];
-    denom = 0.5 / quadrat[0];
+	if (disc > 0.0) {
+	    double q, r1, r2;
 
-    if (discrim > 0.0) {
-	rad = sqrt(discrim);
+	    disc = sqrt(disc);
 
-	if (NEAR_ZERO(quadrat[1], small)) {
-	    double r = fabs(rad * denom);
-	    roots[0].re = r;
-	    roots[1].re = -r;
+	    q = -0.5 * (eqn[1] + copysign(disc, eqn[1]));
+	    r1 = q / eqn[0];
+	    r2 = eqn[2] / q;
+
+	    roots[0].re = fmin(r1, r2);
+	    roots[1].re = fmax(r1, r2);
+	    roots[1].im = roots[0].im = 0.0;
+	} else if (ZERO(disc)) {
+	    roots[1].re = roots[0].re = -eqn[1] * denom;
+	    roots[1].im = roots[0].im = 0.0;
 	} else {
-	    double t, r1, r2;
-
-	    t = -0.5 * (quadrat[1] + copysign(rad, quadrat[1]));
-	    r1 = t / quadrat[0];
-	    r2 = quadrat[2] / t;
-
-	    if (r1 < r2) {
-		roots[0].re = r1;
-		roots[1].re = r2;
-	    } else {
-		roots[0].re = r2;
-		roots[1].re = r1;
-	    }
+	    roots[1].re = roots[0].re = -eqn[1] * denom;
+	    roots[1].im = -(roots[0].im = sqrt(-disc) * denom);
 	}
-	roots[1].im = roots[0].im = 0.0;
-    } else if (NEAR_ZERO(discrim, small)) {
-	roots[1].re = roots[0].re = -quadrat[1] * denom;
-	roots[1].im = roots[0].im = 0.0;
+	return 2;	/* OK */
+    } else if (!NEAR_ZERO(eqn[1], RT_PCOEF_TOL)) {
+	roots[0].re = -eqn[2]/eqn[1];
+	roots[0].im = 0.0;
+	return 1;	/* OK */
     } else {
-	roots[1].re = roots[0].re = -quadrat[1] * denom;
-	roots[1].im = -(roots[0].im = sqrt(-discrim) * denom);
+	/* No solution.  Now what? */
+	/* bu_log("bn_poly_quadratic_roots(): ERROR, no solution\n"); */
+	return 0;
     }
-    return 1;		/* OK */
 }
 
 static int
@@ -232,7 +217,7 @@ bn_poly_cubic_roots(bn_complex_t *roots, const double *eqn)
     for (i=0; i < 3; ++i)
 	roots[i].re -= c1_3rd;
 
-    return 1;		/* OK */
+    return 3;		/* OK */
 }
 
 static int
@@ -241,6 +226,7 @@ bn_poly_quartic_roots(bn_complex_t *roots, const double *eqn)
     double cube[4], quad1[3], quad2[3];
     bn_complex_t u[3];
     double U, p, q, q1, q2;
+    int nroots;
 
     /* something considerably larger than squared floating point fuss */
     const double small = 1.0e-8;
@@ -303,9 +289,10 @@ bn_poly_quartic_roots(bn_complex_t *roots, const double *eqn)
 	}
     }
 
-    bn_poly_quadratic_roots(&roots[0], quad1);
-    bn_poly_quadratic_roots(&roots[2], quad2);
-    return 1;		/* SUCCESS */
+    nroots = 0;
+    nroots += bn_poly_quadratic_roots(&roots[nroots], quad1);
+    nroots += bn_poly_quadratic_roots(&roots[nroots], quad2);
+    return nroots;	/* SUCCESS */
 }
 
 /**
@@ -565,7 +552,7 @@ rt_poly_deflate(double *oldP, uint *oldP_dgr, bn_complex_t *root)
     bn_poly_synthetic_division(oldP, oldP_dgr, rem, &rem_dgr, oldP, oldP_dgr, divisor, &divisor_dgr);
 }
 
-static double *
+static inline double*
 bn_poly_scale(double *eqn, uint dgr, double factor)
 {
     for (uint cnt=0; cnt <= dgr; ++cnt) {
@@ -597,7 +584,7 @@ bn_complex_t *roots)		/* space to put roots found */
      * for ease of handling.
      */
     factor = 1.0 / eqn[0];
-    (void) bn_poly_scale(eqn, dgr, factor);
+    (void)bn_poly_scale(eqn, dgr, factor);
     n = 0;		/* Number of roots found */
 
     /* A trailing coefficient of zero indicates that zero

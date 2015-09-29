@@ -302,6 +302,25 @@ int main(int argc, const char **argv)
 	return 1;
     }
 
+#ifdef USE_OPENCL
+     if (opencl_mode) {
+	struct bu_vls str = BU_VLS_INIT_ZERO;
+
+	 bu_vls_strcat(&str, "\ncompiling OpenCL programs... ");
+	 bu_log("%s\n", bu_vls_addr(&str));
+	 bu_vls_free(&str);
+
+	 rt_prep_timer();
+
+	 clt_init();
+
+	 (void)rt_get_timer(&times, NULL);
+	 if (rt_verbosity & VERBOSE_STATS)
+	     bu_log("OCLINIT: %s\n", bu_vls_addr(&times));
+	 bu_vls_free(&times);
+     }
+#endif
+
     /* Echo back the command line arguments as given, in 3 Tcl commands */
     if (rt_verbosity & VERBOSE_MODELTITLE) {
 	struct bu_vls str = BU_VLS_INIT_ZERO;

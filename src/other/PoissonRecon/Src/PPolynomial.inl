@@ -364,7 +364,7 @@ void PPolynomial<Degree>::printnl(void) const{
 	printf("\n");
 }
 template< >
-PPolynomial< 0 > PPolynomial< 0 >::BSpline( double radius )
+inline PPolynomial< 0 > PPolynomial< 0 >::BSpline( double radius )
 {
 	PPolynomial q;
 	q.set(2);
@@ -377,7 +377,7 @@ PPolynomial< 0 > PPolynomial< 0 >::BSpline( double radius )
 	return q;
 }
 template< int Degree >
-PPolynomial< Degree > PPolynomial<Degree>::BSpline( double radius )
+inline PPolynomial< Degree > PPolynomial<Degree>::BSpline( double radius )
 {
 	return PPolynomial< Degree-1 >::BSpline().MovingAverage( radius );
 }

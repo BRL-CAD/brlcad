@@ -46,8 +46,8 @@ const double ROUND_EPS            = 1e-5;
 // TreeNodeData //
 //////////////////
 int TreeNodeData::NodeCount = 0;
-TreeNodeData::TreeNodeData( void ){ nodeIndex = NodeCount++; }
-TreeNodeData::~TreeNodeData( void ) { }
+inline TreeNodeData::TreeNodeData( void ){ nodeIndex = NodeCount++; }
+inline TreeNodeData::~TreeNodeData( void ) { }
 
 
 ////////////
@@ -3127,29 +3127,29 @@ Pointer( V ) Octree< Real >::Evaluate( ConstPointer( V ) coefficients , int& res
 ////////////////
 // VertexData //
 ////////////////
-long long VertexData::CenterIndex(const TreeOctNode* node,int maxDepth)
+inline long long VertexData::CenterIndex(const TreeOctNode* node,int maxDepth)
 {
 	int idx[DIMENSION];
 	return CenterIndex(node,maxDepth,idx);
 }
-long long VertexData::CenterIndex(const TreeOctNode* node,int maxDepth,int idx[DIMENSION])
+inline long long VertexData::CenterIndex(const TreeOctNode* node,int maxDepth,int idx[DIMENSION])
 {
 	int d,o[3];
 	node->depthAndOffset(d,o);
 	for(int i=0;i<DIMENSION;i++) idx[i]=BinaryNode::CornerIndex( maxDepth+1 , d+1 , o[i]<<1 , 1 );
 	return (long long)(idx[0]) | (long long)(idx[1])<<VERTEX_COORDINATE_SHIFT | (long long)(idx[2])<<(2*VERTEX_COORDINATE_SHIFT);
 }
-long long VertexData::CenterIndex( int depth , const int offSet[DIMENSION] , int maxDepth , int idx[DIMENSION] )
+inline long long VertexData::CenterIndex( int depth , const int offSet[DIMENSION] , int maxDepth , int idx[DIMENSION] )
 {
 	for(int i=0;i<DIMENSION;i++) idx[i]=BinaryNode::CornerIndex( maxDepth+1 , depth+1 , offSet[i]<<1 , 1 );
 	return (long long)(idx[0]) | (long long)(idx[1])<<VERTEX_COORDINATE_SHIFT | (long long)(idx[2])<<(2*VERTEX_COORDINATE_SHIFT);
 }
-long long VertexData::CornerIndex(const TreeOctNode* node,int cIndex,int maxDepth)
+inline long long VertexData::CornerIndex(const TreeOctNode* node,int cIndex,int maxDepth)
 {
 	int idx[DIMENSION];
 	return CornerIndex(node,cIndex,maxDepth,idx);
 }
-long long VertexData::CornerIndex( const TreeOctNode* node , int cIndex , int maxDepth , int idx[DIMENSION] )
+inline long long VertexData::CornerIndex( const TreeOctNode* node , int cIndex , int maxDepth , int idx[DIMENSION] )
 {
 	int x[DIMENSION];
 	Cube::FactorCornerIndex( cIndex , x[0] , x[1] , x[2] );
@@ -3158,22 +3158,22 @@ long long VertexData::CornerIndex( const TreeOctNode* node , int cIndex , int ma
 	for( int i=0 ; i<DIMENSION ; i++ ) idx[i] = BinaryNode::CornerIndex( maxDepth+1 , d , o[i] , x[i] );
 	return CornerIndexKey( idx );
 }
-long long VertexData::CornerIndex( int depth , const int offSet[DIMENSION] , int cIndex , int maxDepth , int idx[DIMENSION] )
+inline long long VertexData::CornerIndex( int depth , const int offSet[DIMENSION] , int cIndex , int maxDepth , int idx[DIMENSION] )
 {
 	int x[DIMENSION];
 	Cube::FactorCornerIndex( cIndex , x[0] , x[1] , x[2] );
 	for( int i=0 ; i<DIMENSION ; i++ ) idx[i] = BinaryNode::CornerIndex( maxDepth+1 , depth , offSet[i] , x[i] );
 	return CornerIndexKey( idx );
 }
-long long VertexData::CornerIndexKey( const int idx[DIMENSION] )
+inline long long VertexData::CornerIndexKey( const int idx[DIMENSION] )
 {
 	return (long long)(idx[0]) | (long long)(idx[1])<<VERTEX_COORDINATE_SHIFT | (long long)(idx[2])<<(2*VERTEX_COORDINATE_SHIFT);
 }
-long long VertexData::FaceIndex(const TreeOctNode* node,int fIndex,int maxDepth){
+inline long long VertexData::FaceIndex(const TreeOctNode* node,int fIndex,int maxDepth){
 	int idx[DIMENSION];
 	return FaceIndex(node,fIndex,maxDepth,idx);
 }
-long long VertexData::FaceIndex(const TreeOctNode* node,int fIndex,int maxDepth,int idx[DIMENSION])
+inline long long VertexData::FaceIndex(const TreeOctNode* node,int fIndex,int maxDepth,int idx[DIMENSION])
 {
 	int dir,offset;
 	Cube::FactorFaceIndex(fIndex,dir,offset);
@@ -3183,8 +3183,8 @@ long long VertexData::FaceIndex(const TreeOctNode* node,int fIndex,int maxDepth,
 	idx[dir]=BinaryNode::CornerIndex(maxDepth+1,d,o[dir],offset);
 	return (long long)(idx[0]) | (long long)(idx[1])<<VERTEX_COORDINATE_SHIFT | (long long)(idx[2])<<(2*VERTEX_COORDINATE_SHIFT);
 }
-long long VertexData::EdgeIndex( const TreeOctNode* node , int eIndex , int maxDepth ){ int idx[DIMENSION] ; return EdgeIndex( node , eIndex , maxDepth , idx ); }
-long long VertexData::EdgeIndex( const TreeOctNode* node , int eIndex , int maxDepth , int idx[DIMENSION] )
+inline long long VertexData::EdgeIndex( const TreeOctNode* node , int eIndex , int maxDepth ){ int idx[DIMENSION] ; return EdgeIndex( node , eIndex , maxDepth , idx ); }
+inline long long VertexData::EdgeIndex( const TreeOctNode* node , int eIndex , int maxDepth , int idx[DIMENSION] )
 {
 	int o , i1 , i2;
 	int d , off[3];

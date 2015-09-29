@@ -51,6 +51,8 @@
 #ifdef CLT_SINGLE_PRECISION
 #define cl_double cl_float
 #define cl_double3 cl_float3
+#define cl_double4 cl_float4
+#define cl_double16 cl_float16
 #endif
 #endif
 

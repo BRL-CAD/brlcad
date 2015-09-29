@@ -113,6 +113,11 @@ if(SPR_ENABLE_EXAMPLES)
     Src/Factor.cpp  Src/Geometry.cpp  Src/MarchingCubes.cpp
     )
 
+#  add_executable(PoissonRecon
+#    Src/CmdLineParser.cpp Src/PlyFile.cpp Src/PoissonRecon.cpp
+#    Src/Factor.cpp  Src/Geometry.cpp  Src/MarchingCubes.cpp Src/SPR.cpp
+#    )
+
   add_executable(SurfaceTrimmer
     Src/CmdLineParser.cpp Src/PlyFile.cpp Src/SurfaceTrimmer.cpp
     Src/Factor.cpp  Src/Geometry.cpp  Src/MarchingCubes.cpp

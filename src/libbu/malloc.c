@@ -690,7 +690,11 @@ bu_mem_barriercheck(void)
 
 
 int
+#ifdef HAVE_SYS_SHM_H
 bu_shmget(int *shmid, char **shared_memory, int key, size_t size)
+#else
+bu_shmget(int *UNUSED(shmid), char **UNUSED(shared_memory), int UNUSED(key), size_t UNUSED(size))
+#endif
 {
     int ret = 1;
 #ifdef HAVE_SYS_SHM_H
@@ -750,7 +754,7 @@ bu_pool_alloc(struct bu_pool *pool, size_t nelem, size_t elsize)
     void *ret;
 
     if (pool->block_pos + n_bytes > pool->alloc_size) {
-    	pool->alloc_size += n_bytes < pool->block_size ? pool->block_size : n_bytes;
+    	pool->alloc_size += (n_bytes < pool->block_size ? pool->block_size : n_bytes);
 	pool->block = (uint8_t*)bu_realloc(pool->block, pool->alloc_size, "bu_pool_alloc");
     }
 

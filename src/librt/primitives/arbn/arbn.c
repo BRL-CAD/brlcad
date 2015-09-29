@@ -1239,7 +1239,7 @@ rt_arbn_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, c
 	    } else {
 		bu_vls_printf(logstr,
 			      "ERROR: illegal argument, choices are P, P#, P+, or N\n");
-		return TCL_ERROR;
+		return BRLCAD_ERROR;
 	    }
 	    if (i >= arbn->neqn) {
 		bu_vls_printf(logstr, "ERROR: plane number out of range\n");

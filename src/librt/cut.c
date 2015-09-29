@@ -2414,7 +2414,7 @@ init_interior(struct bvh_build_node *node, uint8_t axis, struct bvh_build_node *
 
 
 /* utility functions */
-inline uint32_t left_shift3(uint32_t x)
+static inline uint32_t left_shift3(uint32_t x)
 {
     BU_ASSERT(x <= (1 << 10));
     if (x == (1 << 10)) --x;
@@ -2429,7 +2429,7 @@ inline uint32_t left_shift3(uint32_t x)
     return x;
 }
 
-inline uint32_t encode_morton3(const point_t v)
+static inline uint32_t encode_morton3(const point_t v)
 {
     BU_ASSERT(v[X] >= 0 && v[X] <= (1 << 10));
     BU_ASSERT(v[Y] >= 0 && v[Y] <= (1 << 10));
@@ -2498,7 +2498,7 @@ static void radix_sort(size_t v_len, struct morton_primitive **v)
 
 
 static struct bvh_build_node *
-emit_lbvh(int max_prims_in_node,
+emit_lbvh(long max_prims_in_node,
     struct bvh_build_node **build_nodes, const fastf_t *bounds_prims,
     struct morton_primitive *morton_prims, long n_primitives, long *total_nodes,
     long *ordered_prims, long *ordered_prims_offset, int bit_index) {
@@ -2514,8 +2514,10 @@ emit_lbvh(int max_prims_in_node,
         ++*total_nodes;
         node = (*build_nodes)++;
 
-        first_prim_offset = *ordered_prims_offset;
-        (*ordered_prims_offset) += n_primitives; /* atomic_add */
+	{
+	    first_prim_offset = *ordered_prims_offset;
+	    (*ordered_prims_offset) += n_primitives; /* atomic_add */
+	}
 
         for (i = 0; i < n_primitives; ++i) {
             fastf_t bounds2[6];
@@ -2672,86 +2674,89 @@ build_upper_sah(struct bu_pool *pool, struct bvh_build_node **treelet_roots,
 	/* FIXME: if this hits, what do we need to do?
 	 * Make sure the SAH split below does something... ?
 	 */
-	BU_ASSERT(!ZERO(centroid_bounds[3+dim] - centroid_bounds[0+dim]));
+	if (!ZERO(centroid_bounds[3+dim] - centroid_bounds[0+dim])) {
+            /* Initialize bucket_info for HLBVH SAH partition buckets */
+            for (i = start; i < end; ++i) {
+                fastf_t centroid = (treelet_roots[i]->bounds[0+dim] +
+                                    treelet_roots[i]->bounds[3+dim]) * 0.5;
+                long b = n_buckets * ((centroid - centroid_bounds[0+dim]) /
+                                      (centroid_bounds[3+dim] - centroid_bounds[0+dim]));
+                if (b == n_buckets) b = n_buckets - 1;
+                BU_ASSERT(b >= 0 && b < n_buckets);
+                buckets[b].count++;
+                bvh_bounds_union(buckets[b].bounds, buckets[b].bounds,
+                                 treelet_roots[i]->bounds);
+            }
 
-	/* Initialize bucket_info for HLBVH SAH partition buckets */
-	for (i = start; i < end; ++i) {
-	    fastf_t centroid = (treelet_roots[i]->bounds[0+dim] +
-			        treelet_roots[i]->bounds[3+dim]) * 0.5;
-	    long b = n_buckets * ((centroid - centroid_bounds[0+dim]) /
-			          (centroid_bounds[3+dim] - centroid_bounds[0+dim]));
-	    if (b == n_buckets) b = n_buckets - 1;
-	    BU_ASSERT(b >= 0 && b < n_buckets);
-	    buckets[b].count++;
-	    bvh_bounds_union(buckets[b].bounds, buckets[b].bounds,
-			     treelet_roots[i]->bounds);
-	}
+            /* Compute costs for splitting after each bucket */
+            for (i = 0; i < n_buckets - 1; ++i) {
+                fastf_t b0[6] =
+                    {MAX_FASTF,MAX_FASTF,MAX_FASTF, -MAX_FASTF,-MAX_FASTF,-MAX_FASTF};
+                fastf_t b1[6] =
+                    {MAX_FASTF,MAX_FASTF,MAX_FASTF, -MAX_FASTF,-MAX_FASTF,-MAX_FASTF};
+                long count0 = 0, count1 = 0;
+                long j;
 
-	/* Compute costs for splitting after each bucket */
-	for (i = 0; i < n_buckets - 1; ++i) {
-	    fastf_t b0[6] =
-		{MAX_FASTF,MAX_FASTF,MAX_FASTF, -MAX_FASTF,-MAX_FASTF,-MAX_FASTF};
-	    fastf_t b1[6] =
-		{MAX_FASTF,MAX_FASTF,MAX_FASTF, -MAX_FASTF,-MAX_FASTF,-MAX_FASTF};
-	    long count0 = 0, count1 = 0;
-	    long j;
+                for (j = 0; j <= i; ++j) {
+                    bvh_bounds_union(b0, b0, buckets[j].bounds);
+                    count0 += buckets[j].count;
+                }
+                for (j = i + 1; j < n_buckets; ++j) {
+                    bvh_bounds_union(b1, b1, buckets[j].bounds);
+                    count1 += buckets[j].count;
+                }
+                cost[i] = .125 + (count0 * surface_area(b0) + count1 * surface_area(b1)) /
+                    surface_area(bounds);
+            }
 
-	    for (j = 0; j <= i; ++j) {
-		bvh_bounds_union(b0, b0, buckets[j].bounds);
-		count0 += buckets[j].count;
-	    }
-	    for (j = i + 1; j < n_buckets; ++j) {
-		bvh_bounds_union(b1, b1, buckets[j].bounds);
-		count1 += buckets[j].count;
-	    }
-	    cost[i] = .125 + (count0 * surface_area(b0) + count1 * surface_area(b1)) /
-		surface_area(bounds);
-	}
+            /* Find bucket to split at that minimizes SAH metric */
+            min_cost = cost[0];
+            min_cost_split_bucket = 0;
+            for (i = 1; i < n_buckets - 1; ++i) {
+                if (cost[i] < min_cost) {
+                    min_cost = cost[i];
+                    min_cost_split_bucket = i;
+                }
+            }
 
-	/* Find bucket to split at that minimizes SAH metric */
-	min_cost = cost[0];
-	min_cost_split_bucket = 0;
-	for (i = 1; i < n_buckets - 1; ++i) {
-	    if (cost[i] < min_cost) {
-		min_cost = cost[i];
-		min_cost_split_bucket = i;
-	    }
-	}
+            /* Split nodes and create interior HLBVH SAH node */
+            {
+                struct bvh_build_node **first, **last, *t;
+                first = &treelet_roots[start];
+                last = &treelet_roots[end - 1] + 1;
 
-	/* Split nodes and create interior HLBVH SAH node */
-	{
-	    struct bvh_build_node **first, **last, *t;
-	    first = &treelet_roots[start];
-	    last = &treelet_roots[end - 1] + 1;
+                for (;;) {
+                    for (;;)
+                        if (first == last)
+                            goto out;
+                        else if (pred(*first, centroid_bounds, dim, min_cost_split_bucket))
+                            ++first;
+                        else
+                            break;
+                    --last;
+                    for (;;)
+                        if (first == last)
+                            goto out;
+                        else if (!pred(*last, centroid_bounds, dim, min_cost_split_bucket))
+                            --last;
+                        else
+                            break;
+                    t = *first;
+                    *first = *last;
+                    *last = t;
 
-	    for (;;) {
-		for (;;)
-		    if (first == last)
-			goto out;
-		    else if (pred(*first, centroid_bounds, dim, min_cost_split_bucket))
-			++first;
-		    else
-			break;
-		--last;
-		for (;;)
-		    if (first == last)
-			goto out;
-		    else if (!pred(*last, centroid_bounds, dim, min_cost_split_bucket))
-			--last;
-		    else
-			break;
-		t = *first;
-		*first = *last;
-		*last = t;
+                    ++first;
+                }
+    out:
+                pmid = first;
+            }
 
-		++first;
-	    }
-out:
-	    pmid = first;
-	}
+            mid = pmid - treelet_roots;
+        } else {
+            mid = start+(end-start)/2;
+        }
 
-	mid = pmid - treelet_roots;
-	BU_ASSERT(mid > start && mid < end);
+        BU_ASSERT(mid > start && mid < end);
 
 	++*total_nodes;
 	lbvh[0] = build_upper_sah(pool, treelet_roots, start, mid, total_nodes);
@@ -2764,7 +2769,7 @@ out:
 
 
 struct bvh_build_node *
-hlbvh_create(int max_prims_in_node, struct bu_pool *pool, const fastf_t *centroids_prims,
+hlbvh_create(long max_prims_in_node, struct bu_pool *pool, const fastf_t *centroids_prims,
 	     const fastf_t *bounds_prims, long *total_nodes,
 	     const long n_primitives, long **ordered_prims)
 {
@@ -2774,13 +2779,14 @@ hlbvh_create(int max_prims_in_node, struct bu_pool *pool, const fastf_t *centroi
 
     struct lbvh_treelet *treelets_to_build;
     struct lbvh_treelet *treelets_to_build_end;
-    struct lbvh_treelet *treelet;
 
     struct bvh_build_node *ret;
 
-    struct bvh_build_node **finished_treelets, **finished_treelets_last;
+    struct bvh_build_node **finished_treelets;
     long start, end;
     long ordered_prims_offset = 0;
+    long atomic_total = 0;
+    long treelets_size;
 
     /* Compute bounding box of all primitive centroids */
     for (i = 0; i<n_primitives; i++) {
@@ -2842,32 +2848,36 @@ hlbvh_create(int max_prims_in_node, struct bu_pool *pool, const fastf_t *centroi
 
     /* Create LBVHs for treelets in parallel */
     *ordered_prims = (long*)bu_calloc(n_primitives, sizeof(long), "hlbvh_create");
-    for (treelet = treelets_to_build; treelet != treelets_to_build_end; treelet++) {
+    treelets_size = treelets_to_build_end-treelets_to_build;
+    for (i=0; i<treelets_size; i++) {
+	struct lbvh_treelet *treelet;
         /* Generate i_th LBVH treelet */
 	long nodes_created = 0;
         const int first_bit_index = 29 - 12;
+
+        treelet = &treelets_to_build[i];
         treelet->build_nodes = emit_lbvh(max_prims_in_node, &treelet->build_nodes,
 					 bounds_prims,
 					 &morton_prims[treelet->start_index],
 					 treelet->n_primitives, &nodes_created,
 					 *ordered_prims, &ordered_prims_offset,
 					 first_bit_index);
-	*total_nodes += nodes_created;
+	atomic_total += nodes_created;
     }
     bu_free(morton_prims, "hlbvh_create");
+    *total_nodes = atomic_total;
 
     /* Create and return SAH BVH from LBVH treelets */
     finished_treelets =
-	(struct bvh_build_node**)bu_calloc(treelets_to_build_end-treelets_to_build,
-					   sizeof(struct bvh_build_node*),
-					   "hlbvh_create");
-    finished_treelets_last = finished_treelets;
-    for (treelet = treelets_to_build; treelet != treelets_to_build_end; treelet++) {
-        *finished_treelets_last++ = treelet->build_nodes;
+	(struct bvh_build_node**)bu_calloc(treelets_size, sizeof(struct bvh_build_node*),
+ 					   "hlbvh_create");
+    for (i=0; i<treelets_size; i++) {
+	struct lbvh_treelet *treelet;
+	treelet = &treelets_to_build[i];
+        finished_treelets[i] = treelet->build_nodes;
     }
     bu_free(treelets_to_build, "hlbvh_create");
-    ret = build_upper_sah(pool, finished_treelets, 0,
-			  finished_treelets_last-finished_treelets, total_nodes);
+    ret = build_upper_sah(pool, finished_treelets, 0, treelets_size, total_nodes);
     bu_free(finished_treelets, "hlbvh_create");
     return ret;
 }
@@ -2918,20 +2928,18 @@ clt_linear_bvh_create(long n_primitives, struct clt_linear_bvh_node **nodes_p,
 	long nodes_created = 0;
         struct bvh_build_node *root;
 
-	pool = bu_pool_create(1024 * 1024);
+        /*
+         * This pool must have enough size to fit the whole tree or the
+         * algorithm will fail. It stores pointers to itself and a
+         * realloc would make the pointers invalid.
+         *
+         * total_nodes = treelets_size + upper_sah_size,  where:
+         *  treelets_size < 2*n_primitives
+         *  upper_sah_size < 2*2^popcnt(0x3ffc0000)   i.e. 2*4096
+         */
+	pool = bu_pool_create(sizeof(struct bvh_build_node)*(2*n_primitives+2*4096));
         root = hlbvh_create(4, pool, centroids_prims, bounds_prims, &nodes_created,
 			    n_primitives, ordered_prims);
-
-	/*
-	 * Enlarge the model RPP just slightly, to avoid nasty effects
-	 * with a solid's face being exactly on the edge
-	 */
-	root[0].bounds[0] = floor(root[0].bounds[0]);
-	root[0].bounds[1] = floor(root[0].bounds[1]);
-	root[0].bounds[2] = floor(root[0].bounds[2]);
-	root[0].bounds[3] = ceil(root[0].bounds[3]);
-	root[0].bounds[4] = ceil(root[0].bounds[4]);
-	root[0].bounds[5] = ceil(root[0].bounds[5]);
 
         /* Compute representation of depth-first traversal of BVH tree */
         nodes = (struct clt_linear_bvh_node*)bu_calloc(nodes_created, sizeof(*nodes),
@@ -2939,9 +2947,11 @@ clt_linear_bvh_create(long n_primitives, struct clt_linear_bvh_node **nodes_p,
         flatten_bvh_tree(&lnodes_created, nodes, nodes_created, root, 0);
 	bu_pool_delete(pool);
 
-	bu_log("HLBVH: %ld nodes, %ld primitives (%.2f MB)\n",
-	       nodes_created, n_primitives,
-	       (double)(sizeof(*nodes) * nodes_created) / (1024.0 * 1024.0));
+	if (RT_G_DEBUG&DEBUG_CUT) {
+	    bu_log("HLBVH: %ld nodes, %ld primitives (%.2f KB)\n",
+		   nodes_created, n_primitives,
+		   (double)(sizeof(*nodes) * nodes_created) / (1024.0));
+	}
 
 	if (RT_G_DEBUG&DEBUG_CUT) {
 	    long i, j;

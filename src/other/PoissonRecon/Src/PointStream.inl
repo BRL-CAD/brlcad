@@ -173,10 +173,10 @@ void PLYOrientedPointStream< Real >::reset( void )
 		{
 			foundVertices = true;
 			_pCount = num_elems , _pIdx = 0;
-			for( int i=0 ; i<PlyOrientedVertex< Real >::ReadComponents ; i++ ) 
-				if( !ply_get_property( _ply , elem_name , &(PlyOrientedVertex< Real >::ReadProperties[i]) ) )
+			for( int j=0 ; j<PlyOrientedVertex< Real >::ReadComponents ; j++ ) 
+				if( !ply_get_property( _ply , elem_name , &(PlyOrientedVertex< Real >::ReadProperties[j]) ) )
 				{
-					fprintf( stderr , "[ERROR] Failed to find property in ply file: %s\n" , PlyOrientedVertex< Real >::ReadProperties[i].name );
+					fprintf( stderr , "[ERROR] Failed to find property in ply file: %s\n" , PlyOrientedVertex< Real >::ReadProperties[j].name );
 					exit( 0 );
 				}
 		}
@@ -357,27 +357,27 @@ void PLYOrientedPointStreamWithData< Real , Data >::reset( void )
 		{
 			foundVertices = true;
 			_pCount = num_elems , _pIdx = 0;
-			for( int i=0 ; i<PlyOrientedVertex< Real >::ReadComponents ; i++ ) 
-				if( !ply_get_property( _ply , elem_name , &(PlyOrientedVertex< Real >::ReadProperties[i]) ) )
+			for( int j=0 ; j<PlyOrientedVertex< Real >::ReadComponents ; j++ ) 
+				if( !ply_get_property( _ply , elem_name , &(PlyOrientedVertex< Real >::ReadProperties[j]) ) )
 				{
-					fprintf( stderr , "[ERROR] Failed to find property in ply file: %s\n" , PlyOrientedVertex< Real >::ReadProperties[i].name );
+					fprintf( stderr , "[ERROR] Failed to find property in ply file: %s\n" , PlyOrientedVertex< Real >::ReadProperties[j].name );
 					exit( 0 );
 				}
 			if( _validationFunction )
 			{
 				bool* properties = new bool[_dataPropertiesCount];
-				for( int i=0 ; i<_dataPropertiesCount ; i++ )
-					if( !ply_get_property( _ply , elem_name , &(_dataProperties[i]) ) ) properties[i] = false;
-					else                                                                properties[i] = true;
+				for( int j=0 ; j<_dataPropertiesCount ; j++ )
+					if( !ply_get_property( _ply , elem_name , &(_dataProperties[j]) ) ) properties[j] = false;
+					else                                                                properties[j] = true;
 				bool valid = _validationFunction( properties );
 				delete[] properties;
 				if( !valid ) fprintf( stderr , "[ERROR] Failed to validate properties in file\n" ) , exit( 0 );
 			}
 			else
 			{
-				for( int i=0 ; i<_dataPropertiesCount ; i++ )
-					if( !ply_get_property( _ply , elem_name , &(_dataProperties[i]) ) )
-						fprintf( stderr , "[WARNING] Failed to find property in ply file: %s\n" , _dataProperties[i].name );
+				for( int j=0 ; j<_dataPropertiesCount ; j++ )
+					if( !ply_get_property( _ply , elem_name , &(_dataProperties[j]) ) )
+						fprintf( stderr , "[WARNING] Failed to find property in ply file: %s\n" , _dataProperties[j].name );
 			}
 		}
 		for( int j=0 ; j<nr_props ; j++ )
