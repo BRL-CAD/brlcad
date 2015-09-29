@@ -65,7 +65,7 @@ triangulate_array(ON_2dPointArray &on2dpts, int *verts_map, int **ffaces, int lo
 	pt_ind[i] = i;
     }
 
-    int ccw = bg_polygon_clockwise(on2dpts.Count(), verts2d, pt_ind);
+    int ccw = bg_polygon_direction(on2dpts.Count(), verts2d, pt_ind);
 
     if (loop_dir && ccw == loop_dir) {
 	//bu_log("loop direction flipped - has consequences.\n");
@@ -78,7 +78,7 @@ triangulate_array(ON_2dPointArray &on2dpts, int *verts_map, int **ffaces, int lo
 	bu_free(pt_ind, "free verts2d");
 	return 0;
     }
-    if (ccw == 1) {
+    if (ccw == BG_CW) {
 	for (int i = on2dpts.Count() - 1; i >= 0; i--) {
 	    int d = on2dpts.Count() - 1 - i;
 	    V2MOVE(verts2d[d], on2dpts[i]);
@@ -139,20 +139,20 @@ triangulate_array_with_holes(ON_2dPointArray &on2dpts, int *verts_map, int loop_
     size_t outer_npts = loop_starts[1] - loop_starts[0];
     int *outer_pt_ind = (int *)bu_calloc(outer_npts, sizeof(int), "pt_ind");
     for (unsigned int i = 0; i < outer_npts; i++) { outer_pt_ind[i] = i; }
-    ccw = bg_polygon_clockwise(outer_npts, verts2d, outer_pt_ind);
+    ccw = bg_polygon_direction(outer_npts, verts2d, outer_pt_ind);
     if (ccw == 0) {
 	//bu_log("outer loop is degenerate - skip\n");
 	bu_free(verts2d, "free verts2d");
 	bu_free(outer_pt_ind, "free verts2d");
 	return 0;
     }
-    if (ccw == 1) {
+    if (ccw == BG_CW) {
 	for (int i = outer_npts - 1; i >= 0; i--) {
 	    int d = outer_npts - 1 - i;
 	    V2MOVE(verts2d[d], on2dpts[i]);
 	}
-	ccw = bg_polygon_clockwise(outer_npts, verts2d, outer_pt_ind);
-	if (ccw == 1) bu_log("huh?? loop ccw after flip??\n");
+	ccw = bg_polygon_direction(outer_npts, verts2d, outer_pt_ind);
+	if (ccw == BG_CW) bu_log("huh?? loop ccw after flip??\n");
 	std::vector<int> vert_map;
 	for (unsigned int i = 0; i < outer_npts; i++) vert_map.push_back(verts_map[i]);
 	std::reverse(vert_map.begin(), vert_map.end());
@@ -170,14 +170,14 @@ triangulate_array_with_holes(ON_2dPointArray &on2dpts, int *verts_map, int loop_
 	size_t nhole_pts = array_end - array_start;
 	int *holes_array = (int *)bu_calloc(nhole_pts, sizeof(int), "hole array");
 	for (unsigned int j = 0; j < nhole_pts; j++) { holes_array[j] = array_start + j; }
-	ccw = bg_polygon_clockwise(nhole_pts, verts2d, holes_array);
+	ccw = bg_polygon_direction(nhole_pts, verts2d, holes_array);
 	if (ccw == 0) {
 	    //bu_log("inner loop is degenerate - skip\n");
 	    bu_free(holes_array, "free holes array");
 	    nholes--;
 	    continue;
 	}
-	if (ccw == -1) {
+	if (ccw == BG_CCW) {
 	    for (unsigned int j = array_end - 1; j >= array_start; j--) {
 		int d = array_end - 1 - j;
 		V2MOVE(verts2d[d], on2dpts[j]);
