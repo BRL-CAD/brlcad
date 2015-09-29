@@ -10,6 +10,8 @@ if(BRLCAD_ENABLE_X11)
   BRLCAD_ADDEXEC(ir-X ir-X.c "libbu;${X11_LIBRARIES}")
   BRLCAD_ADDEXEC(irdisp irdisp.c "libbu;${X11_LIBRARIES}")
   BRLCAD_ADDEXEC(pictx pictx.c "libbu;${X11_LIBRARIES}")
+else(BRLCAD_ENABLE_X11)
+  CMAKEFILES(ir-X.c irdisp.c pictx.c)
 endif(BRLCAD_ENABLE_X11)
 
 BRLCAD_ADDEXEC(all_sf all_sf.c "librt;${M_LIBRARY}")
@@ -17,8 +19,6 @@ BRLCAD_ADDEXEC(showtherm showtherm.c "librt;${M_LIBRARY}")
 BRLCAD_ADDEXEC(firpass "firpass.c;subroutines.c" "librt;${M_LIBRARY}")
 BRLCAD_ADDEXEC(secpass "secpass.c;subroutines.c" "librt;${M_LIBRARY}")
 BRLCAD_ADDEXEC(shapefact shapefact.c "librt;${M_LIBRARY}")
-
-CMAKEFILES(pictx.c)
 
 # Local Variables:
 # tab-width: 8

@@ -10,6 +10,7 @@
 #include <algorithm>
 
 #include "vmath.h"
+#include "bu/path.h"
 #include "wdb.h"
 #include "analyze.h"
 #include "ged.h"
@@ -17,229 +18,116 @@
 
 #define ptout(p)  p.x << " " << p.y << " " << p.z
 
-HIDDEN void
-assemble_vls_str(struct bu_vls *vls, int *edges, int cnt)
-{
-    bu_vls_sprintf(vls, "%d", edges[0]);
-    for (int i = 1; i < cnt; i++) {
-	bu_vls_printf(vls, ",%d", edges[i]);
-    }
-}
+#define INFORMATION_ATTRS_ON 0
 
 HIDDEN void
-obj_add_attr_key(struct subbrep_island_data *data, struct rt_wdb *wdbp, const char *obj_name)
+set_attr_key(struct rt_wdb *wdbp, const char *obj_name, const char *key, int array_cnt, int *array)
 {
+    struct bu_vls val = BU_VLS_INIT_ZERO;
     struct bu_attribute_value_set avs;
     struct directory *dp;
 
-    if (!data || !wdbp || !obj_name) return;
+    if (!wdbp || !obj_name || !key || !array) return;
 
     dp = db_lookup(wdbp->dbip, obj_name, LOOKUP_QUIET);
 
     if (dp == RT_DIR_NULL) return;
 
+    set_key(&val, array_cnt, array);
+
     bu_avs_init_empty(&avs);
 
     if (db5_get_attributes(wdbp->dbip, &avs, dp)) return;
 
-    (void)bu_avs_add(&avs, "bfaces", bu_vls_addr(data->key));
-    if (data->edges_cnt > 0) {
-	struct bu_vls val = BU_VLS_INIT_ZERO;
-	assemble_vls_str(&val, data->edges, data->edges_cnt);
-	(void)bu_avs_add(&avs, "bedges", bu_vls_addr(&val));
-	bu_vls_free(&val);
-    }
+    (void)bu_avs_add(&avs, key, bu_vls_addr(&val));
 
-    if (db5_replace_attributes(dp, &avs, wdbp->dbip)) {
-	bu_avs_free(&avs);
-	return;
-    }
+#ifdef INFORMATION_ATTRS_ON
+    (void)db5_replace_attributes(dp, &avs, wdbp->dbip);
+#endif
+
+    bu_avs_free(&avs);
+    bu_vls_free(&val);
 }
 
 HIDDEN void
-subbrep_obj_name(struct csg_object_params *data, struct bu_vls *id, struct bu_vls *name)
+subbrep_obj_name(int type, int id, const char *root, struct bu_vls *name)
 {
-    if (!data || !name) return;
-    switch (data->type) {
+    if (!root || !name) return;
+    switch (type) {
 	case ARB6:
-	    bu_vls_sprintf(name, "%s-arb6_%d.s", bu_vls_addr(id), data->id);
+	    bu_vls_printf(name, "%s-arb6_%d.s", root, id);
 	    return;
 	case ARB8:
-	    bu_vls_sprintf(name, "%s-arb8_%d.s", bu_vls_addr(id), data->id);
+	    bu_vls_printf(name, "%s-arb8_%d.s", root, id);
+	    return;
+	case ARBN:
+	    bu_vls_printf(name, "%s-arbn_%d.s", root, id);
 	    return;
 	case PLANAR_VOLUME:
-	    bu_vls_sprintf(name, "%s-bot_%d.s", bu_vls_addr(id), data->id);
+	    bu_vls_printf(name, "%s-bot_%d.s", root, id);
 	    return;
 	case CYLINDER:
-	    bu_vls_sprintf(name, "%s-rcc_%d.s", bu_vls_addr(id), data->id);
+	    bu_vls_printf(name, "%s-rcc_%d.s", root, id);
 	    return;
 	case CONE:
-	    bu_vls_sprintf(name, "%s-trc_%d.s", bu_vls_addr(id), data->id);
-	    //std::cout << bu_vls_addr(name) << "\n";
-	    //std::cout << bu_vls_addr(data->key) << "\n";
+	    bu_vls_printf(name, "%s-trc_%d.s", root, id);
 	    return;
 	case SPHERE:
-	    bu_vls_sprintf(name, "%s-sph_%d.s", bu_vls_addr(id), data->id);
+	    bu_vls_printf(name, "%s-sph_%d.s", root, id);
 	    return;
 	case ELLIPSOID:
-	    bu_vls_sprintf(name, "%s-ell_%d.s", bu_vls_addr(id), data->id);
+	    bu_vls_printf(name, "%s-ell_%d.s", root, id);
 	    return;
 	case TORUS:
-	    bu_vls_sprintf(name, "%s-tor_%d.s", bu_vls_addr(id), data->id);
+	    bu_vls_printf(name, "%s-tor_%d.s", root, id);
 	    return;
 	case COMB:
-	    bu_vls_sprintf(name, "%s-comb_%d.c", bu_vls_addr(id), data->id);
+	    bu_vls_printf(name, "%s-comb_%d.c", root, id);
 	    return;
+	case BREP:
+	    bu_vls_printf(name, "%s-brep_%d.s", root, id);
+	    break;
 	default:
-	    bu_vls_sprintf(name, "%s-brep_%d.s", bu_vls_addr(id), data->id);
+	    bu_vls_printf(name, "%s-%d.c", root, id);
 	    break;
     }
 }
 
-#if 0
-HIDDEN int
-brep_to_bot(struct bu_vls *msgs, struct subbrep_island_data *data, struct rt_wdb *wdbp, struct bu_vls *id)
-{
-    /* Triangulate faces and write out as a bot */
-    struct bu_vls prim_name = BU_VLS_INIT_ZERO;
-    int all_faces_cnt = 0;
-    int *final_faces = NULL;
-
-    if (!data->local_brep) {
-	if (msgs) bu_vls_printf(msgs, "No valid local brep?? bot %s failed\n", bu_vls_addr(data->id));
-	return 0;
-    }
-
-    // Accumulate faces in a std::vector, since we don't know how many we're going to get
-    std::vector<int> all_faces;
-
-    /* Set up an initial comprehensive vertex array that will be used in
-     * the final BoT build - all face definitions will ultimately index
-     * into this array */
-    if (data->local_brep->m_V.Count() == 0) {
-	if (msgs) bu_vls_printf(msgs, "No verts in brep?? bot %s failed\n", bu_vls_addr(data->id));
-	return 0;
-    }
-    point_t *all_verts = (point_t *)bu_calloc(data->local_brep->m_V.Count(), sizeof(point_t), "bot verts");
-    for (int vi = 0; vi < data->local_brep->m_V.Count(); vi++) {
-	VMOVE(all_verts[vi], data->local_brep->m_V[vi].Point());
-    }
-
-    // Iterate over all faces in the brep.  TODO - should probably protect this with some planar checks...
-    int contributing_faces = 0;
-    for (int s_it = 0; s_it < data->local_brep->m_F.Count(); s_it++) {
-	const ON_BrepFace *b_face = &(data->local_brep->m_F[s_it]);
-	/* If we've got multiple loops - rare but not impossible - handle it */
-	int *loop_inds = (int *)bu_calloc(b_face->LoopCount(), sizeof(int), "loop index array");
-	const ON_BrepLoop *b_oloop = b_face->OuterLoop();
-	loop_inds[0] = b_oloop->m_loop_index;
-	for (int j = 1; j < b_face->LoopCount(); j++) {
-	    const ON_BrepLoop *b_loop = b_face->Loop(j);
-	    if (b_loop != b_oloop) loop_inds[j] = b_loop->m_loop_index;
-	}
-	int *ffaces = NULL;
-	int num_faces = subbrep_polygon_tri(msgs, data->local_brep, all_verts, loop_inds, b_face->LoopCount(), &ffaces);
-	if (num_faces > 0) contributing_faces++;
-	for (int f_ind = 0; f_ind < num_faces*3; f_ind++) {
-	    all_faces.push_back(ffaces[f_ind]);
-	}
-	if (ffaces) bu_free(ffaces, "free polygon face array");
-	all_faces_cnt += num_faces;
-    }
-
-    if (contributing_faces < 4) {
-	bu_free(all_verts, "all_verts");
-	return 0;
-    }
-
-    /* Now we can build the final faces array for mk_bot */
-    final_faces = (int *)bu_calloc(all_faces_cnt * 3, sizeof(int), "final bot verts");
-    for (int i = 0; i < all_faces_cnt*3; i++) {
-	final_faces[i] = all_faces[i];
-    }
-
-    /* Make the bot, using the data key for a unique name */
-    subbrep_obj_name(data, id, &prim_name);
-    if (mk_bot(wdbp, bu_vls_addr(&prim_name), RT_BOT_SOLID, RT_BOT_UNORIENTED, 0, data->brep->m_V.Count(), all_faces_cnt, (fastf_t *)all_verts, final_faces, (fastf_t *)NULL, (struct bu_bitv *)NULL)) {
-	if (msgs) bu_vls_printf(msgs, "mk_bot failed for overall bot\n");
-    } else {
-	obj_add_attr_key(data, wdbp, bu_vls_addr(&prim_name));
-    }
-    return 1;
-}
-#endif
-#if 0
-int
-subbrep_to_csg_arb6(struct subbrep_island_data *data, struct rt_wdb *wdbp, struct bu_vls *id, struct wmember *wcomb)
-{
-    struct csg_object_params *params = data->params;
-    if (data->type == ARB6) {
-	struct bu_vls prim_name = BU_VLS_INIT_ZERO;
-	subbrep_obj_name(data, id, &prim_name);
-
-	mk_arb6(wdbp, bu_vls_addr(&prim_name), (const fastf_t *)params->p);
-	obj_add_attr_key(data, wdbp, bu_vls_addr(&prim_name));
-	//std::cout << bu_vls_addr(&prim_name) << ": " << params->bool_op << "\n";
-	if (wcomb) (void)mk_addmember(bu_vls_addr(&prim_name), &((*wcomb).l), NULL, db_str2op(&(params->bool_op)));
-	bu_vls_free(&prim_name);
-	return 1;
-    } else {
-	return 0;
-    }
-}
 
 HIDDEN int
-subbrep_to_csg_arb8(struct subbrep_island_data *data, struct rt_wdb *wdbp, struct bu_vls *id, struct wmember *wcomb)
+subbrep_to_csg_arbn(struct bu_vls *msgs, struct csg_object_params *data, struct rt_wdb *wdbp, const char *pname)
 {
-    struct csg_object_params *params = data->params;
-    if (data->type == ARB8) {
-	struct bu_vls prim_name = BU_VLS_INIT_ZERO;
-	subbrep_obj_name(data, id, &prim_name);
-
-	mk_arb8(wdbp, bu_vls_addr(&prim_name), (const fastf_t *)params->p);
-	obj_add_attr_key(data, wdbp, bu_vls_addr(&prim_name));
-	//std::cout << bu_vls_addr(&prim_name) << ": " << params->bool_op << "\n";
-	if (wcomb) (void)mk_addmember(bu_vls_addr(&prim_name), &((*wcomb).l), NULL, db_str2op(&(params->bool_op)));
-	bu_vls_free(&prim_name);
-	return 1;
-    } else {
-	return 0;
-    }
-}
-#endif
-
-HIDDEN int
-subbrep_to_csg_arbn(struct bu_vls *msgs, struct csg_object_params *data, struct rt_wdb *wdbp, struct bu_vls *id, struct wmember *wcomb)
-{
-    if (!msgs || !data || !wdbp || !id || !wcomb) return 0;
-    if (data->type == ARBN) {
+    if (!msgs || !data || !wdbp || !pname) return 0;
+    if (data->csg_type == ARBN) {
 	/* Make the arbn, using the data key for a unique name */
 	struct bu_vls prim_name = BU_VLS_INIT_ZERO;
-	subbrep_obj_name(data, id, &prim_name);
+	subbrep_obj_name(data->csg_type, data->csg_id, pname, &prim_name);
 	if (mk_arbn(wdbp, bu_vls_addr(&prim_name), data->plane_cnt, data->planes)) {
 	    if (msgs) bu_vls_printf(msgs, "mk_arbn failed for %s\n", bu_vls_addr(&prim_name));
 	} else {
-	    //obj_add_attr_key(data, wdbp, bu_vls_addr(&prim_name));
+	    set_attr_key(wdbp, bu_vls_addr(&prim_name), "loops", data->s->shoal_loops_cnt, data->s->shoal_loops);
 	}
+	bu_vls_free(&prim_name);
 	return 1;
     } else {
 	return 0;
     }
 }
-    
+
 HIDDEN int
-subbrep_to_csg_planar(struct bu_vls *msgs, struct csg_object_params *data, struct rt_wdb *wdbp, struct bu_vls *id, struct wmember *wcomb)
+subbrep_to_csg_planar(struct bu_vls *msgs, struct csg_object_params *data, struct rt_wdb *wdbp, const char *pname)
 {
-    if (!msgs || !data || !wdbp || !id || !wcomb) return 0;
-    if (data->type == PLANAR_VOLUME) {
+    if (!msgs || !data || !wdbp || !pname) return 0;
+    if (data->csg_type == PLANAR_VOLUME) {
 	/* Make the bot, using the data key for a unique name */
 	struct bu_vls prim_name = BU_VLS_INIT_ZERO;
-	subbrep_obj_name(data, id, &prim_name);
-	if (mk_bot(wdbp, bu_vls_addr(&prim_name), RT_BOT_SOLID, RT_BOT_UNORIENTED, 0, data->vert_cnt, data->face_cnt, (fastf_t *)data->verts, data->faces, (fastf_t *)NULL, (struct bu_bitv *)NULL)) {
-	    if (msgs) bu_vls_printf(msgs, "mk_bot failed for overall bot\n");
+	subbrep_obj_name(data->csg_type, data->csg_id, pname, &prim_name);
+	if (mk_bot(wdbp, bu_vls_addr(&prim_name), RT_BOT_SOLID, RT_BOT_UNORIENTED, 0, data->csg_vert_cnt, data->csg_face_cnt, (fastf_t *)data->csg_verts, data->csg_faces, (fastf_t *)NULL, (struct bu_bitv *)NULL)) {
+	    if (msgs) bu_vls_printf(msgs, "mk_bot failed for %s\n", bu_vls_addr(&prim_name));
 	} else {
-	    //obj_add_attr_key(data, wdbp, bu_vls_addr(&prim_name));
+	    set_attr_key(wdbp, bu_vls_addr(&prim_name), "loops", data->s->shoal_loops_cnt, data->s->shoal_loops);
 	}
+	bu_vls_free(&prim_name);
 	return 1;
     } else {
 	return 0;
@@ -247,97 +135,56 @@ subbrep_to_csg_planar(struct bu_vls *msgs, struct csg_object_params *data, struc
 }
 
 HIDDEN int
-subbrep_to_csg_cylinder(struct csg_object_params *params, struct rt_wdb *wdbp, struct bu_vls *id, struct wmember *wcomb)
+subbrep_to_csg_cylinder(struct bu_vls *msgs, struct csg_object_params *data, struct rt_wdb *wdbp, const char *pname)
 {
-    if (params->type == CYLINDER) {
+    if (!msgs || !data || !wdbp || !pname) return 0;
+    if (data->csg_type == CYLINDER) {
 	struct bu_vls prim_name = BU_VLS_INIT_ZERO;
-	subbrep_obj_name(params, id, &prim_name);
-
-	int ret = mk_rcc(wdbp, bu_vls_addr(&prim_name), params->origin, params->hv, params->radius);
-	if (ret) {
-	    //std::cout << "problem making " << bu_vls_addr(&prim_name) << "\n";
+	subbrep_obj_name(data->csg_type, data->csg_id, pname, &prim_name);
+	if (mk_rcc(wdbp, bu_vls_addr(&prim_name), data->origin, data->hv, data->radius)) {
+	    if (msgs) bu_vls_printf(msgs, "mk_rcc failed for %s\n", bu_vls_addr(&prim_name));
+	} else {
+	    set_attr_key(wdbp, bu_vls_addr(&prim_name), "loops", data->s->shoal_loops_cnt, data->s->shoal_loops);
 	}
-#if 0
-       	else {
-	    obj_add_attr_key(params, wdbp, bu_vls_addr(&prim_name));
-	}
-#endif
-	if (wcomb) (void)mk_addmember(bu_vls_addr(&prim_name), &((*wcomb).l), NULL, db_str2op(&(params->bool_op)));
 	bu_vls_free(&prim_name);
 	return 1;
     }
     return 0;
 }
 
-#if 0
-HIDDEN int
-subbrep_to_csg_conic(struct subbrep_island_data *data, struct rt_wdb *wdbp, struct bu_vls *id, struct wmember *wcomb)
-{
-    struct csg_object_params *params = data->params;
-    if (data->type == CONE) {
-	struct bu_vls prim_name = BU_VLS_INIT_ZERO;
-	subbrep_obj_name(data, id, &prim_name);
-
-	mk_cone(wdbp, bu_vls_addr(&prim_name), params->origin, params->hv, params->height, params->radius, params->r2);
-	obj_add_attr_key(data, wdbp, bu_vls_addr(&prim_name));
-	//std::cout << bu_vls_addr(&prim_name) << ": " << params->bool_op << "\n";
-	if (wcomb) (void)mk_addmember(bu_vls_addr(&prim_name), &((*wcomb).l), NULL, db_str2op(&(params->bool_op)));
-	bu_vls_free(&prim_name);
-	return 1;
-    }
-    return 0;
-}
-
-HIDDEN int
-subbrep_to_csg_sphere(struct subbrep_island_data *data, struct rt_wdb *wdbp, struct bu_vls *id, struct wmember *wcomb)
-{
-    struct csg_object_params *params = data->params;
-    if (data->type == SPHERE) {
-	struct bu_vls prim_name = BU_VLS_INIT_ZERO;
-	subbrep_obj_name(data, id, &prim_name);
-
-	mk_sph(wdbp, bu_vls_addr(&prim_name), params->origin, params->radius);
-	obj_add_attr_key(data, wdbp, bu_vls_addr(&prim_name));
-	//std::cout << bu_vls_addr(&prim_name) << ": " << params->bool_op << "\n";
-	if (wcomb) (void)mk_addmember(bu_vls_addr(&prim_name), &((*wcomb).l), NULL, db_str2op(&(params->bool_op)));
-	bu_vls_free(&prim_name);
-	return 1;
-    }
-    return 0;
-}
-#endif
 
 HIDDEN void
-csg_obj_process(struct bu_vls *msgs, struct csg_object_params *data, struct rt_wdb *wdbp, struct bu_vls *id, struct wmember *wcomb)
+csg_obj_process(struct bu_vls *msgs, struct csg_object_params *data, struct rt_wdb *wdbp, const char *pname)
 {
-    struct bu_vls obj_name = BU_VLS_INIT_ZERO;
-    subbrep_obj_name(data, id, &obj_name);
-    struct directory *dp = db_lookup(wdbp->dbip, bu_vls_addr(&obj_name), LOOKUP_QUIET);
-
+#if 0
+    struct bu_vls prim_name = BU_VLS_INIT_ZERO;
+    subbrep_obj_name(data->csg_type, data->csg_id, pname, &prim_name);
+    struct directory *dp = db_lookup(wdbp->dbip, bu_vls_addr(&prim_name), LOOKUP_QUIET);
     // Don't recreate it
     if (dp != RT_DIR_NULL) {
-	//bu_log("already made %s\n", bu_vls_addr(data->obj_name));
+	bu_log("already made %s\n", bu_vls_addr(data->obj_name));
 	return;
     }
+#endif
 
-    switch (data->type) {
+    switch (data->csg_type) {
 	case ARB6:
-	    //subbrep_to_csg_arb6(data, wdbp, id, wcomb);
+	    //subbrep_to_csg_arb6(data, wdbp, pname, wcomb);
 	    break;
 	case ARB8:
-	    //subbrep_to_csg_arb8(data, wdbp, id, wcomb);
+	    //subbrep_to_csg_arb8(data, wdbp, pname, wcomb);
 	    break;
 	case ARBN:
-	    subbrep_to_csg_arbn(msgs, data, wdbp, id, wcomb);
+	    subbrep_to_csg_arbn(msgs, data, wdbp, pname);
 	    break;
 	case PLANAR_VOLUME:
-	    subbrep_to_csg_planar(msgs, data, wdbp, id, wcomb);
+	    subbrep_to_csg_planar(msgs, data, wdbp, pname);
 	    break;
 	case CYLINDER:
-	    subbrep_to_csg_cylinder(data, wdbp, id, wcomb);
+	    subbrep_to_csg_cylinder(msgs, data, wdbp, pname);
 	    break;
 	case CONE:
-	    //subbrep_to_csg_conic(data, wdbp, id, wcomb);
+	    //subbrep_to_csg_conic(data, wdbp, pname, wcomb);
 	    break;
 	case SPHERE:
 	    //subbrep_to_csg_sphere(data, wdbp, id, wcomb);
@@ -351,46 +198,178 @@ csg_obj_process(struct bu_vls *msgs, struct csg_object_params *data, struct rt_w
     }
 }
 
+#define BOOL_RESOLVE(_a, _b) (_b == '+') ? &isect : ((_a == '-' && _b == '-') || (_a == 'u' && _b == 'u')) ? &un : &sub
 
 HIDDEN int
-make_island(struct bu_vls *msgs, struct subbrep_island_data *data, struct rt_wdb *wdbp, struct bu_vls *id, struct wmember *pcomb, int depth)
+make_shoal(struct bu_vls *msgs, struct subbrep_shoal_data *data, struct rt_wdb *wdbp, const char *rname)
 {
-    struct bu_vls spacer = BU_VLS_INIT_ZERO;
+    char un = 'u';
+    char sub = '-';
+    char isect = '+';
 
-    subbrep_obj_name(data->nucleus->params, id, data->obj_name);
-    struct directory *dp = db_lookup(wdbp->dbip, bu_vls_addr(data->obj_name), LOOKUP_QUIET);
-
-    // Don't recreate it
-    if (dp != RT_DIR_NULL) {
-	//bu_log("already made %s\n", bu_vls_addr(data->obj_name));
+    struct wmember wcomb;
+    struct bu_vls prim_name = BU_VLS_INIT_ZERO;
+    struct bu_vls comb_name = BU_VLS_INIT_ZERO;
+    if (!data || !data->params) {
+	if (msgs) bu_vls_printf(msgs, "Error! invalid shoal.\n");
 	return 0;
     }
 
-    for (int i = 0; i < depth; i++)
-	bu_vls_printf(&spacer, " ");
-    //std::cout << bu_vls_addr(&spacer) << "Making shape for " << bu_vls_addr(data->id) << "\n";
+    //struct bu_vls key = BU_VLS_INIT_ZERO;
+    //set_key(&key, data->shoal_loops_cnt, data->shoal_loops);
+    //bu_log("Processing shoal %s from island %s\n", bu_vls_addr(&key), bu_vls_addr(data->i->key));
+
+    if (data->shoal_type == COMB) {
+	BU_LIST_INIT(&wcomb.l);
+	subbrep_obj_name(data->shoal_type, data->shoal_id, rname, &comb_name);
+	//bu_log("Created %s\n", bu_vls_addr(&comb_name));
+	csg_obj_process(msgs, data->params, wdbp, rname);
+	subbrep_obj_name(data->params->csg_type, data->params->csg_id, rname, &prim_name);
+	//bu_log("  %c %s\n", data->params->bool_op, bu_vls_addr(&prim_name));
+	(void)mk_addmember(bu_vls_addr(&prim_name), &(wcomb.l), NULL, db_str2op(&(data->params->bool_op)));
+	for (unsigned int i = 0; i < BU_PTBL_LEN(data->shoal_children); i++) {
+	    struct csg_object_params *c = (struct csg_object_params *)BU_PTBL_GET(data->shoal_children, i);
+	    char *bool_op = BOOL_RESOLVE(data->params->bool_op, c->bool_op);
+	    csg_obj_process(msgs, c, wdbp, rname);
+	    bu_vls_trunc(&prim_name, 0);
+	    subbrep_obj_name(c->csg_type, c->csg_id, rname, &prim_name);
+	    //bu_log("     %c(%c) %s\n", c->bool_op, *bool_op, bu_vls_addr(&prim_name));
+	    (void)mk_addmember(bu_vls_addr(&prim_name), &(wcomb.l), NULL, db_str2op(bool_op));
+	}
+	mk_lcomb(wdbp, bu_vls_addr(&comb_name), &wcomb, 0, NULL, NULL, NULL, 0);
+	set_attr_key(wdbp, bu_vls_addr(&comb_name), "loops", data->shoal_loops_cnt, data->shoal_loops);
+    } else {
+	subbrep_obj_name(data->params->csg_type, data->params->csg_id, rname, &prim_name);
+	csg_obj_process(msgs, data->params, wdbp, rname);
+	//bu_log("Created %s\n", bu_vls_addr(&prim_name));
+    }
+    return 1;
+}
+
+HIDDEN int
+make_island(struct bu_vls *msgs, struct subbrep_island_data *data, struct rt_wdb *wdbp, const char *rname, struct wmember *pcomb)
+{
+    struct wmember icomb;
+    struct wmember ucomb;
+    struct wmember scomb;
+
+    int failed = 0;
+    char un = 'u';
+    char sub = '-';
+    char isect = '+'; // UNUSED here, for BOOL_RESOLVE macro.
+
+    char *n_bool_op;
+    if (data->island_type == BREP) {
+	n_bool_op = &(data->local_brep_bool_op);
+    } else {
+	n_bool_op = &(data->nucleus->params->bool_op);
+    }
+    struct bu_vls island_name = BU_VLS_INIT_ZERO;
+    subbrep_obj_name(-1, data->island_id, rname, &island_name);
+
 #if 0
-    if (data->planar_obj && data->planar_obj->local_brep) {
-	struct bu_vls brep_name = BU_VLS_INIT_ZERO;
-	bu_vls_sprintf(&brep_name, "planar_%s.s", bu_vls_addr(data->id));
-	mk_brep(wdbp, bu_vls_addr(&brep_name), data->planar_obj->local_brep);
-	bu_vls_free(&brep_name);
+    if (*n_bool_op == 'u') {
+	bu_log("Processing island %s\n", bu_vls_addr(&island_name));
+    } else {
+	bu_log("Making negative island %s\n", bu_vls_addr(&island_name));
     }
 #endif
-#if 1
+
+    struct bu_vls shoal_name = BU_VLS_INIT_ZERO;
+    struct bu_vls union_name = BU_VLS_INIT_ZERO;
+    struct bu_vls sub_name = BU_VLS_INIT_ZERO;
+
+    BU_LIST_INIT(&icomb.l);
+    BU_LIST_INIT(&ucomb.l);
+    bu_vls_sprintf(&union_name, "%s-unions", bu_vls_addr(&island_name));
+    BU_LIST_INIT(&scomb.l);
+    bu_vls_sprintf(&sub_name, "%s-subtractions", bu_vls_addr(&island_name));
+
+    bu_vls_trunc(&shoal_name, 0);
+    if (data->island_type == BREP) {
+	subbrep_obj_name(data->island_type, data->island_id, rname, &shoal_name);
+	mk_brep(wdbp, bu_vls_addr(&shoal_name), data->local_brep);
+	n_bool_op = &(data->local_brep_bool_op);
+    } else {
+	subbrep_obj_name(data->nucleus->shoal_type, data->nucleus->shoal_id, rname, &shoal_name);
+	if (!make_shoal(msgs, data->nucleus, wdbp, rname)) failed++;
+    }
+
+    // In a comb, the first element is always unioned.  The nucleus bool op is applied
+    // to the overall shoal in the pcomb assembly.
+    (void)mk_addmember(bu_vls_addr(&shoal_name), &(ucomb.l), NULL, db_str2op(&un));
+    char *bool_op;
+    int have_subtractions = 0;
+
+    // Find and handle union shoals first.
+    for (unsigned int i = 0; i < BU_PTBL_LEN(data->island_children); i++) {
+	struct subbrep_shoal_data *d = (struct subbrep_shoal_data *)BU_PTBL_GET(data->island_children, i);
+	bool_op = BOOL_RESOLVE(*n_bool_op, d->params->bool_op);
+	if (*bool_op == 'u') {
+	    bu_vls_trunc(&shoal_name, 0);
+	    subbrep_obj_name(d->shoal_type, d->shoal_id, rname, &shoal_name);
+	    //if (*n_bool_op == 'u') {
+	    //  bu_log("  unioning: %s: %s\n", bu_vls_addr(&island_name), bu_vls_addr(&shoal_name));
+	    //}
+	    if (!make_shoal(msgs, d, wdbp, rname)) failed++;
+	    (void)mk_addmember(bu_vls_addr(&shoal_name), &(ucomb.l), NULL, db_str2op(bool_op));
+	}
+    }
+    // Have unions, get subtractions.
+    for (unsigned int i = 0; i < BU_PTBL_LEN(data->island_children); i++) {
+	struct subbrep_shoal_data *d = (struct subbrep_shoal_data *)BU_PTBL_GET(data->island_children, i);
+	bool_op = BOOL_RESOLVE(*n_bool_op, d->params->bool_op);
+	if (*bool_op == '-') {
+	    bu_vls_trunc(&shoal_name, 0);
+	    subbrep_obj_name(d->shoal_type, d->shoal_id, rname, &shoal_name);
+	    //if (*n_bool_op == 'u') {
+		//bu_log("  subtracting: %s: %s\n", bu_vls_addr(&island_name), bu_vls_addr(&shoal_name));
+	    //}
+	    if (!make_shoal(msgs, d, wdbp, rname)) failed++;
+	    (void)mk_addmember(bu_vls_addr(&shoal_name), &(scomb.l), NULL, db_str2op(&un));
+	    have_subtractions++;
+	}
+    }
+    // Handle subtractions
+    for (unsigned int i = 0; i < BU_PTBL_LEN(data->subtractions); i++) {
+	struct subbrep_island_data *n = (struct subbrep_island_data *)BU_PTBL_GET(data->subtractions, i);
+	struct bu_vls subtraction_name = BU_VLS_INIT_ZERO;
+	subbrep_obj_name(-1, n->island_id, rname, &subtraction_name);
+	//if (*n_bool_op == 'u') {
+	//  bu_log("  subtraction found for %s: %s\n", bu_vls_addr(&island_name), bu_vls_addr(&subtraction_name));
+	//}
+	(void)mk_addmember(bu_vls_addr(&subtraction_name), &(scomb.l), NULL, db_str2op(&un));
+	bu_vls_free(&subtraction_name);
+	have_subtractions++;
+    }
+
+    mk_lcomb(wdbp, bu_vls_addr(&union_name), &ucomb, 0, NULL, NULL, NULL, 0);
+    (void)mk_addmember(bu_vls_addr(&union_name), &(icomb.l), NULL, db_str2op(&un));
+    if (have_subtractions) {
+	mk_lcomb(wdbp, bu_vls_addr(&sub_name), &scomb, 0, NULL, NULL, NULL, 0);
+	(void)mk_addmember(bu_vls_addr(&sub_name), &(icomb.l), NULL, db_str2op(&sub));
+    }
+    mk_lcomb(wdbp, bu_vls_addr(&island_name), &icomb, 0, NULL, NULL, NULL, 0);
+    set_attr_key(wdbp, bu_vls_addr(&island_name), "loops", data->island_loops_cnt, data->island_loops);
+    set_attr_key(wdbp, bu_vls_addr(&island_name), "faces", data->island_faces_cnt, data->island_faces);
+
+    if (*n_bool_op == 'u')
+	(void)mk_addmember(bu_vls_addr(&island_name), &(pcomb->l), NULL, db_str2op(n_bool_op));
+
+    // Debugging B-Reps - generates a B-Rep object for each island
+#if 0
     if (data->local_brep) {
-	char un = 'u';
 	unsigned char rgb[3];
 	struct wmember bcomb;
 	struct bu_vls bcomb_name = BU_VLS_INIT_ZERO;
 	struct bu_vls brep_name = BU_VLS_INIT_ZERO;
-	bu_vls_sprintf(&bcomb_name, "brep_obj_%s.r", bu_vls_addr(data->id));
+	bu_vls_sprintf(&bcomb_name, "brep_obj_%d.r", data->island_id);
 	BU_LIST_INIT(&bcomb.l);
 
 	for (int i = 0; i < 3; ++i)
 	    rgb[i] = static_cast<unsigned char>(255.0 * drand48() + 0.5);
 
-	bu_vls_sprintf(&brep_name, "brep_obj_%s.s", bu_vls_addr(data->id));
+	bu_vls_sprintf(&brep_name, "brep_obj_%d.s", data->island_id);
 	mk_brep(wdbp, bu_vls_addr(&brep_name), data->local_brep);
 
 	(void)mk_addmember(bu_vls_addr(&brep_name), &(bcomb.l), NULL, db_str2op((const char *)&un));
@@ -400,105 +379,10 @@ make_island(struct bu_vls *msgs, struct subbrep_island_data *data, struct rt_wdb
 	bu_vls_free(&bcomb_name);
     }
 #endif
-    if (data->type == BREP) {
-	if (data->local_brep) {
-	    struct bu_vls brep_name = BU_VLS_INIT_ZERO;
-	    subbrep_obj_name(data->nucleus->params, id, &brep_name);
-	    if (!data->local_brep->IsValid()) {
-		if (msgs) bu_vls_printf(msgs, "Warning - data->local_brep is not valid for %s\n", bu_vls_addr(&brep_name));
-	    }
-	    mk_brep(wdbp, bu_vls_addr(&brep_name), data->local_brep);
-	    // TODO - almost certainly need to do more work to get correct booleans
-	    //std::cout << bu_vls_addr(&brep_name) << ": " << data->params->bool_op << "\n";
-	    if (pcomb) (void)mk_addmember(bu_vls_addr(&brep_name), &(pcomb->l), NULL, db_str2op(&(data->nucleus->params->bool_op)));
-	    bu_vls_free(&brep_name);
-	} else {
-	    if (msgs) bu_vls_printf(msgs, "Warning - mk_brep called but data->local_brep is empty\n");
-	}
-    } else {
-	if (data->type == COMB) {
-	    struct wmember wcomb;
-	    struct bu_vls comb_name = BU_VLS_INIT_ZERO;
-	    struct bu_vls member_name = BU_VLS_INIT_ZERO;
-	    subbrep_obj_name(data->nucleus->params, id, &comb_name);
-	    BU_LIST_INIT(&wcomb.l);
-	    if (data->nucleus->params && !data->negative_nucleus) {
-	    //bu_log("%smake planar obj %s\n", bu_vls_addr(&spacer), bu_vls_addr(data->id));
-		csg_obj_process(msgs, data->nucleus->params, wdbp, id, &wcomb);
-	    }
-	    //bu_log("make comb %s\n", bu_vls_addr(data->id));
-	    for (unsigned int i = 0; i < BU_PTBL_LEN(data->children); i++){
-		struct csg_object_params *cdata = (struct csg_object_params *)BU_PTBL_GET(data->children,i);
-		//struct subbrep_shoal_data *sdata = (struct subbrep_shoal_data *)BU_PTBL_GET(data->children,i);
-		csg_obj_process(msgs, cdata, wdbp, id, &wcomb);
-	    }
-	    if (data->nucleus && data->negative_nucleus) {
-	    //bu_log("%smake planar obj %s\n", bu_vls_addr(&spacer), bu_vls_addr(data->id));
-		csg_obj_process(msgs, data->nucleus->params, wdbp, id, &wcomb);
-	    }
 
-	    mk_lcomb(wdbp, bu_vls_addr(&comb_name), &wcomb, 0, NULL, NULL, NULL, 0);
-	    obj_add_attr_key(data, wdbp, bu_vls_addr(&comb_name));
 
-	    // TODO - almost certainly need to do more work to get correct booleans
-	    //std::cout << bu_vls_addr(&comb_name) << ": " << data->params->bool_op << "\n";
-	    if (pcomb) (void)mk_addmember(bu_vls_addr(&comb_name), &(pcomb->l), NULL, db_str2op(&(data->nucleus->params->bool_op)));
-
-	    bu_vls_free(&member_name);
-	    bu_vls_free(&comb_name);
-	} else {
-	    //std::cout << "type: " << data->type << "\n";
-	    //bu_log("%smake solid %s\n", bu_vls_addr(&spacer), bu_vls_addr(data->id));
-	    csg_obj_process(msgs, data->nucleus->params, wdbp, id, pcomb);
-	}
-    }
+    bu_vls_free(&island_name);
     return 0;
-}
-
-void
-finalize_comb(struct rt_wdb *wdbp, struct directory *brep_dp, struct rt_gen_worker_vars *pbrep_vars, struct subbrep_island_data *curr_union, int ncpus)
-{
-    struct bu_ptbl *sc = curr_union->subtraction_candidates;
-    if (sc && BU_PTBL_LEN(sc) > 0) {
-	struct directory *dp;
-	struct bu_external external;
-	struct bu_vls tmp_comb_name = BU_VLS_INIT_ZERO;
-	struct bu_ptbl results = BU_PTBL_INIT_ZERO;
-
-	bu_log("Finalizing %s...\n", bu_vls_addr(curr_union->obj_name));
-	bu_vls_sprintf(&tmp_comb_name, "%s-r", bu_vls_addr(curr_union->obj_name));
-
-	// We've collected all the subtractions we know about - make a temp copy for raytracing.  Because
-	// overlaps are not desired here, make the temp comb a region
-	dp = db_lookup(wdbp->dbip, bu_vls_addr(curr_union->obj_name), LOOKUP_QUIET);
-	if (db_get_external(&external, dp, wdbp->dbip)) {
-	    bu_log("Database read error on object %s\n", bu_vls_addr(curr_union->obj_name));
-	}
-	if (wdb_export_external(wdbp, &external, bu_vls_addr(&tmp_comb_name), dp->d_flags, dp->d_minor_type) < 0) {
-	    bu_log("Database write error on tmp object %s\n", bu_vls_addr(&tmp_comb_name));
-	}
-	// Now the region flag
-	dp = db_lookup(wdbp->dbip, bu_vls_addr(&tmp_comb_name), LOOKUP_QUIET);
-	dp->d_flags |= RT_DIR_REGION;
-
-	// Evaluate the candidate subtraction objects using solid raytracing, and add the ones
-	// that contribute gaps to the comb definition.
-	analyze_find_subtracted(&results, wdbp, brep_dp->d_namep, pbrep_vars, bu_vls_addr(&tmp_comb_name), sc, (void *)curr_union, ncpus);
-
-	// kill the temp comb.
-	dp = db_lookup(wdbp->dbip, bu_vls_addr(&tmp_comb_name), LOOKUP_QUIET);
-	if (dp != RT_DIR_NULL) {
-	    if (db_delete(wdbp->dbip, dp) != 0 || db_dirdelete(wdbp->dbip, dp) != 0) {
-		bu_log("error deleting temp object %s\n", bu_vls_addr(&tmp_comb_name));
-	    }
-	}
-
-	// update the final comb definition with any new subtraction objects.
-	for (unsigned int j = 0; j < BU_PTBL_LEN(&results); j++) {
-	    struct subbrep_island_data *sobj = (struct subbrep_island_data *)BU_PTBL_GET(&results, j);
-	    bu_log("Subtract %s from %s\n", bu_vls_addr(sobj->id), bu_vls_addr(curr_union->id));
-	}
-    }
 }
 
 /* return codes:
@@ -508,7 +392,7 @@ finalize_comb(struct rt_wdb *wdbp, struct directory *brep_dp, struct rt_gen_work
  *  2 not a valid brep
  */
 int
-brep_to_csg(struct ged *gedp, struct directory *dp, int UNUSED(verify))
+_obj_brep_to_csg(struct ged *gedp, struct directory *dp, int verify, struct bu_vls *retname)
 {
     /* Unpack B-Rep */
     struct rt_db_internal intern;
@@ -518,7 +402,6 @@ brep_to_csg(struct ged *gedp, struct directory *dp, int UNUSED(verify))
     if (rt_db_get_internal(&intern, dp, wdbp->dbip, NULL, &rt_uniresource) < 0) {
 	return -1;
     }
-    bu_vls_printf(gedp->ged_result_str, "processing %s\n", dp->d_namep);
     if (intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_BREP) {
 	bu_vls_printf(gedp->ged_result_str, "%s is not a B-Rep - aborting\n", dp->d_namep);
 	return 1;
@@ -535,45 +418,79 @@ brep_to_csg(struct ged *gedp, struct directory *dp, int UNUSED(verify))
     ON_Brep *brep = brep_ip->brep;
 
     struct wmember pcomb;
+    struct bu_vls core_name = BU_VLS_INIT_ZERO;
     struct bu_vls comb_name = BU_VLS_INIT_ZERO;
-    bu_vls_sprintf(&comb_name, "csg_%s", dp->d_namep);
-    BU_LIST_INIT(&pcomb.l);
+    struct bu_vls root_name = BU_VLS_INIT_ZERO;
+    bu_path_component(&core_name, dp->d_namep, PATH_BASENAME_CORE);
+    bu_vls_sprintf(&root_name, "%s-csg", bu_vls_addr(&core_name));
+    bu_vls_sprintf(&comb_name, "csg_%s.c", bu_vls_addr(&core_name));
+    if (retname) bu_vls_sprintf(retname, "%s", bu_vls_addr(&comb_name));
 
-    struct bu_ptbl *subbreps_tree = find_subbreps(gedp->ged_result_str, brep);
+    // Only do this if we haven't already done it - tree walking may
+    // result in multiple references to a single object
+    if (db_lookup(gedp->ged_wdbp->dbip, bu_vls_addr(&comb_name), LOOKUP_QUIET) == RT_DIR_NULL) {
+	bu_vls_printf(gedp->ged_result_str, "Converting %s to %s\n", dp->d_namep, bu_vls_addr(&comb_name));
 
-    for (unsigned int i = 0; i < BU_PTBL_LEN(subbreps_tree); i++) {
-	struct subbrep_island_data *d = (struct subbrep_island_data *)BU_PTBL_GET(subbreps_tree, i);
-	if (d->nucleus) {
-	    struct bu_vls id = BU_VLS_INIT_ZERO;
-	    bu_vls_sprintf(&id, "csg_%s-%d_nucleus.s", dp->d_namep, d->nucleus->params->id);
-	    bu_log("nucleus type : %d, bool_op: %c\n", d->nucleus->params->type, d->nucleus->params->bool_op);
-	    csg_obj_process(gedp->ged_result_str, d->nucleus->params, wdbp, &id, &pcomb);
-	    if (d->nucleus->sub_params) {
-		for (unsigned int k = 0; k < BU_PTBL_LEN(d->nucleus->sub_params); k++){
-		    struct csg_object_params *ccd = (struct csg_object_params *)BU_PTBL_GET(d->nucleus->sub_params,k);
-		    bu_log("   nucleus subobject type: %d, bool_op: %c\n", ccd->type, ccd->bool_op);
-		    csg_obj_process(gedp->ged_result_str, ccd, wdbp, &id, &pcomb);
+	BU_LIST_INIT(&pcomb.l);
+
+	struct bu_ptbl *subbreps = brep_to_csg(gedp->ged_result_str, brep);
+
+	if (subbreps) {
+	    int have_non_breps = 0;
+	    for (unsigned int i = 0; i < BU_PTBL_LEN(subbreps); i++) {
+		struct subbrep_island_data *sb = (struct subbrep_island_data *)BU_PTBL_GET(subbreps, i);
+		if (sb->island_type != BREP) have_non_breps++;
+	    }
+	    if (!have_non_breps) return 2;
+
+	    for (unsigned int i = 0; i < BU_PTBL_LEN(subbreps); i++) {
+		struct subbrep_island_data *sb = (struct subbrep_island_data *)BU_PTBL_GET(subbreps, i);
+		make_island(gedp->ged_result_str, sb, wdbp, bu_vls_addr(&root_name), &pcomb);
+	    }
+	    for (unsigned int i = 0; i < BU_PTBL_LEN(subbreps); i++) {
+		// free islands;
+	    }
+
+	    // Only do a combination if the comb structure has more than one entry in the list.
+	    struct bu_list *olist;
+	    int comb_objs = 0;
+	    for (BU_LIST_FOR(olist, bu_list, &pcomb.l)) comb_objs++;
+	    if (comb_objs > 1) {
+		// We're not setting the region flag here in case there is a hierarchy above us that
+		// takes care of it.  TODO - support knowing whether that's true and doing the right thing. 
+		mk_lcomb(wdbp, bu_vls_addr(&comb_name), &pcomb, 0, NULL, NULL, NULL, 0);
+	    } else {
+		// TODO - Fix up name of first item in list to reflect top level naming to
+		// avoid an unnecessary level of hierarchy.
+		mk_lcomb(wdbp, bu_vls_addr(&comb_name), &pcomb, 0, NULL, NULL, NULL, 0);
+	    }
+
+	    // Verify that the resulting csg tree and the original B-Rep pass a difference test.
+	    if (verify) {
+		ON_BoundingBox bbox;
+		struct bn_tol tol = {BN_TOL_MAGIC, BN_TOL_DIST, BN_TOL_DIST * BN_TOL_DIST, 1.0e-6, 1.0 - 1.0e-6 };
+		brep->GetBoundingBox(bbox);
+		tol.dist = (bbox.Diagonal().Length() / 100.0);
+		bu_vls_printf(gedp->ged_result_str, "Analyzing %s csg conversion, tol %f...\n", dp->d_namep, tol.dist);
+		if (analyze_raydiff(NULL, gedp->ged_wdbp->dbip, dp->d_namep, bu_vls_addr(&comb_name), &tol, 1)) {
+		    /* remove generated tree if debugging flag isn't passed - not valid */
+		    int ac = 3;
+		    const char **av = (const char **)bu_calloc(4, sizeof(char *), "killtree argv");
+		    av[0] = "killtree";
+		    av[1] = "-f";
+		    av[2] = bu_vls_addr(&comb_name);
+		    av[3] = (char *)0;
+		    (void)ged_killtree(gedp, ac, av);
+		    bu_free(av, "free av array");
+		    bu_vls_printf(gedp->ged_result_str, "Error: %s did not pass diff test at tol %f, rejecting\n", bu_vls_addr(&comb_name), tol.dist);
 		}
 	    }
 	}
-	struct bu_vls id = BU_VLS_INIT_ZERO;
-	bu_vls_sprintf(&id, "csg_%s-%d_child.s", dp->d_namep, d->nucleus->params->id);
-	for (unsigned int j = 0; j < BU_PTBL_LEN(d->children); j++){
-	    struct subbrep_shoal_data *sdata = (struct subbrep_shoal_data *)BU_PTBL_GET(d->children,j);
-	    struct csg_object_params *cdata = sdata->params;
-	    bu_log(" object type: %d, bool_op: %c\n", cdata->type, cdata->bool_op);
-	    csg_obj_process(gedp->ged_result_str, cdata, wdbp, &id, &pcomb);
-	    if (sdata->sub_params) {
-		for (unsigned int k = 0; k < BU_PTBL_LEN(sdata->sub_params); k++){
-		    struct csg_object_params *ccd = (struct csg_object_params *)BU_PTBL_GET(sdata->sub_params,k);
-		    bu_log("   subobject type: %d, bool_op: %c\n", ccd->type, ccd->bool_op);
-		    csg_obj_process(gedp->ged_result_str, ccd, wdbp, &id, &pcomb);
-		}
-	    }
-	}
-
+    } else {
+	bu_vls_printf(gedp->ged_result_str, "Conversion object %s for %s already exists, skipping.\n", bu_vls_addr(&comb_name), dp->d_namep);
     }
-
+    // This string is getting overwritten somewhere???
+    bu_log("result_str: \n\n\n%s\n\n\n\n", bu_vls_addr(gedp->ged_result_str));
     return 0;
 }
 
@@ -630,9 +547,6 @@ brep_csg_conversion_tree(struct ged *gedp, const union tree *oldtree, union tree
 	    struct bu_vls tmpname = BU_VLS_INIT_ZERO;
 	    char *oldname = oldtree->tr_l.tl_name;
 	    bu_vls_sprintf(&tmpname, "csg_%s", oldname);
-	    newtree->tr_l.tl_name = (char*)bu_malloc(strlen(bu_vls_addr(&tmpname))+1, "char");
-	    //bu_log("have leaf: %s\n", oldtree->tr_l.tl_name);
-	    //bu_log("checking for: %s\n", bu_vls_addr(&tmpname));
 	    if (db_lookup(gedp->ged_wdbp->dbip, bu_vls_addr(&tmpname), LOOKUP_QUIET) == RT_DIR_NULL) {
 		struct directory *dir = db_lookup(gedp->ged_wdbp->dbip, oldname, LOOKUP_QUIET);
 
@@ -643,25 +557,31 @@ brep_csg_conversion_tree(struct ged *gedp, const union tree *oldtree, union tree
 			    bu_vls_free(&tmpname);
 			    break;
 			}
+			newtree->tr_l.tl_name = (char*)bu_malloc(strlen(bu_vls_addr(&tmpname))+1, "char");
 			bu_strlcpy(newtree->tr_l.tl_name, bu_vls_addr(&tmpname), strlen(bu_vls_addr(&tmpname))+1);
 			bu_vls_free(&tmpname);
 			break;
 		    }
 		    // It's a primitive. If it's a b-rep object, convert it. Otherwise,
-		    // just duplicate it. Might need better error codes from brep_to_csg for this...
-		    int brep_c = brep_to_csg(gedp, dir, verify);
+		    // just duplicate it. Might need better error codes from _obj_brep_to_csg for this...
+		    struct bu_vls newname = BU_VLS_INIT_ZERO;
+		    int brep_c = _obj_brep_to_csg(gedp, dir, verify, &newname);
 		    int need_break = 0;
 		    switch (brep_c) {
 			case 0:
-			    bu_vls_printf(gedp->ged_result_str, "processed brep %s.\n", bu_vls_addr(&tmpname));
-			    bu_strlcpy(newtree->tr_l.tl_name, bu_vls_addr(&tmpname), strlen(bu_vls_addr(&tmpname))+1);
+			    bu_vls_printf(gedp->ged_result_str, "processed brep %s.\n", bu_vls_addr(&newname));
+			    newtree->tr_l.tl_name = (char*)bu_malloc(strlen(bu_vls_addr(&newname))+1, "char");
+			    bu_strlcpy(newtree->tr_l.tl_name, bu_vls_addr(&newname), strlen(bu_vls_addr(&newname))+1);
+			    bu_vls_free(&newname);
 			    break;
 			case 1:
 			    bu_vls_printf(gedp->ged_result_str, "non brep solid %s.\n", bu_vls_addr(&tmpname));
+			    newtree->tr_l.tl_name = (char*)bu_malloc(strlen(bu_vls_addr(&tmpname))+1, "char");
 			    bu_strlcpy(newtree->tr_l.tl_name, oldname, strlen(oldname)+1);
 			    break;
 			case 2:
 			    bu_vls_printf(gedp->ged_result_str, "skipped invalid brep %s.\n", bu_vls_addr(&tmpname));
+			    newtree->tr_l.tl_name = (char*)bu_malloc(strlen(bu_vls_addr(&tmpname))+1, "char");
 			    bu_strlcpy(newtree->tr_l.tl_name, oldname, strlen(oldname)+1);
 			default:
 			    bu_vls_free(&tmpname);
@@ -676,6 +596,7 @@ brep_csg_conversion_tree(struct ged *gedp, const union tree *oldtree, union tree
 		}
 	    } else {
 		bu_vls_printf(gedp->ged_result_str, "%s already exists.\n", bu_vls_addr(&tmpname));
+		newtree->tr_l.tl_name = (char*)bu_malloc(strlen(bu_vls_addr(&tmpname))+1, "char");
 		bu_strlcpy(newtree->tr_l.tl_name, bu_vls_addr(&tmpname), strlen(bu_vls_addr(&tmpname))+1);
 	    }
 	    bu_vls_free(&tmpname);
@@ -736,7 +657,7 @@ _ged_brep_to_csg(struct ged *gedp, const char *dp_name, int verify)
     if (dp->d_flags & RT_DIR_COMB) {
 	return comb_to_csg(gedp, dp, verify) ? GED_ERROR : GED_OK;
     } else {
-	return brep_to_csg(gedp, dp, verify) ? GED_ERROR : GED_OK;
+	return _obj_brep_to_csg(gedp, dp, verify, NULL) ? GED_ERROR : GED_OK;
     }
 }
 

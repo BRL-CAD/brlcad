@@ -43,6 +43,10 @@
 #  endif
 #endif
 
+/* Definitions for clockwise and counter-clockwise loop directions */
+#define BG_CW 1
+#define BG_CCW -1
+
 #endif  /* BG_DEFINES_H */
 /** @} */
 /*

@@ -191,7 +191,7 @@ bg_3d_polygon_sort_ccw(size_t npts, point_t *pts, plane_t cmp)
 }
 
 int
-bg_polygon_clockwise(size_t npts, const point2d_t *pts, const int *pt_indices)
+bg_polygon_direction(size_t npts, const point2d_t *pts, const int *pt_indices)
 {
     size_t i;
     double sum = 0;
@@ -218,7 +218,7 @@ bg_polygon_clockwise(size_t npts, const point2d_t *pts, const int *pt_indices)
     /* clean up and evaluate results */
     if (tmp_pt_order) bu_free(tmp_pt_order, "free tmp_pt_order");
     if (NEAR_ZERO(sum, SMALL_FASTF)) return 0;
-    return (sum > 0) ? 1 : -1;
+    return (sum > 0) ? BG_CW : BG_CCW;
 }
 
 /*
@@ -730,9 +730,9 @@ int bg_nested_polygon_triangulate(int **faces, int *num_faces, point2d_t **out_p
 
     if (type == DELAUNAY && (!out_pts || !num_outpts)) return 1;
 
-    ccw = bg_polygon_clockwise(poly_pnts, pts, poly);
+    ccw = bg_polygon_direction(poly_pnts, pts, poly);
 
-    if (ccw != -1) {
+    if (ccw != BG_CCW) {
 	bu_log("Warning - non-CCW point loop!\n");
     }
 

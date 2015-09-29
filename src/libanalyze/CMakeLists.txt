@@ -13,7 +13,7 @@ set(LIBANALYZE_SOURCES
   inside.c
   overlaps.c
   raydiff.c
-  find_subtracted_shapes.cpp
+  #find_subtracted_shapes.cpp
   util.cpp
   voxels.c
   )
@@ -23,7 +23,7 @@ add_subdirectory(tests)
 BRLCAD_ADDLIB(libanalyze "${LIBANALYZE_SOURCES}" "${TCL_LIBRARY};libbu;librt")
 set_target_properties(libanalyze PROPERTIES VERSION 20.0.1 SOVERSION 20)
 
-CMAKEFILES(analyze_private.h)
+CMAKEFILES(analyze_private.h find_subtracted_shapes.cpp)
 
 # Local Variables:
 # tab-width: 8

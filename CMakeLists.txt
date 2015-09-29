@@ -2210,8 +2210,18 @@ endif()
 # just run the test and it will be handled by configure_file later.
 include(CheckSymbolExists)
 if(WIN32)
+
+  # TODO: the windows build doesn't actually persist WX/Werror to the
+  # build targets, but there are lots of warnings that still need
+  # cleaning up.  this will do that:
+  #
   # consider all warnings as errors (MSVC)
-  set(CMAKE_REQUIRED_FLAGS ${CMAKE_REQUIRED_FLAGS} /WX)
+  # CHECK_C_FLAG(WX)
+  # CHECK_CXX_FLAG(WX)
+  #
+  # this doesn't actually do anything (or is maybe only used for a few
+  # tests that follow:
+ set(CMAKE_REQUIRED_FLAGS ${CMAKE_REQUIRED_FLAGS} /WX)
 
   CHECK_SYMBOL_EXISTS(hypot "math.h" HAVE_HYPOT)
   #If we don't have it, need to define it as _hypot in config_win

@@ -1535,19 +1535,19 @@ Path::LoadONTrimmingCurves(ON_Brep *brep)
 	curve_pullback_samples.push_back(data);
 	if (!orientWithCurve) {
 	    list<ON_2dPointArray *>::iterator si;
-	    si = data->segments.begin();
+	    si = data->segments->begin();
 	    list<ON_2dPointArray *> rsegs;
-	    while (si != data->segments.end()) {
+	    while (si != data->segments->end()) {
 		ON_2dPointArray *samples = (*si);
 		samples->Reverse();
 		rsegs.push_front(samples);
 		si++;
 	    }
-	    data->segments.clear();
+	    data->segments->clear();
 	    si = rsegs.begin();
 	    while (si != rsegs.end()) {
 		ON_2dPointArray *samples = (*si);
-		data->segments.push_back(samples);
+		data->segments->push_back(samples);
 		si++;
 	    }
 	    rsegs.clear();
@@ -1583,18 +1583,18 @@ Path::LoadONTrimmingCurves(ON_Brep *brep)
 	}
 	data = (*cs);
 	list<ON_2dPointArray *>::iterator si;
-	si = data->segments.begin();
+	si = data->segments->begin();
 	PBCData *ndata = (*next_cs);
 	list<ON_2dPointArray *>::iterator nsi;
-	nsi = ndata->segments.begin();
+	nsi = ndata->segments->begin();
 	ON_2dPointArray *nsamples = (*nsi);
 
-	while (si != data->segments.end()) {
+	while (si != data->segments->end()) {
 	    nsi = si;
 	    nsi++;
-	    if (nsi == data->segments.end()) {
+	    if (nsi == data->segments->end()) {
 		PBCData *nsidata = (*next_cs);
-		nsi = nsidata->segments.begin();
+		nsi = nsidata->segments->begin();
 	    }
 	    ON_2dPointArray *samples = (*si);
 	    nsamples = (*nsi);
@@ -1751,9 +1751,9 @@ Path::LoadONTrimmingCurves(ON_Brep *brep)
 
     while (!curve_pullback_samples.empty()) {
 	data = curve_pullback_samples.front();
-	while (!data->segments.empty()) {
-	    delete data->segments.front();
-	    data->segments.pop_front();
+	while (!data->segments->empty()) {
+	    delete data->segments->front();
+	    data->segments->pop_front();
 	}
 	delete data;
 	curve_pullback_samples.pop_front();

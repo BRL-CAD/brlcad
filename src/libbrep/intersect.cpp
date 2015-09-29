@@ -410,7 +410,8 @@ build_surface_root(const ON_Surface *surf, const ON_Interval *u_domain, const ON
 	int ret = root.m_surf->GetBoundingBox(surf_bbox.m_min,
 		surf_bbox.m_max);
 	if (!ret) {
-	    double corners_min[3], corners_max[3];
+	    vect_t corners_min = VINIT_ZERO;
+	    vect_t corners_max = VINIT_ZERO;
 	    for (int i = 0; i < 2; ++i) {
 		for (int j = 0; j < 2; ++j) {
 		    ON_3dPoint corner = root.m_surf->PointAt(root.m_u.m_t[i],
