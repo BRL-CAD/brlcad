@@ -50,16 +50,6 @@
 #define BRLCAD_OK 0
 #define BRLCAD_ERROR 1
 
- /**
- * BU_IGNORE provides a common mechanism for innocuously ignoring a
- * parameter that is sometimes used and sometimes not.  It should
- * "practically" result in nothing of concern happening.  It's
- * commonly used by macros that disable functionality based on
- * compilation settings (e.g., BU_ASSERT()) and shouldn't normally
- * need to be used directly by code.
- */
-#define BU_IGNORE(_parm) (void)(_parm)
-
 /**
  * @def BU_DIR_SEPARATOR
  * the default directory separator character
@@ -190,7 +180,7 @@
  * Example: BU_ASSERT_LONG(j+7, <, 42);
  */
 #ifdef NO_BOMBING_MACROS
-#  define BU_ASSERT(_equation) BU_IGNORE((_equation))
+#  define BU_ASSERT(_equation) (void)(_equation)
 #else
 #  define BU_ASSERT(_equation)	\
     if (UNLIKELY(!(_equation))) { \
@@ -201,7 +191,7 @@
 #endif
 
 #ifdef NO_BOMBING_MACROS
-#  define BU_ASSERT_PTR(_lhs, _relation, _rhs) BU_IGNORE((_lhs)); BU_IGNORE((_rhs))
+#  define BU_ASSERT_PTR(_lhs, _relation, _rhs) (void)(_lhs); (void)(_rhs)
 #else
 #  define BU_ASSERT_PTR(_lhs, _relation, _rhs)	\
     if (UNLIKELY(!((_lhs) _relation (_rhs)))) { \
@@ -214,7 +204,7 @@
 
 
 #ifdef NO_BOMBING_MACROS
-#  define BU_ASSERT_LONG(_lhs, _relation, _rhs) BU_IGNORE((_lhs)); BU_IGNORE((_rhs))
+#  define BU_ASSERT_LONG(_lhs, _relation, _rhs) (void)(_lhs); (void)(_rhs)
 #else
 #  define BU_ASSERT_LONG(_lhs, _relation, _rhs)	\
     if (UNLIKELY(!((_lhs) _relation (_rhs)))) { \
@@ -227,7 +217,7 @@
 
 
 #ifdef NO_BOMBING_MACROS
-#  define BU_ASSERT_SIZE_T(_lhs, _relation, _rhs) BU_IGNORE((_lhs)); BU_IGNORE((_rhs))
+#  define BU_ASSERT_SIZE_T(_lhs, _relation, _rhs) (void)(_lhs); (void)(_rhs)
 #else
 #  define BU_ASSERT_SIZE_T(_lhs, _relation, _rhs)	\
     if (UNLIKELY(!((_lhs) _relation (_rhs)))) { \
@@ -240,7 +230,7 @@
 
 
 #ifdef NO_BOMBING_MACROS
-#  define BU_ASSERT_SSIZE_T(_lhs, _relation, _rhs) BU_IGNORE((_lhs)); BU_IGNORE((_rhs))
+#  define BU_ASSERT_SSIZE_T(_lhs, _relation, _rhs) (void)(_lhs); (void)(_rhs)
 #else
 #  define BU_ASSERT_SSIZE_T(_lhs, _relation, _rhs)	\
     if (UNLIKELY(!((_lhs) _relation (_rhs)))) { \
@@ -253,7 +243,7 @@
 
 
 #ifdef NO_BOMBING_MACROS
-#  define BU_ASSERT_DOUBLE(_lhs, _relation, _rhs) BU_IGNORE((_lhs)); BU_IGNORE((_rhs))
+#  define BU_ASSERT_DOUBLE(_lhs, _relation, _rhs) (void)(_lhs); (void)(_rhs)
 #else
 #  define BU_ASSERT_DOUBLE(_lhs, _relation, _rhs)	\
     if (UNLIKELY(!((_lhs) _relation (_rhs)))) { \

@@ -1152,7 +1152,7 @@ rt_solid_bitfinder(register union tree *treep, struct region *regp, struct resou
     RT_CK_RESOURCE(resp);
 
     while ((sp = resp->re_boolstack) == (union tree **)0)
-	rt_grow_boolstack(resp);
+	rt_bool_growstack(resp);
     stackend = &(resp->re_boolstack[resp->re_boolslen-1]);
 
     *sp++ = TREE_NULL;
@@ -1176,7 +1176,7 @@ rt_solid_bitfinder(register union tree *treep, struct region *regp, struct resou
 		*sp++ = treep->tr_b.tb_left;
 		if (sp >= stackend) {
 		    register int off = sp - resp->re_boolstack;
-		    rt_grow_boolstack(resp);
+		    rt_bool_growstack(resp);
 		    sp = &(resp->re_boolstack[off]);
 		    stackend = &(resp->re_boolstack[resp->re_boolslen-1]);
 		}

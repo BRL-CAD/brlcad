@@ -203,7 +203,7 @@ static __inline__ int BU_BITTEST(volatile void * addr, int nr)
 
 /* This is not done by default for performance reasons */
 #ifdef NO_BOMBING_MACROS
-#  define BU_BITV_BITNUM_CHECK(_bv, _bit) BU_IGNORE((_bv))
+#  define BU_BITV_BITNUM_CHECK(_bv, _bit) (void)(_bv)
 #else
 #  define BU_BITV_BITNUM_CHECK(_bv, _bit)	/* Validate bit number */ \
     if (UNLIKELY(((unsigned)(_bit)) >= (_bv)->nbits)) {\
@@ -214,7 +214,7 @@ static __inline__ int BU_BITTEST(volatile void * addr, int nr)
 #endif
 
 #ifdef NO_BOMBING_MACROS
-#  define BU_BITV_NBITS_CHECK(_bv, _nbits) BU_IGNORE((_bv))
+#  define BU_BITV_NBITS_CHECK(_bv, _nbits) (void)(_bv)
 #else
 #  define BU_BITV_NBITS_CHECK(_bv, _nbits)	/* Validate number of bits */ \
     if (UNLIKELY(((unsigned)(_nbits)) > (_bv)->nbits)) {\

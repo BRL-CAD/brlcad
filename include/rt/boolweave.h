@@ -167,7 +167,7 @@ RT_EXPORT extern int rt_boolfinal(struct partition *InputHdp,
  *
  * Return the new pointer for what was previously the last element.
  */
-RT_EXPORT extern void rt_grow_boolstack(struct resource *res);
+RT_EXPORT extern void rt_bool_growstack(struct resource *res);
 
 __END_DECLS
 

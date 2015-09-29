@@ -386,7 +386,7 @@ mk_tgc(struct rt_wdb *wdbp, const char *name, const fastf_t *base, const fastf_t
 
 
 int
-mk_cone(struct rt_wdb *wdbp, const char *name, const fastf_t *base, const fastf_t *dirv, fastf_t height, fastf_t rad1, fastf_t rad2)
+mk_cone(struct rt_wdb *wdbp, const char *name, const fastf_t *base, const fastf_t *dirv, fastf_t height, fastf_t base_radius, fastf_t nose_radius)
 {
     vect_t a, avec;	/* one base radius vector */
     vect_t b, bvec;	/* another base radius vector */
@@ -407,10 +407,10 @@ mk_cone(struct rt_wdb *wdbp, const char *name, const fastf_t *base, const fastf_
     bn_vec_ortho(a, h_unitv);
     VUNITIZE(a);
     VCROSS(b, h_unitv, a);
-    VSCALE(avec, a, rad1);
-    VSCALE(bvec, b, rad1);
-    VSCALE(cvec, a, rad2);
-    VSCALE(dvec, b, rad2);
+    VSCALE(avec, a, base_radius);
+    VSCALE(bvec, b, base_radius);
+    VSCALE(cvec, a, nose_radius);
+    VSCALE(dvec, b, nose_radius);
 
     return mk_tgc(wdbp, name, base, hgtv, avec, bvec, cvec, dvec);
 }

@@ -119,6 +119,7 @@ and new names should be listed for reference.
 ----
 all global variables
 	global variables are no longer considered published public API [deprecated 7.26]
+        bn_mat_identity -> MAT_INIT_IDN or MAT_IDN() or NULL
 include/bn.h
 	tp_setup, no longer needs to be public API [deprecated 7.26]
 include/raytrace.h
@@ -1083,6 +1084,9 @@ s/rt_vlist_export/bn_vlist_export/g
 s/rt_vlblock_free/bn_vlblock_free/g
 s/rt_vlblock_find/bn_vlblock_find/g
         move vlist functions from librt to libbn [7.25]
-s/([[:space:],\(,"])bn_tcl/\1tclcad_bn/g [7.25]
-s/([[:space:],\(,"])rt_tcl_rt/\1tclcad_rt/g [7.25]
-s/([[:space:],\(,"])rt_tcl/\1tclcad_rt/g [7.25]
+s/([[:space:],\(,"])bn_tcl/\1tclcad_bn/g
+s/([[:space:],\(,"])rt_tcl_rt/\1tclcad_rt/g
+s/([[:space:],\(,"])rt_tcl/\1tclcad_rt/g
+	tcl library registrations moved to libtclcad [7.25]
+s/rt_grow_boolstack/rt_bool_growstack/g
+	 rename with consistent prefixes [7.25]

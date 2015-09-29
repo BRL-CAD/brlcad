@@ -16,6 +16,17 @@
 
 #define pout(p)  p.x << " " << p.y << " " << p.z
 
+#define ON_VMOVE(on, bn) { \
+    on.x = bn[0]; \
+    on.y = bn[1]; \
+    on.z = bn[2]; \
+}
+#define BN_VMOVE(bn, on) { \
+    bn[0] = on.x; \
+    bn[1] = on.y; \
+    bn[2] = on.z; \
+}
+
 typedef enum {
     CURVE_POINT = 0,
     CURVE_LINE,
@@ -80,48 +91,51 @@ void array_to_set(std::set<int> *set, int *array, int array_cnt);
 
 
 
-void subbrep_object_init(struct subbrep_object_data *obj, const ON_Brep *brep);
-//void subbrep_object_free(struct subbrep_object_data *obj);
+void subbrep_object_init(struct subbrep_island_data *obj, const ON_Brep *brep);
+//void subbrep_object_free(struct subbrep_island_data *obj);
 
-int subbrep_split(struct bu_vls *msgs, struct subbrep_object_data *data);
-int subbrep_make_brep(struct subbrep_object_data *data);
-int subbrep_make_planar(struct subbrep_object_data *data);
+int subbrep_split(struct bu_vls *msgs, struct subbrep_island_data *data);
+int subbrep_make_brep(struct bu_vls *msgs, struct subbrep_island_data *data);
+int subbrep_make_planar(struct subbrep_island_data *data);
 
-int subbrep_determine_boolean(struct subbrep_object_data *data);
+void convex_plane_usage(ON_SimpleArray<ON_Plane> *planes, int **pu);
+
+int subbrep_determine_boolean(struct subbrep_island_data *data);
 
 
 // Functions for defining a simplified planar subvolume
-void subbrep_planar_init(struct subbrep_object_data *data);
-void subbrep_planar_close_obj(struct subbrep_object_data *data);
-void subbrep_add_planar_face(struct subbrep_object_data *data, ON_Plane *pcyl, ON_SimpleArray<const ON_BrepVertex *> *vert_loop, int neg_surf);
+//void subbrep_planar_init(struct subbrep_island_data *data);
+//void subbrep_planar_close_obj(struct subbrep_island_data *data);
+//void subbrep_add_planar_face(struct subbrep_island_data *data, ON_Plane *pcyl, ON_SimpleArray<const ON_BrepVertex *> *vert_loop, int neg_surf);
 
 //struct bu_ptbl *find_subbreps(const ON_Brep *brep);
 //struct bu_ptbl *find_top_level_hierarchy(struct bu_ptbl *subbreps);
-void print_subbrep_object(struct subbrep_object_data *data, const char *offset);
-volume_t subbrep_shape_recognize(struct bu_vls *msgs, struct subbrep_object_data *data);
+void print_subbrep_object(struct subbrep_island_data *data, const char *offset);
+volume_t subbrep_shape_recognize(struct bu_vls *msgs, struct subbrep_island_data *data);
 
-int subbrep_is_planar(struct bu_vls *msgs, struct subbrep_object_data *data);
+int subbrep_is_planar(struct bu_vls *msgs, struct subbrep_island_data *data);
+int island_nucleus(struct bu_vls *msgs, struct subbrep_island_data *data);
 
 int cylindrical_loop_planar_vertices(ON_BrepFace *face, int loop_index);
-int subbrep_is_cylinder(struct bu_vls *msgs, struct subbrep_object_data *data, fastf_t cyl_tol);
-int cylinder_csg(struct bu_vls *msgs, struct subbrep_object_data *data, fastf_t cyl_tol);
+int subbrep_is_cylinder(struct bu_vls *msgs, struct subbrep_island_data *data, fastf_t cyl_tol);
+int cylinder_csg(struct bu_vls *msgs, struct subbrep_shoal_data *data, fastf_t cyl_tol);
 
-int subbrep_is_cone(struct bu_vls *msgs, struct subbrep_object_data *data, fastf_t cone_tol);
-int cone_csg(struct bu_vls *msgs, struct subbrep_object_data *data, fastf_t cone_tol);
+//int subbrep_is_cone(struct bu_vls *msgs, struct subbrep_island_data *data, fastf_t cone_tol);
+//int cone_csg(struct bu_vls *msgs, struct subbrep_island_data *data, fastf_t cone_tol);
 
-int sphere_csg(struct subbrep_object_data *data, fastf_t cone_tol);
+//int sphere_csg(struct subbrep_island_data *data, fastf_t cone_tol);
 
-int torus_csg(struct subbrep_object_data *data, fastf_t cone_tol);
+int torus_csg(struct subbrep_island_data *data, fastf_t cone_tol);
 
-std::string face_set_key(std::set<int> fset);
-surface_t highest_order_face(struct subbrep_object_data *data);
+std::string set_key(std::set<int> intset);
+surface_t highest_order_face(struct subbrep_island_data *data);
 void set_to_array(int **array, int *array_cnt, std::set<int> *set);
 void array_to_set(std::set<int> *set, int *array, int array_cnt);
 void map_to_array(int **array, int *array_cnt, std::map<int,int> *map);
 void array_to_map(std::map<int,int> *map, int *array, int array_cnt);
 
-int subbrep_find_corners(struct subbrep_object_data *data, int **corner_verts_array, ON_Plane *pcyl);
-int subbrep_top_bottom_pnts(struct subbrep_object_data *data, std::set<int> *corner_verts, ON_Plane *top_plane, ON_Plane *bottom_plane, ON_SimpleArray<const ON_BrepVertex *> *top_pnts, ON_SimpleArray<const ON_BrepVertex *> *bottom_pnts);
+int subbrep_find_corners(struct subbrep_island_data *data, int **corner_verts_array, ON_Plane *pcyl);
+int subbrep_top_bottom_pnts(struct subbrep_island_data *data, std::set<int> *corner_verts, ON_Plane *top_plane, ON_Plane *bottom_plane, ON_SimpleArray<const ON_BrepVertex *> *top_pnts, ON_SimpleArray<const ON_BrepVertex *> *bottom_pnts);
 
 ON_3dPoint ON_LinePlaneIntersect(ON_Line &line, ON_Plane &plane);
 void ON_MinMaxInit(ON_3dPoint *min, ON_3dPoint *max);

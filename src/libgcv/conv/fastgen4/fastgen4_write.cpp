@@ -45,7 +45,7 @@ namespace
 static const fastf_t INCHES_PER_MM = 1.0 / 25.4;
 
 
-template <typename T> inline void
+template <typename T> void
 autoptr_wrap_bu_free(T *ptr)
 {
     bu_free(ptr, "AutoPtr");
@@ -211,7 +211,6 @@ DBInternal::DBInternal(const db_i &db, const directory &dir) :
 }
 
 
-inline
 DBInternal::~DBInternal()
 {
     if (m_valid)
@@ -278,13 +277,11 @@ private:
 };
 
 
-inline
 RecordWriter::RecordWriter() :
     m_record_open(false)
 {}
 
 
-inline
 RecordWriter::~RecordWriter()
 {}
 
@@ -298,7 +295,8 @@ public:
     ~Record();
 
     template <typename T> Record &operator<<(const T &value);
-    Record &operator<<(fastf_t value);
+    Record &operator<<(float value);
+    Record &operator<<(double value);
     Record &non_zero(fastf_t value);
     Record &text(const std::string &value);
 
@@ -353,9 +351,15 @@ RecordWriter::Record::operator<<(const T &value)
 }
 
 
-inline
 RecordWriter::Record &
-RecordWriter::Record::operator<<(fastf_t value)
+RecordWriter::Record::operator<<(float value)
+{
+    return operator<<(truncate_float(value));
+}
+
+
+RecordWriter::Record &
+RecordWriter::Record::operator<<(double value)
 {
     return operator<<(truncate_float(value));
 }
@@ -434,7 +438,6 @@ private:
 };
 
 
-inline
 StringBuffer::StringBuffer() :
     m_ostream()
 {
@@ -442,7 +445,7 @@ StringBuffer::StringBuffer() :
 }
 
 
-inline void
+void
 StringBuffer::write(RecordWriter &writer) const
 {
     RecordWriter::Record record(writer);
@@ -450,7 +453,6 @@ StringBuffer::write(RecordWriter &writer) const
 }
 
 
-inline
 std::ostream &
 StringBuffer::get_ostream()
 {
@@ -508,7 +510,6 @@ FastgenWriter::FastgenWriter(const std::string &path) :
 }
 
 
-inline
 FastgenWriter::~FastgenWriter()
 {
     m_sections.write(*this);
@@ -516,7 +517,7 @@ FastgenWriter::~FastgenWriter()
 }
 
 
-inline std::ostream &
+std::ostream &
 FastgenWriter::get_ostream()
 {
     return m_ostream;
@@ -540,7 +541,7 @@ FastgenWriter::take_next_section_id()
 }
 
 
-inline RecordWriter &
+RecordWriter &
 FastgenWriter::get_section_writer()
 {
     return m_sections;
@@ -600,7 +601,7 @@ FastgenWriter::write_boolean(BooleanType type, const SectionID &section_a,
 	record << section_c->first << section_c->second;
 
     if (section_d)
-	record << section_d->first << section_c->second;
+	record << section_d->first << section_d->second;
 }
 
 
@@ -640,7 +641,7 @@ GridManager::PointComparator::operator()(const Point &lhs,
     return false;
 }
 
-inline
+
 GridManager::GridManager() :
     m_next_grid_id(1),
     m_grids()
@@ -653,10 +654,13 @@ GridManager::get_unique_grids(const std::vector<Point> &points)
     std::vector<std::size_t> results(points.size());
 
     for (std::size_t i = 0; i < points.size(); ++i) {
-	std::vector<std::size_t> temp(1);
-	temp.at(0) = m_next_grid_id;
 	std::pair<std::map<Point, std::vector<std::size_t>, PointComparator>::iterator, bool>
-	found = m_grids.insert(std::make_pair(points.at(i), temp));
+	found;
+	{
+	    std::vector<std::size_t> temp(1);
+	    temp.at(0) = m_next_grid_id;
+	    found = m_grids.insert(std::make_pair(points.at(i), temp));
+	}
 	results.at(i) = found.first->second.at(0);
 
 	if (found.second) {
@@ -720,11 +724,10 @@ public:
     // create a comment describing an element
     void write_name(const std::string &value);
 
-    void write_line(const fastf_t *point_a, const fastf_t *point_b,
-		    fastf_t radius, fastf_t thickness);
+    void write_line(const fastf_t *point_a, const fastf_t *point_b, fastf_t radius,
+		    fastf_t thickness);
 
-    void write_sphere(const fastf_t *center, fastf_t radius,
-		      fastf_t thickness = 0.0);
+    void write_sphere(const fastf_t *center, fastf_t radius, fastf_t thickness);
 
     // note: this element (CCONE1) is deprecated
     void write_thin_cone(const fastf_t *point_a, const fastf_t *point_b,
@@ -741,7 +744,7 @@ public:
 		    const fastf_t *point_c, const fastf_t *point_d, fastf_t thickness,
 		    bool grid_centered = true);
 
-    void write_hexahedron(const fastf_t points[8][3], fastf_t thickness = 0.0,
+    void write_hexahedron(const fastf_t points[8][3], fastf_t thickness,
 			  bool grid_centered = true);
 
 
@@ -783,21 +786,21 @@ Section::Section() :
 {}
 
 
-inline bool
+bool
 Section::empty() const
 {
     return m_next_element_id == 1;
 }
 
 
-inline bool
+bool
 Section::has_color() const
 {
     return m_color.first;
 }
 
 
-inline Color
+Color
 Section::get_color() const
 {
     if (!has_color())
@@ -807,7 +810,7 @@ Section::get_color() const
 }
 
 
-inline void
+void
 Section::set_color(const Color &value)
 {
     m_color = std::make_pair(true, value);
@@ -843,7 +846,7 @@ Section::write(RecordWriter &writer, const FastgenWriter::SectionID &id,
 }
 
 
-inline void
+void
 Section::write_name(const std::string &value)
 {
     m_elements.write_comment(value);
@@ -1295,9 +1298,9 @@ path_to_mat(const db_i &db, const db_full_path &path, mat_t &result)
     RT_CK_FULL_PATH(&path);
 
     db_full_path temp;
+    const AutoPtr<db_full_path, db_free_full_path> autofree_path(&temp);
     db_full_path_init(&temp);
     db_dup_full_path(&temp, &path);
-    const AutoPtr<db_full_path, db_free_full_path> autofree_path(&temp);
 
     if (!db_path_to_mat(const_cast<db_i *>(&db), &temp, result, 0, &rt_uniresource))
 	throw std::runtime_error("db_path_to_mat() failed");
@@ -2309,7 +2312,7 @@ convert_primitive(FastgenConversion &data, const db_full_path &path,
 		return true;
 
 	    section.write_name(DB_FULL_PATH_CUR_DIR(&path)->d_namep);
-	    section.write_sphere(ell.v, MAGNITUDE(ell.a));
+	    section.write_sphere(ell.v, MAGNITUDE(ell.a), 0.0);
 	    break;
 	}
 
@@ -2338,7 +2341,7 @@ convert_primitive(FastgenConversion &data, const db_full_path &path,
 	    RT_ARB_CK_MAGIC(&arb);
 
 	    section.write_name(DB_FULL_PATH_CUR_DIR(&path)->d_namep);
-	    section.write_hexahedron(arb.pt);
+	    section.write_hexahedron(arb.pt, 0.0);
 	    break;
 	}
 

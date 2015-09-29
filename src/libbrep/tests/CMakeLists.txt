@@ -3,6 +3,10 @@ include_directories(
   ${BRLCAD_BINARY_DIR}/include
   ${BU_INCLUDE_DIRS}
   ${OPENNURBS_INCLUDE_DIR}
+)
+
+set(distcheck_files
+  nurbs_csg.g
   )
 
 BRLCAD_ADDEXEC(test_brep_ppx ppx.cpp "libbrep"  NO_INSTALL)

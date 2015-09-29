@@ -137,8 +137,13 @@
  */
 
 #define nextafter _nextafter
+
+/* FIXME: this will be wildly wrong for any values far from 1.0 */
 #cmakedefine nextafterf(x,y) ((y)>0?(x)+FLT_EPSILON:(x)-FLT_EPSILON)
+
+/* FIXME: this will be wildly wrong for any values far from 1.0 */
 #cmakedefine nextafterl(x,y) ((y)>0?(x)+DBL_EPSILON:(x)-DBL_EPSILON)
+
 #cmakedefine isnan _isnan
 #cmakedefine isinf(x) (!_finite(x))
 #cmakedefine asinh(x) (log(x + sqrt(x * x + 1)))

@@ -30,34 +30,20 @@
 #  include <sys/time.h>
 #endif
 
-#ifdef HAVE_SYS_RESOURCE_H
-#  include <sys/resource.h>
-#endif
-
 #ifdef linux
 #  include <sys/types.h>
-#  ifdef HAVE_SYS_WAIT_H
-#    include <sys/wait.h>
-#  endif
 #  include <sys/stat.h>
-#  include <sys/sysinfo.h>
 #endif
 
 #if defined(__FreeBSD__) || defined(__OpenBSD__)
 #  include <sys/types.h>
 #  include <sys/param.h>
 #  include <sys/sysctl.h>
-#  ifdef HAVE_SYS_WAIT_H
-#    include <sys/wait.h>
-#  endif
 #  include <sys/stat.h>
 #endif
 
 #ifdef __APPLE__
 #  include <sys/types.h>
-#  ifdef HAVE_SYS_WAIT_H
-#    include <sys/wait.h>
-#  endif
 #  include <sys/stat.h>
 #  include <sys/param.h>
 #  include <sys/sysctl.h>
@@ -79,10 +65,6 @@
 #  include <sys/sysmp.h> /* for sysmp() */
 #endif
 
-#ifdef HAVE_SYS_WAIT_H
-#  include <sys/wait.h>
-#endif
-
 #ifdef HAVE_SCHED_H
 #  include <sched.h>
 #else
@@ -90,6 +72,8 @@
 #    include <sys/sched.h>
 #  endif
 #endif
+
+#include "bresource.h"
 
 /*
  * multithreading support for SunOS 5.X / Solaris 2.x

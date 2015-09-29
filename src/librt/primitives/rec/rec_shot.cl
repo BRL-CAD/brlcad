@@ -38,16 +38,14 @@ int rec_shot(RESULT_TYPE *res, const double3 r_pt, const double3 r_dir, const ui
 	k2 = (1.0 - pprime.z) / dprime.z;		// top plate
 
 	hitp->hit_vpriv = pprime + k1 * dprime;		// hit'
-	if (hitp->hit_vpriv.x * hitp->hit_vpriv.x +
-	    hitp->hit_vpriv.y * hitp->hit_vpriv.y < (1.0 + SMALL_FASTF)) {
+	if (hitp->hit_vpriv.x * hitp->hit_vpriv.x + hitp->hit_vpriv.y * hitp->hit_vpriv.y - 1.0 < SMALL_FASTF)) {
 	    hitp->hit_dist = k1;
 	    hitp->hit_surfno = REC_NORM_BOT;		// -H
 	    hitp++; nhits++;
 	}
 
 	hitp->hit_vpriv = pprime + k2 * dprime;		// hit'
-	if (hitp->hit_vpriv.x * hitp->hit_vpriv.x +
-	    hitp->hit_vpriv.y * hitp->hit_vpriv.y < (1.0 + SMALL_FASTF)) {
+	if (hitp->hit_vpriv.x * hitp->hit_vpriv.x + hitp->hit_vpriv.y * hitp->hit_vpriv.y - 1.0 < SMALL_FASTF) {
 	    hitp->hit_dist = k2;
 	    hitp->hit_surfno = REC_NORM_TOP;		// +H
 	    hitp++; nhits++;
@@ -78,14 +76,14 @@ int rec_shot(RESULT_TYPE *res, const double3 r_pt, const double3 r_dir, const ui
 	     * See if they fall in range.
 	     */
 	    hitp->hit_vpriv = pprime + k1 * dprime;	// hit'
-	    if (hitp->hit_vpriv.z > -SMALL_FASTF && hitp->hit_vpriv.z < (1.0 + SMALL_FASTF)) {
+	    if (hitp->hit_vpriv.z > -SMALL_FASTF && hitp->hit_vpriv.z - 1.0 < SMALL_FASTF) {
 		hitp->hit_dist = k1;
 		hitp->hit_surfno = REC_NORM_BODY;	// compute N
 		hitp++; nhits++;
 	    }
 
 	    hitp->hit_vpriv = pprime + k2 * dprime;	// hit'
-	    if (hitp->hit_vpriv.z > -SMALL_FASTF && hitp->hit_vpriv.z < (1.0 + SMALL_FASTF)) {
+	    if (hitp->hit_vpriv.z > -SMALL_FASTF && hitp->hit_vpriv.z - 1.0 < SMALL_FASTF) {
 		hitp->hit_dist = k2;
 		hitp->hit_surfno = REC_NORM_BODY;	// compute N
 		hitp++; nhits++;
@@ -94,7 +92,7 @@ int rec_shot(RESULT_TYPE *res, const double3 r_pt, const double3 r_dir, const ui
 	    /* if the discriminant is zero, it's a double-root grazer */
 	    k1 = -b * 0.5;
 	    hitp->hit_vpriv = pprime + k1 * dprime;	// hit'
-	    if (hitp->hit_vpriv.z > -SMALL_FASTF && hitp->hit_vpriv.z < (1.0 + SMALL_FASTF)) {
+	    if (hitp->hit_vpriv.z > -SMALL_FASTF && hitp->hit_vpriv.z - 1.0 < SMALL_FASTF) {
 		hitp->hit_dist = k1;
 		hitp->hit_surfno = REC_NORM_BODY;	// compute N
 		hitp++; nhits++;
