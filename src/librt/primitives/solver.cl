@@ -65,11 +65,8 @@ bn_cx_sqrt(bn_complex_t *op, const bn_complex_t *ip)
     if (ZERO(re)) {
 	if (ZERO(im)) {
 	    op->re = op->im = 0.0;
-	} else if (im > 0.0) {
-	    op->re = op->im = sqrt(im * 0.5);
 	} else {
-	    /* ip->im < 0.0 */
-	    op->re = -(op->im = sqrt(im * -0.5));
+	    op->re = copysign(op->im = sqrt(im * copysign(0.5, im)), im);
 	}
     } else if (ZERO(im)) {
 	if (re > 0.0) {
@@ -99,12 +96,7 @@ bn_cx_sqrt(bn_complex_t *op, const bn_complex_t *ip)
 	if ((temp = (ampl + re) * 0.5) < 0.0) {
 	    op->re = 0.0;
 	} else {
-	    if (im > 0.0) {
-		op->re = sqrt(temp);
-	    } else {
-		/* ip->im < 0.0 */
-		op->re = -sqrt(temp);
-	    }
+	    op->re = copysign(sqrt(temp), im);
 	}
     }
 }
@@ -142,11 +134,7 @@ bn_poly_quadratic_roots(bn_complex_t *roots, const double *quadrat)
 	} else {
 	    double t, r1, r2;
 
-	    if (quadrat[1] > 0.0) {
-		t = -0.5 * (quadrat[1] + rad);
-	    } else {
-		t = -0.5 * (quadrat[1] - rad);
-	    }
+	    t = -0.5 * (quadrat[1] + copysign(rad, quadrat[1]));
 	    r1 = t / quadrat[0];
 	    r2 = quadrat[2] / t;
 
@@ -175,8 +163,6 @@ bn_poly_cubic_roots(bn_complex_t *roots, const double *eqn)
     const double THIRD = 1.0 / 3.0;
     const double TWENTYSEVENTH = 1.0 / 27.0;
 
-#define CUBEROOT(a)	(((a) > 0.0) ? pow(a, THIRD) : -pow(-(a), THIRD))
-
     double a, b, c1, c1_3rd, delta;
     int i;
 
@@ -200,8 +186,8 @@ bn_poly_cubic_roots(bn_complex_t *roots, const double *eqn)
 	A += r_delta;
 	B -= r_delta;
 
-	A = CUBEROOT(A);
-	B = CUBEROOT(B);
+	A = cbrt(A);
+	B = cbrt(B);
 
 	roots[2].re = roots[1].re = -0.5 * (roots[0].re = A + B);
 
@@ -211,7 +197,7 @@ bn_poly_cubic_roots(bn_complex_t *roots, const double *eqn)
 	double b_2;
 	b_2 = -0.5 * b;
 
-	roots[0].re = 2.0* CUBEROOT(b_2);
+	roots[0].re = 2.0* cbrt(b_2);
 	roots[2].re = roots[1].re = -0.5 * roots[0].re;
 	roots[2].im = roots[1].im = roots[0].im = 0.0;
     } else {
@@ -231,12 +217,10 @@ bn_poly_cubic_roots(bn_complex_t *roots, const double *eqn)
 		sn_phi_s3 = 0.0;	/* sin(phi) * M_SQRT3; */
 	    }  else if (f <= -1.0) {
 		phi = M_PI_3;
-		cs_phi = cos(phi);
-		sn_phi_s3 = sin(phi) * M_SQRT3;
+		sn_phi_s3 = sincos(phi, &cs_phi) * M_SQRT3;
 	    } else {
 		phi = acos(f) * THIRD;
-		cs_phi = cos(phi);
-		sn_phi_s3 = sin(phi) * M_SQRT3;
+		sn_phi_s3 = sincos(phi, &cs_phi) * M_SQRT3;
 	    }
 	}
 
@@ -261,7 +245,7 @@ bn_poly_quartic_roots(bn_complex_t *roots, const double *eqn)
     /* something considerably larger than squared floating point fuss */
     const double small = 1.0e-8;
 
-#define Max3(a, b, c) ((c)>((a)>(b)?(a):(b)) ? (c) : ((a)>(b)?(a):(b)))
+#define Max3(a, b, c) (fmax(fmax(a, b), c))
 
     cube[0] = 1.0;
     cube[1] = -eqn[2];

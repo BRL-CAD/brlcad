@@ -71,30 +71,26 @@ struct sph_specific {
 
 #ifdef USE_OPENCL
 /* largest data members first */
-struct sph_shot_specific {
+struct clt_sph_specific {
     cl_double sph_V[3];     /* Vector to center of sphere */
     cl_double sph_radsq;    /* Radius squared */
     cl_double sph_invrad;   /* Inverse radius (for normal) */
 };
 
 size_t
-clt_sph_length(struct soltab *stp)
-{
-    (void)stp;
-    return sizeof(struct sph_shot_specific);
-}
-
-void
-clt_sph_pack(void *dst, struct soltab *src)
+clt_sph_pack(struct bu_pool *pool, struct soltab *stp)
 {
     struct sph_specific *sph =
-        (struct sph_specific *)src->st_specific;
-    struct sph_shot_specific *args =
-        (struct sph_shot_specific *)dst;
+        (struct sph_specific *)stp->st_specific;
+    struct clt_sph_specific *args;
+
+    const size_t size = sizeof(*args);
+    args = (struct clt_sph_specific*)bu_pool_alloc(pool, 1, size);
 
     VMOVE(args->sph_V, sph->sph_V);
     args->sph_radsq = sph->sph_radsq;
     args->sph_invrad = sph->sph_invrad;
+    return size;
 }
 #endif /* USE_OPENCL */
 
@@ -124,10 +120,6 @@ rt_sph_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 
     eip = (struct rt_ell_internal *)ip->idb_ptr;
     RT_ELL_CK_MAGIC(eip);
-
-#ifdef USE_OPENCL
-    clt_init();
-#endif
 
     /* Validate that |A| > 0, |B| > 0, |C| > 0 */
     magsq_a = MAGSQ(eip->a);
@@ -243,11 +235,6 @@ rt_sph_print(register const struct soltab *stp)
 int
 rt_sph_shot(struct soltab *stp, register struct xray *rp, struct application *ap, struct seg *seghead)
 {
-#ifdef USE_OPENCL
-    struct cl_hit hits[2];
-
-    return clt_shot(sizeof(hits), hits, rp, stp, ap, seghead);
-#else
     register struct sph_specific *sph =
 	(struct sph_specific *)stp->st_specific;
     register struct seg *segp;
@@ -287,7 +274,6 @@ rt_sph_shot(struct soltab *stp, register struct xray *rp, struct application *ap
     segp->seg_out.hit_surfno = 0;
     BU_LIST_INSERT(&(seghead->l), &(segp->l));
     return 2;			/* HIT */
-#endif
 }
 
 
@@ -357,16 +343,12 @@ rt_sph_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, str
 void
 rt_sph_norm(register struct hit *hitp, struct soltab *stp, register struct xray *rp)
 {
-#ifdef USE_OPENCL
-    clt_norm(hitp, stp, rp);
-#else
     register struct sph_specific *sph =
 	(struct sph_specific *)stp->st_specific;
 
     VJOIN1(hitp->hit_point, rp->r_pt, hitp->hit_dist, rp->r_dir);
     VSUB2(hitp->hit_normal, hitp->hit_point, sph->sph_V);
     VSCALE(hitp->hit_normal, hitp->hit_normal, sph->sph_invrad);
-#endif
 }
 
 

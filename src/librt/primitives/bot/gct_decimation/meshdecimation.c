@@ -2948,7 +2948,9 @@ static void mdMeshBuildTriangleNormals(mdMesh *mesh)
 
 static int mdMeshVertexComputeNormal(mdMesh *mesh, mdi vertexindex, mdi *trireflist, int trirefcount, mdf *normal)
 {
-    int vindex, pivot, validflag;
+    int vindex = 0;
+    int pivot = 0;
+    int validflag = 0;
     mdi triindex;
     mdf norm, norminv;
     mdTriangle *tri;

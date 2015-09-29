@@ -2715,7 +2715,7 @@ output_to_nmg(struct ga_t *ga,
     size_t vert_idx = 0;                 /* index into vertices within for-loop */
     size_t shell_vert_idx = 0;           /* index into vertices for entire nmg shell */
     size_t num_entities_fused = 0;
-    int ret = 1;                         /* function return value, default to failure */
+    static int ret = 1;                  /* function return value, default to failure */
     plane_t pl;                          /* plane equation for face */
     fastf_t tmp_v[3] = {0.0, 0.0, 0.0};  /* temporary vertex */
     fastf_t tmp_w = 0.0;                 /* temporary weight */

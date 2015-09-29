@@ -1,13 +1,13 @@
 #include "common.cl"
 
 
-struct sph_shot_specific {
+struct sph_specific {
     double sph_V[3];     /* Vector to center of sphere */
     double sph_radsq;    /* Radius squared */
     double sph_invrad;   /* Inverse radius (for normal) */
 };
 
-int sph_shot(global struct hit *res, const double3 r_pt, const double3 r_dir, const uint idx, global const struct sph_shot_specific *sph)
+int sph_shot(global struct hit *res, const double3 r_pt, const double3 r_dir, const uint idx, global const struct sph_specific *sph)
 {
     double3 ov;        // ray origin to center (V - P)
     double magsq_ov;   // length squared of ov
@@ -36,7 +36,7 @@ int sph_shot(global struct hit *res, const double3 r_pt, const double3 r_dir, co
     root = sqrt(root);
 
     struct hit hits[2];
-    
+
     // we know root is positive, so we know the smaller t
     hits[0].hit_dist = b - root;
     hits[0].hit_surfno = 0;
@@ -49,7 +49,7 @@ int sph_shot(global struct hit *res, const double3 r_pt, const double3 r_dir, co
 }
 
 
-void sph_norm(global struct hit *hitp, const double3 r_pt, const double3 r_dir, global const struct sph_shot_specific *sph)
+void sph_norm(global struct hit *hitp, const double3 r_pt, const double3 r_dir, global const struct sph_specific *sph)
 {
     hitp->hit_point = r_pt + r_dir * hitp->hit_dist;
     hitp->hit_normal = hitp->hit_point - vload3(0, sph->sph_V);

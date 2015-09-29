@@ -90,7 +90,9 @@ ged_facetize(struct ged *gedp, int argc, const char *argv[])
     static int make_bot;
     static int marching_cube;
     static int screened_poisson;
+#ifdef ENABLE_SPR
     int sp_fidelity = 0;  /* default to LOW fidelity */
+#endif
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
     GED_CHECK_READ_ONLY(gedp, GED_ERROR);
@@ -140,6 +142,7 @@ ged_facetize(struct ged *gedp, int argc, const char *argv[])
 		triangulate = 1;
 		make_bot = 1;
 		break;
+#ifdef ENABLE_SPR
 	    case 'L':
 		sp_fidelity = 0;
 		break;
@@ -149,6 +152,7 @@ ged_facetize(struct ged *gedp, int argc, const char *argv[])
 	    case 'H':
 		sp_fidelity = 2;
 		break;
+#endif
 	    case 'T':
 		triangulate = 1;
 		break;
@@ -187,7 +191,7 @@ ged_facetize(struct ged *gedp, int argc, const char *argv[])
     }
 
     if (screened_poisson) {
-
+#ifdef ENABLE_SPR
 	struct rt_bot_internal *bot;
 
 	BU_ALLOC(bot, struct rt_bot_internal);
@@ -209,7 +213,10 @@ ged_facetize(struct ged *gedp, int argc, const char *argv[])
 	intern.idb_type = ID_BOT;
 	intern.idb_meth = &OBJ[ID_BOT];
 	intern.idb_ptr = (void *) bot;
-
+#else
+	bu_vls_printf(gedp->ged_result_str, "Screened Poisson support was not enabled for this build.  To test, pass -DBRLCAD_ENABLE_SPR=ON to the cmake configure.\n", newname);
+	return GED_ERROR;
+#endif
     } else {
 
 	bu_vls_printf(gedp->ged_result_str,

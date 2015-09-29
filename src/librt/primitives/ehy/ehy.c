@@ -190,7 +190,7 @@ static int ehy_is_valid(struct rt_ehy_internal *ehy);
 
 #ifdef USE_OPENCL
 /* largest data members first */
-struct ehy_shot_specific {
+struct clt_ehy_specific {
     cl_double ehy_V[3];		/* vector to ehy origin */
     cl_double ehy_Hunit[3];	/* unit H vector */
     cl_double ehy_SoR[16];	/* Scale(Rot(vect)) */
@@ -199,26 +199,23 @@ struct ehy_shot_specific {
 };
 
 size_t
-clt_ehy_length(struct soltab *stp)
-{
-    (void)stp;
-    return sizeof(struct ehy_shot_specific);
-}
-
-void
-clt_ehy_pack(void *dst, struct soltab *src)
+clt_ehy_pack(struct bu_pool *pool, struct soltab *stp)
 {
     struct ehy_specific *ehy =
-        (struct ehy_specific *)src->st_specific;
-    struct ehy_shot_specific *args =
-        (struct ehy_shot_specific *)dst;
+        (struct ehy_specific *)stp->st_specific;
+    struct clt_ehy_specific *args;
+
+    const size_t size = sizeof(*args);
+    args = (struct clt_ehy_specific*)bu_pool_alloc(pool, 1, size);
 
     VMOVE(args->ehy_V, ehy->ehy_V);
     VMOVE(args->ehy_Hunit, ehy->ehy_Hunit);
     MAT_COPY(args->ehy_SoR, ehy->ehy_SoR);
     MAT_COPY(args->ehy_invRoS, ehy->ehy_invRoS);
     args->ehy_cprime = ehy->ehy_cprime;
+    return size;
 }
+
 #endif /* USE_OPENCL */
 
 
@@ -299,10 +296,6 @@ rt_ehy_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     mat_t R;
     mat_t Rinv;
     mat_t S;
-
-#ifdef USE_OPENCL
-    clt_init();
-#endif
 
     RT_CK_DB_INTERNAL(ip);
 
@@ -399,11 +392,6 @@ rt_ehy_print(const struct soltab *stp)
 int
 rt_ehy_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct seg *seghead)
 {
-#ifdef USE_OPENCL
-    struct cl_hit hits[2];
-
-    return clt_shot(sizeof(hits), hits, rp, stp, ap, seghead);
-#else
     struct ehy_specific *ehy =
 	(struct ehy_specific *)stp->st_specific;
     vect_t dp;		/* D' */
@@ -521,7 +509,6 @@ check_plates:
 	BU_LIST_INSERT(&(seghead->l), &(segp->l));
     }
     return 2;			/* HIT */
-#endif
 }
 
 
@@ -531,9 +518,6 @@ check_plates:
 void
 rt_ehy_norm(struct hit *hitp, struct soltab *stp, struct xray *rp)
 {
-#ifdef USE_OPENCL
-    clt_norm(hitp, stp, rp);
-#else
     vect_t can_normal;	/* normal to canonical ehy */
     fastf_t cp, scale;
     struct ehy_specific *ehy =
@@ -561,7 +545,6 @@ rt_ehy_norm(struct hit *hitp, struct soltab *stp, struct xray *rp)
 	    bu_log("rt_ehy_norm: surfno=%d bad\n", hitp->hit_surfno);
 	    break;
     }
-#endif
 }
 
 

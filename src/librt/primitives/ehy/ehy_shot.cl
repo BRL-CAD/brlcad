@@ -6,7 +6,7 @@
 #define EHY_NORM_TOP	(2)		/* copy ehy_N */
 
 
-struct ehy_shot_specific {
+struct ehy_specific {
     double ehy_V[3];		/* vector to ehy origin */
     double ehy_Hunit[3];	/* unit H vector */
     double ehy_SoR[16];		/* Scale(Rot(vect)) */
@@ -14,7 +14,7 @@ struct ehy_shot_specific {
     double ehy_cprime;		/* c / |H| */
 };
 
-int ehy_shot(global struct hit *res, const double3 r_pt, const double3 r_dir, const uint idx, global const struct ehy_shot_specific *ehy)
+int ehy_shot(global struct hit *res, const double3 r_pt, const double3 r_dir, const uint idx, global const struct ehy_specific *ehy)
 {
     const double cp = ehy->ehy_cprime;
 
@@ -41,7 +41,7 @@ int ehy_shot(global struct hit *res, const double3 r_pt, const double3 r_dir, co
     c = pp.z * pp.z - (2 * cp + 1) * (pp.x * pp.x + pp.y * pp.y - 1.0) + 2 * (cp + 1) * pp.z;
     if (!NEAR_ZERO(a, RT_PCOEF_TOL)) {
         disc = b*b - 4 * a * c;
-        if (disc > 0) {
+        if (!(disc <= 0)) {
             disc = sqrt(disc);
 
             k1 = (-b + disc) / (2.0 * a);
@@ -112,7 +112,7 @@ int ehy_shot(global struct hit *res, const double3 r_pt, const double3 r_dir, co
 }
 
 
-void ehy_norm(global struct hit *hitp, const double3 r_pt, const double3 r_dir, global const struct ehy_shot_specific *ehy)
+void ehy_norm(global struct hit *hitp, const double3 r_pt, const double3 r_dir, global const struct ehy_specific *ehy)
 {
     double3 can_normal;	/* normal to canonical ehy */
     double cp, scale;

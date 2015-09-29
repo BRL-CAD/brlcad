@@ -43,6 +43,7 @@ list(APPEND gstep_LIBS ${gstep_LIBS})
 
 BRLCAD_ADDEXEC(g-step "${gstep_SOURCES}" "${gstep_LIBS}" NO_STRICT)
 add_dependencies(g-step step-express-${SCHEMA_NAME}-gstep)
+set_property(TARGET g-step APPEND PROPERTY INCLUDE_DIRECTORIES "${gstep_SCHEMA_OUT_DIR}")
 
 if(MSVC)
   set(gstep_IMPORTS
@@ -78,6 +79,9 @@ GENERATE_SCHEMA_INPUTS(${STEP_SCHEMA_FILE} list_elements)
 
 set(list_elements_srcs ${express_srcs} list_elements.cpp)
 BRLCAD_ADDEXEC(list_elements "${list_elements_srcs}" "${gstep_LIBS}" NO_STRICT NO_INSTALL)
+add_dependencies(list_elements step-express-${SCHEMA_NAME}-list_elements)
+set_property(TARGET list_elements APPEND PROPERTY INCLUDE_DIRECTORIES "${list_elements_SCHEMA_OUT_DIR}")
+
 if(MSVC)
   set_target_properties(list_elements PROPERTIES COMPILE_DEFINITIONS "${gstep_IMPORTS}")
 endif(MSVC)

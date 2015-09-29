@@ -167,31 +167,28 @@ struct ell_specific {
 
 #ifdef USE_OPENCL
 /* largest data members first */
-struct ell_shot_specific {
+struct clt_ell_specific {
     cl_double ell_V[3];         /* Vector to center of ellipsoid */
     cl_double ell_SoR[16];      /* Scale(Rot(vect)) */
     cl_double ell_invRSSR[16];  /* invRot(Scale(Scale(Rot(vect)))) */
 };
 
 size_t
-clt_ell_length(struct soltab *stp)
-{
-    (void)stp;
-    return sizeof(struct ell_shot_specific);
-}
-
-void
-clt_ell_pack(void *dst, struct soltab *src)
+clt_ell_pack(struct bu_pool *pool, struct soltab *stp)
 {
     struct ell_specific *ell =
-        (struct ell_specific *)src->st_specific;
-    struct ell_shot_specific *args =
-        (struct ell_shot_specific *)dst;
+        (struct ell_specific *)stp->st_specific;
+    struct clt_ell_specific *args;
+
+    const size_t size = sizeof(*args);
+    args = (struct clt_ell_specific*)bu_pool_alloc(pool, 1, size);
 
     VMOVE(args->ell_V, ell->ell_V);
     MAT_COPY(args->ell_SoR, ell->ell_SoR);
     MAT_COPY(args->ell_invRSSR, ell->ell_invRSSR);
+    return size;
 }
+
 #endif /* USE_OPENCL */
 
 
@@ -295,10 +292,6 @@ rt_ell_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     mat_t mtemp;
     vect_t Au, Bu, Cu;	/* A, B, C with unit length */
     fastf_t f;
-
-#ifdef USE_OPENCL
-    clt_init();
-#endif
 
     eip = (struct rt_ell_internal *)ip->idb_ptr;
     RT_ELL_CK_MAGIC(eip);
@@ -422,11 +415,6 @@ rt_ell_print(register const struct soltab *stp)
 int
 rt_ell_shot(struct soltab *stp, register struct xray *rp, struct application *ap, struct seg *seghead)
 {
-#ifdef USE_OPENCL
-    struct cl_hit hits[2];
-
-    return clt_shot(sizeof(hits), hits, rp, stp, ap, seghead);
-#else
     register struct ell_specific *ell =
 	(struct ell_specific *)stp->st_specific;
     register struct seg *segp;
@@ -465,7 +453,6 @@ rt_ell_shot(struct soltab *stp, register struct xray *rp, struct application *ap
     segp->seg_out.hit_surfno = 0;
     BU_LIST_INSERT(&(seghead->l), &(segp->l));
     return 2;			/* HIT */
-#endif
 }
 
 
@@ -535,9 +522,6 @@ rt_ell_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, str
 void
 rt_ell_norm(register struct hit *hitp, struct soltab *stp, register struct xray *rp)
 {
-#ifdef USE_OPENCL
-    clt_norm(hitp, stp, rp);
-#else
     register struct ell_specific *ell =
 	(struct ell_specific *)stp->st_specific;
     vect_t xlated;
@@ -551,7 +535,6 @@ rt_ell_norm(register struct hit *hitp, struct soltab *stp, register struct xray 
 
     /* tuck away this scale for the curvature routine */
     hitp->hit_vpriv[X] = scale;
-#endif
 }
 
 

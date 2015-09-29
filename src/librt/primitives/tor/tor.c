@@ -156,7 +156,7 @@ struct tor_specific {
 
 #ifdef USE_OPENCL
 /* largest data members first */
-struct tor_shot_specific {
+struct clt_tor_specific {
     cl_double tor_alpha;	/* 0 < (R2/R1) <= 1 */
     cl_double tor_r1;		/* for inverse scaling of k values. */
     cl_double tor_V[3];		/* Vector to center of torus */
@@ -165,26 +165,23 @@ struct tor_shot_specific {
 };
 
 size_t
-clt_tor_length(struct soltab *stp)
-{
-    (void)stp;
-    return sizeof(struct tor_shot_specific);
-}
-
-void
-clt_tor_pack(void *dst, struct soltab *src)
+clt_tor_pack(struct bu_pool *pool, struct soltab *stp)
 {
     struct tor_specific *tor =
-        (struct tor_specific *)src->st_specific;
-    struct tor_shot_specific *args =
-        (struct tor_shot_specific *)dst;
+        (struct tor_specific *)stp->st_specific;
+    struct clt_tor_specific *args;
+
+    const size_t size = sizeof(*args);
+    args = (struct clt_tor_specific*)bu_pool_alloc(pool, 1, size);
 
     args->tor_alpha = tor->tor_alpha;
     args->tor_r1 = tor->tor_r1;
     VMOVE(args->tor_V, tor->tor_V);
     MAT_COPY(args->tor_SoR, tor->tor_SoR);
     MAT_COPY(args->tor_invR, tor->tor_invR);
+    return size;
 }
+
 #endif /* USE_OPENCL */
 
 
@@ -258,10 +255,6 @@ rt_tor_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 
     mat_t R;
     fastf_t f;
-
-#ifdef USE_OPENCL
-    clt_init();
-#endif
 
     tip = (struct rt_tor_internal *)ip->idb_ptr;
     RT_TOR_CK_MAGIC(tip);
@@ -382,11 +375,6 @@ rt_tor_print(register const struct soltab *stp)
 int
 rt_tor_shot(struct soltab *stp, register struct xray *rp, struct application *ap, struct seg *seghead)
 {
-#ifdef USE_OPENCL
-    struct cl_hit hits[4];
-
-    return clt_shot(sizeof(hits), hits, rp, stp, ap, seghead);
-#else
     register struct tor_specific *tor =
 	(struct tor_specific *)stp->st_specific;
     register struct seg *segp;
@@ -571,7 +559,6 @@ rt_tor_shot(struct soltab *stp, register struct xray *rp, struct application *ap
     VJOIN1(segp->seg_out.hit_vpriv, pprime, k[2], dprime);
     BU_LIST_INSERT(&(seghead->l), &(segp->l));
     return 4;			/* HIT */
-#endif
 }
 
 
@@ -851,9 +838,6 @@ rt_tor_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, str
 void
 rt_tor_norm(register struct hit *hitp, struct soltab *stp, register struct xray *rp)
 {
-#ifdef USE_OPENCL
-    clt_norm(hitp, stp, rp);
-#else
     register struct tor_specific *tor =
 	(struct tor_specific *)stp->st_specific;
 
@@ -872,7 +856,6 @@ rt_tor_norm(register struct hit *hitp, struct soltab *stp, register struct xray 
     VUNITIZE(work);
 
     MAT3X3VEC(hitp->hit_normal, tor->tor_invR, work);
-#endif
 }
 
 

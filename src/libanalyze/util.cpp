@@ -86,9 +86,9 @@ analyze_get_bbox_rays(fastf_t **rays, point_t min, point_t max, struct bn_tol *t
 {
     int ret, count;
     point_t mid;
-    struct rt_pattern_data *xdata, *ydata, *zdata;
-
-    xdata = ydata = zdata = NULL;
+    struct rt_pattern_data *xdata = NULL;
+    struct rt_pattern_data *ydata = NULL;
+    struct rt_pattern_data *zdata = NULL;
 
     if (!rays || !tol) return 0;
 

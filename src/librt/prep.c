@@ -444,6 +444,89 @@ rt_prep(register struct rt_i *rtip)
 }
 
 
+#ifdef USE_OPENCL
+void
+clt_prep(struct rt_i *rtip)
+{
+    struct soltab *stp;
+    long i;
+
+    struct soltab **primitives;
+    long n_primitives;
+
+    RT_CK_RTI(rtip);
+
+    clt_init();
+
+    n_primitives = rtip->nsolids+1;
+    primitives = (struct soltab **)bu_calloc(n_primitives,
+        sizeof(struct soltab *), "clt_prep: initial list alloc");
+
+    i = 0;
+    RT_VISIT_ALL_SOLTABS_START(stp, rtip) {
+        /* Ignore "dead" solids in the list.  (They failed prep) */
+        if (stp->st_aradius <= 0) continue;
+        /* Infinite solids make the BVH construction explode. */
+        if (stp->st_aradius >= INFINITY) continue;
+
+        primitives[i++] = stp;
+    } RT_VISIT_ALL_SOLTABS_END;
+
+    n_primitives = i;
+    bu_log("nprimitives: %d of %d\n", n_primitives, rtip->nsolids);
+
+    if (n_primitives != 0) {
+        /* Build BVH tree for primitives */
+        cl_int total_nodes = 0;
+	struct clt_linear_bvh_node *nodes;
+	long *ordered_prims;
+	fastf_t *centroids;
+	fastf_t *bounds;
+
+	centroids = (fastf_t*)bu_calloc(n_primitives, sizeof(fastf_t)*3, "clt_prep");
+	for (i=0; i<n_primitives; i++) {
+	    const struct soltab *primitive = primitives[i];
+	    VMOVE(&centroids[i*3], primitive->st_center);
+	}
+	bounds = (fastf_t*)bu_calloc(n_primitives, sizeof(fastf_t)*6, "clt_prep");
+	for (i=0; i<n_primitives; i++) {
+	    const struct soltab *primitive = primitives[i];
+	    VMOVE(&bounds[i*6+0], primitive->st_min);
+	    VMOVE(&bounds[i*6+3], primitive->st_max);
+	}
+
+	ordered_prims = NULL;
+	nodes = NULL;
+	clt_linear_bvh_create(n_primitives, &nodes, &ordered_prims, centroids, bounds,
+			      &total_nodes);
+
+	bu_free(bounds, "clt_prep");
+	bu_free(centroids, "clt_prep");
+
+        clt_db_store_bvh(total_nodes, nodes);
+	bu_free(nodes, "clt_prep");
+
+	if (ordered_prims) {
+	    struct soltab **ordered_primitives;
+
+	    ordered_primitives = (struct soltab **)bu_calloc(n_primitives,
+							     sizeof(struct soltab *),
+							     "clt_prep");
+	    for (i=0; i<n_primitives; i++) {
+		ordered_primitives[i] = primitives[ordered_prims[i]];
+	    }
+	    bu_free(ordered_prims, "clt_prep");
+	    bu_free(primitives, "clt_prep");
+	    primitives = ordered_primitives;
+	}
+
+	clt_db_store(n_primitives, primitives);
+	bu_free(primitives, "clt_prep");
+    }
+}
+#endif
+
+
 /**
  * Plot the bounding boxes of all the active solids.  Color may be set
  * in advance by the caller.

@@ -149,7 +149,7 @@ static const fastf_t nmg_uv_unitcircle[27] = {
 
 #ifdef USE_OPENCL
 /* largest data members first */
-struct tgc_shot_specific {
+struct clt_tgc_specific {
     cl_double tgc_V[3];             /* Vector to center of base of TGC */
     cl_double tgc_CdAm1;            /* (C/A - 1) */
     cl_double tgc_DdBm1;            /* (D/B - 1) */
@@ -162,19 +162,14 @@ struct tgc_shot_specific {
 };
 
 size_t
-clt_tgc_length(struct soltab *stp)
-{
-    (void)stp;
-    return sizeof(struct tgc_shot_specific);
-}
-
-void
-clt_tgc_pack(void *dst, struct soltab *src)
+clt_tgc_pack(struct bu_pool *pool, struct soltab *stp)
 {
     struct tgc_specific *tgc =
-        (struct tgc_specific *)src->st_specific;
-    struct tgc_shot_specific *args =
-        (struct tgc_shot_specific *)dst;
+        (struct tgc_specific *)stp->st_specific;
+    struct clt_tgc_specific *args;
+
+    const size_t size = sizeof(*args);
+    args = (struct clt_tgc_specific*)bu_pool_alloc(pool, 1, size);
 
     VMOVE(args->tgc_V, tgc->tgc_V);
     args->tgc_CdAm1 = tgc->tgc_CdAm1;
@@ -185,7 +180,9 @@ clt_tgc_pack(void *dst, struct soltab *src)
     MAT_COPY(args->tgc_ScShR, tgc->tgc_ScShR);
     MAT_COPY(args->tgc_invRtShSc, tgc->tgc_invRtShSc);
     args->tgc_AD_CB = tgc->tgc_AD_CB;
+    return size;
 }
+
 #endif /* USE_OPENCL */
 
 /**
@@ -255,10 +252,6 @@ rt_tgc_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     mat_t tmp;
     vect_t nH;
     vect_t work;
-
-#ifdef USE_OPENCL
-    clt_init();
-#endif
 
     tip = (struct rt_tgc_internal *)ip->idb_ptr;
     RT_TGC_CK_MAGIC(tip);
@@ -608,11 +601,6 @@ rt_tgc_print(register const struct soltab *stp)
 int
 rt_tgc_shot(struct soltab *stp, register struct xray *rp, struct application *ap, struct seg *seghead)
 {
-#ifdef USE_OPENCL
-    struct cl_hit hits[4];
-
-    return clt_shot(sizeof(hits), hits, rp, stp, ap, seghead);
-#else
     register const struct tgc_specific *tgc =
 	(struct tgc_specific *)stp->st_specific;
     register struct seg *segp;
@@ -998,7 +986,6 @@ rt_tgc_shot(struct soltab *stp, register struct xray *rp, struct application *ap
     }
 
     return intersect;
-#endif
 }
 
 
@@ -1511,9 +1498,6 @@ rt_pt_sort(fastf_t t[], int npts)
 void
 rt_tgc_norm(register struct hit *hitp, struct soltab *stp, register struct xray *rp)
 {
-#ifdef USE_OPENCL
-    clt_norm(hitp, stp, rp);
-#else
     register struct tgc_specific *tgc =
 	(struct tgc_specific *)stp->st_specific;
 
@@ -1550,7 +1534,6 @@ rt_tgc_norm(register struct hit *hitp, struct soltab *stp, register struct xray 
 	    bu_log("rt_tgc_norm: bad surfno=%d\n", hitp->hit_surfno);
 	    break;
     }
-#endif
 }
 
 

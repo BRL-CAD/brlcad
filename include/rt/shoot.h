@@ -53,41 +53,6 @@
 
 __BEGIN_DECLS
 
-#ifdef USE_OPENCL
-#include <limits.h>
-#include <CL/cl.h>
-
-#ifdef CLT_SINGLE_PRECISION
-#define cl_double cl_float
-#define cl_double3 cl_float3
-#endif
-
-
-struct cl_hit {
-  cl_double3 hit_point;
-  cl_double3 hit_normal;
-  cl_double3 hit_vpriv;
-  cl_double hit_dist;
-  cl_int hit_surfno;
-  cl_uint hit_index;
-};
-
-struct clt_bvh_bounds {
-    cl_double p_min[3], p_max[3];
-};
-
-struct clt_linear_bvh_node {
-    struct clt_bvh_bounds bounds;
-    union {
-        cl_int primitives_offset;	/* leaf */
-        cl_int second_child_offset;	/* interior */
-    } u;
-    cl_ushort n_primitives;		/* 0 -> interior node */
-    cl_uchar axis;			/* interior node: xyz */
-    cl_uchar pad[1];			/* ensure 32 byte total size */
-};
-#endif
-
 /**
  * @brief
  * Shoot a ray
@@ -192,20 +157,28 @@ RT_EXPORT extern void rt_res_pieces_init(struct resource *resp,
                                          struct rt_i *rtip);
 RT_EXPORT extern void rt_vstub(struct soltab *stp[],
                                struct xray *rp[],
-                               struct  seg segp[],
+                               struct seg segp[],
                                int n,
-                               struct application       *ap);
+                               struct application *ap);
 
 #ifdef USE_OPENCL
-RT_EXPORT extern void clt_db_store(size_t count, struct soltab *solids[]);
-RT_EXPORT extern void clt_db_store_bvh(size_t count, struct clt_linear_bvh_node *nodes);
-RT_EXPORT extern void clt_db_release(void);
+struct cl_hit {
+    cl_double3 hit_point;
+    cl_double3 hit_normal;
+    cl_double3 hit_vpriv;
+    cl_double hit_dist;
+    cl_int hit_surfno;
+    cl_uint hit_index;
+};
 
-RT_EXPORT extern cl_int clt_db_solid_shot(const size_t sz_hits, struct cl_hit *hits, struct xray *rp, const cl_uint index);
 
-RT_EXPORT extern void clt_run(unsigned char *pixels, cl_uint pwidth, cl_int cur_pixel, cl_int last_pixel, cl_int width,
-			      mat_t view2model, fastf_t cell_width, fastf_t cell_height, fastf_t aspect, cl_int lightmodel);
+RT_EXPORT extern void
+clt_frame(void *pixels, uint8_t o[3], int cur_pixel, int last_pixel,
+	  int width, int background[3], int nonbackground[3], mat_t view2model,
+          fastf_t cell_width, fastf_t cell_height, fastf_t aspect, int lightmodel);
 #endif
+
+
 
 __END_DECLS
 

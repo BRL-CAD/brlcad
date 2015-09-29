@@ -336,11 +336,13 @@ macro(BRLCAD_ADDLIB libname srcslist libslist)
 
   string(TOUPPER "${libname}" LIBNAME_UPPER)
   if(${ARGC} GREATER 3)
-    CMAKE_PARSE_ARGUMENTS(${LIBNAME_UPPER} "NO_INSTALL;NO_STRICT;NO_STRICT_CXX" "FOLDER" "" ${ARGN})
+    CMAKE_PARSE_ARGUMENTS(${LIBNAME_UPPER} "NO_INSTALL;NO_STRICT;NO_STRICT_CXX" "FOLDER" "SO_SRCS;STATIC_SRCS" ${ARGN})
   endif(${ARGC} GREATER 3)
 
+  set(all_srcs ${srcslist} ${${LIBNAME_UPPER}_SO_SRCS} ${${LIBNAME_UPPER}_STATIC_SRCS})
+
   # Go all C++ if the settings request it
-  SET_CXX_LANG("${srcslist}")
+  SET_CXX_LANG("${all_srcs}")
 
   # Add ${libname} to the list of BRL-CAD libraries
   list(APPEND BRLCAD_LIBS ${libname})
@@ -354,23 +356,25 @@ macro(BRLCAD_ADDLIB libname srcslist libslist)
   GET_TARGET_FLAGS(${libname} "${libslist}")
 
   # Find out if we have C, C++, or both
-  SRCS_LANG("${srcslist}" lib_type ${libname})
+  SRCS_LANG("${all_srcs}" lib_type ${libname})
 
   # If we have a mixed language library, go ahead and pass on the flags to
   # the source files - we don't need the targets defined since the flags
   # will be managed per-source-file.
   if(${lib_type} STREQUAL "MIXED")
-    FLAGS_TO_FILES("${srcslist}" ${libname})
+    FLAGS_TO_FILES("${all_srcs}" ${libname})
   endif(${lib_type} STREQUAL "MIXED")
 
 
   # Handle "shared" libraries (with MSVC, these would be dynamic libraries)
   if(BUILD_SHARED_LIBS)
 
-    add_library(${libname} SHARED ${srcslist})
+    set(so_srcs ${srcslist} ${${LIBNAME_UPPER}_SO_SRCS})
+
+    add_library(${libname} SHARED ${so_srcs})
 
     # Check at comple time the standard BRL-CAD style rules
-    VALIDATE_STYLE("${srcslist}" "${libname}")
+    VALIDATE_STYLE("${so_srcs}" "${libname}")
 
     # Set the FOLDER property.  If the target has supplied a folder, use
     # that as a subfolder
@@ -453,11 +457,14 @@ macro(BRLCAD_ADDLIB libname srcslist libslist)
   # Handle static libraries (renaming requirements to both allow unique targets and
   # respect standard naming conventions.)
   if(BUILD_STATIC_LIBS)
-    add_library(${libname}-static STATIC ${srcslist})
+
+    set(static_srcs ${srcslist} ${${LIBNAME_UPPER}_STATIC_SRCS})
+
+    add_library(${libname}-static STATIC ${static_srcs})
     set_target_properties(${libname}-static PROPERTIES FOLDER "BRL-CAD Static Libs")
     if(NOT BUILD_SHARED_LIBS)
       # Check at comple time the standard BRL-CAD style rules
-      VALIDATE_STYLE("${srcslist}" "${libname}-static")
+      VALIDATE_STYLE("${static_srcs}" "${libname}-static")
     endif(NOT BUILD_SHARED_LIBS)
 
     # Set the FOLDER property.  If the target has supplied a folder, use
@@ -528,7 +535,7 @@ macro(BRLCAD_ADDLIB libname srcslist libslist)
   # Mixed source STRICTNESS is handled separately (on a per-file basis) if we have mixed
   # sources via the NO_STRICT_CXX flag
   if(${lib_type} STREQUAL "MIXED" AND ${LIBNAME_UPPER}_NO_STRICT_CXX)
-    CXX_NO_STRICT("${srcslist}")
+    CXX_NO_STRICT("${all_srcs}")
   endif(${lib_type} STREQUAL "MIXED" AND ${LIBNAME_UPPER}_NO_STRICT_CXX)
 
   # For any CPP_DLL_DEFINES DLL library, users of that library will need the DLL_IMPORTS

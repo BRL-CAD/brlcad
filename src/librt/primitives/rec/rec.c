@@ -160,7 +160,7 @@ struct rec_specific {
 
 #ifdef USE_OPENCL
 /* largest data members first */
-struct rec_shot_specific {
+struct clt_rec_specific {
     cl_double rec_V[3];		/* Vector to center of base of cylinder */
     cl_double rec_Hunit[3];	/* Unit H vector */
     cl_double rec_SoR[16];	/* Scale(Rot(vect)) */
@@ -168,25 +168,22 @@ struct rec_shot_specific {
 };
 
 size_t
-clt_rec_length(struct soltab *stp)
-{
-    (void)stp;
-    return sizeof(struct rec_shot_specific);
-}
-
-void
-clt_rec_pack(void *dst, struct soltab *src)
+clt_rec_pack(struct bu_pool *pool, struct soltab *stp)
 {
     struct rec_specific *rec =
-        (struct rec_specific *)src->st_specific;
-    struct rec_shot_specific *args =
-        (struct rec_shot_specific *)dst;
+        (struct rec_specific *)stp->st_specific;
+    struct clt_rec_specific *args;
+
+    const size_t size = sizeof(*args);
+    args = (struct clt_rec_specific*)bu_pool_alloc(pool, 1, size);
 
     VMOVE(args->rec_V, rec->rec_V);
     VMOVE(args->rec_Hunit, rec->rec_Hunit);
     MAT_COPY(args->rec_SoR, rec->rec_SoR);
     MAT_COPY(args->rec_invRoS, rec->rec_invRoS);
+    return size;
 }
+
 #endif /* USE_OPENCL */
 
 
@@ -319,10 +316,6 @@ rt_rec_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     vect_t invsq;	/* [ 1/(|A|**2), 1/(|B|**2), 1/(|Hv|**2) ] */
     vect_t work;
     fastf_t f;
-
-#ifdef USE_OPENCL
-    clt_init();
-#endif
 
     if (!stp || !ip)
 	return -1;
@@ -466,11 +459,6 @@ rt_rec_print(const struct soltab *stp)
 int
 rt_rec_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct seg *seghead)
 {
-#ifdef USE_OPENCL
-    struct cl_hit hits[2];
-
-    return clt_shot(sizeof(hits), hits, rp, stp, ap, seghead);
-#else
     struct rec_specific *rec;
     vect_t dprime;		/* D' */
     vect_t pprime;		/* P' */
@@ -666,7 +654,6 @@ rt_rec_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct 
 	BU_LIST_INSERT(&(seghead->l), &(segp->l));
     }
     return 2;			/* HIT */
-#endif
 }
 
 
@@ -800,9 +787,6 @@ rt_rec_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, str
 void
 rt_rec_norm(struct hit *hitp, struct soltab *stp, struct xray *rp)
 {
-#ifdef USE_OPENCL
-    clt_norm(hitp, stp, rp);
-#else
     struct rec_specific *rec =
 	(struct rec_specific *)stp->st_specific;
 
@@ -825,7 +809,6 @@ rt_rec_norm(struct hit *hitp, struct soltab *stp, struct xray *rp)
 	    bu_log("rt_rec_norm: surfno=%d bad\n", hitp->hit_surfno);
 	    break;
     }
-#endif
 }
 
 
