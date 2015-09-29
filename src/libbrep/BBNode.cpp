@@ -19,7 +19,6 @@
  */
 #include "common.h"
 #include <algorithm> // for std::max
-#define NOMINMAX
 extern "C" {
 #include "bu/log.h"
 }

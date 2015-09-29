@@ -18,12 +18,16 @@
  * information.
  */
 #include "common.h"
+
+/* systeam headers */
 #include <algorithm> // for std::max
-#define NOMINMAX
+
+/* library headers */
 extern "C" {
 #include "bu/log.h"
 }
 #include "brep.h"
+
 
 namespace brlcad {
 BRNode::~BRNode()
