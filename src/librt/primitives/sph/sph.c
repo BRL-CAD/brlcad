@@ -125,6 +125,10 @@ rt_sph_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     eip = (struct rt_ell_internal *)ip->idb_ptr;
     RT_ELL_CK_MAGIC(eip);
 
+#ifdef USE_OPENCL
+    clt_init();
+#endif
+
     /* Validate that |A| > 0, |B| > 0, |C| > 0 */
     magsq_a = MAGSQ(eip->a);
     magsq_b = MAGSQ(eip->b);
@@ -239,6 +243,11 @@ rt_sph_print(register const struct soltab *stp)
 int
 rt_sph_shot(struct soltab *stp, register struct xray *rp, struct application *ap, struct seg *seghead)
 {
+#ifdef USE_OPENCL
+    struct cl_hit hits[2];
+
+    return clt_shot(sizeof(hits), hits, rp, stp, ap, seghead);
+#else
     register struct sph_specific *sph =
 	(struct sph_specific *)stp->st_specific;
     register struct seg *segp;
@@ -278,6 +287,7 @@ rt_sph_shot(struct soltab *stp, register struct xray *rp, struct application *ap
     segp->seg_out.hit_surfno = 0;
     BU_LIST_INSERT(&(seghead->l), &(segp->l));
     return 2;			/* HIT */
+#endif
 }
 
 
@@ -347,12 +357,16 @@ rt_sph_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, str
 void
 rt_sph_norm(register struct hit *hitp, struct soltab *stp, register struct xray *rp)
 {
+#ifdef USE_OPENCL
+    clt_norm(hitp, stp, rp);
+#else
     register struct sph_specific *sph =
 	(struct sph_specific *)stp->st_specific;
 
     VJOIN1(hitp->hit_point, rp->r_pt, hitp->hit_dist, rp->r_dir);
     VSUB2(hitp->hit_normal, hitp->hit_point, sph->sph_V);
     VSCALE(hitp->hit_normal, hitp->hit_normal, sph->sph_invrad);
+#endif
 }
 
 

@@ -300,6 +300,10 @@ rt_ehy_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     mat_t Rinv;
     mat_t S;
 
+#ifdef USE_OPENCL
+    clt_init();
+#endif
+
     RT_CK_DB_INTERNAL(ip);
 
     xip = (struct rt_ehy_internal *)ip->idb_ptr;
@@ -395,6 +399,11 @@ rt_ehy_print(const struct soltab *stp)
 int
 rt_ehy_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct seg *seghead)
 {
+#ifdef USE_OPENCL
+    struct cl_hit hits[2];
+
+    return clt_shot(sizeof(hits), hits, rp, stp, ap, seghead);
+#else
     struct ehy_specific *ehy =
 	(struct ehy_specific *)stp->st_specific;
     vect_t dp;		/* D' */
@@ -512,6 +521,7 @@ check_plates:
 	BU_LIST_INSERT(&(seghead->l), &(segp->l));
     }
     return 2;			/* HIT */
+#endif
 }
 
 
@@ -521,6 +531,9 @@ check_plates:
 void
 rt_ehy_norm(struct hit *hitp, struct soltab *stp, struct xray *rp)
 {
+#ifdef USE_OPENCL
+    clt_norm(hitp, stp, rp);
+#else
     vect_t can_normal;	/* normal to canonical ehy */
     fastf_t cp, scale;
     struct ehy_specific *ehy =
@@ -548,6 +561,7 @@ rt_ehy_norm(struct hit *hitp, struct soltab *stp, struct xray *rp)
 	    bu_log("rt_ehy_norm: surfno=%d bad\n", hitp->hit_surfno);
 	    break;
     }
+#endif
 }
 
 

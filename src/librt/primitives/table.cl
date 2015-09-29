@@ -78,7 +78,7 @@ db_solid_shot(global int *len, global struct hit *res, const double3 r_pt, const
 }
 
 
-#define RT_SINGLE_HIT 1
+//#define RT_SINGLE_HIT 1
 void do_hitp(global struct hit *res, const uint i, const uint hit_index, const struct hit *hitp)
 {
     if (res) {
@@ -254,11 +254,12 @@ shootray(global struct hit *hitp, const double3 r_pt, const double3 r_dir,
 
 
 __kernel void
-do_pixel(write_only image2d_t image, global struct hit *hits, 
-         const int cur_pixel, const int last_pixel, const int width,
-         const double16 view2model, const double cell_width, const double cell_height,
-	 const double aspect, const int lightmodel, const uint nprims, global int *ids,
-	 global struct linear_bvh_node *nodes, global uint *indexes, global char *prims)
+do_pixel(global unsigned char *pixels, global struct hit *hits, 
+         const uint pwidth, const int cur_pixel, const int last_pixel, const int width,
+         const double16 view2model, const double cell_width, const double cell_height, const double aspect,
+         const int lightmodel,
+         const uint nprims, global int *ids, global struct linear_bvh_node *nodes,
+         global uint *indexes, global char *prims)
 {
     const int pixelnum = cur_pixel+get_global_id(0);
 
@@ -268,13 +269,12 @@ do_pixel(write_only image2d_t image, global struct hit *hits,
     double3 r_pt, r_dir;
     gen_ray(&r_pt, &r_dir, a_x, a_y, view2model, cell_width, cell_height, aspect);
 
-    global struct hit *hitp = hits+get_global_id(0);
+    global struct hit *hitp = hits+(a_y*width+a_x);
     hitp->hit_dist = INFINITY;
 
     int ret = shootray(hitp, r_pt, r_dir, nprims, ids, nodes, indexes, prims);
 
-    double4 a_color;
-    a_color.w = hitp->hit_dist;
+    double3 a_color = 1.0;
 
     if (ret != 0) {
         double diffuse0 = 0;
@@ -301,20 +301,33 @@ do_pixel(write_only image2d_t image, global struct hit *hits,
 
                 /* Add in contribution from ambient light */
                 work1 = ambient_color * AmbientIntensity;
-                a_color.xyz = work0 + work1;
+                a_color = work0 + work1;
                 break;
             case 2:
                 /* Store surface normals pointing inwards */
                 /* (For Spencer's moving light program) */
-                a_color.xyz = (normal * (-.5)) + .5;
+                a_color = (normal * (-.5)) + .5;
                 break;
         }
     }
 
+    uchar3 rgb;
     if (ret <= 0) {
+	/* shot missed the model, don't dither */
+        rgb = ibackground;
 	a_color = -1e-20;	// background flag
+    } else {
+        rgb = convert_uchar3_sat(a_color*255);
+
+	if (all(rgb == ibackground)) {
+            rgb = inonbackground;
+	} else if (all(rgb == iblack)) { // make sure it's never perfect black
+            rgb.z = 1;
+	}
     }
-    write_imagef(image, (int2){a_x, a_y}, convert_float4(a_color));
+
+    global unsigned char *pixelp = pixels+pwidth*(a_y*width+a_x);
+    vstore3(rgb, 0, pixelp);
 }
 
 /*

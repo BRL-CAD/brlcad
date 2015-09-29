@@ -807,6 +807,10 @@ rt_arb_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 {
     struct rt_arb_internal *aip;
 
+#ifdef USE_OPENCL
+    clt_init();
+#endif
+
     aip = (struct rt_arb_internal *)ip->idb_ptr;
     RT_ARB_CK_MAGIC(aip);
 
@@ -860,6 +864,11 @@ rt_arb_print(register const struct soltab *stp)
 int
 rt_arb_shot(struct soltab *stp, register struct xray *rp, struct application *ap, struct seg *seghead)
 {
+#ifdef USE_OPENCL
+    struct cl_hit hits[2];
+
+    return clt_shot(sizeof(hits), hits, rp, stp, ap, seghead);
+#else
     struct arb_specific *arbp = (struct arb_specific *)stp->st_specific;
     int iplane, oplane;
     fastf_t in, out;	/* ray in/out distances */
@@ -938,6 +947,7 @@ rt_arb_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 	BU_LIST_INSERT(&(seghead->l), &(segp->l));
     }
     return 2;			/* HIT */
+#endif
 }
 
 
@@ -1035,6 +1045,9 @@ rt_arb_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, str
 void
 rt_arb_norm(register struct hit *hitp, struct soltab *stp, register struct xray *rp)
 {
+#ifdef USE_OPENCL
+    clt_norm(hitp, stp, rp);
+#else
     register struct arb_specific *arbp =
 	(struct arb_specific *)stp->st_specific;
     register int h;
@@ -1042,6 +1055,7 @@ rt_arb_norm(register struct hit *hitp, struct soltab *stp, register struct xray 
     VJOIN1(hitp->hit_point, rp->r_pt, hitp->hit_dist, rp->r_dir);
     h = hitp->hit_surfno;
     VMOVE(hitp->hit_normal, arbp->arb_face[h].peqn);
+#endif
 }
 
 

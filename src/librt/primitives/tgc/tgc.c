@@ -256,6 +256,10 @@ rt_tgc_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     vect_t nH;
     vect_t work;
 
+#ifdef USE_OPENCL
+    clt_init();
+#endif
+
     tip = (struct rt_tgc_internal *)ip->idb_ptr;
     RT_TGC_CK_MAGIC(tip);
 
@@ -604,6 +608,11 @@ rt_tgc_print(register const struct soltab *stp)
 int
 rt_tgc_shot(struct soltab *stp, register struct xray *rp, struct application *ap, struct seg *seghead)
 {
+#ifdef USE_OPENCL
+    struct cl_hit hits[4];
+
+    return clt_shot(sizeof(hits), hits, rp, stp, ap, seghead);
+#else
     register const struct tgc_specific *tgc =
 	(struct tgc_specific *)stp->st_specific;
     register struct seg *segp;
@@ -989,6 +998,7 @@ rt_tgc_shot(struct soltab *stp, register struct xray *rp, struct application *ap
     }
 
     return intersect;
+#endif
 }
 
 
@@ -1501,6 +1511,9 @@ rt_pt_sort(fastf_t t[], int npts)
 void
 rt_tgc_norm(register struct hit *hitp, struct soltab *stp, register struct xray *rp)
 {
+#ifdef USE_OPENCL
+    clt_norm(hitp, stp, rp);
+#else
     register struct tgc_specific *tgc =
 	(struct tgc_specific *)stp->st_specific;
 
@@ -1537,6 +1550,7 @@ rt_tgc_norm(register struct hit *hitp, struct soltab *stp, register struct xray 
 	    bu_log("rt_tgc_norm: bad surfno=%d\n", hitp->hit_surfno);
 	    break;
     }
+#endif
 }
 
 

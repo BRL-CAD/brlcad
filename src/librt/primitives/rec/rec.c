@@ -320,6 +320,10 @@ rt_rec_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     vect_t work;
     fastf_t f;
 
+#ifdef USE_OPENCL
+    clt_init();
+#endif
+
     if (!stp || !ip)
 	return -1;
     RT_CK_SOLTAB(stp);
@@ -462,6 +466,11 @@ rt_rec_print(const struct soltab *stp)
 int
 rt_rec_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct seg *seghead)
 {
+#ifdef USE_OPENCL
+    struct cl_hit hits[2];
+
+    return clt_shot(sizeof(hits), hits, rp, stp, ap, seghead);
+#else
     struct rec_specific *rec;
     vect_t dprime;		/* D' */
     vect_t pprime;		/* P' */
@@ -657,6 +666,7 @@ rt_rec_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct 
 	BU_LIST_INSERT(&(seghead->l), &(segp->l));
     }
     return 2;			/* HIT */
+#endif
 }
 
 
@@ -790,6 +800,9 @@ rt_rec_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, str
 void
 rt_rec_norm(struct hit *hitp, struct soltab *stp, struct xray *rp)
 {
+#ifdef USE_OPENCL
+    clt_norm(hitp, stp, rp);
+#else
     struct rec_specific *rec =
 	(struct rec_specific *)stp->st_specific;
 
@@ -812,6 +825,7 @@ rt_rec_norm(struct hit *hitp, struct soltab *stp, struct xray *rp)
 	    bu_log("rt_rec_norm: surfno=%d bad\n", hitp->hit_surfno);
 	    break;
     }
+#endif
 }
 
 

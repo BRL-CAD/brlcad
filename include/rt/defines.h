@@ -38,16 +38,7 @@
 #  endif
 #endif
 
-#ifdef USE_OPENCL
-#include <limits.h>
-#include <CL/cl.h>
-
-#ifdef CLT_SINGLE_PRECISION
-#define cl_double cl_float
-#define cl_double3 cl_float3
-#endif
-#endif
-
+#endif /* RT_DEFINES_H */
 
 /*
  * Values for Solid ID.
@@ -203,7 +194,6 @@
 #define VPRINT(a, b) bu_log("%s (%g, %g, %g)\n", a, (b)[0], (b)[1], (b)[2])
 #define HPRINT(a, b) bu_log("%s (%g, %g, %g, %g)\n", a, (b)[0], (b)[1], (b)[2], (b)[3])
 
-#endif /* RT_DEFINES_H */
 
 /*
  * Local Variables:

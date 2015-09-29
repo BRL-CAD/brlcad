@@ -350,22 +350,6 @@ RT_EXPORT extern void rt_fr_cut(struct rt_i *rtip,
 RT_EXPORT extern void rt_regionfix(struct rt_i *rtip);
 
 
-#ifdef USE_OPENCL
-RT_EXPORT extern void clt_init(void);
-
-RT_EXPORT extern void
-clt_db_store(size_t count, struct soltab *solids[]);
-
-RT_EXPORT extern void
-clt_db_store_bvh(size_t count, struct clt_linear_bvh_node *nodes);
-
-RT_EXPORT extern void clt_db_release(void);
-
-
-RT_EXPORT void clt_prep(struct rt_i *rtip);
-#endif
-
-
 __END_DECLS
 
 #endif /* RT_RT_INSTANCE_H */

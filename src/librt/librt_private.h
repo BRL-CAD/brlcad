@@ -181,6 +181,11 @@ extern int tcl_list_to_fastf_array(const char *list, fastf_t **array, int *array
 extern cl_device_id clt_get_cl_device(void);
 extern cl_program clt_get_program(cl_context context, cl_device_id device, cl_uint count, const char *filename[], const char *options);
 
+extern void clt_init(void);
+
+extern cl_int clt_shot(size_t sz_hits, struct cl_hit *hits, struct xray *rp, struct soltab *stp, struct application *ap, struct seg *seghead);
+extern void clt_norm(struct hit *hitp, struct soltab *stp, struct xray *rp);
+
 extern void clt_inclusive_scan(cl_mem array, const cl_uint n);
 extern void clt_exclusive_scan(cl_mem array, const cl_uint n);
 

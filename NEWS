@@ -16,7 +16,7 @@ changes made.  See document footer for additional details.
 
 * added new pixcrop utility for cropping pix images - Carl Moore
 * preliminary OpenCL-accelerated coherent ray tracing pipeline
-	- Jon Engbert, Vasco Alexandre da Silva Costa
+	- Jon Engbert, Vasco Costa
 * improved point cloud plot visualization - Sean Morrison
 * initial support for datum points, lines, and planes - Sean Morrison
 * fixed program freezing bug in MGED grouper command - Bob Parker
