@@ -29,6 +29,8 @@ if (NOT LEMON_SKIP_INSTALL)
   install(FILES lempar.c DESTINATION ${DATA_DIR}/lemon)
 endif (NOT LEMON_SKIP_INSTALL)
 
+configure_file(lempar.c ${CMAKE_BINARY_DIR}/${DATA_DIR}/lemon COPYONLY)
+
 # Local Variables:
 # tab-width: 8
 # mode: cmake
