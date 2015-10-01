@@ -44,7 +44,7 @@ int
 cylinder_csg(struct bu_vls *msgs, struct subbrep_shoal_data *data, fastf_t cyl_tol)
 {
     //bu_log("cyl processing %s\n", bu_vls_addr(data->i->key));
-
+    int nonlinear_edge = -1;
     int implicit_plane_ind = -1;
     std::set<int> cylindrical_surfaces;
     std::set<int>::iterator c_it;
@@ -116,6 +116,7 @@ cylinder_csg(struct bu_vls *msgs, struct subbrep_shoal_data *data, fastf_t cyl_t
 	const ON_BrepEdge *edge = &(brep->m_E[*c_it]);
 	ON_Curve *ecv = edge->EdgeCurveOf()->Duplicate();
 	if (!ecv->IsLinear()) {
+	    if (nonlinear_edge == -1) nonlinear_edge = edge->m_edge_index;
 	    ON_Plane eplane;
 	    int have_planar_face = 0;
 	    // First, see if the edge has a real planar face associated with it.  If it does,
@@ -238,7 +239,6 @@ cylinder_csg(struct bu_vls *msgs, struct subbrep_shoal_data *data, fastf_t cyl_t
 	bu_log("plane %d normal: %f, %f, %f\n", i, p.Normal().x, p.Normal().y, p.Normal().z);
     }
 #endif
-
     if (implicit_plane_ind != -1) {
 	//bu_log("have implicit plane\n");
 	ON_Plane shoal_implicit_plane = cyl_planes[implicit_plane_ind];
@@ -393,6 +393,31 @@ cylinder_csg(struct bu_vls *msgs, struct subbrep_shoal_data *data, fastf_t cyl_t
     BN_VMOVE(data->params->origin, l.PointAt(tmin));
     BN_VMOVE(data->params->hv, cyl_axis);
     data->params->radius = cylinder.circle.Radius();
+
+    // Now that we have the implicit plane and the cylinder, see how much of the cylinder
+    // we've got as positive volume.  This information is needed in certain situations to resolve booleans.
+    if (implicit_plane_ind != -1) {
+	if (nonlinear_edge != -1) {
+	    const ON_BrepEdge *edge = &(brep->m_E[nonlinear_edge]);
+	    ON_3dPoint midpt = edge->EdgeCurveOf()->PointAt(edge->EdgeCurveOf()->Domain().Mid());
+	    ON_Plane p = cyl_planes[implicit_plane_ind];
+	    ON_3dVector ve = midpt - p.origin;
+	    ON_3dVector va = l.PointAt(tmin) - p.origin;
+	    ON_3dVector v1 = p.Normal() * ON_DotProduct(ve, p.Normal());
+	    ON_3dVector v2 = p.Normal() * ON_DotProduct(va, p.Normal());
+	    if (va.Length() > VUNITIZE_TOL) {
+		if (ON_DotProduct(v1, v2) > 0) {
+		    data->params->half_cyl = -1;
+		} else {
+		    data->params->half_cyl = 1;
+		}
+	    } else {
+		data->params->half_cyl = 0;
+	    }
+	} else {
+	    return 0;
+	}
+    }
 
     ////////////// END Cylinder specific stuff - break into function //////////////////////////
 

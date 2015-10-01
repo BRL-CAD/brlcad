@@ -1415,6 +1415,8 @@ struct csg_object_params {
     int csg_vert_cnt;
     int *csg_faces;
     point_t *csg_verts;
+    /* information flags */
+    int half_cyl;
 };
 
 /* Forward declarations */
