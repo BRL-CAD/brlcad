@@ -8,14 +8,14 @@ are permitted provided that the following conditions are met:
 Redistributions of source code must retain the above copyright notice, this list of
 conditions and the following disclaimer. Redistributions in binary form must reproduce
 the above copyright notice, this list of conditions and the following disclaimer
-in the documentation and/or other materials provided with the distribution.
+in the documentation and/or other materials provided with the distribution. 
 
 Neither the name of the Johns Hopkins University nor the names of its contributors
 may be used to endorse or promote products derived from this software without specific
-prior written permission.
+prior written permission. 
 
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY
-EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO THE IMPLIED WARRANTIES
+EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO THE IMPLIED WARRANTIES 
 OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT
 SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED
@@ -29,14 +29,14 @@ DAMAGE.
 /////////////////////
 // SortedTreeNodes //
 /////////////////////
-SortedTreeNodes::SortedTreeNodes( void )
+inline SortedTreeNodes::SortedTreeNodes( void )
 {
 	nodeCount = NULL;
-	treeNodes = NullPointer< TreeOctNode* >();
+	treeNodes = NullPointer( TreeOctNode* );
 	maxDepth = 0;
-	sliceOffsets = NullPointer< Pointer( int ) >();
+	sliceOffsets = NullPointer( Pointer( int ) );
 }
-SortedTreeNodes::~SortedTreeNodes( void )
+inline SortedTreeNodes::~SortedTreeNodes( void )
 {
 	if( nodeCount ) delete[] nodeCount , nodeCount = NULL;
 	if( treeNodes ) DeletePointer( treeNodes );
@@ -46,7 +46,7 @@ SortedTreeNodes::~SortedTreeNodes( void )
 		FreePointer( sliceOffsets );
 	}
 }
-void SortedTreeNodes::set( TreeOctNode& root , std::vector< int >* map )
+inline void SortedTreeNodes::set( TreeOctNode& root , std::vector< int >* map )
 {
 	if( nodeCount ) delete[] nodeCount;
 	if( treeNodes ) DeletePointer( treeNodes );
@@ -79,13 +79,13 @@ void SortedTreeNodes::set( TreeOctNode& root , std::vector< int >* map )
 	}
 	for( int i=0 ; i<nodeCount[maxDepth] ; i++ ) treeNodes[i]->nodeData.nodeIndex = i;
 }
-int SortedTreeNodes::Slices( int depth ){ return 1<<depth; }
-std::pair< int , int > SortedTreeNodes::sliceSpan( int depth , int off , int d ) const
+inline int SortedTreeNodes::Slices( int depth ){ return 1<<depth; }
+inline std::pair< int , int > SortedTreeNodes::sliceSpan( int depth , int off , int d ) const
 {
 	int dd = d-depth;
 	return std::pair< int , int >( nodeCount[d] + sliceOffsets[d][off<<dd] , nodeCount[d] + sliceOffsets[d][(off+1)<<dd] );
 }
-void SortedTreeNodes::_sortByZCoordinate( void )
+inline void SortedTreeNodes::_sortByZCoordinate( void )
 {
 	sliceOffsets = AllocPointer< Pointer( int ) >( maxDepth );
 	for( int d=0 ; d<maxDepth ;  d++ )
@@ -116,29 +116,29 @@ void SortedTreeNodes::_sortByZCoordinate( void )
 		sliceOffsets[d][0] = 0;
 	}
 }
-SortedTreeNodes::SquareCornerIndices& SortedTreeNodes::SliceTableData::cornerIndices( const TreeOctNode* node ) { return cTable[ node->nodeData.nodeIndex - nodeOffset ]; }
-SortedTreeNodes::SquareCornerIndices& SortedTreeNodes::SliceTableData::cornerIndices( int idx ) { return cTable[ idx - nodeOffset ]; }
-const SortedTreeNodes::SquareCornerIndices& SortedTreeNodes::SliceTableData::cornerIndices( const TreeOctNode* node ) const { return cTable[ node->nodeData.nodeIndex - nodeOffset ]; }
-const SortedTreeNodes::SquareCornerIndices& SortedTreeNodes::SliceTableData::cornerIndices( int idx ) const { return cTable[ idx - nodeOffset ]; }
-SortedTreeNodes::SquareEdgeIndices& SortedTreeNodes::SliceTableData::edgeIndices( const TreeOctNode* node ) { return eTable[ node->nodeData.nodeIndex - nodeOffset ]; }
-SortedTreeNodes::SquareEdgeIndices& SortedTreeNodes::SliceTableData::edgeIndices( int idx ) { return eTable[ idx - nodeOffset ]; }
-const SortedTreeNodes::SquareEdgeIndices& SortedTreeNodes::SliceTableData::edgeIndices( const TreeOctNode* node ) const { return eTable[ node->nodeData.nodeIndex - nodeOffset ]; }
-const SortedTreeNodes::SquareEdgeIndices& SortedTreeNodes::SliceTableData::edgeIndices( int idx ) const { return eTable[ idx - nodeOffset ]; }
-SortedTreeNodes::SquareFaceIndices& SortedTreeNodes::SliceTableData::faceIndices( const TreeOctNode* node ) { return fTable[ node->nodeData.nodeIndex - nodeOffset ]; }
-SortedTreeNodes::SquareFaceIndices& SortedTreeNodes::SliceTableData::faceIndices( int idx ) { return fTable[ idx - nodeOffset ]; }
-const SortedTreeNodes::SquareFaceIndices& SortedTreeNodes::SliceTableData::faceIndices( const TreeOctNode* node ) const { return fTable[ node->nodeData.nodeIndex - nodeOffset ]; }
-const SortedTreeNodes::SquareFaceIndices& SortedTreeNodes::SliceTableData::faceIndices( int idx ) const { return fTable[ idx - nodeOffset ]; }
-SortedTreeNodes::SquareCornerIndices& SortedTreeNodes::XSliceTableData::edgeIndices( const TreeOctNode* node ) { return eTable[ node->nodeData.nodeIndex - nodeOffset ]; }
-SortedTreeNodes::SquareCornerIndices& SortedTreeNodes::XSliceTableData::edgeIndices( int idx ) { return eTable[ idx - nodeOffset ]; }
-const SortedTreeNodes::SquareCornerIndices& SortedTreeNodes::XSliceTableData::edgeIndices( const TreeOctNode* node ) const { return eTable[ node->nodeData.nodeIndex - nodeOffset ]; }
-const SortedTreeNodes::SquareCornerIndices& SortedTreeNodes::XSliceTableData::edgeIndices( int idx ) const { return eTable[ idx - nodeOffset ]; }
-SortedTreeNodes::SquareEdgeIndices& SortedTreeNodes::XSliceTableData::faceIndices( const TreeOctNode* node ) { return fTable[ node->nodeData.nodeIndex - nodeOffset ]; }
-SortedTreeNodes::SquareEdgeIndices& SortedTreeNodes::XSliceTableData::faceIndices( int idx ) { return fTable[ idx - nodeOffset ]; }
-const SortedTreeNodes::SquareEdgeIndices& SortedTreeNodes::XSliceTableData::faceIndices( const TreeOctNode* node ) const { return fTable[ node->nodeData.nodeIndex - nodeOffset ]; }
-const SortedTreeNodes::SquareEdgeIndices& SortedTreeNodes::XSliceTableData::faceIndices( int idx ) const { return fTable[ idx - nodeOffset ]; }
+inline SortedTreeNodes::SquareCornerIndices& SortedTreeNodes::SliceTableData::cornerIndices( const TreeOctNode* node ) { return cTable[ node->nodeData.nodeIndex - nodeOffset ]; }
+inline SortedTreeNodes::SquareCornerIndices& SortedTreeNodes::SliceTableData::cornerIndices( int idx ) { return cTable[ idx - nodeOffset ]; }
+inline const SortedTreeNodes::SquareCornerIndices& SortedTreeNodes::SliceTableData::cornerIndices( const TreeOctNode* node ) const { return cTable[ node->nodeData.nodeIndex - nodeOffset ]; }
+inline const SortedTreeNodes::SquareCornerIndices& SortedTreeNodes::SliceTableData::cornerIndices( int idx ) const { return cTable[ idx - nodeOffset ]; }
+inline SortedTreeNodes::SquareEdgeIndices& SortedTreeNodes::SliceTableData::edgeIndices( const TreeOctNode* node ) { return eTable[ node->nodeData.nodeIndex - nodeOffset ]; }
+inline SortedTreeNodes::SquareEdgeIndices& SortedTreeNodes::SliceTableData::edgeIndices( int idx ) { return eTable[ idx - nodeOffset ]; }
+inline const SortedTreeNodes::SquareEdgeIndices& SortedTreeNodes::SliceTableData::edgeIndices( const TreeOctNode* node ) const { return eTable[ node->nodeData.nodeIndex - nodeOffset ]; }
+inline const SortedTreeNodes::SquareEdgeIndices& SortedTreeNodes::SliceTableData::edgeIndices( int idx ) const { return eTable[ idx - nodeOffset ]; }
+inline SortedTreeNodes::SquareFaceIndices& SortedTreeNodes::SliceTableData::faceIndices( const TreeOctNode* node ) { return fTable[ node->nodeData.nodeIndex - nodeOffset ]; }
+inline SortedTreeNodes::SquareFaceIndices& SortedTreeNodes::SliceTableData::faceIndices( int idx ) { return fTable[ idx - nodeOffset ]; }
+inline const SortedTreeNodes::SquareFaceIndices& SortedTreeNodes::SliceTableData::faceIndices( const TreeOctNode* node ) const { return fTable[ node->nodeData.nodeIndex - nodeOffset ]; }
+inline const SortedTreeNodes::SquareFaceIndices& SortedTreeNodes::SliceTableData::faceIndices( int idx ) const { return fTable[ idx - nodeOffset ]; }
+inline SortedTreeNodes::SquareCornerIndices& SortedTreeNodes::XSliceTableData::edgeIndices( const TreeOctNode* node ) { return eTable[ node->nodeData.nodeIndex - nodeOffset ]; }
+inline SortedTreeNodes::SquareCornerIndices& SortedTreeNodes::XSliceTableData::edgeIndices( int idx ) { return eTable[ idx - nodeOffset ]; }
+inline const SortedTreeNodes::SquareCornerIndices& SortedTreeNodes::XSliceTableData::edgeIndices( const TreeOctNode* node ) const { return eTable[ node->nodeData.nodeIndex - nodeOffset ]; }
+inline const SortedTreeNodes::SquareCornerIndices& SortedTreeNodes::XSliceTableData::edgeIndices( int idx ) const { return eTable[ idx - nodeOffset ]; }
+inline SortedTreeNodes::SquareEdgeIndices& SortedTreeNodes::XSliceTableData::faceIndices( const TreeOctNode* node ) { return fTable[ node->nodeData.nodeIndex - nodeOffset ]; }
+inline SortedTreeNodes::SquareEdgeIndices& SortedTreeNodes::XSliceTableData::faceIndices( int idx ) { return fTable[ idx - nodeOffset ]; }
+inline const SortedTreeNodes::SquareEdgeIndices& SortedTreeNodes::XSliceTableData::faceIndices( const TreeOctNode* node ) const { return fTable[ node->nodeData.nodeIndex - nodeOffset ]; }
+inline const SortedTreeNodes::SquareEdgeIndices& SortedTreeNodes::XSliceTableData::faceIndices( int idx ) const { return fTable[ idx - nodeOffset ]; }
 
 
-void SortedTreeNodes::setSliceTableData( SliceTableData& sData , int depth , int offset , int threads ) const
+inline void SortedTreeNodes::setSliceTableData( SliceTableData& sData , int depth , int offset , int threads ) const
 {
 	if( offset<0 || offset>(1<<depth) ) return;
 	if( threads<=0 ) threads = 1;
@@ -151,7 +151,7 @@ void SortedTreeNodes::setSliceTableData( SliceTableData& sData , int depth , int
 	sData._cMap.resize( sData.nodeCount * Square::CORNERS , 0 ) , sData._eMap.resize( sData.nodeCount * Square::EDGES , 0 ) , sData._fMap.resize( sData.nodeCount * Square::FACES , 0 );
 	sData.cTable.resize( sData.nodeCount ) , sData.eTable.resize( sData.nodeCount ) , sData.fTable.resize( sData.nodeCount );
 	std::vector< TreeOctNode::ConstNeighborKey3 > neighborKeys( std::max< int >( 1 , threads ) );
-	for( int i=0 ; i<neighborKeys.size() ; i++ ) neighborKeys[i].set( depth );
+	for( size_t i=0 ; i<neighborKeys.size() ; i++ ) neighborKeys[i].set( depth );
 #pragma omp parallel for num_threads( threads )
 	for( int i=span.first ; i<span.second ; i++ )
 	{
@@ -246,9 +246,9 @@ void SortedTreeNodes::setSliceTableData( SliceTableData& sData , int depth , int
 	}
 	int cCount = 0 , eCount = 0 , fCount = 0;
 
-	for( int i=0 ; i<sData._cMap.size() ; i++ ) if( sData._cMap[i] ) sData._cMap[i] = cCount++;
-	for( int i=0 ; i<sData._eMap.size() ; i++ ) if( sData._eMap[i] ) sData._eMap[i] = eCount++;
-	for( int i=0 ; i<sData._fMap.size() ; i++ ) if( sData._fMap[i] ) sData._fMap[i] = fCount++;
+	for( size_t i=0 ; i<sData._cMap.size() ; i++ ) if( sData._cMap[i] ) sData._cMap[i] = cCount++;
+	for( size_t i=0 ; i<sData._eMap.size() ; i++ ) if( sData._eMap[i] ) sData._eMap[i] = eCount++;
+	for( size_t i=0 ; i<sData._fMap.size() ; i++ ) if( sData._fMap[i] ) sData._fMap[i] = fCount++;
 #pragma omp parallel for num_threads( threads )
 	for( int i=0 ; i<sData.nodeCount ; i++ )
 	{
@@ -259,7 +259,7 @@ void SortedTreeNodes::setSliceTableData( SliceTableData& sData , int depth , int
 
 	sData.cCount = cCount , sData.eCount = eCount , sData.fCount = fCount;
 }
-void SortedTreeNodes::setXSliceTableData( XSliceTableData& sData , int depth , int offset , int threads ) const
+inline void SortedTreeNodes::setXSliceTableData( XSliceTableData& sData , int depth , int offset , int threads ) const
 {
 	if( offset<0 || offset>=(1<<depth) ) return;
 	if( threads<=0 ) threads = 1;
@@ -272,7 +272,7 @@ void SortedTreeNodes::setXSliceTableData( XSliceTableData& sData , int depth , i
 	sData._eMap.resize( sData.nodeCount * Square::CORNERS , 0 ) , sData._fMap.resize( sData.nodeCount * Square::EDGES , 0 );
 	sData.eTable.resize( sData.nodeCount ) , sData.fTable.resize( sData.nodeCount );
 	std::vector< TreeOctNode::ConstNeighborKey3 > neighborKeys( std::max< int >( 1 , threads ) );
-	for( int i=0 ; i<neighborKeys.size() ; i++ ) neighborKeys[i].set( depth );
+	for( size_t i=0 ; i<neighborKeys.size() ; i++ ) neighborKeys[i].set( depth );
 #pragma omp parallel for num_threads( threads )
 	for( int i=span.first ; i<span.second ; i++ )
 	{
@@ -335,8 +335,8 @@ void SortedTreeNodes::setXSliceTableData( XSliceTableData& sData , int depth , i
 	}
 	int eCount = 0 , fCount = 0;
 
-	for( int i=0 ; i<sData._eMap.size() ; i++ ) if( sData._eMap[i] ) sData._eMap[i] = eCount++;
-	for( int i=0 ; i<sData._fMap.size() ; i++ ) if( sData._fMap[i] ) sData._fMap[i] = fCount++;
+	for( size_t i=0 ; i<sData._eMap.size() ; i++ ) if( sData._eMap[i] ) sData._eMap[i] = eCount++;
+	for( size_t i=0 ; i<sData._fMap.size() ; i++ ) if( sData._fMap[i] ) sData._fMap[i] = fCount++;
 #pragma omp parallel for num_threads( threads )
 	for( int i=0 ; i<sData.nodeCount ; i++ )
 	{

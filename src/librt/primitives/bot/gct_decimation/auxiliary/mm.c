@@ -46,9 +46,6 @@
 
 #include "common.h"
 
-#define _GNU_SOURCE
-#include <sched.h>
-
 #include "mm.h"
 
 #include "bu/log.h"
@@ -419,10 +416,11 @@ mmContext mmcontext;
 
 #ifndef MM_ATOMIC_SUPPORT
 #include "cc.h"
+#include <limits.h>
 #include <stdlib.h>
 void mmBlockProcessList(mmBlockHead *head, void *userpointer, int (*processchunk)(void *chunk, void *userpointer))
 {
-    static const int INTPTR_BITS = sizeof(intptr_t) * CHAR_BIT;
+    const int INTPTR_BITS = sizeof(intptr_t) * CHAR_BIT;
     const int INTPTR_BITSHIFT = ccLog2Int(INTPTR_BITS);
 
     int i, blockcount, blockrefsize, chunkperblock;
@@ -504,9 +502,11 @@ void mmInit()
 #elif defined(MM_UNIX)
 	mmcontext.pagesize = sysconf(_SC_PAGESIZE);
 #elif defined(MM_WIN32)
-	SYSTEM_INFO sysinfo;
-	GetSystemInfo(&sysinfo);
-	mmcontext.pagesize = sysinfo.dwPageSize;
+	{
+	    SYSTEM_INFO sysinfo;
+	    GetSystemInfo(&sysinfo);
+	    mmcontext.pagesize = sysinfo.dwPageSize;
+	}
 #endif
 #if defined(MM_UNIX) && defined(_SC_PHYS_PAGES)
 	sysmemory = sysconf(_SC_PHYS_PAGES);
@@ -755,6 +755,10 @@ void mmListRemove(void *item, intptr_t offset)
 }
 
 
+#ifdef MM_LINUX
+#define _GNU_SOURCE
+#include <sched.h>
+#endif
 void mmThreadBindToCpu(int cpuindex)
 {
 #if defined(MM_LINUX)
@@ -766,6 +770,7 @@ void mmThreadBindToCpu(int cpuindex)
     (void)cpuindex;
 #endif
 }
+
 
 int mmCpuGetNode(int cpuindex)
 {

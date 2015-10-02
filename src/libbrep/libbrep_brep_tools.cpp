@@ -24,12 +24,16 @@
 
 #include "common.h"
 
+/* interface header */
+#include "libbrep_brep_tools.h"
+
+/* system implementation headers */
 #include <vector>
 #include <iostream>
 
-#include "opennurbs.h"
+/* library implementation headers */
 #include "bu/log.h"
-#include "libbrep_brep_tools.h"
+
 
 bool ON_NearZero(double val, double epsilon) {
     return (val > -epsilon) && (val < epsilon);

@@ -5,7 +5,7 @@
 #include "common.h"
 
 
-#if defined(__x86_64__) || defined(__ia64__)
+#if defined(__x86_64__)
 #define CPUCONF_ARCH_AMD64
 #elif defined(__i386__)
 #define CPUCONF_ARCH_IA32

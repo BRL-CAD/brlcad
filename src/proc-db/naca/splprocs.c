@@ -364,7 +364,11 @@ Zeroin(fastf_t ax, fastf_t bx, fastf_t (*f)(fastf_t x), fastf_t tol)
 {
     const int MAX_ITER = 500;
     int k;
-    fastf_t a, b, c, d, e, eps, fa, fb, fc, tol1, xm, p, q, r, s, tmp;
+    fastf_t a, b, c, eps, fa, fb, fc, tol1, xm, p, r, s, tmp;
+
+    fastf_t d = 0.0;
+    fastf_t e = 0.0;
+    fastf_t q = 0.0;
 
     eps = SMALL_FASTF;
     a = ax; /* initialization */

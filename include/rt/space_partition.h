@@ -115,6 +115,13 @@ RT_EXPORT extern void fill_out_bsp(struct rt_i *rtip,
                                    struct resource *resp,
                                    fastf_t bb[6]);
 
+struct bvh_build_node; /*forward declaration */
+RT_EXPORT extern struct bvh_build_node *
+hlbvh_create(long max_prims_in_node, struct bu_pool *pool, const fastf_t *centroids_prims,
+	     const fastf_t *bounds_prims, long *total_nodes,
+	     const long n_primitives, long **ordered_prims);
+
+
 /**
  * Add a solid into a given boxnode, extending the lists there.  This
  * is used only for building the root node, which will then be
@@ -141,6 +148,29 @@ RT_EXPORT extern const union cutter *rt_cell_n_on_ray(struct application *ap,
  */
 RT_EXPORT extern void rt_cut_clean(struct rt_i *rtip);
 
+
+#ifdef USE_OPENCL
+struct clt_bvh_bounds {
+    cl_double p_min[3], p_max[3];
+};
+
+struct clt_linear_bvh_node {
+    struct clt_bvh_bounds bounds;
+    union {
+        cl_int primitives_offset;	/* leaf */
+        cl_int second_child_offset;	/* interior */
+    } u;
+    cl_ushort n_primitives;		/* 0 -> interior node */
+    cl_uchar axis;			/* interior node: xyz */
+    cl_uchar pad[1];			/* ensure 32 byte total size */
+};
+
+
+RT_EXPORT extern void
+clt_linear_bvh_create(long n_primitives, struct clt_linear_bvh_node **nodes_p,
+		      long **ordered_prims, const fastf_t *centroids_prims,
+		      const fastf_t *bounds_prims, cl_int *total_nodes);
+#endif
 
 
 __END_DECLS

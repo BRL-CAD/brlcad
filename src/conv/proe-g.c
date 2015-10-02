@@ -33,7 +33,10 @@
 #include <math.h>
 #include <string.h>
 #include <ctype.h>
+
+#define __restrict /* quell gcc 4.1.2 system regex.h -pedantic-errors */
 #include <regex.h>
+
 #include <errno.h>
 #include "bio.h"
 

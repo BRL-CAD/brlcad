@@ -30,6 +30,8 @@
 
 #include "tcl.h"
 
+#include "bresource.h" /* itk.h pedantic-errors sys/wait.h quellage */
+
 #ifdef BWISH
 #  include "itk.h"
 #else

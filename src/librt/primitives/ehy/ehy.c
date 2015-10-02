@@ -188,6 +188,37 @@ const struct bu_structparse rt_ehy_parse[] = {
 
 static int ehy_is_valid(struct rt_ehy_internal *ehy);
 
+#ifdef USE_OPENCL
+/* largest data members first */
+struct clt_ehy_specific {
+    cl_double ehy_V[3];		/* vector to ehy origin */
+    cl_double ehy_Hunit[3];	/* unit H vector */
+    cl_double ehy_SoR[16];	/* Scale(Rot(vect)) */
+    cl_double ehy_invRoS[16];	/* invRot(Scale(vect)) */
+    cl_double ehy_cprime;	/* c / |H| */
+};
+
+size_t
+clt_ehy_pack(struct bu_pool *pool, struct soltab *stp)
+{
+    struct ehy_specific *ehy =
+        (struct ehy_specific *)stp->st_specific;
+    struct clt_ehy_specific *args;
+
+    const size_t size = sizeof(*args);
+    args = (struct clt_ehy_specific*)bu_pool_alloc(pool, 1, size);
+
+    VMOVE(args->ehy_V, ehy->ehy_V);
+    VMOVE(args->ehy_Hunit, ehy->ehy_Hunit);
+    MAT_COPY(args->ehy_SoR, ehy->ehy_SoR);
+    MAT_COPY(args->ehy_invRoS, ehy->ehy_invRoS);
+    args->ehy_cprime = ehy->ehy_cprime;
+    return size;
+}
+
+#endif /* USE_OPENCL */
+
+
 /**
  * Create a bounding RPP for an ehy
  */
@@ -1968,7 +1999,7 @@ rt_ehy_surf_area(fastf_t *area, const struct rt_db_internal *ip)
     b = (eip->ehy_r1 * a) / sqrt(h * (h - 2 * a));
 
     /** Formula taken from : https://docs.google.com/file/d/0BydeQ6BPlVejRWt6NlJLVDl0d28/edit
-     * Area can be calculated by substracting integral of hyperbola from the area of the bounding rectangle
+     * Area can be calculated by subtracting integral of hyperbola from the area of the bounding rectangle
      */
     sqrt_rb = sqrt(eip->ehy_r1 * eip->ehy_r1 + b * b);
     integralArea = (a / b) * ((eip->ehy_r1 * sqrt_rb) + ((b * b / 2) * (log(sqrt_rb + eip->ehy_r1) - log(sqrt_rb - eip->ehy_r1))));

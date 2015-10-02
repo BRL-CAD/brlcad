@@ -31,11 +31,7 @@
 #ifdef HAVE_SYS_TYPES_H
 #  include <sys/types.h>
 #endif
-
-#ifdef HAVE_SYS_WAIT_H
-#  include <sys/wait.h>
-#endif
-
+#include "bresource.h"
 
 #include "tcl.h"
 #include "bu/cmd.h"
@@ -189,7 +185,7 @@ _ged_rt_output_handler(ClientData clientData, int UNUSED(mask))
 	Tcl_DeleteChannelHandler(run_rtp->chan,
 				 _ged_rt_output_handler,
 				 (ClientData)drcdp);
-	Tcl_Close(drcdp->gedp->ged_interp, run_rtp->chan);
+	Tcl_Close((Tcl_Interp *)drcdp->gedp->ged_interp, run_rtp->chan);
 
 	/* wait for the forked process
 	 * either EOF has been sent or there was a read error.

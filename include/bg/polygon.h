@@ -54,11 +54,11 @@ __BEGIN_DECLS
  *
  * If pt_indices is NULL, the first npts points in pts will be checked in array order.
  *
- * @return -1 if polygon is counter-clockwise
- * @return 1 if polygon is clockwise
+ * @return BG_CCW if polygon is counter-clockwise
+ * @return BG_CW if polygon is clockwise
  * @return 0 if the test failed
  */
-BG_EXPORT extern int bg_polygon_clockwise(size_t npts, const point2d_t *pts, const int *pt_indices);
+BG_EXPORT extern int bg_polygon_direction(size_t npts, const point2d_t *pts, const int *pt_indices);
 
 
 /**

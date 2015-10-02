@@ -769,14 +769,14 @@ f_status(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char
 	Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
 	bu_vls_free(&vls);
 
-	bn_tcl_mat_print(interp, "toViewcenter", view_state->vs_gvp->gv_center);
-	bn_tcl_mat_print(interp, "Viewrot", view_state->vs_gvp->gv_rotation);
-	bn_tcl_mat_print(interp, "model2view", view_state->vs_gvp->gv_model2view);
-	bn_tcl_mat_print(interp, "view2model", view_state->vs_gvp->gv_view2model);
+	tclcad_bn_mat_print(interp, "toViewcenter", view_state->vs_gvp->gv_center);
+	tclcad_bn_mat_print(interp, "Viewrot", view_state->vs_gvp->gv_rotation);
+	tclcad_bn_mat_print(interp, "model2view", view_state->vs_gvp->gv_model2view);
+	tclcad_bn_mat_print(interp, "view2model", view_state->vs_gvp->gv_view2model);
 
 	if (STATE != ST_VIEW) {
-	    bn_tcl_mat_print(interp, "model2objview", view_state->vs_model2objview);
-	    bn_tcl_mat_print(interp, "objview2model", view_state->vs_objview2model);
+	    tclcad_bn_mat_print(interp, "model2objview", view_state->vs_model2objview);
+	    tclcad_bn_mat_print(interp, "objview2model", view_state->vs_objview2model);
 	}
 
 	return TCL_OK;
@@ -809,32 +809,32 @@ f_status(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char
     }
 
     if (BU_STR_EQUAL(argv[1], "toViewcenter")) {
-	bn_tcl_mat_print(interp, "toViewcenter", view_state->vs_gvp->gv_center);
+	tclcad_bn_mat_print(interp, "toViewcenter", view_state->vs_gvp->gv_center);
 	return TCL_OK;
     }
 
     if (BU_STR_EQUAL(argv[1], "Viewrot")) {
-	bn_tcl_mat_print(interp, "Viewrot", view_state->vs_gvp->gv_rotation);
+	tclcad_bn_mat_print(interp, "Viewrot", view_state->vs_gvp->gv_rotation);
 	return TCL_OK;
     }
 
     if (BU_STR_EQUAL(argv[1], "model2view")) {
-	bn_tcl_mat_print(interp, "model2view", view_state->vs_gvp->gv_model2view);
+	tclcad_bn_mat_print(interp, "model2view", view_state->vs_gvp->gv_model2view);
 	return TCL_OK;
     }
 
     if (BU_STR_EQUAL(argv[1], "view2model")) {
-	bn_tcl_mat_print(interp, "view2model", view_state->vs_gvp->gv_view2model);
+	tclcad_bn_mat_print(interp, "view2model", view_state->vs_gvp->gv_view2model);
 	return TCL_OK;
     }
 
     if (BU_STR_EQUAL(argv[1], "model2objview")) {
-	bn_tcl_mat_print(interp, "model2objview", view_state->vs_model2objview);
+	tclcad_bn_mat_print(interp, "model2objview", view_state->vs_model2objview);
 	return TCL_OK;
     }
 
     if (BU_STR_EQUAL(argv[1], "objview2model")) {
-	bn_tcl_mat_print(interp, "objview2model", view_state->vs_objview2model);
+	tclcad_bn_mat_print(interp, "objview2model", view_state->vs_objview2model);
 	return TCL_OK;
     }
 

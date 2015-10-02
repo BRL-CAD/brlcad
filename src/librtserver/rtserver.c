@@ -30,6 +30,9 @@
 #include <stdlib.h>
 #include <string.h>
 #include <pthread.h>
+
+#include "tcl.h"
+
 #include "bnetwork.h"
 
 #include "bu/cv.h"

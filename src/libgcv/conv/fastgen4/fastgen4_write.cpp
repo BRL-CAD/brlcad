@@ -26,6 +26,9 @@
 
 #include "common.h"
 
+#include "gcv/util.h"
+#include "../../plugin.h"
+
 #include <cmath>
 #include <fstream>
 #include <iomanip>
@@ -33,9 +36,6 @@
 #include <sstream>
 #include <stdexcept>
 #include <map>
-
-#include "rt/func.h"
-#include "../../plugin.h"
 
 
 namespace
@@ -45,7 +45,7 @@ namespace
 static const fastf_t INCHES_PER_MM = 1.0 / 25.4;
 
 
-template <typename T> inline void
+template <typename T> void
 autoptr_wrap_bu_free(T *ptr)
 {
     bu_free(ptr, "AutoPtr");
@@ -54,18 +54,15 @@ autoptr_wrap_bu_free(T *ptr)
 
 template <typename T, void free_fn(T *) = autoptr_wrap_bu_free>
 struct AutoPtr {
-    explicit AutoPtr(T *vptr = NULL) : ptr(vptr) {}
+    explicit AutoPtr(T *vptr = NULL) :
+	ptr(vptr)
+    {}
+
 
     ~AutoPtr()
     {
-	free();
-    }
-
-    void free()
-    {
-	if (ptr) free_fn(ptr);
-
-	ptr = NULL;
+	if (ptr)
+	    free_fn(ptr);
     }
 
 
@@ -86,12 +83,6 @@ public:
     Triple() :
 	m_value() // zero
     {}
-
-
-    Triple(T x, T y, T z)
-    {
-	VSET(m_value, x, y, z);
-    }
 
 
     explicit Triple(const T *values)
@@ -118,7 +109,7 @@ private:
 
 
 typedef Triple<fastf_t> Point;
-typedef Triple<uint8_t> Color;
+typedef Triple<unsigned char> Color;
 
 
 HIDDEN Color
@@ -127,12 +118,13 @@ color_from_floats(const float *float_color)
     Color result;
 
     for (int i = 0; i < 3; ++i)
-	result[i] = static_cast<uint8_t>(float_color[i] * 255.0 + 0.5);
+	result[i] = static_cast<unsigned char>(float_color[i] * 255.0 + 0.5);
 
     return result;
 }
 
 
+// Assignable/CopyConstructible for use with STL containers.
 class Matrix
 {
 public:
@@ -148,7 +140,7 @@ private:
 
 
 Matrix::Matrix() :
-    m_value()
+    m_value() // zero
 {}
 
 
@@ -219,7 +211,6 @@ DBInternal::DBInternal(const db_i &db, const directory &dir) :
 }
 
 
-inline
 DBInternal::~DBInternal()
 {
     if (m_valid)
@@ -286,13 +277,11 @@ private:
 };
 
 
-inline
 RecordWriter::RecordWriter() :
     m_record_open(false)
 {}
 
 
-inline
 RecordWriter::~RecordWriter()
 {}
 
@@ -306,7 +295,8 @@ public:
     ~Record();
 
     template <typename T> Record &operator<<(const T &value);
-    Record &operator<<(fastf_t value);
+    Record &operator<<(float value);
+    Record &operator<<(double value);
     Record &non_zero(fastf_t value);
     Record &text(const std::string &value);
 
@@ -348,9 +338,8 @@ RecordWriter::Record::operator<<(const T &value)
 	throw std::logic_error("invalid record width");
 
     std::ostringstream sstream;
-
-    if (!(sstream << value))
-	throw std::invalid_argument("failed to convert value");
+    sstream.exceptions(std::ostream::failbit | std::ostream::badbit);
+    sstream << value;
 
     const std::string str_val = sstream.str();
 
@@ -362,9 +351,15 @@ RecordWriter::Record::operator<<(const T &value)
 }
 
 
-inline
 RecordWriter::Record &
-RecordWriter::Record::operator<<(fastf_t value)
+RecordWriter::Record::operator<<(float value)
+{
+    return operator<<(truncate_float(value));
+}
+
+
+RecordWriter::Record &
+RecordWriter::Record::operator<<(double value)
 {
     return operator<<(truncate_float(value));
 }
@@ -398,6 +393,7 @@ std::string
 RecordWriter::Record::truncate_float(fastf_t value)
 {
     std::ostringstream sstream;
+    sstream.exceptions(std::ostream::failbit | std::ostream::badbit);
     sstream.precision(FIELD_WIDTH);
     sstream << std::fixed << value;
     std::string result = sstream.str().substr(0, FIELD_WIDTH);
@@ -438,29 +434,29 @@ protected:
 
 
 private:
-    std::ostringstream m_ostringstream;
+    std::ostringstream m_ostream;
 };
 
 
-inline
 StringBuffer::StringBuffer() :
-    m_ostringstream()
-{}
-
-
-inline void
-StringBuffer::write(RecordWriter &writer) const
+    m_ostream()
 {
-    RecordWriter::Record record(writer);
-    record.text(m_ostringstream.str());
+    m_ostream.exceptions(std::ostream::failbit | std::ostream::badbit);
 }
 
 
-inline
+void
+StringBuffer::write(RecordWriter &writer) const
+{
+    RecordWriter::Record record(writer);
+    record.text(m_ostream.str());
+}
+
+
 std::ostream &
 StringBuffer::get_ostream()
 {
-    return m_ostringstream;
+    return m_ostream;
 }
 
 
@@ -506,15 +502,14 @@ FastgenWriter::FastgenWriter(const std::string &path) :
     m_num_holes(0),
     m_num_walls(0),
     m_sections(),
-    m_ostream(path.c_str(), std::ofstream::out),
-    m_colors_ostream((path + ".colors").c_str(), std::ofstream::out)
+    m_ostream(path.c_str(), std::ostream::out),
+    m_colors_ostream((path + ".colors").c_str(), std::ostream::out)
 {
-    m_ostream.exceptions(std::ofstream::failbit | std::ofstream::badbit);
-    m_colors_ostream.exceptions(std::ofstream::failbit | std::ofstream::badbit);
+    m_ostream.exceptions(std::ostream::failbit | std::ostream::badbit);
+    m_colors_ostream.exceptions(std::ostream::failbit | std::ostream::badbit);
 }
 
 
-inline
 FastgenWriter::~FastgenWriter()
 {
     m_sections.write(*this);
@@ -522,7 +517,7 @@ FastgenWriter::~FastgenWriter()
 }
 
 
-inline std::ostream &
+std::ostream &
 FastgenWriter::get_ostream()
 {
     return m_ostream;
@@ -546,7 +541,7 @@ FastgenWriter::take_next_section_id()
 }
 
 
-inline RecordWriter &
+RecordWriter &
 FastgenWriter::get_section_writer()
 {
     return m_sections;
@@ -606,7 +601,7 @@ FastgenWriter::write_boolean(BooleanType type, const SectionID &section_a,
 	record << section_c->first << section_c->second;
 
     if (section_d)
-	record << section_d->first << section_c->second;
+	record << section_d->first << section_d->second;
 }
 
 
@@ -646,7 +641,7 @@ GridManager::PointComparator::operator()(const Point &lhs,
     return false;
 }
 
-inline
+
 GridManager::GridManager() :
     m_next_grid_id(1),
     m_grids()
@@ -659,10 +654,13 @@ GridManager::get_unique_grids(const std::vector<Point> &points)
     std::vector<std::size_t> results(points.size());
 
     for (std::size_t i = 0; i < points.size(); ++i) {
-	std::vector<std::size_t> temp(1);
-	temp.at(0) = m_next_grid_id;
 	std::pair<std::map<Point, std::vector<std::size_t>, PointComparator>::iterator, bool>
-	found = m_grids.insert(std::make_pair(points.at(i), temp));
+	found;
+	{
+	    std::vector<std::size_t> temp(1);
+	    temp.at(0) = m_next_grid_id;
+	    found = m_grids.insert(std::make_pair(points.at(i), temp));
+	}
 	results.at(i) = found.first->second.at(0);
 
 	if (found.second) {
@@ -726,11 +724,10 @@ public:
     // create a comment describing an element
     void write_name(const std::string &value);
 
-    void write_line(const fastf_t *point_a, const fastf_t *point_b,
-		    fastf_t radius, fastf_t thickness);
+    void write_line(const fastf_t *point_a, const fastf_t *point_b, fastf_t radius,
+		    fastf_t thickness);
 
-    void write_sphere(const fastf_t *center, fastf_t radius,
-		      fastf_t thickness = 0.0);
+    void write_sphere(const fastf_t *center, fastf_t radius, fastf_t thickness);
 
     // note: this element (CCONE1) is deprecated
     void write_thin_cone(const fastf_t *point_a, const fastf_t *point_b,
@@ -747,7 +744,7 @@ public:
 		    const fastf_t *point_c, const fastf_t *point_d, fastf_t thickness,
 		    bool grid_centered = true);
 
-    void write_hexahedron(const fastf_t points[8][3], fastf_t thickness = 0.0,
+    void write_hexahedron(const fastf_t points[8][3], fastf_t thickness,
 			  bool grid_centered = true);
 
 
@@ -789,21 +786,21 @@ Section::Section() :
 {}
 
 
-inline bool
+bool
 Section::empty() const
 {
     return m_next_element_id == 1;
 }
 
 
-inline bool
+bool
 Section::has_color() const
 {
     return m_color.first;
 }
 
 
-inline Color
+Color
 Section::get_color() const
 {
     if (!has_color())
@@ -813,7 +810,7 @@ Section::get_color() const
 }
 
 
-inline void
+void
 Section::set_color(const Color &value)
 {
     m_color = std::make_pair(true, value);
@@ -849,7 +846,7 @@ Section::write(RecordWriter &writer, const FastgenWriter::SectionID &id,
 }
 
 
-inline void
+void
 Section::write_name(const std::string &value)
 {
     m_elements.write_comment(value);
@@ -863,14 +860,14 @@ Section::write_line(const fastf_t *point_a, const fastf_t *point_b,
     radius *= INCHES_PER_MM;
     thickness *= INCHES_PER_MM;
 
-    if (thickness < 0.0)
-	throw std::invalid_argument("negative thickness");
+    if (thickness < 0.0 || thickness > radius)
+	throw std::invalid_argument("invalid thickness");
 
     if (CHECK_MODE_ERRORS)
 	if (!m_volume_mode && NEAR_ZERO(thickness, RT_LEN_TOL))
 	    throw SectionModeError("line with zero thickness in a plate-mode component");
 
-    if (radius <= 0.0 || radius < thickness)
+    if (radius <= 0.0)
 	throw std::invalid_argument("invalid radius");
 
     std::vector<Point> points(2);
@@ -907,7 +904,7 @@ Section::write_sphere(const fastf_t *center, fastf_t radius,
 	    throw SectionModeError("Sphere with thickness in a volume-mode Section");
 
     if (radius < thickness || thickness <= 0.0)
-	throw std::invalid_argument("invalid thickness");
+	throw std::invalid_argument("invalid value");
 
     std::vector<Point> points(1);
     points.at(0) = Point(center);
@@ -1025,7 +1022,7 @@ Section::write_triangle(const fastf_t *point_a, const fastf_t *point_b,
     thickness *= INCHES_PER_MM;
 
     if (thickness < 0.0)
-	throw std::invalid_argument("negative thickness");
+	throw std::invalid_argument("invalid thickness");
 
     if (CHECK_MODE_ERRORS)
 	if (NEAR_ZERO(thickness, RT_LEN_TOL) != m_volume_mode) {
@@ -1064,7 +1061,7 @@ Section::write_quad(const fastf_t *point_a, const fastf_t *point_b,
     thickness *= INCHES_PER_MM;
 
     if (thickness < 0.0)
-	throw std::invalid_argument("negative thickness");
+	throw std::invalid_argument("invalid thickness");
 
     if (CHECK_MODE_ERRORS)
 	if (NEAR_ZERO(thickness, RT_LEN_TOL) != m_volume_mode) {
@@ -1301,9 +1298,9 @@ path_to_mat(const db_i &db, const db_full_path &path, mat_t &result)
     RT_CK_FULL_PATH(&path);
 
     db_full_path temp;
+    const AutoPtr<db_full_path, db_free_full_path> autofree_path(&temp);
     db_full_path_init(&temp);
     db_dup_full_path(&temp, &path);
-    AutoPtr<db_full_path, db_free_full_path> autofree_path(&temp);
 
     if (!db_path_to_mat(const_cast<db_i *>(&db), &temp, result, 0, &rt_uniresource))
 	throw std::runtime_error("db_path_to_mat() failed");
@@ -1377,7 +1374,7 @@ path_is_subtracted(const db_i &db, const db_full_path &path)
     tree_state.ts_dbip = const_cast<db_i *>(&db);
 
     db_full_path end_path;
-    AutoPtr<db_full_path, db_free_full_path> autofree_end_path(&end_path);
+    const AutoPtr<db_full_path, db_free_full_path> autofree_end_path(&end_path);
     db_full_path_init(&end_path);
 
     if (db_follow_path(&tree_state, &end_path, &path, false, 0))
@@ -1415,7 +1412,7 @@ get_cutout(const db_i &db, const db_full_path &parent_path, DBInternal &outer,
     {
 	mat_t matrix;
 	db_full_path temp;
-	AutoPtr<db_full_path, db_free_full_path> autofree_temp(&temp);
+	const AutoPtr<db_full_path, db_free_full_path> autofree_temp(&temp);
 	db_full_path_init(&temp);
 	db_dup_full_path(&temp, &parent_path);
 
@@ -1911,7 +1908,7 @@ struct FastgenConversion {
     bool do_force_facetize_region(const directory *region_dir) const;
 
     const db_i &m_db;
-    const bn_tol &m_tol;
+    const bn_tol m_tol;
     std::set<const directory *> m_failed_regions;
 
 
@@ -2245,7 +2242,7 @@ FastgenConversion::get_region(const directory &region_dir)
 }
 
 
-HIDDEN Section &
+Section &
 FastgenConversion::get_section(const db_full_path &path)
 {
     RT_CK_FULL_PATH(&path);
@@ -2315,7 +2312,7 @@ convert_primitive(FastgenConversion &data, const db_full_path &path,
 		return true;
 
 	    section.write_name(DB_FULL_PATH_CUR_DIR(&path)->d_namep);
-	    section.write_sphere(ell.v, MAGNITUDE(ell.a));
+	    section.write_sphere(ell.v, MAGNITUDE(ell.a), 0.0);
 	    break;
 	}
 
@@ -2344,7 +2341,7 @@ convert_primitive(FastgenConversion &data, const db_full_path &path,
 	    RT_ARB_CK_MAGIC(&arb);
 
 	    section.write_name(DB_FULL_PATH_CUR_DIR(&path)->d_namep);
-	    section.write_hexahedron(arb.pt);
+	    section.write_hexahedron(arb.pt, 0.0);
 	    break;
 	}
 
@@ -2354,7 +2351,6 @@ convert_primitive(FastgenConversion &data, const db_full_path &path,
 
 	    section.write_name(DB_FULL_PATH_CUR_DIR(&path)->d_namep);
 
-	    // FIXME Section section(bot.mode == RT_BOT_SOLID);
 	    if (!get_chex1(section, bot))
 		write_bot(section, bot);
 
@@ -2388,16 +2384,19 @@ write_nmg_region(nmgregion *nmg_region, const db_full_path *path,
 
     FastgenConversion &data = *static_cast<FastgenConversion *>(client_data);
     Section &section = data.get_section(*path);
-    shell *vshell;
+    shell *current_shell;
 
-    for (BU_LIST_FOR(vshell, shell, &nmg_region->s_hd)) {
-	NMG_CK_SHELL(vshell);
+    if (BU_LIST_NON_EMPTY(&nmg_region->s_hd))
+	section.write_name("facetized");
 
-	rt_bot_internal * const bot = nmg_bot(vshell, &data.m_tol);
+    for (BU_LIST_FOR(current_shell, shell, &nmg_region->s_hd)) {
+	NMG_CK_SHELL(current_shell);
+
+	rt_bot_internal * const bot = nmg_bot(current_shell, &data.m_tol);
 
 	// fill in an rt_db_internal with our new bot so we can free it
 	rt_db_internal internal;
-	AutoPtr<rt_db_internal, rt_db_free_internal> autofree_internal(&internal);
+	const AutoPtr<rt_db_internal, rt_db_free_internal> autofree_internal(&internal);
 	RT_DB_INTERNAL_INIT(&internal);
 	internal.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 	internal.idb_minor_type = ID_BOT;
@@ -2503,12 +2502,14 @@ do_conversion(db_i &db, const std::string &path,
     initial_tree_state.ts_ttol = &ttol;
     initial_tree_state.ts_m = &nmg_model.ptr;
 
-    db_update_nref(&db, &rt_uniresource);
-    AutoPtr<directory *> toplevel_dirs;
-    const std::size_t num_objects = db_ls(&db, DB_LS_TOPS, NULL,
-					  &toplevel_dirs.ptr);
-    AutoPtr<char *> object_names(db_dpv_to_argv(toplevel_dirs.ptr));
-    toplevel_dirs.free();
+    AutoPtr<char *> object_names;
+    std::size_t num_objects;
+    {
+	AutoPtr<directory *> toplevel_dirs;
+	db_update_nref(&db, &rt_uniresource);
+	num_objects = db_ls(&db, DB_LS_TOPS, NULL, &toplevel_dirs.ptr);
+	object_names.ptr = db_dpv_to_argv(toplevel_dirs.ptr);
+    }
 
     nmg_model.ptr = nmg_mm();
     FastgenConversion data(path, db, tol, facetize_regions);
@@ -2524,26 +2525,22 @@ do_conversion(db_i &db, const std::string &path,
 
 
 HIDDEN int
-gcv_fastgen4_write(const char *path, struct db_i *source_dbip,
-		   const gcv_opts *UNUSED(options))
+gcv_fastgen4_write(const char *dest_path, struct db_i *source_dbip,
+		   const struct gcv_opts *UNUSED(gcv_options),
+		   const void *UNUSED(options_data))
 {
     RT_CK_DBI(source_dbip);
 
-    std::set<const directory *> failed_regions = do_conversion(*source_dbip, path);
+    const std::set<const directory *> failed_regions = do_conversion(*source_dbip,
+	    dest_path);
 
     // facetize all regions that contain incompatible boolean operations
     if (!failed_regions.empty())
-	if (!do_conversion(*source_dbip, path, failed_regions).empty())
+	if (!do_conversion(*source_dbip, dest_path, failed_regions).empty())
 	    throw std::runtime_error("failed to convert all regions");
 
     return 1;
 }
-
-
-static const struct gcv_converter converters[] = {
-    {"fg4", NULL, gcv_fastgen4_write},
-    {NULL, NULL, NULL}
-};
 
 
 }
@@ -2552,7 +2549,8 @@ static const struct gcv_converter converters[] = {
 extern "C" {
 
 
-    struct gcv_plugin_info gcv_plugin_conv_fastgen4_write = {converters};
+    struct gcv_converter gcv_conv_fastgen4_write =
+    {MIME_MODEL_VND_FASTGEN, GCV_CONVERSION_WRITE, NULL, NULL, gcv_fastgen4_write};
 
 
 }

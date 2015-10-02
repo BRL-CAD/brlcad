@@ -2224,7 +2224,7 @@ nmg_radial_build_list(struct bu_list *hd, struct bu_ptbl *shell_tbl, int existin
 	    if (rad->ang < -SMALL_FASTF) {
 		bu_bomb("nmg_radial_build_list(): fu_angle should not be negative\n");
 	    }
-	    if (rad->ang > (M_2PI + SMALL_FASTF)) {
+	    if (rad->ang - M_2PI > SMALL_FASTF) {
 		bu_bomb("nmg_radial_build_list(): fu_angle should not be > 2pi\n");
 	    }
 

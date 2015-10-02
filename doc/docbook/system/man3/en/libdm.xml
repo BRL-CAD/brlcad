@@ -44,7 +44,7 @@ The following DM (display manager) types are supported:
       </row>
             <row>
         <entry>ogl</entry>
-        <entry>mixed X/OpenGl window</entry>
+        <entry>mixed X/OpenGL window</entry>
       </row>
             <row>
         <entry>ps</entry>

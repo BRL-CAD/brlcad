@@ -55,7 +55,7 @@ SET(SC_ABI_SOVERSION 2)
 SET(SC_ABI_VERSION ${SC_ABI_SOVERSION}.0.0)
 
 # Minimum required version of CMake
-CMAKE_MINIMUM_REQUIRED(VERSION 2.8.7)
+CMAKE_MINIMUM_REQUIRED(VERSION 2.8.8)
 IF(COMMAND CMAKE_POLICY)
   CMAKE_POLICY(SET CMP0003 NEW)
   if ("${CMAKE_VERSION}" VERSION_GREATER 2.99)
@@ -409,8 +409,14 @@ return \"${SC_VERSION}\";\n
   )
 
 file(WRITE
-  ${CMAKE_CURRENT_BINARY_DIR}/${INCLUDE_INSTALL_DIR}/sc_version_string.h
+  ${CMAKE_CURRENT_BINARY_DIR}/${INCLUDE_INSTALL_DIR}/sc_version_string.h.tmp
   "${vstring}")
+execute_process(COMMAND ${CMAKE_COMMAND} -E copy_if_different
+  ${CMAKE_CURRENT_BINARY_DIR}/${INCLUDE_INSTALL_DIR}/sc_version_string.h.tmp
+  ${CMAKE_CURRENT_BINARY_DIR}/${INCLUDE_INSTALL_DIR}/sc_version_string.h)
+execute_process(COMMAND ${CMAKE_COMMAND} -E remove
+  ${CMAKE_CURRENT_BINARY_DIR}/${INCLUDE_INSTALL_DIR}/sc_version_string.h.tmp)
+
 endif(NOT SC_IS_SUBBUILD)
 
 if(MSVC)

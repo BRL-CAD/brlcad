@@ -233,7 +233,7 @@ __BEGIN_DECLS
  * first entry in the structure is a magic number. ((void)(1?0:((_ptr), void(), 0)))
  */
 #ifdef NO_BOMBING_MACROS
-#  define BU_CKMAG(_ptr, _magic, _str) BU_IGNORE((_ptr))
+#  define BU_CKMAG(_ptr, _magic, _str) (void)(_ptr)
 #else
 #  define BU_CKMAG(_ptr, _magic, _str) { \
         const uintptr_t _ptrval = (const uintptr_t)(_ptr); \

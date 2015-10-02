@@ -256,9 +256,7 @@ WDB_EXPORT extern int mk_tgc(struct rt_wdb *fp, const char *name, const point_t 
  * end of the cone.
  *
  */
-WDB_EXPORT extern int mk_cone(struct rt_wdb *fp, const char *name, const point_t base,
-			      const vect_t dirv, fastf_t height, fastf_t rad1,
-			      fastf_t rad2);
+WDB_EXPORT extern int mk_cone(struct rt_wdb *fp, const char *name, const point_t base, const vect_t dirv, fastf_t height, fastf_t base_radius, fastf_t nose_radius);
 
 /**
  *

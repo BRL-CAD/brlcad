@@ -4,6 +4,7 @@
 /* First off, code is included that follows the "include" declaration
 ** in the input grammar file. */
 #include <stdio.h>
+#include <assert.h>
 %%
 /* Next is all token values, in a form suitable for use by makeheaders.
 ** This section will be null unless lemon is run with the -m switch.
@@ -305,8 +306,12 @@ static void yy_destructor(
     ** inside the C code.
     */
 %%
-    default:  break;   /* If no destructor action specified: do nothing */
+    default:
+      if (!yypminor)
+        return;
+      break;   /* If no destructor action specified: do nothing */
   }
+  ParseARG_STORE; /* Suppress warning about unused %extra_argument variable */
 }
 
 /*
@@ -486,9 +491,11 @@ static void yyStackOverflow(yyParser *yypParser, YYMINORTYPE *yypMinor){
 #endif
    while( yypParser->yyidx>=0 ) yy_pop_parser_stack(yypParser);
    /* Here code is inserted which will execute if the parser
-   ** stack every overflows */
+   ** stack ever overflows */
 %%
    ParseARG_STORE; /* Suppress warning about unused %extra_argument var */
+   yypMinor = NULL; /* quellage */
+   assert(yypMinor == NULL);
 }
 
 /*
@@ -635,6 +642,8 @@ static void yy_reduce(
     assert( yyact == YYNSTATE + YYNRULE + 1 );
     yy_accept(yypParser);
   }
+
+  ParseARG_STORE; /* Suppress warning about unused %extra_argument variable */
 }
 
 /*
@@ -670,6 +679,9 @@ static void yy_syntax_error(
 #define TOKEN (yyminor.yy0)
 %%
   ParseARG_STORE; /* Suppress warning about unused %extra_argument variable */
+  yymajor = 0; /* quellage */
+  yyminor.yyinit = 0; /* quellage */
+  assert(yymajor == 0 && yyminor.yyinit == 0);
 }
 
 /*

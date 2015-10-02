@@ -78,7 +78,9 @@ static int regions_written = 0;
 static int inches = 0;
 
 HIDDEN int
-gcv_obj_write(const char *path, struct db_i *source_dbip, const struct gcv_opts *UNUSED(options))
+gcv_obj_write(const char *dest_path, struct db_i *source_dbip,
+	const struct gcv_opts *UNUSED(gcv_options),
+	const void *UNUSED(options_data))
 {
     double percent;
     size_t num_objects;
@@ -111,9 +113,9 @@ gcv_obj_write(const char *path, struct db_i *source_dbip, const struct gcv_opts 
     BU_LIST_INIT(&RTG.rtg_vlfree);	/* for vlist macros */
 
     /* Open output file */
-    if ((fp=fopen(path, "wb+")) == NULL) {
+    if ((fp=fopen(dest_path, "wb+")) == NULL) {
 	perror("obj_write");
-	bu_exit(1, "Cannot open output file (%s) for writing\n", path);
+	bu_exit(1, "Cannot open output file (%s) for writing\n", dest_path);
     }
 
     /* Open g-obj error log file */
@@ -171,14 +173,6 @@ gcv_obj_write(const char *path, struct db_i *source_dbip, const struct gcv_opts 
 
     return 1;
 }
-
-
-static const struct gcv_converter converters[] = {
-    {"obj", NULL, gcv_obj_write},
-    {NULL, NULL, NULL}
-};
-
-const struct gcv_plugin_info gcv_plugin_conv_obj_write = {converters};
 
 
 static void
@@ -450,7 +444,7 @@ process_triangulation(struct nmgregion *r, const struct db_full_path *pathp, str
 static union tree *
 process_boolean(union tree *curtree, struct db_tree_state *tsp, const struct db_full_path *pathp)
 {
-    union tree *ret_tree = TREE_NULL;
+    static union tree *ret_tree = TREE_NULL;
 
     /* Begin bomb protection */
     if (!BU_SETJUMP) {
@@ -598,6 +592,10 @@ do_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union
     curtree->tr_op = OP_NOP;
     return curtree;
 }
+
+
+const struct gcv_converter gcv_conv_obj_write =
+{MIME_MODEL_OBJ, GCV_CONVERSION_WRITE, NULL, NULL, gcv_obj_write};
 
 
 /*

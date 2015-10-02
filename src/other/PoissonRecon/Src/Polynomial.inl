@@ -8,14 +8,14 @@ are permitted provided that the following conditions are met:
 Redistributions of source code must retain the above copyright notice, this list of
 conditions and the following disclaimer. Redistributions in binary form must reproduce
 the above copyright notice, this list of conditions and the following disclaimer
-in the documentation and/or other materials provided with the distribution.
+in the documentation and/or other materials provided with the distribution. 
 
 Neither the name of the Johns Hopkins University nor the names of its contributors
 may be used to endorse or promote products derived from this software without specific
-prior written permission.
+prior written permission. 
 
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY
-EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO THE IMPLIED WARRANTIES
+EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO THE IMPLIED WARRANTIES 
 OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT
 SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED
@@ -67,11 +67,11 @@ Polynomial<Degree+1> Polynomial<Degree>::integral(void) const{
 	for(int i=0;i<=Degree;i++){p.coefficients[i+1]=coefficients[i]/(i+1);}
 	return p;
 }
-template<> double Polynomial< 0 >::operator() ( double t ) const { return coefficients[0]; }
-template<> double Polynomial< 1 >::operator() ( double t ) const { return coefficients[0]+coefficients[1]*t; }
-template<> double Polynomial< 2 >::operator() ( double t ) const { return coefficients[0]+(coefficients[1]+coefficients[2]*t)*t; }
+template<> inline double Polynomial< 0 >::operator() ( double t ) const { return coefficients[0]; }
+template<> inline double Polynomial< 1 >::operator() ( double t ) const { return coefficients[0]+coefficients[1]*t; }
+template<> inline double Polynomial< 2 >::operator() ( double t ) const { return coefficients[0]+(coefficients[1]+coefficients[2]*t)*t; }
 template<int Degree>
-double Polynomial<Degree>::operator() ( double t ) const{
+inline double Polynomial<Degree>::operator() ( double t ) const{
 	double v=coefficients[Degree];
 	for( int d=Degree-1 ; d>=0 ; d-- ) v = v*t + coefficients[d];
 	return v;
@@ -307,14 +307,14 @@ int Polynomial<Degree>::getSolutions( double c , double* roots , double EPS ) co
 	return rCount;
 }
 template< >
-Polynomial< 0 > Polynomial< 0 >::BSplineComponent( int i )
+inline Polynomial< 0 > Polynomial< 0 >::BSplineComponent( int i )
 {
 	Polynomial p;
 	p.coefficients[0] = 1.;
 	return p;
 }
 template< int Degree >
-Polynomial< Degree > Polynomial< Degree >::BSplineComponent( int i )
+inline Polynomial< Degree > Polynomial< Degree >::BSplineComponent( int i )
 {
 	Polynomial p;
 	if( i>0 )

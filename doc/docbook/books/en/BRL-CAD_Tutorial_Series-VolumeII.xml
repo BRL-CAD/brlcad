@@ -5,7 +5,7 @@
   <info><title><application>BRL-CAD</application> Tutorial Series: Volume II - Introduction to MGED</title>
 
 
-    <xi:include href="./tutorial_series_authors.xml" xpointer="Intro_MGED_Tutorial_Series_II_authors"/>
+    <xi:include href="../../books/en/tutorial_series_authors.xml" xpointer="Intro_MGED_Tutorial_Series_II_authors"/>
 
     <publishername>Army Research Laboratory</publishername>
     <biblioid class="pubsnumber">ARL-SR-102</biblioid>
@@ -28,7 +28,7 @@
 
   </info>
 
-  <preface><info><title>Preface</title></info>
+  <preface xml:id="Preface"><info><title>Preface</title></info>
 
     <para>
       Since 1979, the U.S. Army Research Laboratory (formerly the Ballistic
@@ -66,7 +66,7 @@
     </para>
   </preface>
 
-  <preface><info><title>Acknowledgments</title></info>
+  <preface xml:id="Acknowledgments"><info><title>Acknowledgments</title></info>
 
     <para>
       The authors would like to thank Paul Tanenbaum, TraNese Christy, Sean

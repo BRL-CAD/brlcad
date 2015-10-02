@@ -538,10 +538,12 @@ Convert_input()
 
 
 HIDDEN int
-gcv_stl_read(const char *path, struct rt_wdb *dest_wdbp, const struct gcv_opts *UNUSED(options))
+gcv_stl_read(const char *source_path, struct db_i *dest_dbip,
+	const struct gcv_opts *UNUSED(gcv_options),
+	const void *UNUSED(options_data))
 {
-    fd_out = dest_wdbp;
-    input_file = path;
+    fd_out = dest_dbip->dbi_wdbp;
+    input_file = source_path;
 
     tol.magic = BN_TOL_MAGIC;
 
@@ -557,8 +559,8 @@ gcv_stl_read(const char *path, struct rt_wdb *dest_wdbp, const struct gcv_opts *
 
     conv_factor = 1.0;	/* default */
 
-    if ((fd_in=fopen(path, "rb")) == NULL) {
-	bu_log("Cannot open input file (%s)\n", path);
+    if ((fd_in=fopen(input_file, "rb")) == NULL) {
+	bu_log("Cannot open input file (%s)\n", input_file);
 	perror("stl_read");
 	bu_exit(1, NULL);
     }
@@ -581,12 +583,8 @@ gcv_stl_read(const char *path, struct rt_wdb *dest_wdbp, const struct gcv_opts *
 }
 
 
-static const struct gcv_converter converters[] = {
-    {"stl", gcv_stl_read, NULL},
-    {NULL, NULL, NULL}
-};
-
-const struct gcv_plugin_info gcv_plugin_conv_stl_read = {converters};
+const struct gcv_converter gcv_conv_stl_read =
+{MIME_MODEL_STL, GCV_CONVERSION_READ, NULL, NULL, gcv_stl_read};
 
 
 /*

@@ -53,9 +53,7 @@
 
 
 /* Define to use double floating point precision */
-/*
 #define MD_CONF_DOUBLE_PRECISION
-*/
 
 
 /* Define to use double precision just quadric maths. Very strongly recommended. */
@@ -138,47 +136,63 @@ static cpuInfo mdCpuInfo;
 
 
 #ifdef MD_CONF_DOUBLE_PRECISION
+
 typedef double mdf;
-#define mdfmin(x,y) fmin((x),(y))
-#define mdfmax(x,y) fmax((x),(y))
-#define mdffloor(x) floor(x)
-#define mdfceil(x) ceil(x)
-#define mdfround(x) round(x)
-#define mdfsqrt(x) sqrt(x)
-#define mdfcbrt(x) cbrt(x)
-#define mdfabs(x) fabs(x)
-#define mdflog2(x) log2(x)
-#define mdfacos(x) acos(x)
+#  define mdfabs(x) fabs(x)
+#  define mdfacos(x) acos(x)
+#  define mdfcbrt(x) cbrt(x)
+#  define mdfceil(x) ceil(x)
+#  define mdffloor(x) floor(x)
+#  define mdfmax(x,y) FMAX((x),(y))
+#  define mdfsqrt(x) sqrt(x)
+
+#  ifdef HAVE_LOG2
+#    define mdflog2(x) log2(x)
+#  else
+#    define mdflog2(x) (log(x) / log(2))
+#  endif
+#  define mdfmin(x,y) FMIN((x),(y))
+#  define mdfround(x) round(x)
+
 #else
+
 typedef float mdf;
-#define mdfmin(x,y) fminf((x),(y))
-#define mdfmax(x,y) fmaxf((x),(y))
-#define mdffloor(x) floorf(x)
-#define mdfceil(x) ceilf(x)
-#define mdfround(x) roundf(x)
-#define mdfsqrt(x) sqrtf(x)
-#define mdfcbrt(x) cbrtf(x)
-#define mdfabs(x) fabsf(x)
-#define mdflog2(x) log2f(x)
-#define mdfacos(x) acosf(x)
+#  define mdfabs(x) fabsf(x)
+#  define mdfacos(x) acosf(x)
+#  define mdfcbrt(x) cbrtf(x)
+#  define mdfceil(x) ceilf(x)
+#  define mdffloor(x) floorf(x)
+#  define mdfmax(x,y) fmaxf((x),(y))
+#  define mdfsqrt(x) sqrtf(x)
+
+#  ifdef HAVE_LOG2F
+#    define mdflog2(x) log2f(x)
+#  else
+#    define mdflog2(x) (logf(x) / logf(2))
+#  endif
+#  define mdfmin(x,y) fminf((x),(y))
+#  define mdfround(x) roundf(x)
+
 #endif
 
 #ifdef MD_CONF_DOUBLE_PRECISION
-#ifndef MD_CONF_QUADRICS_DOUBLE_PRECISION
-#define MD_CONF_QUADRICS_DOUBLE_PRECISION
-#endif
+#  ifndef MD_CONF_QUADRICS_DOUBLE_PRECISION
+#    define MD_CONF_QUADRICS_DOUBLE_PRECISION
+#  endif
 #endif
 
 
 #ifdef MD_CONF_QUADRICS_DOUBLE_PRECISION
 typedef double mdqf;
+#define mdqfabs(x) fabs(x)
 #else
 typedef float mdqf;
+#define mdqfabs(x) fabsf(x)
 #endif
 
 
 #ifdef MD_CONFIG_HIGH_QUADRICS
-#if ( __GNUC__ > 4 || ( __GNUC__ == 4 && __GNUC_MINOR__ >= 6 ) ) && !defined(__INTEL_COMPILER) && (defined CPUCONF_ARCH_AMD64 || defined(CPUCONF_ARCH_IA32))
+#if ( __GNUC__ > 4 || ( __GNUC__ == 4 && __GNUC_MINOR__ >= 6 ) ) && !defined(__INTEL_COMPILER) && (defined CPUCONF_ARCH_AMD64 || defined(CPUCONF_ARCH_IA32) || defined(__ia64__))
 typedef __float128 mdqfhigh;
 #else
 #undef MD_CONFIG_HIGH_QUADRICS
@@ -282,7 +296,7 @@ static int mathQuadricSolve(mathQuadric *q, mdf *v)
     mathQuadricToMatrix3x3(m, q);
     det = mathMatrix3x3Determinant(m);
 
-    if (mdfabs(det) < 0.00001) {
+    if (mdqfabs(det) < 0.00001) {
 	/* det fail */
 	return 0;
     }
@@ -1078,7 +1092,7 @@ static void mdUpdateBufferAdd(mdUpdateBuffer *updatebuffer, mdOp *op, int orflag
 
     if (updatebuffer->opcount >= updatebuffer->opalloc) {
 	updatebuffer->opalloc <<= 1;
-	updatebuffer->opbuffer = bu_realloc(updatebuffer->opbuffer, updatebuffer->opalloc * sizeof(mdOp *), "opbuffer");
+	updatebuffer->opbuffer = (void **)bu_realloc(updatebuffer->opbuffer, updatebuffer->opalloc * sizeof(mdOp *), "opbuffer");
     }
 
     updatebuffer->opbuffer[updatebuffer->opcount++] = op;
@@ -2652,7 +2666,7 @@ static void mdSortOp(mdMesh *mesh, mdThreadData *tdata, mdOp *op, int denyflag)
 	if (op->flags & MD_OP_FLAGS_DETACHED) {
 	    mmBinSortAdd(tdata->binsort, op, collapsecost);
 	    op->flags &= ~MD_OP_FLAGS_DETACHED;
-	} else if (op->collapsecost != collapsecost)
+	} else if (!EQUAL(op->collapsecost, collapsecost))
 	    mmBinSortUpdate(tdata->binsort, op, op->collapsecost, collapsecost);
 
 	mtSpinUnlock(&op->spinlock);
@@ -2946,7 +2960,9 @@ static void mdMeshBuildTriangleNormals(mdMesh *mesh)
 
 static int mdMeshVertexComputeNormal(mdMesh *mesh, mdi vertexindex, mdi *trireflist, int trirefcount, mdf *normal)
 {
-    int vindex, pivot, validflag;
+    int vindex = 0;
+    int pivot = 0;
+    int validflag = 0;
     mdi triindex;
     mdf norm, norminv;
     mdTriangle *tri;
@@ -3382,11 +3398,11 @@ typedef struct {
 } mdThreadInit;
 
 #ifndef MM_ATOMIC_SUPPORT
-int mdFreeOpCallback(void *chunk, void *userpointer)
+int mdFreeOpCallback(void *chunk, void *UNUSED(userpointer))
 {
-    mdOp *op;
-    op = chunk;
+    mdOp *op = (mdOp *)chunk;
     mtSpinDestroy(&op->spinlock);
+    return 0;
 }
 #endif
 
@@ -3712,8 +3728,12 @@ int mdMeshDecimation(mdOperation *operation, int flags)
     }
 
     threadcount = bu_avail_cpus();
-    threadcount = FMIN(threadcount, (int)operation->tricount / 1024);
-    threadcount = FMAX(threadcount, 1);
+
+    if ((size_t)threadcount > operation->tricount / 1024)
+	threadcount = operation->tricount / 1024;
+
+    if (threadcount < 1)
+	threadcount = 1;
 
     /* Get operation general settings */
     mesh.point = (mdf *)operation->vertex;

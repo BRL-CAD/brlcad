@@ -34,6 +34,7 @@ set(BRLCADCORE_SOURCES
 add_library(BrlcadCore SHARED ${BRLCADCORE_SOURCES})
 
 target_link_libraries(BrlcadCore
+  libbg-static
   libbn-static
   libbrep-static
   libbu-static
@@ -111,6 +112,7 @@ add_library(brlcad SHARED
   )
 
 target_link_libraries(brlcad
+  libbg-static
   libbn-static
   libbrep-static
   libbu-static

@@ -507,6 +507,148 @@ def_tree(register struct rt_i *rtip)
 }
 
 
+
+/*********************************************************************************/
+#ifdef USE_OPENCL
+/* from opt.c */
+extern double haze[3];
+extern double airdensity;
+
+
+static unsigned int clt_mode;           /* Active render buffers */
+static uint8_t clt_o[3];		/* Sub buffer offsets in bytes: {CLT_COLOR, CLT_DEPTH, MAX} */
+
+static fb *clt_fbp;
+
+
+void
+clt_connect_fb(fb *fbp)
+{
+    clt_fbp = fbp;
+}
+
+void
+clt_view_init(unsigned int mode)
+{
+    uint8_t o[3];
+    int i;
+
+    clt_mode = mode;
+
+    o[0] = (mode & CLT_COLOR) ? 3 : 0;	/* uchar rgb[3] */
+    o[1] = (mode & CLT_DEPTH) ? 8 : 0;  /* double depth */
+    o[2] = 0;
+
+    clt_o[0] = 0;
+    for (i=1; i<3; i++) {
+	clt_o[i] = o[i-1] + clt_o[i-1];
+    }
+}
+
+void
+clt_run(int cur_pixel, int last_pixel)
+{
+    int ibackground[3];      /* integer 0..255 version */
+    int inonbackground[3];   /* integer non-background */
+    const double gamma_corr = 0.0;
+
+    int npix, a_x, a_y, i;
+    uint8_t *pixels, *pixelp;
+    size_t cpu = 0;
+    struct application a;
+
+    ssize_t size;
+    ssize_t count;
+
+    npix = last_pixel-cur_pixel+1;
+    size = npix * clt_o[2];
+
+    a_y = (int)(cur_pixel/width);
+    a_x = (int)(cur_pixel - (a_y * width));
+
+    /* Obtain fresh copy of global application struct */
+    a = APP;
+    a.a_resource = &resource[cpu];
+    a.a_level = 0;
+
+
+    if (lightmodel == 2)
+        VSETALL(background, 0);
+
+    /* Create integer version of background color */
+    inonbackground[0] = ibackground[0] = background[0] * 255.0 + 0.5;
+    inonbackground[1] = ibackground[1] = background[1] * 255.0 + 0.5;
+    inonbackground[2] = ibackground[2] = background[2] * 255.0 + 0.5;
+
+    /*
+     * If a non-background pixel comes out the same color as the
+     * background, modify it slightly, to permit compositing.  Perturb
+     * the background color channel with the largest intensity.
+     */
+    if (inonbackground[0] > inonbackground[1]) {
+        if (inonbackground[0] > inonbackground[2]) i = 0;
+        else i = 2;
+    } else {
+        if (inonbackground[1] > inonbackground[2]) i = 1;
+        else i = 2;
+    }
+    if (inonbackground[i] < 127) inonbackground[i]++;
+    else inonbackground[i]--;
+
+
+    pixels = (uint8_t*)bu_calloc(size, sizeof(uint8_t), "image buffer");
+
+    clt_frame(pixels, clt_o, cur_pixel, last_pixel, width,
+              ibackground, inonbackground,
+	      airdensity, haze, gamma_corr, view2model, cell_width,
+              cell_height, aspect, lightmodel);
+
+    pixelp = pixels + cur_pixel*clt_o[2];
+
+    if (clt_fbp) {
+        bu_semaphore_acquire(BU_SEM_SYSCALL);
+        count = fb_write(clt_fbp, a_x, a_y, pixelp, size);
+        bu_semaphore_release(BU_SEM_SYSCALL);
+        if (count < size)
+            bu_exit(EXIT_FAILURE, "pixel fb_write error");
+    }
+    if (outfp) {
+        bu_semaphore_acquire(BU_SEM_SYSCALL);
+        if (bu_fseek(outfp, cur_pixel*clt_o[2], 0) != 0)
+            fprintf(stderr, "fseek error\n");
+        if (fwrite(pixelp, size, 1, outfp) != 1)
+            bu_exit(EXIT_FAILURE, "pixel fwrite error");
+        bu_semaphore_release(BU_SEM_SYSCALL);
+    }
+    if (bif) {
+        int span = width*clt_o[2];
+
+        BU_ASSERT(a_x == 0);
+        while (pixelp < pixels+size) {
+            icv_writeline(bif, a_y++, pixelp, ICV_DATA_UCHAR);
+            pixelp += span;
+        }
+    }
+    bu_free(pixels, "image buffer");
+
+    bu_log("sub_grid_mode: %d, fullfloat_mode: %d, hypersample: %d, jitter: %d\n"
+	   "prism: %d, perspective: %e, stereo: %d\n",
+	   sub_grid_mode, fullfloat_mode, hypersample, jitter & JITTER_CELL,
+	   a.a_rt_i->rti_prismtrace, rt_perspective, stereo);
+
+    /* Tally up the statistics */
+    for (cpu=0; cpu < npsw; cpu++) {
+	if (resource[cpu].re_magic != RESOURCE_MAGIC) {
+	    bu_log("ERROR: CPU %d resources corrupted, statistics bad\n", cpu);
+	    continue;
+	}
+	rt_add_res_stats(APP.a_rt_i, &resource[cpu]);
+    }
+    bu_log("SHOT: opencl\n");
+}
+#endif
+
+
 /**
  * This is a separate function primarily as a service to REMRT.
  */
@@ -528,6 +670,18 @@ do_prep(struct rt_i *rtip)
 	if (rt_verbosity & VERBOSE_STATS)
 	    bu_log("PREP: %s\n", bu_vls_addr(&times));
 	bu_vls_free(&times);
+
+#ifdef USE_OPENCL
+	if (opencl_mode) {
+	    rt_prep_timer();
+	    clt_prep(rtip);
+
+	    (void)rt_get_timer(&times, NULL);
+	    if (rt_verbosity & VERBOSE_STATS)
+		bu_log("OCLPREP: %s\n", bu_vls_addr(&times));
+	    bu_vls_free(&times);
+	}
+#endif
     }
     memory_summary();
     if (rt_verbosity & VERBOSE_STATS) {
@@ -788,6 +942,18 @@ do_frame(int framenumber)
     /* initialize lighting, may update pix_start */
     view_2init(&APP, framename);
 
+#ifdef USE_OPENCL
+    if (opencl_mode) {
+        unsigned int mode = 0;
+
+                            mode |= CLT_COLOR;
+        if (rpt_dist)       mode |= CLT_DEPTH;
+        if (full_incr_mode) mode |= CLT_ACCUM;
+
+        clt_view_init(mode);
+    }
+#endif
+
     /* Just while doing the ray-tracing */
     if (R_DEBUG&RDEBUG_RTMEM)
 	bu_debug |= (BU_DEBUG_MEM_CHECK|BU_DEBUG_MEM_LOG);
@@ -811,6 +977,16 @@ do_frame(int framenumber)
      */
     rt_prep_timer();
 
+#ifdef USE_OPENCL
+    if (opencl_mode) {
+	clt_run(pix_start, pix_end);
+
+	/* Reset values to full size, for next frame (if any) */
+	pix_start = 0;
+	pix_end = (int)(height*width - 1);
+    }
+    else
+#endif
     if (incr_mode) {
 	for (incr_level = 1; incr_level <= incr_nlevel; incr_level++) {
 	    if (incr_level > 1)

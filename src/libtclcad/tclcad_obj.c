@@ -1671,7 +1671,7 @@ Usage: go_open\n\
 	Tcl_AppendResult(interp, "Unable to open geometry database: ", dbname, (char *)NULL);
 	return TCL_ERROR;
     }
-    gedp->ged_interp = interp;
+    gedp->ged_interp = (void *)interp;
 
     /* initialize tclcad_obj */
     BU_ALLOC(top, struct tclcad_obj);
@@ -11057,7 +11057,7 @@ to_pix(struct ged *gedp,
     }
 
     if (dm_get_type(gdvp->gdv_dmp) != DM_TYPE_WGL && dm_get_type(gdvp->gdv_dmp) != DM_TYPE_OGL) {
-	bu_vls_printf(gedp->ged_result_str, "%s: not yet supported for this display manager (i.e. must be OpenGl based)", argv[0]);
+	bu_vls_printf(gedp->ged_result_str, "%s: not yet supported for this display manager (i.e. must be OpenGL based)", argv[0]);
 	return GED_OK;
     }
 
@@ -11147,7 +11147,7 @@ to_png(struct ged *gedp,
     }
 
     if (dm_get_type(gdvp->gdv_dmp) != DM_TYPE_WGL && dm_get_type(gdvp->gdv_dmp) != DM_TYPE_OGL) {
-	bu_vls_printf(gedp->ged_result_str, "%s: not yet supported for this display manager (i.e. must be OpenGl based)", argv[0]);
+	bu_vls_printf(gedp->ged_result_str, "%s: not yet supported for this display manager (i.e. must be OpenGL based)", argv[0]);
 	return GED_OK;
     }
 
@@ -12182,7 +12182,7 @@ to_rt_gettrees(struct ged *gedp,
 
     /* Instantiate the proc, with clientData of wdb */
     /* Beware, returns a "token", not TCL_OK. */
-    (void)Tcl_CreateCommand(current_top->to_interp, newprocname, rt_tcl_rt,
+    (void)Tcl_CreateCommand(current_top->to_interp, newprocname, tclcad_rt,
 			    (ClientData)ap, to_deleteProc_rt);
 
     /* Return new function name as result */

@@ -36,74 +36,25 @@
 
 #include "common.h"
 
-#include "meshdecimation.h"
 
-#include "auxiliary/cpuconfig.h"
-#include "auxiliary/cpuinfo.h"
-#include "auxiliary/cc.h"
+#if defined(__SSE4_1__) && (defined(__GNUC__) || defined(__INTEL_COMPILER) || defined(_MSC_VER))
+
+
 #include "auxiliary/mm.h"
-#include "auxiliary/mmhash.h"
-#include "auxiliary/mmbinsort.h"
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <stddef.h>
-#include <stdint.h>
-#include <string.h>
 #include <math.h>
-#include <float.h>
 
-
-#ifdef __SSE__
-#include <xmmintrin.h>
-#endif
-#ifdef __SSE2__
-#include <emmintrin.h>
-#endif
-#ifdef __SSE3__
-#include <pmmintrin.h>
-#endif
-#ifdef __SSSE3__
-#include <tmmintrin.h>
-#endif
-#ifdef __SSE4A__
-#include <ammintrin.h>
-#endif
-#ifdef __SSE4_1__
 #include <smmintrin.h>
-#endif
-
-
-/****/
-
-
-#ifdef __SSE4_1__
-#define MD_CONFIG_SSE4_1_SUPPORT
-#endif
-
-
-#if defined(__GNUC__) || defined(__INTEL_COMPILER)
-#define RF_ALIGN16 __attribute__((aligned(16)))
-#elif defined(_MSC_VER)
-#define RF_ALIGN16 __declspec(align(16))
-#else
-#define RF_ALIGN16
-#ifdef MD_CONFIG_SSE4_1_SUPPORT
-#undef MD_CONFIG_SSE4_1_SUPPORT
-#endif
-#endif
 
 
 #define MD_CONFIG_SSE_APPROX
-
-
-#ifdef MD_CONFIG_SSE4_1_SUPPORT
 
 
 int mdPathSSE4p1 = 0x1 | 0x2;
 
 
 #define MD_COMPACTNESS_NORMALIZATION_FACTOR (0.5*4.0*1.732050808)
+
 
 float mdEdgeCollapsePenaltyTriangleSSE4p1f(float *newpoint, float *oldpoint, float *leftpoint, float *rightpoint, int *denyflag, float compactnesstarget)
 {

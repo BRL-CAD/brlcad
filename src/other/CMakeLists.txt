@@ -120,7 +120,7 @@ libraries provided with BRL-CAD's source code.  Default is AUTO, responsive to
 the toplevel BRLCAD_BUNDLED_LIBS option and testing first for a system
 version if BRLCAD_BUNDLED_LIBS is also AUTO.
 ")
-THIRD_PARTY(freetype FREETYPE ft freetype_DESCRIPTION "BRLCAD_ENABLE_OSG;BRLCAD_LEVEL3" ALIASES ${freetype_ALIASES} FIND_NAME Freetype)
+THIRD_PARTY(freetype FREETYPE ft freetype_DESCRIPTION BRLCAD_ENABLE_OSG BRLCAD_LEVEL3 ALIASES ${freetype_ALIASES} FIND_NAME Freetype)
 if(BRLCAD_FREETYPE_BUILD)
   set(FREETYPE_LIBRARY freetype CACHE STRING "libfreetype" FORCE)
   set(FREETYPE_INCLUDE_DIR_freetype2
@@ -318,7 +318,7 @@ the toplevel BRLCAD_BUNDLED_LIBS option and testing first for a system
 version if BRLCAD_BUNDLED_LIBS is also AUTO.
 ")
 
-THIRD_PARTY(tcl TCL tcl tcl_DESCRIPTION ALIASES ${tcl_ALIASES} FIND_NAME BRLCADTCL)
+THIRD_PARTY(tcl TCL tcl tcl_DESCRIPTION ALIASES ${tcl_ALIASES} FIND_NAME BRLCADTCL REQUIRED_VARS BRLCAD_LEVEL2)
 if(BRLCAD_TCL_BUILD)
   SetTargetFolder(tclsh "Third Party Executables")
   SetTargetFolder(tcl "Third Party Libraries")
@@ -490,7 +490,9 @@ set(ITCL_INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/incrTcl/itcl/generic)
 if(BRLCAD_TCL_BUILD)
   set(TCL_BIN_PREFIX ${CMAKE_BINARY_DIR}/${LIB_DIR})
 ELSE(BRLCAD_TCL_BUILD)
-  get_filename_component(TCL_BIN_PREFIX ${TCL_LIBRARY} PATH)
+  if (NOT "${TCL_LIBRARY}" STREQUAL "")
+    get_filename_component(TCL_BIN_PREFIX ${TCL_LIBRARY} PATH)
+  endif (NOT "${TCL_LIBRARY}" STREQUAL "")
 endif(BRLCAD_TCL_BUILD)
 if(BRLCAD_ENABLE_TK)
   if(BRLCAD_TK_BUILD)
@@ -696,8 +698,13 @@ the toplevel BRLCAD_BUNDLED_LIBS option and testing first for a system
 version if BRLCAD_BUNDLED_LIBS is also AUTO.
 ")
 THIRD_PARTY(PoissonRecon SPR PoissonRecon poissonrecon_DESCRIPTION ALIASES
-  ${poissonrecon_ALIASES} FLAGS NOSYS)
-SetTargetFolder(PoissonRecon "Third Party Libraries")
+  ${poissonrecon_ALIASES} REQUIRED_VARS "BRLCAD_ENABLE_SPR"  FLAGS NOSYS)
+if(BRLCAD_SPR_BUILD)
+  SetTargetFolder(PoissonRecon "Third Party Executables")
+  SetTargetFolder(SurfaceTrimmer "Third Party Executables")
+  SetTargetFolder(libSPR "Third Party Libraries")
+  SetTargetFolder(libSPR-static "Third Party Libraries")
+endif(BRLCAD_SPR_BUILD)
 
 # STEPcode
 # Need Lemon/Perplex to build STEP - conditionalize
@@ -733,7 +740,7 @@ if(BRLCAD_SC_BUILD)
   mark_as_advanced(EXP2CXX_EXEC)
   mark_as_advanced(EXP2CXX_EXECUTABLE_TARGET)
   DISTCLEAN(${CMAKE_CURRENT_BINARY_DIR}/stepcode/include/sc_cf.h.in)
-  DISTCLEAN(${CMAKE_CURRENT_BINARY_DIR}/stepcode/sc_version_string.h.txt)
+  DISTCLEAN(${CMAKE_CURRENT_BINARY_DIR}/stepcode/include/sc_version_string.h)
 endif(BRLCAD_SC_BUILD)
 set(IS_SUBBUILD ${IS_SUBBUILD_STASH})
 mark_as_advanced(SC_BUILD_TYPE)
@@ -891,7 +898,7 @@ distribution.  Default is AUTO, responsive to the toplevel
 BRLCAD_BUNDLED_LIBS option and testing first for a system version
 if BRLCAD_BUNDLED_LIBS is also AUTO.
 ")
-THIRD_PARTY(bullet BULLET bullet Bullet_DESCRIPTION FIND_NAME Bullet REQUIRED_VARS "BRLCAD_ENABLE_BULLET;BRLCAD_LEVEL2" ALIASES ${Bullet_ALIASES})
+THIRD_PARTY(bullet BULLET bullet Bullet_DESCRIPTION FIND_NAME Bullet REQUIRED_VARS BRLCAD_ENABLE_BULLET BRLCAD_LEVEL2 ALIASES ${Bullet_ALIASES})
 if(BRLCAD_BULLET_BUILD)
   set(BULLET_INCLUDE_DIR "${BRLCAD_SOURCE_DIR}/src/other/bullet/src" CACHE STRING "Directory containing bullet headers." FORCE)
   set(BULLET_LIBRARIES "BulletSoftBody;BulletCollision;BulletDynamics;LinearMath" CACHE STRING "Directory containing bullet headers." FORCE)

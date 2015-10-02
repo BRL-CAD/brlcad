@@ -348,24 +348,24 @@ typedef fastf_t plane_t[ELEMENTS_PER_PLANE];
 
 /**
  * Evaluates truthfully whether a number is not within valid range of
- * INFINITY to -INFINITY inclusive.
+ * INFINITY to -INFINITY exclusive (open set).
  */
-#define INVALID(n) (!((n) >= -INFINITY && (n) <= INFINITY))
+#define INVALID(n) (!((n) > -INFINITY && (n) < INFINITY))
 
 /**
- * Evaluates truthfully whether all components of a vector are not
+ * Evaluates truthfully whether any components of a vector are not
  * within a valid range.
  */
 #define VINVALID(v) (INVALID((v)[X]) || INVALID((v)[Y]) || INVALID((v)[Z]))
 
 /**
- * Evaluates truthfully whether all components of a 2D vector are not
+ * Evaluates truthfully whether any components of a 2D vector are not
  * within a valid range.
  */
 #define V2INVALID(v) (INVALID((v)[X]) || INVALID((v)[Y]))
 
 /**
- * Evaluates truthfully whether all components of a 4D vector are not
+ * Evaluates truthfully whether any components of a 4D vector are not
  * within a valid range.
  */
 #define HINVALID(v) (INVALID((v)[X]) || INVALID((v)[Y]) || INVALID((v)[Z]) || INVALID((v)[W]))

@@ -14,8 +14,10 @@ changes made.  See document footer for additional details.
 --- 2014-XX-XX  Release 7.26.XX                                    ---
 ----------------------------------------------------------------------
 
+* added new pixcrop utility for cropping pix images - Carl Moore
+* preliminary OpenCL-accelerated coherent ray tracing pipeline
+	- Jon Engbert, Vasco Costa
 * improved point cloud plot visualization - Sean Morrison
-* initial support for datum points, lines, and planes - Sean Morrison
 * fixed program freezing bug in MGED grouper command - Bob Parker
 * improved help option consistency across numerous tools - Carl Moore
 * added prefatory FASTGEN4 geometry export support - Jon Engbert
@@ -81,6 +83,13 @@ changes made.  See document footer for additional details.
 * added comb -S option to stop when object already exists - Cliff Yapp
 * improved comb command documentation with many examples - Cliff Yapp
 * implemented new 'hrt' heart-shaped primitive object - Isaac Kamga
+
+
+----------------------------------------------------------------------
+--- 2015-08-31  Release 7.24.4                                     ---
+----------------------------------------------------------------------
+
+* initial support for datum points, lines, and planes - Sean Morrison
 
 
 ----------------------------------------------------------------------

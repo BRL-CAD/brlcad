@@ -241,10 +241,11 @@ CurveTree::CurveTree(const ON_BrepFace* face) :
 	    }
 	}
     }
-    getLeaves(m_sortedX);
-    m_sortedX.sort(sortX);
-    getLeaves(m_sortedY);
-    m_sortedY.sort(sortY);
+
+    m_sortedX = new std::list<BRNode *>();
+
+    getLeaves(*m_sortedX);
+    m_sortedX->sort(sortX);
 
     return;
 }
@@ -253,6 +254,7 @@ CurveTree::CurveTree(const ON_BrepFace* face) :
 CurveTree::~CurveTree()
 {
     delete m_root;
+    delete m_sortedX;
 }
 
 
@@ -296,7 +298,7 @@ CurveTree::getLeavesAbove(std::list<BRNode*>& out_leaves, const ON_Interval& u, 
 {
     point_t bmin, bmax;
     double dist;
-    for (std::list<BRNode*>::iterator i = m_sortedX.begin(); i != m_sortedX.end(); i++) {
+    for (std::list<BRNode*>::iterator i = m_sortedX->begin(); i != m_sortedX->end(); i++) {
 	BRNode* br = dynamic_cast<BRNode*>(*i);
 	br->GetBBox(bmin, bmax);
 
@@ -316,7 +318,7 @@ void
 CurveTree::getLeavesAbove(std::list<BRNode*>& out_leaves, const ON_2dPoint& pt, fastf_t tol)
 {
     point_t bmin, bmax;
-    for (std::list<BRNode*>::iterator i = m_sortedX.begin(); i != m_sortedX.end(); i++) {
+    for (std::list<BRNode*>::iterator i = m_sortedX->begin(); i != m_sortedX->end(); i++) {
 	BRNode* br = dynamic_cast<BRNode*>(*i);
 	br->GetBBox(bmin, bmax);
 
@@ -336,7 +338,7 @@ CurveTree::getLeavesRight(std::list<BRNode*>& out_leaves, const ON_Interval& u, 
 {
     point_t bmin, bmax;
     double dist;
-    for (std::list<BRNode*>::iterator i = m_sortedX.begin(); i != m_sortedX.end(); i++) {
+    for (std::list<BRNode*>::iterator i = m_sortedX->begin(); i != m_sortedX->end(); i++) {
 	BRNode* br = dynamic_cast<BRNode*>(*i);
 	br->GetBBox(bmin, bmax);
 
@@ -356,7 +358,7 @@ void
 CurveTree::getLeavesRight(std::list<BRNode*>& out_leaves, const ON_2dPoint& pt, fastf_t tol)
 {
     point_t bmin, bmax;
-    for (std::list<BRNode*>::iterator i = m_sortedX.begin(); i != m_sortedX.end(); i++) {
+    for (std::list<BRNode*>::iterator i = m_sortedX->begin(); i != m_sortedX->end(); i++) {
 	BRNode* br = dynamic_cast<BRNode*>(*i);
 	br->GetBBox(bmin, bmax);
 
@@ -557,6 +559,7 @@ SurfaceTree::SurfaceTree()
       m_face(NULL),
       m_root(NULL)
 {
+    f_queue = new std::queue<ON_Plane *>();
 }
 
 
@@ -631,6 +634,7 @@ SurfaceTree::SurfaceTree(const ON_BrepFace* face, bool removeTrimmed, int depthL
     surf->FrameAt(u.Mid() + uq, v.Mid() - vq, frames[7]);
     surf->FrameAt(u.Mid() + uq, v.Mid() + vq, frames[8]);
 
+    f_queue = new std::queue<ON_Plane *>();
     m_root = subdivideSurface(surf, u, v, frames, 0, depthLimit, 1, within_distance_tol);
 
     if (m_root) {
@@ -639,9 +643,9 @@ SurfaceTree::SurfaceTree(const ON_BrepFace* face, bool removeTrimmed, int depthL
     TRACE("u: [" << u[0] << ", " << u[1] << "]");
     TRACE("v: [" << v[0] << ", " << v[1] << "]");
     TRACE("m_root: " << m_root);
-    while (!f_queue.empty()) {
-	bu_free(f_queue.front(), "free subsurface frames array");
-	f_queue.pop();
+    while (!f_queue->empty()) {
+	bu_free(f_queue->front(), "free subsurface frames array");
+	f_queue->pop();
     }
 }
 
@@ -650,6 +654,7 @@ SurfaceTree::~SurfaceTree()
 {
     delete ctree;
     delete m_root;
+    delete f_queue;
 }
 
 
@@ -1215,7 +1220,11 @@ SurfaceTree::subdivideSurface(const ON_Surface *localsurf,
 	if (prev_knot) localsurf->FrameAt(usplit, vsplit, frames[4]);
 
 	ON_Plane *newframes;
-	if (!f_queue.empty()) {newframes = f_queue.front(); f_queue.pop();} else {newframes = (ON_Plane *)bu_malloc(9*sizeof(ON_Plane), "new frames");}
+	if (!f_queue->empty()) {
+	    newframes = f_queue->front(); f_queue->pop();
+	} else {
+	    newframes = (ON_Plane *)bu_malloc(9*sizeof(ON_Plane), "new frames");
+	}
 	newframes[0] = frames[0];
 	newframes[1] = sharedframes[0];
 	newframes[2] = frames[4];
@@ -1253,7 +1262,7 @@ SurfaceTree::subdivideSurface(const ON_Surface *localsurf,
 	delete q3surf;
 #endif
 	memset(newframes, 0, 9 * sizeof(ON_Plane *));
-	f_queue.push(newframes);
+	f_queue->push(newframes);
 
 	parent->m_trimmed = true;
 	parent->m_checkTrim = false;
@@ -1400,7 +1409,11 @@ SurfaceTree::subdivideSurface(const ON_Surface *localsurf,
 	localsurf->FrameAt(usplit, v.Max(), sharedframes[1]);
 
 	ON_Plane *newframes;
-	if (!f_queue.empty()) {newframes = f_queue.front(); f_queue.pop();} else {newframes = (ON_Plane *)bu_malloc(9*sizeof(ON_Plane), "new frames");}
+	if (!f_queue->empty()) {
+	    newframes = f_queue->front(); f_queue->pop();
+	} else {
+	    newframes = (ON_Plane *)bu_malloc(9*sizeof(ON_Plane), "new frames");
+	}
 	newframes[0] = frames[0];
 	newframes[1] = sharedframes[0];
 	newframes[2] = sharedframes[1];
@@ -1436,7 +1449,7 @@ SurfaceTree::subdivideSurface(const ON_Surface *localsurf,
 #endif
 
 	memset(newframes, 0, 9 * sizeof(ON_Plane *));
-	f_queue.push(newframes);
+	f_queue->push(newframes);
 
 	parent->m_trimmed = true;
 	parent->m_checkTrim = false;
@@ -1566,7 +1579,11 @@ SurfaceTree::subdivideSurface(const ON_Surface *localsurf,
 	localsurf->FrameAt(u.Max(), vsplit, sharedframes[1]);
 
 	ON_Plane *newframes;
-	if (!f_queue.empty()) {newframes = f_queue.front(); f_queue.pop();} else {newframes = (ON_Plane *)bu_malloc(9*sizeof(ON_Plane), "new frames");}
+	if (!f_queue->empty()) {
+	    newframes = f_queue->front(); f_queue->pop();
+	} else {
+	    newframes = (ON_Plane *)bu_malloc(9*sizeof(ON_Plane), "new frames");
+	}
 	newframes[0] = frames[0];
 	newframes[1] = frames[1];
 	newframes[2] = sharedframes[1];
@@ -1601,7 +1618,7 @@ SurfaceTree::subdivideSurface(const ON_Surface *localsurf,
 #endif
 
 	memset(newframes, 0, 9 * sizeof(ON_Plane *));
-	f_queue.push(newframes);
+	f_queue->push(newframes);
 
 	parent->m_trimmed = true;
 	parent->m_checkTrim = false;

@@ -483,7 +483,6 @@ rt_uplot_to_vlist(struct bn_vlblock *vbp, register FILE *fp, double char_size, i
     return 0;
 }
 
-
 void
 rt_label_vlist_verts(struct bn_vlblock *vbp, struct bu_list *src, fastf_t *mat, double sz, double mm2local)
 {
@@ -504,6 +503,27 @@ rt_label_vlist_verts(struct bn_vlblock *vbp, struct bu_list *src, fastf_t *mat, 
 		    (*pt)[0]*mm2local, (*pt)[1]*mm2local, (*pt)[2]*mm2local);
 	    bn_vlist_3string(vhead, vbp->free_vlist_hd, label, (*pt), mat, sz);
 	}
+    }
+}
+
+void
+rt_label_vlist_faces(struct bn_vlblock* vbp, struct bu_list* f_list,
+                     fastf_t *mat, double sz, double UNUSED(mm2local) )
+{
+    struct bu_list* vhead;
+    struct face* curr_f;
+    char label[256];
+    point_t avg_pt;
+
+    vhead = bn_vlblock_find(vbp, 255, 255, 255);    /* white */
+
+    for( BU_LIST_FOR(curr_f, face, f_list) ) {
+        avg_pt[0] = (curr_f->min_pt[0] + curr_f->max_pt[0]) / 2;
+        avg_pt[1] = (curr_f->min_pt[1] + curr_f->max_pt[1]) / 2;
+        avg_pt[2] = (curr_f->min_pt[2] + curr_f->max_pt[2]) / 2;
+
+        sprintf(label, " %d", (int)curr_f->index );
+        bn_vlist_3string(vhead, vbp->free_vlist_hd, label, avg_pt, mat, sz);
     }
 }
 

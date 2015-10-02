@@ -133,6 +133,7 @@ extern int f_keypoint(ClientData, Tcl_Interp *, int, const char *[]);
 extern int f_knob(ClientData, Tcl_Interp *, int, const char *[]);
 extern int f_l_muves(ClientData, Tcl_Interp *, int, const char *[]);
 extern int f_labelvert(ClientData, Tcl_Interp *, int, const char *[]);
+extern int f_labelface(ClientData, Tcl_Interp *, int, const char *[]);
 extern int f_list(ClientData, Tcl_Interp *, int, const char *[]);
 extern int f_make(ClientData, Tcl_Interp *, int, const char *[]);
 extern int f_matpick(ClientData, Tcl_Interp *, int, const char *[]);

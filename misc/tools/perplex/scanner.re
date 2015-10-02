@@ -429,7 +429,7 @@ bufferFill(perplex_t scanner, size_t n)
     bufferAppend(scanner, n);
 }
 
-static char*
+char*
 getTokenText(perplex_t scanner)
 {
     int tokenChars = scanner->cursor - scanner->tokenStart;

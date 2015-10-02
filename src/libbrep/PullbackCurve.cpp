@@ -2042,8 +2042,8 @@ sample(PBCData& data,
 {
     ON_2dPoint m;
     double t = randomPointFromRange(data, m, t1, t2);
-    if (!data.segments.empty()) {
-	ON_2dPointArray * samples = data.segments.back();
+    if (!data.segments->empty()) {
+	ON_2dPointArray * samples = data.segments->back();
 	if (isFlat(p1, m, p2, data.flatness)) {
 	    samples->Append(p2);
 	} else {
@@ -3042,7 +3042,7 @@ pullback_samples_from_closed_surface(PBCData* data,
 			double seam_t;
 			if (Find3DCurveSeamCrossing(*data,prev_t,curr_t,offset,seam_t,from,to,PBC_TOL,same_point_tol,within_distance_tol)) {
 			    samples->Append(from);
-			    data->segments.push_back(samples);
+			    data->segments->push_back(samples);
 			    samples= new ON_2dPointArray();
 			    samples->Append(to);
 			    prev_pt = to;
@@ -3062,28 +3062,28 @@ pullback_samples_from_closed_surface(PBCData* data,
     delete [] knots;
 
     if (samples != NULL) {
-	data->segments.push_back(samples);
+	data->segments->push_back(samples);
 
-	size_t numsegs = data->segments.size();
+	size_t numsegs = data->segments->size();
 
 	if (numsegs > 1) {
 	    if (curve->IsClosed()) {
 		ON_2dPointArray *reordered_samples= new ON_2dPointArray();
 		// must have walked over seam but have closed curve so reorder stitching
 		size_t seg = 0;
-		for (std::list<ON_2dPointArray *>::reverse_iterator rit=data->segments.rbegin(); rit!=data->segments.rend(); ++seg) {
+		for (std::list<ON_2dPointArray *>::reverse_iterator rit=data->segments->rbegin(); rit!=data->segments->rend(); ++seg) {
 		    samples = *rit;
 		    if (seg < numsegs-1) { // since end points should be repeated
 			reordered_samples->Append(samples->Count()-1,(const ON_2dPoint *)samples->Array());
 		    } else {
 			reordered_samples->Append(samples->Count(),(const ON_2dPoint *)samples->Array());
 		    }
-		    data->segments.erase((++rit).base());
-		    rit = data->segments.rbegin();
+		    data->segments->erase((++rit).base());
+		    rit = data->segments->rbegin();
 		    delete samples;
 		}
-		data->segments.clear();
-		data->segments.push_back(reordered_samples);
+		data->segments->clear();
+		data->segments->push_back(reordered_samples);
 
 	    } else {
 		//punt for now
@@ -3112,6 +3112,7 @@ pullback_samples(const ON_Surface* surf,
     data->curve = curve;
     data->surf = surf;
     data->surftree = NULL;
+    data->segments = new std::list<ON_2dPointArray *>();
 
     double tmin, tmax;
     data->curve->GetDomain(&tmin, &tmax);
@@ -3128,15 +3129,15 @@ pullback_samples(const ON_Surface* surf,
 		    ON_2dPointArray *samples1 = pullback_samples(data, tmin, 0.0,same_point_tol,within_distance_tol);
 		    ON_2dPointArray *samples2 = pullback_samples(data, 0.0, tmax,same_point_tol,within_distance_tol);
 		    if (samples1 != NULL) {
-			data->segments.push_back(samples1);
+			data->segments->push_back(samples1);
 		    }
 		    if (samples2 != NULL) {
-			data->segments.push_back(samples2);
+			data->segments->push_back(samples2);
 		    }
 		} else {
 		    ON_2dPointArray *samples = pullback_samples(data, tmin, tmax,same_point_tol,within_distance_tol);
 		    if (samples != NULL) {
-			data->segments.push_back(samples);
+			data->segments->push_back(samples);
 		    }
 		}
 	    } else {
@@ -3150,7 +3151,7 @@ pullback_samples(const ON_Surface* surf,
     } else {
 	ON_2dPointArray *samples = pullback_samples(data, tmin, tmax,same_point_tol,within_distance_tol);
 	if (samples != NULL) {
-	    data->segments.push_back(samples);
+	    data->segments->push_back(samples);
 	}
     }
     return data;
@@ -3458,9 +3459,9 @@ check_pullback_singular_east(std::list<PBCData*> &pbcs)
     std::cout << "Umax: " << umax << std::endl;
     while (cs != pbcs.end()) {
 	PBCData *data = (*cs);
-	std::list<ON_2dPointArray *>::iterator si = data->segments.begin();
+	std::list<ON_2dPointArray *>::iterator si = data->segments->begin();
 	int segcnt = 0;
-	while (si != data->segments.end()) {
+	while (si != data->segments->end()) {
 	    ON_2dPointArray *samples = (*si);
 	    std::cerr << std::endl << "Segment:" << ++segcnt << std::endl;
 	    if (true) {
@@ -3548,9 +3549,9 @@ print_pullback_data(std::string str, std::list<PBCData*> &pbcs, bool justendpoin
 		continue;
 
 	    const ON_Surface *surf = data->surf;
-	    std::list<ON_2dPointArray *>::iterator si = data->segments.begin();
+	    std::list<ON_2dPointArray *>::iterator si = data->segments->begin();
 	    int segcnt = 0;
-	    while (si != data->segments.end()) {
+	    while (si != data->segments->end()) {
 		ON_2dPointArray *samples = (*si);
 		std::cerr << std::endl << "  Segment:" << ++segcnt << std::endl;
 		int ilast = samples->Count() - 1;
@@ -3601,11 +3602,11 @@ print_pullback_data(std::string str, std::list<PBCData*> &pbcs, bool justendpoin
 		continue;
 
 	    const ON_Surface *surf = data->surf;
-	    std::list<ON_2dPointArray *>::iterator si = data->segments.begin();
+	    std::list<ON_2dPointArray *>::iterator si = data->segments->begin();
 	    int segcnt = 0;
 	    std::cerr << "2d surface domain: " << std::endl;
 	    std::cerr << "in rpp rpp" << surf->Domain(0).m_t[0] << " " << surf->Domain(0).m_t[1] << " " << surf->Domain(1).m_t[0] << " " << surf->Domain(1).m_t[1] << " 0.0 0.01"  << std::endl;
-	    while (si != data->segments.end()) {
+	    while (si != data->segments->end()) {
 		ON_2dPointArray *samples = (*si);
 		std::cerr << std::endl << "  Segment:" << ++segcnt << std::endl;
 		std::cerr << "    T:" << ++trimcnt << std::endl;
@@ -3908,11 +3909,11 @@ number_of_seam_crossings(std::list<PBCData*> &pbcs)
 	    continue;
 
 	const ON_Surface *surf = data->surf;
-	std::list<ON_2dPointArray *>::iterator si = data->segments.begin();
+	std::list<ON_2dPointArray *>::iterator si = data->segments->begin();
 	ON_2dPoint *pt = NULL;
 	ON_2dPoint *prev_pt = NULL;
 	ON_2dPoint *next_pt = NULL;
-	while (si != data->segments.end()) {
+	while (si != data->segments->end()) {
 	    ON_2dPointArray *samples = (*si);
 	    for (int i = 0; i < samples->Count(); i++) {
 		pt = &(*samples)[i];
@@ -3933,7 +3934,7 @@ number_of_seam_crossings(std::list<PBCData*> &pbcs)
 		    }
 		}
 	    }
-	    if (si != data->segments.end())
+	    if (si != data->segments->end())
 		si++;
 	}
 
@@ -3958,8 +3959,8 @@ check_for_points_on_same_seam(std::list<PBCData*> &pbcs)
     while ( cs != pbcs.end()) {
 	PBCData *data = (*cs);
 	const ON_Surface *surf = data->surf;
-	std::list<ON_2dPointArray *>::iterator seg = data->segments.begin();
-	while (seg != data->segments.end()) {
+	std::list<ON_2dPointArray *>::iterator seg = data->segments->begin();
+	while (seg != data->segments->end()) {
 	    ON_2dPointArray *points = (*seg);
 	    for (int i=0; i < points->Count(); i++) {
 		ON_2dPoint *pt = points->At(i);
@@ -4017,8 +4018,8 @@ extend_pullback_at_shared_3D_curve_seam(std::list<PBCData*> &pbcs)
 	    //find which direction we need to extend
 	    if (surf->IsClosed(0) && !surf->IsClosed(1)) {
 		double length = surf->Domain(0).Length();
-		std::list<ON_2dPointArray *>::iterator seg = data->segments.begin();
-		while (seg != data->segments.end()) {
+		std::list<ON_2dPointArray *>::iterator seg = data->segments->begin();
+		while (seg != data->segments->end()) {
 		    ON_2dPointArray *points = (*seg);
 		    for (int i=0; i < points->Count(); i++) {
 			points->At(i)->x = points->At(i)->x + length;
@@ -4027,8 +4028,8 @@ extend_pullback_at_shared_3D_curve_seam(std::list<PBCData*> &pbcs)
 		}
 	    } else if (!surf->IsClosed(0) && surf->IsClosed(1)) {
 		double length = surf->Domain(1).Length();
-		std::list<ON_2dPointArray *>::iterator seg = data->segments.begin();
-		while (seg != data->segments.end()) {
+		std::list<ON_2dPointArray *>::iterator seg = data->segments->begin();
+		while (seg != data->segments->end()) {
 		    ON_2dPointArray *points = (*seg);
 		    for (int i=0; i < points->Count(); i++) {
 			points->At(i)->y = points->At(i)->y + length;
@@ -4061,7 +4062,7 @@ shift_single_curve_loop_straddled_over_seam(std::list<PBCData*> &pbcs)
 	const ON_Surface *surf = data->surf;
 	ON_Interval udom = surf->Domain(0);
 	ON_Interval vdom = surf->Domain(1);
-	std::list<ON_2dPointArray *>::iterator si = data->segments.begin();
+	std::list<ON_2dPointArray *>::iterator si = data->segments->begin();
 	ON_2dPoint pt;
 	ON_2dPoint prev_pt;
 	if (data->curve->IsClosed()) {
@@ -4069,7 +4070,7 @@ shift_single_curve_loop_straddled_over_seam(std::list<PBCData*> &pbcs)
 	    if (numseamcrossings == 1) {
 		ON_2dPointArray part1,part2;
 		ON_2dPointArray* curr_point_array = &part2;
-		while (si != data->segments.end()) {
+		while (si != data->segments->end()) {
 		    ON_2dPointArray *samples = (*si);
 		    for (int i = 0; i < samples->Count(); i++) {
 			pt = (*samples)[i];
@@ -4099,7 +4100,7 @@ shift_single_curve_loop_straddled_over_seam(std::list<PBCData*> &pbcs)
 		    samples->Empty();
 		    samples->Append(part1.Count(),part1.Array());
 		    samples->Append(part2.Count(),part2.Array());
-		    if (si != data->segments.end())
+		    if (si != data->segments->end())
 			si++;
 		}
 	    }
@@ -4126,8 +4127,8 @@ extend_over_seam_crossings(std::list<PBCData*> &pbcs)
 	if (!data || !data->surf)
 	    continue;
 
-	std::list<ON_2dPointArray *>::iterator si = data->segments.begin();
-	while (si != data->segments.end()) {
+	std::list<ON_2dPointArray *>::iterator si = data->segments->begin();
+	while (si != data->segments->end()) {
 	    ON_2dPointArray *samples = (*si);
 	    for (int i = 0; i < samples->Count(); i++) {
 		pt = &(*samples)[i];
@@ -4137,7 +4138,7 @@ extend_over_seam_crossings(std::list<PBCData*> &pbcs)
 		}
 		prev_pt = pt;
 	    }
-	    if (si != data->segments.end())
+	    if (si != data->segments->end())
 		si++;
 	}
 	if (cs != pbcs.end())
@@ -4175,8 +4176,8 @@ resolve_pullback_seams(std::list<PBCData*> &pbcs)
 	surf->GetDomain(0, &umin, &umax);
 	surf->GetDomain(1, &vmin, &vmax);
 
-	std::list<ON_2dPointArray *>::iterator si = data->segments.begin();
-	while (si != data->segments.end()) {
+	std::list<ON_2dPointArray *>::iterator si = data->segments->begin();
+	while (si != data->segments->end()) {
 	    ON_2dPointArray *samples = (*si);
 	    if (resolve_seam_segment(surf, *samples,u_resolved,v_resolved)) {
 		// Found a starting point
@@ -4187,7 +4188,7 @@ resolve_pullback_seams(std::list<PBCData*> &pbcs)
 		std::list<ON_2dPointArray *>::reverse_iterator rsi(si);
 		while (rcs != pbcs.rend()) {
 		    PBCData *rdata = (*rcs);
-		    while (rsi != rdata->segments.rend()) {
+		    while (rsi != rdata->segments->rend()) {
 			ON_2dPointArray *rsamples = (*rsi);
 			// first try and resolve on own merits
 			if (!resolve_seam_segment(surf, *rsamples,u_resolved,v_resolved)) {
@@ -4199,7 +4200,7 @@ resolve_pullback_seams(std::list<PBCData*> &pbcs)
 		    rcs++;
 		    if (rcs != pbcs.rend()) {
 			rdata = (*rcs);
-			rsi = rdata->segments.rbegin();
+			rsi = rdata->segments->rbegin();
 		    }
 		}
 
@@ -4211,7 +4212,7 @@ resolve_pullback_seams(std::list<PBCData*> &pbcs)
 		si++;
 		std::list<PBCData*>::iterator current(cs);
 		while (cs != pbcs.end()) {
-		    while (si != data->segments.end()) {
+		    while (si != data->segments->end()) {
 			samples = (*si);
 			// first try and resolve on own merits
 			if (!resolve_seam_segment(surf, *samples,u_resolved,v_resolved)) {
@@ -4226,15 +4227,15 @@ resolve_pullback_seams(std::list<PBCData*> &pbcs)
 		    cs++;
 		    if (cs != pbcs.end()) {
 			data = (*cs);
-			si = data->segments.begin();
+			si = data->segments->begin();
 		    }
 		}
 		// make sure to wrap back around with previous
 		cs = pbcs.begin();
 		data = (*cs);
-		si = data->segments.begin();
+		si = data->segments->begin();
 		while ((cs != pbcs.end()) && (cs != current)) {
-		    while (si != data->segments.end()) {
+		    while (si != data->segments->end()) {
 			samples = (*si);
 			// first try and resolve on own merits
 			if (!resolve_seam_segment(surf, *samples,u_resolved,v_resolved)) {
@@ -4249,11 +4250,11 @@ resolve_pullback_seams(std::list<PBCData*> &pbcs)
 		    cs++;
 		    if (cs != pbcs.end()) {
 			data = (*cs);
-			si = data->segments.begin();
+			si = data->segments->begin();
 		    }
 		}
 	    }
-	    if (si != data->segments.end())
+	    if (si != data->segments->end())
 		si++;
 	}
 	if (cs != pbcs.end())
@@ -4294,8 +4295,8 @@ resolve_pullback_singularities(std::list<PBCData*> &pbcs)
 		continue;
 
 	    const ON_Surface *surf = data->surf;
-	    std::list<ON_2dPointArray *>::iterator si = data->segments.begin();
-	    while (si != data->segments.end()) {
+	    std::list<ON_2dPointArray *>::iterator si = data->segments->begin();
+	    while (si != data->segments->end()) {
 		ON_2dPointArray *samples = (*si);
 		for (int i = 0; i < samples->Count(); i++) {
 		    // 0 = south, 1 = east, 2 = north, 3 = west
@@ -4386,11 +4387,11 @@ remove_consecutive_intersegment_duplicates(std::list<PBCData*> &pbcs)
     std::list<PBCData*>::iterator cs = pbcs.begin();
     while (cs != pbcs.end()) {
 	PBCData *data = (*cs);
-	std::list<ON_2dPointArray *>::iterator si = data->segments.begin();
-	while (si != data->segments.end()) {
+	std::list<ON_2dPointArray *>::iterator si = data->segments->begin();
+	while (si != data->segments->end()) {
 	    ON_2dPointArray *samples = (*si);
 	    if (samples->Count() == 0) {
-		si = data->segments.erase(si);
+		si = data->segments->erase(si);
 	    } else {
 		for (int i = 0; i < samples->Count() - 1; i++) {
 		    while ((i < (samples->Count() - 1)) && (*samples)[i].DistanceTo((*samples)[i + 1]) < 1e-9) {
@@ -4400,7 +4401,7 @@ remove_consecutive_intersegment_duplicates(std::list<PBCData*> &pbcs)
 		si++;
 	    }
 	}
-	if (data->segments.empty()) {
+	if (data->segments->empty()) {
 	    cs = pbcs.erase(cs);
 	} else {
 	    cs++;
@@ -4513,7 +4514,8 @@ pullback_curve(const brlcad::SurfaceTree* surfacetree,
     data.surf = surf;
     data.surftree = (brlcad::SurfaceTree*)surfacetree;
     ON_2dPointArray samples;
-    data.segments.push_back(&samples);
+    data.segments = new std::list<ON_2dPointArray *>();
+    data.segments->push_back(&samples);
 
     // Step 1 - adaptively sample the curve
     double tmin, tmax;
@@ -4582,7 +4584,8 @@ pullback_seam_curve(enum seam_direction seam_dir,
     data.surf = surf;
     data.surftree = (brlcad::SurfaceTree*)surfacetree;
     ON_2dPointArray samples;
-    data.segments.push_back(&samples);
+    data.segments = new std::list<ON_2dPointArray *>();
+    data.segments->push_back(&samples);
 
     // Step 1 - adaptively sample the curve
     double tmin, tmax;

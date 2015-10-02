@@ -13,7 +13,7 @@
 /* Return -1 if the cone face is pointing in toward the axis,
  * 1 if it is pointing out, and 0 if there is some other problem */
 int
-negative_cone(struct subbrep_object_data *data, int face_index, double cone_tol) {
+negative_cone(struct subbrep_island_data *data, int face_index, double cone_tol) {
     int ret = 0;
     const ON_Surface *surf = data->brep->m_F[face_index].SurfaceOf();
     ON_Cone cone;
@@ -39,7 +39,7 @@ negative_cone(struct subbrep_object_data *data, int face_index, double cone_tol)
 
 
 int
-subbrep_is_cone(struct bu_vls *msgs, struct subbrep_object_data *data, fastf_t cone_tol)
+subbrep_is_cone(struct bu_vls *UNUSED(msgs), struct subbrep_island_data *data, fastf_t cone_tol)
 {
     std::set<int>::iterator f_it;
     std::set<int> planar_surfaces;
@@ -62,7 +62,7 @@ subbrep_is_cone(struct bu_vls *msgs, struct subbrep_object_data *data, fastf_t c
                 break;
         }
     }
-    if (planar_surfaces.size() < 2) return 0;
+    if (planar_surfaces.size() < 1) return 0;
     if (conic_surfaces.size() < 1) return 0;
 
     // Second, check if all conic surfaces share the same base point, apex point and radius.
@@ -80,73 +80,68 @@ subbrep_is_cone(struct bu_vls *msgs, struct subbrep_object_data *data, fastf_t c
         if (!(NEAR_ZERO(cone.radius - f_cone.radius, 0.01))) return 0;
     }
 
-    // Third, see if the planar face and the planes of any non-linear edges from the conic
-    // faces are coplanar. TODO - do we need to do this?
-    ON_Plane p1;
+    // Third, see if all planes are coplanar with at most two planes.
+    ON_Plane p1, p2;
+    int p2_set = 0;
     data->brep->m_F[*planar_surfaces.begin()].SurfaceOf()->IsPlanar(&p1);
-
-    // Fourth, check that the conic axis and the planar face are perpendicular.  If they
-    // are not it isn't fatal, but we need to add a subtracting tgc and return a comb
-    // to handle this situation so for now for simplicity require the perpendicular condition
-    if (p1.Normal().IsParallelTo(cone.Axis(), 0.01) == 0) {
-        //std::cout << "p1 Normal: " << p1.Normal().x << "," << p1.Normal().y << "," << p1.Normal().z << "\n";
-        //std::cout << "cone axis: " << cone.Axis().x << "," << cone.Axis().y << "," << cone.Axis().z << "\n";
-        return 0;
+    for (f_it = planar_surfaces.begin(); f_it != planar_surfaces.end(); f_it++) {
+	ON_Plane f_p;
+	data->brep->m_F[(*f_it)].SurfaceOf()->IsPlanar(&f_p);
+	if (!p2_set && f_p != p1) {
+	    p2 = f_p;
+	    p2_set = 1;
+	    continue;
+	};
+	if (f_p != p1 && f_p != p2) return 0;
     }
 
-
-    // Fifth, remove degenerate edge sets. A degenerate edge set is defined as two
-    // linear segments having the same two vertices.  (To be sure, we should probably
-    // check curve directions in loops in some fashion...)
-    // Fifth, remove degenerate edge sets.
-    std::set<int> active_edges;
-    std::set<int>::iterator e_it;
-    array_to_set(&active_edges, data->edges, data->edges_cnt);
-    //subbrep_remove_linear_degenerate_edges(data, &active_edges);
-
-    // Sixth, check for any remaining linear segments.  If we have a real
-    // cone and not just a partial, all the linear segments should have
-    // washed out.
-    for (e_it = active_edges.begin(); e_it != active_edges.end(); e_it++) {
-        ON_Curve *cv = data->brep->m_E[*e_it].EdgeCurveOf()->Duplicate();
-        if (cv->IsLinear()) {
-	    delete cv;
+    // Fourth, check that the conic axis and the planar face(s) are perpendicular.
+    for (f_it = planar_surfaces.begin(); f_it != planar_surfaces.end(); f_it++) {
+	ON_Plane f_p;
+	data->brep->m_F[(*f_it)].SurfaceOf()->IsPlanar(&f_p);
+	if (f_p.Normal().IsParallelTo(cone.Axis(), 0.01) == 0) {
 	    return 0;
 	}
-	delete cv;
     }
 
-    // Seventh, make sure all the curved edges are on the same circle.
-    // TODO - this is only for a true cone object - a TGC, which can also
-    // be handled here, will have parallel circles
-    ON_Circle circle;
-    int circle_set= 0;
-    for (e_it = active_edges.begin(); e_it != active_edges.end(); e_it++) {
-        const ON_BrepEdge *edge = &(data->brep->m_E[*e_it]);
-        ON_Curve *ecurve = edge->EdgeCurveOf()->Duplicate();
-        ON_Arc arc;
-        if (ecurve->IsArc(NULL, &arc, 0.01)) {
-            ON_Circle circ(arc.StartPoint(), arc.MidPoint(), arc.EndPoint());
-            if (!circle_set) {
-                circle_set = 1;
-                circle = circ;
-            }
-            if (!NEAR_ZERO(circ.Center().DistanceTo(circle.Center()), 0.01)){
-                if (msgs) bu_vls_printf(msgs, "%*sfound extra circle in %s - no go\n", L3_OFFSET, " ", bu_vls_addr(data->key));
-		delete ecurve;
-                return 0;
-            }
-        }
-	delete ecurve;
-    }
 
     data->type = CONE;
 
     data->negative_shape = negative_cone(data, *conic_surfaces.begin(), cone_tol);
 
-
     ON_3dPoint center_bottom = cone.BasePoint();
     ON_3dPoint center_top = cone.ApexPoint();
+    ON_Line l(center_bottom, center_top);
+    ON_3dPoint c1, c2;
+    fastf_t radius_bottom, radius_top;
+    fastf_t hdelta1 = 0;
+    fastf_t hdelta2 = 0;
+    c1 = ON_LinePlaneIntersect(l, p1);
+    hdelta1 = center_bottom.DistanceTo(c1);
+    hdelta1 = (cone.height < 0) ? -1*hdelta1 : hdelta1;
+    if (fabs(hdelta1) > VUNITIZE_TOL) {
+	center_bottom = c1;
+    }
+    if (p2_set) {
+	c2 = ON_LinePlaneIntersect(l, p2);
+	if (c1.DistanceTo(center_bottom) < c2.DistanceTo(center_bottom)) {
+	    center_bottom = c1;
+	    center_top = c2;
+	} else {
+	    center_top = c1;
+	    center_bottom = c2;
+	}
+	hdelta1 = cone.BasePoint().DistanceTo(center_bottom);
+	hdelta1 = (cone.height < 0) ? -1*hdelta1 : hdelta1;
+	hdelta2 = cone.BasePoint().DistanceTo(center_top);
+	hdelta2 = (cone.height < 0) ? -1*hdelta2 : hdelta2;
+	radius_bottom = cone.CircleAt(cone.height - hdelta1).Radius();
+	radius_top = cone.CircleAt(cone.height - hdelta2).Radius();
+    } else {
+	center_top = cone.ApexPoint();
+	radius_bottom = cone.CircleAt(cone.height - hdelta1).Radius();
+	radius_top = 0.000001;
+    }
 
     // If we've got a negative cylinder, bump the center points out
     // very slightly
@@ -162,23 +157,22 @@ subbrep_is_cone(struct bu_vls *msgs, struct subbrep_object_data *data, fastf_t c
 
     ON_3dVector hvect(center_top - center_bottom);
 
-
     data->params->bool_op = (data->negative_shape == -1) ? '-' : 'u';
-    data->params->origin[0] = cone.BasePoint().x;
-    data->params->origin[1] = cone.BasePoint().y;
-    data->params->origin[2] = cone.BasePoint().z;
+    data->params->origin[0] = center_bottom.x;
+    data->params->origin[1] = center_bottom.y;
+    data->params->origin[2] = center_bottom.z;
     data->params->hv[0] = hvect.x;
     data->params->hv[1] = hvect.y;
     data->params->hv[2] = hvect.z;
-    data->params->radius = circle.Radius();
-    data->params->r2 = 0.000001;
+    data->params->radius = radius_bottom;
+    data->params->r2 = radius_top;
     data->params->height = hvect.Length();
 
     return 1;
 }
 
 int
-cone_csg(struct bu_vls *msgs, struct subbrep_object_data *data, fastf_t cone_tol)
+cone_csg(struct bu_vls *msgs, struct subbrep_island_data *data, fastf_t cone_tol)
 {
     std::set<int>::iterator f_it;
     std::set<int> planar_surfaces;
@@ -231,7 +225,18 @@ cone_csg(struct bu_vls *msgs, struct subbrep_object_data *data, fastf_t cone_tol
 	    ON_Arc arc;
 	    if (edge->EdgeCurveOf()->IsArc(NULL, &arc, cone_tol)) {
 		int assigned = 0;
-		ON_Circle circ(arc.StartPoint(), arc.MidPoint(), arc.EndPoint());
+		ON_3dPoint acenter(0,0,0);
+		fastf_t aradius;
+		if (arc.IsCircle()) {
+		    acenter = (arc.StartPoint() + arc.MidPoint())/2.0;
+		    aradius = arc.StartPoint().DistanceTo(arc.MidPoint()) * 0.5;
+		} else {
+		    ON_Circle lcirc(arc.StartPoint(), arc.MidPoint(), arc.EndPoint());
+		    acenter = lcirc.Center();
+		    aradius = lcirc.Radius();
+		}
+
+		ON_Circle circ(acenter,aradius);
 		//std::cout << "circ " << circ.Center().x << " " << circ.Center().y << " " << circ.Center().z << "\n";
 		if (!arc1_circle_set) {
 		    arc1_circle_set = 1;
@@ -269,7 +274,7 @@ cone_csg(struct bu_vls *msgs, struct subbrep_object_data *data, fastf_t cone_tol
 	data->type = CONE;
 	data->obj_cnt = data->parent->obj_cnt;
 	(*data->obj_cnt)++;
-	bu_vls_sprintf(data->name_root, "%s_%d_cone", bu_vls_addr(data->parent->name_root), *(data->obj_cnt));
+	bu_vls_sprintf(data->id, "%s_%d_cone", bu_vls_addr(data->parent->id), *(data->obj_cnt));
 
 
 	ON_3dVector hvect(cone.ApexPoint() - cone.BasePoint());
@@ -313,7 +318,7 @@ cone_csg(struct bu_vls *msgs, struct subbrep_object_data *data, fastf_t cone_tol
 	    data->type = CONE;
 	    data->obj_cnt = data->parent->obj_cnt;
 	    (*data->obj_cnt)++;
-	    bu_vls_sprintf(data->name_root, "%s_%d_cone", bu_vls_addr(data->parent->name_root), *(data->obj_cnt));
+	    bu_vls_sprintf(data->id, "%s_%d_cone", bu_vls_addr(data->parent->id), *(data->obj_cnt));
 
 	    data->negative_shape = negative_cone(data, *conic_surfaces.begin(), cone_tol);
 
@@ -335,20 +340,20 @@ cone_csg(struct bu_vls *msgs, struct subbrep_object_data *data, fastf_t cone_tol
 	    data->type = COMB;
 	    data->obj_cnt = data->parent->obj_cnt;
 	    (*data->obj_cnt)++;
-	    bu_vls_sprintf(data->name_root, "%s_%d_comb", bu_vls_addr(data->parent->name_root), *(data->obj_cnt));
+	    bu_vls_sprintf(data->id, "%s_%d_comb", bu_vls_addr(data->parent->id), *(data->obj_cnt));
 
 	    data->negative_shape = negative_cone(data, *conic_surfaces.begin(), cone_tol);
 	    data->params->bool_op = (data->negative_shape == -1) ? '-' : 'u';
 
-	    struct subbrep_object_data *cone_obj;
-	    BU_GET(cone_obj, struct subbrep_object_data);
+	    struct subbrep_island_data *cone_obj;
+	    BU_GET(cone_obj, struct subbrep_island_data);
 	    subbrep_object_init(cone_obj, data->brep);
-	    std::string key = face_set_key(conic_surfaces);
+	    std::string key = set_key(conic_surfaces);
 	    bu_vls_sprintf(cone_obj->key, "%s", key.c_str());
 	    cone_obj->obj_cnt = data->parent->obj_cnt;
 	    (*cone_obj->obj_cnt)++;
 	    //bu_log("obj_cnt: %d\n", *(cone_obj->obj_cnt));
-	    bu_vls_sprintf(cone_obj->name_root, "%s_%d_cone", bu_vls_addr(data->parent->name_root), *(cone_obj->obj_cnt));
+	    bu_vls_sprintf(cone_obj->id, "%s_%d_cone", bu_vls_addr(data->parent->id), *(cone_obj->obj_cnt));
 	    cone_obj->type = CONE;
 
 	    // cone - positive object in this sub-comb
@@ -385,13 +390,13 @@ cone_csg(struct bu_vls *msgs, struct subbrep_object_data *data, fastf_t cone_tol
             //                                          2
             //
 
-            struct subbrep_object_data *arb_obj;
-            BU_GET(arb_obj, struct subbrep_object_data);
+            struct subbrep_island_data *arb_obj;
+            BU_GET(arb_obj, struct subbrep_island_data);
             subbrep_object_init(arb_obj, data->brep);
             bu_vls_sprintf(arb_obj->key, "%s_arb8", key.c_str());
 	    arb_obj->obj_cnt = data->parent->obj_cnt;
 	    (*arb_obj->obj_cnt)++;
-	    bu_vls_sprintf(arb_obj->name_root, "%s_%d_arb8", bu_vls_addr(data->parent->name_root), *(arb_obj->obj_cnt));
+	    bu_vls_sprintf(arb_obj->id, "%s_%d_arb8", bu_vls_addr(data->parent->id), *(arb_obj->obj_cnt));
             arb_obj->type = ARB8;
 
 

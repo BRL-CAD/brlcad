@@ -1793,6 +1793,43 @@ rt_part_surf_area(fastf_t *area, const struct rt_db_internal *ip)
 }
 
 
+void
+rt_part_centroid(point_t *cent, const struct rt_db_internal *ip)
+{
+    fastf_t vrad, hrad, mag_h, nm, dm, c_frst, cv_hem, ch_hem;
+    vect_t hvec, hvec_n;
+    point_t vpt, fcent, hhcent, cvcent;
+    struct rt_part_internal *pip = (struct rt_part_internal *)ip->idb_ptr;
+    int idx;
+    RT_PART_CK_MAGIC(pip);
+
+    vrad = pip->part_vrad;
+    hrad = pip->part_hrad;
+    VSET(hvec,pip->part_H[0], pip->part_H[1], pip->part_H[2]);
+    VSET(hvec_n,pip->part_H[0], pip->part_H[1], pip->part_H[2]);
+    VUNITIZE(hvec_n);
+    VSET(vpt,pip->part_V[0], pip->part_V[1], pip->part_V[2]);
+    mag_h = MAGNITUDE(hvec);
+
+    /* conical frustum centroid, see http://mathworld.wolfram.com/ConicalFrustum.html */
+    nm = mag_h * (hrad * hrad + 2.0 * hrad * vrad + 3.0 * vrad * vrad);
+    dm = 4.0 * (hrad * hrad + hrad * vrad + vrad * vrad);
+    c_frst = nm / dm;
+
+    /* hemisphere centroids, see http://mathworld.wolfram.com/Hemisphere.html */
+    cv_hem = -3.0 * vrad / 8.0;
+    ch_hem =  3.0 * hrad / 8.0;
+
+    /* find frustum and hemisphere centroids separately, weight points */
+    for (idx=0; idx < 3; idx++) {
+        fcent[idx]  = (hvec_n[idx] * c_frst + vpt[idx]) / 3.0;
+        hhcent[idx] = (hvec_n[idx] * ch_hem + vpt[idx]) / 3.0;
+        cvcent[idx] = (hvec_n[idx] * cv_hem + vpt[idx] + hvec[idx]) / 3.0;
+    }
+
+    VADD3(*cent, fcent, hhcent, cvcent);
+}
+
 /*
  * Local Variables:
  * mode: C
