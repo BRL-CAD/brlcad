@@ -120,7 +120,7 @@ endforeach(VAR ${VARS})
 file(APPEND ${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/CMakeOutput.log "${CMAKE_COMMAND} ${CMAKE_SOURCE_DIR}${CMAKE_ARGS}\n")
 
 # Minimum required version of CMake
-cmake_minimum_required(VERSION 2.8.4)
+cmake_minimum_required(VERSION 2.8.8)
 if(COMMAND CMAKE_POLICY)
   if ("${CMAKE_VERSION}" VERSION_GREATER 2.99)
     CMAKE_POLICY(SET CMP0026 OLD)
@@ -1119,6 +1119,10 @@ if(BRLCAD_ENABLE_OPENCL)
   endif(NOT OPENCL_FOUND)
 endif(BRLCAD_ENABLE_OPENCL)
 
+# Enable features requiring Screened Poisson Surface Reconstruction
+option(BRLCAD_ENABLE_SPR "Enable features requiring Screened Poisson Surface Reconstruction" OFF)
+mark_as_advanced(BRLCAD_ENABLE_SPR)
+
 #----------------------------------------------------------------------
 # The following are fine-grained options for enabling/disabling compiler
 # and source code definition settings.  Typically these are set to
@@ -1374,6 +1378,9 @@ mark_as_advanced(BRLCAD_EXTRADOCS_HTML)
 
 CMAKE_DEPENDENT_OPTION(BRLCAD_EXTRADOCS_PHP "Build MAN page output from DocBook documentation" OFF "BRLCAD_EXTRADOCS" OFF)
 mark_as_advanced(BRLCAD_EXTRADOCS_PHP)
+
+CMAKE_DEPENDENT_OPTION(BRLCAD_EXTRADOCS_PPT "Build MAN page output from DocBook documentation" ON "BRLCAD_EXTRADOCS" OFF)
+mark_as_advanced(BRLCAD_EXTRADOCS_PPT)
 
 # Normally, we'll turn on man page output by default, but there is
 # no point in doing man page output for a Visual Studio build - the
@@ -1938,6 +1945,9 @@ if(HAVE_EMMINTRIN_H)
   endif(HAVE_EMMINTRIN)
 endif(HAVE_EMMINTRIN_H)
 
+if(BRLCAD_ENABLE_SPR)
+  CONFIG_H_APPEND(BRLCAD "#define ENABLE_SPR 1\n")
+endif(BRLCAD_ENABLE_SPR)
 
 # *******************************************************************
 if(NOT EXISTS ${CMAKE_BINARY_DIR}/CMakeCache.txt.prev)
@@ -2121,20 +2131,35 @@ if("${HAVE_PROGRAM_INVOCATION_NAME}" MATCHES "^${HAVE_PROGRAM_INVOCATION_NAME}$"
   endif(HAVE_PROGRAM_INVOCATION_NAME)
 endif("${HAVE_PROGRAM_INVOCATION_NAME}" MATCHES "^${HAVE_PROGRAM_INVOCATION_NAME}$")
 
-# test for lrint
-set(lrint_test "#include <math.h>\nint main() {return lrint(3.14);}")
-# this second test is mainly a test for BRLCAD_FUNCTION_EXISTS - can go away
-# once behavior of the macro is solid
-set(lrint_test_negative "#include <math.h>\nint main() {return lrint(-1);}")
+# test for lrint existence
+set(lrint_test "long int lrint(double); int main() {return lrint(3.14);}")
+# this second test is mainly a test for BRLCAD_FUNCTION_EXISTS - can
+# go away once behavior of the macro is solid
+set(lrint_test_negative "long int lrint(double); int main() {return lrint(-1);}")
 BRLCAD_FUNCTION_EXISTS(lrint HAVE_LRINT
   COMPILE_TEST_SRCS lrint_test lrint_test_negative
   REQUIRED_LIBS ${M_LIBRARY})
-if(NOT HAVE_LRINT AND "${HAVE_LRINT_WORKING_MACRO}" MATCHES "^${HAVE_LRINT_WORKING_MACRO}$")
-    check_c_source_compiles("#include \"${CMAKE_CURRENT_SOURCE_DIR}/misc/CMake/test_srcs/lrint_macro.h\"\n#include <math.h>\nint main() {return lrint(3.14);}" HAVE_WORKING_LRINT_MACRO)
-    if(HAVE_WORKING_LRINT_MACRO)
-      CONFIG_H_APPEND(BRLCAD "#cmakedefine HAVE_WORKING_LRINT_MACRO 1\n")
-    endif(HAVE_WORKING_LRINT_MACRO)
-endif(NOT HAVE_LRINT AND "${HAVE_LRINT_WORKING_MACRO}" MATCHES "^${HAVE_LRINT_WORKING_MACRO}$")
+if(NOT HAVE_LRINT AND "${HAVE_WORKING_LRINT_MACRO}" MATCHES "^${HAVE_WORKING_LRINT_MACRO}$")
+  set(CMAKE_REQUIRED_LIBRARIES_BAK ${CMAKE_REQUIRED_LIBRARIES})
+  set(CMAKE_REQUIRED_LIBRARIES ${M_LIBRARY})
+  # NOTE: this must match the lrint #define in include/common.h
+  check_c_source_compiles("#define lrint(_x) (((_x) < 0.0) ? ceil((_x)-0.5) : floor((_x)+0.5))\nint main() {return lrint(3.14);}" HAVE_WORKING_LRINT_MACRO)
+  set(CMAKE_REQUIRED_LIBRARIES ${CMAKE_REQUIRED_LIBRARIES_BAK})
+  if(HAVE_WORKING_LRINT_MACRO)
+    CONFIG_H_APPEND(BRLCAD "#cmakedefine HAVE_WORKING_LRINT_MACRO 1\n")
+  endif(HAVE_WORKING_LRINT_MACRO)
+endif(NOT HAVE_LRINT AND "${HAVE_WORKING_LRINT_MACRO}" MATCHES "^${HAVE_WORKING_LRINT_MACRO}$")
+
+# test for lrint() declaration
+if(HAVE_LRINT AND "${HAVE_DECL_LRINT}" MATCHES "^${HAVE_DECL_LRINT}$")
+  set(CMAKE_REQUIRED_LIBRARIES_BAK ${CMAKE_REQUIRED_LIBRARIES})
+  set(CMAKE_REQUIRED_LIBRARIES ${M_LIBRARY})
+  check_c_source_compiles("#include <math.h>\nint main() { (void)lrint(0); return 0; }" HAVE_DECL_LRINT)
+  set(CMAKE_REQUIRED_LIBRARIES ${CMAKE_REQUIRED_LIBRARIES_BAK})
+  if(HAVE_DECL_LRINT)
+    CONFIG_H_APPEND(BRLCAD "#cmakedefine HAVE_DECL_LRINT 1\n")
+  endif(HAVE_DECL_LRINT)
+endif(HAVE_LRINT AND "${HAVE_DECL_LRINT}" MATCHES "^${HAVE_DECL_LRINT}$")
 
 # test for tgamma
 set(tgamma_test "#include <math.h>\nint main() {double tga = tgamma(3.14); return 0;}")
@@ -2186,8 +2211,18 @@ endif()
 # just run the test and it will be handled by configure_file later.
 include(CheckSymbolExists)
 if(WIN32)
+
+  # TODO: the windows build doesn't actually persist WX/Werror to the
+  # build targets, but there are lots of warnings that still need
+  # cleaning up.  this will do that:
+  #
   # consider all warnings as errors (MSVC)
-  set(CMAKE_REQUIRED_FLAGS ${CMAKE_REQUIRED_FLAGS} /WX)
+  # CHECK_C_FLAG(WX)
+  # CHECK_CXX_FLAG(WX)
+  #
+  # this doesn't actually do anything (or is maybe only used for a few
+  # tests that follow:
+ set(CMAKE_REQUIRED_FLAGS ${CMAKE_REQUIRED_FLAGS} /WX)
 
   CHECK_SYMBOL_EXISTS(hypot "math.h" HAVE_HYPOT)
   #If we don't have it, need to define it as _hypot in config_win

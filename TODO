@@ -56,6 +56,9 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
 
+* make the idents command not list subtracted objects by default,
+  optionally list everything
+
 * start making use of the CMakePushCheckState macros - we are doing
   this manually in several places
 

@@ -2813,10 +2813,10 @@ f_opendb(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *a
     /* This creates a "db" command object */
 
     /* Beware, returns a "token", not TCL_OK. */
-    (void)Tcl_CreateCommand(wdbp->wdb_interp, MGED_DB_NAME, (Tcl_CmdProc *)wdb_cmd, (ClientData)wdbp, wdb_deleteProc);
+    (void)Tcl_CreateCommand((Tcl_Interp *)wdbp->wdb_interp, MGED_DB_NAME, (Tcl_CmdProc *)wdb_cmd, (ClientData)wdbp, wdb_deleteProc);
 
     /* Return new function name as result */
-    Tcl_AppendResult(wdbp->wdb_interp, MGED_DB_NAME, (char *)NULL);
+    Tcl_AppendResult((Tcl_Interp *)wdbp->wdb_interp, MGED_DB_NAME, (char *)NULL);
 
     /* This creates the ".inmem" in-memory geometry container and sets
      * up the GUI.

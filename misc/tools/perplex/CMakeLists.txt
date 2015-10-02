@@ -71,17 +71,18 @@ if(NOT COMMAND RE2C_TARGET)
 endif(NOT COMMAND RE2C_TARGET)
 
 RE2C_TARGET(PERPLEX scanner.re ${CMAKE_CURRENT_BINARY_DIR}/scanner.c COMPILE_FLAGS "-c")
-LEMON_TARGET(PERPLEX parser.y parser.c parser.h)
+LEMON_TARGET(PERPLEX parser.y)
 ADD_RE2C_LEMON_DEPENDENCY(PERPLEX PERPLEX)
 
 set(perplex_sources
-  ${LEMON_PERPLEX_OUTPUT_SOURCE}
+  ${LEMON_PERPLEX_SRC}
   ${RE2C_PERPLEX_OUTPUTS}
   mbo_getopt.cpp
   perplex.cpp
   )
 
 add_executable(perplex ${perplex_sources})
+set_property(TARGET perplex APPEND PROPERTY INCLUDE_DIRECTORIES "${LEMON_PERPLEX_INCLUDE_DIR}")
 
 # Need to link against stl library with some compilers.
 target_link_libraries(perplex "${STDCXX_LIBRARIES}")

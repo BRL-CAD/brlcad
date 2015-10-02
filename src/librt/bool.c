@@ -58,8 +58,8 @@
  * partition, which probably signals going through some solid an odd
  * number of times, or hitting an NMG wire edge or NMG lone vertex.
  */
-void
-rt_weave0seg(struct seg *segp, struct partition *PartHdp, struct application *ap)
+HIDDEN void
+bool_weave0seg(struct seg *segp, struct partition *PartHdp, struct application *ap)
 {
     register struct partition *pp;
     struct resource *res = ap->a_resource;
@@ -75,7 +75,7 @@ rt_weave0seg(struct seg *segp, struct partition *PartHdp, struct application *ap
 
     if (RT_G_DEBUG&DEBUG_PARTITION) {
 	bu_log(
-	    "rt_weave0seg:  Zero thickness seg: %s (%.18e, %.18e) %d, %d\n",
+	    "bool_weave0seg:  Zero thickness seg: %s (%.18e, %.18e) %d, %d\n",
 	    segp->seg_stp->st_name,
 	    segp->seg_in.hit_dist,
 	    segp->seg_out.hit_dist,
@@ -83,7 +83,7 @@ rt_weave0seg(struct seg *segp, struct partition *PartHdp, struct application *ap
 	    segp->seg_out.hit_surfno);
     }
 
-    if (PartHdp->pt_forw == PartHdp) bu_bomb("rt_weave0seg() with empty partition list\n");
+    if (PartHdp->pt_forw == PartHdp) bu_bomb("bool_weave0seg() with empty partition list\n");
 
     /* See if this segment ends before start of first partition */
     if (segp->seg_out.hit_dist < PartHdp->pt_forw->pt_inhit->hit_dist) {
@@ -137,7 +137,7 @@ rt_weave0seg(struct seg *segp, struct partition *PartHdp, struct application *ap
 	    return;
 	}
     }
-    bu_bomb("rt_weave0seg() fell out of partition loop?\n");
+    bu_bomb("bool_weave0seg() fell out of partition loop?\n");
 }
 
 
@@ -232,6 +232,8 @@ rt_boolweave(struct seg *out_hd, struct seg *in_hd, struct partition *PartHdp, s
 	    continue;
 	}
 
+	diff = segp->seg_in.hit_dist - segp->seg_out.hit_dist;
+
 	/*
 	 * Weave this segment into the existing partitions, creating
 	 * new partitions as necessary.
@@ -246,32 +248,25 @@ rt_boolweave(struct seg *out_hd, struct seg *in_hd, struct partition *PartHdp, s
 	    pp->pt_outhit = &segp->seg_out;
 	    APPEND_PT(pp, PartHdp);
 	    if (RT_G_DEBUG&DEBUG_PARTITION) bu_log("No partitions yet, segment forms first partition\n");
-	    goto done_weave;
-	}
-
-	if (ap->a_no_booleans) {
+	} else if (ap->a_no_booleans) {
 	    lastseg = segp;
 	    lasthit = &segp->seg_in;
 	    lastflip = 0;
 	    /* Just sort in ascending in-dist order */
 	    for (pp=PartHdp->pt_forw; pp != PartHdp; pp=pp->pt_forw) {
 		if (lasthit->hit_dist < pp->pt_inhit->hit_dist) {
-		    if (RT_G_DEBUG&DEBUG_PARTITION) {
-			bu_log("Insert nobool seg before next pt\n");
-		    }
-		    GET_PT_INIT(rtip, newpp, res);
-		    bu_ptbl_ins_unique(&newpp->pt_seglist, (long *)segp);
-		    newpp->pt_inseg = segp;
-		    newpp->pt_inhit = &segp->seg_in;
-		    newpp->pt_outseg = segp;
-		    newpp->pt_outhit = &segp->seg_out;
-		    INSERT_PT(newpp, pp);
-		    goto done_weave;
+		    break;
 		}
 	    }
+
 	    if (RT_G_DEBUG&DEBUG_PARTITION) {
-		bu_log("Append nobool seg at end of list\n");
+		if (pp != PartHdp) {
+		    bu_log("Insert nobool seg before next pt\n");
+		} else {
+		    bu_log("Append nobool seg at end of list\n");
+		}
 	    }
+
 	    GET_PT_INIT(rtip, newpp, res);
 	    bu_ptbl_ins_unique(&newpp->pt_seglist, (long *)segp);
 	    newpp->pt_inseg = segp;
@@ -279,25 +274,18 @@ rt_boolweave(struct seg *out_hd, struct seg *in_hd, struct partition *PartHdp, s
 	    newpp->pt_outseg = segp;
 	    newpp->pt_outhit = &segp->seg_out;
 	    INSERT_PT(newpp, PartHdp);
-	    goto done_weave;
-	}
-
-	/* Check for zero-thickness segment, within tol */
-	diff = segp->seg_in.hit_dist - segp->seg_out.hit_dist;
-	if (NEAR_ZERO(diff, tol_dist)) {
-	    rt_weave0seg(segp, PartHdp, ap);
-	    goto done_weave;
-	}
-
-	if (segp->seg_in.hit_dist >= PartHdp->pt_back->pt_outhit->hit_dist) {
+	} else if (NEAR_ZERO(diff, tol_dist)) {
+	    /* Check for zero-thickness segment, within tol */
+	    bool_weave0seg(segp, PartHdp, ap);
+	} else if (segp->seg_in.hit_dist >= PartHdp->pt_back->pt_outhit->hit_dist) {
 	    /*
 	     * Segment starts exactly at last partition's end, or
 	     * beyond last partitions end.  Make new partition.
 	     */
 	    if (RT_G_DEBUG&DEBUG_PARTITION) {
 		bu_log("seg starts beyond last partition end. (%g, %g) Appending new partition\n",
-		       PartHdp->pt_back->pt_inhit->hit_dist,
-		       PartHdp->pt_back->pt_outhit->hit_dist);
+			PartHdp->pt_back->pt_inhit->hit_dist,
+			PartHdp->pt_back->pt_outhit->hit_dist);
 	    }
 	    GET_PT_INIT(rtip, pp, res);
 	    bu_ptbl_ins_unique(&pp->pt_seglist, (long *)segp);
@@ -306,127 +294,194 @@ rt_boolweave(struct seg *out_hd, struct seg *in_hd, struct partition *PartHdp, s
 	    pp->pt_outseg = segp;
 	    pp->pt_outhit = &segp->seg_out;
 	    APPEND_PT(pp, PartHdp->pt_back);
-	    goto done_weave;
-	}
-
-	/* Loop through current partition list weaving the current
-	 * input segment into the list. The following three variables
-	 * keep track of the current starting point of the input
-	 * segment. The starting point of the segment moves to higher
-	 * hit_dist values (as it is woven in) until it is entirely
-	 * consumed.
-	 */
-	lastseg = segp;
-	lasthit = &segp->seg_in;
-	lastflip = 0;
-	for (pp=PartHdp->pt_forw; pp != PartHdp; pp=pp->pt_forw) {
-
-	    if (RT_G_DEBUG&DEBUG_PARTITION) {
-		bu_log("At start of loop:\n");
-		bu_log("	remaining input segment: (%.12e - %.12e)\n",
-		       lasthit->hit_dist, segp->seg_out.hit_dist);
-		bu_log("	current partition: (%.12e - %.12e)\n",
-		       pp->pt_inhit->hit_dist, pp->pt_outhit->hit_dist);
-		rt_pr_partitions(rtip, PartHdp, "At start of loop");
-	    }
-
-	    diff_se = lasthit->hit_dist - pp->pt_outhit->hit_dist;
-	    if (diff_se > tol_dist) {
-		/* Seg starts beyond the END of the
-		 * current partition.
-		 *	PPPP
-		 *	        SSSS
-		 * Advance to next partition.
-		 */
-		if (RT_G_DEBUG&DEBUG_PARTITION) {
-		    bu_log("seg start beyond partition end, skipping.  (%g, %g)\n",
-			   pp->pt_inhit->hit_dist,
-			   pp->pt_outhit->hit_dist);
-		}
-		continue;
-	    }
-	    if (RT_G_DEBUG&DEBUG_PARTITION) rt_pr_pt(rtip, pp);
-	    diff = lasthit->hit_dist - pp->pt_inhit->hit_dist;
-	    if (diff_se > -(tol_dist) && diff > tol_dist) {
-		/*
-		 * Seg starts almost "precisely" at the
-		 * end of the current partition.
-		 *	PPPP
-		 *	    SSSS
-		 * FUSE an exact match of the endpoints,
-		 * advance to next partition.
-		 */
-		lasthit->hit_dist = pp->pt_outhit->hit_dist;
-		if (RT_G_DEBUG&DEBUG_PARTITION) {
-		    bu_log("seg start fused to partition end, diff=%g\n", diff);
-		}
-		continue;
-	    }
-
-	    /*
-	     * diff < ~~0
-	     * Seg starts before current partition ends
-	     *	PPPPPPPPPPP
-	     *	  SSSS...
+	} else {
+	    /* Loop through current partition list weaving the current
+	     * input segment into the list. The following three variables
+	     * keep track of the current starting point of the input
+	     * segment. The starting point of the segment moves to higher
+	     * hit_dist values (as it is woven in) until it is entirely
+	     * consumed.
 	     */
-	    if (diff > tol_dist) {
-		/*
-		 * lasthit->hit_dist > pp->pt_inhit->hit_dist
-		 * pp->pt_inhit->hit_dist < lasthit->hit_dist
-		 *
-		 * Segment starts after partition starts,
-		 * but before the end of the partition.
-		 * Note:  pt_seglist will be updated in equal_start.
-		 *	PPPPPPPPPPPP
-		 *	     SSSS...
-		 *	newpp|pp
-		 */
-		RT_DUP_PT(rtip, newpp, pp, res);
-		/* new partition is the span before seg joins partition */
-		pp->pt_inseg = segp;
-		pp->pt_inhit = &segp->seg_in;
-		pp->pt_inflip = 0;
-		newpp->pt_outseg = segp;
-		newpp->pt_outhit = &segp->seg_in;
-		newpp->pt_outflip = 1;
-		INSERT_PT(newpp, pp);
+	    lastseg = segp;
+	    lasthit = &segp->seg_in;
+	    lastflip = 0;
+	    for (pp=PartHdp->pt_forw; pp != PartHdp; pp=pp->pt_forw) {
+
 		if (RT_G_DEBUG&DEBUG_PARTITION) {
-		    bu_log("seg starts within p. Split p at seg start, advance. (diff = %g)\n", diff);
-		    bu_log("newpp starts at %.12e, pp starts at %.12e\n",
-			   newpp->pt_inhit->hit_dist,
-			   pp->pt_inhit->hit_dist);
-		    bu_log("newpp = %p, pp = %p\n", (void *)newpp, (void *)pp);
+		    bu_log("At start of loop:\n");
+		    bu_log("	remaining input segment: (%.12e - %.12e)\n",
+			    lasthit->hit_dist, segp->seg_out.hit_dist);
+		    bu_log("	current partition: (%.12e - %.12e)\n",
+			    pp->pt_inhit->hit_dist, pp->pt_outhit->hit_dist);
+		    rt_pr_partitions(rtip, PartHdp, "At start of loop");
 		}
-		goto equal_start;
-	    }
-	    if (diff > -(tol_dist)) {
-		/*
-		 * Make a subtle but important distinction here.  Even
-		 * though the two distances are "equal" within
-		 * tolerance, they are not exactly the same.  If the
-		 * new segment is slightly closer to the ray origin,
-		 * then use its IN point.
-		 *
-		 * This is an attempt to reduce the deflected normals
-		 * sometimes seen along the edges of e.g. a cylinder
-		 * unioned with an ARB8, where the ray hits the top of
-		 * the cylinder and the *side* face of the ARB8 rather
-		 * than the top face of the ARB8.
-		 */
-		diff = segp->seg_in.hit_dist - pp->pt_inhit->hit_dist;
-		if (!pp->pt_back ||
-		    pp->pt_back == PartHdp ||
-		    pp->pt_back->pt_outhit->hit_dist <=
-		    segp->seg_in.hit_dist) {
-		    if (NEAR_ZERO(diff, tol_dist) &&
-			diff < 0) {
-			if (RT_G_DEBUG&DEBUG_PARTITION) bu_log("changing partition start point to segment start point\n");
-			pp->pt_inseg = segp;
-			pp->pt_inhit = &segp->seg_in;
-			pp->pt_inflip = 0;
+
+		diff_se = lasthit->hit_dist - pp->pt_outhit->hit_dist;
+		if (diff_se > tol_dist) {
+		    /* Seg starts beyond the END of the
+		     * current partition.
+		     *	PPPP
+		     *	        SSSS
+		     * Advance to next partition.
+		     */
+		    if (RT_G_DEBUG&DEBUG_PARTITION) {
+			bu_log("seg start beyond partition end, skipping.  (%g, %g)\n",
+				pp->pt_inhit->hit_dist,
+				pp->pt_outhit->hit_dist);
 		    }
+		    continue;
 		}
-	    equal_start:
+		if (RT_G_DEBUG&DEBUG_PARTITION) rt_pr_pt(rtip, pp);
+		diff = lasthit->hit_dist - pp->pt_inhit->hit_dist;
+		if (diff_se > -(tol_dist) && diff > tol_dist) {
+		    /*
+		     * Seg starts almost "precisely" at the
+		     * end of the current partition.
+		     *	PPPP
+		     *	    SSSS
+		     * FUSE an exact match of the endpoints,
+		     * advance to next partition.
+		     */
+		    lasthit->hit_dist = pp->pt_outhit->hit_dist;
+		    if (RT_G_DEBUG&DEBUG_PARTITION) {
+			bu_log("seg start fused to partition end, diff=%g\n", diff);
+		    }
+		    continue;
+		}
+
+		/*
+		 * diff < ~~0
+		 * Seg starts before current partition ends
+		 *	PPPPPPPPPPP
+		 *	  SSSS...
+		 */
+		if (diff >= tol_dist) {
+		    /*
+		     * lasthit->hit_dist > pp->pt_inhit->hit_dist
+		     * pp->pt_inhit->hit_dist < lasthit->hit_dist
+		     *
+		     * Segment starts after partition starts,
+		     * but before the end of the partition.
+		     * Note:  pt_seglist will be updated in equal_start.
+		     *	PPPPPPPPPPPP
+		     *	     SSSS...
+		     *	newpp|pp
+		     */
+		    RT_DUP_PT(rtip, newpp, pp, res);
+		    /* new partition is the span before seg joins partition */
+		    pp->pt_inseg = segp;
+		    pp->pt_inhit = &segp->seg_in;
+		    pp->pt_inflip = 0;
+		    newpp->pt_outseg = segp;
+		    newpp->pt_outhit = &segp->seg_in;
+		    newpp->pt_outflip = 1;
+		    INSERT_PT(newpp, pp);
+		    if (RT_G_DEBUG&DEBUG_PARTITION) {
+			bu_log("seg starts within p. Split p at seg start, advance. (diff = %g)\n", diff);
+			bu_log("newpp starts at %.12e, pp starts at %.12e\n",
+				newpp->pt_inhit->hit_dist,
+				pp->pt_inhit->hit_dist);
+			bu_log("newpp = %p, pp = %p\n", (void *)newpp, (void *)pp);
+		    }
+		} else if (diff > -(tol_dist)) {
+		    /*
+		     * Make a subtle but important distinction here.  Even
+		     * though the two distances are "equal" within
+		     * tolerance, they are not exactly the same.  If the
+		     * new segment is slightly closer to the ray origin,
+		     * then use its IN point.
+		     *
+		     * This is an attempt to reduce the deflected normals
+		     * sometimes seen along the edges of e.g. a cylinder
+		     * unioned with an ARB8, where the ray hits the top of
+		     * the cylinder and the *side* face of the ARB8 rather
+		     * than the top face of the ARB8.
+		     */
+		    diff = segp->seg_in.hit_dist - pp->pt_inhit->hit_dist;
+		    if (!pp->pt_back ||
+			    pp->pt_back == PartHdp ||
+			    pp->pt_back->pt_outhit->hit_dist <=
+			    segp->seg_in.hit_dist) {
+			if (NEAR_ZERO(diff, tol_dist) &&
+				diff < 0) {
+			    if (RT_G_DEBUG&DEBUG_PARTITION) bu_log("changing partition start point to segment start point\n");
+			    pp->pt_inseg = segp;
+			    pp->pt_inhit = &segp->seg_in;
+			    pp->pt_inflip = 0;
+			}
+		    }
+		} else {
+		    /*
+		     * diff < ~~0
+		     *
+		     * Seg starts before current partition starts,
+		     * but after the previous partition ends.
+		     *	SSSSSSSS...
+		     *	     PPPPP...
+		     *	newpp|pp
+		     */
+		    GET_PT_INIT(rtip, newpp, res);
+		    bu_ptbl_ins_unique(&newpp->pt_seglist, (long *)segp);
+		    newpp->pt_inseg = lastseg;
+		    newpp->pt_inhit = lasthit;
+		    newpp->pt_inflip = lastflip;
+		    diff = segp->seg_out.hit_dist - pp->pt_inhit->hit_dist;
+		    if (diff < -(tol_dist)) {
+			/*
+			 * diff < ~0
+			 * Seg starts and ends before current
+			 * partition, but after previous
+			 * partition ends (diff < 0).
+			 *		SSSS
+			 *	pppp		PPPPP...
+			 *		newpp	pp
+			 */
+			newpp->pt_outseg = segp;
+			newpp->pt_outhit = &segp->seg_out;
+			newpp->pt_outflip = 0;
+			INSERT_PT(newpp, pp);
+			if (RT_G_DEBUG&DEBUG_PARTITION) bu_log("seg between 2 partitions\n");
+			break;
+		    } else if (diff < tol_dist) {
+			/*
+			 * diff ~= 0
+			 *
+			 * Seg starts before current
+			 * partition starts, and ends at or
+			 * near the start of the partition.
+			 * (diff == 0).  FUSE the points.
+			 *	SSSSSS
+			 *	     PPPPP
+			 *	newpp|pp
+			 * NOTE: only copy hit point, not
+			 * normals or norm private stuff.
+			 */
+			newpp->pt_outseg = segp;
+			newpp->pt_outhit = &segp->seg_out;
+			newpp->pt_outhit->hit_dist = pp->pt_inhit->hit_dist;
+			newpp->pt_outflip = 0;
+			INSERT_PT(newpp, pp);
+			if (RT_G_DEBUG&DEBUG_PARTITION) bu_log("seg ends at partition start, fuse\n");
+			break;
+		    }
+		    /*
+		     * Seg starts before current partition
+		     * starts, and ends after the start of the
+		     * partition.  (diff > 0).
+		     *	SSSSSSSSSS
+		     *	      PPPPPPP
+		     *	newpp| pp | ...
+		     */
+		    newpp->pt_outseg = pp->pt_inseg;
+		    newpp->pt_outhit = pp->pt_inhit;
+		    newpp->pt_outflip = 1;
+		    lastseg = pp->pt_inseg;
+		    lasthit = pp->pt_inhit;
+		    lastflip = newpp->pt_outflip;
+		    INSERT_PT(newpp, pp);
+		    if (RT_G_DEBUG&DEBUG_PARTITION) bu_log("insert seg before p start, ends after p ends.  Making new partition for initial portion.\n");
+		}
+
 		if (RT_G_DEBUG&DEBUG_PARTITION) bu_log("equal_start\n");
 		/*
 		 * Segment and partition start at (roughly) the same
@@ -461,7 +516,7 @@ rt_boolweave(struct seg *out_hd, struct seg *in_hd, struct partition *PartHdp, s
 		     */
 		    bu_ptbl_ins_unique(&pp->pt_seglist, (long *)segp);
 		    if (RT_G_DEBUG&DEBUG_PARTITION) bu_log("same start&end\n");
-		    goto done_weave;
+		    break;
 		} else {
 		    /*
 		     * diff < ~0
@@ -485,106 +540,34 @@ rt_boolweave(struct seg *out_hd, struct seg *in_hd, struct partition *PartHdp, s
 		    if (RT_G_DEBUG&DEBUG_PARTITION) {
 			bu_log("start together, seg shorter than partition\n");
 			bu_log("newpp starts at %.12e, pp starts at %.12e\n",
-			       newpp->pt_inhit->hit_dist,
-			       pp->pt_inhit->hit_dist);
+				newpp->pt_inhit->hit_dist,
+				pp->pt_inhit->hit_dist);
 			bu_log("newpp = %p, pp = %p\n", (void *)newpp, (void *)pp);
 		    }
-		    goto done_weave;
+		    break;
 		}
 		/* NOTREACHED */
-	    } else {
-		/*
-		 * diff < ~~0
-		 *
-		 * Seg starts before current partition starts,
-		 * but after the previous partition ends.
-		 *	SSSSSSSS...
-		 *	     PPPPP...
-		 *	newpp|pp
-		 */
+	    }
+
+	    /*
+	     * Segment has portion which extends beyond the end
+	     * of the last partition.  Tack on the remainder.
+	     *  	PPPPP
+	     *  	     SSSSS
+	     */
+	    if (pp == PartHdp) {
+		if (RT_G_DEBUG&DEBUG_PARTITION) bu_log("seg extends beyond partition end\n");
 		GET_PT_INIT(rtip, newpp, res);
 		bu_ptbl_ins_unique(&newpp->pt_seglist, (long *)segp);
 		newpp->pt_inseg = lastseg;
 		newpp->pt_inhit = lasthit;
 		newpp->pt_inflip = lastflip;
-		diff = segp->seg_out.hit_dist - pp->pt_inhit->hit_dist;
-		if (diff < -(tol_dist)) {
-		    /*
-		     * diff < ~0
-		     * Seg starts and ends before current
-		     * partition, but after previous
-		     * partition ends (diff < 0).
-		     *		SSSS
-		     *	pppp		PPPPP...
-		     *		newpp	pp
-		     */
-		    newpp->pt_outseg = segp;
-		    newpp->pt_outhit = &segp->seg_out;
-		    newpp->pt_outflip = 0;
-		    INSERT_PT(newpp, pp);
-		    if (RT_G_DEBUG&DEBUG_PARTITION) bu_log("seg between 2 partitions\n");
-		    goto done_weave;
-		}
-		if (diff < tol_dist) {
-		    /*
-		     * diff ~= 0
-		     *
-		     * Seg starts before current
-		     * partition starts, and ends at or
-		     * near the start of the partition.
-		     * (diff == 0).  FUSE the points.
-		     *	SSSSSS
-		     *	     PPPPP
-		     *	newpp|pp
-		     * NOTE: only copy hit point, not
-		     * normals or norm private stuff.
-		     */
-		    newpp->pt_outseg = segp;
-		    newpp->pt_outhit = &segp->seg_out;
-		    newpp->pt_outhit->hit_dist = pp->pt_inhit->hit_dist;
-		    newpp->pt_outflip = 0;
-		    INSERT_PT(newpp, pp);
-		    if (RT_G_DEBUG&DEBUG_PARTITION) bu_log("seg ends at partition start, fuse\n");
-		    goto done_weave;
-		}
-		/*
-		 * Seg starts before current partition
-		 * starts, and ends after the start of the
-		 * partition.  (diff > 0).
-		 *	SSSSSSSSSS
-		 *	      PPPPPPP
-		 *	newpp| pp | ...
-		 */
-		newpp->pt_outseg = pp->pt_inseg;
-		newpp->pt_outhit = pp->pt_inhit;
-		newpp->pt_outflip = 1;
-		lastseg = pp->pt_inseg;
-		lasthit = pp->pt_inhit;
-		lastflip = newpp->pt_outflip;
-		INSERT_PT(newpp, pp);
-		if (RT_G_DEBUG&DEBUG_PARTITION) bu_log("insert seg before p start, ends after p ends.  Making new partition for initial portion.\n");
-		goto equal_start;
+		newpp->pt_outseg = segp;
+		newpp->pt_outhit = &segp->seg_out;
+		APPEND_PT(newpp, PartHdp->pt_back);
 	    }
-	    /* NOTREACHED */
 	}
 
-	/*
-	 * Segment has portion which extends beyond the end
-	 * of the last partition.  Tack on the remainder.
-	 *  	PPPPP
-	 *  	     SSSSS
-	 */
-	if (RT_G_DEBUG&DEBUG_PARTITION) bu_log("seg extends beyond partition end\n");
-	GET_PT_INIT(rtip, newpp, res);
-	bu_ptbl_ins_unique(&newpp->pt_seglist, (long *)segp);
-	newpp->pt_inseg = lastseg;
-	newpp->pt_inhit = lasthit;
-	newpp->pt_inflip = lastflip;
-	newpp->pt_outseg = segp;
-	newpp->pt_outhit = &segp->seg_out;
-	APPEND_PT(newpp, PartHdp->pt_back);
-
-    done_weave:	; /* Sorry about the goto's, but they give clarity */
 	if (RT_G_DEBUG&DEBUG_PARTITION)
 	    rt_pr_partitions(rtip, PartHdp, "After weave");
     }
@@ -594,7 +577,7 @@ rt_boolweave(struct seg *out_hd, struct seg *in_hd, struct partition *PartHdp, s
 
 
 int
-rt_defoverlap (register struct application *ap, register struct partition *pp, struct region *reg1, struct region *reg2, struct partition *pheadp)
+rt_defoverlap(register struct application *ap, register struct partition *pp, struct region *reg1, struct region *reg2, struct partition *pheadp)
 {
     RT_CK_AP(ap);
     RT_CK_PT(pp);
@@ -633,8 +616,8 @@ rt_defoverlap (register struct application *ap, register struct partition *pp, s
  * The bu_ptbl is initialized here, and must be freed by the caller.
  * It will contain a pointer to at least one segment.
  */
-void
-rt_get_region_seglist_for_partition(struct bu_ptbl *sl, const struct partition *pp, const struct region *regp)
+HIDDEN void
+bool_region_seglist_for_partition(struct bu_ptbl *sl, const struct partition *pp, const struct region *regp)
 {
     const struct seg **segpp;
 
@@ -655,7 +638,7 @@ rt_get_region_seglist_for_partition(struct bu_ptbl *sl, const struct partition *
 	}
     }
 
-    if (BU_PTBL_LEN(sl) <= 0) bu_bomb("rt_get_region_seglist_for_partition() didn't find any segments\n");
+    if (BU_PTBL_LEN(sl) <= 0) bu_bomb("bool_region_seglist_for_partition() didn't find any segments\n");
 }
 
 
@@ -667,8 +650,8 @@ rt_get_region_seglist_for_partition(struct bu_ptbl *sl, const struct partition *
  *  # Maximum ray index
  * -1 If no rays are contributing segs for this region.
  */
-int
-rt_tree_max_raynum(register const union tree *tp, register const struct partition *pp)
+HIDDEN int
+bool_max_raynum(register const union tree *tp, register const struct partition *pp)
 {
     RT_CK_TREE(tp);
     RT_CK_PARTITION(pp);
@@ -690,20 +673,20 @@ rt_tree_max_raynum(register const union tree *tp, register const struct partitio
 	    return -1;
 
 	case OP_NOT:
-	    return rt_tree_max_raynum(tp->tr_b.tb_left, pp);
+	    return bool_max_raynum(tp->tr_b.tb_left, pp);
 
 	case OP_UNION:
 	case OP_INTERSECT:
 	case OP_SUBTRACT:
 	case OP_XOR:
 	    {
-		int a = rt_tree_max_raynum(tp->tr_b.tb_left, pp);
-		int b = rt_tree_max_raynum(tp->tr_b.tb_right, pp);
+		int a = bool_max_raynum(tp->tr_b.tb_left, pp);
+		int b = bool_max_raynum(tp->tr_b.tb_right, pp);
 		if (a > b) return a;
 		return b;
 	    }
 	default:
-	    bu_bomb("rt_tree_max_raynum: bad op\n");
+	    bu_bomb("bool_max_raynum: bad op\n");
     }
     return 0;
 }
@@ -716,8 +699,8 @@ rt_tree_max_raynum(register const union tree *tp, register const struct partitio
  *
  * Required to null out one of the two regions.
  */
-void
-rt_fastgen_vol_vol_overlap(struct region **fr1, struct region **fr2, const struct partition *pp)
+HIDDEN void
+bool_vol_vol_overlap(struct region **fr1, struct region **fr2, const struct partition *pp)
 {
     struct bu_ptbl sl1 = BU_PTBL_INIT_ZERO;
     struct bu_ptbl sl2 = BU_PTBL_INIT_ZERO;
@@ -733,8 +716,8 @@ rt_fastgen_vol_vol_overlap(struct region **fr1, struct region **fr2, const struc
 
     if (RT_G_DEBUG&DEBUG_PARTITION) bu_log("Resolving FASTGEN volume/volume overlap: %s %s\n", (*fr1)->reg_name, (*fr2)->reg_name);
 
-    rt_get_region_seglist_for_partition(&sl1, pp, *fr1);
-    rt_get_region_seglist_for_partition(&sl2, pp, *fr2);
+    bool_region_seglist_for_partition(&sl1, pp, *fr1);
+    bool_region_seglist_for_partition(&sl2, pp, *fr2);
 
     s1_in_dist = MAX_FASTF;
     s2_in_dist = MAX_FASTF;
@@ -785,55 +768,6 @@ rt_fastgen_vol_vol_overlap(struct region **fr1, struct region **fr2, const struc
     bu_ptbl_free(&sl2);
 }
 
-int
-rt_fdiff(double a, double b)
-{
-    register double diff;
-    register double d;
-    register int ret;
-
-    /* d = Max(Abs(a), Abs(b)) */
-    d = (a >= 0.0) ? a : -a;
-    if (b >= 0.0) {
-	if (b > d) d = b;
-    } else {
-	if ((-b) > d) d = (-b);
-    }
-    if (d <= 1.0e-6) {
-	ret = 0;	/* both nearly zero */
-	goto out;
-    }
-    if (d >= INFINITY) {
-	if (ZERO(a - b)) {
-	    ret = 0;
-	    goto out;
-	}
-	if (a < b) {
-	    ret = -1;
-	    goto out;
-	}
-	ret = 1;
-	goto out;
-    }
-    if ((diff = a - b) < 0.0) diff = -diff;
-    if (diff < 0.001) {
-	ret = 0;	/* absolute difference is small, < 1/1000mm */
-	goto out;
-    }
-    if (diff < 0.000001 * d) {
-	ret = 0;	/* relative difference is small, < 1ppm */
-	goto out;
-    }
-    if (a < b) {
-	ret = -1;
-	goto out;
-    }
-    ret = 1;
-out:
-    if (RT_G_DEBUG&DEBUG_FDIFF) bu_log("rt_fdiff(%.18e, %.18e)=%d\n", a, b, ret);
-    return ret;
-}
-
 
 /**
  * Handle FASTGEN plate/volume overlap.
@@ -848,8 +782,8 @@ out:
  *
  * Required to null out one of the two regions.
  */
-void
-rt_fastgen_plate_vol_overlap(struct region **fr1, struct region **fr2, struct partition *pp, struct application *ap)
+HIDDEN void
+bool_plate_vol_overlap(struct region **fr1, struct region **fr2, struct partition *pp, struct application *ap)
 {
     struct partition *prev;
     fastf_t depth;
@@ -868,10 +802,7 @@ rt_fastgen_plate_vol_overlap(struct region **fr1, struct region **fr2, struct pa
 	return;
     }
 
-    /* arbitrary tolerance is the dominant absolute tolerance from the
-     * now-deprecated rt_fdiff().  need to test sensitivity before
-     * changing to the distance tolerance.
-     */
+    /* need to test sensitivity before changing to distance tolerance. */
     if (!NEAR_EQUAL(prev->pt_outhit->hit_dist, pp->pt_inhit->hit_dist, 0.001)) {
 	/* There is a gap between previous partition and this one.  So
 	 * both plate and vol start at same place, d=0, plate wins.
@@ -966,7 +897,7 @@ rt_default_multioverlap(struct application *ap, struct partition *pp, struct bu_
 		RT_CK_REGION(*fr2);
 		if ((*fr2)->reg_is_fastgen != REGION_FASTGEN_VOLUME)
 		    continue;
-		rt_fastgen_vol_vol_overlap(fr1, fr2, pp);
+		bool_vol_vol_overlap(fr1, fr2, pp);
 		if (*fr1 == REGION_NULL) break;
 	    }
 	}
@@ -982,7 +913,7 @@ rt_default_multioverlap(struct application *ap, struct partition *pp, struct bu_
 		RT_CK_REGION(*fr2);
 		if ((*fr2)->reg_is_fastgen != REGION_FASTGEN_VOLUME)
 		    continue;
-		rt_fastgen_plate_vol_overlap(fr1, fr2, pp, ap);
+		bool_plate_vol_overlap(fr1, fr2, pp, ap);
 		if (*fr1 == REGION_NULL) break;
 	    }
 	}
@@ -1034,38 +965,35 @@ rt_default_multioverlap(struct application *ap, struct partition *pp, struct bu_
 	 */
 	if (lastregion->reg_aircode != 0 && regp->reg_aircode == 0) {
 	    /* last region is air, replace with solid regp */
-	    goto code2;
+	    code = 2;
 	} else if (lastregion->reg_aircode == 0 && regp->reg_aircode != 0) {
 	    /* last region solid, regp is air, keep last */
-	    goto code1;
+	    code = 1;
 	} else if (lastregion->reg_aircode != 0 &&
 		   regp->reg_aircode != 0 &&
 		   regp->reg_aircode == lastregion->reg_aircode) {
 	    /* both are same air, keep last */
-	    goto code1;
-	}
+	    code = 1;
 
-	/*
-	 * If a FASTGEN region overlaps a non-FASTGEN region, the
-	 * non-FASTGEN ("traditional BRL-CAD") region wins.  No
-	 * mixed-mode geometry like this will be built by the
-	 * fastgen-to-BRL-CAD converters, only by human editors.
-	 */
-	if (lastregion->reg_is_fastgen != regp->reg_is_fastgen) {
-	    if (lastregion->reg_is_fastgen)
-		goto code2;		/* keep regp */
-	    if (regp->reg_is_fastgen)
-		goto code1;		/* keep lastregion */
-	}
+	    /*
+	     * If a FASTGEN region overlaps a non-FASTGEN region, the
+	     * non-FASTGEN ("traditional BRL-CAD") region wins.  No
+	     * mixed-mode geometry like this will be built by the
+	     * fastgen-to-BRL-CAD converters, only by human editors.
+	     */
+	} else if (lastregion->reg_is_fastgen != regp->reg_is_fastgen && lastregion->reg_is_fastgen) {
+	    code = 2;		/* keep regp */
+	} else if (lastregion->reg_is_fastgen != regp->reg_is_fastgen && regp->reg_is_fastgen) {
+	    code = 1;		/* keep lastregion */
 
-	/*
-	 * To support ray bundles, find partition with the lower
-	 * contributing ray number (closer to center of bundle), and
-	 * retain that one.
-	 */
-	{
-	    int r1 = rt_tree_max_raynum(lastregion->reg_treetop, pp);
-	    int r2 = rt_tree_max_raynum(regp->reg_treetop, pp);
+	    /*
+	     * To support ray bundles, find partition with the lower
+	     * contributing ray number (closer to center of bundle), and
+	     * retain that one.
+	     */
+	} else {
+	    int r1 = bool_max_raynum(lastregion->reg_treetop, pp);
+	    int r2 = bool_max_raynum(regp->reg_treetop, pp);
 
 	    /* Only use this algorithm if one is not the main ray */
 	    if (r1 > 0 || r2 > 0) {
@@ -1074,45 +1002,47 @@ rt_default_multioverlap(struct application *ap, struct partition *pp, struct bu_
 			   (r1<r2)?lastregion->reg_name:regp->reg_name);
 		}
 		if (r1 < r2) {
-		    goto code1;	/* keep lastregion */
+		    code = 1;	/* keep lastregion */
+		} else {
+		    code = 2;	/* keep regp */
 		}
-		goto code2;		/* keep regp */
+	    } else {
+		/*
+		 * Hand overlap to old-style application-specific
+		 * overlap handler, or default.
+		 * 0 = destroy partition,
+		 * 1 = keep part, claiming region=lastregion
+		 * 2 = keep part, claiming region=regp
+		 */
+		code = ap->a_overlap(ap, pp, lastregion, regp, InputHdp);
 	    }
 	}
 
-	/*
-	 * Hand overlap to old-style application-specific
-	 * overlap handler, or default.
-	 * 0 = destroy partition,
-	 * 1 = keep part, claiming region=lastregion
-	 * 2 = keep part, claiming region=regp
-	 */
-	code = ap->a_overlap(ap, pp, lastregion, regp, InputHdp);
-
 	/* Implement the policy in "code" */
-	if (code == 0) {
-	    /*
-	     * Destroy the whole partition.
-	     */
-	    if (RT_G_DEBUG&DEBUG_PARTITION)
-		bu_log("rt_default_multioverlap:  overlap code=0, partition=%p deleted\n", (void *)pp);
-	    bu_ptbl_reset(regiontable);
-	    return;
-	} else if (code == 1) {
-	code1:
-	    /* Keep partition, claiming region = lastregion */
-	    if (RT_G_DEBUG&DEBUG_PARTITION)
-		bu_log("rt_default_multioverlap:  overlap policy=1, code=%d, p retained in region=%s\n",
-		       code, lastregion->reg_name);
-	    BU_PTBL_CLEAR_I(regiontable, i);
-	} else {
-	code2:
-	    /* Keep partition, claiming region = regp */
-	    bu_ptbl_zero(regiontable, (long *)lastregion);
-	    lastregion = regp;
-	    if (RT_G_DEBUG&DEBUG_PARTITION)
-		bu_log("rt_default_multioverlap:  overlap policy!=(0, 1) code=%d, p retained in region=%s\n",
-		       code, lastregion->reg_name);
+	switch (code) {
+	    case 0:
+		/*
+		 * Destroy the whole partition.
+		 */
+		if (RT_G_DEBUG&DEBUG_PARTITION)
+		    bu_log("rt_default_multioverlap:  overlap code=0, partition=%p deleted\n", (void *)pp);
+		bu_ptbl_reset(regiontable);
+		return;
+	    case 1:
+		/* Keep partition, claiming region = lastregion */
+		if (RT_G_DEBUG&DEBUG_PARTITION)
+		    bu_log("rt_default_multioverlap:  overlap policy=1, code=%d, p retained in region=%s\n",
+			    code, lastregion->reg_name);
+		BU_PTBL_CLEAR_I(regiontable, i);
+		break;
+	    case 2:
+		/* Keep partition, claiming region = regp */
+		bu_ptbl_zero(regiontable, (long *)lastregion);
+		lastregion = regp;
+		if (RT_G_DEBUG&DEBUG_PARTITION)
+		    bu_log("rt_default_multioverlap:  overlap policy!=(0, 1) code=%d, p retained in region=%s\n",
+			    code, lastregion->reg_name);
+		break;
 	}
     }
 }
@@ -1191,8 +1121,8 @@ rt_default_logoverlap(struct application *ap, const struct partition *pp, const 
  * 1 The tables match
  * 0 The tables do not match
  */
-int
-rt_overlap_tables_equal(struct region *const*a, struct region *const*b)
+HIDDEN int
+bool_equal_overlap_tables(struct region *const*a, struct region *const*b)
 {
     int alen=0, blen=0;
     register struct region *const*app;
@@ -1232,8 +1162,8 @@ rt_overlap_tables_equal(struct region *const*a, struct region *const*b)
  * !0 Region is ready for (correct) evaluation.
  *  0 Region is not ready
  */
-int
-rt_tree_test_ready(register const union tree *tp, register const struct bu_bitv *solidbits, register const struct region *regionp, register const struct partition *pp)
+HIDDEN int
+bool_test_tree(register const union tree *tp, register const struct bu_bitv *solidbits, register const struct region *regionp, register const struct partition *pp)
 {
     RT_CK_TREE(tp);
     BU_CK_BITV(solidbits);
@@ -1256,18 +1186,18 @@ rt_tree_test_ready(register const union tree *tp, register const struct bu_bitv 
 	    return 0;
 
 	case OP_NOT:
-	    return !rt_tree_test_ready(tp->tr_b.tb_left, solidbits, regionp, pp);
+	    return !bool_test_tree(tp->tr_b.tb_left, solidbits, regionp, pp);
 
 	case OP_UNION:
 	case OP_INTERSECT:
 	case OP_SUBTRACT:
 	case OP_XOR:
-	    if (!rt_tree_test_ready(tp->tr_b.tb_left, solidbits, regionp, pp))
+	    if (!bool_test_tree(tp->tr_b.tb_left, solidbits, regionp, pp))
 		return 0;
-	    return rt_tree_test_ready(tp->tr_b.tb_right, solidbits, regionp, pp);
+	    return bool_test_tree(tp->tr_b.tb_right, solidbits, regionp, pp);
 
 	default:
-	    bu_bomb("rt_tree_test_ready: bad op\n");
+	    bu_bomb("bool_test_tree: bad op\n");
     }
     return 0;
 }
@@ -1282,8 +1212,8 @@ rt_tree_test_ready(register const union tree *tp, register const struct bu_bitv 
  * !0 Partition is ready for (correct) evaluation.
  *  0 Partition is not ready
  */
-int
-rt_bool_partition_eligible(register const struct bu_ptbl *regiontable, register const struct bu_bitv *solidbits, register const struct partition *pp)
+HIDDEN int
+bool_partition_eligible(register const struct bu_ptbl *regiontable, register const struct bu_bitv *solidbits, register const struct partition *pp)
 {
     struct region **regpp;
 
@@ -1298,7 +1228,7 @@ rt_bool_partition_eligible(register const struct bu_ptbl *regiontable, register 
 	RT_CK_REGION(regp);
 
 	/* Check region prerequisites */
-	if (!rt_tree_test_ready(regp->reg_treetop, solidbits, regp, pp)) {
+	if (!bool_test_tree(regp->reg_treetop, solidbits, regp, pp)) {
 	    return 0;
 	}
     }
@@ -1307,7 +1237,7 @@ rt_bool_partition_eligible(register const struct bu_ptbl *regiontable, register 
 
 
 void
-rt_grow_boolstack(register struct resource *resp)
+rt_bool_growstack(register struct resource *resp)
 {
     if (resp->re_boolstack == (union tree **)0 || resp->re_boolslen <= 0) {
 	resp->re_boolslen = 128;	/* default len */
@@ -1331,8 +1261,8 @@ rt_grow_boolstack(register struct resource *resp)
  *  0 tree is BOOL_FALSE
  * -1 tree is in error (GUARD)
  */
-int
-rt_booleval(register union tree *treep, struct partition *partp, struct region **trueregp, struct resource *resp)
+HIDDEN int
+bool_eval(register union tree *treep, struct partition *partp, struct region **trueregp, struct resource *resp)
 /* Tree to evaluate */
 /* Partition to evaluate */
 /* XOR true (and overlap) return */
@@ -1353,7 +1283,7 @@ rt_booleval(register union tree *treep, struct partition *partp, struct region *
     else
 	trueregp[0] = trueregp[1] = REGION_NULL;
     while ((sp = resp->re_boolstack) == (union tree **)0)
-	rt_grow_boolstack(resp);
+	rt_bool_growstack(resp);
     stackend = &(resp->re_boolstack[resp->re_boolslen]);
     *sp++ = TREE_NULL;
 stack:
@@ -1381,14 +1311,14 @@ stack:
 	    *sp++ = treep;
 	    if (sp >= stackend) {
 		register int off = sp - resp->re_boolstack;
-		rt_grow_boolstack(resp);
+		rt_bool_growstack(resp);
 		sp = &(resp->re_boolstack[off]);
 		stackend = &(resp->re_boolstack[resp->re_boolslen]);
 	    }
 	    treep = treep->tr_b.tb_left;
 	    goto stack;
 	default:
-	    bu_log("rt_booleval:  bad stack op [%d]\n", treep->tr_op);
+	    bu_log("bool_eval:  bad stack op [%d]\n", treep->tr_op);
 	    return BOOL_TRUE;	/* screw up output */
     }
 pop:
@@ -1401,7 +1331,7 @@ pop:
      */
     switch (treep->tr_op) {
 	case OP_SOLID:
-	    bu_log("rt_booleval:  pop SOLID?\n");
+	    bu_log("bool_eval:  pop SOLID?\n");
 	    return BOOL_TRUE;	/* screw up output */
 	case OP_UNION:
 	    if (ret) goto pop;	/* BOOL_TRUE, we are done */
@@ -1479,7 +1409,7 @@ pop:
 	    }
 	    goto pop;
 	default:
-	    bu_log("rt_booleval:  bad pop op [%d]\n", treep->tr_op);
+	    bu_log("bool_eval:  bad pop op [%d]\n", treep->tr_op);
 	    return BOOL_TRUE;	/* screw up output */
     }
     /* NOTREACHED */
@@ -1719,7 +1649,7 @@ rt_boolfinal(struct partition *InputHdp, struct partition *FinalHdp, fastf_t sta
 	     * in every region participating in this partition has
 	     * been intersected, then it is OK to evaluate it now.
 	     */
-	    if (!rt_bool_partition_eligible(regiontable, solidbits, pp)) {
+	    if (!bool_partition_eligible(regiontable, solidbits, pp)) {
 		ret = 0;
 		reason = "Partition not yet eligible for evaluation";
 		goto out;
@@ -1749,8 +1679,8 @@ rt_boolfinal(struct partition *InputHdp, struct partition *FinalHdp, fastf_t sta
 		    lastregion = regp;
 		    continue;
 		}
-		if (rt_booleval(regp->reg_treetop, pp, TrueRg,
-				ap->a_resource) == BOOL_FALSE) {
+		if (bool_eval(regp->reg_treetop, pp, TrueRg,
+			      ap->a_resource) == BOOL_FALSE) {
 		    if (RT_G_DEBUG&DEBUG_PARTITION)
 			bu_log("BOOL_FALSE\n");
 		    /* Null out non-claiming region's pointer */
@@ -1850,9 +1780,7 @@ rt_boolfinal(struct partition *InputHdp, struct partition *FinalHdp, fastf_t sta
 			   lastpp->pt_outhit->hit_dist,
 			   ap->a_rt_i->rti_tol.dist) &&
 		(ap->a_rt_i->rti_save_overlaps == 0 ||
-		 rt_overlap_tables_equal(
-		     lastpp->pt_overlap_reg,
-		     newpp->pt_overlap_reg))
+		 bool_equal_overlap_tables(lastpp->pt_overlap_reg, newpp->pt_overlap_reg))
 		) {
 		/* same region, merge by extending last final partition */
 		if (RT_G_DEBUG&DEBUG_PARTITION)
@@ -1909,26 +1837,6 @@ out:
 	bu_log("rt_boolfinal() ret=%d, %s\n", ret, reason);
     }
     return ret;
-}
-
-
-double
-rt_reldiff(double a, double b)
-{
-    register fastf_t d;
-    register fastf_t diff;
-
-    /* d = Max(Abs(a), Abs(b)) */
-    d = (a >= 0.0) ? a : -a;
-    if (b >= 0.0) {
-	if (b > d) d = b;
-    } else {
-	if ((-b) > d) d = (-b);
-    }
-    if (ZERO(d))
-	return 0.0;
-    if ((diff = a - b) < 0.0) diff = -diff;
-    return diff / d;
 }
 
 

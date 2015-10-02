@@ -31,7 +31,7 @@
 #  ifdef HAVE_SYS_PARAM_H
 #    include <sys/param.h>
 #  endif
-#  include <sys/sysctl.h>
+/* #  include <sys/sysctl.h> -- CSM: test removal on more platforms */
 #endif
 
 /* common headers */

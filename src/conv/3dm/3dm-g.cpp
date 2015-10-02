@@ -257,15 +257,15 @@ generate_uuid()
     // sufficient for our use here, but
     // officially UUIDv4 also requires certain bits to be set
     result.Data1 = static_cast<ON__UINT32>(drand48() *
-					   std::numeric_limits<ON__UINT32>::max());
+					   std::numeric_limits<ON__UINT32>::max() + 0.5);
     result.Data2 = static_cast<ON__UINT16>(drand48() *
-					   std::numeric_limits<ON__UINT16>::max());
+					   std::numeric_limits<ON__UINT16>::max() + 0.5);
     result.Data3 = static_cast<ON__UINT16>(drand48() *
-					   std::numeric_limits<ON__UINT16>::max());
+					   std::numeric_limits<ON__UINT16>::max() + 0.5);
 
     for (int i = 0; i < 8; ++i)
 	result.Data4[i] = static_cast<unsigned char>(drand48() *
-			  std::numeric_limits<unsigned char>::max());
+			  std::numeric_limits<unsigned char>::max() + 0.5);
 
     return result;
 }

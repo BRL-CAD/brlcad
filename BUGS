@@ -15,6 +15,14 @@ on-going issues.
 Recent Bugs
 -----------
 
+* fblabel seems quite busted, at least talking to a /dev/X fbserv, in
+  that it only draws the first character and eventually displays
+  rem_read() failures when run in -d debug mode.
+
+* rtedge doesn't refresh a /dev/X fbserv (presumably double-buffered)
+  after doing an overlay render.  it does draw, though, as confirmed
+  by a forced fb-fb refresh.
+
 * pixborder doesn't account for an edge case where the right edge of
   an image is expected to be colored (except for one pixel on the top
   edge).  Example:

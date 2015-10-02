@@ -292,7 +292,7 @@ public:
     ~BRNode();
 
     /** List of all children of a given node */
-    std::vector<BRNode *> m_children;
+    std::vector<BRNode *> *m_children;
 
     /** Bounding Box */
     ON_BoundingBox m_node;
@@ -367,6 +367,7 @@ BRNode::BRNode()
 {
     m_start = ON_3dPoint::UnsetPoint;
     m_end = ON_3dPoint::UnsetPoint;
+    m_children = new std::vector<BRNode *>();
 }
 
 inline
@@ -434,6 +435,7 @@ BRNode::BRNode(
 	m_slope = (m_end[Y] - m_start[Y]) / (m_end[X] - m_start[X]);
     }
     m_bb_diag = DIST_PT_PT(m_start, m_end);
+    m_children = new std::vector<BRNode *>();
 }
 
 inline
@@ -464,19 +466,20 @@ BRNode::BRNode(const ON_BoundingBox &node)
     }
     m_start = m_node.m_min;
     m_end = m_node.m_max;
+    m_children = new std::vector<BRNode *>();
 }
 
 inline void
 BRNode::addChild(const ON_BoundingBox &child)
 {
-    m_children.push_back(new BRNode(child));
+    m_children->push_back(new BRNode(child));
 }
 
 inline void
 BRNode::addChild(BRNode *child)
 {
     if (LIKELY(child != NULL)) {
-	m_children.push_back(child);
+	m_children->push_back(child);
     }
 }
 
@@ -484,10 +487,10 @@ inline void
 BRNode::removeChild(BRNode *child)
 {
     std::vector<BRNode *>::iterator i;
-    for (i = m_children.begin(); i < m_children.end(); ++i) {
+    for (i = m_children->begin(); i < m_children->end(); ++i) {
 	if (*i == child) {
 	    delete *i;
-	    m_children.erase(i);
+	    m_children->erase(i);
 	}
     }
 }
@@ -495,7 +498,7 @@ BRNode::removeChild(BRNode *child)
 inline bool
 BRNode::isLeaf()
 {
-    if (m_children.size() == 0) {
+    if (m_children->size() == 0) {
 	return true;
     }
     return false;
@@ -561,8 +564,7 @@ private:
 
     const ON_BrepFace *m_face;
     BRNode *m_root;
-    std::list<BRNode *> m_sortedX;
-    std::list<BRNode *> m_sortedY;
+    std::list<BRNode *> *m_sortedX;
 };
 
 /*--------------------------------------------------------------------------------
@@ -584,7 +586,7 @@ public:
     ~BBNode();
 
     /** List of all children of a given node */
-    std::vector<BBNode *> m_children;
+    std::vector<BBNode *> *m_children;
 
     /** Curve Tree associated with the parent Surface Tree */
     CurveTree *m_ctree;
@@ -666,14 +668,15 @@ public:
 
 private:
     BBNode *closer(const ON_3dPoint &pt, BBNode *left, BBNode *right);
-    std::list<BRNode *> m_trims_above;
-    std::list<BRNode *> m_trims_vertical;
+    std::list<BRNode *> *m_trims_above;
 };
 
 inline
 BBNode::BBNode()
     : m_ctree(NULL), m_face(NULL), m_checkTrim(true), m_trimmed(false)
 {
+    m_children = new std::vector<BBNode *>();
+    m_trims_above = new std::list<BRNode *>();
 }
 
 inline
@@ -687,12 +690,16 @@ BBNode::BBNode(const ON_BoundingBox &node)
 	    m_node.m_max[i] += 0.001;
 	}
     }
+    m_children = new std::vector<BBNode *>();
+    m_trims_above = new std::list<BRNode *>();
 }
 
 inline
 BBNode::BBNode(CurveTree *ct)
     : m_ctree(ct), m_face(NULL), m_checkTrim(true), m_trimmed(false)
 {
+    m_children = new std::vector<BBNode *>();
+    m_trims_above = new std::list<BRNode *>();
 }
 
 inline
@@ -706,6 +713,8 @@ BBNode::BBNode(CurveTree *ct, const ON_BoundingBox &node)
 	    m_node.m_max[i] += 0.001;
 	}
     }
+    m_children = new std::vector<BBNode *>();
+    m_trims_above = new std::list<BRNode *>();
 }
 
 inline
@@ -728,19 +737,21 @@ BBNode::BBNode(
 	    m_node.m_max[i] += 0.001;
 	}
     }
+    m_children = new std::vector<BBNode *>();
+    m_trims_above = new std::list<BRNode *>();
 }
 
 inline void
 BBNode::addChild(const ON_BoundingBox &child)
 {
-    m_children.push_back(new BBNode(child));
+    m_children->push_back(new BBNode(child));
 }
 
 inline void
 BBNode::addChild(BBNode *child)
 {
     if (LIKELY(child != NULL)) {
-	m_children.push_back(child);
+	m_children->push_back(child);
     }
 }
 
@@ -748,10 +759,10 @@ inline void
 BBNode::removeChild(BBNode *child)
 {
     std::vector<BBNode *>::iterator i;
-    for (i = m_children.begin(); i < m_children.end(); ++i) {
+    for (i = m_children->begin(); i < m_children->end(); ++i) {
 	if (*i == child) {
 	    delete *i;
-	    m_children.erase(i);
+	    m_children->erase(i);
 	}
     }
 }
@@ -759,7 +770,7 @@ BBNode::removeChild(BBNode *child)
 inline bool
 BBNode::isLeaf()
 {
-    if (m_children.size() == 0) {
+    if (m_children->size() == 0) {
 	return true;
     }
     return false;
@@ -881,7 +892,7 @@ private:
 
     const ON_BrepFace *m_face;
     BBNode *m_root;
-    std::queue<ON_Plane *> f_queue;
+    std::queue<ON_Plane *> *f_queue;
 };
 
 /**
@@ -943,7 +954,7 @@ typedef struct pbc_data {
     const ON_Curve *curve;
     const ON_Surface *surf;
     brlcad::SurfaceTree *surftree;
-    std::list<ON_2dPointArray *> segments;
+    std::list<ON_2dPointArray *> *segments;
     const ON_BrepEdge *edge;
     bool order_reversed;
 } PBCData;
@@ -1380,6 +1391,11 @@ sub_surface(const ON_Surface *in, int dir, double a, double b);
  * enough data slots to describe any primitive that may
  * be matched by the shape recognition logic */
 struct csg_object_params {
+    struct subbrep_shoal_data *s;
+    int csg_type;
+    int negative;
+    /* Unique id number */
+    int csg_id;
     char bool_op; /* Boolean operator - u = union (default), - = subtraction, + = intersection */
     point_t origin;
     vect_t hv;
@@ -1388,58 +1404,88 @@ struct csg_object_params {
     fastf_t height;
     int arb_type;
     point_t p[8];
+    size_t plane_cnt;
     plane_t *planes;
+    /* An implicit plane, if present, may close a face on a parent solid */
+    int have_implicit_plane;
+    point_t implicit_plane_origin;
+    vect_t implicit_plane_normal;
+    /* bot */
+    int csg_face_cnt;
+    int csg_vert_cnt;
+    int *csg_faces;
+    point_t *csg_verts;
+    /* information flags */
+    int half_cyl;
 };
 
-struct subbrep_object_data {
+/* Forward declarations */
+struct subbrep_island_data;
+
+/* Topological shoal */
+struct subbrep_shoal_data {
+    struct subbrep_island_data *i;
+    int shoal_type;
+    /* Unique id number */
+    int shoal_id;
+    struct csg_object_params *params;
+    /* struct csg_obj_params */
+    struct bu_ptbl *shoal_children;
+
+    /* Working information */
+    int *shoal_loops;
+    int shoal_loops_cnt;
+};
+
+/* Topological island */
+struct subbrep_island_data {
+
+    /* Overall type of island - typically comb or brep, but may
+     * be an actual type if the nucleus corresponds to a single
+     * implicit primitive */
+    int island_type;
+
+    /* Unique id number */
+    int island_id;
+
+    /* Context information */
+    const ON_Brep *brep;
+
+    /* Shape representation data */
+    ON_Brep *local_brep;
+    char local_brep_bool_op; /* Boolean operator - u = union (default), - = subtraction, + = intersection */
+
+    /* Nucleus */
+    struct subbrep_shoal_data *nucleus;
+    /* struct subbrep_shoal_data */
+    struct bu_ptbl *island_children;
+
+    /* For union objects, we list the subtractions it needs */
+    struct bu_ptbl *subtractions;
+
+    /* subbrep metadata */
     struct bu_vls *key;
-    struct bu_vls *name_root;
+    ON_BoundingBox *bbox;
+
+    /* Working information - should probably be in private struct */
+    void *face_surface_types;
     int *obj_cnt;
-    int *faces;
-    int *loops;
-    int *edges;
+    int *island_faces;
+    int *island_loops;
     int *fol; /* Faces with outer loops in object loop network */
     int *fil; /* Faces with only inner loops in object loop network */
-    int faces_cnt;
-    int loops_cnt;
-    int edges_cnt;
+    int island_faces_cnt;
+    int island_loops_cnt;
     int fol_cnt;
     int fil_cnt;
-
-    const ON_Brep *brep;
-    ON_Brep *local_brep;
-    int type;
-    csg_object_params *params;
-    subbrep_object_data *planar_obj;
-    int planar_obj_vert_cnt;
-    int *planar_obj_vert_map;
-    subbrep_object_data *parent;
-    struct bu_ptbl *children;
-    int is_island;
-    /* Irrespective of the broader context, is the shape
-     * itself negative?  This is not meaningful for general
-     * combs, but individual shapes like cylinders and spheres
-     * (even when they are "trimmed down" by other CSG primitives
-     * are "negative" if their normals point inward.
-     * -1 = negative
-     *  1 = positive
-     *  0 = unknown/unset */
-    int negative_shape;
-    ON_BoundingBox *bbox;
-    int bbox_set;
-    int obj_id;
-    /* For some objects, additional post processing is needed
-     * for a subtract/no-subtract determination */
-    struct bu_vls *obj_name;
-    struct bu_ptbl *subtraction_candidates;
+    int null_vert_cnt;
+    int *null_verts;
+    int null_edge_cnt;
+    int *null_edges;
 };
 
-extern BREP_EXPORT void subbrep_bbox(struct subbrep_object_data *obj);
-extern BREP_EXPORT void subbrep_object_free(struct subbrep_object_data *obj);
-extern BREP_EXPORT struct bu_ptbl *find_subbreps(struct bu_vls *msgs, const ON_Brep *brep);
-extern BREP_EXPORT struct bu_ptbl *find_top_level_hierarchy(struct bu_vls *msgs, struct bu_ptbl *subbreps);
-extern BREP_EXPORT int subbrep_polygon_tri(struct bu_vls *msgs, const ON_Brep *brep, const point_t *all_verts, int *loops, int loop_cnt, int **ffaces);
 
+extern BREP_EXPORT struct bu_ptbl *brep_to_csg(struct bu_vls *msgs, const ON_Brep *brep);
 
 } /* extern C++ */
 #endif

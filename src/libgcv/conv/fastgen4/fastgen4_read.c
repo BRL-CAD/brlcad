@@ -1,14 +1,14 @@
 /*                 F A S T G E N 4 _ R E A D . C
  * BRL-CAD
  *
- * Copyright (c) 1994-2014 United States Government as represented by
+ * Copyright (c) 1994-2015 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
- * This program is free software; you can redistribute it and/or
+ * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public License
  * version 2.1 as published by the Free Software Foundation.
  *
- * This program is distributed in the hope that it will be useful, but
+ * This library is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
@@ -16,13 +16,13 @@
  * You should have received a copy of the GNU Lesser General Public
  * License along with this file; see the file named COPYING for more
  * information.
+ */
+/** @file fastgen4_read.c
+ *
+ * Plugin for importing from FASTGEN4 format.
  *
  */
-/** @file conv/fast4-g.c
- *
- * Program to convert the FASTGEN4 format to BRL-CAD.
- *
- */
+
 
 #include "common.h"
 
@@ -86,10 +86,13 @@
 
 #define	NAME_TREE_MAGIC	0x55555555
 #define CK_TREE_MAGIC(ptr) {\
-	if (!ptr)\
+	if (!ptr) { \
 	    bu_log("ERROR: Null name_tree pointer, file=%s, line=%d\n", __FILE__, __LINE__);\
-	else if (ptr->magic != NAME_TREE_MAGIC)\
+	    bu_bomb("bad magic");\
+	} else if (ptr->magic != NAME_TREE_MAGIC) {\
 	    bu_log("ERROR: bad name_tree pointer (%p), file=%s, line=%d\n", (void *)ptr, __FILE__, __LINE__);\
+	    bu_bomb("bad magic");\
+	}\
     }
 
 
@@ -149,6 +152,8 @@ free_name_tree(struct name_tree *ptree)
     if (!ptree)
 	return;
 
+    CK_TREE_MAGIC(ptree);
+
     free_name_tree(ptree->nleft);
     free_name_tree(ptree->nright);
 
@@ -180,7 +185,7 @@ struct holes {
 } *hole_root;
 
 
-static int hex_faces[12][3]={
+static const int hex_faces[12][3]={
     { 0, 1, 4 }, /* 1 */
     { 1, 5, 4 }, /* 2 */
     { 1, 2, 5 }, /* 3 */
@@ -224,7 +229,7 @@ static int	region_list_len=0;	/* actual length of the malloc'd region_list array
 static int	f4_do_plot=0;		/* flag indicating plot file should be created */
 static struct wmember *group_head = (struct wmember *)NULL; /* Lists of regions for groups */
 static ssize_t group_head_cnt=0;
-static struct wmember  hole_head;	/* List of regions used as holes (not solid parts of model) */
+static struct wmember hole_head;	/* List of regions used as holes (not solid parts of model) */
 static struct bu_ptbl stack;		/* Stack for traversing name_tree */
 static struct bu_ptbl stack2;		/* Stack for traversing name_tree */
 static fastf_t	min_radius;		/* minimum radius for TGC solids */
@@ -236,7 +241,6 @@ static int	face_size=0;	/* actual length of above arrays */
 static int	face_count=0;	/* number of faces in above arrays */
 
 static point_t *grid_points = NULL;
-
 
 static int
 get_line(void)
@@ -250,7 +254,7 @@ get_line(void)
 	if (len < 0) goto out; /* eof or error */
 	if (len == 0) continue;
 	bu_vls_trimspace(&buffer);
-	len = bu_vls_strlen(&buffer);
+	len = (int)bu_vls_strlen(&buffer);
 	if (len == 0) continue;
 	done = 1;
     }
@@ -406,7 +410,7 @@ Search_ident(struct name_tree *root, int reg_id, int *found)
     while (1) {
 	int diff;
 
-	diff = reg_id -  ptr->region_id;
+	diff = reg_id - ptr->region_id;
 
 	if (diff == 0) {
 	    *found = 1;
@@ -545,8 +549,8 @@ Insert_region_name(char *name, int reg_id)
 	}
     }
     Check_names();
-    if (RT_G_DEBUG&DEBUG_MEM_FULL &&  bu_mem_barriercheck())
-	bu_log("ERROR: bu_mem_barriercheck failed in Insert_region_name\n");
+    if (RT_G_DEBUG&DEBUG_MEM_FULL && bu_mem_barriercheck())
+	bu_bomb("ERROR: bu_mem_barriercheck failed in Insert_region_name");
 }
 
 
@@ -588,8 +592,8 @@ make_unique_name(char *name)
 	bu_vls_printf(&vls, "%s_%d", name, name_count);
 	(void)Search_names(name_root, bu_vls_addr(&vls), &found);
     }
-    if (RT_G_DEBUG&DEBUG_MEM_FULL &&  bu_mem_barriercheck())
-	bu_log("ERROR: bu_mem_barriercheck failed in make_unique_name\n");
+    if (RT_G_DEBUG&DEBUG_MEM_FULL && bu_mem_barriercheck())
+	bu_bomb("ERROR: bu_mem_barriercheck failed in make_unique_name");
 
     return bu_vls_strgrab(&vls);
 }
@@ -681,8 +685,8 @@ Insert_name(struct name_tree **root, char *name, int inner)
 	}
 	ptr->nleft = new_ptr;
     }
-    if (RT_G_DEBUG&DEBUG_MEM_FULL &&  bu_mem_barriercheck())
-	bu_log("ERROR: bu_mem_barriercheck failed in Insert_name\n");
+    if (RT_G_DEBUG&DEBUG_MEM_FULL && bu_mem_barriercheck())
+	bu_bomb("ERROR: bu_mem_barriercheck failed in Insert_name");
 }
 
 
@@ -702,7 +706,7 @@ make_solid_name(char type, int element_id, int c_id, int g_id, int inner)
 static void
 f4_do_compsplt(void)
 {
-    int gr, co, gr1,  co1;
+    int gr, co, gr1, co1;
     fastf_t z;
     struct compsplt *splt;
 
@@ -922,8 +926,8 @@ f4_do_name(void)
     Insert_region_name(tmp_name, region_id);
 
     name_count = 0;
-    if (RT_G_DEBUG&DEBUG_MEM_FULL &&  bu_mem_barriercheck())
-	bu_log("ERROR: bu_mem_barriercheck failed in f4_do_name\n");
+    if (RT_G_DEBUG&DEBUG_MEM_FULL && bu_mem_barriercheck())
+	bu_bomb("ERROR: bu_mem_barriercheck failed in f4_do_name");
 }
 
 
@@ -936,8 +940,8 @@ f4_do_grid(void)
     if (!pass)	/* not doing geometry yet */
 	return 1;
 
-    if (RT_G_DEBUG&DEBUG_MEM_FULL &&  bu_mem_barriercheck())
-	bu_log("ERROR: bu_mem_barriercheck failed at start of f4_do_grid\n");
+    if (RT_G_DEBUG&DEBUG_MEM_FULL && bu_mem_barriercheck())
+	bu_bomb("ERROR: bu_mem_barriercheck failed at start of f4_do_grid");
 
     bu_strlcpy(field, &line[8], sizeof(field));
     grid_no = atoi(field);
@@ -965,8 +969,8 @@ f4_do_grid(void)
 
     V_MAX(max_grid_no, grid_no);
 
-    if (RT_G_DEBUG&DEBUG_MEM_FULL &&  bu_mem_barriercheck())
-	bu_log("ERROR: bu_mem_barriercheck failed at end of f4_do_grid\n");
+    if (RT_G_DEBUG&DEBUG_MEM_FULL && bu_mem_barriercheck())
+	bu_bomb("ERROR: bu_mem_barriercheck failed at end of f4_do_grid");
 
     return 1;
 }
@@ -1317,7 +1321,7 @@ f4_do_ccone1(void)
 	    mk_trc_h(fpout, inner_name, base, inner_height, inner_r1, inner_r2);
 
 	    if (mk_addmember(inner_name, &r_head.l, NULL, WMOP_SUBTRACT) == (struct wmember *)NULL)
-		bu_bomb("CCONE1: mk_addmember failed\n");
+		bu_bomb("CCONE1: mk_addmember failed");
 	    bu_free(inner_name, "solid_name");
 	}
 
@@ -1689,18 +1693,18 @@ Add_holes(int type, int gr, int comp, struct hole_list *ptr)
 	if (!skip_region(gr*1000 + comp)) {
 	    /* add holes for this region to the list of regions to process */
 	    hptr = ptr;
-	    if (RT_G_DEBUG&DEBUG_MEM_FULL &&  bu_mem_barriercheck())
-		bu_log("ERROR: bu_mem_barriercheck failed in Add_hole\n");
+	    if (RT_G_DEBUG&DEBUG_MEM_FULL && bu_mem_barriercheck())
+		bu_bomb("ERROR: bu_mem_barriercheck failed in Add_hole");
 	    while (hptr) {
 		if (f4_do_skips == region_list_len) {
 		    region_list_len += REGION_LIST_BLOCK;
 		    region_list = (int *)bu_realloc((char *)region_list, region_list_len*sizeof(int), "region_list");
-		    if (RT_G_DEBUG&DEBUG_MEM_FULL &&  bu_mem_barriercheck())
-			bu_log("ERROR: bu_mem_barriercheck failed in Add_hole (after realloc)\n");
+		    if (RT_G_DEBUG&DEBUG_MEM_FULL && bu_mem_barriercheck())
+			bu_bomb("ERROR: bu_mem_barriercheck failed in Add_hole (after realloc)");
 		}
 		region_list[f4_do_skips++] = 1000*hptr->group + hptr->component;
-		if (RT_G_DEBUG&DEBUG_MEM_FULL &&  bu_mem_barriercheck())
-		    bu_log("ERROR: bu_mem_barriercheck failed in Add_hole (after adding %d\n)\n", 1000*hptr->group + hptr->component);
+		if (RT_G_DEBUG&DEBUG_MEM_FULL && bu_mem_barriercheck())
+		    bu_bomb("ERROR: bu_mem_barriercheck failed in Add_hole (after adding)");
 		hptr = hptr->next;
 	    }
 	}
@@ -1766,8 +1770,9 @@ f4_do_hole_wall(int type)
     if (pass)
 	return;
 
-    if (type != HOLE && type != WALL)
+    if (type != HOLE && type != WALL) {
 	bu_bomb("f4_do_hole_wall: unrecognized type");
+    }
 
     /* eliminate trailing blanks */
     s_len = strlen(line);
@@ -1844,12 +1849,12 @@ f4_Add_bot_face(int pt1, int pt2, int pt3, fastf_t thick, int pos)
 
     if (face_count >= face_size) {
 	face_size += GRID_BLOCK;
-	if (bu_debug&BU_DEBUG_MEM_CHECK &&  bu_mem_barriercheck())
+	if (bu_debug&BU_DEBUG_MEM_CHECK && bu_mem_barriercheck())
 	    bu_log("memory corrupted before realloc of faces, thickness, and facemode\n");
-	faces = (int *)bu_realloc((void *)faces,  face_size*3*sizeof(int), "faces");
+	faces = (int *)bu_realloc((void *)faces, face_size*3*sizeof(int), "faces");
 	thickness = (fastf_t *)bu_realloc((void *)thickness, face_size*sizeof(fastf_t), "thickness");
 	facemode = (char *)bu_realloc((void *)facemode, face_size*sizeof(char), "facemode");
-	if (bu_debug&BU_DEBUG_MEM_CHECK &&  bu_mem_barriercheck())
+	if (bu_debug&BU_DEBUG_MEM_CHECK && bu_mem_barriercheck())
 	    bu_log("memory corrupted after realloc of faces, thickness, and facemode\n");
     }
 
@@ -1867,7 +1872,7 @@ f4_Add_bot_face(int pt1, int pt2, int pt3, fastf_t thick, int pos)
 
     face_count++;
 
-    if (bu_debug&BU_DEBUG_MEM_CHECK &&  bu_mem_barriercheck())
+    if (bu_debug&BU_DEBUG_MEM_CHECK && bu_mem_barriercheck())
 	bu_log("memory corrupted at end of f4_Add_bot_face()\n");
 }
 
@@ -1893,14 +1898,14 @@ f4_do_tri(void)
 	return;
 
     if (faces == NULL) {
-	if (bu_debug&BU_DEBUG_MEM_CHECK &&  bu_mem_barriercheck())
+	if (bu_debug&BU_DEBUG_MEM_CHECK && bu_mem_barriercheck())
 	    bu_log("memory corrupted before malloc of faces\n");
 	faces = (int *)bu_malloc(GRID_BLOCK*3*sizeof(int), "faces");
 	thickness = (fastf_t *)bu_malloc(GRID_BLOCK*sizeof(fastf_t), "thickness");
 	facemode = (char *)bu_malloc(GRID_BLOCK*sizeof(char), "facemode");
 	face_size = GRID_BLOCK;
 	face_count = 0;
-	if (bu_debug&BU_DEBUG_MEM_CHECK &&  bu_mem_barriercheck())
+	if (bu_debug&BU_DEBUG_MEM_CHECK && bu_mem_barriercheck())
 	    bu_log("memory corrupted after malloc of faces, thickness, and facemode\n");
     }
 
@@ -1933,12 +1938,12 @@ f4_do_tri(void)
     if (f4_do_plot)
 	plot_tri(pt1, pt2, pt3);
 
-    if (bu_debug&BU_DEBUG_MEM_CHECK &&  bu_mem_barriercheck())
+    if (bu_debug&BU_DEBUG_MEM_CHECK && bu_mem_barriercheck())
 	bu_log("memory corrupted before call to f4_Add_bot_face()\n");
 
     f4_Add_bot_face(pt1, pt2, pt3, thick, pos);
 
-    if (bu_debug&BU_DEBUG_MEM_CHECK &&  bu_mem_barriercheck())
+    if (bu_debug&BU_DEBUG_MEM_CHECK && bu_mem_barriercheck())
 	bu_log("memory corrupted after call to f4_Add_bot_face()\n");
 }
 
@@ -2454,7 +2459,7 @@ Process_input(int pass_number)
     if (!get_line() || !line[0])
 	bu_strlcpy(line, "ENDDATA", sizeof(line));
     while (1) {
-	int result = 1;
+	int ret = 1;
 
 	if (!bu_strncmp(line, "VEHICLE", 7))
 	    f4_do_vehicle();
@@ -2475,23 +2480,23 @@ Process_input(int pass_number)
 	else if (!bu_strncmp(line, "$COMMENT", 8))
 	    ;
 	else if (!bu_strncmp(line, "GRID", 4))
-	    result = f4_do_grid();
+	    ret = f4_do_grid();
 	else if (!bu_strncmp(line, "CLINE", 5))
 	    f4_do_cline();
 	else if (!bu_strncmp(line, "CHEX1", 5))
-	    result = f4_do_hex1();
+	    ret = f4_do_hex1();
 	else if (!bu_strncmp(line, "CHEX2", 5))
-	    result = f4_do_hex2();
+	    ret = f4_do_hex2();
 	else if (!bu_strncmp(line, "CTRI", 4))
 	    f4_do_tri();
 	else if (!bu_strncmp(line, "CQUAD", 5))
 	    f4_do_quad();
 	else if (!bu_strncmp(line, "CCONE1", 6))
-	    result = f4_do_ccone1();
+	    ret = f4_do_ccone1();
 	else if (!bu_strncmp(line, "CCONE2", 6))
-	    result = f4_do_ccone2();
+	    ret = f4_do_ccone2();
 	else if (!bu_strncmp(line, "CCONE3", 6))
-	    result = f4_do_ccone3();
+	    ret = f4_do_ccone3();
 	else if (!bu_strncmp(line, "CSPHERE", 7))
 	    f4_do_sphere();
 	else if (!bu_strncmp(line, "ENDDATA", 7)) {
@@ -2501,7 +2506,7 @@ Process_input(int pass_number)
 	    bu_log("ERROR: skipping unrecognized data type\n%s\n", line);
 	}
 
-	if (!result)
+	if (!ret)
 	    return 0;
 
 	if (!get_line() || !line[0])
@@ -2514,6 +2519,52 @@ Process_input(int pass_number)
     }
 
     return 1;
+}
+
+
+static void
+make_region_list(const char *in_str)
+{
+    char *str = bu_strdup(in_str);
+    char *ptr, *ptr2;
+
+    region_list = (int *)bu_calloc(REGION_LIST_BLOCK, sizeof(int), "region_list");
+    region_list_len = REGION_LIST_BLOCK;
+    f4_do_skips = 0;
+
+    ptr = strtok(str, ",");
+    while (ptr) {
+	if ((ptr2=strchr(ptr, '-'))) {
+	    int i, start, stop;
+
+	    *ptr2 = '\0';
+	    ptr2++;
+	    start = atoi(ptr);
+	    stop = atoi(ptr2);
+	    if (bu_debug&BU_DEBUG_MEM_CHECK && bu_mem_barriercheck())
+		bu_bomb("ERROR: bu_mem_barriercheck failed in make_region_list");
+	    for (i=start; i<=stop; i++) {
+		if (f4_do_skips == region_list_len) {
+		    region_list_len += REGION_LIST_BLOCK;
+		    region_list = (int *)bu_realloc((char *)region_list, region_list_len*sizeof(int), "region_list");
+		    if (bu_debug&BU_DEBUG_MEM_CHECK && bu_mem_barriercheck())
+			bu_bomb("ERROR: bu_mem_barriercheck failed in make_region_list (after realloc)");
+		}
+		region_list[f4_do_skips++] = i;
+		if (bu_debug&BU_DEBUG_MEM_CHECK && bu_mem_barriercheck())
+		    bu_bomb("ERROR: bu_mem_barriercheck failed in make_region_list (after adding)");
+	    }
+	} else {
+	    if (f4_do_skips == region_list_len) {
+		region_list_len += REGION_LIST_BLOCK;
+		region_list = (int *)bu_realloc((char *)region_list, region_list_len*sizeof(int), "region_list");
+	    }
+	    region_list[f4_do_skips++] = atoi(ptr);
+	}
+	ptr = strtok((char *)NULL, ",");
+    }
+
+    bu_free(str, "str");
 }
 
 
@@ -2683,7 +2734,7 @@ make_regions(void)
 #define COLOR_LINE_LEN 256
 
 static void
-read_fast4_colors(char *color_file)
+read_fast4_colors(const char *color_file)
 {
     FILE *fp;
     char colorline[COLOR_LINE_LEN] = {0};
@@ -2722,28 +2773,92 @@ read_fast4_colors(char *color_file)
 }
 
 
-static int
-gcv_fastgen4_read(const char *path, struct rt_wdb *dest_wdbp, const struct gcv_opts *UNUSED(options))
+struct
+gcv_fastgen4_options_data
 {
+    int quiet_mode;
+    int debug_mode;
+    int libbu_debug_mode;
+    const char *colors_path;
+    const char *muves_path;
+    const char *plot_path;
+    const char *create_regions;
+};
+
+
+static void
+gcv_fastgen4_create_opts(struct bu_opt_desc **options_desc, void **dest_options_data)
+{
+    struct gcv_fastgen4_options_data *options_data = (struct gcv_fastgen4_options_data *)bu_malloc(sizeof(struct gcv_fastgen4_options_data), "options_data");
+    *dest_options_data = options_data;
+    *options_desc = (struct bu_opt_desc *)bu_malloc(8 * sizeof(struct bu_opt_desc), "options_desc");
+
+    BU_OPT((*options_desc)[0], "q", "quiet", NULL, NULL, &options_data->quiet_mode, "quiet mode (don't say anything except error messages)");
+    BU_OPT((*options_desc)[1], "d", "debug", NULL, NULL, &options_data->debug_mode, "print debugging info");
+    BU_OPT((*options_desc)[2], "b", "libbu-debug", "flag", bu_opt_int, &options_data->libbu_debug_mode, "set LIBBU debug flag");
+    BU_OPT((*options_desc)[3], "C", "colors", "path to colors file", bu_opt_str, &options_data->colors_path, "path to file specifying component colors");
+    BU_OPT((*options_desc)[4], "m", "muves", "path to output file", bu_opt_str, &options_data->muves_path, "create a MUVES input file containing CHGCOMP and CBACKING elements");
+    BU_OPT((*options_desc)[5], "o", "plot-file", "path to output file", bu_opt_str, &options_data->plot_path, "create a 'plot_file' containing a libplot3 plot file of all CTRI and CQUAD elements processed");
+    BU_OPT((*options_desc)[6], "c", "create-regions", "a list (3001, 4082, 5347) or a range (2315-3527) of section IDs", bu_opt_str, &options_data->create_regions, "process only the listed region ids");
+    BU_OPT_NULL((*options_desc)[7]);
+
+    options_data->quiet_mode = options_data->debug_mode = options_data->libbu_debug_mode = 0;
+    options_data->colors_path = options_data->muves_path = options_data->plot_path = options_data->create_regions = NULL;
+}
+
+
+static void
+gcv_fastgen4_free_opts(void *options_data)
+{
+    bu_free(options_data, "options_data");
+}
+
+
+static int
+gcv_fastgen4_read(const char *source_path, struct db_i *dest_dbip,
+	const struct gcv_opts *UNUSED(gcv_options),
+	const void *options_data)
+{
+    const struct gcv_fastgen4_options_data * const fg4_options = (struct gcv_fastgen4_options_data *)options_data;
     int result = 0;
-    char *plot_file = NULL;
-    char *color_file = NULL;
+
+    if (!fg4_options)
+	bu_bomb("gcv_fastgen4_read(): missing options_data");
+
+    quiet = fg4_options->quiet_mode;
+    debug = fg4_options->debug_mode;
+    bu_debug = fg4_options->libbu_debug_mode;
+    fpout = dest_dbip->dbi_wdbp;
+
+    if (fg4_options->muves_path)
+	if ((fp_muves=fopen(fg4_options->muves_path, "wb")) == (FILE *)NULL) {
+	    bu_log("Unable to open MUVES file (%s)\n\tno MUVES file created\n", fg4_options->muves_path);
+	    return 0;
+	}
+
+
+    RT_CK_DBI(dest_dbip);
 
     if (bu_debug & BU_DEBUG_MEM_CHECK)
 	bu_log("doing memory checking\n");
 
-    if ((fpin=fopen(path, "rb")) == (FILE *)NULL) {
-	perror("fast4-g");
-	bu_log("Cannot open FASTGEN4 file (%s)\n", path);
+    if ((fpin=fopen(source_path, "rb")) == (FILE *)NULL) {
+	bu_log("Cannot open FASTGEN4 file (%s)\n", source_path);
+
+	if (fp_muves)
+	    fclose(fp_muves);
+
 	return 0;
     }
 
-    fpout = dest_wdbp;
-
-    if (plot_file) {
-	if ((fp_plot=fopen(plot_file, "wb")) == NULL) {
-	    bu_log("Cannot open plot file (%s)\n", plot_file);
+    if (fg4_options->plot_path) {
+	if ((fp_plot=fopen(fg4_options->plot_path, "wb")) == NULL) {
+	    bu_log("Cannot open plot file (%s)\n", fg4_options->plot_path);
 	    fclose(fpin);
+
+	    if (fp_muves)
+		fclose(fp_muves);
+
 	    return 0;
 	}
     }
@@ -2758,8 +2873,12 @@ gcv_fastgen4_read(const char *path, struct rt_wdb *dest_wdbp, const struct gcv_o
     }
 
     BU_LIST_INIT(&HeadColor.l);
-    if (color_file)
-	read_fast4_colors(color_file);
+    if (fg4_options->colors_path)
+	read_fast4_colors(fg4_options->colors_path);
+
+    if (fg4_options->create_regions) {
+	make_region_list(fg4_options->create_regions);
+    }
 
     grid_size = GRID_BLOCK;
     grid_points = (point_t *)bu_malloc(grid_size * sizeof(point_t), "fast4-g: grid_points");
@@ -2796,7 +2915,7 @@ gcv_fastgen4_read(const char *path, struct rt_wdb *dest_wdbp, const struct gcv_o
 
 	/* Make an ID record if no vehicle card was found */
 	if (!vehicle[0])
-	    mk_id_units(fpout, path, "in");
+	    mk_id_units(fpout, source_path, "in");
 
 	if (!quiet)
 	    bu_log("Building components....\n");
@@ -2883,12 +3002,8 @@ gcv_fastgen4_read(const char *path, struct rt_wdb *dest_wdbp, const struct gcv_o
 }
 
 
-static const struct gcv_converter converters[] = {
-    {"fg4", gcv_fastgen4_read, NULL},
-    {NULL, NULL, NULL}
-};
-
-const struct gcv_plugin_info gcv_plugin_conv_fastgen4_read = {converters};
+const struct gcv_converter gcv_conv_fastgen4_read =
+{MIME_MODEL_VND_FASTGEN, GCV_CONVERSION_READ, gcv_fastgen4_create_opts, gcv_fastgen4_free_opts, gcv_fastgen4_read};
 
 
 /*

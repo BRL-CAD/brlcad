@@ -715,7 +715,7 @@ rt_binunif_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc
 	argv += 2;
     }
 
-    return TCL_OK;
+    return BRLCAD_OK;
 }
 
 /*

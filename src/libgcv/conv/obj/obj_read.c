@@ -2715,7 +2715,7 @@ output_to_nmg(struct ga_t *ga,
     size_t vert_idx = 0;                 /* index into vertices within for-loop */
     size_t shell_vert_idx = 0;           /* index into vertices for entire nmg shell */
     size_t num_entities_fused = 0;
-    int ret = 1;                         /* function return value, default to failure */
+    static int ret = 1;                  /* function return value, default to failure */
     plane_t pl;                          /* plane equation for face */
     fastf_t tmp_v[3] = {0.0, 0.0, 0.0};  /* temporary vertex */
     fastf_t tmp_w = 0.0;                 /* temporary weight */
@@ -3147,7 +3147,9 @@ process_nv_mode_option(struct ga_t *ga,
 
 
 HIDDEN int
-gcv_obj_read(const char *path, struct rt_wdb *dest_wdbp, const struct gcv_opts *UNUSED(options))
+gcv_obj_read(const char *source_path, struct db_i *dest_dbip,
+	const struct gcv_opts *UNUSED(gcv_options),
+	const void *UNUSED(options_data))
 {
     struct rt_wdb *fd_out;	     /* Resulting BRL-CAD file */
     int ret_val = 0;
@@ -3311,15 +3313,15 @@ gcv_obj_read(const char *path, struct rt_wdb *dest_wdbp, const struct gcv_opts *
 	bu_log("\tDebug messages disabled\n");
     }
 
-    bu_log("\tInput file name (%s)\n", path);
+    bu_log("\tInput file name (%s)\n", source_path);
 
-    if ((my_stream = fopen(path, "r")) == NULL) {
-	bu_log("Cannot open input file (%s)\n", path);
+    if ((my_stream = fopen(source_path, "r")) == NULL) {
+	bu_log("Cannot open input file (%s)\n", source_path);
 	perror("obj-g");
 	return 0;
     }
 
-    fd_out = dest_wdbp;
+    fd_out = dest_dbip->dbi_wdbp;
 
     if ((ret_val = obj_parser_create(&ga.parser)) != 0) {
 	if (ret_val == ENOMEM) {
@@ -3664,12 +3666,8 @@ gcv_obj_read(const char *path, struct rt_wdb *dest_wdbp, const struct gcv_opts *
 }
 
 
-static const struct gcv_converter converters[] = {
-    {"obj", gcv_obj_read, NULL},
-    {NULL, NULL, NULL}
-};
-
-const struct gcv_plugin_info gcv_plugin_conv_obj_read = {converters};
+const struct gcv_converter gcv_conv_obj_read =
+{MIME_MODEL_OBJ, GCV_CONVERSION_READ, NULL, NULL, gcv_obj_read};
 
 
 /*

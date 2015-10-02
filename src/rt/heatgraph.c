@@ -27,11 +27,10 @@
 
 #include "common.h"
 
-#include <sys/types.h>
-#include <sys/resource.h>
 #include <stdio.h>
 #include <string.h>
 #include <math.h>
+#include <sys/types.h>
 #ifdef HAVE_SYS_TIME_H
 #  include <sys/time.h>
 #endif
@@ -46,71 +45,6 @@
 
 #include "./rtuif.h"
 #include "./ext.h"
-
-
-static struct timeval timeStart;	/* These are pulled directly from timer42 */
-static struct rusage ruA;		/*  Resource utilization at the start */
-static struct rusage ruAc;
-
-static void tvsub(struct timeval *tdiff, struct timeval *t1, struct timeval *t0);
-
-/* Time functions are copied almost verbatim from timer42.c */
-
-/**
- * Prep the timer for each pixel
- */
-void prep_pixel_timer(void)
-{
-    gettimeofday(&timeStart, (struct timezone *)0);
-    getrusage(RUSAGE_SELF, &ruA);
-    getrusage(RUSAGE_CHILDREN, &ruAc);
-}
-
-static void
-tvsub(struct timeval *tdiff, struct timeval *t1, struct timeval *t0)
-{
-    tdiff->tv_sec = t1->tv_sec - t0->tv_sec;
-    tdiff->tv_usec = t1->tv_usec - t0->tv_usec;
-    if (tdiff->tv_usec < 0) {
-	tdiff->tv_sec--, tdiff->tv_usec += 1000000;
-    }
-}
-
-/**
- * Get the length of time the pixel
- * was being made.
- */
-double
-get_pixel_timer(double *total)
-{
-    struct timeval timeEnd;
-    /* Pulled directly from timer42.c */
-    struct rusage ru1;
-    struct rusage ru1c;
-    struct timeval td;
-    double totalTime = 0;
-    double elapsed_secs = 0;
-
-    getrusage(RUSAGE_SELF, &ru1);
-    getrusage(RUSAGE_CHILDREN, &ru1c);
-    gettimeofday(&timeEnd, (struct timezone *)0);
-
-    elapsed_secs = (timeEnd.tv_sec - timeStart.tv_sec) +
-	(timeEnd.tv_usec - timeStart.tv_usec)/1000000.0;
-
-    tvsub(&td, &ru1.ru_utime, &ruA.ru_utime);
-    totalTime = td.tv_sec + ((double)td.tv_usec)/1000000.0;
-
-    tvsub(&td, &ru1c.ru_utime, &ruAc.ru_utime);
-    totalTime += td.tv_sec + ((double)td.tv_usec) / 1000000.0;
-
-    if (totalTime < 0.00001) totalTime = 0.00001;
-    if (elapsed_secs < 0.00001) elapsed_secs = totalTime;
-
-    if (total) *total = totalTime;
-
-    return totalTime;
-}
 
 
 /**

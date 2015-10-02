@@ -25,7 +25,10 @@
 #include <sys/types.h>
 #include <ctype.h>
 #include <string.h>
+
+#define __restrict /* quell gcc 4.1.2 system regex.h -pedantic-errors */
 #include <regex.h>
+
 #include "bio.h"
 
 #include "vmath.h"

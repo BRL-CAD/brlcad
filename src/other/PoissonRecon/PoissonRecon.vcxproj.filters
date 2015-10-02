@@ -27,9 +27,6 @@
     <ClCompile Include="Src\MarchingCubes.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Src\Time.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="Src\PoissonRecon.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -71,9 +68,6 @@
     <ClInclude Include="Src\Octree.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Src\PlyFile.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="Src\PointStream.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -86,9 +80,6 @@
     <ClInclude Include="Src\SparseMatrix.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Src\Time.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="Src\Vector.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -99,6 +90,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Src\Ply.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Src\MyTime.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

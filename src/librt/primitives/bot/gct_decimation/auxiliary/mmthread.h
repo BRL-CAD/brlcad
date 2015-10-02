@@ -37,6 +37,8 @@
 
 #include "common.h"
 
+#include <stddef.h>
+
 #include "mmatomic.h"
 
 #include "bu/log.h"
@@ -99,6 +101,23 @@ static inline void mtSpinUnlock(mtSpin *spin)
 
 
 #else
+
+
+static inline int mtMutexTryLock(mtx_t *mutex)
+{
+    switch (mtx_trylock(mutex)) {
+	case thrd_success:
+	    return 1;
+
+	case thrd_busy:
+	    return 0;
+
+	default:
+	    bu_bomb("mtx_trylock() failed");
+	    return -1; /* silence warnings */
+    };
+}
+
 
 #ifdef HAVE_PTHREAD_H
 #include <pthread.h>
@@ -173,5 +192,14 @@ static inline void mtSpinUnlock(mtSpin *spin)
 #endif
 #endif
 
+static void mtQuellPedantic()
+{
+  (void)mtSignalWaitTimeout(NULL, NULL, 0);
+  (void)mtSpinInit(NULL);
+  (void)mtSpinDestroy(NULL);
+  (void)mtSpinLock(NULL);
+  (void)mtSpinUnlock(NULL);
+  (void)mtQuellPedantic();
+}
 
 #endif

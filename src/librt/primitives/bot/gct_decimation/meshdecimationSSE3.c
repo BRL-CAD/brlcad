@@ -36,77 +36,25 @@
 
 #include "common.h"
 
-#include "meshdecimation.h"
 
-#include "auxiliary/cpuconfig.h"
-#include "auxiliary/cpuinfo.h"
-#include "auxiliary/cc.h"
+#if defined(__SSE3__) && (defined(__GNUC__) || defined(__INTEL_COMPILER) || defined(_MSC_VER))
+
+
 #include "auxiliary/mm.h"
-#include "auxiliary/mmhash.h"
-#include "auxiliary/mmbinsort.h"
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <stddef.h>
-#include <stdint.h>
-#include <string.h>
 #include <math.h>
-#include <float.h>
 
-
-#ifdef __SSE__
-#include <xmmintrin.h>
-#endif
-#ifdef __SSE2__
-#include <emmintrin.h>
-#endif
-#ifdef __SSE3__
 #include <pmmintrin.h>
-#endif
-#ifdef __SSSE3__
-#include <tmmintrin.h>
-#endif
-#ifdef __SSE4A__
-#include <ammintrin.h>
-#endif
-#ifdef __SSE4_1__
-#include <smmintrin.h>
-#endif
-
-
-/****/
-
-
-#ifdef __SSE3__
-#define MD_CONFIG_SSE3_SUPPORT
-#else
-#warning "SSE3 wasn't enabled to compile this file."
-#endif
-
-
-#if defined(__GNUC__) || defined(__INTEL_COMPILER)
-#define RF_ALIGN16 __attribute__((aligned(16)))
-#elif defined(_MSC_VER)
-#define RF_ALIGN16 __declspec(align(16))
-#else
-#define RF_ALIGN16
-#warning "SSE Disabled: Unsupported Compiler."
-#ifdef MD_CONFIG_SSE3_SUPPORT
-#undef MD_CONFIG_SSE3_SUPPORT
-#endif
-#endif
 
 
 #define MD_CONFIG_SSE_APPROX
-
-
-#ifdef MD_CONFIG_SSE3_SUPPORT
 
 
 int mdPathSSE3 = 0x1 | 0x2;
 
 
 #define MD_COMPACTNESS_NORMALIZATION_FACTOR (0.5*4.0*1.732050808)
+
 
 float mdEdgeCollapsePenaltyTriangleSSE3f(float *newpoint, float *oldpoint, float *leftpoint, float *rightpoint, int *denyflag, float compactnesstarget)
 {
@@ -274,12 +222,14 @@ double mdEdgeCollapsePenaltyTriangleSSE3d(double *newpoint, double *oldpoint, do
 
 int mdPathSSE3 = 0x0;
 
-float mdEdgeCollapsePenaltyTriangleSSE3f(float *newpoint, float *oldpoint, float *leftpoint, float *rightpoint, int *denyflag)
+
+float mdEdgeCollapsePenaltyTriangleSSE3f(float *UNUSED(newpoint), float *UNUSED(oldpoint), float *UNUSED(leftpoint), float *UNUSED(rightpoint), int *UNUSED(denyflag))
 {
     return 0.0;
 }
 
-double mdEdgeCollapsePenaltyTriangleSSE3d(double *newpoint, double *oldpoint, double *leftpoint, double *rightpoint, int *denyflag)
+
+double mdEdgeCollapsePenaltyTriangleSSE3d(double *UNUSED(newpoint), double *UNUSED(oldpoint), double *UNUSED(leftpoint), double *UNUSED(rightpoint), int *UNUSED(denyflag))
 {
     return 0.0;
 }

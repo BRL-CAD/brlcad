@@ -421,7 +421,7 @@ copy_v5_solid(struct db_i *_dbip, struct directory *proto, struct clone_state *s
 
 	if (db_lookup(wdbp->dbip, bu_vls_addr(name), LOOKUP_QUIET) != RT_DIR_NULL) {
 	    if (wdbp->wdb_interp) {
-		Tcl_AppendResult(wdbp->wdb_interp, bu_vls_addr(name), ":  already exists", (char *)NULL);
+		Tcl_AppendResult((Tcl_Interp *)wdbp->wdb_interp, bu_vls_addr(name), ":  already exists", (char *)NULL);
 	    } else {
 		bu_log("%s: already exists\n", bu_vls_addr(name));
 	    }
@@ -430,7 +430,7 @@ copy_v5_solid(struct db_i *_dbip, struct directory *proto, struct clone_state *s
 
 	if (db_get_external(&external, proto2, wdbp->dbip)) {
 	    if (wdbp->wdb_interp) {
-		Tcl_AppendResult(wdbp->wdb_interp, "Database read error, aborting", (char *)NULL);
+		Tcl_AppendResult((Tcl_Interp *)wdbp->wdb_interp, "Database read error, aborting", (char *)NULL);
 	    } else {
 		bu_log("Database read error, aborting\n");
 	    }
@@ -440,7 +440,7 @@ copy_v5_solid(struct db_i *_dbip, struct directory *proto, struct clone_state *s
 	dp = db_diradd(wdbp->dbip, bu_vls_addr(name), RT_DIR_PHONY_ADDR, 0, proto2->d_flags, (void *)&proto2->d_minor_type);
 	if (dp == RT_DIR_NULL) {
 	    if (wdbp->wdb_interp) {
-		Tcl_AppendResult(wdbp->wdb_interp, "An error has occurred while adding a new object to the database.", (char *)NULL);
+		Tcl_AppendResult((Tcl_Interp *)wdbp->wdb_interp, "An error has occurred while adding a new object to the database.", (char *)NULL);
 	    } else {
 		bu_log("An error has occurred while adding a new object to the database.");
 	    }
@@ -450,7 +450,7 @@ copy_v5_solid(struct db_i *_dbip, struct directory *proto, struct clone_state *s
 	if (db_put_external(&external, dp, wdbp->dbip) < 0) {
 	    bu_free_external(&external);
 	    if (wdbp->wdb_interp) {
-		Tcl_AppendResult(wdbp->wdb_interp, "Database write error, aborting", (char *)NULL);
+		Tcl_AppendResult((Tcl_Interp *)wdbp->wdb_interp, "Database write error, aborting", (char *)NULL);
 	    } else {
 		bu_log("Database write error, aborting\n");
 	    }

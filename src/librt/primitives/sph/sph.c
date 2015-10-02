@@ -38,6 +38,8 @@
 #include "rt/geom.h"
 #include "raytrace.h"
 
+#include "../../librt_private.h"
+
 
 /*
  * Algorithm:
@@ -68,216 +70,27 @@ struct sph_specific {
 };
 
 #ifdef USE_OPENCL
-
-#include <CL/cl.h>
-
-#ifndef CL_VERSION_1_2
-/* #error "Requires OpenCL 1.2." */
-#endif
-
-#ifdef CLT_SINGLE_PRECISION
-#define cl_double cl_float
-#define cl_double3 cl_float3
-#endif
-
-struct AlignedPtr
-{
-    void *alloc;
-    void *ptr;
+/* largest data members first */
+struct clt_sph_specific {
+    cl_double sph_V[3];     /* Vector to center of sphere */
+    cl_double sph_radsq;    /* Radius squared */
+    cl_double sph_invrad;   /* Inverse radius (for normal) */
 };
 
-
-inline struct AlignedPtr
-aligned_malloc(size_t alignment, size_t size)
+size_t
+clt_sph_pack(struct bu_pool *pool, struct soltab *stp)
 {
-    struct AlignedPtr ap;
-    ap.alloc = bu_malloc(size + alignment - 1, "failed to allocate memory in aligned_malloc()");
-    ap.ptr = (void *)(((uintptr_t)ap.alloc + alignment - 1) / alignment*alignment);
-    return ap;
-}
+    struct sph_specific *sph =
+        (struct sph_specific *)stp->st_specific;
+    struct clt_sph_specific *args;
 
+    const size_t size = sizeof(*args);
+    args = (struct clt_sph_specific*)bu_pool_alloc(pool, 1, size);
 
-#define ALIGNED_SET(name, type, value) \
-        {(name) = aligned_malloc(sizeof(type), sizeof(type));\
-        *((type *)name.ptr) = (value);}
-
-
-
-const int clt_semaphore = 12; /* FIXME: for testing; this isn't our semaphore */
-static int clt_initialized = 0;
-static cl_device_id clt_device;
-static cl_context clt_context;
-static cl_command_queue clt_queue;
-static cl_program clt_program;
-static cl_kernel clt_kernel;
-
-
-static void
-clt_cleanup()
-{
-    if (!clt_initialized) return;
-
-    clReleaseKernel(clt_kernel);
-    clReleaseCommandQueue(clt_queue);
-    clReleaseProgram(clt_program);
-    clReleaseContext(clt_context);
-
-    clt_initialized = 0;
-}
-
-
-/* for now, just get the first device from the first platform  */
-static cl_device_id
-clt_get_cl_device()
-{
-    cl_int error;
-    cl_platform_id platform;
-    cl_device_id device;
-    int using_cpu = 0;
-
-    error = clGetPlatformIDs(1, &platform, NULL);
-    if (error != CL_SUCCESS) bu_bomb("failed to find an OpenCL platform");
-
-    error = clGetDeviceIDs(platform, CL_DEVICE_TYPE_GPU, 1, &device, NULL);
-    if (error == CL_DEVICE_NOT_FOUND) {
-        using_cpu = 1;
-	error = clGetDeviceIDs(platform, CL_DEVICE_TYPE_CPU, 1, &device, NULL);
-    }
-    if (error != CL_SUCCESS) bu_bomb("failed to find an OpenCL device (using this method)");
-
-    if (using_cpu) bu_log("clt: no GPU devices available; using CPU for OpenCL\n");
-
-    return device;
-}
-
-
-static char *
-clt_read_code(size_t *length)
-{
-    const char * const code_path = "sph_shot.cl";
-    FILE *fp;
-    char *data;
-
-    fp = fopen(code_path , "r");
-    if (!fp) bu_bomb("failed to read OpenCL code");
-
-    fseek(fp, 0, SEEK_END);
-    *length = ftell(fp);
-    rewind(fp);
-
-    data = bu_malloc((*length+1)*sizeof(char), "failed bu_malloc() in clt_read_code()");
-
-    if(fread(data, *length, 1, fp) != 1)
-	bu_bomb("failed to read OpenCL code");
-
-    fclose(fp);
-    return data;
-}
-
-
-
-
-static cl_program
-clt_get_program(cl_context context, cl_device_id device)
-{
-    cl_int error;
-    cl_program program;
-    size_t code_length;
-    char *code = clt_read_code(&code_length);
-    const char *pc_code = code;
-
-    program = clCreateProgramWithSource(context, 1, &pc_code, &code_length, &error);
-    if (error != CL_SUCCESS) bu_bomb("failed to create OpenCL program");
-
-    error = clBuildProgram(program, 0, NULL, NULL, NULL, NULL);
-    if (error != CL_SUCCESS) {
-	size_t log_size;
-	char *log_data;
-	clGetProgramBuildInfo(program, device, CL_PROGRAM_BUILD_LOG, 0, NULL, &log_size);
-	log_data = bu_malloc(log_size*sizeof(char), "failed to allocate memory for log");
-	clGetProgramBuildInfo(program, device, CL_PROGRAM_BUILD_LOG, log_size+1, log_data, NULL);
-	bu_log("BUILD LOG:\n%s\n", log_data);
-	bu_bomb("failed to build OpenCL program");
-    }
-
-    bu_free(code, "failed bu_free() in clt_get_program()");
-    return program;
-}
-
-
-
-static void
-clt_init()
-{
-    cl_int error;
-
-    bu_semaphore_acquire(clt_semaphore);
-    if (clt_initialized) {
-	bu_semaphore_release(clt_semaphore);
-	return;
-    }
-
-    clt_initialized = 1;
-    atexit(clt_cleanup);
-
-    clt_device = clt_get_cl_device();
-
-    clt_context = clCreateContext(NULL, 1, &clt_device, NULL, NULL, &error);
-    if (error != CL_SUCCESS) bu_bomb("failed to create an OpenCL context");
-
-    clt_queue = clCreateCommandQueue(clt_context, clt_device, 0, &error);
-    if (error != CL_SUCCESS) bu_bomb("failed to create an OpenCL command queue");
-
-    clt_program = clt_get_program(clt_context, clt_device);
-
-    clt_kernel = clCreateKernel(clt_program, "sph_shot", &error);
-    if (error != CL_SUCCESS) bu_bomb("failed to create an OpenCL kernel");
-
-    bu_semaphore_release(clt_semaphore);
-}
-
-
-static cl_double3
-clt_shot(cl_double3 o, cl_double3 dir, cl_double3 V, cl_double radsq, size_t hypersample)
-{
-    const char * const bu_free_error = "failed bu_free() in clt_shot()";
-    cl_int error;
-    cl_mem output;
-    cl_double3 result;
-    struct AlignedPtr a_result, a_o, a_dir, a_V, a_radsq;
-
-    VSET(result.s, 0, 0, 0);
-    ALIGNED_SET(a_result, cl_double3, result);
-    ALIGNED_SET(a_o, cl_double3, o);
-    ALIGNED_SET(a_dir, cl_double3, dir);
-    ALIGNED_SET(a_V, cl_double3, V);
-    ALIGNED_SET(a_radsq, cl_double, radsq);
-
-    output = clCreateBuffer(clt_context, CL_MEM_COPY_HOST_PTR | CL_MEM_WRITE_ONLY,
-	    sizeof(cl_double3), a_result.ptr, &error);
-    if (error != CL_SUCCESS) bu_bomb("failed to create OpenCL output buffer");
-
-    bu_semaphore_acquire(clt_semaphore);
-    error = clSetKernelArg(clt_kernel, 0, sizeof(cl_mem), &output);
-    error |= clSetKernelArg(clt_kernel, 1, sizeof(cl_double3), a_o.ptr);
-    error |= clSetKernelArg(clt_kernel, 2, sizeof(cl_double3), a_dir.ptr);
-    error |= clSetKernelArg(clt_kernel, 3, sizeof(cl_double3), a_V.ptr);
-    error |= clSetKernelArg(clt_kernel, 4, sizeof(cl_double), a_radsq.ptr);
-    if (error != CL_SUCCESS) bu_bomb("failed to set OpenCL kernel arguments");
-    error = clEnqueueNDRangeKernel(clt_queue, clt_kernel, 1, NULL, &hypersample, NULL, 0, NULL, NULL);
-    bu_semaphore_release(clt_semaphore);
-    if (error != CL_SUCCESS) bu_bomb("failed to enqueue OpenCL kernel");
-
-    if (clFinish(clt_queue) != CL_SUCCESS) bu_bomb("failure in clFinish()");
-    clEnqueueReadBuffer(clt_queue, output, CL_TRUE, 0, sizeof(cl_double3), &result, 0, NULL, NULL);
-    clReleaseMemObject(output);
-    bu_free(a_result.alloc, bu_free_error);
-    bu_free(a_o.alloc, bu_free_error);
-    bu_free(a_dir.alloc, bu_free_error);
-    bu_free(a_V.alloc, bu_free_error);
-    bu_free(a_radsq.alloc, bu_free_error);
-
-    return result;
+    VMOVE(args->sph_V, sph->sph_V);
+    args->sph_radsq = sph->sph_radsq;
+    args->sph_invrad = sph->sph_invrad;
+    return size;
 }
 #endif /* USE_OPENCL */
 
@@ -307,10 +120,6 @@ rt_sph_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 
     eip = (struct rt_ell_internal *)ip->idb_ptr;
     RT_ELL_CK_MAGIC(eip);
-
-#ifdef USE_OPENCL
-    clt_init();
-#endif
 
     /* Validate that |A| > 0, |B| > 0, |C| > 0 */
     magsq_a = MAGSQ(eip->a);
@@ -426,36 +235,6 @@ rt_sph_print(register const struct soltab *stp)
 int
 rt_sph_shot(struct soltab *stp, register struct xray *rp, struct application *ap, struct seg *seghead)
 {
-#ifdef USE_OPENCL
-    const size_t hypersample = 1;
-    cl_double3 o;    /* ray origin  */
-    cl_double3 dir;  /* ray direction (unit vector) */
-    cl_double3 V;    /* vector to sphere  */
-    cl_double radsq; /* sphere radius squared */
-    cl_double3 result;
-    struct seg *segp;
-
-    (void)rp; (void)ap;
-
-    VMOVE(o.s, rp->r_pt);
-    VMOVE(dir.s, rp->r_dir);
-    VMOVE(V.s, ((struct sph_specific *)stp->st_specific)->sph_V);
-    radsq = ((struct sph_specific *)stp->st_specific)->sph_radsq;
-    result = clt_shot(o, dir, V, radsq, hypersample);
-
-    if (EQUAL(result.s[0], 0)) return 0; /* no hit  */
-
-    RT_GET_SEG(segp, ap->a_resource);
-    segp->seg_stp = stp;
-
-    segp->seg_in.hit_dist = result.s[0];
-    segp->seg_out.hit_dist = result.s[1];
-    segp->seg_in.hit_surfno = 0;
-    segp->seg_out.hit_surfno = 0;
-    BU_LIST_INSERT(&(seghead->l), &(segp->l));
-    return 2;			/* HIT */
-
-#else
     register struct sph_specific *sph =
 	(struct sph_specific *)stp->st_specific;
     register struct seg *segp;
@@ -495,7 +274,6 @@ rt_sph_shot(struct soltab *stp, register struct xray *rp, struct application *ap
     segp->seg_out.hit_surfno = 0;
     BU_LIST_INSERT(&(seghead->l), &(segp->l));
     return 2;			/* HIT */
-#endif
 }
 
 

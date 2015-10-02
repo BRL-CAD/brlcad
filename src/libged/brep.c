@@ -29,6 +29,8 @@
 #include <string.h>
 
 
+#include "bu/color.h"
+#include "bu/opt.h"
 #include "raytrace.h"
 #include "rt/geom.h"
 #include "wdb.h"
@@ -42,7 +44,7 @@
  * lots of new public librt functions?  right now, we reach into librt
  * directly and export what we need from brep_debug.cpp which sucks.
  */
-RT_EXPORT extern int brep_command(struct bu_vls *vls, const char *solid_name, const struct rt_tess_tol *ttol, const struct bn_tol *tol, struct brep_specific* bs, struct rt_brep_internal* bi, struct bn_vlblock *vbp, int argc, const char *argv[], char *commtag);
+RT_EXPORT extern int brep_command(struct bu_vls *vls, const char *solid_name, struct bu_color *color, const struct rt_tess_tol *ttol, const struct bn_tol *tol, struct brep_specific* bs, struct rt_brep_internal* bi, struct bn_vlblock *vbp, int argc, const char *argv[], char *commtag);
 RT_EXPORT extern int brep_conversion(struct rt_db_internal* in, struct rt_db_internal* out, const struct db_i *dbip);
 RT_EXPORT extern int brep_conversion_comb(struct rt_db_internal *old_internal, const char *name, const char *suffix, struct rt_wdb *wdbp, fastf_t local2mm);
 RT_EXPORT extern int brep_intersect_point_point(struct rt_db_internal *intern1, struct rt_db_internal *intern2, int i, int j);
@@ -183,12 +185,19 @@ ged_brep(struct ged *gedp, int argc, const char *argv[])
     struct rt_brep_internal* bi;
     struct brep_specific* bs;
     struct soltab *stp;
+    struct bu_color color = BU_COLOR_INIT_ZERO;
     char commtag[64];
     char namebuf[64];
     int i, j, real_flag, valid_command, ret;
     const char *commands[] = {"info", "plot", "translate", "intersect", "csg", "u", "i", "-"};
     int num_commands = (int)(sizeof(commands) / sizeof(const char *));
     db_op_t op = DB_OP_NULL;
+    int opt_ret = 0;
+    struct bu_opt_desc d[2];
+    BU_OPT(d[0], "C", "color", "r/g/b", &bu_opt_color, (void *)&color, "Set color");
+    BU_OPT_NULL(d[1]);
+
+    opt_ret = bu_opt_parse(NULL, argc, argv, d);
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
     GED_CHECK_DRAWABLE(gedp, GED_ERROR);
@@ -198,7 +207,7 @@ ged_brep(struct ged *gedp, int argc, const char *argv[])
     bu_vls_trunc(gedp->ged_result_str, 0);
 
     /* must be wanting help */
-    if (argc < 2) {
+    if (argc < 2 || opt_ret < 0) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s\n\t%s\n", argv[0], usage);
 	bu_vls_printf(gedp->ged_result_str, "commands:\n");
 	bu_vls_printf(gedp->ged_result_str, "\tvalid          - report on validity of specific BREP\n");
@@ -308,11 +317,13 @@ ged_brep(struct ged *gedp, int argc, const char *argv[])
 	struct bu_vls bname_csg;
 	bu_vls_init(&bname_csg);
 	bu_vls_sprintf(&bname_csg, "csg_%s", solid_name);
+#if 0
 	if (db_lookup(gedp->ged_wdbp->dbip, bu_vls_addr(&bname_csg), LOOKUP_QUIET) != RT_DIR_NULL) {
 	    bu_vls_printf(gedp->ged_result_str, "%s already exists.", bu_vls_addr(&bname_csg));
 	    bu_vls_free(&bname_csg);
 	    return GED_OK;
 	}
+#endif
 	bu_vls_free(&bname_csg);
 	return _ged_brep_to_csg(gedp, argv[1], 0);
     }
@@ -489,7 +500,11 @@ ged_brep(struct ged *gedp, int argc, const char *argv[])
 
     vbp = rt_vlblock_init();
 
-    brep_command(gedp->ged_result_str, solid_name, (const struct rt_tess_tol *)&gedp->ged_wdbp->wdb_ttol, &gedp->ged_wdbp->wdb_tol, bs, bi, vbp, argc, argv, commtag);
+    if ((int)color.buc_rgb[0] == 0 && (int)color.buc_rgb[1] == 0 && (int)color.buc_rgb[2] == 0) {
+	brep_command(gedp->ged_result_str, solid_name, NULL, (const struct rt_tess_tol *)&gedp->ged_wdbp->wdb_ttol, &gedp->ged_wdbp->wdb_tol, bs, bi, vbp, argc, argv, commtag);
+    } else {
+	brep_command(gedp->ged_result_str, solid_name, &color, (const struct rt_tess_tol *)&gedp->ged_wdbp->wdb_ttol, &gedp->ged_wdbp->wdb_tol, bs, bi, vbp, argc, argv, commtag);
+    }
 
     if (BU_STR_EQUAL(argv[2], "translate")) {
 	bi->brep = bs->brep;

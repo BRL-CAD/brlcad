@@ -535,6 +535,7 @@ process_non_light(struct model *m) {
     static struct faceuse *next_fu;
     static struct loopuse *lu;
     static struct nmgregion *reg;
+    static int shell_is_dead;
 
     /* triangulate any faceuses with holes */
     for ( BU_LIST_FOR( reg, nmgregion, &m->r_hd ) )
@@ -548,7 +549,7 @@ process_non_light(struct model *m) {
 	    fu = BU_LIST_FIRST( faceuse, &s->fu_hd );
 	    while ( BU_LIST_NOT_HEAD( &fu->l, &s->fu_hd ) )
 	    {
-		int shell_is_dead=0;
+		shell_is_dead=0;
 
 		NMG_CK_FACEUSE( fu );
 
@@ -974,7 +975,7 @@ do_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union
 static union tree *
 process_boolean(union tree *curtree, struct db_tree_state *tsp, const struct db_full_path *pathp)
 {
-    union tree *ret_tree = TREE_NULL;
+    static union tree *ret_tree = TREE_NULL;
 
     /* Begin bomb protection */
     if ( !BU_SETJUMP ) {

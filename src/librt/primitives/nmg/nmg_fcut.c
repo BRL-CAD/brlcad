@@ -261,7 +261,7 @@ ptbl_vsort(struct bu_ptbl *b, fastf_t *pt, fastf_t *dir, fastf_t *mag, fastf_t d
 	vect_t vect;
 	NMG_CK_VERTEXUSE(vu[i]);
 
-	if (mag[i] > MAX_FASTF - SMALL_FASTF) {
+	if (mag[i] - MAX_FASTF > -SMALL_FASTF) {
 	    VSUB2(vect, vu[i]->v_p->vg_p->coord, pt);
 	    mag[i] = VDOT(vect, dir);
 	}

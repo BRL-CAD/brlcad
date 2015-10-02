@@ -28,6 +28,7 @@
 #include <ctype.h> /* for isspace */
 #include <errno.h> /* for errno */
 
+#include "bu/color.h"
 #include "bu/log.h"
 #include "bu/malloc.h"
 #include "bu/opt.h"
@@ -69,7 +70,7 @@ wrap_help(struct bu_vls *help, int indent, int offset, int len)
 }
 
 HIDDEN int
-opt_desc_is_null(struct bu_opt_desc *ds)
+opt_desc_is_null(const struct bu_opt_desc *ds)
 {
     int non_null = 0;
     if (!ds) return 1;
@@ -300,7 +301,7 @@ can_be_opt(const char *opt) {
 
 
 int
-bu_opt_parse(struct bu_vls *msgs, int argc, const char **argv, struct bu_opt_desc *ds)
+bu_opt_parse(struct bu_vls *msgs, int argc, const char **argv, const struct bu_opt_desc *ds)
 {
     int i = 0;
     int offset = 0;
@@ -315,7 +316,7 @@ bu_opt_parse(struct bu_vls *msgs, int argc, const char **argv, struct bu_opt_des
 	int desc_ind = 0;
 	char *opt = NULL;
 	const char *eq_arg = NULL;
-	struct bu_opt_desc *desc = NULL;
+	const struct bu_opt_desc *desc = NULL;
 	/* If argv[i] isn't an option, stick the argv entry (and any
 	 * immediately following non-option entries) into the
 	 * unknown args table */
@@ -598,6 +599,48 @@ bu_opt_bool(struct bu_vls *msg, int argc, const char **argv, void *set_var)
     if (b_set) (*b_set) = bool_val;
     return 1;
 }
+
+int
+bu_opt_color(struct bu_vls *msg, int argc, const char **argv, void *set_c)
+{
+    struct bu_color *set_color = (struct bu_color *)set_c;
+    unsigned int rgb[3];
+
+    BU_OPT_CHECK_ARGV0(msg, argc, argv, "color");
+
+    /* First, see if the first string converts to rgb */
+    if (!bu_str_to_rgb((char *)argv[0], (unsigned char *)&rgb)) {
+	/* nope - maybe we have 3 args? */
+	if (argc >= 3) {
+	    struct bu_vls tmp_color = BU_VLS_INIT_ZERO;
+	    bu_vls_sprintf(&tmp_color, "%s/%s/%s", argv[0], argv[1], argv[2]);
+	    if (!bu_str_to_rgb(bu_vls_addr(&tmp_color), (unsigned char *)&rgb)) {
+		/* Not valid with 3 */
+		bu_vls_free(&tmp_color);
+		if (msg) bu_vls_sprintf(msg, "No valid color found.\n");
+		return -1;
+		return -1;
+	    } else {
+		/* 3 did the job */
+		bu_vls_free(&tmp_color);
+		if (set_color) (void)bu_color_from_rgb_chars(set_color, (unsigned char *)&rgb);
+		return 3;
+	    }
+	} else {
+	    /* Not valid with 1 and don't have 3 - we require at least one, so
+	     * claim one argv as belonging to this option regardless. */
+	    if (msg) bu_vls_sprintf(msg, "No valid color found: %s\n", argv[0]);
+	    return -1;
+	}
+    } else {
+	/* yep, 1 did the job */
+	if (set_color) (void)bu_color_from_rgb_chars(set_color, (unsigned char *)&rgb);
+	return 1;
+    }
+
+    return -1;
+}
+
 
 /*
  * Local Variables:

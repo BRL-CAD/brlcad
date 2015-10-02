@@ -89,7 +89,7 @@ main(int argc, char **argv)
 	argc--;
     }
 
-    /* look for optional input file */
+    /* check for optional input file */
     if (argc > 1) {
 	if ((fp = fopen(argv[1], "r")) == 0) {
 	    bu_exit(1, "bwstat: can't open \"%s\"\n", argv[1]);

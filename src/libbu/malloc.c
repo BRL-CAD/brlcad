@@ -688,8 +688,13 @@ bu_mem_barriercheck(void)
     return 0;			/* OK */
 }
 
+
 int
+#ifdef HAVE_SYS_SHM_H
 bu_shmget(int *shmid, char **shared_memory, int key, size_t size)
+#else
+bu_shmget(int *UNUSED(shmid), char **UNUSED(shared_memory), int UNUSED(key), size_t UNUSED(size))
+#endif
 {
     int ret = 1;
 #ifdef HAVE_SYS_SHM_H
@@ -726,6 +731,43 @@ bu_shmget(int *shmid, char **shared_memory, int key, size_t size)
 
 #endif
     return ret;
+}
+
+
+struct bu_pool *
+bu_pool_create(size_t block_size)
+{
+    struct bu_pool *pool;
+
+    pool = (struct bu_pool*)bu_malloc(sizeof(struct bu_pool), "bu_pool_create");
+    pool->block_size = block_size;
+    pool->block_pos = 0;
+    pool->alloc_size = 0;
+    pool->block = NULL;
+    return pool;
+}
+
+void *
+bu_pool_alloc(struct bu_pool *pool, size_t nelem, size_t elsize)
+{
+    const size_t n_bytes = nelem * elsize;
+    void *ret;
+
+    if (pool->block_pos + n_bytes > pool->alloc_size) {
+    	pool->alloc_size += (n_bytes < pool->block_size ? pool->block_size : n_bytes);
+	pool->block = (uint8_t*)bu_realloc(pool->block, pool->alloc_size, "bu_pool_alloc");
+    }
+
+    ret = pool->block + pool->block_pos;
+    pool->block_pos += n_bytes;
+    return ret;
+}
+
+void
+bu_pool_delete(struct bu_pool *pool)
+{
+    bu_free(pool->block, "bu_pool_delete");
+    bu_free(pool, "bu_pool_delete");
 }
 
 

@@ -981,11 +981,11 @@ granted after a contributor demonstrates strong competency with our
 developer guidelines and an existing developer with commit access
 vouches for the new developer.
 
-If you would like to have commit access, there is no need to ask.
-Getting involved with the other contributors and making patches will
-result in automatic consideration for commit access.  That said, the
-following steps represent a minimum that needs to occur in order for
-commit access to be granted:
+If you would like to have commit access, do not ask for it.  Getting
+involved with the other contributors and making patches will result in
+automatic consideration for commit access.  That said, the following
+steps represent a minimum that needs to occur in order for commit
+access to be granted:
 
 1) Read this file completely.
 

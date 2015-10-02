@@ -86,8 +86,10 @@
 #include <stdlib.h>
 #include <ctype.h>
 #include <time.h>
-#include <regex.h>
 #include <limits.h> /* for INT_MAX */
+
+#define __restrict /* quell gcc 4.1.2 system regex.h -pedantic-errors */
+#include <regex.h>
 
 #include "bu/cmd.h"
 #include "bu/path.h"

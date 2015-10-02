@@ -250,7 +250,7 @@ f_amtrack(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[
 	edit_result = TCL_ERROR;
 	goto end;
     }
-    if (tr[0] > tr[1] - SMALL_FASTF) {
+    if (tr[1] - tr[0] < SMALL_FASTF) {
 	Tcl_AppendResult(interp, "MIN > MAX .... will switch\n", (char *)NULL);
 	tr[1] = tr[0];
 	tr[0] = tr[2];

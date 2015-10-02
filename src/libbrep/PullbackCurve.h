@@ -48,6 +48,11 @@
 #ifndef LIBBREP_PULLBACKCURVE_H
 #define LIBBREP_PULLBACKCURVE_H
 
+#include "common.h"
+
+/* library headers */
+#include "bio.h" /* needed to include windows.h with protections */
+#define ON_NO_WINDOWS 1 /* don't let opennurbs include windows.h */
 #include "opennurbs.h"
 
 

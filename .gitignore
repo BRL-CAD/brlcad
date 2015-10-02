@@ -1,2 +1,7 @@
 /bin
 /lib
+/build
+/.rt.cl.swo
+/.primitive_util.c.swo
+/.view.c.swo
+/.do.c.swo

@@ -46,9 +46,7 @@
 #ifdef HAVE_SYS_TIME_H
 #  include <sys/time.h>		/* sometimes includes <time.h> */
 #endif
-#ifdef HAVE_SYS_WAIT_H
-#  include <sys/wait.h>
-#endif
+#include "bresource.h"
 #include "bsocket.h"
 
 /* FIXME: is this basically FD_COPY()? */

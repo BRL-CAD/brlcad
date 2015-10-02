@@ -34,6 +34,24 @@
 #include "rt/soltab.h"
 
 __BEGIN_DECLS
+#ifdef USE_OPENCL
+/* largest data members first */
+struct clt_bot_specific {
+    cl_ulong offsets[5]; /* header, bvh, tris, norms. */
+    cl_uint ntri;
+    cl_uchar orientation;
+    cl_uchar flags;
+    cl_uchar pad[2];
+};
+
+struct clt_tri_specific {
+    cl_double v0[3];
+    cl_double v1[3];
+    cl_double v2[3];
+    cl_int surfno;
+    cl_uchar pad[4];
+};
+#endif
 
 /* Shared between bot and ars at the moment */
 struct bot_specific {
@@ -47,6 +65,12 @@ struct bot_specific {
     void **bot_facearray;       /* head of face array */
     size_t bot_tri_per_piece;   /* log # tri per piece. 1 << bot_ltpp is tri per piece */
     void *tie; /* FIXME: horrible blind cast, points to one in rt_bot_internal */
+
+#ifdef USE_OPENCL
+    struct clt_bot_specific clt_header;
+    struct clt_tri_specific *clt_triangles;
+    cl_double *clt_normals;
+#endif
 };
 
 RT_EXPORT extern void rt_bot_prep_pieces(struct bot_specific    *bot,
@@ -122,7 +146,7 @@ RT_EXPORT extern int rt_bot_decimate(struct rt_bot_internal *bot,
                                      fastf_t max_chord_error,
                                      fastf_t max_normal_error,
                                      fastf_t min_edge_length);
-RT_EXPORT extern  size_t rt_bot_decimate_gct(struct rt_bot_internal *bot, fastf_t feature_size);
+RT_EXPORT extern size_t rt_bot_decimate_gct(struct rt_bot_internal *bot, fastf_t feature_size);
 
 
 /** @} */

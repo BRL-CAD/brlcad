@@ -14,7 +14,7 @@
  * have a corresponding hit in the parent NURBS object is a red flag.  This will help with thin subtractions
  * from the surface of larger objects, where the dimensions that will report a full "gap" are very narrow
  * compared to the available area on which to recognize a first hit that's "off".  That situation is not
- * necessarily unique to first/last hit situtions - may also result in relatively few "exact" hit matches
+ * necessarily unique to first/last hit situations - may also result in relatively few "exact" hit matches
  * on a shape that should be subtracted, if the mating faces have their own large topologically isolated
  * negative areas as well.  In that case, the parent nurb will report a hit on the second negative area,
  * but the "implicit" first surface won't report anything at all from the parent.  Need to think about
@@ -84,7 +84,7 @@ plot_min_partitions(struct bu_ptbl *p, const char *cname)
 
 
 HIDDEN int
-find_missing_gaps(struct bu_ptbl *missing, struct bu_ptbl *p_brep, struct bu_ptbl *p_comb, struct subbrep_object_data *candidate, int max_cnt)
+find_missing_gaps(struct bu_ptbl *missing, struct bu_ptbl *p_brep, struct bu_ptbl *p_comb, struct subbrep_island_data *candidate, int max_cnt)
 {
     ON_BoundingBox *bbox = candidate->bbox;
 
@@ -106,9 +106,41 @@ find_missing_gaps(struct bu_ptbl *missing, struct bu_ptbl *p_brep, struct bu_ptb
     }
 
     //3. Find brep gaps that are within comb solid segments.  These are the "missing" gaps.
+
+
+    // Now look for missing gaps "inside" the comb
     for (int i = 0; i < max_cnt; i++) {
+	fastf_t missing_in = FLT_MAX;
+	fastf_t missing_out = -FLT_MAX;
 	if (brep[i] && comb[i]) {
+	    // If the first hit point on the brep hit list that is within the min/max range of the
+	    // comb hits is an entry point, we need to check for an offset rather than an all-up gap.
+	    // Likewise, the exiting case may be only a "half-gap" and needs special handling.  This
+	    // should greatly reduce how many rays we're needing to use...
+	    fastf_t c_h1 = comb[i]->hits[0];
+	    fastf_t c_hlast = comb[i]->hits[2*(comb[i]->hit_cnt - 1) + 1];
+	    for (int j = 0; j < brep[i]->hit_cnt; j++) {
+		fastf_t b_h1 = brep[i]->hits[2*j];
+		fastf_t b_h2 = brep[i]->hits[2*j+1];
+		if (b_h1 < c_h1 && b_h2 < c_h1) continue; /* unrelated to comb, ignore */
+		if (b_h1 < c_h1 && b_h2 > c_h1) break; /* something wrong... - comb missing positive material */
+		if (NEAR_ZERO(b_h1 - c_h1, VUNITIZE_TOL)) break; /* all aligned, done */
+		/* b_h1 > c_h1 - comb showing up before brep, so subtraction is missing */
+		//bu_log("missing in hit(%i): %f\n", i, b_h1);
+		missing_in = b_h1;
+	    }
+	    for (int j = brep[i]->hit_cnt - 1; j >= 0; j--) {
+		fastf_t b_h1 = brep[i]->hits[2*j];
+		fastf_t b_h2 = brep[i]->hits[2*j+1];
+		if (b_h1 > c_hlast && b_h2 > c_hlast) continue; /* unrelated to comb, ignore */
+		if (b_h1 < c_hlast && b_h2 > c_hlast) break; /* something wrong... - comb missing positive material */
+		if (NEAR_ZERO(b_h2 - c_hlast, VUNITIZE_TOL)) break; /* all aligned, done */
+		/* b_h2 < c_hlast - comb showing up after brep, so subtraction is missing */
+		//bu_log("missing out hit(%i): %f\n", i, b_h2);
+		missing_out = b_h2;
+	    }
 	    std::vector<fastf_t> missing_gaps;
+
 	    if (brep[i]->gap_cnt > 0) {
 		// iterate over the gaps and see if any of them are inside comb solids on this ray
 		for (int j = 0; j < brep[i]->gap_cnt; j++) {
@@ -163,6 +195,8 @@ find_missing_gaps(struct bu_ptbl *missing, struct bu_ptbl *p_brep, struct bu_ptb
 		std::vector<fastf_t>::iterator f_it;
 		struct minimal_partitions *np;
 		BU_GET(np, struct minimal_partitions);
+		np->missing_in = missing_in;
+		np->missing_out = missing_out;
 		VMOVE(np->ray.r_pt, brep[i]->ray.r_pt);
 		VMOVE(np->ray.r_dir, brep[i]->ray.r_dir);
 		np->index = brep[i]->index;
@@ -200,11 +234,28 @@ subtraction_decision(struct bu_ptbl *missing, struct bu_ptbl *candidate, int max
     }
 
     //3. If the candidate has a hit entry and an exit that correspond to a missing gap entry and exit (not necessarily
-    //   in pairs, because there may be intruding positive volumes in the final brep) it's a subtraction.
+    //   in pairs, because there may be intruding positive volumes in the final brep) it's a subtraction.  Similarly,
+    //   if the candidate first-in hit matches the missing_out or the candidate last-out hit matches the missing_in,
+    //   it's a subtraction.
     std::vector<fastf_t> entry_match;
     std::vector<fastf_t> exit_match;
     for (int i = 0; i < max_cnt; i++) {
 	if (mp[i] && cp[i]) {
+
+	    /* Check first/last hits */
+	    fastf_t can_in = cp[i]->hits[0];
+	    fastf_t can_out = cp[i]->hits[2*(cp[i]->hit_cnt - 1) + 1];
+
+	    if (NEAR_ZERO(can_in - mp[i]->missing_out, VUNITIZE_TOL)) {
+		//bu_log("missing out match!\n");
+		exit_match.push_back(can_in);
+	    }
+
+	    if (NEAR_ZERO(can_out - mp[i]->missing_in, VUNITIZE_TOL)) {
+		//bu_log("missing in match!\n");
+		entry_match.push_back(can_out);
+	    }
+
 	    if (cp[i]->hit_cnt > 0) {
 		// iterate over the entry hits
 		for (int j = 0; j < cp[i]->hit_cnt*2; j=j+2) {
@@ -281,7 +332,7 @@ HIDDEN int
 refine_missing_rays(struct bu_ptbl *new_missing, fastf_t **candidate_rays, int *ray_cnt, struct bu_ptbl *old_missing,
        	const char *pbrep, struct rt_gen_worker_vars *pbrep_rtvars,
        	const char *curr_comb, struct rt_gen_worker_vars *ccomb_vars,
-	struct subbrep_object_data *candidate, int pcpus, struct rt_wdb *wdbp, point_t bmin, point_t bmax, int depth, fastf_t dmin)
+	struct subbrep_island_data *candidate, int pcpus, struct rt_wdb *wdbp, point_t bmin, point_t bmax, int depth, fastf_t ratio, struct bn_tol *tol)
 {
     if (!new_missing || !candidate_rays || !ray_cnt || (*ray_cnt) == 0 || !old_missing) return 0;
     if (!pbrep || !pbrep_rtvars || !curr_comb || !ccomb_vars || !candidate || !wdbp) return 0;
@@ -289,17 +340,14 @@ refine_missing_rays(struct bu_ptbl *new_missing, fastf_t **candidate_rays, int *
     struct bu_ptbl o_brep_results = BU_PTBL_INIT_ZERO;
     struct bu_ptbl curr_comb_results = BU_PTBL_INIT_ZERO;
     fastf_t *c_rays = NULL;
-    fastf_t mult = depth * 10;
 
-    struct bn_tol tol = {BN_TOL_MAGIC, dmin/mult, dmin/mult * dmin/mult, 1.0e-6, 1.0 - 1.0e-6 };
-
-    // Construct the rays to shoot from the bbox  (TODO what tol?)
-    (*ray_cnt) = analyze_get_bbox_rays(&c_rays, bmin, bmax, &tol);
+    // Construct the rays to shoot from the bbox
+    (*ray_cnt) = analyze_get_scaled_bbox_rays(&c_rays, bmin, bmax, ratio*((fastf_t)1/depth));
 
     (*candidate_rays) = c_rays;
 
-    analyze_get_solid_partitions(&o_brep_results, pbrep_rtvars, c_rays, (*ray_cnt), wdbp->dbip, pbrep, &tol, pcpus, 0);
-    analyze_get_solid_partitions(&curr_comb_results, ccomb_vars, c_rays, (*ray_cnt), wdbp->dbip, curr_comb, &tol, pcpus, 0);
+    analyze_get_solid_partitions(&o_brep_results, pbrep_rtvars, c_rays, (*ray_cnt), wdbp->dbip, pbrep, tol, pcpus, 0);
+    analyze_get_solid_partitions(&curr_comb_results, ccomb_vars, c_rays, (*ray_cnt), wdbp->dbip, curr_comb, tol, pcpus, 0);
 
     //Compare the two partition/gap sets that result.
     struct bu_ptbl missing = BU_PTBL_INIT_ZERO;
@@ -325,7 +373,7 @@ analyze_find_subtracted(struct bu_ptbl *UNUSED(results), struct rt_wdb *wdbp, co
     struct rt_i *ccomb_rtip;
     //size_t ncpus = bu_avail_cpus();
     size_t ncpus = (size_t)pcpus;
-    struct subbrep_object_data *curr_union_data = (struct subbrep_object_data *)data;
+    struct subbrep_island_data *curr_union_data = (struct subbrep_island_data *)data;
     //const ON_Brep *brep = curr_union_data->brep;
     size_t i = 0;
     //struct bn_tol tol = {BN_TOL_MAGIC, 0.5, 0.5 * 0.5, 1.0e-6, 1.0 - 1.0e-6 };
@@ -344,7 +392,11 @@ analyze_find_subtracted(struct bu_ptbl *UNUSED(results), struct rt_wdb *wdbp, co
 	ccomb_vars[i].resp = &ccomb_resp[i];
 	rt_init_resource(ccomb_vars[i].resp, i, ccomb_rtip);
     }
+
+    if (rt_gettrees(ccomb_rtip, 1, &curr_comb, ncpus) < 0) {
+#if 0
     if (rt_gettree(ccomb_rtip, curr_comb) < 0) {
+#endif
 	// TODO - free memory
 	return 0;
     }
@@ -355,11 +407,11 @@ analyze_find_subtracted(struct bu_ptbl *UNUSED(results), struct rt_wdb *wdbp, co
 	int ray_cnt = 0;
 	fastf_t *c_rays = NULL;
 	fastf_t *candidate_rays = NULL;
-	struct subbrep_object_data *candidate = (struct subbrep_object_data *)BU_PTBL_GET(candidates, i);
+	struct subbrep_island_data *candidate = (struct subbrep_island_data *)BU_PTBL_GET(candidates, i);
 
-	//if (!BU_STR_EQUAL(bu_vls_addr(candidate->name_root), "209") || !BU_STR_EQUAL(bu_vls_addr(curr_union_data->name_root), "107")) continue;
+	//if (!BU_STR_EQUAL(bu_vls_addr(candidate->id), "209") || !BU_STR_EQUAL(bu_vls_addr(curr_union_data->id), "107")) continue;
 
-	bu_log("\nTesting %s against %s\n", bu_vls_addr(candidate->name_root), bu_vls_addr(curr_union_data->name_root));
+	bu_log("\nTesting %s against %s\n", bu_vls_addr(candidate->id), bu_vls_addr(curr_union_data->id));
 
 
 	// 1. Get the subbrep_bbox.
@@ -379,25 +431,23 @@ analyze_find_subtracted(struct bu_ptbl *UNUSED(results), struct rt_wdb *wdbp, co
 
 	VMOVE(bmin, curr_union_data->bbox->Min());
 	VMOVE(bmax, curr_union_data->bbox->Max());
-	bu_log("in %s.s rpp %f %f %f %f %f %f\n", bu_vls_addr(curr_union_data->name_root), bmin[0], bmax[0], bmin[1], bmax[1], bmin[2], bmax[2]);
+	bu_log("in %s.s rpp %f %f %f %f %f %f\n", bu_vls_addr(curr_union_data->id), bmin[0], bmax[0], bmin[1], bmax[1], bmin[2], bmax[2]);
 
 	VMOVE(bmin, wbbox.Min());
 	VMOVE(bmax, wbbox.Max());
-	bu_log("in %s.s rpp %f %f %f %f %f %f\n", bu_vls_addr(candidate->name_root), bmin[0], bmax[0], bmin[1], bmax[1], bmin[2], bmax[2]);
-	/*
+	bu_log("in %s.s rpp %f %f %f %f %f %f\n", bu_vls_addr(candidate->id), bmin[0], bmax[0], bmin[1], bmax[1], bmin[2], bmax[2]);
+
+	/* tol will be used when checking solidity - go with a value based on the smallest of the bbox dimensions. */
 	fastf_t x_dist = fabs(bmax[0] - bmin[0]);
 	fastf_t y_dist = fabs(bmax[1] - bmin[1]);
 	fastf_t z_dist = fabs(bmax[2] - bmin[2]);
 	fastf_t dmin = (x_dist < y_dist) ? x_dist : y_dist;
 	dmin = (z_dist < dmin) ? z_dist : dmin;
-	*/
-	// TODO - need an adaptive refinement here - don't want to shoot any more test rays than necessary, but need
-	// to make sure we have enough that we don't miss something...
-	fastf_t dmin = DIST_PT_PT(bmin, bmax)/50;
-	struct bn_tol tol = {BN_TOL_MAGIC, dmin, dmin * dmin, 1.0e-6, 1.0 - 1.0e-6 };
+	struct bn_tol tol = {BN_TOL_MAGIC, dmin/100, dmin/100 * dmin/100, 1.0e-6, 1.0 - 1.0e-6 };
 
-	// Construct the rays to shoot from the bbox  (TODO what tol?)
-	ray_cnt = analyze_get_bbox_rays(&c_rays, bmin, bmax, &tol);
+	// Construct the rays to shoot from the bbox
+	fastf_t ratio = (fastf_t)1/50;
+	ray_cnt = analyze_get_scaled_bbox_rays(&c_rays, bmin, bmax, ratio);
 	candidate_rays = c_rays;
 
 	// 2. The rays come from the dimensions of the candidate bbox, but
@@ -413,11 +463,11 @@ analyze_find_subtracted(struct bu_ptbl *UNUSED(results), struct rt_wdb *wdbp, co
 	bu_log("Original brep:\n");
 	analyze_get_solid_partitions(&o_brep_results, pbrep_rtvars, candidate_rays, ray_cnt, wdbp->dbip, pbrep, &tol, pcpus, 0);
 	struct bu_vls tmp_name = BU_VLS_INIT_ZERO;
-	bu_vls_sprintf(&tmp_name, "%s-%s_%s.pl", pbrep, bu_vls_addr(curr_union_data->name_root), bu_vls_addr(candidate->name_root));
+	bu_vls_sprintf(&tmp_name, "%s-%s_%s.pl", pbrep, bu_vls_addr(curr_union_data->id), bu_vls_addr(candidate->id));
 	plot_min_partitions(&o_brep_results, bu_vls_addr(&tmp_name));
 	bu_log("Control comb: %s\n", curr_comb);
 	analyze_get_solid_partitions(&curr_comb_results, ccomb_vars, candidate_rays, ray_cnt, wdbp->dbip, curr_comb, &tol, pcpus, 0);
-	bu_vls_sprintf(&tmp_name, "%s-%s_%s-ccomb.pl", pbrep, bu_vls_addr(curr_union_data->name_root), bu_vls_addr(candidate->name_root));
+	bu_vls_sprintf(&tmp_name, "%s-%s_%s-ccomb.pl", pbrep, bu_vls_addr(curr_union_data->id), bu_vls_addr(candidate->id));
 	plot_min_partitions(&curr_comb_results, bu_vls_addr(&tmp_name));
 	//
 	// 3. Compare the two partition/gap sets that result.
@@ -430,7 +480,7 @@ analyze_find_subtracted(struct bu_ptbl *UNUSED(results), struct rt_wdb *wdbp, co
 	missing = fmissing;
 	int missing_gaps = find_missing_gaps(fmissing, &o_brep_results, &curr_comb_results, candidate, ray_cnt);
 	if (missing_gaps > 0 && BU_PTBL_LEN(missing) >= MINIMUM_RAYS_FOR_DECISION) {
-	    bu_vls_sprintf(&tmp_name, "%s-%s_%s-missing.pl", pbrep, bu_vls_addr(curr_union_data->name_root), bu_vls_addr(candidate->name_root));
+	    bu_vls_sprintf(&tmp_name, "%s-%s_%s-missing.pl", pbrep, bu_vls_addr(curr_union_data->id), bu_vls_addr(candidate->id));
 	    plot_min_partitions(missing, bu_vls_addr(&tmp_name));
 	}
 	// 4.  If there are missing gaps in curr_comb, prep candidate and
@@ -439,20 +489,20 @@ analyze_find_subtracted(struct bu_ptbl *UNUSED(results), struct rt_wdb *wdbp, co
 	// present in the results from the original brep, it is subtracted.  Add it
 	// to the results set.
 #if 1
-	int depth = 1;
+	int depth = 2;
 	bu_log("missing: %d\n", BU_PTBL_LEN(missing));
-	while (missing_gaps > 0 && BU_PTBL_LEN(missing) < MINIMUM_RAYS_FOR_DECISION) {
+	while (missing_gaps > 0  && (fastf_t)missing_gaps/(fastf_t)ray_cnt > 0.01 && BU_PTBL_LEN(missing) < MINIMUM_RAYS_FOR_DECISION) {
 	    struct bu_ptbl *nmissing;
 	    fmissing = missing;
 	    BU_GET(nmissing, struct bu_ptbl);
 	    bu_ptbl_init(nmissing, 8, "ptbl init");
-	    missing_gaps = refine_missing_rays(nmissing, &candidate_rays, &ray_cnt, fmissing, pbrep, pbrep_rtvars, curr_comb, ccomb_vars, candidate, pcpus, wdbp, bmin, bmax, depth, dmin);
+	    missing_gaps = refine_missing_rays(nmissing, &candidate_rays, &ray_cnt, fmissing, pbrep, pbrep_rtvars, curr_comb, ccomb_vars, candidate, pcpus, wdbp, bmin, bmax, depth, ratio, &tol);
 	    bu_log("refining: %d\n", ray_cnt);
 	    missing = nmissing;
 	    depth++;
 	}
 	if (missing_gaps > 0) {
-	    bu_vls_sprintf(&tmp_name, "%s-%s_%s-missing.pl", pbrep, bu_vls_addr(curr_union_data->name_root), bu_vls_addr(candidate->name_root));
+	    bu_vls_sprintf(&tmp_name, "%s-%s_%s-missing.pl", pbrep, bu_vls_addr(curr_union_data->id), bu_vls_addr(candidate->id));
 	    plot_min_partitions(missing, bu_vls_addr(&tmp_name));
 	    bu_log("refined to depth %d\n", depth);
 	}
@@ -498,7 +548,10 @@ analyze_find_subtracted(struct bu_ptbl *UNUSED(results), struct rt_wdb *wdbp, co
 		candidate_vars[k].resp = &candidate_resp[k];
 		rt_init_resource(candidate_vars[k].resp, k, candidate_rtip);
 	    }
+	    if (rt_gettrees(candidate_rtip, 1, (const char **)&dp->d_namep, ncpus) < 0) {
+#if 0
 	    if (rt_gettree(candidate_rtip, dp->d_namep) < 0) {
+#endif
 		// TODO - free memory
 		return 0;
 	    }
@@ -511,7 +564,7 @@ analyze_find_subtracted(struct bu_ptbl *UNUSED(results), struct rt_wdb *wdbp, co
 	    bu_free(candidate_vars, "free vars");
 	    bu_free(candidate_resp, "free resp");
 
-	    bu_vls_sprintf(&tmp_name, "%s-%s_%s-candidate.pl", pbrep, bu_vls_addr(curr_union_data->name_root), bu_vls_addr(candidate->name_root));
+	    bu_vls_sprintf(&tmp_name, "%s-%s_%s-candidate.pl", pbrep, bu_vls_addr(curr_union_data->id), bu_vls_addr(candidate->id));
 	    plot_min_partitions(&candidate_results, bu_vls_addr(&tmp_name));
 
 	    // remove the temp comb.
@@ -538,7 +591,7 @@ analyze_find_subtracted(struct bu_ptbl *UNUSED(results), struct rt_wdb *wdbp, co
     // blegh - can't do this through libged, since we're using it - is there a sane librt API to do this somewhere?
     if (BU_PTBL_LEN(&to_subtract) > 0) {
 	struct bu_vls sub_comb_name = BU_VLS_INIT_ZERO;
-	bu_vls_sprintf(&sub_comb_name, "csg_%s-s_%s.c", pbrep, bu_vls_addr(curr_union_data->name_root));
+	bu_vls_sprintf(&sub_comb_name, "csg_%s-s_%s.c", pbrep, bu_vls_addr(curr_union_data->id));
 	struct directory *cdp = db_lookup(wdbp->dbip, bu_vls_addr(&sub_comb_name), LOOKUP_QUIET);
 	if (cdp == RT_DIR_NULL) {
 	    bu_log("error looking up subtraction object %s\n", bu_vls_addr(&sub_comb_name));
@@ -567,7 +620,7 @@ analyze_find_subtracted(struct bu_ptbl *UNUSED(results), struct rt_wdb *wdbp, co
 		comb->tree = TREE_NULL;
 	    }
 	    for (size_t si = 0; si < BU_PTBL_LEN(&to_subtract); si++) {
-		struct subbrep_object_data *s = (struct subbrep_object_data *)BU_PTBL_GET(&to_subtract, si);
+		struct subbrep_island_data *s = (struct subbrep_island_data *)BU_PTBL_GET(&to_subtract, si);
 		tree_list[curr_count].tl_op = OP_UNION;
 		RT_GET_TREE(tp, &rt_uniresource);
 		tree_list[curr_count].tl_tree = tp;

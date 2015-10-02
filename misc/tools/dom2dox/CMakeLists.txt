@@ -84,25 +84,24 @@ include_directories(
   ${CMAKE_CURRENT_BINARY_DIR}
   ${BRLCAD_SRC_INCLUDE_DIR}
   ${BRLCAD_BUILD_INCLUDE_DIR}
-  ${TCL_INCLUDE_DIR}
+  ${TCL_INCLUDE_DIRS}
   )
 
 
-PERPLEX_TARGET(dom2dox_scanner dom2dox_scanner.perplex
-  ${CMAKE_CURRENT_BINARY_DIR}/dom2dox_scanner.c
-  ${CMAKE_CURRENT_BINARY_DIR}/dom2dox_scanner.h)
-LEMON_TARGET(dom2dox_parser dom2dox_parser.lemon
-  ${CMAKE_CURRENT_BINARY_DIR}/dom2dox_parser.c
-  ${CMAKE_CURRENT_BINARY_DIR}/dom2dox_parser.h)
+PERPLEX_TARGET(dom2dox_scanner dom2dox_scanner.perplex)
+LEMON_TARGET(dom2dox_parser dom2dox_parser.lemon)
 ADD_PERPLEX_LEMON_DEPENDENCY(dom2dox_scanner dom2dox_parser)
 
 set(dom2dox_srcs
   dom2dox.c
-  ${CMAKE_CURRENT_BINARY_DIR}/dom2dox_scanner.c
-  ${CMAKE_CURRENT_BINARY_DIR}/dom2dox_parser.c
+  ${PERPLEX_dom2dox_scanner_SRC}
+  ${LEMON_dom2dox_parser_SRC}
 )
 add_executable(dom2dox ${dom2dox_srcs})
 target_link_libraries(dom2dox ${BU_LIBRARY})
+set_property(TARGET dom2dox APPEND PROPERTY INCLUDE_DIRECTORIES "${PERPLEX_dom2dox_scanner_INCLUDE_DIR}")
+set_property(TARGET dom2dox APPEND PROPERTY INCLUDE_DIRECTORIES "${LEMON_dom2dox_parser_INCLUDE_DIR}")
+
 include(CheckCCompilerFlag)
 CHECK_C_COMPILER_FLAG(-Wno-error NOERROR_FLAG)
 if(NOERROR_FLAG)

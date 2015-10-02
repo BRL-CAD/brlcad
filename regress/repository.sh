@@ -93,7 +93,7 @@ done
 echo "running bio.h redundancy check..."
 
 # limit our search to files containing bio.h
-FILES="`grep -I -e '#[[:space:]]*include' $SRCFILES $INCFILES | grep -E 'bio.h' | grep -v 'bio.h:' | grep -v 'obj_rules.cpp' | sed 's/:.*//g' | sort | uniq`"
+FILES="`grep -I -e '#[[:space:]]*include' $SRCFILES $INCFILES | grep -E 'bio.h' | grep -v 'bio.h:' | grep -v 'obj_libgcv_rules.cpp' | grep -v 'obj_obj-g_rules.cpp' | sed 's/:.*//g' | sort | uniq`"
 FOUND=
 for file in $FILES ; do
 
@@ -157,7 +157,7 @@ FILES="`grep -I -e '#[[:space:]]*include' $SRCFILES $INCFILES | grep -E 'common.
 #    fi
 #done`"
 
-LEXERS="schema.h obj_grammar.c obj_grammar.cpp obj_scanner.h points_scan.c script.c"
+LEXERS="schema.h csg_parser.c csg_scanner.h obj_libgcv_grammar.cpp obj_obj-g_grammar.cpp obj_grammar.c obj_scanner.h points_scan.c script.c"
 EXEMPT="bnetwork.h bio.h config_win.h pstdint.h uce-dirent.h ttcp.c optionparser.h $LEXERS"
 
 FOUND=

@@ -41,6 +41,8 @@
 #include "mm.h"
 #include "mmatomic.h"
 
+#include "tinycthread.h"
+
 #include <string.h>
 
 
@@ -62,7 +64,7 @@ typedef struct {
     mmAtomicP owner;
 #else
     /* Mutex, or how to ruin performance */
-    mtMutex mutex;
+    mtx_t mutex;
     void *owner;
 #endif
 } mmHashPage MM_CACHE_ALIGN;
@@ -89,7 +91,7 @@ typedef struct {
 #ifdef MM_ATOMIC_SUPPORT
     mmAtomic32 entrycount;
 #else
-    mtMutex countmutex;
+    mtx_t countmutex;
     uint32_t entrycount;
 #endif
     uint32_t lowcount;
@@ -100,7 +102,7 @@ typedef struct {
 #ifdef MM_ATOMIC_SUPPORT
     mmAtomic32 globallock;
 #else
-    mtMutex globalmutex;
+    mtx_t globalmutex;
 #endif
     char paddingB[64];
 
@@ -148,20 +150,26 @@ static void mmHashSetBounds(mmHashTable *table)
 #else
 
 #define MM_HASH_LOCK_TRY_READ(t,p) (mtMutexTryLock(&t->page[p].mutex))
-#define MM_HASH_LOCK_DONE_READ(t,p) (mtMutexUnlock(&t->page[p].mutex))
+#define MM_HASH_LOCK_DONE_READ(t,p) do {if (mtx_unlock(&t->page[p].mutex) != thrd_success) bu_bomb("mtx_unlock() failed"); } while (0)
 #define MM_HASH_LOCK_TRY_WRITE(t,p) (mtMutexTryLock(&t->page[p].mutex))
-#define MM_HASH_LOCK_DONE_WRITE(t,p) (mtMutexUnlock(&t->page[p].mutex))
-#define MM_HASH_GLOBAL_LOCK(t) (mtMutexLock(&t->globalmutex))
-#define MM_HASH_GLOBAL_UNLOCK(t) (mtMutexUnlock(&t->globalmutex))
+#define MM_HASH_LOCK_DONE_WRITE(t,p) MM_HASH_LOCK_DONE_READ((t), (p))
+#define MM_HASH_GLOBAL_LOCK(t) do {if (mtx_lock(&t->globalmutex) != thrd_success) bu_bomb("mtx_lock() failed"); } while (0)
+#define MM_HASH_GLOBAL_UNLOCK(t) do {if (mtx_unlock(&t->globalmutex) != thrd_success) bu_bomb("mtx_unlock() failed"); } while (0)
 
 
 static inline uint32_t MM_HASH_ENTRYCOUNT_ADD_READ(mmHashTable *t, int32_t c)
 {
     uint32_t entrycount;
-    mtMutexLock(&t->countmutex);
+
+    if (mtx_lock(&t->countmutex) != thrd_success)
+	bu_bomb("mtx_lock() failed");
+
     t->entrycount += c;
     entrycount = t->entrycount;
-    mtMutexUnlock(&t->countmutex);
+
+    if (mtx_unlock(&t->countmutex) != thrd_success)
+	bu_bomb("mtx_unlock() failed");
+
     return entrycount;
 }
 #endif
@@ -709,7 +717,10 @@ void mmHashInit(void *hashtable, mmHashAccess *vaccess, size_t entrysize, uint32
 #ifdef MM_ATOMIC_SUPPORT
     mmAtomicWrite32(&table->entrycount, 0);
 #else
-    mtMutexInit(&table->countmutex);
+
+    if (mtx_init(&table->countmutex, mtx_plain) != thrd_success)
+	bu_bomb("mtx_init() failed");
+
     table->entrycount = 0;
 #endif
     mmHashSetBounds(table);
@@ -735,11 +746,15 @@ void mmHashInit(void *hashtable, mmHashAccess *vaccess, size_t entrysize, uint32
 #else
 
     for (pageindex = table->pagecount; pageindex; pageindex--, page++) {
-	mtMutexInit(&page->mutex);
+	if (mtx_init(&page->mutex, mtx_plain) != thrd_success)
+	    bu_bomb("mtx_init() failed");
+
 	page->owner = 0;
     }
 
-    mtMutexInit(&table->globalmutex);
+    if (mtx_init(&table->globalmutex, mtx_plain) != thrd_success)
+	bu_bomb("mtx_init() failed");
+
 #endif
 
 #ifdef MM_HASH_DEBUG_STATISTICS

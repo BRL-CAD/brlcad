@@ -3,21 +3,32 @@ include_directories(
   ${CMAKE_CURRENT_BINARY_DIR}
   )
 
-PERPLEX_TARGET(OBJ_Scanner wfobj/obj_rules.l
-  ${CMAKE_CURRENT_BINARY_DIR}/obj_rules.cpp ${CMAKE_CURRENT_BINARY_DIR}/obj_scanner.h)
-LEMON_TARGET(OBJ_Parser wfobj/obj_grammar.yy
-  ${CMAKE_CURRENT_BINARY_DIR}/obj_grammar.cpp ${CMAKE_CURRENT_BINARY_DIR}/obj_grammar.hpp)
-ADD_PERPLEX_LEMON_DEPENDENCY(OBJ_Scanner OBJ_Parser)
+# For parallel safety, need separate names and files for each target.
+# Should probably rework this whole perplex/lemon combo into one macro,
+# since this will be the common pattern.
+macro(GEN_OBJ_SRCS targetname)
+  file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/OBJ_${targetname}_SRCS)
+  PERPLEX_TARGET(OBJ_${targetname}_Scanner wfobj/obj_rules.l
+    OUT_SRC_FILE obj_${targetname}_rules.cpp OUT_HDR_FILE obj_scanner.h)
+  LEMON_TARGET(OBJ_${targetname}_Parser wfobj/obj_grammar.yy
+    OUT_SRC_FILE obj_${targetname}_grammar.cpp OUT_HDR_FILE obj_grammar.hpp)
+  ADD_PERPLEX_LEMON_DEPENDENCY(OBJ_${targetname}_Scanner OBJ_${targetname}_Parser)
+  DISTCLEAN(${PERPLEX_OBJ_${targetname}_Scanner_INCLUDE_DIR})
+  DISTCLEAN(${LEMON_OBJ_${targetname}_Parser_INCLUDE_DIR})
+endmacro(GEN_OBJ_SRCS)
 
+GEN_OBJ_SRCS(obj-g)
 set(OBJ_G_SRCS
-  ${CMAKE_CURRENT_BINARY_DIR}/obj_grammar.cpp
-  ${CMAKE_CURRENT_BINARY_DIR}/obj_rules.cpp
+  ${LEMON_OBJ_obj-g_Parser_SRC}
+  ${PERPLEX_OBJ_obj-g_Scanner_SRC}
   wfobj/obj_parser.cpp
   ../conv/obj-g.c
   wfobj/tri_face.c
   )
 
 BRLCAD_ADDEXEC(obj-g "${OBJ_G_SRCS}" "libbu;libbn;librt;libwdb")
+set_property(TARGET obj-g APPEND PROPERTY INCLUDE_DIRECTORIES "${PERPLEX_OBJ_obj-g_Scanner_INCLUDE_DIR}")
+set_property(TARGET obj-g APPEND PROPERTY INCLUDE_DIRECTORIES "${LEMON_OBJ_obj-g_Parser_INCLUDE_DIR}")
 
 set(wfobj_ignore_files
   wfobj/obj_grammar_decls.h
@@ -41,6 +52,17 @@ set(GCV_INCLUDE_DIRS
   )
 BRLCAD_LIB_INCLUDE_DIRS(gcv GCV_INCLUDE_DIRS "")
 
+
+GEN_OBJ_SRCS(libgcv)
+set(GCV_SO_SRCS
+  ${LEMON_OBJ_libgcv_Parser_SRC}
+  ${PERPLEX_OBJ_libgcv_Scanner_SRC}
+  )
+GEN_OBJ_SRCS(libgcv-static)
+set(GCV_STATIC_SRCS
+  ${LEMON_OBJ_libgcv-static_Parser_SRC}
+  ${PERPLEX_OBJ_libgcv-static_Scanner_SRC}
+  )
 set(LIBGCV_SOURCES
   bottess.c
   facetize.c
@@ -51,8 +73,7 @@ set(LIBGCV_SOURCES
   bot_solidity.c
   )
 
-list(APPEND LIBGCV_SOURCES
-  setup.cpp
+set(LIBGCV_CONVERTER_SOURCES
   conv/brlcad.c
   conv/fastgen4/fastgen4_read.c
   conv/fastgen4/fastgen4_write.cpp
@@ -64,19 +85,23 @@ list(APPEND LIBGCV_SOURCES
   conv/obj/obj_read.c
   wfobj/obj_parser.cpp
   wfobj/tri_face.c
-  ${CMAKE_CURRENT_BINARY_DIR}/obj_grammar.cpp
-  ${CMAKE_CURRENT_BINARY_DIR}/obj_rules.cpp
   )
 
-BRLCAD_ADDLIB(libgcv "${LIBGCV_SOURCES}" "librt;libwdb;libbu")
-SET_TARGET_PROPERTIES(libgcv PROPERTIES VERSION 20.0.1 SOVERSION 20)
+list(APPEND LIBGCV_SOURCES ${LIBGCV_CONVERTER_SOURCES})
 
-BRLCAD_ADDEXEC(gcv_test gcv_test.c libgcv NO_INSTALL)
+BRLCAD_ADDLIB(libgcv "${LIBGCV_SOURCES}" "librt;libwdb;libbu" SO_SRCS "${GCV_SO_SRCS}" STATIC_SRCS "${GCV_STATIC_SRCS}")
+set_target_properties(libgcv PROPERTIES VERSION 20.0.1 SOVERSION 20)
+set_property(TARGET libgcv APPEND PROPERTY INCLUDE_DIRECTORIES "${PERPLEX_OBJ_libgcv_Scanner_INCLUDE_DIR}")
+set_property(TARGET libgcv APPEND PROPERTY INCLUDE_DIRECTORIES "${LEMON_OBJ_libgcv_Parser_INCLUDE_DIR}")
+if(TARGET libgcv-static)
+  set_property(TARGET libgcv-static APPEND PROPERTY INCLUDE_DIRECTORIES "${PERPLEX_OBJ_libgcv-static_Scanner_INCLUDE_DIR}")
+  set_property(TARGET libgcv-static APPEND PROPERTY INCLUDE_DIRECTORIES "${LEMON_OBJ_libgcv-static_Parser_INCLUDE_DIR}")
+endif(TARGET libgcv-static)
 
 enable_testing()
 BRLCAD_ADDEXEC(test_bottess test_bottess.c libgcv NO_INSTALL)
 if(CPP_DLL_DEFINES)
-  SET_PROPERTY(TARGET test_bottess APPEND PROPERTY COMPILE_DEFINITIONS "BOTTESS_DLL_IMPORTS")
+  set_property(TARGET test_bottess APPEND PROPERTY COMPILE_DEFINITIONS "BOTTESS_DLL_IMPORTS")
 endif(CPP_DLL_DEFINES)
 add_test(NAME bottess_test COMMAND test_bottess)
 
@@ -84,7 +109,6 @@ set(GCV_IGNORE_FILES
   NOTES
   conv/fastgen4/NOTES
   facetize.h
-  gcv_private.h
   plugin.h
   soup.h
   tri_intersect.h

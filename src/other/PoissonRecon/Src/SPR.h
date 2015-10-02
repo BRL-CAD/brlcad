@@ -53,40 +53,72 @@ DAMAGE.
 #  endif
 #endif
 
-__BEGIN_DECLS
-
 struct spr_options {
-	const char *xform;
-	const char *voxelgrid;
-	const char *confidence;
-	const char *normalweights;
-	/* boolean */
-	int nonManifold;
-	int polygon;
-	/* int */
-	int depth;
-	int cgdepth;
-	int kerneldepth;
-	int adaptiveexponent;
-	int iters;
-	int voxeldepth;
-	int fulldepth;
-	int mindepth;
-	int maxsolvedepth;
-	int boundarytype;
-	int thread_cnt;
+    const char *xform;
+    const char *voxelgrid;
+    const char *confidence;
+    const char *normalweights;
+    /* boolean */
+    int density;
+    int confidenceset;
+    int normalweightsset;
+    int nonManifold;
+    int polygon;
+    int colorset;
+    int complete;
+    int showresidual;
+    /* int */
+    int depth;
+    int cgdepth;
+    int kerneldepth;
+    int adaptiveexponent;
+    int iters;
+    int voxeldepth;
+    int fulldepth;
+    int mindepth;
+    int maxsolvedepth;
+    int boundarytype;
+    int thread_cnt;
+    
+    double samples_per_node;
+    double scale;
+    double cssolveraccuracy;
+    double pointweight;
+    double color;
 
-	double samples_per_node;
-	double scale;
-	double cssolveraccuracy;
-	double pointweight;
+    /* comments */
+    void* comments;  // needs to be of type std::vector< char* >
 };
 
-#define SPR_OPTIONS_DEFAULT_INIT { NULL, NULL, NULL, NULL, 0, 0, 8, 0, 6, 1, 8, -1, 5, 0, 8, 1, 1, 1.0, 1.1, 0.001, 4.0 }
+// forward declarations
+template< class Real > struct Point3D;
+template< class Real > struct XForm4x4;
+template< class Real > class OrientedPointStream;
+template< class Real , class Data > class OrientedPointStreamWithData;
+template< class Real > class PlyVertex;
+template< class Vertex > class CoredFileMeshData;
+
+SPR_EXPORT template< class Real, class Vertex > int
+spr_surface_build_cpp(XForm4x4< Real>& xForm,
+		      OrientedPointStreamWithData< float, Point3D< unsigned char > >* pointStream,
+		      const struct spr_options &opts,
+		      CoredFileMeshData< Vertex >* mesh);
+
+SPR_EXPORT template< class Real, class Vertex > int
+spr_surface_build_cpp_with_data(XForm4x4< Real>& xForm,
+				OrientedPointStream< float >* pointStream,
+				const struct spr_options &opts,
+				CoredFileMeshData< PlyVertex <float> >* mesh);
+
+__BEGIN_DECLS
+
+SPR_EXPORT extern int
+spr_surface_build_opts(int **faces, int *num_faces, double **points, int *num_pnts,
+		const struct cvertex **verts, int cnt, struct spr_options &opts);
 
 SPR_EXPORT extern int
 spr_surface_build(int **faces, int *num_faces, double **points, int *num_pnts,
-		const struct cvertex **verts, int cnt, struct spr_options *opts);
+		const struct cvertex **verts, int cnt, int fidelity);
 
 __END_DECLS
 

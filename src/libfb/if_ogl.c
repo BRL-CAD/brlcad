@@ -73,10 +73,7 @@
 #ifdef HAVE_GL_GL_H
 #  include <GL/gl.h>
 #endif
-
-#ifdef HAVE_SYS_WAIT_H
-#  include <sys/wait.h>
-#endif
+#include "bresource.h"
 
 #include "bu/color.h"
 #include "bu/malloc.h"

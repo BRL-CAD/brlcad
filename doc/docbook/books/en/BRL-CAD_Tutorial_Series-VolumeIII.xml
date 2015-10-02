@@ -3,7 +3,7 @@
 >
   <info><title><application>BRL-CAD</application> Tutorial Series: Volume III - Principles of Effective Modeling</title>
 
-    <xi:include href="./tutorial_series_authors.xml" xpointer="Intro_MGED_Tutorial_Series_III_authors"/>
+    <xi:include href="../../books/en/tutorial_series_authors.xml" xpointer="Intro_MGED_Tutorial_Series_III_authors"/>
 
     <publishername>Army Research Laboratory</publishername>
     <biblioid class="pubsnumber">ARL-SR-119</biblioid>
@@ -97,7 +97,7 @@
 
   <chapter xml:id="volIIImodelprocess"><info><title>The Model Process</title></info>
 
-    <section><info><title>The Importance of the Model Mission</title></info>
+    <section xml:id="The_Importance_of_the_Model_Mission"><info><title>The Importance of the Model Mission</title></info>
 
       <para>
 	The key to knowing how to build successful, effective models in BRL-CAD is
@@ -167,7 +167,7 @@
 
     </section>
 
-    <section><info><title>M-O-D-E-L: A Five-Step Approach to Creating Effective Models</title></info>
+    <section xml:id="M_O_D_E_L_A_Five-Step_Approach_to_Creating_Effective_Models"><info><title>M-O-D-E-L: A Five-Step Approach to Creating Effective Models</title></info>
 
 
       <para>

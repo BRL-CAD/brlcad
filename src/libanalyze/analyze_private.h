@@ -39,6 +39,8 @@ struct minimal_partitions {
     struct xray ray;
     int index;
     int valid;
+    fastf_t missing_in;
+    fastf_t missing_out;
 };
 
 
@@ -46,6 +48,7 @@ extern void analyze_gen_worker(int cpu, void *ptr);
 
 /* Returns count of rays in rays array */
 ANALYZE_EXPORT extern int analyze_get_bbox_rays(fastf_t **rays, point_t min, point_t max, struct bn_tol *tol);
+ANALYZE_EXPORT extern int analyze_get_scaled_bbox_rays(fastf_t **rays, point_t min, point_t max, fastf_t ratio);
 
 ANALYZE_EXPORT extern int analyze_get_solid_partitions(struct bu_ptbl *results, struct rt_gen_worker_vars *pstate, const fastf_t *rays, int ray_cnt,
 	struct db_i *dbip, const char *obj, struct bn_tol *tol, int ncpus, int filter);
