@@ -79,34 +79,35 @@ island_faces_characterize(struct subbrep_island_data *sb)
     return loops_planar;
 }
 
+int
+bbox_isect(struct subbrep_island_data *s, struct subbrep_island_data *c)
+{
+    ON_BoundingBox isect;
+    bool bbi = isect.Intersection(*s->bbox, *c->bbox);
+    if (bbi) {
+	// If the child is a union island, it gets the subtraction
+	if (c->local_brep_bool_op == 'u' || (c->nucleus && c->nucleus->params->bool_op == 'u')) {
+	    bu_ptbl_ins_unique(c->subtractions, (long *)s);
+	}
+	// Regardless, we need to test further.
+	return 1;
+    }
+    return 0;
+}
+
 /*
- * This is the point at which we characterize the relationships between islands.  Assuming our determination
- * of positive and negative shapes is trustworthy, all positive islands are unioned into the toplevel comb.
- * The only question is what needs to be subtracted.  Part of this information is available via the shared
- * loop information from the initial island partitioning, but that by itself is not enough.  It is possible
- * to have protruding subtractions that also remove volume from other shapes.
+ * This is the point at which we characterize the relationships between
+ * islands.  Assuming our determination of positive and negative shapes is
+ * trustworthy, all positive islands are unioned into the toplevel comb.  The
+ * only question is what needs to be subtracted.  Part of this information is
+ * available via the shared loop information from the initial island
+ * partitioning, but that by itself is not enough.  It is possible to have
+ * protruding subtractions that also remove volume from other shapes.
  *
- * To identify what subtractions may do this, we use the loop connectivity for each island to walk the
- * "child" islands of a union island.  These child islands are where additional subtractions may come from.
- * So the top level union, for example, must be checked against all subtractions.  However, a union nested
- * inside a subtraction should *not* have its "parent" negative island subtracted from it.
- *
- * Currently the intrusion test uses axis aligned bounding boxes, but ideally we should use oriented bounding boxes
- * or even tighter tests.
- *
- *
- * For each subtraction island, check that island against parent island(s) to see if there is a bbox
- * overlap. If the parent is negative, jump up to the parent above that parent.  If the parent is postivie and
- * there is an overlap, subtract it. Then, check any direct union children of that parent island. If
- * there is an overlap, subtract and check any direct union parents and childrn of that island not already checked.
- *
- * If and only if there is an overlap with those parents, subtract and queue up the next level of union parents/children.  If any
- * parent does *not* overlap with the negative bbox, the chain is broken and we're done.  If any negative parent is encountered
- * other than when dealing with the negative island's direct parents, the chain is broken. Follow negative children to
- * see if there are any unions below, so long as the current negative island is not in the direct parental chains of a
- * given union.
- *
- *
+ * If we have overlapping bboxes, we have a possible subtraction operation
+ * between islands.  It's not guaranteed that there is an interaction, but to
+ * make sure will require ray testing so for speed we accept that there may be
+ * extra subtractions in the tree.
  */
 void
 find_hierarchy(struct bu_vls *UNUSED(msgs), struct bu_ptbl *islands)
@@ -141,106 +142,51 @@ find_hierarchy(struct bu_vls *UNUSED(msgs), struct bu_ptbl *islands)
 	}
     }
 
-    // Process all islands for subtractions
+    // Build the set of all subtraction islands.  Each will need to be evaluated
+    std::queue<struct subbrep_island_data *> subtractions;
     for (unsigned int i = 0; i < BU_PTBL_LEN(islands); i++) {
-	std::queue<struct subbrep_island_data *> subislands;
 	struct subbrep_island_data *id = (struct subbrep_island_data *)BU_PTBL_GET(islands, i);
 	if (id->local_brep_bool_op == '-' || (id->nucleus && id->nucleus->params->bool_op == '-')) {
-	    continue;
+	    subtractions.push(id);
 	}
+    }
 
-	// We need to ignore any subtractions in the parent linkages of this node and any other parent linkages (that is,
-	// inheritance changes independent of the one above the current node) of any children below this node.  First
-	// step, build the set of children
-	std::set<struct subbrep_island_data *> node_children;
-	std::set<struct subbrep_island_data *>::iterator nc_it;
-	std::queue<struct subbrep_island_data *> cq;
-	cq.push(id);
-
-	// Get the node's immediate children
+    // Process all subtractions
+    while (!subtractions.empty()) {
 	std::pair <IslandMultiMap::iterator, IslandMultiMap::iterator> p2c_ret;
 	IslandMultiMap::iterator p2c_it;
-	p2c_ret = p2c.equal_range(id);
+	std::set<struct subbrep_island_data *> visited;
+	std::queue<struct subbrep_island_data *> cq;
+
+	struct subbrep_island_data *sub = subtractions.front();
+	p2c_ret = c2p.equal_range(sub);
+	subtractions.pop();
+
+	// A subtraction is guaranteed to be subtracted from its own parents
 	for (p2c_it = p2c_ret.first; p2c_it != p2c_ret.second; ++p2c_it) {
-	    if (p2c_it->second != id) {
-		cq.push(p2c_it->second);
-		// At the top level for a union, any negative shape joined by a loop is
-		// guaranteed to be a subtraction from that node - go ahead and add it
-		// here for insurance.  The bbox test *should* catch all of these, but
-		// since we happen to *know* the answer for these particular objects...
-		if (p2c_it->second->local_brep_bool_op == '-' || (p2c_it->second->nucleus && p2c_it->second->nucleus->params->bool_op == '-')) {
-		    bu_ptbl_ins_unique(id->subtractions, (long *)p2c_it->second);
-		}
-	    }
+	    bu_ptbl_ins_unique(p2c_it->second->subtractions, (long *)sub);
+	    cq.push(p2c_it->second);
 	}
+
+	// A subtraction is not subtracted from its own children.
+	visited.insert(sub);
+
+	// A subtraction can remove volume down its parent's child chain(s), or up its parent's parent chain(s).
 	while (!cq.empty()) {
-	    p2c_ret = p2c.equal_range(cq.front());
-	    node_children.insert(cq.front());
+	    struct subbrep_island_data *c = cq.front();
+	    visited.insert(cq.front());
 	    cq.pop();
+	    p2c_ret = p2c.equal_range(c);
 	    for (p2c_it = p2c_ret.first; p2c_it != p2c_ret.second; ++p2c_it) {
-	    if (p2c_it->second != id) cq.push(p2c_it->second);
-	    }
-	}
-
-	std::set<struct subbrep_island_data *> ignore_islands;
-	for (nc_it = node_children.begin(); nc_it != node_children.end(); nc_it++) {
-	    // Get the node's immediate parents
-	    std::pair <IslandMultiMap::iterator, IslandMultiMap::iterator> sc2p_ret;
-	    IslandMultiMap::iterator sc2p_it;
-	    sc2p_ret = c2p.equal_range(*nc_it);
-
-	    // Build a set of any subtractions in the full parent linkage of this node, (for all parents)
-	    // so we know not to subtract those.  If negative islands are in the direct ancestoral
-	    // connectivity graph, they can't be subtractions of that node.
-	    std::queue<struct subbrep_island_data *> pqueue;
-	    for (sc2p_it = sc2p_ret.first; sc2p_it != sc2p_ret.second; ++sc2p_it) {
-		struct subbrep_island_data *pid = sc2p_it->second;
-		if (pid != *nc_it) pqueue.push(pid);
-		if (pid->local_brep_bool_op == '-' || (pid->nucleus && pid->nucleus->params->bool_op == '-')) {
-		    // Don't ignore known node children of this node
-		    if (node_children.find(pid) == node_children.end()) ignore_islands.insert(pid);
+		if (visited.find(p2c_it->second) == visited.end()) {
+		    if (bbox_isect(sub, p2c_it->second)) cq.push(p2c_it->second);
 		}
 	    }
-	    while(!pqueue.empty()) {
-		struct subbrep_island_data *pid= pqueue.front();
-		pqueue.pop();
-		std::pair <IslandMultiMap::iterator, IslandMultiMap::iterator> pchain_ret;
-		IslandMultiMap::iterator pchain_it;
-		pchain_ret = c2p.equal_range(pid);
-		for (pchain_it = pchain_ret.first; pchain_it != pchain_ret.second; ++pchain_it) {
-		    struct subbrep_island_data *gpid = pchain_it->second;
-		    if (gpid != pid) pqueue.push(gpid);
-		    if (gpid->local_brep_bool_op == '-' || (gpid->nucleus && gpid->nucleus->params->bool_op == '-')) {
-			// Don't ignore known node children of this node
-			if (node_children.find(gpid) == node_children.end()) ignore_islands.insert(gpid);
-		    }
+	    p2c_ret = c2p.equal_range(c);
+	    for (p2c_it = p2c_ret.first; p2c_it != p2c_ret.second; ++p2c_it) {
+		if (visited.find(p2c_it->second) == visited.end()) {
+		    if (bbox_isect(sub, p2c_it->second)) cq.push(p2c_it->second);
 		}
-	    }
-
-	    // TODO - if the parent has union children other than the current child node, they need to
-	    // be checked for parentes, their own union children and those children for parents.
-	}
-
-
-
-	// Check all subtractions that aren't in the ignore list.
-	for (unsigned int j = 0; j < BU_PTBL_LEN(islands); j++) {
-	    struct subbrep_island_data *sid = (struct subbrep_island_data *)BU_PTBL_GET(islands, j);
-	    if (sid->local_brep_bool_op == 'u' || (sid->nucleus && sid->nucleus->params->bool_op == 'u')) {
-		continue;
-	    }
-
-	    if (ignore_islands.find(sid) != ignore_islands.end()) continue;
-
-	    ON_BoundingBox isect;
-	    bool bbi = isect.Intersection(*sid->bbox, *id->bbox);
-	    // If we have overlap, we have a possible subtraction operation
-	    // between this island and the parent.  It's not guaranteed that
-	    // there is an interaction, but to make sure will require ray testing
-	    // so for speed we accept that there may be extra subtractions in
-	    // the tree.
-	    if (bbi) {
-		bu_ptbl_ins_unique(id->subtractions, (long *)sid);
 	    }
 	}
     }
