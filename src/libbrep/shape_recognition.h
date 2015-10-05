@@ -85,7 +85,7 @@ void csg_object_params_init(struct csg_object_params *obj, struct subbrep_shoal_
 void csg_object_params_free(struct csg_object_params *obj);
 
 
-int shoal_csg(struct bu_vls *msgs, surface_t surface_type, struct subbrep_shoal_data *data, fastf_t cyl_tol);
+int shoal_csg(struct bu_vls *msgs, surface_t surface_type, struct subbrep_shoal_data *data);
 
 // Cylinder specific functionality
 int cyl_validate_face(const ON_BrepFace *forig, const ON_BrepFace *fcand);

@@ -307,7 +307,7 @@ subbrep_split(struct bu_vls *msgs, struct subbrep_island_data *data)
 		switch (surface_type) {
 		    case SURFACE_CYLINDRICAL_SECTION:
 		    case SURFACE_CYLINDER:
-			if (!shoal_csg(msgs, surface_type, sh, BREP_CYLINDRICAL_TOL)) local_fail++;
+			if (!shoal_csg(msgs, surface_type, sh)) local_fail++;
 			break;
 		    case SURFACE_CONE:
 			local_fail++;

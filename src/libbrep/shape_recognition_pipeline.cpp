@@ -13,12 +13,12 @@
 #define L4_OFFSET 8
 
 int
-shoal_csg(struct bu_vls *msgs, surface_t surface_type, struct subbrep_shoal_data *data, fastf_t cyl_tol)
+shoal_csg(struct bu_vls *msgs, surface_t surface_type, struct subbrep_shoal_data *data)
 {
-    //bu_log("cyl processing %s\n", bu_vls_addr(data->i->key));
+    //bu_log("shoal processing %s\n", bu_vls_addr(data->i->key));
     int nonlinear_edge = -1;
     int implicit_plane_ind = -1;
-    std::set<int> cylindrical_surfaces;
+    std::set<int> nonplanar_surfaces;
     std::set<int>::iterator c_it;
 
     const ON_Brep *brep = data->i->brep;
@@ -28,7 +28,7 @@ shoal_csg(struct bu_vls *msgs, surface_t surface_type, struct subbrep_shoal_data
     std::set<int> edges;
     for (int i = 0; i < data->shoal_loops_cnt; i++) {
 	const ON_BrepLoop *loop = &(brep->m_L[data->shoal_loops[i]]);
-	cylindrical_surfaces.insert(loop->Face()->m_face_index);
+	nonplanar_surfaces.insert(loop->Face()->m_face_index);
 	for (int ti = 0; ti < loop->m_ti.Count(); ti++) {
 	    const ON_BrepTrim *trim = &(brep->m_T[loop->m_ti[ti]]);
 	    const ON_BrepEdge *edge = &(brep->m_E[trim->m_ei]);
@@ -51,7 +51,7 @@ shoal_csg(struct bu_vls *msgs, surface_t surface_type, struct subbrep_shoal_data
 	for (int i = 0; i < edge->m_ti.Count(); i++) {
 	    const ON_BrepTrim *trim = &(brep->m_T[edge->m_ti[i]]);
 	    if (((surface_t *)data->i->face_surface_types)[trim->Face()->m_face_index] == SURFACE_PLANE) continue;
-	    if (cylindrical_surfaces.find(trim->Face()->m_face_index) != cylindrical_surfaces.end())
+	    if (nonplanar_surfaces.find(trim->Face()->m_face_index) != nonplanar_surfaces.end())
 		face_cnt++;
 	}
 	if (face_cnt == 2) {
@@ -106,8 +106,8 @@ shoal_csg(struct bu_vls *msgs, surface_t surface_type, struct subbrep_shoal_data
 	    // No real face - deduce a plane from the curve
 	    if (!have_planar_face) {
 		ON_Curve *ecv2 = edge->EdgeCurveOf()->Duplicate();
-		if (!ecv2->IsPlanar(&eplane, cyl_tol)) {
-		    if (msgs) bu_vls_printf(msgs, "%*sNonplanar edge in cylinder (%s) - no go\n", L3_OFFSET, " ", bu_vls_addr(data->i->key));
+		if (!ecv2->IsPlanar(&eplane, BREP_PLANAR_TOL)) {
+		    if (msgs) bu_vls_printf(msgs, "%*sNonplanar edge in shoal (%s) - no go\n", L3_OFFSET, " ", bu_vls_addr(data->i->key));
 		    delete ecv;
 		    delete ecv2;
 		    return 0;
@@ -122,13 +122,13 @@ shoal_csg(struct bu_vls *msgs, surface_t surface_type, struct subbrep_shoal_data
     }
 
     // Now, build a list of unique planes
-    ON_SimpleArray<ON_Plane> cyl_planes;
+    ON_SimpleArray<ON_Plane> shoal_planes;
     for (int i = 0; i < non_linear_edge_planes.Count(); i++) {
 	int have_plane = 0;
 	ON_Plane p1 = non_linear_edge_planes[i];
 	ON_3dVector p1n = p1.Normal();
-	for (int j = 0; j < cyl_planes.Count(); j++) {
-	    ON_Plane p2 = cyl_planes[j];
+	for (int j = 0; j < shoal_planes.Count(); j++) {
+	    ON_Plane p2 = shoal_planes[j];
 	    ON_3dVector p2n = p2.Normal();
 	    if (p2n.IsParallelTo(p1n, 0.01) && fabs(p2.DistanceTo(p1.Origin())) < 0.001) {
 		have_plane = 1;
@@ -136,7 +136,7 @@ shoal_csg(struct bu_vls *msgs, surface_t surface_type, struct subbrep_shoal_data
 	    }
 	}
 	if (!have_plane) {
-	    cyl_planes.Append(p1);
+	    shoal_planes.Append(p1);
 	}
     }
 
@@ -147,7 +147,7 @@ shoal_csg(struct bu_vls *msgs, surface_t surface_type, struct subbrep_shoal_data
     switch (surface_type) {
 	case SURFACE_CYLINDRICAL_SECTION:
 	case SURFACE_CYLINDER:
-	    implicit_plane_ind = cyl_implicit_plane(brep, lc, le, &cyl_planes);
+	    implicit_plane_ind = cyl_implicit_plane(brep, lc, le, &shoal_planes);
 	    break;
 	case SURFACE_CONE:
 	    break;
@@ -168,8 +168,8 @@ shoal_csg(struct bu_vls *msgs, surface_t surface_type, struct subbrep_shoal_data
     // Check each normal direction to see whether it would trim away any edge
     // midpoints known to be present.  If both directions do so, we have a
     // concave situation and we're done.
-    for (int i = 0; i < cyl_planes.Count(); i++) {
-	ON_Plane p = cyl_planes[i];
+    for (int i = 0; i < shoal_planes.Count(); i++) {
+	ON_Plane p = shoal_planes[i];
 	//bu_log("in rcc_%d.s rcc %f, %f, %f %f, %f, %f 0.1\n", i, p.origin.x, p.origin.y, p.origin.z, p.Normal().x, p.Normal().y, p.Normal().z);
 	int flipped = 0;
 	for (int j = 0; j < edge_midpnts.Count(); j++) {
@@ -187,20 +187,20 @@ shoal_csg(struct bu_vls *msgs, surface_t surface_type, struct subbrep_shoal_data
 		}
 	    }
 	}
-	if (flipped) cyl_planes[i].Flip();
+	if (flipped) shoal_planes[i].Flip();
     }
 
 #if 0
     // Planes should be oriented correctly now
-    for (int i = 0; i < cyl_planes.Count(); i++) {
-	ON_Plane p = cyl_planes[i];
+    for (int i = 0; i < shoal_planes.Count(); i++) {
+	ON_Plane p = shoal_planes[i];
 	bu_log("plane %d origin: %f, %f, %f\n", i, p.origin.x, p.origin.y, p.origin.z);
 	bu_log("plane %d normal: %f, %f, %f\n", i, p.Normal().x, p.Normal().y, p.Normal().z);
     }
 #endif
     if (implicit_plane_ind != -1) {
 	//bu_log("have implicit plane\n");
-	ON_Plane shoal_implicit_plane = cyl_planes[implicit_plane_ind];
+	ON_Plane shoal_implicit_plane = shoal_planes[implicit_plane_ind];
 	shoal_implicit_plane.Flip();
 	BN_VMOVE(data->params->implicit_plane_origin, shoal_implicit_plane.Origin());
 	BN_VMOVE(data->params->implicit_plane_normal, shoal_implicit_plane.Normal());
@@ -257,7 +257,7 @@ shoal_csg(struct bu_vls *msgs, surface_t surface_type, struct subbrep_shoal_data
     switch (surface_type) {
 	case SURFACE_CYLINDRICAL_SECTION:
 	case SURFACE_CYLINDER:
-	    need_arbn = cyl_implicit_params(data, &cyl_planes, implicit_plane_ind, ndc, nde, *cylindrical_surfaces.begin(), nonlinear_edge);
+	    need_arbn = cyl_implicit_params(data, &shoal_planes, implicit_plane_ind, ndc, nde, *nonplanar_surfaces.begin(), nonlinear_edge);
 	    break;
 	case SURFACE_CONE:
 	    break;
@@ -274,7 +274,7 @@ shoal_csg(struct bu_vls *msgs, surface_t surface_type, struct subbrep_shoal_data
 
 
     if (!need_arbn) {
-	//bu_log("Perfect cylinder shoal found in %s\n", bu_vls_addr(data->i->key));
+	//bu_log("Perfect implicit found in %s\n", bu_vls_addr(data->i->key));
 	return 1;
     }
 
@@ -287,11 +287,11 @@ shoal_csg(struct bu_vls *msgs, surface_t surface_type, struct subbrep_shoal_data
     // This will always be a bounding arb plane if any planes are to be removed, so we use that knowledge
     // and start at the top.
     ON_SimpleArray<ON_Plane> uniq_planes;
-    for (int i = cyl_planes.Count() - 1; i >= 0; i--) {
+    for (int i = shoal_planes.Count() - 1; i >= 0; i--) {
 	int keep_plane = 1;
-	ON_Plane p1 = cyl_planes[i];
+	ON_Plane p1 = shoal_planes[i];
 	for (int j = i - 1; j >= 0; j--) {
-	    ON_Plane p2 = cyl_planes[j];
+	    ON_Plane p2 = shoal_planes[j];
 	    // Check for one to avoid removing anti-parallel planes
 	    if (p1.Normal().IsParallelTo(p2.Normal(), VUNITIZE_TOL) == 1) {
 		keep_plane = 0;
@@ -318,7 +318,7 @@ shoal_csg(struct bu_vls *msgs, surface_t surface_type, struct subbrep_shoal_data
     bu_free(planes_used, "planes_used");
 
 
-    // Construct the arbn to intersect with the cylinder to form the final shape
+    // Construct the arbn to intersect with the implicit to form the final shape
     if (arbn_planes.Count() > 3) {
 	struct csg_object_params *sub_param;
 	BU_GET(sub_param, struct csg_object_params);
