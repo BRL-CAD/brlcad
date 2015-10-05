@@ -29,6 +29,7 @@ set(LIBBREP_SOURCES
   PullbackCurve.cpp
   shape_recognition.cpp
   shape_recognition_cylinder.cpp
+  shape_recognition_pipeline.cpp
   shape_recognition_planar.cpp
   shape_recognition_util.cpp
   ssx_event.cpp

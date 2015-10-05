@@ -193,34 +193,6 @@ find_hierarchy(struct bu_vls *UNUSED(msgs), struct bu_ptbl *islands)
 }
 
 
-int cyl_validate_face(const ON_BrepFace *forig, const ON_BrepFace *fcand)
-{
-    ON_Cylinder corig;
-    ON_Surface *csorig = forig->SurfaceOf()->Duplicate();
-    csorig->IsCylinder(&corig, BREP_CYLINDRICAL_TOL);
-    delete csorig;
-    ON_Line lorig(corig.circle.Center(), corig.circle.Center() + corig.Axis());
-
-    ON_Cylinder ccand;
-    ON_Surface *cscand = fcand->SurfaceOf()->Duplicate();
-    cscand->IsCylinder(&ccand, BREP_CYLINDRICAL_TOL);
-    delete cscand;
-    double d1 = lorig.DistanceTo(ccand.circle.Center());
-    double d2 = lorig.DistanceTo(ccand.circle.Center() + ccand.Axis());
-
-    // Make sure the cylinder axes are colinear
-    if (corig.Axis().IsParallelTo(ccand.Axis(), VUNITIZE_TOL) == 0) return 0;
-    if (fabs(d1) > BREP_CYLINDRICAL_TOL) return 0;
-    if (fabs(d2) > BREP_CYLINDRICAL_TOL) return 0;
-
-    // Make sure the radii are the same
-    if (!NEAR_ZERO(corig.circle.Radius() - ccand.circle.Radius(), VUNITIZE_TOL)) return 0;
-
-    // TODO - make sure negative/positive status for both cyl faces is the same.
-
-    return 1;
-}
-
 
 int
 shoal_filter_loop(int control_loop, int candidate_loop, struct subbrep_island_data *data)
@@ -335,7 +307,7 @@ subbrep_split(struct bu_vls *msgs, struct subbrep_island_data *data)
 		switch (surface_type) {
 		    case SURFACE_CYLINDRICAL_SECTION:
 		    case SURFACE_CYLINDER:
-			if (!cylinder_csg(msgs, sh, BREP_CYLINDRICAL_TOL)) local_fail++;
+			if (!shoal_csg(msgs, surface_type, sh, BREP_CYLINDRICAL_TOL)) local_fail++;
 			break;
 		    case SURFACE_CONE:
 			local_fail++;
