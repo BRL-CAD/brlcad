@@ -28,6 +28,7 @@ set(LIBBREP_SOURCES
   px_event.cpp
   PullbackCurve.cpp
   shape_recognition.cpp
+  shape_recognition_cone.cpp
   shape_recognition_cylinder.cpp
   shape_recognition_pipeline.cpp
   shape_recognition_planar.cpp
@@ -44,7 +45,6 @@ set(libbrep_ignored_files
   opennurbs_fit.cpp
   PullbackCurve.h
   shape_recognition.h
-  shape_recognition_cone.cpp
   shape_recognition_sphere.cpp
   shape_recognition_torus.cpp
   surface_tree_queue_tests.patch

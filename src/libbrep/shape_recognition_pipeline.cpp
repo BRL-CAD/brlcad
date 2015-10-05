@@ -150,6 +150,7 @@ shoal_csg(struct bu_vls *msgs, surface_t surface_type, struct subbrep_shoal_data
 	    implicit_plane_ind = cyl_implicit_plane(brep, lc, le, &shoal_planes);
 	    break;
 	case SURFACE_CONE:
+	    implicit_plane_ind = cone_implicit_plane(brep, lc, le, &shoal_planes);
 	    break;
 	case SURFACE_SPHERICAL_SECTION:
 	case SURFACE_SPHERE:
@@ -215,18 +216,20 @@ shoal_csg(struct bu_vls *msgs, surface_t surface_type, struct subbrep_shoal_data
 	    for (int ti = 0; ti < loop->m_ti.Count(); ti++) {
 		int vert_ind;
 		const ON_BrepTrim *trim = &(brep->m_T[loop->m_ti[ti]]);
-		const ON_BrepEdge *edge = &(brep->m_E[trim->m_ei]);
-		if (trim->m_bRev3d) {
-		    vert_ind = edge->Vertex(0)->m_vertex_index;
-		} else {
-		    vert_ind = edge->Vertex(1)->m_vertex_index;
-		}
-		// Get vertex edges.
-		const ON_BrepVertex *v = &(brep->m_V[vert_ind]);
-		for (int ei = 0; ei < v->EdgeCount(); ei++) {
-		    const ON_BrepEdge *e = &(brep->m_E[v->m_ei[ei]]);
-		    //bu_log("insert edge %d\n", e->m_edge_index);
-		    shoal_connected_edges.insert(e->m_edge_index);
+		if (trim->m_ei != -1) {
+		    const ON_BrepEdge *edge = &(brep->m_E[trim->m_ei]);
+		    if (trim->m_bRev3d) {
+			vert_ind = edge->Vertex(0)->m_vertex_index;
+		    } else {
+			vert_ind = edge->Vertex(1)->m_vertex_index;
+		    }
+		    // Get vertex edges.
+		    const ON_BrepVertex *v = &(brep->m_V[vert_ind]);
+		    for (int ei = 0; ei < v->EdgeCount(); ei++) {
+			const ON_BrepEdge *e = &(brep->m_E[v->m_ei[ei]]);
+			//bu_log("insert edge %d\n", e->m_edge_index);
+			shoal_connected_edges.insert(e->m_edge_index);
+		    }
 		}
 	    }
 	}
@@ -244,12 +247,6 @@ shoal_csg(struct bu_vls *msgs, surface_t surface_type, struct subbrep_shoal_data
 	}
     }
 
-
-    ////////////// Cylinder specific stuff - break into function //////////////////////////
-
-
-    ////////////// END Cylinder specific stuff - break into function //////////////////////////
-
     int ndc;
     int *nde = NULL;
     set_to_array(&nde, &ndc, &nondegen_edges);
@@ -260,6 +257,7 @@ shoal_csg(struct bu_vls *msgs, surface_t surface_type, struct subbrep_shoal_data
 	    need_arbn = cyl_implicit_params(data, &shoal_planes, implicit_plane_ind, ndc, nde, *nonplanar_surfaces.begin(), nonlinear_edge);
 	    break;
 	case SURFACE_CONE:
+	    need_arbn = cone_implicit_params(data, &shoal_planes, implicit_plane_ind, ndc, nde, *nonplanar_surfaces.begin(), nonlinear_edge);
 	    break;
 	case SURFACE_SPHERICAL_SECTION:
 	case SURFACE_SPHERE:

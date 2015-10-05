@@ -210,6 +210,9 @@ shoal_filter_loop(int control_loop, int candidate_loop, struct subbrep_island_da
 	    if (ctype != SURFACE_CYLINDRICAL_SECTION && ctype != SURFACE_CYLINDER) return 0;
 	    if (!cyl_validate_face(forig, fcand)) return 0;
 	    break;
+	case SURFACE_CONE:
+	    if (!cone_validate_face(forig, fcand)) return 0;
+	    break;
 	case SURFACE_SPHERICAL_SECTION:
 	case SURFACE_SPHERE:
 	    if (ctype != SURFACE_SPHERICAL_SECTION && ctype != SURFACE_SPHERE) return 0;
@@ -303,26 +306,7 @@ subbrep_split(struct bu_vls *msgs, struct subbrep_island_data *data)
 		for (int i = 0; i < sh->shoal_loops_cnt; i++) {
 		    active.erase(sh->shoal_loops[i]);
 		}
-		int local_fail = 0;
-		switch (surface_type) {
-		    case SURFACE_CYLINDRICAL_SECTION:
-		    case SURFACE_CYLINDER:
-			if (!shoal_csg(msgs, surface_type, sh)) local_fail++;
-			break;
-		    case SURFACE_CONE:
-			local_fail++;
-			break;
-		    case SURFACE_SPHERICAL_SECTION:
-		    case SURFACE_SPHERE:
-			local_fail++;
-			break;
-		    case SURFACE_TORUS:
-			local_fail++;
-			break;
-		    default:
-			break;
-		}
-		if (!local_fail) {
+		if (shoal_csg(msgs, surface_type, sh)) {
 		    if (BU_PTBL_LEN(sh->shoal_children) > 0) {
 			sh->shoal_type = COMB;
 		    } else {
