@@ -91,7 +91,7 @@ int shoal_csg(struct bu_vls *msgs, surface_t surface_type, struct subbrep_shoal_
 int cyl_validate_face(const ON_BrepFace *forig, const ON_BrepFace *fcand);
 int negative_cylinder(const ON_Brep *brep, int face_index, double cyl_tol);
 int cyl_implicit_plane(const ON_Brep *brep, int lc, int *le, ON_SimpleArray<ON_Plane> *cyl_planes);
-
+int cyl_implicit_params(struct subbrep_shoal_data *data, ON_SimpleArray<ON_Plane> *cyl_planes, int implicit_plane_ind, int ndc, int *nde, int shoal_nonplanar_face, int nonlinear_edge);
 
 
 
