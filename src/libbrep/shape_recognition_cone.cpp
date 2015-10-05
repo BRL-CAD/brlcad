@@ -132,20 +132,29 @@ cone_implicit_params(struct subbrep_shoal_data *data, ON_SimpleArray<ON_Plane> *
                 axis_pts_init.Append(ipoint);
             } else {
 
-		ON_3dVector av = ipoint - cone.ApexPoint();
+		ON_3dVector av = cone.ApexPoint() - ipoint;
 		double side = av.Length();
 		av.Unitize();
                 double dpc = ON_DotProduct(av, (*cone_planes)[i].Normal());
+		bu_log("dpc: %f\n", dpc*180/M_PI);
 		double angle_plane_axis = (dpc < 0) ? M_PI/2 - acos(dpc) : acos(dpc);
+		bu_log("angle_plane_axis : %f\n", angle_plane_axis*180/M_PI);
 
-		double C = M_PI/2 - (M_PI/4 - angle_plane_axis) - cone.AngleInRadians();
+		double C = M_PI/2 - angle_plane_axis - cone.AngleInRadians();
 		double a = side * sin(cone.AngleInRadians()) / sin(C);
-		C = M_PI/2 - (M_PI/4 + angle_plane_axis) - cone.AngleInRadians();
+		bu_log("a: %f\n", a);
+		C = M_PI/2 - (M_PI/2 - angle_plane_axis) - cone.AngleInRadians();
 		double b = side * sin(cone.AngleInRadians()) / sin(C);
+		bu_log("b: %f\n", b);
 
 		ON_3dVector avect, bvect;
-                ON_3dVector pvect = cone.Axis() - ((*cone_planes)[i].Normal() * dpc);
+		ON_3dVector cone_unit_axis = cone.Axis();
+		cone_unit_axis.Unitize();
+                ON_3dVector pvect = cone.Axis() - ((*cone_planes)[i].Normal() * ON_DotProduct(cone_unit_axis, (*cone_planes)[i].Normal()));
                 pvect.Unitize();
+		bu_log("in rcc_%d.s rcc %f, %f, %f %f, %f, %f 0.1\n", i, ipoint.x, ipoint.y, ipoint.z, pvect.x, pvect.y, pvect.z);
+		bu_log("in rcc_av.s rcc %f, %f, %f %f, %f, %f 0.1\n", ipoint.x, ipoint.y, ipoint.z, av.x, av.y, av.z);
+
 		double abdp = ON_DotProduct(pvect, av);
 		avect = (abdp < 0) ? pvect : -1 * pvect;
 		bvect = (abdp > 0) ? pvect : -1 * pvect;
@@ -201,17 +210,18 @@ cone_implicit_params(struct subbrep_shoal_data *data, ON_SimpleArray<ON_Plane> *
     data->params->negative = negative_cone(brep, shoal_nonplanar_face, BREP_CONIC_TOL);
     data->params->bool_op = (data->params->negative == -1) ? '-' : 'u';
 
+    fastf_t hdelta;
     if (l.PointAt(tmin).DistanceTo(cone.ApexPoint()) > BREP_CONIC_TOL) {
-	fastf_t hdelta = cone.BasePoint().DistanceTo(l.PointAt(tmin));
+	hdelta = cone.BasePoint().DistanceTo(l.PointAt(tmin));
 	hdelta = (cone.height < 0) ? -1*hdelta : hdelta;
 	data->params->radius = cone.CircleAt(cone.height - hdelta).Radius();
 	BN_VMOVE(data->params->origin, l.PointAt(tmin));
     }
 
     if (l.PointAt(tmax).DistanceTo(cone.ApexPoint()) > BREP_CONIC_TOL) {
-	fastf_t hdelta = cone.BasePoint().DistanceTo(l.PointAt(tmax));
-	hdelta = (cone.height < 0) ? -1*hdelta : hdelta;
-	data->params->r2 = cone.CircleAt(cone.height - hdelta).Radius();
+	fastf_t hdelta2 = cone.BasePoint().DistanceTo(l.PointAt(tmax));
+	hdelta2 = (cone.height < 0) ? -1*hdelta2 : hdelta2;
+	data->params->r2 = cone.CircleAt(cone.height - hdelta2).Radius();
     } else {
 	data->params->r2 = 0.000001;
     }
@@ -219,6 +229,28 @@ cone_implicit_params(struct subbrep_shoal_data *data, ON_SimpleArray<ON_Plane> *
     ON_3dVector hvect(l.PointAt(tmax) - l.PointAt(tmin));
     BN_VMOVE(data->params->hv, hvect);
     data->params->height = hvect.Length();
+
+    // constructed oriented bounding box planes
+    if (need_arbn) {
+	ON_3dVector v1 = cone.CircleAt(cone.height - hdelta).Plane().xaxis;
+	ON_3dVector v2 = cone.CircleAt(cone.height - hdelta).Plane().yaxis;
+	v1.Unitize();
+	v2.Unitize();
+	v1 = v1 * cone.CircleAt(cone.height - hdelta).Radius();
+	v2 = v2 * cone.CircleAt(cone.height - hdelta).Radius();
+	ON_3dPoint arbmid = (l.PointAt(tmax) + l.PointAt(tmin)) * 0.5;
+	ON_3dVector cone_axis_unit = l.PointAt(tmax) - l.PointAt(tmin);
+	cone_axis_unit.Unitize();
+
+	(*cone_planes).Append(ON_Plane(l.PointAt(tmin), -1 * cone_axis_unit));
+	(*cone_planes).Append(ON_Plane(l.PointAt(tmax), cone_axis_unit));
+	(*cone_planes).Append(ON_Plane(arbmid + v1, cone.CircleAt(cone.height - hdelta).Plane().xaxis));
+	(*cone_planes).Append(ON_Plane(arbmid - v1, -1 *cone.CircleAt(cone.height - hdelta).Plane().xaxis));
+	(*cone_planes).Append(ON_Plane(arbmid + v2, cone.CircleAt(cone.height - hdelta).Plane().yaxis));
+	(*cone_planes).Append(ON_Plane(arbmid - v2, -1 * cone.CircleAt(cone.height - hdelta).Plane().yaxis));
+    }
+
+
 
     return need_arbn;
 }
