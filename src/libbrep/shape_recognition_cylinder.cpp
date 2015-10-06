@@ -259,9 +259,11 @@ cyl_implicit_params(struct subbrep_shoal_data *data, ON_SimpleArray<ON_Plane> *c
 	ON_3dPoint arbmid = (l.PointAt(tmax) + l.PointAt(tmin)) * 0.5;
 	ON_3dVector cyl_axis_unit = l.PointAt(tmax) - l.PointAt(tmin);
 	cyl_axis_unit.Unitize();
+	ON_3dPoint arbmax = l.PointAt(tmax) + 0.01 * cyl_axis_unit;
+	ON_3dPoint arbmin = l.PointAt(tmin) - 0.01 * cyl_axis_unit;
 
-	(*cyl_planes).Append(ON_Plane(l.PointAt(tmin), -1 * cyl_axis_unit));
-	(*cyl_planes).Append(ON_Plane(l.PointAt(tmax), cyl_axis_unit));
+	(*cyl_planes).Append(ON_Plane(arbmin, -1 * cyl_axis_unit));
+	(*cyl_planes).Append(ON_Plane(arbmax, cyl_axis_unit));
 	(*cyl_planes).Append(ON_Plane(arbmid + v1, cylinder.circle.Plane().xaxis));
 	(*cyl_planes).Append(ON_Plane(arbmid - v1, -1 *cylinder.circle.Plane().xaxis));
 	(*cyl_planes).Append(ON_Plane(arbmid + v2, cylinder.circle.Plane().yaxis));

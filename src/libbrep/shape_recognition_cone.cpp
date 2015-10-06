@@ -229,9 +229,11 @@ cone_implicit_params(struct subbrep_shoal_data *data, ON_SimpleArray<ON_Plane> *
 	ON_3dPoint arbmid = (l.PointAt(tmax) + l.PointAt(tmin)) * 0.5;
 	ON_3dVector cone_axis_unit = l.PointAt(tmax) - l.PointAt(tmin);
 	cone_axis_unit.Unitize();
+	ON_3dPoint arbmax = l.PointAt(tmax) + 0.01 * cone_axis_unit;
+	ON_3dPoint arbmin = l.PointAt(tmin) - 0.01 * cone_axis_unit;
 
-	(*cone_planes).Append(ON_Plane(l.PointAt(tmin), -1 * cone_axis_unit));
-	(*cone_planes).Append(ON_Plane(l.PointAt(tmax), cone_axis_unit));
+	(*cone_planes).Append(ON_Plane(arbmin, -1 * cone_axis_unit));
+	(*cone_planes).Append(ON_Plane(arbmax, cone_axis_unit));
 	(*cone_planes).Append(ON_Plane(arbmid + v1, cone.CircleAt(cone.height - hdelta).Plane().xaxis));
 	(*cone_planes).Append(ON_Plane(arbmid - v1, -1 *cone.CircleAt(cone.height - hdelta).Plane().xaxis));
 	(*cone_planes).Append(ON_Plane(arbmid + v2, cone.CircleAt(cone.height - hdelta).Plane().yaxis));
