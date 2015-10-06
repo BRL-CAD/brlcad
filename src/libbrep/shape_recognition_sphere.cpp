@@ -62,9 +62,73 @@ negative_sphere(const ON_Brep *brep, int face_index, double sph_tol)
 
 
 int
-sph_implicit_plane(const ON_Brep *UNUSED(brep), int UNUSED(ec), int *UNUSED(edges))
+sph_implicit_plane(const ON_Brep *brep, int ec, int *edges, ON_SimpleArray<ON_Plane> *sph_planes)
 {
-    return -1;
+    // We need to find vertices that are connected to two edges that are not on
+    // the same circle.
+
+    if ((*sph_planes).Count() != 3) return -1;
+
+
+    // Step 1 - build sets of vertices in the edges
+    std::set<int> verts;
+    std::set<int>::iterator v_it;
+    std::set<int> edge_set;
+    for (int i = 0; i < ec; i++) {
+	const ON_BrepEdge *edge = &(brep->m_E[edges[i]]);
+	edge_set.insert(edges[i]);
+	verts.insert(edge->Vertex(0)->m_vertex_index);
+	verts.insert(edge->Vertex(1)->m_vertex_index);
+    }
+
+    // Step 2 - for all vertices, check the edges in the edge set to see
+    // if they are on different circles.  If so, vertex is a candidate for
+    // plane building
+    int pverts[3];
+    int pind = -1;
+    for (v_it = verts.begin(); v_it != verts.end(); v_it++) {
+	int ind = -1;
+	int e_ind[2] = {-1, -1};
+	const ON_BrepVertex *v = &(brep->m_V[*v_it]);
+	for (int ei = 0; ei < v->m_ei.Count(); ei++) {
+	    const ON_BrepEdge *e = &(brep->m_E[v->m_ei[ei]]);
+	    if (edge_set.find(e->m_edge_index) != edge_set.end()) {
+		ind++;
+		// vert should have only two non-degen edges in the sphere if
+		// we're actually looking for an implicit plane
+		if (ind > 1) break;
+		e_ind[ind] = e->m_edge_index;
+	    }
+	}
+	// Check the arcs
+	if (ind == 1) {
+	    const ON_BrepEdge *e1 = &(brep->m_E[e_ind[0]]);
+	    ON_Curve *c1 = e1->EdgeCurveOf()->Duplicate();
+	    const ON_BrepEdge *e2 = &(brep->m_E[e_ind[1]]);
+	    ON_Curve *c2 = e2->EdgeCurveOf()->Duplicate();
+	    ON_Arc a1, a2;
+	    if (c1->IsArc(NULL, &a1, BREP_SPHERICAL_TOL) && c2->IsArc(NULL, &a1, BREP_SPHERICAL_TOL)) {
+		ON_Circle circ1(a1.StartPoint(), a1.MidPoint(), a1.EndPoint());
+		ON_Circle circ2(a2.StartPoint(), a2.MidPoint(), a2.EndPoint());
+		if ((circ1.Center().DistanceTo(circ2.Center()) > VUNITIZE_TOL) || (!NEAR_ZERO(circ1.Radius() - circ2.Radius(), BREP_SPHERICAL_TOL))) {
+		    pind++;
+		    if (pind > 2) return -1;
+		    pverts[pind] = v->m_vertex_index;
+		}
+	    } else {
+		// If we don't have two arcs, bail.
+		return -1;
+	    }
+	}
+    }
+
+    if (pind != 2) return -1;
+
+    // Step 3 - build a plane from three of the candidate points.
+    ON_Plane imp(brep->m_V[pverts[0]].Point(), brep->m_V[pverts[1]].Point(), brep->m_V[pverts[2]].Point());
+    (*sph_planes).Append(imp);
+
+    return (*sph_planes).Count() - 1;
 }
 
 int

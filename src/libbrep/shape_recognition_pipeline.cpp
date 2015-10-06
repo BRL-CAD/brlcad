@@ -167,15 +167,15 @@ shoal_csg(struct bu_vls *msgs, surface_t surface_type, struct subbrep_shoal_data
 	    break;
 	case SURFACE_SPHERICAL_SECTION:
 	case SURFACE_SPHERE:
-	    implicit_plane_ind = sph_implicit_plane(brep, nc, ne);
+	    implicit_plane_ind = sph_implicit_plane(brep, nc, ne, &shoal_planes);
 	    break;
 	case SURFACE_TORUS:
 	    break;
 	default:
 	    break;
     }
-    bu_free(le, "nonlinear edges");
-    bu_free(ne, "nonlinear edges");
+    if (le) bu_free(le, "linear edges");
+    if (ne) bu_free(ne, "nonlinear edges");
     // -1 means no implicit plane, -2 means an error
     if (implicit_plane_ind == -2) return 0;
 

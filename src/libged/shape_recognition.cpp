@@ -170,6 +170,23 @@ subbrep_to_csg_cone(struct bu_vls *msgs, struct csg_object_params *data, struct 
     return 0;
 }
 
+HIDDEN int
+subbrep_to_csg_sph(struct bu_vls *msgs, struct csg_object_params *data, struct rt_wdb *wdbp, const char *pname)
+{
+    if (!msgs || !data || !wdbp || !pname) return 0;
+    if (data->csg_type == SPHERE) {
+	struct bu_vls prim_name = BU_VLS_INIT_ZERO;
+	subbrep_obj_name(data->csg_type, data->csg_id, pname, &prim_name);
+	if (mk_sph(wdbp, bu_vls_addr(&prim_name), data->origin, data->radius)) {
+	    if (msgs) bu_vls_printf(msgs, "mk_sph failed for %s\n", bu_vls_addr(&prim_name));
+	} else {
+	    set_attr_key(wdbp, bu_vls_addr(&prim_name), "loops", data->s->shoal_loops_cnt, data->s->shoal_loops);
+	}
+	bu_vls_free(&prim_name);
+	return 1;
+    }
+    return 0;
+}
 
 HIDDEN void
 csg_obj_process(struct bu_vls *msgs, struct csg_object_params *data, struct rt_wdb *wdbp, const char *pname)
@@ -205,7 +222,7 @@ csg_obj_process(struct bu_vls *msgs, struct csg_object_params *data, struct rt_w
 	    subbrep_to_csg_cone(msgs, data, wdbp, pname);
 	    break;
 	case SPHERE:
-	    //subbrep_to_csg_sphere(data, wdbp, id, wcomb);
+	    subbrep_to_csg_sph(msgs, data, wdbp, pname);
 	    break;
 	case ELLIPSOID:
 	    break;
