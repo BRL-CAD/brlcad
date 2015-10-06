@@ -258,9 +258,12 @@ cyl_implicit_params(struct subbrep_shoal_data *data, ON_SimpleArray<ON_Plane> *c
 	v2 = v2 * cylinder.circle.Radius();
 	ON_3dPoint arbmid = (l.PointAt(tmax) + l.PointAt(tmin)) * 0.5;
 	ON_3dVector cyl_axis_unit = l.PointAt(tmax) - l.PointAt(tmin);
+	double axis_len = cyl_axis_unit.Length();
 	cyl_axis_unit.Unitize();
-	ON_3dPoint arbmax = l.PointAt(tmax) + 0.01 * cyl_axis_unit;
-	ON_3dPoint arbmin = l.PointAt(tmin) - 0.01 * cyl_axis_unit;
+	// Bump the top and bottom planes out slightly to avoid problems when the capping plane normals
+	// are almost but not quite parallel to the cylinder axis
+	ON_3dPoint arbmax = l.PointAt(tmax) + 0.01 * axis_len * cyl_axis_unit;
+	ON_3dPoint arbmin = l.PointAt(tmin) - 0.01 * axis_len * cyl_axis_unit;
 
 	(*cyl_planes).Append(ON_Plane(arbmin, -1 * cyl_axis_unit));
 	(*cyl_planes).Append(ON_Plane(arbmax, cyl_axis_unit));
