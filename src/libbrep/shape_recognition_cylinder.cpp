@@ -79,7 +79,7 @@ cyl_implicit_plane(const ON_Brep *brep, int lc, int *le, ON_SimpleArray<ON_Plane
     // If we have two non-linear edges remaining, construct a plane from them.
     // If we have a count other than two or zero, return.
     if (linear_edges.size() != 2 && linear_edges.size() != 0)
-       	return -1;
+       	return -2;
     if (linear_edges.size() == 2 ) {
 	std::set<int> verts;
 	// If both edges share a pre-existing face that is planar, use the inverse of that
@@ -100,13 +100,13 @@ cyl_implicit_plane(const ON_Brep *brep, int lc, int *le, ON_SimpleArray<ON_Plane
 
 	// If the fourth point is not coplanar with the other three, we've hit a case
 	// that we don't currently handlinear_edges.- hault. (TODO - need test case)
-	if (pf.DistanceTo(points[3]) > BREP_PLANAR_TOL) return -1;
+	if (pf.DistanceTo(points[3]) > BREP_PLANAR_TOL) return -2;
 
 	(*cyl_planes).Append(pf);
 	return (*cyl_planes).Count() - 1;
     }
 
-    return 0;
+    return -1;
 }
 
 // returns whether we need an arbn, the params in data, and bounding arb planes appended to cyl_planes

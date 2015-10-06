@@ -162,7 +162,8 @@ shoal_csg(struct bu_vls *msgs, surface_t surface_type, struct subbrep_shoal_data
 	default:
 	    break;
     }
-    if (implicit_plane_ind == -1) return 0;
+    // -1 means no implicit plane, -2 means an error
+    if (implicit_plane_ind == -2) return 0;
 
     // Need to make sure the normals are pointed the "right way"
     //

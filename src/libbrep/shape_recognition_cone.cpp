@@ -102,7 +102,7 @@ cone_implicit_params(struct subbrep_shoal_data *data, ON_SimpleArray<ON_Plane> *
 	int perpendicular = 0;
 	for (int i = 0; i < 2; i++) {
 	    ON_Plane p;
-	    if ((*cone_planes)[i].Normal().IsParallelTo(cone.Axis(), VUNITIZE_TOL) == 0) perpendicular++;
+	    if ((*cone_planes)[i].Normal().IsParallelTo(cone.Axis(), VUNITIZE_TOL) != 0) perpendicular++;
 	}
 	if (perpendicular == (*cone_planes).Count()) need_arbn = 0;
     }
@@ -131,39 +131,27 @@ cone_implicit_params(struct subbrep_shoal_data *data, ON_SimpleArray<ON_Plane> *
             if ((*cone_planes)[i].Normal().IsParallelTo(cone.Axis(), VUNITIZE_TOL)) {
                 axis_pts_init.Append(ipoint);
             } else {
-
+		double C, a, b;
 		ON_3dVector av = cone.ApexPoint() - ipoint;
 		double side = av.Length();
 		av.Unitize();
                 double dpc = ON_DotProduct(av, (*cone_planes)[i].Normal());
-		bu_log("dpc: %f\n", dpc*180/M_PI);
-		double angle_plane_axis = (dpc < 0) ? M_PI/2 - acos(dpc) : acos(dpc);
-		bu_log("angle_plane_axis : %f\n", angle_plane_axis*180/M_PI);
-
-		double C = M_PI/2 - angle_plane_axis - cone.AngleInRadians();
-		double a = side * sin(cone.AngleInRadians()) / sin(C);
-		bu_log("a: %f\n", a);
-		C = M_PI/2 - (M_PI/2 - angle_plane_axis) - cone.AngleInRadians();
-		double b = side * sin(cone.AngleInRadians()) / sin(C);
-		bu_log("b: %f\n", b);
+                if (dpc < 0) {
+		    dpc = ON_DotProduct(av, -1*(*cone_planes)[i].Normal());
+		}
+		C = M_PI - (M_PI/2 - acos(dpc)) - fabs(cone.AngleInRadians());
+		a = fabs(side * sin(cone.AngleInRadians()) / sin(C));
+		C = M_PI - (M_PI/2 + acos(dpc)) - fabs(cone.AngleInRadians());
+		b = fabs(side * sin(fabs(cone.AngleInRadians())) / sin(C));
 
 		ON_3dVector avect, bvect;
 		ON_3dVector cone_unit_axis = cone.Axis();
 		cone_unit_axis.Unitize();
                 ON_3dVector pvect = cone.Axis() - ((*cone_planes)[i].Normal() * ON_DotProduct(cone_unit_axis, (*cone_planes)[i].Normal()));
                 pvect.Unitize();
-		bu_log("in rcc_%d.s rcc %f, %f, %f %f, %f, %f 0.1\n", i, ipoint.x, ipoint.y, ipoint.z, pvect.x, pvect.y, pvect.z);
-		bu_log("in rcc_av.s rcc %f, %f, %f %f, %f, %f 0.1\n", ipoint.x, ipoint.y, ipoint.z, av.x, av.y, av.z);
-
-		double abdp = ON_DotProduct(pvect, av);
-		avect = (abdp < 0) ? pvect : -1 * pvect;
-		bvect = (abdp > 0) ? pvect : -1 * pvect;
-
                 if (!NEAR_ZERO(dpc, VUNITIZE_TOL)) {
-                    ON_3dPoint p1 = ipoint + avect * a;
-		    bu_log("in p1.s sph %f %f %f 1\n", p1.x, p1.y, p1.z);
-                    ON_3dPoint p2 = ipoint + bvect * b;
-		    bu_log("in p2.s sph %f %f %f 1\n", p2.x, p2.y, p2.z);
+                    ON_3dPoint p1 = ipoint + pvect * a;
+                    ON_3dPoint p2 = ipoint + -1*pvect * b;
                     axis_pts_init.Append(p1);
                     axis_pts_init.Append(p2);
                 }
