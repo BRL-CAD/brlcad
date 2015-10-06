@@ -82,17 +82,20 @@ island_faces_characterize(struct subbrep_island_data *sb)
 int
 bbox_isect(struct subbrep_island_data *s, struct subbrep_island_data *c)
 {
-    ON_BoundingBox isect;
-    bool bbi = isect.Intersection(*s->bbox, *c->bbox);
-    if (bbi) {
-	// If the child is a union island, it gets the subtraction
-	if (c->local_brep_bool_op == 'u' || (c->nucleus && c->nucleus->params->bool_op == 'u')) {
+    if (c->local_brep_bool_op == 'u' || (c->nucleus && c->nucleus->params->bool_op == 'u')) {
+	ON_BoundingBox isect;
+	bool bbi = isect.Intersection(*s->bbox, *c->bbox);
+	if (bbi) {
 	    bu_ptbl_ins_unique(c->subtractions, (long *)s);
+	    return 1;
+	} else {
+	    // A union not overlapping breaks the chain.
+	    return 0;
 	}
-	// Regardless, we need to test further.
+    } else {
+	// c is a subtraction - we need to keep going.
 	return 1;
     }
-    return 0;
 }
 
 /*
@@ -114,17 +117,11 @@ find_hierarchy(struct bu_vls *UNUSED(msgs), struct bu_ptbl *islands)
 {
     if (!islands) return;
 
-    // Get the top level islands
-    std::set<struct subbrep_island_data *> top_islands;
-    for (unsigned int i = 0; i < BU_PTBL_LEN(islands); i++) {
-	struct subbrep_island_data *id = (struct subbrep_island_data *)BU_PTBL_GET(islands, i);
-	if (id->fil_cnt == 0) top_islands.insert(id);
-    }
-
     // Map outer loop face inclusions to islands for easy lookup
     std::map<int, long*> fol_to_i;
     for (unsigned int i = 0; i < BU_PTBL_LEN(islands); i++) {
 	struct subbrep_island_data *id = (struct subbrep_island_data *)BU_PTBL_GET(islands, i);
+	if (id->fol_cnt == 0) bu_log("warning - found island with no fol loops\n");
 	for (int j = 0; j < id->fol_cnt; j++) {
 	    fol_to_i.insert(std::make_pair(id->fol[j], (long *)id));
 	}
