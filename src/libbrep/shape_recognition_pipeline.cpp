@@ -25,10 +25,6 @@ shoal_csg(struct bu_vls *msgs, surface_t surface_type, struct subbrep_shoal_data
 
     // If we hit something we don't handle yet, bail immediately.
     switch (surface_type) {
-	case SURFACE_SPHERICAL_SECTION:
-	case SURFACE_SPHERE:
-	    return 0;
-	    break;
 	case SURFACE_TORUS:
 	    return 0;
 	    break;
@@ -97,6 +93,7 @@ shoal_csg(struct bu_vls *msgs, surface_t surface_type, struct subbrep_shoal_data
     // any.)
     ON_SimpleArray<ON_Plane> non_linear_edge_planes;
     std::set<int> linear_edges;
+    std::set<int> nonlinear_edges;
     for (c_it = nondegen_edges.begin(); c_it != nondegen_edges.end(); c_it++) {
 	const ON_BrepEdge *edge = &(brep->m_E[*c_it]);
 	ON_Curve *ecv = edge->EdgeCurveOf()->Duplicate();
@@ -128,6 +125,7 @@ shoal_csg(struct bu_vls *msgs, surface_t surface_type, struct subbrep_shoal_data
 		delete ecv2;
 	    }
 	    non_linear_edge_planes.Append(eplane);
+	    nonlinear_edges.insert(*c_it);
 	} else {
 	    linear_edges.insert(*c_it);
 	}
@@ -154,9 +152,11 @@ shoal_csg(struct bu_vls *msgs, surface_t surface_type, struct subbrep_shoal_data
     }
 
     // Find the implicit plane, if there is one
-    int lc;
+    int lc, nc;
     int *le = NULL;
+    int *ne = NULL;
     set_to_array(&le, &lc, &linear_edges);
+    set_to_array(&ne, &nc, &nonlinear_edges);
     switch (surface_type) {
 	case SURFACE_CYLINDRICAL_SECTION:
 	case SURFACE_CYLINDER:
@@ -167,14 +167,15 @@ shoal_csg(struct bu_vls *msgs, surface_t surface_type, struct subbrep_shoal_data
 	    break;
 	case SURFACE_SPHERICAL_SECTION:
 	case SURFACE_SPHERE:
-	    // TODO Spheres will need their own thing based on walking the non-degenerate
-	    // edge loop and collecting unique planes from sequential coplanar points.
+	    implicit_plane_ind = sph_implicit_plane(brep, nc, ne);
 	    break;
 	case SURFACE_TORUS:
 	    break;
 	default:
 	    break;
     }
+    bu_free(le, "nonlinear edges");
+    bu_free(ne, "nonlinear edges");
     // -1 means no implicit plane, -2 means an error
     if (implicit_plane_ind == -2) return 0;
 
@@ -275,6 +276,7 @@ shoal_csg(struct bu_vls *msgs, surface_t surface_type, struct subbrep_shoal_data
 	    break;
 	case SURFACE_SPHERICAL_SECTION:
 	case SURFACE_SPHERE:
+	    need_arbn = sph_implicit_params(data, &shoal_planes, *nonplanar_surfaces.begin());
 	    break;
 	case SURFACE_TORUS:
 	    break;

@@ -215,6 +215,7 @@ shoal_filter_loop(int control_loop, int candidate_loop, struct subbrep_island_da
 	case SURFACE_SPHERICAL_SECTION:
 	case SURFACE_SPHERE:
 	    if (ctype != SURFACE_SPHERICAL_SECTION && ctype != SURFACE_SPHERE) return 0;
+	    if (!sph_validate_face(forig, fcand)) return 0;
 	    break;
 	default:
 	    if (otype != ctype) return 0;
