@@ -121,7 +121,6 @@ find_hierarchy(struct bu_vls *UNUSED(msgs), struct bu_ptbl *islands)
     std::map<int, long*> fol_to_i;
     for (unsigned int i = 0; i < BU_PTBL_LEN(islands); i++) {
 	struct subbrep_island_data *id = (struct subbrep_island_data *)BU_PTBL_GET(islands, i);
-	if (id->fol_cnt == 0) bu_log("warning - found island with no fol loops\n");
 	for (int j = 0; j < id->fol_cnt; j++) {
 	    fol_to_i.insert(std::make_pair(id->fol[j], (long *)id));
 	}
