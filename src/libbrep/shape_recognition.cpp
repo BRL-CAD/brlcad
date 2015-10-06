@@ -162,9 +162,12 @@ find_hierarchy(struct bu_vls *UNUSED(msgs), struct bu_ptbl *islands)
 	p2c_ret = c2p.equal_range(sub);
 	subtractions.pop();
 
-	// A subtraction is guaranteed to be subtracted from its own parents
+	// A subtraction is guaranteed to be subtracted from its own parents, if they
+	// are not also subtractions
 	for (p2c_it = p2c_ret.first; p2c_it != p2c_ret.second; ++p2c_it) {
-	    bu_ptbl_ins_unique(p2c_it->second->subtractions, (long *)sub);
+	    if (p2c_it->second->local_brep_bool_op == 'u' || (p2c_it->second->nucleus && p2c_it->second->nucleus->params->bool_op == 'u')) {
+		bu_ptbl_ins_unique(p2c_it->second->subtractions, (long *)sub);
+	    }
 	    cq.push(p2c_it->second);
 	}
 
