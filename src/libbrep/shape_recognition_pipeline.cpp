@@ -23,6 +23,19 @@ shoal_csg(struct bu_vls *msgs, surface_t surface_type, struct subbrep_shoal_data
 
     const ON_Brep *brep = data->i->brep;
 
+    // If we hit something we don't handle yet, bail immediately.
+    switch (surface_type) {
+	case SURFACE_SPHERICAL_SECTION:
+	case SURFACE_SPHERE:
+	    return 0;
+	    break;
+	case SURFACE_TORUS:
+	    return 0;
+	    break;
+	default:
+	    break;
+    }
+
     // Collect faces, edges and edge midpoints.
     ON_SimpleArray<ON_3dPoint> edge_midpnts;
     std::set<int> edges;
