@@ -37,6 +37,14 @@ shoal_csg(struct bu_vls *msgs, surface_t surface_type, struct subbrep_shoal_data
     }
 
     // Collect faces, edges and edge midpoints.
+    //
+    // TODO - edge midpoints are not enough in situations (like certain sphereical faces)
+    // where there *is* no edge that is not coplanar with the connecting loop.  Need to
+    // construct medial axis of loop in 2D space and get the corresponding surface points
+    // to ensure reliable orientation of planar faces...
+    //
+    // see http://www.cs.unc.edu/~snoeyink/papers/medaxis.ps.gz
+    //
     ON_SimpleArray<ON_3dPoint> edge_midpnts;
     std::set<int> edges;
     for (int i = 0; i < data->shoal_loops_cnt; i++) {
