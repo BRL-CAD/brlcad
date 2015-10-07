@@ -210,7 +210,7 @@ cone_implicit_params(struct subbrep_shoal_data *data, ON_SimpleArray<ON_Plane> *
     data->params->negative = negative_cone(brep, shoal_nonplanar_face, BREP_CONIC_TOL);
     data->params->bool_op = (data->params->negative == -1) ? '-' : 'u';
 
-    fastf_t hdelta;
+    fastf_t hdelta = 0;
     if (l.PointAt(tmin).DistanceTo(cone.ApexPoint()) > BREP_CONIC_TOL) {
 	hdelta = cone.BasePoint().DistanceTo(l.PointAt(tmin));
 	hdelta = (cone.height < 0) ? -1*hdelta : hdelta;
