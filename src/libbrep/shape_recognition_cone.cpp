@@ -101,8 +101,8 @@ cone_implicit_params(struct subbrep_shoal_data *data, ON_SimpleArray<ON_Plane> *
     if ((*cone_planes).Count() <= 2) {
 	int perpendicular = 0;
 	for (int i = 0; i < 2; i++) {
-	    ON_Plane p;
-	    if ((*cone_planes)[i].Normal().IsParallelTo(cone.Axis(), VUNITIZE_TOL) != 0) perpendicular++;
+	    ON_Plane p = (*cone_planes)[i];
+	    if (p.Normal().IsParallelTo(cone.Axis(), VUNITIZE_TOL) != 0) perpendicular++;
 	}
 	if (perpendicular == (*cone_planes).Count()) need_arbn = 0;
     }
@@ -125,8 +125,9 @@ cone_implicit_params(struct subbrep_shoal_data *data, ON_SimpleArray<ON_Plane> *
     // Use the intersection, cone angle, and the projection of the cone axis onto the plane
     // to calculate min and max points on the cone from this plane.
     for (int i = 0; i < (*cone_planes).Count(); i++) {
-        // Note - don't intersect the implicit plane, since it doesn't play a role in defining the main cone
-        if (!(*cone_planes)[i].Normal().IsPerpendicularTo(cone.Axis(), VUNITIZE_TOL) && i != implicit_plane_ind) {
+        // Don't intersect the implicit plane, since it doesn't play a role in defining the main cone
+	if (i == implicit_plane_ind) continue;
+        if (!(*cone_planes)[i].Normal().IsPerpendicularTo(cone.Axis(), VUNITIZE_TOL)) {
             ON_3dPoint ipoint = ON_LinePlaneIntersect(l, (*cone_planes)[i]);
             if ((*cone_planes)[i].Normal().IsParallelTo(cone.Axis(), VUNITIZE_TOL)) {
                 axis_pts_init.Append(ipoint);
@@ -156,7 +157,10 @@ cone_implicit_params(struct subbrep_shoal_data *data, ON_SimpleArray<ON_Plane> *
                     axis_pts_init.Append(p2);
                 }
             }
-        }
+        } else {
+	    bu_log("TODO - a perpendicular plane from the plane set, needs unimplemented algorithm.\n");
+	    return -1;
+	}
     }
 
     // Trim out points that are above the bounding planes
