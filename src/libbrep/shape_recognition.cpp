@@ -377,6 +377,16 @@ brep_to_csg(struct bu_vls *msgs, const ON_Brep *brep)
     std::set<struct subbrep_island_data *> islands;
     std::set<struct subbrep_island_data *>::iterator is_it;
 
+    // Before we get started, check the B-Rep trims.  If we have boundary
+    // trims in the B-Rep, that means something isn't closed and we probably
+    // have a non-closed volume. Not representable - bail.
+    for (int i = 0; i < brep->m_T.Count(); i++) {
+	if (brep->m_T[i].m_type == ON_BrepTrim::boundary) {
+	    if (msgs) bu_vls_printf(msgs, "Found unmated trim curve - B-Rep is probably not a solid, skip.\n");
+	    return NULL;
+	}
+    }
+
     BU_GET(subbreps, struct bu_ptbl);
     bu_ptbl_init(subbreps, 8, "subbrep table");
 
