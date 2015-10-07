@@ -89,6 +89,7 @@ cone_implicit_params(struct subbrep_shoal_data *data, ON_SimpleArray<ON_Plane> *
     std::set<int> nondegen_edges;
     std::set<int>::iterator c_it;
     array_to_set(&nondegen_edges, nde, ndc);
+    std::set<int> notrim_planes;
 
     // Make a starting cone from one of the cylindrical surfaces and construct the axis line
     ON_Cone cone;
@@ -114,6 +115,8 @@ cone_implicit_params(struct subbrep_shoal_data *data, ON_SimpleArray<ON_Plane> *
 
     // It may be trimmed away by planes, but not in the simplest case.  Add in apex point.
     axis_pts_init.Append(cone.ApexPoint());
+    double apex_t;
+    l.ClosestPointTo(cone.ApexPoint(), &apex_t);
 
     // Add in all the nondegenerate edge vertices
     for (c_it = nondegen_edges.begin(); c_it != nondegen_edges.end(); c_it++) {
@@ -126,7 +129,10 @@ cone_implicit_params(struct subbrep_shoal_data *data, ON_SimpleArray<ON_Plane> *
     // to calculate min and max points on the cone from this plane.
     for (int i = 0; i < (*cone_planes).Count(); i++) {
         // Don't intersect the implicit plane, since it doesn't play a role in defining the main cone
-	if (i == implicit_plane_ind) continue;
+	if (i == implicit_plane_ind) {
+	    notrim_planes.insert(i);
+	    continue;
+	}
         if (!(*cone_planes)[i].Normal().IsPerpendicularTo(cone.Axis(), VUNITIZE_TOL)) {
             ON_3dPoint ipoint = ON_LinePlaneIntersect(l, (*cone_planes)[i]);
             if ((*cone_planes)[i].Normal().IsParallelTo(cone.Axis(), VUNITIZE_TOL)) {
@@ -151,15 +157,17 @@ cone_implicit_params(struct subbrep_shoal_data *data, ON_SimpleArray<ON_Plane> *
                 ON_3dVector pvect = cone.Axis() - ((*cone_planes)[i].Normal() * ON_DotProduct(cone_unit_axis, (*cone_planes)[i].Normal()));
                 pvect.Unitize();
                 if (!NEAR_ZERO(dpc, VUNITIZE_TOL)) {
+		    double tp1, tp2;
                     ON_3dPoint p1 = ipoint + pvect * a;
                     ON_3dPoint p2 = ipoint + -1*pvect * b;
-                    axis_pts_init.Append(p1);
-                    axis_pts_init.Append(p2);
+		    l.ClosestPointTo(p1, &tp1);
+		    l.ClosestPointTo(p2, &tp2);
+		    if (tp1 < apex_t) { axis_pts_init.Append(p1); } else { notrim_planes.insert(i); }
+		    if (tp2 < apex_t) { axis_pts_init.Append(p2); } else { notrim_planes.insert(i); }
                 }
             }
         } else {
-	    bu_log("TODO - a perpendicular plane from the plane set, needs unimplemented algorithm.\n");
-	    return -1;
+	    notrim_planes.insert(i);
 	}
     }
 
@@ -170,7 +178,7 @@ cone_implicit_params(struct subbrep_shoal_data *data, ON_SimpleArray<ON_Plane> *
         for (int j = 0; j < (*cone_planes).Count(); j++) {
             // Don't trim with the implicit plane - the implicit plane is defined "after" the
             // primary shapes are formed, so it doesn't get a vote in removing capping points
-            if (j != implicit_plane_ind) {
+            if (notrim_planes.find(j) == notrim_planes.end()) {
                 ON_3dVector v = axis_pts_init[i] - (*cone_planes)[j].origin;
                 double dotp = ON_DotProduct(v, (*cone_planes)[j].Normal());
                 if (dotp > 0 && !NEAR_ZERO(dotp, VUNITIZE_TOL)) {
