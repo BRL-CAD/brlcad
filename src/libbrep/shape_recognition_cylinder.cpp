@@ -160,6 +160,7 @@ cyl_implicit_params(struct subbrep_shoal_data *data, ON_SimpleArray<ON_Plane> *c
 	// Note - don't intersect the implicit plane, since it doesn't play a role in defining the main cylinder
 	if (!(*cyl_planes)[i].Normal().IsPerpendicularTo(cylinder.Axis(), VUNITIZE_TOL) && i != implicit_plane_ind) {
 	    ON_3dPoint ipoint = ON_LinePlaneIntersect(l, (*cyl_planes)[i]);
+	    bu_log("ipoint: %f, %f, %f\n", ipoint.x/10, ipoint.y/10, ipoint.z/10);
 	    if ((*cyl_planes)[i].Normal().IsParallelTo(cylinder.Axis(), VUNITIZE_TOL)) {
 		axis_pts_init.Append(ipoint);
 	    } else {
@@ -169,9 +170,24 @@ cyl_implicit_params(struct subbrep_shoal_data *data, ON_SimpleArray<ON_Plane> *c
 		if (!NEAR_ZERO(dpc, VUNITIZE_TOL)) {
 		    double hypotenuse = cylinder.circle.Radius() / dpc;
 		    ON_3dPoint p1 = ipoint + pvect * hypotenuse;
+	    bu_log("p1: %f, %f, %f\n", p1.x/10, p1.y/10, p1.z/10);
 		    ON_3dPoint p2 = ipoint + -1*pvect * hypotenuse;
+	    bu_log("p2: %f, %f, %f\n", p2.x/10, p2.y/10, p2.z/10);
 		    axis_pts_init.Append(p1);
 		    axis_pts_init.Append(p2);
+
+		    // Visualiztion points
+		    double radius = cylinder.circle.Radius();
+		    bu_log("hypotenuse: %f, radius: %f\n", hypotenuse, radius);
+		    ON_3dVector ov = ON_CrossProduct(cylinder.Axis(), pvect);
+		    ON_3dPoint plane1 = ipoint + pvect * 2*radius + ov * 2*radius;
+		    ON_3dPoint plane2 = ipoint + pvect * 2*radius + -ov * 2*radius;
+		    ON_3dPoint plane3 = ipoint + -pvect * 2*radius + ov * 2*radius;
+		    ON_3dPoint plane4 = ipoint + -pvect * 2*radius + -ov * 2*radius;
+		    bu_log("pl1: %f, %f, %f\n", plane1.x/10, plane1.y/10, plane1.z/10);
+		    bu_log("pl2: %f, %f, %f\n", plane2.x/10, plane2.y/10, plane2.z/10);
+		    bu_log("pl3: %f, %f, %f\n", plane3.x/10, plane3.y/10, plane3.z/10);
+		    bu_log("pl4: %f, %f, %f\n", plane4.x/10, plane4.y/10, plane4.z/10);
 		}
 	    }
 	}
@@ -203,6 +219,9 @@ cyl_implicit_params(struct subbrep_shoal_data *data, ON_SimpleArray<ON_Plane> *c
     double tmax = std::numeric_limits<double>::min();
     for (int i = 0; i < axis_pts_2nd.Count(); i++) {
 	double t;
+	l.ClosestPointTo(axis_pts_2nd[i], &t);
+	ON_3dPoint cp = l.PointAt(t);
+	    bu_log("lp: %f, %f, %f\n", cp.x/10, cp.y/10, cp.z/10);
 	if (l.ClosestPointTo(axis_pts_2nd[i], &t)) {
 	    if (t < tmin) tmin = t;
 	    if (t > tmax) tmax = t;
