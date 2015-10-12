@@ -118,6 +118,8 @@ cone_implicit_params(struct subbrep_shoal_data *data, ON_SimpleArray<ON_Plane> *
     double apex_t;
     l.ClosestPointTo(cone.ApexPoint(), &apex_t);
 
+bu_log("apex: %f, %f, %f\n", cone.ApexPoint().x/10, cone.ApexPoint().y/10, cone.ApexPoint().z/10);
+
     // Add in all the nondegenerate edge vertices
     for (c_it = nondegen_edges.begin(); c_it != nondegen_edges.end(); c_it++) {
         const ON_BrepEdge *edge = &(brep->m_E[*c_it]);
@@ -135,6 +137,7 @@ cone_implicit_params(struct subbrep_shoal_data *data, ON_SimpleArray<ON_Plane> *
 	}
         if (!(*cone_planes)[i].Normal().IsPerpendicularTo(cone.Axis(), VUNITIZE_TOL)) {
             ON_3dPoint ipoint = ON_LinePlaneIntersect(l, (*cone_planes)[i]);
+	    bu_log("ipoint: %f, %f, %f\n", ipoint.x/10, ipoint.y/10, ipoint.z/10);
             if ((*cone_planes)[i].Normal().IsParallelTo(cone.Axis(), VUNITIZE_TOL)) {
                 axis_pts_init.Append(ipoint);
             } else {
@@ -159,11 +162,30 @@ cone_implicit_params(struct subbrep_shoal_data *data, ON_SimpleArray<ON_Plane> *
                 if (!NEAR_ZERO(dpc, VUNITIZE_TOL)) {
 		    double tp1, tp2;
                     ON_3dPoint p1 = ipoint + pvect * a;
+		    bu_log("p1: %f, %f, %f\n", p1.x/10, p1.y/10, p1.z/10);
                     ON_3dPoint p2 = ipoint + -1*pvect * b;
+		    bu_log("p2: %f, %f, %f\n", p2.x/10, p2.y/10, p2.z/10);
 		    l.ClosestPointTo(p1, &tp1);
 		    l.ClosestPointTo(p2, &tp2);
 		    if (tp1 < apex_t) { axis_pts_init.Append(p1); } else { notrim_planes.insert(i); }
 		    if (tp2 < apex_t) { axis_pts_init.Append(p2); } else { notrim_planes.insert(i); }
+
+		    double radius = cone.CircleAt(cone.height).Radius();
+		    ON_3dVector ov = ON_CrossProduct(cone.Axis(), pvect);
+		    ON_3dPoint plane1 = ipoint + pvect * 2*radius + ov * 2*radius;
+		    ON_3dPoint plane2 = ipoint + pvect * 2*radius + -ov * 2*radius;
+		    ON_3dPoint plane3 = ipoint + -pvect * 2*radius + ov * 2*radius;
+		    ON_3dPoint plane4 = ipoint + -pvect * 2*radius + -ov * 2*radius;
+		    bu_log("pl1: %f, %f, %f\n", plane1.x/10, plane1.y/10, plane1.z/10);
+		    bu_log("pl2: %f, %f, %f\n", plane2.x/10, plane2.y/10, plane2.z/10);
+		    bu_log("pl3: %f, %f, %f\n", plane3.x/10, plane3.y/10, plane3.z/10);
+		    bu_log("pl4: %f, %f, %f\n", plane4.x/10, plane4.y/10, plane4.z/10);
+
+		    ON_3dPoint cp1 = l.PointAt(tp1);
+		    ON_3dPoint cp2 = l.PointAt(tp2);
+		    bu_log("lp1: %f, %f, %f\n", cp1.x/10, cp1.y/10, cp1.z/10);
+		    bu_log("lp2: %f, %f, %f\n", cp2.x/10, cp2.y/10, cp2.z/10);
+
                 }
             }
         } else {
@@ -225,6 +247,9 @@ cone_implicit_params(struct subbrep_shoal_data *data, ON_SimpleArray<ON_Plane> *
     } else {
 	data->params->r2 = 0.000001;
     }
+
+    bu_log("radius1: %f\n", data->params->radius);
+    bu_log("radius2: %f\n", data->params->r2);
 
     ON_3dVector hvect(l.PointAt(tmax) - l.PointAt(tmin));
     BN_VMOVE(data->params->hv, hvect);
