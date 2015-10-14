@@ -101,7 +101,7 @@ static void *mmAlignRelayAlloc(void *(*relayalloc)(void *head, size_t bytes), vo
 
     i = ((intptr_t)v + align + sizeof(mmAlign) + displacement) & ~align;
     i -= displacement;
-    malign = (mmAlign *)ADDRESS((void *)i, -(int)sizeof(mmAlign));
+    malign = (mmAlign *)ADDRESS((void *)i, -(intptr_t)sizeof(mmAlign));
     malign->padding = ADDRESSDIFF(i, v);
     return (void *)i;
 }
@@ -539,7 +539,7 @@ void *mmAlignAlloc(size_t bytes, intptr_t align)
     v = bu_malloc(bytes + align + sizeof(mmAlign), "mmAlignAlloc()");
 
     i = ((intptr_t)v + align + sizeof(mmAlign)) & ~align;
-    malign = (mmAlign *)ADDRESS((void *)i, -(int)sizeof(mmAlign));
+    malign = (mmAlign *)ADDRESS((void *)i, -(intptr_t)sizeof(mmAlign));
     malign->padding = ADDRESSDIFF(i, v);
     return (void *)i;
 }
@@ -550,7 +550,7 @@ void *mmAlignAlloc(size_t bytes, intptr_t align)
 void mmAlignFree(void *v)
 {
     mmAlign *malign;
-    malign = (mmAlign *)ADDRESS(v, -sizeof(mmAlign));
+    malign = (mmAlign *)ADDRESS(v, -(intptr_t)sizeof(mmAlign));
     bu_free(ADDRESS(v, -malign->padding), "mmAlignFree()");
 }
 
