@@ -152,7 +152,8 @@ typedef double mdf;
 #    define mdflog2(x) (log(x) / log(2))
 #  endif
 #  define mdfmin(x,y) FMIN((x),(y))
-#  define mdfround(x) round(x)
+/* or round() or nearbyint() or lrint() -- see lrint in common.h */
+#  define mdfround(x) rint(x)
 
 #else
 
@@ -1138,7 +1139,7 @@ static mdf mdEdgeCollapsePenaltyTriangle(mdf *newpoint, mdf *oldpoint, mdf *left
 	newcompactness /= norm;
 	VSUB2(oldvectc, oldpoint, rightpoint);
 	oldcompactness = (MD_COMPACTNESS_NORMALIZATION_FACTOR * mdfsqrt(VDOT(oldnormal, oldnormal))) / (vecta2 + VDOT(oldvectb, oldvectb) + VDOT(oldvectc, oldvectc));
-	compactness = fmin(compactnesstarget, oldcompactness) - newcompactness;
+	compactness = mdfmin(compactnesstarget, oldcompactness) - newcompactness;
 
 	if (compactness > 0.0)
 	    penalty = compactness;
@@ -3588,7 +3589,7 @@ static void mdUpdateStatus(mdMesh *mesh, mdThreadInit *threadinit, int stage, md
 	else if (status->stage == MD_STATUS_STAGE_BUILDTRIREFS)
 	    subprogress = (double)buildrefcount / (double)mesh->tricount;
 
-	subprogress = fmax(0.0, fmin(1.0, subprogress));
+	subprogress = mdfmax(0.0, mdfmin(1.0, subprogress));
     }
 
     progress = 0.0;
