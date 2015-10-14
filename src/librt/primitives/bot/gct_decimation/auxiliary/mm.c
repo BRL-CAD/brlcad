@@ -361,8 +361,8 @@ static mmBlock *mmBlockResolveChunk(void *p, mmBlock *root)
 static void mmAlignRelayFree(void (*relayfree)(void *head, void *v, size_t bytes), void *relayvalue, void *v, size_t bytes)
 {
     mmAlign *malign;
-    malign = (mmAlign *)ADDRESS(v, -sizeof(mmAlign));
-    relayfree(relayvalue, ADDRESS(v, -malign->padding), bytes);
+    malign = (mmAlign *)ADDRESS(v, -(intptr_t)sizeof(mmAlign));
+    relayfree(relayvalue, ADDRESS(v, -(intptr_t)malign->padding), bytes);
 }
 
 
