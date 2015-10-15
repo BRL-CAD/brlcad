@@ -42,6 +42,10 @@ extern "C++" {
 #include <iostream>
 #include <fstream>
 
+/* because we're including bio.h in a public header and bsocket/bio have an
+ * ordering dependency, include bsocket.h in the correct order to ensure
+ * we don't get ordering errors */
+#include "bsocket.h"
 #include "bio.h" /* needed to include windows.h with protections */
 #define ON_NO_WINDOWS 1 /* don't let opennurbs include windows.h */
 #include "opennurbs.h"

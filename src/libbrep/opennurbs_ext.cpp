@@ -25,7 +25,6 @@
 
 #include "common.h"
 
-#include "bio.h"
 #include <assert.h>
 #include <vector>
 
