@@ -386,13 +386,18 @@ brep_to_csg(struct bu_vls *msgs, const ON_Brep *brep)
             ON_Curve *c = edge->EdgeCurveOf()->Duplicate();
             ON_Arc arc;
             if (c->IsArc(NULL, &arc, BREP_SPHERICAL_TOL)) {
-                ON_Interval ad = arc.DomainDegrees();
-                ON_Circle circ(arc.StartPoint(), arc.MidPoint(), arc.EndPoint());
-		ON_3dPoint p = circ.Center()*0.1;
-		ON_3dPoint v1 = edge->Vertex(0)->Point()*0.1;
-		ON_3dPoint v2 = edge->Vertex(1)->Point()*0.1;
-                bu_log("\\tdplotdefinepoints(%f,%f,%f)(%f,%f,%f)(%f,%f,%f)\n", p.x,p.y,p.z,v1.x,v1.y,v1.z,v2.x,v2.y,v2.z);
-		bu_log("\\tdplotdrawpolytopearc{%f}{}{}\n", circ.Radius()*0.1);
+		if (!arc.IsCircle()) {
+		    ON_Interval ad = arc.DomainDegrees();
+		    ON_Circle circ(arc.StartPoint(), arc.MidPoint(), arc.EndPoint());
+		    ON_3dPoint p = circ.Center()*0.1;
+		    ON_3dPoint v1 = edge->Vertex(0)->Point()*0.1;
+		    ON_3dPoint v2 = edge->Vertex(1)->Point()*0.1;
+		    bu_log("\\tdplotdefinepoints(%f,%f,%f)(%f,%f,%f)(%f,%f,%f)\n", p.x,p.y,p.z,v1.x,v1.y,v1.z,v2.x,v2.y,v2.z);
+		    bu_log("\\tdplotdrawpolytopearc{%f}{}{}\n", circ.Radius()*0.1);
+		} else {
+		    ON_3dPoint o = arc.plane.origin*0.1;
+		    bu_log("\\draw (%f,%f,%f) circle (%f);\n", o.x, o.y, o.z, arc.radius*0.1);
+		}
             } else {
 		bu_log("%% error - unknown curve on edge %d, approximate with line:\n", edge->m_edge_index);
 		bu_log("\\draw (V%d) -- (V%d);\n", edge->Vertex(0)->m_vertex_index, edge->Vertex(1)->m_vertex_index);
