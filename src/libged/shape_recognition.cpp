@@ -10,6 +10,7 @@
 #include <algorithm>
 
 #include "vmath.h"
+#include "bu/avs.h"
 #include "bu/path.h"
 #include "wdb.h"
 #include "analyze.h"
@@ -152,6 +153,41 @@ subbrep_to_csg_cylinder(struct bu_vls *msgs, struct csg_object_params *data, str
     return 0;
 }
 
+HIDDEN int
+subbrep_to_csg_cone(struct bu_vls *msgs, struct csg_object_params *data, struct rt_wdb *wdbp, const char *pname)
+{
+    if (!msgs || !data || !wdbp || !pname) return 0;
+    if (data->csg_type == CONE) {
+	struct bu_vls prim_name = BU_VLS_INIT_ZERO;
+	subbrep_obj_name(data->csg_type, data->csg_id, pname, &prim_name);
+	if (mk_cone(wdbp, bu_vls_addr(&prim_name), data->origin, data->hv, data->height, data->radius, data->r2)) {
+	    if (msgs) bu_vls_printf(msgs, "mk_trc failed for %s\n", bu_vls_addr(&prim_name));
+	} else {
+	    set_attr_key(wdbp, bu_vls_addr(&prim_name), "loops", data->s->shoal_loops_cnt, data->s->shoal_loops);
+	}
+	bu_vls_free(&prim_name);
+	return 1;
+    }
+    return 0;
+}
+
+HIDDEN int
+subbrep_to_csg_sph(struct bu_vls *msgs, struct csg_object_params *data, struct rt_wdb *wdbp, const char *pname)
+{
+    if (!msgs || !data || !wdbp || !pname) return 0;
+    if (data->csg_type == SPHERE) {
+	struct bu_vls prim_name = BU_VLS_INIT_ZERO;
+	subbrep_obj_name(data->csg_type, data->csg_id, pname, &prim_name);
+	if (mk_sph(wdbp, bu_vls_addr(&prim_name), data->origin, data->radius)) {
+	    if (msgs) bu_vls_printf(msgs, "mk_sph failed for %s\n", bu_vls_addr(&prim_name));
+	} else {
+	    set_attr_key(wdbp, bu_vls_addr(&prim_name), "loops", data->s->shoal_loops_cnt, data->s->shoal_loops);
+	}
+	bu_vls_free(&prim_name);
+	return 1;
+    }
+    return 0;
+}
 
 HIDDEN void
 csg_obj_process(struct bu_vls *msgs, struct csg_object_params *data, struct rt_wdb *wdbp, const char *pname)
@@ -184,10 +220,10 @@ csg_obj_process(struct bu_vls *msgs, struct csg_object_params *data, struct rt_w
 	    subbrep_to_csg_cylinder(msgs, data, wdbp, pname);
 	    break;
 	case CONE:
-	    //subbrep_to_csg_conic(data, wdbp, pname, wcomb);
+	    subbrep_to_csg_cone(msgs, data, wdbp, pname);
 	    break;
 	case SPHERE:
-	    //subbrep_to_csg_sphere(data, wdbp, id, wcomb);
+	    subbrep_to_csg_sph(msgs, data, wdbp, pname);
 	    break;
 	case ELLIPSOID:
 	    break;
@@ -299,7 +335,8 @@ make_island(struct bu_vls *msgs, struct subbrep_island_data *data, struct rt_wdb
     // to the overall shoal in the pcomb assembly.
     (void)mk_addmember(bu_vls_addr(&shoal_name), &(ucomb.l), NULL, db_str2op(&un));
     char *bool_op;
-    int have_subtractions = 0;
+    int union_shoal_cnt = 1;
+    int subtraction_shoal_cnt = 0;
 
     // Find and handle union shoals first.
     for (unsigned int i = 0; i < BU_PTBL_LEN(data->island_children); i++) {
@@ -313,8 +350,15 @@ make_island(struct bu_vls *msgs, struct subbrep_island_data *data, struct rt_wdb
 	    //}
 	    if (!make_shoal(msgs, d, wdbp, rname)) failed++;
 	    (void)mk_addmember(bu_vls_addr(&shoal_name), &(ucomb.l), NULL, db_str2op(bool_op));
+	    union_shoal_cnt++;
 	}
     }
+
+    if (union_shoal_cnt == 1) {
+	bu_vls_sprintf(&union_name, "%s", bu_vls_addr(&shoal_name));
+	bu_log("single union name: %s\n", bu_vls_addr(&union_name));
+    }
+
     // Have unions, get subtractions.
     for (unsigned int i = 0; i < BU_PTBL_LEN(data->island_children); i++) {
 	struct subbrep_shoal_data *d = (struct subbrep_shoal_data *)BU_PTBL_GET(data->island_children, i);
@@ -327,7 +371,7 @@ make_island(struct bu_vls *msgs, struct subbrep_island_data *data, struct rt_wdb
 	    //}
 	    if (!make_shoal(msgs, d, wdbp, rname)) failed++;
 	    (void)mk_addmember(bu_vls_addr(&shoal_name), &(scomb.l), NULL, db_str2op(&un));
-	    have_subtractions++;
+	    subtraction_shoal_cnt++;
 	}
     }
     // Handle subtractions
@@ -340,12 +384,14 @@ make_island(struct bu_vls *msgs, struct subbrep_island_data *data, struct rt_wdb
 	//}
 	(void)mk_addmember(bu_vls_addr(&subtraction_name), &(scomb.l), NULL, db_str2op(&un));
 	bu_vls_free(&subtraction_name);
-	have_subtractions++;
+	subtraction_shoal_cnt++;
     }
 
-    mk_lcomb(wdbp, bu_vls_addr(&union_name), &ucomb, 0, NULL, NULL, NULL, 0);
+    if (union_shoal_cnt > 1) {
+	mk_lcomb(wdbp, bu_vls_addr(&union_name), &ucomb, 0, NULL, NULL, NULL, 0);
+    }
     (void)mk_addmember(bu_vls_addr(&union_name), &(icomb.l), NULL, db_str2op(&un));
-    if (have_subtractions) {
+    if (subtraction_shoal_cnt) {
 	mk_lcomb(wdbp, bu_vls_addr(&sub_name), &scomb, 0, NULL, NULL, NULL, 0);
 	(void)mk_addmember(bu_vls_addr(&sub_name), &(icomb.l), NULL, db_str2op(&sub));
     }
@@ -392,7 +438,7 @@ make_island(struct bu_vls *msgs, struct subbrep_island_data *data, struct rt_wdb
  *  2 not a valid brep
  */
 int
-_obj_brep_to_csg(struct ged *gedp, struct directory *dp, int verify, struct bu_vls *retname)
+_obj_brep_to_csg(struct ged *gedp, struct bu_vls *log, struct bu_attribute_value_set *UNUSED(ito), struct directory *dp, int verify, struct bu_vls *retname)
 {
     /* Unpack B-Rep */
     struct rt_db_internal intern;
@@ -403,7 +449,7 @@ _obj_brep_to_csg(struct ged *gedp, struct directory *dp, int verify, struct bu_v
 	return -1;
     }
     if (intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_BREP) {
-	bu_vls_printf(gedp->ged_result_str, "%s is not a B-Rep - aborting\n", dp->d_namep);
+	bu_vls_printf(log, "%s is not a B-Rep - aborting\n", dp->d_namep);
 	return 1;
     } else {
 	brep_ip = (struct rt_brep_internal *)intern.idb_ptr;
@@ -411,7 +457,7 @@ _obj_brep_to_csg(struct ged *gedp, struct directory *dp, int verify, struct bu_v
     RT_BREP_CK_MAGIC(brep_ip);
 #if 1
     if (!rt_brep_valid(&intern, NULL)) {
-	bu_vls_printf(gedp->ged_result_str, "%s is not a valid B-Rep - aborting\n", dp->d_namep);
+	bu_vls_printf(log, "%s is not a valid B-Rep - aborting\n", dp->d_namep);
 	return 2;
     }
 #endif
@@ -429,11 +475,11 @@ _obj_brep_to_csg(struct ged *gedp, struct directory *dp, int verify, struct bu_v
     // Only do this if we haven't already done it - tree walking may
     // result in multiple references to a single object
     if (db_lookup(gedp->ged_wdbp->dbip, bu_vls_addr(&comb_name), LOOKUP_QUIET) == RT_DIR_NULL) {
-	bu_vls_printf(gedp->ged_result_str, "Converting %s to %s\n", dp->d_namep, bu_vls_addr(&comb_name));
+	bu_vls_printf(log, "Converting %s to %s\n", dp->d_namep, bu_vls_addr(&comb_name));
 
 	BU_LIST_INIT(&pcomb.l);
 
-	struct bu_ptbl *subbreps = brep_to_csg(gedp->ged_result_str, brep);
+	struct bu_ptbl *subbreps = brep_to_csg(log, brep);
 
 	if (subbreps) {
 	    int have_non_breps = 0;
@@ -445,7 +491,7 @@ _obj_brep_to_csg(struct ged *gedp, struct directory *dp, int verify, struct bu_v
 
 	    for (unsigned int i = 0; i < BU_PTBL_LEN(subbreps); i++) {
 		struct subbrep_island_data *sb = (struct subbrep_island_data *)BU_PTBL_GET(subbreps, i);
-		make_island(gedp->ged_result_str, sb, wdbp, bu_vls_addr(&root_name), &pcomb);
+		make_island(log, sb, wdbp, bu_vls_addr(&root_name), &pcomb);
 	    }
 	    for (unsigned int i = 0; i < BU_PTBL_LEN(subbreps); i++) {
 		// free islands;
@@ -462,6 +508,18 @@ _obj_brep_to_csg(struct ged *gedp, struct directory *dp, int verify, struct bu_v
 	    } else {
 		// TODO - Fix up name of first item in list to reflect top level naming to
 		// avoid an unnecessary level of hierarchy.
+		bu_log("only one level... - %s\n", ((struct wmember *)pcomb.l.forw)->wm_name);
+		/*
+		int ac = 3;
+		const char **av = (const char **)bu_calloc(4, sizeof(char *), "killtree argv");
+		av[0] = "mv";
+		av[1] = ((struct wmember *)pcomb.l.forw)->wm_name;
+		av[2] = bu_vls_addr(&comb_name);
+		av[3] = (char *)0;
+		(void)ged_move(gedp, ac, av);
+		bu_free(av, "free av array");
+		bu_vls_sprintf(&comb_name, "%s", ((struct wmember *)pcomb.l.forw)->wm_name);
+		*/
 		mk_lcomb(wdbp, bu_vls_addr(&comb_name), &pcomb, 0, NULL, NULL, NULL, 0);
 	    }
 
@@ -471,7 +529,7 @@ _obj_brep_to_csg(struct ged *gedp, struct directory *dp, int verify, struct bu_v
 		struct bn_tol tol = {BN_TOL_MAGIC, BN_TOL_DIST, BN_TOL_DIST * BN_TOL_DIST, 1.0e-6, 1.0 - 1.0e-6 };
 		brep->GetBoundingBox(bbox);
 		tol.dist = (bbox.Diagonal().Length() / 100.0);
-		bu_vls_printf(gedp->ged_result_str, "Analyzing %s csg conversion, tol %f...\n", dp->d_namep, tol.dist);
+		bu_vls_printf(log, "Analyzing %s csg conversion, tol %f...\n", dp->d_namep, tol.dist);
 		if (analyze_raydiff(NULL, gedp->ged_wdbp->dbip, dp->d_namep, bu_vls_addr(&comb_name), &tol, 1)) {
 		    /* remove generated tree if debugging flag isn't passed - not valid */
 		    int ac = 3;
@@ -482,15 +540,16 @@ _obj_brep_to_csg(struct ged *gedp, struct directory *dp, int verify, struct bu_v
 		    av[3] = (char *)0;
 		    (void)ged_killtree(gedp, ac, av);
 		    bu_free(av, "free av array");
-		    bu_vls_printf(gedp->ged_result_str, "Error: %s did not pass diff test at tol %f, rejecting\n", bu_vls_addr(&comb_name), tol.dist);
+		    bu_vls_printf(log, "Error: %s did not pass diff test at tol %f, rejecting\n", bu_vls_addr(&comb_name), tol.dist);
+		    return 2;
 		}
 	    }
+	} else {
+	    return 2;
 	}
     } else {
-	bu_vls_printf(gedp->ged_result_str, "Conversion object %s for %s already exists, skipping.\n", bu_vls_addr(&comb_name), dp->d_namep);
+	bu_vls_printf(log, "Conversion object %s for %s already exists, skipping.\n", bu_vls_addr(&comb_name), dp->d_namep);
     }
-    // This string is getting overwritten somewhere???
-    bu_log("result_str: \n\n\n%s\n\n\n\n", bu_vls_addr(gedp->ged_result_str));
     return 0;
 }
 
@@ -504,12 +563,16 @@ _obj_brep_to_csg(struct ged *gedp, struct directory *dp, int verify, struct bu_v
 /*               Tree walking, etc.              */
 /*************************************************/
 
-int comb_to_csg(struct ged *gedp, struct directory *dp, int verify);
+int comb_to_csg(struct ged *gedp, struct bu_vls *log, struct bu_attribute_value_set *ito, struct directory *dp, int verify);
 
 int
-brep_csg_conversion_tree(struct ged *gedp, const union tree *oldtree, union tree *newtree, int verify)
+brep_csg_conversion_tree(struct ged *gedp, struct bu_vls *log, struct bu_attribute_value_set *ito, const union tree *oldtree, union tree *newtree, int verify)
 {
     int ret = 0;
+    int brep_c;
+    struct bu_vls tmpname = BU_VLS_INIT_ZERO;
+    struct bu_vls newname = BU_VLS_INIT_ZERO;
+    char *oldname = NULL;
     *newtree = *oldtree;
     switch (oldtree->tr_op) {
 	case OP_UNION:
@@ -520,7 +583,7 @@ brep_csg_conversion_tree(struct ged *gedp, const union tree *oldtree, union tree
 	    //bu_log("convert right\n");
 	    newtree->tr_b.tb_right = new tree;
 	    RT_TREE_INIT(newtree->tr_b.tb_right);
-	    ret = brep_csg_conversion_tree(gedp, oldtree->tr_b.tb_right, newtree->tr_b.tb_right, verify);
+	    ret = brep_csg_conversion_tree(gedp, log, ito, oldtree->tr_b.tb_right, newtree->tr_b.tb_right, verify);
 #if 0
 	    if (ret) {
 		delete newtree->tr_b.tb_right;
@@ -535,7 +598,7 @@ brep_csg_conversion_tree(struct ged *gedp, const union tree *oldtree, union tree
 	    //bu_log("convert left\n");
 	    BU_ALLOC(newtree->tr_b.tb_left, union tree);
 	    RT_TREE_INIT(newtree->tr_b.tb_left);
-	    ret = brep_csg_conversion_tree(gedp, oldtree->tr_b.tb_left, newtree->tr_b.tb_left, verify);
+	    ret = brep_csg_conversion_tree(gedp, log, ito, oldtree->tr_b.tb_left, newtree->tr_b.tb_left, verify);
 #if 0
 	    if (ret) {
 		delete newtree->tr_b.tb_left;
@@ -544,62 +607,59 @@ brep_csg_conversion_tree(struct ged *gedp, const union tree *oldtree, union tree
 #endif
 	    break;
 	case OP_DB_LEAF:
-	    struct bu_vls tmpname = BU_VLS_INIT_ZERO;
-	    char *oldname = oldtree->tr_l.tl_name;
+	    oldname = oldtree->tr_l.tl_name;
 	    bu_vls_sprintf(&tmpname, "csg_%s", oldname);
 	    if (db_lookup(gedp->ged_wdbp->dbip, bu_vls_addr(&tmpname), LOOKUP_QUIET) == RT_DIR_NULL) {
 		struct directory *dir = db_lookup(gedp->ged_wdbp->dbip, oldname, LOOKUP_QUIET);
 
 		if (dir != RT_DIR_NULL) {
 		    if (dir->d_flags & RT_DIR_COMB) {
-			ret = comb_to_csg(gedp, dir, verify);
-			if (ret) {
-			    bu_vls_free(&tmpname);
-			    break;
+			ret = comb_to_csg(gedp, log, ito, dir, verify);
+			if (!ret) {
+			    newtree->tr_l.tl_name = (char*)bu_malloc(strlen(bu_vls_addr(&tmpname))+1, "char");
+			    bu_strlcpy(newtree->tr_l.tl_name, bu_vls_addr(&tmpname), strlen(bu_vls_addr(&tmpname))+1);
 			}
-			newtree->tr_l.tl_name = (char*)bu_malloc(strlen(bu_vls_addr(&tmpname))+1, "char");
-			bu_strlcpy(newtree->tr_l.tl_name, bu_vls_addr(&tmpname), strlen(bu_vls_addr(&tmpname))+1);
 			bu_vls_free(&tmpname);
-			break;
+		    } else {
+			// It's a primitive. If it's a b-rep object, convert it. Otherwise,
+			// just duplicate it. Might need better error codes from _obj_brep_to_csg for this...
+			brep_c = _obj_brep_to_csg(gedp, log, ito, dir, verify, &newname);
+			switch (brep_c) {
+			    case 0:
+				bu_vls_printf(log, "processed brep %s.\n", bu_vls_addr(&newname));
+				newtree->tr_l.tl_name = (char*)bu_malloc(strlen(bu_vls_addr(&newname))+1, "char");
+				bu_strlcpy(newtree->tr_l.tl_name, bu_vls_addr(&newname), strlen(bu_vls_addr(&newname))+1);
+				bu_vls_free(&newname);
+				break;
+			    case 1:
+				bu_vls_printf(log, "non brep solid %s.\n", bu_vls_addr(&tmpname));
+				newtree->tr_l.tl_name = (char*)bu_malloc(strlen(bu_vls_addr(&tmpname))+1, "char");
+				bu_strlcpy(newtree->tr_l.tl_name, oldname, strlen(oldname)+1);
+				break;
+			    case 2:
+				bu_vls_printf(log, "unconverted brep %s.\n", bu_vls_addr(&tmpname));
+				newtree->tr_l.tl_name = (char*)bu_malloc(strlen(bu_vls_addr(&tmpname))+1, "char");
+				bu_strlcpy(newtree->tr_l.tl_name, oldname, strlen(oldname)+1);
+				break;
+			    default:
+				bu_vls_printf(log, "what?? %s.\n", bu_vls_addr(&tmpname));
+				break;
+			}
 		    }
-		    // It's a primitive. If it's a b-rep object, convert it. Otherwise,
-		    // just duplicate it. Might need better error codes from _obj_brep_to_csg for this...
-		    struct bu_vls newname = BU_VLS_INIT_ZERO;
-		    int brep_c = _obj_brep_to_csg(gedp, dir, verify, &newname);
-		    int need_break = 0;
-		    switch (brep_c) {
-			case 0:
-			    bu_vls_printf(gedp->ged_result_str, "processed brep %s.\n", bu_vls_addr(&newname));
-			    newtree->tr_l.tl_name = (char*)bu_malloc(strlen(bu_vls_addr(&newname))+1, "char");
-			    bu_strlcpy(newtree->tr_l.tl_name, bu_vls_addr(&newname), strlen(bu_vls_addr(&newname))+1);
-			    bu_vls_free(&newname);
-			    break;
-			case 1:
-			    bu_vls_printf(gedp->ged_result_str, "non brep solid %s.\n", bu_vls_addr(&tmpname));
-			    newtree->tr_l.tl_name = (char*)bu_malloc(strlen(bu_vls_addr(&tmpname))+1, "char");
-			    bu_strlcpy(newtree->tr_l.tl_name, oldname, strlen(oldname)+1);
-			    break;
-			case 2:
-			    bu_vls_printf(gedp->ged_result_str, "skipped invalid brep %s.\n", bu_vls_addr(&tmpname));
-			    newtree->tr_l.tl_name = (char*)bu_malloc(strlen(bu_vls_addr(&tmpname))+1, "char");
-			    bu_strlcpy(newtree->tr_l.tl_name, oldname, strlen(oldname)+1);
-			default:
-			    bu_vls_free(&tmpname);
-			    need_break = 1;
-			    break;
-		    }
-		    if (need_break) break;
 		} else {
-		    bu_vls_printf(gedp->ged_result_str, "Cannot find %s.\n", oldname);
+		    bu_vls_printf(log, "Cannot find %s.\n", oldname);
 		    newtree = NULL;
 		    ret = -1;
 		}
 	    } else {
-		bu_vls_printf(gedp->ged_result_str, "%s already exists.\n", bu_vls_addr(&tmpname));
+		bu_vls_printf(log, "%s already exists.\n", bu_vls_addr(&tmpname));
 		newtree->tr_l.tl_name = (char*)bu_malloc(strlen(bu_vls_addr(&tmpname))+1, "char");
 		bu_strlcpy(newtree->tr_l.tl_name, bu_vls_addr(&tmpname), strlen(bu_vls_addr(&tmpname))+1);
 	    }
 	    bu_vls_free(&tmpname);
+	    break;
+	default:
+	    bu_log("huh??\n");
 	    break;
     }
     return 1;
@@ -607,7 +667,7 @@ brep_csg_conversion_tree(struct ged *gedp, const union tree *oldtree, union tree
 
 
 int
-comb_to_csg(struct ged *gedp, struct directory *dp, int verify)
+comb_to_csg(struct ged *gedp, struct bu_vls *log, struct bu_attribute_value_set *ito, struct directory *dp, int verify)
 {
     struct rt_db_internal intern;
     struct rt_comb_internal *comb_internal = NULL;
@@ -641,7 +701,7 @@ comb_to_csg(struct ged *gedp, struct directory *dp, int verify)
 
     union tree *newtree = new_internal->tree;
 
-    (void)brep_csg_conversion_tree(gedp, oldtree, newtree, verify);
+    (void)brep_csg_conversion_tree(gedp, log, ito, oldtree, newtree, verify);
     (void)wdb_export(wdbp, bu_vls_addr(&comb_name), (void *)new_internal, ID_COMBINATION, 1);
 
     return 0;
@@ -650,15 +710,22 @@ comb_to_csg(struct ged *gedp, struct directory *dp, int verify)
 extern "C" int
 _ged_brep_to_csg(struct ged *gedp, const char *dp_name, int verify)
 {
+    struct bu_attribute_value_set ito = BU_AVS_INIT_ZERO; /* islands to objects */
+    int ret = 0;
+    struct bu_vls log = BU_VLS_INIT_ZERO;
     struct rt_wdb *wdbp = gedp->ged_wdbp;
     struct directory *dp = db_lookup(wdbp->dbip, dp_name, LOOKUP_QUIET);
     if (dp == RT_DIR_NULL) return GED_ERROR;
 
     if (dp->d_flags & RT_DIR_COMB) {
-	return comb_to_csg(gedp, dp, verify) ? GED_ERROR : GED_OK;
+	ret = comb_to_csg(gedp, &log, &ito, dp, verify) ? GED_ERROR : GED_OK;
     } else {
-	return _obj_brep_to_csg(gedp, dp, verify, NULL) ? GED_ERROR : GED_OK;
+	ret = _obj_brep_to_csg(gedp, &log, &ito, dp, verify, NULL) ? GED_ERROR : GED_OK;
     }
+
+    bu_vls_sprintf(gedp->ged_result_str, "%s", bu_vls_addr(&log));
+    bu_vls_free(&log);
+    return ret;
 }
 
 // Local Variables:

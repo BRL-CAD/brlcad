@@ -70,9 +70,11 @@ void subbrep_bbox(struct subbrep_island_data *obj);
 void ON_MinMaxInit(ON_3dPoint *min, ON_3dPoint *max);
 ON_3dPoint ON_LinePlaneIntersect(ON_Line &line, ON_Plane &plane);
 
+
 void convex_plane_usage(ON_SimpleArray<ON_Plane> *planes, int **pu);
 int island_nucleus(struct bu_vls *msgs, struct subbrep_island_data *data);
 
+int subbrep_brep_boolean(struct subbrep_island_data *data);
 int subbrep_make_brep(struct bu_vls *msgs, struct subbrep_island_data *data);
 
 void subbrep_island_init(struct subbrep_island_data *obj, const ON_Brep *brep);
@@ -82,11 +84,29 @@ void subbrep_shoal_free(struct subbrep_shoal_data *obj);
 void csg_object_params_init(struct csg_object_params *obj, struct subbrep_shoal_data *shoal);
 void csg_object_params_free(struct csg_object_params *obj);
 
-// TODO - will this become a general pattern with primitive specific sub-functions?
-int cylinder_csg(struct bu_vls *msgs, struct subbrep_shoal_data *data, fastf_t cyl_tol);
+
+int shoal_csg(struct bu_vls *msgs, surface_t surface_type, struct subbrep_shoal_data *data);
+
+// Cylinder specific functionality
+int cyl_validate_face(const ON_BrepFace *forig, const ON_BrepFace *fcand);
+int negative_cylinder(const ON_Brep *brep, int face_index, double cyl_tol);
+int cyl_implicit_plane(const ON_Brep *brep, int lc, int *le, ON_SimpleArray<ON_Plane> *cyl_planes);
+int cyl_implicit_params(struct subbrep_shoal_data *data, ON_SimpleArray<ON_Plane> *cyl_planes, int implicit_plane_ind, int ndc, int *nde, int shoal_nonplanar_face, int nonlinear_edge);
+
+// Cone specific functionality
+int cone_validate_face(const ON_BrepFace *forig, const ON_BrepFace *fcand);
+int negative_cone(const ON_Brep *brep, int face_index, double cyl_tol);
+int cone_implicit_plane(const ON_Brep *brep, int lc, int *le, ON_SimpleArray<ON_Plane> *cyl_planes);
+int cone_implicit_params(struct subbrep_shoal_data *data, ON_SimpleArray<ON_Plane> *cyl_planes, int implicit_plane_ind, int ndc, int *nde, int shoal_nonplanar_face, int nonlinear_edge);
+
+// Sphere specific functionality
+int sph_validate_face(const ON_BrepFace *forig, const ON_BrepFace *fcand);
+int negative_sphere(const ON_Brep *brep, int face_index, double cyl_tol);
+int sph_implicit_plane(const ON_Brep *brep, int ec, int *edges, ON_SimpleArray<ON_Plane> *sph_planes);
+int sph_implicit_params(struct subbrep_shoal_data *data, ON_SimpleArray<ON_Plane> *sph_planes, int shoal_nonplanar_face);
 
 
-int subbrep_brep_boolean(struct subbrep_island_data *data);
+
 
 #endif /* SHAPE_RECOGNITION_H */
 

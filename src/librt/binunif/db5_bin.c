@@ -32,9 +32,7 @@
 #include <math.h>
 #include <string.h>
 #include <ctype.h>
-#ifdef HAVE_ARPA_INET_H
-# include <arpa/inet.h> /* for ntohl/htonl */
-#endif
+#include "bnetwork.h"
 #include "bio.h"
 
 

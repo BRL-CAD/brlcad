@@ -2,6 +2,7 @@
 
 #include <set>
 #include <map>
+#include <limits>
 
 #include "bu/log.h"
 #include "bu/str.h"
@@ -10,12 +11,47 @@
 
 #define L3_OFFSET 6
 
+
+int
+cone_validate_face(const ON_BrepFace *forig, const ON_BrepFace *fcand)
+{
+    ON_Cone corig;
+    ON_Surface *csorig = forig->SurfaceOf()->Duplicate();
+    csorig->IsCone(&corig, BREP_CONIC_TOL);
+    delete csorig;
+    ON_Line lorig(corig.BasePoint(), corig.ApexPoint());
+
+    ON_Cone ccand;
+    ON_Surface *cscand = fcand->SurfaceOf()->Duplicate();
+    cscand->IsCone(&ccand, BREP_CONIC_TOL);
+    delete cscand;
+    double d1 = lorig.DistanceTo(ccand.BasePoint());
+    double d2 = lorig.DistanceTo(ccand.ApexPoint());
+
+    // Make sure the cone axes are colinear
+    if (corig.Axis().IsParallelTo(ccand.Axis(), VUNITIZE_TOL) == 0) return 0;
+    if (fabs(d1) > BREP_CONIC_TOL) return 0;
+    if (fabs(d2) > BREP_CONIC_TOL) return 0;
+
+    // Make sure the AngleInRadians parameter is the same for both cones
+    if (!NEAR_ZERO(corig.AngleInRadians() - ccand.AngleInRadians(), VUNITIZE_TOL)) return 0;
+
+    // Make sure the ApexPoint parameter is the same for both cones
+    if (corig.ApexPoint().DistanceTo(ccand.ApexPoint()) > BREP_CONIC_TOL) return 0;
+
+    // TODO - make sure negative/positive status for both cyl faces is the same.
+
+    return 1;
+}
+
+
+
 /* Return -1 if the cone face is pointing in toward the axis,
  * 1 if it is pointing out, and 0 if there is some other problem */
 int
-negative_cone(struct subbrep_island_data *data, int face_index, double cone_tol) {
+negative_cone(const ON_Brep *brep, int face_index, double cone_tol) {
     int ret = 0;
-    const ON_Surface *surf = data->brep->m_F[face_index].SurfaceOf();
+    const ON_Surface *surf = brep->m_F[face_index].SurfaceOf();
     ON_Cone cone;
     ON_Surface *cs = surf->Duplicate();
     cs->IsCone(&cone, cone_tol);
@@ -31,533 +67,199 @@ negative_cone(struct subbrep_island_data *data, int face_index, double cone_tol)
     ON_3dVector base_vect = pnt - base_pnt;
     double dotp = ON_DotProduct(base_vect, normal);
 
-    if (NEAR_ZERO(dotp, 0.000001)) return 0;
+    if (NEAR_ZERO(dotp, VUNITIZE_TOL)) return 0;
     ret = (dotp < 0) ? -1 : 1;
-    if (data->brep->m_F[face_index].m_bRev) ret = -1 * ret;
+    if (brep->m_F[face_index].m_bRev) ret = -1 * ret;
     return ret;
 }
 
 
 int
-subbrep_is_cone(struct bu_vls *UNUSED(msgs), struct subbrep_island_data *data, fastf_t cone_tol)
+cone_implicit_plane(const ON_Brep *brep, int lc, int *le, ON_SimpleArray<ON_Plane> *cone_planes)
 {
-    std::set<int>::iterator f_it;
-    std::set<int> planar_surfaces;
-    std::set<int> conic_surfaces;
-    // First, check surfaces.  If a surface is anything other than planes or cones,
-    // the verdict is no.  If we don't have one planar surface and one or more
-    // conic surfaces, the verdict is no.
-    for (int i = 0; i < data->faces_cnt; i++) {
-	int f_ind = data->faces[i];
-        int surface_type = (int)GetSurfaceType(data->brep->m_F[f_ind].SurfaceOf(), NULL);
-        switch (surface_type) {
-            case SURFACE_PLANE:
-                planar_surfaces.insert(f_ind);
-                break;
-            case SURFACE_CONE:
-                conic_surfaces.insert(f_ind);
-                break;
-            default:
-                return 0;
-                break;
-        }
-    }
-    if (planar_surfaces.size() < 1) return 0;
-    if (conic_surfaces.size() < 1) return 0;
-
-    // Second, check if all conic surfaces share the same base point, apex point and radius.
-    ON_Cone cone;
-    data->brep->m_F[*conic_surfaces.begin()].SurfaceOf()->IsCone(&cone);
-    for (f_it = conic_surfaces.begin(); f_it != conic_surfaces.end(); f_it++) {
-        ON_Cone f_cone;
-        data->brep->m_F[(*f_it)].SurfaceOf()->IsCone(&f_cone);
-        ON_3dPoint fbp = f_cone.BasePoint();
-        ON_3dPoint bp = cone.BasePoint();
-        if (fbp.DistanceTo(bp) > 0.01) return 0;
-        ON_3dPoint fap = f_cone.ApexPoint();
-        ON_3dPoint ap = cone.ApexPoint();
-        if (fap.DistanceTo(ap) > 0.01) return 0;
-        if (!(NEAR_ZERO(cone.radius - f_cone.radius, 0.01))) return 0;
-    }
-
-    // Third, see if all planes are coplanar with at most two planes.
-    ON_Plane p1, p2;
-    int p2_set = 0;
-    data->brep->m_F[*planar_surfaces.begin()].SurfaceOf()->IsPlanar(&p1);
-    for (f_it = planar_surfaces.begin(); f_it != planar_surfaces.end(); f_it++) {
-	ON_Plane f_p;
-	data->brep->m_F[(*f_it)].SurfaceOf()->IsPlanar(&f_p);
-	if (!p2_set && f_p != p1) {
-	    p2 = f_p;
-	    p2_set = 1;
-	    continue;
-	};
-	if (f_p != p1 && f_p != p2) return 0;
-    }
-
-    // Fourth, check that the conic axis and the planar face(s) are perpendicular.
-    for (f_it = planar_surfaces.begin(); f_it != planar_surfaces.end(); f_it++) {
-	ON_Plane f_p;
-	data->brep->m_F[(*f_it)].SurfaceOf()->IsPlanar(&f_p);
-	if (f_p.Normal().IsParallelTo(cone.Axis(), 0.01) == 0) {
-	    return 0;
-	}
-    }
-
-
-    data->type = CONE;
-
-    data->negative_shape = negative_cone(data, *conic_surfaces.begin(), cone_tol);
-
-    ON_3dPoint center_bottom = cone.BasePoint();
-    ON_3dPoint center_top = cone.ApexPoint();
-    ON_Line l(center_bottom, center_top);
-    ON_3dPoint c1, c2;
-    fastf_t radius_bottom, radius_top;
-    fastf_t hdelta1 = 0;
-    fastf_t hdelta2 = 0;
-    c1 = ON_LinePlaneIntersect(l, p1);
-    hdelta1 = center_bottom.DistanceTo(c1);
-    hdelta1 = (cone.height < 0) ? -1*hdelta1 : hdelta1;
-    if (fabs(hdelta1) > VUNITIZE_TOL) {
-	center_bottom = c1;
-    }
-    if (p2_set) {
-	c2 = ON_LinePlaneIntersect(l, p2);
-	if (c1.DistanceTo(center_bottom) < c2.DistanceTo(center_bottom)) {
-	    center_bottom = c1;
-	    center_top = c2;
-	} else {
-	    center_top = c1;
-	    center_bottom = c2;
-	}
-	hdelta1 = cone.BasePoint().DistanceTo(center_bottom);
-	hdelta1 = (cone.height < 0) ? -1*hdelta1 : hdelta1;
-	hdelta2 = cone.BasePoint().DistanceTo(center_top);
-	hdelta2 = (cone.height < 0) ? -1*hdelta2 : hdelta2;
-	radius_bottom = cone.CircleAt(cone.height - hdelta1).Radius();
-	radius_top = cone.CircleAt(cone.height - hdelta2).Radius();
-    } else {
-	center_top = cone.ApexPoint();
-	radius_bottom = cone.CircleAt(cone.height - hdelta1).Radius();
-	radius_top = 0.000001;
-    }
-
-    // If we've got a negative cylinder, bump the center points out
-    // very slightly
-    if (data->negative_shape == -1) {
-	ON_3dVector cvector(center_top - center_bottom);
-	double len = cvector.Length();
-	cvector.Unitize();
-	cvector = cvector * (len * 0.001);
-
-	center_top = center_top + cvector;
-	center_bottom = center_bottom - cvector;
-    }
-
-    ON_3dVector hvect(center_top - center_bottom);
-
-    data->params->bool_op = (data->negative_shape == -1) ? '-' : 'u';
-    data->params->origin[0] = center_bottom.x;
-    data->params->origin[1] = center_bottom.y;
-    data->params->origin[2] = center_bottom.z;
-    data->params->hv[0] = hvect.x;
-    data->params->hv[1] = hvect.y;
-    data->params->hv[2] = hvect.z;
-    data->params->radius = radius_bottom;
-    data->params->r2 = radius_top;
-    data->params->height = hvect.Length();
-
-    return 1;
+    return cyl_implicit_plane(brep, lc, le, cone_planes);
 }
+
 
 int
-cone_csg(struct bu_vls *msgs, struct subbrep_island_data *data, fastf_t cone_tol)
+cone_implicit_params(struct subbrep_shoal_data *data, ON_SimpleArray<ON_Plane> *cone_planes, int implicit_plane_ind, int ndc, int *nde, int shoal_nonplanar_face, int UNUSED(nonlinear_edge))
 {
-    std::set<int>::iterator f_it;
-    std::set<int> planar_surfaces;
-    std::set<int> conic_surfaces;
 
-    for (int i = 0; i < data->faces_cnt; i++) {
-	int f_ind = data->faces[i];
-        int surface_type = (int)GetSurfaceType(data->brep->m_F[f_ind].SurfaceOf(), NULL);
-        switch (surface_type) {
-            case SURFACE_PLANE:
-                planar_surfaces.insert(f_ind);
-                break;
-            case SURFACE_CONE:
-                conic_surfaces.insert(f_ind);
-                break;
-            default:
-                return 0;
-                break;
+    const ON_Brep *brep = data->i->brep;
+    std::set<int> nondegen_edges;
+    std::set<int>::iterator c_it;
+    array_to_set(&nondegen_edges, nde, ndc);
+    std::set<int> notrim_planes;
+
+    // Make a starting cone from one of the cylindrical surfaces and construct the axis line
+    ON_Cone cone;
+    ON_Surface *cs = brep->m_L[data->shoal_loops[0]].Face()->SurfaceOf()->Duplicate();
+    cs->IsCone(&cone, BREP_CONIC_TOL);
+    delete cs;
+    ON_Line l(cone.BasePoint(), cone.ApexPoint());
+
+    int need_arbn = 1;
+    if ((*cone_planes).Count() <= 2) {
+	int perpendicular = 0;
+	for (int i = 0; i < 2; i++) {
+	    ON_Plane p = (*cone_planes)[i];
+	    if (p.Normal().IsParallelTo(cone.Axis(), VUNITIZE_TOL) != 0) perpendicular++;
+	}
+	if (perpendicular == (*cone_planes).Count()) need_arbn = 0;
+    }
+
+    // We'll be using a truncated cone to represent this, and we don't want to make it any
+    // larger than we have to.  Find all the limit points, starting with the apex point and
+    // adding in the planes and edges.
+    ON_3dPointArray axis_pts_init;
+
+    // It may be trimmed away by planes, but not in the simplest case.  Add in apex point.
+    axis_pts_init.Append(cone.ApexPoint());
+    double apex_t;
+    l.ClosestPointTo(cone.ApexPoint(), &apex_t);
+
+    // Add in all the nondegenerate edge vertices
+    for (c_it = nondegen_edges.begin(); c_it != nondegen_edges.end(); c_it++) {
+        const ON_BrepEdge *edge = &(brep->m_E[*c_it]);
+        axis_pts_init.Append(edge->Vertex(0)->Point());
+        axis_pts_init.Append(edge->Vertex(1)->Point());
+    }
+
+    // Use the intersection, cone angle, and the projection of the cone axis onto the plane
+    // to calculate min and max points on the cone from this plane.
+    for (int i = 0; i < (*cone_planes).Count(); i++) {
+        // Don't intersect the implicit plane, since it doesn't play a role in defining the main cone
+	if (i == implicit_plane_ind) {
+	    notrim_planes.insert(i);
+	    continue;
+	}
+        if (!(*cone_planes)[i].Normal().IsPerpendicularTo(cone.Axis(), VUNITIZE_TOL)) {
+            ON_3dPoint ipoint = ON_LinePlaneIntersect(l, (*cone_planes)[i]);
+            if ((*cone_planes)[i].Normal().IsParallelTo(cone.Axis(), VUNITIZE_TOL)) {
+                axis_pts_init.Append(ipoint);
+            } else {
+		double C, a, b;
+		ON_3dVector av = cone.ApexPoint() - ipoint;
+		double side = av.Length();
+		av.Unitize();
+                double dpc = ON_DotProduct(av, (*cone_planes)[i].Normal());
+                if (dpc < 0) {
+		    dpc = ON_DotProduct(av, -1*(*cone_planes)[i].Normal());
+		}
+		C = M_PI - (M_PI/2 - acos(dpc)) - fabs(cone.AngleInRadians());
+		a = fabs(side * sin(cone.AngleInRadians()) / sin(C));
+		C = M_PI - (M_PI/2 + acos(dpc)) - fabs(cone.AngleInRadians());
+		b = fabs(side * sin(fabs(cone.AngleInRadians())) / sin(C));
+
+		ON_3dVector avect, bvect;
+		ON_3dVector cone_unit_axis = cone.Axis();
+		cone_unit_axis.Unitize();
+                ON_3dVector pvect = cone.Axis() - ((*cone_planes)[i].Normal() * ON_DotProduct(cone_unit_axis, (*cone_planes)[i].Normal()));
+                pvect.Unitize();
+                if (!NEAR_ZERO(dpc, VUNITIZE_TOL)) {
+		    double tp1, tp2;
+                    ON_3dPoint p1 = ipoint + pvect * a;
+                    ON_3dPoint p2 = ipoint + -1*pvect * b;
+		    l.ClosestPointTo(p1, &tp1);
+		    l.ClosestPointTo(p2, &tp2);
+		    if (tp1 < apex_t) { axis_pts_init.Append(p1); } else { notrim_planes.insert(i); }
+		    if (tp2 < apex_t) { axis_pts_init.Append(p2); } else { notrim_planes.insert(i); }
+                }
+            }
+        } else {
+	    notrim_planes.insert(i);
+	}
+    }
+
+    // Trim out points that are above the bounding planes
+    ON_3dPointArray axis_pts_2nd;
+    for (int i = 0; i < axis_pts_init.Count(); i++) {
+        int trimmed = 0;
+        for (int j = 0; j < (*cone_planes).Count(); j++) {
+            // Don't trim with the implicit plane - the implicit plane is defined "after" the
+            // primary shapes are formed, so it doesn't get a vote in removing capping points
+            if (notrim_planes.find(j) == notrim_planes.end()) {
+                ON_3dVector v = axis_pts_init[i] - (*cone_planes)[j].origin;
+                double dotp = ON_DotProduct(v, (*cone_planes)[j].Normal());
+                if (dotp > 0 && !NEAR_ZERO(dotp, VUNITIZE_TOL)) {
+                    trimmed = 1;
+                    break;
+                }
+            }
+        }
+        if (!trimmed) axis_pts_2nd.Append(axis_pts_init[i]);
+    }
+
+    // For everything that's left, project it back onto the central axis line and see
+    // if it's further up or down the line than anything previously checked.  We want
+    // the min and the max points on the centeral axis.
+    double tmin = std::numeric_limits<double>::max();
+    double tmax = std::numeric_limits<double>::min();
+    for (int i = 0; i < axis_pts_2nd.Count(); i++) {
+        double t;
+        if (l.ClosestPointTo(axis_pts_2nd[i], &t)) {
+            if (t < tmin) tmin = t;
+            if (t > tmax) tmax = t;
         }
     }
 
-    // Second, check if all conic surfaces share the same base point, apex point and radius.
-    ON_Cone cone;
-    data->brep->m_F[*conic_surfaces.begin()].SurfaceOf()->IsCone(&cone, cone_tol);
-    for (f_it = conic_surfaces.begin(); f_it != conic_surfaces.end(); f_it++) {
-        ON_Cone f_cone;
-        data->brep->m_F[(*f_it)].SurfaceOf()->IsCone(&f_cone, cone_tol);
-        ON_3dPoint fbp = f_cone.BasePoint();
-        ON_3dPoint bp = cone.BasePoint();
-        if (fbp.DistanceTo(bp) > cone_tol) return 0;
-        ON_3dPoint fap = f_cone.ApexPoint();
-        ON_3dPoint ap = cone.ApexPoint();
-        if (fap.DistanceTo(ap) > cone_tol) return 0;
-        if (!(NEAR_ZERO(cone.radius - f_cone.radius, cone_tol))) return 0;
+    // Populate the CSG implicit primitive data
+    data->params->csg_type = CONE;
+    // Flag the cone according to the negative or positive status of the
+    // cone surface.
+    data->params->negative = negative_cone(brep, shoal_nonplanar_face, BREP_CONIC_TOL);
+    data->params->bool_op = (data->params->negative == -1) ? '-' : 'u';
+
+    fastf_t hdelta = 0;
+    if (l.PointAt(tmin).DistanceTo(cone.ApexPoint()) > BREP_CONIC_TOL) {
+	hdelta = cone.BasePoint().DistanceTo(l.PointAt(tmin));
+	hdelta = (cone.height < 0) ? -1*hdelta : hdelta;
+	data->params->radius = cone.CircleAt(cone.height - hdelta).Radius();
+	BN_VMOVE(data->params->origin, l.PointAt(tmin));
     }
 
-    // Characterize the planes of the non-linear edges.  We need one or two planes - one
-    // indicates a true cone, two indicates a truncated cone.  More indicates something
-    // we aren't currently set up to handle.
-    std::set<int> arc_set_1, arc_set_2;
-    ON_Circle set1_c, set2_c;
-    int arc1_circle_set= 0;
-    int arc2_circle_set = 0;
-
-    for (int i = 0; i < data->edges_cnt; i++) {
-	int ei = data->edges[i];
-	const ON_BrepEdge *edge = &(data->brep->m_E[ei]);
-	if (!edge->EdgeCurveOf()->IsLinear()) {
-
-	    ON_Arc arc;
-	    if (edge->EdgeCurveOf()->IsArc(NULL, &arc, cone_tol)) {
-		int assigned = 0;
-		ON_3dPoint acenter(0,0,0);
-		fastf_t aradius;
-		if (arc.IsCircle()) {
-		    acenter = (arc.StartPoint() + arc.MidPoint())/2.0;
-		    aradius = arc.StartPoint().DistanceTo(arc.MidPoint()) * 0.5;
-		} else {
-		    ON_Circle lcirc(arc.StartPoint(), arc.MidPoint(), arc.EndPoint());
-		    acenter = lcirc.Center();
-		    aradius = lcirc.Radius();
-		}
-
-		ON_Circle circ(acenter,aradius);
-		//std::cout << "circ " << circ.Center().x << " " << circ.Center().y << " " << circ.Center().z << "\n";
-		if (!arc1_circle_set) {
-		    arc1_circle_set = 1;
-		    set1_c = circ;
-		    //std::cout << "center 1 " << set1_c.Center().x << " " << set1_c.Center().y << " " << set1_c.Center().z << "\n";
-		} else {
-		    if (!arc2_circle_set) {
-			if (!(NEAR_ZERO(circ.Center().DistanceTo(set1_c.Center()), cone_tol))){
-			    arc2_circle_set = 1;
-			    set2_c = circ;
-			    //std::cout << "center 2 " << set2_c.Center().x << " " << set2_c.Center().y << " " << set2_c.Center().z << "\n";
-			}
-		    }
-		}
-		if (NEAR_ZERO(circ.Center().DistanceTo(set1_c.Center()), cone_tol)){
-		    arc_set_1.insert(ei);
-		    assigned = 1;
-		}
-		if (arc2_circle_set) {
-		    if (NEAR_ZERO(circ.Center().DistanceTo(set2_c.Center()), cone_tol)){
-			arc_set_2.insert(ei);
-			assigned = 1;
-		    }
-		}
-		if (!assigned) {
-		    if (msgs) bu_vls_printf(msgs, "%*sfound extra circle in %s - no go\n", L3_OFFSET, " ", bu_vls_addr(data->key));
-		    return 0;
-		}
-	    }
-	}
-    }
-
-    if (!arc2_circle_set) {
-	//std::cout << "True cone!\n";
-	data->type = CONE;
-	data->obj_cnt = data->parent->obj_cnt;
-	(*data->obj_cnt)++;
-	bu_vls_sprintf(data->id, "%s_%d_cone", bu_vls_addr(data->parent->id), *(data->obj_cnt));
-
-
-	ON_3dVector hvect(cone.ApexPoint() - cone.BasePoint());
-	ON_3dPoint closest_to_base = set1_c.Plane().ClosestPointTo(cone.BasePoint());
-
-	data->negative_shape = negative_cone(data, *conic_surfaces.begin(), cone_tol);
-
-	data->params->bool_op = (data->negative_shape == -1) ? '-' : 'u';
-	data->params->origin[0] = closest_to_base.x;
-	data->params->origin[1] = closest_to_base.y;
-	data->params->origin[2] = closest_to_base.z;
-	data->params->hv[0] = hvect.x;
-	data->params->hv[1] = hvect.y;
-	data->params->hv[2] = hvect.z;
-	data->params->radius = set1_c.Radius();
-	data->params->r2 = 0.000001;
-	data->params->height = set1_c.Plane().DistanceTo(cone.ApexPoint());
-	if (data->params->height < 0) data->params->height = data->params->height * -1;
-	return 1;
+    if (l.PointAt(tmax).DistanceTo(cone.ApexPoint()) > BREP_CONIC_TOL) {
+	fastf_t hdelta2 = cone.BasePoint().DistanceTo(l.PointAt(tmax));
+	hdelta2 = (cone.height < 0) ? -1*hdelta2 : hdelta2;
+	data->params->r2 = cone.CircleAt(cone.height - hdelta2).Radius();
     } else {
-	ON_3dPoint base = set1_c.Center();
-	ON_3dVector hvect = set2_c.Center() - set1_c.Center();
-
-	int *corner_verts_array = NULL;
-	ON_Plane pcone;
-	std::set<int> corner_verts; /* verts with one nonlinear edge */
-	int corner_verts_cnt = subbrep_find_corners(data, &corner_verts_array, &pcone);
-
-	if (corner_verts_cnt == -1) return 0;
-	if (corner_verts_cnt > 0) {
-	    array_to_set(&corner_verts, corner_verts_array, corner_verts_cnt);
-	    bu_free(corner_verts_array, "free tmp array");
-	    if (msgs) bu_vls_printf(msgs, "%*sFound partial TGC!\n", L3_OFFSET, " ");
-	}
-
-	// TODO -check for shared verts between nonlinear curves from different planes.
-	// If we have that case, we're looking at a "sliver" of a cone and need arbs
-
-	if (corner_verts_cnt == 0) {
-	    // Full TGC cone
-	    data->type = CONE;
-	    data->obj_cnt = data->parent->obj_cnt;
-	    (*data->obj_cnt)++;
-	    bu_vls_sprintf(data->id, "%s_%d_cone", bu_vls_addr(data->parent->id), *(data->obj_cnt));
-
-	    data->negative_shape = negative_cone(data, *conic_surfaces.begin(), cone_tol);
-
-	    data->params->bool_op = (data->negative_shape == -1) ? '-' : 'u';
-	    data->params->origin[0] = base.x;
-	    data->params->origin[1] = base.y;
-	    data->params->origin[2] = base.z;
-	    data->params->hv[0] = hvect.x;
-	    data->params->hv[1] = hvect.y;
-	    data->params->hv[2] = hvect.z;
-	    data->params->radius = set1_c.Radius();
-	    data->params->r2 = set2_c.Radius();
-	    data->params->height = set1_c.Center().DistanceTo(set2_c.Center());
-	    if (data->params->height < 0) data->params->height = data->params->height * -1;
-
-	    return 1;
-	} else {
-	    // Have corners, need arb
-	    data->type = COMB;
-	    data->obj_cnt = data->parent->obj_cnt;
-	    (*data->obj_cnt)++;
-	    bu_vls_sprintf(data->id, "%s_%d_comb", bu_vls_addr(data->parent->id), *(data->obj_cnt));
-
-	    data->negative_shape = negative_cone(data, *conic_surfaces.begin(), cone_tol);
-	    data->params->bool_op = (data->negative_shape == -1) ? '-' : 'u';
-
-	    struct subbrep_island_data *cone_obj;
-	    BU_GET(cone_obj, struct subbrep_island_data);
-	    subbrep_object_init(cone_obj, data->brep);
-	    std::string key = set_key(conic_surfaces);
-	    bu_vls_sprintf(cone_obj->key, "%s", key.c_str());
-	    cone_obj->obj_cnt = data->parent->obj_cnt;
-	    (*cone_obj->obj_cnt)++;
-	    //bu_log("obj_cnt: %d\n", *(cone_obj->obj_cnt));
-	    bu_vls_sprintf(cone_obj->id, "%s_%d_cone", bu_vls_addr(data->parent->id), *(cone_obj->obj_cnt));
-	    cone_obj->type = CONE;
-
-	    // cone - positive object in this sub-comb
-	    cone_obj->params->bool_op = 'u';
-	    cone_obj->params->origin[0] = base.x;
-	    cone_obj->params->origin[1] = base.y;
-	    cone_obj->params->origin[2] = base.z;
-	    cone_obj->params->hv[0] = hvect.x;
-	    cone_obj->params->hv[1] = hvect.y;
-	    cone_obj->params->hv[2] = hvect.z;
-	    cone_obj->params->radius = set1_c.Radius();
-	    cone_obj->params->r2 = set2_c.Radius();
-	    cone_obj->params->height = set1_c.Center().DistanceTo(set2_c.Center());
-
-	    bu_ptbl_ins(data->children, (long *)cone_obj);
-
-            // arb8 - subtracted from the previous cone in this sub-comb
-
-            //                                       8
-            //                                    *  |   *
-            //                                 *     |       *
-            //                             4         |           7
-            //                             |    *    |        *  |
-            //                             |         *     *     |
-            //                             |         |  3        |
-            //                             |         |  |        |
-            //                             |         |  |        |
-            //                             |         5  |        |
-            //                             |       *    |*       |
-            //                             |   *        |    *   |
-            //                             1            |        6
-            //                                 *        |     *
-            //                                      *   |  *
-            //                                          2
-            //
-
-            struct subbrep_island_data *arb_obj;
-            BU_GET(arb_obj, struct subbrep_island_data);
-            subbrep_object_init(arb_obj, data->brep);
-            bu_vls_sprintf(arb_obj->key, "%s_arb8", key.c_str());
-	    arb_obj->obj_cnt = data->parent->obj_cnt;
-	    (*arb_obj->obj_cnt)++;
-	    bu_vls_sprintf(arb_obj->id, "%s_%d_arb8", bu_vls_addr(data->parent->id), *(arb_obj->obj_cnt));
-            arb_obj->type = ARB8;
-
-
-            // First, find the two points closest to the set1_c and set2_c planes
-            ON_SimpleArray<const ON_BrepVertex *> bottom_pnts;
-            ON_SimpleArray<const ON_BrepVertex *> top_pnts;
-            ON_Plane b_plane = set1_c.Plane();
-            ON_Plane t_plane = set2_c.Plane();
-            if (subbrep_top_bottom_pnts(data, &corner_verts, &t_plane, &b_plane, &top_pnts, &bottom_pnts)) {
-                if (msgs) bu_vls_printf(msgs, "%*sPoint top/bottom sorting failed: %s\n", L3_OFFSET, " ", bu_vls_addr(arb_obj->key));
-                return 0;
-            }
-
-            // Second, select a point from an arc edge not on the subtraction
-            // plane, construct a vector from the circle center to that point,
-            // and determine if the pcone plane direction is already in the opposite
-            // direction or needs to be reversed.
-            const ON_BrepEdge *edge = &(data->brep->m_E[*arc_set_1.begin()]);
-            ON_Arc arc;
-            ON_Curve *ecv = edge->EdgeCurveOf()->Duplicate();
-            (void)ecv->IsArc(NULL, &arc, cone_tol);
-            delete ecv;
-            ON_3dPoint center = set1_c.Center();
-            ON_3dPoint midpt = arc.MidPoint();
-
-            ON_3dVector invec = center - midpt;
-            double dotp = ON_DotProduct(invec, pcone.Normal());
-            if (dotp < 0) {
-                pcone.Flip();
-            }
-
-            // Third, construct the axis vector and determine the arb
-            // order of the bottom and top points
-            ON_3dVector cone_axis = set2_c.Center() - set1_c.Center();
-
-            ON_3dVector vv1 = bottom_pnts[0]->Point() - bottom_pnts[1]->Point();
-            ON_3dVector v1x = ON_CrossProduct(vv1, cone_axis);
-
-            double flag1 = ON_DotProduct(v1x, pcone.Normal());
-
-            ON_3dVector w1 = top_pnts[0]->Point() - top_pnts[1]->Point();
-            ON_3dVector w1x = ON_CrossProduct(w1, cone_axis);
-
-            double flag3 = ON_DotProduct(w1x, pcone.Normal());
-
-            const ON_BrepVertex *v1, *v2, *v3, *v4;
-            if (flag1 < 0) {
-                v1 = bottom_pnts[1];
-                v2 = bottom_pnts[0];
-                vv1 = -vv1;
-            } else {
-                v1 = bottom_pnts[0];
-                v2 = bottom_pnts[1];
-            }
-            if (flag3 < 0) {
-                v3 = top_pnts[0];
-                v4 = top_pnts[1];
-            } else {
-                v3 = top_pnts[1];
-                v4 = top_pnts[0];
-            }
-#if 0
-            std::cout << "v1 (" << pout(v1->Point()) << ")\n";
-            std::cout << "v2 (" << pout(v2->Point()) << ")\n";
-            std::cout << "v3 (" << pout(v3->Point()) << ")\n";
-            std::cout << "v4 (" << pout(v4->Point()) << ")\n";
-#endif
-
-            // Before we manipulate the points for arb construction,
-            // see if we need to use them to define a new face.
-            if (!data->is_island) {
-                // The coneinder shape is a partial coneinder, and it is not
-                // topologically isolated, so we need to make a new face
-                // in the parent to replace this one.
-                if (data->parent) {
-                    // First, see if a local planar brep object has been generated for
-                    // this shape.  Such a brep is not generated up front, because
-                    // there is no way to be sure a planar parent is needed until
-                    // we hit a case like this - for example, a brep consisting of
-                    // stacked coneinders of different diameters will have multiple
-                    // planar surfaces, but can be completely described without use
-                    // of planar volumes in the final CSG expression.  If another
-                    // shape has already triggered the generation we don't want to
-                    // do it again,  but the first shape to make the need clear has
-                    // to trigger the build.
-                    if (!data->parent->planar_obj) {
-                        subbrep_planar_init(data->parent);
-                    }
-                    // Now, add the new face
-                    ON_SimpleArray<const ON_BrepVertex *> vert_loop(4);
-                    vert_loop.Append(v1);
-                    vert_loop.Append(v2);
-                    vert_loop.Append(v3);
-                    vert_loop.Append(v4);
-                    subbrep_add_planar_face(data->parent, &pcone, &vert_loop, data->negative_shape);
-                }
-            }
-
-
-
-            // Once the 1,2,3,4 points are determined, scale them out
-            // along their respective line segment axis to make sure
-            // the resulting arb is large enough to subtract the full
-            // radius of the coneinder.
-            //
-            // TODO - Only need to do this if the
-            // center point of the coneinder is inside the subtracting arb -
-            // should be able to test that with the circle center point
-            // a distance to pcone plane calculation for the second point,
-            // then subtract the center from the point on the plane and do
-            // a dot product test with pcone's normal.
-            //
-            // TODO - Can optimize this - can make a narrower arb using
-            // the knowledge of the distance between p1/p2.  We only need
-            // to add enough extra length to clear the coneinder, which
-	    // means the full radius length is almost always overkill.
-	    double max_radius = set1_c.Radius();
-	    if (set2_c.Radius() > max_radius) max_radius = set2_c.Radius();
-	    ON_SimpleArray<ON_3dPoint> arb_points(8);
-	    arb_points[0] = v1->Point();
-            arb_points[1] = v2->Point();
-            arb_points[2] = v3->Point();
-            arb_points[3] = v4->Point();
-            vv1.Unitize();
-            vv1 = vv1 * max_radius;
-            arb_points[0] = arb_points[0] + vv1;
-            arb_points[1] = arb_points[1] - vv1;
-            arb_points[2] = arb_points[2] - vv1;
-            arb_points[3] = arb_points[3] + vv1;
-            ON_3dVector hpad = arb_points[2] - arb_points[1];
-            hpad.Unitize();
-            hpad = hpad * (cone_axis.Length() * 0.01);
-            arb_points[0] = arb_points[0] - hpad;
-            arb_points[1] = arb_points[1] - hpad;
-            arb_points[2] = arb_points[2] + hpad;
-            arb_points[3] = arb_points[3] + hpad;
-
-            // Once the final 1,2,3,4 points have been determined, use
-            // the pcone normal direction and the coneinder radius to
-            // construct the remaining arb points.
-            ON_3dPoint p5, p6, p7, p8;
-            ON_3dVector arb_side = pcone.Normal() * 2*max_radius;
-            arb_points[4] = arb_points[0] + arb_side;
-            arb_points[5] = arb_points[1] + arb_side;
-            arb_points[6] = arb_points[2] + arb_side;
-            arb_points[7] = arb_points[3] + arb_side;
-
-            arb_obj->params->bool_op = '-';
-            arb_obj->params->arb_type = 8;
-            for (int j = 0; j < 8; j++) {
-                VMOVE(arb_obj->params->p[j], arb_points[j]);
-            }
-
-            bu_ptbl_ins(data->children, (long *)arb_obj);
-
-            return 1;
-
-	}
+	data->params->r2 = 0.000001;
     }
-    return 0;
+
+    ON_3dVector hvect(l.PointAt(tmax) - l.PointAt(tmin));
+    BN_VMOVE(data->params->hv, hvect);
+    data->params->height = hvect.Length();
+
+    // constructed oriented bounding box planes
+    if (need_arbn) {
+	ON_3dVector v1 = cone.CircleAt(cone.height - hdelta).Plane().xaxis;
+	ON_3dVector v2 = cone.CircleAt(cone.height - hdelta).Plane().yaxis;
+	v1.Unitize();
+	v2.Unitize();
+	v1 = v1 * cone.CircleAt(cone.height - hdelta).Radius();
+	v2 = v2 * cone.CircleAt(cone.height - hdelta).Radius();
+	ON_3dPoint arbmid = (l.PointAt(tmax) + l.PointAt(tmin)) * 0.5;
+	ON_3dVector cone_axis_unit = l.PointAt(tmax) - l.PointAt(tmin);
+	double axis_len = cone_axis_unit.Length();
+	cone_axis_unit.Unitize();
+	// Bump the top and bottom planes out slightly to avoid problems when the capping plane normals
+	// are almost but not quite parallel to the cone axis
+	ON_3dPoint arbmax = l.PointAt(tmax) + 0.01 * axis_len * cone_axis_unit;
+	ON_3dPoint arbmin = l.PointAt(tmin) - 0.01 * axis_len * cone_axis_unit;
+
+	(*cone_planes).Append(ON_Plane(arbmin, -1 * cone_axis_unit));
+	(*cone_planes).Append(ON_Plane(arbmax, cone_axis_unit));
+	(*cone_planes).Append(ON_Plane(arbmid + v1, cone.CircleAt(cone.height - hdelta).Plane().xaxis));
+	(*cone_planes).Append(ON_Plane(arbmid - v1, -1 *cone.CircleAt(cone.height - hdelta).Plane().xaxis));
+	(*cone_planes).Append(ON_Plane(arbmid + v2, cone.CircleAt(cone.height - hdelta).Plane().yaxis));
+	(*cone_planes).Append(ON_Plane(arbmid - v2, -1 * cone.CircleAt(cone.height - hdelta).Plane().yaxis));
+    }
+
+
+
+    return need_arbn;
 }
+
 
 // Local Variables:
 // tab-width: 8

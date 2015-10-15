@@ -1708,6 +1708,10 @@ missing on Windows due to needing lex.
 CONVERTERS
 ----------
 
+* compare libIGES (lgpl, https://github.com/cbernardo/libIGES) as
+  potential replacement for our compelx IGES conversion logic.
+  appropriate time for review when IGES gets added to libGCV.
+
 * investigate the asset import library (assimp.sf.net) to see whether
   we can replace a lot (but probably not all) of our bot-centric
   importers/exports (ply, obj, stl, etc.) with the assimp library
