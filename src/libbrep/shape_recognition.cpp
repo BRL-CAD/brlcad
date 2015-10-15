@@ -79,46 +79,43 @@ island_faces_characterize(struct subbrep_island_data *sb)
     return loops_planar;
 }
 
+int
+bbox_isect(struct subbrep_island_data *s, struct subbrep_island_data *c)
+{
+    if (c->local_brep_bool_op == 'u' || (c->nucleus && c->nucleus->params->bool_op == 'u')) {
+	ON_BoundingBox isect;
+	bool bbi = isect.Intersection(*s->bbox, *c->bbox);
+	if (bbi) {
+	    bu_ptbl_ins_unique(c->subtractions, (long *)s);
+	    return 1;
+	} else {
+	    // A union not overlapping breaks the chain.
+	    return 0;
+	}
+    } else {
+	// c is a subtraction - we need to keep going.
+	return 1;
+    }
+}
+
 /*
- * This is the point at which we characterize the relationships between islands.  Assuming our determination
- * of positive and negative shapes is trustworthy, all positive islands are unioned into the toplevel comb.
- * The only question is what needs to be subtracted.  Part of this information is available via the shared
- * loop information from the initial island partitioning, but that by itself is not enough.  It is possible
- * to have protruding subtractions that also remove volume from other shapes.
+ * This is the point at which we characterize the relationships between
+ * islands.  Assuming our determination of positive and negative shapes is
+ * trustworthy, all positive islands are unioned into the toplevel comb.  The
+ * only question is what needs to be subtracted.  Part of this information is
+ * available via the shared loop information from the initial island
+ * partitioning, but that by itself is not enough.  It is possible to have
+ * protruding subtractions that also remove volume from other shapes.
  *
- * To identify what subtractions may do this, we use the loop connectivity for each island to walk the
- * "child" islands of a union island.  These child islands are where additional subtractions may come from.
- * So the top level union, for example, must be checked against all subtractions.  However, a union nested
- * inside a subtraction should *not* have its "parent" negative island subtracted from it.
- *
- * Currently the intrusion test uses axis aligned bounding boxes, but ideally we should use oriented bounding boxes
- * or even tighter tests.
- *
- *
- * For each subtraction island, check that island against parent island(s) to see if there is a bbox
- * overlap. If the parent is negative, jump up to the parent above that parent.  If the parent is postivie and
- * there is an overlap, subtract it. Then, check any direct union children of that parent island. If
- * there is an overlap, subtract and check any direct union parents and childrn of that island not already checked.
- *
- * If and only if there is an overlap with those parents, subtract and queue up the next level of union parents/children.  If any
- * parent does *not* overlap with the negative bbox, the chain is broken and we're done.  If any negative parent is encountered
- * other than when dealing with the negative island's direct parents, the chain is broken. Follow negative children to
- * see if there are any unions below, so long as the current negative island is not in the direct parental chains of a
- * given union.
- *
- *
+ * If we have overlapping bboxes, we have a possible subtraction operation
+ * between islands.  It's not guaranteed that there is an interaction, but to
+ * make sure will require ray testing so for speed we accept that there may be
+ * extra subtractions in the tree.
  */
 void
 find_hierarchy(struct bu_vls *UNUSED(msgs), struct bu_ptbl *islands)
 {
     if (!islands) return;
-
-    // Get the top level islands
-    std::set<struct subbrep_island_data *> top_islands;
-    for (unsigned int i = 0; i < BU_PTBL_LEN(islands); i++) {
-	struct subbrep_island_data *id = (struct subbrep_island_data *)BU_PTBL_GET(islands, i);
-	if (id->fil_cnt == 0) top_islands.insert(id);
-    }
 
     // Map outer loop face inclusions to islands for easy lookup
     std::map<int, long*> fol_to_i;
@@ -141,139 +138,59 @@ find_hierarchy(struct bu_vls *UNUSED(msgs), struct bu_ptbl *islands)
 	}
     }
 
-    // Process all islands for subtractions
+    // Build the set of all subtraction islands.  Each will need to be evaluated
+    std::queue<struct subbrep_island_data *> subtractions;
     for (unsigned int i = 0; i < BU_PTBL_LEN(islands); i++) {
-	std::queue<struct subbrep_island_data *> subislands;
 	struct subbrep_island_data *id = (struct subbrep_island_data *)BU_PTBL_GET(islands, i);
 	if (id->local_brep_bool_op == '-' || (id->nucleus && id->nucleus->params->bool_op == '-')) {
-	    continue;
+	    subtractions.push(id);
 	}
+    }
 
-	// We need to ignore any subtractions in the parent linkages of this node and any other parent linkages (that is,
-	// inheritance changes independent of the one above the current node) of any children below this node.  First
-	// step, build the set of children
-	std::set<struct subbrep_island_data *> node_children;
-	std::set<struct subbrep_island_data *>::iterator nc_it;
-	std::queue<struct subbrep_island_data *> cq;
-	cq.push(id);
-
-	// Get the node's immediate children
+    // Process all subtractions
+    while (!subtractions.empty()) {
 	std::pair <IslandMultiMap::iterator, IslandMultiMap::iterator> p2c_ret;
 	IslandMultiMap::iterator p2c_it;
-	p2c_ret = p2c.equal_range(id);
+	std::set<struct subbrep_island_data *> visited;
+	std::queue<struct subbrep_island_data *> cq;
+
+	struct subbrep_island_data *sub = subtractions.front();
+	p2c_ret = c2p.equal_range(sub);
+	subtractions.pop();
+
+	// A subtraction is guaranteed to be subtracted from its own parents, if they
+	// are not also subtractions
 	for (p2c_it = p2c_ret.first; p2c_it != p2c_ret.second; ++p2c_it) {
-	    if (p2c_it->second != id) {
-		cq.push(p2c_it->second);
-		// At the top level for a union, any negative shape joined by a loop is
-		// guaranteed to be a subtraction from that node - go ahead and add it
-		// here for insurance.  The bbox test *should* catch all of these, but
-		// since we happen to *know* the answer for these particular objects...
-		if (p2c_it->second->local_brep_bool_op == '-' || (p2c_it->second->nucleus && p2c_it->second->nucleus->params->bool_op == '-')) {
-		    bu_ptbl_ins_unique(id->subtractions, (long *)p2c_it->second);
-		}
+	    if (p2c_it->second->local_brep_bool_op == 'u' || (p2c_it->second->nucleus && p2c_it->second->nucleus->params->bool_op == 'u')) {
+		bu_ptbl_ins_unique(p2c_it->second->subtractions, (long *)sub);
 	    }
+	    cq.push(p2c_it->second);
 	}
+
+	// A subtraction is not subtracted from its own children.
+	visited.insert(sub);
+
+	// A subtraction can remove volume down its parent's child chain(s), or up its parent's parent chain(s).
 	while (!cq.empty()) {
-	    p2c_ret = p2c.equal_range(cq.front());
-	    node_children.insert(cq.front());
+	    struct subbrep_island_data *c = cq.front();
+	    visited.insert(cq.front());
 	    cq.pop();
+	    p2c_ret = p2c.equal_range(c);
 	    for (p2c_it = p2c_ret.first; p2c_it != p2c_ret.second; ++p2c_it) {
-	    if (p2c_it->second != id) cq.push(p2c_it->second);
-	    }
-	}
-
-	std::set<struct subbrep_island_data *> ignore_islands;
-	for (nc_it = node_children.begin(); nc_it != node_children.end(); nc_it++) {
-	    // Get the node's immediate parents
-	    std::pair <IslandMultiMap::iterator, IslandMultiMap::iterator> sc2p_ret;
-	    IslandMultiMap::iterator sc2p_it;
-	    sc2p_ret = c2p.equal_range(*nc_it);
-
-	    // Build a set of any subtractions in the full parent linkage of this node, (for all parents)
-	    // so we know not to subtract those.  If negative islands are in the direct ancestoral
-	    // connectivity graph, they can't be subtractions of that node.
-	    std::queue<struct subbrep_island_data *> pqueue;
-	    for (sc2p_it = sc2p_ret.first; sc2p_it != sc2p_ret.second; ++sc2p_it) {
-		struct subbrep_island_data *pid = sc2p_it->second;
-		if (pid != *nc_it) pqueue.push(pid);
-		if (pid->local_brep_bool_op == '-' || (pid->nucleus && pid->nucleus->params->bool_op == '-')) {
-		    // Don't ignore known node children of this node
-		    if (node_children.find(pid) == node_children.end()) ignore_islands.insert(pid);
+		if (visited.find(p2c_it->second) == visited.end()) {
+		    if (bbox_isect(sub, p2c_it->second)) cq.push(p2c_it->second);
 		}
 	    }
-	    while(!pqueue.empty()) {
-		struct subbrep_island_data *pid= pqueue.front();
-		pqueue.pop();
-		std::pair <IslandMultiMap::iterator, IslandMultiMap::iterator> pchain_ret;
-		IslandMultiMap::iterator pchain_it;
-		pchain_ret = c2p.equal_range(pid);
-		for (pchain_it = pchain_ret.first; pchain_it != pchain_ret.second; ++pchain_it) {
-		    struct subbrep_island_data *gpid = pchain_it->second;
-		    if (gpid != pid) pqueue.push(gpid);
-		    if (gpid->local_brep_bool_op == '-' || (gpid->nucleus && gpid->nucleus->params->bool_op == '-')) {
-			// Don't ignore known node children of this node
-			if (node_children.find(gpid) == node_children.end()) ignore_islands.insert(gpid);
-		    }
+	    p2c_ret = c2p.equal_range(c);
+	    for (p2c_it = p2c_ret.first; p2c_it != p2c_ret.second; ++p2c_it) {
+		if (visited.find(p2c_it->second) == visited.end()) {
+		    if (bbox_isect(sub, p2c_it->second)) cq.push(p2c_it->second);
 		}
-	    }
-
-	    // TODO - if the parent has union children other than the current child node, they need to
-	    // be checked for parentes, their own union children and those children for parents.
-	}
-
-
-
-	// Check all subtractions that aren't in the ignore list.
-	for (unsigned int j = 0; j < BU_PTBL_LEN(islands); j++) {
-	    struct subbrep_island_data *sid = (struct subbrep_island_data *)BU_PTBL_GET(islands, j);
-	    if (sid->local_brep_bool_op == 'u' || (sid->nucleus && sid->nucleus->params->bool_op == 'u')) {
-		continue;
-	    }
-
-	    if (ignore_islands.find(sid) != ignore_islands.end()) continue;
-
-	    ON_BoundingBox isect;
-	    bool bbi = isect.Intersection(*sid->bbox, *id->bbox);
-	    // If we have overlap, we have a possible subtraction operation
-	    // between this island and the parent.  It's not guaranteed that
-	    // there is an interaction, but to make sure will require ray testing
-	    // so for speed we accept that there may be extra subtractions in
-	    // the tree.
-	    if (bbi) {
-		bu_ptbl_ins_unique(id->subtractions, (long *)sid);
 	    }
 	}
     }
 }
 
-
-int cyl_validate_face(const ON_BrepFace *forig, const ON_BrepFace *fcand)
-{
-    ON_Cylinder corig;
-    ON_Surface *csorig = forig->SurfaceOf()->Duplicate();
-    csorig->IsCylinder(&corig, BREP_CYLINDRICAL_TOL);
-    delete csorig;
-    ON_Line lorig(corig.circle.Center(), corig.circle.Center() + corig.Axis());
-
-    ON_Cylinder ccand;
-    ON_Surface *cscand = fcand->SurfaceOf()->Duplicate();
-    cscand->IsCylinder(&ccand, BREP_CYLINDRICAL_TOL);
-    delete cscand;
-    double d1 = lorig.DistanceTo(ccand.circle.Center());
-    double d2 = lorig.DistanceTo(ccand.circle.Center() + ccand.Axis());
-
-    // Make sure the cylinder axes are colinear
-    if (corig.Axis().IsParallelTo(ccand.Axis(), VUNITIZE_TOL) == 0) return 0;
-    if (fabs(d1) > BREP_CYLINDRICAL_TOL) return 0;
-    if (fabs(d2) > BREP_CYLINDRICAL_TOL) return 0;
-
-    // Make sure the radii are the same
-    if (!NEAR_ZERO(corig.circle.Radius() - ccand.circle.Radius(), VUNITIZE_TOL)) return 0;
-
-    // TODO - make sure negative/positive status for both cyl faces is the same.
-
-    return 1;
-}
 
 
 int
@@ -292,9 +209,13 @@ shoal_filter_loop(int control_loop, int candidate_loop, struct subbrep_island_da
 	    if (ctype != SURFACE_CYLINDRICAL_SECTION && ctype != SURFACE_CYLINDER) return 0;
 	    if (!cyl_validate_face(forig, fcand)) return 0;
 	    break;
+	case SURFACE_CONE:
+	    if (!cone_validate_face(forig, fcand)) return 0;
+	    break;
 	case SURFACE_SPHERICAL_SECTION:
 	case SURFACE_SPHERE:
 	    if (ctype != SURFACE_SPHERICAL_SECTION && ctype != SURFACE_SPHERE) return 0;
+	    if (!sph_validate_face(forig, fcand)) return 0;
 	    break;
 	default:
 	    if (otype != ctype) return 0;
@@ -385,26 +306,7 @@ subbrep_split(struct bu_vls *msgs, struct subbrep_island_data *data)
 		for (int i = 0; i < sh->shoal_loops_cnt; i++) {
 		    active.erase(sh->shoal_loops[i]);
 		}
-		int local_fail = 0;
-		switch (surface_type) {
-		    case SURFACE_CYLINDRICAL_SECTION:
-		    case SURFACE_CYLINDER:
-			if (!cylinder_csg(msgs, sh, BREP_CYLINDRICAL_TOL)) local_fail++;
-			break;
-		    case SURFACE_CONE:
-			local_fail++;
-			break;
-		    case SURFACE_SPHERICAL_SECTION:
-		    case SURFACE_SPHERE:
-			local_fail++;
-			break;
-		    case SURFACE_TORUS:
-			local_fail++;
-			break;
-		    default:
-			break;
-		}
-		if (!local_fail) {
+		if (shoal_csg(msgs, surface_type, sh)) {
 		    if (BU_PTBL_LEN(sh->shoal_children) > 0) {
 			sh->shoal_type = COMB;
 		    } else {
@@ -466,6 +368,46 @@ subbrep_split(struct bu_vls *msgs, struct subbrep_island_data *data)
 struct bu_ptbl *
 brep_to_csg(struct bu_vls *msgs, const ON_Brep *brep)
 {
+
+// The following code will print out tikz-3dplot data for B-Rep edges, insofar as
+// they can be represented.
+#if 0
+    // Tikz info
+    for (int i = 0; i < brep->m_V.Count(); i++) {
+        bu_log("\\coordinate (V%d) at (%f, %f, %f);\n", i, brep->m_V[i].Point().x*0.1, brep->m_V[i].Point().y*0.1, brep->m_V[i].Point().z*0.1);
+    }
+    for (int i = 0; i < brep->m_V.Count(); i++) {
+	bu_log("\\node at (V%d) {\\tiny{V%d}};\n", i, i);
+    }
+    for (int i = 0; i < brep->m_E.Count(); i++) {
+        const ON_BrepEdge *edge = &(brep->m_E[i]);
+        ON_Curve *ecv = edge->EdgeCurveOf()->Duplicate();
+        if (!ecv->IsLinear()) {
+            ON_Curve *c = edge->EdgeCurveOf()->Duplicate();
+            ON_Arc arc;
+            if (c->IsArc(NULL, &arc, BREP_SPHERICAL_TOL)) {
+		if (!arc.IsCircle()) {
+		    ON_Interval ad = arc.DomainDegrees();
+		    ON_Circle circ(arc.StartPoint(), arc.MidPoint(), arc.EndPoint());
+		    ON_3dPoint p = circ.Center()*0.1;
+		    ON_3dPoint v1 = edge->Vertex(0)->Point()*0.1;
+		    ON_3dPoint v2 = edge->Vertex(1)->Point()*0.1;
+		    bu_log("\\tdplotdefinepoints(%f,%f,%f)(%f,%f,%f)(%f,%f,%f)\n", p.x,p.y,p.z,v1.x,v1.y,v1.z,v2.x,v2.y,v2.z);
+		    bu_log("\\tdplotdrawpolytopearc{%f}{}{}\n", circ.Radius()*0.1);
+		} else {
+		    ON_3dPoint o = arc.plane.origin*0.1;
+		    bu_log("\\draw (%f,%f,%f) circle (%f);\n", o.x, o.y, o.z, arc.radius*0.1);
+		}
+            } else {
+		bu_log("%% error - unknown curve on edge %d, approximate with line:\n", edge->m_edge_index);
+		bu_log("\\draw (V%d) -- (V%d);\n", edge->Vertex(0)->m_vertex_index, edge->Vertex(1)->m_vertex_index);
+	    }
+        } else {
+            bu_log("\\draw (V%d) -- (V%d);\n", edge->Vertex(0)->m_vertex_index, edge->Vertex(1)->m_vertex_index);
+        }
+    }
+#endif
+
     /* Number of successful conversion operations */
     int successes = 0;
     /* Overall object counter */
@@ -474,6 +416,16 @@ brep_to_csg(struct bu_vls *msgs, const ON_Brep *brep)
     struct bu_ptbl *subbreps;
     std::set<struct subbrep_island_data *> islands;
     std::set<struct subbrep_island_data *>::iterator is_it;
+
+    // Before we get started, check the B-Rep trims.  If we have boundary
+    // trims in the B-Rep, that means something isn't closed and we probably
+    // have a non-closed volume. Not representable - bail.
+    for (int i = 0; i < brep->m_T.Count(); i++) {
+	if (brep->m_T[i].m_type == ON_BrepTrim::boundary) {
+	    if (msgs) bu_vls_printf(msgs, "Found unmated trim curve - B-Rep is probably not a solid, skip.\n");
+	    return NULL;
+	}
+    }
 
     BU_GET(subbreps, struct bu_ptbl);
     bu_ptbl_init(subbreps, 8, "subbrep table");

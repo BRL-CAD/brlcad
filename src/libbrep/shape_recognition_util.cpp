@@ -451,7 +451,7 @@ subbrep_brep_boolean(struct subbrep_island_data *data)
 	    if (face->m_bRev) face_plane.Flip();
 
 	    for (int fo = 0; fo < data->fol_cnt; fo++) {
-		const ON_BrepFace *oface = &(brep->m_F[data->fil[fo]]);
+		const ON_BrepFace *oface = &(brep->m_F[data->fol[fo]]);
 		const ON_Surface *osurf = oface->SurfaceOf();
 		ON_NurbsSurface onsurf;
 		if (!osurf->GetNurbForm(onsurf)) continue;
