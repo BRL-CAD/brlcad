@@ -646,6 +646,68 @@ subbrep_make_brep(struct bu_vls *UNUSED(msgs), struct subbrep_island_data *data)
     return 1;
 }
 
+// Tikz LaTeX output from B-Rep wireframes
+int
+ON_BrepTikz(ON_String& s, const ON_Brep *brep, const char *c, const char *pre)
+{
+    struct bu_vls color = BU_VLS_INIT_ZERO;
+    struct bu_vls output = BU_VLS_INIT_ZERO;
+    struct bu_vls prefix = BU_VLS_INIT_ZERO;
+    if (c) {
+	bu_vls_sprintf(&color, "%s", c);
+    } else {
+	bu_vls_sprintf(&color, "gray", c);
+    }
+    if (pre) {
+	bu_vls_sprintf(&prefix, "%s", pre);
+    } else {
+	bu_vls_trunc(&prefix, 0);
+    }
+
+    for (int i = 0; i < brep->m_V.Count(); i++) {
+	bu_vls_printf(&output, "\\coordinate (%sV%d) at (%f, %f, %f);\n", bu_vls_addr(&prefix), i, brep->m_V[i].Point().x*0.1, brep->m_V[i].Point().y*0.1, brep->m_V[i].Point().z*0.1);
+    }
+
+    for (int i = 0; i < brep->m_E.Count(); i++) {
+	const ON_BrepEdge *edge = &(brep->m_E[i]);
+	ON_Curve *ecv = edge->EdgeCurveOf()->Duplicate();
+	if (!ecv->IsLinear()) {
+	    ON_Curve *cv = edge->EdgeCurveOf()->Duplicate();
+	    ON_Arc arc;
+	    if (cv->IsArc(NULL, &arc, BREP_SPHERICAL_TOL)) {
+		if (!arc.IsCircle()) {
+		    ON_Interval ad = arc.DomainDegrees();
+		    ON_Circle circ(arc.StartPoint(), arc.MidPoint(), arc.EndPoint());
+		    ON_3dPoint p = circ.Center()*0.1;
+		    ON_3dPoint v1 = edge->Vertex(0)->Point()*0.1;
+		    ON_3dPoint v2 = edge->Vertex(1)->Point()*0.1;
+		    bu_vls_printf(&output, "\\coordinate (%sE%dV%d) at (%f, %f, %f);\n", bu_vls_addr(&prefix), edge->m_edge_index, edge->Vertex(0)->m_vertex_index, v1.x*0.1, v1.y*0.1, v1.z*0.1);
+		    bu_vls_printf(&output, "\\coordinate (%sE%dV%d) at (%f, %f, %f);\n", bu_vls_addr(&prefix), edge->m_edge_index, edge->Vertex(1)->m_vertex_index, v2.x*0.1, v2.y*0.1, v2.z*0.1);
+		    bu_vls_printf(&output, "\\tdplotdefinepoints(%f,%f,%f)(%f,%f,%f)(%f,%f,%f)\n", p.x,p.y,p.z,v1.x,v1.y,v1.z,v2.x,v2.y,v2.z);
+		    bu_vls_printf(&output, "\\tdplotdrawpolytopearc[%s]{%f}{}{}\n", bu_vls_addr(&color), circ.Radius()*0.1);
+		} else {
+		    ON_3dPoint o = arc.plane.origin*0.1;
+		    bu_vls_printf(&output, "\\coordinate (%sC%d) at (%f, %f, %f);\n", bu_vls_addr(&prefix), edge->m_edge_index, o.x*0.1, o.y*0.1, o.z*0.1);
+		    bu_vls_printf(&output, "\\draw[%s] (%f,%f,%f) circle (%f);\n", bu_vls_addr(&color), o.x, o.y, o.z, arc.radius*0.1);
+		}
+	    } else {
+		// TODO - this should be a polyline...  split out the wireframe generator for B-Reps
+		bu_vls_printf(&output, "%% Note - unsupported curve type on edge %d, approximating with line:\n", edge->m_edge_index);
+		bu_vls_printf(&output, "\\draw[%s] (%sV%d) -- (%sV%d);\n", bu_vls_addr(&color), bu_vls_addr(&prefix), edge->Vertex(0)->m_vertex_index, bu_vls_addr(&prefix), edge->Vertex(1)->m_vertex_index);
+	    }
+	} else {
+	    bu_vls_printf(&output, "\\draw[%s] (%sV%d) -- (%sV%d);\n", bu_vls_addr(&color), bu_vls_addr(&prefix), edge->Vertex(0)->m_vertex_index, bu_vls_addr(&prefix), edge->Vertex(1)->m_vertex_index);
+	}
+    }
+
+    s.Append(bu_vls_addr(&output), bu_vls_strlen(&output));
+    bu_vls_free(&color);
+    bu_vls_free(&output);
+    bu_vls_free(&prefix);
+    return 1;
+}
+
+
 
 // Local Variables:
 // tab-width: 8

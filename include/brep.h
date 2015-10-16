@@ -1387,6 +1387,15 @@ sub_curve(const ON_Curve *in, double a, double b);
 extern BREP_EXPORT ON_Surface *
 sub_surface(const ON_Surface *in, int dir, double a, double b);
 
+
+/**
+ * Get a Tikz representation of a B-Rep.
+ * EXPERIMENTAL - to do this right, we need more capabilities
+ * and options than we currently have available, and the API
+ * of this function will likely need to reflect that.*/
+extern BREP_EXPORT int ON_BrepTikz(ON_String &s, const ON_Brep *brep, const char *color, const char *prefix);
+
+
 /* Shape recognition functions - HIGHLY EXPERIMENTAL,
  * DO NOT RELY ON - the odds are quite good that this whole
  * setup will be moving to libanalyze and it's public API
