@@ -23,11 +23,12 @@
  *
  */
 
+#include <algorithm> // for std::max
+#define NOMINMAX
 #include "common.h"
 
 #include <assert.h>
 #include <vector>
-#include <algorithm>
 
 #include "vmath.h"
 

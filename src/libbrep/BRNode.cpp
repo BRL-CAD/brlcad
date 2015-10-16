@@ -17,10 +17,10 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-#include "common.h"
 
-/* systeam headers */
 #include <algorithm> // for std::max
+#define NOMINMAX
+#include "common.h"
 
 /* library headers */
 extern "C" {

@@ -24,6 +24,8 @@
  */
 
 
+#include <algorithm>
+#define NOMINMAX
 #include "common.h"
 
 #include "gcv/util.h"
@@ -175,8 +177,9 @@ public:
     const rt_db_internal &get() const;
     rt_db_internal &get();
 
-
+#ifndef WIN32
 private:
+#endif
     DBInternal(const DBInternal &source);
     DBInternal &operator=(const DBInternal &source);
 

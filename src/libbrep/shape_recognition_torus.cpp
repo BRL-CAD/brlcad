@@ -1,3 +1,5 @@
+#include <algorithm>
+#define NOMINMAX
 #include "common.h"
 
 #include <set>

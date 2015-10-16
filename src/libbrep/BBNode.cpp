@@ -17,8 +17,11 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-#include "common.h"
+
 #include <algorithm> // for std::max
+#define NOMINMAX
+#include "common.h"
+
 extern "C" {
 #include "bu/log.h"
 }

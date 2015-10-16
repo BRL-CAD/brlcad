@@ -23,6 +23,8 @@
  *
  */
 
+#include <algorithm> // for std::max
+#define NOMINMAX
 #include "common.h"
 
 #include <assert.h>
@@ -31,7 +33,6 @@
 #include <queue>
 #include <set>
 #include <map>
-#include <algorithm>
 
 #include "vmath.h"
 #include "bu/log.h"

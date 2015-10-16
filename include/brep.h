@@ -39,16 +39,9 @@ extern "C++" {
 
 #include "bu/ptbl.h"
 #include "bn/dvec.h"
+#include "opennurbs.h"
 #include <iostream>
 #include <fstream>
-
-/* because we're including bio.h in a public header and bsocket/bio have an
- * ordering dependency, include bsocket.h in the correct order to ensure
- * we don't get ordering errors */
-#include "bsocket.h"
-#include "bio.h" /* needed to include windows.h with protections */
-#define ON_NO_WINDOWS 1 /* don't let opennurbs include windows.h */
-#include "opennurbs.h"
 
 namespace brlcad {
 class BBNode;
@@ -219,6 +212,7 @@ ON_Ray::IntersectRay(const ON_Ray &v, ON_2dPoint &isect) const
     return true;
 }
 
+BREP_EXPORT void set_key(struct bu_vls *key, int k, int *karray);
 BREP_EXPORT void brep_get_plane_ray(ON_Ray &r, plane_ray &pr);
 BREP_EXPORT void brep_r(const ON_Surface *surf, plane_ray &pr, pt2d_t uv, ON_3dPoint &pt, ON_3dVector &su, ON_3dVector &sv, pt2d_t R);
 BREP_EXPORT void brep_newton_iterate(plane_ray &pr, pt2d_t R, ON_3dVector &su, ON_3dVector &sv, pt2d_t uv, pt2d_t out_uv);
@@ -1386,15 +1380,6 @@ sub_curve(const ON_Curve *in, double a, double b);
  */
 extern BREP_EXPORT ON_Surface *
 sub_surface(const ON_Surface *in, int dir, double a, double b);
-
-
-/**
- * Get a Tikz representation of a B-Rep.
- * EXPERIMENTAL - to do this right, we need more capabilities
- * and options than we currently have available, and the API
- * of this function will likely need to reflect that.*/
-extern BREP_EXPORT int ON_BrepTikz(ON_String &s, const ON_Brep *brep, const char *color, const char *prefix);
-
 
 /* Shape recognition functions - HIGHLY EXPERIMENTAL,
  * DO NOT RELY ON - the odds are quite good that this whole

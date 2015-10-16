@@ -26,6 +26,8 @@
 
 #ifdef OBJ_BREP
 
+#include <algorithm>
+#define NOMINMAX
 #include "common.h"
 
 /* system headers */
