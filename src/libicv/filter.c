@@ -212,8 +212,8 @@ icv_filter(icv_image_t *img, ICV_FILTER filter_type)
 	    c_val = 0;
 	    kern_p = kern;
 
-	    for (k = -k_dim/2; k<=k_dim/2; k++) {
-		n_index = index + k*widthstep;
+	    for (k = 0; k <= k_dim; k++) {
+		n_index = index + (k-(k_dim/2))*widthstep;
 		data_p = in_data + n_index;
 		for (i = 0; i<=k_dim; i++) {
 		    /* Ensures that the arguments are given a zero value for
@@ -295,8 +295,8 @@ icv_filter3(icv_image_t *old_img, icv_image_t *curr_img, icv_image_t *new_img, I
 	kern_old = kern;
 	kern_curr = kern + k_dim*k_dim-1;
 	kern_new = kern + 2*k_dim*k_dim-1;
-	for (k = -k_dim/2; k<=k_dim/2; k++) {
-	    n_index = index + k*widthstep;
+	for (k = 0; k <= k_dim; k++) {
+	    n_index = index + (k-(k_dim/2))*widthstep;
 	    old_data_p = old_data + n_index;
 	    curr_data_p = curr_data + n_index;
 	    new_data_p = new_data + n_index;
