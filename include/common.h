@@ -353,9 +353,11 @@ typedef ptrdiff_t ssize_t;
  */
 #if defined(_MSC_VER)
 
-/* /W1 "we now implement constructor member initialization correctly"
+/* /W1 warning C4351: new behavior: elements of array '...' will be default initialized
  *
- * this warning tells the user that an initializer like this:
+ * i.e., this is the "we now implement constructor member
+ * initialization correctly" warning that tells the user an
+ * initializer like this:
  *
  * Class::Class() : some_array() {}
  *
@@ -363,6 +365,20 @@ typedef ptrdiff_t ssize_t;
  * MSVC2005, behavior was to not initialize in some cases...
  */
 #  pragma warning( disable : 4351 )
+
+/* dubious warnings that are not yet intentinoally disabled:
+ *
+ * /W3 warning C4800: 'int' : forcing value to bool 'true' or 'false' (performance warning)
+ *
+ * this warning is caused by assigning an int (or other non-boolean
+ * value) to a bool like this:
+ *
+ * int i = 1; bool b = i; 
+ *
+ * there is something to be said for making such assignments explict,
+ * e.g., "b = (i != 0);", but this arguably decreases readability or
+ * clarity and the fix has potential for introducing logic errors.
+ */
 #endif
 
 /**
