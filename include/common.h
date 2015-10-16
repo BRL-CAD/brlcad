@@ -342,6 +342,28 @@ typedef ptrdiff_t ssize_t;
 #define HAVE_CLANG_DIAG_PRAGMAS \
     (defined(__clang__) && (__clang_major__ > 2 || (__clang_major__ == 2 && __clang_minor__ >= 8)))
 
+/**
+ * globally disable certain warnings.  do NOT add new warnings here
+ * without discussion and research.  only warnings that cannot be
+ * quieted without objectively decreasing code quality should be
+ * added!  even warnings that are innocuous or produce false-positive
+ * should be quelled when possible.
+ *
+ * any warnings added should include a description and justification.
+ */
+#if defined(_MSC_VER)
+
+/* /W1 "we now implement constructor member initialization correctly"
+ *
+ * this warning tells the user that an initializer like this:
+ *
+ * Class::Class() : some_array() {}
+ *
+ * will now initialize all members of some_array.  previous to
+ * MSVC2005, behavior was to not initialize in some cases...
+ */
+#  pragma warning( disable : 4351 )
+#endif
 
 /**
  * Provide a macro for different treatment of initialized extern const
@@ -362,6 +384,7 @@ typedef ptrdiff_t ssize_t;
 #endif
 
 #endif  /* COMMON_H */
+
 /** @} */
 /*
  * Local Variables:
