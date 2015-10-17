@@ -34,6 +34,8 @@
 #include <set>
 #include <map>
 
+#include "bio.h"
+
 #include "vmath.h"
 #include "bu/log.h"
 #include "brep.h"

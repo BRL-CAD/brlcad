@@ -31,10 +31,10 @@
  *
  */
 
-#include "common.h"
-
 #ifndef BSOCKET_H
 #define BSOCKET_H
+
+#include "common.h"
 
 #ifdef HAVE_SYS_SELECT_H
 #  include <sys/select.h>
