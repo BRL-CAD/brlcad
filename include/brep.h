@@ -1385,6 +1385,11 @@ sub_curve(const ON_Curve *in, double a, double b);
 extern BREP_EXPORT ON_Surface *
 sub_surface(const ON_Surface *in, int dir, double a, double b);
 
+
+extern BREP_EXPORT int
+ON_Curve_PolyLine_Approx(ON_Polyline *polyline, const ON_Curve *curve, double tol);
+
+
 /* Experimental function to generate Tikz plotting information
  * from B-Rep objects.  This may or may not be something we
  * expose as a feature long term - probably should be a more

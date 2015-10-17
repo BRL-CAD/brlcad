@@ -665,39 +665,42 @@ ON_BrepTikz(ON_String& s, const ON_Brep *brep, const char *c, const char *pre)
     }
 
     for (int i = 0; i < brep->m_V.Count(); i++) {
-	bu_vls_printf(&output, "\\coordinate (%sV%d) at (%f, %f, %f);\n", bu_vls_addr(&prefix), i, brep->m_V[i].Point().x*0.1, brep->m_V[i].Point().y*0.1, brep->m_V[i].Point().z*0.1);
+	bu_vls_printf(&output, "\\coordinate (%sV%d) at (%f, %f, %f);\n", bu_vls_addr(&prefix), i, brep->m_V[i].Point().x, brep->m_V[i].Point().y, brep->m_V[i].Point().z);
     }
 
     for (int i = 0; i < brep->m_E.Count(); i++) {
 	const ON_BrepEdge *edge = &(brep->m_E[i]);
+	int ei = edge->m_edge_index;
 	ON_Curve *ecv = edge->EdgeCurveOf()->Duplicate();
 	if (!ecv->IsLinear()) {
-	    ON_Curve *cv = edge->EdgeCurveOf()->Duplicate();
-	    ON_Arc arc;
-	    if (cv->IsArc(NULL, &arc, BREP_SPHERICAL_TOL)) {
-		if (!arc.IsCircle()) {
-		    ON_Interval ad = arc.DomainDegrees();
-		    ON_Circle circ(arc.StartPoint(), arc.MidPoint(), arc.EndPoint());
-		    ON_3dPoint p = circ.Center()*0.1;
-		    ON_3dPoint v1 = edge->Vertex(0)->Point()*0.1;
-		    ON_3dPoint v2 = edge->Vertex(1)->Point()*0.1;
-		    bu_vls_printf(&output, "\\coordinate (%sE%dV%d) at (%f, %f, %f);\n", bu_vls_addr(&prefix), edge->m_edge_index, edge->Vertex(0)->m_vertex_index, v1.x*0.1, v1.y*0.1, v1.z*0.1);
-		    bu_vls_printf(&output, "\\coordinate (%sE%dV%d) at (%f, %f, %f);\n", bu_vls_addr(&prefix), edge->m_edge_index, edge->Vertex(1)->m_vertex_index, v2.x*0.1, v2.y*0.1, v2.z*0.1);
-		    bu_vls_printf(&output, "\\tdplotdefinepoints(%f,%f,%f)(%f,%f,%f)(%f,%f,%f)\n", p.x,p.y,p.z,v1.x,v1.y,v1.z,v2.x,v2.y,v2.z);
-		    bu_vls_printf(&output, "\\tdplotdrawpolytopearc[%s]{%f}{}{}\n", bu_vls_addr(&color), circ.Radius()*0.1);
+	    // Try piecewise bezier
+	    ON_Curve *ncv = edge->EdgeCurveOf()->Duplicate();
+	    ON_NurbsCurve* nc3 = ON_NurbsCurve::New();
+	    ncv->GetNurbForm(*nc3, 0.0);
+	    //nc3->MakePiecewiseBezier(false);
+	    for (int si = 0; si <= 1/*nc3->m_cv_count-nc3->m_order*/; si++) {
+		ON_BezierCurve scurve;
+		nc3->ConvertSpanToBezier(si, scurve);
+		if (scurve.Degree() == 3) {
+		    ON_3dPoint sp = scurve.PointAt(0);
+		    ON_3dPoint ep = scurve.PointAt(1);
+		    ON_3dPoint cp1,cp2;
+		    scurve.GetCV(1,cp1);
+		    scurve.GetCV(2,cp2);
+		    bu_vls_printf(&output, "\\coordinate (%sC%d%ds) at (%f, %f, %f);\n", bu_vls_addr(&prefix), ei, si, sp.x, sp.y, sp.z);
+		    bu_vls_printf(&output, "\\coordinate (%sC%d%de) at (%f, %f, %f);\n", bu_vls_addr(&prefix), ei, si, ep.x, ep.y, ep.z);
+		    bu_vls_printf(&output, "\\coordinate (%sC%d%dcp1) at (%f, %f, %f);\n", bu_vls_addr(&prefix), ei, si, cp1.x, cp1.y, cp1.z);
+		    bu_vls_printf(&output, "\\coordinate (%sC%d%dcp2) at (%f, %f, %f);\n", bu_vls_addr(&prefix), ei, si, cp2.x, cp2.y, cp2.z);
+		    bu_vls_printf(&output, "\\draw[%s] (%sC%d%ds) .. controls (%sC%d%dcp1) and (%sC%d%dcp2) .. (%sC%d%de);\n", bu_vls_addr(&color), bu_vls_addr(&prefix), ei, si, bu_vls_addr(&prefix), ei, si, bu_vls_addr(&prefix), ei, si, bu_vls_addr(&prefix), ei, si);
 		} else {
-		    ON_3dPoint o = arc.plane.origin*0.1;
-		    bu_vls_printf(&output, "\\coordinate (%sC%d) at (%f, %f, %f);\n", bu_vls_addr(&prefix), edge->m_edge_index, o.x*0.1, o.y*0.1, o.z*0.1);
-		    bu_vls_printf(&output, "\\draw[%s] (%f,%f,%f) circle (%f);\n", bu_vls_addr(&color), o.x, o.y, o.z, arc.radius*0.1);
+		    // Non-cubic bezier - needs approximating
+		    bu_log("non-cubic bezier (degree %d) encountered, skipping\n", scurve.Degree());
 		}
-	    } else {
-		// TODO - this should be a polyline...  split out the wireframe generator for B-Reps
-		bu_vls_printf(&output, "%% Note - unsupported curve type on edge %d, approximating with line:\n", edge->m_edge_index);
-		bu_vls_printf(&output, "\\draw[%s] (%sV%d) -- (%sV%d);\n", bu_vls_addr(&color), bu_vls_addr(&prefix), edge->Vertex(0)->m_vertex_index, bu_vls_addr(&prefix), edge->Vertex(1)->m_vertex_index);
 	    }
 	} else {
-	    bu_vls_printf(&output, "\\draw[%s] (%sV%d) -- (%sV%d);\n", bu_vls_addr(&color), bu_vls_addr(&prefix), edge->Vertex(0)->m_vertex_index, bu_vls_addr(&prefix), edge->Vertex(1)->m_vertex_index);
+	    //bu_vls_printf(&output, "\\draw[%s] (%sV%d) -- (%sV%d);\n", bu_vls_addr(&color), bu_vls_addr(&prefix), edge->Vertex(0)->m_vertex_index, bu_vls_addr(&prefix), edge->Vertex(1)->m_vertex_index);
 	}
+	delete ecv;
     }
 
     s.Append(bu_vls_addr(&output), bu_vls_strlen(&output));
