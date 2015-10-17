@@ -6,6 +6,7 @@
 #include "bu/log.h"
 #include "bu/str.h"
 #include "bu/malloc.h"
+#include "bn/tol.h"
 #include "brep.h"
 #include "shape_recognition.h"
 
@@ -670,35 +671,26 @@ ON_BrepTikz(ON_String& s, const ON_Brep *brep, const char *c, const char *pre)
 
     for (int i = 0; i < brep->m_E.Count(); i++) {
 	const ON_BrepEdge *edge = &(brep->m_E[i]);
-	int ei = edge->m_edge_index;
+	//int ei = edge->m_edge_index;
 	ON_Curve *ecv = edge->EdgeCurveOf()->Duplicate();
 	if (!ecv->IsLinear()) {
-	    // Try piecewise bezier
+	    // Try piecewise curve
+	    ON_Polyline poly;
 	    ON_Curve *ncv = edge->EdgeCurveOf()->Duplicate();
-	    ON_NurbsCurve* nc3 = ON_NurbsCurve::New();
-	    ncv->GetNurbForm(*nc3, 0.0);
-	    //nc3->MakePiecewiseBezier(false);
-	    for (int si = 0; si <= 1/*nc3->m_cv_count-nc3->m_order*/; si++) {
-		ON_BezierCurve scurve;
-		nc3->ConvertSpanToBezier(si, scurve);
-		if (scurve.Degree() == 3) {
-		    ON_3dPoint sp = scurve.PointAt(0);
-		    ON_3dPoint ep = scurve.PointAt(1);
-		    ON_3dPoint cp1,cp2;
-		    scurve.GetCV(1,cp1);
-		    scurve.GetCV(2,cp2);
-		    bu_vls_printf(&output, "\\coordinate (%sC%d%ds) at (%f, %f, %f);\n", bu_vls_addr(&prefix), ei, si, sp.x, sp.y, sp.z);
-		    bu_vls_printf(&output, "\\coordinate (%sC%d%de) at (%f, %f, %f);\n", bu_vls_addr(&prefix), ei, si, ep.x, ep.y, ep.z);
-		    bu_vls_printf(&output, "\\coordinate (%sC%d%dcp1) at (%f, %f, %f);\n", bu_vls_addr(&prefix), ei, si, cp1.x, cp1.y, cp1.z);
-		    bu_vls_printf(&output, "\\coordinate (%sC%d%dcp2) at (%f, %f, %f);\n", bu_vls_addr(&prefix), ei, si, cp2.x, cp2.y, cp2.z);
-		    bu_vls_printf(&output, "\\draw[%s] (%sC%d%ds) .. controls (%sC%d%dcp1) and (%sC%d%dcp2) .. (%sC%d%de);\n", bu_vls_addr(&color), bu_vls_addr(&prefix), ei, si, bu_vls_addr(&prefix), ei, si, bu_vls_addr(&prefix), ei, si, bu_vls_addr(&prefix), ei, si);
-		} else {
-		    // Non-cubic bezier - needs approximating
-		    bu_log("non-cubic bezier (degree %d) encountered, skipping\n", scurve.Degree());
+	    int pnt_cnt = ON_Curve_PolyLine_Approx(&poly, ncv, BN_TOL_DIST);
+	    ON_3dPoint p = poly[0];
+	    if (pnt_cnt) {
+		bu_vls_printf(&output, "\\draw[%s] (%f, %f, %f)", bu_vls_addr(&color), p.x, p.y, p.z);
+		for (int si = 1; si < poly.Count(); si++) {
+		    p = poly[si];
+		    bu_vls_printf(&output, " -- (%f, %f, %f)", p.x, p.y, p.z);
+		    if (si+1 == poly.Count()) {
+			bu_vls_printf(&output, ";\n");
+		    }
 		}
 	    }
 	} else {
-	    //bu_vls_printf(&output, "\\draw[%s] (%sV%d) -- (%sV%d);\n", bu_vls_addr(&color), bu_vls_addr(&prefix), edge->Vertex(0)->m_vertex_index, bu_vls_addr(&prefix), edge->Vertex(1)->m_vertex_index);
+	    bu_vls_printf(&output, "\\draw[%s] (%sV%d) -- (%sV%d);\n", bu_vls_addr(&color), bu_vls_addr(&prefix), edge->Vertex(0)->m_vertex_index, bu_vls_addr(&prefix), edge->Vertex(1)->m_vertex_index);
 	}
 	delete ecv;
     }
