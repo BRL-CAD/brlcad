@@ -738,7 +738,7 @@ _ged_brep_to_csg(struct ged *gedp, const char *dp_name, int verify)
 }
 
 extern "C" int
-_ged_brep_tikz(struct ged *gedp, const char *dp_name)
+_ged_brep_tikz(struct ged *gedp, const char *dp_name, const char *outfile)
 {
     struct rt_db_internal intern;
     struct rt_brep_internal *brep_ip = NULL;
@@ -762,19 +762,32 @@ _ged_brep_tikz(struct ged *gedp, const char *dp_name)
     ON_String s;
 
     struct bu_vls wrapper = BU_VLS_INIT_ZERO;
+    bu_vls_printf(&wrapper, "\\documentclass{article}\n");
+    bu_vls_printf(&wrapper, "\\usepackage{tikz}\n");
+    bu_vls_printf(&wrapper, "\\usepackage{tikz-3dplot}\n\n");
+    bu_vls_printf(&wrapper, "\\begin{document}\n\n");
     // Translate view az/el into tikz-3dplot variation
-    bu_vls_sprintf(&wrapper, "\\tdplotsetmaincoords{%f}{%f}\n", 90 + -1*gedp->ged_gvp->gv_aet[1], -1*(-90 + -1 * gedp->ged_gvp->gv_aet[0]));
+    bu_vls_printf(&wrapper, "\\tdplotsetmaincoords{%f}{%f}\n", 90 + -1*gedp->ged_gvp->gv_aet[1], -1*(-90 + -1 * gedp->ged_gvp->gv_aet[0]));
     bu_vls_printf(&wrapper, "\\begin{tikzpicture}[scale=1,tdplot_main_coords]\n");
     s.Append(bu_vls_addr(&wrapper), bu_vls_strlen(&wrapper));
 
     const ON_Brep *brep = brep_ip->brep;
     (void)ON_BrepTikz(s, brep, NULL, NULL);
 
-    bu_vls_sprintf(&wrapper, "\\end{tikzpicture}\n");
+    bu_vls_sprintf(&wrapper, "\\end{tikzpicture}\n\n");
+    bu_vls_printf(&wrapper, "\\end{document}\n");
     s.Append(bu_vls_addr(&wrapper), bu_vls_strlen(&wrapper));
     bu_vls_free(&wrapper);
 
-    bu_vls_sprintf(gedp->ged_result_str, "%s", s.Array());
+    if (outfile) {
+	FILE *fp = fopen(outfile, "w");
+	fprintf(fp, "%s", s.Array());
+	fclose(fp);
+	bu_vls_sprintf(gedp->ged_result_str, "Output written to file %s", outfile);
+    } else {
+
+	bu_vls_sprintf(gedp->ged_result_str, "%s", s.Array());
+    }
     return GED_OK;
 }
 
