@@ -409,13 +409,22 @@ make_island(struct bu_vls *msgs, struct subbrep_island_data *data, struct rt_wdb
 	struct wmember bcomb;
 	struct bu_vls bcomb_name = BU_VLS_INIT_ZERO;
 	struct bu_vls brep_name = BU_VLS_INIT_ZERO;
-	bu_vls_sprintf(&bcomb_name, "brep_obj_%d.r", data->island_id);
+	bu_vls_sprintf(&bcomb_name, "%s-brep_obj_%d.r", rname, data->island_id);
 	BU_LIST_INIT(&bcomb.l);
 
-	for (int i = 0; i < 3; ++i)
-	    rgb[i] = static_cast<unsigned char>(255.0 * drand48() + 0.5);
+	if (*n_bool_op == 'u') {
+	    rgb[0] = static_cast<unsigned char>(0);
+	    rgb[1] = static_cast<unsigned char>(0);
+	    rgb[2] = static_cast<unsigned char>(255.0);
+	} else {
+	    rgb[0] = static_cast<unsigned char>(255.0);
+	    rgb[1] = static_cast<unsigned char>(0);
+	    rgb[2] = static_cast<unsigned char>(0);
+	}
+	//for (int i = 0; i < 3; ++i)
+	//    rgb[i] = static_cast<unsigned char>(255.0 * drand48() + 0.5);
 
-	bu_vls_sprintf(&brep_name, "brep_obj_%d.s", data->island_id);
+	bu_vls_sprintf(&brep_name, "%s-brep_obj_%d.s", rname, data->island_id);
 	mk_brep(wdbp, bu_vls_addr(&brep_name), data->local_brep);
 
 	(void)mk_addmember(bu_vls_addr(&brep_name), &(bcomb.l), NULL, db_str2op((const char *)&un));
@@ -455,7 +464,7 @@ _obj_brep_to_csg(struct ged *gedp, struct bu_vls *log, struct bu_attribute_value
 	brep_ip = (struct rt_brep_internal *)intern.idb_ptr;
     }
     RT_BREP_CK_MAGIC(brep_ip);
-#if 1
+#if 0
     if (!rt_brep_valid(&intern, NULL)) {
 	bu_vls_printf(log, "%s is not a valid B-Rep - aborting\n", dp->d_namep);
 	return 2;
@@ -758,9 +767,8 @@ _ged_brep_tikz(struct ged *gedp, const char *dp_name)
     bu_vls_printf(&wrapper, "\\begin{tikzpicture}[scale=1,tdplot_main_coords]\n");
     s.Append(bu_vls_addr(&wrapper), bu_vls_strlen(&wrapper));
 
-    /* FIXME: symbol missing --CSM */
-    /* const ON_Brep *brep = brep_ip->brep; */
-    /*    (void)ON_BrepTikz(s, brep, NULL, NULL); */
+    const ON_Brep *brep = brep_ip->brep;
+    (void)ON_BrepTikz(s, brep, NULL, NULL);
 
     bu_vls_sprintf(&wrapper, "\\end{tikzpicture}\n");
     s.Append(bu_vls_addr(&wrapper), bu_vls_strlen(&wrapper));

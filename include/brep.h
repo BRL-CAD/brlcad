@@ -1385,6 +1385,13 @@ sub_curve(const ON_Curve *in, double a, double b);
 extern BREP_EXPORT ON_Surface *
 sub_surface(const ON_Surface *in, int dir, double a, double b);
 
+/* Experimental function to generate Tikz plotting information
+ * from B-Rep objects.  This may or may not be something we
+ * expose as a feature long term - probably should be a more
+ * generic API that supports multiple formats... */
+extern BREP_EXPORT int
+ON_BrepTikz(ON_String &s, const ON_Brep *brep, const char *color, const char *prefix);
+
 /* Shape recognition functions - HIGHLY EXPERIMENTAL,
  * DO NOT RELY ON - the odds are quite good that this whole
  * setup will be moving to libanalyze and it's public API
