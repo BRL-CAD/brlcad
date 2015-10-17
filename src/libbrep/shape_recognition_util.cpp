@@ -673,26 +673,39 @@ ON_BrepTikz(ON_String& s, const ON_Brep *brep, const char *c, const char *pre)
 	const ON_BrepEdge *edge = &(brep->m_E[i]);
 	//int ei = edge->m_edge_index;
 	ON_Curve *ecv = edge->EdgeCurveOf()->Duplicate();
-	if (!ecv->IsLinear()) {
-	    // Try piecewise curve
-	    ON_Polyline poly;
-	    ON_Curve *ncv = edge->EdgeCurveOf()->Duplicate();
-	    int pnt_cnt = ON_Curve_PolyLine_Approx(&poly, ncv, BN_TOL_DIST);
-	    ON_3dPoint p = poly[0];
-	    if (pnt_cnt) {
-		bu_vls_printf(&output, "\\draw[%s] (%f, %f, %f)", bu_vls_addr(&color), p.x, p.y, p.z);
-		for (int si = 1; si < poly.Count(); si++) {
-		    p = poly[si];
-		    bu_vls_printf(&output, " -- (%f, %f, %f)", p.x, p.y, p.z);
-		    if (si+1 == poly.Count()) {
-			bu_vls_printf(&output, ";\n");
+	if (ecv->IsLinear()) {
+	    bu_vls_printf(&output, "\\draw[%s] (%sV%d) -- (%sV%d);\n", bu_vls_addr(&color), bu_vls_addr(&prefix), edge->Vertex(0)->m_vertex_index, bu_vls_addr(&prefix), edge->Vertex(1)->m_vertex_index);
+	    delete ecv;
+	    continue;
+	}
+	ecv = edge->EdgeCurveOf()->Duplicate();
+	ON_Polyline poly;
+	ON_Curve *ncv = edge->EdgeCurveOf()->Duplicate();
+	int pnt_cnt = ON_Curve_PolyLine_Approx(&poly, ncv, BN_TOL_DIST);
+	if (pnt_cnt) {
+	    if (ecv->IsPolyline()) {
+		ON_3dPoint p = poly[0];
+		if (pnt_cnt) {
+		    bu_vls_printf(&output, "\\draw[%s] (%f, %f, %f)", bu_vls_addr(&color), p.x, p.y, p.z);
+		    for (int si = 1; si < poly.Count(); si++) {
+			p = poly[si];
+			bu_vls_printf(&output, " -- (%f, %f, %f)", p.x, p.y, p.z);
+			if (si+1 == poly.Count()) {
+			    bu_vls_printf(&output, ";\n");
+			}
 		    }
 		}
+	    } else {
+		bu_vls_printf(&output, "\\draw[%s] plot [smooth] coordinates {", bu_vls_addr(&color));
+		for (int si = 0; si < poly.Count(); si++) {
+		    ON_3dPoint p = poly[si];
+		    bu_vls_printf(&output, "(%f,%f,%f) ", p.x, p.y, p.z);
+		}
+		bu_vls_printf(&output, "};\n", bu_vls_addr(&color));
 	    }
-	} else {
-	    bu_vls_printf(&output, "\\draw[%s] (%sV%d) -- (%sV%d);\n", bu_vls_addr(&color), bu_vls_addr(&prefix), edge->Vertex(0)->m_vertex_index, bu_vls_addr(&prefix), edge->Vertex(1)->m_vertex_index);
 	}
 	delete ecv;
+	delete ncv;
     }
 
     s.Append(bu_vls_addr(&output), bu_vls_strlen(&output));
