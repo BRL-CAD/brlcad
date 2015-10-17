@@ -749,7 +749,6 @@ _ged_brep_tikz(struct ged *gedp, const char *dp_name)
 	brep_ip = (struct rt_brep_internal *)intern.idb_ptr;
     }
     RT_BREP_CK_MAGIC(brep_ip);
-    const ON_Brep *brep = brep_ip->brep;
 
     ON_String s;
 
@@ -759,7 +758,9 @@ _ged_brep_tikz(struct ged *gedp, const char *dp_name)
     bu_vls_printf(&wrapper, "\\begin{tikzpicture}[scale=1,tdplot_main_coords]\n");
     s.Append(bu_vls_addr(&wrapper), bu_vls_strlen(&wrapper));
 
-    (void)ON_BrepTikz(s, brep, NULL, NULL);
+    /* FIXME: symbol missing --CSM */
+    /* const ON_Brep *brep = brep_ip->brep; */
+    /*    (void)ON_BrepTikz(s, brep, NULL, NULL); */
 
     bu_vls_sprintf(&wrapper, "\\end{tikzpicture}\n");
     s.Append(bu_vls_addr(&wrapper), bu_vls_strlen(&wrapper));
