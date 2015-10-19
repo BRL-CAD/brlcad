@@ -252,7 +252,6 @@ static struct cmdtab mged_cmdtab[] = {
     {"oyscale", f_be_o_yscale, GED_FUNC_PTR_NULL},
     {"ozscale", f_be_o_zscale, GED_FUNC_PTR_NULL},
     {"p", f_param, GED_FUNC_PTR_NULL},
-    {"parse_points", cmd_parse_points, GED_FUNC_PTR_NULL},
     {"pathlist", cmd_ged_plain_wrapper, ged_pathlist},
     {"paths", cmd_ged_plain_wrapper, ged_pathsum},
     {"permute", f_permute, GED_FUNC_PTR_NULL},
