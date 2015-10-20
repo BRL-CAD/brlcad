@@ -27,6 +27,7 @@
 
 #include <assert.h>
 #include <vector>
+#include <algorithm> // for std::sort
 
 #include "vmath.h"
 
