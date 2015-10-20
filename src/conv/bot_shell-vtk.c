@@ -77,7 +77,7 @@ static struct vert_root *verts;
 static long *faces = NULL;
 static long max_faces = 0;
 static long num_faces = 0;
-#define FACES_BLOCK	512
+#define FACES_BLOCK 512
 
 static const char *usage = "[-m] [-n] [-d debug_level] [-g cell_size] -o vtk_polydata_output_file database.g object1 object2...\n";
 
@@ -86,6 +86,7 @@ print_usage(const char *progname)
 {
     bu_exit(1, "Usage: %s %s", progname, usage);
 }
+
 
 /* routine to replace default overlap handler.
  * overlaps are irrelevant to this application
@@ -102,6 +103,7 @@ miss(struct application *UNUSED(ap))
 {
     return 0;
 }
+
 
 HIDDEN void
 Add_face(int face[3])
@@ -134,6 +136,7 @@ Add_face(int face[3])
     VMOVE(&faces[num_faces*3], face);
     num_faces++;
 }
+
 
 HIDDEN int
 hit(struct application *ap, struct partition *part, struct seg *UNUSED(seg))
@@ -375,6 +378,7 @@ hit(struct application *ap, struct partition *part, struct seg *UNUSED(seg))
     return 1;
 }
 
+
 int
 main(int argc, char *argv[])
 {
@@ -598,6 +602,7 @@ main(int argc, char *argv[])
 
     return 0;
 }
+
 
 /*
  * Local Variables:

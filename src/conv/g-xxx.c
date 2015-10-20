@@ -135,9 +135,9 @@ describe_tree(union tree *tree,
  * @brief This routine is called when a region is first encountered in the
  * hierarchy when processing a tree
  *
- *      @param tsp tree state (for parsing the tree)
- *      @param pathp A listing of all the nodes traversed to get to this node in the database
- *      @param combp the combination record for this region
+ * @param tsp tree state (for parsing the tree)
+ * @param pathp A listing of all the nodes traversed to get to this node in the database
+ * @param combp the combination record for this region
  */
 int
 region_start(struct db_tree_state *tsp,
@@ -180,8 +180,8 @@ region_start(struct db_tree_state *tsp,
 /**
  * @brief This is called when all sub-elements of a region have been processed by leaf_func.
  *
- * @param tsp     tree state
- * @param pathp   db path
+ * @param tsp tree state
+ * @param pathp db path
  * @param curtree current tree
  *
  * @return TREE_NULL if data in curtree was "stolen", otherwise db_walk_tree will
@@ -354,6 +354,7 @@ primitive_func(struct db_tree_state *tsp,
     return (union tree *) NULL;
 }
 
+
 static void
 print_usage(const char *progname)
 {
@@ -361,6 +362,7 @@ print_usage(const char *progname)
 	"[-o out_file] brlcad_db.g object(s)\n";
     bu_exit(1, "Usage: %s %s", progname, usage);
 }
+
 
 int
 main(int argc, char *argv[])

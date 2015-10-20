@@ -92,6 +92,7 @@ struct render_verts
     struct vertex *v;
 };
 
+
 struct name_conv_list
 {
     char *brlcad_name;
@@ -108,17 +109,20 @@ struct ptc_plane
     double e1[3], e2[3], e3[3], origin[3];
 };
 
+
 struct ptc_cylinder
 {
     double e1[3], e2[3], e3[3], origin[3];
     double radius;
 };
 
+
 union ptc_surf
 {
     struct ptc_plane plane;
     struct ptc_cylinder cylinder;
 };
+
 
 struct ptc_surf_list
 {
@@ -128,15 +132,15 @@ struct ptc_surf_list
 } *surf_root=(struct ptc_surf_list *)NULL;
 
 /* for type in struct ptc_plane and struct ptc_cylinder */
-#define SURF_PLANE	1
-#define SURF_CYLINDER	2
+#define SURF_PLANE 1
+#define SURF_CYLINDER 2
 
-#define MAX_LINE_SIZE	512
+#define MAX_LINE_SIZE 512
 
-#define UNKNOWN_TYPE	0
-#define ASSEMBLY_TYPE	1
-#define PART_TYPE	2
-#define CUT_SOLID_TYPE	3
+#define UNKNOWN_TYPE 0
+#define ASSEMBLY_TYPE 1
+#define PART_TYPE 2
+#define CUT_SOLID_TYPE 3
 
 char *
 Build_unique_name(char *name)
@@ -165,6 +169,7 @@ Build_unique_name(char *name)
     return bu_vls_addr(&ret_name);
 }
 
+
 static struct name_conv_list *
 Add_new_name(char *name, unsigned int obj, int type)
 {
@@ -186,7 +191,7 @@ Add_new_name(char *name, unsigned int obj, int type)
     if (do_regex && type != CUT_SOLID_TYPE) {
 	regmatch_t pmatch;
 
-	if (regexec(&reg_cmp, ptr->brlcad_name, 1, &pmatch, 0 ) == 0) {
+	if (regexec(&reg_cmp, ptr->brlcad_name, 1, &pmatch, 0) == 0) {
 	    /* got a match */
 	    bu_strlcpy(&ptr->brlcad_name[pmatch.rm_so], &ptr->brlcad_name[pmatch.rm_eo], MAX_LINE_SIZE);
 	}
@@ -232,6 +237,7 @@ Add_new_name(char *name, unsigned int obj, int type)
     return ptr;
 }
 
+
 static char *
 Get_unique_name(char *name, unsigned int obj, int type)
 {
@@ -264,6 +270,7 @@ Get_unique_name(char *name, unsigned int obj, int type)
     return ptr->brlcad_name;
 }
 
+
 static char *
 Get_solid_name(char *name, unsigned int obj)
 {
@@ -279,6 +286,7 @@ Get_solid_name(char *name, unsigned int obj)
 
     return ptr->solid_name;
 }
+
 
 static void
 Convert_assy(char *line)
@@ -437,6 +445,7 @@ Convert_assy(char *line)
 
 }
 
+
 static void
 do_modifiers(char *line1, int *start, struct wmember *head, char *name, fastf_t *min, fastf_t *max)
 {
@@ -556,6 +565,7 @@ do_modifiers(char *line1, int *start, struct wmember *head, char *name, fastf_t 
     }
 }
 
+
 void
 Add_face(int *face)
 {
@@ -571,6 +581,7 @@ Add_face(int *face)
     VMOVE(&bot_faces[3*bot_fcurr], face);
     bot_fcurr++;
 }
+
 
 static void
 Convert_part(char *line)
@@ -867,6 +878,7 @@ Convert_part(char *line)
     return;
 }
 
+
 static void
 Convert_input(void)
 {
@@ -892,6 +904,7 @@ Convert_input(void)
     }
 }
 
+
 static void
 Rm_nulls(void)
 {
@@ -901,7 +914,7 @@ Rm_nulls(void)
 
     dbip = fd_out->dbip;
 
-    if (debug || BU_PTBL_LEN(&null_parts) ) {
+    if (debug || BU_PTBL_LEN(&null_parts)) {
 	bu_log("Deleting references to the following null parts:\n");
 	for (i=0; i<BU_PTBL_LEN(&null_parts); i++) {
 	    char *save_name;
@@ -1000,6 +1013,7 @@ Rm_nulls(void)
     } FOR_ALL_DIRECTORY_END;
 }
 
+
 static void
 proe_usage(const char *argv0)
 {
@@ -1021,6 +1035,7 @@ proe_usage(const char *argv0)
     bu_log("	The -t option specifies the minimum distance between two distinct vertices (mm).\n");
     bu_log("	The -x option specifies an RT debug flags (see raytrace.h).\n");
 }
+
 
 int
 main(int argc, char **argv)
@@ -1085,7 +1100,7 @@ main(int argc, char **argv)
 	    case 'i':
 		id_no = atoi(bu_optarg);
 		break;
-	    case  'I':
+	    case 'I':
 		const_id = atoi(bu_optarg);
 		if (const_id < 0) {
 		    bu_log("Illegal value for '-I' option, must be zero or greater!!!\n");
@@ -1165,6 +1180,7 @@ main(int argc, char **argv)
 
     return 0;
 }
+
 
 /*
  * Local Variables:

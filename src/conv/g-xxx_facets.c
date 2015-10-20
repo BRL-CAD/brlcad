@@ -41,7 +41,7 @@
 
 
 #define V3ARGSIN(a)       (a)[X]/25.4, (a)[Y]/25.4, (a)[Z]/25.4
-#define VSETIN(a, b)	{\
+#define VSETIN(a, b) {\
 	(a)[X] = (b)[X]/25.4; \
 	(a)[Y] = (b)[Y]/25.4; \
 	(a)[Z] = (b)[Z]/25.4; \
@@ -63,18 +63,18 @@ static const char *usage =
     "[-D dist_calc_tol (default: " CPP_XQUOTE(BN_TOL_DIST) ")]\n"
     "\t-o output_file_name brlcad_db.g object(s)\n";
 
-static int	NMG_debug;	/* saved arg of -X, for longjmp handling */
-static int	verbose;
-static struct db_i		*dbip;
-static struct rt_tess_tol	ttol;	/* tessellation tolerance in mm */
-static struct bn_tol		tol;	/* calculation tolerance */
-static struct model		*the_model;
+static int NMG_debug;	/* saved arg of -X, for longjmp handling */
+static int verbose;
+static struct db_i *dbip;
+static struct rt_tess_tol ttol;	/* tessellation tolerance in mm */
+static struct bn_tol tol;	/* calculation tolerance */
+static struct model *the_model;
 
-static struct db_tree_state	tree_state;	/* includes tol & model */
+static struct db_tree_state tree_state;	/* includes tol & model */
 
-static int		regions_tried = 0;
-static int		regions_converted = 0;
-static int		regions_written = 0;
+static int regions_tried = 0;
+static int regions_converted = 0;
+static int regions_written = 0;
 static size_t tot_polygons = 0;
 
 
@@ -88,7 +88,7 @@ print_usage(const char *progname)
 int
 main(int argc, char **argv)
 {
-    int	c;
+    int c;
     double percent;
 
     bu_setprogname(argv[0]);
@@ -225,6 +225,7 @@ main(int argc, char **argv)
     return 0;
 }
 
+
 /* routine to output the faceted NMG representation of a BRL-CAD region */
 static void
 output_nmg(struct nmgregion *r, const struct db_full_path *pathp, int UNUSED(region_id), int UNUSED(material_id))
@@ -351,7 +352,7 @@ process_boolean(union tree *curtree, struct db_tree_state *tsp, const struct db_
 	(void)nmg_model_fuse(*tsp->ts_m, tsp->ts_tol);
 	ret_tree = nmg_booltree_evaluate(curtree, tsp->ts_tol, &rt_uniresource);
 
-    } else  {
+    } else {
 	/* catch */
 	char *name = db_path_to_string(pathp);
 
@@ -386,15 +387,15 @@ process_boolean(union tree *curtree, struct db_tree_state *tsp, const struct db_
 
 
 /*
- *  Called from db_walk_tree().
+ * Called from db_walk_tree().
  *
- *  This routine must be prepared to run in parallel.
+ * This routine must be prepared to run in parallel.
  */
 union tree *do_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, void *UNUSED(client_data))
 {
-    union tree		*ret_tree;
-    struct bu_list		vhead;
-    struct nmgregion	*r;
+    union tree *ret_tree;
+    struct bu_list vhead;
+    struct nmgregion *r;
 
     RT_CK_FULL_PATH(pathp);
     RT_CK_TREE(curtree);
@@ -405,7 +406,7 @@ union tree *do_region_end(struct db_tree_state *tsp, const struct db_full_path *
     BU_LIST_INIT(&vhead);
 
     {
-	char	*sofar = db_path_to_string(pathp);
+	char *sofar = db_path_to_string(pathp);
 	bu_log("\ndo_region_end(%d %d%%) %s\n",
 	       regions_tried,
 	       regions_tried>0 ? (regions_converted * 100) / regions_tried : 0,
@@ -475,11 +476,11 @@ union tree *do_region_end(struct db_tree_state *tsp, const struct db_full_path *
     }
 
     /*
-     *  Dispose of original tree, so that all associated dynamic
-     *  memory is released now, not at the end of all regions.
-     *  A return of TREE_NULL from this routine signals an error,
-     *  and there is no point to adding _another_ message to our output,
-     *  so we need to cons up an OP_NOP node to return.
+     * Dispose of original tree, so that all associated dynamic
+     * memory is released now, not at the end of all regions.
+     * A return of TREE_NULL from this routine signals an error,
+     * and there is no point to adding _another_ message to our output,
+     * so we need to cons up an OP_NOP node to return.
      */
 
 
@@ -490,6 +491,7 @@ union tree *do_region_end(struct db_tree_state *tsp, const struct db_full_path *
     curtree->tr_op = OP_NOP;
     return curtree;
 }
+
 
 /*
  * Local Variables:

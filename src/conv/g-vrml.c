@@ -45,8 +45,8 @@
 #include "raytrace.h"
 #include "wdb.h"
 
-#define TXT_BUF_LEN	512
-#define TXT_NAME_SIZE	128
+#define TXT_BUF_LEN 512
+#define TXT_NAME_SIZE 128
 
 struct plate_mode {
     int num_bots;
@@ -54,6 +54,7 @@ struct plate_mode {
     int array_size;
     struct rt_bot_internal **bots;
 };
+
 
 struct vrml_mat {
     /* typical shader parameters */
@@ -63,31 +64,33 @@ struct vrml_mat {
 
     /* light parameters */
     fastf_t lt_fraction;
-    vect_t  lt_dir;
+    vect_t lt_dir;
     fastf_t lt_angle;
 
     /* texture parameters */
     char tx_file[TXT_NAME_SIZE];
-    int	tx_w;
-    int	tx_n;
+    int tx_w;
+    int tx_n;
 };
+
 
 #define PL_O(_m) bu_offsetof(struct vrml_mat, _m)
 
 const struct bu_structparse vrml_mat_parse[]={
     {"%s", TXT_NAME_SIZE, "ma_shader", PL_O(shader), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%d", 1, "shine",PL_O(shininess),BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%d", 1, "sh",PL_O(shininess),BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%g", 1, "transmit",PL_O(transparency),BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%g", 1, "tr",PL_O(transparency),BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%f", 1, "angle",PL_O(lt_angle),BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%f", 1, "fract",PL_O(lt_fraction),BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%f", 3, "aim",PL_O(lt_dir),BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%d", 1, "shine", PL_O(shininess), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%d", 1, "sh", PL_O(shininess), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%g", 1, "transmit", PL_O(transparency), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%g", 1, "tr", PL_O(transparency), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f", 1, "angle", PL_O(lt_angle), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f", 1, "fract", PL_O(lt_fraction), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f", 3, "aim", PL_O(lt_dir), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%d", 1, "w", PL_O(tx_w), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%d", 1, "n", PL_O(tx_n), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%s", TXT_NAME_SIZE, "file",PL_O(tx_file), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"",0, (char *)0,0,BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
+    {"%s", TXT_NAME_SIZE, "file", PL_O(tx_file), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"", 0, (char *)0, 0, BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
 };
+
 
 extern union tree *do_region_end1(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, void *client_data);
 extern union tree *do_region_end2(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, void *client_data);
@@ -125,6 +128,7 @@ print_usage(const char *progname)
     bu_exit(1, "Usage: %s %s", progname, usage);
 }
 
+
 static void
 clean_pmp(struct plate_mode *pmp)
 {
@@ -152,6 +156,7 @@ clean_pmp(struct plate_mode *pmp)
     pmp->num_bots = 0;
     pmp->num_nonbots = 0;
 }
+
 
 /* duplicate bot */
 struct rt_bot_internal *
@@ -207,6 +212,7 @@ dup_bot(struct rt_bot_internal *bot_in)
 
     return bot;
 }
+
 
 /* return 0 when object is NOT a light or an error occurred. regions
  * are skipped when this function returns 0.
@@ -319,6 +325,7 @@ leaf_tess1(struct db_tree_state *tsp, const struct db_full_path *pathp, struct r
 
     return (union tree *)NULL;
 }
+
 
 /* CSG objects are skipped. BOTs are processed but stored outside
  * tree. This leaf-tess function is used when we want to output
@@ -587,8 +594,8 @@ static void path_2_vrml_id(struct bu_vls *id, const char *path) {
 int
 main(int argc, char **argv)
 {
-    int		i;
-    int	c;
+    int i;
+    int c;
     struct plate_mode pm;
 
     bu_setlinebuf(stderr);
@@ -1095,7 +1102,7 @@ nmg_2_vrml(struct db_tree_state *tsp, const struct db_full_path *pathp, struct m
 			}
 
 			if (!first) {
-			    fprintf(fp_out, ",\n");
+			    fprintf(fp_out, ", \n");
 			} else {
 			    first = 0;
 			}
@@ -1107,7 +1114,7 @@ nmg_2_vrml(struct db_tree_state *tsp, const struct db_full_path *pathp, struct m
 			    NMG_CK_EDGEUSE(eu);
 			    v = eu->vu_p->v_p;
 			    NMG_CK_VERTEX(v);
-			    fprintf(fp_out, " %d,", bu_ptbl_locate(&verts, (long *)v));
+			    fprintf(fp_out, " %d, ", bu_ptbl_locate(&verts, (long *)v));
 			}
 			fprintf(fp_out, "-1");
 		    }
@@ -1187,7 +1194,7 @@ bot2vrml(struct plate_mode *pmp, const struct db_full_path *pathp, int region_id
 	bot = pmp->bots[bot_num];
 	RT_BOT_CK_MAGIC(bot);
 	for (i = 0; i < bot->num_faces; i++) {
-	    fprintf(fp_out, "\t\t\t\t\t%lu, %lu, %lu, -1,\n",
+	    fprintf(fp_out, "\t\t\t\t\t%lu, %lu, %lu, -1, \n",
 		    (long unsigned int)vert_count+bot->faces[i*3],
 		    (long unsigned int)vert_count+bot->faces[i*3+1],
 		    (long unsigned int)vert_count+bot->faces[i*3+2]);
@@ -1203,8 +1210,8 @@ bot2vrml(struct plate_mode *pmp, const struct db_full_path *pathp, int region_id
 
 
 /*
- *  Called from db_walk_tree().
- *  This routine must be prepared to run in parallel.
+ * Called from db_walk_tree().
+ * This routine must be prepared to run in parallel.
  */
 union tree *
 do_region_end1(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, void *client_data)
@@ -1236,11 +1243,12 @@ do_region_end1(struct db_tree_state *tsp, const struct db_full_path *pathp, unio
     }
 }
 
+
 /*
- *  Called from db_walk_tree().
- *  This routine must be prepared to run in parallel.
+ * Called from db_walk_tree().
+ * This routine must be prepared to run in parallel.
  *
- *  Only send bots from structure outside tree to vrml file.
+ * Only send bots from structure outside tree to vrml file.
  */
 union tree *
 do_region_end2(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *UNUSED(curtree), void *client_data)
@@ -1298,6 +1306,7 @@ process_boolean(union tree *curtree, struct db_tree_state *tsp, const struct db_
 
     return ret_tree;
 }
+
 
 union tree *
 nmg_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, void *UNUSED(client_data))
@@ -1373,10 +1382,10 @@ nmg_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, unio
 
     NMG_CK_MODEL(*tsp->ts_m);
 
-    /*  Dispose of original tree, so that all associated dynamic
-     *  memory is released now, not at the end of all regions.
-     *  A return of TREE_NULL from this routine signals an error,
-     *  so we need to cons up an OP_NOP node to return.
+    /* Dispose of original tree, so that all associated dynamic
+     * memory is released now, not at the end of all regions.
+     * A return of TREE_NULL from this routine signals an error,
+     * so we need to cons up an OP_NOP node to return.
      */
     db_free_tree(curtree, &rt_uniresource); /* does a nmg_kr (i.e. kill nmg region) */
 
@@ -1385,6 +1394,7 @@ nmg_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, unio
     curtree->tr_op = OP_NOP;
     return curtree;
 }
+
 
 /*
  * Local Variables:

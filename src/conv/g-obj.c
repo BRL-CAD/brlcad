@@ -57,6 +57,7 @@ print_usage(const char *progname)
     bu_exit(1, "Usage: %s %s", progname, usage);
 }
 
+
 static off_t vert_offset=0;
 static off_t norm_offset=0;
 static int do_normals=0;
@@ -99,6 +100,7 @@ parse_tol_abs(struct bu_vls *error_msg, int argc, const char **argv, void *UNUSE
     return ret;
 }
 
+
 static int
 parse_tol_norm(struct bu_vls *error_msg, int argc, const char **argv, void *UNUSED(set_var))
 {
@@ -109,6 +111,7 @@ parse_tol_norm(struct bu_vls *error_msg, int argc, const char **argv, void *UNUS
     ttol.rel = 0.0;
     return ret;
 }
+
 
 static int
 parse_tol_dist(struct bu_vls *error_msg, int argc, const char **argv, void *UNUSED(set_var))
@@ -122,6 +125,7 @@ parse_tol_dist(struct bu_vls *error_msg, int argc, const char **argv, void *UNUS
     return ret;
 }
 
+
 static int
 parse_debug_rt(struct bu_vls *error_msg, int argc, const char **argv, void *UNUSED(set_var))
 {
@@ -130,6 +134,7 @@ parse_debug_rt(struct bu_vls *error_msg, int argc, const char **argv, void *UNUS
     sscanf(argv[0], "%x", (unsigned int *)&RTG.debug);
     return 1;
 }
+
 
 static int
 parse_debug_nmg(struct bu_vls *error_msg, int argc, const char **argv, void *UNUSED(set_var))
@@ -140,6 +145,7 @@ parse_debug_nmg(struct bu_vls *error_msg, int argc, const char **argv, void *UNU
     NMG_debug = RTG.NMG_debug;
     return 1;
 }
+
 
 static struct bu_opt_desc options[] = {
     {"?", "", NULL,         NULL,            &print_help,  "print help and exit"},
@@ -159,6 +165,7 @@ static struct bu_opt_desc options[] = {
     {"r", "", "#",          bu_opt_fastf_t,  &ttol.rel,    "relative tolerance"},
     BU_OPT_DESC_NULL
 };
+
 
 int
 main(int argc, const char **argv)
