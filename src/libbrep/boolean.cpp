@@ -23,8 +23,6 @@
  *
  */
 
-#include <algorithm> // for std::max
-#define NOMINMAX
 #include "common.h"
 
 #include <assert.h>
@@ -42,6 +40,7 @@
 
 #include "raytrace.h"
 #include "brep_except.h"
+
 
 // Whether to output the debug messages about b-rep booleans.
 #define DEBUG_BREP_BOOLEAN 0

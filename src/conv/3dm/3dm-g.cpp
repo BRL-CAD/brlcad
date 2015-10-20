@@ -26,8 +26,6 @@
 
 #ifdef OBJ_BREP
 
-#include <algorithm>
-#define NOMINMAX
 #include "common.h"
 
 /* system headers */
@@ -46,6 +44,8 @@
 #include "bu/path.h"
 #include "icv.h"
 #include "wdb.h"
+
+/* FIXME: private API */
 #include "../../libgcv/bot_solidity.h"
 
 

@@ -23,8 +23,6 @@
  *
  */
 
-#include <algorithm> // for std::max
-#define NOMINMAX
 #include "common.h"
 
 #include <assert.h>
@@ -37,6 +35,7 @@
 #include "bu/malloc.h"
 #include "brep.h"
 #include "brep_except.h"
+
 
 // Whether to output the debug messages about b-rep intersections.
 static int DEBUG_BREP_INTERSECT = 0;

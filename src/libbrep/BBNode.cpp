@@ -18,8 +18,6 @@
  * information.
  */
 
-#include <algorithm> // for std::max
-#define NOMINMAX
 #include "common.h"
 
 extern "C" {
