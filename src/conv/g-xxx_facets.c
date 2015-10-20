@@ -49,8 +49,6 @@
 
 extern union tree *do_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, void *client_data);
 
-extern double nmg_eue_dist;		/* from nmg_plot.c */
-
 #define CPP_QUOTE(string) #string
 #define CPP_XQUOTE(symbol) CPP_QUOTE(symbol)
 
