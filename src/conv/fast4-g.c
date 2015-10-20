@@ -46,6 +46,10 @@
 #include "bn/plot3.h"
 
 
+/* NOTE: there should be no space after comma */
+#define STRCOMMA ","
+
+
 /* convenient macro for building regions */
 #define MK_REGION(fp, headp, name, r_id, rgb) {\
 	if (mode == 1) {\
@@ -2536,7 +2540,7 @@ make_region_list(char *str)
     region_list_len = REGION_LIST_BLOCK;
     f4_do_skips = 0;
 
-    ptr = strtok(str, ",");
+    ptr = strtok(str, STRCOMMA);
     while (ptr) {
 	if ((ptr2=strchr(ptr, '-'))) {
 	    int i, start, stop;
