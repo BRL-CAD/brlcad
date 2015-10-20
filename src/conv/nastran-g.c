@@ -40,7 +40,7 @@
 #include "raytrace.h"
 #include "wdb.h"
 
-#define COMMA ', '
+#define COMMA ','
 
 
 struct coord_sys
