@@ -625,7 +625,6 @@ nmg_2_vrml(FILE *fp, const struct db_full_path *pathp, struct model *m, struct m
     int first=1;
     int is_light=0;
     float r, g, b;
-    point_t ave_pt;
     char *full_path;
     /*There may be a better way to capture the region_id, than getting the rt_comb_internal structure,
      * (and may be a better way to capture the rt_comb_internal struct), but for now I just copied the
@@ -836,8 +835,6 @@ nmg_2_vrml(FILE *fp, const struct db_full_path *pathp, struct model *m, struct m
 	/* convert to desired units */
 	VSCALE( pt_meters, vg->coord, scale_factor );
 
-	if ( is_light )
-	    VADD2( ave_pt, ave_pt, pt_meters );
 	if ( first )
 	{
 	    if ( !is_light )
