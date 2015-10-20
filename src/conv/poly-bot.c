@@ -217,53 +217,53 @@ main(int argc, char **argv)
 		}
 		break;
 	    case ID_P_HEAD:
-	    {
-		struct rt_db_internal intern;
-		struct bu_external ext;
-		struct bu_external ext2;
-
-		polys++;
-		curr_poly = 0;
-		poly[curr_poly++] = record;	/* struct copy */
-		bu_log( "Converting %s\n", poly[0].p.p_name );
-		while ( fread( (char *)&record, sizeof record, 1, ifp ) == 1  &&
-			!feof(ifp) &&
-			record.u_id == ID_P_DATA )
 		{
-		    if ( curr_poly >= poly_limit )
-		    {
-			poly_limit += POLY_BLOCK;
-			poly = (union record *)bu_realloc( poly, poly_limit*sizeof( union record ), "poly realloc" );
-		    }
+		    struct rt_db_internal intern;
+		    struct bu_external ext;
+		    struct bu_external ext2;
+
+		    polys++;
+		    curr_poly = 0;
 		    poly[curr_poly++] = record;	/* struct copy */
-		}
-		BU_EXTERNAL_INIT( &ext );
-		ext.ext_nbytes = curr_poly * sizeof( union record );
-		ext.ext_buf = (uint8_t *)poly;
-		if ( OBJ[ID_POLY].ft_import4( &intern, &ext, bn_mat_identity, (struct db_i *)NULL, &rt_uniresource ) )
-		{
-		    bu_exit(1, "Import failed for polysolid %s\n", poly[0].p.p_name );
-		}
-		/* Don't free this ext buffer! */
+		    bu_log( "Converting %s\n", poly[0].p.p_name );
+		    while ( fread( (char *)&record, sizeof record, 1, ifp ) == 1  &&
+			    !feof(ifp) &&
+			    record.u_id == ID_P_DATA )
+		    {
+			if ( curr_poly >= poly_limit )
+			{
+			    poly_limit += POLY_BLOCK;
+			    poly = (union record *)bu_realloc( poly, poly_limit*sizeof( union record ), "poly realloc" );
+			}
+			poly[curr_poly++] = record;	/* struct copy */
+		    }
+		    BU_EXTERNAL_INIT( &ext );
+		    ext.ext_nbytes = curr_poly * sizeof( union record );
+		    ext.ext_buf = (uint8_t *)poly;
+		    if ( OBJ[ID_POLY].ft_import4( &intern, &ext, bn_mat_identity, (struct db_i *)NULL, &rt_uniresource ) )
+		    {
+			bu_exit(1, "Import failed for polysolid %s\n", poly[0].p.p_name );
+		    }
+		    /* Don't free this ext buffer! */
 
-		if ( rt_pg_to_bot( &intern, &tol, &rt_uniresource ) < 0 )  {
-		    bu_exit(1, "Unable to convert polysolid %s\n", poly[0].p.p_name );
-		}
+		    if ( rt_pg_to_bot( &intern, &tol, &rt_uniresource ) < 0 )  {
+			bu_exit(1, "Unable to convert polysolid %s\n", poly[0].p.p_name );
+		    }
 
-		BU_EXTERNAL_INIT( &ext2 );
-		if ( OBJ[ID_POLY].ft_export4( &ext2, &intern, 1.0, (struct db_i *)NULL, &rt_uniresource ) < 0 )  {
-		    bu_exit(1, "Unable to export v4 BoT %s\n", poly[0].p.p_name );
-		}
-		rt_db_free_internal(&intern);
-		if ( db_fwrite_external( ofp, poly[0].p.p_name, &ext2 ) < 0 )  {
-		    bu_exit(1, "Unable to fwrite v4 BoT %s\n", poly[0].p.p_name );
-		}
-		bu_free_external( &ext2 );
+		    BU_EXTERNAL_INIT( &ext2 );
+		    if ( OBJ[ID_POLY].ft_export4( &ext2, &intern, 1.0, (struct db_i *)NULL, &rt_uniresource ) < 0 )  {
+			bu_exit(1, "Unable to export v4 BoT %s\n", poly[0].p.p_name );
+		    }
+		    rt_db_free_internal(&intern);
+		    if ( db_fwrite_external( ofp, poly[0].p.p_name, &ext2 ) < 0 )  {
+			bu_exit(1, "Unable to fwrite v4 BoT %s\n", poly[0].p.p_name );
+		    }
+		    bu_free_external( &ext2 );
 
-		if ( feof( ifp ) )
-		    break;
-		goto top;
-	    }
+		    if ( feof( ifp ) )
+			break;
+		    goto top;
+		}
 	    case ID_P_DATA:
 		/* This should not happen! */
 		bu_log( "ERROR: Unattached polysolid data record!\n" );

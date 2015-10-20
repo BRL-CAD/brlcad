@@ -94,8 +94,8 @@ extern union tree *do_region_end2(struct db_tree_state *tsp, const struct db_ful
 extern union tree *nmg_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, void *client_data);
 
 static const char *usage =
-"[-b] [-e] [-v] [-xX lvl] [-d tolerance_distance] [-a abs_tol] [-r rel_tol] [-n norm_tol] [-o out_file] [-u units] brlcad_db.g object(s)\n"
-"(units default to mm)\n";
+    "[-b] [-e] [-v] [-xX lvl] [-d tolerance_distance] [-a abs_tol] [-r rel_tol] [-n norm_tol] [-o out_file] [-u units] brlcad_db.g object(s)\n"
+    "(units default to mm)\n";
 
 static char *tok_sep = " \t";
 static int NMG_debug; /* saved arg of -X, for longjmp handling */
@@ -309,7 +309,7 @@ leaf_tess1(struct db_tree_state *tsp, const struct db_full_path *pathp, struct r
 	struct rt_bot_internal **bots_tmp;
 	pmp->array_size += 5;
 	bots_tmp = (struct rt_bot_internal **)bu_realloc((void *)pmp->bots,
-		    pmp->array_size * sizeof(struct rt_bot_internal *), "pmp->bots");
+							 pmp->array_size * sizeof(struct rt_bot_internal *), "pmp->bots");
 	pmp->bots = bots_tmp;
     }
 
@@ -342,7 +342,7 @@ leaf_tess2(struct db_tree_state *UNUSED(tsp), const struct db_full_path *UNUSED(
 	struct rt_bot_internal **bots_tmp;
 	pmp->array_size += 5;
 	bots_tmp = (struct rt_bot_internal **)bu_realloc((void *)pmp->bots,
-		    pmp->array_size * sizeof(struct rt_bot_internal *), "pmp->bots");
+							 pmp->array_size * sizeof(struct rt_bot_internal *), "pmp->bots");
 	pmp->bots = bots_tmp;
     }
 
@@ -730,28 +730,28 @@ main(int argc, char **argv)
     if (!eval_all) {
 	pm.array_size = 5;
 	pm.bots = (struct rt_bot_internal **)bu_calloc(pm.array_size,
-		   sizeof(struct rt_bot_internal *), "pm.bots");
+						       sizeof(struct rt_bot_internal *), "pm.bots");
     }
 
     if (eval_all) {
 	(void)db_walk_tree(dbip, argc-bu_optind, (const char **)(&argv[bu_optind]),
-	       1,		/* ncpu */
-	       &tree_state,
-	       0,
-	       nmg_region_end,
-	       nmg_booltree_leaf_tess,
-	       (void *)&pm);	/* in librt/nmg_bool.c */
+			   1,		/* ncpu */
+			   &tree_state,
+			   0,
+			   nmg_region_end,
+			   nmg_booltree_leaf_tess,
+			   (void *)&pm);	/* in librt/nmg_bool.c */
 	goto out;
     }
 
     if (bot_dump) {
 	(void)db_walk_tree(dbip, argc-bu_optind, (const char **)(&argv[bu_optind]),
-	       1,		/* ncpu */
-	       &tree_state,
-	       0,
-	       do_region_end2,
-	       leaf_tess2,
-	       (void *)&pm);	/* in librt/nmg_bool.c */
+			   1,		/* ncpu */
+			   &tree_state,
+			   0,
+			   do_region_end2,
+			   leaf_tess2,
+			   (void *)&pm);	/* in librt/nmg_bool.c */
 	goto out;
     }
 
@@ -804,11 +804,11 @@ out:
     fprintf(fp_out, "\t]\n}\n");
 
     bu_log("\nTotal of %d regions converted of %d regions attempted.\n",
-	regions_converted, regions_tried);
+	   regions_converted, regions_tried);
 
     if (regions_converted != regions_tried) {
 	bu_log("Of the %d which failed conversion, %d of these failed due to conversion error.\n",
-	    regions_tried - regions_converted, bomb_cnt);
+	       regions_tried - regions_converted, bomb_cnt);
     }
 
     fclose(fp_out);
@@ -868,7 +868,7 @@ nmg_2_vrml(struct db_tree_state *tsp, const struct db_full_path *pathp, struct m
 
     if (id != ID_COMBINATION) {
 	bu_log("Directory/database mismatch!\n\t is '%s' a combination or not?\n",
-		dp->d_namep);
+	       dp->d_namep);
 	return;
     }
 
@@ -1160,7 +1160,7 @@ bot2vrml(struct plate_mode *pmp, const struct db_full_path *pathp, int region_id
     path_2_vrml_id(&shape_name, path_str);
 
     fprintf(fp_out, "\t\tDEF %s Shape {\n\t\t\t# Component_ID: %d   %s\n",
-	     bu_vls_addr(&shape_name), region_id, path_str);
+	    bu_vls_addr(&shape_name), region_id, path_str);
 
     bu_free(path_str, "result of db_path_to_string");
     bu_vls_free(&shape_name);
@@ -1188,9 +1188,9 @@ bot2vrml(struct plate_mode *pmp, const struct db_full_path *pathp, int region_id
 	RT_BOT_CK_MAGIC(bot);
 	for (i = 0; i < bot->num_faces; i++) {
 	    fprintf(fp_out, "\t\t\t\t\t%lu, %lu, %lu, -1,\n",
-		     (long unsigned int)vert_count+bot->faces[i*3],
-		     (long unsigned int)vert_count+bot->faces[i*3+1],
-		     (long unsigned int)vert_count+bot->faces[i*3+2]);
+		    (long unsigned int)vert_count+bot->faces[i*3],
+		    (long unsigned int)vert_count+bot->faces[i*3+1],
+		    (long unsigned int)vert_count+bot->faces[i*3+2]);
 	}
 	vert_count += bot->num_vertices;
     }
@@ -1218,8 +1218,8 @@ do_region_end1(struct db_tree_state *tsp, const struct db_full_path *pathp, unio
     }
     if (RT_G_DEBUG&DEBUG_TREEWALK || verbose) {
 	bu_log("\nConverted %d%% so far (%d of %d)\n",
-		regions_tried > 0 ? (regions_converted * 100) / regions_tried : 0,
-		regions_converted, regions_tried);
+	       regions_tried > 0 ? (regions_converted * 100) / regions_tried : 0,
+	       regions_converted, regions_tried);
     }
 
     if (pmp->num_bots > 0) {
@@ -1250,8 +1250,8 @@ do_region_end2(struct db_tree_state *tsp, const struct db_full_path *pathp, unio
 
     if ((pmp->num_bots > 0) && (RT_G_DEBUG&DEBUG_TREEWALK || verbose)) {
 	bu_log("\nConverted %d%% so far (%d of %d)\n",
-		regions_tried > 0 ? (regions_converted * 100) / regions_tried : 0,
-		regions_converted, regions_tried);
+	       regions_tried > 0 ? (regions_converted * 100) / regions_tried : 0,
+	       regions_converted, regions_tried);
     }
 
     if (pmp->num_bots > 0) {
@@ -1363,12 +1363,12 @@ nmg_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, unio
 	    regions_converted++;
 	} else {
 	    bu_log("WARNING: Nothing left after Boolean evaluation of %s (due to cleanup)\n",
-		db_path_to_string(pathp));
+		   db_path_to_string(pathp));
 	}
 
     } else {
 	bu_log("WARNING: Nothing left after Boolean evaluation of %s (due to error or null result)\n",
-		db_path_to_string(pathp));
+	       db_path_to_string(pathp));
     }
 
     NMG_CK_MODEL(*tsp->ts_m);

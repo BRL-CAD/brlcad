@@ -81,7 +81,7 @@ usage(const char *argv0)
     bu_log("  -f\t\tFuse vertices that are close enough to be considered the\n"
 	   "\t\tsame. Can make the solidity detection more reliable, but\n"
 	   "\t\tmay significantly increase processing time during import.\n"
-	  );
+	);
 
     bu_log("  -g grouping\tSelect which OBJ face grouping is used to create BRL-CAD\n"
 	   "\t\tprimitives:\n"
@@ -1344,7 +1344,7 @@ populate_triangle_indexes(struct ga_t *ga,
 
     for (i = 0; i < numFacePoints; ++i) {
 	retrieve_coord_index(ga, gfi, face_idx, i, tmp_v, tmp_n, tmp_t, &tmp_w,
-	    &svofi, &snofi, &stofi);
+			     &svofi, &snofi, &stofi);
 	VMOVE(&facePoints[i * ELEMENTS_PER_POINT], tmp_v);
     }
 
@@ -1407,7 +1407,7 @@ populate_triangle_indexes(struct ga_t *ga,
 	for (idx = 0; idx < 3; idx++) {
 
 	    retrieve_coord_index(ga, gfi, face_idx, triFaces[vert_idx * ELEMENTS_PER_POINT + idx], tmp_v,
-		tmp_n, tmp_t, &tmp_w, &vofi, &nofi, &tofi);
+				 tmp_n, tmp_t, &tmp_w, &vofi, &nofi, &tofi);
 
 	    switch (ti->tri_type) {
 		case FACE_V:
@@ -2241,10 +2241,10 @@ fuse_vertex(struct ga_t *ga,
 	if (vertex_index_list && (num_index_list > 0)) {
 	    for (idx1 = 0 ; idx1 < num_index_list ; idx1++) {
 		bu_log("non-unique sorted vertex_index_list[idx1] = (%zu)\n",
-			vertex_index_list[idx1]);
+		       vertex_index_list[idx1]);
 	    }
 	    bu_log("num non-unique sorted vertex_index_list[idx1] = (%zu)\n",
-		num_index_list);
+		   num_index_list);
 	}
     }
 
@@ -3360,7 +3360,7 @@ main(int argc, char **argv)
 			break;
 		    default:
 			bu_log("Invalid bot orientation type '%c'.\n",
-				bu_optarg[0]);
+			       bu_optarg[0]);
 			bu_vls_free(&input_file_name);
 			bu_vls_free(&brlcad_file_name);
 			bu_exit(EXIT_FAILURE, "Type '%s' for usage.\n",
@@ -3818,13 +3818,13 @@ main(int argc, char **argv)
     }
 
     bu_free_array(ga.numGroups, (char**)ga.str_arr_obj_groups,
-	"str_arr_obj_groups");
+		  "str_arr_obj_groups");
     bu_free_array(ga.numObjects, (char**)ga.str_arr_obj_objects,
-	"str_arr_obj_objects");
+		  "str_arr_obj_objects");
     bu_free_array(ga.numMaterials, (char**)ga.str_arr_obj_materials,
-	"str_arr_obj_materials");
+		  "str_arr_obj_materials");
     bu_free_array(ga.numTexmaps, (char**)ga.str_arr_obj_texmaps,
-	"str_arr_obj_texmaps");
+		  "str_arr_obj_texmaps");
 
     /* running cleanup functions */
     if (debug) {

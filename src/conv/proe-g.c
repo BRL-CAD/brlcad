@@ -369,59 +369,59 @@ Convert_assy(char *line)
 		bu_log("\tmember (%s)\n", brlcad_name);
 	    wmem = mk_addmember(brlcad_name, &head.l, NULL, WMOP_UNION);
 	} else if (!bu_strncmp(&line1[start], "matrix", 6) || !bu_strncmp(&line1[start], "MATRIX", 6)) {
-	  if (wmem) {
-	    size_t j;
-	    double scale, inv_scale;
+	    if (wmem) {
+		size_t j;
+		double scale, inv_scale;
 
-	    for (j=0; j<4; j++) {
-		bu_fgets(line1, MAX_LINE_SIZE, fd_in);
-		sscanf(line1, "%f %f %f %f", &mat_col[0], &mat_col[1], &mat_col[2], &mat_col[3]);
-		for (i=0; i<4; i++)
-		    wmem->wm_mat[4*i+j] = mat_col[i];
-	    }
+		for (j=0; j<4; j++) {
+		    bu_fgets(line1, MAX_LINE_SIZE, fd_in);
+		    sscanf(line1, "%f %f %f %f", &mat_col[0], &mat_col[1], &mat_col[2], &mat_col[3]);
+		    for (i=0; i<4; i++)
+			wmem->wm_mat[4*i+j] = mat_col[i];
+		}
 
-	    /* convert this matrix to separate scale factor into element #15 */
+		/* convert this matrix to separate scale factor into element #15 */
 /*			scale = MAGNITUDE(&wmem->wm_mat[0]); */
-	    scale = pow(bn_mat_det3(wmem->wm_mat), 1.0/3.0);
-	    if (debug) {
-		bn_mat_print(brlcad_name, wmem->wm_mat);
-		bu_log("\tscale = %g, conv_factor = %g\n", scale, conv_factor);
-	    }
-	    if (!ZERO(scale - 1.0)) {
-		inv_scale = 1.0/scale;
-		for (j=0; j<3; j++)
-		    HSCALE(&wmem->wm_mat[j*4], &wmem->wm_mat[j*4], inv_scale);
-
-		/* clamp rotation elements to fabs(1.0) */
-		for (j=0; j<3; j++) {
-		    for (i=0; i<3; i++) {
-			if (wmem->wm_mat[j*4 + i] > 1.0)
-			    wmem->wm_mat[j*4 + i] = 1.0;
-			else if (wmem->wm_mat[j*4 + i] < -1.0)
-			    wmem->wm_mat[j*4 + i] = -1.0;
-		    }
-		}
-
-		if (top_level)
-		    wmem->wm_mat[15] *= (inv_scale/conv_factor);
-		else
-		    wmem->wm_mat[15] *= inv_scale;
-	    } else if (top_level)
-		wmem->wm_mat[15] /= conv_factor;
-
-	    if (top_level && do_reorient) {
-		/* apply re_orient transformation here */
+		scale = pow(bn_mat_det3(wmem->wm_mat), 1.0/3.0);
 		if (debug) {
-		    bu_log("Applying re-orient matrix to member %s\n", brlcad_name);
-		    bn_mat_print("re-orient matrix", re_orient);
+		    bn_mat_print(brlcad_name, wmem->wm_mat);
+		    bu_log("\tscale = %g, conv_factor = %g\n", scale, conv_factor);
 		}
-		bn_mat_mul2(re_orient, wmem->wm_mat);
+		if (!ZERO(scale - 1.0)) {
+		    inv_scale = 1.0/scale;
+		    for (j=0; j<3; j++)
+			HSCALE(&wmem->wm_mat[j*4], &wmem->wm_mat[j*4], inv_scale);
+
+		    /* clamp rotation elements to fabs(1.0) */
+		    for (j=0; j<3; j++) {
+			for (i=0; i<3; i++) {
+			    if (wmem->wm_mat[j*4 + i] > 1.0)
+				wmem->wm_mat[j*4 + i] = 1.0;
+			    else if (wmem->wm_mat[j*4 + i] < -1.0)
+				wmem->wm_mat[j*4 + i] = -1.0;
+			}
+		    }
+
+		    if (top_level)
+			wmem->wm_mat[15] *= (inv_scale/conv_factor);
+		    else
+			wmem->wm_mat[15] *= inv_scale;
+		} else if (top_level)
+		    wmem->wm_mat[15] /= conv_factor;
+
+		if (top_level && do_reorient) {
+		    /* apply re_orient transformation here */
+		    if (debug) {
+			bu_log("Applying re-orient matrix to member %s\n", brlcad_name);
+			bn_mat_print("re-orient matrix", re_orient);
+		    }
+		    bn_mat_mul2(re_orient, wmem->wm_mat);
+		}
+		if (debug)
+		    bn_mat_print("final matrix", wmem->wm_mat);
+	    } else {
+		bu_log("Matrix present before wmem is initialized! (%s)\n", brlcad_name);
 	    }
-	    if (debug)
-		bn_mat_print("final matrix", wmem->wm_mat);
-	  } else {
-	       bu_log("Matrix present before wmem is initialized! (%s)\n", brlcad_name);
-	  }
 	} else {
 	    bu_log("Unrecognized line in assembly (%s)\n%s\n", name, line1);
 	}

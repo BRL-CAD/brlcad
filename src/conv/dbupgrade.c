@@ -43,7 +43,7 @@
 void
 usage (char *name)
 {
-	fprintf(stderr, "Usage: %s input.g output.g\n", name);
+    fprintf(stderr, "Usage: %s input.g output.g\n", name);
 }
 
 int

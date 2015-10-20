@@ -77,11 +77,13 @@ static int		regions_converted = 0;
 static int		regions_written = 0;
 static size_t tot_polygons = 0;
 
+
 static void
 print_usage(const char *progname)
 {
     bu_exit(1, "Usage: %s %s", progname, usage);
 }
+
 
 int
 main(int argc, char **argv)
@@ -179,9 +181,9 @@ main(int argc, char **argv)
 	for (i = 1; i < argc; i++)
 	    bu_log(" %s", argv[i]);
 	bu_log("\nTessellation tolerances:\n\tabs = %g mm\n\trel = %g\n\tnorm = %g\n",
-		tree_state.ts_ttol->abs, tree_state.ts_ttol->rel, tree_state.ts_ttol->norm);
+	       tree_state.ts_ttol->abs, tree_state.ts_ttol->rel, tree_state.ts_ttol->norm);
 	bu_log("Calculational tolerances:\n\tdist = %g mm perp = %g\n",
-		tree_state.ts_tol->dist, tree_state.ts_tol->perp);
+	       tree_state.ts_tol->dist, tree_state.ts_tol->perp);
     }
 
     /* Walk indicated tree(s).  Each region will be output separately */
@@ -204,7 +206,7 @@ main(int argc, char **argv)
     if (regions_tried > 0) {
 	percent = ((double)regions_written * 100) / regions_tried;
 	bu_log("                  %d triangulated successfully. %g%%\n",
-		regions_written, percent);
+	       regions_written, percent);
     }
 
     bu_log("%zd triangles written\n", tot_polygons);

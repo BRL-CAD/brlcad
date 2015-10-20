@@ -292,29 +292,29 @@ primitive_func(struct db_tree_state *tsp,
 
 	    case ID_BOT:	/* Bag O' Triangles */
 	    case ID_ARS:
-		    /* series of curves
-		     * each with the same number of points
-		     */
+		/* series of curves
+		 * each with the same number of points
+		 */
 	    case ID_HALF:
-		    /* half universe defined by a plane */
+		/* half universe defined by a plane */
 	    case ID_POLY:
-		    /* polygons (up to 5 vertices per) */
+		/* polygons (up to 5 vertices per) */
 	    case ID_BSPLINE:
-		    /* NURB surfaces */
+		/* NURB surfaces */
 	    case ID_NMG:
-		    /* N-manifold geometry */
+		/* N-manifold geometry */
 	    case ID_ARBN:
 	    case ID_DSP:
-		    /* Displacement map (terrain primitive) */
-		    /* the DSP primitive may reference an external file or binunif object */
+		/* Displacement map (terrain primitive) */
+		/* the DSP primitive may reference an external file or binunif object */
 	    case ID_HF:
-		    /* height field (terrain primitive) */
-		    /* the HF primitive references an external file */
+		/* height field (terrain primitive) */
+		/* the HF primitive references an external file */
 	    case ID_EBM:
-		    /* extruded bit-map */
-		    /* the EBM primitive references an external file */
+		/* extruded bit-map */
+		/* the EBM primitive references an external file */
 	    case ID_VOL:
-		    /* the VOL primitive references an external file */
+		/* the VOL primitive references an external file */
 	    case ID_PIPE:
 	    case ID_PARTICLE:
 	    case ID_RPC:
@@ -325,9 +325,9 @@ primitive_func(struct db_tree_state *tsp,
 	    case ID_GRIP:
 	    case ID_SKETCH:
 	    case ID_EXTRUDE:
-		    /* note that an extrusion references a sketch, make sure you convert
-		     * the sketch also
-		     */
+		/* note that an extrusion references a sketch, make sure you convert
+		 * the sketch also
+		 */
 	    default:
 		bu_log("Primitive %s is an unsupported or unrecognized type (%d)\n", dp->d_namep, ip->idb_type);
 		break;

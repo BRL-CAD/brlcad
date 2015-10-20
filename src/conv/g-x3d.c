@@ -227,14 +227,12 @@ select_lights(struct db_tree_state *UNUSED(tsp), const struct db_full_path *path
 	return -1;
 
     id = rt_db_get_internal( &intern, dp, dbip, (matp_t)NULL, &rt_uniresource );
-    if ( id < 0 )
-    {
+    if ( id < 0 ) {
 	bu_log( "Cannot internal form of %s\n", dp->d_namep );
 	return -1;
     }
 
-    if ( id != ID_COMBINATION )
-    {
+    if (id != ID_COMBINATION) {
 	bu_log( "Directory/database mismatch!\n\t is '%s' a combination or not?\n",
 		dp->d_namep );
 	return -1;
@@ -243,13 +241,10 @@ select_lights(struct db_tree_state *UNUSED(tsp), const struct db_full_path *path
     comb = (struct rt_comb_internal *)intern.idb_ptr;
     RT_CK_COMB( comb );
 
-    if ( BU_STR_EQUAL( bu_vls_addr( &comb->shader ), "light" ) )
-    {
+    if (BU_STR_EQUAL( bu_vls_addr( &comb->shader ), "light" )) {
 	rt_db_free_internal(&intern);
 	return 0;
-    }
-    else
-    {
+    } else {
 	rt_db_free_internal(&intern);
 	return -1;
     }
@@ -283,8 +278,7 @@ leaf_tess(struct db_tree_state *tsp, const struct db_full_path *pathp, struct rt
     bot = (struct rt_bot_internal *)ip->idb_ptr;
     RT_BOT_CK_MAGIC( bot );
 
-    if ( bot->mode == RT_BOT_PLATE || bot->mode == RT_BOT_SURFACE )
-    {
+    if ( bot->mode == RT_BOT_PLATE || bot->mode == RT_BOT_SURFACE ) {
 	if ( pmp->array_size <= pmp->num_bots ) {
 	    pmp->array_size += 5;
 	    pmp->bots = (struct rt_bot_internal **)bu_realloc(
@@ -444,8 +438,7 @@ main(int argc, char **argv)
 	print_usage(argv[0]);
 
     /* Open BRL-CAD database */
-    if ((dbip = db_open( argv[bu_optind], DB_OPEN_READONLY)) == DBI_NULL)
-    {
+    if ((dbip = db_open( argv[bu_optind], DB_OPEN_READONLY)) == DBI_NULL) {
 	perror(argv[0]);
 	bu_exit(1, "Cannot open geometry database file %s\n", argv[bu_optind] );
     }
@@ -456,8 +449,7 @@ main(int argc, char **argv)
 	outfp = stdout;
 	setmode(fileno(outfp), O_BINARY);
     } else {
-	if ((outfp = fopen( out_file, "wb")) == NULL)
-	{
+	if ((outfp = fopen( out_file, "wb")) == NULL) {
 	    perror( argv[0] );
 	    bu_exit(2, "Cannot open %s\n", out_file );
 	}
@@ -473,13 +465,11 @@ main(int argc, char **argv)
     pm.array_size = 5;
     pm.bots = (struct rt_bot_internal **)bu_calloc( pm.array_size,
 						    sizeof( struct rt_bot_internal *), "pm.bots" );
-    for ( i=bu_optind; i<argc; i++ )
-    {
+    for ( i=bu_optind; i<argc; i++ ) {
 	struct directory *dp;
 
 	dp = db_lookup( dbip, argv[i], LOOKUP_QUIET );
-	if ( dp == RT_DIR_NULL )
-	{
+	if ( dp == RT_DIR_NULL ) {
 	    bu_log( "Cannot find %s\n", argv[i] );
 	    continue;
 	}
@@ -538,52 +528,42 @@ process_non_light(struct model *m) {
     static int shell_is_dead;
 
     /* triangulate any faceuses with holes */
-    for ( BU_LIST_FOR( reg, nmgregion, &m->r_hd ) )
-    {
+    for ( BU_LIST_FOR( reg, nmgregion, &m->r_hd ) ) {
 	NMG_CK_REGION( reg );
 	s = BU_LIST_FIRST( shell, &reg->s_hd );
-	while ( BU_LIST_NOT_HEAD( s, &reg->s_hd ) )
-	{
+	while ( BU_LIST_NOT_HEAD( s, &reg->s_hd ) ) {
 	    NMG_CK_SHELL( s );
 	    next_s = BU_LIST_PNEXT( shell, &s->l );
 	    fu = BU_LIST_FIRST( faceuse, &s->fu_hd );
-	    while ( BU_LIST_NOT_HEAD( &fu->l, &s->fu_hd ) )
-	    {
+	    while ( BU_LIST_NOT_HEAD( &fu->l, &s->fu_hd ) ) {
 		shell_is_dead=0;
 
 		NMG_CK_FACEUSE( fu );
 
 		next_fu = BU_LIST_PNEXT( faceuse, &fu->l );
 
-		if ( fu->orientation != OT_SAME )
-		{
+		if ( fu->orientation != OT_SAME ) {
 		    fu = next_fu;
 		    continue;
 		}
 
-		if ( fu->fumate_p == next_fu )
-		{
+		if ( fu->fumate_p == next_fu ) {
 		    /* make sure next_fu is not the mate of fu */
 		    next_fu = BU_LIST_PNEXT( faceuse, &next_fu->l );
 		}
 
 
 		/* check if this faceuse has any holes */
-		for ( BU_LIST_FOR( lu, loopuse, &fu->lu_hd ) )
-		{
+		for ( BU_LIST_FOR( lu, loopuse, &fu->lu_hd ) ) {
 		    NMG_CK_LOOPUSE( lu );
-		    if ( lu->orientation == OT_OPPOSITE )
-		    {
+		    if ( lu->orientation == OT_OPPOSITE ) {
 			/* this is a hole, so
 			 * triangulate the faceuse
 			 */
-			if ( !BU_SETJUMP )
-			{
+			if ( !BU_SETJUMP ) {
 			    /* try */
-			    if ( nmg_triangulate_fu( fu, &tol ) )
-			    {
-				if ( nmg_kfu( fu ) )
-				{
+			    if ( nmg_triangulate_fu( fu, &tol ) ) {
+				if ( nmg_kfu( fu ) ) {
 				    (void) nmg_ks( s );
 				    shell_is_dead = 1;
 
@@ -594,8 +574,7 @@ process_non_light(struct model *m) {
 			    bu_log( "A face has failed triangulation!\n" );
 			    if ( next_fu == fu->fumate_p )
 				next_fu = BU_LIST_PNEXT( faceuse, &next_fu->l );
-			    if ( nmg_kfu( fu ) )
-			    {
+			    if ( nmg_kfu( fu ) ) {
 				(void) nmg_ks( s );
 				shell_is_dead = 1;
 			    }
@@ -652,14 +631,12 @@ nmg_2_vrml(FILE *fp, const struct db_full_path *pathp, struct model *m, struct m
 	return;
 
     id = rt_db_get_internal( &intern, dp, dbip, (matp_t)NULL, &rt_uniresource );
-    if ( id < 0 )
-    {
+    if ( id < 0 ) {
 	bu_log( "Cannot internal form of %s\n", dp->d_namep );
 	return;
     }
 
-    if ( id != ID_COMBINATION )
-    {
+    if ( id != ID_COMBINATION ) {
 	bu_log( "Directory/database mismatch!\n\t is '%s' a combination or not?\n",
 		dp->d_namep );
 	return;
@@ -668,23 +645,18 @@ nmg_2_vrml(FILE *fp, const struct db_full_path *pathp, struct model *m, struct m
     comb = (struct rt_comb_internal *)intern.idb_ptr;
     RT_CK_COMB( comb );
 
-    if ( mater->ma_color_valid )
-    {
+    if ( mater->ma_color_valid ) {
 	r = mater->ma_color[0];
 	g = mater->ma_color[1];
 	b = mater->ma_color[2];
-    }
-    else
-    {
+    } else {
 	r = g = b = 0.5;
     }
 
-    if ( mater->ma_shader )
-    {
+    if ( mater->ma_shader ) {
 	tok = strtok( mater->ma_shader, tok_sep );
 	bu_strlcpy( mat.shader, tok, TXT_NAME_SIZE );
-    }
-    else
+    } else
 	mat.shader[0] = '\0';
     mat.shininess = -1;
     mat.transparency = -1.0;
@@ -698,8 +670,7 @@ nmg_2_vrml(FILE *fp, const struct db_full_path *pathp, struct model *m, struct m
     bu_vls_strcpy( &vls, &mater->ma_shader[strlen(mat.shader)] );
     (void)bu_struct_parse( &vls, vrml_mat_parse, (char *)&mat, NULL);
 
-    if ( bu_strncmp( "light", mat.shader, 5 ) == 0 )
-    {
+    if ( bu_strncmp( "light", mat.shader, 5 ) == 0 ) {
 	/* this is a light source */
 	is_light = 1;
     }
