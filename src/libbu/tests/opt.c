@@ -521,7 +521,7 @@ int desc_1(const char *cgy, int test_num)
 	bu_log("%s\n", bu_vls_addr(&parse_msgs));
     }
     bu_vls_free(&parse_msgs);
-    bu_free(av, "free av");
+    bu_free((void *)av, "free av");
     return ret;
 }
 
@@ -724,7 +724,7 @@ int desc_2(int test_num)
 	bu_log("%s\n", bu_vls_addr(&parse_msgs));
     }
     bu_vls_free(&parse_msgs);
-    bu_free(av, "free av");
+    bu_free((void *)av, "free av");
     return ret;
 }
 
