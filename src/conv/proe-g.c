@@ -34,6 +34,9 @@
 #include <string.h>
 #include <ctype.h>
 
+#ifdef __restrict
+#  undef __restrict
+#endif
 #define __restrict /* quell gcc 4.1.2 system regex.h -pedantic-errors */
 #include <regex.h>
 
