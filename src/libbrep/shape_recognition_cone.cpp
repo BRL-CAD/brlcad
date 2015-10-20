@@ -1,3 +1,5 @@
+/* FIXME: header missing, run sh/header.sh */
+
 #include "common.h"
 
 #include <set>
