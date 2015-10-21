@@ -275,6 +275,35 @@ macro(CHECK_CXX_FLAG)
 endmacro(CHECK_CXX_FLAG)
 
 
+# Disable any compilation warning flags currently set
+function(DISABLE_WARNINGS)
+
+  # gcc/llvm-style
+  CHECK_C_FLAG("w" VARS NOWARN_CFLAG)
+  CHECK_CXX_FLAG("w" VARS NOWARN_CXXFLAG)
+
+  # borland-style
+  if (NOT NOWARN_CFLAG)
+    CHECK_C_FLAG("w-" VARS NOWARN_CFLAG)
+  endif (NOT NOWARN_CFLAG)
+  if (NOT NOWARN_CXXFLAG)
+    CHECK_CXX_FLAG("w-" VARS NOWARN_CXXFLAG)
+  endif (NOT NOWARN_CXXFLAG)
+
+  set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${NOWARN_CFLAG}")
+  set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${NOWARN_CXXFLAG}")
+
+  # replace msvc-style warning level flags, disable with W0
+  string(REGEX REPLACE "[/-][wW][1-4]" "/W0" CMAKE_C_FLAGS "${CMAKE_C_FLAGS}")
+  string(REGEX REPLACE "[/-][wW][1-4]" "/W0" CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
+  foreach(BTYPE ${CMAKE_BUILD_TYPES})
+    string(REGEX REPLACE "[/-][wW][1-4]" "/W0" CMAKE_C_FLAGS_${BTYPE} "${CMAKE_C_FLAGS_${BTYPE}}")
+    string(REGEX REPLACE "[/-][wW][1-4]" "/W0" CMAKE_CXX_FLAGS_${BTYPE} "${CMAKE_CXX_FLAGS_${BTYPE}}")
+  endforeach(BTYPE ${CMAKE_BUILD_TYPES})
+
+endfunction(DISABLE_WARNINGS)
+
+
 # Local Variables:
 # tab-width: 8
 # mode: cmake
