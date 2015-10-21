@@ -34,17 +34,30 @@ RESTORE_CACHED_BUILD_FLAGS(_CMAKE_DEFAULT)
 
 # Quiet all warnings in this directory
 if(BRLCAD_DISABLE_SRC_OTHER_WARN)
-  # TODO: will likely need to eventually test what flag disables
-  # warnings.  e.g., Borland is known to use "-w-".
-  add_definitions(-w)
 
-  # replace msvc-style warning level flags, remove them
-  string(REGEX REPLACE "[/-][wW][1-4]" "" CMAKE_C_FLAGS "${CMAKE_C_FLAGS}")
-  string(REGEX REPLACE "[/-][wW][1-4]" "" CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
+  # gcc/llvm-style
+  CHECK_C_FLAG("w" VARS NOWARN_CFLAG)
+  CHECK_CXX_FLAG("w" VARS NOWARN_CXXFLAG)
+
+  # borland-style
+  if (NOT NOWARN_CFLAG)
+    CHECK_C_FLAG("w-" VARS NOWARN_CFLAG)
+  endif (NOT NOWARN_CFLAG)
+  if (NOT NOWARN_CXXFLAG)
+    CHECK_CXX_FLAG("w-" VARS NOWARN_CXXFLAG)
+  endif (NOT NOWARN_CXXFLAG)
+
+  set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${NOWARN_CFLAG}")
+  set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${NOWARN_CXXFLAG}")
+
+  # replace msvc-style warning level flags, disable with W0
+  string(REGEX REPLACE "[/-][wW][1-4]" "/W0" CMAKE_C_FLAGS "${CMAKE_C_FLAGS}")
+  string(REGEX REPLACE "[/-][wW][1-4]" "/W0" CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
   foreach(BTYPE ${CMAKE_BUILD_TYPES})
-    string(REGEX REPLACE "[/-][wW][1-4]" "" CMAKE_C_FLAGS_${BTYPE} "${CMAKE_C_FLAGS_${BTYPE}}")
-    string(REGEX REPLACE "[/-][wW][1-4]" "" CMAKE_CXX_FLAGS_${BTYPE} "${CMAKE_CXX_FLAGS_${BTYPE}}")
+    string(REGEX REPLACE "[/-][wW][1-4]" "/W0" CMAKE_C_FLAGS_${BTYPE} "${CMAKE_C_FLAGS_${BTYPE}}")
+    string(REGEX REPLACE "[/-][wW][1-4]" "/W0" CMAKE_CXX_FLAGS_${BTYPE} "${CMAKE_CXX_FLAGS_${BTYPE}}")
   endforeach(BTYPE ${CMAKE_BUILD_TYPES})
+
 endif(BRLCAD_DISABLE_SRC_OTHER_WARN)
 
 # Ideally we wouldn't need this, but in a few cases we're using
