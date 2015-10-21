@@ -34,7 +34,17 @@ RESTORE_CACHED_BUILD_FLAGS(_CMAKE_DEFAULT)
 
 # Quiet all warnings in this directory
 if(BRLCAD_DISABLE_SRC_OTHER_WARN)
+  # TODO: will likely need to eventually test what flag disables
+  # warnings.  e.g., Borland is known to use "-w-".
   add_definitions(-w)
+
+  # replace msvc-style warning level flags, remove them
+  string(REGEX REPLACE "[/-][wW][1-4]" "" CMAKE_C_FLAGS "${CMAKE_C_FLAGS}")
+  string(REGEX REPLACE "[/-][wW][1-4]" "" CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
+  foreach(BTYPE ${CMAKE_BUILD_TYPES})
+    string(REGEX REPLACE "[/-][wW][1-4]" "" CMAKE_C_FLAGS_${BTYPE} "${CMAKE_C_FLAGS_${BTYPE}}")
+    string(REGEX REPLACE "[/-][wW][1-4]" "" CMAKE_CXX_FLAGS_${BTYPE} "${CMAKE_CXX_FLAGS_${BTYPE}}")
+  endforeach(BTYPE ${CMAKE_BUILD_TYPES})
 endif(BRLCAD_DISABLE_SRC_OTHER_WARN)
 
 # Ideally we wouldn't need this, but in a few cases we're using
