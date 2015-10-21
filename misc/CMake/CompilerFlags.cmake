@@ -276,7 +276,7 @@ endmacro(CHECK_CXX_FLAG)
 
 
 # Disable any compilation warning flags currently set
-function(DISABLE_WARNINGS)
+macro(DISABLE_WARNINGS)
 
   # gcc/llvm-style
   CHECK_C_FLAG("w" VARS NOWARN_CFLAG)
@@ -301,7 +301,7 @@ function(DISABLE_WARNINGS)
     string(REGEX REPLACE "[/-][wW][1-4]" "/W0" CMAKE_CXX_FLAGS_${BTYPE} "${CMAKE_CXX_FLAGS_${BTYPE}}")
   endforeach(BTYPE ${CMAKE_BUILD_TYPES})
 
-endfunction(DISABLE_WARNINGS)
+endmacro(DISABLE_WARNINGS)
 
 
 # Local Variables:
