@@ -119,10 +119,14 @@ int
 ged_remove(struct ged *gedp, int orig_argc, const char *orig_argv[])
 {
     int print_help = 0;
-    int remove_comb = 0;
+    int remove_force = 0;
+    int remove_from_comb = 1;
     int remove_recursive = 0;
+    int remove_force_refs = 0;
     size_t argc = (size_t)orig_argc;
     char **argv = bu_dup_argv(argc, orig_argv);
+    size_t free_argc = argc;
+    char **free_argv = argv;
     int ret_ac;
 
     struct directory *dp;
@@ -131,7 +135,7 @@ ged_remove(struct ged *gedp, int orig_argc, const char *orig_argv[])
     struct rt_comb_internal *comb;
     int ret = GED_OK;
     static const char *usage = "comb object(s)";
-    struct bu_opt_desc d[5];
+    struct bu_opt_desc d[6];
     struct bu_vls str = BU_VLS_INIT_ZERO;
     struct bu_ptbl objs = BU_PTBL_INIT_ZERO;
 
@@ -142,9 +146,10 @@ ged_remove(struct ged *gedp, int orig_argc, const char *orig_argv[])
 
     BU_OPT(d[0], "h", "help",  "", NULL, (void *)&print_help, "Print help and exit");
     BU_OPT(d[1], "?", "",      "", NULL, (void *)&print_help, "");
-    BU_OPT(d[2], "f", "force",  "", NULL, (void *)&remove_comb, "Treat combs like any other objects.  If recursive, do not verify objects are unused in other trees before deleting.");
-    BU_OPT(d[3], "r", "recursive",  "", NULL, (void *)&remove_recursive, "Walk combs and delete all of their sub-objects");
-    BU_OPT_NULL(d[4]);
+    BU_OPT(d[2], "f", "force",  "", NULL, (void *)&remove_force, "Treat combs like any other objects.  If recursive, do not verify objects are unused in other trees before deleting.");
+    BU_OPT(d[3], "F", "force-refs",  "", NULL, (void *)&remove_force_refs, "Like '-f', but will also remove references to removed objects in other parts of the database rather than leaving invalid references. Overrides '-f' if both are specified");
+    BU_OPT(d[4], "r", "recursive",  "", NULL, (void *)&remove_recursive, "Walk combs and delete all of their sub-objects. Will not delete objects used elsewhere in the database.");
+    BU_OPT_NULL(d[5]);
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
@@ -157,18 +162,21 @@ ged_remove(struct ged *gedp, int orig_argc, const char *orig_argv[])
     if (ret_ac < 0) {
 	bu_vls_printf(gedp->ged_result_str, "%s\n", bu_vls_addr(&str));
 	bu_vls_free(&str);
-	bu_free_argv(argc,argv);
+	bu_free_argv(free_argc,free_argv);
 	return GED_ERROR;
     }
 
     /* must be wanting help */
     if (print_help || ret_ac == 0) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	bu_free_argv(argc,argv);
+	bu_free_argv(free_argc,free_argv);
 	return GED_HELP;
     }
 
-    /* Collect paths without slashes, process those with */
+    /* Collect paths without slashes - those are full object removals, not
+     * removal of an object from a comb.  For paths *with* slashes, those
+     * are interpreted as removing the last object in the path from its parent
+     * comb. */
     for (i = 0; i < ret_ac; i++) {
 	const char *slash = strrchr(argv[i], '/');
 	if (slash == NULL) {
@@ -177,19 +185,26 @@ ged_remove(struct ged *gedp, int orig_argc, const char *orig_argv[])
 	    ret = _ged_rm_path(gedp, argv[i]);
 	    /* If the first path arg was a full path,
 	     * we're not removing the rest from a comb */
-	    if (i == 0) remove_comb = 1;
+	    if (i == 0) remove_from_comb = 0;
 	    if (ret == GED_ERROR) goto rcleanup;
 	}
     }
 
+    if (remove_force || remove_force_refs || remove_recursive) remove_from_comb = 0;
+
     if (BU_PTBL_LEN(&objs) > 0) {
+	/* Behavior depends on the type of the first object (potentially, based on supplied flags) */
 	if ((dp = db_lookup(gedp->ged_wdbp->dbip, (const char *)BU_PTBL_GET(&objs, 0), LOOKUP_NOISY)) == RT_DIR_NULL) {
 	    ret = GED_ERROR;
 	    goto rcleanup;
 	}
-	if (!remove_comb && !remove_recursive && (dp->d_flags & RT_DIR_COMB) != 0) {
+
+	/* If we've got a comb to start with, we aren't doing a recursive removal, and nothing is
+	 * forcing us to remove the comb itself, the interpretation is that the list of objs is
+	 * removed from the comb child list of the first comb. */
+	if (remove_from_comb && (dp->d_flags & RT_DIR_COMB) != 0) {
 	    if (BU_PTBL_LEN(&objs) == 1) {
-		bu_vls_printf(gedp->ged_result_str, "Error: single comb supplied without '-f' flag - not removing %s", argv[1]);
+		bu_vls_printf(gedp->ged_result_str, "Error: single comb supplied without one or more of the '-f' and '-r' flags - not removing %s", argv[1]);
 		ret = GED_ERROR;
 		goto rcleanup;
 	    }
@@ -225,7 +240,11 @@ ged_remove(struct ged *gedp, int orig_argc, const char *orig_argv[])
 		goto rcleanup;
 	    }
 	} else {
+	    /* If we don't have the syntax/options that set up removal of a list of objects from a comb, we're
+	     * in traditional unix-style rm territory. */
 	    if (!remove_recursive) {
+		/* the force flag is a no-op at this stage - without recursive removal, it's only role is to override
+		 * the remove-from-comb behavior */
 		const char **av = (const char **)bu_calloc(BU_PTBL_LEN(&objs) + 1, sizeof(char *), "new argv array");
 		av[0] = (const char *)orig_argv[0];
 		for (i = 1; i < (int)BU_PTBL_LEN(&objs) + 1; i++) {
@@ -235,14 +254,48 @@ ged_remove(struct ged *gedp, int orig_argc, const char *orig_argv[])
 		bu_free((void *)av, "free tmp argv");
 		return ret;
 	    } else {
-		/* TODO - killtree */
+		/* This is where the force flag can really impact geometry.  By default, killtree checks to
+		 * make sure geometry being removed from under one comb isn't used elsewhere in the tree.  With
+		 * force on, it will wipe out everything. */
+		if (remove_force_refs) {
+		    const char **av = (const char **)bu_calloc(BU_PTBL_LEN(&objs) + 2, sizeof(char *), "new argv array");
+		    av[0] = "killtree";
+		    av[1] = "-a";
+		    for (i = 2; i < (int)BU_PTBL_LEN(&objs) + 2; i++) {
+			av[i] = (const char *)BU_PTBL_GET(&objs, i - 2);
+		    }
+		    ret = ged_killtree(gedp, BU_PTBL_LEN(&objs)+2, av);
+		    bu_free((void *)av, "free tmp argv");
+		    return ret;
+		}
+		if (remove_force) {
+		    const char **av = (const char **)bu_calloc(BU_PTBL_LEN(&objs) + 2, sizeof(char *), "new argv array");
+		    av[0] = "killtree";
+		    av[1] = "-f";
+		    for (i = 2; i < (int)BU_PTBL_LEN(&objs) + 2; i++) {
+			av[i] = (const char *)BU_PTBL_GET(&objs, i - 2);
+		    }
+		    ret = ged_killtree(gedp, BU_PTBL_LEN(&objs)+2, av);
+		    bu_free((void *)av, "free tmp argv");
+		    return ret;
+		}
+		{
+		    const char **av = (const char **)bu_calloc(BU_PTBL_LEN(&objs) + 1, sizeof(char *), "new argv array");
+		    av[0] = "killtree";
+		    for (i = 1; i < (int)BU_PTBL_LEN(&objs) + 1; i++) {
+			av[i] = (const char *)BU_PTBL_GET(&objs, i - 1);
+		    }
+		    ret = ged_killtree(gedp, BU_PTBL_LEN(&objs)+1, av);
+		    bu_free((void *)av, "free tmp argv");
+		    return ret;
+		}
 	    }
 	}
     }
 
 rcleanup:
     bu_ptbl_free(&objs);
-    bu_free_argv(argc,argv);
+    bu_free_argv(free_argc,free_argv);
     return ret;
 }
 

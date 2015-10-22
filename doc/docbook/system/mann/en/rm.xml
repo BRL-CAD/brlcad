@@ -43,7 +43,20 @@
 	    Rather than interpreting the first non-option argument as a
 	    combination context, treat it as another object even if the object
 	    name does specify a comb.  This means all objects specified in the
-	    paths list will be removed from the database.
+	    paths list will be removed from the database.  Also impacts
+	    a recursive removal - see "-r".
+	  </para>
+	</listitem>
+      </varlistentry>
+      <varlistentry>
+	<term><emphasis remap="B" role="bold">-F</emphasis></term>
+	<term><emphasis remap="B" role="bold">--force-refs</emphasis></term>
+	<listitem>
+	  <para>
+	    Like "-f", but also removes references to objects being removed from
+	    elsewhere in the database rather than simply removing the objects
+	    themselves.  Useful to avoid "dangling references" to objects no
+	    longer present.
 	  </para>
 	</listitem>
       </varlistentry>
@@ -53,9 +66,10 @@
 	<listitem>
 	  <para>
 	    Recursively delete objects in combination objects specified in the
-	    paths list.  If force is also enabled, do the deletions without
-	    checking to see if objects in the combination tree in question are
-	    used in other hierarchies in the .g file.
+	    paths list.  If neither of the forcing options are enabled, do the
+	    deletions while checking to see if objects in the combination
+	    tree in question are used in other hierarchies in the .g file. Any
+	    objects in use elsewhere will be skipped.
 	  </para>
 	</listitem>
       </varlistentry>
@@ -95,6 +109,15 @@
       </para>
     </example>
 
+    <example><title>Delete all objects referenced by a combination.</title>
+
+      <para>
+	<prompt>mged&gt;</prompt><userinput>rm -r regiona</userinput>
+      </para>
+      <para>Deletes <emphasis>regiona</emphasis> and any objects below <emphasis>regiona</emphasis> in its hierarchy.
+
+      </para>
+    </example>
   </refsection>
 
   <refsection xml:id="see_also"><title>SEE ALSO</title>
