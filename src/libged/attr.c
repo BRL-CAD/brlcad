@@ -171,7 +171,7 @@ ged_attr(struct ged *gedp, int argc, const char *argv[])
     size_t i;
     struct directory *dp;
     struct bu_attribute_value_pair *avpp;
-    static const char *usage = "{[-c sep_char] set|get|show|rm|append|sort} object [key [value] ... ]";
+    static const char *usage = "{[-c sep_char] set|get|show|rm|append|sort|list} object [key [value] ... ]";
     attr_cmd_t scmd;
     struct directory **paths = NULL;
     size_t path_cnt = 0;
