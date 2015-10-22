@@ -66,6 +66,18 @@ set_msg_str(struct bu_vls *msg, int ac, const char **av)
     bu_vls_free(&vls);
 }
 
+#define EXPECT_SUCCESS_FLAG(_name, _var) { \
+    set_msg_str(&parse_msgs, ac, av); \
+    ret = bu_opt_parse(&parse_msgs, ac, av, d); \
+    if (ret || _var != 1) { \
+	bu_vls_printf(&parse_msgs, "\nError - expected value \"1\" and got value %d\n", _var); \
+	val_ok = 0; \
+    } else { \
+	bu_vls_printf(&parse_msgs, "  \nGot expected value: %s = %d\n", _name, _var); \
+    } \
+}
+
+
 #define EXPECT_SUCCESS_INT(_name, _var, _exp) { \
     set_msg_str(&parse_msgs, ac, av); \
     ret = bu_opt_parse(&parse_msgs, ac, av, d); \
@@ -170,6 +182,8 @@ int desc_1(const char *cgy, int test_num)
     static int print_help = 0;
     static int verbosity = 0;
     static int b = -1;
+    static int m = 0;
+    static int F = 0;
     static const char *str = NULL;
     static int i = 0;
     static long l = 0;
@@ -185,6 +199,8 @@ int desc_1(const char *cgy, int test_num)
 	{"i", "int",     "#",      &bu_opt_int,  (void *)&i,      "Set int"},
 	{"l", "long",    "#",      &bu_opt_long, (void *)&l,      "Set long"},
 	{"f", "fastf_t", "#",      &bu_opt_fastf_t, (void *)&f,   "Read float"},
+	{"m", "mflag",   "flag",   NULL,     (void *)&m,      "Set boolean flag"},
+	{"F", "Fflag",   "flag",   NULL,     (void *)&F,      "Set boolean flag"},
 	BU_OPT_DESC_NULL
     };
 
@@ -505,6 +521,26 @@ int desc_1(const char *cgy, int test_num)
 		return -1;
 	}
     }
+
+    if (cgy[0] == 'm') {
+	switch (test_num) {
+	    /* boolean option tests */
+	    case 1:
+		ac = 1;
+		av[0] = "-Fm";
+		EXPECT_SUCCESS_FLAG("bool", m);
+		break;
+	    case 2:
+		ac = 1;
+		av[0] = "-mF";
+		EXPECT_SUCCESS_FLAG("bool", m);
+		break;
+	    default:
+		bu_vls_printf(&parse_msgs, "unknown test: %d\n", test_num);
+		return -1;
+	}
+    }
+
 
     if (ret > 0) {
 	int u = 0;
