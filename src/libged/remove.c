@@ -116,12 +116,13 @@ cleanup:
 }
 
 int
-ged_remove(struct ged *gedp, int argc, const char *argv[])
+ged_remove(struct ged *gedp, int orig_argc, const char *orig_argv[])
 {
     int print_help = 0;
     int remove_comb = 0;
     int remove_recursive = 0;
-    const char **orig_av = argv;
+    size_t argc = (size_t)orig_argc;
+    char **argv = bu_dup_argv(argc, orig_argv);
     int ret_ac;
 
     struct directory *dp;
@@ -152,16 +153,18 @@ ged_remove(struct ged *gedp, int argc, const char *argv[])
     argv++; argc--;
 
     /* parse args */
-    ret_ac = bu_opt_parse(&str, argc, argv, d);
+    ret_ac = bu_opt_parse(&str, argc, (const char **)argv, d);
     if (ret_ac < 0) {
 	bu_vls_printf(gedp->ged_result_str, "%s\n", bu_vls_addr(&str));
 	bu_vls_free(&str);
+	bu_free_argv(argc,argv);
 	return GED_ERROR;
     }
 
     /* must be wanting help */
     if (print_help || ret_ac == 0) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_free_argv(argc,argv);
 	return GED_HELP;
     }
 
@@ -224,7 +227,7 @@ ged_remove(struct ged *gedp, int argc, const char *argv[])
 	} else {
 	    if (!remove_recursive) {
 		const char **av = (const char **)bu_calloc(BU_PTBL_LEN(&objs) + 1, sizeof(char *), "new argv array");
-		av[0] = (const char *)orig_av[0];
+		av[0] = (const char *)orig_argv[0];
 		for (i = 1; i < (int)BU_PTBL_LEN(&objs) + 1; i++) {
 		    av[i] = (const char *)BU_PTBL_GET(&objs, i - 1);
 		}
@@ -239,6 +242,7 @@ ged_remove(struct ged *gedp, int argc, const char *argv[])
 
 rcleanup:
     bu_ptbl_free(&objs);
+    bu_free_argv(argc,argv);
     return ret;
 }
 
