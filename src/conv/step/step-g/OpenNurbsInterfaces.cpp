@@ -930,8 +930,9 @@ UniformSurface::LoadONBrep(ON_Brep *brep)
 
 
 /*
- * Overriding ON_BrepFace::Reverse(int dir) from OpenNURBS minimal change to duplicate original surface
- * no matter the surface use count.
+ * Overriding ON_BrepFace::Reverse(int dir) from OpenNURBS minimal
+ * change to duplicate original surface no matter the surface use
+ * count.
  */
 ON_BOOL32 ON_BrepFace::Reverse(int dir)
 {
