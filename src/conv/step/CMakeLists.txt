@@ -44,10 +44,20 @@ macro(GENERATE_SCHEMA_INPUTS SCHEMA_FILE TARGET_SUFFIX)
     ${SCHEMA_OUT_DIR}/schema.cc
     )
 
-  # disable specified warnings for windows
+  # disable all warnings on generated files since they're from src/other
   foreach(generated_file ${express_srcs})
-    CHECK_CXX_FLAG("/WC4251 /WC4800 /WC4065" VARS NOWARN_CXXFLAG)
-    set_source_files_properties(${generated_file} PROPERTIES COMPILE_FLAGS /W0)
+    if (NOT NOWARN_CXXFLAG)
+      CHECK_CXX_FLAG("W0" VARS NOWARN_CXXFLAG)
+    endif (NOT NOWARN_CXXFLAG)
+    if (NOT NOWARN_CXXFLAG)
+      CHECK_CXX_FLAG("w-" VARS NOWARN_CXXFLAG)
+    endif (NOT NOWARN_CXXFLAG)
+    if (NOT NOWARN_CXXFLAG)
+      CHECK_CXX_FLAG("w" VARS NOWARN_CXXFLAG)
+    endif (NOT NOWARN_CXXFLAG)
+    if (NOWARN_CXXFLAG)
+      set_property(SOURCE ${generated_file} APPEND_STRING PROPERTY COMPILE_FLAGS " ${NOWARN_CXXFLAG}")
+    endif (NOWARN_CXXFLAG)
   endforeach(generated_file ${express_srcs})
 
   # For the subdirectory add_custom_command definitions, need the generated
