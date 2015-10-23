@@ -147,13 +147,21 @@ cyl_implicit_params(struct subbrep_shoal_data *data, ON_SimpleArray<ON_Plane> *c
     }
 
     // We need a cylinder large enough to bound the positive volume we are describing -
-    // find all the limits from the various planes and edges
-    ON_3dPointArray axis_pts_init;
-    // Add in all the nondegenerate edge vertices
+    // find all the limits from the various planes and edges.
+    // Build up a list of all unique vertices from the nondegenerate edge vertices
+    std::set<int> apinit;
+    std::set<int>::iterator apit;
     for (c_it = nondegen_edges.begin(); c_it != nondegen_edges.end(); c_it++) {
 	const ON_BrepEdge *edge = &(brep->m_E[*c_it]);
-	axis_pts_init.Append(edge->Vertex(0)->Point());
-	axis_pts_init.Append(edge->Vertex(1)->Point());
+	apinit.insert(edge->m_vi[0]);
+	apinit.insert(edge->m_vi[1]);
+    }
+    // Add the points to a 3DPoint array 
+    ON_3dPointArray axis_pts_init;
+    for (apit = apinit.begin(); apit != apinit.end(); apit++) {
+	const ON_BrepVertex *v = &(brep->m_V[*apit]);
+	ON_3dPoint p = v->Point();
+	axis_pts_init.Append(v->Point());
     }
 
     // Use the intersection and the projection of the cylinder axis onto the plane
@@ -184,15 +192,11 @@ cyl_implicit_params(struct subbrep_shoal_data *data, ON_SimpleArray<ON_Plane> *c
     for (int i = 0; i < axis_pts_init.Count(); i++) {
 	int trimmed = 0;
 	for (int j = 0; j < (*cyl_planes).Count(); j++) {
-	    // Don't trim with the implicit plane - the implicit plane is defined "after" the
-	    // primary shapes are formed, so it doesn't get a vote in removing capping points
-	    if (j != implicit_plane_ind) {
-		ON_3dVector v = axis_pts_init[i] - (*cyl_planes)[j].origin;
-		double dotp = ON_DotProduct(v, (*cyl_planes)[j].Normal());
-		if (dotp > 0 && !NEAR_ZERO(dotp, VUNITIZE_TOL)) {
-		    trimmed = 1;
-		    break;
-		}
+	    ON_3dVector v = axis_pts_init[i] - (*cyl_planes)[j].origin;
+	    double dotp = ON_DotProduct(v, (*cyl_planes)[j].Normal());
+	    if (dotp > 0 && !NEAR_ZERO(dotp, VUNITIZE_TOL)) {
+		trimmed = 1;
+		break;
 	    }
 	}
 	if (!trimmed) axis_pts_2nd.Append(axis_pts_init[i]);
