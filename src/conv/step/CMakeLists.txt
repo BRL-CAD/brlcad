@@ -44,6 +44,12 @@ macro(GENERATE_SCHEMA_INPUTS SCHEMA_FILE TARGET_SUFFIX)
     ${SCHEMA_OUT_DIR}/schema.cc
     )
 
+  # disable specified warnings for windows
+  foreach(generated_file ${express_srcs})
+    CHECK_CXX_FLAG("/WC4251 /WC4800 /WC4065" VARS NOWARN_CXXFLAG)
+    set_source_files_properties(${generated_file} PROPERTIES COMPILE_FLAGS /W0)
+  endforeach(generated_file ${express_srcs})
+
   # For the subdirectory add_custom_command definitions, need the generated
   # headers as well.
   set(EXPRESS_OUTPUT
