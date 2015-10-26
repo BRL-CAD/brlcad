@@ -194,6 +194,22 @@ _rm_obj(struct ged *gedp, const char *objname, struct bu_ptbl *topobjs, struct b
 }
 
 HIDDEN int
+_removal_queue(struct bu_ptbl *to_remove, struct ged *gedp, struct bu_ptbl *seeds, struct bu_vls *rmlog, int verbosity)
+{
+    size_t i = 0;
+
+    if (!to_remove || !gedp || !seeds) return 0;
+
+    for (i = 0; i < BU_PTBL_LEN(seeds); i++) {
+	const char *objname = ((struct directory *)BU_PTBL_GET(seeds, i))->d_namep;
+	if (_rm_find_reference(gedp->ged_wdbp->dbip, seeds, objname, rmlog, verbosity) > 0) continue;
+    }
+
+    return 0;
+}
+
+
+HIDDEN int
 _valid_rm_objs(struct directory ***dirp, struct bu_ptbl *validobjs, struct ged *gedp, struct bu_ptbl *objs, struct bu_vls *rmlog, int verbosity)
 {
     int i = 0;
@@ -450,6 +466,15 @@ ged_remove(struct ged *gedp, int orig_argc, const char *orig_argv[])
 	}
 	goto rcleanup;
     }
+    if ( remove_refs && !remove_force && !remove_recursive) {
+	_rm_ref(gedp, &objs, &rmlog, no_op);
+	if (remove_force) {
+	    for (i = 0; i < (int)BU_PTBL_LEN(&objs); i++) {
+		(void)_rm_obj(gedp, (const char *)BU_PTBL_GET(&objs, i), NULL, &rmlog, verbose, remove_force, no_op);
+	    }
+	}
+	goto rcleanup;
+    }
     if (!remove_refs && remove_recursive) {
 	size_t ind = 0;
 	struct bu_ptbl resultobjs = BU_PTBL_INIT_ZERO;
@@ -465,15 +490,7 @@ ged_remove(struct ged *gedp, int orig_argc, const char *orig_argv[])
 	bu_ptbl_free(&resultobjs);
 	goto rcleanup;
     }
-    if ( remove_refs && !remove_force && !remove_recursive) {
-	_rm_ref(gedp, &objs, &rmlog, no_op);
-	if (remove_force) {
-	    for (i = 0; i < (int)BU_PTBL_LEN(&objs); i++) {
-		(void)_rm_obj(gedp, (const char *)BU_PTBL_GET(&objs, i), NULL, &rmlog, verbose, remove_force, no_op);
-	    }
-	}
-	goto rcleanup;
-    }
+
     if ( remove_refs && !remove_force && remove_recursive) {
 	size_t ind = 0;
 	struct bu_ptbl resultobjs = BU_PTBL_INIT_ZERO;
