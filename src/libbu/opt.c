@@ -419,6 +419,8 @@ bu_opt_parse(struct bu_vls *msgs, int argc, const char **argv, const struct bu_o
 		flag_var = (int *)desc->set_var;
 		if (flag_var) (*flag_var) = 1;
 	    }
+	    /* record the option in known args */
+	    bu_ptbl_ins(&known_args, (long *)argv[i]);
 	    i++;
 	} else {
 	    char *opt = (char *)BU_PTBL_GET(&opts, 0);
@@ -536,10 +538,10 @@ bu_opt_parse(struct bu_vls *msgs, int argc, const char **argv, const struct bu_o
 	for (avc = 0; avc < ret_argc; avc++) {
 	    argv[avc] = (const char *)BU_PTBL_GET(&unknown_args, avc);
 	}
-	/* Put the option argv pointers at the end of the array, in case they
+	/* Put the known option argv pointers at the end of the array, in case they
 	 * are still needed for memory freeing by the caller */
-	for (avc = ret_argc; avc < akc + ret_argc; avc++) {
-	    argv[avc] = (const char *)BU_PTBL_GET(&unknown_args, avc);
+	for (avc = 0; avc < akc; avc++) {
+	    argv[avc+ret_argc] = (const char *)BU_PTBL_GET(&known_args, avc);
 	}
     }
     bu_ptbl_free(&unknown_args);
