@@ -288,7 +288,7 @@ macro(DISABLE_WARNINGS)
 
   # msvc-style (must test before gcc's -w test)
   if (NOT NOWARN_CFLAG)
-    CHECK_C_FLAG("/W0" VARS NOWARN_CFLAG)
+    CHECK_C_FLAG("W0" VARS NOWARN_CFLAG)
 
     if (NOWARN_CFLAG)
       # replace msvc-style warning level C flags, disable with W0
