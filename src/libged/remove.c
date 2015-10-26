@@ -180,7 +180,7 @@ _rm_obj(struct ged *gedp, const char *objname, struct bu_ptbl *topobjs, struct b
 		return -1;
 	    }
 	} else {
-	    bu_vls_printf(rmlog, "Delete object %s", objname);
+	    bu_vls_printf(rmlog, "Delete object %s\n", objname);
 	}
     } else {
 	if (rmlog && verbosity >= 2) {
