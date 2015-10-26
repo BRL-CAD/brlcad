@@ -25,6 +25,9 @@
 
 #include "common.h"
 
+#include <queue>
+#include <set>
+
 #include <string.h>
 #include <limits.h> /* FOR INT_MAX */
 
@@ -120,9 +123,12 @@ _rm_ref(struct ged *gedp, struct bu_ptbl *objs, struct bu_vls *rmlog, int dry_ru
 HIDDEN int
 _rm_find_reference(struct db_i *dbip, struct bu_ptbl *topobjs, const char *obj, struct bu_vls *rmlog, int verbosity)
 {
+    int path_cnt = 0;
     int i;
     int ret = 0;
     struct bu_vls str = BU_VLS_INIT_ZERO;
+    struct directory **paths;
+    struct bu_ptbl results;
 
     if (!dbip || !topobjs || !obj)
 	return 0;
@@ -133,7 +139,11 @@ _rm_find_reference(struct db_i *dbip, struct bu_ptbl *topobjs, const char *obj, 
     }
     bu_vls_printf(&str, " -name %s", obj);
 
-    ret = db_search(NULL, DB_SEARCH_TREE, bu_vls_cstr(&str), 0, NULL, dbip);
+    path_cnt = db_ls(dbip, DB_LS_TOPS, NULL, &(paths));
+    (void)db_search(&results, DB_SEARCH_TREE, bu_vls_cstr(&str), path_cnt, paths, dbip);
+    ret = BU_PTBL_LEN(&results);
+    bu_free(paths, "free search paths");
+    bu_ptbl_free(&results);
 
     if (ret && rmlog && verbosity > 0) {
 	bu_vls_printf(rmlog, "NOTE: %s is referenced by unremoved objects in the database - skipping.\n", obj);
@@ -146,16 +156,9 @@ _rm_find_reference(struct db_i *dbip, struct bu_ptbl *topobjs, const char *obj, 
 
 
 HIDDEN int
-_rm_obj(struct ged *gedp, const char *objname, struct bu_ptbl *topobjs, struct bu_vls *rmlog, int verbosity, int force, int dry_run)
+_rm_obj(struct ged *gedp, struct directory *dp, struct bu_vls *rmlog, int UNUSED(verbosity), int force, int dry_run)
 {
-    struct directory *dp = RT_DIR_NULL;
-    if (!gedp || !objname) return -1;
-
-    if (topobjs && !force) {
-	if (_rm_find_reference(gedp->ged_wdbp->dbip, topobjs, objname, rmlog, verbosity) > 0) return -1;
-    }
-
-    dp = db_lookup(gedp->ged_wdbp->dbip, objname, LOOKUP_QUIET);
+    if (!gedp || !dp) return -1;
 
     if (dp != RT_DIR_NULL) {
 	if (!force && dp->d_major_type == DB5_MAJORTYPE_ATTRIBUTE_ONLY && dp->d_minor_type == 0) {
@@ -173,39 +176,67 @@ _rm_obj(struct ged *gedp, const char *objname, struct bu_ptbl *topobjs, struct b
 
 	/* clear the object from the display */
 	if (!dry_run) {
-	    _dl_eraseAllNamesFromDisplay(gedp->ged_gdp->gd_headDisplay, gedp->ged_wdbp->dbip, gedp->ged_free_vlist_callback, objname, 0, gedp->freesolid);
+	    _dl_eraseAllNamesFromDisplay(gedp->ged_gdp->gd_headDisplay, gedp->ged_wdbp->dbip, gedp->ged_free_vlist_callback, dp->d_namep, 0, gedp->freesolid);
 
 	    /* actually do the deletion */
 	    if (db_delete(gedp->ged_wdbp->dbip, dp) != 0 || db_dirdelete(gedp->ged_wdbp->dbip, dp) != 0) {
 		/* Abort kill processing on first error */
-		if (rmlog) bu_vls_printf(rmlog, "Error: unable to delete %s", objname);
+		if (rmlog) bu_vls_printf(rmlog, "Error: unable to delete %s", dp->d_namep);
 		return -1;
 	    }
 	} else {
-	    bu_vls_printf(rmlog, "Delete object %s\n", objname);
+	    bu_vls_printf(rmlog, "Delete %s\n", dp->d_namep);
 	}
     } else {
-	if (rmlog && verbosity >= 2) {
-	    bu_vls_printf(rmlog, "Attempted to delete object %s, but it was not found in the database\n", objname);
-	}
 	return -1;
     }
     return 0;
 }
 
 HIDDEN int
-_removal_queue(struct bu_ptbl *to_remove, struct ged *gedp, struct bu_ptbl *seeds, struct bu_vls *rmlog, int verbosity)
+_removal_queue(struct bu_ptbl *to_remove, struct ged *gedp, struct bu_ptbl *seeds, struct bu_vls *rmlog, int verbosity, int recurse)
 {
-    size_t i = 0;
+    size_t i,j;
+
+    std::queue<struct directory *> dpq;
 
     if (!to_remove || !gedp || !seeds) return 0;
 
+    /* Initialize */
     for (i = 0; i < BU_PTBL_LEN(seeds); i++) {
-	const char *objname = ((struct directory *)BU_PTBL_GET(seeds, i))->d_namep;
-	if (_rm_find_reference(gedp->ged_wdbp->dbip, seeds, objname, rmlog, verbosity) > 0) continue;
+	struct directory *dp = ((struct directory *)BU_PTBL_GET(seeds, i));
+	if (_rm_find_reference(gedp->ged_wdbp->dbip, seeds, dp->d_namep, rmlog, verbosity) > 0) continue;
+	bu_ptbl_ins_unique(to_remove, (long *)dp);
+	if (recurse) {
+	    /* get immediate children */
+	    const char *comb_children_search = "-mindepth 1 -maxdepth 1";
+	    struct bu_ptbl comb_children = BU_PTBL_INIT_ZERO;
+	    (void)db_search(&comb_children, DB_SEARCH_RETURN_UNIQ_DP, comb_children_search, 1, &dp, gedp->ged_wdbp->dbip);
+	    for (j = 0; j < BU_PTBL_LEN(&comb_children); j++) {
+		struct directory *dpc = (struct directory *)BU_PTBL_GET(&comb_children, j);
+		dpq.push(dpc);
+	    }
+	    bu_ptbl_free(&comb_children);
+	}
+    }
+    /* Walk down the tree structure */
+    while (!dpq.empty()) {
+	struct directory *dp = dpq.front();
+	dpq.pop();
+	if (_rm_find_reference(gedp->ged_wdbp->dbip, seeds, dp->d_namep, rmlog, verbosity) > 0) continue;
+	bu_ptbl_ins_unique(to_remove, (long *)dp);
+	/* get immediate children */
+	const char *comb_children_search = "-mindepth 1 -maxdepth 1";
+	struct bu_ptbl comb_children = BU_PTBL_INIT_ZERO;
+	(void)db_search(&comb_children, DB_SEARCH_RETURN_UNIQ_DP, comb_children_search, 1, &dp, gedp->ged_wdbp->dbip);
+	for (j = 0; j < BU_PTBL_LEN(&comb_children); j++) {
+	    struct directory *dpc = (struct directory *)BU_PTBL_GET(&comb_children, j);
+	    dpq.push(dpc);
+	}
+	bu_ptbl_free(&comb_children);
     }
 
-    return 0;
+    return BU_PTBL_LEN(to_remove);
 }
 
 
@@ -391,7 +422,14 @@ ged_remove(struct ged *gedp, int orig_argc, const char *orig_argv[])
     for (i = 0; i < ret_ac; i++) {
 	const char *slash = strrchr(argv[i], '/');
 	if (slash == NULL) {
-	    bu_ptbl_ins(&objs, (long *)argv[i]);
+	    struct directory *rdp = db_lookup(gedp->ged_wdbp->dbip, argv[i], LOOKUP_QUIET);
+	    if (rdp != RT_DIR_NULL) {
+		bu_ptbl_ins_unique(&objs, (long *)rdp);
+	    } else {
+		if (verbose >= 2) {
+		    bu_vls_printf(&rmlog, "Attempted to delete object %s, but it was not found in the database\n", argv[i]);
+		}
+	    }
 	} else {
 	    ret = _ged_rm_path(gedp, argv[i]);
 	    /* If the first path arg was a full path,
@@ -409,7 +447,7 @@ ged_remove(struct ged *gedp, int orig_argc, const char *orig_argv[])
     }
 
     /* Behavior depends on the type of the first object (potentially, based on supplied flags) */
-    if ((dp = db_lookup(gedp->ged_wdbp->dbip, (const char *)BU_PTBL_GET(&objs, 0), LOOKUP_NOISY)) == RT_DIR_NULL) {
+    if ((dp = db_lookup(gedp->ged_wdbp->dbip, ((struct directory *)BU_PTBL_GET(&objs, 0))->d_namep, LOOKUP_NOISY)) == RT_DIR_NULL) {
 	ret = GED_ERROR;
 	goto rcleanup;
     }
@@ -434,7 +472,7 @@ ged_remove(struct ged *gedp, int orig_argc, const char *orig_argv[])
 
 	/* Process each argument */
 	for (i = 1; i < (int)BU_PTBL_LEN(&objs); i++) {
-	    const char *obj = (const char *)BU_PTBL_GET(&objs, i);
+	    const char *obj = ((struct directory *)BU_PTBL_GET(&objs, i))->d_namep;
 	    if (db_tree_del_dbleaf(&(comb->tree), obj, &rt_uniresource, 0) < 0) {
 		bu_vls_printf(gedp->ged_result_str, "ERROR: Failure deleting %s/%s\n", dp->d_namep, obj);
 		ret = GED_ERROR;
@@ -460,60 +498,70 @@ ged_remove(struct ged *gedp, int orig_argc, const char *orig_argv[])
     /* Having handled the removal-from-comb cases, we move on to the more
      * general database removals.  The various combinations of options need
      * different logic */
-    if (!remove_refs && !remove_recursive) {
-	for (i = 0; i < (int)BU_PTBL_LEN(&objs); i++) {
-	    (void)_rm_obj(gedp, (const char *)BU_PTBL_GET(&objs, i), NULL, &rmlog, verbose, remove_force, no_op);
-	}
-	goto rcleanup;
-    }
-    if ( remove_refs && !remove_force && !remove_recursive) {
-	_rm_ref(gedp, &objs, &rmlog, no_op);
-	if (remove_force) {
-	    for (i = 0; i < (int)BU_PTBL_LEN(&objs); i++) {
-		(void)_rm_obj(gedp, (const char *)BU_PTBL_GET(&objs, i), NULL, &rmlog, verbose, remove_force, no_op);
+    if (!remove_refs && !remove_force && !remove_recursive) {
+	struct bu_ptbl rmobjs = BU_PTBL_INIT_ZERO;
+	if (_removal_queue(&rmobjs, gedp, &objs, &rmlog, verbose, 0)) {
+	    for (i = 0; i < (int)BU_PTBL_LEN(&rmobjs); i++) {
+		(void)_rm_obj(gedp, (struct directory *)BU_PTBL_GET(&rmobjs, i), &rmlog, verbose, remove_force, no_op);
 	    }
 	}
+	bu_ptbl_free(&rmobjs);
 	goto rcleanup;
     }
-    if (!remove_refs && remove_recursive) {
-	size_t ind = 0;
-	struct bu_ptbl resultobjs = BU_PTBL_INIT_ZERO;
-	struct bu_ptbl validobjs = BU_PTBL_INIT_ZERO;
-	struct directory **dirp = NULL;
-	int v_cnt = _valid_rm_objs(&dirp, &validobjs, gedp, &objs, &rmlog, verbose);
-	(void)db_search(&resultobjs, DB_SEARCH_RETURN_UNIQ_DP, "-name *", v_cnt, dirp, gedp->ged_wdbp->dbip);
-	for (ind = 0; ind < BU_PTBL_LEN(&resultobjs); ind++) {
-	    (void)_rm_obj(gedp, ((struct directory *)BU_PTBL_GET(&resultobjs, ind))->d_namep, &validobjs, &rmlog, verbose, remove_force, no_op);
+    if (!remove_refs && !remove_force && remove_recursive) {
+	struct bu_ptbl rmobjs = BU_PTBL_INIT_ZERO;
+	if (_removal_queue(&rmobjs, gedp, &objs, &rmlog, verbose, 1)) {
+	    for (i = 0; i < (int)BU_PTBL_LEN(&rmobjs); i++) {
+		(void)_rm_obj(gedp, (struct directory *)BU_PTBL_GET(&rmobjs, i), &rmlog, verbose, remove_force, no_op);
+	    }
 	}
-	if (dirp) bu_free(dirp, "free dirp");
-	bu_ptbl_free(&validobjs);
-	bu_ptbl_free(&resultobjs);
+	bu_ptbl_free(&rmobjs);
+	goto rcleanup;
+    }
+    if (!remove_refs &&  remove_force && !remove_recursive) {
+	for (i = 0; i < (int)BU_PTBL_LEN(&objs); i++) {
+	    (void)_rm_obj(gedp, (struct directory *)BU_PTBL_GET(&objs, i), &rmlog, verbose, remove_force, no_op);
+	}
+	goto rcleanup;
+    }
+    if (!remove_refs &&  remove_force && remove_recursive) {
+	struct bu_ptbl rmobjs = BU_PTBL_INIT_ZERO;
+	(void)db_search(&rmobjs, DB_SEARCH_RETURN_UNIQ_DP, "-name *", BU_PTBL_LEN(&objs), (struct directory **)objs.buffer, gedp->ged_wdbp->dbip);
+	for (i = 0; i < (int)BU_PTBL_LEN(&rmobjs); i++) {
+	    (void)_rm_obj(gedp, (struct directory *)BU_PTBL_GET(&rmobjs, i), &rmlog, verbose, remove_force, no_op);
+	}
+	bu_ptbl_free(&rmobjs);
+	goto rcleanup;
+    }
+    if (remove_refs && !remove_force && !remove_recursive) {
+	_rm_ref(gedp, &objs, &rmlog, no_op);
+	goto rcleanup;
+    }
+    if (remove_refs && !remove_force && remove_recursive) {
+	struct bu_ptbl rmobjs = BU_PTBL_INIT_ZERO;
+	(void)db_search(&rmobjs, DB_SEARCH_RETURN_UNIQ_DP, "-name *", BU_PTBL_LEN(&objs), (struct directory **)objs.buffer, gedp->ged_wdbp->dbip);
+	_rm_ref(gedp, &rmobjs, &rmlog, no_op);
+	bu_ptbl_free(&rmobjs);
+	goto rcleanup;
+    }
+    if (remove_refs && remove_force && !remove_recursive) {
+	_rm_ref(gedp, &objs, &rmlog, no_op);
+	for (i = 0; i < (int)BU_PTBL_LEN(&objs); i++) {
+	    (void)_rm_obj(gedp, (struct directory *)BU_PTBL_GET(&objs, i), &rmlog, verbose, remove_force, no_op);
+	}
+	goto rcleanup;
+    }
+    if (remove_refs &&  remove_force && remove_recursive) {
+	struct bu_ptbl rmobjs = BU_PTBL_INIT_ZERO;
+	(void)db_search(&rmobjs, DB_SEARCH_RETURN_UNIQ_DP, "-name *", BU_PTBL_LEN(&objs), (struct directory **)objs.buffer, gedp->ged_wdbp->dbip);
+	_rm_ref(gedp, &rmobjs, &rmlog, no_op);
+	for (i = 0; i < (int)BU_PTBL_LEN(&rmobjs); i++) {
+	    (void)_rm_obj(gedp, (struct directory *)BU_PTBL_GET(&rmobjs, i), &rmlog, verbose, remove_force, no_op);
+	}
+	bu_ptbl_free(&rmobjs);
 	goto rcleanup;
     }
 
-    if ( remove_refs && !remove_force && remove_recursive) {
-	size_t ind = 0;
-	struct bu_ptbl resultobjs = BU_PTBL_INIT_ZERO;
-	struct bu_ptbl validobjs = BU_PTBL_INIT_ZERO;
-	struct bu_ptbl resultchars = BU_PTBL_INIT_ZERO;
-	struct directory **dirp = NULL;
-	int v_cnt = _valid_rm_objs(&dirp, &validobjs, gedp, &objs, &rmlog, verbose);
-	(void)db_search(&resultobjs, DB_SEARCH_RETURN_UNIQ_DP, "-name *", v_cnt, dirp, gedp->ged_wdbp->dbip);
-	for (ind = 0; ind < BU_PTBL_LEN(&resultobjs); ind++) {
-	    bu_ptbl_ins(&resultchars, (long *)(((struct directory *)BU_PTBL_GET(&resultobjs, ind))->d_namep));
-	}
-	_rm_ref(gedp, &resultchars, &rmlog, no_op);
-	for (ind = 0; ind < BU_PTBL_LEN(&resultobjs); ind++) {
-	    if (remove_force) {
-		(void)_rm_obj(gedp, ((struct directory *)BU_PTBL_GET(&resultobjs, ind))->d_namep, NULL, &rmlog, verbose, remove_force, no_op);
-	    }
-	}
-	if (dirp) bu_free(dirp, "free dirp");
-	bu_ptbl_free(&resultchars);
-	bu_ptbl_free(&validobjs);
-	bu_ptbl_free(&resultobjs);
-	goto rcleanup;
-    }
 
 rcleanup:
     bu_ptbl_free(&objs);
