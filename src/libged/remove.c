@@ -443,19 +443,20 @@ ged_remove(struct ged *gedp, int orig_argc, const char *orig_argv[])
      * general database removals.  The various combinations of options need
      * different logic */
     if (!remove_refs && !remove_recursive) {
-	for (i = 0; i < (int)BU_PTBL_LEN(&objs) - 1; i++) {
+	for (i = 0; i < (int)BU_PTBL_LEN(&objs); i++) {
 	    (void)_rm_obj(gedp, (const char *)BU_PTBL_GET(&objs, i), NULL, &rmlog, verbose, remove_force, no_op);
 	}
 	goto rcleanup;
     }
     if (!remove_refs && remove_recursive) {
+	size_t ind = 0;
 	struct bu_ptbl resultobjs = BU_PTBL_INIT_ZERO;
 	struct bu_ptbl validobjs = BU_PTBL_INIT_ZERO;
 	struct directory **dirp = NULL;
 	int v_cnt = _valid_rm_objs(&dirp, &validobjs, gedp, &objs, &rmlog, verbose);
-	int r_cnt = db_search(&resultobjs, DB_SEARCH_RETURN_UNIQ_DP, "-name *", v_cnt, dirp, gedp->ged_wdbp->dbip);
-	for (i = 0; i < r_cnt; i++) {
-	    (void)_rm_obj(gedp, ((struct directory *)BU_PTBL_GET(&resultobjs, i))->d_namep, &validobjs, &rmlog, verbose, remove_force, no_op);
+	(void)db_search(&resultobjs, DB_SEARCH_RETURN_UNIQ_DP, "-name *", v_cnt, dirp, gedp->ged_wdbp->dbip);
+	for (ind = 0; ind < BU_PTBL_LEN(&resultobjs); ind++) {
+	    (void)_rm_obj(gedp, ((struct directory *)BU_PTBL_GET(&resultobjs, ind))->d_namep, &validobjs, &rmlog, verbose, remove_force, no_op);
 	}
 	if (dirp) bu_free(dirp, "free dirp");
 	bu_ptbl_free(&validobjs);
@@ -465,26 +466,27 @@ ged_remove(struct ged *gedp, int orig_argc, const char *orig_argv[])
     if ( remove_refs && !remove_force && !remove_recursive) {
 	_rm_ref(gedp, &objs, &rmlog, no_op);
 	if (remove_force) {
-	    for (i = 0; i < (int)BU_PTBL_LEN(&objs) - 1; i++) {
+	    for (i = 0; i < (int)BU_PTBL_LEN(&objs); i++) {
 		(void)_rm_obj(gedp, (const char *)BU_PTBL_GET(&objs, i), NULL, &rmlog, verbose, remove_force, no_op);
 	    }
 	}
 	goto rcleanup;
     }
     if ( remove_refs && !remove_force && remove_recursive) {
+	size_t ind = 0;
 	struct bu_ptbl resultobjs = BU_PTBL_INIT_ZERO;
 	struct bu_ptbl validobjs = BU_PTBL_INIT_ZERO;
 	struct bu_ptbl resultchars = BU_PTBL_INIT_ZERO;
 	struct directory **dirp = NULL;
 	int v_cnt = _valid_rm_objs(&dirp, &validobjs, gedp, &objs, &rmlog, verbose);
-	int r_cnt = db_search(&resultobjs, DB_SEARCH_RETURN_UNIQ_DP, "-name *", v_cnt, dirp, gedp->ged_wdbp->dbip);
-	for (i = 0; i < r_cnt; i++) {
-	    bu_ptbl_ins(&resultchars, (long *)(((struct directory *)BU_PTBL_GET(&resultobjs, i))->d_namep));
+	(void)db_search(&resultobjs, DB_SEARCH_RETURN_UNIQ_DP, "-name *", v_cnt, dirp, gedp->ged_wdbp->dbip);
+	for (ind = 0; ind < BU_PTBL_LEN(&resultobjs); ind++) {
+	    bu_ptbl_ins(&resultchars, (long *)(((struct directory *)BU_PTBL_GET(&resultobjs, ind))->d_namep));
 	}
 	_rm_ref(gedp, &resultchars, &rmlog, no_op);
-	for (i = 0; i < r_cnt; i++) {
+	for (ind = 0; ind < BU_PTBL_LEN(&resultobjs); ind++) {
 	    if (remove_force) {
-		(void)_rm_obj(gedp, ((struct directory *)BU_PTBL_GET(&resultobjs, i))->d_namep, NULL, &rmlog, verbose, remove_force, no_op);
+		(void)_rm_obj(gedp, ((struct directory *)BU_PTBL_GET(&resultobjs, ind))->d_namep, NULL, &rmlog, verbose, remove_force, no_op);
 	    }
 	}
 	if (dirp) bu_free(dirp, "free dirp");
