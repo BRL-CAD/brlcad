@@ -62,38 +62,6 @@ _remove_show_help(struct ged *gedp, const char *cmd, struct bu_opt_desc *d)
     bu_vls_free(&str);
 }
 
-/* this finds references to 'obj' that are not within any of the the 'topobjs'
- * combination hierarchies, elsewhere in the database.  this is so we can make
- * sure we don't kill objects that are referenced elsewhere in the
- * database, in a hierarchy that is not being deleted.
- */
-HIDDEN int
-_rm_find_reference(struct db_i *dbip, struct bu_ptbl *topobjs, const char *obj, struct bu_vls *rmlog, int verbosity)
-{
-    int i;
-    int ret = 0;
-    struct bu_vls str = BU_VLS_INIT_ZERO;
-
-    if (!dbip || !topobjs || !obj)
-	return 0;
-
-    bu_vls_sprintf(&str, "-depth >0");
-    for (i = 0; i < (int)BU_PTBL_LEN(topobjs); i++) {
-	bu_vls_printf(&str, " -not -below -name %s", (const char *)BU_PTBL_GET(topobjs, i));
-    }
-    bu_vls_printf(&str, " -name %s", obj);
-
-    ret = db_search(NULL, DB_SEARCH_TREE, bu_vls_cstr(&str), 0, NULL, dbip);
-
-    if (ret && rmlog && verbosity > 0) {
-	bu_vls_printf(rmlog, "NOTE: %s is referenced by unremoved objects in the database - skipping.\n", obj);
-    }
-
-    bu_vls_free(&str);
-
-    return ret;
-}
-
 HIDDEN void
 _rm_ref(struct ged *gedp, struct bu_ptbl *objs, struct bu_vls *rmlog, int dry_run)
 {
@@ -142,6 +110,40 @@ _rm_ref(struct ged *gedp, struct bu_ptbl *objs, struct bu_vls *rmlog, int dry_ru
 	}
     } FOR_ALL_DIRECTORY_END;
 }
+
+
+/* this finds references to 'obj' that are not within any of the the 'topobjs'
+ * combination hierarchies, elsewhere in the database.  this is so we can make
+ * sure we don't kill objects that are referenced elsewhere in the
+ * database, in a hierarchy that is not being deleted.
+ */
+HIDDEN int
+_rm_find_reference(struct db_i *dbip, struct bu_ptbl *topobjs, const char *obj, struct bu_vls *rmlog, int verbosity)
+{
+    int i;
+    int ret = 0;
+    struct bu_vls str = BU_VLS_INIT_ZERO;
+
+    if (!dbip || !topobjs || !obj)
+	return 0;
+
+    bu_vls_sprintf(&str, "-depth >0");
+    for (i = 0; i < (int)BU_PTBL_LEN(topobjs); i++) {
+	bu_vls_printf(&str, " -not -below -name %s", ((struct directory *)BU_PTBL_GET(topobjs, i))->d_namep);
+    }
+    bu_vls_printf(&str, " -name %s", obj);
+
+    ret = db_search(NULL, DB_SEARCH_TREE, bu_vls_cstr(&str), 0, NULL, dbip);
+
+    if (ret && rmlog && verbosity > 0) {
+	bu_vls_printf(rmlog, "NOTE: %s is referenced by unremoved objects in the database - skipping.\n", obj);
+    }
+
+    bu_vls_free(&str);
+
+    return ret;
+}
+
 
 HIDDEN int
 _rm_obj(struct ged *gedp, const char *objname, struct bu_ptbl *topobjs, struct bu_vls *rmlog, int verbosity, int force, int dry_run)
