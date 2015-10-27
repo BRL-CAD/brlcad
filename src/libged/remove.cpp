@@ -338,7 +338,12 @@ _rm_verbose(struct bu_vls *msg, int argc, const char **argv, void *set_v)
     }
 
     int_ret = bu_opt_int(msg, argc, argv, (void *)&val);
-    if (int_ret == -1) return -1;
+
+    /* Option isn't a number - treat as flag */
+    if (int_ret == -1) {
+	if (int_set) (*int_set) = 1;
+	return 0;
+    }
 
     if (val < 0) return -1;
     if (val > 4) val = 4;
