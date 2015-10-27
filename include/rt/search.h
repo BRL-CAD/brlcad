@@ -155,6 +155,13 @@ RT_EXPORT extern size_t db_ls(const struct db_i *dbip,
 
 
 /* db_glob.c */
+
+
+/* These are general globbing flags. */
+#define DB_GLOB_HIDDEN       0x1    /**< @brief include hidden objects in results */
+#define DB_GLOB_NON_GEOM     0x2    /**< @brief include non-geometry objects in results */
+#define DB_GLOB_SKIP_FIRST   0x4    /**< @brief do not expand the first item */
+
 /**
  * db_glob takes a string and expands wildcard patterns in the string by
  * matching object names in the database instance dbip according to globbing

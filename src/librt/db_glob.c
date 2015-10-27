@@ -80,15 +80,15 @@ _backslash_specials(struct bu_vls *dest, struct bu_vls *src)
     }
 }
 
-
 int
-db_expand_str_glob(struct bu_vls *dest, const char *input, struct db_i *dbip, int skip_first)
+db_expand_str_glob(struct bu_vls *dest, const char *input, struct db_i *dbip, int flags)
 {
     char *start, *end;          /* Start and ends of words */
     int is_fnmatch;                 /* Set to TRUE when word is a is_fnmatch */
     int backslashed;
     int match_cnt = 0;
     int firstword = 1;
+    int skip_first = (flags & DB_GLOB_SKIP_FIRST);
     struct bu_vls word = BU_VLS_INIT_ZERO;         /* Current word being processed */
     struct bu_vls temp = BU_VLS_INIT_ZERO;
     char *src = NULL;
@@ -155,8 +155,9 @@ db_expand_str_glob(struct bu_vls *dest, const char *input, struct db_i *dbip, in
 	    bu_vls_trunc(&temp, 0);
 	    for (i = num = 0; i < RT_DBNHASH; i++) {
 		for (dp = dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
-		    if (bu_fnmatch(bu_vls_addr(&word), dp->d_namep, 0) != 0)
-			continue;
+		    if (bu_fnmatch(bu_vls_addr(&word), dp->d_namep, 0) != 0) continue;
+		    if (!(flags & DB_GLOB_HIDDEN) && (dp->d_flags & RT_DIR_HIDDEN)) continue;
+		    if (!(flags & DB_GLOB_NON_GEOM) && (dp->d_flags & RT_DIR_NON_GEOM)) continue;
 		    if (num == 0)
 			bu_vls_strcat(&temp, dp->d_namep);
 		    else {

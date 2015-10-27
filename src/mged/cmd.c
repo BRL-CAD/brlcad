@@ -944,17 +944,6 @@ cmd_set_more_default(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int
 }
 
 
-/**
- * This routine is called to perform wildcard expansion and character
- * quoting on the given vls (typically input from the keyboard.)
- */
-void
-mged_compat(struct bu_vls *dest, struct bu_vls *src, int use_first)
-{
-    (void)db_expand_str_glob(dest, bu_vls_addr(src), dbip, !use_first);
-}
-
-
 #ifdef _WIN32
 /* limited to seconds only */
 void gettimeofday(struct timeval *tp, struct timezone *tzp)
@@ -1010,7 +999,11 @@ cmdline(struct bu_vls *vp, int record)
     */
 
     if (glob_compat_mode) {
-	mged_compat(&globbed, vp, 0);
+	int flags = 0;
+	flags |= DB_GLOB_HIDDEN;
+	flags |= DB_GLOB_NON_GEOM;
+	flags |= DB_GLOB_SKIP_FIRST;
+	(void)db_expand_str_glob(&globbed, bu_vls_addr(vp), dbip, flags);
     } else {
 	bu_vls_vlscat(&globbed, vp);
     }

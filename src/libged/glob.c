@@ -37,6 +37,9 @@ int
 ged_glob(struct ged *gedp, int argc, const char *argv[])
 {
     static const char *usage = "expression";
+    int flags = 0;
+    flags |= DB_GLOB_HIDDEN;
+    flags |= DB_GLOB_NON_GEOM;
 
     /* Silently return */
     if (gedp == GED_NULL)
@@ -60,7 +63,7 @@ ged_glob(struct ged *gedp, int argc, const char *argv[])
 	return GED_ERROR;
     }
 
-    (void)db_expand_str_glob(gedp->ged_result_str, argv[1], gedp->ged_wdbp->dbip, 0);
+    (void)db_expand_str_glob(gedp->ged_result_str, argv[1], gedp->ged_wdbp->dbip, flags);
 
 
     return GED_OK;
