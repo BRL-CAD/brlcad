@@ -196,22 +196,25 @@ _removal_queue(struct bu_ptbl *to_remove, struct ged *gedp, struct bu_ptbl *seed
     size_t i,j;
 
     std::queue<struct directory *> dpq;
+    std::set<struct directory *> checked;
 
     if (!to_remove || !gedp || !seeds) return 0;
 
     /* Initialize */
     for (i = 0; i < BU_PTBL_LEN(seeds); i++) {
 	struct directory *dp = ((struct directory *)BU_PTBL_GET(seeds, i));
+	checked.insert(dp);
 	if (_rm_find_reference(gedp->ged_wdbp->dbip, seeds, dp->d_namep, rmlog, verbosity) > 0) continue;
 	bu_ptbl_ins_unique(to_remove, (long *)dp);
-	if (recurse) {
+	if (recurse && (dp->d_flags & RT_DIR_COMB)) {
 	    /* get immediate children */
 	    const char *comb_children_search = "-mindepth 1 -maxdepth 1";
 	    struct bu_ptbl comb_children = BU_PTBL_INIT_ZERO;
 	    (void)db_search(&comb_children, DB_SEARCH_RETURN_UNIQ_DP, comb_children_search, 1, &dp, gedp->ged_wdbp->dbip);
 	    for (j = 0; j < BU_PTBL_LEN(&comb_children); j++) {
 		struct directory *dpc = (struct directory *)BU_PTBL_GET(&comb_children, j);
-		dpq.push(dpc);
+		if (checked.find(dpc) == checked.end()) dpq.push(dpc);
+		checked.insert(dpc);
 	    }
 	    bu_ptbl_free(&comb_children);
 	}
@@ -223,14 +226,17 @@ _removal_queue(struct bu_ptbl *to_remove, struct ged *gedp, struct bu_ptbl *seed
 	if (_rm_find_reference(gedp->ged_wdbp->dbip, seeds, dp->d_namep, rmlog, verbosity) > 0) continue;
 	bu_ptbl_ins_unique(to_remove, (long *)dp);
 	/* get immediate children */
-	const char *comb_children_search = "-mindepth 1 -maxdepth 1";
-	struct bu_ptbl comb_children = BU_PTBL_INIT_ZERO;
-	(void)db_search(&comb_children, DB_SEARCH_RETURN_UNIQ_DP, comb_children_search, 1, &dp, gedp->ged_wdbp->dbip);
-	for (j = 0; j < BU_PTBL_LEN(&comb_children); j++) {
-	    struct directory *dpc = (struct directory *)BU_PTBL_GET(&comb_children, j);
-	    dpq.push(dpc);
+	if (dp->d_flags & RT_DIR_COMB) {
+	    const char *comb_children_search = "-mindepth 1 -maxdepth 1";
+	    struct bu_ptbl comb_children = BU_PTBL_INIT_ZERO;
+	    (void)db_search(&comb_children, DB_SEARCH_RETURN_UNIQ_DP, comb_children_search, 1, &dp, gedp->ged_wdbp->dbip);
+	    for (j = 0; j < BU_PTBL_LEN(&comb_children); j++) {
+		struct directory *dpc = (struct directory *)BU_PTBL_GET(&comb_children, j);
+		if (checked.find(dpc) == checked.end()) dpq.push(dpc);
+		checked.insert(dpc);
+	    }
+	    bu_ptbl_free(&comb_children);
 	}
-	bu_ptbl_free(&comb_children);
     }
 
     return BU_PTBL_LEN(to_remove);
