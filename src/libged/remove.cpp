@@ -454,7 +454,7 @@ ged_remove(struct ged *gedp, int orig_argc, const char *orig_argv[])
     if (remove_force || remove_refs || remove_recursive) remove_from_comb = 0;
 
     /* If we've got nothing else, we're done */
-    if (!BU_PTBL_LEN(&objs) > 0) {
+    if (BU_PTBL_LEN(&objs) == 0) {
 	goto rcleanup;
     }
 
