@@ -128,7 +128,6 @@ _rm_find_reference(struct db_i *dbip, struct bu_ptbl *topobjs, const char *obj, 
     int ret = 0;
     struct bu_vls str = BU_VLS_INIT_ZERO;
     struct directory **paths;
-    struct bu_ptbl results;
 
     if (!dbip || !topobjs || !obj)
 	return 0;
@@ -140,10 +139,8 @@ _rm_find_reference(struct db_i *dbip, struct bu_ptbl *topobjs, const char *obj, 
     bu_vls_printf(&str, " -name %s", obj);
 
     path_cnt = db_ls(dbip, DB_LS_TOPS, NULL, &(paths));
-    (void)db_search(&results, DB_SEARCH_TREE, bu_vls_cstr(&str), path_cnt, paths, dbip);
-    ret = BU_PTBL_LEN(&results);
+    ret = db_search(NULL, DB_SEARCH_TREE, bu_vls_cstr(&str), path_cnt, paths, dbip);
     bu_free(paths, "free search paths");
-    bu_ptbl_free(&results);
 
     if (ret && rmlog && verbosity > 0) {
 	bu_vls_printf(rmlog, "NOTE: %s is referenced by unremoved objects in the database - skipping.\n", obj);
@@ -438,6 +435,10 @@ ged_remove(struct ged *gedp, int orig_argc, const char *orig_argv[])
 	    if (ret == GED_ERROR) goto rcleanup;
 	}
     }
+
+    /* Update references after deletion.
+     * IMPORTANT: db_ls and db_search won't work properly without this */
+    db_update_nref(gedp->ged_wdbp->dbip, &rt_uniresource);
 
     if (remove_force || remove_refs || remove_recursive) remove_from_comb = 0;
 
