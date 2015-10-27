@@ -89,18 +89,18 @@ _rm_ref(struct ged *gedp, struct bu_ptbl *objs, struct bu_vls *rmlog, int dry_ru
 	for (i = 0; i < BU_PTBL_LEN(objs); i++) {
 	    int code;
 
-	    code = db_tree_del_dbleaf(&(comb->tree), (const char *)BU_PTBL_GET(objs, i), &rt_uniresource, dry_run);
+	    code = db_tree_del_dbleaf(&(comb->tree), ((struct directory *)BU_PTBL_GET(objs, i))->d_namep, &rt_uniresource, dry_run);
 	    if (code == -1)
 		continue;       /* not found */
 	    if (code == -2)
 		continue;       /* empty tree */
 	    if (code < 0) {
 		if (rmlog) {
-		    bu_vls_printf(rmlog, "ERROR: Failure deleting %s/%s\n", dp->d_namep, (const char *)BU_PTBL_GET(objs, i));
+		    bu_vls_printf(rmlog, "ERROR: Failure deleting %s/%s\n", dp->d_namep, ((struct directory *)BU_PTBL_GET(objs, i))->d_namep);
 		}
 	    } else {
 		if (rmlog && dry_run) {
-		    bu_vls_printf(rmlog, "Remove reference to object %s from %s", (const char *)BU_PTBL_GET(objs, i), dp->d_namep);
+		    bu_vls_printf(rmlog, "Remove reference to object %s from %s\n", ((struct directory *)BU_PTBL_GET(objs, i))->d_namep, dp->d_namep);
 		}
 	    }
 	}
