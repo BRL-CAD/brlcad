@@ -242,34 +242,6 @@ _removal_queue(struct bu_ptbl *to_remove, struct ged *gedp, struct bu_ptbl *seed
     return BU_PTBL_LEN(to_remove);
 }
 
-
-HIDDEN int
-_valid_rm_objs(struct directory ***dirp, struct bu_ptbl *validobjs, struct ged *gedp, struct bu_ptbl *objs, struct bu_vls *rmlog, int verbosity)
-{
-    int i = 0;
-    int dircnt = 0;
-    struct directory *rdp = RT_DIR_NULL;
-    for (i = 0; i < (int)BU_PTBL_LEN(objs); i++) {
-	rdp = db_lookup(gedp->ged_wdbp->dbip, (const char *)BU_PTBL_GET(objs, i), LOOKUP_QUIET);
-	if (rdp != RT_DIR_NULL) {
-	    bu_ptbl_ins_unique(validobjs, (long *)rdp);
-	} else {
-	    if (rmlog && verbosity >= 2) {
-		bu_vls_printf(rmlog, "Attempted to delete object %s, but it was not found in the database\n", (const char *)BU_PTBL_GET(objs, i));
-	    }
-	}
-    }
-    dircnt = BU_PTBL_LEN(validobjs);
-    /* Got valid objects, build search directory array */
-    if (dircnt > 0) {
-	(*dirp) = (struct directory **)bu_calloc(BU_PTBL_LEN(validobjs), sizeof(struct directory *), "dp array");
-	for (i = 0; i < (int)BU_PTBL_LEN(validobjs); i++) {
-	    (*dirp)[i] = (struct directory *)BU_PTBL_GET(validobjs, i);
-	}
-    }
-    return dircnt;
-}
-
 HIDDEN int
 _ged_rm_path(struct ged *gedp, const char *in)
 {
@@ -514,7 +486,7 @@ ged_remove(struct ged *gedp, int orig_argc, const char *orig_argv[])
 	struct bu_ptbl rmobjs = BU_PTBL_INIT_ZERO;
 	if (_removal_queue(&rmobjs, gedp, &objs, &rmlog, verbose, 0)) {
 	    for (i = 0; i < (int)BU_PTBL_LEN(&rmobjs); i++) {
-		(void)_rm_obj(gedp, (struct directory *)BU_PTBL_GET(&rmobjs, i), &rmlog, verbose, remove_force, no_op);
+		(void)_rm_obj(gedp, (struct directory *)BU_PTBL_GET(&rmobjs, i), &rmlog, verbose, 0, no_op);
 	    }
 	}
 	bu_ptbl_free(&rmobjs);
@@ -524,7 +496,7 @@ ged_remove(struct ged *gedp, int orig_argc, const char *orig_argv[])
 	struct bu_ptbl rmobjs = BU_PTBL_INIT_ZERO;
 	if (_removal_queue(&rmobjs, gedp, &objs, &rmlog, verbose, 1)) {
 	    for (i = 0; i < (int)BU_PTBL_LEN(&rmobjs); i++) {
-		(void)_rm_obj(gedp, (struct directory *)BU_PTBL_GET(&rmobjs, i), &rmlog, verbose, remove_force, no_op);
+		(void)_rm_obj(gedp, (struct directory *)BU_PTBL_GET(&rmobjs, i), &rmlog, verbose, 0, no_op);
 	    }
 	}
 	bu_ptbl_free(&rmobjs);
@@ -532,7 +504,8 @@ ged_remove(struct ged *gedp, int orig_argc, const char *orig_argv[])
     }
     if (!remove_refs &&  remove_force && !remove_recursive) {
 	for (i = 0; i < (int)BU_PTBL_LEN(&objs); i++) {
-	    (void)_rm_obj(gedp, (struct directory *)BU_PTBL_GET(&objs, i), &rmlog, verbose, remove_force, no_op);
+	    /* If _GLOBAL is specified explicitly with a force flag, remove it */
+	    (void)_rm_obj(gedp, (struct directory *)BU_PTBL_GET(&objs, i), &rmlog, verbose, 1, no_op);
 	}
 	goto rcleanup;
     }
@@ -540,7 +513,8 @@ ged_remove(struct ged *gedp, int orig_argc, const char *orig_argv[])
 	struct bu_ptbl rmobjs = BU_PTBL_INIT_ZERO;
 	(void)db_search(&rmobjs, DB_SEARCH_RETURN_UNIQ_DP, "-name *", BU_PTBL_LEN(&objs), (struct directory **)objs.buffer, gedp->ged_wdbp->dbip);
 	for (i = 0; i < (int)BU_PTBL_LEN(&rmobjs); i++) {
-	    (void)_rm_obj(gedp, (struct directory *)BU_PTBL_GET(&rmobjs, i), &rmlog, verbose, remove_force, no_op);
+	    /* If _GLOBAL is specified explicitly with a force flag, remove it */
+	    (void)_rm_obj(gedp, (struct directory *)BU_PTBL_GET(&rmobjs, i), &rmlog, verbose, 1, no_op);
 	}
 	bu_ptbl_free(&rmobjs);
 	goto rcleanup;
@@ -559,7 +533,8 @@ ged_remove(struct ged *gedp, int orig_argc, const char *orig_argv[])
     if (remove_refs && remove_force && !remove_recursive) {
 	_rm_ref(gedp, &objs, &rmlog, no_op);
 	for (i = 0; i < (int)BU_PTBL_LEN(&objs); i++) {
-	    (void)_rm_obj(gedp, (struct directory *)BU_PTBL_GET(&objs, i), &rmlog, verbose, remove_force, no_op);
+	    /* If _GLOBAL is specified explicitly with a force flag, remove it */
+	    (void)_rm_obj(gedp, (struct directory *)BU_PTBL_GET(&objs, i), &rmlog, verbose, 1, no_op);
 	}
 	goto rcleanup;
     }
@@ -568,7 +543,8 @@ ged_remove(struct ged *gedp, int orig_argc, const char *orig_argv[])
 	(void)db_search(&rmobjs, DB_SEARCH_RETURN_UNIQ_DP, "-name *", BU_PTBL_LEN(&objs), (struct directory **)objs.buffer, gedp->ged_wdbp->dbip);
 	_rm_ref(gedp, &rmobjs, &rmlog, no_op);
 	for (i = 0; i < (int)BU_PTBL_LEN(&rmobjs); i++) {
-	    (void)_rm_obj(gedp, (struct directory *)BU_PTBL_GET(&rmobjs, i), &rmlog, verbose, remove_force, no_op);
+	    /* If _GLOBAL is specified explicitly with a force flag, remove it */
+	    (void)_rm_obj(gedp, (struct directory *)BU_PTBL_GET(&rmobjs, i), &rmlog, verbose, 1, no_op);
 	}
 	bu_ptbl_free(&rmobjs);
 	goto rcleanup;
