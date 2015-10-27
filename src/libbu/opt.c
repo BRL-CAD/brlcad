@@ -222,7 +222,7 @@ bu_opt_describe(struct bu_opt_desc *ds, struct bu_opt_desc_opts *settings)
 }
 
 HIDDEN int
-opt_is_flag(const char *opt, const struct bu_opt_desc *ds)
+opt_is_flag(const char *opt, const struct bu_opt_desc *ds, const char *arg)
 {
     int arg_offset = -1;
     /* Find the corresponding desc, if we have one */
@@ -238,9 +238,17 @@ opt_is_flag(const char *opt, const struct bu_opt_desc *ds)
     }
 
     /* If there is an arg_process, it's up to the function - if
-     * an option without args is valid, this can be a flag */
-    arg_offset = (*desc->arg_process)(NULL, 1, &opt, NULL);
-    if (!arg_offset) return 1;
+     * an option without args is valid, and the potential arg after
+     * the option isn't a valid arg for this opt, opt can be a flag */
+    if (desc && desc->arg_process) {
+	if (arg) {
+	    arg_offset = (*desc->arg_process)(NULL, 1, &arg, NULL);
+	    if (!arg_offset) return 1;
+	} else {
+	    arg_offset = (*desc->arg_process)(NULL, 0, NULL, NULL);
+	    if (!arg_offset) return 1;
+	}
+    }
 
     return 0;
 }
@@ -270,13 +278,13 @@ opt_process(struct bu_ptbl *opts, const char **eq_arg, const char *opt_candidate
 	     * with a flag option anything in the same argv with it that is not
 	     * also a flag constitutes an error. */
 	    opt = opt_candidate+offset;
-	    if (opt_is_flag(opt, ds)) {
+	    if (opt_is_flag(opt, ds, opt_candidate+offset+1)) {
 		optcpy = (char *)bu_calloc(2, sizeof(char), "option");
 		optcpy[0] = (opt)[0];
 		bu_ptbl_ins(opts,(long *)optcpy);
 		opt++;
 		while (strlen(opt) > 0) {
-		    if (opt_is_flag(opt, ds)) {
+		    if (opt_is_flag(opt, ds, NULL)) {
 			optcpy = (char *)bu_calloc(2, sizeof(char), "option");
 			optcpy[0] = (opt)[0];
 			bu_ptbl_ins(opts,(long *)optcpy);
