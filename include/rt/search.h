@@ -154,6 +154,27 @@ RT_EXPORT extern size_t db_ls(const struct db_i *dbip,
                                               globbing rules (default) */
 
 
+/* db_glob.c */
+/**
+ * db_glob takes a string and expands wildcard patterns in the string by
+ * matching object names in the database instance dbip according to globbing
+ * rules (see bu_fnmatch).
+ *
+ * The caller is responsible for providing a non-null vls destination buffer.
+ *
+ * Returns -
+ * number of dbip objects added to string
+ * expanded string in dest bu_vls
+ *
+ * TODO - use flags for skip first, do/don't expand hidden, etc.
+ *
+ * Note - deliberately did not name this fuction db_glob - probably want a more
+ * powerful globbing API than just strings for more general usage...
+ */
+int
+db_expand_str_glob(struct bu_vls *dest, const char *input, struct db_i *dbip, int skip_first);
+
+
 
 /***************************************************************
  * DEPRECATED - all structures and functions below this notice
