@@ -224,16 +224,24 @@ bu_opt_describe(struct bu_opt_desc *ds, struct bu_opt_desc_opts *settings)
 HIDDEN int
 opt_is_flag(const char *opt, const struct bu_opt_desc *ds)
 {
+    int arg_offset = -1;
     /* Find the corresponding desc, if we have one */
     int desc_ind = 0;
     const struct bu_opt_desc *desc = &(ds[desc_ind]);
     while (desc && !opt_desc_is_null(desc)) {
 	if (opt[0] == desc->shortopt[0]) {
-	    return (desc->arg_process) ? 0 : 1;
+	    if (!desc->arg_process) return 1;
+	    break;
 	}
 	desc_ind++;
 	desc = &(ds[desc_ind]);
     }
+
+    /* If there is an arg_process, it's up to the function - if
+     * an option without args is valid, this can be a flag */
+    arg_offset = (*desc->arg_process)(NULL, 1, &opt, NULL);
+    if (!arg_offset) return 1;
+
     return 0;
 }
 
