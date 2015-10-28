@@ -69,6 +69,7 @@ enum seam_direction {
     UNKNOWN_SEAM_DIRECTION
 };
 
+
 #define PBC_TOL 0.000001
 #define PBC_FROM_OFFSET 0.001
 #define PBC_SEAM_TOL 0.001
