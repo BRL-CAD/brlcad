@@ -206,22 +206,32 @@ _removal_queue(struct bu_ptbl *to_remove, struct ged *gedp, struct bu_ptbl *seed
 	if (dp && dp != RT_DIR_NULL) {
 	    checked.insert(dp);
 	    if (_rm_find_reference(gedp->ged_wdbp->dbip, seeds, dp->d_namep, rmlog, verbosity) > 0) continue;
-	    bu_ptbl_ins_unique(to_remove, (long *)dp);
-	    if (recurse && (dp->d_flags & RT_DIR_COMB)) {
+	    if (dp->d_flags & RT_DIR_COMB) {
 		/* get immediate children */
 		const char *comb_children_search = "-mindepth 1 -maxdepth 1";
 		struct bu_ptbl comb_children = BU_PTBL_INIT_ZERO;
 		(void)db_search(&comb_children, DB_SEARCH_RETURN_UNIQ_DP, comb_children_search, 1, &dp, gedp->ged_wdbp->dbip);
-		for (j = 0; j < BU_PTBL_LEN(&comb_children); j++) {
-		    struct directory *dpc = (struct directory *)BU_PTBL_GET(&comb_children, j);
-		    if (dpc && checked.find(dpc) == checked.end() && dpc != RT_DIR_NULL) {
-			dpq.push(dpc);
-		    }
-		    if (dpc && dpc != RT_DIR_NULL) {
-			checked.insert(dpc);
+		if (BU_PTBL_LEN(&comb_children) == 0) {
+		    bu_ptbl_ins_unique(to_remove, (long *)dp);
+		} else {
+		    if (recurse) {
+			bu_ptbl_ins_unique(to_remove, (long *)dp);
+			for (j = 0; j < BU_PTBL_LEN(&comb_children); j++) {
+			    struct directory *dpc = (struct directory *)BU_PTBL_GET(&comb_children, j);
+			    if (dpc && checked.find(dpc) == checked.end() && dpc != RT_DIR_NULL) {
+				dpq.push(dpc);
+			    }
+			    if (dpc && dpc != RT_DIR_NULL) {
+				checked.insert(dpc);
+			    }
+			}
+		    } else {
+			if (rmlog && verbosity > 0) bu_vls_printf(rmlog, "Combination %s is not empty, skipping\n", dp->d_namep);
 		    }
 		}
 		bu_ptbl_free(&comb_children);
+	    } else {
+		bu_ptbl_ins_unique(to_remove, (long *)dp);
 	    }
 	}
     }
