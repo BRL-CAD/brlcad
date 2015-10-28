@@ -324,7 +324,7 @@ bool ON_Surface_SubSurface(
     ON_Surface **result
     )
 {
-    bool split = true;
+    ON_BOOL32 split = true;
     ON_Surface **target;
     int last_split = 0;
     int t1_del, t2_del, t3_del;
@@ -374,7 +374,8 @@ bool ON_Surface_SubSurface(
     if (t3_del) delete *t3;
     (*result)->SetDomain(0, u_val->Min(), u_val->Max());
     (*result)->SetDomain(1, v_val->Min(), v_val->Max());
-    return split;
+
+    return split != 0;
 }
 
 bool ON_Surface_Quad_Split(
@@ -388,7 +389,7 @@ bool ON_Surface_Quad_Split(
     ON_Surface **q2,
     ON_Surface **q3)
 {
-    bool split_success = true;
+    ON_BOOL32 split_success = true;
     ON_Surface *north = NULL;
     ON_Surface *south = NULL;
 

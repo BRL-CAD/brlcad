@@ -2761,7 +2761,7 @@ is_pt_in_surf_overlap(
 
     if (surf1_pt_intersects_surf2) {
 	surfs_parallel_at_pt = surf1->NormalAt(surf1_pt.x, surf1_pt.y).IsParallelTo(
-	    surf2->NormalAt(px_event[0].m_b[0], px_event[0].m_b[1]));
+	    surf2->NormalAt(px_event[0].m_b[0], px_event[0].m_b[1])) != 0;
     }
     return surf1_pt_intersects_surf2 && surfs_parallel_at_pt;
 }
@@ -2892,7 +2892,7 @@ struct OverlapIsocurve {
 	overlap_t[0] = ol_start;
 	overlap_t[1] = ol_end;
 
-	bool swap_xy = src.knot.dir;
+	bool swap_xy = src.knot.dir != 0;
 	overlap_uv[0] = point_xy_or_yx(overlap_t[0], src.knot.c, swap_xy);
 	overlap_uv[1] = point_xy_or_yx(overlap_t[1], src.knot.c, swap_xy);
     }
@@ -2954,7 +2954,7 @@ is_curve_on_overlap_boundary(
     if (iso.overlap_t[0] < iso.overlap_t[1]) {
 	bool at_first_knot = iso.src.knot.IsFirst();
 	bool at_last_knot = iso.src.knot.IsLast();
-	bool closed_at_iso = surf1->IsClosed(1 - iso.src.knot.dir);
+	bool closed_at_iso = surf1->IsClosed(1 - iso.src.knot.dir) != 0;
 
 	ret = true;
 	if (closed_at_iso || (!at_first_knot && !at_last_knot)) {
@@ -3367,7 +3367,7 @@ append_overlap_segments(
 	// the intersections twice.
 	seg = new OverlapSegment(seg);
 	seg->m_fix = get_knots(surf1, surf_dir).back();
-	bool swap_xy = 1 - surf_dir;
+	bool swap_xy = (1 - surf_dir) != 0;
 	ON_2dPoint iso_pt1 = point_xy_or_yx(iso.overlap_t[0], seg->m_fix, swap_xy);
 	ON_2dPoint iso_pt2 = point_xy_or_yx(iso.overlap_t[1], seg->m_fix, swap_xy);
 	ON_Curve *&surf1_curve = iso.src.is_surfA ? seg->m_curveA :
