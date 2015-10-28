@@ -178,7 +178,7 @@ RT_EXPORT extern size_t db_ls(const struct db_i *dbip,
  * Note - deliberately did not name this fuction db_glob - probably want a more
  * powerful globbing API than just strings for more general usage...
  */
-int
+RT_EXPORT int
 db_expand_str_glob(struct bu_vls *dest, const char *input, struct db_i *dbip, int skip_first);
 
 
