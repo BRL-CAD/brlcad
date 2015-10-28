@@ -350,7 +350,6 @@ ged_remove(struct ged *gedp, int orig_argc, const char *orig_argv[])
     int remove_force = 0;
     int remove_from_comb = 1;
     int remove_recursive = 0;
-    int remove_refs = 0;
     int verbose = 0;
     int no_op = 0;
     size_t argc = (size_t)orig_argc;
@@ -364,7 +363,7 @@ ged_remove(struct ged *gedp, int orig_argc, const char *orig_argv[])
     struct rt_db_internal intern;
     struct rt_comb_internal *comb;
     int ret = GED_OK;
-    struct bu_opt_desc d[8];
+    struct bu_opt_desc d[7];
     struct bu_vls str = BU_VLS_INIT_ZERO;
     struct bu_vls rmlog = BU_VLS_INIT_ZERO;
     struct bu_ptbl objs = BU_PTBL_INIT_ZERO;
@@ -377,11 +376,10 @@ ged_remove(struct ged *gedp, int orig_argc, const char *orig_argv[])
     BU_OPT(d[0], "h", "help",  "", NULL, (void *)&print_help, "Print help and exit");
     BU_OPT(d[1], "?", "",      "", NULL, (void *)&print_help, "");
     BU_OPT(d[2], "f", "force",  "", NULL, (void *)&remove_force, "Treat combs like any other objects.  If recursive flag is added, do not verify objects are unused in other trees before deleting.");
-    BU_OPT(d[3], "a", "references",  "", NULL, (void *)&remove_refs, "Remove references to the removed object elsewhere in the database.  When used without the force force flag, will *only* remove references to the specificed object or objects and not the objects themselves.  When recursive mode is enabled will remove all references to all object identifed by the recursion, not just those explicitly listed by the user.");
-    BU_OPT(d[4], "r", "recursive",  "", NULL, (void *)&remove_recursive, "Walks combs and deletes all of their sub-objects (or, when used with just -a, removes references to objects but not the actual objects.) Will not delete objects used elsewhere in the database unless the -f option is also supplied.");
-    BU_OPT(d[5], "v", "verbose",  "[#]", &_rm_verbose, (void *)&verbose, "Enable verbose reporting.  Optional integer parameter specifies verbosity level - 0 is no output (default when no verbsosity flag is added), 1 reports objects skipped due to use elsewhere in the database (the default if no integer is supplied to -v), 2 adds reports of attempts to delete objects not present in the database, 3 adds reporting of successful deletions, and 4 adds reports of all references successfully removed.");
-    BU_OPT(d[6], "n", "no-op",  "", NULL, (void *)&no_op, "Perform a \"dry run\" - reports what actions would be taken but does not change the database.");
-    BU_OPT_NULL(d[7]);
+    BU_OPT(d[3], "r", "recursive",  "", NULL, (void *)&remove_recursive, "Walks combs and deletes all of their sub-objects (or, when used with just -a, removes references to objects but not the actual objects.) Will not delete objects used elsewhere in the database unless the -f option is also supplied.");
+    BU_OPT(d[4], "v", "verbose",  "[#]", &_rm_verbose, (void *)&verbose, "Enable verbose reporting.  Optional integer parameter specifies verbosity level - 0 is no output (default when no verbsosity flag is added), 1 reports objects skipped due to use elsewhere in the database (the default if no integer is supplied to -v), 2 adds reports of attempts to delete objects not present in the database, 3 adds reporting of successful deletions, and 4 adds reports of all references successfully removed.");
+    BU_OPT(d[5], "n", "no-op",  "", NULL, (void *)&no_op, "Perform a \"dry run\" - reports what actions would be taken but does not change the database.");
+    BU_OPT_NULL(d[6]);
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
@@ -435,7 +433,7 @@ ged_remove(struct ged *gedp, int orig_argc, const char *orig_argv[])
      * IMPORTANT: db_ls and db_search won't work properly without this */
     db_update_nref(gedp->ged_wdbp->dbip, &rt_uniresource);
 
-    if (remove_force || remove_refs || remove_recursive) remove_from_comb = 0;
+    if (remove_force || remove_recursive) remove_from_comb = 0;
 
     /* If we've got nothing else, we're done */
     if (BU_PTBL_LEN(&objs) == 0) {
@@ -501,7 +499,7 @@ ged_remove(struct ged *gedp, int orig_argc, const char *orig_argv[])
     /* Having handled the removal-from-comb cases, we move on to the more
      * general database removals.  The various combinations of options need
      * different logic */
-    if (!remove_refs && !remove_force && !remove_recursive) {
+    if (!remove_force && !remove_recursive) {
 	struct bu_ptbl rmobjs = BU_PTBL_INIT_ZERO;
 	if (_removal_queue(&rmobjs, gedp, &objs, &rmlog, verbose, 0)) {
 	    for (i = 0; i < (int)BU_PTBL_LEN(&rmobjs); i++) {
@@ -511,7 +509,7 @@ ged_remove(struct ged *gedp, int orig_argc, const char *orig_argv[])
 	bu_ptbl_free(&rmobjs);
 	goto rcleanup;
     }
-    if (!remove_refs && !remove_force && remove_recursive) {
+    if (!remove_force && remove_recursive) {
 	struct bu_ptbl rmobjs = BU_PTBL_INIT_ZERO;
 	if (_removal_queue(&rmobjs, gedp, &objs, &rmlog, verbose, 1)) {
 	    for (i = 0; i < (int)BU_PTBL_LEN(&rmobjs); i++) {
@@ -521,14 +519,14 @@ ged_remove(struct ged *gedp, int orig_argc, const char *orig_argv[])
 	bu_ptbl_free(&rmobjs);
 	goto rcleanup;
     }
-    if (!remove_refs &&  remove_force && !remove_recursive) {
+    if (remove_force && !remove_recursive) {
 	for (i = 0; i < (int)BU_PTBL_LEN(&objs); i++) {
 	    /* If _GLOBAL is specified explicitly with a force flag, remove it */
 	    (void)_rm_obj(gedp, (struct directory *)BU_PTBL_GET(&objs, i), &rmlog, verbose, 1, no_op);
 	}
 	goto rcleanup;
     }
-    if (!remove_refs &&  remove_force && remove_recursive) {
+    if (remove_force && remove_recursive) {
 	struct bu_ptbl rmobjs = BU_PTBL_INIT_ZERO;
 	(void)db_search(&rmobjs, DB_SEARCH_RETURN_UNIQ_DP, "-name *", BU_PTBL_LEN(&objs), (struct directory **)objs.buffer, gedp->ged_wdbp->dbip);
 	for (i = 0; i < (int)BU_PTBL_LEN(&rmobjs); i++) {
@@ -538,37 +536,6 @@ ged_remove(struct ged *gedp, int orig_argc, const char *orig_argv[])
 	bu_ptbl_free(&rmobjs);
 	goto rcleanup;
     }
-    if (remove_refs && !remove_force && !remove_recursive) {
-	_rm_ref(gedp, &objs, &rmlog, no_op);
-	goto rcleanup;
-    }
-    if (remove_refs && !remove_force && remove_recursive) {
-	struct bu_ptbl rmobjs = BU_PTBL_INIT_ZERO;
-	(void)db_search(&rmobjs, DB_SEARCH_RETURN_UNIQ_DP, "-name *", BU_PTBL_LEN(&objs), (struct directory **)objs.buffer, gedp->ged_wdbp->dbip);
-	_rm_ref(gedp, &rmobjs, &rmlog, no_op);
-	bu_ptbl_free(&rmobjs);
-	goto rcleanup;
-    }
-    if (remove_refs && remove_force && !remove_recursive) {
-	_rm_ref(gedp, &objs, &rmlog, no_op);
-	for (i = 0; i < (int)BU_PTBL_LEN(&objs); i++) {
-	    /* If _GLOBAL is specified explicitly with a force flag, remove it */
-	    (void)_rm_obj(gedp, (struct directory *)BU_PTBL_GET(&objs, i), &rmlog, verbose, 1, no_op);
-	}
-	goto rcleanup;
-    }
-    if (remove_refs &&  remove_force && remove_recursive) {
-	struct bu_ptbl rmobjs = BU_PTBL_INIT_ZERO;
-	(void)db_search(&rmobjs, DB_SEARCH_RETURN_UNIQ_DP, "-name *", BU_PTBL_LEN(&objs), (struct directory **)objs.buffer, gedp->ged_wdbp->dbip);
-	_rm_ref(gedp, &rmobjs, &rmlog, no_op);
-	for (i = 0; i < (int)BU_PTBL_LEN(&rmobjs); i++) {
-	    /* If _GLOBAL is specified explicitly with a force flag, remove it */
-	    (void)_rm_obj(gedp, (struct directory *)BU_PTBL_GET(&rmobjs, i), &rmlog, verbose, 1, no_op);
-	}
-	bu_ptbl_free(&rmobjs);
-	goto rcleanup;
-    }
-
 
 rcleanup:
     bu_ptbl_free(&objs);
