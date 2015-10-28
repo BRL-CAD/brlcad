@@ -270,7 +270,7 @@ surface_GetBoundingBox(
 	return false;
     }
 
-    bool growcurrent = (bool)bGrowBox;
+    bool growcurrent = bGrowBox != 0;
     for (int i=0; i<2; i++) {
 	if (domSplits[0][i] == ON_Interval::EmptyInterval)
 	    continue;
@@ -347,7 +347,7 @@ face_GetBoundingBox(
 
     // may be a smaller trimmed subset of surface so worth getting
     // face boundary
-    bool growcurrent = (bool)bGrowBox;
+    bool growcurrent = bGrowBox != 0;
     ON_3dPoint min, max;
     for (int li = 0; li < face.LoopCount(); li++) {
 	for (int ti = 0; ti < face.Loop(li)->TrimCount(); ti++) {
