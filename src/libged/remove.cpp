@@ -488,6 +488,13 @@ ged_remove(struct ged *gedp, int orig_argc, const char *orig_argv[])
 	    ret = GED_ERROR;
 	    goto rcleanup;
 	}
+	bu_vls_printf(gedp->ged_result_str, "Warning - this behavor of the rm command has been deprecated.  In future versions of BRL-CAD, the correct way to accomplish removing objects from a comb is to specify a path:\n\n");
+	bu_vls_printf(gedp->ged_result_str, "rm ");
+	for (i = 1; i < (int)BU_PTBL_LEN(&objs); i++) {
+	    const char *obj = ((struct directory *)BU_PTBL_GET(&objs, i))->d_namep;
+	    bu_vls_printf(gedp->ged_result_str, "%s/%s ", dp->d_namep, obj);
+	}
+	bu_vls_printf(gedp->ged_result_str, "\n\n");
 	goto rcleanup;
     }
 
