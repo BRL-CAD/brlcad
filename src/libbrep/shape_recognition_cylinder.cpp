@@ -184,7 +184,6 @@ cyl_implicit_params(struct subbrep_shoal_data *data, ON_SimpleArray<ON_Plane> *c
     ON_3dPointArray axis_pts_init;
     for (apit = apinit.begin(); apit != apinit.end(); apit++) {
 	const ON_BrepVertex *v = &(brep->m_V[*apit]);
-	ON_3dPoint p = v->Point();
 	axis_pts_init.Append(v->Point());
     }
 
