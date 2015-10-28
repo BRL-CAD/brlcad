@@ -539,7 +539,7 @@
 	  <para>
 	    Specifies a volumetric tolerance value that the three view computations must be within for
 	    computation to complete.  If volume calculation is selected and this option is not set, then
-	    the tolerance is set to 1/10,000 of the volume of the model. For large, complex objects
+	    the tolerance is set to 1/1,000 of the volume of the model bounding box. For large, complex objects
 	    (such as entire vehicles), this value might need to be set larger to achieve reasonable
 	    runtimes (or even completion). Given the approximate sampling nature of the algorithm, the
 	    three separate view computations will not usually produce identical results.
