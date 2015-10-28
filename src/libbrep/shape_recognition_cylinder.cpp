@@ -73,6 +73,7 @@ negative_cylinder(const ON_Brep *brep, int face_index, double cyl_tol) {
     return ret;
 }
 
+
 int
 cyl_implicit_plane(const ON_Brep *brep, int lc, int *le, ON_SimpleArray<ON_Plane> *cyl_planes)
 {
@@ -83,7 +84,7 @@ cyl_implicit_plane(const ON_Brep *brep, int lc, int *le, ON_SimpleArray<ON_Plane
     // If we have a count other than two or zero, return.
     if (linear_edges.size() != 2 && linear_edges.size() != 0)
        	return -2;
-    if (linear_edges.size() == 2 ) {
+    if (linear_edges.size() == 2) {
 	std::set<int> verts;
 	// If both edges share a pre-existing face that is planar, use the inverse of that
 	// plane.  Otherwise, construct a plane from the vertex points.
@@ -105,9 +106,9 @@ cyl_implicit_plane(const ON_Brep *brep, int lc, int *le, ON_SimpleArray<ON_Plane
 	ON_3dPoint pforigin = points[0] + points[1] + points[2] + points[3];
 	pforigin = pforigin*0.25;
 
-	bu_log("\\coordinate (impo) at (%f,%f,%f);\n", pforigin.x, pforigin.y, pforigin.z);
-	bu_log("\\coordinate (impn) at (%f,%f,%f);\n", pforigin.x + -0.6*pf.Normal().x, pforigin.y + -0.6*pf.Normal().y, pforigin.z + -0.6*pf.Normal().z);
-	bu_log("\\draw[red,->] (impo) -- (impn);\n");
+	bu_log("\\coordinate (impo) at (%f, %f, %f);\n", pforigin.x, pforigin.y, pforigin.z);
+	bu_log("\\coordinate (impn) at (%f, %f, %f);\n", pforigin.x + -0.6*pf.Normal().x, pforigin.y + -0.6*pf.Normal().y, pforigin.z + -0.6*pf.Normal().z);
+	bu_log("\\draw[red, ->] (impo) -- (impn);\n");
 	ON_3dVector v1 = pf.Xaxis() * points[0].DistanceTo(points[1]) * 0.8;
 	ON_3dVector v2 = pf.Yaxis() * points[1].DistanceTo(points[2]) * 0.6;
 	ON_3dPoint plane1 = pforigin + v1 + v2;
@@ -134,6 +135,7 @@ cyl_implicit_plane(const ON_Brep *brep, int lc, int *le, ON_SimpleArray<ON_Plane
 
     return -1;
 }
+
 
 // returns whether we need an arbn, the params in data, and bounding arb planes appended to cyl_planes
 int
@@ -180,7 +182,7 @@ cyl_implicit_params(struct subbrep_shoal_data *data, ON_SimpleArray<ON_Plane> *c
 	apinit.insert(edge->m_vi[0]);
 	apinit.insert(edge->m_vi[1]);
     }
-    // Add the points to a 3DPoint array 
+    // Add the points to a 3DPoint array
     ON_3dPointArray axis_pts_init;
     for (apit = apinit.begin(); apit != apinit.end(); apit++) {
 	const ON_BrepVertex *v = &(brep->m_V[*apit]);
@@ -194,10 +196,10 @@ cyl_implicit_params(struct subbrep_shoal_data *data, ON_SimpleArray<ON_Plane> *c
 	if (!(*cyl_planes)[i].Normal().IsPerpendicularTo(cylinder.Axis(), VUNITIZE_TOL) && i != implicit_plane_ind) {
 	    ON_3dPoint ipoint = ON_LinePlaneIntersect(l, (*cyl_planes)[i]);
 #if TIKZ_OUT1
-	    bu_log("\\coordinate (ip%d) at (%f,%f,%f);\n", i, ipoint.x, ipoint.y, ipoint.z);
+	    bu_log("\\coordinate (ip%d) at (%f, %f, %f);\n", i, ipoint.x, ipoint.y, ipoint.z);
 	    ON_3dPoint npoint = ipoint + 0.6*(*cyl_planes)[i].Normal();
-	    bu_log("\\coordinate (np%d) at (%f,%f,%f);\n", i, npoint.x, npoint.y, npoint.z);
-	    bu_log("\\draw[orange,->] (ip%d) -- (np%d);\n", i, i);
+	    bu_log("\\coordinate (np%d) at (%f, %f, %f);\n", i, npoint.x, npoint.y, npoint.z);
+	    bu_log("\\draw[orange, ->] (ip%d) -- (np%d);\n", i, i);
 #endif
 	    if ((*cyl_planes)[i].Normal().IsParallelTo(cylinder.Axis(), VUNITIZE_TOL)) {
 		axis_pts_init.Append(ipoint);
@@ -406,8 +408,6 @@ cyl_implicit_params(struct subbrep_shoal_data *data, ON_SimpleArray<ON_Plane> *c
 
     return need_arbn;
 }
-
-
 
 
 // Local Variables:
