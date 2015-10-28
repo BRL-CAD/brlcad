@@ -234,23 +234,14 @@ typedef ptrdiff_t ssize_t;
 #  undef UNUSED
 #endif
 #if GCC_PREREQ(2, 5)
-   /* GCC-style */
+   /* GCC-style compilers have an attribute */
 #  define UNUSED(parameter) UNUSED_ ## parameter __attribute__((unused))
+#elif defined(__cplusplus)
+   /* C++ allows the name to go away */
+#  define UNUSED(parameter) /* parameter */
 #else
-   /* MSVC/C++ */
-#  ifdef __cplusplus
-#    if defined(NDEBUG)
-#      define UNUSED(parameter) /* parameter */
-#    else /* some of them are asserted */
-#       define UNUSED(parameter) (parameter)
-#    endif
-#  else
-#    if defined(_MSC_VER)
-     /* disable reporting an "unreferenced formal parameter" */
-#      pragma warning( disable : 4100 )
-#    endif
-#    define UNUSED(parameter) (parameter)
-#  endif
+   /* some are asserted when !NDEBUG */
+#  define UNUSED(parameter) (parameter)
 #endif
 
 /**
@@ -373,12 +364,14 @@ typedef ptrdiff_t ssize_t;
  * this warning is caused by assigning an int (or other non-boolean
  * value) to a bool like this:
  *
- * int i = 1; bool b = i; 
+ * int i = 1; bool b = i;
  *
  * there is something to be said for making such assignments explict,
  * e.g., "b = (i != 0);", but this arguably decreases readability or
  * clarity and the fix has potential for introducing logic errors.
  */
+/*#  pragma warning( disable : 4800 ) */
+
 #endif
 
 /**
