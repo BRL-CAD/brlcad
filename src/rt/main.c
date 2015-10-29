@@ -38,6 +38,7 @@
 #include <signal.h>
 #include <math.h>
 
+#include "bu/endian.h"
 #include "bu/getopt.h"
 #include "bu/bitv.h"
 #include "bu/debug.h"
