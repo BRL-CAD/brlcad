@@ -92,33 +92,33 @@ _handle_UnlabeledValueArg(bu_arg_unlabeled_value_t *a, CmdLine &cmd)
   Arg *A = 0;
   switch (val_type) {
       case BU_ARG_BOOL: {
-        bool val = bu_str_true(a->def_val);
+        int val = bu_str_true(a->def_val);
         type_desc = "bool";
-        A = new UnlabeledValueArg<bool>(a->name, a->desc, a->req, val, type_desc);
+        A = new UnlabeledValueArg<bool>(a->name, a->desc, a->req == BU_OPT_REQUIRED, val, type_desc);
       }
         break;
       case BU_ARG_DOUBLE: {
         double val = strtod(a->def_val, NULL);
         type_desc = "double";
-        A = new UnlabeledValueArg<double>(a->name, a->desc, a->req, val, type_desc);
+        A = new UnlabeledValueArg<double>(a->name, a->desc, a->req == BU_OPT_REQUIRED, val, type_desc);
       }
         break;
       case BU_ARG_LONG: {
         long val = strtol(a->def_val, NULL, 10);
         type_desc = "long";
-        A = new UnlabeledValueArg<long>(a->name, a->desc, a->req, val, type_desc);
+        A = new UnlabeledValueArg<long>(a->name, a->desc, a->req == BU_OPT_REQUIRED, val, type_desc);
       }
         break;
       case BU_ARG_STRING: {
         string val = a->def_val;
         type_desc = "string";
-        A = new UnlabeledValueArg<string>(a->name, a->desc, a->req, val, type_desc);
+        A = new UnlabeledValueArg<string>(a->name, a->desc, a->req == BU_OPT_REQUIRED, val, type_desc);
       }
         break;
       default: {
         string val = a->def_val;
         type_desc = "string";
-        A = new UnlabeledValueArg<string>(a->name, a->desc, a->req, val, type_desc);
+        A = new UnlabeledValueArg<string>(a->name, a->desc, a->req == BU_OPT_REQUIRED, val, type_desc);
       }
         break;
   }

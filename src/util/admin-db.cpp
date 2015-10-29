@@ -235,9 +235,8 @@ main(int argc, char** argv)
         }
 
         // named object?
-        bool has_name = static_cast<bool>(r.h_name_present);
         string name("(none)");
-        if (has_name) {
+        if (r.h_name_present != 0) {
             ++named_obj;
             size_t len = r.name.ext_nbytes;
             name = "";

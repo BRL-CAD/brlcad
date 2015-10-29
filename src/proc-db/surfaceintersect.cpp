@@ -139,9 +139,9 @@ void
 SplitTrim(ON_BrepTrim *trim, double t)
 {
     ON_Curve *left, *right;
-    bool rv = trim->Split(t, left, right);
+    ON_BOOL32 rv = trim->Split(t, left, right);
 
-    if (rv) {
+    if (rv != 0) {
 	int lefti = trim->Brep()->AddTrimCurve(left);
 	int righti = trim->Brep()->AddTrimCurve(right);
 	trim->Loop()->m_ti.Remove(trim->m_trim_index);
