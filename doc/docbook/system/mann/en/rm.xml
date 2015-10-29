@@ -65,7 +65,8 @@
 	<term><emphasis remap="B" role="bold">--verbose [#]</emphasis></term>
 	<listitem>
 	  <para>
-	    Control the verbosity of reporting during a <command>rm</command> operation.
+	    Control the verbosity of reporting during a <command>rm</command> operation.  Repeated
+	    specification of -v option will increase verbosity of reporting.
 	  </para>
 	</listitem>
       </varlistentry>
