@@ -94,7 +94,7 @@ db_expand_str_glob(struct bu_vls *dest, const char *input, struct db_i *dbip, in
     char *src = NULL;
 
     if (dbip == DBI_NULL) {
-	bu_vls_sprintf(dest, "%s", src);
+	bu_vls_sprintf(dest, "%s", input);
 	return 0;
     }
 
