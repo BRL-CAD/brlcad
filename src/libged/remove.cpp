@@ -29,7 +29,6 @@
 #include <set>
 
 #include <string.h>
-#include <limits.h> /* FOR INT_MAX */
 
 #include "bu/cmd.h"
 #include "bu/opt.h"
@@ -326,31 +325,11 @@ cleanup:
 
 
 HIDDEN int
-_rm_verbose(struct bu_vls *msg, int argc, const char **argv, void *set_v)
+_rm_verbose(struct bu_vls *UNUSED(msg), int UNUSED(argc), const char **UNUSED(argv), void *set_v)
 {
-    int val = INT_MAX;
     int *int_set = (int *)set_v;
-    int int_ret;
-    if (!argv || !argv[0] || strlen(argv[0]) == 0 || argc == 0) {
-	/* Have verbosity flag but no valid arg - go with just the flag */
-	if (int_set) (*int_set) = 1;
-	return 0;
-    }
-
-    int_ret = bu_opt_int(msg, argc, argv, (void *)&val);
-
-    /* Option isn't a number - treat as flag */
-    if (int_ret == -1) {
-	if (int_set) (*int_set) = 1;
-	return 0;
-    }
-
-    if (val < 0) return -1;
-    if (val > 4) val = 4;
-
-    if (int_set) (*int_set) = val;
-
-    return 1;
+    if (int_set) (*int_set) = (*int_set) + 1;
+    return 0;
 }
 
 int
@@ -387,7 +366,7 @@ ged_remove(struct ged *gedp, int orig_argc, const char *orig_argv[])
     BU_OPT(d[1], "?", "",      "", NULL, (void *)&print_help, "");
     BU_OPT(d[2], "f", "force",  "", NULL, (void *)&remove_force, "Treat combs like any other objects.  If recursive flag is added, do not verify objects are unused in other trees before deleting.");
     BU_OPT(d[3], "r", "recursive",  "", NULL, (void *)&remove_recursive, "Walks combs and deletes all of their sub-objects (or, when used with just -a, removes references to objects but not the actual objects.) Will not delete objects used elsewhere in the database unless the -f option is also supplied.");
-    BU_OPT(d[4], "v", "verbose",  "[#]", &_rm_verbose, (void *)&verbose, "Enable verbose reporting.  Optional integer parameter specifies verbosity level - 0 is no output (default when no verbsosity flag is added), 1 reports objects skipped due to use elsewhere in the database (the default if no integer is supplied to -v), 2 adds reports of attempts to delete objects not present in the database, 3 adds reporting of successful deletions, and 4 adds reports of all references successfully removed.");
+    BU_OPT(d[4], "v", "verbose",  "", &_rm_verbose, (void *)&verbose, "Enable verbose reporting.  Supplying the option multiple times will increase the verbosity of reporting.");
     BU_OPT(d[5], "n", "no-op",  "", NULL, (void *)&no_op, "Perform a \"dry run\" - reports what actions would be taken but does not change the database.");
     BU_OPT_NULL(d[6]);
 
