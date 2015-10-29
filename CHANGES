@@ -137,6 +137,8 @@ pixcut, pixpaste
         copyright cleanup [deprecated 7.26]
 librt, fast4-g
 	removal of CLINE entity support [deprecated 7.26]
+kill, killtree, killall, killrefs
+        replaced with rm command [deprecated 7.26]
 
 7.24
 ----
