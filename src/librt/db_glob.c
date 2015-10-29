@@ -88,7 +88,7 @@ db_expand_str_glob(struct bu_vls *dest, const char *input, struct db_i *dbip, in
     int backslashed;
     int match_cnt = 0;
     int firstword = 1;
-    int skip_first = (flags & DB_GLOB_SKIP_FIRST);
+    int skip_first = (flags & DB_GLOB_SKIP_FIRST) ? 1 : 0;
     struct bu_vls word = BU_VLS_INIT_ZERO;         /* Current word being processed */
     struct bu_vls temp = BU_VLS_INIT_ZERO;
     char *src = NULL;
@@ -178,6 +178,7 @@ db_expand_str_glob(struct bu_vls *dest, const char *input, struct db_i *dbip, in
 	    _debackslash(dest, &word);
 	}
 
+	firstword = 0;
     }
 
     bu_vls_free(&temp);
