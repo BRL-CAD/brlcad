@@ -452,30 +452,6 @@ BU_EXPORT extern int bu_structparse_argv(struct bu_vls *str,
     }
 
 
-/** @brief routines for parsing boolean values from strings */
-
-/**
- * Returns truthfully if a given input string represents an
- * "affirmative string".
- *
- * Input values that are null, empty, begin with the letter 'n', or
- * are 0-valued return as false.  Any other input value returns as
- * true.  Strings that strongly indicate true return as 1, other
- * values still return as true but may be a value greater than 1.
- */
-BU_EXPORT extern int bu_str_true(const char *str);
-
-/**
- * Returns truthfully if a given input string represents a
- * "negative string".
- *
- * Input values that are null, empty, begin with the letter 'n', or
- * are 0-valued return as true.  Any other input value returns as
- * false.
- */
-BU_EXPORT extern int bu_str_false(const char *str);
-
-
 /** @} */
 
 __END_DECLS
