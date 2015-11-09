@@ -341,6 +341,7 @@ ged_remove(struct ged *gedp, int orig_argc, const char *orig_argv[])
     int remove_recursive = 0;
     int verbose = 0;
     int no_op = 0;
+    int legacy = 0;
     size_t argc = (size_t)orig_argc;
     char **argv = bu_dup_argv(argc, orig_argv);
     size_t free_argc = argc;
@@ -352,7 +353,7 @@ ged_remove(struct ged *gedp, int orig_argc, const char *orig_argv[])
     struct rt_db_internal intern;
     struct rt_comb_internal *comb;
     int ret = GED_OK;
-    struct bu_opt_desc d[7];
+    struct bu_opt_desc d[8];
     struct bu_vls str = BU_VLS_INIT_ZERO;
     struct bu_vls rmlog = BU_VLS_INIT_ZERO;
     struct bu_ptbl objs = BU_PTBL_INIT_ZERO;
@@ -368,7 +369,8 @@ ged_remove(struct ged *gedp, int orig_argc, const char *orig_argv[])
     BU_OPT(d[3], "r", "recursive",  "", NULL, (void *)&remove_recursive, "Walks combs and deletes all of their sub-objects (or, when used with just -a, removes references to objects but not the actual objects.) Will not delete objects used elsewhere in the database unless the -f option is also supplied.");
     BU_OPT(d[4], "v", "verbose",  "", &_rm_verbose, (void *)&verbose, "Enable verbose reporting.  Supplying the option multiple times will increase the verbosity of reporting.");
     BU_OPT(d[5], "n", "no-op",  "", NULL, (void *)&no_op, "Perform a \"dry run\" - reports what actions would be taken but does not change the database.");
-    BU_OPT_NULL(d[6]);
+    BU_OPT(d[6], "L", "legacy",  "", NULL, (void *)&legacy, "[DEPRECATED] Use the old rm behavior, which takes as arguments one comb and a list of objects to remove from that comb.");
+    BU_OPT_NULL(d[7]);
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
@@ -392,6 +394,64 @@ ged_remove(struct ged *gedp, int orig_argc, const char *orig_argv[])
 	bu_vls_free(&str);
 	bu_free_argv(free_argc,free_argv);
 	return GED_HELP;
+    }
+
+
+    /* If we've got a comb to start with and none of the flags are active, the
+     * interpretation is that the list of objs is removed from the comb child
+     * list of the first comb. */
+    if (legacy) {
+	if ((dp = db_lookup(gedp->ged_wdbp->dbip, argv[0], LOOKUP_NOISY)) == RT_DIR_NULL) {
+	    ret = GED_ERROR;
+	    goto rcleanup;
+	}
+	if ((dp->d_flags & RT_DIR_COMB) != 0) {
+	    if (BU_PTBL_LEN(&objs) == 1) {
+		bu_vls_printf(gedp->ged_result_str, "Error: single comb supplied with no flags - not removing %s.  To remove an individual comb from the database add the -f flag.", argv[1]);
+		ret = GED_ERROR;
+		goto rcleanup;
+	    }
+	    if (rt_db_get_internal(&intern, dp, gedp->ged_wdbp->dbip, (fastf_t *)NULL, &rt_uniresource) < 0) {
+		bu_vls_printf(gedp->ged_result_str, "Database read error, aborting");
+		ret = GED_ERROR;
+		goto rcleanup;
+	    }
+
+	    comb = (struct rt_comb_internal *)intern.idb_ptr;
+	    RT_CK_COMB(comb);
+
+	    /* Process each argument */
+	    for (i = 1; i < ret_ac; i++) {
+		if (db_tree_del_dbleaf(&(comb->tree), argv[i], &rt_uniresource, 0) < 0) {
+		    bu_vls_printf(gedp->ged_result_str, "ERROR: Failure deleting %s/%s\n", dp->d_namep, argv[i]);
+		    ret = GED_ERROR;
+		    goto rcleanup;
+		} else {
+		    struct bu_vls path = BU_VLS_INIT_ZERO;
+
+		    bu_vls_printf(&path, "%s/%s", dp->d_namep, argv[i]);
+		    _dl_eraseAllPathsFromDisplay(gedp->ged_gdp->gd_headDisplay, gedp->ged_wdbp->dbip, gedp->ged_free_vlist_callback, bu_vls_addr(&path), 0, gedp->freesolid);
+		    bu_vls_free(&path);
+		    bu_vls_printf(gedp->ged_result_str, "deleted %s/%s\n", dp->d_namep, argv[i]);
+		}
+	    }
+
+	    if (rt_db_put_internal(dp, gedp->ged_wdbp->dbip, &intern, &rt_uniresource) < 0) {
+		bu_vls_printf(gedp->ged_result_str, "Database write error, aborting");
+		ret = GED_ERROR;
+		goto rcleanup;
+	    }
+	    bu_vls_printf(gedp->ged_result_str, "Warning - this behavor of the rm command has been deprecated.  In future versions of BRL-CAD, the correct way to accomplish removing objects from a comb is to specify a path:\n\n");
+	    bu_vls_printf(gedp->ged_result_str, "rm ");
+	    for (i = 1; i < ret_ac; i++) {
+		bu_vls_printf(gedp->ged_result_str, "%s/%s ", dp->d_namep, argv[i]);
+	    }
+	    bu_vls_printf(gedp->ged_result_str, "\n\n");
+	    goto rcleanup;
+	} else {
+	    ret = GED_ERROR;
+	    goto rcleanup;
+	}
     }
 
     /* Collect paths without slashes - those are full object removals, not
@@ -435,55 +495,6 @@ ged_remove(struct ged *gedp, int orig_argc, const char *orig_argv[])
 	goto rcleanup;
     }
 
-    /* If we've got a comb to start with and none of the flags are active, the
-     * interpretation is that the list of objs is removed from the comb child
-     * list of the first comb. */
-    if (remove_from_comb && (dp->d_flags & RT_DIR_COMB) != 0) {
-	if (BU_PTBL_LEN(&objs) == 1) {
-	    bu_vls_printf(gedp->ged_result_str, "Error: single comb supplied with no flags - not removing %s.  To remove an individual comb from the database add the -f flag.", argv[1]);
-	    ret = GED_ERROR;
-	    goto rcleanup;
-	}
-	if (rt_db_get_internal(&intern, dp, gedp->ged_wdbp->dbip, (fastf_t *)NULL, &rt_uniresource) < 0) {
-	    bu_vls_printf(gedp->ged_result_str, "Database read error, aborting");
-	    ret = GED_ERROR;
-	    goto rcleanup;
-	}
-
-	comb = (struct rt_comb_internal *)intern.idb_ptr;
-	RT_CK_COMB(comb);
-
-	/* Process each argument */
-	for (i = 1; i < (int)BU_PTBL_LEN(&objs); i++) {
-	    const char *obj = ((struct directory *)BU_PTBL_GET(&objs, i))->d_namep;
-	    if (db_tree_del_dbleaf(&(comb->tree), obj, &rt_uniresource, 0) < 0) {
-		bu_vls_printf(gedp->ged_result_str, "ERROR: Failure deleting %s/%s\n", dp->d_namep, obj);
-		ret = GED_ERROR;
-		goto rcleanup;
-	    } else {
-		struct bu_vls path = BU_VLS_INIT_ZERO;
-
-		bu_vls_printf(&path, "%s/%s", dp->d_namep, obj);
-		_dl_eraseAllPathsFromDisplay(gedp->ged_gdp->gd_headDisplay, gedp->ged_wdbp->dbip, gedp->ged_free_vlist_callback, bu_vls_addr(&path), 0, gedp->freesolid);
-		bu_vls_free(&path);
-		bu_vls_printf(gedp->ged_result_str, "deleted %s/%s\n", dp->d_namep, obj);
-	    }
-	}
-
-	if (rt_db_put_internal(dp, gedp->ged_wdbp->dbip, &intern, &rt_uniresource) < 0) {
-	    bu_vls_printf(gedp->ged_result_str, "Database write error, aborting");
-	    ret = GED_ERROR;
-	    goto rcleanup;
-	}
-	bu_vls_printf(gedp->ged_result_str, "Warning - this behavor of the rm command has been deprecated.  In future versions of BRL-CAD, the correct way to accomplish removing objects from a comb is to specify a path:\n\n");
-	bu_vls_printf(gedp->ged_result_str, "rm ");
-	for (i = 1; i < (int)BU_PTBL_LEN(&objs); i++) {
-	    const char *obj = ((struct directory *)BU_PTBL_GET(&objs, i))->d_namep;
-	    bu_vls_printf(gedp->ged_result_str, "%s/%s ", dp->d_namep, obj);
-	}
-	bu_vls_printf(gedp->ged_result_str, "\n\n");
-	goto rcleanup;
-    }
 
     /* Having handled the removal-from-comb cases, we move on to the more
      * general database removals.  The various combinations of options need
