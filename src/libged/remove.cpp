@@ -113,6 +113,54 @@ _rm_ref(struct ged *gedp, struct bu_ptbl *objs, struct bu_vls *rmlog, int dry_ru
     } FOR_ALL_DIRECTORY_END;
 }
 
+/* Determine if the given full path may be safely removed from the database.  If a db_search
+ * of the .g file finds zero paths matching the fp path that are not present in the paths table,
+ * the path may be removed. */
+HIDDEN int
+_rm_path_safety_check(struct db_i *dbip, struct bu_ptbl *paths, struct db_full_path *fp)
+{
+    size_t i,j;
+    size_t count = 0;
+    int path_cnt = 0;
+    struct bu_vls str = BU_VLS_INIT_ZERO;
+    struct directory **tpaths = NULL;
+    struct bu_ptbl results = BU_PTBL_INIT_ZERO;
+
+    if (!dbip || !paths || !fp)
+	return 0;
+
+    bu_vls_sprintf(&str, "-path */%s/%s", fp->fp_names[fp->fp_len-2]->d_namep, DB_FULL_PATH_CUR_DIR(fp)->d_namep);
+
+    path_cnt = db_ls(dbip, DB_LS_TOPS, NULL, &(tpaths));
+    (void)db_search(&results, DB_SEARCH_TREE, bu_vls_cstr(&str), path_cnt, tpaths, dbip);
+    if (tpaths) bu_free(tpaths, "free search paths");
+
+
+    /* If we got results, see if they are in the paths tbl.  Any that aren't disqualify
+     * the path from a safe delete */
+    count = BU_PTBL_LEN(&results);
+    if (BU_PTBL_LEN(&results) > 0) {
+	for (i = 0; i < BU_PTBL_LEN(&results); i++) {
+	    int safe_delete = 0;
+	    struct db_full_path *p1 = (struct db_full_path *)BU_PTBL_GET(&results, i);
+	    for (j = 0; j < BU_PTBL_LEN(paths); j++) {
+		struct db_full_path *p2 = (struct db_full_path *)BU_PTBL_GET(paths, i);
+		if (db_identical_full_paths(p1, p2)) {
+		    safe_delete = 1;
+		    break;
+		}
+	    }
+	    if (!safe_delete) {
+		return 1;
+	    }
+	}
+    } else {
+	bu_ptbl_free(&results);
+	return -1;
+    }
+
+    return 0;
+}
 
 /* this finds references to 'obj' that are not within any of the the 'topobjs'
  * combination hierarchies, elsewhere in the database.  this is so we can make
@@ -320,7 +368,6 @@ ged_remove(struct ged *gedp, int orig_argc, const char *orig_argv[])
 {
     int print_help = 0;
     int remove_force = 0;
-    int remove_from_comb = 1;
     int remove_recursive = 0;
     int verbose = 0;
     int no_op = 0;
@@ -340,6 +387,7 @@ ged_remove(struct ged *gedp, int orig_argc, const char *orig_argv[])
     struct bu_vls str = BU_VLS_INIT_ZERO;
     struct bu_vls rmlog = BU_VLS_INIT_ZERO;
     struct bu_ptbl objs = BU_PTBL_INIT_ZERO;
+    struct bu_ptbl paths = BU_PTBL_INIT_ZERO;
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
     GED_CHECK_DRAWABLE(gedp, GED_ERROR);
@@ -453,13 +501,37 @@ ged_remove(struct ged *gedp, int orig_argc, const char *orig_argv[])
 		}
 	    }
 	} else {
-	    /* Make a db_full_path from the string to verify it */
-	    struct db_full_path fp;
-	    db_full_path_init(&fp);
-	    if (db_string_to_path(&fp, gedp->ged_wdbp->dbip, argv[i]) != -1) {
-		ret = _ged_rm_path(gedp, fp.fp_names[fp.fp_len-2], DB_FULL_PATH_CUR_DIR(&fp));
+	    /* Make a db_full_path from the string */
+	    struct db_full_path *fp;
+	    BU_GET(fp, struct db_full_path);
+	    db_full_path_init(fp);
+	    if (db_string_to_path(fp, gedp->ged_wdbp->dbip, argv[i]) != -1) {
+		bu_ptbl_ins(&paths, (long *)fp);
+	    } else {
+		db_free_full_path(fp);
+		BU_PUT(fp, struct db_full_path);
 	    }
-	    db_free_full_path(&fp);
+	}
+    }
+
+    /* Update references. */
+    db_update_nref(gedp->ged_wdbp->dbip, &rt_uniresource);
+
+    /* Handle full paths */
+    if (BU_PTBL_LEN(&paths) > 0) {
+	size_t k;
+	if (!remove_force) {
+	    for (k = 0; k < BU_PTBL_LEN(&paths); k++) {
+		struct db_full_path *fp = (struct db_full_path *)BU_PTBL_GET(&paths, k);
+		if (!_rm_path_safety_check(gedp->ged_wdbp->dbip, &paths, fp)) {
+		    (void)_ged_rm_path(gedp, fp->fp_names[fp->fp_len-2], DB_FULL_PATH_CUR_DIR(fp));
+		}
+	    }
+	} else {
+	    for (k = 0; k < BU_PTBL_LEN(&paths); k++) {
+		struct db_full_path *fp = (struct db_full_path *)BU_PTBL_GET(&paths, k);
+		(void)_ged_rm_path(gedp, fp->fp_names[fp->fp_len-2], DB_FULL_PATH_CUR_DIR(fp));
+	    }
 	}
     }
 
@@ -467,19 +539,10 @@ ged_remove(struct ged *gedp, int orig_argc, const char *orig_argv[])
      * IMPORTANT: db_ls and db_search won't work properly without this */
     db_update_nref(gedp->ged_wdbp->dbip, &rt_uniresource);
 
-    if (remove_force || remove_recursive) remove_from_comb = 0;
-
     /* If we've got nothing else, we're done */
     if (BU_PTBL_LEN(&objs) == 0) {
 	goto rcleanup;
     }
-
-    /* Behavior depends on the type of the first object (potentially, based on supplied flags) */
-    if ((dp = db_lookup(gedp->ged_wdbp->dbip, ((struct directory *)BU_PTBL_GET(&objs, 0))->d_namep, LOOKUP_NOISY)) == RT_DIR_NULL) {
-	ret = GED_ERROR;
-	goto rcleanup;
-    }
-
 
     /* Having handled the removal-from-comb cases, we move on to the more
      * general database removals.  The various combinations of options need
