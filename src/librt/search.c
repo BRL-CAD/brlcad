@@ -86,12 +86,15 @@
 #include <stdlib.h>
 #include <ctype.h>
 #include <time.h>
-#include <regex.h>
 #include <limits.h> /* for INT_MAX */
 
-#include "bu/cmd.h"
+#define __restrict /* quell gcc 4.1.2 system regex.h -pedantic-errors */
+#include <regex.h>
 
-#include "db.h"
+#include "bu/cmd.h"
+#include "bu/path.h"
+
+#include "rt/db4.h"
 #include "./librt_private.h"
 #include "./search.h"
 
@@ -1005,28 +1008,22 @@ f_type(struct db_plan_t *plan, struct db_node_t *db_node, struct db_i *dbip, str
     if (dp->d_flags & RT_DIR_COMB) {
 	if (dp->d_flags & RT_DIR_REGION) {
 	    if ((!bu_fnmatch(plan->type_data, "r", 0)) || (!bu_fnmatch(plan->type_data, "reg", 0))  || (!bu_fnmatch(plan->type_data, "region", 0))) {
-		return 1;
-	    } else {
-		db_node->matched_filters = 0;
-		return 0;
+		type_match = 1;
 	    }
 	}
 	if ((!bu_fnmatch(plan->type_data, "c", 0)) || (!bu_fnmatch(plan->type_data, "comb", 0)) || (!bu_fnmatch(plan->type_data, "combination", 0))) {
-	    return 1;
-	} else {
-	    db_node->matched_filters = 0;
-	    return 0;
+	    type_match = 1;
 	}
+	goto return_label;
     } else {
 	if ((!bu_fnmatch(plan->type_data, "r", 0)) || (!bu_fnmatch(plan->type_data, "reg", 0))  || (!bu_fnmatch(plan->type_data, "region", 0)) || (!bu_fnmatch(plan->type_data, "c", 0)) || (!bu_fnmatch(plan->type_data, "comb", 0)) || (!bu_fnmatch(plan->type_data, "combination", 0))) {
-	    db_node->matched_filters = 0;
-	    return 0;
+	    goto return_label;
 	}
 
     }
 
     if (rt_db_get_internal(&intern, dp, dbip, (fastf_t *)NULL, &rt_uniresource) < 0) return 0;
-    if (intern.idb_major_type != DB5_MAJORTYPE_BRLCAD || !intern.idb_meth->ft_label) {
+    if (intern.idb_major_type != DB5_MAJORTYPE_BRLCAD) {
 	rt_db_free_internal(&intern);
 	db_node->matched_filters = 0;
 	return 0;
@@ -1078,6 +1075,8 @@ f_type(struct db_plan_t *plan, struct db_node_t *db_node, struct db_i *dbip, str
     }
 
     rt_db_free_internal(&intern);
+
+return_label:
 
     if (!type_match) db_node->matched_filters = 0;
     return type_match;
@@ -2280,9 +2279,9 @@ db_search(struct bu_ptbl *search_results,
 
     if (!paths) {
 	if (search_flags & DB_SEARCH_HIDDEN) {
-	    path_cnt = db_ls(dbip, DB_LS_TOPS | DB_LS_HIDDEN, &top_level_objects);
+	    path_cnt = db_ls(dbip, DB_LS_TOPS | DB_LS_HIDDEN, NULL, &top_level_objects);
 	} else {
-	    path_cnt = db_ls(dbip, DB_LS_TOPS, &top_level_objects);
+	    path_cnt = db_ls(dbip, DB_LS_TOPS, NULL, &top_level_objects);
 	}
 	paths = top_level_objects;
     }

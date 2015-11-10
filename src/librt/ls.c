@@ -28,8 +28,9 @@
 #include <string.h>
 #include "bio.h"
 
+#include "bu/path.h"
 #include "vmath.h"
-#include "db.h"
+#include "rt/db4.h"
 #include "raytrace.h"
 
 HIDDEN int
@@ -54,11 +55,11 @@ dp_eval_flags(struct directory *dp, int flags)
     return (flag_eval) ? 0 : 1;
 }
 
-int
-db_ls(const struct db_i *dbip, int flags, struct directory ***dpv)
+size_t
+db_ls(const struct db_i *dbip, int flags, const char *pattern, struct directory ***dpv)
 {
-    int i;
-    int objcount = 0;
+    size_t i;
+    size_t objcount = 0;
     struct directory *dp;
 
     RT_CK_DBI(dbip);
@@ -74,8 +75,10 @@ db_ls(const struct db_i *dbip, int flags, struct directory ***dpv)
 	for (i = 0; i < RT_DBNHASH; i++) {
 	    for (dp = dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
 		if (dp_eval_flags(dp,flags)) {
-		    (*dpv)[objcount] = dp;
-		    objcount++;
+		    if (!pattern || !bu_fnmatch(pattern, dp->d_namep, 0)) {
+			(*dpv)[objcount] = dp;
+			objcount++;
+		    }
 		}
 	    }
 	}
@@ -122,17 +125,15 @@ db_dpv_to_argv(struct directory **dpv)
 {
     char **argv = NULL;
     int dpv_cnt = 0;
-    struct directory *dp = dpv[dpv_cnt];
     if (!dpv) return argv;
-    while (dp) {
+
+    while (dpv[dpv_cnt]) {
 	dpv_cnt++;
-	dp = dpv[dpv_cnt];
     }
     if (dpv_cnt > 0) {
 	argv = (char **)bu_malloc(sizeof(char *) * (dpv_cnt + 1), "char pointer array");
 	dpv_cnt = 0;
-	dp = dpv[0];
-	while (dpv) {
+	while (dpv[dpv_cnt]) {
 	    argv[dpv_cnt] = dpv[dpv_cnt]->d_namep;
 	    dpv_cnt++;
 	}

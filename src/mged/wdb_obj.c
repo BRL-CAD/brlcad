@@ -2406,6 +2406,50 @@ wdb_reopen_tcl(void *clientData,
 }
 
 
+#if 1
+int
+wdb_match_cmd(struct rt_wdb *wdbp,
+	      int UNUSED(argc),
+	      const char *argv[])
+{
+    struct bu_vls matches;
+
+    RT_CK_WDB(wdbp);
+
+    /* Verify that this wdb supports lookup operations
+       (non-null dbip) */
+    if (wdbp->dbip == 0) {
+	Tcl_AppendResult((Tcl_Interp *)wdbp->wdb_interp, "this database does not support lookup operations");
+	return TCL_ERROR;
+    }
+
+    bu_vls_init(&matches);
+    for (++argv; *argv != NULL; ++argv) {
+	register int i, num;
+	register struct directory *dp;
+	for (i = num = 0; i < RT_DBNHASH; i++) {
+	    for (dp = wdbp->dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
+		if (bu_fnmatch(*argv, dp->d_namep, 0) != 0)
+		    continue;
+		if (num == 0)
+		    bu_vls_strcat(&matches, dp->d_namep);
+		else {
+		    bu_vls_strcat(&matches, " ");
+		    bu_vls_strcat(&matches, dp->d_namep);
+		}
+		++num;
+	    }
+	}
+
+	if (num > 0)
+	    bu_vls_strcat(&matches, " ");
+    }
+    bu_vls_trimspace(&matches);
+    Tcl_AppendResult((Tcl_Interp *)wdbp->wdb_interp, bu_vls_addr(&matches), (char *)NULL);
+    bu_vls_free(&matches);
+    return TCL_OK;
+}
+#else
 int
 wdb_match_cmd(struct rt_wdb *wdbp,
 	      int UNUSED(argc),
@@ -2432,6 +2476,7 @@ wdb_match_cmd(struct rt_wdb *wdbp,
     bu_vls_free(&matches);
     return TCL_OK;
 }
+#endif
 
 
 /**
