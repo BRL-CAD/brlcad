@@ -208,6 +208,10 @@
 		<entry>Gaps/voids</entry>
 	      </row>
 	      <row>
+		<entry>m</entry>
+		<entry>Weight + Centroids + Moments of Inertia</entry>
+	      </row>
+	      <row>
 		<entry>o</entry>
 		<entry>Overlaps</entry>
 	      </row>
