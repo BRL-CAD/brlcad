@@ -198,6 +198,11 @@ echo $CMD
 echo $CMD >> gqa.log 2>&1
 $CMD >> gqa.log 2>&1
 
+CMD="$GQA -Am gqa.g closed_box.r"
+echo $CMD
+echo $CMD >> gqa.log 2>&1
+$CMD >> gqa.log 2>&1
+
 
 if [ $STATUS = 0 ] ; then
     echo "-> gqa.sh succeeded"
