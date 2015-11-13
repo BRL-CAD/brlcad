@@ -61,6 +61,8 @@
  *	Number of matches in the current invocation of glob.
  */
 
+#include "common.h"
+
 #include <sys/stat.h>
 
 #include <ctype.h>
@@ -570,7 +572,7 @@ glob0(const Char *pattern, bu_glob_t *pglob, struct glob_lim *limitp)
 static int
 compare(const void *p, const void *q)
 {
-	return(strcmp(*(char **)p, *(char **)q));
+	return(bu_strcmp(*(char **)p, *(char **)q));
 }
 
 static int
@@ -579,7 +581,7 @@ compare_gps(const void *_p, const void *_q)
 	const struct glob_path_stat *p = (const struct glob_path_stat *)_p;
 	const struct glob_path_stat *q = (const struct glob_path_stat *)_q;
 
-	return(strcmp(p->gps_path, q->gps_path));
+	return(bu_strcmp(p->gps_path, q->gps_path));
 }
 
 static int
