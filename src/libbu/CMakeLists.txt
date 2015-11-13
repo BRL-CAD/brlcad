@@ -127,6 +127,7 @@ add_subdirectory(y2038)
 
 set(bu_ignore_files
   bu_internals.h
+  charclass.h
   mime.cmake
   parallel.h
   rb_internals.h
