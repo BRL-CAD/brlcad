@@ -126,6 +126,8 @@ static CHARCLASS charclasses[] = {
     { NULL,     NULL}
 };
 
+#define NCCLASSES (sizeof(charclasses) / sizeof(charclasses[0]) - 1)
+
 /*
  * Local Variables:
  * tab-width: 8
