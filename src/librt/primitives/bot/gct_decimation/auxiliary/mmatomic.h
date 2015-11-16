@@ -311,23 +311,25 @@ static inline int64_t mmAtomicCmpXchg64(mmAtomic64 *v, int64_t old, int64_t vnew
 }
 
 
-static void mmQuellPedantic()
+static void mmQuellPedantic(int var)
 {
-  (void)mmAtomicAnd32(NULL, 0);
-  (void)mmAtomicOr32(NULL, 0);
-  (void)mmAtomicAddRead32(NULL, 0);
-  (void)mmAtomicSpinWaitEq32(NULL, 0);
-  (void)mmAtomicLockInit32(NULL);
-  (void)mmAtomicLockTryRead32(NULL, 0);
-  (void)mmAtomicLockTryWrite32(NULL, 0);
-  (void)mmAtomicLockDoneRead32(NULL);
-  (void)mmAtomicLockDoneWrite32(NULL);
-  (void)mmAtomicRead64(NULL);
-  (void)mmAtomicWrite64(NULL, 0);
-  (void)mmAtomicAnd64(NULL, 0);
-  (void)mmAtomicOr64(NULL, 0);
-  (void)mmAtomicCmpXchg64(NULL, 0, 0);
-  (void)mmQuellPedantic();
+if (!var) {
+	(void)mmAtomicAnd32(NULL, 0);
+	(void)mmAtomicOr32(NULL, 0);
+	(void)mmAtomicAddRead32(NULL, 0);
+	(void)mmAtomicSpinWaitEq32(NULL, 0);
+	(void)mmAtomicLockInit32(NULL);
+	(void)mmAtomicLockTryRead32(NULL, 0);
+	(void)mmAtomicLockTryWrite32(NULL, 0);
+	(void)mmAtomicLockDoneRead32(NULL);
+	(void)mmAtomicLockDoneWrite32(NULL);
+	(void)mmAtomicRead64(NULL);
+	(void)mmAtomicWrite64(NULL, 0);
+	(void)mmAtomicAnd64(NULL, 0);
+	(void)mmAtomicOr64(NULL, 0);
+	(void)mmAtomicCmpXchg64(NULL, 0, 0);
+	(void)mmQuellPedantic(1);
+}
 }
 
 #endif
