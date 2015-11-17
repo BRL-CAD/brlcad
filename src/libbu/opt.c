@@ -421,11 +421,9 @@ bu_opt_parse(struct bu_vls *msgs, int argc, const char **argv, const struct bu_o
 		 * processing situation, we've already verified that each entry
 		 * has a desc. */
 		desc_ind = 0;
-		desc_found = 0;
 		desc = &(ds[0]);
-		while (!desc_found && (desc && !opt_desc_is_null(desc))) {
+		while (desc && !opt_desc_is_null(desc)) {
 		    if (opt[0] == desc->shortopt[0]) {
-			desc_found = 1;
 			break;
 		    }
 		    desc_ind++;
