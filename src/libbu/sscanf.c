@@ -116,6 +116,8 @@ bu_vsscanf(const char *src, const char *fmt0, va_list ap)
     struct bu_vls partFmt = BU_VLS_INIT_ZERO;
     const char *fmt;
 
+    /* TODO - do we really need to bail and exit the program here?  What about just returning
+     * -1 as an error condition? */
     BU_ASSERT(src != NULL);
     BU_ASSERT(fmt0 != NULL);
 
