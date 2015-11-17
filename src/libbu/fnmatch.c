@@ -111,7 +111,7 @@ charclassmatch(const char *pattern, char test, size_t *s)
 
 	c = *pattern++; /* next */
     }
-    c = *pattern++;
+
     bu_vls_strncpy(&classname, pattern-counter-2, counter);
 
     ctclass = findclass(bu_vls_addr(&classname));
@@ -119,7 +119,10 @@ charclassmatch(const char *pattern, char test, size_t *s)
 	bu_log("Unknown character class type: %s\n", bu_vls_addr(&classname));
 	resultholder = (size_t)-1;
     } else {
-	/*bu_log("classname: %s, test char = %c, (class->checkfun)=%d\n", bu_vls_addr(&classname), test, (ctclass->checkfun)(test));*/
+	/*
+	 c = *pattern++;
+	 bu_log("classname: %s, test char = %c, (class->checkfun)=%d\n", bu_vls_addr(&classname), test, (ctclass->checkfun)(test));
+	 */
 	if ((ctclass->checkfun)(test) != 0) {
 	    resultholder = counter;
 	} else {
