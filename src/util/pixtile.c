@@ -113,7 +113,7 @@ main(int argc, char **argv)
     int islist = 0;		/* set if a list, zero if basename */
     int is_stream = 0;	/* set if input is stream on stdin */
     char name[256] = {0};
-    ssize_t ret = 0;
+    ssize_t ret;
 
     if (!get_args(argc, argv)) {
 	(void)fputs(usage, stderr);
@@ -147,10 +147,9 @@ main(int argc, char **argv)
 
     maximage = im_line * im_high;
 
-    obuf = (char *)malloc(swathbytes);
-    if (!obuf) {
+    if ((obuf = (char *)malloc(swathbytes)) == (char *)0) {
 	fprintf(stderr, "pixtile:  malloc %d failure\n", swathbytes);
-	goto done;
+	bu_exit (10, NULL);
     }
 
     image = 0;
@@ -214,22 +213,18 @@ main(int argc, char **argv)
 	rel = 0;	/* in case we fall through */
     }
 done:
-    if (!obuf) {
-	bu_exit (10, NULL);
-    } else {
-	/* Flush partial frame? */
-	if (rel != 0) {
-	    ret = write(1, obuf, swathbytes);
-	    if (ret < 0)
-		perror("write");
-	}
-
-	bu_free(obuf, "obuf alloc from malloc");
-
-	fprintf(stderr, "\n");
-	ret = 0;
+    /* Flush partial frame? */
+    if (rel != 0) {
+	ret = write(1, obuf, swathbytes);
+	if (ret < 0)
+	    perror("write");
     }
-    return ret;
+
+    bu_free(obuf, "obuf alloc from malloc");
+
+    fprintf(stderr, "\n");
+
+    return 0;
 }
 
 
