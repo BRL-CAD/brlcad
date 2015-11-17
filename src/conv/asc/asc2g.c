@@ -368,7 +368,8 @@ sktbld(void)
 		if (!ptr)
 		    bu_exit(1, "ERROR: not enough knots for nurb segment in sketch (%s)\n", name);
 		for (k=0; k<nsg->k.k_size; k++) {
-		    nsg->k.knots[k] = atof(ptr);
+		    // test ptr != NULL here to suppress clang static analyzer warning
+		    if (ptr) nsg->k.knots[k] = atof(ptr);
 		    ptr = strtok((char *)NULL, " ");
 		    if (!ptr && k<nsg->k.k_size-1)
 			bu_exit(1, "ERROR: not enough knots for nurb segment in sketch (%s)\n", name);
@@ -380,7 +381,8 @@ sktbld(void)
 		if (!ptr)
 		    bu_exit(1, "ERROR: not enough control points for nurb segment in sketch (%s)\n", name);
 		for (k=0; k<nsg->c_size; k++) {
-		    nsg->ctl_points[k] = atoi(ptr);
+		    // test ptr != NULL here to suppress clang static analyzer warning
+		    if (ptr) nsg->ctl_points[k] = atoi(ptr);
 		    ptr = strtok((char *)NULL, " ");
 		    if (!ptr && k<nsg->c_size-1)
 			bu_exit(1, "ERROR: not enough control points for nurb segment in sketch (%s)\n", name);
