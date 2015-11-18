@@ -200,7 +200,7 @@ typedef struct bu_list bu_list_t;
 	(new)->forw = (old)->forw; \
 	(new)->back = (old); \
 	(old)->forw = (new); \
-	BU_ASSERT((void *)((old)->forw) != (void *)NULL); \
+	BU_ASSERT((void *)((new)->forw) != (void *)NULL); \
 	(new)->forw->back = (new);  }
 
 /**
