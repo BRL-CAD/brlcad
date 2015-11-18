@@ -129,15 +129,14 @@ bu_avs_add(struct bu_attribute_value_set *avsp, const char *name, const char *va
     }
 
     /* add the new attribute */
-    if (!(&avsp->avp[avsp->count++])) {
-	return 0;
-    }
     app = &avsp->avp[avsp->count++];
-    app->name = bu_strdup(name);
-    if (value) {
-	app->value = bu_strdup(value);
-    } else {
-	app->value = (char *)NULL;
+    if (app) {
+	app->name = bu_strdup(name);
+	if (value) {
+	    app->value = bu_strdup(value);
+	} else {
+	    app->value = (char *)NULL;
+	}
     }
     return 2;
 }
