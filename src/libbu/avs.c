@@ -130,6 +130,9 @@ bu_avs_add(struct bu_attribute_value_set *avsp, const char *name, const char *va
 
     /* add the new attribute */
     app = &avsp->avp[avsp->count++];
+    /* FIXME: returning 0 when app is null causes crashing problems
+     * (observed in comgeom-g, probably in others - need to understand
+     * why. */
     if (app) {
 	app->name = bu_strdup(name);
 	if (value) {
