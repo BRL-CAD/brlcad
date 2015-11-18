@@ -173,6 +173,14 @@ analyze_find_subtracted(struct bu_ptbl *results, struct rt_wdb *wdbp,
 	const char *curr_comb, struct bu_ptbl *candidates, void *curr_union_data, int ncpus);
 
 
+/**
+ * Determine whether the supplied point or points are inside, on, or outside of the geometry object.
+ * Returns an integer array of size pnt_cnt, where the integer ret[i] correspnds to the status of chk_pts[i].
+ * -1 is inside, 0 is on the surface, and 1 is outside.
+ */
+ANALYZE_EXPORT int *
+analyze_inside_outside(point_t *chk_pts, int pnt_cnt, struct directory *dp, struct rt_wdb *wdbp, fastf_t tol);
+
 __END_DECLS
 
 #endif /* ANALYZE_H */

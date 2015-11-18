@@ -115,19 +115,19 @@
  * shorthand declaration of a printf-style functions
  */
 #if !defined(_BU_ATTR_PRINTF12)
-#define _BU_ATTR_PRINTF12 __attribute__ ((__format__ (__printf__, 1, 2)))
+#define _BU_ATTR_PRINTF12 __attribute__((__format__ (__printf__, 1, 2)))
 #endif
 #if !defined(_BU_ATTR_PRINTF23)
-#define _BU_ATTR_PRINTF23 __attribute__ ((__format__ (__printf__, 2, 3)))
+#define _BU_ATTR_PRINTF23 __attribute__((__format__ (__printf__, 2, 3)))
 #endif
 #if !defined(_BU_ATTR_SCANF23)
-#define _BU_ATTR_SCANF23 __attribute__ ((__format__ (__scanf__, 2, 3)))
+#define _BU_ATTR_SCANF23 __attribute__((__format__ (__scanf__, 2, 3)))
 #endif
 
 /**
  * shorthand declaration of a function that doesn't return
  */
-#define _BU_ATTR_NORETURN __attribute__ ((__noreturn__))
+#define _BU_ATTR_NORETURN __attribute__((__noreturn__))
 
 /* For the moment, we need to specially flag some functions
  * for clang.  It's not clear if we will always need to do
@@ -142,7 +142,7 @@
 /**
  * shorthand declaration of a function that should always be inline
  */
-#define _BU_ATTR_ALWAYS_INLINE __attribute__ ((always_inline))
+#define _BU_ATTR_ALWAYS_INLINE __attribute__((always_inline))
 
 /**
  *  If we're compiling strict, turn off "format string vs arguments"
