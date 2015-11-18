@@ -198,9 +198,9 @@ BU_EXPORT extern char **bu_argv_from_path(const char *path, int *ac);
  */
 BU_EXPORT extern int bu_fnmatch(const char *pattern, const char *pathname, int flags);
 
+#if 0
 /* NOTE - the glob API below is a work in progress - until this notice is
  * removed it should not be consided functional, much less stable! */
-#if 0
 #define BU_GLOB_APPEND     0x0001  /* Append to output from previous call. */
 #define BU_GLOB_ERR        0x0004  /* Return on error. */
 #define BU_GLOB_NOCHECK    0x0010  /* Return pattern itself if nothing matches. */
@@ -222,6 +222,11 @@ BU_EXPORT extern int bu_fnmatch(const char *pattern, const char *pathname, int f
 #define	BU_GLOB_STAR       0x0040  /* Use glob ** to recurse w */
 #define BU_GLOB_KEEPSTAT   0x8000  /* Retain stat data for paths in gl_statv. */
 
+struct bu_dirent {
+    char *d_name;
+    void *d_data;
+};
+
 struct bu_stat {
     const char *name;
     void *s_data;
@@ -235,19 +240,18 @@ typedef struct {
     struct bu_stat **gl_statv; /* Stat entries corresponding to gl_pathv */
     /* Optional error handling function. */
     int (*gl_errfunc)(const char *, int, void *dptr);
-    /*
-     * Access methods for glob */
+    /* Access methods for glob */
     void (*gl_closedir)(void *, void *dptr);
-    void *(*gl_readdir)(void *, void *dptr);
+    int (*gl_readdir)(struct bu_dirent *, void *, void *dptr);
     void *(*gl_opendir)(const char *, void *dptr);
     int (*gl_lstat)(const char *, struct bu_stat *, void *dptr);
     int (*gl_stat)(const char *, struct bu_stat *, void *dptr);
     /* function to expand '~' */
-    char *(*e_tilde)(void *dptr);
-    /* Functions that know how to free gl_readdir's return type and bu_stat'a s_data slot. */
+    int (*e_tilde)(char *, void *dptr);
+    /* Functions that know how to free bu_dirent's d_data slot and bu_stat'a s_data slot. */
     int (*d_free)(void *data, void *dptr);
     int (*s_free)(struct bu_stat *, void *dptr);
-    /* Void pointer to allow additional data not specified in
+    /* Void pointer to allow additional data not explicitly specified in
      * bu_glob_t to be passed to various functions */
     void *dptr;
 } bu_glob_t;
@@ -278,9 +282,13 @@ BU_EXPORT extern int bu_glob(const char *, int, bu_glob_t *);
 
 /** Free a bu_glob_t structure, including any returned results */
 BU_EXPORT extern void bu_globfree(bu_glob_t *);
-#endif
 /** @} */
 
+/* Possible TODO - add a bu_fs_glob for portable filesystem globbing (a closer
+ * analogy to the actual system glob) if there is enough need for cross
+ * platform filesystem globbing to warrant it - the primary use case for this
+ * right now is the .g database */
+#endif
 __END_DECLS
 
 #endif  /* BU_PATH_H */
