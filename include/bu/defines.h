@@ -135,6 +135,8 @@
  * reports */
 #ifdef __clang__
 #  define _BU_ATTR_ANALYZE_NORETURN __attribute__((analyzer_noreturn))
+#else
+#  define _BU_ATTR_ANALYZE_NORETURN
 #endif
 
 /**
