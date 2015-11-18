@@ -484,8 +484,14 @@ bu_realloc(register void *ptr, size_t siz, const char *str)
     if (UNLIKELY(bu_debug&BU_DEBUG_MEM_CHECK && ptr)) {
 	/* Even if ptr didn't change, need to update siz & barrier */
 	bu_semaphore_acquire(BU_SEM_MALLOC);
-	mp->mdb_addr = ptr;
-	mp->mdb_len = siz;
+
+	/* If memdebug_check returned MEMDEBUG_NULL, we can't do these
+	 * assignments.  In that situation the error condition was already
+	 * reported earlier, so just skip the assignments here and continue */
+	if (mp != MEMDEBUG_NULL) {
+	    mp->mdb_addr = ptr;
+	    mp->mdb_len = siz;
+	}
 
 	/* Install a barrier word at the new end of the dynamic
 	 * arena. Correct location depends on 'siz' being rounded up,
