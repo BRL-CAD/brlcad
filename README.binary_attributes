@@ -1,0 +1,19 @@
+branch/attr-extension-mods
+==========================
+
+To turn on the use of binary attributes define:
+
+  USE_BINARY_ATTRIBUTES
+
+Files affected:
+
+  ./include/bu/parse.h
+  ./include/bu/avs.h
+  ./src/librt/db5_io.c
+  ./src/librt/attributes.c
+
+A db admin tool (to be nrenamed to sonething like: db-admin-tool):
+
+  ./src/util/admin-db.cpp
+
+
