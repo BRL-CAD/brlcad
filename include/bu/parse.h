@@ -228,18 +228,30 @@ typedef struct bu_external bu_external_t;
 /**
  * initializes a bu_external struct without allocating any memory.
  */
-#define BU_EXTERNAL_INIT(_p) { \
+#if defined(USE_BINARY_ATTRIBUTES)
+  #define BU_EXTERNAL_INIT(_p) { \
+	(_p)->ext_magic = BU_EXTERNAL_MAGIC; \
+	(_p)->ext_nbytes = 0; \
+	(_p)->widcode = 0; \
+	(_p)->ext_buf = NULL; \
+    }
+#else
+  #define BU_EXTERNAL_INIT(_p) { \
 	(_p)->ext_magic = BU_EXTERNAL_MAGIC; \
 	(_p)->ext_nbytes = 0; \
 	(_p)->ext_buf = NULL; \
     }
+#endif
 
 /**
  * macro suitable for declaration statement initialization of a
  * bu_external struct. does not allocate memory.
  */
-#define BU_EXTERNAL_INIT_ZERO { BU_EXTERNAL_MAGIC, 0, NULL }
-
+#if defined(USE_BINARY_ATTRIBUTES)
+  #define BU_EXTERNAL_INIT_ZERO { BU_EXTERNAL_MAGIC, 0, 0, NULL }
+#else
+  #define BU_EXTERNAL_INIT_ZERO { BU_EXTERNAL_MAGIC, 0, NULL }
+#endif
 /**
  * returns truthfully whether a bu_external struct has been
  * initialized.  is not reliable unless the struct has been
