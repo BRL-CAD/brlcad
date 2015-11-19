@@ -12,7 +12,7 @@ Files affected:
   ./src/librt/db5_io.c
   ./src/librt/attributes.c
 
-A db admin tool (to be renamed to sonething like: db-admin-tool):
+A db admin tool (to be renamed later to something like: db-admin-tool):
 
   ./src/util/admin-db.cpp
 
