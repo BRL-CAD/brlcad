@@ -302,6 +302,13 @@ RT_EXPORT extern int db5_decode_signed(size_t			*lenp,
 RT_EXPORT extern size_t db5_decode_length(size_t *lenp,
 					  const unsigned char *cp,
 					  int format);
+#if defined(USE_BINARY_ATTRIBUTES)
+/**
+ * Given a pointer to a binary attribute, determine its length.
+ */
+RT_EXPORT extern void decode_binary_attribute(const size_t len,
+					      const unsigned char *cp);
+#endif
 
 /**
  * Given a number to encode, decide which is the smallest encoding
