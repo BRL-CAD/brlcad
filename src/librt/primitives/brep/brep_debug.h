@@ -1,7 +1,7 @@
 /*                     B R E P _ D E B U G . H
  * BRL-CAD
  *
- * Copyright (c) 2007-2013 United States Government as represented by
+ * Copyright (c) 2007-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @addtogroup g_ */
+/** @addtogroup librt */
 /** @{ */
 /** @file brep_debug.h
  *
@@ -25,8 +25,8 @@
  *
  */
 
-#ifndef __BREP_DEBUG
-#define __BREP_DEBUG
+#ifndef LIBRT_PRIMITIVES_BREP_BREP_DEBUG_H
+#define LIBRT_PRIMITIVES_BREP_BREP_DEBUG_H
 
 #include "common.h"
 
@@ -40,10 +40,10 @@
 #include "vmath.h"
 
 #include "brep.h"
-#include "dvec.h"
+#include "bn/dvec.h"
 
 #include "raytrace.h"
-#include "rtgeom.h"
+#include "rt/geom.h"
 
 #define fastf_t double
 
@@ -57,7 +57,7 @@ extern "C" {
 
 using namespace brlcad;
 
-#include "plot3.h"
+#include "bn/plot3.h"
 
 #define BLUEVIOLET 138, 43, 226
 #define CADETBLUE 95, 159, 159
@@ -113,11 +113,13 @@ extern FILE* brep_plot_file(const char *pname = NULL);
 
 
 void plotsurfaceleafs(SurfaceTree* surf);
-void plotleaf3d(BBNode* bb);
+void plotleaf3d(BBNode* bb,double within_distance_tol = BREP_EDGE_MISS_TOLERANCE);
 void plotleafuv(BBNode* bb);
 void plottrim(ON_BrepFace &face, struct bn_vlblock *vbp);
 void plottrim(const ON_Curve &curve, double from, double to);
 void plottrim(ON_Curve &curve);
+
+int brep_translate_scv(ON_Brep *brep, int surface_index, int i, int j, fastf_t dx, fastf_t dy, fastf_t dz);
 
 #endif
 /** @} */

@@ -1,7 +1,7 @@
 /*                 FaceBound.cpp
  * BRL-CAD
  *
- * Copyright (c) 1994-2013 United States Government as represented by
+ * Copyright (c) 1994-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -69,6 +69,7 @@ FaceBound::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
     // load base class attributes
     if (!TopologicalRepresentationItem::Load(step, sse)) {
 	std::cout << CLASSNAME << ":Error loading base class ::TopologicalRepresentationItem." << std::endl;
+	sw->entity_status[id] = STEP_LOAD_ERROR;
 	return false;
     }
 
@@ -80,12 +81,20 @@ FaceBound::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
 	SDAI_Application_instance *entity = step->getEntityAttribute(sse, "bound");
 	if (entity) {
 	    bound = dynamic_cast<Loop *>(Factory::CreateObject(sw, entity));
+	    if (!bound) {
+		sw->entity_status[id] = STEP_LOAD_ERROR;
+	    }
 	} else {
 	    std::cerr << CLASSNAME << ": Error loading 'bound' entity." << std::endl;
+	    sw->entity_status[id] = STEP_LOAD_ERROR;
 	    return false;
 	}
     }
     orientation = step->getBooleanAttribute(sse, "orientation");
+
+    if (sw->entity_status[id] == STEP_LOAD_ERROR) return false;
+
+    sw->entity_status[id] = STEP_LOADED;
 
     return true;
 }

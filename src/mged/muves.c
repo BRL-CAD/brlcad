@@ -1,7 +1,7 @@
 /*                         M U V E S . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2013 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -28,18 +28,15 @@
 
 #include <stdlib.h>
 #include <signal.h>
-#include <stdio.h>
 #include <ctype.h>
 #include <math.h>
 #include <string.h>
 
-#include "bio.h"
-#include "bu.h"
 #include "vmath.h"
 #include "bn.h"
 #include "nmg.h"
 #include "raytrace.h"
-#include "rtgeom.h"
+#include "rt/geom.h"
 #include "./mged.h"
 #include "./sedit.h"
 
@@ -164,8 +161,6 @@ Free_muves_comp(struct bu_list *hp)
 
 
 /*
- * F _ R E A D _ M U V E S
- *
  * routine to read MUVES input files and create structures to hold the data
  */
 int
@@ -582,8 +577,6 @@ Display_muves_sys(struct muves_sys *sys, int *e_argc, char ***e_argv, int *e_arg
 
 
 /*
- * F _ E _ M U V E S
- *
  * routine to display regions using MUVES component names
  */
 
@@ -631,8 +624,7 @@ f_e_muves(ClientData UNUSED(clientData), Tcl_Interp *UNUSED(interp), int argc, c
 }
 
 
-/* F _ L _ M U V E S
- *
+/*
  * routine to list the muves components
  */
 int
@@ -707,8 +699,7 @@ f_l_muves(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const cha
 }
 
 
-/* F _ T _ M U V E S
- *
+/*
  * routine to list the muves components
  */
 int

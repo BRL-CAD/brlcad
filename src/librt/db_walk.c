@@ -1,7 +1,7 @@
 /*                       D B _ W A L K . C
  * BRL-CAD
  *
- * Copyright (c) 1988-2013 United States Government as represented by
+ * Copyright (c) 1988-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -27,12 +27,11 @@
 
 #include "common.h"
 
-#include <stdio.h>
 #include <string.h>
 #include "bio.h"
 
 #include "vmath.h"
-#include "db.h"
+#include "rt/db4.h"
 #include "raytrace.h"
 
 
@@ -79,8 +78,6 @@ db_traverse_subtree(union tree *tp,
 
 
 /*
- * D B _ P R E O R D E R _ T R A V E R S E
- *
  * This subroutine is called for a no-frills tree-walk,
  * with the provided subroutines being called when entering and
  * exiting combinations and at leaf (solid) nodes.
@@ -100,8 +97,11 @@ db_preorder_traverse(struct directory *dp,
     }
 
     if (RT_G_DEBUG & DEBUG_DB)
-	bu_log("db_preorder_traverse(%s) x%x, x%x, comb_enter=x%x, comb_exit=x%x, leaf=x%x, client_data=x%x\n",
-	       dp->d_namep, dtp->dbip, dp, dtp->comb_enter_func, dtp->comb_exit_func, dtp->leaf_func, dtp->client_data);
+	bu_log("db_preorder_traverse(%s) %p, %p, comb_enter=%lx, comb_exit=%lx, leaf=%lx, client_data=%p\n",
+	       dp->d_namep,
+	       (void *)dtp->dbip, (void *)dp,
+	       (long unsigned int)dtp->comb_enter_func, (long unsigned int)dtp->comb_exit_func, (long unsigned int)dtp->leaf_func,
+	       dtp->client_data);
 
     if (dp->d_flags & RT_DIR_COMB) {
 	/* entering region */
@@ -151,18 +151,17 @@ db_preorder_traverse(struct directory *dp,
 }
 
 
-/* D B _ F U N C T R E E _ S U B T R E E
- *
+/*
  * The only reason for this to be broken out is that
  * 2 separate locations in db_functree() call it.
  */
 void
 db_functree_subtree(struct db_i *dbip,
 		    union tree *tp,
-		    void (*comb_func) (struct db_i *, struct directory *, genptr_t),
-		    void (*leaf_func) (struct db_i *, struct directory *, genptr_t),
+		    void (*comb_func) (struct db_i *, struct directory *, void *),
+		    void (*leaf_func) (struct db_i *, struct directory *, void *),
 		    struct resource *resp,
-		    genptr_t client_data)
+		    void *client_data)
 {
     struct directory *dp;
 
@@ -199,10 +198,10 @@ db_functree_subtree(struct db_i *dbip,
 void
 db_functree(struct db_i *dbip,
 	    struct directory *dp,
-	    void (*comb_func) (struct db_i *, struct directory *, genptr_t),
-	    void (*leaf_func) (struct db_i *, struct directory *, genptr_t),
+	    void (*comb_func) (struct db_i *, struct directory *, void *),
+	    void (*leaf_func) (struct db_i *, struct directory *, void *),
 	    struct resource *resp,
-	    genptr_t client_data)
+	    void *client_data)
 {
     register size_t i;
 
@@ -216,8 +215,10 @@ db_functree(struct db_i *dbip,
     }
 
     if (RT_G_DEBUG&DEBUG_DB) {
-	bu_log("db_functree(%s) x%x, x%x, comb=x%x, leaf=x%x, client_data=x%x\n",
-	       dp->d_namep, dbip, dp, comb_func, leaf_func, client_data);
+	bu_log("db_functree(%s) %p, %p, comb=%lx, leaf=%lx, client_data=%p\n",
+	       dp->d_namep, (void *)dbip, (void *)dp,
+	       (long unsigned int)comb_func, (long unsigned int)leaf_func,
+	       client_data);
     }
 
     if (dp->d_flags & RT_DIR_COMB) {

@@ -1,7 +1,7 @@
 /*                         G - D X F . C
  * BRL-CAD
  *
- * Copyright (c) 2003-2013 United States Government as represented by
+ * Copyright (c) 2003-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -29,21 +29,21 @@
 
 /* system headers */
 #include <stdlib.h>
-#include <stdio.h>
 #include <ctype.h>
 #include <math.h>
 #include <string.h>
 #include "bio.h"
 
 /* interface headers */
+#include "bu/getopt.h"
 #include "vmath.h"
 #include "nmg.h"
-#include "rtgeom.h"
+#include "rt/geom.h"
 #include "raytrace.h"
 #include "gcv.h"
 
 /* private headers */
-#include "brlcad_version.h"
+#include "brlcad_ident.h"
 #include "./dxf.h"
 
 
@@ -78,7 +78,7 @@ usage(const char *argv0)
  -D #	Specify a calculation distance tolerance (in mm)\n\n");
 
     bu_log("\
- -P #	Specify number of CPUS to be used, and turn on flag to enable receiving of core dumps\n\n");
+ -P #	DISABLED: Specify number of CPUS to be used (value accepted, but not used)\n\n");
 
     bu_log("\
  -o dxf	Output to the specified dxf filename\n\n---\n");
@@ -134,7 +134,7 @@ find_closest_color(float color[3])
 
 
 static void
-nmg_to_dxf(struct nmgregion *r, const struct db_full_path *pathp, int UNUSED(region_id), int UNUSED(material_id), float color[3])
+nmg_to_dxf(struct nmgregion *r, const struct db_full_path *pathp, int UNUSED(region_id), int UNUSED(material_id), float color[3], void *UNUSED(client_data))
 {
     struct model *m;
     struct shell *s;
@@ -349,7 +349,7 @@ nmg_to_dxf(struct nmgregion *r, const struct db_full_path *pathp, int UNUSED(reg
 }
 
 
-union tree *get_layer(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *UNUSED(curtree), genptr_t UNUSED(client_data))
+union tree *get_layer(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *UNUSED(curtree), void *UNUSED(client_data))
 {
     char *layer_name;
     int color_num;
@@ -365,16 +365,10 @@ union tree *get_layer(struct db_tree_state *tsp, const struct db_full_path *path
 }
 
 
-/* FIXME: this be a dumb hack to avoid void* conversion */
-struct gcv_data {
-    void (*func)(struct nmgregion *, const struct db_full_path *, int, int, float [3]);
-};
-static struct gcv_data gcvwriter = {nmg_to_dxf};
+static struct gcv_region_end_data gcvwriter = {nmg_to_dxf, NULL};
 
 
 /**
- * M A I N
- *
  * This is the gist for what is going on (not verified):
  *
  * 1. initialize tree_state (db_tree_state)
@@ -413,9 +407,6 @@ main(int argc, char *argv[])
     tol.dist_sq = tol.dist * tol.dist;
     tol.perp = 1e-6;
     tol.para = 1 - tol.perp;
-
-    /* init resources we might need */
-    rt_init_resource(&rt_uniresource, 0, NULL);
 
     BU_LIST_INIT(&RTG.rtg_vlfree);	/* for vlist macros */
 
@@ -474,9 +465,7 @@ main(int argc, char *argv[])
 
     if (!output_file) {
 	fp = stdout;
-#if defined(_WIN32) && !defined(__CYGWIN__)
 	setmode(fileno(fp), O_BINARY);
-#endif
     } else {
 	/* Open output file */
 	if ((fp=fopen(output_file, "w+b")) == NULL) {
@@ -525,7 +514,7 @@ main(int argc, char *argv[])
 		       0,			/* take all regions */
 		       get_layer,
 		       NULL,
-		       (genptr_t)NULL);	/* in librt/nmg_bool.c */
+		       (void *)NULL);	/* in librt/nmg_bool.c */
 
     /* end of layers section, start of ENTITIES SECTION */
     fprintf(fp, "0\nENDTAB\n0\nENDSEC\n0\nSECTION\n2\nENTITIES\n");
@@ -543,7 +532,7 @@ main(int argc, char *argv[])
 			0,			/* take all regions */
 			gcv_region_end,
 			nmg_booltree_leaf_tess,
-			(genptr_t)&gcvwriter);	/* callback for gcv_region_end */
+			(void *)&gcvwriter);	/* callback for gcv_region_end */
 
     percent = 0;
     if (regions_tried>0) {

@@ -340,7 +340,7 @@ command can sometimes be useful to track down which ports are being used.</para>
 <refsect1 xml:id='see_also'><title>SEE ALSO</title>
 <para><citerefentry><refentrytitle>rtsrv</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>rt</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>scriptsort</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
 <citerefentry><refentrytitle>brlcad</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>mged</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>lgt</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>pix-fb</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>rtray</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>rtpp</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
-<citerefentry><refentrytitle>librt</refentrytitle><manvolnum>3</manvolnum></citerefentry>, <citerefentry><refentrytitle>ray</refentrytitle><manvolnum>5V</manvolnum></citerefentry>, <citerefentry><refentrytitle>pix</refentrytitle><manvolnum>5</manvolnum></citerefentry>.</para>
+<citerefentry><refentrytitle>librt</refentrytitle><manvolnum>3</manvolnum></citerefentry>, <citerefentry><refentrytitle>ray</refentrytitle><manvolnum>5V</manvolnum></citerefentry>, <citerefentry><refentrytitle>pix</refentrytitle><manvolnum>5</manvolnum></citerefentry></para>
 </refsect1>
 
 <refsect1 xml:id='diagnostics'><title>DIAGNOSTICS</title>
@@ -350,11 +350,13 @@ Descriptive messages are printed on standard error.</para>
 
 <refsect1 xml:id='see_also2'><title>SEE ALSO</title>
 <para>M. Muuss,
-<emphasis remap='I'>"Workstations, Networking, Distributed Graphics,
-and Parallel Processing"</emphasis>,
-in <emphasis remap='I'>"Computer Graphics Techniques:  Theory and Practice"</emphasis>,
+"<emphasis remap='I'>Workstations</emphasis>,
+<emphasis remap='I'>Networking</emphasis>,
+<emphasis remap='I'>Distributed Graphics</emphasis>,
+<emphasis remap='I'>and Parallel Processing</emphasis>",
+in "<emphasis remap='I'>Computer Graphics Techniques</emphasis>: <emphasis remap='I'>Theory and Practice</emphasis>",
 ed: Rogers &amp; Earnshaw,
-Springer Verlag, New York, pages 409-472.</para>
+Springer Verlag, New York, pages 409-472</para>
 </refsect1>
 
 <refsect1 xml:id='bugs'><title>BUGS</title>
@@ -379,7 +381,7 @@ or the distributed computation side of things.</para>
 </refsect1>
 
 <refsect1 xml:id='copyright'><title>COPYRIGHT</title>
-<para>This software is Copyright (c) 1994-2013 by the United States
+<para>This software is Copyright (c) 1994-2014 by the United States
 Government as represented by U.S. Army Research Laboratory.</para>
 </refsect1>
 

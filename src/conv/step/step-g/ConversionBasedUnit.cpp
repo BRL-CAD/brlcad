@@ -1,7 +1,7 @@
 /*                 ConversionBasedUnit.cpp
  * BRL-CAD
  *
- * Copyright (c) 1994-2013 United States Government as represented by
+ * Copyright (c) 1994-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -83,6 +83,7 @@ ConversionBasedUnit::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
     // load base class attributes
     if (!NamedUnit::Load(step, sse)) {
 	std::cout << CLASSNAME << ":Error loading base class ::Unit." << std::endl;
+	sw->entity_status[id] = STEP_LOAD_ERROR;
 	return false;
     }
 
@@ -98,9 +99,12 @@ ConversionBasedUnit::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
 	    conversion_factor = dynamic_cast<MeasureWithUnit *>(Factory::CreateObject(sw, entity));
 	} else {
 	    std::cerr << CLASSNAME << ": error loading 'conversion_factor' attribute." << std::endl;
+	    sw->entity_status[id] = STEP_LOAD_ERROR;
 	    return false;
 	}
     }
+
+    sw->entity_status[id] = STEP_LOADED;
 
     return true;
 }

@@ -1,7 +1,7 @@
 /*                       G E D _ U T I L . C
  * BRL-CAD
  *
- * Copyright (c) 2000-2013 United States Government as represented by
+ * Copyright (c) 2000-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -28,44 +28,81 @@
 
 #include "common.h"
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <math.h>
-#include "bio.h"
 
-#include "bu.h"
-#include "vmath.h"
-#include "bn.h"
-#include "rtgeom.h"
-#include "raytrace.h"
-#include "plot3.h"
-
+#include "ged.h"
 #include "./ged_private.h"
 
 int
-_ged_results_append_str(struct ged *gedp, char *result_string)
+_ged_results_init(struct ged_results *results)
 {
-    bu_vls_printf(gedp->ged_result_str, "%s", result_string);
+    if (UNLIKELY(!results))
+	return GED_ERROR;
+    BU_ALLOC(results->results_tbl, struct bu_ptbl);
+    BU_PTBL_INIT(results->results_tbl);
     return GED_OK;
 }
 
 
 int
-_ged_results_append_vls(struct ged *gedp, struct bu_vls *result_vls)
+_ged_results_add(struct ged_results *results, const char *result_string)
 {
-    bu_vls_printf(gedp->ged_result_str, "%s", bu_vls_addr(result_vls));
+    /* If there isn't a string, we can live with that */
+    if (UNLIKELY(!result_string))
+	return GED_OK;
+
+    /* If we have nowhere to insert into and we *do* have a string, trouble */
+    if (UNLIKELY(!results))
+	return GED_ERROR;
+    if (UNLIKELY(!(results->results_tbl)))
+	return GED_ERROR;
+    if (UNLIKELY(!(BU_PTBL_IS_INITIALIZED(results->results_tbl))))
+	return GED_ERROR;
+
+    /* We're good to go - copy the string and stuff it in. */
+    bu_ptbl_ins(results->results_tbl, (long *)bu_strdup(result_string));
+
     return GED_OK;
 }
 
-
-int
-_ged_results_clear(struct ged *gedp)
+size_t
+ged_results_count(struct ged_results *results)
 {
-    bu_vls_trunc(gedp->ged_result_str, 0);
-    return GED_OK;
+    if (UNLIKELY(!results)) return 0;
+    if (UNLIKELY(!(results->results_tbl))) return 0;
+    return (size_t)BU_PTBL_LEN(results->results_tbl);
 }
 
+const char *
+ged_results_get(struct ged_results *results, size_t index)
+{
+    return (const char *)BU_PTBL_GET(results->results_tbl, index);
+}
+
+void
+ged_results_clear(struct ged_results *results)
+{
+    int i = 0;
+    if (UNLIKELY(!results)) return;
+    if (UNLIKELY(!(results->results_tbl))) return;
+
+    /* we clean up everything except the ged_results structure itself */
+    for (i = (int)BU_PTBL_LEN(results->results_tbl) - 1; i >= 0; i--) {
+	char *rstring = (char *)BU_PTBL_GET(results->results_tbl, i);
+	if (rstring)
+	    bu_free(rstring, "free results string");
+    }
+    bu_ptbl_reset(results->results_tbl);
+}
+
+void
+ged_results_free(struct ged_results *results) {
+    if (UNLIKELY(!results)) return;
+    if (UNLIKELY(!(results->results_tbl))) return;
+
+    ged_results_clear(results);
+    bu_ptbl_free(results->results_tbl);
+    bu_free(results->results_tbl, "done with results ptbl");
+}
 
 /*
  * Local Variables:

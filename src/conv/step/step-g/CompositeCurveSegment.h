@@ -1,7 +1,7 @@
 /*                 CompositeCurveSegment.h
  * BRL-CAD
  *
- * Copyright (c) 1994-2013 United States Government as represented by
+ * Copyright (c) 1994-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -24,8 +24,8 @@
  *
  */
 
-#ifndef COMPOSITECURVESEGMENT_H_
-#define COMPOSITECURVESEGMENT_H_
+#ifndef CONV_STEP_STEP_G_COMPOSITECURVESEGMENT_H
+#define CONV_STEP_STEP_G_COMPOSITECURVESEGMENT_H
 
 #include "FoundedItem.h"
 
@@ -53,7 +53,7 @@ public:
     static STEPEntity *Create(STEPWrapper *sw, SDAI_Application_instance *sse);
 };
 
-#endif /* COMPOSITECURVESEGMENT_H_ */
+#endif /* CONV_STEP_STEP_G_COMPOSITECURVESEGMENT_H */
 
 /*
  * Local Variables:

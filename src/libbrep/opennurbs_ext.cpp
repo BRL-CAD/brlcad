@@ -1,7 +1,7 @@
 /*               O P E N N U R B S _ E X T . C P P
  * BRL-CAD
  *
- * Copyright (c) 2007-2013 United States Government as represented by
+ * Copyright (c) 2007-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -29,15 +29,14 @@
 #include <assert.h>
 #include <vector>
 
-#include "tnt.h"
-#include "jama_lu.h"
-
 #include "vmath.h"
-#include "bu.h"
 
+#include "bu/log.h"
+#include "bu/malloc.h"
+#include "bu/parallel.h"
 #include "brep.h"
 #include "libbrep_brep_tools.h"
-#include "dvec.h"
+#include "bn/dvec.h"
 
 #define RANGE_HI 0.55
 #define RANGE_LO 0.45
@@ -53,6 +52,8 @@
 
 /// another arbitrary calculation tolerance (need to try VDIVIDE_TOL or VUNITIZE_TOL to tighten the bounds)
 #define TOL2 0.00001
+
+//#define _OLD_SUBDIVISION_
 
 void
 brep_get_plane_ray(ON_Ray& r, plane_ray& pr)
@@ -108,28 +109,6 @@ brep_newton_iterate(plane_ray& pr, pt2d_t R, ON_3dVector& su, ON_3dVector& sv, p
 	mat2d_pt2d_mul(tmp, inv_jacob, R);
 	pt2dsub(out_uv, uv, tmp);
     } else {
-	TRACE2("inverse failed"); // XXX how to handle this?
-	move(out_uv, uv);
-    }
-}
-
-
-void
-brep_newton_iterate(const ON_Surface* UNUSED(surf), plane_ray& pr, pt2d_t R, ON_3dVector& su, ON_3dVector& sv, pt2d_t uv, pt2d_t out_uv)
-{
-    vect_t vsu, vsv;
-    VMOVE(vsu, su);
-    VMOVE(vsv, sv);
-
-    mat2d_t jacob = { VDOT(pr.n1, vsu), VDOT(pr.n1, vsv),
-		      VDOT(pr.n2, vsu), VDOT(pr.n2, vsv) };
-    mat2d_t inv_jacob;
-    if (mat2d_inverse(inv_jacob, jacob)) {
-	// check inverse validity
-	pt2d_t tmp;
-	mat2d_pt2d_mul(tmp, inv_jacob, R);
-	pt2dsub(out_uv, uv, tmp);
-    } else {
 	TRACE2("inverse failed"); // FIXME: how to handle this?
 	move(out_uv, uv);
     }
@@ -152,7 +131,7 @@ distribute(const int count, const ON_3dVector* v, double x[], double y[], double
 //--------------------------------------------------------------------------------
 // CurveTree
 CurveTree::CurveTree(const ON_BrepFace* face) :
-    m_face(face), m_adj_face_index(-99)
+    m_face(face)
 {
     m_root = initialLoopBBox();
 
@@ -262,10 +241,11 @@ CurveTree::CurveTree(const ON_BrepFace* face) :
 	    }
 	}
     }
-    getLeaves(m_sortedX);
-    m_sortedX.sort(sortX);
-    getLeaves(m_sortedY);
-    m_sortedY.sort(sortY);
+
+    m_sortedX = new std::list<BRNode *>();
+
+    getLeaves(*m_sortedX);
+    m_sortedX->sort(sortX);
 
     return;
 }
@@ -274,6 +254,7 @@ CurveTree::CurveTree(const ON_BrepFace* face) :
 CurveTree::~CurveTree()
 {
     delete m_root;
+    delete m_sortedX;
 }
 
 
@@ -317,7 +298,7 @@ CurveTree::getLeavesAbove(std::list<BRNode*>& out_leaves, const ON_Interval& u, 
 {
     point_t bmin, bmax;
     double dist;
-    for (std::list<BRNode*>::iterator i = m_sortedX.begin(); i != m_sortedX.end(); i++) {
+    for (std::list<BRNode*>::iterator i = m_sortedX->begin(); i != m_sortedX->end(); i++) {
 	BRNode* br = dynamic_cast<BRNode*>(*i);
 	br->GetBBox(bmin, bmax);
 
@@ -337,7 +318,7 @@ void
 CurveTree::getLeavesAbove(std::list<BRNode*>& out_leaves, const ON_2dPoint& pt, fastf_t tol)
 {
     point_t bmin, bmax;
-    for (std::list<BRNode*>::iterator i = m_sortedX.begin(); i != m_sortedX.end(); i++) {
+    for (std::list<BRNode*>::iterator i = m_sortedX->begin(); i != m_sortedX->end(); i++) {
 	BRNode* br = dynamic_cast<BRNode*>(*i);
 	br->GetBBox(bmin, bmax);
 
@@ -357,7 +338,7 @@ CurveTree::getLeavesRight(std::list<BRNode*>& out_leaves, const ON_Interval& u, 
 {
     point_t bmin, bmax;
     double dist;
-    for (std::list<BRNode*>::iterator i = m_sortedX.begin(); i != m_sortedX.end(); i++) {
+    for (std::list<BRNode*>::iterator i = m_sortedX->begin(); i != m_sortedX->end(); i++) {
 	BRNode* br = dynamic_cast<BRNode*>(*i);
 	br->GetBBox(bmin, bmax);
 
@@ -377,7 +358,7 @@ void
 CurveTree::getLeavesRight(std::list<BRNode*>& out_leaves, const ON_2dPoint& pt, fastf_t tol)
 {
     point_t bmin, bmax;
-    for (std::list<BRNode*>::iterator i = m_sortedX.begin(); i != m_sortedX.end(); i++) {
+    for (std::list<BRNode*>::iterator i = m_sortedX->begin(); i != m_sortedX->end(); i++) {
 	BRNode* br = dynamic_cast<BRNode*>(*i);
 	br->GetBBox(bmin, bmax);
 
@@ -433,7 +414,7 @@ BRNode*
 CurveTree::curveBBox(const ON_Curve* curve, int adj_face_index, ON_Interval& t, bool isLeaf, bool innerTrim, const ON_BoundingBox& bb)
 {
     BRNode* node;
-    int vdot = 1;
+    bool vdot = true;
 
     if (isLeaf) {
 	TRACE("creating leaf: u(" << u.Min() << ", " << u.Max() << ") v(" << v.Min() << ", " << v.Max() << ")");
@@ -451,6 +432,8 @@ BRNode*
 CurveTree::initialLoopBBox()
 {
     ON_BoundingBox bb;
+    m_face->SurfaceOf()->GetBBox(bb[0], bb[1]);
+
     for (int i = 0; i < m_face->LoopCount(); i++) {
 	ON_BrepLoop* loop = m_face->Loop(i);
 	if (loop->m_type == ON_BrepLoop::outer) {
@@ -576,19 +559,14 @@ SurfaceTree::SurfaceTree()
       m_face(NULL),
       m_root(NULL)
 {
+    f_queue = new std::queue<ON_Plane *>();
 }
 
 
-SurfaceTree::SurfaceTree(const ON_BrepFace* face, bool removeTrimmed, int depthLimit)
+SurfaceTree::SurfaceTree(const ON_BrepFace* face, bool removeTrimmed, int depthLimit, double within_distance_tol)
     : m_removeTrimmed(removeTrimmed),
       m_face(face)
 {
-    // first, build the Curve Tree
-    if (removeTrimmed)
-	ctree = new CurveTree(m_face);
-    else
-	ctree = NULL;
-
     // build the surface bounding volume hierarchy
     const ON_Surface* surf = face->SurfaceOf();
     if (!surf) {
@@ -596,9 +574,50 @@ SurfaceTree::SurfaceTree(const ON_BrepFace* face, bool removeTrimmed, int depthL
 	return;
     }
 
+    // may be a smaller trimmed subset of surface so worth getting
+    // face boundary
+    bool bGrowBox = false;
+    ON_3dPoint min = ON_3dPoint::UnsetPoint, max = ON_3dPoint::UnsetPoint;
+    for (int li = 0; li < face->LoopCount(); li++) {
+	for (int ti = 0; ti < face->Loop(li)->TrimCount(); ti++) {
+	    ON_BrepTrim *trim = face->Loop(li)->Trim(ti);
+	    trim->GetBoundingBox(min, max, bGrowBox);
+	    bGrowBox = true;
+	}
+    }
+    if (!bGrowBox) {
+	surf->GetBoundingBox(min, max);
+	removeTrimmed = false;
+    }
+
+    // first, build the Curve Tree
+    if (removeTrimmed)
+	ctree = new CurveTree(m_face);
+    else
+	ctree = NULL;
+
     TRACE("Creating surface tree for: " << face->m_face_index);
+
+#ifdef _OLD_SUBDIVISION_
     ON_Interval u = surf->Domain(0);
     ON_Interval v = surf->Domain(1);
+#else
+    ON_Interval dom[2] = { ON_Interval::EmptyInterval, ON_Interval::EmptyInterval };
+    for (int i = 0; i < 2; i++) {
+	dom[i] = surf->Domain(i);
+#ifdef LOOSEN_UV
+	min[i] -= within_distance_tol;
+	max[i] += within_distance_tol;
+#endif
+	if ((min != ON_3dPoint::UnsetPoint) && (max != ON_3dPoint::UnsetPoint)) {
+	    if ((min[i] >= dom[i].m_t[0]) && (max[i] <= dom[i].m_t[1])) {
+		dom[i].Set(min[i],max[i]);
+	    }
+	}
+    }
+    ON_Interval u = dom[0];
+    ON_Interval v = dom[1];
+#endif
     double uq = u.Length()*0.25;
     double vq = v.Length()*0.25;
 
@@ -615,16 +634,18 @@ SurfaceTree::SurfaceTree(const ON_BrepFace* face, bool removeTrimmed, int depthL
     surf->FrameAt(u.Mid() + uq, v.Mid() - vq, frames[7]);
     surf->FrameAt(u.Mid() + uq, v.Mid() + vq, frames[8]);
 
-    m_root = subdivideSurface(surf, u, v, frames, 0, depthLimit, 1);
+    f_queue = new std::queue<ON_Plane *>();
+    m_root = subdivideSurface(surf, u, v, frames, 0, depthLimit, 1, within_distance_tol);
+
     if (m_root) {
 	m_root->BuildBBox();
     }
     TRACE("u: [" << u[0] << ", " << u[1] << "]");
     TRACE("v: [" << v[0] << ", " << v[1] << "]");
     TRACE("m_root: " << m_root);
-    while (!f_queue.empty()) {
-	bu_free(f_queue.front(), "free subsurface frames array");
-	f_queue.pop();
+    while (!f_queue->empty()) {
+	bu_free(f_queue->front(), "free subsurface frames array");
+	f_queue->pop();
     }
 }
 
@@ -633,6 +654,7 @@ SurfaceTree::~SurfaceTree()
 {
     delete ctree;
     delete m_root;
+    delete f_queue;
 }
 
 
@@ -717,19 +739,12 @@ brep_getSurfacePoint(const ON_3dPoint& pt, ON_2dPoint& uv , BBNode* node) {
 
 	//Check for closed surface wrap around
 	if (surf->IsClosed(0)) {
-	    if (new_uv[0] < umin) {
-		new_uv[0] = umin;
-	    } else if (new_uv[0] > umax) {
-		new_uv[0] = umax;
-	    }
+	    CLAMP(new_uv[0], umin, umax);
 	}
 	if (surf->IsClosed(1)) {
-	    if (new_uv[1] < vmin) {
-		new_uv[1] = vmin;
-	    } else if (new_uv[1] > vmax) {
-		new_uv[1] = vmax;
-	    }
+	    CLAMP(new_uv[1], vmin, vmax);
 	}
+
 #ifdef HOOD
 	//push answer back to within node bounds
 	double ufluff = (node->m_u[1] - node->m_u[0])*0.01;
@@ -739,6 +754,7 @@ brep_getSurfacePoint(const ON_3dPoint& pt, ON_2dPoint& uv , BBNode* node) {
 	double ufluff = 0.0;
 	double vfluff = 0.0;
 #endif
+
 	if (new_uv[0] < node->m_u[0] - ufluff)
 	    new_uv[0] = node->m_u[0];
 	else if (new_uv[0] > node->m_u[1] + ufluff)
@@ -750,7 +766,7 @@ brep_getSurfacePoint(const ON_3dPoint& pt, ON_2dPoint& uv , BBNode* node) {
 	    new_uv[1] = node->m_v[1];
 
 
-	surf->EvNormal(new_uv[0], new_uv[1], newpt, ray.m_dir);
+	surface_EvNormal(surf,new_uv[0], new_uv[1], newpt, ray.m_dir);
 	ray.m_dir.Reverse();
 	brep_get_plane_ray(ray, pr);
 
@@ -800,18 +816,52 @@ SurfaceTree::getSurfacePoint(const ON_3dPoint& pt, ON_2dPoint& uv, const ON_3dPo
     if (found) {
 	return 1;
     }
+
+    nodes.clear();
+    (void)m_root->getLeavesBoundingPoint(pt, nodes);
+    for (i = nodes.begin(); i != nodes.end(); i++) {
+	BBNode* node = (*i);
+	if (brep_getSurfacePoint(pt, curr_uv, node)) {
+	    ON_3dPoint fp = m_face->SurfaceOf()->PointAt(curr_uv.x, curr_uv.y);
+	    double dist = fp.DistanceTo(pt);
+	    if (NEAR_ZERO(dist, BREP_SAME_POINT_TOLERANCE)) {
+		uv = curr_uv;
+		found = true;
+		return 1; //close enough to same point so no sense in looking for one closer
+	    } else if (NEAR_ZERO(dist, tolerance)) {
+		if (dist < min_dist) {
+		    uv = curr_uv;
+		    min_dist = dist;
+		    found = true; //within tolerance but may be a point closer so keep looking
+		}
+	    }
+	}
+    }
+
     return -1;
 }
 
 
 //static int bb_cnt=0;
 BBNode*
-SurfaceTree::surfaceBBox(const ON_Surface *localsurf, bool isLeaf, ON_Plane *m_frames, const ON_Interval& u, const ON_Interval& v)
+SurfaceTree::surfaceBBox(const ON_Surface *localsurf,
+	bool isLeaf,
+	ON_Plane *m_frames,
+	const ON_Interval& u,
+	const ON_Interval& v,
+	double within_distance_tol)
 {
     point_t min, max, buffer;
+#ifdef _OLD_SUBDIVISION_
     ON_BoundingBox bbox = localsurf->BoundingBox();
+#else
+    ON_BoundingBox bbox = ON_BoundingBox::EmptyBoundingBox;
+    if (!surface_GetBoundingBox(localsurf,u,v,bbox,false)) {
+	return NULL;
+    }
+#endif
 
-    VSETALL(buffer, BREP_EDGE_MISS_TOLERANCE);
+    VSETALL(buffer, within_distance_tol);
 
     //bu_log("in bb%d rpp %f %f %f %f %f %f\n", bb_cnt, min[0], max[0], min[1], max[1], min[2], max[2]);
     VMOVE(min, bbox.Min());
@@ -863,11 +913,18 @@ SurfaceTree::surfaceBBox(const ON_Surface *localsurf, bool isLeaf, ON_Plane *m_f
 BBNode*
 initialBBox(CurveTree* ctree, const ON_Surface* surf, const ON_BrepFace* face, const ON_Interval& u, const ON_Interval& v)
 {
+#ifdef _OLD_SUBDIVISION_
     ON_BoundingBox bb = surf->BoundingBox();
+#else
+    ON_BoundingBox bb = ON_BoundingBox::EmptyBoundingBox;
+    if (!surface_GetBoundingBox(surf,u,v,bb,false)) {
+	return NULL;
+    }
+#endif
     BBNode* node = new BBNode(ctree, bb, face, u, v, false, false);
     ON_3dPoint estimate;
     ON_3dVector normal;
-    if (!surf->EvNormal(surf->Domain(0).Mid(), surf->Domain(1).Mid(), estimate, normal)) {
+    if (!surface_EvNormal(surf,surf->Domain(0).Mid(), surf->Domain(1).Mid(), estimate, normal)) {
 	bu_bomb("Could not evaluate estimate point on surface");
     }
     node->m_estimate = estimate;
@@ -879,6 +936,77 @@ initialBBox(CurveTree* ctree, const ON_Surface* surf, const ON_BrepFace* face, c
 }
 
 
+// Cache surface information as file static to ensure initialization once;
+static const ON_Surface *prev_surf[MAX_PSW] = {NULL};
+static ON_Interval dom[MAX_PSW][2] = {{ON_Interval::EmptyInterval, ON_Interval::EmptyInterval}};
+static int span_cnt[MAX_PSW][2] = {{0, 0}};
+static double *span[MAX_PSW][2] = {{NULL, NULL}};
+bool
+hasSplit(const ON_Surface *surf, const int dir,const ON_Interval& interval,double &split)
+{
+    int p = bu_parallel_id();
+    if (surf == NULL) {
+	// clean up statics and return
+	prev_surf[p] = NULL;
+	for(int i=0; i<2; i++) {
+	    span_cnt[p][i] = 0;
+	    if (span[p][i])
+		bu_free(span[p][i], "surface span vector");
+	    span[p][i] = NULL;
+	    dom[p][i] = ON_Interval::EmptyInterval;
+	}
+
+	return false;
+    }
+    if (prev_surf[p] != surf ) {
+	// load new surf info
+	for(int i=0; i<2; i++) {
+	    dom[p][i] = surf->Domain(i);
+	    span_cnt[p][i] = surf->SpanCount(i);
+	    if (span[p][i])
+		bu_free(span[p][i], "surface span vector");
+	    span[p][i] = (double *)bu_malloc((unsigned)(span_cnt[p][i]+1) * sizeof(double), "surface span vector");
+	    surf->GetSpanVector(i, span[p][i]);
+	}
+
+	prev_surf[p] = surf;
+    }
+
+    // find direction split based on setting of 'dir'
+
+    // first, if closed in 'dir' check to see if it extends over seam and use that as split
+    if (surf->IsClosed(dir)) {
+	bool testOpen = true;
+	if (interval.Includes(dom[p][dir].m_t[0], testOpen)) { //crosses lower boundary
+	    split = dom[p][dir].m_t[0];
+	    return true;
+	} else if (interval.Includes(dom[p][dir].m_t[1], testOpen)) { //crosses upper boundary
+	    split = dom[p][dir].m_t[1];
+	    return true;
+	}
+    }
+
+    // next lets see if we have a knots in interval, if so split on middle knot
+    if (span_cnt[p][dir] > 1) {
+	int sum = 0;
+	int cnt = 0;
+	for(int i=0; i<span_cnt[p][dir]+1; i++) {
+	    bool testOpen = true;
+	    if (interval.Includes((span[p][dir])[i], testOpen)) { //crosses lower boundary
+		sum = sum + i;
+		cnt++;
+	    }
+	}
+	if (cnt > 0) {
+	    split = (span[p][dir])[sum/cnt];
+	    return true;
+	}
+    }
+
+    return false;
+}
+
+
 BBNode*
 SurfaceTree::subdivideSurface(const ON_Surface *localsurf,
 			      const ON_Interval& u,
@@ -886,7 +1014,8 @@ SurfaceTree::subdivideSurface(const ON_Surface *localsurf,
 			      ON_Plane frames[],
 			      int divDepth,
 			      int depthLimit,
-			      int prev_knot
+			      int prev_knot,
+			      double within_distance_tol
     )
 {
     BBNode* quads[4];
@@ -909,18 +1038,30 @@ SurfaceTree::subdivideSurface(const ON_Surface *localsurf,
     usplit = u.Mid();
     vsplit = v.Mid();
 
+#ifndef _OLD_SUBDIVISION_
+    if (divDepth >= depthLimit) {
+	return surfaceBBox(localsurf, true, frames, u, v, within_distance_tol);
+    }
+#endif
+
     // The non-knot case where all criteria are satisfied is the
     // terminating case for the recursion - handle that first
     if (!prev_knot) {
+#ifdef _OLD_SUBDIVISION_
 	localsurf->GetSurfaceSize(&width, &height);
+#else
+	width = u.Length();
+	height = v.Length();
+#endif
 	if (((width/height < ratio) && (width/height > 1.0/ratio) && isFlat(frames) && isStraight(frames))
 	    || (divDepth >= depthLimit)) { //BREP_MAX_FT_DEPTH
-	    return surfaceBBox(localsurf, true, frames, u, v);
+	    return surfaceBBox(localsurf, true, frames, u, v, within_distance_tol);
 	}
     }
 
     // Knots
     if (prev_knot) {
+#ifdef _OLD_SUBDIVISION_
 	int spanu_cnt = localsurf->SpanCount(0);
 	int spanv_cnt = localsurf->SpanCount(1);
 	parent = initialBBox(ctree, localsurf, m_face, u, v);
@@ -943,13 +1084,29 @@ SurfaceTree::subdivideSurface(const ON_Surface *localsurf,
 	    do_u_split = 0;
 	    do_v_split = 0;
 	}
+#else
+	int dir = 0; // U direction
+	if (hasSplit(localsurf,dir,u,usplit)) {
+	    do_u_split = 1;
+	}
+	dir = 1; // V direction
+	if (hasSplit(localsurf,dir,v,vsplit)) {
+	    if (do_u_split) {
+		do_both_splits = 1;
+		do_u_split = 0;
+	    } else {
+		do_v_split = 1;
+	    }
+	}
+	parent = initialBBox(ctree, localsurf, m_face, u, v);
+#endif
     }
     // Flatness
     if (!prev_knot) {
 	bool isUFlat = isFlatU(frames);
 	bool isVFlat = isFlatV(frames);
 
-	parent = (divDepth == 0) ? initialBBox(ctree, localsurf, m_face, u, v) : surfaceBBox(localsurf, false, frames, u, v);
+	parent = (divDepth == 0) ? initialBBox(ctree, localsurf, m_face, u, v) : surfaceBBox(localsurf, false, frames, u, v, within_distance_tol);
 
 	if ((!isVFlat || (width/height > ratio)) && (!isUFlat || (height/width > ratio))) {
 	    do_both_splits = 1;
@@ -969,8 +1126,8 @@ SurfaceTree::subdivideSurface(const ON_Surface *localsurf,
 	ON_Interval secondu(usplit, u.Max());
 	ON_Interval firstv(v.Min(), vsplit);
 	ON_Interval secondv(vsplit, v.Max());
-	ON_BoundingBox box = localsurf->BoundingBox();
 
+#ifdef _OLD_SUBDIVISION_
 	ON_Surface *q0surf = NULL;
 	ON_Surface *q1surf = NULL;
 	ON_Surface *q2surf = NULL;
@@ -986,6 +1143,13 @@ SurfaceTree::subdivideSurface(const ON_Surface *localsurf,
 	q1surf->ClearBoundingBox();
 	q2surf->ClearBoundingBox();
 	q3surf->ClearBoundingBox();
+#else
+	const ON_Surface *q0surf = localsurf;
+	const ON_Surface *q1surf = localsurf;
+	const ON_Surface *q2surf = localsurf;
+	const ON_Surface *q3surf = localsurf;
+
+#endif
 
 	/*********************************************************************
 	 * In order to avoid fairly expensive re-calculation of 3d points at
@@ -1056,37 +1220,49 @@ SurfaceTree::subdivideSurface(const ON_Surface *localsurf,
 	if (prev_knot) localsurf->FrameAt(usplit, vsplit, frames[4]);
 
 	ON_Plane *newframes;
-	if (!f_queue.empty()) {newframes = f_queue.front(); f_queue.pop();} else {newframes = (ON_Plane *)bu_malloc(9*sizeof(ON_Plane), "new frames");}
+	if (!f_queue->empty()) {
+	    newframes = f_queue->front(); f_queue->pop();
+	} else {
+	    newframes = (ON_Plane *)bu_malloc(9*sizeof(ON_Plane), "new frames");
+	}
 	newframes[0] = frames[0];
 	newframes[1] = sharedframes[0];
 	newframes[2] = frames[4];
 	newframes[3] = sharedframes[1];
 	newframes[4] = frames[5];
-	quads[0] = subdivideSurface(q0surf, firstu, firstv, newframes, divDepth+1, depthLimit, prev_knot);
+	quads[0] = subdivideSurface(q0surf, firstu, firstv, newframes, divDepth+1, depthLimit, prev_knot, within_distance_tol);
+#ifdef _OLD_SUBDIVISION_
 	delete q0surf;
+#endif
 	newframes[0] = sharedframes[0];
 	newframes[1] = frames[1];
 	newframes[2] = sharedframes[3];
 	newframes[3] = frames[4];
 	newframes[4] = frames[7];
-	quads[1] = subdivideSurface(q1surf, secondu, firstv, newframes, divDepth+1, depthLimit, prev_knot);
+	quads[1] = subdivideSurface(q1surf, secondu, firstv, newframes, divDepth+1, depthLimit, prev_knot, within_distance_tol);
+#ifdef _OLD_SUBDIVISION_
 	delete q1surf;
+#endif
 	newframes[0] = frames[4];
 	newframes[1] = sharedframes[3];
 	newframes[2] = frames[2];
 	newframes[3] = sharedframes[2];
 	newframes[4] = frames[8];
-	quads[2] = subdivideSurface(q2surf, secondu, secondv, newframes, divDepth+1, depthLimit, prev_knot);
+	quads[2] = subdivideSurface(q2surf, secondu, secondv, newframes, divDepth+1, depthLimit, prev_knot, within_distance_tol);
+#ifdef _OLD_SUBDIVISION_
 	delete q2surf;
+#endif
 	newframes[0] = sharedframes[1];
 	newframes[1] = frames[4];
 	newframes[2] = sharedframes[2];
 	newframes[3] = frames[3];
 	newframes[4] = frames[6];
-	quads[3] = subdivideSurface(q3surf, firstu, secondv, newframes, divDepth+1, depthLimit, prev_knot);
+	quads[3] = subdivideSurface(q3surf, firstu, secondv, newframes, divDepth+1, depthLimit, prev_knot, within_distance_tol);
+#ifdef _OLD_SUBDIVISION_
 	delete q3surf;
+#endif
 	memset(newframes, 0, 9 * sizeof(ON_Plane *));
-	f_queue.push(newframes);
+	f_queue->push(newframes);
 
 	parent->m_trimmed = true;
 	parent->m_checkTrim = false;
@@ -1121,13 +1297,14 @@ SurfaceTree::subdivideSurface(const ON_Surface *localsurf,
     }
     //////////////////////////////////////
     if (do_u_split) {
+#ifdef _OLD_SUBDIVISION_
 	bool split;
+#endif
 	ON_Interval firstu(u.Min(), usplit);
 	ON_Interval secondu(usplit, u.Max());
+#ifdef _OLD_SUBDIVISION_
 	ON_Surface *east = NULL;
 	ON_Surface *west = NULL;
-
-	ON_BoundingBox box = localsurf->BoundingBox();
 
 	int dir = 0;
 	if (prev_knot) {
@@ -1145,6 +1322,10 @@ SurfaceTree::subdivideSurface(const ON_Surface *localsurf,
 
 	east->ClearBoundingBox();
 	west->ClearBoundingBox();
+#else
+	const ON_Surface *east = localsurf;
+	const ON_Surface *west = localsurf;
+#endif
 
 	//////////////////////////////////
 	/*********************************************************************
@@ -1228,7 +1409,11 @@ SurfaceTree::subdivideSurface(const ON_Surface *localsurf,
 	localsurf->FrameAt(usplit, v.Max(), sharedframes[1]);
 
 	ON_Plane *newframes;
-	if (!f_queue.empty()) {newframes = f_queue.front(); f_queue.pop();} else {newframes = (ON_Plane *)bu_malloc(9*sizeof(ON_Plane), "new frames");}
+	if (!f_queue->empty()) {
+	    newframes = f_queue->front(); f_queue->pop();
+	} else {
+	    newframes = (ON_Plane *)bu_malloc(9*sizeof(ON_Plane), "new frames");
+	}
 	newframes[0] = frames[0];
 	newframes[1] = sharedframes[0];
 	newframes[2] = sharedframes[1];
@@ -1236,13 +1421,15 @@ SurfaceTree::subdivideSurface(const ON_Surface *localsurf,
 
 	if (prev_knot) {
 	    localsurf->FrameAt(firstu.Mid(), v.Mid(), newframes[4]);
-	    quads[0] = subdivideSurface(east, firstu, v, newframes, divDepth+1, depthLimit, prev_knot);
+	    quads[0] = subdivideSurface(east, firstu, v, newframes, divDepth+1, depthLimit, prev_knot, within_distance_tol);
 	} else {
 	    ON_Interval first(0, 0.5);
 	    localsurf->FrameAt(u.Mid() - uq, v.Mid(), newframes[4]);
-	    quads[0] = subdivideSurface(east, u.ParameterAt(first), v, newframes, divDepth + 1, depthLimit, prev_knot);
+	    quads[0] = subdivideSurface(east, u.ParameterAt(first), v, newframes, divDepth + 1, depthLimit, prev_knot, within_distance_tol);
 	}
+#ifdef _OLD_SUBDIVISION_
 	delete east;
+#endif
 
 	newframes[0] = sharedframes[0];
 	newframes[1] = frames[1];
@@ -1251,16 +1438,18 @@ SurfaceTree::subdivideSurface(const ON_Surface *localsurf,
 
 	if (prev_knot) {
 	    localsurf->FrameAt(secondu.Mid(), v.Mid(), newframes[4]);
-	    quads[1] = subdivideSurface(west, secondu, v, newframes, divDepth+1, depthLimit, prev_knot);
+	    quads[1] = subdivideSurface(west, secondu, v, newframes, divDepth+1, depthLimit, prev_knot, within_distance_tol);
 	} else {
 	    ON_Interval second(0.5, 1.0);
 	    localsurf->FrameAt(u.Mid() + uq, v.Mid(), newframes[4]);
-	    quads[1] = subdivideSurface(west, u.ParameterAt(second), v, newframes, divDepth + 1, depthLimit, prev_knot);
+	    quads[1] = subdivideSurface(west, u.ParameterAt(second), v, newframes, divDepth + 1, depthLimit, prev_knot, within_distance_tol);
 	}
+#ifdef _OLD_SUBDIVISION_
 	delete west;
+#endif
 
 	memset(newframes, 0, 9 * sizeof(ON_Plane *));
-	f_queue.push(newframes);
+	f_queue->push(newframes);
 
 	parent->m_trimmed = true;
 	parent->m_checkTrim = false;
@@ -1294,15 +1483,16 @@ SurfaceTree::subdivideSurface(const ON_Surface *localsurf,
 	return parent;
     }
     if (do_v_split || !prev_knot) {
+#ifdef _OLD_SUBDIVISION_
 	bool split;
+#endif
 	ON_Interval firstv(v.Min(), vsplit);
 	ON_Interval secondv(vsplit, v.Max());
 
+#ifdef _OLD_SUBDIVISION_
 	//////////////////////////////////////
 	ON_Surface *north = NULL;
 	ON_Surface *south = NULL;
-
-	ON_BoundingBox box = localsurf->BoundingBox();
 
 	int dir = 1;
 	if (prev_knot) {
@@ -1320,7 +1510,10 @@ SurfaceTree::subdivideSurface(const ON_Surface *localsurf,
 
 	south->ClearBoundingBox();
 	north->ClearBoundingBox();
-
+#else
+	const ON_Surface *north = localsurf;
+	const ON_Surface *south = localsurf;
+#endif
 	//////////////////////////////////
 	/*********************************************************************
 	 * In order to avoid fairly expensive re-calculation of 3d points at
@@ -1386,20 +1579,26 @@ SurfaceTree::subdivideSurface(const ON_Surface *localsurf,
 	localsurf->FrameAt(u.Max(), vsplit, sharedframes[1]);
 
 	ON_Plane *newframes;
-	if (!f_queue.empty()) {newframes = f_queue.front(); f_queue.pop();} else {newframes = (ON_Plane *)bu_malloc(9*sizeof(ON_Plane), "new frames");}
+	if (!f_queue->empty()) {
+	    newframes = f_queue->front(); f_queue->pop();
+	} else {
+	    newframes = (ON_Plane *)bu_malloc(9*sizeof(ON_Plane), "new frames");
+	}
 	newframes[0] = frames[0];
 	newframes[1] = frames[1];
 	newframes[2] = sharedframes[1];
 	newframes[3] = sharedframes[0];
 	if (prev_knot) {
 	    localsurf->FrameAt(u.Mid(), firstv.Mid(), newframes[4]);
-	    quads[0] = subdivideSurface(south, u, firstv, newframes, divDepth+1, depthLimit, prev_knot);
+	    quads[0] = subdivideSurface(south, u, firstv, newframes, divDepth+1, depthLimit, prev_knot, within_distance_tol);
 	} else {
 	    ON_Interval first(0, 0.5);
 	    localsurf->FrameAt(u.Mid(), v.Mid() - vq, newframes[4]);
-	    quads[0] = subdivideSurface(south, u, v.ParameterAt(first), newframes, divDepth + 1, depthLimit, prev_knot);
+	    quads[0] = subdivideSurface(south, u, v.ParameterAt(first), newframes, divDepth + 1, depthLimit, prev_knot, within_distance_tol);
 	}
+#ifdef _OLD_SUBDIVISION_
 	delete south;
+#endif
 
 	newframes[0] = sharedframes[0];
 	newframes[1] = sharedframes[1];
@@ -1408,16 +1607,18 @@ SurfaceTree::subdivideSurface(const ON_Surface *localsurf,
 
 	if (prev_knot) {
 	    localsurf->FrameAt(u.Mid(), secondv.Mid(), newframes[4]);
-	    quads[1] = subdivideSurface(north, u, secondv, newframes, divDepth+1, depthLimit, prev_knot);
+	    quads[1] = subdivideSurface(north, u, secondv, newframes, divDepth+1, depthLimit, prev_knot, within_distance_tol);
 	} else {
 	    ON_Interval second(0.5, 1.0);
 	    localsurf->FrameAt(u.Mid(), v.Mid() + vq, newframes[4]);
-	    quads[1] = subdivideSurface(north, u, v.ParameterAt(second), newframes, divDepth + 1, depthLimit, prev_knot);
+	    quads[1] = subdivideSurface(north, u, v.ParameterAt(second), newframes, divDepth + 1, depthLimit, prev_knot, within_distance_tol);
 	}
+#ifdef _OLD_SUBDIVISION_
 	delete north;
+#endif
 
 	memset(newframes, 0, 9 * sizeof(ON_Plane *));
-	f_queue.push(newframes);
+	f_queue->push(newframes);
 
 	parent->m_trimmed = true;
 	parent->m_checkTrim = false;
@@ -1455,7 +1656,7 @@ SurfaceTree::subdivideSurface(const ON_Surface *localsurf,
     if (!do_both_splits && !do_u_split && !do_v_split) {
 	((ON_Surface *)localsurf)->ClearBoundingBox();
 	delete parent;
-	return subdivideSurface(localsurf, u, v, frames, 0, depthLimit, 0);
+	return subdivideSurface(localsurf, u, v, frames, 0, depthLimit, 0, within_distance_tol);
     }
 
     // Should never get here
@@ -1511,14 +1712,14 @@ typedef struct _gcp_data {
 bool
 gcp_gradient(pt2d_t out_grad, GCPData& data, pt2d_t uv)
 {
-    bool evaluated = data.surf->Ev2Der(uv[0],
-				       uv[1],
-				       data.S,
-				       data.du,
-				       data.dv,
-				       data.duu,
-				       data.duv,
-				       data.dvv); // calc S(u, v) dS/du dS/dv d2S/du2 d2S/dv2 d2S/dudv
+    ON_BOOL32 evaluated = data.surf->Ev2Der(uv[0],
+					    uv[1],
+					    data.S,
+					    data.du,
+					    data.dv,
+					    data.duu,
+					    data.duv,
+					    data.dvv); // calc S(u, v) dS/du dS/dv d2S/du2 d2S/dv2 d2S/dudv
     if (!evaluated) return false;
     out_grad[0] = 2 * (data.du * (data.S - data.pt));
     out_grad[1] = 2 * (data.dv * (data.S - data.pt));
@@ -1611,11 +1812,10 @@ try_again:
 	// check to see if we've left the surface domain
 	double l, h;
 	data.surf->GetDomain(0, &l, &h);
-	if (uv[0] < l) uv[0] = l; // clamp if out of range!
-	if (uv[0] > h) uv[0] = h;
+	CLAMP(uv[0], l, h); // make sure in range
+
 	data.surf->GetDomain(1, &l, &h);
-	if (uv[1] < l) uv[1] = l;
-	if (uv[1] > h) uv[1] = h;
+	CLAMP(uv[1], l, h);
 
 	outpt[0] = uv[0];
 	outpt[1] = uv[1];
@@ -1630,334 +1830,9 @@ try_again:
 	}
     }
 
-    if (delete_tree) delete a_tree;
+    if (delete_tree)
+	delete a_tree;
     return found;
-}
-
-
-//--------------------------------------------------------------------------------
-// pullback_curve implementation
-class PBCData {
-public:
-    double tolerance;
-    double flatness;
-    const ON_Curve* curve;
-    const ON_Surface* surf;
-    ON_BrepFace* face;
-    SurfaceTree* tree;
-    ON_2dPointArray samples;
-};
-
-
-class BSpline {
-public:
-    int p; // degree
-    int m; // num_knots-1
-    int n; // num_samples-1 (aka number of control points)
-    std::vector<double> params;
-    std::vector<double> knots;
-    ON_2dPointArray controls;
-};
-
-
-bool
-isFlat(const ON_2dPoint& p1, const ON_2dPoint& m, const ON_2dPoint& p2, double flatness)
-{
-    ON_Line line = ON_Line(ON_3dPoint(p1), ON_3dPoint(p2));
-    return line.DistanceTo(ON_3dPoint(m)) <= flatness;
-}
-
-
-bool
-toUV(PBCData& data, ON_2dPoint& out_pt, double t)
-{
-    ON_3dPoint pointOnCurve = data.curve->PointAt(t);
-    return get_closest_point(out_pt, data.face, pointOnCurve, data.tree);
-}
-
-
-double
-randomPointFromRange(PBCData& data, ON_2dPoint& out, double lo, double hi)
-{
-    assert(lo < hi);
-
-#ifdef HAVE_DRAND48
-    double random_pos = drand48() * (RANGE_HI - RANGE_LO) + RANGE_LO;
-#else
-    double random_pos = rand() * (RANGE_HI - RANGE_LO) / (RAND_MAX + 1.) + RANGE_LO;
-#endif
-
-    double newt = random_pos * (hi - lo) + lo;
-    assert(newt >= lo && newt <= hi);
-    assert(toUV(data, out, newt));
-    return newt;
-}
-
-
-bool
-sample(PBCData& data, double t1, double t2, const ON_2dPoint& p1, const ON_2dPoint& p2)
-{
-    ON_2dPoint m;
-    double t = randomPointFromRange(data, m, t1, t2);
-    if (isFlat(p1, m, p2, data.flatness)) {
-	data.samples.Append(p2);
-    } else {
-	sample(data, t1, t, p1, m);
-	sample(data, t, t2, m, p2);
-    }
-    return true;
-}
-
-
-/**
- * this is uniform knot generation, not recommended for use with
- * chord-length parameter method... but we're not using
- * that. considering using the average method described at
- * http://www.cs.mtu.edu/~shene/COURSES/cs3621/NOTES/
- */
-void
-generateKnots(BSpline& bspline)
-{
-    int num_knots = bspline.m + 1;
-    bspline.knots.resize(num_knots);
-    for (int i = 0; i <= bspline.p; i++) {
-	bspline.knots[i] = 0.0;
-	TRACE("knot: " << bspline.knots[i]);
-    }
-    for (int i = 1; i <= bspline.n-bspline.p; i++) {
-	bspline.knots[bspline.p+i] = ((double)i) / (bspline.n-bspline.p+1.0);
-	TRACE("knot: " << bspline.knots[bspline.p+i]);
-    }
-    for (int i = bspline.m-bspline.p; i <= bspline.m; i++) {
-	bspline.knots[i] = 1.0;
-	TRACE("knot: " << bspline.knots[i]);
-    }
-    TRACE("knot size: " << bspline.knots.size());
-}
-
-
-int
-getKnotInterval(BSpline& bspline, double u)
-{
-    int k = 0;
-    while (u >= bspline.knots[k]) k++;
-    k = (k == 0) ? k : k-1;
-    return k;
-}
-
-
-int
-getCoefficients(BSpline& bspline, TNT::Array1D<double>& N, double u)
-{
-    // evaluate the b-spline basis function for the given parameter u
-    // place the results in N[]
-    N = 0.0;
-    if (NEAR_EQUAL(u, bspline.knots[0], BREP_FCP_ROOT_EPSILON)) {
-	N[0] = 1.0;
-	return 0;
-    } else if (NEAR_EQUAL(u, bspline.knots[bspline.m], BREP_FCP_ROOT_EPSILON)) {
-	N[bspline.n] = 1.0;
-	return bspline.n;
-    }
-    int k = getKnotInterval(bspline, u);
-    N[k] = 1.0;
-    for (int d = 1; d <= bspline.p; d++) {
-	double uk_1 = bspline.knots[k+1];
-	double uk_d_1 = bspline.knots[k-d+1];
-	N[k-d] = ((uk_1 - u)/(uk_1 - uk_d_1)) * N[k-d+1];
-	for (int i = k-d+1; i <= k-1; i++) {
-	    double ui = bspline.knots[i];
-	    double ui_1 = bspline.knots[i+1];
-	    double ui_d = bspline.knots[i+d];
-	    double ui_d_1 = bspline.knots[i+d+1];
-	    N[i] = ((u - ui)/(ui_d - ui)) * N[i] + ((ui_d_1 - u)/(ui_d_1 - ui_1))*N[i+1];
-	}
-	double uk = bspline.knots[k];
-	double uk_d = bspline.knots[k+d];
-	N[k] = ((u - uk)/(uk_d - uk)) * N[k];
-    }
-    return k;
-}
-
-
-// XXX: this function sucks...
-void
-generateParameters(BSpline& bspline)
-{
-    TRACE("generateParameters");
-    double lastT = 0.0;
-    bspline.params.resize(bspline.n+1);
-    TNT::Array2D<double> N(UNIVERSAL_SAMPLE_COUNT, bspline.n+1);
-    for (int i = 0; i < UNIVERSAL_SAMPLE_COUNT; i++) {
-	double t = (double)i / (UNIVERSAL_SAMPLE_COUNT-1);
-	TNT::Array1D<double> n = TNT::Array1D<double>(N.dim2(), N[i]);
-	getCoefficients(bspline, n, t);
-    }
-    for (int i = 0; i < bspline.n+1; i++) {
-	double max = -DBL_MAX;
-	for (int j = 0; j < UNIVERSAL_SAMPLE_COUNT; j++) {
-	    double f = N[j][i];
-	    double t = ((double)j)/(UNIVERSAL_SAMPLE_COUNT-1);
-	    if (f > max) {
-		max = f;
-		if (j == UNIVERSAL_SAMPLE_COUNT-1) bspline.params[i] = t;
-	    } else if (f < max) {
-		bspline.params[i] = lastT;
-		break;
-	    }
-	    lastT = t;
-	}
-    }
-    for (int i = 0; i < bspline.n+1; i++) {
-    }
-}
-
-
-void
-printMatrix(TNT::Array2D<double>& m)
-{
-    printf("---\n");
-    for (int i = 0; i < m.dim1(); i++) {
-	for (int j = 0; j < m.dim2(); j++) {
-	    printf("% 5.5f ", m[i][j]);
-	}
-	printf("\n");
-    }
-}
-
-
-void
-generateControlPoints(BSpline& bspline, PBCData& data)
-{
-    TNT::Array2D<double> bigN(bspline.n+1, bspline.n+1);
-    for (int i = 0; i < bspline.n+1; i++) {
-	TNT::Array1D<double> n = TNT::Array1D<double>(bigN.dim2(), bigN[i]);
-	getCoefficients(bspline, n, bspline.params[i]);
-    }
-    TNT::Array2D<double> bigD(bspline.n+1, 2);
-    for (int i = 0; i < bspline.n+1; i++) {
-	bigD[i][0] = data.samples[i].x;
-	bigD[i][1] = data.samples[i].y;
-    }
-
-    printMatrix(bigD);
-    printMatrix(bigN);
-
-    JAMA::LU<double> lu(bigN);
-    assert(lu.isNonsingular() > 0);
-    TNT::Array2D<double> bigP = lu.solve(bigD); // big linear algebra black box here...
-
-    // extract the control points
-    for (int i = 0; i < bspline.n+1; i++) {
-	ON_2dPoint& p = bspline.controls.AppendNew();
-	p.x = bigP[i][0];
-	p.y = bigP[i][1];
-    }
-}
-
-
-ON_NurbsCurve*
-newNURBSCurve(BSpline& spline)
-{
-    TRACE("newNURBSCurve!");
-
-    TRACE("n: " << spline.n);
-    TRACE("p: " << spline.p);
-
-    // we now have everything to complete our spline
-    ON_NurbsCurve* c = ON_NurbsCurve::New(2,
-					  false,
-					  spline.p+1,
-					  spline.n+1);
-
-    // truly - i don't know WTF openNURBS is doing here
-    // when it prints out the knots, they only have multiplicity 3,
-    // but yet the order of the curve is 4!!!
-    int num_knots = (int)spline.knots.size() - 2;
-    for (int i = 0; i < num_knots; i++) {
-	double knot = spline.knots[i+1];
-	TRACE("knot: " << knot);
-	c->SetKnot(i, knot);
-    }
-    //c->ClampEnd(2);
-
-    for (int i = 0; i < spline.controls.Count(); i++) {
-	c->SetCV(i, ON_3dPoint(spline.controls[i]));
-    }
-
-    return c;
-}
-
-
-ON_Curve*
-interpolateCurve(PBCData& data)
-{
-    ON_Curve* curve;
-    if (data.samples.Count() == 2) {
-	// build a line
-	curve = new ON_LineCurve(data.samples[0], data.samples[1]);
-	curve->SetDomain(0.0, 1.0);
-    } else {
-	// build a NURBS curve, then see if it can be simplified!
-	BSpline spline;
-	spline.p = 3;
-	spline.n = data.samples.Count()-1;
-	spline.m = spline.n + spline.p + 1;
-	generateKnots(spline);
-	generateParameters(spline);
-	generateControlPoints(spline, data);
-	assert(spline.controls.Count() >= 4);
-	curve = newNURBSCurve(spline);
-	// XXX - attempt to simplify here!
-    }
-    ON_TextLog tl;
-    TRACE("************** interpolateCurve");
-    curve->Dump(tl);
-    assert(curve->IsValid(&tl));
-    return curve;
-}
-
-
-ON_Curve*
-pullback_curve(ON_BrepFace* face,
-	       const ON_Curve* curve,
-	       SurfaceTree* tree,
-	       double tolerance,
-	       double flatness)
-{
-    PBCData data;
-    data.tolerance = tolerance;
-    double len;
-    curve->GetLength(&len);
-    data.flatness = (len < 1.0) ? flatness : flatness * len;
-
-    data.curve = curve;
-    data.face = face;
-    data.surf = face->SurfaceOf();
-    data.tree = tree;
-
-    double u[2], v[2];
-    data.surf->GetDomain(0, &u[0], &u[1]);
-    data.surf->GetDomain(1, &v[0], &v[1]);
-    TRACE("pullback_curve: " << PT2(u) << " | " << PT2(v));
-    TRACE("pullback_curve: ");
-    ON_TextLog tl;
-    curve->Dump(tl);
-    data.surf->Dump(tl);
-
-    // Step 1 - adaptively sample the curve
-    double tmin, tmax;
-    data.curve->GetDomain(&tmin, &tmax);
-    ON_2dPoint& start = data.samples.AppendNew(); // new point is added to samples and returned
-    assert(toUV(data, start, tmin));
-
-    ON_2dPoint p1, p2;
-    toUV(data, p1, tmin);
-    toUV(data, p2, tmax);
-    assert(sample(data, tmin, tmax, p1, p2));
-
-    // step 2 - interpolate the samples
-    return interpolateCurve(data);
 }
 
 

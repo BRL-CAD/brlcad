@@ -1,7 +1,7 @@
 /*                         V D E C K . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2013 United States Government as represented by
+ * Copyright (c) 1990-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -65,9 +65,12 @@
 #endif
 #include "bio.h"
 
+#include "bu/parallel.h"
+#include "bu/sort.h"
+#include "bu/units.h"
 #include "vmath.h"
 #include "raytrace.h"
-#include "rtgeom.h"
+#include "rt/geom.h"
 
 #include "./vextern.h"
 
@@ -146,6 +149,12 @@ off_t		savsol;		/* File position of # of solids & regions	*/
 /* Structures.								*/
 mat_t		identity;
 
+/* Head of linked list of solids */
+struct soltab	sol_hd;
+
+struct db_i	*dbip;		/* Database instance ptr */
+
+
 extern void		menu();
 extern void		quit();
 
@@ -174,22 +183,38 @@ extern int		parsArg();
 extern int		insert();
 extern int		col_prt();
 extern int		match();
-extern int		delete();
+extern int		delete_obj();
 extern int		cgarbs();
 extern int		redoarb();
 
-extern void ewrite(FILE *fp, const char *buf, unsigned bytes);
-extern void blank_fill(FILE *fp, int count);
 
-/* Head of linked list of solids */
-struct soltab	sol_hd;
+/**
+ * Write with error checking.
+ */
+void
+ewrite(FILE *fp, const char *buf, size_t bytes)
+{
+    if (bytes == 0)  return;
 
-struct db_i	*dbip;		/* Database instance ptr */
+    if (fwrite(buf, bytes, 1, fp) != 1) {
+	perror("write");
+	fprintf(stderr, "vdeck: write error\n");
+	bu_exit(2, NULL);
+    }
+}
+
+
+/**
+ * Write count blanks to fildes.
+ */
+void
+blank_fill(FILE *fp, size_t count)
+{
+    ewrite(fp, BLANKS, count);
+}
 
 
 /*
- *			P R O M P T
- *
  *  Print a non-newline-terminate string, and flush stdout
  */
 void
@@ -201,14 +226,12 @@ prompt(char *fmt)
 
 
 /**
- * S O R T F U N C
+ * Comparison function for bu_sort().
  *
- * Comparison function for qsort().
- *
- * 'a' is the exact template expected by qsort.
+ * 'a' is the exact template expected by bu_sort.
  */
 static int
-sortFunc(const void *a, const void *b)
+sortFunc(const void *a, const void *b, void *UNUSED(arg))
 {
     const char **lhs = (const char **)a;
     const char **rhs = (const char **)b;
@@ -217,21 +240,16 @@ sortFunc(const void *a, const void *b)
 }
 
 
-/**
- *			M A I N
- */
 int
 main(int argc, char *argv[])
 {
-    setbuf(stdout, bu_malloc(BUFSIZ, "stdout buffer"));
+    setbuf(stdout, (char *)bu_malloc(BUFSIZ, "stdout buffer"));
     BU_LIST_INIT(&(sol_hd.l));
 
     if (! parsArg(argc, argv)) {
 	menu(usage);
 	return 1;
     }
-
-    rt_init_resource(&rt_uniresource, 0, NULL);
 
     /* Build directory from object file.	 	*/
     if (db_dirbuild(dbip) < 0) {
@@ -241,7 +259,9 @@ main(int argc, char *argv[])
 
     toc();		/* Build table of contents from directory.	*/
 
-    /*      C o m m a n d   I n t e r p r e t e r			*/
+    /***********************
+     * Command Interpreter *
+     ***********************/
     (void) setjmp(env);/* Point of re-entry from aborted command.	*/
     prompt(CMD_PROMPT);
     while (1) {
@@ -270,7 +290,7 @@ main(int argc, char *argv[])
 		{
 		    int	i;
 		    if (arg_list[1] == 0) {
-			(void) col_prt(curr_list, curr_ct);
+			(void) col_prt(curr_list, (size_t)curr_ct);
 			break;
 		    }
 		    for (tmp_ct = 0, i = 0; i < curr_ct; i++)
@@ -300,14 +320,14 @@ main(int argc, char *argv[])
 		    prompt("enter object[s] to remove: ");
 		    (void) getcmd(arg_list, arg_ct);
 		}
-		(void) delete(arg_list);
+		(void) delete_obj(arg_list);
 		break;
 	    case RETURN :
 		prompt(PROMPT);
 		continue;
 	    case SORT_TOC :
-		qsort((genptr_t)toc_list, (unsigned)ndir,
-		       sizeof(char *), sortFunc);
+		bu_sort((void *)toc_list, (unsigned)ndir,
+			sizeof(char *), sortFunc, NULL);
 		break;
 	    case TOC :
 		list_toc(arg_list);
@@ -329,8 +349,6 @@ out:
 
 
 /**
- * F L A T T E N _ T R E E
- *
  * This routine turns a union tree into a flat string.
  */
 void
@@ -371,7 +389,7 @@ flatten_tree(struct bu_vls *vls, union tree *tp, char *op, int neg)
 	    return;
 
 	case OP_REGION:
-	    bu_log("REGION 'stp'=x%x\n", (size_t)tp->tr_a.tu_stp);
+	    bu_log("REGION 'stp'=%lx\n", (size_t)tp->tr_a.tu_stp);
 	    return;
 
 	default:
@@ -395,13 +413,11 @@ flatten_tree(struct bu_vls *vls, union tree *tp, char *op, int neg)
 
 
 /**
- * R E G I O N _ E N D
- *
  * This routine will be called by db_walk_tree() once all the solids
  * in this region have been visited.
  */
 union tree *
-region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, genptr_t UNUSED(client_data))
+region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, void *UNUSED(client_data))
 {
     struct directory	*dp;
     char			*fullname;
@@ -411,7 +427,7 @@ region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tr
 #define OBUF_SIZE 128
     char			obuf[OBUF_SIZE];
     char			*cp;
-    int			left;
+    size_t			left;
     int			length;
     struct directory	*regdp = RT_DIR_NULL;
     size_t i;
@@ -538,12 +554,10 @@ region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tr
 
 
 /**
- * G E T T R E E _ L E A F
- *
  * Re-use the librt "soltab" structures here, for our own purposes.
  */
 union tree *
-gettree_leaf(struct db_tree_state *tsp, const struct db_full_path *pathp, struct rt_db_internal *ip, genptr_t UNUSED(client_data))
+gettree_leaf(struct db_tree_state *tsp, const struct db_full_path *pathp, struct rt_db_internal *ip, void *UNUSED(client_data))
 {
     fastf_t	f;
     struct soltab	*stp;
@@ -617,7 +631,7 @@ gettree_leaf(struct db_tree_state *tsp, const struct db_full_path *pathp, struct
     } else {
 	stp->st_matp = mat;
     }
-    stp->st_specific = (genptr_t)0;
+    stp->st_specific = (void *)0;
 
     /* init solid's maxima and minima */
     VSETALL(stp->st_max, -INFINITY);
@@ -724,8 +738,6 @@ swap_dbl(double *d1, double *d2)
 
 
 /**
- * A D D T O R
- *
  * Process torus.
  */
 void
@@ -752,9 +764,6 @@ addtor(struct bu_vls *v, struct rt_tor_internal *gp, char *name, int num)
 }
 
 
-/**
- * A D D H A L F
- */
 void
 addhalf(struct bu_vls *v, struct rt_half_internal *gp, char *name, int num)
 {
@@ -772,9 +781,6 @@ addhalf(struct bu_vls *v, struct rt_half_internal *gp, char *name, int num)
 }
 
 
-/**
- * A D D A R B N
- */
 void
 addarbn(struct bu_vls *v, struct rt_arbn_internal *gp, char *name, int num)
 {
@@ -831,8 +837,6 @@ vls_solid_pts(struct bu_vls *v, const point_t *pts, int npts, const char *name, 
 
 
 /**
- *			A D D A R B
- *
  *  Process generalized arb.
  */
 void
@@ -889,8 +893,6 @@ addarb(struct bu_vls *v, struct rt_arb_internal *gp, char *name, int num)
 #define SPH	3
 
 /**
- * A D D E L L
- *
  * Process the general ellipsoid.
  */
 void
@@ -975,8 +977,6 @@ addell(struct bu_vls *v, struct rt_ell_internal *gp, char *name, int num)
 
 
 /**
- * A D D T G C
- *
  * Process generalized truncated cone.
  */
 void
@@ -1131,11 +1131,8 @@ addtgc(struct bu_vls *v, struct rt_tgc_internal *gp, char *name, int num)
 }
 
 
-/**
- * A R S _ C U R V E _ O U T
- */
 void
-ars_curve_out(struct bu_vls *v, fastf_t *fp, int todo, int curveno, int num)
+ars_curve_out(struct bu_vls *v, fastf_t *fp, int todo, size_t curveno, int num)
 {
     while (todo > 0) {
 	vls_itoa(v, num, 5);
@@ -1156,15 +1153,13 @@ ars_curve_out(struct bu_vls *v, fastf_t *fp, int todo, int curveno, int num)
 	}
 
 	bu_vls_strcat(v, "curve ");
-	vls_itoa(v, curveno, 3);
+	vls_itoa(v, (int)curveno, 3);
 	bu_vls_strcat(v, "\n");
     }
 }
 
 
 /**
- * A D D A R S
- *
  * Process triangular surfaced polyhedron - ars.
  */
 void
@@ -1190,26 +1185,6 @@ addars(struct bu_vls *v, struct rt_ars_internal *gp, char *name, int num)
 
 
 /**
- * e w r i t e
- *
- * Write with error checking.
- */
-void
-ewrite(FILE *fp, const char *buf, unsigned bytes)
-{
-    if (bytes == 0)  return;
-
-    if (fwrite(buf, bytes, 1, fp) != 1) {
-	perror("write");
-	fprintf(stderr, "vdeck: write error\n");
-	bu_exit(2, NULL);
-    }
-}
-
-
-/**
- * d e c k
- *
  * make a COMGEOM deck for current list of objects
  */
 void
@@ -1290,7 +1265,7 @@ deck(char *prefix)
     /*  '1' indicates one CPU.  This code isn't ready for parallelism */
     if (db_walk_tree(dbip, curr_ct, (const char **)curr_list,
 		     1, &rt_initial_tree_state,
-		     0, region_end, gettree_leaf, (genptr_t)NULL) < 0) {
+		     0, region_end, gettree_leaf, (void *)NULL) < 0) {
 	fprintf(stderr, "Unable to treewalk any trees!\n");
 	bu_exit(11, NULL);
     }
@@ -1323,8 +1298,6 @@ deck(char *prefix)
 }
 
 /**
- * t o c
- *
  * Build a sorted list of names of all the objects accessible in the
  * object file.
  */
@@ -1355,8 +1328,6 @@ toc()
 
 
 /**
- * l i s t _ t o c
- *
  * List the table of contents.
  */
 void
@@ -1382,21 +1353,19 @@ list_toc(char *args[])
 #define MAX_COL	(NAMESIZE*5)
 #define SEND_LN()	{\
 	buf[column++] = '\n';\
-	ewrite(stdout, buf, (unsigned) column);\
+	ewrite(stdout, buf, column);\
 	column = 0;\
     }
 
 
 /**
- * c o l _ p r t
- *
  * Print list of names in tabular columns.
  */
 int
-col_prt(char *list[], int ct)
+col_prt(char *list[], size_t ct)
 {
     char		buf[MAX_COL+2];
-    int	i, column, spaces;
+    size_t i, column, spaces;
 
     for (i = 0, column = 0; i < ct; i++) {
 	if (column + (int)strlen(list[i]) > MAX_COL) {
@@ -1420,8 +1389,6 @@ col_prt(char *list[], int ct)
 
 
 /**
- * i n s e r t
- *
  * Insert each member of the table of contents 'toc_list' which
  * matches one of the arguments into the current list 'curr_list'.
  */
@@ -1449,13 +1416,11 @@ insert(char *args[], int ct)
 }
 
 /**
- * d e l e t e
- *
  * delete all members of current list 'curr_list' which match one of
  * the arguments.
  */
 int
-delete(char *args[])
+delete_obj(char *args[])
 {
     int	i;
     int	nomatch;
@@ -1494,8 +1459,6 @@ delete(char *args[])
 
 
 /**
- * i t o a
- *
  * Convert integer to ascii  wd format.
  */
 void
@@ -1537,8 +1500,6 @@ vls_blanks(struct bu_vls *v, int n)
 
 
 /**
- * V L S _ I T O A
- *
  * Convert integer to ascii  wd format.
  */
 void
@@ -1600,8 +1561,6 @@ vls_ftoa_cvt(struct bu_vls *v, double f, int w, int d)
 
 
 /**
- * V L S _ F T O A
- *
  * Convert float to ascii  w.df format.
  */
 void
@@ -1666,8 +1625,6 @@ vls_ftoa(struct bu_vls *v, double f, int w, int d)
 
 
 /**
- * g e t c m d
- *
  * Return first character read from keyboard, copy command into
  * args[0] and arguments into args[1]...args[n].
  */
@@ -1679,7 +1636,7 @@ getcmd(char *args[], int ct)
 	while (--arg_ct >= 0)
 	    bu_free(args[arg_ct], "args[arg_ct]");
     for (arg_ct = ct; arg_ct < MAXARG - 1; ++arg_ct) {
-	args[arg_ct] = bu_malloc(MAXLN, "getcmd buffer");
+	args[arg_ct] = (char *)bu_malloc(MAXLN, "getcmd buffer");
 	if (! getarg(args[arg_ct], MAXLN))
 	    break;
     }
@@ -1697,8 +1654,6 @@ getcmd(char *args[], int ct)
 
 
 /**
- * g e t a r g
- *
  * Get a word of input into 'str'. Copies no more than maxchars characters
  * into str and ensures str is null-terminated if possible.
  *
@@ -1742,8 +1697,6 @@ getarg(char *str, size_t maxchars)
 
 
 /**
- * m e n u
- *
  * Display menu stored at address 'addr'.
  */
 void
@@ -1758,20 +1711,6 @@ menu(char **addr)
 
 
 /**
- * b l a n k _ f i l l
- *
- * Write count blanks to fildes.
- */
-void
-blank_fill(FILE *fp, int count)
-{
-    ewrite(fp, BLANKS, (unsigned) count);
-}
-
-
-/**
- * a b o r t
- *
  * Abort command without terminating run (restore command prompt) and
  * cleanup temporary files.
  */
@@ -1786,8 +1725,6 @@ abort_sig(int sig)
 
 
 /**
- * q u i t
- *
  * Terminate run.
  */
 void

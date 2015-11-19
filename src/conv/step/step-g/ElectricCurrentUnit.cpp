@@ -1,7 +1,7 @@
 /*                 ElectricCurrentUnit.cpp
  * BRL-CAD
  *
- * Copyright (c) 1994-2013 United States Government as represented by
+ * Copyright (c) 1994-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -58,9 +58,12 @@ ElectricCurrentUnit::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
 
     // load base class attributes
     if (!NamedUnit::Load(step, sse)) {
+	sw->entity_status[id] = STEP_LOAD_ERROR;
 	std::cout << CLASSNAME << ":Error loading base class ::Unit." << std::endl;
 	return false;
     }
+
+    sw->entity_status[id] = STEP_LOADED;
 
     return true;
 }
@@ -77,24 +80,16 @@ ElectricCurrentUnit::Print(int level)
     NamedUnit::Print(level + 1);
 
 }
+
 STEPEntity *
-ElectricCurrentUnit::Create(STEPWrapper *sw, SDAI_Application_instance *sse)
+ElectricCurrentUnit::GetInstance(STEPWrapper *sw, int id)
 {
-    Factory::OBJECTS::iterator i;
-    if ((i = Factory::FindObject(sse->STEPfile_id)) == Factory::objects.end()) {
-	ElectricCurrentUnit *object = new ElectricCurrentUnit(sw, sse->STEPfile_id);
+    return new ElectricCurrentUnit(sw, id);
+}
 
-	Factory::AddObject(object);
-
-	if (!object->Load(sw, sse)) {
-	    std::cerr << CLASSNAME << ":Error loading class in ::Create() method." << std::endl;
-	    delete object;
-	    return NULL;
-	}
-	return static_cast<STEPEntity *>(object);
-    } else {
-	return (*i).second;
-    }
+STEPEntity *
+ElectricCurrentUnit::Create(STEPWrapper *sw, SDAI_Application_instance *sse) {
+    return STEPEntity::CreateEntity(sw, sse, GetInstance, CLASSNAME);
 }
 
 // Local Variables:

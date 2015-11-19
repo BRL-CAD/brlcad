@@ -1,7 +1,7 @@
 /*                          A R B S . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2013 United States Government as represented by
+ * Copyright (c) 1986-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -22,14 +22,12 @@
 
 #include <stdlib.h>
 #include <signal.h>
-#include <stdio.h>
 #include <string.h>
 #include <math.h>
 
-#include "bio.h"
-#include "bu.h"
+#include "bu/vls.h"
 #include "vmath.h"
-#include "rtgeom.h"
+#include "rt/geom.h"
 #include "raytrace.h"
 #include "./mged.h"
 #include "./mged_dm.h"
@@ -56,8 +54,8 @@ char *p_rfin[] = {
 };
 
 
-/* F _ R F A R B () :	finds arb8 given.....
- *
+/*
+ * Finds arb8 given:
  * 1. one point
  * 2. 2 coordinates of 3 other points
  * 3. rot and fallback angles
@@ -280,7 +278,7 @@ f_rfarb(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
     /* no interrupts */
     (void)signal(SIGINT, SIG_IGN);
 
-    if ((dp = db_diradd(dbip, argv[1], -1L, 0, RT_DIR_SOLID, (genptr_t)&internal.idb_type)) == RT_DIR_NULL) {
+    if ((dp = db_diradd(dbip, argv[1], -1L, 0, RT_DIR_SOLID, (void *)&internal.idb_type)) == RT_DIR_NULL) {
 	Tcl_AppendResult(interp, "Cannot add ", argv[1], " to the directory\n", (char *)NULL);
 	return TCL_ERROR;
     }

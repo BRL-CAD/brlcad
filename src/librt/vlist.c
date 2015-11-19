@@ -1,7 +1,7 @@
 /*                         V L I S T . C
  * BRL-CAD
  *
- * Copyright (c) 1992-2013 United States Government as represented by
+ * Copyright (c) 1992-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -25,45 +25,15 @@
 #include <string.h>
 #include <math.h>
 #include <string.h>
-#include "bin.h"
+#include "bnetwork.h"
 
+#include "bu/cv.h"
 #include "vmath.h"
-#include "bu.h"
+
 #include "bn.h"
 #include "raytrace.h"
-#include "plot3.h"
-
-
-struct bn_vlblock *
-bn_vlblock_init(struct bu_list *free_vlist_hd, /**< where to get/put free vlists */
-		int max_ent /**< maximum number of entities to get/put */)
-{
-    struct bn_vlblock *vbp;
-    size_t i;
-
-    if (!BU_LIST_IS_INITIALIZED(free_vlist_hd))
-	BU_LIST_INIT(free_vlist_hd);
-
-    BU_ALLOC(vbp, struct bn_vlblock);
-    vbp->magic = BN_VLBLOCK_MAGIC;
-    vbp->free_vlist_hd = free_vlist_hd;
-    vbp->max = max_ent;
-    vbp->head = (struct bu_list *)bu_calloc(vbp->max,
-					    sizeof(struct bu_list), "head[]");
-    vbp->rgb = (long *)bu_calloc(vbp->max,
-				 sizeof(long), "rgb[]");
-
-    for (i=0; i < vbp->max; i++) {
-	vbp->rgb[i] = 0;
-	BU_LIST_INIT(&(vbp->head[i]));
-    }
-
-    vbp->rgb[0] = 0xFFFF00L;	/* Yellow, default */
-    vbp->rgb[1] = 0xFFFFFFL;	/* White */
-    vbp->nused = 2;
-
-    return vbp;
-}
+#include "bn/plot3.h"
+#include "bn/vlist.h"
 
 
 struct bn_vlblock *
@@ -72,170 +42,10 @@ rt_vlblock_init(void)
     return bn_vlblock_init(&RTG.rtg_vlfree, 32);
 }
 
-
-void
-rt_vlblock_free(struct bn_vlblock *vbp)
-{
-    size_t i;
-
-    BN_CK_VLBLOCK(vbp);
-    for (i=0; i < vbp->nused; i++) {
-	/* Release any remaining vlist storage */
-	if (vbp->rgb[i] == 0) continue;
-	if (BU_LIST_IS_EMPTY(&(vbp->head[i]))) continue;
-	BN_FREE_VLIST(vbp->free_vlist_hd, &(vbp->head[i]));
-    }
-
-    bu_free((char *)(vbp->head), "head[]");
-    bu_free((char *)(vbp->rgb), "rgb[]");
-    bu_free((char *)vbp, "bn_vlblock");
-
-}
-
-
-struct bu_list *
-rt_vlblock_find(struct bn_vlblock *vbp, int r, int g, int b)
-{
-    long newrgb;
-    size_t n;
-    size_t omax;		/* old max */
-
-    BN_CK_VLBLOCK(vbp);
-
-    newrgb = ((r&0xFF)<<16)|((g&0xFF)<<8)|(b&0xFF);
-
-    for (n=0; n < vbp->nused; n++) {
-	if (vbp->rgb[n] == newrgb)
-	    return &(vbp->head[n]);
-    }
-    if (vbp->nused < vbp->max) {
-	/* Allocate empty slot */
-	n = vbp->nused++;
-	vbp->rgb[n] = newrgb;
-	return &(vbp->head[n]);
-    }
-
-    /************** enlarge the table ****************/
-    omax = vbp->max;
-    vbp->max *= 2;
-
-    /* Look for empty lists and mark for use below. */
-    for (n=0; n < omax; n++)
-	if (BU_LIST_IS_EMPTY(&vbp->head[n]))
-	    vbp->head[n].forw = BU_LIST_NULL;
-
-    vbp->head = (struct bu_list *)bu_realloc((genptr_t)vbp->head,
-					     vbp->max * sizeof(struct bu_list),
-					     "head[]");
-    vbp->rgb = (long *)bu_realloc((genptr_t)vbp->rgb,
-				  vbp->max * sizeof(long),
-				  "rgb[]");
-
-    /* re-initialize pointers in lower half */
-    for (n=0; n < omax; n++) {
-	/*
-	 * Check to see if list is empty
-	 * (i.e. yellow and/or white are not used).
-	 * Note - we can't use BU_LIST_IS_EMPTY here because
-	 * the addresses of the list heads have possibly changed.
-	 */
-	if (vbp->head[n].forw == BU_LIST_NULL) {
-	    vbp->head[n].forw = &vbp->head[n];
-	    vbp->head[n].back = &vbp->head[n];
-	} else {
-	    vbp->head[n].forw->back = &vbp->head[n];
-	    vbp->head[n].back->forw = &vbp->head[n];
-	}
-    }
-
-    /* initialize upper half of memory */
-    for (n=omax; n < vbp->max; n++) {
-	vbp->rgb[n] = 0;
-	BU_LIST_INIT(&vbp->head[n]);
-    }
-
-    /* here we go again */
-    return rt_vlblock_find(vbp, r, g, b);
-}
-
-
-int
-rt_ck_vlist(const struct bu_list *vhead)
-{
-    register struct bn_vlist *vp;
-    int npts = 0;
-
-    for (BU_LIST_FOR(vp, bn_vlist, vhead)) {
-	register int i;
-	register int nused = vp->nused;
-	register int *cmd = vp->cmd;
-	register point_t *pt = vp->pt;
-
-	BN_CK_VLIST(vp);
-	npts += nused;
-
-	for (i = 0; i < nused; i++, cmd++, pt++) {
-	    register int j;
-
-	    for (j=0; j < 3; j++) {
-		/*
-		 * If (*pt)[j] is an IEEE NaN, then all comparisons
-		 * between it and any genuine number will return
-		 * FALSE.  This test is formulated so that NaN values
-		 * will activate the "else" clause.
-		 */
-		if ((*pt)[j] > -INFINITY && (*pt)[j] < INFINITY) {
-		    /* Number is good */
-		} else {
-		    bu_log("  %s (%g, %g, %g)\n",
-			   rt_vlist_cmd_descriptions[*cmd],
-			   V3ARGS(*pt));
-		    bu_bomb("rt_ck_vlist() bad coordinate value\n");
-		}
-		/* XXX Need a define for largest command number */
-		if (*cmd < 0 || *cmd > BN_VLIST_CMD_MAX) {
-		    bu_log("cmd = x%x (%d.)\n", *cmd, *cmd);
-		    bu_bomb("rt_ck_vlist() bad vlist command\n");
-		}
-	    }
-	}
-    }
-    return npts;
-}
-
-
 void
 rt_vlist_copy(struct bu_list *dest, const struct bu_list *src)
 {
-    struct bn_vlist *vp;
-
-    for (BU_LIST_FOR(vp, bn_vlist, src)) {
-	register int i;
-	register int nused = vp->nused;
-	register int *cmd = vp->cmd;
-	register point_t *pt = vp->pt;
-	for (i = 0; i < nused; i++, cmd++, pt++) {
-	    BN_ADD_VLIST(&RTG.rtg_vlfree, dest, *pt, *cmd);
-	}
-    }
-}
-
-
-void
-bn_vlist_cleanup(struct bu_list *hd)
-{
-    register struct bn_vlist *vp;
-
-    if (!BU_LIST_IS_INITIALIZED(hd)) {
-	BU_LIST_INIT(hd);
-	return;
-    }
-
-    while (BU_LIST_WHILE(vp, bn_vlist, hd)) {
-	BN_CK_VLIST(vp);
-	BU_LIST_DEQUEUE(&(vp->l));
-	bu_free((char *)vp, "bn_vlist");
-    }
+    bn_vlist_copy(&RTG.rtg_vlfree, dest, src);
 }
 
 
@@ -245,152 +55,10 @@ rt_vlist_cleanup(void)
     bn_vlist_cleanup(&RTG.rtg_vlfree);
 }
 
-
-void
-bn_vlist_rpp(struct bu_list *hd, const point_t minn, const point_t maxx)
-{
-    point_t p;
-
-    VSET(p, minn[X], minn[Y], minn[Z]);
-    BN_ADD_VLIST(&RTG.rtg_vlfree, hd, p, BN_VLIST_LINE_MOVE)
-
-	/* first side */
-	VSET(p, minn[X], maxx[Y], minn[Z]);
-    BN_ADD_VLIST(&RTG.rtg_vlfree, hd, p, BN_VLIST_LINE_DRAW)
-	VSET(p, minn[X], maxx[Y], maxx[Z]);
-    BN_ADD_VLIST(&RTG.rtg_vlfree, hd, p, BN_VLIST_LINE_DRAW)
-	VSET(p, minn[X], minn[Y], maxx[Z]);
-    BN_ADD_VLIST(&RTG.rtg_vlfree, hd, p, BN_VLIST_LINE_DRAW)
-	VSET(p, minn[X], minn[Y], minn[Z]);
-    BN_ADD_VLIST(&RTG.rtg_vlfree, hd, p, BN_VLIST_LINE_DRAW)
-
-	/* across */
-	VSET(p, maxx[X], minn[Y], minn[Z]);
-    BN_ADD_VLIST(&RTG.rtg_vlfree, hd, p, BN_VLIST_LINE_DRAW)
-
-	/* second side */
-	VSET(p, maxx[X], maxx[Y], minn[Z]);
-    BN_ADD_VLIST(&RTG.rtg_vlfree, hd, p, BN_VLIST_LINE_DRAW)
-	VSET(p, maxx[X], maxx[Y], maxx[Z]);
-    BN_ADD_VLIST(&RTG.rtg_vlfree, hd, p, BN_VLIST_LINE_DRAW)
-	VSET(p, maxx[X], minn[Y], maxx[Z]);
-    BN_ADD_VLIST(&RTG.rtg_vlfree, hd, p, BN_VLIST_LINE_DRAW)
-	VSET(p, maxx[X], minn[Y], minn[Z]);
-    BN_ADD_VLIST(&RTG.rtg_vlfree, hd, p, BN_VLIST_LINE_DRAW)
-
-	/* front edge */
-	VSET(p, minn[X], maxx[Y], minn[Z]);
-    BN_ADD_VLIST(&RTG.rtg_vlfree, hd, p, BN_VLIST_LINE_MOVE)
-	VSET(p, maxx[X], maxx[Y], minn[Z]);
-    BN_ADD_VLIST(&RTG.rtg_vlfree, hd, p, BN_VLIST_LINE_DRAW)
-
-	/* bottom back */
-	VSET(p, minn[X], minn[Y], maxx[Z]);
-    BN_ADD_VLIST(&RTG.rtg_vlfree, hd, p, BN_VLIST_LINE_MOVE)
-	VSET(p, maxx[X], minn[Y], maxx[Z]);
-    BN_ADD_VLIST(&RTG.rtg_vlfree, hd, p, BN_VLIST_LINE_DRAW)
-
-	/* top back */
-	VSET(p, minn[X], maxx[Y], maxx[Z]);
-    BN_ADD_VLIST(&RTG.rtg_vlfree, hd, p, BN_VLIST_LINE_MOVE)
-	VSET(p, maxx[X], maxx[Y], maxx[Z]);
-    BN_ADD_VLIST(&RTG.rtg_vlfree, hd, p, BN_VLIST_LINE_DRAW)
-	}
-
-
-void
-rt_vlist_export(struct bu_vls *vls, struct bu_list *hp, const char *name)
-{
-    register struct bn_vlist *vp;
-    size_t nelem;
-    size_t namelen;
-    size_t nbytes;
-    unsigned char *buf;
-    unsigned char *bp;
-
-    BU_CK_VLS(vls);
-
-    /* Count number of element in the vlist */
-    nelem = 0;
-    for (BU_LIST_FOR(vp, bn_vlist, hp)) {
-	nelem += vp->nused;
-    }
-
-    /* Build output buffer for binary transmission
-     * nelem[4], String[n+1], cmds[nelem*1], pts[3*nelem*8]
-     */
-    namelen = strlen(name)+1;
-    nbytes = namelen + 4 + nelem * (1+ELEMENTS_PER_VECT*SIZEOF_NETWORK_DOUBLE) + 2;
-
-    /* FIXME: this is pretty much an abuse of vls.  should be using
-     * vlb for variable-length byte buffers.
-     */
-    bu_vls_setlen(vls, (int)nbytes);
-    buf = (unsigned char *)bu_vls_addr(vls);
-    *(uint32_t *)buf = htonl((uint32_t)nelem);
-    bp = buf+sizeof(uint32_t);
-    bu_strlcpy((char *)bp, name, namelen);
-    bp += namelen;
-
-    /* Output cmds, as bytes */
-    for (BU_LIST_FOR(vp, bn_vlist, hp)) {
-	register int i;
-	register int nused = vp->nused;
-	register int *cmd = vp->cmd;
-	for (i = 0; i < nused; i++) {
-	    *bp++ = *cmd++;
-	}
-    }
-
-    /* Output points, as three 8-byte doubles */
-    for (BU_LIST_FOR(vp, bn_vlist, hp)) {
-	register int i;
-	register int nused = vp->nused;
-	register point_t *pt = vp->pt;
-
-	/* must be double for import and export */
-	double point[ELEMENTS_PER_POINT];
-
-	for (i = 0; i < nused; i++) {
-	    VMOVE(point, pt[i]); /* convert fastf_t to double */
-	    bu_cv_htond(bp, (unsigned char *)point, ELEMENTS_PER_VECT);
-	    bp += ELEMENTS_PER_VECT*SIZEOF_NETWORK_DOUBLE;
-	}
-    }
-}
-
-
 void
 rt_vlist_import(struct bu_list *hp, struct bu_vls *namevls, const unsigned char *buf)
 {
-    register const unsigned char *bp;
-    const unsigned char *pp;		/* point pointer */
-    size_t nelem;
-    size_t namelen;
-    size_t i;
-
-    /* must be double for import and export */
-    double point[ELEMENTS_PER_POINT];
-
-    BU_CK_VLS(namevls);
-
-    nelem = ntohl(*(uint32_t *)buf);
-    bp = buf+4;
-
-    namelen = strlen((char *)bp)+1;
-    bu_vls_strncpy(namevls, (char *)bp, namelen);
-    bp += namelen;
-
-    pp = bp + nelem*1;
-
-    for (i=0; i < nelem; i++) {
-	int cmd;
-
-	cmd = *bp++;
-	bu_cv_ntohd((unsigned char *)point, pp, ELEMENTS_PER_POINT);
-	pp += ELEMENTS_PER_POINT*SIZEOF_NETWORK_DOUBLE;
-	BN_ADD_VLIST(&RTG.rtg_vlfree, hp, point, cmd);
-    }
+    bn_vlist_import(&RTG.rtg_vlfree, hp, namevls, buf);
 }
 
 
@@ -526,8 +194,6 @@ static const struct uplot rt_uplot_letters[] = {
 
 
 /**
- * g e t s h o r t
- *
  * Read VAX-order 16-bit number
  */
 static int
@@ -769,7 +435,7 @@ rt_process_uplot_value(register struct bu_list **vhead,
 	    break;
 	case 'C':
 	    /* Color */
-	    *vhead = rt_vlblock_find(vbp,
+	    *vhead = bn_vlblock_find(vbp,
 				     carg[0], carg[1], carg[2]);
 	    moved = 0;
 	    break;
@@ -798,7 +464,7 @@ rt_uplot_to_vlist(struct bn_vlblock *vbp, register FILE *fp, double char_size, i
     struct bu_list *vhead;
     register int c;
 
-    vhead = rt_vlblock_find(vbp, 0xFF, 0xFF, 0x00);	/* Yellow */
+    vhead = bn_vlblock_find(vbp, 0xFF, 0xFF, 0x00);	/* Yellow */
 
     while (!feof(fp) && (c=getc(fp)) != EOF) {
 	int ret;
@@ -817,7 +483,6 @@ rt_uplot_to_vlist(struct bn_vlblock *vbp, register FILE *fp, double char_size, i
     return 0;
 }
 
-
 void
 rt_label_vlist_verts(struct bn_vlblock *vbp, struct bu_list *src, fastf_t *mat, double sz, double mm2local)
 {
@@ -825,7 +490,7 @@ rt_label_vlist_verts(struct bn_vlblock *vbp, struct bu_list *src, fastf_t *mat, 
     struct bu_list *vhead;
     char label[256];
 
-    vhead = rt_vlblock_find(vbp, 255, 255, 255);	/* white */
+    vhead = bn_vlblock_find(vbp, 255, 255, 255);	/* white */
 
     for (BU_LIST_FOR(vp, bn_vlist, src)) {
 	register int i;
@@ -838,6 +503,27 @@ rt_label_vlist_verts(struct bn_vlblock *vbp, struct bu_list *src, fastf_t *mat, 
 		    (*pt)[0]*mm2local, (*pt)[1]*mm2local, (*pt)[2]*mm2local);
 	    bn_vlist_3string(vhead, vbp->free_vlist_hd, label, (*pt), mat, sz);
 	}
+    }
+}
+
+void
+rt_label_vlist_faces(struct bn_vlblock* vbp, struct bu_list* f_list,
+                     fastf_t *mat, double sz, double UNUSED(mm2local) )
+{
+    struct bu_list* vhead;
+    struct face* curr_f;
+    char label[256];
+    point_t avg_pt;
+
+    vhead = bn_vlblock_find(vbp, 255, 255, 255);    /* white */
+
+    for( BU_LIST_FOR(curr_f, face, f_list) ) {
+        avg_pt[0] = (curr_f->min_pt[0] + curr_f->max_pt[0]) / 2;
+        avg_pt[1] = (curr_f->min_pt[1] + curr_f->max_pt[1]) / 2;
+        avg_pt[2] = (curr_f->min_pt[2] + curr_f->max_pt[2]) / 2;
+
+        sprintf(label, " %d", (int)curr_f->index );
+        bn_vlist_3string(vhead, vbp->free_vlist_hd, label, avg_pt, mat, sz);
     }
 }
 

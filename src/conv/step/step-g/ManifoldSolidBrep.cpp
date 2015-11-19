@@ -1,7 +1,7 @@
 /*                 ManifoldSolidBrep.cpp
  * BRL-CAD
  *
- * Copyright (c) 1994-2013 United States Government as represented by
+ * Copyright (c) 1994-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -62,6 +62,7 @@ ManifoldSolidBrep::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
     // load base class attributes
     if (!SolidModel::Load(step, sse)) {
 	std::cout << CLASSNAME << ":Error loading base class ::SolidModel." << std::endl;
+	sw->entity_status[id] = STEP_LOAD_ERROR;
 	return false;
     }
 
@@ -74,11 +75,17 @@ ManifoldSolidBrep::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
 	if (entity) {
 	    //outer = dynamic_cast<ClosedShell *>(Factory::CreateTopologicalObject(sw,entity));
 	    outer = dynamic_cast<ClosedShell *>(Factory::CreateObject(sw, entity));
+	    if (!outer) {
+		sw->entity_status[id] = STEP_LOAD_ERROR;
+		return false;
+	    }
 	} else {
 	    std::cout << CLASSNAME << ":Error loading entity attribute 'outer'." << std::endl;
+	    sw->entity_status[id] = STEP_LOAD_ERROR;
 	    return false;
 	}
     }
+    sw->entity_status[id] = STEP_LOADED;
     return true;
 }
 

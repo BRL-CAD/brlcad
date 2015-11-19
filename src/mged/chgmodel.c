@@ -1,7 +1,7 @@
 /*                      C H G M O D E L . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2013 United States Government as represented by
+ * Copyright (c) 1985-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -31,14 +31,14 @@
 #include <stdlib.h>
 #include <math.h>
 #include <string.h>
-#include "bio.h"
 
-#include "bu.h"
 #include "vmath.h"
+#include "bu/units.h"
 #include "bn.h"
+#include "raytrace.h"
 #include "nmg.h"
-#include "nurb.h"
-#include "rtgeom.h"
+#include "rt/nurb.h"
+#include "rt/geom.h"
 #include "ged.h"
 #include "wdb.h"
 
@@ -64,8 +64,6 @@ aexists(const char *name)
 
 
 /*
- * F _ M A K E
- *
  * Create a new solid of a given type
  * (Generic, or explicit)
  */
@@ -289,8 +287,6 @@ f_sc_obj(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char
 
 
 /*
- * F _ T R _ O B J
- *
  * Bound to command "translate"
  *
  * Allow precise changes to object translation
@@ -356,8 +352,6 @@ f_tr_obj(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[]
 
 
 /*
- * F _ Q O R O T
- *
  * Usage: qorot x y z dx dy dz theta
  *
  * rotate an object through a specified angle

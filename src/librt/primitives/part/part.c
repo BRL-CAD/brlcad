@@ -1,7 +1,7 @@
 /*                          P A R T . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2013 United States Government as represented by
+ * Copyright (c) 1990-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -180,14 +180,14 @@
 #include "common.h"
 
 #include <stddef.h>
-#include <stdio.h>
 #include <string.h>
 #include <math.h>
 #include "bio.h"
 
+#include "bu/cv.h"
 #include "vmath.h"
-#include "db.h"
-#include "rtgeom.h"
+#include "rt/db4.h"
+#include "rt/geom.h"
 #include "raytrace.h"
 #include "nmg.h"
 #include "../../librt_private.h"
@@ -221,8 +221,6 @@ const struct bu_structparse rt_part_parse[] = {
 };
 
 /**
- * R T _ P A R T _ B B O X
- *
  * Compute the bounding RPP for a particle
  */
 int
@@ -260,8 +258,6 @@ rt_part_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struct
 
 
 /**
- * R T _ P A R T _ P R E P
- *
  * Given a pointer to a GED database record, and a transformation matrix,
  * determine if this is a valid particle, and if so, precompute various
  * terms of the formula.
@@ -297,11 +293,11 @@ rt_part_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     RT_PART_CK_MAGIC(pip);
 
     BU_GET(part, struct part_specific);
-    stp->st_specific = (genptr_t)part;
+    stp->st_specific = (void *)part;
     part->part_int = *pip;			/* struct copy */
     pip = &part->part_int;
 
-    if(rt_part_bbox(ip, &(stp->st_min), &(stp->st_max), &rtip->rti_tol)) return 1;
+    if (rt_part_bbox(ip, &(stp->st_min), &(stp->st_max), &rtip->rti_tol)) return 1;
 
     if (pip->part_type == RT_PARTICLE_TYPE_SPHERE) {
 	/* Compute bounding sphere*/
@@ -408,9 +404,6 @@ rt_part_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 }
 
 
-/**
- * R T _ P A R T _ P R I N T
- */
 void
 rt_part_print(register const struct soltab *stp)
 {
@@ -444,8 +437,6 @@ rt_part_print(register const struct soltab *stp)
 
 
 /**
- * R T _ P A R T _ S H O T
- *
  * Intersect a ray with a part.
  * If an intersection occurs, a struct seg will be acquired
  * and filled in.
@@ -743,8 +734,6 @@ rt_part_shot(struct soltab *stp, register struct xray *rp, struct application *a
 
 
 /**
- * R T _ P A R T _ N O R M
- *
  * Given ONE ray distance, return the normal and entry/exit point.
  */
 void
@@ -793,8 +782,6 @@ rt_part_norm(register struct hit *hitp, struct soltab *stp, register struct xray
 
 
 /**
- * R T _ P A R T _ C U R V E
- *
  * Return the curvature of the particle.
  * There are two cases:  hitting a hemisphere, and hitting the cylinder.
  */
@@ -833,8 +820,6 @@ rt_part_curve(register struct curvature *cvp, register struct hit *hitp, struct 
 
 
 /**
- * R T _ P A R T _ U V
- *
  * For a hit on the surface of a particle, return the (u, v) coordinates
  * of the hit point, 0 <= u, v <= 1.
  * u = azimuth
@@ -872,7 +857,7 @@ rt_part_uv(struct application *ap, struct soltab *stp, register struct hit *hitp
     uvp->uv_v = (hit_unit[Z] + vrad_unit) / hsize;
 
     /* U is azimuth, atan() range: -pi to +pi */
-    uvp->uv_u = bn_atan2(hit_unit[Y], hit_unit[X]) * bn_inv2pi;
+    uvp->uv_u = bn_atan2(hit_unit[Y], hit_unit[X]) * M_1_2PI;
     if (uvp->uv_u < 0)
 	uvp->uv_u += 1.0;
 
@@ -881,13 +866,10 @@ rt_part_uv(struct application *ap, struct soltab *stp, register struct hit *hitp
     V_MIN(minrad, part->part_h_erad);
     r = ap->a_rbeam + ap->a_diverge * hitp->hit_dist;
     uvp->uv_du = uvp->uv_dv =
-	bn_inv2pi * r / minrad;
+	M_1_2PI * r / minrad;
 }
 
 
-/**
- * R T _ P A R T _ F R E E
- */
 void
 rt_part_free(register struct soltab *stp)
 {
@@ -895,23 +877,11 @@ rt_part_free(register struct soltab *stp)
 	(struct part_specific *)stp->st_specific;
 
     BU_PUT(part, struct part_specific);
-    stp->st_specific = GENPTR_NULL;
+    stp->st_specific = ((void *)0);
 }
 
 
 /**
- * R T _ P A R T _ C L A S S
- */
-int
-rt_part_class(void)
-{
-    return 0;
-}
-
-
-/**
- * R T _ P A R T _ H E M I S P H E R E 8
- *
  * Produce a crude approximation to a hemisphere,
  * 8 points around the rim [0]..[7],
  * 4 points around a midway latitude [8]..[11], and
@@ -947,9 +917,6 @@ rt_part_hemisphere(register point_t (*ov), register fastf_t *v, fastf_t *a, fast
 }
 
 
-/**
- * R T _ P A R T _ P L O T
- */
 int
 rt_part_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol), const struct rt_view_info *UNUSED(info))
 {
@@ -1077,8 +1044,6 @@ struct part_vert_strip {
 
 
 /**
- * R T _ P A R T _ T E S S
- *
  * Based upon the tesselator for the ellipsoid.
  *
  * Break the particle into three parts:
@@ -1170,10 +1135,10 @@ rt_part_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, c
     }
 
     /*
-     * Converte distance tolerance into a maximum permissible
+     * Convert distance tolerance into a maximum permissible
      * angle tolerance.  'radius' is largest radius.
      */
-    state.theta_tol = 2 * acos(1.0 - dtol / radius);
+    state.theta_tol = 2.0 * acos(1.0 - dtol / radius);
 
     /* To ensure normal tolerance, remain below this angle */
     if (ttol->norm > 0.0 && ttol->norm < state.theta_tol) {
@@ -1184,7 +1149,7 @@ rt_part_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, c
     state.s = BU_LIST_FIRST(shell, &(*r)->s_hd);
 
     /* Find the number of segments to divide 90 degrees worth into */
-    nsegs = bn_halfpi / state.theta_tol + 0.999;
+    nsegs = M_PI_2 / state.theta_tol + 0.999;
     if (nsegs < 2) nsegs = 2;
 
     /* Find total number of strips of vertices that will be needed.
@@ -1348,13 +1313,13 @@ rt_part_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, c
 	    alpha = (((double)i) / (nstrips-1-1));
 	else
 	    alpha = (((double)i-1) / (nstrips-1-1));
-	cos_alpha = cos(alpha*bn_pi);
-	sin_alpha = sin(alpha*bn_pi);
+	cos_alpha = cos(alpha*M_PI);
+	sin_alpha = sin(alpha*M_PI);
 	for (j=0; j < strips[i].nverts; j++) {
 
 	    beta = ((double)j) / strips[i].nverts;
-	    cos_beta = cos(beta*bn_twopi);
-	    sin_beta = sin(beta*bn_twopi);
+	    cos_beta = cos(beta*M_2PI);
+	    sin_beta = sin(beta*M_2PI);
 	    VSET(sphere_pt,
 		 cos_beta * sin_alpha,
 		 sin_beta * sin_alpha,
@@ -1444,9 +1409,6 @@ rt_part_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, c
 }
 
 
-/**
- * R T _ P A R T _ I M P O R T
- */
 int
 rt_part_import4(struct rt_db_internal *ip, const struct bu_external *ep, register const fastf_t *mat, const struct db_i *dbip)
 {
@@ -1536,9 +1498,6 @@ rt_part_import4(struct rt_db_internal *ip, const struct bu_external *ep, registe
 }
 
 
-/**
- * R T _ P A R T _ E X P O R T
- */
 int
 rt_part_export4(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip)
 {
@@ -1560,7 +1519,7 @@ rt_part_export4(struct bu_external *ep, const struct rt_db_internal *ip, double 
 
     BU_CK_EXTERNAL(ep);
     ep->ext_nbytes = sizeof(union record);
-    ep->ext_buf = (genptr_t)bu_calloc(1, ep->ext_nbytes, "part external");
+    ep->ext_buf = (uint8_t*)bu_calloc(1, ep->ext_nbytes, "part external");
     rec = (union record *)ep->ext_buf;
 
     /* Convert from user units to mm */
@@ -1580,9 +1539,6 @@ rt_part_export4(struct bu_external *ep, const struct rt_db_internal *ip, double 
 }
 
 
-/**
- * R T _ P A R T _ I M P O R T 5
- */
 int
 rt_part_import5(struct rt_db_internal *ip, const struct bu_external *ep, register const fastf_t *mat, const struct db_i *dbip)
 {
@@ -1661,9 +1617,6 @@ rt_part_import5(struct rt_db_internal *ip, const struct bu_external *ep, registe
 }
 
 
-/**
- * R T _ P A R T _ E X P O R T 5
- */
 int
 rt_part_export5(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip)
 {
@@ -1681,7 +1634,7 @@ rt_part_export5(struct bu_external *ep, const struct rt_db_internal *ip, double 
 
     BU_CK_EXTERNAL(ep);
     ep->ext_nbytes = SIZEOF_NETWORK_DOUBLE * 8;
-    ep->ext_buf = (genptr_t)bu_malloc(ep->ext_nbytes, "part external");
+    ep->ext_buf = (uint8_t*)bu_malloc(ep->ext_nbytes, "part external");
 
     /* scale 'em into local buffer */
     VSCALE(&vec[0*3], pip->part_V, local2mm);
@@ -1699,8 +1652,6 @@ rt_part_export5(struct bu_external *ep, const struct rt_db_internal *ip, double 
 
 
 /**
- * R T _ P A R T _ D E S C R I B E
- *
  * Make human-readable formatted presentation of this solid.
  * First line describes type of solid.
  * Additional lines are indented one tab, and give parameter values.
@@ -1777,8 +1728,6 @@ rt_part_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbos
 
 
 /**
- * R T _ P A R T _ I F R E E
- *
  * Free the storage associated with the rt_db_internal version of this solid.
  */
 void
@@ -1787,14 +1736,10 @@ rt_part_ifree(struct rt_db_internal *ip)
     RT_CK_DB_INTERNAL(ip);
 
     bu_free(ip->idb_ptr, "particle ifree");
-    ip->idb_ptr = GENPTR_NULL;
+    ip->idb_ptr = ((void *)0);
 }
 
 
-/**
- * R T _ P A R T _ P A R A M S
- *
- */
 int
 rt_part_params(struct pc_pc_set *UNUSED(ps), const struct rt_db_internal *ip)
 {
@@ -1804,9 +1749,6 @@ rt_part_params(struct pc_pc_set *UNUSED(ps), const struct rt_db_internal *ip)
 }
 
 
-/**
- * R T _ P A R T _ V O L U M E
- */
 void
 rt_part_volume(fastf_t *vol, const struct rt_db_internal *ip)
 {
@@ -1830,9 +1772,6 @@ rt_part_volume(fastf_t *vol, const struct rt_db_internal *ip)
 }
 
 
-/**
- * R T _ P A R T _ S U R F _ A R E A
- */
 void
 rt_part_surf_area(fastf_t *area, const struct rt_db_internal *ip)
 {
@@ -1845,14 +1784,51 @@ rt_part_surf_area(fastf_t *area, const struct rt_db_internal *ip)
     mag_h = MAGNITUDE(pip->part_H);
 
     if (EQUAL(vrad, hrad)) {
-	*area = 2.0 * M_PI * vrad * (2.0 * vrad + mag_h);
+	*area = M_2PI * vrad * (2.0 * vrad + mag_h);
     } else {
 	fastf_t mid_section;
 	mid_section = M_PI * ((vrad + hrad) * sqrt((vrad - hrad) * (vrad - hrad) + mag_h * mag_h));
-	*area = 2.0 * M_PI * (vrad * vrad + hrad * hrad) + mid_section;
+	*area = M_2PI * (vrad * vrad + hrad * hrad) + mid_section;
     }
 }
 
+
+void
+rt_part_centroid(point_t *cent, const struct rt_db_internal *ip)
+{
+    fastf_t vrad, hrad, mag_h, nm, dm, c_frst, cv_hem, ch_hem;
+    vect_t hvec, hvec_n;
+    point_t vpt, fcent, hhcent, cvcent;
+    struct rt_part_internal *pip = (struct rt_part_internal *)ip->idb_ptr;
+    int idx;
+    RT_PART_CK_MAGIC(pip);
+
+    vrad = pip->part_vrad;
+    hrad = pip->part_hrad;
+    VSET(hvec,pip->part_H[0], pip->part_H[1], pip->part_H[2]);
+    VSET(hvec_n,pip->part_H[0], pip->part_H[1], pip->part_H[2]);
+    VUNITIZE(hvec_n);
+    VSET(vpt,pip->part_V[0], pip->part_V[1], pip->part_V[2]);
+    mag_h = MAGNITUDE(hvec);
+
+    /* conical frustum centroid, see http://mathworld.wolfram.com/ConicalFrustum.html */
+    nm = mag_h * (hrad * hrad + 2.0 * hrad * vrad + 3.0 * vrad * vrad);
+    dm = 4.0 * (hrad * hrad + hrad * vrad + vrad * vrad);
+    c_frst = nm / dm;
+
+    /* hemisphere centroids, see http://mathworld.wolfram.com/Hemisphere.html */
+    cv_hem = -3.0 * vrad / 8.0;
+    ch_hem =  3.0 * hrad / 8.0;
+
+    /* find frustum and hemisphere centroids separately, weight points */
+    for (idx=0; idx < 3; idx++) {
+        fcent[idx]  = (hvec_n[idx] * c_frst + vpt[idx]) / 3.0;
+        hhcent[idx] = (hvec_n[idx] * ch_hem + vpt[idx]) / 3.0;
+        cvcent[idx] = (hvec_n[idx] * cv_hem + vpt[idx] + hvec[idx]) / 3.0;
+    }
+
+    VADD3(*cent, fcent, hhcent, cvcent);
+}
 
 /*
  * Local Variables:

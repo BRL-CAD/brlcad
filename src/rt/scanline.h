@@ -1,7 +1,7 @@
 /*                      S C A N L I N E . H
  * BRL-CAD
  *
- * Copyright (c) 2008-2013 United States Government as represented by
+ * Copyright (c) 2008-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -23,7 +23,8 @@
  *
  */
 
-#include "bu.h"
+#ifndef RT_SCANLINE_H
+#define RT_SCANLINE_H
 
 struct scanline {
     int	sl_left;		/* # pixels left on this scanline */
@@ -32,6 +33,8 @@ struct scanline {
 
 void free_scanlines(int, struct scanline*);
 struct scanline* alloc_scanlines(int);
+
+#endif /* RT_SCANLINE_H */
 
 /*
  * Local Variables:

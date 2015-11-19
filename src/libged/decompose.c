@@ -1,7 +1,7 @@
 /*                         D E C O M P O S E . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2013 United States Government as represented by
+ * Copyright (c) 2008-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -28,7 +28,6 @@
 #include <stdlib.h>
 #include <ctype.h>
 #include <string.h>
-#include "bio.h"
 
 #include "./ged_private.h"
 
@@ -171,13 +170,13 @@ ged_decompose(struct ged *gedp, int argc, const char *argv[])
 		new_intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 		new_intern.idb_type = ID_NMG;
 		new_intern.idb_meth = &OBJ[ID_NMG];
-		new_intern.idb_ptr = (genptr_t)new_m;
+		new_intern.idb_ptr = (void *)new_m;
 
-		new_dp=db_diradd(gedp->ged_wdbp->dbip, bu_vls_addr(&solid_name), RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (genptr_t)&new_intern.idb_type);
+		new_dp=db_diradd(gedp->ged_wdbp->dbip, bu_vls_addr(&solid_name), RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (void *)&new_intern.idb_type);
 		if (new_dp == RT_DIR_NULL) {
 		    bu_vls_free(&solid_name);
 		    bu_vls_printf(gedp->ged_result_str, "%s: Database alloc error, aborting", argv[0]);
-		    return GED_ERROR;;
+		    return GED_ERROR;
 		}
 
 		if (rt_db_put_internal(new_dp, gedp->ged_wdbp->dbip, &new_intern, &rt_uniresource) < 0) {

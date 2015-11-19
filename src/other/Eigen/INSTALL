@@ -1,6 +1,0 @@
-Eigen consists only of header files, hence there is nothing to compile
-before you can use it. Moreover, these header files do not depend on your
-platform, they are the same for everybody.
-
-You can use right away the headers in the Eigen/ subdirectory. In order
-to install, just copy this Eigen/ subdirectory to your favorite location.

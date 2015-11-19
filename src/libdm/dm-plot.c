@@ -1,7 +1,7 @@
 /*                       D M - P L O T . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2013 United States Government as represented by
+ * Copyright (c) 1985-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -35,26 +35,20 @@
 #ifdef HAVE_SYS_TIME_H
 #  include <sys/time.h>		/* for struct timeval */
 #endif
-#ifdef HAVE_UNISTED_H
-#  include <unistd.h>
-#endif
-#include "bio.h"
 
 #include "tcl.h"
-#include "bu.h"
 #include "vmath.h"
 #include "bn.h"
-#include "mater.h"
 #include "raytrace.h"
 #include "dm.h"
 
 #include "dm-plot.h"
 #include "dm-Null.h"
 
-#include "solid.h"
-#include "plot3.h"
+#include "rt/solid.h"
+#include "bn/plot3.h"
 
-#include "./dm_util.h"
+#include "./dm_private.h"
 
 /* Display Manager package interface */
 
@@ -65,12 +59,10 @@ static mat_t plotmat;
 
 
 /**
- * P L O T _ C L O S E
- *
  * Gracefully release the display.
  */
 HIDDEN int
-plot_close(struct dm *dmp)
+plot_close(dm *dmp)
 {
     if (!dmp)
 	return TCL_ERROR;
@@ -83,20 +75,18 @@ plot_close(struct dm *dmp)
 	fclose(((struct plot_vars *)dmp->dm_vars.priv_vars)->up_fp);
 
     bu_vls_free(&dmp->dm_pathName);
-    bu_free((genptr_t)dmp->dm_vars.priv_vars, "plot_close: plot_vars");
-    bu_free((genptr_t)dmp, "plot_close: dmp");
+    bu_free((void *)dmp->dm_vars.priv_vars, "plot_close: plot_vars");
+    bu_free((void *)dmp, "plot_close: dmp");
 
     return TCL_OK;
 }
 
 
 /**
- * P L O T _ P R O L O G
- *
  * There are global variables which are parameters to this routine.
  */
 HIDDEN int
-plot_drawBegin(struct dm *dmp)
+plot_drawBegin(dm *dmp)
 {
     if (!dmp)
 	return TCL_ERROR;
@@ -107,11 +97,8 @@ plot_drawBegin(struct dm *dmp)
 }
 
 
-/**
- * P L O T _ E P I L O G
- */
 HIDDEN int
-plot_drawEnd(struct dm *dmp)
+plot_drawEnd(dm *dmp)
 {
     if (!dmp)
 	return TCL_ERROR;
@@ -125,13 +112,11 @@ plot_drawEnd(struct dm *dmp)
 
 
 /**
- * P L O T _ L O A D M A T R I X
- *
  * Load a new transformation matrix.  This will be followed by
  * many calls to plot_draw().
  */
 HIDDEN int
-plot_loadMatrix(struct dm *dmp, fastf_t *mat, int which_eye)
+plot_loadMatrix(dm *dmp, fastf_t *mat, int which_eye)
 {
     Tcl_Obj *obj;
 
@@ -165,8 +150,6 @@ plot_loadMatrix(struct dm *dmp, fastf_t *mat, int which_eye)
 
 
 /**
- * P L O T _ O B J E C T
- *
  * Set up for an object, transformed as indicated, and with an
  * object center as specified.  The ratio of object to screen size
  * is passed in as a convenience.
@@ -174,7 +157,7 @@ plot_loadMatrix(struct dm *dmp, fastf_t *mat, int which_eye)
  * Returns 0 if object could be drawn, !0 if object was omitted.
  */
 HIDDEN int
-plot_drawVList(struct dm *dmp, struct bn_vlist *vp)
+plot_drawVList(dm *dmp, struct bn_vlist *vp)
 {
     static vect_t last;
     struct bn_vlist *tvp;
@@ -317,11 +300,8 @@ plot_drawVList(struct dm *dmp, struct bn_vlist *vp)
 }
 
 
-/**
- * P L O T _ D R A W
- */
 HIDDEN int
-plot_draw(struct dm *dmp, struct bn_vlist *(*callback_function)(void *), genptr_t *data)
+plot_draw(dm *dmp, struct bn_vlist *(*callback_function)(void *), void **data)
 {
     struct bn_vlist *vp;
     if (!callback_function) {
@@ -341,13 +321,11 @@ plot_draw(struct dm *dmp, struct bn_vlist *(*callback_function)(void *), genptr_
 
 
 /**
- * P L O T _ N O R M A L
- *
  * Restore the display processor to a normal mode of operation (i.e.,
  * not scaled, rotated, displaced, etc.).  Turns off windowing.
  */
 HIDDEN int
-plot_normal(struct dm *dmp)
+plot_normal(dm *dmp)
 {
     if (!dmp)
 	return TCL_ERROR;
@@ -357,13 +335,11 @@ plot_normal(struct dm *dmp)
 
 
 /**
- * P L O T _ P U T S
- *
  * Output a string into the displaylist.
  * The starting position of the beam is as specified.
  */
 HIDDEN int
-plot_drawString2D(struct dm *dmp, const char *str, fastf_t x, fastf_t y, int size, int UNUSED(use_aspect))
+plot_drawString2D(dm *dmp, const char *str, fastf_t x, fastf_t y, int size, int UNUSED(use_aspect))
 {
     int sx, sy;
 
@@ -380,11 +356,8 @@ plot_drawString2D(struct dm *dmp, const char *str, fastf_t x, fastf_t y, int siz
 }
 
 
-/**
- * P L O T _ 2 D _ G O T O
- */
 HIDDEN int
-plot_drawLine2D(struct dm *dmp, fastf_t xpos1, fastf_t ypos1, fastf_t xpos2, fastf_t ypos2)
+plot_drawLine2D(dm *dmp, fastf_t xpos1, fastf_t ypos1, fastf_t xpos2, fastf_t ypos2)
 {
     int sx1, sy1;
     int sx2, sy2;
@@ -401,14 +374,14 @@ plot_drawLine2D(struct dm *dmp, fastf_t xpos1, fastf_t ypos1, fastf_t xpos2, fas
 
 
 HIDDEN int
-plot_drawLine3D(struct dm *dmp, point_t pt1, point_t pt2)
+plot_drawLine3D(dm *dmp, point_t pt1, point_t pt2)
 {
     return draw_Line3D(dmp, pt1, pt2);
 }
 
 
 HIDDEN int
-plot_drawLines3D(struct dm *dmp, int npoints, point_t *points, int UNUSED(sflag))
+plot_drawLines3D(dm *dmp, int npoints, point_t *points, int UNUSED(sflag))
 {
     if (!dmp || npoints < 0 || !points)
 	return TCL_ERROR;
@@ -418,14 +391,14 @@ plot_drawLines3D(struct dm *dmp, int npoints, point_t *points, int UNUSED(sflag)
 
 
 HIDDEN int
-plot_drawPoint2D(struct dm *dmp, fastf_t x, fastf_t y)
+plot_drawPoint2D(dm *dmp, fastf_t x, fastf_t y)
 {
     return plot_drawLine2D(dmp, x, y, x, y);
 }
 
 
 HIDDEN int
-plot_setFGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b, int strict, fastf_t transparency)
+plot_setFGColor(dm *dmp, unsigned char r, unsigned char g, unsigned char b, int strict, fastf_t transparency)
 {
     if (!dmp) {
 	bu_log("WARNING: NULL display (r/g/b => %d/%d/%d; strict => %d; transparency => %f)\n", r, g, b, strict, transparency);
@@ -436,7 +409,7 @@ plot_setFGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char 
     return TCL_OK;
 }
 HIDDEN int
-plot_setBGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b)
+plot_setBGColor(dm *dmp, unsigned char r, unsigned char g, unsigned char b)
 {
     if (!dmp) {
 	bu_log("WARNING: Null display (r/g/b==%d/%d/%d)\n", r, g, b);
@@ -448,7 +421,7 @@ plot_setBGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char 
 
 
 HIDDEN int
-plot_setLineAttr(struct dm *dmp, int width, int style)
+plot_setLineAttr(dm *dmp, int width, int style)
 {
     dmp->dm_lineWidth = width;
     dmp->dm_lineStyle = style;
@@ -463,7 +436,7 @@ plot_setLineAttr(struct dm *dmp, int width, int style)
 
 
 HIDDEN int
-plot_debug(struct dm *dmp, int lvl)
+plot_debug(dm *dmp, int lvl)
 {
     Tcl_Obj *obj;
 
@@ -479,9 +452,27 @@ plot_debug(struct dm *dmp, int lvl)
     return TCL_OK;
 }
 
+HIDDEN int
+plot_logfile(dm *dmp, const char *filename)
+{
+    Tcl_Obj *obj;
+
+    obj = Tcl_GetObjResult(dmp->dm_interp);
+    if (Tcl_IsShared(obj))
+	obj = Tcl_DuplicateObj(obj);
+
+    bu_vls_sprintf(&dmp->dm_log, "%s", filename);
+    (void)fflush(((struct plot_vars *)dmp->dm_vars.priv_vars)->up_fp);
+    Tcl_AppendStringsToObj(obj, "flushed\n", (char *)NULL);
+
+    Tcl_SetObjResult(dmp->dm_interp, obj);
+    return TCL_OK;
+}
+
+
 
 HIDDEN int
-plot_setWinBounds(struct dm *dmp, fastf_t *w)
+plot_setWinBounds(dm *dmp, fastf_t *w)
 {
     /* Compute the clipping bounds */
     dmp->dm_clipmin[0] = w[0] / 2048.0;
@@ -501,7 +492,7 @@ plot_setWinBounds(struct dm *dmp, fastf_t *w)
 }
 
 
-struct dm dm_plot = {
+dm dm_plot = {
     plot_close,
     plot_drawBegin,
     plot_drawEnd,
@@ -528,15 +519,19 @@ struct dm dm_plot = {
     null_setDepthMask,
     null_setZBuffer,
     plot_debug,
+    plot_logfile,
     null_beginDList,
     null_endDList,
     null_drawDList,
     null_freeDLists,
     null_genDLists,
+    NULL,
     null_getDisplayImage,	/* display to image function */
     null_reshape,
     null_makeCurrent,
-    null_processEvents,
+    null_openFb,
+    NULL,
+    NULL,
     0,
     0,				/* no displaylist */
     0,				/* no stereo */
@@ -555,6 +550,8 @@ struct dm dm_plot = {
     1.0, /* aspect ratio */
     NULL,
     {0, 0},
+    NULL,
+    NULL,
     BU_VLS_INIT_ZERO,		/* bu_vls path name*/
     BU_VLS_INIT_ZERO,		/* bu_vls full name drawing window */
     BU_VLS_INIT_ZERO,		/* bu_vls short name drawing window */
@@ -563,6 +560,7 @@ struct dm dm_plot = {
     VINIT_ZERO,			/* clipmin */
     VINIT_ZERO,			/* clipmax */
     0,				/* no debugging */
+    BU_VLS_INIT_ZERO,		/* bu_vls logfile */
     0,				/* no perspective */
     0,				/* no lighting */
     0,				/* no transparency */
@@ -571,24 +569,24 @@ struct dm dm_plot = {
     0,				/* no zclipping */
     1,                          /* clear back buffer after drawing and swap */
     0,                          /* not overriding the auto font size */
+    BU_STRUCTPARSE_NULL,
+    FB_NULL,
     NULL			/* Tcl interpreter */
 };
 
 
 /*
- * P L O T _ O P E N
- *
  * Fire up the display manager, and the display processor.
  *
  */
-struct dm *
+dm *
 plot_open(Tcl_Interp *interp, int argc, const char *argv[])
 {
     static int count = 0;
-    struct dm *dmp;
+    dm *dmp;
     Tcl_Obj *obj;
 
-    BU_ALLOC(dmp, struct dm);
+    BU_ALLOC(dmp, struct dm_internal);
 
     *dmp = dm_plot; /* struct copy */
     dmp->dm_interp = interp;

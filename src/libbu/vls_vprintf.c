@@ -1,7 +1,7 @@
 /*                        V L S _ V P R I N T F . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2013 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -33,7 +33,8 @@
 
 #include "bio.h"
 
-#include "bu.h"
+#include "bu/log.h"
+#include "bu/vls.h"
 
 #include "./vls_internals.h"
 
@@ -389,7 +390,7 @@ bu_vls_vprintf(struct bu_vls *vls, const char *fmt, va_list ap)
     int c;
 
     struct bu_vls fbuf = BU_VLS_INIT_ZERO; /* % format buffer */
-    const char *fbufp  = NULL;
+    char *fbufp  = NULL;
 
     if (UNLIKELY(!vls || !fmt || fmt[0] == '\0')) {
 	/* nothing to print to or from */
@@ -547,25 +548,25 @@ bu_vls_vprintf(struct bu_vls *vls, const char *fmt, va_list ap)
 		    f.left_justify = 0;
 		    f.have_dot = 0;
 		    while (*fp) {
-			if (isdigit(*fp)) {
+			if (isdigit((unsigned char)*fp)) {
 
 			    if (!f.have_dot) {
 				if (*fp == '0') {
-				    bu_sscanf(fp, "%o", &f.fieldlen);
+				    bu_sscanf(fp, "%d", &f.fieldlen);
 				} else {
 				    f.fieldlen = atoi(fp);
 				}
 				f.flags |= FIELDLEN;
 			    } else {
 				if (*fp == '0') {
-				    bu_sscanf(fp, "%o", &f.precision);
+				    bu_sscanf(fp, "%d", &f.precision);
 				} else {
 				    f.precision = atoi(fp);
 				}
 				f.flags |= PRECISION;
 			    }
 
-			    while (isdigit(*(fp+1)))
+			    while (isdigit((unsigned char)*(fp+1)))
 				fp++;
 
 			    if (*fp == '\0') {
@@ -658,17 +659,17 @@ bu_vls_vprintf(struct bu_vls *vls, const char *fmt, va_list ap)
 		    if (vp) {
 			BU_CK_VLS(vp);
 			if (f.flags & FIELDLEN) {
-			    int stringlen = bu_vls_strlen(vp);
+			    size_t stringlen = bu_vls_strlen(vp);
 
-			    if (stringlen >= f.fieldlen)
+			    if (stringlen >= (size_t)f.fieldlen)
 				bu_vls_strncat(vls, bu_vls_addr(vp), (size_t)f.fieldlen);
 			    else {
 				struct bu_vls padded = BU_VLS_INIT_ZERO;
-				int i;
+				size_t i;
 
 				if (f.left_justify)
 				    bu_vls_vlscat(&padded, vp);
-				for (i = 0; i < f.fieldlen - stringlen; ++i)
+				for (i = 0; i < (size_t)f.fieldlen - stringlen; ++i)
 				    bu_vls_putc(&padded, ' ');
 				if (!f.left_justify)
 				    bu_vls_vlscat(&padded, vp);

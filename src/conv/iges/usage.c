@@ -1,7 +1,7 @@
 /*                         U S A G E . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2013 United States Government as represented by
+ * Copyright (c) 1990-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -23,7 +23,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "bu.h"
+#include "bu/log.h"
 
 /* this is for iges-g */
 void

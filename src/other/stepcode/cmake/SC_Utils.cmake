@@ -48,7 +48,11 @@ ENDMACRO( DEFINE_DLL_IMPORTS tgt libs )
 # so either test the target or install it - but not both
 MACRO(EXCLUDE_OR_INSTALL target dest arg_3 )
     if( NOT ( ( SC_ENABLE_TESTING ) AND ( "${arg_3}" STREQUAL "TESTABLE" ) ) )
-        INSTALL(TARGETS ${target} DESTINATION ${dest})
+        INSTALL(TARGETS ${target}
+	       	RUNTIME DESTINATION ${BIN_DIR}
+	       	LIBRARY DESTINATION ${LIB_DIR}
+	       	ARCHIVE DESTINATION ${LIB_DIR}
+		)
     else( NOT ( ( SC_ENABLE_TESTING ) AND ( "${arg_3}" STREQUAL "TESTABLE" ) ) )
         set_target_properties( ${target} PROPERTIES EXCLUDE_FROM_ALL ON )
     endif( NOT ( ( SC_ENABLE_TESTING ) AND ( "${arg_3}" STREQUAL "TESTABLE" ) ) )
@@ -80,9 +84,18 @@ ENDMACRO(SC_ADDEXEC execname srcslist libslist)
 # optional args can also be used by MSVC-specific code, but it looks like these two uses
 # will not conflict because the MSVC args must contain "STRICT"
 MACRO(SC_ADDLIB libname srcslist libslist)
+
+  string(TOUPPER "${libname}" LIBNAME_UPPER)
+  if(${ARGC} GREATER 3)
+    CMAKE_PARSE_ARGUMENTS(${LIBNAME_UPPER} "" "" "SO_SRCS;STATIC_SRCS" ${ARGN})
+  endif(${ARGC} GREATER 3)
+
   STRING(REGEX REPLACE "-framework;" "-framework " libslist "${libslist1}")
   IF(SC_BUILD_SHARED_LIBS)
-      add_library(${libname} SHARED ${srcslist})
+
+      set(so_srcs ${srcslist} ${${LIBNAME_UPPER}_SO_SRCS})
+
+      add_library(${libname} SHARED ${so_srcs})
       DEFINE_DLL_EXPORTS(${libname})
       if(NOT "${libs}" MATCHES "NONE")
           target_link_libraries(${libname} ${libslist})
@@ -95,7 +108,10 @@ MACRO(SC_ADDLIB libname srcslist libslist)
     endif(APPLE)
   ENDIF(SC_BUILD_SHARED_LIBS)
   IF(SC_BUILD_STATIC_LIBS AND NOT MSVC)
-      add_library(${libname}-static STATIC ${srcslist})
+
+      set(static_srcs ${srcslist} ${${LIBNAME_UPPER}_STATIC_SRCS})
+
+      add_library(${libname}-static STATIC ${static_srcs})
       DEFINE_DLL_EXPORTS(${libname}-static)
       if(NOT ${libs} MATCHES "NONE")
           target_link_libraries(${libname}-static "${libslist}")
@@ -131,3 +147,10 @@ MACRO(SC_ADDLIB libname srcslist libslist)
       ENDIF(BUILD_STATIC_LIBS AND NOT MSVC)
   ENDIF(LOCAL_COMPILE_FLAGS)
 ENDMACRO(SC_ADDLIB libname srcslist libslist)
+
+# Local Variables:
+# tab-width: 8
+# mode: cmake
+# indent-tabs-mode: t
+# End:
+# ex: shiftwidth=2 tabstop=8

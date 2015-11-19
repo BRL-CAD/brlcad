@@ -17,9 +17,9 @@
 <cmdsynopsis>
   <command>anim_sort</command>
     <arg choice='opt'>-ic </arg>
-    <arg choice='plain'><replaceable>&lt;</replaceable></arg>
+    <arg choice='plain'>&lt;</arg>
     <arg choice='plain'><replaceable>mixed.script</replaceable></arg>
-    <arg choice='plain'><replaceable>&gt;</replaceable></arg>
+    <arg choice='plain'>&gt;</arg>
     <arg choice='plain'><replaceable>ordered.script</replaceable></arg>
 </cmdsynopsis>
 </refsynopsisdiv>
@@ -29,13 +29,13 @@
 <para>Note:
 <command>anim_sort</command>
 has been preempted in release 5.0 by
-<emphasis remap='I'>scriptsort</emphasis>,
+<command>scriptsort</command>,
 which sorts scripts much faster.</para>
 
-<para><emphasis remap='I'>Anim_sort</emphasis>
+<para><command>anim_sort</command>
 allows the user to combine several animation scripts
 into a single script suitable for input to
-<emphasis remap='I'>rt</emphasis>.
+<command>rt</command>.
 A convenient way to
 prepare a complicated animation script is to develop each part
 separately and then use
@@ -68,13 +68,13 @@ output.</para>
 
 <para>Each of the input files to be concatenated is expected to be a
 viable
-<emphasis remap='I'>rt</emphasis>
+<command>rt</command>
 animation script, containing a series of frames of the
 following form:</para>
 
 <literallayout remap='.nf'>
 start framenumber;
-any number of semi-colon terminated commands for rt;
+any number of semi-colon terminated commands for <command>rt</command>;
 end;
 any number of post-raytracing commands
 </literallayout> <!-- .fi -->
@@ -173,7 +173,7 @@ commands are printed.</para>
 </refsect1>
 
 <refsect1 xml:id='copyright'><title>COPYRIGHT</title>
-<para>This software is Copyright (c) 1994-2013 by the United States
+<para>This software is Copyright (c) 1994-2014 by the United States
 Government as represented by U.S. Army Research Laboratory.</para>
 </refsect1>
 

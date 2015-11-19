@@ -1,7 +1,7 @@
 /*                        J O I N T . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2013 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -53,6 +53,10 @@
  * of freedom is not used.
  */
 
+#ifndef LIBGED_JOINT_H
+#define LIBGED_JOINT_H
+
+
 #ifndef FALSE
 #  define FALSE 0
 #endif
@@ -85,6 +89,7 @@ struct arc {
     char **original;
     int org_last;
 };
+
 
 #define ARC_UNSET	0x0
 #define ARC_PATH	0x1
@@ -191,8 +196,12 @@ struct funtab {
     int tcl_converted;
 };
 
+
 void vls_col_item(struct bu_vls *str, const char *cp);
 void vls_col_eol(struct bu_vls *str);
+
+#endif /* LIBGED_JOINT_H */
+
 /*
  * Local Variables:
  * mode: C

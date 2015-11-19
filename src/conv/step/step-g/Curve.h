@@ -1,7 +1,7 @@
 /*                 Curve.h
  * BRL-CAD
  *
- * Copyright (c) 1994-2013 United States Government as represented by
+ * Copyright (c) 1994-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -24,8 +24,8 @@
  *
  */
 
-#ifndef CURVE_H_
-#define CURVE_H_
+#ifndef CONV_STEP_STEP_G_CURVE_H
+#define CONV_STEP_STEP_G_CURVE_H
 
 #include "GeometricRepresentationItem.h"
 class Vertex;
@@ -78,7 +78,7 @@ public:
     static STEPEntity *Create(STEPWrapper *sw, SDAI_Application_instance *sse);
 };
 
-#endif /* CURVE_H_ */
+#endif /* CONV_STEP_STEP_G_CURVE_H */
 
 /*
  * Local Variables:

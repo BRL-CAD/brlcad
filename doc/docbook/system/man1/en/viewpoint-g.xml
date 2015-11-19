@@ -26,7 +26,7 @@
 
 
 <refsect1 xml:id='description'><title>DESCRIPTION</title>
-<para><emphasis remap='I'>viewpoint-g</emphasis>
+<para><command>viewpoint-g</command>
 converts the specified input files to a BRL-CAD
 <emphasis remap='I'>database.g</emphasis>
 file. The
@@ -39,14 +39,14 @@ and the
 are expected to be in the
 <emphasis remap='I'>VIEWPOINT</emphasis>
 triangulated format as provided by
-<emphasis remap='I'>Viewpoint Datalabs.</emphasis>
+<emphasis remap='I'>Viewpoint Datalabs</emphasis>.
 In this format each object is represented as a group of
 elements, and each element is a group of triangular facets.</para>
 </refsect1>
 
 <refsect1 xml:id='example'><title>EXAMPLE</title>
 <synopsis>
-$ <emphasis remap='I'>viewpoint-g -e viewpoint.elems -c viewpoint.coords -o sample.g</emphasis>
+$ viewpoint-g -e <emphasis remap='I'>viewpoint.elems</emphasis> -c <emphasis remap='I'>viewpoint.coords</emphasis> -o <emphasis remap='I'>sample.g</emphasis>
 </synopsis>
 </refsect1>
 
@@ -55,7 +55,7 @@ $ <emphasis remap='I'>viewpoint-g -e viewpoint.elems -c viewpoint.coords -o samp
 Viewpoint Dataset Catalog
 Viewpoint Datalabs Int'l
 625 South State Street
-Orem, UT     84058
+Orem, UT 84058
 (801)229-3000
 </literallayout> <!-- .fi -->
 
@@ -72,7 +72,7 @@ Orem, UT     84058
 </refsect1>
 
 <refsect1 xml:id='copyright'><title>COPYRIGHT</title>
-<para>This software is Copyright (c) 1994-2013 by the United States
+<para>This software is Copyright (c) 1994-2014 by the United States
 Government as represented by U.S. Army Research Laboratory.</para>
 </refsect1>
 

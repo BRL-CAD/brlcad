@@ -17,44 +17,48 @@
 <refsynopsisdiv xml:id='synopsis'>
 <cmdsynopsis>
   <command>fbed</command>
-    <arg choice='opt'>-ph </arg>
+    <arg choice='opt'>-pH </arg>
 </cmdsynopsis>
 </refsynopsisdiv>
 
 
 <refsect1 xml:id='description'><title>DESCRIPTION</title>
-<para><emphasis remap='I'>Fbed</emphasis>
+<para><command>fbed</command>
 is an editor for frame buffer images, designed to facilitate the
 manipulation of existing images for the preparation of presentation quality
 graphics.  Although it does have the potential to generate fairly complex
 images, it is meant mainly for touching up existing images; adding titles,
 captions or other labels; cutting and pasting of one or more images; and
 reducing images or portions thereof.
-<emphasis remap='I'>Fbed</emphasis>
+<command>fbed</command>
 uses the frame buffer library
 <citerefentry><refentrytitle>libfb</refentrytitle><manvolnum>3</manvolnum></citerefentry>
 and therefore is available on all graphics devices which are supported
 by this package.  On start up, the program always attempts to open the
 default frame buffer.  This device is specified by the frame buffer library,
 and is configurable on a per system basis.  Often the user will want to
-over ride this default by setting the environment variable
+override this default by setting the environment variable
 <envar>FB_FILE</envar>
 (see
 <citerefentry><refentrytitle>brlcad</refentrytitle><manvolnum>1</manvolnum></citerefentry>).
 The
-<option>-h</option>
+<option>-H</option>
 option is for editing
 1024x1024 or high resolution
-<emphasis remap='SM'>(HIRES)</emphasis>
+(<emphasis remap='SM'>HIRES</emphasis>)
 images;  the default is low resolution, 512x512
-<emphasis remap='SM'>(LORES).</emphasis>
+(<emphasis remap='SM'>LORES</emphasis>).
 The frame buffer's state can be toggled back and forth between
 <acronym>HIRES</acronym>
 and
 <acronym>LORES</acronym>
 at any time during execution of the program.</para>
 
-<para><emphasis remap='I'>Fbed</emphasis>
+<para>
+The <option>-p</option> option turns on the "pad" flag.
+</para>
+
+<para><command>fbed</command>
 allows function-to-key bindings and macro definition facilities
 in a fashion similar to some of the more versatile EMACS-style
 screen editors, such as
@@ -64,8 +68,8 @@ screen editors, such as
 <para><emphasis remap='B'>Cursor Movement</emphasis></para>
 
 <para>When
-<emphasis remap='I'>fbed</emphasis>
-is running on a graphics device a cursor will appear on the screen.
+<command>fbed</command>
+is running on a graphics device, a cursor will appear on the screen.
 The position of the cursor points to the
 <emphasis remap='I'>current pixel</emphasis><literal>.</literal></para>
 
@@ -131,7 +135,7 @@ indicating to the user that an operation is on-going.</para>
 <para><emphasis remap='B'>Modes of Input</emphasis></para>
 
 <para>The user interface consists of a list of provided commands, referred to as
-<emphasis remap='I'>functions</emphasis>
+<emphasis remap='I'>functions</emphasis>;
 and user-defined commands, called
 <emphasis remap='I'>macros</emphasis>.
 In general, every key-stroke will immediately be processed (this is often
@@ -620,11 +624,11 @@ Here is the standard listing:</para>
 </refsect1>
 
 <refsect1 xml:id='hints'><title>HINTS</title>
-<para>This program may require a little practice,
+<para>This program may require a little practice;
 be sure to save a copy of the input files until you are confident.
-The first time using the program you should start out by listing the menu
-and finding the command for saving your image and use it if you don't
-already have a copy.</para>
+If you are using the program for the first time, you should start by
+listing the menu, finding the command for saving your image, and using
+such command if you don't already have a copy.</para>
 </refsect1>
 
 <refsect1 xml:id='files'><title>FILES</title>
@@ -667,7 +671,7 @@ for the length of the macro startup file.</para>
 </refsect1>
 
 <refsect1 xml:id='copyright'><title>COPYRIGHT</title>
-<para>This software is Copyright (c) 1986-2013 by the United States
+<para>This software is Copyright (c) 1986-2014 by the United States
 Government as represented by U.S. Army Research Laboratory.</para>
 </refsect1>
 

@@ -1,7 +1,7 @@
 /*                          B I G E . C
  * BRL-CAD
  *
- * Copyright (c) 1997-2013 United States Government as represented by
+ * Copyright (c) 1997-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -31,15 +31,14 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
-#include "bio.h"
 
-#include "bu.h"
+#include "bu/debug.h"
+#include "bu/getopt.h"
 #include "vmath.h"
 #include "nmg.h"
-#include "rtgeom.h"
-#include "rtfunc.h"
-#include "solid.h"
-#include "dg.h"
+#include "rt/geom.h"
+#include "raytrace.h"
+#include "rt/func.h"
 
 #include "./ged_private.h"
 
@@ -195,7 +194,7 @@ add_solid(const struct directory *dp,
 		intern2.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 		intern2.idb_type = ID_BOT;
 		intern2.idb_meth = &OBJ[ID_BOT];
-		intern2.idb_ptr = (genptr_t)bot;
+		intern2.idb_ptr = (void *)bot;
 		eptr->l.stp->st_id = ID_BOT;
 		eptr->l.stp->st_meth = &OBJ[ID_BOT];
 		if (rt_obj_prep(eptr->l.stp, &intern2, dgcdp->rtip) < 0) {
@@ -469,9 +468,9 @@ promote_ints(struct bu_list *head,
 		    a->seg_stp = ON_SURF;
 		    tmp = b;
 		    b = BU_LIST_PNEXT(seg, &b->l);
-		    BU_LIST_DEQUEUE(&tmp->l)
-			RT_FREE_SEG(tmp, dgcdp->ap->a_resource)
-			continue;;
+		    BU_LIST_DEQUEUE(&tmp->l);
+		    RT_FREE_SEG(tmp, dgcdp->ap->a_resource);
+		    continue;
 		}
 
 		if (ZERO(a->seg_out.hit_dist - b->seg_out.hit_dist))
@@ -2005,7 +2004,7 @@ fix_halfs(struct _ged_client_data *dgcdp)
 	    intern2.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 	    intern2.idb_type = ID_POLY;
 	    intern2.idb_meth = &OBJ[ID_POLY];
-	    intern2.idb_ptr = (genptr_t)pg;
+	    intern2.idb_ptr = (void *)pg;
 	    if (OBJ[tp->l.stp->st_id].ft_free)
 		OBJ[tp->l.stp->st_id].ft_free(tp->l.stp);
 	    tp->l.stp->st_specific = NULL;
@@ -2057,6 +2056,7 @@ ged_E(struct ged *gedp, int argc, const char *argv[])
     dgcdp->wireframe_color_override = 0;
     dgcdp->transparency = 0;
     dgcdp->dmode = _GED_BOOL_EVAL;
+    dgcdp->freesolid = gedp->freesolid;
 
     /* Parse options. */
     bu_optind = 1;          /* re-init bu_getopt() */
@@ -2100,8 +2100,8 @@ ged_E(struct ged *gedp, int argc, const char *argv[])
 
     av[1] = (char *)0;
     for (i = 0; i < argc; ++i) {
-	ged_erasePathFromDisplay(gedp, argv[i], 0);
-	dgcdp->gdlp = ged_addToDisplay(dgcdp->gedp, argv[i]);
+	dl_erasePathFromDisplay(gedp->ged_gdp->gd_headDisplay, gedp->ged_wdbp->dbip, gedp->ged_free_vlist_callback, argv[i], 0, gedp->freesolid);
+	dgcdp->gdlp = dl_addToDisplay(gedp->ged_gdp->gd_headDisplay, gedp->ged_wdbp->dbip, argv[i]);
 
 	BU_ALLOC(dgcdp->ap, struct application);
 	RT_APPLICATION_INIT(dgcdp->ap);
@@ -2154,7 +2154,7 @@ ged_E(struct ged *gedp, int argc, const char *argv[])
 		bu_ptbl_reset(&dgcdp->leaf_list);
 		ts.ts_mater = rp->reg_mater;
 		db_string_to_path(&path, gedp->ged_wdbp->dbip, rp->reg_name);
-		_ged_drawH_part2(0, &vhead, &path, &ts, SOLID_NULL, dgcdp);
+		_ged_drawH_part2(0, &vhead, &path, &ts, dgcdp);
 		db_free_full_path(&path);
 	    }
 	    /* do not do an rt_free_rti() (closes the database!!!!) */

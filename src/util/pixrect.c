@@ -1,7 +1,7 @@
 /*                       P I X R E C T . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2013 United States Government as represented by
+ * Copyright (c) 1986-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -19,20 +19,22 @@
  */
 /** @file util/pixrect.c
  *
- * Remove a portion of a potentially huge pix file.
+ * Remove a portion of a potentially huge .pix file.
  *
  */
 
 #include "common.h"
 
 #include <stdlib.h>
-#include <ctype.h>
 #include "bio.h"
 
-#include "bu.h"
+#include "bu/getopt.h"
+#include "bu/log.h"
+#include "bu/mime.h"
+
 #include "icv.h"
 
-int outx=0, outy=0;		/* Number of pixels in new map */
+int outx=0, outy=0;		/* Number of pixels (width, height) in new map */
 int xorig=0, yorig=0;		/* Bottom left corner to extract from */
 int inx=512, iny=512;
 char *out_file = NULL;
@@ -40,8 +42,8 @@ char *in_file = NULL;
 
 
 char usage[] = "\
-Usage:  pixrect [-h] [squaresize] [-w width] [-n height] [-W out_width ] [-N out_height] \n\
-			[-x xorig] [-y yorig] [-S out_squaresize] [-o out_file.pix] [file.pix] > [out_file.pix]\n";
+Usage:  pixrect [-s squaresize] [-w width] [-n height] [-S out_squaresize] [-W out_width] [-N out_height]\n\
+			[-x xorig] [-y yorig] [-o out_file.pix] [file.pix] > [out_file.pix]\n";
 
 
 static int
@@ -49,25 +51,26 @@ get_args(int argc, char **argv)
 {
     int c;
 
-    while ((c = bu_getopt(argc, argv, "s:w:n:S:W:N:x:y:o:#:h?")) != -1) {
+/* "#:" was removed from the following: */
+    while ((c = bu_getopt(argc, argv, "s:w:n:S:W:N:x:y:o:h?")) != -1) {
 	switch (c) {
 	    case 's':
 		inx = iny = atoi(bu_optarg);
 		break;
-	    case 'W':
-		outx = atoi(bu_optarg);
-		break;
 	    case 'w':
 		inx = atoi(bu_optarg);
-		break;
-	    case 'N':
-		outy = atoi(bu_optarg);
 		break;
 	    case 'n':
 		iny = atoi(bu_optarg);
 		break;
 	    case 'S':
 		outy = outx = atoi(bu_optarg);
+		break;
+	    case 'W':
+		outx = atoi(bu_optarg);
+		break;
+	    case 'N':
+		outy = atoi(bu_optarg);
 		break;
 	    case 'x':
 		xorig = atoi(bu_optarg);
@@ -78,11 +81,11 @@ get_args(int argc, char **argv)
 	    case 'o':
 		out_file = bu_optarg;
 		break;
-	    case '#' :
-		bu_log("pixrect: bytes per pixel is not supported.\n");
-		return 0;
-    	    case 'h' :
-	    default : /* '?' */
+/*	    case '#' :
+ *		bu_log("pixrect: bytes per pixel is not supported.\n");
+ *		return 0;
+ */
+	    default : /* '?' , 'h' */
 		return 0;
 	}
     }
@@ -119,14 +122,13 @@ main(int argc, char **argv)
 	return 1;
     }
 
-    img = icv_read(in_file, ICV_IMAGE_PIX, inx, iny);
+    img = icv_read(in_file, MIME_IMAGE_PIX, inx, iny);
     if (img == NULL)
 	return 1;
     icv_rect(img, xorig, yorig, outx, outy);
-    icv_write(img, out_file, ICV_IMAGE_PIX);
+    icv_write(img, out_file, MIME_IMAGE_PIX);
 
     icv_destroy(img);
-
     return 0;
 }
 

@@ -1,7 +1,7 @@
 /*                       N M G - S G P . C
  * BRL-CAD
  *
- * Copyright (c) 1997-2013 United States Government as represented by
+ * Copyright (c) 1997-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -33,9 +33,10 @@
 #include <errno.h>
 #include "bio.h"
 
+#include "bu/getopt.h"
 #include "vmath.h"
 #include "nmg.h"
-#include "rtgeom.h"
+#include "rt/geom.h"
 #include "raytrace.h"
 #include "wdb.h"
 
@@ -45,14 +46,19 @@ static int verbose=0;
 static FILE *fp_out;
 static char *out_file;
 static struct bn_tol tol;
-static const char *usage="Usage:\n\t%s [-d] [-v] [-x librt_debug_flag] [-X NMG_debug_flag] [-o output_file] brlcad_model.g object1 [object2 object3...]\n";
+static const char *usage="[-d] [-v] [-x librt_debug_flag] [-X NMG_debug_flag] [-o output_file] brlcad_model.g object1 [object2 object3...]\n";
 static long polygons=0;
 static int stats=0;
 
+static void
+print_usage(const char *progname)
+{
+    bu_exit(1, "Usage:\n\t%s %s", progname, usage);
+}
+
 /* returns 1 if faceuse was not written because it was empty */
 static int
-write_fu_as_sgp( fu )
-    struct faceuse *fu;
+write_fu_as_sgp(struct faceuse *fu)
 {
     struct loopuse *lu;
 
@@ -117,9 +123,6 @@ write_model_as_sgp(struct model *m)
     }
 }
 
-/*
- *			M A I N
- */
 int
 main(int argc, char *argv[])
 {
@@ -138,7 +141,7 @@ main(int argc, char *argv[])
     tol.para = 1 - tol.perp;
 
     /* Get command line arguments. */
-    while ((c = bu_getopt(argc, argv, "do:vx:X:")) != -1) {
+    while ((c = bu_getopt(argc, argv, "do:vx:X:h?")) != -1) {
 	switch (c) {
 	    case 'd':		/* increment debug level */
 		debug++;
@@ -163,13 +166,13 @@ main(int argc, char *argv[])
 		bu_log("\n");
 		break;
 	    default:
-		bu_exit(1, usage, argv[0]);
+		print_usage(argv[0]);
 		break;
 	}
     }
 
     if (bu_optind+1 >= argc) {
-	bu_exit(1, usage, argv[0]);
+	print_usage(argv[0]);
     }
 
     /* Open BRL-CAD database */
@@ -185,9 +188,7 @@ main(int argc, char *argv[])
 
     if (out_file == NULL) {
 	fp_out = stdout;
-#if defined(_WIN32) && !defined(__CYGWIN__)
 	setmode(fileno(fp_out), O_BINARY);
-#endif
     } else {
 	if ((fp_out = fopen( out_file, "wb")) == NULL)
 	{

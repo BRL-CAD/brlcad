@@ -1,7 +1,7 @@
 #                   D O C B O O K . C M A K E
 # BRL-CAD
 #
-# Copyright (c) 2011-2013 United States Government as represented by
+# Copyright (c) 2011-2014 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -142,15 +142,20 @@ macro(DB_VALIDATE_TARGET targetdir filename filename_root)
   # proceed to add a new custom command
   get_property(DB_VALIDATION_FILE_LIST GLOBAL PROPERTY DB_VALIDATION_FILE_LIST)
   set(IN_LIST)
-  list(FIND DB_VALIDATION_FILE_LIST "${CMAKE_CURRENT_SOURCE_DIR}/${filename}" IN_LIST)
+  if (EXISTS ${filename})
+    set(full_path_filename ${filename})
+  else (EXISTS ${filename})
+    set(full_path_filename ${CMAKE_CURRENT_SOURCE_DIR}/${filename})
+  endif (EXISTS ${filename})
+  list(FIND DB_VALIDATION_FILE_LIST "${full_path_filename}" IN_LIST)
   if("${IN_LIST}" STREQUAL "-1")
-    set_property(GLOBAL APPEND PROPERTY DB_VALIDATION_FILE_LIST "${CMAKE_CURRENT_SOURCE_DIR}/${filename}")
+    set_property(GLOBAL APPEND PROPERTY DB_VALIDATION_FILE_LIST "${full_path_filename}")
 
     DB_SCRIPT("${filename_root}_validate" "${DOC_DIR}/${targetdir}" "${VALIDATE_EXECUTABLE}")
     add_custom_command(
       OUTPUT ${xml_valid_stamp}
       COMMAND ${CMAKE_COMMAND} -P ${scriptfile}
-      DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/${filename} ${XMLLINT_EXECUTABLE_TARGET} ${DOCBOOK_RESOURCE_FILES}
+      DEPENDS ${full_path_filename} ${XMLLINT_EXECUTABLE_TARGET} ${DOCBOOK_RESOURCE_FILES}
       COMMENT "Validating DocBook source with ${VALIDATE_EXECUTABLE}:"
       )
   endif("${IN_LIST}" STREQUAL "-1")
@@ -161,10 +166,15 @@ macro(DOCBOOK_TO_HTML targetname_suffix xml_files targetdir deps_list)
   set(xml_valid_stamp)
   if(BRLCAD_EXTRADOCS_HTML)
     foreach(filename ${${xml_files}})
-      string(REGEX REPLACE "([0-9a-z_-]*).xml" "\\1" filename_root "${filename}")
+      get_filename_component(filename_root "${filename}" NAME_WE)
       set(outfile ${bin_root}/${DOC_DIR}/${targetdir}/${filename_root}.html)
       set(targetname ${filename_root}_${targetname_suffix}_html)
       set(CURRENT_XSL_STYLESHEET ${XSL_XHTML_STYLESHEET})
+      if (EXISTS ${filename})
+	set(full_path_filename ${filename})
+      else (EXISTS ${filename})
+	set(full_path_filename ${CMAKE_CURRENT_SOURCE_DIR}/${filename})
+      endif (EXISTS ${filename})
 
       # If we have extra outputs, need to handle them now
       set(EXTRAS)
@@ -183,9 +193,10 @@ macro(DOCBOOK_TO_HTML targetname_suffix xml_files targetdir deps_list)
       add_custom_command(
 	OUTPUT ${outfile} ${EXTRAS}
 	COMMAND ${CMAKE_COMMAND} -P ${scriptfile}
-	DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/${filename} ${xml_valid_stamp} ${XSLTPROC_EXECUTABLE_TARGET} ${DOCBOOK_RESOURCE_FILES} ${XSL_XHTML_STYLESHEET} ${deps_list}
+	DEPENDS ${full_path_filename} ${xml_valid_stamp} ${XSLTPROC_EXECUTABLE_TARGET} ${DOCBOOK_RESOURCE_FILES} ${XSL_XHTML_STYLESHEET} ${deps_list}
 	)
       add_custom_target(${targetname} ALL DEPENDS ${outfile})
+      set_target_properties(${targetname} PROPERTIES FOLDER "DocBook/HTML")
 
       # CMAKE_CFG_INTDIR can't be used in installation rules:
       # http://www.cmake.org/Bug/view.php?id=5747
@@ -217,15 +228,153 @@ macro(DOCBOOK_TO_HTML targetname_suffix xml_files targetdir deps_list)
   CMAKEFILES(${${xml_files}})
 endmacro(DOCBOOK_TO_HTML targetname_suffix srcfile outfile targetdir deps_list)
 
+# HTML output, the format used by BRL-CAD's graphical help systems
+macro(DOCBOOK_TO_PHP targetname_suffix xml_files targetdir deps_list)
+  set(xml_valid_stamp)
+  if(BRLCAD_EXTRADOCS_PHP)
+    foreach(filename ${${xml_files}})
+      get_filename_component(filename_root "${filename}" NAME_WE)
+      set(outfile ${bin_root}/${DOC_DIR}/${targetdir}/${filename_root}.php)
+      set(targetname ${filename_root}_${targetname_suffix}_php)
+      set(CURRENT_XSL_STYLESHEET ${XSL_PHP_STYLESHEET})
+      if (EXISTS ${filename})
+  set(full_path_filename ${filename})
+      else (EXISTS ${filename})
+  set(full_path_filename ${CMAKE_CURRENT_SOURCE_DIR}/${filename})
+      endif (EXISTS ${filename})
+
+      # If we have extra outputs, need to handle them now
+      set(EXTRAS)
+      get_property(EXTRA_OUTPUTS SOURCE ${filename} PROPERTY EXTRA_PHP_OUTPUTS)
+      foreach(extra_out ${EXTRA_OUTPUTS})
+  set(EXTRAS ${EXTRAS} ${bin_root}/${DOC_DIR}/${targetdir}/${extra_out})
+      endforeach(extra_out ${EXTRA_OUTPUTS})
+
+      if(BRLCAD_EXTRADOCS_VALIDATE)
+  DB_VALIDATE_TARGET(${targetdir} "${filename}" ${filename_root})
+      endif(BRLCAD_EXTRADOCS_VALIDATE)
+
+      # Generate the script that will be used to run the XSLT executable
+      DB_SCRIPT("${targetname}" "${DOC_DIR}/${targetdir}" "${XSLT_EXECUTABLE}")
+
+      add_custom_command(
+  OUTPUT ${outfile} ${EXTRAS}
+  COMMAND ${CMAKE_COMMAND} -P ${scriptfile}
+  DEPENDS ${full_path_filename} ${xml_valid_stamp} ${XSLTPROC_EXECUTABLE_TARGET} ${DOCBOOK_RESOURCE_FILES} ${XSL_PHP_STYLESHEET} ${deps_list}
+  )
+      add_custom_target(${targetname} ALL DEPENDS ${outfile})
+      set_target_properties(${targetname} PROPERTIES FOLDER "DocBook/HTML")
+
+      # CMAKE_CFG_INTDIR can't be used in installation rules:
+      # http://www.cmake.org/Bug/view.php?id=5747
+      if(CMAKE_CONFIGURATION_TYPES)
+        string(REPLACE "${CMAKE_CFG_INTDIR}" "\${BUILD_TYPE}" outfile "${outfile}")
+  if(EXTRAS)
+    string(REPLACE "${CMAKE_CFG_INTDIR}" "\${BUILD_TYPE}" EXTRAS "${EXTRAS}")
+  endif(EXTRAS)
+      endif(CMAKE_CONFIGURATION_TYPES)
+      install(FILES ${outfile} ${EXTRAS} DESTINATION ${DOC_DIR}/${targetdir})
+
+      get_property(BRLCAD_EXTRADOCS_PHP_TARGETS GLOBAL PROPERTY BRLCAD_EXTRADOCS_PHP_TARGETS)
+      set(BRLCAD_EXTRADOCS_PHP_TARGETS ${BRLCAD_EXTRADOCS_PHP_TARGETS} ${targetname})
+      set_property(GLOBAL PROPERTY BRLCAD_EXTRADOCS_PHP_TARGETS "${BRLCAD_EXTRADOCS_PHP_TARGETS}")
+
+      # If multiple outputs are being generated from the same file, make sure
+      # one of them is run to completion before the others to avoid multiple
+      # triggerings of the XML validation command.
+      get_property(1ST_TARGET SOURCE ${filename} PROPERTY 1ST_TARGET)
+      if(1ST_TARGET)
+  add_dependencies(${targetname} ${1ST_TARGET})
+      else(1ST_TARGET)
+  set_property(SOURCE ${filename} PROPERTY 1ST_TARGET "${targetname}")
+      endif(1ST_TARGET)
+
+    endforeach(filename ${${xml_files}})
+  endif(BRLCAD_EXTRADOCS_PHP)
+
+  CMAKEFILES(${${xml_files}})
+endmacro(DOCBOOK_TO_PHP targetname_suffix srcfile outfile targetdir deps_list)
+
+macro(DOCBOOK_TO_PPT targetname_suffix xml_files targetdir deps_list)
+  set(xml_valid_stamp)
+  if(BRLCAD_EXTRADOCS_PPT)
+    foreach(filename ${${xml_files}})
+      get_filename_component(filename_root "${filename}" NAME_WE)
+      set(outfile ${bin_root}/${DOC_DIR}/${targetdir}/${filename_root}_2.html)
+      set(targetname ${filename_root}_${targetname_suffix}_ppt)
+      set(CURRENT_XSL_STYLESHEET ${XSL_PPT_STYLESHEET})
+      if (EXISTS ${filename})
+  set(full_path_filename ${filename})
+      else (EXISTS ${filename})
+  set(full_path_filename ${CMAKE_CURRENT_SOURCE_DIR}/${filename})
+      endif (EXISTS ${filename})
+
+      # If we have extra outputs, need to handle them now
+      set(EXTRAS)
+      get_property(EXTRA_OUTPUTS SOURCE ${filename} PROPERTY EXTRA_PPT_OUTPUTS)
+      foreach(extra_out ${EXTRA_OUTPUTS})
+  set(EXTRAS ${EXTRAS} ${bin_root}/${DOC_DIR}/${targetdir}/${extra_out})
+      endforeach(extra_out ${EXTRA_OUTPUTS})
+
+      if(BRLCAD_EXTRADOCS_VALIDATE)
+  DB_VALIDATE_TARGET(${targetdir} "${filename}" ${filename_root})
+      endif(BRLCAD_EXTRADOCS_VALIDATE)
+
+      # Generate the script that will be used to run the XSLT executable
+      DB_SCRIPT("${targetname}" "${DOC_DIR}/${targetdir}" "${XSLT_EXECUTABLE}")
+
+      add_custom_command(
+  OUTPUT ${outfile} ${EXTRAS}
+  COMMAND ${CMAKE_COMMAND} -P ${scriptfile}
+  DEPENDS ${full_path_filename} ${xml_valid_stamp} ${XSLTPROC_EXECUTABLE_TARGET} ${DOCBOOK_RESOURCE_FILES} ${XSL_PPT_STYLESHEET} ${deps_list}
+  )
+      add_custom_target(${targetname} ALL DEPENDS ${outfile})
+      set_target_properties(${targetname} PROPERTIES FOLDER "DocBook/HTML")
+
+      # CMAKE_CFG_INTDIR can't be used in installation rules:
+      # http://www.cmake.org/Bug/view.php?id=5747
+      if(CMAKE_CONFIGURATION_TYPES)
+        string(REPLACE "${CMAKE_CFG_INTDIR}" "\${BUILD_TYPE}" outfile "${outfile}")
+  if(EXTRAS)
+    string(REPLACE "${CMAKE_CFG_INTDIR}" "\${BUILD_TYPE}" EXTRAS "${EXTRAS}")
+  endif(EXTRAS)
+      endif(CMAKE_CONFIGURATION_TYPES)
+      install(FILES ${outfile} ${EXTRAS} DESTINATION ${DOC_DIR}/${targetdir})
+
+      get_property(BRLCAD_EXTRADOCS_PPT_TARGETS GLOBAL PROPERTY BRLCAD_EXTRADOCS_PPT_TARGETS)
+      set(BRLCAD_EXTRADOCS_PPT_TARGETS ${BRLCAD_EXTRADOCS_PPT_TARGETS} ${targetname})
+      set_property(GLOBAL PROPERTY BRLCAD_EXTRADOCS_PPT_TARGETS "${BRLCAD_EXTRADOCS_PPT_TARGETS}")
+
+      # If multiple outputs are being generated from the same file, make sure
+      # one of them is run to completion before the others to avoid multiple
+      # triggerings of the XML validation command.
+      get_property(1ST_TARGET SOURCE ${filename} PROPERTY 1ST_TARGET)
+      if(1ST_TARGET)
+  add_dependencies(${targetname} ${1ST_TARGET})
+      else(1ST_TARGET)
+  set_property(SOURCE ${filename} PROPERTY 1ST_TARGET "${targetname}")
+      endif(1ST_TARGET)
+
+    endforeach(filename ${${xml_files}})
+  endif(BRLCAD_EXTRADOCS_PPT)
+
+  CMAKEFILES(${${xml_files}})
+endmacro(DOCBOOK_TO_PPT targetname_suffix srcfile outfile targetdir deps_list)
+
 # This macro produces Unix-style manual or "man" pages
 macro(DOCBOOK_TO_MAN targetname_suffix xml_files mannum manext targetdir deps_list)
   set(xml_valid_stamp)
   if(BRLCAD_EXTRADOCS_MAN)
     foreach(filename ${${xml_files}})
-      string(REGEX REPLACE "([0-9a-z_-]*).xml" "\\1" filename_root "${filename}")
+      get_filename_component(filename_root "${filename}" NAME_WE)
       set(outfile ${bin_root}/${MAN_DIR}/${targetdir}/${filename_root}.${manext})
       set(targetname ${filename_root}_${targetname_suffix}_man)
       set(CURRENT_XSL_STYLESHEET ${XSL_MAN_STYLESHEET})
+      if (EXISTS ${filename})
+	set(full_path_filename ${filename})
+      else (EXISTS ${filename})
+	set(full_path_filename ${CMAKE_CURRENT_SOURCE_DIR}/${filename})
+      endif (EXISTS ${filename})
 
       # If we have more outputs than the default, they need to be handled here.
       set(EXTRAS)
@@ -244,9 +393,10 @@ macro(DOCBOOK_TO_MAN targetname_suffix xml_files mannum manext targetdir deps_li
       add_custom_command(
 	OUTPUT ${outfile} ${EXTRAS}
 	COMMAND ${CMAKE_COMMAND} -P ${scriptfile}
-	DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/${filename} ${xml_valid_stamp} ${XSLTPROC_EXECUTABLE_TARGET} ${DOCBOOK_RESOURCE_FILES} ${XSL_MAN_STYLESHEET} ${deps_list}
+	DEPENDS ${full_path_filename} ${xml_valid_stamp} ${XSLTPROC_EXECUTABLE_TARGET} ${DOCBOOK_RESOURCE_FILES} ${XSL_MAN_STYLESHEET} ${deps_list}
 	)
       add_custom_target(${targetname} ALL DEPENDS ${outfile})
+      set_target_properties(${targetname} PROPERTIES FOLDER "DocBook/MAN")
 
       # CMAKE_CFG_INTDIR can't be used in installation rules:
       # http://www.cmake.org/Bug/view.php?id=5747
@@ -285,7 +435,13 @@ macro(DOCBOOK_TO_PDF targetname_suffix xml_files targetdir deps_list)
   set(xml_valid_stamp)
   if(BRLCAD_EXTRADOCS_PDF)
     foreach(filename ${${xml_files}})
-      string(REGEX REPLACE "([0-9a-z_-]*).xml" "\\1" filename_root "${filename}")
+      get_filename_component(filename_root "${filename}" NAME_WE)
+      if (EXISTS ${filename})
+	set(full_path_filename ${filename})
+      else (EXISTS ${filename})
+	set(full_path_filename ${CMAKE_CURRENT_SOURCE_DIR}/${filename})
+      endif (EXISTS ${filename})
+
       set(targetname ${filename_root}_${targetname_suffix}_fo)
       if(CMAKE_CONFIGURATION_TYPES)
 	file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_CFG_INTDIR})
@@ -302,7 +458,7 @@ macro(DOCBOOK_TO_PDF targetname_suffix xml_files targetdir deps_list)
       add_custom_command(
 	OUTPUT ${outfile}
 	COMMAND ${CMAKE_COMMAND} -P ${scriptfile}
-	DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/${filename} ${xml_valid_stamp} ${XSLTPROC_EXECUTABLE_TARGET} ${DOCBOOK_RESOURCE_FILES} ${XSL_FO_STYLESHEET} ${deps_list}
+	DEPENDS ${full_path_filename} ${xml_valid_stamp} ${XSLTPROC_EXECUTABLE_TARGET} ${DOCBOOK_RESOURCE_FILES} ${XSL_FO_STYLESHEET} ${deps_list}
 	)
       set(targetname ${filename_root}_${targetname_suffix}_pdf)
       set(outfile ${bin_root}/${DOC_DIR}/${targetdir}/${filename_root}.pdf)
@@ -313,6 +469,7 @@ macro(DOCBOOK_TO_PDF targetname_suffix xml_files targetdir deps_list)
 	DEPENDS ${fo_outfile} ${DOCBOOK_RESOURCE_FILES} ${deps_list}
 	)
       add_custom_target(${targetname} ALL DEPENDS ${outfile})
+      set_target_properties(${targetname} PROPERTIES FOLDER "DocBook/PDF")
       # CMAKE_CFG_INTDIR can't be used in installation rules:
       # http://www.cmake.org/Bug/view.php?id=5747
       if(CMAKE_CONFIGURATION_TYPES)

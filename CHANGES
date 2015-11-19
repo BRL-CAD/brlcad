@@ -1,12 +1,58 @@
 						 -*- coding: utf-8 -*-
-BRL-CAD Deprecation Log
-=======================
+BRL-CAD Interface Change Policy
+===============================
 
-Included below is a deprecation log and notes for BRL-CAD public
-interface changes that potentially impact external developers and
-users.  Public interfaces include developer application programming
-interface (API) calls as well as user application command-line
-interface (CLI) and graphical user interface (GUI) behaviors.
+Included below are details of BRL-CAD public interface changes that
+potentially impact external developers and users.  Public interfaces
+include developer application programming interface (API) calls as
+well as user application command-line interface (CLI) and graphical
+user interface (GUI) behaviors.  Changes are characterized as:
+
+    1) those affecting a new interface,
+    2) being minimally impacting, or
+    3) requiring adherence to deprecation policy.
+
+This policy is intentionally designed to balance developer agility,
+helping accelerate development, with interface stability, helping
+preserve application developer and user investments.
+
+All changes to BRL-CAD are expected to conform to this change policy.
+
+
+NEW INTERFACE
+-------------
+
+Changes to interfaces that have been recently introduced are often
+subject to further change and should not yet be relied upon by
+application developers or users until they stabilize.  They are
+allowed to change from release to release and are not subject to
+change policy restrictions until they have been included in at least
+TWO releases without any change.
+
+
+MINIMALLY IMPACTING
+-------------------
+
+If a change to an interface has a suitable and completely equivalent
+alternative, the change is deemed to be "minimally impacting" and can
+be made during any release.  Examples of such changes include renaming
+an interface, reordering parameters, adding optional parameters,
+adding additional parameters for previously implicit behavior, and
+removing unused parameters.
+
+Generally, the impact can usually be considered minimally impacting if
+a static regular expression search-and-replace is all that is needed
+to update calling code, and no manual intervention is required.
+
+
+DEPRECATION POLICY
+------------------
+
+If a change will intentionally alter, replace, or remove functionality
+that has been documented and published in at least TWO releases, it
+should mut first be announced as DEPRECATED.  Otherwise, changes to
+interfaces that have not been publicly announced or are not publicly
+documented for at least two releases may be changed without notice.
 
 The general practice is that public interface changes may go from
 deprecated to obsolete, whereby previous behavior is removed or
@@ -16,61 +62,98 @@ a) during a major release (e.g. going from 7.*.* to 8.*.*)
 
 b) during a minor release provided the change was publicly announced
    as deprecated beforehand AND sufficient deprecation warning was
-   given via i) two minor releases included the deprecation notice,
-   and ii) at least three months (90 days) have passed since the
+   given via i) TWO minor releases included the deprecation notice,
+   and ii) at least THREE months (90 days) have passed since the
    deprecation was announced
 
-c) during a minor release provided there still exists an equivalent
-   alternative interface that will not impose an undue burden on users
-   or developers (see "MINIMALLY IMPACTING API CHANGES" below)
+c) during any release provided there still exists an EQUIVALENT
+   alternative interface that does not impose an undue burden on users
+   or developers (see "MINIMALLY IMPACTING")
 
-d) during a patch release provided you can correctly prove P = NP
+Public interfaces scheduled for removal should be visibly marked as
+deprecated during compilation with the DEPRECATED keyword on function
+declarations, with #warning "DEPRECATED ..." pre-processor statements,
+and with @DEPRECATED in source code comments.  Where users are not
+adversely affected, a run-time DEPRECATION statement may be printed.
 
-If a change will intentionally replace or remove functionality, then
-they should be then marked as deprecated first.  Otherwise, changes to
-interfaces that are never publicly announced, not installed, or are
-not part of publicly available documentation are fair game to change
-as needed.
+Whenever published functionality is finally removed, move its entry
+from the DEPRECATED section below to the OBSOLETE section for the
+version in which it was removed.  Make sure the entry retains a
+reference to the version in which the item was marked as deprecated.
 
-Where feasible, interfaces should be visibly marked as deprecated
-either during compile-time with #warning pre-processor declarations or
-during run-time with print statements.
 
-Example: Say we decided during 7.50.3 development to remove
-rt_shootray() from our API without a replacement that would qualify as
-"minimally impacting".  We'd annotate the deprecation here, mark the
+EXAMPLES
+--------
+
+Example #1: Say we decided during 7.50.3 development to remove
+rt_shootray() from the API without a replacement. That does NOT
+qualify as "minimally impacting" because there's no replacement and
+rt_shootray() has been published and documented in more than two
+releases.  We'd annotate the deprecation in the CHANGES file, mark the
 function as DEPRECATED in the API header, and post the 7.50.4 release.
 The soonest that function could be removed would be in the 7.54.0
 release during 7.53 development.  It could NOT be removed in 7.54.2
 since it's a patch version, prior to the 7.54 release line, nor even
 during 7.54.0 if less than 90 days had passed since 7.50.6 was posted.
 
-When it is finally removed, remove its entry in the DEPRECATED section
-and move it to the OBSOLETE section under the version entry in which
-it was removed.  Make sure the entry has a reference to the version
-in which the item was first classified as deprecated.  See the %S
-entry for an example.
-
-DEPRECATED/OBSOLETE Items
--------------------------
-
-The items listed below are interfaces that are deprecated or obsolete,
-categorized by the release in which the change was made.  If the
-change involved a rename/removal of a routine, both the original and
-new names should be listed for reference.
+Example #2: Say we decide during 7.48.0 development to modify bu_log()
+by adding a new additional enum parameter denoting a message type.
+This change is considered minimally impacting because it can be
+characterized by a simple regular expression (e.g.,
+s/bu_log(/bu_log(PRINT, /g).  Updates to calling codes are considered
+trivial.  The change would get documented in the CHANGES file and all
+calls that can be updated must be updated at that time.
 
 
 **************
 * DEPRECATED *
 **************
 
+The items listed below are interfaces that are deprecated.  They are
+categorized by the release in which the change was made.  If the
+change involved a removal of a command or function, both the original
+and new names should be listed for reference.
+
+
+7.26
+----
+all global variables
+	global variables are no longer considered published public API [deprecated 7.26]
+        bn_mat_identity -> MAT_INIT_IDN or MAT_IDN() or NULL
+include/bn.h
+	tp_setup, no longer needs to be public API [deprecated 7.26]
+include/raytrace.h
+	curve_to_tcl_list
+	db_full_path_appendresult tcl_obj_to_int_array
+	tcl_obj_to_fastf_array tcl_list_to_int_array
+	tcl_list_to_fastf_array *_tcl_*, removal of all tcl-specific
+	API functions [deprecated 7.26]
+	db_regexp_match_all() -> db_ls() [deprecated 7.26]
+include/tclcad.h
+	tclcad_bn_mat_print tclcad_rt_parse_ray tclcad_rt_pr_cutter
+	tclcad_rt_pr_hit tclcad_rt_rt tclcad_rt_import_from_path, removal of all
+        tcl-specific API functions [deprecated 7.26]
+pixcut, pixpaste
+        copyright cleanup [deprecated 7.26]
+librt, fast4-g
+	removal of CLINE entity support [deprecated 7.26]
+kill, killtree, killall, killrefs
+        replaced with rm command [deprecated 7.26]
+rm comb obj1 obj2 comb1 ... -> new behavior: remove objects and empty combs from .g
+        original functionality replaced with rm comb/obj* comb/comb1 ... syntax [deprecated 7.26]
 
 7.24
 ----
+fbed, pp-fb
+        removes termcap use, no known users [deprecated 7.24]
+include/raytrace librt
+        db_full_path_list_add(), db_free_full_path_list() [deprecated 7.24]
+        db_search_formplan(), db_search_freeplan(), db_search_full_paths() [deprecated 7.24]
+        db_search_unique_objects(), struct db_full_path_list [deprecated 7.24]
 src/irprep
-       all_sf, firpass, ir-X, irdisp, pictx, secpass, shapefact, showterm [deprecated 7.24]
+        all_sf, firpass, ir-X, irdisp, pictx, secpass, shapefact, showterm [deprecated 7.24]
 include/raytrace.h librt
-        RT_DBHASH and RT_DBNHASH [deprecation 7.24]
+        RT_DBHASH and RT_DBNHASH [deprecated 7.24]
 
 7.22
 ----
@@ -87,9 +170,6 @@ mged
 
 7.20
 ----
-liborle
-	remove liborle and the tools using it, fb-orle, orle-fb, orle-pix and
-	pix-orle [deprecated 7.20]
 tclscripts/lib
 	Mged, Database, Db, Dm, Drawable, Display, QuadDisplay, View -> Ged [deprecated 7.20]
 librt
@@ -98,8 +178,7 @@ librt
 	hf primitive [deprecated 7.20]
 include/bu.h
 	bu_vls_init_if_uninit() -> bu_vls_init() [deprecated 7.20]
-autogen.sh && configure
-	GNU Autotools build system -> CMake build system [deprecated 7.20]
+GNU Autotools configure compatibility script
 	./configure -> cmake . [deprecated 7.20]
 include/raytrace.h
 	rt_load_attrs() -> rt_gettrees_and_attrs() or db5_import_attributs() [deprecated 7.20]
@@ -164,12 +243,6 @@ mged
 ----
 struct bu_structparse 'i' format
        'i' -> '%p' [deprecated 7.16]
-SGI-specific tools
-	pl-sgi -> pl-fb [ deprecated 7.16 ]
-Dunn camera and Canon printer tools
-	dunncolor [ deprecated 7.16 ]
-	dunnsnap [ deprecated 7.16 ]
-	canonize [ deprecated 7.16 ]
 reserved attributes and case-sensitivity
 	id -> region_id [deprecated 7.16]
 	GIFTmater -> material_id [deprecated 7.16]
@@ -178,8 +251,84 @@ reserved attributes and case-sensitivity
 	AIRCODE -> air [deprecated 7.16]
 	rgb -> color [deprecated 7.16]
 	oshader -> shader [deprecated 7.16]
+include/raytrace.h
+	rt_prep_timer() -> bu_timer() [deprecated 7.16]
+	rt_get_timer() -> bu_elapsed() [deprecated 7.16]
+
+7.14
+----
+mged
+	src/tclscripts/mged/bots.tcl [deprecated 7.14]
+
+7.12
+----
+include/raytrace.h
+	rt_functab size -> growing ft_label and new callbacks [deprecated 7.12]
+src/rt/viewarea.c
+	terminology and output format [deprecated 7.12]
+
+pre 7.0
+-------
+include/raytrace.h
+	struct hit.hit_point -> RT_HIT_POINT [deprecated pre-7.0]
+	struct hit.hit_normal -> RT_HIT_NORMAL [deprecated pre-7.0]
+
+
+************
+* OBSOLETE *
+************
+
+Below are the interfaces that have followed deprecation policy and are
+now no longer a part of BRL-CAD.
+
+7.26.0
+------
+libbu, libbn
+        no longer utilize or require Tcl [7.26 architecture change]
+include/dg.h
+        implementation detail no longer being exposed, use libged [deprecated 7.22]
+autogen.sh && configure
+	GNU Autotools build system -> CMake build system [deprecated 7.20]
+Dunn camera and Canon printer tools
+	dunncolor [ deprecated 7.16 ]
+	dunnsnap [ deprecated 7.16 ]
+	canonize [ deprecated 7.16 ]
 genptr_t/GENPTR_NULL
 	genptr_t -> void* [deprecated 7.16]
+include/bu.h
+	bu_argv0() -> bu_basename(bu_argv0_full_path()); [deprecated 7.16]
+include/dm_color.h
+	dm_color.h -> dm.h [deprecated 7.14]
+include/fb.h
+	FB_WPIXEL -> fb_wpixel [deprecated 7.14]
+include/raytrace.h
+	rt_fdiff -> NEAR_ZERO [deprecated 7.14]
+	rt_reldiff -> NEAR_ZERO [deprecated 7.14]
+	DIR_* -> RT_DIR_* [deprecated 7.14]
+	RT_HIT_NORM -> RT_HIT_NORMAL [deprecated 7.12]
+include/vmath.h
+	VADD2_2D -> V2ADD2 [deprecated 7.14]
+	VSUB2_2D -> V2SUB2 [deprecated 7.14]
+	MAGSQ_2D -> MAG2SQ [deprecated 7.14]
+	VDOT_2D -> V2DOT [deprecated 7.14]
+	VMOVE_2D -> V2MOVE [deprecated 7.14]
+	VSCALE_2D -> V2SCALE [deprecated 7.14]
+	VJOIN1_2D -> V2JOIN1 [deprecated 7.14]
+liborle
+include/orle.h
+	remove liborle and the tools using it, fb-orle, orle-fb, orle-pix and
+	pix-orle [deprecated 7.20]
+mged
+	make_bb -> bb [deprecated 7.16]
+	tops -g -u -> now default behavior [deprecated 7.14]
+	-n option -> -c option [deprecated 7.14]
+	per_line [deprecated 7.14]
+SGI-specific tools
+	pl-sgi -> pl-fb [ deprecated 7.16 ]
+src/gtools
+	g_[toolname] -> g[toolname] [deprecated 7.14]
+src/librt/cmd.c
+	rt_split_cmd() -> bu_argv_from_string() [deprecated 7.12]
 any-png.sh
 	use pix tools [deprecated 7.16]
 cadbug.sh
@@ -192,60 +341,6 @@ pixread.sh
 	obsolete hardware [deprecated 7.16]
 sgisnap.sh
 	obsolete hardware [deprecated 7.16]
-include/bu.h
-	bu_argv0() -> bu_basename(bu_argv0_full_path()); [deprecated 7.16]
-include/raytrace.h
-	rt_prep_timer() -> bu_timer() [deprecated 7.16]
-	rt_get_timer() -> bu_elapsed() [deprecated 7.16]
-mged
-	make_bb -> bb [deprecated 7.16]
-
-7.14
-----
-include/dm_color.h
-	dm_color.h -> dm.h [deprecated 7.14]
-include/fb.h
-	FB_WPIXEL -> fb_wpixel [deprecated 7.14]
-src/gtools
-	g_[toolname] -> g[toolname] [deprecated 7.14]
-include/raytrace.h
-	rt_fdiff -> NEAR_ZERO [deprecated 7.14]
-	rt_reldiff -> NEAR_ZERO [deprecated 7.14]
-	DIR_* -> RT_DIR_* [deprecated 7.14]
-mged
-	tops -g -u -> now default behavior [deprecated 7.14]
-	-n option -> -c option [deprecated 7.14]
-	bots, per_line [deprecated 7.14]
-include/vmath.h
-	VADD2_2D -> V2ADD2 [deprecated 7.14]
-	VSUB2_2D -> V2SUB2 [deprecated 7.14]
-	MAGSQ_2D -> MAG2SQ [deprecated 7.14]
-	VDOT_2D -> V2DOT [deprecated 7.14]
-	VMOVE_2D -> V2MOVE [deprecated 7.14]
-	VSCALE_2D -> V2SCALE [deprecated 7.14]
-	VJOIN1_2D -> V2JOIN1 [deprecated 7.14]
-
-7.12
-----
-include/raytrace.h
-	rt_functab size -> growing ft_label and new callbacks [deprecated 7.12]
-srt/librt/cmd.c
-	rt_split_cmd() -> bu_argv_from_string() [deprecated 7.12]
-src/rt/viewarea.c
-	terminology and output format [deprecated 7.12]
-include/raytrace.h
-	RT_HIT_NORM -> RT_HIT_NORMAL [deprecated 7.12]
-
-pre 7.0
--------
-include/raytrace.h
-	struct hit.hit_point -> RT_HIT_POINT [deprecated pre-7.0]
-	struct hit.hit_normal -> RT_HIT_NORMAL [deprecated pre-7.0]
-
-
-************
-* OBSOLETE *
-************
 
 7.24.2
 ------
@@ -412,15 +507,6 @@ include/[library].h (several)
 * MINIMALLY IMPACTING API CHANGES *
 ***********************************
 
-If a change to an interface has a suitable and completely equivalent
-alternative, the change is deemed to be "minimally impacting" and can
-be made during any minor release.  Examples of such changes include
-renaming an interface, reordering parameters, adding new parameters to
-an interface for previously implicit or restricted behavior, and
-removing unused parameters.
-
-Basically, the impact can usually be considered minor if a static
-regular expression search-and-replace is all that is needed to update.
 Included in following are various minimally impacting API changes that
 have been identified in chronological order.  As expressions are not
 extensively tested, use with caution.
@@ -430,6 +516,8 @@ may need adjustment (particularly quoting of '(', ')', and '|'
 characters) for other environments.  Most expressions will apply with:
 	perl -0777 -pi -e 'EXPRESSION' FILE
 
+To apply them to an entire SVN checkout, the following pattern is useful:
+find . -type f -not -path "*.svn/*" -regex '.*\(c\|cpp\|cxx\|h\|hpp\)$' -exec perl -0777 -pi -e 'EXPRESSION' {} \;
 
 6.0 (sed lines)
 ---
@@ -890,9 +978,9 @@ s/bu_strcmpm\((.*),([^,]*)\)/bu_strcmp(\1)/g
 
 7.24
 ----
-s/bu_set_realtime([[:space:]]);//g
+s/bu_set_realtime\([[:space:]]\);//g
         didn't do anything [7.23]
-s/.*bu_cpulimit_[sg]et([[:space:]]);//g
+s/.*bu_cpulimit_[sg]et\([[:space:]]\);//g
         didn't do anything [7.23]
 s/rt_g\./RTG\./g
         renamed rt_g global to RTG so it doesn't match the struct name [7.24]
@@ -903,3 +991,106 @@ s/redraw_vlist/draw/g
 s/RT_BADNUM/INVALID/g
 s/RT_BADVAL/VINVALID/g
         moved RT_BADNUM and RT_BADVEC to vmath.h as INVALID and VINVALID [7.24]
+s/bu_create_hash_tbl/bu_hash_tbl_create/g
+s/bu_find_hash_entry/bu_hash_tbl_find/g
+s/bu_hash_add_entry/bu_hash_tbl_add/g
+s/bu_hash_tbl_pr/bu_hash_tbl_print/g
+	renamed for better consistency in hash table API and with other libbu API [7.24]
+s/dm_applicationfocus\([[:space:]]*\);//g
+	only useful in older os x versions, users can now do the same thing via XQuartz preferences [7.24]
+s/bu_vls_trunc2/bu_vls_trunc/g
+        removed duplicitous function in favor of more general version [7.24]
+s/bn_pi/M_PI/g
+s/bn_twopi/M_2PI/g
+s/bn_halfpi/M_PI_2/g
+s/bn_quarterpi/M_PI_4/g
+s/bn_invpi/M_1_PI/g
+s/bn_inv2pi/M_1_2PI/g
+s/bn_inv4pi/M_1_4PI)/g
+s/bn_inv255/(1.0 \/ 255.0)/g
+s/bn_degtorad/DEG2RAD/g
+s/bn_radtodeg/RAD2DEG/g
+s/bn_sin_scale/(BN_SINTABSIZE \/ M_2PI)/g
+        eliminated a number of libbn globals in favor of existing constants [7.24]
+s/(#[[:space:]]*include[[:space:]]+["<])vfont-if\.h/\1bu\/vfont.h/g
+s/(#[[:space:]]*include[[:space:]]+["<])cmd\.h/\1bu\/cmd.h/g
+s/(#[[:space:]]*include[[:space:]]+["<])hist\.h/\1bu\/hist.h/g
+s/(#[[:space:]]*include[[:space:]]+["<])magic\.h/\1bu\/magic.h/g
+        library-specific public headers moved into a subdir [7.24]
+s/([^_])([nh]to[hn][fd])/\1bu_cv_\2/g
+        ntohf, ntohd, htonf, htond renamed with bu_cv_ prefix [7.24]
+
+7.26
+----
+s/bu_kill_parallel\([[:space:]]*\);//g
+        didn't do anything unless called from forked process, use bu_terminate() [7.25]
+s/bu_jmpbuf/bu_jmpbuf[0]/g
+s/bu_setjmp_valid/bu_setjmp_valid[0]/g
+        can replace 0 with bu_parallel_id() to get thread-safe jumping [7.25]
+s/bu_semaphore_reinit/bu_semaphore_init/g
+        no longer need to manually reinitialize (or initialize) semaphores [7.25]
+s/(#[[:space:]]*include[[:space:]]+["<])fbio\.h/\1bu\/fb.h/g
+        fbio.h is now part of fb.h [7.25]
+s/UNION/'u'/g
+s/SUBTRACT/'-'/g
+s/INTERSECT/'+'/g
+        old db.h db4 preprocessor symbols removed, use char or DB_OP_* [7.25]
+s/(#[[:space:]]*include[[:space:]]+["<])bselect\.h/\1bsocket.h/g
+s/(#[[:space:]]*include[[:space:]]+["<])bin\.h/\1bnetwork.h/g
+        rename bselect.h and bin.h public headers to be more declaratively named [7.25]
+s/db5_enc_len[(.*)]/DB5_ENC_LEN(\1)/g
+	replaced db5_enc_len[] global array with DB5_ENC_LEN() macro [7.25]
+s/db_normalize/bu_normalize/g
+	move the path normalization routine to libbu [7.25]
+s/(#[[:space:]]*include[[:space:]]+["<])bot\.h/\1rt\/primitives\/bot.h/g
+	consolidate bot header contents [7.25]
+s/(#[[:space:]]*include[[:space:]]+["<])anim\.h/\1bn\/anim.h/g
+	consolidate anim header contents [7.25]
+s/(#[[:space:]]*include[[:space:]]+["<])plot3\.h/\1bn.h/g
+	plot3 implementation is in libbn, move header and replace plot3.h with bn.h [7.25]
+s/(#[[:space:]]*include[[:space:]]+["<])vectfont\.h/#define LAST -128\n\1bn\/vectfont.h/g
+	consolidate vectfont.h files [7.25]
+s/(#[[:space:]]*include[[:space:]]+["<])spm\.h/\1bn\/spm.h/g
+	move spm.h into bn subheader directory [7.25]
+s/(#[[:space:]]*include[[:space:]]+["<])dvec\.h/\1bn\/dvec.h/g
+s/(#[[:space:]]*include[[:space:]]+["<])vector_fpu\.h/\1bn\/vector_fpu.h/g
+s/(#[[:space:]]*include[[:space:]]+["<])vector_x86\.h/\1bn\/vector_x86.h/g
+	move dvec.h and friends into bn subheader directory [7.25]
+s/(#[[:space:]]*include[[:space:]]+["<])db\.h/\1rt\/db4.h/g
+	move db.h to rt/db4.h [7.25]
+s/(#[[:space:]]*include[[:space:]]+["<])db5\.h/\1rt\/db5.h/g
+	move db5.h to rt/db5.h [7.25]
+s/(#[[:space:]]*include[[:space:]]+["<])mater\.h/\1raytrace.h/g
+	merge mater.h with rt/mater.h [7.25]
+s/(#[[:space:]]*include[[:space:]]+["<])nurb\.h/#include "raytrace.h"\n\1rt\/nurb.h/g
+	move nurb.h to rt/nurb.h [7.25]
+s/(#[[:space:]]*include[[:space:]]+["<])rtfunc\.h/#include "raytrace.h"\n\1rt\/func.h/g
+	move rtfunc.h to rt/func.h [7.25]
+s/(#[[:space:]]*include[[:space:]]+["<])tol\.h/#include "bn.h"\n#include "raytrace.h"\n\1rt\/tol.h/g
+	consolidate tol.h and rt/tol.h [7.25]
+s/(#[[:space:]]*include[[:space:]]+["<])tie\.h/\1rt\/tie.h/g
+	move tie.h to rt/tie.h [7.25]
+s/(#[[:space:]]*include[[:space:]]+["<])solid\.h/#include "raytrace.h"\n\1rt\/solid.h/g
+	move solid.h to rt/solid.h [7.25]
+s/(#[[:space:]]*include[[:space:]]+["<])shadework\.h/\1optical\/shadework.h/g
+	move shadework.h to optical/shadework.h [7.25]
+s/(#[[:space:]]*include[[:space:]]+["<])shadefuncs\.h/\1optical.h/g
+	move shadefuncs.h to optical/shadefuncs.h [7.25]
+s/(#[[:space:]]*include[[:space:]]+["<])light\.h/#include "bn.h"\n#include "raytrace.h"\n\1optical\/light.h/g
+	move light.h to optical/light.h [7.25]
+s/(#[[:space:]]*include[[:space:]]+["<])plastic\.h/\1optical\/plastic.h/g
+	move plastic.h to optical/plastic.h [7.25]
+s/(#[[:space:]]*include[[:space:]]+["<])rtgeom\.h/\1rt\/geom.h/g
+	move rtgeom.h to rt/geom.h [7.25]
+s/rt_vlist_get_cmd_description/bn_vlist_get_cmd_description/g
+s/rt_ck_vlist/bn_ck_vlist/g
+s/rt_vlist_export/bn_vlist_export/g
+s/rt_vlblock_free/bn_vlblock_free/g
+s/rt_vlblock_find/bn_vlblock_find/g
+        move vlist functions from librt to libbn [7.25]
+s/([[:space:],\(,"])bn_tcl/\1tclcad_bn/g
+s/([[:space:],\(,"])rt_tcl_rt/\1tclcad_rt/g
+s/([[:space:],\(,"])rt_tcl/\1tclcad_rt/g
+	tcl library registrations moved to libtclcad [7.25]
+s/rt_grow_boolstack/rt_bool_growstack/g
+	 rename with consistent prefixes [7.25]

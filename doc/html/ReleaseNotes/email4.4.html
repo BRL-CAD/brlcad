@@ -4952,7 +4952,7 @@ In the Release 4.0 sources (which probably won't work on an Indigo
 anyway), remove line 137, which states:
 
 <p>
-static int sortFunc RT_ARGS((const genptr_t a, const genptr_t b));
+static int sortFunc RT_ARGS((const void *a, const void *b));
 
 <p>
 	Best,

@@ -1,7 +1,7 @@
 #                        H E L P . T C L
 # BRL-CAD
 #
-# Copyright (c) 2004-2013 United States Government as represented by
+# Copyright (c) 2004-2014 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -200,6 +200,7 @@ set mged_help_data(knob)	{{[-e -i -m -v] [-o v/m/e/k] [zap|zero|(x|y|z|X|Y|Z|S|a
 set mged_help_data(l)		$helplib_data(wdb_list)
 set mged_help_data(l_muves)	{{MUVES_component1 MUVES_component2 ...} {DEPRECATED: list the MGED components that make up the specified MUVES components/systems}}
 set mged_help_data(labelvert)	{{object[s]}	{label vertices of wireframes of objects}}
+set mged_help_data(labelface)	{{object[s]}	{label faces of wireframes of objects}}
 set mged_help_data(listeval)	$helplib_data(wdb_listeval)
 set mged_help_data(loadtk)	{{[DISPLAY]}	{initializes the Tk window library}}
 set mged_help_data(loadview)	{{file}	{load view from raytrace script file}}
@@ -210,7 +211,6 @@ set mged_help_data(lm)          {{[-l] value [value value...]} {DEPRECATED: list
 set mged_help_data(lt)		$helplib_data(wdb_lt)
 set mged_help_data(M)		{{1|0 xpos ypos}	{invoke a traditional MGED mouse event}}
 set mged_help_data(make)	{{-t | name <arb8|arb7|arb6|arb5|arb4|arbn|ars|bot|ehy|ell|ell1|epa|eto|extrude|grip|half|nmg|part|pipe|rcc|rec|rhc|rpc|rpp|sketch|sph|tec|tgc|tor|trc>}	{create a primitive}}
-set mged_help_data(make_bb)	$helplib_data(wdb_make_bb)
 set mged_help_data(make_pnts)	{{object_name path_and_filename file_format units_or_conv_factor default_diameter} {creates a point-cloud}}
 set mged_help_data(match)	$helplib_data(wdb_match)
 set mged_help_data(mater)	{{comb [material]}	{assign/delete material to combination}}
@@ -246,6 +246,7 @@ set mged_help_data(press)	{{button_label}	{emulate button press}}
 set mged_help_data(prj_add)	{{ [-t] [-b] [-n] shaderfile [image_file] [image_width] [image_height]} {Appends image filename + current view parameters to shaderfile}}
 set mged_help_data(preview)	{{[-v] [-o imagename.ext] [-d sec_delay] [-D start frame] [-K last frame] rt_script_file}	{preview new style RT animation script}}
 set mged_help_data(ps)		{{[-f font] [-t title] [-c creator] [-s size in inches] [-l linewidth] file}	{creates a postscript file of the current view}}
+set mged_help_data(pull)       $helplib_data(wdb_pull)
 set mged_help_data(push)	$helplib_data(wdb_push)
 set mged_help_data(put)		$helplib_data(wdb_put)
 set mged_help_data(putmat)	{{a/b {I | m0 m1 ... m16}}	{replace matrix on combination's arc}}

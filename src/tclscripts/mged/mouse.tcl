@@ -1,7 +1,7 @@
 #                       M O U S E . T C L
 # BRL-CAD
 #
-# Copyright (c) 1995-2013 United States Government as represented by
+# Copyright (c) 1995-2014 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -311,7 +311,7 @@ proc mouse_matrix_edit_select { x y } {
     }
 
     _mged_press oill
-    _mged_ill -i 1 [lindex $spath_and_pos 0]
+    _mged_ill -e -i 1 [lindex $spath_and_pos 0]
     _mged_matpick [lindex $spath_and_pos 1]
 
     mged_apply_all [winset] "set mouse_behavior d"

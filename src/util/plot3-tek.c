@@ -1,7 +1,7 @@
 /*                     P L O T 3 - T E K . C
  * BRL-CAD
  *
- * Copyright (c) 1991-2013 United States Government as represented by
+ * Copyright (c) 1991-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -26,23 +26,21 @@
 
 #include "common.h"
 
-#ifdef HAVE_UNISTD_H
-#  include <unistd.h> /* for sleep(3) */
-#endif
-
 #include <stdlib.h>
 #include <string.h>
 #include "bio.h"
 
-#include "bu.h"
 #include "vmath.h"
+#include "bu/cv.h"
+#include "bu/log.h"
+#include "bu/str.h"
 #include "bn.h"
 
 
 struct uplot {
     int targ;	/* type of args */
     int narg;	/* number or args */
-    char *desc;	/* description */
+    const char *desc;	/* description */
     int t3d;	/* non-zero if 3D */
 };
 
@@ -133,7 +131,7 @@ int seenscale = 0;
 int expand_it = 0;		/* expand plot to 4k, beyond what will fit on real Tek screen */
 
 static const char usage[] = "\
-Usage: plot3-tek [-e] [-v] < file.plot3 > file.tek\n";
+Usage: plot3-tek [-e] [-v] < file.plot3 [> file.tek]\n";
 
 
 int
@@ -376,6 +374,8 @@ main(int argc, char **argv)
 	    verbose++;
 	} else if (BU_STR_EQUAL(argv[1], "-e")) {
 	    expand_it = 1;
+	} else if (BU_STR_EQUAL(argv[1], "-h") || BU_STR_EQUAL(argv[1], "-?")) {
+	    bu_exit(1, "%s", usage);
 	} else {
 	    fprintf(stderr, "plot3-tek: argument '%s' ignored\n", argv[1]);
 	    break;

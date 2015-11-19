@@ -1,7 +1,7 @@
 /*                 RepresentationRelationshipWithTransformation.cpp
  * BRL-CAD
  *
- * Copyright (c) 1994-2013 United States Government as represented by
+ * Copyright (c) 1994-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -27,8 +27,10 @@
 #include "STEPWrapper.h"
 #include "Factory.h"
 
+#include "Axis2Placement3D.h"
 #include "Transformation.h"
 #include "RepresentationRelationshipWithTransformation.h"
+#include "ItemDefinedTransformation.h"
 
 #define CLASSNAME "RepresentationRelationshipWithTransformation"
 #define ENTITYNAME "Representation_Relationship_With_Transformation"
@@ -51,11 +53,41 @@ RepresentationRelationshipWithTransformation::RepresentationRelationshipWithTran
 
 RepresentationRelationshipWithTransformation::~RepresentationRelationshipWithTransformation()
 {
+    // created through factory will be deleted there.
+    transformation_operator = NULL;
 }
 
 string RepresentationRelationshipWithTransformation::ClassName()
 {
     return entityname;
+}
+
+Axis2Placement3D *
+RepresentationRelationshipWithTransformation::GetTransformItem_1()
+{
+    Axis2Placement3D *axis = NULL;
+    if (transformation_operator != NULL) {
+	ItemDefinedTransformation *idt = dynamic_cast<ItemDefinedTransformation*>(transformation_operator);
+
+	if (idt) {
+	    axis = idt->GetTransformItem_1();
+	}
+    }
+    return axis;
+}
+
+Axis2Placement3D *
+RepresentationRelationshipWithTransformation::GetTransformItem_2()
+{
+    Axis2Placement3D *axis = NULL;
+    if (transformation_operator != NULL) {
+	ItemDefinedTransformation *idt = dynamic_cast<ItemDefinedTransformation*>(transformation_operator);
+
+	if (idt) {
+	    axis = idt->GetTransformItem_2();
+	}
+    }
+    return axis;
 }
 
 bool RepresentationRelationshipWithTransformation::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
@@ -65,7 +97,7 @@ bool RepresentationRelationshipWithTransformation::Load(STEPWrapper *sw, SDAI_Ap
 
     if (!RepresentationRelationship::Load(step, sse)) {
 	std::cout << CLASSNAME << ":Error loading base class ::RepresentationRelationship." << std::endl;
-	return false;
+	goto step_error;
     }
     // need to do this for local attributes to makes sure we have
     // the actual entity and not a complex/supertype parent
@@ -79,19 +111,25 @@ bool RepresentationRelationshipWithTransformation::Load(STEPWrapper *sw, SDAI_Ap
 	    if (t->IsItem_defined_transformation()) {
 		SdaiItem_defined_transformation *idt = *t;
 		transformation_operator = dynamic_cast<Transformation *>(Factory::CreateObject(sw, (SDAI_Application_instance *) idt));
+		if (!transformation_operator) goto step_error;
 	    } else if (t->IsFunctionally_defined_transformation()) {
 		SdaiFunctionally_defined_transformation *fdt = *t;
 		transformation_operator = dynamic_cast<Transformation *>(Factory::CreateObject(sw, (SDAI_Application_instance *) fdt));
+		if (!transformation_operator) goto step_error;
 	    } else {
 		std::cerr << CLASSNAME << ": Unknown 'Transformation' type from select." << std::endl;
-		return false;
+		goto step_error;
 	    }
 	} else {
-	    return false;
+	    goto step_error;
 	}
     }
-
+    sw->entity_status[id] = STEP_LOADED;
     return true;
+step_error:
+    sw->entity_status[id] = STEP_LOAD_ERROR;
+    return false;
+
 }
 
 void RepresentationRelationshipWithTransformation::Print(int level)

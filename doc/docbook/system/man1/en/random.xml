@@ -28,8 +28,13 @@
 
 
 <refsect1 xml:id='description'><title>DESCRIPTION</title>
-<para><emphasis remap='I'>random</emphasis>
-generates a random number between the two values given.  The number
+<para><command>random</command>
+generates a random number between the two values given by
+    <replaceable>low</replaceable>
+and
+    <replaceable>high</replaceable>,
+which are required arguments.
+The number
 can be uniform across the entire range or it can be a gaussian
 distribution around the center of the range (or a named center).</para>
 
@@ -37,6 +42,8 @@ distribution around the center of the range (or a named center).</para>
 <option>-s</option>
 option specifies what integer seed to use to prime the random number
 generator.
+</para>
+<para>
 The
 <option>-u</option>
 option specifies that the random number distribution should be uniform
@@ -48,6 +55,11 @@ gaussian distribution around a default or named center, specified with
 the
 <option>-c</option>
 option.
+If neither
+<option>-u</option> nor <option>-g</option>
+is specified, <option>-u</option> will be used.
+</para>
+<para>
 The
 <option>-v</option>
 option specifies verbose diagnostic output.</para>
@@ -67,7 +79,7 @@ random -g 40 2000
 </refsect1>
 
 <refsect1 xml:id='copyright'><title>COPYRIGHT</title>
-<para>This software is Copyright (c) 2010-2013 by the United States
+<para>This software is Copyright (c) 2010-2014 by the United States
 Government as represented by U.S. Army Research Laboratory.</para>
 
 </refsect1>

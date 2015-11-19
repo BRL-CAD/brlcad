@@ -1,7 +1,7 @@
 /*                         G - O B J . C
  * BRL-CAD
  *
- * Copyright (c) 1996-2013 United States Government as represented by
+ * Copyright (c) 1996-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -34,22 +34,32 @@
 #include "bio.h"
 
 /* interface headers */
+#include "bu/getopt.h"
+#include "bu/opt.h"
+#include "bu/parallel.h"
 #include "vmath.h"
 #include "nmg.h"
-#include "rtgeom.h"
+#include "rt/geom.h"
 #include "raytrace.h"
 
 
 #define V3ARGSIN(a)       (a)[X]/25.4, (a)[Y]/25.4, (a)[Z]/25.4
 
-extern union tree *do_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, genptr_t client_data);
+extern union tree *do_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, void *client_data);
 
-static char usage[] = "\
-Usage: %s [-m][-v][-i][-u][-xX lvl][-a abs_tess_tol][-r rel_tess_tol][-n norm_tess_tol][-P #_of_CPUs]\n\
-[-e error_file_name ][-D dist_calc_tol][-o output_file_name ] brlcad_db.g object(s)\n";
+static char usage[] =
+    "[-m][-v][-i][-u][-xX lvl][-a abs_tess_tol][-r rel_tess_tol][-n norm_tess_tol][-P #_of_CPUs]\n"
+    "[-e error_file_name ][-D dist_calc_tol][-o output_file_name ] brlcad_db.g object(s)\n";
 
-static long vert_offset=0;
-static long norm_offset=0;
+static void
+print_usage(const char *progname)
+{
+    bu_exit(1, "Usage: %s %s", progname, usage);
+}
+
+
+static off_t vert_offset=0;
+static off_t norm_offset=0;
 static int do_normals=0;
 static int NMG_debug;	/* saved arg of -X, for longjmp handling */
 static int verbose=0;
@@ -77,15 +87,93 @@ static int regions_tried = 0;
 static int regions_converted = 0;
 static int regions_written = 0;
 static int inches = 0;
+static int print_help = 0;
 
-/*
- * M A I N
- */
+static int
+parse_tol_abs(struct bu_vls *error_msg, int argc, const char **argv, void *UNUSED(set_var))
+{
+    int ret;
+    BU_OPT_CHECK_ARGV0(error_msg, argc, argv, "absolute tolerance");
+
+    ret = bu_opt_fastf_t(error_msg, argc, argv, (void *)&(ttol.abs));
+    ttol.rel = 0.0;
+    return ret;
+}
+
+
+static int
+parse_tol_norm(struct bu_vls *error_msg, int argc, const char **argv, void *UNUSED(set_var))
+{
+    int ret;
+    BU_OPT_CHECK_ARGV0(error_msg, argc, argv, "normal tolerance");
+
+    ret = bu_opt_fastf_t(error_msg, argc, argv, (void *)&(ttol.norm));
+    ttol.rel = 0.0;
+    return ret;
+}
+
+
+static int
+parse_tol_dist(struct bu_vls *error_msg, int argc, const char **argv, void *UNUSED(set_var))
+{
+    int ret;
+    BU_OPT_CHECK_ARGV0(error_msg, argc, argv, "distance tolerance");
+
+    ret = bu_opt_fastf_t(error_msg, argc, argv, (void *)&(tol.dist));
+    tol.dist_sq = tol.dist * tol.dist;
+    rt_pr_tol(&tol);
+    return ret;
+}
+
+
+static int
+parse_debug_rt(struct bu_vls *error_msg, int argc, const char **argv, void *UNUSED(set_var))
+{
+    BU_OPT_CHECK_ARGV0(error_msg, argc, argv, "debug rt");
+
+    sscanf(argv[0], "%x", (unsigned int *)&RTG.debug);
+    return 1;
+}
+
+
+static int
+parse_debug_nmg(struct bu_vls *error_msg, int argc, const char **argv, void *UNUSED(set_var))
+{
+    BU_OPT_CHECK_ARGV0(error_msg, argc, argv, "debug nmg");
+
+    sscanf(argv[0], "%x", (unsigned int *)&RTG.NMG_debug);
+    NMG_debug = RTG.NMG_debug;
+    return 1;
+}
+
+
+static struct bu_opt_desc options[] = {
+    {"?", "", NULL,         NULL,            &print_help,  "print help and exit"},
+    {"h", "", NULL,         NULL,            &print_help,  "print help and exit"},
+    {"i", "", NULL,         NULL,            &inches,      "change output units from mm to inches"},
+    {"m", "", NULL,         NULL,            &usemtl,      "output usemtl statements"},
+    {"u", "", NULL,         NULL,            &do_normals,  "output vertex normals"},
+    {"v", "", NULL,         NULL,            &verbose,     "verbose output"},
+    {"a", "", "#",          parse_tol_abs,   &ttol,        "absolute tolerance"},
+    {"n", "", "#",          parse_tol_norm,  &ttol,        "surface normal tolerance"},
+    {"D", "", "#",          parse_tol_dist,  &tol,         "distance tolerance"},
+    {"x", "", "level",      parse_debug_rt,  NULL,         "set RT debug flag"},
+    {"X", "", "level",      parse_debug_nmg, NULL,         "set NMG debug flag"},
+    {"e", "", "error_file", bu_opt_str,      &error_file,  "error file name"},
+    {"o", "", "output.obj", bu_opt_str,      &output_file, "output file name"},
+    {"P", "", "#",          bu_opt_int,      &ncpu,        "number of CPUs"},
+    {"r", "", "#",          bu_opt_fastf_t,  &ttol.rel,    "relative tolerance"},
+    BU_OPT_DESC_NULL
+};
+
+
 int
-main(int argc, char **argv)
+main(int argc, const char **argv)
 {
     int c;
     double percent;
+    struct bu_vls parse_msgs = BU_VLS_INIT_ZERO;
+    const char *prog_name = argv[0];
 
     bu_setprogname(argv[0]);
     bu_setlinebuf(stderr);
@@ -103,70 +191,25 @@ main(int argc, char **argv)
 
     /* FIXME: These need to be improved */
     tol.magic = BN_TOL_MAGIC;
-    tol.dist = 0.0005;
+    tol.dist = BN_TOL_DIST;
     tol.dist_sq = tol.dist * tol.dist;
     tol.perp = 1e-6;
     tol.para = 1 - tol.perp;
-
-    rt_init_resource(&rt_uniresource, 0, NULL);
 
     the_model = nmg_mm();
     BU_LIST_INIT(&RTG.rtg_vlfree);	/* for vlist macros */
 
     /* Get command line arguments. */
-    while ((c = bu_getopt(argc, argv, "mua:n:o:r:vx:D:P:X:e:ih?")) != -1) {
-	switch (c) {
-	    case 'm':		/* include 'usemtl' statements */
-		usemtl = 1;
-		break;
-	    case 'u':		/* Include vertexuse normals */
-		do_normals = 1;
-		break;
-	    case 'a':		/* Absolute tolerance. */
-		ttol.abs = atof(bu_optarg);
-		ttol.rel = 0.0;
-		break;
-	    case 'n':		/* Surface normal tolerance. */
-		ttol.norm = atof(bu_optarg);
-		ttol.rel = 0.0;
-		break;
-	    case 'o':		/* Output file name. */
-		output_file = bu_optarg;
-		break;
-	    case 'r':		/* Relative tolerance. */
-		ttol.rel = atof(bu_optarg);
-		break;
-	    case 'v':
-		verbose = 1;
-		break;
-	    case 'P':
-		ncpu = atoi(bu_optarg);
-		break;
-	    case 'x':
-		sscanf(bu_optarg, "%x", (unsigned int *)&RTG.debug);
-		break;
-	    case 'D':
-		tol.dist = atof(bu_optarg);
-		tol.dist_sq = tol.dist * tol.dist;
-		rt_pr_tol(&tol);
-		break;
-	    case 'X':
-		sscanf(bu_optarg, "%x", (unsigned int *)&RTG.NMG_debug);
-		NMG_debug = RTG.NMG_debug;
-		break;
-	    case 'e':		/* Error file name. */
-		error_file = bu_optarg;
-		break;
-	    case 'i':
-		inches = 1;
-		break;
-	    default:
-		bu_exit(1, usage, argv[0]);
-	}
-    }
+    ++argv; --argc;
 
-    if (bu_optind+1 >= argc)
-	bu_exit(1, usage, argv[0]);
+    argc = bu_opt_parse(&parse_msgs, argc, argv, options);
+
+    if (bu_vls_strlen(&parse_msgs) > 0) {
+	bu_log("%s\n", bu_vls_cstr(&parse_msgs));
+    }
+    if (argc < 2 || print_help) {
+	print_usage(prog_name);
+    }
 
     if (!output_file)
 	fp = stdout;
@@ -181,17 +224,13 @@ main(int argc, char **argv)
     /* Open g-obj error log file */
     if (!error_file) {
 	fpe = stderr;
-#if defined(_WIN32) && !defined(__CYGWIN__)
 	setmode(fileno(fpe), O_BINARY);
-#endif
     } else if ((fpe=fopen(error_file, "wb")) == NULL) {
 	perror(argv[0]);
 	bu_exit(1, "Cannot open output file (%s) for writing\n", error_file);
     }
 
     /* Open BRL-CAD database */
-    argc -= bu_optind;
-    argv += bu_optind;
     if ((dbip = db_open(argv[0], DB_OPEN_READONLY)) == DBI_NULL) {
 	perror(argv[0]);
 	bu_exit(1, "Unable to open geometry database file (%s)\n", argv[0]);
@@ -221,14 +260,14 @@ main(int argc, char **argv)
 			0,			/* take all regions */
 			do_region_end,
 			nmg_booltree_leaf_tess,
-			(genptr_t)NULL);	/* in librt/nmg_bool.c */
+			(void *)NULL);	/* in librt/nmg_bool.c */
 
     if (regions_tried>0) {
 	percent = ((double)regions_converted * 100.0) / regions_tried;
-	printf("Tried %d regions, %d converted to NMG's successfully.  %g%%\n",
+	bu_log("Tried %d regions, %d converted to NMG's successfully.  %g%%\n",
 	       regions_tried, regions_converted, percent);
 	percent = ((double)regions_written * 100.0) / regions_tried;
-	printf("                 %d triangulated successfully. %g%%\n",
+	bu_log("                 %d triangulated successfully. %g%%\n",
 	       regions_written, percent);
     }
 
@@ -271,7 +310,7 @@ nmg_to_obj(struct nmgregion *r, const struct db_full_path *pathp, int UNUSED(reg
     nmg_vertex_tabulate(&verts, &r->l.magic);
 
     /* Get number of vertices */
-    numverts = BU_PTBL_END (&verts);
+    numverts = BU_PTBL_END(&verts);
 
     /* get list of vertexuse normals */
     if (do_normals)
@@ -321,14 +360,14 @@ nmg_to_obj(struct nmgregion *r, const struct db_full_path *pathp, int UNUSED(reg
 		    if (loc < 0) {
 			bu_ptbl_free(&verts);
 			bu_free(region_name, "region name");
-			bu_log("Vertex from eu x%x is not in nmgregion x%x\n", eu, r);
+			bu_log("Vertex from eu %p is not in nmgregion %p\n", (void *)eu, (void *)r);
 			bu_exit(1, "ERROR: Can't find vertex in list!");
 		    }
 		}
 		if (vert_count > 3) {
 		    bu_ptbl_free(&verts);
 		    bu_free(region_name, "region name");
-		    bu_log("lu x%x has %d vertices!\n", lu, vert_count);
+		    bu_log("lu %p has %d vertices!\n", (void *)lu, vert_count);
 		    bu_exit(1, "ERROR: LU is not a triangle\n");
 		} else if (vert_count < 3)
 		    continue;
@@ -430,7 +469,7 @@ nmg_to_obj(struct nmgregion *r, const struct db_full_path *pathp, int UNUSED(reg
 		    loc = bu_ptbl_locate(&verts, (long *)v);
 		    if (loc < 0) {
 			bu_ptbl_free(&verts);
-			bu_log("Vertex from eu x%x is not in nmgregion x%x\n", eu, r);
+			bu_log("Vertex from eu %p is not in nmgregion %p\n", (void *)eu, (void *)r);
 			bu_free(region_name, "region name");
 			bu_exit(1, "Can't find vertex in list!\n");
 		    }
@@ -439,9 +478,9 @@ nmg_to_obj(struct nmgregion *r, const struct db_full_path *pathp, int UNUSED(reg
 			int j;
 
 			j = bu_ptbl_locate(&norms, (long *)eu->vu_p->a.magic_p);
-			fprintf(fp, " %ld//%ld", loc+1+vert_offset, j+1+norm_offset);
+			fprintf(fp, " %ld//%ld", loc+1+(long)vert_offset, j+1+(long)norm_offset);
 		    } else
-			fprintf(fp, " %ld", loc+1+vert_offset);
+			fprintf(fp, " %ld", loc+1+(long)vert_offset);
 		}
 
 		fprintf(fp, "\n");
@@ -449,17 +488,12 @@ nmg_to_obj(struct nmgregion *r, const struct db_full_path *pathp, int UNUSED(reg
 		if (vert_count > 3) {
 		    bu_ptbl_free(&verts);
 		    bu_free(region_name, "region name");
-		    bu_log("lu x%x has %d vertices!\n", lu, vert_count);
+		    bu_log("lu %p has %d vertices!\n", (void *)lu, vert_count);
 		    bu_exit(1, "ERROR: LU is not a triangle\n");
 		}
 	    }
 	}
     }
-    /*	regions_converted++;
-	printf("Processed region %s\n", region_name);
-	printf("Regions attempted = %d Regions done = %d\n", regions_tried, regions_converted);
-	fflush(stdout);
-    */
     vert_offset += numverts;
     bu_ptbl_free(&verts);
     if (do_normals) {
@@ -512,7 +546,7 @@ process_triangulation(struct nmgregion *r, const struct db_full_path *pathp, str
 static union tree *
 process_boolean(union tree *curtree, struct db_tree_state *tsp, const struct db_full_path *pathp)
 {
-    union tree *ret_tree = TREE_NULL;
+    static union tree *ret_tree = TREE_NULL;
 
     /* Begin bomb protection */
     if (!BU_SETJUMP) {
@@ -556,14 +590,12 @@ process_boolean(union tree *curtree, struct db_tree_state *tsp, const struct db_
 
 
 /*
- * D O _ R E G I O N _ E N D
- *
  * Called from db_walk_tree().
  *
  * This routine must be prepared to run in parallel.
  */
 union tree *
-do_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, genptr_t UNUSED(client_data))
+do_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, void *UNUSED(client_data))
 {
     union tree *ret_tree;
     struct bu_list vhead;
@@ -653,7 +685,7 @@ do_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union
 
 	npercent = (float)(regions_converted * 100) / regions_tried;
 	tpercent = (float)(regions_written * 100) / regions_tried;
-	printf("Tried %d regions; %d conv. to NMG's, %d conv. to tri.; nmgper = %.2f%%, triper = %.2f%%\n",
+	bu_log("Tried %d regions; %d conv. to NMG's, %d conv. to tri.; nmgper = %.2f%%, triper = %.2f%%\n",
 	       regions_tried, regions_converted, regions_written, npercent, tpercent);
     }
 

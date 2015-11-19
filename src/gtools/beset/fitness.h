@@ -1,7 +1,7 @@
 /*                       F I T N E S S . H
  * BRL-CAD
  *
- * Copyright (c) 2007-2013 United States Government as represented by
+ * Copyright (c) 2007-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -25,8 +25,8 @@
  *   Ben Poole
  */
 
-#ifndef __FITNESS_H__
-#define __FITNESS_H__
+#ifndef GTOOLS_BESET_FITNESS_H
+#define GTOOLS_BESET_FITNESS_H
 
 #define U_AXIS 0
 #define V_AXIS 1
@@ -91,7 +91,7 @@ int compare_miss(register struct application *ap);
 int get_next_row(struct fitness_state *fstate);
 
 /* raytrace an object stored in fstate  either storing the rays or comparing them to the source */
-void rt_worker(int cpu, genptr_t g);
+void rt_worker(int cpu, void *g);
 
 /* prep for raytracing object, and call rt_worker for parallel processing */
 void fit_rt (char *obj, struct db_i *db, struct fitness_state *fstate);
@@ -114,7 +114,7 @@ void fit_diff(char *obj, struct db_i *db, struct fitness_state *fstate);
 /* clear the stored rays */
 void free_rays (struct fitness_state *fstate);
 
-#endif /* __FITNESS_H__ */
+#endif /* GTOOLS_BESET_FITNESS_H */
 
 /*
  * Local Variables:

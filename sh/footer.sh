@@ -2,7 +2,7 @@
 #                       F O O T E R . S H
 # BRL-CAD
 #
-# Copyright (c) 2004-2013 United States Government as represented by
+# Copyright (c) 2004-2014 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -92,6 +92,9 @@ mode=""
 mode_vars=""
 wrap=0
 commentchar=""
+
+commentstart="/"
+commentend="/"
 
 case $FILE in
     *.sh )
@@ -191,6 +194,24 @@ case $FILE in
 	mode_vars="c-basic-offset tcl-indent-level"
 	wrap=0
 	commentchar="#"
+	;;
+    *.php* )
+	echo "$FILE is a PHP source file"
+	mode="php"
+	mode_vars="c-basic-offset"
+	wrap=1
+	commentchar=""
+	commentstart="<!--"
+	commentend="-->"
+	;;
+    *.htm* )
+	echo "$FILE is an HTML source file"
+	mode="html"
+	mode_vars="sgml-basic-offset"
+	wrap=1
+	commentchar=""
+	commentstart="<!--"
+	commentend="-->"
 	;;
     *.pl )
 	echo "$FILE is a Perl source file"
@@ -375,7 +396,7 @@ fi
 comment_block="
 "
 if [ "x$wrap" = "x1" ] ; then
-    comment_block="${comment_block}/`echo "${commentchar}"`
+    comment_block="${comment_block}${commentstart}${commentchar}
 "
 fi
 
@@ -387,24 +408,24 @@ fi
 # use temp vars so that emacs doesn't think this line is a local var block too
 do_not="Local"
 parse="Variables"
-comment_block="${comment_block}`echo "${prefixspace}${commentchar} ${do_not} ${parse}:"`
+comment_block="${comment_block}${prefixspace}${commentchar} ${do_not} ${parse}:
 "
 
 index=0
 for var in ${variables[@]} ; do
-    comment_block="${comment_block}`echo "${prefixspace}${commentchar} ${var}: ${values[$index]}"`
+    comment_block="${comment_block}${prefixspace}${commentchar} ${var}: ${values[$index]}
 "
     index="`expr $index \+ 1`"
 done
 
-comment_block="${comment_block}`echo "${prefixspace}${commentchar} End:"`
+comment_block="${comment_block}${prefixspace}${commentchar} End:
 "
-comment_block="${comment_block}`echo "${prefixspace}${commentchar} ex: shiftwidth=$indentation tabstop=$tab_width"`"
+comment_block="${comment_block}${prefixspace}${commentchar} ex: shiftwidth=$indentation tabstop=$tab_width"
 
 if [ "x$wrap" = "x1" ] ; then
     comment_block="${comment_block}
 "
-    comment_block="${comment_block}`echo " ${commentchar}/"`"
+    comment_block="${comment_block} ${commentchar}${commentend}"
 fi
 
 
@@ -415,8 +436,8 @@ matching_found=0
 index=0
 for var in ${variables[@]} ; do
     if [ ! "x$commentchar" = "x" ] ; then
-	existing_var=`cat $FILE | grep -i "${prefixspace}[${commentchar}][${commentchar}]* ${var}:" | sed 's/:/ /g' | awk '{print $3}'`
-	existing_suffix=`cat $FILE | grep -i "${prefixspace}[${commentchar}][${commentchar}]* ${var}:" | sed 's/:/ /g' | awk '{print $4}'`
+	existing_var=`grep -i "${prefixspace}[${commentchar}][${commentchar}]* ${var}:" "$FILE" | sed 's/:/ /g' | awk '{print $3}'`
+	existing_suffix=`grep -i "${prefixspace}[${commentchar}][${commentchar}]* ${var}:" "$FILE" | sed 's/:/ /g' | awk '{print $4}'`
     fi
 
     if [ "x$existing_var" = "x" ] ; then
@@ -441,7 +462,7 @@ done
 ######################
 # check the vi block #
 ######################
-existing_vi="`cat $FILE | grep -i "${prefixspace}${commentchar} ex:"`"
+existing_vi="`grep -i "${prefixspace}${commentchar} ex:" "$FILE"`"
 if [ "x$existing_vi" = "x" ] ; then
     echo "No vi line found..."
 else
@@ -460,7 +481,7 @@ if [ $matching_found -eq 0 ] ; then
     # make sure there are no local vars
     do_not="Local"
     match="Variables"
-    local=`cat "$FILE" | grep -i "${do_not} ${match}:" | awk '{print $1}'`
+    local=`grep -i "${do_not} ${match}:" "$FILE" | awk '{print $1}'`
     # w00t, no local vars so just dump a shiny new block at the end of the file
     if [ "x$local" = "x" ] ; then
 	cat >> $FILE <<EOF
@@ -477,14 +498,14 @@ else
     match="Variables"
 
     if [ ! "x$commentchar" = "x" ] ; then
-	existing_suffix=`cat $FILE | grep -i "${prefixspace}[${commentchar}][${commentchar}]* ${do_not} ${match}:" | sed 's/:/ /g' | awk '{print $4}'`
+	existing_suffix=`grep -i "${prefixspace}[${commentchar}][${commentchar}]* ${do_not} ${match}:" "$FILE" | sed 's/:/ /g' | awk '{print $4}'`
     fi
     if [ "x$existing_suffix" != "x" ] ; then
 	echo "loc. var has trailing goo ... fixing"
 	perl -pi -e "s,(${prefixspace}[${commentchar}]+ ${do_not} ${match}:.*),${prefixspace}${commentchar} ${do_not} ${match}:,i" $FILE
     fi
     if [ ! "x$commentchar" = "x" ] ; then
-	existing_suffix=`cat $FILE | grep -i "${prefixspace}[${commentchar}][${commentchar}]* End:" | sed 's/:/ /g' | awk '{print $3}'`
+	existing_suffix=`grep -i "${prefixspace}[${commentchar}][${commentchar}]* End:" "$FILE" | sed 's/:/ /g' | awk '{print $3}'`
     fi
     if [ "x$existing_suffix" != "x" ] ; then
 	echo "end has trailing goo ... fixing"

@@ -1,7 +1,7 @@
 /*                      P R O G N A M E . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2013 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -18,6 +18,10 @@
  * information.
  */
 
+#ifndef _GNU_SOURCE
+#  define _GNU_SOURCE /* must come before common.h */
+#endif
+
 #include "common.h"
 
 #ifdef HAVE_SYS_PARAM_H /* for MAXPATHLEN */
@@ -26,110 +30,19 @@
 
 #include <stdlib.h>
 #include <string.h>
+#include <errno.h>
 #include "bio.h"
 
-#include "bu.h"
+#include "bu/file.h"
+#include "bu/log.h"
+#include "bu/malloc.h"
+#include "bu/parallel.h"
+#include "bu/path.h"
+#include "bu/str.h"
 
 /* internal storage for bu_getprogname/bu_setprogname */
-static char bu_argv0_buffer[MAXPATHLEN] = {0};
 static char bu_progname[MAXPATHLEN] = {0};
-
-
-/**
- * b u _ i p w d
- *
- * set/return the path to the initial working directory.
- * bu_setprogname() must be called on app startup for the correct pwd to
- * be acquired/set.
- */
-HIDDEN const char *
-progname_ipwd()
-{
-    /* private stash */
-    static const char *ipwd = NULL;
-    static char buffer[MAXPATHLEN] = {0};
-    const char *pwd = NULL;
-
-    /* already found the path before */
-    if (ipwd) {
-	return ipwd;
-    }
-
-    /* FIRST: try environment */
-    pwd = getenv("PWD"); /* not our memory to free */
-    if (pwd && strlen(pwd) > 0) {
-#ifdef HAVE_REALPATH
-	ipwd = realpath(pwd, buffer);
-	if (ipwd) {
-	    return ipwd;
-	}
-#endif
-	ipwd = pwd;
-	return ipwd;
-    }
-
-    /* SECOND: try to query path */
-#ifdef HAVE_REALPATH
-    ipwd = realpath(".", buffer);
-    if (ipwd && strlen(ipwd) > 0) {
-	return ipwd;
-    }
-#endif
-
-    /* THIRD: try calling the 'pwd' command */
-    ipwd = bu_which("pwd");
-    if (ipwd) {
-#if defined(HAVE_POPEN) && !defined(STRICT_FLAGS)
-	FILE *fp = NULL;
-
-	fp = popen(ipwd, "r");
-	if (LIKELY(fp != NULL)) {
-	    if (bu_fgets(buffer, MAXPATHLEN, fp)) {
-		ipwd = buffer;
-	    } else {
-		ipwd = ".";
-	    }
-	} else {
-	    ipwd = ".";
-	}
-#else
-	memset(buffer, 0, MAXPATHLEN); /* quellage */
-	ipwd = ".";
-#endif
-    }
-
-    /* LAST: punt (but do not return NULL) */
-    ipwd = ".";
-    return ipwd;
-}
-
-
-HIDDEN const char *
-progname_argv0(void)
-{
-    /* private stash */
-    static const char *argv0 = NULL;
-
-    /* FIXME: this is temporary until bu_getcwd() is working. */
-    (void)progname_ipwd();
-
-    if (bu_argv0_buffer[0] != '\0') {
-	argv0 = bu_argv0_buffer;
-    }
-
-#ifdef HAVE_GETPROGNAME
-    if (!argv0) {
-	/* do not call bu_getgrogname() */
-	argv0 = getprogname(); /* not malloc'd memory */
-    }
-#endif
-
-    if (!argv0 || *argv0 == '\0') {
-	argv0 = "(BRL-CAD)";
-    }
-
-    return argv0;
-}
+const char *DEFAULT_PROGNAME = "(BRL-CAD)";
 
 
 const char *
@@ -137,12 +50,14 @@ bu_argv0_full_path(void)
 {
     static char buffer[MAXPATHLEN] = {0};
 
-    const char *argv0 = progname_argv0();
+    const char *argv0 = bu_progname;
+    const char *which;
 
-    /* FIXME: this is temporary until bu_getcwd() is working. */
-    const char *ipwd = progname_ipwd();
-
-    const char *which = bu_which(argv0);
+#ifdef HAVE_PROGRAM_INVOCATION_NAME
+    /* GLIBC provides a way */
+    if (argv0[0] == '\0' && program_invocation_name)
+	argv0 = program_invocation_name;
+#endif
 
     if (argv0[0] == BU_DIR_SEPARATOR) {
 	/* seems to already be a full path */
@@ -151,9 +66,9 @@ bu_argv0_full_path(void)
     }
 
     /* running from PATH */
-    if (which) {
-	snprintf(buffer, MAXPATHLEN, "%s", which);
-	return buffer;
+    which = bu_which(argv0);
+    if (which && which[0] != '\0') {
+	argv0 = which;
     }
 
     while (argv0[0] == '.' && argv0[1] == BU_DIR_SEPARATOR) {
@@ -162,7 +77,12 @@ bu_argv0_full_path(void)
     }
 
     /* running from relative dir */
-    snprintf(buffer, MAXPATHLEN, "%s%c%s", ipwd, BU_DIR_SEPARATOR, argv0);
+
+    /* FIXME: this is technically wrong.  if the current working
+     * directory is changed, we'll get the wrong path for argv0.
+     */
+    bu_getcwd(buffer, MAXPATHLEN);
+    snprintf(buffer+strlen(buffer), MAXPATHLEN-strlen(buffer), "%c%s", BU_DIR_SEPARATOR, argv0);
     if (bu_file_exists(buffer, NULL)) {
 	return buffer;
     }
@@ -174,48 +94,62 @@ bu_argv0_full_path(void)
 
 
 const char *
-bu_getprogname(void) {
-    const char *name = NULL;
+bu_getprogname(void)
+{
+    /* this static buffer is needed so we don't have to write into
+     * bu_progname[], which potentially holds a full path.  we have to
+     * free the bu_basename() memory, so we need to copy the string
+     * somewhere before returning.
+     */
+    static char buffer[MAXPATHLEN] = {0};
+    const char *name = bu_progname;
     char *tmp_basename = NULL;
 
-#ifdef HAVE_GETPROGNAME
-    name = getprogname(); /* not malloc'd memory */
+#ifdef HAVE_PROGRAM_INVOCATION_NAME
+    /* GLIBC provides a way */
+    if (name[0] == '\0' && program_invocation_name)
+	name = program_invocation_name;
 #endif
 
-    if (!name || *name == '\0') {
-	name = progname_argv0();
+#ifdef HAVE_GETPROGNAME
+    /* BSD's libc provides a way */
+    if (name[0] == '\0') {
+	name = getprogname(); /* not malloc'd memory, may return NULL */
+	if (!name)
+	    name = bu_progname;
     }
+#endif
 
-    tmp_basename = bu_basename(name);
-    if (!BU_STR_EQUAL(tmp_basename, ".") && !BU_STR_EQUAL(tmp_basename, "/")) {
-	bu_strlcpy(bu_progname, tmp_basename, MAXPATHLEN);
-	bu_free(tmp_basename, "tmp_basename free");
+    /* want just the basename from paths, otherwise default result */
+    tmp_basename = (char *)bu_calloc(strlen(name), sizeof(char), "bu_getprogname tmp_basename");
+    bu_basename(tmp_basename, name);
+    if (BU_STR_EQUAL(tmp_basename, ".") || BU_STR_EQUAL(tmp_basename, "/")) {
+	name = DEFAULT_PROGNAME;
     } else {
-	bu_strlcpy(bu_progname, name, MAXPATHLEN);
+	name = tmp_basename;
     }
 
-    return bu_progname;
+    /* stash for return since we need to free the basename */
+    bu_semaphore_acquire(BU_SEM_SYSCALL);
+    bu_strlcpy(buffer, name, MAXPATHLEN);
+    bu_semaphore_release(BU_SEM_SYSCALL);
+
+    bu_free(tmp_basename, "tmp_basename free");
+
+    return buffer;
 }
 
 
 void
 bu_setprogname(const char *argv0)
 {
-#ifdef HAVE_SETPROGNAME
-    setprogname(argv0 ? argv0 : "");
-#endif
-
+    bu_semaphore_acquire(BU_SEM_SYSCALL);
     if (argv0) {
-	memset(&bu_progname[0], '\0', sizeof(bu_progname));
-	snprintf(bu_progname, MAXPATHLEN, "%s", argv0);
-	if (strlen(bu_argv0_buffer) == 0)
-	    snprintf(bu_argv0_buffer, MAXPATHLEN, "%s", argv0);
+	bu_strlcpy(bu_progname, argv0, MAXPATHLEN);
     } else {
-	bu_progname[0] = '\0';
+	bu_progname[0] = '\0'; /* zap */
     }
-
-    /* FIXME: this is temporary until bu_getcwd() is working. */
-    (void)progname_ipwd();
+    bu_semaphore_release(BU_SEM_SYSCALL);
 
     return;
 }
@@ -225,7 +159,7 @@ bu_setprogname(const char *argv0)
 const char *
 bu_argv0(void)
 {
-    return progname_argv0();
+    return bu_getprogname();
 }
 
 

@@ -26,14 +26,14 @@
     <arg choice='opt'>-n <replaceable>height</replaceable></arg>
     <arg choice='opt'>-o <replaceable>out_file</replaceable></arg>
     <arg choice='opt'><replaceable>file.bw</replaceable></arg>
-    <arg choice='plain'><replaceable>&gt;</replaceable></arg>
+    <arg choice='plain'>&gt;</arg>
     <arg choice='plain'><replaceable>newfile.bw</replaceable></arg>
 </cmdsynopsis>
 </refsynopsisdiv>
 
 
 <refsect1 xml:id='description'><title>DESCRIPTION</title>
-<para><emphasis remap='I'>Bwfilter</emphasis>
+<para><command>bwfilter</command>
 applies one of several 3x3 kernel filters to a black and white
 <citerefentry><refentrytitle>bw</refentrytitle><manvolnum>5</manvolnum></citerefentry>
 format file.
@@ -102,7 +102,7 @@ a laplacian for example is "centered" about zero, thus it
 adds 128 to the answer to yield a difference from neutral grey.
 The
 <option>-O</option>
-flag can bw used to change this offset.</para>
+flag can be used to change this offset.</para>
 
 <para>The
 <option>-v</option>
@@ -114,7 +114,7 @@ flag displays the max and minimum values and the kernel information on standard 
 </refsect1>
 
 <refsect1 xml:id='see_also'><title>SEE ALSO</title>
-<para><citerefentry><refentrytitle>brlcad</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>bwscale</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>bw</refentrytitle><manvolnum>5</manvolnum></citerefentry>.</para>
+<para><citerefentry><refentrytitle>brlcad</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>bwscale</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>bw</refentrytitle><manvolnum>5</manvolnum></citerefentry></para>
 
 </refsect1>
 
@@ -124,7 +124,7 @@ flag displays the max and minimum values and the kernel information on standard 
 </refsect1>
 
 <refsect1 xml:id='copyright'><title>COPYRIGHT</title>
-<para>This software is Copyright (c) 1989-2013 by the United States
+<para>This software is Copyright (c) 1989-2014 by the United States
 Government as represented by U.S. Army Research Laboratory.</para>
 </refsect1>
 

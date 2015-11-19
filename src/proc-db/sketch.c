@@ -1,7 +1,7 @@
 /*                        S K E T C H . C
  * BRL-CAD
  *
- * Copyright (c) 2000-2013 United States Government as represented by
+ * Copyright (c) 2000-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -27,12 +27,11 @@
 
 #include <stdio.h>
 #include <math.h>
-#include "bu.h"
 #include "vmath.h"
 #include "bn.h"
 #include "raytrace.h"
 #include "wdb.h"
-#include "rtgeom.h"
+#include "rt/geom.h"
 
 extern struct rt_sketch_internal *sketch_start();
 
@@ -70,13 +69,19 @@ main(int argc, char **argv)
 
     /* overall segments */
     int reverse[6] = {0, 0, 0, 0, 0, 0};
-    genptr_t segments[6] = {NULL, NULL, NULL, NULL, NULL, NULL};
+    void *segments[6] = {NULL, NULL, NULL, NULL, NULL, NULL};
 
     /* bezier */
     int ctrl_points[5] = {0, 0, 0, 0, 0};
 
-    if (argc > 1)
-	bu_log("Usage: %s\nWarning - ignored unsupported argument \"%s\"\n", argv[0], argv[1]);
+    bu_log("Usage: %s\n",argv[0]);
+    if (argc > 1) {
+	if ( BU_STR_EQUAL(argv[1],"-h") || BU_STR_EQUAL(argv[1],"-?"))
+	    bu_exit(1, NULL);
+	bu_log("Warning - ignored unsupported argument \"%s\"\n",argv[1]);
+    } else
+	bu_log("       Program continues running:\n");
+
 
     VSET(V, 10, 20, 30);
     VSET(u_vec, 1, 0, 0);
@@ -101,33 +106,33 @@ main(int argc, char **argv)
     bsg.ctl_points[2] = 9;
     bsg.ctl_points[3] = 8;
     bsg.ctl_points[4] = 0;
-    skt.curve.segment[0] = (genptr_t)&bsg;
+    skt.curve.segment[0] = (void *)&bsg;
 
     lsg[0].magic = CURVE_LSEG_MAGIC;
     lsg[0].start = 0;
     lsg[0].end = 1;
-    skt.curve.segment[1] = (genptr_t)&lsg[0];
+    skt.curve.segment[1] = (void *)&lsg[0];
 
     lsg[1].magic = CURVE_LSEG_MAGIC;
     lsg[1].start = 1;
     lsg[1].end = 2;
-    skt.curve.segment[2] = (genptr_t)&lsg[1];
+    skt.curve.segment[2] = (void *)&lsg[1];
 
     lsg[2].magic = CURVE_LSEG_MAGIC;
     lsg[2].start = 2;
     lsg[2].end = 3;
-    skt.curve.segment[3] = (genptr_t)&lsg[2];
+    skt.curve.segment[3] = (void *)&lsg[2];
 
     lsg[3].magic = CURVE_LSEG_MAGIC;
     lsg[3].start = 3;
     lsg[3].end = 4;
-    skt.curve.segment[4] = (genptr_t)&lsg[3];
+    skt.curve.segment[4] = (void *)&lsg[3];
 
     csg.magic = CURVE_CARC_MAGIC;
     csg.radius = -1.0;
     csg.start = 6;
     csg.end = 5;
-    skt.curve.segment[5] = (genptr_t)&csg;
+    skt.curve.segment[5] = (void *)&csg;
 
     /* write the sketch out */
     outfp = wdb_fopen("sketch.g");

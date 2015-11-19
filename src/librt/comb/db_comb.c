@@ -1,7 +1,7 @@
 /*                       D B _ C O M B . C
  * BRL-CAD
  *
- * Copyright (c) 1996-2013 United States Government as represented by
+ * Copyright (c) 1996-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -36,16 +36,15 @@
 
 #include "common.h"
 
-#include <stdio.h>
+#include <limits.h>
 #include <math.h>
 #include <string.h>
 #include "bio.h"
 
-#include "bu.h"
+
 #include "vmath.h"
 #include "bn.h"
-#include "db.h"
-#include "mater.h"
+#include "rt/db4.h"
 #include "raytrace.h"
 
 #include "../librt_private.h"
@@ -58,8 +57,6 @@
 
 
 /**
- * D B _ C O M B _ M A T _ C A T E G O R I Z E
- *
  * Describe with a bit vector the effects this matrix will have.
  */
 static int
@@ -209,24 +206,24 @@ rt_comb_import4(
     else
 	rt_tree_array = (struct rt_tree_array *)NULL;
 
-    for (j=0; j<node_count; j++) {
+    for (j = 0; j < node_count; j++) {
 	if (rp[j+1].u_id != ID_MEMB) {
-	    bu_free((genptr_t)rt_tree_array, "rt_comb_import4: rt_tree_array");
+	    bu_free((void *)rt_tree_array, "rt_comb_import4: rt_tree_array");
 	    bu_log("rt_comb_import4(): granule in external buffer is not ID_MEMB, id=%d\n", rp[j+1].u_id);
 	    return -1;
 	}
 
 	switch (rp[j+1].M.m_relation) {
-	    case '+':
+	    case DB_OP_INTERSECT:
 		rt_tree_array[j].tl_op = OP_INTERSECT;
 		break;
-	    case '-':
+	    case DB_OP_SUBTRACT:
 		rt_tree_array[j].tl_op = OP_SUBTRACT;
 		break;
 	    default:
 		bu_log("rt_comb_import4() unknown op=x%x, assuming UNION\n", rp[j+1].M.m_relation);
 		/* Fall through */
-	    case 'u':
+	    case DB_OP_UNION:
 		rt_tree_array[j].tl_op = OP_UNION;
 		break;
 	}
@@ -303,7 +300,7 @@ rt_comb_import4(
 
     comb->tree = tree;
 
-    ip->idb_ptr = (genptr_t)comb;
+    ip->idb_ptr = (void *)comb;
 
     switch (rp[0].c.c_flags) {
 	case DBV4_NON_REGION_NULL:
@@ -390,7 +387,7 @@ rt_comb_import4(
     if (comb->region_flag)
 	bu_vls_printf(&comb->material, "gift%ld", comb->GIFTmater);
 
-    if (rt_tree_array) bu_free((genptr_t)rt_tree_array, "rt_tree_array");
+    if (rt_tree_array) bu_free((void *)rt_tree_array, "rt_tree_array");
 
     return 0;
 }
@@ -449,7 +446,7 @@ rt_comb_export4(
     /* Reformat the data into the necessary V4 granules */
     BU_EXTERNAL_INIT(ep);
     ep->ext_nbytes = sizeof(union record) * (1 + node_count);
-    ep->ext_buf = bu_calloc(1, ep->ext_nbytes, "v4 comb external");
+    ep->ext_buf = (uint8_t *)bu_calloc(1, ep->ext_nbytes, "v4 comb external");
     rp = (union record *)ep->ext_buf;
 
     /* Convert the member records */
@@ -461,13 +458,13 @@ rt_comb_export4(
 	rp[j+1].u_id = ID_MEMB;
 	switch (rt_tree_array[j].tl_op) {
 	    case OP_INTERSECT:
-		rp[j+1].M.m_relation = '+';
+		rp[j+1].M.m_relation = DB_OP_INTERSECT;
 		break;
 	    case OP_SUBTRACT:
-		rp[j+1].M.m_relation = '-';
+		rp[j+1].M.m_relation = DB_OP_SUBTRACT;
 		break;
 	    case OP_UNION:
-		rp[j+1].M.m_relation = 'u';
+		rp[j+1].M.m_relation = DB_OP_UNION;
 		break;
 	    default:
 		bu_bomb("rt_comb_export4() corrupt rt_tree_array");
@@ -629,13 +626,13 @@ db_tree_flatten_describe(
 
 	switch (rt_tree_array[i].tl_op) {
 	    case OP_INTERSECT:
-		op = '+';
+		op = DB_OP_INTERSECT;
 		break;
 	    case OP_SUBTRACT:
-		op = '-';
+		op = DB_OP_SUBTRACT;
 		break;
 	    case OP_UNION:
-		op = 'u';
+		op = DB_OP_UNION;
 		break;
 	    default:
 		bu_bomb("db_tree_flatten_describe() corrupt rt_tree_array");
@@ -672,7 +669,7 @@ db_tree_flatten_describe(
 	bu_vls_printf(vls, "\n");
     }
 
-    if (rt_tree_array) bu_free((genptr_t)rt_tree_array, "rt_tree_array");
+    if (rt_tree_array) bu_free((void *)rt_tree_array, "rt_tree_array");
     db_free_tree(ntp, resp);
 }
 
@@ -734,15 +731,15 @@ db_tree_describe(
 	    /* This node is known to be a binary op */
 	case OP_UNION:
 	    if (!indented) bu_vls_spaces(vls, 2*lvl);
-	    bu_vls_strcat(vls, "u ");
+	    bu_vls_printf(vls, "%c ", DB_OP_UNION);
 	    goto bin;
 	case OP_INTERSECT:
 	    if (!indented) bu_vls_spaces(vls, 2*lvl);
-	    bu_vls_strcat(vls, "+ ");
+	    bu_vls_printf(vls, "%c ", DB_OP_INTERSECT);
 	    goto bin;
 	case OP_SUBTRACT:
 	    if (!indented) bu_vls_spaces(vls, 2*lvl);
-	    bu_vls_strcat(vls, "- ");
+	    bu_vls_printf(vls, "%c ", DB_OP_SUBTRACT);
 	    goto bin;
 	case OP_XOR:
 	    if (!indented) bu_vls_spaces(vls, 2*lvl);
@@ -840,8 +837,6 @@ db_comb_describe(
 
 
 /**
- * R T _ C O M B _ I F R E E
- *
  * Free the storage associated with the rt_db_internal version of this combination.
  */
 void
@@ -856,9 +851,9 @@ rt_comb_ifree(struct rt_db_internal *ip)
 	/* If tree hasn't been stolen, release it */
 	db_free_tree(comb->tree, &rt_uniresource);
 	RT_FREE_COMB_INTERNAL(comb);
-	bu_free((genptr_t)comb, "comb ifree");
+	bu_free((void *)comb, "comb ifree");
     }
-    ip->idb_ptr = GENPTR_NULL;	/* sanity */
+    ip->idb_ptr = ((void *)0);	/* sanity */
 }
 
 
@@ -973,7 +968,7 @@ db_mkbool_tree(
 	return TREE_NULL;
 
     /* Count number of non-null sub-trees to do */
-    for (i=howfar, inuse=0, tlp=rt_tree_array; i>0; i--, tlp++) {
+    for (i = howfar, inuse = 0, tlp = rt_tree_array; i > 0; i--, tlp++) {
 	if (tlp->tl_tree == TREE_NULL)
 	    continue;
 	if (inuse++ == 0)

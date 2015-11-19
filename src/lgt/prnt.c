@@ -1,7 +1,7 @@
 /*                          P R N T . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2013 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -17,9 +17,6 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file lgt/prnt.c
-    Author:		Gary S. Moss
-*/
 
 #include "common.h"
 
@@ -28,7 +25,9 @@
 #include <assert.h>
 #include <stdarg.h>
 
-#include "bu.h"
+#include "bu/str.h"
+#include "bu/log.h"
+#include "bu/parallel.h"
 #include "vmath.h"
 #include "raytrace.h"
 #include "fb.h"
@@ -39,21 +38,20 @@
 #include "./screen.h"
 #include "./ascii.h"
 
-static const char * usage[] =
+static const char *usage[] =
 {
     "",
     "Usage:",
-    "",
-    "lgt [-IOjovw file][-AGKTXacefiknps n][-G \"s c g v\"][-b \"R G B\"][-dtD \"x y\"][-xy \"a b\"] file.g object...",
+    "lgt [-IOjovw file][-AKTXacefiknps n][-G \"s c g v\"][-b \"R G B\"][-dtD \"x y\"][-xy \"a b\"] file.g object...",
     "",
     "The options may appear in any order; however, their parameters must",
     "be present, are positional, and if there is more than one parameter",
-    "for an option, they must be supplied as a single argument (e.g.,",
+    "for an option, they must be supplied as a single argument (e.g., ",
     "inside double-quotes as shown).",
     "",
     0
 };
-static const char * lgt_menu[] =
+static const char *lgt_menu[] =
 {
     "                BRL Lighting Model (LGT) : global command set",
     "",
@@ -111,12 +109,12 @@ static const char * lgt_menu[] =
     "y start finish       set bottom and top border of current rectangle",
     "z ulen vlen width    size of texture map (plus width of padded lines)",
     "?                    print this menu",
-    "! arg(s)             feed arg(s) to /bin/sh or $SHELL if set",
+    "! arg(s) feed arg(s) to /bin/sh or $SHELL if set",
     ". flag               set buffered pixel I/O flag",
     "# anything           comment or NOP (useful in preparing input files)",
     NULL
 };
-static const char * ir_menu[] =
+static const char *ir_menu[] =
 {
     "",
     "                       Infrared Module: local commands",
@@ -134,157 +132,154 @@ static const char * ir_menu[] =
     NULL
 };
 
-char	screen[TOP_SCROLL_WIN+1][TEMPLATE_COLS+1];
 
-/*	pad_Strcpy -- WARNING: this routine does NOT nul-terminate the
-	destination buffer, but pads it with blanks.
+char screen[TOP_SCROLL_WIN+1][TEMPLATE_COLS+1];
+
+/* pad_Strcpy -- WARNING: this routine does NOT nul-terminate the
+   destination buffer, but pads it with blanks.
 */
 static void
 pad_Strcpy(char *des, char *src, int len)
 {
-    while ( len > 0 && *src != '\0' )
-    {
+    while (len > 0 && *src != '\0') {
 	*des++ = *src++;
 	len--;
     }
-    while ( len-- > 0 )
+    while (len-- > 0)
 	*des++ = ' ';
     return;
 }
 
-/*	i n i t _ S t a t u s ( )					*/
+
 void
 init_Status(void)
 {
-    int	row, col;
-    for ( row = 0; row <= TOP_SCROLL_WIN; row++ )
-	for ( col = 0; col <= TEMPLATE_COLS; col++ )
+    int row, col;
+    for (row = 0; row <= TOP_SCROLL_WIN; row++)
+	for (col = 0; col <= TEMPLATE_COLS; col++)
 	    screen[row][col] = '\0';
     return;
 }
 
-/*	p r n t _ S t a t u s ( )					*/
+
 void
 prnt_Status(void)
 {
-    static char	scratchbuf[TEMPLATE_COLS+1];
-    pad_Strcpy( TITLE_PTR, title, TITLE_LEN - 1 );
-    pad_Strcpy( TIMER_PTR, timer, TIMER_LEN - 1 );
-    pad_Strcpy( F_SCRIPT_PTR, script_file, 32 );
-    sprintf( scratchbuf, "%11.4f", view_size );
-    bu_strlcpy( VU_SIZE_PTR, scratchbuf, strlen( scratchbuf ) );
-    pad_Strcpy( F_ERRORS_PTR, err_file, 32 );
-    sprintf( scratchbuf, "%11.4f", grid_dist );
-    bu_strlcpy( GRID_DIS_PTR, scratchbuf, strlen( scratchbuf ) );
-    pad_Strcpy( F_MAT_DB_PTR, mat_db_file, 32 );
-    sprintf( scratchbuf, "%11.4f", x_grid_offset );
-    bu_strlcpy( GRID_XOF_PTR, scratchbuf, strlen( scratchbuf ) );
-    pad_Strcpy( F_LGT_DB_PTR, lgt_db_file, 32 );
-    sprintf( scratchbuf, "%11.4f", y_grid_offset );
-    bu_strlcpy( GRID_YOF_PTR, scratchbuf, strlen( scratchbuf ) );
-    pad_Strcpy( F_RASTER_PTR, fb_file, 32 );
-    sprintf( scratchbuf, "%11.4f", modl_radius );
-    bu_strlcpy( MODEL_RA_PTR, scratchbuf, strlen( scratchbuf ) );
-    sprintf( scratchbuf, "%3d %3d %3d",
-	     background[0], background[1], background[2] );
-    bu_strlcpy( BACKGROU_PTR, scratchbuf, strlen( scratchbuf ) );
-    snprintf( scratchbuf, TEMPLATE_COLS+1,
-	      "%4s",	pix_buffered == B_PAGE ? "PAGE" :
-	      pix_buffered == B_PIO ? "PIO" :
-	      pix_buffered == B_LINE ? "LINE" : "?"
+    static char scratchbuf[TEMPLATE_COLS+1];
+    pad_Strcpy(TITLE_PTR, title, TITLE_LEN - 1);
+    pad_Strcpy(TIMER_PTR, timer, TIMER_LEN - 1);
+    pad_Strcpy(F_SCRIPT_PTR, script_file, 32);
+    sprintf(scratchbuf, "%11.4f", view_size);
+    bu_strlcpy(VU_SIZE_PTR, scratchbuf, strlen(scratchbuf));
+    pad_Strcpy(F_ERRORS_PTR, err_file, 32);
+    sprintf(scratchbuf, "%11.4f", grid_dist);
+    bu_strlcpy(GRID_DIS_PTR, scratchbuf, strlen(scratchbuf));
+    pad_Strcpy(F_MAT_DB_PTR, mat_db_file, 32);
+    sprintf(scratchbuf, "%11.4f", x_grid_offset);
+    bu_strlcpy(GRID_XOF_PTR, scratchbuf, strlen(scratchbuf));
+    pad_Strcpy(F_LGT_DB_PTR, lgt_db_file, 32);
+    sprintf(scratchbuf, "%11.4f", y_grid_offset);
+    bu_strlcpy(GRID_YOF_PTR, scratchbuf, strlen(scratchbuf));
+    pad_Strcpy(F_RASTER_PTR, fb_file, 32);
+    sprintf(scratchbuf, "%11.4f", modl_radius);
+    bu_strlcpy(MODEL_RA_PTR, scratchbuf, strlen(scratchbuf));
+    sprintf(scratchbuf, "%3d %3d %3d",
+	    background[0], background[1], background[2]);
+    bu_strlcpy(BACKGROU_PTR, scratchbuf, strlen(scratchbuf));
+    snprintf(scratchbuf, TEMPLATE_COLS+1,
+	     "%4s",	pix_buffered == B_PAGE ? "PAGE" :
+	     pix_buffered == B_PIO ? "PIO" :
+	     pix_buffered == B_LINE ? "LINE" : "?"
 	);
-    bu_strlcpy( BUFFERED_PTR, scratchbuf, strlen( scratchbuf ) );
-    sprintf( scratchbuf, "0x%06x", RT_G_DEBUG );
-    bu_strlcpy( DEBUGGER_PTR, scratchbuf, strlen( scratchbuf ) );
-    sprintf( scratchbuf, "%-2d", max_bounce );
-    bu_strlcpy( MAX_BOUN_PTR, scratchbuf, strlen( scratchbuf ) );
-    snprintf( scratchbuf, TEMPLATE_COLS+1, " LGT" );
-    bu_strlcpy( PROGRAM_NM_PTR, scratchbuf, strlen( scratchbuf ) );
-    snprintf( scratchbuf, TEMPLATE_COLS+1, " %s ",
-	      ged_file == NULL ? "(null)" : ged_file );
-    bu_strlcpy( F_GED_DB_PTR, scratchbuf, FMIN(strlen( scratchbuf ), 26));
-    sprintf( scratchbuf, " [%04d-", grid_x_org );
-    bu_strlcpy( GRID_PIX_PTR, scratchbuf, strlen( scratchbuf ) );
-    sprintf( scratchbuf, "%04d,", grid_x_fin );
-    bu_strlcpy( GRID_SIZ_PTR, scratchbuf, strlen( scratchbuf ) );
-    sprintf( scratchbuf, "%04d-", grid_y_org );
-    bu_strlcpy( GRID_SCN_PTR, scratchbuf, strlen( scratchbuf ) );
-    sprintf( scratchbuf, "%04d:", grid_y_fin );
-    bu_strlcpy( GRID_FIN_PTR, scratchbuf, strlen( scratchbuf ) );
-    sprintf( scratchbuf, "%04d] ", frame_no );
-    bu_strlcpy( FRAME_NO_PTR, scratchbuf, strlen( scratchbuf ) );
+    bu_strlcpy(BUFFERED_PTR, scratchbuf, strlen(scratchbuf));
+    sprintf(scratchbuf, "0x%06x", RT_G_DEBUG);
+    bu_strlcpy(DEBUGGER_PTR, scratchbuf, strlen(scratchbuf));
+    sprintf(scratchbuf, "%-2d", max_bounce);
+    bu_strlcpy(MAX_BOUN_PTR, scratchbuf, strlen(scratchbuf));
+    snprintf(scratchbuf, TEMPLATE_COLS+1, " LGT");
+    bu_strlcpy(PROGRAM_NM_PTR, scratchbuf, strlen(scratchbuf));
+    snprintf(scratchbuf, TEMPLATE_COLS+1, " %s ",
+	     ged_file == NULL ? "(null)" : ged_file);
+    bu_strlcpy(F_GED_DB_PTR, scratchbuf, FMIN(strlen(scratchbuf), 26));
+    sprintf(scratchbuf, " [%04d-", grid_x_org);
+    bu_strlcpy(GRID_PIX_PTR, scratchbuf, strlen(scratchbuf));
+    sprintf(scratchbuf, "%04d, ", grid_x_fin);
+    bu_strlcpy(GRID_SIZ_PTR, scratchbuf, strlen(scratchbuf));
+    sprintf(scratchbuf, "%04d-", grid_y_org);
+    bu_strlcpy(GRID_SCN_PTR, scratchbuf, strlen(scratchbuf));
+    sprintf(scratchbuf, "%04d:", grid_y_fin);
+    bu_strlcpy(GRID_FIN_PTR, scratchbuf, strlen(scratchbuf));
+    sprintf(scratchbuf, "%04d] ", frame_no);
+    bu_strlcpy(FRAME_NO_PTR, scratchbuf, strlen(scratchbuf));
     update_Screen();
     return;
 }
 
+
 void
 update_Screen(void)
 {
-    int	tem_co, row, col;
+    int tem_co, row, col;
     tem_co = FMIN(co, TEMPLATE_COLS);
-    for ( row = 0; !BU_STR_EMPTY(template[row]); row++ )
-    {
-	int	lastcol = -2;
+    for (row = 0; !BU_STR_EMPTY(screen_template[row]); row++) {
+	int lastcol = -2;
 
-	if (BU_STR_EMPTY(template[row + 1])) {
+	if (BU_STR_EMPTY(screen_template[row + 1])) {
 	    SetStandout();
 	}
 
-	for ( col = 0; col < tem_co; col++ )
-	    if ( screen[row][col] != template[row][col] )
-	    {
-		if ( col != lastcol+1 )
-		    MvCursor( col+1, row+1 );
+	for (col = 0; col < tem_co; col++)
+	    if (screen[row][col] != screen_template[row][col]) {
+		if (col != lastcol+1)
+		    MvCursor(col+1, row+1);
 		lastcol = col;
-		(void) putchar( template[row][col] );
-		screen[row][col] = template[row][col];
+		(void) putchar(screen_template[row][col]);
+		screen[row][col] = screen_template[row][col];
 	    }
     }
     (void) ClrStandout();
     EVENT_MOVE();
-    (void) fflush( stdout );
+    (void) fflush(stdout);
     return;
 }
 
-/*	p r n t _ P a g e d _ M e n u ( )				*/
+
 void
 prnt_Paged_Menu(char **menu)
 {
-    int	done = FALSE;
-    int		lines =	(PROMPT_LINE-TOP_SCROLL_WIN);
-    if ( ! tty )
-    {
-	for (; *menu != NULL; menu++ )
-	    bu_log( "%s\n", *menu );
+    int done = FALSE;
+    int lines =	(PROMPT_LINE-TOP_SCROLL_WIN);
+    if (! tty) {
+	for (; *menu != NULL; menu++)
+	    bu_log("%s\n", *menu);
 	return;
     }
-    for (; *menu != NULL && ! done;  )
-    {
-	for (; lines > 0 && *menu != NULL; menu++, --lines )
-	    prnt_Scroll( "%-*s\n", co, *menu );
-	if ( *menu != NULL )
-	    done = ! do_More( &lines );
-	prnt_Prompt( "" );
+    for (; *menu != NULL && ! done;) {
+	for (; lines > 0 && *menu != NULL; menu++, --lines)
+	    prnt_Scroll("%-*s\n", co, *menu);
+	if (*menu != NULL)
+	    done = ! do_More(&lines);
+	prnt_Prompt("");
     }
-    (void) fflush( stdout );
+    (void) fflush(stdout);
     return;
 }
+
 
 int
 do_More(int *linesp)
 {
-    int	ret = TRUE;
-    if ( ! tty )
-	return	TRUE;
-    save_Tty( 0 );
-    set_Raw( 0 );
-    clr_Echo( 0 );
+    int ret = TRUE;
+    if (! tty)
+	return TRUE;
+    save_Tty(0);
+    set_Raw(0);
+    clr_Echo(0);
     SetStandout();
-    prnt_Prompt( "More ? [n|<return>|<space>] " );
+    prnt_Prompt("More ? [n|<return>|<space>] ");
     ClrStandout();
-    (void) fflush( stdout );
-    switch ( hm_getchar() )
-    {
+    (void) fflush(stdout);
+    switch (hm_getchar()) {
 	case 'Q' :
 	case 'q' :
 	case 'N' :
@@ -299,150 +294,135 @@ do_More(int *linesp)
 	    *linesp = (PROMPT_LINE-TOP_SCROLL_WIN);
 	    break;
     }
-    reset_Tty( 0 );
-    return	ret;
+    reset_Tty(0);
+    return ret;
 }
 
 
-/*	p r n t _ M e n u ( )						*/
 void
 prnt_Menu(void)
 {
-    prnt_Paged_Menu( (char **)lgt_menu );
-    if ( ir_mapping )
-	prnt_Paged_Menu( (char **)ir_menu );
+    prnt_Paged_Menu((char **)lgt_menu);
+    if (ir_mapping)
+	prnt_Paged_Menu((char **)ir_menu);
     hmredraw();
     return;
 }
 
-/*	p r n t _ P r o m p t ( )					*/
+
 void
 prnt_Prompt(const char* prprompt)
 {
-    if ( tty )
-    {
+    if (tty) {
 	PROMPT_MOVE();
 	(void) ClrEOL();
 	SetStandout();
-	(void) printf( "%s", prprompt );
+	(void) printf("%s", prprompt);
 	(void) ClrStandout();
-	(void) fflush( stdout );
+	(void) fflush(stdout);
     }
     return;
 }
 
-/*	p r n t _ T i m e r ( )						*/
+
 void
 prnt_Timer(const char* eventstr)
 {
-    (void) rt_read_timer( timer, TIMER_LEN-1 );
-    if ( tty )
-    {
-	pad_Strcpy( TIMER_PTR, timer, TIMER_LEN-1 );
+    (void) rt_read_timer(timer, TIMER_LEN-1);
+    if (tty) {
+	pad_Strcpy(TIMER_PTR, timer, TIMER_LEN-1);
 	update_Screen();
-    }
-    else
-	bu_log( "(%s) %s\n", eventstr == NULL ? "(null)" : eventstr, timer );
+    } else
+	bu_log("(%s) %s\n", eventstr == NULL ? "(null)" : eventstr, timer);
     return;
 }
 
-/*	p r n t _ E v e n t ( )						*/
+
 void
 prnt_Event(const char* s)
 {
-    static int	lastlen = 0;
-    int	i;
-    if ( ! tty )
+    static int lastlen = 0;
+    int i;
+    if (! tty)
 	return;
     EVENT_MOVE();
-    if ( s != NULL )
-    {
-	int len = strlen( s );
-	(void) fputs( s, stdout );
+    if (s != NULL) {
+	int len = strlen(s);
+	(void) fputs(s, stdout);
 	/* Erase last message. */
-	for ( i = len; i < lastlen; i++ )
-	    (void) putchar( ' ' );
+	for (i = len; i < lastlen; i++)
+	    (void) putchar(' ');
 	lastlen = len;
-    }
-    else
-    {
+    } else {
 	/* Erase last message. */
-	for ( i = 0; i < lastlen; i++ )
-	    (void) putchar( ' ' );
+	for (i = 0; i < lastlen; i++)
+	    (void) putchar(' ');
 	lastlen = 0;
     }
     IDLE_MOVE();
-    (void) fflush( stdout );
+    (void) fflush(stdout);
     return;
 }
 
-/*	p r n t _ T i t l e ( )						*/
+
 void
 prnt_Title(const char* titleptr)
 {
-    if ( ! tty || RT_G_DEBUG )
-	bu_log( "%s\n", titleptr == NULL ? "(null)" : titleptr );
+    if (! tty || RT_G_DEBUG)
+	bu_log("%s\n", titleptr == NULL ? "(null)" : titleptr);
     return;
 }
 
-/*	p r n t _ U s a g e ( )
-	Print usage message.
-*/
+
 void
 prnt_Usage(void)
 {
-    char	**p = (char **)usage;
-    while ( *p != NULL )
-	(void) fprintf( stderr, "%s\n", *p++ );
+    char **p = (char **)usage;
+    while (*p != NULL)
+	(void) fprintf(stderr, "%s\n", *p++);
     return;
 }
 
-/*	p r n t _ S c r o l l ( )					*/
+
 void
-prnt_Scroll(const char *fmt, ... ) {
-    va_list		ap;
+prnt_Scroll(const char *fmt, ...)
+{
+    va_list ap;
     /* We use the same lock as malloc.  Sys-call or mem lock, really */
-    bu_semaphore_acquire( BU_SEM_SYSCALL );		/* lock */
-    va_start( ap, fmt );
-    if ( tty )
-    {
+    bu_semaphore_acquire(BU_SEM_SYSCALL);		/* lock */
+    va_start(ap, fmt);
+    if (tty) {
 	/* Only move cursor and scroll if newline is output.	*/
-	static int	newline = 1;
-	if ( CS != NULL )
-	{
-	    SetScrlReg( TOP_SCROLL_WIN, PROMPT_LINE - 1 );
-	    if ( newline )
-	    {
+	static int newline = 1;
+	if (CS != NULL) {
+	    SetScrlReg(TOP_SCROLL_WIN, PROMPT_LINE - 1);
+	    if (newline) {
 		SCROLL_PR_MOVE();
 		(void) ClrEOL();
 	    }
-	    (void)vfprintf( stdout, fmt, ap );
+	    (void)vfprintf(stdout, fmt, ap);
 	    (void) ResetScrlReg();
-	}
-	else
-	    if ( DL != NULL )
-	    {
-		if ( newline )
-		{
-		    SCROLL_DL_MOVE();
-		    (void) DeleteLn();
-		    SCROLL_PR_MOVE();
-		    (void) ClrEOL();
-		}
-		(void)vfprintf( stdout, fmt, ap );
+	} else if (DL != NULL) {
+	    if (newline) {
+		SCROLL_DL_MOVE();
+		(void) DeleteLn();
+		SCROLL_PR_MOVE();
+		(void) ClrEOL();
 	    }
-	    else
-		(void)vfprintf( stdout, fmt, ap );
-	/* End of line detected by existence of a newline.	*/
-	newline = fmt[strlen( fmt )-1] == '\n';
+	    (void)vfprintf(stdout, fmt, ap);
+	} else
+	    (void)vfprintf(stdout, fmt, ap);
+
+	/* End of line detected by existence of a newline. */
+	newline = fmt[strlen(fmt)-1] == '\n';
 	hmredraw();
-    }
-    else
-	(void)vfprintf( stderr, fmt, ap );
-    va_end( ap );
-    bu_semaphore_release( BU_SEM_SYSCALL );		/* unlock */
+    } else
+	(void)vfprintf(stderr, fmt, ap);
+    va_end(ap);
+    bu_semaphore_release(BU_SEM_SYSCALL);		/* unlock */
     return;
 }
+
 
 /*
  * Local Variables:

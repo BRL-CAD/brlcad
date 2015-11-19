@@ -1,7 +1,7 @@
 /*                        B U N D L E . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2013 United States Government as represented by
+ * Copyright (c) 1985-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -28,13 +28,12 @@
 
 #include "common.h"
 
-#include <stdio.h>
 #include <string.h>
 #include <math.h>
 #include "bio.h"
 
 #include "vmath.h"
-#include "bu.h"
+
 #include "bn.h"
 #include "raytrace.h"
 
@@ -80,9 +79,9 @@ rt_shootray_bundle(register struct application *ap, struct xray *rays, int nrays
     fastf_t last_bool_start;
     struct bu_bitv *solidbits;	/* bits for all solids shot so far */
     struct bu_ptbl *regionbits;	/* table of all involved regions */
-    char *status;
-    auto struct partition InitialPart;	/* Head of Initial Partitions */
-    auto struct partition FinalPart;	/* Head of Final Partitions */
+    const char *status;
+    struct partition InitialPart;	/* Head of Initial Partitions */
+    struct partition FinalPart;	/* Head of Final Partitions */
     struct soltab **stpp;
     register const union cutter *cutp;
     struct resource *resp;
@@ -583,7 +582,7 @@ int
 rt_shootrays(struct application_bundle *bundle)
 {
     struct partition_bundle *pb = NULL;
-    genptr_t a_uptr_backup = NULL;
+    void *a_uptr_backup = NULL;
     struct xray a_ray;
     int (*a_hit)(struct application *, struct partition *, struct seg *);
     int (*a_miss)(struct application *);
@@ -625,7 +624,7 @@ rt_shootrays(struct application_bundle *bundle)
     pb->ap = &bundle->b_ap;
     pb->hits = pb->misses = 0;
 
-    bundle->b_uptr = (genptr_t)pb;
+    bundle->b_uptr = (void *)pb;
 
     for (BU_LIST_FOR (r, xrays, &bundle->b_rays.l)) {
 	BU_ALLOC(ray_ap, struct application);
@@ -633,7 +632,7 @@ rt_shootrays(struct application_bundle *bundle)
 
 	ray_ap->a_ray = r->ray;
 	ray_ap->a_ray.magic = RT_RAY_MAGIC;
-	ray_ap->a_uptr = (genptr_t)pb;
+	ray_ap->a_uptr = (void *)pb;
 	ray_ap->a_rt_i = rt_i;
 	ray_ap->a_resource = resource;
 
@@ -643,7 +642,7 @@ rt_shootrays(struct application_bundle *bundle)
 	resource = ray_ap->a_resource;
 
 	if (hit == 0)
-	    bu_free((genptr_t)(ray_ap), "ray application structure");
+	    bu_free((void *)(ray_ap), "ray application structure");
     }
 
     if ((bundle->b_hit) && (pb->hits > 0)) {

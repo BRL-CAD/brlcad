@@ -1,7 +1,7 @@
 /*                           T E M P . C
  * BRL-CAD
  *
- * Copyright (c) 2001-2013 United States Government as represented by
+ * Copyright (c) 2001-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -31,14 +31,20 @@
 #endif
 #include "bio.h"
 
-#include "bu.h"
+#include "bu/file.h"
+#include "bu/log.h"
+#include "bu/list.h"
+#include "bu/malloc.h"
+#include "bu/vls.h"
 
 #define _TF_FAIL "WARNING: Unable to create a temporary file\n"
 
 
 /* c99 doesn't declare these */
 #if !defined(_WIN32) || defined(__CYGWIN__)
+#  if !defined(__cplusplus)
 extern FILE *fdopen(int, const char *);
+#  endif
 #endif
 
 
@@ -181,10 +187,8 @@ bu_temp_file(char *filepath, size_t len)
     const char *dir = NULL;
     const char *envdirs[] = {"TMPDIR", "TEMP", "TMP", NULL};
     const char *trydirs[] = {
-#ifdef _WIN32
 	"C:\\TEMP",
 	"C:\\WINDOWS\\TEMP",
-#endif
 	"/tmp",
 	"/usr/tmp",
 	"/var/tmp",

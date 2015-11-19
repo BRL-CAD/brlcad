@@ -1,7 +1,7 @@
 /*                 Axis2Placement3D.h
  * BRL-CAD
  *
- * Copyright (c) 1994-2013 United States Government as represented by
+ * Copyright (c) 1994-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -24,8 +24,8 @@
  *
  */
 
-#ifndef AXIS2_PLACEMENT_3D_H_
-#define AXIS2_PLACEMENT_3D_H_
+#ifndef CONV_STEP_STEP_G_AXIS2PLACEMENT3D_H
+#define CONV_STEP_STEP_G_AXIS2PLACEMENT3D_H
 
 #include "Placement.h"
 
@@ -55,6 +55,7 @@ public:
     virtual const double *GetNormal();
     virtual const double *GetXAxis();
     virtual const double *GetYAxis();
+    const double *GetZAxis();
     bool Load(STEPWrapper *sw, SDAI_Application_instance *sse);
     virtual bool LoadONBrep(ON_Brep *brep);
     virtual void Print(int level);
@@ -63,7 +64,7 @@ public:
     static STEPEntity *Create(STEPWrapper *sw, SDAI_Application_instance *sse);
 };
 
-#endif /* AXIS2_PLACEMENT_3D_H_ */
+#endif /* CONV_STEP_STEP_G_AXIS2PLACEMENT3D_H */
 
 /*
  * Local Variables:

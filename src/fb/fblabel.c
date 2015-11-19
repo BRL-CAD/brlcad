@@ -1,7 +1,7 @@
 /*                       F B L A B E L . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2013 United States Government as represented by
+ * Copyright (c) 1986-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -29,19 +29,22 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
-#include "bio.h"
 
-#include "bu.h"
+#include "bu/color.h"
+#include "bu/getopt.h"
+#include "bu/file.h"
+#include "bu/log.h"
+#include "bu/vfont.h"
 #include "fb.h"
-#include "vfont-if.h"
 #include "pkg.h"
+
 
 #define FONTBUFSZ 200
 
 static char *framebuffer = NULL;
 static char *font1 = NULL;
 
-FBIO *fbp;
+fb *fbp;
 
 static char usage[] = "\
 Usage: fblabel [-c -a] [-F framebuffer] [-C r/g/b]\n\
@@ -112,7 +115,7 @@ squash(int *buf0, int *buf1, int *buf2, float *ret_buf, int n)
 }
 
 
-/* b i t x ()
+/*
    Extract a bit field from a bit string.
 */
 int
@@ -128,8 +131,7 @@ bitx(char *bitstring, int posn)
 }
 
 
-/* f i l l _ b u f ()
- *
+/*
  Fills in the buffer by reading a row of a bitmap from the character
  font file.  The file pointer is assumed to be in the correct
  position.
@@ -391,6 +393,8 @@ main(int argc, char **argv)
     do_line(vfp, textstring);
 
     fb_close(fbp);
+    vfont_free(vfp);
+
     return 0;
 }
 

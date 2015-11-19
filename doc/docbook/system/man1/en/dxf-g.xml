@@ -29,7 +29,7 @@
 
 
 <refsect1 xml:id='description'><title>DESCRIPTION</title>
-<para><emphasis remap='I'>dxf-g</emphasis>
+<para><command>dxf-g</command>
 converts the specified
 <emphasis remap='I'>file.dxf</emphasis>
 to a BRL-CAD
@@ -78,7 +78,7 @@ will be considered to be the same vertex.</para>
 </variablelist>
 
 <para>The
-<emphasis remap='B'>file.dxf</emphasis>
+<emphasis remap='I'>file.dxf</emphasis>
 file is expected to be in the ASCII Autodesk DXF format as defined in the
 Autocad 2006 manuals. This converter handles entities of types:</para>
 
@@ -115,11 +115,11 @@ SPLINE</para>
 <para>The POLYLINE entities in AUTOCAD are actually a container for numerous different entity types. The types
 of POLYLINE entities converted include:</para>
 
-<para>3D polylines
+<para>3D polylines;
 <!-- .br -->
-3D polygon meshes
+3D polygon meshes;
 <!-- .br -->
-polyface meshes.</para>
+polyface meshes</para>
 
 <para>SOLID entities are 2D shapes with a solid fill, but this converter does not do
 any filling.
@@ -128,7 +128,7 @@ Each layer is converted to a separate object. Colors are also converted.</para>
 
 <refsect1 xml:id='example'><title>EXAMPLE</title>
 <synopsis>
-$ <emphasis remap='I'>dxf-g sample.dxf sample.g</emphasis>
+$ dxf-g <emphasis remap='I'>sample.dxf sample.g</emphasis>
 </synopsis>
 </refsect1>
 
@@ -147,7 +147,7 @@ $ <emphasis remap='I'>dxf-g sample.dxf sample.g</emphasis>
 </refsect1>
 
 <refsect1 xml:id='copyright'><title>COPYRIGHT</title>
-<para>This software is Copyright (c) 1993-2013 by the United States
+<para>This software is Copyright (c) 1993-2014 by the United States
 Government as represented by U.S. Army Research Laboratory.</para>
 </refsect1>
 

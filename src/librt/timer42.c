@@ -1,7 +1,7 @@
 /*                       T I M E R 4 2 . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2013 United States Government as represented by
+ * Copyright (c) 1985-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -23,14 +23,9 @@
 #include <stdio.h>
 #include <string.h>
 #include <sys/types.h>
-#include <sys/resource.h>
 
-#ifdef HAVE_SYS_TIME_H
-#  include <sys/time.h>
-#endif
+#include "bresource.h"
 
-
-#include "bu.h"
 #include "vmath.h"
 #include "raytrace.h"
 

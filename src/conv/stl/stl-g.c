@@ -1,7 +1,7 @@
 /*                         S T L - G . C
  * BRL-CAD
  *
- * Copyright (c) 2002-2013 United States Government as represented by
+ * Copyright (c) 2002-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -34,12 +34,15 @@
 #include <string.h>
 #include <ctype.h>
 #include <errno.h>
+#include "bnetwork.h"
 #include "bio.h"
-#include "bin.h"
 
+#include "bu/cv.h"
+#include "bu/getopt.h"
+#include "bu/units.h"
 #include "vmath.h"
 #include "nmg.h"
-#include "rtgeom.h"
+#include "rt/geom.h"
 #include "raytrace.h"
 #include "wdb.h"
 
@@ -108,7 +111,7 @@ mk_unique_brlcad_name(struct bu_vls *name)
 {
     char *c;
     int count=0;
-    int len;
+    size_t len;
 
     c = bu_vls_addr(name);
 
@@ -350,15 +353,12 @@ Convert_part_ascii(char line[MAX_LINE_SIZE])
 	mk_lrcomb(fd_out, bu_vls_addr(&region_name), &head, 1, (char *)NULL,
 		  (char *)NULL, color, const_id, 0, mat_code, 100, 0);
 	if (face_count) {
-	    (void)mk_addmember(bu_vls_addr(&region_name), &all_head.l,
-			       NULL, WMOP_UNION);
+	    (void)mk_addmember(bu_vls_addr(&region_name), &all_head.l, NULL, WMOP_UNION);
 	}
     } else {
-	mk_lrcomb(fd_out, bu_vls_addr(&region_name), &head, 1, (char *)NULL,
-		  (char *)NULL, color, id_no, 0, mat_code, 100, 0);
+	mk_lrcomb(fd_out, bu_vls_addr(&region_name), &head, 1, (char *)NULL, (char *)NULL, color, id_no, 0, mat_code, 100, 0);
 	if (face_count)
-	    (void)mk_addmember(bu_vls_addr(&region_name), &all_head.l,
-			       NULL, WMOP_UNION);
+	    (void)mk_addmember(bu_vls_addr(&region_name), &all_head.l, NULL, WMOP_UNION);
 	id_no++;
     }
 
@@ -501,15 +501,12 @@ Convert_part_binary()
 	mk_lrcomb(fd_out, bu_vls_addr(&region_name), &head, 1, (char *)NULL,
 		  (char *)NULL, NULL, const_id, 0, mat_code, 100, 0);
 	if (face_count) {
-	    (void)mk_addmember(bu_vls_addr(&region_name), &all_head.l,
-			       NULL, WMOP_UNION);
+	    (void)mk_addmember(bu_vls_addr(&region_name), &all_head.l, NULL, WMOP_UNION);
 	}
     } else {
-	mk_lrcomb(fd_out, bu_vls_addr(&region_name), &head, 1, (char *)NULL,
-		  (char *)NULL, NULL, id_no, 0, mat_code, 100, 0);
+	mk_lrcomb(fd_out, bu_vls_addr(&region_name), &head, 1, (char *)NULL, (char *)NULL, NULL, id_no, 0, mat_code, 100, 0);
 	if (face_count)
-	    (void)mk_addmember(bu_vls_addr(&region_name), &all_head.l,
-			       NULL, WMOP_UNION);
+	    (void)mk_addmember(bu_vls_addr(&region_name), &all_head.l, NULL, WMOP_UNION);
 	id_no++;
     }
 
@@ -556,9 +553,6 @@ Convert_input()
 }
 
 
-/*
- *			M A I N
- */
 int
 main(int argc, char *argv[])
 {
@@ -642,8 +636,6 @@ main(int argc, char *argv[])
 		break;
 	}
     }
-
-    rt_init_resource(&rt_uniresource, 0, NULL);
 
     input_file = argv[bu_optind];
     if ((fd_in=fopen(input_file, "rb")) == NULL) {

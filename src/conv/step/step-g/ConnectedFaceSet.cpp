@@ -1,7 +1,7 @@
 /*                 ConnectedFaceSet.cpp
  * BRL-CAD
  *
- * Copyright (c) 1994-2013 United States Government as represented by
+ * Copyright (c) 1994-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -47,14 +47,7 @@ ConnectedFaceSet::ConnectedFaceSet(STEPWrapper *sw, int step_id)
 
 ConnectedFaceSet::~ConnectedFaceSet()
 {
-    /*
-      LIST_OF_FACES::iterator i = cfs_faces.begin();
-
-      while(i != cfs_faces.end()) {
-      delete (*i);
-      i = cfs_faces.erase(i);
-      }
-    */
+    // elements created through factory will be deleted there.
     cfs_faces.clear();
 }
 
@@ -66,6 +59,7 @@ ConnectedFaceSet::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
 
     if (!TopologicalRepresentationItem::Load(step, sse)) {
 	std::cout << CLASSNAME << ":Error loading base class ::TopologicalRepresentationItem." << std::endl;
+	sw->entity_status[id] = STEP_LOAD_ERROR;
 	return false;
     }
 
@@ -80,18 +74,27 @@ ConnectedFaceSet::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
 	    SDAI_Application_instance *entity = (*i);
 	    if (entity) {
 		Face *aAF = dynamic_cast<Face *>(Factory::CreateObject(sw, entity)); //CreateSurfaceObject(sw,entity));
-
-		cfs_faces.push_back(aAF);
+		if (aAF) {
+		    cfs_faces.push_back(aAF);
+		} else {
+		    l->clear();
+		    delete l;
+		    sw->entity_status[id] = STEP_LOAD_ERROR;
+		    return false;
+		}
 	    } else {
 		std::cerr << CLASSNAME  << ": Unhandled entity in attribute 'cfs_faces'." << std::endl;
 		l->clear();
 		delete l;
+		sw->entity_status[id] = STEP_LOAD_ERROR;
 		return false;
 	    }
 	}
 	l->clear();
 	delete l;
     }
+
+    sw->entity_status[id] = STEP_LOADED;
 
     return true;
 }
@@ -138,6 +141,10 @@ ConnectedFaceSet::Create(STEPWrapper *sw, SDAI_Application_instance *sse)
     return STEPEntity::CreateEntity(sw, sse, GetInstance, CLASSNAME);
 }
 
+#ifdef _DEBUG_TESTING_
+  static int _face_cnt_ = 0;
+#endif
+
 bool
 ConnectedFaceSet::LoadONBrep(ON_Brep *brep)
 {
@@ -149,7 +156,13 @@ ConnectedFaceSet::LoadONBrep(ON_Brep *brep)
     LIST_OF_FACES::iterator i;
     int facecnt = 0;
     for (i = cfs_faces.begin(); i != cfs_faces.end(); ++i) {
-	//if (facecnt == 5)
+#ifdef _DEBUG_TESTING_
+	if (facecnt != _face_cnt_) {
+	    facecnt++;
+	    continue;
+	    std::cerr << "We're here." << std::endl;
+	}
+#endif
 	if (!(*i)->LoadONBrep(brep)) {
 	    std::cerr << "Error: " << entityname << "::LoadONBrep() - Error loading openNURBS brep." << std::endl;
 	    return false;

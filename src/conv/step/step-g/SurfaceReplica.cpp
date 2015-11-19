@@ -1,7 +1,7 @@
 /*                 SurfaceReplica.cpp
  * BRL-CAD
  *
- * Copyright (c) 1994-2013 United States Government as represented by
+ * Copyright (c) 1994-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -63,6 +63,7 @@ SurfaceReplica::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
 
     if (!Surface::Load(step, sse)) {
 	std::cout << CLASSNAME << ":Error loading base class ::BoundedSurface." << std::endl;
+	sw->entity_status[id] = STEP_LOAD_ERROR;
 	return false;
     }
 
@@ -74,8 +75,10 @@ SurfaceReplica::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
 	SDAI_Application_instance *entity = step->getEntityAttribute(sse, "parent_surface");
 	if (entity) {
 	    parent_surface = dynamic_cast<Surface *>(Factory::CreateObject(sw, entity));
-	} else {
+	}
+	if (!entity || !parent_surface) {
 	    std::cerr << CLASSNAME << ": error loading 'parent_surface' attribute." << std::endl;
+	    sw->entity_status[id] = STEP_LOAD_ERROR;
 	    return false;
 	}
     }
@@ -83,11 +86,15 @@ SurfaceReplica::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
 	SDAI_Application_instance *entity = step->getEntityAttribute(sse, "transformation");
 	if (entity) {
 	    transformation = dynamic_cast<CartesianTransformationOperator3D *>(Factory::CreateObject(sw, entity));
-	} else {
+	}
+	if (!entity || !transformation) {
 	    std::cerr << CLASSNAME << ": error loading 'transformation' attribute." << std::endl;
+	    sw->entity_status[id] = STEP_LOAD_ERROR;
 	    return false;
 	}
     }
+
+    sw->entity_status[id] = STEP_LOADED;
 
     return true;
 }

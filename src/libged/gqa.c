@@ -1,7 +1,7 @@
 /*                         G Q A . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2013 United States Government as represented by
+ * Copyright (c) 2008-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -37,15 +37,15 @@
 #include <errno.h>
 #include <sys/types.h>
 #include <sys/stat.h>
-#include <stdio.h>
 #include <math.h>
 #include <limits.h>			/* home of INT_MAX aka MAXINT */
-#include "bio.h"
 
-#include "bu.h"
+
+#include "bu/parallel.h"
+#include "bu/getopt.h"
 #include "vmath.h"
 #include "raytrace.h"
-#include "plot3.h"
+#include "bn/plot3.h"
 #include "sysv.h"
 #include "analyze.h"
 
@@ -53,8 +53,8 @@
 
 
 /* bu_getopt() options */
-char *options = "A:a:de:f:g:Gn:N:pP:qrS:s:t:U:u:vV:W:";
-char *options_str = "[-A A|a|b|c|e|g|m|o|p|v|w] [-a az] [-d] [-e el] [-f densityFile] [-g spacing|upper, lower|upper-lower] [-G] [-n nhits] [-N nviews] [-p] [-P ncpus] [-q] [-r] [-S nsamples] [-t overlap_tol] [-U useair] [-u len_units vol_units wt_units] [-v] [-V volume_tol] [-W weight_tol]";
+char *options = "A:a:de:f:g:Gn:N:pP:qrS:s:t:U:u:vV:W:h?";
+char *options_str = "[-A A|a|b|c|e|g|m|o|p|v|w] [-a az] [-d] [-e el] [-f densityFile] [-g spacing|upper,lower|upper-lower] [-G] [-n nhits] [-N nviews] [-p] [-P ncpus] [-q] [-r] [-S nsamples] [-t overlap_tol] [-U useair] [-u len_units vol_units wt_units] [-v] [-V volume_tol] [-W weight_tol]";
 
 #define ANALYSIS_VOLUME 1
 #define ANALYSIS_WEIGHT 2
@@ -110,12 +110,12 @@ static FILE *plot_adjair;
 static FILE *plot_gaps;
 static FILE *plot_expair;
 
-static int overlap_color[3] = { 255, 255, 0 };	 /* yellow */
+static int overlap_color[3] = { 255, 255, 0 };	/* yellow */
 static int gap_color[3] = { 128, 192, 255 };    /* cyan */
 static int adjAir_color[3] = { 128, 255, 192 }; /* pale green */
 static int expAir_color[3] = { 255, 128, 255 }; /* magenta */
 
-static int debug;
+static int debug = 0;
 #define DLOG if (debug) bu_vls_printf
 
 /* Some defines for re-using the values from the application structure
@@ -125,8 +125,6 @@ static int debug;
 #define A_LEN a_color[1]
 #define A_STATE a_uptr
 
-
-static struct resource resource[MAX_PSW];	/* memory resources for multi-cpu processing */
 
 struct cstate {
     int curr_view; /* the "view" number we are shooting */
@@ -155,6 +153,8 @@ struct cstate {
     fastf_t *m_lenTorque; /* torque vector for each view */
     fastf_t *m_moi;       /* one vector per view for collecting the partial moments of inertia calculation */
     fastf_t *m_poi;       /* one vector per view for collecting the partial products of inertia calculation */
+
+    struct resource *resp;
 };
 
 
@@ -448,8 +448,6 @@ read_units_double(double *val, char *buf, const struct cvt_tab *cvt)
 
 
 /**
- * P A R S E _ A R G S
- *
  * Parse through command line flags
  */
 static int
@@ -577,9 +575,8 @@ parse_args(int ac, char *av[])
 		    double value1, value2;
 		    i = 0;
 
-
-		    /* find out if we have two or one args user can
-		     * separate them with, or - delimiter
+		    /* find out if we have two or one args; user can
+		     * separate them with , or - delimiter
 		     */
 		    p = strchr(bu_optarg, COMMA);
 		    if (p)
@@ -730,9 +727,7 @@ parse_args(int ac, char *av[])
 		}
 		break;
 
-	    case '?':
-	    case 'h':
-	    default :
+	    default: /* '?' 'h' */
 		return -1;
 	}
     }
@@ -768,11 +763,11 @@ get_densities_from_file(char *name)
 	return GED_ERROR;
     }
 
-    densities = bu_calloc(128, sizeof(struct density_entry), "density entries");
+    densities = (struct density_entry *)bu_calloc(128, sizeof(struct density_entry), "density entries");
     num_densities = 128;
 
     /* a mapped file would make more sense here */
-    buf = bu_malloc(sb.st_size+1, "density buffer");
+    buf = (char *)bu_malloc(sb.st_size+1, "density buffer");
     sret = fread(buf, sb.st_size, 1, fp);
     if (sret != 1)
 	perror("fread");
@@ -817,16 +812,16 @@ get_densities_from_database(struct rt_i *rtip)
 
     RT_CHECK_BINUNIF (bu);
 
-    densities = bu_calloc(128, sizeof(struct density_entry), "density entries");
+    densities = (struct density_entry *)bu_calloc(128, sizeof(struct density_entry), "density entries");
     num_densities = 128;
 
     /* Acquire one extra byte to accommodate parse_densities_buffer()
      * (i.e. it wants to write an EOS in buf[bu->count]).
      */
-    buf = bu_malloc(bu->count+1, "density buffer");
+    buf = (char *)bu_malloc(bu->count+1, "density buffer");
     memcpy(buf, bu->u.int8, bu->count);
     ret = parse_densities_buffer(buf, bu->count, densities, _ged_current_gedp->ged_result_str, &num_densities);
-    bu_free((genptr_t)buf, "density buffer");
+    bu_free((void *)buf, "density buffer");
 
     return ret;
 }
@@ -976,7 +971,7 @@ hit(struct application *ap, struct partition *PartHeadp, struct seg *segs)
     double gap_dist;
     double last_out_dist = -1.0;
     double val;
-    struct cstate *state = ap->A_STATE;
+    struct cstate *state = (struct cstate *)ap->A_STATE;
 
     if (!segs) /* unexpected */
 	return 0;
@@ -1313,7 +1308,7 @@ get_next_row(struct cstate *state)
  * This routine must be prepared to run in parallel
  */
 void
-plane_worker (int cpu, genptr_t ptr)
+plane_worker(int cpu, void *ptr)
 {
     struct application ap;
     int u, v;
@@ -1330,7 +1325,7 @@ plane_worker (int cpu, genptr_t ptr)
     ap.a_miss = miss;  /* where to go on a miss */
     ap.a_logoverlap = logoverlap;
     ap.a_overlap = overlap;
-    ap.a_resource = &resource[cpu];
+    ap.a_resource = &state->resp[cpu];
     ap.A_LENDEN = 0.0; /* really the cumulative length*density for weight computation*/
     ap.A_LEN = 0.0;    /* really the cumulative length for volume computation */
 
@@ -1433,9 +1428,6 @@ plane_worker (int cpu, genptr_t ptr)
 }
 
 
-/**
- *
- */
 int
 find_cmd_line_obj(struct per_obj_data *obj_rpt, const char *name)
 {
@@ -1497,11 +1489,11 @@ allocate_per_region_data(struct cstate *state, int start, int ac, const char *av
 	return;
     }
 
-    state->m_lenDensity = bu_calloc(num_views, sizeof(double), "densityLen");
-    state->m_len = bu_calloc(num_views, sizeof(double), "volume");
-    state->m_volume = bu_calloc(num_views, sizeof(double), "volume");
-    state->m_weight = bu_calloc(num_views, sizeof(double), "volume");
-    state->shots = bu_calloc(num_views, sizeof(unsigned long), "volume");
+    state->m_lenDensity = (double *)bu_calloc(num_views, sizeof(double), "densityLen");
+    state->m_len = (double *)bu_calloc(num_views, sizeof(double), "volume");
+    state->m_volume = (double *)bu_calloc(num_views, sizeof(double), "volume");
+    state->m_weight = (double *)bu_calloc(num_views, sizeof(double), "volume");
+    state->shots = (unsigned long *)bu_calloc(num_views, sizeof(unsigned long), "volume");
     state->m_lenTorque = (fastf_t *)bu_calloc(num_views, sizeof(vect_t), "lenTorque");
     state->m_moi = (fastf_t *)bu_calloc(num_views, sizeof(vect_t), "moments of inertia");
     state->m_poi = (fastf_t *)bu_calloc(num_views, sizeof(vect_t), "products of inertia");
@@ -1509,29 +1501,29 @@ allocate_per_region_data(struct cstate *state, int start, int ac, const char *av
     /* build data structures for the list of objects the user
      * specified on the command line
      */
-    obj_tbl = bu_calloc(num_objects, sizeof(struct per_obj_data), "report tables");
+    obj_tbl = (struct per_obj_data *)bu_calloc(num_objects, sizeof(struct per_obj_data), "report tables");
     for (i = 0; i < num_objects; i++) {
 	obj_tbl[i].o_name = (char *)av[start+i];
-	obj_tbl[i].o_len = bu_calloc(num_views, sizeof(double), "o_len");
-	obj_tbl[i].o_lenDensity = bu_calloc(num_views, sizeof(double), "o_lenDensity");
-	obj_tbl[i].o_volume = bu_calloc(num_views, sizeof(double), "o_volume");
-	obj_tbl[i].o_weight = bu_calloc(num_views, sizeof(double), "o_weight");
+	obj_tbl[i].o_len = (double *)bu_calloc(num_views, sizeof(double), "o_len");
+	obj_tbl[i].o_lenDensity = (double *)bu_calloc(num_views, sizeof(double), "o_lenDensity");
+	obj_tbl[i].o_volume = (double *)bu_calloc(num_views, sizeof(double), "o_volume");
+	obj_tbl[i].o_weight = (double *)bu_calloc(num_views, sizeof(double), "o_weight");
 	obj_tbl[i].o_lenTorque = (fastf_t *)bu_calloc(num_views, sizeof(vect_t), "lenTorque");
 	obj_tbl[i].o_moi = (fastf_t *)bu_calloc(num_views, sizeof(vect_t), "moments of inertia");
 	obj_tbl[i].o_poi = (fastf_t *)bu_calloc(num_views, sizeof(vect_t), "products of inertia");
     }
 
     /* build objects for each region */
-    reg_tbl = bu_calloc(rtip->nregions, sizeof(struct per_region_data), "per_region_data");
+    reg_tbl = (struct per_region_data *)bu_calloc(rtip->nregions, sizeof(struct per_region_data), "per_region_data");
 
 
     for (i = 0, BU_LIST_FOR (regp, region, &(rtip->HeadRegion)), i++) {
 	regp->reg_udata = &reg_tbl[i];
 
-	reg_tbl[i].r_lenDensity = bu_calloc(num_views, sizeof(double), "r_lenDensity");
-	reg_tbl[i].r_len = bu_calloc(num_views, sizeof(double), "r_len");
-	reg_tbl[i].r_volume = bu_calloc(num_views, sizeof(double), "len");
-	reg_tbl[i].r_weight = bu_calloc(num_views, sizeof(double), "len");
+	reg_tbl[i].r_lenDensity = (double *)bu_calloc(num_views, sizeof(double), "r_lenDensity");
+	reg_tbl[i].r_len = (double *)bu_calloc(num_views, sizeof(double), "r_len");
+	reg_tbl[i].r_volume = (double *)bu_calloc(num_views, sizeof(double), "len");
+	reg_tbl[i].r_weight = (double *)bu_calloc(num_views, sizeof(double), "len");
 
 	m = (int)strlen(regp->reg_name);
 	if (m > max_region_name_len) max_region_name_len = m;
@@ -1707,9 +1699,6 @@ options_prep(struct rt_i *rtip, vect_t span)
 }
 
 
-/**
- *
- */
 void
 view_reports(struct cstate *state)
 {
@@ -2339,6 +2328,7 @@ ged_gqa(struct ged *gedp, int argc, const char *argv[])
     struct region_pair *rp;
     struct region *regp;
     static const char *usage = "object [object ...]";
+    struct resource resp[MAX_PSW];	/* memory resources for multi-cpu processing */
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
@@ -2404,11 +2394,9 @@ ged_gqa(struct ged *gedp, int argc, const char *argv[])
 	return GED_ERROR;
     }
 
-    bu_semaphore_reinit(GED_SEM_LAST);
-
     if (analysis_flags & ANALYSIS_PLOT_OVERLAPS) {
 	ged_gqa_plot.vbp = rt_vlblock_init();
-	ged_gqa_plot.vhead = rt_vlblock_find(ged_gqa_plot.vbp, 0xFF, 0xFF, 0x00);
+	ged_gqa_plot.vhead = bn_vlblock_find(ged_gqa_plot.vbp, 0xFF, 0xFF, 0x00);
     }
 
     rtip = rt_new_rti(gedp->ged_wdbp->dbip);
@@ -2416,6 +2404,15 @@ ged_gqa(struct ged *gedp, int argc, const char *argv[])
 
     start_objs = arg_count;
     num_objects = argc - arg_count;
+
+    /* Initialize all the per-CPU memory resources.  The number of
+     * processors can change at runtime, init them all.
+     */
+    memset(resp, 0, sizeof(resp));
+    for (i = 0; i < MAX_PSW; i++) {
+	rt_init_resource(&resp[i], i, rtip);
+    }
+    state.resp = resp;
 
     /* Walk trees.  Here we identify any object trees in the database
      * that the user wants included in the ray trace.
@@ -2425,14 +2422,6 @@ ged_gqa(struct ged *gedp, int argc, const char *argv[])
 	    fprintf(stderr, "rt_gettree(%s) FAILED\n", argv[arg_count]);
 	    return GED_ERROR;
 	}
-    }
-
-    /* Initialize all the per-CPU memory resources.  The number of
-     * processors can change at runtime, init them all.
-     */
-    for (i = 0; i < max_cpus; i++) {
-	rt_init_resource(&resource[i], i, rtip);
-	bn_rand_init(resource[i].re_randptr, i);
     }
 
     /* This gets the database ready for ray tracing.  (it precomputes
@@ -2527,7 +2516,7 @@ ged_gqa(struct ged *gedp, int argc, const char *argv[])
 	    state.v_dir[state.i_axis] = 0;
 	    state.v = 1;
 
-	    bu_parallel(plane_worker, ncpu, (genptr_t)&state);
+	    bu_parallel(plane_worker, ncpu, (void *)&state);
 
 	    if (aborted)
 		goto aborted;
@@ -2561,7 +2550,7 @@ aborted:
 	aborted = 0; /* reset flag */
 
     if (analysis_flags & ANALYSIS_PLOT_OVERLAPS)
-	rt_vlblock_free(ged_gqa_plot.vbp);
+	bn_vlblock_free(ged_gqa_plot.vbp);
 
     /* Clear out the lists */
     while (BU_LIST_WHILE (rp, region_pair, &overlapList.l)) {

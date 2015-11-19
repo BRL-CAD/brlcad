@@ -1,7 +1,7 @@
 /*                         P A T H S U M . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2013 United States Government as represented by
+ * Copyright (c) 2008-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -26,9 +26,8 @@
 #include "common.h"
 
 #include <string.h>
-#include "bio.h"
 
-#include "cmd.h"
+#include "bu/cmd.h"
 
 #include "./ged_private.h"
 
@@ -117,7 +116,7 @@ ged_pathsum(struct ged *gedp, int argc, const char *argv[])
 
     MAT_IDN(gtd.gtd_xform);
 
-    _ged_trace(gtd.gtd_obj[0], 0, bn_mat_identity, &gtd, verbose);
+    ged_trace(gtd.gtd_obj[0], 0, bn_mat_identity, &gtd, verbose);
 
     if (gtd.gtd_prflag == 0) {
 	/* path not found */

@@ -4,12 +4,26 @@ include_directories(
   ${CMAKE_CURRENT_SOURCE_DIR}
   )
 
+set(STEP_SCHEMA_FILE ${STEPCODE_DIR}/data/ap203/ap203.exp)
+add_definitions(-DAP203)
+
 GENERATE_SCHEMA_INPUTS(${STEP_SCHEMA_FILE} gstep)
 
 set(gstep_SOURCES
   ${express_srcs}
   ../BRLCADWrapper.cpp
+  AP203.cpp
+  Assembly_Product.cpp
+  Comb.cpp
+  Default_Geometric_Context.cpp
+  G_Objects.cpp
+  ON_NurbsCurve.cpp
+  ON_NurbsSurface.cpp
   ON_Brep.cpp
+  Shape_Definition_Representation.cpp
+  Shape_Representation.cpp
+  Shape_Representation_Relationship.cpp
+  Trees.cpp
   g-step.cpp
   )
 
@@ -27,10 +41,9 @@ set(gstep_LIBS
   )
 list(APPEND gstep_LIBS ${gstep_LIBS})
 
-#add_definitions(-DAP203e2)
-
 BRLCAD_ADDEXEC(g-step "${gstep_SOURCES}" "${gstep_LIBS}" NO_STRICT)
 add_dependencies(g-step step-express-${SCHEMA_NAME}-gstep)
+set_property(TARGET g-step APPEND PROPERTY INCLUDE_DIRECTORIES "${gstep_SCHEMA_OUT_DIR}")
 
 if(MSVC)
   set(gstep_IMPORTS
@@ -47,7 +60,31 @@ if(MSVC)
   set_target_properties(g-step PROPERTIES COMPILE_DEFINITIONS "${gstep_IMPORTS}")
 endif(MSVC)
 
-CMAKEFILES(ON_Brep.h)
+set(IGNORE_FILES
+  AP203.h
+  Assembly_Product.h
+  Comb.h
+  Default_Geometric_Context.h
+  G_Objects.h
+  ON_Brep.h
+  Shape_Definition_Representation.h
+  Shape_Representation.h
+  Shape_Representation_Relationship.h
+  list_elements.cpp
+  Trees.h
+  )
+CMAKEFILES(${IGNORE_FILES})
+
+GENERATE_SCHEMA_INPUTS(${STEP_SCHEMA_FILE} list_elements)
+
+set(list_elements_srcs ${express_srcs} list_elements.cpp)
+BRLCAD_ADDEXEC(list_elements "${list_elements_srcs}" "${gstep_LIBS}" NO_STRICT NO_INSTALL)
+add_dependencies(list_elements step-express-${SCHEMA_NAME}-list_elements)
+set_property(TARGET list_elements APPEND PROPERTY INCLUDE_DIRECTORIES "${list_elements_SCHEMA_OUT_DIR}")
+
+if(MSVC)
+  set_target_properties(list_elements PROPERTIES COMPILE_DEFINITIONS "${gstep_IMPORTS}")
+endif(MSVC)
 
 # Local Variables:
 # tab-width: 8

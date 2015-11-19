@@ -1,7 +1,7 @@
 /*                           L O G . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2013 United States Government as represented by
+ * Copyright (c) 2008-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -34,15 +34,15 @@
  * Get the output from bu_log and append it to clientdata vls.
  */
 static int
-log_hook(genptr_t clientdata,
-	 genptr_t str)
+log_hook(void *clientdata,
+	 void *str)
 {
     struct bu_vls *vp = (struct bu_vls *)clientdata;
     int len;
 
     BU_CK_VLS(vp);
     len = bu_vls_strlen(vp);
-    bu_vls_strcat(vp, str);
+    bu_vls_strcat(vp, (const char *)str);
     len = bu_vls_strlen(vp) - len;
 
     return len;
@@ -78,12 +78,12 @@ ged_log(struct ged *gedp, int argc, const char *argv[])
     }
 
     if (argv[1][0] == 's' && BU_STR_EQUAL(argv[1], "start")) {
-	bu_log_add_hook(log_hook, (genptr_t)gedp->ged_log);
+	bu_log_add_hook(log_hook, (void *)gedp->ged_log);
 	return GED_OK;
     }
 
     if (argv[1][0] == 's' && BU_STR_EQUAL(argv[1], "stop")) {
-	bu_log_delete_hook(log_hook, (genptr_t)gedp->ged_log);
+	bu_log_delete_hook(log_hook, (void *)gedp->ged_log);
 	return GED_OK;
     }
 

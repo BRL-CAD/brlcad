@@ -1,7 +1,7 @@
 /*                     O B J - G . C
  * BRL-CAD
  *
- * Copyright (c) 2010-2013 United States Government as represented by
+ * Copyright (c) 2010-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -52,11 +52,13 @@
 #include <errno.h>
 #include <time.h>
 
-#include "bu.h"
 #include "vmath.h"
+#include "bu/getopt.h"
+#include "bu/sort.h"
+#include "bu/units.h"
 #include "nmg.h"
-#include "plot3.h"
-#include "rtgeom.h"
+#include "bn/plot3.h"
+#include "rt/geom.h"
 #include "raytrace.h"
 #include "wdb.h"
 #include "obj_parser.h"
@@ -73,8 +75,15 @@ usage(const char *argv0)
 	   "\t\tbot via nmg modes.\n"
 	);
 
-    bu_log("  -d\t\tOutput debug info to stderr.\n"
-	   "  -g grouping\tSelect which OBJ face grouping is used to create BRL-CAD\n"
+    bu_log("  -d\t\tOutput debug info to standard error.\n"
+	);
+
+    bu_log("  -f\t\tFuse vertices that are close enough to be considered the\n"
+	   "\t\tsame. Can make the solidity detection more reliable, but\n"
+	   "\t\tmay significantly increase processing time during import.\n"
+	);
+
+    bu_log("  -g grouping\tSelect which OBJ face grouping is used to create BRL-CAD\n"
 	   "\t\tprimitives:\n"
 	   "\t\t\tg = group (default)\n"
 	   "\t\t\tm = material\n"
@@ -83,7 +92,8 @@ usage(const char *argv0)
 	   "\t\t\tt = texture\n"
 	);
 
-    bu_log("  -h mm\t\tThickness used when a bot is not a closed volume and it's\n"
+    bu_log("  -H plate_thickness\n"
+	   "\t\tThickness (mm) used when a bot is not a closed volume and it's\n"
 	   "\t\tconverted as a plate or plate-nocos bot.\n"
 	   "  -i\t\tIgnore the normals defined in the input file when using native\n"
 	   "\t\tbot conversion mode.\n"
@@ -97,8 +107,8 @@ usage(const char *argv0)
 	   "\t\t\tn = plate nocos\n"
 	   "\t\t\tp = plate\n"
 	   "\t\t\ts = surface (default)\n"
-	   "  -p\t\tCreates a plot/overlay (.pl) file of open edges for bots that\n"
-	   "\t\taren't closed volumes. <bot_name>.pl will be created in the\n"
+	   "  -p\t\tCreates a plot/overlay (.plot3) file of open edges for bots that\n"
+	   "\t\taren't closed volumes. <bot_name>.plot3 will be created in the\n"
 	   "\t\tcurrent directory and will overwrite any existing file with the\n"
 	   "\t\tsame name.\n"
 	   "  -r orient\tSelect the bot orientation mode:\n"
@@ -107,16 +117,17 @@ usage(const char *argv0)
 	   "\t\t\t3 = cw\n"
 	);
 
-    bu_log("  -t mm\t\tDistance tolerance. Two vertices are considered to be the same\n"
-	   "\t\tif they are within this distance of one another. Default is\n"
-	   "\t\t.0005mm. You should not change this value without setting the\n"
-	   "\t\traytracer tolerance to match it.\n"
-	   "  -u units\tSelect units for the obj file: (m|cm|mm|ft|in). Default is m.\n"
+    bu_log("  -t distance_tolerance\n"
+	   "\t\tDistance tolerance (mm); default is %lf. Two vertices are\n"
+	   "\t\tconsidered to be the same if they are within this distance of\n"
+	   "\t\teach other. You should not change this value without setting\n"
+	   "\t\tthe raytracer tolerance to match it.\n", BN_TOL_DIST);
+    bu_log("  -u units\tSelect units for the obj file: (m|cm|mm|ft|in). Default is m.\n"
 	   "\t\tYou can also provide a custom conversion factor from file units\n"
 	   "\t\tto mm.\n"
 	);
 
-    bu_log("  -v\t\tOut verbose user info to stderr. Each occurrence of this option\n"
+    bu_log("  -v\t\tOutput verbose user info to standard error. Each occurrence of this option\n"
 	   "\t\tin the option list increases the verbosity level (two levels currently).\n"
 	   "  -x flag\tSpecify rt debug flag bits (see raytrace.h).\n"
 	   "  -X flag\tSpecify nmg debug flag bits (see nmg.h).\n"
@@ -125,7 +136,6 @@ usage(const char *argv0)
 
 
 /* global definition */
-size_t *tmp_ptr = NULL;
 static int NMG_debug; /* saved arg of -X, for longjmp handling */
 static int debug = 0;
 static int verbose = 0;
@@ -294,8 +304,6 @@ struct ga_t {
 
 
 /*
- * C O L L E C T _ G L O B A L _ O B J _ F I L E _ A T T R I B U T E S
- *
  * Collects object file attributes from the libobj library for use by
  * functions called later. Examples of collected attributes are the
  * quantity of each face type, the quantity of each grouping type, the
@@ -395,8 +403,6 @@ collect_global_obj_file_attributes(struct ga_t *ga)
 
 
 /*
- * C L E A N U P _ N A M E
- *
  * Replaces with underscore characters which are invalid for BRL-CAD
  * primitive names and file names.
  */
@@ -423,9 +429,7 @@ cleanup_name(struct bu_vls *outputObjectName_ptr)
 
 
 /*
- * C O M P _ B
- *
- * Compare function used by the functions qsort and bsearch for
+ * Compare function used by the function bsearch for
  * sorting and searching an array of numbers.
  */
 static int
@@ -439,29 +443,37 @@ comp_b(const void *p1, const void *p2)
 
 
 /*
- * C O M P
- *
- * Compare function used by the function qsort for sorting an index
- * into a multi-dimensional array.
+ * Compare function used by the function bu_sort for
+ * sorting an array of numbers.
  */
 static int
-comp(const void *p1, const void *p2)
+comp_b_sort(const void *p1, const void *p2, void *UNUSED(arg))
 {
-    size_t i = * (size_t *) p1;
-    size_t j = * (size_t *) p2;
-
-    return (int)(tmp_ptr[i] - tmp_ptr[j]);
+    return comp_b(p1, p2);
 }
 
 
 /*
- * C O M P _ C
- *
- * Compare function used by the function qsort for sorting a 2D array
+ * Compare function used by the function bu_sort for sorting an index
+ * into a multi-dimensional array.
+ */
+static int
+comp(const void *p1, const void *p2, void *arg)
+{
+    size_t i = * (size_t *) p1;
+    size_t j = * (size_t *) p2;
+    size_t *array = (size_t *) arg;
+
+    return (int)(array[i] - array[j]);
+}
+
+
+/*
+ * Compare function used by the function bu_sort for sorting a 2D array
  * of numbers.
  */
 static int
-comp_c(const void *p1, const void *p2)
+comp_c(const void *p1, const void *p2, void *UNUSED(arg))
 {
     edge_arr_2D_t i = (edge_arr_2D_t) p1;
     edge_arr_2D_t j = (edge_arr_2D_t) p2;
@@ -475,8 +487,6 @@ comp_c(const void *p1, const void *p2)
 
 
 /*
- * R E T R I E V E _ C O O R D _ I N D E X
- *
  * For a grouping of faces, retrieve the coordinates and obj file
  * indexes of a specific vertex within a specific face in this
  * grouping. If the face type indicates a type where some return
@@ -595,8 +605,6 @@ retrieve_coord_index(struct ga_t *ga,   /* obj file global attributes */
 
 
 /*
- * F I N D _ L A S T _ U N I Q U E _ V E R T E X
- *
  * Returns the number of vertices in a face where the last vertex in
  * the vertex list is not the same as the first vertex. Essentially
  * this function finds the last unique vertex of the face. If the
@@ -652,8 +660,6 @@ find_last_unique_vertex(struct ga_t *ga,   /* obj file global attributes */
 
 
 /*
- * T E S T _ F A C E
- *
  * Within a given grouping of faces, test an individual face for
  * degenerate conditions such as duplicate vertex indexes or the
  * distance between any pair of vertices of a individual face are
@@ -812,8 +818,6 @@ test_face(struct ga_t *ga,
 
 
 /*
- * R E T E S T _ G R O U P I N G _ F A C E S
- *
  * Within a given grouping of faces, test all the faces for degenerate
  * conditions such as duplicate vertex indexes or the distance between
  * any pair of vertices of a individual face are equal to or less than
@@ -845,8 +849,6 @@ retest_grouping_faces(struct ga_t *ga,
 
 
 /*
- * F R E E _ G F I
- *
  * Releases the memory allocated for the contents of the gfi structure
  * and the gfi structure itself. The gfi structure contains the
  * 'grouping face indices' into the libobj structures (and supporting
@@ -879,8 +881,6 @@ free_gfi(struct gfi_t **gfi)
 
 
 /*
- * C O L L E C T _ G R O U P I N G _ F A C E S _ I N D E X E S
- *
  * Collects the face indexes into the libobj structures for a specific
  * grouping of faces. The grouping_index identifies the grouping to be
  * collected and corresponds to the index of the grouping defined in the obj
@@ -1007,7 +1007,7 @@ collect_grouping_faces_indexes(struct ga_t *ga,
 		for (groupid = 0 ; groupid < setsize ; groupid++) {
 		    /* if true, current face is in current group grouping */
 		    if (grouping_index == indexset_arr[groupid]) {
-			int groups_index = indexset_arr[groupid];
+			size_t groups_index = indexset_arr[groupid];
 			name_str = ga->str_arr_obj_groups[groups_index];
 			found = 1;
 		    }
@@ -1104,38 +1104,24 @@ collect_grouping_faces_indexes(struct ga_t *ga,
 	    /* sets initial number of elements to allocate memory for */
 	    (*gfi)->max_faces = max_faces_increment;
 
-	    (*gfi)->num_vertices_arr =
-		(size_t *)bu_calloc((*gfi)->max_faces, sizeof(size_t),
-				    "num_vertices_arr");
-
-	    (*gfi)->obj_file_face_idx_arr =
-		(size_t *)bu_calloc((*gfi)->max_faces, sizeof(size_t),
-				    "obj_file_face_idx_arr");
+	    (*gfi)->num_vertices_arr = (size_t *)bu_calloc((*gfi)->max_faces, sizeof(size_t), "num_vertices_arr");
+	    (*gfi)->obj_file_face_idx_arr = (size_t *)bu_calloc((*gfi)->max_faces, sizeof(size_t), "obj_file_face_idx_arr");
 
 	    /* allocate initial memory for (*gfi)->index_arr_faces based on
 	     * face_type
 	     */
 	    switch (face_type) {
 		case FACE_V:
-		    (*gfi)->index_arr_faces =
-			(void *)bu_calloc((*gfi)->max_faces, sizeof(size_t *),
-					  "index_arr_faces");
-
+		    (*gfi)->index_arr_faces = bu_calloc((*gfi)->max_faces, sizeof(size_t *), "index_arr_faces");
 		    index_arr_faces_1D = (arr_1D_t)((*gfi)->index_arr_faces);
 		    break;
 		case FACE_TV:
 		case FACE_NV:
-		    (*gfi)->index_arr_faces =
-			(void *)bu_calloc((*gfi)->max_faces, sizeof(size_t (*)[2]),
-					  "index_arr_faces");
-
+		    (*gfi)->index_arr_faces = bu_calloc((*gfi)->max_faces, sizeof(size_t (*)[2]), "index_arr_faces");
 		    index_arr_faces_2D = (arr_2D_t)((*gfi)->index_arr_faces);
 		    break;
 		case FACE_TNV:
-		    (*gfi)->index_arr_faces =
-			(void *)bu_calloc((*gfi)->max_faces, sizeof(size_t (*)[3]),
-					  "index_arr_faces");
-
+		    (*gfi)->index_arr_faces = bu_calloc((*gfi)->max_faces, sizeof(size_t (*)[3]), "index_arr_faces");
 		    index_arr_faces_3D = (arr_3D_t)((*gfi)->index_arr_faces);
 		    break;
 	    } /* switch (face_type) */
@@ -1151,49 +1137,27 @@ collect_grouping_faces_indexes(struct ga_t *ga,
 	    if (faceIndex >= (*gfi)->max_faces) {
 		(*gfi)->max_faces += max_faces_increment;
 
-		num_vertices_arr_tmp =
-		    (size_t *)bu_realloc((*gfi)->num_vertices_arr,
-					 sizeof(size_t) * (*gfi)->max_faces,
-					 "num_vertices_arr_tmp");
-
+		num_vertices_arr_tmp = (size_t *)bu_realloc((*gfi)->num_vertices_arr, sizeof(size_t) * (*gfi)->max_faces, "num_vertices_arr_tmp");
 		(*gfi)->num_vertices_arr = num_vertices_arr_tmp;
 
-		obj_file_face_idx_arr_tmp =
-		    (size_t *)bu_realloc((*gfi)->obj_file_face_idx_arr,
-					 sizeof(size_t) * (*gfi)->max_faces,
-					 "obj_file_face_idx_arr_tmp");
-
+		obj_file_face_idx_arr_tmp = (size_t *)bu_realloc((*gfi)->obj_file_face_idx_arr, sizeof(size_t) * (*gfi)->max_faces, "obj_file_face_idx_arr_tmp");
 		(*gfi)->obj_file_face_idx_arr = obj_file_face_idx_arr_tmp;
 
 		switch (face_type) {
 		    case FACE_V:
-			(*gfi)->index_arr_faces =
-			    (void *)bu_realloc(index_arr_faces_1D,
-					       sizeof(size_t *) * (*gfi)->max_faces,
-					       "index_arr_faces");
-
-			index_arr_faces_1D =
-			    (arr_1D_t)((*gfi)->index_arr_faces);
+			(*gfi)->index_arr_faces = bu_realloc((void *)index_arr_faces_1D, sizeof(size_t *) * (*gfi)->max_faces, "index_arr_faces");
+			index_arr_faces_1D = (arr_1D_t)((*gfi)->index_arr_faces);
 
 			break;
 		    case FACE_TV:
 		    case FACE_NV:
-			(*gfi)->index_arr_faces =
-			    (void *)bu_realloc(index_arr_faces_2D,
-					       sizeof(size_t (*)[2]) * (*gfi)->max_faces,
-					       "index_arr_faces");
-
-			index_arr_faces_2D =
-			    (arr_2D_t)((*gfi)->index_arr_faces);
+			(*gfi)->index_arr_faces = bu_realloc((void *)index_arr_faces_2D, sizeof(size_t (*)[2]) * (*gfi)->max_faces, "index_arr_faces");
+			index_arr_faces_2D = (arr_2D_t)((*gfi)->index_arr_faces);
 
 			break;
 		    case FACE_TNV:
-			(*gfi)->index_arr_faces =
-			    (void *)bu_realloc(index_arr_faces_3D,
-					       sizeof(size_t (*)[3]) * (*gfi)->max_faces,
-					       "index_arr_faces");
-			index_arr_faces_3D =
-			    (arr_3D_t)((*gfi)->index_arr_faces);
+			(*gfi)->index_arr_faces = bu_realloc((void *)index_arr_faces_3D, sizeof(size_t (*)[3]) * (*gfi)->max_faces, "index_arr_faces");
+			index_arr_faces_3D = (arr_3D_t)((*gfi)->index_arr_faces);
 
 			break;
 		}
@@ -1202,8 +1166,7 @@ collect_grouping_faces_indexes(struct ga_t *ga,
 	    /* assign obj file face index into array for tracking
 	     * errors back to the face within the obj file
 	     */
-	    (*gfi)->obj_file_face_idx_arr[faceIndex] =
-		attindex_arr_faces[i];
+	    (*gfi)->obj_file_face_idx_arr[faceIndex] = attindex_arr_faces[i];
 
 	    switch (face_type) {
 		case FACE_V:
@@ -1243,10 +1206,7 @@ collect_grouping_faces_indexes(struct ga_t *ga,
 
     if (numFacesFound) {
 	(*gfi)->num_faces = numFacesFound;
-
-	(*gfi)->face_status =
-	    (short int *)bu_calloc((*gfi)->num_faces, sizeof(short int),
-				   "face_status");
+	(*gfi)->face_status = (short int *)bu_calloc((*gfi)->num_faces, sizeof(short int), "face_status");
 
 	/* initialize array */
 	for (i = 0; i < (*gfi)->num_faces; i++) {
@@ -1261,8 +1221,6 @@ collect_grouping_faces_indexes(struct ga_t *ga,
 
 
 /*
- * P O P U L A T E _ T R I A N G L E _ I N D E X E S
- *
  * Populate the triangle index structure with the vertex indexes of
  * one or more triangles which represent a single face. This function
  * triangulates a face and places these triangles into the triangle
@@ -1382,12 +1340,11 @@ populate_triangle_indexes(struct ga_t *ga,
 
     /* copy face vertices into facePoints array */
     numFacePoints = gfi->num_vertices_arr[face_idx];
-    facePoints = (double*)bu_malloc(
-	numFacePoints * ELEMENTS_PER_POINT * sizeof(double), "facePoints");
+    facePoints = (double*)bu_malloc(numFacePoints * ELEMENTS_PER_POINT * sizeof(double), "facePoints");
 
     for (i = 0; i < numFacePoints; ++i) {
 	retrieve_coord_index(ga, gfi, face_idx, i, tmp_v, tmp_n, tmp_t, &tmp_w,
-	    &svofi, &snofi, &stofi);
+			     &svofi, &snofi, &stofi);
 	VMOVE(&facePoints[i * ELEMENTS_PER_POINT], tmp_v);
     }
 
@@ -1407,13 +1364,12 @@ populate_triangle_indexes(struct ga_t *ga,
 	    }
 
 	    /* create triangles that all start at the first face vertex */
-	    triFaces = (int*)bu_malloc(num_new_tri * POINTS_PER_FACE * sizeof(int),
-		"triFaces");
+	    triFaces = (int*)bu_malloc(num_new_tri * POINTS_PER_FACE * sizeof(int), "triFaces");
 
 	    for (vert_idx = 0; vert_idx < num_new_tri; vert_idx++) {
 		triFaces[vert_idx * ELEMENTS_PER_POINT + X] = 0;
-		triFaces[vert_idx * ELEMENTS_PER_POINT + Y] = vert_idx + 1;
-		triFaces[vert_idx * ELEMENTS_PER_POINT + Z] = vert_idx + 2;
+		triFaces[vert_idx * ELEMENTS_PER_POINT + Y] = (int)vert_idx + 1;
+		triFaces[vert_idx * ELEMENTS_PER_POINT + Z] = (int)vert_idx + 2;
 	    }
 
 	    nmg_km(fu->s_p->r_p->m_p);
@@ -1431,19 +1387,16 @@ populate_triangle_indexes(struct ga_t *ga,
 	ti->max_tri += max_tri_increment;
 	switch (ti->tri_type) {
 	    case FACE_V:
-		ti->index_arr_tri = (void *)bu_realloc(index_arr_tri_1D,
-						       sizeof(size_t) * ti->max_tri * 3, "index_arr_tri");
+		ti->index_arr_tri = (void *)bu_realloc(index_arr_tri_1D, sizeof(size_t) * ti->max_tri * 3, "index_arr_tri");
 		index_arr_tri_1D = (tri_arr_1D_t)(ti->index_arr_tri);
 		break;
 	    case FACE_TV:
 	    case FACE_NV:
-		ti->index_arr_tri = (void *)bu_realloc(index_arr_tri_2D,
-						       sizeof(size_t) * ti->max_tri * 6, "index_arr_tri");
+		ti->index_arr_tri = (void *)bu_realloc(index_arr_tri_2D, sizeof(size_t) * ti->max_tri * 6, "index_arr_tri");
 		index_arr_tri_2D = (tri_arr_2D_t)(ti->index_arr_tri);
 		break;
 	    case FACE_TNV:
-		ti->index_arr_tri = (void *)bu_realloc(index_arr_tri_3D,
-						       sizeof(size_t) * ti->max_tri * 9, "index_arr_tri");
+		ti->index_arr_tri = (void *)bu_realloc(index_arr_tri_3D, sizeof(size_t) * ti->max_tri * 9, "index_arr_tri");
 		index_arr_tri_3D = (tri_arr_3D_t)(ti->index_arr_tri);
 		break;
 	}
@@ -1454,7 +1407,7 @@ populate_triangle_indexes(struct ga_t *ga,
 	for (idx = 0; idx < 3; idx++) {
 
 	    retrieve_coord_index(ga, gfi, face_idx, triFaces[vert_idx * ELEMENTS_PER_POINT + idx], tmp_v,
-		tmp_n, tmp_t, &tmp_w, &vofi, &nofi, &tofi);
+				 tmp_n, tmp_t, &tmp_w, &vofi, &nofi, &tofi);
 
 	    switch (ti->tri_type) {
 		case FACE_V:
@@ -1485,8 +1438,6 @@ populate_triangle_indexes(struct ga_t *ga,
 
 
 /*
- * P O P U L A T E _ S O R T _ I N D E X E S
- *
  * Allocate the memory for and populate the sort-indexes used to sort
  * the necessary libobj vertex indexes. The sort-indexes created are
  * determined by the current face_type. Sorting of these indexes is
@@ -1546,8 +1497,6 @@ populate_sort_indexes(struct ti_t *ti)
 
 
 /*
- * S O R T _ I N D E X E S
- *
  * Sort the sort-indexes used to sort the necessary libobj vertex
  * indexes. Sorting of these indexes is necessary as part of the
  * process of creating a unique set of vertices to build a bot
@@ -1558,23 +1507,17 @@ sort_indexes(struct ti_t *ti)
 {
     size_t num_indexes = ti->num_tri * 3;
 
-    /* tmp_ptr is global which is required for qsort */
-    tmp_ptr = (size_t *)ti->index_arr_tri;
-
     /* process vertex indexes */
-    qsort(ti->vsi, num_indexes, sizeof ti->vsi[0],
-	  (int (*)(const void *a, const void *b))comp);
+    bu_sort(ti->vsi, num_indexes, sizeof ti->vsi[0], comp, ti->index_arr_tri);
 
     /* process vertex normal indexes */
     if (ti->tri_type == FACE_NV || ti->tri_type == FACE_TNV) {
-	qsort(ti->vnsi, num_indexes, sizeof ti->vnsi[0],
-	      (int (*)(const void *a, const void *b))comp);
+	bu_sort(ti->vnsi, num_indexes, sizeof ti->vnsi[0], comp, ti->index_arr_tri);
     }
 
     /* process texture vertex indexes */
     if (ti->tri_type == FACE_TV || ti->tri_type == FACE_TNV) {
-	qsort(ti->tvsi, num_indexes, sizeof ti->tvsi[0],
-	      (int (*)(const void *a, const void *b))comp);
+	bu_sort(ti->tvsi, num_indexes, sizeof ti->tvsi[0], comp, ti->index_arr_tri);
     }
 
     return;
@@ -1582,8 +1525,6 @@ sort_indexes(struct ti_t *ti)
 
 
 /*
- * C R E A T E _ U N I Q U E _ I N D E X E S
- *
  * Create a unique sort-index from a provided non-unique sorted
  * sort-index by removing duplicates in the index. The non-unique
  * sort-indexes are freed when they are no longer needed.
@@ -1703,8 +1644,6 @@ create_unique_indexes(struct ti_t *ti)
 
 
 /*
- * F R E E _ T I
- *
  * Free memory allocated for the contents of the triangle index
  * structure.
  */
@@ -1748,8 +1687,6 @@ free_ti(struct ti_t *ti)
 
 
 /*
- * C R E A T E _ B O T _ F L O A T _ A R R A Y S
- *
  * Create the arrays used by the bot primitive which contain
  * floating-point values. The unique sorted-indexes are used to
  * retrieve the values from the libobj structures.
@@ -1836,8 +1773,6 @@ create_bot_float_arrays(struct ga_t *ga,
 
 
 /*
- * C R E A T E _ B O T _ I N T _ A R R A Y S
- *
  * Create the arrays used by the bot primitive which contain integer
  * values. These integer values are the index values of the triangle
  * vertices and normals within the bot primitive. The unique
@@ -1984,8 +1919,6 @@ create_bot_int_arrays(struct ti_t *ti)
 
 
 /*
- * R E M O V E _ D U P L I C A T E S _ A N D _ S O R T
- *
  * Given a one-dimensional array of numbers of type size_t, the array
  * is sorted and duplicate entries removed, resulting in a sorted list
  * of unique values. For speed, a new list is allocated where the
@@ -2000,7 +1933,7 @@ remove_duplicates_and_sort(size_t **list, size_t *count)
     size_t unique_count = 0;
     size_t *unique_arr = (size_t *)NULL;
 
-    qsort(*list, *count, sizeof(size_t), (int (*)(const void *a, const void *b))comp_b);
+    bu_sort(*list, *count, sizeof(size_t), comp_b_sort, NULL);
 
     /* process list, count sorted and unique list elements */
     last = (*list)[0];
@@ -2036,8 +1969,6 @@ remove_duplicates_and_sort(size_t **list, size_t *count)
 
 
 /*
- * P O P U L A T E _ F U S E _ M A P
- *
  * Populate the fuse map array which maps vertex indexes to their
  * fused equivalent. This function is a support function for the
  * fuse_vertex function. This function performs the distance compare
@@ -2074,6 +2005,8 @@ populate_fuse_map(struct ga_t *ga,
 	fuse_offset = gfi->vertex_fuse_offset;
     }
 
+    /* the loop below is the expensive part of the fusing operation. */
+
     /* only set the flag for duplicates */
     idx1 = 0;
     while (idx1 < num_unique_index_list) {
@@ -2091,10 +2024,10 @@ populate_fuse_map(struct ga_t *ga,
 			bn_pt3_pt3_equal(tmp_v1, tmp_v2, tol)) {
 			if (debug) {
 			    distance_between_vertices = DIST_PT_PT(tmp_v1, tmp_v2);
-			    bu_log("found equal i1=(%zu)vi1=(%zu)v1=(%f)(%f)(%f), i2=(%zu)vi2=(%zu)v2=(%f)(%f)(%f), dist = (%fmm)\n",
+			    bu_log("found equal i1=(%zu)vi1=(%zu)v1=(%f)(%f)(%f), i2=(%zu)vi2=(%zu)v2=(%f)(%f)(%f), dist = (%lu mm)\n",
 				   idx1, unique_index_list[idx1], tmp_v1[0], tmp_v1[1], tmp_v1[2],
 				   idx2, unique_index_list[idx2], tmp_v2[0], tmp_v2[1], tmp_v2[2],
-				   unique_index_list[idx2], distance_between_vertices);
+				   (unsigned long)distance_between_vertices);
 			}
 			fuse_map[unique_index_list[idx2] - fuse_offset] = unique_index_list[idx1];
 			fuse_flag[unique_index_list[idx2] - fuse_offset] = 1;
@@ -2119,8 +2052,6 @@ populate_fuse_map(struct ga_t *ga,
 
 
 /*
- * F U S E _ V E R T E X
- *
  * Perform a vertex fuse of the given face grouping. Vertices which
  * are close enough together to be considered the same vertex are
  * joined. A mapping is created to convert each vertex index to their
@@ -2203,15 +2134,13 @@ fuse_vertex(struct ga_t *ga,
      */
 
     if (vertex_type == FUSE_VERT) {
-	vertex_index_list = (size_t *)bu_calloc(max_index_list, sizeof(size_t),
-						"vertex_index_list");
+	vertex_index_list = (size_t *)bu_calloc(max_index_list, sizeof(size_t),	"vertex_index_list");
     }
 
     if ((gfi->face_type == FACE_TV || gfi->face_type == FACE_TNV) &&
 	(vertex_type == FUSE_TEX_VERT))
     {
-	texture_vertex_index_list = (size_t *)bu_calloc(max_index_list,
-							sizeof(size_t), "texture_vertex_index_list");
+	texture_vertex_index_list = (size_t *)bu_calloc(max_index_list, sizeof(size_t), "texture_vertex_index_list");
     }
 
     /* loop thru all polygons and collect max and min index values and
@@ -2243,42 +2172,28 @@ fuse_vertex(struct ga_t *ga,
 		/* set max and min */
 		if (vertex_type == FUSE_VERT) {
 		    vertex_index_list[num_index_list] = vofi;
-		    if (vofi > max_vert_idx) {
-			max_vert_idx = vofi;
-		    }
-		    if (vofi < min_vert_idx) {
-			min_vert_idx = vofi;
-		    }
+		    V_MAX(max_vert_idx, vofi);
+		    V_MIN(min_vert_idx, vofi);
 		}
 		if ((gfi->face_type == FACE_TV || gfi->face_type == FACE_TNV) &&
 		    (vertex_type == FUSE_TEX_VERT))
 		{
 		    texture_vertex_index_list[num_index_list] = tofi;
-		    if (tofi > max_tex_vert_idx) {
-			max_tex_vert_idx = tofi;
-		    }
-		    if (tofi < min_tex_vert_idx) {
-			min_tex_vert_idx = tofi;
-		    }
+		    V_MAX(max_tex_vert_idx, tofi);
+		    V_MIN(min_tex_vert_idx, tofi);
 		}
 	    }
 	    num_index_list++;
 	    if (num_index_list >= max_index_list) {
 		max_index_list += max_index_list_increment;
 		if (vertex_type == FUSE_VERT) {
-		    index_list_tmp = (size_t *)bu_realloc(vertex_index_list,
-							  sizeof(size_t) * max_index_list, "index_list_tmp");
-
+		    index_list_tmp = (size_t *)bu_realloc(vertex_index_list, sizeof(size_t) * max_index_list, "index_list_tmp");
 		    vertex_index_list = index_list_tmp;
 		}
 		if ((gfi->face_type == FACE_TV || gfi->face_type == FACE_TNV) &&
 		    (vertex_type == FUSE_TEX_VERT))
 		{
-		    index_list_tmp =
-			(size_t *) bu_realloc(texture_vertex_index_list,
-					      sizeof(size_t) * max_index_list,
-					      "index_list_tmp");
-
+		    index_list_tmp = (size_t *) bu_realloc(texture_vertex_index_list, sizeof(size_t) * max_index_list, "index_list_tmp");
 		    texture_vertex_index_list = index_list_tmp;
 		}
 	    }
@@ -2291,11 +2206,8 @@ fuse_vertex(struct ga_t *ga,
     if (vertex_type == FUSE_VERT) {
 	gfi->num_vertex_fuse = max_vert_idx - min_vert_idx + 1;
 	gfi->vertex_fuse_offset = min_vert_idx;
-	gfi->vertex_fuse_map = (size_t *)bu_calloc(gfi->num_vertex_fuse,
-						   sizeof(size_t), "gfi->vertex_fuse_map");
-
-	gfi->vertex_fuse_flag = (short int *)bu_calloc(gfi->num_vertex_fuse,
-						       sizeof(short int), "gfi->vertex_fuse_flag");
+	gfi->vertex_fuse_map = (size_t *)bu_calloc(gfi->num_vertex_fuse, sizeof(size_t), "gfi->vertex_fuse_map");
+	gfi->vertex_fuse_flag = (short int *)bu_calloc(gfi->num_vertex_fuse, sizeof(short int), "gfi->vertex_fuse_flag");
 
 	/* initialize arrays */
 	for (idx1 = 0 ; idx1 < gfi->num_vertex_fuse ; idx1++) {
@@ -2309,13 +2221,8 @@ fuse_vertex(struct ga_t *ga,
     {
 	gfi->num_texture_vertex_fuse = max_tex_vert_idx - min_tex_vert_idx + 1;
 	gfi->texture_vertex_fuse_offset = min_tex_vert_idx;
-	gfi->texture_vertex_fuse_map =
-	    (size_t *)bu_calloc(gfi->num_texture_vertex_fuse, sizeof(size_t),
-				"gfi->texture_vertex_fuse_map");
-
-	gfi->texture_vertex_fuse_flag =
-	    (short int *)bu_calloc(gfi->num_texture_vertex_fuse,
-				   sizeof(short int), "gfi->texture_vertex_fuse_flag");
+	gfi->texture_vertex_fuse_map = (size_t *)bu_calloc(gfi->num_texture_vertex_fuse, sizeof(size_t), "gfi->texture_vertex_fuse_map");
+	gfi->texture_vertex_fuse_flag = (short int *)bu_calloc(gfi->num_texture_vertex_fuse, sizeof(short int), "gfi->texture_vertex_fuse_flag");
 
 	/* initialize arrays */
 	for (idx1 = 0 ; idx1 < gfi->num_texture_vertex_fuse ; idx1++) {
@@ -2334,10 +2241,10 @@ fuse_vertex(struct ga_t *ga,
 	if (vertex_index_list && (num_index_list > 0)) {
 	    for (idx1 = 0 ; idx1 < num_index_list ; idx1++) {
 		bu_log("non-unique sorted vertex_index_list[idx1] = (%zu)\n",
-			vertex_index_list[idx1]);
+		       vertex_index_list[idx1]);
 	    }
 	    bu_log("num non-unique sorted vertex_index_list[idx1] = (%zu)\n",
-		num_index_list);
+		   num_index_list);
 	}
     }
 
@@ -2400,8 +2307,6 @@ fuse_vertex(struct ga_t *ga,
 
 
 /*
- * T E S T _ C L O S U R E
- *
  * For a grouping of faces, test if the surface is closed. This
  * function returns the number of open edges. Zero open edges
  * indicates a closed surface. This function traverses all the faces
@@ -2521,7 +2426,7 @@ test_closure(struct ga_t *ga,
 	}
     } /* ends when edges list is complete */
 
-    qsort(edges, edge_count, sizeof(size_t) * 2, (int (*)(const void *a, const void *b))comp_c);
+    bu_sort(edges, edge_count, sizeof(size_t) * 2, comp_c, NULL);
 
     if (debug) {
 	for (idx = 0 ; idx < edge_count ; idx++) {
@@ -2598,8 +2503,6 @@ test_closure(struct ga_t *ga,
 
 
 /*
- * O U T P U T _ T O _ B O T
- *
  * For a grouping of faces, write a bot primitive to a BRL-CAD
  * database file (i.e. ".g" file). Texture_mode should be set to
  * IGNR_TEX since the ability to use the obj file texture vertices is
@@ -2763,8 +2666,6 @@ output_to_bot(struct ga_t *ga,
 
 
 /*
- * O U T P U T _ T O _ N M G
- *
  * For a grouping of faces, write a nmg primitive or volume-mode-bot
  * primitive to a BRL-CAD database file (i.e. ".g" file). This
  * function will return a non-zero value if no primitive was output.
@@ -2823,7 +2724,7 @@ output_to_nmg(struct ga_t *ga,
     size_t vert_idx = 0;                 /* index into vertices within for-loop */
     size_t shell_vert_idx = 0;           /* index into vertices for entire nmg shell */
     size_t num_entities_fused = 0;
-    int ret = 1;                         /* function return value, default to failure */
+    int ret;                             /* function return value, default to failure */
     plane_t pl;                          /* plane equation for face */
     fastf_t tmp_v[3] = {0.0, 0.0, 0.0};  /* temporary vertex */
     fastf_t tmp_w = 0.0;                 /* temporary weight */
@@ -2836,10 +2737,10 @@ output_to_nmg(struct ga_t *ga,
 
     struct vertex **verts = (struct vertex **)NULL;
 
-    size_t num_faces_killed = 0; /* number of degenerate faces killed in the current shell */
+    size_t num_faces_killed;             /* number of degenerate faces killed in the current shell */
 
     m = nmg_mm();
-    if(m == NULL)
+    if (m == NULL)
 	return -1;
     r = nmg_mrsv(m);
     s = BU_LIST_FIRST(shell, &r->s_hd);
@@ -2869,6 +2770,9 @@ output_to_nmg(struct ga_t *ga,
 
 	return 2; /* return code 2 indicates nmg bomb occurred */
     }
+
+    ret = 0;
+    num_faces_killed = 0;
 
     /* initialize tables */
     bu_ptbl_init(&faces, 64, " &faces ");
@@ -2976,7 +2880,8 @@ output_to_nmg(struct ga_t *ga,
 	num_entities_fused = nmg_model_fuse(m, tol);
 	if ((verbose > 1) || debug) {
 	    bu_log("Completed nmg_model_fuse for obj file face grouping name (%s), obj file face grouping index (%zu)\n", bu_vls_addr(gfi->raw_grouping_name), gfi->grouping_index + 1);
-	    bu_log("Fused (%d) entities in obj file face grouping name (%s), obj file face grouping index (%zu)\n", num_entities_fused, bu_vls_addr(gfi->raw_grouping_name), gfi->grouping_index + 1);
+	    bu_log("Fused (%d) entities in obj file face grouping name (%s), obj file face grouping index (%zu)\n",
+		   (int)num_entities_fused, bu_vls_addr(gfi->raw_grouping_name), gfi->grouping_index + 1);
 	}
 
 	/* run nmg_gluefaces, run nmg_vertex_fuse before nmg_gluefaces */
@@ -3110,8 +3015,6 @@ output_to_nmg(struct ga_t *ga,
 
 
 /*
- * S T R 2 M M
- *
  * Validate unit string and output conversion factor to millimeters.
  * If the string is not a standard units identifier, the function
  * assumes a custom conversion factor was specified. A valid null
@@ -3150,8 +3053,6 @@ str2mm(const char *units_string, fastf_t *conv_factor)
 
 
 /*
- * P R O C E S S _ B _ M O D E _ O P T I O N
- *
  * This function is executed from main when the user selects mode
  * option 'b' from the command line. (i.e. output to "native bot")
  */
@@ -3161,6 +3062,7 @@ process_b_mode_option(struct ga_t *ga,
 		      struct rt_wdb *outfp,
 		      fastf_t conv_factor,
 		      struct bn_tol *tol,
+		      int fuse_vertices,
 		      fastf_t bot_thickness, /* bot plate thickness (mm) */
 		      int normal_mode,       /* PROC_NORM, IGNR_NORM */
 		      int plot_mode,         /* PLOT_OFF, PLOT_ON */
@@ -3169,7 +3071,10 @@ process_b_mode_option(struct ga_t *ga,
 		      char bot_orientation,
 		      int face_test_type)    /* TEST_ALL, TEST_NUM_VERT */
 {
-    (void)fuse_vertex(ga, gfi, conv_factor, tol, FUSE_VERT, FUSE_EQUAL);
+    if (fuse_vertices) {
+        (void)fuse_vertex(ga, gfi, conv_factor, tol, FUSE_VERT, FUSE_EQUAL);
+    }
+
     (void)retest_grouping_faces(ga, gfi, conv_factor, face_test_type, tol);
     if (!test_closure(ga, gfi, conv_factor, plot_mode, face_test_type, tol)) {
 	(void)output_to_bot(ga, gfi, outfp, conv_factor, tol, bot_thickness,
@@ -3184,8 +3089,6 @@ process_b_mode_option(struct ga_t *ga,
 
 
 /*
- * P R O C E S S _ N V _ M O D E _ O P T I O N
- *
  * This function is executed from main when the user selects mode
  * option 'n' or 'v' from the command line. The 'n' indicates output
  * to nmg and 'v' indicates output to volume-mode-bot via nmg. If
@@ -3297,6 +3200,7 @@ main(int argc, char **argv)
     time_t overall_elapsed_time;
     struct tm *timep;
     char bot_orientation = RT_BOT_UNORIENTED;
+    int fuse_vertices = 0;
 
     bu_setprogname(argv[0]);
 
@@ -3312,7 +3216,7 @@ main(int argc, char **argv)
     tol = &tol_struct;
     tol->magic = BN_TOL_MAGIC;
     /* default which should be equal to the raytracer default tolerance */
-    tol->dist = 0.0005;
+    tol->dist = BN_TOL_DIST;
     tol->dist_sq = tol->dist * tol->dist;
     /* default which should be equal to the raytracer default tolerance */
     tol->perp = 1e-6;
@@ -3325,7 +3229,7 @@ main(int argc, char **argv)
 	bu_exit(1, NULL);
     }
 
-    while ((c = bu_getopt(argc, argv, "cpidx:X:vt:h:m:u:g:o:r:")) != -1) {
+    while ((c = bu_getopt(argc, argv, "cpidfx:X:vt:H:m:u:g:o:r:h?")) != -1) {
 	switch (c) {
 	    case 'c': /* continue processing on nmg bomb */
 		cont_on_nmg_bomb_flag = 1;
@@ -3357,6 +3261,9 @@ main(int argc, char **argv)
 	    case 'v': /* displays additional information of user interest */
 		verbose++;
 		break;
+	    case 'f': /* vertex fusing is very expensive; disabled by default */
+		fuse_vertices = 1;
+		break;
 	    case 't': /* distance tolerance in mm units */
 		dist_tmp = (double)atof(bu_optarg);
 		if (dist_tmp <= 0.0) {
@@ -3368,7 +3275,7 @@ main(int argc, char **argv)
 		tol->dist = dist_tmp;
 		tol->dist_sq = tol->dist * tol->dist;
 		break;
-	    case 'h': /* plate-mode-bot thickness in mm units */
+	    case 'H': /* plate-mode-bot thickness in mm units */
 		bot_thickness = (fastf_t)atof(bu_optarg);
 		user_bot_thickness_flag = 1;
 		break;
@@ -3441,7 +3348,7 @@ main(int argc, char **argv)
 		}
 		break;
 	    case 'r':
-		switch(bu_optarg[0]) {
+		switch (bu_optarg[0]) {
 		    case '1':
 			bot_orientation = RT_BOT_UNORIENTED;
 			break;
@@ -3453,7 +3360,7 @@ main(int argc, char **argv)
 			break;
 		    default:
 			bu_log("Invalid bot orientation type '%c'.\n",
-				bu_optarg[0]);
+			       bu_optarg[0]);
 			bu_vls_free(&input_file_name);
 			bu_vls_free(&brlcad_file_name);
 			bu_exit(EXIT_FAILURE, "Type '%s' for usage.\n",
@@ -3461,7 +3368,8 @@ main(int argc, char **argv)
 		}
 		break;
 	    default:
-		bu_log("Invalid option '%c'.\n", c);
+/*		bu_log("Invalid option '%c'.\n", c); */
+/* The above is believed to be redundant, and anyway should be off if 'h' or '?' was used. */
 		bu_vls_free(&input_file_name);
 		bu_vls_free(&brlcad_file_name);
 		bu_exit(EXIT_FAILURE, "Type '%s' for usage.\n", argv[0]);
@@ -3678,7 +3586,7 @@ main(int argc, char **argv)
 		    switch (mode_option) {
 			case 'b':
 			    process_b_mode_option(&ga, gfi, fd_out, conv_factor,
-						  tol, bot_thickness, normal_mode, plot_mode,
+						  tol, fuse_vertices, bot_thickness, normal_mode, plot_mode,
 						  open_bot_output_mode, bot_orientation,
 						  native_face_test_type);
 			    break;
@@ -3704,8 +3612,8 @@ main(int argc, char **argv)
 			       "Facetype: (%d) "
 			       "Grouping name: (%s) Primitive name: (%s)\n",
 			       timep->tm_hour, timep->tm_min, timep->tm_sec,
-			       elapsed_time/3600, (elapsed_time%3600)/60,
-			       (elapsed_time%60), face_type_idx,
+			       (int)elapsed_time/3600, (int)(elapsed_time%3600)/60, (int)(elapsed_time%60),
+			       face_type_idx,
 			       bu_vls_addr(gfi->raw_grouping_name),
 			       bu_vls_addr(gfi->primitive_name));
 		    }
@@ -3735,7 +3643,7 @@ main(int argc, char **argv)
 
 			switch (mode_option) {
 			    case 'b':
-				process_b_mode_option(&ga, gfi, fd_out, conv_factor, tol, bot_thickness,
+				process_b_mode_option(&ga, gfi, fd_out, conv_factor, tol, fuse_vertices, bot_thickness,
 						      normal_mode, plot_mode, open_bot_output_mode, bot_orientation,
 						      native_face_test_type);
 				break;
@@ -3754,7 +3662,7 @@ main(int argc, char **argv)
 			    elapsed_time = end_time - start_time;
 			    bu_log("Grouping end time: %02d:%02d:%02d Duration: %02dh %02dm %02ds Grouping index: (%zu of %zu) Facetype: (%d) Grouping name: (%s) Primitive name: (%s)\n",
 				   timep->tm_hour, timep->tm_min, timep->tm_sec,
-				   elapsed_time/3600, (elapsed_time%3600)/60, (elapsed_time%60),
+				   (int)elapsed_time/3600, (int)(elapsed_time%3600)/60, (int)(elapsed_time%60),
 				   gfi->grouping_index + 1, ga.numGroups, face_type_idx,
 				   bu_vls_addr(gfi->raw_grouping_name), bu_vls_addr(gfi->primitive_name));
 			}
@@ -3782,7 +3690,7 @@ main(int argc, char **argv)
 
 			switch (mode_option) {
 			    case 'b':
-				process_b_mode_option(&ga, gfi, fd_out, conv_factor, tol, bot_thickness,
+				process_b_mode_option(&ga, gfi, fd_out, conv_factor, tol, fuse_vertices, bot_thickness,
 						      normal_mode, plot_mode, open_bot_output_mode, bot_orientation,
 						      native_face_test_type);
 				break;
@@ -3801,7 +3709,7 @@ main(int argc, char **argv)
 			    elapsed_time = end_time - start_time;
 			    bu_log("Grouping end time: %02d:%02d:%02d Duration: %02dh %02dm %02ds Grouping index: (%zu of %zu) Facetype: (%d) Grouping name: (%s) Primitive name: (%s)\n",
 				   timep->tm_hour, timep->tm_min, timep->tm_sec,
-				   elapsed_time/3600, (elapsed_time%3600)/60, (elapsed_time%60),
+				   (int)elapsed_time/3600, (int)(elapsed_time%3600)/60, (int)(elapsed_time%60),
 				   gfi->grouping_index + 1, ga.numObjects, face_type_idx,
 				   bu_vls_addr(gfi->raw_grouping_name), bu_vls_addr(gfi->primitive_name));
 			}
@@ -3829,7 +3737,7 @@ main(int argc, char **argv)
 
 			switch (mode_option) {
 			    case 'b':
-				process_b_mode_option(&ga, gfi, fd_out, conv_factor, tol, bot_thickness,
+				process_b_mode_option(&ga, gfi, fd_out, conv_factor, tol, fuse_vertices, bot_thickness,
 						      normal_mode, plot_mode, open_bot_output_mode, bot_orientation,
 						      native_face_test_type);
 				break;
@@ -3848,7 +3756,7 @@ main(int argc, char **argv)
 			    elapsed_time = end_time - start_time;
 			    bu_log("Grouping end time: %02d:%02d:%02d Duration: %02dh %02dm %02ds Grouping index: (%zu of %zu) Facetype: (%d) Grouping name: (%s) Primitive name: (%s)\n",
 				   timep->tm_hour, timep->tm_min, timep->tm_sec,
-				   elapsed_time/3600, (elapsed_time%3600)/60, (elapsed_time%60),
+				   (int)elapsed_time/3600, (int)(elapsed_time%3600)/60, (int)(elapsed_time%60),
 				   gfi->grouping_index + 1, ga.numMaterials, face_type_idx,
 				   bu_vls_addr(gfi->raw_grouping_name), bu_vls_addr(gfi->primitive_name));
 			}
@@ -3876,7 +3784,7 @@ main(int argc, char **argv)
 
 			switch (mode_option) {
 			    case 'b':
-				process_b_mode_option(&ga, gfi, fd_out, conv_factor, tol, bot_thickness,
+				process_b_mode_option(&ga, gfi, fd_out, conv_factor, tol, fuse_vertices, bot_thickness,
 						      normal_mode, plot_mode, open_bot_output_mode, bot_orientation,
 						      native_face_test_type);
 				break;
@@ -3895,7 +3803,7 @@ main(int argc, char **argv)
 			    elapsed_time = end_time - start_time;
 			    bu_log("Grouping end time: %02d:%02d:%02d Duration: %02dh %02dm %02ds Grouping index: (%zu of %zu) Facetype: (%d) Grouping name: (%s) Primitive name: (%s)\n",
 				   timep->tm_hour, timep->tm_min, timep->tm_sec,
-				   elapsed_time/3600, (elapsed_time%3600)/60, (elapsed_time%60),
+				   (int)elapsed_time/3600, (int)(elapsed_time%3600)/60, (int)(elapsed_time%60),
 				   gfi->grouping_index + 1, ga.numTexmaps, face_type_idx,
 				   bu_vls_addr(gfi->raw_grouping_name), bu_vls_addr(gfi->primitive_name));
 			}
@@ -3910,13 +3818,13 @@ main(int argc, char **argv)
     }
 
     bu_free_array(ga.numGroups, (char**)ga.str_arr_obj_groups,
-	"str_arr_obj_groups");
+		  "str_arr_obj_groups");
     bu_free_array(ga.numObjects, (char**)ga.str_arr_obj_objects,
-	"str_arr_obj_objects");
+		  "str_arr_obj_objects");
     bu_free_array(ga.numMaterials, (char**)ga.str_arr_obj_materials,
-	"str_arr_obj_materials");
+		  "str_arr_obj_materials");
     bu_free_array(ga.numTexmaps, (char**)ga.str_arr_obj_texmaps,
-	"str_arr_obj_texmaps");
+		  "str_arr_obj_texmaps");
 
     /* running cleanup functions */
     if (debug) {
@@ -3948,8 +3856,8 @@ main(int argc, char **argv)
 
     bu_log("\nDone\n");
 
-    bu_log("Duration %02dh %02dm %02ds\n", overall_elapsed_time/3600,
-	   (overall_elapsed_time%3600)/60, (overall_elapsed_time%60));
+    bu_log("Duration %02dh %02dm %02ds\n", (int)overall_elapsed_time/3600,
+	   (int)(overall_elapsed_time%3600)/60, (int)(overall_elapsed_time%60));
 
     bu_log("End time %s", asctime(localtime(&overall_end_time)));
 

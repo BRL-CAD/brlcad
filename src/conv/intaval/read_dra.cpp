@@ -1,7 +1,7 @@
 /*                         R E A D _ D R A . C P P
  * BRL-CAD
  *
- * Copyright (c) 2008-2013 United States Government as represented by
+ * Copyright (c) 2008-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -46,7 +46,7 @@ size_t addBotPoint
     size_t ret = form.data.bot.num_vertices;
 
     // search for duplicate vertex
-    for(size_t i = 0; i < form.data.bot.num_vertices; ++i) {
+    for (size_t i = 0; i < form.data.bot.num_vertices; ++i) {
 	if ((form.data.bot.vertices[i * 3]     == x) &&
 	    (form.data.bot.vertices[i * 3 + 1] == y) &&
 	    (form.data.bot.vertices[i * 3 + 2] == z)) {
@@ -71,9 +71,9 @@ size_t addBotPoint
 void addBotTriangle
 (
     Form& form,
-    int   a,
-    int   b,
-    int   c
+    size_t a,
+    size_t b,
+    size_t c
 ) {
     // all three points on a line?
     int ax = form.data.bot.vertices[a * 3] - form.data.bot.vertices[b * 3];
@@ -100,17 +100,17 @@ void readCadTypeBot
     form.data.bot.num_faces    = 0; // unknown yet how many different faces are used, there may be some degenerated ones
     form.data.bot.num_vertices = 0; // unknown yet how many different points are used
 
-    for(size_t i = 0; i < form.npts; ++i) {
-	int x;
-	int y;
-	int z;
+    for (size_t i = 0; i < form.npts; ++i) {
+	size_t x;
+	size_t y;
+	size_t z;
 
 	is >> x >> y >> z;
-	int a = addBotPoint(form, x, y, z);
+	size_t a = addBotPoint(form, x, y, z);
 	is >> x >> y >> z;
-	int b = addBotPoint(form, x, y, z);
+	size_t b = addBotPoint(form, x, y, z);
 	is >> x >> y >> z;
-	int c = addBotPoint(form, x, y, z);
+	size_t c = addBotPoint(form, x, y, z);
 
 	addBotTriangle(form, a, b, c);
     }
@@ -125,16 +125,16 @@ void readLongFormBot
     form.data.bot.num_faces    = 0; // unknown yet how many different faces are used
     form.data.bot.num_vertices = 0; // unknown yet how many different points are used
 
-    int x;
-    int y;
-    int z;
+    size_t x;
+    size_t y;
+    size_t z;
 
     is >> x >> y >> z;
-    int a = addBotPoint(form, x, y, z);
+    size_t a = addBotPoint(form, x, y, z);
     is >> x >> y >> z;
-    int b = addBotPoint(form, x, y, z);
+    size_t b = addBotPoint(form, x, y, z);
     is >> x >> y >> z;
-    int c = addBotPoint(form, x, y, z);
+    size_t c = addBotPoint(form, x, y, z);
 
     addBotTriangle(form, a, b, c);
 

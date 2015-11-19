@@ -1,7 +1,7 @@
 /*                 DerivedUnit.cpp
  * BRL-CAD
  *
- * Copyright (c) 1994-2013 United States Government as represented by
+ * Copyright (c) 1994-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -49,6 +49,7 @@ DerivedUnit::DerivedUnit(STEPWrapper *sw, int step_id)
 
 DerivedUnit::~DerivedUnit()
 {
+    // elements created through factory will be deleted there.
     elements.clear();
 }
 
@@ -60,6 +61,7 @@ DerivedUnit::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
 
     if (!Unit::Load(step, sse)) {
 	std::cout << CLASSNAME << ":Error loading base class ::Unit." << std::endl;
+	sw->entity_status[id] = STEP_LOAD_ERROR;
 	return false;
     }
 
@@ -76,6 +78,7 @@ DerivedUnit::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
 	    elements.push_back(aDUE);
 	    if (!aDUE->Load(step, (*i))) {
 		l->clear();
+		sw->entity_status[id] = STEP_LOAD_ERROR;
 		delete l;
 		return false;
 	    }
@@ -83,6 +86,8 @@ DerivedUnit::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
 	l->clear();
 	delete l;
     }
+
+    sw->entity_status[id] = STEP_LOADED;
 
     return true;
 }

@@ -348,13 +348,13 @@ To visualize the exact position taken by the aim point
 in the example (output channels 3, 4, 5), a UNIX-plot file
 of that trajectory can be created with:
 <p>
-   cut -f5,6,7 table.final | xyz-pl &gt; aim.pl
+   cut -f5,6,7 table.final | xyz-plot3 &gt; aim.pl
 <br>
-   cut -f1,5,6,7 table.final | txyz-pl &gt; aim.pl
+   cut -f1,5,6,7 table.final | xyz-plot3 &gt; aim.pl
 <p>
 Similarly, the position of the main object can be viewed with
 <p>
-   cut -f2,3,4 table.final | xyz-pl &gt; obj.pl
+   cut -f2,3,4 table.final | xyz-plot3 &gt; obj.pl
 <p>
 <i>tabinterp</i>
 uses 0-based column numbering, while
@@ -400,7 +400,7 @@ command can also be useful for routing through the output files
 of existing scientific analysis programs, and extracting the
 few gems of data buried in the heaps of ``printout''.
 <h1>"SEE ALSO"</h1>
-tabsub(1), xyz-pl(1), txyz-pl(1), cut(1), paste(1), rt(1), mged(1)
+tabsub(1), xyz-plot3(1), cut(1), paste(1), rt(1), mged(1)
 <h1>BUGS</h1>
 You can't
 <i>grep</i>

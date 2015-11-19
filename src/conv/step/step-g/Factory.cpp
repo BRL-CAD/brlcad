@@ -1,7 +1,7 @@
 /*                 Factory.cpp
  * BRL-CAD
  *
- * Copyright (c) 1994-2013 United States Government as represented by
+ * Copyright (c) 1994-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -29,12 +29,7 @@
 /* implementation headers */
 #include "STEPEntity.h"
 
-#ifdef AP203e2
-#  define SCHEMA_NAMESPACE ap203_configuration_controlled_3d_design_of_mechanical_parts_and_assemblies_mim_lf
-#else
-#  define SCHEMA_NAMESPACE config_control_design
-#endif
-
+#include "ap_schema.h"
 
 #define CLASSNAME "Factory"
 const char *Factory::factoryname = "AP203e2 Object Factory";
@@ -762,7 +757,7 @@ Factory::CreateRepresentationContext(STEPWrapper *sw, SDAI_Application_instance 
 	    f = (*i).second;
 	} else {
 	    // not sure if/why this would happen so error for now
-	    std::cerr << CLASSNAME << ": Tagged as complex SCHEMA_NAMESPACE::e_shape_representation_relationship but not complex." << std::endl;
+	    std::cerr << CLASSNAME << ": Tagged as complex SCHEMA_NAMESPACE::e_representation_context but not complex." << std::endl;
 	    return NULL;
 	}
     } else {

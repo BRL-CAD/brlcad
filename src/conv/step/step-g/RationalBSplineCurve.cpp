@@ -1,7 +1,7 @@
 /*                 RationalBSplineCurve.cpp
  * BRL-CAD
  *
- * Copyright (c) 1994-2013 United States Government as represented by
+ * Copyright (c) 1994-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -60,7 +60,7 @@ RationalBSplineCurve::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
     // load base class attributes
     if (!BSplineCurve::Load(sw, sse)) {
 	std::cout << CLASSNAME << ":Error loading base class ::BSplineCurve." << std::endl;
-	return false;
+	goto step_error;
     }
 
     // need to do this for local attributes to makes sure we have
@@ -72,6 +72,7 @@ RationalBSplineCurve::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
 
 	if (attr) {
 	    STEPaggregate *sa = (STEPaggregate *)(attr->ptr.a);
+	    if (!sa) goto step_error;
 	    RealNode *rn = (RealNode *)sa->GetHead();
 
 	    while (rn != NULL) {
@@ -80,11 +81,15 @@ RationalBSplineCurve::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
 	    }
 	} else {
 	    std::cout << CLASSNAME << ": Error loading RationalBSplineCurve(weights_data)." << std::endl;
-	    return false;
+	    goto step_error;
 	}
     }
 
+    sw->entity_status[id] = STEP_LOADED;
     return true;
+step_error:
+    sw->entity_status[id] = STEP_LOAD_ERROR;
+    return false;
 }
 
 void

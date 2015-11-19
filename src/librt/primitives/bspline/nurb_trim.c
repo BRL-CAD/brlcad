@@ -1,7 +1,7 @@
 /*                     N U R B _ T R I M . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2013 United States Government as represented by
+ * Copyright (c) 1990-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -28,13 +28,12 @@
 
 #include "common.h"
 
-#include <stdio.h>
 #include <math.h>
 #include "bio.h"
 
 #include "vmath.h"
 #include "raytrace.h"
-#include "nurb.h"
+#include "rt/nurb.h"
 
 extern void rt_clip_cnurb(struct bu_list *plist, struct edge_g_cnurb *crv, fastf_t u, fastf_t v);
 
@@ -298,8 +297,8 @@ rt_process_casec(struct edge_g_cnurb *trim, fastf_t u, fastf_t v)
 /**
  * This routine will be called several times, once for each portion of
  * the trimming curve. It returns whether a line extended from the
- * <u, v> point will cross the trimming curve an even or odd number of
- * times. Or the <u, v> point could be on the curve in which case
+ * \<u, v\> point will cross the trimming curve an even or odd number of
+ * times. Or the \<u, v\> point could be on the curve in which case
  * TRIM_ON will be returned. The algorithm uses the approach taken Tom
  * Sederburge and uses bezier clipping to produce caseA and caseB
  * curves. If the original trimming curve is a CASE C curve then
@@ -509,13 +508,13 @@ nmg_uv_in_lu(const fastf_t u, const fastf_t v, const struct loopuse *lu)
 	struct edge_g_cnurb *eg;
 
 	if (!eu->g.magic_p) {
-	    bu_log("nmg_uv_in_lu: eu (x%x) has no geometry!!!\n", eu);
+	    bu_log("nmg_uv_in_lu: eu (%p) has no geometry!!!\n", (void *)eu);
 	    bu_bomb("nmg_uv_in_lu: eu has no geometry!!!\n");
 	}
 
 	if (*eu->g.magic_p != NMG_EDGE_G_CNURB_MAGIC) {
-	    bu_log("nmg_uv_in_lu: Called with lu (x%x) containing eu (x%x) that is not CNURB!!!!\n",
-		   lu, eu);
+	    bu_log("nmg_uv_in_lu: Called with lu (%p) containing eu (%p) that is not CNURB!!!!\n",
+		   (void *)lu, (void *)eu);
 	    bu_bomb("nmg_uv_in_lu: Called with lu containing eu that is not CNURB!!!\n");
 	}
 
@@ -532,16 +531,16 @@ nmg_uv_in_lu(const fastf_t u, const fastf_t v, const struct loopuse *lu)
 	    vu2 = eu->eumate_p->vu_p;
 
 	    if (!vu1->a.magic_p || !vu2->a.magic_p) {
-		bu_log("nmg_uv_in_lu: Called with lu (x%x) containing vu with no attribute!!!!\n",
-		       lu);
+		bu_log("nmg_uv_in_lu: Called with lu (%p) containing vu with no attribute!!!!\n",
+		       (void *)lu);
 		bu_bomb("nmg_uv_in_lu: Called with lu containing vu with no attribute!!!\n");
 	    }
 
 	    if (*vu1->a.magic_p != NMG_VERTEXUSE_A_CNURB_MAGIC
 		|| *vu2->a.magic_p != NMG_VERTEXUSE_A_CNURB_MAGIC)
 	    {
-		bu_log("nmg_uv_in_lu: Called with lu (x%x) containing vu that is not CNURB!!!!\n",
-		       lu);
+		bu_log("nmg_uv_in_lu: Called with lu (%p) containing vu that is not CNURB!!!!\n",
+		       (void *)lu);
 		bu_bomb("nmg_uv_in_lu: Called with lu containing vu that is not CNURB!!!\n");
 	    }
 

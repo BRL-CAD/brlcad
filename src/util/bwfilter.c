@@ -1,7 +1,7 @@
 /*                      B W F I L T E R . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2013 United States Government as represented by
+ * Copyright (c) 1986-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -31,7 +31,12 @@
 #include <string.h>
 #include "bio.h"
 
-#include "bu.h"
+#include "bu/getopt.h"
+#include "bu/malloc.h"
+#include "bu/mime.h"
+#include "bu/log.h"
+#include "bu/str.h"
+
 #include "icv.h"
 #include "vmath.h"
 
@@ -53,9 +58,9 @@ struct kernels {
     { NULL, NULL, {0, 0, 0, 0, 0, 0, 0, 0, 0}, 0, 0, ICV_FILTER_NULL },
 };
 
+int *kern;
 int kerndiv;
 int kernoffset;
-int *kern;
 ICV_FILTER filter_type;
 int kernel_index;
 int inx = 512;
@@ -74,8 +79,6 @@ char *in_file = NULL;
 char *out_file = NULL;
 
 /*
- * S E L E C T _ F I L T E R
- *
  * Looks at the command line string and selects a filter
  * based on it.
  */
@@ -128,10 +131,10 @@ get_args(int argc, char **argv)
 	    case 'd':
 		dflag++;
 		kerndiv = atoi(bu_optarg);
-		if(ZERO(kerndiv)) {
+		if (ZERO(kerndiv)) {
 		    bu_log("Bad argument for kerndiv\n");
 		    return 1;
-		}		    
+		}
 		break;
 	    case 'O':
 		oflag++;
@@ -149,7 +152,7 @@ get_args(int argc, char **argv)
 	    case 's':
 		inx = iny = atoi(bu_optarg);
 		break;
-	    default:		/* '?' */
+	    default:		/* 'h' '?' */
 		return 0;
 	}
     }
@@ -189,22 +192,22 @@ main(int argc, char **argv)
 	dousage();
 	bu_exit (1, NULL);
     }
-    img = icv_read(in_file, ICV_IMAGE_BW, inx, iny);
+    img = icv_read(in_file, MIME_IMAGE_BW, inx, iny);
     if (img == NULL)
 	return 1;
 
     icv_filter(img, filter_type);
-    
+
     /* Correct the image as per the input offset and */
-    if(oflag | dflag) {
+    if (oflag | dflag) {
         icv_add_val(img, -ICV_CONV_8BIT(kernel[kernel_index].kernoffset));
 
-        if(dflag) {
-            if(ZERO(kerndiv))
+        if (dflag) {
+            if (ZERO(kerndiv))
             icv_multiply_val(img, ICV_CONV_8BIT(kernel[kernel_index].kerndiv/kerndiv));
         }
-        
-        if(oflag)
+
+        if (oflag)
             icv_add_val(img, ICV_CONV_8BIT(kernoffset));
         else
             icv_add_val(img, ICV_CONV_8BIT(kernel[kernel_index].kernoffset));
@@ -222,8 +225,8 @@ main(int argc, char **argv)
     }
     bu_free(min_d, "max value");
     bu_free(max_d, "min values");
-    
-    icv_write(img, out_file, ICV_IMAGE_BW);
+
+    icv_write(img, out_file, MIME_IMAGE_BW);
     return 0;
 }
 

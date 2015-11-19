@@ -1,7 +1,7 @@
 /*                 TrimmingSelect.cpp
  * BRL-CAD
  *
- * Copyright (c) 1994-2013 United States Government as represented by
+ * Copyright (c) 1994-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -61,6 +61,8 @@ TrimmingSelect::TrimmingSelect(STEPWrapper *sw, int step_id)
 
 TrimmingSelect::~TrimmingSelect()
 {
+    // created through factory will be deleted there.
+    cartesian_point = NULL;
 }
 
 double
@@ -85,7 +87,7 @@ TrimmingSelect::IsParameterTrim()
 }
 
 bool
-TrimmingSelect::Load(STEPWrapper *sw, SDAI_Select *sse)
+TrimmingSelect::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
 {
     step = sw;
 
@@ -96,6 +98,7 @@ TrimmingSelect::Load(STEPWrapper *sw, SDAI_Select *sse)
 	SdaiCartesian_point *p = *v;
 	type = CARTESIAN_POINT;
 	cartesian_point = dynamic_cast<CartesianPoint *>(Factory::CreateObject(sw, (SDAI_Application_instance *)p));
+	if (!cartesian_point) return false;
     } else if (v->IsParameter_value()) {
 	type = PARAMETER_VALUE;
 	parameter_value = (double)*v;

@@ -1,7 +1,7 @@
 /*                          G L O B . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2013 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -35,7 +35,7 @@
 
 
 Colors colorids;	/* ident range to color mappings for plots */
-FBIO *fbiop = NULL;	/* frame buffer specific access from libfb */
+fb *fbiop = NULL;	/* frame buffer specific access from libfb */
 FILE *burstfp = NULL;	/* input stream for burst point locations */
 FILE *gridfp = NULL;	/* grid file output stream (2-d shots) */
 FILE *histfp = NULL;	/* histogram output stream (statistics) */

@@ -1,7 +1,7 @@
 /*                        S H _ X X X . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2013 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -67,6 +67,7 @@
 #include <math.h>
 #include <string.h>
 
+#include "bu/units.h"
 #include "vmath.h"
 #include "raytrace.h"
 #include "optical.h"
@@ -131,10 +132,10 @@ struct bu_structparse xxx_parse_tab[] = {
 };
 
 
-HIDDEN int xxx_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, const struct mfuncs *mfp, struct rt_i *rtip);
-HIDDEN int xxx_render(struct application *ap, const struct partition *pp, struct shadework *swp, genptr_t dp);
-HIDDEN void xxx_print(register struct region *rp, genptr_t dp);
-HIDDEN void xxx_free(genptr_t cp);
+HIDDEN int xxx_setup(register struct region *rp, struct bu_vls *matparm, void **dpp, const struct mfuncs *mfp, struct rt_i *rtip);
+HIDDEN int xxx_render(struct application *ap, const struct partition *pp, struct shadework *swp, void *dp);
+HIDDEN void xxx_print(register struct region *rp, void *dp);
+HIDDEN void xxx_free(void *cp);
 
 /* The "mfuncs" structure defines the external interface to the shader.
  * Note that more than one shader "name" can be associated with a given
@@ -150,8 +151,7 @@ struct mfuncs xxx_mfuncs[] = {
 };
 
 
-/* X X X _ S E T U P
- *
+/*
  * This routine is called (at prep time)
  * once for each region which uses this shader.
  * Any shader-specific initialization should be done here.
@@ -162,11 +162,8 @@ struct mfuncs xxx_mfuncs[] = {
  * -1 failure
  */
 HIDDEN int
-xxx_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, const struct mfuncs *UNUSED(mfp), struct rt_i *rtip)
-
-
+xxx_setup(register struct region *rp, struct bu_vls *matparm, void **dpp, const struct mfuncs *UNUSED(mfp), struct rt_i *rtip)
 /* pointer to reg_udata in *rp */
-
 /* New since 4.4 release */
 {
     register struct xxx_specific *xxx_sp;
@@ -188,7 +185,7 @@ xxx_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, con
     memcpy(xxx_sp, &xxx_defaults, sizeof(struct xxx_specific));
 
     /* parse the user's arguments for this use of the shader. */
-    if (bu_struct_parse(matparm, xxx_parse_tab, (char *)xxx_sp) < 0)
+    if (bu_struct_parse(matparm, xxx_parse_tab, (char *)xxx_sp, NULL) < 0)
 	return -1;
 
     /* Optional:
@@ -223,37 +220,27 @@ xxx_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, con
 }
 
 
-/*
- * X X X _ P R I N T
- */
 HIDDEN void
-xxx_print(register struct region *rp, genptr_t dp)
+xxx_print(register struct region *rp, void *dp)
 {
     bu_struct_print(rp->reg_name, xxx_print_tab, (char *)dp);
 }
 
 
-/*
- * X X X _ F R E E
- */
 HIDDEN void
-xxx_free(genptr_t cp)
+xxx_free(void *cp)
 {
     BU_PUT(cp, struct xxx_specific);
 }
 
 
 /*
- * X X X _ R E N D E R
- *
  * This is called (from viewshade() in shade.c) once for each hit point
  * to be shaded.  The purpose here is to fill in values in the shadework
  * structure.
  */
 int
-xxx_render(struct application *ap, const struct partition *pp, struct shadework *swp, genptr_t dp)
-
-
+xxx_render(struct application *ap, const struct partition *pp, struct shadework *swp, void *dp)
 /* defined in ../h/shadework.h */
 /* ptr to the shader-specific struct */
 {

@@ -1,7 +1,7 @@
 /*                    D O _ O P T I O N S . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2013 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -34,7 +34,9 @@
 #  include <unistd.h>
 #endif
 
-#include "bu.h"
+#include "bu/getopt.h"
+#include "bu/log.h"
+#include "bu/file.h"
 #include "fb.h"
 #include "vmath.h"
 #include "raytrace.h"
@@ -62,7 +64,7 @@ static char scratchbuf[TEMPLATE_COLS+1];
 /* The strings in this array will be modified as the program runs,
  * so don't point to const strings, initialize as character arrays here.
  */
-char template[][TEMPLATE_COLS+1] = {
+char screen_template[][TEMPLATE_COLS+1] = {
 /*         1         2         3         4         5         6         7         8
 	   012345678901234567890123456789012345678901234567890123456789012345678901234567890*/
     "TITLE [                                                                       ]",
@@ -650,7 +652,6 @@ f_Grid_Roll(char **args)
 }
 
 
-/* f _ A n t i _ A l i a s i n g () */
 static int
 f_Anti_Aliasing(char **args)
 {
@@ -679,7 +680,6 @@ f_Anti_Aliasing(char **args)
 }
 
 
-/* f _ B a t c h () */
 /*ARGSUSED*/
 static int
 f_Batch()
@@ -958,23 +958,19 @@ f_Cursor_Module()
 		    break;
 		case JDOWN :
 		    y -= JUMP;
-		    if (y < 0)
-			y = 0;
+		    V_MAX(y, 0);
 		    break;
 		case JUP :
 		    y += JUMP;
-		    if (y > grid_sz - 1)
-			y = (grid_sz - 1);
+		    V_MIN(y, grid_sz - 1);
 		    break;
 		case JLEFT :
 		    x -= JUMP;
-		    if (x < 0)
-			x = 0;
+		    V_MAX(x, 0);
 		    break;
 		case JRIGHT :
 		    x += JUMP;
-		    if (x > grid_sz - 1)
-			x = (grid_sz - 1);
+		    V_MIN(x, grid_sz - 1);
 		    break;
 		case CENTER :
 		    cx = x;
@@ -989,7 +985,7 @@ f_Cursor_Module()
 		    (void) fb_window(fbiop, cx, cy);
 		    break;
 		case IN :
-		    if (zoom <= fbiop->if_width/2) {
+		    if (zoom <= fb_getwidth(fbiop)/2) {
 			zoom *= 2;
 			cx = x;
 			cy = y;
@@ -1157,7 +1153,6 @@ exit_cm :	;
 }
 
 
-/* f _ D i s p l a y _ O r i g i n () */
 /*ARGSUSED*/
 static int
 f_Display_Origin(char **args)
@@ -1183,7 +1178,6 @@ f_Display_Origin(char **args)
 }
 
 
-/* f _ A n i m a t e () */
 /*ARGSUSED*/
 static int
 f_Animate()
@@ -1211,14 +1205,14 @@ f_Animate()
 	    return -1;
 	(void) signal(SIGINT, abort_RT);
 	for (frame_no = 0; ! user_interrupt; frame_no++) {
-	    FBIO *movie_fbiop;
+	    fb *movie_fbiop;
 	    int y;
 	    if (frame_no == noframes)
 		frame_no = 0;
 	    (void) sprintf(suffixptr, ".%04d", frame_no);
 	    if (!bu_file_exists(movie_file, NULL))
 		continue;
-	    if ((movie_fbiop = fb_open(movie_file, grid_sz, grid_sz)) == FBIO_NULL) {
+	    if ((movie_fbiop = fb_open(movie_file, grid_sz, grid_sz)) == FB_NULL) {
 		(void) signal(SIGINT, norml_sig);
 		close_Output_Device(0);
 		return -1;
@@ -1357,14 +1351,13 @@ f_GridConfig(char **args)
 }
 
 
-/* f _ W r t _ F b () */
 /*ARGSUSED*/
 static int
 f_Wrt_Fb(char **args)
 {
     int y;
     static char save_fb_file[MAX_LN] = { 0 };
-    FBIO *save_fbiop;
+    fb *save_fbiop;
     if (args != NULL && args[1] != NULL)
 	bu_strlcpy(save_fb_file, args[1], MAX_LN);
     else
@@ -1387,7 +1380,7 @@ f_Wrt_Fb(char **args)
 	return -1;
     prnt_Event("Saving image...");
     if ((save_fbiop =
-	 fb_open(save_fb_file, grid_sz, grid_sz))== FBIO_NULL) {
+	 fb_open(save_fb_file, grid_sz, grid_sz))== FB_NULL) {
 	close_Output_Device(0);
 	return -1;
     }
@@ -1420,14 +1413,13 @@ f_Wrt_Fb(char **args)
 }
 
 
-/* f _ R d _ F b () */
 /*ARGSUSED*/
 static int
 f_Rd_Fb(char **args)
 {
     int y;
     static char save_fb_file[MAX_LN] = { 0 };
-    FBIO *save_fbiop;
+    fb *save_fbiop;
     if (args != NULL && args[1] != NULL)
 	bu_strlcpy(save_fb_file, args[1], MAX_LN);
     else
@@ -1449,7 +1441,7 @@ f_Rd_Fb(char **args)
 	return -1;
     prnt_Event("Reading saved image...");
     if ((save_fbiop =
-	 fb_open(save_fb_file, grid_sz, grid_sz)) == FBIO_NULL) {
+	 fb_open(save_fb_file, grid_sz, grid_sz)) == FB_NULL) {
 	close_Output_Device(0);
 	return -1;
     }
@@ -1491,7 +1483,6 @@ wait_For_User(void)
 }
 
 
-/* f _ P r n t _ L g t _ D b () */
 /*ARGSUSED*/
 static int
 f_Prnt_Lgt_Db(char **args)
@@ -1523,7 +1514,6 @@ f_Prnt_Lgt_Db(char **args)
 }
 
 
-/* f _ P r n t _ M a t _ D b () */
 /*ARGSUSED*/
 static int
 f_Prnt_Mat_Db(char **args)
@@ -1556,7 +1546,6 @@ f_Prnt_Mat_Db(char **args)
 }
 
 
-/* f _ R d _ R a w _ I R () */
 /*ARGSUSED*/
 static int
 f_Rd_Raw_IR(char **args)
@@ -1640,7 +1629,6 @@ read_Frame(FILE *fp)
 }
 
 
-/* f _ M o v i e () */
 /*ARGSUSED*/
 static int
 f_Movie()
@@ -1850,7 +1838,6 @@ error_exit :
 }
 
 
-/* f _ M a x _ B o u n c e () */
 /*ARGSUSED*/
 static int
 f_Max_Bounce(char **args)
@@ -1880,7 +1867,6 @@ f_Max_Bounce(char **args)
 }
 
 
-/* f _ P r n t _ R e g i o n s ()  */
 /*ARGSUSED*/
 static int
 f_Prnt_Regions()
@@ -1892,7 +1878,6 @@ f_Prnt_Regions()
 }
 
 
-/* f _ S e t _ R e g i o n _ I R () */
 /*ARGSUSED*/
 static int
 f_Set_Region_IR()
@@ -1917,7 +1902,6 @@ f_Set_Region_IR()
 }
 
 
-/* f _ E r r _ F i l e () */
 /*ARGSUSED*/
 static int
 f_Err_File(char **args)
@@ -1954,8 +1938,6 @@ f_Err_File(char **args)
 }
 
 
-/* f _ S h a d o w s ()
- */
 /*ARGSUSED*/
 static int
 f_Shadows(char **args)
@@ -1975,7 +1957,6 @@ f_Shadows(char **args)
 }
 
 
-/* f _ T r a c k i n g _ C u r s o r () */
 /*ARGSUSED*/
 static int
 f_Tracking_Cursor(char **args)
@@ -1996,16 +1977,13 @@ f_Tracking_Cursor(char **args)
 
 
 /**
- * f _ P a r a l l e l
- *
  * returns the number of processors or negative on user input error
  */
 static int
 f_Parallel(char **args)
 {
     int maxpsw = bu_avail_cpus();
-    if (maxpsw > MAX_PSW)
-	maxpsw = MAX_PSW;
+    CLAMP(maxpsw, 0, MAX_PSW);
 
     if (maxpsw == 1) {
 	RTG.rtg_parallel = 0;
@@ -2030,13 +2008,10 @@ f_Parallel(char **args)
     else
 	RTG.rtg_parallel = 0;
 
-    bu_semaphore_init(RT_SEM_LAST);
-
     return 1;
 }
 
 
-/* f _ W r t _ I R _ D b () */
 /*ARGSUSED*/
 static int
 f_Wrt_IR_Db(char **args)
@@ -2076,7 +2051,6 @@ f_Wrt_IR_Db(char **args)
 }
 
 
-/* f _ W r t _ L g t _ D b () */
 /*ARGSUSED*/
 static int
 f_Wrt_Lgt_Db(char **args)
@@ -2106,7 +2080,6 @@ f_Wrt_Lgt_Db(char **args)
 }
 
 
-/* f _ W r t _ M a t _ D b () */
 /*ARGSUSED*/
 static int
 f_Wrt_Mat_Db(char **args)
@@ -2132,7 +2105,6 @@ f_Wrt_Mat_Db(char **args)
 }
 
 
-/* f _ G r i d _ T r a n s l a t e () */
 /*ARGSUSED*/
 static int
 f_Grid_Translate(char **args)
@@ -2188,7 +2160,6 @@ f_Overlaps(char **args)
 }
 
 
-/* f _ S h o w _ I R () */
 /*ARGSUSED*/
 static int
 f_Show_IR(char **args)
@@ -2215,7 +2186,6 @@ f_Show_IR(char **args)
 }
 
 
-/* f _ B a c k g r o u n d () */
 /*ARGSUSED*/
 static int
 f_Background(char **args)
@@ -2237,10 +2207,10 @@ f_Background(char **args)
 		);
 	    if (get_Input(input_ln, MAX_LN, prompt) != NULL
 		&& sscanf(input_ln,
-			       "%d %d %d",
-			       &background[0],
-			       &background[1],
-			       &background[2]
+			  "%d %d %d",
+			  &background[0],
+			  &background[1],
+			  &background[2]
 		    ) != 3)
 		return -1;
 	} else
@@ -2305,7 +2275,6 @@ note_IRmapping(void)
 }
 
 
-/* f _ I R m o d u l e () */
 /*ARGSUSED*/
 static int
 f_IRmodule(char **args)
@@ -2337,7 +2306,6 @@ f_IRmodule(char **args)
 }
 
 
-/* f _ R d _ I R _ D b () */
 /*ARGSUSED*/
 static int
 f_Rd_IR_Db(char **args)
@@ -2381,7 +2349,6 @@ f_Rd_IR_Db(char **args)
 }
 
 
-/* f _ R d _ L g t _ D b () */
 /*ARGSUSED*/
 static int
 f_Rd_Lgt_Db(char **args)
@@ -2409,7 +2376,6 @@ f_Rd_Lgt_Db(char **args)
 }
 
 
-/* f _ R d _ M a t _ D b () */
 /*ARGSUSED*/
 static int
 f_Rd_Mat_Db(char **args)
@@ -2437,7 +2403,6 @@ f_Rd_Mat_Db(char **args)
 }
 
 
-/* f _ I R _ O f f s e t () */
 /*ARGSUSED*/
 static int
 f_IR_Offset(char **args)
@@ -2452,7 +2417,6 @@ f_IR_Offset(char **args)
 }
 
 
-/* f _ D i s t _ G r i d () */
 /*ARGSUSED*/
 static int
 f_Dist_Grid(char **args)
@@ -2488,7 +2452,6 @@ f_Dist_Grid(char **args)
 }
 
 
-/* f _ S c a l e _ G r i d () */
 /*ARGSUSED*/
 static int
 f_Scale_Grid()
@@ -2498,7 +2461,6 @@ f_Scale_Grid()
 }
 
 
-/* f _ I R _ N o i s e () */
 /*ARGSUSED*/
 static int
 f_IR_Noise(char **args)
@@ -2523,10 +2485,10 @@ f_IR_Noise(char **args)
 }
 
 
-/* f _ K e y _ F r a m e ()
-   Apply saved view output by MGED(1B) "saveview" and "svkey" commands.
-   Some of this code was originally written by Mike J. Muuss for
-   his RT(1B) ray-tracing front-end.
+/*
+  Apply saved view output by MGED(1B) "saveview" and "svkey" commands.
+  Some of this code was originally written by Mike J. Muuss for
+  his RT(1B) ray-tracing front-end.
 */
 /*ARGSUSED*/
 static int
@@ -2642,7 +2604,6 @@ f_Hidden_Ln_Draw(char **args)
 }
 
 
-/* f _ E n t r _ L g t _ D b () */
 /*ARGSUSED*/
 static int
 f_Entr_Lgt_Db(char **args)
@@ -2675,7 +2636,6 @@ f_Entr_Lgt_Db(char **args)
 }
 
 
-/* f _ E n t r _ M a t _ D b () */
 /*ARGSUSED*/
 static int
 f_Entr_Mat_Db(char **args)
@@ -2707,7 +2667,6 @@ f_Entr_Mat_Db(char **args)
 }
 
 
-/* f _ S e t _ I R _ P a i n t () */
 /*ARGSUSED*/
 static int
 f_Set_IR_Paint(char **args)
@@ -2720,7 +2679,6 @@ f_Set_IR_Paint(char **args)
 }
 
 
-/* f _ R a s t e r _ F i l e () */
 /*ARGSUSED*/
 static int
 f_Raster_File(char **args)
@@ -2742,7 +2700,6 @@ f_Raster_File(char **args)
 }
 
 
-/* f _ P e r s p e c t i v e () */
 /*ARGSUSED*/
 static int
 f_Perspective(char **args)
@@ -2771,7 +2728,6 @@ f_Perspective(char **args)
 }
 
 
-/* f _ Q u i t () */
 /*ARGSUSED*/
 static int
 f_Quit()
@@ -2782,7 +2738,6 @@ f_Quit()
 }
 
 
-/* f _ R e d r a w () */
 /*ARGSUSED*/
 static int
 f_Redraw()
@@ -2797,14 +2752,13 @@ f_Redraw()
 }
 
 
-/* f _ G r i d _ X _ P o s () */
 /*ARGSUSED*/
 int
 f_Grid_X_Pos(char **args)
 {
     if (args != NULL && args[1] != NULL && args[2] != NULL
 	&& (sscanf(args[1], "%d", &grid_x_org) != 1
-		 || sscanf(args[2], "%d", &grid_x_fin) != 1
+	    || sscanf(args[2], "%d", &grid_x_fin) != 1
 	    )
 	)
     {
@@ -2836,14 +2790,13 @@ f_Grid_X_Pos(char **args)
 }
 
 
-/* f _ G r i d _ Y _ P o s () */
 /*ARGSUSED*/
 int
 f_Grid_Y_Pos(char **args)
 {
     if (args != NULL && args[1] != NULL && args[2] != NULL
 	&& (sscanf(args[1], "%d", &grid_y_org) != 1
-		 || sscanf(args[2], "%d", &grid_y_fin) != 1
+	    || sscanf(args[2], "%d", &grid_y_fin) != 1
 	    )
 	)
     {
@@ -2875,7 +2828,6 @@ f_Grid_Y_Pos(char **args)
 }
 
 
-/* f _ F b c l e a r () */
 /*ARGSUSED*/
 static int
 f_Fbclear()
@@ -2889,7 +2841,6 @@ f_Fbclear()
 }
 
 
-/* f _ E x e c _ S h e l l () */
 /*ARGSUSED*/
 static int
 f_Exec_Shell(char **args)
@@ -2915,14 +2866,14 @@ exec_start :
 	    if (get_Input(input_ln, BUFSIZ, "Command line : ") == NULL
 		|| (args[0] = strtok(input_ln, " \t")) == NULL
 		) {
-		if(stashed_args)
+		if (stashed_args)
 		    free(stashed_args);
 		return -1;
 	    }
 	    for (i = 1; args[i-1] != NULL; ++i)
 		args[i] = strtok((char *) NULL, " \t");
 	} else {
-	    if(stashed_args)
+	    if (stashed_args)
 		free(stashed_args);
 	    return -1;
 	}
@@ -2957,7 +2908,7 @@ exec_start :
 	}
 	(void) f_Redraw();
     }
-    if(stashed_args)
+    if (stashed_args)
 	free(stashed_args);
     return 1;
 }
@@ -3253,7 +3204,6 @@ setup_Lgts(int frame)
 }
 
 
-/* u s e r _ I n p u t () */
 void
 user_Input(char **args)
 {
@@ -3297,7 +3247,6 @@ user_Input(char **args)
 }
 
 
-/* m a k e _ S c r i p t () */
 static int
 make_Script(char *file)
 {
@@ -3413,7 +3362,6 @@ make_Script(char *file)
 }
 
 
-/* p a r s _ A r g v () */
 int
 pars_Argv(int argc, char **argv)
 {
@@ -3422,7 +3370,7 @@ pars_Argv(int argc, char **argv)
 
     /* Initialize terminal I/O. */
     if ((tty = isatty(0))) {
-	setlinebuf(stdout);
+	bu_setlinebuf(stdout);
 	InitTermCap(stdout);
 	li = LI;	/* Default window size from termcap. */
 	co = CO;
@@ -3434,20 +3382,21 @@ pars_Argv(int argc, char **argv)
 
     /* Parse options. */
     while ((c =
-	    bu_getopt(argc, argv, "A:D:I:G:K:O:S:T:X:a:b:c:d:e:f:g:i:j:k:n:o:p:s:t:v:w:x:y:z:")
+	    bu_getopt(argc, argv, "A:D:I:G:K:O:S:T:X:a:b:c:d:e:f:g:i:j:k:n:o:p:s:t:v:w:x:y:z:h?")
 	       )
 	   != EOF
 	)
     {
+    	if (bu_optopt == '?') c='h';
 	switch (c) {
+	    case 'h' :
+		return 0;
 	    default :
 		if (! user_Opt(c, bu_optarg)) {
 		    (void) printf("Failure of user_Opt(%c)", c);
 		    return 0;
 		}
 		break;
-	    case '?' :
-		return 0;
 	}
     }
     prnt_Timer("OPT");
@@ -3553,8 +3502,8 @@ key_Frame(void)
 }
 
 
-/* g e t _ I n p u t ()
-   Get a line of input.
+/*
+  Get a line of input.
 */
 char *
 get_Input(char *inbuf, int bufsz, char *msg)

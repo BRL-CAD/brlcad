@@ -1,5 +1,3 @@
-<!-- Converted by db4-upgrade version 1.0 -->
-
 <refentry xmlns="http://docbook.org/ns/docbook" version="5.0" xml:id="fracture">
 
 <refmeta>
@@ -29,7 +27,7 @@
 
   <para>Creates a new NMG shape for every face in the specified
 	<emphasis>NMG_shape</emphasis>. The new shapes will be named by adding an underscore and a number
-	to the <emphasis>prefix</emphasis>. If no <emphasis>prefix</emphasis> is specified, then the <emphasis>	NMG_shape</emphasis> name provided is used in place of the <emphasis>prefix</emphasis>.
+	to the <emphasis>prefix</emphasis>. If no <emphasis>prefix</emphasis> is specified, then the <emphasis>NMG_shape</emphasis> name provided is used in place of the <emphasis>prefix</emphasis>.
   </para>
 </refsection>
 

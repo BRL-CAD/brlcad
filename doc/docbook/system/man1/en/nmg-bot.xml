@@ -28,10 +28,10 @@
 <refsect1 xml:id='description'><title>DESCRIPTION</title>
 <para><command>nmg-bot</command>
 reads the
-<emphasis remap='I'>in_file.g</emphasis>
-and whenever an NMG solid is encountered, it is converted to the BoT solid format
+<emphasis remap='I'>in_file.g</emphasis>;
+whenever an NMG solid is encountered, it is converted to the BoT solid format
 and written to
-<emphasis remap='I'>out_file.g.</emphasis>
+<emphasis remap='I'>out_file.g</emphasis>.
 All other objects in
 <emphasis remap='I'>in_file.g</emphasis>
 are copied to
@@ -44,7 +44,7 @@ option is specified, then a message is displayed for each NMG converted to BoT f
 
 <refsect1 xml:id='example'><title>EXAMPLE</title>
 <synopsis>
-$ <emphasis remap='I'>nmg-bot  file_with_nmgs.g  file_with_BoTs.g</emphasis>
+$ nmg-bot <emphasis remap='I'>file_with_nmgs.g  file_with_BoTs.g</emphasis>
 </synopsis>
 </refsect1>
 
@@ -59,7 +59,7 @@ $ <emphasis remap='I'>nmg-bot  file_with_nmgs.g  file_with_BoTs.g</emphasis>
 </refsect1>
 
 <refsect1 xml:id='copyright'><title>COPYRIGHT</title>
-<para>This software is Copyright (c) 1998-2013 by the United States
+<para>This software is Copyright (c) 1998-2014 by the United States
 Government as represented by U.S. Army Research Laboratory.</para>
 </refsect1>
 

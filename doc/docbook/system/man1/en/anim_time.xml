@@ -22,9 +22,9 @@
     <arg choice='opt'>-f <replaceable>final_speed_relative</replaceable></arg>
     <arg choice='opt'>-m <replaceable>max_len</replaceable></arg>
     <group choice='opt'><arg choice='plain'>-v </arg><arg choice='plain'><replaceable>q</replaceable></arg></group>
-    <arg choice='plain'><replaceable>&lt;</replaceable></arg>
+    <arg choice='plain'>&lt;</arg>
     <arg choice='plain'><replaceable>in.table</replaceable></arg>
-    <arg choice='plain'><replaceable>&gt;</replaceable></arg>
+    <arg choice='plain'>&gt;</arg>
     <arg choice='plain'><replaceable>out.table</replaceable></arg>
 </cmdsynopsis>
 </refsynopsisdiv>
@@ -43,7 +43,7 @@ calculated speed of the object. Various options allow the user to
 control the assumptions on the object's initial and final speeds, and the
 form of the output.</para>
 
-<para><emphasis remap='I'>Anim_time</emphasis>
+<para><command>anim_time</command>
 is intended to be used in situations where the user knows what key points
 an object should pass through and how long the entire motion should take,
 but doesn't care exactly when the object
@@ -132,7 +132,7 @@ option is specified, the results of each iteration will be printed.</para>
 </refsect1>
 
 <refsect1 xml:id='copyright'><title>COPYRIGHT</title>
-<para>This software is Copyright (c) 1996-2013 by the United States
+<para>This software is Copyright (c) 1996-2014 by the United States
 Government as represented by U.S. Army Research Laboratory.</para>
 </refsect1>
 

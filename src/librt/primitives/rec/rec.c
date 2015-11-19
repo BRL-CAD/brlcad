@@ -1,7 +1,7 @@
 /*                           R E C . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2013 United States Government as represented by
+ * Copyright (c) 1985-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -135,14 +135,15 @@
 
 #include "common.h"
 
-#include <stdio.h>
 #include <string.h>
 #include <math.h>
 #include "bio.h"
 
 #include "vmath.h"
-#include "rtgeom.h"
+#include "rt/geom.h"
 #include "raytrace.h"
+
+#include "../../librt_private.h"
 
 
 struct rec_specific {
@@ -156,9 +157,37 @@ struct rec_specific {
     fastf_t rec_iBsq;	/* 1/MAGSQ(B) */
 };
 
+
+#ifdef USE_OPENCL
+/* largest data members first */
+struct clt_rec_specific {
+    cl_double rec_V[3];		/* Vector to center of base of cylinder */
+    cl_double rec_Hunit[3];	/* Unit H vector */
+    cl_double rec_SoR[16];	/* Scale(Rot(vect)) */
+    cl_double rec_invRoS[16];	/* invRot(Scale(vect)) */
+};
+
+size_t
+clt_rec_pack(struct bu_pool *pool, struct soltab *stp)
+{
+    struct rec_specific *rec =
+        (struct rec_specific *)stp->st_specific;
+    struct clt_rec_specific *args;
+
+    const size_t size = sizeof(*args);
+    args = (struct clt_rec_specific*)bu_pool_alloc(pool, 1, size);
+
+    VMOVE(args->rec_V, rec->rec_V);
+    VMOVE(args->rec_Hunit, rec->rec_Hunit);
+    MAT_COPY(args->rec_SoR, rec->rec_SoR);
+    MAT_COPY(args->rec_invRoS, rec->rec_invRoS);
+    return size;
+}
+
+#endif /* USE_OPENCL */
+
+
 /**
- * R E C _ B B O X
- *
  * Calculate the RPP for an REC
  */
 int
@@ -262,8 +291,6 @@ rt_rec_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struct 
 }
 
 /**
- * R E C _ P R E P
- *
  * Given a pointer to a GED database record, and a transformation matrix,
  * determine if this is a valid REC,
  * and if so, precompute various terms of the formulas.
@@ -343,7 +370,7 @@ rt_rec_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     stp->st_meth = &OBJ[ID_REC];
 
     BU_GET(rec, struct rec_specific);
-    stp->st_specific = (genptr_t)rec;
+    stp->st_specific = (void *)rec;
 
     VMOVE(rec->rec_Hunit, tip->h);
     VUNITIZE(rec->rec_Hunit);
@@ -400,9 +427,6 @@ rt_rec_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 }
 
 
-/**
- * R E C _ P R I N T
- */
 void
 rt_rec_print(const struct soltab *stp)
 {
@@ -423,8 +447,6 @@ rt_rec_print(const struct soltab *stp)
 
 
 /**
- * R E C _ S H O T
- *
  * Intersect a ray with a right elliptical cylinder,
  * where all constant terms have
  * been precomputed by rt_rec_prep().  If an intersection occurs,
@@ -469,7 +491,7 @@ rt_rec_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct 
 
 	VJOIN1(hitp->hit_vpriv, pprime, k1, dprime);	/* hit' */
 	if (hitp->hit_vpriv[X] * hitp->hit_vpriv[X] +
-	    hitp->hit_vpriv[Y] * hitp->hit_vpriv[Y] < (1.0 + SMALL_FASTF)) {
+	    hitp->hit_vpriv[Y] * hitp->hit_vpriv[Y] - 1.0 < SMALL_FASTF) {
 	    hitp->hit_magic = RT_HIT_MAGIC;
 	    hitp->hit_dist = k1;
 	    hitp->hit_surfno = REC_NORM_BOT;	/* -H */
@@ -478,7 +500,7 @@ rt_rec_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct 
 
 	VJOIN1(hitp->hit_vpriv, pprime, k2, dprime);	/* hit' */
 	if (hitp->hit_vpriv[X] * hitp->hit_vpriv[X] +
-	    hitp->hit_vpriv[Y] * hitp->hit_vpriv[Y] < (1.0 + SMALL_FASTF)) {
+	    hitp->hit_vpriv[Y] * hitp->hit_vpriv[Y] - 1.0 < SMALL_FASTF) {
 	    hitp->hit_magic = RT_HIT_MAGIC;
 	    hitp->hit_dist = k2;
 	    hitp->hit_surfno = REC_NORM_TOP;	/* +H */
@@ -491,39 +513,39 @@ rt_rec_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct 
      */
     if (nhits != 2) {
 	fastf_t b;		/* coeff of polynomial */
-	fastf_t descriminant;		/* root of radical, the descriminant */
+	fastf_t discriminant;		/* root of radical, the discriminant */
 	fastf_t dx2dy2;
 
 	dx2dy2 = 1 / (dprime[X]*dprime[X] + dprime[Y]*dprime[Y]);
 	b = 2 * (dprime[X]*pprime[X] + dprime[Y]*pprime[Y]) * dx2dy2;
-	descriminant = b*b - 4 * dx2dy2 * (pprime[X]*pprime[X] + pprime[Y]*pprime[Y] - 1);
+	discriminant = b*b - 4 * dx2dy2 * (pprime[X]*pprime[X] + pprime[Y]*pprime[Y] - 1);
 
 	/* might want compare against tol_dist here? */
 
-	if (NEAR_ZERO(descriminant, SMALL_FASTF)) {
-	    /* if the descriminant is zero, it's a double-root grazer */
+	if (NEAR_ZERO(discriminant, SMALL_FASTF)) {
+	    /* if the discriminant is zero, it's a double-root grazer */
 	    k1 = -b * 0.5;
 	    VJOIN1(hitp->hit_vpriv, pprime, k1, dprime); /* hit' */
-	    if (hitp->hit_vpriv[Z] > -SMALL_FASTF && hitp->hit_vpriv[Z] < (1.0 + SMALL_FASTF)) {
+	    if (hitp->hit_vpriv[Z] > -SMALL_FASTF && hitp->hit_vpriv[Z] - 1.0 < SMALL_FASTF) {
 		hitp->hit_magic = RT_HIT_MAGIC;
 		hitp->hit_dist = k1;
 		hitp->hit_surfno = REC_NORM_BODY; /* compute N */
 		hitp++; nhits++;
 	    }
 
-	} else if (descriminant > SMALL_FASTF) {
-	    /* if the descriminant is positive, there are two roots */
+	} else if (discriminant > SMALL_FASTF) {
+	    /* if the discriminant is positive, there are two roots */
 
-	    descriminant = sqrt(descriminant);
-	    k1 = (-b+descriminant) * 0.5;
-	    k2 = (-b-descriminant) * 0.5;
+	    discriminant = sqrt(discriminant);
+	    k1 = (-b+discriminant) * 0.5;
+	    k2 = (-b-discriminant) * 0.5;
 
 	    /*
 	     * k1 and k2 are potential solutions to intersection with side.
 	     * See if they fall in range.
 	     */
 	    VJOIN1(hitp->hit_vpriv, pprime, k1, dprime); /* hit' */
-	    if (hitp->hit_vpriv[Z] > -SMALL_FASTF && hitp->hit_vpriv[Z] < (1.0 + SMALL_FASTF)) {
+	    if (hitp->hit_vpriv[Z] > -SMALL_FASTF && hitp->hit_vpriv[Z] - 1.0 < SMALL_FASTF) {
 		hitp->hit_magic = RT_HIT_MAGIC;
 		hitp->hit_dist = k1;
 		hitp->hit_surfno = REC_NORM_BODY; /* compute N */
@@ -531,7 +553,7 @@ rt_rec_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct 
 	    }
 
 	    VJOIN1(hitp->hit_vpriv, pprime, k2, dprime); /* hit' */
-	    if (hitp->hit_vpriv[Z] > -SMALL_FASTF && hitp->hit_vpriv[Z] < (1.0 + SMALL_FASTF)) {
+	    if (hitp->hit_vpriv[Z] > -SMALL_FASTF && hitp->hit_vpriv[Z] - 1.0 < SMALL_FASTF) {
 		hitp->hit_magic = RT_HIT_MAGIC;
 		hitp->hit_dist = k2;
 		hitp->hit_surfno = REC_NORM_BODY; /* compute N */
@@ -637,8 +659,6 @@ rt_rec_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct 
 
 #define RT_REC_SEG_MISS(SEG)		(SEG).seg_stp=(struct soltab *) 0;
 /**
- * R E C _ V S H O T
- *
  * This is the Becker vector version
  */
 void
@@ -661,6 +681,10 @@ rt_rec_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, str
     fastf_t root;		/* root of radical */
     fastf_t dx2dy2;
 
+    /* FIXME: this vectorized version logic is now substantially out
+     * of sync with the non-vectorized implementation.
+     */
+
     if (ap) RT_CK_APPLICATION(ap);
 
     /* for each ray/right_elliptical_cylinder pair */
@@ -681,8 +705,9 @@ rt_rec_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, str
 	/* Find roots of eqn, using formula for quadratic w/ a=1 */
 	b = 2 * (dprime[X]*pprime[X] + dprime[Y]*pprime[Y]) *
 	    (dx2dy2 = 1 / (dprime[X]*dprime[X] + dprime[Y]*dprime[Y]));
-	if ((root = b*b - 4 * dx2dy2 *
-	     (pprime[X]*pprime[X] + pprime[Y]*pprime[Y] - 1)) <= 0)
+	root = b*b - 4 * dx2dy2 *
+	    (pprime[X]*pprime[X] + pprime[Y]*pprime[Y] - 1);
+	if (root < SMALL_FASTF)
 	    goto check_plates;
 
 	root = sqrt(root);
@@ -761,8 +786,6 @@ rt_rec_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, str
 
 
 /**
- * R E C _ N O R M
- *
  * Given ONE ray distance, return the normal and entry/exit point.
  * hit_surfno is a flag indicating if normal needs to be computed or not.
  */
@@ -795,8 +818,6 @@ rt_rec_norm(struct hit *hitp, struct soltab *stp, struct xray *rp)
 
 
 /**
- * R E C _ C U R V E
- *
  * Return the "curvature" of the cylinder.  If an endplate,
  * pick a principle direction orthogonal to the normal, and
  * indicate no curvature.  Otherwise, compute curvature.
@@ -836,8 +857,6 @@ rt_rec_curve(struct curvature *cvp, struct hit *hitp, struct soltab *stp)
 
 
 /**
- * R E C _ U V
- *
  * For a hit on the surface of an REC, return the (u, v) coordinates
  * of the hit point, 0 <= u, v <= 1.
  *
@@ -871,7 +890,7 @@ rt_rec_uv(struct application *ap, struct soltab *stp, struct hit *hitp, struct u
 		ratio = 1.0;
 	    if (ratio < -1.0)
 		ratio = -1.0;
-	    uvp->uv_u = acos(ratio) * bn_inv2pi;
+	    uvp->uv_u = acos(ratio) * M_1_2PI;
 	    uvp->uv_v = pprime[Z];		/* height */
 	    break;
 	case REC_NORM_TOP:
@@ -882,7 +901,7 @@ rt_rec_uv(struct application *ap, struct soltab *stp, struct hit *hitp, struct u
 		ratio = 1.0;
 	    if (ratio < -1.0)
 		ratio = -1.0;
-	    uvp->uv_u = acos(ratio) * bn_inv2pi;
+	    uvp->uv_u = acos(ratio) * M_1_2PI;
 	    uvp->uv_v = len;		/* rim v = 1 */
 	    break;
 	case REC_NORM_BOT:
@@ -893,7 +912,7 @@ rt_rec_uv(struct application *ap, struct soltab *stp, struct hit *hitp, struct u
 		ratio = 1.0;
 	    if (ratio < -1.0)
 		ratio = -1.0;
-	    uvp->uv_u = acos(ratio) * bn_inv2pi;
+	    uvp->uv_u = acos(ratio) * M_1_2PI;
 	    uvp->uv_v = 1 - len;	/* rim v = 0 */
 	    break;
     }
@@ -911,10 +930,6 @@ rt_rec_uv(struct application *ap, struct soltab *stp, struct hit *hitp, struct u
 }
 
 
-/**
- * R T _ R E C _ P A R A M S
- *
- */
 int
 rt_rec_params(struct pc_pc_set *UNUSED(ps), const struct rt_db_internal *ip)
 {
@@ -924,9 +939,6 @@ rt_rec_params(struct pc_pc_set *UNUSED(ps), const struct rt_db_internal *ip)
 }
 
 
-/**
- * R E C _ F R E E
- */
 void
 rt_rec_free(struct soltab *stp)
 {
@@ -934,13 +946,6 @@ rt_rec_free(struct soltab *stp)
 	(struct rec_specific *)stp->st_specific;
 
     BU_PUT(rec, struct rec_specific);
-}
-
-
-int
-rt_rec_class(void)
-{
-    return 0;
 }
 
 

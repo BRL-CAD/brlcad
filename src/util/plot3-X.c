@@ -1,7 +1,7 @@
 /*                       P L O T 3 - X . C
  * BRL-CAD
  *
- * Copyright (c) 1988-2013 United States Government as represented by
+ * Copyright (c) 1988-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -33,9 +33,9 @@
 #endif
 #include "bio.h"
 
-#include "dm.h" /* for dm_applicationfocus() */
-#include "bu.h"
-
+#include "bu/cv.h"
+#include "bu/log.h"
+#include "bu/str.h"
 
 #define TBAD	0	/* no such command */
 #define TNONE	1	/* no arguments */
@@ -262,7 +262,9 @@ xsetup(int argc, char **argv)
 
     if ((envp = getenv("DISPLAY")) == NULL) {
 	/* Env not set, use local host */
-	gethostname(hostname, 80);
+	if (gethostname(hostname, 80) != 0) {
+	    bu_exit(2, "plot3-X: Can't get hostname.\n");
+	}
 	snprintf(display, 81, "%s:0", hostname);
 	envp = display;
     }
@@ -331,8 +333,6 @@ xsetup(int argc, char **argv)
 	}
     }
     XSetInputFocus(dpy, win, RevertToNone, CurrentTime);
-
-    dm_applicationfocus();
 }
 
 

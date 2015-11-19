@@ -1,7 +1,7 @@
 /*                         L O A D . C
  * BRL-CAD / ADRT
  *
- * Copyright (c) 2007-2013 United States Government as represented by
+ * Copyright (c) 2007-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -30,7 +30,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "tie.h"
+#include "rt/tie.h"
 #include "load.h"
 
 uint32_t slave_load_mesh_num;

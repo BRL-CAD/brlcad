@@ -1,7 +1,7 @@
 /*                 P U L L B A C K C U R V E . H
  * BRL-CAD
  *
- * Copyright (c) 2009-2013 United States Government as represented by
+ * Copyright (c) 2009-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -45,9 +45,14 @@
  *
  */
 
-#ifndef PULLBACK_CURVE
-#define PULLBACK_CURVE
+#ifndef LIBBREP_PULLBACKCURVE_H
+#define LIBBREP_PULLBACKCURVE_H
 
+#include "common.h"
+
+/* library headers */
+#include "bio.h" /* needed to include windows.h with protections */
+#define ON_NO_WINDOWS 1 /* don't let opennurbs include windows.h */
 #include "opennurbs.h"
 
 
@@ -55,10 +60,6 @@ namespace brlcad {
     class SurfaceTree;
 }
 
-
-/**
- * p u l l b a c k _ c u r v e
- */
 
 enum seam_direction {
     NORTH_SEAM,
@@ -68,27 +69,16 @@ enum seam_direction {
     UNKNOWN_SEAM_DIRECTION
 };
 
+
 #define PBC_TOL 0.000001
 #define PBC_FROM_OFFSET 0.001
-#define PBC_SEAM_TOL 0.01
+#define PBC_SEAM_TOL 0.001
 
 extern enum seam_direction seam_direction(ON_2dPoint uv1, ON_2dPoint uv2);
 
 extern ON_Curve*
 refit_edge(const ON_BrepEdge* edge,
 	   double tolerance);
-
-extern ON_Curve*
-test1_pullback_curve(const brlcad::SurfaceTree* surfacetree,
-		     const ON_Curve* curve,
-		     double tolerance = 1.0e-6,
-		     double flatness = 1.0e-3);
-
-extern ON_Curve*
-test2_pullback_curve(const brlcad::SurfaceTree* surfacetree,
-		     const ON_Curve* curve,
-		     double tolerance = 1.0e-6,
-		     double flatness = 1.0e-3);
 
 extern int
 check_pullback_seam_bridge(const ON_Surface *surf, const ON_2dPoint &p1, const ON_2dPoint &p2);
@@ -107,7 +97,7 @@ pullback_seam_curve(enum seam_direction seam_dir,
 		    double flatness = 1.0e-3);
 
 extern bool
-toUV(brlcad::SurfaceTree *surftree, const ON_Curve *curve,  ON_2dPoint& out_pt, double t, double knudge);
+toUV(brlcad::SurfaceTree *surftree, const ON_Curve *curve,  ON_2dPoint& out_pt, double t, double knudge, double within_distance_tol);
 
 #endif
 

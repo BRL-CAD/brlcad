@@ -1,7 +1,7 @@
 /*                     S E M A P H O R E . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2013 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -21,21 +21,14 @@
 #include "common.h"
 
 #include <stdlib.h>
-#include <stdio.h>
+#include <string.h>
 #include <ctype.h>
 #include <math.h>
 
 #include "bio.h"
-#include "bu.h"
-
-
-#if defined(_WIN32) && !defined(__CYGWIN__)
-struct bu_semaphores {
-    uint32_t magic;
-    HANDLE m;
-};
-# define DEFINED_BU_SEMAPHORES 1
-#endif
+#include "bu/log.h"
+#include "bu/malloc.h"
+#include "bu/parallel.h"
 
 /*
  * multithreading support for SunOS 5.X / Solaris 2.x
@@ -44,52 +37,71 @@ struct bu_semaphores {
 #	include <sys/unistd.h>
 #	include <thread.h>
 #	include <synch.h>
+#	define SEMAPHORE_INIT DEFAULTMUTEX
 struct bu_semaphores {
     uint32_t magic;
     mutex_t mu;
 };
-# define DEFINED_BU_SEMAPHORES 1
-#endif	/* SUNOS */
+
+static mutext_t bu_init_lock = SEMAPHORE_INIT;
+#	define DEFINED_BU_SEMAPHORES 1
 
 /*
  * multithread support built on POSIX Threads (pthread) library.
  */
-#ifdef HAVE_PTHREAD_H
+#elif defined(HAVE_PTHREAD_H)
 #	include <pthread.h>
+#	define SEMAPHORE_INIT PTHREAD_MUTEX_INITIALIZER
 struct bu_semaphores {
     uint32_t magic;
     pthread_mutex_t mu;
 };
+
+static pthread_mutex_t bu_init_lock = SEMAPHORE_INIT;
+#	define DEFINED_BU_SEMAPHORES 1
+
+/*
+ * multithread support based on the Windows kernel.
+ */
+#elif defined(_WIN32) && !defined(__CYGWIN__)
+#	define SEMAPHORE_INIT {0}
+struct bu_semaphores {
+    uint32_t magic;
+    CRITICAL_SECTION mu;
+};
+
+static uint32_t bu_init_lock = 0;
 #	define DEFINED_BU_SEMAPHORES 1
 #endif
 
-
-#define BU_SEMAPHORE_MAGIC 0x62757365
+#define SEMAPHORE_MAGIC 0x62757365
+#define SEMAPHORE_MAX 1024
 
 
 #if defined(PARALLEL) || defined(DEFINED_BU_SEMAPHORES)
 static unsigned int bu_nsemaphores = 0;
-static struct bu_semaphores *bu_semaphores = (struct bu_semaphores *)NULL;
+static struct bu_semaphores bu_semaphores[SEMAPHORE_MAX] = {{0, SEMAPHORE_INIT}};
 #endif
 
 
 void
 bu_semaphore_init(unsigned int nsemaphores)
 {
-    unsigned int i;
-
-    if (nsemaphores <= 0)
-	nsemaphores = i = 1;
-
 #if !defined(PARALLEL) && !defined(DEFINED_BU_SEMAPHORES)
-    return;					/* No support on this hardware */
+    if (nsemaphores) /* quellage */
+	return;
+    return; /* No support on this hardware */
 #else
 
-    if (bu_nsemaphores != 0)  return;	/* Already called */
-    bu_semaphores = (struct bu_semaphores *)calloc(nsemaphores, sizeof(struct bu_semaphores));
-    if (UNLIKELY(!bu_semaphores)) {
-	fprintf(stderr, "bu_semaphore_init(): could not allocate space for %d semaphores of len %ld\n",
-		nsemaphores, (long)sizeof(struct bu_semaphores));
+    unsigned int i;
+
+    if (nsemaphores < 1)
+	nsemaphores = 1;
+    else if (nsemaphores <= bu_nsemaphores)
+	return;	/* Already initialized */
+    else if (UNLIKELY(nsemaphores > SEMAPHORE_MAX)) {
+	fprintf(stderr, "bu_semaphore_init(): could not initialize %d semaphores, max is %d\n",
+		nsemaphores, SEMAPHORE_MAX);
 	exit(2); /* cannot call bu_exit() here */
     }
 
@@ -97,69 +109,88 @@ bu_semaphore_init(unsigned int nsemaphores)
      * Begin vendor-specific initialization sections.
      */
 
-#	ifdef SUNOS
-    for (i=0; i < nsemaphores; i++) {
-	bu_semaphores[i].magic = BU_SEMAPHORE_MAGIC;
+#	if defined(SUNOS)
+    if (mutex_lock(&bu_init_lock)) {
+	fprintf(stderr, "bu_semaphore_acquire(): mutex_lock() failed on init lock\n");
+	bu_bomb("fatal semaphore acquisition failure");
+    }
+    for (i=bu_nsemaphores; i < nsemaphores; i++) {
+	memset(&bu_semaphores[i], 0, sizeof(struct bu_semaphores));
+	bu_semaphores[i].magic = SEMAPHORE_MAGIC;
 	if (mutex_init(&bu_semaphores[i].mu, USYNC_THREAD, NULL)) {
-	    fprintf(stderr, "bu_semaphore_init(): mutex_init() failed on [%d]\n", i);
-	    bu_bomb("fatal semaphore acquisition failure");
-	}
-
-    }
-#	endif
-#	if defined(HAVE_PTHREAD_H)
-    for (i=0; i < nsemaphores; i++) {
-	bu_semaphores[i].magic = BU_SEMAPHORE_MAGIC;
-	if (pthread_mutex_init(&bu_semaphores[i].mu,  NULL)) {
-	    fprintf(stderr, "bu_semaphore_init(): pthread_mutex_init() failed on [%d]\n", i);
+	    fprintf(stderr, "bu_semaphore_init(): mutex_init() failed on [%d] of [%d]\n", i+1, nsemaphores - bu_nsemaphores);
 	    bu_bomb("fatal semaphore acquisition failure");
 	}
     }
-#	endif
-
-#	if defined(_WIN32) && !defined(__CYGWIN__)
-    for (i=0; i < nsemaphores; i++) {
-	bu_semaphores[i].magic = BU_SEMAPHORE_MAGIC;
-	bu_semaphores[i].m = CreateMutex(NULL, FALSE, NULL);
-	if (bu_semaphores[i].m == NULL) {
-	    fprintf(stderr, "bu_semaphore_init(): CreateMutex() failed on [%d]\n", i);
-	    bu_bomb("fatal semaphore acquisition failure");
-	}
-    }
-#	endif
-
-    /*
-     * This should be last thing done before returning, so that
-     * any subroutines called (e.g. bu_calloc()) won't think that
-     * parallel operation has begun yet, and do acquire/release.
-     */
     bu_nsemaphores = nsemaphores;
+    if (mutex_unlock(&bu_init_lock)) {
+	fprintf(stderr, "bu_semaphore_acquire(): mutex_unlock() failed on init lock\n");
+	bu_bomb("fatal semaphore acquisition failure");
+    }
+#	elif defined(HAVE_PTHREAD_H)
+    if (pthread_mutex_lock(&bu_init_lock)) {
+	fprintf(stderr, "bu_semaphore_acquire(): pthread_mutex_lock() failed on init lock\n");
+	bu_bomb("fatal semaphore acquisition failure");
+    }
+    for (i=bu_nsemaphores; i < nsemaphores; i++) {
+	memset(&bu_semaphores[i], 0, sizeof(struct bu_semaphores));
+	bu_semaphores[i].magic = SEMAPHORE_MAGIC;
+	if (pthread_mutex_init(&bu_semaphores[i].mu,  NULL)) {
+	    fprintf(stderr, "bu_semaphore_init(): pthread_mutex_init() failed on [%d] of [%d]\n", i+1, nsemaphores - bu_nsemaphores);
+	    bu_bomb("fatal semaphore acquisition failure");
+	}
+    }
+    bu_nsemaphores = nsemaphores;
+    if (pthread_mutex_unlock(&bu_init_lock)) {
+	fprintf(stderr, "bu_semaphore_acquire(): pthread_mutex_unlock() failed on init lock\n");
+	bu_bomb("fatal semaphore acquisition failure");
+    }
+#	elif defined(_WIN32) && !defined(__CYGWIN__)
+    while (InterlockedCompareExchange(&bu_init_lock, 1, 0));
+    for (i=bu_nsemaphores; i < nsemaphores; i++) {
+	memset(&bu_semaphores[i], 0, sizeof(struct bu_semaphores));
+	bu_semaphores[i].magic = SEMAPHORE_MAGIC;
+	/* This cannot fail except for very low memory situations in XP. */
+	InitializeCriticalSection(&bu_semaphores[i].mu);
+    }
+    bu_init_lock = 0;
+#	endif
 #endif	/* PARALLEL */
 }
 
 
 void
-bu_semaphore_free() {
-    if (bu_semaphores) {
-	free(bu_semaphores);
-	bu_semaphores = (struct bu_semaphores *)NULL;
-	bu_nsemaphores = 0;
-    }
-}
-
-
-void
-bu_semaphore_reinit(unsigned int nsemaphores)
+bu_semaphore_free(void)
 {
-    if (nsemaphores <= 0)
-	nsemaphores = 1;
 
 #if !defined(PARALLEL) && !defined(DEFINED_BU_SEMAPHORES)
     return;					/* No support on this hardware */
 #else
 
-    bu_semaphore_free();
-    bu_semaphore_init(nsemaphores);
+    unsigned int i;
+
+    /* Close out the mutexes already created. */
+#	if defined(SUNOS)
+    for (i = 0; i < bu_nsemaphores; i++) {
+	if (mutex_destroy(&bu_semaphores[i].mu)) {
+	    fprintf(stderr, "bu_semaphore_free(): mutex_destroy() failed on [%d] of [%d]\n", i+1, bu_nsemaphores);
+	}
+    }
+
+#	elif defined(HAVE_PTHREAD_H)
+    for (i = 0; i < bu_nsemaphores; i++) {
+	if (pthread_mutex_destroy(&bu_semaphores[i].mu)) {
+	    fprintf(stderr, "bu_semaphore_free(): pthread_mutex_destroy() failed on [%d] of [%d]\n", i+1, bu_nsemaphores);
+	}
+    }
+
+#	elif defined(_WIN32) && !defined(__CYGWIN__)
+    for (i = 0; i < bu_nsemaphores; i++) {
+	DeleteCriticalSection(&bu_semaphores[i].mu);
+    }
+#	endif
+
+    bu_nsemaphores = 0;
 #endif	/* PARALLEL */
 }
 
@@ -168,23 +199,14 @@ void
 bu_semaphore_acquire(unsigned int i)
 {
 #if !defined(PARALLEL) && !defined(DEFINED_BU_SEMAPHORES)
-    i = i; /* quellage */
+    if (i) /* quellage */
+	return;
     return;					/* No support on this hardware */
 #else
-    if (bu_semaphores == NULL) {
-	/* Semaphores not initialized yet.  Must be non-parallel */
-	return;
-    }
 
-    BU_CKMAG(bu_semaphores, BU_SEMAPHORE_MAGIC, "bu_semaphore");
-
-    if (i >= bu_nsemaphores) {
-	fprintf(stderr, "bu_semaphore_acquire(%d): semaphore # exceeds max of %d\n",
-		i, bu_nsemaphores - 1);
-	bu_bomb("fatal semaphore acquisition failure");
-    }
-
-    BU_CKMAG(&bu_semaphores[i], BU_SEMAPHORE_MAGIC, "bu_semaphore");
+    /* ensure we have this semaphore */
+    bu_semaphore_init(i+1);
+    BU_CKMAG(&bu_semaphores[i], SEMAPHORE_MAGIC, "bu_semaphore");
 
     /*
      * Begin vendor-specific initialization sections.
@@ -203,10 +225,8 @@ bu_semaphore_acquire(unsigned int i)
     }
 #	endif
 #	if defined(_WIN32) && !defined(__CYGWIN__)
-    if (WaitForSingleObject(bu_semaphores[i].m, INFINITE) == WAIT_FAILED) {
-	fprintf(stderr, "bu_semaphore_acquire(): WaitForSingleObject() failed on [%d]\n", i);
-	bu_bomb("fatal semaphore acquisition failure");
-    }
+    /* This only fails if the timeout exceeds 30 days. */
+    EnterCriticalSection(&bu_semaphores[i].mu);
 #	endif
 
 #endif
@@ -217,23 +237,14 @@ void
 bu_semaphore_release(unsigned int i)
 {
 #if !defined(PARALLEL) && !defined(DEFINED_BU_SEMAPHORES)
-    i = i; /* quellage */
+    if (i) /* quellage */
+	return;
     return;					/* No support on this hardware */
 #else
-    if (bu_semaphores == NULL) {
-	/* Semaphores not initialized yet.  Must be non-parallel */
-	return;
-    }
 
-    BU_CKMAG(bu_semaphores, BU_SEMAPHORE_MAGIC, "bu_semaphore");
-
-    if (i >= bu_nsemaphores) {
-	fprintf(stderr, "bu_semaphore_release(%d): semaphore # exceeds max of %d\n",
-		i, bu_nsemaphores - 1);
-	exit(3); /* cannot call bu_exit() here */
-    }
-
-    BU_CKMAG(&bu_semaphores[i], BU_SEMAPHORE_MAGIC, "bu_semaphore");
+    /* ensure we have this semaphore */
+    bu_semaphore_init(i+1);
+    BU_CKMAG(&bu_semaphores[i], SEMAPHORE_MAGIC, "bu_semaphore");
 
     /*
      * Begin vendor-specific initialization sections.
@@ -253,10 +264,7 @@ bu_semaphore_release(unsigned int i)
 #	endif
 
 #	if defined(_WIN32) && !defined(__CYGWIN__)
-    if (!ReleaseMutex(bu_semaphores[i].m)) {
-	fprintf(stderr, "bu_semaphore_acquire(): ReleaseMutex() failed on [%d]\n", i);
-	bu_bomb("fatal semaphore acquisition failure");
-    }
+    LeaveCriticalSection(&bu_semaphores[i].mu);
 #	endif
 #endif
 }

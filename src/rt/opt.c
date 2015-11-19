@@ -1,7 +1,7 @@
 /*                           O P T . C
  * BRL-CAD
  *
- * Copyright (c) 1989-2013 United States Government as represented by
+ * Copyright (c) 1989-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -31,6 +31,10 @@
 #include <math.h>
 #include <string.h>
 
+#include "bu/debug.h"
+#include "bu/getopt.h"
+#include "bu/parallel.h"
+#include "bu/units.h"
 #include "vmath.h"
 #include "raytrace.h"
 #include "fb.h"
@@ -92,10 +96,11 @@ size_t		incr_level = 0;		/* current incremental level */
 size_t		incr_nlevel = 0;	/* number of levels */
 size_t          full_incr_sample = 0;    /* current fully incremental sample */
 size_t          full_incr_nsamples = 0;  /* number of samples in the fully incremental mode */
-int		npsw = 1;		/* number of worker PSWs to run */
+size_t		npsw = 1;		/* number of worker PSWs to run */
 struct resource	resource[MAX_PSW];	/* memory resources */
 int		transpose_grid = 0;     /* reverse the order of grid traversal */
 int             random_mode = 0;        /* Mode to shoot rays at random directions */
+int		opencl_mode = 0;	/* enable/disable OpenCL */
 /***** end variables shared with worker() *****/
 
 /***** Photon Mapping Variables *****/
@@ -139,7 +144,7 @@ int		use_air = 0;		/* whether librt should handle air */
 
 /***** variables shared with view.c *****/
 fastf_t		frame_delta_t = (fastf_t)(1.0/30.0); /* 1.0 / frames_per_second_playback */
-double		airdensity;    /* is the scene hazy (we shade the void space */
+double		airdensity;    /* is the scene hazy (we shade the void space) */
 double		haze[3] = { 0.8, 0.9, 0.99 };	      /* color of the haze */
 int             do_kut_plane = 0;
 plane_t         kut_plane;
@@ -157,6 +162,7 @@ fastf_t		rt_perp_tol = (fastf_t)0.0;	/* Value for rti_tol.perp */
 char		*framebuffer = (char *)NULL;		/* desired framebuffer */
 
 int		space_partition = 	/*space partitioning algorithm to use*/
+/* Do NOT insert value above for space_partition ; it's taken care of below. */
 
 /* TODO: need a run-time mechanism for toggling spatial partitioning
  * methods.  Use this compile-time switch to toggle between different
@@ -178,9 +184,6 @@ double		nu_gfactor = RT_NU_GFACTOR_DEFAULT;
 
 extern struct command_tab	rt_cmdtab[];
 
-/*
- *			G E T _ A R G S
- */
 int
 get_args(int argc, const char *argv[])
 {
@@ -192,9 +195,11 @@ get_args(int argc, const char *argv[])
 
 
 #define GETOPT_STR	\
-	".:,:@:a:b:c:d:e:f:g:h:ij:k:l:n:o:p:q:rs:tu:v:w:x:A:BC:D:E:F:G:H:IJ:K:MN:O:P:Q:RST:U:V:WX:!:+:"
+	".:,:@:a:b:c:d:e:f:g:m:ij:k:l:n:o:p:q:rs:tu:v:w:x:z:A:BC:D:E:F:G:H:IJ:K:MN:O:P:Q:RST:U:V:WX:!:+:h?"
 
     while ( (c=bu_getopt( argc, (char * const *)argv, GETOPT_STR )) != -1 )  {
+    	if (bu_optopt == '?')
+    	    c = 'h';
 	switch ( c )  {
 	    case 'q':
 		i = atoi(bu_optarg);
@@ -207,7 +212,7 @@ get_args(int argc, const char *argv[])
 		}
 		bn_randhalftabsize = i;
 		break;
-	    case 'h':
+	    case 'm':
 		i = sscanf(bu_optarg, "%lg,%lg,%lg,%lg",
 			   &airdensity, &haze[X], &haze[Y], &haze[Z]);
 		break;
@@ -248,14 +253,14 @@ get_args(int argc, const char *argv[])
 
 		do_kut_plane = 1;
 		i = sscanf(bu_optarg, "%lg,%lg,%lg,%lg", &scan[0], &scan[1], &scan[2], &scan[3]);
-		if( i != 4 ) {
+		if ( i != 4 ) {
 		    bu_exit( EXIT_FAILURE, "ERROR: bad cutting plane\n" );
 		}
 		HMOVE(kut_plane, scan); /* double to fastf_t */
 
 		/* verify that normal has unit length */
 		f = MAGNITUDE( kut_plane );
-		if( f <= SMALL ) {
+		if ( f <= SMALL ) {
 		    bu_exit( EXIT_FAILURE, "Bad normal for cutting plane, length=%g\n", f );
 		}
 		f = 1.0 /f;
@@ -277,7 +282,6 @@ get_args(int argc, const char *argv[])
 		break;
 	    case 'C':
 	    {
-		char		buf[128];
 		int		r, g, b;
 		register char	*cp = bu_optarg;
 
@@ -307,10 +311,11 @@ get_args(int argc, const char *argv[])
 		else
 		    background[2] = b / 255.0;
 #else
-		sprintf(buf, "set background=%f/%f/%f",
-			r/255., g/255., b/255. );
-		(void)rt_do_cmd( (struct rt_i *)0, buf,
-				 rt_cmdtab );
+		{
+		    char buf[128] = {0};
+		    sprintf(buf, "set background=%f/%f/%f", r/255.0, g/255.0, b/255.0);
+		    (void)rt_do_cmd((struct rt_i *)0, buf, rt_cmdtab);
+		}
 #endif
 	    }
 	    break;
@@ -477,7 +482,7 @@ get_args(int argc, const char *argv[])
 		break;
 	    case 'p':
 		rt_perspective = atof( bu_optarg );
-		if ( rt_perspective < 0 || rt_perspective > 179 ) {
+		if ( rt_perspective < 0 || rt_perspective >= 180 ) {
 		    fprintf(stderr, "persp=%g out of range\n", rt_perspective);
 		    rt_perspective = 0;
 		}
@@ -510,26 +515,26 @@ get_args(int argc, const char *argv[])
 	    case 'P':
 	    {
 		/* Number of parallel workers */
-		int avail_cpus;
+		size_t avail_cpus;
 
 		avail_cpus = bu_avail_cpus();
 
 		npsw = atoi( bu_optarg );
 
 		if (npsw > avail_cpus ) {
-		    fprintf( stderr, "Requesting %d cpus, only %d available.",
-			     npsw, avail_cpus );
+		    fprintf( stderr, "Requesting %lu cpus, only %lu available.",
+			     (unsigned long)npsw, (unsigned long)avail_cpus );
 
 		    if ((bu_debug & BU_DEBUG_PARALLEL) ||
 			(RT_G_DEBUG & DEBUG_PARALLEL)) {
 			fprintf(stderr, "\nAllowing surplus cpus due to debug flag.\n");
 		    } else {
-			fprintf( stderr, "  Will use %d.\n", avail_cpus );
+			fprintf( stderr, "  Will use %lu.\n", (unsigned long)avail_cpus );
 			npsw = avail_cpus;
 		    }
 		}
-		if ( npsw == 0 || npsw < -MAX_PSW || npsw > MAX_PSW )  {
-		    fprintf(stderr, "Numer of requested cpus (%d) is out of range 1..%d", npsw, MAX_PSW);
+		if ( npsw < 1 || npsw > MAX_PSW )  {
+		    fprintf(stderr, "Numer of requested cpus (%lu) is out of range 1..%d", (unsigned long)npsw, MAX_PSW);
 
 		    if ((bu_debug & BU_DEBUG_PARALLEL) ||
 			(RT_G_DEBUG & DEBUG_PARALLEL)) {
@@ -553,21 +558,23 @@ get_args(int argc, const char *argv[])
 		bn_mathtab_constant();
 		break;
 	    case 'b':
-		/* Specify a single pixel to be done */
+		/* Specify a single pixel to be done; X and Y pixel coordinates need enclosing quotes. */
 		/* Actually processed in do_frame() */
 		string_pix_start = bu_optarg;
 		npsw = 1;	/* Cancel running in parallel */
 		break;
 	    case 'f':
-		/* set expected playback rate in frames-per-second.
-		 * This actually gets stored as the delta-t per frame.
+		/* input expected playback rate in frames-per-second;
+		 * actually stored as the delta-t per frame
 		 */
 		frame_delta_t = atof(bu_optarg);
 		if (ZERO(frame_delta_t)) {
-		    fprintf(stderr, "Invalid frames/sec (%s) == 0.0\n",
+		    fprintf(stderr, "Invalid frames/sec (%s) == 0.0; set to default\n",
 			    bu_optarg);
 		    frame_delta_t = 30.0;
 		}
+		/* now convert to delta-t per frame
+		 */
 		frame_delta_t = 1.0 / frame_delta_t;
 		break;
 	    case 'V':
@@ -603,6 +610,9 @@ get_args(int argc, const char *argv[])
 	    case 'd':
 		rpt_dist = atoi( bu_optarg );
 		break;
+	    case 'z':
+		opencl_mode = atoi( bu_optarg );
+		break;
 	    case '+':
 	    {
 		register char	*cp = bu_optarg;
@@ -616,8 +626,9 @@ get_args(int argc, const char *argv[])
 		}
 	    }
 	    break;
-	    default:		/* '?' */
-		fprintf(stderr, "ERROR: bad option specified\n");
+	    default:		/* '?' 'h' */
+		if(bu_optopt != 'h')
+		    fprintf(stderr, "ERROR: argument missing or bad option specified\n");
 		return 0;	/* BAD */
 	}
     }
@@ -645,14 +656,14 @@ get_args(int argc, const char *argv[])
 
     /* TODO: add options instead of reading from ENV */
     env_str = getenv("LIBRT_RAND_MODE");
-    if(env_str != NULL && atoi(env_str) == 1){
+    if (env_str != NULL && atoi(env_str) == 1) {
 	random_mode = 1;
 	bu_log("random mode\n");
     }
     /* TODO: Read from command line */
     /* Read from ENV with we're going to use the experimental mode */
     env_str = getenv("LIBRT_EXP_MODE");
-    if(env_str != NULL && atoi(env_str) == 1){
+    if (env_str != NULL && atoi(env_str) == 1) {
 	full_incr_mode = 1;
 	full_incr_nsamples = 10;
 	bu_log("multi-sample mode\n");

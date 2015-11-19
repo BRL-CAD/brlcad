@@ -1,7 +1,7 @@
 #       D I S T C H E C K _ T A R G E T . C M A K E . I N
 # BRL-CAD
 #
-# Copyright (c) 2012-2013 United States Government as represented by
+# Copyright (c) 2012-2014 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -61,10 +61,15 @@ add_custom_target(distcheck-${TARGET_SUFFIX}
   COMMAND ${CMAKE_COMMAND} -E echo "-- distcheck-${TARGET_SUFFIX} - Compiling using source from TGZ archive..."
   COMMAND ${CMAKE_COMMAND} -E chdir "distcheck-${TARGET_SUFFIX}/${build_dir}" @DISTCHECK_BUILD_CMD@ @TARGET_REDIRECT@
   COMMAND ${CMAKE_COMMAND} -E echo "-- distcheck-${TARGET_SUFFIX} - Compiling using source from TGZ archive... Done."
-  COMMAND ${CMAKE_COMMAND} -E echo "-- distcheck-${TARGET_SUFFIX} - Run build-directory regression and benchmark testing..."
-  COMMAND ${CMAKE_COMMAND} -E chdir "distcheck-${TARGET_SUFFIX}/${build_dir}" @DISTCHECK_REGRESS_CMD@ @TARGET_REDIRECT@
+  COMMAND ${CMAKE_COMMAND} -E echo "-- distcheck-${TARGET_SUFFIX} - Run build-directory benchmark testing..."
   COMMAND ${CMAKE_COMMAND} -E chdir "distcheck-${TARGET_SUFFIX}/${build_dir}/bench" ../${BIN_DIR}/benchmark run TIMEFRAME=1 @TARGET_REDIRECT@
-  COMMAND ${CMAKE_COMMAND} -E echo "-- distcheck-${TARGET_SUFFIX} - Run build-directory regression and benchmark testing... Done."
+  COMMAND ${CMAKE_COMMAND} -E echo "-- distcheck-${TARGET_SUFFIX} - Run build-directory benchmark testing...Done."
+  COMMAND ${CMAKE_COMMAND} -E echo "-- distcheck-${TARGET_SUFFIX} - Run build-directory regression testing..."
+  COMMAND ${CMAKE_COMMAND} -E chdir "distcheck-${TARGET_SUFFIX}/${build_dir}" @DISTCHECK_REGRESS_CMD@ @TARGET_REDIRECT@
+  COMMAND ${CMAKE_COMMAND} -E echo "-- distcheck-${TARGET_SUFFIX} - Run build-directory regression testing...Done."
+  #COMMAND ${CMAKE_COMMAND} -E echo "-- distcheck-${TARGET_SUFFIX} - Run build-directory unit testing..."
+  #COMMAND ${CMAKE_COMMAND} -E chdir "distcheck-${TARGET_SUFFIX}/${build_dir}" @DISTCHECK_TEST_CMD@ @TARGET_REDIRECT@
+  #COMMAND ${CMAKE_COMMAND} -E echo "-- distcheck-${TARGET_SUFFIX} - Run build-directory unit testing... Done."
   COMMAND ${CMAKE_COMMAND} -E echo "-- distcheck-${TARGET_SUFFIX} - Install from tgz build directory..."
   COMMAND ${CMAKE_COMMAND} -E chdir "distcheck-${TARGET_SUFFIX}/${build_dir}" @DISTCHECK_INSTALL_CMD@ @TARGET_REDIRECT@
   COMMAND ${CMAKE_COMMAND} -E echo "-- distcheck-${TARGET_SUFFIX} - Install from tgz build directory... Done."
@@ -86,6 +91,8 @@ add_custom_target(distcheck-${TARGET_SUFFIX}
   COMMENT "[distcheck-${TARGET_SUFFIX}] Performing distcheck - ${TARGET_SUFFIX} configuration..."
   DEPENDS distcheck-source_archives
   )
+set_target_properties(distcheck-${TARGET_SUFFIX} PROPERTIES FOLDER "BRL-CAD Distribution Checking")
+set_target_properties(distcheck-${TARGET_SUFFIX} PROPERTIES EXCLUDE_FROM_DEFAULT_BUILD 1)
 
 # Local Variables:
 # tab-width: 8

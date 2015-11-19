@@ -24,13 +24,13 @@
 
 
 <refsect1 xml:id='descriptions'><title>DESCRIPTIONS</title>
-<para>Showtherm
+<para><command>showtherm</command>
 is an interactive program that ray-traces a BRL-CAD geometry file
 that does not include air and as a region is hit the temperature is
 looked up in a temperature output file.  This file may be either a
 PRISM temperature output file or a generic temperature output file.</para>
 
-<para>Showtherm then creates an output file that is readable by Analyzer2
+<para><command>showtherm</command> then creates an output file that is readable by Analyzer2
 (an X-windows program written by Glen Durfee), ir-X, or ir-sgi.
 These programs will graphically showtherm the image with temperatures
 being represented by different colors.</para>
@@ -102,7 +102,7 @@ for Generating an Input File for PRISM and Displaying PRISM Results
 </refsect1>
 
 <refsect1 xml:id='copyright'><title>COPYRIGHT</title>
-<para>This software is Copyright (c) 1992-2013 by the United States
+<para>This software is Copyright (c) 1992-2014 by the United States
 Government as represented by U.S. Army Research Laboratory.</para>
 
 </refsect1>

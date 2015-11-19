@@ -124,3 +124,4 @@ SDAI_Application_instance * lazyInstMgr::loadInstance( instanceID id ) {
     }
     return inst;
 }
+

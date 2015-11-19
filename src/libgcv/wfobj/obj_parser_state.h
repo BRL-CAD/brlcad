@@ -1,7 +1,7 @@
 /*             O B J _ P A R S E R _ S T A T E . H
  * BRL-CAD
  *
- * Copyright (c) 2010-2013 United States Government as represented by
+ * Copyright (c) 2010-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -18,13 +18,13 @@
  * information.
  */
 
-#ifndef ARL_OBJ_PARSER_STATE_H
-#define ARL_OBJ_PARSER_STATE_H
+#ifndef LIBGCV_WFOBJ_OBJ_PARSER_STATE_H
+#define LIBGCV_WFOBJ_OBJ_PARSER_STATE_H
 
 #include "common.h"
 
 #include "obj_parser.h"
-#include "bu.h"
+#include "bu/str.h"
 
 #include <memory>
 #include <string>
@@ -34,9 +34,6 @@
 #include <map>
 #include <algorithm>
 #include <cstring>
-
-#include <boost/shared_ptr.hpp>
-using boost::shared_ptr;
 
 inline bool operator<(const obj_polygonal_attributes_t &lhs,
 		      const obj_polygonal_attributes_t &rhs)
@@ -68,7 +65,7 @@ struct tuple_compare {
 /* tuple comparison base case */
 template<typename T, std::size_t N>
 struct tuple_compare<T, N, 0> {
-    void compare(tuple<T, N> &lhs, const tuple<T, N> &rhs) {
+    bool compare(tuple<T, N> &lhs, const tuple<T, N> &rhs) {
 	return lhs[0] == rhs[0];
     }
 };
@@ -285,7 +282,7 @@ struct basic_parser_state {
 	string_type path;
 	string_type dir;
 	std::size_t lineno;
-	shared_ptr<FILE> file;
+	FILE *file;
     };
 
     std::vector<file_node> file_stack;
@@ -381,7 +378,6 @@ void set_working_groupset(basic_parser_extra<PrecisionT, charT, traits,
     typedef basic_parser_extra<PrecisionT, charT, traits, Allocator>
 	extra_type;
 
-    typedef typename extra_type::contents_type contents_type;
     typedef typename extra_type::parser_state_type parser_state_type;
 
     typename parser_state_type::groupset_index_map_type::const_iterator res =
@@ -811,7 +807,6 @@ void set_working_polygattributes(basic_parser_extra<PrecisionT, charT, traits,
 						    Allocator> &extra)
 {
     typedef basic_parser_extra<PrecisionT, charT, traits, Allocator> extra_type;
-    typedef typename extra_type::contents_type contents_type;
     typedef typename extra_type::parser_state_type parser_state_type;
 
     typename parser_state_type::polyattributes_index_map_type::iterator res =

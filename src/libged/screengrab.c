@@ -1,7 +1,7 @@
 /*                         S C R E E N G R A B . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2013 United States Government as represented by
+ * Copyright (c) 2008-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -29,7 +29,7 @@
 #include <ctype.h>
 #include <string.h>
 
-#include "bu.h"
+
 #include "icv.h"
 
 #include "./ged_private.h"
@@ -112,7 +112,7 @@ ged_screen_grab(struct ged *gedp, int argc, const char *argv[])
     }
 
     if (bif != NULL) {
-	icv_write(bif, argv[1], ICV_IMAGE_AUTO);
+	icv_write(bif, argv[1], MIME_IMAGE_AUTO);
 	icv_destroy(bif);
 	bif = NULL;
     }

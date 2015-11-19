@@ -20,26 +20,26 @@
     <arg choice='plain'><replaceable>redinput</replaceable></arg>
     <arg choice='plain'><replaceable>greeninput</replaceable></arg>
     <arg choice='plain'><replaceable>blueinput</replaceable></arg>
-    <arg choice='plain'><replaceable>&gt;</replaceable></arg>
+    <arg choice='plain'>&gt;</arg>
     <arg choice='plain'><replaceable>file.pix</replaceable></arg>
 </cmdsynopsis>
 </refsynopsisdiv>
 
 
 <refsect1 xml:id='description'><title>DESCRIPTION</title>
-<para><emphasis remap='I'>Bw3-pix</emphasis>
+<para><command>bw3-pix</command>
 merges (combines the colors of)
 <citerefentry><refentrytitle>bw</refentrytitle><manvolnum>5</manvolnum></citerefentry>
 format files into a
 <citerefentry><refentrytitle>pix</refentrytitle><manvolnum>5</manvolnum></citerefentry>
 file.
-<emphasis remap='I'>Bw3-pix</emphasis>
+<command>bw3-pix</command>
 reads the specified input files
 and writes stdout until all files have been exhausted.
 The first file goes into the red color plane, the second green,
 the third blue.</para>
 
-<para><emphasis remap='I'>Bw3-pix</emphasis>
+<para><command>bw3-pix</command>
 accepts two special filename synonyms:
 ``<emphasis remap='B'>-</emphasis>'',
 which stands for stdin, and
@@ -58,7 +58,7 @@ the latter of which will write black into the corresponding color plane.</para>
 </refsect1>
 
 <refsect1 xml:id='copyright'><title>COPYRIGHT</title>
-<para>This software is Copyright (c) 1989-2013 by the United States
+<para>This software is Copyright (c) 1989-2014 by the United States
 Government as represented by U.S. Army Research Laboratory.</para>
 </refsect1>
 

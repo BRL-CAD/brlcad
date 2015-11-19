@@ -1,7 +1,7 @@
 #                       O P E N W . T C L
 # BRL-CAD
 #
-# Copyright (c) 1998-2013 United States Government as represented by
+# Copyright (c) 1998-2014 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -181,7 +181,7 @@ if {![info exists mged_default(zbuffer)]} {
 }
 
 if {![info exists mged_default(lighting)]} {
-    set mged_default(lighting) 0
+    set mged_default(lighting) 1
 }
 
 if {![info exists mged_default(perspective_mode)]} {
@@ -1778,6 +1778,12 @@ hoc_register_menu_data "Create" "$ptype..." "Make a $ptype" $ksl
 	-label "OpenGL" -underline 0\
 	-command "dmtype set ogl"
     }
+    set have_dm [dm valid osgl]
+    if {$have_dm == "osgl"} {
+    .$id.menubar.modes.dmtype add radiobutton -value s -variable mged_gui($id,dtype)\
+	-label "OpenSceneGraph OpenGL" -underline 0\
+	-command "dmtype set osgl"
+    }
     set have_dm [dm valid wgl]
     if {$have_dm == "wgl"} {
     .$id.menubar.modes.dmtype add radiobutton -value s -variable mged_gui($id,dtype)\
@@ -1861,7 +1867,7 @@ hoc_register_menu_data "Create" "$ptype..." "Make a $ptype" $ksl
 	modify the state of the drawing window) will apply only to the
 	drawing window wherein the user typed. This feature is provided
 	to lessen the need to use the mouse." } }
-    if {$mged_gui($id,dtype) == "ogl" || $mged_gui($id,dtype) == "wgl"} {
+    if {$mged_gui($id,dtype) == "ogl" || $mged_gui($id,dtype) == "wgl" || $mged_gui($id,dtype) == "osgl"} {
 	.$id.menubar.misc add checkbutton -offvalue 0 -onvalue 1\
 	    -variable mged_gui($id,depthcue) -label "Depth Cueing" -underline 0\
 	    -command "mged_apply $id \"dm set depthcue \$mged_gui($id,depthcue)\""
@@ -1968,7 +1974,7 @@ hoc_register_menu_data "Create" "$ptype..." "Make a $ptype" $ksl
 
     .$id.menubar.tools add separator
 
-    .$id.menubar.tools add command -label "Command Window" -underline 6\
+    .$id.menubar.tools add command -label "Command Window (c)" -underline 16\
 	-command "open_cmd_win $id"
     hoc_register_menu_data "Tools" "Command Window" "Command Window"\
 	{ { summary "Raise the command window." } }
@@ -2302,7 +2308,7 @@ hoc_register_menu_data "Create" "$ptype..." "Make a $ptype" $ksl
     update_mged_vars $id
     set mged_gui($id,qray_effects) [qray effects]
 
-    if {$mged_gui($id,dtype) == "ogl" || $mged_gui($id,dtype) == "wgl"} {
+    if {$mged_gui($id,dtype) == "ogl" || $mged_gui($id,dtype) == "wgl" || $mged_gui($id,dtype) == "osgl"} {
 	mged_apply_local $id "dm set zbuffer $mged_default(zbuffer)"
     }
 
@@ -2474,7 +2480,7 @@ proc update_mged_vars { id } {
     set mged_gui($id,orig_gui) $orig_gui
     set mged_gui($id,forward_keys) $forwarding_key($mged_gui($id,active_dm))
 
-    if {$mged_gui($id,dtype) == "ogl"} {
+    if {$mged_gui($id,dtype) == "ogl" || $mged_gui($id,dtype) == "ogl"} {
 	set mged_gui($id,depthcue) [dm set depthcue]
 	set mged_gui($id,zbuffer) [dm set zbuffer]
 	set mged_gui($id,lighting) [dm set lighting]

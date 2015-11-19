@@ -1,7 +1,7 @@
 /*                 CartesianTransformationOperator.cpp
  * BRL-CAD
  *
- * Copyright (c) 1994-2013 United States Government as represented by
+ * Copyright (c) 1994-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -68,6 +68,7 @@ CartesianTransformationOperator::Load(STEPWrapper *sw, SDAI_Application_instance
 
     if (!GeometricRepresentationItem::Load(sw, sse)) {
 	std::cout << CLASSNAME << ":Error loading base class ::Curve." << std::endl;
+	sw->entity_status[id] = STEP_LOAD_ERROR;
 	return false;
     }
 
@@ -95,6 +96,7 @@ CartesianTransformationOperator::Load(STEPWrapper *sw, SDAI_Application_instance
 	    local_origin = dynamic_cast<CartesianPoint *>(Factory::CreateObject(sw, entity));
 	} else {
 	    std::cerr << CLASSNAME << ": error loading 'local_origin' attribute." << std::endl;
+	    sw->entity_status[id] = STEP_LOAD_ERROR;
 	    return false;
 	}
     }
@@ -105,6 +107,8 @@ CartesianTransformationOperator::Load(STEPWrapper *sw, SDAI_Application_instance
     } else {
 	scale = 1.0;
     }
+
+    sw->entity_status[id] = STEP_LOADED;
 
     return true;
 }

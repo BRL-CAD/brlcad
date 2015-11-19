@@ -1,7 +1,7 @@
 /*                        G I F 2 F B . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2013 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -41,9 +41,10 @@
 
 #include <stdlib.h>
 #include <string.h>
-#include "bio.h"
 
-#include "bu.h"
+#include "bu/getopt.h"
+#include "bu/log.h"
+#include "vmath.h"
 #include "fb.h"
 
 
@@ -97,13 +98,20 @@ struct GIF_Image Im;
 
 char *framebuffer=NULL;
 
-void usage(char **argv);
+void
+usage(char **argv)
+{
+    fprintf(stderr,"Usage: %s [-H] [-v] [-F frame_buffer] [gif_file]\n", argv[0]);
+    fprintf(stderr,"       (stdin used with '<' construct if gif_file not supplied)\n");
+}
+
 int getByte(FILE *inp);
 
 int
 main(int argc, char **argv)
 {
-    int i, idx, n;
+    int i, idx;
+    size_t n;
     int maxcolors;
     int code;
     int verbose=0;
@@ -118,12 +126,12 @@ main(int argc, char **argv)
     static int lace[4] = {8, 8, 4, 2};
     static int offs[4] = {0, 4, 2, 1};
 
-    FBIO *fbp;
+    fb *fbp;
     FILE *fp;
 
-    while ((code = bu_getopt(argc, argv, "vFh")) != -1) {
+    while ((code = bu_getopt(argc, argv, "HvFh?")) != -1) {
 	switch (code) {
-	    case 'h':
+	    case 'H':
 		headers=1;
 		break;
 	    case 'v':
@@ -140,7 +148,6 @@ main(int argc, char **argv)
 
     if (bu_optind >= argc) {
 	if (isatty(fileno(stdin))) {
-	    (void) fprintf(stderr, "%s: No input file.\n", argv[0]);
 	    usage(argv);
 	    return 1;
 	}
@@ -159,10 +166,10 @@ main(int argc, char **argv)
 /*
  * read in the Header and then check for consistency.
  */
-    n= fread(&Header, 1, 13, fp);
+    n = fread(&Header, 1, 13, fp);
 
     if (n != 13) {
-	fprintf(stderr, "%s: only %d bytes in header.\n", argv[0], n);
+	fprintf(stderr, "%s: only %ld bytes in header.\n", argv[0], (long)n);
 	return 1;
     }
 
@@ -212,8 +219,8 @@ main(int argc, char **argv)
     n = fread(&Im, 1, sizeof(Im), fp);
 
     if (n != sizeof(Im)) {
-	fprintf(stderr, "%s: only %d bytes in image header.\n",
-		argv[0], n);
+	fprintf(stderr, "%s: only %ld bytes in image header.\n",
+		argv[0], (long)n);
 	return 1;
     }
     if (verbose) {
@@ -224,7 +231,7 @@ main(int argc, char **argv)
 		Im.IH_Flags>>7, (Im.IH_Flags>>6)&0x01, Im.IH_Flags&0x03);
     }
 
-    if(WORD(Im.IH_Height) < 0 || WORD(Im.IH_Height) > 65535)
+    if (WORD(Im.IH_Height) < 0 || WORD(Im.IH_Height) > 65535)
 	bu_exit(1, "Bad height info in GIF header\n");
 
     interlaced = (Im.IH_Flags>>6)&0x01;
@@ -274,7 +281,7 @@ main(int argc, char **argv)
 	int ih_height = WORD(Im.IH_Height);
 	int ih_width = WORD(Im.IH_Width);
 
-	if(ih_height < 0 || ih_height > 0xffff || ih_width < 0 || ih_height > 0xffff)
+	if (ih_height < 0 || ih_height > 0xffff || ih_width < 0 || ih_height > 0xffff)
 	    bu_exit(1, "Invalid height in GIF Header\n");
 
 	/*
@@ -299,8 +306,7 @@ main(int argc, char **argv)
 	    lineNumber += lineInc;
 	    if (lineNumber >= ih_height) {
 		++lineIdx;
-		if (lineIdx > (int)(sizeof(lace)/sizeof(lace[0]))-1)
-		    lineIdx = (sizeof(lace)/sizeof(lace[0]))-1;
+		V_MIN(lineIdx, (int)(sizeof(lace)/sizeof(lace[0]))-1);
 		lineInc = lace[lineIdx];
 		lineNumber = offs[lineIdx];
 	    }
@@ -492,12 +498,6 @@ int getByte(FILE *inp)
     }
     return code;
 }
-void
-usage(char **argv)
-{
-    fprintf(stderr, "%s [-h] [-v] [-F frame_buffer] [gif_file]\n", argv[0]);
-}
-
 
 /*
  * Local Variables:

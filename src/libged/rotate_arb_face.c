@@ -1,7 +1,7 @@
 /*                  R O T A T E _ A R B _ F A C E . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2013 United States Government as represented by
+ * Copyright (c) 2008-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -26,10 +26,9 @@
 #include "common.h"
 
 #include <string.h>
-#include "bio.h"
 
-#include "cmd.h"
-#include "rtgeom.h"
+#include "bu/cmd.h"
+#include "rt/geom.h"
 
 #include "./ged_private.h"
 
@@ -200,7 +199,7 @@ ged_rotate_arb_face(struct ged *gedp, int argc, const char *argv[])
     }
 
     /* calculate new points for the arb */
-    (void)rt_arb_calc_points(arb, arb_type, planes, &gedp->ged_wdbp->wdb_tol);
+    (void)rt_arb_calc_points(arb, arb_type, (const plane_t *)planes, &gedp->ged_wdbp->wdb_tol);
 
     {
 	mat_t invmat;

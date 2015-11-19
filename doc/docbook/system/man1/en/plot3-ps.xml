@@ -18,30 +18,38 @@
 <cmdsynopsis>
   <command>plot3-ps</command>
     <arg choice='opt'>-ec </arg>
-    <arg choice='opt'>-s <replaceable>square_output_size</replaceable></arg>
-    <arg choice='opt'>-w <replaceable>output_width</replaceable></arg>
-    <arg choice='opt'>-n <replaceable>output_height</replaceable></arg>
-    <arg choice='plain'><replaceable>&lt;</replaceable></arg>
+    <arg choice='opt'>-s|S <replaceable>square_output_size</replaceable></arg>
+    <arg choice='opt'>-w|W <replaceable>output_width</replaceable></arg>
+    <arg choice='opt'>-n|N <replaceable>output_height</replaceable></arg>
+    <arg choice='opt'>&lt;</arg>
     <arg choice='plain'><replaceable>unix_plot</replaceable></arg>
 </cmdsynopsis>
 </refsynopsisdiv>
 
 
 <refsect1 xml:id='description'><title>DESCRIPTION</title>
-<para><emphasis remap='I'>Plot3-ps</emphasis>
+<para><command>plot3-ps</command>
 converts an extended UnixPlot file to a PostScript file
 suitable for embedding in a larger PostScript document.
 This is especially useful for creating figures for inclusion in TeX
 documents.
 The
 <option>-e</option>
-option will produce and encapsulated PostScript file. The
+option will produce an encapsulated PostScript file. The
+<option>-c</option>
+option causes the output to be centered on an 8.5 x 11 inch page. The
 <option>-s</option>
 ,
 <option>-w</option>
 , and
 <option>-n</option>
-options specify the size of the output image in inches (ignored when used with the
+options (alternatively
+<option>-S</option>
+,
+<option>-W</option>
+, and
+<option>-N</option>)
+specify the size of the output image in inches (ignored when used with the
 <option>-e</option>
 option).</para>
 
@@ -59,7 +67,7 @@ of this writing.</para>
 </refsect1>
 
 <refsect1 xml:id='see_also'><title>SEE ALSO</title>
-<para><citerefentry><refentrytitle>plot3-fb</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>plot3-plot3</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>plot3-X</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>plot3</refentrytitle><manvolnum>5</manvolnum></citerefentry>.</para>
+<para><citerefentry><refentrytitle>plot3-fb</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>plot3-plot3</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>plot3-X</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>plot3</refentrytitle><manvolnum>5</manvolnum></citerefentry></para>
 </refsect1>
 
 <refsect1 xml:id='trademarks'><title>TRADEMARKS</title>
@@ -73,7 +81,7 @@ of this writing.</para>
 </refsect1>
 
 <refsect1 xml:id='copyright'><title>COPYRIGHT</title>
-<para>This software is Copyright (c) 1989-2013 by the United States
+<para>This software is Copyright (c) 1989-2014 by the United States
 Government as represented by U.S. Army Research Laboratory.</para>
 </refsect1>
 

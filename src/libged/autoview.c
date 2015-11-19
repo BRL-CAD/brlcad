@@ -1,7 +1,7 @@
 /*                         A U T O V I E W . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2013 United States Government as represented by
+ * Copyright (c) 2008-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -25,9 +25,6 @@
 
 #include "common.h"
 
-#include "bio.h"
-
-#include "solid.h"
 
 #include "./ged_private.h"
 
@@ -41,12 +38,8 @@
 int
 ged_autoview(struct ged *gedp, int argc, const char *argv[])
 {
-    struct ged_display_list *gdlp;
-    struct ged_display_list *next_gdlp;
-    struct solid *sp;
     int is_empty = 1;
     vect_t min, max;
-    vect_t minus, plus;
     vect_t center;
     vect_t radial;
     vect_t sqrt_small;
@@ -85,30 +78,9 @@ ged_autoview(struct ged *gedp, int argc, const char *argv[])
 	factor = 2.0; /* 2 is half the view */
     }
 
-    VSETALL(min,  INFINITY);
-    VSETALL(max, -INFINITY);
     VSETALL(sqrt_small, SQRT_SMALL_FASTF);
 
-    /* calculate the bounding for of all solids being displayed */
-    gdlp = BU_LIST_NEXT(ged_display_list, gedp->ged_gdp->gd_headDisplay);
-    while (BU_LIST_NOT_HEAD(gdlp, gedp->ged_gdp->gd_headDisplay)) {
-	next_gdlp = BU_LIST_PNEXT(ged_display_list, gdlp);
-
-	FOR_ALL_SOLIDS(sp, &gdlp->gdl_headSolid) {
-	    minus[X] = sp->s_center[X] - sp->s_size;
-	    minus[Y] = sp->s_center[Y] - sp->s_size;
-	    minus[Z] = sp->s_center[Z] - sp->s_size;
-	    VMIN(min, minus);
-	    plus[X] = sp->s_center[X] + sp->s_size;
-	    plus[Y] = sp->s_center[Y] + sp->s_size;
-	    plus[Z] = sp->s_center[Z] + sp->s_size;
-	    VMAX(max, plus);
-
-	    is_empty = 0;
-	}
-
-	gdlp = next_gdlp;
-    }
+    is_empty = dl_bounding_sph(gedp->ged_gdp->gd_headDisplay, &min, &max, 1);
 
     if (is_empty) {
 	/* Nothing is in view */

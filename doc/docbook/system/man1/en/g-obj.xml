@@ -33,7 +33,7 @@
 
 
 <refsect1 xml:id='description'><title>DESCRIPTION</title>
-<para><emphasis remap='I'>g-obj</emphasis>
+<para><command>g-obj</command>
 converts the specified
 <emphasis remap='I'>object(s)</emphasis>
 from a BRL-CAD
@@ -93,7 +93,7 @@ option specifies a file for receiving the error messages.</para>
 
 <refsect1 xml:id='example'><title>EXAMPLE</title>
 <synopsis>
-$ <emphasis remap='I'>g-obj -o sample.obj sample.g sample_object</emphasis>
+$ g-obj -o <emphasis remap='I'>sample.obj sample.g sample_object</emphasis>
 </synopsis>
 </refsect1>
 
@@ -108,7 +108,7 @@ $ <emphasis remap='I'>g-obj -o sample.obj sample.g sample_object</emphasis>
 </refsect1>
 
 <refsect1 xml:id='copyright'><title>COPYRIGHT</title>
-<para>This software is Copyright (c) 1997-2013 by the United States
+<para>This software is Copyright (c) 1997-2014 by the United States
 Government as represented by U.S. Army Research Laboratory.</para>
 </refsect1>
 

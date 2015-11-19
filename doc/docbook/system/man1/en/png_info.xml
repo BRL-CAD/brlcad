@@ -23,17 +23,17 @@
 
 
 <refsect1 xml:id='description'><title>DESCRIPTION</title>
-<para><emphasis remap='I'>Png_info</emphasis>
+<para><command>png_info</command>
 will print most of the information available from a PNG file other than the image itself.</para>
 </refsect1>
 
-<refsect1 xml:id='examples'><title>EXAMPLES</title>
+<refsect1 xml:id='examples'><title>EXAMPLE</title>
 <para><command>png_info</command>
 file.png</para>
 </refsect1>
 
 <refsect1 xml:id='see_also'><title>SEE ALSO</title>
-<para><citerefentry><refentrytitle>brlcad</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>png-pix</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>bw-png</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>pix-png</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>png-bw</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>pix</refentrytitle><manvolnum>5</manvolnum></citerefentry>, <citerefentry><refentrytitle>bw</refentrytitle><manvolnum>5</manvolnum></citerefentry>.</para>
+<para><citerefentry><refentrytitle>brlcad</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>png-pix</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>bw-png</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>pix-png</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>png-bw</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>pix</refentrytitle><manvolnum>5</manvolnum></citerefentry>, <citerefentry><refentrytitle>bw</refentrytitle><manvolnum>5</manvolnum></citerefentry></para>
 </refsect1>
 
 <refsect1 xml:id='author'><title>AUTHOR</title>
@@ -42,7 +42,7 @@ file.png</para>
 </refsect1>
 
 <refsect1 xml:id='copyright'><title>COPYRIGHT</title>
-<para>This software is Copyright (c) 1998-2013 by the United States
+<para>This software is Copyright (c) 1998-2014 by the United States
 Government as represented by U.S. Army Research Laboratory.</para>
 </refsect1>
 

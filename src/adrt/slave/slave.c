@@ -1,7 +1,7 @@
 /*                         S L A V E . C
  * BRL-CAD / ADRT
  *
- * Copyright (c) 2007-2013 United States Government as represented by
+ * Copyright (c) 2007-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -39,11 +39,11 @@
 #  include <getopt.h>
 #endif
 
-#include "tie.h"
+#include "rt/tie.h"
 #include "adrt.h"
 #include "camera.h"
 #include "adrt.h"
-#include "tie.h"
+#include "rt/tie.h"
 #include "render_util.h"
 
 #include "slave.h"
@@ -432,7 +432,7 @@ static struct option longopts[] =
     { "version",	no_argument,		NULL, 'v' },
 };
 #endif
-static char shortopts[] = "Xdhp:t:v";
+static char shortopts[] = "Xdhp:t:vh?";
 
 
 static void finish(int sig)
@@ -448,8 +448,8 @@ static void info(int sig)
 
 static void help()
 {
-    printf("%s\n", ADRT_VER_DETAIL);
-    printf("%s", "Usage: adrt_slave [options] [host]\n\
+    fprintf(stderr,"%s\n", ADRT_VER_DETAIL);
+    fprintf(stderr,"%s", "Usage: adrt_slave [options] [host]\n\
   -v\t\tdisplay version\n\
   -h\t\tdisplay help\n\
   -p\t\tport number\n\
@@ -487,6 +487,7 @@ main(int argc, char **argv)
 	    bu_getopt(argc, argv, shortopts)
 #endif
 	       )!= -1) {
+	if (bu_optopt == '?') c='h';
 	switch (c) {
 	    case 'h':
 		help();
@@ -499,8 +500,7 @@ main(int argc, char **argv)
 	    case 't':
 		bu_strlcpy(temp, bu_optarg, 5);
 		threads = atoi(temp);
-		if (threads < 0) threads = 0;
-		if (threads > 32) threads = 32;
+		CLAMP(threads, 0, 32);
 		break;
 
 	    case 'v':
@@ -516,9 +516,8 @@ main(int argc, char **argv)
     argc -= bu_optind;
     argv += bu_optind;
 
-    if (argc) {
+    if (argc)
 	bu_strlcpy(host, argv[0], 64);
-    }
 
     if (!host[0]) {
 	if (!port)

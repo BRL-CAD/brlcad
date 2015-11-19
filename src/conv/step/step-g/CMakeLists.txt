@@ -4,6 +4,11 @@ include_directories(
   ${CMAKE_CURRENT_SOURCE_DIR}
   )
 
+set(STEP_SCHEMA_FILE ${STEPCODE_DIR}/data/ap203/ap203.exp)
+add_definitions(-DAP203)
+#set(STEP_SCHEMA_FILE ${STEPCODE_DIR}/data/ap203e2/ap203e2_mim_lf.exp)
+#add_definitions(-DAP203e2)
+
 GENERATE_SCHEMA_INPUTS(${STEP_SCHEMA_FILE} stepg)
 
 set(stepg_SOURCES
@@ -22,6 +27,7 @@ set(stepg_SOURCES
   AreaConversionBasedUnit.cpp
   AreaSiUnit.cpp
   AreaUnit.cpp
+  AssemblyComponentUsage.cpp
   Axis1Placement.cpp
   Axis2Placement.cpp
   Axis2Placement2D.cpp
@@ -42,6 +48,8 @@ set(stepg_SOURCES
   CartesianTransformationOperator.cpp
   CartesianTransformationOperator2D.cpp
   CartesianTransformationOperator3D.cpp
+  CharacterizedDefinition.cpp
+  CharacterizedProductDefinition.cpp
   Circle.cpp
   ClosedShell.cpp
   CompositeCurve.cpp
@@ -79,8 +87,11 @@ set(stepg_SOURCES
   Factory.cpp
   FoundedItem.cpp
   FunctionallyDefinedTransformation.cpp
+  GeometricallyBoundedSurfaceShapeRepresentation.cpp
   GeometricRepresentationContext.cpp
   GeometricRepresentationItem.cpp
+  GeometricSet.cpp
+  GeometricSetSelect.cpp
   GlobalUncertaintyAssignedContext.cpp
   GlobalUnitAssignedContext.cpp
   Hyperbola.cpp
@@ -107,12 +118,14 @@ set(stepg_SOURCES
   MeasureWithUnit.cpp
   MechanicalContext.cpp
   NamedUnit.cpp
+  NextAssemblyUsageOccurrence.cpp
   OffsetCurve2D.cpp
   OffsetCurve3D.cpp
   OffsetSurface.cpp
   OpenNurbsInterfaces.cpp
-  OrientedEdge.cpp
   OrientedClosedShell.cpp
+  OrientedEdge.cpp
+  OrientedFace.cpp
   PCurve.cpp
   PCurveOrSurface.cpp
   Parabola.cpp
@@ -136,9 +149,13 @@ set(stepg_SOURCES
   ProductDefinitionContextRole.cpp
   ProductDefinitionFormation.cpp
   ProductDefinitionFormationWithSpecifiedSource.cpp
+  ProductDefinitionRelationship.cpp
   ProductDefinitionShape.cpp
+  ProductDefinitionUsage.cpp
+  ProductDefinitionWithAssociatedDocuments.cpp
   ProductRelatedProductCategory.cpp
   PropertyDefinition.cpp
+  PropertyDefinitionRepresentation.cpp
   QuasiUniformCurve.cpp
   QuasiUniformSurface.cpp
   RatioContextDependentUnit.cpp
@@ -162,8 +179,13 @@ set(stepg_SOURCES
   RepresentationItem.cpp
   RepresentationRelationship.cpp
   RepresentationRelationshipWithTransformation.cpp
+  RepresentedDefinition.cpp
   STEPEntity.cpp
   SeamCurve.cpp
+  ShapeAspect.cpp
+  ShapeAspectRelationship.cpp
+  ShapeDefinition.cpp
+  ShapeDefinitionRepresentation.cpp
   ShapeRepresentation.cpp
   ShapeRepresentationRelationship.cpp
   SiUnit.cpp
@@ -221,6 +243,7 @@ set(stepg_HDRS
   AreaConversionBasedUnit.h
   AreaSiUnit.h
   AreaUnit.h
+  AssemblyComponentUsage.h
   Axis1Placement.h
   Axis2Placement.h
   Axis2Placement2D.h
@@ -241,6 +264,8 @@ set(stepg_HDRS
   CartesianTransformationOperator.h
   CartesianTransformationOperator2D.h
   CartesianTransformationOperator3D.h
+  CharacterizedDefinition.h
+  CharacterizedProductDefinition.h
   Circle.h
   ClosedShell.h
   CompositeCurve.h
@@ -278,8 +303,11 @@ set(stepg_HDRS
   Factory.h
   FoundedItem.h
   FunctionallyDefinedTransformation.h
+  GeometricallyBoundedSurfaceShapeRepresentation.h
   GeometricRepresentationContext.h
   GeometricRepresentationItem.h
+  GeometricSet.h
+  GeometricSetSelect.h
   GlobalUncertaintyAssignedContext.h
   GlobalUnitAssignedContext.h
   Hyperbola.h
@@ -306,11 +334,13 @@ set(stepg_HDRS
   MeasureWithUnit.h
   MechanicalContext.h
   NamedUnit.h
+  NextAssemblyUsageOccurrence.h
   OffsetCurve2D.h
   OffsetCurve3D.h
   OffsetSurface.h
-  OrientedEdge.h
   OrientedClosedShell.h
+  OrientedEdge.h
+  OrientedFace.h
   PCurve.h
   PCurveOrSurface.h
   Parabola.h
@@ -334,9 +364,13 @@ set(stepg_HDRS
   ProductDefinitionContextRole.h
   ProductDefinitionFormation.h
   ProductDefinitionFormationWithSpecifiedSource.h
+  ProductDefinitionRelationship.h
   ProductDefinitionShape.h
+  ProductDefinitionUsage.h
+  ProductDefinitionWithAssociatedDocuments.h
   ProductRelatedProductCategory.h
   PropertyDefinition.h
+  PropertyDefinitionRepresentation.h
   QuasiUniformCurve.h
   QuasiUniformSurface.h
   RatioContextDependentUnit.h
@@ -360,8 +394,13 @@ set(stepg_HDRS
   RepresentationItem.h
   RepresentationRelationship.h
   RepresentationRelationshipWithTransformation.h
+  RepresentedDefinition.h
   STEPEntity.h
   SeamCurve.h
+  ShapeAspect.h
+  ShapeAspectRelationship.h
+  ShapeDefinition.h
+  ShapeDefinitionRepresentation.h
   ShapeRepresentation.h
   ShapeRepresentationRelationship.h
   SiUnit.h
@@ -419,10 +458,9 @@ set(stepg_LIBS
   )
 list(APPEND stepg_LIBS ${stepg_LIBS})
 
-#add_definitions(-DAP203e2)
-
 BRLCAD_ADDEXEC(step-g "${stepg_SOURCES}" "${stepg_LIBS}" NO_STRICT)
 add_dependencies(step-g step-express-${SCHEMA_NAME}-stepg)
+set_property(TARGET step-g APPEND PROPERTY INCLUDE_DIRECTORIES "${stepg_SCHEMA_OUT_DIR}")
 
 if(MSVC)
   set(stepg_IMPORTS

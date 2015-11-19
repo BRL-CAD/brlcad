@@ -1,7 +1,7 @@
 /*                          P N T S . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2013 United States Government as represented by
+ * Copyright (c) 2008-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -26,13 +26,14 @@
 #include "common.h"
 
 /* system headers */
-#include "bin.h"
+#include "bnetwork.h"
 
 /* common headers */
+#include "bu/cv.h"
 #include "bn.h"
-#include "bu.h"
+
 #include "raytrace.h"
-#include "rtgeom.h"
+#include "rt/geom.h"
 #include "vmath.h"
 
 
@@ -57,8 +58,6 @@ pnts_unpack_double(unsigned char *buf, unsigned char *data, unsigned int count)
 }
 
 /**
- * R T _ P N T S _ B B O X
- *
  * Calculate a bounding box for a set of points
  */
 int
@@ -104,8 +103,6 @@ rt_pnts_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struct
 }
 
 /**
- * R T _ P N T S _ E X P O R T 5
- *
  * Export a pnts collection from the internal structure to the
  * database format
  */
@@ -131,7 +128,7 @@ rt_pnts_export5(struct bu_external *external, const struct rt_db_internal *inter
 
     /* allocate enough for the header (scale + type + count) */
     external->ext_nbytes = SIZEOF_NETWORK_DOUBLE + SIZEOF_NETWORK_SHORT + SIZEOF_NETWORK_LONG;
-    external->ext_buf = (genptr_t) bu_calloc(sizeof(unsigned char), external->ext_nbytes, "pnts external");
+    external->ext_buf = (uint8_t *) bu_calloc(sizeof(unsigned char), external->ext_nbytes, "pnts external");
     buf = (unsigned char *)external->ext_buf;
 
     scan = pnts->scale; /* convert fastf_t to double */
@@ -162,7 +159,7 @@ rt_pnts_export5(struct bu_external *external, const struct rt_db_internal *inter
     /* convert number of doubles to number of network bytes required to store doubles */
     pointDataSize = pointDataSize * SIZEOF_NETWORK_DOUBLE;
 
-    external->ext_buf = (genptr_t)bu_realloc(external->ext_buf, external->ext_nbytes + (pnts->count * pointDataSize), "pnts external realloc");
+    external->ext_buf = (uint8_t *)bu_realloc(external->ext_buf, external->ext_nbytes + (pnts->count * pointDataSize), "pnts external realloc");
     buf = (unsigned char *)external->ext_buf + external->ext_nbytes;
     external->ext_nbytes = external->ext_nbytes + (pnts->count * pointDataSize);
 
@@ -350,8 +347,6 @@ rt_pnts_export5(struct bu_external *external, const struct rt_db_internal *inter
 
 
 /**
- * R T _ P N T S _ I M P O R T 5
- *
  * Import a pnts collection from the database format to the internal
  * structure and apply modeling transformations.
  */
@@ -362,6 +357,7 @@ rt_pnts_import5(struct rt_db_internal *internal, const struct bu_external *exter
     struct bu_list *head = NULL;
     unsigned char *buf = NULL;
     unsigned long i;
+    uint16_t type;
 
     /* must be double for import and export */
     double scan;
@@ -387,7 +383,8 @@ rt_pnts_import5(struct rt_db_internal *internal, const struct bu_external *exter
     bu_cv_ntohd((unsigned char *)&scan, buf, 1);
     pnts->scale = scan; /* convert double to fastf_t */
     buf += SIZEOF_NETWORK_DOUBLE;
-    pnts->type = (rt_pnt_type)ntohs(*(uint16_t *)buf);
+    type = ntohs(*(uint16_t *)buf);
+    pnts->type = (rt_pnt_type)type; /* intentional enum coercion */
     buf += SIZEOF_NETWORK_SHORT;
     pnts->count = ntohl(*(uint32_t *)buf);
     buf += SIZEOF_NETWORK_LONG;
@@ -657,8 +654,6 @@ rt_pnts_import5(struct rt_db_internal *internal, const struct bu_external *exter
 
 
 /**
- * R T _ P N T S _ I F R E E
- *
  * Free the storage associated with the rt_db_internal version of the
  * collection.  This uses type aliasing to iterate over the list of
  * points as a bu_list instead of calling up a switching table for
@@ -694,14 +689,10 @@ rt_pnts_ifree(struct rt_db_internal *internal)
 
     /* free the internal container */
     bu_free(internal->idb_ptr, "pnts ifree");
-    internal->idb_ptr = GENPTR_NULL; /* sanity */
+    internal->idb_ptr = ((void *)0); /* sanity */
 }
 
 
-/**
- * R T _ P N T S _ P R I N T
- *
- */
 void
 rt_pnts_print(register const struct soltab *stp)
 {
@@ -758,8 +749,6 @@ rt_pnts_print(register const struct soltab *stp)
 
 
 /**
- * R T _ P N T S _ P L O T
- *
  * Plot pnts collection as axes or spheres.
  */
 int
@@ -835,8 +824,6 @@ rt_pnts_plot(struct bu_list *vhead, struct rt_db_internal *internal, const struc
 
 
 /**
- * R T _ P N T S _ D E S C R I B E
- *
  * Make human-readable formatted presentation of this primitive.  First
  * line describes type of solid.  Additional lines are indented one
  * tab, and give parameter values.

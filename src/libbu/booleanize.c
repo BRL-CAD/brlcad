@@ -1,7 +1,7 @@
 /*                    B O O L E A N I Z E . C
  * BRL-CAD
  *
- * Copyright (c) 2010-2013 United States Government as represented by
+ * Copyright (c) 2010-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -25,8 +25,8 @@
 #include <string.h>
 #include <errno.h>
 
-#include "bu.h"
-
+#include "bu/parse.h"
+#include "bu/str.h"
 
 int
 bu_str_true(const char *str)
@@ -58,6 +58,17 @@ bu_str_true(const char *str)
 	return 0;
     }
 
+    /* exactly "f" or "F" (for false) */
+    if (BU_STR_EQUIV(newstr, "f")) {
+	bu_vls_free(&vls);
+	return 0;
+    }
+
+    /* exact case insensitive match for "false" */
+    if (BU_STR_EQUIV(newstr, "false")) {
+	bu_vls_free(&vls);
+	return 0;
+    }
     /* exactly "0" */
     if (BU_STR_EQUAL(newstr, "0")) {
 	bu_vls_free(&vls);
@@ -81,6 +92,18 @@ bu_str_true(const char *str)
 
     /* starts with 'y', [yY]* looks like 'yes' */
     if (newstr[0] == 'y' || newstr[0] == 'Y') {
+	bu_vls_free(&vls);
+	return 1;
+    }
+
+    /* exactly "t" or "T" (for true) */
+    if (BU_STR_EQUIV(newstr, "t")) {
+	bu_vls_free(&vls);
+	return 1;
+    }
+
+    /* exact case insensitive match for "true" */
+    if (BU_STR_EQUIV(newstr, "true")) {
 	bu_vls_free(&vls);
 	return 1;
     }

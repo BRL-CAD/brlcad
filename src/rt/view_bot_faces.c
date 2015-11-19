@@ -1,7 +1,7 @@
 /*                V I E W _ B O T _ F A C E S . C
  * BRL-CAD
  *
- * Copyright (c) 2003-2013 United States Government as represented by
+ * Copyright (c) 2003-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -38,9 +38,10 @@
 #  include <sys/stat.h>
 #endif
 
+#include "bu/parallel.h"
 #include "vmath.h"
 #include "raytrace.h"
-#include "plot3.h"
+#include "bn/plot3.h"
 
 #include "./rtuif.h"
 #include "./ext.h"
@@ -49,8 +50,6 @@
 extern char *outputfile;		/* output file name */
 
 extern point_t viewbase_model;
-
-extern int npsw;			/* number of worker PSWs to run */
 
 extern int rpt_overlap;
 
@@ -88,8 +87,6 @@ usage(const char *argv0)
 
 
 /*
- * R A Y H I T
- *
  * Rayhit() is called by rt_shootray() when the ray hits one or more objects.
  */
 int
@@ -131,8 +128,6 @@ rayhit(struct application *ap, struct partition *PartHeadp, struct seg *UNUSED(s
 
 
 /*
- * R A Y M I S S
- *
  * Null function -- handle a miss
  * This function is called by rt_shootray(), which is called by
  * do_frame().
@@ -145,8 +140,6 @@ raymiss(struct application *UNUSED(ap))
 
 
 /*
- * V I E W _ I N I T
- *
  * This routine is called by main().
  */
 
@@ -176,8 +169,6 @@ view_init(struct application *ap, char *UNUSED(file), char *UNUSED(obj), int min
 
 
 /*
- * V I E W _ 2 I N I T
- *
  * View_2init is called by do_frame(), which in turn is called by
  * main() in rt.c.
  *
@@ -249,8 +240,6 @@ view_2init(struct application *ap, char *framename)
 
 
 /*
- * V I E W _ P I X E L
- *
  * This routine is called from do_run(), and in this case does nothing.
  */
 void
@@ -261,8 +250,6 @@ view_pixel(struct application *UNUSED(ap))
 
 
 /*
- * V I E W _ E O L
- *
  * View_eol() is called by rt_shootray() in do_run().  In this case,
  * it does nothing.
  */
@@ -272,8 +259,6 @@ void view_eol(struct application *UNUSED(ap))
 
 
 /*
- * V I E W _ E N D
- *
  * View_end() is called by rt_shootray in do_run().
  *
  */
@@ -292,7 +277,7 @@ view_end(struct application *UNUSED(ap))
     while (entry) {
 	size_t i;
 
-	fprintf(outfp, "BOT: %s\n", Tcl_GetHashKey(&bots, entry));
+	fprintf(outfp, "BOT: %s\n", (char *)Tcl_GetHashKey(&bots, entry));
 	faces = (struct bu_ptbl *)Tcl_GetHashValue(entry);
 	for (i=0; i<BU_PTBL_LEN(faces); i++) {
 	    fprintf(outfp, "\t%lu\n", (unsigned long)BU_PTBL_GET(faces, i));

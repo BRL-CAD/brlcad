@@ -1,7 +1,7 @@
 /*                      N U R B _ R A Y . C
  * BRL-CAD
  *
- * Copyright (c) 1991-2013 United States Government as represented by
+ * Copyright (c) 1991-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -28,13 +28,12 @@
 
 #include "common.h"
 
-#include <stdio.h>
 #include "bio.h"
 
 #include "vmath.h"
 #include "nmg.h"
 #include "raytrace.h"
-#include "nurb.h"
+#include "rt/nurb.h"
 
 
 void rt_nurb_pbound(struct face_g_snurb *srf, fastf_t *vmin, fastf_t *vmax);
@@ -124,8 +123,9 @@ struct internal_convex_hull {
     fastf_t min, max;
 };
 
-
+#if !defined(SIGN)
 #define SIGN(a)	((a < 0.0)? -1 : 1)
+#endif
 
 void
 rt_nurb_clip_srf(const struct face_g_snurb *srf, int dir, fastf_t *min, fastf_t *max)
@@ -280,22 +280,20 @@ rt_nurb_clip_srf(const struct face_g_snurb *srf, int dir, fastf_t *min, fastf_t 
 }
 
 
-/**
- * R T _ N U R B _ R E G I O N _ F R O M _ S R F
- */
 struct face_g_snurb *
 rt_nurb_region_from_srf(const struct face_g_snurb *srf, int dir, fastf_t param1, fastf_t param2, struct resource *res)
 {
     register int i;
     struct face_g_snurb *region;
     struct knot_vector new_knots;
-    /* FIXME: gcc 4.8.1 report array overrun with size 40, temp  change to 400 */
-    /* fastf_t knot_vec[40]; */
-    fastf_t knot_vec[400];
 
-    /* Build the new knot vector in the local array */
-    /* XXX fill in magic number here? */
-    new_knots.knots = & knot_vec[0];
+    fastf_t *knot_vec = NULL;
+    size_t maxorder = FMAX(srf->order[0], srf->order[1]);
+    knot_vec = (fastf_t *)bu_calloc(maxorder * 2, sizeof(fastf_t), "knot vector");
+
+    /* Build the new knot vector in a local array, which gets copied
+     * later in rt_nurb_s_refine(). */
+    new_knots.knots = &knot_vec[0];
 
     if (dir == RT_NURB_SPLIT_ROW) {
 	new_knots.k_size = srf->order[0] * 2;
@@ -311,19 +309,15 @@ rt_nurb_region_from_srf(const struct face_g_snurb *srf, int dir, fastf_t param1,
 	    knot_vec[i] = param1;
 	    knot_vec[i+srf->order[1]] = param2;
 	}
-
     }
-    if (new_knots.k_size >= 40) bu_bomb("rt_nurb_region_from_srf() local kv overflow\n");
 
     region = rt_nurb_s_refine(srf, dir, &new_knots, res);
+    bu_free(knot_vec, "knot vector");
 
     return region;
 }
 
 
-/**
- * R T _ N U R B _ I N T E R S E C T
- */
 struct rt_nurb_uv_hit *
 rt_nurb_intersect(const struct face_g_snurb *srf, fastf_t *plane1, fastf_t *plane2, double uv_tol, struct resource *res, struct bu_list *plist)
 {

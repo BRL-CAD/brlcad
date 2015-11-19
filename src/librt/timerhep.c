@@ -1,7 +1,7 @@
 /*                      T I M E R H E P . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2013 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -28,9 +28,6 @@ extern long time(time_t *);
 static long time0;
 
 
-/**
- *
- */
 void
 rt_prep_timer(void)
 {
@@ -39,9 +36,6 @@ rt_prep_timer(void)
 }
 
 
-/**
- *
- */
 double
 rt_read_timer(char *str, int len)
 {

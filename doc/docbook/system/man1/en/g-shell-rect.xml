@@ -18,11 +18,15 @@
 <refsynopsisdiv xml:id='synopsis'>
 <cmdsynopsis>
   <command>g-shell-rect</command>
+    <arg choice='opt'>-a <replaceable>rpp_args</replaceable></arg>
+    <arg choice='opt'>-R <replaceable>edge_tol</replaceable></arg>
+    <arg choice='opt'>-p <replaceable>plotfile</replaceable></arg>
+    <arg choice='opt'>-X <replaceable>lvl</replaceable></arg>
     <arg choice='opt'>-d <replaceable>debug_level</replaceable></arg>
+    <arg choice='opt'>-b </arg>
     <arg choice='opt'>-n </arg>
-    <arg choice='opt'>-g <replaceable>cell_size</replaceable></arg>
     <arg choice='opt'>-i <replaceable>initial_ray_dir</replaceable></arg>
-    <arg choice='opt'>-d <replaceable>debug_level</replaceable></arg>
+    <arg choice='opt'>-g <replaceable>cell_size</replaceable></arg>
     <arg choice='plain'>-o <replaceable>brlcad_output_file</replaceable></arg>
     <arg choice='plain'><replaceable>database.g</replaceable></arg>
     <arg choice='plain'><replaceable>object(s)</replaceable></arg>
@@ -31,7 +35,7 @@
 
 
 <refsect1 xml:id='description'><title>DESCRIPTION</title>
-<para><emphasis remap='I'>g-shell-rect</emphasis>
+<para><command>g-shell-rect</command>
 converts the specified
 <emphasis remap='I'>objects(s)</emphasis>
 from a BRL-CAD model
@@ -46,19 +50,19 @@ by specifying a desired initial ray direction using the
 option (see below).
 The initial shell is constructed using only the first and last
 intersections with the
-<emphasis remap='I'>object(s).</emphasis>
+<emphasis remap='I'>object(s)</emphasis>.
 This will typically result in some rather large faces with normals at right angles
 to the ray direction. Unless the
 <option>-n</option>
 option is specified, these faces are then subdivided (according to the
-<emphasis remap='I'>cell_size</emphasis>
-) and additional rays fired from the other two directions are used to refine their
+<emphasis remap='I'>cell_size</emphasis>)
+and additional rays fired from the other two directions are used to refine their
 shape.
 The resulting NMG solid
 will be named
 <emphasis remap='I'>shell</emphasis>
 and will be written to the specified
-<emphasis remap='I'>brlcad_output_file.</emphasis></para>
+<emphasis remap='I'>brlcad_output_file</emphasis>.</para>
 
 
 <para>The following command line options are recognized:</para>
@@ -75,7 +79,6 @@ and will be written to the specified
 <para>Specify the initial ray direction.  Valid values are X, Y, or Z.
 The best results are usually obtained by raytracing in the direction that produces the
 most hits first.</para>
-
   </listitem>
   </varlistentry>
   <varlistentry>
@@ -91,6 +94,36 @@ most hits first.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
+  <term><option>-b</option></term>
+  <listitem>
+<para>Output a BOT rather than an NMG.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-a </option><emphasis remap='I'>rpp_args</emphasis></term>
+  <listitem>
+<para>Add an RPP for refining.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-R </option><emphasis remap='I'>edge_tol</emphasis></term>
+  <listitem>
+<para>Supply edge tolerance.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-p </option><emphasis remap='I'>plotfile</emphasis></term>
+  <listitem>
+<para>Supply plotfile for plot edge breaking.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-X </option><emphasis remap='I'>lvl</emphasis></term>
+  <listitem>
+<para>Supply NMG debug flags.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
   <term><option>-o </option><emphasis remap='I'>output.g</emphasis></term>
   <listitem>
 <para>Specifies the name of the BRL-CAD geometry file to create.</para>
@@ -101,7 +134,7 @@ most hits first.</para>
 
 <refsect1 xml:id='example'><title>EXAMPLE</title>
 <synopsis>
-$ <emphasis remap='I'>g-shell-rect -o shell.g sample.g sample_object</emphasis>
+$ g-shell-rect -o <emphasis remap='I'>shell.g sample.g sample_object</emphasis>
 </synopsis>
 </refsect1>
 
@@ -116,7 +149,7 @@ $ <emphasis remap='I'>g-shell-rect -o shell.g sample.g sample_object</emphasis>
 </refsect1>
 
 <refsect1 xml:id='copyright'><title>COPYRIGHT</title>
-<para>This software is Copyright (c) 1998-2013 by the United States
+<para>This software is Copyright (c) 1998-2014 by the United States
 Government as represented by U.S. Army Research Laboratory.</para>
 </refsect1>
 

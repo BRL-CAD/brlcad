@@ -1,7 +1,7 @@
 /*                          A D R T . H
  * BRL-CAD
  *
- * Copyright (c) 2008-2013 United States Government as represented by
+ * Copyright (c) 2008-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -23,8 +23,8 @@
  *
  */
 
-#ifndef _ADRT_H
-#define _ADRT_H
+#ifndef ADRT_ADRT_H
+#define ADRT_ADRT_H
 
 #include "common.h"
 
@@ -124,7 +124,7 @@ enum
 
 #define TIENET_BUFFER_SIZE(_b, _s) { \
 	if (_s > _b.size) { \
-	    _b.data = bu_realloc(_b.data, _s, "tienet buffer size"); \
+	    _b.data = (uint8_t *)bu_realloc(_b.data, _s, "tienet buffer size");	\
 	    _b.size = _s; \
 	} }
 
@@ -134,7 +134,7 @@ typedef struct tienet_buffer_s {
     uint32_t ind;
 } tienet_buffer_t;
 
-BU_EXPORT extern int load_g(struct tie_s *tie, const char *db, int argc, const char **argv, struct adrt_mesh_s **);
+RENDER_EXPORT extern int load_g(struct tie_s *tie, const char *db, int argc, const char **argv, struct adrt_mesh_s **);
 
 #endif
 

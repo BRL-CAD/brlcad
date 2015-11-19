@@ -1,7 +1,7 @@
 /*                 BoundedPCurve.cpp
  * BRL-CAD
  *
- * Copyright (c) 1994-2013 United States Government as represented by
+ * Copyright (c) 1994-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -60,13 +60,15 @@ BoundedPCurve::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
 
     if (!PCurve::Load(sw, sse)) {
 	std::cout << CLASSNAME << ":Error loading base class ::PCurve." << std::endl;
+	sw->entity_status[id] = STEP_LOAD_ERROR;
 	return false;
     }
     if (!BoundedCurve::Load(sw, sse)) {
 	std::cout << CLASSNAME << ":Error loading base class ::BoundedCurve." << std::endl;
+	sw->entity_status[id] = STEP_LOAD_ERROR;
 	return false;
     }
-
+    sw->entity_status[id] = STEP_LOADED;
     return true;
 }
 const double *

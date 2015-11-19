@@ -1,7 +1,7 @@
 /*                        F B - P N G . C
  * BRL-CAD
  *
- * Copyright (c) 1998-2013 United States Government as represented by
+ * Copyright (c) 1998-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -31,10 +31,12 @@
 #include <sys/stat.h>
 #include <zlib.h>
 #include <png.h>
-#include "bio.h"
-#include "bin.h"
 
-#include "bu.h"
+#include "bu/getopt.h"
+#include "bu/log.h"
+#include "bu/malloc.h"
+#include "bu/file.h"
+#include "vmath.h"
 #include "fb.h"
 
 #include "pkg.h"
@@ -91,7 +93,7 @@ get_args(int argc, char **argv)
 		    bu_exit(EXIT_FAILURE, "fb-png: Only able to handle 1 and 3 byte pixels\n");
 		break;
 
-	    default:		/* '?' */
+	    default:		/* '?' 'h' */
 		return 0;
 	}
     }
@@ -125,7 +127,7 @@ main(int argc, char **argv)
     static int scanpix;			/* # of pixels of scanline */
     static ColorMap cmap;		/* libfb color map */
 
-    FBIO *fbp;
+    fb *fbp;
     int y;
     int got;
     png_structp png_p;
@@ -157,10 +159,8 @@ Usage: fb-png [-i -c] [-# nbytes/pixel] [-F framebuffer] [-g gamma]\n\
     }
 
     /* If actual screen is smaller than requested size, trim down */
-    if (screen_height > fb_getheight(fbp))
-	screen_height = fb_getheight(fbp);
-    if (screen_width > fb_getwidth(fbp))
-	screen_width = fb_getwidth(fbp);
+    V_MIN(screen_height, fb_getheight(fbp));
+    V_MIN(screen_width, fb_getwidth(fbp));
 
     scanpix = screen_width;
     scanbytes = scanpix * sizeof(RGBpixel);

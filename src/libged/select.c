@@ -1,7 +1,7 @@
 /*                         S E L E C T . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2013 United States Government as represented by
+ * Copyright (c) 2008-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -26,238 +26,10 @@
 #include "common.h"
 
 #include <string.h>
-#include "bio.h"
-#include "solid.h"
 
+
+#include "bu/getopt.h"
 #include "./ged_private.h"
-
-int
-_ged_select(struct ged *gedp, double vx, double vy, double vwidth, double vheight, int rflag)
-{
-    struct ged_display_list *gdlp = NULL;
-    struct ged_display_list *next_gdlp = NULL;
-    struct solid *sp = NULL;
-    fastf_t vr = 0.0;
-    fastf_t vmin_x = 0.0;
-    fastf_t vmin_y = 0.0;
-    fastf_t vmax_x = 0.0;
-    fastf_t vmax_y = 0.0;
-
-    if (rflag) {
-	vr = vwidth;
-    } else {
-	vmin_x = vx;
-	vmin_y = vy;
-
-	if (vwidth > 0)
-	    vmax_x = vx + vwidth;
-	else {
-	    vmin_x = vx + vwidth;
-	    vmax_x = vx;
-	}
-
-	if (vheight > 0)
-	    vmax_y = vy + vheight;
-	else {
-	    vmin_y = vy + vheight;
-	    vmax_y = vy;
-	}
-    }
-
-    gdlp = BU_LIST_NEXT(ged_display_list, gedp->ged_gdp->gd_headDisplay);
-    while (BU_LIST_NOT_HEAD(gdlp, gedp->ged_gdp->gd_headDisplay)) {
-	next_gdlp = BU_LIST_PNEXT(ged_display_list, gdlp);
-
-	FOR_ALL_SOLIDS(sp, &gdlp->gdl_headSolid) {
-	    point_t vmin, vmax;
-	    struct bn_vlist *vp;
-
-	    vmax[X] = vmax[Y] = vmax[Z] = -INFINITY;
-	    vmin[X] = vmin[Y] = vmin[Z] =  INFINITY;
-
-	    for (BU_LIST_FOR(vp, bn_vlist, &(sp->s_vlist))) {
-		int j;
-		int nused = vp->nused;
-		int *cmd = vp->cmd;
-		point_t *pt = vp->pt;
-		point_t vpt;
-		for (j = 0; j < nused; j++, cmd++, pt++) {
-		    switch (*cmd) {
-			case BN_VLIST_POLY_START:
-			case BN_VLIST_POLY_VERTNORM:
-			case BN_VLIST_TRI_START:
-			case BN_VLIST_TRI_VERTNORM:
-			case BN_VLIST_POINT_SIZE:
-			case BN_VLIST_LINE_WIDTH:
-			    /* attribute, not location */
-			    break;
-			case BN_VLIST_LINE_MOVE:
-			case BN_VLIST_LINE_DRAW:
-			case BN_VLIST_POLY_MOVE:
-			case BN_VLIST_POLY_DRAW:
-			case BN_VLIST_POLY_END:
-			case BN_VLIST_TRI_MOVE:
-			case BN_VLIST_TRI_DRAW:
-			case BN_VLIST_TRI_END:
-			    MAT4X3PNT(vpt, gedp->ged_gvp->gv_model2view, *pt);
-			    V_MIN(vmin[X], vpt[X]);
-			    V_MAX(vmax[X], vpt[X]);
-			    V_MIN(vmin[Y], vpt[Y]);
-			    V_MAX(vmax[Y], vpt[Y]);
-			    V_MIN(vmin[Z], vpt[Z]);
-			    V_MAX(vmax[Z], vpt[Z]);
-			    break;
-			default: {
-			    bu_vls_printf(gedp->ged_result_str, "unknown vlist op %d\n", *cmd);
-			}
-		    }
-		}
-	    }
-
-	    if (rflag) {
-		point_t vloc;
-		vect_t diff;
-		fastf_t mag;
-
-		VSET(vloc, vx, vy, vmin[Z]);
-		VSUB2(diff, vmin, vloc);
-		mag = MAGNITUDE(diff);
-
-		if (mag > vr)
-		    continue;
-
-		VSET(vloc, vx, vy, vmax[Z]);
-		VSUB2(diff, vmax, vloc);
-		mag = MAGNITUDE(diff);
-
-		if (mag > vr)
-		    continue;
-
-		db_path_to_vls(gedp->ged_result_str, &sp->s_fullpath);
-		bu_vls_printf(gedp->ged_result_str, "\n");
-	    } else {
-		if (vmin_x <= vmin[X] && vmax[X] <= vmax_x &&
-		    vmin_y <= vmin[Y] && vmax[Y] <= vmax_y) {
-		    db_path_to_vls(gedp->ged_result_str, &sp->s_fullpath);
-		    bu_vls_printf(gedp->ged_result_str, "\n");
-		}
-	    }
-	}
-
-	gdlp = next_gdlp;
-    }
-
-    return GED_OK;
-}
-
-
-int
-_ged_select_partial(struct ged *gedp, double vx, double vy, double vwidth, double vheight, int rflag)
-{
-    struct ged_display_list *gdlp = NULL;
-    struct ged_display_list *next_gdlp = NULL;
-    struct solid *sp = NULL;
-    fastf_t vr = 0.0;
-    fastf_t vmin_x = 0.0;
-    fastf_t vmin_y = 0.0;
-    fastf_t vmax_x = 0.0;
-    fastf_t vmax_y = 0.0;
-
-    if (rflag) {
-	vr = vwidth;
-    } else {
-	vmin_x = vx;
-	vmin_y = vy;
-
-	if (vwidth > 0)
-	    vmax_x = vx + vwidth;
-	else {
-	    vmin_x = vx + vwidth;
-	    vmax_x = vx;
-	}
-
-	if (vheight > 0)
-	    vmax_y = vy + vheight;
-	else {
-	    vmin_y = vy + vheight;
-	    vmax_y = vy;
-	}
-    }
-
-    gdlp = BU_LIST_NEXT(ged_display_list, gedp->ged_gdp->gd_headDisplay);
-    while (BU_LIST_NOT_HEAD(gdlp, gedp->ged_gdp->gd_headDisplay)) {
-	next_gdlp = BU_LIST_PNEXT(ged_display_list, gdlp);
-
-	FOR_ALL_SOLIDS(sp, &gdlp->gdl_headSolid) {
-	    struct bn_vlist *vp;
-
-	    for (BU_LIST_FOR(vp, bn_vlist, &(sp->s_vlist))) {
-		int j;
-		int nused = vp->nused;
-		int *cmd = vp->cmd;
-		point_t *pt = vp->pt;
-		point_t vpt;
-		for (j = 0; j < nused; j++, cmd++, pt++) {
-		    switch (*cmd) {
-			case BN_VLIST_POLY_START:
-			case BN_VLIST_POLY_VERTNORM:
-			case BN_VLIST_TRI_START:
-			case BN_VLIST_TRI_VERTNORM:
-			    /* Has normal vector, not location */
-			    break;
-			case BN_VLIST_LINE_MOVE:
-			case BN_VLIST_LINE_DRAW:
-			case BN_VLIST_POLY_MOVE:
-			case BN_VLIST_POLY_DRAW:
-			case BN_VLIST_POLY_END:
-			case BN_VLIST_TRI_MOVE:
-			case BN_VLIST_TRI_DRAW:
-			case BN_VLIST_TRI_END:
-			    MAT4X3PNT(vpt, gedp->ged_gvp->gv_model2view, *pt);
-
-			    if (rflag) {
-				point_t vloc;
-				vect_t diff;
-				fastf_t mag;
-
-				VSET(vloc, vx, vy, vpt[Z]);
-				VSUB2(diff, vpt, vloc);
-				mag = MAGNITUDE(diff);
-
-				if (mag > vr)
-				    continue;
-
-				db_path_to_vls(gedp->ged_result_str, &sp->s_fullpath);
-				bu_vls_printf(gedp->ged_result_str, "\n");
-
-				goto solid_done;
-			    } else {
-				if (vmin_x <= vpt[X] && vpt[X] <= vmax_x &&
-				    vmin_y <= vpt[Y] && vpt[Y] <= vmax_y) {
-				    db_path_to_vls(gedp->ged_result_str, &sp->s_fullpath);
-				    bu_vls_printf(gedp->ged_result_str, "\n");
-
-				    goto solid_done;
-				}
-			    }
-
-			    break;
-			default: {
-			    bu_vls_printf(gedp->ged_result_str, "unknown vlist op %d\n", *cmd);
-			}
-		    }
-		}
-	    }
-
-	    solid_done:
-	    ;
-	}
-
-	gdlp = next_gdlp;
-    }
-
-    return GED_OK;
-}
 
 
 /*
@@ -361,9 +133,9 @@ ged_select(struct ged *gedp, int argc, const char *argv[])
 	    return ret;
 	} else {
 	    if (pflag)
-		return _ged_select_partial(gedp, vx, vy, vr, vr, 1);
+		return dl_select_partial(gedp->ged_gdp->gd_headDisplay, gedp->ged_gvp->gv_model2view, gedp->ged_result_str, vx, vy, vr, vr, 1);
 	    else
-		return _ged_select(gedp, vx, vy, vr, vr, 1);
+		return dl_select(gedp->ged_gdp->gd_headDisplay, gedp->ged_gvp->gv_model2view, gedp->ged_result_str, vx, vy, vr, vr, 1);
 	}
     } else {
 	if (sscanf(argv[1], "%lf", &vx) != 1 ||
@@ -383,9 +155,9 @@ ged_select(struct ged *gedp, int argc, const char *argv[])
 	    return ret;
 	} else {
 	    if (pflag)
-		return _ged_select_partial(gedp, vx, vy, vw, vh, 0);
+		return dl_select_partial(gedp->ged_gdp->gd_headDisplay, gedp->ged_gvp->gv_model2view, gedp->ged_result_str, vx, vy, vw, vh, 0);
 	    else
-		return _ged_select(gedp, vx, vy, vw, vh, 0);
+		return dl_select(gedp->ged_gdp->gd_headDisplay, gedp->ged_gvp->gv_model2view, gedp->ged_result_str, vx, vy, vw, vh, 0);
 	}
     }
 }
@@ -477,10 +249,10 @@ ged_rselect(struct ged *gedp, int argc, const char *argv[])
 	int ret;
 
 	ret = _ged_select_botpts(gedp, botip,
-				  gedp->ged_gvp->gv_rect.grs_x,
-				  gedp->ged_gvp->gv_rect.grs_y,
-				  gedp->ged_gvp->gv_rect.grs_width,
-				  gedp->ged_gvp->gv_rect.grs_height,
+				  gedp->ged_gvp->gv_rect.x,
+				  gedp->ged_gvp->gv_rect.y,
+				  gedp->ged_gvp->gv_rect.width,
+				  gedp->ged_gvp->gv_rect.height,
 				  vminz,
 				  0);
 
@@ -488,22 +260,59 @@ ged_rselect(struct ged *gedp, int argc, const char *argv[])
 	return ret;
     } else {
 	if (pflag)
-	    return _ged_select_partial(gedp,
-				       gedp->ged_gvp->gv_rect.grs_x,
-				       gedp->ged_gvp->gv_rect.grs_y,
-				       gedp->ged_gvp->gv_rect.grs_width,
-				       gedp->ged_gvp->gv_rect.grs_height,
-				       0);
+	    return dl_select_partial(gedp->ged_gdp->gd_headDisplay, gedp->ged_gvp->gv_model2view, gedp->ged_result_str, 				       gedp->ged_gvp->gv_rect.x,
+				     gedp->ged_gvp->gv_rect.y,
+				     gedp->ged_gvp->gv_rect.width,
+				     gedp->ged_gvp->gv_rect.height,
+				     0);
 	else
-	    return _ged_select(gedp,
-			       gedp->ged_gvp->gv_rect.grs_x,
-			       gedp->ged_gvp->gv_rect.grs_y,
-			       gedp->ged_gvp->gv_rect.grs_width,
-			       gedp->ged_gvp->gv_rect.grs_height,
-			       0);
+	    return dl_select(gedp->ged_gdp->gd_headDisplay, gedp->ged_gvp->gv_model2view, gedp->ged_result_str, 				       gedp->ged_gvp->gv_rect.x,
+			     gedp->ged_gvp->gv_rect.y,
+			     gedp->ged_gvp->gv_rect.width,
+			     gedp->ged_gvp->gv_rect.height,
+			     0);
     }
 }
 
+struct rt_object_selections *
+ged_get_object_selections(struct ged *gedp, const char *object_name)
+{
+    int int_new;
+    struct bu_hash_entry *entry;
+
+    entry = bu_hash_tbl_add(gedp->ged_selections, (unsigned char *)object_name,
+	    strlen(object_name), &int_new);
+
+    if (int_new) {
+	struct rt_object_selections *obj_selections;
+	BU_ALLOC(obj_selections, struct rt_object_selections);
+	obj_selections->sets = bu_hash_tbl_create(0);
+	bu_set_hash_value(entry, (unsigned char *)obj_selections);
+    }
+
+    return (struct rt_object_selections *)bu_get_hash_value(entry);
+}
+
+struct rt_selection_set *
+ged_get_selection_set(struct ged *gedp, const char *object_name, const char *selection_name)
+{
+    struct rt_object_selections *obj_selections;
+    struct bu_hash_entry *entry;
+    int int_new;
+
+    obj_selections = ged_get_object_selections(gedp, object_name);
+    entry = bu_hash_tbl_add(obj_selections->sets,
+		(const unsigned char *)selection_name, strlen(selection_name), &int_new);
+
+    if (int_new) {
+	struct rt_selection_set *set;
+	BU_ALLOC(set, struct rt_selection_set);
+	BU_PTBL_INIT(&set->selections);
+	bu_set_hash_value(entry, (unsigned char *)set);
+    }
+
+    return (struct rt_selection_set *)bu_get_hash_value(entry);
+}
 
 /*
  * Local Variables:

@@ -1,7 +1,7 @@
 /*                        E S C A P E . C
  * BRL-CAD
  *
- * Copyright (c) 2011-2013 United States Government as represented by
+ * Copyright (c) 2011-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -22,8 +22,10 @@
 
 #include <string.h>
 
-#include "bu.h"
-
+#include "bu/log.h"
+#include "bu/malloc.h"
+#include "bu/str.h"
+#include "bu/vls.h"
 
 static int
 expand_expression(const char *expression, struct bu_vls *vp)
@@ -94,7 +96,7 @@ bu_str_escape(const char *input, const char *expression, char *output, size_t si
     /* allocate dynamic space if output is NULL */
     if (!output) {
 	size = need + 1;
-	output = bu_calloc(size, 1, "bu_str_escape");
+	output = (char *)bu_calloc(size, 1, "bu_str_escape");
     } else {
 	/* copy input buffer if same or overlapping output buffer */
 	if (input == output
@@ -173,7 +175,7 @@ bu_str_unescape(const char *input, char *output, size_t size)
     /* allocate dynamic space if output is NULL */
     if (!output) {
 	size = need + 1;
-	output = bu_calloc(size, 1, "bu_str_unescape");
+	output = (char *)bu_calloc(size, 1, "bu_str_unescape");
     } else {
 	/* copy input buffer output buffer starts within the input
 	 * buffer (output is "in front" of the input).  it's okay if

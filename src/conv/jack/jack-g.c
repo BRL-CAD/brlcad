@@ -1,7 +1,7 @@
 /*                        J A C K - G . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2013 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -21,6 +21,16 @@
  *
  * Program to convert JACK Psurf file into a BRL-CAD NMG object.
  *
+ * Jack, originally from the University of Pennsylvania's Computer
+ * Graphics Research Laboratory, is a package used for human figure
+ * animation and ergonomic analysis.
+ *
+ * This converter was written prior to JACK becoming a commercial
+ * product in 1996, but it should be compatible with the more modern
+ * Tecnomatix Jack version distributed by Siemens (maintainers of the
+ * NX and Parasolid CAD software).  It reportedly still supports JACK
+ * 5.1 JT files.
+ *
  */
 
 #include "common.h"
@@ -30,12 +40,12 @@
 #include <string.h>
 #include "bio.h"
 
-#include "bu.h"
+#include "bu/getopt.h"
 #include "vmath.h"
 #include "bn.h"
 #include "nmg.h"
 #include "raytrace.h"
-#include "rtgeom.h"
+#include "rt/geom.h"
 #include "wdb.h"
 
 
@@ -48,14 +58,17 @@ struct vlist {
 
 static struct bn_tol	tol;
 
-static const char usage[] = "Usage: %s [-r region] [-g group] [jack_db] [brlcad_db]\n";
-
-extern fastf_t nmg_loop_plane_area(const struct loopuse *lu, plane_t pl);
+static const char *usage = "[-r region] [-g group] [jack_db] [brlcad_db]\n";
 
 int	psurf_to_nmg(struct model *m, FILE *fp, char *jfile);
 int	create_brlcad_db(struct rt_wdb *fpout, struct model *m, char *reg_name, char *grp_name);
 void	jack_to_brlcad(FILE *fpin, struct rt_wdb *fpout, char *reg_name, char *grp_name, char *jfile);
 
+static void
+print_usage(const char *progname)
+{
+    bu_exit(1, "Usage: %s %s", progname, usage);
+}
 
 int
 main(int argc, char **argv)
@@ -63,13 +76,13 @@ main(int argc, char **argv)
     char		*base, *bfile, *grp_name, *jfile, *reg_name;
     FILE		*fpin;
     struct rt_wdb	*fpout = NULL;
-    int		doti;
+    size_t doti;
     int	c;
 
     grp_name = reg_name = NULL;
 
     /* Get command line arguments. */
-    while ((c = bu_getopt(argc, argv, "g:r:")) != -1) {
+    while ((c = bu_getopt(argc, argv, "g:r:h?")) != -1) {
 	switch (c) {
 	    case 'g':
 		grp_name = bu_optarg;
@@ -80,7 +93,7 @@ main(int argc, char **argv)
 		reg_name = bu_optarg;
 		break;
 	    default:
-		bu_exit(1, usage, argv[0]);
+		print_usage(argv[0]);
 		break;
 	}
     }
@@ -100,14 +113,12 @@ main(int argc, char **argv)
     /* Get BRL-CAD output data base name. */
     bu_optind++;
     if (bu_optind >= argc) {
-	bfile = "-";
-	bu_exit(1, usage, argv[0]);
-    } else {
-	bfile = argv[bu_optind];
-	if ((fpout = wdb_fopen(bfile)) == NULL) {
-	    bu_exit(1, "%s: cannot open %s for writing\n",
-		    argv[0], bfile);
-	}
+	print_usage(argv[0]);
+    }
+    bfile = argv[bu_optind];
+    if ((fpout = wdb_fopen(bfile)) == NULL) {
+	bu_exit(1, "%s: cannot open %s for writing\n",
+		argv[0], bfile);
     }
 
     /* Output BRL-CAD database header.  No problem if more than one. */
@@ -117,16 +128,20 @@ main(int argc, char **argv)
     if (!reg_name) {
 	/* Ignore leading path info. */
 	base = strrchr(argv[1], '/');
-	if (!base)
-	    base = argv[1];
-	else
+	if (base)
 	    base++;
-	reg_name = bu_malloc(sizeof(base)+1, "reg_name");
+	else
+	    base = argv[1];
+	reg_name = (char *)bu_malloc(sizeof(base)+1, "reg_name");
 	bu_strlcpy(reg_name, base, sizeof(base)+1);
+
 	/* Ignore .pss extension if it's there. */
-	doti = strlen(reg_name) - 4;
-	if (doti > 0 && BU_STR_EQUAL(".pss", reg_name+doti))
-	    reg_name[doti] = '\0';
+	doti = strlen(reg_name);
+	if (doti > 4) {
+	    doti -= 4;
+	    if (BU_STR_EQUAL(".pss", reg_name+doti))
+		reg_name[doti] = '\0';
+	}
     }
 
     jack_to_brlcad(fpin, fpout, reg_name, grp_name, jfile);
@@ -136,8 +151,6 @@ main(int argc, char **argv)
 }
 
 /*
- *	J A C K _ T O _ B R L C A D
- *
  *	Convert a UPenn Jack data base into a BRL-CAD data base.
  */
 void
@@ -152,8 +165,6 @@ jack_to_brlcad(FILE *fpin, struct rt_wdb *fpout, char *reg_name, char *grp_name,
 }
 
 /*
- *	R E A D _ P S U R F _ V E R T I C E S
- *
  *	Read in vertices from a psurf file and store them in an
  *	array of nmg vertex structures.
  *
@@ -197,8 +208,6 @@ read_psurf_vertices(FILE *fp, struct vlist *vert)
 }
 
 /*
- *	R E A D _ P S U R F _ F A C E
- *
  *	Read in the vertexes describing a face of a psurf.
  */
 int
@@ -216,10 +225,6 @@ read_psurf_face(FILE *fp, int *lst)
     return i;
 }
 
-/*
- *	P S U R F _ T O _ N M G
- *
- */
 int
 psurf_to_nmg(struct model *m, FILE *fp, char *jfile)
 /* Input/output, nmg model. */
@@ -313,8 +318,6 @@ psurf_to_nmg(struct model *m, FILE *fp, char *jfile)
 }
 
 /*
- *	C R E A T E _ B R L C A D _ D B
- *
  *	Write the nmg to a BRL-CAD style data base.
  */
 int
@@ -325,8 +328,8 @@ create_brlcad_db(struct rt_wdb *fpout, struct model *m, char *reg_name, char *gr
     struct shell *s;
     struct nmgregion *r;
 
-    rname = bu_malloc(sizeof(reg_name) + 3, "rname");	/* Region name. */
-    sname = bu_malloc(sizeof(reg_name) + 3, "sname");	/* Solid name. */
+    rname = (char *)bu_malloc(sizeof(reg_name) + 3, "rname");	/* Region name. */
+    sname = (char *)bu_malloc(sizeof(reg_name) + 3, "sname");	/* Solid name. */
 
     snprintf(sname, sizeof(reg_name) + 2, "s.%s", reg_name);
     empty_model = nmg_kill_zero_length_edgeuses(m);

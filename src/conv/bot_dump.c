@@ -1,7 +1,7 @@
 /*                       B O T _ D U M P . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2013 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -23,19 +23,21 @@
  */
 
 #include "common.h"
-#include "bio.h"
 
-#include "cmd.h"
+#include "bu/cmd.h"
+#include "bu/getopt.h"
 #include "ged.h"
 
-static char usage[] = "\
-Usage: %s [-b] [-n] [-m directory] [-o file] [-t dxf|obj|sat|stl] [-u units] geom.g [bot1 bot2 ...]\n";
+static const char *usage =
+    "[-b] [-n] [-m directory] [-o file] [-t dxf|obj|sat|stl] [-u units] geom.g [bot1 bot2 ...]\n";
+
+static void
+print_usage(const char *progname)
+{
+    bu_exit(1, "Usage: %s %s", progname, usage);
+}
 
 
-/*
- *	M A I N
- *
- */
 int
 main(int argc, char *argv[])
 {
@@ -60,16 +62,16 @@ main(int argc, char *argv[])
 	    case 'u':
 		break;
 	    default:
-		bu_exit(1, usage, argv[0]);
+		print_usage(argv[0]);
 		break;
 	}
     }
 
     if (bu_optind >= argc) {
-	bu_exit(1, usage, argv[0]);
+	print_usage(argv[0]);
     }
 
-    av = bu_calloc(argc, sizeof(char *), "alloc argv copy");
+    av = (const char **)bu_calloc(argc, sizeof(char *), "alloc argv copy");
 
     db_index = bu_optind;
     for (i = j = 0; i < argc; ++i) {
@@ -82,16 +84,16 @@ main(int argc, char *argv[])
     av[j] = (char *)0;
 
     if ((gedp = ged_open("db", argv[db_index], 1)) == GED_NULL) {
-	bu_exit(1, usage, argv[0]);
+	print_usage(argv[0]);
     }
 
     (void)ged_bot_dump(gedp, j, av);
     if (bu_vls_strlen(gedp->ged_result_str) > 0)
 	bu_log("%s", bu_vls_addr(gedp->ged_result_str));
     ged_close(gedp);
-    if(gedp)
+    if (gedp)
 	BU_PUT(gedp, struct ged);
-    bu_free(av, "free argv copy");
+    bu_free((void *)av, "free argv copy");
 
     return 0;
 }

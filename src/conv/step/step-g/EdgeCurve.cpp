@@ -1,7 +1,7 @@
 /*                 EdgeCurve.cpp
  * BRL-CAD
  *
- * Copyright (c) 1994-2013 United States Government as represented by
+ * Copyright (c) 1994-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -70,6 +70,7 @@ EdgeCurve::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
 
     if (!Edge::Load(step, sse)) {
 	std::cout << CLASSNAME << ":Error loading base class ::Edge." << std::endl;
+	sw->entity_status[id] = STEP_LOAD_ERROR;
 	return false;
     }
 
@@ -93,14 +94,17 @@ EdgeCurve::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
 		}
 	    } else {
 		std::cout << CLASSNAME << ":Error loading member field \"edge_geometry\"." << std::endl;
+		sw->entity_status[id] = STEP_LOAD_ERROR;
 		return false;
 	    }
 	} else {
 	    std::cout << CLASSNAME << ":Error loading member field \"edge_geometry\"." << std::endl;
+	    sw->entity_status[id] = STEP_LOAD_ERROR;
 	    return false;
 	}
     }
 
+    sw->entity_status[id] = STEP_LOADED;
     return true;
 }
 

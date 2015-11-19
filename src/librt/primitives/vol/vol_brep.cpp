@@ -1,7 +1,7 @@
 /*                    V O L _ B R E P . C P P
  * BRL-CAD
  *
- * Copyright (c) 2008-2013 United States Government as represented by
+ * Copyright (c) 2008-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -26,7 +26,7 @@
 #include "common.h"
 
 #include "raytrace.h"
-#include "rtgeom.h"
+#include "rt/geom.h"
 #include "nmg.h"
 #include "brep.h"
 
@@ -36,9 +36,6 @@ extern "C" {
 }
 
 
-/**
- * R T _ V O L _ B R E P
- */
 extern "C" void
 rt_vol_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *tol)
 {
@@ -56,9 +53,9 @@ rt_vol_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *t
     struct model *volm = nmg_mm();
     struct nmgregion *volr;
 
-    tmp_internal->idb_ptr = (genptr_t)ip->idb_ptr;
+    tmp_internal->idb_ptr = (void *)ip->idb_ptr;
     rt_vol_tess(&volr, volm, tmp_internal, ttol, tol);
-    tmp_internal->idb_ptr = (genptr_t)volm;
+    tmp_internal->idb_ptr = (void *)volm;
     rt_nmg_brep(b, tmp_internal, tol);
 
     FREE_MODEL(volm);

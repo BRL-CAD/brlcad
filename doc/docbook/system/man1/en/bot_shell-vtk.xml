@@ -66,7 +66,7 @@ only be useful for developers.</para>
 
 <refsect1 xml:id='example'><title>EXAMPLE</title>
 <synopsis>
-$ <emphasis remap='I'>bot_shell-vtk  -o output.vtk  sample.g  the_exterior</emphasis>
+$ bot_shell-vtk  -o <emphasis remap='I'>output.vtk  sample.g  the_exterior</emphasis>
 </synopsis>
 </refsect1>
 
@@ -81,7 +81,7 @@ $ <emphasis remap='I'>bot_shell-vtk  -o output.vtk  sample.g  the_exterior</emph
 </refsect1>
 
 <refsect1 xml:id='copyright'><title>COPYRIGHT</title>
-<para>This software is Copyright (c) 2003-2013 by the United States
+<para>This software is Copyright (c) 2003-2014 by the United States
 Government as represented by U.S. Army Research Laboratory.</para>
 </refsect1>
 

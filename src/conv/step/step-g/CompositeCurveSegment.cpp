@@ -1,7 +1,7 @@
 /*                 CompositeCurveSegment.cpp
  * BRL-CAD
  *
- * Copyright (c) 1994-2013 United States Government as represented by
+ * Copyright (c) 1994-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -73,6 +73,7 @@ CompositeCurveSegment::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
 
     if (!FoundedItem::Load(sw, sse)) {
 	std::cout << CLASSNAME << ":Error loading base class ::Curve." << std::endl;
+	sw->entity_status[id] = STEP_LOAD_ERROR;
 	return false;
     }
 
@@ -86,16 +87,17 @@ CompositeCurveSegment::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
 	    parent_curve = dynamic_cast<Curve *>(Factory::CreateObject(sw, entity));
 	} else {
 	    std::cout << CLASSNAME << ":Error loading member entity \"parent_curve\"." << std::endl;
+	    sw->entity_status[id] = STEP_LOAD_ERROR;
 	    return false;
 	}
     }
 
     transition = (Transition_code)step->getEnumAttribute(sse, "transition");
-    if (transition > Transition_code_unset) {
-	transition = Transition_code_unset;
-    }
+    V_MIN(transition, Transition_code_unset);
 
     same_sense = step->getBooleanAttribute(sse, "same_sense");
+
+    sw->entity_status[id] = STEP_LOADED;
 
     return true;
 }

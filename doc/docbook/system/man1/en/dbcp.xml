@@ -19,9 +19,9 @@
   <command>dbcp</command>
     <arg choice='opt'>-v </arg>
     <arg choice='plain'><replaceable>blocksize</replaceable></arg>
-    <arg choice='plain'><replaceable>&lt;</replaceable></arg>
+    <arg choice='plain'>&lt;</arg>
     <arg choice='plain'><replaceable>infile</replaceable></arg>
-    <arg choice='plain'><replaceable>&gt;</replaceable></arg>
+    <arg choice='plain'>&gt;</arg>
     <arg choice='plain'><replaceable>outfile</replaceable></arg>
 </cmdsynopsis>
 </refsynopsisdiv>
@@ -31,7 +31,7 @@
 <para><command>dbcp</command>
 is a program for copying data rapidly between devices.</para>
 
-<para>This command is DEPRECATED.  Use 'dd' instead.</para>
+<para>This command is DEPRECATED.  Use <command>dd</command> instead.</para>
 
 <para>While the primary application is to move data between raw devices such as
 tape and disk, it can also be used with pipes.
@@ -55,15 +55,15 @@ the number of records processed is printed upon exit.</para>
 </refsect1>
 
 <refsect1 xml:id='examples'><title>EXAMPLES</title>
-<para>$ <emphasis remap='B'>dbcp 16 &lt; /dev/rdk1a &gt; /dev/rmt0</emphasis>
-<!-- .br -->
+<para>$ <emphasis remap='B'>dbcp 16 &lt; /dev/rdk1a &gt; /dev/rmt0</emphasis></para>
+<para>
 <command>dbcp</command>
 copies the filesystem on dk1a to tape
 with a record size of 8K bytes (16 * 512).
 This allows "streaming" tape drives to operate a peak speed.</para>
 
-<para>$ <emphasis remap='B'>tar cf - . | dbcp 20 &gt; /dev/rmt0</emphasis>
-<!-- .br -->
+<para>$ <emphasis remap='B'>tar cf - . | dbcp 20 &gt; /dev/rmt0</emphasis></para>
+<para>
 The
 <emphasis remap='I'>tar</emphasis>
 process runs independently of the
@@ -84,7 +84,7 @@ Chase Manhattan Building, New York, NY)</para>
 </refsect1>
 
 <refsect1 xml:id='copyright'><title>COPYRIGHT</title>
-<para>This software is Copyright (c) 1993-2013 by the United States
+<para>This software is Copyright (c) 1993-2014 by the United States
 Government as represented by U.S. Army Research Laboratory.</para>
 </refsect1>
 

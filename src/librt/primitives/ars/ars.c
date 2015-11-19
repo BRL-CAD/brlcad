@@ -1,7 +1,7 @@
 /*                           A R S . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2013 United States Government as represented by
+ * Copyright (c) 1985-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -32,15 +32,15 @@
 #include <string.h>
 #include <math.h>
 #include <ctype.h>
-#include "bin.h"
+#include "bnetwork.h"
 
-#include "tcl.h"
+#include "bu/cv.h"
 #include "vmath.h"
-#include "db.h"
+#include "rt/db4.h"
 #include "nmg.h"
-#include "rtgeom.h"
+#include "rt/geom.h"
 #include "raytrace.h"
-#include "bot.h"
+#include "rt/primitives/bot.h"
 
 #include "../../librt_private.h"
 
@@ -95,8 +95,6 @@ rt_ars_class(const struct soltab *stp,
 
 
 /**
- * A R S _ R D _ C U R V E
- *
  * reads a set of ARS B records and returns a pointer to memory
  * allocated for holding the curve's fastf_t values.
  */
@@ -123,7 +121,7 @@ ars_rd_curve(union record *rp, int npts, int flip)
 	    break;
 	}
 	lim = (npts>8) ? 8 : npts;
-	for (i=0; i<lim; i++) {
+	for (i = 0; i < lim; i++) {
 	    vect_t vec;
 
 	    /* cvt from dbfloat_t */
@@ -138,8 +136,6 @@ ars_rd_curve(union record *rp, int npts, int flip)
 
 
 /**
- * R T _ A R S _ I M P O R T
- *
  * Read all the curves in as a two dimensional array.  The caller is
  * responsible for freeing the dynamic memory.
  *
@@ -190,7 +186,7 @@ rt_ars_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fa
 	(ari->ncurves+1) * sizeof(fastf_t *), "ars curve ptrs");
 
     currec = 1;
-    for (i=0; i < ari->ncurves; i++) {
+    for (i = 0; i < ari->ncurves; i++) {
 	ari->curves[i] = ars_rd_curve(&rp[currec], ari->pts_per_curve, dbip->dbi_version < 0 ? 1 : 0);
 	currec += (ari->pts_per_curve+7)/8;
     }
@@ -207,7 +203,7 @@ rt_ars_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fa
 	for (j = 0; j < ari->pts_per_curve; j++) {
 	    vect_t homog;
 
-	    if (i==0 && j == 0) {
+	    if (i == 0 && j == 0) {
 		/* base vector */
 		VMOVE(homog, v);
 		MAT4X3PNT(base_vect, mat, homog);
@@ -225,8 +221,6 @@ rt_ars_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fa
 
 
 /**
- * R T _ A R S _ E X P O R T
- *
  * The name will be added by the caller.  Generally, only libwdb will
  * set conv2mm != 1.0
  */
@@ -252,7 +246,7 @@ rt_ars_export4(struct bu_external *ep, const struct rt_db_internal *ip, double l
     BU_CK_EXTERNAL(ep);
     ep->ext_nbytes = (1 + per_curve_grans * arip->ncurves) *
 	sizeof(union record);
-    ep->ext_buf = (genptr_t)bu_calloc(1, ep->ext_nbytes, "ars external");
+    ep->ext_buf = (uint8_t *)bu_calloc(1, ep->ext_nbytes, "ars external");
     rec = (union record *)ep->ext_buf;
 
     rec[0].a.a_id = ID_ARS_A;
@@ -264,14 +258,14 @@ rt_ars_export4(struct bu_external *ep, const struct rt_db_internal *ip, double l
 
     VMOVE(base_pt, &arip->curves[0][0]);
     gno = 1;
-    for (cur=0; cur<arip->ncurves; cur++) {
+    for (cur = 0; cur < arip->ncurves; cur++) {
 	register fastf_t *fp;
 	size_t npts;
 	int left;
 
 	fp = arip->curves[cur];
 	left = arip->pts_per_curve;
-	for (npts=0; npts < arip->pts_per_curve; npts+=8, left -= 8) {
+	for (npts = 0; npts < arip->pts_per_curve; npts+=8, left -= 8) {
 	    register int el;
 	    register int lim;
 	    register struct ars_ext *bp = &rec[gno].b;
@@ -282,9 +276,9 @@ rt_ars_export4(struct bu_external *ep, const struct rt_db_internal *ip, double l
 	    bp->b_ngranule = (npts/8)+1; /* obsolete? */
 
 	    lim = (left > 8) ? 8 : left;
-	    for (el=0; el < lim; el++) {
+	    for (el = 0; el < lim; el++) {
 		vect_t diff;
-		if (cur==0 && npts==0 && el==0) {
+		if (cur == 0 && npts == 0 && el == 0) {
 		    VSCALE(diff, fp, local2mm);
 		} else {
 		    VSUB2SCALE(diff, fp, base_pt, local2mm);
@@ -301,8 +295,6 @@ rt_ars_export4(struct bu_external *ep, const struct rt_db_internal *ip, double l
 
 
 /**
- * R T _ A R S _ I M P O R T 5
- *
  * Read all the curves in as a two dimensional array.  The caller is
  * responsible for freeing the dynamic memory.
  *
@@ -344,11 +336,11 @@ rt_ars_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fa
     ari->curves = (fastf_t **)bu_calloc(
 	(ari->ncurves+1), sizeof(fastf_t *), "ars curve ptrs");
     if (mat == NULL) mat = bn_mat_identity;
-    for (i=0; i < ari->ncurves; i++) {
+    for (i = 0; i < ari->ncurves; i++) {
 	ari->curves[i] = (fastf_t *)bu_calloc((ari->pts_per_curve + 1) * ELEMENTS_PER_POINT,
 					      sizeof(fastf_t), "ARS points");
 	fp = ari->curves[i];
-	for (j=0; j<ari->pts_per_curve; j++) {
+	for (j = 0; j < ari->pts_per_curve; j++) {
 	    bu_cv_ntohd((unsigned char *)tmp_pnt, cp, ELEMENTS_PER_POINT);
 	    MAT4X3PNT(fp, mat, tmp_pnt);
 	    cp += ELEMENTS_PER_POINT * SIZEOF_NETWORK_DOUBLE;
@@ -361,8 +353,6 @@ rt_ars_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fa
 
 
 /**
- * R T _ A R S _ E X P O R T 5
- *
  * The name will be added by the caller.  Generally, only libwdb will
  * set conv2mm != 1.0
  */
@@ -385,7 +375,7 @@ rt_ars_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
 
     BU_CK_EXTERNAL(ep);
     ep->ext_nbytes = 2 * SIZEOF_NETWORK_LONG + ELEMENTS_PER_POINT * arip->ncurves * arip->pts_per_curve * SIZEOF_NETWORK_DOUBLE;
-    ep->ext_buf = (genptr_t)bu_calloc(1, ep->ext_nbytes, "ars external");
+    ep->ext_buf = (uint8_t *)bu_calloc(1, ep->ext_nbytes, "ars external");
     cp = (unsigned char *)ep->ext_buf;
 
     *(uint32_t *)cp = htonl(arip->ncurves);
@@ -393,12 +383,12 @@ rt_ars_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
     *(uint32_t *)cp = htonl(arip->pts_per_curve);
     cp += SIZEOF_NETWORK_LONG;
 
-    for (cur=0; cur<arip->ncurves; cur++) {
+    for (cur = 0; cur < arip->ncurves; cur++) {
 	register fastf_t *fp;
 	size_t npts;
 
 	fp = arip->curves[cur];
-	for (npts=0; npts < arip->pts_per_curve; npts++) {
+	for (npts = 0; npts < arip->pts_per_curve; npts++) {
 	    VSCALE(tmp_pnt, fp, local2mm);
 	    bu_cv_htond(cp, (unsigned char *)tmp_pnt, ELEMENTS_PER_POINT);
 	    cp += ELEMENTS_PER_POINT * SIZEOF_NETWORK_DOUBLE;
@@ -410,8 +400,6 @@ rt_ars_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
 
 
 /**
- * R T _ A R S _ D E S C R I B E
- *
  * Make human-readable formatted presentation of this solid.  First
  * line describes type of solid.  Additional lines are indented one
  * tab, and give parameter values.
@@ -441,12 +429,12 @@ rt_ars_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose
     if (!verbose) return 0;
 
     /* Print out all the points */
-    for (i=0; i < arip->ncurves; i++) {
+    for (i = 0; i < arip->ncurves; i++) {
 	register fastf_t *v = arip->curves[i];
 
 	sprintf(buf, "\tCurve %lu:\n", (long unsigned)i);
 	bu_vls_strcat(str, buf);
-	for (j=0; j < arip->pts_per_curve; j++) {
+	for (j = 0; j < arip->pts_per_curve; j++) {
 	    sprintf(buf, "\t\t(%g, %g, %g)\n",
 		    INTCLAMP(v[X] * mm2local),
 		    INTCLAMP(v[Y] * mm2local),
@@ -461,8 +449,6 @@ rt_ars_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose
 
 
 /**
- * R T _ A R S _ I F R E E
- *
  * Free the storage associated with the rt_db_internal version of this
  * solid.
  */
@@ -486,13 +472,10 @@ rt_ars_ifree(struct rt_db_internal *ip)
     arip->magic = 0;		/* sanity */
     arip->ncurves = 0;
     bu_free((char *)arip, "ars ifree");
-    ip->idb_ptr = GENPTR_NULL;	/* sanity */
+    ip->idb_ptr = ((void *)0);	/* sanity */
 }
 
 
-/**
- * R T _ A R S _ T E S S
- */
 int
 rt_ars_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct rt_tess_tol *UNUSED(ttol), const struct bn_tol *tol)
 {
@@ -504,7 +487,7 @@ rt_ars_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     struct vertex **verts;
     struct faceuse *fu;
     struct bu_ptbl kill_fus;
-    int bad_ars=0;
+    int bad_ars = 0;
 
     RT_CK_DB_INTERNAL(ip);
     arip = (struct rt_ars_internal *)ip->idb_ptr;
@@ -642,7 +625,7 @@ rt_ars_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     bu_free((char *)verts, "rt_ars_tess *verts[]");
 
     /* kill any degenerate faces that may have been created */
-    for (i=0; i<(size_t)BU_PTBL_END(&kill_fus); i++) {
+    for (i = 0; i < (size_t)BU_PTBL_END(&kill_fus); i++) {
 	fu = (struct faceuse *)BU_PTBL_GET(&kill_fus, i);
 	NMG_CK_FACEUSE(fu);
 	(void)nmg_kfu(fu);
@@ -667,8 +650,6 @@ rt_ars_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 
 
 /**
- * R T _ A R S _ B B O X
- *
  * TODO:  produces bboxes that are waaay too big.
  */
 int
@@ -703,8 +684,6 @@ rt_ars_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struct 
 
 
 /**
- * R T _ A R S _ P R E P
- *
  * This routine is used to prepare a list of planar faces for being
  * shot at by the ars routines.
  *
@@ -753,7 +732,7 @@ rt_ars_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
     intern.idb_minor_type = ID_BOT;
     intern.idb_meth = &OBJ[ID_BOT];
-    intern.idb_ptr = (genptr_t)bot;
+    intern.idb_ptr = (void *)bot;
     bu_avs_init(&intern.idb_avs, 0, "ARS to a BOT for prep");
 
     ret = rt_bot_prep(stp, &intern, rtip);
@@ -768,9 +747,6 @@ rt_ars_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 }
 
 
-/**
- * R T _ A R S _ P R I N T
- */
 void
 rt_ars_print(register const struct soltab *stp)
 {
@@ -794,8 +770,6 @@ rt_ars_print(register const struct soltab *stp)
 
 
 /**
- * R T _ A R S _ S H O T
- *
  * Shoot a ray at an ARS.
  *
  * Returns -
@@ -903,13 +877,12 @@ rt_ars_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 	    RT_HIT_NORMAL(NULL, &hits[0], stp, 0, 0);
 	}
 
-	for (i=0; i<nhits-1; i++) {
+	for (i = 0; i < nhits - 1; i++) {
 	    RT_HIT_NORMAL(NULL, &hits[i+1], stp, 0, 0);
 	    if (NEAR_EQUAL(hits[i].hit_dist, hits[i+1].hit_dist, ap->a_rt_i->rti_tol.dist) &&
 		VDOT(hits[i].hit_normal, rp->r_dir) *
-		VDOT(hits[i+1].hit_normal, rp->r_dir) > 0)
-	    {
-		for (j=i; j<nhits-1; j++)
+		VDOT(hits[i+1].hit_normal, rp->r_dir) > 0) {
+		for (j = i; j < nhits-1; j++)
 		    hits[j] = hits[j+1];
 		nhits--;
 		i--;
@@ -925,7 +898,7 @@ rt_ars_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 	 */
 	bu_log("ERROR: ars(%s): %d hits odd, skipping solid\n",
 	       stp->st_name, nhits);
-	for (i=0; i < nhits; i++)
+	for (i = 0; i < nhits; i++)
 	    bu_log("k=%g dn=%g\n",
 		   hits[i].hit_dist, hp->hit_vpriv[X]);
 	return 0;		/* MISS */
@@ -991,8 +964,6 @@ rt_ars_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 
 
 /**
- * R T _ H I T S O R T
- *
  * Sort an array of hits into ascending order.
  */
 void
@@ -1001,8 +972,8 @@ rt_hitsort(register struct hit *h, register int nh)
     register int i, j;
     struct hit temp;
 
-    for (i=0; i < nh-1; i++) {
-	for (j=i+1; j < nh; j++) {
+    for (i = 0; i < nh-1; i++) {
+	for (j = i + 1; j < nh; j++) {
 	    if (h[i].hit_dist <= h[j].hit_dist)
 		continue;
 	    temp = h[j];		/* struct copy */
@@ -1014,8 +985,6 @@ rt_hitsort(register struct hit *h, register int nh)
 
 
 /**
- * R T _ A R S _ N O R M
- *
  * Given ONE ray distance, return the normal and entry/exit point.
  */
 void
@@ -1031,8 +1000,6 @@ rt_ars_norm(register struct hit *hitp, struct soltab *stp, register struct xray 
 
 
 /**
- * R T _ A R S _ C U R V E
- *
  * Return the "curvature" of the ARB face.  Pick a principle direction
  * orthogonal to normal, and indicate no curvature.
  */
@@ -1049,8 +1016,6 @@ rt_ars_curve(register struct curvature *cvp, register struct hit *hitp, struct s
 
 
 /**
- * R T _ A R S _ U V
- *
  * For a hit on a face of an ARB, return the (u, v) coordinates of the
  * hit point.  0 <= u, v <= 1.
  *
@@ -1088,9 +1053,6 @@ rt_ars_uv(struct application *ap, struct soltab *stp, register struct hit *hitp,
 }
 
 
-/**
- * R T _ A R S _ P L O T
- */
 int
 rt_ars_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol), const struct rt_view_info *UNUSED(info))
 {
@@ -1131,7 +1093,7 @@ rt_ars_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
 int
 rt_ars_get(struct bu_vls *logstr, const struct rt_db_internal *intern, const char *attr)
 {
-    register struct rt_ars_internal *ars=(struct rt_ars_internal *)intern->idb_ptr;
+    register struct rt_ars_internal *ars = (struct rt_ars_internal *)intern->idb_ptr;
     size_t i, j;
 
     RT_ARS_CK_MAGIC(ars);
@@ -1139,9 +1101,9 @@ rt_ars_get(struct bu_vls *logstr, const struct rt_db_internal *intern, const cha
     if (attr == (char *)NULL) {
 	bu_vls_strcpy(logstr, "ars");
 	bu_vls_printf(logstr, " NC %zu PPC %zu", ars->ncurves, ars->pts_per_curve);
-	for (i=0; i<ars->ncurves; i++) {
+	for (i = 0; i < ars->ncurves; i++) {
 	    bu_vls_printf(logstr, " C%zu {", i);
-	    for (j=0; j<ars->pts_per_curve; j++) {
+	    for (j = 0; j < ars->pts_per_curve; j++) {
 		bu_vls_printf(logstr, " { %.25g %.25g %.25g }",
 			      V3ARGS(&ars->curves[i][j*3]));
 	    }
@@ -1152,13 +1114,13 @@ rt_ars_get(struct bu_vls *logstr, const struct rt_db_internal *intern, const cha
     } else if (BU_STR_EQUAL(attr, "PPC")) {
 	bu_vls_printf(logstr, "%zu", ars->pts_per_curve);
     } else if (attr[0] == 'C') {
-	char *ptr;
+	const char *ptr;
 
 	if (attr[1] == '\0') {
 	    /* all the curves */
-	    for (i=0; i<ars->ncurves; i++) {
+	    for (i = 0; i < ars->ncurves; i++) {
 		bu_vls_printf(logstr, " C%zu {", i);
-		for (j=0; j<ars->pts_per_curve; j++) {
+		for (j = 0; j < ars->pts_per_curve; j++) {
 		    bu_vls_printf(logstr, " { %.25g %.25g %.25g }",
 				  V3ARGS(&ars->curves[i][j*3]));
 		}
@@ -1179,14 +1141,16 @@ rt_ars_get(struct bu_vls *logstr, const struct rt_db_internal *intern, const cha
 		return BRLCAD_ERROR;
 	    }
 	    j = atoi((ptr+1));
+	    /* FIXME: is this necessary? modifying a const char is illegal!
 	    *ptr = '\0';
+	    */
 	    i = atoi(&attr[1]);
 	    bu_vls_printf(logstr, "%.25g %.25g %.25g",
 			  V3ARGS(&ars->curves[i][j*3]));
 	} else {
 	    /* the entire curve */
 	    i = atoi(&attr[1]);
-	    for (j=0; j<ars->pts_per_curve; j++) {
+	    for (j = 0; j < ars->pts_per_curve; j++) {
 		bu_vls_printf(logstr, " { %.25g %.25g %.25g }",
 			      V3ARGS(&ars->curves[i][j*3]));
 	    }
@@ -1229,7 +1193,7 @@ rt_ars_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, co
 			ars->curves[j] = (fastf_t *)bu_malloc(
 			    ars->pts_per_curve * 3 * sizeof(fastf_t),
 			    "ars->curves[j]");
-			for (k=0; k<ars->pts_per_curve; k++) {
+			for (k = 0; k < ars->pts_per_curve; k++) {
 			    if (j) {
 				VMOVE(&ars->curves[j][k*3],
 				      &ars->curves[j-1][k*3]);
@@ -1254,19 +1218,19 @@ rt_ars_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, co
 		return BRLCAD_ERROR;
 	    }
 	    if (i < ars->pts_per_curve) {
-		for (j=0; j<ars->ncurves; j++) {
-		    ars->curves[j] = bu_realloc(ars->curves[j],
+		for (j = 0; j < ars->ncurves; j++) {
+		    ars->curves[j] = (fastf_t *)bu_realloc(ars->curves[j],
 						i * 3 * sizeof(fastf_t),
 						"ars->curves[j]");
 		}
 		ars->pts_per_curve = i;
 	    } else if (i > ars->pts_per_curve) {
-		for (j=0; j<ars->ncurves; j++) {
-		    ars->curves[j] = bu_realloc(ars->curves[j],
+		for (j = 0; j < ars->ncurves; j++) {
+		    ars->curves[j] = (fastf_t *)bu_realloc(ars->curves[j],
 						i * 3 * sizeof(fastf_t),
 						"ars->curves[j]");
 		    /* new points are duplicates of last */
-		    for (k=ars->pts_per_curve; k<i; k++) {
+		    for (k = ars->pts_per_curve; k < i; k++) {
 			if (k) {
 			    VMOVE(&ars->curves[j][k*3],
 				  &ars->curves[j][(k-1)*3]);
@@ -1279,7 +1243,7 @@ rt_ars_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, co
 	    }
 	} else if (argv[0][0] == 'C') {
 	    if (isdigit((int)argv[0][1])) {
-		char *ptr;
+		const char *ptr;
 
 		/* a specific curve */
 		ptr = strchr(argv[0], 'P');
@@ -1289,29 +1253,27 @@ rt_ars_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, co
 		    j = atoi(ptr+1);
 		    len = 3;
 		    array = &ars->curves[i][j*3];
-		    if (tcl_list_to_fastf_array(brlcad_interp, argv[1],
-						&array,
-						&len)!= len) {
-			bu_vls_printf(logstr,
-				      "WARNING: incorrect number of parameters provided for a point\n");
+		    if (_rt_tcl_list_to_fastf_array(argv[1], &array, &len)!= len) {
+			bu_vls_printf(logstr, "WARNING: incorrect number of parameters provided for a point\n");
 		    }
 		} else {
 		    char *dupstr;
+		    char *ptr2;
 
 		    /* one complete curve */
 		    i = atoi(&argv[0][1]);
 		    len = ars->pts_per_curve * 3;
 		    dupstr = bu_strdup(argv[1]);
-		    ptr = dupstr;
-		    while (*ptr) {
-			if (*ptr == '{' || *ptr == '}')
-			    *ptr = ' ';
-			ptr++;
+		    ptr2 = dupstr;
+		    while (*ptr2) {
+			if (*ptr2 == '{' || *ptr2 == '}')
+			    *ptr2 = ' ';
+			ptr2++;
 		    }
 		    if (!ars->curves[i]) {
 			ars->curves[i] = (fastf_t *)bu_calloc(ars->pts_per_curve * 3, sizeof(fastf_t), "ars->curves[i]");
 		    }
-		    if (tcl_list_to_fastf_array(brlcad_interp, dupstr,	&ars->curves[i], &len) != len) {
+		    if (_rt_tcl_list_to_fastf_array(dupstr, &ars->curves[i], &len) != len) {
 			bu_vls_printf(logstr, "WARNING: incorrect number of parameters provided for a curve\n");
 		    }
 		    bu_free(dupstr, "bu_strdup ars curve");
@@ -1332,10 +1294,6 @@ rt_ars_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, co
 }
 
 
-/**
- * R T _ A R S _ P A R A M S
- *
- */
 int
 rt_ars_params(struct pc_pc_set *UNUSED(ps), const struct rt_db_internal *ip)
 {

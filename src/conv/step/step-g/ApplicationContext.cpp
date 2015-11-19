@@ -1,7 +1,7 @@
 /*                 ApplicationContext.cpp
  * BRL-CAD
  *
- * Copyright (c) 1994-2013 United States Government as represented by
+ * Copyright (c) 1994-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -71,6 +71,8 @@ bool ApplicationContext::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
     sse = step->getEntity(sse, ENTITYNAME);
 
     application = step->getStringAttribute(sse, "application");
+
+    sw->entity_status[id] = STEP_LOADED;
 
     return true;
 }

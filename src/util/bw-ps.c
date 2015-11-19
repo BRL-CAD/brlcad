@@ -1,7 +1,7 @@
 /*                         B W - P S . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2013 United States Government as represented by
+ * Copyright (c) 1986-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -27,158 +27,35 @@
 
 #include <stdlib.h> /* for atof() */
 #include <math.h>
-#include <time.h>	/* for ctime() */
+#include <time.h> /* for ctime() */
 #include "bio.h"
+#include "bu/getopt.h"
+#include "bu/log.h"
 
-#include "bu.h"
-
-#define DEFAULT_SIZE 6.75		/* default output size in inches */
+#define DEFAULT_SIZE 6.75	/* default output size in inches */
 #define MAX_BYTES (64*128)	/* max bytes per image chunk */
 
 static int encapsulated = 0;	/* encapsulated postscript */
 static int center = 0;		/* center output on 8.5 x 11 page */
-static int landscape = 0;		/* landscape mode */
+static int landscape = 0;	/* landscape mode */
 
 static size_t width = 512;		/* input size in pixels */
 static size_t height = 512;
-static double outwidth;		/* output image size in inches */
-static double outheight;
+static double outwidth = DEFAULT_SIZE;		/* output image size in inches */
+static double outheight = DEFAULT_SIZE;
 static size_t xpoints;		/* output image size in points */
 static size_t ypoints;
 static size_t pagewidth = 612;	/* page size in points - 8.5 inches */
 static size_t pageheight = 792;	/* 11 inches */
 
+static char Stdin[] = "stdin";
 static char *file_name;
 static FILE *infp;
-
-void prolog(FILE *fp, char *name, int w, int h);
-void postlog(FILE *fp);
 
 static char usage[] = "\
 Usage: bw-ps [-e] [-c] [-L]\n\
 	[-s input_squaresize] [-w input_width] [-n input_height]\n\
 	[-S inches_square] [-W inches_width] [-N inches_height] [file.bw]\n";
-
-int
-get_args(int argc, char **argv)
-{
-    int c;
-
-    while ((c = bu_getopt(argc, argv, "ecLs:w:n:S:W:N:h?")) != -1) {
-	switch (c) {
-	    case 'e':
-		/* Encapsulated PostScript */
-		encapsulated++;
-		break;
-	    case 'c':
-		center = 1;
-		break;
-	    case 'L':
-		landscape = 1;
-		break;
-	    case 's':
-		/* square file size */
-		height = width = atoi(bu_optarg);
-		break;
-	    case 'w':
-		width = atoi(bu_optarg);
-		break;
-	    case 'n':
-		height = atoi(bu_optarg);
-		break;
-	    case 'S':
-		/* square file size */
-		outheight = outwidth = atof(bu_optarg);
-		break;
-	    case 'W':
-		outwidth = atof(bu_optarg);
-		break;
-	    case 'N':
-		outheight = atof(bu_optarg);
-		break;
-
-	    default:		/* '?' */
-		return 0;
-	}
-    }
-
-    if (bu_optind >= argc) {
-	if (isatty(fileno(stdin)))
-	    return 0;
-	file_name = "[stdin]";
-	infp = stdin;
-    } else {
-	file_name = argv[bu_optind];
-	if ((infp = fopen(file_name, "r")) == NULL) {
-	    fprintf(stderr,
-		    "bw-ps: cannot open \"%s\" for reading\n",
-		    file_name);
-	    return 0;
-	}
-	/*fileinput++;*/
-    }
-
-    if (argc > ++bu_optind)
-	fprintf(stderr, "bw-ps: excess argument(s) ignored\n");
-
-    return 1;		/* OK */
-}
-
-
-int
-main(int argc, char **argv)
-{
-    FILE *ofp = stdout;
-    size_t num = 0;
-    size_t scans_per_patch, bytes_per_patch;
-    size_t y;
-
-    outwidth = outheight = DEFAULT_SIZE;
-
-    if (!get_args(argc, argv)) {
-	(void)fputs(usage, stderr);
-	bu_exit (1, NULL);
-    }
-
-    if (encapsulated) {
-	xpoints = width;
-	ypoints = height;
-    } else {
-	xpoints = outwidth * 72 + 0.5;
-	ypoints = outheight * 72 + 0.5;
-    }
-    prolog(ofp, file_name, xpoints, ypoints);
-
-    scans_per_patch = MAX_BYTES / width;
-    if (scans_per_patch > height)
-	scans_per_patch = height;
-    bytes_per_patch = scans_per_patch * width;
-
-    for (y = 0; y < height; y += scans_per_patch) {
-	/* start a patch */
-	fprintf(ofp, "save\n");
-	fprintf(ofp, "%lu %lu 8 [%lu 0 0 %lu 0 %lu] {<\n ",
-		(unsigned long)width, (unsigned long)scans_per_patch,		/* patch size */
-		(unsigned long)width, (unsigned long)height,			/* total size = 1.0 */
-		(unsigned long)-y);				/* patch y origin */
-
-	/* data */
-	num = 0;
-	while (num < bytes_per_patch) {
-	    fprintf(ofp, "%02x", getc(infp));
-	    if ((++num % 32) == 0)
-		fprintf(ofp, "\n ");
-	}
-
-	/* close this patch */
-	fprintf(ofp, ">} image\n");
-	fprintf(ofp, "restore\n");
-    }
-
-    postlog(ofp);
-    return 0;
-}
-
 
 void
 prolog(FILE *fp, char *name, int w, int h)
@@ -231,6 +108,125 @@ postlog(FILE *fp)
 	fputs("%end(plot)\n", fp);
 
     fputs("\nshowpage\n", fp);
+}
+
+
+int
+get_args(int argc, char **argv)
+{
+    int c;
+
+    while ((c = bu_getopt(argc, argv, "ecLs:w:n:S:W:N:h?")) != -1) {
+	switch (c) {
+	    case 'e':
+		/* Encapsulated PostScript */
+		encapsulated++;
+		break;
+	    case 'c':
+		center = 1;
+		break;
+	    case 'L':
+		landscape = 1;
+		break;
+	    case 's':
+		/* square file size */
+		height = width = atoi(bu_optarg);
+		break;
+	    case 'w':
+		width = atoi(bu_optarg);
+		break;
+	    case 'n':
+		height = atoi(bu_optarg);
+		break;
+	    case 'S':
+		/* square file size */
+		outheight = outwidth = atof(bu_optarg);
+		break;
+	    case 'W':
+		outwidth = atof(bu_optarg);
+		break;
+	    case 'N':
+		outheight = atof(bu_optarg);
+		break;
+
+	    default:		/* 'h' '?' */
+		return 0;
+	}
+    }
+
+    if (bu_optind >= argc) {
+	if (isatty(fileno(stdin)))
+	    return 0;
+	file_name = Stdin;
+	infp = stdin;
+    } else {
+	file_name = argv[bu_optind];
+	if ((infp = fopen(file_name, "r")) == NULL) {
+	    fprintf(stderr,
+		    "bw-ps: cannot open \"%s\" for reading\n",
+		    file_name);
+	    return 0;
+	}
+	/*fileinput++;*/
+    }
+
+    if (argc > ++bu_optind)
+	fprintf(stderr, "bw-ps: excess argument(s) ignored\n");
+
+    return 1;		/* OK */
+}
+
+
+int
+main(int argc, char **argv)
+{
+    FILE *ofp = stdout;
+    size_t num = 0;
+    size_t scans_per_patch, bytes_per_patch;
+    size_t y;
+
+    if (!get_args(argc, argv)) {
+	(void)fputs(usage, stderr);
+	bu_exit (1, NULL);
+    }
+
+    if (encapsulated) {
+	xpoints = width;
+	ypoints = height;
+    } else {
+	xpoints = outwidth * 72 + 0.5;
+	ypoints = outheight * 72 + 0.5;
+    }
+    prolog(ofp, file_name, xpoints, ypoints);
+
+    scans_per_patch = MAX_BYTES / width;
+    if (scans_per_patch > height)
+	scans_per_patch = height;
+    bytes_per_patch = scans_per_patch * width;
+
+    for (y = 0; y < height; y += scans_per_patch) {
+	/* start a patch */
+	fprintf(ofp, "save\n");
+	fprintf(ofp, "%lu %lu 8 [%lu 0 0 %lu 0 %ld] {<\n ",
+		(unsigned long)width, (unsigned long)scans_per_patch,		/* patch size */
+		(unsigned long)width, (unsigned long)height,			/* total size = 1.0 */
+		-(long)y);				/* patch y origin */
+
+	/* data */
+	num = 0;
+	while (num < bytes_per_patch) {
+	    fprintf(ofp, "%02x", getc(infp));
+	    if ((++num % 32) == 0)
+		fprintf(ofp, "\n ");
+	}
+
+	/* close this patch */
+	fprintf(ofp, ">} image\n");
+	fprintf(ofp, "restore\n");
+    }
+
+    postlog(ofp);
+    return 0;
 }
 
 

@@ -1,7 +1,7 @@
 /*                 L I B R T _ P R I V A T E . H
  * BRL-CAD
  *
- * Copyright (c) 2011-2013 United States Government as represented by
+ * Copyright (c) 2011-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -28,10 +28,12 @@
  * accordingly (e.g., ell_*() for functions defined in primitives/ell)
  *
  */
+#ifndef LIBRT_LIBRT_PRIVATE_H
+#define LIBRT_LIBRT_PRIVATE_H
 
 #include "common.h"
 
-#include "db.h"
+#include "rt/db4.h"
 #include "raytrace.h"
 
 /* approximation formula for the circumference of an ellipse */
@@ -129,7 +131,76 @@ extern void plot_ellipse(
 	const vect_t b,
 	int num_points);
 
+
+/**
+ * Evaluate a Bezier curve at a particular parameter value. Fill in
+ * control points for resulting sub-curves if "Left" and "Right" are
+ * non-null.
+ */
+extern void bezier(point2d_t *V, int degree, double t, point2d_t *Left, point2d_t *Right, point2d_t eval_pt, point2d_t normal );
+
+/**
+ * Given an equation in Bernstein-Bezier form, find all of the roots
+ * in the interval [0, 1].  Return the number of roots found.
+ */
+extern int bezier_roots(point2d_t *w, int degree, point2d_t **intercept, point2d_t **normal, point2d_t ray_start, point2d_t ray_dir, point2d_t ray_perp, int depth, fastf_t epsilon);
+
+/**
+ * subdivide a 2D bezier curve at t=0.5
+ */
+extern struct bezier_2d_list *bezier_subdivide(struct bezier_2d_list *bezier_hd, int degree, fastf_t epsilon, int depth);
+
+
+/* db_fullpath.c */
+
+/**
+ * Function to test whether a path has a cyclic entry in it.
+ *
+ * @param fp [i] Full path to test
+ * @param name [i] String to use when checking path (optional).  If NULL, use the name of the current directory pointer in fp.
+ * @return 1 if the path is cyclic, 0 if it is not.
+ */
+extern int cyclic_path(const struct db_full_path *fp, const char *name);
+
+
+/* db_diff.c */
+
+/**
+ * Function to convert an ft_get list of parameters into an avs.
+ * @return 0 if the conversion succeeds, -1 if it does not.
+ */
+extern int tcl_list_to_avs(const char *tcl_list, struct bu_attribute_value_set *avs, int offset);
+
+
+/* primitive_util.c */
+
+extern int _rt_tcl_list_to_int_array(const char *list, int **array, int *array_len);
+extern int _rt_tcl_list_to_fastf_array(const char *list, fastf_t **array, int *array_len);
+
+#ifdef USE_OPENCL
+extern cl_device_id clt_get_cl_device(void);
+extern cl_program clt_get_program(cl_context context, cl_device_id device, cl_uint count, const char *filename[], const char *options);
+
+
+#define CLT_DECLARE_INTERFACE(name) \
+    extern size_t clt_##name##_pack(struct bu_pool *pool, struct soltab *stp)
+
+CLT_DECLARE_INTERFACE(tor);
+CLT_DECLARE_INTERFACE(tgc);
+CLT_DECLARE_INTERFACE(ell);
+CLT_DECLARE_INTERFACE(arb);
+CLT_DECLARE_INTERFACE(ars);
+CLT_DECLARE_INTERFACE(rec);
+CLT_DECLARE_INTERFACE(sph);
+CLT_DECLARE_INTERFACE(ehy);
+CLT_DECLARE_INTERFACE(bot);
+
+extern size_t clt_bot_pack(struct bu_pool *pool, struct soltab *stp);
+#endif
+
 __END_DECLS
+
+#endif /* LIBRT_LIBRT_PRIVATE_H */
 
 /*
  * Local Variables:

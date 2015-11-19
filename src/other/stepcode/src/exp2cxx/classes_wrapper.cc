@@ -335,7 +335,7 @@ void SCOPEPrint( Scope scope, FILES * files, Schema schema, Express model,
 
     LISTfree( list );
 
-#if following_should_be_done_in_caller
+#ifdef following_should_be_done_in_caller
     list = SCOPEget_schemata( scope );
     fprintf( files -> inc, "\n/*        **************  SCOPE          */\n" );
     fprintf( files -> lib, "\n/*        **************  SCOPE          */\n" );

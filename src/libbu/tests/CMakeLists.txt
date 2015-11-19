@@ -1,3 +1,6 @@
+# a local library for this directory
+BRLCAD_ADDLIB(libbu_tests "test_funcs.c" libbu NO_INSTALL)
+
 BRLCAD_ADDEXEC(tester_bu_sscanf bu_sscanf.c libbu NO_INSTALL)
 BRLCAD_ADDEXEC(tester_bu_gethostname bu_gethostname.c libbu NO_INSTALL)
 
@@ -9,79 +12,55 @@ BRLCAD_ADDEXEC(tester_bu_gethostname bu_gethostname.c libbu NO_INSTALL)
 #      bu_basename testing    #
 ###############################
 BRLCAD_ADDEXEC(tester_bu_basename    bu_basename.c    libbu NO_INSTALL)
-add_test(bu_basename_null                                   tester_bu_basename) # tests NULL
-add_test(bu_basename_empty                                  tester_bu_basename "")
-add_test(bu_basename_sl_usr_sl_dir_sl_file                  tester_bu_basename "/usr/dir/file")
-add_test(bu_basename_sl_usr_sl_dir_sl_                      tester_bu_basename "/usr/dir/")
-add_test(bu_basename_sl_usr_bsl__sl_dir                     tester_bu_basename "/usr\\\\/dir")
-add_test(bu_basename_sl_usr_sl__p_                          tester_bu_basename "/usr/.")
-add_test(bu_basename_sl_usr_sl_                             tester_bu_basename "/usr/")
-add_test(bu_basename_sl_usr                                 tester_bu_basename "/usr")
-add_test(bu_basename_usr                                    tester_bu_basename "usr")
-add_test(bu_basename_sl_usr_sl_some_sp_long_sl_file         tester_bu_basename "/usr/some long/file")
-add_test(bu_basename_sl_usr_sl_some_sp_file                 tester_bu_basename "/usr/some file")
-add_test(bu_basename_C_c__sl_usr_sl_some_bsl__sp_drivepath  tester_bu_basename "C:/usr/some\\\\ drivepath")
-add_test(bu_basename_sl_a_sp_test_sp_file                   tester_bu_basename "/a test file")
-add_test(bu_basename_another_sp_file                        tester_bu_basename "another file")
-add_test(bu_basename_C_c__bsl__Temp                         tester_bu_basename "C:\\\\Temp")
-add_test(bu_basename_C_c__sl_Temp                           tester_bu_basename "C:/Temp")
-add_test(bu_basename_sl_                                    tester_bu_basename "/")
-add_test(bu_basename_sl__sl__sl__sl__sl_                    tester_bu_basename "/////")
-add_test(bu_basename_p_                                     tester_bu_basename ".")
-add_test(bu_basename_p__p_                                  tester_bu_basename "..")
-add_test(bu_basename_p__p__p_                               tester_bu_basename "...")
-add_test(bu_basename_sp__sp__sp_                            tester_bu_basename "   ")
+add_test(NAME bu_basename_null                                   COMMAND tester_bu_basename) # tests NULL
+add_test(NAME bu_basename_empty                                  COMMAND tester_bu_basename "")
+add_test(NAME bu_basename_sl_usr_sl_dir_sl_file                  COMMAND tester_bu_basename "/usr/dir/file")
+add_test(NAME bu_basename_sl_usr_sl_dir_sl_                      COMMAND tester_bu_basename "/usr/dir/")
+add_test(NAME bu_basename_sl_usr_bsl__sl_dir                     COMMAND tester_bu_basename "/usr\\\\/dir")
+add_test(NAME bu_basename_sl_usr_sl__p_                          COMMAND tester_bu_basename "/usr/.")
+add_test(NAME bu_basename_sl_usr_sl_                             COMMAND tester_bu_basename "/usr/")
+add_test(NAME bu_basename_sl_usr                                 COMMAND tester_bu_basename "/usr")
+add_test(NAME bu_basename_usr                                    COMMAND tester_bu_basename "usr")
+add_test(NAME bu_basename_sl_usr_sl_some_sp_long_sl_file         COMMAND tester_bu_basename "/usr/some long/file")
+add_test(NAME bu_basename_sl_usr_sl_some_sp_file                 COMMAND tester_bu_basename "/usr/some file")
+add_test(NAME bu_basename_C_c__sl_usr_sl_some_bsl__sp_drivepath  COMMAND tester_bu_basename "C:/usr/some\\\\ drivepath")
+add_test(NAME bu_basename_sl_a_sp_test_sp_file                   COMMAND tester_bu_basename "/a test file")
+add_test(NAME bu_basename_another_sp_file                        COMMAND tester_bu_basename "another file")
+add_test(NAME bu_basename_C_c__bsl__Temp                         COMMAND tester_bu_basename "C:\\\\Temp")
+add_test(NAME bu_basename_C_c__sl_Temp                           COMMAND tester_bu_basename "C:/Temp")
+add_test(NAME bu_basename_sl_                                    COMMAND tester_bu_basename "/")
+add_test(NAME bu_basename_sl__sl__sl__sl__sl_                    COMMAND tester_bu_basename "/////")
+add_test(NAME bu_basename_p_                                     COMMAND tester_bu_basename ".")
+add_test(NAME bu_basename_p__p_                                  COMMAND tester_bu_basename "..")
+add_test(NAME bu_basename_p__p__p_                               COMMAND tester_bu_basename "...")
+add_test(NAME bu_basename_sp__sp__sp_                            COMMAND tester_bu_basename "   ")
 
-if(ENABLE_BITV_TESTS)
+
+##########################################
+#      bu_file_path_component testing    #
+##########################################
+BRLCAD_ADDEXEC(tester_bu_path_component    bu_path_component.c    libbu NO_INSTALL)
+add_test(NAME bu_path_component_null                               COMMAND tester_bu_path_component) # tests NULL
+add_test(NAME bu_path_component_empty                              COMMAND tester_bu_path_component 0) # tests empty
+add_test(NAME bu_path_component_sl_usr_sl_dir_sl_file_ext          COMMAND tester_bu_path_component "/usr/dir/file.ext" "ext" 4)
+add_test(NAME bu_path_component_sl_usr_sl_dir_sl_file_base         COMMAND tester_bu_path_component "/usr/dir/file.ext" "file.ext" 2)
+add_test(NAME bu_path_component_sl_usr_sl_dir_sl_file_base_core    COMMAND tester_bu_path_component "/usr/dir/file.ext" "file" 3)
+add_test(NAME bu_path_component_sl_usr_sl_dir_sl_file_dir          COMMAND tester_bu_path_component "/usr/dir/file.ext" "/usr/dir" 0)
+add_test(NAME bu_path_component_sl_usr_sl_dir_sl_file_dir_core     COMMAND tester_bu_path_component "/usr/dir/file.ext" "/usr/dir/file" 1)
+
+
+################################
+#      bu_file_mime testing    #
+################################
+BRLCAD_ADDEXEC(tester_bu_file_mime    bu_file_mime.c    libbu NO_INSTALL)
+add_test(NAME bu_file_mime_dxf   COMMAND tester_bu_file_mime dxf 5 1) # tests dxf extension in model context
+add_test(NAME bu_file_mime_stp   COMMAND tester_bu_file_mime stp 5 7) # tests stp extension in model context
+add_test(NAME bu_file_mime_png   COMMAND tester_bu_file_mime png 3 14) # tests png extension in image context
+
 #
 #  ************ bitv.c tests *************
 #
-
-###############################
-#      bu_bitv_and testing    #
-###############################
-BRLCAD_ADDEXEC(tester_bu_bitv_and    bu_bitv_and.c    libbu NO_INSTALL)
-add_test(bu_bitv_and_test1 tester_bu_bitv_and "ffffffff" "00000000" "00000000")
-add_test(bu_bitv_and_test2 tester_bu_bitv_and "ab00" "1200" "0200")
-
-###############################
-#      bu_bitv_or testing     #
-###############################
-BRLCAD_ADDEXEC(tester_bu_bitv_or     bu_bitv_or.c     libbu NO_INSTALL)
-add_test(bu_bitv_or_test1 tester_bu_bitv_or "ffffffff" "00000000" "ffffffff")
-add_test(bu_bitv_or_test2 tester_bu_bitv_or "ab00" "1200" "bb00")
-
-##################################
-#      bu_bitv_shift testing     #
-##################################
-BRLCAD_ADDEXEC(tester_bu_bitv_shift  bu_bitv_shift.c  libbu NO_INSTALL)
-add_test(bu_bitv_shift tester_bu_bitv_shift)
-
-##################################
-#      bu_bitv_to_hex testing    #
-##################################
-BRLCAD_ADDEXEC(tester_bu_bitv_to_hex bu_bitv_to_hex.c libbu NO_INSTALL)
-add_test(bu_bitv_to_hex_test1 tester_bu_bitv_to_hex "0123" "33323130" 32)
-add_test(bu_bitv_to_hex_test2 tester_bu_bitv_to_hex "12" "3231" 16)
-
-################################
-#      bu_bitv_vls testing     #
-################################
-BRLCAD_ADDEXEC(tester_bu_bitv_vls    bu_bitv_vls.c    libbu NO_INSTALL)
-add_test(bu_bitv_vls_test1 tester_bu_bitv_vls "00000000" "() ")
-add_test(bu_bitv_vls_test2 tester_bu_bitv_vls "f0f0f0f0" "(4, 5, 6, 7, 12, 13, 14, 15, 20, 21, 22, 23, 28, 29, 30, 31) ")
-
-##################################
-#      bu_hex_to_bitv testing    #
-##################################
-BRLCAD_ADDEXEC(tester_bu_hex_to_bitv bu_hex_to_bitv.c libbu NO_INSTALL)
-add_test(bu_hex_to_bitv_test1 tester_bu_hex_to_bitv "33323130" "0123" 0)
-add_test(bu_hex_to_bitv_test2 tester_bu_hex_to_bitv "30" "0" 0)
-add_test(bu_hex_to_bitv_error tester_bu_hex_to_bitv "303" "" 1)
-
-else(ENABLE_BITV_TESTS)
-CMAKEFILES(bu_bitv_and.c bu_bitv_or.c bu_bitv_shift.c bu_bitv_to_hex.c bu_bitv_vls.c bu_hex_to_bitv.c)
-endif(ENABLE_BITV_TESTS)
+include(bitv-tests.cmake)
 
 #
 #  ************ booleanize.c tests *************
@@ -91,23 +70,23 @@ endif(ENABLE_BITV_TESTS)
 #      bu_booleanize testing    #
 #################################
 BRLCAD_ADDEXEC(tester_bu_booleanize bu_booleanize.c libbu NO_INSTALL)
-add_test(bu_booleanize_null         tester_bu_booleanize) # tests NULL
-add_test(bu_booleanize_empty        tester_bu_booleanize "")
-add_test(bu_booleanize_n            tester_bu_booleanize "n")
-add_test(bu_booleanize_nabcd        tester_bu_booleanize "nabcd")
-add_test(bu_booleanize_N            tester_bu_booleanize "N")
-add_test(bu_booleanize_Nabcd        tester_bu_booleanize "Nabcd")
-add_test(bu_booleanize__sp__sp_abcd tester_bu_booleanize "  abcd")
-add_test(bu_booleanize_0            tester_bu_booleanize "0")
-add_test(bu_booleanize_0000         tester_bu_booleanize "0000")
-add_test(bu_booleanize__lp_null_rp_ tester_bu_booleanize "(null)")
-add_test(bu_booleanize_y            tester_bu_booleanize "y")
-add_test(bu_booleanize_yabcd        tester_bu_booleanize "yabcd")
-add_test(bu_booleanize_Y            tester_bu_booleanize "Y")
-add_test(bu_booleanize_Yabcd        tester_bu_booleanize "Yabcd")
-add_test(bu_booleanize_1            tester_bu_booleanize "1")
-add_test(bu_booleanize_0001         tester_bu_booleanize "0001")
-add_test(bu_booleanize_abcd         tester_bu_booleanize "abcd")
+add_test(NAME bu_booleanize_null         COMMAND tester_bu_booleanize) # tests NULL
+add_test(NAME bu_booleanize_empty        COMMAND tester_bu_booleanize "")
+add_test(NAME bu_booleanize_n            COMMAND tester_bu_booleanize "n")
+add_test(NAME bu_booleanize_nabcd        COMMAND tester_bu_booleanize "nabcd")
+add_test(NAME bu_booleanize_N            COMMAND tester_bu_booleanize "N")
+add_test(NAME bu_booleanize_Nabcd        COMMAND tester_bu_booleanize "Nabcd")
+add_test(NAME bu_booleanize__sp__sp_abcd COMMAND tester_bu_booleanize "  abcd")
+add_test(NAME bu_booleanize_0            COMMAND tester_bu_booleanize "0")
+add_test(NAME bu_booleanize_0000         COMMAND tester_bu_booleanize "0000")
+add_test(NAME bu_booleanize__lp_null_rp_ COMMAND tester_bu_booleanize "(null)")
+add_test(NAME bu_booleanize_y            COMMAND tester_bu_booleanize "y")
+add_test(NAME bu_booleanize_yabcd        COMMAND tester_bu_booleanize "yabcd")
+add_test(NAME bu_booleanize_Y            COMMAND tester_bu_booleanize "Y")
+add_test(NAME bu_booleanize_Yabcd        COMMAND tester_bu_booleanize "Yabcd")
+add_test(NAME bu_booleanize_1            COMMAND tester_bu_booleanize "1")
+add_test(NAME bu_booleanize_0001         COMMAND tester_bu_booleanize "0001")
+add_test(NAME bu_booleanize_abcd         COMMAND tester_bu_booleanize "abcd")
 
 #
 #  ************ ctype.c tests *************
@@ -119,13 +98,13 @@ add_test(bu_booleanize_abcd         tester_bu_booleanize "abcd")
 # Note - because of the special characters needed in these tests, the strings
 # don't work well when fed in from the command line.
 BRLCAD_ADDEXEC(tester_bu_str_isprint bu_str_isprint.c libbu NO_INSTALL)
-add_test(bu_str_isprint_basic                tester_bu_str_isprint 1)
-add_test(bu_str_isprint_eol                  tester_bu_str_isprint 2)
-add_test(bu_str_isprint_double_slash         tester_bu_str_isprint 3)
-add_test(bu_str_isprint_horiz_tab            tester_bu_str_isprint 4)
-add_test(bu_str_isprint_non-alphanumeric     tester_bu_str_isprint 5)
-add_test(bu_str_isprint_eol_non-alphanumeric tester_bu_str_isprint 6)
-add_test(bu_str_isprint_carriage_return      tester_bu_str_isprint 7)
+add_test(NAME bu_str_isprint_basic                COMMAND tester_bu_str_isprint 1)
+add_test(NAME bu_str_isprint_eol                  COMMAND tester_bu_str_isprint 2)
+add_test(NAME bu_str_isprint_double_slash         COMMAND tester_bu_str_isprint 3)
+add_test(NAME bu_str_isprint_horiz_tab            COMMAND tester_bu_str_isprint 4)
+add_test(NAME bu_str_isprint_non-alphanumeric     COMMAND tester_bu_str_isprint 5)
+add_test(NAME bu_str_isprint_eol_non-alphanumeric COMMAND tester_bu_str_isprint 6)
+add_test(NAME bu_str_isprint_carriage_return      COMMAND tester_bu_str_isprint 7)
 
 #
 #  ************ dirname.c tests *************
@@ -135,28 +114,28 @@ add_test(bu_str_isprint_carriage_return      tester_bu_str_isprint 7)
 #      bu_dirname testing    #
 ##############################
 BRLCAD_ADDEXEC(tester_bu_dirname bu_dirname.c libbu NO_INSTALL)
-add_test(bu_dirname__usr_dir_file tester_bu_dirname "/usr/dir/file")
-add_test(bu_dirname__usr_dir_ tester_bu_dirname "/usr/dir/")
-add_test(bu_dirname__usr__bsl__dir tester_bu_dirname "/usr\\\\/dir")
-add_test(bu_dirname__usr_period tester_bu_dirname "/usr/.")
-add_test(bu_dirname__usr_ tester_bu_dirname "/usr/")
-add_test(bu_dirname__usr tester_bu_dirname "/usr")
-add_test(bu_dirname_usr tester_bu_dirname "usr")
-add_test(bu_dirname__usr_some_sp_long_file tester_bu_dirname "/usr/some long/file")
-add_test(bu_dirname__usr_some_sp_file tester_bu_dirname "/usr/some file")
-add_test(bu_dirname__usr_some__bsl__sp_drivepath tester_bu_dirname "C:/usr/some\\\\ drivepath")
-add_test(bu_dirname__a_sp_test_file tester_bu_dirname "/a test file")
-add_test(bu_dirname_another_file tester_bu_dirname "another file")
-add_test(bu_dirname_C_colon__bsl_Temp tester_bu_dirname "C:\\\\Temp")
-add_test(bu_dirname_C_colon__Temp tester_bu_dirname "C:/Temp")
-add_test(bu_dirname__ tester_bu_dirname "/")
-add_test(bu_dirname______ tester_bu_dirname "/////")
-add_test(bu_dirname__period_ tester_bu_dirname ".")
-add_test(bu_dirname__period__period_ tester_bu_dirname "..")
-add_test(bu_dirname__period__period__period_ tester_bu_dirname "...")
-add_test(bu_dirname__sp__sp__sp_ tester_bu_dirname "   ")
-add_test(bu_dirname_empty tester_bu_dirname "")
-add_test(bu_dirname_null tester_bu_dirname)
+add_test(NAME bu_dirname__usr_dir_file COMMAND tester_bu_dirname "/usr/dir/file")
+add_test(NAME bu_dirname__usr_dir_ COMMAND tester_bu_dirname "/usr/dir/")
+add_test(NAME bu_dirname__usr__bsl__dir COMMAND tester_bu_dirname "/usr\\\\/dir")
+add_test(NAME bu_dirname__usr_period COMMAND tester_bu_dirname "/usr/.")
+add_test(NAME bu_dirname__usr_ COMMAND tester_bu_dirname "/usr/")
+add_test(NAME bu_dirname__usr COMMAND tester_bu_dirname "/usr")
+add_test(NAME bu_dirname_usr COMMAND tester_bu_dirname "usr")
+add_test(NAME bu_dirname__usr_some_sp_long_file COMMAND tester_bu_dirname "/usr/some long/file")
+add_test(NAME bu_dirname__usr_some_sp_file COMMAND tester_bu_dirname "/usr/some file")
+add_test(NAME bu_dirname__usr_some__bsl__sp_drivepath COMMAND tester_bu_dirname "C:/usr/some\\\\ drivepath")
+add_test(NAME bu_dirname__a_sp_test_file COMMAND tester_bu_dirname "/a test file")
+add_test(NAME bu_dirname_another_file COMMAND tester_bu_dirname "another file")
+add_test(NAME bu_dirname_C_colon__bsl_Temp COMMAND tester_bu_dirname "C:\\\\Temp")
+add_test(NAME bu_dirname_C_colon__Temp COMMAND tester_bu_dirname "C:/Temp")
+add_test(NAME bu_dirname__ COMMAND tester_bu_dirname "/")
+add_test(NAME bu_dirname______ COMMAND tester_bu_dirname "/////")
+add_test(NAME bu_dirname__period_ COMMAND tester_bu_dirname ".")
+add_test(NAME bu_dirname__period__period_ COMMAND tester_bu_dirname "..")
+add_test(NAME bu_dirname__period__period__period_ COMMAND tester_bu_dirname "...")
+add_test(NAME bu_dirname__sp__sp__sp_ COMMAND tester_bu_dirname "   ")
+add_test(NAME bu_dirname_empty COMMAND tester_bu_dirname "")
+add_test(NAME bu_dirname_null COMMAND tester_bu_dirname)
 
 #
 #  ************ escape.c tests *************
@@ -169,78 +148,29 @@ BRLCAD_ADDEXEC(tester_bu_escape bu_escape.c libbu NO_INSTALL)
 ###################################
 #      bu_str_unescape testing    #
 ###################################
-add_test(bu_str_unescape_1   tester_bu_escape 1 1)   # NULL
-add_test(bu_str_unescape_2   tester_bu_escape 1 2)   # ""
-add_test(bu_str_unescape_3   tester_bu_escape 1 3)   # " "
-add_test(bu_str_unescape_4   tester_bu_escape 1 4)   # "hello"
-add_test(bu_str_unescape_5   tester_bu_escape 1 5)   # "\""
-add_test(bu_str_unescape_6   tester_bu_escape 1 6)   # "\'"
-add_test(bu_str_unescape_7   tester_bu_escape 1 7)   # "\\"
-add_test(bu_str_unescape_8   tester_bu_escape 1 8)   # "\\\""
-add_test(bu_str_unescape_9   tester_bu_escape 1 9)   # "\\\\"
-add_test(bu_str_unescape_10  tester_bu_escape 1 10)  # "\"hello\""
-add_test(bu_str_unescape_11  tester_bu_escape 1 11)  # "\'hello\'"
-add_test(bu_str_unescape_12  tester_bu_escape 1 12)  # "\\hello"
-add_test(bu_str_unescape_13  tester_bu_escape 1 13)  # "\\hello\""
-add_test(bu_str_unescape_14  tester_bu_escape 1 14)  # "hello\\\\"
-add_test(bu_str_unescape_15  tester_bu_escape 1 15)  # "\"hello\'\""
-add_test(bu_str_unescape_16  tester_bu_escape 1 16)  # "\"hello\'"
-add_test(bu_str_unescape_17  tester_bu_escape 1 17)  # "\'hello\'"
-add_test(bu_str_unescape_18  tester_bu_escape 1 18)  # "\'hello\""
-add_test(bu_str_unescape_19  tester_bu_escape 1 19)  # "\"\"hello\""
-add_test(bu_str_unescape_20  tester_bu_escape 1 20)  # "\'\'hello\'\'"
-add_test(bu_str_unescape_21  tester_bu_escape 1 21)  # "\'\"hello\"\'"
-add_test(bu_str_unescape_22  tester_bu_escape 1 22)  # "\"\"hello\"\""
-add_test(bu_str_unescape_23  tester_bu_escape 1 23)  # "\\\"\\\"\\\"hello\\"
+foreach(test_num RANGE 1 23)
+  add_test(NAME "bu_str_unescape_${test_num}" COMMAND tester_bu_escape 1 "${test_num}")
+endforeach()
 
 #################################
 #      bu_str_escape testing    #
 #################################
-add_test(bu_str_escape_1   tester_bu_escape 2 1)     # NULL, NULL
-add_test(bu_str_escape_2   tester_bu_escape 2 2)     # NULL, ""
-add_test(bu_str_escape_3   tester_bu_escape 2 3)     # "", NULL
-add_test(bu_str_escape_4   tester_bu_escape 2 4)     # "", ""
-add_test(bu_str_escape_5   tester_bu_escape 2 5)     # " ", ""
-add_test(bu_str_escape_6   tester_bu_escape 2 6)     # "[ ]", " "
-add_test(bu_str_escape_7   tester_bu_escape 2 7)     # "[  ]", " "
-add_test(bu_str_escape_8   tester_bu_escape 2 8)     # "h e l l o", " "
-add_test(bu_str_escape_9   tester_bu_escape 2 9)     # "h\\ ello", " "
-add_test(bu_str_escape_10  tester_bu_escape 2 10)    # "[]", "\\"
-add_test(bu_str_escape_11  tester_bu_escape 2 11)    # "\\", "\\"
-add_test(bu_str_escape_12  tester_bu_escape 2 12)    # "\\\\", "\\"
-add_test(bu_str_escape_13  tester_bu_escape 2 13)    # "\\a\\b", "\\"
-add_test(bu_str_escape_14  tester_bu_escape 2 14)    # "abc", "a"
-add_test(bu_str_escape_15  tester_bu_escape 2 15)    # "abc", "b"
-add_test(bu_str_escape_16  tester_bu_escape 2 16)    # "abc", "c"
-add_test(bu_str_escape_17  tester_bu_escape 2 17)    # "abc", "ab"
-add_test(bu_str_escape_18  tester_bu_escape 2 18)    # "abc", "bc"
-add_test(bu_str_escape_19  tester_bu_escape 2 19)    # "abc", "abc"
-add_test(bu_str_escape_20  tester_bu_escape 2 20)    # "aaa", "bc"
-add_test(bu_str_escape_21  tester_bu_escape 2 21)    # "aaa", "a"
-add_test(bu_str_escape_22  tester_bu_escape 2 22)    # "aaa", "aaa"
-add_test(bu_str_escape_23  tester_bu_escape 2 23)    # "abc", "^a"
-add_test(bu_str_escape_24  tester_bu_escape 2 24)    # "abc", "^b"
-add_test(bu_str_escape_25  tester_bu_escape 2 25)    # "abc", "^c"
-add_test(bu_str_escape_26  tester_bu_escape 2 26)    # "abc", "^ab"
-add_test(bu_str_escape_27  tester_bu_escape 2 27)    # "abc", "^bc"
-add_test(bu_str_escape_28  tester_bu_escape 2 28)    # "abc", "^abc"
-add_test(bu_str_escape_29  tester_bu_escape 2 29)    # "aaa", "^bc"
-add_test(bu_str_escape_30  tester_bu_escape 2 30)    # "aaa", "^a"
-add_test(bu_str_escape_31  tester_bu_escape 2 31)    # "aaa", "^aaa"
+foreach(test_num RANGE 1 31)
+  add_test(NAME "bu_str_escape_${test_num}" COMMAND tester_bu_escape 2 "${test_num}")
+endforeach()
 
 ##############################################
 #      escape/unescape round trip testing    #
 ##############################################
-add_test(bu_escape_roundtrip_1  tester_bu_escape 3 1) # "abc", "b"
-add_test(bu_escape_roundtrip_2  tester_bu_escape 3 2) # "abc\\cba", "b"
-add_test(bu_escape_roundtrip_3  tester_bu_escape 3 3) # "abc\\\\cba", "b"
-add_test(bu_escape_roundtrip_4  tester_bu_escape 3 4) # "abc\\\\\\c\\ba\\"
+foreach(test_num RANGE 1 4)
+  add_test(NAME "bu_escape_roundtrip_${test_num}" COMMAND tester_bu_escape 3 "${test_num}")
+endforeach()
 
 ###
 # bu_heap memory allocation testing
 ###
 BRLCAD_ADDEXEC(tester_bu_heap bu_heap.c libbu NO_INSTALL)
-add_test(bu_heap_test_1 tester_bu_heap)
+add_test(NAME bu_heap_test_1 COMMAND tester_bu_heap)
 
 #
 #  ************ progname.c tests *************
@@ -253,131 +183,350 @@ add_test(bu_heap_test_1 tester_bu_heap)
 #      bu_progname testing    #
 ###############################
 BRLCAD_ADDEXEC(tester_bu_progname bu_progname.c libbu NO_INSTALL)
-add_test(bu_progname_tests tester_bu_progname)
+add_test(NAME bu_progname_tests COMMAND tester_bu_progname)
 
 #
-#  ************ quote.c tests *************
+#  ************ encode.c tests *************
 #
 # The testing of encoding and de-coding is tested at once in a "round trip"
 # approach - the tests below all test both bu_vls_encode and bu_vls_decode.
 # Like many string functions using escaped characters the input strings are
 # left in C to minimize pass-through errors.
-BRLCAD_ADDEXEC(tester_bu_quote bu_quote.c libbu NO_INSTALL)
-add_test(bu_quote_test_1  tester_bu_quote 1)   # NULL
-add_test(bu_quote_test_2  tester_bu_quote 2)   # ""
-add_test(bu_quote_test_3  tester_bu_quote 3)   # " "
-add_test(bu_quote_test_4  tester_bu_quote 4)   # "hello"
-add_test(bu_quote_test_5  tester_bu_quote 5)   # "\""
-add_test(bu_quote_test_6  tester_bu_quote 6)   # "\'"
-add_test(bu_quote_test_7  tester_bu_quote 7)   # "\\"
-add_test(bu_quote_test_8  tester_bu_quote 8)   # "\\\""
-add_test(bu_quote_test_9  tester_bu_quote 9)   # "\\\\"
-add_test(bu_quote_test_10 tester_bu_quote 10)  # "\"hello\""
-add_test(bu_quote_test_11 tester_bu_quote 11)  # "\'hello\'"
-add_test(bu_quote_test_12 tester_bu_quote 12)  # "\\hello"
-add_test(bu_quote_test_13 tester_bu_quote 13)  # "\\hello\""
-add_test(bu_quote_test_14 tester_bu_quote 14)  # "hello\\\\"
-add_test(bu_quote_test_15 tester_bu_quote 15)  # "\"hello\'\""
-add_test(bu_quote_test_16 tester_bu_quote 16)  # "\"hello\'"
-add_test(bu_quote_test_17 tester_bu_quote 17)  # "\'hello\'"
-add_test(bu_quote_test_18 tester_bu_quote 18)  # "\'hello\""
-add_test(bu_quote_test_19 tester_bu_quote 19)  # "\"\"hello\""
-add_test(bu_quote_test_20 tester_bu_quote 20)  # "\'\'hello\'\'"
-add_test(bu_quote_test_21 tester_bu_quote 21)  # "\'\"hello\"\'"
-add_test(bu_quote_test_22 tester_bu_quote 22)  # "\"\"hello\"\""
-add_test(bu_quote_test_23 tester_bu_quote 23)  # "\"\"\"hello\"\"\""
+BRLCAD_ADDEXEC(tester_bu_encode bu_encode.c libbu NO_INSTALL)
+foreach(test_num RANGE 1 23)
+  add_test(NAME "bu_encode_test_${test_num}" COMMAND tester_bu_encode "${test_num}")
+endforeach()
+
+#
+#  ************ b64.c tests *************
+#
+# The testing of encoding and de-coding is tested at once in a "round trip"
+# approach - the tests below all test both bu_b64_encode and bu_b64_decode.
+BRLCAD_ADDEXEC(tester_bu_b64 bu_b64.c libbu NO_INSTALL)
+add_test(NAME "bu_b64_test" COMMAND tester_bu_b64)
+
 
 #
 #  ************ rb_*.c tests *************
 #
 BRLCAD_ADDEXEC(tester_bu_redblack bu_redblack.c libbu NO_INSTALL)
-add_test(bu_redblack_test tester_bu_redblack)
+add_test(NAME bu_redblack_test COMMAND tester_bu_redblack)
 
 #
 #  ************ timer.c tests *************
 #
 BRLCAD_ADDEXEC(tester_bu_timer bu_timer.c libbu NO_INSTALL)
-add_test(bu_gettime_test tester_bu_timer)
+add_test(NAME bu_gettime_test COMMAND tester_bu_timer)
 
 #
 #  ************ bu_semaphore.c tests *************
 #
-BRLCAD_ADDEXEC(tester_bu_semaphore bu_semaphore.c "libbu;${WINMM_LIBRARY}" NO_INSTALL LOCAL)
+BRLCAD_ADDEXEC(tester_bu_semaphore bu_semaphore.c "libbu;${WINMM_LIBRARY}" NO_INSTALL)
+add_test(NAME bu_semaphore_test COMMAND tester_bu_semaphore)
+add_test(NAME bu_semaphore_test_P1 COMMAND tester_bu_semaphore -P1)
+add_test(NAME bu_semaphore_test_P2 COMMAND tester_bu_semaphore -P2)
+add_test(NAME bu_semaphore_test_P3 COMMAND tester_bu_semaphore -P3)
 
-# failure encountered, output:
-# parallel-increment bu_semaphore test invalid: threads did not run in parallel
-# disabled prior to release 7.22.2
-# add_test(bu_semaphore_test tester_bu_semaphore)
+#
+#  ************ bu_parallel.c tests *************
+#
+BRLCAD_ADDEXEC(tester_bu_parallel bu_parallel.c "libbu;${WINMM_LIBRARY}" NO_INSTALL)
+add_test(NAME bu_parallel_test COMMAND tester_bu_parallel)
 
 #
 #  ************ vls_vprintf.c tests *************
 #
 BRLCAD_ADDEXEC(tester_bu_vls_vprintf bu_vls_vprintf.c libbu NO_INSTALL)
-add_test(bu_vls_vprintf_test_1  tester_bu_vls_vprintf 1)
-add_test(bu_vls_vprintf_test_2  tester_bu_vls_vprintf 2)
-add_test(bu_vls_vprintf_test_3  tester_bu_vls_vprintf 3)
-add_test(bu_vls_vprintf_test_4  tester_bu_vls_vprintf 4)
-add_test(bu_vls_vprintf_test_5  tester_bu_vls_vprintf 5)
-add_test(bu_vls_vprintf_test_6  tester_bu_vls_vprintf 6)
-add_test(bu_vls_vprintf_test_7  tester_bu_vls_vprintf 7)
-add_test(bu_vls_vprintf_test_8  tester_bu_vls_vprintf 8)
-add_test(bu_vls_vprintf_test_9  tester_bu_vls_vprintf 9)
-add_test(bu_vls_vprintf_test_10 tester_bu_vls_vprintf 10)
-add_test(bu_vls_vprintf_test_11 tester_bu_vls_vprintf 11)
-add_test(bu_vls_vprintf_test_12 tester_bu_vls_vprintf 12)
-add_test(bu_vls_vprintf_test_13 tester_bu_vls_vprintf 13)
-add_test(bu_vls_vprintf_test_14 tester_bu_vls_vprintf 14)
-add_test(bu_vls_vprintf_test_15 tester_bu_vls_vprintf 15)
-add_test(bu_vls_vprintf_test_16 tester_bu_vls_vprintf 16)
-add_test(bu_vls_vprintf_test_17 tester_bu_vls_vprintf 17)
-add_test(bu_vls_vprintf_test_18 tester_bu_vls_vprintf 18)
-add_test(bu_vls_vprintf_test_19 tester_bu_vls_vprintf 19)
-add_test(bu_vls_vprintf_test_20 tester_bu_vls_vprintf 20)
-add_test(bu_vls_vprintf_test_21 tester_bu_vls_vprintf 21)
-add_test(bu_vls_vprintf_test_22 tester_bu_vls_vprintf 22)
-add_test(bu_vls_vprintf_test_23 tester_bu_vls_vprintf 23)
-add_test(bu_vls_vprintf_test_24 tester_bu_vls_vprintf 24)
-add_test(bu_vls_vprintf_test_25 tester_bu_vls_vprintf 25)
-add_test(bu_vls_vprintf_test_26 tester_bu_vls_vprintf 26)
-add_test(bu_vls_vprintf_test_27 tester_bu_vls_vprintf 27)
-add_test(bu_vls_vprintf_test_28 tester_bu_vls_vprintf 28)
-add_test(bu_vls_vprintf_test_29 tester_bu_vls_vprintf 29)
-add_test(bu_vls_vprintf_test_30 tester_bu_vls_vprintf 30)
-add_test(bu_vls_vprintf_test_31 tester_bu_vls_vprintf 31)
-add_test(bu_vls_vprintf_test_32 tester_bu_vls_vprintf 32)
-add_test(bu_vls_vprintf_test_33 tester_bu_vls_vprintf 33)
-add_test(bu_vls_vprintf_test_34 tester_bu_vls_vprintf 34)
-add_test(bu_vls_vprintf_test_35 tester_bu_vls_vprintf 35)
-add_test(bu_vls_vprintf_test_36 tester_bu_vls_vprintf 36)
-add_test(bu_vls_vprintf_test_37 tester_bu_vls_vprintf 37)
-add_test(bu_vls_vprintf_test_38 tester_bu_vls_vprintf 38)
-add_test(bu_vls_vprintf_test_39 tester_bu_vls_vprintf 39)
-add_test(bu_vls_vprintf_test_40 tester_bu_vls_vprintf 40)
-add_test(bu_vls_vprintf_test_41 tester_bu_vls_vprintf 41)
-add_test(bu_vls_vprintf_test_42 tester_bu_vls_vprintf 42)
-add_test(bu_vls_vprintf_test_43 tester_bu_vls_vprintf 43)
-add_test(bu_vls_vprintf_test_44 tester_bu_vls_vprintf 44)
-add_test(bu_vls_vprintf_test_45 tester_bu_vls_vprintf 45)
-add_test(bu_vls_vprintf_test_46 tester_bu_vls_vprintf 46)
-add_test(bu_vls_vprintf_test_47 tester_bu_vls_vprintf 47)
-add_test(bu_vls_vprintf_test_48 tester_bu_vls_vprintf 48)
-add_test(bu_vls_vprintf_test_49 tester_bu_vls_vprintf 49)
-add_test(bu_vls_vprintf_test_50 tester_bu_vls_vprintf 50)
-add_test(bu_vls_vprintf_test_51 tester_bu_vls_vprintf 51)
-add_test(bu_vls_vprintf_test_52 tester_bu_vls_vprintf 52)
-add_test(bu_vls_vprintf_test_53 tester_bu_vls_vprintf 53)
-add_test(bu_vls_vprintf_test_54 tester_bu_vls_vprintf 54)
-add_test(bu_vls_vprintf_test_55 tester_bu_vls_vprintf 55)
-add_test(bu_vls_vprintf_test_56 tester_bu_vls_vprintf 56)
-add_test(bu_vls_vprintf_test_57 tester_bu_vls_vprintf 57)
-add_test(bu_vls_vprintf_test_58 tester_bu_vls_vprintf 58)
-add_test(bu_vls_vprintf_test_59 tester_bu_vls_vprintf 59)
-add_test(bu_vls_vprintf_test_60 tester_bu_vls_vprintf 60)
-add_test(bu_vls_vprintf_test_61 tester_bu_vls_vprintf 61)
-add_test(bu_vls_vprintf_test_62 tester_bu_vls_vprintf 62)
-add_test(bu_vls_vprintf_test_63 tester_bu_vls_vprintf 63)
-add_test(bu_vls_vprintf_test_64 tester_bu_vls_vprintf 64)
-add_test(bu_vls_vprintf_test_65 tester_bu_vls_vprintf 65)
+foreach(test_num RANGE 1 67)
+  add_test(NAME "bu_vls_vprintf_test_${test_num}" COMMAND tester_bu_vls_vprintf "${test_num}")
+endforeach()
+
+#
+#  ************ vls.c tests *************
+#
+include(vls-tests.cmake)
+
+
+#
+#  ************ sort.c test *************
+#
+BRLCAD_ADDEXEC(tester_bu_sort bu_sort.c libbu NO_INSTALL)
+add_test(NAME bu_sort_test_unsigned_int_1 COMMAND tester_bu_sort 1)
+add_test(NAME bu_sort_test_unsigned_int_2 COMMAND tester_bu_sort 2)
+add_test(NAME bu_sort_test_fastf_t_1 COMMAND tester_bu_sort 3)
+add_test(NAME bu_sort_test_fastf_t_2 COMMAND tester_bu_sort 4)
+add_test(NAME bu_sort_test_string_1 COMMAND tester_bu_sort 5)
+add_test(NAME bu_sort_test_string_2 COMMAND tester_bu_sort 6)
+add_test(NAME bu_sort_test_dist_to_int_1 COMMAND tester_bu_sort 7)
+add_test(NAME bu_sort_test_dist_to_int_2 COMMAND tester_bu_sort 8)
+add_test(NAME bu_sort_test_fastf_empty COMMAND tester_bu_sort 9)
+add_test(NAME bu_sort_test_fastf_inf COMMAND tester_bu_sort 10)
+
+#
+#  ************ color.c tests *************
+
+# For COMMAND tester_bu_color, the input format is as follows:
+#
+# COMMAND tester_bu_color <function number> <args>
+BRLCAD_ADDEXEC(tester_bu_color bu_color.c libbu NO_INSTALL)
+
+# For function #1 (bu_rgb_to_hsv) the <args> format is as follows:
+#
+# rgb expected_hsv
+#
+# Where rgb colors are represented by comma-separated triples of
+# integers, and hsv colors are represented by comma-separated triples
+# of floats.
+
+add_test(NAME bu_rgb_to_hsv_1 COMMAND tester_bu_color 1 192,78,214 290.294,0.636,0.839)
+
+# For function #2 (bu_hsv_to_rgb) the <args> format is as follows:
+#
+# hsv expected_rgb
+#
+# Where rgb colors are represented by comma-separated triples of
+# integers, and hsv colors are represented by comma-separated triples
+# of floats.
+
+add_test(NAME bu_hsv_to_rgb_1 COMMAND tester_bu_color 2 290.294,0.636,0.839 192,78,214)
+
+# For function #3 (bu_str_to_rgb) the <args> format is as follows:
+#
+# string expected_rgb
+#
+# Where rgb colors are represented by comma-separated triples of
+# integers.
+
+add_test(NAME bu_str_to_rgb_1 COMMAND tester_bu_color 3 "#C04ED6" 192,78,214)
+add_test(NAME bu_str_to_rgb_2 COMMAND tester_bu_color 3 "192/78/214" 192,78,214)
+add_test(NAME bu_str_to_rgb_3 COMMAND tester_bu_color 3 "192 78 214" 192,78,214)
+
+# For function #4 (bu_color_to_rgb_floats) the <args> format is as follows:
+#
+# rgb_color
+#
+# Where rgb colors are represented by comma-separated triples of
+# integers or floats.
+
+add_test(NAME bu_color_to_rgb_floats_1 COMMAND tester_bu_color 4 192,78,214)
+#
+# ************ str.c tests ************
+#
+
+# For COMMAND tester_bu_str, the input format is as follows:
+#
+# COMMAND tester_bu_str <function number> <args>
+BRLCAD_ADDEXEC(tester_bu_str bu_str.c libbu NO_INSTALL)
+
+# For function #1 (bu_strlcatm) the <args> format is as follows:
+#
+# string1 string2 result_size expected_ret expected_result
+#
+# Where string1 and string2 are the strings to concatenate,
+# result_size is the size for the buffer that the result will be
+# stored in, expected_ret is the expected return value of the
+# function, and expected_result is the expected resultant string in
+# dst.
+
+add_test(NAME bu_strlcatm_valid_1 COMMAND tester_bu_str 1 "abc" "def" 7 6 "abcdef")
+add_test(NAME bu_strlcatm_valid_2 COMMAND tester_bu_str 1 "abc" "def" 8 6 "abcdef")
+add_test(NAME bu_strlcatm_bad_size_1 COMMAND tester_bu_str 1 "abc" "def" 0 0 "")
+add_test(NAME bu_strlcatm_bad_size_2 COMMAND tester_bu_str 1 "abc" "def" 5 4 "abcd")
+
+# For function #2 (bu_strlcpym) the <args> format is as follows:
+#
+# string result_size expected_ret expected_result
+#
+# Where string is the string to copy, result_size is the size of the
+# result buffer, expected_ret is the expected return value of the
+# function, and expected_result is the expected contents of the copied
+# string.
+
+add_test(NAME bu_strlcpym_valid_1 COMMAND tester_bu_str 2 "abcdef" 7 6 "abcdef")
+add_test(NAME bu_strlcpym_valid_2 COMMAND tester_bu_str 2 "abcdef" 8 6 "abcdef")
+add_test(NAME bu_strlcpym_bad_size_1 COMMAND tester_bu_str 2 "abcdef" 0 0 "")
+add_test(NAME bu_strlcpym_bad_size_2 COMMAND tester_bu_str 2 "abcdef" 5 4 "abcd")
+
+# For function #3 (bu_strdupm) the <args> format is as follows:
+#
+# string
+#
+# Where string is the string to duplicate.
+
+add_test(NAME bu_strdupm_1 COMMAND tester_bu_str 3 "abcdef")
+
+# For function #4 (bu_strcmp) the <args> format is as follows:
+#
+# string1 string2 expected_ret
+#
+# Where string1 and string2 are the strings to compare, and
+# expected_ret is a number of the same sign as the expected comparison
+# result.
+
+add_test(NAME bu_strcmp_equal_1 COMMAND tester_bu_str 4 "abcd" "abcd" 0)
+add_test(NAME bu_strcmp_less_1 COMMAND tester_bu_str 4 "a" "b" -1)
+add_test(NAME bu_strcmp_less_2 COMMAND tester_bu_str 4 "abCD" "abcd" -1)
+add_test(NAME bu_strcmp_greater_1 COMMAND tester_bu_str 4 "b" "a" 1)
+add_test(NAME bu_strcmp_greater_2 COMMAND tester_bu_str 4 "abcd" "abCD" 1)
+
+# For function #5 (bu_strncmp) the <args> format is as follows:
+#
+# string1 string2 n expected_ret
+#
+# Where string1 and string2 are the strings to compare, n is the
+# length to give strncmp, and expected_ret is a number of the same
+# sign as the expected comparison result.
+
+add_test(NAME bu_strncmp_equal_1 COMMAND tester_bu_str 5 "abcd" "abcd" 4 0)
+add_test(NAME bu_strncmp_equal_2 COMMAND tester_bu_str 5 "abcd" "abcd" 3 0)
+add_test(NAME bu_strncmp_equal_3 COMMAND tester_bu_str 5 "abcd" "abcd" 5 0)
+add_test(NAME bu_strncmp_equal_4 COMMAND tester_bu_str 5 "abcd" "abc" 3 0)
+add_test(NAME bu_strncmp_equal_5 COMMAND tester_bu_str 5 "abcd" "abce" 3 0)
+add_test(NAME bu_strncmp_less_1 COMMAND tester_bu_str 5 "abcd" "abce" 4 -1)
+add_test(NAME bu_strncmp_less_2 COMMAND tester_bu_str 5 "abCD" "abcd" 4 -1)
+add_test(NAME bu_strncmp_greater_1 COMMAND tester_bu_str 5 "abcd" "abc" 4 1)
+add_test(NAME bu_strncmp_greater_2 COMMAND tester_bu_str 5 "abcd" "abCD" 4 1)
+
+# For function #6 (bu_strcasecmp) the <args> format is as follows:
+#
+# string1 string2 expected_ret
+#
+# Where string1 and string2 are the strings to compare, and
+# expected_ret is a number of the same sign as the expected comparison
+# result.
+
+add_test(NAME bu_strcasecmp_equal_1 COMMAND tester_bu_str 6 "abcd" "abcd" 0)
+add_test(NAME bu_strcasecmp_equal_2 COMMAND tester_bu_str 6 "abCD" "abcd" 0)
+add_test(NAME bu_strcasecmp_equal_3 COMMAND tester_bu_str 6 "abcd" "abCD" 0)
+add_test(NAME bu_strcasecmp_less_1 COMMAND tester_bu_str 4 "a" "b" -1)
+add_test(NAME bu_strcasecmp_greater_1 COMMAND tester_bu_str 4 "b" "a" 1)
+
+# For function #7 (bu_strncasecmp) the <args> format is as follows:
+#
+# string1 string2 n expected_ret
+#
+# Where string1 and string2 are the strings to compare, n is the
+# length to give strncmp, and expected_ret is a number of the same
+# sign as the expected comparison result.
+
+add_test(NAME bu_strncasecmp_equal_1 COMMAND tester_bu_str 7 "abcd" "abcd" 4 0)
+add_test(NAME bu_strncasecmp_equal_2 COMMAND tester_bu_str 7 "abcd" "abcd" 3 0)
+add_test(NAME bu_strncasecmp_equal_3 COMMAND tester_bu_str 7 "abcd" "abcd" 5 0)
+add_test(NAME bu_strncasecmp_equal_4 COMMAND tester_bu_str 7 "abcd" "abc" 3 0)
+add_test(NAME bu_strncasecmp_equal_5 COMMAND tester_bu_str 7 "abcd" "abce" 3 0)
+add_test(NAME bu_strncasecmp_equal_6 COMMAND tester_bu_str 7 "abCD" "abcd" 4 0)
+add_test(NAME bu_strncasecmp_equal_7 COMMAND tester_bu_str 7 "abcd" "abCD" 4 0)
+add_test(NAME bu_strncasecmp_less_1 COMMAND tester_bu_str 7 "abcd" "abce" 4 -1)
+add_test(NAME bu_strncasecmp_greater_1 COMMAND tester_bu_str 7 "abcd" "abc" 4 1)
+
+#
+#  *********** badmagic.c tests ************
+#
+
+BRLCAD_ADDEXEC(tester_bu_badmagic bu_badmagic.c libbu NO_INSTALL)
+add_test(NAME bu_badmagic_diff_magic  COMMAND tester_bu_badmagic 1)
+add_test(NAME bu_badmagic_normal      COMMAND tester_bu_badmagic 2)
+add_test(NAME bu_badmagic_null_ptr    COMMAND tester_bu_badmagic 3)
+add_test(NAME bu_badmagic_misaligned  COMMAND tester_bu_badmagic 4)
+
+#
+#  *********** opt.c tests ************
+#
+
+BRLCAD_ADDEXEC(tester_bu_opt opt.c libbu NO_INSTALL)
+add_test(NAME bu_opt_null  COMMAND tester_bu_opt 0 0 0)
+
+# Verbosity (custom handler) testing
+add_test(NAME bu_opt_1_v_00  COMMAND tester_bu_opt 1 v 0)
+add_test(NAME bu_opt_1_v_01  COMMAND tester_bu_opt 1 v 1)
+add_test(NAME bu_opt_1_v_02  COMMAND tester_bu_opt 1 v 2)
+add_test(NAME bu_opt_1_v_03  COMMAND tester_bu_opt 1 v 3)
+add_test(NAME bu_opt_1_v_04  COMMAND tester_bu_opt 1 v 4)
+add_test(NAME bu_opt_1_v_05  COMMAND tester_bu_opt 1 v 5)
+add_test(NAME bu_opt_1_v_06  COMMAND tester_bu_opt 1 v 6)
+add_test(NAME bu_opt_1_v_07  COMMAND tester_bu_opt 1 v 7)
+add_test(NAME bu_opt_1_v_08  COMMAND tester_bu_opt 1 v 8)
+add_test(NAME bu_opt_1_v_09  COMMAND tester_bu_opt 1 v 9)
+add_test(NAME bu_opt_1_v_10  COMMAND tester_bu_opt 1 v 10)
+add_test(NAME bu_opt_1_v_11  COMMAND tester_bu_opt 1 v 11)
+add_test(NAME bu_opt_1_v_12  COMMAND tester_bu_opt 1 v 12)
+add_test(NAME bu_opt_1_v_13  COMMAND tester_bu_opt 1 v 13)
+add_test(NAME bu_opt_1_v_14  COMMAND tester_bu_opt 1 v 14)
+
+# Help option testing
+add_test(NAME bu_opt_1_h_01  COMMAND tester_bu_opt 1 h 1)
+add_test(NAME bu_opt_1_h_02  COMMAND tester_bu_opt 1 h 2)
+add_test(NAME bu_opt_1_h_03  COMMAND tester_bu_opt 1 h 3)
+add_test(NAME bu_opt_1_h_04  COMMAND tester_bu_opt 1 h 4)
+add_test(NAME bu_opt_1_h_05  COMMAND tester_bu_opt 1 h 5)
+add_test(NAME bu_opt_1_h_06  COMMAND tester_bu_opt 1 h 6)
+add_test(NAME bu_opt_1_h_07  COMMAND tester_bu_opt 1 h 7)
+add_test(NAME bu_opt_1_h_08  COMMAND tester_bu_opt 1 h 8)
+add_test(NAME bu_opt_1_h_09  COMMAND tester_bu_opt 1 h 9)
+add_test(NAME bu_opt_1_h_10  COMMAND tester_bu_opt 1 h 10)
+
+# Boolean option testing
+add_test(NAME bu_opt_1_b_01  COMMAND tester_bu_opt 1 b 1)
+add_test(NAME bu_opt_1_b_02  COMMAND tester_bu_opt 1 b 2)
+add_test(NAME bu_opt_1_b_03  COMMAND tester_bu_opt 1 b 3)
+add_test(NAME bu_opt_1_b_04  COMMAND tester_bu_opt 1 b 4)
+
+# String option testing
+add_test(NAME bu_opt_1_s_01  COMMAND tester_bu_opt 1 s 1)
+add_test(NAME bu_opt_1_s_02  COMMAND tester_bu_opt 1 s 2)
+
+# Integer option testing
+add_test(NAME bu_opt_1_i_01  COMMAND tester_bu_opt 1 i 1)
+add_test(NAME bu_opt_1_i_02  COMMAND tester_bu_opt 1 i 2)
+add_test(NAME bu_opt_1_i_03  COMMAND tester_bu_opt 1 i 3)
+add_test(NAME bu_opt_1_i_04  COMMAND tester_bu_opt 1 i 4)
+
+# Long int option testing
+add_test(NAME bu_opt_1_l_01  COMMAND tester_bu_opt 1 l 1)
+add_test(NAME bu_opt_1_l_02  COMMAND tester_bu_opt 1 l 2)
+
+# fastf_t option testing
+add_test(NAME bu_opt_1_f_01  COMMAND tester_bu_opt 1 f 1)
+add_test(NAME bu_opt_1_f_02  COMMAND tester_bu_opt 1 f 2)
+add_test(NAME bu_opt_1_f_03  COMMAND tester_bu_opt 1 f 3)
+
+# Multiple flag option testing
+add_test(NAME bu_opt_1_mf_01  COMMAND tester_bu_opt 1 m 1)
+add_test(NAME bu_opt_1_mf_02  COMMAND tester_bu_opt 1 m 2)
+
+# non-static var assignment option testing (and also complex
+# custom arg processing testing)
+add_test(NAME bu_opt_2_color_00  COMMAND tester_bu_opt 2 C 0)
+add_test(NAME bu_opt_2_color_01  COMMAND tester_bu_opt 2 C 1)
+add_test(NAME bu_opt_2_color_02  COMMAND tester_bu_opt 2 C 2)
+add_test(NAME bu_opt_2_color_03  COMMAND tester_bu_opt 2 C 3)
+add_test(NAME bu_opt_2_color_04  COMMAND tester_bu_opt 2 C 4)
+add_test(NAME bu_opt_2_color_05  COMMAND tester_bu_opt 2 C 5)
+add_test(NAME bu_opt_2_color_06  COMMAND tester_bu_opt 2 C 6)
+add_test(NAME bu_opt_2_color_07  COMMAND tester_bu_opt 2 C 7)
+add_test(NAME bu_opt_2_color_08  COMMAND tester_bu_opt 2 C 8)
+add_test(NAME bu_opt_2_color_09  COMMAND tester_bu_opt 2 C 9)
+add_test(NAME bu_opt_2_color_10  COMMAND tester_bu_opt 2 C 10)
+add_test(NAME bu_opt_2_color_11  COMMAND tester_bu_opt 2 C 11)
+add_test(NAME bu_opt_2_color_12  COMMAND tester_bu_opt 2 C 12)
+add_test(NAME bu_opt_2_color_13  COMMAND tester_bu_opt 2 C 13)
+add_test(NAME bu_opt_2_color_14  COMMAND tester_bu_opt 2 C 14)
+add_test(NAME bu_opt_2_color_15  COMMAND tester_bu_opt 2 C 15)
+
+#
+#  *********** date-time.c tests ************
+#
+
+BRLCAD_ADDEXEC(tester_bu_date-time bu_date-time.c libbu NO_INSTALL)
+foreach(test_num RANGE 1 10)
+  add_test(NAME "bu_date-time${test_num}" COMMAND tester_bu_date-time "${test_num}")
+endforeach()
+
+CMAKEFILES(
+  bitv-tests.cmake
+  test_internals.h
+  vls-tests.cmake
+)
 
 # Local Variables:
 # tab-width: 8

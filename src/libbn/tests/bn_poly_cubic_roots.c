@@ -1,7 +1,7 @@
 /*          B N _ P O L Y _ C U B I C _ R O O T S. C
  * BRL-CAD
  *
- * Copyright (c) 2013 United States Government as represented by
+ * Copyright (c) 2013-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -30,7 +30,6 @@
 #include "bu.h"
 #include "vmath.h"
 #include "bn.h"
-#include "magic.h"
 
 
 /* holds three polynomials to be used in test. */
@@ -82,17 +81,18 @@ poly_init(void)
     return;
 }
 
+
 /* tests the polynomials to make sure bn_poly_mul() works properly. */
 int
 test_bn_poly_cubic_rts(void)
 {
     int val, val1[3], val2[3];/* variables get results for comparisons */
-    bn_complex_t r1[3],r2[3],r3[3];
+    bn_complex_t r1[3], r2[3], r3[3];
     int i, j, ind1 = 1, ind2 = 4; /* creates indexes for rts array. */
 
-    bn_poly_cubic_roots(r1,&input[0]);
-    bn_poly_cubic_roots(r2,&input[1]);
-    bn_poly_cubic_roots(r3,&input[2]);
+    bn_poly_cubic_roots(r1, &input[0]);
+    bn_poly_cubic_roots(r2, &input[1]);
+    bn_poly_cubic_roots(r3, &input[2]);
 
     /* loop moves through arrays for roots and output comparing variables. */
     for (i = 0; i < 3; i++) {
@@ -118,13 +118,13 @@ test_bn_poly_cubic_rts(void)
 	}
     }
 
-    if (!EQUAL(val,0))
-	 return -1;
+    if (!EQUAL(val, 0))
+	return -1;
 
     for (i = 0; i < 3; i++) {
-	if (!EQUAL(val1[i],val2[i]) && !EQUAL(val1[i], 0))
+	if (!EQUAL(val1[i], val2[i]) && !EQUAL(val1[i], 0))
 	    return -1;
-	}
+    }
 
     return 0;
 }
@@ -145,6 +145,7 @@ main(void)
 
     return 0;
 }
+
 
 /*
  * Local Variables:

@@ -1,7 +1,7 @@
 /*                 Path.cpp
  * BRL-CAD
  *
- * Copyright (c) 1994-2013 United States Government as represented by
+ * Copyright (c) 1994-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -49,14 +49,7 @@ Path::Path(STEPWrapper *sw, int step_id)
 
 Path::~Path()
 {
-    /*
-      LIST_OF_ORIENTED_EDGES::iterator i = edge_list.begin();
-
-      while(i != edge_list.end()) {
-      delete (*i);
-      i = edge_list.erase(i);
-      }
-    */
+    // elements created through factory will be deleted there.
     edge_list.clear();
 }
 
@@ -104,6 +97,7 @@ Path::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
 
     if (!TopologicalRepresentationItem::Load(step, sse)) {
 	std::cout << CLASSNAME << ":Error loading base class ::TopologicalRepresentationItem." << std::endl;
+	sw->entity_status[id] = STEP_LOAD_ERROR;
 	return false;
     }
 
@@ -120,12 +114,15 @@ Path::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
 		OrientedEdge *aOE = dynamic_cast<OrientedEdge *>(Factory::CreateObject(sw, entity));
 		if (aOE) {
 		    edge_list.push_back(aOE);
+		} else {
+		    sw->entity_status[id] = STEP_LOAD_ERROR;
 		}
 	    } else {
 		std::cerr << CLASSNAME
 			  << ": Unhandled entity in attribute 'edge_list'."
 			  << std::endl;
 		l->clear();
+		sw->entity_status[id] = STEP_LOAD_ERROR;
 		delete l;
 		return false;
 	    }
@@ -133,6 +130,10 @@ Path::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
 	l->clear();
 	delete l;
     }
+
+    if (sw->entity_status[id] == STEP_LOAD_ERROR) return false;
+
+    sw->entity_status[id] = STEP_LOADED;
 
     return true;
 }

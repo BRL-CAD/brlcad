@@ -1,7 +1,7 @@
 /*                      P I X C O U N T . C
  * BRL-CAD
  *
- * Copyright (c) 1998-2013 United States Government as represented by
+ * Copyright (c) 1998-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -29,7 +29,11 @@
 #include <math.h>
 #include "bio.h"
 
-#include "bu.h"
+#include "bu/color.h"
+#include "bu/getopt.h"
+#include "bu/log.h"
+#include "bu/rb.h"
+#include "bu/malloc.h"
 
 
 struct pixel {
@@ -37,7 +41,7 @@ struct pixel {
     unsigned char *p_color;
     int p_count;
 };
-#define PIXEL_NULL ((struct pixel *) 0)
+#define PIXEL_NULL ((struct pixel *)0)
 #define PIXEL_MAGIC 0x7078656c
 
 
@@ -48,19 +52,17 @@ int pixel_size = 3;		/* Bytes/pixel */
 FILE *outfp = NULL;		/* output file */
 
 static const char usage[]     = "Usage: pixcount [-# bytes_per_pixel] [infile.pix [outfile]]\n";
-static const char optstring[] = "#:?";
+static const char optstring[] = "#:h?";
 
-static void print_usage (void)
+static
+void print_usage(void)
 {
     bu_exit(1, "%s", usage);
 }
 
 
-/*
- * M K _ P I X E L ()
- *
- */
-struct pixel *mk_pixel (unsigned char *color)
+struct pixel *
+mk_pixel(unsigned char *color)
 {
     int i;
     struct pixel *pp;
@@ -79,25 +81,19 @@ struct pixel *mk_pixel (unsigned char *color)
 }
 
 
-/*
- * F R E E _ P I X E L ()
- *
- */
-void free_pixel (struct pixel *pp)
+void
+free_pixel(struct pixel *pp)
 {
     BU_CKMAG(pp, PIXEL_MAGIC, "pixel");
-    bu_free((genptr_t) pp, "pixel");
+    bu_free((void *)pp, "pixel");
 }
 
 
-/*
- * P R I N T _ P I X E L ()
- *
- */
-void print_pixel (void *p, int UNUSED(depth))
+void
+print_pixel(void *p, int UNUSED(depth))
 {
     int i;
-    struct pixel *pp = (struct pixel *) p;
+    struct pixel *pp = (struct pixel *)p;
 
     BU_CKMAG(pp, PIXEL_MAGIC, "pixel");
 
@@ -108,14 +104,13 @@ void print_pixel (void *p, int UNUSED(depth))
 
 
 /*
- * C O M P A R E _ P I X E L S ()
- *
  * The comparison callback for the red-black tree
  */
-int compare_pixels (void *v1, void *v2)
+int
+compare_pixels(void *v1, void *v2)
 {
-    struct pixel *p1 = (struct pixel *) v1;
-    struct pixel *p2 = (struct pixel *) v2;
+    struct pixel *p1 = (struct pixel *)v1;
+    struct pixel *p2 = (struct pixel *)v2;
     int i;
 
     BU_CKMAG(p1, PIXEL_MAGIC, "pixel");
@@ -131,10 +126,8 @@ int compare_pixels (void *v1, void *v2)
 }
 
 
-/*
- * L O O K U P _ P I X E L ()
- */
-struct pixel *lookup_pixel(struct bu_rb_tree *palette, unsigned char *color)
+struct pixel *
+lookup_pixel(struct bu_rb_tree *palette, unsigned char *color)
 {
     int rc = 0;	/* Return code from bu_rb_insert() */
     struct pixel *qpp = NULL;	/* The query */
@@ -151,9 +144,9 @@ struct pixel *lookup_pixel(struct bu_rb_tree *palette, unsigned char *color)
      * then we have our pixel.
      * Otherwise, we must create a new pixel.
      */
-    switch (rc = bu_rb_insert(palette, (void *) qpp)) {
+    switch (rc = bu_rb_insert(palette, (void *)qpp)) {
 	case -1:
-	    pp = (struct pixel *) bu_rb_curr1(palette);
+	    pp = (struct pixel *)bu_rb_curr1(palette);
 	    free_pixel(qpp);
 	    break;
 	case 0:
@@ -168,11 +161,11 @@ struct pixel *lookup_pixel(struct bu_rb_tree *palette, unsigned char *color)
 
 
 int
-main (int argc, char **argv)
+main(int argc, char **argv)
 {
     struct bu_rb_tree *palette;	/* Pixel palette */
     char *inf_name;	/* name of input stream */
-    char *outf_name;	/* " " output " */
+    char *outf_name;	/*  "   "  output  " */
     unsigned char *buf;		/* the current input pixel */
     FILE *infp = NULL;	/* input stream */
     int ch;		/* current char in command line */
@@ -189,17 +182,16 @@ main (int argc, char **argv)
 		    print_usage();
 		}
 		break;
-	    case '?':
-	    default:
+	    default: /* 'h' '?' */
 		print_usage();
 	}
     switch (argc - bu_optind) {
 	case 0:
 	    infp = stdin;
-	    /* Break intentionally missing */
+	    /* Break intentionally omitted */
 	case 1:
 	    outfp = stdout;
-	    /* Break intentionally missing */
+	    /* Break intentionally omitted */
 	case 2:
 	    break;
 	default:
@@ -221,7 +213,7 @@ main (int argc, char **argv)
     }
 
     /*
-     * Ensure that infp is kosher,
+     * Ensure that infp is kosher
      */
     if (infp == stdin) {
 	if (isatty(fileno(stdin))) {
@@ -230,7 +222,7 @@ main (int argc, char **argv)
 	}
     }
 
-    palette = bu_rb_create1("Pixel palette", compare_pixels);
+    palette = bu_rb_create1("Pixel palette", (int (*)(void))compare_pixels);
     bu_rb_uniq_on1(palette);
 
     /*
@@ -239,15 +231,15 @@ main (int argc, char **argv)
     buf = (unsigned char *)
 	bu_malloc(pixel_size * sizeof(unsigned char),
 		  "pixel buffer");
-    while (fread((void *) buf, pixel_size * sizeof(unsigned char), 1, infp) == 1) {
+    while (fread((void *)buf, pixel_size * sizeof(unsigned char), 1, infp) == 1) {
 	pp = lookup_pixel(palette, buf);
 	BU_CKMAG(pp, PIXEL_MAGIC, "pixel");
 
 	++(pp->p_count);
     }
-    bu_free((genptr_t) buf, "pixel buffer");
+    bu_free((void *)buf, "pixel buffer");
 
-    bu_rb_walk1(palette, print_pixel, INORDER);
+    bu_rb_walk1(palette, (void (*)(void))print_pixel, BU_RB_WALK_INORDER);
 
     return 0;
 }

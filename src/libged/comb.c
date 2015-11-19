@@ -1,7 +1,7 @@
 /*                  C O M B . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2013 United States Government as represented by
+ * Copyright (c) 2008-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -25,16 +25,17 @@
 
 #include "common.h"
 
-#include "bio.h"
 #include <string.h>
 
-#include "cmd.h"
+#include "bu/cmd.h"
+#include "bu/getopt.h"
+#include "bu/sort.h"
 #include "wdb.h"
 
 #include "./ged_private.h"
 
 HIDDEN int
-_ged_set_region_flag(struct ged *gedp, struct directory *dp) {
+region_flag_set(struct ged *gedp, struct directory *dp) {
     struct bu_attribute_value_set avs;
     bu_avs_init_empty(&avs);
     if (db5_get_attributes(gedp->ged_wdbp->dbip, &avs, dp)) {
@@ -54,7 +55,7 @@ _ged_set_region_flag(struct ged *gedp, struct directory *dp) {
 }
 
 HIDDEN int
-_ged_clear_region_flag(struct ged *gedp, struct directory *dp) {
+region_flag_clear(struct ged *gedp, struct directory *dp) {
     struct bu_attribute_value_set avs;
     bu_avs_init_empty(&avs);
     if (db5_get_attributes(gedp->ged_wdbp->dbip, &avs, dp)) {
@@ -74,7 +75,7 @@ _ged_clear_region_flag(struct ged *gedp, struct directory *dp) {
 }
 
 HIDDEN int
-_ged_clear_color_shader(struct ged *gedp, struct directory *dp) {
+color_shader_clear(struct ged *gedp, struct directory *dp) {
     struct bu_attribute_value_set avs;
     bu_avs_init_empty(&avs);
     if (db5_get_attributes(gedp->ged_wdbp->dbip, &avs, dp)) {
@@ -96,7 +97,7 @@ _ged_clear_color_shader(struct ged *gedp, struct directory *dp) {
 }
 
 HIDDEN int
-_ged_clear_comb_tree(struct ged *gedp, struct directory *dp)
+comb_tree_clear(struct ged *gedp, struct directory *dp)
 {
     struct rt_db_internal intern;
     struct rt_comb_internal *comb;
@@ -118,36 +119,9 @@ _ged_clear_comb_tree(struct ged *gedp, struct directory *dp)
     return GED_OK;
 }
 
-/* TODO - this needs to be a librt utility function for search or something - it's
- * a common operation */
-HIDDEN void
-db_full_path_list_add_toplevel(struct db_i *dbip, struct db_full_path_list *path_list, int local)
-{
-    int i;
-    struct directory *dp;
-    struct db_full_path dfp;
-    struct db_full_path_list *new_entry;
-    db_full_path_init(&dfp);
-    for (i = 0; i < RT_DBNHASH; i++) {
-	for (dp = dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
-	    if (dp->d_nref == 0 && !(dp->d_flags & RT_DIR_HIDDEN) && (dp->d_addr != RT_DIR_PHONY_ADDR)) {
-		if (!db_string_to_path(&dfp, dbip, dp->d_namep)) {
-		    BU_ALLOC(new_entry, struct db_full_path_list);
-		    BU_ALLOC(new_entry->path, struct db_full_path);
-		    db_full_path_init(new_entry->path);
-		    db_dup_full_path(new_entry->path, (const struct db_full_path *)&dfp);
-		    new_entry->local = local;
-		    BU_LIST_INSERT(&(path_list->l), &(new_entry->l));
-		}
-	    }
-	}
-    }
-    db_free_full_path(&dfp);
-}
-
 
 HIDDEN int
-_ged_wrap_comb(struct ged *gedp, struct directory *dp) {
+comb_wrap(struct ged *gedp, struct directory *dp) {
 
     struct bu_vls orig_name, comb_child_name;
     struct bu_external external;
@@ -191,19 +165,19 @@ _ged_wrap_comb(struct ged *gedp, struct directory *dp) {
 	bu_vls_free(&orig_name);
 	return GED_ERROR;
     }
-    if (_ged_clear_region_flag(gedp, new_dp) == GED_ERROR) {
+    if (region_flag_clear(gedp, new_dp) == GED_ERROR) {
 	bu_vls_free(&comb_child_name);
 	bu_vls_free(&orig_name);
 	return GED_ERROR;
     }
-    if (_ged_clear_color_shader(gedp, new_dp) == GED_ERROR) {
+    if (color_shader_clear(gedp, new_dp) == GED_ERROR) {
 	bu_vls_free(&comb_child_name);
 	bu_vls_free(&orig_name);
 	return GED_ERROR;
     }
 
     /* Clear the tree from the original object */
-    if (_ged_clear_comb_tree(gedp, dp) == GED_ERROR) {
+    if (comb_tree_clear(gedp, dp) == GED_ERROR) {
 	bu_vls_printf(gedp->ged_result_str, "ERROR: %s tree clearing failed", bu_vls_addr(&orig_name));
 	bu_vls_free(&comb_child_name);
 	bu_vls_free(&orig_name);
@@ -229,9 +203,9 @@ _ged_wrap_comb(struct ged *gedp, struct directory *dp) {
     return GED_OK;
 }
 
-/* QSort functions for solids */
+/* bu_sort functions for solids */
 HIDDEN int
-name_compare(const void *d1, const void *d2)
+name_compare(const void *d1, const void *d2, void *UNUSED(arg))
 {
     struct directory *dp1 = *(struct directory **)d1;
     struct directory *dp2 = *(struct directory **)d2;
@@ -247,118 +221,96 @@ name_compare(const void *d1, const void *d2)
  *
  *  Run the first search, and quit if any non-union ops are present.
  *  If all clear, search for the solid and comb lists.  Clear the old
- *  tree and union in all the solids - solids are sorted via qsort.
+ *  tree and union in all the solids - solids are sorted via bu_sort.
  *  If we have combs, run the not-in-this-comb-tree search and check
  *  which (if any) of the combs under the current comb are not used
  *  elsewhere.  For those that are not, remove them.
  */
 HIDDEN int
-_ged_flatten_comb(struct ged *gedp, struct directory *dp) {
+comb_flatten(struct ged *gedp, struct directory *dp)
+{
+    int result_cnt = 0;
+    int obj_cnt = 0;
+    struct directory **all_paths;
     char *only_unions_in_tree_plan = "! -bool u";
     char *solids_in_tree_plan = "! -type comb";
     char *combs_in_tree_plan = "-type comb";
-    struct bu_ptbl *non_union_objects = BU_PTBL_NULL;
-    struct bu_ptbl *solids = BU_PTBL_NULL;
-    struct bu_ptbl *combs = BU_PTBL_NULL;
-    struct bu_ptbl *combs_outside_of_tree = BU_PTBL_NULL;
+    struct bu_ptbl solids = BU_PTBL_INIT_ZERO;
+    struct bu_ptbl combs = BU_PTBL_INIT_ZERO;
+    struct bu_ptbl combs_outside_of_tree = BU_PTBL_INIT_ZERO;
     struct bu_vls plan_string;
     struct directory **dp_curr;
-    struct db_full_path_list *toplevel_list = NULL;
-    struct db_full_path_list *path_list = NULL;
-    BU_ALLOC(path_list, struct db_full_path_list);
-    BU_LIST_INIT(&(path_list->l));
-
-
-    /* Turn directory's name into a full path structure */
-    if (db_full_path_list_add(dp->d_namep, 0, gedp->ged_wdbp->dbip, path_list) == -1) {
-	bu_vls_printf(gedp->ged_result_str,  "Failed to add path %s to search list.\n", dp->d_namep);
-	db_free_full_path_list(path_list);
-	return GED_ERROR;
-    }
-
 
     /* if there are non-union booleans in this comb's tree, error out */
-    non_union_objects = db_search_unique_objects_strplan(only_unions_in_tree_plan, path_list, gedp->ged_wdbp->dbip, gedp->ged_wdbp);
-    /* if non_union_objects isn't empty, error out */
-    if (BU_PTBL_LEN(non_union_objects)) {
+    result_cnt = db_search(NULL, DB_SEARCH_TREE, only_unions_in_tree_plan, 1, &dp, gedp->ged_wdbp->dbip);
+    if (result_cnt) {
 	bu_vls_printf(gedp->ged_result_str, "ERROR: %s tree contains non-union booleans", dp->d_namep);
-	db_free_full_path_list(path_list);
-	bu_ptbl_free(non_union_objects);
 	return GED_ERROR;
     }
-    /* Done with non_union_objects */
-    bu_ptbl_free(non_union_objects);
 
+    /* Find the solids and combs in the tree */
+    (void)db_search(&solids, DB_SEARCH_RETURN_UNIQ_DP, solids_in_tree_plan, 1, &dp, gedp->ged_wdbp->dbip);
+    (void)db_search(&combs, DB_SEARCH_RETURN_UNIQ_DP, combs_in_tree_plan, 1, &dp, gedp->ged_wdbp->dbip);
 
-    /* Find the solids */
-    solids = db_search_unique_objects_strplan(solids_in_tree_plan, path_list, gedp->ged_wdbp->dbip, gedp->ged_wdbp);
-
-
-    /* Find the combs in the tree */
-    combs = db_search_unique_objects_strplan(combs_in_tree_plan, path_list, gedp->ged_wdbp->dbip, gedp->ged_wdbp);
     /* If it's all solids already, nothing to do */
-    if (!BU_PTBL_LEN(combs)) {
-	db_free_full_path_list(path_list);
-	bu_ptbl_free(solids);
-	bu_ptbl_free(combs);
+    if (!BU_PTBL_LEN(&combs)) {
+	db_search_free(&solids);
+	db_search_free(&combs);
 	return GED_OK;
     }
 
 
     /* Find the combs NOT in the tree */
-    BU_ALLOC(toplevel_list, struct db_full_path_list);
-    BU_LIST_INIT(&(toplevel_list->l));
-    db_full_path_list_add_toplevel(gedp->ged_wdbp->dbip, toplevel_list, 0);
+    obj_cnt = db_ls(gedp->ged_wdbp->dbip, DB_LS_TOPS, NULL, &all_paths);
     bu_vls_init(&plan_string);
-    bu_vls_sprintf(&plan_string, "-mindepth 1 ! -above -name %s -type comb", dp->d_namep);
-    combs_outside_of_tree = db_search_unique_objects_strplan(bu_vls_addr(&plan_string), toplevel_list, gedp->ged_wdbp->dbip, gedp->ged_wdbp);
+    bu_vls_sprintf(&plan_string, "-mindepth 1 ! -below -name %s -type comb", dp->d_namep);
+    (void)db_search(&combs_outside_of_tree, DB_SEARCH_RETURN_UNIQ_DP, bu_vls_addr(&plan_string), obj_cnt, all_paths, gedp->ged_wdbp->dbip);
     bu_vls_free(&plan_string);
-    db_free_full_path_list(toplevel_list);
 
     /* Done searching - now we can free the path list and clear the original tree */
-    db_free_full_path_list(path_list);
-    if (_ged_clear_comb_tree(gedp, dp) == GED_ERROR) {
+    bu_free(all_paths, "free db_tops output");
+    if (comb_tree_clear(gedp, dp) == GED_ERROR) {
 	bu_vls_printf(gedp->ged_result_str, "ERROR: %s tree clearing failed", dp->d_namep);
-	bu_ptbl_free(solids);
-	bu_ptbl_free(combs);
-	bu_ptbl_free(combs_outside_of_tree);
+	db_search_free(&solids);
+	db_search_free(&combs);
+	db_search_free(&combs_outside_of_tree);
 	return GED_ERROR;
     }
 
     /* Sort the solids and union them into a new tree for dp */
-    if (BU_PTBL_LEN(solids)) {
-	qsort((genptr_t)BU_PTBL_BASEADDR(solids), BU_PTBL_LEN(solids), sizeof(struct directory *), name_compare);
-	for (BU_PTBL_FOR(dp_curr, (struct directory **), solids)) {
+    if (BU_PTBL_LEN(&solids)) {
+	bu_sort((void *)BU_PTBL_BASEADDR(&solids), BU_PTBL_LEN(&solids), sizeof(struct directory *), name_compare, NULL);
+	for (BU_PTBL_FOR(dp_curr, (struct directory **), &solids)) {
 	    /* add "child" comb to the newly cleared parent */
 	    if (_ged_combadd(gedp, (*dp_curr), dp->d_namep, 0, WMOP_UNION, 0, 0) == RT_DIR_NULL) {
 		bu_vls_printf(gedp->ged_result_str, "Error adding '%s' to '%s'\n", (*dp_curr)->d_namep, dp->d_namep);
-		bu_ptbl_free(solids);
-		bu_ptbl_free(combs);
-		bu_ptbl_free(combs_outside_of_tree);
+		db_search_free(&solids);
+		db_search_free(&combs);
+		db_search_free(&combs_outside_of_tree);
 		return GED_ERROR;
 	    }
 	}
     }
     /* Done with solids */
-    bu_ptbl_free(solids);
+    db_search_free(&solids);
 
     /* Remove any combs that were in dp and not used elsewhere from the .g file */
-    for (BU_PTBL_FOR(dp_curr, (struct directory **), combs)) {
-	if (bu_ptbl_locate(combs_outside_of_tree, (const long *)(*dp_curr)) == -1 && ((*dp_curr) != dp)) {
+    for (BU_PTBL_FOR(dp_curr, (struct directory **), &combs)) {
+	if (bu_ptbl_locate(&combs_outside_of_tree, (const long *)(*dp_curr)) == -1 && ((*dp_curr) != dp)) {
 	    /* This comb is only part of the flattened tree - remove */
 	    bu_vls_printf(gedp->ged_result_str, "an error occurred while deleting %s", (*dp_curr)->d_namep);
 	    if (db_delete(gedp->ged_wdbp->dbip, (*dp_curr)) != 0 || db_dirdelete(gedp->ged_wdbp->dbip, (*dp_curr)) == 0) {
 		bu_vls_trunc(gedp->ged_result_str, 0);
 	    } else {
-		bu_ptbl_free(combs);
-		bu_ptbl_free(combs_outside_of_tree);
+		db_search_free(&combs);
+		db_search_free(&combs_outside_of_tree);
 		return GED_ERROR;
 	    }
 	}
     }
 
-    bu_ptbl_free(combs);
-    bu_ptbl_free(combs_outside_of_tree);
+    db_search_free(&combs);
+    db_search_free(&combs_outside_of_tree);
     return GED_OK;
 }
 
@@ -367,72 +319,61 @@ _ged_flatten_comb(struct ged *gedp, struct directory *dp) {
  * flags below in the tree if practical.
  */
 HIDDEN int
-_ged_lift_region_comb(struct ged *gedp, struct directory *dp) {
-    char *combs_in_tree_plan = "-type comb";
+comb_lift_region(struct ged *gedp, struct directory *dp)
+{
+    int j;
+    int obj_cnt;
+    struct directory **all_paths;
     char *regions_in_tree_plan = "-type region";
-    struct bu_ptbl *combs_in_tree = BU_PTBL_NULL;
-    struct bu_ptbl *combs_outside_of_tree = BU_PTBL_NULL;
-    struct bu_ptbl regions_to_clear;
-    struct bu_ptbl regions_to_wrap;
+
+    struct bu_ptbl combs_outside_of_tree = BU_PTBL_INIT_ZERO;
+    struct bu_ptbl regions = BU_PTBL_INIT_ZERO;
+    struct bu_ptbl regions_to_clear = BU_PTBL_INIT_ZERO;
+    struct bu_ptbl regions_to_wrap = BU_PTBL_INIT_ZERO;
+
     struct bu_vls plan_string;
-    struct db_full_path_list *toplevel_list = NULL;
-    struct db_full_path_list *path_list = NULL;
-    struct db_full_path_list *regions = NULL;
-    struct db_full_path_list *entry = NULL;
     struct directory **dp_curr;
     int failure_case = 0;
-    BU_ALLOC(path_list, struct db_full_path_list);
-    BU_LIST_INIT(&(path_list->l));
-
-
-    /* Turn directory's name into a full path structure */
-    if (db_full_path_list_add(dp->d_namep, 0, gedp->ged_wdbp->dbip, path_list) == -1) {
-	bu_vls_printf(gedp->ged_result_str,  "Failed to add path %s to search list.\n", dp->d_namep);
-	db_free_full_path_list(path_list);
-	return GED_ERROR;
-    }
 
     /* Find the regions - need full paths here, because we'll be checking parents */
-    regions = db_search_full_paths_strplan(regions_in_tree_plan, path_list, gedp->ged_wdbp->dbip, gedp->ged_wdbp);
+    (void)db_search(&regions, DB_SEARCH_TREE, regions_in_tree_plan, 1, &dp, gedp->ged_wdbp->dbip);
 
     /* If it's all non-region combs and solids already, nothing to do except possibly set the region flag*/
-    if (BU_LIST_IS_EMPTY(&(regions->l))) {
-	db_free_full_path_list(path_list);
-	db_free_full_path_list(regions);
-	if (!(dp->d_flags & RT_DIR_REGION)) {
-	    if (_ged_set_region_flag(gedp, dp) == GED_ERROR)
-		return GED_OK;
-	}
+    if (!BU_PTBL_LEN(&regions)) {
+	db_search_free(&regions);
+	if (!(dp->d_flags & RT_DIR_REGION))
+	    return region_flag_set(gedp, dp);
 	return GED_OK;
     }
 
     /* Find the combs NOT in the tree */
-    BU_ALLOC(toplevel_list, struct db_full_path_list);
-    BU_LIST_INIT(&(toplevel_list->l));
-    db_full_path_list_add_toplevel(gedp->ged_wdbp->dbip, toplevel_list, 0);
+    obj_cnt = db_ls(gedp->ged_wdbp->dbip, DB_LS_TOPS, NULL, &all_paths);
     bu_vls_init(&plan_string);
-    bu_vls_sprintf(&plan_string, "-mindepth 1 ! -above -name %s -type comb", dp->d_namep);
-    combs_outside_of_tree = db_search_unique_objects_strplan(bu_vls_addr(&plan_string), toplevel_list, gedp->ged_wdbp->dbip, gedp->ged_wdbp);
+    bu_vls_sprintf(&plan_string, "-mindepth 1 ! -below -name %s -type comb", dp->d_namep);
+    (void)db_search(&combs_outside_of_tree, DB_SEARCH_RETURN_UNIQ_DP, bu_vls_addr(&plan_string), obj_cnt, all_paths, gedp->ged_wdbp->dbip);
     bu_vls_free(&plan_string);
-    db_free_full_path_list(toplevel_list);
 
-    /* check for entry->path last node in combs_outside of tree
+    /* release our db_ls path */
+    bu_free(all_paths, "free db_tops output");
+
+    /* check for entry last node in combs_outside of tree
      *    - if NO, add to quash region flag bu_ptbl list (uniq insert).  If yes, continue.
-     * get parent of entry->path last node
+     * get parent of entry last node
      * check for parent node in combs_outside_of_tree
      * if problem found, append specifics to ged_result_str, set fail flag
      * if no problem found, add to bu_ptbl list of regions to wrap (uniq insert)
      * no point in storing the specific parent, since we'll in-tree mvall in any case to update */
     bu_ptbl_init(&regions_to_clear, 64, "regions to clear");
     bu_ptbl_init(&regions_to_wrap, 64, "regions to wrap");
-    for (BU_LIST_FOR_BACKWARDS(entry, db_full_path_list, &(regions->l))) {
-	struct directory *dp_curr_dir =  DB_FULL_PATH_CUR_DIR(entry->path);
-	struct directory *dp_parent = DB_FULL_PATH_GET(entry->path, entry->path->fp_len-2);
+    for (j = (int)BU_PTBL_LEN(&regions) - 1; j >= 0; j--) {
+	struct db_full_path *entry = (struct db_full_path *)BU_PTBL_GET(&regions, j);
+	struct directory *dp_curr_dir =  DB_FULL_PATH_CUR_DIR(entry);
+	struct directory *dp_parent = DB_FULL_PATH_GET(entry, entry->fp_len-2);
 	if (dp_curr_dir != dp) {
-	    if (bu_ptbl_locate(combs_outside_of_tree, (const long *)(dp_curr_dir)) == -1) {
+	    if (bu_ptbl_locate(&combs_outside_of_tree, (const long *)(dp_curr_dir)) == -1) {
 		bu_ptbl_ins_unique(&regions_to_clear, (long *)(dp_curr_dir));
 	    } else {
-		if (bu_ptbl_locate(combs_outside_of_tree, (const long *)(dp_parent)) == -1 || (dp_parent == dp)) {
+		if (bu_ptbl_locate(&combs_outside_of_tree, (const long *)(dp_parent)) == -1 || (dp_parent == dp)) {
 		    bu_ptbl_ins_unique(&regions_to_wrap, (long *)(dp_curr_dir));
 		} else {
 		    if (!failure_case) {
@@ -444,12 +385,11 @@ _ged_lift_region_comb(struct ged *gedp, struct directory *dp) {
 	    }
 	}
     }
-    db_free_full_path_list(regions);
-    bu_ptbl_free(combs_outside_of_tree);
+    db_search_free(&regions);
+    db_search_free(&combs_outside_of_tree);
 
     if (failure_case) {
-	bu_vls_printf(gedp->ged_result_str,  "The above combs must be reworked before region lifting the tree of %s can succeed.\n", dp->d_namep);
-	db_free_full_path_list(path_list);
+	bu_vls_printf(gedp->ged_result_str,  "\nThe above combs must be reworked before region lifting the tree of %s can succeed.\n", dp->d_namep);
 	bu_ptbl_free(&regions_to_clear);
 	bu_ptbl_free(&regions_to_wrap);
 	return GED_ERROR;
@@ -458,8 +398,7 @@ _ged_lift_region_comb(struct ged *gedp, struct directory *dp) {
     /* Easy case first - if we can just clear the region flag, do it. */
     for (BU_PTBL_FOR(dp_curr, (struct directory **), &regions_to_clear)) {
 	if ((*dp_curr) != dp) {
-	    if (_ged_clear_region_flag(gedp, (*dp_curr)) == GED_ERROR) {
-		db_free_full_path_list(path_list);
+	    if (region_flag_clear(gedp, (*dp_curr)) == GED_ERROR) {
 		bu_ptbl_free(&regions_to_clear);
 		bu_ptbl_free(&regions_to_wrap);
 		return GED_ERROR;
@@ -474,49 +413,49 @@ _ged_lift_region_comb(struct ged *gedp, struct directory *dp) {
      * as we go.
      */
     {
-	struct bu_vls new_comb_name;
-	struct bu_ptbl stack;
+	struct bu_vls new_comb_name = BU_VLS_INIT_ZERO;
+	struct bu_ptbl stack = BU_PTBL_INIT_ZERO;
 	struct directory *new_comb;
-	bu_vls_init(&new_comb_name);
+
+	char *combs_in_tree_plan = "-type comb";
+	struct bu_ptbl combs_in_tree = BU_PTBL_INIT_ZERO;
+
 	bu_ptbl_init(&stack, 64, "comb mvall working stack");
-	combs_in_tree = db_search_unique_objects_strplan(combs_in_tree_plan, path_list, gedp->ged_wdbp->dbip, gedp->ged_wdbp);
-        bu_ptbl_ins(combs_in_tree, (long *)dp);
+
+	(void)db_search(&combs_in_tree, DB_SEARCH_RETURN_UNIQ_DP, combs_in_tree_plan, 1, &dp, gedp->ged_wdbp->dbip);
+	bu_ptbl_ins(&combs_in_tree, (long *)dp);
 	for (BU_PTBL_FOR(dp_curr, (struct directory **), &regions_to_wrap)) {
 	    if ((*dp_curr) != dp) {
 		struct directory **dp_comb_from_tree;
-		if (_ged_wrap_comb(gedp, (*dp_curr)) == GED_ERROR) {
-		    db_free_full_path_list(path_list);
+		if (comb_wrap(gedp, (*dp_curr)) == GED_ERROR) {
 		    bu_ptbl_free(&regions_to_wrap);
-		    bu_vls_free(&new_comb_name);
+		    db_search_free(&combs_in_tree);
 		    bu_ptbl_free(&stack);
 		    return GED_ERROR;
 		} else {
 		    bu_vls_sprintf(&new_comb_name, "%s.c", (*dp_curr)->d_namep);
 		    new_comb = db_lookup(gedp->ged_wdbp->dbip, bu_vls_addr(&new_comb_name), LOOKUP_QUIET);
 		}
-		for (BU_PTBL_FOR(dp_comb_from_tree, (struct directory **), combs_in_tree)) {
+		for (BU_PTBL_FOR(dp_comb_from_tree, (struct directory **), &combs_in_tree)) {
 		    bu_ptbl_reset(&stack);
 		    if (db_comb_mvall((*dp_comb_from_tree), gedp->ged_wdbp->dbip, (*dp_curr)->d_namep, bu_vls_addr(&new_comb_name), &stack) == 2) {
-			db_free_full_path_list(path_list);
+			db_search_free(&combs_in_tree);
 			bu_ptbl_free(&regions_to_wrap);
-			bu_vls_free(&new_comb_name);
-			bu_ptbl_free(combs_in_tree);
 			bu_ptbl_free(&stack);
 			return GED_ERROR;
 		    }
 		}
-		bu_ptbl_ins(combs_in_tree, (long *)new_comb);
-		bu_ptbl_rm(combs_in_tree, (long *)(*dp_curr));
+		bu_ptbl_ins(&combs_in_tree, (long *)new_comb);
+		bu_ptbl_rm(&combs_in_tree, (long *)(*dp_curr));
 	    }
 	}
 	bu_ptbl_free(&stack);
-	bu_vls_free(&new_comb_name);
+	db_search_free(&combs_in_tree);
     }
     bu_ptbl_free(&regions_to_wrap);
-    db_free_full_path_list(path_list);
 
     /* Finally, set the region flag on the toplevel comb */
-    if (_ged_set_region_flag(gedp, dp) == GED_ERROR)
+    if (region_flag_set(gedp, dp) == GED_ERROR)
 	return GED_ERROR;
 
     return GED_OK;
@@ -530,7 +469,7 @@ ged_comb(struct ged *gedp, int argc, const char *argv[])
     const char *cmd_name;
     char *comb_name;
     int i,c, sum;
-    char oper;
+    db_op_t oper;
     int set_region = 0;
     int set_comb = 0;
     int standard_comb_build = 1;
@@ -538,7 +477,7 @@ ged_comb(struct ged *gedp, int argc, const char *argv[])
     int flatten_comb = 0;
     int lift_region_comb = 0;
     int alter_existing = 1;
-    static const char *usage = "[-c/-r] [-w/-f/-l] [-S] comb_name [<operation object>]";
+    static const char *usage = "[-c|-r] [-w|-f|-l] [-S] comb_name [<operation object>]";
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
     GED_CHECK_READ_ONLY(gedp, GED_ERROR);
@@ -565,13 +504,13 @@ ged_comb(struct ged *gedp, int argc, const char *argv[])
     bu_optind = 1;
     /* Grab any arguments off of the argv list */
     while ((c = bu_getopt(argc, (char **)argv, "crwflS")) != -1) {
-        switch (c) {
-            case 'c' :
-                set_comb = 1;
-                break;
-            case 'r' :
-                set_region = 1;
-                break;
+	switch (c) {
+	    case 'c' :
+		set_comb = 1;
+		break;
+	    case 'r' :
+		set_region = 1;
+		break;
 	    case 'w' :
 		wrap_comb = 1;
 		standard_comb_build = 0;
@@ -584,12 +523,12 @@ ged_comb(struct ged *gedp, int argc, const char *argv[])
 		lift_region_comb = 1;
 		standard_comb_build = 0;
 		break;
-            case 'S' :
+	    case 'S' :
 		alter_existing = 0;
 		break;
 	    default :
-                break;
-        }
+		break;
+	}
     }
 
     argc -= bu_optind - 1;
@@ -614,14 +553,16 @@ ged_comb(struct ged *gedp, int argc, const char *argv[])
 
     /* Get target combination info */
     comb_name = (char *)argv[1];
-    if ((dp=db_lookup(gedp->ged_wdbp->dbip, comb_name, LOOKUP_QUIET)) != RT_DIR_NULL) {
+    dp = db_lookup(gedp->ged_wdbp->dbip, comb_name, LOOKUP_QUIET);
+    if (dp != RT_DIR_NULL) {
 	if (!(dp->d_flags & RT_DIR_COMB)) {
 	    bu_vls_printf(gedp->ged_result_str, "ERROR: %s is not a combination", comb_name);
 	    return GED_ERROR;
 	}
-        if ((dp != RT_DIR_NULL) && !alter_existing) {
+	if (!alter_existing) {
 	    bu_vls_printf(gedp->ged_result_str, "ERROR: %s already exists.", comb_name);
-        }
+	    return GED_ERROR;
+	}
     }
 
     /* If we aren't performing one of the option operations,
@@ -643,14 +584,9 @@ ged_comb(struct ged *gedp, int argc, const char *argv[])
 		return GED_ERROR;
 	    }
 
-	    /* ops are 1-char */
-	    if (argv[i][1] != '\0') {
-		bu_vls_printf(gedp->ged_result_str, "Invalid operation '%s' before object '%s'\n", argv[i], argv[i+1]);
-		continue;
-	    }
-	    oper = argv[i][0];
-	    if (oper != WMOP_UNION && oper != WMOP_SUBTRACT && oper != WMOP_INTERSECT) {
-		bu_vls_printf(gedp->ged_result_str, "Unknown operator '%c' encountered, invalid syntax.\n", oper);
+	    oper = db_str2op(argv[i]);
+	    if (oper == DB_OP_NULL) {
+		bu_vls_printf(gedp->ged_result_str, "Unknown operator '%c' (0x%x) encountered, invalid syntax.\n", argv[i][0], argv[i][0]);
 		continue;
 	    }
 
@@ -662,7 +598,7 @@ ged_comb(struct ged *gedp, int argc, const char *argv[])
 
 	    /* add it to the comb immediately */
 	    if (_ged_combadd(gedp, dp, comb_name, 0, oper, 0, 0) == RT_DIR_NULL) {
-		bu_vls_printf(gedp->ged_result_str, "Error adding '%s' (with op '%c') to '%s'\n", dp->d_namep, oper, comb_name);
+		bu_vls_printf(gedp->ged_result_str, "Error adding '%s' (with op '%c') to '%s'\n", dp->d_namep, (char)oper, comb_name);
 		return GED_ERROR;
 	    }
 	}
@@ -674,7 +610,7 @@ ged_comb(struct ged *gedp, int argc, const char *argv[])
 	    bu_vls_printf(gedp->ged_result_str, "Combination '%s does not exist.\n", comb_name);
 	    return GED_ERROR;
 	}
-	if (_ged_wrap_comb(gedp, dp) == GED_ERROR) {
+	if (comb_wrap(gedp, dp) == GED_ERROR) {
 	    return GED_ERROR;
 	} else {
 	    if ((dp=db_lookup(gedp->ged_wdbp->dbip, comb_name, LOOKUP_QUIET)) == RT_DIR_NULL) {
@@ -689,7 +625,7 @@ ged_comb(struct ged *gedp, int argc, const char *argv[])
 	    bu_vls_printf(gedp->ged_result_str, "Combination '%s does not exist.\n", comb_name);
 	    return GED_ERROR;
 	}
-	if (_ged_flatten_comb(gedp, dp) == GED_ERROR) {
+	if (comb_flatten(gedp, dp) == GED_ERROR) {
 	    return GED_ERROR;
 	} else {
 	    if ((dp=db_lookup(gedp->ged_wdbp->dbip, comb_name, LOOKUP_QUIET)) == RT_DIR_NULL) {
@@ -704,7 +640,7 @@ ged_comb(struct ged *gedp, int argc, const char *argv[])
 	    bu_vls_printf(gedp->ged_result_str, "Combination '%s does not exist.\n", comb_name);
 	    return GED_ERROR;
 	}
-	if (_ged_lift_region_comb(gedp, dp) == GED_ERROR) {
+	if (comb_lift_region(gedp, dp) == GED_ERROR) {
 	    return GED_ERROR;
 	} else {
 	    if ((dp=db_lookup(gedp->ged_wdbp->dbip, comb_name, LOOKUP_QUIET)) == RT_DIR_NULL) {
@@ -719,11 +655,11 @@ ged_comb(struct ged *gedp, int argc, const char *argv[])
     if (set_comb || set_region) {
 	if ((dp = db_lookup(gedp->ged_wdbp->dbip, comb_name, LOOKUP_NOISY)) != RT_DIR_NULL) {
 	    if (set_region) {
-		if (_ged_set_region_flag(gedp, dp) == GED_ERROR)
+		if (region_flag_set(gedp, dp) == GED_ERROR)
 		    return GED_ERROR;
 	    }
 	    if (set_comb) {
-		if (_ged_clear_region_flag(gedp, dp) == GED_ERROR)
+		if (region_flag_clear(gedp, dp) == GED_ERROR)
 		    return GED_ERROR;
 	    }
 	}
@@ -734,8 +670,6 @@ ged_comb(struct ged *gedp, int argc, const char *argv[])
 
 
 /*
- * G E D _ C O M B A D D
- *
  * Add an instance of object 'objp' to combination 'name'.
  * If the combination does not exist, it is created.
  * region_flag is 1 (region), or 0 (group).
@@ -747,7 +681,7 @@ _ged_combadd(struct ged *gedp,
 	     struct directory *objp,
 	     char *combname,
 	     int region_flag,	/* true if adding region */
-	     int relation,	/* = UNION, SUBTRACT, INTERSECT */
+	     db_op_t relation,	/* = UNION, SUBTRACT, INTERSECT */
 	     int ident,		/* "Region ID" */
 	     int air		/* Air code */)
 {
@@ -765,8 +699,6 @@ _ged_combadd(struct ged *gedp,
 
 
 /*
- * G E D _ C O M B A D D
- *
  * Add an instance of object 'objp' to combination 'name'.
  * If the combination does not exist, it is created.
  * region_flag is 1 (region), or 0 (group).
@@ -779,7 +711,7 @@ _ged_combadd2(struct ged *gedp,
 	      int argc,
 	      const char *argv[],
 	      int region_flag,	/* true if adding region */
-	      int relation,	/* = UNION, SUBTRACT, INTERSECT */
+	      db_op_t relation,	/* = UNION, SUBTRACT, INTERSECT */
 	      int ident,	/* "Region ID" */
 	      int air		/* Air code */)
 {
@@ -813,12 +745,12 @@ _ged_combadd2(struct ged *gedp,
 	intern.idb_type = ID_COMBINATION;
 	intern.idb_meth = &OBJ[ID_COMBINATION];
 
-	GED_DB_DIRADD(gedp, dp, combname, -1, 0, flags, (genptr_t)&intern.idb_type, 0);
+	GED_DB_DIRADD(gedp, dp, combname, -1, 0, flags, (void *)&intern.idb_type, 0);
 
 	BU_ALLOC(comb, struct rt_comb_internal);
 	RT_COMB_INTERNAL_INIT(comb);
 
-	intern.idb_ptr = (genptr_t)comb;
+	intern.idb_ptr = (void *)comb;
 
 	if (region_flag) {
 	    comb->region_flag = 1;
@@ -826,9 +758,10 @@ _ged_combadd2(struct ged *gedp,
 	    comb->aircode = air;
 	    comb->los = gedp->ged_wdbp->wdb_los_default;
 	    comb->GIFTmater = gedp->ged_wdbp->wdb_mat_default;
-	    bu_vls_printf(gedp->ged_result_str,
-			  "Creating region with attrs: region_id=%d, air=%d, los=%d, material_id=%d\n",
-			  ident, air,
+	    bu_vls_printf(gedp->ged_result_str, "Creating region with attrs: region_id=%d, ", ident);
+	    if (air)
+		bu_vls_printf(gedp->ged_result_str, "air=%d, ", air);
+	    bu_vls_printf(gedp->ged_result_str, "los=%d, material_id=%d\n",
 			  gedp->ged_wdbp->wdb_los_default,
 			  gedp->ged_wdbp->wdb_mat_default);
 	} else {
@@ -882,14 +815,14 @@ addmembers:
 
 	/* insert new member at end */
 	switch (relation) {
-	case '+':
+	case DB_OP_INTERSECT:
 	    tree_list[curr_count].tl_op = OP_INTERSECT;
 	    break;
-	case '-':
+	case DB_OP_SUBTRACT:
 	    tree_list[curr_count].tl_op = OP_SUBTRACT;
 	    break;
 	default:
-	    if (relation != 'u') {
+	    if (relation != DB_OP_UNION) {
 		bu_vls_printf(gedp->ged_result_str, "unrecognized relation (assume UNION)\n");
 	    }
 	    tree_list[curr_count].tl_op = OP_UNION;

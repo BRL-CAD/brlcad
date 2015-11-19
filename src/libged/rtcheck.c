@@ -1,7 +1,7 @@
 /*                         R T C H E C K . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2013 United States Government as represented by
+ * Copyright (c) 2008-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -30,15 +30,10 @@
 #ifdef HAVE_SYS_TYPES_H
 #   include <sys/types.h>
 #endif
+#include "bresource.h"
 
-#ifdef HAVE_SYS_WAIT_H
-#   include <sys/wait.h>
-#endif
+#include "bu/cmd.h"
 
-#include "bio.h"
-
-#include "cmd.h"
-#include "solid.h"
 
 #include "./ged_private.h"
 
@@ -51,7 +46,7 @@ struct ged_rtcheck {
 #ifdef TCL_OK
     Tcl_Channel chan;
 #else
-    genptr_t chan;
+    void *chan;
 #endif
 #else
     int fd;
@@ -106,10 +101,7 @@ _ged_wait_status(struct bu_vls *logstr,
 static void
 rtcheck_vector_handler(ClientData clientData, int UNUSED(mask))
 {
-    struct ged_display_list *gdlp;
-    struct ged_display_list *next_gdlp;
     int value;
-    struct solid *sp;
     struct ged_rtcheck *rtcp = (struct ged_rtcheck *)clientData;
 
     /* Get vector output from rtcheck */
@@ -120,19 +112,11 @@ rtcheck_vector_handler(ClientData clientData, int UNUSED(mask))
 	Tcl_DeleteFileHandler(rtcp->fd);
 	fclose(rtcp->fp);
 
-	gdlp = BU_LIST_NEXT(ged_display_list, rtcp->gedp->ged_gdp->gd_headDisplay);
-	while (BU_LIST_NOT_HEAD(gdlp, rtcp->gedp->ged_gdp->gd_headDisplay)) {
-	    next_gdlp = BU_LIST_PNEXT(ged_display_list, gdlp);
-
-	    FOR_ALL_SOLIDS(sp, &gdlp->gdl_headSolid)
-		sp->s_flag = DOWN;
-
-	    gdlp = next_gdlp;
-	}
+	dl_set_flag(rtcp->gedp->ged_gdp->gd_headDisplay, DOWN);
 
 	/* Add overlay */
 	_ged_cvt_vlblock_to_solids(rtcp->gedp, rtcp->vbp, "OVERLAPS", 0);
-	rt_vlblock_free(rtcp->vbp);
+	bn_vlblock_free(rtcp->vbp);
 
 	/* wait for the forked process */
 	while ((rpid = wait(&retcode)) != rtcp->pid && rpid != -1) {
@@ -188,10 +172,7 @@ rtcheck_output_handler(ClientData clientData, int UNUSED(mask))
 void
 rtcheck_vector_handler(ClientData clientData, int mask)
 {
-    struct ged_display_list *gdlp;
-    struct ged_display_list *next_gdlp;
     int value;
-    struct solid *sp;
     struct ged_rtcheck *rtcp = (struct ged_rtcheck *)clientData;
 
     /* Get vector output from rtcheck */
@@ -201,19 +182,11 @@ rtcheck_vector_handler(ClientData clientData, int mask)
 				 (ClientData)rtcp);
 	Tcl_Close(rtcp->interp, rtcp->chan);
 
-	gdlp = BU_LIST_NEXT(ged_display_list, rtcp->gedp->ged_gdp->gd_headDisplay);
-	while (BU_LIST_NOT_HEAD(gdlp, rtcp->gedp->ged_gdp->gd_headDisplay)) {
-	    next_gdlp = BU_LIST_PNEXT(ged_display_list, gdlp);
-
-	    FOR_ALL_SOLIDS(sp, &gdlp->gdl_headSolid)
-		sp->s_flag = DOWN;
-
-	    gdlp = next_gdlp;
-	}
+	dl_set_flag(rtcp->gedp->ged_gdp->gd_headDisplay, DOWN);
 
 	/* Add overlay */
 	_ged_cvt_vlblock_to_solids(rtcp->gedp, rtcp->vbp, "OVERLAPS", 0);
-	rt_vlblock_free(rtcp->vbp);
+	bn_vlblock_free(rtcp->vbp);
 
 	/* wait for the forked process */
 	WaitForSingleObject( rtcp->hProcess, INFINITE );
@@ -257,7 +230,7 @@ rtcheck_output_handler(ClientData clientData, int mask)
     }
 
     line[count] = '\0';
-    if (rtcop->gedp->ged_output_handler != (void (*)())0)
+    if (rtcop->gedp->ged_output_handler != (void (*)(struct ged *, char *))0)
 	rtcop->gedp->ged_output_handler(rtcop->gedp, line);
     else
 	bu_vls_printf(rtcop->gedp->ged_result_str, "%s", line);
@@ -353,9 +326,9 @@ ged_rtcheck(struct ged *gedp, int argc, const char *argv[])
 	*vp = 0;
 	vp = &gedp->ged_gdp->gd_rt_cmd[0];
 	while (*vp)
-	    Tcl_AppendResult(brlcad_interp, *vp++, " ", (char *)NULL);
+	    Tcl_AppendResult((Tcl_Interp *)gedp->ged_interp, *vp++, " ", (char *)NULL);
 
-	Tcl_AppendResult(brlcad_interp, "\n", (char *)NULL);
+	Tcl_AppendResult((Tcl_Interp *)gedp->ged_interp, "\n", (char *)NULL);
     }
 
 #ifndef _WIN32
@@ -420,10 +393,10 @@ ged_rtcheck(struct ged *gedp, int argc, const char *argv[])
     rtcp->fp = fdopen(i_pipe[0], "r");
     rtcp->pid = pid;
     rtcp->vbp = rt_vlblock_init();
-    rtcp->vhead = rt_vlblock_find(rtcp->vbp, 0xFF, 0xFF, 0x00);
+    rtcp->vhead = bn_vlblock_find(rtcp->vbp, 0xFF, 0xFF, 0x00);
     rtcp->csize = gedp->ged_gvp->gv_scale * 0.01;
     rtcp->gedp = gedp;
-    rtcp->interp = brlcad_interp;
+    rtcp->interp = (Tcl_Interp *)gedp->ged_interp;
 
     /* file handlers */
     Tcl_CreateFileHandler(i_pipe[0], TCL_READABLE,
@@ -432,7 +405,7 @@ ged_rtcheck(struct ged *gedp, int argc, const char *argv[])
     BU_GET(rtcop, struct rtcheck_output);
     rtcop->fd = e_pipe[0];
     rtcop->gedp = gedp;
-    rtcop->interp = brlcad_interp;
+    rtcop->interp = (Tcl_Interp *)gedp->ged_interp;
     Tcl_CreateFileHandler(rtcop->fd,
 			  TCL_READABLE,
 			  rtcheck_output_handler,
@@ -525,10 +498,10 @@ ged_rtcheck(struct ged *gedp, int argc, const char *argv[])
     rtcp->hProcess = pi.hProcess;
     rtcp->pid = pi.dwProcessId;
     rtcp->vbp = rt_vlblock_init();
-    rtcp->vhead = rt_vlblock_find(rtcp->vbp, 0xFF, 0xFF, 0x00);
+    rtcp->vhead = bn_vlblock_find(rtcp->vbp, 0xFF, 0xFF, 0x00);
     rtcp->csize = gedp->ged_gvp->gv_scale * 0.01;
     rtcp->gedp = gedp;
-    rtcp->interp = brlcad_interp;
+    rtcp->interp = (Tcl_Interp *)gedp->ged_interp;
 
     rtcp->chan = Tcl_MakeFileChannel(pipe_iDup, TCL_READABLE);
     Tcl_CreateChannelHandler(rtcp->chan, TCL_READABLE,
@@ -539,7 +512,7 @@ ged_rtcheck(struct ged *gedp, int argc, const char *argv[])
     rtcop->fd = pipe_eDup;
     rtcop->chan = Tcl_MakeFileChannel(pipe_eDup, TCL_READABLE);
     rtcop->gedp = gedp;
-    rtcop->interp = brlcad_interp;
+    rtcop->interp = (Tcl_Interp *)gedp->ged_interp;
     Tcl_CreateChannelHandler(rtcop->chan,
 			     TCL_READABLE,
 			     rtcheck_output_handler,

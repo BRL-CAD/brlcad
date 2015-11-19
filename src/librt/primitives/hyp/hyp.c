@@ -1,7 +1,7 @@
 /*                           H Y P . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2013 United States Government as represented by
+ * Copyright (c) 1990-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -38,11 +38,12 @@
 #include <math.h>
 
 /* interface headers */
+#include "bu/cv.h"
 #include "vmath.h"
-#include "db.h"
+#include "rt/db4.h"
 #include "nmg.h"
 #include "raytrace.h"
-#include "rtgeom.h"
+#include "rt/geom.h"
 
 #include "../../librt_private.h"
 
@@ -114,8 +115,6 @@ const struct bu_structparse rt_hyp_parse[] = {
 };
 
 /**
- * R T _ H Y P _ B B O X
- *
  * Create a bounding RPP for an hyp
  */
 int
@@ -168,8 +167,6 @@ rt_hyp_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struct 
 }
 
 /**
- * R T _ H Y P _ P R E P
- *
  * Given a pointer to a GED database record, and a transformation
  * matrix, determine if this is a valid HYP, and if so, precompute
  * various terms of the formula.
@@ -200,7 +197,7 @@ rt_hyp_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     stp->st_meth = &OBJ[ID_HYP];
 
     hyp =  hyp_internal_to_specific(hyp_ip);
-    stp->st_specific = (genptr_t)hyp;
+    stp->st_specific = (void *)hyp;
 
     /* calculate bounding sphere */
     VMOVE(stp->st_center, hyp->hyp_V);
@@ -214,9 +211,6 @@ rt_hyp_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 }
 
 
-/**
- * R T _ H Y P _ P R I N T
- */
 void
 rt_hyp_print(const struct soltab *stp)
 {
@@ -238,8 +232,6 @@ rt_hyp_print(const struct soltab *stp)
 
 
 /**
- * R T _ H Y P _ S H O T
- *
  * Intersect a ray with a hyp.  If an intersection occurs, a struct
  * seg will be acquired and filled in.
  *
@@ -414,8 +406,6 @@ rt_hyp_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct 
 
 
 /**
- * R T _ H Y P _ N O R M
- *
  * Given ONE ray distance, return the normal and entry/exit point.
  */
 void
@@ -463,8 +453,6 @@ rt_hyp_norm(struct hit *hitp, struct soltab *stp, struct xray *rp)
 
 
 /**
- * R T _ H Y P _ C U R V E
- *
  * Return the curvature of the hyp.
  */
 void
@@ -537,8 +525,6 @@ rt_hyp_curve(struct curvature *cvp, struct hit *hitp, struct soltab *stp)
 
 
 /**
- * R T _ H Y P _ U V
- *
  * For a hit on the surface of an hyp, return the (u, v) coordinates
  * of the hit point, 0 <= u, v <= 1.
  *
@@ -553,11 +539,11 @@ rt_hyp_uv(struct application *ap, struct soltab *stp, struct hit *hitp, struct u
     if (ap) RT_CK_APPLICATION(ap);
 
     /* u = (angle from semi-major axis on basic hyperboloid) / (2*pi) */
-    uvp->uv_u = M_1_PI * 0.5
+    uvp->uv_u = M_1_2PI
 	* (atan2(-hitp->hit_vpriv[X] * hyp->hyp_r2, hitp->hit_vpriv[Y] * hyp->hyp_r1) + M_PI);
 
     /* v ranges (0, 1) on each plate */
-    switch(hitp->hit_surfno) {
+    switch (hitp->hit_surfno) {
 	case HYP_NORM_BODY:
 	    /* v = (z + Hmag) / (2*Hmag) */
 	    uvp->uv_v = (hitp->hit_vpriv[Z] + hyp->hyp_Hmag) / (2.0 * hyp->hyp_Hmag);
@@ -591,9 +577,6 @@ rt_hyp_uv(struct application *ap, struct soltab *stp, struct hit *hitp, struct u
 }
 
 
-/**
- * R T _ H Y P _ F R E E
- */
 void
 rt_hyp_free(struct soltab *stp)
 {
@@ -604,9 +587,6 @@ rt_hyp_free(struct soltab *stp)
 }
 
 
-/**
- * R T _ H Y P _ P L O T
- */
 int
 rt_hyp_plot(struct bu_list *vhead, struct rt_db_internal *incoming, const struct rt_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol), const struct rt_view_info *UNUSED(info))
 {
@@ -684,20 +664,20 @@ rt_hyp_plot(struct bu_list *vhead, struct rt_db_internal *incoming, const struct
 
 	/* draw ellipse */
 	RT_ADD_VLIST(vhead, ell[15], BN_VLIST_LINE_MOVE);
-	for (j=0; j<16; j++) {
+	for (j = 0; j < 16; j++) {
 	    RT_ADD_VLIST(vhead, ell[j], BN_VLIST_LINE_DRAW);
 	}
 
 	/* add ellipse's points to ribs */
-	for (j=0; j<16; j++) {
+	for (j = 0; j < 16; j++) {
 	    VMOVE(ribs[j][i], ell[j]);
 	}
     }
 
     /* draw ribs */
-    for (i=0; i<16; i++) {
+    for (i = 0; i < 16; i++) {
 	RT_ADD_VLIST(vhead, ribs[i][0], BN_VLIST_LINE_MOVE);
-	for (j=1; j<7; j++) {
+	for (j = 1; j < 7; j++) {
 	    RT_ADD_VLIST(vhead, ribs[i][j], BN_VLIST_LINE_DRAW);
 	}
 
@@ -710,8 +690,6 @@ rt_hyp_plot(struct bu_list *vhead, struct rt_db_internal *incoming, const struct
 
 
 /**
- * R T _ H Y P _ T E S S
- *
  * Returns -
  * -1 failure
  * 0 OK.  *r points to nmgregion that holds this tessellation.
@@ -724,8 +702,8 @@ rt_hyp_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     fastf_t theta_new;
     int *pts_dbl, face, i, j, nseg;
     int jj, nell;
-    mat_t invRoS;
-    mat_t SoR;
+    mat_t invRoS = MAT_INIT_IDN;
+    mat_t SoR = MAT_INIT_IDN;
     struct rt_hyp_internal *iip;
     struct hyp_specific *xip;
     struct rt_pt_node *pos_a, *pos_b, *pts_a, *pts_b;
@@ -738,9 +716,6 @@ rt_hyp_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     struct vertex ***vells = (struct vertex ***)NULL;
     vect_t A, Au, B, Bu, Hu, V;
     struct bu_ptbl vert_tab;
-
-    MAT_ZERO(invRoS);
-    MAT_ZERO(SoR);
 
     RT_CK_DB_INTERNAL(ip);
     iip = (struct rt_hyp_internal *)ip->idb_ptr;
@@ -786,7 +761,7 @@ rt_hyp_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 	ntol = ttol->norm;
     else
 	/* tolerate everything */
-	ntol = bn_pi;
+	ntol = M_PI;
 
     /*
      * build hyp from 2 hyperbolas
@@ -909,7 +884,7 @@ rt_hyp_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 	VSET(p1, 0., pos_b->p[Y], 0.);
 	theta_new = ell_angle(p1, pos_a->p[X], pos_b->p[Y], dtol, ntol);
 	if (nseg == 0) {
-	    nseg = (int)(bn_twopi / theta_new) + 1;
+	    nseg = (int)(M_2PI / theta_new) + 1;
 	    pts_dbl[i] = 0;
 	    /* maximum number of faces needed for hyp */
 	    face = 2*nseg*nell - 4;	/*nseg*(1 + 3*((1 << (nell-1)) - 1));*/
@@ -1098,7 +1073,7 @@ rt_hyp_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     }
 
     /* Associate the face geometry */
-    for (i=0; i < face; i++) {
+    for (i = 0; i < face; i++) {
 	if (nmg_fu_planeeqn(outfaceuses[i], tol) < 0) {
 	    bu_log("planeeqn fail:\n\ti:\t%d\n\toutfaceuses:\n\tmin:\t%f\t%f\t%f\n\tmax:\t%f\t%f\t%f\n",
 		   i, outfaceuses[i]->f_p->min_pt[0],
@@ -1136,7 +1111,7 @@ rt_hyp_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 
     /* Assign vertexuse normals */
     nmg_vertex_tabulate(&vert_tab, &s->l.magic);
-    for (i=0; i<BU_PTBL_END(&vert_tab); i++) {
+    for (i = 0; i < BU_PTBL_END(&vert_tab); i++) {
 	point_t pt_prime, tmp_pt;
 	vect_t norm, rev_norm, tmp_vect;
 	struct vertex_g *vg;
@@ -1199,8 +1174,6 @@ rt_hyp_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 
 
 /**
- * R T _ H Y P _ I M P O R T 5
- *
  * Import an HYP from the database format to the internal format.
  * Note that the data read will be in network order.  This means
  * Big-Endian integers and IEEE doubles for floating point.
@@ -1253,8 +1226,6 @@ rt_hyp_import5(struct rt_db_internal *ip, const struct bu_external *ep, const ma
 
 
 /**
- * R T _ H Y P _ E X P O R T 5
- *
  * Export an HYP from internal form to external format.  Note that
  * this means converting all integers to Big-Endian format and
  * floating point data to IEEE double.
@@ -1278,7 +1249,7 @@ rt_hyp_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
 
     BU_CK_EXTERNAL(ep);
     ep->ext_nbytes = SIZEOF_NETWORK_DOUBLE * ELEMENTS_PER_VECT * 4;
-    ep->ext_buf = (genptr_t)bu_calloc(1, ep->ext_nbytes, "hyp external");
+    ep->ext_buf = (uint8_t *)bu_calloc(1, ep->ext_nbytes, "hyp external");
 
 
     /* Since libwdb users may want to operate in units other than mm,
@@ -1299,8 +1270,6 @@ rt_hyp_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
 
 
 /**
- * R T _ H Y P _ D E S C R I B E
- *
  * Make human-readable formatted presentation of this solid.  First
  * line describes type of solid.  Additional lines are indented one
  * tab, and give parameter values.
@@ -1348,8 +1317,6 @@ rt_hyp_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose
 
 
 /**
- * R T _ H Y P _ I F R E E
- *
  * Free the storage associated with the rt_db_internal version of this
  * solid.
  */
@@ -1365,13 +1332,10 @@ rt_hyp_ifree(struct rt_db_internal *ip)
     hyp_ip->hyp_magic = 0;			/* sanity */
 
     bu_free((char *)hyp_ip, "hyp ifree");
-    ip->idb_ptr = GENPTR_NULL;	/* sanity */
+    ip->idb_ptr = ((void *)0);	/* sanity */
 }
 
 
-/**
- * R T _ H Y P _ P A R A M S
- */
 int
 rt_hyp_params(struct pc_pc_set * UNUSED(ps), const struct rt_db_internal *ip)
 {
@@ -1381,9 +1345,6 @@ rt_hyp_params(struct pc_pc_set * UNUSED(ps), const struct rt_db_internal *ip)
 }
 
 
-/**
- * R T _ H Y P _ C E N T R O I D
- */
 void
 rt_hyp_centroid(point_t *cent, const struct rt_db_internal *ip)
 {
@@ -1401,8 +1362,6 @@ rt_hyp_centroid(point_t *cent, const struct rt_db_internal *ip)
 
 
 /**
- * R T _ H Y P _ S U R F _ A R E A
- *
  * only the stub to make analyze happy
  * TODO: needs an implementation
  */
@@ -1410,9 +1369,6 @@ void
 rt_hyp_surf_area(fastf_t *UNUSED(area), const struct rt_db_internal *UNUSED(ip)) {}
 
 
-/**
- * R T _ H Y P _ V O L U M E
- */
 void
 rt_hyp_volume(fastf_t *volume, const struct rt_db_internal *ip)
 {
@@ -1425,7 +1381,7 @@ rt_hyp_volume(fastf_t *volume, const struct rt_db_internal *ip)
 	RT_HYP_CK_MAGIC(hip);
 
 	hyp = hyp_internal_to_specific(hip);
-	*volume = M_PI * hyp->hyp_r1 * hyp->hyp_r2 * hyp->hyp_Hmag * 2 *
+	*volume = M_2PI * hyp->hyp_r1 * hyp->hyp_r2 * hyp->hyp_Hmag *
 	    (1 + hyp->hyp_Hmag * hyp->hyp_Hmag * hyp->hyp_c * hyp->hyp_c / (12 * hyp->hyp_r1 * hyp->hyp_r1));
 	bu_free(hyp, "hyp volume");
     }

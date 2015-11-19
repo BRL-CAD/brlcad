@@ -1,7 +1,7 @@
 /*                       N M G - R I B . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2013 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -32,21 +32,21 @@
 #include <stdlib.h>
 #include <math.h>
 
+#include "bu/getopt.h"
 #include "vmath.h"
 #include "nmg.h"
 #include "raytrace.h"
 
 
 /* declarations to support use of bu_getopt() system call */
-char *options = "ht";
+char *options = "th?";
 
 char *progname = "(noname)";
 int triangulate = 0;
 
-/*
- *	U S A G E --- tell user how to invoke this program, then exit
- */
-void usage(char *s)
+
+void
+usage(char *s)
 {
     if (s) {
 	bu_log(s);
@@ -56,10 +56,9 @@ void usage(char *s)
 		   progname);
 }
 
-/*
- *	P A R S E _ A R G S --- Parse through command line flags
- */
-int parse_args(int ac, char **av)
+
+int
+parse_args(int ac, char **av)
 {
     int  c;
     char *strrchr(const char *, int);
@@ -73,14 +72,16 @@ int parse_args(int ac, char **av)
     bu_opterr = 0;
 
     /* get all the option flags from the command line */
-    while ((c=bu_getopt(ac, av, options)) != -1)
+    while ((c=bu_getopt(ac, av, options)) != -1) {
+    	if (bu_optopt == '?')
+    	    c='h';
 	switch (c) {
-	    case 't'	: triangulate = !triangulate; break;
-	    case '?'	:
-	    case 'h'	:
-	    default		: usage("Bad or help flag specified\n"); break;
+	    case 't'	:
+		triangulate = !triangulate; break;
+	    case 'h'	: usage(""); break;
+	    default	: usage("Bad flag specified\n"); break;
 	}
-
+    }
     return bu_optind;
 }
 
@@ -164,8 +165,6 @@ nmg_to_rib(struct model *m)
 
 
 /*
- *	M A I N
- *
  *	Call parse_args to handle command line arguments first, then
  *	process input.
  */
@@ -181,8 +180,6 @@ int main(int ac, char **av)
      * left over for processing.
      */
     if ((arg_index = parse_args(ac, av)) >= ac) usage("No extra args specified\n");
-
-    rt_init_resource( &rt_uniresource, 0, NULL );
 
     /* open the database */
     if ((dbip = db_open(av[arg_index], DB_OPEN_READONLY)) == DBI_NULL) {

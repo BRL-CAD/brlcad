@@ -1,7 +1,7 @@
 /*                         B O T _ S P L I T . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2013 United States Government as represented by
+ * Copyright (c) 2008-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -28,9 +28,9 @@
 #include <stdlib.h>
 #include <ctype.h>
 #include <string.h>
-#include "bio.h"
 
-#include "rtgeom.h"	/* for rt_bot_split (in raytrace.h) */
+#include "bu/path.h"
+#include "rt/geom.h"	/* for rt_bot_split (in raytrace.h) */
 #include "./ged_private.h"
 
 
@@ -61,9 +61,10 @@ ged_bot_split(struct ged *gedp, int argc, const char *argv[])
     }
 
     for (i = 1; i < argc; ++i) {
-	/* Skip past any path elements */
-	char *obj = bu_basename(argv[i]);
 	struct rt_bot_list *headRblp = NULL;
+	/* Skip past any path elements */
+	char *obj = (char *)bu_calloc(strlen(argv[i]), sizeof(char), "ged_bot_split obj");
+	bu_basename(obj, argv[i]);
 
 	if (BU_STR_EQUAL(obj, ".")) {
 	    /* malformed path, lookup using exactly what was provided */
@@ -116,12 +117,12 @@ ged_bot_split(struct ged *gedp, int argc, const char *argv[])
 		bot_intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 		bot_intern.idb_type = ID_BOT;
 		bot_intern.idb_meth = &OBJ[ID_BOT];
-		bot_intern.idb_ptr = (genptr_t)rblp->bot;
+		bot_intern.idb_ptr = (void *)rblp->bot;
 
 		/* Save new bot name for later use */
-		bu_vls_printf(&new_bots, "%V ", gedp->ged_result_str);
+		bu_vls_printf(&new_bots, "%s ", bu_vls_addr(gedp->ged_result_str));
 
-		dp = db_diradd(gedp->ged_wdbp->dbip, bu_vls_addr(gedp->ged_result_str), RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (genptr_t)&bot_intern.idb_type);
+		dp = db_diradd(gedp->ged_wdbp->dbip, bu_vls_addr(gedp->ged_result_str), RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (void *)&bot_intern.idb_type);
 		if (dp == RT_DIR_NULL) {
 		    bu_vls_printf(&error_str, " failed to be added to the database.\n");
 		    rt_bot_list_free(headRblp, 0);
@@ -136,7 +137,7 @@ ged_bot_split(struct ged *gedp, int argc, const char *argv[])
 	    }
 
 	    /* Save the name of the original bot and the new bots as a sublist */
-	    bu_vls_printf(&bot_result_list, "{%s {%V}} ", obj, &new_bots);
+	    bu_vls_printf(&bot_result_list, "{%s {%s}} ", obj, bu_vls_addr(&new_bots));
 
 	    bu_vls_trunc(gedp->ged_result_str, 0);
 	    bu_vls_trunc(&new_bots, 0);
@@ -148,7 +149,7 @@ ged_bot_split(struct ged *gedp, int argc, const char *argv[])
     }
 
     bu_vls_trunc(gedp->ged_result_str, 0);
-    bu_vls_printf(gedp->ged_result_str, "%V {%V}", &bot_result_list, &error_str);
+    bu_vls_printf(gedp->ged_result_str, "%s {%s}", bu_vls_addr(&bot_result_list), bu_vls_addr(&error_str));
 
     bu_vls_free(&bot_result_list);
     bu_vls_free(&new_bots);

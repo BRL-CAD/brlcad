@@ -1,7 +1,7 @@
 /*                       C E L L - F B . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2013 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -27,7 +27,8 @@
 #include <time.h>
 #include <math.h>
 
-#include "bu.h"
+#include "bu/getopt.h"
+#include "bu/debug.h"
 #include "fb.h"
 #include "vmath.h"
 #include "raytrace.h"
@@ -188,7 +189,7 @@ static int xorigin = 0, yorigin = 0;	/* Pixel location of image low lft */
 static int view_flag = 0;		/* The view that is of interest */
 
 static long maxcells = 10000;	/* Max number of cells in the image */
-static FBIO *fbiop = FBIO_NULL;	/* Frame-buffer device */
+static fb *fbiop = FB_NULL;	/* Frame-buffer device */
 static FILE *filep;		/* Input stream */
 static struct locrec gp_locs;
 
@@ -427,7 +428,7 @@ display_Cells(long int ncells)
 
     zoom = 1;
     fbiop = fb_open((fbfile[0] != '\0') ? fbfile : NULL, fb_width, fb_height);
-    if (fbiop == FBIO_NULL)
+    if (fbiop == FB_NULL)
 	return 0;
     if (compute_fb_height || compute_fb_width) {
 	bu_log("fb_size requested: %d %d\n", fb_width, fb_height);
@@ -525,10 +526,9 @@ display_Cells(long int ncells)
 	 */
 	scr_min = H2SCRX(xmin);
 	scr_max = H2SCRX(xmax);
-	if (scr_min < 0) scr_min = 0;
-	if (scr_min > fb_width) scr_min = fb_width;
-	if (scr_max < 0) scr_max = 0;
-	if (scr_max > fb_width) scr_max = fb_width;
+	CLAMP(scr_min, 0, fb_width);
+	CLAMP(scr_max, 0, fb_width);
+
 	scr_center = (scr_max + scr_min)/2;
 	if ((center_cell = VPX2CX(SCRX2VPX(scr_center))) < 5)
 	    center_cell = 5;

@@ -1,7 +1,7 @@
 /*              I M P O R T F G 4 S E C T I O N . C
  * BRL-CAD
  *
- * Copyright (c) 1994-2013 United States Government as represented by
+ * Copyright (c) 1994-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -35,15 +35,16 @@
 #include <string.h>
 #include <ctype.h>
 #include <errno.h>
-#include "bio.h"
 
-#include "db.h"
+#include "bu/debug.h"
+#include "rt/db4.h"
 #include "vmath.h"
 #include "nmg.h"
-#include "rtgeom.h"
+#include "rt/geom.h"
 #include "raytrace.h"
+#include "ged.h"
 #include "wdb.h"
-#include "plot3.h"
+#include "bn/plot3.h"
 
 
 static int grid_size;		/* Number of points that will fit in current grid_pts array */
@@ -160,7 +161,7 @@ rt_mk_bot_w_normals(
 	botip->face_normals = (int *)NULL;
     }
 
-    return wdb_export(fp, name, (genptr_t)botip, ID_BOT, 1.0);
+    return wdb_export(fp, name, (void *)botip, ID_BOT, 1.0);
 }
 
 
@@ -182,7 +183,7 @@ rt_mk_bot(
 				 * otherwise thickness is centered about hit point
 				 */
 {
-    return(rt_mk_bot_w_normals(fp, name, botmode, orientation, flags, num_vertices, num_faces, vertices,
+    return (rt_mk_bot_w_normals(fp, name, botmode, orientation, flags, num_vertices, num_faces, vertices,
 			       faces, thickness, face_mode, 0, NULL, NULL));
 }
 
@@ -433,7 +434,7 @@ make_bot_object(const char *name,
     for (i = 0; i < face_count*3; i++)
 	FACES[i] -= min_pt;
     bot_ip.num_faces = face_count;
-    bot_ip.faces = bu_calloc(face_count*3, sizeof(int), "BOT faces");
+    bot_ip.faces = (int *)bu_calloc(face_count*3, sizeof(int), "BOT faces");
     for (i = 0; i < face_count*3; i++)
 	bot_ip.faces[i] = FACES[i];
 

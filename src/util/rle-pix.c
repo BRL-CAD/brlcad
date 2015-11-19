@@ -1,7 +1,7 @@
 /*                       R L E - P I X . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2013 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -28,10 +28,12 @@
 
 #include <stdlib.h>
 #include <string.h>
-#include "bio.h"
 
+#include "bu/getopt.h"
+#include "bu/malloc.h"
+#include "bu/log.h"
+#include "bu/file.h"
 #include "fb.h"
-#include "bu.h"
 
 /*
  * system installed RLE reports a re-define, so undef it to quell the
@@ -39,6 +41,7 @@
  */
 #include "rle.h"
 
+static char hyphen[] = "-";
 static FILE *infp;
 static char *infile;
 static FILE *outfp;
@@ -60,20 +63,17 @@ static int r_debug;
 static int hflag;			/* print header only */
 
 static char usage[] = "\
-Usage: rle-pix [-c -d -h -H] [-C r/g/b]\n\
+Usage: rle-pix [-c -d -H] [-C r/g/b]\n\
 	[-s|S squareoutsize] [-w|W out_width] [-n|N out_height]\n\
 	[file.rle [file.pix]]\n\
 ";
 
-/*
- * G E T _ A R G S
- */
 static int
 get_args(int argc, char **argv)
 {
     int c;
 
-    while ((c = bu_getopt(argc, argv, "cdhHs:S:w:W:n:N:C:")) != -1) {
+    while ((c = bu_getopt(argc, argv, "cdHs:S:w:W:n:N:C:h?")) != -1) {
 	switch (c) {
 	    case 'd':
 		r_debug = 1;
@@ -83,10 +83,6 @@ get_args(int argc, char **argv)
 		break;
 	    case 'H':
 		hflag = 1;
-		break;
-	    case 'h':
-		/* high-res */
-		screen_height = screen_width = 1024;
 		break;
 	    case 'S':
 	    case 's':
@@ -116,7 +112,6 @@ get_args(int argc, char **argv)
 		}
 		break;
 	    default:
-	    case '?':
 		return 0;
 	}
     }
@@ -127,7 +122,7 @@ get_args(int argc, char **argv)
 	}
 	bu_optind++;
     } else {
-	infile = "-";
+	infile = hyphen;
     }
     if (argv[bu_optind] != NULL) {
 	if (bu_file_exists(argv[bu_optind], NULL)) {
@@ -149,9 +144,6 @@ get_args(int argc, char **argv)
 }
 
 
-/*
- * M A I N
- */
 int
 main(int argc, char **argv)
 {

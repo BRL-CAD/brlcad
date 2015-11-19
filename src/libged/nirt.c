@@ -1,7 +1,7 @@
 /*                          N I R T . C
  * BRL-CAD
  *
- * Copyright (c) 1988-2013 United States Government as represented by
+ * Copyright (c) 1988-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -35,43 +35,28 @@
 #include <string.h>
 #include <math.h>
 #include <signal.h>
-#ifdef HAVE_SYS_TIME_H
-#  include <sys/time.h>		/* For struct timeval */
-#endif
 #ifdef HAVE_SYS_TYPES_H
 #  include <sys/types.h>
 #endif
-#ifdef HAVE_SYS_WAIT_H
-#  include <sys/wait.h>
-#endif
-#include "bio.h"
+#include "bresource.h"
 
 #include "tcl.h"
-#include "bu.h"
+
 #include "bn.h"
-#include "cmd.h"
+#include "bu/cmd.h"
 #include "vmath.h"
-#include "solid.h"
-#include "dg.h"
+
 
 #include "./qray.h"
 #include "./ged_private.h"
 
 
-/* defined in draw.c */
-extern void _ged_cvt_vlblock_to_solids(struct ged *gedp, struct bn_vlblock *vbp, char *name, int copy);
-
-
 /**
- * F _ N I R T
- *
  * Invoke nirt with the current view & stuff
  */
 int
 ged_nirt(struct ged *gedp, int argc, const char *argv[])
 {
-    struct ged_display_list *gdlp = NULL;
-    struct ged_display_list *next_gdlp = NULL;
     char **vp = NULL;
     FILE *fp_in = NULL;
     FILE *fp_out = NULL;
@@ -99,7 +84,6 @@ ged_nirt(struct ged *gedp, int argc, const char *argv[])
     vect_t cml;
     double scan[4]; /* holds sscanf values */
     int i = 9;
-    struct solid *sp = NULL;
     char line[RT_MAXLINE] = {0};
     char *val = NULL;
     struct bu_vls o_vls = BU_VLS_INIT_ZERO;
@@ -194,7 +178,7 @@ ged_nirt(struct ged *gedp, int argc, const char *argv[])
 	    char *cp;
 	    int count = 0;
 
-	    /* get 'r' format now; prepend its' format string with a newline */
+	    /* get 'r' format now; prepend its format string with a newline */
 	    val = bu_vls_addr(&gedp->ged_gdp->gd_qray_fmts[0].fmt);
 
 	    /* find first '"' */
@@ -218,7 +202,7 @@ ged_nirt(struct ged *gedp, int argc, const char *argv[])
 	    else {
 		struct bu_vls tmp = BU_VLS_INIT_ZERO;
 		bu_vls_strncpy(&tmp, val, count);
-		bu_vls_printf(&o_vls, " fmt r \"\\n%V\" ", &tmp);
+		bu_vls_printf(&o_vls, " fmt r \"\\n%V\" ", (&tmp));
 		bu_vls_free(&tmp);
 
 		if (count)
@@ -477,7 +461,7 @@ ged_nirt(struct ged *gedp, int argc, const char *argv[])
 	qray_data_to_vlist(gedp, vbp, &HeadQRayData, dir, 0);
 	bu_list_free(&HeadQRayData.l);
 	_ged_cvt_vlblock_to_solids(gedp, vbp, bu_vls_addr(&gedp->ged_gdp->gd_qray_basename), 0);
-	rt_vlblock_free(vbp);
+	bn_vlblock_free(vbp);
 
 	/* handle overlaps */
 	while (bu_fgets(line, RT_MAXLINE, fp_out) != (char *)NULL) {
@@ -507,7 +491,7 @@ ged_nirt(struct ged *gedp, int argc, const char *argv[])
 	qray_data_to_vlist(gedp, vbp, &HeadQRayData, dir, 1);
 	bu_list_free(&HeadQRayData.l);
 	_ged_cvt_vlblock_to_solids(gedp, vbp, bu_vls_addr(&gedp->ged_gdp->gd_qray_basename), 0);
-	rt_vlblock_free(vbp);
+	bn_vlblock_free(vbp);
     }
 
     if (DG_QRAY_TEXT(gedp->ged_gdp)) {
@@ -546,15 +530,7 @@ ged_nirt(struct ged *gedp, int argc, const char *argv[])
     bu_vls_free(&line1);
 #endif
 
-    gdlp = BU_LIST_NEXT(ged_display_list, gedp->ged_gdp->gd_headDisplay);
-    while (BU_LIST_NOT_HEAD(gdlp, gedp->ged_gdp->gd_headDisplay)) {
-	next_gdlp = BU_LIST_PNEXT(ged_display_list, gdlp);
-
-	FOR_ALL_SOLIDS(sp, &gdlp->gdl_headSolid)
-	    sp->s_wflag = DOWN;
-
-	gdlp = next_gdlp;
-    }
+    dl_set_wflag(gedp->ged_gdp->gd_headDisplay, DOWN);
 
     bu_free(gedp->ged_gdp->gd_rt_cmd, "free gd_rt_cmd");
     gedp->ged_gdp->gd_rt_cmd = NULL;
@@ -639,7 +615,7 @@ ged_vnirt(struct ged *gedp, int argc, const char *argv[])
     bu_vls_free(&x_vls);
     bu_vls_free(&y_vls);
     bu_vls_free(&z_vls);
-    bu_free((genptr_t)av, "ged_vnirt: av");
+    bu_free((void *)av, "ged_vnirt: av");
     av = NULL;
 
     return status;

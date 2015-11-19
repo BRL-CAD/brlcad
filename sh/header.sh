@@ -2,7 +2,7 @@
 #                       H E A D E R . S H
 # BRL-CAD
 #
-# Copyright (c) 2004-2013 United States Government as represented by
+# Copyright (c) 2004-2014 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -205,6 +205,11 @@ case $FILE in
 	wrap=0
 	commentprefix="#"
 	;;
+    *.php* )
+	echo "$FILE is a PHP source file"
+	wrap=1
+	commentprefix=" *"
+	;;
     *.pl )
 	echo "$FILE is a Perl source file"
 	wrap=0
@@ -344,12 +349,15 @@ titleline="${titleline}${title}"
 ###################################
 # figure out the copyright extent #
 ###################################
-copyright=""
-currentyear="`date +%Y`"
 copyrightline="`grep -i copyright $FILE | grep -v -i notice | grep -v -i '\.SH' | head -n 1`"
 if [ "x$copyrightline" = "x" ] ; then
     copyrightline="`grep -i copyright $FILE | grep -v -i united | grep -v -i '\.SH' | head -n 1`"
 fi
+copyrightline="`echo $copyrightline | head -n 1`"
+
+echo "copyrightline is [$copyrightline]"
+
+currentyear="`date +%Y`"
 if [ "x$copyrightline" = "x" ] ; then
     startyear="$currentyear"
 else
@@ -359,13 +367,13 @@ else
 	startyear="`echo "$copyrightline" | sed 's/.*[^0-9]\([0-9][0-9][0-9][0-9]\),[0-9][0-9][0-9][0-9],[0-9][0-9][0-9][0-9][^0-9].*/\1/'`"
 	echo "start2 is $startyear"
 	if [ `echo $startyear | wc | awk '{print $3}'` -gt 10 -o "x$startyear" = "x" ] ; then
-	    # didn't find a year, so use current year
 	    startyear="`echo "$copyrightline" | sed 's/.*[^0-9]\([0-9][0-9][0-9][0-9]\),[0-9][0-9][0-9][0-9][^0-9].*/\1/'`"
 	    echo "start3 is $startyear"
 	    if [ `echo $startyear | wc | awk '{print $3}'` -gt 10 -o "x$startyear" = "x" ] ; then
 		startyear="`echo "$copyrightline" | sed 's/.*[^0-9]\([0-9][0-9][0-9][0-9]\)[^0-9].*/\1/'`"
 		echo "start4 is $startyear"
 		if [ `echo $startyear | wc | awk '{print $3}'` -gt 10 -o "x$startyear" = "x" ] ; then
+		    # didn't find a year, so use current year
 		    startyear="$currentyear"
 		fi
 	    fi
@@ -373,6 +381,7 @@ else
     fi
 fi
 
+copyright=""
 if [ "x$startyear" != "x$currentyear" ] ; then
     copyright="${startyear}-${currentyear}"
 else
@@ -470,7 +479,7 @@ $c 3. The name of the author may not be used to endorse or promote
 $c products derived from this documentation without specific prior
 $c written permission.
 $c
-$c THIS DOCUMENTATION IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY
+$c THIS DOCUMENTATION IS PROVIDED BY THE AUTHOR \`\`AS IS'' AND ANY
 $c EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
 $c IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
 $c PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
@@ -554,9 +563,9 @@ mv -f $FILE ${FILE}.backup
 
 closeit=0
 skip=1
-lineone="`cat ${FILE}.backup | head -n 1`"
-linetwo="`cat ${FILE}.backup | head -n 2 | tail -n 1`"
-linethree="`cat ${FILE}.backup | head -n 3 | tail -n 1`"
+lineone="`head -n 1 ${FILE}.backup`"
+linetwo="`head -n 2 ${FILE}.backup | tail -n 1`"
+linethree="`head -n 3 ${FILE}.backup | tail -n 1`"
 case "x$lineone" in
     "x/*"*${title})
 	echo "Found C comment start with file header"
@@ -632,6 +641,12 @@ case "x$lineone" in
 		skip=3
 		;;
 	esac
+	;;
+    "x<?"*)
+	echo "Found PHP web directive"
+	echo "$lineone" >> $FILE
+	skip=2
+	closeit=1
 	;;
     "x")
 	echo "Found empty line"
@@ -721,7 +736,7 @@ case "x$lineone" in
 	echo "found batch command"
 	skip=0
 	;;
-    x\REM*)
+    xREM*)
 	echo "found batch comment"
 	skip=0
 	;;

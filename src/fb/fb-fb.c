@@ -1,7 +1,7 @@
 /*                         F B - F B . C
  * BRL-CAD
  *
- * Copyright (c) 1991-2013 United States Government as represented by
+ * Copyright (c) 1991-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -28,9 +28,9 @@
 #include "common.h"
 
 #include <stdlib.h>
-#include "bio.h"
 
-#include "bu.h"
+#include "bu/getopt.h"
+#include "bu/log.h"
 #include "fb.h"
 
 
@@ -44,7 +44,8 @@ static int scr_height = 0;
 
 static char usage[] = "\
 Usage: fb-fb [-v] [-F output_framebuffer]\n\
-	input_framebuffer [output_framebuffer]\n";
+       or\n\
+       fb-fb [-v] input_framebuffer [output_framebuffer]\n";
 
 int
 get_args(int argc, char **argv)
@@ -60,7 +61,7 @@ get_args(int argc, char **argv)
 		verbose++;
 		break;
 
-	    default:		/* '?' */
+	    default:		/* 'h' '?' */
 		return 0;
 	}
     }
@@ -86,7 +87,7 @@ int
 main(int argc, char **argv)
 {
     int y;
-    FBIO *in_fbp, *out_fbp;
+    fb *in_fbp, *out_fbp;
     int n, m;
     int height;
 
@@ -116,7 +117,7 @@ main(int argc, char **argv)
     if (verbose)
 	fprintf(stderr, "fb-fb: width=%d height=%d\n", scr_width, scr_height);
 
-    if ((out_fbp = fb_open(out_fb_name, scr_width, scr_height)) == FBIO_NULL) {
+    if ((out_fbp = fb_open(out_fb_name, scr_width, scr_height)) == FB_NULL) {
 	if (out_fb_name)
 	    fprintf(stderr, "fb-fb: unable to open output '%s'\n", out_fb_name);
 	bu_exit(12, NULL);

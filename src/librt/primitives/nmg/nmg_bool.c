@@ -1,7 +1,7 @@
 /*                      N M G _ B O O L . C
  * BRL-CAD
  *
- * Copyright (c) 1993-2013 United States Government as represented by
+ * Copyright (c) 1993-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -34,7 +34,6 @@
 #include "common.h"
 
 #include <stdlib.h>
-#include <stdio.h>
 #include <math.h>
 #include <string.h>
 #include "bio.h"
@@ -42,7 +41,7 @@
 #include "vmath.h"
 #include "nmg.h"
 #include "raytrace.h"
-#include "plot3.h"
+#include "bn/plot3.h"
 
 
 extern int nmg_class_nothing_broken;
@@ -59,8 +58,6 @@ int debug_file_count=0;
 
 
 /**
- * N M G _ P L O T _ O P E N _ E D G E S
- *
  * Find open edges, if any, in NMG object pointed to by magic_p and
  * create a UNIX plot file containing these edges.
  *
@@ -121,7 +118,7 @@ nmg_plot_open_edges(const uint32_t *magic_p, const char *prefix)
 			    VMOVE(pt1, eu->vu_p->v_p->vg_p->coord);
 			    VMOVE(pt2, eu->eumate_p->vu_p->v_p->vg_p->coord);
 			    if (!plotfp) {
-				bu_vls_sprintf(&plot_file_name, "%s.%zu.pl", prefix, magic_p);
+				bu_vls_sprintf(&plot_file_name, "%s.%p.pl", prefix, (void *)magic_p);
 				if ((plotfp = fopen(bu_vls_addr(&plot_file_name), "wb")) == (FILE *)NULL) {
 				    bu_log("nmg_plot_open_edges(): Unable to create plot file (%s)\n", bu_vls_addr(&plot_file_name));
 				    bu_bomb("nmg_plot_open_edges(): Unable to create plot file.");
@@ -151,7 +148,7 @@ nmg_plot_open_edges(const uint32_t *magic_p, const char *prefix)
 
 
 static void
-nmg_dangling_handler(uint32_t *longp, genptr_t state, int UNUSED(unused))
+nmg_dangling_handler(uint32_t *longp, void *state, int UNUSED(unused))
 {
     register struct faceuse *fu = (struct faceuse *)longp;
     register struct dangling_faceuse_state *sp =
@@ -169,8 +166,6 @@ nmg_dangling_handler(uint32_t *longp, genptr_t state, int UNUSED(unused))
 
 
 /**
- * N M G _ H A S _ D A N G L I N G _ F A C E S
- *
  * Argument is expected to be model, region, shell, or faceuse
  * pointer.
  *
@@ -196,7 +191,7 @@ nmg_has_dangling_faces(uint32_t *magic_p, const char *manifolds)
     st.manifolds = manifolds;
     st.count = 0;
 
-    nmg_visit(magic_p, &handlers, (genptr_t)&st);
+    nmg_visit(magic_p, &handlers, (void *)&st);
 
     bu_free((char *)st.visited, "visited[]");
     return st.count;
@@ -204,8 +199,6 @@ nmg_has_dangling_faces(uint32_t *magic_p, const char *manifolds)
 
 
 /**
- * N M G _ S H O W _ E A C H _ L O O P
- *
  * Within a shell, show each loop as a separate display.  Pause after
  * displaying each one.
  *
@@ -213,11 +206,11 @@ nmg_has_dangling_faces(uint32_t *magic_p, const char *manifolds)
  * edge.
  */
 void
-nmg_show_each_loop(struct shell *s, char **classlist, int new, int fancy, const char *str)
+nmg_show_each_loop(struct shell *s, char **classlist, int redraw, int fancy, const char *str)
 
 
-    /* non-zero means flush previous vlist */
-    /* non-zero means pause after the display */
+/* non-zero means flush previous vlist */
+/* non-zero means pause after the display */
 {
     struct faceuse *fu;
     struct loopuse *lu;
@@ -237,12 +230,12 @@ nmg_show_each_loop(struct shell *s, char **classlist, int new, int fancy, const 
 	    if (lu->orientation == OT_OPPOSITE) continue;
 
 	    snprintf(buf, 128, "%s=%p", str, (void *)lu);
-	    nmg_show_broken_classifier_stuff(&lu->l.magic, classlist, new, fancy, buf);
+	    nmg_show_broken_classifier_stuff(&lu->l.magic, classlist, redraw, fancy, buf);
 	}
     }
     for (BU_LIST_FOR(lu, loopuse, &s->lu_hd)) {
 	snprintf(buf, 128, "%s=%p (wire)", str, (void *)lu);
-	nmg_show_broken_classifier_stuff(&lu->l.magic, classlist, new, fancy, buf);
+	nmg_show_broken_classifier_stuff(&lu->l.magic, classlist, redraw, fancy, buf);
     }
     RTG.NMG_debug = save;		/* restore it */
 }
@@ -282,7 +275,7 @@ nmg_kill_non_common_cracks(struct shell *sA, struct shell *sB)
     struct faceuse *fu_next;
 
     if (RTG.NMG_debug & DEBUG_BASIC)
-	bu_log("nmg_kill_non_common_cracks(s=%x and %x)\n", sA, sB);
+	bu_log("nmg_kill_non_common_cracks(s=%p and %p)\n", (void *)sA, (void *)sB);
 
     NMG_CK_SHELL(sA);
     NMG_CK_SHELL(sB);
@@ -430,8 +423,6 @@ nmg_kill_non_common_cracks(struct shell *sA, struct shell *sB)
 
 
 /**
- * N M G _ C L A S S I F Y _ S H A R E D _ E D G E S _ V E R T S
- *
  * Preprocessor routine for classifier to get all the easy shared
  * edges and vertices marked as shared.
  */
@@ -444,7 +435,7 @@ nmg_classify_shared_edges_verts(struct shell *sA, struct shell *sB, char **class
     int i;
 
     if (RTG.NMG_debug & DEBUG_CLASSIFY)
-	bu_log("nmg_classify_shared_edges_verts(sA=x%x, sB=x%x)\n", sA, sB);
+	bu_log("nmg_classify_shared_edges_verts(sA=%p, sB=%p)\n", (void *)sA, (void *)sB);
 
     NMG_CK_SHELL(sA);
     NMG_CK_SHELL(sB);
@@ -466,7 +457,7 @@ nmg_classify_shared_edges_verts(struct shell *sA, struct shell *sB, char **class
 		NMG_INDEX_SET(classlist[4 + NMG_CLASS_AonBshared], v);
 
 		if (RTG.NMG_debug & DEBUG_CLASSIFY)
-		    bu_log("nmg_classify_shared_edges_verts: v=x%x is shared\n", v);
+		    bu_log("nmg_classify_shared_edges_verts: v=%p is shared\n", (void *)v);
 
 		break;
 	    }
@@ -493,7 +484,7 @@ nmg_classify_shared_edges_verts(struct shell *sA, struct shell *sB, char **class
 		NMG_INDEX_SET(classlist[4 + NMG_CLASS_AonBshared], e);
 
 		if (RTG.NMG_debug & DEBUG_CLASSIFY)
-		    bu_log("nmg_classify_shared_edges_verts: e=x%x is shared\n", e);
+		    bu_log("nmg_classify_shared_edges_verts: e=%p is shared\n", (void *)e);
 
 		break;
 	    }
@@ -508,8 +499,6 @@ nmg_classify_shared_edges_verts(struct shell *sA, struct shell *sB, char **class
 
 
 /**
- * N M G _ K I L L _ A N T I _ L O O P S
- *
  * Look for same loop in opposite direction in shell "s", Kill them.
  */
 
@@ -604,7 +593,7 @@ nmg_kill_anti_loops(struct shell *s)
 	    break;
 	}
     }
- out:
+out:
     bu_ptbl_free(&loops);
 }
 
@@ -628,8 +617,6 @@ nmg_kill_wire_edges(struct shell *s)
 
 
 /**
- * N M G _ B O O L
- *
  * Perform boolean operations on a pair of shells.
  *
  * The return is an updated version of shell A.  Shell B is destroyed.
@@ -1126,8 +1113,6 @@ static struct shell * nmg_bool(struct shell *sA, struct shell *sB, const int ope
 
 
 /**
- * N M G _ D O _ B O O L
- *
  * BUG: we assume only one shell per region
  */
 struct nmgregion *
@@ -1171,8 +1156,6 @@ nmg_do_bool(struct nmgregion *rA, struct nmgregion *rB, const int oper, const st
 
 
 /**
- * N M G _ B O O L T R E E _ L E A F _ T E S S
- *
  * Called from db_walk_tree() each time a tree leaf is encountered.
  * The primitive solid, in external format, is provided in 'ep', and
  * the type of that solid (e.g. ID_ELL) is in 'id'.  The full tree
@@ -1189,7 +1172,7 @@ nmg_do_bool(struct nmgregion *rA, struct nmgregion *rB, const int oper, const st
  * This routine must be prepared to run in parallel.
  */
 union tree *
-nmg_booltree_leaf_tess(struct db_tree_state *tsp, const struct db_full_path *pathp, struct rt_db_internal *ip, genptr_t UNUSED(client_data))
+nmg_booltree_leaf_tess(struct db_tree_state *tsp, const struct db_full_path *pathp, struct rt_db_internal *ip, void *UNUSED(client_data))
 {
     struct model *m;
     struct nmgregion *r1 = (struct nmgregion *)NULL;
@@ -1239,8 +1222,6 @@ nmg_booltree_leaf_tess(struct db_tree_state *tsp, const struct db_full_path *pat
 
 
 /**
- * N M G _ B O O L T R E E _ L E A F _ T N U R B
- *
  * Called from db_walk_tree() each time a tree leaf is encountered.
  * The primitive solid, in external format, is provided in 'ep', and
  * the type of that solid (e.g. ID_ELL) is in 'id'.  The full tree
@@ -1257,7 +1238,7 @@ nmg_booltree_leaf_tess(struct db_tree_state *tsp, const struct db_full_path *pat
  * This routine must be prepared to run in parallel.
  */
 union tree *
-nmg_booltree_leaf_tnurb(struct db_tree_state *tsp, const struct db_full_path *pathp, struct rt_db_internal *ip, genptr_t UNUSED(client_data))
+nmg_booltree_leaf_tnurb(struct db_tree_state *tsp, const struct db_full_path *pathp, struct rt_db_internal *ip, void *UNUSED(client_data))
 {
     struct nmgregion *r1;
     union tree *curtree;
@@ -1300,8 +1281,6 @@ nmg_booltree_leaf_tnurb(struct db_tree_state *tsp, const struct db_full_path *pa
 int nmg_bool_eval_silent=0;
 
 /**
- * N M G _ B O O L T R E E _ E V A L U A T E
- *
  * Given a tree of leaf nodes tessellated earlier by
  * nmg_booltree_leaf_tess(), use recursion to do a depth-first
  * traversal of the tree, evaluating each pair of boolean operations
@@ -1527,8 +1506,6 @@ nmg_booltree_evaluate(register union tree *tp, const struct bn_tol *tol, struct 
 
 
 /**
- * N M G _ B O O L E A N
- *
  * This is the main application interface to the NMG Boolean
  * Evaluator.
  *
@@ -1554,8 +1531,8 @@ nmg_boolean(union tree *tp, struct model *m, const struct bn_tol *tol, struct re
     RT_CK_RESOURCE(resp);
 
     if (RTG.NMG_debug & (DEBUG_BOOL|DEBUG_BASIC)) {
-	bu_log("\n\nnmg_boolean(tp=x%x, m=x%x) START\n",
-	       tp, m);
+	bu_log("\n\nnmg_boolean(tp=%p, m=%p) START\n",
+	       (void *)tp, (void *)m);
     }
 
     /* The nmg_model_fuse function was removed from this point in the
@@ -1605,10 +1582,10 @@ nmg_boolean(union tree *tp, struct model *m, const struct bn_tol *tol, struct re
     nmg_merge_models(m, tp->tr_d.td_r->m_p);
     ret = 0;
 
- out:
+out:
     if (RTG.NMG_debug & (DEBUG_BOOL|DEBUG_BASIC)) {
-	bu_log("nmg_boolean(tp=x%x, m=x%x) END, ret=%d\n\n",
-	       tp, m, ret);
+	bu_log("nmg_boolean(tp=%p, m=%p) END, ret=%d\n\n",
+	       (void *)tp, (void *)m, ret);
     }
 
     return ret;

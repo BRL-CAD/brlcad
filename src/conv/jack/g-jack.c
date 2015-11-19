@@ -1,7 +1,7 @@
 /*                        G - J A C K . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2013 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -22,6 +22,16 @@
  * Program to convert a BRL-CAD model (in a .g file) to a JACK Psurf
  * file, by calling on the NMG booleans.
  *
+ * Jack, originally from the University of Pennsylvania's Computer
+ * Graphics Research Laboratory, is a package used for human figure
+ * animation and ergonomic analysis.
+ *
+ * This converter was written prior to JACK becoming a commercial
+ * product in 1996, but it should be compatible with the more modern
+ * Tecnomatix Jack version distributed by Siemens (maintainers of the
+ * NX and Parasolid CAD software).  It reportedly still supports JACK
+ * 5.1 JT files.
+ *
  */
 
 #include "common.h"
@@ -31,19 +41,20 @@
 #include <string.h>
 #include "bio.h"
 
+#include "bu/getopt.h"
+#include "bu/parallel.h"
 #include "vmath.h"
 #include "nmg.h"
-#include "rtgeom.h"
+#include "rt/geom.h"
 #include "raytrace.h"
-#include "plot3.h"
+#include "bn/plot3.h"
 
 
-static const char usage[] =
-  "Usage: %s [-v] [-d] [-f] [-xX lvl] [-u eu_dist]\n"
-  "       [-a abs_tess_tol] [-r rel_tess_tol] [-n norm_tess_tol]\n"
-  "       [-D dist_calc_tol] [-p prefix]\n"
-  "       [-P #_of_cpus] brlcad_db.g object(s)\n"
-  ;
+static const char *usage =
+    "[-v] [-d] [-f] [-xX lvl] [-u eu_dist]\n"
+    "\t[-a abs_tess_tol] [-r rel_tess_tol] [-n norm_tess_tol]\n"
+    "\t[-D dist_calc_tol] [-p prefix]\n"
+    "\t[-P #_of_cpus] brlcad_db.g object(s)\n";
 
 static const char optstring[] = "a:dfn:p:r:u:vx:D:P:X:h?";
 
@@ -65,10 +76,13 @@ static struct db_tree_state	jack_tree_state;	/* includes tol & model */
 static int	regions_tried = 0;
 static int	regions_done = 0;
 
+static void
+print_usage(const char *progname)
+{
+    bu_exit(1, "Usage: %s %s", progname, usage);
+}
 
 /*
- *	J A C K _ F A C E S
- *
  *	Continues the conversion of an nmg into Jack format.  Before
  *	this routine is called, a list of unique vertices has been
  *	stored in a heap.  Using this heap and the nmg structure, a
@@ -170,8 +184,6 @@ jack_faces(struct nmgregion *r, FILE *fp_psurf, int *map)
 
 
 /*
- *	N M G _ T O _ P S U R F
- *
  *	Convert an nmg region into Jack format.  This routine makes a
  *	list of unique vertices and writes them to the ascii Jack
  *	data base file.  Then a routine to generate the face vertex
@@ -219,7 +231,7 @@ nmg_to_psurf(struct nmgregion *r, FILE *fp_psurf)
 static union tree *
 process_boolean(union tree *curtree, struct db_tree_state *tsp, const struct db_full_path *pathp)
 {
-    union tree *ret_tree = TREE_NULL;
+    static union tree *ret_tree = TREE_NULL;
 
     /* Begin bomb protection */
     if (!BU_SETJUMP) {
@@ -263,13 +275,11 @@ process_boolean(union tree *curtree, struct db_tree_state *tsp, const struct db_
 
 
 /*
- *			D O _ R E G I O N _ E N D
- *
  *  Called from db_walk_tree().
  *
  *  This routine must be prepared to run in parallel.
  */
-union tree *do_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, genptr_t UNUSED(client_data))
+union tree *do_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, void *UNUSED(client_data))
 {
     union tree		*ret_tree;
     struct nmgregion	*r;
@@ -407,9 +417,6 @@ union tree *do_region_end(struct db_tree_state *tsp, const struct db_full_path *
     return curtree;
 }
 
-/*
- *			M A I N
- */
 int
 main(int argc, char **argv)
 {
@@ -445,8 +452,6 @@ main(int argc, char **argv)
 	/* Set it here, before the bu_getopt() */
 	nmg_eue_dist = 2.0;
     }
-
-    rt_init_resource(&rt_uniresource, 0, NULL);
 
     the_model = nmg_mm();
     BU_LIST_INIT(&RTG.rtg_vlfree);	/* for vlist macros */
@@ -494,13 +499,13 @@ main(int argc, char **argv)
 		NMG_debug = RTG.NMG_debug;
 		break;
 	    default:
-		bu_exit(1, usage, argv[0]);
+		print_usage(argv[0]);
 		break;
 	}
     }
 
     if (bu_optind+1 >= argc)
-	bu_exit(1, usage, argv[0]);
+	print_usage(argv[0]);
 
     /* Open BRL-CAD database */
     argc -= bu_optind;
@@ -550,7 +555,7 @@ main(int argc, char **argv)
 			0,			/* take all regions */
 			do_region_end,
 			nmg_booltree_leaf_tess,
-			(genptr_t)NULL);	/* in librt/nmg_bool.c */
+			(void *)NULL);	/* in librt/nmg_bool.c */
 
     fprintf(fp_fig, "\troot=%s_seg.base;\n", bu_vls_addr(&base_seg));
     fprintf(fp_fig, "}\n");

@@ -1,7 +1,7 @@
 /*                         T A B L E S . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2013 United States Government as represented by
+ * Copyright (c) 2008-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -34,8 +34,8 @@
 #endif
 #include <ctype.h>
 #include <string.h>
-#include "bio.h"
 
+#include "bu/units.h"
 #include "./ged_private.h"
 
 
@@ -190,13 +190,13 @@ tables_new(struct ged *gedp, struct directory *dp, struct bu_ptbl *cur_path, con
 
 	    switch (tree_list[i].tl_op) {
 		case OP_UNION:
-		    op = 'u';
+		    op = DB_OP_UNION;
 		    break;
 		case OP_SUBTRACT:
-		    op = '-';
+		    op = DB_OP_UNION;
 		    break;
 		case OP_INTERSECT:
-		    op = '+';
+		    op = DB_OP_INTERSECT;
 		    break;
 		default:
 		    bu_log("unrecognized operation in region %s\n", dp->d_namep);
@@ -464,12 +464,12 @@ ged_tables(struct ged *gedp, int argc, const char *argv[])
 	    if (ret != 0)
 		bu_log("WARNING: sort failure detected\n");
 	}
-	bu_vls_printf(gedp->ged_result_str, "%V\n", &cmd);
+	bu_vls_printf(gedp->ged_result_str, "%s\n", bu_vls_addr(&cmd));
 
 	bu_vls_trunc(&cmd, 0);
 	bu_vls_strcpy(&cmd, catcmd);
 	bu_vls_strcat(&cmd, argv[1]);
-	bu_vls_printf(gedp->ged_result_str, "%V\n", &cmd);
+	bu_vls_printf(gedp->ged_result_str, "%s\n", bu_vls_addr(&cmd));
 	ret = system(bu_vls_addr(&cmd));
 	if (ret != 0)
 	    bu_log("WARNING: cat failure detected\n");

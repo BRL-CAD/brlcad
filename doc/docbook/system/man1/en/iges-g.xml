@@ -30,7 +30,7 @@
 
 
 <refsect1 xml:id='description'><title>DESCRIPTION</title>
-<para><emphasis remap='I'>iges-g</emphasis>
+<para><command>iges-g</command>
 converts the specified
 <emphasis remap='I'>file.iges</emphasis>
 to a BRL-CAD
@@ -88,19 +88,19 @@ and are therefore approximated. The solid of revolution is built from a series o
 truncated right cones developed by approximating the curve to be revolved with a series
 of straight line segments. The extrusion is similarly handled by approximating the
 curve to be extruded with straight line segments and using that to build a BRL-CAD
-<emphasis remap='I'>polysolid.</emphasis>
+<emphasis remap='I'>polysolid</emphasis>.
 Planar faced IGES BREP objects are converted to BRL-CAD NMG structures.</para>
 </refsect1>
 
 <refsect1 xml:id='example'><title>EXAMPLE</title>
 <synopsis>
-$ <emphasis remap='I'>iges-g -o sample.g sample.iges</emphasis>
+$ iges-g -o <emphasis remap='I'>-o sample.g sample.iges</emphasis>
 </synopsis>
 </refsect1>
 
 <refsect1 xml:id='see_also'><title>SEE ALSO</title>
-<para><emphasis remap='I'>The Initial Graphics Exchange Specification (IGES) Version 5.1,</emphasis>
-IGES/PDES Organization, September 1991.</para>
+<para><emphasis remap='I'>The Initial Graphics Exchange Specification (IGES) Version 5.1</emphasis>,
+IGES/PDES Organization, September 1991</para>
 </refsect1>
 
 <refsect1 xml:id='diagnostics'><title>DIAGNOSTICS</title>
@@ -108,18 +108,18 @@ IGES/PDES Organization, September 1991.</para>
 </refsect1>
 
 <refsect1 xml:id='authors'><title>AUTHORS</title>
-<para>John Anderson
+<para>John Anderson;
 <!-- .br -->
-Susanne Muuss
+Susanne Muuss;
 <!-- .br -->
-Phil Dykstra
+Phil Dykstra;
 <!-- .br -->
 Earl Weaver</para>
 
 </refsect1>
 
 <refsect1 xml:id='copyright'><title>COPYRIGHT</title>
-<para>This software is Copyright (c) 1991-2013 by the United States
+<para>This software is Copyright (c) 1991-2014 by the United States
 Government as represented by U.S. Army Research Laboratory.</para>
 </refsect1>
 

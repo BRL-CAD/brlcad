@@ -1,7 +1,7 @@
 /*                        F B T H R E A D T E S T. C
  * BRL-CAD
  *
- * Copyright (c) 1986-2013 United States Government as represented by
+ * Copyright (c) 1986-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -37,9 +37,8 @@
 #ifdef HAVE_WINSOCK_H
 #  include <winsock.h>
 #endif
-#include "bio.h"
 
-#include "bu.h"
+#include "bu/getopt.h"
 #include "fb.h"
 
 #include <tcl.h>
@@ -192,8 +191,8 @@ main(int argc, char **argv)
 	bu_exit(1, NULL);
     }
 
-    FBIO *ifp;
-    ifp = (FBIO *) calloc(sizeof(FBIO), 1);
+    fb *ifp;
+    ifp = (fb *) calloc(sizeof(fb), 1);
     ifp->if_name = "/dev/tk";
     ifp->if_magic = FB_MAGIC;
     char *fbname = "/dev/tk";

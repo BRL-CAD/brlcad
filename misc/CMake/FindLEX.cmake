@@ -44,7 +44,7 @@
 #  ====================================================================
 #
 #=============================================================================
-# Copyright (c) 2010-2013 United States Government as represented by
+# Copyright (c) 2010-2014 United States Government as represented by
 #                the U.S. Army Research Laboratory.
 # Copyright 2009 Kitware, Inc.
 # Copyright 2006 Tristan Carel
@@ -149,7 +149,9 @@ if(LEX_EXECUTABLE)
   EXEC_PROGRAM(${LEX_EXECUTABLE} ARGS ${CMAKE_SOURCE_DIR}/misc/CMake/test_srcs/lex_test.l -o ${CMAKE_BINARY_DIR}/CMakeTmp/lex_test.c RETURN_VALUE _retval OUTPUT_VARIABLE _lexOut)
   INCLUDE (CheckCSourceRuns)
   set(FILE_RUN_DEFINITIONS "-DYYTEXT_POINTER=1")
-  CHECK_C_SOURCE_RUNS(${CMAKE_SOURCE_DIR}/misc/CMake/test_srcs/sys_wait_test.c YYTEXT_POINTER)
+  if(NOT DEFINED YYTEXT_POINTER)
+    CHECK_C_SOURCE_RUNS(${CMAKE_SOURCE_DIR}/misc/CMake/test_srcs/sys_wait_test.c YYTEXT_POINTER)
+  endif(NOT DEFINED YYTEXT_POINTER)
   set(FILE_RUN_DEFINITIONS)
   if(CONFIG_H_FILE)
     CONFIG_H_APPEND(${CMAKE_CURRENT_PROJECT} "#cmakedefine YYTEXT_POINTER 1\n")

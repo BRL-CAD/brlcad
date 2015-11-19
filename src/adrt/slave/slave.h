@@ -1,7 +1,7 @@
 /*                         S L A V E . H
  * BRL-CAD / ADRT
  *
- * Copyright (c) 2007-2013 United States Government as represented by
+ * Copyright (c) 2007-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -18,8 +18,8 @@
  * information.
  */
 
-#ifndef _ISST_SLAVE_H
-#define _ISST_SLAVE_H
+#ifndef ADRT_SLAVE_SLAVE_H
+#define ADRT_SLAVE_SLAVE_H
 
 void adrt_slave(int port, char *host, int threads);
 

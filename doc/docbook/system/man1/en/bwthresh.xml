@@ -18,31 +18,31 @@
 <cmdsynopsis>
   <command>bwthresh</command>
     <arg choice='plain' rep='repeat'><replaceable>val</replaceable></arg>
-    <arg choice='plain'><replaceable>&lt;</replaceable></arg>
+    <arg choice='plain'>&lt;</arg>
     <arg choice='plain'><replaceable>file.bw</replaceable></arg>
 </cmdsynopsis>
 </refsynopsisdiv>
 
 
 <refsect1 xml:id='description'><title>DESCRIPTION</title>
-<para><emphasis remap='I'>Bwthresh</emphasis>
+<para><command>bwthresh</command>
 reads from standard input a stream of black-and-white data in
 <citerefentry><refentrytitle>bw</refentrytitle><manvolnum>5</manvolnum></citerefentry>
 format
 and thresholds it among the
-<emphasis remap='I'>vals,</emphasis>
+<emphasis remap='I'>val</emphasis>s,
 writing the resulting
 <citerefentry><refentrytitle>bw</refentrytitle><manvolnum>5</manvolnum></citerefentry>
 data to standard output.
 The
-<emphasis remap='I'>vals</emphasis>
+<emphasis remap='I'>val</emphasis>s
 must appear on the command line in strictly increasing order.</para>
 
 <para>The grey scale 0..255 is divided evenly into
 <emphasis remap='I'>n</emphasis>+1
 bins,
 and each pixel of input is compared to the
-<emphasis remap='I'>vals,</emphasis>
+<emphasis remap='I'>val</emphasis>s,
 to determine which of the
 <emphasis remap='I'>n</emphasis>+1
 grey levels should be output.</para>
@@ -52,7 +52,7 @@ grey levels should be output.</para>
 <para>The command</para>
 
 <!-- .in +5 -->
-<para><emphasis remap='I'>bwthresh 37 143 &lt; file.bw &gt; file2.bw</emphasis></para>
+<para>bwthresh 37 143 &lt; <emphasis remap='I'>file.bw</emphasis> &gt; <emphasis remap='I'>file2.bw</emphasis></para>
 <!-- .in &bsol;-5 -->
 
 <para>performs the following mapping:</para>
@@ -82,7 +82,7 @@ pixel_out = 255</para>
 </refsect1>
 
 <refsect1 xml:id='copyright'><title>COPYRIGHT</title>
-<para>This software is Copyright (c) 1991-2013 by the United States
+<para>This software is Copyright (c) 1991-2014 by the United States
 Government as represented by U.S. Army Research Laboratory.</para>
 </refsect1>
 

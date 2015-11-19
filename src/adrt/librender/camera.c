@@ -1,7 +1,7 @@
 /*                        C A M E R A . C
  * BRL-CAD
  *
- * Copyright (c) 2007-2013 United States Government as represented by
+ * Copyright (c) 2007-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -24,13 +24,12 @@
 # include <dlfcn.h>
 #endif
 
-#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
 
 #include "bio.h"
-#include "bu.h"
+#include "bu/parallel.h"
 #include "raytrace.h" /* for last RT_SEM_LAST */
 
 #include "camera.h"
@@ -49,7 +48,7 @@ struct render_shader_s {
 
 static struct render_shader_s *shaders = NULL;
 
-void render_camera_render_thread(int cpu, genptr_t ptr);	/* for bu_parallel */
+void render_camera_render_thread(int cpu, void *ptr);	/* for bu_parallel */
 static void render_camera_prep_ortho(render_camera_t *camera);
 static void render_camera_prep_persp(render_camera_t *camera);
 static void render_camera_prep_persp_dof(render_camera_t *camera);
@@ -67,15 +66,13 @@ render_camera_init(render_camera_t *camera, int threads)
     camera->tilt = 0;
 
     /* The camera will use a thread for every cpu the machine has. */
-    camera->thread_num = threads ? threads : bu_avail_cpus();
-
-    bu_semaphore_init(TIE_SEM_LAST);
+    camera->thread_num = threads ? threads : (uint8_t)bu_avail_cpus();
 
     /* Initialize camera to rendering surface normals */
     render_normal_init(&camera->render, NULL);
     camera->rm = RENDER_METHOD_PHONG;
 
-    if(shaders == NULL) {
+    if (shaders == NULL) {
 #define REGISTER(x) render_shader_register((const char *)#x, render_##x##_init);
 	REGISTER(component);
 	REGISTER(cut);
@@ -401,7 +398,7 @@ render_camera_prep(render_camera_t *camera)
 
 
 void
-render_camera_render_thread(int UNUSED(cpu), genptr_t ptr)
+render_camera_render_thread(int UNUSED(cpu), void *ptr)
 {
     render_camera_thread_data_t *td;
     int d, n, res_ind, scanline, v_scanline;
@@ -506,9 +503,9 @@ render_camera_render_thread(int UNUSED(cpu), genptr_t ptr)
 
 
 	    if (td->tile->format == RENDER_CAMERA_BIT_DEPTH_24) {
-		if (pixel[0] > 1) pixel[0] = 1;
-		if (pixel[1] > 1) pixel[1] = 1;
-		if (pixel[2] > 1) pixel[2] = 1;
+		V_MIN(pixel[0], 1);
+		V_MIN(pixel[1], 1);
+		V_MIN(pixel[2], 1);
 		((char *)(td->res_buf))[res_ind+0] = (unsigned char)(255 * pixel[0]);
 		((char *)(td->res_buf))[res_ind+1] = (unsigned char)(255 * pixel[1]);
 		((char *)(td->res_buf))[res_ind+2] = (unsigned char)(255 * pixel[2]);
@@ -536,7 +533,8 @@ void
 render_camera_render(render_camera_t *camera, struct tie_s *tie, camera_tile_t *tile, tienet_buffer_t *result)
 {
     render_camera_thread_data_t td;
-    unsigned int scanline, ind;
+    unsigned int scanline;
+    uint32_t ind;
 
     ind = result->ind;
 
@@ -588,25 +586,27 @@ render_shader_load_plugin(const char *filename)
 {
 #ifdef HAVE_DLFCN_H
     void *lh;	/* library handle */
+    void *init_val;
     int (*init)(render_t *, const char *);
     char *name;
     struct render_shader_s *s;
 
     lh = bu_dlopen(filename, RTLD_LOCAL|RTLD_LAZY);
 
-    if(lh == NULL) {
+    if (lh == NULL) {
 	bu_log("Faulty plugin %s: %s\n", filename, bu_dlerror());
 	return NULL;
     }
-    name = bu_dlsym(lh, "name");
-    if(name == NULL) {
+    name = (char *)bu_dlsym(lh, "name");
+    if (name == NULL) {
 	bu_log("Faulty plugin %s: No name\n", filename);
 	bu_dlclose(lh);
 	return NULL;
     }
     /* assumes function pointers can be stored as a number, which ISO C does not guarantee */
-    init = (int (*) (render_t *, const char *))(intptr_t)bu_dlsym(lh, "init");
-    if(init == NULL) {
+    init_val = bu_dlsym(lh, "init");
+    init = (int (*) (render_t *, const char *))(intptr_t)init_val;
+    if (init == NULL) {
 	bu_log("Faulty plugin %s: No init\n", filename);
 	bu_dlclose(lh);
 	return NULL;
@@ -626,12 +626,12 @@ render_shader_unload_plugin(render_t *r, const char *name)
 {
 #ifdef HAVE_DLFCN_H
     struct render_shader_s *t, *s = shaders, *meh;
-    if(!bu_strncmp(s->name, name, 8)) {
+    if (!bu_strncmp(s->name, name, 8)) {
 	t = s->next;
-	if(r && r->shader && !bu_strncmp(r->shader, name, 8)) {
+	if (r && r->shader && !bu_strncmp(r->shader, name, 8)) {
 	    meh = s->next;
-	    while(meh) {
-		if(render_shader_init(r, meh->name, NULL) != -1)
+	    while (meh) {
+		if (render_shader_init(r, meh->name, NULL) != -1)
 		    goto LOADED;
 		meh = meh->next;
 	    }
@@ -639,18 +639,18 @@ render_shader_unload_plugin(render_t *r, const char *name)
 	}
 LOADED:
 
-	if(s->dlh)
+	if (s->dlh)
 	    bu_dlclose(s->dlh);
 	bu_free(s, "unload first shader");
 	shaders = t;
 	return 0;
     }
 
-    while(s->next) {
-	if(!bu_strncmp(s->next->name, name, 8)) {
-	    if(r)
+    while (s->next) {
+	if (!bu_strncmp(s->next->name, name, 8)) {
+	    if (r)
 		render_shader_init(r, s->name, NULL);
-	    if(s->next->dlh)
+	    if (s->next->dlh)
 		bu_dlclose(s->next->dlh);
 	    t = s->next;
 	    s->next = s->next->next;
@@ -671,8 +671,8 @@ int
 render_shader_init(render_t *r, const char *name, const char *buf)
 {
     struct render_shader_s *s = shaders;
-    while(s) {
-	if(!bu_strncmp(s->name, name, 8)) {
+    while (s) {
+	if (!bu_strncmp(s->name, name, 8)) {
 	    s->init(r, buf);
 	    r->shader = s->name;
 	    return 0;

@@ -1,7 +1,7 @@
 /*                 OpenNurbsInterfaces.cpp
  * BRL-CAD
  *
- * Copyright (c) 1994-2013 United States Government as represented by
+ * Copyright (c) 1994-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -33,7 +33,7 @@ class SDAI_Application_instance;
 
 /* must come after nist step headers */
 #include "brep.h"
-#include "nurb.h"
+#include "rt/nurb.h"
 
 #include "STEPEntity.h"
 #include "Axis1Placement.h"
@@ -75,6 +75,7 @@ class SDAI_Application_instance;
 #include "Loop.h"
 #include "VertexLoop.h"
 #include "Face.h"
+#include "OrientedFace.h"
 #include "FaceBound.h"
 #include "FaceOuterBound.h"
 #include "FaceSurface.h"
@@ -96,6 +97,10 @@ class SDAI_Application_instance;
 
 #include "brep.h"
 
+//#define _DEBUG_TESTING_
+#ifdef _DEBUG_TESTING_
+extern void print_pullback_data(std::string str, std::list<PBCData*> &pbcs, bool justendpoints);
+#endif
 
 ON_Brep *
 AdvancedBrepShapeRepresentation::GetONBrep()
@@ -411,9 +416,8 @@ RationalBSplineCurveWithKnots::LoadONBrep(ON_Brep *brep)
 	while (m != knot_multiplicities.end()) {
 	    int multiplicity = (*m);
 	    double knot_value = (*r);
-	    if (multiplicity > degree) {
-		multiplicity = degree;
-	    }
+	    V_MIN(multiplicity, degree);
+
 	    for (int j = 0; j < multiplicity; j++, knot_index++) {
 		curve->SetKnot(knot_index, knot_value);
 	    }
@@ -615,9 +619,8 @@ BSplineSurfaceWithKnots::LoadONBrep(ON_Brep *brep)
 		break;
 	    }
 
-	    if (multiplicity > u_degree) {
-		multiplicity = u_degree;
-	    }
+	    V_MIN(multiplicity, u_degree);
+
 	    for (int j = 0; j < multiplicity; j++) {
 		surf->SetKnot(0, knot_index++, knot_value);
 	    }
@@ -631,9 +634,9 @@ BSplineSurfaceWithKnots::LoadONBrep(ON_Brep *brep)
 	while (m != u_multiplicities.end()) {
 	    int multiplicity = (*m);
 	    double knot_value = (*r);
-	    if (multiplicity > u_degree) {
-		multiplicity = u_degree;
-	    }
+
+	    V_MIN(multiplicity, u_degree);
+
 	    for (int j = 0; j < multiplicity; j++) {
 		surf->SetKnot(0, knot_index++, knot_value);
 	    }
@@ -664,9 +667,8 @@ BSplineSurfaceWithKnots::LoadONBrep(ON_Brep *brep)
 		break;
 	    }
 
-	    if (multiplicity > v_degree) {
-		multiplicity = v_degree;
-	    }
+	    V_MIN(multiplicity, v_degree);
+
 	    for (int j = 0; j < multiplicity; j++, knot_index++) {
 		surf->SetKnot(1, knot_index, knot_value);
 	    }
@@ -680,9 +682,9 @@ BSplineSurfaceWithKnots::LoadONBrep(ON_Brep *brep)
 	while (m != v_multiplicities.end()) {
 	    int multiplicity = (*m);
 	    double knot_value = (*r);
-	    if (multiplicity > v_degree) {
-		multiplicity = v_degree;
-	    }
+
+	    V_MIN(multiplicity, v_degree);
+
 	    for (int j = 0; j < multiplicity; j++, knot_index++) {
 		surf->SetKnot(1, knot_index, knot_value);
 	    }
@@ -832,9 +834,9 @@ RationalBSplineSurfaceWithKnots::LoadONBrep(ON_Brep *brep)
     while (m != u_multiplicities.end()) {
 	int multiplicity = (*m);
 	double knot_value = (*r);
-	if (multiplicity > u_degree) {
-	    multiplicity = u_degree;
-	}
+
+	V_MIN(multiplicity, u_degree);
+
 	for (int j = 0; j < multiplicity; j++, knot_index++) {
 	    surf->SetKnot(0, knot_index, knot_value);
 	}
@@ -847,9 +849,9 @@ RationalBSplineSurfaceWithKnots::LoadONBrep(ON_Brep *brep)
     while (m != v_multiplicities.end()) {
 	int multiplicity = (*m);
 	double knot_value = (*r);
-	if (multiplicity > v_degree) {
-	    multiplicity = v_degree;
-	}
+
+	V_MIN(multiplicity, v_degree);
+
 	for (int j = 0; j < multiplicity; j++) {
 	    surf->SetKnot(1, knot_index++, knot_value);
 	}
@@ -925,6 +927,8 @@ UniformSurface::LoadONBrep(ON_Brep *brep)
     }
     return true;
 }
+
+
 void
 FaceSurface::AddFace(ON_Brep *brep)
 {
@@ -934,11 +938,11 @@ FaceSurface::AddFace(ON_Brep *brep)
     }
 
     ON_BrepFace &face = brep->NewFace(face_geometry->GetONId());
-    if (same_sense == 1) {
+    if (same_sense == BTrue) {
 	face.m_bRev = false;
     } else {
 	face.m_bRev = true;
-	face.Reverse(0);
+	face.Reverse(0); //need to remove here but check for reversed face in raytracer
     }
 
     ON_id = face.m_face_index;
@@ -985,6 +989,27 @@ FaceSurface::LoadONBrep(ON_Brep *brep)
 	face->Reverse(1);
 	face->m_bRev = face->m_bRev ? false : true;
     }
+    return true;
+}
+
+
+bool
+OrientedFace::LoadONBrep(ON_Brep *brep)
+{
+    if (!brep) {
+	/* nothing to do */
+	return false;
+    }
+
+    // need edge bounds to determine extents for some of the infinitely
+    // defined surfaces like cones/cylinders/planes
+    if (!face_element->LoadONBrep(brep)) {
+#ifndef AP242
+	std::cerr << "Error: " << entityname << "::LoadONBrep() - Error loading openNURBS brep." << std::endl;
+#endif
+	return false;
+    }
+
     return true;
 }
 
@@ -1079,8 +1104,8 @@ Face::LoadONBrep(ON_Brep *brep)
     // direction perhaps offer input option possibly
     // check for outer spanning to bounds
     int cnt = 0;
-    LIST_OF_FACE_BOUNDS::reverse_iterator i;
-    for (i = bounds.rbegin(); i != bounds.rend(); i++) {
+    LIST_OF_FACE_BOUNDS::iterator i;
+    for (i = bounds.begin(); i != bounds.end(); i++) {
 	(*i)->SetFaceIndex(ON_id);
 	if (!(*i)->LoadONBrep(brep)) {
 	    std::cerr << "Error: " << entityname << "::LoadONBrep() - Error loading openNURBS brep." << std::endl;
@@ -1345,9 +1370,7 @@ Path::ShiftSurfaceSeam(ON_Brep *brep, double *t)
 	    curve->GetDomain(&tmin, &tmax);
 
 	    if (((tmin < 0.0) && (tmax > 0.0)) && ((tmin > smin) || (tmax < smax))) {
-		if (tmin < ang_min) {
-		    ang_min = tmin;
-		}
+		V_MIN(ang_min, tmin);
 	    }
 
 	}
@@ -1360,6 +1383,10 @@ Path::ShiftSurfaceSeam(ON_Brep *brep, double *t)
     return false;
 }
 
+
+#ifdef _DEBUG_TESTING_
+bool _debug_print_ = false;
+#endif
 
 bool
 Path::LoadONTrimmingCurves(ON_Brep *brep)
@@ -1374,13 +1401,40 @@ Path::LoadONTrimmingCurves(ON_Brep *brep)
     }
 
     const ON_BrepLoop *loop = &brep->m_L[ON_path_index];
-    const ON_BrepFace *face = loop->Face();
+    ON_BrepFace *face = loop->Face();
     const ON_Surface *surface = face->SurfaceOf();
 
+    if (surface) {
+	double surface_width, surface_height;
+	if (surface->GetSurfaceSize(&surface_width, &surface_height)) {
+	    // reparameterization of the face's surface and transforms the "u"
+	    // and "v" coordinates of all the face's parameter space trimming
+	    // curves to minimize distortion in the map from parameter space to 3d..
+	    face->SetDomain(0, 0.0, surface_width);
+	    face->SetDomain(1, 0.0, surface_height);
+	}
+    }
+#ifdef _DEBUG_TESTING_
+    if (_debug_print_) {
+	int curve_cnt = 0;
+	for (i = edge_list.begin(); i != edge_list.end(); i++) {
+	    // grab the curve for this edge, face and surface
+	    const ON_BrepEdge *edge = &brep->m_E[(*i)->GetONId()];
+	    const ON_Curve *curve = edge->EdgeCurveOf();
+
+	    ON_Interval interval = curve->Domain();
+	    double delta = interval.Length()/100.0;
+	    for(int j =0; j < 100; j++) {
+		ON_3dPoint p = curve->PointAt(interval.m_t[0] + j*delta);
+		std::cerr << "in pt_" << curve_cnt << " sph " << p.x << " " << p.y << " " << p.z << " 0.1000"  << std::endl;
+		curve_cnt++;
+	    }
+	}
+    }
+#endif
     // build surface tree making sure not to remove trimmed subsurfaces
     // since currently building trims and need full tree
-    bool removeTrimmed = false;
-    brlcad::SurfaceTree *st = new brlcad::SurfaceTree((ON_BrepFace *) face, removeTrimmed);
+    // bool removeTrimmed = false;
 
     //TODO: remove debugging code
     if ((false) && (id == 24894)) {
@@ -1398,7 +1452,7 @@ Path::LoadONTrimmingCurves(ON_Brep *brep)
 	if ((false) && (id == 34193)) {
 	    std::cerr << "Debug:LoadONTrimmingCurves for Path:" << id << std::endl;
 	}
-	data = pullback_samples(st, curve);
+	data = pullback_samples(surface, curve);
 	if (data == NULL) {
 	    continue;
 	}
@@ -1412,28 +1466,42 @@ Path::LoadONTrimmingCurves(ON_Brep *brep)
 	curve_pullback_samples.push_back(data);
 	if (!orientWithCurve) {
 	    list<ON_2dPointArray *>::iterator si;
-	    si = data->segments.begin();
+	    si = data->segments->begin();
 	    list<ON_2dPointArray *> rsegs;
-	    while (si != data->segments.end()) {
+	    while (si != data->segments->end()) {
 		ON_2dPointArray *samples = (*si);
 		samples->Reverse();
 		rsegs.push_front(samples);
 		si++;
 	    }
-	    data->segments.clear();
+	    data->segments->clear();
 	    si = rsegs.begin();
 	    while (si != rsegs.end()) {
 		ON_2dPointArray *samples = (*si);
-		data->segments.push_back(samples);
+		data->segments->push_back(samples);
 		si++;
 	    }
 	    rsegs.clear();
 	}
     }
+#ifdef _DEBUG_TESTING_
+    //TODO: remove debugging
+    if (_debug_print_) {
+	std::cerr << "Face " << face->m_face_index << " id " << id << std::endl;
+	print_pullback_data("Before check_pullback_data", curve_pullback_samples, false);
+    }
+#endif
     // check for seams and singularities
     if (!check_pullback_data(curve_pullback_samples)) {
 	std::cerr << "Error: Can not resolve seam or singularity issues." << std::endl;
     }
+#ifdef _DEBUG_TESTING_
+    //TODO: remove debugging
+    if (_debug_print_) {
+	std::cerr << "Face " << face->m_face_index << " id " << id << std::endl;
+	print_pullback_data("After check_pullback_data", curve_pullback_samples, false);
+    }
+#endif
     list<PBCData *>::iterator cs = curve_pullback_samples.begin();
     list<PBCData *>::iterator next_cs;
 
@@ -1446,18 +1514,18 @@ Path::LoadONTrimmingCurves(ON_Brep *brep)
 	}
 	data = (*cs);
 	list<ON_2dPointArray *>::iterator si;
-	si = data->segments.begin();
+	si = data->segments->begin();
 	PBCData *ndata = (*next_cs);
 	list<ON_2dPointArray *>::iterator nsi;
-	nsi = ndata->segments.begin();
+	nsi = ndata->segments->begin();
 	ON_2dPointArray *nsamples = (*nsi);
 
-	while (si != data->segments.end()) {
+	while (si != data->segments->end()) {
 	    nsi = si;
 	    nsi++;
-	    if (nsi == data->segments.end()) {
+	    if (nsi == data->segments->end()) {
 		PBCData *nsidata = (*next_cs);
-		nsi = nsidata->segments.begin();
+		nsi = nsidata->segments->begin();
 	    }
 	    ON_2dPointArray *samples = (*si);
 	    nsamples = (*nsi);
@@ -1508,7 +1576,7 @@ Path::LoadONTrimmingCurves(ON_Brep *brep)
 	    if (end_current.DistanceTo(start_next) > PBC_TOL) {
 		// endpoints don't connect
 		int is;
-		const ON_Surface *surf = data->surftree->getSurface();
+		const ON_Surface *surf = data->surf;
 		if ((is = check_pullback_singularity_bridge(surf, end_current, start_next)) >= 0) {
 		    // insert trim
 		    // insert singular trim along
@@ -1613,15 +1681,14 @@ Path::LoadONTrimmingCurves(ON_Brep *brep)
     }
 
     while (!curve_pullback_samples.empty()) {
-	PBCData *data = curve_pullback_samples.front();
-	while (!data->segments.empty()) {
-	    delete data->segments.front();
-	    data->segments.pop_front();
+	data = curve_pullback_samples.front();
+	while (!data->segments->empty()) {
+	    delete data->segments->front();
+	    data->segments->pop_front();
 	}
 	delete data;
 	curve_pullback_samples.pop_front();
     }
-    delete st;
 
     return true;
 }
@@ -1636,6 +1703,21 @@ Plane::LoadONBrep(ON_Brep *brep)
     }
 
     if (ON_id >= 0) {
+	ON_PlaneSurface *s = dynamic_cast<ON_PlaneSurface *>(brep->m_S[ON_id]);
+
+	if (s) {
+	    double bbdiag = trim_curve_3d_bbox->Diagonal().Length();
+
+	    // origin may not lie within face so include in extent
+	    double maxdist = s->m_plane.origin.DistanceTo(trim_curve_3d_bbox->m_max);
+	    double mindist = s->m_plane.origin.DistanceTo(trim_curve_3d_bbox->m_min);
+	    bbdiag += FMAX(maxdist, mindist);
+
+	    ON_Interval extents(-bbdiag, bbdiag);
+	    s->Extend(0,extents);
+	    s->Extend(1,extents);
+	}
+
 	return true;    // already loaded
     }
 
@@ -1645,6 +1727,8 @@ Plane::LoadONBrep(ON_Brep *brep)
     // ON_3dVector norm = GetNormal();
 
     origin = origin * LocalUnits::length;
+    xaxis.Unitize();
+    yaxis.Unitize();
 
     ON_Plane p(origin, xaxis, yaxis);
 
@@ -1690,6 +1774,8 @@ CylindricalSurface::LoadONBrep(ON_Brep *brep)
     ON_3dVector norm = GetNormal();
 
     origin = origin * LocalUnits::length;
+    xaxis.Unitize();
+    yaxis.Unitize();
 
     // make sure origin is part of the bbox
     trim_curve_3d_bbox->Set(origin, true);
@@ -1737,13 +1823,23 @@ ConicalSurface::LoadONBrep(ON_Brep *brep)
     ON_3dVector norm = GetNormal();
 
     origin = origin * LocalUnits::length;
+    xaxis.Unitize();
+    yaxis.Unitize();
 
     double tan_semi_angle = tan(semi_angle * LocalUnits::planeangle);
     double height = (radius * LocalUnits::length) / tan_semi_angle;
+
+    origin = origin + norm * (-height);
+    if (NEAR_ZERO(height, BN_TOL_DIST)) {
+	// make sure origin is part of the bbox
+	trim_curve_3d_bbox->Set(origin, true);
+
+	height = trim_curve_3d_bbox->Diagonal().Length();
+    }
+
     double hplus = height * 2.01;
     double r1 = hplus * tan_semi_angle;
 
-    origin = origin + norm * (-height);
     ON_Plane p(origin, xaxis, yaxis);
     ON_Cone c(p, hplus, r1);
 
@@ -1813,12 +1909,16 @@ Circle::SetParameterTrim(double start_param, double end_param)
     ON_3dPoint origin = GetOrigin();
     ON_3dVector xaxis = GetXAxis();
     ON_3dVector yaxis = GetYAxis();
+
+    origin = origin * LocalUnits::length;
+    xaxis.Unitize();
+    yaxis.Unitize();
+
     ON_Plane p(origin, xaxis, yaxis);
-    ON_3dPoint center = origin * LocalUnits::length;
 
     // Creates a circle parallel to the plane
     // with given center and radius.
-    ON_Circle c(p, center, radius * LocalUnits::length);
+    ON_Circle c(p, origin, radius * LocalUnits::length);
 
     ON_3dPoint P = c.PointAt(t);
 
@@ -1858,12 +1958,15 @@ static double
 radians_from_xaxis_to_ellipse_point(Conic *conic, ON_3dPoint p, double a = 1.0, double b = 1.0)
 {
     ON_3dPoint origin = conic->GetOrigin();
-    ON_3dPoint center = origin * LocalUnits::length;
     ON_3dVector xaxis = conic->GetXAxis();
     ON_3dVector yaxis = conic->GetYAxis();
 
+    origin = origin * LocalUnits::length;
+    xaxis.Unitize();
+    yaxis.Unitize();
+
     // get p after translating to origin
-    ON_3dPoint canonical_p = p - center;
+    ON_3dPoint canonical_p = p - origin;
 
     // decompose into x and y components
     double x = canonical_p * xaxis;
@@ -1893,16 +1996,18 @@ Circle::LoadONBrep(ON_Brep *brep)
     }
 
     ON_3dPoint origin = GetOrigin();
-    ON_3dPoint center = origin * LocalUnits::length;
     ON_3dVector xaxis = GetXAxis();
     ON_3dVector yaxis = GetYAxis();
-    // ON_3dVector norm = GetNormal();
+
+    origin = origin * LocalUnits::length;
+    xaxis.Unitize();
+    yaxis.Unitize();
 
     double r = radius * LocalUnits::length;
     ON_Plane plane(origin, xaxis, yaxis);
     // Creates a circle parallel to the plane
     // with given center and radius.
-    ON_Circle circle(plane, center, r);
+    ON_Circle circle(plane, origin, r);
 
     ON_3dPoint startpt;
     ON_3dPoint endpt;
@@ -1919,10 +2024,6 @@ Circle::LoadONBrep(ON_Brep *brep)
 
 	startpt *= LocalUnits::length;
 	endpt *= LocalUnits::length;
-    } else {
-	std::cerr << "Error: ::LoadONBrep(ON_Brep *brep<" << std::hex << brep << std::dec
-		  << ">) not endpoints for specified for curve " << entityname << std::endl;
-	return false;
     }
 
     // if we have start and end points, get corresponding t and s
@@ -1973,8 +2074,8 @@ Circle::LoadONBrep(ON_Brep *brep)
     ON_3dPoint circleP1, isect, circleP2, PM, PT;
     ON_3dVector tangentP1, tangentP2;
 
-    circleP1 = startpt;
-    tangentP1 = circle.TangentAt(t);
+    circleP1 = circle.PointAt(angle); // was using 'startpt' from edge_curve but found case where not in tol
+    tangentP1 = circle.TangentAt(angle);
 
     for (int i = 0; i < narcs; i++) {
 	angle = angle + dtheta;
@@ -2000,7 +2101,7 @@ Circle::LoadONBrep(ON_Brep *brep)
 	circleP1 = circleP2;
 	tangentP1 = tangentP2;
     }
-    cpts.Append(endpt);
+    cpts.Append(circle.PointAt(s));
     W[2 * narcs] = 1.0;
 
     int degree = 2;
@@ -2055,7 +2156,10 @@ Ellipse::SetParameterTrim(double start_param, double end_param)
     ON_3dPoint origin = GetOrigin();
     ON_3dVector xaxis = GetXAxis();
     ON_3dVector yaxis = GetYAxis();
-    // ON_3dPoint center = origin * LocalUnits::length;
+
+    origin = origin * LocalUnits::length;
+    xaxis.Unitize();
+    yaxis.Unitize();
 
     double a = semi_axis_1 * LocalUnits::length;
     double b = semi_axis_2 * LocalUnits::length;
@@ -2123,10 +2227,6 @@ Ellipse::LoadONBrep(ON_Brep *brep)
 
 	startpt *= LocalUnits::length;
 	endpt *= LocalUnits::length;
-    } else {
-	std::cerr << "Error: ::LoadONBrep(ON_Brep *brep<" << std::hex << brep << std::dec
-		  << ">) not endpoints for specified for curve " << entityname << std::endl;
-	return false;
     }
 
     // if we have start and end points, get corresponding t and s
@@ -2549,6 +2649,32 @@ Parabola::LoadONBrep(ON_Brep *brep)
 }
 
 
+void
+Line::SetParameterTrim(double start_param, double end_param)
+{
+    double startpoint[3];
+    double endpoint[3];
+
+    t = start_param;
+    s = end_param;
+
+    ON_3dPoint ptstart = pnt->Point3d();
+    ON_3dVector vdir =  dir->Orientation();
+    ON_3dPoint ptend = ptstart + (vdir*dir->Magnitude());
+    ON_Line l(ptstart, ptend);
+
+    if (s < t) {
+	double tmp = s;
+	s = t;
+	t = tmp;
+    }
+    VMOVE(startpoint,l.PointAt(t));
+    VMOVE(endpoint,l.PointAt(s));
+
+    SetPointTrim(startpoint, endpoint);
+}
+
+
 bool
 Line::LoadONBrep(ON_Brep *brep)
 {
@@ -2560,8 +2686,19 @@ Line::LoadONBrep(ON_Brep *brep)
     //if (ON_id >= 0)
     //	return true; // already loaded
 
-    ON_3dPoint startpnt = start->Point3d();
-    ON_3dPoint endpnt = end->Point3d();
+    ON_3dPoint startpnt = ON_3dPoint::UnsetPoint;
+    ON_3dPoint endpnt = ON_3dPoint::UnsetPoint;
+
+    if (trimmed) { //explicitly trimmed
+	startpnt = trim_startpoint;
+	endpnt = trim_endpoint;
+    } else if ((start != NULL) && (end != NULL)) { //not explicit let's try edge vertices
+	startpnt = start->Point3d();
+	endpnt = end->Point3d();
+    } else {
+	std::cerr << "Error: ::LoadONBrep(ON_Brep *brep<" << std::hex << brep << std::dec << ">) not endpoints for specified for curve " << entityname << std::endl;
+	return false;
+    }
 
     startpnt = startpnt * LocalUnits::length;
     endpnt = endpnt * LocalUnits::length;
@@ -2675,6 +2812,8 @@ SurfaceOfRevolution::LoadONBrep(ON_Brep *brep)
     }
 
     ON_3dPoint start = axis_position->GetOrigin();
+    start = start * LocalUnits::length;
+
     ON_3dVector dir = axis_position->GetNormal();
     ON_3dPoint end = start + dir;
 

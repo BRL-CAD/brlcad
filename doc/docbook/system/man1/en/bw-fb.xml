@@ -33,7 +33,7 @@
 
 
 <refsection xml:id="description"><title>DESCRIPTION</title>
-<para><emphasis remap="I">Bw-fb</emphasis>
+<para><command>bw-fb</command>
 reads a
 <citerefentry><refentrytitle>bw</refentrytitle><manvolnum>5</manvolnum></citerefentry>
 format file
@@ -42,7 +42,7 @@ image on the currently selected framebuffer.
 The environment variable
 <emphasis remap="I">FB_FILE</emphasis>
 specifies
-the current framebuffer, see
+the current framebuffer; see
 <citerefentry><refentrytitle>brlcad</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
 Alternatively, the framebuffer may be explicitly specified
 by using the
@@ -51,16 +51,13 @@ flag.</para>
 
 <para>By default, the
 <emphasis remap="I">bw</emphasis>
-file, and the requested framebuffer size, is assumed to be 512x512 pixels.
+file (and, automatically, the requested framebuffer size) is assumed to be 512x512 pixels.
 Specifying the
 <option>-a</option>
 flag causes the program to attempt to autosize.
 A table of common image sizes is consulted, and if any match
 the size of the input file, then the width and height values
-associated with that size will be used.
-Specifying the
-<option>-h</option>
-flag changes both of these sizes to 1024x1024.</para>
+associated with that size will be used.</para>
 
 <para>If the
 <option>-i</option>
@@ -82,7 +79,7 @@ flag will zoom and center on the image being displayed
 to make it fill the display area.</para>
 
 <para>The flags
-<option>-R</option>,<emphasis remap="B"> -G</emphasis>, and<emphasis remap="B"> -B</emphasis>
+<option>-R</option>, <option>-G</option>, and <option>-B</option>
 select individual color planes into which the image will be loaded.
 One or more can be given.  By default all three colors are written
 with the
@@ -90,28 +87,26 @@ with the
 pixel value.</para>
 
 <para>The
-<option>-w </option>file_width
+<option>-w </option><replaceable>file_width</replaceable>
 flag specifies the width of each scanline in the input file, in pixels.
-<option>-W </option>scr_width
-does the same for the display device.</para>
+The
+<option>-n </option><replaceable>file_height</replaceable>
+flag specifies the height in scanlines of the input file.
+Both are set to to the same value via
+<option>-s </option><replaceable>squarefilesize</replaceable>.
+(<option>-W </option><replaceable>scr_width</replaceable>,
+<option>-N </option><replaceable>scr_height</replaceable>, and
+<option>-S </option><replaceable>squarescrsize</replaceable>
+perform these roles for the display device; if none of these
+three options are used, the display device uses the dimensions
+of the input file.)
+</para>
 
-<para>The
-<option>-n </option>file_height
+<para><option>-x </option><replaceable>file_xoff</replaceable>,
+<option>-y </option><replaceable>file_yoff</replaceable>,
+<option>-X </option><replaceable>scr_xoff</replaceable>,
 and
-<option>-N </option>scr_height
-flags specify the height in scanlines of the input file or display device
-respectively.</para>
-
-<para><option>-s </option>squarefilesize
-and
-<option>-S </option>squarescrsize
-set both the height and width to the size given.</para>
-
-<para><option>-x </option>file_xoff,
-<option>-y </option>file_yoff,
-<option>-X </option>scr_xoff,
-and
-<option>-Y </option>scr_yoff
+<option>-y </option><replaceable>scr_yoff</replaceable>
 will offset into the file or onto the screen by the given amounts.
 The coordinate system for these offsets is first quadrant, with
 the origin at the lower left corner of the image.</para>
@@ -122,7 +117,7 @@ the origin at the lower left corner of the image.</para>
 <citerefentry><refentrytitle>bw</refentrytitle><manvolnum>5</manvolnum></citerefentry>
 file contains sequences of pixels.
 Each pixel is stored as one
-<emphasis remap="B">unsigned char</emphasis>
+<emphasis remap="B">unsigned char</emphasis>.
 The first pixel in a
 <emphasis remap="I">bw</emphasis>
 file is the lower left corner of the image.
@@ -141,7 +136,7 @@ with scanlines being written from the bottom to the top of the image.</para>
 </refsection>
 
 <refsection xml:id="copyright"><title>COPYRIGHT</title>
-<para>This software is Copyright (c) 1989-2013 by the United States
+<para>This software is Copyright (c) 1989-2014 by the United States
 Government as represented by U.S. Army Research Laboratory.</para>
 </refsection>
 

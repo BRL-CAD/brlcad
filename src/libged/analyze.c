@@ -1,7 +1,7 @@
 /*                          A N A L Y Z E . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2013 United States Government as represented by
+ * Copyright (c) 1985-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -29,13 +29,14 @@
 #include <string.h>
 #include <assert.h>
 
-#include "bio.h"
 
-#include "bu.h"
+
 #include "vmath.h"
 #include "bn.h"
+#include "bg/polygon.h"
+#include "rt/arb_edit.h"
 #include "raytrace.h"
-#include "rtgeom.h"
+#include "rt/geom.h"
 
 #include "./ged_private.h"
 
@@ -44,7 +45,6 @@
  * ehy
  * metaball
  * nmg
- * rhc
  */
 
 /* Conversion factor for Gallons to cubic millimeters */
@@ -81,57 +81,59 @@ struct poly_face
     fastf_t area;
 };
 
+
 #define POLY_FACE_INIT_ZERO { { 0, 0, 0, 0, 0 }, 0, NULL, HINIT_ZERO, 0.0 }
 
-#define ADD_PT(face, pt) do { VMOVE((face).pts[(face).npts], (pt)); (face).npts++; } while(0)
+#define ADD_PT(face, pt) do { VMOVE((face).pts[(face).npts], (pt)); (face).npts++; } while (0)
 
 /* structures and subroutines for analyze pretty printing */
 
 #define FBUFSIZ 100
-#define NFIELDS   9
+#define NFIELDS 9
 #define NOT_A_PLANE -1
 typedef struct row_field
 {
-  int  nchars;
-  char buf[FBUFSIZ];
+    int nchars;
+    char buf[FBUFSIZ];
 } field_t;
 
 typedef struct table_row
 {
-  int nfields;
-  field_t fields[NFIELDS];
+    int nfields;
+    field_t fields[NFIELDS];
 } row_t;
 
 typedef struct table
 {
-  int nrows;
-  row_t *rows;
+    int nrows;
+    row_t *rows;
 } table_t;
 
 void get_dashes(field_t *f, const int ndashes)
 {
-  int i;
-  f->buf[0] = '\0';
-  for (i = 0; i < ndashes; ++i) {
-      bu_strlcat(f->buf, "-", FBUFSIZ);
-  }
-  f->nchars = ndashes;
+    int i;
+    f->buf[0] = '\0';
+    for (i = 0; i < ndashes; ++i) {
+	bu_strlcat(f->buf, "-", FBUFSIZ);
+    }
+    f->nchars = ndashes;
 }
+
 
 void print_volume_table(struct ged *gedp
 			, const fastf_t tot_vol
 			, const fastf_t tot_area
 			, const fastf_t tot_gallons
-			)
+    )
 {
 
 /* table format
 
-    +------------------------------------+
-    | Volume       = 7999999999.99999905 |
-    | Surface Area =   24000000.00000000 |
-    | Gallons      =       2113.37641887 |
-    +------------------------------------+
+   +------------------------------------+
+   | Volume       = 7999999999.99999905 |
+   | Surface Area =   24000000.00000000 |
+   | Gallons      =       2113.37641887 |
+   +------------------------------------+
 
 */
     /* track actual table column widths */
@@ -153,8 +155,8 @@ void print_volume_table(struct ged *gedp
 
 	/* field 0 */
 	field = 0;
-	table.rows[i].fields[0].nchars = sprintf(table.rows[i].fields[field].buf, "%s",
-						 fnames[i]);
+	table.rows[i].fields[0].nchars = snprintf(table.rows[i].fields[field].buf, FBUFSIZ, "%s",
+						  fnames[i]);
 	if (maxwidth[field] < table.rows[i].fields[field].nchars)
 	    maxwidth[field] = table.rows[i].fields[field].nchars;
 
@@ -168,11 +170,11 @@ void print_volume_table(struct ged *gedp
 
 	/* field 1 */
 	field = 1;
-    if (val < 0) {
-	table.rows[i].fields[1].nchars = sprintf(table.rows[i].fields[field].buf, "COULD NOT DETERMINE");
-    } else {
-	table.rows[i].fields[1].nchars = sprintf(table.rows[i].fields[field].buf, "%10.8f", val);
-    }
+	if (val < 0) {
+	    table.rows[i].fields[1].nchars = snprintf(table.rows[i].fields[field].buf, FBUFSIZ, "COULD NOT DETERMINE");
+	} else {
+	    table.rows[i].fields[1].nchars = snprintf(table.rows[i].fields[field].buf, FBUFSIZ, "%10.8f", val);
+	}
 	if (maxwidth[field] < table.rows[i].fields[field].nchars)
 	    maxwidth[field] = table.rows[i].fields[field].nchars;
     }
@@ -207,6 +209,7 @@ void print_volume_table(struct ged *gedp
     bu_free((char *)table.rows, "print_volume_table: rows");
 }
 
+
 void print_edges_table(struct ged *gedp, table_t *table)
 {
 
@@ -232,7 +235,7 @@ void print_edges_table(struct ged *gedp, table_t *table)
     char buf[FBUFSIZ];
 
     /* put four edges per row making 8 columns */
-    /* this table has 8 columns per row: 2 columns per edge; 4 edges per row  */
+    /* this table has 8 columns per row: 2 columns per edge; 4 edges per row */
 
     /* collect max table column widths */
     tcol = 0;
@@ -322,35 +325,35 @@ void print_edges_table(struct ged *gedp, table_t *table)
 	int field;
 
 	if (tcol == 0) {
-	  /* need to start a row */
-	  sprintf(buf, "%-*.*s|",
-		  indent, indent, " ");
-	  bu_vls_printf(gedp->ged_result_str, "%s", buf);
+	    /* need to start a row */
+	    snprintf(buf, FBUFSIZ, "%-*.*s|",
+		     indent, indent, " ");
+	    bu_vls_printf(gedp->ged_result_str, "%s", buf);
 	}
 
 	/* data in sets of two */
 	/* field 0 */
 	field = 0;
-	/* FIXME: using sprintf because bu_vls_printf is broken for complex formats */
-	sprintf(buf, " %-*.*s",
-		maxwidth[tcol], maxwidth[tcol], table->rows[i].fields[field].buf);
+	/* FIXME: using snprintf because bu_vls_printf is broken for complex formats */
+	snprintf(buf, FBUFSIZ, " %-*.*s",
+		 maxwidth[tcol], maxwidth[tcol], table->rows[i].fields[field].buf);
 	bu_vls_printf(gedp->ged_result_str, "%s", buf);
 
 	/* field 1 */
 	field = 1;
-	/* FIXME: using sprintf because bu_vls_printf is broken for complex formats */
-	sprintf(buf, " %-*.*s |",
-		maxwidth[tcol+1], maxwidth[tcol+1], table->rows[i].fields[field].buf);
+	/* FIXME: using snprintf because bu_vls_printf is broken for complex formats */
+	snprintf(buf, FBUFSIZ, " %-*.*s |",
+		 maxwidth[tcol+1], maxwidth[tcol+1], table->rows[i].fields[field].buf);
 	bu_vls_printf(gedp->ged_result_str, "%s", buf);
 
 	/* iterate on columns */
 	tcol += 2;
 
 	if (tcol > 6) {
-	  /* time for a newline to end the row */
-	  bu_vls_printf(gedp->ged_result_str, "\n");
-	  tcol = 0;
-	  ++nrow;
+	    /* time for a newline to end the row */
+	    bu_vls_printf(gedp->ged_result_str, "\n");
+	    tcol = 0;
+	    ++nrow;
 	}
     }
 
@@ -364,23 +367,23 @@ void print_edges_table(struct ged *gedp, table_t *table)
 
 	    /* data in sets of two */
 	    /* this is field 0 */
-	    /* FIXME: using sprintf because bu_vls_printf is broken for complex formats */
-	    sprintf(buf, " %-*.*s",
-		    maxwidth[tcol], maxwidth[tcol], " ");
+	    /* FIXME: using snprintf because bu_vls_printf is broken for complex formats */
+	    snprintf(buf, FBUFSIZ, " %-*.*s",
+		     maxwidth[tcol], maxwidth[tcol], " ");
 	    bu_vls_printf(gedp->ged_result_str, "%s", buf);
 
 	    /* this is field 1 */
-	    /* FIXME: using sprintf because bu_vls_printf is broken for complex formats */
-	    sprintf(buf, " %-*.*s |",
-		    maxwidth[tcol+1], maxwidth[tcol+1], " ");
+	    /* FIXME: using snprintf because bu_vls_printf is broken for complex formats */
+	    snprintf(buf, FBUFSIZ, " %-*.*s |",
+		     maxwidth[tcol+1], maxwidth[tcol+1], " ");
 	    bu_vls_printf(gedp->ged_result_str, "%s", buf);
 
 	    /* iterate on columns */
 	    tcol += 2;
 
 	    if (tcol > 6) {
-	      /* time for a newline to end the row */
-	      bu_vls_printf(gedp->ged_result_str, "\n");
+		/* time for a newline to end the row */
+		bu_vls_printf(gedp->ged_result_str, "\n");
 	    }
 	}
     }
@@ -405,6 +408,7 @@ void print_edges_table(struct ged *gedp, table_t *table)
     bu_vls_printf(gedp->ged_result_str, "+%-*.*s+\n",
 		  nd, nd, dashes.buf);
 }
+
 
 void print_faces_table(struct ged *gedp, table_t *table)
 {
@@ -439,7 +443,7 @@ void print_faces_table(struct ged *gedp, table_t *table)
 	for (j = 0; j < table->rows[i].nfields; ++j) {
 	    if (table->rows[i].fields[j].nchars > maxwidth[j])
 		maxwidth[j] = table->rows[i].fields[j].nchars;
-      }
+	}
     }
 
     /* blank line following previous table */
@@ -453,19 +457,19 @@ void print_faces_table(struct ged *gedp, table_t *table)
     h1a = (maxwidth[1] - h1b)/2;
     h1c = (maxwidth[1] - h1b - h1a);
 
-    /* print "FB"  in center of field 2 space  */
+    /* print "FB" in center of field 2 space */
     h2b = strlen(FB);
     h2a = (maxwidth[2] - h2b)/2;
     h2c = (maxwidth[2] - h2b - h2a);
 
     /* get width of subcolumns of header column 2 */
-    /* print "PLANE EQUATION" in center of columns 2 space  */
+    /* print "PLANE EQUATION" in center of columns 2 space */
     c2 = maxwidth[3] + maxwidth[4] + maxwidth[5] + maxwidth[6] + 3; /* 3 spaces between fields */
     c2b = strlen(PA);
     c2a = (c2 - c2b)/2;
     c2c = (c2 - c2b - c2a);
 
-    /* print "SURFACE AREA" in center of field 7 space  */
+    /* print "SURFACE AREA" in center of field 7 space */
     f7b = strlen(SA);
     f7  = maxwidth[7] > f7b ? maxwidth[7] : f7b;
     f7a = (f7 - f7b)/2;
@@ -574,7 +578,7 @@ void print_faces_table(struct ged *gedp, table_t *table)
 			  table->rows[i].fields[j].buf);
 	    /* do we need a separator? */
 	    if (j == 0 || j == 2 || j == 6 || j == 7)
-	      bu_vls_printf(gedp->ged_result_str, " |");
+		bu_vls_printf(gedp->ged_result_str, " |");
 	}
 	/* close the row */
 	bu_vls_printf(gedp->ged_result_str, "\n");
@@ -606,30 +610,35 @@ void print_faces_table(struct ged *gedp, table_t *table)
 
 
 /**
- * A N A L Y Z E _ G E N E R A L
- *
  * general analyze function for primitives that can be analyzed using volume
  * and surface area functions from the rt_functab.
  * Currently used for:
- *  - ell
- *  - tor
- *  - tgc
- *  - rpc
- *  - eto
- *  - epa
- *  - part
+ * - ell
+ * - tor
+ * - tgc
+ * - rpc
+ * - eto
+ * - epa
+ * - part
+ * - rhc
  */
 HIDDEN void
 analyze_general(struct ged *gedp, const struct rt_db_internal *ip)
 {
-    fastf_t vol, area = -1;
+    fastf_t vol, area;
     point_t centroid;
 
-    OBJ[ip->idb_minor_type].ft_volume(&vol, ip);
-    OBJ[ip->idb_minor_type].ft_surf_area(&area, ip);
+    vol = area = -1.0;
 
-    if (OBJ[ip->idb_minor_type].ft_centroid != NULL) {
-        OBJ[ip->idb_minor_type].ft_centroid(&centroid, ip);
+    if (OBJ[ip->idb_minor_type].ft_volume) {
+	OBJ[ip->idb_minor_type].ft_volume(&vol, ip);
+    }
+    if (OBJ[ip->idb_minor_type].ft_surf_area) {
+	OBJ[ip->idb_minor_type].ft_surf_area(&area, ip);
+    }
+
+    if (OBJ[ip->idb_minor_type].ft_centroid) {
+	OBJ[ip->idb_minor_type].ft_centroid(&centroid, ip);
 	bu_vls_printf(gedp->ged_result_str, "\n    Centroid: (%g, %g, %g)\n",
 		      centroid[X] * gedp->ged_wdbp->dbip->dbi_base2local,
 		      centroid[Y] * gedp->ged_wdbp->dbip->dbi_base2local,
@@ -637,21 +646,19 @@ analyze_general(struct ged *gedp, const struct rt_db_internal *ip)
     }
 
     print_volume_table(gedp,
-	    vol
-	    * gedp->ged_wdbp->dbip->dbi_base2local
-	    * gedp->ged_wdbp->dbip->dbi_base2local
-	    * gedp->ged_wdbp->dbip->dbi_base2local,
-	    area
-	    * gedp->ged_wdbp->dbip->dbi_base2local
-	    * gedp->ged_wdbp->dbip->dbi_base2local,
-	    vol/GALLONS_TO_MM3
-	    );
+		       vol
+		       * gedp->ged_wdbp->dbip->dbi_base2local
+		       * gedp->ged_wdbp->dbip->dbi_base2local
+		       * gedp->ged_wdbp->dbip->dbi_base2local,
+		       area
+		       * gedp->ged_wdbp->dbip->dbi_base2local
+		       * gedp->ged_wdbp->dbip->dbi_base2local,
+		       vol/GALLONS_TO_MM3
+	);
 }
 
 
 /**
- * F I N D A N G
- *
  * finds direction cosines and rotation, fallback angles of a unit vector
  * angles = pointer to 5 fastf_t's to store angles
  * unitv = pointer to the unit vector (previously computed)
@@ -669,7 +676,7 @@ findang(fastf_t *angles, fastf_t *unitv)
 	else if (unitv[i] >= 1.0)
 	    angles[i] = 90.0;
 	else
-	    angles[i] = acos(unitv[i]) * bn_radtodeg;
+	    angles[i] = acos(unitv[i]) * RAD2DEG;
     }
 
     /* fallback angle */
@@ -691,84 +698,39 @@ findang(fastf_t *angles, fastf_t *unitv)
 	else if (f >= 1.0)
 	    angles[3] = 0.0;
 	else
-	    angles[3] = bn_radtodeg * acos(f);
+	    angles[3] = RAD2DEG * acos(f);
     } else
 	angles[3] = 0.0;
 
     if (unitv[Y] < 0)
 	angles[3] = 360.0 - angles[3];
 
-    angles[4] *= bn_radtodeg;
+    angles[4] *= RAD2DEG;
 }
 
-
-/* plane used by ccw to compare 2 points */
-static plane_t *cmp_plane = NULL;
-
-/* qsort helper function, used to sort points into
- * counter-clockwise order */
-HIDDEN int
-ccw(const void *x, const void *y)
-{
-    vect_t tmp;
-    VCROSS(tmp, ((fastf_t *)x), ((fastf_t *)y));
-    return VDOT(*cmp_plane, tmp);
-}
 
 /**
- * A N A L Y Z E _ P O L Y _ F A C E
- *
  * general analyze function for polygonal faces.
  * Currently used for:
- *  - arb8
- *  - arbn
- *  - bot
- *  - ars
+ * - arb8
+ * - arbn
+ * - ars
  *
  * returns:
- *  - area in face->area
- *  - print_faces_table() information in row
- *  - sorts vertices in face->pts into ccw order
+ * - area in face->area
+ * - print_faces_table() information in row
+ * - sorts vertices in face->pts into ccw order
  */
 HIDDEN void
 analyze_poly_face(struct ged *gedp, struct poly_face *face, row_t *row)
 {
-    size_t i;
-    vect_t v1, v2, tmp, tot = VINIT_ZERO;
     fastf_t angles[5];
 
     findang(angles, face->plane_eqn);
 
     /* sort points */
-    cmp_plane = &face->plane_eqn;
-    qsort(face->pts, face->npts, sizeof(point_t), ccw);
-    cmp_plane = NULL;
-
-    switch (face->npts) {
-    case 3:
-	/* Triangular Face - for triangular face T:V0,V1,V2,
-	 * area = 0.5 * [(V2 - V0) x (V1 - V0)] */
-	VSUB2(v1, face->pts[1], face->pts[0]);
-	VSUB2(v2, face->pts[2], face->pts[0]);
-	VCROSS(tot, v2, v1);
-	break;
-    case 4:
-	/* Quadrilateral Face - for planar quadrilateral
-	 * Q:V0,V1,V2,V3 with unit normal N,
-	 * area = N/2 ⋅ [(V2 - V0) x (V3 - V1)] */
-	VSUB2(v1, face->pts[2], face->pts[0]);
-	VSUB2(v2, face->pts[3], face->pts[1]);
-	VCROSS(tot, v2, v1);
-	break;
-    default:
-	/* N-Sided Face - compute area using Green's Theorem */
-	for (i = 0; i < face->npts; i++) {
-	    VCROSS(tmp, face->pts[i], face->pts[i + 1 == face->npts ? 0 : i + 1]);
-	    VADD2(tot, tot, tmp);
-	}
-	break;
-    }
-    face->area = fabs(VDOT(face->plane_eqn, tot)) * 0.5;
+    bg_3d_polygon_sort_ccw(face->npts, face->pts, face->plane_eqn);
+    bg_3d_polygon_area(&face->area, face->npts, (const point_t *)face->pts);
 
     /* store face information for pretty printing */
     row->nfields = 8;
@@ -779,18 +741,15 @@ analyze_poly_face(struct ged *gedp, struct poly_face *face, row_t *row)
     row->fields[4].nchars = sprintf(row->fields[4].buf, "%10.8f", face->plane_eqn[Y]);
     row->fields[5].nchars = sprintf(row->fields[5].buf, "%10.8f", face->plane_eqn[Z]);
     row->fields[6].nchars = sprintf(row->fields[6].buf, "%10.8f",
-	    face->plane_eqn[W]*gedp->ged_wdbp->dbip->dbi_base2local);
+				    face->plane_eqn[W]*gedp->ged_wdbp->dbip->dbi_base2local);
     row->fields[7].nchars = sprintf(row->fields[7].buf, "%10.8f",
-	    face->area*gedp->ged_wdbp->dbip->dbi_base2local*gedp->ged_wdbp->dbip->dbi_base2local);
+				    face->area*gedp->ged_wdbp->dbip->dbi_base2local*gedp->ged_wdbp->dbip->dbi_base2local);
 }
 
 
-/**
- * A N A L Y Z E _ E D G E
- */
 HIDDEN void
 analyze_edge(struct ged *gedp, const int edge, const struct rt_arb_internal *arb,
-	const int type, row_t *row)
+	     const int type, row_t *row)
 {
     int a = nedge[type][edge*2];
     int b = nedge[type][edge*2+1];
@@ -803,13 +762,10 @@ analyze_edge(struct ged *gedp, const int edge, const struct rt_arb_internal *arb
     row->nfields = 2;
     row->fields[0].nchars = sprintf(row->fields[0].buf, "%d%d", a + 1, b + 1);
     row->fields[1].nchars = sprintf(row->fields[1].buf, "%10.8f",
-	    DIST_PT_PT(arb->pt[a], arb->pt[b])*gedp->ged_wdbp->dbip->dbi_base2local);
+				    DIST_PT_PT(arb->pt[a], arb->pt[b])*gedp->ged_wdbp->dbip->dbi_base2local);
 }
 
 
-/**
- * A N A L Y Z E _ A R B 8
- */
 HIDDEN void
 analyze_arb8(struct ged *gedp, const struct rt_db_internal *ip)
 {
@@ -821,6 +777,7 @@ analyze_arb8(struct ged *gedp, const struct rt_db_internal *ip)
     struct poly_face face = POLY_FACE_INIT_ZERO;
     struct rt_arb_internal earb;
     struct rt_arb_internal *arb = (struct rt_arb_internal *)ip->idb_ptr;
+    const int arb_faces[5][24] = rt_arb_faces;
     RT_ARB_CK_MAGIC(arb);
 
     /* find the specific arb type, in GIFT order. */
@@ -848,10 +805,10 @@ analyze_arb8(struct ged *gedp, const struct rt_db_internal *ip)
     for (face.npts = 0, i = 0; i < 6; face.npts = 0, i++) {
 	int a, b, c, d; /* 4 indices to face vertices */
 
-	a = rt_arb_faces[type][i*4+0];
-	b = rt_arb_faces[type][i*4+1];
-	c = rt_arb_faces[type][i*4+2];
-	d = rt_arb_faces[type][i*4+3];
+	a = arb_faces[type][i*4+0];
+	b = arb_faces[type][i*4+1];
+	c = arb_faces[type][i*4+2];
+	d = arb_faces[type][i*4+3];
 
 	if (a == -1) {
 	    table.rows[i].nfields = 0;
@@ -861,7 +818,7 @@ analyze_arb8(struct ged *gedp, const struct rt_db_internal *ip)
 	/* find plane eqn for this face */
 	if (bn_mk_plane_3pts(face.plane_eqn, arb->pt[a], arb->pt[b], arb->pt[c], &gedp->ged_wdbp->wdb_tol) < 0) {
 	    bu_vls_printf(gedp->ged_result_str, "| %d%d%d%d |         ***NOT A PLANE***                                          |\n",
-		    a+1, b+1, c+1, d+1);
+			  a+1, b+1, c+1, d+1);
 	    /* this row has 1 special fields */
 	    table.rows[i].nfields = NOT_A_PLANE;
 	    continue;
@@ -919,36 +876,37 @@ analyze_arb8(struct ged *gedp, const struct rt_db_internal *ip)
     /* TABLE 3 =========================================== */
     /* find the volume - break arb8 into 6 arb4s */
 
-    OBJ[ID_ARB8].ft_volume(&tot_vol, ip);
+    if (OBJ[ID_ARB8].ft_volume)
+	OBJ[ID_ARB8].ft_volume(&tot_vol, ip);
 
     print_volume_table(gedp,
-	    tot_vol
-	    * gedp->ged_wdbp->dbip->dbi_base2local
-	    * gedp->ged_wdbp->dbip->dbi_base2local
-	    * gedp->ged_wdbp->dbip->dbi_base2local,
-	    tot_area
-	    * gedp->ged_wdbp->dbip->dbi_base2local
-	    * gedp->ged_wdbp->dbip->dbi_base2local,
-	    tot_vol/GALLONS_TO_MM3
-	    );
+		       tot_vol
+		       * gedp->ged_wdbp->dbip->dbi_base2local
+		       * gedp->ged_wdbp->dbip->dbi_base2local
+		       * gedp->ged_wdbp->dbip->dbi_base2local,
+		       tot_area
+		       * gedp->ged_wdbp->dbip->dbi_base2local
+		       * gedp->ged_wdbp->dbip->dbi_base2local,
+		       tot_vol/GALLONS_TO_MM3
+	);
 
     bu_free((char *)face.pts, "analyze_arb8: pts");
     bu_free((char *)table.rows, "analyze_arb8: rows");
 }
 
 
-/**
- * A N A L Y Z E _ A R B N
- */
 HIDDEN void
 analyze_arbn(struct ged *gedp, const struct rt_db_internal *ip)
 {
-    size_t i, j, k, l;
+    size_t i;
     fastf_t tot_vol = 0.0, tot_area = 0.0;
     table_t table;
     struct poly_face *faces;
     struct bu_vls tmpstr = BU_VLS_INIT_ZERO;
     struct rt_arbn_internal *aip = (struct rt_arbn_internal *)ip->idb_ptr;
+    size_t *npts = (size_t *)bu_calloc(aip->neqn, sizeof(size_t), "analyze_arbn: npts");
+    point_t **tmp_pts = (point_t **)bu_calloc(aip->neqn, sizeof(point_t *), "analyze_arbn: tmp_pts");
+    plane_t *eqs= (plane_t *)bu_calloc(aip->neqn, sizeof(plane_t), "analyze_arbn: eqs");
 
     /* allocate array of face structs */
     faces = (struct poly_face *)bu_calloc(aip->neqn, sizeof(struct poly_face), "analyze_arbn: faces");
@@ -957,44 +915,21 @@ analyze_arbn(struct ged *gedp, const struct rt_db_internal *ip)
 	VUNITIZE(faces[i].plane_eqn);
 	/* allocate array of pt structs, max number of verts per faces = (# of faces) - 1 */
 	faces[i].pts = (point_t *)bu_calloc(aip->neqn - 1, sizeof(point_t), "analyze_arbn: pts");
+	tmp_pts[i] = faces[i].pts;
+	HMOVE(eqs[i], faces[i].plane_eqn);
     }
     /* allocate table rows, 1 row per plane eqn */
     table.rows = (row_t *)bu_calloc(aip->neqn, sizeof(row_t), "analyze_arbn: rows");
     table.nrows = aip->neqn;
 
-    /* find all vertices */
-    for (i = 0; i < aip->neqn - 2; i++) {
-    for (j = i + 1; j < aip->neqn - 1; j++) {
-    for (k = j + 1; k < aip->neqn; k++) {
-	point_t pt;
-	int keep_point = 1;
-	if (bn_mkpoint_3planes(pt, aip->eqn[i], aip->eqn[j], aip->eqn[k]) < 0) {
-	    continue;
-	}
-	/* discard pt if it is outside the arbn */
-	for (l = 0; l < aip->neqn; l++) {
-	    if (l == i || l == j || l == k) {
-		continue;
-	    }
-	    if (DIST_PT_PLANE(pt, aip->eqn[l]) > gedp->ged_wdbp->wdb_tol.dist) {
-		keep_point = 0;
-		break;
-	    }
-	}
-	/* found a good point, add it to each of the intersecting faces */
-	if (keep_point) {
-	    ADD_PT(faces[i], pt);
-	    ADD_PT(faces[j], pt);
-	    ADD_PT(faces[k], pt);
-	}
-    }
-    }
-    }
+    bg_3d_polygon_mk_pts_planes(npts, tmp_pts, aip->neqn, (const plane_t *)eqs);
 
     for (i = 0; i < aip->neqn; i++) {
 	vect_t tmp;
 	bu_vls_sprintf(&tmpstr, "%4zu", i);
 	snprintf(faces[i].label, sizeof(faces[i].label), "%s", bu_vls_addr(&tmpstr));
+
+	faces[i].npts = npts[i];
 
 	/* calculate surface area */
 	analyze_poly_face(gedp, &faces[i], &table.rows[i]);
@@ -1008,104 +943,30 @@ analyze_arbn(struct ged *gedp, const struct rt_db_internal *ip)
 
     print_faces_table(gedp, &table);
     print_volume_table(gedp,
-	    tot_vol
-	    * gedp->ged_wdbp->dbip->dbi_base2local
-	    * gedp->ged_wdbp->dbip->dbi_base2local
-	    * gedp->ged_wdbp->dbip->dbi_base2local,
-	    tot_area
-	    * gedp->ged_wdbp->dbip->dbi_base2local
-	    * gedp->ged_wdbp->dbip->dbi_base2local,
-	    tot_vol/GALLONS_TO_MM3
-	    );
+		       tot_vol
+		       * gedp->ged_wdbp->dbip->dbi_base2local
+		       * gedp->ged_wdbp->dbip->dbi_base2local
+		       * gedp->ged_wdbp->dbip->dbi_base2local,
+		       tot_area
+		       * gedp->ged_wdbp->dbip->dbi_base2local
+		       * gedp->ged_wdbp->dbip->dbi_base2local,
+		       tot_vol/GALLONS_TO_MM3
+	);
 
     for (i = 0; i < aip->neqn; i++) {
 	bu_free((char *)faces[i].pts, "analyze_arbn: pts");
     }
     bu_free((char *)faces, "analyze_arbn: faces");
     bu_free((char *)table.rows, "analyze_arbn: rows");
+    bu_free((char *)tmp_pts, "analyze_arbn: tmp_pts");
+    bu_free((char *)npts, "analyze_arbn: npts");
+    bu_free((char *)eqs, "analyze_arbn: eqs");
     bu_vls_free(&tmpstr);
-}
-
-
-#define BOT_PT(idx) (&bot->vertices[(idx) * ELEMENTS_PER_POINT])
-
-/**
- * A N A L Y Z E _ B O T
- */
-HIDDEN void
-analyze_bot(struct ged *gedp, const struct rt_db_internal *ip)
-{
-    size_t i;
-    fastf_t tot_area = 0.0, tot_vol = 0.0;
-    table_t table;
-    struct poly_face face = POLY_FACE_INIT_ZERO;
-    struct rt_bot_internal *bot = (struct rt_bot_internal *)ip->idb_ptr;
-    RT_BOT_CK_MAGIC(bot);
-
-    /* allocate pts array, 3 vertices per bot face */
-    face.pts = (point_t *)bu_calloc(3, sizeof(point_t), "analyze_bot: pts");
-    /* allocate table rows, 1 row per bot face */
-    table.rows = (row_t *)bu_calloc(bot->num_faces, sizeof(row_t), "analyze_bot: rows");
-    table.nrows = bot->num_faces;
-
-    for (face.npts = 0, i = 0; i < bot->num_faces; face.npts = 0, i++) {
-	int a, b, c;
-	vect_t tmp;
-
-	/* find indices of the 3 vertices that make up this face */
-	a = bot->faces[i * ELEMENTS_PER_POINT + 0];
-	b = bot->faces[i * ELEMENTS_PER_POINT + 1];
-	c = bot->faces[i * ELEMENTS_PER_POINT + 2];
-
-	/* find normal, needed to calculate volume later */
-	if (bot->bot_flags == RT_BOT_HAS_SURFACE_NORMALS && bot->normals) {
-	    /* bot->normals array already exists, use those instead */
-	    VMOVE(face.plane_eqn, &bot->normals[i * ELEMENTS_PER_VECT]);
-	} else if (UNLIKELY(bn_mk_plane_3pts(face.plane_eqn, BOT_PT(a), BOT_PT(b), BOT_PT(c), &gedp->ged_wdbp->wdb_tol) < 0)) {
-	    bu_vls_printf(gedp->ged_result_str,
-		    "analyze_bot: bad BOT, points (%.3f, %.3f, %.3f), (%.3f, %.3f, %.3f), (%.3f, %.3f, %.3f) do not form a plane\n",
-		    V3ARGS(BOT_PT(a)), V3ARGS(BOT_PT(b)), V3ARGS(BOT_PT(c)));
-	    continue;
-	}
-
-	ADD_PT(face, BOT_PT(a));
-	ADD_PT(face, BOT_PT(b));
-	ADD_PT(face, BOT_PT(c));
-
-	snprintf(face.label, sizeof(face.label), "%d%d%d", a, b, c);
-
-	/* surface area */
-	analyze_poly_face(gedp, &face, &table.rows[i]);
-	tot_area += face.area;
-
-	/* volume */
-	VSCALE(tmp, face.plane_eqn, face.area);
-	tot_vol += fabs(VDOT(face.pts[0], tmp));
-    }
-    tot_vol /= 3.0;
-
-    print_faces_table(gedp, &table);
-    print_volume_table(gedp,
-	    tot_vol
-	    * gedp->ged_wdbp->dbip->dbi_base2local
-	    * gedp->ged_wdbp->dbip->dbi_base2local
-	    * gedp->ged_wdbp->dbip->dbi_base2local,
-	    tot_area
-	    * gedp->ged_wdbp->dbip->dbi_base2local
-	    * gedp->ged_wdbp->dbip->dbi_base2local,
-	    tot_vol/GALLONS_TO_MM3
-	    );
-
-    bu_free((char *)face.pts, "analyze_bot: pts");
-    bu_free((char *)table.rows, "analyze_bot: rows");
 }
 
 
 #define ARS_PT(ii, jj) (&arip->curves[i+(ii)][(j+(jj))*ELEMENTS_PER_VECT])
 
-/**
- * A N A L Y Z E _ A R S
- */
 HIDDEN void
 analyze_ars(struct ged *gedp, const struct rt_db_internal *ip)
 {
@@ -1126,72 +987,72 @@ analyze_ars(struct ged *gedp, const struct rt_db_internal *ip)
 
     k = arip->pts_per_curve - 2;
     for (i = 0; i < arip->ncurves - 1; i++) {
-    int double_ended = k != 1 && VEQUAL(&arip->curves[i][ELEMENTS_PER_VECT], &arip->curves[i][k * ELEMENTS_PER_VECT]);
+	int double_ended = k != 1 && VEQUAL(&arip->curves[i][ELEMENTS_PER_VECT], &arip->curves[i][k * ELEMENTS_PER_VECT]);
 
-    for (j = 0; j < arip->pts_per_curve; j++) {
-	vect_t tmp;
+	for (j = 0; j < arip->pts_per_curve; j++) {
+	    vect_t tmp;
 
-	if (double_ended && i != 0 && (j == 0 || j == k || j == arip->pts_per_curve - 1)) continue;
+	    if (double_ended && i != 0 && (j == 0 || j == k || j == arip->pts_per_curve - 1)) continue;
 
-	/* first triangular face, make sure its not a duplicate */
-	if (bn_mk_plane_3pts(face.plane_eqn, ARS_PT(0, 0), ARS_PT(1, 1), ARS_PT(0, 1), &gedp->ged_wdbp->wdb_tol) == 0
-	    && !HEQUAL(old_plane, face.plane_eqn)) {
-	    HMOVE(old_plane, face.plane_eqn);
-	    ADD_PT(face, ARS_PT(0, 1));
-	    ADD_PT(face, ARS_PT(0, 0));
-	    ADD_PT(face, ARS_PT(1, 1));
+	    /* first triangular face, make sure it's not a duplicate */
+	    if (bn_mk_plane_3pts(face.plane_eqn, ARS_PT(0, 0), ARS_PT(1, 1), ARS_PT(0, 1), &gedp->ged_wdbp->wdb_tol) == 0
+		&& !HEQUAL(old_plane, face.plane_eqn)) {
+		HMOVE(old_plane, face.plane_eqn);
+		ADD_PT(face, ARS_PT(0, 1));
+		ADD_PT(face, ARS_PT(0, 0));
+		ADD_PT(face, ARS_PT(1, 1));
 
-	    bu_vls_sprintf(&tmpstr, "%zu%zu", i, j);
-	    snprintf(face.label, sizeof(face.label), "%s", bu_vls_addr(&tmpstr));
+		bu_vls_sprintf(&tmpstr, "%zu%zu", i, j);
+		snprintf(face.label, sizeof(face.label), "%s", bu_vls_addr(&tmpstr));
 
-	    /* surface area */
-	    analyze_poly_face(gedp, &face, &(table.rows[nfaces]));
-	    tot_area += face.area;
+		/* surface area */
+		analyze_poly_face(gedp, &face, &(table.rows[nfaces]));
+		tot_area += face.area;
 
-	    /* volume */
-	    VSCALE(tmp, face.plane_eqn, face.area);
-	    tot_vol += fabs(VDOT(face.pts[0], tmp));
+		/* volume */
+		VSCALE(tmp, face.plane_eqn, face.area);
+		tot_vol += fabs(VDOT(face.pts[0], tmp));
 
-	    face.npts = 0;
-	    nfaces++;
+		face.npts = 0;
+		nfaces++;
+	    }
+
+	    /* second triangular face, make sure it's not a duplicate */
+	    if (bn_mk_plane_3pts(face.plane_eqn, ARS_PT(1, 0), ARS_PT(1, 1), ARS_PT(0, 0), &gedp->ged_wdbp->wdb_tol) == 0
+		&& !HEQUAL(old_plane, face.plane_eqn)) {
+		HMOVE(old_plane, face.plane_eqn);
+		ADD_PT(face, ARS_PT(1, 0));
+		ADD_PT(face, ARS_PT(0, 0));
+		ADD_PT(face, ARS_PT(1, 1));
+
+		bu_vls_sprintf(&tmpstr, "%zu%zu", i, j);
+		snprintf(face.label, sizeof(face.label), "%s", bu_vls_addr(&tmpstr));
+
+		analyze_poly_face(gedp, &face, &table.rows[nfaces]);
+		tot_area += face.area;
+
+		VSCALE(tmp, face.plane_eqn, face.area);
+		tot_vol += fabs(VDOT(face.pts[0], tmp));
+
+		face.npts = 0;
+		nfaces++;
+	    }
 	}
-
-	/* second triangular face, make sure its not a duplicate */
-	if (bn_mk_plane_3pts(face.plane_eqn, ARS_PT(1, 0), ARS_PT(1, 1), ARS_PT(0, 0), &gedp->ged_wdbp->wdb_tol) == 0
-	    && !HEQUAL(old_plane, face.plane_eqn)) {
-	    HMOVE(old_plane, face.plane_eqn);
-	    ADD_PT(face, ARS_PT(1, 0));
-	    ADD_PT(face, ARS_PT(0, 0));
-	    ADD_PT(face, ARS_PT(1, 1));
-
-	    bu_vls_sprintf(&tmpstr, "%zu%zu", i, j);
-	    snprintf(face.label, sizeof(face.label), "%s", bu_vls_addr(&tmpstr));
-
-	    analyze_poly_face(gedp, &face, &table.rows[nfaces]);
-	    tot_area += face.area;
-
-	    VSCALE(tmp, face.plane_eqn, face.area);
-	    tot_vol += fabs(VDOT(face.pts[0], tmp));
-
-	    face.npts = 0;
-	    nfaces++;
-	}
-    }
     }
     tot_vol /= 3.0;
     table.nrows = nfaces;
 
     print_faces_table(gedp, &table);
     print_volume_table(gedp,
-	    tot_vol
-	    * gedp->ged_wdbp->dbip->dbi_base2local
-	    * gedp->ged_wdbp->dbip->dbi_base2local
-	    * gedp->ged_wdbp->dbip->dbi_base2local,
-	    tot_area
-	    * gedp->ged_wdbp->dbip->dbi_base2local
-	    * gedp->ged_wdbp->dbip->dbi_base2local,
-	    tot_vol/GALLONS_TO_MM3
-	    );
+		       tot_vol
+		       * gedp->ged_wdbp->dbip->dbi_base2local
+		       * gedp->ged_wdbp->dbip->dbi_base2local
+		       * gedp->ged_wdbp->dbip->dbi_base2local,
+		       tot_area
+		       * gedp->ged_wdbp->dbip->dbi_base2local
+		       * gedp->ged_wdbp->dbip->dbi_base2local,
+		       tot_vol/GALLONS_TO_MM3
+	);
 
     bu_free((char *)face.pts, "analyze_ars: pts");
     bu_free((char *)table.rows, "analyze_ars: rows");
@@ -1202,9 +1063,6 @@ analyze_ars(struct ged *gedp, const struct rt_db_internal *ip)
 #define PROLATE 1
 #define OBLATE 2
 
-/**
- * A N A L Y Z E _ S U P E R E L L
- */
 HIDDEN void
 analyze_superell(struct ged *gedp, const struct rt_db_internal *ip)
 {
@@ -1276,40 +1134,52 @@ analyze_superell(struct ged *gedp, const struct rt_db_internal *ip)
 	    }
     ecc = sqrt(major_mag*major_mag - minor_mag*minor_mag) / major_mag;
     if (type == PROLATE) {
-	sur_area = 2.0 * M_PI * minor_mag * minor_mag +
-	    (2.0 * M_PI * (major_mag*minor_mag/ecc) * asin(ecc));
-    } else { /* type == OBLATE */
-	sur_area = 2.0 * M_PI * major_mag * major_mag +
+	sur_area = M_2PI * minor_mag * minor_mag +
+	    (M_2PI * (major_mag*minor_mag/ecc) * asin(ecc));
+    } else {
+	/* type == OBLATE */
+	sur_area = M_2PI * major_mag * major_mag +
 	    (M_PI * (minor_mag*minor_mag/ecc) * log((1.0+ecc)/(1.0-ecc)));
     }
 
 print_results:
     print_volume_table(gedp,
-	    vol
-	    * gedp->ged_wdbp->dbip->dbi_base2local
-	    * gedp->ged_wdbp->dbip->dbi_base2local
-	    * gedp->ged_wdbp->dbip->dbi_base2local,
-	    sur_area
-	    * gedp->ged_wdbp->dbip->dbi_base2local
-	    * gedp->ged_wdbp->dbip->dbi_base2local,
-	    vol/GALLONS_TO_MM3
-	    );
+		       vol
+		       * gedp->ged_wdbp->dbip->dbi_base2local
+		       * gedp->ged_wdbp->dbip->dbi_base2local
+		       * gedp->ged_wdbp->dbip->dbi_base2local,
+		       sur_area
+		       * gedp->ged_wdbp->dbip->dbi_base2local
+		       * gedp->ged_wdbp->dbip->dbi_base2local,
+		       vol/GALLONS_TO_MM3
+	);
 }
 
 
-/**
- * A N A L Y Z E _ S K E T C H
- */
 HIDDEN void
 analyze_sketch(struct ged *gedp, const struct rt_db_internal *ip)
 {
-    fastf_t area;
-    OBJ[ID_SKETCH].ft_surf_area(&area, ip);
-    bu_vls_printf(gedp->ged_result_str, "\nTotal Area: %10.8f",
-	    area
-	    * gedp->ged_wdbp->dbip->dbi_local2base
-	    * gedp->ged_wdbp->dbip->dbi_local2base
+    fastf_t area = -1;
+    point_t centroid;
+
+    if (OBJ[ID_SKETCH].ft_surf_area)
+	OBJ[ID_SKETCH].ft_surf_area(&area, ip);
+
+    if (area > 0.0) {
+	bu_vls_printf(gedp->ged_result_str, "\nTotal Area: %10.8f",
+		      area
+		      * gedp->ged_wdbp->dbip->dbi_local2base
+		      * gedp->ged_wdbp->dbip->dbi_local2base
 	    );
+    }
+
+    if (OBJ[ID_SKETCH].ft_centroid) {
+	OBJ[ID_SKETCH].ft_centroid(&centroid, ip);
+	bu_vls_printf(gedp->ged_result_str, "\n    Centroid: (%g, %g, %g)\n",
+		      centroid[X] * gedp->ged_wdbp->dbip->dbi_base2local,
+		      centroid[Y] * gedp->ged_wdbp->dbip->dbi_base2local,
+		      centroid[Z] * gedp->ged_wdbp->dbip->dbi_base2local);
+    }
 }
 
 
@@ -1327,70 +1197,82 @@ analyze_do(struct ged *gedp, const struct rt_db_internal *ip)
 
     switch (ip->idb_type) {
 
-    case ID_ARB8:
-	analyze_arb8(gedp, ip);
-	break;
+	case ID_ARB8:
+	    analyze_arb8(gedp, ip);
+	    break;
 
-    case ID_BOT:
-	analyze_bot(gedp, ip);
-	break;
+	case ID_BOT:
+	    analyze_general(gedp, ip);
+	    break;
 
-    case ID_ARBN:
-	analyze_arbn(gedp, ip);
-	break;
+	case ID_ARBN:
+	    analyze_arbn(gedp, ip);
+	    break;
 
-    case ID_ARS:
-	analyze_ars(gedp, ip);
-	break;
+	case ID_ARS:
+	    analyze_ars(gedp, ip);
+	    break;
 
-    case ID_TGC:
-	analyze_general(gedp, ip);
-	break;
+	case ID_TGC:
+	    analyze_general(gedp, ip);
+	    break;
 
-    case ID_ELL:
-	analyze_general(gedp, ip);
-	break;
+	case ID_ELL:
+	    analyze_general(gedp, ip);
+	    break;
 
-    case ID_TOR:
-	analyze_general(gedp, ip);
-	break;
+	case ID_TOR:
+	    analyze_general(gedp, ip);
+	    break;
 
-    case ID_RPC:
-	analyze_general(gedp, ip);
-	break;
+	case ID_RPC:
+	    analyze_general(gedp, ip);
+	    break;
 
-    case ID_ETO:
-	analyze_general(gedp, ip);
-	break;
+	case ID_ETO:
+	    analyze_general(gedp, ip);
+	    break;
 
-    case ID_EPA:
-	analyze_general(gedp, ip);
-	break;
+	case ID_EPA:
+	    analyze_general(gedp, ip);
+	    break;
 
-    case ID_PARTICLE:
-	analyze_general(gedp, ip);
-	break;
+	case ID_PARTICLE:
+	    analyze_general(gedp, ip);
+	    break;
 
-    case ID_SUPERELL:
-	analyze_superell(gedp, ip);
-	break;
+	case ID_SUPERELL:
+	    analyze_superell(gedp, ip);
+	    break;
 
-    case ID_SKETCH:
-	analyze_sketch(gedp, ip);
-	break;
+	case ID_SKETCH:
+	    analyze_sketch(gedp, ip);
+	    break;
 
-    case ID_HYP:
-	analyze_general(gedp, ip);
-	break;
+	case ID_HYP:
+	    analyze_general(gedp, ip);
+	    break;
 
-    case ID_PIPE:
-	analyze_general(gedp, ip);
-	break;
+	case ID_PIPE:
+	    analyze_general(gedp, ip);
+	    break;
 
-    default:
-	bu_vls_printf(gedp->ged_result_str, "\nanalyze: unable to process %s solid\n",
-		OBJ[ip->idb_type].ft_name);
-	break;
+	case ID_VOL:
+	    analyze_general(gedp, ip);
+	    break;
+
+	 case ID_EXTRUDE:
+	    analyze_general(gedp, ip);
+	    break;
+
+	 case ID_RHC:
+	    analyze_general(gedp, ip);
+	    break;
+
+	default:
+	    bu_vls_printf(gedp->ged_result_str, "\nanalyze: unable to process %s solid\n",
+			  OBJ[ip->idb_type].ft_name);
+	    break;
     }
 }
 
@@ -1429,6 +1311,7 @@ ged_analyze(struct ged *gedp, int argc, const char *argv[])
 
     return GED_OK;
 }
+
 
 /*
  * Local Variables:

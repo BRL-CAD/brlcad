@@ -1,7 +1,7 @@
 /*                         M O V E _ A R B _ E D G E . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2013 United States Government as represented by
+ * Copyright (c) 2008-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -26,10 +26,10 @@
 #include "common.h"
 
 #include <string.h>
-#include "bio.h"
 
-#include "cmd.h"
-#include "rtgeom.h"
+#include "bu/cmd.h"
+#include "rt/geom.h"
+#include "rt/arb_edit.h"
 #include "raytrace.h"
 
 #include "./ged_private.h"
@@ -52,6 +52,11 @@ ged_move_arb_edge(struct ged *gedp, int argc, const char *argv[])
     char *last;
     struct directory *dp;
     static const char *usage = "[-r] arb edge pt";
+    const short arb8_evm[12][2] = arb8_edge_vertex_mapping;
+    const short arb7_evm[12][2] = arb7_edge_vertex_mapping;
+    const short arb6_evm[10][2] = arb6_edge_vertex_mapping;
+    const short arb5_evm[9][2] = arb5_edge_vertex_mapping;
+    const short arb4_evm[5][2] = arb4_edge_vertex_mapping;
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
     GED_CHECK_READ_ONLY(gedp, GED_ERROR);
@@ -138,7 +143,7 @@ ged_move_arb_edge(struct ged *gedp, int argc, const char *argv[])
 		goto bad_edge;
 	    }
 
-	    arb_pt_index = arb4_edge_vertex_mapping[edge][0];
+	    arb_pt_index = arb4_evm[edge][0];
 	    break;
 	case ARB5:
 	    if (edge < 0 || 8 < edge) {
@@ -146,7 +151,7 @@ ged_move_arb_edge(struct ged *gedp, int argc, const char *argv[])
 		goto bad_edge;
 	    }
 
-	    arb_pt_index = arb5_edge_vertex_mapping[edge][0];
+	    arb_pt_index = arb5_evm[edge][0];
 	    break;
 	case ARB6:
 	    if (edge < 0 || 9 < edge) {
@@ -154,7 +159,7 @@ ged_move_arb_edge(struct ged *gedp, int argc, const char *argv[])
 		goto bad_edge;
 	    }
 
-	    arb_pt_index = arb6_edge_vertex_mapping[edge][0];
+	    arb_pt_index = arb6_evm[edge][0];
 	    break;
 	case ARB7:
 	    if (edge < 0 || 11 < edge) {
@@ -162,7 +167,7 @@ ged_move_arb_edge(struct ged *gedp, int argc, const char *argv[])
 		goto bad_edge;
 	    }
 
-	    arb_pt_index = arb7_edge_vertex_mapping[edge][0];
+	    arb_pt_index = arb7_evm[edge][0];
 	    break;
 	case ARB8:
 	    if (edge < 0 || 11 < edge) {
@@ -170,7 +175,7 @@ ged_move_arb_edge(struct ged *gedp, int argc, const char *argv[])
 		goto bad_edge;
 	    }
 
-	    arb_pt_index = arb8_edge_vertex_mapping[edge][0];
+	    arb_pt_index = arb8_evm[edge][0];
 	    break;
 	default:
 	    bu_vls_printf(gedp->ged_result_str, "unrecognized arb type");

@@ -1,7 +1,7 @@
 /*                         C L O N E . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2013 United States Government as represented by
+ * Copyright (c) 2008-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -55,10 +55,10 @@
 #include <ctype.h>
 #include <math.h>
 #include <string.h>
-#include "bio.h"
 
+#include "bu/getopt.h"
 #include "vmath.h"
-#include "db.h"
+#include "rt/db4.h"
 #include "raytrace.h"
 
 #include "./ged_private.h"
@@ -252,7 +252,7 @@ clone_get_name(struct directory *dp, struct ged_clone_state *state, size_t iter)
 		    snprintf(buf, CLONE_BUFSIZE, "%s%d", prefix, num);	/* save the name for the next pass */
 		    /* clear and set the name */
 		    bu_vls_trunc(newname, 0);
-		    bu_vls_printf(newname, "%s%s", obj_list.names[j].dest[iter], suffix);
+		    bu_vls_printf(newname, "%s%s", bu_vls_addr(&(obj_list.names[j].dest[iter])), suffix);
 		} else
 		    bu_vls_printf(newname, "%d%s", num+i*state->incr, suffix);
 	    else
@@ -419,7 +419,8 @@ copy_v5_solid(struct db_i *dbip, struct directory *proto, struct ged_clone_state
 	argv[3] = (char *)0;
 	ret = ged_copy(state->gedp, 3, (const char **)argv);
 	if (ret != GED_OK)
-	    bu_vls_printf(state->gedp->ged_result_str, "WARNING: failure cloning \"%s\" to \"%s\"\n", proto->d_namep, name);
+	    bu_vls_printf(state->gedp->ged_result_str, "WARNING: failure cloning \"%s\" to \"%s\"\n",
+			  proto->d_namep, bu_vls_addr(name));
 
 	/* get the original objects matrix */
 	if (rt_db_get_internal(&intern, dp, dbip, matrix, &rt_uniresource) < 0) {
@@ -440,7 +441,7 @@ copy_v5_solid(struct db_i *dbip, struct directory *proto, struct ged_clone_state
 	if (rt_db_put_internal(dp, dbip, &intern, &rt_uniresource) < 0)
 	    bu_vls_printf(state->gedp->ged_result_str, "ERROR: clone internal error copying %s\n", proto->d_namep);
 
-	bu_vls_printf(&state->olist, "%V ", name);
+	bu_vls_printf(&state->olist, "%s ", bu_vls_addr(name));
 	bu_vls_free(name);
     } /* end make n copies */
 
@@ -454,7 +455,7 @@ copy_v5_solid(struct db_i *dbip, struct directory *proto, struct ged_clone_state
  * to the db.
  */
 static void
-copy_solid(struct db_i *dbip, struct directory *proto, genptr_t clientData)
+copy_solid(struct db_i *dbip, struct directory *proto, void *clientData)
 {
     struct ged_clone_state *state = (struct ged_clone_state *)clientData;
     int idx;
@@ -634,7 +635,7 @@ copy_v5_comb(struct db_i *dbip, struct directory *proto, struct ged_clone_state 
 		return NULL;
 	    }
 
-	    if ((dp=db_diradd(dbip, bu_vls_addr(name), RT_DIR_PHONY_ADDR, 0, proto->d_flags, (genptr_t)&proto->d_minor_type)) == RT_DIR_NULL) {
+	    if ((dp=db_diradd(dbip, bu_vls_addr(name), RT_DIR_PHONY_ADDR, 0, proto->d_flags, (void *)&proto->d_minor_type)) == RT_DIR_NULL) {
 		bu_vls_printf(state->gedp->ged_result_str, "An error has occurred while adding a new object to the database.");
 		return NULL;
 	    }
@@ -652,7 +653,7 @@ copy_v5_comb(struct db_i *dbip, struct directory *proto, struct ged_clone_state 
 		bu_vls_free(name);
 		return NULL;
 	    }
-	    bu_vls_printf(&state->olist, "%V ", name);
+	    bu_vls_printf(&state->olist, "%s ", bu_vls_addr(name));
 	    bu_vls_free(name);
 	    rt_db_free_internal(&dbintern);
 	}
@@ -671,7 +672,7 @@ copy_v5_comb(struct db_i *dbip, struct directory *proto, struct ged_clone_state 
  * to the db.
  */
 static void
-copy_comb(struct db_i *dbip, struct directory *proto, genptr_t clientData)
+copy_comb(struct db_i *dbip, struct directory *proto, void *clientData)
 {
     struct ged_clone_state *state = (struct ged_clone_state *)clientData;
     int idx;
@@ -750,13 +751,13 @@ copy_tree(struct directory *dp, struct resource *resp, struct ged_clone_state *s
 	    }
 
 	    /* copy this combination itself */
-	    copy_comb(state->gedp->ged_wdbp->dbip, dp, (genptr_t)state);
+	    copy_comb(state->gedp->ged_wdbp->dbip, dp, (void *)state);
 	} else
 	    /* A v5 method of peeking into a combination */
-	    db_functree(state->gedp->ged_wdbp->dbip, dp, copy_comb, copy_solid, resp, (genptr_t)state);
+	    db_functree(state->gedp->ged_wdbp->dbip, dp, copy_comb, copy_solid, resp, (void *)state);
     } else if (dp->d_flags & RT_DIR_SOLID)
 	/* leaf node -- make a copy the object */
-	copy_solid(state->gedp->ged_wdbp->dbip, dp, (genptr_t)state);
+	copy_solid(state->gedp->ged_wdbp->dbip, dp, (void *)state);
     else {
 	bu_vls_printf(state->gedp->ged_result_str, "%s is neither a combination or a primitive?\n", dp->d_namep);
 	goto done_copy_tree;
@@ -764,7 +765,8 @@ copy_tree(struct directory *dp, struct resource *resp, struct ged_clone_state *s
 
     nextname = clone_get_name(dp, state, 0);
     if (bu_vls_strcmp(copyname, nextname) == 0)
-	bu_vls_printf(state->gedp->ged_result_str, "ERROR: unable to successfully clone \"%s\" to \"%s\"\n", dp->d_namep, copyname);
+	bu_vls_printf(state->gedp->ged_result_str, "ERROR: unable to successfully clone \"%s\" to \"%s\"\n",
+		      dp->d_namep, bu_vls_addr(copyname));
     else
 	copy = db_lookup(state->gedp->ged_wdbp->dbip, bu_vls_addr(copyname), LOOKUP_QUIET);
 
@@ -860,7 +862,8 @@ get_args(struct ged *gedp, int argc, char **argv, struct ged_clone_state *state)
     state->miraxis = W;
     state->updpos = 0;
 
-    while ((k = bu_getopt(argc, argv, "a:b:chgi:m:n:p:r:t:v")) != -1) {
+    while ((k = bu_getopt(argc, argv, "a:b:cgi:m:n:p:r:t:vh?")) != -1) {
+	if (bu_optopt == '?') k='h';
 	switch (k) {
 	    case 'a':
 		state->n_copies = atoi(bu_optarg);
@@ -886,10 +889,6 @@ get_args(struct ged *gedp, int argc, char **argv, struct ged_clone_state *state)
 		break;
 	    case 'g':
 		state->autoview = 0;
-		break;
-	    case 'h':
-		print_usage(gedp->ged_result_str);
-		return GED_ERROR;
 		break;
 	    case 'i':
 		state->incr = atoi(bu_optarg);
@@ -982,7 +981,7 @@ ged_clone(struct ged *gedp, int argc, const char *argv[])
     if ((copy = deep_copy_object(&rt_uniresource, &state)) != (struct directory *)NULL)
 	bu_vls_printf(gedp->ged_result_str, "%s", copy->d_namep);
 
-    bu_vls_printf(gedp->ged_result_str, " {%V}", &state.olist);
+    bu_vls_printf(gedp->ged_result_str, " {%s}", bu_vls_addr(&state.olist));
     bu_vls_free(&state.olist);
 
     return GED_OK;

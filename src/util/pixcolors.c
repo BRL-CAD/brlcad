@@ -1,7 +1,7 @@
 /*                     P I X C O L O R S . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2013 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -31,15 +31,18 @@
 #include "common.h"
 
 #include <stdlib.h>
+#include <limits.h>
 #include "bio.h"
 
-#include "bu.h"
-
+#include "bu/color.h"
+#include "bu/getopt.h"
+#include "bu/log.h"
 
 /* declarations to support use of bu_getopt() system call */
-char *options = "v";
+char options[] = "v";
 char verbose = 0;
-char *progname = "(noname)";
+char noname[] = "(noname)";
+char *progname = noname;
 
 #define PIXELS 1024
 unsigned char pixbuf[BUFSIZ*3];
@@ -52,10 +55,12 @@ unsigned char pixbuf[BUFSIZ*3];
 /*NOBASE*/
 unsigned char vals[1L << (24-3)];
 
+
 /*
- * D O I T --- Main function of program
+ * Main function of program
  */
-void doit(FILE *fd)
+void
+doit(FILE *fd)
 {
     unsigned long pixel, count;
     int bytes;
@@ -72,15 +77,15 @@ void doit(FILE *fd)
 	    b = pixbuf[i+2];
 	    if (r < 0)
 		r = 0;
+	    else if (r > UCHAR_MAX)
+		r = UCHAR_MAX;
 	    if (g < 0)
 		g = 0;
+	    else if (g > UCHAR_MAX)
+		g = UCHAR_MAX;
 	    if (b < 0)
 		b = 0;
-	    if (r > UCHAR_MAX)
-		r = UCHAR_MAX;
-	    if (g > UCHAR_MAX)
-		g = UCHAR_MAX;
-	    if (b > UCHAR_MAX)
+	    else if (b > UCHAR_MAX)
 		b = UCHAR_MAX;
 	    pixel = r +	(g << 8) + (b << 16);
 
@@ -110,8 +115,6 @@ void usage(void)
 
 
 /*
- * M A I N
- *
  * Perform miscellaneous tasks such as argument parsing and
  * I/O setup and then call "doit" to perform the task at hand
  */
@@ -129,21 +132,26 @@ int main(int ac, char **av)
     /* get all the option flags from the command line
      */
     while ((c=bu_getopt(ac, av, options)) != -1) {
-	if (c == 'v') verbose = ! verbose;
-	else usage();
+	if (c != 'v')
+	    usage();
+	verbose = ! verbose;
     }
 
 
-    if (bu_optind < ac-1) {
+    if (bu_optind < ac-1)
 	usage();
-    } else if (bu_optind == ac-1) {
+    if (bu_optind == ac-1) {
 	FILE *fd;
 	if ((fd=fopen(av[bu_optind], "r")) == (FILE *)NULL) {
 	    perror(av[bu_optind]);
 	    bu_exit (1, NULL);
-	} else doit(fd);
-    } else if (bu_optind >= ac) {
-	if (isatty(fileno(stdin))) usage();
+	}
+	doit(fd);
+    }
+/* (bu_optind >= ac) if arriving here */
+    else {
+	if (isatty(fileno(stdin)))
+	    usage();
 	doit(stdin);
     }
 

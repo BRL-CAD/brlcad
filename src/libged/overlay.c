@@ -1,7 +1,7 @@
 /*                         O V E R L A Y . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2013 United States Government as represented by
+ * Copyright (c) 2008-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -25,7 +25,6 @@
 
 #include "common.h"
 
-#include "bio.h"
 
 #include "./ged_private.h"
 
@@ -78,12 +77,12 @@ ged_overlay(struct ged *gedp, int argc, const char *argv[])
     fclose(fp);
 
     if (ret < 0) {
-	rt_vlblock_free(vbp);
+	bn_vlblock_free(vbp);
 	return GED_ERROR;
     }
 
     _ged_cvt_vlblock_to_solids(gedp, vbp, name, 0);
-    rt_vlblock_free(vbp);
+    bn_vlblock_free(vbp);
 
     return GED_OK;
 }

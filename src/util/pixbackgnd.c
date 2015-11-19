@@ -1,7 +1,7 @@
 /*                    P I X B A C K G N D . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2013 United States Government as represented by
+ * Copyright (c) 1986-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -32,8 +32,10 @@
 #include <math.h>
 #include "bio.h"
 
-#include "bu.h"
 #include "vmath.h"
+#include "bu/getopt.h"
+#include "bu/log.h"
+#include "bu/malloc.h"
 
 
 double RGB[3] = {128, 128, 128};	/* r, g, b */
@@ -45,15 +47,15 @@ int invert = 0;
 
 double deltav;
 int title_height = 80;
-int h_start = 240;
-int h_end = 50;
+int h_start = 240; /* top_inten, in the Usage and in the man page */
+int h_end = 50; /* bottom_inten, in the Usage and in the man page */
 
 char usage[] = "\
-Usage:  pixbackgnd [-h -i] [-s squaresize] [-w width] [-n height]\n\
+Usage:  pixbackgnd [-H -i] [-s squaresize] [-w width] [-n height]\n\
 	[-t title_height] [-a top_inten] [-b bottom_inten]\n\
 	hue saturation\n\
-or	r g b\n\
-	> file.pix";
+or	r g b <--(used in place of \"hue saturation\" just above)\n\
+	> file.pix\n";
 
 /* rgbhsv
  *
@@ -168,13 +170,13 @@ get_args(int argc, char **argv)
 {
     int c;
 
-    while ((c = bu_getopt(argc, argv, "his:w:n:t:a:b:")) != -1) {
+    while ((c = bu_getopt(argc, argv, "His:w:n:t:a:b:h?")) != -1) {
 	switch (c) {
 	    case 'i':
 		invert = 1;
 		break;
-	    case 'h':
-		/* high-res */
+	    case 'H':
+		/* high-res, and also set title_height to 90 */
 		file_height = file_width = 1024;
 		title_height = 90;
 		break;
@@ -193,13 +195,13 @@ get_args(int argc, char **argv)
 		title_height = atoi(bu_optarg);
 		break;
 	    case 'a':
-		h_start = atoi(bu_optarg);
+		h_start = atoi(bu_optarg); /* top_inten, in the Usage and in the man page */
 		break;
 	    case 'b':
-		h_end = atoi(bu_optarg);
+		h_end = atoi(bu_optarg); /* bottom_inten, in the Usage and in the man page */
 		break;
 
-	    default:		/* '?' */
+	    default:		/* '?' 'h' */
 		return 0;
 	}
     }
@@ -318,7 +320,7 @@ main(int argc, char **argv)
 	for (line = file_height-1; line >= 0; line--)
 	    flood(horiz_buf, vert_buf, vp, line);
     } else {
-	/* Inverted:  top-to-bottom.  Good with cat-fb */
+	/* Inverted: top-to-bottom */
 	for (line=0; line < file_height; line++)
 	    flood(horiz_buf, vert_buf, vp, line);
     }

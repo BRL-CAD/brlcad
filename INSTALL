@@ -405,38 +405,49 @@ mode.
 Aliases:  ENABLE_STRICT, ENABLE_STRICT_COMPILE, ENABLE_STRICT_COMPILE_FLAGS
 
 
+--- ENABLE_ALL_CXX_COMPILE ---
+
+Build all C and C++ files with a C++ compiler.  Defaults to OFF.
+
+EXPERIMENTAL!
+
+Aliases:  ENABLE_ALL_CXX
+
+
+--- ENABLE_POSIX_COMPLIANCE ---
+
+Build with strict POSIX compliance checking.  Defaults to OFF.
+
+Causes compiler options to be set for strict compliance with the
+minimum C and C++ standards acceptable according to current BRL-CAD
+policy.  The current minimum C standard is ??.
+There is no currently defined minimum C++ standard.
+
+Aliases:  ENABLE_POSIX
+
+
+--- ENABLE_STRICT_COMPILER_STANDARD_COMPLIANCE ---
+
+Build with strict ISO C compliance checking.  Defaults to OFF.
+
+Causes C compiler options to be set for strict compliance with the
+appropriate ISO C standard.
+
+Aliases:  STRICT_ISO_C
+
+
 --- BRLCAD_EXTRADOCS ---
 
-The core option that enables and disables building of BRL-CAD's DocBook
-based documentation (includes manuals and man pages for commands, among
-other things.)  Defaults to ON, but only HTML and MAN formats are enabled
-by default - PDF must be enabled separately by use of this option or one
-of its aliases.  Note that you may set environment variable APACHE_FOP
-to point to your locally installed fop executable file (which on Linux is
-usually a shell script with 0755 permissions).
+The core option that enables and disables building of BRL-CAD's
+DocBook based documentation (includes manuals and man pages for
+commands, among other things).  Defaults to ON, but only HTML and MAN
+formats are enabled by default - PDF must be enabled separately by use
+of this option or one of its aliases.  Note that you may set
+environment variable APACHE_FOP to point to your locally installed fop
+executable file (which on Linux is usually a shell script with 0755
+permissions).
 
 Aliases:  ENABLE_DOCS, ENABLE_EXTRA_DOCS, ENABLE_DOCBOOK
-
-
---- BRLCAD_REGEX ---
-
-Option for enabling and disabling compilation of the Regular
-Expression Library provided with BRL-CAD's source distribution.
-Default is AUTO, responsive to the toplevel BRLCAD_BUNDLED_LIBS option
-and testing first for a system version if BRLCAD_BUNDLED_LIBS is also
-AUTO.
-
-Aliases:  ENABLE_REGEX
-
-
---- BRLCAD_ZLIB ---
-
-Option for enabling and disabling compilation of the zlib library
-provided with BRL-CAD's source distribution.  Default is AUTO,
-responsive to the toplevel BRLCAD_BUNDLED_LIBS option and testing
-first for a system version if BRLCAD_BUNDLED_LIBS is also AUTO.
-
-Aliases:  ENABLE_ZLIB, ENABLE_LIBZ
 
 
 --- BRLCAD_LEMON ---
@@ -470,6 +481,17 @@ AUTO.  perplex requires a working re2c.
 Aliases:  ENABLE_PERPLEX
 
 
+--- BRLCAD_ASTYLE ---
+
+Option for enabling and disabling compilation of the Artistic Style
+(astyle) utility provided with BRL-CAD's source distribution.  Default is
+AUTO,
+responsive to the toplevel BRLCAD_BUNDLED_LIBS option and testing
+first for a system version if BRLCAD_BUNDLED_LIBS is also AUTO.
+
+Aliases:  ENABLE_ASTYLE
+
+
 --- BRLCAD_XSLTPROC ---
 
 Option for enabling and disabling compilation of the xsltproc XML
@@ -491,6 +513,37 @@ the toplevel BRLCAD_BUNDLED_LIBS option and testing first for a system
 version if BRLCAD_BUNDLED_LIBS is also AUTO.
 
 Aliases:  ENABLE_XMLLINT
+
+
+--- BRLCAD_REGEX ---
+
+Option for enabling and disabling compilation of the Regular
+Expression Library provided with BRL-CAD's source distribution.
+Default is AUTO, responsive to the toplevel BRLCAD_BUNDLED_LIBS option
+and testing first for a system version if BRLCAD_BUNDLED_LIBS is also
+AUTO.
+
+Aliases:  ENABLE_REGEX
+
+
+--- BRLCAD_ZLIB ---
+
+Option for enabling and disabling compilation of the zlib library
+provided with BRL-CAD's source distribution.  Default is AUTO,
+responsive to the toplevel BRLCAD_BUNDLED_LIBS option and testing
+first for a system version if BRLCAD_BUNDLED_LIBS is also AUTO.
+
+Aliases:  ENABLE_ZLIB, ENABLE_LIBZ
+
+
+--- BRLCAD_FREETYPE ---
+
+Option for enabling and disabling compilation of the FreeType
+libraries provided with BRL-CAD's source code.  Default is AUTO, responsive to
+the toplevel BRLCAD_BUNDLED_LIBS option and testing first for a system
+version if BRLCAD_BUNDLED_LIBS is also AUTO.
+
+Aliases:  ENABLE_FREETYPE
 
 
 --- BRLCAD_TERMLIB ---
@@ -639,7 +692,17 @@ version if BRLCAD_BUNDLED_LIBS is also AUTO.
 Aliases:  ENABLE_OPENNURBS
 
 
---- BRLCAD_SCL ---
+--- BRLCAD_SPR ---
+
+Option for enabling and disabling compilation of the PoissonRecon library
+provided with BRL-CAD's source code.  Default is AUTO, responsive to
+the toplevel BRLCAD_BUNDLED_LIBS option and testing first for a system
+version if BRLCAD_BUNDLED_LIBS is also AUTO.
+
+Aliases:  ENABLE_SPR
+
+
+--- BRLCAD_SC ---
 
 Option for enabling and disabling compilation of the NIST Step Class
 Libraries provided with BRL-CAD's source code.  Default is AUTO,
@@ -649,7 +712,7 @@ first for a system version if BRLCAD_BUNDLED_LIBS is also AUTO.
 Aliases:  ENABLE_SCL, ENABLE_STEP, ENABLE_STEP_CLASS_LIBRARIES
 
 
---- BRLCAD_LIBVDS ---
+--- BRLCAD_VDS ---
 
 Option for enabling and disabling compilation of the libvds triangle
 simplification library provided with BRL-CAD's source code.  Default
@@ -660,7 +723,17 @@ AUTO.
 Aliases:  ENABLE_VDS
 
 
---- BRLCAD_LIBGDIAM ---
+--- BRLCAD_OSG ---
+
+Option for enabling and disabling compilation of the OpenSceneGraph
+libraries provided with BRL-CAD's source code.  Default is AUTO, responsive to
+the toplevel BRLCAD_BUNDLED_LIBS option and testing first for a system
+version if BRLCAD_BUNDLED_LIBS is also AUTO.
+
+Aliases:  ENABLE_OPENSCENEGRAPH
+
+
+--- BRLCAD_GDIAM ---
 
 Option for enabling and disabling compilation of the libgdiam approximate
 tight bounding box library provided with BRL-CAD's source code.  Default
@@ -669,6 +742,17 @@ testing first for a system version if BRLCAD_BUNDLED_LIBS is also
 AUTO.
 
 Aliases:  ENABLE_GDIAM
+
+
+--- BRLCAD_BULLET ---
+
+Option for enabling and disabling compilation of the Bullet Realtime
+Physics Simulation Libraries provided with BRL-CAD's source
+distribution.  Default is AUTO, responsive to the toplevel
+BRLCAD_BUNDLED_LIBS option and testing first for a system version
+if BRLCAD_BUNDLED_LIBS is also AUTO.
+
+Aliases:  ENABLE_BULLET
 
 
 

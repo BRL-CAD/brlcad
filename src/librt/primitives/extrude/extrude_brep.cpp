@@ -1,7 +1,7 @@
 /*                    E X T R U D E _ B R E P . C P P
  * BRL-CAD
  *
- * Copyright (c) 2008-2013 United States Government as represented by
+ * Copyright (c) 2008-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -26,7 +26,7 @@
 #include "common.h"
 
 #include "raytrace.h"
-#include "rtgeom.h"
+#include "rt/geom.h"
 #include "nmg.h"
 #include "brep.h"
 
@@ -35,9 +35,6 @@ extern "C" {
 }
 
 
-/**
- * R T _ E X T R U D E _ B R E P
- */
 extern "C" void
 rt_extrude_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *tol)
 {
@@ -58,7 +55,7 @@ rt_extrude_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_to
     VMOVE(sketch.V, eip->V);
     VMOVE(sketch.u_vec, eip->u_vec);
     VMOVE(sketch.v_vec, eip->v_vec);
-    tmp_internal->idb_ptr = (genptr_t)(&sketch);
+    tmp_internal->idb_ptr = (void *)(&sketch);
     rt_sketch_brep(b, tmp_internal, tol);
 
     // Create the extrude path and make the extrude primitive.

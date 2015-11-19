@@ -1,7 +1,7 @@
 /*                     S H _ R T R A N S . C
  * BRL-CAD
  *
- * Copyright (c) 1998-2013 United States Government as represented by
+ * Copyright (c) 1998-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -62,10 +62,10 @@ struct bu_structparse rtrans_parse[] = {
 };
 
 
-HIDDEN int rtrans_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, const struct mfuncs *mfp, struct rt_i *rtip);
-HIDDEN int rtrans_render(struct application *ap, const struct partition *pp, struct shadework *swp, genptr_t dp);
-HIDDEN void rtrans_print(register struct region *rp, genptr_t dp);
-HIDDEN void rtrans_free(genptr_t cp);
+HIDDEN int rtrans_setup(register struct region *rp, struct bu_vls *matparm, void **dpp, const struct mfuncs *mfp, struct rt_i *rtip);
+HIDDEN int rtrans_render(struct application *ap, const struct partition *pp, struct shadework *swp, void *dp);
+HIDDEN void rtrans_print(register struct region *rp, void *dp);
+HIDDEN void rtrans_free(void *cp);
 
 struct mfuncs rtrans_mfuncs[] = {
     {MF_MAGIC,	"rtrans",	0,		0,	0,     rtrans_setup,	rtrans_render,	rtrans_print,	rtrans_free },
@@ -73,14 +73,13 @@ struct mfuncs rtrans_mfuncs[] = {
 };
 
 
-/* R T R A N S _ S E T U P
- *
+/*
  * This routine is called (at prep time)
  * once for each region which uses this shader.
  * Any shader-specific initialization should be done here.
  */
 HIDDEN int
-rtrans_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, const struct mfuncs *UNUSED(mfp), struct rt_i *rtip)
+rtrans_setup(register struct region *rp, struct bu_vls *matparm, void **dpp, const struct mfuncs *UNUSED(mfp), struct rt_i *rtip)
 
 
 /* pointer to reg_udata in *rp */
@@ -97,7 +96,7 @@ rtrans_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, 
 
     memcpy(rtrans_sp, &rtrans_defaults, sizeof(struct rtrans_specific));
 
-    if (bu_struct_parse(matparm, rtrans_parse, (char *)rtrans_sp) < 0)
+    if (bu_struct_parse(matparm, rtrans_parse, (char *)rtrans_sp, NULL) < 0)
 	return -1;
 
     BN_RANDSEED(rtrans_sp->next_rand, 3);
@@ -109,34 +108,26 @@ rtrans_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, 
 }
 
 
-/*
- * R T R A N S _ P R I N T
- */
 HIDDEN void
-rtrans_print(register struct region *rp, genptr_t dp)
+rtrans_print(register struct region *rp, void *dp)
 {
     bu_struct_print(rp->reg_name, rtrans_parse, (char *)dp);
 }
 
 
-/*
- * R T R A N S _ F R E E
- */
 HIDDEN void
-rtrans_free(genptr_t cp)
+rtrans_free(void *cp)
 {
     BU_PUT(cp, struct rtrans_specific);
 }
 
 
 /*
- * R T R A N S _ R E N D E R
- *
  * This is called (from viewshade() in shade.c)
  * once for each hit point to be shaded.
  */
 int
-rtrans_render(struct application *ap, const struct partition *pp, struct shadework *swp, genptr_t dp)
+rtrans_render(struct application *ap, const struct partition *pp, struct shadework *swp, void *dp)
 {
     register struct rtrans_specific *rtrans_sp =
 	(struct rtrans_specific *)dp;

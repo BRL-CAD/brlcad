@@ -1,7 +1,7 @@
 /*                           S E T . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2013 United States Government as represented by
+ * Copyright (c) 1990-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -23,11 +23,8 @@
 
 #include "common.h"
 
-#include "bio.h"
 
-#include "bu.h"
 #include "vmath.h"
-#include "dg.h"
 
 #include "./sedit.h"
 #include "./mged.h"
@@ -35,25 +32,27 @@
 
 #include "tcl.h"
 
-extern void predictor_hook(void);
+/* external sp_hook functions */
+extern void fbserv_set_port(const struct bu_structparse *, const char *, void *, const char *, void *);
+extern void predictor_hook(const struct bu_structparse *, const char *, void *, const char *, void *);
 
-extern void fbserv_set_port(void);
+/* exported sp_hook functions */
+void set_perspective(const struct bu_structparse *, const char *, void *, const char *, void *);
+void set_scroll_private(const struct bu_structparse *, const char *, void *, const char *, void *);
 
-extern void set_perspective(void);
-
-static void set_dirty_flag(void);
-static void nmg_eu_dist_set(void);
-static void set_dlist(void);
-static void establish_perspective(void);
-static void toggle_perspective(void);
-static void set_coords(void);
-static void set_rotate_about(void);
+/* local sp_hook functions */
+static void establish_perspective(const struct bu_structparse *, const char *, void *, const char *, void *);
+static void nmg_eu_dist_set(const struct bu_structparse *, const char *, void *, const char *, void *);
+static void set_coords(const struct bu_structparse *, const char *, void *, const char *, void *);
+static void set_dirty_flag(const struct bu_structparse *, const char *, void *, const char *, void *);
+static void set_dlist(const struct bu_structparse *, const char *, void *, const char *, void *);
+static void set_rotate_about(const struct bu_structparse *, const char *, void *, const char *, void *);
+static void toggle_perspective(const struct bu_structparse *, const char *, void *, const char *, void *);
 
 static char *read_var(ClientData clientData, Tcl_Interp *interp, const char *name1, const char *name2, int flags);
 static char *write_var(ClientData clientData, Tcl_Interp *interp, const char *name1, const char *name2, int flags);
 static char *unset_var(ClientData clientData, Tcl_Interp *interp, const char *name1, const char *name2, int flags);
 
-void set_scroll_private(void);
 void set_absolute_tran(void);
 void set_absolute_view_tran(void);
 void set_absolute_model_tran(void);
@@ -127,14 +126,18 @@ struct bu_structparse mged_vparse[] = {
     {"%d", 1, "toggle_perspective",	MV_O(mv_toggle_perspective),	toggle_perspective, NULL, NULL },
     {"%g", 1, "nmg_eu_dist",		MV_O(mv_nmg_eu_dist),		nmg_eu_dist_set, NULL, NULL },
     {"%g", 1, "eye_sep_dist",		MV_O(mv_eye_sep_dist),		set_dirty_flag, NULL, NULL },
-    {"%s", LINE, "union_op",		MV_O(mv_union_lexeme),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%s", LINE, "intersection_op",	MV_O(mv_intersection_lexeme),BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%s", LINE, "union_op",		MV_O(mv_union_lexeme),	        BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%s", LINE, "intersection_op",	MV_O(mv_intersection_lexeme),   BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%s", LINE, "difference_op",	MV_O(mv_difference_lexeme),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"",   0, NULL,			0,				BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
 };
 
 static void
-set_dirty_flag(void)
+set_dirty_flag(const struct bu_structparse *UNUSED(sdp),
+	       const char *UNUSED(name),
+	       void *UNUSED(base),
+	       const char *UNUSED(value),
+	       void *UNUSED(data))
 {
     struct dm_list *dmlp;
 
@@ -145,7 +148,11 @@ set_dirty_flag(void)
 
 
 static void
-nmg_eu_dist_set(void)
+nmg_eu_dist_set(const struct bu_structparse *UNUSED(sdp),
+		const char *UNUSED(name),
+		void *UNUSED(base),
+		const char *UNUSED(value),
+		void *UNUSED(data))
 {
     struct bu_vls tmp_vls = BU_VLS_INIT_ZERO;
 
@@ -158,13 +165,12 @@ nmg_eu_dist_set(void)
 
 
 /**
- ** R E A D _ V A R
+ **
  **
  ** Callback used when an MGED variable is read with either the Tcl "set"
  ** command or the Tcl dereference operator '$'.
  **
  **/
-
 static char *
 read_var(ClientData clientData, Tcl_Interp *interp, const char *UNUSED(name1), const char *UNUSED(name2), int flags)
     /* Contains pointer to bu_struct_parse entry */
@@ -189,7 +195,7 @@ read_var(ClientData clientData, Tcl_Interp *interp, const char *UNUSED(name1), c
 
 
 /**
- ** W R I T E _ V A R
+ **
  **
  ** Callback used when an MGED variable is set with the Tcl "set" command.
  **
@@ -205,7 +211,7 @@ write_var(ClientData clientData, Tcl_Interp *interp, const char *name1, const ch
     newvalue = Tcl_GetVar(interp, sp->sp_name,
 			  (flags&TCL_GLOBAL_ONLY)|TCL_LEAVE_ERR_MSG);
     bu_vls_printf(&str, "%s=\"%s\"", name1, newvalue);
-    if (bu_struct_parse(&str, mged_vparse, (char *)mged_variables) < 0) {
+    if (bu_struct_parse(&str, mged_vparse, (char *)mged_variables, NULL) < 0) {
 	Tcl_AppendResult(interp, "ERROR OCCURRED WHEN SETTING ", name1,
 			 " TO ", newvalue, "\n", (char *)NULL);
     }
@@ -217,7 +223,7 @@ write_var(ClientData clientData, Tcl_Interp *interp, const char *name1, const ch
 
 
 /**
- ** U N S E T _ V A R
+ **
  **
  ** Callback used when an MGED variable is unset.  This function undoes that.
  **
@@ -248,7 +254,7 @@ unset_var(ClientData clientData, Tcl_Interp *interp, const char *name1, const ch
 
 
 /**
- ** M G E D _ V A R I A B L E _ S E T U P
+ **
  **
  ** Sets the variable traces for each of the MGED variables so they can be
  ** accessed with the Tcl "set" and "$" operators.
@@ -295,7 +301,11 @@ f_set(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *a
 
 
 void
-set_scroll_private(void)
+set_scroll_private(const struct bu_structparse *UNUSED(sdp),
+		   const char *UNUSED(name),
+		   void *UNUSED(base),
+		   const char *UNUSED(value),
+		   void *UNUSED(data))
 {
     struct dm_list *dmlp;
     struct dm_list *save_dmlp;
@@ -356,7 +366,11 @@ set_absolute_model_tran(void)
 
 
 static void
-set_dlist(void)
+set_dlist(const struct bu_structparse *UNUSED(sdp),
+	  const char *UNUSED(name),
+	  void *UNUSED(base),
+	  const char *UNUSED(value),
+	  void *UNUSED(data))
 {
     struct dm_list *dlp1;
     struct dm_list *dlp2;
@@ -374,7 +388,7 @@ set_dlist(void)
 		continue;
 	    }
 
-	    if (dlp1->dml_dmp->dm_displaylist &&
+	    if (dm_get_displaylist(dlp1->dml_dmp) &&
 		dlp1->dml_dlist_state->dl_active == 0) {
 		curr_dm_list = dlp1;
 		createDLists(gedp->ged_gdp->gd_headDisplay);
@@ -406,20 +420,20 @@ set_dlist(void)
 
 		/* these display lists are not being used, so free them */
 		if (BU_LIST_IS_HEAD(dlp2, &head_dm_list.l)) {
-		    struct ged_display_list *gdlp;
-		    struct ged_display_list *next_gdlp;
+		    struct display_list *gdlp;
+		    struct display_list *next_gdlp;
 
 		    dlp1->dml_dlist_state->dl_active = 0;
 
-		    gdlp = BU_LIST_NEXT(ged_display_list, gedp->ged_gdp->gd_headDisplay);
+		    gdlp = BU_LIST_NEXT(display_list, gedp->ged_gdp->gd_headDisplay);
 		    while (BU_LIST_NOT_HEAD(gdlp, gedp->ged_gdp->gd_headDisplay)) {
-			next_gdlp = BU_LIST_PNEXT(ged_display_list, gdlp);
+			next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
 
-			(void)DM_MAKE_CURRENT(dlp1->dml_dmp);
-			(void)DM_FREEDLISTS(dlp1->dml_dmp,
-				      BU_LIST_FIRST(solid, &gdlp->gdl_headSolid)->s_dlist,
-				      BU_LIST_LAST(solid, &gdlp->gdl_headSolid)->s_dlist -
-				      BU_LIST_FIRST(solid, &gdlp->gdl_headSolid)->s_dlist + 1);
+			(void)dm_make_current(dlp1->dml_dmp);
+			(void)dm_free_dlists(dlp1->dml_dmp,
+				      BU_LIST_FIRST(solid, &gdlp->dl_headSolid)->s_dlist,
+				      BU_LIST_LAST(solid, &gdlp->dl_headSolid)->s_dlist -
+				      BU_LIST_FIRST(solid, &gdlp->dl_headSolid)->s_dlist + 1);
 
 			gdlp = next_gdlp;
 		    }
@@ -434,7 +448,11 @@ set_dlist(void)
 
 
 extern void
-set_perspective(void)
+set_perspective(const struct bu_structparse *sdp,
+		const char *name,
+		void *base,
+		const char *value,
+		void *data)
 {
     /* if perspective is set to something greater than 0, turn perspective mode on */
     if (mged_variables->mv_perspective > 0)
@@ -446,14 +464,18 @@ set_perspective(void)
     view_state->vs_gvp->gv_perspective = mged_variables->mv_perspective;
 
     /* keep display manager in sync */
-    dmp->dm_perspective = mged_variables->mv_perspective_mode;
+    dm_set_perspective(dmp, mged_variables->mv_perspective_mode);
 
-    set_dirty_flag();
+    set_dirty_flag(sdp, name, base, value, data);
 }
 
 
 static void
-establish_perspective(void)
+establish_perspective(const struct bu_structparse *sdp,
+		      const char *name,
+		      void *base,
+		      const char *value,
+		      void *data)
 {
     mged_variables->mv_perspective = mged_variables->mv_perspective_mode ?
 	perspective_table[perspective_angle] : -1;
@@ -462,9 +484,9 @@ establish_perspective(void)
     view_state->vs_gvp->gv_perspective = mged_variables->mv_perspective;
 
     /* keep display manager in sync */
-    dmp->dm_perspective = mged_variables->mv_perspective_mode;
+    dm_set_perspective(dmp, mged_variables->mv_perspective_mode);
 
-    set_dirty_flag();
+    set_dirty_flag(sdp, name, base, value, data);
 }
 
 
@@ -474,7 +496,11 @@ establish_perspective(void)
   perspective_angle is set to the value of (toggle_perspective - 1).
 */
 static void
-toggle_perspective(void)
+toggle_perspective(const struct bu_structparse *sdp,
+		   const char *name,
+		   void *base,
+		   const char *value,
+		   void *data)
 {
     /* set perspective matrix */
     if (mged_variables->mv_toggle_perspective > 0)
@@ -498,21 +524,29 @@ toggle_perspective(void)
     view_state->vs_gvp->gv_perspective = mged_variables->mv_perspective;
 
     /* keep display manager in sync */
-    dmp->dm_perspective = mged_variables->mv_perspective_mode;
+    dm_set_perspective(dmp, mged_variables->mv_perspective_mode);
 
-    set_dirty_flag();
+    set_dirty_flag(sdp, name, base, value, data);
 }
 
 
 static void
-set_coords(void)
+set_coords(const struct bu_structparse *UNUSED(sdp),
+	   const char *UNUSED(name),
+	   void *UNUSED(base),
+	   const char *UNUSED(value),
+	   void *UNUSED(data))
 {
     view_state->vs_gvp->gv_coord = mged_variables->mv_coords;
 }
 
 
 static void
-set_rotate_about(void)
+set_rotate_about(const struct bu_structparse *UNUSED(sdp),
+		 const char *UNUSED(name),
+		 void *UNUSED(base),
+		 const char *UNUSED(value),
+		 void *UNUSED(data))
 {
     view_state->vs_gvp->gv_rotate_about = mged_variables->mv_rotate_about;
 }

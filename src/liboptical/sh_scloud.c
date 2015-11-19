@@ -1,7 +1,7 @@
 /*                     S H _ S C L O U D . C
  * BRL-CAD
  *
- * Copyright (c) 1998-2013 United States Government as represented by
+ * Copyright (c) 1998-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -33,7 +33,7 @@
 #include "vmath.h"
 #include "raytrace.h"
 #include "optical.h"
-#include "light.h"
+#include "optical/light.h"
 
 
 #define FLOOR(x)	((int)(x) - ((x) < 0 && (x) != (int)(x)))
@@ -100,11 +100,11 @@ struct bu_structparse scloud_parse[] = {
 };
 
 
-HIDDEN int scloud_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, const struct mfuncs *mfp, struct rt_i *rtip);
-HIDDEN int scloud_render(struct application *ap, const struct partition *pp, struct shadework *swp, genptr_t dp);
-HIDDEN int tsplat_render(struct application *ap, const struct partition *pp, struct shadework *swp, genptr_t dp);
-HIDDEN void scloud_print(register struct region *rp, genptr_t dp);
-HIDDEN void scloud_free(genptr_t cp);
+HIDDEN int scloud_setup(register struct region *rp, struct bu_vls *matparm, void **dpp, const struct mfuncs *mfp, struct rt_i *rtip);
+HIDDEN int scloud_render(struct application *ap, const struct partition *pp, struct shadework *swp, void *dp);
+HIDDEN int tsplat_render(struct application *ap, const struct partition *pp, struct shadework *swp, void *dp);
+HIDDEN void scloud_print(register struct region *rp, void *dp);
+HIDDEN void scloud_free(void *cp);
 
 struct mfuncs scloud_mfuncs[] = {
     {MF_MAGIC,	"scloud",	0,	MFI_HIT, MFF_PROC,     scloud_setup,	scloud_render,	scloud_print,	scloud_free },
@@ -113,11 +113,8 @@ struct mfuncs scloud_mfuncs[] = {
 };
 
 
-/*
- * S C L O U D _ S E T U P
- */
 HIDDEN int
-scloud_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, const struct mfuncs *mfp, struct rt_i *rtip)
+scloud_setup(register struct region *rp, struct bu_vls *matparm, void **dpp, const struct mfuncs *mfp, struct rt_i *rtip)
 
 
 /* pointer to reg_udata in *rp */
@@ -146,7 +143,7 @@ scloud_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, 
     if (rdebug&RDEBUG_SHADE)
 	bu_log("scloud_setup\n");
 
-    if (bu_struct_parse(matparm, scloud_parse, (char *)scloud) < 0)
+    if (bu_struct_parse(matparm, scloud_parse, (char *)scloud, NULL) < 0)
 	return -1;
 
     if (rdebug&RDEBUG_SHADE)
@@ -189,34 +186,26 @@ scloud_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, 
 }
 
 
-/*
- * S C L O U D _ P R I N T
- */
 HIDDEN void
-scloud_print(register struct region *rp, genptr_t dp)
+scloud_print(register struct region *rp, void *dp)
 {
     (void)bu_struct_print(rp->reg_name, scloud_pr, (char *)dp);
 }
 
 
-/*
- * S C L O U D _ F R E E
- */
 HIDDEN void
-scloud_free(genptr_t cp)
+scloud_free(void *cp)
 {
     BU_PUT(cp, struct scloud_specific);
 }
 
 
 /*
- * T S P L A T _ R E N D E R
- *
  * Sort of a surface spot transparency shader.  Picks transparency
  * based upon noise value of surface spot.
  */
 int
-tsplat_render(struct application *ap, const struct partition *pp, struct shadework *swp, genptr_t dp)
+tsplat_render(struct application *ap, const struct partition *pp, struct shadework *swp, void *dp)
 {
     register struct scloud_specific *scloud_sp =
 	(struct scloud_specific *)dp;
@@ -243,11 +232,8 @@ tsplat_render(struct application *ap, const struct partition *pp, struct shadewo
 }
 
 
-/*
- * S C L O U D _ R E N D E R
- */
 int
-scloud_render(struct application *ap, const struct partition *pp, struct shadework *swp, genptr_t dp)
+scloud_render(struct application *ap, const struct partition *pp, struct shadework *swp, void *dp)
 {
     register struct scloud_specific *scloud_sp =
 	(struct scloud_specific *)dp;

@@ -1,7 +1,7 @@
 /*                 ProductDefinitionFormationWithSpecifiedSource.cpp
  * BRL-CAD
  *
- * Copyright (c) 1994-2013 United States Government as represented by
+ * Copyright (c) 1994-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -84,6 +84,7 @@ bool ProductDefinitionFormationWithSpecifiedSource::Load(STEPWrapper *sw, SDAI_A
 
     if (!ProductDefinitionFormation::Load(step, sse)) {
 	std::cout << CLASSNAME << ":Error loading base class ::ProductDefinitionFormation." << std::endl;
+	sw->entity_status[id] = STEP_LOAD_ERROR;
 	return false;
     }
 
@@ -92,9 +93,9 @@ bool ProductDefinitionFormationWithSpecifiedSource::Load(STEPWrapper *sw, SDAI_A
     sse = step->getEntity(sse, ENTITYNAME);
 
     make_or_buy = (Source) step->getEnumAttribute(sse, "make_or_buy");
-    if (make_or_buy > Source_unset) {
-	make_or_buy = Source_unset;
-    }
+    V_MIN(make_or_buy, Source_unset);
+
+    sw->entity_status[id] = STEP_LOADED;
 
     return true;
 }

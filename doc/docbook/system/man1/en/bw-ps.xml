@@ -27,14 +27,14 @@
     <arg choice='opt'>-W <replaceable>inches_width</replaceable></arg>
     <arg choice='opt'>-N <replaceable>inches_height</replaceable></arg>
     <arg choice='opt'><replaceable>infile.bw</replaceable></arg>
-    <arg choice='plain'><replaceable>&gt;</replaceable></arg>
+    <arg choice='plain'>&gt;</arg>
     <arg choice='plain'><replaceable>outfile.ps</replaceable></arg>
 </cmdsynopsis>
 </refsynopsisdiv>
 
 
 <refsect1 xml:id='description'><title>DESCRIPTION</title>
-<para><emphasis remap='I'>Bw-ps</emphasis>
+<para><command>bw-ps</command>
 will take a black and white
 <citerefentry><refentrytitle>bw</refentrytitle><manvolnum>5</manvolnum></citerefentry>
 format file of given dimensions and produce a Postscript file
@@ -68,20 +68,20 @@ selects landscape mode, i.e. rotates the output image by ninety degrees.</para>
 </refsect1>
 
 <refsect1 xml:id='examples'><title>EXAMPLES</title>
-<para>bw-ps -c image.bw &gt; image.ps</para>
+<para>bw-ps -c <emphasis remap="I">image.bw</emphasis> &gt; <emphasis remap="I">image.ps</emphasis></para>
 
-<para>Produces a 6.75 inch PostScript file from an 512 x512 input image
+<para>Produces a 6.75 inch PostScript file from an 512 x 512 input image
 and centers it on an 8.5 x 11 inch page.</para>
 
 
-<para>bw-ps -e -w 1024 -n 768 image.bw &gt; image.ps</para>
+<para>bw-ps -e -w 1024 -n 768 <emphasis remap="I">image.bw</emphasis> &gt; <emphasis remap="I">image.ps</emphasis></para>
 
 <para>Takes the file image.bw which has the dimensions of 1024 pixels wide
 by 768 pixels high, and produces an Encapsulated Postscript version
 of it.</para>
 
 
-<para>bw-ps -L -c -W 5.2 &lt; image.bw &gt; image.ps</para>
+<para>bw-ps -L -c -S 5.2 &lt; <emphasis remap="I">image.bw</emphasis> &gt; <emphasis remap="I">image.px</emphasis></para>
 
 <para>Makes a PostScript file of the (assumed 512 square) image, with
 the output image 5.2 inches square, in landscape mode, centered
@@ -99,7 +99,7 @@ on an 8.5 x 11 inch page.</para>
 </refsect1>
 
 <refsect1 xml:id='copyright'><title>COPYRIGHT</title>
-<para>This software is Copyright (c) 1991-2013 by the United States
+<para>This software is Copyright (c) 1991-2014 by the United States
 Government as represented by U.S. Army Research Laboratory.</para>
 </refsect1>
 

@@ -1,7 +1,7 @@
 /*                           B O T . C
  * BRL-CAD
  *
- * Copyright (c) 1999-2013 United States Government as represented by
+ * Copyright (c) 1999-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -26,15 +26,15 @@
 
 #include "common.h"
 
-#include <stdio.h>
 #include <string.h>
 #include <math.h>
 #include "bio.h"
 
-#include "bu.h"
+#include "bu/bitv.h"
+#include "bu/log.h"
 #include "vmath.h"
 #include "bn.h"
-#include "rtgeom.h"
+#include "rt/geom.h"
 #include "raytrace.h"
 #include "wdb.h"
 
@@ -113,7 +113,7 @@ mk_bot_w_normals(
 	bot->face_normals = (int *)NULL;
     }
 
-    return wdb_export(fp, name, (genptr_t)bot, ID_BOT, mk_conv2mm);
+    return wdb_export(fp, name, (void *)bot, ID_BOT, mk_conv2mm);
 }
 
 
@@ -138,7 +138,7 @@ mk_bot(
 				 * about hit point
 				 */
 {
-    return(mk_bot_w_normals(fp, name, mode, orientation, flags, num_vertices, num_faces, vertices,
+    return (mk_bot_w_normals(fp, name, mode, orientation, flags, num_vertices, num_faces, vertices,
 			    faces, thickness, face_mode, 0, NULL, NULL));
 }
 

@@ -15,6 +15,40 @@ on-going issues.
 Recent Bugs
 -----------
 
+* fblabel seems quite busted, at least talking to a /dev/X fbserv, in
+  that it only draws the first character and eventually displays
+  rem_read() failures when run in -d debug mode.
+
+* rtedge doesn't refresh a /dev/X fbserv (presumably double-buffered)
+  after doing an overlay render.  it does draw, though, as confirmed
+  by a forced fb-fb refresh.
+
+* pixborder doesn't account for an edge case where the right edge of
+  an image is expected to be colored (except for one pixel on the top
+  edge).  Example:
+
+  pixborder -b "255 0 0" -t "255 255 255" < pix/moss.pix | pix-fb
+
+* report that attempting to change units on a read-only file in MGED
+  will not change the units in the file but changes them in MGED,
+  resulting in problems with nirt missing geometry it shouldn't miss.
+
+* typing 'comb -f -r assembly_name' shuts down mged with the error:
+  ERROR: bad pointer 0000000000B4CA50: s/b bu_external(x768dbbd0), was bu_vls(x89333bbb), file ..\..\..\brlcad_src\src\libbu\parse.c, line 2443"
+  And on the mged command line:
+  rt_db_cvt_to_external5 expecting non-NULL name parameter
+  wdb_export((null)): solid export failure
+
+* report of mged command history not working with the down arrow key
+  in 7.25.0 (on Windows, unknown on other platforms).  Up arrow works
+  fine.
+
+* wgl framebuffer is not lingering on windows (regardless of using
+  wgll or default) when it should
+
+* nirt -e "xyz val val val" doesn't work due to the space after the -e
+  and how the nirt/rt commands parse quoted args.
+
 * calling "attr set obj key value" should always result in key getting
   set to value, no matter what, as it is the lowest-level attribute
   management interface and what the command (correctly) documents.
@@ -110,8 +144,8 @@ Recent Bugs
 * bu_log() with a width specifier does not align like printf().
   Example: bu_log("%24s", str);
 
-* report that keep sometimes results in a .g file with unknown units
-  dbconcat also is reported to set the units to unknown if concating
+* report that "keep" sometimes results in a .g file with unknown units;
+  dbconcat also is reported to set the units to unknown if concatting
   a file with unknown units.
 
 * infinite loop in rt_find_backing_dist() raytracing a BoT (without
@@ -268,9 +302,6 @@ Recent Bugs
   depending on whether you shoot from the front or back can result in
   bogus lists visible with nirt in mged, entirely missing the bot, or
   mismatched entry/exit/overlap segments.
-
-* nirt -e "xyz val val val" doesn't work due to the space after the -e
-  and how the nirt/rt commands parse quoted args.
 
 * tab completion in classic/command mode sometimes doesn't work
   (presumably if mged can't find tcl resources).  was finally able to
@@ -513,6 +544,12 @@ Recent Bugs
 * rtweight chokes on a .density file that has less than 3 values per
   line (infinite loop).  also gives infinite areas when presented with
   an empty .density file.
+
+* rtarea gives incorrect areas when using -H hypersample flag
+
+* rtweight/gqa volumes seem wrong with simple sphere test case, with
+  values consistently and quickly converging less than the actual
+  volume regardless of the grid size.
 
 * setting src/librt/db5_io.c's AVS_ADD off in db5_import_attributes
   causes bad things to happen and it really shouldn't.

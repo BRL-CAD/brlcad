@@ -1,7 +1,7 @@
 /*                          P L O T . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2013 United States Government as represented by
+ * Copyright (c) 1985-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -29,16 +29,12 @@
 #ifdef HAVE_SYS_TYPES_H
 #  include <sys/types.h>
 #endif
-#ifdef HAVE_SYS_WAIT_H
-#  include <sys/wait.h>
-#endif
-#include "bio.h"
+#include "bresource.h"
 
-#include "bu.h"
 #include "vmath.h"
-#include "mater.h"
-#include "dg.h"
-#include "plot3.h"
+#include "bu/units.h"
+#include "raytrace.h"
+#include "bn/plot3.h"
 
 #include "./mged.h"
 #include "./mged_dm.h"
@@ -54,8 +50,8 @@ f_area(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *
     int is_empty = 1;
 
 #ifndef _WIN32
-    struct ged_display_list *gdlp;
-    struct ged_display_list *next_gdlp;
+    struct display_list *gdlp;
+    struct display_list *next_gdlp;
     struct solid *sp;
     struct bn_vlist *vp;
     FILE *fp_r;
@@ -85,11 +81,11 @@ f_area(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *
     if (not_state(ST_VIEW, "Presented Area Calculation") == TCL_ERROR)
 	return TCL_ERROR;
 
-    gdlp = BU_LIST_NEXT(ged_display_list, gedp->ged_gdp->gd_headDisplay);
+    gdlp = BU_LIST_NEXT(display_list, gedp->ged_gdp->gd_headDisplay);
     while (BU_LIST_NOT_HEAD(gdlp, gedp->ged_gdp->gd_headDisplay)) {
-	next_gdlp = BU_LIST_PNEXT(ged_display_list, gdlp);
+	next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
 
-	if (BU_LIST_NON_EMPTY(&gdlp->gdl_headSolid)) {
+	if (BU_LIST_NON_EMPTY(&gdlp->dl_headSolid)) {
 	    is_empty = 0;
 	    break;
 	}
@@ -102,11 +98,11 @@ f_area(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *
 	return TCL_ERROR;
     }
 
-    gdlp = BU_LIST_NEXT(ged_display_list, gedp->ged_gdp->gd_headDisplay);
+    gdlp = BU_LIST_NEXT(display_list, gedp->ged_gdp->gd_headDisplay);
     while (BU_LIST_NOT_HEAD(gdlp, gedp->ged_gdp->gd_headDisplay)) {
-	next_gdlp = BU_LIST_PNEXT(ged_display_list, gdlp);
+	next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
 
-	FOR_ALL_SOLIDS(sp, &gdlp->gdl_headSolid) {
+	FOR_ALL_SOLIDS(sp, &gdlp->dl_headSolid) {
 	    if (!sp->s_Eflag && sp->s_soldash != 0) {
 		struct bu_vls vls = BU_VLS_INIT_ZERO;
 
@@ -193,11 +189,11 @@ f_area(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *
      * Write out rotated but unclipped, untranslated,
      * and unscaled vectors
      */
-    gdlp = BU_LIST_NEXT(ged_display_list, gedp->ged_gdp->gd_headDisplay);
+    gdlp = BU_LIST_NEXT(display_list, gedp->ged_gdp->gd_headDisplay);
     while (BU_LIST_NOT_HEAD(gdlp, gedp->ged_gdp->gd_headDisplay)) {
-	next_gdlp = BU_LIST_PNEXT(ged_display_list, gdlp);
+	next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
 
-	FOR_ALL_SOLIDS(sp, &gdlp->gdl_headSolid) {
+	FOR_ALL_SOLIDS(sp, &gdlp->dl_headSolid) {
 	    for (BU_LIST_FOR(vp, bn_vlist, &(sp->s_vlist))) {
 		int i;
 		int nused = vp->nused;

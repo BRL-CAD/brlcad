@@ -1,7 +1,7 @@
 /*                        E X T E R N . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2013 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -22,8 +22,8 @@
  *
  */
 
-#ifndef __EXTERN_H__
-#define __EXTERN_H__
+#ifndef BURST_EXTERN_H
+#define BURST_EXTERN_H
 
 #include "common.h"
 
@@ -31,9 +31,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "bio.h"
 #include "fb.h"
-#include "bu.h"
 
 #include "./burst.h"
 #include "./trie.h"
@@ -116,7 +114,7 @@ extern void brst_log(const char *, ...);
 extern int roundToInt(fastf_t f);
 
 extern Colors colorids;
-extern FBIO *fbiop;
+extern fb *fbiop;
 extern FILE *burstfp;
 extern FILE *gridfp;
 extern FILE *histfp;
@@ -178,8 +176,6 @@ extern char tmpfname[];
 
 extern char *cmdptr;
 
-extern char **template;
-
 extern fastf_t bdist;
 extern fastf_t burstpoint[];
 extern fastf_t cellsz;
@@ -236,7 +232,7 @@ extern int zoom;
 
 extern struct rt_i *rtip;
 
-#endif  /* __EXTERN_H__ */
+#endif  /* BURST_EXTERN_H */
 
 /*
  * Local Variables:

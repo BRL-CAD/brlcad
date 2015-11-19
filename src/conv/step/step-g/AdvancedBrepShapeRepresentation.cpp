@@ -1,7 +1,7 @@
 /*                 AdvancedBrepShapeRepresentation.cpp
  * BRL-CAD
  *
- * Copyright (c) 1994-2013 United States Government as represented by
+ * Copyright (c) 1994-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -32,6 +32,7 @@
 #include "Factory.h"
 #include "ManifoldSolidBrep.h"
 #include "GeometricRepresentationContext.h"
+#include "Axis2Placement3D.h"
 
 
 #define CLASSNAME "AdvancedBrepShapeRepresentation"
@@ -76,6 +77,20 @@ AdvancedBrepShapeRepresentation::Create(STEPWrapper *sw, SDAI_Application_instan
 }
 
 
+Axis2Placement3D *
+AdvancedBrepShapeRepresentation::GetAxis2Placement3d()
+{
+    std::list<RepresentationItem *>::iterator iter;
+    Axis2Placement3D *axis = NULL;
+    for (iter = items.begin(); iter != items.end(); iter++) {
+	axis = dynamic_cast<Axis2Placement3D *>(*iter);
+	if (axis != NULL)
+	    break;
+    }
+    return axis;
+}
+
+
 bool
 AdvancedBrepShapeRepresentation::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
 {
@@ -84,8 +99,12 @@ AdvancedBrepShapeRepresentation::Load(STEPWrapper *sw, SDAI_Application_instance
 
     if (!ShapeRepresentation::Load(step, sse)) {
 	std::cerr << CLASSNAME << ":Error loading base class ::ShapeRepresentation." << std::endl;
+	sw->entity_status[id] = STEP_LOAD_ERROR;
 	return false;
     }
+
+    sw->entity_status[id] = STEP_LOADED;
+
     return true;
 }
 

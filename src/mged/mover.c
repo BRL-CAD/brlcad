@@ -1,7 +1,7 @@
 /*                         M O V E R . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2013 United States Government as represented by
+ * Copyright (c) 1985-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -23,12 +23,9 @@
 
 #include "common.h"
 
-#include <stdio.h>
 #include <math.h>
 #include <string.h>
-#include "bio.h"
 
-#include "bu.h"
 #include "vmath.h"
 #include "bn.h"
 #include "raytrace.h"
@@ -43,8 +40,6 @@ int mat_default = 1;	/* GIFT material code */
 int los_default = 100;	/* Line-of-sight estimate */
 
 /*
- * M O V E H O B J
- *
  * This routine is used when the object to be moved is
  * the top level in its reference path.
  * The object itself (solid or "leaf" combination) is relocated.
@@ -76,8 +71,6 @@ moveHobj(struct directory *dp, matp_t xlate)
 
 
 /*
- * M O V E H I N S T A N C E
- *
  * This routine is used when an instance of an object is to be
  * moved relative to a combination, as opposed to modifying the
  * co-ordinates of member solids.  Input is a pointer to a COMB,

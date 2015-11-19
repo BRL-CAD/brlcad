@@ -14,6 +14,7 @@ set(docbook_man1_EN
   benchmark.xml
   bot_dump.xml
   bot_shell-vtk.xml
+  brep_simple.xml
   brlcad-config.xml
   brlcad.xml
   buffer.xml
@@ -54,8 +55,6 @@ set(docbook_man1_EN
   dbupgrade.xml
   decimate.xml
   dpix-pix.xml
-  dunncolor.xml
-  dunnsnap.xml
   dxf-g.xml
   enf-g.xml
   euclid-g.xml
@@ -63,7 +62,6 @@ set(docbook_man1_EN
   fb-bw.xml
   fb-cmap.xml
   fb-fb.xml
-  fb-orle.xml
   fb-pix.xml
   fb-png.xml
   fb-rle.xml
@@ -98,14 +96,18 @@ set(docbook_man1_EN
   g-obj.xml
   g-raw.xml
   g-shell-rect.xml
+  g-step.xml
   g-stl.xml
   g-tankill.xml
   g-var.xml
+  g-voxel.xml
   g-vrml.xml
   g-x3d.xml
+  g-dot.xml
   g2asc.xml
   g_diff.xml
   g_lint.xml
+  gdiff.xml
   gencolor.xml
   gif-fb.xml
   gif2fb.xml
@@ -126,15 +128,12 @@ set(docbook_man1_EN
   nmg-bot.xml
   nmg-rib.xml
   obj-g.xml
-  orle-fb.xml
-  orle-pix.xml
   patch-g.xml
   pictx.xml
   pix-alias.xml
   pix-bw.xml
   pix-bw3.xml
   pix-fb.xml
-  pix-orle.xml
   pix-png.xml
   pix-ppm.xml
   pix-ps.xml
@@ -150,6 +149,7 @@ set(docbook_man1_EN
   pixclump.xml
   pixcmp.xml
   pixcolors.xml
+  pixcrop.xml
   pixcut.xml
   pixdiff.xml
   pixdsplit.xml
@@ -205,6 +205,7 @@ set(docbook_man1_EN
   rtarea.xml
   rtcheck.xml
   rtedge.xml
+  rtexample.xml
   rtg3.xml
   rthide.xml
   rtpp.xml
@@ -235,6 +236,7 @@ set(docbook_man1_EN
   vdeck.xml
   viewpoint-g.xml
   wavelet.xml
+  wdb_example.xml
   )
 
 # Some DocBook man pages generate multiple output files, if they
@@ -245,11 +247,9 @@ set_source_files_properties(pix2asc.xml PROPERTIES EXTRA_MAN_OUTPUTS "asc2pix.1"
 set_source_files_properties(chan_mult.xml PROPERTIES EXTRA_MAN_OUTPUTS "chan_add.1")
 
 DOCBOOK_TO_HTML(man1 docbook_man1_EN html/man1/en "")
+DOCBOOK_TO_PHP(man1 docbook_man1_EN html/man1/en "")
 DOCBOOK_TO_MAN(man1 docbook_man1_EN 1 1 man1 "")
-
-if(BRLCAD_EXTRADOCS_PDF_MAN)
-  DOCBOOK_TO_PDF(man1 docbook_man1_EN pdf/man1/en "")
-endif(BRLCAD_EXTRADOCS_PDF_MAN)
+DOCBOOK_TO_PDF(man1 docbook_man1_EN pdf/man1/en "")
 
 CMAKEFILES(pictx.xml)
 

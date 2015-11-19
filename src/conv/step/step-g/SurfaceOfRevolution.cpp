@@ -1,7 +1,7 @@
 /*                 SurfaceOfRevolution.cpp
  * BRL-CAD
  *
- * Copyright (c) 1994-2013 United States Government as represented by
+ * Copyright (c) 1994-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -59,7 +59,7 @@ SurfaceOfRevolution::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
 
     if (!SweptSurface::Load(step, sse)) {
 	std::cout << CLASSNAME << ":Error loading base class ::Surface." << std::endl;
-	return false;
+	goto step_error;
     }
 
     // need to do this for local attributes to makes sure we have
@@ -70,13 +70,17 @@ SurfaceOfRevolution::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
 	SDAI_Application_instance *entity = step->getEntityAttribute(sse, "axis_position");
 	if (entity) {
 	    axis_position = dynamic_cast<Axis1Placement *>(Factory::CreateObject(sw, entity));
-	} else {
+	}
+	if (!entity || !axis_position) {
 	    std::cerr << CLASSNAME << ": error loading 'axis_position' attribute." << std::endl;
-	    return false;
+	    goto step_error;
 	}
     }
-
+    sw->entity_status[id] = STEP_LOADED;
     return true;
+step_error:
+    sw->entity_status[id] = STEP_LOAD_ERROR;
+    return false;
 }
 
 void

@@ -1,7 +1,7 @@
 /*                      S H _ G A U S S . C
  * BRL-CAD
  *
- * Copyright (c) 1998-2013 United States Government as represented by
+ * Copyright (c) 1998-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -49,7 +49,7 @@
 
 #include "vmath.h"
 #include "raytrace.h"
-#include "rtgeom.h"
+#include "rt/geom.h"
 #include "optical.h"
 
 
@@ -126,10 +126,10 @@ struct bu_structparse gauss_parse_tab[] = {
 };
 
 
-HIDDEN int gauss_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, const struct mfuncs *mfp, struct rt_i *rtip);
-HIDDEN int gauss_render(struct application *ap, const struct partition *pp, struct shadework *swp, genptr_t dp);
-HIDDEN void gauss_print(register struct region *rp, genptr_t dp);
-HIDDEN void gauss_free(genptr_t cp);
+HIDDEN int gauss_setup(register struct region *rp, struct bu_vls *matparm, void **dpp, const struct mfuncs *mfp, struct rt_i *rtip);
+HIDDEN int gauss_render(struct application *ap, const struct partition *pp, struct shadework *swp, void *dp);
+HIDDEN void gauss_print(register struct region *rp, void *dp);
+HIDDEN void gauss_free(void *cp);
 
 /* The "mfuncs" structure defines the external interface to the shader.
  * Note that more than one shader "name" can be associated with a given
@@ -286,14 +286,13 @@ tree_solids(union tree *tp, struct tree_bark *tb, int op, struct resource *resp)
 }
 
 
-/* G A U S S _ S E T U P
- *
+/*
  * This routine is called (at prep time)
  * once for each region which uses this shader.
  * Any shader-specific initialization should be done here.
  */
 HIDDEN int
-gauss_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, const struct mfuncs *UNUSED(mfp), struct rt_i *rtip)
+gauss_setup(register struct region *rp, struct bu_vls *matparm, void **dpp, const struct mfuncs *UNUSED(mfp), struct rt_i *rtip)
 
 
 /* pointer to reg_udata in *rp */
@@ -324,7 +323,7 @@ gauss_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, c
     memcpy(gauss_sp, &gauss_defaults, sizeof(struct gauss_specific));
 
     /* parse the user's arguments for this use of the shader. */
-    if (bu_struct_parse(matparm, gauss_parse_tab, (char *)gauss_sp) < 0)
+    if (bu_struct_parse(matparm, gauss_parse_tab, (char *)gauss_sp, NULL) < 0)
 	return -1;
 
     /* We have to pick up the parameters for the gaussian puff now.
@@ -358,21 +357,15 @@ gauss_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, c
 }
 
 
-/*
-   * G A U S S _ P R I N T
-   */
-HIDDEN void
-gauss_print(register struct region *rp, genptr_t dp)
+HIDDEN void
+gauss_print(register struct region *rp, void *dp)
 {
     bu_struct_print(rp->reg_name, gauss_print_tab, (char *)dp);
 }
 
 
-/*
- * G A U S S _ F R E E
- */
 HIDDEN void
-gauss_free(genptr_t cp)
+gauss_free(void *cp)
 {
     register struct gauss_specific *gauss_sp =
 	(struct gauss_specific *)cp;
@@ -381,7 +374,7 @@ gauss_free(genptr_t cp)
     while (BU_LIST_WHILE(p, reg_db_internals, &gauss_sp->dbil)) {
 	BU_LIST_DEQUEUE(&(p->l));
 	bu_free(p->ip.idb_ptr, "internal ptr");
-	bu_free((genptr_t)p, "gauss reg_db_internals");
+	bu_free((void *)p, "gauss reg_db_internals");
     }
 
     BU_PUT(cp, struct gauss_specific);
@@ -472,14 +465,12 @@ eval_seg(struct application *ap, struct reg_db_internals *dbint, struct seg *seg
 
 
 /*
- * G A U S S _ R E N D E R
- *
  * This is called (from viewshade() in shade.c) once for each hit point
  * to be shaded.  The purpose here is to fill in values in the shadework
  * structure.
  */
 int
-gauss_render(struct application *ap, const struct partition *pp, struct shadework *swp, genptr_t dp)
+gauss_render(struct application *ap, const struct partition *pp, struct shadework *swp, void *dp)
 
 
 /* defined in material.h */

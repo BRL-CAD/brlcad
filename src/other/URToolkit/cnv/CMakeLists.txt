@@ -2,8 +2,18 @@ include_directories(
 	${UTAHRLE_INCLUDE_DIR}
 	${${CMAKE_PROJECT_NAME}_SOURCE_DIR}/include
 	${CMAKE_CURRENT_SOURCE_DIR}
+	${CMAKE_CURRENT_BINARY_DIR}
 	${CMAKE_CURRENT_SOURCE_DIR}/rletogif
 )
+
+include(CheckIncludeFiles)
+include(CheckFunctionExists)
+
+check_function_exists(gethostname HAVE_GETHOSTNAME)
+check_include_files (unistd.h HAVE_UNISTD_H)
+check_include_files (winsock.h HAVE_WINSOCK_H)
+
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/config.h.in ${CMAKE_CURRENT_BINARY_DIR}/config.h)
 
 # Disabled due to various external dependancies:
 #	iristorle
@@ -38,7 +48,10 @@ URT_EXEC(rletopaint rletopaint.c)
 URT_EXEC(rletops rletops.c)
 # URT_EXEC(rletorast rletorast.c)
 URT_EXEC(rletoraw rletoraw.c)
-URT_EXEC(rletorla rletorla.c)
+URT_EXEC(rletorla "rletorla.c config.h.in")
+if(MINGW)
+	target_link_libraries(rletorla ws2_32)
+endif(MINGW)
 URT_EXEC(rletotarga rletotarga.c)
 # URT_EXEC(rletotiff rletotiff.c)
 URT_EXEC(rletovcr rletovcr.c)

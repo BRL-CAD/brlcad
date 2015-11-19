@@ -1,7 +1,7 @@
 /*                       F B C M R O T . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2013 United States Government as represented by
+ * Copyright (c) 1986-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -32,10 +32,10 @@
 #ifdef HAVE_SYS_TIME_H
 #  include <sys/time.h>		/* For struct timeval */
 #endif
-#include "bselect.h"
-#include "bio.h"
+#include "bsocket.h"
 
-#include "bu.h"
+#include "bu/getopt.h"
+#include "bu/log.h"
 #include "fb.h"
 #include "vmath.h"
 
@@ -47,7 +47,7 @@ double fps = 0.0;	/* frames per second */
 int increment = 1;
 int onestep = 0;
 
-FBIO *fbp;
+fb *fbp;
 
 static char usage[] = "\
 Usage: fbcmrot [-H -i increment] steps_per_second\n";
@@ -113,7 +113,7 @@ main(int argc, char **argv)
 	tv.tv_usec = (long) (((1.0 / fps) - tv.tv_sec) * 1000000);
     }
 
-    if ((fbp = fb_open(NULL, size, size)) == FBIO_NULL) {
+    if ((fbp = fb_open(NULL, size, size)) == FB_NULL) {
 	fprintf(stderr, "fbcmrot:  fb_open failed\n");
 	return 1;
     }

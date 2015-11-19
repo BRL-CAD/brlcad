@@ -1,7 +1,7 @@
 /*                        I F _ O G L . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2013 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @addtogroup if */
+/** @addtogroup libfb */
 /** @{ */
 /** @file if_ogl.c
  *
@@ -61,6 +61,7 @@
 #define access acs
 #define remainder rem
 #ifdef HAVE_GL_GLX_H
+#  define class REDEFINE_CLASS_STRING_TO_AVOID_CXX_CONFLICT
 #  include <GL/glx.h>
 #endif
 #undef remainder
@@ -72,19 +73,15 @@
 #ifdef HAVE_GL_GL_H
 #  include <GL/gl.h>
 #endif
+#include "bresource.h"
 
-#ifdef HAVE_UNISTD_H
-#  include <unistd.h>	/* for getpagesize */
-#endif
-
-#ifdef HAVE_SYS_WAIT_H
-#  include <sys/wait.h>
-#endif
-#include "bio.h"
-
-#include "bu.h"
+#include "bu/color.h"
+#include "bu/malloc.h"
+#include "bu/parallel.h"
+#include "bu/str.h"
+#include "fb_private.h"
 #include "fb.h"
-
+#include "fb/fb_ogl.h"
 
 #define CJDEBUG 0
 #define DIRECT_COLOR_VISUAL_ALLOWED 0
@@ -272,9 +269,6 @@ HIDDEN struct modeflags {
 };
 
 
-/*
- * S I G K I D
- */
 HIDDEN void
 sigkid(int UNUSED(pid))
 {
@@ -287,7 +281,7 @@ sigkid(int UNUSED(pid))
  * screen if one_y equals -1.
  */
 HIDDEN void
-backbuffer_to_screen(register FBIO *ifp, int one_y)
+backbuffer_to_screen(register fb *ifp, int one_y)
 {
     struct ogl_clip *clp;
 
@@ -357,13 +351,12 @@ backbuffer_to_screen(register FBIO *ifp, int one_y)
 }
 
 
-/* O G L _ X M I T _ S C A N L I N E S
- *
+/*
  * Note: unlike sgi_xmit_scanlines, this function updates an arbitrary
  * rectangle of the frame buffer
  */
 HIDDEN void
-ogl_xmit_scanlines(register FBIO *ifp, int ybase, int nlines, int xbase, int npix)
+ogl_xmit_scanlines(register fb *ifp, int ybase, int nlines, int xbase, int npix)
 {
     register int y;
     register int n;
@@ -482,11 +475,8 @@ ogl_xmit_scanlines(register FBIO *ifp, int ybase, int nlines, int xbase, int npi
 }
 
 
-/**
- * O G L _ C M I N I T
- */
 HIDDEN void
-ogl_cminit(register FBIO *ifp)
+ogl_cminit(register fb *ifp)
 {
     register int i;
 
@@ -503,8 +493,6 @@ ogl_cminit(register FBIO *ifp)
 /************************************************************************/
 
 /**
- * O G L _ G E T M E M
- *
  * not changed from sgi_getmem.
  *
  * Because there is no hardware zoom or pan, we need to repaint the
@@ -532,14 +520,14 @@ ogl_cminit(register FBIO *ifp)
  * might need to be increased.
  */
 HIDDEN int
-ogl_getmem(FBIO *ifp)
+ogl_getmem(fb *ifp)
 {
-#define SHMEM_KEY 42
     int pixsize;
     int size;
     int i;
     char *sp;
-    int new = 0;
+    int new_mem = 0;
+    int shm_result = 0;
 
     errno = 0;
 
@@ -551,12 +539,12 @@ ogl_getmem(FBIO *ifp)
 	pixsize = ifp->if_height * ifp->if_width * sizeof(struct ogl_pixel);
 	size = pixsize + sizeof(struct ogl_cmap);
 
-	sp = calloc(1, size);
+	sp = (char *)calloc(1, size);
 	if (sp == 0) {
 	    fb_log("ogl_getmem: frame buffer memory malloc failed\n");
 	    goto fail;
 	}
-	new = 1;
+	new_mem = 1;
 	goto success;
     }
 
@@ -572,26 +560,12 @@ ogl_getmem(FBIO *ifp)
 	sizeof(struct ogl_pixel);
 
     size = pixsize + sizeof(struct ogl_cmap);
-    size = (size + getpagesize()-1) & ~(getpagesize()-1);
 
-    /* First try to attach to an existing one */
-    if ((SGI(ifp)->mi_shmid = shmget(SHMEM_KEY, size, 0)) < 0) {
-	/* No existing one, create a new one */
-	if ((SGI(ifp)->mi_shmid = shmget(
-		 SHMEM_KEY, size, IPC_CREAT|0666)) < 0) {
-	    fb_log("ogl_getmem: shmget failed, errno=%d\n", errno);
-	    goto fail;
-	}
-	new = 1;
-    }
 
-    /* WWW this is unnecessary in this version? */
-    /* Open the segment Read/Write */
-    /* This gets mapped to a high address on some platforms, so no problem. */
-    if ((sp = shmat(SGI(ifp)->mi_shmid, 0, 0)) == (char *)(-1L)) {
-	fb_log("ogl_getmem: shmat returned x%x, errno=%d\n", sp, errno);
-	goto fail;
-    }
+    shm_result = bu_shmget(&(SGI(ifp)->mi_shmid), &sp, SHMEM_KEY, (size_t)size);
+
+    if (shm_result == 1) goto fail;
+    if (shm_result == -1) new_mem = 1;
 
 success:
     ifp->if_mem = sp;
@@ -600,23 +574,20 @@ success:
     CMB(ifp)[255] = i;
 
     /* Provide non-black colormap on creation of new shared mem */
-    if (new)
+    if (new_mem)
 	ogl_cminit(ifp);
     return 0;
 fail:
     fb_log("ogl_getmem:  Unable to attach to shared memory.\n");
-    if ((sp = calloc(1, size)) == NULL) {
+    if ((sp = (char *)calloc(1, size)) == NULL) {
 	fb_log("ogl_getmem:  malloc failure\n");
 	return -1;
     }
-    new = 1;
+    new_mem = 1;
     goto success;
 }
 
 
-/**
- * O G L _ Z A P M E M
- */
 void
 ogl_zapmem(void)
 {
@@ -638,8 +609,6 @@ ogl_zapmem(void)
 
 
 /**
- * O G L _ C L I P P E R
- *
  * Given:- the size of the viewport in pixels (vp_width, vp_height)
  *	 - the size of the framebuffer image (if_width, if_height)
  *	 - the current view center (if_xcenter, if_ycenter)
@@ -651,7 +620,7 @@ ogl_zapmem(void)
  *		(xpixmin, xpixmax, ypixmin, ypixmax)
  */
 void
-ogl_clipper(register FBIO *ifp)
+ogl_clipper(register fb *ifp)
 {
     register struct ogl_clip *clp;
     register int i;
@@ -712,7 +681,7 @@ ogl_clipper(register FBIO *ifp)
 
 
 HIDDEN void
-expose_callback(FBIO *ifp)
+expose_callback(fb *ifp)
 {
     XWindowAttributes xwa;
     struct ogl_clip *clp;
@@ -838,12 +807,12 @@ expose_callback(FBIO *ifp)
 }
 
 
-void
-ogl_configureWindow(FBIO *ifp, int width, int height)
+int
+ogl_configureWindow(fb *ifp, int width, int height)
 {
     if (width == OGL(ifp)->win_width &&
 	height == OGL(ifp)->win_height)
-	return;
+	return 1;
 
     ifp->if_width = ifp->if_max_width = width;
     ifp->if_height = ifp->if_max_height = height;
@@ -859,11 +828,12 @@ ogl_configureWindow(FBIO *ifp, int width, int height)
 
     ogl_getmem(ifp);
     ogl_clipper(ifp);
+    return 0;
 }
 
 
 HIDDEN void
-ogl_do_event(FBIO *ifp)
+ogl_do_event(fb *ifp)
 {
     XEvent event;
 
@@ -944,8 +914,6 @@ ogl_do_event(FBIO *ifp)
 
 
 /**
- * O G L _ C H O O S E _ V I S U A L
- *
  * Select an appropriate visual, and set flags.
  *
  * The user requires support for:
@@ -969,10 +937,10 @@ ogl_do_event(FBIO *ifp)
  * Return NULL on failure.
  */
 HIDDEN XVisualInfo *
-fb_ogl_choose_visual(FBIO *ifp)
+fb_ogl_choose_visual(fb *ifp)
 {
 
-    XVisualInfo *vip, *vibase, *maxvip, template;
+    XVisualInfo *vip, *vibase, *maxvip, _template;
 #define NGOOD 200
     int good[NGOOD];
     int num, i, j;
@@ -983,21 +951,23 @@ fb_ogl_choose_visual(FBIO *ifp)
     m_sing_buf  = ((ifp->if_mode & MODE_9MASK)==MODE_9SINGLEBUF);
     m_doub_buf =  !m_sing_buf;
 
-    memset((void *)&template, 0, sizeof(XVisualInfo));
+    memset((void *)&_template, 0, sizeof(XVisualInfo));
 
     /* get a list of all visuals on this display */
-    vibase = XGetVisualInfo(OGL(ifp)->dispp, 0, &template, &num);
+    vibase = XGetVisualInfo(OGL(ifp)->dispp, 0, &_template, &num);
     while (1) {
 
 	/* search for all visuals matching current criteria */
-	for (i=0, j=0, vip=vibase; i<num; i++, vip++) {
+	for (i = 0, j = 0, vip=vibase; i < num; i++, vip++) {
 	    /* requirements */
 	    glXGetConfig(OGL(ifp)->dispp, vip, GLX_USE_GL, &use);
-	    if (!use)
+	    if (!use) {
 		continue;
+	    }
 	    glXGetConfig(OGL(ifp)->dispp, vip, GLX_RGBA, &rgba);
-	    if (!rgba)
+	    if (!rgba) {
 		continue;
+	    }
 	    /* desires */
 	    /* X_CreateColormap needs a DirectColor visual */
 	    /* There should be some way of handling this with TrueColor,
@@ -1009,15 +979,19 @@ fb_ogl_choose_visual(FBIO *ifp)
 	     red, green, blue masks:    0xff0000, 0xff00, 0xff
 	     significant bits in color specification:    8 bits
 	    */
-	    if ((m_hard_cmap) && (vip->class!=DirectColor))
+	    if ((m_hard_cmap) && (vip->class != DirectColor)) {
 		continue;
-	    if ((m_hard_cmap) && (vip->colormap_size<256))
+	    }
+	    if ((m_hard_cmap) && (vip->colormap_size < 256)) {
 		continue;
+	    }
 	    glXGetConfig(OGL(ifp)->dispp, vip, GLX_DOUBLEBUFFER, &dbfr);
-	    if ((m_doub_buf) && (!dbfr))
+	    if ((m_doub_buf) && (!dbfr)) {
 		continue;
-	    if ((m_sing_buf) && (dbfr))
+	    }
+	    if ((m_sing_buf) && (dbfr)) {
 		continue;
+	    }
 
 	    /* this visual meets criteria */
 	    if (j >= NGOOD-1) {
@@ -1029,9 +1003,9 @@ fb_ogl_choose_visual(FBIO *ifp)
 
 	/* from list of acceptable visuals,
 	 * choose the visual with the greatest depth */
-	if (j>=1) {
+	if (j >= 1) {
 	    maxvip = vibase + good[0];
-	    for (i=1; i<j; i++) {
+	    for (i = 1; i < j; i++) {
 		vip = vibase + good[i];
 		if (vip->depth > maxvip->depth) {
 		    maxvip = vip;
@@ -1071,17 +1045,15 @@ fb_ogl_choose_visual(FBIO *ifp)
 
 
 /**
- * I S _ L I N E A R _ C M A P
- *
  * Check for a color map being linear in R, G, and B.  Returns 1 for
  * linear map, 0 for non-linear map (i.e., non-identity map).
  */
 HIDDEN int
-is_linear_cmap(register FBIO *ifp)
+is_linear_cmap(register fb *ifp)
 {
     register int i;
 
-    for (i=0; i<256; i++) {
+    for (i = 0; i < 256; i++) {
 	if (CMR(ifp)[i] != i) return 0;
 	if (CMG(ifp)[i] != i) return 0;
 	if (CMB(ifp)[i] != i) return 0;
@@ -1091,14 +1063,14 @@ is_linear_cmap(register FBIO *ifp)
 
 
 HIDDEN int
-fb_ogl_open(FBIO *ifp, const char *file, int width, int height)
+fb_ogl_open(fb *ifp, const char *file, int width, int height)
 {
     static char title[128];
     int mode, i, direct;
     long valuemask;
     XSetWindowAttributes swa;
 
-    FB_CK_FBIO(ifp);
+    FB_CK_FB(ifp);
 
     /*
      * First, attempt to determine operating mode for this open,
@@ -1364,8 +1336,9 @@ fb_ogl_open(FBIO *ifp, const char *file, int width, int height)
 }
 
 
+
 int
-_ogl_open_existing(FBIO *ifp, Display *dpy, Window win, Colormap cmap, XVisualInfo *vip, int width, int height, GLXContext glxc, int double_buffer, int soft_cmap)
+_ogl_open_existing(fb *ifp, Display *dpy, Window win, Colormap cmap, XVisualInfo *vip, int width, int height, GLXContext glxc, int double_buffer, int soft_cmap)
 {
 
     /*XXX for now use private memory */
@@ -1429,57 +1402,43 @@ _ogl_open_existing(FBIO *ifp, Display *dpy, Window win, Colormap cmap, XVisualIn
     return 0;
 }
 
-
-int
-ogl_open_existing(FBIO *ifp, int argc, const char **argv)
+HIDDEN struct fb_platform_specific *
+ogl_get_fbps(uint32_t magic)
 {
-    Display *dpy;
-    Window win;
-    Colormap cmap;
-    XVisualInfo *vip;
-    int width;
-    int height;
-    GLXContext glxc;
-    int double_buffer;
-    int soft_cmap;
+    struct fb_platform_specific *fb_ps = NULL;
+    struct ogl_fb_info *data = NULL;
+    BU_GET(fb_ps, struct fb_platform_specific);
+    BU_GET(data, struct ogl_fb_info);
+    fb_ps->magic = magic;
+    fb_ps->data = data;
+    return fb_ps;
+}
 
-    if (argc != 10)
-	return -1;
 
-    if (sscanf(argv[1], "%p", (void **)&dpy) != 1)
-	return -1;
+HIDDEN void
+ogl_put_fbps(struct fb_platform_specific *fbps)
+{
+    BU_CKMAG(fbps, FB_OGL_MAGIC, "ogl framebuffer");
+    BU_PUT(fbps->data, struct ogl_fb_info);
+    BU_PUT(fbps, struct fb_platform_specific);
+    return;
+}
 
-    if (sscanf(argv[2], "%p", (void **)&win) != 1)
-	return -1;
+HIDDEN int
+ogl_open_existing(fb *ifp, int width, int height, struct fb_platform_specific *fb_p)
+{
+    struct ogl_fb_info *ogl_internal = (struct ogl_fb_info *)fb_p->data;
+    BU_CKMAG(fb_p, FB_OGL_MAGIC, "ogl framebuffer");
+    return _ogl_open_existing(ifp, ogl_internal->dpy, ogl_internal->win,
+	    ogl_internal->cmap, ogl_internal->vip, width, height, ogl_internal->glxc,
+	    ogl_internal->double_buffer, ogl_internal->soft_cmap);
 
-    if (sscanf(argv[3], "%p", (void **)&cmap) != 1)
-	return -1;
-
-    if (sscanf(argv[4], "%p", (void **)&vip) != 1)
-	return -1;
-
-    if (sscanf(argv[5], "%d", &width) != 1)
-	return -1;
-
-    if (sscanf(argv[6], "%d", &height) != 1)
-	return -1;
-
-    if (sscanf(argv[7], "%p", (void **)&glxc) != 1)
-	return -1;
-
-    if (sscanf(argv[8], "%d", &double_buffer) != 1)
-	return -1;
-
-    if (sscanf(argv[9], "%d", &soft_cmap) != 1)
-	return -1;
-
-    return _ogl_open_existing(ifp, dpy, win, cmap, vip, width, height,
-			      glxc, double_buffer, soft_cmap);
+        return 0;
 }
 
 
 HIDDEN int
-ogl_final_close(FBIO *ifp)
+ogl_final_close(fb *ifp)
 {
 
     if (CJDEBUG) {
@@ -1521,7 +1480,7 @@ ogl_final_close(FBIO *ifp)
 
 
 HIDDEN int
-ogl_flush(FBIO *ifp)
+ogl_flush(fb *ifp)
 {
     if ((ifp->if_mode & MODE_12MASK) == MODE_12DELAY_WRITES_TILL_FLUSH) {
 	if (glXMakeCurrent(OGL(ifp)->dispp, OGL(ifp)->wind, OGL(ifp)->glxc)==False) {
@@ -1546,7 +1505,7 @@ ogl_flush(FBIO *ifp)
 
 
 HIDDEN int
-fb_ogl_close(FBIO *ifp)
+fb_ogl_close(fb *ifp)
 {
 
     ogl_flush(ifp);
@@ -1593,7 +1552,7 @@ fb_ogl_close(FBIO *ifp)
 
 
 int
-ogl_close_existing(FBIO *ifp)
+ogl_close_existing(fb *ifp)
 {
     if (OGL(ifp)->cursor)
 	XDestroyWindow(OGL(ifp)->dispp, OGL(ifp)->cursor);
@@ -1626,12 +1585,10 @@ ogl_close_existing(FBIO *ifp)
 
 
 /*
- * O G L _ P O L L
- *
  * Handle any pending input events
  */
 HIDDEN int
-ogl_poll(FBIO *ifp)
+ogl_poll(fb *ifp)
 {
     ogl_do_event(ifp);
 
@@ -1643,12 +1600,10 @@ ogl_poll(FBIO *ifp)
 
 
 /*
- * O G L _ F R E E
- *
  * Free shared memory resources, and close.
  */
 HIDDEN int
-ogl_free(FBIO *ifp)
+ogl_free(fb *ifp)
 {
     int ret;
 
@@ -1665,9 +1620,7 @@ ogl_free(FBIO *ifp)
 
 
 HIDDEN int
-ogl_clear(FBIO *ifp, unsigned char *pp)
-
-/* pointer to beginning of memory segment*/
+ogl_clear(fb *ifp, unsigned char *pp)
 {
     struct ogl_pixel bg;
     register struct ogl_pixel *oglp;
@@ -1676,59 +1629,60 @@ ogl_clear(FBIO *ifp, unsigned char *pp)
 
     if (CJDEBUG) printf("entering ogl_clear\n");
 
-    if (glXMakeCurrent(OGL(ifp)->dispp, OGL(ifp)->wind, OGL(ifp)->glxc)==False) {
-	fb_log("Warning, ogl_clear: glXMakeCurrent unsuccessful.\n");
-    }
-
     /* Set clear colors */
     if (pp != RGBPIXEL_NULL) {
 	bg.alpha = 0;
 	bg.red   = (pp)[RED];
 	bg.green = (pp)[GRN];
 	bg.blue  = (pp)[BLU];
-	glClearColor(pp[RED]/255.0, pp[GRN]/255.0, pp[BLU]/255.0, 0.0);
     } else {
 	bg.alpha = 0;
 	bg.red   = 0;
 	bg.green = 0;
 	bg.blue  = 0;
-	glClearColor(0, 0, 0, 0);
     }
 
     /* Flood rectangle in shared memory */
-    for (y=0; y < ifp->if_height; y++) {
+    for (y = 0; y < ifp->if_height; y++) {
 	oglp = (struct ogl_pixel *)&ifp->if_mem[
 	    (y*SGI(ifp)->mi_memwidth+0)*sizeof(struct ogl_pixel) ];
-	for (cnt=ifp->if_width-1; cnt >= 0; cnt--) {
+	for (cnt = ifp->if_width-1; cnt >= 0; cnt--) {
 	    *oglp++ = bg;	/* struct copy */
 	}
     }
 
-
-    /* Update screen */
     if (OGL(ifp)->use_ext_ctrl) {
-	glClear(GL_COLOR_BUFFER_BIT);
-    } else {
-	if (OGL(ifp)->copy_flag) {
-	    /* COPY mode: clear both buffers */
-	    if (OGL(ifp)->front_flag) {
-		glDrawBuffer(GL_BACK);
-		glClear(GL_COLOR_BUFFER_BIT);
-		glDrawBuffer(GL_FRONT);
-		glClear(GL_COLOR_BUFFER_BIT);
-	    } else {
-		glDrawBuffer(GL_FRONT);
-		glClear(GL_COLOR_BUFFER_BIT);
-		glDrawBuffer(GL_BACK);
-		glClear(GL_COLOR_BUFFER_BIT);
-	    }
-	} else {
-	    glClear(GL_COLOR_BUFFER_BIT);
-	    if (SGI(ifp)->mi_doublebuffer) {
-		glXSwapBuffers(OGL(ifp)->dispp, OGL(ifp)->wind);
-	    }
-	}
+	return 0;
+    }
 
+    if (glXMakeCurrent(OGL(ifp)->dispp, OGL(ifp)->wind, OGL(ifp)->glxc)==False) {
+	fb_log("Warning, ogl_clear: glXMakeCurrent unsuccessful.\n");
+    }
+
+    if (pp != RGBPIXEL_NULL) {
+	glClearColor(pp[RED]/255.0, pp[GRN]/255.0, pp[BLU]/255.0, 0.0);
+    } else {
+	glClearColor(0, 0, 0, 0);
+    }
+
+    if (OGL(ifp)->copy_flag) {
+	/* COPY mode: clear both buffers */
+	if (OGL(ifp)->front_flag) {
+	    glDrawBuffer(GL_BACK);
+	    glClear(GL_COLOR_BUFFER_BIT);
+	    glDrawBuffer(GL_FRONT);
+	    glClear(GL_COLOR_BUFFER_BIT);
+	} else {
+	    glDrawBuffer(GL_FRONT);
+	    glClear(GL_COLOR_BUFFER_BIT);
+	    glDrawBuffer(GL_BACK);
+	    glClear(GL_COLOR_BUFFER_BIT);
+	}
+    } else {
+	glClear(GL_COLOR_BUFFER_BIT);
+	if (SGI(ifp)->mi_doublebuffer) {
+	    glXSwapBuffers(OGL(ifp)->dispp, OGL(ifp)->wind);
+	}
     }
 
     /* unattach context for other threads to use */
@@ -1738,11 +1692,8 @@ ogl_clear(FBIO *ifp, unsigned char *pp)
 }
 
 
-/*
- * O G L _ V I E W
- */
 HIDDEN int
-ogl_view(FBIO *ifp, int xcenter, int ycenter, int xzoom, int yzoom)
+ogl_view(fb *ifp, int xcenter, int ycenter, int xzoom, int yzoom)
 {
     struct ogl_clip *clp;
 
@@ -1813,11 +1764,8 @@ ogl_view(FBIO *ifp, int xcenter, int ycenter, int xzoom, int yzoom)
 }
 
 
-/*
- * O G L _ G E T V I E W
- */
 HIDDEN int
-ogl_getview(FBIO *ifp, int *xcenter, int *ycenter, int *xzoom, int *yzoom)
+ogl_getview(fb *ifp, int *xcenter, int *ycenter, int *xzoom, int *yzoom)
 {
     if (CJDEBUG) printf("entering ogl_getview\n");
 
@@ -1832,7 +1780,7 @@ ogl_getview(FBIO *ifp, int *xcenter, int *ycenter, int *xzoom, int *yzoom)
 
 /* read count pixels into pixelp starting at x, y */
 HIDDEN ssize_t
-ogl_read(FBIO *ifp, int x, int y, unsigned char *pixelp, size_t count)
+ogl_read(fb *ifp, int x, int y, unsigned char *pixelp, size_t count)
 {
     size_t n;
     size_t scan_count;	/* # pix on this scanline */
@@ -1883,7 +1831,7 @@ ogl_read(FBIO *ifp, int x, int y, unsigned char *pixelp, size_t count)
 
 /* write count pixels from pixelp starting at xstart, ystart */
 HIDDEN ssize_t
-ogl_write(FBIO *ifp, int xstart, int ystart, const unsigned char *pixelp, size_t count)
+ogl_write(fb *ifp, int xstart, int ystart, const unsigned char *pixelp, size_t count)
 {
     size_t scan_count;	/* # pix on this scanline */
     register unsigned char *cp;
@@ -2007,14 +1955,12 @@ ogl_write(FBIO *ifp, int xstart, int ystart, const unsigned char *pixelp, size_t
 
 
 /*
- * O G L _ W R I T E R E C T
- *
  * The task of this routine is to reformat the pixels into SGI
  * internal form, and then arrange to have them sent to the screen
  * separately.
  */
 HIDDEN int
-ogl_writerect(FBIO *ifp, int xmin, int ymin, int width, int height, const unsigned char *pp)
+ogl_writerect(fb *ifp, int xmin, int ymin, int width, int height, const unsigned char *pp)
 {
     register int x;
     register int y;
@@ -2073,14 +2019,12 @@ ogl_writerect(FBIO *ifp, int xmin, int ymin, int width, int height, const unsign
 
 
 /*
- * O G L _ B W W R I T E R E C T
- *
  * The task of this routine is to reformat the pixels into SGI
  * internal form, and then arrange to have them sent to the screen
  * separately.
  */
 HIDDEN int
-ogl_bwwriterect(FBIO *ifp, int xmin, int ymin, int width, int height, const unsigned char *pp)
+ogl_bwwriterect(fb *ifp, int xmin, int ymin, int width, int height, const unsigned char *pp)
 {
     register int x;
     register int y;
@@ -2139,7 +2083,7 @@ ogl_bwwriterect(FBIO *ifp, int xmin, int ymin, int width, int height, const unsi
 
 
 HIDDEN int
-ogl_rmap(register FBIO *ifp, register ColorMap *cmp)
+ogl_rmap(register fb *ifp, register ColorMap *cmp)
 {
     register int i;
 
@@ -2155,11 +2099,8 @@ ogl_rmap(register FBIO *ifp, register ColorMap *cmp)
 }
 
 
-/*
- * O G L _ W M A P
- */
 HIDDEN int
-ogl_wmap(register FBIO *ifp, register const ColorMap *cmp)
+ogl_wmap(register fb *ifp, register const ColorMap *cmp)
 {
     register int i;
     int prev;	/* !0 = previous cmap was non-linear */
@@ -2218,11 +2159,8 @@ ogl_wmap(register FBIO *ifp, register const ColorMap *cmp)
 }
 
 
-/*
- * O G L _ H E L P
- */
 HIDDEN int
-ogl_help(FBIO *ifp)
+ogl_help(fb *ifp)
 {
     struct modeflags *mfp;
     XVisualInfo *visual = OGL(ifp)->vip;
@@ -2271,8 +2209,7 @@ ogl_help(FBIO *ifp)
 	    fb_log("\tStaticGray: Fixed map (R=G=B), single index\n");
 	    break;
 	default:
-	    fb_log("\tUnknown visual class %d\n",
-		   visual->class);
+	    fb_log("\tUnknown visual class %d\n", visual->class);
 	    break;
     }
     fb_log("\tColormap Size: %d\n", visual->colormap_size);
@@ -2287,16 +2224,16 @@ ogl_help(FBIO *ifp)
 
 
 HIDDEN int
-ogl_setcursor(FBIO *ifp, const unsigned char *UNUSED(bits), int UNUSED(xbits), int UNUSED(ybits), int UNUSED(xorig), int UNUSED(yorig))
+ogl_setcursor(fb *ifp, const unsigned char *UNUSED(bits), int UNUSED(xbits), int UNUSED(ybits), int UNUSED(xorig), int UNUSED(yorig))
 {
-    FB_CK_FBIO(ifp);
+    FB_CK_FB(ifp);
 
     return 0;
 }
 
 
 HIDDEN int
-ogl_cursor(FBIO *ifp, int mode, int x, int y)
+ogl_cursor(fb *ifp, int mode, int x, int y)
 {
     if (mode) {
 	register int xx, xy;
@@ -2359,7 +2296,7 @@ ogl_cursor(FBIO *ifp, int mode, int x, int y)
 
 
 int
-ogl_refresh(FBIO *ifp, int x, int y, int w, int h)
+ogl_refresh(fb *ifp, int x, int y, int w, int h)
 {
     int mm;
     struct ogl_clip *clp;
@@ -2397,16 +2334,24 @@ ogl_refresh(FBIO *ifp, int x, int y, int w, int h)
     glPopMatrix();
     glMatrixMode(mm);
 
-    glFlush();
+    if (!OGL(ifp)->use_ext_ctrl) {
+	glFlush();
+    }
+
     return 0;
 }
 
 
 /* This is the ONLY thing that we normally "export" */
-FBIO ogl_interface =
+fb ogl_interface =
 {
     0,			/* magic number slot */
+    FB_OGL_MAGIC,
     fb_ogl_open,	/* open device */
+    ogl_open_existing,    /* existing device_open */
+    ogl_close_existing,    /* existing device_close */
+    ogl_get_fbps,         /* get platform specific memory */
+    ogl_put_fbps,         /* free platform specific memory */
     fb_ogl_close,	/* close device */
     ogl_clear,		/* clear device */
     ogl_read,		/* read pixels */
@@ -2422,6 +2367,8 @@ FBIO ogl_interface =
     ogl_writerect,	/* write rectangle */
     fb_sim_bwreadrect,
     ogl_bwwriterect,	/* write rectangle */
+    ogl_configureWindow,
+    ogl_refresh,
     ogl_poll,		/* process events */
     ogl_flush,		/* flush output */
     ogl_free,		/* free resources */
@@ -2445,6 +2392,7 @@ FBIO ogl_interface =
     0L,			/* page_curpos */
     0L,			/* page_pixels */
     0,			/* debug */
+    60000000,		/* refresh rate (from fbserv, which had 60 seconds as its default... not sure why) */
     {0}, /* u1 */
     {0}, /* u2 */
     {0}, /* u3 */
@@ -2453,6 +2401,11 @@ FBIO ogl_interface =
     {0}  /* u6 */
 };
 
+/* Because class is actually used to access a struct
+ * entry in this file, preserve our redefinition
+ * of class for the benefit of avoiding C++ name
+ * collisions until the end of this file */
+#undef class
 
 #else
 

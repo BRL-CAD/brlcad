@@ -5,6 +5,7 @@ set(OPTICAL_INCLUDE_DIRS
   ${BU_INCLUDE_DIRS}
   ${BN_INCLUDE_DIRS}
   ${RT_INCLUDE_DIRS}
+  ${TCL_INCLUDE_DIRS}
   )
 BRLCAD_LIB_INCLUDE_DIRS(optical OPTICAL_INCLUDE_DIRS "")
 
@@ -106,11 +107,11 @@ if(BRLCAD_ENABLE_OSL)
   set(LIBOPTICAL_SOURCES ${LIBOPTICAL_SOURCES} sh_osl.cpp)
 
   # Link liboptical with osl-renderer library
-  BRLCAD_ADDLIB(liboptical "${LIBOPTICAL_SOURCES}" "librt;libbn;libbu;liboslrend")
+  BRLCAD_ADDLIB(liboptical "${LIBOPTICAL_SOURCES}" "librt;libbn;libbu;liboslrend;${TCL_LIBRARY}")
 
 else(BRLCAD_ENABLE_OSL)
 
-  BRLCAD_ADDLIB(liboptical "${LIBOPTICAL_SOURCES}" "librt;libbn;libbu")
+  BRLCAD_ADDLIB(liboptical "${LIBOPTICAL_SOURCES}" "librt;libbn;libbu;${TCL_LIBRARY}")
 
 endif(BRLCAD_ENABLE_OSL)
 

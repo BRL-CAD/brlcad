@@ -40,11 +40,11 @@
 
 
 <refsect1 xml:id='description'><title>DESCRIPTION</title>
-<para><emphasis remap='I'>Bwcrop</emphasis>
+<para><command>bwcrop</command>
 crops any quadrilateral out of an arbitrarily large
 <citerefentry><refentrytitle>bw</refentrytitle><manvolnum>5</manvolnum></citerefentry>
 input file
-(<emphasis remap='I'>in.bw</emphasis>)<emphasis remap='I'>,</emphasis>
+(<emphasis remap='I'>in.bw</emphasis>),
 squares that region to a given height and width output size,
 and writes the result to
 <emphasis remap='I'>out.bw</emphasis>.
@@ -55,14 +55,17 @@ All responses should be pixel counts or first
 quadrant coordinates.
 The second form allows all of the needed parameters to be given
 on the command line and is intended for use from shell scripts.
-The coordinate names stand for upper-left-x, lower-right-y, etc.</para>
+The coordinate names (the eight arguments listed above after
+<replaceable>outheight</replaceable>) refer to the input file,
+and more specifically to upper-left-x (ulx), lower-right-y (lry), etc.,
+in clockwise-from-upper-left order.</para>
 
 <para>The nearest input pixel is selected for each output pixel.  No
 interpolation is done by this program.</para>
 </refsect1>
 
 <refsect1 xml:id='see_also'><title>SEE ALSO</title>
-<para><citerefentry><refentrytitle>brlcad</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>bwrect</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>bwscale</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>bw</refentrytitle><manvolnum>5</manvolnum></citerefentry>.</para>
+<para><citerefentry><refentrytitle>brlcad</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>bwrect</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>bwscale</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>bw</refentrytitle><manvolnum>5</manvolnum></citerefentry></para>
 </refsect1>
 
 <refsect1 xml:id='author'><title>AUTHOR</title>
@@ -71,7 +74,7 @@ interpolation is done by this program.</para>
 </refsect1>
 
 <refsect1 xml:id='copyright'><title>COPYRIGHT</title>
-<para>This software is Copyright (c) 1989-2013 by the United States
+<para>This software is Copyright (c) 1989-2014 by the United States
 Government as represented by U.S. Army Research Laboratory.</para>
 </refsect1>
 

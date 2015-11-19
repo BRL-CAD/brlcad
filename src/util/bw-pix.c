@@ -1,7 +1,7 @@
 /*                        B W - P I X . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2013 United States Government as represented by
+ * Copyright (c) 1986-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -23,31 +23,47 @@
  * color one by replicating each value three times.
  *
  */
+
 #include "common.h"
+
 #include <stdlib.h>
-#include <stdio.h>
 #include "bio.h"
+
+#include "bu/getopt.h"
+#include "bu/log.h"
+#include "bu/mime.h"
 #include "icv.h"
-#include "bu.h"
+
 
 char usage[] = "\
-Usage: bw-pix [-h] [-o out_file.pix] [file.pix] > [out_file.pix]\n";
+Usage: bw-pix [[-s squaresize] [-w width] [-n height]]\n\
+[-o out_file.pix] [file.bw] > [out_file.pix]\n";
 
 char *out_file = NULL;
 char *in_file = NULL;
+int inx=0, iny=0;
+
 
 int
 get_args(int argc, char **argv)
 {
     int c;
 
-    while ((c = bu_getopt(argc, argv, "o:h?")) != -1) {
+    while ((c = bu_getopt(argc, argv, "s:w:n:o:h?")) != -1) {
 	switch (c) {
 	    case 'o':
 		out_file = bu_optarg;
 		break;
-	    case 'h':
-	    default:		/* '?' */
+	    case 's' :
+               inx = iny = atoi(bu_optarg);
+               break;
+            case 'w' :
+               inx = atoi(bu_optarg);
+               break;
+            case 'n' :
+               iny = atoi(bu_optarg);
+               break;
+	    default:		/* '?' 'h' */
 		return 0;
 	}
     }
@@ -83,11 +99,15 @@ main(int argc, char **argv)
 	return 1;
     }
 
-    img = icv_read(in_file, ICV_IMAGE_BW, 0, 0);
+    setmode(fileno(stdin), O_BINARY);
+    setmode(fileno(stdout), O_BINARY);
+    setmode(fileno(stderr), O_BINARY);
+
+    img = icv_read(in_file, MIME_IMAGE_BW, inx, iny);
     if (img == NULL)
 	return 1;
     icv_gray2rgb(img);
-    icv_write(img, out_file, ICV_IMAGE_PIX);
+    icv_write(img, out_file, MIME_IMAGE_PIX);
     icv_destroy(img);
     return 0;
 }

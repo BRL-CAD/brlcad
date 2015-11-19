@@ -1,7 +1,7 @@
 /*                        I D E N T S . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2013 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -31,6 +31,7 @@
 #include <signal.h>
 
 #include "vmath.h"
+#include "bu/log.h"
 
 #include "./burst.h"
 #include "./extern.h"
@@ -39,9 +40,7 @@
 #define DEBUG_IDENTS 0
 
 int
-findIdents(ident, idp)
-    int ident;
-    Ids *idp;
+findIdents(int ident, Ids *idp)
 {
 #if DEBUG_IDENTS
     brst_log("findIdents(%d)\n", ident);

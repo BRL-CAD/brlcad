@@ -1,7 +1,7 @@
 /*                        S S C A N F . C
  * BRL-CAD
  *
- * Copyright (c) 2012-2013 United States Government as represented by
+ * Copyright (c) 2012-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * Copyright (c) 1990, 1993 The Regents of the University of California.
@@ -47,7 +47,7 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "bu.h"
+#include "bu/log.h"
 
 
 /*
@@ -109,20 +109,18 @@ bu_vsscanf(const char *src, const char *fmt0, va_list ap)
     int c;
     long flags;
     size_t i, width;
-    int numCharsConsumed, partConsumed;
-    int numFieldsAssigned, partAssigned;
+    int numCharsConsumed = 0;
+    int partConsumed = 0;
+    int numFieldsAssigned = 0;
+    int partAssigned = 0;
     struct bu_vls partFmt = BU_VLS_INIT_ZERO;
     const char *fmt;
 
+    /* If these fail, hard to guarantee safety - bomb */
     BU_ASSERT(src != NULL);
     BU_ASSERT(fmt0 != NULL);
 
     fmt = fmt0;
-
-    numFieldsAssigned = 0;
-    numCharsConsumed = 0;
-    partConsumed = 0;
-    partAssigned = 0;
 
 #define UPDATE_COUNTS \
     numCharsConsumed += partConsumed; \
@@ -237,7 +235,7 @@ bu_vsscanf(const char *src, const char *fmt0, va_list ap)
 	    case 't':
 #ifndef HAVE_C99_FORMAT_SPECIFIERS
 		/* remove C99 't' */
-		bu_vls_trunc(&partFmt, bu_vls_strlen(&partFmt) - 1);
+		bu_vls_trunc(&partFmt, (int)(bu_vls_strlen(&partFmt) - 1));
 
 		/* Assume MSVC.
 		 *
@@ -256,7 +254,7 @@ bu_vsscanf(const char *src, const char *fmt0, va_list ap)
 	    case 'z':
 #ifndef HAVE_C99_FORMAT_SPECIFIERS
 		/* remove C99 'z' */
-		bu_vls_trunc(&partFmt, bu_vls_strlen(&partFmt) - 1);
+		bu_vls_trunc(&partFmt, (int)(bu_vls_strlen(&partFmt) - 1));
 
 		/* Assume MSVC.
 		 *
@@ -285,7 +283,7 @@ bu_vsscanf(const char *src, const char *fmt0, va_list ap)
 		     * Will use %h[diouxX] with short instead, then cast into
 		     * char argument.
 		     */
-		    bu_vls_trunc(&partFmt, bu_vls_strlen(&partFmt) - 1);
+		    bu_vls_trunc(&partFmt, (int)(bu_vls_strlen(&partFmt) - 1));
 #endif
 		    /* Since SHORT is set, the previous conversion character must
 		     * have been 'h'. With this second 'h', we know we have an "hh"
@@ -342,7 +340,7 @@ bu_vsscanf(const char *src, const char *fmt0, va_list ap)
 		 * implementations, and there is varying support for E/F/G.
 		 * Replace all with the most portable 'f' variant.
 		 */
-		bu_vls_trunc(&partFmt, bu_vls_strlen(&partFmt) - 1);
+		bu_vls_trunc(&partFmt, (int)(bu_vls_strlen(&partFmt) - 1));
 		bu_vls_putc(&partFmt, 'f');
 		c = CT_FLOAT;
 		break;

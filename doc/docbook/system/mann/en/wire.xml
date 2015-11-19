@@ -1,5 +1,3 @@
-<!-- Converted by db4-upgrade version 1.0 -->
-
 <refentry xmlns="http://docbook.org/ns/docbook" version="5.0" xml:id="wire1">
 
 <refmeta>
@@ -32,7 +30,7 @@
     ending points of the different segments of wires along with the radius at each
     of these points.  Currently the program is limited to 10 segments.  This
     number may be changed by changing the variable MAXSEG.  MAXSEG may be no greater
-    than 100 with out changing other parts of the program.  The wires are composed
+    than 100 without changing other parts of the program.  The wires are composed
     of cones and spheres.  This program is designed to be run interactively.
  </para>
 </refsection>
@@ -77,7 +75,7 @@ Segment # 3:  (0.000000, 10.000000, -3.000000) 0.250000
   </example>
 
   <para>
-  In this example a wire of three segments is made.  These
+  In this example, a wire of three segments is made.  These
   segments  are  joined together with spheres.  All dimensions
   are in millimeters.
   </para>
@@ -91,8 +89,8 @@ Segment # 3:  (0.000000, 10.000000, -3.000000) 0.250000
 <refsection xml:id="copyright"><title>COPYRIGHT</title>
 
   <para>
-    This software is Copyright (c) 2005-2013 United States Government as
-    represented by the U.S. Army Research Laboratory. All rights reserved.
+    This software is Copyright (c) 2005-2014 United States Government as
+    represented by the U.S. Army Research Laboratory.
   </para>
 </refsection>
 

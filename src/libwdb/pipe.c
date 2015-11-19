@@ -1,7 +1,7 @@
 /*                          P I P E . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2013 United States Government as represented by
+ * Copyright (c) 1990-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -35,14 +35,12 @@
 
 #include "common.h"
 
-#include <stdio.h>
 #include <math.h>
 #include "bio.h"
 
-#include "bu.h"
 #include "vmath.h"
 #include "bn.h"
-#include "rtgeom.h"
+#include "rt/geom.h"
 #include "raytrace.h"
 #include "wdb.h"
 
@@ -60,7 +58,7 @@ mk_particle(struct rt_wdb *fp, const char *name, fastf_t *vertex, fastf_t *heigh
     part->part_hrad = hradius;
     part->part_type = 0;		/* sanity, unused */
 
-    return wdb_export(fp, name, (genptr_t)part, ID_PARTICLE, mk_conv2mm);
+    return wdb_export(fp, name, (void *)part, ID_PARTICLE, mk_conv2mm);
 }
 
 
@@ -80,7 +78,7 @@ mk_pipe(struct rt_wdb *fp, const char *name, struct bu_list *headp)
     /* linked list from caller */
     BU_LIST_APPEND_LIST(&pipep->pipe_segs_head, headp);
 
-    return wdb_export(fp, name, (genptr_t)pipep, ID_PIPE, mk_conv2mm);
+    return wdb_export(fp, name, (void *)pipep, ID_PIPE, mk_conv2mm);
 }
 
 

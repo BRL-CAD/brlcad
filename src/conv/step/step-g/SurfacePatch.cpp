@@ -1,7 +1,7 @@
 /*                 SurfacePatch.cpp
  * BRL-CAD
  *
- * Copyright (c) 1994-2013 United States Government as represented by
+ * Copyright (c) 1994-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -72,12 +72,15 @@ SurfacePatch::~SurfacePatch()
 bool
 SurfacePatch::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
 {
+    if (!sw || !sse)
+	return false;
+
     step = sw;
     id = sse->STEPfile_id;
 
     if (!FoundedItem::Load(sw, sse)) {
 	std::cout << CLASSNAME << ":Error loading base class ::Curve." << std::endl;
-	return false;
+	goto step_error;
     }
 
     // need to do this for local attributes to makes sure we have
@@ -88,25 +91,28 @@ SurfacePatch::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
 	SDAI_Application_instance *entity = step->getEntityAttribute(sse, "parent_surface");
 	if (entity != NULL) {
 	    parent_surface = dynamic_cast<BoundedSurface *>(Factory::CreateObject(sw, entity));
-	} else {
+	}
+	if (!entity || !parent_surface) {
 	    std::cout << CLASSNAME << ":Error loading member field \"parent_surface\"." << std::endl;
-	    return false;
+	    goto step_error;
 	}
     }
 
     u_transition = (Transition_code)step->getEnumAttribute(sse, "u_transition");
-    if (u_transition > Transition_code_unset) {
-	u_transition = Transition_code_unset;
-    }
+    V_MIN(u_transition, Transition_code_unset);
+
     v_transition = (Transition_code)step->getEnumAttribute(sse, "v_transition");
-    if (v_transition > Transition_code_unset) {
-	v_transition = Transition_code_unset;
-    }
+    V_MIN(v_transition, Transition_code_unset);
 
     u_sense = step->getBooleanAttribute(sse, "u_sense");
     v_sense = step->getBooleanAttribute(sse, "v_sense");
 
+    sw->entity_status[id] = STEP_LOADED;
+
     return true;
+step_error:
+    sw->entity_status[id] = STEP_LOAD_ERROR;
+    return false;
 }
 
 void
@@ -125,10 +131,13 @@ SurfacePatch::Print(int level)
     std::cout << "u_transition:" << Transition_code_string[u_transition] << std::endl;
     TAB(level + 1);
     std::cout << "v_transition:" << Transition_code_string[v_transition] << std::endl;
-    TAB(level + 1);
-    std::cout << "u_sense:" << step->getBooleanString(u_sense) << std::endl;
-    TAB(level + 1);
-    std::cout << "v_sense:" << step->getBooleanString(v_sense) << std::endl;
+
+    if (step) {
+	TAB(level + 1);
+	std::cout << "u_sense:" << step->getBooleanString(u_sense) << std::endl;
+	TAB(level + 1);
+	std::cout << "v_sense:" << step->getBooleanString(v_sense) << std::endl;
+    }
 
     TAB(level);
     std::cout << "Inherited Attributes:" << std::endl;

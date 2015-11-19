@@ -1,7 +1,7 @@
 /*                 GeometricRepresentationContext.cpp
  * BRL-CAD
  *
- * Copyright (c) 1994-2013 United States Government as represented by
+ * Copyright (c) 1994-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -60,6 +60,7 @@ GeometricRepresentationContext::Load(STEPWrapper *sw, SDAI_Application_instance 
     // load base class attributes
     if (!RepresentationContext::Load(sw, sse)) {
 	std::cout << CLASSNAME << ":Error loading base class ::RepresentationContext." << std::endl;
+	sw->entity_status[id] = STEP_LOAD_ERROR;
 	return false;
     }
 
@@ -68,6 +69,8 @@ GeometricRepresentationContext::Load(STEPWrapper *sw, SDAI_Application_instance 
     sse = step->getEntity(sse, ENTITYNAME);
 
     coordinate_space_dimension = step->getIntegerAttribute(sse, "coordinate_space_dimension");
+
+    sw->entity_status[id] = STEP_LOADED;
 
     return true;
 }

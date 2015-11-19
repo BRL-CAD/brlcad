@@ -1,7 +1,7 @@
 /*                        G - I G E S . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2013 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -44,17 +44,20 @@
 #include "vmath.h"
 #include "nmg.h"
 #include "raytrace.h"
-#include "rtgeom.h"
+#include "rt/geom.h"
 
+#include "bu/parallel.h"
+#include "bu/getopt.h"
 /* private */
 #include "./iges.h"
+#include "brlcad_ident.h"
 #include "brlcad_version.h"
 
 
 #define CP_BUF_SIZE 4096	/* size of buffer for file copy */
 #define SUFFIX_LEN 10 /* max size of suffix for 'part' files (-m option) */
 
-extern union tree *do_nmg_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, genptr_t client_data);
+extern union tree *do_nmg_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, void *client_data);
 void w_start_global(
     FILE *fp_dir,
     FILE *fp_param,
@@ -69,10 +72,10 @@ extern void write_vertex_list(struct nmgregion *r, struct bu_ptbl *vtab, FILE *f
 extern void nmg_region_edge_list(struct bu_ptbl *tab, struct nmgregion *r);
 extern int nmgregion_to_iges(char *name, struct nmgregion *r, int dependent, FILE *fp_dir, FILE *fp_param);
 extern int write_shell_face_loop(struct nmgregion *r, int edge_de, struct bu_ptbl *etab, int vert_de, struct bu_ptbl *vtab, FILE *fp_dir, FILE *fp_param);
-extern void csg_comb_func(struct db_i *dbip, struct directory *dp, genptr_t ptr);
-extern void csg_leaf_func(struct db_i *dbip, struct directory *dp, genptr_t ptr);
+extern void csg_comb_func(struct db_i *dbip, struct directory *dp, void *ptr);
+extern void csg_leaf_func(struct db_i *dbip, struct directory *dp, void *ptr);
 extern void set_iges_tolerances(struct bn_tol *set_tol, struct rt_tess_tol *set_ttol);
-extern void count_refs(struct db_i *dbip, struct directory *dp, genptr_t ptr);
+extern void count_refs(struct db_i *dbip, struct directory *dp, void *ptr);
 extern int nmgregion_to_tsurf(char *name, struct nmgregion *r, FILE *fp_dir, FILE *fp_param);
 extern int write_solid_instance(int orig_de, mat_t mat, FILE *fp_dir, FILE *fp_param);
 extern void get_props(struct iges_properties *props, struct rt_comb_internal *comb);
@@ -184,9 +187,6 @@ char **independent;
 size_t no_of_indeps = 0;
 int do_nurbs = 0;
 
-/*
- * M A I N
- */
 int
 main(int argc, char *argv[])
 {
@@ -223,8 +223,6 @@ main(int argc, char *argv[])
 
     the_model = nmg_mm();
     BU_LIST_INIT(&RTG.rtg_vlfree);	/* for vlist macros */
-
-    rt_init_resource(&rt_uniresource, 0, NULL);
 
     prog_name = argv[0];
 
@@ -347,7 +345,7 @@ main(int argc, char *argv[])
 			   0,			/* take all regions */
 			   do_nmg_region_end,
 			   nmg_booltree_leaf_tess,
-			   (genptr_t)NULL);	/* in librt/nmg_bool.c */
+			   (void *)NULL);	/* in librt/nmg_bool.c */
 
 	if (ret)
 	    bu_exit(1, "g-iges: Could not facetize anything!");
@@ -394,7 +392,7 @@ main(int argc, char *argv[])
 			   0,			/* take all regions */
 			   do_nmg_region_end,
 			   nmg_booltree_leaf_tess,
-			   (genptr_t)NULL);	/* in librt/nmg_bool.c */
+			   (void *)NULL);	/* in librt/nmg_bool.c */
 
 	if (ret)
 	    bu_exit(1, "g-iges: Could not facetize anything!");
@@ -446,7 +444,7 @@ main(int argc, char *argv[])
 static union tree *
 process_boolean(struct db_tree_state *tsp, union tree *curtree, const struct db_full_path *pathp)
 {
-    union tree *result = NULL;
+    static union tree *result = NULL;
 
     /* Begin bomb protection */
     if (!BU_SETJUMP) {
@@ -487,14 +485,12 @@ process_boolean(struct db_tree_state *tsp, union tree *curtree, const struct db_
 
 
 /*
- * D O _ N M G _ R E G I O N _ E N D
- *
  * Called from db_walk_tree().
  *
  * This routine must be prepared to run in parallel.
  */
 union tree *
-do_nmg_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, genptr_t UNUSED(client_data))
+do_nmg_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, void *UNUSED(client_data))
 {
     union tree *result;
     struct nmgregion *r;
@@ -554,7 +550,7 @@ do_nmg_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, u
 
 		/* construct a unique file name */
 		len = strlen(output_file) + strlen(dp->d_namep) + 6 + SUFFIX_LEN;
-		multi_name = bu_malloc(sizeof(char)*len, "multi_name");
+		multi_name = (char *)bu_malloc(sizeof(char)*len, "multi_name");
 		snprintf(multi_name, len, "%s/%s.igs", output_file, dp->d_namep);
 		bu_strlcpy(suffix, "a", sizeof(suffix));
 		suffix[0]--;
@@ -566,7 +562,7 @@ do_nmg_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, u
 
 		    /* not unique, try adding a suffix */
 		    len = strlen(suffix);
-		    i = len - 1;;
+		    i = len - 1;
 		    suffix[i]++;
 		    while (suffix[i] > 'z' && i > 0) {
 			suffix[i] = 'a';
@@ -658,11 +654,8 @@ do_nmg_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, u
 static int de_pointer_number;
 
 int
-get_de_pointers(tp, dp, de_len, de_pointers)
-    union tree *tp;
-    struct directory *dp;
-    int de_len;
-    int *de_pointers;
+get_de_pointers(union tree *tp, struct directory *dp, int de_len,
+		int *de_pointers)
 {
     RT_CK_TREE(tp);
     RT_CK_DIR(dp);
@@ -714,12 +707,12 @@ get_de_pointers(tp, dp, de_len, de_pointers)
 
 
 void
-csg_comb_func(struct db_i *dbip, struct directory *dp, genptr_t UNUSED(ptr))
+csg_comb_func(struct db_i *dbip, struct directory *dp, void *UNUSED(ptr))
 {
     struct rt_db_internal intern;
     struct rt_comb_internal *comb;
     struct iges_properties props;
-    int comb_len;
+    size_t comb_len;
     size_t i;
     int dependent = 1;
     int *de_pointers;
@@ -765,7 +758,7 @@ csg_comb_func(struct db_i *dbip, struct directory *dp, genptr_t UNUSED(ptr))
     comb_form = 0;
 
     de_pointer_number = 0;
-    if (get_de_pointers(comb->tree, dp, comb_len, de_pointers)) {
+    if (get_de_pointers(comb->tree, dp, (int)comb_len, de_pointers)) {
 	bu_log("Error in combination %s\n", dp->d_namep);
 	bu_free((char *)de_pointers, "csg_comb_func de_pointers");
 	rt_db_free_internal(&intern);
@@ -785,7 +778,7 @@ csg_comb_func(struct db_i *dbip, struct directory *dp, genptr_t UNUSED(ptr))
     props.color[2] = 0;
     get_props(&props, comb);
 
-    dp->d_uses = (-comb_to_iges(comb, comb_len, dependent, &props, de_pointers, fp_dir, fp_param));
+    dp->d_uses = (-comb_to_iges(comb, (int)comb_len, dependent, &props, de_pointers, fp_dir, fp_param));
 
     if (!dp->d_uses) {
 	comb_error++;
@@ -799,7 +792,7 @@ csg_comb_func(struct db_i *dbip, struct directory *dp, genptr_t UNUSED(ptr))
 
 
 void
-csg_leaf_func(struct db_i *dbip, struct directory *dp, genptr_t UNUSED(ptr))
+csg_leaf_func(struct db_i *dbip, struct directory *dp, void *UNUSED(ptr))
 {
     struct rt_db_internal ip;
 
@@ -831,7 +824,7 @@ csg_leaf_func(struct db_i *dbip, struct directory *dp, genptr_t UNUSED(ptr))
 
 
 void
-incr_refs(struct db_i *dbip, struct rt_comb_internal *comb, union tree *tp, genptr_t UNUSED(user_ptr1), genptr_t UNUSED(user_ptr2), genptr_t UNUSED(user_ptr3), genptr_t UNUSED(user_ptr4))
+incr_refs(struct db_i *dbip, struct rt_comb_internal *comb, union tree *tp, void *UNUSED(user_ptr1), void *UNUSED(user_ptr2), void *UNUSED(user_ptr3), void *UNUSED(user_ptr4))
 {
     struct directory *dp;
 
@@ -847,7 +840,7 @@ incr_refs(struct db_i *dbip, struct rt_comb_internal *comb, union tree *tp, genp
 
 
 void
-count_refs(struct db_i *dbip, struct directory *dp, genptr_t UNUSED(ptr))
+count_refs(struct db_i *dbip, struct directory *dp, void *UNUSED(ptr))
 {
     struct rt_db_internal intern;
     struct rt_comb_internal *comb;
@@ -874,7 +867,7 @@ count_refs(struct db_i *dbip, struct directory *dp, genptr_t UNUSED(ptr))
     comb_form = 0;
 
     db_tree_funcleaf(dbip, comb, comb->tree, incr_refs,
-		     (genptr_t)NULL, (genptr_t)NULL, (genptr_t)NULL, (genptr_t)NULL);
+		     (void *)NULL, (void *)NULL, (void *)NULL, (void *)NULL);
 
 }
 

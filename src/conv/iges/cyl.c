@@ -1,7 +1,7 @@
 /*                           C Y L . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2013 United States Government as represented by
+ * Copyright (c) 1990-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -22,8 +22,7 @@
 #include "./iges_extern.h"
 
 int
-cyl(entityno)
-    int entityno;
+cyl(int entityno)
 {
     fastf_t radius = 0.0;
     point_t base;		/* center point of base */

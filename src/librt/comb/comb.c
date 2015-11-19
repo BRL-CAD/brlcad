@@ -1,7 +1,7 @@
 /*                          C O M B . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2013 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -42,15 +42,16 @@
 #include "common.h"
 
 #include <stdlib.h>
-#include <stdio.h>
 #include <string.h>
 #include <ctype.h>
 #include "bio.h"
 
-#include "bu.h"
+
+#include "bu/parse.h"
+#include "bu/cv.h"
 #include "vmath.h"
 #include "bn.h"
-#include "db5.h"
+#include "rt/db5.h"
 #include "raytrace.h"
 
 
@@ -67,8 +68,6 @@ struct db_tree_counter_state {
 
 
 /**
- * D B _ T R E E _ C O U N T E R
- *
  * Count number of non-identity matrices, number of leaf nodes,
  * number of operator nodes, etc.
  *
@@ -79,7 +78,7 @@ struct db_tree_counter_state {
  * holding the matrix subscripts.  The caller is responsible for
  * correcting by saying:
  *
- * tcsp->leafbytes -= tcsp->n_leaf * (8 - db5_enc_len[wid]);
+ * tcsp->leafbytes -= tcsp->n_leaf * (8 - DB5_ENC_LEN(wid));
  */
 size_t
 db_tree_counter(const union tree *tp, struct db_tree_counter_state *tcsp)
@@ -153,8 +152,6 @@ struct rt_comb_v5_serialize_state {
 
 
 /**
- * R T _ C O M B _ V 5 _ S E R I A L I Z E
- *
  * In one single pass through the tree, serialize out all three output
  * sections at once.
  */
@@ -251,9 +248,6 @@ rt_comb_v5_serialize(
 }
 
 
-/**
- * R T _ C O M B _ E X P O R T 5
- */
 int
 rt_comb_export5(
     struct bu_external *ep,
@@ -309,22 +303,22 @@ rt_comb_export5(
      * 'wid'.  Ignore the slight chance that a smaller 'wid' might now
      * be possible.
      */
-    tcs.leafbytes -= tcs.n_leaf * (8 - db5_enc_len[wid]);
+    tcs.leafbytes -= tcs.n_leaf * (8 - DB5_ENC_LEN(wid));
 
     /* Second pass -- determine amount of on-disk storage needed */
     need =  1 +			/* width code */
-	db5_enc_len[wid] + 	/* size for nmatrices */
-	db5_enc_len[wid] +	/* size for nleaves */
-	db5_enc_len[wid] +	/* size for leafbytes */
-	db5_enc_len[wid] +	/* size for len of RPN */
-	db5_enc_len[wid] +	/* size for max_stack_depth */
+	DB5_ENC_LEN(wid) + 	/* size for nmatrices */
+	DB5_ENC_LEN(wid) +	/* size for nleaves */
+	DB5_ENC_LEN(wid) +	/* size for leafbytes */
+	DB5_ENC_LEN(wid) +	/* size for len of RPN */
+	DB5_ENC_LEN(wid) +	/* size for max_stack_depth */
 	tcs.n_mat * (ELEMENTS_PER_MAT * SIZEOF_NETWORK_DOUBLE) +	/* sizeof matrix array */
 	tcs.leafbytes +		/* size for leaf nodes */
 	rpn_len;		/* storage for RPN expression */
 
     BU_EXTERNAL_INIT(ep);
     ep->ext_nbytes = need;
-    ep->ext_buf = bu_calloc(1, need, "rt_comb_export5 ext_buf");
+    ep->ext_buf = (uint8_t *)bu_calloc(1, need, "rt_comb_export5 ext_buf");
 
     /* Build combination's on-disk header section */
     cp = (unsigned char *)ep->ext_buf;
@@ -484,7 +478,7 @@ rt_comb_import5(struct rt_db_internal *ip, const struct bu_external *ep,
     BU_ALLOC(comb, struct rt_comb_internal);
     RT_COMB_INTERNAL_INIT(comb);
 
-    ip->idb_ptr = (genptr_t)comb;
+    ip->idb_ptr = (void *)comb;
 
     cp = ep->ext_buf;
     wid = *cp++;
@@ -792,8 +786,6 @@ finish:
 
 
 /**
- * R T _ C O M B _ G E T
- *
  * Sets the result string to a description of the given combination.
  * Entered via OBJ[].ft_get().
  */
@@ -906,8 +898,6 @@ rt_comb_get(struct bu_vls *logstr, const struct rt_db_internal *intern, const ch
 
 
 /**
- * R T _ C O M B _ A D J U S T
- *
  * Example -
  * rgb "1 2 3" ...
  *
@@ -1075,9 +1065,6 @@ not_region:
 }
 
 
-/**
- * R T _ C O M B _ F O R M
- */
 int
 rt_comb_form(struct bu_vls *logstr, const struct rt_functab *ftp)
 {
@@ -1090,8 +1077,6 @@ rt_comb_form(struct bu_vls *logstr, const struct rt_functab *ftp)
 
 
 /**
- * R T _ C O M B _ M A K E
- *
  * Create a blank combination with appropriate values.  Called via
  * OBJ[ID_COMBINATION].ft_make().
  */

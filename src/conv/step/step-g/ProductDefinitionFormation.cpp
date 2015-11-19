@@ -1,7 +1,7 @@
 /*                 ProductDefinitionFormation.cpp
  * BRL-CAD
  *
- * Copyright (c) 1994-2013 United States Government as represented by
+ * Copyright (c) 1994-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -54,6 +54,8 @@ ProductDefinitionFormation::ProductDefinitionFormation(STEPWrapper *sw, int step
 
 ProductDefinitionFormation::~ProductDefinitionFormation()
 {
+    // created through factory will be deleted there.
+    of_product = NULL;
 }
 
 string ProductDefinitionFormation::ClassName()
@@ -66,9 +68,22 @@ string ProductDefinitionFormation::Ident()
     return ident;
 }
 
-string ProductDefinitionFormation::Description()
+string
+ProductDefinitionFormation::Description()
 {
     return description;
+}
+
+string
+ProductDefinitionFormation::GetProductName()
+{
+    return of_product->Name();
+}
+
+int
+ProductDefinitionFormation::GetProductId()
+{
+    return of_product->GetId();
 }
 
 bool ProductDefinitionFormation::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
@@ -87,11 +102,15 @@ bool ProductDefinitionFormation::Load(STEPWrapper *sw, SDAI_Application_instance
 	SDAI_Application_instance *entity = step->getEntityAttribute(sse, "of_product");
 	if (entity) { //this attribute is optional
 	    of_product = dynamic_cast<Product *>(Factory::CreateObject(sw, entity));
-	} else {
+	}
+	if (!entity || !of_product) {
 	    std::cout << CLASSNAME << ":Error loading attribute 'of_product'." << std::endl;
+	    sw->entity_status[id] = STEP_LOAD_ERROR;
 	    return false;
 	}
     }
+
+    sw->entity_status[id] = STEP_LOADED;
 
     return true;
 }

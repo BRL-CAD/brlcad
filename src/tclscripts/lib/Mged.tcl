@@ -1,7 +1,7 @@
 #                        M G E D . T C L
 # BRL-CAD
 #
-# Copyright (c) 1998-2013 United States Government as represented by
+# Copyright (c) 1998-2014 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -97,7 +97,6 @@ option add *Mged.height 400 widgetDefault
 	method ls {args}
 	method lt {args}
 	method make {args}
-	method make_bb {name args}
 	method make_name {args}
 	method match {args}
 	method mater {args}
@@ -117,6 +116,7 @@ option add *Mged.height 400 widgetDefault
 	method pathlist {args}
 	method paths {args}
 	method prcolor {args}
+	method pull {args}
 	method push {args}
 	method put {args}
 	method r {args}
@@ -542,10 +542,6 @@ option add *Mged.height 400 widgetDefault
 	    return [lindex $result 1]
 	}
     }
-}
-
-::itcl::body Mged::make_bb {name args} {
-    eval $db make_bb $name $args
 }
 
 ::itcl::body Mged::make_name {args} {

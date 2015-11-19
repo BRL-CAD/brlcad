@@ -1,7 +1,7 @@
 /*                         C O P Y M A T . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2013 United States Government as represented by
+ * Copyright (c) 2008-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -28,7 +28,6 @@
 #include <stdlib.h>
 #include <ctype.h>
 #include <string.h>
-#include "bio.h"
 
 #include "./ged_private.h"
 
@@ -136,7 +135,7 @@ ged_copymat(struct ged *gedp, int argc, const char *argv[])
 	else
 	    MAT_COPY(tp->tr_l.tl_mat, ts.ts_mat);
     } else if (tp->tr_l.tl_mat != NULL) {
-	bu_free((genptr_t) tp->tr_l.tl_mat, "tl_mat");
+	bu_free((void *) tp->tr_l.tl_mat, "tl_mat");
 	tp->tr_l.tl_mat = (matp_t) 0;
     }
 

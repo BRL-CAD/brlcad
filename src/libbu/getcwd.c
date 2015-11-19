@@ -1,7 +1,7 @@
 /*                        G E T C W D . C
  * BRL-CAD
  *
- * Copyright (c) 2011-2013 United States Government as represented by
+ * Copyright (c) 2011-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -28,28 +28,31 @@
 #ifdef HAVE_UNISTD_H
 #  include <unistd.h>
 #endif
+#ifdef HAVE_DIRECT_H
+#  include <direct.h>
+#endif
 #ifdef HAVE_SYS_PARAM_H /* for MAXPATHLEN */
 #  include <sys/param.h>
 #endif
 #include <string.h>
 
-#include "bu.h"
-
+#include "bu/file.h"
+#include "bu/log.h"
+#include "bu/malloc.h"
+#include "bu/str.h"
 
 char *
 bu_getcwd(char *buf, size_t size)
 {
     char *cwd = NULL;
     char *pwd = NULL;
-    char *rwd = NULL;
     char cbuf[MAXPATHLEN] = {0};
-    char rbuf[MAXPATHLEN] = {0};
     size_t sz = size;
 
     /* NULL buf means allocate */
     if (!buf) {
 	sz = MAXPATHLEN;
-	buf = bu_calloc(1, sz, "alloc bu_getcwd");
+	buf = (char *)bu_calloc(1, sz, "alloc bu_getcwd");
     }
 
     /* FIRST: try getcwd */
@@ -60,7 +63,9 @@ bu_getcwd(char *buf, size_t size)
 	&& bu_file_exists(cwd, NULL))
     {
 #ifdef HAVE_REALPATH
-	rwd = realpath(cbuf, rbuf);
+	/* FIXME: shouldn't have gotten here with -std=c99 (HAVE_REALPATH test not working right?) */
+	char rbuf[MAXPATHLEN] = {0};
+	char *rwd = bu_realpath(cbuf, rbuf);
 	if (rwd
 	    && strlen(rwd) > 0
 	    && bu_file_exists(rwd, NULL))
@@ -87,7 +92,8 @@ bu_getcwd(char *buf, size_t size)
 	&& bu_file_exists(pwd, NULL))
     {
 #ifdef HAVE_REALPATH
-	rwd = realpath(pwd, rbuf);
+	char rbuf[MAXPATHLEN] = {0};
+	char *rwd = realpath(pwd, rbuf);
 	if (rwd
 	    && strlen(rwd) > 0
 	    && bu_file_exists(rwd, NULL))

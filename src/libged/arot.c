@@ -1,7 +1,7 @@
 /*                         A R O T . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2013 United States Government as represented by
+ * Copyright (c) 2008-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -28,7 +28,6 @@
 #include <stdlib.h>
 #include <ctype.h>
 #include <string.h>
-#include "bio.h"
 
 #include "./ged_private.h"
 
@@ -82,7 +81,7 @@ ged_arot_args(struct ged *gedp, int argc, const char *argv[], mat_t rmat)
     VSETALL(pt, 0.0);
     VUNITIZE(axis);
     VMOVE(axisv, axis);
-    bn_mat_arb_rot(rmat, pt, axisv, angle*bn_degtorad);
+    bn_mat_arb_rot(rmat, pt, axisv, angle*DEG2RAD);
 
     return GED_OK;
 }

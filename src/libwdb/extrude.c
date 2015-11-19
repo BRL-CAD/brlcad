@@ -1,7 +1,7 @@
 /*                       E X T R U D E . C
  * BRL-CAD
  *
- * Copyright (c) 2000-2013 United States Government as represented by
+ * Copyright (c) 2000-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -26,16 +26,14 @@
 
 #include "common.h"
 
-#include <stdio.h>
 #include <math.h>
 #include <string.h>
 #include "bio.h"
 
-#include "bu.h"
-#include "db.h"
+#include "rt/db4.h"
 #include "vmath.h"
 #include "bn.h"
-#include "rtgeom.h"
+#include "rt/geom.h"
 #include "raytrace.h"
 #include "wdb.h"
 
@@ -62,7 +60,7 @@ mk_extrusion(
     extr->keypoint = keypoint;
     extr->skt = (struct rt_sketch_internal *)NULL;
 
-    return wdb_export(fp, name, (genptr_t)extr, ID_EXTRUDE, mk_conv2mm);
+    return wdb_export(fp, name, (void *)extr, ID_EXTRUDE, mk_conv2mm);
 }
 
 

@@ -1,7 +1,7 @@
 /*                      P A R A L L E L . H
  * BRL-CAD
  *
- * Copyright (c) 2013 United States Government as represented by
+ * Copyright (c) 2013-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -18,7 +18,8 @@
  * information.
  */
 
-#include "bu.h"
+#ifndef LIBBU_PARALLEL_H
+#define LIBBU_PARALLEL_H
 
 /**
  * Set affinity mask of current thread to the CPU set it is currently
@@ -35,6 +36,7 @@ extern int parallel_set_affinity(int cpu);
 extern void thread_set_cpu(int cpu);
 extern int thread_get_cpu(void);
 
+#endif /* LIBBU_PARALLEL_H */
 
 /*
  * Local Variables:

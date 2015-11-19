@@ -1,7 +1,7 @@
 /*                        G - A C A D . C
  * BRL-CAD
  *
- * Copyright (c) 1996-2013 United States Government as represented by
+ * Copyright (c) 1996-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -38,9 +38,11 @@
 #include "bio.h"
 
 /* interface headers */
+#include "bu/parallel.h"
+#include "bu/getopt.h"
 #include "vmath.h"
 #include "nmg.h"
-#include "rtgeom.h"
+#include "rt/geom.h"
 #include "raytrace.h"
 
 
@@ -324,14 +326,12 @@ process_region(const struct db_full_path *pathp, union tree *curtree, struct db_
 
 
 /*
- * D O _ R E G I O N _ E N D
- *
  * Called from db_walk_tree().
  *
  * This routine must be prepared to run in parallel.
  */
 union tree *
-do_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, genptr_t UNUSED(client_data))
+do_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, void *UNUSED(client_data))
 {
     union tree *ret_tree = NULL;
     struct bu_list vhead;
@@ -474,9 +474,6 @@ do_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union
 }
 
 
-/*
- * M A I N
- */
 int
 main(int argc, char **argv)
 {
@@ -502,12 +499,10 @@ main(int argc, char **argv)
 
     /* FIXME: These need to be improved */
     tol.magic = BN_TOL_MAGIC;
-    tol.dist = 0.0005;
+    tol.dist = BN_TOL_DIST;
     tol.dist_sq = tol.dist * tol.dist;
     tol.perp = 1e-6;
     tol.para = 1 - tol.perp;
-
-    rt_init_resource(&rt_uniresource, 0, NULL);
 
     the_model = nmg_mm();
     BU_LIST_INIT(&RTG.rtg_vlfree);	/* for vlist macros */
@@ -563,9 +558,7 @@ main(int argc, char **argv)
 
     if (!output_file) {
 	fp = stdout;
-#if defined(_WIN32) && !defined(__CYGWIN__)
 	setmode(fileno(fp), O_BINARY);
-#endif
     } else {
 	/* Open output file */
 	if ((fp=fopen(output_file, "wb+")) == NULL) {
@@ -577,9 +570,7 @@ main(int argc, char **argv)
     /* Open g-acad error log file */
     if (!error_file) {
 	fpe = stderr;
-#if defined(_WIN32) && !defined(__CYGWIN__)
 	setmode(fileno(fpe), O_BINARY);
-#endif
     } else if ((fpe=fopen(error_file, "wb")) == NULL) {
 	perror(argv[0]);
 	bu_exit(1, "Cannot open output file (%s) for writing\n", error_file);
@@ -635,7 +626,7 @@ main(int argc, char **argv)
 			0,			/* take all regions */
 			do_region_end,
 			nmg_booltree_leaf_tess,
-			(genptr_t)NULL);	/* in librt/nmg_bool.c */
+			(void *)NULL);	/* in librt/nmg_bool.c */
 
     percent = 0;
     if (regions_tried>0) {

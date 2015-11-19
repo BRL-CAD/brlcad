@@ -1,7 +1,7 @@
 /*                     G - V O X E L . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2013 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -17,6 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
+#include "bu/getopt.h"
 #include "analyze.h"
 
 
@@ -32,12 +33,12 @@ struct voxelizeData
  * Function to print values to File
  */
 HIDDEN void
-printToFile(genptr_t callBackData, int x, int y, int z, const char *a, fastf_t fill) {
+printToFile(void *callBackData, int x, int y, int z, const char *a, fastf_t fill) {
     struct voxelizeData *dataValues = (struct voxelizeData *)callBackData;
     FILE *fp;
 
     if ((a != NULL) && (dataValues->threshold <= fill)) {
-	fp = fopen("voxels1.txt","a");
+	fp = fopen("voxels1.txt", "a");
 
 	if (fp != NULL) {
 	    fastf_t voxel[3];
@@ -54,9 +55,6 @@ printToFile(genptr_t callBackData, int x, int y, int z, const char *a, fastf_t f
 }
 
 
-/*
- * M A I N
- */
 int
 main(int argc, char **argv)
 {
@@ -64,7 +62,7 @@ main(int argc, char **argv)
     static const char *usage = "[-s \"dx dy dz\"] [-d n] [-t f] model.g objects...\n";
     struct voxelizeData dataValues;
     int levelOfDetail;
-    genptr_t callBackData;
+    void *callBackData;
     int c;
     int gottree = 0;
 
@@ -111,7 +109,7 @@ main(int argc, char **argv)
 		break;
 
 	    case 't':
-		if(sscanf(bu_optarg, "%lf", &dataValues.threshold) != 1) {
+		if (sscanf(bu_optarg, "%lf", &dataValues.threshold) != 1) {
 		    bu_exit(1, "Usage: %s %s", argv[0], usage);
 		}
 		break;

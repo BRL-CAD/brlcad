@@ -1,5 +1,3 @@
-<!-- Converted by db4-upgrade version 1.0 -->
-
 <article xmlns="http://docbook.org/ns/docbook" version="5.0">
   <info><title>Creating a Goblet</title>
 
@@ -41,7 +39,10 @@
 
       <informalfigure>
 	<mediaobject>
-	  <imageobject>
+	  <imageobject role="html">
+	    <imagedata align="center" fileref="../../lessons/en/images/mged06_rtgoblet.png" format="PNG"/>
+	  </imageobject>
+	  <imageobject role="fo">
 	    <imagedata align="center" fileref="../../lessons/en/images/mged06_rtgoblet.png" format="PNG"/>
 	  </imageobject>
 	  <caption>
@@ -68,7 +69,7 @@
     <section xml:id="create_edit_copy_goblet"><info><title>Creating, Editing, and Copying the Parts of the Goblet</title></info>
 
 
-      <section><info><title>Creating the Goblet Base</title></info>
+      <section xml:id="Creating_the_Goblet_Base"><info><title>Creating the Goblet Base</title></info>
 
 
 	<para>
@@ -80,7 +81,7 @@
 	</para>
       </section>
 
-      <section><info><title>Editing the Base</title></info>
+      <section xml:id="Editing_the_Base"><info><title>Editing the Base</title></info>
 
 
 	<para>
@@ -97,7 +98,10 @@
 
       <informalfigure>
 	<mediaobject>
-	  <imageobject>
+	  <imageobject role="html">
+	    <imagedata align="center" fileref="../../lessons/en/images/mged06_gobletbase.png" format="PNG"/>
+	  </imageobject>
+	  <imageobject role="fo">
 	    <imagedata align="center" fileref="../../lessons/en/images/mged06_gobletbase.png" format="PNG"/>
 	  </imageobject>
 	  <caption>
@@ -111,7 +115,7 @@
 	</para>
       </section>
 
-      <section><info><title>Creating the Goblet Stem</title></info>
+      <section xml:id="Creating_the_Goblet_Stem"><info><title>Creating the Goblet Stem</title></info>
 
 
 	<para>
@@ -129,7 +133,10 @@
 
       <informalfigure>
 	<mediaobject>
-	  <imageobject>
+	  <imageobject role="html">
+	    <imagedata align="center" fileref="../../lessons/en/images/mged06_goblet1stsphere.png" format="PNG"/>
+	  </imageobject>
+	  <imageobject role="fo">
 	    <imagedata align="center" fileref="../../lessons/en/images/mged06_goblet1stsphere.png" format="PNG"/>
 	  </imageobject>
 	  <caption>
@@ -154,7 +161,7 @@
 	</para>
       </section>
 
-      <section><info><title>Adding Additional Balls to the Goblet Stem</title></info>
+      <section xml:id="Adding_Additional_Balls"><info><title>Adding Additional Balls to the Goblet Stem</title></info>
 
 
 	<para>
@@ -184,7 +191,7 @@
 	</para>
       </section>
 
-      <section><info><title>Editing the Balls of the Goblet Stem</title></info>
+      <section xml:id="Editing_the_base_Goblet"><info><title>Editing the Balls of the Goblet Stem</title></info>
 
 
 	<para>
@@ -213,7 +220,10 @@
 
       <informalfigure>
 	<mediaobject>
-	  <imageobject>
+	  <imageobject role="html">
+	    <imagedata align="center" fileref="../../lessons/en/images/mged06_gobletstem.png" format="PNG"/>
+	  </imageobject>
+	  <imageobject role="fo">
 	    <imagedata align="center" fileref="../../lessons/en/images/mged06_gobletstem.png" format="PNG"/>
 	  </imageobject>
 	  <caption>
@@ -226,7 +236,7 @@
 	</para>
       </section>
 
-      <section><info><title>Making the Goblet Basin</title></info>
+      <section xml:id="making_goblet_Basin"><info><title>Making the Goblet Basin</title></info>
 
 	<para>
 	  The next step is to make the goblet's basin. Go to the Create menu and
@@ -243,7 +253,10 @@
 
       <informalfigure>
 	<mediaobject>
-	  <imageobject>
+	  <imageobject role="html">
+	    <imagedata align="center" fileref="../../lessons/en/images/mged06_gobletbasestembasin.png" format="PNG"/>
+	  </imageobject>
+	  <imageobject role="fo">
 	    <imagedata align="center" fileref="../../lessons/en/images/mged06_gobletbasestembasin.png" format="PNG"/>
 	  </imageobject>
 	  <caption>
@@ -404,7 +417,10 @@
 
       <informalfigure>
 	<mediaobject>
-	  <imageobject>
+	  <imageobject role="html">
+	    <imagedata align="center" fileref="../../lessons/en/images/mged06_base_subtracted_vol.png" format="PNG"/>
+	  </imageobject>
+	<imageobject role="fo">
 	    <imagedata align="center" fileref="../../lessons/en/images/mged06_base_subtracted_vol.png" format="PNG"/>
 	  </imageobject>
 	</mediaobject>
@@ -431,7 +447,10 @@
 
       <informalfigure>
 	<mediaobject>
-	  <imageobject>
+	  <imageobject role="html">
+	    <imagedata align="center" fileref="../../lessons/en/images/mged06_rtgobletaz_35_el_25.png" format="PNG"/>
+	  </imageobject>
+	  <imageobject role="fo">
 	    <imagedata align="center" fileref="../../lessons/en/images/mged06_rtgobletaz_35_el_25.png" format="PNG"/>
 	  </imageobject>
 	  <caption>

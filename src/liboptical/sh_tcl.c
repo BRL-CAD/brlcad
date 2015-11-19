@@ -1,7 +1,7 @@
 /*                        S H _ T C L . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2013 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -34,6 +34,7 @@
 
 #include <tcl.h>
 
+#include "bu/parallel.h"
 #include "vmath.h"
 #include "raytrace.h"
 #include "optical.h"
@@ -87,10 +88,10 @@ struct bu_structparse tcl_parse_tab[] = {
 };
 
 
-HIDDEN int tcl_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, const struct mfuncs *mfp, struct rt_i *rtip);
-HIDDEN int tcl_render(struct application *ap, const struct partition *pp, struct shadework *swp, genptr_t dp);
-HIDDEN void tcl_print(register struct region *rp, genptr_t dp);
-HIDDEN void tcl_free(genptr_t cp);
+HIDDEN int tcl_setup(register struct region *rp, struct bu_vls *matparm, void **dpp, const struct mfuncs *mfp, struct rt_i *rtip);
+HIDDEN int tcl_render(struct application *ap, const struct partition *pp, struct shadework *swp, void *dp);
+HIDDEN void tcl_print(register struct region *rp, void *dp);
+HIDDEN void tcl_free(void *cp);
 
 /* The "mfuncs" structure defines the external interface to the shader.
  * Note that more than one shader "name" can be associated with a given
@@ -109,14 +110,13 @@ struct mfuncs tcl_mfuncs[] = {
 };
 
 
-/* T C L _ S E T U P
- *
+/*
  * This routine is called (at prep time)
  * once for each region which uses this shader.
  * Any shader-specific initialization should be done here.
  */
 HIDDEN int
-tcl_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, const struct mfuncs *UNUSED(mfp), struct rt_i *rtip)
+tcl_setup(register struct region *rp, struct bu_vls *matparm, void **dpp, const struct mfuncs *UNUSED(mfp), struct rt_i *rtip)
 
 
 /* pointer to reg_udata in *rp */
@@ -143,7 +143,7 @@ tcl_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, con
     memcpy(tcl_sp, &tcl_defaults, sizeof(struct tcl_specific));
 
     /* parse the user's arguments for this use of the shader. */
-    if (bu_struct_parse(matparm, tcl_parse_tab, (char *)tcl_sp) < 0)
+    if (bu_struct_parse(matparm, tcl_parse_tab, (char *)tcl_sp, NULL) < 0)
 	return -1;
 
     for (cpu=0; cpu < MAX_PSW; cpu++) {
@@ -171,35 +171,27 @@ tcl_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, con
 }
 
 
-/*
- * T C L _ P R I N T
- */
 HIDDEN void
-tcl_print(register struct region *rp, genptr_t dp)
+tcl_print(register struct region *rp, void *dp)
 {
     bu_struct_print(rp->reg_name, tcl_print_tab, (char *)dp);
 }
 
 
-/*
- * T C L _ F R E E
- */
 HIDDEN void
-tcl_free(genptr_t cp)
+tcl_free(void *cp)
 {
     BU_PUT(cp, struct tcl_specific);
 }
 
 
 /*
- * T C L _ R E N D E R
- *
  * This is called (from viewshade() in shade.c) once for each hit point
  * to be shaded.  The purpose here is to fill in values in the shadework
  * structure.
  */
 int
-tcl_render(struct application *ap, const struct partition *pp, struct shadework *swp, genptr_t dp)
+tcl_render(struct application *ap, const struct partition *pp, struct shadework *swp, void *dp)
 
 
 /* defined in material.h */

@@ -1,7 +1,7 @@
 /*                    B O M B A R D I E R . H
  * BRL-CAD
  *
- * Copyright (c) 2008-2013 United States Government as represented by
+ * Copyright (c) 2008-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -23,6 +23,9 @@
  * for a startup dialog.
  *
  */
+
+#ifndef UTIL_BOMBARDIER_H
+#define UTIL_BOMBARDIER_H
 
 #define bomb_icon_width 192
 #define bomb_icon_height 56
@@ -142,6 +145,7 @@ static unsigned char bomb_icon_bits[] = {
     0x03, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
 };
 
+#endif /* UTIL_BOMBARDIER_H */
 
 /*
  * Local Variables:

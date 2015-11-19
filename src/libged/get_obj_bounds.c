@@ -1,7 +1,7 @@
 /*                         G E T _ O B J _ B O U N D S . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2013 United States Government as represented by
+ * Copyright (c) 2008-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -27,7 +27,6 @@
 
 #include <stdlib.h>
 #include <string.h>
-#include "bio.h"
 
 #include "ged.h"
 
@@ -35,7 +34,7 @@
 
 
 int
-_ged_get_obj_bounds(struct ged *gedp,
+ged_get_obj_bounds(struct ged *gedp,
 		    int argc,
 		    const char *argv[],
 		    int use_air,
@@ -87,7 +86,7 @@ _ged_get_obj_bounds(struct ged *gedp,
 	}
 
 	/* if we don't already have it, get it */
-	if (!gottree && rt_gettree(rtip, path.fp_names[0]->d_namep)) {
+	if (!gottree && rt_gettree(rtip, argv[i])) {
 	    bu_vls_printf(gedp->ged_result_str, "rt_gettree failed for %s\n", argv[i]);
 	    rt_free_rti(rtip);
 	    db_free_full_path(&path);
@@ -158,10 +157,6 @@ _ged_get_obj_bounds(struct ged *gedp,
 }
 
 
-/**
- *
- *
- */
 static int
 get_objpath_mat(struct ged *gedp,
 		    int argc,
@@ -215,7 +210,7 @@ get_objpath_mat(struct ged *gedp,
     }
 
     MAT_IDN(gtdp->gtd_xform);
-    _ged_trace(gtdp->gtd_obj[0], 0, bn_mat_identity, gtdp, 1);
+    ged_trace(gtdp->gtd_obj[0], 0, bn_mat_identity, gtdp, 1);
 
     return GED_OK;
 }

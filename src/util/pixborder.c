@@ -1,7 +1,7 @@
 /*                     P I X B O R D E R . C
  * BRL-CAD
  *
- * Copyright (c) 1996-2013 United States Government as represented by
+ * Copyright (c) 1996-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -20,6 +20,7 @@
 /** @file util/pixborder.c
  *
  * Add a 1-pixel-wide border to regions of a specified color.
+ * (Do not confuse this with drawing border around the image.)
  *
  */
 
@@ -27,10 +28,12 @@
 
 #include <stdlib.h>
 #include <math.h>
-#include "bio.h"
 
 #include "vmath.h"
-#include "bu.h"
+#include "bu/color.h"
+#include "bu/getopt.h"
+#include "bu/malloc.h"
+#include "bu/log.h"
 #include "bn.h"
 #include "fb.h"
 
@@ -71,19 +74,17 @@ fastf_t exterior_hsv[3];
 fastf_t interior_hsv[3];
 fastf_t hsv_tol[3];
 
-#define OPT_STRING "ab:e:hi:n:s:t:w:x:y:B:E:I:T:X:Y:?"
+#define OPT_STRING "ab:e:i:n:s:t:w:x:y:B:E:I:T:X:Y:h?"
 
 static char usage[] = "\
 Usage: pixborder [-b 'R G B'] [-e 'R G B'] [-i 'R G B'] [-t 'R G B']\n\
 		 [-B 'H S V'] [-E 'H S V'] [-I 'H S V'] [-T 'H S V']\n\
 		 [-x left_edge]  [-y bottom_edge]\n\
 		 [-X right_edge] [-Y top_edge]\n\
-		 [-ah] [-s squaresize] [-w file_width] [-n file_height]\n\
+		 [-a] [-s squaresize] [-w file_width] [-n file_height]\n\
 		 [file.pix]\n";
 
 /*
- * R E A D _ H S V ()
- *
  * Read in an HSV triple.
  */
 static int read_hsv (fastf_t *hsvp, char *buf)
@@ -103,9 +104,6 @@ static int read_hsv (fastf_t *hsvp, char *buf)
 }
 
 
-/*
- * R E A D _ R O W ()
- */
 static int
 read_row(unsigned char *rp, size_t width, FILE *fp)
 {
@@ -133,9 +131,6 @@ read_row(unsigned char *rp, size_t width, FILE *fp)
  * Reading, MA, 1990.
  */
 
-/*
- * R G B _ T O _ H S V ()
- */
 static void rgb_to_hsv (unsigned char *rgb, fastf_t *hsv)
 {
     fastf_t red, grn, blu;
@@ -196,9 +191,6 @@ static void rgb_to_hsv (unsigned char *rgb, fastf_t *hsv)
 }
 
 
-/*
- * H S V _ T O _ R G B ()
- */
 int hsv_to_rgb (fastf_t *hsv, unsigned char *rgb)
 {
     fastf_t float_rgb[3];
@@ -252,9 +244,6 @@ int hsv_to_rgb (fastf_t *hsv, unsigned char *rgb)
 }
 
 
-/*
- * S A M E _ R G B ()
- */
 static int same_rgb (unsigned char *color1, unsigned char *color2)
 {
     return ((abs(color1[RED] - color2[RED]) <= (int) rgb_tol[RED]) &&
@@ -263,9 +252,6 @@ static int same_rgb (unsigned char *color1, unsigned char *color2)
 }
 
 
-/*
- * S A M E _ H S V ()
- */
 static int same_hsv (fastf_t *color1, fastf_t *color2)
 {
     return ((fabs(color1[HUE] - color2[HUE]) <= hsv_tol[HUE]) &&
@@ -274,9 +260,6 @@ static int same_hsv (fastf_t *color1, fastf_t *color2)
 }
 
 
-/*
- * I S _ I N T E R I O R ()
- */
 static int is_interior (unsigned char *pix_rgb)
 {
     if (tol_using_rgb)
@@ -294,9 +277,6 @@ static int is_interior (unsigned char *pix_rgb)
 }
 
 
-/*
- * I S _ E X T E R I O R ()
- */
 static int is_exterior (unsigned char *pix_rgb)
 {
     if (tol_using_rgb)
@@ -314,9 +294,6 @@ static int is_exterior (unsigned char *pix_rgb)
 }
 
 
-/*
- * I S _ B O R D E R ()
- */
 static int is_border (unsigned char *prp, unsigned char *trp, unsigned char *nrp, int col_nm)
 
 /* Previous row */
@@ -362,9 +339,6 @@ static int is_border (unsigned char *prp, unsigned char *trp, unsigned char *nrp
 }
 
 
-/*
- * G E T _ A R G S ()
- */
 static int
 get_args (int argc, char **argv)
 {
@@ -388,10 +362,6 @@ get_args (int argc, char **argv)
 		}
 		rgb_to_hsv(exterior_rgb, exterior_hsv);
 		colors_specified |= COLORS_EXTERIOR;
-		break;
-	    case 'h':
-		file_height = file_width = 1024L;
-		autosize = 0;
 		break;
 	    case 'i':
 		if (! bu_str_to_rgb(bu_optarg, interior_rgb)) {
@@ -462,10 +432,7 @@ get_args (int argc, char **argv)
 	    case 'Y':
 		top_edge = atoi(bu_optarg);
 		break;
-	    case '?':
-		(void) fputs(usage, stderr);
-		bu_exit (0, NULL);
-	    default:
+	    default:  /* 'h' '?' */
 		return 0;
 	}
     }
@@ -501,9 +468,6 @@ get_args (int argc, char **argv)
 }
 
 
-/*
- * M A I N ()
- */
 int
 main (int argc, char **argv)
 {
@@ -546,9 +510,9 @@ main (int argc, char **argv)
      * Allocate a 1-scanline output buffer
      * and a circular input buffer of 3 scanlines
      */
-    outbuf = bu_malloc(3*file_width, "outbuf");
+    outbuf = (char *)bu_malloc(3*file_width, "outbuf");
     for (i = 0; i < 3; ++i)
-	inrow[i] = bu_malloc(3*(file_width + 2), "inrow[i]");
+	inrow[i] = (unsigned char *)bu_malloc(3*(file_width + 2), "inrow[i]");
     prev_row = 0;
     this_row = 1;
     next_row = 2;

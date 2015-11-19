@@ -1,7 +1,7 @@
 /*                        D B 5 _ I O . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2013 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -30,14 +30,15 @@
 #include <stdio.h>
 #include <string.h>
 #include <ctype.h>
-#include "bin.h"
+#include "bnetwork.h"
 
-#include "bu.h"
+#include "bu/endian.h"
+#include "bu/parse.h"
+#include "bu/cv.h"
 #include "vmath.h"
 #include "bn.h"
-#include "db5.h"
+#include "rt/db5.h"
 #include "raytrace.h"
-#include "mater.h"
 
 
 int
@@ -72,7 +73,8 @@ db5_header_is_valid(const unsigned char *hp)
     if (odp->db5h_minor_type != 0) return 0;
 
     /* Check length, known to be 8-bit.  Header len=1 8-byte chunk. */
-    if (hp[6] != 1) return 0;
+    if (hp[6] != 1)
+	return 0;
 
     return 1;		/* valid */
 }
@@ -139,8 +141,6 @@ db5_decode_signed(size_t *lenp, const unsigned char *cp, int format)
 
 
 /**
- * D B 5 _ E N C O D E _ L E N G T H
- *
  * Given a value and a variable-width format spec, store it in network
  * order.
  *
@@ -173,8 +173,6 @@ db5_encode_length(
 
 
 /**
- * D B 5 _ C R A C K _ D I S K _ H E A D E R
- *
  * Returns -
  * 0 on success
  * -1 on error
@@ -238,8 +236,6 @@ db5_crack_disk_header(struct db5_raw_internal *rip, const unsigned char *cp)
 
 
 /**
- * D B 5 _ G E T _ R A W _ I N T E R N A L _ P T R
- *
  * Returns -
  * on success, pointer to first unused byte
  * NULL, on error
@@ -276,7 +272,7 @@ db5_get_raw_internal_ptr(struct db5_raw_internal *rip, const unsigned char *ip)
     if (rip->h_name_present) {
 	cp += db5_decode_length(&rip->name.ext_nbytes,
 				cp, rip->h_name_width);
-	rip->name.ext_buf = (genptr_t)cp;	/* discard const */
+	rip->name.ext_buf = (uint8_t *)cp;	/* discard const */
 	cp += rip->name.ext_nbytes;
     }
 
@@ -284,7 +280,10 @@ db5_get_raw_internal_ptr(struct db5_raw_internal *rip, const unsigned char *ip)
     if (rip->a_present) {
 	cp += db5_decode_length(&rip->attributes.ext_nbytes,
 				cp, rip->a_width);
-	rip->attributes.ext_buf = (genptr_t)cp;	/* discard const */
+	rip->attributes.ext_buf = (uint8_t *)cp;	/* discard const */
+#if defined(USE_BINARY_ATTRIBUTES)
+	rip->attributes.widcode = rip->a_width;
+#endif
 	cp += rip->attributes.ext_nbytes;
     }
 
@@ -292,7 +291,7 @@ db5_get_raw_internal_ptr(struct db5_raw_internal *rip, const unsigned char *ip)
     if (rip->b_present) {
 	cp += db5_decode_length(&rip->body.ext_nbytes,
 				cp, rip->b_width);
-	rip->body.ext_buf = (genptr_t)cp;	/* discard const */
+	rip->body.ext_buf = (uint8_t *)cp;	/* discard const */
 	cp += rip->body.ext_nbytes;
     }
 
@@ -348,7 +347,7 @@ db5_get_raw_internal_fp(struct db5_raw_internal *rip, FILE *fp)
     used += dlen;
 
     /* verify the length won't overflow before we <<=3 it */
-    if ( rip->object_length > UINTPTR_MAX>>3 ) {
+    if (rip->object_length > UINTPTR_MAX>>3) {
 	bu_log("db5_get_raw_internal_fp():  bad length read\n");
 	return -1;
     }
@@ -390,7 +389,7 @@ db5_get_raw_internal_fp(struct db5_raw_internal *rip, FILE *fp)
     if (rip->h_name_present) {
 	cp += db5_decode_length(&rip->name.ext_nbytes,
 				cp, rip->h_name_width);
-	rip->name.ext_buf = (genptr_t)cp;	/* discard const */
+	rip->name.ext_buf = (uint8_t *)cp;	/* discard const */
 	cp += rip->name.ext_nbytes;
     }
 
@@ -398,7 +397,10 @@ db5_get_raw_internal_fp(struct db5_raw_internal *rip, FILE *fp)
     if (rip->a_present) {
 	cp += db5_decode_length(&rip->attributes.ext_nbytes,
 				cp, rip->a_width);
-	rip->attributes.ext_buf = (genptr_t)cp;	/* discard const */
+	rip->attributes.ext_buf = (uint8_t *)cp;	/* discard const */
+#if defined(USE_BINARY_ATTRIBUTES)
+	rip->attributes.widcode = rip->a_width;
+#endif
 	cp += rip->attributes.ext_nbytes;
     }
 
@@ -406,7 +408,7 @@ db5_get_raw_internal_fp(struct db5_raw_internal *rip, FILE *fp)
     if (rip->b_present) {
 	cp += db5_decode_length(&rip->body.ext_nbytes,
 				cp, rip->b_width);
-	rip->body.ext_buf = (genptr_t)cp;	/* discard const */
+	rip->body.ext_buf = (uint8_t *)cp;	/* discard const */
 	cp += rip->body.ext_nbytes;
     }
 
@@ -443,7 +445,7 @@ db5_export_object3(
 	namelen = (long)strlen(name) + 1;	/* includes null */
 	if (namelen > 1) {
 	    n_width = db5_select_length_encoding(namelen);
-	    need += namelen + db5_enc_len[n_width];
+	    need += namelen + DB5_ENC_LEN(n_width);
 	} else {
 	    name = NULL;
 	    namelen = 0;
@@ -456,7 +458,7 @@ db5_export_object3(
 	BU_CK_EXTERNAL(attrib);
 	if (attrib->ext_nbytes > 0) {
 	    a_width = db5_select_length_encoding(attrib->ext_nbytes);
-	    need += attrib->ext_nbytes + db5_enc_len[a_width];
+	    need += attrib->ext_nbytes + DB5_ENC_LEN(a_width);
 	} else {
 	    attrib = NULL;
 	    a_width = 0;
@@ -468,7 +470,7 @@ db5_export_object3(
 	BU_CK_EXTERNAL(body);
 	if (body->ext_nbytes > 0) {
 	    b_width = db5_select_length_encoding(body->ext_nbytes);
-	    need += body->ext_nbytes + db5_enc_len[b_width];
+	    need += body->ext_nbytes + DB5_ENC_LEN(b_width);
 	} else {
 	    body = NULL;
 	    b_width = 0;
@@ -480,7 +482,7 @@ db5_export_object3(
 
     /* Allocate the buffer for the combined external representation */
     BU_EXTERNAL_INIT(out);
-    out->ext_buf = bu_malloc(need, "external object3");
+    out->ext_buf = (uint8_t *)bu_malloc(need, "external object3");
     out->ext_nbytes = need;		/* will be trimmed, below */
 
     /* Determine encoding for the header length field */
@@ -579,7 +581,7 @@ db5_make_free_object_hdr(struct bu_external *ep, size_t length)
 
     /* Reserve enough space to hold any free header, even w/64-bit len */
     ep->ext_nbytes = 8+8;
-    ep->ext_buf = bu_calloc(1, ep->ext_nbytes, "db5_make_free_object_hdr");
+    ep->ext_buf = (uint8_t *)bu_calloc(1, ep->ext_nbytes, "db5_make_free_object_hdr");
 
     /* Determine encoding for the header length field */
     h_width = db5_select_length_encoding(length>>3);
@@ -606,7 +608,7 @@ db5_make_free_object(struct bu_external *ep, size_t length)
     BU_ASSERT_SIZE_T(length, >=, 8);
     BU_ASSERT_SIZE_T(length&7, ==, 0);
 
-    ep->ext_buf = bu_calloc(1, length, "db5_make_free_object");
+    ep->ext_buf = (uint8_t *)bu_calloc(1, length, "db5_make_free_object");
     ep->ext_nbytes = length;
 
     /* Determine encoding for the header length field */
@@ -744,8 +746,8 @@ db_put_external5(struct bu_external *ep, struct directory *dp, struct db_i *dbip
     RT_CK_DIR(dp);
     BU_CK_EXTERNAL(ep);
 
-    if (RT_G_DEBUG&DEBUG_DB) bu_log("db_put_external5(%s) ep=x%x, dbip=x%x, dp=x%x\n",
-				    dp->d_namep, ep, dbip, dp);
+    if (RT_G_DEBUG&DEBUG_DB) bu_log("db_put_external5(%s) ep=%p, dbip=%p, dp=%p\n",
+				    dp->d_namep, (void *)ep, (void *)dbip, (void *)dp);
 
     if (dbip->dbi_read_only) {
 	bu_log("db_put_external5(%s):  READ-ONLY file\n",
@@ -840,8 +842,6 @@ fail:
 extern int rt_binunif_import5_minor_type(struct rt_db_internal *, const struct bu_external *, const mat_t, const struct db_i *, struct resource *, int);
 
 /**
- * R T _ D B _ E X T E R N A L 5 _ T O _ I N T E R N A L 5
- *
  * Given an object in external form, convert it to internal form.  The
  * caller is responsible for freeing the external form.
  *
@@ -929,7 +929,7 @@ rt_db_external5_to_internal5(
 	    return -1;
     }
 
-    /* ip has already been initialized, and should not be re-inited */
+    /* ip has already been initialized, and should not be re-initialized */
     ret = -1;
     if (id == ID_BINUNIF) {
 	/* FIXME: binunif export needs to write out minor_type so
@@ -983,9 +983,6 @@ rt_db_get_internal5(
 }
 
 
-/**
- *
- */
 void
 db5_export_color_table(struct bu_vls *ostr, struct db_i *dbip)
 {

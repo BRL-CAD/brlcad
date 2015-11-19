@@ -1,7 +1,7 @@
 /*                        F L O S . C
  * BRL-CAD / ADRT
  *
- * Copyright (c) 2007-2013 United States Government as represented by
+ * Copyright (c) 2007-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -30,7 +30,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "bu.h"
+#include "bu/malloc.h"
+#include "bu/log.h"
+
 
 struct render_flos_s {
     point_t frag_pos;
@@ -84,7 +86,7 @@ render_flos_init(render_t *render, const char *frag_pos)
     struct render_flos_s *d;
     double scan[3];
 
-    if(frag_pos == NULL)
+    if (frag_pos == NULL)
 	return -1;
 
     render->work = render_flos_work;

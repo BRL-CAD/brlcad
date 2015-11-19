@@ -1,7 +1,7 @@
 /*                        S P H M A P . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2013 United States Government as represented by
+ * Copyright (c) 1986-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -24,10 +24,12 @@
 #include <math.h>
 #include <string.h>
 
-#include "bu.h"
+#include "bu/parallel.h"
+#include "bu/log.h"
+#include "bu/malloc.h"
+#include "bu/str.h"
 #include "vmath.h"
-#include "bn.h"
-#include "spm.h"
+#include "bn/spm.h"
 
 
 void
@@ -82,8 +84,9 @@ bn_spm_init(int N, int elsize)
 
     total = 0;
     for (i = 0; i < N/4; i++) {
-	nx = ceil(N*cos(i*bn_twopi/N));
-	if (nx > N) nx = N;
+	nx = ceil(N*cos(i*M_2PI/N));
+	V_MIN(nx, N);
+
 	mapp->nx[ N/4 + i ] = nx;
 	mapp->nx[ N/4 - i -1 ] = nx;
 
@@ -294,9 +297,11 @@ bn_spm_pix_load(bn_spm_map_t *mapp, char *filename, int nx, int ny)
 	    }
 	    /* Save the color */
 	    cp = &(mapp->xbin[y][x*3]);
-	    *cp++ = (unsigned char)(red/count);
-	    *cp++ = (unsigned char)(green/count);
-	    *cp++ = (unsigned char)(blue/count);
+	    if (count) {
+		*cp++ = (unsigned char)(red/count);
+		*cp++ = (unsigned char)(green/count);
+		*cp++ = (unsigned char)(blue/count);
+	    }
 	}
     }
     (void) bu_free((char *)buffer, "bn_spm buffer");

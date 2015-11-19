@@ -1,7 +1,7 @@
 /*                  R T S E R V E R T E S T . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2013 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -30,12 +30,18 @@
 #include <string.h>
 #include <pthread.h>
 
-#include "bu.h"
+#include "bu/cv.h"
+#include "bu/getopt.h"
+#include "bu/debug.h"
+#include "bu/ptbl.h"
+#include "bu/malloc.h"
+#include "bu/log.h"
+#include "bu/vlb.h"
 #include "vmath.h"
 #include "nmg.h"
 #include "raytrace.h"
-#include "nurb.h"
-#include "rtgeom.h"
+#include "rt/nurb.h"
+#include "rt/geom.h"
 #include "rtserver.h"
 
 #ifdef HAVE_SYS_TIME_H
@@ -85,14 +91,14 @@ countHits(struct bu_vlb *vlb)
 
     c += SIZEOF_NETWORK_LONG;
 
-    for(rayNum=0 ; rayNum<numRays ; rayNum++) {
+    for (rayNum=0 ; rayNum<numRays ; rayNum++) {
 	int numPartitions = 0;
 	int partNo;
 
 	numPartitions = BU_GLONG(c);
 	c += SIZEOF_NETWORK_LONG;
 
-	for(partNo=0 ; partNo<numPartitions ; partNo++) {
+	for (partNo=0 ; partNo<numPartitions ; partNo++) {
 	    point_t enterPt;
 	    point_t exitPt;
 	    vect_t enterNorm;
@@ -151,9 +157,6 @@ main( int argc, char *argv[] )
     point_t mdl_max;
     struct bu_vlb *vlb;
 
-    /* Things like bu_malloc() must have these initialized for use with parallel processing */
-    bu_semaphore_init( RT_SEM_LAST );
-
     /* initialize the list of BRL-CAD objects to be raytraced (this is used for the "-o" option) */
     bu_ptbl_init( &objs, 64, "objects" );
 
@@ -185,7 +188,7 @@ main( int argc, char *argv[] )
 
 
     /* shoot a ray ten times, cleaning and loading geometry each time */
-    for(i=0 ; i<10 ; i++) {
+    for (i=0 ; i<10 ; i++) {
 	/* load geometry */
 	my_session_id = loadGeometry( argv[bu_optind], &objs );
 
@@ -228,7 +231,7 @@ main( int argc, char *argv[] )
     }
     fprintf( stderr, "...\n" );
 
-    if( do_plot ) {
+    if ( do_plot ) {
 	result_map = (char **)bu_calloc( grid_size, sizeof( char *), "result_map" );
 	for ( i=0; i<grid_size; i++ ) {
 	    result_map[i] = (char *)bu_calloc( (grid_size+1), sizeof( char ), "result_map[i]" );
@@ -238,7 +241,7 @@ main( int argc, char *argv[] )
     cell_size = model_size[X] / grid_size;
     gettimeofday( &startTime, NULL );
     for ( i=0; i<grid_size; i++ ) {
-	if( verbose ) {
+	if ( verbose ) {
 	    fprintf( stderr, "shooting row %d\n", i );
 	}
 	for ( j=0; j<grid_size; j++ ) {
@@ -255,8 +258,8 @@ main( int argc, char *argv[] )
 	    ap->a_ray.index = ap->a_user;
 	    VSET( ap->a_ray.r_dir, 0, 1, 0 );
 	    rts_shootray(ap);
-	    if( do_plot ) {
-		hitCount = countHits(ap->a_uptr);
+	    if ( do_plot ) {
+		hitCount = countHits((struct bu_vlb *)ap->a_uptr);
 		if ( hitCount == 0 ) {
 		    result_map[i][j] = ' ';
 		} else if ( hitCount <= 9 ) {
@@ -273,7 +276,7 @@ main( int argc, char *argv[] )
     diff = endTime.tv_sec - startTime.tv_sec + (endTime.tv_usec - startTime.tv_usec) / 1000000.0;
     fprintf( stderr, "time for %d individual rays: %g second\n", job_count, diff );
 
-    if(do_plot) {
+    if (do_plot) {
 	for ( i=grid_size-1; i>=0; i-- ) {
 	    fprintf( stderr, "%s\n", result_map[i] );
 	}

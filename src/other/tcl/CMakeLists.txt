@@ -40,6 +40,14 @@
 CMAKE_MINIMUM_REQUIRED(VERSION 2.8)
 IF(COMMAND CMAKE_POLICY)
   CMAKE_POLICY(SET CMP0003 NEW)
+  if ("${CMAKE_VERSION}" VERSION_GREATER 2.99)
+	  CMAKE_POLICY(SET CMP0026 OLD)
+	  CMAKE_POLICY(SET CMP0048 OLD)
+  endif ("${CMAKE_VERSION}" VERSION_GREATER 2.99)
+  if ("${CMAKE_VERSION}" VERSION_GREATER 3.0.9)
+	  CMAKE_POLICY(SET CMP0053 OLD)
+	  CMAKE_POLICY(SET CMP0054 NEW)
+  endif ("${CMAKE_VERSION}" VERSION_GREATER 3.0.9)
 ENDIF(COMMAND CMAKE_POLICY)
 
 # Set CMake project name
@@ -149,11 +157,19 @@ add_definitions(-DTCL_SHLIB_EXT="${CMAKE_SHARED_LIBRARY_SUFFIX}")
 # Define some platform specific flags
 
 # Windows specific flags
-IF(WIN32)
+IF(MSVC)
   add_definitions(-D_CRT_SECURE_NO_DEPRECATE -D_CRT_NONSTDC_NO_DEP -Ot -Oi -fp:strict -Gs -GS -GL -MD)
   add_definitions(-DTCL_PIPE_DLL="tclpip${TCL_VERSION_MAJOR}${TCL_VERSION_MINOR}.dll")
   add_definitions(-Dinline=__inline -DBUILD_tcl)
-ENDIF(WIN32)
+ENDIF(MSVC)
+
+IF(MINGW)
+  add_definitions(-D_CRT_SECURE_NO_DEPRECATE -D_CRT_NONSTDC_NO_DEP)
+  add_definitions(-DTCL_PIPE_DLL="tclpip${TCL_VERSION_MAJOR}${TCL_VERSION_MINOR}.dll")
+  add_definitions(-Dinline=__inline -DBUILD_tcl)
+  remove_definitions(-w)
+  add_definitions(-DHAVE_NO_SEH -DEXCEPTION_DISPOSITION=int)
+ENDIF(MINGW)
 
 IF(APPLE)
   ADD_TCL_CFLAG(MAC_OSX_TCL)
@@ -260,7 +276,9 @@ ENDIF(TCL_DEBUG)
 
 OPTION(TCL_COMPILE_DEBUG "Bytecode debugging" OFF)
 IF(TCL_COMPILE_DEBUG)
-  ADD_TCL_CFLAG(TCL_COMPILE_DEBUG)
+  ADD_TCL_CFLAG(TCL_COMPILE_DEBUG=1)
+else(TCL_COMPILE_DEBUG)
+  add_definitions(-DTCL_COMPILE_DEBUG=0)
 ENDIF(TCL_COMPILE_DEBUG)
 
 OPTION(TCL_COMPILE_STATS "Bytecode statistics" OFF)
@@ -268,19 +286,21 @@ IF(TCL_COMPILE_STATS)
   ADD_TCL_CFLAG(TCL_COMPILE_STATS)
 ENDIF(TCL_COMPILE_STATS)
 
+add_definitions(-DUSE_TCLALLOC=0)
+add_definitions(-DYYENABLE_NLS=0)
 
 #--------------------------------------------------------------------
 #       Check endianness because we can optimize comparisons of
 #       Tcl_UniChar strings to memcmp on big-endian systems.
 #--------------------------------------------------------------------
 # Test endianness 
-IF(NOT MSVC)
+IF(NOT WIN32)
   INCLUDE(TestBigEndian)
   TEST_BIG_ENDIAN(WORDS_BIGENDIAN)
   IF(WORDS_BIGENDIAN)
     ADD_TCL_CFLAG(WORDS_BIGENDIAN)
   ENDIF(WORDS_BIGENDIAN)
-ENDIF(NOT MSVC)
+ENDIF(NOT WIN32)
 
 #--------------------------------------------------------------------
 #       Supply substitutes for missing POSIX library procedures, or
@@ -295,6 +315,10 @@ IF(NOT HAVE_GETCWD)
     ADD_TCL_CFLAG(USEGETWD)
   ENDIF(NOT HAVE_GETWD)
 ENDIF(NOT HAVE_GETCWD)
+TCL_CHECK_FUNCTION_EXISTS(hypot HAVE_HYPOT)
+IF(NOT HAVE_HYPOT)
+  SET(COMPAT_SRCS ${COMPAT_SRCS} compat/hypot.c)
+ENDIF()
 TCL_CHECK_FUNCTION_EXISTS(mkstemp HAVE_MKSTEMP)
 IF(NOT HAVE_MKSTEMP)
   SET(COMPAT_SRCS ${COMPAT_SRCS} compat/mkstemp.c)
@@ -492,7 +516,9 @@ WIFEXITED(x);           /* Generates compiler error if WIFEXITED
 return 0;
 }
 ")
-CHECK_C_SOURCE_RUNS("${UNION_WAIT_SRC}" HAVE_UNION_WAIT)
+if(NOT DEFINED HAVE_UNION_WAIT)
+   CHECK_C_SOURCE_RUNS("${UNION_WAIT_SRC}" HAVE_UNION_WAIT)
+endif(NOT DEFINED HAVE_UNION_WAIT)
 IF(NOT HAVE_UNION_WAIT)
   ADD_TCL_CFLAG(NO_UNION_WAIT)
 ENDIF(NOT HAVE_UNION_WAIT)
@@ -539,7 +565,9 @@ main ()
    return 0;
 }
 ")
-CHECK_C_SOURCE_RUNS("${unsigned_char_srcs}" CHAR_IS_UNSIGNED)
+if(NOT DEFINED CHAR_IS_UNSIGNED)
+   CHECK_C_SOURCE_RUNS("${unsigned_char_srcs}" CHAR_IS_UNSIGNED)
+endif(NOT DEFINED CHAR_IS_UNSIGNED)
 IF(CHAR_IS_UNSIGNED)
   ADD_TCL_CFLAG(__CHAR_UNSIGNED__)
 ENDIF(CHAR_IS_UNSIGNED)
@@ -579,7 +607,9 @@ int main () {
 	return 0;
 }
 ")
-CHECK_C_SOURCE_RUNS("${isnan_srcs}" USABLE_ISNAN)
+if(NOT DEFINED USABLE_ISNAN)
+  CHECK_C_SOURCE_RUNS("${isnan_srcs}" USABLE_ISNAN)
+endif(NOT DEFINED USABLE_ISNAN)
 IF(NOT USABLE_ISNAN)
   ADD_TCL_CFLAG(NO_ISNAN)
 ENDIF(NOT USABLE_ISNAN)
@@ -703,7 +733,9 @@ int foo;
 return StackGrowsUp(&foo);
 }
 ")
-CHECK_C_SOURCE_RUNS("${C_STACK_SRC}" STACK_GROWS_UP)
+if(NOT DEFINED STACK_GROWS_UP)
+  CHECK_C_SOURCE_RUNS("${C_STACK_SRC}" STACK_GROWS_UP)
+endif(NOT DEFINED STACK_GROWS_UP)
 IF(STACK_GROWS_UP)
   ADD_TCL_CFLAG(TCL_STACK_GROWS_UP)
 ENDIF(STACK_GROWS_UP)
@@ -719,6 +751,10 @@ TCL_CHECK_INCLUDE_FILE(strings.h HAVE_STRINGS_H)
 TCL_CHECK_INCLUDE_FILE(inttypes.h HAVE_INTTYPES_H)
 TCL_CHECK_INCLUDE_FILE(stdint.h HAVE_STDINT_H)
 TCL_CHECK_INCLUDE_FILE(unistd.h HAVE_UNISTD_H)
+TCL_CHECK_INCLUDE_FILE(AvailabilityMacros.h HAVE_AVAILABILITYMACROS_H)
+IF(HAVE_AVAILABILITYMACROS_H)
+  add_definitions(-DHAVE_AVAILABILITY_MACROS_H)
+ENDIF(HAVE_AVAILABILITYMACROS_H)
 
 CHECK_COMPILER_SUPPORTS_HIDDEN_D()
 
@@ -736,11 +772,6 @@ CHECK_FD_SET_IN_TYPES_D()
 IF(COMPAT_SRCS)
   ADD_TCL_CFLAG(USE_COMPAT)
 ENDIF(COMPAT_SRCS)
-
-IF(APPLE)
-  # Now that all the tests are done, configure the tclConfig.h file:
-  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/unix/tclConfig.h.in ${TCL_BINARY_DIR}/include/tclConfig.h)
-ENDIF(APPLE)
 
 ADD_SUBDIRECTORY(library)
 
@@ -1004,8 +1035,12 @@ ELSE(WIN32)
   SET(TCLSH_SRCS unix/tclAppInit.c)
 ENDIF(WIN32)
 
+IF(MINGW)
+  set(TCL_MINGW_LIBS ws2_32)
+ENDIF(MINGW)
+
 add_library(tcl ${TCL_SRCS})
-target_link_libraries(tcl ${CoreFoundation_LIBRARIES} ${TCL_LINK_LIBS} ${DL_LIBRARY} ${CMAKE_THREAD_LIBS_INIT})
+target_link_libraries(tcl ${CoreFoundation_LIBRARIES} ${TCL_LINK_LIBS} ${DL_LIBRARY} ${CMAKE_THREAD_LIBS_INIT} ${TCL_MINGW_LIBS})
 install(TARGETS tcl 
 	RUNTIME DESTINATION ${BIN_DIR}
 	LIBRARY DESTINATION ${LIB_DIR}
@@ -1022,7 +1057,10 @@ ENDIF(${CMAKE_SYSTEM_NAME} MATCHES "^Darwin$")
 
 add_library(tclstub STATIC ${TCL_STUB_SRCS})
 target_link_libraries(tclstub ${CMAKE_THREAD_LIBS_INIT} ${CoreFoundation_LIBRARIES} ${DL_LIBRARY})
-set_target_properties(tclstub PROPERTIES COMPILE_FLAGS "-fPIC")
+CHECK_C_COMPILER_FLAG(-fPIC FPIC_COMPILER_FLAG)
+if(FPIC_COMPILER_FLAG)
+  set_target_properties(tclstub PROPERTIES COMPILE_FLAGS "-fPIC")
+endif(FPIC_COMPILER_FLAG)
 install(TARGETS tclstub
 	RUNTIME DESTINATION ${BIN_DIR}
 	LIBRARY DESTINATION ${LIB_DIR}

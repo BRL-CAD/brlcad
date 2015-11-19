@@ -1,7 +1,7 @@
 /*                          R E C T . C
  * BRL-CAD
  *
- * Copyright (c) 1998-2013 United States Government as represented by
+ * Copyright (c) 1998-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -26,47 +26,45 @@
 #include "common.h"
 
 #include <math.h>
-#include <stdio.h>
 
-#include "bio.h"
-#include "bu.h"
 #include "vmath.h"
 #include "dm.h"
+#include "dm_private.h"
 
 void
-dm_draw_rect(struct dm *dmp, struct ged_rect_state *grsp)
+dm_draw_rect(dm *dmp, struct bview_interactive_rect_state *grsp)
 {
-    if (ZERO(grsp->grs_width) &&
-	ZERO(grsp->grs_height))
+    if (ZERO(grsp->width) &&
+	ZERO(grsp->height))
 	return;
 
     /* draw rectangle */
-    DM_SET_FGCOLOR(dmp,
-		   (unsigned char)grsp->grs_color[0],
-		   (unsigned char)grsp->grs_color[1],
-		   (unsigned char)grsp->grs_color[2], 1, 1.0);
-    DM_SET_LINE_ATTR(dmp, grsp->grs_line_width, grsp->grs_line_style);
+    dm_set_fg(dmp,
+		   (unsigned char)grsp->color[0],
+		   (unsigned char)grsp->color[1],
+		   (unsigned char)grsp->color[2], 1, 1.0);
+    dm_set_line_attr(dmp, grsp->line_width, grsp->line_style);
 
-    DM_DRAW_LINE_2D(dmp,
-		    grsp->grs_x,
-		    grsp->grs_y * dmp->dm_aspect,
-		    grsp->grs_x,
-		    (grsp->grs_y + grsp->grs_height) * dmp->dm_aspect);
-    DM_DRAW_LINE_2D(dmp,
-		    grsp->grs_x,
-		    (grsp->grs_y + grsp->grs_height) * dmp->dm_aspect,
-		    grsp->grs_x + grsp->grs_width,
-		    (grsp->grs_y + grsp->grs_height) * dmp->dm_aspect);
-    DM_DRAW_LINE_2D(dmp,
-		    grsp->grs_x + grsp->grs_width,
-		    (grsp->grs_y + grsp->grs_height) * dmp->dm_aspect,
-		    grsp->grs_x + grsp->grs_width,
-		    grsp->grs_y * dmp->dm_aspect);
-    DM_DRAW_LINE_2D(dmp,
-		    grsp->grs_x + grsp->grs_width,
-		    grsp->grs_y * dmp->dm_aspect,
-		    grsp->grs_x,
-		    grsp->grs_y * dmp->dm_aspect);
+    dm_draw_line_2d(dmp,
+		    grsp->x,
+		    grsp->y * dmp->dm_aspect,
+		    grsp->x,
+		    (grsp->y + grsp->height) * dmp->dm_aspect);
+    dm_draw_line_2d(dmp,
+		    grsp->x,
+		    (grsp->y + grsp->height) * dmp->dm_aspect,
+		    grsp->x + grsp->width,
+		    (grsp->y + grsp->height) * dmp->dm_aspect);
+    dm_draw_line_2d(dmp,
+		    grsp->x + grsp->width,
+		    (grsp->y + grsp->height) * dmp->dm_aspect,
+		    grsp->x + grsp->width,
+		    grsp->y * dmp->dm_aspect);
+    dm_draw_line_2d(dmp,
+		    grsp->x + grsp->width,
+		    grsp->y * dmp->dm_aspect,
+		    grsp->x,
+		    grsp->y * dmp->dm_aspect);
 }
 
 

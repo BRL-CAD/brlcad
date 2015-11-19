@@ -1,7 +1,7 @@
 /*                    R E A D - R T L O G . C
  * BRL-CAD
  *
- * Copyright (c) 1991-2013 United States Government as represented by
+ * Copyright (c) 1991-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -34,7 +34,7 @@
 #include <math.h>
 
 #include "vmath.h"
-#include "bu.h"
+#include "bu/log.h"
 #include "raytrace.h"
 
 #define BUFF_LEN 256
@@ -43,8 +43,6 @@ extern int verbose;
 
 
 /**
- * R E A D _ R T _ F I L E
- *
  * Read an RT program's log file line by line until it either finds
  * view, orientation, eye_position, and size of the model, or it hits
  * the end of file.  When a colon is found, sscanf() retrieves the

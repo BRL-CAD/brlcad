@@ -23,7 +23,7 @@
 
 
 <refsection xml:id="description"><title>DESCRIPTION</title>
-<para><emphasis remap="I">Cell-fb</emphasis>
+<para><command>cell-fb</command>
 reads a stream of cell-by-cell data
 and displays the data, one view at a time, on a frame buffer.
 If
@@ -48,10 +48,10 @@ reference, which, through a color map, corresponds to a color.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term><option>-F</option><replaceable>fbfile</replaceable></term>
+  <term><option>-F </option><replaceable>fbfile</replaceable></term>
   <listitem>
 <para>Write graphics output to
-<emphasis remap="I">fbfile,</emphasis>
+<emphasis remap="I">fbfile</emphasis>,
 which may be any UNIX file (or frame-buffer device).
 In the absence of the
 <option>-F</option>
@@ -68,67 +68,67 @@ Otherwise, the host's default frame buffer is used
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term><option>-N</option><replaceable>scr_height</replaceable></term>
+  <term><option>-N </option><replaceable>scr_height</replaceable></term>
   <listitem>
 <para>Set screen (frame-buffer) height to
 <emphasis remap="I">scr_height</emphasis>
-pixels.
-<emphasis remap="I">Scr_height</emphasis>
+pixels, where
+<emphasis remap="I">scr_height</emphasis>
 may legally be any integer greater than -2.
 See the discussion of autosizing below.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term><option>-S</option><replaceable>scr_size</replaceable></term>
+  <term><option>-S </option><replaceable>scr_size</replaceable></term>
   <listitem>
 <para>Set screen (frame-buffer) width and height to
 <emphasis remap="I">scr_size</emphasis>
-pixels.
-<emphasis remap="I">Scr_size</emphasis>
+pixels, where
+<emphasis remap="I">scr_size</emphasis>
 may legally be any integer greater than -2.
 See the discussion of autosizing below.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term><option>-W</option><replaceable>scr_width</replaceable></term>
+  <term><option>-W </option><replaceable>scr_width</replaceable></term>
   <listitem>
 <para>Set screen (frame-buffer) width to
 <emphasis remap="I">scr_width</emphasis>
-pixels.
-<emphasis remap="I">Scr_width</emphasis>
+pixels, where
+<emphasis remap="I">scr_width</emphasis>
 may legally be any integer greater than -2.
 See the discussion of autosizing below.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term><option>-X</option><replaceable>n</replaceable></term>
+  <term><option>-X </option><replaceable>n</replaceable></term>
   <listitem>
 <para>Set the local debug flag to the hexadecimal value
-<emphasis remap="I">n.</emphasis></para>
+<emphasis remap="I">n</emphasis>.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term><option>-a</option><replaceable>“h v”</replaceable><emphasis remap="B"/></term>
+  <term><option>-a </option><replaceable>h v</replaceable><emphasis remap="B"/></term>
   <listitem>
 <para>Do not display the data,
 simply print out the frame-buffer coordinates of the grid-plane point
-(<emphasis remap="I">h, v</emphasis>).
+(<emphasis remap="I">h</emphasis>, <emphasis remap="I">v</emphasis>).
 This option is useful for outboard manipulation of the
 <citerefentry><refentrytitle>pix</refentrytitle><manvolnum>5</manvolnum></citerefentry>
 data created by
-<emphasis remap="I">cell-fb.</emphasis></para>
+<command>cell-fb</command> .</para>
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term><option>-b</option><replaceable>n</replaceable></term>
+  <term><option>-b </option><replaceable>n</replaceable></term>
   <listitem>
 <para>Ignore values not equal to
-<emphasis remap="I">n.</emphasis>
+<emphasis remap="I">n</emphasis>.
 All other cell-data values are mapped to the background color.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term><option>-c</option><replaceable>n</replaceable></term>
+  <term><option>-c </option><replaceable>n</replaceable></term>
   <listitem>
 <para>Assume a cell size of
 <emphasis remap="I">n</emphasis>
@@ -137,10 +137,10 @@ The default cell size is 100 user units.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term><option>-d</option><replaceable>“m n”</replaceable><emphasis remap="B"/></term>
+  <term><option>-d </option><replaceable>m n</replaceable><emphasis remap="B"/></term>
   <listitem>
 <para>Scale the data values from the interval
-[<emphasis remap="I">m, n</emphasis>]
+[<emphasis remap="I">m</emphasis>, <emphasis remap="I">n</emphasis>]
 into the unit interval [0, 1].
 The scaling is performed before values are mapped to colors,
 so the
@@ -163,7 +163,7 @@ for which no scaling is necessary.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term><option>-f</option><replaceable>n</replaceable></term>
+  <term><option>-f </option><replaceable>n</replaceable></term>
   <listitem>
 <para>Display field number
 <emphasis remap="I">n</emphasis>
@@ -179,13 +179,6 @@ By default, field 1 is displayed.</para>
   <listitem>
 <para>Display the grid.
 Causes a 1-pixel spacing between cells in the output.</para>
-  </listitem>
-  </varlistentry>
-  <varlistentry>
-  <term><option>-h</option></term>
-  <listitem>
-<para>Force high-resolution display (1024×1024 pixels).
-See the discussion of autosizing below.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
@@ -216,7 +209,7 @@ See the discussion of autosizing below.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term><option>-l</option><replaceable>“az el”</replaceable><emphasis remap="B"/></term>
+  <term><option>-l </option><replaceable>az el</replaceable><emphasis remap="B"/></term>
   <listitem>
 <para>Write log information to the standard output.
 When given this option,
@@ -234,19 +227,19 @@ If a single view has not been specified,
 this option causes an implicit
 <option>-v</option> 1,
 which may, of course, be overridden explicitly.
-N.B.—<emphasis remap="I">Cell-fb</emphasis>
+N.B. <command>cell-fb</command>
 makes no use whatever of the values
 <emphasis remap="I">az</emphasis> and <emphasis remap="I">el</emphasis>,
 it merely writes them to the log.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term><option>-m</option><replaceable>“n color”</replaceable><emphasis remap="B"/></term>
+  <term><option>-m </option><replaceable>n color</replaceable><emphasis remap="B"/></term>
   <listitem>
 <para>Map cell data value
 <emphasis remap="I">n</emphasis>
 to
-<emphasis remap="I">color.</emphasis>
+<emphasis remap="I">color</emphasis>.
 The value
 <emphasis remap="I">n</emphasis>
 will be truncated, if necessary, to
@@ -254,20 +247,20 @@ the nearest lower of the discrete values listed in the description of the
 <option>-k</option>
 option above.
 The background color can be indexed by specifying the value 1.1 for
-<emphasis remap="I">n.</emphasis>
+<emphasis remap="I">n</emphasis>.
 For the meaning and format of
-<emphasis remap="I">color,</emphasis>
+<emphasis remap="I">color</emphasis>,
 see the
 <link linkend="definitions">DEFINITIONS</link>
 section below.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term><option>-M</option><replaceable>“color1 color2”</replaceable><emphasis remap="B"/></term>
+  <term><option>-M </option><replaceable>color1 color2</replaceable><emphasis remap="B"/></term>
   <listitem>
 <para>Define the color map
 to be a ramp between
-<emphasis remap="I">color1</emphasis> and <emphasis remap="I">color2.</emphasis>
+<emphasis remap="I">color1</emphasis> and <emphasis remap="I">color2</emphasis>.
 This allows frugality with the colors in an image:
 if, for example, cell data is plotted in gray scale,
 then many other colors remain for use in
@@ -277,14 +270,14 @@ is a typical cold-to-hot, blue-to-red scale,
 excepting that the smallest value in the input domain
 is mapped to white.
 For the meaning and format of
-<emphasis remap="I">color1</emphasis> and <emphasis remap="I">color2,</emphasis>
+<emphasis remap="I">color1</emphasis> and <emphasis remap="I">color2</emphasis>,
 see the
 <link linkend="definitions">DEFINITIONS</link>
 section below.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term><option>-p</option><replaceable>“h v”</replaceable><emphasis remap="B"/></term>
+  <term><option>-p </option><replaceable>h v</replaceable><emphasis remap="B"/></term>
   <listitem>
 <para>Offset the picture from the lower-left corner of the frame buffer display
 by
@@ -297,12 +290,13 @@ then the horizontal and vertical offsets are both set to this value.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term><option>-s</option><replaceable>“w h”</replaceable><emphasis remap="B"/></term>
+  <term><option>-s </option><replaceable>w h</replaceable><emphasis remap="B"/></term>
   <listitem>
 <para>Plot each cell as a rectangle of width
 <emphasis remap="I">w</emphasis>
 pixels and height
-<emphasis remap="I">h</emphasis>pixels.
+<emphasis remap="I">h</emphasis>
+pixels.
 This option has the effect of scaling the picture independently in the
 horizontal and vertical dimensions.
 The default is 10 pixels per cell in each dimension, not including the
@@ -312,10 +306,10 @@ then the width and height are both set to this value.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term><option>-v</option><replaceable>n</replaceable></term>
+  <term><option>-v </option><replaceable>n</replaceable></term>
   <listitem>
 <para>Display only view number
-<emphasis remap="I">n.</emphasis>
+<emphasis remap="I">n</emphasis>.
 Views are numbered starting at 1.
 If
 <emphasis remap="I">n</emphasis> = 0,
@@ -323,19 +317,19 @@ all views are displayed sequentially,
 which is the default behavior.
 The option
 <option>-v</option> 0
-implicitly turns off logging.
+implicitly turns off logging
 (see the
 <option>-l</option>
 option above).</para>
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term><option>-x</option><replaceable>n</replaceable></term>
+  <term><option>-x </option><replaceable>n</replaceable></term>
   <listitem>
 <para>Set the
 <citerefentry><refentrytitle>libbu</refentrytitle><manvolnum>3</manvolnum></citerefentry>
 debug flag to the hexadecimal value
-<emphasis remap="I">n.</emphasis>
+<emphasis remap="I">n</emphasis>.
 This option is useful primarily in debugging
 memory allocation.</para>
   </listitem>
@@ -353,7 +347,7 @@ utility such as
 </refsection>
 
 <refsection xml:id="discussion"><title>DISCUSSION</title>
-<para><emphasis remap="I">Cell-fb</emphasis>
+<para><command>cell-fb</command>
 determines the appropriate width and height of the frame buffer
 independently.
 For each there are three methods.
@@ -367,7 +361,7 @@ options,
 will use exactly the specified values.
 Otherwise,
 it performs autosizing for each view.
-<emphasis remap="I">Cell-fb</emphasis>'s
+<command>cell-fb</command>'s
 original behavior is called loose-fit autosizing.
 In that case, a frame-buffer dimension will be set to 512 pixels
 unless the image will not fit,
@@ -461,7 +455,7 @@ the color key will appear underneath the
 grid of cells, and the display will be erased before each view is drawn.</para>
 
 <literallayout remap="RS" class="normal">
-$  <emphasis remap="I">cell-fb</emphasis>  -F  fictitious.brlcad.org:  -gek  -p  “20 30”  inputs
+$  cell-fb -F fictitious.brlcad.org: -gek -p 20 30 inputs
 </literallayout> <!-- remap='RE' -->
 </refsection>
 
@@ -480,7 +474,7 @@ $  <emphasis remap="I">cell-fb</emphasis>  -F  fictitious.brlcad.org:  -ge
 </refsection>
 
 <refsection xml:id="copyright"><title>COPYRIGHT</title>
-<para>This software is Copyright (c) 1991-2013 by the United States
+<para>This software is Copyright (c) 1991-2014 by the United States
 Government as represented by U.S. Army Research Laboratory.</para>
 
 </refsection>

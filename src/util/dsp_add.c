@@ -1,7 +1,7 @@
 /*                       D S P _ A D D . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2013 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -31,8 +31,11 @@
 #include <sys/stat.h>
 #include "bio.h"
 
-#include "bu.h"
 #include "vmath.h"
+#include "bu/getopt.h"
+#include "bu/malloc.h"
+#include "bu/log.h"
+#include "bu/cv.h"
 #include "bn.h"
 
 
@@ -45,12 +48,13 @@ static const char usage[] = "Usage: %s dsp_1 dsp_2 > dsp_3\n";
  *
  * description: Combines two dsp files (which are binary files
  * comprised of network unsigned shorts).  The two files must be of
- * identical size.  The result is a file where each cell's height is
- * the total of the heights of the same cell in the input files.
+ * identical size.  The result, written to stdout, is a file where
+ * each cell's height is the total of the heights of the same cell
+ * in the input files.
  *
- * See the wiki for a tutorial on using dsp's.
+ * See the BRL-CAD wiki for a tutorial on using dsp's.
  *
- * see_also: dsp(5) ; asc2dsp(1) ; cv(1)
+ * see_also: dsp(5) asc2dsp(1) cv(1)
  *
  * opt: -h brief help
  *
@@ -67,7 +71,7 @@ static int style = ADD_STYLE_INT;
  * tell user how to invoke this program, then exit
  */
 static void
-print_usage(char *s)
+print_usage(const char *s)
 {
     if (s) (void)fputs(s, stderr);
 
@@ -115,7 +119,7 @@ add_float(unsigned short *buf1, unsigned short *buf2, unsigned long count)
     double *dbuf, *d;
     double min, max, k;
 
-    dbuf = bu_malloc(sizeof(double) * count, "buffer of double");
+    dbuf = (double *)bu_malloc(sizeof(double) * count, "buffer of double");
 
     min = MAX_FASTF;
     max = -MAX_FASTF;
@@ -210,7 +214,7 @@ main(int ac, char *av[])
     }
 
     count = sb.st_size;
-    buf1 = bu_malloc((size_t)sb.st_size, "buf1");
+    buf1 = (unsigned short *)bu_malloc((size_t)sb.st_size, "buf1");
 
     next_arg++;
 
@@ -234,7 +238,7 @@ main(int ac, char *av[])
 	bu_exit(EXIT_FAILURE, "**** ERROR **** file size mis-match\n");
     }
 
-    buf2 = bu_malloc((size_t)sb.st_size, "buf2");
+    buf2 = (unsigned short *)bu_malloc((size_t)sb.st_size, "buf2");
 
     count = count >> 1; /* convert count of char to count of short */
 

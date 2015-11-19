@@ -1,7 +1,7 @@
 /*          D E R I V E D U N I T E L E M E N T . C P P
  * BRL-CAD
  *
- * Copyright (c) 1994-2013 United States Government as represented by
+ * Copyright (c) 1994-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -72,14 +72,18 @@ DerivedUnitElement::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
 	    unit = dynamic_cast<NamedUnit *>(Factory::CreateObject(sw, se));
 	    if (unit == NULL) {
 		std::cout << CLASSNAME << ":Error loading member field \"unit\"." << std::endl;
+		sw->entity_status[id] = STEP_LOAD_ERROR;
 		return false;
 	    }
 	} else {
 	    std::cout << CLASSNAME << ":Error loading member field \"unit\"." << std::endl;
+	    sw->entity_status[id] = STEP_LOAD_ERROR;
 	    return false;
 	}
     }
     exponent = step->getRealAttribute(sse, "exponent");
+
+    sw->entity_status[id] = STEP_LOADED;
 
     return true;
 }

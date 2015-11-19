@@ -1,7 +1,7 @@
 /*               P U L L B A C K C U R V E . C P P
  * BRL-CAD
  *
- * Copyright (c) 2009-2013 United States Government as represented by
+ * Copyright (c) 2009-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -26,24 +26,33 @@
 #include "common.h"
 
 #include "vmath.h"
-#include "dvec.h"
+#include "bn/dvec.h"
 
 #include <assert.h>
 #include <vector>
 #include <list>
 #include <limits>
+#include <set>
+#include <map>
+#include <string>
 
-#include "tnt.h"
-#include "jama_lu.h"
 #include "brep.h"
+#include "bu/parallel.h"
 
 /* interface header */
 #include "PullbackCurve.h"
 
-
 #define RANGE_HI 0.55
 #define RANGE_LO 0.45
 #define UNIVERSAL_SAMPLE_COUNT 1001
+
+#define _DEBUG_TESTING_
+#ifdef _DEBUG_TESTING_
+bool _debug_print_ = false;
+bool _debug_print_mged2d_points_ = true;
+bool _debug_print_mged3d_points_ = false;
+int _debug_point_count_=0;
+#endif
 
 /* FIXME: duplicated with opennurbs_ext.cpp */
 class BSpline
@@ -57,12 +66,14 @@ public:
     ON_2dPointArray controls;
 };
 
+
 bool
 isFlat(const ON_2dPoint& p1, const ON_2dPoint& m, const ON_2dPoint& p2, double flatness)
 {
     ON_Line line = ON_Line(ON_3dPoint(p1), ON_3dPoint(p2));
     return line.DistanceTo(ON_3dPoint(m)) <= flatness;
 }
+
 
 void
 utah_ray_planes(const ON_Ray &r, ON_3dVector &p1, double &p1d, ON_3dVector &p2, double &p2d)
@@ -110,14 +121,1822 @@ seam_direction(ON_2dPoint uv1, ON_2dPoint uv2)
 }
 
 
+ON_BOOL32
+GetDomainSplits(
+    const ON_Surface *surf,
+    const ON_Interval &u_interval,
+    const ON_Interval &v_interval,
+    ON_Interval domSplits[2][2]
+    )
+{
+    ON_3dPoint min, max;
+    ON_Interval dom[2];
+    double length[2];
+
+    // initialize intervals
+    for (int i = 0; i < 2; i++) {
+	for (int j = 0; j < 2; j++) {
+	    domSplits[i][j] = ON_Interval::EmptyInterval;
+	}
+    }
+
+    min[0] = u_interval.m_t[0];
+    min[1] = v_interval.m_t[0];
+    max[0] = u_interval.m_t[1];
+    max[1] = v_interval.m_t[1];
+
+    for (int i=0; i<2; i++) {
+	if (surf->IsClosed(i)) {
+	    dom[i] = surf->Domain(i);
+	    length[i] = dom[i].Length();
+	    if ((max[i] - min[i]) >= length[i]) {
+		domSplits[i][0] = dom[i];
+	    } else {
+		double minbound = min[i];
+		double maxbound = max[i];
+		while (minbound < dom[i].m_t[0]) {
+		    minbound += length[i];
+		    maxbound += length[i];
+		}
+		while (minbound > dom[i].m_t[1]) {
+		    minbound -= length[i];
+		    maxbound -= length[i];
+		}
+		if (maxbound > dom[i].m_t[1]) {
+		    domSplits[i][0].m_t[0] = minbound;
+		    domSplits[i][0].m_t[1] = dom[i].m_t[1];
+		    domSplits[i][1].m_t[0] = dom[i].m_t[0];
+		    domSplits[i][1].m_t[1] = maxbound - length[i];
+		} else {
+		    domSplits[i][0].m_t[0] = minbound;
+		    domSplits[i][0].m_t[1] = maxbound;
+		}
+	    }
+	} else {
+	    domSplits[i][0].m_t[0] = min[i];
+	    domSplits[i][0].m_t[1] = max[i];
+	}
+    }
+
+    return true;
+}
+
+
+/*
+ * Wrapped OpenNURBS 'EvNormal()' because it fails when at surface singularity
+ * but not on edge of domain. If fails and at singularity this wrapper will
+ * reevaluate at domain edge.
+ */
+ON_BOOL32
+surface_EvNormal(// returns false if unable to evaluate
+    const ON_Surface *surf,
+    double s, double t, // evaluation parameters (s, t)
+    ON_3dPoint& point,  // returns value of surface
+    ON_3dVector& normal, // unit normal
+    int side,       // optional - determines which side to evaluate from
+    //         0 = default
+    //         1 from NE quadrant
+    //         2 from NW quadrant
+    //         3 from SW quadrant
+    //         4 from SE quadrant
+    int* hint       // optional - evaluation hint (int[2]) used to speed
+    //            repeated evaluations
+    )
+{
+    ON_BOOL32 rc = false;
+
+    if (!(rc=surf->EvNormal(s, t, point, normal, side, hint))) {
+	side = IsAtSingularity(surf, s, t, PBC_SEAM_TOL);// 0 = south, 1 = east, 2 = north, 3 = west
+	if (side >= 0) {
+	    ON_Interval u = surf->Domain(0);
+	    ON_Interval v = surf->Domain(1);
+	    if (side == 0) {
+		rc=surf->EvNormal(u.m_t[0], v.m_t[0], point, normal, side, hint);
+	    } else if (side == 1) {
+		rc=surf->EvNormal(u.m_t[1], v.m_t[1], point, normal, side, hint);
+	    } else if (side == 2) {
+		rc=surf->EvNormal(u.m_t[1], v.m_t[1], point, normal, side, hint);
+	    } else if (side == 3) {
+		rc=surf->EvNormal(u.m_t[0], v.m_t[0], point, normal, side, hint);
+	    }
+	} else {
+	    /*
+	     * brute force and try to solve from each side of the surface domain
+	     */
+	    ON_Interval u = surf->Domain(0);
+	    ON_Interval v = surf->Domain(1);
+	    for(int iside=1; iside <= 4; iside++) {
+		rc=surf->EvNormal(s, t, point, normal, iside, hint);
+		if (rc)
+		    break;
+	    }
+	}
+    }
+    return rc;
+}
+
+
+static bool locals_initialized[MAX_PSW] = {false};
+static ON_RevSurface *rev_surface[MAX_PSW] = {NULL};
+static ON_NurbsSurface *nurbs_surface[MAX_PSW] = {NULL};
+static ON_Extrusion *extr_surface[MAX_PSW] = {NULL};
+static ON_PlaneSurface *plane_surface[MAX_PSW] = {NULL};
+static ON_SumSurface *sum_surface[MAX_PSW] = {NULL};
+static ON_SurfaceProxy *proxy_surface[MAX_PSW] = {NULL};
+
+ON_BOOL32
+surface_GetBoundingBox(
+    const ON_Surface *surf,
+    const ON_Interval &u_interval,
+    const ON_Interval &v_interval,
+    ON_BoundingBox& bbox,
+    ON_BOOL32 bGrowBox
+    )
+{
+    int p = bu_parallel_id();
+
+    if (!locals_initialized[p]) {
+	bu_semaphore_acquire(BU_SEM_MALLOC);
+	rev_surface[p] = ON_RevSurface::New();
+	nurbs_surface[p] = ON_NurbsSurface::New();
+	extr_surface[p] = new ON_Extrusion();
+	plane_surface[p] = new ON_PlaneSurface();
+	sum_surface[p] = ON_SumSurface::New();
+	proxy_surface[p] = new ON_SurfaceProxy();
+	locals_initialized[p] = true;
+	bu_semaphore_release(BU_SEM_MALLOC);
+    }
+
+    ON_Interval domSplits[2][2] = { { ON_Interval::EmptyInterval, ON_Interval::EmptyInterval }, { ON_Interval::EmptyInterval, ON_Interval::EmptyInterval }};
+    if (!GetDomainSplits(surf, u_interval, v_interval, domSplits)) {
+	return false;
+    }
+
+    bool growcurrent = bGrowBox != 0;
+    for (int i=0; i<2; i++) {
+	if (domSplits[0][i] == ON_Interval::EmptyInterval)
+	    continue;
+
+	for (int j=0; j<2; j++) {
+	    if (domSplits[1][j] != ON_Interval::EmptyInterval) {
+		if (dynamic_cast<ON_RevSurface * >(const_cast<ON_Surface *>(surf)) != NULL) {
+		    *rev_surface[p] = *dynamic_cast<ON_RevSurface * >(const_cast<ON_Surface *>(surf));
+		    if (rev_surface[p]->Trim(0, domSplits[0][i]) && rev_surface[p]->Trim(1, domSplits[1][j])) {
+			if (!rev_surface[p]->GetBoundingBox(bbox, growcurrent)) {
+			    return false;
+			}
+			growcurrent = true;
+		    }
+		} else if (dynamic_cast<ON_NurbsSurface * >(const_cast<ON_Surface *>(surf)) != NULL) {
+		    *nurbs_surface[p] = *dynamic_cast<ON_NurbsSurface * >(const_cast<ON_Surface *>(surf));
+		    if (nurbs_surface[p]->Trim(0, domSplits[0][i]) && nurbs_surface[p]->Trim(1, domSplits[1][j])) {
+			if (!nurbs_surface[p]->GetBoundingBox(bbox, growcurrent)) {
+			    return false;
+			}
+		    }
+		    growcurrent = true;
+		} else if (dynamic_cast<ON_Extrusion * >(const_cast<ON_Surface *>(surf)) != NULL) {
+		    *extr_surface[p] = *dynamic_cast<ON_Extrusion * >(const_cast<ON_Surface *>(surf));
+		    if (extr_surface[p]->Trim(0, domSplits[0][i]) && extr_surface[p]->Trim(1, domSplits[1][j])) {
+			if (!extr_surface[p]->GetBoundingBox(bbox, growcurrent)) {
+			    return false;
+			}
+		    }
+		    growcurrent = true;
+		} else if (dynamic_cast<ON_PlaneSurface * >(const_cast<ON_Surface *>(surf)) != NULL) {
+		    *(plane_surface[p]) = *dynamic_cast<ON_PlaneSurface * >(const_cast<ON_Surface *>(surf));
+		    if (plane_surface[p]->Trim(0, domSplits[0][i]) && plane_surface[p]->Trim(1, domSplits[1][j])) {
+			if (!plane_surface[p]->GetBoundingBox(bbox, growcurrent)) {
+			    return false;
+			}
+		    }
+		    growcurrent = true;
+		} else if (dynamic_cast<ON_SumSurface * >(const_cast<ON_Surface *>(surf)) != NULL) {
+		    *sum_surface[p] = *dynamic_cast<ON_SumSurface * >(const_cast<ON_Surface *>(surf));
+		    if (sum_surface[p]->Trim(0, domSplits[0][i]) && sum_surface[p]->Trim(1, domSplits[1][j])) {
+			if (!sum_surface[p]->GetBoundingBox(bbox, growcurrent)) {
+			    return false;
+			}
+		    }
+		    growcurrent = true;
+		} else if (dynamic_cast<ON_SurfaceProxy * >(const_cast<ON_Surface *>(surf)) != NULL) {
+		    *proxy_surface[p] = *dynamic_cast<ON_SurfaceProxy * >(const_cast<ON_Surface *>(surf));
+		    if (proxy_surface[p]->Trim(0, domSplits[0][i]) && proxy_surface[p]->Trim(1, domSplits[1][j])) {
+			if (!proxy_surface[p]->GetBoundingBox(bbox, growcurrent)) {
+			    return false;
+			}
+		    }
+		    growcurrent = true;
+		} else {
+		    std::cerr << "Unknown Surface Type" << std::endl;
+		}
+	    }
+	}
+    }
+
+    return true;
+}
+
+
+ON_BOOL32
+face_GetBoundingBox(
+    const ON_BrepFace &face,
+    ON_BoundingBox& bbox,
+    ON_BOOL32 bGrowBox
+    )
+{
+    const ON_Surface *surf = face.SurfaceOf();
+
+    // may be a smaller trimmed subset of surface so worth getting
+    // face boundary
+    bool growcurrent = bGrowBox != 0;
+    ON_3dPoint min, max;
+    for (int li = 0; li < face.LoopCount(); li++) {
+	for (int ti = 0; ti < face.Loop(li)->TrimCount(); ti++) {
+	    ON_BrepTrim *trim = face.Loop(li)->Trim(ti);
+	    trim->GetBoundingBox(min, max, growcurrent);
+	    growcurrent = true;
+	}
+    }
+
+    ON_Interval u_interval(min.x, max.x);
+    ON_Interval v_interval(min.y, max.y);
+    if (!surface_GetBoundingBox(surf, u_interval, v_interval, bbox, growcurrent)) {
+	return false;
+    }
+
+    return true;
+}
+
+
+ON_BOOL32
+surface_GetIntervalMinMaxDistance(
+    const ON_3dPoint& p,
+    ON_BoundingBox &bbox,
+    double &min_distance,
+    double &max_distance
+    )
+{
+    min_distance = bbox.MinimumDistanceTo(p);
+    max_distance = bbox.MaximumDistanceTo(p);
+    return true;
+}
+
+
+ON_BOOL32
+surface_GetIntervalMinMaxDistance(
+    const ON_Surface *surf,
+    const ON_3dPoint& p,
+    const ON_Interval &u_interval,
+    const ON_Interval &v_interval,
+    double &min_distance,
+    double &max_distance
+    )
+{
+    ON_BoundingBox bbox;
+
+    if (surface_GetBoundingBox(surf, u_interval, v_interval, bbox, false)) {
+	min_distance = bbox.MinimumDistanceTo(p);
+
+	max_distance = bbox.MaximumDistanceTo(p);
+	return true;
+    }
+    return false;
+}
+
+
+double
+surface_GetOptimalNormalUSplit(const ON_Surface *surf, const ON_Interval &u_interval, const ON_Interval &v_interval, double tol)
+{
+    ON_3dVector normal[4];
+    double u = u_interval.Mid();
+
+    if ((normal[0] = surf->NormalAt(u_interval.m_t[0], v_interval.m_t[0])) &&
+	(normal[2] = surf->NormalAt(u_interval.m_t[0], v_interval.m_t[1]))) {
+	double step = u_interval.Length()/2.0;
+	double stepdir = 1.0;
+	u = u_interval.m_t[0] + stepdir * step;
+
+	while (step > tol) {
+	    if ((normal[1] = surf->NormalAt(u, v_interval.m_t[0])) &&
+		(normal[3] = surf->NormalAt(u, v_interval.m_t[1]))) {
+		double udot_1 = normal[0] * normal[1];
+		double udot_2 = normal[2] * normal[3];
+		if ((udot_1 < 0.0) || (udot_2 < 0.0)) {
+		    stepdir = -1.0;
+		} else {
+		    stepdir = 1.0;
+		}
+		step = step / 2.0;
+		u = u + stepdir * step;
+	    }
+	}
+    }
+    return u;
+}
+
+
+double
+surface_GetOptimalNormalVSplit(const ON_Surface *surf, const ON_Interval &u_interval, const ON_Interval &v_interval, double tol)
+{
+    ON_3dVector normal[4];
+    double v = v_interval.Mid();
+
+    if ((normal[0] = surf->NormalAt(u_interval.m_t[0], v_interval.m_t[0])) &&
+	(normal[1] = surf->NormalAt(u_interval.m_t[1], v_interval.m_t[0]))) {
+	double step = v_interval.Length()/2.0;
+	double stepdir = 1.0;
+	v = v_interval.m_t[0] + stepdir * step;
+
+	while (step > tol) {
+	    if ((normal[2] = surf->NormalAt(u_interval.m_t[0], v)) &&
+		(normal[3] = surf->NormalAt(u_interval.m_t[1], v))) {
+		double vdot_1 = normal[0] * normal[2];
+		double vdot_2 = normal[1] * normal[3];
+		if ((vdot_1 < 0.0) || (vdot_2 < 0.0)) {
+		    stepdir = -1.0;
+		} else {
+		    stepdir = 1.0;
+		}
+		step = step / 2.0;
+		v = v + stepdir * step;
+	    }
+	}
+    }
+    return v;
+}
+
+
+//forward for cyclic
+double surface_GetClosestPoint3dFirstOrderByRange(const ON_Surface *surf, const ON_3dPoint& p, const ON_Interval& u_range,
+						  const ON_Interval& v_range, double current_closest_dist, ON_2dPoint& p2d, ON_3dPoint& p3d, double same_point_tol, double within_distance_tol, int level);
+
+double surface_GetClosestPoint3dFirstOrderSubdivision(const ON_Surface *surf,
+						      const ON_3dPoint& p, const ON_Interval &u_interval, double u, const ON_Interval &v_interval, double v,
+						      double current_closest_dist, ON_2dPoint& p2d, ON_3dPoint& p3d,
+						      double same_point_tol, double within_distance_tol, int level)
+{
+    double min_distance = 0;
+    double max_distance = 0;
+    ON_Interval new_u_interval = u_interval;
+    ON_Interval new_v_interval = v_interval;
+
+    for (int iu = 0; iu < 2; iu++) {
+	new_u_interval.m_t[iu] = u_interval.m_t[iu];
+	new_u_interval.m_t[1 - iu] = u;
+	for (int iv = 0; iv < 2; iv++) {
+	    new_v_interval.m_t[iv] = v_interval.m_t[iv];
+	    new_v_interval.m_t[1 - iv] = v;
+	    if (surface_GetIntervalMinMaxDistance(surf, p, new_u_interval, new_v_interval, min_distance, max_distance)) {
+		double distance = DBL_MAX;
+		if ((min_distance < current_closest_dist) && NEAR_ZERO(min_distance, within_distance_tol)) {
+		    /////////////////////////////////////////
+		    // Could check normals and CV angles here
+		    /////////////////////////////////////////
+		    ON_3dVector normal[4];
+		    if ((normal[0] = surf->NormalAt(new_u_interval.m_t[0], new_v_interval.m_t[0])) &&
+			(normal[1] = surf->NormalAt(new_u_interval.m_t[1], new_v_interval.m_t[0])) &&
+			(normal[2] = surf->NormalAt(new_u_interval.m_t[0], new_v_interval.m_t[1])) &&
+			(normal[3] = surf->NormalAt(new_u_interval.m_t[1], new_v_interval.m_t[1]))) {
+
+			double udot_1 = normal[0] * normal[1];
+			double udot_2 = normal[2] * normal[3];
+			double vdot_1 = normal[0] * normal[2];
+			double vdot_2 = normal[1] * normal[3];
+
+			if ((udot_1 < 0.0) || (udot_2 < 0.0) || (vdot_1 < 0.0) || (vdot_2 < 0.0)) {
+			    double u_split, v_split;
+			    if ((udot_1 < 0.0) || (udot_2 < 0.0)) {
+				//get optimal U split
+				u_split = surface_GetOptimalNormalUSplit(surf, new_u_interval, new_v_interval, same_point_tol);
+			    } else {
+				u_split = new_u_interval.Mid();
+			    }
+			    if ((vdot_1 < 0.0) || (vdot_2 < 0.0)) {
+				//get optimal V split
+				v_split = surface_GetOptimalNormalVSplit(surf, new_u_interval, new_v_interval, same_point_tol);
+			    } else {
+				v_split = new_v_interval.Mid();
+			    }
+			    distance = surface_GetClosestPoint3dFirstOrderSubdivision(surf, p, new_u_interval, u_split, new_v_interval, v_split, current_closest_dist, p2d, p3d, same_point_tol, within_distance_tol, level++);
+			    if (distance < current_closest_dist) {
+				current_closest_dist = distance;
+				if (current_closest_dist < same_point_tol)
+				    return current_closest_dist;
+			    }
+			} else {
+			    distance = surface_GetClosestPoint3dFirstOrderByRange(surf, p, new_u_interval, new_v_interval, current_closest_dist, p2d, p3d, same_point_tol, within_distance_tol, level++);
+			    if (distance < current_closest_dist) {
+				current_closest_dist = distance;
+				if (current_closest_dist < same_point_tol)
+				    return current_closest_dist;
+			    }
+			}
+		    }
+		}
+	    }
+	}
+    }
+    return current_closest_dist;
+}
+
+
+double
+surface_GetClosestPoint3dFirstOrderByRange(
+    const ON_Surface *surf,
+    const ON_3dPoint& p,
+    const ON_Interval& u_range,
+    const ON_Interval& v_range,
+    double current_closest_dist,
+    ON_2dPoint& p2d,
+    ON_3dPoint& p3d,
+    double same_point_tol,
+    double within_distance_tol,
+    int level
+    )
+{
+    ON_3dPoint p0;
+    ON_2dPoint p2d0;
+    ON_3dVector ds, dt, dss, dst, dtt;
+    ON_2dPoint working_p2d;
+    ON_3dPoint working_p3d;
+    ON_3dPoint P;
+    ON_3dVector Ds, Dt, Dss, Dst, Dtt;
+    bool notdone = true;
+    double previous_distance = DBL_MAX;
+    double distance;
+    int errcnt = 0;
+
+    p2d0.x = u_range.Mid();
+    p2d0.y = v_range.Mid();
+
+    while (notdone && (surf->Ev2Der(p2d0.x, p2d0.y, p0, ds, dt, dss, dst, dtt))) {
+	if ((distance = p0.DistanceTo(p)) >= previous_distance) {
+	    if (++errcnt <= 10) {
+		p2d0 = (p2d0 + working_p2d) / 2.0;
+		continue;
+	    } else {
+		///////////////////////////
+		// Don't Subdivide just not getting any closer
+		///////////////////////////
+		/*
+		  double distance =
+		  surface_GetClosestPoint3dFirstOrderSubdivision(surf, p,
+		  u_range, u_range.Mid(), v_range, v_range.Mid(),
+		  current_closest_dist, p2d, p3d, tol, level++);
+		  if (distance < current_closest_dist) {
+		  current_closest_dist = distance;
+		  if (current_closest_dist < tol)
+		  return current_closest_dist;
+		  }
+		*/
+		break;
+	    }
+	} else {
+	    if (distance < current_closest_dist) {
+		current_closest_dist = distance;
+		p3d = p0;
+		p2d = p2d0;
+		if (current_closest_dist < same_point_tol)
+		    return current_closest_dist;
+	    }
+	    previous_distance = distance;
+	    working_p3d = p0;
+	    working_p2d = p2d0;
+	    errcnt = 0;
+	}
+	ON_3dVector N = ON_CrossProduct(ds, dt);
+	N.Unitize();
+	ON_Plane plane(p0, N);
+	ON_3dPoint q = plane.ClosestPointTo(p);
+	ON_2dVector pullback;
+	ON_3dVector vector = q - p0;
+	double vlength = vector.Length();
+
+	if (vlength > 0.0) {
+	    if (ON_Pullback3dVector(vector, 0.0, ds, dt, dss, dst, dtt,
+				    pullback)) {
+		p2d0 = p2d0 + pullback;
+		if (!u_range.Includes(p2d0.x, false)) {
+		    int i = (u_range.m_t[0] <= u_range.m_t[1]) ? 0 : 1;
+		    p2d0.x =
+			(p2d0.x < u_range.m_t[i]) ?
+			u_range.m_t[i] : u_range.m_t[1 - i];
+		}
+		if (!v_range.Includes(p2d0.y, false)) {
+		    int i = (v_range.m_t[0] <= v_range.m_t[1]) ? 0 : 1;
+		    p2d0.y =
+			(p2d0.y < v_range.m_t[i]) ?
+			v_range.m_t[i] : v_range.m_t[1 - i];
+		}
+	    } else {
+		///////////////////////////
+		// Subdivide and go again
+		///////////////////////////
+		notdone = false;
+		distance =
+		    surface_GetClosestPoint3dFirstOrderSubdivision(surf, p,
+								   u_range, u_range.Mid(), v_range, v_range.Mid(),
+								   current_closest_dist, p2d, p3d, same_point_tol, within_distance_tol, level++);
+		if (distance < current_closest_dist) {
+		    current_closest_dist = distance;
+		    if (current_closest_dist < same_point_tol)
+			return current_closest_dist;
+		}
+		break;
+	    }
+	} else {
+	    // can't get any closer
+	    notdone = false;
+	    break;
+	}
+    }
+    if (previous_distance < current_closest_dist) {
+	current_closest_dist = previous_distance;
+	p3d = working_p3d;
+	p2d = working_p2d;
+    }
+
+    return current_closest_dist;
+}
+
+
+bool surface_GetClosestPoint3dFirstOrder(
+    const ON_Surface *surf,
+    const ON_3dPoint& p,
+    ON_2dPoint& p2d,
+    ON_3dPoint& p3d,
+    double &current_distance,
+    int quadrant,	// optional - determines which quadrant to evaluate from
+    //         0 = default
+    //         1 from NE quadrant
+    //         2 from NW quadrant
+    //         3 from SW quadrant
+    //         4 from SE quadrant
+    double same_point_tol,
+    double within_distance_tol
+    )
+{
+    ON_3dPoint p0;
+    ON_2dPoint p2d0;
+    ON_3dVector ds, dt, dss, dst, dtt;
+    ON_3dVector T, K;
+    bool rc = false;
+
+    static const ON_Surface *prev_surface = NULL;
+    static int prev_u_spancnt = 0;
+    static int u_spancnt = 0;
+    static int v_spancnt = 0;
+    static double *uspan = NULL;
+    static double *vspan = NULL;
+    static ON_BoundingBox **bbox = NULL;
+    static double umid = 0.0;
+    static int umid_index = 0;
+    static double vmid = 0.0;
+    static int vmid_index = 0;
+
+    current_distance = DBL_MAX;
+
+    int prec = std::cerr.precision();
+    std::cerr.precision(15);
+
+
+    if (prev_surface != surf) {
+	if (uspan)
+	    delete [] uspan;
+	if (vspan)
+	    delete [] vspan;
+	if (bbox) {
+	    for(int i = 0 ; i < (prev_u_spancnt + 2) ; i++)
+		delete [] bbox[i] ;
+	    delete [] bbox;
+	}
+	u_spancnt = prev_u_spancnt = surf->SpanCount(0);
+	v_spancnt = surf->SpanCount(1);
+	// adding 2 here because going to divide at midpoint
+	uspan = new double[u_spancnt + 2];
+	vspan = new double[v_spancnt + 2];
+	bbox = new ON_BoundingBox *[(u_spancnt + 2)];
+	for(int i = 0 ; i < (u_spancnt + 2) ; i++)
+	    bbox[i] = new ON_BoundingBox [v_spancnt + 2];
+
+	if (surf->GetSpanVector(0, uspan) && surf->GetSpanVector(1, vspan)) {
+	    prev_surface = surf;
+	    umid = surf->Domain(0).Mid();
+	    umid_index = u_spancnt/2;
+	    for (int u_span_index = 0; u_span_index < u_spancnt + 1;u_span_index++) {
+		if (NEAR_EQUAL(uspan[u_span_index], umid, same_point_tol)) {
+		    umid_index = u_span_index;
+		    break;
+		} else if (uspan[u_span_index] > umid) {
+		    for (u_span_index = u_spancnt + 1; u_span_index > 0;u_span_index--) {
+			if (uspan[u_span_index-1] < umid) {
+			    uspan[u_span_index] = umid;
+			    umid_index = u_span_index;
+			    u_spancnt++;
+			    u_span_index = u_spancnt+1;
+			    break;
+			} else {
+			    uspan[u_span_index] = uspan[u_span_index-1];
+			}
+		    }
+		}
+	    }
+	    vmid = surf->Domain(1).Mid();
+	    vmid_index = v_spancnt/2;
+	    for (int v_span_index = 0; v_span_index < v_spancnt + 1;v_span_index++) {
+		if (NEAR_EQUAL(vspan[v_span_index], vmid, same_point_tol)) {
+		    vmid_index = v_span_index;
+		    break;
+		} else if (vspan[v_span_index] > vmid) {
+		    for (v_span_index = v_spancnt + 1; v_span_index > 0;v_span_index--) {
+			if (vspan[v_span_index-1] < vmid) {
+			    vspan[v_span_index] = vmid;
+			    vmid_index = v_span_index;
+			    v_spancnt++;
+			    v_span_index = v_spancnt+1;
+			    break;
+			} else {
+			    vspan[v_span_index] = vspan[v_span_index-1];
+			}
+		    }
+		}
+	    }
+	    for (int u_span_index = 1; u_span_index < u_spancnt + 1;
+		 u_span_index++) {
+		for (int v_span_index = 1; v_span_index < v_spancnt + 1;
+		     v_span_index++) {
+		    ON_Interval u_interval(uspan[u_span_index - 1],
+					   uspan[u_span_index]);
+		    ON_Interval v_interval(vspan[v_span_index - 1],
+					   vspan[v_span_index]);
+
+		    if (!surface_GetBoundingBox(surf, u_interval, v_interval, bbox[u_span_index-1][v_span_index-1], false)) {
+			std::cerr << "Error computing bounding box for surface interval" << std::endl;
+		    }
+		}
+	    }
+	} else {
+	    prev_surface = NULL;
+	}
+    }
+    if (prev_surface == surf) {
+	if (quadrant == 0) {
+	    for (int u_span_index = 1; u_span_index < u_spancnt + 1;
+		 u_span_index++) {
+		for (int v_span_index = 1; v_span_index < v_spancnt + 1;
+		     v_span_index++) {
+		    ON_Interval u_interval(uspan[u_span_index - 1],
+					   uspan[u_span_index]);
+		    ON_Interval v_interval(vspan[v_span_index - 1],
+					   vspan[v_span_index]);
+		    double min_distance, max_distance;
+
+		    int level = 1;
+		    if (surface_GetIntervalMinMaxDistance(p, bbox[u_span_index-1][v_span_index-1], min_distance, max_distance)) {
+			if ((min_distance < current_distance) && NEAR_ZERO(min_distance, within_distance_tol)) {
+			    /////////////////////////////////////////
+			    // Could check normals and CV angles here
+			    /////////////////////////////////////////
+			    double distance = surface_GetClosestPoint3dFirstOrderSubdivision(surf, p, u_interval, u_interval.Mid(), v_interval, v_interval.Mid(), current_distance, p2d, p3d, same_point_tol, within_distance_tol, level++);
+			    if (distance < current_distance) {
+				current_distance = distance;
+				if (current_distance < same_point_tol) {
+				    rc = true;
+				    goto cleanup;
+				}
+			    }
+			}
+		    }
+		}
+	    }
+	    if (current_distance < within_distance_tol) {
+		rc = true;
+		goto cleanup;
+	    }
+	} else if (quadrant == 1) {
+	    if (surf->IsClosed(0)) { //NE, SE, NW.SW
+		//         1 from NE quadrant
+		for (int u_span_index = umid_index+1; u_span_index < u_spancnt + 1; u_span_index++) {
+		    for (int v_span_index = vmid_index+1; v_span_index < v_spancnt + 1; v_span_index++) {
+			ON_Interval u_interval(uspan[u_span_index - 1],
+					       uspan[u_span_index]);
+			ON_Interval v_interval(vspan[v_span_index - 1],
+					       vspan[v_span_index]);
+			double min_distance, max_distance;
+
+			int level = 1;
+			if (surface_GetIntervalMinMaxDistance(p, bbox[u_span_index-1][v_span_index-1], min_distance, max_distance)) {
+			    if ((min_distance < current_distance) && NEAR_ZERO(min_distance, within_distance_tol)) {
+				/////////////////////////////////////////
+				// Could check normals and CV angles here
+				/////////////////////////////////////////
+				double distance = surface_GetClosestPoint3dFirstOrderSubdivision(surf, p, u_interval, u_interval.Mid(), v_interval, v_interval.Mid(), current_distance, p2d, p3d, same_point_tol, within_distance_tol, level++);
+				if (distance < current_distance) {
+				    current_distance = distance;
+				    if (current_distance < same_point_tol) {
+					rc = true;
+					goto cleanup;
+				    }
+				}
+			    }
+			}
+		    }
+		}
+		//         4 from SE quadrant
+		for (int u_span_index = umid_index+1; u_span_index < u_spancnt + 1; u_span_index++) {
+		    for (int v_span_index = 1; v_span_index < vmid_index+1; v_span_index++) {
+			ON_Interval u_interval(uspan[u_span_index - 1],
+					       uspan[u_span_index]);
+			ON_Interval v_interval(vspan[v_span_index - 1],
+					       vspan[v_span_index]);
+			double min_distance, max_distance;
+
+			int level = 1;
+			if (surface_GetIntervalMinMaxDistance(p, bbox[u_span_index-1][v_span_index-1], min_distance, max_distance)) {
+			    if ((min_distance < current_distance) && NEAR_ZERO(min_distance, within_distance_tol)) {
+				/////////////////////////////////////////
+				// Could check normals and CV angles here
+				/////////////////////////////////////////
+				double distance = surface_GetClosestPoint3dFirstOrderSubdivision(surf, p, u_interval, u_interval.Mid(), v_interval, v_interval.Mid(), current_distance, p2d, p3d, same_point_tol, within_distance_tol, level++);
+				if (distance < current_distance) {
+				    current_distance = distance;
+				    if (current_distance < same_point_tol) {
+					rc = true;
+					goto cleanup;
+				    }
+				}
+			    }
+			}
+		    }
+		}
+		//         2 from NW quadrant
+		for (int u_span_index = 1; u_span_index < umid_index+1; u_span_index++) {
+		    for (int v_span_index = vmid_index+1; v_span_index < v_spancnt + 1; v_span_index++) {
+			ON_Interval u_interval(uspan[u_span_index - 1],
+					       uspan[u_span_index]);
+			ON_Interval v_interval(vspan[v_span_index - 1],
+					       vspan[v_span_index]);
+			double min_distance, max_distance;
+
+			int level = 1;
+			if (surface_GetIntervalMinMaxDistance(p, bbox[u_span_index-1][v_span_index-1], min_distance, max_distance)) {
+			    if ((min_distance < current_distance) && NEAR_ZERO(min_distance, within_distance_tol)) {
+				/////////////////////////////////////////
+				// Could check normals and CV angles here
+				/////////////////////////////////////////
+				double distance = surface_GetClosestPoint3dFirstOrderSubdivision(surf, p, u_interval, u_interval.Mid(), v_interval, v_interval.Mid(), current_distance, p2d, p3d, same_point_tol, within_distance_tol, level++);
+				if (distance < current_distance) {
+				    current_distance = distance;
+				    if (current_distance < same_point_tol) {
+					rc = true;
+					goto cleanup;
+				    }
+				}
+			    }
+			}
+		    }
+		}
+		//         3 from SW quadrant
+		for (int u_span_index = 1; u_span_index < umid_index+1; u_span_index++) {
+		    for (int v_span_index = 1; v_span_index < vmid_index+1; v_span_index++) {
+			ON_Interval u_interval(uspan[u_span_index - 1],
+					       uspan[u_span_index]);
+			ON_Interval v_interval(vspan[v_span_index - 1],
+					       vspan[v_span_index]);
+			double min_distance, max_distance;
+
+			int level = 1;
+			if (surface_GetIntervalMinMaxDistance(p, bbox[u_span_index-1][v_span_index-1], min_distance, max_distance)) {
+			    if ((min_distance < current_distance) && NEAR_ZERO(min_distance, within_distance_tol)) {
+				/////////////////////////////////////////
+				// Could check normals and CV angles here
+				/////////////////////////////////////////
+				double distance = surface_GetClosestPoint3dFirstOrderSubdivision(surf, p, u_interval, u_interval.Mid(), v_interval, v_interval.Mid(), current_distance, p2d, p3d, same_point_tol, within_distance_tol, level++);
+				if (distance < current_distance) {
+				    current_distance = distance;
+				    if (current_distance < same_point_tol) {
+					rc = true;
+					goto cleanup;
+				    }
+				}
+			    }
+			}
+		    }
+		}
+	    } else { //NE, NW, SW, SE
+		//         1 from NE quadrant
+		for (int u_span_index = umid_index+1; u_span_index < u_spancnt + 1; u_span_index++) {
+		    for (int v_span_index = vmid_index+1; v_span_index < v_spancnt + 1; v_span_index++) {
+			ON_Interval u_interval(uspan[u_span_index - 1],
+					       uspan[u_span_index]);
+			ON_Interval v_interval(vspan[v_span_index - 1],
+					       vspan[v_span_index]);
+			double min_distance, max_distance;
+
+			int level = 1;
+			if (surface_GetIntervalMinMaxDistance(p, bbox[u_span_index-1][v_span_index-1], min_distance, max_distance)) {
+			    if ((min_distance < current_distance) && NEAR_ZERO(min_distance, within_distance_tol)) {
+				/////////////////////////////////////////
+				// Could check normals and CV angles here
+				/////////////////////////////////////////
+				double distance = surface_GetClosestPoint3dFirstOrderSubdivision(surf, p, u_interval, u_interval.Mid(), v_interval, v_interval.Mid(), current_distance, p2d, p3d, same_point_tol, within_distance_tol, level++);
+				if (distance < current_distance) {
+				    current_distance = distance;
+				    if (current_distance < same_point_tol) {
+					rc = true;
+					goto cleanup;
+				    }
+				}
+			    }
+			}
+		    }
+		}
+		//         2 from NW quadrant
+		for (int u_span_index = 1; u_span_index < umid_index+1; u_span_index++) {
+		    for (int v_span_index = vmid_index+1; v_span_index < v_spancnt + 1; v_span_index++) {
+			ON_Interval u_interval(uspan[u_span_index - 1],
+					       uspan[u_span_index]);
+			ON_Interval v_interval(vspan[v_span_index - 1],
+					       vspan[v_span_index]);
+			double min_distance, max_distance;
+
+			int level = 1;
+			if (surface_GetIntervalMinMaxDistance(p, bbox[u_span_index-1][v_span_index-1], min_distance, max_distance)) {
+			    if ((min_distance < current_distance) && NEAR_ZERO(min_distance, within_distance_tol)) {
+				/////////////////////////////////////////
+				// Could check normals and CV angles here
+				/////////////////////////////////////////
+				double distance = surface_GetClosestPoint3dFirstOrderSubdivision(surf, p, u_interval, u_interval.Mid(), v_interval, v_interval.Mid(), current_distance, p2d, p3d, same_point_tol, within_distance_tol, level++);
+				if (distance < current_distance) {
+				    current_distance = distance;
+				    if (current_distance < same_point_tol) {
+					rc = true;
+					goto cleanup;
+				    }
+				}
+			    }
+			}
+		    }
+		}
+		//         3 from SW quadrant
+		for (int u_span_index = 1; u_span_index < umid_index+1; u_span_index++) {
+		    for (int v_span_index = 1; v_span_index < vmid_index+1; v_span_index++) {
+			ON_Interval u_interval(uspan[u_span_index - 1],
+					       uspan[u_span_index]);
+			ON_Interval v_interval(vspan[v_span_index - 1],
+					       vspan[v_span_index]);
+			double min_distance, max_distance;
+
+			int level = 1;
+			if (surface_GetIntervalMinMaxDistance(p, bbox[u_span_index-1][v_span_index-1], min_distance, max_distance)) {
+			    if ((min_distance < current_distance) && NEAR_ZERO(min_distance, within_distance_tol)) {
+				/////////////////////////////////////////
+				// Could check normals and CV angles here
+				/////////////////////////////////////////
+				double distance = surface_GetClosestPoint3dFirstOrderSubdivision(surf, p, u_interval, u_interval.Mid(), v_interval, v_interval.Mid(), current_distance, p2d, p3d, same_point_tol, within_distance_tol, level++);
+				if (distance < current_distance) {
+				    current_distance = distance;
+				    if (current_distance < same_point_tol) {
+					rc = true;
+					goto cleanup;
+				    }
+				}
+			    }
+			}
+		    }
+		}
+		//         4 from SE quadrant
+		for (int u_span_index = umid_index+1; u_span_index < u_spancnt + 1; u_span_index++) {
+		    for (int v_span_index = 1; v_span_index < vmid_index+1; v_span_index++) {
+			ON_Interval u_interval(uspan[u_span_index - 1],
+					       uspan[u_span_index]);
+			ON_Interval v_interval(vspan[v_span_index - 1],
+					       vspan[v_span_index]);
+			double min_distance, max_distance;
+
+			int level = 1;
+			if (surface_GetIntervalMinMaxDistance(p, bbox[u_span_index-1][v_span_index-1], min_distance, max_distance)) {
+			    if ((min_distance < current_distance) && NEAR_ZERO(min_distance, within_distance_tol)) {
+				/////////////////////////////////////////
+				// Could check normals and CV angles here
+				/////////////////////////////////////////
+				double distance = surface_GetClosestPoint3dFirstOrderSubdivision(surf, p, u_interval, u_interval.Mid(), v_interval, v_interval.Mid(), current_distance, p2d, p3d, same_point_tol, within_distance_tol, level++);
+				if (distance < current_distance) {
+				    current_distance = distance;
+				    if (current_distance < same_point_tol) {
+					rc = true;
+					goto cleanup;
+				    }
+				}
+			    }
+			}
+		    }
+		}
+	    }
+	    if (current_distance < within_distance_tol) {
+		rc = true;
+		goto cleanup;
+	    }
+	} else if (quadrant == 2) {
+	    if (surf->IsClosed(0)) { // NW, SW, NE, SE
+		//         2 from NW quadrant
+		for (int u_span_index = 1; u_span_index < umid_index+1; u_span_index++) {
+		    for (int v_span_index = vmid_index+1; v_span_index < v_spancnt + 1; v_span_index++) {
+			ON_Interval u_interval(uspan[u_span_index - 1],
+					       uspan[u_span_index]);
+			ON_Interval v_interval(vspan[v_span_index - 1],
+					       vspan[v_span_index]);
+			double min_distance, max_distance;
+
+			int level = 1;
+			if (surface_GetIntervalMinMaxDistance(p, bbox[u_span_index-1][v_span_index-1], min_distance, max_distance)) {
+			    if ((min_distance < current_distance) && NEAR_ZERO(min_distance, within_distance_tol)) {
+				/////////////////////////////////////////
+				// Could check normals and CV angles here
+				/////////////////////////////////////////
+				double distance = surface_GetClosestPoint3dFirstOrderSubdivision(surf, p, u_interval, u_interval.Mid(), v_interval, v_interval.Mid(), current_distance, p2d, p3d, same_point_tol, within_distance_tol, level++);
+				if (distance < current_distance) {
+				    current_distance = distance;
+				    if (current_distance < same_point_tol) {
+					rc = true;
+					goto cleanup;
+				    }
+				}
+			    }
+			}
+		    }
+		}
+		//         3 from SW quadrant
+		for (int u_span_index = 1; u_span_index < umid_index+1; u_span_index++) {
+		    for (int v_span_index = 1; v_span_index < vmid_index+1; v_span_index++) {
+			ON_Interval u_interval(uspan[u_span_index - 1],
+					       uspan[u_span_index]);
+			ON_Interval v_interval(vspan[v_span_index - 1],
+					       vspan[v_span_index]);
+			double min_distance, max_distance;
+
+			int level = 1;
+			if (surface_GetIntervalMinMaxDistance(p, bbox[u_span_index-1][v_span_index-1], min_distance, max_distance)) {
+			    if ((min_distance < current_distance) && NEAR_ZERO(min_distance, within_distance_tol)) {
+				/////////////////////////////////////////
+				// Could check normals and CV angles here
+				/////////////////////////////////////////
+				double distance = surface_GetClosestPoint3dFirstOrderSubdivision(surf, p, u_interval, u_interval.Mid(), v_interval, v_interval.Mid(), current_distance, p2d, p3d, same_point_tol, within_distance_tol, level++);
+				if (distance < current_distance) {
+				    current_distance = distance;
+				    if (current_distance < same_point_tol) {
+					rc = true;
+					goto cleanup;
+				    }
+				}
+			    }
+			}
+		    }
+		}
+		//         1 from NE quadrant
+		for (int u_span_index = umid_index+1; u_span_index < u_spancnt + 1; u_span_index++) {
+		    for (int v_span_index = vmid_index+1; v_span_index < v_spancnt + 1; v_span_index++) {
+			ON_Interval u_interval(uspan[u_span_index - 1],
+					       uspan[u_span_index]);
+			ON_Interval v_interval(vspan[v_span_index - 1],
+					       vspan[v_span_index]);
+			double min_distance, max_distance;
+
+			int level = 1;
+			if (surface_GetIntervalMinMaxDistance(p, bbox[u_span_index-1][v_span_index-1], min_distance, max_distance)) {
+			    if ((min_distance < current_distance) && NEAR_ZERO(min_distance, within_distance_tol)) {
+				/////////////////////////////////////////
+				// Could check normals and CV angles here
+				/////////////////////////////////////////
+				double distance = surface_GetClosestPoint3dFirstOrderSubdivision(surf, p, u_interval, u_interval.Mid(), v_interval, v_interval.Mid(), current_distance, p2d, p3d, same_point_tol, within_distance_tol, level++);
+				if (distance < current_distance) {
+				    current_distance = distance;
+				    if (current_distance < same_point_tol) {
+					rc = true;
+					goto cleanup;
+				    }
+				}
+			    }
+			}
+		    }
+		}
+		//         4 from SE quadrant
+		for (int u_span_index = umid_index+1; u_span_index < u_spancnt + 1; u_span_index++) {
+		    for (int v_span_index = 1; v_span_index < vmid_index+1; v_span_index++) {
+			ON_Interval u_interval(uspan[u_span_index - 1],
+					       uspan[u_span_index]);
+			ON_Interval v_interval(vspan[v_span_index - 1],
+					       vspan[v_span_index]);
+			double min_distance, max_distance;
+
+			int level = 1;
+			if (surface_GetIntervalMinMaxDistance(p, bbox[u_span_index-1][v_span_index-1], min_distance, max_distance)) {
+			    if ((min_distance < current_distance) && NEAR_ZERO(min_distance, within_distance_tol)) {
+				/////////////////////////////////////////
+				// Could check normals and CV angles here
+				/////////////////////////////////////////
+				double distance = surface_GetClosestPoint3dFirstOrderSubdivision(surf, p, u_interval, u_interval.Mid(), v_interval, v_interval.Mid(), current_distance, p2d, p3d, same_point_tol, within_distance_tol, level++);
+				if (distance < current_distance) {
+				    current_distance = distance;
+				    if (current_distance < same_point_tol) {
+					rc = true;
+					goto cleanup;
+				    }
+				}
+			    }
+			}
+		    }
+		}
+	    } else { // NW, NE, SW, SE
+		//         2 from NW quadrant
+		for (int u_span_index = 1; u_span_index < umid_index+1; u_span_index++) {
+		    for (int v_span_index = vmid_index+1; v_span_index < v_spancnt + 1; v_span_index++) {
+			ON_Interval u_interval(uspan[u_span_index - 1],
+					       uspan[u_span_index]);
+			ON_Interval v_interval(vspan[v_span_index - 1],
+					       vspan[v_span_index]);
+			double min_distance, max_distance;
+
+			int level = 1;
+			if (surface_GetIntervalMinMaxDistance(p, bbox[u_span_index-1][v_span_index-1], min_distance, max_distance)) {
+			    if ((min_distance < current_distance) && NEAR_ZERO(min_distance, within_distance_tol)) {
+				/////////////////////////////////////////
+				// Could check normals and CV angles here
+				/////////////////////////////////////////
+				double distance = surface_GetClosestPoint3dFirstOrderSubdivision(surf, p, u_interval, u_interval.Mid(), v_interval, v_interval.Mid(), current_distance, p2d, p3d, same_point_tol, within_distance_tol, level++);
+				if (distance < current_distance) {
+				    current_distance = distance;
+				    if (current_distance < same_point_tol) {
+					rc = true;
+					goto cleanup;
+				    }
+				}
+			    }
+			}
+		    }
+		}
+		//         1 from NE quadrant
+		for (int u_span_index = umid_index+1; u_span_index < u_spancnt + 1; u_span_index++) {
+		    for (int v_span_index = vmid_index+1; v_span_index < v_spancnt + 1; v_span_index++) {
+			ON_Interval u_interval(uspan[u_span_index - 1],
+					       uspan[u_span_index]);
+			ON_Interval v_interval(vspan[v_span_index - 1],
+					       vspan[v_span_index]);
+			double min_distance, max_distance;
+
+			int level = 1;
+			if (surface_GetIntervalMinMaxDistance(p, bbox[u_span_index-1][v_span_index-1], min_distance, max_distance)) {
+			    if ((min_distance < current_distance) && NEAR_ZERO(min_distance, within_distance_tol)) {
+				/////////////////////////////////////////
+				// Could check normals and CV angles here
+				/////////////////////////////////////////
+				double distance = surface_GetClosestPoint3dFirstOrderSubdivision(surf, p, u_interval, u_interval.Mid(), v_interval, v_interval.Mid(), current_distance, p2d, p3d, same_point_tol, within_distance_tol, level++);
+				if (distance < current_distance) {
+				    current_distance = distance;
+				    if (current_distance < same_point_tol) {
+					rc = true;
+					goto cleanup;
+				    }
+				}
+			    }
+			}
+		    }
+		}
+		//         3 from SW quadrant
+		for (int u_span_index = 1; u_span_index < umid_index+1; u_span_index++) {
+		    for (int v_span_index = 1; v_span_index < vmid_index+1; v_span_index++) {
+			ON_Interval u_interval(uspan[u_span_index - 1],
+					       uspan[u_span_index]);
+			ON_Interval v_interval(vspan[v_span_index - 1],
+					       vspan[v_span_index]);
+			double min_distance, max_distance;
+
+			int level = 1;
+			if (surface_GetIntervalMinMaxDistance(p, bbox[u_span_index-1][v_span_index-1], min_distance, max_distance)) {
+			    if ((min_distance < current_distance) && NEAR_ZERO(min_distance, within_distance_tol)) {
+				/////////////////////////////////////////
+				// Could check normals and CV angles here
+				/////////////////////////////////////////
+				double distance = surface_GetClosestPoint3dFirstOrderSubdivision(surf, p, u_interval, u_interval.Mid(), v_interval, v_interval.Mid(), current_distance, p2d, p3d, same_point_tol, within_distance_tol, level++);
+				if (distance < current_distance) {
+				    current_distance = distance;
+				    if (current_distance < same_point_tol) {
+					rc = true;
+					goto cleanup;
+				    }
+				}
+			    }
+			}
+		    }
+		}
+		//         4 from SE quadrant
+		for (int u_span_index = umid_index+1; u_span_index < u_spancnt + 1; u_span_index++) {
+		    for (int v_span_index = 1; v_span_index < vmid_index+1; v_span_index++) {
+			ON_Interval u_interval(uspan[u_span_index - 1],
+					       uspan[u_span_index]);
+			ON_Interval v_interval(vspan[v_span_index - 1],
+					       vspan[v_span_index]);
+			double min_distance, max_distance;
+
+			int level = 1;
+			if (surface_GetIntervalMinMaxDistance(p, bbox[u_span_index-1][v_span_index-1], min_distance, max_distance)) {
+			    if ((min_distance < current_distance) && NEAR_ZERO(min_distance, within_distance_tol)) {
+				/////////////////////////////////////////
+				// Could check normals and CV angles here
+				/////////////////////////////////////////
+				double distance = surface_GetClosestPoint3dFirstOrderSubdivision(surf, p, u_interval, u_interval.Mid(), v_interval, v_interval.Mid(), current_distance, p2d, p3d, same_point_tol, within_distance_tol, level++);
+				if (distance < current_distance) {
+				    current_distance = distance;
+				    if (current_distance < same_point_tol) {
+					rc = true;
+					goto cleanup;
+				    }
+				}
+			    }
+			}
+		    }
+		}
+	    }
+	    if (current_distance < within_distance_tol) {
+		rc = true;
+		goto cleanup;
+	    }
+	} else if (quadrant == 3) {
+	    if (surf->IsClosed(0)) { // SW, NW, SE, NE
+		//         3 from SW quadrant
+		for (int u_span_index = 1; u_span_index < umid_index+1; u_span_index++) {
+		    for (int v_span_index = 1; v_span_index < vmid_index+1; v_span_index++) {
+			ON_Interval u_interval(uspan[u_span_index - 1],
+					       uspan[u_span_index]);
+			ON_Interval v_interval(vspan[v_span_index - 1],
+					       vspan[v_span_index]);
+			double min_distance, max_distance;
+
+			int level = 1;
+			if (surface_GetIntervalMinMaxDistance(p, bbox[u_span_index-1][v_span_index-1], min_distance, max_distance)) {
+			    if ((min_distance < current_distance) && NEAR_ZERO(min_distance, within_distance_tol)) {
+				/////////////////////////////////////////
+				// Could check normals and CV angles here
+				/////////////////////////////////////////
+				double distance = surface_GetClosestPoint3dFirstOrderSubdivision(surf, p, u_interval, u_interval.Mid(), v_interval, v_interval.Mid(), current_distance, p2d, p3d, same_point_tol, within_distance_tol, level++);
+				if (distance < current_distance) {
+				    current_distance = distance;
+				    if (current_distance < same_point_tol) {
+					rc = true;
+					goto cleanup;
+				    }
+				}
+			    }
+			}
+		    }
+		}
+		//         2 from NW quadrant
+		for (int u_span_index = 1; u_span_index < umid_index+1; u_span_index++) {
+		    for (int v_span_index = vmid_index+1; v_span_index < v_spancnt + 1; v_span_index++) {
+			ON_Interval u_interval(uspan[u_span_index - 1],
+					       uspan[u_span_index]);
+			ON_Interval v_interval(vspan[v_span_index - 1],
+					       vspan[v_span_index]);
+			double min_distance, max_distance;
+
+			int level = 1;
+			if (surface_GetIntervalMinMaxDistance(p, bbox[u_span_index-1][v_span_index-1], min_distance, max_distance)) {
+			    if ((min_distance < current_distance) && NEAR_ZERO(min_distance, within_distance_tol)) {
+				/////////////////////////////////////////
+				// Could check normals and CV angles here
+				/////////////////////////////////////////
+				double distance = surface_GetClosestPoint3dFirstOrderSubdivision(surf, p, u_interval, u_interval.Mid(), v_interval, v_interval.Mid(), current_distance, p2d, p3d, same_point_tol, within_distance_tol, level++);
+				if (distance < current_distance) {
+				    current_distance = distance;
+				    if (current_distance < same_point_tol) {
+					rc = true;
+					goto cleanup;
+				    }
+				}
+			    }
+			}
+		    }
+		}
+		//         4 from SE quadrant
+		for (int u_span_index = umid_index+1; u_span_index < u_spancnt + 1; u_span_index++) {
+		    for (int v_span_index = 1; v_span_index < vmid_index+1; v_span_index++) {
+			ON_Interval u_interval(uspan[u_span_index - 1],
+					       uspan[u_span_index]);
+			ON_Interval v_interval(vspan[v_span_index - 1],
+					       vspan[v_span_index]);
+			double min_distance, max_distance;
+
+			int level = 1;
+			if (surface_GetIntervalMinMaxDistance(p, bbox[u_span_index-1][v_span_index-1], min_distance, max_distance)) {
+			    if ((min_distance < current_distance) && NEAR_ZERO(min_distance, within_distance_tol)) {
+				/////////////////////////////////////////
+				// Could check normals and CV angles here
+				/////////////////////////////////////////
+				double distance = surface_GetClosestPoint3dFirstOrderSubdivision(surf, p, u_interval, u_interval.Mid(), v_interval, v_interval.Mid(), current_distance, p2d, p3d, same_point_tol, within_distance_tol, level++);
+				if (distance < current_distance) {
+				    current_distance = distance;
+				    if (current_distance < same_point_tol) {
+					rc = true;
+					goto cleanup;
+				    }
+				}
+			    }
+			}
+		    }
+		}
+		//         1 from NE quadrant
+		for (int u_span_index = umid_index+1; u_span_index < u_spancnt + 1; u_span_index++) {
+		    for (int v_span_index = vmid_index+1; v_span_index < v_spancnt + 1; v_span_index++) {
+			ON_Interval u_interval(uspan[u_span_index - 1],
+					       uspan[u_span_index]);
+			ON_Interval v_interval(vspan[v_span_index - 1],
+					       vspan[v_span_index]);
+			double min_distance, max_distance;
+
+			int level = 1;
+			if (surface_GetIntervalMinMaxDistance(p, bbox[u_span_index-1][v_span_index-1], min_distance, max_distance)) {
+			    if ((min_distance < current_distance) && NEAR_ZERO(min_distance, within_distance_tol)) {
+				/////////////////////////////////////////
+				// Could check normals and CV angles here
+				/////////////////////////////////////////
+				double distance = surface_GetClosestPoint3dFirstOrderSubdivision(surf, p, u_interval, u_interval.Mid(), v_interval, v_interval.Mid(), current_distance, p2d, p3d, same_point_tol, within_distance_tol, level++);
+				if (distance < current_distance) {
+				    current_distance = distance;
+				    if (current_distance < same_point_tol) {
+					rc = true;
+					goto cleanup;
+				    }
+				}
+			    }
+			}
+		    }
+		}
+	    } else { // SW, SE, NW, NE
+		//         3 from SW quadrant
+		for (int u_span_index = 1; u_span_index < umid_index+1; u_span_index++) {
+		    for (int v_span_index = 1; v_span_index < vmid_index+1; v_span_index++) {
+			ON_Interval u_interval(uspan[u_span_index - 1],
+					       uspan[u_span_index]);
+			ON_Interval v_interval(vspan[v_span_index - 1],
+					       vspan[v_span_index]);
+			double min_distance, max_distance;
+
+			int level = 1;
+			if (surface_GetIntervalMinMaxDistance(p, bbox[u_span_index-1][v_span_index-1], min_distance, max_distance)) {
+			    if ((min_distance < current_distance) && NEAR_ZERO(min_distance, within_distance_tol)) {
+				/////////////////////////////////////////
+				// Could check normals and CV angles here
+				/////////////////////////////////////////
+				double distance = surface_GetClosestPoint3dFirstOrderSubdivision(surf, p, u_interval, u_interval.Mid(), v_interval, v_interval.Mid(), current_distance, p2d, p3d, same_point_tol, within_distance_tol, level++);
+				if (distance < current_distance) {
+				    current_distance = distance;
+				    if (current_distance < same_point_tol) {
+					rc = true;
+					goto cleanup;
+				    }
+				}
+			    }
+			}
+		    }
+		}
+		//         4 from SE quadrant
+		for (int u_span_index = umid_index+1; u_span_index < u_spancnt + 1; u_span_index++) {
+		    for (int v_span_index = 1; v_span_index < vmid_index+1; v_span_index++) {
+			ON_Interval u_interval(uspan[u_span_index - 1],
+					       uspan[u_span_index]);
+			ON_Interval v_interval(vspan[v_span_index - 1],
+					       vspan[v_span_index]);
+			double min_distance, max_distance;
+
+			int level = 1;
+			if (surface_GetIntervalMinMaxDistance(p, bbox[u_span_index-1][v_span_index-1], min_distance, max_distance)) {
+			    if ((min_distance < current_distance) && NEAR_ZERO(min_distance, within_distance_tol)) {
+				/////////////////////////////////////////
+				// Could check normals and CV angles here
+				/////////////////////////////////////////
+				double distance = surface_GetClosestPoint3dFirstOrderSubdivision(surf, p, u_interval, u_interval.Mid(), v_interval, v_interval.Mid(), current_distance, p2d, p3d, same_point_tol, within_distance_tol, level++);
+				if (distance < current_distance) {
+				    current_distance = distance;
+				    if (current_distance < same_point_tol) {
+					rc = true;
+					goto cleanup;
+				    }
+				}
+			    }
+			}
+		    }
+		}
+		//         2 from NW quadrant
+		for (int u_span_index = 1; u_span_index < umid_index+1; u_span_index++) {
+		    for (int v_span_index = vmid_index+1; v_span_index < v_spancnt + 1; v_span_index++) {
+			ON_Interval u_interval(uspan[u_span_index - 1],
+					       uspan[u_span_index]);
+			ON_Interval v_interval(vspan[v_span_index - 1],
+					       vspan[v_span_index]);
+			double min_distance, max_distance;
+
+			int level = 1;
+			if (surface_GetIntervalMinMaxDistance(p, bbox[u_span_index-1][v_span_index-1], min_distance, max_distance)) {
+			    if ((min_distance < current_distance) && NEAR_ZERO(min_distance, within_distance_tol)) {
+				/////////////////////////////////////////
+				// Could check normals and CV angles here
+				/////////////////////////////////////////
+				double distance = surface_GetClosestPoint3dFirstOrderSubdivision(surf, p, u_interval, u_interval.Mid(), v_interval, v_interval.Mid(), current_distance, p2d, p3d, same_point_tol, within_distance_tol, level++);
+				if (distance < current_distance) {
+				    current_distance = distance;
+				    if (current_distance < same_point_tol) {
+					rc = true;
+					goto cleanup;
+				    }
+				}
+			    }
+			}
+		    }
+		}
+		//         1 from NE quadrant
+		for (int u_span_index = umid_index+1; u_span_index < u_spancnt + 1; u_span_index++) {
+		    for (int v_span_index = vmid_index+1; v_span_index < v_spancnt + 1; v_span_index++) {
+			ON_Interval u_interval(uspan[u_span_index - 1],
+					       uspan[u_span_index]);
+			ON_Interval v_interval(vspan[v_span_index - 1],
+					       vspan[v_span_index]);
+			double min_distance, max_distance;
+
+			int level = 1;
+			if (surface_GetIntervalMinMaxDistance(p, bbox[u_span_index-1][v_span_index-1], min_distance, max_distance)) {
+			    if ((min_distance < current_distance) && NEAR_ZERO(min_distance, within_distance_tol)) {
+				/////////////////////////////////////////
+				// Could check normals and CV angles here
+				/////////////////////////////////////////
+				double distance = surface_GetClosestPoint3dFirstOrderSubdivision(surf, p, u_interval, u_interval.Mid(), v_interval, v_interval.Mid(), current_distance, p2d, p3d, same_point_tol, within_distance_tol, level++);
+				if (distance < current_distance) {
+				    current_distance = distance;
+				    if (current_distance < same_point_tol) {
+					rc = true;
+					goto cleanup;
+				    }
+				}
+			    }
+			}
+		    }
+		}
+	    }
+	    if (current_distance < within_distance_tol) {
+		rc = true;
+		goto cleanup;
+	    }
+	} else if (quadrant == 4) {
+	    if (surf->IsClosed(0)) { // SE, NE, SW, NW
+		//         4 from SE quadrant
+		for (int u_span_index = umid_index+1; u_span_index < u_spancnt + 1; u_span_index++) {
+		    for (int v_span_index = 1; v_span_index < vmid_index+1; v_span_index++) {
+			ON_Interval u_interval(uspan[u_span_index - 1],
+					       uspan[u_span_index]);
+			ON_Interval v_interval(vspan[v_span_index - 1],
+					       vspan[v_span_index]);
+			double min_distance, max_distance;
+
+			int level = 1;
+			if (surface_GetIntervalMinMaxDistance(p, bbox[u_span_index-1][v_span_index-1], min_distance, max_distance)) {
+			    if ((min_distance < current_distance) && NEAR_ZERO(min_distance, within_distance_tol)) {
+				/////////////////////////////////////////
+				// Could check normals and CV angles here
+				/////////////////////////////////////////
+				double distance = surface_GetClosestPoint3dFirstOrderSubdivision(surf, p, u_interval, u_interval.Mid(), v_interval, v_interval.Mid(), current_distance, p2d, p3d, same_point_tol, within_distance_tol, level++);
+				if (distance < current_distance) {
+				    current_distance = distance;
+				    if (current_distance < same_point_tol) {
+					rc = true;
+					goto cleanup;
+				    }
+				}
+			    }
+			}
+		    }
+		}
+		//         1 from NE quadrant
+		for (int u_span_index = umid_index+1; u_span_index < u_spancnt + 1; u_span_index++) {
+		    for (int v_span_index = vmid_index+1; v_span_index < v_spancnt + 1; v_span_index++) {
+			ON_Interval u_interval(uspan[u_span_index - 1],
+					       uspan[u_span_index]);
+			ON_Interval v_interval(vspan[v_span_index - 1],
+					       vspan[v_span_index]);
+			double min_distance, max_distance;
+
+			int level = 1;
+			if (surface_GetIntervalMinMaxDistance(p, bbox[u_span_index-1][v_span_index-1], min_distance, max_distance)) {
+			    if ((min_distance < current_distance) && NEAR_ZERO(min_distance, within_distance_tol)) {
+				/////////////////////////////////////////
+				// Could check normals and CV angles here
+				/////////////////////////////////////////
+				double distance = surface_GetClosestPoint3dFirstOrderSubdivision(surf, p, u_interval, u_interval.Mid(), v_interval, v_interval.Mid(), current_distance, p2d, p3d, same_point_tol, within_distance_tol, level++);
+				if (distance < current_distance) {
+				    current_distance = distance;
+				    if (current_distance < same_point_tol) {
+					rc = true;
+					goto cleanup;
+				    }
+				}
+			    }
+			}
+		    }
+		}
+		//         3 from SW quadrant
+		for (int u_span_index = 1; u_span_index < umid_index+1; u_span_index++) {
+		    for (int v_span_index = 1; v_span_index < vmid_index+1; v_span_index++) {
+			ON_Interval u_interval(uspan[u_span_index - 1],
+					       uspan[u_span_index]);
+			ON_Interval v_interval(vspan[v_span_index - 1],
+					       vspan[v_span_index]);
+			double min_distance, max_distance;
+
+			int level = 1;
+			if (surface_GetIntervalMinMaxDistance(p, bbox[u_span_index-1][v_span_index-1], min_distance, max_distance)) {
+			    if ((min_distance < current_distance) && NEAR_ZERO(min_distance, within_distance_tol)) {
+				/////////////////////////////////////////
+				// Could check normals and CV angles here
+				/////////////////////////////////////////
+				double distance = surface_GetClosestPoint3dFirstOrderSubdivision(surf, p, u_interval, u_interval.Mid(), v_interval, v_interval.Mid(), current_distance, p2d, p3d, same_point_tol, within_distance_tol, level++);
+				if (distance < current_distance) {
+				    current_distance = distance;
+				    if (current_distance < same_point_tol) {
+					rc = true;
+					goto cleanup;
+				    }
+				}
+			    }
+			}
+		    }
+		}
+		//         2 from NW quadrant
+		for (int u_span_index = 1; u_span_index < umid_index+1; u_span_index++) {
+		    for (int v_span_index = vmid_index+1; v_span_index < v_spancnt + 1; v_span_index++) {
+			ON_Interval u_interval(uspan[u_span_index - 1],
+					       uspan[u_span_index]);
+			ON_Interval v_interval(vspan[v_span_index - 1],
+					       vspan[v_span_index]);
+			double min_distance, max_distance;
+
+			int level = 1;
+			if (surface_GetIntervalMinMaxDistance(p, bbox[u_span_index-1][v_span_index-1], min_distance, max_distance)) {
+			    if ((min_distance < current_distance) && NEAR_ZERO(min_distance, within_distance_tol)) {
+				/////////////////////////////////////////
+				// Could check normals and CV angles here
+				/////////////////////////////////////////
+				double distance = surface_GetClosestPoint3dFirstOrderSubdivision(surf, p, u_interval, u_interval.Mid(), v_interval, v_interval.Mid(), current_distance, p2d, p3d, same_point_tol, within_distance_tol, level++);
+				if (distance < current_distance) {
+				    current_distance = distance;
+				    if (current_distance < same_point_tol) {
+					rc = true;
+					goto cleanup;
+				    }
+				}
+			    }
+			}
+		    }
+		}
+	    } else { // SE, SW, NE, NW
+		//         4 from SE quadrant
+		for (int u_span_index = umid_index+1; u_span_index < u_spancnt + 1; u_span_index++) {
+		    for (int v_span_index = 1; v_span_index < vmid_index+1; v_span_index++) {
+			ON_Interval u_interval(uspan[u_span_index - 1],
+					       uspan[u_span_index]);
+			ON_Interval v_interval(vspan[v_span_index - 1],
+					       vspan[v_span_index]);
+			double min_distance, max_distance;
+
+			int level = 1;
+			if (surface_GetIntervalMinMaxDistance(p, bbox[u_span_index-1][v_span_index-1], min_distance, max_distance)) {
+			    if ((min_distance < current_distance) && NEAR_ZERO(min_distance, within_distance_tol)) {
+				/////////////////////////////////////////
+				// Could check normals and CV angles here
+				/////////////////////////////////////////
+				double distance = surface_GetClosestPoint3dFirstOrderSubdivision(surf, p, u_interval, u_interval.Mid(), v_interval, v_interval.Mid(), current_distance, p2d, p3d, same_point_tol, within_distance_tol, level++);
+				if (distance < current_distance) {
+				    current_distance = distance;
+				    if (current_distance < same_point_tol) {
+					rc = true;
+					goto cleanup;
+				    }
+				}
+			    }
+			}
+		    }
+		}
+		//         3 from SW quadrant
+		for (int u_span_index = 1; u_span_index < umid_index+1; u_span_index++) {
+		    for (int v_span_index = 1; v_span_index < vmid_index+1; v_span_index++) {
+			ON_Interval u_interval(uspan[u_span_index - 1],
+					       uspan[u_span_index]);
+			ON_Interval v_interval(vspan[v_span_index - 1],
+					       vspan[v_span_index]);
+			double min_distance, max_distance;
+
+			int level = 1;
+			if (surface_GetIntervalMinMaxDistance(p, bbox[u_span_index-1][v_span_index-1], min_distance, max_distance)) {
+			    if ((min_distance < current_distance) && NEAR_ZERO(min_distance, within_distance_tol)) {
+				/////////////////////////////////////////
+				// Could check normals and CV angles here
+				/////////////////////////////////////////
+				double distance = surface_GetClosestPoint3dFirstOrderSubdivision(surf, p, u_interval, u_interval.Mid(), v_interval, v_interval.Mid(), current_distance, p2d, p3d, same_point_tol, within_distance_tol, level++);
+				if (distance < current_distance) {
+				    current_distance = distance;
+				    if (current_distance < same_point_tol) {
+					rc = true;
+					goto cleanup;
+				    }
+				}
+			    }
+			}
+		    }
+		}
+		//         1 from NE quadrant
+		for (int u_span_index = umid_index+1; u_span_index < u_spancnt + 1; u_span_index++) {
+		    for (int v_span_index = vmid_index+1; v_span_index < v_spancnt + 1; v_span_index++) {
+			ON_Interval u_interval(uspan[u_span_index - 1],
+					       uspan[u_span_index]);
+			ON_Interval v_interval(vspan[v_span_index - 1],
+					       vspan[v_span_index]);
+			double min_distance, max_distance;
+
+			int level = 1;
+			if (surface_GetIntervalMinMaxDistance(p, bbox[u_span_index-1][v_span_index-1], min_distance, max_distance)) {
+			    if ((min_distance < current_distance) && NEAR_ZERO(min_distance, within_distance_tol)) {
+				/////////////////////////////////////////
+				// Could check normals and CV angles here
+				/////////////////////////////////////////
+				double distance = surface_GetClosestPoint3dFirstOrderSubdivision(surf, p, u_interval, u_interval.Mid(), v_interval, v_interval.Mid(), current_distance, p2d, p3d, same_point_tol, within_distance_tol, level++);
+				if (distance < current_distance) {
+				    current_distance = distance;
+				    if (current_distance < same_point_tol) {
+					rc = true;
+					goto cleanup;
+				    }
+				}
+			    }
+			}
+		    }
+		}
+		//         2 from NW quadrant
+		for (int u_span_index = 1; u_span_index < umid_index+1; u_span_index++) {
+		    for (int v_span_index = vmid_index+1; v_span_index < v_spancnt + 1; v_span_index++) {
+			ON_Interval u_interval(uspan[u_span_index - 1],
+					       uspan[u_span_index]);
+			ON_Interval v_interval(vspan[v_span_index - 1],
+					       vspan[v_span_index]);
+			double min_distance, max_distance;
+
+			int level = 1;
+			if (surface_GetIntervalMinMaxDistance(p, bbox[u_span_index-1][v_span_index-1], min_distance, max_distance)) {
+			    if ((min_distance < current_distance) && NEAR_ZERO(min_distance, within_distance_tol)) {
+				/////////////////////////////////////////
+				// Could check normals and CV angles here
+				/////////////////////////////////////////
+				double distance = surface_GetClosestPoint3dFirstOrderSubdivision(surf, p, u_interval, u_interval.Mid(), v_interval, v_interval.Mid(), current_distance, p2d, p3d, same_point_tol, within_distance_tol, level++);
+				if (distance < current_distance) {
+				    current_distance = distance;
+				    if (current_distance < same_point_tol) {
+					rc = true;
+					goto cleanup;
+				    }
+				}
+			    }
+			}
+		    }
+		}
+	    }
+	    if (current_distance < within_distance_tol) {
+		rc = true;
+		goto cleanup;
+	    }
+	}
+    }
+cleanup:
+    std::cerr.precision(prec);
+    return rc;
+}
+
+
+bool trim_GetClosestPoint3dFirstOrder(
+    const ON_BrepTrim& trim,
+    const ON_3dPoint& p,
+    ON_2dPoint& p2d,
+    double& t,
+    double& distance,
+    const ON_Interval* interval,
+    double same_point_tol,
+    double within_distance_tol
+    )
+{
+    bool rc = false;
+    const ON_Surface *surf = trim.SurfaceOf();
+
+    double t0 = interval->Mid();
+    ON_3dPoint p3d;
+    ON_3dPoint p0;
+    ON_3dVector ds, dt, dss, dst, dtt;
+    ON_3dVector T, K;
+    int prec = std::cerr.precision();
+    ON_BoundingBox tight_bbox;
+    std::vector<ON_BoundingBox> bbox;
+    std::cerr.precision(15);
+
+    ON_Curve *c = trim.Brep()->m_C2[trim.m_c2i];
+    ON_NurbsCurve N;
+    if (0 == c->GetNurbForm(N))
+	return false;
+    if (N.m_order < 2 || N.m_cv_count < N.m_order)
+	return false;
+
+    p2d = trim.PointAt(t);
+    int quadrant = 0;     // optional - determines which quadrant to evaluate from
+                          //         0 = default
+                          //         1 from NE quadrant
+                          //         2 from NW quadrant
+                          //         3 from SW quadrant
+                          //         4 from SE quadrant
+    ON_Interval u_interval = surf->Domain(0);
+    ON_Interval v_interval = surf->Domain(1);
+    if (p2d.y > v_interval.Mid()) {
+	// North quadrants -> 1 or 2;
+	if (p2d.x > u_interval.Mid()) {
+	    quadrant = 1; // NE
+	} else {
+	    quadrant = 2; //NW
+	}
+    } else {
+	// South quadrants -> 3 or 4;
+	if (p2d.x > u_interval.Mid()) {
+	    quadrant = 4; // SE
+	} else {
+	    quadrant = 3; //SW
+	}
+    }
+    if (surface_GetClosestPoint3dFirstOrder(surf, p, p2d, p3d, distance, quadrant, same_point_tol, within_distance_tol)) {
+	ON_BezierCurve B;
+	bool bGrowBox = false;
+	ON_3dVector d1, d2;
+	double max_dist_to_closest_pt = DBL_MAX;
+	ON_Interval *span_interval = new ON_Interval[N.m_cv_count - N.m_order + 1];
+	double *min_distance = new double[N.m_cv_count - N.m_order + 1];
+	double *max_distance = new double[N.m_cv_count - N.m_order + 1];
+	bool *skip = new bool[N.m_cv_count - N.m_order + 1];
+	bbox.resize(N.m_cv_count - N.m_order + 1);
+	for (int span_index = 0; span_index <= N.m_cv_count - N.m_order; span_index++)
+	{
+	    skip[span_index] = true;
+	    if (!(N.m_knot[span_index + N.m_order-2] < N.m_knot[span_index + N.m_order-1]))
+		continue;
+
+	    // check for span out of interval
+	    int i = (interval->m_t[0] <= interval->m_t[1]) ? 0 : 1;
+	    if (N.m_knot[span_index + N.m_order-2] > interval->m_t[1-i])
+		continue;
+	    if (N.m_knot[span_index + N.m_order-1] < interval->m_t[i])
+		continue;
+
+	    if (!N.ConvertSpanToBezier(span_index, B))
+		continue;
+	    ON_Interval bi = B.Domain();
+	    if (!B.GetTightBoundingBox(tight_bbox, bGrowBox, NULL))
+		continue;
+	    bbox[span_index] = tight_bbox;
+	    d1 = tight_bbox.m_min - p2d;
+	    d2 = tight_bbox.m_max - p2d;
+	    min_distance[span_index] = tight_bbox.MinimumDistanceTo(p2d);
+
+	    if (min_distance[span_index] > max_dist_to_closest_pt) {
+		max_distance[span_index] = DBL_MAX;
+		continue;
+	    }
+	    skip[span_index] = false;
+	    span_interval[span_index].m_t[0] = ((N.m_knot[span_index + N.m_order-2]) < interval->m_t[i]) ? interval->m_t[i] : N.m_knot[span_index + N.m_order-2];
+	    span_interval[span_index].m_t[1] = ((N.m_knot[span_index + N.m_order-1]) > interval->m_t[1 -i]) ? interval->m_t[1 -i] : (N.m_knot[span_index + N.m_order-1]);
+	    ON_3dPoint d1sq(d1.x*d1.x, d1.y*d1.y, 0.0), d2sq(d2.x*d2.x, d2.y*d2.y, 0.0);
+	    double distancesq;
+	    if (d1sq.x < d2sq.x) {
+		if (d1sq.y < d2sq.y) {
+		    if ((d1sq.x + d2sq.y) < (d2sq.x + d1sq.y)) {
+			distancesq = d1sq.x + d2sq.y;
+		    } else {
+			distancesq = d2sq.x + d1sq.y;
+		    }
+		} else {
+		    if ((d1sq.x + d1sq.y) < (d2sq.x + d2sq.y)) {
+			distancesq = d1sq.x + d1sq.y;
+		    } else {
+			distancesq = d2sq.x + d2sq.y;
+		    }
+		}
+	    } else {
+		if (d1sq.y < d2sq.y) {
+		    if ((d1sq.x + d1sq.y) < (d2sq.x + d2sq.y)) {
+			distancesq = d1sq.x + d1sq.y;
+		    } else {
+			distancesq = d2sq.x + d2sq.y;
+		    }
+		} else {
+		    if ((d1sq.x + d2sq.y) < (d2sq.x + d1sq.y)) {
+			distancesq = d1sq.x + d2sq.y;
+		    } else {
+			distancesq = d2sq.x + d1sq.y;
+		    }
+		}
+	    }
+	    max_distance[span_index] = sqrt(distancesq);
+	    if (max_distance[span_index] < max_dist_to_closest_pt) {
+		max_dist_to_closest_pt = max_distance[span_index];
+	    }
+	    if (max_distance[span_index] < min_distance[span_index]) {
+		// should only be here for near equal fuzz
+		min_distance[span_index] = max_distance[span_index];
+	    }
+	}
+	for (int span_index = 0; span_index <= N.m_cv_count - N.m_order; span_index++)
+	{
+
+	    if (skip[span_index])
+		continue;
+
+	    if (min_distance[span_index] > max_dist_to_closest_pt) {
+		skip[span_index] = true;
+		continue;
+	    }
+
+	}
+
+	ON_3dPoint q;
+	ON_3dPoint point;
+	double closest_distance = DBL_MAX;
+	double closestT = DBL_MAX;
+	for (int span_index = 0; span_index <= N.m_cv_count - N.m_order; span_index++)
+	{
+	    if (skip[span_index]) {
+		continue;
+	    }
+	    t0 = span_interval[span_index].Mid();
+	    bool closestfound = false;
+	    bool notdone = true;
+	    double span_distance = DBL_MAX;
+	    double previous_distance = DBL_MAX;
+	    ON_3dVector firstDervative, secondDervative;
+	    while (notdone
+		   && trim.Ev2Der(t0, point, firstDervative, secondDervative)
+		   && ON_EvCurvature(firstDervative, secondDervative, T, K)) {
+		ON_Line line(point, point + 100.0 * T);
+		q = line.ClosestPointTo(p2d);
+		double delta_t = (firstDervative * (q - point))
+		    / (firstDervative * firstDervative);
+		double new_t0 = t0 + delta_t;
+		if (!span_interval[span_index].Includes(new_t0, false)) {
+		    // limit to interval
+		    int i = (span_interval[span_index].m_t[0] <= span_interval[span_index].m_t[1]) ? 0 : 1;
+		    new_t0 =
+			(new_t0 < span_interval[span_index].m_t[i]) ?
+			span_interval[span_index].m_t[i] : span_interval[span_index].m_t[1 - i];
+		}
+		delta_t = new_t0 - t0;
+		t0 = new_t0;
+		point = trim.PointAt(t0);
+		span_distance = point.DistanceTo(p2d);
+		if (span_distance < previous_distance) {
+		    closestfound = true;
+		    closestT = t0;
+		    previous_distance = span_distance;
+		    if (fabs(delta_t) < same_point_tol) {
+			notdone = false;
+		    }
+		} else {
+		    notdone = false;
+		}
+	    }
+	    if (closestfound && (span_distance < closest_distance)) {
+		closest_distance = span_distance;
+		rc = true;
+		t = closestT;
+	    }
+	}
+	delete [] span_interval;
+	delete [] min_distance;
+	delete [] max_distance;
+	delete [] skip;
+
+    }
+    std::cerr.precision(prec);
+
+    return rc;
+}
+
+
 bool
-toUV(PBCData& data, ON_2dPoint& out_pt, double t, double knudge = 0.0)
+toUV(PBCData& data, ON_2dPoint& out_pt, double t, double knudge = 0.0, double within_distance_tol = BREP_EDGE_MISS_TOLERANCE)
 {
     ON_3dPoint pointOnCurve = data.curve->PointAt(t);
     ON_3dPoint knudgedPointOnCurve = data.curve->PointAt(t + knudge);
 
     ON_2dPoint uv;
-    if (data.surftree->getSurfacePoint((const ON_3dPoint&)pointOnCurve, uv, (const ON_3dPoint&)knudgedPointOnCurve, BREP_EDGE_MISS_TOLERANCE) > 0) {
+    if (data.surftree->getSurfacePoint((const ON_3dPoint&)pointOnCurve, uv, (const ON_3dPoint&)knudgedPointOnCurve, within_distance_tol) > 0) {
 	out_pt.Set(uv.x, uv.y);
 	return true;
     } else {
@@ -191,7 +2010,7 @@ toUV(brlcad::SurfaceTree *surftree, const ON_Curve *curve, ON_2dPoint& out_pt, d
 		break;
 		//return brep_edge_check(found, sbv, face, surf, ray, hits);
 	    }
-	    brep_newton_iterate(surf, pr, Rcurr, su, sv, uv, new_uv);
+	    brep_newton_iterate(pr, Rcurr, su, sv, uv, new_uv);
 	    move(uv, new_uv);
 	    Dlast = d;
 	}
@@ -225,8 +2044,8 @@ sample(PBCData& data,
 {
     ON_2dPoint m;
     double t = randomPointFromRange(data, m, t1, t2);
-    if (!data.segments.empty()) {
-	ON_2dPointArray * samples = data.segments.back();
+    if (!data.segments->empty()) {
+	ON_2dPointArray * samples = data.segments->back();
 	if (isFlat(p1, m, p2, data.flatness)) {
 	    samples->Append(p2);
 	} else {
@@ -265,96 +2084,6 @@ getKnotInterval(BSpline& bspline, double u)
     return k;
 }
 
-
-int
-getCoefficients(BSpline& bspline, TNT::Array1D<double>& N, double u)
-{
-    // evaluate the b-spline basis function for the given parameter u
-    // place the results in N[]
-    N = 0.0;
-    if (NEAR_EQUAL(u, bspline.knots[0], PBC_TOL)) {
-	N[0] = 1.0;
-	return 0;
-    } else if (NEAR_EQUAL(u, bspline.knots[bspline.m], PBC_TOL)) {
-	N[bspline.n] = 1.0;
-	return bspline.n;
-    }
-    int k = getKnotInterval(bspline, u);
-    N[k] = 1.0;
-    for (int d = 1; d <= bspline.p; d++) {
-	double uk_1 = bspline.knots[k + 1];
-	double uk_d_1 = bspline.knots[k - d + 1];
-	N[k - d] = ((uk_1 - u) / (uk_1 - uk_d_1)) * N[k - d + 1];
-	for (int i = k - d + 1; i <= k - 1; i++) {
-	    double ui = bspline.knots[i];
-	    double ui_1 = bspline.knots[i + 1];
-	    double ui_d = bspline.knots[i + d];
-	    double ui_d_1 = bspline.knots[i + d + 1];
-	    N[i] = ((u - ui) / (ui_d - ui)) * N[i] + ((ui_d_1 - u) / (ui_d_1 - ui_1)) * N[i + 1];
-	}
-	double uk = bspline.knots[k];
-	double uk_d = bspline.knots[k + d];
-	N[k] = ((u - uk) / (uk_d - uk)) * N[k];
-    }
-    return k;
-}
-
-
-void
-printMatrix(TNT::Array1D<double>& m)
-{
-    printf("---\n");
-    for (int i = 0; i < m.dim1(); i++) {
-	printf("% 5.5f ", m[i]);
-    }
-    printf("\n");
-}
-
-
-// FIXME: this function sucks...
-void
-generateParameters(BSpline& bspline)
-{
-    double lastT = 0.0;
-    bspline.params.resize(bspline.n + 1);
-    TNT::Array2D<double> N(UNIVERSAL_SAMPLE_COUNT, bspline.n + 1);
-    for (int i = 0; i < UNIVERSAL_SAMPLE_COUNT; i++) {
-	double t = (double) i / (UNIVERSAL_SAMPLE_COUNT - 1);
-	TNT::Array1D<double> n = TNT::Array1D<double> (N.dim2(), N[i]);
-	getCoefficients(bspline, n, t);
-	//printMatrix(n);
-    }
-
-    for (int i = 0; i < bspline.n + 1; i++) {
-	double max = 0.0; //real.min();
-	for (int j = 0; j < UNIVERSAL_SAMPLE_COUNT; j++) {
-	    double f = N[j][i];
-	    double t = (double) j / (UNIVERSAL_SAMPLE_COUNT - 1);
-	    if (f > max) {
-		max = f;
-		if (j == UNIVERSAL_SAMPLE_COUNT - 1)
-		    bspline.params[i] = t;
-	    } else if (f < max) {
-		bspline.params[i] = lastT;
-		break;
-	    }
-	    lastT = t;
-	}
-    }
-}
-
-
-void
-printMatrix(TNT::Array2D<double>& m)
-{
-    printf("---\n");
-    for (int i = 0; i < m.dim1(); i++) {
-	for (int j = 0; j < m.dim2(); j++) {
-	    printf("% 5.5f ", m[i][j]);
-	}
-	printf("\n");
-    }
-}
 
 ON_NurbsCurve*
 interpolateLocalCubicCurve(ON_2dPointArray &Q)
@@ -418,7 +2147,6 @@ interpolateLocalCubicCurve(ON_2dPointArray &Q)
     }
     control_points.Append(Q[num_samples - 1]);
 
-    //generateParameters(spline);
     std::vector<double> u(num_segments + 1);
     u[0] = 0.0;
     for (int k = 0; k < num_segments; k++) {
@@ -450,6 +2178,7 @@ interpolateLocalCubicCurve(ON_2dPointArray &Q)
     }
     return c;
 }
+
 
 ON_NurbsCurve*
 interpolateLocalCubicCurve(const ON_3dPointArray &Q)
@@ -514,7 +2243,6 @@ interpolateLocalCubicCurve(const ON_3dPointArray &Q)
     }
     control_points.Append(Q[num_samples - 1]);
 
-    //generateParameters(spline);
     std::vector<double> u(num_segments + 1);
     u[0] = 0.0;
     for (int k = 0; k < num_segments; k++) {
@@ -548,39 +2276,6 @@ interpolateLocalCubicCurve(const ON_3dPointArray &Q)
 }
 
 
-void
-generateControlPoints(BSpline& bspline, ON_2dPointArray &samples)
-{
-    TNT::Array2D<double> bigN(bspline.n + 1, bspline.n + 1);
-    //printMatrix(bigN);
-
-    for (int i = 0; i < bspline.n + 1; i++) {
-	TNT::Array1D<double> n = TNT::Array1D<double>(bigN.dim2(), bigN[i]);
-	getCoefficients(bspline, n, bspline.params[i]);
-	//printMatrix(bigN);
-    }
-    TNT::Array2D<double> bigD(bspline.n + 1, 2);
-    for (int i = 0; i < bspline.n + 1; i++) {
-	bigD[i][0] = samples[i].x;
-	bigD[i][1] = samples[i].y;
-    }
-
-    //printMatrix(bigD);
-    //printMatrix(bigN);
-
-    JAMA::LU<double> lu(bigN);
-    assert(lu.isNonsingular() > 0);
-    TNT::Array2D<double> bigP = lu.solve(bigD); // big linear algebra black box here...
-
-    // extract the control points
-    for (int i = 0; i < bspline.n + 1; i++) {
-	ON_2dPoint& p = bspline.controls.AppendNew();
-	p.x = bigP[i][0];
-	p.y = bigP[i][1];
-    }
-}
-
-
 ON_NurbsCurve*
 newNURBSCurve(BSpline& spline, int dimension = 3)
 {
@@ -589,7 +2284,7 @@ newNURBSCurve(BSpline& spline, int dimension = 3)
 					  false,
 					  spline.p + 1,
 					  spline.n + 1);
-    c->ReserveKnotCapacity(spline.knots.size() - 2);
+    c->ReserveKnotCapacity((int)spline.knots.size() - 2);
     for (unsigned int i = 1; i < spline.knots.size() - 1; i++) {
 	c->m_knot[i - 1] = spline.knots[i];
     }
@@ -611,45 +2306,40 @@ interpolateCurve(ON_2dPointArray &samples)
 	// build a line
 	return new ON_LineCurve(samples[0], samples[1]);
 
-#ifdef DEBUG_USE_BEZIER_CURVE_INTERPOLATION
-    ON_NurbsCurve nurbcurve;
-    ON_BezierCurve *bezier = new ON_BezierCurve(samples);
-    if (bezier->GetNurbForm(nurbcurve)) {
-	return ON_NurbsCurve::New(*bezier);
-    }
-    // build a NURBS curve, then see if it can be simplified!
-    BSpline spline;
-    spline.p = 3;
-    spline.n = samples.Count() - 1;
-    spline.m = spline.n + spline.p + 1;
-    generateKnots(spline);
-    generateParameters(spline);
-    generateControlPoints(spline, samples);
-
-    nurbs = newNURBSCurve(spline);
-#else
     // local vs. global interpolation for large point sampled curves
     nurbs = interpolateLocalCubicCurve(samples);
-#endif
 
     return nurbs;
 }
 
 
+int
+IsAtSeam(const ON_Surface *surf, int dir, double u, double v, double tol)
+{
+    int rc = 0;
+    if (!surf->IsClosed(dir))
+	return rc;
+
+    double p = (dir) ? v : u;
+    if (NEAR_EQUAL(p, surf->Domain(dir)[0], tol) || NEAR_EQUAL(p, surf->Domain(dir)[1], tol))
+	rc += (dir + 1);
+
+    return rc;
+}
+
+
 /*
+ * Similar to openNURBS's surf->IsAtSeam() function but uses tolerance to do a near check versus
+ * the floating point equality used by openNURBS.
  * rc = 0 Not on seam, 1 on East/West seam(umin/umax), 2 on North/South seam(vmin/vmax), 3 seam on both U/V boundaries
  */
 int
-IsAtSeam(const ON_Surface *surf, double u, double v)
+IsAtSeam(const ON_Surface *surf, double u, double v, double tol)
 {
     int rc = 0;
     int i;
     for (i = 0; i < 2; i++) {
-	if (!surf->IsClosed(i))
-	    continue;
-	double p = (i) ? v : u;
-	if (NEAR_EQUAL(p, surf->Domain(i)[0], PBC_SEAM_TOL) || NEAR_EQUAL(p, surf->Domain(i)[1], PBC_SEAM_TOL))
-	    rc += (i + 1);
+	rc += IsAtSeam(surf, i, u, v, tol);
     }
 
     return rc;
@@ -657,23 +2347,49 @@ IsAtSeam(const ON_Surface *surf, double u, double v)
 
 
 int
-IsAtSingularity(const ON_Surface *surf, double u, double v)
+IsAtSeam(const ON_Surface *surf, int dir, const ON_2dPoint &pt, double tol)
+{
+    int rc = 0;
+    ON_2dPoint unwrapped_pt = UnwrapUVPoint(surf, pt, tol);
+    rc = IsAtSeam(surf, dir, unwrapped_pt.x, unwrapped_pt.y, tol);
+
+    return rc;
+}
+
+
+/*
+ * Similar to IsAtSeam(surf, u, v, tol) function but takes a ON_2dPoint
+ * and unwraps any closed seam extents before passing on IsAtSeam(surf, u, v, tol)
+ */
+int
+IsAtSeam(const ON_Surface *surf, const ON_2dPoint &pt, double tol)
+{
+    int rc = 0;
+    ON_2dPoint unwrapped_pt = UnwrapUVPoint(surf, pt, tol);
+    rc = IsAtSeam(surf, unwrapped_pt.x, unwrapped_pt.y, tol);
+
+    return rc;
+}
+
+
+int
+IsAtSingularity(const ON_Surface *surf, double u, double v, double tol)
 {
     // 0 = south, 1 = east, 2 = north, 3 = west
     //std::cerr << "IsAtSingularity = u, v - " << u << ", " << v << std::endl;
     //std::cerr << "surf->Domain(0) - " << surf->Domain(0)[0] << ", " << surf->Domain(0)[1] << std::endl;
     //std::cerr << "surf->Domain(1) - " << surf->Domain(1)[0] << ", " << surf->Domain(1)[1] << std::endl;
-    if (NEAR_EQUAL(u, surf->Domain(0)[0], PBC_TOL)) {
+    if (NEAR_EQUAL(u, surf->Domain(0)[0], tol)) {
 	if (surf->IsSingular(3))
 	    return 3;
-    } else if (NEAR_EQUAL(u, surf->Domain(0)[1], PBC_TOL)) {
+    } else if (NEAR_EQUAL(u, surf->Domain(0)[1], tol)) {
 	if (surf->IsSingular(1))
 	    return 1;
     }
-    if (NEAR_EQUAL(v, surf->Domain(1)[0], PBC_TOL)) {
+    if (NEAR_EQUAL(v, surf->Domain(1)[0], tol)) {
 	if (surf->IsSingular(0))
 	    return 0;
-    } else if (NEAR_EQUAL(v, surf->Domain(1)[1], PBC_TOL)) {
+    } else if (NEAR_EQUAL(v, surf->Domain(1)[1], tol)) {
 	if (surf->IsSingular(2))
 	    return 2;
     }
@@ -681,139 +2397,29 @@ IsAtSingularity(const ON_Surface *surf, double u, double v)
 }
 
 
-ON_Curve*
-test1_pullback_curve(const brlcad::SurfaceTree* surfacetree,
-		     const ON_Curve* curve,
-		     double UNUSED(tolerance),
-		     double UNUSED(flatness))
+int
+IsAtSingularity(const ON_Surface *surf, const ON_2dPoint &pt, double tol)
 {
-    ON_NurbsCurve* orig = curve->NurbsCurve();
-    bool isRational = false;
-    // we now have everything to complete our spline
-    ON_NurbsCurve* c = ON_NurbsCurve::New(curve->Dimension(),
-					  isRational,
-					  orig->Degree() + 1,
-					  orig->m_cv_count + 1);
+    int rc = 0;
+    ON_2dPoint unwrapped_pt = UnwrapUVPoint(surf, pt, tol);
+    rc = IsAtSingularity(surf, unwrapped_pt.x, unwrapped_pt.y, tol);
 
-    int numKnots = orig->Degree() + orig->m_cv_count - 1;
-    c->ReserveKnotCapacity(numKnots);
-    double *span = new double[numKnots];
-    if (orig->GetSpanVector(span)) {
-	for (int i = 0; i < numKnots; i++) {
-	    c->SetKnot(i, span[i]);
-	}
-    }
-
-    ON_2dPoint uv;
-    for (int i = 0; i < orig->m_cv_count; i++) {
-	ON_3dPoint p;
-	if (orig->GetCV(i, p)) {
-	    if (surfacetree->getSurfacePoint((const ON_3dPoint&)p, uv, (const ON_3dPoint&)p) > 0) {
-		c->SetCV(i, p);
-	    }
-	}
-    }
-
-    return c;
-}
-
-
-ON_Curve*
-test2_pullback_curve(const brlcad::SurfaceTree* surfacetree,
-		     const ON_Curve* curve,
-		     double tolerance,
-		     double flatness)
-{
-    PBCData data;
-    data.tolerance = tolerance;
-    data.flatness = flatness;
-    data.curve = curve;
-    data.surftree = (brlcad::SurfaceTree*)surfacetree;
-    ON_2dPointArray *samples = new ON_2dPointArray();
-
-    data.segments.push_back(samples);
-
-    // Step 1 - adaptively sample the curve
-    double tmin, tmax;
-    data.curve->GetDomain(&tmin, &tmax);
-    int numKnots = curve->SpanCount();
-    double *knots = new double[numKnots + 1];
-    curve->GetSpanVector(knots);
-
-    int samplesperknotinterval;
-    int degree = curve->Degree();
-
-    if (degree > 1) {
-	samplesperknotinterval = 3 * degree;
-    } else {
-	samplesperknotinterval = 18 * degree;
-    }
-    ON_2dPoint pt;
-    for (int i = 0; i <= numKnots; i++) {
-	if (i <= numKnots / 2) {
-	    if (i > 0) {
-		double delta = (knots[i] - knots[i - 1]) / (double)samplesperknotinterval;
-		for (int j = 1; j < samplesperknotinterval; j++) {
-		    if (toUV(data, pt, knots[i - 1] + j * delta, PBC_TOL)) {
-			samples->Append(pt);
-		    } else {
-			//std::cout << "didn't find point on surface" << std::endl;
-		    }
-		}
-	    }
-	    if (toUV(data, pt, knots[i], PBC_TOL)) {
-		samples->Append(pt);
-	    } else {
-		//std::cout << "didn't find point on surface" << std::endl;
-	    }
-	} else {
-	    if (i > 0) {
-		double delta = (knots[i] - knots[i - 1]) / (double)samplesperknotinterval;
-		for (int j = 1; j < samplesperknotinterval; j++) {
-		    if (toUV(data, pt, knots[i - 1] + j * delta, -PBC_TOL)) {
-			samples->Append(pt);
-		    } else {
-			//std::cout << "didn't find point on surface" << std::endl;
-		    }
-		}
-		if (toUV(data, pt, knots[i], -PBC_TOL)) {
-		    samples->Append(pt);
-		} else {
-		    //std::cout << "didn't find point on surface" << std::endl;
-		}
-	    }
-	}
-    }
-    delete [] knots;
-
-    std::cerr << std::endl << "samples:" << std::endl;
-    for (int i = 0; i < samples->Count(); i++) {
-	std::cerr << i << "- " << (*samples)[i].x << ", " << (*samples)[i].y << std::endl;
-    }
-
-    /*
-      if (!data.surftree)
-      return NULL;
-      ON_Surface *surf = (ON_Surface *)data.surftree->getSurface();
-      if (!surf)
-      return NULL;
-      ON_3dPoint p;
-      for (int i = 0; i < data.samples.Count(); i++) {
-      p=surf->PointAt(data.samples[i].x, data.samples[i].y);
-      std::cerr << data.samples[i].x << ", " << data.samples[i].y;
-      std::cerr << " --> "<< p.x << ", " << p.y << ", " << p.z << std::endl;
-      }
-    */
-    return interpolateCurve(*samples);
+    return rc;
 }
 
 
 ON_2dPointArray *
 pullback_samples(PBCData* data,
 		 double t,
-		 double s)
+		 double s,
+		 double same_point_tol,
+		 double within_distance_tol)
 {
+    if (!data)
+	return NULL;
+
     const ON_Curve* curve = data->curve;
+    const ON_Surface* surf = data->surf;
     ON_2dPointArray *samples = new ON_2dPointArray();
     int numKnots = curve->SpanCount();
     double *knots = new double[numKnots + 1];
@@ -846,28 +2452,39 @@ pullback_samples(PBCData* data,
 	samplesperknotinterval = 18 * degree;
     }
     ON_2dPoint pt;
+    ON_3dPoint p = ON_3dPoint::UnsetPoint;
+    ON_3dPoint p3d = ON_3dPoint::UnsetPoint;
+    double distance;
     for (int i = istart; i <= istop; i++) {
 	if (i <= numKnots / 2) {
 	    if (i > 0) {
 		double delta = (knots[i] - knots[i - 1]) / (double) samplesperknotinterval;
 		for (int j = 1; j < samplesperknotinterval; j++) {
-		    if (toUV(*data, pt, knots[i - 1] + j * delta, PBC_FROM_OFFSET)) {
+		    p = curve->PointAt(knots[i - 1] + j * delta);
+		    p3d = ON_3dPoint::UnsetPoint;
+		    if (surface_GetClosestPoint3dFirstOrder(surf, p, pt, p3d, distance, 0, same_point_tol, within_distance_tol)) {
 			samples->Append(pt);
 		    }
 		}
 	    }
-	    if (toUV(*data, pt, knots[i], PBC_FROM_OFFSET)) {
+	    p = curve->PointAt(knots[i]);
+	    p3d = ON_3dPoint::UnsetPoint;
+	    if (surface_GetClosestPoint3dFirstOrder(surf, p, pt, p3d, distance, 0, same_point_tol, within_distance_tol)) {
 		samples->Append(pt);
 	    }
 	} else {
 	    if (i > 0) {
 		double delta = (knots[i] - knots[i - 1]) / (double) samplesperknotinterval;
 		for (int j = 1; j < samplesperknotinterval; j++) {
-		    if (toUV(*data, pt, knots[i - 1] + j * delta, -PBC_FROM_OFFSET)) {
+		    p = curve->PointAt(knots[i - 1] + j * delta);
+		    p3d = ON_3dPoint::UnsetPoint;
+		    if (surface_GetClosestPoint3dFirstOrder(surf, p, pt, p3d, distance, 0, same_point_tol, within_distance_tol)) {
 			samples->Append(pt);
 		    }
 		}
-		if (toUV(*data, pt, knots[i], -PBC_FROM_OFFSET)) {
+		p = curve->PointAt(knots[i]);
+		p3d = ON_3dPoint::UnsetPoint;
+		if (surface_GetClosestPoint3dFirstOrder(surf, p, pt, p3d, distance, 0, same_point_tol, within_distance_tol)) {
 		    samples->Append(pt);
 		}
 	    }
@@ -877,82 +2494,473 @@ pullback_samples(PBCData* data,
     return samples;
 }
 
-// If the given uv point is at the edge of a closed parameter range, bias it
-// to the same side of the range as the previous point.
-static ON_2dPoint
-resolve_seam_point_from_prev(
-    const ON_Surface *surf,
-    const ON_2dPoint &pt,
-    const ON_2dPoint &prev_pt)
-{
-    ON_2dPoint newpt = pt;
 
+/*
+ * Unwrap 2D UV point values to within actual surface UV. Points often wrap around the closed seam.
+ */
+ON_2dPoint
+UnwrapUVPoint(const ON_Surface *surf, const ON_2dPoint &pt, double tol)
+{
+    ON_2dPoint p = pt;
+
+    for (int i=0; i<2; i++) {
+	if (!surf->IsClosed(i))
+	    continue;
+	double length = surf->Domain(i).Length();
+	double dom_min = surf->Domain(i).Min() - ON_ZERO_TOLERANCE;
+	double dom_max = surf->Domain(i).Max() + ON_ZERO_TOLERANCE;
+
+	if (p[i] < surf->Domain(i).m_t[0] - tol) {
+	    int domains_away = (int)(((dom_min - p[i]) / length) + 1.0);
+	    p[i] += length*domains_away;
+	} else if (p[i] >= surf->Domain(i).m_t[1] + tol) {
+	    int domains_away = (int)(((p[i] - dom_max) / length) + 1.0);
+	    p[i] -= length * domains_away;
+	}
+    }
+
+    return p;
+}
+
+
+double
+DistToNearestClosedSeam(const ON_Surface *surf, const ON_2dPoint &pt)
+{
+    double dist = -1.0;
+    ON_2dPoint unwrapped_pt = UnwrapUVPoint(surf, pt);
+    for (int i=0; i<2; i++) {
+	if (!surf->IsClosed(i))
+	    continue;
+	dist = fabs(unwrapped_pt[i] - surf->Domain(i)[0]);
+	V_MIN(dist, fabs(surf->Domain(i)[1]-unwrapped_pt[i]));
+    }
+    return dist;
+}
+
+
+void
+GetClosestExtendedPoint(const ON_Surface *surf, ON_2dPoint &pt, ON_2dPoint &prev_pt, double UNUSED(tol)) {
+    if (surf->IsClosed(0)) {
+	double length = surf->Domain(0).Length();
+	double delta=pt.x-prev_pt.x;
+	while (fabs(delta) > length/2.0) {
+	    if (delta > length/2.0) {
+		pt.x = pt.x - length;
+		delta=pt.x-prev_pt.x;
+	    } else {
+		pt.x = pt.x + length;
+		delta=pt.x - prev_pt.x;
+	    }
+	}
+    }
+
+    if (surf->IsClosed(1)) {
+	double length = surf->Domain(1).Length();
+	double delta=pt.y-prev_pt.y;
+	while (fabs(delta) > length/2.0) {
+	    if (delta > length/2.0) {
+		pt.y = pt.y - length;
+		delta=pt.y - prev_pt.y;
+	    } else {
+		pt.y = pt.y + length;
+		delta=pt.y -prev_pt.y;
+	    }
+	}
+    }
+}
+
+
+/*
+ * Simple check to determine if two consecutive points pulled back from 3d curve sampling
+ * to 2d UV parameter space crosses the seam of the closed UV. The assumption here is that
+ * the sampling of the 3d curve is a small fraction of the UV domain.
+ *
+ *  // dir - 0 = not crossing, 1 = south/east bound, 2 = north/west bound
+ */
+bool
+ConsecutivePointsCrossClosedSeam(const ON_Surface *surf, const ON_2dPoint &pt, const ON_2dPoint &prev_pt, int &udir, int &vdir, double tol)
+{
+    bool rc = false;
+
+    /*
+     * if one of the points is at a seam then not crossing
+     */
+    int dir =0;
+
+    if (!IsAtSeam(surf, dir, pt, tol) && !IsAtSeam(surf, dir, prev_pt, tol)) {
+	udir = vdir = 0;
+	if (surf->IsClosed(0)) {
+	    ON_2dPoint unwrapped_pt = UnwrapUVPoint(surf, pt);
+	    ON_2dPoint unwrapped_prev_pt = UnwrapUVPoint(surf, prev_pt);
+	    double delta=unwrapped_pt.x-unwrapped_prev_pt.x;
+	    if (fabs(delta) > surf->Domain(0).Length()/2.0) {
+		if (delta < 0.0) {
+		    udir = 1; // east bound
+		} else {
+		    udir= 2; // west bound
+		}
+		rc = true;
+	    }
+	}
+    }
+    dir = 1;
+    if (!IsAtSeam(surf, dir, pt, tol) && !IsAtSeam(surf, dir, prev_pt, tol)) {
+	if (surf->IsClosed(1)) {
+	    ON_2dPoint unwrapped_pt = UnwrapUVPoint(surf, pt);
+	    ON_2dPoint unwrapped_prev_pt = UnwrapUVPoint(surf, prev_pt);
+	    double delta=unwrapped_pt.y-unwrapped_prev_pt.y;
+	    if (fabs(delta) > surf->Domain(1).Length()/2.0) {
+		if (delta < 0.0) {
+		    vdir = 2; // north bound
+		} else {
+		    vdir= 1; // south bound
+		}
+		rc = true;
+	    }
+	}
+    }
+
+    return rc;
+}
+
+
+/*
+ * If within UV tolerance to a seam force force to actually seam value so surface
+ * seam function can be used.
+ */
+void
+ForceToClosestSeam(const ON_Surface *surf, ON_2dPoint &pt, double tol)
+{
+    int seam;
+    ON_2dPoint unwrapped_pt = UnwrapUVPoint(surf, pt, tol);
+    ON_2dVector wrap = ON_2dVector::ZeroVector;
+    ON_Interval dom[2] = { ON_Interval::EmptyInterval, ON_Interval::EmptyInterval };
+    double length[2] = { ON_UNSET_VALUE, ON_UNSET_VALUE};
+
+    for (int i=0; i<2; i++) {
+	dom[i] = surf->Domain(i);
+	length[i] = dom[i].Length();
+	if (!surf->IsClosed(i))
+	    continue;
+	if (pt[i] > (dom[i].m_t[1] + tol)) {
+	    ON_2dPoint p = pt;
+	    while (p[i] > (dom[i].m_t[1] + tol)) {
+		p[i] -= length[i];
+		wrap[i] += 1.0;
+	    }
+	} else if (pt[i] < (dom[i].m_t[0] - tol)) {
+	    ON_2dPoint p = pt;
+	    while (p[i] < (dom[i].m_t[0] - tol)) {
+		p[i] += length[i];
+		wrap[i] -= 1.0;
+	    }
+	}
+	wrap[i] = wrap[i] * length[i];
+    }
+
+    if ((seam=IsAtSeam(surf, unwrapped_pt, tol)) > 0) {
+	if (seam == 1) { // east/west seam
+	    if (fabs(unwrapped_pt.x - dom[0].m_t[0]) < length[0]/2.0) {
+		unwrapped_pt.x = dom[0].m_t[0]; // on east swap to west seam
+	    } else {
+		unwrapped_pt.x = dom[0].m_t[1]; // on west swap to east seam
+	    }
+	} else if (seam == 2) { // north/south seam
+	    if (fabs(unwrapped_pt.y - dom[1].m_t[0]) < length[1]/2.0) {
+		unwrapped_pt.y = dom[1].m_t[0]; // on north swap to south seam
+	    } else {
+		unwrapped_pt.y = dom[1].m_t[1]; // on south swap to north seam
+	    }
+	} else { //on both seams
+	    if (fabs(unwrapped_pt.x - dom[0].m_t[0]) < length[0]/2.0) {
+		unwrapped_pt.x = dom[0].m_t[0]; // on east swap to west seam
+	    } else {
+		unwrapped_pt.x = dom[0].m_t[1]; // on west swap to east seam
+	    }
+	    if (fabs(pt.y - dom[1].m_t[0]) < length[1]/2.0) {
+		unwrapped_pt.y = dom[1].m_t[0]; // on north swap to south seam
+	    } else {
+		unwrapped_pt.y = dom[1].m_t[1]; // on south swap to north seam
+	    }
+	}
+    }
+    pt = unwrapped_pt + wrap;
+}
+
+
+/*
+ * If point lies on a seam(s) swap to opposite side of UV.
+ * hint = 1 swap E/W, 2 swap N/S or default 3 swap both
+ */
+void
+SwapUVSeamPoint(const ON_Surface *surf, ON_2dPoint &p, int hint)
+{
+    int seam;
     ON_Interval dom[2];
     dom[0] = surf->Domain(0);
     dom[1] = surf->Domain(1);
 
-    double umin = dom[0].m_t[0];
-    double umax = dom[0].m_t[1];
-    double vmin = dom[1].m_t[0];
-    double vmax = dom[1].m_t[1];
+    if ((seam=surf->IsAtSeam(p.x, p.y)) > 0) {
+	if (seam == 1) { // east/west seam
+	    if (fabs(p.x - dom[0].m_t[0]) > dom[0].Length()/2.0) {
+		p.x = dom[0].m_t[0]; // on east swap to west seam
+	    } else {
+		p.x = dom[0].m_t[1]; // on west swap to east seam
+	    }
+	} else if (seam == 2) { // north/south seam
+	    if (fabs(p.y - dom[1].m_t[0]) > dom[1].Length()/2.0) {
+		p.y = dom[1].m_t[0]; // on north swap to south seam
+	    } else {
+		p.y = dom[1].m_t[1]; // on south swap to north seam
+	    }
+	} else { //on both seams check hint 1=east/west only, 2=north/south, 3 = both
+	    if (hint == 1) {
+		if (fabs(p.x - dom[0].m_t[0]) > dom[0].Length()/2.0) {
+		    p.x = dom[0].m_t[0]; // on east swap to west seam
+		} else {
+		    p.x = dom[0].m_t[1]; // on west swap to east seam
+		}
+	    } else if (hint == 2) {
+		if (fabs(p.y - dom[1].m_t[0]) > dom[1].Length()/2.0) {
+		    p.y = dom[1].m_t[0]; // on north swap to south seam
+		} else {
+		    p.y = dom[1].m_t[1]; // on south swap to north seam
+		}
+	    } else {
+		if (fabs(p.x - dom[0].m_t[0]) > dom[0].Length()/2.0) {
+		    p.x = dom[0].m_t[0]; // on east swap to west seam
+		} else {
+		    p.x = dom[0].m_t[1]; // on west swap to east seam
+		}
+		if (fabs(p.y - dom[1].m_t[0]) > dom[1].Length()/2.0) {
+		    p.y = dom[1].m_t[0]; // on north swap to south seam
+		} else {
+		    p.y = dom[1].m_t[1]; // on south swap to north seam
+		}
+	    }
+	}
+    }
+}
 
-    if (surf->IsClosed(0) &&
-	(NEAR_EQUAL(pt.x, umin, PBC_TOL) || NEAR_EQUAL(pt.x, umax, PBC_TOL)))
-    {
-	if (fabs(prev_pt.x - umin) < fabs(prev_pt.x - umax)) {
-	    newpt.x = umin;
-	} else {
-	    newpt.x = umax;
+
+/*
+ * Find where Pullback of 3d curve crosses closed seam of surface UV
+ */
+bool
+Find3DCurveSeamCrossing(PBCData &data, double t0, double t1, double UNUSED(offset), double &seam_t, ON_2dPoint &from, ON_2dPoint &to, double tol, double same_point_tol, double within_distance_tol)
+{
+    bool rc = true;
+    const ON_Surface *surf = data.surf;
+
+    // quick bail out is surface not closed
+    if (surf->IsClosed(0) || surf->IsClosed(1)) {
+	ON_2dPoint p0_2d = ON_2dPoint::UnsetPoint;
+	ON_2dPoint p1_2d = ON_2dPoint::UnsetPoint;
+	ON_3dPoint p0_3d = data.curve->PointAt(t0);
+	ON_3dPoint p1_3d = data.curve->PointAt(t1);
+	ON_Interval dom[2];
+	double p0_distance;
+	double p1_distance;
+
+	dom[0] = surf->Domain(0);
+	dom[1] = surf->Domain(1);
+
+	ON_3dPoint check_pt_3d = ON_3dPoint::UnsetPoint;
+	int udir=0;
+	int vdir=0;
+	if (surface_GetClosestPoint3dFirstOrder(surf, p0_3d, p0_2d, check_pt_3d, p0_distance, 0, same_point_tol, within_distance_tol) &&
+	    surface_GetClosestPoint3dFirstOrder(surf, p1_3d, p1_2d, check_pt_3d, p1_distance, 0, same_point_tol, within_distance_tol)) {
+	    if (ConsecutivePointsCrossClosedSeam(surf, p0_2d, p1_2d, udir, vdir, tol)) {
+		ON_2dPoint p_2d;
+		//lets check to see if p0 || p1 are already on a seam
+		int seam0=0;
+		if ((seam0 = IsAtSeam(surf, p0_2d, tol)) > 0) {
+		    ForceToClosestSeam(surf, p0_2d, tol);
+		}
+		int seam1 = 0;
+		if ((seam1 = IsAtSeam(surf, p1_2d, tol)) > 0) {
+		    ForceToClosestSeam(surf, p1_2d, tol);
+		}
+		if (seam0 > 0) {
+		    if (seam1 > 0) { // both p0 & p1 on seam shouldn't happen report error and return false
+			rc = false;
+		    } else { // just p0 on seam
+			from = to = p0_2d;
+			seam_t = t0;
+			SwapUVSeamPoint(surf, to);
+		    }
+		} else if (seam1 > 0) { // only p1 on seam
+		    from = to = p1_2d;
+		    seam_t = t1;
+		    SwapUVSeamPoint(surf, from);
+		} else { // crosses the seam somewhere in between the two points
+		    bool seam_not_found = true;
+		    while(seam_not_found) {
+			double d0 = DistToNearestClosedSeam(surf, p0_2d);
+			double d1 = DistToNearestClosedSeam(surf, p1_2d);
+			if ((d0 > 0.0) && (d1 > 0.0)) {
+			    double t = t0 + (t1 - t0)*(d0/(d0+d1));
+			    int seam;
+			    ON_3dPoint p_3d = data.curve->PointAt(t);
+			    double distance;
+
+			    if (surface_GetClosestPoint3dFirstOrder(surf, p_3d, p_2d, check_pt_3d, distance, 0, same_point_tol, within_distance_tol)) {
+				if ((seam=IsAtSeam(surf, p_2d, tol)) > 0) {
+				    ForceToClosestSeam(surf, p_2d, tol);
+				    from = to = p_2d;
+				    seam_t = t;
+				    if (p0_2d.DistanceTo(p_2d) < p1_2d.DistanceTo(p_2d)) {
+					SwapUVSeamPoint(surf, to);
+				    } else {
+					SwapUVSeamPoint(surf, from);
+				    }
+				    seam_not_found=false;
+				    rc = true;
+				} else {
+				    if (ConsecutivePointsCrossClosedSeam(surf, p0_2d, p_2d, udir, vdir, tol)) {
+					p1_2d = p_2d;
+					t1 = t;
+				    } else if (ConsecutivePointsCrossClosedSeam(surf, p_2d, p1_2d, udir, vdir, tol)) {
+					p0_2d = p_2d;
+					t0=t;
+				    } else {
+					seam_not_found=false;
+					rc = false;
+				    }
+				}
+			    } else {
+				seam_not_found=false;
+				rc = false;
+			    }
+			} else {
+			    seam_not_found=false;
+			    rc = false;
+			}
+		    }
+		}
+	    }
 	}
     }
 
-    if (surf->IsClosed(1) &&
-	(NEAR_EQUAL(pt.y, vmin, PBC_TOL) || NEAR_EQUAL(pt.y, vmax, PBC_TOL)))
-    {
-	if (fabs(prev_pt.y - vmin) < fabs(prev_pt.y - vmax)) {
-	    newpt.y = vmin;
-	} else {
-	    newpt.y = vmax;
+    return rc;
+}
+
+
+/*
+ * Find where 2D trim curve crosses closed seam of surface UV
+ */
+bool
+FindTrimSeamCrossing(const ON_BrepTrim &trim, double t0, double t1, double &seam_t, ON_2dPoint &from, ON_2dPoint &to, double tol)
+{
+    bool rc = true;
+    const ON_Surface *surf = trim.SurfaceOf();
+
+    // quick bail out is surface not closed
+    if (surf->IsClosed(0) || surf->IsClosed(1)) {
+	ON_2dPoint p0 = trim.PointAt(t0);
+	ON_2dPoint p1 = trim.PointAt(t1);
+	ON_Interval dom[2];
+	dom[0] = surf->Domain(0);
+	dom[1] = surf->Domain(1);
+
+	p0 = UnwrapUVPoint(surf, p0);
+	p1 = UnwrapUVPoint(surf, p1);
+
+        int udir=0;
+        int vdir=0;
+	if (ConsecutivePointsCrossClosedSeam(surf, p0, p1, udir, vdir, tol)) {
+	    ON_2dPoint p;
+	    //lets check to see if p0 || p1 are already on a seam
+	    int seam0=0;
+	    if ((seam0 = IsAtSeam(surf, p0, tol)) > 0) {
+		ForceToClosestSeam(surf, p0, tol);
+	    }
+	    int seam1 = 0;
+	    if ((seam1 = IsAtSeam(surf, p1, tol)) > 0) {
+		ForceToClosestSeam(surf, p1, tol);
+	    }
+	    if (seam0 > 0) {
+		if (seam1 > 0) { // both p0 & p1 on seam shouldn't happen report error and return false
+		    rc = false;
+		} else { // just p0 on seam
+		    from = to = p0;
+		    seam_t = t0;
+		    SwapUVSeamPoint(surf, to);
+		}
+	    } else if (seam1 > 0) { // only p1 on seam
+		from = to = p1;
+		seam_t = t1;
+		SwapUVSeamPoint(surf, from);
+	    } else { // crosses the seam somewhere in between the two points
+		bool seam_not_found = true;
+		while (seam_not_found) {
+		    double d0 = DistToNearestClosedSeam(surf, p0);
+		    double d1 = DistToNearestClosedSeam(surf, p1);
+		    if ((d0 > tol) && (d1 > tol)) {
+			double t = t0 + (t1 - t0)*(d0/(d0+d1));
+			int seam;
+			p = trim.PointAt(t);
+			if ((seam=IsAtSeam(surf, p, tol)) > 0) {
+			    ForceToClosestSeam(surf, p, tol);
+			    from = to = p;
+			    seam_t = t;
+
+			    if (p0.DistanceTo(p) < p1.DistanceTo(p)) {
+				SwapUVSeamPoint(surf, to);
+			    } else {
+				SwapUVSeamPoint(surf, from);
+			    }
+			    seam_not_found=false;
+			    rc = true;
+			} else {
+			    if (ConsecutivePointsCrossClosedSeam(surf, p0, p, udir, vdir, tol)) {
+				p1 = p;
+				t1 = t;
+			    } else if (ConsecutivePointsCrossClosedSeam(surf, p, p1, udir, vdir, tol)) {
+				p0 = p;
+				t0=t;
+			    } else {
+				seam_not_found=false;
+				rc = false;
+			    }
+			}
+		    } else {
+			seam_not_found=false;
+			rc = false;
+		    }
+		}
+	    }
 	}
     }
 
-    return newpt;
+    return rc;
 }
 
 
 void
 pullback_samples_from_closed_surface(PBCData* data,
 				     double t,
-				     double s)
+				     double s,
+				     double same_point_tol,
+				     double within_distance_tol)
 {
-    if (!data || !data->surftree)
+    if (!data)
 	return;
 
-    const ON_Curve* curve = data->curve;
-
-    if (!curve)
+    if (!data->surf || !data->curve)
 	return;
 
-    const ON_Surface *surf = data->surftree->getSurface();
-    if (!surf)
-	return;
+    const ON_Curve* curve= data->curve;
+    const ON_Surface *surf = data->surf;
 
-    ON_2dPointArray *samples = new ON_2dPointArray();
-
+    ON_2dPointArray *samples= new ON_2dPointArray();
     size_t numKnots = curve->SpanCount();
-    double *knots = new double[numKnots + 1];
-
-    ON_2dPoint lastgoodpoint;
-    ON_2dPoint lastbadpoint;
-    ON_2dPoint workingpoint;
-    bool lastgoodpoint_set = false;
-    bool lastbadpoint_set = false;
-    bool workingpoint_set = false;
+    double *knots = new double[numKnots+1];
 
     curve->GetSpanVector(knots);
 
     size_t istart = 0;
-    while ((istart < (numKnots + 1)) && (t >= knots[istart]))
+    while ((istart < (numKnots+1)) && (t >= knots[istart]))
 	istart++;
 
     if (istart > 0) {
@@ -967,288 +2975,144 @@ pullback_samples_from_closed_surface(PBCData* data,
 	knots[++istop] = s;
     }
 
-    size_t samplesperknotinterval;
     size_t degree = curve->Degree();
+    size_t samplesperknotinterval=18*degree;
 
-    if (degree == 1) {
-	samplesperknotinterval = 3 * degree;
-    } else {
-	samplesperknotinterval = 18 * degree;
-    }
-    //
-    // thinking out-loud check half step between samples and check for sign change
-    // need to check sign change between p1->phalf, phalf->p2 if steps over
-    // bound then should be a sign change
-    //
     ON_2dPoint pt;
     ON_2dPoint prev_pt;
-    ON_2dVector dir;
-    ON_2dVector prev_dir;
-    double dottol = 0.9999999;
-    double steptol = 0.0000001;
-    bool has_dir = false;
-    bool has_prev_dir = false;
+    double prev_t = knots[istart];
+    double offset = 0.0;
+    double delta;
+    for (size_t i=istart; i<istop; i++) {
+	delta = (knots[i+1] - knots[i])/(double)samplesperknotinterval;
+	if (i <= numKnots/2) {
+	    offset = PBC_FROM_OFFSET;
+	} else {
+	    offset = -PBC_FROM_OFFSET;
+	}
+	for (size_t j=0; j<=samplesperknotinterval; j++) {
+	    if ((j == samplesperknotinterval) && (i < istop - 1))
+		continue;
 
-    size_t i;
-    for (i = istart; (i <= (numKnots / 2)) && (i <= istop); ++i) {
-	if (i > istart) {
-	    double delta = (knots[i] - knots[i - 1]) / (double)samplesperknotinterval;
-	    if (!toUV(*data, prev_pt, knots[i - 1], PBC_FROM_OFFSET)) {
-		std::cout << "prev_pt1 failed" << std::endl;
+	    double curr_t = knots[i]+j*delta;
+	    if (curr_t < (s-t)/2.0) {
+		offset = PBC_FROM_OFFSET;
 	    } else {
-		lastgoodpoint = prev_pt;
-		samples->Append(prev_pt);
-		lastgoodpoint_set = true;
-		lastbadpoint_set = false;
-		workingpoint_set = false;
+		offset = -PBC_FROM_OFFSET;
 	    }
-	    for (size_t j = 1; j < samplesperknotinterval;) {
-		if (toUV(*data, pt, knots[i - 1] + j * delta, PBC_FROM_OFFSET)) {
-		    pt = resolve_seam_point_from_prev(surf, pt, prev_pt);
-		    dir = pt - prev_pt;
-		    dir.Unitize();
-		    has_dir = true;
-		    if (has_prev_dir && (j > 1)) {
-			double dot = prev_dir * dir;
-#ifdef SHOW_UNUSED
-			double lastgood = 0.0, lastbad = 0.0;
-#endif
-			if (dot < dottol) {
-			    double step = delta;
-			    double at = knots[i - 1] + j * delta;
-			    while (step > steptol) {
-				step = step / 2.0;
-				if (dot < dottol) {
-#ifdef SHOW_UNUSED
-				    lastbad = at;
-#endif
-				    lastbadpoint = workingpoint;
-				    lastbadpoint_set = workingpoint_set;
-				    at = at - step;
-				    if (toUV(*data, workingpoint, at, PBC_FROM_OFFSET)) {
-					workingpoint_set = true;
-					dir = workingpoint - prev_pt;
-					dir.Unitize();
-					dot = prev_dir * dir;
-				    }
-				} else {
-#ifdef SHOW_UNUSED
-				    lastgood = at;
-#endif
-				    lastgoodpoint = workingpoint;
-				    lastgoodpoint_set = workingpoint_set;
-				    at = at + step;
-				    if (toUV(*data, workingpoint, at, PBC_FROM_OFFSET)) {
-					workingpoint_set = true;
-					dir = workingpoint - prev_pt;
-					dir.Unitize();
-					dot = prev_dir * dir;
-				    }
-				}
-			    }
-			    if (dot < dottol) {
-#ifdef SHOW_UNUSED
-				lastbad = at;
-#endif
-				lastbadpoint = workingpoint;
-				lastbadpoint_set = workingpoint_set;
-			    } else {
-#ifdef SHOW_UNUSED
-				lastgood = at;
-#endif
-				lastgoodpoint = workingpoint;
-				lastgoodpoint_set = workingpoint_set;
-			    }
-			    if (lastgoodpoint_set) {
-				samples->Append(lastgoodpoint);
-				data->segments.push_back(samples);
-				samples = new ON_2dPointArray();
-			    }
-
-			    if (lastgoodpoint_set) {
-				std::cout << "finalgoodpt1 -  " << lastgoodpoint.x << "," << lastgoodpoint.y << std::endl;
-			    } else {
-				std::cout << "finalgoodpt1 -  unknown" << std::endl;
-			    }
-			    if (lastbadpoint_set) {
-				std::cout << "finalbadpt1 -  " << lastbadpoint.x << "," << lastbadpoint.y  << std::endl;
-			    } else {
-				std::cout << "finalbadpt1 -  unknown" << std::endl;
-			    }
-			}
-		    }
+	    ON_3dPoint p = curve->PointAt(curr_t);
+	    ON_3dPoint p3d = ON_3dPoint::UnsetPoint;
+	    double distance;
+	    if (surface_GetClosestPoint3dFirstOrder(surf, p, pt, p3d, distance, 0, same_point_tol, within_distance_tol)) {
+		if (IsAtSeam(surf, pt, PBC_SEAM_TOL) > 0) {
+		    ForceToClosestSeam(surf, pt, PBC_SEAM_TOL);
+		}
+		if ((i == istart) && (j == 0)) {
+		    // first point just append and set reference in prev_pt
 		    samples->Append(pt);
-		    j++;
-		    //std::cout << "pt -  " << pt.x << "," << pt.y << "   2d dir - " << (pt.x - prev_pt.x) << "," << (pt.y - prev_pt.y) << std::endl;
 		    prev_pt = pt;
-		    prev_dir = dir;
-		    has_prev_dir = true;
-		} else {
-		    //std::cout << "didn't find point on surface" << std::endl;
-		    j++;
+		    prev_t = curr_t;
+		    continue;
 		}
-	    }
-	} /* i > istart */
-
-	if (toUV(*data, pt, knots[i], PBC_FROM_OFFSET)) {
-	    if ((i == istart) && (i < numKnots)) {
-		double delta = (knots[i + 1] - knots[i]) / (double)samplesperknotinterval;
-		if (surf->IsClosed(0) || surf->IsClosed(1)) {
-		    ON_2dPoint test;
-		    if (toUV(*data, test, knots[i] + delta, PBC_FROM_OFFSET)) {
-			pt = resolve_seam_point_from_prev(surf, pt, test);
-		    }
-		}
-	    } else {
-		pt = resolve_seam_point_from_prev(surf, pt, prev_pt);
-	    }
-	    samples->Append(pt);
-	    //std::cout << "pt -  " << pt.x << "," << pt.y << "   2d dir - " << (pt.x - prev_pt.x) << "," << (pt.y - prev_pt.y) << std::endl;
-	    prev_pt = pt;
-	    if (has_dir) {
-		prev_dir = dir;
-		has_prev_dir = true;
-	    }
-	} else {
-	    //std::cout << "didn't find point on surface" << std::endl;
-	}
-    }
-
-    has_dir = false;
-    has_prev_dir = false;
-    for (; (i > 1) && (i <= numKnots) && (i <= istop); ++i) {
-	double delta = (knots[i] - knots[i - 1]) / (double)samplesperknotinterval;
-	if (!toUV(*data, prev_pt, knots[i - 1], -PBC_FROM_OFFSET)) {
-	    std::cout << "prev_pt2 failed" << std::endl;
-	} else {
-	    lastgoodpoint = prev_pt;
-	    samples->Append(prev_pt);
-	    lastgoodpoint_set = true;
-	    lastbadpoint_set = false;
-	    workingpoint_set = false;
-	}
-	for (size_t j = 1; j < samplesperknotinterval;) {
-	    if (toUV(*data, pt, knots[i - 1] + j * delta, -PBC_FROM_OFFSET)) {
-		pt = resolve_seam_point_from_prev(surf, pt, prev_pt);
-		dir = pt - prev_pt;
-		dir.Unitize();
-		has_dir = true;
-		if (has_prev_dir && (j > 1)) {
-		    double dot = prev_dir * dir;
-#ifdef SHOW_UNUSED
-		    double lastgood = 0.0, lastbad = 0.0;
-#endif
-		    //std::cout << "dot - " << dot << std::endl;
-		    if (dot < dottol) {
-			double step = delta;
-			double at = knots[i - 1] + j * delta;
-			while (step > steptol) {
-			    step = step / 2.0;
-			    if (dot < dottol) {
-#ifdef SHOW_UNUSED
-				lastbad = at;
-#endif
-				lastbadpoint = workingpoint;
-				lastbadpoint_set = workingpoint_set;
-				at = at - step;
-				if (toUV(*data, workingpoint, at, -PBC_FROM_OFFSET)) {
-				    workingpoint_set = true;
-				    dir = workingpoint - prev_pt;
-				    dir.Unitize();
-				    dot = prev_dir * dir;
+		int udir= 0;
+		int vdir= 0;
+		if (ConsecutivePointsCrossClosedSeam(surf, pt, prev_pt, udir, vdir, PBC_SEAM_TOL)) {
+		    int pt_seam = surf->IsAtSeam(pt.x, pt.y);
+		    int prev_pt_seam = surf->IsAtSeam(prev_pt.x, prev_pt.y);
+		    if (pt_seam > 0) {
+			if ((prev_pt_seam > 0) && (samples->Count() == 1)) {
+			    samples->Empty();
+			    SwapUVSeamPoint(surf, prev_pt, pt_seam);
+			    samples->Append(prev_pt);
+			} else {
+			    if (pt_seam == 3) {
+				if (prev_pt_seam == 1) {
+				    pt.x = prev_pt.x;
+				    if (ConsecutivePointsCrossClosedSeam(surf, pt, prev_pt, udir, vdir, PBC_SEAM_TOL)) {
+					SwapUVSeamPoint(surf, pt, 2);
+				    }
+				} else if (prev_pt_seam == 2) {
+				    pt.y = prev_pt.y;
+				    if (ConsecutivePointsCrossClosedSeam(surf, pt, prev_pt, udir, vdir, PBC_SEAM_TOL)) {
+					SwapUVSeamPoint(surf, pt, 1);
+				    }
 				}
 			    } else {
-#ifdef SHOW_UNUSED
-				lastgood = at;
-#endif
-				lastgoodpoint = workingpoint;
-				lastgoodpoint_set = workingpoint_set;
-				at = at + step;
-				if (toUV(*data, workingpoint, at, -PBC_FROM_OFFSET)) {
-				    workingpoint_set = true;
-				    dir = workingpoint - prev_pt;
-				    dir.Unitize();
-				    dot = prev_dir * dir;
-				}
+				SwapUVSeamPoint(surf, pt, prev_pt_seam);
 			    }
 			}
-			if (dot < dottol) {
-#ifdef SHOW_UNUSED
-			    lastbad = at;
-#endif
-			    lastbadpoint = workingpoint;
-			    lastbadpoint_set = workingpoint_set;
-			} else {
-#ifdef SHOW_UNUSED
-			    lastgood = at;
-#endif
-			    lastgoodpoint = workingpoint;
-			    lastgoodpoint_set = workingpoint_set;
+		    } else if (prev_pt_seam > 0) {
+			if (samples->Count() == 1) {
+			    samples->Empty();
+			    SwapUVSeamPoint(surf, prev_pt);
+			    samples->Append(prev_pt);
 			}
-			if (lastgoodpoint_set) {
-			    samples->Append(lastgoodpoint);
-			    data->segments.push_back(samples);
-			    samples = new ON_2dPointArray();
-			}
-
-			if (lastgoodpoint_set) {
-			    std::cout << "finalgoodpt2 -  " << lastgoodpoint.x << "," << lastgoodpoint.y << std::endl;
+		    } else if (data->curve->IsClosed()) {
+			ON_2dPoint from, to;
+			double seam_t;
+			if (Find3DCurveSeamCrossing(*data, prev_t, curr_t, offset, seam_t, from, to, PBC_TOL, same_point_tol, within_distance_tol)) {
+			    samples->Append(from);
+			    data->segments->push_back(samples);
+			    samples= new ON_2dPointArray();
+			    samples->Append(to);
+			    prev_pt = to;
+			    prev_t = seam_t;
 			} else {
-			    std::cout << "finalgoodpt2 -  unknown" << std::endl;
-			}
-			if (lastbadpoint_set) {
-			    std::cout << "finalbadpt2 -  " << lastbadpoint.x << "," << lastbadpoint.y  << std::endl;
-			} else {
-			    std::cout << "finalbadpt2 -  unknown" << std::endl;
+			    std::cout << "Can not find seam crossing...." << std::endl;
 			}
 		    }
 		}
 		samples->Append(pt);
-		j++;
-		//std::cout << "pt -  " << pt.x << "," << pt.y << "   2d dir - " << (pt.x - prev_pt.x) << "," << (pt.y - prev_pt.y) << std::endl;
+
 		prev_pt = pt;
-		prev_dir = dir;
-		has_prev_dir = true;
-	    } else {
-		//std::cout << "didn't find point on surface" << std::endl;
-		j++;
+		prev_t = curr_t;
 	    }
-	}
-	if (toUV(*data, pt, knots[i], -PBC_FROM_OFFSET)) {
-	    pt = resolve_seam_point_from_prev(surf, pt, prev_pt);
-	    samples->Append(pt);
-	    //std::cout << "pt -  " << pt.x << "," << pt.y << "   2d dir - " << (pt.x - prev_pt.x) << "," << (pt.y - prev_pt.y) << std::endl;
-	    prev_pt = pt;
-	    if (has_dir) {
-		prev_dir = dir;
-		has_prev_dir = true;
-	    }
-	} else {
-	    //std::cout << "didn't find point on surface" << std::endl;
 	}
     }
-
     delete [] knots;
 
     if (samples != NULL) {
-	data->segments.push_back(samples);
+	data->segments->push_back(samples);
+
+	size_t numsegs = data->segments->size();
+
+	if (numsegs > 1) {
+	    if (curve->IsClosed()) {
+		ON_2dPointArray *reordered_samples= new ON_2dPointArray();
+		// must have walked over seam but have closed curve so reorder stitching
+		size_t seg = 0;
+		for (std::list<ON_2dPointArray *>::reverse_iterator rit=data->segments->rbegin(); rit!=data->segments->rend(); ++seg) {
+		    samples = *rit;
+		    if (seg < numsegs-1) { // since end points should be repeated
+			reordered_samples->Append(samples->Count()-1, (const ON_2dPoint *)samples->Array());
+		    } else {
+			reordered_samples->Append(samples->Count(), (const ON_2dPoint *)samples->Array());
+		    }
+		    data->segments->erase((++rit).base());
+		    rit = data->segments->rbegin();
+		    delete samples;
+		}
+		data->segments->clear();
+		data->segments->push_back(reordered_samples);
+
+	    } else {
+		//punt for now
+	    }
+	}
     }
 
     return;
 }
- 
+
+
 PBCData *
-pullback_samples(const brlcad::SurfaceTree* surfacetree,
+pullback_samples(const ON_Surface* surf,
 		 const ON_Curve* curve,
 		 double tolerance,
-		 double flatness)
+		 double flatness,
+		 double same_point_tol,
+		 double within_distance_tol)
 {
-    const ON_Surface *surf = NULL;
-
-    if (!surfacetree)
-	return NULL;
-
-    surf = ((brlcad::SurfaceTree *)surfacetree)->getSurface();
     if (!surf)
 	return NULL;
 
@@ -1256,31 +3120,34 @@ pullback_samples(const brlcad::SurfaceTree* surfacetree,
     data->tolerance = tolerance;
     data->flatness = flatness;
     data->curve = curve;
-    data->surftree = (brlcad::SurfaceTree*)surfacetree;
+    data->surf = surf;
+    data->surftree = NULL;
+    data->segments = new std::list<ON_2dPointArray *>();
 
     double tmin, tmax;
     data->curve->GetDomain(&tmin, &tmax);
 
     if (surf->IsClosed(0) || surf->IsClosed(1)) {
 	if ((tmin < 0.0) && (tmax > 0.0)) {
-	    ON_2dPoint uv;
-	    if (toUV(*data, uv, 0.0, PBC_TOL)) {
-		if (IsAtSeam(surf, uv.x, uv.y) > 0) {
-		    ON_2dPointArray *samples1 = pullback_samples(data, tmin, 0.0);
-		    ON_2dPointArray *samples2 = pullback_samples(data, 0.0, tmax);
+	    ON_2dPoint uv = ON_2dPoint::UnsetPoint;
+	    ON_3dPoint p = curve->PointAt(0.0);
+	    ON_3dPoint p3d = ON_3dPoint::UnsetPoint;
+	    double distance;
+	    int quadrant = 0; // optional - 0 = default, 1 from NE quadrant, 2 from NW quadrant, 3 from SW quadrant, 4 from SE quadrant
+	    if (surface_GetClosestPoint3dFirstOrder(surf, p, uv, p3d, distance, quadrant, same_point_tol, within_distance_tol)) {
+		if (IsAtSeam(surf, uv, PBC_SEAM_TOL) > 0) {
+		    ON_2dPointArray *samples1 = pullback_samples(data, tmin, 0.0, same_point_tol, within_distance_tol);
+		    ON_2dPointArray *samples2 = pullback_samples(data, 0.0, tmax, same_point_tol, within_distance_tol);
 		    if (samples1 != NULL) {
-			data->segments.push_back(samples1);
+			data->segments->push_back(samples1);
 		    }
 		    if (samples2 != NULL) {
-			data->segments.push_back(samples2);
+			data->segments->push_back(samples2);
 		    }
-		    //TODO: remove debugging code
-		    if (false)
-			std::cerr << "need to divide curve across the seam" << std::endl;
 		} else {
-		    ON_2dPointArray *samples = pullback_samples(data, tmin, tmax);
+		    ON_2dPointArray *samples = pullback_samples(data, tmin, tmax, same_point_tol, within_distance_tol);
 		    if (samples != NULL) {
-			data->segments.push_back(samples);
+			data->segments->push_back(samples);
 		    }
 		}
 	    } else {
@@ -1289,12 +3156,12 @@ pullback_samples(const brlcad::SurfaceTree* surfacetree,
 		return NULL;
 	    }
 	} else {
-	    pullback_samples_from_closed_surface(data, tmin, tmax);
+	    pullback_samples_from_closed_surface(data, tmin, tmax, same_point_tol, within_distance_tol);
 	}
     } else {
-	ON_2dPointArray *samples = pullback_samples(data, tmin, tmax);
+	ON_2dPointArray *samples = pullback_samples(data, tmin, tmax, same_point_tol, within_distance_tol);
 	if (samples != NULL) {
-	    data->segments.push_back(samples);
+	    data->segments->push_back(samples);
 	}
     }
     return data;
@@ -1566,12 +3433,10 @@ bool
 check_pullback_closed(std::list<PBCData*> &pbcs)
 {
     std::list<PBCData*>::iterator d = pbcs.begin();
-    if ((*d) == NULL || (*d)->surftree == NULL)
+    if ((*d) == NULL || (*d)->surf == NULL)
 	return false;
 
-    const ON_Surface *surf = (*d)->surftree->getSurface();
-    if (!surf)
-	return false;
+    const ON_Surface *surf = (*d)->surf;
 
     //TODO:
     // 0 = U, 1 = V
@@ -1593,13 +3458,10 @@ bool
 check_pullback_singular_east(std::list<PBCData*> &pbcs)
 {
     std::list<PBCData *>::iterator cs = pbcs.begin();
-    if ((*cs) == NULL || (*cs)->surftree == NULL)
+    if ((*cs) == NULL || (*cs)->surf == NULL)
 	return false;
 
-    const ON_Surface *surf = (*cs)->surftree->getSurface();
-    if (!surf)
-	return false;
-
+    const ON_Surface *surf = (*cs)->surf;
     double umin, umax;
     ON_2dPoint *prev = NULL;
 
@@ -1607,9 +3469,9 @@ check_pullback_singular_east(std::list<PBCData*> &pbcs)
     std::cout << "Umax: " << umax << std::endl;
     while (cs != pbcs.end()) {
 	PBCData *data = (*cs);
-	std::list<ON_2dPointArray *>::iterator si = data->segments.begin();
+	std::list<ON_2dPointArray *>::iterator si = data->segments->begin();
 	int segcnt = 0;
-	while (si != data->segments.end()) {
+	while (si != data->segments->end()) {
 	    ON_2dPointArray *samples = (*si);
 	    std::cerr << std::endl << "Segment:" << ++segcnt << std::endl;
 	    if (true) {
@@ -1639,13 +3501,10 @@ bool
 check_pullback_singular(std::list<PBCData*> &pbcs)
 {
     std::list<PBCData*>::iterator d = pbcs.begin();
-    if ((*d) == NULL || (*d)->surftree == NULL)
+    if ((*d) == NULL || (*d)->surf == NULL)
 	return false;
 
-    const ON_Surface *surf = (*d)->surftree->getSurface();
-    if (!surf)
-	return false;
-
+    const ON_Surface *surf = (*d)->surf;
     int cnt = 0;
 
     for (int i = 0; i < 4; i++) {
@@ -1685,6 +3544,7 @@ check_pullback_singular(std::list<PBCData*> &pbcs)
 }
 
 
+#ifdef _DEBUG_TESTING_
 void
 print_pullback_data(std::string str, std::list<PBCData*> &pbcs, bool justendpoints)
 {
@@ -1695,23 +3555,20 @@ print_pullback_data(std::string str, std::list<PBCData*> &pbcs, bool justendpoin
 	std::cerr << "EndPoints " << str << ":" << std::endl;
 	while (cs != pbcs.end()) {
 	    PBCData *data = (*cs);
-	    if (!data || !data->surftree)
+	    if (!data || !data->surf)
 		continue;
 
-	    const ON_Surface *surf = data->surftree->getSurface();
-	    if (!surf)
-		continue;
-
-	    std::list<ON_2dPointArray *>::iterator si = data->segments.begin();
+	    const ON_Surface *surf = data->surf;
+	    std::list<ON_2dPointArray *>::iterator si = data->segments->begin();
 	    int segcnt = 0;
-	    while (si != data->segments.end()) {
+	    while (si != data->segments->end()) {
 		ON_2dPointArray *samples = (*si);
 		std::cerr << std::endl << "  Segment:" << ++segcnt << std::endl;
 		int ilast = samples->Count() - 1;
 		std::cerr << "    T:" << ++trimcnt << std::endl;
 		int i = 0;
-		int singularity = IsAtSingularity(surf, (*samples)[i].x, (*samples)[i].y);
-		int seam = IsAtSeam(surf, (*samples)[i].x, (*samples)[i].y);
+		int singularity = IsAtSingularity(surf, (*samples)[i], PBC_SEAM_TOL);
+		int seam = IsAtSeam(surf, (*samples)[i], PBC_SEAM_TOL);
 		std::cerr << "--------";
 		if ((seam > 0) && (singularity >= 0)) {
 		    std::cerr << " S/S  " << (*samples)[i].x << ", " << (*samples)[i].y;
@@ -1726,8 +3583,8 @@ print_pullback_data(std::string str, std::list<PBCData*> &pbcs, bool justendpoin
 		std::cerr << "  (" << p.x << ", " << p.y << ", " << p.z << ") " << std::endl;
 
 		i = ilast;
-		singularity = IsAtSingularity(surf, (*samples)[i].x, (*samples)[i].y);
-		seam = IsAtSeam(surf, (*samples)[i].x, (*samples)[i].y);
+		singularity = IsAtSingularity(surf, (*samples)[i], PBC_SEAM_TOL);
+		seam = IsAtSeam(surf, (*samples)[i], PBC_SEAM_TOL);
 		std::cerr << "        ";
 		if ((seam > 0) && (singularity >= 0)) {
 		    std::cerr << " S/S  " << (*samples)[i].x << ", " << (*samples)[i].y << std::endl;
@@ -1751,38 +3608,44 @@ print_pullback_data(std::string str, std::list<PBCData*> &pbcs, bool justendpoin
 	std::cerr << str << ":" << std::endl;
 	while (cs != pbcs.end()) {
 	    PBCData *data = (*cs);
-	    if (!data || !data->surftree)
+	    if (!data || !data->surf)
 		continue;
 
-	    const ON_Surface *surf = data->surftree->getSurface();
-	    if (!surf)
-		continue;
-
-	    std::list<ON_2dPointArray *>::iterator si = data->segments.begin();
+	    const ON_Surface *surf = data->surf;
+	    std::list<ON_2dPointArray *>::iterator si = data->segments->begin();
 	    int segcnt = 0;
-	    while (si != data->segments.end()) {
+	    std::cerr << "2d surface domain: " << std::endl;
+	    std::cerr << "in rpp rpp" << surf->Domain(0).m_t[0] << " " << surf->Domain(0).m_t[1] << " " << surf->Domain(1).m_t[0] << " " << surf->Domain(1).m_t[1] << " 0.0 0.01"  << std::endl;
+	    while (si != data->segments->end()) {
 		ON_2dPointArray *samples = (*si);
 		std::cerr << std::endl << "  Segment:" << ++segcnt << std::endl;
 		std::cerr << "    T:" << ++trimcnt << std::endl;
 		for (int i = 0; i < samples->Count(); i++) {
-		    int singularity = IsAtSingularity(surf, (*samples)[i].x, (*samples)[i].y);
-		    int seam = IsAtSeam(surf, (*samples)[i].x, (*samples)[i].y);
-		    if (i == 0) {
-			std::cerr << "--------";
+		    int singularity = IsAtSingularity(surf, (*samples)[i], PBC_SEAM_TOL);
+		    int seam = IsAtSeam(surf, (*samples)[i], PBC_SEAM_TOL);
+		    if (_debug_print_mged2d_points_) {
+			std::cerr << "in pt_" << _debug_point_count_++ << " sph " << (*samples)[i].x << " " << (*samples)[i].y << " 0.0 0.1000"  << std::endl;
+		    } else if (_debug_print_mged3d_points_) {
+			ON_3dPoint p = surf->PointAt((*samples)[i].x, (*samples)[i].y);
+			std::cerr << "in pt_" << _debug_point_count_++ << " sph " << p.x << " " << p.y << " " << p.z << " 0.1000"  << std::endl;
 		    } else {
-			std::cerr << "        ";
+			if (i == 0) {
+			    std::cerr << "--------";
+			} else {
+			    std::cerr << "        ";
+			}
+			if ((seam > 0) && (singularity >= 0)) {
+			    std::cerr << " S/S  " << (*samples)[i].x << ", " << (*samples)[i].y;
+			} else if (seam > 0) {
+			    std::cerr << " Seam " << (*samples)[i].x << ", " << (*samples)[i].y;
+			} else if (singularity >= 0) {
+			    std::cerr << " Sing " << (*samples)[i].x << ", " << (*samples)[i].y;
+			} else {
+			    std::cerr << "      " << (*samples)[i].x << ", " << (*samples)[i].y;
+			}
+			ON_3dPoint p = surf->PointAt((*samples)[i].x, (*samples)[i].y);
+			std::cerr << "  (" << p.x << ", " << p.y << ", " << p.z << ") " << std::endl;
 		    }
-		    if ((seam > 0) && (singularity >= 0)) {
-			std::cerr << " S/S  " << (*samples)[i].x << ", " << (*samples)[i].y;
-		    } else if (seam > 0) {
-			std::cerr << " Seam " << (*samples)[i].x << ", " << (*samples)[i].y;
-		    } else if (singularity >= 0) {
-			std::cerr << " Sing " << (*samples)[i].x << ", " << (*samples)[i].y;
-		    } else {
-			std::cerr << "      " << (*samples)[i].x << ", " << (*samples)[i].y;
-		    }
-		    ON_3dPoint p = surf->PointAt((*samples)[i].x, (*samples)[i].y);
-		    std::cerr << "  (" << p.x << ", " << p.y << ", " << p.z << ") " << std::endl;
 		}
 		si++;
 	    }
@@ -1791,6 +3654,7 @@ print_pullback_data(std::string str, std::list<PBCData*> &pbcs, bool justendpoin
     }
     /////
 }
+#endif
 
 
 bool
@@ -1806,50 +3670,51 @@ resolve_seam_segment_from_prev(const ON_Surface *surface, ON_2dPointArray &segme
     vmid = (vmin + vmax) / 2.0;
 
     for (int i = 0; i < segment.Count(); i++) {
-	int singularity = IsAtSingularity(surface, segment[i].x, segment[i].y);
-	if (singularity < 0) {
-	    int seam = IsAtSeam(surface, segment[i].x, segment[i].y);
-	    if ((seam > 0)) {
-		if (prev != NULL) {
-		    //std::cerr << " at seam " << seam << " but has prev" << std::endl;
-		    //std::cerr << "    prev: " << prev->x << ", " << prev->y << std::endl;
-		    //std::cerr << "    curr: " << data->samples[i].x << ", " << data->samples[i].y << std::endl;
-		    switch (seam) {
-			case 1: //east/west
-			    if (prev->x < umid) {
-				segment[i].x = umin;
-			    } else {
-				segment[i].x = umax;
-			    }
-			    break;
-			case 2: //north/south
-			    if (prev->y < vmid) {
-				segment[i].y = vmin;
-			    } else {
-				segment[i].y = vmax;
-			    }
-			    break;
-			case 3: //both
-			    if (prev->x < umid) {
-				segment[i].x = umin;
-			    } else {
-				segment[i].x = umax;
-			    }
-			    if (prev->y < vmid) {
-				segment[i].y = vmin;
-			    } else {
-				segment[i].y = vmax;
-			    }
-		    }
-		} else {
-		    //std::cerr << " at seam and no prev" << std::endl;
-		    complete = false;
+	int singularity = IsAtSingularity(surface, segment[i], PBC_SEAM_TOL);
+	int seam = IsAtSeam(surface, segment[i], PBC_SEAM_TOL);
+	if ((seam > 0)) {
+	    if (prev != NULL) {
+		//std::cerr << " at seam " << seam << " but has prev" << std::endl;
+		//std::cerr << "    prev: " << prev->x << ", " << prev->y << std::endl;
+		//std::cerr << "    curr: " << data->samples[i].x << ", " << data->samples[i].y << std::endl;
+		switch (seam) {
+		    case 1: //east/west
+			if (prev->x < umid) {
+			    segment[i].x = umin;
+			} else {
+			    segment[i].x = umax;
+			}
+			break;
+		    case 2: //north/south
+			if (prev->y < vmid) {
+			    segment[i].y = vmin;
+			} else {
+			    segment[i].y = vmax;
+			}
+			break;
+		    case 3: //both
+			if (prev->x < umid) {
+			    segment[i].x = umin;
+			} else {
+			    segment[i].x = umax;
+			}
+			if (prev->y < vmid) {
+			    segment[i].y = vmin;
+			} else {
+			    segment[i].y = vmax;
+			}
 		}
-	    } else {
 		prev = &segment[i];
+	    } else {
+		//std::cerr << " at seam and no prev" << std::endl;
+		complete = false;
 	    }
 	} else {
-	    prev = NULL;
+	    if (singularity < 0) {
+		prev = &segment[i];
+	    } else {
+		prev = NULL;
+	    }
 	}
     }
     return complete;
@@ -1871,47 +3736,49 @@ resolve_seam_segment_from_next(const ON_Surface *surface, ON_2dPointArray &segme
     if (next != NULL) {
 	complete = true;
 	for (int i = segment.Count() - 1; i >= 0; i--) {
-	    int singularity = IsAtSingularity(surface, segment[i].x, segment[i].y);
-	    if (singularity < 0) {
-		int seam = IsAtSeam(surface, segment[i].x, segment[i].y);
-		if ((seam > 0)) {
-		    if (next != NULL) {
-			switch (seam) {
-			    case 1: //east/west
-				if (next->x < umid) {
-				    segment[i].x = umin;
-				} else {
-				    segment[i].x = umax;
-				}
-				break;
-			    case 2: //north/south
-				if (next->y < vmid) {
-				    segment[i].y = vmin;
-				} else {
-				    segment[i].y = vmax;
-				}
-				break;
-			    case 3: //both
-				if (next->x < umid) {
-				    segment[i].x = umin;
-				} else {
-				    segment[i].x = umax;
-				}
-				if (next->y < vmid) {
-				    segment[i].y = vmin;
-				} else {
-				    segment[i].y = vmax;
-				}
-			}
-		    } else {
-			//std::cerr << " at seam and no prev" << std::endl;
-			complete = false;
+	    int singularity = IsAtSingularity(surface, segment[i], PBC_SEAM_TOL);
+	    int seam = IsAtSeam(surface, segment[i], PBC_SEAM_TOL);
+
+	    if ((seam > 0)) {
+		if (next != NULL) {
+		    switch (seam) {
+			case 1: //east/west
+			    if (next->x < umid) {
+				segment[i].x = umin;
+			    } else {
+				segment[i].x = umax;
+			    }
+			    break;
+			case 2: //north/south
+			    if (next->y < vmid) {
+				segment[i].y = vmin;
+			    } else {
+				segment[i].y = vmax;
+			    }
+			    break;
+			case 3: //both
+			    if (next->x < umid) {
+				segment[i].x = umin;
+			    } else {
+				segment[i].x = umax;
+			    }
+			    if (next->y < vmid) {
+				segment[i].y = vmin;
+			    } else {
+				segment[i].y = vmax;
+			    }
 		    }
-		} else {
 		    next = &segment[i];
+		} else {
+		    //std::cerr << " at seam and no prev" << std::endl;
+		    complete = false;
 		}
 	    } else {
-		next = NULL;
+		if (singularity < 0) {
+		    next = &segment[i];
+		} else {
+		    next = NULL;
+		}
 	    }
 	}
     }
@@ -1920,7 +3787,7 @@ resolve_seam_segment_from_next(const ON_Surface *surface, ON_2dPointArray &segme
 
 
 bool
-resolve_seam_segment(const ON_Surface *surface, ON_2dPointArray &segment)
+resolve_seam_segment(const ON_Surface *surface, ON_2dPointArray &segment, bool &UNUSED(u_resolved), bool &UNUSED(v_resolved))
 {
     ON_2dPoint *prev = NULL;
     bool complete = false;
@@ -1933,9 +3800,59 @@ resolve_seam_segment(const ON_Surface *surface, ON_2dPointArray &segment)
     vmid = (vmin + vmax) / 2.0;
 
     for (int i = 0; i < segment.Count(); i++) {
-	int singularity = IsAtSingularity(surface, segment[i].x, segment[i].y);
-	if (singularity < 0) {
-	    int seam = IsAtSeam(surface, segment[i].x, segment[i].y);
+	int singularity = IsAtSingularity(surface, segment[i], PBC_SEAM_TOL);
+	int seam = IsAtSeam(surface, segment[i], PBC_SEAM_TOL);
+
+	if ((seam > 0)) {
+	    if (prev != NULL) {
+		//std::cerr << " at seam " << seam << " but has prev" << std::endl;
+		//std::cerr << "    prev: " << prev->x << ", " << prev->y << std::endl;
+		//std::cerr << "    curr: " << data->samples[i].x << ", " << data->samples[i].y << std::endl;
+		switch (seam) {
+		    case 1: //east/west
+			if (prev->x < umid) {
+			    segment[i].x = umin;
+			} else {
+			    segment[i].x = umax;
+			}
+			break;
+		    case 2: //north/south
+			if (prev->y < vmid) {
+			    segment[i].y = vmin;
+			} else {
+			    segment[i].y = vmax;
+			}
+			break;
+		    case 3: //both
+			if (prev->x < umid) {
+			    segment[i].x = umin;
+			} else {
+			    segment[i].x = umax;
+			}
+			if (prev->y < vmid) {
+			    segment[i].y = vmin;
+			} else {
+			    segment[i].y = vmax;
+			}
+		}
+		prev = &segment[i];
+	    } else {
+		//std::cerr << " at seam and no prev" << std::endl;
+		complete = false;
+	    }
+	} else {
+	    if (singularity < 0) {
+		prev = &segment[i];
+	    } else {
+		prev = NULL;
+	    }
+	}
+    }
+    if ((!complete) && (prev != NULL)) {
+	complete = true;
+	for (int i = segment.Count() - 2; i >= 0; i--) {
+	    int singularity = IsAtSingularity(surface, segment[i], PBC_SEAM_TOL);
+	    int seam = IsAtSeam(surface, segment[i], PBC_SEAM_TOL);
 	    if ((seam > 0)) {
 		if (prev != NULL) {
 		    //std::cerr << " at seam " << seam << " but has prev" << std::endl;
@@ -1968,68 +3885,277 @@ resolve_seam_segment(const ON_Surface *surface, ON_2dPointArray &segment)
 				segment[i].y = vmax;
 			    }
 		    }
+		    prev = &segment[i];
 		} else {
 		    //std::cerr << " at seam and no prev" << std::endl;
 		    complete = false;
 		}
 	    } else {
-		prev = &segment[i];
-	    }
-	} else {
-	    prev = NULL;
-	}
-    }
-    if ((!complete) && (prev != NULL)) {
-	complete = true;
-	for (int i = segment.Count() - 2; i >= 0; i--) {
-	    int singularity = IsAtSingularity(surface, segment[i].x, segment[i].y);
-	    if (singularity < 0) {
-		int seam = IsAtSeam(surface, segment[i].x, segment[i].y);
-		if ((seam > 0)) {
-		    if (prev != NULL) {
-			//std::cerr << " at seam " << seam << " but has prev" << std::endl;
-			//std::cerr << "    prev: " << prev->x << ", " << prev->y << std::endl;
-			//std::cerr << "    curr: " << data->samples[i].x << ", " << data->samples[i].y << std::endl;
-			switch (seam) {
-			    case 1: //east/west
-				if (prev->x < umid) {
-				    segment[i].x = umin;
-				} else {
-				    segment[i].x = umax;
-				}
-				break;
-			    case 2: //north/south
-				if (prev->y < vmid) {
-				    segment[i].y = vmin;
-				} else {
-				    segment[i].y = vmax;
-				}
-				break;
-			    case 3: //both
-				if (prev->x < umid) {
-				    segment[i].x = umin;
-				} else {
-				    segment[i].x = umax;
-				}
-				if (prev->y < vmid) {
-				    segment[i].y = vmin;
-				} else {
-				    segment[i].y = vmax;
-				}
-			}
-		    } else {
-			//std::cerr << " at seam and no prev" << std::endl;
-			complete = false;
-		    }
-		} else {
+		if (singularity < 0) {
 		    prev = &segment[i];
+		} else {
+		    prev = NULL;
 		}
-	    } else {
-		prev = NULL;
 	    }
 	}
     }
     return complete;
+}
+
+
+/*
+ * number_of_seam_crossings
+ */
+int
+number_of_seam_crossings(std::list<PBCData*> &pbcs)
+{
+    int rc = 0;
+    std::list<PBCData*>::iterator cs;
+
+    cs = pbcs.begin();
+    while (cs != pbcs.end()) {
+	PBCData *data = (*cs);
+	if (!data || !data->surf)
+	    continue;
+
+	const ON_Surface *surf = data->surf;
+	std::list<ON_2dPointArray *>::iterator si = data->segments->begin();
+	ON_2dPoint *pt = NULL;
+	ON_2dPoint *prev_pt = NULL;
+	ON_2dPoint *next_pt = NULL;
+	while (si != data->segments->end()) {
+	    ON_2dPointArray *samples = (*si);
+	    for (int i = 0; i < samples->Count(); i++) {
+		pt = &(*samples)[i];
+		if (!IsAtSeam(surf, *pt, PBC_SEAM_TOL)) {
+		    if (prev_pt == NULL) {
+			prev_pt = pt;
+		    } else {
+			next_pt = pt;
+		    }
+		    int udir=0;
+		    int vdir=0;
+		    if (next_pt != NULL) {
+			if (ConsecutivePointsCrossClosedSeam(surf, *prev_pt, *next_pt, udir, vdir, PBC_SEAM_TOL)) {
+			    rc++;
+			}
+			prev_pt = next_pt;
+			next_pt = NULL;
+		    }
+		}
+	    }
+	    if (si != data->segments->end())
+		si++;
+	}
+
+	if (cs != pbcs.end())
+	    cs++;
+    }
+
+    return rc;
+}
+
+
+/*
+ * if current and previous point on seam make sure they are on same seam
+ */
+bool
+check_for_points_on_same_seam(std::list<PBCData*> &pbcs)
+{
+
+    std::list<PBCData*>::iterator cs = pbcs.begin();
+    ON_2dPoint *prev_pt = NULL;
+    int prev_seam = 0;
+    while (cs != pbcs.end()) {
+	PBCData *data = (*cs);
+	const ON_Surface *surf = data->surf;
+	std::list<ON_2dPointArray *>::iterator seg = data->segments->begin();
+	while (seg != data->segments->end()) {
+	    ON_2dPointArray *points = (*seg);
+	    for (int i=0; i < points->Count(); i++) {
+		ON_2dPoint *pt = points->At(i);
+		int seam = IsAtSeam(surf, *pt, PBC_SEAM_TOL);
+		if (seam > 0) {
+		    if (prev_seam > 0) {
+			if ((seam == 1) && ((prev_seam % 2) == 1)) {
+			    pt->x = prev_pt->x;
+			} else if ((seam == 2) && (prev_seam > 1)) {
+			    pt->y = prev_pt->y;
+			} else if (seam == 3) {
+			    if ((prev_seam % 2) == 1) {
+				pt->x = prev_pt->x;
+			    }
+			    if (prev_seam > 1) {
+				pt->y = prev_pt->y;
+			    }
+			}
+		    }
+		    prev_seam = seam;
+		    prev_pt = pt;
+		}
+	    }
+	    seg++;
+	}
+	cs++;
+    }
+    return true;
+}
+
+
+/*
+ * extend_pullback_at_shared_3D_curve_seam
+ */
+bool
+extend_pullback_at_shared_3D_curve_seam(std::list<PBCData*> &pbcs)
+{
+    const ON_Curve *next_curve = NULL;
+    std::set<const ON_Curve *> set;
+    std::map<const ON_Curve *, int> map;
+    std::list<PBCData*>::iterator cs = pbcs.begin();
+
+    while (cs != pbcs.end()) {
+	PBCData *data = (*cs++);
+	const ON_Curve *curve = data->curve;
+	const ON_Surface *surf = data->surf;
+
+	if (cs != pbcs.end()) {
+	    PBCData *nextdata = (*cs);
+	    next_curve = nextdata->curve;
+	}
+
+	if (curve == next_curve) {
+	    std::cerr << "Consecutive seam usage" << std::endl;
+	    //find which direction we need to extend
+	    if (surf->IsClosed(0) && !surf->IsClosed(1)) {
+		double length = surf->Domain(0).Length();
+		std::list<ON_2dPointArray *>::iterator seg = data->segments->begin();
+		while (seg != data->segments->end()) {
+		    ON_2dPointArray *points = (*seg);
+		    for (int i=0; i < points->Count(); i++) {
+			points->At(i)->x = points->At(i)->x + length;
+		    }
+		    seg++;
+		}
+	    } else if (!surf->IsClosed(0) && surf->IsClosed(1)) {
+		double length = surf->Domain(1).Length();
+		std::list<ON_2dPointArray *>::iterator seg = data->segments->begin();
+		while (seg != data->segments->end()) {
+		    ON_2dPointArray *points = (*seg);
+		    for (int i=0; i < points->Count(); i++) {
+			points->At(i)->y = points->At(i)->y + length;
+		    }
+		    seg++;
+		}
+	    } else {
+		std::cerr << "both directions" << std::endl;
+	    }
+	}
+	next_curve = NULL;
+    }
+    return true;
+}
+
+
+/*
+ * shift_closed_curve_split_over_seam
+ */
+bool
+shift_single_curve_loop_straddled_over_seam(std::list<PBCData*> &pbcs)
+{
+    if (pbcs.size() == 1) { // single curve for this loop
+	std::list<PBCData*>::iterator cs;
+
+	PBCData *data = pbcs.front();
+	if (!data || !data->surf)
+	    return false;
+
+	const ON_Surface *surf = data->surf;
+	ON_Interval udom = surf->Domain(0);
+	ON_Interval vdom = surf->Domain(1);
+	std::list<ON_2dPointArray *>::iterator si = data->segments->begin();
+	ON_2dPoint pt;
+	ON_2dPoint prev_pt;
+	if (data->curve->IsClosed()) {
+	    int numseamcrossings = number_of_seam_crossings(pbcs);
+	    if (numseamcrossings == 1) {
+		ON_2dPointArray part1, part2;
+		ON_2dPointArray* curr_point_array = &part2;
+		while (si != data->segments->end()) {
+		    ON_2dPointArray *samples = (*si);
+		    for (int i = 0; i < samples->Count(); i++) {
+			pt = (*samples)[i];
+			if (i == 0) {
+			    prev_pt = pt;
+			    curr_point_array->Append(pt);
+			    continue;
+			}
+			int udir= 0;
+			int vdir= 0;
+			if (ConsecutivePointsCrossClosedSeam(surf, pt, prev_pt, udir, vdir, PBC_SEAM_TOL)) {
+			    if (surf->IsAtSeam(pt.x, pt.y) > 0) {
+				SwapUVSeamPoint(surf, pt);
+				curr_point_array->Append(pt);
+				curr_point_array = &part1;
+				SwapUVSeamPoint(surf, pt);
+			    } else if (surf->IsAtSeam(prev_pt.x, prev_pt.y) > 0) {
+				SwapUVSeamPoint(surf, prev_pt);
+				curr_point_array->Append(prev_pt);
+			    } else {
+				std::cerr << "shift_single_curve_loop_straddled_over_seam(): Error expecting to see seam in sample points" << std::endl;
+			    }
+			}
+			curr_point_array->Append(pt);
+			prev_pt = pt;
+		    }
+		    samples->Empty();
+		    samples->Append(part1.Count(), part1.Array());
+		    samples->Append(part2.Count(), part2.Array());
+		    if (si != data->segments->end())
+			si++;
+		}
+	    }
+	}
+    }
+    return true;
+}
+
+
+/*
+ * extend_over_seam_crossings - all incoming points assumed to be within UV bounds
+ */
+bool
+extend_over_seam_crossings(std::list<PBCData*> &pbcs)
+{
+    std::list<PBCData*>::iterator cs;
+    ON_2dPoint *pt = NULL;
+    ON_2dPoint *prev_pt = NULL;
+
+    ///// Loop through and fix any seam ambiguities
+    cs = pbcs.begin();
+    while (cs != pbcs.end()) {
+	PBCData *data = (*cs);
+	if (!data || !data->surf)
+	    continue;
+
+	std::list<ON_2dPointArray *>::iterator si = data->segments->begin();
+	while (si != data->segments->end()) {
+	    ON_2dPointArray *samples = (*si);
+	    for (int i = 0; i < samples->Count(); i++) {
+		pt = &(*samples)[i];
+
+		if (prev_pt != NULL) {
+		    GetClosestExtendedPoint(data->surf, *pt, *prev_pt, PBC_SEAM_TOL);
+		}
+		prev_pt = pt;
+	    }
+	    if (si != data->segments->end())
+		si++;
+	}
+	if (cs != pbcs.end())
+	    cs++;
+    }
+
+    return true;
 }
 
 
@@ -2043,66 +4169,48 @@ resolve_pullback_seams(std::list<PBCData*> &pbcs)
 {
     std::list<PBCData*>::iterator cs;
 
-    //TODO: remove debugging
-    if (false)
-	print_pullback_data("Before seam cleanup", pbcs, false);
-
     ///// Loop through and fix any seam ambiguities
     ON_2dPoint *prev = NULL;
     ON_2dPoint *next = NULL;
+    bool u_resolved = false;
+    bool v_resolved = false;
     cs = pbcs.begin();
     while (cs != pbcs.end()) {
 	PBCData *data = (*cs);
-	if (!data || !data->surftree)
+	if (!data || !data->surf)
 	    continue;
 
-	const ON_Surface *surf = data->surftree->getSurface();
-	if (!surf)
-	    continue;
-
+	const ON_Surface *surf = data->surf;
 	double umin, umax;
 	double vmin, vmax;
-#ifdef SHOW_UNUSED
-	double umid;
-	double vmid;
-#endif
 	surf->GetDomain(0, &umin, &umax);
 	surf->GetDomain(1, &vmin, &vmax);
-#ifdef SHOW_UNUSED
-	umid = (umin + umax) / 2.0;
-	vmid = (vmin + vmax) / 2.0;
-#endif
 
-	std::list<ON_2dPointArray *>::iterator si = data->segments.begin();
-	while (si != data->segments.end()) {
+	std::list<ON_2dPointArray *>::iterator si = data->segments->begin();
+	while (si != data->segments->end()) {
 	    ON_2dPointArray *samples = (*si);
-	    if (resolve_seam_segment(surf, *samples)) {
+	    if (resolve_seam_segment(surf, *samples, u_resolved, v_resolved)) {
 		// Found a starting point
 		//1) walk back up with resolved next point
-		next = &(*samples)[0];
+		next = (*samples).First();
 		std::list<PBCData*>::reverse_iterator rcs(cs);
 		rcs--;
 		std::list<ON_2dPointArray *>::reverse_iterator rsi(si);
 		while (rcs != pbcs.rend()) {
 		    PBCData *rdata = (*rcs);
-		    if (data->segments.rend() == rdata->segments.rend()) {
-			//TODO: remove debugging
-			if (false)
-			    std::cerr << "Ends match" << std::endl;
-		    }
-		    while (rsi != rdata->segments.rend()) {
+		    while (rsi != rdata->segments->rend()) {
 			ON_2dPointArray *rsamples = (*rsi);
 			// first try and resolve on own merits
-			if (!resolve_seam_segment(surf, *rsamples)) {
+			if (!resolve_seam_segment(surf, *rsamples, u_resolved, v_resolved)) {
 			    resolve_seam_segment_from_next(surf, *rsamples, next);
 			}
-			next = &(*rsamples)[0];
+			next = (*rsamples).First();
 			rsi++;
 		    }
 		    rcs++;
 		    if (rcs != pbcs.rend()) {
 			rdata = (*rcs);
-			rsi = rdata->segments.rbegin();
+			rsi = rdata->segments->rbegin();
 		    }
 		}
 
@@ -2112,11 +4220,12 @@ resolve_pullback_seams(std::list<PBCData*> &pbcs)
 		else
 		    prev = NULL;
 		si++;
+		std::list<PBCData*>::iterator current(cs);
 		while (cs != pbcs.end()) {
-		    while (si != data->segments.end()) {
+		    while (si != data->segments->end()) {
 			samples = (*si);
 			// first try and resolve on own merits
-			if (!resolve_seam_segment(surf, *samples)) {
+			if (!resolve_seam_segment(surf, *samples, u_resolved, v_resolved)) {
 			    resolve_seam_segment_from_prev(surf, *samples, prev);
 			}
 			if (samples->Count() > 1)
@@ -2128,20 +4237,39 @@ resolve_pullback_seams(std::list<PBCData*> &pbcs)
 		    cs++;
 		    if (cs != pbcs.end()) {
 			data = (*cs);
-			si = data->segments.begin();
+			si = data->segments->begin();
+		    }
+		}
+		// make sure to wrap back around with previous
+		cs = pbcs.begin();
+		data = (*cs);
+		si = data->segments->begin();
+		while ((cs != pbcs.end()) && (cs != current)) {
+		    while (si != data->segments->end()) {
+			samples = (*si);
+			// first try and resolve on own merits
+			if (!resolve_seam_segment(surf, *samples, u_resolved, v_resolved)) {
+			    resolve_seam_segment_from_prev(surf, *samples, prev);
+			}
+			if (samples->Count() > 1)
+			    prev = &(*samples)[samples->Count() - 1];
+			else
+			    prev = NULL;
+			si++;
+		    }
+		    cs++;
+		    if (cs != pbcs.end()) {
+			data = (*cs);
+			si = data->segments->begin();
 		    }
 		}
 	    }
-	    if (si != data->segments.end())
+	    if (si != data->segments->end())
 		si++;
 	}
 	if (cs != pbcs.end())
 	    cs++;
     }
-    //TODO: remove debugging
-    if (false)
-	print_pullback_data("After seam cleanup", pbcs, false);
-
     return true;
 }
 
@@ -2155,10 +4283,6 @@ bool
 resolve_pullback_singularities(std::list<PBCData*> &pbcs)
 {
     std::list<PBCData*>::iterator cs = pbcs.begin();
-
-    //TODO: remove debugging
-    if (false)
-	print_pullback_data("Before singularity cleanup", pbcs, false);
 
     ///// Loop through and fix any seam ambiguities
     ON_2dPoint *prev = NULL;
@@ -2177,19 +4301,16 @@ resolve_pullback_singularities(std::list<PBCData*> &pbcs)
 	    int singularity;
 	    prev = NULL;
 	    PBCData *data = (*cs);
-	    if (!data || !data->surftree)
+	    if (!data || !data->surf)
 		continue;
 
-	    const ON_Surface *surf = data->surftree->getSurface();
-	    if (!surf)
-		continue;
-
-	    std::list<ON_2dPointArray *>::iterator si = data->segments.begin();
-	    while (si != data->segments.end()) {
+	    const ON_Surface *surf = data->surf;
+	    std::list<ON_2dPointArray *>::iterator si = data->segments->begin();
+	    while (si != data->segments->end()) {
 		ON_2dPointArray *samples = (*si);
 		for (int i = 0; i < samples->Count(); i++) {
 		    // 0 = south, 1 = east, 2 = north, 3 = west
-		    if ((singularity = IsAtSingularity(surf, (*samples)[i].x, (*samples)[i].y)) >= 0) {
+		    if ((singularity = IsAtSingularity(surf, (*samples)[i], PBC_SEAM_TOL)) >= 0) {
 			if (prev != NULL) {
 			    //std::cerr << " at singularity " << singularity << " but has prev" << std::endl;
 			    //std::cerr << "    prev: " << prev->x << ", " << prev->y << std::endl;
@@ -2226,7 +4347,7 @@ resolve_pullback_singularities(std::list<PBCData*> &pbcs)
 		    //std::cerr << "Lets work backward:" << std::endl;
 		    for (int i = samples->Count() - 2; i >= 0; i--) {
 			// 0 = south, 1 = east, 2 = north, 3 = west
-			if ((singularity = IsAtSingularity(surf, (*samples)[i].x, (*samples)[i].y)) >= 0) {
+			if ((singularity = IsAtSingularity(surf, (*samples)[i], PBC_SEAM_TOL)) >= 0) {
 			    if (prev != NULL) {
 				//std::cerr << " at singularity " << singularity << " but has prev" << std::endl;
 				//std::cerr << "    prev: " << prev->x << ", " << prev->y << std::endl;
@@ -2266,10 +4387,6 @@ resolve_pullback_singularities(std::list<PBCData*> &pbcs)
 	}
     }
 
-    //TODO: remove debugging
-    if (false)
-	print_pullback_data("After singularity cleanup", pbcs, false);
-
     return true;
 }
 
@@ -2280,27 +4397,21 @@ remove_consecutive_intersegment_duplicates(std::list<PBCData*> &pbcs)
     std::list<PBCData*>::iterator cs = pbcs.begin();
     while (cs != pbcs.end()) {
 	PBCData *data = (*cs);
-	std::list<ON_2dPointArray *>::iterator si = data->segments.begin();
-	while (si != data->segments.end()) {
+	std::list<ON_2dPointArray *>::iterator si = data->segments->begin();
+	while (si != data->segments->end()) {
 	    ON_2dPointArray *samples = (*si);
 	    if (samples->Count() == 0) {
-		si = data->segments.erase(si);
+		si = data->segments->erase(si);
 	    } else {
 		for (int i = 0; i < samples->Count() - 1; i++) {
 		    while ((i < (samples->Count() - 1)) && (*samples)[i].DistanceTo((*samples)[i + 1]) < 1e-9) {
-			//TODO: remove debugging code
-			if (false)
-			    std::cerr << "Sample Count was " << samples->Count();
 			samples->Remove(i + 1);
-			//TODO: remove debugging code
-			if (false)
-			    std::cerr << " now " << samples->Count() << std::endl;
 		    }
 		}
 		si++;
 	    }
 	}
-	if (data->segments.empty()) {
+	if (data->segments->empty()) {
 	    cs = pbcs.erase(cs);
 	} else {
 	    cs++;
@@ -2314,38 +4425,46 @@ check_pullback_data(std::list<PBCData*> &pbcs)
 {
     std::list<PBCData*>::iterator d = pbcs.begin();
 
-    //TODO: remove debugging code
-    if (false)
-	print_pullback_data("Before cleanup", pbcs, false);
-
-    if ((*d) == NULL || (*d)->surftree == NULL)
+    if (d == pbcs.end() || (*d) == NULL || (*d)->surf == NULL)
 	return false;
 
-    const ON_Surface *surf = (*d)->surftree->getSurface();
-    if (!surf)
-	return false;
-
+    const ON_Surface *surf = (*d)->surf;
     bool singular = has_singularity(surf);
     bool closed = is_closed(surf);
 
-    if (closed) {
-	if (!resolve_pullback_seams(pbcs)) {
-	    std::cerr << "Error: Can not resolve seam ambiguities." << std::endl;
-	    return false;
-	}
-    }
     if (singular) {
 	if (!resolve_pullback_singularities(pbcs)) {
 	    std::cerr << "Error: Can not resolve singular ambiguities." << std::endl;
 	}
     }
 
+    if (closed) {
+	// check for same 3D curve use
+	if (!check_for_points_on_same_seam(pbcs)) {
+	    std::cerr << "Error: Can not extend pullback at shared 3D curve seam." << std::endl;
+	    return false;
+	}
+	// check for same 3D curve use
+	if (!extend_pullback_at_shared_3D_curve_seam(pbcs)) {
+	    std::cerr << "Error: Can not extend pullback at shared 3D curve seam." << std::endl;
+	    return false;
+	}
+	if (!shift_single_curve_loop_straddled_over_seam(pbcs)) {
+	    std::cerr << "Error: Can not resolve seam ambiguities." << std::endl;
+	    return false;
+	}
+	if (!resolve_pullback_seams(pbcs)) {
+	    std::cerr << "Error: Can not resolve seam ambiguities." << std::endl;
+	    return false;
+	}
+	if (!extend_over_seam_crossings(pbcs)) {
+	    std::cerr << "Error: Can not resolve seam ambiguities." << std::endl;
+	    return false;
+	}
+    }
+
     // consecutive duplicates within segment will cause problems in curve fit
     remove_consecutive_intersegment_duplicates(pbcs);
-
-    //TODO: remove debugging code
-    if (false)
-	print_pullback_data("After cleanup", pbcs, false);
 
     return true;
 }
@@ -2356,7 +4475,7 @@ check_pullback_singularity_bridge(const ON_Surface *surf, const ON_2dPoint &p1, 
 {
     if (has_singularity(surf)) {
 	int is, js;
-	if (((is = IsAtSingularity(surf, p1.x, p1.y)) >= 0) && ((js = IsAtSingularity(surf, p2.x, p2.y)) >= 0)) {
+	if (((is = IsAtSingularity(surf, p1, PBC_SEAM_TOL)) >= 0) && ((js = IsAtSingularity(surf, p2, PBC_SEAM_TOL)) >= 0)) {
 	    //create new singular trim
 	    if (is == js) {
 		return is;
@@ -2372,7 +4491,7 @@ check_pullback_seam_bridge(const ON_Surface *surf, const ON_2dPoint &p1, const O
 {
     if (is_closed(surf)) {
 	int is, js;
-	if (((is = IsAtSeam(surf, p1.x, p1.y)) > 0) && ((js = IsAtSeam(surf, p2.x, p2.y)) > 0)) {
+	if (((is = IsAtSeam(surf, p1, PBC_SEAM_TOL)) > 0) && ((js = IsAtSeam(surf, p2, PBC_SEAM_TOL)) > 0)) {
 	    //create new seam trim
 	    if (is == js) {
 		// need to check if seam 3d points are equal
@@ -2393,6 +4512,7 @@ check_pullback_seam_bridge(const ON_Surface *surf, const ON_2dPoint &p1, const O
 
 ON_Curve*
 pullback_curve(const brlcad::SurfaceTree* surfacetree,
+	       const ON_Surface* surf,
 	       const ON_Curve* curve,
 	       double tolerance,
 	       double flatness)
@@ -2401,9 +4521,11 @@ pullback_curve(const brlcad::SurfaceTree* surfacetree,
     data.tolerance = tolerance;
     data.flatness = flatness;
     data.curve = curve;
+    data.surf = surf;
     data.surftree = (brlcad::SurfaceTree*)surfacetree;
     ON_2dPointArray samples;
-    data.segments.push_back(&samples);
+    data.segments = new std::list<ON_2dPointArray *>();
+    data.segments->push_back(&samples);
 
     // Step 1 - adaptively sample the curve
     double tmin, tmax;
@@ -2417,19 +4539,17 @@ pullback_curve(const brlcad::SurfaceTree* surfacetree,
     ON_3dPoint p = curve->PointAt(tmin);
     ON_3dPoint from = curve->PointAt(tmin + 0.0001);
     brlcad::SurfaceTree *st = (brlcad::SurfaceTree *)surfacetree;
-    if (!st->getSurfacePoint((const ON_3dPoint&)p, uv, (const ON_3dPoint&)from) > 0) {
+    if (st->getSurfacePoint((const ON_3dPoint&)p, uv, (const ON_3dPoint&)from) < 0) {
 	std::cerr << "Error: Can not get surface point." << std::endl;
     }
 
     ON_2dPoint p1, p2;
 
 #ifdef SHOW_UNUSED
-    if (!data.surftree)
+    if (!data.surf)
 	return NULL;
 
-    const ON_Surface *surf = (data.surftree)->getSurface();
-    if (!surf)
-	return NULL;
+    const ON_Surface *surf = data.surf;
 #endif
 
     if (toUV(data, p1, tmin, PBC_TOL) && toUV(data, p2, tmax, -PBC_TOL)) {
@@ -2440,7 +4560,7 @@ pullback_curve(const brlcad::SurfaceTree* surfacetree,
 
 	p = curve->PointAt(tmax);
 	from = curve->PointAt(tmax - 0.0001);
-	if (!st->getSurfacePoint((const ON_3dPoint&)p, uv, (const ON_3dPoint&)from) > 0) {
+	if (st->getSurfacePoint((const ON_3dPoint&)p, uv, (const ON_3dPoint&)from) < 0) {
 	    std::cerr << "Error: Can not get surface point." << std::endl;
 	}
 
@@ -2462,6 +4582,7 @@ pullback_curve(const brlcad::SurfaceTree* surfacetree,
 ON_Curve*
 pullback_seam_curve(enum seam_direction seam_dir,
 		    const brlcad::SurfaceTree* surfacetree,
+		    const ON_Surface* surf,
 		    const ON_Curve* curve,
 		    double tolerance,
 		    double flatness)
@@ -2470,9 +4591,11 @@ pullback_seam_curve(enum seam_direction seam_dir,
     data.tolerance = tolerance;
     data.flatness = flatness;
     data.curve = curve;
+    data.surf = surf;
     data.surftree = (brlcad::SurfaceTree*)surfacetree;
     ON_2dPointArray samples;
-    data.segments.push_back(&samples);
+    data.segments = new std::list<ON_2dPointArray *>();
+    data.segments->push_back(&samples);
 
     // Step 1 - adaptively sample the curve
     double tmin, tmax;

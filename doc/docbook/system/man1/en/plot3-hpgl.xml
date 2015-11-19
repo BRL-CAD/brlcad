@@ -17,9 +17,9 @@
 <refsynopsisdiv xml:id='synopsis'>
 <cmdsynopsis>
   <command>plot3-hpgl</command>
-    <arg choice='plain'><replaceable>&lt;</replaceable></arg>
+    <arg choice='plain'>&lt;</arg>
     <arg choice='plain'><replaceable>unix_plot</replaceable></arg>
-    <arg choice='plain'><replaceable>&gt;</replaceable></arg>
+    <arg choice='plain'>&gt;</arg>
     <arg choice='plain'><replaceable>hpgl_cmds</replaceable></arg>
 </cmdsynopsis>
 </refsynopsisdiv>
@@ -27,7 +27,7 @@
 
 <refsect1 xml:id='description'><title>DESCRIPTION</title>
 <para>Reads a Unix Plot file from standard input and
-converts it to of HPGL commands which are written to standard output.</para>
+converts it to HPGL commands which are written to standard output.</para>
 </refsect1>
 
 <refsect1 xml:id='see_also'><title>SEE ALSO</title>
@@ -39,7 +39,7 @@ converts it to of HPGL commands which are written to standard output.</para>
 </refsect1>
 
 <refsect1 xml:id='copyright'><title>COPYRIGHT</title>
-<para>This software is Copyright (c) 1991-2013 by the United States
+<para>This software is Copyright (c) 1991-2014 by the United States
 Government as represented by U.S. Army Research Laboratory.</para>
 </refsect1>
 

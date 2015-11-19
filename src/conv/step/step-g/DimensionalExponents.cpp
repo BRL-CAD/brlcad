@@ -1,7 +1,7 @@
 /*        D I M E N S I O N A L E X P O N E N T S . C P P
  * BRL-CAD
  *
- * Copyright (c) 1994-2013 United States Government as represented by
+ * Copyright (c) 1994-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -80,6 +80,8 @@ DimensionalExponents::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
     thermodynamic_temperature_exponent = step->getRealAttribute(sse, "thermodynamic_temperature_exponent");
     amount_of_substance_exponent = step->getRealAttribute(sse, "amount_of_substance_exponent");
     luminous_intensity_exponent = step->getRealAttribute(sse, "luminous_intensity_exponent");
+
+    sw->entity_status[id] = STEP_LOADED;
 
     return true;
 }

@@ -1,7 +1,7 @@
 /*                        B S P L I N E . C P P
  * BRL-CAD
  *
- * Copyright (c) 1991-2013 United States Government as represented by
+ * Copyright (c) 1991-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -41,13 +41,14 @@
 #include <stdio.h>
 #include <string.h>
 #include <math.h>
-#include "bin.h"
+#include "bnetwork.h"
 
+#include "bu/cv.h"
 #include "vmath.h"
-#include "db.h"
-#include "rtgeom.h"
+#include "rt/db4.h"
+#include "rt/geom.h"
 #include "raytrace.h"
-#include "nurb.h"		/* before nmg.h */
+#include "rt/nurb.h"		/* before nmg.h */
 #include "nmg.h"
 
 #ifdef CONVERT_TO_BREP
@@ -116,8 +117,6 @@ rt_nurb_grans(struct face_g_snurb *srf)
 }
 
 /**
- * R T _ N U R B _ B B O X
- *
  * Calculate the bounding RPP of a bspline
  */
 int
@@ -193,8 +192,6 @@ rt_nurb_bbox(struct rt_db_internal *ip, point_t *min, point_t *max) {
 
 
 /**
- * R T _ N U R B _ P R E P
- *
  * Given a pointer of a GED database record, and a transformation
  * matrix, determine if this is a valid NURB, and if so, prepare the
  * surface so the intersections will work.
@@ -227,7 +224,7 @@ rt_nurb_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 
     struct rt_db_internal di;
     RT_DB_INTERNAL_INIT(&di);
-    di.idb_ptr = (genptr_t)&bi;
+    di.idb_ptr = (void *)&bi;
 
     return rt_brep_prep(stp, &di, rtip);
 #else
@@ -261,7 +258,7 @@ rt_nurb_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 	nurbs = n;
     }
 
-    stp->st_specific = (genptr_t)nurbs;
+    stp->st_specific = (void *)nurbs;
 
     /* zero thickness will get missed by the raytracer */
     if (NEAR_EQUAL(stp->st_min[X], stp->st_max[X], los)) {
@@ -295,9 +292,6 @@ rt_nurb_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 }
 
 
-/**
- * R T _ N U R B _ P R I N T
- */
 void
 rt_nurb_print(register const struct soltab *stp)
 {
@@ -321,8 +315,6 @@ rt_nurb_print(register const struct soltab *stp)
 
 
 /**
- * R T _ N U R B _ S H O T
- *
  * Intersect a ray with a nurb.  If an intersection occurs, a struct
  * seg will be acquired and filled in.
  *
@@ -479,8 +471,6 @@ rt_nurb_shot(struct soltab *stp, register struct xray *rp, struct application *a
 
 
 /**
- * R T _ N U R B _ N O R M
- *
  * Given ONE ray distance, return the normal and entry/exit point.
  */
 void
@@ -511,8 +501,6 @@ rt_nurb_norm(register struct hit *hitp, struct soltab *stp, register struct xray
 
 
 /**
- * R T _ N U R B _ C U R V E
- *
  * Return the curvature of the nurb.
  */
 void
@@ -543,8 +531,6 @@ rt_nurb_curve(register struct curvature *cvp, register struct hit *hitp, struct 
 
 
 /**
- * R T _ N U R B _ U V
- *
  * For a hit on the surface of an nurb, return the (u, v) coordinates
  * of the hit point, 0 <= u, v <= 1.
  * u = azimuth
@@ -565,9 +551,6 @@ rt_nurb_uv(struct application *ap, struct soltab *stp, register struct hit *hitp
 }
 
 
-/**
- * R T _ N U R B _ F R E E
- */
 void
 rt_nurb_free(register struct soltab *stp)
 {
@@ -601,9 +584,6 @@ rt_nurb_free(register struct soltab *stp)
 }
 
 
-/**
- * R T _ N U R B _ C L A S S
- */
 int
 rt_nurb_class(void)
 {
@@ -611,9 +591,6 @@ rt_nurb_class(void)
 }
 
 
-/**
- * R T _ N U R B _ P L O T
- */
 int
 rt_nurb_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol, const struct rt_view_info *UNUSED(info))
 {
@@ -734,7 +711,7 @@ rt_nurb_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_t
 
     struct rt_db_internal di;
     RT_DB_INTERNAL_INIT(&di);
-    di.idb_ptr = (genptr_t)&bi;
+    di.idb_ptr = (void *)&bi;
 
     return rt_brep_plot(vhead, &di, ttol, tol, NULL);
 #else
@@ -743,9 +720,6 @@ rt_nurb_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_t
 }
 
 
-/**
- * R T _ N U R B _ T E S S
- */
 int
 rt_nurb_tess(struct nmgregion **, struct model *, struct rt_db_internal *, const struct rt_tess_tol *, const struct bn_tol *)
 {
@@ -753,9 +727,6 @@ rt_nurb_tess(struct nmgregion **, struct model *, struct rt_db_internal *, const
 }
 
 
-/**
- * R T _ N U R B _ I M P O R T
- */
 int
 rt_nurb_import4(struct rt_db_internal *ip, const struct bu_external *ep, register const fastf_t *mat, const struct db_i *dbip)
 {
@@ -915,9 +886,6 @@ rt_nurb_import4(struct rt_db_internal *ip, const struct bu_external *ep, registe
 }
 
 
-/**
- * R T _ N U R B _ E X P O R T
- */
 int
 rt_nurb_export4(struct bu_external *ep, const struct rt_db_internal *ip, double UNUSED(local2mm), const struct db_i *dbip)
 {
@@ -1023,9 +991,6 @@ rt_nurb_bytes(struct face_g_snurb *srf)
 }
 
 
-/**
- * R T _ N U R B _ E X P O R T 5
- */
 int
 rt_nurb_export5(struct bu_external *ep, const struct rt_db_internal *ip, double UNUSED(local2mm), const struct db_i *dbip)
 {
@@ -1122,9 +1087,6 @@ rt_nurb_export5(struct bu_external *ep, const struct rt_db_internal *ip, double 
 }
 
 
-/**
- * R T _ N U R B _ I M P O R T 5
- */
 int
 rt_nurb_import5(struct rt_db_internal *ip, const struct bu_external *ep, register const fastf_t *mat, const struct db_i *dbip)
 {
@@ -1250,9 +1212,6 @@ rt_nurb_import5(struct rt_db_internal *ip, const struct bu_external *ep, registe
 }
 
 
-/**
- * R T _ N U R B _ I F R E E
- */
 void
 rt_nurb_ifree(struct rt_db_internal *ip)
 {
@@ -1271,16 +1230,13 @@ rt_nurb_ifree(struct rt_db_internal *ip)
     sip->magic = 0;
     sip->nsrf = 0;
     bu_free(sip->srfs, "nurb surfs[]");
-    sip->srfs = (struct face_g_snurb**)GENPTR_NULL;
+    sip->srfs = (struct face_g_snurb**)((void *)0);
 
     bu_free(ip->idb_ptr, "sip ifree");
-    ip->idb_ptr = GENPTR_NULL;
+    ip->idb_ptr = ((void *)0);
 }
 
 
-/**
- * R T _ N U R B _ D E S C R I B E
- */
 int
 rt_nurb_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose, double mm2local)
 {
@@ -1401,10 +1357,11 @@ rt_nurb_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, c
 {
     struct rt_nurb_internal *nurb;
     int srf_no;
-    Tcl_Obj *obj, *list, **srf_array, **srf_param_array;
+    const char **srf_array = NULL;
+    const char **srf_param_array = NULL;
     struct face_g_snurb *srf;
     int i;
-    char *key;
+    const char *key;
     int len;
 
     RT_CK_DB_INTERNAL(intern);
@@ -1412,9 +1369,8 @@ rt_nurb_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, c
     RT_NURB_CK_MAGIC(nurb);
 
     while (argc >= 2) {
-	obj = Tcl_NewStringObj(argv[1], -1);
-	list = Tcl_NewListObj(0, NULL);
-	if (Tcl_ListObjAppendList(brlcad_interp, list, obj) != TCL_OK) {
+
+	if (bu_argv_from_tcl_list(argv[1], &len, (const char ***)&srf_array) != 0) {
 	    return BRLCAD_ERROR;
 	}
 
@@ -1428,82 +1384,77 @@ rt_nurb_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, c
 	    nurb->srfs = (struct face_g_snurb **) bu_calloc(
 		nurb->nsrf, sizeof(struct face_g_snurb *), "nurb srfs[]");
 	} else if (BU_STR_EQUAL(argv[0], "S")) {
-	    (void)Tcl_ListObjGetElements(brlcad_interp, list, &len, &srf_array);
 	    for (srf_no=0; srf_no < nurb->nsrf; srf_no++) {
 		int n_params=0;
 		int *order=NULL, *s_size=NULL, u_size=0, v_size=0, pt_type=0;
 		fastf_t *u_pts=NULL, *v_pts=NULL;
 
-		(void)Tcl_ListObjGetElements(brlcad_interp, srf_array[srf_no], &n_params,
-					     &srf_param_array);
+		(void)bu_argv_from_tcl_list(srf_array[srf_no], &n_params, (const char ***)&srf_param_array);
 
 		for (i=0; i<n_params; i+= 2) {
 		    int tmp_len;
 
-		    key = Tcl_GetStringFromObj(srf_param_array[i], NULL);
+		    key = srf_param_array[i];
 		    if (BU_STR_EQUAL(key, "O")) {
 			tmp_len = 0;
-			if (tcl_obj_to_int_array(brlcad_interp, srf_param_array[i+1],
-						 &order, &tmp_len) != 2) {
+			if (_rt_tcl_list_to_int_array(srf_param_array[i+1], &order, &tmp_len) != 2) {
 			    bu_vls_printf(logstr,
 					  "ERROR: unable to parse surface\n");
 			    return BRLCAD_ERROR;
 			}
 		    } else if (BU_STR_EQUAL(key, "s")) {
 			tmp_len = 0;
-			if (tcl_obj_to_int_array(brlcad_interp, srf_param_array[i+1],
-						 &s_size, &tmp_len) != 2) {
+			if (_rt_tcl_list_to_int_array(srf_param_array[i+1], &s_size, &tmp_len) != 2) {
 			    bu_vls_printf(logstr,
 					  "ERROR: unable to parse surface\n");
 			    return BRLCAD_ERROR;
 			}
 		    } else if (BU_STR_EQUAL(key, "T")) {
-			pt_type = atoi(Tcl_GetStringFromObj(
-					   srf_param_array[i+1], NULL));
+			pt_type = atoi(srf_param_array[i+1]);
 		    } else if (BU_STR_EQUAL(key, "u")) {
-			tcl_obj_to_fastf_array(brlcad_interp, srf_param_array[i+1], &u_pts,
-					       &u_size);
+			(void)_rt_tcl_list_to_fastf_array(srf_param_array[i+1], &u_pts, &u_size);
 		    } else if (BU_STR_EQUAL(key, "v")) {
-			tcl_obj_to_fastf_array(brlcad_interp, srf_param_array[i+1], &v_pts,
-					       &v_size);
+			(void)_rt_tcl_list_to_fastf_array(srf_param_array[i+1], &v_pts, &v_size);
 		    } else if (BU_STR_EQUAL(key, "P")) {
 			int tmp2;
 
 			if (!order || !s_size || !u_pts || !v_pts ||
 			    u_size == 0 || v_size == 0 || pt_type == 0) {
-			    bu_vls_printf(logstr,
-					  "ERROR: Need all other details set before ctl points\n");
+			    bu_vls_printf(logstr, "ERROR: Need all other details set before ctl points\n");
+			    bu_free((char *)srf_array, "srf_array");
+			    bu_free((char *)srf_param_array, "srf_param_array");
 			    return BRLCAD_ERROR;
 			}
 			nurb->srfs[srf_no] = (struct face_g_snurb *) rt_nurb_new_snurb(
-			    order[0], order[1],
-			    u_size, v_size,
-			    s_size[0], s_size[1],
-			    pt_type, (struct resource *)NULL);
+				order[0], order[1],
+				u_size, v_size,
+				s_size[0], s_size[1],
+				pt_type, (struct resource *)NULL);
 			srf = nurb->srfs[srf_no];
 			bu_free((char *)order, "order");
 			bu_free((char *)s_size, "s_size");
 			(void)memcpy(srf->u.knots, u_pts,
-				     srf->u.k_size * sizeof(fastf_t));
+				srf->u.k_size * sizeof(fastf_t));
 			(void)memcpy(srf->v.knots, v_pts,
-				     srf->v.k_size * sizeof(fastf_t));
+				srf->v.k_size * sizeof(fastf_t));
 			bu_free((char *)u_pts, "u_pts");
 			bu_free((char *)v_pts, "v_pts");
 			tmp_len = srf->s_size[0] * srf->s_size[1] *
 			    RT_NURB_EXTRACT_COORDS(srf->pt_type);
 			tmp2 = tmp_len;
-			if (tcl_obj_to_fastf_array(brlcad_interp, srf_param_array[i+1],
-						   &srf->ctl_points, &tmp_len) != tmp2) {
-			    bu_vls_printf(logstr,
-					  "ERROR: unable to parse surface\n");
+			if (_rt_tcl_list_to_fastf_array(srf_param_array[i+1], &srf->ctl_points, &tmp_len) != tmp2) {
+			    bu_vls_printf(logstr, "ERROR: unable to parse surface\n");
+			    bu_free((char *)srf_array, "srf_array");
+			    bu_free((char *)srf_param_array, "srf_param_array");
 			    return BRLCAD_ERROR;
 			}
 		    }
 		}
+		bu_free((char *)srf_param_array, "srf_param_array");
 	    }
 	}
 
-	Tcl_DecrRefCount(list);
+	bu_free((char *)srf_array, "srf_array");
 
 	argc -= 2;
 	argv += 2;
@@ -1513,10 +1464,6 @@ rt_nurb_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, c
 }
 
 
-/**
- * R T _ N U R B _ P A R A M S
- *
- */
 int
 rt_nurb_params(struct pc_pc_set *, const struct rt_db_internal *)
 {

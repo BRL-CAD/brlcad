@@ -1,7 +1,7 @@
 /*                          B R E P . C P P
  * BRL-CAD
  *
- * Copyright (c) 1987-2013 United States Government as represented by
+ * Copyright (c) 1987-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -27,13 +27,12 @@
 
 #include "common.h"
 
-#include <stdio.h>
 #include <math.h>
 #include <string.h>
 #include "bio.h"
 
-#include "bu.h"
-#include "db.h"
+#include "bu/log.h"
+#include "rt/db4.h"
 #include "vmath.h"
 #include "bn.h"
 #include "wdb.h"
@@ -51,7 +50,7 @@ mk_brep(struct rt_wdb* file, const char* name, ON_Brep* brep)
     if (!bi->brep) {
 	bu_log("mk_brep: Unable to copy BREP\n");
     }
-    return wdb_export(file, name, (genptr_t)bi, ID_BREP, mk_conv2mm);
+    return wdb_export(file, name, (void *)bi, ID_BREP, mk_conv2mm);
 }
 
 

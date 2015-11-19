@@ -1,0 +1,23 @@
+set(PLY_INCLUDE_DIRS
+  ${CMAKE_CURRENT_SOURCE_DIR}
+  ${BU_INCLUDE_DIRS}
+  ${RT_INCLUDE_DIRS}
+  ${RPLY_INCLUDE_DIRS}
+  )
+BRLCAD_INCLUDE_DIRS(PLY_INCLUDE_DIRS)
+
+BRLCAD_ADDEXEC(ply-g ply-g.c "${RPLY_LIBRARIES};librt;libbu;libwdb")
+BRLCAD_ADDEXEC(g-ply g-ply.c "${RPLY_LIBRARIES};librt;libbu")
+
+if(CPP_DLL_DEFINES)
+  SET_PROPERTY(TARGET ply-g APPEND PROPERTY COMPILE_DEFINITIONS "RPLY_DLL_IMPORTS")
+  SET_PROPERTY(TARGET g-ply APPEND PROPERTY COMPILE_DEFINITIONS "RPLY_DLL_IMPORTS")
+endif(CPP_DLL_DEFINES)
+
+# Local Variables:
+# tab-width: 8
+# mode: cmake
+# indent-tabs-mode: t
+# End:
+# ex: shiftwidth=2 tabstop=8
+

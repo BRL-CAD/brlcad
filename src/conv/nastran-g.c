@@ -1,7 +1,7 @@
 /*                     N A S T R A N - G . C
  * BRL-CAD
  *
- * Copyright (c) 1997-2013 United States Government as represented by
+ * Copyright (c) 1997-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -34,11 +34,11 @@
 #include "bio.h"
 
 #include "vmath.h"
+#include "bu/getopt.h"
 #include "nmg.h"
-#include "rtgeom.h"
+#include "rt/geom.h"
 #include "raytrace.h"
 #include "wdb.h"
-#include "bu.h"
 
 #define COMMA ','
 
@@ -83,9 +83,9 @@ struct pshell
 };
 
 
-#define CORD_CYL  'C'
+#define CORD_CYL 'C'
 #define CORD_RECT 'R'
-#define CORD_SPH  'S'
+#define CORD_SPH 'S'
 
 #define NAMESIZE 16 /* from db.h */
 
@@ -106,7 +106,7 @@ static char *output_file = "nastran.g";
 static struct rt_wdb *fpout;		/* brlcad output file */
 static FILE *fpin;			/* NASTRAN input file */
 static FILE *fptmp;			/* temporary version of NASTRAN input */
-static char *Usage="Usage:\n\t%s [-p] [-xX lvl] [-t tol.dist] [-i NASTRAN_file] -o BRL-CAD_file\n";
+static char *usage = "[-xX lvl] [-t tol.dist] [-n] [-m] [-i NASTRAN_file] -o BRL-CAD_file\n";
 static off_t start_off;
 static char *delims=", \t";
 static struct coord_sys coord_head;	/* head of linked list of coordinate systems */
@@ -143,6 +143,13 @@ HIDDEN int convert_pt(const point_t pt, struct coord_sys *cs, point_t out_pt);
 
 #define NO_OF_FIELDS 20
 #define FIELD_LENGTH 17
+
+static void
+print_usage(const char *progname)
+{
+    bu_exit(1, "Usage: %s %s", progname, usage);
+}
+
 
 HIDDEN void
 reset_input(void)
@@ -246,8 +253,8 @@ get_large_field_input(FILE *fp, int write_flag)
     last_field = (card_len - 8)/16 + 1;
     if (((last_field - 1) * 16 + 8) < card_len)
 	last_field++;
-    if (last_field > 5)
-	last_field = 5;
+    CLAMP(last_field, 1, 5);
+
     bu_strlcpy(curr_rec[0], line, 8);
     curr_rec[0][8] = '\0';
     for (field_no=1; field_no < last_field; field_no++) {
@@ -270,8 +277,8 @@ get_large_field_input(FILE *fp, int write_flag)
 	last_field = (card_len - 8)/16 + 1;
 	if (((last_field - 1) * 16 + 8) < card_len)
 	    last_field++;
-	if (last_field > 5)
-	    last_field = 5;
+	CLAMP(last_field, 1, 5);
+
 	last_field += 4;
 	for (field_no=5; field_no < last_field; field_no++) {
 	    bu_strlcpy(curr_rec[field_no], &line[(field_no-4)*16 - 8], 16);
@@ -303,8 +310,8 @@ get_small_field_input(FILE *fp, int write_flag)
     last_field = card_len/8 + 1;
     if ((last_field * 8) < card_len)
 	last_field++;
-    if (last_field > 9)
-	last_field = 9;
+    CLAMP(last_field, 1, 9);
+
     bu_strlcpy(curr_rec[0], line, 8);
     curr_rec[0][8] = '\0';
     for (field_no=2; field_no < last_field+1; field_no++) {
@@ -321,8 +328,8 @@ get_small_field_input(FILE *fp, int write_flag)
 	last_field = card_len/8 + 1;
 	if ((last_field * 8) < card_len)
 	    last_field++;
-	if (last_field > 9)
-	    last_field = 9;
+	CLAMP(last_field, 1, 9);
+
 	last_field += 9;
 	for (field_no=10; field_no < last_field+1; field_no++) {
 	    bu_strlcpy(curr_rec[field_no-1], &line[(field_no-9)*8], 8);
@@ -578,8 +585,8 @@ convert_pt(const point_t pt, struct coord_sys *cs, point_t out_pt)
 
     switch (cs->type) {
 	case CORD_CYL:
-	    c1 = pt[X] * cos(pt[Y] * bn_degtorad);
-	    c2 = pt[X] * sin(pt[Y] * bn_degtorad);
+	    c1 = pt[X] * cos(pt[Y] * DEG2RAD);
+	    c2 = pt[X] * sin(pt[Y] * DEG2RAD);
 	    VJOIN3(tmp_pt, cs->origin, c1, cs->v1, c2, cs->v2, pt[Z], cs->v3);
 	    VMOVE(out_pt, tmp_pt);
 	    break;
@@ -590,10 +597,10 @@ convert_pt(const point_t pt, struct coord_sys *cs, point_t out_pt)
 	    break;
 
 	case CORD_SPH:
-	    c4 = pt[X] * sin(pt[Y] * bn_degtorad);
-	    c1 = c4 * cos(pt[Z] * bn_degtorad);
-	    c2 = c4 * sin(pt[Z] * bn_degtorad);
-	    c3 = pt[X] * cos(pt[Y] * bn_degtorad);
+	    c4 = pt[X] * sin(pt[Y] * DEG2RAD);
+	    c1 = c4 * cos(pt[Z] * DEG2RAD);
+	    c2 = c4 * sin(pt[Z] * DEG2RAD);
+	    c3 = pt[X] * cos(pt[Y] * DEG2RAD);
 	    VJOIN3(tmp_pt, cs->origin, c1, cs->v1, c2, cs->v2, c3, cs->v3);
 	    VMOVE(out_pt, tmp_pt);
 	    break;
@@ -1087,7 +1094,7 @@ get_cbar(void)
     VSCALE(pt1, pt1, conv[units]);
     VSCALE(pt2, pt2, conv[units]);
 
-    radius = sqrt(pb->area/bn_pi);
+    radius = sqrt(pb->area/M_PI);
     radius = radius * conv[units];
 
     VSUB2(height, pt2, pt1);
@@ -1111,19 +1118,18 @@ main(int argc, char **argv)
     char *nastran_file = "Converted from NASTRAN file (stdin)";
 
     bu_setprogname(argv[0]);
-
     fpin = stdin;
 
     units = INCHES;
 
     /* FIXME: These need to be improved */
     tol.magic = BN_TOL_MAGIC;
-    tol.dist = 0.0005;
+    tol.dist = BN_TOL_DIST;
     tol.dist_sq = tol.dist * tol.dist;
     tol.perp = 1e-6;
     tol.para = 1 - tol.perp;
 
-    while ((c=bu_getopt(argc, argv, "x:X:t:ni:o:m")) != -1) {
+    while ((c=bu_getopt(argc, argv, "x:X:t:ni:o:mh?")) != -1) {
 	switch (c) {
 	    case 'x':
 		sscanf(bu_optarg, "%x", (unsigned int *)&RTG.debug);
@@ -1146,27 +1152,29 @@ main(int argc, char **argv)
 		units = MM;
 		break;
 	    case 'i':
-		nastran_file = bu_optarg;
 		fpin = fopen(bu_optarg, "rb");
 		if (fpin == (FILE *)NULL) {
 		    bu_log("Cannot open NASTRAN file (%s) for reading!\n", bu_optarg);
-		    bu_exit(1, Usage, argv[0]);
+		    print_usage(argv[0]);
 		}
+		nastran_file = bu_optarg;
 		break;
 	    case 'o':
 		output_file = bu_optarg;
 		break;
+	    default:
+		print_usage(argv[0]);
 	}
     }
 
     fpout = wdb_fopen(output_file);
     if (fpout == NULL) {
 	bu_log("Cannot open BRL-CAD file (%s) for writing!\n", output_file);
-	bu_exit(1, Usage, argv[0]);
+	print_usage(argv[0]);
     }
 
     if (!fpin || !fpout) {
-	bu_exit(1, Usage, argv[0]);
+	print_usage(argv[0]);
     }
 
     line = (char *)bu_malloc(MAX_LINE_SIZE, "line");
@@ -1193,7 +1201,7 @@ main(int argc, char **argv)
 
     if (start_off < 0) {
 	bu_log("Cannot find start of bulk data in NASTRAN file!\n");
-	bu_exit(1, Usage, argv[0]);
+	print_usage(argv[0]);
     }
 
     /* convert BULK data deck into something reasonable */
@@ -1274,7 +1282,7 @@ main(int argc, char **argv)
 
 	g_pts[grid_used].gid = gid;
 	g_pts[grid_used].cid = cid;
-	g_pts[grid_used].v = (struct vertex **)bu_calloc(pshell_count + 1, sizeof(struct vertex *), "g_pts vertex array");;
+	g_pts[grid_used].v = (struct vertex **)bu_calloc(pshell_count + 1, sizeof(struct vertex *), "g_pts vertex array");
 	VMOVE(g_pts[grid_used].pt, tmp);
 	grid_used++;
     }

@@ -1,7 +1,7 @@
 /*                          L O W P . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2013 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -25,16 +25,13 @@
 
 #include "common.h"
 
-#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <fcntl.h>
-#ifdef HAVE_UNISTD_H
-#  include <unistd.h>
-#endif
 #include "bio.h"
 
-#include "bu.h"
+#include "bu/log.h"
+#include "bu/file.h"
+#include "bu/malloc.h"
 
 
 #define MAX_LINE 10000		/* Max pixels/line */
@@ -45,7 +42,7 @@ unsigned char *in1, *in2, *in3;
 /* Output line */
 unsigned char out1[MAX_LINE*3] = {0};
 
-static int nlines;		/* Number of input lines */
+static int nlines = 512;		/* Number of input lines */
 static int pix_line;		/* Number of pixels/line */
 int readval = 0;
 
@@ -76,7 +73,6 @@ main(int argc, char **argv)
 	bu_exit (1, NULL);
     }
 
-    nlines = 512;
     ifname = bu_realpath(argv[1], NULL);
     if ((infd1 = open(ifname, 0)) < 0) {
 	perror(ifname);

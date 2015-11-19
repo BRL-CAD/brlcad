@@ -1,7 +1,7 @@
 /*                          H T B L . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2013 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -29,11 +29,11 @@
 
 #include "common.h"
 
-#include <stdio.h>
 #include <string.h>
 #include "bio.h"
 
-#include "bu.h"
+
+#include "bu/debug.h"
 #include "vmath.h"
 #include "raytrace.h"
 
@@ -45,7 +45,7 @@ rt_htbl_init(struct rt_htbl *b, size_t len, const char *str)
 
 {
     if (bu_debug & BU_DEBUG_PTBL)
-	bu_log("rt_htbl_init(%8x, len=%d, %s)\n", b, len, str);
+	bu_log("rt_htbl_init(%p, len=%zu, %s)\n", (void *)b, len, str);
     BU_LIST_INIT(&b->l);
     b->l.magic = RT_HTBL_MAGIC;
     if (len == 0) len = 64;
@@ -61,7 +61,7 @@ rt_htbl_reset(struct rt_htbl *b)
     RT_CK_HTBL(b);
     b->end = 0;
     if (bu_debug & BU_DEBUG_PTBL)
-	bu_log("rt_htbl_reset(%8x)\n", b);
+	bu_log("rt_htbl_reset(%p)\n", (void *)b);
 }
 
 
@@ -70,11 +70,11 @@ rt_htbl_free(struct rt_htbl *b)
 {
     RT_CK_HTBL(b);
 
-    bu_free((genptr_t)b->hits, "rt_htbl.hits[]");
+    bu_free((void *)b->hits, "rt_htbl.hits[]");
     memset((char *)b, 0, sizeof(struct rt_htbl));	/* sanity */
 
     if (bu_debug & BU_DEBUG_PTBL)
-	bu_log("rt_htbl_free(%8x)\n", b);
+	bu_log("rt_htbl_free(%p)\n", (void *)b);
 }
 
 

@@ -1,7 +1,7 @@
 /*                 CylindricalSurface.cpp
  * BRL-CAD
  *
- * Copyright (c) 1994-2013 United States Government as represented by
+ * Copyright (c) 1994-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -83,6 +83,7 @@ CylindricalSurface::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
 
     if (!ElementarySurface::Load(step, sse)) {
 	std::cout << CLASSNAME << ":Error loading base class ::Surface." << std::endl;
+	sw->entity_status[id] = STEP_LOAD_ERROR;
 	return false;
     }
 
@@ -91,6 +92,8 @@ CylindricalSurface::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
     sse = step->getEntity(sse, ENTITYNAME);
 
     radius = step->getRealAttribute(sse, "radius");
+
+    sw->entity_status[id] = STEP_LOADED;
 
     return true;
 }

@@ -1,7 +1,7 @@
 /*                          M A I N . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2013 United States Government as represented by
+ * Copyright (c) 1990-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -25,10 +25,12 @@
 
 #include "common.h"
 
+#include "bu/debug.h"
+#include "bu/getopt.h"
 /* private */
 #include "./iges_struct.h"
 #include "./iges_types.h"
-#include "brlcad_version.h"
+#include "brlcad_ident.h"
 
 
 int do_projection = 1;
@@ -50,7 +52,7 @@ struct file_list iges_list;
 struct file_list *curr_file;
 struct name_list *name_root;
 
-char operator[] = {
+char operators[] = {
     ' ',
     'u',
     '+',

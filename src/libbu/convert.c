@@ -1,7 +1,7 @@
 /*                       C O N V E R T . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2013 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -24,8 +24,10 @@
 #include <ctype.h>
 #include <string.h>
 
-#include "bu.h"
-
+#include "bu/cv.h"
+#include "bu/endian.h"
+#include "bu/malloc.h"
+#include "bu/str.h"
 
 int
 bu_cv_cookie(const char *in)			/* input format */
@@ -215,19 +217,15 @@ bu_cv_fmt_cookie(char *buf, size_t buflen, int cookie)
     switch (cookie & CV_CONVERT_MASK) {
 	case CV_CLIP:
 	    *cp++ = 'C';
-	    buflen -= 1;
 	    break;
 	case CV_NORMAL:
 	    *cp++ = 'N';
-	    buflen -= 1;
 	    break;
 	case CV_LIT:
 	    *cp++ = 'L';
-	    buflen -= 1;
 	    break;
 	default:
 	    *cp++ = 'X';
-	    buflen -= 1;
 	    break;
     }
     *cp = '\0';
@@ -245,7 +243,7 @@ bu_cv_pr_cookie(char *title, int cookie)
 
 
 size_t
-bu_cv(genptr_t out, char *outfmt, size_t size, genptr_t in, char *infmt, int count)
+bu_cv(void *out, char *outfmt, size_t size, void *in, char *infmt, size_t count)
 {
     int incookie, outcookie;
     incookie = bu_cv_cookie(infmt);
@@ -283,14 +281,14 @@ bu_cv_optimize(register int cookie)
 }
 
 
-int
+size_t
 bu_cv_itemlen(register int cookie)
 {
     register int fmt = (cookie & CV_TYPE_MASK) >> CV_TYPE_SHIFT;
-    static int host_size_table[8] = {0, sizeof(char),
+    static size_t host_size_table[8] = {0, sizeof(char),
 				     sizeof(short), sizeof(int),
 				     sizeof(long int), sizeof(double)};
-    static int net_size_table[8] = {0, 1, 2, 4, 8, 8};
+    static size_t net_size_table[8] = {0, 1, 2, 4, 8, 8};
 
     if (cookie & CV_HOST_MASK)
 	return host_size_table[fmt];
@@ -299,13 +297,14 @@ bu_cv_itemlen(register int cookie)
 
 
 size_t
-bu_cv_ntohss(register short int *out, size_t size, register genptr_t in, size_t count)
+bu_cv_ntohss(register short int *out, size_t size, register void *in, size_t count)
 {
     size_t limit;
     register size_t i;
 
-    limit = (int)(size / sizeof(signed short));
-    if (limit < count) count = limit;
+    limit = size / sizeof(signed short);
+    if (limit < count)
+	count = limit;
 
     for (i=0; i<count; i++) {
 	*out++ = ((signed char *)in)[0] << 8 | ((unsigned char *)in)[1];
@@ -321,13 +320,14 @@ bu_cv_ntohss(register short int *out, size_t size, register genptr_t in, size_t 
 
 
 size_t
-bu_cv_ntohus(register short unsigned int *out, size_t size, register genptr_t in, size_t count)
+bu_cv_ntohus(register short unsigned int *out, size_t size, register void *in, size_t count)
 {
     size_t limit;
     register size_t i;
 
-    limit = (int)(size / sizeof(unsigned short));
-    if (limit < count) count = limit;
+    limit = size / sizeof(unsigned short);
+    if (limit < count)
+	count = limit;
 
     for (i=0; i<count; i++) {
 	*out++ = ((unsigned char *)in)[0]<<8 |
@@ -339,13 +339,14 @@ bu_cv_ntohus(register short unsigned int *out, size_t size, register genptr_t in
 
 
 size_t
-bu_cv_ntohsl(register long int *out, size_t size, register genptr_t in, size_t count)
+bu_cv_ntohsl(register long int *out, size_t size, register void *in, size_t count)
 {
     size_t limit;
     register size_t i;
 
-    limit = (int)(size / sizeof(signed long int));
-    if (limit < count) count = limit;
+    limit = size / sizeof(signed long int);
+    if (limit < count)
+	count = limit;
 
     for (i=0; i<count; i++) {
 	*out++ = ((signed char *)in)[0] << 24 |
@@ -361,13 +362,14 @@ bu_cv_ntohsl(register long int *out, size_t size, register genptr_t in, size_t c
 
 
 size_t
-bu_cv_ntohul(register long unsigned int *out, size_t size, register genptr_t in, size_t count)
+bu_cv_ntohul(register long unsigned int *out, size_t size, register void *in, size_t count)
 {
     size_t limit;
     register size_t i;
 
-    limit = (int)(size / sizeof(unsigned long int));
-    if (limit < count) count = limit;
+    limit = size / sizeof(unsigned long int);
+    if (limit < count)
+	count = limit;
 
     for (i=0; i<count; i++) {
 	*out++ =
@@ -382,14 +384,14 @@ bu_cv_ntohul(register long unsigned int *out, size_t size, register genptr_t in,
 
 
 size_t
-bu_cv_htonss(genptr_t out, size_t size, register short int *in, size_t count)
+bu_cv_htonss(void *out, size_t size, register short int *in, size_t count)
 {
     size_t limit;
     register size_t i;
     register unsigned char *cp = (unsigned char *)out;
     register int val;
 
-    limit = (int)(size / 2);
+    limit = size / 2;
     if (count > limit)  count = limit;
 
     for (i=0; i<count; i++) {
@@ -401,57 +403,36 @@ bu_cv_htonss(genptr_t out, size_t size, register short int *in, size_t count)
 
 
 size_t
-bu_cv_htonus(genptr_t out, size_t size, register short unsigned int *in, size_t count)
+bu_cv_htonus(void *out, size_t size, register short unsigned int *in, size_t count)
 {
     size_t limit;
     register size_t i;
     register unsigned char *cp = (unsigned char *)out;
     register int val;
 
-    limit = (int)(size / 2);
-    if (count > limit)  count = limit;
-
-    for (i=0; i<count; i++) {
-	*cp++ = (val = *in++)>>8;
-	*cp++ = val;
-    }
-    return count;
-}
-
-
-size_t
-bu_cv_htonsl(genptr_t out, size_t size, register long int *in, size_t count)
-{
-    size_t limit;
-    register size_t i;
-    register unsigned char *cp = (unsigned char *)out;
-    register long val;
-
-    limit = (int)(size / 4);
-    if (count > limit)  count = limit;
-
-    for (i=0; i<count; i++) {
-	*cp++ = (val = *in++)>>24;
-	*cp++ = val>>16;
-	*cp++ = val>> 8;
-	*cp++ = val;
-    }
-    return count;
-}
-
-
-size_t
-bu_cv_htonul(genptr_t out, size_t size, register long unsigned int *in, size_t count)
-{
-    size_t limit;
-    register size_t i;
-    register unsigned char *cp = (unsigned char *)out;
-    register long val;
-
-    limit = (int)(size / 4);
-    if (count > limit) {
+    limit = size / 2;
+    if (count > limit)
 	count = limit;
+
+    for (i=0; i<count; i++) {
+	*cp++ = (val = *in++)>>8;
+	*cp++ = val;
     }
+    return count;
+}
+
+
+size_t
+bu_cv_htonsl(void *out, size_t size, register long int *in, size_t count)
+{
+    size_t limit;
+    register size_t i;
+    register unsigned char *cp = (unsigned char *)out;
+    register long val;
+
+    limit = size / 4;
+    if (count > limit)
+	count = limit;
 
     for (i=0; i<count; i++) {
 	*cp++ = (val = *in++)>>24;
@@ -464,16 +445,41 @@ bu_cv_htonul(genptr_t out, size_t size, register long unsigned int *in, size_t c
 
 
 size_t
-bu_cv_w_cookie(genptr_t out, int outcookie, size_t size, genptr_t in,  int incookie,  size_t count)
+bu_cv_htonul(void *out, size_t size, register long unsigned int *in, size_t count)
+{
+    size_t limit;
+    register size_t i;
+    register unsigned char *cp = (unsigned char *)out;
+    register long val;
+
+    limit = size / 4;
+    if (count > limit)
+	count = limit;
+
+    for (i=0; i<count; i++) {
+	*cp++ = (val = *in++)>>24;
+	*cp++ = val>>16;
+	*cp++ = val>> 8;
+	*cp++ = val;
+    }
+    return count;
+}
+
+
+size_t
+bu_cv_w_cookie(void *out, int outcookie, size_t size, void *in, int incookie, size_t count)
 {
     size_t work_count = 4096;
     size_t number_done = 0;
-    int inIsHost, outIsHost, infmt, outfmt, insize, outsize;
+    int inIsHost, outIsHost, infmt, outfmt;
+    size_t insize, outsize;
     size_t bufsize;
-    genptr_t t1, t2, t3;
-    genptr_t from;
-    genptr_t to;
-    genptr_t hold;
+    void *t1;
+    void *t2;
+    void *t3;
+    void *from;
+    void *to;
+    void *hold;
     register size_t i;
 
     /*
@@ -528,7 +534,7 @@ bu_cv_w_cookie(genptr_t out, int outcookie, size_t size, genptr_t in,  int incoo
 	    /*
 	     * This is the simplest case, binary copy and out.
 	     */
-	    memmove((genptr_t)out, (genptr_t)in, (size_t)number_done * outsize);
+	    memmove((void *)out, (void *)in, (size_t)number_done * outsize);
 	    return number_done;
 
 	    /*
@@ -586,9 +592,9 @@ bu_cv_w_cookie(genptr_t out, int outcookie, size_t size, genptr_t in,  int incoo
      */
 
     bufsize = work_count * sizeof(double);
-    t1 = (genptr_t) bu_malloc(bufsize, "convert.c: t1");
-    t2 = (genptr_t) bu_malloc(bufsize, "convert.c: t2");
-    t3 = (genptr_t) bu_malloc(bufsize, "convert.c: t3");
+    t1 = (void *) bu_malloc(bufsize, "convert.c: t1");
+    t2 = (void *) bu_malloc(bufsize, "convert.c: t2");
+    t3 = (void *) bu_malloc(bufsize, "convert.c: t3");
 
     /*
      * From here on we will be working on a chunk of process at a time.
@@ -637,7 +643,7 @@ bu_cv_w_cookie(genptr_t out, int outcookie, size_t size, genptr_t in,  int incoo
 	in = ((char *) in) + work_count * insize;
 
 	/*
-	 * If the input is in net format convert it host format.
+	 * If the input is in net format convert it to host format.
 	 * Because we know that the input format is not equal to the
 	 * output this means that there will be at least two
 	 * conversions taking place if the input is in net format.
@@ -697,43 +703,43 @@ bu_cv_w_cookie(genptr_t out, int outcookie, size_t size, genptr_t in,  int incoo
 		case CV_SIGNED_MASK | CV_8:
 		    for (i=0; i< work_count; i++) {
 			*((double *)to) = *((signed char *)from);
-			to = (genptr_t)(((double *)to) + 1);
+			to = (void *)(((double *)to) + 1);
 			from = ((char *)from) + 1;
 		    }
 		    break;
 		case CV_8:
 		    for (i=0; i < work_count; i++) {
 			*((double *)to) = *((unsigned char *)from);
-			to = (genptr_t)(((double *)to) + 1);
-			from = (genptr_t)(((unsigned char *)from) + 1);
+			to = (void *)(((double *)to) + 1);
+			from = (void *)(((unsigned char *)from) + 1);
 		    }
 		    break;
 		case CV_SIGNED_MASK | CV_16:
 		    for (i=0; i < work_count; i++) {
 			*((double *)to) = *((signed short *)from);
-			to = (genptr_t)(((double *)to) + 1);
-			from = (genptr_t)(((signed short *)from) + 1);
+			to = (void *)(((double *)to) + 1);
+			from = (void *)(((signed short *)from) + 1);
 		    }
 		    break;
 		case CV_16:
 		    for (i=0; i < work_count; i++) {
 			*((double *)to) = *((unsigned short *)from);
-			to = (genptr_t)(((double *)to) + 1);
-			from = (genptr_t)(((unsigned short *)from) + 1);
+			to = (void *)(((double *)to) + 1);
+			from = (void *)(((unsigned short *)from) + 1);
 		    }
 		    break;
 		case CV_SIGNED_MASK | CV_32:
 		    for (i=0; i < work_count; i++) {
 			*((double *)to) = *((signed long int *)from);
-			to = (genptr_t)(((double *)to) + 1);
-			from =  (genptr_t)(((signed long int *)from) + 1);
+			to = (void *)(((double *)to) + 1);
+			from =  (void *)(((signed long int *)from) + 1);
 		    }
 		    break;
 		case CV_32:
 		    for (i=0; i < work_count; i++) {
 			*((double *)to) = *((unsigned long int *) from);
-			to = (genptr_t)(((double *)to) + 1);
-			from = (genptr_t)(((unsigned long int *)from) + 1);
+			to = (void *)(((double *)to) + 1);
+			from = (void *)(((unsigned long int *)from) + 1);
 		    }
 		    break;
 		default:
@@ -768,48 +774,48 @@ bu_cv_w_cookie(genptr_t out, int outcookie, size_t size, genptr_t in,  int incoo
 		case CV_SIGNED_MASK | CV_8:
 		    for (i=0; i<work_count; i++) {
 			*((signed char *)to) = *((double *)from);
-			to = (genptr_t)(((signed char *)to) + 1);
-			from = (genptr_t)(((double *)from) + 1);
+			to = (void *)(((signed char *)to) + 1);
+			from = (void *)(((double *)from) + 1);
 		    }
 		    break;
 		case CV_8:
 		    for (i=0; i<work_count; i++) {
 			*((unsigned char *)to) =
 			    (unsigned char)(*((double *)from));
-			to = (genptr_t)(((unsigned char *)to) + 1);
-			from = (genptr_t)(((double *)from) + 1);
+			to = (void *)(((unsigned char *)to) + 1);
+			from = (void *)(((double *)from) + 1);
 		    }
 		    break;
 		case CV_SIGNED_MASK | CV_16:
 		    for (i=0; i<work_count; i++) {
 			*((signed short int *)to) =
 			    *((double *)from);
-			to = (genptr_t)(((signed short int *)to) + 1);
-			from = (genptr_t)(((double *)from) + 1);
+			to = (void *)(((signed short int *)to) + 1);
+			from = (void *)(((double *)from) + 1);
 		    }
 		    break;
 		case CV_16:
 		    for (i=0; i<work_count; i++) {
 			*((unsigned short int *)to) =
 			    *((double *)from);
-			to = (genptr_t)(((unsigned short int *)to) + 1);
-			from = (genptr_t)(((double *)from) + 1);
+			to = (void *)(((unsigned short int *)to) + 1);
+			from = (void *)(((double *)from) + 1);
 		    }
 		    break;
 		case CV_SIGNED_MASK | CV_32:
 		    for (i=0; i<work_count; i++) {
 			*((signed long int *)to) =
 			    *((double *)from);
-			to = (genptr_t)(((signed long int *)to) + 1);
-			from = (genptr_t)(((double *)from) + 1);
+			to = (void *)(((signed long int *)to) + 1);
+			from = (void *)(((double *)from) + 1);
 		    }
 		    break;
 		case CV_32:
 		    for (i=0; i<work_count; i++) {
 			*((unsigned long int *)to) =
 			    *((double *)from);
-			to = (genptr_t)(((unsigned long int *)to) + 1);
-			from = (genptr_t)(((double *)from) + 1);
+			to = (void *)(((unsigned long int *)to) + 1);
+			from = (void *)(((double *)from) + 1);
 		    }
 		    break;
 		default:

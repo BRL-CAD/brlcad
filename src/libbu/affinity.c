@@ -1,7 +1,7 @@
 /*                         A F F I N I T Y . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2012 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -49,8 +49,8 @@
 #  include <windows.h>
 #endif
 
-#include "bu.h"
-
+#include "bu/parallel.h"
+#include "bu/log.h"
 
 int
 parallel_set_affinity(int cpu)
@@ -65,19 +65,15 @@ parallel_set_affinity(int cpu)
     cpuset_t set_of_cpus; /* linux */
 #endif
     int ret;
+    int ncpus = bu_avail_cpus();
 
-    /* Clear CPU set and assign our number */
     CPU_ZERO(&set_of_cpus);
-    CPU_SET(cpu & bu_avail_cpus(), &set_of_cpus);
 
-    /* set affinity mask of current thread */
+    /* Set affinity to a single CPU core */
+    CPU_SET(cpu % ncpus, &set_of_cpus);
     ret = pthread_setaffinity_np(pthread_self(), sizeof(set_of_cpus), &set_of_cpus);
-    if (ret != 0) {
-	/* Error in setting affinity mask */
-	return -1;
-    }
 
-    return 0;
+    return ret;
 
 #elif defined(HAVE_MACH_THREAD_POLICY_H)
 
@@ -108,8 +104,8 @@ parallel_set_affinity(int cpu)
     return 0;
 
 #elif defined(HAVE_WINDOWS_H)
-
-    BOOL ret = SetThreadAffinityMask(GetCurrentThread(), 1ul << cpu % bu_avail_cpus());
+    DWORD_PTR cpumask = (DWORD_PTR)1 << cpu % bu_avail_cpus();
+    BOOL ret = SetThreadAffinityMask(GetCurrentThread(), cpumask);
     if (ret  == 0)
 	return -1;
 

@@ -26,7 +26,7 @@
 
 
 <refsect1 xml:id='description'><title>DESCRIPTION</title>
-<para><emphasis remap='I'>Rtshot</emphasis>
+<para><command>rtshot</command>
 fires a single ray at the indicated
 <emphasis remap='I'>objects</emphasis>
 in the input
@@ -158,7 +158,7 @@ central ray. The default is to fire a single ray.</para>
 
 <refsect1 xml:id='see_also'><title>SEE ALSO</title>
 <para><citerefentry><refentrytitle>mged</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>rt</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>pix-fb</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>rtray</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>rtpp</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
-<citerefentry><refentrytitle>librt</refentrytitle><manvolnum>3</manvolnum></citerefentry>, <citerefentry><refentrytitle>ray</refentrytitle><manvolnum>5V</manvolnum></citerefentry>, <citerefentry><refentrytitle>pix</refentrytitle><manvolnum>5</manvolnum></citerefentry>.</para>
+<citerefentry><refentrytitle>librt</refentrytitle><manvolnum>3</manvolnum></citerefentry>, <citerefentry><refentrytitle>ray</refentrytitle><manvolnum>5V</manvolnum></citerefentry>, <citerefentry><refentrytitle>pix</refentrytitle><manvolnum>5</manvolnum></citerefentry></para>
 </refsect1>
 
 <refsect1 xml:id='diagnostics'><title>DIAGNOSTICS</title>
@@ -179,8 +179,8 @@ package instead.</para>
 </refsect1>
 
 <refsect1 xml:id='copyright'><title>COPYRIGHT</title>
-<para>This software is Copyright (c) 1987-2013 United States Government as
-represented by the U.S. Army Research Laboratory. All rights reserved.</para>
+<para>This software is Copyright (c) 1987-2014 United States Government as
+represented by the U.S. Army Research Laboratory.</para>
 </refsect1>
 
 <refsect1 xml:id='bug_reports'><title>BUG REPORTS</title>

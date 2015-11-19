@@ -1,7 +1,7 @@
 /*                      T R I _ F A C E . C
  * BRL-CAD
  *
- * Copyright (c) 2011-2013 United States Government as represented by
+ * Copyright (c) 2011-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -26,7 +26,7 @@
 
 #include "common.h"
 
-#include "bu.h"
+#include "bu/malloc.h"
 #include "nmg.h"
 #include "raytrace.h"
 
@@ -102,9 +102,9 @@ attach_face_g_plane(struct model *model, struct face *f)
  * specified in points[]
  */
 HIDDEN struct model*
-make_model_from_face(const double points[], int numPoints)
+make_model_from_face(const double points[], size_t numPoints)
 {
-    int i;
+    size_t i;
     struct model *model;
     struct shell *shell;
     struct faceuse *fu;
@@ -143,7 +143,7 @@ make_model_from_face(const double points[], int numPoints)
 }
 
 struct faceuse*
-make_faceuse_from_face(const double points[], int numPoints)
+make_faceuse_from_face(const double points[], size_t numPoints)
 {
     struct model *model;
     struct shell *shell;
@@ -208,7 +208,8 @@ triangulateFace(
     struct loopuse *lu;
     struct edgeuse *eu;
     size_t numFaceVertices;
-    int i, ref;
+    size_t i;
+    int ref;
     double point[3];
 
     /* get nmg faceuse that represents the face specified by points */

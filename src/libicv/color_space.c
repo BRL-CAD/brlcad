@@ -1,7 +1,7 @@
-/*         x
+/*                   C O L O R _ S P A C E . C
  * BRL-CAD
  *
- * Copyright (c) 2013 United States Government as represented by
+ * Copyright (c) 2013-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -29,7 +29,8 @@
 
 #include "vmath.h"
 #include "bio.h"
-#include "bu.h"
+#include "bu/malloc.h"
+#include "bu/log.h"
 #include "icv.h"
 
 int
@@ -37,21 +38,20 @@ icv_gray2rgb(icv_image_t *img)
 {
     double *out_data, *op;
     double *in_data;
-    long int size;
-    long int i = 0;
-     if (!ICV_IMAGE_IS_INITIALIZED(img)) {
-	bu_log("icv_image_gray2rgb : Uninitialized Image argument\n");
+    size_t size;
+    size_t i = 0;
+
+    ICV_IMAGE_VAL_INT(img);
+
+    /* If this condition is true, the image is already RGB.*/
+    if (img->color_space == ICV_COLOR_SPACE_RGB)
+	return 0;
+
+    if (img->color_space != ICV_COLOR_SPACE_GRAY) {
+	bu_log("ERROR : color_space error");
 	return -1;
     }
 
-    if (img->color_space == ICV_COLOR_SPACE_RGB) {
-	bu_log("icv_image_gray2rgb : already RGB");
-	return 0;
-    }
-    else if (img->color_space != ICV_COLOR_SPACE_GRAY) {
-	bu_log("icv_image_gray2rgb : color_space error");
-	return -1;
-    }
     size = img->height*img->width;
     op = out_data = (double *)bu_malloc(size*3*sizeof(double), "Out Image Data");
     in_data = img->data;
@@ -63,7 +63,7 @@ icv_gray2rgb(icv_image_t *img)
 	in_data++;
     }
 
-    bu_free(img->data, "icv_image_gray2rgb : gray image data");
+    bu_free(img->data, "icv_gray2rgb : gray image data");
     img->data = op;
     img->color_space = ICV_COLOR_SPACE_RGB;
     img->channels = 3;
@@ -76,71 +76,65 @@ icv_rgb2gray(icv_image_t *img, ICV_COLOR color, double rweight, double gweight, 
 {
     double *out_data, *in_data;
     size_t in, out, size;
-    int multiple_colors = 0;
-    int num_color_planes = 3;
+    int multiple_colors = 1; /* will set to 0 if it's found only 1 color is referenced */
+    int num_color_planes;
 
     double value;
-    int red, green, blue;
-    red = green = blue = 0;
+    int red = 0 , green = 0 , blue = 0 ;
 
-     if (!ICV_IMAGE_IS_INITIALIZED(img)) {
-	bu_log("icv_image_rgb2gray : Uninitialized Image argument\n");
-	return -1;
-    }
+    ICV_IMAGE_VAL_INT(img);
 
+    /* If this condition is true, the image is already GRAY.*/
     if (img->color_space == ICV_COLOR_SPACE_GRAY)
 	return 0;
-    else if (img->color_space != ICV_COLOR_SPACE_RGB) {
-	bu_log("icv_image_rgb2gray : color_space error");
+
+    if (img->color_space != ICV_COLOR_SPACE_RGB) {
+	bu_log("ERROR : color_space error");
 	return -1;
     }
 
-    switch(color) {
+    switch (color) {
 	case ICV_COLOR_R :
 	    red = 1;
-	    bweight = 0;
-	    gweight = 0;
+	    bweight = 0.0;
+	    gweight = 0.0;
 	    multiple_colors = 0;
 	    break;
 	case ICV_COLOR_G :
 	    green = 1;
-	    rweight = 0;
-	    bweight = 0;
+	    rweight = 0.0;
+	    bweight = 0.0;
 	    multiple_colors = 0;
 	    break;
 	case ICV_COLOR_B :
 	    blue = 1;
-	    rweight = 0;
-	    gweight = 0;
+	    rweight = 0.0;
+	    gweight = 0.0;
 	    multiple_colors = 0;
 	    break;
 	case ICV_COLOR_RG :
 	    red = 1;
 	    green = 1;
-	    bweight = 0;
-	    multiple_colors = 1;
+	    bweight = 0.0;
 	    break;
 	case ICV_COLOR_RB :
 	    blue = 1;
 	    red = 1;
-	    gweight = 0;
-	    multiple_colors = 1;
+	    gweight = 0.0;
 	    break;
 	case ICV_COLOR_BG :
 	    blue = 1;
 	    green = 1;
-	    rweight = 0;
-	    multiple_colors = 1;
+	    rweight = 0.0;
 	    break;
 	case ICV_COLOR_RGB :
 	    red = 1;
 	    green = 1;
 	    blue = 1;
-	    multiple_colors = 1;
 	    break;
 	default :
-	    bu_exit(1,"icv_depth_3to1: Wrong Arguments for Color");
-	    break;
+	    bu_log("ERROR: Wrong Arguments for Color");
+	    return -1;
     }
 
     /* Gets number of planes according to the status of arguments

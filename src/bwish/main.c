@@ -1,7 +1,7 @@
 /*                          M A I N . C
  * BRL-CAD
  *
- * Copyright (c) 1998-2013 United States Government as represented by
+ * Copyright (c) 1998-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -30,13 +30,14 @@
 
 #include "tcl.h"
 
+#include "bresource.h" /* itk.h pedantic-errors sys/wait.h quellage */
+
 #ifdef BWISH
 #  include "itk.h"
 #else
 #  include "itcl.h"
 #endif
 
-#include "bu.h"
 #include "vmath.h"
 #include "bn.h"
 #include "ged.h"
@@ -133,7 +134,7 @@ Cad_AppInit(Tcl_Interp *interp)
 		 */
 		Tcl_DeleteCommand(interp, "::itcl::class");
 		nsp = Tcl_FindNamespace(interp, "::itcl", NULL, 0);
-		if(nsp != NULL)
+		if (nsp != NULL)
 		    Tcl_DeleteNamespace(nsp);
 		continue;
 	    }
@@ -231,7 +232,7 @@ Cad_AppInit(Tcl_Interp *interp)
 	bu_log("Dm_Init ERROR:\n%s\n", Tcl_GetStringResult(interp));
 	return TCL_ERROR;
     }
-    Tcl_StaticPackage(interp, "Dm", Dm_Init, (Tcl_PackageInitProc *) NULL);
+    Tcl_StaticPackage(interp, "Dm", (int (*)(struct Tcl_Interp *))Dm_Init, (Tcl_PackageInitProc *) NULL);
 
     /* Initialize libfb */
     if (Fb_Init(interp) == TCL_ERROR) {

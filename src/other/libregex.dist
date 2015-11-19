@@ -6,5 +6,4 @@ engine.c
 regex.h
 regex2.h
 utils.h
-CheckCInline.cmake
 )

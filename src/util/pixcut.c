@@ -1,7 +1,7 @@
 /*                        P I X C U T . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2013 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -35,10 +35,12 @@
 
 #include <stdlib.h>
 #include <string.h>
-#include "bio.h"
 
-#include "bu.h"
 #include "vmath.h"
+#include "bu/getopt.h"
+#include "bu/log.h"
+#include "bu/malloc.h"
+#include "bu/str.h"
 #include "bn.h"
 #include "fb.h"
 
@@ -64,7 +66,7 @@ static int isfile = 0;
 static char usage[] = "\
 pixcut: Copyright (C) 1992 Paladin Software\n\
 pixcut: All rights reserved\n\
-pixcut: Usage:	[-v] [-h] [-H] [-a] [-# num_bytes] [-C red/green/blue]\n\
+pixcut: Usage:	[-v] [-a] [-# num_bytes] [-C red/green/blue]\n\
 		[-s in_square_size] [-w in_width] [-n in_height]\n\
 		[-S out_square_size] [-W out_width] [-N out_height]\n\
 		[-x horizontal] [-y vertical] [file_in]\n";
@@ -88,20 +90,13 @@ get_args(int argc, char **argv)
 {
     int c;
 
-    while ((c = bu_getopt(argc, argv, "vahHC:s:w:n:S:W:N:x:y:#:")) != -1) {
+    while ((c = bu_getopt(argc, argv, "vaC:s:w:n:S:W:N:x:y:#:h?")) != -1) {
 	switch (c) {
 	    case 'v':
 		Verbose = 1;
 		break;
 	    case 'a':
 		autosize = 1;
-		break;
-	    case 'h':
-		org_width = org_height = 1024L;
-		autosize = 0;
-		break;
-	    case 'H':
-		new_width = new_height = 1024L;
 		break;
 	    case 's':
 		org_width = org_height = atol(bu_optarg);
@@ -136,7 +131,7 @@ get_args(int argc, char **argv)
 	    case '#':
 		num_bytes = atol(bu_optarg);
 		break;
-	    default:		/* '?' */
+	    default:		/* '?' 'h' */
 		return 0;
 	}
     }
@@ -175,6 +170,8 @@ main(int argc, char **argv)
     long int i;
     unsigned char *cp;
     int finish, row, result;
+
+    bu_log("DEPRECATED: pixcut is no longer being maintained.\n\tContact devs@brlcad.org if you still use this tool.\n");
 
     for (i=0;i<SIZEBACK;i++) background[i] = 0;
     background[2] = 1;

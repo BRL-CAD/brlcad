@@ -1,7 +1,7 @@
 /*                    P O L Y C L I P . C P P
  * BRL-CAD
  *
- * Copyright (c) 2011-2013 United States Government as represented by
+ * Copyright (c) 2011-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -30,6 +30,7 @@
 
 #include <clipper.hpp>
 
+#include "bu/sort.h"
 #include "ged.h"
 
 
@@ -42,7 +43,7 @@ struct segment_node {
     struct bu_list l;
     int reverse;
     int used;
-    genptr_t segment;
+    void *segment;
 };
 
 struct contour_node {
@@ -51,11 +52,12 @@ struct contour_node {
 };
 
 
-static void
-load_polygon(ClipperLib::Clipper &clipper, ClipperLib::PolyType ptype, ged_polygon *gpoly, fastf_t sf, matp_t mat)
+static fastf_t
+load_polygon(ClipperLib::Clipper &clipper, ClipperLib::PolyType ptype, bview_polygon *gpoly, fastf_t sf, matp_t mat)
 {
     register size_t j, k, n;
     ClipperLib::Polygon curr_poly;
+    fastf_t vZ = 1.0;
 
     for (j = 0; j < gpoly->gp_num_contours; ++j) {
 	n = gpoly->gp_contour[j].gpc_num_points;
@@ -65,6 +67,7 @@ load_polygon(ClipperLib::Clipper &clipper, ClipperLib::PolyType ptype, ged_polyg
 
 	    /* Convert to view coordinates */
 	    MAT4X3PNT(vpoint, mat, gpoly->gp_contour[j].gpc_point[k]);
+	    vZ = vpoint[Z];
 
 	    curr_poly[k].X = (ClipperLib::long64)(vpoint[X] * sf);
 	    curr_poly[k].Y = (ClipperLib::long64)(vpoint[Y] * sf);
@@ -76,41 +79,46 @@ load_polygon(ClipperLib::Clipper &clipper, ClipperLib::PolyType ptype, ged_polyg
 	    bu_log("Exception thrown by clipper\n");
 	}
     }
+
+    return vZ;
 }
 
-static void
-load_polygons(ClipperLib::Clipper &clipper, ClipperLib::PolyType ptype, ged_polygons *subj, fastf_t sf, matp_t mat)
+static fastf_t
+load_polygons(ClipperLib::Clipper &clipper, ClipperLib::PolyType ptype, bview_polygons *subj, fastf_t sf, matp_t mat)
 {
     register size_t i;
+    fastf_t vZ = 1.0;
 
     for (i = 0; i < subj->gp_num_polygons; ++i)
-	load_polygon(clipper, ptype, &subj->gp_polygon[i], sf, mat);
+	vZ = load_polygon(clipper, ptype, &subj->gp_polygon[i], sf, mat);
+
+    return vZ;
 }
 
 
 /*
- * Process/extract the clipper_polys into a ged_polygon.
+ * Process/extract the clipper_polys into a bview_polygon.
  */
-static ged_polygon *
-extract(ClipperLib::ExPolygons &clipper_polys, fastf_t sf, matp_t mat)
+static bview_polygon *
+extract(ClipperLib::ExPolygons &clipper_polys, fastf_t sf, matp_t mat, fastf_t vZ)
 {
     register size_t i, j, k, n;
     size_t num_contours = 0;
-    ged_polygon *result_poly;
+    bview_polygon *result_poly;
 
     /* Count up the number of contours. */
     for (i = 0; i < clipper_polys.size(); ++i)
 	/* Add the outer and the holes */
 	num_contours += clipper_polys[i].holes.size() + 1;
 
-    BU_ALLOC(result_poly, ged_polygon);
+    BU_ALLOC(result_poly, bview_polygon);
     result_poly->gp_num_contours = num_contours;
 
     if (num_contours < 1)
 	return result_poly;
 
     result_poly->gp_hole = (int *)bu_calloc(num_contours, sizeof(int), "gp_hole");
-    result_poly->gp_contour = (ged_poly_contour *)bu_calloc(num_contours, sizeof(ged_poly_contour), "gp_contour");
+    result_poly->gp_contour = (bview_poly_contour *)bu_calloc(num_contours, sizeof(bview_poly_contour), "gp_contour");
 
     n = 0;
     for (i = 0; i < clipper_polys.size(); ++i) {
@@ -123,7 +131,7 @@ extract(ClipperLib::ExPolygons &clipper_polys, fastf_t sf, matp_t mat)
 				 sizeof(point_t), "gpc_point");
 
 	for (j = 0; j < result_poly->gp_contour[n].gpc_num_points; ++j) {
-	    VSET(vpoint, (fastf_t)(clipper_polys[i].outer[j].X) * sf, (fastf_t)(clipper_polys[i].outer[j].Y) * sf, 1.0);
+	    VSET(vpoint, (fastf_t)(clipper_polys[i].outer[j].X) * sf, (fastf_t)(clipper_polys[i].outer[j].Y) * sf, vZ);
 
 	    /* Convert to model coordinates */
 	    MAT4X3PNT(result_poly->gp_contour[n].gpc_point[j], mat, vpoint);
@@ -138,7 +146,7 @@ extract(ClipperLib::ExPolygons &clipper_polys, fastf_t sf, matp_t mat)
 				     sizeof(point_t), "gpc_point");
 
 	    for (k = 0; k < result_poly->gp_contour[n].gpc_num_points; ++k) {
-		VSET(vpoint, (fastf_t)(clipper_polys[i].holes[j][k].X) * sf, (fastf_t)(clipper_polys[i].holes[j][k].Y) * sf, 1.0);
+		VSET(vpoint, (fastf_t)(clipper_polys[i].holes[j][k].X) * sf, (fastf_t)(clipper_polys[i].holes[j][k].Y) * sf, vZ);
 
 		/* Convert to model coordinates */
 		MAT4X3PNT(result_poly->gp_contour[n].gpc_point[k], mat, vpoint);
@@ -152,10 +160,11 @@ extract(ClipperLib::ExPolygons &clipper_polys, fastf_t sf, matp_t mat)
 }
 
 
-ged_polygon *
-ged_clip_polygon(GedClipType op, ged_polygon *subj, ged_polygon *clip, fastf_t sf, matp_t model2view, matp_t view2model)
+bview_polygon *
+ged_clip_polygon(ClipType op, bview_polygon *subj, bview_polygon *clip, fastf_t sf, matp_t model2view, matp_t view2model)
 {
     fastf_t inv_sf;
+    fastf_t vZ;
     ClipperLib::Clipper clipper;
     ClipperLib::ExPolygons result_clipper_polys;
     ClipperLib::ClipType ctOp;
@@ -168,7 +177,7 @@ ged_clip_polygon(GedClipType op, ged_polygon *subj, ged_polygon *clip, fastf_t s
     load_polygon(clipper, ClipperLib::ptSubject, subj, sf, model2view);
 
     /* Load clip polygon into clipper */
-    load_polygon(clipper, ClipperLib::ptClip, clip, sf, model2view);
+    vZ = load_polygon(clipper, ClipperLib::ptClip, clip, sf, model2view);
 
     /* Convert op from BRL-CAD to Clipper */
     switch (op) {
@@ -190,14 +199,15 @@ ged_clip_polygon(GedClipType op, ged_polygon *subj, ged_polygon *clip, fastf_t s
     clipper.Execute(ctOp, result_clipper_polys, ClipperLib::pftEvenOdd, ClipperLib::pftEvenOdd);
 
     inv_sf = 1.0/sf;
-    return extract(result_clipper_polys, inv_sf, view2model);
+    return extract(result_clipper_polys, inv_sf, view2model, vZ);
 }
 
 
-ged_polygon *
-ged_clip_polygons(GedClipType op, ged_polygons *subj, ged_polygons *clip, fastf_t sf, matp_t model2view, matp_t view2model)
+bview_polygon *
+ged_clip_polygons(ClipType op, bview_polygons *subj, bview_polygons *clip, fastf_t sf, matp_t model2view, matp_t view2model)
 {
     fastf_t inv_sf;
+    fastf_t vZ;
     ClipperLib::Clipper clipper;
     ClipperLib::ExPolygons result_clipper_polys;
     ClipperLib::ClipType ctOp;
@@ -210,7 +220,7 @@ ged_clip_polygons(GedClipType op, ged_polygons *subj, ged_polygons *clip, fastf_
     load_polygons(clipper, ClipperLib::ptSubject, subj, sf, model2view);
 
     /* Load clip polygons into clipper */
-    load_polygons(clipper, ClipperLib::ptClip, clip, sf, model2view);
+    vZ = load_polygons(clipper, ClipperLib::ptClip, clip, sf, model2view);
 
     /* Convert op from BRL-CAD to Clipper */
     switch (op) {
@@ -232,11 +242,12 @@ ged_clip_polygons(GedClipType op, ged_polygons *subj, ged_polygons *clip, fastf_
     clipper.Execute(ctOp, result_clipper_polys, ClipperLib::pftEvenOdd, ClipperLib::pftEvenOdd);
 
     inv_sf = 1.0/sf;
-    return extract(result_clipper_polys, inv_sf, view2model);
+    return extract(result_clipper_polys, inv_sf, view2model, vZ);
 }
 
+
 int
-ged_export_polygon(struct ged *gedp, ged_data_polygon_state *gdpsp, size_t polygon_i, const char *sname)
+ged_export_polygon(struct ged *gedp, bview_data_polygon_state *gdpsp, size_t polygon_i, const char *sname)
 {
     register size_t j, k, n;
     register size_t num_verts = 0;
@@ -272,7 +283,7 @@ ged_export_polygon(struct ged *gedp, ged_data_polygon_state *gdpsp, size_t polyg
     sketch_ip->verts = (point2d_t *)bu_calloc(sketch_ip->vert_count, sizeof(point2d_t), "sketch_ip->verts");
     sketch_ip->curve.count = num_verts;
     sketch_ip->curve.reverse = (int *)bu_calloc(sketch_ip->curve.count, sizeof(int), "sketch_ip->curve.reverse");
-    sketch_ip->curve.segment = (genptr_t *)bu_calloc(sketch_ip->curve.count, sizeof(genptr_t), "sketch_ip->curve.segment");
+    sketch_ip->curve.segment = (void **)bu_calloc(sketch_ip->curve.count, sizeof(void *), "sketch_ip->curve.segment");
 
     bn_mat_inv(invRot, gdpsp->gdps_rotation);
     VSET(view, 1.0, 0.0, 0.0);
@@ -287,7 +298,7 @@ ged_export_polygon(struct ged *gedp, ged_data_polygon_state *gdpsp, size_t polyg
 
     /* Project the origin onto the front of the viewing cube */
     MAT4X3PNT(vorigin, gdpsp->gdps_model2view, gdpsp->gdps_origin);
-    vorigin[Z] = 1.0;
+    vorigin[Z] = gdpsp->gdps_data_vZ;
 
     /* Convert back to model coordinates for storage */
     MAT4X3PNT(sketch_ip->V, gdpsp->gdps_view2model, vorigin);
@@ -307,7 +318,7 @@ ged_export_polygon(struct ged *gedp, ged_data_polygon_state *gdpsp, size_t polyg
 
 	    if (k) {
 		BU_ALLOC(lsg, struct line_seg);
-		sketch_ip->curve.segment[n-1] = (genptr_t)lsg;
+		sketch_ip->curve.segment[n-1] = (void *)lsg;
 		lsg->magic = CURVE_LSEG_MAGIC;
 		lsg->start = n-1;
 		lsg->end = n;
@@ -318,7 +329,7 @@ ged_export_polygon(struct ged *gedp, ged_data_polygon_state *gdpsp, size_t polyg
 
 	if (k) {
 	    BU_ALLOC(lsg, struct line_seg);
-	    sketch_ip->curve.segment[n-1] = (genptr_t)lsg;
+	    sketch_ip->curve.segment[n-1] = (void *)lsg;
 	    lsg->magic = CURVE_LSEG_MAGIC;
 	    lsg->start = n-1;
 	    lsg->end = cstart;
@@ -326,14 +337,14 @@ ged_export_polygon(struct ged *gedp, ged_data_polygon_state *gdpsp, size_t polyg
     }
 
 
-    GED_DB_DIRADD(gedp, dp, sname, RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (genptr_t)&internal.idb_type, GED_ERROR);
+    GED_DB_DIRADD(gedp, dp, sname, RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (void *)&internal.idb_type, GED_ERROR);
     GED_DB_PUT_INTERNAL(gedp, dp, &internal, &rt_uniresource, GED_ERROR);
 
     return GED_OK;
 }
 
 
-ged_polygon *
+bview_polygon *
 ged_import_polygon(struct ged *gedp, const char *sname)
 {
     register size_t j, n;
@@ -345,15 +356,15 @@ ged_import_polygon(struct ged *gedp, const char *sname)
     struct segment_node *all_segment_nodes;
     struct segment_node *curr_snode;
     struct contour_node *curr_cnode;
-    ged_polygon *gpp;
+    bview_polygon *gpp;
 
     if (wdb_import_from_path(gedp->ged_result_str, &intern, sname, gedp->ged_wdbp) == GED_ERROR)
-	return (ged_polygon *)0;
+	return (bview_polygon *)0;
 
     sketch_ip = (rt_sketch_internal *)intern.idb_ptr;
     if (sketch_ip->vert_count < 3 || sketch_ip->curve.count < 1) {
 	rt_db_free_internal(&intern);
-	return (ged_polygon *)0;
+	return (bview_polygon *)0;
     }
 
     all_segment_nodes = (struct segment_node *)bu_calloc(sketch_ip->curve.count, sizeof(struct segment_node), "all_segment_nodes");
@@ -415,10 +426,10 @@ ged_import_polygon(struct ged *gedp, const char *sname)
 	}
     }
 
-    BU_ALLOC(gpp, ged_polygon);
+    BU_ALLOC(gpp, bview_polygon);
     gpp->gp_num_contours = ncontours;
     gpp->gp_hole = (int *)bu_calloc(ncontours, sizeof(int), "gp_hole");
-    gpp->gp_contour = (ged_poly_contour *)bu_calloc(ncontours, sizeof(ged_poly_contour), "gp_contour");
+    gpp->gp_contour = (bview_poly_contour *)bu_calloc(ncontours, sizeof(bview_poly_contour), "gp_contour");
 
     j = 0;
     while (BU_LIST_NON_EMPTY(&HeadContourNodes)) {
@@ -450,13 +461,13 @@ ged_import_polygon(struct ged *gedp, const char *sname)
 	}
 
 	/* free contour node */
-	bu_free((genptr_t)curr_cnode, "curr_cnode");
+	bu_free((void *)curr_cnode, "curr_cnode");
 
 	++j;
     }
 
     /* Clean up */
-    bu_free((genptr_t)all_segment_nodes, "all_segment_nodes");
+    bu_free((void *)all_segment_nodes, "all_segment_nodes");
     rt_db_free_internal(&intern);
 
     return gpp;
@@ -464,7 +475,7 @@ ged_import_polygon(struct ged *gedp, const char *sname)
 
 
 fastf_t
-ged_find_polygon_area(ged_polygon *gpoly, fastf_t sf, matp_t model2view, fastf_t size)
+ged_find_polygon_area(bview_polygon *gpoly, fastf_t sf, matp_t model2view, fastf_t size)
 {
     register size_t j, k, n;
     ClipperLib::Polygon poly;
@@ -508,7 +519,7 @@ typedef struct {
 
 
 int
-ged_polygons_overlap(struct ged *gedp, ged_polygon *polyA, ged_polygon *polyB)
+ged_polygons_overlap(struct ged *gedp, bview_polygon *polyA, bview_polygon *polyB)
 {
     register size_t i, j;
     register size_t beginA, endA, beginB, endB;
@@ -865,16 +876,268 @@ ged_polygons_overlap(struct ged *gedp, ged_polygon *polyA, ged_polygon *polyB)
 end:
 
     for (i = 0; i < polyA->gp_num_contours; ++i)
-	bu_free((genptr_t)polyA_2d.p_contour[i].pc_point, "pc_point");
+	bu_free((void *)polyA_2d.p_contour[i].pc_point, "pc_point");
     for (i = 0; i < polyB->gp_num_contours; ++i)
-	bu_free((genptr_t)polyB_2d.p_contour[i].pc_point, "pc_point");
+	bu_free((void *)polyB_2d.p_contour[i].pc_point, "pc_point");
 
-    bu_free((genptr_t)polyA_2d.p_hole, "p_hole");
-    bu_free((genptr_t)polyA_2d.p_contour, "p_contour");
-    bu_free((genptr_t)polyB_2d.p_hole, "p_hole");
-    bu_free((genptr_t)polyB_2d.p_contour, "p_contour");
+    bu_free((void *)polyA_2d.p_hole, "p_hole");
+    bu_free((void *)polyA_2d.p_contour, "p_contour");
+    bu_free((void *)polyB_2d.p_hole, "p_hole");
+    bu_free((void *)polyB_2d.p_contour, "p_contour");
 
     return ret;
+}
+
+
+HIDDEN int
+sort_by_X(const void *p1, const void *p2, void *UNUSED(arg))
+{
+    point2d_t *pt1 = (point2d_t *)p1;
+    point2d_t *pt2 = (point2d_t *)p2;
+
+    if (*pt1[X] < *pt2[X]) {
+	return -1;
+    }
+
+    if (*pt1[X] > *pt2[X]) {
+	return 1;
+    }
+
+    return 0;
+}
+
+
+void
+ged_polygon_fill_segments(struct ged *gedp, bview_polygon *poly, vect2d_t vfilldir, fastf_t vfilldelta)
+{
+    register size_t i, j;
+    register fastf_t vx, vy, vZ = 0.0;
+    register size_t begin, end;
+    point2d_t pt_2d;
+    point_t pt;
+    point_t hit_pt;
+    polygon_2d poly_2d;
+    size_t ecount;
+    size_t icount;
+    size_t final_icount;
+    struct bu_vls result_vls;
+    point2d_t *isect2;
+    point2d_t *final_isect2;
+    int tweakCount;
+    static size_t isectSize = 8;
+    static int maxTweaks = 10;
+
+    /* initialize result */
+    bu_vls_trunc(gedp->ged_result_str, 0);
+
+    if (poly->gp_num_contours < 1 || poly->gp_contour[0].gpc_num_points < 3)
+	return;
+
+    if (vfilldelta < 0)
+	vfilldelta = -vfilldelta;
+
+    isect2 = (point2d_t *)bu_calloc(isectSize, sizeof(point2d_t), "isect2");
+    final_isect2 = (point2d_t *)bu_calloc(isectSize, sizeof(point2d_t), "final_isect2");
+
+    /* Project poly onto the view plane */
+    poly_2d.p_num_contours = poly->gp_num_contours;
+    poly_2d.p_hole = (int *)bu_calloc(poly->gp_num_contours, sizeof(int), "p_hole");
+    poly_2d.p_contour = (poly_contour_2d *)bu_calloc(poly->gp_num_contours, sizeof(poly_contour_2d), "p_contour");
+
+    for (i = 0; i < poly->gp_num_contours; ++i) {
+	poly_2d.p_hole[i] = poly->gp_hole[i];
+	poly_2d.p_contour[i].pc_num_points = poly->gp_contour[i].gpc_num_points;
+	poly_2d.p_contour[i].pc_point = (point2d_t *)bu_calloc(poly->gp_contour[i].gpc_num_points, sizeof(point2d_t), "pc_point");
+
+	for (j = 0; j < poly->gp_contour[i].gpc_num_points; ++j) {
+	    point_t vpoint;
+
+	    MAT4X3PNT(vpoint, gedp->ged_gvp->gv_model2view, poly->gp_contour[i].gpc_point[j]);
+	    V2MOVE(poly_2d.p_contour[i].pc_point[j], vpoint);
+	    vZ = vpoint[Z];
+	}
+    }
+
+    VUNITIZE(vfilldir);
+    bu_vls_init(&result_vls);
+
+    /* Intersect diagonal view lines with the 2d polygon */
+    pt_2d[X] = -1.0;
+    for (vy = 1.0 - vfilldelta; vy > -1.0; vy -= vfilldelta) {
+	tweakCount = 0;
+	pt_2d[Y] = vy;
+
+    try_y_tweak:
+        ecount = 0;
+        icount = 0;
+	for (i = 0; i < poly_2d.p_num_contours; ++i) {
+	    for (begin = 0; begin < poly_2d.p_contour[i].pc_num_points; ++begin) {
+		vect2d_t distvec;
+		vect2d_t pdir;
+		int ret;
+
+		/* wrap around */
+		if (begin == poly_2d.p_contour[i].pc_num_points-1)
+		    end = 0;
+		else
+		    end = begin + 1;
+
+		V2SUB2(pdir, poly_2d.p_contour[i].pc_point[end], poly_2d.p_contour[i].pc_point[begin]);
+
+		if ((ret = bn_isect_line2_lseg2(distvec,
+						pt_2d, vfilldir,
+						poly_2d.p_contour[i].pc_point[begin], pdir,
+						&gedp->ged_wdbp->wdb_tol)) >= 0) {
+		    /* We have an intersection */
+		    V2JOIN1(pt, poly_2d.p_contour[i].pc_point[begin], distvec[1], pdir);
+
+		    if (ret == 1 || ret == 2) {
+			++ecount;
+
+			if (ecount > 1 && tweakCount < maxTweaks) {
+			    ++tweakCount;
+			    pt_2d[Y] = pt_2d[Y] - vfilldelta*0.01;
+			    goto try_y_tweak;
+			}
+		    }
+
+		    if (icount >= isectSize) {
+			isectSize *= 2;
+			isect2 = (point2d_t *)bu_realloc((void *)isect2, isectSize*sizeof(point2d_t), "isect2");
+			final_isect2 = (point2d_t *)bu_realloc((void *)final_isect2, isectSize*sizeof(point2d_t), "final_isect2");
+		    }
+
+		    V2MOVE(isect2[icount], pt);
+		    ++icount;
+		}
+	    }
+	}
+
+	if (icount) {
+	    final_icount = icount;
+
+	    bu_sort(isect2, icount, sizeof(point2d_t), sort_by_X, NULL);
+	    V2MOVE(final_isect2[0], isect2[0]);
+
+	    /* remove duplicates */
+	    j = 1;
+	    for (i = 1; i < icount; ++i) {
+		if (V2NEAR_EQUAL(final_isect2[j-1], isect2[i], SMALL_FASTF)) {
+		    --final_icount;
+		    continue;
+		}
+
+		V2MOVE(final_isect2[j], isect2[i]);
+		++j;
+	    }
+
+	    if (!(final_icount%2)) {
+		for (i = 0; i < final_icount; ++i) {
+		    V2MOVE(pt, final_isect2[i]);
+		    pt[Z] = vZ;
+		    MAT4X3PNT(hit_pt, gedp->ged_gvp->gv_view2model, pt);
+		    bu_vls_printf(&result_vls, "{%lf %lf %lf} ", V3ARGS(hit_pt));
+		}
+	    } else if (tweakCount < maxTweaks) {
+		++tweakCount;
+		pt_2d[Y] = pt_2d[Y] - vfilldelta*0.01;
+		goto try_y_tweak;
+	    }
+	}
+    }
+
+    if (vfilldir[X]*vfilldir[Y] < 0)
+	pt_2d[Y] = 1.0;
+    else
+	pt_2d[Y] = -1.0;
+
+    for (vx = -1.0; vx < 1.0; vx += vfilldelta) {
+	tweakCount = 0;
+	pt_2d[X] = vx;
+
+    try_x_tweak:
+        ecount = 0;
+        icount = 0;
+	for (i = 0; i < poly_2d.p_num_contours; ++i) {
+	    for (begin = 0; begin < poly_2d.p_contour[i].pc_num_points; ++begin) {
+		vect2d_t distvec;
+		vect2d_t pdir;
+		int ret;
+
+		/* wrap around */
+		if (begin == poly_2d.p_contour[i].pc_num_points-1)
+		    end = 0;
+		else
+		    end = begin + 1;
+
+
+		V2SUB2(pdir, poly_2d.p_contour[i].pc_point[end], poly_2d.p_contour[i].pc_point[begin]);
+
+		if ((ret = bn_isect_line2_lseg2(distvec,
+						pt_2d, vfilldir,
+						poly_2d.p_contour[i].pc_point[begin], pdir,
+						&gedp->ged_wdbp->wdb_tol)) >= 0) {
+		    /* We have an intersection */
+		    V2JOIN1(pt, poly_2d.p_contour[i].pc_point[begin], distvec[1], pdir);
+
+		    if (ret == 1 || ret == 2) {
+			++ecount;
+
+			if (ecount > 1 && tweakCount < maxTweaks) {
+			    ++tweakCount;
+			    pt_2d[X] = pt_2d[X] + vfilldelta*0.01;
+			    goto try_x_tweak;
+			}
+		    }
+
+		    if (icount >= isectSize) {
+			isectSize *= 2;
+			isect2 = (point2d_t *)bu_realloc((void *)isect2, isectSize*sizeof(point2d_t), "isect2");
+			final_isect2 = (point2d_t *)bu_realloc((void *)final_isect2, isectSize*sizeof(point2d_t), "final_isect2");
+		    }
+
+		    V2MOVE(isect2[icount], pt);
+		    ++icount;
+		}
+	    }
+	}
+
+	if (icount) {
+	    final_icount = icount;
+
+	    bu_sort(isect2, icount, sizeof(point2d_t), sort_by_X, NULL);
+	    V2MOVE(final_isect2[0], isect2[0]);
+
+	    /* remove duplicates */
+	    j = 1;
+	    for (i = 1; i < icount; ++i) {
+		if (V2NEAR_EQUAL(final_isect2[j-1], isect2[i], SMALL_FASTF)) {
+		    --final_icount;
+		    continue;
+		}
+
+		V2MOVE(final_isect2[j], isect2[i]);
+		++j;
+	    }
+
+	    if (!(final_icount%2)) {
+		for (i = 0; i < final_icount; ++i) {
+		    V2MOVE(pt, final_isect2[i]);
+		    pt[Z] = vZ;
+		    MAT4X3PNT(hit_pt, gedp->ged_gvp->gv_view2model, pt);
+		    bu_vls_printf(&result_vls, "{%lf %lf %lf} ", V3ARGS(hit_pt));
+		}
+	    } else if (tweakCount < maxTweaks) {
+		++tweakCount;
+		pt_2d[X] = pt_2d[X] + vfilldelta*0.01;
+		goto try_x_tweak;
+	    }
+	}
+    }
+
+    bu_vls_printf(gedp->ged_result_str, "%s", bu_vls_addr(&result_vls));
+    bu_free((void *)isect2, "isect2");
+    bu_free((void *)final_isect2, "final_isect2");
 }
 
 

@@ -1,7 +1,7 @@
 /*                 ProductDefinition.cpp
  * BRL-CAD
  *
- * Copyright (c) 1994-2013 United States Government as represented by
+ * Copyright (c) 1994-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -28,6 +28,7 @@
 #include "Factory.h"
 
 #include "ProductDefinitionFormation.h"
+#include "ProductDefinitionFormationWithSpecifiedSource.h"
 #include "ProductDefinitionContext.h"
 #include "ProductDefinition.h"
 
@@ -57,6 +58,9 @@ ProductDefinition::ProductDefinition(STEPWrapper *sw, int step_id)
 
 ProductDefinition::~ProductDefinition()
 {
+    // created through factory will be deleted there.
+    formation = NULL;
+    frame_of_reference = NULL;
 }
 
 string ProductDefinition::ClassName()
@@ -72,6 +76,27 @@ string ProductDefinition::Ident()
 string ProductDefinition::Description()
 {
     return description;
+}
+
+string ProductDefinition::GetProductName()
+{
+    string name;
+    ProductDefinitionFormation *aPDF = dynamic_cast<ProductDefinitionFormation *>(formation);
+    if (aPDF != NULL) {
+	name = aPDF->GetProductName();
+    }
+    return name;
+}
+
+int
+ProductDefinition::GetProductId()
+{
+    int ret = 0;
+    ProductDefinitionFormation *aPDF = dynamic_cast<ProductDefinitionFormation *>(formation);
+    if (aPDF != NULL) {
+	ret = aPDF->GetProductId();
+    }
+    return ret;
 }
 
 bool ProductDefinition::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
@@ -92,6 +117,7 @@ bool ProductDefinition::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
 	    formation = dynamic_cast<ProductDefinitionFormation *>(Factory::CreateObject(sw, entity));
 	} else {
 	    std::cout << CLASSNAME << ":Error loading attribute 'formation'." << std::endl;
+	    sw->entity_status[id] = STEP_LOAD_ERROR;
 	    return false;
 	}
     }
@@ -102,9 +128,12 @@ bool ProductDefinition::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
 	    frame_of_reference = dynamic_cast<ProductDefinitionContext *>(Factory::CreateObject(sw, entity));
 	} else {
 	    std::cout << CLASSNAME << ":Error loading attribute 'frame_of_reference'." << std::endl;
+	    sw->entity_status[id] = STEP_LOAD_ERROR;
 	    return false;
 	}
     }
+
+    sw->entity_status[id] = STEP_LOADED;
 
     return true;
 }

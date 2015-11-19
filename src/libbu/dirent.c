@@ -1,7 +1,7 @@
 /*                           D I R E N T . C
  * BRL-CAD
  *
- * Copyright (c) 2001-2013 United States Government as represented by
+ * Copyright (c) 2001-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -25,9 +25,11 @@
 #include <string.h>
 #include <sys/types.h>
 
-#include "bu.h"
+#include "bu/file.h"
+#include "bu/path.h"
+#include "bu/malloc.h"
+#include "bu/str.h"
 #include "uce-dirent.h"
-
 
 size_t
 bu_dir_list(const char *path, const char *pattern, char ***files)

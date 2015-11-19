@@ -1,7 +1,7 @@
 /*                         M A T E R . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2013 United States Government as represented by
+ * Copyright (c) 1985-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -32,13 +32,10 @@
 
 #include "common.h"
 
-#include <stdio.h>
 #include "bio.h"
 
 #include "vmath.h"
 #include "raytrace.h"
-#include "mater.h"
-
 
 /*
  * It is expected that entries on this mater list will be sorted in
@@ -48,9 +45,6 @@
 static struct mater *material_head = MATER_NULL;
 
 
-/**
- *
- */
 void
 rt_pr_mater(register const struct mater *mp)
 {
@@ -210,20 +204,17 @@ rt_region_color_map(register struct region *regp)
 	    regp->reg_regionid >= mp->mt_low) {
 	    regp->reg_mater.ma_color_valid = 1;
 	    regp->reg_mater.ma_color[0] =
-		(((double)mp->mt_r)+0.5)*bn_inv255;
+		(((double)mp->mt_r)+0.5) / 255.0;
 	    regp->reg_mater.ma_color[1] =
-		(((double)mp->mt_g)+0.5)*bn_inv255;
+		(((double)mp->mt_g)+0.5) / 255.0;
 	    regp->reg_mater.ma_color[2] =
-		(((double)mp->mt_b)+0.5)*bn_inv255;
+		(((double)mp->mt_b)+0.5) / 255.0;
 	    return;
 	}
     }
 }
 
 
-/**
- *
- */
 void
 rt_vls_color_map(struct bu_vls *str)
 {
@@ -247,7 +238,7 @@ rt_vls_color_map(struct bu_vls *str)
  * returns the material linked list head node
  */
 struct mater *
-rt_material_head()
+rt_material_head(void)
 {
     return material_head;
 }
@@ -267,7 +258,7 @@ rt_new_material_head(struct mater *newmat)
  * returns a copy of the material linked list head node
  */
 struct mater *
-rt_dup_material_head()
+rt_dup_material_head(void)
 {
     register struct mater *mp = NULL;
     register struct mater *newmp = NULL;

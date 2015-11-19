@@ -1,7 +1,7 @@
 /*                            C V . C
  * BRL-CAD
  *
- * Copyright (c) 1991-2013 United States Government as represented by
+ * Copyright (c) 1991-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -28,8 +28,8 @@
 #include <math.h>
 #include "bio.h"
 
-#include "bu.h"
 #include "vmath.h"
+#include "bu/cv.h"
 #include "raytrace.h"
 
 
@@ -52,14 +52,17 @@ int outbytes;
 FILE *infp;
 FILE *outfp;
 
-genptr_t ibuf;
-genptr_t obuf;
+void *ibuf;
+void *obuf;
+
+const char huc[] = "huc";
+const char nuc[] = "nuc";
 
 int
 main(int argc, char **argv)
 {
-    char *in_pat;
-    char *out_pat;
+    const char *in_pat;
+    const char *out_pat;
     int m;
     int n;
 
@@ -70,7 +73,7 @@ main(int argc, char **argv)
 
     in_pat = argv[1];
     if (BU_STR_EQUAL(in_pat, "")) {
-	in_pat = "huc";
+	in_pat = huc;
     } else if (strlen(in_pat) > 4 || strlen(in_pat) < 1) {
 	fprintf(stderr, "cv: unrecognized input pattern\n");
 	return 1;
@@ -78,7 +81,7 @@ main(int argc, char **argv)
 
     out_pat = argv[2];
     if (BU_STR_EQUAL(out_pat, "")) {
-	out_pat = "nuc";
+	out_pat = nuc;
     } else if (strlen(out_pat) > 4 || strlen(out_pat) < 1) {
 	fprintf(stderr, "cv: unrecognized output pattern\n");
 	return 1;
@@ -115,8 +118,8 @@ main(int argc, char **argv)
     inbytes = NITEMS*iitem;
     outbytes = NITEMS*oitem;
 
-    ibuf = (genptr_t)bu_malloc(inbytes, "cv input buffer");
-    obuf = (genptr_t)bu_malloc(outbytes, "cv output buffer");
+    ibuf = (void *)bu_malloc(inbytes, "cv input buffer");
+    obuf = (void *)bu_malloc(outbytes, "cv output buffer");
 
     while (!feof(infp)) {
 	if ((n = fread(ibuf, iitem, NITEMS, infp)) <= 0)

@@ -1,7 +1,7 @@
 /*                      S H _ N O I S E . C
  * BRL-CAD
  *
- * Copyright (c) 1998-2013 United States Government as represented by
+ * Copyright (c) 1998-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -35,8 +35,8 @@
 #include <string.h>
 #include <math.h>
 
-#include "bu.h"
 #include "vmath.h"
+#include "bu/units.h"
 #include "bn.h"
 #include "raytrace.h"
 #include "optical.h"
@@ -45,40 +45,21 @@
 #define noise_MAGIC 0x1847
 #define CK_noise_SP(_p) BU_CKMAG(_p, noise_MAGIC, "noise_specific")
 
-/* This allows us to specify the "size" parameter as values like ".5m"
- * or "27in" rather than using mm all the time.
- */
 void
-noise_cvt_parse(register const struct bu_structparse *sdp, register const char *name, char *base, const char *value)
+noise_deg_to_rad(const struct bu_structparse *sdp,
+		 const char *UNUSED(name),
+		 void *base,
+		 const char *UNUSED(value),
+		 void *UNUSED(data))
 /* structure description */
 /* struct member name */
 /* beginning of structure */
 /* string containing value */
 {
-    double *p = (double *)(base+sdp->sp_offset);
-
-    if (rdebug&RDEBUG_SHADE)
-	bu_log("%s value %s ", name, value);
-    /* reconvert with optional units */
-    *p = bu_mm_value(value);
-
-    if (rdebug&RDEBUG_SHADE)
-	bu_log(" %g\n", *p);
-
-}
-
-
-void
-noise_deg_to_rad(register const struct bu_structparse *sdp, const char *UNUSED(name), char *base, const char *UNUSED(value))
-/* structure description */
-/* struct member name */
-/* beginning of structure */
-/* string containing value */
-{
-    double *p = (double *)(base+sdp->sp_offset);
+    double *p = (double *)((char *)base + sdp->sp_offset);
 
     /* reconvert with optional units */
-    *p = *p * (bn_pi / 180.0);
+    *p = *p * DEG2RAD;
 }
 
 
@@ -112,7 +93,7 @@ struct noise_specific noise_defaults = {
     1.0,		/* h_val */
     4.0,		/* octaves */
     1.0,		/* size */
-    1.57079632679489661923,		/* max_angle M_PI_2 */
+    M_PI_2,		/* max_angle */
     VINITALL(1.0),	/* vscale */
     VINITALL(1000.0),	/* delta into noise space */
     MAT_INIT_ZERO,	/* m_to_sh */
@@ -167,18 +148,14 @@ struct bu_structparse noise_parse_tab[] = {
 };
 
 
-/* G R A V E L _ S E T U P
- *
+/*
  * This routine is called (at prep time)
  * once for each region which uses this shader.
  * Any shader-specific initialization should be done here.
  */
 HIDDEN int
-noise_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, const struct mfuncs *mfp, struct rt_i *rtip)
-
-
+noise_setup(register struct region *rp, struct bu_vls *matparm, void **dpp, const struct mfuncs *mfp, struct rt_i *rtip)
 /* pointer to reg_udata in *rp */
-
 /* New since 4.4 release */
 {
     register struct noise_specific *noise_sp;
@@ -205,7 +182,7 @@ noise_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, c
     memcpy(noise_sp, &noise_defaults, sizeof(struct noise_specific));
 
     /* parse the user's arguments for this use of the shader. */
-    if (bu_struct_parse(matparm, noise_parse_tab, (char *)noise_sp) < 0)
+    if (bu_struct_parse(matparm, noise_parse_tab, (char *)noise_sp, NULL) < 0)
 	return -1;
 
     /* figure out which shader is really being called */
@@ -256,37 +233,26 @@ found:
 }
 
 
-/*
- * G R A V E L _ P R I N T
- */
 HIDDEN void
-noise_print(register struct region *rp, genptr_t dp)
+noise_print(register struct region *rp, void *dp)
 {
     bu_struct_print(rp->reg_name, noise_print_tab, (char *)dp);
 }
 
 
-/*
- * G R A V E L _ F R E E
- */
 HIDDEN void
-noise_free(genptr_t cp)
+noise_free(void *cp)
 {
     BU_PUT(cp, struct noise_specific);
 }
 #define RESCALE_NOISE(n) n += 1.0
 
 /*
- * N O R M _ N O I S E
- *
  * Apply a noise function to the surface normal
  */
 static void
 norm_noise(fastf_t *pt, double val, struct noise_specific *noise_sp, double (*func) (/* ??? */), struct shadework *swp, int rescale)
-
-
 /* defined in material.h */
-
 {
     vect_t N, tmp;
     point_t u_pt, v_pt;
@@ -350,16 +316,12 @@ norm_noise(fastf_t *pt, double val, struct noise_specific *noise_sp, double (*fu
 
 
 /*
- * F R A C T A L _ R E N D E R
- *
  * This is called (from viewshade() in shade.c) once for each hit point
  * to be shaded.  The purpose here is to fill in values in the shadework
  * structure.
  */
 int
-fractal_render(struct application *ap, const struct partition *pp, struct shadework *swp, genptr_t dp)
-
-
+fractal_render(struct application *ap, const struct partition *pp, struct shadework *swp, void *dp)
 /* defined in material.h */
 /* ptr to the shader-specific struct */
 {

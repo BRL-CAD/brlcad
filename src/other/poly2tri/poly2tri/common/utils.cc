@@ -29,7 +29,7 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include <exception>
-#ifdef WIN32
+#ifdef _WIN32
 // Otherwise #defines like M_PI are undeclared under Visual Studio
 # define _USE_MATH_DEFINES
 #endif
@@ -54,10 +54,11 @@ const double EPSILON = DBL_MIN;
  *              =  (x1-x3)*(y2-y3) - (y1-y3)*(x2-x3)
  * </pre>
  */
-Orientation Orient2d(Point& pa, Point& pb, Point& pc)
+Orientation Orient2d(Point *pa, Point *pb, Point *pc)
 {
-  double detleft = (pa.x - pc.x) * (pb.y - pc.y);
-  double detright = (pa.y - pc.y) * (pb.x - pc.x);
+  if (!pa || !pb || !pc) return INVALID_ORIENTATION;
+  double detleft = (pa->x - pc->x) * (pb->y - pc->y);
+  double detright = (pa->y - pc->y) * (pb->x - pc->x);
   double val = detleft - detright;
   if (val > -EPSILON && val < EPSILON) {
     return COLLINEAR;
@@ -67,48 +68,15 @@ Orientation Orient2d(Point& pa, Point& pb, Point& pc)
   return CW;
 }
 
-/*
-bool InScanArea(Point& pa, Point& pb, Point& pc, Point& pd)
+bool InScanArea(Point *pa, Point *pb, Point *pc, Point *pd)
 {
-  double pdx = pd.x;
-  double pdy = pd.y;
-  double adx = pa.x - pdx;
-  double ady = pa.y - pdy;
-  double bdx = pb.x - pdx;
-  double bdy = pb.y - pdy;
-
-  double adxbdy = adx * bdy;
-  double bdxady = bdx * ady;
-  double oabd = adxbdy - bdxady;
-
-  if (oabd <= EPSILON) {
-    return false;
-  }
-
-  double cdx = pc.x - pdx;
-  double cdy = pc.y - pdy;
-
-  double cdxady = cdx * ady;
-  double adxcdy = adx * cdy;
-  double ocad = cdxady - adxcdy;
-
-  if (ocad <= EPSILON) {
-    return false;
-  }
-
-  return true;
-}
-
-*/
-
-bool InScanArea(Point& pa, Point& pb, Point& pc, Point& pd)
-{
-  double oadb = (pa.x - pb.x)*(pd.y - pb.y) - (pd.x - pb.x)*(pa.y - pb.y);
+  if (!pa || !pb || !pc || !pd) return false;
+  double oadb = (pa->x - pb->x)*(pd->y - pb->y) - (pd->x - pb->x)*(pa->y - pb->y);
   if (oadb >= -EPSILON) {
     return false;
   }
 
-  double oadc = (pa.x - pc.x)*(pd.y - pc.y) - (pd.x - pc.x)*(pa.y - pc.y);
+  double oadc = (pa->x - pc->x)*(pd->y - pc->y) - (pd->x - pc->x)*(pa->y - pc->y);
   if (oadc <= EPSILON) {
     return false;
   }
@@ -116,3 +84,4 @@ bool InScanArea(Point& pa, Point& pb, Point& pc, Point& pd)
 }
 
 }
+

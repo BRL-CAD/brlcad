@@ -1,7 +1,7 @@
 /*                      P L O T 3 - P S . C
  * BRL-CAD
  *
- * Copyright (c) 1989-2013 United States Government as represented by
+ * Copyright (c) 1989-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -32,8 +32,11 @@
 #include <string.h>
 #include "bio.h"
 
-#include "bu.h"
 #include "vmath.h"
+#include "bu/getopt.h"
+#include "bu/cv.h"
+#include "bu/log.h"
+#include "bu/str.h"
 
 #define TBAD	0	/* no such command */
 #define TNONE	1	/* no arguments */
@@ -45,7 +48,7 @@
 struct uplot {
     int targ;	/* type of args */
     int narg;	/* number or args */
-    char *desc;	/* description */
+    const char *desc;	/* description */
 };
 struct uplot uerror = { 0, 0, 0 };
 struct uplot letters[] = {
@@ -118,22 +121,23 @@ char strarg[512];		/* string buffer */
 
 #define DEFAULT_SIZE 6.75	/* default output size in inches */
 
-int encapsulated = 0;	/* encapsulated postscript */
+int encapsulated = 0;	/* encapsulated PostScript */
 int center = 0;		/* center output on 8.5 x 11 page */
 int width = 4096;		/* Our integer plotting space */
 int height = 4096;
-double outwidth;		/* output plot size in inches */
-double outheight;
+double outwidth = DEFAULT_SIZE;		/* output plot size in inches */
+double outheight = DEFAULT_SIZE;
 int xpoints;		/* output plot size in points */
 int ypoints;
 int page_dirty = 0;		/* to skip extra erases */
 
+static char Stdin[] = "[stdin]";
 static char *file_name;
 static FILE *infp;
 
 static char usage[] = "\
-Usage: plot3-ps [-e] [-c] [-S inches_square]\n\
-	[-W width_inches] [-N height_inches] [file.plot3]\n";
+Usage: plot3-ps [-e] [-c] [-s|S inches_square]\n\
+	[-w|W width_inches] [-n|N height_inches] [<] file.plot3\n";
 
 int
 getshort(void)
@@ -359,7 +363,7 @@ get_args(int argc, char **argv)
 {
     int c;
 
-    while ((c = bu_getopt(argc, argv, "ecs:w:n:S:W:N:")) != -1) {
+    while ((c = bu_getopt(argc, argv, "ecs:w:n:S:W:N:h?")) != -1) {
 	switch (c) {
 	    case 'e':
 		/* Encapsulated PostScript */
@@ -382,7 +386,7 @@ get_args(int argc, char **argv)
 		outheight = atof(bu_optarg);
 		break;
 
-	    default:		/* '?' */
+	    default:		/* 'h' '?' */
 		return 0;
 	}
     }
@@ -390,7 +394,7 @@ get_args(int argc, char **argv)
     if (bu_optind >= argc) {
 	if (isatty(fileno(stdin)))
 	    return 0;
-	file_name = "[stdin]";
+	file_name = Stdin;
 	infp = stdin;
     } else {
 	file_name = argv[bu_optind];
@@ -415,8 +419,6 @@ main(int argc, char **argv)
 {
     int c;
     struct uplot *up;
-
-    outwidth = outheight = DEFAULT_SIZE;
 
     if (!get_args(argc, argv)) {
 	(void)fputs(usage, stderr);

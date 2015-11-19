@@ -1,7 +1,7 @@
 /*                        B W - P N G . C
  * BRL-CAD
  *
- * Copyright (c) 1998-2013 United States Government as represented by
+ * Copyright (c) 1998-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -29,13 +29,18 @@
 #include <math.h>
 #include <zlib.h>
 #include <png.h>
-#include "bio.h"
 
-#include "bu.h"
 #include "vmath.h"
+#include "bu/getopt.h"
+#include "bu/log.h"
+#include "bu/malloc.h"
 #include "bn.h"
 #include "fb.h"
 
+
+#define BYTESPERPIXEL 1
+#define ROWSIZE (file_width * BYTESPERPIXEL)
+#define SIZE (file_height * ROWSIZE)
 
 static long int file_width = 512;		/* default input width */
 static long int file_height = 512;		/* default input height */
@@ -44,13 +49,7 @@ static int fileinput = 0;			/* file of pipe on input? */
 static char *file_name;
 static FILE *infp;
 
-#define BYTESPERPIXEL 1
-
-#define ROWSIZE (file_width * BYTESPERPIXEL)
-#define SIZE (file_height * ROWSIZE)
-
-static char usage[] = "\
-Usage: bw-png [-a] [-w file_width] [-n file_height]\n\
+static char usage[] = "Usage: bw-png [-a] [-w file_width] [-n file_height]\n\
 	[-s square_file_size] [file.bw]\n";
 
 int
@@ -77,7 +76,7 @@ get_args(int argc, char **argv)
 		autosize = 0;
 		break;
 
-	    default:		/* '?' */
+	    default: /* 'h' '?' */
 		return 0;
 	}
     }

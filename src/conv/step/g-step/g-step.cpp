@@ -1,7 +1,7 @@
 /*                    G -  S T E P . C P P
  * BRL-CAD
  *
- * Copyright (c) 2013 United States Government as represented by
+ * Copyright (c) 2013-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -23,36 +23,23 @@
  *
  */
 
-#include "common.h"
+#include "AP_Common.h"
+
+#include "bu/getopt.h"
+#include "bu/file.h"
+#include "bu/log.h"
+#include "rt/geom.h"
+#include "raytrace.h"
+#include "wdb.h"
 
 #include <iostream>
 
-#include "bu.h"
-
-//
 // step-g related headers
-//
-#include <BRLCADWrapper.h>
-#include <STEPWrapper.h>
-#include <STEPfile.h>
-#include <sdai.h>
-#include <STEPcomplex.h>
-#include <STEPattribute.h>
-#include <SdaiHeaderSchema.h>
-#include "ON_Brep.h"
-
-//
-// include NIST step related headers
-//
-#include <sdai.h>
-#include <STEPfile.h>
-#ifdef AP203e2
-#  include <SdaiAP203_CONFIGURATION_CONTROLLED_3D_DESIGN_OF_MECHANICAL_PARTS_AND_ASSEMBLIES_MIM_LF.h>
-#else
-#  include <SdaiCONFIG_CONTROL_DESIGN.h>
-#endif
-
+#include "SdaiHeaderSchema.h"
 #include "schema.h"
+
+#include "G_Objects.h"
+#include "Default_Geometric_Context.h"
 
 void
 usage()
@@ -65,6 +52,10 @@ int
 main(int argc, char *argv[])
 {
     int ret = 0;
+    int convert_tops_list = 0;
+    struct directory **paths;
+    int path_cnt = 0;
+    AP203_Contents *sc = new AP203_Contents;
 
     // process command line arguments
     int c;
@@ -98,6 +89,11 @@ main(int argc, char *argv[])
 	bu_exit(2, "ERROR: unable to read input \"%s\" .g file", argv[0]);
     }
 
+    if (argc < 2) {
+	convert_tops_list = 1;
+    }
+
+
     std::string iflnm = argv[0];
     std::string oflnm = output_file;
 
@@ -114,36 +110,44 @@ main(int argc, char *argv[])
     }
 
     struct db_i *dbip = dotg->GetDBIP();
-    struct directory *dp = db_lookup(dbip, "brep.s", LOOKUP_QUIET);
-    if (dp == RT_DIR_NULL) {
-	std::cerr << "ERROR: cannot find " << "brep.s" << "\n" << std::endl;
-	delete dotg;
-	return 1;
+    struct rt_wdb *wdbp = wdb_dbopen(dbip, RT_WDB_TYPE_DB_DISK);
+
+    if (convert_tops_list) {
+	/* Need db_update_nref for DB_LS_TOPS to work */
+	db_update_nref(dbip, &rt_uniresource);
+	path_cnt = db_ls(dbip, DB_LS_TOPS, NULL, &paths);
+	if (!path_cnt) {
+	    std::cerr << "ERROR: no objects found in .g file" << "\n" << std::endl;
+	    delete dotg;
+	    return 1;
+	}
+    } else {
+	int i = 1;
+	paths = (struct directory **)bu_malloc(sizeof(struct directory *) * argc, "dp array");
+	while (i < argc) {
+	    bu_log("%d: %s\n", i, argv[i]);
+	    struct directory *dp = db_lookup(dbip, argv[i], LOOKUP_QUIET);
+	    if (dp == RT_DIR_NULL) {
+		std::cerr << "ERROR: cannot find " << argv[i] << "\n" << std::endl;
+		delete dotg;
+		bu_free(paths, "free path memory");
+		return 1;
+	    } else {
+		paths[i-1] = dp;
+		path_cnt++;
+		i++;
+	    }
+	}
+	paths[i-1] = RT_DIR_NULL;
     }
 
-    struct rt_db_internal intern;
-    struct rt_brep_internal *bi;
-    rt_db_get_internal(&intern, dp, dbip, bn_mat_identity, &rt_uniresource);
-    RT_CK_DB_INTERNAL(&intern);
-    bi = (struct rt_brep_internal*)intern.idb_ptr;
-    //RT_BREP_TEST_MAGIC(bi);
-    ON_Brep *brep = bi->brep;
-    ON_wString wstr;
-    ON_TextLog dump(wstr);
-    brep->Dump(dump);
-    ON_String ss = wstr;
-    //bu_log("Brep:\n %s\n", ss.Array());
 
-    Exporter_Info_AP203 *info = new Exporter_Info_AP203();
-
-    info->split_closed = 0; /* For now, don't try splitting things - need some libbrep functionality before that can work */
+    struct bu_vls scratch_string;
+    bu_vls_init(&scratch_string);
 
     Registry *registry = new Registry(SchemaInit);
     InstMgr instance_list;
     STEPfile *sfile = new STEPfile(*registry, instance_list);
-
-    info->registry = registry;
-    info->instance_list = &instance_list;
 
     registry->ResetSchemas();
     registry->ResetEntities();
@@ -153,7 +157,8 @@ main(int argc, char *argv[])
 
     /* 1 - Populate File_Name */
     SdaiFile_name * fn = (SdaiFile_name *)sfile->HeaderDefaultFileName();
-    fn->name_("'brep'");
+    bu_vls_sprintf(&scratch_string, "'%s'", output_file);
+    fn->name_(bu_vls_addr(&scratch_string));
     fn->time_stamp_("");
     StringAggregate_ptr author_tmp = new StringAggregate;
     author_tmp->AddNode(new StringNode("''"));
@@ -181,14 +186,59 @@ main(int argc, char *argv[])
     fs->schema_identifiers_(schema_tmp);
     header_instances->Append((SDAI_Application_instance *)fs, completeSE);
 
-    /* Now, add actual DATA */
-    ON_BRep_to_STEP(brep, info);
+    sc->registry = registry;
+    sc->instance_list = &instance_list;
+
+    sc->default_context = Add_Default_Geometric_Context(sc);
+
+    sc->application_context = (SdaiApplication_context *)sc->registry->ObjCreate("APPLICATION_CONTEXT");
+    sc->instance_list->Append((STEPentity *)sc->application_context, completeSE);
+    sc->application_context->application_("'CONFIGURATION CONTROLLED 3D DESIGNS OF MECHANICAL PARTS AND ASSEMBLIES'");
+
+    sc->design_context = (SdaiDesign_context *)sc->registry->ObjCreate("DESIGN_CONTEXT");
+    sc->instance_list->Append((STEPentity *)sc->design_context, completeSE);
+    sc->design_context->name_("''");
+    sc->design_context->life_cycle_stage_("'design'");
+    sc->design_context->frame_of_reference_(sc->application_context);
+
+    sc->solid_to_step = new std::map<struct directory *, STEPentity *>;
+    sc->solid_to_step_shape = new std::map<struct directory *, STEPentity *>;
+    sc->solid_to_step_manifold = new std::map<struct directory *, STEPentity *>;
+    sc->comb_to_step = new std::map<struct directory *, STEPentity *>;
+    sc->comb_to_step_shape = new std::map<struct directory *, STEPentity *>;
+    sc->comb_to_step_manifold = new std::map<struct directory *, STEPentity *>;
+
+    for (int i = 0; i < path_cnt; i++) {
+	/* Now, add actual DATA */
+	struct directory *dp = paths[i];
+	struct rt_db_internal intern;
+	rt_db_get_internal(&intern, dp, dbip, bn_mat_identity, &rt_uniresource);
+	RT_CK_DB_INTERNAL(&intern);
+	Object_To_STEP(dp, &intern, wdbp, sc);
+	rt_db_free_internal(&intern);
+    }
 
     /* Write STEP file */
     if (!bu_file_exists(output_file, NULL)) {
 	std::ofstream stepout(output_file);
 	sfile->WriteExchangeFile(stepout);
     }
+
+    /* Free memory */
+    header_instances->DeleteInstances();
+    instance_list.DeleteInstances();
+    delete dotg;
+    delete registry;
+    delete sfile;
+    delete sc->solid_to_step;
+    delete sc->solid_to_step_shape;
+    delete sc->solid_to_step_manifold;
+    delete sc->comb_to_step;
+    delete sc->comb_to_step_shape;
+    delete sc->comb_to_step_manifold;
+    delete sc;
+    bu_vls_free(&scratch_string);
+    bu_free(paths, "free dp list");
 
     return ret;
 }

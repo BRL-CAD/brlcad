@@ -24,7 +24,7 @@
 
 
 <refsection xml:id="description"><title>DESCRIPTION</title>
-<para><emphasis remap="I">Cmap-fb</emphasis>
+<para><command>cmap-fb</command>
 loads a colormap into a framebuffer.  A colormap
 file can be specified on the command line, otherwise standard
 input will be read.
@@ -39,9 +39,9 @@ the framebuffer will be retained (one can view this as
 "overlaying" the existing colormap).</para>
 
 <para>By default, the display is assumed to be 512x512 pixels;
-by specifying the
+if the
 <option>-H</option>
-flag, the size is changed to 1024x1024.
+flag is specified, the size is changed to 1024x1024.
 This size distinction is important for devices like the Adage
 framebuffers which have different operating modes based on the
 display size.</para>
@@ -58,7 +58,7 @@ display size.</para>
 </refsection>
 
 <refsection xml:id="copyright"><title>COPYRIGHT</title>
-<para>This software is Copyright (c) 1987-2013 by the United States
+<para>This software is Copyright (c) 1987-2014 by the United States
 Government as represented by U.S. Army Research Laboratory.</para>
 </refsection>
 

@@ -1,7 +1,7 @@
 /*                        M A L L O C . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2013 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -22,9 +22,20 @@
 
 #include <stdlib.h>
 #include <string.h>
+#ifdef HAVE_SYS_IPC_H
+#  include <sys/ipc.h>
+#endif
+#ifdef HAVE_SYS_SHM_H
+#  include <sys/shm.h>
+#endif
+#include "errno.h"
 #include "bio.h"
 
-#include "bu.h"
+#include "bu/debug.h"
+#include "bu/list.h"
+#include "bu/log.h"
+#include "bu/malloc.h"
+#include "bu/parallel.h"
 
 /**
  * this controls whether to semaphore protect malloc calls
@@ -49,7 +60,7 @@ typedef enum {
 #define MDB_MAGIC 0x12348969
 struct memdebug {
     uint32_t magic;		/* corruption can be everywhere */
-    genptr_t mdb_addr;
+    void *mdb_addr;
     const char *mdb_str;
     size_t mdb_len;
 };
@@ -77,7 +88,7 @@ extern const char bu_strdup_message[];
  * Add another entry to the memory debug table
  */
 HIDDEN void
-memdebug_add(genptr_t ptr, size_t cnt, const char *str)
+memdebug_add(void *ptr, size_t cnt, const char *str)
 {
     register struct memdebug *mp = NULL;
 
@@ -142,7 +153,7 @@ again:
  * Check an entry against the memory debug table, based upon its address.
  */
 HIDDEN struct memdebug *
-memdebug_check(register genptr_t ptr, const char *str)
+memdebug_check(register void *ptr, const char *str)
 {
     register struct memdebug *mp = &bu_memdebug[bu_memdebug_len-1];
     register uint32_t *ip;
@@ -174,7 +185,7 @@ memdebug_check(register genptr_t ptr, const char *str)
 }
 
 
-extern int bu_bomb_failsafe_init();
+extern int bu_bomb_failsafe_init(void);
 
 /**
  * This routine only returns on successful allocation.  We promise
@@ -187,10 +198,10 @@ extern int bu_bomb_failsafe_init();
  *
  * type is 0 for malloc, 1 for calloc
  */
-HIDDEN genptr_t
+HIDDEN void *
 alloc(alloc_t type, size_t cnt, size_t sz, const char *str)
 {
-    genptr_t ptr = 0;
+    void *ptr = 0;
     register size_t size = sz;
     const size_t MINSIZE = sizeof(uint32_t) > sizeof(intptr_t) ? sizeof(uint32_t) : sizeof(intptr_t);
 
@@ -280,7 +291,7 @@ alloc(alloc_t type, size_t cnt, size_t sz, const char *str)
 	*((uint32_t *)(((char *)ptr) + (cnt*size) - sizeof(uint32_t))) = MDB_MAGIC;
     } else if (UNLIKELY(bu_debug&BU_DEBUG_MEM_QCHECK)) {
 	struct memqdebug *mp = (struct memqdebug *)ptr;
-	ptr = (genptr_t)(((struct memqdebug *)ptr)+1);
+	ptr = (void *)(((struct memqdebug *)ptr)+1);
 	mp->m.magic = MDB_MAGIC;
 	mp->m.mdb_addr = ptr;
 	mp->m.mdb_len = cnt*size;
@@ -299,14 +310,14 @@ alloc(alloc_t type, size_t cnt, size_t sz, const char *str)
 }
 
 
-genptr_t
+void *
 bu_malloc(size_t size, const char *str)
 {
     return alloc(MALLOC, 1, size, str);
 }
 
 
-genptr_t
+void *
 bu_calloc(size_t nelem, size_t elsize, const char *str)
 {
     return alloc(CALLOC, nelem, elsize, str);
@@ -314,7 +325,7 @@ bu_calloc(size_t nelem, size_t elsize, const char *str)
 
 
 void
-bu_free(genptr_t ptr, const char *str)
+bu_free(void *ptr, const char *str)
 {
     const char *nul = "(null)";
     if (!str)
@@ -341,7 +352,7 @@ bu_free(genptr_t ptr, const char *str)
 	if (UNLIKELY(!BU_LIST_MAGIC_EQUAL(&(mp->q), MDB_MAGIC))) {
 	    fprintf(stderr, "ERROR bu_free(%p, %s) pointer bad, or not allocated with bu_malloc!  Ignored.\n", ptr, str);
 	} else {
-	    ptr = (genptr_t)mp;
+	    ptr = (void *)mp;
 	    bu_semaphore_acquire(BU_SEM_MALLOC);
 	    BU_LIST_DEQUEUE(&(mp->q));
 	    bu_semaphore_release(BU_SEM_MALLOC);
@@ -365,15 +376,14 @@ bu_free(genptr_t ptr, const char *str)
 #if defined(MALLOC_NOT_MP_SAFE)
     bu_semaphore_release(BU_SEM_MALLOC);
 #endif
-    bu_n_free++;
 }
 
 
-genptr_t
-bu_realloc(register genptr_t ptr, size_t siz, const char *str)
+void *
+bu_realloc(register void *ptr, size_t siz, const char *str)
 {
     struct memdebug *mp=NULL;
-    genptr_t original_ptr;
+    void *original_ptr;
     const size_t MINSIZE = sizeof(uint32_t) > sizeof(intptr_t) ? sizeof(uint32_t) : sizeof(intptr_t);
 
     /* If bu_realloc receives a NULL pointer and zero size then bomb
@@ -439,7 +449,7 @@ bu_realloc(register genptr_t ptr, size_t siz, const char *str)
 	     */
 	    return ptr;
 	}
-	ptr = (genptr_t)mqp;
+	ptr = (void *)mqp;
 	BU_LIST_DEQUEUE(&(mqp->q));
     }
 
@@ -466,16 +476,26 @@ bu_realloc(register genptr_t ptr, size_t siz, const char *str)
 	    fprintf(stderr, "%p realloc%6d %s [grew in place]\n",
 		    ptr, (int)siz, str);
 	} else {
-	    fprintf(stderr, "%p realloc%6d %s [moved from %p]\n",
-		    ptr, (int)siz, str, original_ptr);
+	    /* Not using %p to print original_ptr's pointer value here in order
+	     * to avoid clang static analyzer complaining about use of memory
+	     * after memory is freed.  If/when clang can recognize that this is
+	     * not an actual problem, switch it back to the %p form */
+	    fprintf(stderr, "%p realloc%6d %s [moved from 0x%lx]\n",
+		    ptr, (int)siz, str, (uintptr_t)original_ptr);
 	}
     }
 
     if (UNLIKELY(bu_debug&BU_DEBUG_MEM_CHECK && ptr)) {
 	/* Even if ptr didn't change, need to update siz & barrier */
 	bu_semaphore_acquire(BU_SEM_MALLOC);
-	mp->mdb_addr = ptr;
-	mp->mdb_len = siz;
+
+	/* If memdebug_check returned MEMDEBUG_NULL, we can't do these
+	 * assignments.  In that situation the error condition was already
+	 * reported earlier, so just skip the assignments here and continue */
+	if (mp != MEMDEBUG_NULL) {
+	    mp->mdb_addr = ptr;
+	    mp->mdb_len = siz;
+	}
 
 	/* Install a barrier word at the new end of the dynamic
 	 * arena. Correct location depends on 'siz' being rounded up,
@@ -487,7 +507,7 @@ bu_realloc(register genptr_t ptr, size_t siz, const char *str)
 	struct memqdebug *mqp;
 	bu_semaphore_acquire(BU_SEM_MALLOC);
 	mqp = (struct memqdebug *)ptr;
-	ptr = (genptr_t)(((struct memqdebug *)ptr)+1);
+	ptr = (void *)(((struct memqdebug *)ptr)+1);
 	mqp->m.magic = MDB_MAGIC;
 	mqp->m.mdb_addr = ptr;
 	mqp->m.mdb_len = siz;
@@ -499,6 +519,36 @@ bu_realloc(register genptr_t ptr, size_t siz, const char *str)
     }
     bu_n_realloc++;
     return ptr;
+}
+
+/* bu_reallocarray is based off of OpenBSD's reallocarray.c, v 1.3 2015/09/13
+ *
+ * Copyright (c) 2008 Otto Moerbeek <otto@drijf.net>
+ *
+ * Permission to use, copy, modify, and distribute this software for any
+ * purpose with or without fee is hereby granted, provided that the above
+ * copyright notice and this permission notice appear in all copies.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+ * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+ * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+ * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ */
+/*
+ * This is sqrt(SIZE_MAX+1), as s1*s2 <= SIZE_MAX
+ * if both s1 < MUL_NO_OVERFLOW and s2 < MUL_NO_OVERFLOW
+ */
+#define MUL_NO_OVERFLOW	((size_t)1 << (sizeof(size_t) * 4))
+void *
+bu_reallocarray(register void *optr, size_t nmemb, size_t size, const char *str)
+{
+    if ((nmemb >= MUL_NO_OVERFLOW || size >= MUL_NO_OVERFLOW) && nmemb > 0 && SIZE_MAX / nmemb < size) {
+	return NULL;
+    }
+    return bu_realloc(optr, size * nmemb, str);
 }
 
 
@@ -601,7 +651,7 @@ bu_malloc_len_roundup(register int nbytes)
 
 
 void
-bu_ck_malloc_ptr(genptr_t ptr, const char *str)
+bu_ck_malloc_ptr(void *ptr, const char *str)
 {
     register struct memdebug *mp = &bu_memdebug[bu_memdebug_len-1];
     register uint32_t *ip;
@@ -676,6 +726,88 @@ bu_mem_barriercheck(void)
     }
     bu_semaphore_release(BU_SEM_MALLOC);
     return 0;			/* OK */
+}
+
+
+int
+#ifdef HAVE_SYS_SHM_H
+bu_shmget(int *shmid, char **shared_memory, int key, size_t size)
+#else
+bu_shmget(int *UNUSED(shmid), char **UNUSED(shared_memory), int UNUSED(key), size_t UNUSED(size))
+#endif
+{
+    int ret = 1;
+#ifdef HAVE_SYS_SHM_H
+    int shmsize;
+    long psize = sysconf(_SC_PAGESIZE);
+    int flags = IPC_CREAT|0666;
+
+    ret = 0;
+    errno = 0;
+
+    /*
+       make more portable
+       shmsize = (size + getpagesize()-1) & ~(getpagesize()-1);
+       */
+    shmsize = (size + psize - 1) & ~(psize - 1);
+
+    /* First try to attach to an existing one */
+    if (((*shmid) = shmget(key, shmsize, 0)) < 0) {
+	/* No existing one, create a new one */
+	if (((*shmid) = shmget(key, shmsize, flags)) < 0) {
+	    printf("bu_shmget failed, errno=%d\n", errno);
+	    return 1;
+	}
+	ret = -1;
+    }
+
+    /* WWW this is unnecessary in this version? */
+    /* Open the segment Read/Write */
+    /* This gets mapped to a high address on some platforms, so no problem. */
+    if (((*shared_memory) = (char *)shmat((*shmid), 0, 0)) == (char *)(-1L)) {
+	printf("errno=%d\n", errno);
+	return 1;
+    }
+
+#endif
+    return ret;
+}
+
+
+struct bu_pool *
+bu_pool_create(size_t block_size)
+{
+    struct bu_pool *pool;
+
+    pool = (struct bu_pool*)bu_malloc(sizeof(struct bu_pool), "bu_pool_create");
+    pool->block_size = block_size;
+    pool->block_pos = 0;
+    pool->alloc_size = 0;
+    pool->block = NULL;
+    return pool;
+}
+
+void *
+bu_pool_alloc(struct bu_pool *pool, size_t nelem, size_t elsize)
+{
+    const size_t n_bytes = nelem * elsize;
+    void *ret;
+
+    if (pool->block_pos + n_bytes > pool->alloc_size) {
+    	pool->alloc_size += (n_bytes < pool->block_size ? pool->block_size : n_bytes);
+	pool->block = (uint8_t*)bu_realloc(pool->block, pool->alloc_size, "bu_pool_alloc");
+    }
+
+    ret = pool->block + pool->block_pos;
+    pool->block_pos += n_bytes;
+    return ret;
+}
+
+void
+bu_pool_delete(struct bu_pool *pool)
+{
+    bu_free(pool->block, "bu_pool_delete");
+    bu_free(pool, "bu_pool_delete");
 }
 
 

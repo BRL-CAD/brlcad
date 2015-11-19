@@ -1,7 +1,7 @@
 /*                 FaceOuterBound.cpp
  * BRL-CAD
  *
- * Copyright (c) 1994-2013 United States Government as represented by
+ * Copyright (c) 1994-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -53,16 +53,16 @@ FaceOuterBound::~FaceOuterBound()
 bool
 FaceOuterBound::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
 {
-    bool retValue = true;
-
     step = sw;
     id = sse->STEPfile_id;
 
     if (!FaceBound::Load(step, sse)) {
 	std::cout << CLASSNAME << ":Error loading base class 'FaceBound'." << std::endl;
-	retValue = false;
+	sw->entity_status[id] = STEP_LOAD_ERROR;
+	return false;
     }
-    return retValue;
+    sw->entity_status[id] = STEP_LOADED;
+    return true;
 }
 
 void

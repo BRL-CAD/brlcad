@@ -1,7 +1,7 @@
 /*                       R E M A P I D . C
  * BRL-CAD
  *
- * Copyright (c) 1997-2013 United States Government as represented by
+ * Copyright (c) 1997-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -36,9 +36,11 @@
 #include <string.h>
 #include "bio.h"
 
-#include "bu.h"
+#include "bu/getopt.h"
+#include "bu/rb.h"
+#include "bu/vls.h"
 #include "bn.h"
-#include "db.h"
+#include "rt/db4.h"
 #include "vmath.h"
 #include "raytrace.h"
 
@@ -55,7 +57,7 @@ struct remapid_file {
     int file_needline;	/* time to grab another line? */
     int file_linenm;
     int file_comment;	/* the comment character */
-    int file_buflen;	/* length of intact buffer */
+    size_t file_buflen;	/* length of intact buffer */
 };
 typedef struct remapid_file REMAPID_FILE;
 #define REMAPID_FILE_MAGIC 0x6275666c
@@ -71,7 +73,7 @@ extern REMAPID_FILE bu_iob[1];
  * XXX - The following initialization of bu_stdin is essentially
  * an inline version of remapid_fopen() and bu_vls_init().  As
  * such, it depends heavily on the definitions of struct
- * remapid_file and struct bu_vls in ../h/bu.h
+ * remapid_file and struct bu_vls
  */
 char dmy_eos = '\0';
 REMAPID_FILE bu_iob[1] = {
@@ -106,7 +108,7 @@ remapid_fopen(char *fname, char *type)
     bfp->file_needline = 1;
     bfp->file_linenm = 0;
     bfp->file_comment = '#';
-    bfp->file_buflen = -1;
+    bfp->file_buflen = 0;
 
     return bfp;
 }
@@ -130,7 +132,7 @@ remapid_fclose(REMAPID_FILE *bfp)
 	bfp->file_name = (char *) 0;
 	bfp->file_bp = (char *) 0;
 	bu_vls_free(&(bfp->file_buf));
-	bu_free((genptr_t) bfp, "remapid_file struct");
+	bu_free((void *) bfp, "remapid_file struct");
     }
     return close_status;
 }
@@ -168,7 +170,7 @@ remapid_fgetc(REMAPID_FILE *bfp)
 	    continue;
 
 	if (strip_comments) {
-	    bfp->file_buflen = -1;
+	    bfp->file_buflen = 0;
 	    for (cp = bfp->file_bp; *cp != '\0'; ++cp)
 		if (*cp == comment_char) {
 		    bfp->file_buflen = (bfp->file_buf).vls_len;
@@ -193,21 +195,23 @@ remapid_file_err(REMAPID_FILE *bfp, char *text1, char *text2, ssize_t cursor_pos
 {
     char *cp;
     int buflen;
-    int i;
-    int stripped_length;
+    size_t i;
+    size_t stripped_length;
 
     BU_CK_FILE(bfp);
 
     /*
      * Show any trailing comments
      */
-    if ((buflen = bfp->file_buflen) > -1) {
+    buflen = bfp->file_buflen;
+    if (buflen > 0) {
 	stripped_length = (bfp->file_buf).vls_len;
 	*(bu_vls_addr(&(bfp->file_buf)) + stripped_length) =
 	    bfp->file_comment;
 	(bfp->file_buf).vls_len = buflen;
-    } else
-	stripped_length = -1;
+    } else {
+	stripped_length = 0;
+    }
 
     /*
      * Print out the first line of the error message
@@ -225,7 +229,7 @@ remapid_file_err(REMAPID_FILE *bfp, char *text1, char *text2, ssize_t cursor_pos
 	&& ((size_t)cursor_pos < bu_vls_strlen(&(bfp->file_buf))))
     {
 	cp = bu_vls_addr(&(bfp->file_buf));
-	for (i = 0; i < cursor_pos; ++i)
+	for (i = 0; i < (size_t)cursor_pos; ++i)
 	    if (*cp++ == '\t')
 		bu_log("\t");
 	    else
@@ -236,8 +240,7 @@ remapid_file_err(REMAPID_FILE *bfp, char *text1, char *text2, ssize_t cursor_pos
     /*
      * Hide the comments again
      */
-    if (stripped_length > -1)
-	bu_vls_trunc(&(bfp->file_buf), stripped_length);
+    bu_vls_trunc(&(bfp->file_buf), stripped_length);
 }
 
 
@@ -347,10 +350,6 @@ static int debug = 0;
  *									*
  ************************************************************************/
 
-/*
- * M K _ C U R R _ I D
- *
- */
 struct curr_id *
 mk_curr_id(int region_id)
 {
@@ -367,10 +366,6 @@ mk_curr_id(int region_id)
 }
 
 
-/*
- * P R I N T _ C U R R _ I D
- *
- */
 void
 print_curr_id(void *v, int UNUSED(depth))
 {
@@ -389,10 +384,6 @@ print_curr_id(void *v, int UNUSED(depth))
 }
 
 
-/*
- * P R I N T _ N O N E M P T Y _ C U R R _ I D
- *
- */
 void
 print_nonempty_curr_id(void *v, int UNUSED(depth))
 {
@@ -413,21 +404,15 @@ print_nonempty_curr_id(void *v, int UNUSED(depth))
 }
 
 
-/*
- * F R E E _ C U R R _ I D
- *
- */
 void
 free_curr_id(struct curr_id *cip)
 {
     BU_CKMAG(cip, CURR_ID_MAGIC, "curr_id");
-    bu_free((genptr_t) cip, "curr_id");
+    bu_free((void *) cip, "curr_id");
 }
 
 
 /*
- * L O O K U P _ C U R R _ I D
- *
  * Scrounge for a particular region in the red-black tree.
  * If it's not found there, add it to the tree.  In either
  * event, return a pointer to it.
@@ -466,10 +451,6 @@ lookup_curr_id(int region_id)
 }
 
 
-/*
- * M K _ R E M A P _ R E G
- *
- */
 struct remap_reg *
 mk_remap_reg(char *region_name)
 {
@@ -489,17 +470,13 @@ mk_remap_reg(char *region_name)
 }
 
 
-/*
- * F R E E _ R E M A P _ R E G
- *
- */
 void
 free_remap_reg(struct remap_reg *rp)
 {
     BU_CKMAG(rp, REMAP_REG_MAGIC, "remap_reg");
-    bu_free((genptr_t) rp->rr_name, "region name");
-    bu_free((genptr_t) rp->rr_ip, "rt_db_internal");
-    bu_free((genptr_t) rp, "remap_reg");
+    bu_free((void *) rp->rr_name, "region name");
+    bu_free((void *) rp->rr_ip, "rt_db_internal");
+    bu_free((void *) rp, "remap_reg");
 }
 
 
@@ -509,9 +486,6 @@ free_remap_reg(struct remap_reg *rp)
  *									*
  ************************************************************************/
 
-/*
- * C O M P A R E _ C U R R _ I D S
- */
 int
 compare_curr_ids(void *v1, void *v2)
 {
@@ -532,8 +506,6 @@ compare_curr_ids(void *v1, void *v2)
  ************************************************************************/
 
 /*
- * R E A D _ I N T
- *
  * ch is the result
  */
 int
@@ -566,9 +538,6 @@ read_int(REMAPID_FILE *sfp, int *ch, int *n)
 }
 
 
-/*
- * R E A D _ B L O C K
- */
 int
 read_block(REMAPID_FILE *sfp, int *ch, int *n1, int *n2)
 {
@@ -602,9 +571,6 @@ read_block(REMAPID_FILE *sfp, int *ch, int *n1, int *n2)
 }
 
 
-/*
- * R E A D _ S P E C
- */
 int
 read_spec(REMAPID_FILE *sfp, char *sf_name)
 {
@@ -727,10 +693,6 @@ db_init(char *db_name)
 }
 
 
-/*
- * W R I T E _ A S S I G N M E N T
- *
- */
 void
 write_assignment(void *v, int UNUSED(depth))
 {
@@ -760,7 +722,7 @@ write_assignment(void *v, int UNUSED(depth))
 }
 
 
-HIDDEN void
+static void
 tankill_reassign(char *db_name)
 {
     FILE *fd_in;
@@ -819,9 +781,6 @@ tankill_reassign(char *db_name)
  *									*
  ************************************************************************/
 
-/*
- * P R I N T _ U S A G E
- */
 void
 print_usage(void)
 {
@@ -831,9 +790,6 @@ print_usage(void)
 }
 
 
-/*
- * M A I N
- */
 int
 main(int argc, char **argv)
 {
@@ -868,8 +824,6 @@ main(int argc, char **argv)
 	    print_usage();
     }
 
-    rt_init_resource(&rt_uniresource, 0, NULL);
-
     /*
      * Open database and specification file, as necessary
      */
@@ -880,7 +834,7 @@ main(int argc, char **argv)
     /*
      * Initialize the assignment
      */
-    assignment = bu_rb_create1("Remapping assignment", compare_curr_ids);
+    assignment = bu_rb_create1("Remapping assignment", BU_RB_COMPARE_FUNC_CAST_AS_FUNC_ARG(compare_curr_ids));
     bu_rb_uniq_on1(assignment);
 
     /*
@@ -897,9 +851,9 @@ main(int argc, char **argv)
 	db_init(db_name);
 
 	if (debug)
-	    bu_rb_walk1(assignment, print_nonempty_curr_id, INORDER);
+	    bu_rb_walk1(assignment, (void (*)(void))print_nonempty_curr_id, BU_RB_WALK_INORDER);
 	else
-	    bu_rb_walk1(assignment, write_assignment, INORDER);
+	    bu_rb_walk1(assignment, (void (*)(void))write_assignment, BU_RB_WALK_INORDER);
     }
     return 0;
 }

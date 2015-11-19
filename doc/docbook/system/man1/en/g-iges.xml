@@ -33,11 +33,11 @@
 
 
 <refsect1 xml:id='description'><title>DESCRIPTION</title>
-<para><emphasis remap='I'>g-iges</emphasis>
+<para><command>g-iges</command>
 converts the specified objects of the BRL-CAD database,
-<emphasis remap='I'>database.g,</emphasis>
+<emphasis remap='I'>database.g</emphasis>,
 to an IGES version 5.1 file,
-<emphasis remap='I'>file.iges.</emphasis></para>
+<emphasis remap='I'>file.iges</emphasis>.</para>
 
 
 <para>The following options are recognized</para>
@@ -139,8 +139,8 @@ this way).</para>
 
 <para>If neither the -f , -t , nor the -m options  are  selected,
 the  default is a CSG IGES file. In this situation, all regions will be
-written to the IGES file as Boolean trees with all possible solids rep-
-resented  by their IGES CSG equivalent. In cases where there is no IGES
+written to the IGES file as Boolean trees with all possible solids
+represented  by their IGES CSG equivalent. In cases where there is no IGES
 CSG equivalent, the BRL-CAD solid is  tesellated  (using  the  provided
 tolerances),  and  a  BREP  object  is  written for that solid.</para>
 
@@ -148,21 +148,21 @@ tolerances),  and  a  BREP  object  is  written for that solid.</para>
 </refsect1>
 
 <refsect1 xml:id='example'><title>EXAMPLE</title>
-<para><emphasis remap='I'>g-iges -f -o sample.iges sample.g object1</emphasis></para>
+<para>g-iges -f -o <emphasis remap='I'>gsample.iges sample.g object1</emphasis></para>
 
 <para>This command will produce an IGES BREP output file,
-<emphasis remap='I'>sample.iges,</emphasis>
+<emphasis remap='I'>sample.iges</emphasis>,
 from
 <emphasis remap='I'>object1</emphasis>
 of the BRL-CAD database file
-<emphasis remap='I'>sample.g.</emphasis></para>
+<emphasis remap='I'>sample.g</emphasis>.</para>
 </refsect1>
 
 <refsect1 xml:id='see_also'><title>SEE ALSO</title>
-<para><citerefentry><refentrytitle>iges-g</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
+<para><citerefentry><refentrytitle>iges-g</refentrytitle><manvolnum>1</manvolnum></citerefentry>
 <!-- .br -->
-<emphasis remap='I'>The Initial Graphics Exchange Specification (IGES) Version 5.1,</emphasis>
-IGES/PDES Organization, September 1991.</para>
+<emphasis remap='I'>The Initial Graphics Exchange Specification (IGES) Version 5.1</emphasis>,
+IGES/PDES Organization, September 1991</para>
 </refsect1>
 
 <refsect1 xml:id='diagnostics'><title>DIAGNOSTICS</title>
@@ -176,7 +176,7 @@ IGES/PDES Organization, September 1991.</para>
 </refsect1>
 
 <refsect1 xml:id='copyright'><title>COPYRIGHT</title>
-<para>This software is Copyright (c) 1993-2013 by the United States
+<para>This software is Copyright (c) 1993-2014 by the United States
 Government as represented by U.S. Army Research Laboratory.</para>
 </refsect1>
 

@@ -1,7 +1,7 @@
 /*                        M A S T E R . C
  * BRL-CAD / ADRT
  *
- * Copyright (c) 2007-2013 United States Government as represented by
+ * Copyright (c) 2007-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -22,7 +22,6 @@
  */
 
 #include "master.h"
-#include <stdio.h>
 #include <stdlib.h>
 #include <signal.h>
 #include <string.h>
@@ -34,7 +33,7 @@
 #  include <sys/time.h>
 #endif
 
-#include "bu.h"
+
 
 #include "camera.h"
 #include "dispatcher.h"		/* Dispatcher that creates work units */
@@ -423,8 +422,7 @@ master_networking(void *ptr)
 		    master.socklist->prev = NULL;
 		    tienet_sem_init(&(master.socklist->frame_sem), 0);
 		    tmp->prev = master.socklist;
-		    if (new_socket > highest_fd)
-			highest_fd = new_socket;
+		    V_MAX(highest_fd, new_socket);
 		    master.active_connections++;
 		}
 		continue;
@@ -594,8 +592,7 @@ master_networking(void *ptr)
 	/* Rebuild select list for next select call */
 	highest_fd = 0;
 	for (sock = master.socklist; sock; sock = sock->next) {
-	    if (sock->num > highest_fd)
-		highest_fd = sock->num;
+	    V_MAX(highest_fd, sock->num);
 	    FD_SET(sock->num, &readfds);
 	}
     }
@@ -623,7 +620,7 @@ static struct option longopts[] =
 };
 #endif
 
-static char shortopts[] = "bc:de:i:ho:p:vl:";
+static char shortopts[] = "bc:de:i:ho:p:vl:h?";
 
 unsigned char go_daemon_mode = 0;
 unsigned int master_listener_result = 1;
@@ -636,7 +633,7 @@ static void finish(int sig) {
 
 
 static void help() {
-    printf("%s\n", "Usage: adrt_master [options]\n\
+    fprintf(stderr,"%s\n", "Usage: adrt_master [options]\n\
   -h\t\tdisplay help.\n\
   -c\t\tconnect to component server.\n\
   -d\t\tdaemon mode.\n\
@@ -674,6 +671,7 @@ int main(int argc, char **argv) {
 #endif
 	       )!= -1)
     {
+	if (bu_optopt == '?') c='h';
 	switch (c) {
 	    case 'c':
 		bu_strlcpy(comp_host, bu_optarg, 64);

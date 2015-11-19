@@ -1,7 +1,7 @@
 /*                         P R E V I E W . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2013 United States Government as represented by
+ * Copyright (c) 2008-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -29,10 +29,10 @@
 #include <ctype.h>
 #include <string.h>
 #include <time.h>
-#include "bselect.h"
-#include "bio.h"
+#include "bsocket.h"
 
-#include "cmd.h"
+#include "bu/cmd.h"
+#include "bu/getopt.h"
 
 #include "./ged_private.h"
 
@@ -57,7 +57,7 @@ static char rt_cmd_storage[MAXARGS*9];
 
 
 int
-ged_cm_anim(int argc, char **argv)
+ged_cm_anim(const int argc, const char **argv)
 {
 
     if (_ged_current_gedp->ged_wdbp->dbip == DBI_NULL)
@@ -75,7 +75,7 @@ ged_cm_anim(int argc, char **argv)
 
 
 int
-ged_cm_clean(int UNUSED(argc), char **UNUSED(argv))
+ged_cm_clean(const int UNUSED(argc), const char **UNUSED(argv))
 {
     if (_ged_current_gedp->ged_wdbp->dbip == DBI_NULL)
 	return 0;
@@ -91,7 +91,7 @@ ged_cm_clean(int UNUSED(argc), char **UNUSED(argv))
 
 
 int
-ged_cm_end(int UNUSED(argc), char **UNUSED(argv))
+ged_cm_end(const int UNUSED(argc), const char **UNUSED(argv))
 {
     vect_t xlate;
     vect_t new_cent;
@@ -166,14 +166,14 @@ ged_cm_end(int UNUSED(argc), char **UNUSED(argv))
 
 
 int
-ged_cm_multiview(int UNUSED(argc), char **UNUSED(argv))
+ged_cm_multiview(const int UNUSED(argc), const char **UNUSED(argv))
 {
     return -1;
 }
 
 
 int
-ged_cm_start(int argc, char **argv)
+ged_cm_start(const int argc, const char **argv)
 {
     if (argc < 2)
 	return -1;
@@ -185,7 +185,7 @@ ged_cm_start(int argc, char **argv)
 
 
 int
-ged_cm_tree(int argc, char **argv)
+ged_cm_tree(const int argc, const char **argv)
 {
     int i = 1;
     char *cp = rt_cmd_storage;
@@ -249,7 +249,7 @@ ged_loadframe(struct ged *gedp, FILE *fp)
 	if (cmd[0] == '!') {
 	    if (preview_currentframe < preview_desiredframe ||
 		(preview_finalframe && preview_currentframe > preview_finalframe)) {
-		bu_free((genptr_t)cmd, "preview ! cmd");
+		bu_free((void *)cmd, "preview ! cmd");
 		continue;
 	    }
 	}
@@ -260,7 +260,7 @@ ged_loadframe(struct ged *gedp, FILE *fp)
 
 	if (rt_do_cmd((struct rt_i *)0, cmd, ged_preview_cmdtab) < 0)
 	    bu_vls_printf(gedp->ged_result_str, "command failed: %s\n", cmd);
-	bu_free((genptr_t)cmd, "preview cmd");
+	bu_free((void *)cmd, "preview cmd");
     }
 
     if (end) {
@@ -433,7 +433,7 @@ ged_preview(struct ged *gedp, int argc, const char *argv[])
 	_ged_cvt_vlblock_to_solids(gedp, preview_vbp, "EYE_PATH", 0);
 
     if (preview_vbp) {
-	rt_vlblock_free(preview_vbp);
+	bn_vlblock_free(preview_vbp);
 	preview_vbp = (struct bn_vlblock *)NULL;
     }
     db_free_anim(gedp->ged_wdbp->dbip);	/* Forget any anim commands */

@@ -1,7 +1,7 @@
 /*                 CompositeCurve.cpp
  * BRL-CAD
  *
- * Copyright (c) 1994-2013 United States Government as represented by
+ * Copyright (c) 1994-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -51,14 +51,7 @@ CompositeCurve::CompositeCurve(STEPWrapper *sw, int step_id)
 
 CompositeCurve::~CompositeCurve()
 {
-    /*
-      LIST_OF_SEGMENTS::iterator i = segments.begin();
-
-      while(i != segments.end()) {
-      delete (*i);
-      i = segments.erase(i);
-      }
-    */
+    // elements created through factory will be deleted there.
     segments.clear();
 }
 
@@ -70,6 +63,7 @@ CompositeCurve::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
 
     if (!BoundedCurve::Load(step, sse)) {
 	std::cout << CLASSNAME << ":Error loading base class ::BoundedCurve." << std::endl;
+	sw->entity_status[id] = STEP_LOAD_ERROR;
 	return false;
     }
 
@@ -89,6 +83,7 @@ CompositeCurve::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
 	    } else {
 		std::cerr << CLASSNAME  << ": Unhandled entity in attribute 'segments'." << std::endl;
 		l->clear();
+		sw->entity_status[id] = STEP_LOAD_ERROR;
 		delete l;
 		return false;
 	    }
@@ -97,6 +92,8 @@ CompositeCurve::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
 	delete l;
     }
     self_intersect = step->getLogicalAttribute(sse, "self_intersect");
+
+    sw->entity_status[id] = STEP_LOADED;
 
     return true;
 }

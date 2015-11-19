@@ -1,7 +1,7 @@
 /*                         G - D O T . C
  * BRL-CAD
  *
- * Copyright (c) 2011-2013 United States Government as represented by
+ * Copyright (c) 2011-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -33,14 +33,16 @@
 
 /* system headers */
 #include <string.h>
-#include "bio.h"
 
 /* interface headers */
+#include "bu/getopt.h"
+#include "bu/path.h"
+#include "bu/str.h"
 #include "brlcad_version.h"
 #include "raytrace.h"
 #include "ged.h"
 
-const char *usage_fmt = "Usage: %s [-o output.dot] input.g [object1 ...]\n";
+const char *usage = "[-o output.dot] input.g [object1 ...]\n";
 
 struct output {
     FILE *outfp;
@@ -52,7 +54,7 @@ struct output {
 
 
 static void
-dot_comb(struct db_i *dbip, struct directory *dp, genptr_t out)
+dot_comb(struct db_i *dbip, struct directory *dp, void *out)
 {
     struct rt_db_internal intern;
     struct rt_comb_internal *comb;
@@ -68,11 +70,13 @@ dot_comb(struct db_i *dbip, struct directory *dp, genptr_t out)
     comb = (struct rt_comb_internal *)intern.idb_ptr;
 
     if (comb->region_flag) {
-	if (bu_ptbl_ins_unique(&(o->regions), (long *)bu_hash((unsigned char *)dp->d_namep, strlen(dp->d_namep))) == -1) {
+	long hash = bu_hash((unsigned char *)dp->d_namep, strlen(dp->d_namep));
+	if (bu_ptbl_ins_unique(&(o->regions), (long *)hash) == -1) {
 	    fprintf(o->outfp, "\t\"%s\" [ color=blue shape=box3d ];\n", dp->d_namep);
 	}
     } else {
-	if (bu_ptbl_ins_unique(&(o->groups), (long *)bu_hash((unsigned char *)dp->d_namep, strlen(dp->d_namep))) == -1) {
+	long hash = bu_hash((unsigned char *)dp->d_namep, strlen(dp->d_namep));
+	if (bu_ptbl_ins_unique(&(o->groups), (long *)hash) == -1) {
 	    fprintf(o->outfp, "\t\"%s\" [ color=green ];\n", dp->d_namep);
 	}
     }
@@ -111,13 +115,13 @@ dot_comb(struct db_i *dbip, struct directory *dp, genptr_t out)
 
 	    switch (rt_tree_array[i].tl_op) {
 		case OP_UNION:
-		    op = '+';
+		    op = DB_OP_UNION;
 		    break;
 		case OP_INTERSECT:
-		    op = 'x';
+		    op = DB_OP_INTERSECT;
 		    break;
 		case OP_SUBTRACT:
-		    op = '-';
+		    op = DB_OP_SUBTRACT;
 		    break;
 		default:
 		    op = '?';
@@ -138,14 +142,16 @@ dot_comb(struct db_i *dbip, struct directory *dp, genptr_t out)
 
 
 static void
-dot_leaf(struct db_i *UNUSED(dbip), struct directory *dp, genptr_t out)
+dot_leaf(struct db_i *UNUSED(dbip), struct directory *dp, void *out)
 {
     struct output *o = (struct output *)out;
+    unsigned long hash;
 
     if (!o->outfp)
 	return;
 
-    if (bu_ptbl_ins_unique(&(o->primitives), (long *)bu_hash((unsigned char *)dp->d_namep, strlen(dp->d_namep))) == -1) {
+    hash = bu_hash((unsigned char *)dp->d_namep, strlen(dp->d_namep));
+    if (bu_ptbl_ins_unique(&(o->primitives), (long *)hash) == -1) {
 	fprintf(o->outfp, "\t\"%s\" [ color=red shape=box rank=min ];\n", dp->d_namep);
     }
 
@@ -186,9 +192,9 @@ dot_footer(FILE *outfp)
 
 
 static void
-help(const char *argv0)
+help(const char *progname)
 {
-    bu_log(usage_fmt, argv0);
+    bu_log("Usage: %s %s", progname, usage);
     bu_log("\n\t-o output.dot   (optional) name of output Graphviz .dot file");
     bu_log("\n\tinput.g         name of input BRL-CAD .g database");
     bu_log("\n\tobject1 ...     (optional) name of object(s) to export from .g file\n");
@@ -310,9 +316,10 @@ main(int ac, char *av[])
 	const char *title[2] = {"title", NULL};
 
 	ged_title(gp, 1, title);
-	bu_vls_printf(&vp, "%V\\n", gp->ged_result_str);
+	bu_vls_printf(&vp, "%s\\n", bu_vls_addr(gp->ged_result_str));
 	if (!(av[0][0] == '-' && av[0][1] == '\0')) {
-	    char *base = bu_basename(av[0]);
+	    char *base = (char *)bu_calloc(strlen(av[0]), sizeof(char), "g-dot base");
+	    bu_basename(base, av[0]);
 	    bu_vls_printf(&vp, "%s ", base);
 	    bu_free(base, "free basename");
 	}
@@ -336,8 +343,8 @@ main(int ac, char *av[])
 
 	ged_tops(gp, 2, tops);
 
-	topobjs = bu_calloc(1, bu_vls_strlen(gp->ged_result_str), "alloc topobjs");
-	c = bu_argv_from_string(topobjs, bu_vls_strlen(gp->ged_result_str), bu_vls_addr(gp->ged_result_str));
+	topobjs = (char **)bu_calloc(1, bu_vls_strlen(gp->ged_result_str), "alloc topobjs");
+	c = (int)bu_argv_from_string(topobjs, bu_vls_strlen(gp->ged_result_str), bu_vls_addr(gp->ged_result_str));
 	objs = bu_dup_argv(c, (const char **)topobjs);
 	bu_free(topobjs, "free topobjs");
     }

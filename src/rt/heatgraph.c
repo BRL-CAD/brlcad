@@ -1,7 +1,7 @@
 /*                      H E A T G R A P H . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2013 United States Government as represented by
+ * Copyright (c) 1985-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -27,102 +27,27 @@
 
 #include "common.h"
 
-#include <sys/types.h>
-#include <sys/resource.h>
 #include <stdio.h>
 #include <string.h>
 #include <math.h>
+#include <sys/types.h>
 #ifdef HAVE_SYS_TIME_H
 #  include <sys/time.h>
 #endif
 
-#include "bu.h"
+#include "bu/log.h"
+#include "bu/parallel.h"
 #include "vmath.h"
 #include "raytrace.h"
 #include "fb.h"
-#include "plot3.h"
+#include "bn/plot3.h"
 #include "scanline.h"
 
 #include "./rtuif.h"
 #include "./ext.h"
 
 
-static struct timeval timeStart;	/* These are pulled directly from timer42 */
-static struct rusage ruA;		/*  Resource utilization at the start */
-static struct rusage ruAc;
-
-static void tvsub(struct timeval *tdiff, struct timeval *t1, struct timeval *t0);
-
-/* Time functions are copied almost verbatim from timer42.c */
-
 /**
- * P R E P _ P I X E L _ T I M E R
- *
- * Prep the timer for each pixel
- */
-void prep_pixel_timer(void)
-{
-    gettimeofday(&timeStart, (struct timezone *)0);
-    getrusage(RUSAGE_SELF, &ruA);
-    getrusage(RUSAGE_CHILDREN, &ruAc);
-}
-
-/**
- * T V S U B
- */
-
-static void
-tvsub(struct timeval *tdiff, struct timeval *t1, struct timeval *t0)
-{
-    tdiff->tv_sec = t1->tv_sec - t0->tv_sec;
-    tdiff->tv_usec = t1->tv_usec - t0->tv_usec;
-    if (tdiff->tv_usec < 0) {
-	tdiff->tv_sec--, tdiff->tv_usec += 1000000;
-    }
-}
-
-/**
- * G E T _ P I X E L _ T I M E R
- *
- * Get the length of time the pixel
- * was being made.
- */
-double
-get_pixel_timer(double *total)
-{
-    struct timeval timeEnd;
-    /* Pulled directly from timer42.c */
-    struct rusage ru1;
-    struct rusage ru1c;
-    struct timeval td;
-    double totalTime = 0;
-    double elapsed_secs = 0;
-
-    getrusage(RUSAGE_SELF, &ru1);
-    getrusage(RUSAGE_CHILDREN, &ru1c);
-    gettimeofday(&timeEnd, (struct timezone *)0);
-
-    elapsed_secs = (timeEnd.tv_sec - timeStart.tv_sec) +
-	(timeEnd.tv_usec - timeStart.tv_usec)/1000000.0;
-
-    tvsub(&td, &ru1.ru_utime, &ruA.ru_utime);
-    totalTime = td.tv_sec + ((double)td.tv_usec)/1000000.0;
-
-    tvsub(&td, &ru1c.ru_utime, &ruAc.ru_utime);
-    totalTime += td.tv_sec + ((double)td.tv_usec) / 1000000.0;
-
-    if (totalTime < 0.00001) totalTime = 0.00001;
-    if (elapsed_secs < 0.00001) elapsed_secs = totalTime;
-
-    if (total) *total = totalTime;
-
-    return totalTime;
-}
-
-
-/**
- * T I M E T A B L E _ I N I T
- *
  * This function creates the table of values that will store the
  * time taken to complete pixels during a raytrace. Returns a
  * pointer to the table.
@@ -147,9 +72,9 @@ timeTable_init(int x, int y)
 	if (timeTable == NULL) {
 	    bu_log("X is %d, Y is %d\n", x, y);
 	    bu_log("Making time Table\n");
-	    timeTable = bu_malloc(x * sizeof(double *), "timeTable");
+	    timeTable = (fastf_t **)bu_malloc(x * sizeof(fastf_t *), "timeTable");
 	    for (i = 0; i < x; i++) {
-		timeTable[i] = bu_malloc(y * sizeof(double), "timeTable[i]");
+		timeTable[i] = (fastf_t *)bu_malloc(y * sizeof(fastf_t), "timeTable[i]");
 	    }
 	    for (i = 0; i < x; i++) {
 		for (w = 0; w < y; w++) {
@@ -165,8 +90,6 @@ timeTable_init(int x, int y)
 
 
 /**
- * T I M E T A B L E _ F R E E
- *
  * Frees up the time table array.
  */
 void
@@ -183,8 +106,6 @@ timeTable_free(fastf_t **timeTable)
 
 
 /**
- * T I M E T A B L E _ I N P U T
- *
  * This function inputs the time taken to complete a pixel during a
  * raytrace and places it into the timeTable for use in creating a
  * heat graph light model.
@@ -207,8 +128,6 @@ timeTable_input(int x, int y, fastf_t timeval, fastf_t **timeTable)
 
 
 /**
- * T I M E T A B L E _ S I N G L E P R O C E S S
- *
  * This function processes the time table 1 pixel at a time, as
  * opposed to all at once like timeTable_process. Heat values are
  * bracketed to certain values, instead of normalized.
@@ -257,13 +176,11 @@ timeTable_singleProcess(struct application *app, fastf_t **timeTable, fastf_t *t
 
 
 /**
- * T I M E T A B L E _ P R O C E S S
- *
  * This function takes the contents of the time table, and produces the
  * heat graph based on time taken for each pixel.
  */
 void
-timeTable_process(fastf_t **timeTable, struct application *UNUSED(app), FBIO *fbp)
+timeTable_process(fastf_t **timeTable, struct application *UNUSED(app), fb *fbp)
 {
     fastf_t maxTime = -MAX_FASTF;		/* The 255 value */
     fastf_t minTime = MAX_FASTF; 		/* The 1 value */
@@ -331,7 +248,7 @@ timeTable_process(fastf_t **timeTable, struct application *UNUSED(app), FBIO *fb
 	    p[1]=Gcolor;
 	    p[2]=Bcolor;
 
-	    if (fbp != FBIO_NULL) {
+	    if (fbp != FB_NULL) {
 		bu_semaphore_acquire(BU_SEM_SYSCALL);
 		npix = fb_write(fbp, x, y, (unsigned char *)p, 1);
 		bu_semaphore_release(BU_SEM_SYSCALL);
@@ -340,7 +257,7 @@ timeTable_process(fastf_t **timeTable, struct application *UNUSED(app), FBIO *fb
 	    }
 	}
     }
-    if (fbp != FBIO_NULL) {
+    if (fbp != FB_NULL) {
       zoomH = fb_getheight(fbp) / height;
       zoomW = fb_getwidth(fbp) / width;
       (void)fb_view(fbp, width/2, height/2, zoomH, zoomW);

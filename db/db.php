@@ -2,7 +2,7 @@
 /*                         D B . P H P
  * BRL-CAD
  *
- * Copyright (c) 2004-2013 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -275,12 +275,14 @@ if ($physicalFile) {
 
 debug("END http request");
 
-
-# Local Variables: ***
-# mode: C ***
-# tab-width: 8 ***
-# c-basic-offset: 2 ***
-# indent-tabs-mode: t ***
-# End: ***
-# ex: shiftwidth=2 tabstop=8
 ?>
+
+<!--
+  Local Variables:
+  tab-width: 8
+  mode: php
+  c-basic-offset: 4
+  indent-tabs-mode: t
+  End:
+  ex: shiftwidth=4 tabstop=8
+ -->

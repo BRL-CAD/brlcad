@@ -1,7 +1,7 @@
 /*                       P A T C H - G . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2013 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -17,6 +17,9 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
+
+#ifndef CONV_PATCH_PATCH_G_H
+#define CONV_PATCH_PATCH_G_H
 
 #include "vmath.h"
 
@@ -92,7 +95,7 @@ point_t ce[4];
 point_t Centroid;			/* object, description centroids */
 unsigned char rgb[3];
 int debug = 0;
-float mmtin = 25.4;
+float mmtin = 25.4f;
 double conv_mm2in;
 fastf_t third = 0.333333333;
 
@@ -104,7 +107,6 @@ char space[2];
 
 int numobj = 0;
 int nflg = 1;
-int aflg = 1;				/* use phantom armor */
 int num_unions = 5;			/* number of unions per region */
 char *title = "patch-g conversion";	/* database title */
 char *top_level = "all";		/* top-level node name in the database */
@@ -141,6 +143,8 @@ struct bn_tol TOL;
 int scratch_num;
 
 struct rt_wdb *outfp;
+
+#endif /* CONV_PATCH_PATCH_G_H */
 
 
 /*

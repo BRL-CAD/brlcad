@@ -1,7 +1,7 @@
 #                          D M . T C L
 # BRL-CAD
 #
-# Copyright (c) 1998-2013 United States Government as represented by
+# Copyright (c) 1998-2014 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -264,6 +264,7 @@ if {$tcl_platform(os) != "Windows NT"} {
     switch $itk_option(-type) {
 	X -
 	ogl -
+	osgl -
 	wgl {
 	    if {$initializing} {
 		set priv_type $itk_option(-type)

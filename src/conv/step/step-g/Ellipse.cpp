@@ -1,7 +1,7 @@
 /*                 Ellipse.cpp
  * BRL-CAD
  *
- * Copyright (c) 1994-2013 United States Government as represented by
+ * Copyright (c) 1994-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -62,6 +62,7 @@ Ellipse::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
 
     if (!Conic::Load(step, sse)) {
 	std::cout << CLASSNAME << ":Error loading base class ::Conic." << std::endl;
+	sw->entity_status[id] = STEP_LOAD_ERROR;
 	return false;
     }
 
@@ -71,6 +72,8 @@ Ellipse::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
 
     semi_axis_1 = step->getRealAttribute(sse, "semi_axis_1");
     semi_axis_2 = step->getRealAttribute(sse, "semi_axis_2");
+
+    sw->entity_status[id] = STEP_LOADED;
 
     return true;
 }

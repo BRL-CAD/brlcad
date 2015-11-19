@@ -1,0 +1,6 @@
+This directory contains various header files that are used make code
+C89 compliant.  Typically, files from this directory are used to
+provide a function declaration to compile BRL-CAD when a system
+doesn't know about the functions which are normally hidden for C89.
+When the whole world becomes POSIX- compliant this directory should be
+unnecessary.

@@ -1,7 +1,7 @@
 /*                           A - D . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2013 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -31,14 +31,13 @@
 #include <string.h>
 #include "bio.h"
 
-#include "bu.h"
-
+#include "bu/log.h"
 
 #define COMMENT_CHAR '#'
 
 
 int
-main(int argc, char **argv)
+main(int argc, char *argv[])
 {
     double d;
     int i;

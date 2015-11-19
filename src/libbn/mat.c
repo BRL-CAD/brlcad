@@ -1,7 +1,7 @@
 /*                           M A T . C
  * BRL-CAD
  *
- * Copyright (c) 1996-2013 United States Government as represented by
+ * Copyright (c) 1996-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -34,34 +34,39 @@
 #include <string.h>
 #include "bio.h"
 
-#include "bu.h"
+#include "bu/debug.h"
+#include "bu/log.h"
+#include "bu/malloc.h"
+#include "bu/str.h"
 #include "vmath.h"
-#include "bn.h"
+#include "bn/mat.h"
+#include "bn/plane.h"
 
 
 const mat_t bn_mat_identity = MAT_INIT_IDN;
 
 
 void
-bn_mat_print_guts(const char *title,
-		  const mat_t m,
-		  char *obuf,
-		  int len)
+bn_mat_print_guts(
+    const char *title,
+    const mat_t m,
+    char *obuf,
+    int len)
 {
     register int i;
     register char *cp;
 
     snprintf(obuf, len, "MATRIX %s:\n  ", title);
-    cp = obuf+strlen(obuf);
+    cp = obuf + strlen(obuf);
     if (!m) {
 	bu_strlcat(obuf, "(Identity)", len);
     } else {
-	for (i=0; i<16; i++) {
-	    snprintf(cp, len-(cp-obuf), " %8.3f", m[i]);
+	for (i = 0; i < 16; i++) {
+	    snprintf(cp, len - (cp - obuf), " %8.3f", m[i]);
 	    cp += strlen(cp);
 	    if (i == 15) {
 		break;
-	    } else if ((i&3) == 3) {
+	    } else if ((i & 3) == 3) {
 		*cp++ = '\n';
 		*cp++ = ' ';
 		*cp++ = ' ';
@@ -73,10 +78,9 @@ bn_mat_print_guts(const char *title,
 
 
 void
-bn_mat_print(const char *title,
-	     const mat_t m)
+bn_mat_print(const char *title, const mat_t m)
 {
-    char obuf[1024];	/* sprintf may be non-PARALLEL */
+    char obuf[1024];	/* snprintf may be non-PARALLEL */
 
     bn_mat_print_guts(title, m, obuf, 1024);
     bu_log("%s\n", obuf);
@@ -84,9 +88,10 @@ bn_mat_print(const char *title,
 
 
 void
-bn_mat_print_vls(const char *title,
-		 const mat_t m,
-		 struct bu_vls *vls)
+bn_mat_print_vls(
+    const char *title,
+    const mat_t m,
+    struct bu_vls *vls)
 {
     char obuf[1024];
 
@@ -100,10 +105,12 @@ bn_atan2(double y, double x)
 {
     if (x > -1.0e-20 && x < 1.0e-20) {
 	/* X is equal to zero, check Y */
-	if (y < -1.0e-20)
+	if (y < -1.0e-20) {
 	    return -M_PI_2;
-	if (y > 1.0e-20)
+	}
+	if (y > 1.0e-20) {
 	    return M_PI_2;
+	}
 	return 0.0;
     }
     return atan2(y, x);
@@ -113,25 +120,25 @@ bn_atan2(double y, double x)
 void
 bn_mat_mul(register mat_t o, register const mat_t a, register const mat_t b)
 {
-    o[ 0] = a[ 0]*b[ 0] + a[ 1]*b[ 4] + a[ 2]*b[ 8] + a[ 3]*b[12];
-    o[ 1] = a[ 0]*b[ 1] + a[ 1]*b[ 5] + a[ 2]*b[ 9] + a[ 3]*b[13];
-    o[ 2] = a[ 0]*b[ 2] + a[ 1]*b[ 6] + a[ 2]*b[10] + a[ 3]*b[14];
-    o[ 3] = a[ 0]*b[ 3] + a[ 1]*b[ 7] + a[ 2]*b[11] + a[ 3]*b[15];
+    o[ 0] = a[ 0] * b[ 0] + a[ 1] * b[ 4] + a[ 2] * b[ 8] + a[ 3] * b[12];
+    o[ 1] = a[ 0] * b[ 1] + a[ 1] * b[ 5] + a[ 2] * b[ 9] + a[ 3] * b[13];
+    o[ 2] = a[ 0] * b[ 2] + a[ 1] * b[ 6] + a[ 2] * b[10] + a[ 3] * b[14];
+    o[ 3] = a[ 0] * b[ 3] + a[ 1] * b[ 7] + a[ 2] * b[11] + a[ 3] * b[15];
 
-    o[ 4] = a[ 4]*b[ 0] + a[ 5]*b[ 4] + a[ 6]*b[ 8] + a[ 7]*b[12];
-    o[ 5] = a[ 4]*b[ 1] + a[ 5]*b[ 5] + a[ 6]*b[ 9] + a[ 7]*b[13];
-    o[ 6] = a[ 4]*b[ 2] + a[ 5]*b[ 6] + a[ 6]*b[10] + a[ 7]*b[14];
-    o[ 7] = a[ 4]*b[ 3] + a[ 5]*b[ 7] + a[ 6]*b[11] + a[ 7]*b[15];
+    o[ 4] = a[ 4] * b[ 0] + a[ 5] * b[ 4] + a[ 6] * b[ 8] + a[ 7] * b[12];
+    o[ 5] = a[ 4] * b[ 1] + a[ 5] * b[ 5] + a[ 6] * b[ 9] + a[ 7] * b[13];
+    o[ 6] = a[ 4] * b[ 2] + a[ 5] * b[ 6] + a[ 6] * b[10] + a[ 7] * b[14];
+    o[ 7] = a[ 4] * b[ 3] + a[ 5] * b[ 7] + a[ 6] * b[11] + a[ 7] * b[15];
 
-    o[ 8] = a[ 8]*b[ 0] + a[ 9]*b[ 4] + a[10]*b[ 8] + a[11]*b[12];
-    o[ 9] = a[ 8]*b[ 1] + a[ 9]*b[ 5] + a[10]*b[ 9] + a[11]*b[13];
-    o[10] = a[ 8]*b[ 2] + a[ 9]*b[ 6] + a[10]*b[10] + a[11]*b[14];
-    o[11] = a[ 8]*b[ 3] + a[ 9]*b[ 7] + a[10]*b[11] + a[11]*b[15];
+    o[ 8] = a[ 8] * b[ 0] + a[ 9] * b[ 4] + a[10] * b[ 8] + a[11] * b[12];
+    o[ 9] = a[ 8] * b[ 1] + a[ 9] * b[ 5] + a[10] * b[ 9] + a[11] * b[13];
+    o[10] = a[ 8] * b[ 2] + a[ 9] * b[ 6] + a[10] * b[10] + a[11] * b[14];
+    o[11] = a[ 8] * b[ 3] + a[ 9] * b[ 7] + a[10] * b[11] + a[11] * b[15];
 
-    o[12] = a[12]*b[ 0] + a[13]*b[ 4] + a[14]*b[ 8] + a[15]*b[12];
-    o[13] = a[12]*b[ 1] + a[13]*b[ 5] + a[14]*b[ 9] + a[15]*b[13];
-    o[14] = a[12]*b[ 2] + a[13]*b[ 6] + a[14]*b[10] + a[15]*b[14];
-    o[15] = a[12]*b[ 3] + a[13]*b[ 7] + a[14]*b[11] + a[15]*b[15];
+    o[12] = a[12] * b[ 0] + a[13] * b[ 4] + a[14] * b[ 8] + a[15] * b[12];
+    o[13] = a[12] * b[ 1] + a[13] * b[ 5] + a[14] * b[ 9] + a[15] * b[13];
+    o[14] = a[12] * b[ 2] + a[13] * b[ 6] + a[14] * b[10] + a[15] * b[14];
+    o[15] = a[12] * b[ 3] + a[13] * b[ 7] + a[14] * b[11] + a[15] * b[15];
 }
 
 
@@ -156,7 +163,12 @@ bn_mat_mul3(mat_t o, const mat_t a, const mat_t b, const mat_t c)
 
 
 void
-bn_mat_mul4(mat_t ao, const mat_t a, const mat_t b, const mat_t c, const mat_t d)
+bn_mat_mul4(
+    mat_t ao,
+    const mat_t a,
+    const mat_t b,
+    const mat_t c,
+    const mat_t d)
 {
     mat_t t, u;
 
@@ -167,19 +179,23 @@ bn_mat_mul4(mat_t ao, const mat_t a, const mat_t b, const mat_t c, const mat_t d
 
 
 void
-bn_matXvec(register vect_t ov, register const mat_t im, register const vect_t iv)
+bn_matXvec(
+    register vect_t ov,
+    register const mat_t im,
+    register const vect_t iv)
 {
     register int eo = 0;	/* Position in output vector */
     register int em = 0;	/* Position in input matrix */
     register int ei;		/* Position in input vector */
 
     /* For each element in the output array... */
-    for (; eo<4; eo++) {
+    for (; eo < 4; eo++) {
 
 	ov[eo] = 0;		/* Start with zero in output */
 
-	for (ei=0; ei<4; ei++)
+	for (ei = 0; ei < 4; ei++) {
 	    ov[eo] += im[em++] * iv[ei];
+	}
     }
 }
 
@@ -211,19 +227,20 @@ bn_mat_inverse(register mat_t output, const mat_t input)
     MAT_COPY(output, input);	/* Duplicate */
 
     /* Initialization */
-    for (j = 0; j < 4; j++)
+    for (j = 0; j < 4; j++) {
 	z[j] = j;
+    }
 
     /* Main Loop */
     for (i = 0; i < 4; i++) {
 	register fastf_t y;		/* local temporary */
 
 	k = i;
-	y = output[i*4+i];
-	for (j = i+1; j < 4; j++) {
+	y = output[i * 4 + i];
+	for (j = i + 1; j < 4; j++) {
 	    register fastf_t w;		/* local temporary */
 
-	    w = output[i*4+j];
+	    w = output[i * 4 + j];
 	    if (fabs(w) > fabs(y)) {
 		k = j;
 		y = w;
@@ -239,25 +256,27 @@ bn_mat_inverse(register mat_t output, const mat_t input)
 	for (j = 0; j < 4; j++) {
 	    register fastf_t temp;	/* Local */
 
-	    c[j] = output[j*4+k];
-	    output[j*4+k] = output[j*4+i];
-	    output[j*4+i] = - c[j] * y;
-	    temp = output[i*4+j] * y;
+	    c[j] = output[j * 4 + k];
+	    output[j * 4 + k] = output[j * 4 + i];
+	    output[j * 4 + i] = - c[j] * y;
+	    temp = output[i * 4 + j] * y;
 	    b[j] = temp;
-	    output[i*4+j] = temp;
+	    output[i * 4 + j] = temp;
 	}
 
-	output[i*4+i] = y;
+	output[i * 4 + i] = y;
 	j = z[i];
 	z[i] = z[k];
 	z[k] = j;
 	for (k = 0; k < 4; k++) {
-	    if (k == i)
+	    if (k == i) {
 		continue;
+	    }
 	    for (j = 0; j < 4; j++) {
-		if (j == i)
+		if (j == i) {
 		    continue;
-		output[k*4+j] = output[k*4+j] - b[j] * c[k];
+		}
+		output[k * 4 + j] = output[k * 4 + j] - b[j] * c[k];
 	    }
 	}
     }
@@ -270,9 +289,9 @@ bn_mat_inverse(register mat_t output, const mat_t input)
 	    for (j = 0; j < 4; j++) {
 		register fastf_t w;	/* Local temp */
 
-		w = output[i*4+j];
-		output[i*4+j] = output[k*4+j];
-		output[k*4+j] = w;
+		w = output[i * 4 + j];
+		output[i * 4 + j] = output[k * 4 + j];
+		output[k * 4 + j] = w;
 	    }
 	    p = z[i];
 	    z[i] = z[k];
@@ -323,8 +342,8 @@ bn_mat_ae(register fastf_t *m, double azimuth, double elev)
     double sin_az, sin_el;
     double cos_az, cos_el;
 
-    azimuth *= bn_degtorad;
-    elev *= bn_degtorad;
+    azimuth *= DEG2RAD;
+    elev *= DEG2RAD;
 
     sin_az = sin(azimuth);
     cos_az = cos(azimuth);
@@ -356,19 +375,25 @@ bn_ae_vec(fastf_t *azp, fastf_t *elp, const vect_t v)
 {
     register fastf_t az;
 
-    if ((az = bn_atan2(v[Y], v[X]) * bn_radtodeg) < 0) {
+    if ((az = bn_atan2(v[Y], v[X]) * RAD2DEG) < 0) {
 	*azp = 360 + az;
     } else if (az >= 360) {
 	*azp = az - 360;
     } else {
 	*azp = az;
     }
-    *elp = bn_atan2(v[Z], hypot(v[X], v[Y])) * bn_radtodeg;
+    *elp = bn_atan2(v[Z], hypot(v[X], v[Y])) * RAD2DEG;
 }
 
 
 void
-bn_aet_vec(fastf_t *az, fastf_t *el, fastf_t *twist, fastf_t *vec_ae, fastf_t *vec_twist, fastf_t accuracy)
+bn_aet_vec(
+    fastf_t *az,
+    fastf_t *el,
+    fastf_t *twist,
+    fastf_t *vec_ae,
+    fastf_t *vec_twist,
+    fastf_t accuracy)
 {
     vect_t zero_twist, ninety_twist;
     vect_t z_dir;
@@ -378,13 +403,14 @@ bn_aet_vec(fastf_t *az, fastf_t *el, fastf_t *twist, fastf_t *vec_ae, fastf_t *v
 
     /* stabilize fluctuation between 0 and 360
      * change azimuth near 360 to 0 */
-    if (NEAR_EQUAL(*az, 360.0, accuracy))
+    if (NEAR_EQUAL(*az, 360.0, accuracy)) {
 	*az = 0.0;
+    }
 
     /* if elevation is +/-90 set twist to zero and calculate azimuth */
     if (NEAR_EQUAL(*el, 90.0, accuracy) || NEAR_ZERO(*el + 90.0, accuracy)) {
 	*twist = 0.0;
-	*az = bn_atan2(-vec_twist[X], vec_twist[Y]) * bn_radtodeg;
+	*az = bn_atan2(-vec_twist[X], vec_twist[Y]) * RAD2DEG;
     } else {
 	/* Calculate twist from vec_twist */
 	VSET(z_dir, 0, 0, 1);
@@ -393,11 +419,12 @@ bn_aet_vec(fastf_t *az, fastf_t *el, fastf_t *twist, fastf_t *vec_ae, fastf_t *v
 	VCROSS(ninety_twist, vec_ae, zero_twist);
 	VUNITIZE(ninety_twist);
 
-	*twist = bn_atan2(VDOT(vec_twist, ninety_twist), VDOT(vec_twist, zero_twist)) * bn_radtodeg;
+	*twist = bn_atan2(VDOT(vec_twist, ninety_twist), VDOT(vec_twist, zero_twist)) * RAD2DEG;
 
 	/* stabilize flutter between +/- 180 */
-	if (NEAR_EQUAL(*twist, -180.0, accuracy))
+	if (NEAR_EQUAL(*twist, -180.0, accuracy)) {
 	    *twist = 180.0;
+	}
     }
 }
 
@@ -405,10 +432,11 @@ bn_aet_vec(fastf_t *az, fastf_t *el, fastf_t *twist, fastf_t *vec_ae, fastf_t *v
 void
 bn_vec_ae(vect_t vect, fastf_t az, fastf_t el)
 {
-    fastf_t vx, vy, vz;
+    fastf_t vx, vy, vz, rtemp;
     vz = sin(el);
-    vy = fabs(vz) * sin(az);
-    vx = fabs(vz) * cos(az);
+    rtemp = cos(el);
+    vy = rtemp * sin(az);
+    vx = rtemp * cos(az);
     VSET(vect, vx, vy , vz);
     VUNITIZE(vect);
 }
@@ -427,7 +455,11 @@ bn_vec_aed(vect_t vect, fastf_t az, fastf_t el, fastf_t distance)
 
 
 void
-bn_mat_angles(register fastf_t *mat, double alpha_in, double beta_in, double ggamma_in)
+bn_mat_angles(
+    register fastf_t *mat,
+    double alpha_in,
+    double beta_in,
+    double ggamma_in)
 {
     double alpha, beta, ggamma;
     double calpha, cbeta, cgamma;
@@ -438,32 +470,35 @@ bn_mat_angles(register fastf_t *mat, double alpha_in, double beta_in, double gga
 	return;
     }
 
-    alpha = alpha_in * bn_degtorad;
-    beta = beta_in * bn_degtorad;
-    ggamma = ggamma_in * bn_degtorad;
+    alpha = alpha_in * DEG2RAD;
+    beta = beta_in * DEG2RAD;
+    ggamma = ggamma_in * DEG2RAD;
 
     calpha = cos(alpha);
     cbeta = cos(beta);
     cgamma = cos(ggamma);
 
-    /* sine of "180*bn_degtorad" will not be exactly zero and will
+    /* sine of "180*DEG2RAD" will not be exactly zero and will
      * result in errors when some codes try to convert this back to
      * azimuth and elevation.  do_frame() uses this technique!!!
      */
-    if (ZERO(alpha_in - 180.0))
+    if (ZERO(alpha_in - 180.0)) {
 	salpha = 0.0;
-    else
+    } else {
 	salpha = sin(alpha);
+    }
 
-    if (ZERO(beta_in - 180.0))
+    if (ZERO(beta_in - 180.0)) {
 	sbeta = 0.0;
-    else
+    } else {
 	sbeta = sin(beta);
+    }
 
-    if (ZERO(ggamma_in - 180.0))
+    if (ZERO(ggamma_in - 180.0)) {
 	sgamma = 0.0;
-    else
+    } else {
 	sgamma = sin(ggamma);
+    }
 
     mat[0] = cbeta * cgamma;
     mat[1] = -cbeta * sgamma;
@@ -485,10 +520,11 @@ bn_mat_angles(register fastf_t *mat, double alpha_in, double beta_in, double gga
 
 
 void
-bn_mat_angles_rad(register mat_t mat,
-		  double alpha,
-		  double beta,
-		  double ggamma)
+bn_mat_angles_rad(
+    register mat_t mat,
+    double alpha,
+    double beta,
+    double ggamma)
 {
     double calpha, cbeta, cgamma;
     double salpha, sbeta, sgamma;
@@ -526,7 +562,14 @@ bn_mat_angles_rad(register mat_t mat,
 
 
 void
-bn_eigen2x2(fastf_t *val1, fastf_t *val2, fastf_t *vec1, fastf_t *vec2, fastf_t a, fastf_t b, fastf_t c)
+bn_eigen2x2(
+    fastf_t *val1,
+    fastf_t *val2,
+    fastf_t *vec1,
+    fastf_t *vec2,
+    fastf_t a,
+    fastf_t b,
+    fastf_t c)
 {
     fastf_t d, root;
     fastf_t v1, v2;
@@ -550,7 +593,7 @@ bn_eigen2x2(fastf_t *val1, fastf_t *val2, fastf_t *vec1, fastf_t *vec2, fastf_t 
 	return;
     }
 
-    root = sqrt(d*d + b*b);
+    root = sqrt(d * d + b * b);
     v1 = 0.5 * (c + a) - root;
     v2 = 0.5 * (c + a) + root;
 
@@ -570,26 +613,41 @@ bn_eigen2x2(fastf_t *val1, fastf_t *val2, fastf_t *vec1, fastf_t *vec2, fastf_t 
 
 
 void
-bn_vec_perp(vect_t new, const vect_t old)
+bn_vec_perp(vect_t new_vec, const vect_t old_vec)
 {
-    register int i;
-    vect_t another;	/* Another vector, different */
+    int i;
+    vect_t another_vec;
+
+    /* degenerate case goes up */
+    if (ZERO(old_vec[X]) && ZERO(old_vec[Y]) && ZERO(old_vec[Z])) {
+	VSET(new_vec, 0.0, 0.0, 1.0);
+	return;
+    }
+
+    /* FIXME: switching to completely different axes when a component
+     * exceeds another causes twitchy jumping when using these vectors
+     * to draw.  a better method would support smooth transitions.
+     */
 
     i = X;
-    if (fabs(old[Y])<fabs(old[i])) i=Y;
-    if (fabs(old[Z])<fabs(old[i])) i=Z;
-    VSETALL(another, 0);
-    another[i] = 1.0;
-    if (ZERO(old[X]) && ZERO(old[Y]) && ZERO(old[Z])) {
-	VMOVE(new, another);
-    } else {
-	VCROSS(new, another, old);
+    if (fabs(old_vec[Y]) < fabs(old_vec[i])) {
+	i = Y;
     }
+    if (fabs(old_vec[Z]) < fabs(old_vec[i])) {
+	i = Z;
+    }
+    VSETALL(another_vec, 0);
+    another_vec[i] = 1.0;
+    VCROSS(new_vec, another_vec, old_vec);
 }
 
 
 void
-bn_mat_fromto(mat_t m, const fastf_t *from, const fastf_t *to, const struct bn_tol *tol)
+bn_mat_fromto(
+    mat_t m,
+    const fastf_t *from,
+    const fastf_t *to,
+    const struct bn_tol *tol)
 {
     vect_t test_to;
     vect_t unit_from, unit_to;
@@ -820,10 +878,10 @@ bn_vec_ortho(register vect_t out, register const vect_t in)
 	VSETALL(out, 0);
 	return;
     }
-    f = 1.0/f;
+    f = 1.0 / f;
     out[i] = 0.0;
-    out[j] = -in[k]*f;
-    out[k] =  in[j]*f;
+    out[j] = -in[k] * f;
+    out[k] =  in[j] * f;
 
     return;
 }
@@ -844,7 +902,7 @@ bn_mat_scale_about_pt(mat_t mat, const point_t pt, const double scale)
 	MAT_ZERO(mat);
 	return -1;			/* ERROR */
     }
-    s[15] = 1/scale;
+    s[15] = 1 / scale;
 
     bn_mat_mul(tmp, s, xlate);
 
@@ -887,21 +945,29 @@ bn_mat_is_equal(const mat_t a, const mat_t b, const struct bn_tol *tol)
      * involves translation and no rotation, doing this first should
      * detect most non-equal cases rapidly.
      */
-    for (i=3; i<12; i+=4) {
+    for (i = 3; i < 12; i += 4) {
 	f = a[i] - b[i];
-	if (!NEAR_ZERO(f, tdist)) return 0;
+	if (!NEAR_ZERO(f, tdist)) {
+	    return 0;
+	}
     }
 
     /* Check that the rotation part of the matrix (cosines) are within
      * the perpendicular tolerance.
      */
-    for (i = 0; i < 16; i+=4) {
+    for (i = 0; i < 16; i += 4) {
 	f = a[i] - b[i];
-	if (!NEAR_ZERO(f, tperp)) return 0;
-	f = a[i+1] - b[i+1];
-	if (!NEAR_ZERO(f, tperp)) return 0;
-	f = a[i+2] - b[i+2];
-	if (!NEAR_ZERO(f, tperp)) return 0;
+	if (!NEAR_ZERO(f, tperp)) {
+	    return 0;
+	}
+	f = a[i + 1] - b[i + 1];
+	if (!NEAR_ZERO(f, tperp)) {
+	    return 0;
+	}
+	f = a[i + 2] - b[i + 2];
+	if (!NEAR_ZERO(f, tperp)) {
+	    return 0;
+	}
     }
 
     /* Check that the scale part of the matrix (ratio) is within the
@@ -909,7 +975,9 @@ bn_mat_is_equal(const mat_t a, const mat_t b, const struct bn_tol *tol)
      * the tighter of dist or perp.
      */
     f = a[15] - b[15];
-    if (!NEAR_ZERO(f, tperp)) return 0;
+    if (!NEAR_ZERO(f, tperp)) {
+	return 0;
+    }
 
     return 1;
 }
@@ -923,7 +991,11 @@ bn_mat_is_identity(const mat_t m)
 
 
 void
-bn_mat_arb_rot(mat_t m, const point_t pt, const vect_t dir, const fastf_t ang)
+bn_mat_arb_rot(
+    mat_t m,
+    const point_t pt,
+    const vect_t dir,
+    const fastf_t ang)
 {
     mat_t tran1, tran2, rot;
     double cos_ang, sin_ang, one_m_cosang;
@@ -952,24 +1024,24 @@ bn_mat_arb_rot(mat_t m, const point_t pt, const vect_t dir, const fastf_t ang)
     cos_ang = cos(ang);
     sin_ang = sin(ang);
     one_m_cosang = 1.0 - cos_ang;
-    n1_sq = dir[X]*dir[X];
-    n2_sq = dir[Y]*dir[Y];
-    n3_sq = dir[Z]*dir[Z];
-    n1_n2 = dir[X]*dir[Y];
-    n1_n3 = dir[X]*dir[Z];
-    n2_n3 = dir[Y]*dir[Z];
+    n1_sq = dir[X] * dir[X];
+    n2_sq = dir[Y] * dir[Y];
+    n3_sq = dir[Z] * dir[Z];
+    n1_n2 = dir[X] * dir[Y];
+    n1_n3 = dir[X] * dir[Z];
+    n2_n3 = dir[Y] * dir[Z];
 
     MAT_IDN(rot);
-    rot[0] = n1_sq + (1.0 - n1_sq)*cos_ang;
-    rot[1] = n1_n2 * one_m_cosang - dir[Z]*sin_ang;
-    rot[2] = n1_n3 * one_m_cosang + dir[Y]*sin_ang;
+    rot[0] = n1_sq + (1.0 - n1_sq) * cos_ang;
+    rot[1] = n1_n2 * one_m_cosang - dir[Z] * sin_ang;
+    rot[2] = n1_n3 * one_m_cosang + dir[Y] * sin_ang;
 
-    rot[4] = n1_n2 * one_m_cosang + dir[Z]*sin_ang;
-    rot[5] = n2_sq + (1.0 - n2_sq)*cos_ang;
-    rot[6] = n2_n3 * one_m_cosang - dir[X]*sin_ang;
+    rot[4] = n1_n2 * one_m_cosang + dir[Z] * sin_ang;
+    rot[5] = n2_sq + (1.0 - n2_sq) * cos_ang;
+    rot[6] = n2_n3 * one_m_cosang - dir[X] * sin_ang;
 
-    rot[8] = n1_n3 * one_m_cosang - dir[Y]*sin_ang;
-    rot[9] = n2_n3 * one_m_cosang + dir[X]*sin_ang;
+    rot[8] = n1_n3 * one_m_cosang - dir[Y] * sin_ang;
+    rot[9] = n2_n3 * one_m_cosang + dir[X] * sin_ang;
     rot[10] = n3_sq + (1.0 - n3_sq) * cos_ang;
 
     bn_mat_mul(m, rot, tran1);
@@ -995,7 +1067,9 @@ bn_mat_ck(const char *title, const mat_t m)
     vect_t A, B, C;
     fastf_t fx, fy, fz;
 
-    if (!m) return 0;		/* implies identity matrix */
+    if (!m) {
+	return 0;    /* implies identity matrix */
+    }
 
     /* Validate that matrix preserves perpendicularity of axis by
      * checking that A.B == 0, B.C == 0, A.C == 0 XXX these vectors
@@ -1011,14 +1085,13 @@ bn_mat_ck(const char *title, const mat_t m)
 
     /* NOTE: this tolerance cannot be any more tight than 0.00001 due
      * to default calculation tolerancing used by models.  Matrices
-     * exported to disk outside of tolerance and will fail import if
+     * exported to disk outside of tolerance will fail import if
      * set too restrictive.
      */
     if (!NEAR_ZERO(fx, 0.00001)
 	|| !NEAR_ZERO(fy, 0.00001)
 	|| !NEAR_ZERO(fz, 0.00001)
-	|| NEAR_ZERO(m[15], VDIVIDE_TOL))
-    {
+	|| NEAR_ZERO(m[15], VDIVIDE_TOL)) {
 	if (bu_debug & BU_DEBUG_MATH) {
 	    bu_log("bn_mat_ck(%s):  bad matrix, does not preserve axis perpendicularity.\n  X.Y=%g, Y.Z=%g, X.Z=%g, s=%g\n", title, fx, fy, fz, m[15]);
 	    bn_mat_print("bn_mat_ck() bad matrix", m);
@@ -1039,9 +1112,9 @@ bn_mat_det3(const mat_t m)
 {
     register fastf_t sum;
 
-    sum = m[0] * (m[5]*m[10] - m[6]*m[9])
-	-m[1] * (m[4]*m[10] - m[6]*m[8])
-	+m[2] * (m[4]*m[9] - m[5]*m[8]);
+    sum = m[0] * (m[5] * m[10] - m[6] * m[9])
+	  - m[1] * (m[4] * m[10] - m[6] * m[8])
+	  + m[2] * (m[4] * m[9] - m[5] * m[8]);
 
     return sum;
 }
@@ -1053,23 +1126,23 @@ bn_mat_determinant(const mat_t m)
     fastf_t det[4];
     fastf_t sum;
 
-    det[0] = m[5] * (m[10]*m[15] - m[11]*m[14])
-	-m[6] * (m[ 9]*m[15] - m[11]*m[13])
-	+m[7] * (m[ 9]*m[14] - m[10]*m[13]);
+    det[0] = m[5] * (m[10] * m[15] - m[11] * m[14])
+	     - m[6] * (m[ 9] * m[15] - m[11] * m[13])
+	     + m[7] * (m[ 9] * m[14] - m[10] * m[13]);
 
-    det[1] = m[4] * (m[10]*m[15] - m[11]*m[14])
-	-m[6] * (m[ 8]*m[15] - m[11]*m[12])
-	+m[7] * (m[ 8]*m[14] - m[10]*m[12]);
+    det[1] = m[4] * (m[10] * m[15] - m[11] * m[14])
+	     - m[6] * (m[ 8] * m[15] - m[11] * m[12])
+	     + m[7] * (m[ 8] * m[14] - m[10] * m[12]);
 
-    det[2] = m[4] * (m[ 9]*m[15] - m[11]*m[13])
-	-m[5] * (m[ 8]*m[15] - m[11]*m[12])
-	+m[7] * (m[ 8]*m[13] - m[ 9]*m[12]);
+    det[2] = m[4] * (m[ 9] * m[15] - m[11] * m[13])
+	     - m[5] * (m[ 8] * m[15] - m[11] * m[12])
+	     + m[7] * (m[ 8] * m[13] - m[ 9] * m[12]);
 
-    det[3] = m[4] * (m[ 9]*m[14] - m[10]*m[13])
-	-m[5] * (m[ 8]*m[14] - m[10]*m[12])
-	+m[6] * (m[ 8]*m[13] - m[ 9]*m[12]);
+    det[3] = m[4] * (m[ 9] * m[14] - m[10] * m[13])
+	     - m[5] * (m[ 8] * m[14] - m[10] * m[12])
+	     + m[6] * (m[ 8] * m[13] - m[ 9] * m[12]);
 
-    sum = m[0]*det[0] - m[1]*det[1] + m[2]*det[2] - m[3]*det[3];
+    sum = m[0] * det[0] - m[1] * det[1] + m[2] * det[2] - m[3] * det[3];
 
     return sum;
 
@@ -1077,7 +1150,7 @@ bn_mat_determinant(const mat_t m)
 
 
 int
-bn_mat_is_non_unif (const mat_t m)
+bn_mat_is_non_unif(const mat_t m)
 {
     double mag[3];
 
@@ -1085,14 +1158,15 @@ bn_mat_is_non_unif (const mat_t m)
     mag[1] = MAGSQ(&m[4]);
     mag[2] = MAGSQ(&m[8]);
 
-    if (fabs(1.0 - (mag[1]/mag[0])) > .0005 ||
-	fabs(1.0 - (mag[2]/mag[0])) > .0005) {
+    if (fabs(1.0 - (mag[1] / mag[0])) > .0005 ||
+	fabs(1.0 - (mag[2] / mag[0])) > .0005) {
 
 	return 1;
     }
 
-    if (!ZERO(m[12]) || !ZERO(m[13]) || !ZERO(m[14]))
+    if (!ZERO(m[12]) || !ZERO(m[13]) || !ZERO(m[14])) {
 	return 2;
+    }
 
     return 0;
 }
@@ -1132,6 +1206,151 @@ bn_wrt_point_direc(mat_t out, const mat_t change, const mat_t in, const point_t 
      */
     bn_mat_mul3(out, origin_to_pt, zaxis_to_d, t1);
 }
+
+/*
+ * Compute a perspective matrix for a right-handed coordinate system.
+ * Reference: SGI Graphics Reference Appendix C
+ * (Note:  SGI is left-handed, but the fix is done in the Display Manger).
+ */
+void
+persp_mat(mat_t m, fastf_t fovy, fastf_t aspect, fastf_t near1, fastf_t far1, fastf_t backoff)
+{
+    mat_t m2, tra;
+
+    fovy *= DEG2RAD;
+
+    MAT_IDN(m2);
+    m2[5] = cos(fovy/2.0) / sin(fovy/2.0);
+    m2[0] = m2[5]/aspect;
+    m2[10] = (far1+near1) / (far1-near1);
+    m2[11] = 2*far1*near1 / (far1-near1);       /* This should be negative */
+
+    m2[14] = -1;                /* XXX This should be positive */
+    m2[15] = 0;
+
+    /* Move eye to origin, then apply perspective */
+    MAT_IDN(tra);
+    tra[11] = -backoff;
+    bn_mat_mul(m, m2, tra);
+}
+
+/*
+ *
+ * Create a perspective matrix that transforms the +/1 viewing cube,
+ * with the actual eye position (not at Z=+1) specified in viewing coords,
+ * into a related space where the eye has been sheared onto the Z axis
+ * and repositioned at Z=(0, 0, 1), with the same perspective field of view
+ * as before.
+ *
+ * The Zbuffer clips off stuff with negative Z values.
+ *
+ * pmat = persp * xlate * shear
+ */
+void
+mike_persp_mat(fastf_t *pmat, const fastf_t *eye)
+{
+    mat_t shear;
+    mat_t persp;
+    mat_t xlate;
+    mat_t t1, t2;
+    point_t sheared_eye;
+
+    if (eye[Z] < SMALL) {
+        VPRINT("mike_persp_mat(): ERROR, z<0, eye", eye);
+        return;
+    }
+
+    /* Shear "eye" to +Z axis */
+    MAT_IDN(shear);
+    shear[2] = -eye[X]/eye[Z];
+    shear[6] = -eye[Y]/eye[Z];
+
+    MAT4X3VEC(sheared_eye, shear, eye);
+    if (!NEAR_ZERO(sheared_eye[X], .01) || !NEAR_ZERO(sheared_eye[Y], .01)) {
+        VPRINT("ERROR sheared_eye", sheared_eye);
+        return;
+    }
+
+    /* Translate along +Z axis to put sheared_eye at (0, 0, 1). */
+    MAT_IDN(xlate);
+    /* XXX should I use MAT_DELTAS_VEC_NEG()?  X and Y should be 0 now */
+    MAT_DELTAS(xlate, 0, 0, 1-sheared_eye[Z]);
+
+    /* Build perspective matrix in place, substituting fov=2*atan(1, Z) */
+    MAT_IDN(persp);
+    /* From page 492 of Graphics Gems */
+    persp[0] = sheared_eye[Z];  /* scaling: fov aspect term */
+    persp[5] = sheared_eye[Z];  /* scaling: determines fov */
+
+    /* From page 158 of Rogers Mathematical Elements */
+    /* Z center of projection at Z=+1, r=-1/1 */
+    persp[14] = -1;
+
+    bn_mat_mul(t1, xlate, shear);
+    bn_mat_mul(t2, persp, t1);
+    /* Now, move eye from Z=1 to Z=0, for clipping purposes */
+    MAT_DELTAS(xlate, 0, 0, -1);
+    bn_mat_mul(pmat, xlate, t2);
+}
+
+
+/*
+ * Map "display plate coordinates" (which can just be the screen viewing cube),
+ * into [-1, +1] coordinates, with perspective.
+ * Per "High Resolution Virtual Reality" by Michael Deering,
+ * Computer Graphics 26, 2, July 1992, pp 195-201.
+ *
+ * L is lower left corner of screen, H is upper right corner.
+ * L[Z] is the front (near) clipping plane location.
+ * H[Z] is the back (far) clipping plane location.
+ *
+ * This corresponds to the SGI "window()" routine, but taking into account
+ * skew due to the eyepoint being offset parallel to the image plane.
+ *
+ * The gist of the algorithm is to translate the display plate to the
+ * view center, shear the eye point to (0, 0, 1), translate back,
+ * then apply an off-axis perspective projection.
+ *
+ * Another (partial) reference is "A comparison of stereoscopic cursors
+ * for the interactive manipulation of B-splines" by Barham & McAllister,
+ * SPIE Vol 1457 Stereoscopic Display & Applications, 1991, pg 19.
+ */
+void
+deering_persp_mat(fastf_t *m, const fastf_t *l, const fastf_t *h, const fastf_t *eye)
+    /* lower left corner of screen */
+    /* upper right (high) corner of screen */
+    /* eye location.  Traditionally at (0, 0, 1) */
+{
+    vect_t diff;        /* H - L */
+    vect_t sum; /* H + L */
+
+    VSUB2(diff, h, l);
+    VADD2(sum, h, l);
+
+    m[0] = 2 * eye[Z] / diff[X];
+    m[1] = 0;
+    m[2] = (sum[X] - 2 * eye[X]) / diff[X];
+    m[3] = -eye[Z] * sum[X] / diff[X];
+
+    m[4] = 0;
+    m[5] = 2 * eye[Z] / diff[Y];
+    m[6] = (sum[Y] - 2 * eye[Y]) / diff[Y];
+    m[7] = -eye[Z] * sum[Y] / diff[Y];
+
+    /* Multiplied by -1, to do right-handed Z coords */
+    m[8] = 0;
+    m[9] = 0;
+    m[10] = -(sum[Z] - 2 * eye[Z]) / diff[Z];
+    m[11] = -(-eye[Z] + 2 * h[Z] * eye[Z]) / diff[Z];
+
+    m[12] = 0;
+    m[13] = 0;
+    m[14] = -1;
+    m[15] = eye[Z];
+
+/* XXX May need to flip Z ? (lefthand to righthand?) */
+}
+
 
 
 /** @} */

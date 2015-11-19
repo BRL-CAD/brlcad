@@ -1,7 +1,7 @@
 /*                 CartesianPoint.cpp
  * BRL-CAD
  *
- * Copyright (c) 1994-2013 United States Government as represented by
+ * Copyright (c) 1994-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -55,6 +55,8 @@ CartesianPoint::~CartesianPoint()
 bool
 CartesianPoint::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
 {
+    STEPattribute *attr = NULL;
+    STEPaggregate *sa = NULL;
     step = sw;
     id = sse->STEPfile_id;
 
@@ -62,17 +64,19 @@ CartesianPoint::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
     // load base class attributes
     if (!Point::Load(step, sse)) {
 	std::cout << CLASSNAME << ":Error loading base class ::Point." << std::endl;
-	return false;
+	goto step_error;
     }
 
     // need to do this for local attributes to makes sure we have
     // the actual entity and not a complex/supertype parent
     sse = step->getEntity(sse, ENTITYNAME);
 
-    STEPattribute *attr = step->getAttribute(sse, "coordinates");
+    attr = step->getAttribute(sse, "coordinates");
     if (attr != NULL) {
-	STEPaggregate *sa = (STEPaggregate *)(attr->ptr.a);
+	sa = (STEPaggregate *)(attr->ptr.a);
+	if (!sa) goto step_error;
 	RealNode *rn = (RealNode *)sa->GetHead();
+	if (!rn) goto step_error;
 	int index = 0;
 	while ((rn != NULL) && (index < 3)) {
 	    coordinates[index++] = rn->value;
@@ -81,7 +85,11 @@ CartesianPoint::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
     } else {
 	std::cout << CLASSNAME << ": error loading 'coordinate' attribute." << std::endl;
     }
+    sw->entity_status[id] = STEP_LOADED;
     return true;
+step_error:
+    sw->entity_status[id] = STEP_LOAD_ERROR;
+    return false;
 }
 
 void

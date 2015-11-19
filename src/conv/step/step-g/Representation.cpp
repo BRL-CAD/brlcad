@@ -1,7 +1,7 @@
 /*                 Representation.cpp
  * BRL-CAD
  *
- * Copyright (c) 1994-2013 United States Government as represented by
+ * Copyright (c) 1994-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -49,6 +49,8 @@ Representation::Representation()
 {
     step = NULL;
     id = 0;
+    items.clear();
+    context_of_items.clear();
 }
 
 
@@ -56,26 +58,14 @@ Representation::Representation(STEPWrapper *sw, int step_id)
 {
     step = sw;
     id = step_id;
+    items.clear();
+    context_of_items.clear();
 }
 
 
 Representation::~Representation()
 {
-    /*
-      LIST_OF_REPRESENTATION_ITEMS::iterator i = items.begin();
-
-      while (i != items.end()) {
-      delete (*i);
-      i = items.erase(i);
-      }
-
-      LIST_OF_REPRESENTATION_CONTEXT::iterator ic = context_of_items.begin();
-
-      while (ic != context_of_items.end()) {
-      delete (*ic);
-      ic = context_of_items.erase(ic);
-      }
-    */
+    // elements created through factory will be deleted there.
     items.clear();
     if (context_of_items.size() > 1) {
 	LIST_OF_REPRESENTATION_CONTEXT::iterator ic = context_of_items.begin();
@@ -137,6 +127,29 @@ Representation::GetSolidAngleConversionFactor()
     return 1.0; // assume base of steradians
 }
 
+string
+Representation::GetRepresentationContextName()
+{
+    string pname = "";
+
+    if (!context_of_items.empty()) {
+	LIST_OF_REPRESENTATION_CONTEXT::iterator ic;
+	for (ic = context_of_items.begin(); ic != context_of_items.end(); ++ic) {
+	    if ( (dynamic_cast<GeometricRepresentationContext*>(*ic) == NULL) &&
+		    (dynamic_cast<GlobalUncertaintyAssignedContext *>(*ic) == NULL) &&
+		    (dynamic_cast<GlobalUnitAssignedContext *>(*ic) == NULL) &&
+		    (dynamic_cast<ParametricRepresentationContext *>(*ic) == NULL) &&
+		    (dynamic_cast<RepresentationContext *>(*ic) != NULL) ) {
+		RepresentationContext *rc = dynamic_cast<RepresentationContext *>(*ic);
+
+		pname = rc->GetContextIdentifier();
+		break;
+	    }
+	}
+    }
+
+    return pname;
+}
 
 bool Representation::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
 {
@@ -158,12 +171,16 @@ bool Representation::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
 		RepresentationItem *aRI = dynamic_cast<RepresentationItem *>(Factory::CreateObject(sw, entity));
 		if (aRI != NULL) {
 		    items.push_back(aRI);
+		} else {
+		    l->clear();
+		    delete l;
+		    goto step_error;
 		}
 	    } else {
 		std::cerr << CLASSNAME << ": Unhandled entity in attribute 'items'." << std::endl;
 		l->clear();
 		delete l;
-		return false;
+		goto step_error;
 	    }
 	}
 	l->clear();
@@ -181,7 +198,7 @@ bool Representation::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
 		    context_of_items.push_back(aGRC);
 		    if (!aGRC->Load(step, sub_entity)) {
 			std::cout << CLASSNAME << ":Error loading GeometricRepresentationContext" << std::endl;
-			return false;
+			goto step_error;
 		    }
 		}
 
@@ -192,7 +209,7 @@ bool Representation::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
 		    context_of_items.push_back(aGUAC);
 		    if (!aGUAC->Load(step, sub_entity)) {
 			std::cout << CLASSNAME << ":Error loading GlobalUncertaintyAssignedContext" << std::endl;
-			return false;
+			goto step_error;
 		    }
 		}
 
@@ -203,7 +220,7 @@ bool Representation::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
 		    context_of_items.push_back(aGUAC);
 		    if (!aGUAC->Load(step, sub_entity)) {
 			std::cout << CLASSNAME << ":Error loading GlobalUnitAssignedContext" << std::endl;
-			return false;
+			goto step_error;
 		    }
 		}
 
@@ -214,7 +231,7 @@ bool Representation::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
 		    context_of_items.push_back(aPRC);
 		    if (!aPRC->Load(step, sub_entity)) {
 			std::cout << CLASSNAME << ":Error loading ParametricRepresentationContext" << std::endl;
-			return false;
+			goto step_error;
 		    }
 		}
 	    } else {
@@ -223,15 +240,22 @@ bool Representation::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
 		    context_of_items.push_back(aRC);
 		} else {
 		    std::cout << CLASSNAME << ":Error loading RepresentationContext" << std::endl;
-		    return false;
+		    goto step_error;
 		}
 	    }
 	} else {
 	    std::cout << CLASSNAME << ":Error loading \"context_of_items\"" << std::endl;
-	    return false;
+	    goto step_error;
 	}
     }
+
+    if (sw->entity_status[id] == STEP_LOAD_ERROR) goto step_error;
+
+    sw->entity_status[id] = STEP_LOADED;
     return true;
+step_error:
+    sw->entity_status[id] = STEP_LOAD_ERROR;
+    return false;
 }
 
 

@@ -1,7 +1,7 @@
 /*                            H F . C
  * BRL-CAD
  *
- * Copyright (c) 1994-2013 United States Government as represented by
+ * Copyright (c) 1994-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -47,16 +47,16 @@
 
 #include <stdlib.h>
 #include <stddef.h>
-#include <stdio.h>
 #include <math.h>
-#include <fcntl.h>
 #include <string.h>
 #include "bio.h"
 
+#include "bu/cv.h"
+#include "bu/parallel.h"
 #include "vmath.h"
-#include "db.h"
+#include "rt/db4.h"
 #include "nmg.h"
-#include "rtgeom.h"
+#include "rt/geom.h"
 #include "raytrace.h"
 
 
@@ -110,8 +110,6 @@ struct hf_specific {
 
 
 /**
- * R T _ H F _ T O _ D S P
- *
  * Convert in-memory form of a height-field (HF) to a displacement-map
  * solid (DSP) in internal representation.  There is no record in the
  * V5 database for an HF.
@@ -182,7 +180,7 @@ rt_hf_to_dsp(struct rt_db_internal *db_intern)
 
     rt_db_free_internal(db_intern);
 
-    db_intern->idb_ptr = (genptr_t)dsp;
+    db_intern->idb_ptr = (void *)dsp;
     db_intern->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     db_intern->idb_type = ID_DSP;
     db_intern->idb_meth = &OBJ[ID_DSP];
@@ -192,8 +190,6 @@ rt_hf_to_dsp(struct rt_db_internal *db_intern)
 }
 
 /**
- * R T _ H F _ B B O X
- *
  * Calculate the bounding RPP for an hf
  */
 int
@@ -226,7 +222,7 @@ rt_hf_bbox(struct rt_db_internal *ip, point_t *min_pt, point_t *max_pt, const st
 	sp = (unsigned short *)hip->mp->apbuf;
 	min = max = *sp++;
 	len = hip->w * hip->n;
-	for (i=1; i< len; i++, sp++) {
+	for (i = 1; i < len; i++, sp++) {
 	    if ((int)*sp > max) max=*sp;
 	    if ((int)*sp < min) min=*sp;
 	}
@@ -240,7 +236,7 @@ rt_hf_bbox(struct rt_db_internal *ip, point_t *min_pt, point_t *max_pt, const st
 	fp = (fastf_t *) hip->mp->apbuf;
 	min = max = *fp++;
 	len = hip->w * hip->n;
-	for (i=1; i < len; i++, fp++) {
+	for (i = 1; i < len; i++, fp++) {
 	    if (*fp > max) max = *fp;
 	    if (*fp < min) min = *fp;
 	}
@@ -271,8 +267,6 @@ rt_hf_bbox(struct rt_db_internal *ip, point_t *min_pt, point_t *max_pt, const st
 
 
 /**
- * R T _ H F _ P R E P
- *
  * Given a pointer to a GED database record, and a transformation
  * matrix, determine if this is a valid HF, and if so, precompute
  * various terms of the formula.
@@ -293,17 +287,17 @@ rt_hf_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     const struct bn_tol *tol = &rtip->rti_tol;
     double dot;
     vect_t height, work;
-    static int first_time=1;
+    static int first_time = 1;
 
     if (first_time) {
-	first_time=0;
+	first_time = 0;
     }
     RT_CK_DB_INTERNAL(ip);
     hip = (struct rt_hf_internal *)ip->idb_ptr;
     RT_HF_CK_MAGIC(hip);
 
     BU_GET(hf, struct hf_specific);
-    stp->st_specific = (genptr_t) hf;
+    stp->st_specific = (void *) hf;
     /*
      * The stuff that is given to us.
      */
@@ -359,7 +353,7 @@ rt_hf_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 	sp = (unsigned short *)hf->hf_mp->apbuf;
 	min = max = *sp++;
 	len = hf->hf_w * hf->hf_n;
-	for (i=1; i< len; i++, sp++) {
+	for (i = 1; i < len; i++, sp++) {
 	    if ((int)*sp > max) max=*sp;
 	    if ((int)*sp < min) min=*sp;
 	}
@@ -374,7 +368,7 @@ rt_hf_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 	fp = (fastf_t *) hf->hf_mp->apbuf;
 	min = max = *fp++;
 	len = hf->hf_w * hf->hf_n;
-	for (i=1; i < len; i++, fp++) {
+	for (i = 1; i < len; i++, fp++) {
 	    if (*fp > max) max = *fp;
 	    if (*fp < min) min = *fp;
 	}
@@ -424,9 +418,6 @@ rt_hf_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 }
 
 
-/**
- * R T _ H F _ P R I N T
- */
 void
 rt_hf_print(const struct soltab *stp)
 {
@@ -447,7 +438,7 @@ hf_cell_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct
     struct hf_specific *hfp =
 	(struct hf_specific *)stp->st_specific;
 
-    fastf_t dn, abs_dn, k1st=0, k2nd=0, alpha, beta;
+    fastf_t dn, abs_dn, k1st = 0, k2nd = 0, alpha, beta;
     int dir1st, dir2nd;
     vect_t wxb, xp;
     vect_t tri_wn1st, tri_wn2nd, tri_BA1st, tri_BA2nd;
@@ -693,9 +684,9 @@ hf_cell_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct
 static void
 axis_plane_isect(int plane, fastf_t inout, struct xray *rp, struct hf_specific *hf, double xWidth, double yWidth, struct hit **hp, int *nhits)
 {
-    double left, right, xx=0, xright=0, answer;
+    double left, right, xx = 0, xright = 0, answer;
     vect_t loc;
-    int CellX=0, CellY=0;
+    int CellX = 0, CellY = 0;
 
     if (plane == -6) return;
 
@@ -771,7 +762,7 @@ axis_plane_isect(int plane, fastf_t inout, struct xray *rp, struct hf_specific *
     right *= hf->hf_file2mm;
     answer = (right-left)/xright*xx+left;
 
-    if (loc[Z]-SQRT_SMALL_FASTF < answer) {
+    if (loc[Z] - answer < SQRT_SMALL_FASTF) {
 	(*hp)->hit_magic = RT_HIT_MAGIC;
 	(*hp)->hit_dist = inout;
 	(*hp)->hit_surfno = plane;
@@ -783,8 +774,6 @@ axis_plane_isect(int plane, fastf_t inout, struct xray *rp, struct hf_specific *
 
 
 /**
- * R T _ H T F _ S H O T
- *
  * Intersect a ray with a height field.  If an intersection occurs, a
  * struct seg will be acquired and filled in.
  *
@@ -804,7 +793,7 @@ rt_hf_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct s
     double xWidth, yWidth;
 
     vect_t peqn;
-    fastf_t pdist=0;
+    fastf_t pdist = 0;
     fastf_t allDist[6];	/* The hit point for all rays. */
     fastf_t cosine;
 
@@ -820,7 +809,7 @@ rt_hf_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct s
     out = INFINITY;
     iplane = oplane = 0;
 
-    nhits=0;
+    nhits = 0;
     hp = &hits[0];
 
 
@@ -1026,7 +1015,7 @@ rt_hf_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct s
 	 * samples and the scaling factor is used.  Second, the math
 	 * is nice to us.  IF we are entering at the far end
 	 * (curloc[X] == Xlen || curloc[Y] == Ylen) then the result we
-	 * will get back is of the cell following this (out of bounds)
+	 * will get back is of the cell following this (out of bounds).
 	 * So we add a check for that problem.
 	 */
 	xCell = curloc[X]/xWidth;
@@ -1281,7 +1270,7 @@ rt_hf_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct s
 	 * samples and the scaling factor is used.  Second, the math
 	 * is nice to us.  IF we are entering at the far end
 	 * (curloc[X] == Xlen || curloc[Y] == Ylen) then the result we
-	 * will get back is of the cell following this (out of bounds)
+	 * will get back is of the cell following this (out of bounds).
 	 * So we add a check for that problem.
 	 */
 	yCell = curloc[Y]/yWidth;
@@ -1496,8 +1485,8 @@ rt_hf_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct s
     {
 	int i;
 	struct hit tmp;
-	for (i=0; i< nhits-1; i++) {
-	    for (j=i+1; j<nhits; j++) {
+	for (i = 0; i < nhits-1; i++) {
+	    for (j = i+1; j < nhits; j++) {
 		if (hits[i].hit_dist <= hits[j].hit_dist) continue;
 		tmp = hits[j];
 		hits[j]=hits[i];
@@ -1518,7 +1507,7 @@ rt_hf_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct s
 	nhits++;
 	if (nerrors++ < 300) {
 	    bu_log("rt_hf_shot(%s): %d hit(s)@ %d %d: ", stp->st_name, nhits-1, ap->a_x, ap->a_y);
-	    for (i=0; i< nhits; i++) {
+	    for (i = 0; i < nhits; i++) {
 		bu_log("%f(%d), ", hits[i].hit_dist, hits[i].hit_surfno);
 	    }
 	    bu_log("\n");
@@ -1529,7 +1518,7 @@ rt_hf_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct s
     {
 	struct seg *segp;
 	int i;
-	for (i=0; i< nhits; i+=2) {
+	for (i = 0; i < nhits; i += 2) {
 	    RT_GET_SEG(segp, ap->a_resource);
 	    segp->seg_stp = stp;
 	    segp->seg_in = hits[i];
@@ -1542,8 +1531,6 @@ rt_hf_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct s
 
 
 /**
- * R T _ H F _ N O R M
- *
  * Given ONE ray distance, return the normal and entry/exit point.
  */
 void
@@ -1587,8 +1574,6 @@ rt_hf_norm(struct hit *hitp, struct soltab *stp, struct xray *rp)
 
 
 /**
- * R T _ H F _ C U R V E
- *
  * Return the curvature of the hf.
  */
 void
@@ -1607,8 +1592,6 @@ rt_hf_curve(struct curvature *cvp, struct hit *hitp, struct soltab *stp)
 
 
 /**
- * R T _ H F _ U V
- *
  * For a hit on the surface of an hf, return the (u, v) coordinates of
  * the hit point, 0 <= u, v <= 1.
  *
@@ -1634,19 +1617,16 @@ rt_hf_uv(struct application *ap, struct soltab *stp, struct hit *hitp, struct uv
     uvp->uv_u = delta[X] / hf->hf_Xlen;
     uvp->uv_v = delta[Y] / hf->hf_Ylen;
     r = 0.0;
-    if (uvp->uv_u < 0.0) uvp->uv_u=0.0;
-    if (uvp->uv_u > 1.0) uvp->uv_u=1.0;
-    if (uvp->uv_v < 0.0) uvp->uv_v=0.0;
-    if (uvp->uv_v > 1.0) uvp->uv_v=1.0;
+    if (uvp->uv_u < 0.0) uvp->uv_u = 0.0;
+    if (uvp->uv_u > 1.0) uvp->uv_u = 1.0;
+    if (uvp->uv_v < 0.0) uvp->uv_v = 0.0;
+    if (uvp->uv_v > 1.0) uvp->uv_v = 1.0;
 
     uvp->uv_du = r;
     uvp->uv_dv = r;
 }
 
 
-/**
- * R T _ H F _ F R E E
- */
 void
 rt_hf_free(struct soltab *stp)
 {
@@ -1661,19 +1641,6 @@ rt_hf_free(struct soltab *stp)
 }
 
 
-/**
- * R T _ H F _ C L A S S
- */
-int
-rt_hf_class(void)
-{
-    return 0;
-}
-
-
-/**
- * R T _ H F _ P L O T
- */
 int
 rt_hf_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *UNUSED(tol), const struct rt_view_info *UNUSED(info))
 {
@@ -1923,8 +1890,6 @@ rt_hf_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tes
 
 
 /**
- * R T _ H F _ T E S S
- *
  * Returns -
  * -1 failure
  * 0 OK.  *r points to nmgregion that holds this tessellation.
@@ -1946,8 +1911,6 @@ rt_hf_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, con
 
 
 /**
- * R T _ H F _ I M P O R T
- *
  * Import an HF from the database format to the internal format.
  * Apply modeling transformations as well.
  */
@@ -1997,12 +1960,12 @@ rt_hf_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fas
 
     /* Process parameters found in .g file */
     bu_vls_strcpy(&str, rp->ss.ss_args);
-    if (bu_struct_parse(&str, rt_hf_parse, (char *)xip) < 0) {
+    if (bu_struct_parse(&str, rt_hf_parse, (char *)xip, NULL) < 0) {
 	bu_vls_free(&str);
     err1:
 	bu_free((char *)xip, "rt_hf_import4: xip");
 	ip->idb_type = ID_NULL;
-	ip->idb_ptr = (genptr_t)NULL;
+	ip->idb_ptr = (void *)NULL;
 	return -2;
     }
     bu_vls_free(&str);
@@ -2024,7 +1987,7 @@ rt_hf_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fas
 	bu_semaphore_acquire(BU_SEM_SYSCALL);
 	fclose(fp);
 	bu_semaphore_release(BU_SEM_SYSCALL);
-	if (bu_struct_parse(&str, rt_hf_cparse, (char *)xip) < 0) {
+	if (bu_struct_parse(&str, rt_hf_cparse, (char *)xip, NULL) < 0) {
 	    bu_log("rt_hf_import4() parse error in cfile input '%s'\n",
 		   bu_vls_addr(&str));
 	    bu_vls_free(&str);
@@ -2039,7 +2002,7 @@ rt_hf_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fas
 	goto err1;
     }
     if (xip->w < 2 || xip->n < 2) {
-	bu_log("rt_hf_import4() w=%zu, n=%zu too small\n", xip->w, xip->n);
+	bu_log("rt_hf_import4() w=%u, n=%u too small\n", xip->w, xip->n);
 	goto err1;
     }
     if (xip->xlen <= 0 || xip->ylen <= 0) {
@@ -2098,7 +2061,7 @@ rt_hf_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fas
 	return 0;		/* OK */
     }
 
-    mp->apbuf = (genptr_t)bu_malloc(mp->apbuflen, "rt_hf_import4 apbuf[]");
+    mp->apbuf = (void *)bu_malloc(mp->apbuflen, "rt_hf_import4 apbuf[]");
     got = bu_cv_w_cookie(mp->apbuf, out_cookie, mp->apbuflen,
 			 mp->buf, in_cookie, count);
     if (got != count) {
@@ -2111,8 +2074,6 @@ rt_hf_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fas
 
 
 /**
- * R T _ H F _ E X P O R T
- *
  * The name is added by the caller, in the usual place.
  *
  * The meaning of the export here is slightly different than that of
@@ -2146,7 +2107,7 @@ rt_hf_export4(struct bu_external *ep, const struct rt_db_internal *ip, double lo
 
     BU_CK_EXTERNAL(ep);
     ep->ext_nbytes = sizeof(union record) * DB_SS_NGRAN;
-    ep->ext_buf = (genptr_t)bu_calloc(1, ep->ext_nbytes, "hf external");
+    ep->ext_buf = (uint8_t *)bu_calloc(1, ep->ext_nbytes, "hf external");
     rec = (union record *)ep->ext_buf;
 
     bu_vls_struct_print(&str, rt_hf_parse, (char *)xip);
@@ -2195,8 +2156,6 @@ rt_hf_export5(struct bu_external *ep, const struct rt_db_internal *ip, double UN
 
 
 /**
- * R T _ H F _ D E S C R I B E
- *
  * Make human-readable formatted presentation of this solid.  First
  * line describes type of solid.  Additional lines are indented one
  * tab, and give parameter values.
@@ -2215,7 +2174,7 @@ rt_hf_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose,
     if (!verbose)
 	return 0;
 
-    bu_vls_struct_print(str, rt_hf_parse, ip->idb_ptr);
+    bu_vls_struct_print(str, rt_hf_parse, (const char *)ip->idb_ptr);
     bu_vls_strcat(str, "\n");
 
     return 0;
@@ -2223,8 +2182,6 @@ rt_hf_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose,
 
 
 /**
- * R T _ H F _ I F R E E
- *
  * Free the storage associated with the rt_db_internal version of this
  * solid.
  */
@@ -2244,12 +2201,8 @@ rt_hf_ifree(struct rt_db_internal *ip)
     }
 
     bu_free((char *)xip, "hf ifree");
-    ip->idb_ptr = GENPTR_NULL;	/* sanity */
+    ip->idb_ptr = ((void *)0);	/* sanity */
 }
-/**
- * R T _ H F _ P A R A M S
- *
- */
 int
 rt_hf_params(struct pc_pc_set *UNUSED(ps), const struct rt_db_internal *ip)
 {

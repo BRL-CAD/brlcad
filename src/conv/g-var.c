@@ -1,7 +1,7 @@
 /*                     G - V A R . C
  * BRL-CAD
  *
- * Copyright (c) 2002-2013 United States Government as represented by
+ * Copyright (c) 2002-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -38,6 +38,8 @@
 #include <math.h>
 
 /* interface headers */
+#include "bu/endian.h"
+#include "bu/getopt.h"
 #include "wdb.h"
 #include "raytrace.h"
 
@@ -52,7 +54,14 @@ struct mesh {
 };
 
 
-static const char usage[] = "Usage: %s [-v] [-y] [-s scale] [-f] [-o out_file] tgm.g object\n";
+static const char usage[] = "[-v] [-y] [-s scale] [-f] [-o out_file] tgm.g object\n";
+
+static void
+print_usage(const char *progname)
+{
+    bu_exit(1, "Usage: %s %s", progname, usage);
+}
+
 
 static int verbose = 0;
 static int yup = 0;
@@ -72,7 +81,7 @@ static uint32_t total_vertex_count = 0;
 static uint32_t total_face_count = 0;
 
 
-void mesh_tracker(struct db_i *dbip, struct directory *dp, genptr_t UNUSED(ptr))
+void mesh_tracker(struct db_i *dbip, struct directory *dp, void *UNUSED(ptr))
 {
     struct rt_db_internal internal;
 
@@ -102,8 +111,8 @@ void mesh_tracker(struct db_i *dbip, struct directory *dp, genptr_t UNUSED(ptr))
 	curr->next = NULL;
     }
     /* accumulate counts */
-    total_vertex_count += curr->bot->num_vertices;
-    total_face_count += curr->bot->num_faces;
+    total_vertex_count += (uint32_t)curr->bot->num_vertices;
+    total_face_count += (uint32_t)curr->bot->num_faces;
     mesh_count++;
 }
 
@@ -174,7 +183,7 @@ void write_header(struct db_i *dbip)
 }
 
 
-void get_vertex(struct rt_bot_internal *bot, int idx, float *dest)
+void get_vertex(struct rt_bot_internal *bot, size_t idx, float *dest)
 {
     dest[0] = bot->vertices[3*idx] * scale;
     dest[1] = bot->vertices[3*idx+1] * scale;
@@ -182,7 +191,7 @@ void get_vertex(struct rt_bot_internal *bot, int idx, float *dest)
 
     if (yup) {
 	/* perform 90deg x-axis rotation */
-	float q = -(M_PI_2);
+	float q = (float)-(M_PI_2);
 	float y = dest[1];
 	float z = dest[2];
 	dest[1] = y * cos(q) - z * sin(q);
@@ -288,8 +297,8 @@ void write_mesh_data()
 	ret = fwrite(curr->name, 1, len, fp_out);
 	if (ret != len)
 	    perror("fwrite");
-	nvert = curr->bot->num_vertices;
-	nface = curr->bot->num_faces;
+	nvert = (uint32_t)curr->bot->num_vertices;
+	nface = (uint32_t)curr->bot->num_faces;
 	/* number of vertices */
 	ret = fwrite(&nvert, sizeof(uint32_t), 1, fp_out);
 	if (ret != 1)
@@ -320,7 +329,7 @@ void write_mesh_data()
 		fprintf(stderr, ">> .. normals will be computed\n");
 	    }
 	    /* normals need to be computed */
-	    normals = bu_calloc(sizeof(float), curr->bot->num_vertices * 3, "normals");
+	    normals = (float *)bu_calloc(sizeof(float), curr->bot->num_vertices * 3, "normals");
 	    get_normals(curr->bot, normals);
 	    ret = fwrite(normals, sizeof(float), curr->bot->num_vertices * 3, fp_out);
 	    if (ret != curr->bot->num_vertices * 3)
@@ -402,10 +411,9 @@ int main(int argc, char *argv[])
     /* setup BRL-CAD environment */
     bu_setprogname(argv[0]);
     bu_setlinebuf(stderr);
-    rt_init_resource(&rt_uniresource, 0, NULL);
 
     /* process command line arguments */
-    while ((c = bu_getopt(argc, argv, "vo:ys:f")) != -1) {
+    while ((c = bu_getopt(argc, argv, "vo:ys:fh?")) != -1) {
 	switch (c) {
 	    case 'v':
 		verbose++;
@@ -428,14 +436,13 @@ int main(int argc, char *argv[])
 		break;
 
 	    default:
-		bu_exit(1, usage, argv[0]);
-		break;
+		print_usage(argv[0]);
 	}
     }
     /* param check */
-    if (bu_optind+1 >= argc) {
-	bu_exit(1, usage, argv[0]);
-    }
+    if (bu_optind+1 >= argc)
+	print_usage(argv[0]);
+
     /* get database filename and object */
     db_file = argv[bu_optind++];
     object = argv[bu_optind];
@@ -445,19 +452,16 @@ int main(int argc, char *argv[])
 	perror(argv[0]);
 	bu_exit(1, "Cannot open geometry database file %s\n", db_file);
     }
-    if (db_dirbuild(dbip)) {
+    if (db_dirbuild(dbip))
 	bu_exit(1, "db_dirbuild() failed!\n");
-    }
-    if (verbose) {
+
+    if (verbose)
 	fprintf(stderr, ">> opened db '%s'\n", dbip->dbi_title);
-    }
 
     /* setup output stream */
     if (out_file == NULL) {
 	fp_out = stdout;
-#if defined(_WIN32) && !defined(__CYGWIN__)
 	setmode(fileno(fp_out), O_BINARY);
-#endif
     } else {
 	if ((fp_out = fopen(out_file, "wb")) == NULL) {
 	    bu_log("Cannot open %s\n", out_file);
@@ -470,15 +474,13 @@ int main(int argc, char *argv[])
     db_update_nref(dbip, &rt_uniresource);
 
     dp = db_lookup(dbip, object, 0);
-    if (dp == RT_DIR_NULL) {
+    if (dp == RT_DIR_NULL)
 	bu_exit(1, "Object %s not found in database!\n", object);
-    }
 
     /* generate mesh list */
     db_functree(dbip, dp, NULL, mesh_tracker, &rt_uniresource, NULL);
-    if (verbose) {
+    if (verbose)
 	fprintf(stderr, ">> mesh count: %d\n", mesh_count);
-    }
 
     /* write out header */
     write_header(dbip);

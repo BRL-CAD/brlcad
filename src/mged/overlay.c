@@ -1,7 +1,7 @@
 /*                       O V E R L A Y . C
  * BRL-CAD
  *
- * Copyright (c) 1988-2013 United States Government as represented by
+ * Copyright (c) 1988-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -25,12 +25,9 @@
 
 #include <math.h>
 #include <signal.h>
-#include <stdio.h>
-#include "bio.h"
 
 #include "vmath.h"
-#include "mater.h"
-#include "dg.h"
+#include "raytrace.h"
 
 #include "./mged.h"
 #include "./sedit.h"
@@ -87,8 +84,8 @@ cmd_overlay(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const c
 int
 f_labelvert(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *argv[])
 {
-    struct ged_display_list *gdlp;
-    struct ged_display_list *next_gdlp;
+    struct display_list *gdlp;
+    struct display_list *next_gdlp;
     int i;
     struct bn_vlblock*vbp;
     struct directory *dp;
@@ -116,11 +113,11 @@ f_labelvert(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const c
 	if ((dp = db_lookup(dbip, argv[i], LOOKUP_NOISY)) == RT_DIR_NULL)
 	    continue;
 	/* Find uses of this solid in the solid table */
-	gdlp = BU_LIST_NEXT(ged_display_list, gedp->ged_gdp->gd_headDisplay);
+	gdlp = BU_LIST_NEXT(display_list, gedp->ged_gdp->gd_headDisplay);
 	while (BU_LIST_NOT_HEAD(gdlp, gedp->ged_gdp->gd_headDisplay)) {
-	    next_gdlp = BU_LIST_PNEXT(ged_display_list, gdlp);
+	    next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
 
-	    FOR_ALL_SOLIDS(s, &gdlp->gdl_headSolid) {
+	    FOR_ALL_SOLIDS(s, &gdlp->dl_headSolid) {
 		if (db_full_path_search(&s->s_fullpath, dp)) {
 		    rt_label_vlist_verts(vbp, &s->s_vlist, mat, scale, base2local);
 		}
@@ -132,7 +129,147 @@ f_labelvert(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const c
 
     cvt_vlblock_to_solids(vbp, "_LABELVERT_", 0);
 
-    rt_vlblock_free(vbp);
+    bn_vlblock_free(vbp);
+    update_views = 1;
+    return TCL_OK;
+}
+
+void get_face_list( const struct model* m, struct bu_list* f_list )
+{
+    struct nmgregion *r;
+    struct shell *s;
+    struct faceuse *fu;
+    struct face *f;
+    struct face* curr_f;
+    int found;
+
+    NMG_CK_MODEL(m);
+
+    for (BU_LIST_FOR(r, nmgregion, &m->r_hd)) {
+        NMG_CK_REGION(r);
+
+        if (r->ra_p) {
+            NMG_CK_REGION_A(r->ra_p);
+        }
+
+        for (BU_LIST_FOR(s, shell, &r->s_hd)) {
+            NMG_CK_SHELL(s);
+
+            if (s->sa_p) {
+                NMG_CK_SHELL_A(s->sa_p);
+            }
+
+            /* Faces in shell */
+            for (BU_LIST_FOR(fu, faceuse, &s->fu_hd)) {
+                NMG_CK_FACEUSE(fu);
+                f = fu->f_p;
+                NMG_CK_FACE(f);
+
+                found = 0;
+                /* check for duplicate face struct */
+                for (BU_LIST_FOR(curr_f, face, f_list)) {
+                    if (curr_f->index == f->index) {
+                        found = 1;
+                        break;
+                    }
+                }
+
+                if ( !found )
+                    BU_LIST_INSERT( f_list, &(f->l) );
+
+                if (f->g.magic_p) switch (*f->g.magic_p) {
+                    case NMG_FACE_G_PLANE_MAGIC:
+                        break;
+                    case NMG_FACE_G_SNURB_MAGIC:
+                        break;
+                }
+
+            }
+        }
+    }
+}
+
+/* Usage:  labelface solid(s) */
+int
+f_labelface(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *argv[])
+{
+    struct rt_db_internal internal;
+    struct directory *dp;
+    struct display_list *gdlp;
+    struct display_list *next_gdlp;
+    int i;
+    struct bn_vlblock *vbp;
+    mat_t mat;
+    fastf_t scale;
+    struct model* m;
+    const char* name;
+    struct bu_list f_list;
+
+    BU_LIST_INIT( &f_list );
+
+    CHECK_DBI_NULL;
+
+    if (argc < 2) {
+        struct bu_vls vls = BU_VLS_INIT_ZERO;
+
+        bu_vls_printf(&vls, "help labelface");
+        Tcl_Eval(interp, bu_vls_addr(&vls));
+        bu_vls_free(&vls);
+        return TCL_ERROR;
+    }
+
+    /* attempt to resolve and verify */
+    name = argv[1];
+
+    if ( (dp=db_lookup(gedp->ged_wdbp->dbip, name, LOOKUP_QUIET))
+        == RT_DIR_NULL ) {
+        bu_vls_printf(gedp->ged_result_str, "%s does not exist\n", name);
+        return GED_ERROR;
+    }
+
+    if (rt_db_get_internal(&internal, dp, gedp->ged_wdbp->dbip,
+        bn_mat_identity, &rt_uniresource) < 0) {
+        bu_vls_printf(gedp->ged_result_str, "rt_db_get_internal() error\n");
+        return GED_ERROR;
+    }
+
+    if (internal.idb_type != ID_NMG) {
+        bu_vls_printf(gedp->ged_result_str, "%s is not an NMG solid\n", name);
+        rt_db_free_internal(&internal);
+        return GED_ERROR;
+    }
+
+    m = (struct model *)internal.idb_ptr;
+    NMG_CK_MODEL(m);
+
+    vbp = rt_vlblock_init();
+    MAT_IDN(mat);
+    bn_mat_inv(mat, view_state->vs_gvp->gv_rotation);
+    scale = view_state->vs_gvp->gv_size / 100;      /* divide by # chars/screen */
+
+    for (i=1; i<argc; i++) {
+        struct solid *s;
+        if ((dp = db_lookup(dbip, argv[i], LOOKUP_NOISY)) == RT_DIR_NULL)
+            continue;
+
+        /* Find uses of this solid in the solid table */
+        gdlp = BU_LIST_NEXT(display_list, gedp->ged_gdp->gd_headDisplay);
+        while (BU_LIST_NOT_HEAD(gdlp, gedp->ged_gdp->gd_headDisplay)) {
+            next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
+            FOR_ALL_SOLIDS(s, &gdlp->dl_headSolid) {
+                if (db_full_path_search(&s->s_fullpath, dp)) {
+                    get_face_list(m, &f_list);
+                    rt_label_vlist_faces(vbp, &f_list, mat, scale, base2local);
+                }
+            }
+
+            gdlp = next_gdlp;
+        }
+    }
+
+    cvt_vlblock_to_solids(vbp, "_LABELFACE_", 0);
+
+    bn_vlblock_free(vbp);
     update_views = 1;
     return TCL_OK;
 }

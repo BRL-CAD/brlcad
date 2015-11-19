@@ -2,7 +2,7 @@
 #                     M A K E _ R P M . S H
 # BRL-CAD
 #
-# Copyright (c) 2005-2013 United States Government as represented by
+# Copyright (c) 2005-2014 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -71,7 +71,7 @@ if test ! -x "`which rpm 2>/dev/null`" ; then
     ferror "Missing \"rpm\" command" "Exiting..."
 fi
 fcheck(){
-    if ! `rpm -q $1 &>/dev/null` ; then
+    if ! rpm -q $1 >/dev/null 2>&1 ; then
 	echo "* Missing $1..."
 	LLIST=$LLIST" "$1
 	E=1
@@ -96,7 +96,7 @@ if test "$DNAME" = "fedora" ;then
 fi
 
 if test "$DNAME" = "openSUSE" ;then
-    fcheck rpm
+    fcheck rpm-build
     fcheck fakeroot
     fcheck gcc-c++
     fcheck make
@@ -104,8 +104,8 @@ if test "$DNAME" = "openSUSE" ;then
     fcheck sed
     fcheck bison
     fcheck flex
-    fcheck libXi6-devel
-    fcheck libxslt
+    fcheck libXi-devel
+    fcheck libxslt1
     fcheck Mesa-devel
     fcheck pango-devel
 fi
@@ -115,7 +115,7 @@ if [ $E -eq 1 ]; then
 fi
 
 # set variables
-BVERSION=`cat include/conf/MAJOR | sed 's/[^0-9]//g'`"."`cat include/conf/MINOR | sed 's/[^0-9]//g'`"."`cat include/conf/PATCH | sed 's/[^0-9]//g'`
+BVERSION="`sed 's/[^0-9]//g' include/conf/MAJOR`.`sed 's/[^0-9]//g' include/conf/MINOR`.`sed 's/[^0-9]//g' include/conf/PATCH`"
 TMPDIR="misc/$DNAME-tmp"
 RELEASE="0"
 
@@ -296,7 +296,7 @@ find $TMPDIR/tmp/ ! -type d | sed 's:'$TMPDIR'/tmp:":' | sed 's:$:":' >> $TMPDIR
 # create rpm file
 fakeroot rpmbuild -vv --buildroot=`pwd`/$TMPDIR/tmp -bb --target $ARCH $TMPDIR/brlcad.spec > $TMPDIR/rpmbuild.log
 
-RPMFILE=`cat $TMPDIR"/rpmbuild.log" | grep "brlcad-"$BVERSION"-"$RELEASE"."$ARCH".rpm" | awk '{print $(NF)}'`
+RPMFILE=`grep "brlcad-$BVERSION-$RELEASE.$ARCH.rpm" "$TMPDIR/rpmbuild.log" | awk '{print $(NF)}'`
 
 mv $RPMFILE ../brlcad-$BVERSION-$RELEASE.$DNAME.$ARCH.rpm
 

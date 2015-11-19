@@ -1,7 +1,7 @@
 /*                         D A M D F . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2013 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -28,21 +28,22 @@
 
 #include <string.h>
 #include <stdlib.h>
-#include <stdio.h>
 #include <math.h>
 #include "bio.h"
 
-#include "bu.h"
+#include "bu/log.h"
 
+
+
+int
+main(int argc, char *argv[])
+{
+    static const char usage[] = "Usage: damdf [window_size (512)] < doubles >outputfile\n";
 
 #define BSIZE 2048		/* Must be AT LEAST 2*Points in spectrum */
-double data[BSIZE];		/* Input buffer */
-double r[BSIZE];
+    double data[BSIZE];		/* Input buffer */
+    double r[BSIZE];
 
-static const char usage[] = "Usage: damdf [window_size (512)] < doubles >outputfile\n";
-
-int main(int argc, char **argv)
-{
     int i, j, n, L;
     double *dp1, *dp2;
     double d;

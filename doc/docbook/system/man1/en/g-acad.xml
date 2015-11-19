@@ -32,7 +32,7 @@
 
 
 <refsect1 xml:id='description'><title>DESCRIPTION</title>
-<para><emphasis remap='I'>g-acad</emphasis>
+<para><command>g-acad</command>
 converts the specified
 <emphasis remap='I'>object(s)</emphasis>
 from a BRL-CAD
@@ -75,7 +75,7 @@ option specifies the number of CPU's to be used, and also turns on a flag to ena
 
 <refsect1 xml:id='example'><title>EXAMPLE</title>
 <synopsis>
-$ <emphasis remap='I'>g-acad -o sample.ACAD sample.g sample_object</emphasis>
+$ g-acad -o <emphasis remap='I'>sample.ACAD sample.g sample_object</emphasis>
 </synopsis>
 </refsect1>
 
@@ -90,7 +90,7 @@ $ <emphasis remap='I'>g-acad -o sample.ACAD sample.g sample_object</emphasis>
 </refsect1>
 
 <refsect1 xml:id='copyright'><title>COPYRIGHT</title>
-<para>This software is Copyright (c) 1997-2013 by the United States
+<para>This software is Copyright (c) 1997-2014 by the United States
 Government as represented by U.S. Army Research Laboratory.</para>
 </refsect1>
 

@@ -58,7 +58,7 @@ typedef struct Hash_Table * Hash_TableP;
 Address     SC_HASHhash( char *, Hash_TableP );
 static void SC_HASHexpand_table( Hash_TableP );
 
-# if HASH_STATISTICS
+# ifdef HASH_STATISTICS
 static long     HashAccesses, HashCollisions;
 # endif
 
@@ -124,7 +124,7 @@ SC_HASHcreate( unsigned count ) {
     table->maxp = MUL( count, SEGMENT_SIZE );
     table->MinLoadFactor = 1;
     table->MaxLoadFactor = MAX_LOAD_FACTOR;
-# if DEBUG
+# ifdef DEBUG
     fprintf( stderr,
              "[HASHcreate] table %x count %d maxp %d SegmentCount %d\n",
              table,
@@ -132,7 +132,7 @@ SC_HASHcreate( unsigned count ) {
              table->maxp,
              table->SegmentCount );
 # endif
-# if HASH_STATISTICS
+# ifdef HASH_STATISTICS
     HashAccesses = HashCollisions = 0;
 # endif
     return( table );
@@ -225,7 +225,7 @@ SC_HASHdestroy( Hash_TableP table ) {
             }
         }
         SC_HASH_Table_destroy( table );
-# if HASH_STATISTICS && DEBUG
+# if defined(HASH_STATISTICS) && defined(DEBUG)
         fprintf( stderr,
                  "[hdestroy] Accesses %ld Collisions %ld\n",
                  HashAccesses,
@@ -244,7 +244,7 @@ SC_HASHsearch( Hash_TableP table, const struct Element * item, Action action ) {
     struct Element * q;
     struct Element * deleteme;
 
-# if HASH_STATISTICS
+# ifdef HASH_STATISTICS
     HashAccesses++;
 # endif
     h = SC_HASHhash( item->key, table );
@@ -265,7 +265,7 @@ SC_HASHsearch( Hash_TableP table, const struct Element * item, Action action ) {
     while( q != NULL && strcmp( q->key, item->key ) ) {
         p = &q->next;
         q = *p;
-# if HASH_STATISTICS
+# ifdef HASH_STATISTICS
         HashCollisions++;
 # endif
     }

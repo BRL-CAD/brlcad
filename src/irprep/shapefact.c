@@ -1,7 +1,7 @@
 /*                     S H A P E F A C T . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2013 United States Government as represented by
+ * Copyright (c) 1990-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -186,8 +186,7 @@ int main(int argc, char **argv)
 	    bu_exit(-1, "scanf failure - number of rays to be fired");
 
 	/* clamp loops */
-	if (loops > UINT32_MAX)
-	    loops = UINT32_MAX;
+	V_MIN(loops, UINT32_MAX);
 
 	/* Set seed for random number generator.  */
 	seed = 1;
@@ -316,7 +315,7 @@ int main(int argc, char **argv)
 	    rho = sqrt(rho) / 2.0 + .5;
 
 	    /* find surface area of bounding sphere.  */
-	    areabs = 4. * M_PI * rho * rho;
+	    areabs = 4.0 * M_PI * rho * rho;
 
 	    /* Second way to find starting point and direction.  */
 	    /* This approach finds the starting point and direction */
@@ -326,7 +325,7 @@ int main(int argc, char **argv)
 	    /* of the unit vector of this point will eventually be */
 	    /* the firing direction.  */
 	    q = BN_UNIF_DOUBLE(msr) + 0.5;
-	    theta = q * 2. * M_PI;
+	    theta = q * M_2PI;
 	    q = BN_UNIF_DOUBLE(msr) + 0.5;
 	    phi = (q * 2.0) - 1.0;
 	    phi = acos(phi);
@@ -341,7 +340,7 @@ int main(int argc, char **argv)
 	    /* Find vector in yz-plane.  */
 
 	    q = BN_UNIF_DOUBLE(msr) + 0.5;
-	    theta = q * 2. * M_PI;
+	    theta = q * M_2PI;
 	    q = BN_UNIF_DOUBLE(msr) + 0.5;
 	    rad = rho * sqrt(q);
 	    s[X] = 0.0;

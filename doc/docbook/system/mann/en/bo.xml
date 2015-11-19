@@ -1,5 +1,3 @@
-<!-- Converted by db4-upgrade version 1.0 -->
-
 <refentry xmlns="http://docbook.org/ns/docbook" version="5.0" xml:id="bo">
 
   <refmeta>
@@ -76,7 +74,7 @@
 
     <example><title>Copy the contents of a particular binary object into a specified file.</title>
 
-      <para><prompt>mged&gt;</prompt><userinput>bo -o /home/jim/cmds.html cmds</userinput></para>
+      <para><prompt>mged&gt;</prompt> <userinput>bo -o /home/jim/cmds.html cmds</userinput></para>
       <para>
 	Copies the contents of the binary object named <emphasis>cmds</emphasis> into the file named
 	<emphasis>/home/jim/cmds.html</emphasis>.

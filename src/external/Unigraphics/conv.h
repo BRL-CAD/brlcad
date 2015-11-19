@@ -1,7 +1,7 @@
 /*                          C O N V . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2013 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -20,6 +20,9 @@
 /** @file conv.h
  *
  */
+
+#ifndef EXTERNAL_UNIGRAPHICS_CONV_H
+#define EXTERNAL_UNIGRAPHICS_CONV_H
 
 /* default indentation for a single level in the DAG */
 #define LEVEL_INDENT 6
@@ -43,6 +46,8 @@ extern ug_tol ugtol;
 
 extern int debug;
 #define dprintf if (debug) printf
+
+#endif /* EXTERNAL_UNIGRAPHICS_CONV_H */
 
 /*
  * Local Variables:

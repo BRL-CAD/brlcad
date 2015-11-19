@@ -1,7 +1,7 @@
 /*                         M O V E _ A R B _ F A C E . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2013 United States Government as represented by
+ * Copyright (c) 2008-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -26,10 +26,9 @@
 #include "common.h"
 
 #include <string.h>
-#include "bio.h"
 
-#include "cmd.h"
-#include "rtgeom.h"
+#include "bu/cmd.h"
+#include "rt/geom.h"
 #include "raytrace.h"
 
 #include "./ged_private.h"
@@ -216,7 +215,7 @@ if (face_idx > max_idx) { \
     /* calculate new points for the arb */
     save_tol_dist = gedp->ged_wdbp->wdb_tol.dist;
     gedp->ged_wdbp->wdb_tol.dist = gedp->ged_wdbp->wdb_tol.dist * 2;
-    if (rt_arb_calc_points(arb, arb_type, planes, &gedp->ged_wdbp->wdb_tol) < 0) {
+    if (rt_arb_calc_points(arb, arb_type, (const plane_t *)planes, &gedp->ged_wdbp->wdb_tol) < 0) {
 	gedp->ged_wdbp->wdb_tol.dist = save_tol_dist;
 	rt_db_free_internal(&intern);
 	return GED_ERROR;

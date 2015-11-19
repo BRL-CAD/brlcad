@@ -6,6 +6,7 @@ int main(void) {
   time_t t, ts, te;
   struct tm *currenttime;
   struct tm starttime;
+  double tdiff_f;
   int tdiff, d_mins, d_hrs, d_days;
   t = time(NULL);
   currenttime = localtime(&t);
@@ -20,7 +21,8 @@ int main(void) {
   ts = mktime(&starttime);
   te = mktime(currenttime);
 
-  tdiff = (int)difftime(te, ts);
+  tdiff_f = difftime(te, ts);
+  tdiff = (int)tdiff_f;
   d_days = 0;
   d_hrs = 0;
   d_mins = 0;

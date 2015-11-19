@@ -1,7 +1,7 @@
 /*                 ToroidalSurface.cpp
  * BRL-CAD
  *
- * Copyright (c) 1994-2013 United States Government as represented by
+ * Copyright (c) 1994-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -85,6 +85,7 @@ ToroidalSurface::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
 
     if (!ElementarySurface::Load(step, sse)) {
 	std::cout << CLASSNAME << ":Error loading base class ::Surface." << std::endl;
+	sw->entity_status[id] = STEP_LOAD_ERROR;
 	return false;
     }
 
@@ -94,6 +95,8 @@ ToroidalSurface::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
 
     major_radius = step->getRealAttribute(sse, "major_radius");
     minor_radius = step->getRealAttribute(sse, "minor_radius");
+
+    sw->entity_status[id] = STEP_LOADED;
 
     return true;
 }

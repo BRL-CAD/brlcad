@@ -1,7 +1,7 @@
 /*                         S O L I D S _ O N _ R A Y . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2013 United States Government as represented by
+ * Copyright (c) 2008-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -27,12 +27,11 @@
 #include <stdlib.h>
 #include <ctype.h>
 #include <string.h>
-#include "bio.h"
 
-#include "bu.h"
+
 #include "bn.h"
-#include "cmd.h"
-#include "solid.h"
+#include "bu/cmd.h"
+
 
 #include "./ged_private.h"
 
@@ -83,7 +82,7 @@ rpt_hits(struct application *ap, struct partition *PartHeadp, struct seg *UNUSED
     list[i++] = NULL;
     if (i > len) bu_exit(EXIT_FAILURE, "rpt_hits_mike: array overflow\n");
 
-    ap->a_uptr = (genptr_t)list;
+    ap->a_uptr = (void *)list;
     return len;
 }
 
@@ -104,8 +103,6 @@ rpt_miss(struct application *ap)
 
 
 /*
- * G E D _ S K E W E R _ S O L I D S
- *
  * Fire a ray at some geometry and obtain a list of the solids
  * encountered, sorted by first intersection.
  *
@@ -139,7 +136,7 @@ skewer_solids(struct ged *gedp, int argc, const char **argv, fastf_t *ray_orig, 
     if (rt_gettrees(rtip, argc, argv, 1) == -1) {
 	bu_vls_printf(gedp->ged_result_str, "rt_gettrees() failed\n");
 	rt_clean(rtip);
-	bu_free((genptr_t)rtip, "struct rt_i");
+	bu_free((void *)rtip, "struct rt_i");
 	return (char **) 0;
     }
 
@@ -171,7 +168,7 @@ skewer_solids(struct ged *gedp, int argc, const char **argv, fastf_t *ray_orig, 
     (void) rt_shootray(&ap);
 
     rt_clean(rtip);
-    bu_free((genptr_t)rtip, "struct rt_i");
+    bu_free((void *)rtip, "struct rt_i");
 
     return (char **) ap.a_uptr;
 }
@@ -270,7 +267,7 @@ ged_solids_on_ray(struct ged *gedp, int argc, const char *argv[])
 
     /* allocate space for display top-levels */
     args = 2 + ged_count_tops(gedp);
-    solids_on_ray_cmd_vec = bu_calloc(1, sizeof(char *) * args, "alloca solids_on_ray_cmd_vec");
+    solids_on_ray_cmd_vec = (char **)bu_calloc(args, sizeof(char *), "alloca solids_on_ray_cmd_vec");
 
     /*
      * Build a list of all the top-level objects currently displayed
@@ -290,7 +287,7 @@ ged_solids_on_ray(struct ged *gedp, int argc, const char *argv[])
     for (i = 0; snames[i] != 0; ++i)
 	bu_vls_printf(gedp->ged_result_str, " %s", snames[i]);
 
-    bu_free((genptr_t) snames, "solid names");
+    bu_free((void *) snames, "solid names");
 
     return GED_OK;
 }

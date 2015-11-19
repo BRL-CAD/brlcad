@@ -1,7 +1,7 @@
 /*                         M A T E R . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2013 United States Government as represented by
+ * Copyright (c) 1985-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -33,27 +33,23 @@
 
 #include <stdlib.h>
 #include <string.h>
-#include "bio.h"
 
 #include "vmath.h"
-#include "db.h"
-#include "mater.h"
-#include "dg.h"
+#include "rt/db4.h"
+#include "raytrace.h"
 
 #include "./mged.h"
 #include "./mged_dm.h"
 
 
 /*
- * C O L O R _ S O L T A B
- *
  * Pass through the solid table and set pointer to appropriate
  * mater structure.
  */
 void
-color_soltab(void)
+mged_color_soltab(void)
 {
-    ged_color_soltab(gedp->ged_gdp->gd_headDisplay);
+    dl_color_soltab(gedp->ged_gdp->gd_headDisplay);
     update_views = 1;		/* re-write control list with new colors */
 }
 

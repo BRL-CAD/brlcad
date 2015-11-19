@@ -1,7 +1,7 @@
 /*                         E M P T Y . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2013 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -26,11 +26,10 @@
 #ifdef HAVE_SYS_TIME_H
 #  include <sys/time.h>
 #endif
-#include "bio.h"
 
 #include "fb.h"
 
-/*	e m p t y ( )
+/*
 	Examine file descriptor for input with no time delay.
 	Return 1 if input is pending on file descriptor 'fd'.
 	Return 0 if no input or error.

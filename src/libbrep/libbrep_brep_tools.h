@@ -1,7 +1,7 @@
 /*            L I B B R E P _ B R E P _ T O O L S . H
  * BRL-CAD
  *
- * Copyright (c) 2013 United States Government as represented by
+ * Copyright (c) 2013-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -24,13 +24,17 @@
  *  Utility routines for working with geometry.
  */
 
-#ifndef __LIBBREP_BREP_TOOLS
-#define __LIBBREP_BREP_TOOLS
+#ifndef LIBBREP_LIBBREP_BREP_TOOLS_H
+#define LIBBREP_LIBBREP_BREP_TOOLS_H
 
 #include "common.h"
 
+/* system headers */
 #include <vector>
 
+/* interface headers */
+#include "bio.h" /* needed to include windows.h with protections */
+#define ON_NO_WINDOWS 1 /* don't let opennurbs include windows.h */
 #include "opennurbs.h"
 #include "brep.h"
 
@@ -188,7 +192,7 @@ bool ON_Surface_IsFlat(ON_Plane *frames, double f_tol);
   Array index conventions are the same as ::ON_Surface_IsFlat.
 
   @param frames Array of 9 frenet frames
-  @param s_tol Straightness tolerance - 0 always evaluates to straight, 1 requires perfect straightness
+  @param f_tol Straightness tolerance - 0 always evaluates to straight, 1 requires perfect straightness
 */
 BREP_EXPORT
 bool ON_Surface_IsFlat_U(ON_Plane *frames, double f_tol);
@@ -200,7 +204,7 @@ bool ON_Surface_IsFlat_U(ON_Plane *frames, double f_tol);
   Array index conventions are the same as ::ON_Surface_IsFlat.
 
   @param frames Array of 9 frenet frames
-  @param s_tol Straightness tolerance - 0 always evaluates to straight, 1 requires perfect straightness
+  @param f_tol Straightness tolerance - 0 always evaluates to straight, 1 requires perfect straightness
 */
 BREP_EXPORT
 bool ON_Surface_IsFlat_V(ON_Plane *frames, double f_tol);
@@ -285,7 +289,7 @@ bool ON_Surface_SubSurface(
   @param u U interval of parent surface
   @param v V interval of parent surface
   @param upt U interval point for quad definition
-  @param upt U interval point for quad definition
+  @param vpt V interval point for quad definition
   @param q0 surface calculated by split algorithm
   @param q1 surface calculated by split algorithm
   @param q2 surface calculated by split algorithm
@@ -309,7 +313,7 @@ bool ON_Surface_Quad_Split(
 	);
 
 
-#endif /* __LIBBREP_BREP_TOOLS */
+#endif /* LIBBREP_LIBBREP_BREP_TOOLS_H */
 /** @} */
 
 // Local Variables:

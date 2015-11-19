@@ -1,7 +1,7 @@
 /*                  A N I M _ C A S C A D E . C
  * BRL-CAD
  *
- * Copyright (c) 1993-2013 United States Government as represented by
+ * Copyright (c) 1993-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -47,9 +47,10 @@
 #include <math.h>
 #include "bio.h"
 
-#include "bu.h"
+#include "bu/getopt.h"
+#include "bu/log.h"
 #include "bn.h"
-#include "anim.h"
+#include "bn/anim.h"
 #include "vmath.h"
 
 
@@ -176,12 +177,12 @@ main (int argc, char *argv[])
     mat_t m_rot1, m_rot2, m_ans;
     int one_time, read_cen1, read_cen2, read_rot1, read_rot2;
 
-    if (argc == 1 && isatty(fileno(stdin)) && isatty(fileno(stdout))){
+    if (argc == 1 && isatty(fileno(stdin)) && isatty(fileno(stdout))) {
 	usage();
 	return 0;
     }
 
-    if (!get_args(argc, argv)){
+    if (!get_args(argc, argv)) {
 	usage();
 	return 0;
     }

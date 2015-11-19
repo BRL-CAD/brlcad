@@ -1,7 +1,7 @@
 /*                 CartesianTransformationOperator3D.cpp
  * BRL-CAD
  *
- * Copyright (c) 1994-2013 United States Government as represented by
+ * Copyright (c) 1994-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -61,6 +61,7 @@ CartesianTransformationOperator3D::Load(STEPWrapper *sw, SDAI_Application_instan
 
     if (!CartesianTransformationOperator::Load(sw, sse)) {
 	std::cout << CLASSNAME << ":Error loading base class ::CartesianTransformationOperator." << std::endl;
+	sw->entity_status[id] = STEP_LOAD_ERROR;
 	return false;
     }
 
@@ -74,6 +75,8 @@ CartesianTransformationOperator3D::Load(STEPWrapper *sw, SDAI_Application_instan
 	    axis3 = dynamic_cast<Direction *>(Factory::CreateObject(sw, entity));
 	}
     }
+
+    sw->entity_status[id] = STEP_LOADED;
 
     return true;
 }

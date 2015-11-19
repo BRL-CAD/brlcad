@@ -23,6 +23,15 @@
 #ifndef  __GDIAM__H
 #define  __GDIAM__H
 
+/* for g++ to quell warnings */
+#if (defined(__GNUC__) && (__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 6)) && !defined(__clang__))
+#  pragma GCC diagnostic push /* start new diagnostic pragma */
+#  pragma GCC diagnostic ignored "-Wfloat-equal"
+#elif (defined(__clang__) && (__clang_major__ > 2 || (__clang_major__ == 2 && __clang_minor__ >= 8)))
+#  pragma clang diagnostic push /* start new diagnostic pragma */
+#  pragma clang diagnostic ignored "-Wfloat-equal"
+#endif
+
 #ifndef GDIAM_EXPORT
 #  if defined(GDIAM_DLL_EXPORTS) && defined(GDIAM_DLL_IMPORTS)
 #    error "Only GDIAM_DLL_EXPORTS or GDIAM_DLL_IMPORTS can be defined, not both."
@@ -694,6 +703,12 @@ GDIAM_EXPORT gdiam_bbox   gdiam_approx_mvbb_grid_sample( gdiam_real  * start, in
 GDIAM_EXPORT void  gdiam_generate_orthonormal_base( gdiam_point  in,
                                        gdiam_point  out1,
                                        gdiam_point  out2 );
+
+#if (defined(__GNUC__) && (__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 6)) && !defined(__clang__))
+#  pragma GCC diagnostic pop /* end ignoring warnings */
+#elif (defined(__clang__) && (__clang_major__ > 2 || (__clang_major__ == 2 && __clang_minor__ >= 8)))
+#  pragma clang diagnostic pop /* end ignoring warnings */
+#endif
 
 #else   /* __GDIAM__H */
 #error  Header file gdiam.h included twice

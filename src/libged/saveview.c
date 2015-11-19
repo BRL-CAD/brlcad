@@ -1,7 +1,7 @@
 /*                         S A V E V I E W . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2013 United States Government as represented by
+ * Copyright (c) 2008-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -28,9 +28,9 @@
 #include <stdlib.h>
 #include <ctype.h>
 #include <string.h>
-#include "bio.h"
 
-#include "solid.h"
+#include "bu/getopt.h"
+
 
 #include "./ged_private.h"
 
@@ -70,8 +70,8 @@ basename_without_suffix(const char *p1, const char *suff)
 int
 ged_saveview(struct ged *gedp, int argc, const char *argv[])
 {
-    struct ged_display_list *gdlp;
-    struct ged_display_list *next_gdlp;
+    struct display_list *gdlp;
+    struct display_list *next_gdlp;
     int i;
     FILE *fp;
     char *base;
@@ -80,6 +80,7 @@ ged_saveview(struct ged *gedp, int argc, const char *argv[])
     char outlog[255] = {0};
     char outpix[255] = {0};
     char inputg[255] = {0};
+    const char *cmdname = argv[0];
     static const char *usage = "[-e] [-i] [-l] [-o] filename [args]";
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
@@ -91,7 +92,7 @@ ged_saveview(struct ged *gedp, int argc, const char *argv[])
 
     /* must be wanting help */
     if (argc == 1) {
-	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", cmdname, usage);
 	return GED_HELP;
     }
 
@@ -121,7 +122,7 @@ ged_saveview(struct ged *gedp, int argc, const char *argv[])
     argv += bu_optind-1;
 
     if (argc < 2) {
-	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", cmdname, usage);
 	return GED_ERROR;
     }
 
@@ -166,10 +167,10 @@ ged_saveview(struct ged *gedp, int argc, const char *argv[])
     }
     fprintf(fp, " '%s'\\\n ", inputg);
 
-    gdlp = BU_LIST_NEXT(ged_display_list, gedp->ged_gdp->gd_headDisplay);
+    gdlp = BU_LIST_NEXT(display_list, gedp->ged_gdp->gd_headDisplay);
     while (BU_LIST_NOT_HEAD(gdlp, gedp->ged_gdp->gd_headDisplay)) {
-	next_gdlp = BU_LIST_PNEXT(ged_display_list, gdlp);
-	fprintf(fp, "'%s' ", bu_vls_addr(&gdlp->gdl_path));
+	next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
+	fprintf(fp, "'%s' ", bu_vls_addr(&gdlp->dl_path));
 	gdlp = next_gdlp;
     }
 

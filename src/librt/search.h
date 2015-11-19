@@ -1,7 +1,7 @@
 /*                        S E A R C H . H
  * BRL-CAD
  *
- * Copyright (c) 2008-2013 United States Government as represented by
+ * Copyright (c) 2008-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -52,12 +52,21 @@
  *
  */
 
+#ifndef LIBRT_SEARCH_H
+#define LIBRT_SEARCH_H
+
+#include "common.h"
+
 #include "regex.h"
+#include "bu/ptbl.h"
 #include "raytrace.h"
 
 /* node struct - holds data specific to each node under consideration */
 struct db_node_t {
     struct db_full_path *path;
+    struct bu_ptbl *full_paths;
+    int flags;
+    int matched_filters;
 };
 
 /* search node type */
@@ -67,13 +76,13 @@ enum db_search_ntype {
     N_CLOSEPAREN, N_DEPTH, N_EXEC, N_EXECDIR, N_EXPR,
     N_FLAGS, N_INAME, N_IREGEX, N_LS, N_MAXDEPTH,
     N_MINDEPTH, N_NAME, N_NNODES, N_NOT, N_OK, N_OPENPAREN, N_OR, N_PATH,
-    N_PRINT, N_PRUNE, N_REGEX, N_STDATTR, N_TYPE, N_BOOL
+    N_PRINT, N_PRUNE, N_REGEX, N_STDATTR, N_TYPE, N_BOOL, N_PARAM
 };
 
 
 struct db_plan_t {
     struct db_plan_t *next;			/* next node */
-    int (*eval)(struct db_plan_t *, struct db_node_t *, struct db_i *dbip, struct rt_wdb *wdbp, struct db_full_path_list *results);
+    int (*eval)(struct db_plan_t *, struct db_node_t *, struct db_i *dbip, struct bu_ptbl *results);
     /* node evaluation function */
 #define F_EQUAL 1 /* [acm]time inum links size */
 #define F_LESSTHAN 2
@@ -82,8 +91,11 @@ struct db_plan_t {
 #define F_MTFLAG 1 /* fstype */
 #define F_MTTYPE 2
 #define F_ATLEAST 1 /* perm */
+    int min_depth;
+    int max_depth;
     int flags;				/* private flags */
-    enum db_search_ntype type;			/* plan node type */
+    enum db_search_ntype type;		/* plan node type */
+    struct bu_ptbl *plans;              /* set of all allocated plans */
     union {
 	gid_t _g_data;			/* gid */
 	struct {
@@ -103,6 +115,8 @@ struct db_plan_t {
 	char *_ci_data;			/* char pointer */
 	char *_path_data;		/* char pointer */
 	char *_attr_data;		/* char pointer */
+	char *_param_data;		/* char pointer */
+	char *_depth_data;		/* char pointer */
 	char *_node_data;		/* char pointer */
 	char *_type_data;
 	regex_t _regex_data;	/* compiled regexp */
@@ -119,6 +133,8 @@ struct db_plan_t {
 #define path_data	p_un._path_data
 #define regexp_data 	p_un._regex_data
 #define attr_data	p_un._attr_data
+#define param_data	p_un._param_data
+#define depth_data	p_un._depth_data
 #define node_data	p_un._node_data
 #define fl_flags	p_un.fl._f_flags
 #define fl_mask		p_un.fl._f_mask
@@ -137,7 +153,7 @@ struct db_plan_t {
 typedef struct _option {
     char *name;				/* option name */
     enum db_search_ntype token;			/* token type */
-    int (*create)(char *, char ***, int, struct db_plan_t **, int *);	/* create function */
+    int (*create)(char *, char ***, int, struct db_plan_t **, int *, struct bu_ptbl *);	/* create function */
 #define O_NONE		0x01			/* no call required */
 #define O_ZERO		0x02			/* pass: nothing */
 #define O_ARGV		0x04			/* pass: argv, increment argv */
@@ -147,27 +163,33 @@ typedef struct _option {
 
 extern int isdepth, isoutput;
 
+__BEGIN_DECLS
 
-static int c_attr(char *, char ***, int, struct db_plan_t **, int *);
-static int c_iname(char *, char ***, int, struct db_plan_t **, int *);
-static int c_maxdepth(char *, char ***, int, struct db_plan_t **, int *);
-static int c_mindepth(char *, char ***, int, struct db_plan_t **, int *);
-static int c_name(char *, char ***, int, struct db_plan_t **, int *);
-static int c_nnodes(char *, char ***, int, struct db_plan_t **, int *);
-static int c_regex(char *, char ***, int, struct db_plan_t **, int *);
-static int c_iregex(char *, char ***, int, struct db_plan_t **, int *);
-static int c_path(char *, char ***, int, struct db_plan_t **, int *);
-static int c_print(char *, char ***, int, struct db_plan_t **, int *);
-static int c_stdattr(char *, char ***, int, struct db_plan_t **, int *);
-static int c_type(char *, char ***, int, struct db_plan_t **, int *);
-static int c_bool(char *, char ***, int, struct db_plan_t **, int *);
-static int c_openparen(char *, char ***, int, struct db_plan_t **, int *);
-static int c_closeparen(char *, char ***, int, struct db_plan_t **, int *);
-static int c_not(char *, char ***, int, struct db_plan_t **, int *);
-static int c_or(char *, char ***, int, struct db_plan_t **, int *);
-static int c_above(char *, char ***, int, struct db_plan_t **, int *);
-static int c_below(char *, char ***, int, struct db_plan_t **, int *);
+static int c_attr(char *, char ***, int, struct db_plan_t **, int *, struct bu_ptbl *);
+static int c_objparam(char *, char ***, int, struct db_plan_t **, int *, struct bu_ptbl *);
+static int c_iname(char *, char ***, int, struct db_plan_t **, int *, struct bu_ptbl *);
+static int c_maxdepth(char *, char ***, int, struct db_plan_t **, int *, struct bu_ptbl *);
+static int c_mindepth(char *, char ***, int, struct db_plan_t **, int *, struct bu_ptbl *);
+static int c_depth(char *, char ***, int, struct db_plan_t **, int *, struct bu_ptbl *);
+static int c_name(char *, char ***, int, struct db_plan_t **, int *, struct bu_ptbl *);
+static int c_nnodes(char *, char ***, int, struct db_plan_t **, int *, struct bu_ptbl *);
+static int c_regex(char *, char ***, int, struct db_plan_t **, int *, struct bu_ptbl *);
+static int c_iregex(char *, char ***, int, struct db_plan_t **, int *, struct bu_ptbl *);
+static int c_path(char *, char ***, int, struct db_plan_t **, int *, struct bu_ptbl *);
+static int c_print(char *, char ***, int, struct db_plan_t **, int *, struct bu_ptbl *);
+static int c_stdattr(char *, char ***, int, struct db_plan_t **, int *, struct bu_ptbl *);
+static int c_type(char *, char ***, int, struct db_plan_t **, int *, struct bu_ptbl *);
+static int c_bool(char *, char ***, int, struct db_plan_t **, int *, struct bu_ptbl *);
+static int c_openparen(char *, char ***, int, struct db_plan_t **, int *, struct bu_ptbl *);
+static int c_closeparen(char *, char ***, int, struct db_plan_t **, int *, struct bu_ptbl *);
+static int c_not(char *, char ***, int, struct db_plan_t **, int *, struct bu_ptbl *);
+static int c_or(char *, char ***, int, struct db_plan_t **, int *, struct bu_ptbl *);
+static int c_above(char *, char ***, int, struct db_plan_t **, int *, struct bu_ptbl *);
+static int c_below(char *, char ***, int, struct db_plan_t **, int *, struct bu_ptbl *);
 
+__END_DECLS
+
+#endif /* LIBRT_SEARCH_H */
 
 /*
  * Local Variables:

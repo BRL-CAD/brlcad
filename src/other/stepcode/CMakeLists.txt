@@ -42,7 +42,11 @@ PROJECT(SC)
 
 # SC version
 SET(SC_VERSION_MAJOR 0)
-SET(SC_VERSION_MINOR 7-dev)
+if(NOT SC_IS_SUBBUILD)
+	SET(SC_VERSION_MINOR 7-dev)
+else(NOT SC_IS_SUBBUILD)
+	SET(SC_VERSION_MINOR 7)
+endif(NOT SC_IS_SUBBUILD)
 SET(SC_VERSION ${SC_VERSION_MAJOR}.${SC_VERSION_MINOR})
 
 # SC ABI version. SC_ABI_SOVERSION should be incremented
@@ -51,9 +55,15 @@ SET(SC_ABI_SOVERSION 2)
 SET(SC_ABI_VERSION ${SC_ABI_SOVERSION}.0.0)
 
 # Minimum required version of CMake
-CMAKE_MINIMUM_REQUIRED(VERSION 2.8.7)
+CMAKE_MINIMUM_REQUIRED(VERSION 2.8.8)
 IF(COMMAND CMAKE_POLICY)
   CMAKE_POLICY(SET CMP0003 NEW)
+  if ("${CMAKE_VERSION}" VERSION_GREATER 2.99)
+	  CMAKE_POLICY(SET CMP0026 OLD)
+  endif ("${CMAKE_VERSION}" VERSION_GREATER 2.99)
+  if ("${CMAKE_VERSION}" VERSION_GREATER 3.0.9)
+	  CMAKE_POLICY(SET CMP0054 NEW)
+  endif ("${CMAKE_VERSION}" VERSION_GREATER 3.0.9)
 ENDIF(COMMAND CMAKE_POLICY)
 
 IF( NOT DEFINED INCLUDE_INSTALL_DIR )
@@ -67,6 +77,14 @@ ENDIF( NOT DEFINED LIB_INSTALL_DIR )
 IF( NOT DEFINED BIN_INSTALL_DIR )
   SET( BIN_INSTALL_DIR bin )
 ENDIF( NOT DEFINED BIN_INSTALL_DIR )
+
+if(NOT DEFINED BIN_DIR)
+  set(BIN_DIR bin)
+endif(NOT DEFINED BIN_DIR)
+
+if(NOT DEFINED LIB_DIR)
+  set(LIB_DIR lib)
+endif(NOT DEFINED LIB_DIR)
 
 IF( NOT DEFINED SC_BUILD_TYPE )
   SET( SC_BUILD_TYPE "Debug" CACHE STRING "Build type" ) # By default set debug build
@@ -200,15 +218,15 @@ ENDIF(NOT DEFINED CMAKE_RUNTIME_OUTPUT_DIRECTORY)
 
 FOREACH(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
   STRING(TOUPPER "${CFG_TYPE}" CFG_TYPE)
-  IF(NOT "CMAKE_LIBRARY_OUTPUT_DIRECTORY_${CFG_TYPE}")
+  IF(NOT DEFINED CMAKE_LIBRARY_OUTPUT_DIRECTORY_${CFG_TYPE})
     SET("CMAKE_LIBRARY_OUTPUT_DIRECTORY_${CFG_TYPE}" ${SC_BINARY_DIR}/lib CACHE INTERNAL "Single output directory for building all libraries.")
-  ENDIF(NOT "CMAKE_LIBRARY_OUTPUT_DIRECTORY_${CFG_TYPE}")
-  IF(NOT "CMAKE_ARCHIVE_OUTPUT_DIRECTORY_${CFG_TYPE}")
+ ENDIF(NOT DEFINED CMAKE_LIBRARY_OUTPUT_DIRECTORY_${CFG_TYPE})
+ IF(NOT DEFINED CMAKE_ARCHIVE_OUTPUT_DIRECTORY_${CFG_TYPE})
     SET("CMAKE_ARCHIVE_OUTPUT_DIRECTORY_${CFG_TYPE}" ${SC_BINARY_DIR}/lib CACHE INTERNAL "Single output directory for building all archives.")
-  ENDIF(NOT "CMAKE_ARCHIVE_OUTPUT_DIRECTORY_${CFG_TYPE}")
-  IF(NOT "CMAKE_RUNTIME_OUTPUT_DIRECTORY_${CFG_TYPE}")
+ ENDIF(NOT DEFINED CMAKE_ARCHIVE_OUTPUT_DIRECTORY_${CFG_TYPE})
+ IF(NOT DEFINED CMAKE_RUNTIME_OUTPUT_DIRECTORY_${CFG_TYPE})
     SET("CMAKE_RUNTIME_OUTPUT_DIRECTORY_${CFG_TYPE}" ${SC_BINARY_DIR}/bin CACHE INTERNAL "Single output directory for building all executables.")
-  ENDIF(NOT "CMAKE_RUNTIME_OUTPUT_DIRECTORY_${CFG_TYPE}")
+ ENDIF(NOT DEFINED CMAKE_RUNTIME_OUTPUT_DIRECTORY_${CFG_TYPE})
 ENDFOREACH()
 
 
@@ -362,22 +380,44 @@ get_property(CONFIG_H_FILE_CONTENTS GLOBAL PROPERTY SC_CONFIG_H_CONTENTS)
 file(WRITE ${CONFIG_H_FILE} "${CONFIG_H_FILE_CONTENTS}")
 configure_file(${CONFIG_H_FILE} ${SC_BINARY_DIR}/${INCLUDE_INSTALL_DIR}/sc_cf.h)
 
-################ create sc_version_string.h, http://stackoverflow.com/questions/3780667
-# Using 'ver_string' instead of 'sc_version_string.h' is a trick to force the
-# command to always execute when the custom target is built. It works because
-# a file by that name never exists.
-configure_file(${SC_CMAKE_DIR}/sc_version_string.cmake ${SC_BINARY_DIR}/sc_version_string.cmake @ONLY)
-add_custom_target(version_string ALL DEPENDS ver_string )
-# creates sc_version_string.h using cmake script
-add_custom_command(OUTPUT ver_string ${CMAKE_CURRENT_BINARY_DIR}/${INCLUDE_INSTALL_DIR}/sc_version_string.h
-                   COMMAND ${CMAKE_COMMAND} -DSOURCE_DIR=${SC_SOURCE_DIR}
-                                            -DBINARY_DIR=${SC_BINARY_DIR}
-                                            -P ${SC_BINARY_DIR}/sc_version_string.cmake)
-# sc_version_string.h is a generated file
-set_source_files_properties(${CMAKE_CURRENT_BINARY_DIR}/${INCLUDE_INSTALL_DIR}/sc_version_string.h
-  PROPERTIES GENERATED TRUE
-  HEADER_FILE_ONLY TRUE )
-################
+if(NOT SC_IS_SUBBUILD)
+  ################ create sc_version_string.h, http://stackoverflow.com/questions/3780667
+  # Using 'ver_string' instead of 'sc_version_string.h' is a trick to force the
+  # command to always execute when the custom target is built. It works because
+  # a file by that name never exists.
+  configure_file(${SC_CMAKE_DIR}/sc_version_string.cmake ${SC_BINARY_DIR}/sc_version_string.cmake @ONLY)
+  add_custom_target(version_string ALL DEPENDS ver_string )
+  # creates sc_version_string.h using cmake script
+  add_custom_command(OUTPUT ver_string ${CMAKE_CURRENT_BINARY_DIR}/${INCLUDE_INSTALL_DIR}/sc_version_string.h
+    COMMAND ${CMAKE_COMMAND} -DSOURCE_DIR=${SC_SOURCE_DIR}
+    -DBINARY_DIR=${SC_BINARY_DIR}
+    -P ${SC_BINARY_DIR}/sc_version_string.cmake)
+  # sc_version_string.h is a generated file
+  set_source_files_properties(${CMAKE_CURRENT_BINARY_DIR}/${INCLUDE_INSTALL_DIR}/sc_version_string.h
+    PROPERTIES GENERATED TRUE
+    HEADER_FILE_ONLY TRUE )
+  ################
+else(NOT SC_IS_SUBBUILD)
+  set(vstring "
+//sc_version_string.h - written by cmake. Changes will be lost!\n
+#ifndef SC_VERSION_STRING\n
+#define SC_VERSION_STRING\n\n
+const char* sc_version() {\n
+return \"${SC_VERSION}\";\n
+}\n\n
+#endif\n"
+  )
+
+file(WRITE
+  ${CMAKE_CURRENT_BINARY_DIR}/${INCLUDE_INSTALL_DIR}/sc_version_string.h.tmp
+  "${vstring}")
+execute_process(COMMAND ${CMAKE_COMMAND} -E copy_if_different
+  ${CMAKE_CURRENT_BINARY_DIR}/${INCLUDE_INSTALL_DIR}/sc_version_string.h.tmp
+  ${CMAKE_CURRENT_BINARY_DIR}/${INCLUDE_INSTALL_DIR}/sc_version_string.h)
+execute_process(COMMAND ${CMAKE_COMMAND} -E remove
+  ${CMAKE_CURRENT_BINARY_DIR}/${INCLUDE_INSTALL_DIR}/sc_version_string.h.tmp)
+
+endif(NOT SC_IS_SUBBUILD)
 
 if(MSVC)
   # add_definitions( -Wall )
@@ -447,3 +487,11 @@ if(NOT SC_IS_SUBBUILD)
     COMMAND ${CMAKE_COMMAND} -P ${CMAKE_CURRENT_BINARY_DIR}/cmake_uninstall.cmake)
 
 endif(NOT SC_IS_SUBBUILD)
+
+# Local Variables:
+# tab-width: 8
+# mode: cmake
+# indent-tabs-mode: t
+# End:
+# ex: shiftwidth=2 tabstop=8
+

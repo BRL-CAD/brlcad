@@ -1,7 +1,7 @@
 /*                          B B O X . C
  * BRL-CAD
  *
- * Copyright (c) 1995-2013 United States Government as represented by
+ * Copyright (c) 1995-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -29,7 +29,8 @@
 #include "common.h"
 
 #include <string.h>
-#include "bu.h"
+
+#include "bu/path.h"
 #include "vmath.h"
 #include "raytrace.h"
 
@@ -66,8 +67,8 @@ rt_bound_tree(const union tree *tp, fastf_t *tree_min, fastf_t *tree_max)
 	    }
 
 	default:
-	    bu_log("rt_bound_tree(x%x): unknown op=x%x\n",
-		   tp, tp->tr_op);
+	    bu_log("rt_bound_tree(%p): unknown op=x%x\n",
+		   (void *)tp, tp->tr_op);
 	    return -1;
 
 	case OP_XOR:
@@ -116,7 +117,8 @@ HIDDEN struct region *
 _rt_getregion(struct rt_i *rtip, const char *reg_name)
 {
     struct region *regp;
-    char *reg_base = bu_basename(reg_name);
+    char *reg_base = (char *)bu_calloc(strlen(reg_name), sizeof(char), "rt_getregion reg_base");
+    bu_basename(reg_base, reg_name);
 
     RT_CK_RTI(rtip);
     for (BU_LIST_FOR(regp, region, &(rtip->HeadRegion))) {
@@ -128,7 +130,8 @@ _rt_getregion(struct rt_i *rtip, const char *reg_name)
 	    return regp;
 	}
 	/* Second, check for a match of the database node name */
-	cp = bu_basename(regp->reg_name);
+	cp = (char *)bu_calloc(strlen(regp->reg_name), sizeof(char), "rt_getregion cp");
+	bu_basename(cp, regp->reg_name);
 	if (*cp == *reg_name && BU_STR_EQUAL(cp, reg_name)) {
 	    bu_free(reg_base, "reg_base free");
 	    bu_free(cp, "cp free");
@@ -242,8 +245,6 @@ rt_in_rpp(struct xray *rp,
 
 
 /**
- * R T _ T R A V E R S E _ T R E E
- *
  * Traverse the passed tree using rt_db_internals to show the way
  * This function supports rt_bound_internal and is internal to librt
  *
@@ -283,7 +284,7 @@ rt_traverse_tree(struct rt_i *rtip, const union tree *tp, fastf_t *tree_min, fas
 	    }
 
 	default:
-	    bu_log("rt_traverse_tree(x%x): unknown op=x%x\n", tp, (unsigned int)(tp->tr_op));
+	    bu_log("rt_traverse_tree(%p): unknown op=x%x\n", (void *)tp, (tp->tr_op));
 	    return -1;
 
 	case OP_XOR:
@@ -361,7 +362,7 @@ rt_traverse_tree(struct rt_i *rtip, const union tree *tp, fastf_t *tree_min, fas
 		    if (intern.idb_minor_type == ID_COMBINATION) {
 			combp = (struct rt_comb_internal *)intern.idb_ptr;
 		    } else {
-			/* if its not a comb, then something else is cooking */
+			/* if it's not a comb, then something else is cooking */
 			bu_log("rt_traverse_tree: WARNING : rt_db_lookup_internal(%s) got the internal form of a \
 							primitive when it should not, the bounds may not be correct", tp->tr_l.tl_name);
 			return -1;
@@ -466,7 +467,7 @@ rt_bound_internal(struct db_i *dbip, struct directory *dp,
     VMOVE(rpp_min, tree_min);
     VMOVE(rpp_max, tree_max);
 
-    /* Check if the model bounds look correct e.g. if they are all 0, then its not correct */
+    /* Check if the model bounds look correct e.g. if they are all 0, then it's not correct */
     if ((NEAR_ZERO(rpp_min[0], SMALL_FASTF) || rpp_min[0] <= -INFINITY || rpp_min[0] >= INFINITY) &&
 	(NEAR_ZERO(rpp_min[1], SMALL_FASTF) || rpp_min[1] <= -INFINITY || rpp_min[1] >= INFINITY) &&
 	(NEAR_ZERO(rpp_min[2], SMALL_FASTF) || rpp_min[2] <= -INFINITY || rpp_min[2] >= INFINITY) &&

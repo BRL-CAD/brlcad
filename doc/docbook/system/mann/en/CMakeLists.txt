@@ -30,6 +30,7 @@ set(docbook_mann_EN
   bb.xml
   bev.xml
   bo.xml
+  bot.xml
   bolt.xml
   bot_condense.xml
   bot_decimate.xml
@@ -39,6 +40,7 @@ set(docbook_mann_EN
   bot_split.xml
   bot_sync.xml
   bot_vertex_fuse.xml
+  brep.xml
   build_region.xml
   c.xml
   cat.xml
@@ -129,7 +131,6 @@ set(docbook_mann_EN
   lookat.xml
   ls.xml
   make.xml
-  make_bb.xml
   make_pnts.xml
   mater.xml
   matpick.xml
@@ -159,6 +160,7 @@ set(docbook_mann_EN
   preview.xml
   prj_add.xml
   ps.xml
+  pull.xml
   push.xml
   put_comb.xml
   putmat.xml
@@ -257,12 +259,11 @@ set(docbook_mann_INTRO
 set_source_files_properties(gr.xml PROPERTIES EXTRA_MAN_OUTPUTS "dg.nged")
 
 DOCBOOK_TO_HTML(mann docbook_mann_EN html/mann/en "")
+DOCBOOK_TO_PHP(mann docbook_mann_EN html/mann/en "")
 DOCBOOK_TO_HTML(mann docbook_mann_INTRO html/mann/en "")
+DOCBOOK_TO_PHP(mann docbook_mann_INTRO html/mann/en "")
 DOCBOOK_TO_MAN(mann docbook_mann_EN n nged mann "")
-
-if(BRLCAD_EXTRADOCS_PDF_MAN)
-  DOCBOOK_TO_PDF(mann docbook_mann_EN pdf/mann/en "")
-endif(BRLCAD_EXTRADOCS_PDF_MAN)
+DOCBOOK_TO_PDF(mann docbook_mann_EN pdf/mann/en "")
 
 # Local Variables:
 # tab-width: 8

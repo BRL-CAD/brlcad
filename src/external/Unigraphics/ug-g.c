@@ -1,7 +1,7 @@
 /*                          U G - G . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2013 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -33,10 +33,10 @@
 #include <string.h>
 #include "bio.h"
 
-#include "db.h"
+#include "rt/db4.h"
 #include "vmath.h"
 #include "nmg.h"
-#include "rtgeom.h"
+#include "rt/geom.h"
 #include "raytrace.h"
 #include "wdb.h"
 
@@ -80,7 +80,7 @@ static time_t start_time;
 int debug = 0;
 int show_all_features = 0;
 
-char *options = "hsufd:o:i:t:a:n:c:r:R:";
+char *options = "sufd:o:i:t:a:n:c:r:R:h?";
 char *progname = "(noname)";
 
 /* count of how parts were converted */
@@ -1223,7 +1223,7 @@ conv_extrusion( tag_t feat_tag, char *part_name, char *refset_name, char *inst_n
     skt->magic = RT_SKETCH_INTERNAL_MAGIC;
     skt->curve.seg_count = seg_count;
     skt->curve.reverse = (int *)bu_calloc( seg_count, sizeof( int ), "sketch reverse flags" );
-    skt->curve.segment = (genptr_t *)bu_calloc( seg_count, sizeof( genptr_t ), "sketch segment pointers" );
+    skt->curve.segment = (void **)bu_calloc( seg_count, sizeof( void *), "sketch segment pointers" );
     skt->vert_count = 0;
     skt->verts = (point2d_t *)bu_calloc( VERT_ALLOC_BLOCK, sizeof( point2d_t ), "skt->verts" );
     verts_alloced = VERT_ALLOC_BLOCK;
@@ -1263,13 +1263,13 @@ conv_extrusion( tag_t feat_tag, char *part_name, char *refset_name, char *inst_n
 	    for ( i=j+1; i<num_curves; i++ ) {
 		BU_ALLOC(lsg, struct line_seg);
 		lsg->magic = CURVE_LSEG_MAGIC;
-		skt->curve.segment[i] = (genptr_t)lsg;
+		skt->curve.segment[i] = (void *)lsg;
 	    }
 	    intern.idb_magic = RT_DB_INTERNAL_MAGIC;
 	    intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 	    intern.idb_minor_type = DB5_MINORTYPE_BRLCAD_SKETCH;
 	    intern.idb_meth = &OBJ[ID_SKETCH];
-	    intern.idb_ptr = (genptr_t)skt;
+	    intern.idb_ptr = (void *)skt;
 	    bu_avs_init_empty( &intern.idb_avs );
 	    intern.idb_meth->ft_ifree( &intern, NULL );
 	    UF_MODL_delete_list( &sketch_list );
@@ -1284,7 +1284,7 @@ conv_extrusion( tag_t feat_tag, char *part_name, char *refset_name, char *inst_n
 		bu_log( "Line from (%g %g %g) to (%g %g %g)\n",
 			V3ARGS( line_data.start_point ), V3ARGS( line_data.end_point ) );
 		BU_ALLOC(lsg, struct line_seg);
-		skt->curve.segment[j] = (genptr_t)lsg;
+		skt->curve.segment[j] = (void *)lsg;
 		lsg->magic = CURVE_LSEG_MAGIC;
 		UF_MTX3_vec_multiply( line_data.start_point, csys, pt );
 		VSCALE( pt, pt, units_conv );
@@ -1302,13 +1302,13 @@ conv_extrusion( tag_t feat_tag, char *part_name, char *refset_name, char *inst_n
 		    for ( i=j+1; i<num_curves; i++ ) {
 			BU_ALLOC(lsg, struct line_seg);
 			lsg->magic = CURVE_LSEG_MAGIC;
-			skt->curve.segment[i] = (genptr_t)lsg;
+			skt->curve.segment[i] = (void *)lsg;
 		    }
 		    intern.idb_magic = RT_DB_INTERNAL_MAGIC;
 		    intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 		    intern.idb_minor_type = DB5_MINORTYPE_BRLCAD_SKETCH;
 		    intern.idb_meth = &OBJ[ID_SKETCH];
-		    intern.idb_ptr = (genptr_t)skt;
+		    intern.idb_ptr = (void *)skt;
 		    bu_avs_init_empty( &intern.idb_avs );
 		    intern.idb_meth->ft_ifree( &intern, NULL );
 		    UF_MODL_delete_list( &sketch_list );
@@ -1335,7 +1335,7 @@ conv_extrusion( tag_t feat_tag, char *part_name, char *refset_name, char *inst_n
 		start[0] = arc_data.arc_center[0] + arc_data.radius * cos( arc_data.start_angle );
 		start[1] = arc_data.arc_center[1] + arc_data.radius * sin( arc_data.start_angle );
 		start[2] = arc_data.arc_center[2];
-		arc_angle_m_2pi = fabs( arc_data.end_angle - arc_data.start_angle ) - 2.0 * M_PI;
+		arc_angle_m_2pi = fabs( arc_data.end_angle - arc_data.start_angle ) - M_2PI;
 		if ( NEAR_ZERO( arc_angle_m_2pi, 0.0005)  ) {
 		    /* full circle */
 		    csg->radius = -csg->radius;
@@ -1366,7 +1366,7 @@ conv_extrusion( tag_t feat_tag, char *part_name, char *refset_name, char *inst_n
 		    z2 = end[Z];
 		    csg->end = add_sketch_vert( end, skt, &verts_alloced, tol_sq );
 		}
-		skt->curve.segment[j] = (genptr_t)csg;
+		skt->curve.segment[j] = (void *)csg;
 		if ( !NEAR_ZERO( fabs( z1 - z2 ), tol_dist ) ) {
 		    bu_log( "Sketch (%s) for part %s is not planar, cannot handle this",
 			    skt_name, part_name );
@@ -1375,13 +1375,13 @@ conv_extrusion( tag_t feat_tag, char *part_name, char *refset_name, char *inst_n
 		    for ( i=j+1; i<num_curves; i++ ) {
 			BU_ALLOC(lsg, struct line_seg);
 			lsg->magic = CURVE_LSEG_MAGIC;
-			skt->curve.segment[i] = (genptr_t)lsg;
+			skt->curve.segment[i] = (void *)lsg;
 		    }
 		    intern.idb_magic = RT_DB_INTERNAL_MAGIC;
 		    intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 		    intern.idb_minor_type = DB5_MINORTYPE_BRLCAD_SKETCH;
 		    intern.idb_meth = &OBJ[ID_SKETCH];
-		    intern.idb_ptr = (genptr_t)skt;
+		    intern.idb_ptr = (void *)skt;
 		    bu_avs_init_empty( &intern.idb_avs );
 		    intern.idb_meth->ft_ifree( &intern, NULL );
 		    UF_MODL_delete_list( &sketch_list );
@@ -1397,13 +1397,13 @@ conv_extrusion( tag_t feat_tag, char *part_name, char *refset_name, char *inst_n
 		for ( i=j; i<num_curves; i++ ) {
 		    BU_ALLOC(lsg, struct line_seg);
 		    lsg->magic = CURVE_LSEG_MAGIC;
-		    skt->curve.segment[i] = (genptr_t)lsg;
+		    skt->curve.segment[i] = (void *)lsg;
 		}
 		intern.idb_magic = RT_DB_INTERNAL_MAGIC;
 		intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 		intern.idb_minor_type = DB5_MINORTYPE_BRLCAD_SKETCH;
 		intern.idb_meth = &OBJ[ID_SKETCH];
-		intern.idb_ptr = (genptr_t)skt;
+		intern.idb_ptr = (void *)skt;
 		bu_avs_init_empty( &intern.idb_avs );
 		intern.idb_meth->ft_ifree( &intern, NULL );
 		UF_MODL_delete_list( &sketch_list );
@@ -1429,13 +1429,13 @@ conv_extrusion( tag_t feat_tag, char *part_name, char *refset_name, char *inst_n
 	    for ( i=j+1; i<num_curves; i++ ) {
 		BU_ALLOC(lsg, struct line_seg);
 		lsg->magic = CURVE_LSEG_MAGIC;
-		skt->curve.segment[i] = (genptr_t)lsg;
+		skt->curve.segment[i] = (void *)lsg;
 	    }
 	    intern.idb_magic = RT_DB_INTERNAL_MAGIC;
 	    intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 	    intern.idb_minor_type = DB5_MINORTYPE_BRLCAD_SKETCH;
 	    intern.idb_meth = &OBJ[ID_SKETCH];
-	    intern.idb_ptr = (genptr_t)skt;
+	    intern.idb_ptr = (void *)skt;
 	    bu_avs_init_empty( &intern.idb_avs );
 	    intern.idb_meth->ft_ifree( &intern, NULL );
 	    return (char *)NULL;
@@ -1476,7 +1476,7 @@ conv_extrusion( tag_t feat_tag, char *part_name, char *refset_name, char *inst_n
 	intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 	intern.idb_minor_type = DB5_MINORTYPE_BRLCAD_SKETCH;
 	intern.idb_meth = &OBJ[ID_SKETCH];
-	intern.idb_ptr = (genptr_t)skt;
+	intern.idb_ptr = (void *)skt;
 	bu_avs_init_empty( &intern.idb_avs );
 	intern.idb_meth->ft_ifree( &intern, NULL );
 	return (char *)NULL;
@@ -1720,13 +1720,9 @@ get_thru_faces_length( tag_t feat_tag,
 	bu_log( "ret = %d, dist = %g\n", ret, dist );
 	/* 1 - exit, 2 - entrance, else miss */
 	if ( ret == 1 ) {
-	    if ( dist < min_exit ) {
-		min_exit = dist;
-	    }
+	    V_MIN(min_exit, dist);
 	} else if ( ret ==2 ) {
-	    if ( dist > max_entr ) {
-		max_entr = dist;
-	    }
+	    V_MAX(max_entr, dist);
 	}
 
 	VSETALLN( pl, 0.0, 4 );
@@ -1739,29 +1735,17 @@ get_thru_faces_length( tag_t feat_tag,
 	bu_log( "ret = %d, dist = %g\n", ret, dist );
 	/* 1 - exit, 2 - entrance, else miss */
 	if ( ret == 1 ) {
-	    if ( dist < min_exit ) {
-		min_exit = dist;
-	    }
+	    V_MIN(min_exit, dist);
 	} else if ( ret ==2 ) {
-	    if ( dist > max_entr ) {
-		max_entr = dist;
-	    }
+	    V_MAX(max_entr, dist);
 	}
     }
 
-    if ( min_exit < min_len ) {
-	min_len = min_exit;
-    }
-    if ( max_entr < min_len ) {
-	min_len = max_entr;
-    }
+    V_MIN(min_len, min_exit);
+    V_MIN(min_len, max_extr);
 
-    if ( min_exit > max_len ) {
-	max_len = min_exit;
-    }
-    if ( max_entr > max_len ) {
-	max_len = max_entr;
-    }
+    V_MAX(max_len, min_exit);
+    V_MAX(max_len, max_entr);
 
     if ( face2 ) {
 	if ( UF_MODL_ask_bounding_box( face2, bb ) ) {
@@ -1783,13 +1767,9 @@ get_thru_faces_length( tag_t feat_tag,
 	    ret = bn_isect_line3_plane( &dist, base, dir, pl, &tol );
 	    /* 1 - exit, 2 - entrance, else miss */
 	    if ( ret == 1 ) {
-		if ( dist < min_exit ) {
-		    min_exit = dist;
-		}
+		V_MIN(min_exit, dist);
 	    } else if ( ret ==2 ) {
-		if ( dist > max_entr ) {
-		    max_entr = dist;
-		}
+		V_MAX(max_entr, dist);
 	    }
 
 	    VSETALLN( pl, 0.0, 4 );
@@ -1798,29 +1778,17 @@ get_thru_faces_length( tag_t feat_tag,
 	    ret = bn_isect_line3_plane( &dist, base, dir, pl, &tol );
 	    /* 1 - exit, 2 - entrance, else miss */
 	    if ( ret == 1 ) {
-		if ( dist < min_exit ) {
-		    min_exit = dist;
-		}
+		V_MIN(min_exit, dist);
 	    } else if ( ret ==2 ) {
-		if ( dist > max_entr ) {
-		    max_entr = dist;
-		}
+		V_MAX(max_entr, dist);
 	    }
 	}
 
-	if ( min_exit < min_len ) {
-	    min_len = min_exit;
-	}
-	if ( max_entr < min_len ) {
-	    min_len = max_entr;
-	}
+	V_MIN(min_len, min_exit);
+	V_MIN(min_len, max_extr);
 
-	if ( min_exit > max_len ) {
-	    max_len = min_exit;
-	}
-	if ( max_entr > max_len ) {
-	    max_len = max_entr;
-	}
+	V_MAX(max_len, min_exit);
+	V_MAX(max_len, max_entr);
     }
 
 
@@ -2126,9 +2094,7 @@ do_rect_pocket(
     ylen_bottom = ylen - 2.0 * (depth-f_radius) * tan( angle );
     zlen_bottom = zlen - 2.0 * (depth-f_radius) * tan( angle );
     c_radius_bottom = c_radius - (depth-f_radius) * tan( angle );
-    if ( c_radius_bottom < 0.0 ) {
-	c_radius_bottom = 0.0;
-    }
+    V_MAX(c_radius_bottom, 0.0);
 
     DO_INDENT;
     bu_log( "\tbase = (%g %g %g), base_bottom = (%g %g %g), ylen_bottom = %g, zlen_bottom = %g\n",
@@ -2585,9 +2551,7 @@ do_cyl_pocket(
     }
     angle = tmp * DEG2RAD;
     radius2 = radius1 - ht * tan( angle );
-    if ( radius2 < MIN_RADIUS ) {
-	radius2 = MIN_RADIUS;
-    }
+    V_MAX(radius2, MIN_RADIUS);
 
     if ( get_exp_value( "Floor Radius", n_exps, exps, descs, &tmp ) ) {
 	bu_log( "Failed to get floor radius for cylindrical pocket.\n" );
@@ -2603,9 +2567,7 @@ do_cyl_pocket(
 	fastf_t tmp_ht, radius4;
 	point_t base2;
 
-	if ( round_rad > radius2 ) {
-	    round_rad = radius2;
-	}
+	V_MIN(round_rad, radius2);
 
 	tmp_ht = ht - round_rad * cos( angle );
 	if ( tmp_ht < SMALL_FASTF ) {
@@ -2613,9 +2575,8 @@ do_cyl_pocket(
 	}
 
 	radius3 = radius1 - tmp_ht * tan( angle );
-	if ( radius3 < MIN_RADIUS ) {
-	    radius3 = MIN_RADIUS;
-	}
+	V_MAX(radius3, MIN_RADIUS);
+
 	VSCALE( height, dir, tmp_ht );
 	radius4 = radius3 - round_rad * cos( angle );
 	if ( ZERO(radius2 - round_rad) ) {
@@ -2692,9 +2653,8 @@ do_cyl_pocket(
     } else {
 	/* no rounding */
 	radius3 = radius1 - ht * tan( angle );
-	if ( radius3 < MIN_RADIUS ) {
-	    radius3 = MIN_RADIUS;
-	}
+	V_MAX(radius3, MIN_RADIUS);
+
 	VSCALE( height, dir, ht );
 	solid_name = create_unique_brlcad_solid_name();
 	if ( mk_trc_h( wdb_fd, solid_name, base, height, radius1, radius3 ) ) {
@@ -2853,9 +2813,7 @@ do_rect_pad(
 
     d = depth * tan( angle );
     c_radius_end = c_radius - d;
-    if ( c_radius_end < MIN_RADIUS ) {
-	c_radius_end = MIN_RADIUS;
-    }
+    V_MAX(c_radius_end, MIN_RADIUS);
 
     bu_log( "Rectangular Pad:\n" );
     bu_log( "\tlocation = (%g %g %g), ylen = %g, zlen = %g, depth = %g\n", V3ARGS( base ), ylen, zlen, depth );
@@ -3736,12 +3694,8 @@ do_groove( int groove_type,
 		UF_func( UF_EVAL_is_arc( eval, &is_arc ) );
 		if ( is_arc ) {
 		    UF_func( UF_EVAL_ask_arc( eval, &arc ) );
-		    if ( arc.radius > outer_radius ) {
-			outer_radius = arc.radius;
-		    }
-		    if ( arc.radius < inner_radius ) {
-			inner_radius = arc.radius;
-		    }
+		    V_MAX(outer_radius, arc.radius);
+		    V_MIN(inner_radius, arc.radius);
 		}
 		UF_func( UF_EVAL_free( eval ) );
 	    }
@@ -4175,9 +4129,7 @@ convert_a_feature( tag_t feat_tag,
 	}
 	ang = tmp * DEG2RAD;
 	radius2 = radius1 - ht * tan( ang );
-	if ( radius2 < MIN_RADIUS ) {
-	    radius2 = MIN_RADIUS;
-	}
+	V_MAX(radius2, MIN_RADIUS);
 
 	solid_name = create_unique_brlcad_solid_name();
 	if ( mk_trc_h( wdb_fd, solid_name, base, Height, radius1, radius2 ) ) {
@@ -4916,7 +4868,7 @@ convert_reference_set( tag_t node, char *p_name, char *refset_name, char *inst_n
     }
 
     if ( do_entire_part ) {
-	return( convert_entire_part( node, p_name, refset_name,
+	return ( convert_entire_part( node, p_name, refset_name,
 				     inst_name, curr_xform, units_conv ) );
     }
 
@@ -5016,20 +4968,20 @@ convert_geom( tag_t node, char *p_name, char *refset_name, char *inst_name, cons
 	bu_log( "Using user specified reference set name (%s) in place of (%s)\n",
 		use_refset_name, refset_name );
 	if ( BU_STR_EQUAL( use_refset_name, "Entire Part" ) || BU_STR_EQUAL( use_refset_name, "None" ) ) {
-	    return( convert_entire_part( node, p_name, refset_name, inst_name,
+	    return ( convert_entire_part( node, p_name, refset_name, inst_name,
 					 curr_xform, units_conv ) );
 	} else {
-	    return( convert_reference_set( node, p_name, use_refset_name, inst_name,
+	    return ( convert_reference_set( node, p_name, use_refset_name, inst_name,
 					   curr_xform, units_conv ) );
 	}
     }
     if ( refset_name && !BU_STR_EQUAL( refset_name, "None" ) ) {
 	/* convert reference set */
-	return( convert_reference_set( node, p_name, refset_name, inst_name,
+	return ( convert_reference_set( node, p_name, refset_name, inst_name,
 				       curr_xform, units_conv ) );
     } else {
 	/* convert entire part */
-	return( convert_entire_part( node, p_name, refset_name, inst_name,
+	return ( convert_entire_part( node, p_name, refset_name, inst_name,
 				     curr_xform, units_conv ) );
     }
 
@@ -5330,10 +5282,9 @@ get_it_all_loaded( tag_t node )
     }
 }
 
-/*
- *	P A R S E _ A R G S --- Parse through command line flags
- */
-int parse_args(int ac, char *av[])
+
+int
+parse_args(int ac, char *av[])
 {
     int  c;
     char *strrchr();
@@ -5347,7 +5298,8 @@ int parse_args(int ac, char *av[])
     bu_opterr = 0;
 
     /* get all the option flags from the command line */
-    while ((c=bu_getopt(ac, av, options)) != -1)
+    while ((c=bu_getopt(ac, av, options)) != -1) {
+	if (bu_optopt == '?') c='h';
 	switch (c) {
 	    case 'i'	: ident = atoi( bu_optarg ); break;
 	    case 'o'	: output_file = strdup( bu_optarg ); break;
@@ -5361,10 +5313,13 @@ int parse_args(int ac, char *av[])
 	    case 'f'	: only_facetize = 1; break;
 	    case 's'	: show_all_features = 1; break;
 	    case 'u'	: use_normals = 1; break;
-	    case '?'	:
-	    case 'h'	:
-	    default		: fprintf(stderr, "Bad or help flag specified\n"); break;
+	    case 'h'	: bu_exit(1, usage, av[0]);
+			  break;
+	    default	: fprintf(stderr, "Bad flag specified\n");
+	    		  bu_exit(1, usage, av[0]);
+			  break;
 	}
+    }
 
     return bu_optind;
 }

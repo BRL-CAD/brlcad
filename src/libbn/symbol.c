@@ -1,7 +1,7 @@
 /*                        S Y M B O L . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2013 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -42,13 +42,12 @@
 #include <string.h>
 #include <math.h>
 
+#include "bu/str.h"
 #include "vmath.h"
-#include "plot3.h"
-#include "vectfont.h"
+#include "bn/mat.h"
+#include "bn/plot3.h"
+#include "bn/vectfont.h"
 
-/*
- *			T P _ 3 S Y M B O L
- */
 void
 tp_3symbol(FILE *fp, char *string, fastf_t *origin, fastf_t *rot, double scale)
 
@@ -82,9 +81,6 @@ tp_3symbol(FILE *fp, char *string, fastf_t *origin, fastf_t *rot, double scale)
     MAT_DELTAS_VEC( xlate_to_origin, origin );
     bn_mat_mul( mat, xlate_to_origin, rot );
 
-    /* Check to see if initialization is needed */
-    if ( tp_cindex[040] == 0 )  tp_setup();
-
     /* Draw each character in the input string */
     offset = 0;
     for ( cp = (unsigned char *)string; *cp; cp++, offset += scale )  {
@@ -95,7 +91,7 @@ tp_3symbol(FILE *fp, char *string, fastf_t *origin, fastf_t *rot, double scale)
 	MAT4X3PNT( loc, mat, temp );
 	pdv_3move( fp, loc );
 
-	for ( p = tp_cindex[*cp]; (stroke= *p) != LAST; p++ )  {
+	for ( p = tp_getchar(cp); (stroke= *p) != VFONT_LAST; p++ )  {
 	    int	draw;
 
 	    if ( stroke==NEGY )  {
@@ -124,9 +120,6 @@ tp_3symbol(FILE *fp, char *string, fastf_t *origin, fastf_t *rot, double scale)
 }
 
 
-/*
- *			T P _ 2 S Y M B O L
- */
 void
 tp_2symbol(FILE *fp, char *string, double x, double y, double scale, double theta)
 

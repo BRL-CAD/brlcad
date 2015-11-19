@@ -1,7 +1,7 @@
 /*                  T E X T U R E S C A L E . C
  * BRL-CAD
  *
- * Copyright (c) 1997-2013 United States Government as represented by
+ * Copyright (c) 1997-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -27,10 +27,12 @@
 
 #include <stdlib.h>
 #include <math.h>
-#include "bio.h"
 
 #include "vmath.h"
-#include "bu.h"
+#include "bu/color.h"
+#include "bu/getopt.h"
+#include "bu/log.h"
+#include "bu/malloc.h"
 #include "bn.h"
 #include "fb.h"
 
@@ -57,12 +59,10 @@ static fastf_t r1, r2;		/* radii */
     fflush(stderr)
 static char usage[] = "\
 Usage: texturescale [-T 'r1 r2' | -S]\n\
-		 [-ah] [-s squaresize] [-w file_width] [-n file_height]\n\
+		 [-a] [-s squaresize] [-w file_width] [-n file_height]\n\
 		 [file.pix]\n";
 
 /*
- * R E A D _ R A D I I ()
- *
  * Read in the radii for a torus
  */
 static int read_radii (fastf_t *r1p, fastf_t *r2p, char *buf)
@@ -79,9 +79,6 @@ static int read_radii (fastf_t *r1p, fastf_t *r2p, char *buf)
 }
 
 
-/*
- * R E A D _ R O W ()
- */
 static int read_row(char *rp, size_t width, FILE *fp)
 {
     size_t ret = fread(rp + 3, 3, width, fp);
@@ -95,22 +92,16 @@ static int read_row(char *rp, size_t width, FILE *fp)
 }
 
 
-/*
- * G E T _ A R G S ()
- */
 static int
 get_args (int argc, char **argv)
 {
     int c;
 
     while ((c = bu_getopt(argc, argv, OPT_STRING)) != -1) {
+	if (bu_optopt == '?') c='h';
 	switch (c) {
 	    case 'a':
 		autosize = 1;
-		break;
-	    case 'h':
-		file_height = file_width = 1024L;
-		autosize = 0;
 		break;
 	    case 'n':
 		file_height = atol(bu_optarg);
@@ -135,7 +126,7 @@ get_args (int argc, char **argv)
 		}
 		solid_type = TORUS;
 		break;
-	    case '?':
+	    case 'h':
 		(void) fputs(usage, stderr);
 		bu_exit (0, NULL);
 	    default:
@@ -167,9 +158,6 @@ get_args (int argc, char **argv)
 }
 
 
-/*
- * M A I N ()
- */
 int
 main (int argc, char **argv)
 {
@@ -223,8 +211,8 @@ main (int argc, char **argv)
     /*
      * Allocate 1-scanline buffers for input and output
      */
-    outbuf = bu_malloc(3*file_width, "outbuf");
-    inbuf  = bu_malloc(3*file_width, "inbuf");
+    outbuf = (char *)bu_malloc(3*file_width, "outbuf");
+    inbuf  = (char *)bu_malloc(3*file_width, "inbuf");
 
     /*
      * Do the filtering
@@ -242,7 +230,7 @@ main (int argc, char **argv)
 	/*
 	 * Determine how much of the input scanline we want
 	 */
-	theta = 2 * bn_pi * row / file_height;
+	theta = M_2PI * row / file_height;
 	row_width = scale_fac * sqrt(squares - twice_r1r2 * cos(theta));
 	in = inbuf + ((file_width - row_width) / 2) * 3;
 	out = outbuf;

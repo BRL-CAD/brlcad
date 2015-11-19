@@ -1,7 +1,7 @@
 /*                    D O U B L E - A S C . C
  * BRL-CAD
  *
- * Copyright (c) 1996-2013 United States Government as represented by
+ * Copyright (c) 1996-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -27,10 +27,14 @@
 
 #include <stdlib.h>
 #include <string.h>
-#include "bio.h"
 
 #include "vmath.h"
-#include "bu.h"
+#include "bu/getopt.h"
+#include "bu/malloc.h"
+#include "bu/file.h"
+#include "bu/log.h"
+#include "bu/str.h"
+#include "bu/cv.h"
 #include "bn.h"
 #include "fb.h"
 
@@ -53,8 +57,8 @@ static int make_cells = 0;		/* Insert cell coords in output? */
 static int d_per_l = 1;		/* doubles per line of output */
 
 
-void print_usage (willexit)
-    int willexit;
+void
+print_usage(int willexit)
 {
     if (willexit)
 	bu_exit(1, "%s%s", usage1, usage2);

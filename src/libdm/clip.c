@@ -1,7 +1,7 @@
 /*                          C L I P . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2013 United States Government as represented by
+ * Copyright (c) 1985-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -26,9 +26,7 @@
  */
 
 #include "common.h"
-#include "bio.h"
 
-#include <stdio.h>
 
 #include "vmath.h"
 #include "dm.h"
@@ -120,8 +118,6 @@ clip(fastf_t *xp1, fastf_t *yp1, fastf_t *xp2, fastf_t *yp2)
 
 
 /**
- * V C L I P
- *
  * Clip a ray against a rectangular parallelepiped (RPP) that has faces
  * parallel to the coordinate planes (a clipping RPP).  The RPP is
  * defined by a minimum point and a maximum point.

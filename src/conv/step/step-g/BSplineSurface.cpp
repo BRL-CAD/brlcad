@@ -1,7 +1,7 @@
 /*                 BSplineSurface.cpp
  * BRL-CAD
  *
- * Copyright (c) 1994-2013 United States Government as represented by
+ * Copyright (c) 1994-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -76,16 +76,17 @@ BSplineSurface::BSplineSurface(STEPWrapper *sw, int step_id)
 
 BSplineSurface::~BSplineSurface()
 {
-
-    LIST_OF_LIST_OF_POINTS::iterator i = control_points_list->begin();
-
-    while (i != control_points_list->end()) {
-	(*i)->clear();
-	delete(*i);
-	i = control_points_list->erase(i);
+    // elements created through factory will be deleted there.
+    if (control_points_list) {
+	LIST_OF_LIST_OF_POINTS::iterator i;
+	for (i = control_points_list->begin(); i != control_points_list->end(); ++i) {
+	    LIST_OF_POINTS *points = *i;
+	    points->clear();
+	    delete points;
+	}
+	control_points_list->clear();
+	delete control_points_list;
     }
-    control_points_list->clear();
-    delete control_points_list;
 }
 
 bool
@@ -97,7 +98,7 @@ BSplineSurface::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
 
     if (!BoundedSurface::Load(step, sse)) {
 	std::cout << CLASSNAME << ":Error loading base class ::BoundedSurface." << std::endl;
-	return false;
+	goto step_error;
     }
 
     // need to do this for local attributes to makes sure we have
@@ -106,18 +107,30 @@ BSplineSurface::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
 
     u_degree = step->getIntegerAttribute(sse, "u_degree");
     v_degree = step->getIntegerAttribute(sse, "v_degree");
+    if (!u_degree || !v_degree) {
+	/* If we don't have degrees, error */
+	goto step_error;
+    }
+
     if (control_points_list == NULL) {
 	control_points_list = step->getListOfListOfPoints(sse, "control_points_list");
+	if (!control_points_list) {
+	    /* If we had an entity but couldn't load it, error */
+	    goto step_error;
+	}
     }
     surface_form = (B_spline_surface_form)step->getEnumAttribute(sse, "surface_form");
-    if (surface_form > B_spline_surface_form_unset) {
-	surface_form = B_spline_surface_form_unset;
-    }
+    V_MIN(surface_form, B_spline_surface_form_unset);
+
     u_closed = step->getLogicalAttribute(sse, "u_closed");
     v_closed = step->getLogicalAttribute(sse, "v_closed");
     self_intersect = step->getLogicalAttribute(sse, "self_intersect");
 
+    sw->entity_status[id] = STEP_LOADED;
     return true;
+step_error:
+    sw->entity_status[id] = STEP_LOAD_ERROR;
+    return false;
 }
 
 void

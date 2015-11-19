@@ -1,7 +1,7 @@
 /*                        V E C T O R . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2013 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -29,12 +29,10 @@
 #include <math.h>
 
 #include "vmath.h"
-#include "plot3.h"
-#include "bu.h"
-#include "bn.h"
+#include "bn/mat.h"
+#include "bn/plot3.h"
 
 /**
- * T P _ 3 V E C T O R
  *@brief
  * Draw a vector between points "from" and "to", with the option of
  * having an arrowhead on either or both ends.

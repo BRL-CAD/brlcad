@@ -1,7 +1,7 @@
 /*                          Q R A Y . C
  * BRL-CAD
  *
- * Copyright (c) 1998-2013 United States Government as represented by
+ * Copyright (c) 1998-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -28,11 +28,9 @@
 #include "common.h"
 
 #include <string.h>
-#include "bio.h"
 
-#include "bu.h"
+
 #include "vmath.h"
-#include "dg.h"
 #include "ged.h"
 
 #include "./qray.h"
@@ -484,17 +482,17 @@ qray_data_to_vlist(struct ged *gedp,
 
     for (BU_LIST_FOR(ndlp, qray_dataList, &headp->l)) {
 	if (do_overlaps)
-	    vhead = rt_vlblock_find(vbp,
+	    vhead = bn_vlblock_find(vbp,
 				    gedp->ged_gdp->gd_qray_overlap_color.r,
 				    gedp->ged_gdp->gd_qray_overlap_color.g,
 				    gedp->ged_gdp->gd_qray_overlap_color.b);
 	else if (i % 2)
-	    vhead = rt_vlblock_find(vbp,
+	    vhead = bn_vlblock_find(vbp,
 				    gedp->ged_gdp->gd_qray_odd_color.r,
 				    gedp->ged_gdp->gd_qray_odd_color.g,
 				    gedp->ged_gdp->gd_qray_odd_color.b);
 	else
-	    vhead = rt_vlblock_find(vbp,
+	    vhead = bn_vlblock_find(vbp,
 				    gedp->ged_gdp->gd_qray_even_color.r,
 				    gedp->ged_gdp->gd_qray_even_color.g,
 				    gedp->ged_gdp->gd_qray_even_color.b);
@@ -507,7 +505,7 @@ qray_data_to_vlist(struct ged *gedp,
 	RT_ADD_VLIST(vhead, out_pt, BN_VLIST_LINE_DRAW);
 
 	if (!do_overlaps && i > 1 && !VNEAR_EQUAL(last_out_pt, in_pt, SQRT_SMALL_FASTF)) {
-	    vhead = rt_vlblock_find(vbp,
+	    vhead = bn_vlblock_find(vbp,
 				    gedp->ged_gdp->gd_qray_void_color.r,
 				    gedp->ged_gdp->gd_qray_void_color.g,
 				    gedp->ged_gdp->gd_qray_void_color.b);

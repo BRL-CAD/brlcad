@@ -21,14 +21,14 @@
     <arg choice='plain'><replaceable>model.g</replaceable></arg>
     <arg choice='plain' rep='repeat'><replaceable>objects</replaceable></arg>
 
-    <arg choice='plain'><replaceable>&gt;</replaceable></arg>
+    <arg choice='plain'>&gt;</arg>
     <arg choice='plain'><replaceable>model.pp</replaceable></arg>
 </cmdsynopsis>
 </refsynopsisdiv>
 
 
 <refsect1 xml:id='description'><title>DESCRIPTION</title>
-<para><emphasis remap='I'>Rtpp</emphasis>
+<para><command>rtpp</command>
 operates on the indicated
 <emphasis remap='I'>objects</emphasis>
 in the input
@@ -120,7 +120,7 @@ are used.</para>
 <refsect1 xml:id='see_also'><title>SEE ALSO</title>
 <para><citerefentry><refentrytitle>gift</refentrytitle><manvolnum>1V</manvolnum></citerefentry>, <citerefentry><refentrytitle>mged</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>pp-ik</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>pp-fb</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
 <citerefentry><refentrytitle>rt</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>rayplot</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>rayvect</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>rtpp</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>rtray</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
-<citerefentry><refentrytitle>librt</refentrytitle><manvolnum>3</manvolnum></citerefentry>, <citerefentry><refentrytitle>ray</refentrytitle><manvolnum>5V</manvolnum></citerefentry>.</para>
+<citerefentry><refentrytitle>librt</refentrytitle><manvolnum>3</manvolnum></citerefentry>, <citerefentry><refentrytitle>ray</refentrytitle><manvolnum>5V</manvolnum></citerefentry></para>
 </refsect1>
 
 <refsect1 xml:id='diagnostics'><title>DIAGNOSTICS</title>
@@ -141,7 +141,7 @@ package instead.</para>
 </refsect1>
 
 <refsect1 xml:id='copyright'><title>COPYRIGHT</title>
-<para>This software is Copyright (c) 1986-2013 by the United States
+<para>This software is Copyright (c) 1986-2014 by the United States
 Government as represented by U.S. Army Research Laboratory.</para>
 </refsect1>
 

@@ -1,7 +1,7 @@
 /*                        F F T E S T . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2013 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -54,7 +54,7 @@ main(int ac, char *av[])
     int i;
 
     if (ac > 1)
-	printf("Usage: %s\n", av[0]);
+	fprintf(stderr,"Usage: %s\n", av[0]);
 
     for (i = 0; i < 64; i++) {
 /* Original and simplified expressions in next 4 lines of file you are reading. */

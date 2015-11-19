@@ -2,7 +2,7 @@
 #                          G Q A . S H
 # BRL-CAD
 #
-# Copyright (c) 2010-2013 United States Government as represented by
+# Copyright (c) 2010-2014 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -48,9 +48,9 @@ if test ! -f "$MGED" ; then
     exit 1
 fi
 
-GQABIN="`ensearch g_qa`"
+GQABIN="`ensearch gqa`"
 if test ! -f "$GQABIN" ; then
-    echo "Unable to find g_qa, aborting"
+    echo "Unable to find gqa, aborting"
     exit 1
 fi
 
@@ -194,6 +194,11 @@ $CMD >> gqa.log 2>&1
 
 
 CMD="$GQA -g 50mm -Ao gqa.g closed_box.r"
+echo $CMD
+echo $CMD >> gqa.log 2>&1
+$CMD >> gqa.log 2>&1
+
+CMD="$GQA -Am gqa.g closed_box.r"
 echo $CMD
 echo $CMD >> gqa.log 2>&1
 $CMD >> gqa.log 2>&1

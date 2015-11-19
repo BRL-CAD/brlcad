@@ -1,7 +1,7 @@
 /*                      P I X H A L V E . C
  * BRL-CAD
  *
- * Copyright (c) 1995-2013 United States Government as represented by
+ * Copyright (c) 1995-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -31,10 +31,11 @@
 #include "common.h"
 
 #include <stdlib.h>
-#include "bio.h"
 
-#include "bu.h"
 #include "vmath.h"
+#include "bu/getopt.h"
+#include "bu/log.h"
+#include "bu/malloc.h"
 #include "bn.h"
 #include "fb.h"
 
@@ -48,8 +49,7 @@ static int autosize = 0;	/* !0 to autosize input */
 static size_t file_width = 512; /* default input width */
 
 static char usage[] = "\
-Usage: pixhalve [-h] [-a]\n\
-	[-s squaresize] [-w file_width] [-n file_height] [file.pix]\n";
+Usage: pixhalve [-a] [-s squaresize] [-w file_width] [-n file_height] [file.pix]\n";
 
 int *rlines[5];
 int *glines[5];
@@ -61,15 +61,10 @@ get_args(int argc, char **argv)
 {
     int c;
 
-    while ((c = bu_getopt(argc, argv, "ahs:w:n:")) != -1) {
+    while ((c = bu_getopt(argc, argv, "as:w:n:h?")) != -1) {
 	switch (c) {
 	    case 'a':
 		autosize = 1;
-		break;
-	    case 'h':
-		/* high-res */
-		file_width = 1024L;
-		autosize = 0;
 		break;
 	    case 's':
 		/* square file size */
@@ -84,7 +79,7 @@ get_args(int argc, char **argv)
 		autosize = 0;
 		break;
 
-	    default:		/* '?' */
+	    default:		/* '?' 'h' */
 		return 0;
 	}
     }
@@ -114,8 +109,6 @@ get_args(int argc, char **argv)
 
 
 /*
- * S E P A R A T E
- *
  * Unpack RGB byte triples into three separate arrays of integers.
  * The first and last pixels are replicated twice, to handle border effects.
  *
@@ -169,8 +162,6 @@ separate(int *rop, int *gop, int *bop, unsigned char *cp, long int num)
 
 
 /*
- * C O M B I N E
- *
  * Combine three separate arrays of integers into a buffer of
  * RGB byte triples
  */
@@ -205,8 +196,6 @@ combine(unsigned char *cp, int *rip, int *gip, int *bip, long int num)
 
 
 /*
- * R I P P L E
- *
  * Ripple all the scanlines down by one.
  *
  * Barrel shift all the pointers down, with [0] going back to the top.
@@ -225,8 +214,6 @@ ripple(int **array, int num)
 
 
 /*
- * F I L T E R 5
- *
  * Apply a 5x5 image pyramid to the input scanline, taking every other
  * input position to make an output.
  *
@@ -277,8 +264,6 @@ filter5(int *op, int **lines, int num)
 
 
 /*
- * F I L T E R 3
- *
  * Apply a 3x3 image pyramid to the input scanline, taking every other
  * input position to make an output.
  *
@@ -348,8 +333,8 @@ main(int argc, char *argv[])
     out_width = file_width/2;
 
     /* Allocate 1-scanline input & output buffers */
-    inbuf = bu_malloc(3*file_width+8, "inbuf");
-    outbuf = bu_malloc(3*(out_width+2)+8, "outbuf");
+    inbuf = (unsigned char *)bu_malloc(3*file_width+8, "inbuf");
+    outbuf = (unsigned char *)bu_malloc(3*(out_width+2)+8, "outbuf");
 
     /* Allocate 5 integer arrays for each color */
     /* each width+2 elements wide */

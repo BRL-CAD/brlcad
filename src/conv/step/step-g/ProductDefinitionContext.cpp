@@ -1,7 +1,7 @@
 /*                 ProductDefinitionContext.cpp
  * BRL-CAD
  *
- * Copyright (c) 1994-2013 United States Government as represented by
+ * Copyright (c) 1994-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -57,6 +57,7 @@ bool ProductDefinitionContext::Load(STEPWrapper *sw, SDAI_Application_instance *
 
     if (!ApplicationContextElement::Load(step, sse)) {
 	std::cout << CLASSNAME << ":Error loading base class ::ApplicationContextElement." << std::endl;
+	sw->entity_status[id] = STEP_LOAD_ERROR;
 	return false;
     }
 
@@ -65,6 +66,8 @@ bool ProductDefinitionContext::Load(STEPWrapper *sw, SDAI_Application_instance *
     sse = step->getEntity(sse, ENTITYNAME);
 
     life_cycle_stage = step->getStringAttribute(sse, "life_cycle_stage");
+
+    sw->entity_status[id] = STEP_LOADED;
 
     return true;
 }

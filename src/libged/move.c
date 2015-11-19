@@ -1,7 +1,7 @@
 /*                         M O V E . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2013 United States Government as represented by
+ * Copyright (c) 2008-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -27,9 +27,8 @@
 
 #include <stdlib.h>
 #include <string.h>
-#include "bio.h"
 
-#include "cmd.h"
+#include "bu/cmd.h"
 
 #include "./ged_private.h"
 
@@ -37,7 +36,7 @@
 int
 ged_move(struct ged *gedp, int argc, const char *argv[])
 {
-    struct ged_display_list *gdlp;
+    struct display_list *gdlp;
     struct directory *dp;
     struct rt_db_internal intern;
     static const char *usage = "from to";
@@ -87,11 +86,11 @@ ged_move(struct ged *gedp, int argc, const char *argv[])
     }
 
     /* Change object name if it matches the first element in the display list path. */
-    for (BU_LIST_FOR(gdlp, ged_display_list, gedp->ged_gdp->gd_headDisplay)) {
+    for (BU_LIST_FOR(gdlp, display_list, gedp->ged_gdp->gd_headDisplay)) {
 	int first = 1;
 	int found = 0;
 	struct bu_vls new_path = BU_VLS_INIT_ZERO;
-	char *dupstr = strdup(bu_vls_addr(&gdlp->gdl_path));
+	char *dupstr = strdup(bu_vls_addr(&gdlp->dl_path));
 	char *tok = strtok(dupstr, "/");
 
 	while (tok) {
@@ -110,8 +109,8 @@ ged_move(struct ged *gedp, int argc, const char *argv[])
 	}
 
 	if (found) {
-	    bu_vls_free(&gdlp->gdl_path);
-	    bu_vls_printf(&gdlp->gdl_path, "%V", &new_path);
+	    bu_vls_free(&gdlp->dl_path);
+	    bu_vls_printf(&gdlp->dl_path, "%s", bu_vls_addr(&new_path));
 	}
 
 	free((void *)dupstr);

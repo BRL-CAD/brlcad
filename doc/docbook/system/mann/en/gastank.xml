@@ -1,5 +1,3 @@
-<!-- Converted by db4-upgrade version 1.0 -->
-
 <refentry xmlns="http://docbook.org/ns/docbook" version="5.0" xml:id="gastank1">
 
 <refmeta>
@@ -45,7 +43,7 @@
 
   <variablelist remap="TP">
     <varlistentry>
-      <term><option>-fname.g</option></term>
+      <term><option>-f </option><replaceable>name.g</replaceable></term>
       <listitem>
 	<para>
 	 BRL-CAD file name.
@@ -53,15 +51,15 @@
       </listitem>
     </varlistentry>
     <varlistentry>
-      <term><option>-n#</option></term>
+      <term><option>-n #</option></term>
       <listitem>
 	<para>
-	 The number of gas tanks to be created (must be less than or equal to 26.)
+	 The number of gas tanks to be created (must be less than or equal to 26).
 	</para>
       </listitem>
     </varlistentry>
     <varlistentry>
-      <term><option>-h#</option></term>
+      <term><option>-H #</option></term>
       <listitem>
 	<para>
 	 Height of gas tank in millimeters.
@@ -69,7 +67,7 @@
       </listitem>
     </varlistentry>
     <varlistentry>
-      <term><option>-w#</option></term>
+      <term><option>-w #</option></term>
       <listitem>
 	<para>
 	 Width of gas tank in millimeters.
@@ -77,7 +75,7 @@
       </listitem>
     </varlistentry>
     <varlistentry>
-      <term><option>-d#</option></term>
+      <term><option>-d #</option></term>
       <listitem>
 	<para>
 	 Depth of gas tank in millimeters.
@@ -85,7 +83,7 @@
       </listitem>
     </varlistentry>
     <varlistentry>
-      <term><option>-r#</option></term>
+      <term><option>-r #</option></term>
       <listitem>
 	<para>
 	 Radius of the corner in millimeters.
@@ -110,9 +108,9 @@ Enter the mged file to be created (25 char max).
 	gastank.g
 Enter the number of gas tanks to create (26 max).
 	3
-Enter the height, width, and depth of the gas tank.
+Enter the height, width, and depth of the gas tank (units mm).
 	300 200 400
-Enter the radius of the corners.
+Enter the radius of the corners (units mm).
 	30
 
 mged file:  gastank.g
@@ -128,7 +126,7 @@ number of gas tanks:  3
   <example><title>Single-Line <command>gastank</command> Command</title>
 
     <para>
-      <userinput>gastank -fgastank.g -n3 -h300 -w200 -d400 -r30</userinput>
+      <userinput>gastank -fgastank.g -n3 -H300 -w200 -d400 -r30</userinput>
     </para>
   </example>
 
@@ -148,8 +146,8 @@ number of gas tanks:  3
 <refsection xml:id="copyright"><title>COPYRIGHT</title>
 
   <para>
-    This software is Copyright (c) 2005-2013 United States Government as
-    represented by the U.S. Army Research Laboratory. All rights reserved.
+    This software is Copyright (c) 2005-2014 United States Government as
+    represented by the U.S. Army Research Laboratory.
   </para>
 </refsection>
 

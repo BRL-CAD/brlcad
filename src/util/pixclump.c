@@ -1,7 +1,7 @@
 /*                      P I X C L U M P . C
  * BRL-CAD
  *
- * Copyright (c) 1997-2013 United States Government as represented by
+ * Copyright (c) 1997-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -31,8 +31,12 @@
 #include "bio.h"
 
 #include "vmath.h"
-#include "bu.h"
 
+#include "bu/color.h"
+#include "bu/getopt.h"
+#include "bu/malloc.h"
+#include "bu/log.h"
+#include "bu/vls.h"
 
 #define RED 0
 #define GRN 1
@@ -41,7 +45,7 @@
 #define PC_DEBUG_TABLE 0x01
 #define PC_DEBUG_MATCH 0x02
 #define PC_DEBUG_OUTPUT 0x04
-#define OPT_STRING "c:f:x:?"
+#define OPT_STRING "c:f:x:h?"
 
 
 /*
@@ -53,8 +57,8 @@ int next_color;		/* Number of colors now in table */
 static int debug = 0;
 
 static char usage[] = "\
-Usage: 'pixclump [-c R/G/B] [-f color_file] [-x debug_flags]\n\
-		 [infile.pix [outfile.pix]]'\n";
+Usage: pixclump [-c R/G/B] [-f color_file] [-x debug_flags]\n\
+		 [infile.pix [outfile.pix]]\n";
 
 
 static void print_usage (void)
@@ -90,7 +94,7 @@ static void add_to_table (unsigned char *rgb)
     if (next_color == color_tbl_size) {
 	color_tbl_size *= 2;
 	color_tbl = (unsigned char (*)[3])
-	    bu_realloc((genptr_t) color_tbl,
+	    bu_realloc((void *) color_tbl,
 		       color_tbl_size * 3 * sizeof(unsigned char),
 		       "color table");
     }
@@ -140,8 +144,6 @@ static void print_table (void)
 
 
 /*
- * C O L O R _ D I F F ()
- *
  * Returns the square of the Euclidean distance in RGB space
  * between a specified pixel (R/G/B triple) and a specified
  * entry in the color table.
@@ -160,14 +162,14 @@ int
 main (int argc, char **argv)
 {
     char *cf_name = 0;	/* name of color file */
-    char *inf_name;	/* name of input stream */
-    char *outf_name = NULL;	/* "   " output "   */
+    char *inf_name;		/* name of input stream */
+    char *outf_name = NULL;	/*  "   "  output  "    */
     unsigned char pixbuf[3];	/* the current input pixel */
     FILE *infp = NULL;	/* input stream */
-    FILE *outfp = NULL;	/* output "   */
+    FILE *outfp = NULL;	/* output  "    */
     int ch;		/* current char in command line */
     int i;		/* dummy loop indices */
-    unsigned char rgb[3];		/* Specified color */
+    unsigned char rgb[3];	/* Specified color */
     int best_color;	/* index of best match to pixbuf */
     int best_diff;	/* error in best match */
     int this_diff;	/* pixel-color_tbl difference */
@@ -203,18 +205,17 @@ main (int argc, char **argv)
 		    print_debug_usage();
 		}
 		break;
-	    case '?':
 	    default:
 		print_usage();
 	}
     switch (argc - bu_optind) {
 	case 0:
 	    infp = stdin;
-	    /* Break intentionally missing */
+	    /* Break intentionally omitted */
 	case 1:
 	    outf_name = "stdout";
 	    outfp = stdout;
-	    /* Break intentionally missing */
+	    /* Break intentionally omitted */
 	case 2:
 	    break;
 	default:
@@ -236,7 +237,7 @@ main (int argc, char **argv)
     }
 
     /*
-     * Ensure that infp is kosher,
+     * Ensure that infp is kosher
      */
     if (infp == stdin) {
 	if (isatty(fileno(stdin))) {
@@ -277,7 +278,7 @@ main (int argc, char **argv)
 		       color_tbl[best_color][GRN],
 		       color_tbl[best_color][BLU]);
 	}
-	if (fwrite((genptr_t) color_tbl[best_color],
+	if (fwrite((void *) color_tbl[best_color],
 		   3 * sizeof(unsigned char), 1, outfp) != 1)
 	    bu_exit(1, "pixclump:  Error writing pixel to file '%s'\n", outf_name);
     }

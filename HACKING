@@ -559,12 +559,12 @@ bn.h, part of libbn).  Examples:
 
   For known tolerances:
 
-  * instead of "foo == 2.0" use "NEAR_EQUAL(foo,2.0,tol)"
-  * instead of "foo != 0.0" use "foo !NEAR_ZERO(foo,tol)"
+  * instead of "foo == 2.0" use "NEAR_EQUAL(foo, 2.0, tol)"
+  * instead of "foo != 0.0" use "foo !NEAR_ZERO(foo, tol)"
 
   For indeterminate tolerances:
 
-  * instead of "foo == 2.0" use "EQUAL(foo,2.0)"
+  * instead of "foo == 2.0" use "EQUAL(foo, 2.0)"
   * instead of "foo != 0.0" use "foo !ZERO(foo)"
 
 There are several functions whose functionality are either wrapped or
@@ -594,6 +594,7 @@ variables should be utilized instead of the standard C facility:
   bu_strncmp() instead of strncmp()
   bu_strcasecmp() instead of strnicmp()/strncasecmp()
   bu_file_delete() instead of unlink(), rmdir(), and remove()
+  bu_sort() instead of qsort()
 
 Similarly, ANSI C functions are preferred over the BSD and POSIX
 interfaces.  The following functions should be used:
@@ -648,7 +649,7 @@ main(int ac, char *av[])
 ....int i;
 ....int foo = 0;
 
-....for (i=0; i<10; i++) {
+....for (i = 0 ; i < 10; i++) {
 [      ]foo += 1;
 [      ]if (foo % 2) {
 [      ]....printf("hello\n");
@@ -675,6 +676,12 @@ No space immediately inside parentheses.
 Commas and semicolons are followed by whitespace.
   int main(int argc, char *argv[]); /* ok */
   for (i = 0; i < max; i++) { ...   /* ok */
+
+Operators and arguments generally are separated with whitespace.
+  if (FLAG & MORE_FLAGS) { ...      /* ok */
+  for (i = 0; i < max; i++) { ...   /* ok */
+  if (FLAG&MORE_FLAGS) { ...        /* discouraged */
+  for (i=0; i<max; i++) { ...       /* discouraged */
 
 No space on arrow operators.
   structure->member = 5;            /* ok */
@@ -706,7 +713,8 @@ braces should line up with that same statement.  Functions, however,
 are treated specially and we place their opening braces on separate
 lines.  See http://en.wikipedia.org/wiki/Indent_style for details.
 
-  int some_function(char *j)
+  int
+  some_function(char *j)
   {
       for (i = 0; i < 100; i++) {
 	  if (i % 10 == 0) {
@@ -750,6 +758,20 @@ Naming exceptions are allowed where the API intentionally mirrors some
 other familiar programming construct (e.g., bu_malloc()+bu_free()),
 but care should otherwise be taken to be as consistent as possible
 within a file and across a library's API.
+
+Here are some naming convention pairings commonly used:
+
+  Allocation   => alloc()
+  Deallocation => free()
+
+  Initialization      => init()
+  De/Reinitialization => clear()
+
+  Allocation + Init      => create()   (new for C++)
+  Deinitialize + Dealloc => destroy()  (delete for C++)
+
+  Resource acquire => open()
+  Resource release => close()
 
 5) Debugging
 
@@ -938,36 +960,32 @@ BUGS & UNEXPECTED BEHAVIOR
 --------------------------
 
 When a bug or unexpected behavior is encountered that cannot be
-quickly fixed, it minimally needs to be documented.  If you are
-already a BRL-CAD contributor, this means either making a comment in
-the BUGS file or by making a formal report to the SourceForge bug
-tracker at:
+quickly fixed, it needs to be documented in our BUGS file or more
+formally reported to the SourceForge bug tracker at:
 
 http://sourceforge.net/tracker/?atid=640802&group_id=105292&func=browse
 
-If the bug is complicated, will require significant discussion or
-collaboration, cannot be fixed any time soon, or if you do not have
-commit access, the issue should be reported to the SourceForge bug
-tracker.  The issues listed in BUGS are not necessarily listed in bug
-tracker, and vice-versa.  The BUGS file is merely maintained as a
-convenience notepad of long and short term issues for the developers
-only.
+The tracker is the main source for user-reported bugs and/or any
+issues that require significant discussion or benefit from having
+their status publicly announced.  Issues listed in BUGS file are not
+necessarily listed in the tracker, and vice-versa.  The BUGS file is
+also a convenience notepad of long and short term development issues.
 
 
 COMMIT ACCESS
 -------------
 
 Commit access is evaluated on a person-to-person basis at the
-discretion of existing contributors, but generally readily granted so
-long as there is an existing developer with commit access willing to
-mentor the new developer.  If you would like to have commit access,
-there is usually no need to ask -- they will ask you.  Getting
-involved with the other contributors and making patches will generally
-result in automatic consideration for commit access.  If you have to
-ask for it, you probably won't get it.
+discretion of existing contributors.  Commit access is generally
+granted after a contributor demonstrates strong competency with our
+developer guidelines and an existing developer with commit access
+vouches for the new developer.
 
-That said, the following steps represent a minimum that needs to occur
-in order for commit access to be granted:
+If you would like to have commit access, do not ask for it.  Getting
+involved with the other contributors and making patches will result in
+automatic consideration for commit access.  That said, the following
+steps represent a minimum that needs to occur in order for commit
+access to be granted:
 
 1) Read this file completely.
 
@@ -975,25 +993,19 @@ in order for commit access to be granted:
 
 3) Join the brlcad-devel developer mailing list, introduce yourself.
 
-4) Create a SourceForge account, submit two or more patches that
+4) Create a SourceForge account, submit at least two patches that
 demonstrate competency with our coding style, apply flawlessly, and
-provide significant improvements to the existing code.
+provide some significant improvement.
 
-5) Be a nice person.  We're here to have fun and do cool things.  ;)
+5) Get to know the other developers.  One of them will need to vouch
+for your commit access.
+
+*) Be a nice person.  ;)
 
 Those with commit access have a responsibility to ensure that other
 developers are following the guidelines that have been described in
 this developer's guide within reasonable expectations.  A basic rule
-of thumb is: don't break anything.
-
-While the testing process will strive to ensure consistent behavior as
-changes are made, the responsibility still remains with the individual
-contributors to ensure that everything still compiles and runs as it
-should.  At any given time, BRL-CAD should compile on all of the
-primary platforms and (minimally) pass the BRL-CAD Benchmark
-successfully.  If changes are made that are not exercised by the
-Benchmark suite, testing should be manually performed in a manner that
-exercises those particular changes.
+of thumb is:  don't break anything.
 
 
 CONTRIBUTOR RESPONSIBILITIES
@@ -1069,7 +1081,8 @@ number follows a common convention where the three numbers represent:
     {MAJOR_VERSION}.{MINOR_VERSION}.{PATCH_VERSION}
 
 All "development" builds use an odd number for the minor version.  All
-"release" builds use an even number for the minor version.  Patched versions should include a release count:
+"release" builds use an even number for the minor version.  Patched
+versions should include a release count:
 
     {MAJOR_VERSION}.{MINOR_VERSION}.{PATCH_VERSION}[-{RELEASE_COUNT}]
 
@@ -1189,108 +1202,164 @@ necessary convention by a binary package management system.  Examples:
   zip
 
 
+PATCHING A RELEASE
+------------------
+
+Should it become necessary to patch a release that has already been
+posted and announced, the mechanism is to post patch files for the
+source release and update the uploaded release notes README file.
+
+Example: stop_rt_crashing-0.patch and fix_fbserv-1.patch
+
+It's expected that all patch files are independent and will be applied
+sequentially.  They should be consistently and incrementally numbered.
+Users should be instructed in the release notes README to download and
+apply all available patch files.
+
+For binary releases, it's recommended to just "move on" and let issues
+become resolved in the next release unless there's a critical security
+or significant data corruption issue involved.  If it becomes
+necessary to repost a release, use the RELEASE_COUNT file name
+convention described in VERSION NUMBERS & COMPATIBILITY.
+
+Example:  BRL-CAD-7.12.2.dmg is superseded by BRL-CAD-7.12.2-1.dmg
+
+Patched binary releases may be moved to the hidden attic folder if
+critical, though not necessary or recommended.  They are preserved for
+historic record and should never be deleted once announced.  Releases
+not yet been announced may be updated within two days of being posted
+without involving a patch.
+
+
 MAKING A RELEASE
 ----------------
 
+BRL-CAD is developed on a monthly iteration development schedule with
+a release planned (not always actualized) at the end of every month.
+
 In order to make a release, the sources need to be appropriately
-verified, validated, documented, synchronized, and tagged:
+documented, tested, synchronized, and tagged.  BRL-CAD releases must
+pass strict verification and validation testing.
 
-  * Required verification and validation actions include compiling
-    successfully, passing regression tests, a successful benchmark,
-    and passing distcheck on at least two different platforms.
-    Compile with both default settings and all dependencies enabled.
+Any developer may cause a release to be made provided testing passes
+and the appropriate release steps are taken.
 
-  * All user-visible changes should be documented in the NEWS file;
-    all API changes should be noted in the CHANGES file (or reverted).
-    The release number should appropriately reflect the type of
-    changes being released.  See the more specific release steps noted
-    below and VERSION NUMBERS & COMPATIBILITY.
+When a release intention is announced, it is recommended to sync the
+trunk sources to the RELEASE branch so appropriate review testing,
+repairs, and release steps can occur without being impacted by other
+development activity.
 
-  * After successfully compiling and passing tests on at least two
-    platforms, the sources get merged to the STABLE branch and tagged
-    as tags/rel-MAJOR-MINOR-PATCH allowing for minor changes until
-    sources are posted and an announcement is posted.
+Release steps are as follows:
 
-Any developer may cause a release to be made provided all of the
-appropriate steps are taken.
+#####################################################################
+# 00: Notify developer mailing list of intention to release.
 
-When a release intention is announced, contributors are expected to
-"settle down" for two days (at most) so that the source code may be
-verified, tested, and released.  As BRL-CAD strives for a monthly
-iteration development cycle, this is often done at the end of a month.
+    echo "Release preparations are under way.  Trunk sources merged to the RELEASE branch will be reviewed for sync to STABLE and release tagging.  Please help test by compiling distcheck-full and running benchmark, mged, and archer." | mail -s "Release preparations commencing" brlcad-devel@lists.sourceforge.net -r "your@subscribed.address"
 
-Only minor bug fixes, documentation changes, and build system fixes
-should be performed after release intention is announced.   Major
-changes to the source code and documentation should not occur while
-release testing is being performed.
+#####################################################################
+# 01: Sync trunk to RELEASE branch.
 
-Steps to take for performing an appropriately verified, validated,
-documented, synchronized, and tagged release are as follows:
+    # NON-AUTO: Review the log and obtain the last trunk merge
+    # revision number from comments.
+    svn log --stop-on-copy https://svn.code.sf.net/p/brlcad/code/brlcad/branches/RELEASE | grep -E 'r[0-9]{5}'
+    PREV=[[last_trunk_rev]]
+    echo "PREV=$PREV"
 
-0) All code is committed to SVN.  All commits have been reviewed.
-Notify developer mailing list of intention to release.
+    svn co svn://svn.code.sf.net/p/brlcad/code/brlcad/branches/RELEASE brlcad.RELEASE
+    cd brlcad.RELEASE
+    svn merge https://svn.code.sf.net/p/brlcad/code/brlcad/trunk@$PREV https://svn.code.sf.net/p/brlcad/code/brlcad/trunk@HEAD .
 
-    echo "Release preparations have begun.  Please refrain from disruptive commits until the release is tagged or 24-hours have passed, whichever first.  Ensure API changes are in CHANGES, user-visible changes are in NEWS, and help with release testing." | mail -s "Release preparations commencing" brlcad-devel@lists.sourceforge.net -r "your@subscribed.address"
+#####################################################################
+# 02: Test the merge.
 
-1) Update TODO and BUGS.  Verify all user-visible changes are in NEWS.
-Verify CHANGES reflects all API and application changes.  Make sure
-changes to usage/options are reflected in manual pages.
+    mkdir -p .build && cd .build
+    cmake .. -DBRLCAD_BUNDLED_LIBS=ON -DCMAKE_BUILD_TYPE=Release && make
 
-2) Update or verify the version numbers in the include/conf version
-files, NEWS, and README.  Commit the changes to the source repository.
-See VERSION NUMBERS & COMPATIBILITY for versioning requirements.
+    # Manually check rt, mged, and archer.
+    bin/rt        # should report usage with correct library versions
+    bin/mged -c test.g "make sph sph ; rt"   # pops up a sphere
+    bin/mged      # displays gui, run: opendb test.g ; draw sph ; rt
+    bin/archer    # displays gui, run: opendb test.g ; draw sph ; rt
 
-3) Update the ChangeLog with entries since the last release; commit
-the updated ChangeLog.  Use the YYYY-MM-DD of the previous release.
-Get the date from the NEWS file.
+    # clean up
+    cd .. && rm -rf .build
+
+#####################################################################
+# 03: Commit the merge.
+
+    CURR=`svn log --xml https://svn.code.sf.net/p/brlcad/code/brlcad/trunk | grep 'revision=' | head -n 1 | sed 's/.*="\([0-9][0-9]*\)".*/\1/g'`
+    echo "CURR=$CURR"
+
+    svn commit -m "merge of trunk to RELEASE branch, r$PREV through r$CURR"
+
+#####################################################################
+# 04: Reprioritize or address remaining TODO items.
+
+    # NON-AUTO: Do what's necessary to release, update priorities.
+
+#####################################################################
+# 05: Review all commits.
+
+    # NON-AUTO: Verify all user-visible changes are in NEWS.
+    # NON-AUTO: Verify all interface changes are in CHANGES.
+    # NON-AUTO: Verify usage/options are documented in doc/.
+
+#####################################################################
+# 06: Update the version numbers.
+
+    # NON-AUTO: NEWS
+    # NON-AUTO: README
+    # NON-AUTO: include/conf/PATCH
+    # NON-AUTO: include/conf/MINOR (See VERSION NUMBERS & COMPATIBILITY section.)
+    # NON-AUTO: misc/debian/changelog
+    # NON-AUTO: misc/macosx/Resources/ReadMe.rtfd/TXT.rtf
+    # NON-AUTO: misc/macosx/Resources/Welcome.rtfd/TXT.rtf
+
+#####################################################################
+# 07: Update ChangeLog.  Use the YYYY-MM-DD of previous NEWS entry.
 
     LAST=`grep -E "\--- [0-9]{4}-[0-9]{2}-[0-9]{2}" NEWS | head -n 2 | tail -n 1 | awk '{print $2}'`
     echo "LAST=$LAST"
+    LAST=r57446
     svn2cl --break-before-msg --include-rev --stdout -r HEAD:{$LAST} > ChangeLog
     svn commit -m "update log with commits through $LAST" ChangeLog
 
-4) Verify a successful build and distcheck ON AT LEAST TWO PLATFORMS.
-Passing regression tests, benchmark, and two build configurations are
-required for syncing to STABLE.  Manually test mged and archer.
+#####################################################################
+# 08: Run distcheck-full on at least two platforms.
 
-    mkdir -p .verify && cd .verify
-    cmake .. && make distcheck && rm -rf ../.verify/*
-    cmake .. -DBRLCAD_BUNDLED_LIBS=ON -DCMAKE_BUILD_TYPE=Release && make distcheck && make
+    mkdir -p .build && cd .build && cmake .. && make distcheck-full
 
-    # manually test
-    bin/rt        # should report usage with correct library versions
-    bin/benchmark run TIMEFRAME=1            # completes without ERROR
-    bin/mged -c test.g "make sph sph ; rt"   # pops up a sphere
-    bin/rtwizard  # displays gui
-    bin/mged      # displays gui, run: opendb test2.g ; make sph sph ; rt
+#####################################################################
+# 09: Sync RELEASE to STABLE branch:
 
-    # clean up
-    cd .. && rm -rf .verify
-
-5) Sync trunk onto the STABLE branch.  Make sure all changes since the
-previous sync are included and that STABLE matches trunk.
-
-    # review the log and obtain the last trunk merge revision number from comments
-    svn log --stop-on-copy https://svn.code.sf.net/p/brlcad/code/brlcad/branches/STABLE . | more
+    # NON-AUTO: Review the log and obtain the last merge revision
+    # number from comments.
+    svn log --stop-on-copy https://svn.code.sf.net/p/brlcad/code/brlcad/branches/STABLE | less
     PREV=[[last_trunk_rev]]
-	*** OR ***
+	### OR ###
     PREV=`svn log --xml --stop-on-copy https://svn.code.sf.net/p/brlcad/code/brlcad/branches/STABLE | grep 'revision=' | head -n 1 | sed 's/.*revision="\([0-9][0-9]*\)".*/\1/g'`
     echo "PREV=$PREV"
 
-    # merge that range of changes into STABLE and make sure it works
+    # merge that range of changes into STABLE
     svn co https://svn.code.sf.net/p/brlcad/code/brlcad/branches/STABLE brlcad.STABLE && cd brlcad.STABLE
-    svn merge https://svn.code.sf.net/p/brlcad/code/brlcad/trunk@$PREV https://svn.code.sf.net/p/brlcad/code/brlcad/trunk@HEAD .
+    svn merge https://svn.code.sf.net/p/brlcad/code/brlcad/branches/RELEASE@$PREV https://svn.code.sf.net/p/brlcad/code/brlcad/branches/RELEASE@HEAD .
 
-    # compile the merge
+#####################################################################
+# 10: Test the merge.
+
     mkdir .merge && cd .merge
-    cmake .. -DBRLCAD_BUNDLED_LIBS=ON -DCMAKE_BUILD_TYPE=Release && make && cd .. && rm -rf .merge
+    cmake .. -DBRLCAD_BUNDLED_LIBS=ON -DCMAKE_BUILD_TYPE=Release && make distcheck-full && cd .. && rm -rf .merge
 
-    # commit the merge
-    CURR=`svn log --xml https://svn.code.sf.net/p/brlcad/code/brlcad/trunk | grep 'revision=' | head -n 1 | sed 's/.*="\([0-9][0-9]*\)".*/\1/g'`
+#####################################################################
+# 11: Commit the merge.
+
+    CURR=`svn log --xml https://svn.code.sf.net/p/brlcad/code/brlcad/branches/RELEASE | grep 'revision=' | head -n 1 | sed 's/.*="\([0-9][0-9]*\)".*/\1/g'`
     echo "CURR=$CURR"
-    svn commit -m "merging trunk to STABLE from r$PREV to HEAD r$CURR"
 
-6) Tag the release using "rel-MAJOR-MINOR-PATCH" format:
+    svn commit -m "merging RELEASE branch to STABLE branch, r$PREV through r$CURR"
+
+#####################################################################
+# 12: Tag the release using "rel-MAJOR-MINOR-PATCH" format:
 
     MAJOR=`awk '{print $1}' include/conf/MAJOR`
     MINOR=`awk '{print $1}' include/conf/MINOR`
@@ -1298,11 +1367,13 @@ previous sync are included and that STABLE matches trunk.
     echo "Tagging rel-$MAJOR-$MINOR-$PATCH"
     svn cp https://svn.code.sf.net/p/brlcad/code/brlcad/branches/STABLE https://svn.code.sf.net/p/brlcad/code/brlcad/tags/rel-$MAJOR-$MINOR-$PATCH
 
-7) Increment and commit the next BRL-CAD release numbers to SVN.
-Update the include/conf/(MAJOR|MINOR|PATCH) version files immediately
-to an odd-numbered minor version or a new patch developer version
-(e.g. 7.11.0 or 7.4.1).  Update README and NEWS version to next
-_expected_ release number (e.g. 7.12.0 or 7.4.2).
+#####################################################################
+# 13: Increment and commit the next BRL-CAD release numbers to SVN.
+
+    # Update the include/conf/(MAJOR|MINOR|PATCH) version files
+    # immediately to odd-numbered minor version or new patch developer
+    # version (e.g. 7.11.0 or 7.34.1).  Update README and NEWS version
+    # to next *expected* release number (e.g. 7.12.0 or 7.34.2).
 
     echo "`expr $PATCH + 1`" > include/conf/PATCH
     NEXT="`expr $PATCH + 2`"
@@ -1311,16 +1382,22 @@ _expected_ release number (e.g. 7.12.0 or 7.4.2).
     cat NEWS | tr '\n' '@' | perl -pi -e "$EXPR" | tr '@' '\n' > NEWS
     svn commit -m "bump to next development revision after tagging the $MAJOR.$MINOR.$PATCH release" ../include/conf/PATCH
 
-8) Obtain a tagged version of the sources from the repository, make
-final distribution tarballs:
+#####################################################################
+# 14: Sync RELEASE changes back to trunk.
+
+    # Work-in-progress
+
+#####################################################################
+# 15: Obtain a tagged version of the sources from the repository, make
+# final distribution tarballs:
 
     svn checkout https://svn.code.sf.net/p/brlcad/code/brlcad/tags/rel-$MAJOR-$MINOR-$PATCH brlcad-$MAJOR.$MINOR.$PATCH
     cd brlcad-$MAJOR.$MINOR.$PATCH-build && mkdir .build && cd .build
-    cmake .. -DBRLCAD_BUNDLED_LIBS=ON -DCMAKE_BUILD_TYPE=Release && make distcheck
+    cmake .. -DBRLCAD_BUNDLED_LIBS=ON -DCMAKE_BUILD_TYPE=Release && make distcheck-full
 
-9) Upload the source distributions and release notes.  Use source
-tarballs to create binaries.  Use the NAMING A BINARY RELEASE section
-above to name them.
+#####################################################################
+# 16: Upload the source distributions and release notes.  Use source
+# tarballs to create binaries.
 
     # create a shell session and source dir
     SFUSERNAME=`ls ~/.subversion/auth/svn.simple/* | xargs -n 1 grep -A4 sourceforge | tail -1`
@@ -1344,23 +1421,27 @@ above to name them.
     cat README-$MAJOR-$MINOR-$PATCH.txt && echo "==="
     scp README-$MAJOR-$MINOR-$PATCH.txt "$SFUSERNAME,brlcad@shell.sf.net:/home/frs/project/b/br/brlcad/BRL-CAD\ Source/$MAJOR.$MINOR.$PATCH/."
 
-    # upload release notes to binary dirs (as needed)
+    # NON-AUTO: Following the NAMING A BINARY RELEASE convention,
+    # upload any release binaries and platform-specific release notes.
+
     scp README-$MAJOR-$MINOR-$PATCH.txt "$SFUSERNAME,brlcad@shell.sf.net:/home/frs/project/b/br/brlcad/BRL-CAD\ Runtime\ Libraries/$MAJOR.$MINOR.$PATCH/."
     scp README-$MAJOR-$MINOR-$PATCH.txt "$SFUSERNAME,brlcad@shell.sf.net:/home/frs/project/b/br/brlcad/BRL-CAD\ for\ BSD/$MAJOR.$MINOR.$PATCH/."
     scp README-$MAJOR-$MINOR-$PATCH.txt "$SFUSERNAME,brlcad@shell.sf.net:/home/frs/project/b/br/brlcad/BRL-CAD\ for\ Linux/$MAJOR.$MINOR.$PATCH/."
     scp README-$MAJOR-$MINOR-$PATCH.txt "$SFUSERNAME,brlcad@shell.sf.net:/home/frs/project/b/br/brlcad/BRL-CAD\ for\ Mac\ OS\ X/$MAJOR.$MINOR.$PATCH/."
     scp README-$MAJOR-$MINOR-$PATCH.txt "$SFUSERNAME,brlcad@shell.sf.net:/home/frs/project/b/br/brlcad/BRL-CAD\ for\ Windows/$MAJOR.$MINOR.$PATCH/."
 
-    # be sure to mark binaries as default download, then close shell session
+    # NON-AUTO: Be sure to mark binaries as default download, then
+    # close shell session
     ssh -v $SFUSERNAME,brlcad@shell.sf.net shutdown
 
-10) Notify binary platform maintainers:
+#####################################################################
+# 17: Notify binary platform maintainers:
 
     T2 package maintainer
 	http://t2-project.org/packages/brlcad.html
 
     OpenSUSE package maintainer
-	https://build.opensuse.org/package/users?package=brlcad&project=Education
+        https://build.opensuse.org/package/users/Education/brlcad
 
     FreeBSD ports maintainer
 	http://www.freebsd.org/cgi/cvsweb.cgi/ports/cad/brlcad/
@@ -1377,7 +1458,8 @@ above to name them.
     Slackware maintainer
 	http://slackbuilds.org/result/?search=brlcad
 
-11) Announce the new release.
+#####################################################################
+# 18: Announce the new release.
 
 The NEWS file should generally be used as a basis for making release
 announcements though the announcements almost always require
@@ -1439,10 +1521,6 @@ Mac OS X release:
 
 Multiple platform major release and announcements:
 
-    upFront.ezine, Ralph Grabowski
-	ralphg@upfrontezine.com
-	with news details
-
     CADinfo.NET
 	copyboy@cadinfo.net
 	with news details
@@ -1463,36 +1541,9 @@ Multiple platform major release and announcements:
 	http://cadcam-insider.com/index.php/News-submission-guidelines.html
 	copyboy@cadcam-insider.com
 
-12) Sit back and enjoy a beverage for a job well done.
+#####################################################################
+# 19: Sit back and enjoy a beverage for a job well done.
 
-
-PATCHING A RELEASE
-------------------
-
-Should it become necessary to patch a release that has already been
-posted and announced, the mechanism is to post patch files for the
-source release and update the uploaded release notes README file.
-
-Example: stop_rt_crashing-0.patch and fix_fbserv-1.patch
-
-It's expected that all patch files are independent and will be applied
-sequentially.  They should be consistently and incrementally numbered.
-Users should be instructed in the release notes README to download and
-apply all available patch files.
-
-For binary releases, it's recommended to just "move on" and let issues
-become resolved in the next release unless there's a critical security
-or significant data corruption issue involved.  If it becomes
-necessary to repost a release, use the RELEASE_COUNT file name
-convention described in VERSION NUMBERS & COMPATIBILITY.
-
-Example:  BRL-CAD-7.12.2.dmg is superseded by BRL-CAD-7.12.2-1.dmg
-
-Patched binary releases may be moved to the hidden attic folder if
-critical, though not necessary or recommended.  They are preserved for
-historic record and should never be deleted once announced.  Releases
-not yet been announced may be updated within two days of being posted
-without involving a patch.
 
 
 GETTING HELP

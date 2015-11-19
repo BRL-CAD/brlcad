@@ -1,7 +1,7 @@
 /*                 BoundedCurve.h
  * BRL-CAD
  *
- * Copyright (c) 1994-2013 United States Government as represented by
+ * Copyright (c) 1994-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -24,8 +24,8 @@
  *
  */
 
-#ifndef BOUNDEDCURVE_H_
-#define BOUNDEDCURVE_H_
+#ifndef CONV_STEP_STEP_G_BOUNDEDCURVE_H
+#define CONV_STEP_STEP_G_BOUNDEDCURVE_H
 
 #include "Curve.h"
 
@@ -49,7 +49,7 @@ public:
     static STEPEntity *Create(STEPWrapper *sw, SDAI_Application_instance *sse);
 };
 
-#endif /* BOUNDEDCURVE_H_ */
+#endif /* CONV_STEP_STEP_G_BOUNDEDCURVE_H */
 
 /*
  * Local Variables:

@@ -1,7 +1,7 @@
 /*                        N M G _ P R . C
  * BRL-CAD
  *
- * Copyright (c) 1993-2013 United States Government as represented by
+ * Copyright (c) 1993-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -31,22 +31,19 @@
 
 #include "common.h"
 
-#include <stdio.h>
 #include <string.h>
 #include "bio.h"
 
 #include "vmath.h"
 #include "nmg.h"
 #include "raytrace.h"
-#include "nurb.h"
+#include "rt/nurb.h"
 
 
 static char nmg_pr_padstr[128];
 
 
 /**
- * N M G _ O R I E N T A T I O N
- *
  * Convert orientation code to string.
  */
 char *
@@ -69,8 +66,6 @@ nmg_orientation(int orientation)
 
 
 /**
- * N M G _ P R _ O R I E N T
- *
  * Print the orientation in a nice, English form
  */
 void
@@ -87,15 +82,12 @@ nmg_pr_orient(int orientation, const char *h)
 }
 
 
-/**
- * N M G _ P R _ M
- */
 void
 nmg_pr_m(const struct model *m)
 {
     const struct nmgregion *r;
 
-    bu_log("MODEL %8x\n", m);
+    bu_log("MODEL %p\n", (void *)m);
     if (!m || m->magic != NMG_MODEL_MAGIC) {
 	bu_log("bad model magic\n");
 	return;
@@ -109,8 +101,6 @@ nmg_pr_m(const struct model *m)
 
 
 /**
- * M K P A D
- *
  * NOTE:  All the nmg_pr_*() routines take an "h" (header string) pointer.
  * This can be an arbitrary caller-provided string, as long as it is kept
  * short.  The string will be copied over into nmg_pr_padstr[], and
@@ -119,21 +109,18 @@ nmg_pr_m(const struct model *m)
 #define MKPAD(_h) { \
 	if (!_h) { _h = nmg_pr_padstr; nmg_pr_padstr[0] = '\0'; } \
 	else if ((_h) < nmg_pr_padstr || (_h) >= nmg_pr_padstr+sizeof(nmg_pr_padstr)) { \
-		bu_strlcpy(nmg_pr_padstr, (_h), sizeof(nmg_pr_padstr)/2); \
-		_h = nmg_pr_padstr; \
+	    bu_strlcpy(nmg_pr_padstr, (_h), sizeof(nmg_pr_padstr)/2); \
+	    _h = nmg_pr_padstr; \
 	} else { if (strlen(_h) < sizeof(nmg_pr_padstr)-4) bu_strlcat(_h, "   ", sizeof(nmg_pr_padstr)); } }
 
 #define Return { h[strlen(h)-3] = '\0'; return; }
 
-/**
- * N M G _ P R _ R
- */
 void
 nmg_pr_r(const struct nmgregion *r, char *h)
 {
     struct shell *s;
 
-    bu_log("REGION %8x\n", r);
+    bu_log("REGION %p\n", (void *)r);
 
     MKPAD(h);
 
@@ -142,10 +129,10 @@ nmg_pr_r(const struct nmgregion *r, char *h)
 	Return;
     }
 
-    bu_log("%8x m_p\n", r->m_p);
-    bu_log("%8x l.forw\n", r->l.forw);
-    bu_log("%8x l.back\n", r->l.back);
-    bu_log("%8x ra_p\n", r->ra_p);
+    bu_log("%p m_p\n", (void *)r->m_p);
+    bu_log("%p l.forw\n", (void *)r->l.forw);
+    bu_log("%p l.back\n", (void *)r->l.back);
+    bu_log("%p ra_p\n", (void *)r->ra_p);
 
     for (BU_LIST_FOR(s, shell, &r->s_hd)) {
 	nmg_pr_s(s, h);
@@ -154,15 +141,12 @@ nmg_pr_r(const struct nmgregion *r, char *h)
 }
 
 
-/**
- * N M G _ P R _ S A
- */
 void
 nmg_pr_sa(const struct shell_a *sa, char *h)
 {
     MKPAD(h);
 
-    bu_log("%sSHELL_A %8x\n", h, sa);
+    bu_log("%sSHELL_A %p\n", h, (void *)sa);
     if (!sa || sa->magic != NMG_SHELL_A_MAGIC) {
 	bu_log("bad shell_a magic\n");
 	Return;
@@ -177,16 +161,13 @@ nmg_pr_sa(const struct shell_a *sa, char *h)
 }
 
 
-/**
- * N M G _ P R _ L G
- */
 void
 nmg_pr_lg(const struct loop_g *lg, char *h)
 {
     MKPAD(h);
     NMG_CK_LOOP_G(lg);
 
-    bu_log("%sLOOP_G %8x\n", h, lg);
+    bu_log("%sLOOP_G %p\n", h, (void *)lg);
     bu_log("%s%f %f %f Min\n", h, lg->min_pt[X], lg->min_pt[Y],
 	   lg->min_pt[Z]);
     bu_log("%s%f %f %f Max\n", h, lg->max_pt[X], lg->max_pt[Y],
@@ -196,9 +177,6 @@ nmg_pr_lg(const struct loop_g *lg, char *h)
 }
 
 
-/**
- * N M G _ P R _ F G
- */
 void
 nmg_pr_fg(const uint32_t *magic, char *h)
 {
@@ -210,14 +188,14 @@ nmg_pr_fg(const uint32_t *magic, char *h)
 
     switch (*magic) {
 	case NMG_FACE_G_PLANE_MAGIC:
-	    bu_log("%sFACE_G_PLANE %8x\n", h, magic);
+	    bu_log("%sFACE_G_PLANE %p\n", h, (void *)magic);
 
 	    bu_log("%s%fX + %fY + %fZ = %f\n", h,
 		   V4ARGS(((struct face_g_plane *)magic)->N));
 	    break;
 	case NMG_FACE_G_SNURB_MAGIC:
 	    fgs = (struct face_g_snurb *)magic;
-	    bu_log("%sFACE_G_SNURB %8x\n", h, magic);
+	    bu_log("%sFACE_G_SNURB %p\n", h, (void *)magic);
 	    bu_log("%s  order (%d, %d)\n", h, fgs->order[0], fgs->order[1]);
 	    bu_log("%s  U knots: size=%d", h, fgs->u.k_size);
 	    for (i=0; i<fgs->u.k_size; i++)
@@ -248,9 +226,6 @@ nmg_pr_fg(const uint32_t *magic, char *h)
 }
 
 
-/**
- * N M G _ P R _ S
- */
 void
 nmg_pr_s(const struct shell *s, char *h)
 {
@@ -260,16 +235,16 @@ nmg_pr_s(const struct shell *s, char *h)
 
     MKPAD(h);
 
-    bu_log("%sSHELL %8x\n", h, s);
+    bu_log("%sSHELL %p\n", h, (void *)s);
     if (!s || s->l.magic != NMG_SHELL_MAGIC) {
 	bu_log("bad shell magic\n");
 	Return;
     }
 
-    bu_log("%s%8x r_p\n", h, s->r_p);
-    bu_log("%s%8x l.forw\n", h, s->l.forw);
-    bu_log("%s%8x l.back\n", h, s->l.back);
-    bu_log("%s%8x sa_p\n", h, s->sa_p);
+    bu_log("%s%p r_p\n", h, (void *)s->r_p);
+    bu_log("%s%p l.forw\n", h, (void *)s->l.forw);
+    bu_log("%s%p l.back\n", h, (void *)s->l.back);
+    bu_log("%s%p sa_p\n", h, (void *)s->sa_p);
     if (s->sa_p)
 	nmg_pr_sa(s->sa_p, h);
 
@@ -291,9 +266,6 @@ nmg_pr_s(const struct shell *s, char *h)
 }
 
 
-/**
- * N M G _ P R _ S _ B R I E F L Y
- */
 void
 nmg_pr_s_briefly(const struct shell *s, char *h)
 {
@@ -303,7 +275,7 @@ nmg_pr_s_briefly(const struct shell *s, char *h)
 
     MKPAD(h);
 
-    bu_log("%sSHELL %8x\n", h, s);
+    bu_log("%sSHELL %p\n", h, (void *)s);
     if (!s || s->l.magic != NMG_SHELL_MAGIC) {
 	bu_log("bad shell magic\n");
 	Return;
@@ -327,18 +299,15 @@ nmg_pr_s_briefly(const struct shell *s, char *h)
 }
 
 
-/**
- * N M G _ P R _ F
- */
 void
 nmg_pr_f(const struct face *f, char *h)
 {
     MKPAD(h);
     NMG_CK_FACE(f);
 
-    bu_log("%sFACE %8x\n", h, f);
-    bu_log("%s%8x fu_p\n", h, f->fu_p);
-    bu_log("%s%8x g.magic_p\n", h, f->g.magic_p);
+    bu_log("%sFACE %p\n", h, (void *)f);
+    bu_log("%s%p fu_p\n", h, (void *)f->fu_p);
+    bu_log("%s%p g.magic_p\n", h, (void *)f->g.magic_p);
 
     bu_log("%s%f %f %f Min\n", h, f->min_pt[X], f->min_pt[Y],
 	   f->min_pt[Z]);
@@ -354,9 +323,6 @@ nmg_pr_f(const struct face *f, char *h)
 }
 
 
-/**
- * N M G _ P R _ F U
- */
 void
 nmg_pr_fu(const struct faceuse *fu, char *h)
 {
@@ -365,20 +331,20 @@ nmg_pr_fu(const struct faceuse *fu, char *h)
     MKPAD(h);
     NMG_CK_FACEUSE(fu);
 
-    bu_log("%sFACEUSE %8x\n", h, fu);
+    bu_log("%sFACEUSE %p\n", h, (void *)fu);
 
     if (!fu || fu->l.magic != NMG_FACEUSE_MAGIC) {
 	bu_log("bad faceuse magic\n");
 	Return;
     }
 
-    bu_log("%s%8x s_p\n", h, fu->s_p);
-    bu_log("%s%8x l.forw\n", h, fu->l.forw);
-    bu_log("%s%8x l.back\n", h, fu->l.back);
-    bu_log("%s%8x fumate_p\n", h, fu->fumate_p);
+    bu_log("%s%p s_p\n", h, (void *)fu->s_p);
+    bu_log("%s%p l.forw\n", h, (void *)fu->l.forw);
+    bu_log("%s%p l.back\n", h, (void *)fu->l.back);
+    bu_log("%s%p fumate_p\n", h, (void *)fu->fumate_p);
     nmg_pr_orient(fu->orientation, h);
 
-    bu_log("%s%8x f_p\n", h, fu->f_p);
+    bu_log("%s%p f_p\n", h, (void *)fu->f_p);
     if (fu->f_p)
 	nmg_pr_f(fu->f_p, h);
 
@@ -389,9 +355,6 @@ nmg_pr_fu(const struct faceuse *fu, char *h)
 }
 
 
-/**
- * N M G _ P R _ F U _ B R I E F L Y
- */
 void
 nmg_pr_fu_briefly(const struct faceuse *fu, char *h)
 {
@@ -403,11 +366,13 @@ nmg_pr_fu_briefly(const struct faceuse *fu, char *h)
     f = fu->f_p;
 
     if (f->g.magic_p && *f->g.magic_p == NMG_FACE_G_PLANE_MAGIC) {
-	bu_log("%sFACEUSE %8x (%s) f_p=x%x fg=x%x flip=%d pl= %f %f %f %f\n",
-	       h, fu, nmg_orientation(fu->orientation), fu->f_p, f->g.magic_p, fu->f_p->flip, V4ARGS(f->g.plane_p->N));
+	bu_log("%sFACEUSE %p (%s) f_p=%p fg=%p flip=%d pl= %f %f %f %f\n",
+	       h,
+	       (void *)fu, nmg_orientation(fu->orientation),
+	       (void *)fu->f_p, (void *)f->g.magic_p, fu->f_p->flip, V4ARGS(f->g.plane_p->N));
     } else
-	bu_log("%sFACEUSE %8x (%s) f_p=x%x\n",
-	       h, fu, nmg_orientation(fu->orientation), fu->f_p);
+	bu_log("%sFACEUSE %p (%s) f_p=%p\n",
+	       h, (void *)fu, nmg_orientation(fu->orientation), (void *)fu->f_p);
 
     for (BU_LIST_FOR(lu, loopuse, &fu->lu_hd)) {
 	nmg_pr_lu_briefly(lu, h);
@@ -416,22 +381,19 @@ nmg_pr_fu_briefly(const struct faceuse *fu, char *h)
 }
 
 
-/**
- * N M G _ P R _ L
- */
 void
 nmg_pr_l(const struct loop *l, char *h)
 {
     MKPAD(h);
     NMG_CK_LOOP(l);
 
-    bu_log("%sLOOP %8x\n", h, l);
+    bu_log("%sLOOP %p\n", h, (void *)l);
     if (!l || l->magic != NMG_LOOP_MAGIC) {
 	bu_log("bad loop magic\n");
 	Return;
     }
-    bu_log("%s%8x lu_p\n", h, l->lu_p);
-    bu_log("%s%8x lg_p\n", h, l->lg_p);
+    bu_log("%s%p lu_p\n", h, (void *)l->lu_p);
+    bu_log("%s%p lg_p\n", h, (void *)l->lg_p);
     if (l->lg_p)
 	nmg_pr_lg(l->lg_p, h);
 
@@ -439,9 +401,6 @@ nmg_pr_l(const struct loop *l, char *h)
 }
 
 
-/**
- * N M G _ P R _ L U
- */
 void
 nmg_pr_lu(const struct loopuse *lu, char *h)
 {
@@ -452,34 +411,34 @@ nmg_pr_lu(const struct loopuse *lu, char *h)
     MKPAD(h);
     NMG_CK_LOOPUSE(lu);
 
-    bu_log("%sLOOPUSE %8x\n", h, lu);
+    bu_log("%sLOOPUSE %p\n", h, (void *)lu);
 
     switch (*lu->up.magic_p) {
-	case NMG_SHELL_MAGIC	: bu_log("%s%8x up.s_p\n", h, lu->up.s_p);
+	case NMG_SHELL_MAGIC	: bu_log("%s%p up.s_p\n", h, (void *)lu->up.s_p);
 	    break;
-	case NMG_FACEUSE_MAGIC	: bu_log("%s%8x up.fu_p\n", h, lu->up.fu_p);
+	case NMG_FACEUSE_MAGIC	: bu_log("%s%p up.fu_p\n", h, (void *)lu->up.fu_p);
 	    break;
 	default			: bu_log("Bad loopuse parent magic\n");
 	    Return;
     }
 
-    bu_log("%s%8x l.forw\n", h, lu->l.forw);
-    bu_log("%s%8x l.back\n", h, lu->l.back);
-    bu_log("%s%8x lumate_p\n", h, lu->lumate_p);
+    bu_log("%s%p l.forw\n", h, (void *)lu->l.forw);
+    bu_log("%s%p l.back\n", h, (void *)lu->l.back);
+    bu_log("%s%p lumate_p\n", h, (void *)lu->lumate_p);
     nmg_pr_orient(lu->orientation, h);
-    bu_log("%s%8x l_p\n", h, lu->l_p);
+    bu_log("%s%p l_p\n", h, (void *)lu->l_p);
     if (lu->l_p)
 	nmg_pr_l(lu->l_p, h);
 
 
     bu_log("%s%8x down_hd.magic\n", h, lu->down_hd.magic);
-    bu_log("%s%8x down_hd.forw\n", h, lu->down_hd.forw);
-    bu_log("%s%8x down_hd.back\n", h, lu->down_hd.back);
+    bu_log("%s%p down_hd.forw\n", h, (void *)lu->down_hd.forw);
+    bu_log("%s%p down_hd.back\n", h, (void *)lu->down_hd.back);
 
     magic1 = BU_LIST_FIRST_MAGIC(&lu->down_hd);
     if (magic1 == NMG_VERTEXUSE_MAGIC) {
 	vu = BU_LIST_PNEXT(vertexuse, &lu->down_hd);
-	bu_log("%s%8x down_hd->forw (vu)\n", h, vu);
+	bu_log("%s%p down_hd->forw (vu)\n", h, (void *)vu);
 	nmg_pr_vu(vu, h);
     } else if (magic1 == NMG_EDGEUSE_MAGIC) {
 	for (BU_LIST_FOR(eu, edgeuse, &lu->down_hd)) {
@@ -492,9 +451,6 @@ nmg_pr_lu(const struct loopuse *lu, char *h)
 }
 
 
-/**
- * N M G _ P R _ L U _ B R I E F L Y
- */
 void
 nmg_pr_lu_briefly(const struct loopuse *lu, char *h)
 {
@@ -505,13 +461,13 @@ nmg_pr_lu_briefly(const struct loopuse *lu, char *h)
     MKPAD(h);
     NMG_CK_LOOPUSE(lu);
 
-    bu_log("%sLOOPUSE %8x, lumate_p=x%x (%s) \n",
-	   h, lu, lu->lumate_p, nmg_orientation(lu->orientation));
+    bu_log("%sLOOPUSE %p, lumate_p=%p (%s) \n",
+	   h, (void *)lu, (void *)lu->lumate_p, nmg_orientation(lu->orientation));
 
     magic1 = BU_LIST_FIRST_MAGIC(&lu->down_hd);
     if (magic1 == NMG_VERTEXUSE_MAGIC) {
 	vu = BU_LIST_PNEXT(vertexuse, &lu->down_hd);
-	bu_log("%s%8x down_hd->forw (vu)\n", h, vu);
+	bu_log("%s%p down_hd->forw (vu)\n", h, (void *)vu);
 	nmg_pr_vu_briefly(vu, h);
     } else if (magic1 == NMG_EDGEUSE_MAGIC) {
 	for (BU_LIST_FOR(eu, edgeuse, &lu->down_hd)) {
@@ -525,8 +481,6 @@ nmg_pr_lu_briefly(const struct loopuse *lu, char *h)
 
 
 /**
- * N M G _ P R _ E G
- *
  * Expects a pointer to the magic number of an edge geometry structure
  * either edge_g_lseg or edge_g_cnurb structures.
  */
@@ -540,8 +494,8 @@ nmg_pr_eg(const uint32_t *eg_magic_p, char *h)
 	case NMG_EDGE_G_LSEG_MAGIC: {
 	    struct edge_g_lseg *eg_l=(struct edge_g_lseg *)eg_magic_p;
 
-	    bu_log("%sEDGE_G_LSEG %8x pt:(%f %f %f)\n",
-		   h, eg_l, V3ARGS(eg_l->e_pt));
+	    bu_log("%sEDGE_G_LSEG %p pt:(%f %f %f)\n",
+		   h, (void *)eg_l, V3ARGS(eg_l->e_pt));
 	    bu_log("%s       eu uses=%d  dir:(%f %f %f)\n",
 		   h, bu_list_len(&eg_l->eu_hd2), V3ARGS(eg_l->e_dir));
 	    break;
@@ -551,19 +505,19 @@ nmg_pr_eg(const uint32_t *eg_magic_p, char *h)
 	    int i, j, l;
 	    int ncoords;
 
-	    bu_log("%sEDGE_G_CNURB %8x\n", h, eg_c);
+	    bu_log("%sEDGE_G_CNURB %p\n", h, (void *)eg_c);
 	    bu_log("%s  order=%d, %d ctl pts, pt_type=%d\n",
 		   h, eg_c->order, eg_c->c_size, eg_c->pt_type);
 	    bu_log("%s  knot vector (len=%d):", h, eg_c->k.k_size);
-	    for (i=0; i<eg_c->k.k_size; i++)
+	    for (i = 0; i < eg_c->k.k_size; i++)
 		bu_log(" %f", eg_c->k.knots[i]);
 	    bu_log("\n");
 	    ncoords = RT_NURB_EXTRACT_COORDS(eg_c->pt_type);
 	    l = 0;
 	    bu_log("%s  control points: ", h);
-	    for (i=0; i<eg_c->c_size; i++) {
+	    for (i = 0; i < eg_c->c_size; i++) {
 		bu_log("(");
-		for (j=0; j<ncoords; j++)
+		for (j = 0; j < ncoords; j++)
 		    bu_log("%f ", eg_c->ctl_points[l+j]);
 		bu_log(")");
 		l += ncoords;
@@ -577,53 +531,47 @@ nmg_pr_eg(const uint32_t *eg_magic_p, char *h)
 }
 
 
-/**
- * N M G _ P R _ E
- */
 void
 nmg_pr_e(const struct edge *e, char *h)
 {
     MKPAD(h);
     NMG_CK_EDGE(e);
 
-    bu_log("%sEDGE %8x\n", h, e);
+    bu_log("%sEDGE %p\n", h, (void *)e);
     if (!e || e->magic != NMG_EDGE_MAGIC) {
 	bu_log("bad edge magic\n");
 	Return;
     }
-    bu_log("%s%8x eu_p\n", h, e->eu_p);
+    bu_log("%s%p eu_p\n", h, (void *)e->eu_p);
 
     Return;
 }
 
 
-/**
- * N M G _ P R _ E U
- */
 void
 nmg_pr_eu(const struct edgeuse *eu, char *h)
 {
     MKPAD(h);
     NMG_CK_EDGEUSE(eu);
 
-    bu_log("%sEDGEUSE %8x\n", h, eu);
+    bu_log("%sEDGEUSE %p\n", h, (void *)eu);
 
     switch (*eu->up.magic_p) {
-	case NMG_SHELL_MAGIC	: bu_log("%s%8x up.s_p\n", h, eu->up.s_p);
+	case NMG_SHELL_MAGIC	: bu_log("%s%p up.s_p\n", h, (void *)eu->up.s_p);
 	    break;
-	case NMG_LOOPUSE_MAGIC	: bu_log("%s%8x up.lu_p\n", h, eu->up.lu_p);
+	case NMG_LOOPUSE_MAGIC	: bu_log("%s%p up.lu_p\n", h, (void *)eu->up.lu_p);
 	    break;
 	default			: bu_log("bad edgeuse parent magic\n");
 	    Return;
     }
-    bu_log("%s%8x l.forw\n", h, eu->l.forw);
-    bu_log("%s%8x l.back\n", h, eu->l.back);
-    bu_log("%s%8x eumate_p\n", h, eu->eumate_p);
-    bu_log("%s%8x radial_p\n", h, eu->radial_p);
+    bu_log("%s%p l.forw\n", h, (void *)eu->l.forw);
+    bu_log("%s%p l.back\n", h, (void *)eu->l.back);
+    bu_log("%s%p eumate_p\n", h, (void *)eu->eumate_p);
+    bu_log("%s%p radial_p\n", h, (void *)eu->radial_p);
     nmg_pr_orient(eu->orientation, h);
-    bu_log("%s%8x e_p\n", h, eu->e_p);
-    bu_log("%s%8x vu_p\n", h, eu->vu_p);
-    bu_log("%s%8x g.magic_p\n", h, eu->g.magic_p);
+    bu_log("%s%p e_p\n", h, (void *)eu->e_p);
+    bu_log("%s%p vu_p\n", h, (void *)eu->vu_p);
+    bu_log("%s%p g.magic_p\n", h, (void *)eu->g.magic_p);
     nmg_pr_e(eu->e_p, h);
     nmg_pr_vu(eu->vu_p, h);
 
@@ -634,25 +582,20 @@ nmg_pr_eu(const struct edgeuse *eu, char *h)
 }
 
 
-/**
- * N M G _ P R _ E U _ B R I E F L Y
- */
 void
 nmg_pr_eu_briefly(const struct edgeuse *eu, char *h)
 {
     MKPAD(h);
     NMG_CK_EDGEUSE(eu);
 
-    bu_log("%sEDGEUSE %8x, g=%8x, e_p=%8x\n", h, eu, eu->g.magic_p, eu->e_p);
+    bu_log("%sEDGEUSE %p, g=%p, e_p=%p\n",
+	   h, (void *)eu, (void *)eu->g.magic_p, (void *)eu->e_p);
     nmg_pr_vu_briefly(eu->vu_p, h);
 
     Return;
 }
 
 
-/**
- * N M G _ P R _ E U _ E N D P O I N T S
- */
 void
 nmg_pr_eu_endpoints(const struct edgeuse *eu, char *h)
 {
@@ -666,7 +609,8 @@ nmg_pr_eu_endpoints(const struct edgeuse *eu, char *h)
     NMG_CK_VERTEX_G(vg1);
     NMG_CK_VERTEX_G(vg2);
 
-    bu_log("%sEDGEUSE %8x\n%s  (%g, %g, %g) -- (%g, %g, %g)\n", h, eu, h,
+    bu_log("%sEDGEUSE %p\n%s  (%g, %g, %g) -- (%g, %g, %g)\n",
+	   h, (void *)eu, h,
 	   V3ARGS(vg1->coord),
 	   V3ARGS(vg2->coord));
 
@@ -674,9 +618,6 @@ nmg_pr_eu_endpoints(const struct edgeuse *eu, char *h)
 }
 
 
-/**
- * N M G _ P R _ V G
- */
 void
 nmg_pr_vg(const struct vertex_g *vg, char *h)
 {
@@ -684,37 +625,34 @@ nmg_pr_vg(const struct vertex_g *vg, char *h)
     NMG_CK_VERTEX_G(vg);
 
     if (!vg || vg->magic != NMG_VERTEX_G_MAGIC) {
-	bu_log("%sVERTEX_G %8x\n", h, vg);
+	bu_log("%sVERTEX_G %p\n", h, (void *)vg);
 	bu_log("bad vertex_g magic\n");
 	Return;
     }
-    bu_log("%sVERTEX_G %8x %f %f %f = XYZ coord\n",
-	   h, vg, V3ARGS(vg->coord));
+    bu_log("%sVERTEX_G %p %f %f %f = XYZ coord\n",
+	   h, (void *)vg, V3ARGS(vg->coord));
     Return;
 }
 
 
-/**
- * N M G _ P R _ V
- */
 void
 nmg_pr_v(const struct vertex *v, char *h)
 {
     MKPAD(h);
     NMG_CK_VERTEX(v);
 
-    bu_log("%sVERTEX %8x\n", h, v);
+    bu_log("%sVERTEX %p\n", h, (void *)v);
     if (!v || v->magic != NMG_VERTEX_MAGIC) {
 	bu_log("bad vertex magic\n");
 	Return;
     }
     /* vu_hd ? */
-    bu_log("%s   vu_hd %8x\n", h, &v->vu_hd);
-    bu_log("%s%8x vu_hd.forw\n", h, v->vu_hd.forw);
-    bu_log("%s%8x vu_hd.back\n", h, v->vu_hd.back);
+    bu_log("%s   vu_hd %p\n", h, (void *)&v->vu_hd);
+    bu_log("%s%p vu_hd.forw\n", h, (void *)v->vu_hd.forw);
+    bu_log("%s%p vu_hd.back\n", h, (void *)v->vu_hd.back);
 
 
-    bu_log("%s%8x vg_p\n", h, v->vg_p);
+    bu_log("%s%p vg_p\n", h, (void *)v->vg_p);
     if (v->vg_p)
 	nmg_pr_vg(v->vg_p, h);
 
@@ -722,40 +660,37 @@ nmg_pr_v(const struct vertex *v, char *h)
 }
 
 
-/**
- * N M G _ P R _ V U
- */
 void
 nmg_pr_vu(const struct vertexuse *vu, char *h)
 {
     MKPAD(h);
     NMG_CK_VERTEXUSE(vu);
 
-    bu_log("%sVERTEXUSE %8x\n", h, vu);
+    bu_log("%sVERTEXUSE %p\n", h, (void *)vu);
     if (!vu || vu->l.magic != NMG_VERTEXUSE_MAGIC) {
 	bu_log("bad vertexuse magic\n");
 	Return;
     }
 
     switch (*vu->up.magic_p) {
-	case NMG_SHELL_MAGIC	: bu_log("%s%8x up.s_p\n", h, vu->up.s_p); break;
-	case NMG_LOOPUSE_MAGIC	: bu_log("%s%8x up.lu_p\n", h, vu->up.lu_p); break;
-	case NMG_EDGEUSE_MAGIC	: bu_log("%s%8x up.eu_p\n", h, vu->up.eu_p); break;
+	case NMG_SHELL_MAGIC	: bu_log("%s%p up.s_p\n", h, (void *)vu->up.s_p); break;
+	case NMG_LOOPUSE_MAGIC	: bu_log("%s%p up.lu_p\n", h, (void *)vu->up.lu_p); break;
+	case NMG_EDGEUSE_MAGIC	: bu_log("%s%p up.eu_p\n", h, (void *)vu->up.eu_p); break;
 	default			: bu_log("bad vertexuse parent magic\n");
 	    Return;
     }
-    bu_log("%s%8x l.forw\n", h, vu->l.forw);
-    bu_log("%s%8x l.back\n", h, vu->l.back);
+    bu_log("%s%p l.forw\n", h, (void *)vu->l.forw);
+    bu_log("%s%p l.back\n", h, (void *)vu->l.back);
     if (vu->a.magic_p) switch (*vu->a.magic_p) {
-	case NMG_VERTEXUSE_A_PLANE_MAGIC:
-	    bu_log("%s%8x a.plane_p\n", h, vu->a.plane_p);
-	    bu_log("%s normal: %f %f %f\n", h, V3ARGS(vu->a.plane_p->N));
-	    break;
-	case NMG_VERTEXUSE_A_CNURB_MAGIC:
-	    bu_log("%s%8x a.cnurb_p\n", h, vu->a.cnurb_p);
-	    break;
-    }
-    bu_log("%s%8x v_p\n", h, vu->v_p);
+	    case NMG_VERTEXUSE_A_PLANE_MAGIC:
+		bu_log("%s%p a.plane_p\n", h, (void *)vu->a.plane_p);
+		bu_log("%s normal: %f %f %f\n", h, V3ARGS(vu->a.plane_p->N));
+		break;
+	    case NMG_VERTEXUSE_A_CNURB_MAGIC:
+		bu_log("%s%p a.cnurb_p\n", h, (void *)vu->a.cnurb_p);
+		break;
+	}
+    bu_log("%s%p v_p\n", h, (void *)vu->v_p);
     nmg_pr_v(vu->v_p, h);
     if (vu->a.magic_p) nmg_pr_vua(vu->a.magic_p, h);
 
@@ -763,9 +698,6 @@ nmg_pr_vu(const struct vertexuse *vu, char *h)
 }
 
 
-/**
- * N M G _ P R _ V U _ B R I E F L Y
- */
 void
 nmg_pr_vu_briefly(const struct vertexuse *vu, char *h)
 {
@@ -778,25 +710,23 @@ nmg_pr_vu_briefly(const struct vertexuse *vu, char *h)
     vg = vu->v_p->vg_p;
     if (vg) {
 	NMG_CK_VERTEX_G(vg);
-	bu_log("%sVERTEXUSE %8x, v=x%x, %f %f %f\n", h, vu, vu->v_p,
+	bu_log("%sVERTEXUSE %p, v=%p, %f %f %f\n", h,
+	       (void *)vu, (void *)vu->v_p,
 	       V3ARGS(vg->coord));
     } else {
-	bu_log("%sVERTEXUSE %8x, v=x%x\n", h, vu, vu->v_p);
+	bu_log("%sVERTEXUSE %p, v=%p\n", h, (void *)vu, (void *)vu->v_p);
     }
 
     Return;
 }
 
 
-/**
- * N M G _ P R _ V U A
- */
 void
 nmg_pr_vua(const uint32_t *magic_p, char *h)
 {
     MKPAD(h);
 
-    bu_log("%sVERTEXUSE_A %8x\n", h, magic_p);
+    bu_log("%sVERTEXUSE_A %p\n", h, (void *)magic_p);
     if (!magic_p) {
 	bu_log("bad vertexuse_a magic\n");
 	Return;
@@ -817,9 +747,6 @@ nmg_pr_vua(const uint32_t *magic_p, char *h)
 }
 
 
-/**
- * N M G _ E U P R I N T
- */
 void
 nmg_euprint(const char *str, const struct edgeuse *eu)
 {
@@ -843,8 +770,6 @@ nmg_euprint(const char *str, const struct edgeuse *eu)
 	   matep[0], matep[1], matep[2]);
 }
 /**
- * N M G _ P R _ P T B L
- *
  * Print an bu_ptbl array for inspection.
  */
 void
@@ -853,7 +778,7 @@ nmg_pr_ptbl(const char *title, const struct bu_ptbl *tbl, int verbose)
     register long **lp;
 
     BU_CK_PTBL(tbl);
-    bu_log("%s: bu_ptbl array with %d entries\n",
+    bu_log("%s: bu_ptbl array with %ld entries\n",
 	   title, tbl->end);
 
     if (!verbose) return;
@@ -862,23 +787,23 @@ nmg_pr_ptbl(const char *title, const struct bu_ptbl *tbl, int verbose)
 	 lp <= (long **)BU_PTBL_LASTADDR(tbl); lp++
 	) {
 	if (*lp == 0) {
-	    bu_log("  %.8x NULL entry\n", *lp);
+	    bu_log("  %p NULL entry\n", (void *)*lp);
 	    continue;
 	}
 	switch (**lp) {
 	    default:
-		bu_log("  %.8x %s\n", *lp, bu_identify_magic(**lp));
+		bu_log("  %p %s\n", (void *)*lp, bu_identify_magic(**lp));
 		break;
 	    case NMG_EDGEUSE_MAGIC:
-		bu_log("  %.8x edgeuse vu=%x, far vu=%x\n",
-		       *lp,
-		       ((struct edgeuse *)*lp)->vu_p,
-		       BU_LIST_PNEXT_CIRC(edgeuse, *lp)->vu_p);
+		bu_log("  %p edgeuse vu=%p, far vu=%p\n",
+		       (void *)*lp,
+		       (void *)((struct edgeuse *)*lp)->vu_p,
+		       (void *)BU_LIST_PNEXT_CIRC(edgeuse, *lp)->vu_p);
 		break;
 	    case NMG_VERTEXUSE_MAGIC:
-		bu_log("  %.8x vertexuse v=%x\n",
-		       *lp,
-		       ((struct vertexuse *)*lp)->v_p);
+		bu_log("  %p vertexuse v=%p\n",
+		       (void *)*lp,
+		       (void *)((struct vertexuse *)*lp)->v_p);
 		break;
 	}
     }
@@ -886,8 +811,6 @@ nmg_pr_ptbl(const char *title, const struct bu_ptbl *tbl, int verbose)
 
 
 /**
- * N M G _ P R _ P T B L _ V E R T _ L I S T
- *
  * Print a ptbl array as a vertex list.
  */
 void
@@ -902,10 +825,11 @@ nmg_pr_ptbl_vert_list(const char *str, const struct bu_ptbl *tbl, const fastf_t 
     bu_log("nmg_pr_ptbl_vert_list(%s):\n", str);
 
     vup = (const struct vertexuse **)tbl->buffer;
-    for (i=0; i < tbl->end; ++i) {
+    for (i = 0; i < tbl->end; ++i) {
 	vu = vup[i];
 	if (vu->l.magic != NMG_VERTEXUSE_MAGIC) {
-	    bu_log("\tWARNING: vertexuse #%d has bad MAGIC (%x)\n", i, vu->l.magic);
+	    bu_log("\tWARNING: vertexuse #%d has bad MAGIC (%u)\n",
+		   i, vu->l.magic);
 	    continue;
 	}
 	NMG_CK_VERTEXUSE(vu);
@@ -927,19 +851,18 @@ nmg_pr_ptbl_vert_list(const char *str, const struct bu_ptbl *tbl, const fastf_t 
 	} else {
 	    bu_log("vu up UNKNOWN");
 	}
-	bu_log("\tv=x%x, vu=x%x, dist=%g\n", v, vu, mag[i]);
+	bu_log("\tv=%p, vu=%p, dist=%g\n", (void *)v, (void *)vu, mag[i]);
     }
 }
 
 
 /**
- * N M G _ P R _ O N E _ E U _ V E C S
- *
  * Common formatting code for edgeuses and edgeuse mates.
  * Does not mind wire edges.
  */
 void
-nmg_pr_one_eu_vecs(const struct edgeuse *eu, const fastf_t *xvec, const fastf_t *yvec, const fastf_t *zvec, const struct bn_tol *UNUSED(tol))
+nmg_pr_one_eu_vecs(const struct edgeuse *eu, const fastf_t *xvec, const fastf_t *yvec,
+		   const fastf_t *zvec, const struct bn_tol *UNUSED(tol))
 {
     const struct loopuse *lu;
     const struct faceuse *fu;
@@ -973,27 +896,24 @@ nmg_pr_one_eu_vecs(const struct edgeuse *eu, const fastf_t *xvec, const fastf_t 
     }
     NMG_CK_SHELL(s);
     if (f && *f->g.magic_p == NMG_FACE_G_SNURB_MAGIC) {
-	bu_log(" %8.8x, lu=%8.8x=%1.1s, f=%8.8x, fu=%8.8x=%1.1s, s=%8.8x SNURB\n",
-	       eu,
-	       lu, lu_orient,
-	       f,
-	       fu, fu_orient,
-	       s);
+	bu_log(" %p, lu=%p=%1.1s, f=%p, fu=%p=%1.1s, s=%p SNURB\n",
+	       (void *)eu,
+	       (void *)lu, lu_orient,
+	       (void *)f,
+	       (void *)fu, fu_orient,
+	       (void *)s);
     } else {
-	bu_log(" %8.8x, lu=%8.8x=%1.1s, f=%8.8x, fu=%8.8x=%1.1s, s=%8.8x %g deg\n",
-	       eu,
-	       lu, lu_orient,
-	       f,
-	       fu, fu_orient,
-	       s,
-	       nmg_measure_fu_angle(eu, xvec, yvec, zvec) * bn_radtodeg);
+	bu_log(" %p, lu=%p=%1.1s, f=%p, fu=%p=%1.1s, s=%p %g deg\n",
+	       (void *)eu,
+	       (void *)lu, lu_orient,
+	       (void *)f,
+	       (void *)fu, fu_orient,
+	       (void *)s,
+	       nmg_measure_fu_angle(eu, xvec, yvec, zvec) * RAD2DEG);
     }
 }
 
 
-/**
- * N M G _ P R _ F U _ A R O U N D _ E U _ V E C S
- */
 void
 nmg_pr_fu_around_eu_vecs(const struct edgeuse *eu, const fastf_t *xvec, const fastf_t *yvec, const fastf_t *zvec, const struct bn_tol *tol)
 {
@@ -1001,7 +921,7 @@ nmg_pr_fu_around_eu_vecs(const struct edgeuse *eu, const fastf_t *xvec, const fa
 
     NMG_CK_EDGEUSE(eu);
     BN_CK_TOL(tol);
-    bu_log("nmg_pr_fu_around_eu_vecs(eu=x%x) e=x%x\n", eu, eu->e_p);
+    bu_log("nmg_pr_fu_around_eu_vecs(eu=%p) e=%p\n", (void *)eu, (void *)eu->e_p);
 
     /* To go correct way around, start with arg's mate,
      * so that arg, then radial, will follow.
@@ -1024,8 +944,6 @@ nmg_pr_fu_around_eu_vecs(const struct edgeuse *eu, const fastf_t *xvec, const fa
 
 
 /**
- * N M G _ P R _ F U _ A R O U N D _ E U
- *
  * A debugging routine to print all the faceuses around a given edge,
  * starting with the given edgeuse.
  * The normal of the first face is considered to be "0 degrees",
@@ -1038,7 +956,7 @@ nmg_pr_fu_around_eu(const struct edgeuse *eu, const struct bn_tol *tol)
 
     NMG_CK_EDGEUSE(eu);
     BN_CK_TOL(tol);
-    bu_log("nmg_pr_fu_around_eu(x%x)\n", eu);
+    bu_log("nmg_pr_fu_around_eu(%p)\n", (void *)eu);
 
     if (eu->vu_p->v_p == eu->eumate_p->vu_p->v_p || *eu->g.magic_p == NMG_EDGE_G_CNURB_MAGIC) {
 	VSET(xvec, 1, 0, 0);
@@ -1054,8 +972,6 @@ nmg_pr_fu_around_eu(const struct edgeuse *eu, const struct bn_tol *tol)
 
 
 /**
- * N M G _ P L _ L U _ A R O U N D _ E U
- *
  * Plot all the loopuses around an edgeuse.
  * Don't bother drawing the loopuse mates.
  */
@@ -1108,8 +1024,6 @@ nmg_pl_lu_around_eu(const struct edgeuse *eu)
 
 
 /**
- * N M G _ P R _ F U S _ I N _ F G
- *
  * For either kind of face geometry, print the list of all faces & faceuses
  * that share this geometry.
  */
@@ -1119,12 +1033,12 @@ nmg_pr_fus_in_fg(const uint32_t *fg_magic)
     struct face *f;
 
     NMG_CK_FACE_G_EITHER(fg_magic);
-    bu_log("nmg_pr_fus_in_fg(x%x):\n", fg_magic);
+    bu_log("nmg_pr_fus_in_fg(%p):\n", (void *)fg_magic);
     for (BU_LIST_FOR(f, face, &(((struct face_g_plane *)fg_magic)->f_hd))) {
 	NMG_CK_FACE(f);
 	NMG_CK_FACEUSE(f->fu_p);
-	bu_log(" f=x%x, fu=x%x, fumate=x%x\n",
-	       f, f->fu_p, f->fu_p->fumate_p);
+	bu_log(" f=%p, fu=%p, fumate=%p\n",
+	       (void *)f, (void *)f->fu_p, (void *)f->fu_p->fumate_p);
     }
 }
 

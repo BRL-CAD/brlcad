@@ -1,7 +1,7 @@
 /*                 BoundedSurface.cpp
  * BRL-CAD
  *
- * Copyright (c) 1994-2013 United States Government as represented by
+ * Copyright (c) 1994-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -55,9 +55,12 @@ BoundedSurface::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
     id = sse->STEPfile_id;
 
     if (!Surface::Load(sw, sse)) {
+	sw->entity_status[id] = STEP_LOAD_ERROR;
 	std::cout << CLASSNAME << ":Error loading base class ::Surface." << std::endl;
 	return false;
     }
+
+    sw->entity_status[id] = STEP_LOADED;
 
     return true;
 }

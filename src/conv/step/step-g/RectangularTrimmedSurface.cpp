@@ -1,7 +1,7 @@
 /*                 RectangularTrimmedSurface.cpp
  * BRL-CAD
  *
- * Copyright (c) 1994-2013 United States Government as represented by
+ * Copyright (c) 1994-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -72,6 +72,7 @@ RectangularTrimmedSurface::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
 
     if (!BoundedSurface::Load(step, sse)) {
 	std::cout << CLASSNAME << ":Error loading base class ::BoundedSurface." << std::endl;
+	sw->entity_status[id] = STEP_LOAD_ERROR;
 	return false;
     }
 
@@ -83,8 +84,10 @@ RectangularTrimmedSurface::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
 	SDAI_Application_instance *entity = step->getEntityAttribute(sse, "basis_surface");
 	if (entity) {
 	    basis_surface = dynamic_cast<Surface *>(Factory::CreateObject(sw, entity));
-	} else {
+	}
+	if (!entity || !basis_surface) {
 	    std::cerr << CLASSNAME << ": error loading 'basis_surface' attribute." << std::endl;
+	    sw->entity_status[id] = STEP_LOAD_ERROR;
 	    return false;
 	}
     }
@@ -96,6 +99,8 @@ RectangularTrimmedSurface::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
 
     usense = step->getBooleanAttribute(sse, "usense");
     vsense = step->getBooleanAttribute(sse, "vsense");
+
+    sw->entity_status[id] = STEP_LOADED;
 
     return true;
 }

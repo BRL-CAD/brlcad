@@ -2,7 +2,7 @@
 #                      D B C L E A N . S H
 # BRL-CAD
 #
-# Copyright (c) 1991-2013 United States Government as represented by
+# Copyright (c) 1991-2014 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This program is free software; you can redistribute it and/or
@@ -19,8 +19,8 @@
 # information.
 ###
 
-# This shell program compacts mged (.g) databases to remove spaces left
-# by the kill/killall commands.  This is achieved by converting the
+# This shell program compacts mged (.g) databases to remove spaces which resulted
+# from use of the kill/killall commands.  This is achieved by converting the
 # database to ASCII and then back to .g format.
 # Note: when the converters are unable to convert a solid and it is skipped,
 # the conversions will go to completion and a new database --- without those
@@ -34,8 +34,8 @@
 
 if test "$#" -lt 2
 then
-	echo "Usage: $0 in.g out.g"
-	exit 1
+    echo "Usage: $0 in.g out.g"
+    exit 1
 fi
 
 # Test to check whether the name of the input database is the same
@@ -44,8 +44,8 @@ fi
 
 if test $1 = $2
 then
-	echo " $0 ERROR: input and output name must be different"
-	exit 1
+    echo " $0 ERROR: input and output name must be different"
+    exit 1
 fi
 
 # Set a temp file to be in /usr/tmp and include the process id.  That
@@ -67,10 +67,10 @@ trap "rm -f $TMP; exit 1"  1 2 3 15
 
 if touch $2
 then
-	eval
+    eval
 else
-	echo "$0 ERROR: $2 permission denied"
-	exit 1
+    echo "$0 ERROR: $2 permission denied"
+    exit 1
 fi
 
 # Do the conversions with g2asc and asc2g.  If either conversion does
@@ -79,20 +79,20 @@ fi
 
 if g2asc < $1 > $TMP
 then
-	eval
+    eval
 else
-	echo "$0 ERROR: g2asc failed on $1"
-	rm -f $TMP
-	exit 1
+    echo "$0 ERROR: g2asc failed on $1"
+    rm -f $TMP
+    exit 1
 fi
 
 if asc2g < $TMP > $2
 then
-	eval
+    eval
 else
-	echo "$0 ERROR: asc2g failed on $2"
-	rm -f $TMP $2
-	exit 1
+    echo "$0 ERROR: asc2g failed on $2"
+    rm -f $TMP $2
+    exit 1
 fi
 
 # Now clean up after a successful conversion and exit.

@@ -260,9 +260,7 @@
 <TD WIDTH="21%" VALIGN="MIDDLE">
 <FONT SIZE=2><P></FONT><A HREF="#make"><FONT SIZE=2>make</FONT></A></TD>
 </TR>
-<TR><TD WIDTH="18%" VALIGN="MIDDLE">
-<FONT SIZE=2><P></FONT><A HREF="#make_bb"><FONT SIZE=2>make_bb</FONT></A></TD>
-<TD WIDTH="19%" VALIGN="MIDDLE">
+<TR><TD WIDTH="19%" VALIGN="MIDDLE">
 <FONT SIZE=2><P></FONT><A HREF="#mater"><FONT SIZE=2>mater</FONT></A></TD>
 <TD WIDTH="20%" VALIGN="MIDDLE">
 <FONT SIZE=2><P></FONT><A HREF="#matpick"><FONT SIZE=2>matpick</FONT></A></TD>
@@ -331,6 +329,8 @@
 <TD WIDTH="19%" VALIGN="MIDDLE">
 <FONT SIZE=2><P></FONT><A HREF="#ps"><FONT SIZE=2>ps</FONT></A></TD>
 <TD WIDTH="20%" VALIGN="MIDDLE">
+<FONT SIZE=2><P></FONT><A HREF="#pull"><FONT SIZE=2>pull</FONT></A></TD>
+<TD WIDTH="21%" VALIGN="MIDDLE">
 <FONT SIZE=2><P></FONT><A HREF="#push"><FONT SIZE=2>push</FONT></A></TD>
 <TD WIDTH="22%" VALIGN="MIDDLE">
 <FONT SIZE=2><P></FONT><A HREF="#putmat"><FONT SIZE=2>putmat</FONT></A></TD>
@@ -839,7 +839,7 @@
 -- Create a toplevel window named .t. </P>
 <P><BR>
 </FONT><TT>mged&gt;</TT><FONT SIZE=2> <B>attach -t 0 -S 800 -n .t.ogl ogl</B> <BR>
--- Open a 800x800 OpenGl display window named .t.ogl that is not a top-level window.</P>
+-- Open a 800x800 OpenGL display window named .t.ogl that is not a top-level window.</P>
 <P><BR>
 </FONT><TT>mged&gt;</TT><FONT SIZE=2> <B>button .t.dismiss -text Dismiss -command "release .t.ogl; destroy .t"</B> <BR>
 -- Create a button to dismiss the display manager etc. </P>
@@ -1500,7 +1500,7 @@ l r230 r231 r232 r233 r234 r235 r236 r237 r238 r239 <BR>
 <I><LI>t</I> -- Perform CSG-to-tNURBS conversion (still under development). </LI>
 <I><LI>v</I> -- Shade using per-vertex normals, when present. </LI>
 <I><LI>u</I> -- Draw </FONT><A HREF="#NMG"><FONT SIZE=2>NMG</FONT></A><FONT SIZE=2> edgeuses (for debugging). </LI>
-<I><LI>S</I> -- Draw tNURBs with trimming curves only, no surfaces. </LI>
+<I><LI>S</I> -- Draw tNURBS with trimming curves only, no surfaces. </LI>
 <I><LI>T</I> -- Do not triangulate after evaluating the Boolean (may produce unexpected results if not used with the <I>w</I> option). </LI>
 <I><LI>P</I># -- Use # processors in parallel. Default=1. </LI>
 <I><LI>r</I> -- Draw all objects in red. Useful for examining objects colored black. </LI>
@@ -2164,16 +2164,6 @@ foo.r_xpand/R
 
 <P><HR ALIGN="RIGHT"></P>
 </FONT><B><DL>
-<DT><A NAME="make_bb"></A>make_bb</B> [-u] <I>new_shape_name</I> &lt;<I>objects|paths</I>&gt;</DT>
-<DD>The &quot;make_bb&quot; (make bounding box) command builds a single axis-aligned rectangular parallelepiped (RPP) that will contain the <I>objects</I> and <I>paths</I> specified.  The <I>paths</I> will include any transformation matrices that accumulate from <A HREF="#COMBINATION">combinations</A> along the path.  The <A HREF="#listeval">listeval</A> command may be used to see the effect of transformation matrices along a path.  The optional -u argument indicates that regions which have the <i>air</i> flag set should be retained, not discarded as is the default.</DD>
-<FONT SIZE=4><DT>Examples:</DT>
-</FONT><TT><DD>mged&gt;</TT> <B>make_bb new_bb shapea group1/region3</DD>
-</DL><DIR>
-
-</B><FONT SIZE=2><P>-- Create an RPP named <I>new_bb</I> that is large enough to contain <I>shapea</I> and <I>group1/region3.</I> </P></DIR>
-
-<P><HR ALIGN="RIGHT"></P>
-</FONT><B><DL>
 <DT><A NAME="mater"></A>mater</B> <I>combination</I> [<I>shader_parameters</I>[<I>RGB</I> [<I>inheritance</I>]]]</DT>
 <DD>The &quot;mater&quot; command assigns <A HREF="#SHADER">shader</A> parameters, <A HREF="#RGB">RGB</A> color, and <A HREF="#INHERITANCE">inheritance</A> to an existing combination.  The information may be included on the command line; otherwise the user will be prompted for it.  Some available shaders are:</DD>
 </DL>
@@ -2388,7 +2378,7 @@ foo.r_xpand/R
 <P><HR ALIGN="RIGHT"></P>
 </FONT><B><DL>
 <DT><A NAME="permute"></A>permute</B> <I>tuple</DT>
-</I><DD>The &quot;permute&quot; command permutes the vertex labels for the face of an <A HREF="#ARB">ARB</A> shape that is currently being edited.  The <I>tuple</I> indicates which face is affected and also indicates the desired result.  The tuple is formed by concating the list of vertex numbers for the face in the order desired such that the first vertex listed will become vertex number one (and therefore the default <A HREF="#keypoint">keypoint</A>).  Only a sufficient number of vertices to disambiguate need be included in the tuple.  Note that this has no effect on the geometry of the <I>ARB</I>, but may affect any texture mapping involving this shape.</DD>
+</I><DD>The &quot;permute&quot; command permutes the vertex labels for the face of an <A HREF="#ARB">ARB</A> shape that is currently being edited.  The <I>tuple</I> indicates which face is affected and also indicates the desired result.  The tuple is formed by concatting the list of vertex numbers for the face in the order desired such that the first vertex listed will become vertex number one (and therefore the default <A HREF="#keypoint">keypoint</A>).  Only a sufficient number of vertices to disambiguate need be included in the tuple.  Note that this has no effect on the geometry of the <I>ARB</I>, but may affect any texture mapping involving this shape.</DD>
 <FONT SIZE=4><DT>Examples:</DT>
 </FONT><TT><DD>mged&gt;</TT> <B>permute 321</DD>
 </DL><DIR>
@@ -2515,6 +2505,17 @@ foo.r_xpand/R
 <P><BR>
 </FONT><TT>mged&gt;</TT><FONT SIZE=2> <B>ps -l 10 -t "Test Fat Lines" fat_lines.ps</B> <BR>
 -- This time use fat lines. </P></DIR>
+
+<P><HR ALIGN="RIGHT"></P>
+</FONT><B><DL>
+<DT><A NAME="pull"></A>pull</B> &lt;<I>objects</I>&gt;</DT>
+<DD>The &quot;pull&quot; command pulls the effects of all transformation matrices that appear in any <A HREF="#SOLID">primitive shapes</A> or <A HREF="#COMBINATION">combinations</A> in the trees up to the specified <I>objects</I> heading the tree. This will restore the original the parameters of the <I>primitive shapes</I> if any of the transformation matrices are not identity matrices.  All the transformation matrices visited up the tree will be set to the current transformation matrix.  This command will fail, and no changes will be made, if the head is referenced by a <I>primitive shape</I>.</DD>
+<FONT SIZE=4><DT>Examples:</DT>
+</FONT><TT><DD>mged&gt;</TT> <B>pull group1 regiona</DD>
+</DL><DIR>
+
+</B><FONT SIZE=2><P>-- Pull  the effects of any transformation matrices from the <I>primitive shapes.</I> in the trees up to the heads indicated by <I>group1</I> and <I>regiona</I> </P>
+</DIR>
 
 <P><HR ALIGN="RIGHT"></P>
 </FONT><B><DL>

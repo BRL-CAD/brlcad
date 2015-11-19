@@ -1,7 +1,7 @@
 /*                       F B - C M A P . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2013 United States Government as represented by
+ * Copyright (c) 1986-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -28,9 +28,9 @@
 
 #include <stdlib.h>
 #include <string.h>
-#include "bio.h"
 
-#include "bu.h"
+#include "bu/str.h"
+#include "bu/log.h"
 #include "fb.h"
 
 ColorMap cm;
@@ -40,7 +40,7 @@ Usage: fb-cmap [-H] [colormap]\n";
 int
 main(int argc, char **argv)
 {
-    FBIO *fbp;
+    fb *fbp;
     FILE *fp;
     int fbsize = 512;
     int i;
@@ -65,11 +65,11 @@ main(int argc, char **argv)
 	}
     } else {
 	fp = stdout;
-	if(isatty(fileno(fp)))
+	if (isatty(fileno(fp)))
 	    fprintf(stderr, "%s       Program continues running:\n", usage);
     }
 
-    if ((fbp = fb_open(NULL, fbsize, fbsize)) == FBIO_NULL)
+    if ((fbp = fb_open(NULL, fbsize, fbsize)) == FB_NULL)
 	bu_exit(2, "Unable to open framebuffer\n");
 
     i = fb_rmap(fbp, &cm);

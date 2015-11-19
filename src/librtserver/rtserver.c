@@ -1,7 +1,7 @@
 /*                      R T S E R V E R . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2013 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -30,14 +30,22 @@
 #include <stdlib.h>
 #include <string.h>
 #include <pthread.h>
-#include "bin.h"
 
+#include "tcl.h"
+
+#include "bnetwork.h"
+
+#include "bu/cv.h"
 #include "vmath.h"
 #include "nmg.h"
 #include "raytrace.h"
-#include "nurb.h"
-#include "rtgeom.h"
+#include "rt/nurb.h"
+#include "rt/geom.h"
 #include "rtserver.h"
+
+#ifdef UNUSED
+#  undef UNUSED /* we conflict with jni_md.h */
+#endif
 
 #ifdef HAVE_JAVAVM_JNI_H
 #  include <JavaVM/jni.h>
@@ -47,6 +55,11 @@
 #  include "ERROR: jni.h could not be found"
 #endif
 #include "RtServerImpl.h"
+
+/* just in case older versions of jni_md.h don't provide */
+#ifndef UNUSED
+#  define UNUSED(parameter) UNUSED_ ## parameter __attribute__((unused))
+#endif
 
 /* private structures not used outside this file */
 struct rtserver_rti {
@@ -91,7 +104,7 @@ static pthread_mutex_t apps_mutex = PTHREAD_MUTEX_INITIALIZER;
 	    _p = (struct application *)BU_PTBL_GET( &apps, BU_PTBL_LEN( &apps )-1 ); \
 	    bu_ptbl_trunc( &apps, BU_PTBL_LEN( &apps )-1 );		\
 	    pthread_mutex_unlock( &apps_mutex );			\
-	    bu_vlb_reset(_p->a_uptr);					\
+	    bu_vlb_reset((struct bu_vlb *)_p->a_uptr);					\
 	} else {							\
 	    int app_no = app_count++;					\
 	    pthread_mutex_unlock( &apps_mutex );			\
@@ -99,7 +112,7 @@ static pthread_mutex_t apps_mutex = PTHREAD_MUTEX_INITIALIZER;
 	    RT_APPLICATION_INIT(_p);					\
 	    _p->a_rt_i = myrtip;					\
 	    BU_ALLOC(_p->a_uptr, struct bu_vlb); \
-	    bu_vlb_init(_p->a_uptr);					\
+	    bu_vlb_init((struct bu_vlb *)_p->a_uptr);					\
 	    BU_ALLOC(_p->a_resource, struct resource); \
 	    rt_init_resource( _p->a_resource, app_no, _p->a_rt_i );	\
 	    _p->a_hit = rts_hit;					\
@@ -126,7 +139,7 @@ static int use_air=1;
 static int verbose=0;
 
 /* total number of MUVES component names */
-static CLIENTDATA_INT comp_count=0;
+static long comp_count=0;
 
 /* array of MUVES component names */
 static char **names;
@@ -234,10 +247,10 @@ get_muves_components()
     name_entry = Tcl_FirstHashEntry( &name_tbl, &search );
     while ( name_entry ) {
 	char *name;
-	CLIENTDATA_INT idx;
+	long idx;
 
 	name = Tcl_GetHashKey( &name_tbl, name_entry );
-	idx = (CLIENTDATA_INT)Tcl_GetHashValue( name_entry );
+	idx = (long)Tcl_GetHashValue( name_entry );
 	names[idx] = bu_strdup( name );
 
 	name_entry = Tcl_NextHashEntry( &search );
@@ -341,23 +354,23 @@ rts_clean( int sessionid)
     bu_free( (char *)rts_geometry, "rts_geometry" );
     rts_geometry = NULL;
 
-    if(title != NULL) {
+    if (title != NULL) {
 	bu_free(title, "title");
 	title = NULL;
     }
 
-    for( i=0 ; i<BU_PTBL_LEN(&apps) ; i++ ) {
+    for ( i=0 ; i<BU_PTBL_LEN(&apps) ; i++ ) {
 	struct bu_vlb *vlb;
 
 	ap = (struct application *)BU_PTBL_GET( &apps, i);
 
 	vlb = (struct bu_vlb *)ap->a_uptr;
-	if(vlb != NULL) {
+	if (vlb != NULL) {
 	    bu_vlb_free(vlb);
 	    bu_free(vlb, "vlb");
 	}
 
-	if( ap->a_resource != NULL ) {
+	if ( ap->a_resource != NULL ) {
 	    rt_clean_resource_complete(NULL, ap->a_resource);
 	    bu_free(ap->a_resource, "resource");
 	}
@@ -435,7 +448,7 @@ rts_load_geometry( char *filename, int num_trees, char **objects )
 	rts_geometry = NULL;
     }
 
-    if( !BU_PTBL_TEST(&apps) ) {
+    if ( !BU_PTBL_TEST(&apps) ) {
 	bu_ptbl_init( &apps, 8, "application structure list" );
     }
 
@@ -526,16 +539,16 @@ rts_load_geometry( char *filename, int num_trees, char **objects )
 	/* create the hash table of region names */
 	BU_ALLOC(rts_rtip->rtrti_region_names, Tcl_HashTable);
 	Tcl_InitHashTable(rts_rtip->rtrti_region_names, TCL_STRING_KEYS);
-	for( regno=0 ; regno<rtip->nregions ; regno++ ) {
+	for ( regno=0 ; regno<rtip->nregions ; regno++ ) {
 	    int newPtr = 0;
 	    Tcl_HashEntry *entry = Tcl_CreateHashEntry(rts_rtip->rtrti_region_names, rtip->Regions[regno]->reg_name, &newPtr);
-	    if( !newPtr ) {
-		if( verbose ) {
+	    if ( !newPtr ) {
+		if ( verbose ) {
 		    bu_log( "Already have an entry for region %s\n", rtip->Regions[regno]->reg_name);
 		}
 		continue;
 	    }
-	    if( verbose ) {
+	    if ( verbose ) {
 		bu_log( "Setting hash table for key %s to %d\n", rtip->Regions[regno]->reg_name, regno);
 	    }
 	    Tcl_SetHashValue(entry, (ClientData)regno );
@@ -565,7 +578,7 @@ rts_miss( struct application *ap )
 
     /* get the results pointer from the application structure */
     vlb = (struct bu_vlb *)ap->a_uptr;
-    if(vlb != NULL) {
+    if (vlb != NULL) {
 	unsigned char buffer[SIZEOF_NETWORK_LONG];
 	*(uint32_t *)buffer = htonl(numPartitions);
 	bu_vlb_write(vlb, buffer, SIZEOF_NETWORK_LONG);
@@ -616,7 +629,7 @@ rts_hit( struct application *ap, struct partition *partHeadp, struct seg *UNUSED
 	Tcl_HashEntry *entry;
 	double inObl, outObl;
 	double dot;
-	int regionIndex;
+	long regionIndex;
 	int matrixSize;
 	int i;
 	matp_t inv_mat;
@@ -645,9 +658,9 @@ rts_hit( struct application *ap, struct partition *partHeadp, struct seg *UNUSED
 
 	/* calculate the entrance and exit obliquities */
 	dot = VDOT( reverse_ray_dir, enterNormal );
-	if( dot < -1.0 ) {
+	if ( dot < -1.0 ) {
 	    dot = -1.0;
-	} else if( dot > 1.0 ) {
+	} else if ( dot > 1.0 ) {
 	    dot = 1.0;
 	}
 	inObl = acos(dot);
@@ -659,9 +672,9 @@ rts_hit( struct application *ap, struct partition *partHeadp, struct seg *UNUSED
 	}
 
 	dot = VDOT( ap->a_ray.r_dir, exitNormal );
-	if( dot < -1.0 ) {
+	if ( dot < -1.0 ) {
 	    dot = -1.0;
-	} else if( dot > 1.0 ) {
+	} else if ( dot > 1.0 ) {
 	    dot = 1.0;
 	}
 	outObl = acos(dot);
@@ -678,8 +691,8 @@ rts_hit( struct application *ap, struct partition *partHeadp, struct seg *UNUSED
 	bu_vlb_write(vlb, buffer, SIZEOF_NETWORK_DOUBLE*2);
 
 	/* get the region index from the hash table */
-	entry = Tcl_FindHashEntry( rts_geometry[sessionid]->rts_rtis[0]->rtrti_region_names, (ClientData)rp->reg_name );
-	regionIndex = (CLIENTDATA_INT)Tcl_GetHashValue( entry );
+	entry = Tcl_FindHashEntry( rts_geometry[sessionid]->rts_rtis[0]->rtrti_region_names, (const char *)rp->reg_name );
+	regionIndex = (long)Tcl_GetHashValue( entry );
 
 	/* write region index to buffer */
 	*(uint32_t *)buffer = htonl(regionIndex);
@@ -739,7 +752,7 @@ printHits(struct bu_vlb *vlb)
 
     c += SIZEOF_NETWORK_LONG;
 
-    for(rayNum=0 ; rayNum<numRays ; rayNum++) {
+    for (rayNum=0 ; rayNum<numRays ; rayNum++) {
 	int numPartitions = 0;
 	int partNo;
 
@@ -748,7 +761,7 @@ printHits(struct bu_vlb *vlb)
 	c += SIZEOF_NETWORK_LONG;
 	bu_log("\tnumber of partitions: %d\n", numPartitions);
 
-	for(partNo=0 ; partNo<numPartitions ; partNo++) {
+	for (partNo=0 ; partNo<numPartitions ; partNo++) {
 	    point_t enterPt;
 	    point_t exitPt;
 	    vect_t enterNorm;
@@ -804,7 +817,7 @@ rts_shootray( struct application *ap )
 
     /* write the number of rays to the byte array */
     *(uint32_t *)buffer = htonl(i);
-    bu_vlb_write(ap->a_uptr, buffer, SIZEOF_NETWORK_LONG);
+    bu_vlb_write((struct bu_vlb *)ap->a_uptr, buffer, SIZEOF_NETWORK_LONG);
 
     /* actually shoot the ray */
     rt_shootray( ap );
@@ -824,8 +837,6 @@ void fillItemTree( jobject parent_node,
 		   jmethodID itemTree_setUseCount_id );
 
 /*
- *			F I L L I T E M M E M B E R S
- *
  * Routine to descend into a BRL-CAD tree structure and call fillItemTree() at each leaf
  */
 void
@@ -872,8 +883,7 @@ fillItemMembers( jobject node,
     }
 }
 
-/*				F I L L I T E M T R E E
- *
+/*
  * Routine to fill a MUVES3 ItemTree structure based on a leaf node of a BRL-CAD tree structure.
  */
 void
@@ -1302,7 +1312,7 @@ Java_mil_army_muves_brlcadservice_impl_BrlcadJNIWrapper_shootRay( JNIEnv *env, j
     /* make session id available for the hit routine */
     ap->a_user = sessionId;
 
-    vlb = ap->a_uptr;
+    vlb = (struct bu_vlb *)ap->a_uptr;
 
     /* write the number of rays to the byte array (one in this case) */
     *(uint32_t *)buffer = htonl(rayCount);
@@ -1452,11 +1462,11 @@ JNIEXPORT jbyteArray JNICALL Java_mil_army_muves_brlcadservice_impl_BrlcadJNIWra
     rayCount = (*env)->GetArrayLength(env, aRays);
 
     /* write the number of rays to the byte array */
-    vlb = ap->a_uptr;
+    vlb = (struct bu_vlb *)ap->a_uptr;
     *(uint32_t *)buffer = htonl(rayCount);
     bu_vlb_write(vlb, buffer, SIZEOF_NETWORK_LONG);
 
-    for(rayIndex=0 ; rayIndex<rayCount ; rayIndex++) {
+    for (rayIndex=0 ; rayIndex<rayCount ; rayIndex++) {
 	jobject ray, start, direction;
 
 	ray = (*env)->GetObjectArrayElement(env, aRays, rayIndex);
@@ -1753,7 +1763,7 @@ JNIEXPORT jbyteArray JNICALL Java_mil_army_muves_brlcadservice_impl_BrlcadJNIWra
     vlb = (struct bu_vlb *)ap->a_uptr;
 
     /* write the number of rays to the byte array */
-    vlb = ap->a_uptr;
+    vlb = (struct bu_vlb *)ap->a_uptr;
     *(uint32_t *)buffer = htonl(rayCount);
     bu_vlb_write(vlb, buffer, SIZEOF_NETWORK_LONG);
 
@@ -1798,8 +1808,6 @@ JNIEXPORT jbyteArray JNICALL Java_mil_army_muves_brlcadservice_impl_BrlcadJNIWra
 
 
 /*
- *				G E T I T E M T R E E
- *
  * This is the implementation of the MUVES3 Platform.getItemTree() method for BRL-CAD geometry.
  * Basically a tree walker that gathers information about the BRL-CAD objects that are prepped
  * and ready for ray-tracing. The returned tree contains leaf nodes for each BRL-CAD region in the
@@ -1936,7 +1944,7 @@ JNIEXPORT jobjectArray JNICALL Java_mil_army_muves_brlcadservice_impl_BrlcadJNIW
     int region_count;
     jobject jNameArray;
     jstring region_name;
-    CLIENTDATA_INT region_number;
+    long region_number;
 
     hashTbl = rts_geometry[sessionId]->rts_rtis[0]->rtrti_region_names;
     region_count = rts_geometry[sessionId]->rts_rtis[0]->region_count;
@@ -1944,8 +1952,8 @@ JNIEXPORT jobjectArray JNICALL Java_mil_army_muves_brlcadservice_impl_BrlcadJNIW
     jNameArray = (*env)->NewObjectArray( env, region_count, (*env)->FindClass(env, "java/lang/String"), (jobject)NULL);
     entry = Tcl_FirstHashEntry(hashTbl, &searchTbl);
 
-    while( entry != NULL ) {
-	region_number = (CLIENTDATA_INT)Tcl_GetHashValue(entry);
+    while ( entry != NULL ) {
+	region_number = (long)Tcl_GetHashValue(entry);
 	region_name = (*env)->NewStringUTF(env, Tcl_GetHashKey(hashTbl, entry));
 	(*env)->SetObjectArrayElement(env, jNameArray, region_number, region_name);
 	entry = Tcl_NextHashEntry(&searchTbl);

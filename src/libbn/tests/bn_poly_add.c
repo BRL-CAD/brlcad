@@ -1,7 +1,7 @@
 /*              T E S T _ B N _ P O L Y _ A D D . C
  * BRL-CAD
  *
- * Copyright (c) 2013 United States Government as represented by
+ * Copyright (c) 2013-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -30,7 +30,6 @@
 #include "bu.h"
 #include "vmath.h"
 #include "bn.h"
-#include "magic.h"
 
 
 /* holds three polynomials to be used in test. */
@@ -91,14 +90,14 @@ poly_init(void)
 
 
 /* compares the values of the array and returns 0. */
-int
-check_results(fastf_t a[], fastf_t b[], int n)
+static size_t
+check_results(fastf_t a[], fastf_t b[], size_t n)
 {
-    int i;
+    size_t i;
 
     for (i = 0; i < n; i++) {
-	if (!EQUAL(a[i],b[i]))
-	    return -1;
+	if (!EQUAL(a[i], b[i]))
+	    return 1;
     }
 
     return 0;
@@ -106,10 +105,10 @@ check_results(fastf_t a[], fastf_t b[], int n)
 
 
 /* tests the polynomials to make sure bn_poly_add() works properly. */
-int
+static int
 test_bn_poly_add(void)
 {
-    int val, val1, val2;
+    size_t val, val1, val2;
     bn_poly_t a, b, c;
     a = bn_Zero_poly, b = bn_Zero_poly, c = bn_Zero_poly;
 
@@ -117,14 +116,14 @@ test_bn_poly_add(void)
     bn_poly_add(&b, &input[1], &input[1]);
     bn_poly_add(&c, &input[2], &input[2]);
 
-    val = check_results(a.cf,output[0].cf, output[0].dgr + 1);
+    val = check_results(a.cf, output[0].cf, output[0].dgr + 1);
     val1 = check_results(b.cf, output[1].cf, output[1].dgr + 1);
     val2 = check_results(c.cf, output[2].cf, output[2].dgr + 1);
 
     if (val == 0 && val1 == 0 && val2 == 0)
-	return val;
+	return 0;
 
-    return -1;
+    return 1;
 }
 
 
@@ -135,13 +134,12 @@ main(void)
     poly_init();
     ret = test_bn_poly_add();
 
-    if (ret == 0) {
-	bu_log("Function computes correctly");
-	exit(EXIT_SUCCESS);
-    } else
+    if (ret != 0) {
 	exit(EXIT_FAILURE);
+    }
 
-    return 0;
+    bu_log("Function computes correctly");
+    return EXIT_SUCCESS;
 }
 
 

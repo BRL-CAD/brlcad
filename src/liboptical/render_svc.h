@@ -1,7 +1,7 @@
 /*                    R E N D E R _ S V C . H
  * BRL-CAD
  *
- * Copyright (c) 2012-2013 United States Government as represented by
+ * Copyright (c) 2012-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -18,8 +18,8 @@
  * information.
  */
 
-#ifndef RENDER_SVC_H
-#define RENDER_SVC_H
+#ifndef LIBOPTICAL_RENDER_SVC_H
+#define LIBOPTICAL_RENDER_SVC_H
 
 #include "common.h"
 
@@ -88,7 +88,7 @@ using namespace OSL_NAMESPACE;
 #endif
 
 
-#endif /* RENDER_SVC_H */
+#endif /* LIBOPTICAL_RENDER_SVC_H */
 
 /*
  * Local Variables:

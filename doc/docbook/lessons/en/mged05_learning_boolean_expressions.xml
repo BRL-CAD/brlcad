@@ -1,5 +1,3 @@
-<!-- Converted by db4-upgrade version 1.0 -->
-
 <article xmlns="http://docbook.org/ns/docbook" version="5.0">
   <info><title>Learning About Boolean Expressions</title>
 
@@ -105,7 +103,7 @@
 	</itemizedlist>
       </para>
 
-      <section><info><title>Union</title></info>
+      <section xml:id="Union"><info><title>Union</title></info>
 
 	<para>
 	  The union operator, u, joins shapes so that any point in at least one of
@@ -115,7 +113,10 @@
 
 	<informalfigure>
 	<mediaobject>
-	  <imageobject>
+	  <imageobject role="html">
+	    <imagedata align="center" fileref="../../lessons/en/images/mged05_unionspheres.png" format="PNG"/>
+	  </imageobject>
+	  <imageobject role="fo">
 	    <imagedata align="center" fileref="../../lessons/en/images/mged05_unionspheres.png" format="PNG"/>
 	  </imageobject>
 	  <caption>
@@ -127,7 +128,7 @@
       </informalfigure>
       </section>
 
-      <section><info><title>Subtraction</title></info>
+      <section xml:id="Subtraction"><info><title>Subtraction</title></info>
 
 	<para>
 	  When a primitive shape has a second, overlapping shape subtracted from it,
@@ -147,7 +148,10 @@
 
 	<informalfigure>
 	<mediaobject>
-	  <imageobject>
+	  <imageobject role="html">
+	    <imagedata align="center" fileref="../../lessons/en/images/mged05_subtractionspheres.png" format="PNG"/>
+	  </imageobject>
+	  <imageobject role="fo">
 	    <imagedata align="center" fileref="../../lessons/en/images/mged05_subtractionspheres.png" format="PNG"/>
 	  </imageobject>
 	  <caption>
@@ -160,7 +164,7 @@
 
       </section>
 
-      <section><info><title>Intersection</title></info>
+      <section xml:id="Intersection"><info><title>Intersection</title></info>
 
 
 	<para>
@@ -187,7 +191,10 @@
 
 	<informalfigure>
 	<mediaobject>
-	  <imageobject>
+	  <imageobject role="html">
+	    <imagedata align="center" fileref="../../lessons/en/images/mged05_intersectionspheres.png" format="PNG"/>
+	  </imageobject>
+	  <imageobject role="fo">
 	    <imagedata align="center" fileref="../../lessons/en/images/mged05_intersectionspheres.png" format="PNG"/>
 	  </imageobject>
 	  <caption>
@@ -223,7 +230,10 @@
 
 	<informalfigure>
 	<mediaobject>
-	  <imageobject>
+	  <imageobject role="html">
+	    <imagedata align="center" fileref="../../lessons/en/images/mged05_twoprimitivespheres.png" format="PNG"/>
+	  </imageobject>
+	  <imageobject role="fo">
 	    <imagedata align="center" fileref="../../lessons/en/images/mged05_twoprimitivespheres.png" format="PNG"/>
 	  </imageobject>
 	  <caption>
@@ -288,7 +298,10 @@
 
 	<informalfigure>
 	<mediaobject>
-	  <imageobject>
+	  <imageobject role="html">
+	    <imagedata align="center" fileref="../../lessons/en/images/mged05_combinationeditor.png" format="PNG"/>
+	  </imageobject>
+	  <imageobject role="fo">
 	    <imagedata align="center" fileref="../../lessons/en/images/mged05_combinationeditor.png" format="PNG"/>
 	  </imageobject>
 	  <caption>
@@ -329,8 +342,8 @@
 	<tgroup cols="2">
 	  <tbody>
 	    <row>
-	      <entry><inlinemediaobject><imageobject><imagedata fileref="../../lessons/en/images/mged05_raytracedpart1.png"/></imageobject></inlinemediaobject></entry>
-	      <entry><inlinemediaobject><imageobject><imagedata fileref="../../lessons/en/images/mged05_raytracedpart2.png"/></imageobject></inlinemediaobject></entry>
+	      <entry><inlinemediaobject><imageobject role="html"><imagedata fileref="../../lessons/en/images/mged05_raytracedpart1.png"/></imageobject><imageobject role="fo"><imagedata fileref="../../lessons/en/images/mged05_raytracedpart1.png"/></imageobject></inlinemediaobject></entry>
+	      <entry><inlinemediaobject><imageobject role="html"><imagedata fileref="../../lessons/en/images/mged05_raytracedpart2.png"/></imageobject><imageobject role="fo"><imagedata fileref="../../lessons/en/images/mged05_raytracedpart2.png"/></imageobject></inlinemediaobject></entry>
 	    </row>
 	    <row>
 	      <entry>Raytraced part1.r</entry>
@@ -408,7 +421,10 @@
 
 	<informalfigure>
 	<mediaobject>
-	  <imageobject>
+	  <imageobject role="html">
+	    <imagedata align="center" fileref="../../lessons/en/images/mged05_raytracedpart3.png" format="PNG"/>
+	  </imageobject>
+	  <imageobject role="fo">
 	    <imagedata align="center" fileref="../../lessons/en/images/mged05_raytracedpart3.png" format="PNG"/>
 	  </imageobject>
 	  <caption>
@@ -475,7 +491,10 @@
 
 	<informalfigure>
 	<mediaobject>
-	  <imageobject>
+	  <imageobject role="html">
+	    <imagedata align="center" fileref="../../lessons/en/images/mged05_raytraceddome.png" format="PNG"/>
+	  </imageobject>
+	  <imageobject role="fo">
 	    <imagedata align="center" fileref="../../lessons/en/images/mged05_raytraceddome.png" format="PNG"/>
 	  </imageobject>
 	  <caption>

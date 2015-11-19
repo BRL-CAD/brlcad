@@ -18,9 +18,8 @@
 <cmdsynopsis>
   <command>pix-ps</command>
     <arg choice='opt'>-e </arg>
-    <arg choice='opt'>-c </arg>
+    <arg choice='opt'>-c|-l </arg>
     <arg choice='opt'>-L </arg>
-    <arg choice='opt'>-h </arg>
     <arg choice='opt'>-s <replaceable>input_squaresize</replaceable></arg>
     <arg choice='opt'>-w <replaceable>input_width</replaceable></arg>
     <arg choice='opt'>-n <replaceable>input_height</replaceable></arg>
@@ -28,14 +27,14 @@
     <arg choice='opt'>-W <replaceable>inches_width</replaceable></arg>
     <arg choice='opt'>-N <replaceable>inches_height</replaceable></arg>
     <arg choice='opt'><replaceable>infile.pix</replaceable></arg>
-    <arg choice='plain'><replaceable>&gt;</replaceable></arg>
+    <arg choice='plain'>&gt;</arg>
     <arg choice='plain'><replaceable>outfile.ps</replaceable></arg>
 </cmdsynopsis>
 </refsynopsisdiv>
 
 
 <refsect1 xml:id='description'><title>DESCRIPTION</title>
-<para><emphasis remap='I'>Pix-ps</emphasis>
+<para><command>pix-ps</command>
 will take a color
 <citerefentry><refentrytitle>pix</refentrytitle><manvolnum>5</manvolnum></citerefentry>
 format file of given dimensions and produce a Postscript file
@@ -47,18 +46,17 @@ and
 flags specify the input file width and number of scan lines in pixels.
 They can both be set to the same value via
 <option>-s.</option>
-The
-<option>-h</option>
-flag is a shorthand for an input image size of 1024 square.
 If no input size is given, defaults of 512 are assumed.</para>
 
 <para>By default the output PostScript image size is 6.75 inches.
 The
 <option>-c</option>
-option will center it on a 8.5 x 11 inch page.
+option (on by default) will center it on a 8.5 x 11 inch page; otherwise, the
+<option>-l</option>
+option uses the lower left corner.
 If a different output size is desired,
-<option>-S</option>
-<option>-W</option>
+<option>-S</option>,
+<option>-W</option>,
 and
 <option>-N</option>
 can be used to set the size in inches analogous to the input
@@ -74,20 +72,20 @@ selects landscape mode, i.e. rotates the output image by ninety degrees.</para>
 <refsect1 xml:id='examples'><title>EXAMPLES</title>
 <para>pix-ps -c image.pix &gt; image.ps</para>
 
-<para>Produces a 6.75 inch PostScript file from an 512x512 input image
+<para>Produces a 6.75 inch PostScript file from a 512x512 input image
 and centers it on an 8.5 x 11 inch page.</para>
 
 
 <para>pix-ps -e -w 1024 -n 768 image.pix &gt; image.ps</para>
 
 <para>Takes the file image.pix which has the dimensions of 1024 pixels wide
-by 768 pixel high, and produces an Encapsulated Postscript version
+by 768 pixels high, and produces an Encapsulated Postscript version
 of it.</para>
 
 
-<para>pix-ps -L -c -W 5.2 &lt; image.pix &gt; image.ps</para>
+<para>pix-ps -L -c -S 5.2 &lt; image.pix &gt; image.ps</para>
 
-<para>Makes a PostScript file of the (assumed 512 square) image, with
+<para>Makes a PostScript file of the (assumed 512x512) image, with
 the output image 5.2 inches square, in landscape mode, centered
 on an 8.5 x 11 inch page.</para>
 </refsect1>
@@ -103,7 +101,7 @@ on an 8.5 x 11 inch page.</para>
 </refsect1>
 
 <refsect1 xml:id='copyright'><title>COPYRIGHT</title>
-<para>This software is Copyright (c) 1991-2013 by the United States
+<para>This software is Copyright (c) 1991-2014 by the United States
 Government as represented by U.S. Army Research Laboratory.</para>
 </refsect1>
 

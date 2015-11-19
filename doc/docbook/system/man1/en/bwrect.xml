@@ -17,31 +17,58 @@
 <refsynopsisdiv xml:id='synopsis'>
 <cmdsynopsis>
   <command>bwrect</command>
-    <arg choice='opt'>-h </arg>
     <arg choice='opt'>-s <replaceable>squaresize</replaceable></arg>
     <arg choice='opt'>-w <replaceable>width</replaceable></arg>
     <arg choice='opt'>-n <replaceable>height</replaceable></arg>
+    <arg choice='opt'>-S <replaceable>out_squaresize</replaceable></arg>
     <arg choice='opt'>-W <replaceable>out_width</replaceable></arg>
     <arg choice='opt'>-N <replaceable>out_height</replaceable></arg>
     <arg choice='opt'>-x <replaceable>xorig</replaceable></arg>
     <arg choice='opt'>-y <replaceable>yorig</replaceable></arg>
-    <arg choice='opt'>-S <replaceable>out_squaresize</replaceable></arg>
     <arg choice='opt'>-o <replaceable>out_file.bw</replaceable></arg>
     <arg choice='plain'><replaceable>file.bw</replaceable></arg>
-    <arg choice='plain'><replaceable>&gt;</replaceable></arg>
+    <arg choice='plain'>&gt;</arg>
     <arg choice='opt'><replaceable>out_file.bw</replaceable></arg>
 </cmdsynopsis>
 </refsynopsisdiv>
 
 
 <refsect1 xml:id='description'><title>DESCRIPTION</title>
-<para><emphasis remap='I'>Bwrect</emphasis>
+<para><command>bwrect</command>
 extracts a rectangular region from a black and white
 <citerefentry><refentrytitle>bw</refentrytitle><manvolnum>5</manvolnum></citerefentry>
-format file. The default input image size is 512X512.
-The x-y coordinates of the origin (xorig=0, yorig=0 corresponds to the
-lower left corner) and the dimension of the output image are passed as
-command line arguments.</para>
+format file. The default input image size is 512x512.
+The x,y coordinates of the origin (the default xorig=0, yorig=0 corresponds to the
+lower left corner) are passed as
+arguments for <option>-x</option> and <option>-y</option>.</para>
+
+<para>The
+<option>-w </option><replaceable>file_width</replaceable>
+flag specifies the width of each scanline in the input file, in pixels.
+<option>-W </option><replaceable>scr_width</replaceable>
+does the same for the display device.</para>
+
+<para>The
+<option>-n </option><replaceable>file_height</replaceable>
+and
+<option>-N </option><replaceable>scr_height</replaceable>
+flags specify the height in scanlines of the input file and display device
+respectively.</para>
+
+<para><option>-s </option><replaceable>squarefilesize</replaceable>
+and
+<option>-S </option><replaceable>squarescrsize</replaceable>
+set both the height and width to the size given (for input file and display device respectively).</para>
+
+<para>
+(<replaceable>scr_width</replaceable> and <replaceable>scr_height</replaceable> must be set
+to positive values, either separately via <option>-W</option> and <option>-N</option>, or
+jointly via <option>-S</option>.  This is because they start with default values of zero.)
+</para>
+
+<para><option>-o </option><replaceable>out_file.bw</replaceable> is a way of specifying output
+file name.</para>
+
 <para>This utility supports pipes and can read/write from/to them.
 </para>
 </refsect1>
@@ -62,7 +89,7 @@ so that shell scripts, etc., could use this.</para>
 </refsect1>
 
 <refsect1 xml:id='copyright'><title>COPYRIGHT</title>
-<para>This software is Copyright (c) 1989-2013 by the United States
+<para>This software is Copyright (c) 1989-2014 by the United States
 Government as represented by U.S. Army Research Laboratory.</para>
 </refsect1>
 

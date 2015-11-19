@@ -12,7 +12,6 @@ xmltools	http://xmlsoft.org/				Verify DocBook inputs and generate DocBook outpu
 
 Eigen		http://eigen.tuxfamily.org			Linear algebra - used by NURBS code
 boost		http://www.boost.org				C++ utilties - used by libpc and obj converter
-tnt		http://math.nist.gov/tnt/overview.html		Linear algebra - used by NURBS, plan is to replace with Eigen
 
 3.  Installed libraries
 
@@ -46,13 +45,10 @@ URToolkit							These are tools that were part of the original UtahRLE distribut
 								we distribute them, but it's not clear if they are ever used in standard BRL-CAD workflows
 
 5.  Tcl/Tk packages
-
-hv3		http://tkhtml.tcl.tk/hv3.html			This is the full web browser in Tcl/Tk, not just the subset used by the MGED help system.
 								The plan is to switch to using the full browser and its capabilities (like searching.)
 incrTcl		http://incrtcl.sourceforge.net/			Object oriented extension for Tcl/Tk - all Archer GUI work uses these extensions
 iwidgets	http://incrtcl.sourceforge.net/iwidgets		Part of the incrTcl project, used by Archer
-sqlite3		http://www.sqlite.org/				Although sqlite has many potential uses, currently it's in place for hv3
-tkhtml		fork of http://tkhtml.tcl.tk/tkhtml.html 	Used by MGED and Archer help systems now, and by hv3 once it is up and running.
+tkhtml		fork of http://tkhtml.tcl.tk/tkhtml.html 	Used by MGED and Archer help systems.
 tkpng		http://www.muonics.com/FreeStuff/TkPNG/ 	PNG photo image support for Tk - used by Archer
 tktable		http://tktable.sourceforge.net/			High performing table widget for Tcl/Tk, used by Archer
 

@@ -1,7 +1,7 @@
 /*                           S P H . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2013 United States Government as represented by
+ * Copyright (c) 1985-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -29,14 +29,16 @@
 
 #include "common.h"
 
-#include <stdio.h>
 #include <string.h>
 #include <math.h>
+
 #include "bio.h"
 
 #include "vmath.h"
-#include "rtgeom.h"
+#include "rt/geom.h"
 #include "raytrace.h"
+
+#include "../../librt_private.h"
 
 
 /*
@@ -67,9 +69,33 @@ struct sph_specific {
     mat_t sph_SoR;	/* Rotate and scale for UV mapping */
 };
 
+#ifdef USE_OPENCL
+/* largest data members first */
+struct clt_sph_specific {
+    cl_double sph_V[3];     /* Vector to center of sphere */
+    cl_double sph_radsq;    /* Radius squared */
+    cl_double sph_invrad;   /* Inverse radius (for normal) */
+};
+
+size_t
+clt_sph_pack(struct bu_pool *pool, struct soltab *stp)
+{
+    struct sph_specific *sph =
+        (struct sph_specific *)stp->st_specific;
+    struct clt_sph_specific *args;
+
+    const size_t size = sizeof(*args);
+    args = (struct clt_sph_specific*)bu_pool_alloc(pool, 1, size);
+
+    VMOVE(args->sph_V, sph->sph_V);
+    args->sph_radsq = sph->sph_radsq;
+    args->sph_invrad = sph->sph_invrad;
+    return size;
+}
+#endif /* USE_OPENCL */
+
+
 /**
- * R T _ S P H _ P R E P
- *
  * Given a pointer to a GED database record, and a transformation matrix,
  * determine if this is a valid sphere, and if so, precompute various
  * terms of the formula.
@@ -144,7 +170,7 @@ rt_sph_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 
     /* Solid is OK, compute constant terms now */
     BU_GET(sph, struct sph_specific);
-    stp->st_specific = (genptr_t)sph;
+    stp->st_specific = (void *)sph;
 
     VMOVE(sph->sph_V, eip->v);
 
@@ -173,9 +199,6 @@ rt_sph_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 }
 
 
-/**
- * R T _ S P H _ P R I N T
- */
 void
 rt_sph_print(register const struct soltab *stp)
 {
@@ -191,8 +214,6 @@ rt_sph_print(register const struct soltab *stp)
 
 
 /**
- * R T _ S P H _ S H O T
- *
  * Intersect a ray with a sphere.  If an intersection occurs, a struct
  * seg will be acquired and filled in.
  *
@@ -258,8 +279,6 @@ rt_sph_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 
 #define RT_SPH_SEG_MISS(SEG)		(SEG).seg_stp=(struct soltab *) 0;
 /**
- * R T _ S P H _ V S H O T
- *
  * This is the Becker vectorized version
  */
 void
@@ -319,8 +338,6 @@ rt_sph_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, str
 
 
 /**
- * R T _ S P H _ N O R M
- *
  * Given ONE ray distance, return the normal and entry/exit point.
  */
 void
@@ -336,8 +353,6 @@ rt_sph_norm(register struct hit *hitp, struct soltab *stp, register struct xray 
 
 
 /**
- * R T _ S P H _ C U R V E
- *
  * Return the curvature of the sphere.
  */
 void
@@ -354,8 +369,6 @@ rt_sph_curve(register struct curvature *cvp, register struct hit *hitp, struct s
 
 
 /**
- * R T _ S P H _ U V
- *
  * For a hit on the surface of an SPH, return the (u, v) coordinates
  * of the hit point, 0 <= u, v <= 1.
  *
@@ -379,7 +392,7 @@ rt_sph_uv(struct application *ap, struct soltab *stp, register struct hit *hitp,
     /* Assert that pprime has unit length */
 
     /* U is azimuth, atan() range: -pi to +pi */
-    uvp->uv_u = bn_atan2(pprime[Y], pprime[X]) * bn_inv2pi;
+    uvp->uv_u = bn_atan2(pprime[Y], pprime[X]) * M_1_2PI;
     if (uvp->uv_u < 0)
 	uvp->uv_u += 1.0;
     /*
@@ -388,18 +401,15 @@ rt_sph_uv(struct application *ap, struct soltab *stp, register struct hit *hitp,
      */
     uvp->uv_v = bn_atan2(pprime[Z],
 			 sqrt(pprime[X] * pprime[X] + pprime[Y] * pprime[Y])) *
-	bn_invpi + 0.5;
+	M_1_PI + 0.5;
 
     /* approximation: r / (circumference, 2 * pi * aradius) */
     r = ap->a_rbeam + ap->a_diverge * hitp->hit_dist;
     uvp->uv_du = uvp->uv_dv =
-	bn_inv2pi * r / stp->st_aradius;
+	M_1_2PI * r / stp->st_aradius;
 }
 
 
-/**
- * R T _ S P H _ F R E E
- */
 void
 rt_sph_free(register struct soltab *stp)
 {
@@ -410,17 +420,6 @@ rt_sph_free(register struct soltab *stp)
 }
 
 
-int
-rt_sph_class(void)
-{
-    return 0;
-}
-
-
-/**
- * R T _ S P H _ P A R A M S
- *
- */
 int
 rt_sph_params(struct pc_pc_set *UNUSED(ps), const struct rt_db_internal *ip)
 {

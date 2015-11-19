@@ -1,7 +1,7 @@
 /*                    A T T R I B U T E S . C
  * BRL-CAD
  *
- * Copyright (c) 2010-2013 United States Government as represented by
+ * Copyright (c) 2010-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -22,7 +22,7 @@
 
 #include <string.h>
 
-#include "bu.h"
+#include "bu/debug.h"
 #include "raytrace.h"
 
 
@@ -32,6 +32,9 @@ db5_import_attributes(struct bu_attribute_value_set *avs, const struct bu_extern
     const char *cp;
     const char *ep;
     int count = 0;
+#if defined(USE_BINARY_ATTRIBUTES)
+    int bcount = 0; /* for the subset of binary attributes */
+#endif
 
     BU_CK_EXTERNAL(ap);
 
@@ -41,7 +44,9 @@ db5_import_attributes(struct bu_attribute_value_set *avs, const struct bu_extern
     cp = (const char *)ap->ext_buf;
     ep = (const char *)ap->ext_buf+ap->ext_nbytes;
 
-    /* Null "name" string indicates end of attribute list */
+    /* An empty "name" string (a pair of nul bytes) indicates end of
+     * attribute list (for the original ASCII-valued attributes).
+     */
     while (*cp != '\0') {
 	if (cp >= ep) {
 	    bu_log("db5_import_attributes() ran off end of buffer, database is probably corrupted\n");
@@ -51,8 +56,40 @@ db5_import_attributes(struct bu_attribute_value_set *avs, const struct bu_extern
 	cp += strlen(cp)+1;	/* next name */
 	count++;
     }
+#if defined(USE_BINARY_ATTRIBUTES)
+    /* Do we have binary attributes?  If so, they are after the last
+     * ASCII attribute. */
+    if (ep > (cp+1)) {
+	/* Count binary attrs. */
+	/* format is: <ascii name> NULL <binary length [network order, must be decoded]> <bytes...> */
+	size_t abinlen;
+	cp += 2; /* We are now at the first byte of the first binary attribute... */
+	while (cp != ep) {
+	    ++bcount
+	    cp += strlen(cp)+1;	/* name */
+	    /* The next value is an unsigned integer of variable width
+	     * (a_width: DB5HDR_WIDTHCODE_x) so how do we get its
+	     * width?  We now have a new member of struct bu_external:
+	     * 'unsigned char intwid'.  Note that the integer
+	     * is in network order and must be properly decoded for
+	     * the local architecture.
+	     */
+	    cp += db5_decode_length(&abinlen, cp, ap->intwid);
+	    /* account for the abinlen bytes */
+	    cp += abinlen;
+	}
+	/* now cp should be at the end */
+	count += bcount;
+    } else {
+	/* step to the end for the sanity check */
+	++cp;
+    }
+    /* Ensure we're exactly at the end */
+    BU_ASSERT_PTR(cp, ==, ep);
+#else
     /* Ensure we're exactly at the end */
     BU_ASSERT_PTR(cp+1, ==, ep);
+#endif
 
     /* not really needed for AVS_ADD since bu_avs_add will
      * incrementally allocate as it needs it. but one alloc is better
@@ -74,8 +111,34 @@ db5_import_attributes(struct bu_attribute_value_set *avs, const struct bu_extern
 	bu_avs_add(avs, name, cp);
 	cp += strlen(cp)+1; /* next name */
     }
-
+#if defined(USE_BINARY_ATTRIBUTES)
+    /* Do we have binary attributes?  If so, they are after the last
+     * ASCII attribute. */
+    if (ep > (cp+1)) {
+	/* Count binary attrs. */
+	/* format is: <ascii name> NULL <binary length [network order, must be decoded]> <bytes...> */
+	size_t abinlen;
+	cp += 2; /* We are now at the first byte of the first binary attribute... */
+	while (cp != ep) {
+	    const char *name = cp;  /* name */
+	    cp += strlen(cp)+1;	/* name */
+	    cp += db5_decode_length(&abinlen, cp, ap->intwid);
+	    /* now decode for the abinlen bytes */
+	    decode_binary_attribute(const size_t len, const char *cp)
+	    decod
+	    cp += abinlen;
+	}
+	/* now cp should be at the end */
+    } else {
+	/* step to the end for the sanity check */
+	++cp;
+    }
+    /* Ensure we're exactly at the end */
+    BU_ASSERT_PTR(cp, ==, ep);
+#else
     BU_ASSERT_PTR(cp+1, ==, ep);
+#endif
+
     BU_ASSERT_LONG(avs->count, <=, avs->max);
     BU_ASSERT_LONG((size_t)avs->count, ==, (size_t)count);
 
@@ -93,6 +156,7 @@ db5_export_attributes(struct bu_external *ext, const struct bu_attribute_value_s
     const struct bu_attribute_value_pair *avpp;
     char *cp;
     size_t i;
+    size_t len;
 
     BU_CK_AVS(avs);
     BU_EXTERNAL_INIT(ext);
@@ -108,19 +172,17 @@ db5_export_attributes(struct bu_external *ext, const struct bu_attribute_value_s
     /* First pass -- determine how much space is required */
     need = 0;
     avpp = avs->avp;
-    for (i = 0; i < (size_t)avs->count; i++, avpp++) {
+    for (i = 0; i < avs->count; i++, avpp++) {
 	if (avpp->name) {
-	    need += (int)strlen(avpp->name) + 1; /* include room for NULL */
-	} else {
-	    need += 1;
+	    need += strlen(avpp->name);
 	}
+	need += 1; /* include room for nul byte */
 	if (avpp->value) {
-	    need += (int)strlen(avpp->value) + 1; /* include room for NULL */
-	} else {
-	    need += 1;
+	    need += strlen(avpp->value);
 	}
+	need += 1; /* include room for nul byte */
     }
-    /* include final null */
+    /* include a final nul byte */
     need += 1;
 
     if (need <= 1) {
@@ -129,29 +191,27 @@ db5_export_attributes(struct bu_external *ext, const struct bu_attribute_value_s
     }
 
     ext->ext_nbytes = need;
-    ext->ext_buf = bu_calloc(1, need, "external attributes");
+    ext->ext_buf = (uint8_t*)bu_calloc(1, need, "external attributes");
 
     /* Second pass -- store in external form */
     cp = (char *)ext->ext_buf;
     avpp = avs->avp;
     for (i = 0; i < avs->count; i++, avpp++) {
-	int len;
-
 	if (avpp->name) {
-	    len = (int)strlen(avpp->name);
+	    len = strlen(avpp->name);
 	    memcpy(cp, avpp->name, len);
-	    cp += len + 1;
+	    cp += len;
 	}
-	*cp = '\0'; /* pad null */
+	*(cp++) = '\0'; /* pad nul byte */
 
 	if (avpp->value) {
-	    len = (int)strlen(avpp->value);
+	    len = strlen(avpp->value);
 	    memcpy(cp, avpp->value, strlen(avpp->value));
-	    cp += len + 1;
+	    cp += len;
 	}
-	*cp = '\0'; /* pad null */
+	*(cp++) = '\0'; /* pad nul byte */
     }
-    *(cp++) = '\0'; /* final null */
+    *(cp++) = '\0'; /* final nul byte */
 
     /* sanity check */
     need = cp - ((char *)ext->ext_buf);
@@ -173,8 +233,8 @@ db5_replace_attributes(struct directory *dp, struct bu_attribute_value_set *avsp
     RT_CK_DBI(dbip);
 
     if (RT_G_DEBUG&DEBUG_DB) {
-	bu_log("db5_replace_attributes(%s) dbip=x%x\n",
-	       dp->d_namep, dbip);
+	bu_log("db5_replace_attributes(%s) dbip=%p\n",
+	       dp->d_namep, (void *)dbip);
 	bu_avs_print(avsp, "new attributes");
     }
 
@@ -236,8 +296,8 @@ db5_update_attributes(struct directory *dp, struct bu_attribute_value_set *avsp,
     RT_CK_DBI(dbip);
 
     if (RT_G_DEBUG&DEBUG_DB) {
-	bu_log("db5_update_attributes(%s) dbip=x%x\n",
-	       dp->d_namep, dbip);
+	bu_log("db5_update_attributes(%s) dbip=%p\n",
+	       dp->d_namep, (void *)dbip);
 	bu_avs_print(avsp, "new attributes");
     }
 
@@ -342,7 +402,7 @@ int db5_update_ident(struct db_i *dbip, const char *title, double local2mm)
 			   DB5_MAJORTYPE_ATTRIBUTE_ONLY, 0,
 			   DB5_ZZZ_UNCOMPRESSED, DB5_ZZZ_UNCOMPRESSED);
 
-	dp = db_diradd(dbip, DB5_GLOBAL_OBJECT_NAME, RT_DIR_PHONY_ADDR, 0, 0, (genptr_t)&minor_type);
+	dp = db_diradd(dbip, DB5_GLOBAL_OBJECT_NAME, RT_DIR_PHONY_ADDR, 0, 0, (void *)&minor_type);
 	dp->d_major_type = DB5_MAJORTYPE_ATTRIBUTE_ONLY;
 	if (db_put_external(&global, dp, dbip) < 0) {
 	    bu_log("db5_update_ident() unable to create replacement %s object!\n", DB5_GLOBAL_OBJECT_NAME);
@@ -362,7 +422,7 @@ int db5_update_ident(struct db_i *dbip, const char *title, double local2mm)
     bu_vls_free(&units);
     bu_avs_free(&avs);
 
-    /* protect from loosing memory and from freeing what we are
+    /* protect from losing memory and from freeing what we are
        about to dup */
     if (dbip->dbi_title) {
 	old_title = dbip->dbi_title;
@@ -428,6 +488,13 @@ db5_fwrite_ident(FILE *fp, const char *title, double local2mm)
     return 0;
 }
 
+
+#if defined(USE_BINARY_ATTRIBUTES)
+void
+decode_binary_attribute(const size_t len, const char *cp)
+{
+}
+#endif
 
 /*
  * Local Variables:

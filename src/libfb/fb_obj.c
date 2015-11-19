@@ -1,7 +1,7 @@
 /*                        F B _ O B J . C
  * BRL-CAD
  *
- * Copyright (c) 1997-2013 United States Government as represented by
+ * Copyright (c) 1997-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @addtogroup fb */
+/** @addtogroup libfb */
 /** @{ */
 /** @file fb_obj.c
  *
@@ -35,15 +35,19 @@
 # include <strings.h>
 #endif
 
-#include "bio.h"
 #include "tcl.h"
-#include "cmd.h"
+#include "bu/cmd.h"
+#include "bu/color.h"
+#include "bu/getopt.h"
+#include "bu/malloc.h"
+#include "bu/str.h"
+#include "fb_private.h"
 #include "fb.h"
 #include "fbserv_obj.h"
 
 
 /* defined in libfb/tcl.c */
-extern int fb_refresh(FBIO *ifp, int x, int y, int w, int h);
+extern int fb_refresh(fb *ifp, int x, int y, int w, int h);
 
 
 #define FBO_CONSTRAIN(_v, _a, _b)		\
@@ -61,7 +65,7 @@ static struct fb_obj HeadFBObj;			/* head of display manager object list */
 
 
 HIDDEN int
-fbo_coords_ok(FBIO *fbp, int x, int y)
+fbo_coords_ok(fb *fbp, int x, int y)
 {
     int width;
     int height;
@@ -112,7 +116,7 @@ fbo_deleteProc(void *clientData)
 
     bu_vls_free(&fbop->fbo_name);
     BU_LIST_DEQUEUE(&fbop->l);
-    bu_free((genptr_t)fbop, "fbo_deleteProc: fbop");
+    bu_free((void *)fbop, "fbo_deleteProc: fbop");
 }
 
 
@@ -323,7 +327,7 @@ fbo_listen_tcl(void *clientData, int argc, const char **argv)
     struct fb_obj *fbop = (struct fb_obj *)clientData;
     struct bu_vls vls = BU_VLS_INIT_ZERO;
 
-    if (fbop->fbo_fbs.fbs_fbp == FBIO_NULL) {
+    if (fbop->fbo_fbs.fbs_fbp == FB_NULL) {
 	bu_log("%s listen: framebuffer not open!\n", argv[0]);
 	return BRLCAD_ERROR;
     }
@@ -628,14 +632,12 @@ fbo_rect_tcl(void *clientData, int argc, const char **argv)
     }
 
     if (sscanf(argv[2], "%d", &xmin) != 1) {
-	bu_log("fb_rect: bad xmin value - %s",
-			 argv[2], (char *)NULL);
+	bu_log("fb_rect: bad xmin value - %s", argv[2]);
 	return BRLCAD_ERROR;
     }
 
     if (sscanf(argv[3], "%d", &ymin) != 1) {
-	bu_log("fb_rect: bad ymin value - %s",
-			 argv[3], (char *)NULL);
+	bu_log("fb_rect: bad ymin value - %s", argv[3]);
 	return BRLCAD_ERROR;
     }
 
@@ -722,16 +724,14 @@ fbo_configure_tcl(void *clientData, int argc, const char **argv)
     }
 
     /* configure the framebuffer window */
-    if (fbop->fbo_fbs.fbs_fbp != FBIO_NULL)
-	fb_configureWindow(fbop->fbo_fbs.fbs_fbp, width, height);
+    if (fbop->fbo_fbs.fbs_fbp != FB_NULL)
+	(void)fb_configure_window(fbop->fbo_fbs.fbs_fbp, width, height);
 
     return BRLCAD_OK;
 }
 
 
 /*
- * F B O _ C M D
- *
  * Generic interface for framebuffer object routines.
  * Usage:
  * procname cmd ?args?
@@ -758,7 +758,7 @@ fbo_cmd(ClientData clientData, Tcl_Interp *UNUSED(interp), int argc, const char 
 	{"listen",	fbo_listen_tcl},
 	{"rect",	fbo_rect_tcl},
 	{"refresh",	fbo_refresh_tcl},
-	{(char *)0,	(int (*)())0}
+	{(const char *)NULL, BU_CMD_NULL}
     };
 
     if (bu_cmd(fbo_cmds, argc, argv, 1, clientData, &ret) == BRLCAD_OK)
@@ -779,7 +779,7 @@ HIDDEN int
 fbo_open_tcl(void *UNUSED(clientData), Tcl_Interp *interp, int argc, const char **argv)
 {
     struct fb_obj *fbop;
-    FBIO *ifp;
+    fb *ifp;
     int width = 512;
     int height = 512;
     register int c;
@@ -820,19 +820,18 @@ fbo_open_tcl(void *UNUSED(clientData), Tcl_Interp *interp, int argc, const char 
 		break;
 	    case '?':
 	    default:
-		bu_log("fb_open: bad option - %s",
-				 bu_optarg, (char *)NULL);
+		bu_log("fb_open: bad option - %s", bu_optarg);
 		return BRLCAD_ERROR;
 	}
     }
 
-    if ((ifp = fb_open(argv[2], width, height)) == FBIO_NULL) {
-	bu_log("fb_open: bad device - %s", argv[2], (char *)NULL);
+    if ((ifp = fb_open(argv[2], width, height)) == FB_NULL) {
+	bu_log("fb_open: bad device - %s", argv[2]);
 	return BRLCAD_ERROR;
     }
 
     if (fb_ioinit(ifp) != 0) {
-	bu_log("fb_open: fb_ioinit() failed.", (char *) NULL);
+	bu_log("fb_open: fb_ioinit() failed.");
 	return BRLCAD_ERROR;
     }
 

@@ -1,7 +1,7 @@
 /*                      P I X S C A L E . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2013 United States Government as represented by
+ * Copyright (c) 1986-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -38,7 +38,10 @@
 #include <stdlib.h>
 #include "bio.h"
 
-#include "bu.h"
+#include "bu/getopt.h"
+#include "bu/malloc.h"
+#include "bu/log.h"
+#include "bu/file.h"
 
 
 #define MAXBUFBYTES 3*1024*1024	/* max bytes to malloc in buffer space */
@@ -52,6 +55,7 @@ off_t buf_start = -1000;	/* First line in buffer */
 ssize_t bufy;				/* y coordinate in buffer */
 FILE *buffp;
 static char *file_name;
+static char hyphen[] = "-";
 
 int rflag = 0;
 int inx = 512;
@@ -314,12 +318,12 @@ scale(FILE *ofp, int ix, int iy, int ox, int oy)
  * XXX - CHECK FILE SIZE
  */
 void
-init_buffer(int len)
+init_buffer()
 {
-    int max;
+    ssize_t max;
 
     /* See how many we could buffer */
-    max = MAXBUFBYTES / len;
+    max = MAXBUFBYTES / scanlen;
 
     /*
      * Do a max of 512.  We really should see how big
@@ -334,7 +338,7 @@ init_buffer(int len)
 	buflines = iny;
 
     buf_start = (-buflines);
-    buffer = bu_malloc(buflines * len, "buffer");
+    buffer = (unsigned char *)bu_malloc(buflines * scanlen, "buffer");
 }
 
 
@@ -370,7 +374,7 @@ get_args(int argc, char **argv)
 		iny = atoi(bu_optarg);
 		break;
 
-	    default:		/* '?' */
+	    default:		/* 'h' , '?' */
 		return 0;
 	}
     }
@@ -391,7 +395,7 @@ get_args(int argc, char **argv)
     if (bu_optind >= argc) {
 	if (isatty(fileno(stdin)))
 	    return 0;
-	file_name = "-";
+	file_name = hyphen;
 	buffp = stdin;
     } else {
 	file_name = argv[bu_optind];
@@ -413,7 +417,7 @@ main(int argc, char **argv)
 {
     int i;
 
-    if ( argc == 1 && isatty(fileno(stdin)) && isatty(fileno(stdout)) )
+    if (argc == 1 && isatty(fileno(stdin)) && isatty(fileno(stdout)))
 	bu_exit(1, "%s", usage);
     if (!get_args(argc, argv) || isatty(fileno(stdout)))
 	bu_exit(1, "%s", usage);
@@ -424,11 +428,11 @@ main(int argc, char **argv)
 
     /* See how many lines we can buffer */
     scanlen = 3 * inx;
-    init_buffer(scanlen);
+    init_buffer();
     if (inx < outx) i = outx * 3;
     else i = inx * 3;
 
-    outbuf = bu_malloc(i, "outbuf");
+    outbuf = (unsigned char *)bu_malloc(i, "outbuf");
 
     /* Here we go */
     scale(stdout, inx, iny, outx, outy);

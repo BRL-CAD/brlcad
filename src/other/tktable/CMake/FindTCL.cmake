@@ -1,7 +1,7 @@
 #                   F I N D T C L . C M A K E
 # BRL-CAD
 #
-# Copyright (c) 2010-2013 United States Government as represented by
+# Copyright (c) 2010-2014 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -35,7 +35,7 @@
 ###
 # - Find Tcl/Tk commands, includes and libraries.
 #
-# Copyright (c) 2010-2013 United States Government as represented by
+# Copyright (c) 2010-2014 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # Copyright 2001-2009 Kitware, Inc.
@@ -283,8 +283,10 @@ macro(TK_GRAPHICS_SYSTEM wishcmd resultvar)
   set(${resultvar} "wm-NOTFOUND")
   file(WRITE ${tkwin_scriptfile} ${tkwin_script})
   EXEC_PROGRAM(${wishcmd} ARGS ${tkwin_scriptfile} OUTPUT_VARIABLE EXECOUTPUT)
-  file(READ ${CMAKE_BINARY_DIR}/CMakeTmp/TK_WINDOWINGSYSTEM readresultvar)
-  string(REGEX REPLACE "\n" "" "${resultvar}" "${readresultvar}")
+  if(EXISTS ${CMAKE_BINARY_DIR}/CMakeTmp/TK_WINDOWINGSYSTEM)
+    file(READ ${CMAKE_BINARY_DIR}/CMakeTmp/TK_WINDOWINGSYSTEM readresultvar)
+    string(REGEX REPLACE "\n" "" "${resultvar}" "${readresultvar}")
+  endif(EXISTS ${CMAKE_BINARY_DIR}/CMakeTmp/TK_WINDOWINGSYSTEM)
 endmacro()
 
 

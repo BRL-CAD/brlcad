@@ -2,7 +2,7 @@
 #                        C L E A R . T C L
 # BRL-CAD
 #
-# Copyright (c) 2009-2013 United States Government as represented by
+# Copyright (c) 2009-2014 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or

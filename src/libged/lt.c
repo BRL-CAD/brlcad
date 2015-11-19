@@ -1,7 +1,7 @@
 /*                         L T . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2013 United States Government as represented by
+ * Copyright (c) 2008-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -26,15 +26,14 @@
 #include "common.h"
 
 #include <string.h>
-#include "bio.h"
 
-#include "cmd.h"
-
+#include "bu/getopt.h"
+#include "bu/cmd.h"
 #include "./ged_private.h"
 
 
 static int
-list_children(struct ged *gedp, struct directory *dp)
+list_children(struct ged *gedp, struct directory *dp, int c_sep)
 {
     size_t i;
     struct rt_db_internal intern;
@@ -81,20 +80,28 @@ list_children(struct ged *gedp, struct directory *dp)
 
 	    switch (rt_tree_array[i].tl_op) {
 		case OP_UNION:
-		    op = 'u';
+		    op = DB_OP_UNION;
 		    break;
 		case OP_INTERSECT:
-		    op = '+';
+		    op = DB_OP_INTERSECT;
 		    break;
 		case OP_SUBTRACT:
-		    op = '-';
+		    op = DB_OP_SUBTRACT;
 		    break;
 		default:
 		    op = '?';
 		    break;
 	    }
 
-	    bu_vls_printf(gedp->ged_result_str, "{%c %s} ", op, rt_tree_array[i].tl_tree->tr_l.tl_name);
+	    if (c_sep == -1)
+		bu_vls_printf(gedp->ged_result_str, "{%c %s} ", op, rt_tree_array[i].tl_tree->tr_l.tl_name);
+	    else {
+		if (i == 0)
+		    bu_vls_printf(gedp->ged_result_str, "%s", rt_tree_array[i].tl_tree->tr_l.tl_name);
+		else
+		    bu_vls_printf(gedp->ged_result_str, "%c%s", (char)c_sep, rt_tree_array[i].tl_tree->tr_l.tl_name);
+	    }
+
 	    db_free_tree(rt_tree_array[i].tl_tree, &rt_uniresource);
 	}
 	bu_vls_free(&vls);
@@ -112,7 +119,10 @@ int
 ged_lt(struct ged *gedp, int argc, const char *argv[])
 {
     struct directory *dp;
-    static const char *usage = "object";
+    static const char *usage = "[-c sep_char] object";
+    int opt;
+    int c_sep = -1;
+    const char *cmd_name = argv[0];
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
@@ -122,21 +132,36 @@ ged_lt(struct ged *gedp, int argc, const char *argv[])
 
     /* must be wanting help */
     if (argc == 1) {
-	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", cmd_name, usage);
 	return GED_HELP;
     }
 
+    bu_optind = 1;      /* re-init bu_getopt() */
+    while ((opt = bu_getopt(argc, (char * const *)argv, "c:")) != -1) {
+	switch (opt) {
+	    case 'c':
+		c_sep = (int)bu_optarg[0];
+		break;
+	    default:
+		bu_vls_printf(gedp->ged_result_str, "Unrecognized option - %c", opt);
+		return GED_ERROR;
+	}
+    }
+
+    argc -= bu_optind - 1;
+    argv += bu_optind - 1;
+
     if (argc != 2) {
-	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", cmd_name, usage);
 	return GED_ERROR;
     }
 
     if ((dp = db_lookup(gedp->ged_wdbp->dbip, argv[1], LOOKUP_NOISY)) == RT_DIR_NULL) {
-	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", cmd_name, usage);
 	return GED_ERROR;
     }
 
-    return list_children(gedp, dp);
+    return list_children(gedp, dp, c_sep);
 }
 
 

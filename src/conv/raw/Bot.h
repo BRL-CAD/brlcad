@@ -1,7 +1,7 @@
 /*                         B O T . H
  * BRL-CAD
  *
- * Copyright (c) 2012-2013 United States Government as represented by
+ * Copyright (c) 2012-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -26,8 +26,8 @@
  *	IABG mbH (Germany)
  */
 
-#ifndef BOT_INCLUDED
-#define BOT_INCLUDED
+#ifndef CONV_RAW_BOT_H
+#define CONV_RAW_BOT_H
 
 #include "common.h"
 #include <vector>
@@ -41,9 +41,9 @@ public:
     void               setName(const std::string& value);
     void               setThickness(double value);
     size_t             addPoint(point_t& point);
-    void               addTriangle(int  a,
-				   int  b,
-				   int  c);
+    void               addTriangle(size_t a,
+				   size_t b,
+				   size_t c);
 
     const std::string& name(void) const;
     void               write(rt_wdb* wdbp) const;
@@ -53,11 +53,11 @@ private:
     std::string          m_name;
     double               m_thickness;
     std::vector<fastf_t> m_vertices;
-    std::vector<int>     m_faces;
+    std::vector<size_t>  m_faces;
 
     void writeSolid(rt_wdb* wdbp) const;
     void writePlate(rt_wdb* wdbp) const;
 };
 
 
-#endif //BOT_INCLUDED
+#endif /* CONV_RAW_BOT_H */

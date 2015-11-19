@@ -1,7 +1,7 @@
 /*                          T R E E . C
  * BRL-CAD
  *
- * Copyright (c) 1995-2013 United States Government as represented by
+ * Copyright (c) 1995-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -22,17 +22,16 @@
 #include "common.h"
 
 #include <stddef.h>
-#include <stdio.h>
 #include <math.h>
 #include <string.h>
 #include "bio.h"
 
-#include "bu.h"
+
+#include "bu/parallel.h"
 #include "vmath.h"
 #include "bn.h"
-#include "db.h"
+#include "rt/db4.h"
 #include "raytrace.h"
-#include "mater.h"
 
 
 #define ACQUIRE_SEMAPHORE_TREE(_hash) switch ((_hash)&03) {	\
@@ -105,7 +104,7 @@ _rt_tree_region_assign(union tree *tp, const struct region *regionp)
  * This routine must be prepared to run in parallel.
  */
 HIDDEN int
-_rt_gettree_region_start(struct db_tree_state *tsp, const struct db_full_path *pathp, const struct rt_comb_internal *combp, genptr_t UNUSED(client_data))
+_rt_gettree_region_start(struct db_tree_state *tsp, const struct db_full_path *pathp, const struct rt_comb_internal *combp, void *UNUSED(client_data))
 {
   if (tsp) {
     RT_CK_RTI(tsp->ts_rtip);
@@ -135,14 +134,14 @@ _rt_gettree_region_start(struct db_tree_state *tsp, const struct db_full_path *p
  * into the serial section.  (_rt_tree_region_assign, rt_bound_tree)
  */
 HIDDEN union tree *
-_rt_gettree_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, genptr_t client_data)
+_rt_gettree_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, void *client_data)
 {
     struct region *rp;
     struct directory *dp = NULL;
     size_t shader_len=0;
     struct rt_i *rtip;
-    Tcl_HashTable *tbl = (Tcl_HashTable *)client_data;
-    Tcl_HashEntry *entry;
+    struct bu_hash_tbl *tbl = (struct bu_hash_tbl *)client_data;
+    struct bu_hash_entry *entry;
     matp_t inv_mat;
     struct bu_attribute_value_set avs;
     struct bu_attribute_value_pair *avpp;
@@ -226,7 +225,6 @@ _rt_gettree_region_end(struct db_tree_state *tsp, const struct db_full_path *pat
     if (tbl && bu_avs_get(&tsp->ts_attrs, "ORCA_Comp")) {
 	int newentry;
 	long int reg_bit = rp->reg_bit;
-	const char *key = (char *)reg_bit;
 
 	inv_mat = (matp_t)bu_calloc(16, sizeof(fastf_t), "inv_mat");
 	bn_mat_inv(inv_mat, tsp->ts_mat);
@@ -234,8 +232,8 @@ _rt_gettree_region_end(struct db_tree_state *tsp, const struct db_full_path *pat
 	/* enter critical section */
 	bu_semaphore_acquire(RT_SEM_RESULTS);
 
-	entry = Tcl_CreateHashEntry(tbl, key, &newentry);
-	Tcl_SetHashValue(entry, (ClientData)inv_mat);
+	entry = bu_hash_tbl_add(tbl, (unsigned char *)reg_bit, sizeof(reg_bit), &newentry);
+	bu_set_hash_value(entry, (unsigned char *)inv_mat);
 
 	/* leave critical section */
 	bu_semaphore_release(RT_SEM_RESULTS);
@@ -437,7 +435,7 @@ _rt_find_identical_solid(const matp_t mat, struct directory *dp, struct rt_i *rt
  * This routine must be prepared to run in parallel.
  */
 HIDDEN union tree *
-_rt_gettree_leaf(struct db_tree_state *tsp, const struct db_full_path *pathp, struct rt_db_internal *ip, genptr_t UNUSED(client_data))
+_rt_gettree_leaf(struct db_tree_state *tsp, const struct db_full_path *pathp, struct rt_db_internal *ip, void *UNUSED(client_data))
 {
     struct soltab *stp;
     struct directory *dp;
@@ -662,8 +660,9 @@ _rt_tree_kill_dead_solid_refs(union tree *tp)
 		stp = tp->tr_a.tu_stp;
 		RT_CK_SOLTAB(stp);
 		if (stp->st_aradius <= 0) {
-		    if (RT_G_DEBUG&DEBUG_TREEWALK)bu_log("encountered dead solid '%s' stp=x%x, tp=x%x\n",
-							 stp->st_dp->d_namep, stp, tp);
+		    if (RT_G_DEBUG&DEBUG_TREEWALK)
+			bu_log("encountered dead solid '%s' stp=%p, tp=%p\n",
+			       stp->st_dp->d_namep, (void *)stp, (void *)tp);
 		    rt_free_soltab(stp);
 		    tp->tr_a.tu_stp = SOLTAB_NULL;
 		    tp->tr_op = OP_NOP;	/* Convert to NOP */
@@ -672,8 +671,8 @@ _rt_tree_kill_dead_solid_refs(union tree *tp)
 	    }
 
 	default:
-	    bu_log("_rt_tree_kill_dead_solid_refs(x%x): unknown op=x%x\n",
-		   tp, tp->tr_op);
+	    bu_log("_rt_tree_kill_dead_solid_refs(%p): unknown op=%x\n",
+		   (void *)tp, tp->tr_op);
 	    return;
 
 	case OP_XOR:
@@ -703,7 +702,8 @@ rt_gettrees_muves(struct rt_i *rtip, const char **attrs, int argc, const char **
 {
     struct soltab *stp;
     struct region *regp;
-    Tcl_HashTable *tbl;
+    struct bu_hash_tbl *tbl;
+
     size_t prev_sol_count;
     int i;
     int num_attrs=0;
@@ -719,9 +719,8 @@ rt_gettrees_muves(struct rt_i *rtip, const char **attrs, int argc, const char **
 
     if (argc <= 0) return -1;	/* FAIL */
 
-    BU_ALLOC(tbl, Tcl_HashTable);
-    Tcl_InitHashTable(tbl, TCL_ONE_WORD_KEYS);
-    rtip->Orca_hash_tbl = (genptr_t)tbl;
+    tbl = bu_hash_tbl_create(1);
+    rtip->Orca_hash_tbl = (void *)tbl;
 
     prev_sol_count = rtip->nsolids;
 
@@ -765,7 +764,7 @@ rt_gettrees_muves(struct rt_i *rtip, const char **attrs, int argc, const char **
 			 &tree_state,
 			 _rt_gettree_region_start,
 			 _rt_gettree_region_end,
-			 _rt_gettree_leaf, (genptr_t)tbl);
+			 _rt_gettree_leaf, (void *)tbl);
 	bu_avs_free(&tree_state.ts_attrs);
     }
 
@@ -912,8 +911,8 @@ top:
 	    return 0;		/* Retain */
 
 	default:
-	    bu_log("rt_tree_elim_nops(x%x): unknown op=x%x\n",
-		   tp, tp->tr_op);
+	    bu_log("rt_tree_elim_nops(%p): unknown op=%x\n",
+		   (void *)tp, tp->tr_op);
 	    return -1;
 
 	case OP_XOR:
@@ -1012,7 +1011,7 @@ rt_optim_tree(union tree *tp, struct resource *resp)
 
     RT_CK_TREE(tp);
     while ((sp = resp->re_boolstack) == (union tree **)0)
-	rt_grow_boolstack(resp);
+	rt_bool_growstack(resp);
     stackend = &(resp->re_boolstack[resp->re_boolslen-1]);
     *sp++ = TREE_NULL;
     *sp++ = tp;
@@ -1038,7 +1037,7 @@ rt_optim_tree(union tree *tp, struct resource *resp)
 		*sp++ = tp->tr_b.tb_left;
 		if (sp >= stackend) {
 		    int off = sp - resp->re_boolstack;
-		    rt_grow_boolstack(resp);
+		    rt_bool_growstack(resp);
 		    sp = &(resp->re_boolstack[off]);
 		    stackend = &(resp->re_boolstack[resp->re_boolslen-1]);
 		}
@@ -1052,7 +1051,7 @@ rt_optim_tree(union tree *tp, struct resource *resp)
 		*sp++ = tp->tr_b.tb_left;
 		if (sp >= stackend) {
 		    int off = sp - resp->re_boolstack;
-		    rt_grow_boolstack(resp);
+		    rt_bool_growstack(resp);
 		    sp = &(resp->re_boolstack[off]);
 		    stackend = &(resp->re_boolstack[resp->re_boolslen-1]);
 		}

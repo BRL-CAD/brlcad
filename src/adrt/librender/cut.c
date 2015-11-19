@@ -1,7 +1,7 @@
 /*                        C U T . C
  * BRL-CAD / ADRT
  *
- * Copyright (c) 2007-2013 United States Government as represented by
+ * Copyright (c) 2007-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -26,7 +26,9 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "bu.h"
+
+#include "bu/malloc.h"
+#include "bu/log.h"
 #include "vmath.h"
 
 #ifndef TIE_PRECISION
@@ -195,7 +197,7 @@ render_cut_init(render_t *render, const char *buf)
 	vect_t v;
 
 	VSUB2(v, ray_pos, render->tie->mid);
-	shot_len = 2.0 * render->tie->radius + MAGNITUDE(v) - render->tie->radius;;
+	shot_len = 2.0 * render->tie->radius + MAGNITUDE(v) - render->tie->radius;
     }
 
     /*

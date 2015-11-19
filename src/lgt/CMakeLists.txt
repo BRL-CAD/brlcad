@@ -1,4 +1,5 @@
 set(LGT_INCLUDE_DIRS
+  ${BU_INCLUDE_DIRS}
   ${FB_INCLUDE_DIRS}
   ${RT_INCLUDE_DIRS}
   ${TERMIO_INCLUDE_DIRS}
@@ -30,7 +31,7 @@ set(lgt_SOURCES
   )
 
 if(HAVE_TERMLIB)
-  BRLCAD_ADDEXEC(lgt "${lgt_SOURCES}" "librt;libfb;libtermio;libvfont;libcursor;${M_LIBRARY}")
+  BRLCAD_ADDEXEC(lgt "${lgt_SOURCES}" "librt;libfb;libbu;libtermio;libcursor;${M_LIBRARY}")
   SET_TARGET_PROPERTIES(lgt PROPERTIES COMPILE_DEFINITIONS "BEHIND_ME_TOL=0.05")
 
 endif(HAVE_TERMLIB)

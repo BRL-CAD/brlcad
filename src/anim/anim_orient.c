@@ -1,7 +1,7 @@
 /*                   A N I M _ O R I E N T . C
  * BRL-CAD
  *
- * Copyright (c) 1993-2013 United States Government as represented by
+ * Copyright (c) 1993-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -45,9 +45,9 @@
 #include <math.h>
 #include "bio.h"
 
-#include "bu.h"
+#include "bu/log.h"
 #include "bn.h"
-#include "anim.h"
+#include "bn/anim.h"
 #include "vmath.h"
 
 
@@ -95,7 +95,7 @@ parse_args(int argc, char **argv)
     output_inv = 0;
     length = 4;
 
-    if(*argv[1] == 'h' || *argv[1] == '?')
+    if (*argv[1] == 'h' || *argv[1] == '?')
 	usage();
 
     if (argc > 2) {
@@ -186,11 +186,11 @@ main(int argc, char *argv[])
     int num_read;
     fastf_t temp[3], temp2[3], angle[3], quat[4], matrix[16];
 
-    if (argc == 1 && isatty(fileno(stdin)) && isatty(fileno(stdout))){
+    if (argc == 1 && isatty(fileno(stdin)) && isatty(fileno(stdout))) {
 	usage();
     }
 
-    if (!parse_args(argc, argv)){
+    if (!parse_args(argc, argv)) {
 	usage();
     }
 

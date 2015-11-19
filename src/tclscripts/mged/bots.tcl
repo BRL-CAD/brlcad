@@ -1,7 +1,7 @@
 #                        B O T S . T C L
 # BRL-CAD
 #
-# Copyright (c) 2009-2013 United States Government as represented by
+# Copyright (c) 2009-2014 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -24,15 +24,6 @@
 # DEPRECATED: this command should go away once 'search' has support to
 # introspect primitive data parameters (form elements)
 #
-
-proc per_line { args } {
-    puts stderr "DEPRECATION WARNING: 'bots' and 'per_line' are temporary until 'search' is enhanced."
-    foreach list $args {
-	foreach item $list {
-	    puts "$item"
-	}
-    }
-}
 
 proc bots { args } {
 

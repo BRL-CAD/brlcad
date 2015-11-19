@@ -1,7 +1,7 @@
 /*                         S H A D E . C
  * BRL-CAD
  *
- * Copyright (c) 1989-2013 United States Government as represented by
+ * Copyright (c) 1989-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -32,13 +32,12 @@
 #include <stdio.h>
 #include <math.h>
 
-#include "bu.h"
 #include "bn.h"
 #include "vmath.h"
 #include "raytrace.h"
 #include "optical.h"
-#include "light.h"
-#include "plot3.h"
+#include "optical/light.h"
+#include "bn/plot3.h"
 
 
 #ifdef RT_MULTISPECTRAL
@@ -47,8 +46,6 @@
 
 
 /**
- * P R _ S H A D E W O R K
- *
  * Pretty print a shadework structure.
  */
 void
@@ -59,7 +56,7 @@ pr_shadework(const char *str, const struct shadework *swp)
     if (!swp)
 	return;
 
-    bu_log("Shadework%s: 0x%x\n", str ? str : "", swp);
+    bu_log("Shadework%s: %p\n", str ? str : "", (void *)swp);
     bu_printb(" sw_inputs", swp->sw_inputs, MFI_FORMAT);
     if (swp->sw_inputs & MFI_HIT)
 	bu_log(" sw_hit.dist:%g @ sw_hit.point(%g %g %g)\n",
@@ -108,8 +105,6 @@ pr_shadework(const char *str, const struct shadework *swp)
 
 
 /**
- * S H A D E _ I N P U T S
- *
  * Compute the necessary fields in the shadework structure.
  *
  * Note that only hit_dist is valid in pp_inhit.  Must calculate it if
@@ -162,18 +157,23 @@ shade_inputs(struct application *ap, const struct partition *pp, struct shadewor
 	    if (f > 0.0 &&
 		!BN_VECT_ARE_PERP(f, &(ap->a_rt_i->rti_tol))) {
 		static int counter = 0;
-		if (counter++ < 100 || (R_DEBUG&RDEBUG_SHADE)) {
+
+		if (counter < 100 || (R_DEBUG&RDEBUG_SHADE)) {
 		    bu_log("shade_inputs(%s) flip N xy=%d, %d %s surf=%d dot=%g\n",
 			   pp->pt_inseg->seg_stp->st_name,
 			   ap->a_x, ap->a_y,
 			   OBJ[pp->pt_inseg->seg_stp->st_id].ft_name,
 			   swp->sw_hit.hit_surfno, f);
-		} else {
-		    if (counter++ == 101) {
-			bu_log("shade_inputs(%s) flipped normals detected, additional reporting suppressed\n",
-			       pp->pt_inseg->seg_stp->st_name);
-		    }
+		} else if (counter == 101) {
+		    bu_log("shade_inputs(%s) flipped normals detected, additional reporting suppressed\n",
+			   pp->pt_inseg->seg_stp->st_name);
 		}
+		if (counter < 101) {
+			bu_semaphore_acquire(BU_SEM_THREAD);
+			counter++;
+			bu_semaphore_release(BU_SEM_THREAD);
+		}
+
 		if (R_DEBUG&RDEBUG_SHADE) {
 		    VPRINT("Dir ", ap->a_ray.r_dir);
 		    VPRINT("Norm", swp->sw_hit.hit_normal);
@@ -250,8 +250,6 @@ hit pt: %g %g %g end pt: %g %g %g\n",
 
 
 /**
- * V I E W S H A D E
- *
  * Call the material-specific shading function, after making certain
  * that all shadework fields desired have been provided.
  *

@@ -1,7 +1,7 @@
 /*                    B O M B A R D I E R . C
  * BRL-CAD
  *
- * Copyright (c) 2007-2013 United States Government as represented by
+ * Copyright (c) 2007-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -37,7 +37,6 @@
 #include "tk.h"
 
 #include "tclcad.h"
-#include "bu.h"
 
 #include "./bombardier.h"
 
@@ -198,7 +197,7 @@ sendlog(ClientData data, Tcl_Interp *UNUSED(interp), int UNUSED(argc), const cha
     struct bu_vls *daBomb = (struct bu_vls *)data;
 
     bu_log("Pretending that we're sending the log file to brlcad.org\n");
-    bu_log("REPORT:\n%V\n", daBomb);
+    bu_log("REPORT:\n%s\n", bu_vls_addr(daBomb));
 
     return TCL_OK;
 }
@@ -286,8 +285,8 @@ main(int argc, char *argv[])
     int tkargc = 1;
     char *tkargv[2] = {NULL, NULL};
 
-    if(argc > 1){
-	if ( BU_STR_EQUAL(argv[1],"-h") || BU_STR_EQUAL(argv[1],"-?")){
+    if (argc > 1) {
+	if (BU_STR_EQUAL(argv[1],"-h") || BU_STR_EQUAL(argv[1],"-?")) {
 		bu_exit(1, "Usage: %s logfile(s)\n", argv[0]);
 	}
     }

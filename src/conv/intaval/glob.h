@@ -1,7 +1,7 @@
 /*                         G L O B . H
  * BRL-CAD
  *
- * Copyright (c) 2008-2013 United States Government as represented by
+ * Copyright (c) 2008-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -27,8 +27,8 @@
  *	IABG mbH (Germany)
  */
 
-#ifndef GLOB_INCLUDED
-#define GLOB_INCLUDED
+#ifndef CONV_INTAVAL_GLOB_H
+#define CONV_INTAVAL_GLOB_H
 
 #include "common.h"
 
@@ -66,4 +66,4 @@ struct Form {
 };
 
 
-#endif // GLOB_INCLUDED
+#endif /* CONV_INTAVAL_GLOB_H */
