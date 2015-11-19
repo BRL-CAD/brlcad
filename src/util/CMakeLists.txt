@@ -101,7 +101,7 @@ CMAKEFILES(test_bu_arg_parse.c)
 BRLCAD_ADDEXEC(dsp_add_opt dsp_add_opt.c libbu NO_INSTALL)
 
 # a new admin file
-BRLCAD_ADDEXEC(admin-db "admin-db.cpp;bu_arg_parse.cpp" "libbu;librt" NO_INSTALL)
+BRLCAD_ADDEXEC(db-admin-tool "db-admin-tool.cpp;bu_arg_parse.cpp" "libbu;librt")
 
 # tmp header to stand-in for bu.h (ignore it)
 CMAKEFILES(bu_arg_parse.h)
