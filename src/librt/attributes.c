@@ -65,16 +65,16 @@ db5_import_attributes(struct bu_attribute_value_set *avs, const struct bu_extern
 	size_t abinlen;
 	cp += 2; /* We are now at the first byte of the first binary attribute... */
 	while (cp != ep) {
-	    ++bcount
+	    ++bcount;
 	    cp += strlen(cp)+1;	/* name */
 	    /* The next value is an unsigned integer of variable width
 	     * (a_width: DB5HDR_WIDTHCODE_x) so how do we get its
 	     * width?  We now have a new member of struct bu_external:
-	     * 'unsigned char intwid'.  Note that the integer
+	     * 'unsigned char widcode'.  Note that the integer
 	     * is in network order and must be properly decoded for
 	     * the local architecture.
 	     */
-	    cp += db5_decode_length(&abinlen, cp, ap->intwid);
+	    cp += db5_decode_length(&abinlen, (const unsigned char*)cp, ap->widcode);
 	    /* account for the abinlen bytes */
 	    cp += abinlen;
 	}
@@ -122,10 +122,9 @@ db5_import_attributes(struct bu_attribute_value_set *avs, const struct bu_extern
 	while (cp != ep) {
 	    const char *name = cp;  /* name */
 	    cp += strlen(cp)+1;	/* name */
-	    cp += db5_decode_length(&abinlen, cp, ap->intwid);
+	    cp += db5_decode_length(&abinlen, (const unsigned char*)cp, ap->widcode);
 	    /* now decode for the abinlen bytes */
-	    decode_binary_attribute(const size_t len, const char *cp)
-	    decod
+	    decode_binary_attribute(abinlen, (const unsigned char*)cp);
 	    cp += abinlen;
 	}
 	/* now cp should be at the end */
@@ -488,10 +487,9 @@ db5_fwrite_ident(FILE *fp, const char *title, double local2mm)
     return 0;
 }
 
-
 #if defined(USE_BINARY_ATTRIBUTES)
 void
-decode_binary_attribute(const size_t len, const char *cp)
+decode_binary_attribute(const size_t len, const unsigned char *cp)
 {
 }
 #endif
