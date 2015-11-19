@@ -12,8 +12,18 @@ Files affected:
   ./src/librt/db5_io.c
   ./src/librt/attributes.c
 
-A db admin tool (to be nrenamed to sonething like: db-admin-tool):
+A db admin tool (to be renamed to sonething like: db-admin-tool):
 
   ./src/util/admin-db.cpp
 
+Test plan:
+
+1. Select a complex TGM in the db directory as a test subject.
+2. Create a script to:
+
+   + copy the TGM to a new file (TGM2)
+   + add multiple binary attributes to TGM2
+   + use the admin-db tool to check TGM2
+   + delete the added binary attributes from TGM2
+   + run cmp on TGM and TGM2 to see they are the same
 
