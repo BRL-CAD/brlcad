@@ -66,7 +66,7 @@ objects.
           <term><emphasis remap="B" role="bold">set</emphasis></term>
           <listitem>
                 <para>
-                  Assigned the value provied for the specified attribute to the object or objects matched by the pattern. The arguments for "set" sub-command are attribute name/value pairs.
+                  Assigned the value provided for the specified attribute to the object or objects matched by the pattern. The arguments for "set" sub-command are attribute name/value pairs.
                 </para>
           </listitem>
         </varlistentry>
