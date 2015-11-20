@@ -525,7 +525,7 @@ if(NOT BRLCAD_IS_SUBBUILD)
   else(${CMAKE_VERSION} VERSION_GREATER 2.99)
     add_custom_target(check COMMAND ${CMAKE_CTEST_COMMAND} -C $<CONFIGURATION> -LE Regression -E ^regress- ${JFLAG})
   endif(${CMAKE_VERSION} VERSION_GREATER 2.99)
-  set_target_properties(check PROPERTIES FOLDER "BRL-CAD Unit Tests")
+  set_target_properties(check PROPERTIES FOLDER "BRL-CAD Validation Testing")
   function(add_test test_name test_prog)
     _add_test(${test_name} ${test_prog} ${ARGN})
     if (NOT "${test_name}" STREQUAL "NAME")
@@ -539,6 +539,30 @@ if(NOT BRLCAD_IS_SUBBUILD)
     endif (NOT "${test_name}" STREQUAL "NAME")
   endfunction(add_test)
 endif(NOT BRLCAD_IS_SUBBUILD)
+
+if (TARGET "check")
+  message("
+
+**********************************************************************
+NOTE: The \"check\" a.k.a. \"BRL-CAD Validation Testing\" target runs
+BRL-CAD's unit, system, integration, and regression tests but not the
+BRL-CAD Benchmark.  For a build to be considered viable for production
+use, these tests must pass along with the benchmark target.  All
+dependencies required by the tests are compiled automatically.
+**********************************************************************
+
+")
+elseif (TARGET "test")
+  message("
+
+**********************************************************************
+NOTE: The \"test\" target runs all of BRL-CAD's available unit tests
+including tests for API currently under development.  It is not
+necessarily cause for concern if any of these tests fail.
+**********************************************************************
+
+")
+endif (TARGET "check")
 
 #---------------------------------------------------------------------
 # Load macros that will be used to define the BRL-CAD
