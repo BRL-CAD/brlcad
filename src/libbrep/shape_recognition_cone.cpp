@@ -100,6 +100,11 @@ cone_implicit_params(struct subbrep_shoal_data *data, ON_SimpleArray<ON_Plane> *
     delete cs;
     ON_Line l(cone.BasePoint(), cone.ApexPoint());
 
+    // Need at least one plane to make an implicit shape
+    if ((*cone_planes).Count() == 0) {
+	return -1;
+    }
+
     int need_arbn = 1;
     if ((*cone_planes).Count() <= 2) {
 	int perpendicular = 0;
