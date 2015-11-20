@@ -1,4 +1,4 @@
-/*                   T E S T _ B U N D L E . C
+/*           T E S T _ B I N A R Y _ A T T R I B U T E . C
  * BRL-CAD
  *
  * Copyright (c) 2013-2014 United States Government as represented by
