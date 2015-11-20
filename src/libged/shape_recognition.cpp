@@ -403,7 +403,7 @@ make_island(struct bu_vls *msgs, struct subbrep_island_data *data, struct rt_wdb
 	(void)mk_addmember(bu_vls_addr(&island_name), &(pcomb->l), NULL, db_str2op(n_bool_op));
 
     // Debugging B-Reps - generates a B-Rep object for each island
-#if 1
+#if 0
     if (data->local_brep) {
 	unsigned char rgb[3];
 	struct wmember bcomb;
