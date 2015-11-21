@@ -1605,7 +1605,7 @@ NEW OBJECTS
   material object name.  material object encompasses hierarchical
   material traits.  some traits potentially of interest:
     - density
-    - young modulus
+    - Young's modulus
     - yield strength (in different dirs, e.g., rolling & transversal)
     - ultimate tensile strength (also in different dirs)
     - Poisson's ratio
