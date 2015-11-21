@@ -2033,8 +2033,8 @@ THESE BREAK PROTOCOL OR ARE BACKWARDS-INCOMPATIBLE
 
 * remove the hf primitive
 
-* support for features either as primitives or operations or both
-  e.g. chamfer, fillet, round, cut, etc.
+* support for features either as primitives or operations or both,
+  e.g., chamfer, fillet, round, cut, etc.
 
 * a cut feature edit.  implementation could be represented as the cube
   that bounds a geometry object.  eight points somewhere on the edges
@@ -2060,7 +2060,7 @@ THESE BREAK PROTOCOL OR ARE BACKWARDS-INCOMPATIBLE
 * see the CHANGES file for items that have been marked as deprecated
   or available to be removed as obsolete items.
 
-* make struct rt_functab's ft_label bigger and/or dynamic (e.g. vls)
+* make struct rt_functab's ft_label bigger and/or dynamic (e.g., vls)
 
 * remove the storage of the never-implemented keypoint parameter for
   extrude objects.
@@ -2090,7 +2090,7 @@ THESE BREAK PROTOCOL OR ARE BACKWARDS-INCOMPATIBLE
   of attributes and objects from the size of the strings that are
   serialized out into them.  It may be possible to store a
   shortened/empty string, but record a larger attribute/object size,
-  allowing for binary data beyond the attribut value '\0' termination.
+  allowing for binary data beyond the attribute value '\0' termination.
 
 * change format of related programs (especially filters) so the
   input/output files are handled identically. two examples of
