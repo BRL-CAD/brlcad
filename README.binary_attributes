@@ -1,5 +1,5 @@
-branch/attr-extension-mods
-==========================
+branch/binary-attributes
+========================
 
 To turn on the use of binary attributes define:
 
@@ -9,6 +9,19 @@ E.g., prior to running CMake:
 
   export CFLAGS=-DUSE_BINARY_ATTRIBUTES
   export CXXFLAGS=-DUSE_BINARY_ATTRIBUTES
+
+external code added:
+-------------------
+
+BSON
+  specification:           http://bsonspec.org/spec.html
+  libbson source:          https://github.com/mongodb/libbson
+  current release tarball: https://github.com/mongodb/libbson/releases/
+                             libbson-1.3.0-beta0.tar.gz
+
+
+BSON tools
+
 
 Files affected:
 
@@ -59,57 +72,5 @@ Test plan:
    + delete the added binary attributes from TGM2
    + run cmp on TGM and TGM2 to see they are the same
 
-The following is from the TODO file:
-
-ATTRIBUTES
-----------
-
-* attr command option to output to a file
-
-* attr command change to only output non-standard attributes
-
-* attr command change to have an optional object argument and to work
-  with multiple objects.  make output format scriptable.
-
-* implement an attribute versioning system.  can hang attribute
-  version off of _GLOBAL (ideally) or per-object so application codes
-  (including our own tools) know whether they're compatible or whether
-  the attributes must be upgraded.
-
-* implement an "attr upgrade" subcommand that allows for forwards AND
-  backwards conversion of attributes.  the command will need two
-  function pointers per version that describes how to upgrade and
-  downgrade for that version transition.  this will allow new files to
-  be downgraded for use on older versions and obviously lets new files
-  be upgraded to the latest conventions.
-
-* implement namespacing for attributes as a means to group attributes
-  together.  examples: cad:color, cad:region_id, muves:component.
-  similar to svn properties, the namespace is predominantly (perhaps
-  entirely) a naming convention, but allows us to document and assert
-  requirements/conventions over a given prefix (e.g., 'cad:'), and
-  provides 3rd party applications with a sandbox to work with.
-
-* expose the list of internally recognized attributes via the man page
-  documentation and some internal method (e.g., an 'attr standards'
-  subcommand).
-
-* clean up default attributes to be consistent and upgrade old
-  attributes to their new names.  includes likes of region, region_id,
-  material_id, air, los, rgb, oshader, and inherit.  see
-  doc/docbook/system/man5/en/attributes.xml for more detailed listing.
-
-* implement an option to "attr upgrade" for reading upgrade/downgrade
-  plugins/instructions from an external file for 3rd party use.
-
-* prevent nirt from outputting a trailing space after values when
-  there are no attributes to be displayed.  the problem is in the nirt
-  format strings where they use " %s" for displaying any attributes.
-  need to left-pad a space conditionally, perhaps by supporting %*s
-  and sizeof(var).
-
-* add additional support for user-specified sorting for the attr
-  command when new attribute attributes are added (e.g., creation
-  date)
-
-* binary attributes, see binary-incompatible section for details.
+See the TODO file, sections "ATTRIBUTES" and "THESE BREAK PROTOCOL OR
+ARE BACKWARDS-INCOMPATIBLE" for more official information.
