@@ -176,6 +176,32 @@ objects.
   </example>
 </refsection>
 
+<refsection xml:id="binary-attributes"><title>BINARY ATTRIBUTES</title>
+
+  <para>
+    A new feature is the capability of adding binary attributes which
+    consist of a name as with normal attributes, but the value is an
+    unsigned integer (of minimum width to describe the total length of
+    the following struct) followed by a struct containing (1) an
+    optional, null-terminated description and (2) a "uniform array
+    binary object" which is defined as a contiguous
+    stream of one of the following integers (with its macro name in
+    parentheses):
+  </para>
+
+  <itemizedlist>
+    <listitem>8-bit signed ()</listitem>
+    <listitem>8-bit unsigned ()</listitem>
+    <listitem>16-bit signed ()</listitem>
+    <listitem>16-bit unsigned ()</listitem>
+    <listitem>32-bit signed ()</listitem>
+    <listitem>32-bit unsigned ()</listitem>
+    <listitem>64-bit signed ()</listitem>
+    <listitem>64-bit unsigned ()</listitem>
+  </itemizedlist>
+
+</refsection>
+
 <refsection xml:id="see_also"><title>SEE ALSO</title>
 <para><citerefentry><refentrytitle>attributes</refentrytitle><manvolnum>5</manvolnum></citerefentry>.</para>
 </refsection>

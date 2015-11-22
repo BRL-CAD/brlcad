@@ -32,6 +32,10 @@ add_test(NAME rt_test_nmg_mk COMMAND test_nmg_mk)
 BRLCAD_ADDEXEC(test_nmg_copy test_nmg_copy.c "librt" NO_INSTALL)
 add_test(NAME rt_test_nmg_copy COMMAND test_nmg_copy)
 
+# binary attribute testing
+BRLCAD_ADDEXEC(test_binary_attribute test_binary_attribute.c "librt" NO_INSTALL)
+add_test(NAME rt_test_binary_attribute COMMAND test_binary_attribute)
+
 set(distcheck_files
   arb_intersect.g
   brep_boolean_tests.g
