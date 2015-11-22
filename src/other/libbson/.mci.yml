@@ -1,0 +1,259 @@
+#######################################
+#      libbson config for MCI      #
+#######################################
+
+#######################################
+#            Options                  #
+#######################################
+
+stepback: true
+
+#######################################
+#            Functions                #
+#######################################
+
+functions:
+    fetch_source:
+        command: git.get_project
+        params:
+            directory: libbson
+
+libbson_variables:
+    ## Tests run on most buildvariants
+
+    std_test_def: &std_tests
+        - name: compile
+        - name: make check
+
+    ## Architectures
+
+    default_expansions_def: &default_expansions
+        env_vars: CFLAGS=""
+    i386_expansions_def: &i386_expansions
+        env_vars: CFLAGS="-m32 -march=i386"
+    i686_expansions_def: &i686_expansions
+        env_vars: CFLAGS="-m32 -march=i686"
+    x86_64_expansions_def: &x86_64_expansions
+        env_vars: CFLAGS="-m64 -march=x86-64"
+
+    ## "Platforms" or whatever
+
+    linux_expansions_def: &linux_expansions
+        j_flag: -j$(grep -c ^processor /proc/cpuinfo)
+
+    osx_expansions_def: &osx_expansions
+        j_flag: -j$(sysctl -n hw.logicalcpu)
+
+    solaris_expansions_def: &solaris_expansions
+        j_flag: -j$(kstat cpu_info|grep core_id|sort -u|wc -l)
+
+    mingw_expansions_def: &mingw_expansions
+        j_flag: -j$(grep -c ^processor /proc/cpuinfo)
+
+#######################################
+#              Pre Task               #
+#######################################
+
+pre:
+    - command: expansions.fetch
+      params:
+          keys:
+              - local_key: aws_key
+                remote_key: project_aws_key
+              - local_key: aws_secret
+                remote_key: project_aws_secret
+
+    - command: shell.exec
+      params:
+          script: |
+              set -o verbose
+              rm -rf libbson
+
+#######################################
+#               Tasks                 #
+#######################################
+
+tasks:
+- name: compile
+  commands:
+      - command: git.get_project
+        params:
+            directory: libbson
+      - command: git.apply_patch
+        params:
+            directory: libbson
+      - command: shell.exec
+        params:
+            working_dir: libbson
+            script: |
+                set -o verbose
+                set -o errexit
+                export PATH=${path}:$PATH
+                ${env_vars} ./autogen.sh
+                make ${j_flag}
+      - command: shell.exec
+        params:
+            working_dir: libbson
+            script: |
+                set -o verbose
+                tar -czvf ../libbson.tar.gz .
+      - command: s3.put
+        params:
+            aws_key: ${aws_key}
+            aws_secret: ${aws_secret}
+            remote_file: libbson/${build_variant}/${revision}/artifacts/${build_id}.tar.gz
+            bucket: mciuploads
+            local_file: libbson.tar.gz
+            permissions: public-read
+            content_type: ${content_type|application/x-gzip}
+
+- name: make check
+  depends_on:
+      - name: compile
+  commands:
+      - command: shell.exec
+        params:
+            script: |
+                mkdir libbson
+      - command: shell.exec
+        params:
+            working_dir: libbson
+            script: |
+                set -o verbose
+                set -o errexit
+                # MCI's S3 mechanism doesn't support symlinks
+                curl http://s3.amazonaws.com/mciuploads/libbson/${build_variant}/${revision}/artifacts/${build_id}.tar.gz -o ${build_id}.tar.gz --silent
+                tar -xzf ${build_id}.tar.gz
+                export PATH=${path}:$PATH
+                make check
+
+#######################################
+#           Buildvariants             #
+#######################################
+
+buildvariants:
+
+################ 32-bit ###############
+
+- name: rhel55-32
+  display_name: RHEL 5.5 32-bit
+  expansions:
+      <<: *default_expansions
+      <<: *linux_expansions
+  run_on:
+      - rhel55-32
+  tasks: *std_tests
+
+- name: windows-32
+  display_name: Windows 32-bit
+  expansions:
+      <<: *default_expansions
+      <<: *linux_expansions
+  run_on:
+      - windows-32
+  tasks: *std_tests
+
+########## i386 cross-compile #########
+
+- name: ubuntu-1204-i386
+  display_name: Ubuntu 12.04 i386
+  expansions:
+      <<: *i386_expansions
+      <<: *linux_expansions
+  run_on:
+      - ubuntu1204-test
+  tasks: *std_tests
+
+- name: ubuntu-1404-i386
+  display_name: Ubuntu 14.04 i386
+  expansions:
+      <<: *i386_expansions
+      <<: *linux_expansions
+  run_on:
+      - ubuntu1404-test
+  tasks: *std_tests
+
+- name: os-x-108-i386
+  display_name: OS X 10.8 i386
+  expansions:
+      <<: *osx_expansions
+      env_vars: CC="clang -m32 -march=i386"
+  run_on:
+      - osx-108
+  tasks: *std_tests
+
+########## i686 cross-compile #########
+
+- name: ubuntu-1204-i686
+  display_name: Ubuntu 12.04 i686
+  expansions:
+      <<: *i686_expansions
+      <<: *linux_expansions
+  run_on:
+      - ubuntu1204-test
+  tasks: *std_tests
+
+- name: ubuntu-1404-i686
+  display_name: Ubuntu 14.04 i686
+  expansions:
+      <<: *i686_expansions
+      <<: *linux_expansions
+  run_on:
+      - ubuntu1404-test
+  tasks: *std_tests
+
+- name: os-x-108-i686
+  display_name: OS X 10.8 i686
+  expansions:
+      <<: *osx_expansions
+      env_vars: CC="clang -m32 -march=i686"
+  run_on:
+      - osx-108
+  tasks: *std_tests
+
+############## x86_64 #################
+
+- name: ubuntu-1204-64
+  display_name: Ubuntu 12.04 64-bit
+  expansions:
+      <<: *x86_64_expansions
+      <<: *linux_expansions
+  run_on:
+      - ubuntu1204-test
+  tasks: *std_tests
+
+- name: ubuntu-1404-64
+  display_name: Ubuntu 14.04 64-bit
+  expansions:
+      <<: *x86_64_expansions
+      <<: *linux_expansions
+  run_on:
+      - ubuntu1404-test
+  tasks: *std_tests
+
+- name: os-x-108-64
+  display_name: OS X 10.8 64-bit
+  expansions:
+      <<: *osx_expansions
+  run_on:
+      - osx-108
+  tasks: *std_tests
+
+- name: solaris-64-bit
+  display_name: Solaris 64-bit
+  expansions:
+      <<: *x86_64_expansions
+      <<: *solaris_expansions
+      path: "/opt/mongodbtoolchain/bin/"
+  run_on:
+      - solaris
+  tasks: *std_tests
+
+- name: windows-64-mingw64
+  display_name: Windows 64-bit MinGW-64
+  expansions:
+      <<: *default_expansions
+      path: "/cygdrive/c/mingw-w64/x86_64-4.9.1-posix-seh-rt_v3-rev1/mingw64/bin:/cygdrive/c/sasl/"
+  run_on:
+      - windows-64-vs2013-test
+  tasks: *std_tests
