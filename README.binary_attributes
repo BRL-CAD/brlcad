@@ -18,11 +18,35 @@ BSON
   libbson source:          https://github.com/mongodb/libbson
   current release tarball: https://github.com/mongodb/libbson/releases/
                              libbson-1.3.0-beta0.tar.gz
+  converter: libbson has tools included to convert BSON to/from JSON 
 
+Scheme
+------
 
-BSON tools
+The BRL-CAD V5 database seems to allow an arbitrary binary chunk
+following the ASCII attributes.  The idea is to define the total
+attribute chunk length to include any desired binary objects.  The
+read or write (RW) of the ASCII attributes stops with the char* RW of
+a double NULL which should be a sufficient stop RW mark. Then, any
+difference in length read versus attribute chunk length is the length
+of a chunk of binary attributes (BAs) which we will define as a BSON
+collection of BSON documents (??? check BSON terminology).  At that
+point we use libbson to RW the BAs.
 
+As a minumum, a BA must have an ASCII key and a binary value.
+Following the BSON specification, the user can add other objects in
+the BA if desired.
 
+The user interface relies on AVS handling which will have to also
+handle the BAs (??? check on that capability).  Our best practice
+should encourage (maybe require?) a BA to have a short ASCII comment.
+
+We will need appropriate functions to convert BAs to/from AVS
+objects. In the course of developing the BA capability we will add a
+file IO scheme for users to manipulate the BAs.
+
+Other notes
+-----------
 Files affected:
 
   ./include/bu/parse.h
