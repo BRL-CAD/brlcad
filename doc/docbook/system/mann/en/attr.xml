@@ -190,14 +190,14 @@ objects.
   </para>
 
   <itemizedlist>
-    <listitem>8-bit signed ()</listitem>
-    <listitem>8-bit unsigned ()</listitem>
-    <listitem>16-bit signed ()</listitem>
-    <listitem>16-bit unsigned ()</listitem>
-    <listitem>32-bit signed ()</listitem>
-    <listitem>32-bit unsigned ()</listitem>
-    <listitem>64-bit signed ()</listitem>
-    <listitem>64-bit unsigned ()</listitem>
+    <listitem><para>8-bit signed ()</para></listitem>
+    <listitem><para>8-bit unsigned ()</para></listitem>
+    <listitem><para>16-bit signed ()</para></listitem>
+    <listitem><para>16-bit unsigned ()</para></listitem>
+    <listitem><para>32-bit signed ()</para></listitem>
+    <listitem><para>32-bit unsigned ()</para></listitem>
+    <listitem><para>64-bit signed ()</para></listitem>
+    <listitem><para>64-bit unsigned ()</para></listitem>
   </itemizedlist>
 
 </refsection>

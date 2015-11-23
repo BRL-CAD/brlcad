@@ -182,6 +182,10 @@ do
                                   shift;;
      --disable-spr)                options="$options -DBRLCAD_SPR=SYSTEM";
                                   shift;;
+     --enable-bson)                options="$options -DBRLCAD_BSON=BUNDLED";
+                                  shift;;
+     --disable-bson)                options="$options -DBRLCAD_BSON=SYSTEM";
+                                  shift;;
      --enable-scl)                options="$options -DBRLCAD_SC=BUNDLED";
                                   shift;;
      --disable-scl)                options="$options -DBRLCAD_SC=SYSTEM";
