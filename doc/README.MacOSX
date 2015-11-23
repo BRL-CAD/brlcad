@@ -104,6 +104,6 @@ uname -a
 Bugs
 ----
 The only known bugs specific to Mac OS X are limitations of Tk or the
-X11 event handler that our generally outside of BRL-CAD's domain.
+X11 event handler that are generally outside of BRL-CAD's domain.
 Refer to BUGS for more general details on known bugs and reporting
 mechanisms.
