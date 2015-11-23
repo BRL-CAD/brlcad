@@ -240,6 +240,14 @@ struct bu_opt_desc_opts {
     int offset;
     int option_columns;
     int description_columns;
+    /* The application needs to inform the printer if
+     * certain options have special status */
+    struct bu_opt_desc *required;
+    struct bu_opt_desc *repeated;
+    struct bu_opt_desc *optional;
+    /* Report the longopt version(s) of an option
+     * even when it has a shortopt */
+    int show_all_longopts;
 };
 
 /**

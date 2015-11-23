@@ -213,11 +213,222 @@ bu_opt_describe_internal_ascii(struct bu_opt_desc *ds, struct bu_opt_desc_opts *
     return finalized;
 }
 
+#define OPT_PLAIN    0x1
+#define OPT_REQUIRED 0x2
+#define OPT_OPTIONAL 0x4
+#define OPT_REPEAT   0x10
+
+HIDDEN int
+docbook_get_opt_type(struct bu_opt_desc *d, struct bu_opt_desc_opts *settings)
+{
+    struct bu_opt_desc *curr = NULL;
+    int flags = OPT_PLAIN;
+
+    if (settings->required) {
+	int j = 0;
+	curr = &(settings->required[j]);
+	while (curr) {
+	    j++;
+	    if (d == curr) {
+		flags = flags & ~(OPT_PLAIN);
+		flags |= OPT_REQUIRED;
+		break;
+	    }
+	    curr = &(settings->required[j]);
+	}
+    }
+
+    if (!(flags & OPT_REQUIRED)) {
+	if (settings->optional) {
+	    int j = 0;
+	    curr = &(settings->optional[j]);
+	    while (curr) {
+		j++;
+		if (d == curr) {
+		    flags = flags & ~(OPT_PLAIN);
+		    flags |= OPT_OPTIONAL;
+		    break;
+		}
+		curr = &(settings->required[j]);
+	    }
+	}
+    }
+
+    if (settings->repeated) {
+	int j = 0;
+	curr = &(settings->repeated[j]);
+	while (curr) {
+	    j++;
+	    if (d == curr) {
+		flags |= OPT_REPEAT;
+		break;
+	    }
+	    curr = &(settings->required[j]);
+	}
+    }
+
+    return flags;
+}
+
+HIDDEN void
+docbook_print_short_opt(struct bu_vls *desc, struct bu_opt_desc *d, int opt_type, int offset)
+{
+    if (!desc || !d) return;
+    bu_vls_printf(desc, "%*s<arg", offset, " ");
+    if (opt_type & OPT_PLAIN) {
+	bu_vls_printf(desc, " choice='plain'");
+    }
+    if (opt_type & OPT_REQUIRED) {
+	bu_vls_printf(desc, " choice='req'");
+    }
+    if (opt_type & OPT_OPTIONAL) {
+	bu_vls_printf(desc, " choice='opt'");
+    }
+    if (opt_type & OPT_REPEAT) {
+	bu_vls_printf(desc, " rep='repeat'");
+    }
+    bu_vls_printf(desc, ">-%c", d->shortopt);
+    if (d->arg_helpstr && strlen(d->arg_helpstr) > 0) {
+	bu_vls_printf(desc, " <replaceable>%s</replaceable>", d->arg_helpstr);
+    }
+    bu_vls_printf(desc, "</arg>\n");
+}
+
+HIDDEN void
+docbook_print_long_opt(struct bu_vls *desc, struct bu_opt_desc *d, int opt_type, int offset)
+{
+    if (!desc || !d) return;
+    bu_vls_printf(desc, "%*s<arg", offset, " ");
+    if (opt_type & OPT_PLAIN) {
+	bu_vls_printf(desc, " choice='plain'");
+    }
+    if (opt_type & OPT_REQUIRED) {
+	bu_vls_printf(desc, " choice='req'");
+    }
+    if (opt_type & OPT_OPTIONAL) {
+	bu_vls_printf(desc, " choice='opt'");
+    }
+    if (opt_type & OPT_REPEAT) {
+	bu_vls_printf(desc, " rep='repeat'");
+    }
+    bu_vls_printf(desc, ">--%s", d->longopt);
+    if (d->arg_helpstr && strlen(d->arg_helpstr) > 0) {
+	bu_vls_printf(desc, " <replaceable>%s</replaceable>", d->arg_helpstr);
+    }
+    bu_vls_printf(desc, "</arg>\n");
+}
+
+
+HIDDEN const char *
+bu_opt_describe_internal_docbook(struct bu_opt_desc *ds, struct bu_opt_desc_opts *settings)
+{
+    int opt_cnt, i, j;
+    struct bu_opt_desc *required = NULL;
+    struct bu_opt_desc *repeated = NULL;
+    struct bu_opt_desc *optional = NULL;
+    int show_all_longopts = 0;
+    const char *finalized;
+    struct bu_vls description = BU_VLS_INIT_ZERO;
+    int *status;
+    if (!ds || opt_desc_is_null(&ds[0])) return NULL;
+
+    if (settings) {
+	required = settings->required;
+	repeated = settings->repeated;
+	optional = settings->optional;
+	show_all_longopts = settings->show_all_longopts;
+   }
+
+    while (!opt_desc_is_null(&ds[i])) i++;
+    if (i == 0) return NULL;
+    opt_cnt = i;
+    status = (int *)bu_calloc(opt_cnt, sizeof(int), "opt status");
+    i = 0;
+    while (i < opt_cnt) {
+	struct bu_opt_desc *curr;
+	struct bu_opt_desc *d;
+	curr = &(ds[i]);
+	if (!status[i]) {
+	    int opt_alias_cnt = 0;
+	    int need_group = 0;
+
+	    /* We handle all entries with the same set_var in the same
+	     * pass, so set the status flags accordingly */
+	    j = i;
+	    while (j < opt_cnt) {
+		d = &(ds[j]);
+		if (d == curr || (d->set_var && curr->set_var && d->set_var == curr->set_var)) {
+		    status[j] = 1;
+		    opt_alias_cnt++;
+		}
+		j++;
+	    }
+
+	    /* If we've got more than one option, make a group */
+	    if (opt_alias_cnt > 1) {
+		need_group = 1;
+	    }
+	    /* If we're showing all the opts and we've got both a short and a long, make
+	     * a group */
+	    if (show_all_longopts && !need_group) {
+		if (curr->shortopt && strlen(d->shortopt) > 0 && curr->longopt && strlen(d->longopt) > 0)
+		    need_group = 1;
+	    }
+
+	    if (need_group) bu_vls_printf(&description, "<group>\n");
+
+	    /* Go with the short option, unless there isn't one. */
+	    j = i;
+	    while (j < opt_cnt) {
+		d = &(ds[j]);
+		if (d == curr || (d->set_var && curr->set_var && d->set_var == curr->set_var)) {
+		    int opt_type = docbook_get_opt_type(d, settings);
+		    if (d->shortopt && strlen(d->shortopt) > 0) {
+			docbook_print_short_opt(&description, d, opt_type, need_group);
+			/* If we're supposed to, also do the longopt */
+			if (show_all_longopts && !need_group) {
+			    if (d->longopt && strlen(d->longopt) > 0) {
+				docbook_print_long_opt(&description, d, opt_type, need_group);
+			    }
+			}
+		    } else {
+			/* For d == curr we *need* to do a longopt if that's all we've got */
+			if ((d == curr || show_all_longopts) && d->longopt && strlen(d->longopt) > 0) {
+			    docbook_print_long_opt(&description, d, opt_type, need_group);
+			}
+		    }
+		}
+		j++;
+	    }
+
+	    if (need_group) bu_vls_printf(&description, "</group>\n");
+	    status[i] = 1;
+
+	}
+	i++;
+	/* add an sbr if we've reached a multiple of 5 */
+	if (i%5 == 0) bu_vls_printf(&description, "<sbr/>\n");
+    }
+    finalized = bu_strdup(bu_vls_addr(&description));
+    bu_vls_free(&description);
+    return finalized;
+}
+
 const char *
 bu_opt_describe(struct bu_opt_desc *ds, struct bu_opt_desc_opts *settings)
 {
     if (!ds) return NULL;
     if (!settings) return bu_opt_describe_internal_ascii(ds, NULL);
+    switch (settings->format) {
+	case BU_OPT_ASCII:
+	    return bu_opt_describe_internal_ascii(ds, settings);
+	    break;
+	case BU_OPT_DOCBOOK:
+	    return bu_opt_describe_internal_docbook(ds, settings);
+	    break;
+	default:
+	    break;
+    }
     return NULL;
 }
 
