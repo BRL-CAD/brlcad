@@ -713,7 +713,7 @@ provided with BRL-CAD's source code.  Default is BUNDLED, using
 the included other/src version.
 ")
 THIRD_PARTY(libbson BSON Libbson libbson_DESCRIPTION ALIASES
-  ${libbson_ALIASES} REQUIRED_VARS "BRLCAD_ENABLE_BSON"  FLAGS NOSYS)
+  ${libbson_ALIASES} FLAGS NOSYS)
 if(BRLCAD_BSON_BUILD)
   SetTargetFolder(libBSON "Third Party Libraries")
   SetTargetFolder(libBSON-static "Third Party Libraries")
