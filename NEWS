@@ -14,6 +14,7 @@ changes made.  See document footer for additional details.
 --- 2014-XX-XX  Release 7.26.XX                                    ---
 ----------------------------------------------------------------------
 
+* fixed datum type 'in' command unit conversion bug - Cliff Yapp
 * added 'arb8' surface area value to analyze command - Kalpit Thakkar
 * added 'part' centroid reporting to analyze command - Brad Hollister
 * added new pixcrop utility for cropping pix images - Carl Moore
