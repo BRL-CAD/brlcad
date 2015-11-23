@@ -1,9 +1,5 @@
-/autom4te.cache
-/set-svn-file-attrs.sh
-/README
-/ltmain.sh
-/ltversion.m4
-/lt~obsolete.m4
-/ltoptions.m4
-/libtool.m4
-/ltsugar.m4
+/bin
+/lib
+/build
+/INSTALL
+/configure
