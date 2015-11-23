@@ -356,7 +356,7 @@ make_island(struct bu_vls *msgs, struct subbrep_island_data *data, struct rt_wdb
 
     if (union_shoal_cnt == 1) {
 	bu_vls_sprintf(&union_name, "%s", bu_vls_addr(&shoal_name));
-	bu_log("single union name: %s\n", bu_vls_addr(&union_name));
+	//bu_log("single union name: %s\n", bu_vls_addr(&union_name));
     }
 
     // Have unions, get subtractions.
