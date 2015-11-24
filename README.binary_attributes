@@ -38,12 +38,47 @@ Following the BSON specification, the user can add other objects in
 the BA if desired.
 
 The user interface relies on AVS handling which will have to also
-handle the BAs (??? check on that capability).  Our best practice
-should encourage (maybe require?) a BA to have a short ASCII comment.
+handle the BAs (that appears to be doable).  Our best practice should
+encourage (maybe require?) a BA to have a short ASCII comment.
 
 We will need appropriate functions to convert BAs to/from AVS
 objects. In the course of developing the BA capability we will add a
 file IO scheme for users to manipulate the BAs.
+
+User interface (mged)
+---------------------
+
+Current attr usage
+******************
+
+mged> attr
+Usage: attr {[-c sep_char] set|get|show|rm|append|sort|list} object [key [value] ... ]
+
+Proposed attr usage
+*******************
+
+mged> attr
+Usage: attr {[-c sep_char][-b] set|get|show|rm|append|sort|list} object [key [value] ... ]
+
+Where the '-b', indicating a binary attribute (BA), works with 'get'
+and 'set' only (and ignored for the other commands).
+ 
+Note that 'set' and 'get' for binary attributes require an external
+file name (which must must be a valid JSON file for 'set') and must
+NOT exist for 'get'.  The 'append' command will NOT work for a BA.
+
+The 'show', 'sort', and 'list' commands will show for BAs their key
+followed by followed by '(binary)' followed by their comment string,
+if it exists (we should make that mandatory I believe).  The 'rm'
+command will remove the BA referenced by the key.
+
+The BAs will have both a key and a comment, and it is an error to try
+to add a BA with a key the same as an existing key.
+
+Tentative JSON format of a BA
+----------------------------- 
+
+
 
 Other notes
 -----------
