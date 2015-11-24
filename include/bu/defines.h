@@ -114,26 +114,30 @@
 /**
  * shorthand declaration of a printf-style functions
  */
-#if !defined(_BU_ATTR_PRINTF12)
-#define _BU_ATTR_PRINTF12 __attribute__ ((__format__ (__printf__, 1, 2)))
+#ifdef HAVE_PRINTF12_ATTRIBUTE
+#define _BU_ATTR_PRINTF12 __attribute__((__format__ (__printf__, 1, 2)))
 #endif
-#if !defined(_BU_ATTR_PRINTF23)
-#define _BU_ATTR_PRINTF23 __attribute__ ((__format__ (__printf__, 2, 3)))
+#ifdef HAVE_PRINTF23_ATTRIBUTE
+#define _BU_ATTR_PRINTF23 __attribute__((__format__ (__printf__, 2, 3)))
 #endif
-#if !defined(_BU_ATTR_SCANF23)
-#define _BU_ATTR_SCANF23 __attribute__ ((__format__ (__scanf__, 2, 3)))
+#ifdef HAVE_SCANF23_ATTRIBUTE
+#define _BU_ATTR_SCANF23 __attribute__((__format__ (__scanf__, 2, 3)))
 #endif
 
 /**
  * shorthand declaration of a function that doesn't return
  */
-#define _BU_ATTR_NORETURN __attribute__ ((__noreturn__))
+#ifdef HAVE_NORETURN_ATTRIBUTE
+#  define _BU_ATTR_NORETURN __attribute__((__noreturn__))
+#else
+#  define _BU_ATTR_NORETURN
+#endif
 
 /* For the moment, we need to specially flag some functions
  * for clang.  It's not clear if we will always need to do
  * this, but for now this suppresses a lot of noise in the
  * reports */
-#ifdef HAVE_ANALYZER_NORETURN 
+#ifdef HAVE_ANALYZER_NORETURN_ATTRIBUTE
 #  define _BU_ATTR_ANALYZE_NORETURN __attribute__((analyzer_noreturn))
 #else
 #  define _BU_ATTR_ANALYZE_NORETURN
@@ -142,7 +146,12 @@
 /**
  * shorthand declaration of a function that should always be inline
  */
-#define _BU_ATTR_ALWAYS_INLINE __attribute__ ((always_inline))
+
+#ifdef HAVE_ALWAYS_INLINE_ATTRIBUTE
+#  define _BU_ATTR_ALWAYS_INLINE __attribute__((always_inline))
+#else
+#  define _BU_ATTR_ALWAYS_INLINE
+#endif
 
 /**
  *  If we're compiling strict, turn off "format string vs arguments"

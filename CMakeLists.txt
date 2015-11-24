@@ -1703,13 +1703,44 @@ if (ERROR_FLAG)
   set(CMAKE_REQUIRED_FLAGS "-Werror")
 endif (ERROR_FLAG)
 
+include(CheckCSourceCompiles)
+# Check whether the compiler supports __attribute__((__noreturn__))
+check_c_source_compiles("#include <stdlib.h>\n
+void noret() __attribute__((__noreturn__)); void noret(){exit(1);} int main(int argc, char *argv[]) {noret(); return 0;}" HAVE_NORETURN_ATTRIBUTE)
+if(HAVE_NORETURN_ATTRIBUTE)
+  CONFIG_H_APPEND(BRLCAD "#define HAVE_NORETURN_ATTRIBUTE 1\n")
+endif(HAVE_NORETURN_ATTRIBUTE)
 
 # Check whether the compiler supports __attribute__((analyzer_noreturn))
-include(CheckCSourceCompiles)
-check_c_source_compiles("void anoret() __attribute__((analyzer_noreturn)); void anoret(){return;} int main(int argc, char *argv[]) {anoret(); return 0;}" HAVE_ANALYZER_NORETURN)
-if(HAVE_ANALYZER_NORETURN)
-  CONFIG_H_APPEND(BRLCAD "#define HAVE_ANALYZER_NORETURN 1\n")
-endif(HAVE_ANALYZER_NORETURN)
+check_c_source_compiles("void anoret() __attribute__((analyzer_noreturn)); void anoret(){return;} int main(int argc, char *argv[]) {anoret(); return 0;}" HAVE_ANALYZER_NORETURN_ATTRIBUTE)
+if(HAVE_ANALYZER_NORETURN_ATTRIBUTE)
+  CONFIG_H_APPEND(BRLCAD "#define HAVE_ANALYZER_NORETURN_ATTRIBUTE 1\n")
+endif(HAVE_ANALYZER_NORETURN_ATTRIBUTE)
+
+# Check whether the compiler supports __attribute__((always_inline))
+check_c_source_compiles("void always_inline() __attribute__((always_inline)); void always_inline(){return;} int main(int argc, char *argv[]) {always_inline(); return 0;}" HAVE_ALWAYS_INLINE_ATTRIBUTE)
+if(HAVE_ALWAYS_INLINE_ATTRIBUTE)
+  CONFIG_H_APPEND(BRLCAD "#define HAVE_ALWAYS_INLINE_ATTRIBUTE 1\n")
+endif(HAVE_ALWAYS_INLINE_ATTRIBUTE)
+
+# Check whether the compiler supports __attribute__((format (__printf__, 1, 2)))
+check_c_source_compiles("int pf(const char *f, ...) __attribute__((format (__printf__, 1, 2))); int pf(const char *f, ...){return 1;} int main(int argc, char *argv[]) {return pf(\"%c\",'a');}" HAVE_PRINTF12_ATTRIBUTE)
+if(HAVE_PRINTF12_ATTRIBUTE)
+  CONFIG_H_APPEND(BRLCAD "#define HAVE_PRINTF12_ATTRIBUTE 1\n")
+endif(HAVE_PRINTF12_ATTRIBUTE)
+
+# Check whether the compiler supports __attribute__((format (__printf__, 2, 3)))
+check_c_source_compiles("int pf(void *o, const char *f, ...) __attribute__((format (__printf__, 2, 3))); int pf(void *o, const char *f, ...){return 1;} int main(int argc, char *argv[]) {return pf((void *)0, \"%c\",'a');}" HAVE_PRINTF23_ATTRIBUTE)
+if(HAVE_PRINTF23_ATTRIBUTE)
+  CONFIG_H_APPEND(BRLCAD "#define HAVE_PRINTF23_ATTRIBUTE 1\n")
+endif(HAVE_PRINTF23_ATTRIBUTE)
+
+# Check whether the compiler supports __attribute__((format (__scanf__, 2, 3)))
+check_c_source_compiles("int sf(void *o, const char *f, ...) __attribute__((format (__scanf__, 2, 3))); int sf(void *o, const char *f, ...){return 1;} int main(int argc, char *argv[]) {int i = 1; return sf((void *)0, \"%d\", &i);}" HAVE_SCANF23_ATTRIBUTE)
+if(HAVE_SCANF23_ATTRIBUTE)
+  CONFIG_H_APPEND(BRLCAD "#define HAVE_SCANF23_ATTRIBUTE 1\n")
+endif(HAVE_SCANF23_ATTRIBUTE)
+
 
 # Silence check for unused arguments (used to silence clang warnings about
 # unused options on the command line). By default clang generates a lot of
