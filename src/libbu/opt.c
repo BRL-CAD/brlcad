@@ -223,8 +223,17 @@ docbook_get_opt_type(struct bu_opt_desc *d, struct bu_opt_desc_opts *settings)
 {
     struct bu_opt_desc *curr = NULL;
     int flags = OPT_PLAIN;
+    struct bu_opt_desc *required = NULL;
+    struct bu_opt_desc *repeated = NULL;
+    struct bu_opt_desc *optional = NULL;
 
-    if (settings->required) {
+    if (settings) {
+	required = settings->required;
+	repeated = settings->repeated;
+	optional = settings->optional;
+   }
+
+    if (required) {
 	int j = 0;
 	curr = &(settings->required[j]);
 	while (curr) {
@@ -239,9 +248,9 @@ docbook_get_opt_type(struct bu_opt_desc *d, struct bu_opt_desc_opts *settings)
     }
 
     if (!(flags & OPT_REQUIRED)) {
-	if (settings->optional) {
+	if (optional) {
 	    int j = 0;
-	    curr = &(settings->optional[j]);
+	    curr = &(optional[j]);
 	    while (curr) {
 		j++;
 		if (d == curr) {
@@ -249,21 +258,21 @@ docbook_get_opt_type(struct bu_opt_desc *d, struct bu_opt_desc_opts *settings)
 		    flags |= OPT_OPTIONAL;
 		    break;
 		}
-		curr = &(settings->required[j]);
+		curr = &(optional[j]);
 	    }
 	}
     }
 
-    if (settings->repeated) {
+    if (repeated) {
 	int j = 0;
-	curr = &(settings->repeated[j]);
+	curr = &(repeated[j]);
 	while (curr) {
 	    j++;
 	    if (d == curr) {
 		flags |= OPT_REPEAT;
 		break;
 	    }
-	    curr = &(settings->required[j]);
+	    curr = &(repeated[j]);
 	}
     }
 
@@ -323,9 +332,6 @@ HIDDEN const char *
 bu_opt_describe_internal_docbook(struct bu_opt_desc *ds, struct bu_opt_desc_opts *settings)
 {
     int opt_cnt, i, j;
-    struct bu_opt_desc *required = NULL;
-    struct bu_opt_desc *repeated = NULL;
-    struct bu_opt_desc *optional = NULL;
     int show_all_longopts = 0;
     const char *finalized;
     struct bu_vls description = BU_VLS_INIT_ZERO;
@@ -333,11 +339,8 @@ bu_opt_describe_internal_docbook(struct bu_opt_desc *ds, struct bu_opt_desc_opts
     if (!ds || opt_desc_is_null(&ds[0])) return NULL;
 
     if (settings) {
-	required = settings->required;
-	repeated = settings->repeated;
-	optional = settings->optional;
 	show_all_longopts = settings->show_all_longopts;
-   }
+    }
 
     while (!opt_desc_is_null(&ds[i])) i++;
     if (i == 0) return NULL;
