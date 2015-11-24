@@ -74,16 +74,13 @@
 #define HAVE_GL_GL_H		1
 #define HAVE_IO_H		1
 #define HAVE_MEMORY_H		1
-#define HAVE_MEMSET		1
 #define HAVE_OFF_T		1
 #define HAVE_PROCESS_H  	1
 #define HAVE_PUTENV     	1
 #define HAVE_REGEX_H		1
 #define HAVE_SIG_T		1
-#define HAVE_STRCHR		1
 #define HAVE_STRDUP		1
 #define HAVE_STRDUP_DECL	1
-#define HAVE_STRTOK		1
 #define HAVE_SYS_STAT_H		1
 #define HAVE_SYS_TYPES_H	1
 #define HAVE_TIME		1
