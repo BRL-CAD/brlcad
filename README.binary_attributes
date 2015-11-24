@@ -78,7 +78,22 @@ to add a BA with a key the same as an existing key.
 Tentative JSON format of a BA
 ----------------------------- 
 
+(See http://www.json.org/ for the JSON specification.)
 
+Functions needed
+----------------
+
+  JSON BA to/from in-memory AVS
+    see current functions:
+
+  AVS BA to/from on-disk attribute body
+    see current functions:
+
+Macro definitions needed
+------------------------
+
+Data structures needed
+----------------------
 
 Other notes
 -----------
