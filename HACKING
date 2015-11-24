@@ -288,11 +288,6 @@ models, as well as various visual effects such as texturing, marble,
 wood graining, air, gravel, grass, clouds, fire, and more.
 	Depends on: librt libbn libbu libtcl
 
-liborle: The "old" run-length encoding library that will decode and
-encode University of Utah Raster Toolkit format Run-Length Encoded
-data.
-	Depends on nothing
-
 libpkg: The "Package" library is a network communications library that
 supports multiplexing and demultiplexing synchronous and asynchronous
 messages across stream connections.  The library supports a
