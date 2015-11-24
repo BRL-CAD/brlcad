@@ -521,9 +521,15 @@ if(NOT BRLCAD_IS_SUBBUILD)
     set(JFLAG)
   endif(NOT N EQUAL 0)
   if(${CMAKE_VERSION} VERSION_GREATER 2.99)
-    add_custom_target(check COMMAND ${CMAKE_CTEST_COMMAND} -C $<CONFIG> -LE Regression -E ^regress- ${JFLAG})
+    add_custom_target(check
+      COMMAND ${CMAKE_COMMAND} -P ${BRLCAD_CMAKE_DIR}/make_check_msg.cmake
+      COMMAND ${CMAKE_CTEST_COMMAND} -C $<CONFIG> -LE Regression -E ^regress- ${JFLAG}
+      )
   else(${CMAKE_VERSION} VERSION_GREATER 2.99)
-    add_custom_target(check COMMAND ${CMAKE_CTEST_COMMAND} -C $<CONFIGURATION> -LE Regression -E ^regress- ${JFLAG})
+    add_custom_target(check
+      COMMAND ${CMAKE_COMMAND} -P ${BRLCAD_CMAKE_DIR}/make_check_msg.cmake
+      COMMAND ${CMAKE_CTEST_COMMAND} -C $<CONFIGURATION> -LE Regression -E ^regress- ${JFLAG}
+      )
   endif(${CMAKE_VERSION} VERSION_GREATER 2.99)
   set_target_properties(check PROPERTIES FOLDER "BRL-CAD Validation Testing")
   function(add_test test_name test_prog)
@@ -2990,28 +2996,6 @@ if(NOT BRLCAD_IS_SUBBUILD)
   endwhile(${SETTINGLABELLENGTH} GREATER ${CURRENTLENGTH})
   message("${CONFIG_TIME_MSG_LABEL}..: ${CONFIG_TIME_MSG}")
 endif(NOT BRLCAD_IS_SUBBUILD)
-
-# FIXME: we only want to print these messages during these targets,
-# yet seem to always enter TARGET check during cmake.
-if (TARGET check)
-  message("
-**********************************************************************
-NOTE: The \"check\" a.k.a. \"BRL-CAD Validation Testing\" target runs
-BRL-CAD's unit, system, integration, and regression tests but not the
-BRL-CAD Benchmark.  For a build to be considered viable for production
-use, these tests must pass along with the benchmark target.  All
-dependencies required by the tests are compiled automatically.
-**********************************************************************
-")
-elseif (TARGET test)
-  message("
-**********************************************************************
-NOTE: The \"test\" target runs all of BRL-CAD's available unit tests
-including tests for API currently under development.  It is not
-necessarily cause for concern if any of these tests fail.
-**********************************************************************
-")
-endif (TARGET check)
 
 # Local Variables:
 # tab-width: 8
