@@ -1563,12 +1563,6 @@ if(ENABLE_POSIX_COMPLIANCE)
   CHECK_CXX_FLAG("D_XOPEN_SOURCE=500")
 endif()
 
-# Silence check for unused arguments (used to silence clang warnings about
-# unused options on the command line). By default clang generates a lot of
-# warnings about such arguments, and we don't really care.
-CHECK_C_FLAG(Qunused-arguments)
-CHECK_CXX_FLAG(Qunused-arguments)
-
 # 64bit compilation flags
 if(${CMAKE_WORD_SIZE} MATCHES "64BIT" AND NOT CMAKE_CL_64)
   CHECK_C_FLAG(m64 VARS 64BIT_FLAG)
@@ -1699,6 +1693,34 @@ endif(${BRLCAD_OPTIMIZED_BUILD} MATCHES "ON")
 # Enable this flag for additional reporting of undefined symbols.
 # TODO: Fixing these is a work in progress.
 # CHECK_C_COMPILER_FLAG("Wl,--no-undefined" NO_UNDEFINED_LINKER_FLAG)
+
+# ******************************************************************* #
+# For some tests, we need Werror to make sure the test actually fails
+
+set(CMAKE_REQUIRED_FLAGS_BAK ${CMAKE_REQUIRED_FLAGS})
+CHECK_C_FLAG(Werror VARS ERROR_FLAG)
+if (ERROR_FLAG)
+  set(CMAKE_REQUIRED_FLAGS "-Werror")
+endif (ERROR_FLAG)
+
+
+# Check whether the compiler supports __attribute__((analyzer_noreturn))
+include(CheckCSourceCompiles)
+check_c_source_compiles("void anoret() __attribute__((analyzer_noreturn)); void anoret(){return;} int main(int argc, char *argv[]) {anoret(); return 0;}" HAVE_ANALYZER_NORETURN)
+if(HAVE_ANALYZER_NORETURN)
+  CONFIG_H_APPEND(BRLCAD "#define HAVE_ANALYZER_NORETURN 1\n")
+endif(HAVE_ANALYZER_NORETURN)
+
+# Silence check for unused arguments (used to silence clang warnings about
+# unused options on the command line). By default clang generates a lot of
+# warnings about such arguments, and we don't really care.
+CHECK_C_FLAG(Qunused-arguments)
+CHECK_CXX_FLAG(Qunused-arguments)
+
+
+set(CMAKE_REQUIRED_FLAGS ${CMAKE_REQUIRED_FLAGS_BAK})
+
+# ******************************************************************* #
 
 if(NOT MSVC)
   # We could include this, but these tests are almost entirely for

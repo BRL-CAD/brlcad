@@ -133,7 +133,7 @@
  * for clang.  It's not clear if we will always need to do
  * this, but for now this suppresses a lot of noise in the
  * reports */
-#ifdef __clang__
+#ifdef HAVE_ANALYZER_NORETURN 
 #  define _BU_ATTR_ANALYZE_NORETURN __attribute__((analyzer_noreturn))
 #else
 #  define _BU_ATTR_ANALYZE_NORETURN
