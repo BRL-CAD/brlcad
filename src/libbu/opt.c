@@ -331,7 +331,8 @@ docbook_print_long_opt(struct bu_vls *desc, struct bu_opt_desc *d, int opt_type,
 HIDDEN const char *
 bu_opt_describe_internal_docbook(struct bu_opt_desc *ds, struct bu_opt_desc_opts *settings)
 {
-    int opt_cnt, i, j;
+    int opt_cnt, j;
+    int i = 0;
     int show_all_longopts = 0;
     const char *finalized;
     struct bu_vls description = BU_VLS_INIT_ZERO;
