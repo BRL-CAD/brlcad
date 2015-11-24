@@ -42,7 +42,6 @@ libged - the geometry editor library
 libgcv - the geometry conversion library
 libmultispectral - a multispectral ray-tracing optics library
 liboptical - an optics library for raster image ray-tracing
-liborle - an "old" run-length image encoding library
 libpkg - a network package transport library
 librt - the BRL-CAD ray-trace library
 librtserver - the JNI interface to librt providing raytrace services to Java

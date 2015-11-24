@@ -78,7 +78,6 @@ typedef unsigned char RGBpixel[3];
  * left-justified in a short.  Think of this as fixed-point values
  * from 0 to 1.
  */
-/* FIXME: ColorMap is same as RLEColorMap defined in 'orle.h' */
 typedef struct {
     unsigned short cm_red[256];
     unsigned short cm_green[256];
