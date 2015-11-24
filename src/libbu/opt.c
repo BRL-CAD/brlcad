@@ -349,8 +349,8 @@ bu_opt_describe_internal_docbook(struct bu_opt_desc *ds, struct bu_opt_desc_opts
     status = (int *)bu_calloc(opt_cnt, sizeof(int), "opt status");
     i = 0;
     while (i < opt_cnt) {
-	struct bu_opt_desc *curr;
-	struct bu_opt_desc *d;
+	struct bu_opt_desc *curr = NULL;
+	struct bu_opt_desc *d = NULL;
 	curr = &(ds[i]);
 	if (!status[i]) {
 	    int opt_alias_cnt = 0;
