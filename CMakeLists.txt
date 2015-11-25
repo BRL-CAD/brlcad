@@ -3052,15 +3052,13 @@ add_custom_target(print-warning-message ${CMAKE_COMMAND} -E echo ""
   COMMAND ${CMAKE_COMMAND} -E echo "\"**********************************************************************\""
   COMMAND ${CMAKE_COMMAND} -E echo "NOTE: The \"test\" target runs all of BRL-CAD\\'s available unit tests"
   COMMAND ${CMAKE_COMMAND} -E echo "      including tests for API currently under development.  It is not"
-  COMMAND ${CMAKE_COMMAND} -E echo "      necessarily cause for concern if any of these tests fail."
+  COMMAND ${CMAKE_COMMAND} -E echo "      necessarily cause for concern if any of these tests fail.  It is"
+  COMMAND ${CMAKE_COMMAND} -E echo "      always helpful to fix tests that are failing (except this one)."
   COMMAND ${CMAKE_COMMAND} -E echo "\"**********************************************************************\""
   COMMAND ${CMAKE_COMMAND} -E echo ""
   COMMAND false
   )
-
-#_add_test(NAME "fails_intentionally_to_print_a_message" COMMAND ${CMAKE_COMMAND} --build . --target print-warning-message)
-#_add_test(NAME "beginning_testing" COMMAND ${CMAKE_CTEST_COMMAND} --output-on-failure -R fails_intentionally_to_print_a_message)
-#set_tests_properties(beginning_testing PROPERTIES DEPENDS fails_intentionally_to_print_a_message)
+_add_test(NAME "NOTE:\\ some\\ tests\\ are\\ expected\\ to\\ fail" COMMAND ${CMAKE_COMMAND} --build . --target print-warning-message)
 
 # Local Variables:
 # tab-width: 8
