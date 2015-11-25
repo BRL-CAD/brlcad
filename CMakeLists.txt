@@ -523,12 +523,12 @@ if(NOT BRLCAD_IS_SUBBUILD)
   if(${CMAKE_VERSION} VERSION_GREATER 2.99)
     add_custom_target(check
       COMMAND ${CMAKE_COMMAND} -P ${BRLCAD_CMAKE_DIR}/make_check_msg.cmake
-      COMMAND ${CMAKE_CTEST_COMMAND} -C $<CONFIG> -LE Regression -E ^regress- ${JFLAG}
+      COMMAND ${CMAKE_CTEST_COMMAND} -C $<CONFIG> -LE \"Regression|NOT_WORKING\" -E \"^regress-|NOTE\" ${JFLAG}
       )
   else(${CMAKE_VERSION} VERSION_GREATER 2.99)
     add_custom_target(check
       COMMAND ${CMAKE_COMMAND} -P ${BRLCAD_CMAKE_DIR}/make_check_msg.cmake
-      COMMAND ${CMAKE_CTEST_COMMAND} -C $<CONFIGURATION> -LE Regression -E ^regress- ${JFLAG}
+      COMMAND ${CMAKE_CTEST_COMMAND} -C $<CONFIGURATION> -LE \"Regression|NOT_WORKING\" -E \"^regress-|NOTE\" ${JFLAG}
       )
   endif(${CMAKE_VERSION} VERSION_GREATER 2.99)
   set_target_properties(check PROPERTIES FOLDER "BRL-CAD Validation Testing")
