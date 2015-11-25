@@ -3047,6 +3047,21 @@ if(NOT BRLCAD_IS_SUBBUILD)
   message("${CONFIG_TIME_MSG_LABEL}..: ${CONFIG_TIME_MSG}")
 endif(NOT BRLCAD_IS_SUBBUILD)
 
+
+add_custom_target(print-warning-message ${CMAKE_COMMAND} -E echo ""
+  COMMAND ${CMAKE_COMMAND} -E echo "\"**********************************************************************\""
+  COMMAND ${CMAKE_COMMAND} -E echo "NOTE: The \"test\" target runs all of BRL-CAD\\'s available unit tests"
+  COMMAND ${CMAKE_COMMAND} -E echo "      including tests for API currently under development.  It is not"
+  COMMAND ${CMAKE_COMMAND} -E echo "      necessarily cause for concern if any of these tests fail."
+  COMMAND ${CMAKE_COMMAND} -E echo "\"**********************************************************************\""
+  COMMAND ${CMAKE_COMMAND} -E echo ""
+  COMMAND false
+  )
+
+#_add_test(NAME "fails_intentionally_to_print_a_message" COMMAND ${CMAKE_COMMAND} --build . --target print-warning-message)
+#_add_test(NAME "beginning_testing" COMMAND ${CMAKE_CTEST_COMMAND} --output-on-failure -R fails_intentionally_to_print_a_message)
+#set_tests_properties(beginning_testing PROPERTIES DEPENDS fails_intentionally_to_print_a_message)
+
 # Local Variables:
 # tab-width: 8
 # mode: cmake
