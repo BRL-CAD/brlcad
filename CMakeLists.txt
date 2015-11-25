@@ -519,7 +519,7 @@ if(NOT BRLCAD_IS_SUBBUILD)
   endif(NOT N EQUAL 0)
   add_custom_target(check
     COMMAND ${CMAKE_COMMAND} -P ${BRLCAD_CMAKE_DIR}/make_check_msg.cmake
-    COMMAND ${CMAKE_CTEST_COMMAND} -LE \"Regression|NOT_WORKING\" -E \"^regress-|NOTE\" ${JFLAG}
+    COMMAND ${CMAKE_CTEST_COMMAND} -LE \"Regression|NOT_WORKING\" -E \"^regress-|NOTE|benchmark\" ${JFLAG}
     COMMAND ${CMAKE_CTEST_COMMAND} -R \"benchmark\" --output-on-failure ${JFLAG}
     COMMAND ${CMAKE_CTEST_COMMAND} -L \"Regression\" --output-on-failure ${JFLAG}
     )
@@ -543,12 +543,12 @@ if(NOT BRLCAD_IS_SUBBUILD)
   if(${CMAKE_VERSION} VERSION_GREATER 2.99)
     add_custom_target(unit
       COMMAND ${CMAKE_COMMAND} -P ${BRLCAD_CMAKE_DIR}/make_unit_msg.cmake
-      COMMAND ${CMAKE_CTEST_COMMAND} -C $<CONFIG> -LE \"Regression|NOT_WORKING\" -E \"^regress-|NOTE\" ${JFLAG}
+      COMMAND ${CMAKE_CTEST_COMMAND} -C $<CONFIG> -LE \"Regression|NOT_WORKING\" -E \"^regress-|NOTE|benchmark\" ${JFLAG}
       )
   else(${CMAKE_VERSION} VERSION_GREATER 2.99)
     add_custom_target(unit
       COMMAND ${CMAKE_COMMAND} -P ${BRLCAD_CMAKE_DIR}/make_unit_msg.cmake
-      COMMAND ${CMAKE_CTEST_COMMAND} -C $<CONFIGURATION> -LE \"Regression|NOT_WORKING\" -E \"^regress-|NOTE\" ${JFLAG}
+      COMMAND ${CMAKE_CTEST_COMMAND} -C $<CONFIGURATION> -LE \"Regression|NOT_WORKING\" -E \"^regress-|NOTE|benchmark\" ${JFLAG}
       )
   endif(${CMAKE_VERSION} VERSION_GREATER 2.99)
   set_target_properties(unit PROPERTIES FOLDER "BRL-CAD Validation Testing")
