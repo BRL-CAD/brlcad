@@ -66,6 +66,7 @@
 #include "./bu/cv.h"
 #include "./bu/debug.h"
 #include "./bu/endian.h"
+#include "./bu/env.h"
 #include "./bu/file.h"
 #include "./bu/path.h"
 #include "./bu/getopt.h"

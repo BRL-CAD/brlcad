@@ -31,6 +31,7 @@
 #include <string.h>
 #include "bio.h"
 
+#include "bu/env.h"
 #include "bu/getopt.h"
 #include "bu/list.h"
 #include "bu/units.h"
@@ -399,7 +400,7 @@ main(int argc, char *argv[])
 		rt_bot_minpieces = atoi(bu_optarg);
 		break;
 	    case 'T':
-		setenv("LIBRT_BOT_MINTIE", bu_optarg, 1);
+		bu_setenv("LIBRT_BOT_MINTIE", bu_optarg, 1);
 		break;
 	    case 'b':
 		do_backout = 1;
