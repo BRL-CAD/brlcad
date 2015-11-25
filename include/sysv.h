@@ -53,10 +53,6 @@ __BEGIN_DECLS
 #  endif
 #endif
 
-#ifndef HAVE_STRDUP
-SYSV_EXPORT extern char *strdup(const char *cp);
-#endif
-
 #ifndef HAVE_STRSEP
 SYSV_EXPORT extern char *strsep(char **stringp, const char *delim);
 #endif
