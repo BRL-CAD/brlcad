@@ -46,7 +46,6 @@
 #include "vmath.h"
 #include "raytrace.h"
 #include "bn/plot3.h"
-#include "sysv.h"
 #include "analyze.h"
 
 #include "./ged_private.h"

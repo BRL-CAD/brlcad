@@ -111,12 +111,6 @@ etc.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term><emphasis remap='B'>libsysv</emphasis></term>
-  <listitem>
-<para>Some System-V compatibility routines</para>
-  </listitem>
-  </varlistentry>
-  <varlistentry>
   <term><emphasis remap='B'>libtermio</emphasis></term>
   <listitem>
 <para>A library to handle terminal mode setting

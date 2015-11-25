@@ -53,7 +53,7 @@ set(comgeom-g_SRCS
   )
 BRLCAD_ADDEXEC(comgeom-g "${comgeom-g_SRCS}" "libwdb;libbn;libbu;${M_LIBRARY}")
 
-BRLCAD_ADDEXEC(conv-vg2g conv-vg2g.c "libbu;libsysv")
+BRLCAD_ADDEXEC(conv-vg2g conv-vg2g.c "libbu")
 
 BRLCAD_ADDEXEC(cy-g cy-g.c "libwdb;${M_LIBRARY}")
 
@@ -67,7 +67,7 @@ BRLCAD_ADDEXEC(enf-g enf-g.c "libwdb;${TCL_LIBRARY};${M_LIBRARY}")
 
 BRLCAD_ADDEXEC(euclid_format euclid/euclid_format.c librt)
 
-BRLCAD_ADDEXEC(euclid_unformat euclid/euclid_unformat.c "libbn;libbu;libsysv")
+BRLCAD_ADDEXEC(euclid_unformat euclid/euclid_unformat.c "libbn;libbu")
 
 BRLCAD_ADDEXEC(euclid-g euclid/euclid-g.c libwdb)
 

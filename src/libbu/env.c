@@ -39,7 +39,6 @@
 #include <string.h>
 #include <errno.h>
 #include "bio.h"
-#include "sysv.h"
 
 #include "bu/env.h"
 

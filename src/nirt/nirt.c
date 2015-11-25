@@ -37,7 +37,6 @@
 #include "bu/units.h"
 #include "vmath.h"
 #include "raytrace.h"
-#include "sysv.h"
 
 /* private */
 #include "./nirt.h"

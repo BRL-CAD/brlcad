@@ -45,7 +45,6 @@ liboptical - an optics library for raster image ray-tracing
 libpkg - a network package transport library
 librt - the BRL-CAD ray-trace library
 librtserver - the JNI interface to librt providing raytrace services to Java
-libsysv - a System V compatibility library (deprecated)
 libtclcad - a library for Tcl routines related to CAD
 libtermio - a terminal I/O library
 libwdb - the write database library, for creating BRL-CAD geometry models

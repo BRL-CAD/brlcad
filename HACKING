@@ -302,11 +302,6 @@ multithreaded ray dispatch.
 	Depends on: librt libbn libbu libtcl
 	Includes dependent libraries as part of this library
 
-libsysv: The System 5 compatibility library exists to support legacy
-systems that lack functionality required by BRL-CAD.  This library is
-deprecated and should generally not be used for new development.
-	Depends on nothing
-
 libtclcad: The Tcl-CAD library is a thin interface that assists in the
 binding of an image to a Tk graphics context.
 	Depends on: libbn libbu libfb libtcl libtk

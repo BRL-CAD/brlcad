@@ -60,7 +60,6 @@ set(noinst_HEADERS
   brlcad_version.h
   conf.h
   fbmsg.h
-  sysv.h
   )
 CMAKEFILES(${noinst_HEADERS})
 
