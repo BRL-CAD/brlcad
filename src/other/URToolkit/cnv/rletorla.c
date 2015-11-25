@@ -29,6 +29,8 @@
  * System includes.
  */
 
+#include "config.h"
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <unistd.h>
@@ -209,7 +211,11 @@ int	minx, maxx, miny, maxy, frame_number;
      exit(BAD);
    }
 #else
+#  ifdef HAVE_GETHOSTNAME
    gethostname(rlb_head.machine, 32);
+#  else
+   strcpy(rlb_head.machine, getenv("HOSTNAME"));
+#  endif
 #endif
    strcpy(rlb_head.user, getenv("USER"));
    second = time((long *)NULL);

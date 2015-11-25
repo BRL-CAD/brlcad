@@ -944,160 +944,6 @@ cmd_set_more_default(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int
 }
 
 
-/**
- * debackslash, backslash_specials, mged_compat: routines for original
- * mged emulation mode
- */
-void
-debackslash(struct bu_vls *dest, struct bu_vls *src)
-{
-    char *ptr;
-
-    ptr = bu_vls_addr(src);
-    while (*ptr) {
-	if (*ptr == '\\')
-	    ++ptr;
-	if (*ptr == '\0')
-	    break;
-	bu_vls_putc(dest, *ptr++);
-    }
-}
-
-
-void
-backslash_specials(struct bu_vls *dest, struct bu_vls *src)
-{
-    int backslashed;
-    char *ptr, buf[2];
-
-    buf[1] = '\0';
-    backslashed = 0;
-    for (ptr = bu_vls_addr(src); *ptr; ptr++) {
-	if (*ptr == '[' && !backslashed)
-	    bu_vls_strcat(dest, "\\[");
-	else if (*ptr == ']' && !backslashed)
-	    bu_vls_strcat(dest, "\\]");
-	else if (backslashed) {
-	    bu_vls_strcat(dest, "\\");
-	    buf[0] = *ptr;
-	    bu_vls_strcat(dest, buf);
-	    backslashed = 0;
-	} else if (*ptr == '\\')
-	    backslashed = 1;
-	else {
-	    buf[0] = *ptr;
-	    bu_vls_strcat(dest, buf);
-	}
-    }
-}
-
-
-/**
- * This routine is called to perform wildcard expansion and character
- * quoting on the given vls (typically input from the keyboard.)
- *
- * TODO: this and ged_glob share a good bit of logic - can ged_glob
- * be used, and if not can the common logic be expressed in some API?
- */
-void
-mged_compat(struct bu_vls *dest, struct bu_vls *src, int use_first)
-{
-    char *start, *end;          /* Start and ends of words */
-    int regexp;                 /* Set to TRUE when word is a regexp */
-    int backslashed;
-    int firstword;
-    struct bu_vls word = BU_VLS_INIT_ZERO;         /* Current word being processed */
-    struct bu_vls temp = BU_VLS_INIT_ZERO;
-
-    if (dbip == DBI_NULL) {
-	bu_vls_vlscat(dest, src);
-	return;
-    }
-
-    start = end = bu_vls_addr(src);
-    firstword = 1;
-    while (*end != '\0') {
-	/* Run through entire string */
-
-	/* First, pass along leading whitespace. */
-
-	start = end;                   /* Begin where last word ended */
-	while (*start != '\0') {
-	    if (*start == ' '  ||
-		*start == '\t' ||
-		*start == '\n')
-		bu_vls_putc(dest, *start++);
-	    else
-		break;
-	}
-	if (*start == '\0')
-	    break;
-
-	/* Next, advance "end" pointer to the end of the word, while
-	 * adding each character to the "word" vls.  Also make a note
-	 * of any unbackslashed wildcard characters.
-	 */
-
-	end = start;
-	bu_vls_trunc(&word, 0);
-	regexp = 0;
-	backslashed = 0;
-	while (*end != '\0') {
-	    if (*end == ' '  ||
-		*end == '\t' ||
-		*end == '\n')
-		break;
-	    if ((*end == '*' || *end == '?' || *end == '[') && !backslashed)
-		regexp = 1;
-	    if (*end == '\\' && !backslashed)
-		backslashed = 1;
-	    else
-		backslashed = 0;
-	    bu_vls_putc(&word, *end++);
-	}
-
-	if (firstword && !use_first)
-	    regexp = 0;
-
-	/* Now, if the word was suspected of being a wildcard, try to
-	 * match it to the database.
-	 */
-
-	if (regexp) {
-	    register int i, num;
-	    register struct directory *dp;
-	    bu_vls_trunc(&temp, 0);
-	    for (i = num = 0; i < RT_DBNHASH; i++) {
-		for (dp = dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
-		    if (bu_fnmatch(bu_vls_addr(&word), dp->d_namep, 0) != 0)
-			continue;
-		    if (num == 0)
-			bu_vls_strcat(&temp, dp->d_namep);
-		    else {
-			bu_vls_strcat(&temp, " ");
-			bu_vls_strcat(&temp, dp->d_namep);
-		    }
-		    ++num;
-		}
-	    }
-
-	    if (num == 0) {
-		debackslash(&temp, &word);
-		backslash_specials(dest, &temp);
-	    } else
-		bu_vls_vlscat(dest, &temp);
-	} else {
-	    debackslash(dest, &word);
-	}
-
-	firstword = 0;
-    }
-
-    bu_vls_free(&temp);
-    bu_vls_free(&word);
-}
-
-
 #ifdef _WIN32
 /* limited to seconds only */
 void gettimeofday(struct timeval *tp, struct timezone *tzp)
@@ -1153,7 +999,11 @@ cmdline(struct bu_vls *vp, int record)
     */
 
     if (glob_compat_mode) {
-	mged_compat(&globbed, vp, 0);
+	int flags = 0;
+	flags |= DB_GLOB_HIDDEN;
+	flags |= DB_GLOB_NON_GEOM;
+	flags |= DB_GLOB_SKIP_FIRST;
+	(void)db_expand_str_glob(&globbed, bu_vls_addr(vp), dbip, flags);
     } else {
 	bu_vls_vlscat(&globbed, vp);
     }
@@ -2254,36 +2104,6 @@ cmd_shaded_mode(ClientData UNUSED(clientData),
 
     return TCL_OK;
 }
-
-
-/* XXX needs to be provided from points header */
-extern int parse_point_file(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *argv[]);
-#ifndef BC_WITH_PARSERS
-int
-cmd_parse_points(ClientData UNUSED(clientData),
-		 Tcl_Interp *UNUSED(interpreter),
-		 int UNUSED(argc),
-		 const char *UNUSED(argv[]))
-{
-
-    bu_log("parse_points was disabled in this compilation of mged due to system limitations\n");
-    return TCL_ERROR;
-}
-#else
-int
-cmd_parse_points(ClientData clientData,
-		 Tcl_Interp *interpreter,
-		 int argc,
-		 const char *argv[])
-{
-   if (argc != 2) {
-	bu_log("parse_points only supports a single file name right now\n");
-	bu_log("doing nothing\n");
-	return TCL_ERROR;
-    }
-    return parse_point_file(clientData, interpreter, argc-1, &(argv[1]));
-}
-#endif
 
 
 int

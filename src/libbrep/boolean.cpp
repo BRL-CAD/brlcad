@@ -31,7 +31,8 @@
 #include <queue>
 #include <set>
 #include <map>
-#include <algorithm>
+
+#include "bio.h"
 
 #include "vmath.h"
 #include "bu/log.h"
@@ -39,6 +40,7 @@
 
 #include "raytrace.h"
 #include "brep_except.h"
+
 
 // Whether to output the debug messages about b-rep booleans.
 #define DEBUG_BREP_BOOLEAN 0

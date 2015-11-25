@@ -44,6 +44,8 @@
 #include "bu/path.h"
 #include "icv.h"
 #include "wdb.h"
+
+/* FIXME: private API */
 #include "../../libgcv/bot_solidity.h"
 
 
@@ -557,7 +559,7 @@ RhinoConverter::ObjectManager::mark_idef_member(const ON_UUID &uuid)
 inline bool
 RhinoConverter::ObjectManager::exists(const ON_UUID &uuid) const
 {
-    return m_obj_map.count(uuid);
+    return m_obj_map.count(uuid) > 0;
 }
 
 

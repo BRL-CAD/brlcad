@@ -74,16 +74,13 @@
 #define HAVE_GL_GL_H		1
 #define HAVE_IO_H		1
 #define HAVE_MEMORY_H		1
-#define HAVE_MEMSET		1
 #define HAVE_OFF_T		1
 #define HAVE_PROCESS_H  	1
 #define HAVE_PUTENV     	1
 #define HAVE_REGEX_H		1
 #define HAVE_SIG_T		1
-#define HAVE_STRCHR		1
 #define HAVE_STRDUP		1
 #define HAVE_STRDUP_DECL	1
-#define HAVE_STRTOK		1
 #define HAVE_SYS_STAT_H		1
 #define HAVE_SYS_TYPES_H	1
 #define HAVE_TIME		1
@@ -122,8 +119,10 @@
 /* #define mktemp _mktemp */
 #define open _open
 #define unlink _unlink
-/* why not just #define pipe _pipe? */
+
+/* io.h's _pipe func takes different args */
 #define pipe(_FD) (_pipe((_FD), 256, _O_TEXT))
+
 #define read _read
 #define setmode _setmode
 /* #define tell _tell */
@@ -157,7 +156,6 @@
 #define pclose _pclose
 #define popen _popen
 #define putenv _putenv
-#define snprintf _snprintf
 #define snprintf _snprintf
 #define sopen _sopen
 #define strcasecmp _stricmp

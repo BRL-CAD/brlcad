@@ -521,11 +521,17 @@ if(NOT BRLCAD_IS_SUBBUILD)
     set(JFLAG)
   endif(NOT N EQUAL 0)
   if(${CMAKE_VERSION} VERSION_GREATER 2.99)
-    add_custom_target(check COMMAND ${CMAKE_CTEST_COMMAND} -C $<CONFIG> -LE Regression -E ^regress- ${JFLAG})
+    add_custom_target(check
+      COMMAND ${CMAKE_COMMAND} -P ${BRLCAD_CMAKE_DIR}/make_check_msg.cmake
+      COMMAND ${CMAKE_CTEST_COMMAND} -C $<CONFIG> -LE Regression -E ^regress- ${JFLAG}
+      )
   else(${CMAKE_VERSION} VERSION_GREATER 2.99)
-    add_custom_target(check COMMAND ${CMAKE_CTEST_COMMAND} -C $<CONFIGURATION> -LE Regression -E ^regress- ${JFLAG})
+    add_custom_target(check
+      COMMAND ${CMAKE_COMMAND} -P ${BRLCAD_CMAKE_DIR}/make_check_msg.cmake
+      COMMAND ${CMAKE_CTEST_COMMAND} -C $<CONFIGURATION> -LE Regression -E ^regress- ${JFLAG}
+      )
   endif(${CMAKE_VERSION} VERSION_GREATER 2.99)
-  set_target_properties(check PROPERTIES FOLDER "BRL-CAD Unit Tests")
+  set_target_properties(check PROPERTIES FOLDER "BRL-CAD Validation Testing")
   function(add_test test_name test_prog)
     _add_test(${test_name} ${test_prog} ${ARGN})
     if (NOT "${test_name}" STREQUAL "NAME")
@@ -1220,10 +1226,6 @@ endif(BRLCAD_ENABLE_STRICT)
 # release builds.
 AUTO_OPTION(BRLCAD_FLAGS_OPTIMIZATION BRLCAD_OPTIMIZED_BUILD "OFF" "ON")
 
-# By default, we don't want any error reports at all from src/other
-option(BRLCAD_DISABLE_SRC_OTHER_WARN "Disable warnings for src/other" ON)
-mark_as_advanced(BRLCAD_DISABLE_SRC_OTHER_WARN)
-
 # Build with full compiler lines visible by default (won't need make
 # VERBOSE=1) on command line
 option(BRLCAD_ENABLE_VERBOSE_PROGRESS "verbose output" OFF)
@@ -1562,12 +1564,6 @@ if(ENABLE_POSIX_COMPLIANCE)
   CHECK_CXX_FLAG("D_XOPEN_SOURCE=500")
 endif()
 
-# Silence check for unused arguments (used to silence clang warnings about
-# unused options on the command line). By default clang generates a lot of
-# warnings about such arguments, and we don't really care.
-CHECK_C_FLAG(Qunused-arguments)
-CHECK_CXX_FLAG(Qunused-arguments)
-
 # 64bit compilation flags
 if(${CMAKE_WORD_SIZE} MATCHES "64BIT" AND NOT CMAKE_CL_64)
   CHECK_C_FLAG(m64 VARS 64BIT_FLAG)
@@ -1698,6 +1694,65 @@ endif(${BRLCAD_OPTIMIZED_BUILD} MATCHES "ON")
 # Enable this flag for additional reporting of undefined symbols.
 # TODO: Fixing these is a work in progress.
 # CHECK_C_COMPILER_FLAG("Wl,--no-undefined" NO_UNDEFINED_LINKER_FLAG)
+
+# ******************************************************************* #
+# For some tests, we need Werror to make sure the test actually fails
+
+set(CMAKE_REQUIRED_FLAGS_BAK ${CMAKE_REQUIRED_FLAGS})
+CHECK_C_FLAG(Werror VARS ERROR_FLAG)
+if (ERROR_FLAG)
+  set(CMAKE_REQUIRED_FLAGS "-Werror")
+endif (ERROR_FLAG)
+
+include(CheckCSourceCompiles)
+# Check whether the compiler supports __attribute__((__noreturn__))
+check_c_source_compiles("#include <stdlib.h>\n
+void noret() __attribute__((__noreturn__)); void noret(){exit(1);} int main(int argc, char *argv[]) {noret(); return 0;}" HAVE_NORETURN_ATTRIBUTE)
+if(HAVE_NORETURN_ATTRIBUTE)
+  CONFIG_H_APPEND(BRLCAD "#define HAVE_NORETURN_ATTRIBUTE 1\n")
+endif(HAVE_NORETURN_ATTRIBUTE)
+
+# Check whether the compiler supports __attribute__((analyzer_noreturn))
+check_c_source_compiles("void anoret() __attribute__((analyzer_noreturn)); void anoret(){return;} int main(int argc, char *argv[]) {anoret(); return 0;}" HAVE_ANALYZER_NORETURN_ATTRIBUTE)
+if(HAVE_ANALYZER_NORETURN_ATTRIBUTE)
+  CONFIG_H_APPEND(BRLCAD "#define HAVE_ANALYZER_NORETURN_ATTRIBUTE 1\n")
+endif(HAVE_ANALYZER_NORETURN_ATTRIBUTE)
+
+# Check whether the compiler supports __attribute__((always_inline))
+check_c_source_compiles("void always_inline() __attribute__((always_inline)); void always_inline(){return;} int main(int argc, char *argv[]) {always_inline(); return 0;}" HAVE_ALWAYS_INLINE_ATTRIBUTE)
+if(HAVE_ALWAYS_INLINE_ATTRIBUTE)
+  CONFIG_H_APPEND(BRLCAD "#define HAVE_ALWAYS_INLINE_ATTRIBUTE 1\n")
+endif(HAVE_ALWAYS_INLINE_ATTRIBUTE)
+
+# Check whether the compiler supports __attribute__((format (__printf__, 1, 2)))
+check_c_source_compiles("int pf(const char *f, ...) __attribute__((format (__printf__, 1, 2))); int pf(const char *f, ...){return 1;} int main(int argc, char *argv[]) {return pf(\"%c\",'a');}" HAVE_PRINTF12_ATTRIBUTE)
+if(HAVE_PRINTF12_ATTRIBUTE)
+  CONFIG_H_APPEND(BRLCAD "#define HAVE_PRINTF12_ATTRIBUTE 1\n")
+endif(HAVE_PRINTF12_ATTRIBUTE)
+
+# Check whether the compiler supports __attribute__((format (__printf__, 2, 3)))
+check_c_source_compiles("int pf(void *o, const char *f, ...) __attribute__((format (__printf__, 2, 3))); int pf(void *o, const char *f, ...){return 1;} int main(int argc, char *argv[]) {return pf((void *)0, \"%c\",'a');}" HAVE_PRINTF23_ATTRIBUTE)
+if(HAVE_PRINTF23_ATTRIBUTE)
+  CONFIG_H_APPEND(BRLCAD "#define HAVE_PRINTF23_ATTRIBUTE 1\n")
+endif(HAVE_PRINTF23_ATTRIBUTE)
+
+# Check whether the compiler supports __attribute__((format (__scanf__, 2, 3)))
+check_c_source_compiles("int sf(void *o, const char *f, ...) __attribute__((format (__scanf__, 2, 3))); int sf(void *o, const char *f, ...){return 1;} int main(int argc, char *argv[]) {int i = 1; return sf((void *)0, \"%d\", &i);}" HAVE_SCANF23_ATTRIBUTE)
+if(HAVE_SCANF23_ATTRIBUTE)
+  CONFIG_H_APPEND(BRLCAD "#define HAVE_SCANF23_ATTRIBUTE 1\n")
+endif(HAVE_SCANF23_ATTRIBUTE)
+
+
+# Silence check for unused arguments (used to silence clang warnings about
+# unused options on the command line). By default clang generates a lot of
+# warnings about such arguments, and we don't really care.
+CHECK_C_FLAG(Qunused-arguments)
+CHECK_CXX_FLAG(Qunused-arguments)
+
+
+set(CMAKE_REQUIRED_FLAGS ${CMAKE_REQUIRED_FLAGS_BAK})
+
+# ******************************************************************* #
 
 if(NOT MSVC)
   # We could include this, but these tests are almost entirely for
@@ -2034,7 +2089,6 @@ BRLCAD_FUNCTION_EXISTS(getprogname HAVE_GETPROGNAME) # bsd
 BRLCAD_FUNCTION_EXISTS(htonll HAVE_HTONLL)
 BRLCAD_FUNCTION_EXISTS(logb HAVE_LOGB REQUIRED_LIBS ${M_LIBRARY})
 BRLCAD_FUNCTION_EXISTS(lrand48 HAVE_LRAND48)
-BRLCAD_FUNCTION_EXISTS(memset HAVE_MEMSET)
 BRLCAD_FUNCTION_EXISTS(mkstemp HAVE_MKSTEMP)
 BRLCAD_FUNCTION_EXISTS(ntohll HAVE_NTOHLL)
 BRLCAD_FUNCTION_EXISTS(pipe HAVE_PIPE)
@@ -2052,12 +2106,10 @@ BRLCAD_FUNCTION_EXISTS(shmget HAVE_SHMGET)
 BRLCAD_FUNCTION_EXISTS(srand48 HAVE_SRAND48)
 BRLCAD_FUNCTION_EXISTS(strcasecmp HAVE_STRCASECMP)
 BRLCAD_FUNCTION_EXISTS(strncasecmp HAVE_STRNCASECMP)
-BRLCAD_FUNCTION_EXISTS(strchr HAVE_STRCHR)
 BRLCAD_FUNCTION_EXISTS(strdup HAVE_STRDUP)
 BRLCAD_FUNCTION_EXISTS(strlcat HAVE_STRLCAT)
 BRLCAD_FUNCTION_EXISTS(strlcpy HAVE_STRLCPY)
 BRLCAD_FUNCTION_EXISTS(strsep HAVE_STRSEP)
-BRLCAD_FUNCTION_EXISTS(strtok HAVE_STRTOK)
 BRLCAD_FUNCTION_EXISTS(sync HAVE_SYNC)
 BRLCAD_FUNCTION_EXISTS(sysconf HAVE_SYSCONF)
 BRLCAD_FUNCTION_EXISTS(sysctl HAVE_SYSCTL)
@@ -2209,20 +2261,11 @@ endif()
 # On Windows, we need to check for hypot etc.  This test pertains
 # to the windows specific config file, not CONFIG_H_FILE - hence,
 # just run the test and it will be handled by configure_file later.
-include(CheckSymbolExists)
 if(WIN32)
 
-  # TODO: the windows build doesn't actually persist WX/Werror to the
-  # build targets, but there are lots of warnings that still need
-  # cleaning up.  this will do that:
-  #
   # consider all warnings as errors (MSVC)
   # CHECK_C_FLAG(WX)
   # CHECK_CXX_FLAG(WX)
-  #
-  # this doesn't actually do anything (or is maybe only used for a few
-  # tests that follow:
- set(CMAKE_REQUIRED_FLAGS ${CMAKE_REQUIRED_FLAGS} /WX)
 
   CHECK_SYMBOL_EXISTS(hypot "math.h" HAVE_HYPOT)
   #If we don't have it, need to define it as _hypot in config_win

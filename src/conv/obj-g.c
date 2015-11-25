@@ -81,7 +81,7 @@ usage(const char *argv0)
     bu_log("  -f\t\tFuse vertices that are close enough to be considered the\n"
 	   "\t\tsame. Can make the solidity detection more reliable, but\n"
 	   "\t\tmay significantly increase processing time during import.\n"
-	  );
+	);
 
     bu_log("  -g grouping\tSelect which OBJ face grouping is used to create BRL-CAD\n"
 	   "\t\tprimitives:\n"
@@ -121,7 +121,7 @@ usage(const char *argv0)
 	   "\t\tDistance tolerance (mm); default is %lf. Two vertices are\n"
 	   "\t\tconsidered to be the same if they are within this distance of\n"
 	   "\t\teach other. You should not change this value without setting\n"
-	   "\t\tthe raytracer tolerance to match it.\n",BN_TOL_DIST);
+	   "\t\tthe raytracer tolerance to match it.\n", BN_TOL_DIST);
     bu_log("  -u units\tSelect units for the obj file: (m|cm|mm|ft|in). Default is m.\n"
 	   "\t\tYou can also provide a custom conversion factor from file units\n"
 	   "\t\tto mm.\n"
@@ -1104,38 +1104,24 @@ collect_grouping_faces_indexes(struct ga_t *ga,
 	    /* sets initial number of elements to allocate memory for */
 	    (*gfi)->max_faces = max_faces_increment;
 
-	    (*gfi)->num_vertices_arr =
-		(size_t *)bu_calloc((*gfi)->max_faces, sizeof(size_t),
-				    "num_vertices_arr");
-
-	    (*gfi)->obj_file_face_idx_arr =
-		(size_t *)bu_calloc((*gfi)->max_faces, sizeof(size_t),
-				    "obj_file_face_idx_arr");
+	    (*gfi)->num_vertices_arr = (size_t *)bu_calloc((*gfi)->max_faces, sizeof(size_t), "num_vertices_arr");
+	    (*gfi)->obj_file_face_idx_arr = (size_t *)bu_calloc((*gfi)->max_faces, sizeof(size_t), "obj_file_face_idx_arr");
 
 	    /* allocate initial memory for (*gfi)->index_arr_faces based on
 	     * face_type
 	     */
 	    switch (face_type) {
 		case FACE_V:
-		    (*gfi)->index_arr_faces =
-			(void *)bu_calloc((*gfi)->max_faces, sizeof(size_t *),
-					  "index_arr_faces");
-
+		    (*gfi)->index_arr_faces = bu_calloc((*gfi)->max_faces, sizeof(size_t *), "index_arr_faces");
 		    index_arr_faces_1D = (arr_1D_t)((*gfi)->index_arr_faces);
 		    break;
 		case FACE_TV:
 		case FACE_NV:
-		    (*gfi)->index_arr_faces =
-			(void *)bu_calloc((*gfi)->max_faces, sizeof(size_t (*)[2]),
-					  "index_arr_faces");
-
+		    (*gfi)->index_arr_faces = bu_calloc((*gfi)->max_faces, sizeof(size_t (*)[2]), "index_arr_faces");
 		    index_arr_faces_2D = (arr_2D_t)((*gfi)->index_arr_faces);
 		    break;
 		case FACE_TNV:
-		    (*gfi)->index_arr_faces =
-			(void *)bu_calloc((*gfi)->max_faces, sizeof(size_t (*)[3]),
-					  "index_arr_faces");
-
+		    (*gfi)->index_arr_faces = bu_calloc((*gfi)->max_faces, sizeof(size_t (*)[3]), "index_arr_faces");
 		    index_arr_faces_3D = (arr_3D_t)((*gfi)->index_arr_faces);
 		    break;
 	    } /* switch (face_type) */
@@ -1151,49 +1137,27 @@ collect_grouping_faces_indexes(struct ga_t *ga,
 	    if (faceIndex >= (*gfi)->max_faces) {
 		(*gfi)->max_faces += max_faces_increment;
 
-		num_vertices_arr_tmp =
-		    (size_t *)bu_realloc((*gfi)->num_vertices_arr,
-					 sizeof(size_t) * (*gfi)->max_faces,
-					 "num_vertices_arr_tmp");
-
+		num_vertices_arr_tmp = (size_t *)bu_realloc((*gfi)->num_vertices_arr, sizeof(size_t) * (*gfi)->max_faces, "num_vertices_arr_tmp");
 		(*gfi)->num_vertices_arr = num_vertices_arr_tmp;
 
-		obj_file_face_idx_arr_tmp =
-		    (size_t *)bu_realloc((*gfi)->obj_file_face_idx_arr,
-					 sizeof(size_t) * (*gfi)->max_faces,
-					 "obj_file_face_idx_arr_tmp");
-
+		obj_file_face_idx_arr_tmp = (size_t *)bu_realloc((*gfi)->obj_file_face_idx_arr, sizeof(size_t) * (*gfi)->max_faces, "obj_file_face_idx_arr_tmp");
 		(*gfi)->obj_file_face_idx_arr = obj_file_face_idx_arr_tmp;
 
 		switch (face_type) {
 		    case FACE_V:
-			(*gfi)->index_arr_faces =
-			    (arr_1D_t)bu_realloc(index_arr_faces_1D,
-						 sizeof(size_t *) * (*gfi)->max_faces,
-						 "index_arr_faces");
-
-			index_arr_faces_1D =
-			    (arr_1D_t)((*gfi)->index_arr_faces);
+			(*gfi)->index_arr_faces = bu_realloc((void *)index_arr_faces_1D, sizeof(size_t *) * (*gfi)->max_faces, "index_arr_faces");
+			index_arr_faces_1D = (arr_1D_t)((*gfi)->index_arr_faces);
 
 			break;
 		    case FACE_TV:
 		    case FACE_NV:
-			(*gfi)->index_arr_faces =
-			    (arr_2D_t)bu_realloc(index_arr_faces_2D,
-					       sizeof(size_t (*)[2]) * (*gfi)->max_faces,
-					       "index_arr_faces");
-
-			index_arr_faces_2D =
-			    (arr_2D_t)((*gfi)->index_arr_faces);
+			(*gfi)->index_arr_faces = bu_realloc((void *)index_arr_faces_2D, sizeof(size_t (*)[2]) * (*gfi)->max_faces, "index_arr_faces");
+			index_arr_faces_2D = (arr_2D_t)((*gfi)->index_arr_faces);
 
 			break;
 		    case FACE_TNV:
-			(*gfi)->index_arr_faces =
-			    (arr_3D_t)bu_realloc(index_arr_faces_3D,
-						 sizeof(size_t (*)[3]) * (*gfi)->max_faces,
-						 "index_arr_faces");
-			index_arr_faces_3D =
-			    (arr_3D_t)((*gfi)->index_arr_faces);
+			(*gfi)->index_arr_faces = bu_realloc((void *)index_arr_faces_3D, sizeof(size_t (*)[3]) * (*gfi)->max_faces, "index_arr_faces");
+			index_arr_faces_3D = (arr_3D_t)((*gfi)->index_arr_faces);
 
 			break;
 		}
@@ -1202,8 +1166,7 @@ collect_grouping_faces_indexes(struct ga_t *ga,
 	    /* assign obj file face index into array for tracking
 	     * errors back to the face within the obj file
 	     */
-	    (*gfi)->obj_file_face_idx_arr[faceIndex] =
-		attindex_arr_faces[i];
+	    (*gfi)->obj_file_face_idx_arr[faceIndex] = attindex_arr_faces[i];
 
 	    switch (face_type) {
 		case FACE_V:
@@ -1243,10 +1206,7 @@ collect_grouping_faces_indexes(struct ga_t *ga,
 
     if (numFacesFound) {
 	(*gfi)->num_faces = numFacesFound;
-
-	(*gfi)->face_status =
-	    (short int *)bu_calloc((*gfi)->num_faces, sizeof(short int),
-				   "face_status");
+	(*gfi)->face_status = (short int *)bu_calloc((*gfi)->num_faces, sizeof(short int), "face_status");
 
 	/* initialize array */
 	for (i = 0; i < (*gfi)->num_faces; i++) {
@@ -1380,12 +1340,11 @@ populate_triangle_indexes(struct ga_t *ga,
 
     /* copy face vertices into facePoints array */
     numFacePoints = gfi->num_vertices_arr[face_idx];
-    facePoints = (double*)bu_malloc(
-	numFacePoints * ELEMENTS_PER_POINT * sizeof(double), "facePoints");
+    facePoints = (double*)bu_malloc(numFacePoints * ELEMENTS_PER_POINT * sizeof(double), "facePoints");
 
     for (i = 0; i < numFacePoints; ++i) {
 	retrieve_coord_index(ga, gfi, face_idx, i, tmp_v, tmp_n, tmp_t, &tmp_w,
-	    &svofi, &snofi, &stofi);
+			     &svofi, &snofi, &stofi);
 	VMOVE(&facePoints[i * ELEMENTS_PER_POINT], tmp_v);
     }
 
@@ -1405,8 +1364,7 @@ populate_triangle_indexes(struct ga_t *ga,
 	    }
 
 	    /* create triangles that all start at the first face vertex */
-	    triFaces = (int*)bu_malloc(num_new_tri * POINTS_PER_FACE * sizeof(int),
-		"triFaces");
+	    triFaces = (int*)bu_malloc(num_new_tri * POINTS_PER_FACE * sizeof(int), "triFaces");
 
 	    for (vert_idx = 0; vert_idx < num_new_tri; vert_idx++) {
 		triFaces[vert_idx * ELEMENTS_PER_POINT + X] = 0;
@@ -1429,19 +1387,16 @@ populate_triangle_indexes(struct ga_t *ga,
 	ti->max_tri += max_tri_increment;
 	switch (ti->tri_type) {
 	    case FACE_V:
-		ti->index_arr_tri = (void *)bu_realloc(index_arr_tri_1D,
-						       sizeof(size_t) * ti->max_tri * 3, "index_arr_tri");
+		ti->index_arr_tri = (void *)bu_realloc(index_arr_tri_1D, sizeof(size_t) * ti->max_tri * 3, "index_arr_tri");
 		index_arr_tri_1D = (tri_arr_1D_t)(ti->index_arr_tri);
 		break;
 	    case FACE_TV:
 	    case FACE_NV:
-		ti->index_arr_tri = (void *)bu_realloc(index_arr_tri_2D,
-						       sizeof(size_t) * ti->max_tri * 6, "index_arr_tri");
+		ti->index_arr_tri = (void *)bu_realloc(index_arr_tri_2D, sizeof(size_t) * ti->max_tri * 6, "index_arr_tri");
 		index_arr_tri_2D = (tri_arr_2D_t)(ti->index_arr_tri);
 		break;
 	    case FACE_TNV:
-		ti->index_arr_tri = (void *)bu_realloc(index_arr_tri_3D,
-						       sizeof(size_t) * ti->max_tri * 9, "index_arr_tri");
+		ti->index_arr_tri = (void *)bu_realloc(index_arr_tri_3D, sizeof(size_t) * ti->max_tri * 9, "index_arr_tri");
 		index_arr_tri_3D = (tri_arr_3D_t)(ti->index_arr_tri);
 		break;
 	}
@@ -1452,7 +1407,7 @@ populate_triangle_indexes(struct ga_t *ga,
 	for (idx = 0; idx < 3; idx++) {
 
 	    retrieve_coord_index(ga, gfi, face_idx, triFaces[vert_idx * ELEMENTS_PER_POINT + idx], tmp_v,
-		tmp_n, tmp_t, &tmp_w, &vofi, &nofi, &tofi);
+				 tmp_n, tmp_t, &tmp_w, &vofi, &nofi, &tofi);
 
 	    switch (ti->tri_type) {
 		case FACE_V:
@@ -2179,15 +2134,13 @@ fuse_vertex(struct ga_t *ga,
      */
 
     if (vertex_type == FUSE_VERT) {
-	vertex_index_list = (size_t *)bu_calloc(max_index_list, sizeof(size_t),
-						"vertex_index_list");
+	vertex_index_list = (size_t *)bu_calloc(max_index_list, sizeof(size_t),	"vertex_index_list");
     }
 
     if ((gfi->face_type == FACE_TV || gfi->face_type == FACE_TNV) &&
 	(vertex_type == FUSE_TEX_VERT))
     {
-	texture_vertex_index_list = (size_t *)bu_calloc(max_index_list,
-							sizeof(size_t), "texture_vertex_index_list");
+	texture_vertex_index_list = (size_t *)bu_calloc(max_index_list, sizeof(size_t), "texture_vertex_index_list");
     }
 
     /* loop thru all polygons and collect max and min index values and
@@ -2234,19 +2187,13 @@ fuse_vertex(struct ga_t *ga,
 	    if (num_index_list >= max_index_list) {
 		max_index_list += max_index_list_increment;
 		if (vertex_type == FUSE_VERT) {
-		    index_list_tmp = (size_t *)bu_realloc(vertex_index_list,
-							  sizeof(size_t) * max_index_list, "index_list_tmp");
-
+		    index_list_tmp = (size_t *)bu_realloc(vertex_index_list, sizeof(size_t) * max_index_list, "index_list_tmp");
 		    vertex_index_list = index_list_tmp;
 		}
 		if ((gfi->face_type == FACE_TV || gfi->face_type == FACE_TNV) &&
 		    (vertex_type == FUSE_TEX_VERT))
 		{
-		    index_list_tmp =
-			(size_t *) bu_realloc(texture_vertex_index_list,
-					      sizeof(size_t) * max_index_list,
-					      "index_list_tmp");
-
+		    index_list_tmp = (size_t *) bu_realloc(texture_vertex_index_list, sizeof(size_t) * max_index_list, "index_list_tmp");
 		    texture_vertex_index_list = index_list_tmp;
 		}
 	    }
@@ -2259,11 +2206,8 @@ fuse_vertex(struct ga_t *ga,
     if (vertex_type == FUSE_VERT) {
 	gfi->num_vertex_fuse = max_vert_idx - min_vert_idx + 1;
 	gfi->vertex_fuse_offset = min_vert_idx;
-	gfi->vertex_fuse_map = (size_t *)bu_calloc(gfi->num_vertex_fuse,
-						   sizeof(size_t), "gfi->vertex_fuse_map");
-
-	gfi->vertex_fuse_flag = (short int *)bu_calloc(gfi->num_vertex_fuse,
-						       sizeof(short int), "gfi->vertex_fuse_flag");
+	gfi->vertex_fuse_map = (size_t *)bu_calloc(gfi->num_vertex_fuse, sizeof(size_t), "gfi->vertex_fuse_map");
+	gfi->vertex_fuse_flag = (short int *)bu_calloc(gfi->num_vertex_fuse, sizeof(short int), "gfi->vertex_fuse_flag");
 
 	/* initialize arrays */
 	for (idx1 = 0 ; idx1 < gfi->num_vertex_fuse ; idx1++) {
@@ -2277,13 +2221,8 @@ fuse_vertex(struct ga_t *ga,
     {
 	gfi->num_texture_vertex_fuse = max_tex_vert_idx - min_tex_vert_idx + 1;
 	gfi->texture_vertex_fuse_offset = min_tex_vert_idx;
-	gfi->texture_vertex_fuse_map =
-	    (size_t *)bu_calloc(gfi->num_texture_vertex_fuse, sizeof(size_t),
-				"gfi->texture_vertex_fuse_map");
-
-	gfi->texture_vertex_fuse_flag =
-	    (short int *)bu_calloc(gfi->num_texture_vertex_fuse,
-				   sizeof(short int), "gfi->texture_vertex_fuse_flag");
+	gfi->texture_vertex_fuse_map = (size_t *)bu_calloc(gfi->num_texture_vertex_fuse, sizeof(size_t), "gfi->texture_vertex_fuse_map");
+	gfi->texture_vertex_fuse_flag = (short int *)bu_calloc(gfi->num_texture_vertex_fuse, sizeof(short int), "gfi->texture_vertex_fuse_flag");
 
 	/* initialize arrays */
 	for (idx1 = 0 ; idx1 < gfi->num_texture_vertex_fuse ; idx1++) {
@@ -2302,10 +2241,10 @@ fuse_vertex(struct ga_t *ga,
 	if (vertex_index_list && (num_index_list > 0)) {
 	    for (idx1 = 0 ; idx1 < num_index_list ; idx1++) {
 		bu_log("non-unique sorted vertex_index_list[idx1] = (%zu)\n",
-			vertex_index_list[idx1]);
+		       vertex_index_list[idx1]);
 	    }
 	    bu_log("num non-unique sorted vertex_index_list[idx1] = (%zu)\n",
-		num_index_list);
+		   num_index_list);
 	}
     }
 
@@ -3421,7 +3360,7 @@ main(int argc, char **argv)
 			break;
 		    default:
 			bu_log("Invalid bot orientation type '%c'.\n",
-				bu_optarg[0]);
+			       bu_optarg[0]);
 			bu_vls_free(&input_file_name);
 			bu_vls_free(&brlcad_file_name);
 			bu_exit(EXIT_FAILURE, "Type '%s' for usage.\n",
@@ -3879,13 +3818,13 @@ main(int argc, char **argv)
     }
 
     bu_free_array(ga.numGroups, (char**)ga.str_arr_obj_groups,
-	"str_arr_obj_groups");
+		  "str_arr_obj_groups");
     bu_free_array(ga.numObjects, (char**)ga.str_arr_obj_objects,
-	"str_arr_obj_objects");
+		  "str_arr_obj_objects");
     bu_free_array(ga.numMaterials, (char**)ga.str_arr_obj_materials,
-	"str_arr_obj_materials");
+		  "str_arr_obj_materials");
     bu_free_array(ga.numTexmaps, (char**)ga.str_arr_obj_texmaps,
-	"str_arr_obj_texmaps");
+		  "str_arr_obj_texmaps");
 
     /* running cleanup functions */
     if (debug) {

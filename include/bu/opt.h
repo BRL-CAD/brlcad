@@ -52,7 +52,7 @@ __BEGIN_DECLS
  * present in the argv string.  Because it is necessary for arbitrary variables
  * to be assigned to the set_var slot (the type needed is determined by the
  * arg_process callback function and may be anything) all set_var variables are
- * identified by their pointers (which are in turn cast to void.)
+ * identified by their pointers (which are in turn cast to (void *)).
  *
  * There are two styles in which a bu_opt_desc array may be initialized.  The first
  * is very compact but in C89 based code requires static variables as set_var entries,
@@ -64,9 +64,9 @@ __BEGIN_DECLS
  * static int i = 0;
  * static fastf_t f = 0.0;
  * struct bu_opt_desc opt_defs[] = {
- *     {"h", "help",    "",  NULL,            (void *)&ph, help_str},
- *     {"n", "num",     "#", &bu_opt_int,     (void *)&i,  "Read int"},
- *     {"f", "fastf_t", "#", &bu_opt_fastf_t, (void *)&f,  "Read float"},
+ *     {"h", "help",    "",  NULL,            &ph, help_str},
+ *     {"n", "num",     "#", &bu_opt_int,     &i,  "Read int"},
+ *     {"f", "fastf_t", "#", &bu_opt_fastf_t, &f,  "Read float"},
  *     BU_OPT_DESC_NULL
  * };
  * @endcode
@@ -82,9 +82,9 @@ __BEGIN_DECLS
  * int i = 0;
  * fastf_t f = 0.0;
  * struct bu_opt_desc opt_defs[4];
- * BU_OPT(opt_defs[0], "h", "help",    "",  NULL,            (void *)&ph, help_str);
- * BU_OPT(opt_defs[1], "n", "num",     "#", &bu_opt_int,     (void *)&i,  "Read int");
- * BU_OPT(opt_defs[2], "f", "fastf_t", "#", &bu_opt_fastf_t, (void *)&f,  "Read float");
+ * BU_OPT(opt_defs[0], "h", "help",    "",  NULL,            &ph, help_str);
+ * BU_OPT(opt_defs[1], "n", "num",     "#", &bu_opt_int,     &i,  "Read int");
+ * BU_OPT(opt_defs[2], "f", "fastf_t", "#", &bu_opt_fastf_t, &f,  "Read float");
  * BU_OPT_NULL(opt_defs[3]);
  * @endcode
  *
@@ -178,7 +178,7 @@ struct bu_opt_desc {
     (_desc).longopt = _lo; \
     (_desc).arg_helpstr = _ahelp; \
     (_desc).arg_process = _aprocess; \
-    (_desc).set_var = _var; \
+    (_desc).set_var = (void *)_var;  \
     (_desc).help_string = _help; \
 }
 
@@ -240,6 +240,14 @@ struct bu_opt_desc_opts {
     int offset;
     int option_columns;
     int description_columns;
+    /* The application needs to inform the printer if
+     * certain options have special status */
+    struct bu_opt_desc *required;
+    struct bu_opt_desc *repeated;
+    struct bu_opt_desc *optional;
+    /* Report the longopt version(s) of an option
+     * even when it has a shortopt */
+    int show_all_longopts;
 };
 
 /**
@@ -248,9 +256,9 @@ struct bu_opt_desc_opts {
  *
  * @code
  * struct bu_opt_desc opt_defs[] = {
- *     {"h", "help",    "",  NULL,            (void *)&ph, "Print help string and exit."},
- *     {"n", "num",     "#", &bu_opt_int,     (void *)&i,  "Read int"},
- *     {"f", "fastf_t", "#", &bu_opt_fastf_t, (void *)&f,  "Read float"},
+ *     {"h", "help",    "",  NULL,            &ph, "Print help string and exit."},
+ *     {"n", "num",     "#", &bu_opt_int,     &i,  "Read int"},
+ *     {"f", "fastf_t", "#", &bu_opt_fastf_t, &f,  "Read float"},
  *     BU_OPT_DESC_NULL
  * };
  * @endcode
@@ -272,11 +280,11 @@ struct bu_opt_desc_opts {
  * #define help_str "Print help and exit. If a type is specified to --help, print help specific to that type"
  * struct help_struct hs;
  * struct bu_opt_desc opt_defs[] = {
- *     {"h", "help",    "[type]",  &hfun, (void *)&hs, help_str},
- *     {"H", "HELP",    "[type]",  &hfun, (void *)&hs, help_str},
- *     {"?", "",        "[type]",  &hfun, (void *)&hs, help_str},
- *     {"n", "num",     "#", &bu_opt_int,     (void *)&i,  "Read int"},
- *     {"f", "fastf_t", "#", &bu_opt_fastf_t, (void *)&f,  "Read float"},
+ *     {"h", "help",    "[type]",  &hfun, &hs, help_str},
+ *     {"H", "HELP",    "[type]",  &hfun, &hs, help_str},
+ *     {"?", "",        "[type]",  &hfun, &hs, help_str},
+ *     {"n", "num",     "#", &bu_opt_int,     &i,  "Read int"},
+ *     {"f", "fastf_t", "#", &bu_opt_fastf_t, &f,  "Read float"},
  *     BU_OPT_DESC_NULL
  * };
  * @endcode

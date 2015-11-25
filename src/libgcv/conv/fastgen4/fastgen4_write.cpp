@@ -158,7 +158,7 @@ Matrix::equal(const Matrix &other, const bn_tol &tol) const
 {
     BN_CK_TOL(&tol);
 
-    return bn_mat_is_equal(m_value, other.m_value, &tol);
+    return bn_mat_is_equal(m_value, other.m_value, &tol) != 0;
 }
 
 
@@ -169,6 +169,7 @@ public:
 
     DBInternal();
     DBInternal(const db_i &db, const directory &dir);
+    DBInternal(const DBInternal &source);
     ~DBInternal();
 
     void load(const db_i &db, const directory &dir);
@@ -177,7 +178,6 @@ public:
 
 
 private:
-    DBInternal(const DBInternal &source);
     DBInternal &operator=(const DBInternal &source);
 
     bool m_valid;
@@ -1380,7 +1380,7 @@ path_is_subtracted(const db_i &db, const db_full_path &path)
     if (db_follow_path(&tree_state, &end_path, &path, false, 0))
 	throw std::runtime_error("db_follow_path() failed");
 
-    return tree_state.ts_sofar & (TS_SOFAR_MINUS | TS_SOFAR_INTER);
+    return (tree_state.ts_sofar & (TS_SOFAR_MINUS | TS_SOFAR_INTER)) != 0;
 }
 
 
@@ -2269,7 +2269,7 @@ FastgenConversion::do_force_facetize_region(const directory *region_dir) const
     if (region_dir)
 	RT_CK_DIR(region_dir);
 
-    return m_facetize_regions.count(region_dir);
+    return (m_facetize_regions.count(region_dir) > 0);
 }
 
 
@@ -2442,8 +2442,7 @@ convert_leaf(db_tree_state *tree_state, const db_full_path *path,
 
     if (!data.m_failed_regions.count(region_dir)) {
 	const bool facetize = data.do_force_facetize_region(region_dir);
-	const bool subtracted = tree_state->ts_sofar & (TS_SOFAR_MINUS |
-				TS_SOFAR_INTER);
+	const bool subtracted = (tree_state->ts_sofar & (TS_SOFAR_MINUS | TS_SOFAR_INTER)) != 0;
 	bool converted = false;
 
 	if (region_dir

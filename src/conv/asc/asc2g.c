@@ -305,7 +305,6 @@ sktbld(void)
 	bu_exit(-1, "Unexpected EOF while reading sketch (%s) data\n", name);
 
     verts = (point2d_t *)bu_calloc(vert_count, sizeof(point2d_t), "verts");
-    cp = buf;
     ptr = strtok(buf, " ");
     if (!ptr)
 	bu_exit(1, "ERROR: no vertices for sketch (%s)\n", name);
@@ -745,11 +744,13 @@ int
 combbld(void)
 {
     struct bu_list head;
-    char *cp;
-    char *np;
-    int temp_nflag, temp_pflag;
+    char *cp = NULL;
+    char *np = NULL;
+    /* indicators for optional fields */
+    int temp_nflag = 0;
+    int temp_pflag = 0;
 
-    char override;
+    char override = 0;
     char reg_flags;	/* region flag */
     int is_reg;
     short regionid;
@@ -763,9 +764,6 @@ combbld(void)
 
     /* Set all flags initially. */
     BU_LIST_INIT(&head);
-
-    override = 0;
-    temp_nflag = temp_pflag = 0;	/* indicators for optional fields */
 
     cp = buf;
     cp++;			/* ID_COMB */

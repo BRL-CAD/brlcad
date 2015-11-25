@@ -217,19 +217,15 @@ bu_cv_fmt_cookie(char *buf, size_t buflen, int cookie)
     switch (cookie & CV_CONVERT_MASK) {
 	case CV_CLIP:
 	    *cp++ = 'C';
-	    buflen -= 1;
 	    break;
 	case CV_NORMAL:
 	    *cp++ = 'N';
-	    buflen -= 1;
 	    break;
 	case CV_LIT:
 	    *cp++ = 'L';
-	    buflen -= 1;
 	    break;
 	default:
 	    *cp++ = 'X';
-	    buflen -= 1;
 	    break;
     }
     *cp = '\0';

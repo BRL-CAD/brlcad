@@ -33,9 +33,7 @@ CLEAR_BUILD_FLAGS()
 RESTORE_CACHED_BUILD_FLAGS(_CMAKE_DEFAULT)
 
 # Quiet all warnings in this directory
-if(BRLCAD_DISABLE_SRC_OTHER_WARN)
-  add_definitions(-w)
-endif(BRLCAD_DISABLE_SRC_OTHER_WARN)
+DISABLE_WARNINGS()
 
 # Ideally we wouldn't need this, but in a few cases we're using
 # BRL-CAD's include dirs.
@@ -198,6 +196,8 @@ set(SKIP_INSTALL_EXPORT ON CACHE BOOL "We dont't want export for this applicatio
 mark_as_advanced(SKIP_INSTALL_EXPORT)
 set(PNG_MAN_DIR ${MAN_DIR} CACHE STRING "Set PNG_MAN_DIR to the global MAN_DIR" FORCE)
 mark_as_advanced(PNG_MAN_DIR)
+set(PNG_TESTS 0 CACHE STRING "Disable building png test executables" FORCE)
+mark_as_advanced(PNG_TESTS)
 set(CMAKE_INSTALL_LIBDIR ${LIB_DIR})
 set(png_ALIASES ENABLE_PNG)
 set(png_DESCRIPTION "
@@ -226,9 +226,6 @@ if(BRLCAD_PNG_BUILD)
   endif("${M_LIBRARY}" MATCHES "NOTFOUND")
   SetTargetFolder(png16 "Third Party Libraries")
   SetTargetFolder(png16_static "Third Party Libraries")
-  SetTargetFolder(pngtest "Third Party Libraries")
-  SetTargetFolder(pngstest "Third Party Libraries")
-  SetTargetFolder(pngvalid "Third Party Libraries")
 ELSE(BRLCAD_PNG_BUILD)
   # The PNG CMake file seems to set PNG_PNG_INCLUDE_DIR rather than
   # PNG_INCLUDE_DIR, so a generic macro won't pick up the setting -
@@ -254,7 +251,6 @@ mark_as_advanced(PNGARG)
 mark_as_advanced(PNG_DEBUG)
 mark_as_advanced(PNG_SHARED)
 mark_as_advanced(PNG_STATIC)
-mark_as_advanced(PNG_TESTS)
 mark_as_advanced(uname_executable)
 
 

@@ -61,12 +61,12 @@ dump_bitv(const struct bu_bitv *b)
 {
     const size_t len = b->nbits;
     size_t x;
-    size_t i, j, k;
-    size_t bit, ipad = 0, jpad = 0;
+    int i, j, k;
+    int bit, ipad = 0, jpad = 0;
     size_t word_count;
     size_t chunksize = 0;
     volatile size_t BVS = sizeof(bitv_t); /* should be 1 byte as defined in bu.h */
-    size_t bytes;
+    unsigned bytes;
     struct bu_vls *v = bu_vls_vlsinit();
 
     bytes = len / BITS_PER_BYTE; /* eight digits per byte */
@@ -136,7 +136,7 @@ dump_bitv(const struct bu_bitv *b)
 	    bu_log("   %c", bu_vls_cstr(v)[j]);
     }
 
-    if (i < len - 1) {
+    if ((size_t)i < len - 1) {
         goto NEXT;
     }
 

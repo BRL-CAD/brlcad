@@ -490,6 +490,10 @@ add_test(NAME bu_opt_1_f_01  COMMAND tester_bu_opt 1 f 1)
 add_test(NAME bu_opt_1_f_02  COMMAND tester_bu_opt 1 f 2)
 add_test(NAME bu_opt_1_f_03  COMMAND tester_bu_opt 1 f 3)
 
+# Multiple flag option testing
+add_test(NAME bu_opt_1_mf_01  COMMAND tester_bu_opt 1 m 1)
+add_test(NAME bu_opt_1_mf_02  COMMAND tester_bu_opt 1 m 2)
+
 # non-static var assignment option testing (and also complex
 # custom arg processing testing)
 add_test(NAME bu_opt_2_color_00  COMMAND tester_bu_opt 2 C 0)

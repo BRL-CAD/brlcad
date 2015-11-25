@@ -41,16 +41,29 @@
 #include <stdio.h>
 
 #if defined(_WIN32) && !defined(__CYGWIN__)
-#  define NOMINMAX
+
+#  ifdef WIN32_LEAN_AND_MEAN
+#    undef WIN32_LEAN_AND_MEAN
+#  endif
+#  define WIN32_LEAN_AND_MEAN 434144 /* don't want winsock.h */
+
+#  ifdef NOMINMAX
+#    undef NOMINMAX
+#  endif
+#  define NOMINMAX 434144 /* don't break std::min and std::max */
+
 #  include <windows.h>
+
+#  undef WIN32_LEAN_AND_MEAN /* unset to not interfere with calling apps */
+#  undef NOMINMAX
 #  include <io.h>
 
 #  undef rad1 /* Win32 radio button 1 */
 #  undef rad2 /* Win32 radio button 2 */
 #  undef small /* defined as part of the Microsoft Interface Definition Language (MIDL) */
-#  undef IN
-#  undef OUT
+
 #else
+
 #  include <unistd.h>
 
 /* provide a stub so we don't need to wrap all setmode() calls */

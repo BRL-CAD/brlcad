@@ -19,21 +19,21 @@
  *
  */
 /** @file conv/g5-g4.c
- *               g5-g4: program to convert version 5 databases to version 4
+ * g5-g4: program to convert version 5 databases to version 4
  *
  * USAGE
- * 	g5-g4 v5_input_database v4_output_database
+ * g5-g4 v5_input_database v4_output_database
  *
  * DESCRIPTION
- *	Imports version 5 database objects and writes out the equivalent v4 database
- *	objects as best it can. Note that some v5 objects cannot be represented in a
- *	version 4 database.
+ * Imports version 5 database objects and writes out the equivalent v4 database
+ * objects as best it can. Note that some v5 objects cannot be represented in a
+ * version 4 database.
  *
  * AUTHOR
- *	John R. Anderson
+ * John R. Anderson
  *
  * EXAMPLE
- *	g5-g4 model_v5.g model_v4.g
+ * g5-g4 model_v5.g model_v4.g
  */
 
 #include "common.h"
@@ -54,10 +54,10 @@
 int
 main(int argc, char **argv)
 {
-    struct rt_wdb	*fp;
-    struct db_i	*dbip, *dbip4;
-    struct directory	*dp;
-    long	errors = 0, skipped = 0;
+    struct rt_wdb *fp;
+    struct db_i *dbip, *dbip4;
+    struct directory *dp;
+    long errors = 0, skipped = 0;
     struct bn_tol tol;
 
     bu_setprogname(argv[0]);
@@ -104,7 +104,7 @@ main(int argc, char **argv)
 
     /* Retrieve every item in the input database */
     FOR_ALL_DIRECTORY_START(dp, dbip)  {
-	struct rt_db_internal	intern;
+	struct rt_db_internal intern;
 	int id;
 	int ret;
 

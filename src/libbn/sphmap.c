@@ -297,9 +297,11 @@ bn_spm_pix_load(bn_spm_map_t *mapp, char *filename, int nx, int ny)
 	    }
 	    /* Save the color */
 	    cp = &(mapp->xbin[y][x*3]);
-	    *cp++ = (unsigned char)(red/count);
-	    *cp++ = (unsigned char)(green/count);
-	    *cp++ = (unsigned char)(blue/count);
+	    if (count) {
+		*cp++ = (unsigned char)(red/count);
+		*cp++ = (unsigned char)(green/count);
+		*cp++ = (unsigned char)(blue/count);
+	    }
 	}
     }
     (void) bu_free((char *)buffer, "bn_spm buffer");

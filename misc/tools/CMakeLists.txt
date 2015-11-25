@@ -25,9 +25,7 @@ CLEAR_BUILD_FLAGS()
 RESTORE_CACHED_BUILD_FLAGS(_CMAKE_DEFAULT)
 
 # Quiet all warnings in this directory
-if(BRLCAD_DISABLE_SRC_OTHER_WARN)
-  add_definitions(-w)
-endif(BRLCAD_DISABLE_SRC_OTHER_WARN)
+DISABLE_WARNINGS()
 
 # Most third party items have a list calling out files for distcheck -
 # these are stored in files in the dlists directory.  Ignore that

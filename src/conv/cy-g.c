@@ -20,9 +20,9 @@
  */
 /** @file conv/cy-g.c
  *
- *	This routine converts Cyberware Digitizer Data (laser scan data)
- *	to a single BRL-CAD ARS solid. The data must be in cylindrical scan
- *	format (Cyberware Echo file format).
+ * This routine converts Cyberware Digitizer Data (laser scan data)
+ * to a single BRL-CAD ARS solid. The data must be in cylindrical scan
+ * format (Cyberware Echo file format).
  *
  */
 
@@ -445,12 +445,12 @@ main(int argc, char **argv)
 
 	    ptr = &curves[y+1][x*3];
 
-	    r = data[INDEX(y,x)];
+	    r = data[INDEX(y, x)];
 	    if ((r << rshift) == (short)VOIDVAL) {
 		/* skip void values */
 		continue;
 	    } else if (r < 0) {
-/*		bu_log("FOUND NEGATIVE VALUE at %d,%d\n", x, y);*/
+/* bu_log("FOUND NEGATIVE VALUE at %d, %d\n", x, y);*/
 		rad = 0.0;
 	    } else {
 		long radius;
@@ -465,7 +465,7 @@ main(int argc, char **argv)
 	    *ptr = rad * coss[x];
 	    *(ptr+1) = rad * sins[x];
 	    *(ptr+2) = z;
-/*			bu_log("%d %d: %g (%d) (%g %g %g)\n", x, y, rad, r, V3ARGS(ptr)); */
+/* bu_log("%d %d: %g (%d) (%g %g %g)\n", x, y, rad, r, V3ARGS(ptr)); */
 
 	    /* duplicate the first point at the end of the curve */
 	    if (x == 0) {
@@ -527,6 +527,7 @@ main(int argc, char **argv)
     wdb_close(outfp);
     return 0;
 }
+
 
 /*
  * Local Variables:

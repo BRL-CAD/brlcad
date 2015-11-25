@@ -326,7 +326,7 @@ done
 # make sure no more WIN32 issues are introduced than existed
 # previously.  for cases where it "seems" necessary, can find and fix
 # a case that is not before adding another.  lets not increase this.
-NEED_FIXING=184
+NEED_FIXING=182
 if test $FOUND -lt `expr $NEED_FIXING + 1` ; then
     if test $FOUND -ne $NEED_FIXING ; then
 	echo "********************************************************"

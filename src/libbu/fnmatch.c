@@ -64,6 +64,8 @@
 #include "bu/str.h"
 #include "bu/vls.h"
 
+#include "./charclass.h"
+
 #define FNMATCH_IGNORECASE  BU_FNMATCH_CASEFOLD
 #define FNMATCH_FILE_NAME   BU_FNMATCH_PATHNAME
 
@@ -74,119 +76,6 @@
 #define FNMATCH_RANGE_ERROR   (-1)
 
 #define FNMATCH_NOMATCH 1       /* Match failed. */
-
-
-/* isblank appears to be obsolete in newer ctype.h files so use
- * fnblank instead when looking for the "blank" character class.
- */
-static inline int
-fnblank(int c)
-{
-#ifdef isblank
-    return isblank(c);
-#else
-    return c == ' ' || c == '\t';
-#endif
-}
-
-
-static inline int
-fnalnum(int c)
-{
-    return isalnum(c);
-}
-
-
-static inline int
-fnalpha(int c)
-{
-    return isalpha(c);
-}
-
-
-static inline int
-fncntrl(int c)
-{
-    return iscntrl(c);
-}
-
-
-static inline int
-fndigit(int c)
-{
-    return isdigit(c);
-}
-
-
-static inline int
-fngraph(int c)
-{
-    return isgraph(c);
-}
-
-
-static inline int
-fnlower(int c)
-{
-    return islower(c);
-}
-
-
-static inline int
-fnprint(int c)
-{
-    return isprint(c);
-}
-
-
-static inline int
-fnpunct(int c)
-{
-    return ispunct(c);
-}
-
-
-static inline int
-fnspace(int c)
-{
-    return isspace(c);
-}
-
-
-static inline int
-fnupper(int c)
-{
-    return isupper(c);
-}
-
-
-static inline int
-fnxdigit(int c)
-{
-    return isxdigit(c);
-}
-
-
-typedef struct _charclass {
-    const char *idstring;	/* identifying string */
-    int (*checkfun)(int);	/* testing function */
-} CHARCLASS;
-
-static CHARCLASS charclasses[] = {
-    { "alnum", fnalnum },
-    { "alpha", fnalpha },
-    { "blank", fnblank },
-    { "cntrl", fncntrl },
-    { "digit", fndigit },
-    { "graph", fngraph },
-    { "lower", fnlower },
-    { "print", fnprint },
-    { "punct", fnpunct },
-    { "space", fnspace },
-    { "upper", fnupper },
-    { "xdigit", fnxdigit },
-};
-
 
 static int
 classcompare(const void *a, const void *b)
@@ -222,7 +111,7 @@ charclassmatch(const char *pattern, char test, size_t *s)
 
 	c = *pattern++; /* next */
     }
-    c = *pattern++;
+
     bu_vls_strncpy(&classname, pattern-counter-2, counter);
 
     ctclass = findclass(bu_vls_addr(&classname));
@@ -230,7 +119,10 @@ charclassmatch(const char *pattern, char test, size_t *s)
 	bu_log("Unknown character class type: %s\n", bu_vls_addr(&classname));
 	resultholder = (size_t)-1;
     } else {
-	/*bu_log("classname: %s, test char = %c, (class->checkfun)=%d\n", bu_vls_addr(&classname), test, (ctclass->checkfun)(test));*/
+	/*
+	 c = *pattern++;
+	 bu_log("classname: %s, test char = %c, (class->checkfun)=%d\n", bu_vls_addr(&classname), test, (ctclass->checkfun)(test));
+	 */
 	if ((ctclass->checkfun)(test) != 0) {
 	    resultholder = counter;
 	} else {

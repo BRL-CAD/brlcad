@@ -31,20 +31,10 @@
  *
  */
 
-#include "common.h"
-
-/* make sure this header always comes before bio.h due to system
- * header ordering requirements.  this is mostly a windows issue, but
- * we want to detect the issue early.  If we've already included *both*
- * bsocket.h and bio.h, we should already be good to go, so put this
- * check ahead of the BSOCKET_H define.
- */
-#if defined(BIO_H) && !defined(BSOCKET_H)
-#  error "The #include for bio.h must come after this header (Windows Sockets portability)."
-#endif
-
 #ifndef BSOCKET_H
 #define BSOCKET_H
+
+#include "common.h"
 
 #ifdef HAVE_SYS_SELECT_H
 #  include <sys/select.h>

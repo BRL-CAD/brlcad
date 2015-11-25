@@ -62,6 +62,7 @@ print_usage(const char *progname)
     bu_exit(1, "Usage: %s %s", progname, usage);
 }
 
+
 static int verbose = 0;
 static int yup = 0;
 static int flip_normals = 0;

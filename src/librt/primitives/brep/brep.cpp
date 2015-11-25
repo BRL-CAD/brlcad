@@ -1768,26 +1768,6 @@ plot_bbnode(BBNode* node, struct bu_list* vhead, int depth, int start, int limit
     }
 }
 
-
-double
-find_next_point(const ON_Curve* crv, double startdomval, double increment, double tolerance, int stepcount)
-{
-    double inc = increment;
-    if (startdomval + increment > 1.0) inc = 1.0 - startdomval;
-    ON_Interval dom = crv->Domain();
-    ON_3dPoint prev_pt = crv->PointAt(dom.ParameterAt(startdomval));
-    ON_3dPoint next_pt = crv->PointAt(dom.ParameterAt(startdomval + inc));
-    if (prev_pt.DistanceTo(next_pt) > tolerance) {
-	stepcount++;
-	inc = inc / 2;
-	return find_next_point(crv, startdomval, inc, tolerance, stepcount);
-    } else {
-	if (stepcount > 5) return 0.0;
-	return startdomval + inc;
-    }
-}
-
-
 double
 find_next_trimming_point(const ON_Curve* crv, const ON_Surface* s, double startdomval, double increment, double tolerance, int stepcount)
 {
@@ -4287,58 +4267,21 @@ rt_brep_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_t
     }
 
     {
-
-	point_t pt1 = VINIT_ZERO;
-	point_t pt2 = VINIT_ZERO;
-
 	for (i = 0; i < bi->brep->m_E.Count(); i++) {
+	    int j, pnt_cnt;
+	    ON_3dPoint p;
+	    point_t pt1 = VINIT_ZERO;
+	    ON_Polyline poly;
 	    ON_BrepEdge& e = brep->m_E[i];
 	    const ON_Curve* crv = e.EdgeCurveOf();
-
-	    if (crv->IsLinear()) {
-		ON_BrepVertex& v1 = brep->m_V[e.m_vi[0]];
-		ON_BrepVertex& v2 = brep->m_V[e.m_vi[1]];
-		VMOVE(pt1, v1.Point());
-		VMOVE(pt2, v2.Point());
-		RT_ADD_VLIST(vhead, pt1, BN_VLIST_LINE_MOVE);
-		RT_ADD_VLIST(vhead, pt2, BN_VLIST_LINE_DRAW);
-	    } else {
-		ON_Interval dom = crv->Domain();
-
-		double domainval = 0.0;
-		double olddomainval = 1.0;
-		int crudestep = 0;
-		// Insert first point.
-		ON_3dPoint p = crv->PointAt(dom.ParameterAt(domainval));
+	    pnt_cnt = ON_Curve_PolyLine_Approx(&poly, crv, tol->dist);
+	    p = poly[0];
+	    VMOVE(pt1, p);
+	    RT_ADD_VLIST(vhead, pt1, BN_VLIST_LINE_MOVE);
+	    for (j = 1; j < pnt_cnt; j++) {
+		p = poly[j];
 		VMOVE(pt1, p);
-		RT_ADD_VLIST(vhead, pt1, BN_VLIST_LINE_MOVE);
-
-		/* Dynamic sampling approach - start with an initial guess
-		 * for the next point of one tenth of the domain length
-		 * further down the domain from the previous value.  Set a
-		 * maximum physical distance between points of 100 times
-		 * the model tolerance.  Reduce the increment until the
-		 * tolerance is satisfied, then add the point and use it
-		 * as the starting point for the next calculation until
-		 * the whole domain is finished.  Perhaps it would be more
-		 * ideal to base the tolerance on some fraction of the
-		 * curve bounding box dimensions?
-		 */
-
-		while (domainval < 1.0 && crudestep <= 100) {
-		    olddomainval = domainval;
-		    if (crudestep == 0)
-			domainval = find_next_point(crv, domainval, 0.1,
-						    tol->dist * 100, 0);
-		    if (crudestep >= 1 || ZERO(domainval)) {
-			crudestep++;
-			domainval = olddomainval + (1.0 - olddomainval)
-				    / 100 * crudestep;
-		    }
-		    p = crv->PointAt(dom.ParameterAt(domainval));
-		    VMOVE(pt1, p);
-		    RT_ADD_VLIST(vhead, pt1, BN_VLIST_LINE_DRAW);
-		}
+		RT_ADD_VLIST(vhead, pt1, BN_VLIST_LINE_DRAW);
 	    }
 	}
     }

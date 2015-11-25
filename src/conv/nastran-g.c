@@ -83,9 +83,9 @@ struct pshell
 };
 
 
-#define CORD_CYL  'C'
+#define CORD_CYL 'C'
 #define CORD_RECT 'R'
-#define CORD_SPH  'S'
+#define CORD_SPH 'S'
 
 #define NAMESIZE 16 /* from db.h */
 
@@ -149,6 +149,7 @@ print_usage(const char *progname)
 {
     bu_exit(1, "Usage: %s %s", progname, usage);
 }
+
 
 HIDDEN void
 reset_input(void)

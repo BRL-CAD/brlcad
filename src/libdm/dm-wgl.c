@@ -51,27 +51,6 @@
 
 #include "./dm_private.h"
 
-#define Wgl_MV_O(_m) offsetof(struct modifiable_wgl_vars, _m)
-
-struct modifiable_wgl_vars {
-    dm *this_dm;
-    int cueing_on;
-    int zclipping_on;
-    int zbuffer_on;
-    int lighting_on;
-    int transparency_on;
-    int fastfog;
-    double fogdensity;
-    int zbuf;
-    int rgb;
-    int doublebuffer;
-    int depth;
-    int debug;
-    struct bu_vls log;
-    double bound;
-    int boundFlag;
-};
-
 #define VIEWFACTOR      (1.0/(*dmp->dm_vp))
 #define VIEWSIZE        (2.0*(*dmp->dm_vp))
 
@@ -114,7 +93,7 @@ static float backDiffuseColorLight[4];
 void
 wgl_fogHint(dm *dmp, int fastfog)
 {
-    struct modifiable_wgl_vars *mvars = (struct modifiable_wgl_vars *)dmp->m_vars;
+    struct modifiable_ogl_vars *mvars = (struct modifiable_ogl_vars *)dmp->m_vars;
     mvars->fastfog = fastfog;
     glHint(GL_FOG_HINT, fastfog ? GL_FASTEST : GL_NICEST);
 }
@@ -186,7 +165,7 @@ wgl_setBGColor(dm *dmp,
 	       unsigned char g,
 	       unsigned char b)
 {
-    struct modifiable_wgl_vars *mvars = (struct modifiable_wgl_vars *)dmp->m_vars;
+    struct modifiable_ogl_vars *mvars = (struct modifiable_ogl_vars *)dmp->m_vars;
     if (dmp->dm_debugLevel)
 	bu_log("wgl_setBGColor()\n");
 
@@ -223,7 +202,7 @@ wgl_open(Tcl_Interp *interp, int argc, char *argv[])
     int make_square = -1;
     struct bu_vls str = BU_VLS_INIT_ZERO;
     struct bu_vls init_proc_vls = BU_VLS_INIT_ZERO;
-    struct modifiable_wgl_vars *mvars = NULL;
+    struct modifiable_ogl_vars *mvars = NULL;
     dm *dmp = (dm *)NULL;
     Tk_Window tkwin;
     HWND hwnd;
@@ -243,7 +222,7 @@ wgl_open(Tcl_Interp *interp, int argc, char *argv[])
     BU_ALLOC(dmp->dm_vars.priv_vars, struct wgl_vars);
 
     dmp->dm_get_internal(dmp);
-    mvars = (struct modifiable_wgl_vars *)dmp->m_vars;
+    mvars = (struct modifiable_ogl_vars *)dmp->m_vars;
 
     dmp->dm_vp = &default_viewscale;
 
@@ -503,7 +482,7 @@ wgl_share_dlist(dm *dmp1, dm *dmp2)
     GLfloat backgnd[4];
     GLfloat vf;
     HGLRC old_glxContext;
-	struct modifiable_wgl_vars *mvars = (struct modifiable_wgl_vars *)dmp1->m_vars;
+	struct modifiable_ogl_vars *mvars = (struct modifiable_ogl_vars *)dmp1->m_vars;
 
     if (dmp1 == (dm *)NULL)
 	return TCL_ERROR;
@@ -694,7 +673,7 @@ wgl_close(dm *dmp)
 HIDDEN int
 wgl_drawBegin(dm *dmp)
 {
-    struct modifiable_wgl_vars *mvars = (struct modifiable_wgl_vars *)dmp->m_vars;
+    struct modifiable_ogl_vars *mvars = (struct modifiable_ogl_vars *)dmp->m_vars;
     GLfloat fogdepth;
 
     if (dmp->dm_debugLevel) {
@@ -764,7 +743,7 @@ wgl_drawBegin(dm *dmp)
 HIDDEN int
 wgl_drawEnd(dm *dmp)
 {
-    struct modifiable_wgl_vars *mvars = (struct modifiable_wgl_vars *)dmp->m_vars;
+    struct modifiable_ogl_vars *mvars = (struct modifiable_ogl_vars *)dmp->m_vars;
     if (dmp->dm_debugLevel)
 	bu_log("wgl_drawEnd\n");
 
@@ -943,7 +922,7 @@ wgl_drawVListHiddenLine(dm *dmp, register struct bn_vlist *vp)
 {
     register struct bn_vlist	*tvp;
     register int		first;
-	struct modifiable_wgl_vars *mvars = (struct modifiable_wgl_vars *)dmp->m_vars;
+	struct modifiable_ogl_vars *mvars = (struct modifiable_ogl_vars *)dmp->m_vars;
 
     if (dmp->dm_debugLevel)
 	bu_log("wgl_drawVList()\n");
@@ -1294,7 +1273,7 @@ HIDDEN int
 wgl_normal(dm *dmp)
 {
 
-    struct modifiable_wgl_vars *mvars = (struct modifiable_wgl_vars *)dmp->m_vars;
+    struct modifiable_ogl_vars *mvars = (struct modifiable_ogl_vars *)dmp->m_vars;
     if (dmp->dm_debugLevel)
 	bu_log("wgl_normal\n");
 
@@ -1509,7 +1488,7 @@ HIDDEN PIXELFORMATDESCRIPTOR *
 wgl_choose_visual(dm *dmp,
 		  Tk_Window tkwin)
 {
-    struct modifiable_wgl_vars *mvars = (struct modifiable_wgl_vars *)dmp->m_vars;
+    struct modifiable_ogl_vars *mvars = (struct modifiable_ogl_vars *)dmp->m_vars;
     int iPixelFormat;
     PIXELFORMATDESCRIPTOR *ppfd, pfd;
     BOOL good;
@@ -1951,7 +1930,7 @@ wgl_configureWin(dm *dmp, int force)
 HIDDEN int
 wgl_setLight(dm *dmp, int lighting_on)
 {
-    struct modifiable_wgl_vars *mvars = (struct modifiable_wgl_vars *)dmp->m_vars;
+    struct modifiable_ogl_vars *mvars = (struct modifiable_ogl_vars *)dmp->m_vars;
     if (dmp->dm_debugLevel)
 	bu_log("wgl_setLight()\n");
 
@@ -1987,7 +1966,7 @@ HIDDEN int
 wgl_setTransparency(dm *dmp,
 		    int transparency_on)
 {
-    struct modifiable_wgl_vars *mvars = (struct modifiable_wgl_vars *)dmp->m_vars;
+    struct modifiable_ogl_vars *mvars = (struct modifiable_ogl_vars *)dmp->m_vars;
     if (dmp->dm_debugLevel)
 	bu_log("wgl_setTransparency()\n");
 
@@ -2027,7 +2006,7 @@ wgl_setDepthMask(dm *dmp,
 HIDDEN int
 wgl_setZBuffer(dm *dmp, int zbuffer_on)
 {
-    struct modifiable_wgl_vars *mvars = (struct modifiable_wgl_vars *)dmp->m_vars;
+    struct modifiable_ogl_vars *mvars = (struct modifiable_ogl_vars *)dmp->m_vars;
     if (dmp->dm_debugLevel)
 	bu_log("wgl_setZBuffer:\n");
 
@@ -2127,7 +2106,7 @@ wgl_openFb(dm *dmp)
 {
     struct fb_platform_specific *fb_ps;
     struct wgl_fb_info *wfb_ps;
-    struct modifiable_wgl_vars *mvars = (struct modifiable_wgl_vars *)dmp->m_vars;
+    struct modifiable_ogl_vars *mvars = (struct modifiable_ogl_vars *)dmp->m_vars;
     struct dm_xvars *pubvars = (struct dm_xvars *)dmp->dm_vars.pub_vars;
     struct wgl_vars *privars = (struct wgl_vars *)dmp->dm_vars.priv_vars;
 
@@ -2149,10 +2128,10 @@ wgl_openFb(dm *dmp)
 void
 wgl_get_internal(struct dm_internal *dmp)
 {
-    struct modifiable_wgl_vars *mvars = NULL;
+    struct modifiable_ogl_vars *mvars = NULL;
     if (!dmp->m_vars) {
-	BU_GET(dmp->m_vars, struct modifiable_wgl_vars);
-	mvars = (struct modifiable_wgl_vars *)dmp->m_vars;
+	BU_GET(dmp->m_vars, struct modifiable_ogl_vars);
+	mvars = (struct modifiable_ogl_vars *)dmp->m_vars;
 	mvars->this_dm = dmp;
 	bu_vls_init(&(mvars->log));
     }
@@ -2161,11 +2140,11 @@ wgl_get_internal(struct dm_internal *dmp)
 void
 wgl_put_internal(struct dm_internal *dmp)
 {
-    struct modifiable_wgl_vars *mvars = NULL;
+    struct modifiable_ogl_vars *mvars = NULL;
     if (dmp->m_vars) {
-	mvars = (struct modifiable_wgl_vars *)dmp->m_vars;
+	mvars = (struct modifiable_ogl_vars *)dmp->m_vars;
 	bu_vls_free(&(mvars->log));
-	BU_PUT(dmp->m_vars, struct modifiable_wgl_vars);
+	BU_PUT(dmp->m_vars, struct modifiable_ogl_vars);
     }
 }
 
@@ -2176,7 +2155,7 @@ Wgl_colorchange(const struct bu_structparse *sdp,
 	const char *value,
 	void *data)
 {
-    struct modifiable_wgl_vars *mvars = (struct modifiable_wgl_vars *)base;
+    struct modifiable_ogl_vars *mvars = (struct modifiable_ogl_vars *)base;
     if (mvars->cueing_on) {
 	glEnable(GL_FOG);
     } else {
@@ -2193,7 +2172,7 @@ wgl_zclip_hook(const struct bu_structparse *sdp,
 	const char *value,
 	void *data)
 {
-    struct modifiable_wgl_vars *mvars = (struct modifiable_wgl_vars *)base;
+    struct modifiable_ogl_vars *mvars = (struct modifiable_ogl_vars *)base;
     dm *dmp = mvars->this_dm;
     fastf_t bounds[6] = { GED_MIN, GED_MAX, GED_MIN, GED_MAX, GED_MIN, GED_MAX };
 
@@ -2217,7 +2196,7 @@ wgl_debug_hook(const struct bu_structparse *sdp,
 	const char *value,
 	void *data)
 {
-    struct modifiable_wgl_vars *mvars = (struct modifiable_wgl_vars *)base;
+    struct modifiable_ogl_vars *mvars = (struct modifiable_ogl_vars *)base;
     dm *dmp = mvars->this_dm;
 
     dm_debug(dmp, mvars->debug);
@@ -2233,7 +2212,7 @@ wgl_logfile_hook(const struct bu_structparse *sdp,
 	const char *value,
 	void *data)
 {
-    struct modifiable_wgl_vars *mvars = (struct modifiable_wgl_vars *)base;
+    struct modifiable_ogl_vars *mvars = (struct modifiable_ogl_vars *)base;
     dm *dmp = mvars->this_dm;
 
     dm_logfile(dmp, bu_vls_addr(&mvars->log));
@@ -2248,7 +2227,7 @@ wgl_bound_hook(const struct bu_structparse *sdp,
 	const char *value,
 	void *data)
 {
-    struct modifiable_wgl_vars *mvars = (struct modifiable_wgl_vars *)base;
+    struct modifiable_ogl_vars *mvars = (struct modifiable_ogl_vars *)base;
     dm *dmp = mvars->this_dm;
 
     dmp->dm_bound = mvars->bound;
@@ -2263,7 +2242,7 @@ wgl_bound_flag_hook(const struct bu_structparse *sdp,
 	const char *value,
 	void *data)
 {
-    struct modifiable_wgl_vars *mvars = (struct modifiable_wgl_vars *)base;
+    struct modifiable_ogl_vars *mvars = (struct modifiable_ogl_vars *)base;
     dm *dmp = mvars->this_dm;
 
     dmp->dm_boundFlag = mvars->boundFlag;
@@ -2278,7 +2257,7 @@ wgl_zbuffer_hook(const struct bu_structparse *sdp,
 	const char *value,
 	void *data)
 {
-    struct modifiable_wgl_vars *mvars = (struct modifiable_wgl_vars *)base;
+    struct modifiable_ogl_vars *mvars = (struct modifiable_ogl_vars *)base;
     dm *dmp = mvars->this_dm;
 
     (void)dm_make_current(dmp);
@@ -2294,7 +2273,7 @@ wgl_lighting_hook(const struct bu_structparse *sdp,
 	const char *value,
 	void *data)
 {
-    struct modifiable_wgl_vars *mvars = (struct modifiable_wgl_vars *)base;
+    struct modifiable_ogl_vars *mvars = (struct modifiable_ogl_vars *)base;
     dm *dmp = mvars->this_dm;
 
     (void)dm_make_current(dmp);
@@ -2310,7 +2289,7 @@ wgl_transparency_hook(const struct bu_structparse *sdp,
 	const char *value,
 	void *data)
 {
-    struct modifiable_wgl_vars *mvars = (struct modifiable_wgl_vars *)base;
+    struct modifiable_ogl_vars *mvars = (struct modifiable_ogl_vars *)base;
     dm *dmp = mvars->this_dm;
 
     (void)dm_make_current(dmp);
@@ -2326,7 +2305,7 @@ wgl_fog_hook(const struct bu_structparse *sdp,
 	const char *value,
 	void *data)
 {
-    struct modifiable_wgl_vars *mvars = (struct modifiable_wgl_vars *)base;
+    struct modifiable_ogl_vars *mvars = (struct modifiable_ogl_vars *)base;
     dm *dmp = mvars->this_dm;
 
     dm_fogHint(dmp, mvars->fastfog);
@@ -2335,21 +2314,21 @@ wgl_fog_hook(const struct bu_structparse *sdp,
 }
 
 struct bu_structparse Wgl_vparse[] = {
-    {"%d",  1, "depthcue",              Wgl_MV_O(cueing_on),    Wgl_colorchange, NULL, NULL },
-    {"%d",  1, "zclip",         	Wgl_MV_O(zclipping_on), wgl_zclip_hook, NULL, NULL },
-    {"%d",  1, "zbuffer",               Wgl_MV_O(zbuffer_on),   wgl_zbuffer_hook, NULL, NULL },
-    {"%d",  1, "lighting",              Wgl_MV_O(lighting_on),  wgl_lighting_hook, NULL, NULL },
-    {"%d",  1, "transparency",  	Wgl_MV_O(transparency_on), wgl_transparency_hook, NULL, NULL },
-    {"%d",  1, "fastfog",               Wgl_MV_O(fastfog),      wgl_fog_hook, NULL, NULL },
-    {"%g",  1, "density",               Wgl_MV_O(fogdensity),   dm_generic_hook, NULL, NULL },
-    {"%d",  1, "has_zbuf",              Wgl_MV_O(zbuf),         dm_generic_hook, NULL, NULL },
-    {"%d",  1, "has_rgb",               Wgl_MV_O(rgb),          dm_generic_hook, NULL, NULL },
-    {"%d",  1, "has_doublebuffer",      Wgl_MV_O(doublebuffer), dm_generic_hook, NULL, NULL },
-    {"%d",  1, "depth",         	Wgl_MV_O(depth),        dm_generic_hook, NULL, NULL },
-    {"%d",  1, "debug",         	Wgl_MV_O(debug),        wgl_debug_hook, NULL, NULL },
-    {"%V",  1, "log",   		Wgl_MV_O(log),  	 wgl_logfile_hook, NULL, NULL },
-    {"%g",  1, "bound",         	Wgl_MV_O(bound),        wgl_bound_hook, NULL, NULL },
-    {"%d",  1, "useBound",              Wgl_MV_O(boundFlag),    wgl_bound_flag_hook, NULL, NULL },
+    {"%d",  1, "depthcue",              Ogl_MV_O(cueing_on),    Wgl_colorchange, NULL, NULL },
+    {"%d",  1, "zclip",         	Ogl_MV_O(zclipping_on), wgl_zclip_hook, NULL, NULL },
+    {"%d",  1, "zbuffer",               Ogl_MV_O(zbuffer_on),   wgl_zbuffer_hook, NULL, NULL },
+    {"%d",  1, "lighting",              Ogl_MV_O(lighting_on),  wgl_lighting_hook, NULL, NULL },
+    {"%d",  1, "transparency",  	Ogl_MV_O(transparency_on), wgl_transparency_hook, NULL, NULL },
+    {"%d",  1, "fastfog",               Ogl_MV_O(fastfog),      wgl_fog_hook, NULL, NULL },
+    {"%g",  1, "density",               Ogl_MV_O(fogdensity),   dm_generic_hook, NULL, NULL },
+    {"%d",  1, "has_zbuf",              Ogl_MV_O(zbuf),         dm_generic_hook, NULL, NULL },
+    {"%d",  1, "has_rgb",               Ogl_MV_O(rgb),          dm_generic_hook, NULL, NULL },
+    {"%d",  1, "has_doublebuffer",      Ogl_MV_O(doublebuffer), dm_generic_hook, NULL, NULL },
+    {"%d",  1, "depth",         	Ogl_MV_O(depth),        dm_generic_hook, NULL, NULL },
+    {"%d",  1, "debug",         	Ogl_MV_O(debug),        wgl_debug_hook, NULL, NULL },
+    {"%V",  1, "log",   		Ogl_MV_O(log),  	 wgl_logfile_hook, NULL, NULL },
+    {"%g",  1, "bound",         	Ogl_MV_O(bound),        wgl_bound_hook, NULL, NULL },
+    {"%d",  1, "useBound",              Ogl_MV_O(boundFlag),    wgl_bound_flag_hook, NULL, NULL },
     {"",        0,  (char *)0,          0,                      BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
 };
 

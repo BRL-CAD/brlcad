@@ -37,6 +37,7 @@ print_usage(const char *progname)
     bu_exit(1, "Usage: %s %s", progname, usage);
 }
 
+
 int
 main(int argc, char *argv[])
 {

@@ -34,6 +34,8 @@
  * this file, and for a DISCLAIMER OF ALL WARRANTIES.
  */
 
+#include "common.h"
+
 #include "tkInt.h"
 #include <locale.h>
 

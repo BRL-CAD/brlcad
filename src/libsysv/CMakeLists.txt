@@ -6,12 +6,9 @@ set(SYSV_INCLUDE_DIRS
 BRLCAD_LIB_INCLUDE_DIRS(sysv SYSV_INCLUDE_DIRS "")
 
 set(LIBSYSV_SOURCES
-  memset.c
   setenv.c
-  strchr.c
   strdup.c
   strsep.c
-  strtok.c
   )
 
 if(HAVE_C_WUNUSED_CONST_VARIABLE)

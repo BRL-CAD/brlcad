@@ -238,9 +238,7 @@ are used.</para>
 returned an error code.
 Either the file is not in Edition-2 or Edition-3 RLE format,
 or the file has been damaged or truncated.
-If the file is in Edition-1 RLE format, the
-<emphasis remap="I">orle-fb(1)</emphasis>
-program can be used to display the file.</para>
+</para>
   </listitem>
   </varlistentry>
   <varlistentry>
