@@ -59,6 +59,7 @@ endif(DOXYGEN_FOUND)
 set(misc_ignore_files
   ${misc_ignore_files}
   Bullet_Box_Chain_Demo.cpp
+  clang-static-analyzer-run.sh
   CMake
   Description.txt
   profont/LICENSE
