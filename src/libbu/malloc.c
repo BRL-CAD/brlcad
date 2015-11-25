@@ -476,8 +476,12 @@ bu_realloc(register void *ptr, size_t siz, const char *str)
 	    fprintf(stderr, "%p realloc%6d %s [grew in place]\n",
 		    ptr, (int)siz, str);
 	} else {
-	    fprintf(stderr, "%p realloc%6d %s [moved from %p]\n",
-		    ptr, (int)siz, str, original_ptr);
+	    /* Not using %p to print original_ptr's pointer value here in order
+	     * to avoid clang static analyzer complaining about use of memory
+	     * after memory is freed.  If/when clang can recognize that this is
+	     * not an actual problem, switch it back to the %p form */
+	    fprintf(stderr, "%p realloc%6d %s [moved from 0x%lx]\n",
+		    ptr, (int)siz, str, (unsigned long)original_ptr);
 	}
     }
 
