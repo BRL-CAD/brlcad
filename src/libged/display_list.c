@@ -28,6 +28,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "bu/str.h"
 #include "bn/plot3.h"
 
 #include "rt/solid.h"
@@ -345,7 +346,7 @@ _dl_eraseAllNamesFromDisplay(struct bu_list *hdlp, struct db_i *dbip,
 
 	next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
 
-	dup_path = strdup(bu_vls_addr(&gdlp->dl_path));
+	dup_path = bu_strdup(bu_vls_addr(&gdlp->dl_path));
 	tok = strtok(dup_path, "/");
 	while (tok) {
 	    if (first) {

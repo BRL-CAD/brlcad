@@ -5302,7 +5302,7 @@ parse_args(int ac, char *av[])
 	if (bu_optopt == '?') c='h';
 	switch (c) {
 	    case 'i'	: ident = atoi( bu_optarg ); break;
-	    case 'o'	: output_file = strdup( bu_optarg ); break;
+	    case 'o'	: output_file = bu_strdup( bu_optarg ); break;
 	    case 'd'	: debug = atoi(bu_optarg); break;
 	    case 't'	: surf_tol = atof( bu_optarg ); break;
 	    case 'a'	: ang_tol = atof( bu_optarg ) * DEG2RAD; break;
