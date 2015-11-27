@@ -30,149 +30,6 @@
 #include "bu.h"
 #include "icv.h"
 
-HIDDEN int
-extract_path(struct bu_vls *path, const char *input)
-{
-    int ret = 0;
-    struct bu_vls wpath = BU_VLS_INIT_ZERO;
-    char *colon_pos = NULL;
-    char *inputcpy = NULL;
-    if (UNLIKELY(!input)) return 0;
-    inputcpy = bu_strdup(input);
-    colon_pos = strchr(inputcpy, ':');
-    if (colon_pos) {
-	bu_vls_sprintf(&wpath, "%s", input);
-	bu_vls_nibble(&wpath, strlen(input) - strlen(colon_pos) + 1);
-	if (path && bu_vls_strlen(&wpath) > 0) {
-	    ret = 1;
-	    bu_vls_sprintf(path, "%s", bu_vls_addr(&wpath));
-	}
-	bu_vls_free(&wpath);
-    } else {
-	if (path) bu_vls_sprintf(path, "%s", input);
-	ret = 1;
-    }
-    if (inputcpy) bu_free(inputcpy, "input copy");
-    if (path && !(bu_vls_strlen(path) > 0)) return 0;
-    return ret;
-}
-
-HIDDEN int
-extract_format_prefix(struct bu_vls *format, const char *input)
-{
-    struct bu_vls wformat = BU_VLS_INIT_ZERO;
-    char *colon_pos = NULL;
-    char *inputcpy = NULL;
-    if (UNLIKELY(!input)) return 0;
-    inputcpy = bu_strdup(input);
-    colon_pos = strchr(inputcpy, ':');
-    if (colon_pos) {
-	int ret = 0;
-	bu_vls_sprintf(&wformat, "%s", input);
-	bu_vls_trunc(&wformat, -1 * strlen(colon_pos));
-	if (bu_vls_strlen(&wformat) > 0) {
-	    ret = 1;
-	    if (format) bu_vls_sprintf(format, "%s", bu_vls_addr(&wformat));
-	}
-	bu_vls_free(&wformat);
-	if (inputcpy) bu_free(inputcpy, "input copy");
-	return ret;
-    } else {
-	if (inputcpy) bu_free(inputcpy, "input copy");
-	return 0;
-    }
-    /* Shouldn't get here */
-    return 0;
-}
-
-int
-parse_image_string(struct bu_vls *format, struct bu_vls *slog, const char *opt, const char *input)
-{
-    int type_int = 0;
-    mime_image_t type = MIME_IMAGE_UNKNOWN;
-
-    struct bu_vls format_cpy = BU_VLS_INIT_ZERO;
-    struct bu_vls path = BU_VLS_INIT_ZERO;
-
-    if (UNLIKELY(!input) || UNLIKELY(strlen(input) == 0)) return MIME_IMAGE_UNKNOWN;
-
-    /* If an external routine has specified a format string, that string will
-     * override the file extension (but not an explicit option or format prefix).
-     * Stash any local format string here for later processing.  The idea is
-     * to allow some other routine (say, an introspection of a file looking for
-     * some signature string) to override a file extension based type identification.
-     * Such introspection is beyond the scope of this function, but should override
-     * the file extension mechanism. */
-    if (format) bu_vls_sprintf(&format_cpy, "%s", bu_vls_addr(format));
-
-    /* If we have an explicit option, that overrides any other format specifiers */
-    if (opt) {
-	type_int = bu_file_mime(opt, MIME_IMAGE);
-	type = (type_int < 0) ? MIME_IMAGE_UNKNOWN : (mime_image_t)type_int;
-	if (type == MIME_IMAGE_UNKNOWN) {
-	    /* Have prefix, but doesn't result in a known format - that's an error */
-	    if (slog) bu_vls_printf(slog, "Error: unknown image format \"%s\" specified as an option.\n", opt);
-	    bu_vls_free(&format_cpy);
-	    return -1;
-	}
-    }
-
-    /* Try for a format prefix */
-    if (extract_format_prefix(format, input)) {
-	/* If we don't already have a valid type and we had a format prefix,
-	 * find out if it maps to a valid type */
-	if (type == MIME_IMAGE_UNKNOWN && format) {
-	    /* Yes - see if the prefix specifies a image format */
-	    type_int = bu_file_mime(bu_vls_addr(format), MIME_IMAGE);
-	    type = (type_int < 0) ? MIME_IMAGE_UNKNOWN : (mime_image_t)type_int;
-	    if (type == MIME_IMAGE_UNKNOWN) {
-		/* Have prefix, but doesn't result in a known format - that's an error */
-		if (slog) bu_vls_printf(slog, "Error: unknown image format \"%s\" specified as a format prefix.\n", bu_vls_addr(format));
-		bu_vls_free(&format_cpy);
-		return -1;
-	    }
-	}
-    }
-
-    /* If we don't already have a type and we were passed a format string, give it a try */
-    if (type == MIME_IMAGE_UNKNOWN && format && bu_vls_strlen(&format_cpy) > 0) {
-	bu_vls_sprintf(format, "%s", bu_vls_addr(&format_cpy));
-	type_int = bu_file_mime(bu_vls_addr(&format_cpy), MIME_IMAGE);
-	type = (type_int < 0) ? MIME_IMAGE_UNKNOWN : (mime_image_t)type_int;
-	if (type == MIME_IMAGE_UNKNOWN) {
-	    /* Have prefix, but doesn't result in a known format - that's an error */
-	    if (slog) bu_vls_printf(slog, "Error: unknown image format \"%s\" passed to parse_image_string.\n", bu_vls_addr(format));
-	    bu_vls_free(&format_cpy);
-	    return -1;
-	}
-    }
-
-    /* If we have no prefix or the prefix didn't map to a image type, try file extension */
-    if (type == MIME_IMAGE_UNKNOWN && extract_path(&path, input)) {
-	/* TODO - this piece (and maybe most of this function's logic - is
-	 * conceptually a duplicate of the icv_guess_file_format logic,
-	 * although this may actually be a better implementation...  It's
-	 * also quite similar to the gcv file format discovery code.  There may
-	 * be a libbu-level mime functionality to be written here to
-	 * generically do this - support ImageMagic style FMT:filename and
-	 * file.ext resolutions for *all* mime types */
-	if (bu_path_component(format, bu_vls_addr(&path), PATH_EXTENSION)) {
-	    type_int = bu_file_mime(bu_vls_addr(format), MIME_IMAGE);
-	    type = (type_int < 0) ? MIME_IMAGE_UNKNOWN : (mime_image_t)type_int;
-	    if (type == MIME_IMAGE_UNKNOWN) {
-		/* Have file extension, but doesn't result in a known format - that's an error */
-		if (slog) bu_vls_printf(slog, "Error: file extension \"%s\" does not map to a known image format.\n", bu_vls_addr(format));
-		bu_vls_free(&format_cpy);
-		bu_vls_free(&path);
-		return -1;
-	    }
-	}
-    }
-    bu_vls_free(&path);
-    bu_vls_free(&format_cpy);
-    return (int)type;
-}
-
 int
 file_stat(struct bu_vls *msg, int argc, const char **argv, void *set_var)
 {
@@ -231,7 +88,6 @@ int
 main(int ac, const char **av)
 {
     int uac = 0;
-    int fmt = 0;
     int ret = 0;
     const char *in_fmt = NULL;
     const char *out_fmt = NULL;
@@ -338,7 +194,7 @@ main(int ac, const char **av)
     }
 
     /* See if we have input and output files specified */
-    if (!extract_path(&in_path, bu_vls_addr(&in_path_raw))) {
+    if (!bu_path_component(&in_path, bu_vls_addr(&in_path_raw), PATH_ALL)) {
 	if (bu_vls_strlen(&in_path_raw) > 0) {
 	    bu_vls_printf(&slog, "Error: no input path identified: %s\n", bu_vls_addr(&in_path_raw));
 	} else {
@@ -346,7 +202,7 @@ main(int ac, const char **av)
 	}
 	ret = 1;
     }
-    if (!extract_path(&out_path, bu_vls_addr(&out_path_raw))) {
+    if (!bu_path_component(&out_path, bu_vls_addr(&out_path_raw), PATH_ALL)) {
 	if (bu_vls_strlen(&out_path_raw) > 0) {
 	    bu_vls_printf(&slog, "Error: no output path identified: %s\n", bu_vls_addr(&out_path_raw));
 	} else {
@@ -363,15 +219,18 @@ main(int ac, const char **av)
 
     /* Find out what input file type we are dealing with */
     if (in_type == MIME_IMAGE_UNKNOWN) {
-	fmt = parse_image_string(&in_format, &slog, in_fmt, bu_vls_addr(&in_path_raw));
-	in_type = (fmt < 0) ? MIME_IMAGE_UNKNOWN : (mime_image_t)fmt;
-	in_fmt = NULL;
+	struct bu_vls c = BU_VLS_INIT_ZERO;
+	if (bu_path_component(&c, bu_vls_addr(&in_path_raw), (path_component_t)MIME_IMAGE)) {
+	    in_type = (mime_image_t)bu_file_mime_int(bu_vls_addr(&c));
+	}
+	bu_vls_free(&c);
     }
-    /* Identify output file type */
     if (out_type == MIME_IMAGE_UNKNOWN) {
-	fmt = parse_image_string(&out_format, &slog, out_fmt, bu_vls_addr(&out_path_raw));
-	out_type = (fmt < 0) ? MIME_IMAGE_UNKNOWN : (mime_image_t)fmt;
-	out_fmt = NULL;
+	struct bu_vls c = BU_VLS_INIT_ZERO;
+	if (bu_path_component(&c, bu_vls_addr(&out_path_raw), (path_component_t)MIME_IMAGE)) {
+	    out_type = (mime_image_t)bu_file_mime_int(bu_vls_addr(&c));
+	}
+	bu_vls_free(&c);
     }
 
     /* If we get to this point without knowing both input and output types, we've got a problem */

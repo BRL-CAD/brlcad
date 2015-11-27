@@ -193,6 +193,12 @@ bu_path_component(struct bu_vls *component, const char *in_path, path_component_
 
     if (type < PATH_UNKNOWN) {
 	switch (type) {
+	    case PATH_ALL:
+		ret = 1;
+		if (component) {
+		    bu_vls_sprintf(component, "%s", bu_vls_addr(&working_path));
+		}
+		break;
 	    case PATH_DIRNAME:
 		dirname = bu_dirname(bu_vls_addr(&working_path));
 		if (!(!dirname || strlen(dirname) == 0)) {
@@ -258,6 +264,7 @@ bu_path_component(struct bu_vls *component, const char *in_path, path_component_
 	    int mime_int = bu_file_mime(bu_vls_addr(&mime_prefix), (mime_context_t)type);
 	    const char *mime_str = bu_file_mime_str(mime_int, (mime_context_t)type);
 	    bu_vls_sprintf(component, "%s", mime_str);
+	    ret = 1;
 	    bu_free((char *)mime_str, "free orig mime str");
 	} else {
 	    struct bu_vls mime_ext = BU_VLS_INIT_ZERO;
@@ -271,10 +278,11 @@ bu_path_component(struct bu_vls *component, const char *in_path, path_component_
 		    bu_vls_strncpy(&mime_ext, period_pos, strlen(period_pos)+1);
 		    bu_vls_nibble(&mime_ext, 1);
 		    /* actual mime bits */
-		    mime_int = bu_file_mime(bu_vls_addr(&mime_prefix), (mime_context_t)type);
+		    mime_int = bu_file_mime(bu_vls_addr(&mime_ext), (mime_context_t)type);
 		    mime_str = bu_file_mime_str(mime_int, (mime_context_t)type);
 		    bu_vls_sprintf(component, "%s", mime_str);
 		    bu_free((char *)mime_str, "free orig mime str");
+		    ret = 1;
 		}
 	    }
 	    bu_vls_free(&mime_ext);
