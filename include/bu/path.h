@@ -153,16 +153,26 @@ typedef enum {
     PATH_DIRNAME_CORE,  /*!< /dir1/dir2/file */
     PATH_BASENAME,      /*!< file.ext */
     PATH_BASENAME_CORE, /*!< file */
-    PATH_EXTENSION      /*!< ext */
+    PATH_EXTENSION,     /*!< ext */
+    PATH_UNKNOWN        /*!< marks end of path_component_t enums */
 } path_component_t;
-
 
 /**
  * Attempt to extract a component from a file path.
  *
- * returns 0 if the specified component was not found, 1
- * if it was.  If the bu_vls pointer component is not NULL,
- * the component will be written to the vls.
+ * returns 0 if the specified component was not found, 1 if it was.  If the
+ * bu_vls pointer component is not NULL, the component will be written to the
+ * vls.
+ *
+ * bu_path_component will also accept a mime_type_t argument to type and return
+ * the string form of the mime type associated with the file path in component.
+ * The return value will still report success or failure (1/0) - to get the
+ * integer form of the mime type found, use bu_file_mime_int to process
+ * component:
+ *
+ * if (bu_path_component(c, "file.png", (path_component_t)MIME_IMAGE)) {
+ *    mime_image_t t = (mime_image_t)bu_file_mime_int(bu_vls_addr(c));
+ * }
  */
 
 BU_EXPORT extern int bu_path_component(struct bu_vls *component,
