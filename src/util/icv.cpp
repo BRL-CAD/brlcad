@@ -89,6 +89,8 @@ main(int ac, const char **av)
 {
     int uac = 0;
     int ret = 0;
+    int width = 0;
+    int height = 0;
     const char *in_fmt = NULL;
     const char *out_fmt = NULL;
     static mime_image_t in_type = MIME_IMAGE_UNKNOWN;
@@ -98,6 +100,7 @@ main(int ac, const char **av)
     int need_help = 0;
     int skip_in = 0;
     int skip_out = 0;
+    icv_image_t *img = NULL;
 
     struct bu_vls parse_msgs = BU_VLS_INIT_ZERO;
     struct bu_vls in_format = BU_VLS_INIT_ZERO;
@@ -113,6 +116,8 @@ main(int ac, const char **av)
 	{"?", "",                 "",           NULL,          &need_help,            "",                           },
 	{"i", "input",            "file",       &file_stat,   (void *)&in_path_str,   "Input file.",                },
 	{"o", "output",           "file",       &file_null,   (void *)&out_path_str,  "Output file.",               },
+	{"w", "width",            "#",          &bu_opt_int,  (void *)&width,         "Image width.",               },
+	{"n", "height",           "#",          &bu_opt_int,  (void *)&height,        "Image height.",              },
 	{"",  "input-format",     "format",     &image_mime,  (void *)&in_type,       "File format of input file.", },
 	{"",  "output-format",    "format",     &image_mime,  (void *)&out_type,      "File format of output file." },
 	BU_OPT_DESC_NULL
@@ -264,6 +269,8 @@ main(int ac, const char **av)
     bu_log("Input file path: %s\n", bu_vls_addr(&in_path));
     bu_log("Output file path: %s\n", bu_vls_addr(&out_path));
 
+    img = icv_read(bu_vls_addr(&in_path), in_type, width, height);
+    icv_write(img, bu_vls_addr(&out_path), out_type);
 
     /* Clean up */
 cleanup:
