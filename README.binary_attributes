@@ -89,6 +89,8 @@ Functions needed
   AVS BA to/from on-disk attribute body
     see current functions:
 
+  ...
+
 Macro definitions needed
 ------------------------
 
@@ -122,9 +124,10 @@ A db admin tool:
 On-disk format of a binary attribute [following the (char*)NULL
 (char*)NULL end of the normal attributes]:
 
-After more deliberation I believe we ought to create a separate object
-structure section for binary attributes.  Following is the existing
-Table 1. in the V5 database format manual:
+While I believe we can use the existing AVS attribute section for BAs,
+I believe in the future we ought to create a separate object structure
+section for binary attributes, especially if we use a more compact
+binary representation such as CBOR.
 
 The following describes the current V5 db:
 
@@ -135,14 +138,25 @@ The following describes the proposed V6 db with the binary attributes:
   BRL_CAD_g_format_V6.xml
  
 
-Test plan:
+Possible tests:
 
-1. Select a complex TGM in the db directory as a test subject.
-2. Create a script to:
-
+1. Simple TGM
+   + create a single-object TGM
    + copy the TGM to a new file (TGM2)
    + add multiple binary attributes to TGM2
+   + add a file to TGM2
    + use the admin-db tool to check TGM2
+   + export the file; check that it is the same as was imported
+   + delete the added binary attributes from TGM2
+   + run cmp on TGM and TGM2 to see they are the same
+
+2. Complex TGM
+   + select a complex TGM in the db directory as a test subject
+   + copy the TGM to a new file (TGM2)
+   + add multiple binary attributes to TGM2
+   + add a file to TGM2
+   + use the admin-db tool to check TGM2
+   + export the file; check that it is the same as was imported
    + delete the added binary attributes from TGM2
    + run cmp on TGM and TGM2 to see they are the same
 
