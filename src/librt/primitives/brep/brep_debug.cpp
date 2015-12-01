@@ -2666,6 +2666,7 @@ brep_conversion_tree(const struct db_i *dbip, const union tree *oldtree, union t
 		    if (BU_STR_EQUAL(intern->idb_meth->ft_name, "ID_BREP")) {
 			*brep = ((struct rt_brep_internal *)intern->idb_ptr)->brep->Duplicate();
 		    } else {
+			*brep = ON_Brep::New();
 			ret = single_conversion(intern, brep, dbip);
 			if (ret == -1) {
 			    bu_log("The brep conversion of %s is unsuccessful.\n", oldname);
