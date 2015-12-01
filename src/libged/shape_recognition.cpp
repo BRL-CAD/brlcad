@@ -737,6 +737,50 @@ _ged_brep_to_csg(struct ged *gedp, const char *dp_name, int verify)
     return ret;
 }
 
+
+int
+tikz_comb(struct ged *gedp, struct bu_vls *UNUSED(log), struct directory *dp)
+{
+    struct rt_db_internal intern;
+    struct rt_comb_internal *comb_internal = NULL;
+    struct rt_wdb *wdbp = gedp->ged_wdbp;
+    struct bu_vls comb_name = BU_VLS_INIT_ZERO;
+    bu_vls_sprintf(&comb_name, "csg_%s", dp->d_namep);
+
+    RT_DB_INTERNAL_INIT(&intern)
+
+    if (rt_db_get_internal(&intern, dp, wdbp->dbip, NULL, &rt_uniresource) < 0) {
+	return -1;
+    }
+
+    RT_CK_COMB(intern.idb_ptr);
+    comb_internal = (struct rt_comb_internal *)intern.idb_ptr;
+
+    if (comb_internal->tree == NULL) {
+	// Empty tree
+	(void)wdb_export(wdbp, bu_vls_addr(&comb_name), comb_internal, ID_COMBINATION, 1);
+	return 0;
+    }
+#if 0
+    RT_CK_TREE(comb_internal->tree);
+    union tree *oldtree = comb_internal->tree;
+    struct rt_comb_internal *new_internal;
+
+    BU_ALLOC(new_internal, struct rt_comb_internal);
+    *new_internal = *comb_internal;
+    BU_ALLOC(new_internal->tree, union tree);
+    RT_TREE_INIT(new_internal->tree);
+
+    union tree *newtree = new_internal->tree;
+#endif
+    //(void)brep_csg_conversion_tree(gedp, log, ito, oldtree, newtree, verify);
+    //(void)wdb_export(wdbp, bu_vls_addr(&comb_name), (void *)new_internal, ID_COMBINATION, 1);
+
+    return 0;
+}
+
+
+
 extern "C" int
 _ged_brep_tikz(struct ged *gedp, const char *dp_name, const char *outfile)
 {
@@ -768,7 +812,33 @@ _ged_brep_tikz(struct ged *gedp, const char *dp_name, const char *outfile)
     bu_vls_printf(&wrapper, "\\begin{document}\n\n");
     // Translate view az/el into tikz-3dplot variation
     bu_vls_printf(&wrapper, "\\tdplotsetmaincoords{%f}{%f}\n", 90 + -1*gedp->ged_gvp->gv_aet[1], -1*(-90 + -1 * gedp->ged_gvp->gv_aet[0]));
-    bu_vls_printf(&wrapper, "\\begin{tikzpicture}[scale=1,tdplot_main_coords]\n");
+
+    // Need bbox dimensions to determine proper scale factor - do this with db_search so it will
+    // work for combs as well, so long as there are no matrix transformations in the hierarchy.
+    // Properly speaking this should be a bbox call in librt, but in this case we want the bbox of
+    // everything - subtractions and unions.  Need to check if that's an option, and if not how
+    // to handle it properly...
+    ON_BoundingBox bbox;
+    ON_MinMaxInit(&(bbox.m_min), &(bbox.m_max));
+    struct bu_ptbl breps = BU_PTBL_INIT_ZERO;
+    const char *brep_search = "-type brep";
+    (void)db_search(&breps, DB_SEARCH_TREE|DB_SEARCH_RETURN_UNIQ_DP, brep_search, 1, &dp, gedp->ged_wdbp->dbip);
+    for(size_t i = 0; i < BU_PTBL_LEN(&breps); i++) {
+	struct rt_db_internal bintern;
+	struct rt_brep_internal *b_ip = NULL;
+	RT_DB_INTERNAL_INIT(&bintern)
+	struct directory *d = (struct directory *)BU_PTBL_GET(&breps, i);
+	if (rt_db_get_internal(&bintern, d, wdbp->dbip, NULL, &rt_uniresource) < 0) {
+	    return GED_ERROR;
+	}
+	b_ip = (struct rt_brep_internal *)bintern.idb_ptr;
+	b_ip->brep->GetBBox(bbox[0], bbox[1], true);
+    }
+    // Get things roughly down to page size - not perfect, but establishes a ballpark that can be fine tuned
+    // by hand after generation
+    double scale = 100/bbox.Diagonal().Length();
+
+    bu_vls_printf(&wrapper, "\\begin{tikzpicture}[scale=%f,tdplot_main_coords]\n", scale);
     s.Append(bu_vls_addr(&wrapper), bu_vls_strlen(&wrapper));
 
     const ON_Brep *brep = brep_ip->brep;
