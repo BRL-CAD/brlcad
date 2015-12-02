@@ -41,6 +41,8 @@
 #include "bio.h"
 
 #include "bu/env.h"
+#include "bu/malloc.h"
+
 
 int
 bu_setenv(const char *name, const char *value, int overwrite)
