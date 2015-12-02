@@ -1397,7 +1397,7 @@ ON_Curve_PolyLine_Approx(ON_Polyline *polyline, const ON_Curve *curve, double to
  * expose as a feature long term - probably should be a more
  * generic API that supports multiple formats... */
 extern BREP_EXPORT int
-ON_BrepTikz(ON_String &s, const ON_Brep *brep, const char *color, const char *prefix, double tol);
+ON_BrepTikz(ON_String &s, const ON_Brep *brep, const char *color, const char *prefix);
 
 /* Shape recognition functions - HIGHLY EXPERIMENTAL,
  * DO NOT RELY ON - the odds are quite good that this whole
