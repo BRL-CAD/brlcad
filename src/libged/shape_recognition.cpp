@@ -738,19 +738,78 @@ _ged_brep_to_csg(struct ged *gedp, const char *dp_name, int verify)
 }
 
 
+
+void tikz_comb(struct ged *gedp, struct bu_vls *tikz, struct directory *dp, struct bu_vls *color, int *cnt);
+
 int
-tikz_comb(struct ged *gedp, struct bu_vls *UNUSED(log), struct directory *dp)
+tikz_tree(struct ged *gedp, struct bu_vls *tikz, const union tree *oldtree, struct bu_vls *color, int *cnt)
+{
+    int ret = 0;
+    switch (oldtree->tr_op) {
+	case OP_UNION:
+	case OP_INTERSECT:
+	case OP_SUBTRACT:
+	case OP_XOR:
+	    /* convert right */
+	    ret = tikz_tree(gedp, tikz, oldtree->tr_b.tb_right, color, cnt);
+	    /* fall through */
+	case OP_NOT:
+	case OP_GUARD:
+	case OP_XNOP:
+	    /* convert left */
+	    ret = tikz_tree(gedp, tikz, oldtree->tr_b.tb_left, color, cnt);
+	    break;
+	case OP_DB_LEAF:
+	    {
+		struct directory *dir = db_lookup(gedp->ged_wdbp->dbip, oldtree->tr_l.tl_name, LOOKUP_QUIET);
+		if (dir != RT_DIR_NULL) {
+		    if (dir->d_flags & RT_DIR_COMB) {
+			tikz_comb(gedp, tikz, dir, color, cnt);
+		    } else {
+			// It's a primitive. If it's a brep, get the wireframe.
+			// TODO - support wireframes from other primitive types...
+			struct rt_db_internal bintern;
+			struct rt_brep_internal *b_ip = NULL;
+			RT_DB_INTERNAL_INIT(&bintern)
+			if (rt_db_get_internal(&bintern, dir, gedp->ged_wdbp->dbip, NULL, &rt_uniresource) < 0) {
+			    return GED_ERROR;
+			}
+			if (bintern.idb_minor_type == DB5_MINORTYPE_BRLCAD_BREP) {
+			    ON_String s;
+			    struct bu_vls cntstr = BU_VLS_INIT_ZERO;
+			    (*cnt)++;
+			    bu_vls_sprintf(&cntstr, "OBJ%d", *cnt);
+			    b_ip = (struct rt_brep_internal *)bintern.idb_ptr;
+			    (void)ON_BrepTikz(s, b_ip->brep, bu_vls_addr(color), bu_vls_addr(&cntstr));
+			    const char *str = s.Array();
+			    bu_vls_strcat(tikz, str);
+			    bu_vls_free(&cntstr);
+			}
+		    }
+		}
+	    }
+	    break;
+	default:
+	    bu_log("huh??\n");
+	    break;
+    }
+    return ret;
+}
+
+void
+tikz_comb(struct ged *gedp, struct bu_vls *tikz, struct directory *dp, struct bu_vls *color, int *cnt)
 {
     struct rt_db_internal intern;
     struct rt_comb_internal *comb_internal = NULL;
     struct rt_wdb *wdbp = gedp->ged_wdbp;
-    struct bu_vls comb_name = BU_VLS_INIT_ZERO;
-    bu_vls_sprintf(&comb_name, "csg_%s", dp->d_namep);
+    struct bu_vls color_backup = BU_VLS_INIT_ZERO;
+
+    bu_vls_sprintf(&color_backup, "%s", bu_vls_addr(color));
 
     RT_DB_INTERNAL_INIT(&intern)
 
     if (rt_db_get_internal(&intern, dp, wdbp->dbip, NULL, &rt_uniresource) < 0) {
-	return -1;
+	return;
     }
 
     RT_CK_COMB(intern.idb_ptr);
@@ -758,25 +817,21 @@ tikz_comb(struct ged *gedp, struct bu_vls *UNUSED(log), struct directory *dp)
 
     if (comb_internal->tree == NULL) {
 	// Empty tree
-	(void)wdb_export(wdbp, bu_vls_addr(&comb_name), comb_internal, ID_COMBINATION, 1);
-	return 0;
+	return;
     }
-#if 0
     RT_CK_TREE(comb_internal->tree);
-    union tree *oldtree = comb_internal->tree;
-    struct rt_comb_internal *new_internal;
+    union tree *t = comb_internal->tree;
 
-    BU_ALLOC(new_internal, struct rt_comb_internal);
-    *new_internal = *comb_internal;
-    BU_ALLOC(new_internal->tree, union tree);
-    RT_TREE_INIT(new_internal->tree);
 
-    union tree *newtree = new_internal->tree;
-#endif
-    //(void)brep_csg_conversion_tree(gedp, log, ito, oldtree, newtree, verify);
-    //(void)wdb_export(wdbp, bu_vls_addr(&comb_name), (void *)new_internal, ID_COMBINATION, 1);
+    // Get color
+    if (comb_internal->rgb[0] > 0 || comb_internal->rgb[1] > 0 || comb_internal->rgb[1] > 0) {
+	bu_vls_sprintf(color, "color={rgb:red,%d;green,%d;blue,%d}", comb_internal->rgb[0], comb_internal->rgb[1], comb_internal->rgb[2]);
+    }
 
-    return 0;
+    (void)tikz_tree(gedp, tikz, t, color, cnt);
+
+    bu_vls_sprintf(color, "%s", bu_vls_addr(&color_backup));
+    bu_vls_free(&color_backup);
 }
 
 
@@ -784,34 +839,27 @@ tikz_comb(struct ged *gedp, struct bu_vls *UNUSED(log), struct directory *dp)
 extern "C" int
 _ged_brep_tikz(struct ged *gedp, const char *dp_name, const char *outfile)
 {
+    int cnt = 0;
+    struct bu_vls color = BU_VLS_INIT_ZERO;
     struct rt_db_internal intern;
     struct rt_brep_internal *brep_ip = NULL;
     RT_DB_INTERNAL_INIT(&intern)
     struct rt_wdb *wdbp = gedp->ged_wdbp;
     struct directory *dp = db_lookup(wdbp->dbip, dp_name, LOOKUP_QUIET);
     if (dp == RT_DIR_NULL) return GED_ERROR;
+    struct bu_vls tikz = BU_VLS_INIT_ZERO;
 
     /* Unpack B-Rep */
     if (rt_db_get_internal(&intern, dp, wdbp->dbip, NULL, &rt_uniresource) < 0) {
 	return GED_ERROR;
     }
-    if (intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_BREP) {
-	bu_vls_printf(gedp->ged_result_str, "%s is not a B-Rep - aborting\n", dp->d_namep);
-	return 1;
-    } else {
-	brep_ip = (struct rt_brep_internal *)intern.idb_ptr;
-    }
-    RT_BREP_CK_MAGIC(brep_ip);
 
-    ON_String s;
-
-    struct bu_vls wrapper = BU_VLS_INIT_ZERO;
-    bu_vls_printf(&wrapper, "\\documentclass{article}\n");
-    bu_vls_printf(&wrapper, "\\usepackage{tikz}\n");
-    bu_vls_printf(&wrapper, "\\usepackage{tikz-3dplot}\n\n");
-    bu_vls_printf(&wrapper, "\\begin{document}\n\n");
+    bu_vls_printf(&tikz, "\\documentclass{article}\n");
+    bu_vls_printf(&tikz, "\\usepackage{tikz}\n");
+    bu_vls_printf(&tikz, "\\usepackage{tikz-3dplot}\n\n");
+    bu_vls_printf(&tikz, "\\begin{document}\n\n");
     // Translate view az/el into tikz-3dplot variation
-    bu_vls_printf(&wrapper, "\\tdplotsetmaincoords{%f}{%f}\n", 90 + -1*gedp->ged_gvp->gv_aet[1], -1*(-90 + -1 * gedp->ged_gvp->gv_aet[0]));
+    bu_vls_printf(&tikz, "\\tdplotsetmaincoords{%f}{%f}\n", 90 + -1*gedp->ged_gvp->gv_aet[1], -1*(-90 + -1 * gedp->ged_gvp->gv_aet[0]));
 
     // Need bbox dimensions to determine proper scale factor - do this with db_search so it will
     // work for combs as well, so long as there are no matrix transformations in the hierarchy.
@@ -838,26 +886,42 @@ _ged_brep_tikz(struct ged *gedp, const char *dp_name, const char *outfile)
     // by hand after generation
     double scale = 100/bbox.Diagonal().Length();
 
-    bu_vls_printf(&wrapper, "\\begin{tikzpicture}[scale=%f,tdplot_main_coords]\n", scale);
-    s.Append(bu_vls_addr(&wrapper), bu_vls_strlen(&wrapper));
+    bu_vls_printf(&tikz, "\\begin{tikzpicture}[scale=%f,tdplot_main_coords]\n", scale);
 
-    const ON_Brep *brep = brep_ip->brep;
-    (void)ON_BrepTikz(s, brep, NULL, NULL);
+    if (dp->d_flags & RT_DIR_COMB) {
+	// Assign a default color
+	bu_vls_sprintf(&color, "color={rgb:red,255;green,0;blue,0}");
+	tikz_comb(gedp, &tikz, dp, &color, &cnt);
+    } else {
+	ON_String s;
+	if (intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_BREP) {
+	    bu_vls_printf(gedp->ged_result_str, "%s is not a B-Rep - aborting\n", dp->d_namep);
+	    return 1;
+	} else {
+	    brep_ip = (struct rt_brep_internal *)intern.idb_ptr;
+	}
+	RT_BREP_CK_MAGIC(brep_ip);
+	const ON_Brep *brep = brep_ip->brep;
+	(void)ON_BrepTikz(s, brep, NULL, NULL);
+	const char *str = s.Array();
+	bu_vls_strcat(&tikz, str);
+    }
 
-    bu_vls_sprintf(&wrapper, "\\end{tikzpicture}\n\n");
-    bu_vls_printf(&wrapper, "\\end{document}\n");
-    s.Append(bu_vls_addr(&wrapper), bu_vls_strlen(&wrapper));
-    bu_vls_free(&wrapper);
+    bu_vls_printf(&tikz, "\\end{tikzpicture}\n\n");
+    bu_vls_printf(&tikz, "\\end{document}\n");
 
     if (outfile) {
 	FILE *fp = fopen(outfile, "w");
-	fprintf(fp, "%s", s.Array());
+	fprintf(fp, "%s", bu_vls_addr(&tikz));
 	fclose(fp);
+	bu_vls_free(&tikz);
 	bu_vls_sprintf(gedp->ged_result_str, "Output written to file %s", outfile);
     } else {
 
-	bu_vls_sprintf(gedp->ged_result_str, "%s", s.Array());
+	bu_vls_sprintf(gedp->ged_result_str, "%s", bu_vls_addr(&tikz));
+	bu_vls_free(&tikz);
     }
+	bu_vls_free(&tikz);
     return GED_OK;
 }
 
