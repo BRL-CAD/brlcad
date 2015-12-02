@@ -63,17 +63,21 @@ bu_setenv(const char *name, const char *value, int overwrite)
 	if (errcode || envsize)
 	    return errcode;
     }
+
+    /* set/overwrite value */
 #  ifdef HAVE__PUTENV_S
     return _putenv_s(name, value);
 #  else
     {
 	size_t maxlen = strlen(name)+strlen(value)+2;
-	char *keyval = (char *)malloc(maxlen);
-	if (!keyval)
-	    return ENOMEM;
+	char *keyval = (char *)bu_malloc(maxlen, "setenv key=value copy/leak");
 	snprintf(keyval, maxlen, "%s=%s", name, value);
-	return putenv(keyval);
-    }
+
+	/* NOTE: we intentionally cannot free our key=value memory
+	 * here due to legacy putenv() behavior.  the pointer becomes
+	 * part of the environment.
+	 */
+	return putenv(keyval); }
 #  endif
 
 #endif
