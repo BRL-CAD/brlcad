@@ -1259,11 +1259,15 @@ dl_set_wflag(struct bu_list *hdlp, int wflag)
 void
 dl_zap(struct bu_list *hdlp, struct db_i *dbip, void (*callback)(unsigned int, int), struct solid *freesolid)
 {
-    struct solid *sp;
-    struct display_list *gdlp;
-    struct directory *dp;
+    struct solid *sp = SOLID_NULL;
+    struct display_list *gdlp = NULL;
+    struct directory *dp = RT_DIR_NULL;
 
     while (BU_LIST_WHILE(gdlp, display_list, hdlp)) {
+
+	/* If we don't have a valid gdlp, we're done */
+	if (!gdlp) return;
+
 	if (callback != GED_FREE_VLIST_CALLBACK_PTR_NULL && BU_LIST_NON_EMPTY(&gdlp->dl_headSolid))
 	    (*callback)(BU_LIST_FIRST(solid, &gdlp->dl_headSolid)->s_dlist,
 		    BU_LIST_LAST(solid, &gdlp->dl_headSolid)->s_dlist -
