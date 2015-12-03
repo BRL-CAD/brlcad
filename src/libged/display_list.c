@@ -1289,6 +1289,7 @@ dl_zap(struct bu_list *hdlp, struct db_i *dbip, void (*callback)(unsigned int, i
 	BU_LIST_DEQUEUE(&gdlp->l);
 	bu_vls_free(&gdlp->dl_path);
 	free((void *)gdlp);
+	gdlp = NULL;
     }
 }
 
