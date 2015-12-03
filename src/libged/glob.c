@@ -46,12 +46,14 @@ ged_glob(struct ged *gedp, int argc, const char *argv[])
     if (gedp == GED_NULL)
 	return GED_ERROR;
 
+    /* Initialize result. This behavior is depended upon by mged - apparently
+     * the interpretation is that if no database is open, all expressions match
+     * nothing and the empty string is returned. */
+    bu_vls_trunc(gedp->ged_result_str, 0);
+
     /* No database to match against, so return. */
     if (gedp->ged_wdbp == RT_WDB_NULL || gedp->ged_wdbp->dbip == DBI_NULL)
 	return GED_OK;
-
-    /* initialize result */
-    bu_vls_trunc(gedp->ged_result_str, 0);
 
     /* must be wanting help */
     if (argc == 1) {
