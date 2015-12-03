@@ -117,6 +117,8 @@ and new names should be listed for reference.
 
 7.26
 ----
+nirt
+	-T - use LIBRT_BOT_MINTIE environment variable instead [deprecated 7.26]
 all global variables
 	global variables are no longer considered published public API [deprecated 7.26]
         bn_mat_identity -> MAT_INIT_IDN or MAT_IDN() or NULL
