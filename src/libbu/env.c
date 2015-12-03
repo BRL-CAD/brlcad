@@ -47,11 +47,10 @@
 int
 bu_setenv(const char *name, const char *value, int overwrite)
 {
-    int errcode = 0;
-
 #ifdef HAVE_SETENV
     return setenv(name, value, overwrite);
 #else
+    int errcode = 0;
 
     if (!overwrite) {
 	size_t envsize = 0;
