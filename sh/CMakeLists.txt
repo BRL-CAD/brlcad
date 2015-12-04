@@ -32,11 +32,7 @@ set(noinst_SCRIPTS
   linkroot.sh
   make_deb.sh
   make_dmg.sh
-  make_pkg.sh
   make_rpm.sh
-  make_tar.sh
-  make_bz2.sh
-  make_tgz.sh
   shtool
   template.sh
   ws.sh
