@@ -33,7 +33,6 @@ set(noinst_SCRIPTS
   make_deb.sh
   make_dmg.sh
   make_rpm.sh
-  shtool
   template.sh
   ws.sh
   )
