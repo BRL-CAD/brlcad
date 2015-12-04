@@ -26,7 +26,6 @@ install(PROGRAMS ${sh_SCRIPTS} DESTINATION ${BIN_DIR})
 
 set(noinst_SCRIPTS
   copyright.sh
-  distcheck_screen.sh
   enumerate.sh
   footer.sh
   header.sh
