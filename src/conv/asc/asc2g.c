@@ -175,11 +175,6 @@ strsolbld(void)
     type = strtok_r(NULL, delim, &saveptr);
     name = strtok_r(NULL, delim, &saveptr);
     args = strtok_r(NULL, end_delim, &saveptr);
-#elif defined(HAVE_STRSEP)
-    (void)strsep(&buf2, delim);		/* skip stringsolid_id */
-    type = strsep(&buf2, delim);
-    name = strsep(&buf2, delim);
-    args = strsep(&buf2, end_delim);
 #else
     (void)strtok(buf2, delim);		/* skip stringsolid_id */
     type = strtok(NULL, delim);

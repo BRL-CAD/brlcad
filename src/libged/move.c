@@ -29,6 +29,7 @@
 #include <string.h>
 
 #include "bu/cmd.h"
+#include "bu/str.h"
 
 #include "./ged_private.h"
 
@@ -90,7 +91,7 @@ ged_move(struct ged *gedp, int argc, const char *argv[])
 	int first = 1;
 	int found = 0;
 	struct bu_vls new_path = BU_VLS_INIT_ZERO;
-	char *dupstr = strdup(bu_vls_addr(&gdlp->dl_path));
+	char *dupstr = bu_strdup(bu_vls_addr(&gdlp->dl_path));
 	char *tok = strtok(dupstr, "/");
 
 	while (tok) {

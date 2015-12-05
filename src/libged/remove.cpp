@@ -139,8 +139,8 @@ _rm_path_safety_check(struct db_i *dbip, struct bu_ptbl *paths, struct db_full_p
     /* If we got results, see if they are in the paths tbl.  Any that aren't disqualify
      * the path from a safe delete */
     count = BU_PTBL_LEN(&results);
-    if (BU_PTBL_LEN(&results) > 0) {
-	for (i = 0; i < BU_PTBL_LEN(&results); i++) {
+    if (count > 0) {
+	for (i = 0; i < count; i++) {
 	    int safe_delete = 0;
 	    struct db_full_path *p1 = (struct db_full_path *)BU_PTBL_GET(&results, i);
 	    for (j = 0; j < BU_PTBL_LEN(paths); j++) {

@@ -124,7 +124,7 @@ ged_qray(struct ged *gedp,
 	 int argc,
 	 const char *argv[])
 {
-    GED_CHECK_DATABASE_OPEN(gedp, GED_OK);
+    if (!gedp || argc <= 0 || !argv) return GED_ERROR;
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
     /* initialize result */

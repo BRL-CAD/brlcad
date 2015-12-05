@@ -1,7 +1,7 @@
-/*                        M E M S E T . C
+/*                          E N V . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2014 United States Government as represented by
+ * Copyright (c) 2007-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -17,45 +17,36 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @addtogroup libsysv */
-/** @{ */
-/** @file libsysv/memset.c
- *
- */
-/** @} */
+
+#ifndef BU_ENV_H
+#define BU_ENV_H
 
 #include "common.h"
 
-/* quell empty-compilation unit warnings */
-const int memset_unused = 0;
+#include "bu/defines.h"
 
+__BEGIN_DECLS
 
-/*
- * defined for the folks that don't seem to have a system memset()
+/** @addtogroup bu_env
+ *
+ * @brief
+ * Platform-independent methods for interacting with the parent operating
+ * system environment.
+ *
  */
-#ifndef HAVE_MEMSET
-#include "sysv.h"
+/** @{ */
+/** @file bu/env.h */
 
-void *
-memset(void *s, register int c, register size_t n)
-{
-    register unsigned char *p=(char *)s;
+BU_EXPORT extern int bu_setenv(const char *name, const char *value, int overwrite);
 
-    if (p) {
-	while (n-- > 0) {
-	    *p++ = (unsigned char)c;
-	}
-    }
+__END_DECLS
 
-    return s;
-}
-
-#endif
+#endif /* BU_ENV_H */
 
 /*
  * Local Variables:
- * mode: C
  * tab-width: 8
+ * mode: C
  * indent-tabs-mode: t
  * c-file-style: "stroustrup"
  * End:

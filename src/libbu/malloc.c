@@ -481,7 +481,7 @@ bu_realloc(register void *ptr, size_t siz, const char *str)
 	     * after memory is freed.  If/when clang can recognize that this is
 	     * not an actual problem, switch it back to the %p form */
 	    fprintf(stderr, "%p realloc%6d %s [moved from 0x%lx]\n",
-		    ptr, (int)siz, str, (uintptr_t)original_ptr);
+		    ptr, (int)siz, str, (unsigned long)original_ptr);
 	}
     }
 

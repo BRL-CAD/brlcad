@@ -137,11 +137,9 @@ i-a
 i-d
 i-f
 mac-pix
-orle-pix
 pix-alias
 pix-bw
 pix-bw3
-pix-orle
 pix-png
 pix-ppm
 pix-ps
@@ -169,7 +167,6 @@ ddisp
 fb-bw
 fb-cmap
 fb-fb
-fb-orle
 fb-pix
 fb-png
 fb-rle
@@ -197,7 +194,6 @@ fbthreadtest
 fbzoom
 gif-fb
 gif2fb
-orle-fb
 pix-fb
 pixflip-fb
 plot3-fb

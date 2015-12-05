@@ -210,7 +210,7 @@ echo "running API usage check"
 # 89 - calloc
 # 21 - realloc
 FOUND=
-for func in fgets abort dirname getopt strcat strncat strlcat strcpy strncpy strlcpy strcmp strcasecmp stricmp strncmp strncasecmp unlink rmdir remove ; do
+for func in fgets abort dirname getopt strcat strncat strlcat strcpy strdup strncpy strlcpy strcmp strcasecmp stricmp strncmp strncasecmp unlink rmdir remove ; do
     echo "Searching for $func ..."
     MATCH="`grep -n -e [^a-zA-Z0-9_:]$func\( $INCFILES $SRCFILES /dev/null`"
 
@@ -227,6 +227,7 @@ for func in fgets abort dirname getopt strcat strncat strlcat strcpy strncpy str
 | sed 's/.*\/optionparser\.h.*//g' \
 | sed 's/.*\/str\.c:.*strcasecmp.*//' \
 | sed 's/.*\/str\.c:.*strcmp.*//' \
+| sed 's/.*\/str\.c:.*strdup.*//' \
 | sed 's/.*\/str\.c:.*strlcat.*//' \
 | sed 's/.*\/str\.c:.*strlcpy.*//' \
 | sed 's/.*\/str\.c:.*strncasecmp.*//' \

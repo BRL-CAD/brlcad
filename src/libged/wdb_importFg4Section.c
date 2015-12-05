@@ -37,6 +37,7 @@
 #include <errno.h>
 
 #include "bu/debug.h"
+#include "bu/str.h"
 #include "rt/db4.h"
 #include "vmath.h"
 #include "nmg.h"
@@ -508,7 +509,7 @@ wdb_importFg4Section_cmd(void *data,
     grid_pts = (point_t *)bu_malloc(grid_size * sizeof(point_t) ,
 				    "importFg4Section: grid_pts");
 
-    lines = strdup(argv[2]);
+    lines = bu_strdup(argv[2]);
     cp = line = lines;
 
     FIND_NEWLINE(cp, eosFlag);

@@ -1,7 +1,6 @@
 set(docbook_man3_EN
   libcursor.xml
   libfb.xml
-  liborle.xml
   libplot3.xml
   librt.xml
   libwdb.xml

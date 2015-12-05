@@ -818,7 +818,7 @@ add_to_empty_list( char *name )
     }
 
     ptr->next = NULL;
-    ptr->name = (char *)strdup( name );
+    ptr->name = (char *)bu_strdup( name );
 }
 
 void
