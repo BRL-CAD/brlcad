@@ -29,6 +29,10 @@
 #include "bu/magic.h"
 #include "bu/vls.h"
 
+#if defined(USE_BINARY_ATTRIBUTES)
+#include "bson.h"
+#endif
+
 __BEGIN_DECLS
 
 /*----------------------------------------------------------------------*/
