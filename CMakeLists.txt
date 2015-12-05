@@ -540,18 +540,20 @@ if(NOT BRLCAD_IS_SUBBUILD)
     # Huh?  No j flag if we can't get a processor count
     set(JFLAG)
   endif(NOT N EQUAL 0)
+
   if(${CMAKE_VERSION} VERSION_GREATER 2.99)
-    add_custom_target(unit
-      COMMAND ${CMAKE_COMMAND} -P ${BRLCAD_CMAKE_DIR}/make_unit_msg.cmake
-      COMMAND ${CMAKE_CTEST_COMMAND} -C $<CONFIG> -LE \"Regression|NOT_WORKING\" -E \"^regress-|NOTE|benchmark\" ${JFLAG}
-      )
+    set(CONFIG $<CONFIG>)
   else(${CMAKE_VERSION} VERSION_GREATER 2.99)
-    add_custom_target(unit
-      COMMAND ${CMAKE_COMMAND} -P ${BRLCAD_CMAKE_DIR}/make_unit_msg.cmake
-      COMMAND ${CMAKE_CTEST_COMMAND} -C $<CONFIGURATION> -LE \"Regression|NOT_WORKING\" -E \"^regress-|NOTE|benchmark\" ${JFLAG}
-      )
+    set(CONFIG $<CONFIGURATION>)
   endif(${CMAKE_VERSION} VERSION_GREATER 2.99)
+
+  add_custom_target(unit
+    COMMAND ${CMAKE_COMMAND} -P ${BRLCAD_CMAKE_DIR}/make_check_msg.cmake
+    COMMAND ${CMAKE_CTEST_COMMAND} -C $CONFIG -LE \"Regression|NOT_WORKING\" -E \"^regress-|NOTE\" ${JFLAG}
+    )
+
   set_target_properties(unit PROPERTIES FOLDER "BRL-CAD Validation Testing")
+
   function(add_test test_name test_prog)
     _add_test(${test_name} ${test_prog} ${ARGN})
     if (NOT "${test_name}" STREQUAL "NAME")
