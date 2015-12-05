@@ -518,7 +518,12 @@ if(NOT BRLCAD_IS_SUBBUILD)
     set(JFLAG)
   endif(NOT N EQUAL 0)
   add_custom_target(check
-    COMMAND ${CMAKE_COMMAND} -P ${BRLCAD_CMAKE_DIR}/make_check_msg.cmake
+    COMMAND ${CMAKE_COMMAND} -E echo "\"**********************************************************************\""
+    COMMAND ${CMAKE_COMMAND} -E echo "NOTE: The \"check\" a.k.a. \"BRL-CAD Validation Testing\" target runs"
+    COMMAND ${CMAKE_COMMAND} -E echo "      BRL-CAD's unit, system, integration, benchmark (performance), and"
+    COMMAND ${CMAKE_COMMAND} -E echo "      regression tests.  To consider a build viable for production use,"
+    COMMAND ${CMAKE_COMMAND} -E echo "      these tests must pass.  Dependencies are compiled automatically."
+    COMMAND ${CMAKE_COMMAND} -E echo "\"**********************************************************************\""
     COMMAND ${CMAKE_CTEST_COMMAND} -LE \"Regression|NOT_WORKING\" -E \"^regress-|NOTE|benchmark\" ${JFLAG}
     COMMAND ${CMAKE_CTEST_COMMAND} -R \"benchmark\" --output-on-failure ${JFLAG}
     COMMAND ${CMAKE_CTEST_COMMAND} -L \"Regression\" --output-on-failure ${JFLAG}
@@ -548,7 +553,12 @@ if(NOT BRLCAD_IS_SUBBUILD)
   endif(${CMAKE_VERSION} VERSION_GREATER 2.99)
 
   add_custom_target(unit
-    COMMAND ${CMAKE_COMMAND} -P ${BRLCAD_CMAKE_DIR}/make_check_msg.cmake
+    COMMAND ${CMAKE_COMMAND} -E echo "\"**********************************************************************\""
+    COMMAND ${CMAKE_COMMAND} -E echo "NOTE: The \"unit\" a.k.a. \"BRL-CAD Unit Testing\" target runs the"
+    COMMAND ${CMAKE_COMMAND} -E echo "      subset of BRL-CAD's API unit tests that are expected to work (i.e.,"
+    COMMAND ${CMAKE_COMMAND} -E echo "      tests not currently under development).  All dependencies required"
+    COMMAND ${CMAKE_COMMAND} -E echo "      by the tests are compiled automatically."
+    COMMAND ${CMAKE_COMMAND} -E echo "\"**********************************************************************\""
     COMMAND ${CMAKE_CTEST_COMMAND} -C $CONFIG -LE \"Regression|NOT_WORKING\" -E \"^regress-|NOTE\" ${JFLAG}
     )
 
