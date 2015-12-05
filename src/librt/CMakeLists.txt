@@ -8,6 +8,9 @@ set(RT_INCLUDE_DIRS
   ${P2T_INCLUDE_DIR}
   ${OPENNURBS_INCLUDE_DIR}
   ${ZLIB_INCLUDE_DIR}
+  # TB: these may be needed locally only:
+  ${BRLCAD_BINARY_DIR}/src/other/libbson/src
+  ${BRLCAD_SOURCE_DIR}/src/other/libbson/src
   )
 
 if(BRLCAD_ENABLE_OPENCL)
