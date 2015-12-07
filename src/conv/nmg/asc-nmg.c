@@ -175,7 +175,7 @@ ascii_to_brlcad(FILE *fpin, struct rt_wdb *fpout, char *reg_name, char *grp_name
 
 /*
  *	Convert an ascii description of an nmg to an actual nmg.
- *	(This should be done with lex and yacc.)
+ *	(This should be done with perplex and lemon.)
  */
 static void
 descr_to_nmg(struct shell *s, FILE *fp, fastf_t *Ext)

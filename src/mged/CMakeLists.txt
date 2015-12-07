@@ -77,9 +77,6 @@ endif(${ITCL_LIBRARY} MATCHES "itcl")
 if(${ITK_LIBRARY} MATCHES "itk")
   ADD_DEPENDENCIES(mged itk)
 endif(${ITK_LIBRARY} MATCHES "itk")
-if(LEX_EXECUTABLE AND YACC_EXECUTABLE)
-  SET_TARGET_PROPERTIES(mged PROPERTIES COMPILE_FLAGS "-DBC_WITH_PARSER")
-endif(LEX_EXECUTABLE AND YACC_EXECUTABLE)
 
 # mged depends on the creation/installation of all the
 # tclscripts.
