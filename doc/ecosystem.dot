@@ -97,15 +97,13 @@ digraph BRLCADDeps{
 	autotools [color = "red", style = bold, shape = box, label = "GNU Autotools"];
 	cmake [color = "red", style = bold, shape = box, label = "CMake"];
 	fop [color = "red", style = bold, shape = box, label = "Apache FOP (Docbook->pdf)"];
-	lex [color = "red", style = bold, shape = box, label = "re2c"];
 	make [color = "red", style = bold, shape = box, label = "Make"];
 	mesa [color = "red", style = bold, shape = box, label = "Mesa 3D library"];
 	unixtools [color = "red", style = bold, shape = box, label = "Unix tools (sed, grep, awk, etc.)"];
 	xsltproc [color = "red", style = bold, shape = box, label = "XSLT processor (xsltproc)"];
-	yacc [color = "red", style = bold, shape = box, label = "Lemon"];
 	crun [color = "red", style = bold, shape = box, label = "C/C++ Runtime"];
 
-	{ rank = same; "System Requirements"; X11; autotools; cmake; crun; fop; lex; make; mesa; unixtools; xsltproc; yacc; }
+	{ rank = same; "System Requirements"; X11; autotools; cmake; crun; fop; make; mesa; unixtools; xsltproc; }
 
 	// BRL-CAD components
 	libbu [color = "green", style = bold, shape = box, label = "BRL-CAD Utility Library (libbu)"];
