@@ -51,6 +51,7 @@ foreach(ITEM ${dlists})
   CMAKEFILES(${dlist})
 endforeach(ITEM ${dlists})
 
+#=== LIBREGEX ============================================
 # libregex library -  often needed by tools, so do this one first.
 set(regex_ALIASES ENABLE_REGEX)
 set(regex_DESCRIPTION "
@@ -94,6 +95,7 @@ if(BUILD_SHARED_LIBS AND HAVE_LIBC_REGEX AND "${BRLCAD_REGEX}" MATCHES "BUNDLED"
   set_property(DIRECTORY libregex APPEND PROPERTY COMPILE_DEFINITIONS regexec=libregex_regexec)
   set_property(DIRECTORY libregex APPEND PROPERTY COMPILE_DEFINITIONS regfree=libregex_regfree)
 endif(BUILD_SHARED_LIBS AND HAVE_LIBC_REGEX AND "${BRLCAD_REGEX}" MATCHES "BUNDLED")
+#=== END LIBREGEX ============================================
 
 # Same deal for zlib Library - common requirement, deal with it up front
 set(zlib_ALIASES ENABLE_ZLIB ENABLE_LIBZ)

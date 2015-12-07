@@ -99,15 +99,19 @@ configure_file (
    "${CMAKE_CURRENT_BINARY_DIR}/src/bson/bson-stdint.h"
 )
 
-include_directories("${CMAKE_CURRENT_BINARY_DIR}/src/bson")
-include_directories("src/bson")
-include_directories("src")
+include_directories("${CMAKE_CURRENT_BINARY_DIR}/src/other/libbson/src/bson")
+#include_directories("src/bson")
+#include_directories("src")
 
 if (APPLE)
    cmake_policy(SET CMP0042 OLD)
 endif()
 
-set (SOURCES
+set(LIBBSON_PUBLIC_HDRS
+  bson.h
+  )
+
+set (LIBBSON_SOURCES
    src/bson/bcon.c
    src/bson/bson.c
    src/bson/bson-atomic.c
@@ -143,7 +147,7 @@ set (HEADERS
    ${CMAKE_CURRENT_BINARY_DIR}/src/bson/bson-config.h
    ${CMAKE_CURRENT_BINARY_DIR}/src/bson/bson-stdint.h
    ${CMAKE_CURRENT_BINARY_DIR}/src/bson/bson-version.h
-   src/bson/bcon.h
+   src/bson/bson.h
    src/bson/bson-atomic.h
    src/bson/bson-clock.h
    src/bson/bson-compat.h
@@ -168,14 +172,20 @@ set (HEADERS
    src/bson/bson-writer.h
 )
 
+file(COPY ${HEADERS}
+     DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/src/bson/)
+
 if (MSVC)
-   set(BSON_SHARED_SOURCES ${SOURCES} ${PROJECT_SOURCE_DIR}/build/cmake/libbson.def)
+   set(BSON_SHARED_SOURCES ${LIBBSON_SOURCES} ${PROJECT_SOURCE_DIR}/build/cmake/libbson.def)
 else()
-   set(BSON_SHARED_SOURCES ${SOURCES})
+   set(BSON_SHARED_SOURCES ${LIBBSON_SOURCES})
 endif()
 
 add_library(bson_shared SHARED ${BSON_SHARED_SOURCES} ${HEADERS})
 add_library(bson_static STATIC ${SOURCES} ${HEADERS})
+
+set_target_properties(bson_shared PROPERTIES LINKER_LANGUAGE C)
+set_target_properties(bson_static PROPERTIES LINKER_LANGUAGE C)
 
 set_target_properties(bson_shared PROPERTIES COMPILE_DEFINITIONS "BSON_COMPILATION")
 set_target_properties(bson_static PROPERTIES COMPILE_DEFINITIONS "BSON_COMPILATION")
@@ -199,36 +209,34 @@ else()
     target_link_libraries (bson_static ws2_32)
 endif()
 
-enable_testing()
+## enable_testing()
+## add_executable(test-libbson
+##    tests/TestSuite.c
+##    tests/TestSuite.h
+##    tests/test-libbson.c
+##    tests/test-atomic.c
+##    tests/test-bson.c
+##    tests/test-endian.c
+##    tests/test-clock.c
+##    tests/test-error.c
+##    tests/test-iso8601.c
+##    tests/test-iter.c
+##    tests/test-json.c
+##    tests/test-oid.c
+##    tests/test-reader.c
+##    tests/test-string.c
+##    tests/test-utf8.c
+##    tests/test-value.c
+##    tests/test-version.c
+##    tests/test-writer.c
+##    tests/test-bcon-basic.c
+##    tests/test-bcon-extract.c
+## )
+## target_link_libraries(test-libbson bson_static)
+## add_test(NAME test-libbson COMMAND test-libbson)
+## file(COPY tests/binary tests/json
+##      DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/tests)
 
-add_executable(test-libbson
-   tests/TestSuite.c
-   tests/TestSuite.h
-   tests/test-libbson.c
-   tests/test-atomic.c
-   tests/test-bson.c
-   tests/test-endian.c
-   tests/test-clock.c
-   tests/test-error.c
-   tests/test-iso8601.c
-   tests/test-iter.c
-   tests/test-json.c
-   tests/test-oid.c
-   tests/test-reader.c
-   tests/test-string.c
-   tests/test-utf8.c
-   tests/test-value.c
-   tests/test-version.c
-   tests/test-writer.c
-   tests/test-bcon-basic.c
-   tests/test-bcon-extract.c
-)
-
-target_link_libraries(test-libbson bson_static)
-add_test(NAME test-libbson COMMAND test-libbson)
-
-file(COPY tests/binary tests/json
-     DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/tests)
 
 install(
   TARGETS bson_shared bson_static

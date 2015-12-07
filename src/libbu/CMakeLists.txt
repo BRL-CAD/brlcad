@@ -3,6 +3,8 @@ set(BU_INCLUDE_DIRS
   ${BRLCAD_BINARY_DIR}/include
   ${BRLCAD_SOURCE_DIR}/include
   ${TCL_INCLUDE_DIRS}
+  ${BRLCAD_BINARY_DIR}/src/other/libbson/src/bson
+  ${BRLCAD_SOURCE_DIR}/src/other/libbson/src/bson
   )
 
 # locally used but not needed by users of the library
