@@ -56,7 +56,7 @@ ppm_write(icv_image_t *bif, const char *filename)
 {
     unsigned char *data;
     FILE *fp;
-    size_t ret, size;
+    size_t size = 0;
 
     if (bif->color_space == ICV_COLOR_SPACE_GRAY) {
 	icv_gray2rgb(bif);
@@ -74,17 +74,19 @@ ppm_write(icv_image_t *bif, const char *filename)
     data =  data2uchar(bif);
     size = (size_t) bif->width*bif->height*3;
     image_flip(data, bif->width, bif->height);
-    ret = fprintf(fp, "P6 %lu %lu 255\n", (unsigned long)bif->width, (unsigned long)bif->height);
-
-     ret = fwrite(data, 1, size, fp);
-
-     fclose(fp);
-     if (ret != size) {
-	 bu_log("ERROR : Short Write");
-	 return -1;
-     }
-     return 0;
- }
+    if (fprintf(fp, "P6 %lu %lu 255\n", (unsigned long)bif->width, (unsigned long)bif->height) < 0) {
+	bu_log("ERROR : fp write failure");
+	return -1;
+    } else {
+	size_t ret = fwrite(data, 1, size, fp);
+	fclose(fp);
+	if (ret != size) {
+	    bu_log("ERROR : Short Write");
+	    return -1;
+	}
+    }
+    return 0;
+}
 
 
 HIDDEN void
