@@ -522,7 +522,7 @@ PHit(struct application *ap, struct partition *PartHeadp, struct seg *UNUSED(fin
 	}
     }
 
-    if (part == PartHeadp)
+    if (!part || part == PartHeadp)
 	return 0;
 
 
@@ -923,7 +923,6 @@ GetEstimate(vect_t irrad, point_t pos, vect_t normal, fastf_t rad, int np, int m
 	irrad[2] += Search.List[i].P.Power[2]*Filter*ScaleFilter;
     }
 
-    tmp = M_PI*Search.RadSq;
     t[0] = sqrt((Centroid[0] - pos[0])*(Centroid[0] - pos[0])+(Centroid[1] - pos[1])*(Centroid[1] - pos[1])+(Centroid[2] - pos[2])*(Centroid[2] - pos[2]));
     tmp = M_PI*(sqrt(Search.RadSq)-t[0])*(sqrt(Search.RadSq)-t[0]);
 

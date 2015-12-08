@@ -118,17 +118,15 @@ stxt_read(register struct stxt_specific *stp)
     register FILE *fp;
     register int i;
     char name[256];
-    int frame, ln;
-    int rd, rdd;
+    int frame = 0;
+    int ln = 0;
+    int rd = 0;
+    int rdd = 0;
 
     /*** MEMORY HOG ***/
     stp->stx_pixels = (char *)bu_malloc(
 	stp->stx_w * stp->stx_n * stp->stx_d * 3,
 	stp->stx_file);
-
-    ln = 0;
-    rdd = 0;
-    rd = 0;
 
     /* LOOP: through list of basename.n files */
     for (frame = 0; frame <= stp->stx_d-1; frame++) {
