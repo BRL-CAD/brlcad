@@ -213,8 +213,10 @@ get_args(int argc, const char *argv[])
 		bn_randhalftabsize = i;
 		break;
 	    case 'm':
-		i = sscanf(bu_optarg, "%lg,%lg,%lg,%lg",
-			   &airdensity, &haze[X], &haze[Y], &haze[Z]);
+		i = sscanf(bu_optarg, "%lg,%lg,%lg,%lg", &airdensity, &haze[X], &haze[Y], &haze[Z]);
+		if ( i != 4 ) {
+		    bu_exit( EXIT_FAILURE, "ERROR: bad air density + haze\n" );
+		}
 		break;
 	    case 't':
 		transpose_grid = 1;
