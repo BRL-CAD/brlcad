@@ -271,7 +271,6 @@ retry:
 
     if (material != mdefault) {
 	material = mdefault;
-	mlen = strlen(mdefault);
 	bu_vls_trunc(&params, 0);
 	bu_vls_strcpy(&name, mdefault);
 	goto retry;
