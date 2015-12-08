@@ -749,7 +749,9 @@ light_init(struct application *ap)
 {
     register struct light_specific *lsp;
     register int nlights = 0;
+#ifndef RT_MULTISPECTRAL
     register fastf_t inten = 0.0;
+#endif
 
     if (!BU_LIST_IS_INITIALIZED(&(LightHead.l))) {
 	BU_LIST_INIT(&(LightHead.l));
@@ -761,14 +763,18 @@ light_init(struct application *ap)
 	if (lsp->lt_fraction > 0) continue;	/* overridden */
 	if (lsp->lt_intensity <= 0)
 	    lsp->lt_intensity = 1;		/* keep non-neg */
+#ifndef RT_MULTISPECTRAL
 	if (lsp->lt_intensity > inten)
 	    inten = lsp->lt_intensity;
+#endif
     }
 
+#ifndef RT_MULTISPECTRAL
     /* Compute total emitted energy, including ambient */
     /* inten *= (1 + AmbientIntensity); */
     /* This is non-physical and risky, but gives nicer pictures for now */
     inten *= (1 + AmbientIntensity*0.5);
+#endif
 
     for (BU_LIST_FOR(lsp, light_specific, &(LightHead.l))) {
 	RT_CK_LIGHT(lsp);

@@ -157,7 +157,6 @@ rr_hit(struct application *ap, struct partition *PartHeadp, struct seg *UNUSED(s
      */
 
     if (pp->pt_inhit->hit_dist > 10) {
-	stp = pp->pt_inseg->seg_stp;
 	if (R_DEBUG&RDEBUG_REFRACT)
 	    bu_log("rr_hit: %d, %d %s inhit %g > 10.0! (treating as escaping ray)\n",
 		   ap->a_x, ap->a_y,
