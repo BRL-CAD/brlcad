@@ -30,13 +30,7 @@
 #include "bu/vls.h"
 
 #if defined(USE_BINARY_ATTRIBUTES)
-#if defined(__cplusplus)
-extern "C" {
-#endif
 #include "bson.h"
-#if defined(__cplusplus)
-}
-#endif
 #endif
 
 __BEGIN_DECLS
