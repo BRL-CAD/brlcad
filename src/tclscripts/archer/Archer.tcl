@@ -1828,6 +1828,8 @@ package provide Archer 1.0
 	set mGridAnchor "$X $Y $Z"
 	set mGridRh [expr {$sf * $mGridRh}]
 	set mGridRv [expr {$sf * $mGridRv}]
+	set mGridRhPref $mGridRh
+	set mGridRvPref $mGridRv
 
 	if {[info exists itk_component(sketchView)]} {
 	    $itk_component(sketchView) configure -units $mDbUnits
