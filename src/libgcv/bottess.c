@@ -120,29 +120,29 @@ split_face_single(struct soup_s *s, unsigned long int fid, point_t isectpt[2], s
 #define VERT_INT 0x10
 #define LINE_INT 0x20
 #define FACE_INT 0x40
-#define ALL_INT  (VERT_INT|LINE_INT|FACE_INT)
+#define ALL_INT (VERT_INT|LINE_INT|FACE_INT)
 
     /****** START hoistable ******/
     for (i=0;i<2;i++) for (j=0;j<3;j++) {
-	if (isv[i] == 0) {
-	    fastf_t dist;
+	    if (isv[i] == 0) {
+		fastf_t dist;
 
-	    switch ( bn_isect_pt_lseg( &dist, (fastf_t *)&f->vert[j], (fastf_t *)&f->vert[j==2?0:j+1], (fastf_t *)&isectpt[i], tol) ) {
-		case -2: case -1: continue;
-		case 1: isv[i] = VERT_INT|j; break;
-		case 2: isv[i] = VERT_INT|(j==2?0:j+1); break;
-		case 3: isv[i] = LINE_INT|j; break;
-		default: bu_log("Whu?\n"); break;
+		switch (bn_isect_pt_lseg(&dist, (fastf_t *)&f->vert[j], (fastf_t *)&f->vert[j==2?0:j+1], (fastf_t *)&isectpt[i], tol)) {
+		    case -2: case -1: continue;
+		    case 1: isv[i] = VERT_INT|j; break;
+		    case 2: isv[i] = VERT_INT|(j==2?0:j+1); break;
+		    case 3: isv[i] = LINE_INT|j; break;
+		    default: bu_log("Whu?\n"); break;
+		}
 	    }
 	}
-    }
 
     /*** test if intersect is middle of face ***/
     for (i=0;i<2;i++)
 	/* test for face in plane */
 	if (isv[i] == 0)	/* assume that the isectpt is necessarily on the vert, line or
-			   face... if it's not seen on the vert or line, it must be face.
-			   This should probably be a real check. */
+				   face... if it's not seen on the vert or line, it must be face.
+				   This should probably be a real check. */
 	    isv[i] = FACE_INT;
 
     if (isv[0] == 0 || isv[1] == 0) {
@@ -170,7 +170,7 @@ split_face_single(struct soup_s *s, unsigned long int fid, point_t isectpt[2], s
     }
 
     a = isv[0]&~ALL_INT;
-    if ( a != 0 && a != 1 && a != 2) {
+    if (a != 0 && a != 1 && a != 2) {
 	bu_log("Bad a value: %d\n", a);
 	bu_bomb("Exploding\n");
     }
@@ -194,7 +194,7 @@ split_face_single(struct soup_s *s, unsigned long int fid, point_t isectpt[2], s
     }
 
     /* if VERT+FACE, break into 3, intersect is one line, other two to the * opposing verts */
-    if (isv[0]&VERT_INT ) {
+    if (isv[0]&VERT_INT) {
 	soup_add_face_precomputed(s, f->vert[0], f->vert[1], isectpt[1], f->plane, 0);
 	soup_add_face_precomputed(s, f->vert[1], f->vert[2], isectpt[1], f->plane, 0);
 	soup_add_face_precomputed(s, f->vert[2], f->vert[0], isectpt[1], f->plane, 0);
@@ -203,7 +203,7 @@ split_face_single(struct soup_s *s, unsigned long int fid, point_t isectpt[2], s
     }
 
     /* if LINE+FACE, break into 4 */
-    if (isv[0]&LINE_INT ) {
+    if (isv[0]&LINE_INT) {
 	soup_add_face_precomputed(s, f->vert[a], isectpt[0], isectpt[1], f->plane, 0);
 	soup_add_face_precomputed(s, f->vert[a==2?0:a+1], isectpt[1], isectpt[0], f->plane, 0);
 	soup_add_face_precomputed(s, f->vert[a==2?0:a+1], f->vert[a==0?2:a-1], isectpt[1], f->plane, 0);
@@ -213,7 +213,7 @@ split_face_single(struct soup_s *s, unsigned long int fid, point_t isectpt[2], s
     }
 
     /* if FACE+FACE, break into 3 */
-    if (isv[0]&FACE_INT ) {
+    if (isv[0]&FACE_INT) {
 	/* extend intersect line to triangle edges, could be 2 or 3? */
 
 	/* make sure isectpt[0] is closest to vert[0] */
@@ -353,8 +353,8 @@ split_faces(union tree *left_tree, union tree *right_tree, const struct bn_tol *
 	    rf = r->faces+j;
 	    /* quick bounding box test */
 	    if (lf->min[X]>rf->max[X] || lf->max[X]>lf->max[X] ||
-	       lf->min[Y]>rf->max[Y] || lf->max[Y]>lf->max[Y] ||
-	       lf->min[Z]>rf->max[Z] || lf->max[Z]>lf->max[Z])
+		lf->min[Y]>rf->max[Y] || lf->max[Y]>lf->max[Y] ||
+		lf->min[Z]>rf->max[Z] || lf->max[Z]>lf->max[Z])
 		continue;
 	    /* two possibly overlapping faces found */
 	    ret = split_face(l, i, r, j, tol);

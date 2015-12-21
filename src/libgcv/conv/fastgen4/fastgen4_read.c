@@ -48,7 +48,7 @@
 
 
 /* convenient macro for building regions */
-#define	MK_REGION(fp, headp, name, r_id, rgb) {\
+#define MK_REGION(fp, headp, name, r_id, rgb) {\
 	if (mode == 1) {\
 	    if (!quiet)\
 		bu_log("Making region: %s (PLATE)\n", name); \
@@ -64,7 +64,7 @@
     }
 
 
-#define	PUSH(ptr) bu_ptbl_ins(&stack, (long *)ptr)
+#define PUSH(ptr) bu_ptbl_ins(&stack, (long *)ptr)
 #define POP(structure, ptr) { \
 	if (BU_PTBL_END(&stack) == 0) \
 	    ptr = (struct structure *)NULL; \
@@ -73,7 +73,7 @@
 	    bu_ptbl_rm(&stack, (long *)ptr); \
 	} \
     }
-#define	PUSH2(ptr) bu_ptbl_ins(&stack2, (long *)ptr)
+#define PUSH2(ptr) bu_ptbl_ins(&stack2, (long *)ptr)
 #define POP2(structure, ptr) { \
 	if (BU_PTBL_END(&stack2) == 0) \
 	    ptr = (struct structure *)NULL; \
@@ -84,7 +84,7 @@
     }
 
 
-#define	NAME_TREE_MAGIC	0x55555555
+#define NAME_TREE_MAGIC 0x55555555
 #define CK_TREE_MAGIC(ptr) {\
 	if (!ptr) { \
 	    bu_log("ERROR: Null name_tree pointer, file=%s, line=%d\n", __FILE__, __LINE__);\
@@ -96,35 +96,35 @@
     }
 
 
-#define	PLATE_MODE	1
-#define	VOLUME_MODE	2
+#define PLATE_MODE	1
+#define VOLUME_MODE	2
 
-#define	POS_CENTER	1	/* face positions for facets */
-#define	POS_FRONT	2
+#define POS_CENTER	1	/* face positions for facets */
+#define POS_FRONT	2
 
-#define	END_OPEN	1	/* End closure codes for cones */
-#define	END_CLOSED	2
+#define END_OPEN	1	/* End closure codes for cones */
+#define END_CLOSED	2
 
-#define	GRID_BLOCK	256	/* allocate space for grid points in blocks of 256 points */
+#define GRID_BLOCK	256	/* allocate space for grid points in blocks of 256 points */
 
-#define	CLINE		'l'
-#define	CHEX1		'p'
-#define	CHEX2		'b'
-#define	CTRI		't'
-#define	CQUAD		'q'
-#define	CCONE1		'c'
-#define	CCONE2		'd'
-#define	CCONE3		'e'
-#define	CSPHERE		's'
-#define	NMG		'n'
-#define	BOT		't'
-#define	COMPSPLT	'h'
+#define CLINE		'l'
+#define CHEX1		'p'
+#define CHEX2		'b'
+#define CTRI		't'
+#define CQUAD		'q'
+#define CCONE1		'c'
+#define CCONE2		'd'
+#define CCONE3		'e'
+#define CSPHERE		's'
+#define NMG		'n'
+#define BOT		't'
+#define COMPSPLT	'h'
 
 #define HOLE 1
 #define WALL 2
 #define INT_LIST_BLOCK		256	/* Number of int_list array slots to allocate */
-#define	MAX_LINE_SIZE			128	/* Length of char array for input line */
-#define	REGION_LIST_BLOCK	256	/* initial length of array of region ids to process */
+#define MAX_LINE_SIZE			128	/* Length of char array for input line */
+#define REGION_LIST_BLOCK	256	/* initial length of array of region ids to process */
 
 
 struct fast4_color {
@@ -2123,8 +2123,8 @@ skip_section(void)
 }
 
 
-/*	cleanup from previous component and start a new one.
- *	This is called with final == 1 when ENDDATA is found
+/* cleanup from previous component and start a new one.
+ * This is called with final == 1 when ENDDATA is found
  */
 static void
 f4_do_section(int final)
@@ -2532,7 +2532,7 @@ make_region_list(const char *in_str)
     region_list_len = REGION_LIST_BLOCK;
     f4_do_skips = 0;
 
-    ptr = strtok(str, ",");
+    ptr = strtok(str, ", ");
     while (ptr) {
 	if ((ptr2=strchr(ptr, '-'))) {
 	    int i, start, stop;
@@ -2561,7 +2561,7 @@ make_region_list(const char *in_str)
 	    }
 	    region_list[f4_do_skips++] = atoi(ptr);
 	}
-	ptr = strtok((char *)NULL, ",");
+	ptr = strtok((char *)NULL, ", ");
     }
 
     bu_free(str, "str");
@@ -2816,8 +2816,8 @@ gcv_fastgen4_free_opts(void *options_data)
 
 static int
 gcv_fastgen4_read(const char *source_path, struct db_i *dest_dbip,
-	const struct gcv_opts *UNUSED(gcv_options),
-	const void *options_data)
+		  const struct gcv_opts *UNUSED(gcv_options),
+		  const void *options_data)
 {
     const struct gcv_fastgen4_options_data * const fg4_options = (struct gcv_fastgen4_options_data *)options_data;
     int result = 0;

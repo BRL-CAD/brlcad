@@ -79,8 +79,8 @@ static int inches = 0;
 
 HIDDEN int
 gcv_obj_write(const char *dest_path, struct db_i *source_dbip,
-	const struct gcv_opts *UNUSED(gcv_options),
-	const void *UNUSED(options_data))
+	      const struct gcv_opts *UNUSED(gcv_options),
+	      const void *UNUSED(options_data))
 {
     double percent;
     size_t num_objects;

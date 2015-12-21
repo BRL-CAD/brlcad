@@ -67,8 +67,8 @@ static int set_stream(FILE *stream, basic_parser_state<ObjContentsT> &state)
 
 template<typename ObjContentsT>
 static int open_file(
-	const typename basic_parser_state<ObjContentsT>::string_type &filename,
-	basic_parser_state<ObjContentsT> &state)
+    const typename basic_parser_state<ObjContentsT>::string_type &filename,
+    basic_parser_state<ObjContentsT> &state)
 {
     typedef basic_parser_state<ObjContentsT> state_type;
     typedef typename state_type::file_node file_node_type;
@@ -111,6 +111,7 @@ struct lex_sentry {
     yyscan_t scanner;
 };
 
+
 } /* namespace obj */
 
 __BEGIN_DECLS
@@ -121,21 +122,25 @@ bu_malloc_wrapper(size_t size)
     return bu_malloc(size, "alloc lemon parser object");
 }
 
+
 static void
 bu_free_wrapper(void *ptr)
 {
     return bu_free(ptr, "free lemon parser object");
 }
 
+
 static void createParser(obj::parser_type *parser)
 {
     *parser = ParseAlloc(bu_malloc_wrapper);
 }
 
+
 static void destroyParser(obj::parser_type *parser)
 {
     ParseFree(*parser, bu_free_wrapper);
 }
+
 
 static void destroyScanner(yyscan_t *scanner)
 {
@@ -148,6 +153,7 @@ static void destroyScanner(yyscan_t *scanner)
     obj_parser_lex_destroy(*scanner);
 }
 
+
 static void setScannerExtra(yyscan_t scanner, obj::objCombinedState *state)
 {
     struct extra_t *extra;
@@ -157,6 +163,7 @@ static void setScannerExtra(yyscan_t scanner, obj::objCombinedState *state)
 
     obj_parser_set_extra(scanner, static_cast<void*>(extra));
 }
+
 
 int obj_parser_create(obj_parser_t *parser)
 {
@@ -509,7 +516,7 @@ size_t obj_num_materiallibsets(obj_contents_t contents)
 {
     try {
 	obj::objFileContents *c =
-	static_cast<obj::objFileContents*>(contents.p);
+	    static_cast<obj::objFileContents*>(contents.p);
 
 	return c->materiallibindex_set.size();
     } catch(...) {
@@ -957,6 +964,7 @@ size_t obj_polygonal_tnv_face_vertices(obj_contents_t contents, size_t face,
 
     return 0;
 }
+
 
 __END_DECLS
 

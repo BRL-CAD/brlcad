@@ -64,10 +64,10 @@ gcv_get_converters(void)
 
     if (!BU_PTBL_LEN(&converter_table)) {
 #define CONVERTER(name) \
-    do { \
-	extern const struct gcv_converter (name); \
-	_gcv_converter_insert(&converter_table, &(name)); \
-    } while (0)
+	do { \
+	    extern const struct gcv_converter (name); \
+	    _gcv_converter_insert(&converter_table, &(name)); \
+	} while (0)
 
 	CONVERTER(gcv_conv_brlcad_read);
 	CONVERTER(gcv_conv_brlcad_write);
@@ -127,7 +127,7 @@ gcv_converter_create_options(const struct gcv_converter *converter,
 	    bu_bomb("converter->create_opts_fn() set null result");
     } else {
 	*options_desc = (struct bu_opt_desc *)bu_malloc(sizeof(struct bu_opt_desc),
-			"options_desc");
+							"options_desc");
 	BU_OPT_NULL(**options_desc);
 	*options_data = NULL;
     }

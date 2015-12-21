@@ -56,6 +56,7 @@ struct extra_t {
     YYSTYPE tokenData;
 };
 
+
 void obj_parser_lex_destroy(yyscan_t scanner);
 void *obj_parser_get_state(yyscan_t scanner);
 void *obj_parser_get_extra(yyscan_t scanner);

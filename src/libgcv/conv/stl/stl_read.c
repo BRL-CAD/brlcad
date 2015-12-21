@@ -90,6 +90,7 @@ Add_face(int face[3])
     bot_fcurr++;
 }
 
+
 HIDDEN void
 mk_unique_brlcad_name(struct bu_vls *name)
 {
@@ -116,6 +117,7 @@ mk_unique_brlcad_name(struct bu_vls *name)
 	bu_vls_strcat(name, suff);
     }
 }
+
 
 static void
 Convert_part_ascii(char line[MAX_LINE_SIZE])
@@ -358,6 +360,7 @@ Convert_part_ascii(char line[MAX_LINE_SIZE])
     return;
 }
 
+
 /* Byte swaps a 4-byte val */
 static void lswap(unsigned int *v)
 {
@@ -367,6 +370,7 @@ static void lswap(unsigned int *v)
     *v = ((r & 0xff) << 24) | ((r & 0xff00) << 8) | ((r & 0xff0000) >> 8)
 	| ((r & 0xff000000) >> 24);
 }
+
 
 static void
 Convert_part_binary()
@@ -539,8 +543,8 @@ Convert_input()
 
 HIDDEN int
 gcv_stl_read(const char *source_path, struct db_i *dest_dbip,
-	const struct gcv_opts *UNUSED(gcv_options),
-	const void *UNUSED(options_data))
+	     const struct gcv_opts *UNUSED(gcv_options),
+	     const void *UNUSED(options_data))
 {
     fd_out = dest_dbip->dbi_wdbp;
     input_file = source_path;

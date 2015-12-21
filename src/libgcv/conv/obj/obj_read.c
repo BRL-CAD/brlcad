@@ -1315,7 +1315,7 @@ populate_triangle_indexes(struct ga_t *ga,
 
     for (i = 0; i < numFacePoints; ++i) {
 	retrieve_coord_index(ga, gfi, face_idx, i, tmp_v, tmp_n, tmp_t, &tmp_w,
-	    &svofi, &snofi, &stofi);
+			     &svofi, &snofi, &stofi);
 	VMOVE(&facePoints[i * ELEMENTS_PER_POINT], tmp_v);
     }
 
@@ -1336,7 +1336,7 @@ populate_triangle_indexes(struct ga_t *ga,
 
 	    /* create triangles that all start at the first face vertex */
 	    triFaces = (int*)bu_malloc(num_new_tri * POINTS_PER_FACE * sizeof(int),
-		"triFaces");
+				       "triFaces");
 
 	    for (vert_idx = 0; vert_idx < num_new_tri; vert_idx++) {
 		triFaces[vert_idx * ELEMENTS_PER_POINT + X] = 0;
@@ -1382,7 +1382,7 @@ populate_triangle_indexes(struct ga_t *ga,
 	for (idx = 0; idx < 3; idx++) {
 
 	    retrieve_coord_index(ga, gfi, face_idx, triFaces[vert_idx * ELEMENTS_PER_POINT + idx], tmp_v,
-		tmp_n, tmp_t, &tmp_w, &vofi, &nofi, &tofi);
+				 tmp_n, tmp_t, &tmp_w, &vofi, &nofi, &tofi);
 
 	    switch (ti->tri_type) {
 		case FACE_V:
@@ -2232,10 +2232,10 @@ fuse_vertex(struct ga_t *ga,
 	if (vertex_index_list && (num_index_list > 0)) {
 	    for (idx1 = 0 ; idx1 < num_index_list ; idx1++) {
 		bu_log("non-unique sorted vertex_index_list[idx1] = (%zu)\n",
-			vertex_index_list[idx1]);
+		       vertex_index_list[idx1]);
 	    }
 	    bu_log("num non-unique sorted vertex_index_list[idx1] = (%zu)\n",
-		num_index_list);
+		   num_index_list);
 	}
     }
 
@@ -3148,8 +3148,8 @@ process_nv_mode_option(struct ga_t *ga,
 
 HIDDEN int
 gcv_obj_read(const char *source_path, struct db_i *dest_dbip,
-	const struct gcv_opts *UNUSED(gcv_options),
-	const void *UNUSED(options_data))
+	     const struct gcv_opts *UNUSED(gcv_options),
+	     const void *UNUSED(options_data))
 {
     struct rt_wdb *fd_out;	     /* Resulting BRL-CAD file */
     int ret_val = 0;
@@ -3622,13 +3622,13 @@ gcv_obj_read(const char *source_path, struct db_i *dest_dbip,
     }
 
     bu_free_array(ga.numGroups, (char**)ga.str_arr_obj_groups,
-	"str_arr_obj_groups");
+		  "str_arr_obj_groups");
     bu_free_array(ga.numObjects, (char**)ga.str_arr_obj_objects,
-	"str_arr_obj_objects");
+		  "str_arr_obj_objects");
     bu_free_array(ga.numMaterials, (char**)ga.str_arr_obj_materials,
-	"str_arr_obj_materials");
+		  "str_arr_obj_materials");
     bu_free_array(ga.numTexmaps, (char**)ga.str_arr_obj_texmaps,
-	"str_arr_obj_texmaps");
+		  "str_arr_obj_texmaps");
 
     /* running cleanup functions */
     if (debug) {

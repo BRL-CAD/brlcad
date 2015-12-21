@@ -28,7 +28,7 @@
 
 HIDDEN union tree *
 _gcv_facetize_region_end(struct db_tree_state *tree_state,
-                         const struct db_full_path *path, union tree *current_tree, void *client_data)
+			 const struct db_full_path *path, union tree *current_tree, void *client_data)
 {
     union tree **facetize_tree;
 
@@ -134,7 +134,7 @@ gcv_facetize(struct db_i *db, const struct db_full_path *path,
     union tree *facetize_tree;
     struct model *nmg_model;
 
-    /* static to silence warnings over longjmp  */
+    /* static to silence warnings over longjmp */
     static struct nmgregion *current_region = NULL;
     static struct rt_bot_internal *result = NULL;
     static struct shell *current_shell = NULL;

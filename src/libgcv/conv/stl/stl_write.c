@@ -51,10 +51,10 @@
 
 #define V3ARGSIN(a)       (a)[X]/25.4, (a)[Y]/25.4, (a)[Z]/25.4
 #define VSETIN(a, b) {\
-    (a)[X] = (b)[X]/25.4; \
-    (a)[Y] = (b)[Y]/25.4; \
-    (a)[Z] = (b)[Z]/25.4; \
-}
+	(a)[X] = (b)[X]/25.4; \
+	(a)[Y] = (b)[Y]/25.4; \
+	(a)[Z] = (b)[Z]/25.4; \
+    }
 
 
 static int verbose;
@@ -298,8 +298,8 @@ static struct gcv_region_end_data gcvwriter = {nmg_to_stl, NULL};
 
 HIDDEN int
 gcv_stl_write(const char *dest_path, struct db_i *source_dbip,
-	const struct gcv_opts *UNUSED(gcv_options),
-	const void *UNUSED(options_data))
+	      const struct gcv_opts *UNUSED(gcv_options),
+	      const void *UNUSED(options_data))
 {
     size_t num_objects;
     char **object_names;
@@ -354,14 +354,14 @@ gcv_stl_write(const char *dest_path, struct db_i *source_dbip,
 	    if ((fp=fopen(output_file, "wb+")) == NULL)
 	    {
 		perror("stl_write");
-		bu_exit(1, "%s: Cannot open ASCII output file (%s) for writing\n", "stl_write",output_file);
+		bu_exit(1, "%s: Cannot open ASCII output file (%s) for writing\n", "stl_write", output_file);
 	    }
 	} else {
 	    /* Open binary output file */
 	    if ((bfd=open(output_file, O_WRONLY|O_CREAT|O_TRUNC|O_BINARY, S_IRUSR|S_IWUSR|S_IRGRP|S_IROTH)) < 0)
 	    {
 		perror("stl_write");
-		bu_exit(1, "%s: Cannot open binary output file (%s) for writing\n", "stl_write",output_file);
+		bu_exit(1, "%s: Cannot open binary output file (%s) for writing\n", "stl_write", output_file);
 	    }
 	}
     }
