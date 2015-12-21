@@ -220,12 +220,14 @@ bu_semaphore_acquire(unsigned int i)
 	bu_bomb("fatal semaphore acquisition failure");
     }
 #  endif
+
 #  if defined(HAVE_PTHREAD_H)
     if (pthread_mutex_lock(&bu_semaphores[i].mu)) {
 	fprintf(stderr, "bu_semaphore_acquire(): pthread_mutex_lock() failed on [%d]\n", i);
 	bu_bomb("fatal semaphore acquisition failure");
     }
 #  endif
+
 #  if defined(_WIN32) && !defined(__CYGWIN__)
     /* This only fails if the timeout exceeds 30 days. */
     EnterCriticalSection(&bu_semaphores[i].mu);
@@ -258,6 +260,7 @@ bu_semaphore_release(unsigned int i)
 	bu_bomb("fatal semaphore acquisition failure");
     }
 #  endif
+
 #  if defined(HAVE_PTHREAD_H)
     if (pthread_mutex_unlock(&bu_semaphores[i].mu)) {
 	fprintf(stderr, "bu_semaphore_acquire(): pthread_mutex_unlock() failed on [%d]\n", i);
@@ -268,6 +271,7 @@ bu_semaphore_release(unsigned int i)
 #  if defined(_WIN32) && !defined(__CYGWIN__)
     LeaveCriticalSection(&bu_semaphores[i].mu);
 #  endif
+
 #endif
 }
 
