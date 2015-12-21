@@ -144,7 +144,7 @@ _extract_path_and_prefix(struct bu_vls *path, struct bu_vls *format, const char 
     char *colon_pos = NULL;
     char *inputcpy = NULL;
     if (UNLIKELY(!input)) return 0;
-    if (UNLIKELY(!strlen(input) > 0)) return 0;
+    if (UNLIKELY(strlen(input) == 0)) return 0;
     inputcpy = bu_strdup(input);
     colon_pos = strchr(inputcpy, ':');
     if (colon_pos) {
