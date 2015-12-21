@@ -60,6 +60,35 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
 
+* consider whether the file introspection capabilities of libmagic
+  (https://github.com/file/file) should be hooked into the libbu
+  mime type system to support more robust file type identification
+  beyond that offered by file extension + context.  In principle
+  we want the most powerful capability we can get, but there are
+  some not-entirely-trivial design issues involved.
+
+  - Do we want to use file introspection to replace the "context"
+    mechanism we're currently using to disambiguate file extensions?
+
+  - Is it practical to define enough "magic" for the file types we
+    will be interested in?  (the current "cad" entry just has a
+    few autodesk formats - would need considerable expansion.)
+
+  - How should we return the "human readable" string libmagic provides,
+    particularly in the context of bu_path_component - the mime type
+    is currently returned as a string.
+
+  - libmagic is capable of greater fidelity than the basic file
+    extension based mime types - should we define custom mime types
+    to allow that refinement?  e.g. MIME_MODEL_STEP if we don't know
+    what step version, and MIME_MODEL_STEP_AP203 if libmagic ids the
+    file as a particular version?  There are many situations where
+    this capability could be very useful, but we would have to
+    rethink how we are currently defining our mime types.  Ideally
+    we would want to generate specific mimes from the magic definition
+    files, but we would have to make sure all the magic files we
+    use for BRL-CAD provide mimes for all entires.
+
 * investigate merging functionality from the sig tools into libicv
   and removing the tools themselves.  Also, need some documentation
   for the sig functionality (currently none??)
