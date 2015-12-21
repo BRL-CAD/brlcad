@@ -137,10 +137,13 @@ BRLCAD_MainWindow::BRLCAD_MainWindow()
 void
 BRLCAD_MainWindow::open_file()
 {
-    QString fileName = QFileDialog::getOpenFileName(this,
+    const char *file_filters = "BRL-CAD (*.g *.asc);;Rhino (*.3dm);;STEP (*.stp *.step);;All Files (*)";
+    QString fileName = QFileDialog::getOpenFileName((QWidget *)this,
 	    "Open Geometry File",
 	    qApp->applicationDirPath(),
-	    "BRL-CAD (*.g *.asc);;Rhino (*.3dm);;STEP (*.stp *.step);;All Files (*)");
+	    file_filters,
+	    NULL,
+	    QFileDialog::DontUseNativeDialog);
     if (!fileName.isEmpty()) {
 	int ret = ((CADApp *)qApp)->opendb(fileName.toLocal8Bit());
 	if (ret) {

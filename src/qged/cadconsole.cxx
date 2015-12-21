@@ -75,7 +75,7 @@ CADConsole::~CADConsole()
 
 void CADConsole::initialize()
 {
-    this->initialize();
+    //this->initialize();
 
     // TODO - will probably need a lot of setup here...
 
