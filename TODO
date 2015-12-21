@@ -18,6 +18,8 @@ tasks as they are completed.
 THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 -------------------------------------------------
 
+* new bu mime symbols are not prefixed in accordance with rest of API
+
 * make sure windows wireframes are not horked
 
 * make sure rt -I interactive mode still works... looks like code for
