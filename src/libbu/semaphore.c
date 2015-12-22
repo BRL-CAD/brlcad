@@ -70,7 +70,7 @@ struct bu_semaphores {
     CRITICAL_SECTION mu;
 };
 
-static uint32_t bu_init_lock = 0;
+static LONG bu_init_lock = 0;
 #  define DEFINED_BU_SEMAPHORES 1
 #endif
 
@@ -148,14 +148,18 @@ bu_semaphore_init(unsigned int nsemaphores)
     }
 
 #  elif defined(_WIN32) && !defined(__CYGWIN__)
-    while (InterlockedCompareExchange(&bu_init_lock, 1, 0));
+    while (InterlockedCompareExchange(&bu_init_lock, 1, 0)) {
+	/* someone else has the lock, spin-wait */
+    }
+    /* lock acquired */
     for (i=bu_nsemaphores; i < nsemaphores; i++) {
 	memset(&bu_semaphores[i], 0, sizeof(struct bu_semaphores));
 	bu_semaphores[i].magic = SEMAPHORE_MAGIC;
-	/* This cannot fail except for very low memory situations in XP. */
 	InitializeCriticalSection(&bu_semaphores[i].mu);
     }
-    bu_init_lock = 0;
+    bu_nsemaphores = nsemaphores;
+    /* release lock */
+    InterlockedExchange(&bu_init_lock, 0);
 #  endif
 #endif	/* PARALLEL */
 }
