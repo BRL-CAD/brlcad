@@ -30,7 +30,7 @@
 
 
 HIDDEN int
-gcv_brlcad_read(const char *source_path, struct db_i *dest_dbip,
+brlcad_read(const char *source_path, struct db_i *dest_dbip,
 		const struct gcv_opts *UNUSED(gcv_options),
 		const void *UNUSED(options_data))
 {
@@ -56,7 +56,7 @@ gcv_brlcad_read(const char *source_path, struct db_i *dest_dbip,
 
 
 HIDDEN int
-gcv_brlcad_write(const char *dest_path, struct db_i *source_dbip,
+brlcad_write(const char *dest_path, struct db_i *source_dbip,
 		 const struct gcv_opts *UNUSED(gcv_options),
 		 const void *UNUSED(options_data))
 {
@@ -76,11 +76,11 @@ gcv_brlcad_write(const char *dest_path, struct db_i *source_dbip,
 
 
 const struct gcv_converter gcv_conv_brlcad_read =
-{MIME_MODEL_VND_BRLCAD_PLUS_BINARY, GCV_CONVERSION_READ, NULL, NULL, gcv_brlcad_read};
+{MIME_MODEL_VND_BRLCAD_PLUS_BINARY, GCV_CONVERSION_READ, NULL, NULL, brlcad_read};
 
 
 const struct gcv_converter gcv_conv_brlcad_write =
-{MIME_MODEL_VND_BRLCAD_PLUS_BINARY, GCV_CONVERSION_WRITE, NULL, NULL, gcv_brlcad_write};
+{MIME_MODEL_VND_BRLCAD_PLUS_BINARY, GCV_CONVERSION_WRITE, NULL, NULL, brlcad_write};
 
 
 /*

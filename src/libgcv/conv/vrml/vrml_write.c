@@ -582,10 +582,10 @@ static void path_2_vrml_id(struct bu_vls *id, const char *path) {
 }
 
 
-static int
-gcv_vrml_write(const char *dest_path, struct db_i *source_dbip,
-	       const struct gcv_opts *UNUSED(gcv_options),
-	       const void *UNUSED(options_data))
+HIDDEN int
+vrml_write(const char *dest_path, struct db_i *source_dbip,
+	   const struct gcv_opts *UNUSED(gcv_options),
+	   const void *UNUSED(options_data))
 {
     size_t i;
     struct plate_mode pm;
@@ -1341,7 +1341,7 @@ nmg_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, unio
 
 
 const struct gcv_converter gcv_conv_vrml_write =
-{MIME_MODEL_VRML, GCV_CONVERSION_WRITE, NULL, NULL, gcv_vrml_write};
+{MIME_MODEL_VRML, GCV_CONVERSION_WRITE, NULL, NULL, vrml_write};
 
 
 /*

@@ -297,9 +297,9 @@ static struct gcv_region_end_data gcvwriter = {nmg_to_stl, NULL};
 
 
 HIDDEN int
-gcv_stl_write(const char *dest_path, struct db_i *source_dbip,
-	      const struct gcv_opts *UNUSED(gcv_options),
-	      const void *UNUSED(options_data))
+stl_write(const char *dest_path, struct db_i *source_dbip,
+	  const struct gcv_opts *UNUSED(gcv_options),
+	  const void *UNUSED(options_data))
 {
     size_t num_objects;
     char **object_names;
@@ -462,7 +462,7 @@ gcv_stl_write(const char *dest_path, struct db_i *source_dbip,
 
 
 const struct gcv_converter gcv_conv_stl_write =
-{MIME_MODEL_STL, GCV_CONVERSION_WRITE, NULL, NULL, gcv_stl_write};
+{MIME_MODEL_STL, GCV_CONVERSION_WRITE, NULL, NULL, stl_write};
 
 
 /*

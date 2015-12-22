@@ -542,9 +542,9 @@ Convert_input()
 
 
 HIDDEN int
-gcv_stl_read(const char *source_path, struct db_i *dest_dbip,
-	     const struct gcv_opts *UNUSED(gcv_options),
-	     const void *UNUSED(options_data))
+stl_read(const char *source_path, struct db_i *dest_dbip,
+	 const struct gcv_opts *UNUSED(gcv_options),
+	 const void *UNUSED(options_data))
 {
     fd_out = dest_dbip->dbi_wdbp;
     input_file = source_path;
@@ -588,7 +588,7 @@ gcv_stl_read(const char *source_path, struct db_i *dest_dbip,
 
 
 const struct gcv_converter gcv_conv_stl_read =
-{MIME_MODEL_STL, GCV_CONVERSION_READ, NULL, NULL, gcv_stl_read};
+{MIME_MODEL_STL, GCV_CONVERSION_READ, NULL, NULL, stl_read};
 
 
 /*

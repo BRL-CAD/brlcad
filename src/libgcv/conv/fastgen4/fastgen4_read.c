@@ -2774,7 +2774,7 @@ read_fast4_colors(const char *color_file)
 
 
 struct
-gcv_fastgen4_options_data
+fastgen4_options_data
 {
     int quiet_mode;
     int debug_mode;
@@ -2787,9 +2787,9 @@ gcv_fastgen4_options_data
 
 
 static void
-gcv_fastgen4_create_opts(struct bu_opt_desc **options_desc, void **dest_options_data)
+fastgen4_create_opts(struct bu_opt_desc **options_desc, void **dest_options_data)
 {
-    struct gcv_fastgen4_options_data *options_data = (struct gcv_fastgen4_options_data *)bu_malloc(sizeof(struct gcv_fastgen4_options_data), "options_data");
+    struct fastgen4_options_data *options_data = (struct fastgen4_options_data *)bu_malloc(sizeof(struct fastgen4_options_data), "options_data");
     *dest_options_data = options_data;
     *options_desc = (struct bu_opt_desc *)bu_malloc(8 * sizeof(struct bu_opt_desc), "options_desc");
 
@@ -2808,22 +2808,22 @@ gcv_fastgen4_create_opts(struct bu_opt_desc **options_desc, void **dest_options_
 
 
 static void
-gcv_fastgen4_free_opts(void *options_data)
+fastgen4_free_opts(void *options_data)
 {
     bu_free(options_data, "options_data");
 }
 
 
 static int
-gcv_fastgen4_read(const char *source_path, struct db_i *dest_dbip,
-		  const struct gcv_opts *UNUSED(gcv_options),
-		  const void *options_data)
+fastgen4_read(const char *source_path, struct db_i *dest_dbip,
+	      const struct gcv_opts *UNUSED(gcv_options),
+	      const void *options_data)
 {
-    const struct gcv_fastgen4_options_data * const fg4_options = (struct gcv_fastgen4_options_data *)options_data;
+    const struct fastgen4_options_data * const fg4_options = (struct fastgen4_options_data *)options_data;
     int result = 0;
 
     if (!fg4_options)
-	bu_bomb("gcv_fastgen4_read(): missing options_data");
+	bu_bomb("fastgen4_read(): missing options_data");
 
     quiet = fg4_options->quiet_mode;
     debug = fg4_options->debug_mode;
@@ -3003,7 +3003,7 @@ gcv_fastgen4_read(const char *source_path, struct db_i *dest_dbip,
 
 
 const struct gcv_converter gcv_conv_fastgen4_read =
-{MIME_MODEL_VND_FASTGEN, GCV_CONVERSION_READ, gcv_fastgen4_create_opts, gcv_fastgen4_free_opts, gcv_fastgen4_read};
+{MIME_MODEL_VND_FASTGEN, GCV_CONVERSION_READ, fastgen4_create_opts, fastgen4_free_opts, fastgen4_read};
 
 
 /*
