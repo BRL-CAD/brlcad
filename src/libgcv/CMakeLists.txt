@@ -66,14 +66,14 @@ set(GCV_STATIC_SRCS
 set(LIBGCV_SOURCES
   bottess.c
   facetize.c
-  plugin.c
+  filter.c
   region_end.c
   region_end_mc.c
   tri_intersect.c
   bot_solidity.c
   )
 
-set(LIBGCV_CONVERTER_SOURCES
+set(LIBGCV_PLUGIN_SOURCES
   conv/brlcad.c
   conv/fastgen4/fastgen4_read.c
   conv/fastgen4/fastgen4_write.cpp
@@ -87,7 +87,7 @@ set(LIBGCV_CONVERTER_SOURCES
   wfobj/tri_face.c
   )
 
-list(APPEND LIBGCV_SOURCES ${LIBGCV_CONVERTER_SOURCES})
+list(APPEND LIBGCV_SOURCES ${LIBGCV_PLUGIN_SOURCES})
 
 BRLCAD_ADDLIB(libgcv "${LIBGCV_SOURCES}" "librt;libwdb;libbu" SO_SRCS "${GCV_SO_SRCS}" STATIC_SRCS "${GCV_STATIC_SRCS}")
 set_target_properties(libgcv PROPERTIES VERSION 20.0.1 SOVERSION 20)
@@ -108,11 +108,8 @@ add_test(NAME bottess_test COMMAND test_bottess)
 set(GCV_IGNORE_FILES
   NOTES
   conv/fastgen4/NOTES
-  facetize.h
-  plugin.h
   soup.h
   tri_intersect.h
-  bot_solidity.h
   )
 CMAKEFILES(${GCV_IGNORE_FILES})
 

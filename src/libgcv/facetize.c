@@ -23,7 +23,9 @@
  */
 
 
-#include "./facetize.h"
+#include "common.h"
+
+#include "gcv/util.h"
 
 
 HIDDEN union tree *
@@ -145,7 +147,7 @@ gcv_facetize(struct db_i *db, const struct db_full_path *path,
     RT_CK_TESS_TOL(tess_tol);
 
     {
-	char *str_path = db_path_to_string(path);
+	char * const str_path = db_path_to_string(path);
 	struct db_tree_state initial_tree_state = rt_initial_tree_state;
 	initial_tree_state.ts_tol = tol;
 	initial_tree_state.ts_ttol = tess_tol;
@@ -185,7 +187,6 @@ gcv_facetize(struct db_i *db, const struct db_full_path *path,
 
     /* New region remains part of this nmg "model" */
     NMG_CK_REGION(facetize_tree->tr_d.td_r);
-    result = NULL;
 
     _gcv_optimize_model(nmg_model);
 
@@ -213,7 +214,7 @@ gcv_facetize(struct db_i *db, const struct db_full_path *path,
 	    } else {
 		/* catch */
 		BU_UNSETJUMP;
-		bu_log("gcv_facetize(): conversion to BOT failed\n");
+		bu_log("gcv_facetize(): conversion to BoT failed\n");
 
 		if (result)
 		    _gcv_facetize_free_bot(result);

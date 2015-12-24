@@ -37,6 +37,22 @@
 __BEGIN_DECLS
 
 
+struct rt_bot_internal *gcv_facetize(struct db_i *db, const struct db_full_path *path, const struct bn_tol *tol, const struct rt_tess_tol *tess_tol);
+
+
+/*
+ * Topological test for determining whether the given BoT satisfies
+ * the conditions for solidity.
+ *
+ * Equivalent to bot_is_closed_fan() && bot_is_orientable()
+ */
+GCV_EXPORT extern int gcv_bot_is_solid(const struct rt_bot_internal *bot);
+
+GCV_EXPORT extern int gcv_bot_is_closed_fan(const struct rt_bot_internal *bot);
+
+GCV_EXPORT extern int gcv_bot_is_orientable(const struct rt_bot_internal *bot);
+
+
 /**
  * write_region is a function pointer to a routine that will
  * write out the region in a given file format.

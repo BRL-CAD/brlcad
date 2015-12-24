@@ -26,13 +26,13 @@
 
 #include "common.h"
 
-#include "../plugin.h"
+#include "gcv/api.h"
 
 
 HIDDEN int
-brlcad_read(const char *source_path, struct db_i *dest_dbip,
-		const struct gcv_opts *UNUSED(gcv_options),
-		const void *UNUSED(options_data))
+brlcad_read(struct db_i *dest_dbip,
+		const struct gcv_opts *UNUSED(gcv_options), const void *UNUSED(options_data),
+		const char *source_path)
 {
     int ret;
     struct db_i * const in_dbip = db_open(source_path, DB_OPEN_READONLY);
@@ -56,9 +56,9 @@ brlcad_read(const char *source_path, struct db_i *dest_dbip,
 
 
 HIDDEN int
-brlcad_write(const char *dest_path, struct db_i *source_dbip,
-		 const struct gcv_opts *UNUSED(gcv_options),
-		 const void *UNUSED(options_data))
+brlcad_write(struct db_i *source_dbip,
+		 const struct gcv_opts *UNUSED(gcv_options), const void *UNUSED(options_data),
+		 const char *dest_path)
 {
     int ret;
     struct rt_wdb * const out_wdbp = wdb_fopen(dest_path);
@@ -75,12 +75,12 @@ brlcad_write(const char *dest_path, struct db_i *source_dbip,
 }
 
 
-const struct gcv_converter gcv_conv_brlcad_read =
-{MIME_MODEL_VND_BRLCAD_PLUS_BINARY, GCV_CONVERSION_READ, NULL, NULL, brlcad_read};
+const struct gcv_filter gcv_conv_brlcad_read =
+{GCV_FILTER_READ, MIME_MODEL_VND_BRLCAD_PLUS_BINARY, NULL, NULL, brlcad_read};
 
 
-const struct gcv_converter gcv_conv_brlcad_write =
-{MIME_MODEL_VND_BRLCAD_PLUS_BINARY, GCV_CONVERSION_WRITE, NULL, NULL, brlcad_write};
+const struct gcv_filter gcv_conv_brlcad_write =
+{GCV_FILTER_WRITE, MIME_MODEL_VND_BRLCAD_PLUS_BINARY, NULL, NULL, brlcad_write};
 
 
 /*

@@ -61,8 +61,7 @@
 #include "wdb.h"
 #include "obj_parser.h"
 #include "tri_face.h"
-
-#include "../../plugin.h"
+#include "gcv/api.h"
 
 
 /* global definition */
@@ -3147,9 +3146,7 @@ process_nv_mode_option(struct ga_t *ga,
 
 
 HIDDEN int
-obj_read(const char *source_path, struct db_i *dest_dbip,
-	 const struct gcv_opts *UNUSED(gcv_options),
-	 const void *UNUSED(options_data))
+obj_read(struct db_i *dest_dbip, const struct gcv_opts *UNUSED(gcv_options), const void *UNUSED(options_data), const char *source_path)
 {
     struct rt_wdb *fd_out;	     /* Resulting BRL-CAD file */
     int ret_val = 0;
@@ -3650,7 +3647,7 @@ obj_read(const char *source_path, struct db_i *dest_dbip,
 	return 0;
     }
 
-    rt_clean_resource_complete(NULL, &rt_uniresource);
+    rt_clean_resource(NULL, &rt_uniresource);
 
     (void)time(&overall_end_time);
     overall_elapsed_time = overall_end_time - overall_start_time;
@@ -3666,8 +3663,8 @@ obj_read(const char *source_path, struct db_i *dest_dbip,
 }
 
 
-const struct gcv_converter gcv_conv_obj_read =
-{MIME_MODEL_OBJ, GCV_CONVERSION_READ, NULL, NULL, obj_read};
+const struct gcv_filter gcv_conv_obj_read =
+{GCV_FILTER_READ, MIME_MODEL_OBJ, NULL, NULL, obj_read};
 
 
 /*

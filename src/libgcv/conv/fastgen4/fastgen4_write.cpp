@@ -27,7 +27,7 @@
 #include "common.h"
 
 #include "gcv/util.h"
-#include "../../plugin.h"
+#include "gcv/api.h"
 
 #include <cmath>
 #include <fstream>
@@ -2524,9 +2524,9 @@ do_conversion(db_i &db, const std::string &path,
 
 
 HIDDEN int
-fastgen4_write(const char *dest_path, struct db_i *source_dbip,
+fastgen4_write(struct db_i *source_dbip,
 	       const struct gcv_opts *UNUSED(gcv_options),
-	       const void *UNUSED(options_data))
+	       const void *UNUSED(options_data), const char *dest_path)
 {
     RT_CK_DBI(source_dbip);
 
@@ -2546,8 +2546,8 @@ fastgen4_write(const char *dest_path, struct db_i *source_dbip,
 
 
 extern "C" {
-    struct gcv_converter gcv_conv_fastgen4_write =
-    {MIME_MODEL_VND_FASTGEN, GCV_CONVERSION_WRITE, NULL, NULL, fastgen4_write};
+    struct gcv_filter gcv_conv_fastgen4_write =
+    {GCV_FILTER_WRITE, MIME_MODEL_VND_FASTGEN, NULL, NULL, fastgen4_write};
 }
 
 

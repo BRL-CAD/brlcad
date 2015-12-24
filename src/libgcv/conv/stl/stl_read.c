@@ -45,8 +45,7 @@
 #include "rt/geom.h"
 #include "raytrace.h"
 #include "wdb.h"
-
-#include "../../plugin.h"
+#include "gcv/api.h"
 
 
 static struct vert_root *tree_root;
@@ -542,9 +541,7 @@ Convert_input()
 
 
 HIDDEN int
-stl_read(const char *source_path, struct db_i *dest_dbip,
-	 const struct gcv_opts *UNUSED(gcv_options),
-	 const void *UNUSED(options_data))
+stl_read(struct db_i *dest_dbip, const struct gcv_opts *UNUSED(gcv_options), const void *UNUSED(options_data), const char *source_path)
 {
     fd_out = dest_dbip->dbi_wdbp;
     input_file = source_path;
@@ -587,8 +584,8 @@ stl_read(const char *source_path, struct db_i *dest_dbip,
 }
 
 
-const struct gcv_converter gcv_conv_stl_read =
-{MIME_MODEL_STL, GCV_CONVERSION_READ, NULL, NULL, stl_read};
+const struct gcv_filter gcv_conv_stl_read =
+{GCV_FILTER_READ, MIME_MODEL_STL, NULL, NULL, stl_read};
 
 
 /*

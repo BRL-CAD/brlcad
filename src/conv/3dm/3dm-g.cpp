@@ -40,13 +40,9 @@
 
 /* implementation headers */
 #include "bu/getopt.h"
-#include "bu/mime.h"
-#include "bu/path.h"
+#include "gcv/util.h"
 #include "icv.h"
 #include "wdb.h"
-
-/* FIXME: private API */
-#include "../../libgcv/bot_solidity.h"
 
 
 namespace

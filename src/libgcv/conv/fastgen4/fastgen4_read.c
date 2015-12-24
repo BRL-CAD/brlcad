@@ -37,6 +37,7 @@
 /* interface headers */
 #include "bu/debug.h"
 #include "bu/getopt.h"
+#include "gcv/api.h"
 #include "rt/db4.h"
 #include "vmath.h"
 #include "nmg.h"
@@ -44,7 +45,6 @@
 #include "raytrace.h"
 #include "wdb.h"
 #include "bn/plot3.h"
-#include "../../plugin.h"
 
 
 /* convenient macro for building regions */
@@ -2815,9 +2815,9 @@ fastgen4_free_opts(void *options_data)
 
 
 static int
-fastgen4_read(const char *source_path, struct db_i *dest_dbip,
+fastgen4_read(struct db_i *dest_dbip,
 	      const struct gcv_opts *UNUSED(gcv_options),
-	      const void *options_data)
+	      const void *options_data, const char *source_path)
 {
     const struct fastgen4_options_data * const fg4_options = (struct fastgen4_options_data *)options_data;
     int result = 0;
@@ -3002,8 +3002,8 @@ fastgen4_read(const char *source_path, struct db_i *dest_dbip,
 }
 
 
-const struct gcv_converter gcv_conv_fastgen4_read =
-{MIME_MODEL_VND_FASTGEN, GCV_CONVERSION_READ, fastgen4_create_opts, fastgen4_free_opts, fastgen4_read};
+const struct gcv_filter gcv_conv_fastgen4_read =
+{GCV_FILTER_READ, MIME_MODEL_VND_FASTGEN, fastgen4_create_opts, fastgen4_free_opts, fastgen4_read};
 
 
 /*

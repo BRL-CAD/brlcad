@@ -25,7 +25,9 @@
  */
 
 
-#include "bot_solidity.h"
+#include "common.h"
+
+#include "gcv/util.h"
 
 #include <stdlib.h>
 

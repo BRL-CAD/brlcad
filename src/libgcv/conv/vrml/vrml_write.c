@@ -44,7 +44,7 @@
 #include "rt/geom.h"
 #include "raytrace.h"
 #include "wdb.h"
-#include "../../plugin.h"
+#include "gcv/api.h"
 
 #define TXT_BUF_LEN 512
 #define TXT_NAME_SIZE 128
@@ -582,10 +582,8 @@ static void path_2_vrml_id(struct bu_vls *id, const char *path) {
 }
 
 
-HIDDEN int
-vrml_write(const char *dest_path, struct db_i *source_dbip,
-	   const struct gcv_opts *UNUSED(gcv_options),
-	   const void *UNUSED(options_data))
+static int
+vrml_write(struct db_i *source_dbip, const struct gcv_opts *UNUSED(gcv_options), const void *UNUSED(options_data), const char *dest_path)
 {
     size_t i;
     struct plate_mode pm;
@@ -1340,8 +1338,8 @@ nmg_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, unio
 }
 
 
-const struct gcv_converter gcv_conv_vrml_write =
-{MIME_MODEL_VRML, GCV_CONVERSION_WRITE, NULL, NULL, vrml_write};
+const struct gcv_filter gcv_conv_vrml_write =
+{GCV_FILTER_WRITE, MIME_MODEL_VRML, NULL, NULL, vrml_write};
 
 
 /*

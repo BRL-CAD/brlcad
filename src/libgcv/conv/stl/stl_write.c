@@ -46,8 +46,6 @@
 #include "raytrace.h"
 #include "gcv.h"
 
-#include "../../plugin.h"
-
 
 #define V3ARGSIN(a)       (a)[X]/25.4, (a)[Y]/25.4, (a)[Z]/25.4
 #define VSETIN(a, b) {\
@@ -297,9 +295,7 @@ static struct gcv_region_end_data gcvwriter = {nmg_to_stl, NULL};
 
 
 HIDDEN int
-stl_write(const char *dest_path, struct db_i *source_dbip,
-	  const struct gcv_opts *UNUSED(gcv_options),
-	  const void *UNUSED(options_data))
+stl_write(struct db_i *source_dbip, const struct gcv_opts *UNUSED(gcv_options), const void *UNUSED(options_data), const char *dest_path)
 {
     size_t num_objects;
     char **object_names;
@@ -461,8 +457,8 @@ stl_write(const char *dest_path, struct db_i *source_dbip,
 }
 
 
-const struct gcv_converter gcv_conv_stl_write =
-{MIME_MODEL_STL, GCV_CONVERSION_WRITE, NULL, NULL, stl_write};
+const struct gcv_filter gcv_conv_stl_write =
+{GCV_FILTER_WRITE, MIME_MODEL_STL, NULL, NULL, stl_write};
 
 
 /*
