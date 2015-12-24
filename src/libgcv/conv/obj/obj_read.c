@@ -3146,7 +3146,7 @@ process_nv_mode_option(struct ga_t *ga,
 
 
 HIDDEN int
-obj_read(struct db_i *dest_dbip, const struct gcv_opts *UNUSED(gcv_options), const void *UNUSED(options_data), const char *source_path)
+obj_read(struct gcv_context *context, const struct gcv_opts *UNUSED(gcv_options), const void *UNUSED(options_data), const char *source_path)
 {
     struct rt_wdb *fd_out;	     /* Resulting BRL-CAD file */
     int ret_val = 0;
@@ -3318,7 +3318,7 @@ obj_read(struct db_i *dest_dbip, const struct gcv_opts *UNUSED(gcv_options), con
 	return 0;
     }
 
-    fd_out = dest_dbip->dbi_wdbp;
+    fd_out = context->dbip->dbi_wdbp;
 
     if ((ret_val = obj_parser_create(&ga.parser)) != 0) {
 	if (ret_val == ENOMEM) {
@@ -3664,7 +3664,7 @@ obj_read(struct db_i *dest_dbip, const struct gcv_opts *UNUSED(gcv_options), con
 
 
 const struct gcv_filter gcv_conv_obj_read =
-{GCV_FILTER_READ, MIME_MODEL_OBJ, NULL, NULL, obj_read};
+{"OBJ Reader", GCV_FILTER_READ, MIME_MODEL_OBJ, NULL, NULL, obj_read};
 
 
 /*

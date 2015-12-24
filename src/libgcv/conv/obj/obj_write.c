@@ -77,13 +77,13 @@ static int regions_written = 0;
 static int inches = 0;
 
 HIDDEN int
-obj_write(struct db_i *source_dbip, const struct gcv_opts *UNUSED(gcv_options), const void *UNUSED(options_data), const char *dest_path)
+obj_write(struct gcv_context *context, const struct gcv_opts *UNUSED(gcv_options), const void *UNUSED(options_data), const char *dest_path)
 {
     double percent;
     size_t num_objects;
     char **object_names;
 
-    dbip = source_dbip;
+    dbip = context->dbip;
 
     bu_setprogname("obj_write");
     bu_setlinebuf(stderr);
@@ -592,7 +592,7 @@ do_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union
 
 
 const struct gcv_filter gcv_conv_obj_write =
-{GCV_FILTER_WRITE, MIME_MODEL_OBJ, NULL, NULL, obj_write};
+{"OBJ Writer", GCV_FILTER_WRITE, MIME_MODEL_OBJ, NULL, NULL, obj_write};
 
 
 /*

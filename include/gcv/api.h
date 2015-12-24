@@ -39,19 +39,18 @@ __BEGIN_DECLS
 /**
  * The big kahuna.
  */
-struct gcv_context;
-
-
-enum gcv_filter_type {GCV_FILTER_FILTER, GCV_FILTER_READ, GCV_FILTER_WRITE};
+struct gcv_context
+{
+    struct db_i *dbip;
+    struct bu_vls messages;
+};
 
 
 /**
  * Initialize a conversion context.
- *
- * Returns 0 on success or non-zero on failure.
  */
-GCV_EXPORT int
-gcv_init(struct gcv_context *cxt);
+GCV_EXPORT void
+gcv_context_init(struct gcv_context *cxt);
 
 
 /**
@@ -59,15 +58,21 @@ gcv_init(struct gcv_context *cxt);
  * allocated by the library.  Caller is responsible for freeing the
  * context pointer itself, if necessary.
  */
-GCV_EXPORT int
-gcv_destroy(struct gcv_context *cxt);
+GCV_EXPORT void
+gcv_context_destroy(struct gcv_context *cxt);
 
 
-enum gcv_tessellation_algorithm
-{
+enum gcv_tessellation_algorithm {
     GCV_TESS_DEFAULT = 0,
     GCV_TESS_BOTTESS,
     GCV_TESS_MARCHING_CUBES
+};
+
+
+enum gcv_filter_type {
+    GCV_FILTER_FILTER,
+    GCV_FILTER_READ,
+    GCV_FILTER_WRITE
 };
 
 
@@ -97,13 +102,14 @@ struct gcv_opts
 };
 
 
-void gcv_opts_init(struct gcv_opts *gcv_options);
+void gcv_opts_default(struct gcv_opts *gcv_options);
 
 
 /**
  * Input/Output/Translation filter.
  */
 struct gcv_filter {
+    const char * const name;
     const enum gcv_filter_type filter_type;
     const mime_model_t mime_type;
 
@@ -114,7 +120,7 @@ struct gcv_filter {
 
     void (* const free_opts_fn)(void *options_data); /* PRIVATE */
 
-    int (* const filter_fn)(struct db_i *dbip, const struct gcv_opts *gcv_options, const void *options_data, const char *target); /* PRIVATE */
+    int (* const filter_fn)(struct gcv_context *context, const struct gcv_opts *gcv_options, const void *options_data, const char *target); /* PRIVATE */
 };
 
 
@@ -136,7 +142,7 @@ gcv_writer(struct gcv_filter *writer, const char *target, const struct gcv_opts 
  *
  */
 GCV_EXPORT int
-gcv_execute(struct db_i *dbip, const struct gcv_filter *filter, const struct gcv_opts *gcv_options, size_t argc, const char * const *argv, const char *target);
+gcv_execute(struct gcv_context *context, const struct gcv_filter *filter, const struct gcv_opts *gcv_options, size_t argc, const char * const *argv, const char *target);
 
 
 GCV_EXPORT const struct bu_ptbl *gcv_list_filters(void);

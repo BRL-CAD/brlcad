@@ -2946,17 +2946,13 @@ fastgen4_free_opts(void *options_data)
 
 
 static int
-fastgen4_read(struct db_i *dest_dbip, const struct gcv_opts *UNUSED(gcv_options), const void *options_data, const char *source_path)
+fastgen4_read(struct gcv_context *context, const struct gcv_opts *UNUSED(gcv_options), const void *options_data, const char *source_path)
 {
     const struct fastgen4_options_data * const fg4_options = (struct fastgen4_options_data *)options_data;
-    int result = 0;
-
-    if (!fg4_options)
-	bu_bomb("fastgen4_read(): missing options_data");
 
     zero_conversion_state(pstate);
 
-    pstate->fpout = dest_dbip->dbi_wdbp;
+    pstate->fpout = context->dbip->dbi_wdbp;
 
     if (fg4_options->muves_path)
 	if ((pstate->fp_muves=fopen(fg4_options->muves_path, "wb")) == (FILE *)NULL) {
@@ -2965,27 +2961,19 @@ fastgen4_read(struct db_i *dest_dbip, const struct gcv_opts *UNUSED(gcv_options)
 	    return 0;
 	}
 
-
-    RT_CK_DBI(dest_dbip);
-
     if (bu_debug & BU_DEBUG_MEM_CHECK)
 	bu_log("doing memory checking\n");
 
     if ((pstate->fpin=fopen(source_path, "rb")) == (FILE *)NULL) {
 	bu_log("Cannot open FASTGEN4 file (%s)\n", source_path);
 	free_conversion_state(pstate);
-
 	return 0;
     }
 
     if (fg4_options->plot_path) {
 	if ((pstate->fp_plot=fopen(fg4_options->plot_path, "wb")) == NULL) {
 	    bu_log("Cannot open plot file (%s)\n", fg4_options->plot_path);
-	    fclose(pstate->fpin);
-
-	    if (pstate->fp_muves)
-		fclose(pstate->fp_muves);
-
+	    free_conversion_state(pstate);
 	    return 0;
 	}
     }
@@ -3006,26 +2994,6 @@ fastgen4_read(struct db_i *dest_dbip, const struct gcv_opts *UNUSED(gcv_options)
     if (fg4_options->create_regions) {
 	make_region_list(fg4_options->create_regions);
     }
-
-    pstate->grid_size = GRID_BLOCK;
-    pstate->grid_points = (point_t *)bu_malloc(pstate->grid_size * sizeof(point_t), "fast4-g: grid_points");
-
-    pstate->name_root = (struct name_tree *)NULL;
-
-    pstate->hole_root = (struct holes *)NULL;
-
-    pstate->compsplt_root = (struct compsplt *)NULL;
-
-    pstate->min_radius = 2.0 * sqrt(SQRT_SMALL_FASTF);
-
-    pstate->name_count = 0;
-
-    pstate->vehicle[0] = '\0';
-
-    bu_ptbl_init(&pstate->stack, 64, " &stack ");
-    bu_ptbl_init(&pstate->stack2, 64, " &stack2 ");
-
-    BU_LIST_INIT(&pstate->hole_head.l);
 
     if (!quiet)
 	bu_log("Scanning for HOLE, WALL, and COMPSPLT cards...\n");
@@ -3062,18 +3030,16 @@ fastgen4_read(struct db_i *dest_dbip, const struct gcv_opts *UNUSED(gcv_options)
 
 	    if (!quiet)
 		bu_log("%d components converted\n", pstate->comp_count);
-
-	    result = 1;
 	}
     }
 
     free_conversion_state(pstate);
-    return result;
+    return 1;
 }
 
 
 const struct gcv_filter gcv_conv_fastgen4_read =
-{GCV_FILTER_READ, MIME_MODEL_VND_FASTGEN, fastgen4_create_opts, fastgen4_free_opts, fastgen4_read};
+{"FASTGEN4 Reader", GCV_FILTER_READ, MIME_MODEL_VND_FASTGEN, fastgen4_create_opts, fastgen4_free_opts, fastgen4_read};
 
 
 /*

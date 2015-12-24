@@ -541,9 +541,9 @@ Convert_input()
 
 
 HIDDEN int
-stl_read(struct db_i *dest_dbip, const struct gcv_opts *UNUSED(gcv_options), const void *UNUSED(options_data), const char *source_path)
+stl_read(struct gcv_context *context, const struct gcv_opts *UNUSED(gcv_options), const void *UNUSED(options_data), const char *source_path)
 {
-    fd_out = dest_dbip->dbi_wdbp;
+    fd_out = context->dbip->dbi_wdbp;
     input_file = source_path;
 
     tol.magic = BN_TOL_MAGIC;
@@ -585,7 +585,7 @@ stl_read(struct db_i *dest_dbip, const struct gcv_opts *UNUSED(gcv_options), con
 
 
 const struct gcv_filter gcv_conv_stl_read =
-{GCV_FILTER_READ, MIME_MODEL_STL, NULL, NULL, stl_read};
+{"STL Reader", GCV_FILTER_READ, MIME_MODEL_STL, NULL, NULL, stl_read};
 
 
 /*

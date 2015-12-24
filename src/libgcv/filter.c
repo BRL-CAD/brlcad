@@ -39,6 +39,9 @@ _gcv_filter_register(struct bu_ptbl *table, const struct gcv_filter *filter)
     if (!table || !filter)
 	bu_bomb("missing argument");
 
+    if (!filter->name)
+	bu_bomb("null filter name");
+
     switch (filter->filter_type) {
 	case GCV_FILTER_FILTER:
 	    if (filter->mime_type != MIME_MODEL_UNKNOWN)
@@ -143,6 +146,58 @@ _gcv_filter_options_process(const struct gcv_filter *filter, size_t argc,
 }
 
 
+HIDDEN void
+_gcv_opts_check(const struct gcv_opts *gcv_options)
+{
+    if (!gcv_options)
+	bu_bomb("null gcv_options");
+
+    BN_CK_TOL(&gcv_options->calculational_tolerance);
+    RT_CK_TESS_TOL(&gcv_options->tessellation_tolerance);
+
+    if (gcv_options->debug_mode > 1)
+	bu_bomb("invalid gcv_opts.debug_mode");
+
+    if (gcv_options->scale_factor <= 0.0)
+	bu_bomb("invalid gcv_opts.scale_factor");
+
+    if (!gcv_options->default_name)
+	bu_bomb("invalid gcv_opts.default_name");
+
+    if (!gcv_options->num_objects != !gcv_options->object_names)
+	bu_bomb("must have none or both of num_objects and object_names");
+}
+
+
+HIDDEN void
+_gcv_context_check(const struct gcv_context *context)
+{
+    if (!context)
+	bu_bomb("null gcv_context");
+
+    RT_CK_DBI(context->dbip);
+    BU_CK_VLS(&context->messages);
+}
+
+
+void
+gcv_context_init(struct gcv_context *context)
+{
+    context->dbip = db_create_inmem();
+    BU_VLS_INIT(&context->messages);
+}
+
+
+void
+gcv_context_destroy(struct gcv_context *context)
+{
+    _gcv_context_check(context);
+
+    db_close(context->dbip);
+    bu_vls_free(&context->messages);
+}
+
+
 const struct bu_ptbl *
 gcv_list_filters(void)
 {
@@ -173,7 +228,7 @@ gcv_list_filters(void)
 
 
 void
-gcv_opts_init(struct gcv_opts *gcv_options)
+gcv_opts_default(struct gcv_opts *gcv_options)
 {
     const struct bn_tol default_calculational_tolerance =
     {BN_TOL_MAGIC, BN_TOL_DIST, BN_TOL_DIST * BN_TOL_DIST, 1.0e-6, 1.0 - 1.0e-6};
@@ -192,7 +247,7 @@ gcv_opts_init(struct gcv_opts *gcv_options)
 
 
 int
-gcv_execute(struct db_i *dbip, const struct gcv_filter *filter,
+gcv_execute(struct gcv_context *context, const struct gcv_filter *filter,
 	    const struct gcv_opts *gcv_options, size_t argc, const char * const *argv,
 	    const char *target)
 {
@@ -205,10 +260,10 @@ gcv_execute(struct db_i *dbip, const struct gcv_filter *filter,
     struct gcv_opts default_opts;
     void *options_data;
 
-    if (!dbip || !filter)
-	bu_bomb("missing arguments");
+    _gcv_context_check(context);
 
-    RT_CK_DBI(dbip);
+    if (!filter)
+	bu_bomb("missing filter");
 
     switch (filter->filter_type) {
 	case GCV_FILTER_FILTER:
@@ -229,24 +284,11 @@ gcv_execute(struct db_i *dbip, const struct gcv_filter *filter,
     }
 
     if (!gcv_options) {
-	gcv_opts_init(&default_opts);
+	gcv_opts_default(&default_opts);
 	gcv_options = &default_opts;
     }
 
-    BN_CK_TOL(&gcv_options->calculational_tolerance);
-    RT_CK_TESS_TOL(&gcv_options->tessellation_tolerance);
-
-    if (gcv_options->debug_mode > 1)
-	bu_bomb("invalid gcv_opts.debug_mode");
-
-    if (gcv_options->scale_factor <= 0.0)
-	bu_bomb("invalid gcv_opts.scale_factor");
-
-    if (!gcv_options->default_name)
-	bu_bomb("invalid gcv_opts.default_name");
-
-    if (!gcv_options->num_objects != !gcv_options->object_names)
-	bu_bomb("must have none or both of num_objects and object_names");
+    _gcv_opts_check(gcv_options);
 
     if (!_gcv_filter_options_process(filter, argc, argv, &options_data))
 	return 0;
@@ -256,16 +298,16 @@ gcv_execute(struct db_i *dbip, const struct gcv_filter *filter,
     RTG.NMG_debug |= gcv_options->nmg_debug_flag;
 
     if (filter->filter_type == GCV_FILTER_WRITE) {
-	dbi_read_only_orig = dbip->dbi_read_only;
-	dbip->dbi_read_only = 1;
+	dbi_read_only_orig = context->dbip->dbi_read_only;
+	context->dbip->dbi_read_only = 1;
     }
 
     if (!gcv_options->num_objects && filter->filter_type != GCV_FILTER_READ) {
 	size_t num_objects;
 	struct directory **toplevel_dirs;
 
-	db_update_nref(dbip, &rt_uniresource);
-	num_objects = db_ls(dbip, DB_LS_TOPS, NULL, &toplevel_dirs);
+	db_update_nref(context->dbip, &rt_uniresource);
+	num_objects = db_ls(context->dbip, DB_LS_TOPS, NULL, &toplevel_dirs);
 
 	if (num_objects) {
 	    struct gcv_opts temp_options = *gcv_options;
@@ -274,15 +316,15 @@ gcv_execute(struct db_i *dbip, const struct gcv_filter *filter,
 
 	    temp_options.num_objects = num_objects;
 	    temp_options.object_names = (const char * const *)object_names;
-	    result = filter->filter_fn(dbip, &temp_options, options_data, target);
+	    result = filter->filter_fn(context, &temp_options, options_data, target);
 	    bu_free(object_names, "object_names");
 	} else
-	    result = filter->filter_fn(dbip, gcv_options, options_data, target);
+	    result = filter->filter_fn(context, gcv_options, options_data, target);
     } else
-	result = filter->filter_fn(dbip, gcv_options, options_data, target);
+	result = filter->filter_fn(context, gcv_options, options_data, target);
 
     if (filter->filter_type == GCV_FILTER_WRITE)
-	dbip->dbi_read_only = dbi_read_only_orig;
+	context->dbip->dbi_read_only = dbi_read_only_orig;
 
     bu_debug = bu_debug_orig;
     RTG.debug = rt_debug_orig;

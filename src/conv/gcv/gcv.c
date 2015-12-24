@@ -388,7 +388,7 @@ gcv_do_conversion(
     const struct bu_ptbl * const filters = gcv_list_filters();
     const struct gcv_filter * const *entry;
     const struct gcv_filter *in_filter = NULL, *out_filter = NULL;
-    struct db_i *dbip;
+    struct gcv_context context;
 
     for (BU_PTBL_FOR(entry, (const struct gcv_filter * const *), filters)) {
 	if ((*entry)->filter_type == GCV_FILTER_READ && (*entry)->mime_type == in_type)
@@ -404,21 +404,21 @@ gcv_do_conversion(
     if (!in_filter || !out_filter)
 	return 0;
 
-    dbip = db_create_inmem();
+    gcv_context_init(&context);
 
-    if (!gcv_execute(dbip, in_filter, NULL, in_argc, in_argv, in_path)) {
+    if (!gcv_execute(&context, in_filter, NULL, in_argc, in_argv, in_path)) {
 	bu_vls_printf(messages, "Read filter failed for '%s'\n", in_path);
-	db_close(dbip);
+	gcv_context_destroy(&context);
 	return 0;
     }
 
-    if (!gcv_execute(dbip, out_filter, NULL, out_argc, out_argv, out_path)) {
+    if (!gcv_execute(&context, out_filter, NULL, out_argc, out_argv, out_path)) {
 	bu_vls_printf(messages, "Write filter failed for '%s'\n", out_path);
-	db_close(dbip);
+	gcv_context_destroy(&context);
 	return 0;
     }
 
-    db_close(dbip);
+    gcv_context_destroy(&context);
 
     return 1;
 }

@@ -2524,18 +2524,16 @@ do_conversion(db_i &db, const std::string &path,
 
 
 HIDDEN int
-fastgen4_write(struct db_i *source_dbip,
+fastgen4_write(struct gcv_context *context,
 	       const struct gcv_opts *UNUSED(gcv_options),
 	       const void *UNUSED(options_data), const char *dest_path)
 {
-    RT_CK_DBI(source_dbip);
-
-    const std::set<const directory *> failed_regions = do_conversion(*source_dbip,
+    const std::set<const directory *> failed_regions = do_conversion(*context->dbip,
 								     dest_path);
 
     // facetize all regions that contain incompatible boolean operations
     if (!failed_regions.empty())
-	if (!do_conversion(*source_dbip, dest_path, failed_regions).empty())
+	if (!do_conversion(*context->dbip, dest_path, failed_regions).empty())
 	    throw std::runtime_error("failed to convert all regions");
 
     return 1;
@@ -2547,7 +2545,7 @@ fastgen4_write(struct db_i *source_dbip,
 
 extern "C" {
     struct gcv_filter gcv_conv_fastgen4_write =
-    {GCV_FILTER_WRITE, MIME_MODEL_VND_FASTGEN, NULL, NULL, fastgen4_write};
+    {"FASTGEN4 Writer", GCV_FILTER_WRITE, MIME_MODEL_VND_FASTGEN, NULL, NULL, fastgen4_write};
 }
 
 

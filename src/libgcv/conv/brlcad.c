@@ -30,7 +30,7 @@
 
 
 HIDDEN int
-brlcad_read(struct db_i *dest_dbip,
+brlcad_read(struct gcv_context *context,
 		const struct gcv_opts *UNUSED(gcv_options), const void *UNUSED(options_data),
 		const char *source_path)
 {
@@ -48,7 +48,7 @@ brlcad_read(struct db_i *dest_dbip,
 	return 0;
     }
 
-    ret = db_dump(dest_dbip->dbi_wdbp, in_dbip);
+    ret = db_dump(context->dbip->dbi_wdbp, in_dbip);
     db_close(in_dbip);
 
     return ret == 0;
@@ -56,7 +56,7 @@ brlcad_read(struct db_i *dest_dbip,
 
 
 HIDDEN int
-brlcad_write(struct db_i *source_dbip,
+brlcad_write(struct gcv_context *context,
 		 const struct gcv_opts *UNUSED(gcv_options), const void *UNUSED(options_data),
 		 const char *dest_path)
 {
@@ -68,7 +68,7 @@ brlcad_write(struct db_i *source_dbip,
 	return 0;
     }
 
-    ret = db_dump(out_wdbp, source_dbip);
+    ret = db_dump(out_wdbp, context->dbip);
     wdb_close(out_wdbp);
 
     return ret == 0;
@@ -76,11 +76,11 @@ brlcad_write(struct db_i *source_dbip,
 
 
 const struct gcv_filter gcv_conv_brlcad_read =
-{GCV_FILTER_READ, MIME_MODEL_VND_BRLCAD_PLUS_BINARY, NULL, NULL, brlcad_read};
+{"BRL-CAD Reader", GCV_FILTER_READ, MIME_MODEL_VND_BRLCAD_PLUS_BINARY, NULL, NULL, brlcad_read};
 
 
 const struct gcv_filter gcv_conv_brlcad_write =
-{GCV_FILTER_WRITE, MIME_MODEL_VND_BRLCAD_PLUS_BINARY, NULL, NULL, brlcad_write};
+{"BRL-CAD Writer", GCV_FILTER_WRITE, MIME_MODEL_VND_BRLCAD_PLUS_BINARY, NULL, NULL, brlcad_write};
 
 
 /*

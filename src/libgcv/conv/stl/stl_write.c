@@ -295,7 +295,7 @@ static struct gcv_region_end_data gcvwriter = {nmg_to_stl, NULL};
 
 
 HIDDEN int
-stl_write(struct db_i *source_dbip, const struct gcv_opts *UNUSED(gcv_options), const void *UNUSED(options_data), const char *dest_path)
+stl_write(struct gcv_context *context, const struct gcv_opts *UNUSED(gcv_options), const void *UNUSED(options_data), const char *dest_path)
 {
     size_t num_objects;
     char **object_names;
@@ -305,7 +305,7 @@ stl_write(struct db_i *source_dbip, const struct gcv_opts *UNUSED(gcv_options), 
     int mutex;
 
     output_file = dest_path;
-    dbip = source_dbip;
+    dbip = context->dbip;
 
     bu_setlinebuf(stderr);
 
@@ -458,7 +458,7 @@ stl_write(struct db_i *source_dbip, const struct gcv_opts *UNUSED(gcv_options), 
 
 
 const struct gcv_filter gcv_conv_stl_write =
-{GCV_FILTER_WRITE, MIME_MODEL_STL, NULL, NULL, stl_write};
+{"STL Writer", GCV_FILTER_WRITE, MIME_MODEL_STL, NULL, NULL, stl_write};
 
 
 /*
