@@ -108,40 +108,36 @@ _gcv_filter_options_free(const struct gcv_filter *filter, void *options_data)
 
 
 HIDDEN int
-_gcv_filter_options_process(const struct gcv_filter *filter, size_t argc,
+_gcv_filter_options_process(struct bu_vls *messages,
+			    const struct gcv_filter *filter, size_t argc,
 			    const char * const *argv, void **options_data)
 {
     int ret_argc;
     struct bu_opt_desc *options_desc;
-    struct bu_vls messages = BU_VLS_INIT_ZERO;
 
     _gcv_filter_options_create(filter, &options_desc, options_data);
-    ret_argc = argc ? bu_opt_parse(&messages, argc, (const char **)argv,
+    ret_argc = argc ? bu_opt_parse(messages, argc, (const char **)argv,
 				   options_desc) : argc;
     bu_free(options_desc, "options_desc");
 
     if (ret_argc) {
 	if (ret_argc == -1)
-	    bu_vls_printf(&messages, "fatal error in bu_opt_parse()\n");
+	    bu_vls_printf(messages, "fatal error in bu_opt_parse()\n");
 	else {
 	    int i;
 
-	    bu_vls_printf(&messages, "unknown arguments: ");
+	    bu_vls_printf(messages, "unknown arguments: ");
 
 	    for (i = 0; i < ret_argc - 1; ++i)
-		bu_vls_printf(&messages, "%s, ", argv[i]);
+		bu_vls_printf(messages, "%s, ", argv[i]);
 
-	    bu_vls_printf(&messages, "%s\n", argv[i]);
+	    bu_vls_printf(messages, "%s\n", argv[i]);
 	}
 
 	_gcv_filter_options_free(filter, *options_data);
-	bu_log("%s", bu_vls_addr(&messages));
 	return 0;
     }
 
-    bu_log("%s", bu_vls_addr(&messages));
-
-    bu_vls_free(&messages);
     return 1;
 }
 
@@ -290,7 +286,8 @@ gcv_execute(struct gcv_context *context, const struct gcv_filter *filter,
 
     _gcv_opts_check(gcv_options);
 
-    if (!_gcv_filter_options_process(filter, argc, argv, &options_data))
+    if (!_gcv_filter_options_process(&context->messages, filter, argc, argv,
+				     &options_data))
 	return 0;
 
     bu_debug |= gcv_options->bu_debug_flag;

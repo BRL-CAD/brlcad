@@ -408,16 +408,19 @@ gcv_do_conversion(
 
     if (!gcv_execute(&context, in_filter, NULL, in_argc, in_argv, in_path)) {
 	bu_vls_printf(messages, "Read filter failed for '%s'\n", in_path);
+	bu_vls_vlscat(messages, &context.messages);
 	gcv_context_destroy(&context);
 	return 0;
     }
 
     if (!gcv_execute(&context, out_filter, NULL, out_argc, out_argv, out_path)) {
 	bu_vls_printf(messages, "Write filter failed for '%s'\n", out_path);
+	bu_vls_vlscat(messages, &context.messages);
 	gcv_context_destroy(&context);
 	return 0;
     }
 
+    bu_vls_vlscat(messages, &context.messages);
     gcv_context_destroy(&context);
 
     return 1;
