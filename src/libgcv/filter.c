@@ -138,7 +138,6 @@ _gcv_filter_options_process(struct bu_vls *messages,
 	return 0;
     }
 
-    _gcv_filter_options_free(filter, *options_data);
     return 1;
 }
 
