@@ -42,7 +42,7 @@ __BEGIN_DECLS
 struct gcv_context
 {
     struct db_i *dbip;
-    struct bu_vls messages;
+    bu_avs_t messages;
 };
 
 
