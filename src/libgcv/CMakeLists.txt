@@ -37,7 +37,7 @@ set(LIBGCV_PLUGIN_SOURCES
 
 list(APPEND LIBGCV_SOURCES ${LIBGCV_PLUGIN_SOURCES})
 
-BRLCAD_ADDLIB(libgcv "${LIBGCV_SOURCES}" "librt;libwdb;libbu;libwfobj" SO_SRCS "${GCV_SO_SRCS}" STATIC_SRCS "${GCV_STATIC_SRCS}")
+BRLCAD_ADDLIB(libgcv "${LIBGCV_SOURCES}" "libwfobj;librt;libwdb;libbu" SO_SRCS "${GCV_SO_SRCS}" STATIC_SRCS "${GCV_STATIC_SRCS}")
 set_target_properties(libgcv PROPERTIES VERSION 20.0.1 SOVERSION 20)
 
 enable_testing()

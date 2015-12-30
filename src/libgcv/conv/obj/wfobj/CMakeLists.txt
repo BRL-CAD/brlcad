@@ -24,7 +24,7 @@ set(LIBWFOBJ_SOURCES
   tri_face.c
   )
 
-BRLCAD_ADDLIB(libwfobj "${LIBWFOBJ_SOURCES}" "")
+BRLCAD_ADDLIB(libwfobj "${LIBWFOBJ_SOURCES}" "librt;libbu")
 set_target_properties(libwfobj PROPERTIES VERSION 20.0.1 SOVERSION 20)
 
 set_property(TARGET libwfobj APPEND PROPERTY INCLUDE_DIRECTORIES "${PERPLEX_WFOBJ_SCANNER_INCLUDE_DIR}")
