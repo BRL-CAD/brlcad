@@ -231,9 +231,6 @@ gcv_list_filters(void)
 void
 gcv_opts_default(struct gcv_opts *gcv_options)
 {
-    const struct bn_tol default_calculational_tolerance =
-    {BN_TOL_MAGIC, BN_TOL_DIST, BN_TOL_DIST * BN_TOL_DIST, 1.0e-6, 1.0 - 1.0e-6};
-
     const struct rt_tess_tol default_tessellation_tolerance =
     {RT_TESS_TOL_MAGIC, 0.0, 1.0e-2, 0.0};
 
@@ -242,7 +239,8 @@ gcv_opts_default(struct gcv_opts *gcv_options)
     gcv_options->scale_factor = 1.0;
     gcv_options->default_name = "unnamed";
 
-    gcv_options->calculational_tolerance = default_calculational_tolerance;
+    BN_TOL_INIT(&gcv_options->calculational_tolerance);
+    rt_tol_default(&gcv_options->calculational_tolerance);
     gcv_options->tessellation_tolerance = default_tessellation_tolerance;
 }
 
