@@ -213,7 +213,7 @@ struct conversion_state {
     ssize_t group_head_cnt;
     int	grid_size;	                /* Number of points that will fit in current grid_pts array */
     int	max_grid_no;	                /* Maximum grid number used */
-    int	mode;	                 	/* Plate mode (1) or volume mode (2), of current component */
+    enum section_mode mode;	        /* Plate mode (1) or volume mode (2), of current component */
     int	group_id;                 	/* Group identification number from SECTION card */
     int	comp_id;                 	/* Component identification number from SECTION card */
     int	region_id;		        /* Region id number (group id no X 1000 + component id no) */

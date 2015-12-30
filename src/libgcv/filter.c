@@ -119,7 +119,7 @@ _gcv_filter_options_process(const struct gcv_filter *filter, size_t argc,
 
     BU_VLS_INIT(&messages);
     ret_argc = argc ? bu_opt_parse(&messages, argc, (const char **)argv,
-				   options_desc) : argc;
+				   options_desc) : 0;
     bu_log("%s", bu_vls_addr(&messages));
     bu_vls_free(&messages);
 
