@@ -20,8 +20,6 @@
  */
 /** @file stl_read.c
  *
- * Convert Stereolithography format files into a BRL-CAD database.
- *
  * Note that binary STL format use a little-endian byte ordering where
  * bytes at lower addresses have lower significance.
  *
@@ -40,32 +38,41 @@
 #include "bu/cv.h"
 #include "bu/getopt.h"
 #include "bu/units.h"
+#include "gcv/api.h"
 #include "vmath.h"
 #include "nmg.h"
 #include "rt/geom.h"
 #include "raytrace.h"
 #include "wdb.h"
-#include "gcv/api.h"
 
 
-static struct vert_root *tree_root;
-static struct wmember all_head;
-static const char *input_file;	/* name of the input file */
-static char *forced_name=NULL;	/* name specified on command line */
-static int solid_count=0;	/* count of solids converted */
-static struct bn_tol tol;	/* Tolerance structure */
-static int id_no=1000;		/* Ident numbers */
-static int const_id=-1;		/* Constant ident number (assigned to all regions if non-negative) */
-static int mat_code=1;		/* default material code */
-static int debug=0;		/* Debug flag */
-static int binary=0;		/* flag indicating input is binary format */
-static FILE *fd_in;		/* input file */
-static struct rt_wdb *fd_out;	/* Resulting BRL-CAD file */
-static float conv_factor=1.0;	/* conversion factor from model units to mm */
-static unsigned int obj_count=0; /* Count of parts converted for "stl-g" conversions */
-static int *bot_faces=NULL;	 /* array of ints (indices into tree_root->the_array array) three per face */
-static int bot_fsize=0;		/* current size of the bot_faces array */
-static int bot_fcurr=0;		/* current bot face */
+struct stl_read_options
+{
+    int binary;	        	/* flag indicating input is binary format */
+    int starting_id;
+    int const_id;		/* Constant ident number (assigned to all regions if non-negative) */
+    int mat_code;		/* default material code */
+};
+
+
+struct conversion_state
+{
+    const struct gcv_opts *gcv_options;
+    const struct stl_read_options *stl_read_options;
+
+    const char *input_file;	/* name of the input file */
+    FILE *fd_in;		/* input file */
+    struct rt_wdb *fd_out;	/* Resulting BRL-CAD file */
+
+    struct wmember all_head;
+    struct vert_root *tree_root;
+    int *bot_faces;	        /* array of ints (indices into tree_root->the_array array) three per face */
+
+    int id_no;	            	/* Ident numbers */
+    int bot_fsize;		/* current size of the bot_faces array */
+    int bot_fcurr;		/* current bot face */
+};
+
 
 /* Size of blocks of faces to malloc */
 #define BOT_FBLOCK 128
@@ -74,28 +81,27 @@ static int bot_fcurr=0;		/* current bot face */
 
 
 HIDDEN void
-Add_face(int face[3])
+Add_face(struct conversion_state *pstate, int face[3])
 {
-    if (!bot_faces) {
-	bot_faces = (int *)bu_malloc(3 * BOT_FBLOCK * sizeof(int), "bot_faces");
-	bot_fsize = BOT_FBLOCK;
-	bot_fcurr = 0;
-    } else if (bot_fcurr >= bot_fsize) {
-	bot_fsize += BOT_FBLOCK;
-	bot_faces = (int *)bu_realloc((void *)bot_faces, 3 * bot_fsize * sizeof(int), "bot_faces increase");
+    if (!pstate->bot_faces) {
+	pstate->bot_faces = (int *)bu_malloc(3 * BOT_FBLOCK * sizeof(int), "bot_faces");
+	pstate->bot_fsize = BOT_FBLOCK;
+	pstate->bot_fcurr = 0;
+    } else if (pstate->bot_fcurr >= pstate->bot_fsize) {
+	pstate->bot_fsize += BOT_FBLOCK;
+	pstate->bot_faces = (int *)bu_realloc((void *)pstate->bot_faces, 3 * pstate->bot_fsize * sizeof(int), "bot_faces increase");
     }
 
-    VMOVE(&bot_faces[3*bot_fcurr], face);
-    bot_fcurr++;
+    VMOVE(&pstate->bot_faces[3*pstate->bot_fcurr], face);
+    pstate->bot_fcurr++;
 }
 
-
 HIDDEN void
-mk_unique_brlcad_name(struct bu_vls *name)
+mk_unique_brlcad_name(struct conversion_state *pstate, struct bu_vls *name)
 {
     char *c;
     int count=0;
-    int len;
+    size_t len;
 
     c = bu_vls_addr(name);
 
@@ -107,7 +113,7 @@ mk_unique_brlcad_name(struct bu_vls *name)
     }
 
     len = bu_vls_strlen(name);
-    while (db_lookup(fd_out->dbip, bu_vls_addr(name), LOOKUP_QUIET) != RT_DIR_NULL) {
+    while (db_lookup(pstate->fd_out->dbip, bu_vls_addr(name), LOOKUP_QUIET) != RT_DIR_NULL) {
 	char suff[10];
 
 	bu_vls_trunc(name, len);
@@ -117,9 +123,8 @@ mk_unique_brlcad_name(struct bu_vls *name)
     }
 }
 
-
-static void
-Convert_part_ascii(char line[MAX_LINE_SIZE])
+HIDDEN void
+Convert_part_ascii(struct conversion_state *pstate, char line[MAX_LINE_SIZE])
 {
     char line1[MAX_LINE_SIZE];
     struct bu_vls solid_name = BU_VLS_INIT_ZERO;
@@ -145,7 +150,7 @@ Convert_part_ascii(char line[MAX_LINE_SIZE])
     }
 
 
-    bot_fcurr = 0;
+    pstate->bot_fcurr = 0;
     BU_LIST_INIT(&head.l);
 
     start = (-1);
@@ -160,9 +165,7 @@ Convert_part_ascii(char line[MAX_LINE_SIZE])
     start += 4;
     while (isspace((int)line[++start]) && line[start] != '\0');
 
-    if (forced_name) {
-	bu_vls_strcpy(&region_name, forced_name);
-    } else if (line[start] != '\0') {
+    if (line[start] != '\0') {
 	char *ptr;
 
 	/* get name */
@@ -182,15 +185,13 @@ Convert_part_ascii(char line[MAX_LINE_SIZE])
 	char *ptr;
 	int base_len;
 
-	obj_count++;
-
 	/* copy the file name into our work space (skip over path) */
-	ptr = strrchr(input_file, '/');
+	ptr = strrchr(pstate->input_file, '/');
 	if (ptr) {
 	    ptr++;
 	    bu_vls_strcpy(&region_name, ptr);
 	} else {
-	    bu_vls_strcpy(&region_name, input_file);
+	    bu_vls_strcpy(&region_name, pstate->input_file);
 	}
 
 	/* eliminate a trailing ".stl" */
@@ -200,20 +201,19 @@ Convert_part_ascii(char line[MAX_LINE_SIZE])
 	}
     }
 
-    mk_unique_brlcad_name(&region_name);
+    mk_unique_brlcad_name(pstate, &region_name);
     bu_log("Converting Part: %s\n", bu_vls_addr(&region_name));
 
-    solid_count++;
     bu_vls_strcpy(&solid_name, "s.");
     bu_vls_vlscat(&solid_name, &region_name);
-    mk_unique_brlcad_name(&solid_name);
+    mk_unique_brlcad_name(pstate, &solid_name);
 
     bu_log("\tUsing solid name: %s\n", bu_vls_addr(&solid_name));
 
     if (RT_G_DEBUG & DEBUG_MEM || RT_G_DEBUG & DEBUG_MEM_FULL)
 	bu_prmem("At start of Convert_part_ascii()");
 
-    while (bu_fgets(line1, MAX_LINE_SIZE, fd_in) != NULL) {
+    while (bu_fgets(line1, MAX_LINE_SIZE, pstate->fd_in) != NULL) {
 	start = (-1);
 	while (isspace((int)line1[++start]));
 	if (!bu_strncmp(&line1[start], "endsolid", 8) || !bu_strncmp(&line1[start], "ENDSOLID", 8)) {
@@ -249,7 +249,7 @@ Convert_part_ascii(char line[MAX_LINE_SIZE])
 	    int tmp_face[3] = {0, 0, 0};
 
 	    while (!endloop) {
-		if (bu_fgets(line1, MAX_LINE_SIZE, fd_in) == NULL)
+		if (bu_fgets(line1, MAX_LINE_SIZE, pstate->fd_in) == NULL)
 		    bu_exit(EXIT_FAILURE, "Unexpected EOF while reading a loop in a part!\n");
 
 		start = (-1);
@@ -267,14 +267,14 @@ Convert_part_ascii(char line[MAX_LINE_SIZE])
 
 			bu_log("Non-triangular loop:\n");
 			for (n=0; n<3; n++)
-			    bu_log("\t(%g %g %g)\n", V3ARGS(&tree_root->the_array[tmp_face[n]]));
+			    bu_log("\t(%g %g %g)\n", V3ARGS(&pstate->tree_root->the_array[tmp_face[n]]));
 
 			bu_log("\t(%g %g %g)\n", x, y, z);
 		    }
-		    x *= conv_factor;
-		    y *= conv_factor;
-		    z *= conv_factor;
-		    tmp_face[vert_no++] = Add_vert(x, y, z, tree_root, tol.dist_sq);
+		    x *= pstate->gcv_options->scale_factor;
+		    y *= pstate->gcv_options->scale_factor;
+		    z *= pstate->gcv_options->scale_factor;
+		    tmp_face[vert_no++] = Add_vert(x, y, z, pstate->tree_root, pstate->gcv_options->calculational_tolerance.dist_sq);
 		} else {
 		    bu_log("Unrecognized line: %s\n", line1);
 		}
@@ -296,16 +296,16 @@ Convert_part_ascii(char line[MAX_LINE_SIZE])
 		continue;
 	    }
 
-	    if (debug) {
+	    if (pstate->gcv_options->debug_mode) {
 		int n;
 
 		bu_log("Making Face:\n");
 		for (n=0; n<3; n++)
-		    bu_log("\tvertex #%d: (%g %g %g)\n", tmp_face[n], V3ARGS(&tree_root->the_array[3*tmp_face[n]]));
+		    bu_log("\tvertex #%d: (%g %g %g)\n", tmp_face[n], V3ARGS(&pstate->tree_root->the_array[3*tmp_face[n]]));
 		VPRINT(" normal", normal);
 	    }
 
-	    Add_face(tmp_face);
+	    Add_face(pstate, tmp_face);
 	    face_count++;
 	}
     }
@@ -324,9 +324,9 @@ Convert_part_ascii(char line[MAX_LINE_SIZE])
 	    bu_log("\t%d faces were degenerate\n", degenerate_count);
     }
 
-    mk_bot(fd_out, bu_vls_addr(&solid_name), RT_BOT_SOLID, RT_BOT_UNORIENTED, 0, tree_root->curr_vert, bot_fcurr,
-	   tree_root->the_array, bot_faces, NULL, NULL);
-    clean_vert_tree(tree_root);
+    mk_bot(pstate->fd_out, bu_vls_addr(&solid_name), RT_BOT_SOLID, RT_BOT_UNORIENTED, 0, pstate->tree_root->curr_vert, pstate->bot_fcurr,
+	   pstate->tree_root->the_array, pstate->bot_faces, NULL, NULL);
+    clean_vert_tree(pstate->tree_root);
 
     if (face_count && !solid_in_region) {
 	(void)mk_addmember(bu_vls_addr(&solid_name), &head.l, NULL, WMOP_UNION);
@@ -334,17 +334,17 @@ Convert_part_ascii(char line[MAX_LINE_SIZE])
 
     bu_log("\tMaking region (%s)\n", bu_vls_addr(&region_name));
 
-    if (const_id >= 0) {
-	mk_lrcomb(fd_out, bu_vls_addr(&region_name), &head, 1, (char *)NULL,
-		  (char *)NULL, color, const_id, 0, mat_code, 100, 0);
+    if (pstate->stl_read_options->const_id) {
+	mk_lrcomb(pstate->fd_out, bu_vls_addr(&region_name), &head, 1, (char *)NULL,
+		  (char *)NULL, color, pstate->id_no, 0, pstate->stl_read_options->mat_code, 100, 0);
 	if (face_count) {
-	    (void)mk_addmember(bu_vls_addr(&region_name), &all_head.l, NULL, WMOP_UNION);
+	    (void)mk_addmember(bu_vls_addr(&region_name), &pstate->all_head.l, NULL, WMOP_UNION);
 	}
     } else {
-	mk_lrcomb(fd_out, bu_vls_addr(&region_name), &head, 1, (char *)NULL, (char *)NULL, color, id_no, 0, mat_code, 100, 0);
+	mk_lrcomb(pstate->fd_out, bu_vls_addr(&region_name), &head, 1, (char *)NULL, (char *)NULL, color, pstate->id_no, 0, pstate->stl_read_options->mat_code, 100, 0);
 	if (face_count)
-	    (void)mk_addmember(bu_vls_addr(&region_name), &all_head.l, NULL, WMOP_UNION);
-	id_no++;
+	    (void)mk_addmember(bu_vls_addr(&region_name), &pstate->all_head.l, NULL, WMOP_UNION);
+	pstate->id_no++;
     }
 
     if (RT_G_DEBUG & DEBUG_MEM_FULL) {
@@ -359,9 +359,8 @@ Convert_part_ascii(char line[MAX_LINE_SIZE])
     return;
 }
 
-
 /* Byte swaps a 4-byte val */
-static void lswap(unsigned int *v)
+HIDDEN void stl_read_lswap(unsigned int *v)
 {
     unsigned int r;
 
@@ -370,9 +369,8 @@ static void lswap(unsigned int *v)
 	| ((r & 0xff000000) >> 24);
 }
 
-
-static void
-Convert_part_binary()
+HIDDEN void
+Convert_part_binary(struct conversion_state *pstate)
 {
     unsigned char buf[51];
     unsigned long num_facets=0;
@@ -386,53 +384,46 @@ Convert_part_binary()
     int degenerate_count=0;
     size_t ret;
 
-    solid_count++;
-    if (forced_name) {
-	bu_vls_strcpy(&solid_name, "s.");
-	bu_vls_strcat(&solid_name, forced_name);
-	bu_vls_strcpy(&region_name, forced_name);
-    } else {
-	bu_vls_strcat(&solid_name, "s.stl");
-	bu_vls_strcat(&region_name, "r.stl");
-    }
+    bu_vls_strcat(&solid_name, "s.stl");
+    bu_vls_strcat(&region_name, "r.stl");
     bu_log("\tUsing solid name: %s\n", bu_vls_addr(&solid_name));
 
 
-    ret = fread(buf, 4, 1, fd_in);
+    ret = fread(buf, 4, 1, pstate->fd_in);
     if (ret != 1)
 	perror("fread");
 
     /* swap bytes to convert from Little-endian to network order (big-endian) */
-    lswap((unsigned int *)buf);
+    stl_read_lswap((unsigned int *)buf);
 
     /* now use our network to native host format conversion tools */
     num_facets = ntohl(*(uint32_t *)buf);
 
     bu_log("\t%ld facets\n", num_facets);
-    while (fread(buf, 48, 1, fd_in)) {
+    while (fread(buf, 48, 1, pstate->fd_in)) {
 	int i;
 	double pt[3];
 
 	/* swap bytes to convert from Little-endian to network order (big-endian) */
 	for (i=0; i<12; i++) {
-	    lswap((unsigned int *)&buf[i*4]);
+	    stl_read_lswap((unsigned int *)&buf[i*4]);
 	}
 
 	/* now use our network to native host format conversion tools */
 	bu_cv_ntohf((unsigned char *)flts, buf, 12);
 
 	/* unused attribute byte count */
-	ret = fread(buf, 2, 1, fd_in);
+	ret = fread(buf, 2, 1, pstate->fd_in);
 	if (ret != 1)
 	    perror("fread");
 
 	VMOVE(normal, flts);
-	VSCALE(pt, &flts[3], conv_factor);
-	tmp_face[0] = Add_vert(V3ARGS(pt), tree_root, tol.dist_sq);
-	VSCALE(pt, &flts[6], conv_factor);
-	tmp_face[1] = Add_vert(V3ARGS(pt), tree_root, tol.dist_sq);
-	VSCALE(pt, &flts[9], conv_factor);
-	tmp_face[2] = Add_vert(V3ARGS(pt), tree_root, tol.dist_sq);
+	VSCALE(pt, &flts[3], pstate->gcv_options->scale_factor);
+	tmp_face[0] = Add_vert(V3ARGS(pt), pstate->tree_root, pstate->gcv_options->calculational_tolerance.dist_sq);
+	VSCALE(pt, &flts[6], pstate->gcv_options->scale_factor);
+	tmp_face[1] = Add_vert(V3ARGS(pt), pstate->tree_root, pstate->gcv_options->calculational_tolerance.dist_sq);
+	VSCALE(pt, &flts[9], pstate->gcv_options->scale_factor);
+	tmp_face[2] = Add_vert(V3ARGS(pt), pstate->tree_root, pstate->gcv_options->calculational_tolerance.dist_sq);
 
 	/* check for degenerate faces */
 	if (tmp_face[0] == tmp_face[1]) {
@@ -450,16 +441,16 @@ Convert_part_binary()
 	    continue;
 	}
 
-	if (debug) {
+	if (pstate->gcv_options->debug_mode) {
 	    int n;
 
 	    bu_log("Making Face:\n");
 	    for (n=0; n<3; n++)
-		bu_log("\tvertex #%d: (%g %g %g)\n", tmp_face[n], V3ARGS(&tree_root->the_array[3*tmp_face[n]]));
+		bu_log("\tvertex #%d: (%g %g %g)\n", tmp_face[n], V3ARGS(&pstate->tree_root->the_array[3*tmp_face[n]]));
 	    VPRINT(" normal", normal);
 	}
 
-	Add_face(tmp_face);
+	Add_face(pstate, tmp_face);
 	face_count++;
     }
 
@@ -474,9 +465,9 @@ Convert_part_binary()
 	    bu_log("\t%d faces were degenerate\n", degenerate_count);
     }
 
-    mk_bot(fd_out, bu_vls_addr(&solid_name), RT_BOT_SOLID, RT_BOT_UNORIENTED, 0,
-	   tree_root->curr_vert, bot_fcurr, tree_root->the_array, bot_faces, NULL, NULL);
-    clean_vert_tree(tree_root);
+    mk_bot(pstate->fd_out, bu_vls_addr(&solid_name), RT_BOT_SOLID, RT_BOT_UNORIENTED, 0,
+	   pstate->tree_root->curr_vert, pstate->bot_fcurr, pstate->tree_root->the_array, pstate->bot_faces, NULL, NULL);
+    clean_vert_tree(pstate->tree_root);
 
     BU_LIST_INIT(&head.l);
     if (face_count) {
@@ -484,17 +475,17 @@ Convert_part_binary()
     }
     bu_log("\tMaking region (%s)\n", bu_vls_addr(&region_name));
 
-    if (const_id >= 0) {
-	mk_lrcomb(fd_out, bu_vls_addr(&region_name), &head, 1, (char *)NULL,
-		  (char *)NULL, NULL, const_id, 0, mat_code, 100, 0);
+    if (pstate->stl_read_options->const_id) {
+	mk_lrcomb(pstate->fd_out, bu_vls_addr(&region_name), &head, 1, (char *)NULL,
+		  (char *)NULL, NULL, pstate->id_no, 0, pstate->stl_read_options->mat_code, 100, 0);
 	if (face_count) {
-	    (void)mk_addmember(bu_vls_addr(&region_name), &all_head.l, NULL, WMOP_UNION);
+	    (void)mk_addmember(bu_vls_addr(&region_name), &pstate->all_head.l, NULL, WMOP_UNION);
 	}
     } else {
-	mk_lrcomb(fd_out, bu_vls_addr(&region_name), &head, 1, (char *)NULL, (char *)NULL, NULL, id_no, 0, mat_code, 100, 0);
+	mk_lrcomb(pstate->fd_out, bu_vls_addr(&region_name), &head, 1, (char *)NULL, (char *)NULL, NULL, pstate->id_no, 0, pstate->stl_read_options->mat_code, 100, 0);
 	if (face_count)
-	    (void)mk_addmember(bu_vls_addr(&region_name), &all_head.l, NULL, WMOP_UNION);
-	id_no++;
+	    (void)mk_addmember(bu_vls_addr(&region_name), &pstate->all_head.l, NULL, WMOP_UNION);
+	pstate->id_no++;
     }
 
     if (RT_G_DEBUG & DEBUG_MEM_FULL) {
@@ -508,13 +499,13 @@ Convert_part_binary()
 
 
 HIDDEN void
-Convert_input()
+Convert_input(struct conversion_state *pstate)
 {
     char line[ MAX_LINE_SIZE ];
 
-    if (binary) {
-	if (fread(line, 80, 1, fd_in) < 1) {
-	    if (feof(fd_in)) {
+    if (pstate->stl_read_options->binary) {
+	if (fread(line, 80, 1, pstate->fd_in) < 1) {
+	    if (feof(pstate->fd_in)) {
 		bu_exit(EXIT_FAILURE, "Unexpected EOF in input file!\n");
 	    } else {
 		bu_log("Error reading input file\n");
@@ -524,15 +515,15 @@ Convert_input()
 	}
 	line[80] = '\0';
 	bu_log("header data:\n%s\n\n", line);
-	Convert_part_binary();
+	Convert_part_binary(pstate);
     } else {
-	while (bu_fgets(line, MAX_LINE_SIZE, fd_in) != NULL) {
+	while (bu_fgets(line, MAX_LINE_SIZE, pstate->fd_in) != NULL) {
 	    int start = 0;
 	    while (line[start] != '\0' && isspace((int)line[start])) {
 		start++;
 	    }
 	    if (!bu_strncmp(&line[start], "solid", 5) || !bu_strncmp(&line[start], "SOLID", 5))
-		Convert_part_ascii(line);
+		Convert_part_ascii(pstate, line);
 	    else
 		bu_log("Unrecognized line:\n%s\n", line);
 	}
@@ -540,52 +531,88 @@ Convert_input()
 }
 
 
-HIDDEN int
-stl_read(struct gcv_context *context, const struct gcv_opts *UNUSED(gcv_options), const void *UNUSED(options_data), const char *source_path)
+HIDDEN void
+stl_read_create_opts(struct bu_opt_desc **options_desc, void **dest_options_data)
 {
-    fd_out = context->dbip->dbi_wdbp;
-    input_file = source_path;
+    struct stl_read_options *options_data;
 
-    tol.magic = BN_TOL_MAGIC;
+    BU_ALLOC(options_data, struct stl_read_options);
+    *dest_options_data = options_data;
+    *options_desc = (struct bu_opt_desc *)bu_malloc(5 * sizeof(struct bu_opt_desc), "options_desc");
 
-    /* this value selected as a reasonable compromise between eliminating
-     * needed faces and keeping degenerate faces
-     */
-    tol.dist = 0.0005;	/* default, same as MGED, RT, ... */
-    tol.dist_sq = tol.dist * tol.dist;
-    tol.perp = 1e-6;
-    tol.para = 1 - tol.perp;
+    options_data->binary = 0;
+    options_data->starting_id = 1000;
+    options_data->const_id = 0;
+    options_data->mat_code = 1;
 
-    forced_name = NULL;
+    BU_OPT((*options_desc)[0], NULL, "binary", NULL,
+	    NULL, &options_data->binary,
+	    "specify that the input is in binary STL format");
 
-    conv_factor = 1.0;	/* default */
+    BU_OPT((*options_desc)[1], NULL, "starting-ident", "number",
+	    bu_opt_int, options_data,
+	    "specify the starting ident for the regions created");
 
-    if ((fd_in=fopen(input_file, "rb")) == NULL) {
-	bu_log("Cannot open input file (%s)\n", input_file);
-	perror("stl_read");
+    BU_OPT((*options_desc)[2], NULL, "constant-ident", NULL,
+	    NULL, &options_data->const_id,
+	    "specify that the starting ident should remain constant");
+
+    BU_OPT((*options_desc)[3], NULL, "material", "code",
+	    bu_opt_int, &options_data->mat_code,
+	    "specify the material code that will be assigned to created regions");
+
+    BU_OPT_NULL((*options_desc)[4]);
+}
+
+
+HIDDEN void
+stl_read_free_opts(void *options_data)
+{
+    bu_free(options_data, "options_data");
+}
+
+
+HIDDEN int
+stl_read(struct gcv_context *context, const struct gcv_opts *gcv_options, const void *options_data, const char *source_path)
+{
+    struct conversion_state state;
+
+    memset(&state, 0, sizeof(state));
+
+    state.gcv_options = gcv_options;
+    state.stl_read_options = (struct stl_read_options *)options_data;
+    state.id_no = state.stl_read_options->starting_id;
+    state.input_file = source_path;
+    state.fd_out = context->dbip->dbi_wdbp;
+
+    if ((state.fd_in = fopen(source_path, "rb")) == NULL) {
+	bu_log("Cannot open input file (%s)\n", source_path);
+	perror("libgcv");
 	bu_exit(1, NULL);
     }
 
-    mk_id_units(fd_out, "Conversion from Stereolithography format", "mm");
+    mk_id_units(state.fd_out, "Conversion from Stereolithography format", "mm");
 
-    BU_LIST_INIT(&all_head.l);
+    BU_LIST_INIT(&state.all_head.l);
 
     /* create a tree structure to hold the input vertices */
-    tree_root = create_vert_tree();
+    state.tree_root = create_vert_tree();
 
-    Convert_input();
+    Convert_input(&state);
 
     /* make a top level group */
-    mk_lcomb(fd_out, "all", &all_head, 0, (char *)NULL, (char *)NULL, (unsigned char *)NULL, 0);
+    mk_lcomb(context->dbip->dbi_wdbp, "all", &state.all_head, 0, (char *)NULL, (char *)NULL, (unsigned char *)NULL, 0);
 
-    fclose(fd_in);
+    fclose(state.fd_in);
 
     return 1;
 }
 
 
-const struct gcv_filter gcv_conv_stl_read =
-{"STL Reader", GCV_FILTER_READ, MIME_MODEL_STL, NULL, NULL, stl_read};
+const struct gcv_filter gcv_conv_stl_read = {
+    "STL Reader", GCV_FILTER_READ, MIME_MODEL_STL,
+    stl_read_create_opts, stl_read_free_opts, stl_read
+};
 
 
 /*

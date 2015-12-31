@@ -120,7 +120,8 @@ struct name_tree {
 #define NAME_TREE_MAGIC 0x55555555
 
 
-static void check_name_tree_magic(const struct name_tree *tree)
+HIDDEN void
+check_name_tree_magic(const struct name_tree *tree)
 {
 	if (!tree) { \
 	    bu_log("ERROR: Null name_tree pointer, file=%s, line=%d\n", __FILE__, __LINE__);
@@ -132,7 +133,7 @@ static void check_name_tree_magic(const struct name_tree *tree)
 }
 
 
-static void
+HIDDEN void
 free_name_tree(struct name_tree *ptree)
 {
     if (!ptree)
@@ -171,7 +172,7 @@ struct holes {
 };
 
 
-static const int hex_faces[12][3]={
+HIDDEN const int hex_faces[12][3]={
     { 0, 1, 4 }, /* 1 */
     { 1, 5, 4 }, /* 2 */
     { 1, 2, 5 }, /* 3 */
@@ -188,6 +189,7 @@ static const int hex_faces[12][3]={
 
 
 struct conversion_state {
+    const struct gcv_opts *gcv_options;
     struct rt_wdb *fpout;
 
     FILE *fpin;			        /* Input FASTGEN4 file pointer */
@@ -213,7 +215,7 @@ struct conversion_state {
     ssize_t group_head_cnt;
     int	grid_size;	                /* Number of points that will fit in current grid_pts array */
     int	max_grid_no;	                /* Maximum grid number used */
-    enum section_mode mode;	        /* Plate mode (1) or volume mode (2), of current component */
+    enum section_mode mode;	                 	/* Plate mode (1) or volume mode (2), of current component */
     int	group_id;                 	/* Group identification number from SECTION card */
     int	comp_id;                 	/* Component identification number from SECTION card */
     int	region_id;		        /* Region id number (group id no X 1000 + component id no) */
@@ -234,15 +236,8 @@ struct conversion_state {
 };
 
 
-/* temporary -- FIXME */
-static const int debug = 0;
-static const int quiet = 0;
-static struct conversion_state vstate;
-static struct conversion_state * const pstate = &vstate;
-
-
-static void
-zero_conversion_state(struct conversion_state *state)
+HIDDEN void
+fg4_zero_conversion_state(struct conversion_state *state)
 {
     memset(state, 0, sizeof(*state));
 
@@ -256,11 +251,12 @@ zero_conversion_state(struct conversion_state *state)
     bu_ptbl_init(&state->stack, 64, " &stack");
     bu_ptbl_init(&state->stack2, 64, " &stack2 ");
     BU_LIST_INIT(&state->hole_head.l);
+    BU_LIST_INIT(&state->HeadColor.l);
 }
 
 
-static void
-free_conversion_state(struct conversion_state *state)
+HIDDEN void
+fg4_free_conversion_state(struct conversion_state *state)
 {
     if (state->fpin)
 	fclose(state->fpin);
@@ -287,8 +283,7 @@ free_conversion_state(struct conversion_state *state)
     bu_ptbl_free(&state->stack);
     bu_ptbl_free(&state->stack2);
 
-    if (BU_LIST_IS_INITIALIZED((struct bu_list *)&state->HeadColor))
-	bu_list_free((struct bu_list *)&state->HeadColor);
+    bu_list_free(&state->HeadColor.l);
 
     if (state->compsplt_root) {
 	struct compsplt *current, *next;
@@ -330,15 +325,15 @@ free_conversion_state(struct conversion_state *state)
 
 
 /* convenient function for building regions */
-static void
-make_region(struct rt_wdb *fp, struct wmember *headp, const char *name, int r_id, const unsigned char *rgb)
+HIDDEN void
+make_region(const struct conversion_state *pstate, struct rt_wdb *fp, struct wmember *headp, const char *name, int r_id, const unsigned char *rgb)
 {
 	if (pstate->mode == MODE_PLATE) {
-	    if (!quiet)
+	    if (pstate->gcv_options->verbosity_level)
 		bu_log("Making region: %s (PLATE)\n", name);
 	    mk_comb(fp, name, &((headp)->l), 'P', (char *)NULL, (char *)NULL, rgb, r_id, 0, 1, 100, 0, 0, 0);
 	} else if (pstate->mode == MODE_VOLUME) {
-	    if (!quiet)
+	    if (pstate->gcv_options->verbosity_level)
 		bu_log("Making region: %s (VOLUME)\n", name);
 	    mk_comb(fp, name, &((headp)->l), 'V', (char *)NULL, (char *)NULL, rgb, r_id, 0, 1, 100, 0, 0, 0);
 	} else {
@@ -347,8 +342,8 @@ make_region(struct rt_wdb *fp, struct wmember *headp, const char *name, int r_id
 }
 
 
-static int
-get_line(void)
+HIDDEN int
+get_line(struct conversion_state *pstate)
 {
     int len, done;
     struct bu_vls buffer = BU_VLS_INIT_ZERO;
@@ -377,8 +372,8 @@ out:
 }
 
 
-static unsigned char *
-get_fast4_color(int r_id) {
+HIDDEN unsigned char *
+get_fast4_color(const struct conversion_state *pstate, int r_id) {
     struct fast4_color *fcp;
 
     for (BU_LIST_FOR(fcp, fast4_color, &pstate->HeadColor.l)) {
@@ -390,8 +385,8 @@ get_fast4_color(int r_id) {
 }
 
 
-static int
-is_a_hole(int id)
+HIDDEN int
+is_a_hole(const struct conversion_state *pstate, int id)
 {
     struct holes *hole_ptr;
     struct hole_list *ptr;
@@ -413,8 +408,8 @@ is_a_hole(int id)
 }
 
 
-static void
-plot_tri(int pt1, int pt2, int pt3)
+HIDDEN void
+plot_tri(const struct conversion_state *pstate, int pt1, int pt2, int pt3)
 {
     pdv_3move(pstate->fp_plot, pstate->grid_points[pt1]);
     pdv_3cont(pstate->fp_plot, pstate->grid_points[pt2]);
@@ -423,8 +418,8 @@ plot_tri(int pt1, int pt2, int pt3)
 }
 
 
-static void
-Check_names(void)
+HIDDEN void
+Check_names(struct conversion_state *pstate)
 {
     struct name_tree *ptr;
 
@@ -468,7 +463,7 @@ Check_names(void)
 }
 
 
-static struct name_tree *
+HIDDEN struct name_tree *
 Search_names(struct name_tree *root, char *name, int *found)
 {
     struct name_tree *ptr;
@@ -501,7 +496,7 @@ Search_names(struct name_tree *root, char *name, int *found)
 }
 
 
-static struct name_tree *
+HIDDEN struct name_tree *
 Search_ident(struct name_tree *root, int reg_id, int *found)
 {
     struct name_tree *ptr;
@@ -535,8 +530,8 @@ Search_ident(struct name_tree *root, int reg_id, int *found)
 }
 
 
-static void
-List_names(void)
+HIDDEN void
+List_names(struct conversion_state *pstate)
 {
     struct name_tree *ptr;
 
@@ -577,14 +572,14 @@ List_names(void)
 }
 
 
-static void
-Insert_region_name(char *name, int reg_id)
+HIDDEN void
+Insert_region_name(struct conversion_state *pstate, char *name, int reg_id)
 {
     struct name_tree *nptr_model, *rptr_model;
     struct name_tree *new_ptr;
     int foundn, foundr;
 
-    if (debug)
+    if (pstate->gcv_options->debug_mode)
 	bu_log("Insert_region_name(name=%s, reg_id=%d\n", name, reg_id);
 
     rptr_model = Search_ident(pstate->name_root, reg_id, &foundr);
@@ -596,7 +591,7 @@ Insert_region_name(char *name, int reg_id)
     if (foundn != foundr) {
 	bu_log("Insert_region_name: name %s ident %d\n\tfound name is %d\n\tfound ident is %d\n",
 	       name, reg_id, foundn, foundr);
-	List_names();
+	List_names(pstate);
 	bu_bomb("Cannot insert new node");
     }
 
@@ -653,14 +648,14 @@ Insert_region_name(char *name, int reg_id)
 	    rptr_model->rleft = new_ptr;
 	}
     }
-    Check_names();
+    Check_names(pstate);
     if (RT_G_DEBUG&DEBUG_MEM_FULL && bu_mem_barriercheck())
 	bu_bomb("ERROR: bu_mem_barriercheck failed in Insert_region_name");
 }
 
 
-static char *
-find_region_name(int g_id, int c_id)
+HIDDEN char *
+find_region_name(const struct conversion_state *pstate, int g_id, int c_id)
 {
     struct name_tree *ptr;
     int reg_id;
@@ -668,7 +663,7 @@ find_region_name(int g_id, int c_id)
 
     reg_id = g_id * 1000 + c_id;
 
-    if (debug)
+    if (pstate->gcv_options->debug_mode)
 	bu_log("find_region_name(g_id=%d, c_id=%d), reg_id=%d\n", g_id, c_id, reg_id);
 
     ptr = Search_ident(pstate->name_root, reg_id, &found);
@@ -680,8 +675,8 @@ find_region_name(int g_id, int c_id)
 }
 
 
-static char *
-make_unique_name(char *name)
+HIDDEN char *
+make_unique_name(const struct conversion_state *pstate, char *name)
 {
     struct bu_vls vls = BU_VLS_INIT_ZERO;
     int found;
@@ -704,8 +699,8 @@ make_unique_name(char *name)
 }
 
 
-static void
-make_region_name(int g_id, int c_id)
+HIDDEN void
+make_region_name(struct conversion_state *pstate, int g_id, int c_id)
 {
     int r_id;
     const char *tmp_name;
@@ -713,10 +708,10 @@ make_region_name(int g_id, int c_id)
 
     r_id = g_id * 1000 + c_id;
 
-    if (debug)
+    if (pstate->gcv_options->debug_mode)
 	bu_log("make_region_name(g_id=%d, c_id=%d)\n", g_id, c_id);
 
-    tmp_name = find_region_name(g_id, c_id);
+    tmp_name = find_region_name(pstate, g_id, c_id);
     if (tmp_name)
 	return;
 
@@ -724,13 +719,13 @@ make_region_name(int g_id, int c_id)
     name = (char *)bu_malloc(MAX_LINE_SIZE, "make_region_name");
     snprintf(name, MAX_LINE_SIZE, "comp_%04d.r", r_id);
 
-    make_unique_name(name);
+    make_unique_name(pstate, name);
 
-    Insert_region_name(name, r_id);
+    Insert_region_name(pstate, name, r_id);
 }
 
 
-static char *
+HIDDEN char *
 get_solid_name(char type, int element_id, int c_id, int g_id, int inner)
 {
     int reg_id;
@@ -744,8 +739,8 @@ get_solid_name(char type, int element_id, int c_id, int g_id, int inner)
 }
 
 
-static void
-Insert_name(struct name_tree **root, char *name, int inner)
+HIDDEN void
+Insert_name(const struct conversion_state *pstate, struct name_tree **root, char *name, int inner)
 {
     struct name_tree *ptr;
     struct name_tree *new_ptr;
@@ -795,21 +790,21 @@ Insert_name(struct name_tree **root, char *name, int inner)
 }
 
 
-static char *
-make_solid_name(char type, int element_id, int c_id, int g_id, int inner)
+HIDDEN char *
+make_solid_name(struct conversion_state *pstate, char type, int element_id, int c_id, int g_id, int inner)
 {
     char *name;
 
     name = get_solid_name(type, element_id, c_id, g_id, inner);
 
-    Insert_name(&pstate->name_root, name, inner);
+    Insert_name(pstate, &pstate->name_root, name, inner);
 
     return name;
 }
 
 
-static void
-f4_do_compsplt(void)
+HIDDEN void
+f4_do_compsplt(struct conversion_state *pstate)
 {
     int gr, co, gr1, co1;
     fastf_t z;
@@ -844,12 +839,12 @@ f4_do_compsplt(void)
     splt->ident_to_split = gr * 1000 + co;
     splt->new_ident = gr1 * 1000 + co1;
     splt->z = z;
-    make_region_name(gr1, co1);
+    make_region_name(pstate, gr1, co1);
 }
 
 
-static void
-List_holes(void)
+HIDDEN void
+List_holes(const struct conversion_state *pstate)
 {
     struct holes *hole_ptr;
     struct hole_list *list_ptr;
@@ -868,8 +863,8 @@ List_holes(void)
 }
 
 
-static void
-Add_stragglers_to_groups(void)
+HIDDEN void
+Add_stragglers_to_groups(struct conversion_state *pstate)
 {
     struct name_tree *ptr;
 
@@ -891,7 +886,7 @@ Add_stragglers_to_groups(void)
 	 * when extending it.  just use a null-terminated list and
 	 * realloc as needed...
 	 */
-	if (!ptr->in_comp_group && ptr->region_id > 0 && !is_a_hole(ptr->region_id)) {
+	if (!ptr->in_comp_group && ptr->region_id > 0 && !is_a_hole(pstate, ptr->region_id)) {
 	    /* add this component to a series */
 
 	    if (!pstate->group_head || ptr->region_id > pstate->region_id_max) {
@@ -929,18 +924,18 @@ Add_stragglers_to_groups(void)
 }
 
 
-static void
-f4_do_groups(void)
+HIDDEN void
+f4_do_groups(struct conversion_state *pstate)
 {
     int group_no;
     struct wmember head_all;
 
-    if (debug)
+    if (pstate->gcv_options->debug_mode)
 	bu_log("f4_do_groups\n");
 
     BU_LIST_INIT(&head_all.l);
 
-    Add_stragglers_to_groups();
+    Add_stragglers_to_groups(pstate);
 
     for (group_no=0; group_no < pstate->group_head_cnt; group_no++) {
 	char name[MAX_LINE_SIZE] = {0};
@@ -963,8 +958,8 @@ f4_do_groups(void)
 }
 
 
-static void
-f4_do_name(void)
+HIDDEN void
+f4_do_name(struct conversion_state *pstate)
 {
     int i, j;
     int g_id;
@@ -975,7 +970,7 @@ f4_do_name(void)
     if (pstate->pass)
 	return;
 
-    if (debug)
+    if (pstate->gcv_options->debug_mode)
 	bu_log("f4_do_name: %s\n", pstate->line);
 
     bu_strlcpy(pstate->field, &pstate->line[8], sizeof(pstate->field));
@@ -1027,8 +1022,8 @@ f4_do_name(void)
     tmp_name[++j] = '\0';
 
     /* reserve this name for group name */
-    make_unique_name(tmp_name);
-    Insert_region_name(tmp_name, pstate->region_id);
+    make_unique_name(pstate, tmp_name);
+    Insert_region_name(pstate, tmp_name, pstate->region_id);
 
     pstate->name_count = 0;
     if (RT_G_DEBUG&DEBUG_MEM_FULL && bu_mem_barriercheck())
@@ -1036,8 +1031,8 @@ f4_do_name(void)
 }
 
 
-static int
-f4_do_grid(void)
+HIDDEN int
+f4_do_grid(struct conversion_state *pstate)
 {
     int grid_no;
     fastf_t x, y, z;
@@ -1081,8 +1076,8 @@ f4_do_grid(void)
 }
 
 
-static void
-f4_do_sphere(void)
+HIDDEN void
+f4_do_sphere(struct conversion_state *pstate)
 {
     int element_id;
     int center_pt;
@@ -1093,7 +1088,7 @@ f4_do_sphere(void)
     struct wmember sphere_group;
 
     if (!pstate->pass) {
-	make_region_name(pstate->group_id, pstate->comp_id);
+	make_region_name(pstate, pstate->group_id, pstate->comp_id);
 	return;
     }
 
@@ -1124,11 +1119,11 @@ f4_do_sphere(void)
     BU_LIST_INIT(&sphere_group.l);
 
     if (pstate->mode == MODE_VOLUME) {
-	name = make_solid_name(CSPHERE, element_id, pstate->comp_id, pstate->group_id, 0);
+	name = make_solid_name(pstate, CSPHERE, element_id, pstate->comp_id, pstate->group_id, 0);
 	mk_sph(pstate->fpout, name, pstate->grid_points[center_pt], radius);
 	bu_free(name, "solid_name");
     } else if (pstate->mode == MODE_PLATE) {
-	name = make_solid_name(CSPHERE, element_id, pstate->comp_id, pstate->group_id, 1);
+	name = make_solid_name(pstate, CSPHERE, element_id, pstate->comp_id, pstate->group_id, 1);
 	mk_sph(pstate->fpout, name, pstate->grid_points[center_pt], radius);
 
 	BU_LIST_INIT(&sphere_group.l);
@@ -1145,7 +1140,7 @@ f4_do_sphere(void)
 	    return;
 	}
 
-	name = make_solid_name(CSPHERE, element_id, pstate->comp_id, pstate->group_id, 2);
+	name = make_solid_name(pstate, CSPHERE, element_id, pstate->comp_id, pstate->group_id, 2);
 	mk_sph(pstate->fpout, name, pstate->grid_points[center_pt], inner_radius);
 
 	if (mk_addmember(name, &sphere_group.l, NULL, WMOP_SUBTRACT) == (struct wmember *)NULL) {
@@ -1153,7 +1148,7 @@ f4_do_sphere(void)
 	}
 	bu_free(name, "solid_name");
 
-	name = make_solid_name(CSPHERE, element_id, pstate->comp_id, pstate->group_id, 0);
+	name = make_solid_name(pstate, CSPHERE, element_id, pstate->comp_id, pstate->group_id, 0);
 	mk_comb(pstate->fpout, name, &sphere_group.l, 0, NULL, NULL, NULL, 0, 0, 0, 0, 0, 1, 1);
 	bu_free(name, "solid_name");
     } else {
@@ -1162,8 +1157,8 @@ f4_do_sphere(void)
 }
 
 
-static void
-f4_do_vehicle(void)
+HIDDEN void
+f4_do_vehicle(struct conversion_state *pstate)
 {
     if (pstate->pass)
 	return;
@@ -1173,8 +1168,8 @@ f4_do_vehicle(void)
 }
 
 
-static void
-f4_do_cline(void)
+HIDDEN void
+f4_do_cline(struct conversion_state *pstate)
 {
     int element_id;
     int pt1, pt2;
@@ -1183,11 +1178,11 @@ f4_do_cline(void)
     vect_t height;
     char *name;
 
-    if (debug)
+    if (pstate->gcv_options->debug_mode)
 	bu_log("f4_do_cline: %s\n", pstate->line);
 
     if (!pstate->pass) {
-	make_region_name(pstate->group_id, pstate->comp_id);
+	make_region_name(pstate, pstate->group_id, pstate->comp_id);
 	return;
     }
 
@@ -1226,14 +1221,14 @@ f4_do_cline(void)
 
     VSUB2(height, pstate->grid_points[pt2], pstate->grid_points[pt1]);
 
-    name = make_solid_name(CLINE, element_id, pstate->comp_id, pstate->group_id, 0);
+    name = make_solid_name(pstate, CLINE, element_id, pstate->comp_id, pstate->group_id, 0);
     mk_cline(pstate->fpout, name, pstate->grid_points[pt1], height, radius, thick);
     bu_free(name, "solid_name");
 }
 
 
-static int
-f4_do_ccone1(void)
+HIDDEN int
+f4_do_ccone1(struct conversion_state *pstate)
 {
     int element_id;
     int pt1, pt2;
@@ -1251,8 +1246,8 @@ f4_do_ccone1(void)
     element_id = atoi(pstate->field);
 
     if (!pstate->pass) {
-	make_region_name(pstate->group_id, pstate->comp_id);
-	if (!get_line()) {
+	make_region_name(pstate, pstate->group_id, pstate->comp_id);
+	if (!get_line(pstate)) {
 	    bu_log("Unexpected EOF while reading continuation card for CCONE1\n");
 	    bu_log("\tgroup_id = %d, comp_id = %d, element_id = %d\n",
 		   pstate->group_id, pstate->comp_id, element_id);
@@ -1276,7 +1271,7 @@ f4_do_ccone1(void)
     bu_strlcpy(pstate->field, &pstate->line[72], sizeof(pstate->field));
     c1 = atoi(pstate->field);
 
-    if (!get_line()) {
+    if (!get_line(pstate)) {
 	bu_log("Unexpected EOF while reading continuation card for CCONE1\n");
 	bu_log("\tgroup_id = %d, comp_id = %d, element_id = %d, c1 = %d\n",
 	       pstate->group_id, pstate->comp_id, element_id, c1);
@@ -1342,7 +1337,7 @@ f4_do_ccone1(void)
     VSUB2(height, pstate->grid_points[pt2], pstate->grid_points[pt1]);
 
     if (pstate->mode == MODE_VOLUME) {
-	outer_name = make_solid_name(CCONE1, element_id, pstate->comp_id, pstate->group_id, 0);
+	outer_name = make_solid_name(pstate, CCONE1, element_id, pstate->comp_id, pstate->group_id, 0);
 	mk_trc_h(pstate->fpout, outer_name, pstate->grid_points[pt1], height, r1, r2);
 	bu_free(outer_name, "solid_name");
     } else if (pstate->mode == MODE_PLATE) {
@@ -1359,7 +1354,7 @@ f4_do_ccone1(void)
 	vect_t height_dir;
 
 	/* make outside TGC */
-	outer_name = make_solid_name(CCONE1, element_id, pstate->comp_id, pstate->group_id, 1);
+	outer_name = make_solid_name(pstate, CCONE1, element_id, pstate->comp_id, pstate->group_id, 1);
 	mk_trc_h(pstate->fpout, outer_name, pstate->grid_points[pt1], height, r1, r2);
 
 	BU_LIST_INIT(&r_head.l);
@@ -1422,7 +1417,7 @@ f4_do_ccone1(void)
 	} else {
 	    /* make inner tgc */
 
-	    inner_name = make_solid_name(CCONE1, element_id, pstate->comp_id, pstate->group_id, 2);
+	    inner_name = make_solid_name(pstate, CCONE1, element_id, pstate->comp_id, pstate->group_id, 2);
 	    mk_trc_h(pstate->fpout, inner_name, base, inner_height, inner_r1, inner_r2);
 
 	    if (mk_addmember(inner_name, &r_head.l, NULL, WMOP_SUBTRACT) == (struct wmember *)NULL)
@@ -1430,7 +1425,7 @@ f4_do_ccone1(void)
 	    bu_free(inner_name, "solid_name");
 	}
 
-	name = make_solid_name(CCONE1, element_id, pstate->comp_id, pstate->group_id, 0);
+	name = make_solid_name(pstate, CCONE1, element_id, pstate->comp_id, pstate->group_id, 0);
 	mk_comb(pstate->fpout, name, &r_head.l, 0, NULL, NULL, NULL, 0, 0, 0, 0, 0, 1, 1);
 	bu_free(name, "solid_name");
     } else {
@@ -1441,8 +1436,8 @@ f4_do_ccone1(void)
 }
 
 
-static int
-f4_do_ccone2(void)
+HIDDEN int
+f4_do_ccone2(struct conversion_state *pstate)
 {
     int element_id;
     int pt1, pt2;
@@ -1456,8 +1451,8 @@ f4_do_ccone2(void)
     element_id = atoi(pstate->field);
 
     if (!pstate->pass) {
-	make_region_name(pstate->group_id, pstate->comp_id);
-	if (!get_line()) {
+	make_region_name(pstate, pstate->group_id, pstate->comp_id);
+	if (!get_line(pstate)) {
 	    bu_log("Unexpected EOF while reading continuation card for CCONE2\n");
 	    bu_log("\tgroup_id = %d, comp_id = %d, element_id = %d\n",
 		   pstate->group_id, pstate->comp_id, element_id);
@@ -1478,7 +1473,7 @@ f4_do_ccone2(void)
     bu_strlcpy(pstate->field, &pstate->line[72], sizeof(pstate->field));
     c1 = atoi(pstate->field);
 
-    if (!get_line()) {
+    if (!get_line(pstate)) {
 	bu_log("Unexpected EOF while reading continuation card for CCONE2\n");
 	bu_log("\tgroup_id = %d, comp_id = %d, element_id = %d, c1 = %d\n",
 	       pstate->group_id, pstate->comp_id, element_id, c1);
@@ -1525,11 +1520,11 @@ f4_do_ccone2(void)
     VSUB2(height, pstate->grid_points[pt2], pstate->grid_points[pt1]);
 
     if (ri1 <= 0.0 && ri2 <= 0.0) {
-	name = make_solid_name(CCONE2, element_id, pstate->comp_id, pstate->group_id, 0);
+	name = make_solid_name(pstate, CCONE2, element_id, pstate->comp_id, pstate->group_id, 0);
 	mk_trc_h(pstate->fpout, name, pstate->grid_points[pt1], height, ro1, ro2);
 	bu_free(name, "solid_name");
     } else {
-	name = make_solid_name(CCONE2, element_id, pstate->comp_id, pstate->group_id, 1);
+	name = make_solid_name(pstate, CCONE2, element_id, pstate->comp_id, pstate->group_id, 1);
 	mk_trc_h(pstate->fpout, name, pstate->grid_points[pt1], height, ro1, ro2);
 
 	if (mk_addmember(name, &r_head.l, NULL, WMOP_UNION) == (struct wmember *)NULL)
@@ -1539,14 +1534,14 @@ f4_do_ccone2(void)
 	V_MAX(ri1, pstate->min_radius);
 	V_MAX(ri2, pstate->min_radius);
 
-	name = make_solid_name(CCONE2, element_id, pstate->comp_id, pstate->group_id, 2);
+	name = make_solid_name(pstate, CCONE2, element_id, pstate->comp_id, pstate->group_id, 2);
 	mk_trc_h(pstate->fpout, name, pstate->grid_points[pt1], height, ri1, ri2);
 
 	if (mk_addmember(name, &r_head.l, NULL, WMOP_SUBTRACT) == (struct wmember *)NULL)
 	    bu_bomb("mk_addmember failed!");
 	bu_free(name, "solid_name");
 
-	name = make_solid_name(CCONE2, element_id, pstate->comp_id, pstate->group_id, 0);
+	name = make_solid_name(pstate, CCONE2, element_id, pstate->comp_id, pstate->group_id, 0);
 	mk_comb(pstate->fpout, name, &r_head.l, 0, NULL, NULL, NULL, 0, 0, 0, 0, 0, 1, 1);
 	bu_free(name, "solid_name");
     }
@@ -1555,8 +1550,8 @@ f4_do_ccone2(void)
 }
 
 
-static int
-f4_do_ccone3(void)
+HIDDEN int
+f4_do_ccone3(struct conversion_state *pstate)
 {
     int element_id;
     int pt1, pt2, pt3, pt4, i;
@@ -1569,8 +1564,8 @@ f4_do_ccone3(void)
     element_id = atoi(pstate->field);
 
     if (!pstate->pass) {
-	make_region_name(pstate->group_id, pstate->comp_id);
-	if (!get_line()) {
+	make_region_name(pstate, pstate->group_id, pstate->comp_id);
+	if (!get_line(pstate)) {
 	    bu_log("Unexpected EOF while reading continuation card for CCONE3\n");
 	    bu_log("\tgroup_id = %d, comp_id = %d, element_id = %d\n",
 		   pstate->group_id, pstate->comp_id, element_id);
@@ -1593,7 +1588,7 @@ f4_do_ccone3(void)
 
     bu_strlcpy(pstate->field, &pstate->line[72], sizeof(pstate->field));
 
-    if (!get_line()) {
+    if (!get_line(pstate)) {
 	bu_log("Unexpected EOF while reading continuation card for CCONE3\n");
 	bu_log("\tgroup_id = %d, comp_id = %d, element_id = %d, c1 = %8.8s\n",
 	       pstate->group_id, pstate->comp_id, element_id, pstate->field);
@@ -1694,7 +1689,7 @@ f4_do_ccone3(void)
 
 	/* make first cone */
 	if (!EQUAL(ro[0], pstate->min_radius) || !EQUAL(ro[1], pstate->min_radius)) {
-	    name = make_solid_name(CCONE3, element_id, pstate->comp_id, pstate->group_id, 1);
+	    name = make_solid_name(pstate, CCONE3, element_id, pstate->comp_id, pstate->group_id, 1);
 	    mk_trc_h(pstate->fpout, name, pstate->grid_points[pt1], diff, ro[0], ro[1]);
 	    if (mk_addmember(name, &r_head.l, NULL, WMOP_UNION) == (struct wmember *)NULL)
 		bu_bomb("mk_addmember failed!");
@@ -1702,7 +1697,7 @@ f4_do_ccone3(void)
 
 	    /* and the inner cone */
 	    if (!EQUAL(ri[0], pstate->min_radius) || !EQUAL(ri[1], pstate->min_radius)) {
-		name = make_solid_name(CCONE3, element_id, pstate->comp_id, pstate->group_id, 11);
+		name = make_solid_name(pstate, CCONE3, element_id, pstate->comp_id, pstate->group_id, 11);
 		mk_trc_h(pstate->fpout, name, pstate->grid_points[pt1], diff, ri[0], ri[1]);
 		if (mk_addmember(name, &r_head.l, NULL, WMOP_SUBTRACT) == (struct wmember *)NULL)
 		    bu_bomb("mk_addmember failed!");
@@ -1716,7 +1711,7 @@ f4_do_ccone3(void)
 
 	/* make second cone */
 	if (!EQUAL(ro[1], pstate->min_radius) || !EQUAL(ro[2], pstate->min_radius)) {
-	    name = make_solid_name(CCONE3, element_id, pstate->comp_id, pstate->group_id, 2);
+	    name = make_solid_name(pstate, CCONE3, element_id, pstate->comp_id, pstate->group_id, 2);
 	    mk_trc_h(pstate->fpout, name, pstate->grid_points[pt2], diff, ro[1], ro[2]);
 	    if (mk_addmember(name, &r_head.l, NULL, WMOP_UNION) == (struct wmember *)NULL)
 		bu_bomb("mk_addmember failed!");
@@ -1724,7 +1719,7 @@ f4_do_ccone3(void)
 
 	    /* and the inner cone */
 	    if (!EQUAL(ri[1], pstate->min_radius) || !EQUAL(ri[2], pstate->min_radius)) {
-		name = make_solid_name(CCONE3, element_id, pstate->comp_id, pstate->group_id, 22);
+		name = make_solid_name(pstate, CCONE3, element_id, pstate->comp_id, pstate->group_id, 22);
 		mk_trc_h(pstate->fpout, name, pstate->grid_points[pt2], diff, ri[1], ri[2]);
 		if (mk_addmember(name, &r_head.l, NULL, WMOP_SUBTRACT) == (struct wmember *)NULL)
 		    bu_bomb("mk_addmember failed!");
@@ -1738,7 +1733,7 @@ f4_do_ccone3(void)
 
 	/* make third cone */
 	if (!EQUAL(ro[2], pstate->min_radius) || !EQUAL(ro[3], pstate->min_radius)) {
-	    name = make_solid_name(CCONE3, element_id, pstate->comp_id, pstate->group_id, 3);
+	    name = make_solid_name(pstate, CCONE3, element_id, pstate->comp_id, pstate->group_id, 3);
 	    mk_trc_h(pstate->fpout, name, pstate->grid_points[pt3], diff, ro[2], ro[3]);
 	    if (mk_addmember(name, &r_head.l, NULL, WMOP_UNION) == (struct wmember *)NULL)
 		bu_bomb("mk_addmember failed!");
@@ -1746,7 +1741,7 @@ f4_do_ccone3(void)
 
 	    /* and the inner cone */
 	    if (!EQUAL(ri[2], pstate->min_radius) || !EQUAL(ri[3], pstate->min_radius)) {
-		name = make_solid_name(CCONE3, element_id, pstate->comp_id, pstate->group_id, 33);
+		name = make_solid_name(pstate, CCONE3, element_id, pstate->comp_id, pstate->group_id, 33);
 		mk_trc_h(pstate->fpout, name, pstate->grid_points[pt3], diff, ri[2], ri[3]);
 		if (mk_addmember(name, &r_head.l, NULL, WMOP_SUBTRACT) == (struct wmember *)NULL)
 		    bu_bomb("mk_addmember failed!");
@@ -1755,7 +1750,7 @@ f4_do_ccone3(void)
 	}
     }
 
-    name = make_solid_name(CCONE3, element_id, pstate->comp_id, pstate->group_id, 0);
+    name = make_solid_name(pstate, CCONE3, element_id, pstate->comp_id, pstate->group_id, 0);
     mk_comb(pstate->fpout, name, &r_head.l, 0, NULL, NULL, NULL, 0, 0, 0, 0, 0, 1, 1);
     bu_free(name, "solid_name");
 
@@ -1763,8 +1758,8 @@ f4_do_ccone3(void)
 }
 
 
-static int
-skip_region(int id)
+HIDDEN int
+skip_region(const struct conversion_state *pstate, int id)
 {
     int i;
 
@@ -1780,14 +1775,14 @@ skip_region(int id)
 }
 
 
-static void
-Add_holes(int type, int gr, int comp, struct hole_list *ptr)
+HIDDEN void
+Add_holes(struct conversion_state *pstate, int type, int gr, int comp, struct hole_list *ptr)
 {
     struct holes *hole_ptr = (struct holes *)NULL;
     struct holes *prev = (struct holes *)NULL;
     struct hole_list *hptr= (struct hole_list *)NULL;
 
-    if (debug) {
+    if (pstate->gcv_options->debug_mode) {
 	bu_log("Adding holes for group %d, component %d:\n", gr, comp);
 	hptr = ptr;
 	while (hptr) {
@@ -1797,7 +1792,7 @@ Add_holes(int type, int gr, int comp, struct hole_list *ptr)
     }
 
     if (pstate->f4_do_skips) {
-	if (!skip_region(gr*1000 + comp)) {
+	if (!skip_region(pstate, gr*1000 + comp)) {
 	    /* add holes for this region to the list of regions to process */
 	    hptr = ptr;
 	    if (RT_G_DEBUG&DEBUG_MEM_FULL && bu_mem_barriercheck())
@@ -1861,8 +1856,8 @@ Add_holes(int type, int gr, int comp, struct hole_list *ptr)
 }
 
 
-static void
-f4_do_hole_wall(int type)
+HIDDEN void
+f4_do_hole_wall(struct conversion_state *pstate, int type)
 {
     struct hole_list *list_ptr;
     struct hole_list *list_start;
@@ -1871,7 +1866,7 @@ f4_do_hole_wall(int type)
     size_t s_len;
     size_t col;
 
-    if (debug)
+    if (pstate->gcv_options->debug_mode)
 	bu_log("f4_do_hole_wall: %s\n", pstate->line);
 
     if (pstate->pass)
@@ -1931,12 +1926,12 @@ f4_do_hole_wall(int type)
 	col += 8;
     }
 
-    Add_holes(type, group, comp, list_start);
+    Add_holes(pstate, type, group, comp, list_start);
 }
 
 
-static void
-f4_Add_bot_face(int pt1, int pt2, int pt3, fastf_t thick, int pos)
+HIDDEN void
+f4_Add_bot_face(struct conversion_state *pstate, int pt1, int pt2, int pt3, fastf_t thick, int pos)
 {
 
     if (pt1 == pt2 || pt2 == pt3 || pt1 == pt3) {
@@ -1986,15 +1981,15 @@ f4_Add_bot_face(int pt1, int pt2, int pt3, fastf_t thick, int pos)
 }
 
 
-static void
-f4_do_tri(void)
+HIDDEN void
+f4_do_tri(struct conversion_state *pstate)
 {
     int element_id;
     int pt1, pt2, pt3;
     fastf_t thick;
     int pos;
 
-    if (debug)
+    if (pstate->gcv_options->debug_mode)
 	bu_log("f4_do_tri: %s\n", pstate->line);
 
     bu_strlcpy(pstate->field, &pstate->line[8], sizeof(pstate->field));
@@ -2039,26 +2034,26 @@ f4_do_tri(void)
 	if (pos == 0)
 	    pos = POS_FRONT;
 
-	if (debug)
+	if (pstate->gcv_options->debug_mode)
 	    bu_log("\tplate mode: thickness = %f\n", thick);
 
     }
 
     if (pstate->f4_do_plot)
-	plot_tri(pt1, pt2, pt3);
+	plot_tri(pstate, pt1, pt2, pt3);
 
     if (bu_debug&BU_DEBUG_MEM_CHECK && bu_mem_barriercheck())
 	bu_log("memory corrupted before call to f4_Add_bot_face()\n");
 
-    f4_Add_bot_face(pt1, pt2, pt3, thick, pos);
+    f4_Add_bot_face(pstate, pt1, pt2, pt3, thick, pos);
 
     if (bu_debug&BU_DEBUG_MEM_CHECK && bu_mem_barriercheck())
 	bu_log("memory corrupted after call to f4_Add_bot_face()\n");
 }
 
 
-static void
-f4_do_quad(void)
+HIDDEN void
+f4_do_quad(struct conversion_state *pstate)
 {
     int element_id;
     int pt1, pt2, pt3, pt4;
@@ -2068,7 +2063,7 @@ f4_do_quad(void)
     bu_strlcpy(pstate->field, &pstate->line[8], sizeof(pstate->field));
     element_id = atoi(pstate->field);
 
-    if (debug)
+    if (pstate->gcv_options->debug_mode)
 	bu_log("f4_do_quad: %s\n", pstate->line);
 
     if (!pstate->bot)
@@ -2114,13 +2109,13 @@ f4_do_quad(void)
 	}
     }
 
-    f4_Add_bot_face(pt1, pt2, pt3, thick, pos);
-    f4_Add_bot_face(pt1, pt3, pt4, thick, pos);
+    f4_Add_bot_face(pstate, pt1, pt2, pt3, thick, pos);
+    f4_Add_bot_face(pstate, pt1, pt3, pt4, thick, pos);
 }
 
 
-static void
-make_bot_object(void)
+HIDDEN void
+make_bot_object(struct conversion_state *pstate)
 {
     int i;
     int max_pt = 0;
@@ -2134,7 +2129,7 @@ make_bot_object(void)
     struct rt_bot_internal bot_ip;
 
     if (!pstate->pass) {
-	make_region_name(pstate->group_id, pstate->comp_id);
+	make_region_name(pstate, pstate->group_id, pstate->comp_id);
 	return;
     }
 
@@ -2189,7 +2184,7 @@ make_bot_object(void)
     if (count)
 	bu_log("WARNING: %d duplicate faces eliminated from group %d component %d\n", count, pstate->group_id, pstate->comp_id);
 
-    name = make_solid_name(BOT, element_id, pstate->comp_id, pstate->group_id, 0);
+    name = make_solid_name(pstate, BOT, element_id, pstate->comp_id, pstate->group_id, 0);
     mk_bot(pstate->fpout, name, bot_mode, RT_BOT_UNORIENTED, 0, bot_ip.num_vertices, bot_ip.num_faces, bot_ip.vertices,
 	   bot_ip.faces, bot_ip.thickness, bot_ip.face_mode);
     bu_free(name, "solid_name");
@@ -2204,8 +2199,8 @@ make_bot_object(void)
 }
 
 
-static void
-skip_section(void)
+HIDDEN void
+skip_section(struct conversion_state *pstate)
 {
     off_t section_start;
 
@@ -2215,7 +2210,7 @@ skip_section(void)
 	bu_bomb("Error: couldn't get input file's current file position.");
     }
 
-    if (get_line()) {
+    if (get_line(pstate)) {
 	while (pstate->line[0] && bu_strncmp(pstate->line, "SECTION", 7) &&
 	       bu_strncmp(pstate->line, "HOLE", 4) &&
 	       bu_strncmp(pstate->line, "WALL", 4) &&
@@ -2225,7 +2220,7 @@ skip_section(void)
 	    if (section_start < 0) {
 		bu_bomb("Error: couldn't get input file's current file position.");
 	    }
-	    if (!get_line())
+	    if (!get_line(pstate))
 		break;
 	}
     }
@@ -2237,26 +2232,26 @@ skip_section(void)
 /* cleanup from previous component and start a new one.
  * This is called with final == 1 when ENDDATA is found
  */
-static void
-f4_do_section(int final)
+HIDDEN void
+f4_do_section(struct conversion_state *pstate, int final)
 {
     int found;
     struct name_tree *nm_ptr;
 
-    if (debug)
+    if (pstate->gcv_options->debug_mode)
 	bu_log("f4_do_section(%d): %s\n", final, pstate->line);
 
     if (pstate->pass)	/* doing geometry */ {
-	if (pstate->region_id && !skip_region(pstate->region_id)) {
+	if (pstate->region_id && !skip_region(pstate, pstate->region_id)) {
 	    pstate->comp_count++;
 
 	    if (pstate->bot)
-		make_bot_object();
+		make_bot_object(pstate);
 	}
-	if (final && debug) /* The ENDATA card has been found */
-	    List_names();
+	if (final && pstate->gcv_options->debug_mode) /* The ENDATA card has been found */
+	    List_names(pstate);
     } else if (pstate->bot) {
-	make_region_name(pstate->group_id, pstate->comp_id);
+	make_region_name(pstate, pstate->group_id, pstate->comp_id);
     }
 
     if (!final) {
@@ -2268,8 +2263,8 @@ f4_do_section(int final)
 
 	pstate->region_id = pstate->group_id * 1000 + pstate->comp_id;
 
-	if (skip_region(pstate->region_id)) /* do not process this component */ {
-	    skip_section();
+	if (skip_region(pstate, pstate->region_id)) /* do not process this component */ {
+	    skip_section(pstate);
 	    return;
 	}
 
@@ -2309,8 +2304,8 @@ f4_do_section(int final)
 }
 
 
-static int
-f4_do_hex1(void)
+HIDDEN int
+f4_do_hex1(struct conversion_state *pstate)
 {
     fastf_t thick=0.0;
     int pos;
@@ -2326,7 +2321,7 @@ f4_do_hex1(void)
 	pstate->bot = element_id;
 
     if (!pstate->pass) {
-	if (!get_line()) {
+	if (!get_line(pstate)) {
 	    bu_log("Unexpected EOF while reading continuation card for CHEX1\n");
 	    bu_log("\tgroup_id = %d, comp_id = %d, element_id = %d\n",
 		   pstate->group_id, pstate->comp_id, element_id);
@@ -2351,7 +2346,7 @@ f4_do_hex1(void)
     bu_strlcpy(pstate->field, &pstate->line[72], sizeof(pstate->field));
     cont1 = atoi(pstate->field);
 
-    if (!get_line()) {
+    if (!get_line(pstate)) {
 	bu_log("Unexpected EOF while reading continuation card for CHEX1\n");
 	bu_log("\tgroup_id = %d, comp_id = %d, element_id = %d, c1 = %d\n",
 	       pstate->group_id, pstate->comp_id, element_id, cont1);
@@ -2402,14 +2397,14 @@ f4_do_hex1(void)
     }
 
     for (i=0; i<12; i++)
-	f4_Add_bot_face(pts[hex_faces[i][0]], pts[hex_faces[i][1]], pts[hex_faces[i][2]], thick, pos);
+	f4_Add_bot_face(pstate, pts[hex_faces[i][0]], pts[hex_faces[i][1]], pts[hex_faces[i][2]], thick, pos);
 
     return 1;
 }
 
 
-static int
-f4_do_hex2(void)
+HIDDEN int
+f4_do_hex2(struct conversion_state *pstate)
 {
     int pts[8];
     int element_id;
@@ -2422,8 +2417,8 @@ f4_do_hex2(void)
     element_id = atoi(pstate->field);
 
     if (!pstate->pass) {
-	make_region_name(pstate->group_id, pstate->comp_id);
-	if (!get_line()) {
+	make_region_name(pstate, pstate->group_id, pstate->comp_id);
+	if (!get_line(pstate)) {
 	    bu_log("Unexpected EOF while reading continuation card for CHEX2\n");
 	    bu_log("\tgroup_id = %d, comp_id = %d, element_id = %d\n",
 		   pstate->group_id, pstate->comp_id, element_id);
@@ -2440,7 +2435,7 @@ f4_do_hex2(void)
     bu_strlcpy(pstate->field, &pstate->line[72], sizeof(pstate->field));
     cont1 = atoi(pstate->field);
 
-    if (!get_line()) {
+    if (!get_line(pstate)) {
 	bu_log("Unexpected EOF while reading continuation card for CHEX2\n");
 	bu_log("\tgroup_id = %d, comp_id = %d, element_id = %d, c1 = %d\n",
 	       pstate->group_id, pstate->comp_id, element_id, cont1);
@@ -2466,7 +2461,7 @@ f4_do_hex2(void)
     for (i=0; i<8; i++)
 	VMOVE(points[i], pstate->grid_points[pts[i]]);
 
-    name = make_solid_name(CHEX2, element_id, pstate->comp_id, pstate->group_id, 0);
+    name = make_solid_name(pstate, CHEX2, element_id, pstate->comp_id, pstate->group_id, 0);
     mk_arb8(pstate->fpout, name, &points[0][X]);
     bu_free(name, "solid_name");
 
@@ -2474,10 +2469,10 @@ f4_do_hex2(void)
 }
 
 
-static void
-Process_hole_wall(void)
+HIDDEN void
+Process_hole_wall(struct conversion_state *pstate)
 {
-    if (debug)
+    if (pstate->gcv_options->debug_mode)
 	bu_log("Process_hole_wall\n");
     if (bu_debug & BU_DEBUG_MEM_CHECK)
 	bu_prmem("At start of Process_hole_wall:");
@@ -2485,11 +2480,11 @@ Process_hole_wall(void)
     rewind(pstate->fpin);
     while (1) {
 	if (!bu_strncmp(pstate->line, "HOLE", 4)) {
-	    f4_do_hole_wall(HOLE);
+	    f4_do_hole_wall(pstate, HOLE);
 	} else if (!bu_strncmp(pstate->line, "WALL", 4)) {
-	    f4_do_hole_wall(WALL);
+	    f4_do_hole_wall(pstate, WALL);
 	} else if (!bu_strncmp(pstate->line, "COMPSPLT", 8)) {
-	    f4_do_compsplt();
+	    f4_do_compsplt(pstate);
 	} else if (!bu_strncmp(pstate->line, "SECTION", 7)) {
 	    bu_strlcpy(pstate->field, &pstate->line[24], sizeof(pstate->field));
 
@@ -2511,19 +2506,19 @@ Process_hole_wall(void)
 	    break;
 	}
 
-	if (!get_line() || !pstate->line[0])
+	if (!get_line(pstate) || !pstate->line[0])
 	    break;
     }
 
-    if (debug) {
+    if (pstate->gcv_options->debug_mode) {
 	bu_log("At end of Process_hole_wall:\n");
-	List_holes();
+	List_holes(pstate);
     }
 }
 
 
-static void
-f4_do_chgcomp(void)
+HIDDEN void
+f4_do_chgcomp(const struct conversion_state *pstate)
 {
 
     if (!pstate->pass)
@@ -2536,8 +2531,8 @@ f4_do_chgcomp(void)
 }
 
 
-static void
-f4_do_cbacking(void)
+HIDDEN void
+f4_do_cbacking(struct conversion_state *pstate)
 {
     int gr1, co1, gr2, co2, material;
     fastf_t inthickness, probability;
@@ -2573,10 +2568,10 @@ f4_do_cbacking(void)
 }
 
 
-static int
-Process_input(int pass_number)
+HIDDEN int
+Process_input(struct conversion_state *pstate, int pass_number)
 {
-    if (debug)
+    if (pstate->gcv_options->debug_mode)
 	bu_log("\n\nProcess_input(pass = %d)\n", pass_number);
     if (bu_debug & BU_DEBUG_MEM_CHECK)
 	bu_prmem("At start of Process_input:");
@@ -2587,13 +2582,13 @@ Process_input(int pass_number)
 
     pstate->region_id = 0;
     pstate->pass = pass_number;
-    if (!get_line() || !pstate->line[0])
+    if (!get_line(pstate) || !pstate->line[0])
 	bu_strlcpy(pstate->line, "ENDDATA", sizeof(pstate->line));
     while (1) {
 	int ret = 1;
 
 	if (!bu_strncmp(pstate->line, "vehicle", 7))
-	    f4_do_vehicle();
+	    f4_do_vehicle(pstate);
 	else if (!bu_strncmp(pstate->line, "HOLE", 4))
 	    ;
 	else if (!bu_strncmp(pstate->line, "WALL", 4))
@@ -2601,37 +2596,37 @@ Process_input(int pass_number)
 	else if (!bu_strncmp(pstate->line, "COMPSPLT", 8))
 	    ;
 	else if (!bu_strncmp(pstate->line, "CBACKING", 8))
-	    f4_do_cbacking();
+	    f4_do_cbacking(pstate);
 	else if (!bu_strncmp(pstate->line, "CHGCOMP", 7))
-	    f4_do_chgcomp();
+	    f4_do_chgcomp(pstate);
 	else if (!bu_strncmp(pstate->line, "SECTION", 7))
-	    f4_do_section(0);
+	    f4_do_section(pstate, 0);
 	else if (!bu_strncmp(pstate->line, "$NAME", 5))
-	    f4_do_name();
+	    f4_do_name(pstate);
 	else if (!bu_strncmp(pstate->line, "$COMMENT", 8))
 	    ;
 	else if (!bu_strncmp(pstate->line, "GRID", 4))
-	    ret = f4_do_grid();
+	    ret = f4_do_grid(pstate);
 	else if (!bu_strncmp(pstate->line, "CLINE", 5))
-	    f4_do_cline();
+	    f4_do_cline(pstate);
 	else if (!bu_strncmp(pstate->line, "CHEX1", 5))
-	    ret = f4_do_hex1();
+	    ret = f4_do_hex1(pstate);
 	else if (!bu_strncmp(pstate->line, "CHEX2", 5))
-	    ret = f4_do_hex2();
+	    ret = f4_do_hex2(pstate);
 	else if (!bu_strncmp(pstate->line, "CTRI", 4))
-	    f4_do_tri();
+	    f4_do_tri(pstate);
 	else if (!bu_strncmp(pstate->line, "CQUAD", 5))
-	    f4_do_quad();
+	    f4_do_quad(pstate);
 	else if (!bu_strncmp(pstate->line, "CCONE1", 6))
-	    ret = f4_do_ccone1();
+	    ret = f4_do_ccone1(pstate);
 	else if (!bu_strncmp(pstate->line, "CCONE2", 6))
-	    ret = f4_do_ccone2();
+	    ret = f4_do_ccone2(pstate);
 	else if (!bu_strncmp(pstate->line, "CCONE3", 6))
-	    ret = f4_do_ccone3();
+	    ret = f4_do_ccone3(pstate);
 	else if (!bu_strncmp(pstate->line, "CSPHERE", 7))
-	    f4_do_sphere();
+	    f4_do_sphere(pstate);
 	else if (!bu_strncmp(pstate->line, "ENDDATA", 7)) {
-	    f4_do_section(1);
+	    f4_do_section(pstate, 1);
 	    break;
 	} else {
 	    bu_log("ERROR: skipping unrecognized data type\n%s\n", pstate->line);
@@ -2640,21 +2635,21 @@ Process_input(int pass_number)
 	if (!ret)
 	    return 0;
 
-	if (!get_line() || !pstate->line[0])
+	if (!get_line(pstate) || !pstate->line[0])
 	    bu_strlcpy(pstate->line, "ENDDATA", sizeof(pstate->line));
     }
 
-    if (debug) {
+    if (pstate->gcv_options->debug_mode) {
 	bu_log("At pass %d:\n", pstate->pass);
-	List_names();
+	List_names(pstate);
     }
 
     return 1;
 }
 
 
-static void
-make_region_list(const char *in_str)
+HIDDEN void
+make_region_list(struct conversion_state *pstate, const char *in_str)
 {
     char *str = bu_strdup(in_str);
     char *ptr, *ptr2;
@@ -2699,8 +2694,8 @@ make_region_list(const char *in_str)
 }
 
 
-static void
-make_regions(void)
+HIDDEN void
+make_regions(struct conversion_state *pstate)
 {
     struct name_tree *ptr1, *ptr2;
     struct holes *hptr;
@@ -2729,7 +2724,7 @@ make_regions(void)
 	    break;
 
 	/* check if we are skipping some regions (but we might need all the holes) */
-	if (skip_region(ptr1->region_id) && !is_a_hole(ptr1->region_id))
+	if (skip_region(pstate, ptr1->region_id) && !is_a_hole(pstate, ptr1->region_id))
 	    goto cont1;
 
 	/* place all the solids for this ident in a "solids" combination */
@@ -2762,7 +2757,7 @@ make_regions(void)
 		   solids_name, ptr1->name);
 
 	/* hole components do not get made into regions */
-	if (is_a_hole(ptr1->region_id)) {
+	if (is_a_hole(pstate, ptr1->region_id)) {
 	    /* just add it to the "holes" group */
 	    if (mk_addmember(solids_name, &holes.l, NULL, WMOP_UNION) == (struct wmember *)NULL)
 		bu_log("make_regions: mk_addmember failed to add %s to holes group\n", ptr1->name);
@@ -2783,7 +2778,7 @@ make_regions(void)
 	    splt = splt->next;
 
 	pstate->mode = ptr1->mode;
-	if (debug)
+	if (pstate->gcv_options->debug_mode)
 	    bu_log("Build region for %s %d, mode = %d\n", ptr1->name, ptr1->region_id, pstate->mode);
 
 	if (splt) {
@@ -2809,7 +2804,7 @@ make_regions(void)
 		    bu_log("make_regions: mk_addmember failed to add %s to %s\n", hole_name, ptr1->name);
 		lptr = lptr->next;
 	    }
-	    make_region(pstate->fpout, &region, ptr1->name, ptr1->region_id, get_fast4_color(ptr1->region_id));
+	    make_region(pstate, pstate->fpout, &region, ptr1->name, ptr1->region_id, get_fast4_color(pstate, ptr1->region_id));
 
 	    /* create new region by subtracting halfspace */
 	    BU_LIST_INIT(&region.l);
@@ -2832,10 +2827,10 @@ make_regions(void)
 	    }
 	    ptr2 = Search_ident(pstate->name_root, splt->new_ident, &found);
 	    if (found) {
-		make_region(pstate->fpout, &region, ptr2->name, splt->new_ident, get_fast4_color(splt->new_ident));
+		make_region(pstate, pstate->fpout, &region, ptr2->name, splt->new_ident, get_fast4_color(pstate, splt->new_ident));
 	    } else {
 		sprintf(reg_name, "comp_%d.r", splt->new_ident);
-		make_region(pstate->fpout, &region, reg_name, splt->new_ident, get_fast4_color(splt->new_ident));
+		make_region(pstate, pstate->fpout, &region, reg_name, splt->new_ident, get_fast4_color(pstate, splt->new_ident));
 	    }
 	} else {
 	    BU_LIST_INIT(&region.l);
@@ -2848,7 +2843,7 @@ make_regions(void)
 		    bu_log("make_regions: mk_addmember failed to add %s to %s\n", hole_name, ptr1->name);
 		lptr = lptr->next;
 	    }
-	    make_region(pstate->fpout, &region, ptr1->name, ptr1->region_id, get_fast4_color(ptr1->region_id));
+	    make_region(pstate, pstate->fpout, &region, ptr1->name, ptr1->region_id, get_fast4_color(pstate, ptr1->region_id));
 	}
     cont1:
 	ptr1 = ptr1->rright;
@@ -2864,8 +2859,8 @@ make_regions(void)
 
 #define COLOR_LINE_LEN 256
 
-static void
-read_fast4_colors(const char *color_file)
+HIDDEN void
+read_fast4_colors(struct conversion_state *pstate, const char *color_file)
 {
     FILE *fp;
     char colorline[COLOR_LINE_LEN] = {0};
@@ -2905,75 +2900,76 @@ read_fast4_colors(const char *color_file)
 
 
 struct
-fastgen4_options_data
+fastgen4_read_options
 {
-    int quiet_mode;
-    int debug_mode;
-    int libbu_debug_mode;
     const char *colors_path;
     const char *muves_path;
     const char *plot_path;
-    const char *create_regions;
+    const char *section_list_str;
 };
 
 
-static void
+HIDDEN void
 fastgen4_create_opts(struct bu_opt_desc **options_desc, void **dest_options_data)
 {
-    struct fastgen4_options_data *options_data = (struct fastgen4_options_data *)bu_malloc(sizeof(struct fastgen4_options_data), "options_data");
+    struct fastgen4_read_options *options_data;
+
+    BU_ALLOC(options_data, struct fastgen4_read_options);
     *dest_options_data = options_data;
-    *options_desc = (struct bu_opt_desc *)bu_malloc(8 * sizeof(struct bu_opt_desc), "options_desc");
+    *options_desc = (struct bu_opt_desc *)bu_malloc(5 * sizeof(struct bu_opt_desc), "options_desc");
 
-    BU_OPT((*options_desc)[0], "q", "quiet", NULL, NULL, &options_data->quiet_mode, "quiet mode (don't say anything except error messages)");
-    BU_OPT((*options_desc)[1], "d", "debug", NULL, NULL, &options_data->debug_mode, "print debugging info");
-    BU_OPT((*options_desc)[2], "b", "libbu-debug", "flag", bu_opt_int, &options_data->libbu_debug_mode, "set LIBBU debug flag");
-    BU_OPT((*options_desc)[3], "C", "colors", "path to colors file", bu_opt_str, &options_data->colors_path, "path to file specifying component colors");
-    BU_OPT((*options_desc)[4], "m", "muves", "path to output file", bu_opt_str, &options_data->muves_path, "create a MUVES input file containing CHGCOMP and CBACKING elements");
-    BU_OPT((*options_desc)[5], "o", "plot-file", "path to output file", bu_opt_str, &options_data->plot_path, "create a 'plot_file' containing a libplot3 plot file of all CTRI and CQUAD elements processed");
-    BU_OPT((*options_desc)[6], "c", "create-regions", "a list (3001, 4082, 5347) or a range (2315-3527) of section IDs", bu_opt_str, &options_data->create_regions, "process only the listed region ids");
-    BU_OPT_NULL((*options_desc)[7]);
-
-    options_data->quiet_mode = options_data->debug_mode = options_data->libbu_debug_mode = 0;
-    options_data->colors_path = options_data->muves_path = options_data->plot_path = options_data->create_regions = NULL;
+    BU_OPT((*options_desc)[0], NULL, "colors", "path", bu_opt_str, &options_data->colors_path,
+	    "path to file specifying component colors");
+    BU_OPT((*options_desc)[1], NULL, "muves", "path", bu_opt_str, &options_data->muves_path,
+	    "create a MUVES input file containing any CHGCOMP and CBACKING components");
+    BU_OPT((*options_desc)[2], NULL, "plot", "path", bu_opt_str, &options_data->plot_path,
+	    "create a libplot3 file of all CTRI and CQUAD elements processed");
+    BU_OPT((*options_desc)[3], NULL, "sections", "list", bu_opt_str, &options_data->section_list_str,
+	    "process only a list (3001, 4082, 5347) or a range (2315-3527) of SECTION IDs");
+    BU_OPT_NULL((*options_desc)[4]);
 }
 
 
-static void
+HIDDEN void
 fastgen4_free_opts(void *options_data)
 {
     bu_free(options_data, "options_data");
 }
 
 
-static int
-fastgen4_read(struct gcv_context *context, const struct gcv_opts *UNUSED(gcv_options), const void *options_data, const char *source_path)
+HIDDEN int
+fastgen4_read(struct gcv_context *context, const struct gcv_opts *gcv_options, const void *options_data, const char *source_path)
 {
-    const struct fastgen4_options_data * const fg4_options = (struct fastgen4_options_data *)options_data;
+    const struct fastgen4_read_options * const fg4_read_options =
+	(struct fastgen4_read_options *)options_data;
 
-    zero_conversion_state(pstate);
+    struct conversion_state state;
 
-    pstate->fpout = context->dbip->dbi_wdbp;
+    fg4_zero_conversion_state(&state);
+    state.gcv_options = gcv_options;
 
-    if (fg4_options->muves_path)
-	if ((pstate->fp_muves=fopen(fg4_options->muves_path, "wb")) == (FILE *)NULL) {
-	    bu_log("Unable to open MUVES file (%s)\n\tno MUVES file created\n", fg4_options->muves_path);
-	    free_conversion_state(pstate);
+    state.fpout = context->dbip->dbi_wdbp;
+
+    if (fg4_read_options->muves_path)
+	if ((state.fp_muves=fopen(fg4_read_options->muves_path, "wb")) == (FILE *)NULL) {
+	    bu_log("Unable to open MUVES file (%s)\n\tno MUVES file created\n", fg4_read_options->muves_path);
+	    fg4_free_conversion_state(&state);
 	    return 0;
 	}
 
     if (bu_debug & BU_DEBUG_MEM_CHECK)
 	bu_log("doing memory checking\n");
 
-    if ((pstate->fpin=fopen(source_path, "rb")) == (FILE *)NULL) {
+    if ((state.fpin=fopen(source_path, "rb")) == (FILE *)NULL) {
 	bu_log("Cannot open FASTGEN4 file (%s)\n", source_path);
-	free_conversion_state(pstate);
+	fg4_free_conversion_state(&state);
 	return 0;
     }
 
-    if (fg4_options->plot_path) {
-	if ((pstate->fp_plot=fopen(fg4_options->plot_path, "wb")) == NULL) {
-	    bu_log("Cannot open plot file (%s)\n", fg4_options->plot_path);
-	    free_conversion_state(pstate);
+    if (fg4_read_options->plot_path) {
+	if ((state.fp_plot=fopen(fg4_read_options->plot_path, "wb")) == NULL) {
+	    bu_log("Cannot open plot file (%s)\n", fg4_read_options->plot_path);
+	    fg4_free_conversion_state(&state);
 	    return 0;
 	}
     }
@@ -2987,59 +2983,60 @@ fastgen4_read(struct gcv_context *context, const struct gcv_opts *UNUSED(gcv_opt
 	bu_log("\n");
     }
 
-    BU_LIST_INIT(&pstate->HeadColor.l);
-    if (fg4_options->colors_path)
-	read_fast4_colors(fg4_options->colors_path);
+    if (fg4_read_options->colors_path)
+	read_fast4_colors(&state, fg4_read_options->colors_path);
 
-    if (fg4_options->create_regions) {
-	make_region_list(fg4_options->create_regions);
+    if (fg4_read_options->section_list_str) {
+	make_region_list(&state, fg4_read_options->section_list_str);
     }
 
-    if (!quiet)
+    if (state.gcv_options->verbosity_level)
 	bu_log("Scanning for HOLE, WALL, and COMPSPLT cards...\n");
 
-    Process_hole_wall();
+    Process_hole_wall(&state);
 
-    rewind(pstate->fpin);
+    rewind(state.fpin);
 
-    if (!quiet)
+    if (state.gcv_options->verbosity_level)
 	bu_log("Building component names....\n");
 
-    if (Process_input(0)) {
-	rewind(pstate->fpin);
+    if (Process_input(&state, 0)) {
+	rewind(state.fpin);
 
 	/* Make an ID record if no vehicle card was found */
-	if (!pstate->vehicle[0])
-	    mk_id_units(pstate->fpout, source_path, "in");
+	if (!state.vehicle[0])
+	    mk_id_units(state.fpout, source_path, "in");
 
-	if (!quiet)
+	if (state.gcv_options->verbosity_level)
 	    bu_log("Building components....\n");
 
-	if (Process_input(1)) {
-	    if (!quiet)
+	if (Process_input(&state, 1)) {
+	    if (state.gcv_options->verbosity_level)
 		bu_log("Building regions and groups....\n");
 
 	    /* make regions */
-	    make_regions();
+	    make_regions(&state);
 
 	    /* make groups */
-	    f4_do_groups();
+	    f4_do_groups(&state);
 
-	    if (debug)
-		List_holes();
+	    if (state.gcv_options->debug_mode)
+		List_holes(&state);
 
-	    if (!quiet)
-		bu_log("%d components converted\n", pstate->comp_count);
+	    if (state.gcv_options->verbosity_level)
+		bu_log("%d components converted\n", state.comp_count);
 	}
     }
 
-    free_conversion_state(pstate);
+    fg4_free_conversion_state(&state);
     return 1;
 }
 
 
-const struct gcv_filter gcv_conv_fastgen4_read =
-{"FASTGEN4 Reader", GCV_FILTER_READ, MIME_MODEL_VND_FASTGEN, fastgen4_create_opts, fastgen4_free_opts, fastgen4_read};
+const struct gcv_filter gcv_conv_fastgen4_read = {
+    "FASTGEN4 Reader", GCV_FILTER_READ, MIME_MODEL_VND_FASTGEN,
+    fastgen4_create_opts, fastgen4_free_opts, fastgen4_read
+};
 
 
 /*
