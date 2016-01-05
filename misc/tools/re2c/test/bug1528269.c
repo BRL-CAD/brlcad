@@ -2,5 +2,3 @@
 #line 1 "bug1528269.re"
 void foo()
 {
-	x='ü';
-}
