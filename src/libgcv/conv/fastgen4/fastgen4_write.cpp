@@ -1424,7 +1424,6 @@ get_cutout(const db_i &db, const db_full_path &parent_path, DBInternal &outer,
 	db_add_node_to_full_path(&temp, const_cast<directory *>(&inner_dir));
 	path_to_mat(db, temp, matrix);
 	apply_path_xform(db, matrix, inner.get());
-
     }
 
     return true;

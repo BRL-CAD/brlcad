@@ -1,4 +1,4 @@
-/*                        V R M L _ W R I T E . C
+/*                    V R M L _ W R I T E . C
  * BRL-CAD
  *
  * Copyright (c) 1995-2016 United States Government as represented by
@@ -20,7 +20,7 @@
  */
 /** @file vrml_write.c
  *
- * Program to convert a BRL-CAD model (in a .g file) to a VRML (2.0)
+ * Convert a BRL-CAD model (in a .g file) to a VRML (2.0)
  * faceted model by calling on the NMG booleans.
  *
  */
@@ -40,11 +40,11 @@
 #include "vmath.h"
 #include "bu/getopt.h"
 #include "bu/units.h"
+#include "gcv/api.h"
 #include "nmg.h"
 #include "rt/geom.h"
 #include "raytrace.h"
 #include "wdb.h"
-#include "gcv/api.h"
 
 #define TXT_BUF_LEN 512
 #define TXT_NAME_SIZE 128
@@ -97,30 +97,29 @@ extern union tree *do_region_end1(struct db_tree_state *tsp, const struct db_ful
 extern union tree *do_region_end2(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, void *client_data);
 extern union tree *nmg_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, void *client_data);
 
-static char *tok_sep = " \t";
-static int NMG_debug; /* saved arg of -X, for longjmp handling */
-static int verbose = 0;
-static const char *out_file = (char *)NULL; /* Output filename */
-static FILE *fp_out; /* Output file pointer */
-static struct db_i *dbip;
-static struct rt_tess_tol ttol;
-static struct bn_tol tol;
-static struct model *the_model;
 
-static char *units = "mm";
-static fastf_t scale_factor = 1.0;
-
-static struct db_tree_state tree_state;	/* includes tol & model */
-
-static int regions_tried = 0;
-static int regions_converted = 0;
-static int bomb_cnt = 0;
-
-static int bot_dump = 0;
-static int eval_all = 0;
+struct vrml_write_options
+{
+    int bot_dump;
+    int eval_all;
+};
 
 
-static void
+struct conversion_state {
+    const struct gcv_opts *gcv_options;
+    const struct vrml_write_options *vrml_write_options;
+
+    FILE *fp_out;
+    struct db_i *dbip;
+
+    int nmg_debug;
+    int regions_tried;
+    int regions_converted;
+    int bomb_cnt;
+};
+
+
+HIDDEN void
 clean_pmp(struct plate_mode *pmp)
 {
     int i;
@@ -150,7 +149,7 @@ clean_pmp(struct plate_mode *pmp)
 
 
 /* duplicate bot */
-struct rt_bot_internal *
+HIDDEN struct rt_bot_internal *
 dup_bot(struct rt_bot_internal *bot_in)
 {
     struct rt_bot_internal *bot;
@@ -205,12 +204,20 @@ dup_bot(struct rt_bot_internal *bot_in)
 }
 
 
+struct region_end_data
+{
+    struct conversion_state *pstate;
+    struct plate_mode *pmp;
+};
+
+
 /* return 0 when object is NOT a light or an error occurred. regions
  * are skipped when this function returns 0.
  */
-static int
-select_lights(struct db_tree_state *UNUSED(tsp), const struct db_full_path *pathp, const struct rt_comb_internal *UNUSED(combp), void *UNUSED(client_data))
+HIDDEN int
+select_lights(struct db_tree_state *UNUSED(tsp), const struct db_full_path *pathp, const struct rt_comb_internal *UNUSED(combp), void *client_data)
 {
+    const struct region_end_data * const data = (struct region_end_data *)client_data;
     struct directory *dp;
     struct rt_db_internal intern;
     struct rt_comb_internal *comb;
@@ -224,7 +231,7 @@ select_lights(struct db_tree_state *UNUSED(tsp), const struct db_full_path *path
 	return 0;
     }
 
-    id = rt_db_get_internal(&intern, dp, dbip, (matp_t)NULL, &rt_uniresource);
+    id = rt_db_get_internal(&intern, dp, data->pstate->dbip, (matp_t)NULL, &rt_uniresource);
     if (id < 0) {
 	/* error occurred retrieving object */
 	bu_log("Warning: Can not load internal form of %s\n", dp->d_namep);
@@ -252,9 +259,10 @@ select_lights(struct db_tree_state *UNUSED(tsp), const struct db_full_path *path
 /* return 0 when IS a light or an error occurred. regions are skipped
  * when this function returns 0.
  */
-static int
-select_non_lights(struct db_tree_state *UNUSED(tsp), const struct db_full_path *pathp, const struct rt_comb_internal *UNUSED(combp), void *UNUSED(client_data))
+HIDDEN int
+select_non_lights(struct db_tree_state *UNUSED(tsp), const struct db_full_path *pathp, const struct rt_comb_internal *UNUSED(combp), void *client_data)
 {
+    const struct region_end_data * const data = (struct region_end_data *)client_data;
     struct directory *dp;
     struct rt_db_internal intern;
     struct rt_comb_internal *comb;
@@ -263,7 +271,7 @@ select_non_lights(struct db_tree_state *UNUSED(tsp), const struct db_full_path *
     RT_CK_FULL_PATH(pathp);
     dp = DB_FULL_PATH_CUR_DIR(pathp);
 
-    id = rt_db_get_internal(&intern, dp, dbip, (matp_t)NULL, &rt_uniresource);
+    id = rt_db_get_internal(&intern, dp, data->pstate->dbip, (matp_t)NULL, &rt_uniresource);
     if (id < 0) {
 	/* error occurred retrieving object */
 	bu_log("Warning: Can not load internal form of %s\n", dp->d_namep);
@@ -288,31 +296,32 @@ select_non_lights(struct db_tree_state *UNUSED(tsp), const struct db_full_path *
  * used when we want CSG objects tessellated and evaluated but we
  * want to output BOTs without boolean evaluation.
  */
-union tree *
+HIDDEN union tree *
 leaf_tess1(struct db_tree_state *tsp, const struct db_full_path *pathp, struct rt_db_internal *ip, void *client_data)
 {
+    const struct region_end_data * const data = (struct region_end_data *)client_data;
+
     struct rt_bot_internal *bot;
-    struct plate_mode *pmp = (struct plate_mode *)client_data;
 
     if (ip->idb_type != ID_BOT) {
-	pmp->num_nonbots++;
+	data->pmp->num_nonbots++;
 	return nmg_booltree_leaf_tess(tsp, pathp, ip, client_data);
     }
 
     bot = (struct rt_bot_internal *)ip->idb_ptr;
     RT_BOT_CK_MAGIC(bot);
 
-    if (pmp->array_size <= pmp->num_bots) {
+    if (data->pmp->array_size <= data->pmp->num_bots) {
 	struct rt_bot_internal **bots_tmp;
-	pmp->array_size += 5;
-	bots_tmp = (struct rt_bot_internal **)bu_realloc((void *)pmp->bots,
-							 pmp->array_size * sizeof(struct rt_bot_internal *), "pmp->bots");
-	pmp->bots = bots_tmp;
+	data->pmp->array_size += 5;
+	bots_tmp = (struct rt_bot_internal **)bu_realloc((void *)data->pmp->bots,
+							 data->pmp->array_size * sizeof(struct rt_bot_internal *), "data->pmp->bots");
+	data->pmp->bots = bots_tmp;
     }
 
     /* walk tree will free the bot, so we need a copy */
-    pmp->bots[pmp->num_bots] = dup_bot(bot);
-    pmp->num_bots++;
+    data->pmp->bots[data->pmp->num_bots] = dup_bot(bot);
+    data->pmp->num_bots++;
 
     return (union tree *)NULL;
 }
@@ -323,11 +332,11 @@ leaf_tess1(struct db_tree_state *tsp, const struct db_full_path *pathp, struct r
  * BOTs directly to the VRML file without performing a boolean
  * evaluation.
  */
-union tree *
+HIDDEN union tree *
 leaf_tess2(struct db_tree_state *UNUSED(tsp), const struct db_full_path *UNUSED(pathp), struct rt_db_internal *ip, void *client_data)
 {
+    const struct region_end_data * const data = (struct region_end_data *)client_data;
     struct rt_bot_internal *bot;
-    struct plate_mode *pmp = (struct plate_mode *)client_data;
 
     if (ip->idb_type != ID_BOT) {
 	return (union tree *)NULL;
@@ -336,17 +345,17 @@ leaf_tess2(struct db_tree_state *UNUSED(tsp), const struct db_full_path *UNUSED(
     bot = (struct rt_bot_internal *)ip->idb_ptr;
     RT_BOT_CK_MAGIC(bot);
 
-    if (pmp->array_size <= pmp->num_bots) {
+    if (data->pmp->array_size <= data->pmp->num_bots) {
 	struct rt_bot_internal **bots_tmp;
-	pmp->array_size += 5;
-	bots_tmp = (struct rt_bot_internal **)bu_realloc((void *)pmp->bots,
-							 pmp->array_size * sizeof(struct rt_bot_internal *), "pmp->bots");
-	pmp->bots = bots_tmp;
+	data->pmp->array_size += 5;
+	bots_tmp = (struct rt_bot_internal **)bu_realloc((void *)data->pmp->bots,
+							 data->pmp->array_size * sizeof(struct rt_bot_internal *), "data->pmp->bots");
+	data->pmp->bots = bots_tmp;
     }
 
     /* walk tree will free the bot, so we need a copy */
-    pmp->bots[pmp->num_bots] = dup_bot(bot);
-    pmp->num_bots++;
+    data->pmp->bots[data->pmp->num_bots] = dup_bot(bot);
+    data->pmp->num_bots++;
 
     return (union tree *)NULL;
 }
@@ -361,7 +370,7 @@ leaf_tess2(struct db_tree_state *UNUSED(tsp), const struct db_full_path *UNUSED(
  * in mged such that two conversions will result in the same name, but
  * it should be an extremely rare situation.
  */
-static void path_2_vrml_id(struct bu_vls *id, const char *path) {
+HIDDEN void path_2_vrml_id(struct bu_vls *id, const char *path) {
     static int counter = 0;
     unsigned int i;
     char c;
@@ -582,193 +591,8 @@ static void path_2_vrml_id(struct bu_vls *id, const char *path) {
 }
 
 
-static int
-vrml_write(struct gcv_context *context, const struct gcv_opts *UNUSED(gcv_options), const void *UNUSED(options_data), const char *dest_path)
-{
-    size_t i;
-    struct plate_mode pm;
-    size_t num_objects = 0;
-    char **object_names = NULL;
-
-    out_file = dest_path;
-    dbip = context->dbip;
-    bu_setlinebuf(stderr);
-
-    the_model = nmg_mm();
-    tree_state = rt_initial_tree_state;	/* struct copy */
-    tree_state.ts_tol = &tol;
-    tree_state.ts_ttol = &ttol;
-    tree_state.ts_m = &the_model;
-
-    ttol.magic = RT_TESS_TOL_MAGIC;
-    /* Defaults, updated by command line options. */
-    ttol.abs = 0.0;
-    ttol.rel = 0.01;
-    ttol.norm = 0.0;
-
-    tol.magic = BN_TOL_MAGIC;
-    tol.dist = 0.005;
-    tol.dist_sq = tol.dist * tol.dist;
-    tol.perp = 1e-6;
-    tol.para = 1 - tol.perp;
-
-    /* NOTE: For visualization purposes, in the debug plot files */
-    {
-	/* WTF: This value is specific to the Bradley */
-	nmg_eue_dist = 2.0;
-    }
-
-    BU_LIST_INIT(&RTG.rtg_vlfree);	/* for vlist macros */
-
-    if ((bot_dump == 1) && (eval_all == 1)) {
-	bu_log("BOT Dump and Evaluate All are mutually exclusive\n");
-	return 0;
-    }
-
-    if (out_file == NULL) {
-	fp_out = stdout;
-	setmode(fileno(fp_out), O_BINARY);
-    } else {
-	if ((fp_out = fopen(out_file, "wb")) == NULL) {
-	    perror("g-vrml");
-	    bu_log("Cannot open %s\n", out_file);
-	    return 0;
-	}
-    }
-
-    fprintf(fp_out, "#VRML V2.0 utf8\n");
-    fprintf(fp_out, "#Units are %s\n", units);
-    /* NOTE: We may want to inquire about bounding boxes for the
-     * various groups and add Viewpoints nodes that point the camera
-     * to the center and orient for Top, Side, etc. Views. We will add
-     * some default Material Color definitions (for thousands groups)
-     * before we start defining the geometry.
-     */
-    fprintf(fp_out, "Shape { appearance Appearance { material DEF Material_999 Material { diffuseColor 0.78 0.78 0.78 } } }\n");
-    fprintf(fp_out, "Shape { appearance Appearance { material DEF Material_1999 Material { diffuseColor 0.88 0.29 0.29 } } }\n");
-    fprintf(fp_out, "Shape { appearance Appearance { material DEF Material_2999 Material { diffuseColor 0.82 0.53 0.54 } } }\n");
-    fprintf(fp_out, "Shape { appearance Appearance { material DEF Material_3999 Material { diffuseColor 0.39 0.89 0.00 } } }\n");
-    fprintf(fp_out, "Shape { appearance Appearance { material DEF Material_4999 Material { diffuseColor 1.00 0.00 0.00 } } }\n");
-    fprintf(fp_out, "Shape { appearance Appearance { material DEF Material_5999 Material { diffuseColor 0.82 0.00 0.82 } } }\n");
-    fprintf(fp_out, "Shape { appearance Appearance { material DEF Material_6999 Material { diffuseColor 0.62 0.62 0.62 } } }\n");
-    fprintf(fp_out, "Shape { appearance Appearance { material DEF Material_7999 Material { diffuseColor 0.49 0.49 0.49 } } }\n");
-    fprintf(fp_out, "Shape { appearance Appearance { material DEF Material_8999 Material { diffuseColor 0.18 0.31 0.31 } } }\n");
-    fprintf(fp_out, "Shape { appearance Appearance { material DEF Material_9999 Material { diffuseColor 0.00 0.41 0.82 } } }\n");
-
-    /* I had hoped to create a separate sub-tree (using the Transform
-     * node) for each group name argument however, it appears they are
-     * all handled at the same time so I will only have one Transform
-     * for the complete conversion. Later on switch nodes may be added
-     * to turn on and off the groups (via ROUTE nodes).
-     */
-    fprintf(fp_out, "Transform {\n");
-    fprintf(fp_out, "\tchildren [\n");
-
-    pm.num_bots = 0;
-    pm.num_nonbots = 0;
-
-    if (!eval_all) {
-	pm.array_size = 5;
-	pm.bots = (struct rt_bot_internal **)bu_calloc(pm.array_size,
-						       sizeof(struct rt_bot_internal *), "pm.bots");
-    }
-
-    /* get toplevel objects */
-    {
-	struct directory **results;
-	db_update_nref(dbip, &rt_uniresource);
-	num_objects = db_ls(dbip, DB_LS_TOPS, NULL, &results);
-	object_names = db_dpv_to_argv(results);
-	bu_free(results, "tops");
-    }
-
-    if (eval_all) {
-	(void)db_walk_tree(dbip, num_objects, (const char **)(object_names),
-			   1,		/* ncpu */
-			   &tree_state,
-			   0,
-			   nmg_region_end,
-			   nmg_booltree_leaf_tess,
-			   (void *)&pm);	/* in librt/nmg_bool.c */
-	goto out;
-    }
-
-    if (bot_dump) {
-	(void)db_walk_tree(dbip, num_objects, (const char **)(object_names),
-			   1,		/* ncpu */
-			   &tree_state,
-			   0,
-			   do_region_end2,
-			   leaf_tess2,
-			   (void *)&pm);	/* in librt/nmg_bool.c */
-	goto out;
-    }
-
-    for (i = 0; i < num_objects; i++) {
-	struct directory *dp;
-
-	dp = db_lookup(dbip, object_names[i], LOOKUP_QUIET);
-	if (dp == RT_DIR_NULL) {
-	    bu_log("Cannot find %s\n", object_names[i]);
-	    continue;
-	}
-
-	/* light source must be a combination */
-	if (!(dp->d_flags & RT_DIR_COMB)) {
-	    continue;
-	}
-
-	fprintf(fp_out, "# Includes group %s\n", object_names[i]);
-
-	/* walk trees selecting only light source regions */
-	(void)db_walk_tree(dbip, 1, (const char **)(&object_names[i]),
-			   1,			/* ncpu */
-			   &tree_state,
-			   select_lights,
-			   do_region_end1,
-			   leaf_tess1,
-			   (void *)&pm);	/* in librt/nmg_bool.c */
-    }
-
-    /* Walk indicated tree(s).  Each non-light-source region will be output separately */
-    (void)db_walk_tree(dbip, num_objects, (const char **)(object_names),
-		       1,		/* ncpu */
-		       &tree_state,
-		       select_non_lights,
-		       do_region_end1,
-		       leaf_tess1,
-		       (void *)&pm);	/* in librt/nmg_bool.c */
-
-    /* Release dynamic storage */
-    nmg_km(the_model);
-
-    if (!eval_all) {
-	bu_free(pm.bots, "pm.bots");
-    }
-
-out:
-    bu_free(object_names, "object_names");
-
-    /* Now we need to close each group set */
-    fprintf(fp_out, "\t]\n}\n");
-
-    bu_log("\nTotal of %d regions converted of %d regions attempted.\n",
-	   regions_converted, regions_tried);
-
-    if (regions_converted != regions_tried) {
-	bu_log("Of the %d which failed conversion, %d of these failed due to conversion error.\n",
-	       regions_tried - regions_converted, bomb_cnt);
-    }
-
-    fclose(fp_out);
-    bu_log("Done.\n");
-
-    return 1;
-}
-
-
-void
-nmg_2_vrml(struct db_tree_state *tsp, const struct db_full_path *pathp, struct model *m)
+HIDDEN void
+nmg_2_vrml(const struct conversion_state *pstate, struct db_tree_state *tsp, const struct db_full_path *pathp, struct model *m)
 {
     struct mater_info *mater = &tsp->ts_mater;
     const struct bn_tol *tol2 = tsp->ts_tol;
@@ -782,7 +606,6 @@ nmg_2_vrml(struct db_tree_state *tsp, const struct db_full_path *pathp, struct m
     int is_light = 0;
     point_t ave_pt = VINIT_ZERO;
     struct bu_vls shape_name = BU_VLS_INIT_ZERO;
-    char *full_path;
     /* There may be a better way to capture the region_id, than
      * getting the rt_comb_internal structure, (and may be a better
      * way to capture the rt_comb_internal struct), but for now I just
@@ -800,8 +623,6 @@ nmg_2_vrml(struct db_tree_state *tsp, const struct db_full_path *pathp, struct m
 
     NMG_CK_MODEL(m);
 
-    full_path = db_path_to_string(pathp);
-
     RT_CK_FULL_PATH(pathp);
     dp = DB_FULL_PATH_CUR_DIR(pathp);
 
@@ -809,7 +630,7 @@ nmg_2_vrml(struct db_tree_state *tsp, const struct db_full_path *pathp, struct m
 	return;
     }
 
-    id = rt_db_get_internal(&intern, dp, dbip, (matp_t)NULL, &rt_uniresource);
+    id = rt_db_get_internal(&intern, dp, pstate->dbip, (matp_t)NULL, &rt_uniresource);
     if (id < 0) {
 	bu_log("Cannot internal form of %s\n", dp->d_namep);
 	return;
@@ -833,7 +654,7 @@ nmg_2_vrml(struct db_tree_state *tsp, const struct db_full_path *pathp, struct m
     }
 
     if (mater->ma_shader) {
-	tok = strtok(mater->ma_shader, tok_sep);
+	tok = strtok(mater->ma_shader, " \t");
 	bu_strlcpy(mat.shader, tok, TXT_NAME_SIZE);
     } else {
 	mat.shader[0] = '\0';
@@ -854,11 +675,13 @@ nmg_2_vrml(struct db_tree_state *tsp, const struct db_full_path *pathp, struct m
 	/* this is a light source */
 	is_light = 1;
     } else {
+	char *full_path = db_path_to_string(pathp);
 	path_2_vrml_id(&shape_name, full_path);
-	fprintf(fp_out, "\t\tDEF %s Shape {\n", bu_vls_addr(&shape_name));
+	fprintf(pstate->fp_out, "\t\tDEF %s Shape {\n", bu_vls_addr(&shape_name));
 
-	fprintf(fp_out, "\t\t\t# Component_ID: %ld   %s\n", comb->region_id, full_path);
-	fprintf(fp_out, "\t\t\tappearance Appearance {\n");
+	fprintf(pstate->fp_out, "\t\t\t# Component_ID: %ld   %s\n", comb->region_id, full_path);
+	bu_free(full_path, "db_path_to_string");
+	fprintf(pstate->fp_out, "\t\t\tappearance Appearance {\n");
 
 	if (bu_strncmp("plastic", mat.shader, 7) == 0) {
 	    if (mat.shininess < 0) {
@@ -868,13 +691,13 @@ nmg_2_vrml(struct db_tree_state *tsp, const struct db_full_path *pathp, struct m
 		mat.transparency = 0.0;
 	    }
 
-	    fprintf(fp_out, "\t\t\t\tmaterial Material {\n");
-	    fprintf(fp_out, "\t\t\t\t\tdiffuseColor %g %g %g \n", r, g, b);
-	    fprintf(fp_out, "\t\t\t\t\tshininess %g\n", 1.0-exp(-(double)mat.shininess/20.0));
+	    fprintf(pstate->fp_out, "\t\t\t\tmaterial Material {\n");
+	    fprintf(pstate->fp_out, "\t\t\t\t\tdiffuseColor %g %g %g \n", r, g, b);
+	    fprintf(pstate->fp_out, "\t\t\t\t\tshininess %g\n", 1.0-exp(-(double)mat.shininess/20.0));
 	    if (mat.transparency > SMALL_FASTF) {
-		fprintf(fp_out, "\t\t\t\t\ttransparency %g\n", mat.transparency);
+		fprintf(pstate->fp_out, "\t\t\t\t\ttransparency %g\n", mat.transparency);
 	    }
-	    fprintf(fp_out, "\t\t\t\t\tspecularColor %g %g %g \n\t\t\t\t}\n", 1.0, 1.0, 1.0);
+	    fprintf(pstate->fp_out, "\t\t\t\t\tspecularColor %g %g %g \n\t\t\t\t}\n", 1.0, 1.0, 1.0);
 	} else if (bu_strncmp("glass", mat.shader, 5) == 0) {
 	    if (mat.shininess < 0) {
 		mat.shininess = 4;
@@ -883,13 +706,13 @@ nmg_2_vrml(struct db_tree_state *tsp, const struct db_full_path *pathp, struct m
 		mat.transparency = 0.8;
 	    }
 
-	    fprintf(fp_out, "\t\t\t\tmaterial Material {\n");
-	    fprintf(fp_out, "\t\t\t\t\tdiffuseColor %g %g %g \n", r, g, b);
-	    fprintf(fp_out, "\t\t\t\t\tshininess %g\n", 1.0-exp(-(double)mat.shininess/20.0));
+	    fprintf(pstate->fp_out, "\t\t\t\tmaterial Material {\n");
+	    fprintf(pstate->fp_out, "\t\t\t\t\tdiffuseColor %g %g %g \n", r, g, b);
+	    fprintf(pstate->fp_out, "\t\t\t\t\tshininess %g\n", 1.0-exp(-(double)mat.shininess/20.0));
 	    if (mat.transparency > SMALL_FASTF) {
-		fprintf(fp_out, "\t\t\t\t\ttransparency %g\n", mat.transparency);
+		fprintf(pstate->fp_out, "\t\t\t\t\ttransparency %g\n", mat.transparency);
 	    }
-	    fprintf(fp_out, "\t\t\t\t\tspecularColor %g %g %g \n\t\t\t\t}\n", 1.0, 1.0, 1.0);
+	    fprintf(pstate->fp_out, "\t\t\t\t\tspecularColor %g %g %g \n\t\t\t\t}\n", 1.0, 1.0, 1.0);
 	} else if (bu_strncmp("texture", mat.shader, 7) == 0) {
 	    if (mat.tx_w < 0) {
 		mat.tx_w = 512;
@@ -910,12 +733,12 @@ nmg_2_vrml(struct db_tree_state *tsp, const struct db_full_path *pathp, struct m
 		    long bytes_to_go = 0;
 
 		    /* Johns note - need to check (test) the texture stuff */
-		    fprintf(fp_out, "\t\t\t\ttextureTransform TextureTransform {\n");
-		    fprintf(fp_out, "\t\t\t\t\tscale 1.33333 1.33333\n\t\t\t\t}\n");
-		    fprintf(fp_out, "\t\t\t\ttexture PixelTexture {\n");
-		    fprintf(fp_out, "\t\t\t\t\trepeatS TRUE\n");
-		    fprintf(fp_out, "\t\t\t\t\trepeatT TRUE\n");
-		    fprintf(fp_out, "\t\t\t\t\timage %d %d %d\n", mat.tx_w, mat.tx_n, 3);
+		    fprintf(pstate->fp_out, "\t\t\t\ttextureTransform TextureTransform {\n");
+		    fprintf(pstate->fp_out, "\t\t\t\t\tscale 1.33333 1.33333\n\t\t\t\t}\n");
+		    fprintf(pstate->fp_out, "\t\t\t\ttexture PixelTexture {\n");
+		    fprintf(pstate->fp_out, "\t\t\t\t\trepeatS TRUE\n");
+		    fprintf(pstate->fp_out, "\t\t\t\t\trepeatT TRUE\n");
+		    fprintf(pstate->fp_out, "\t\t\t\t\timage %d %d %d\n", mat.tx_w, mat.tx_n, 3);
 		    tex_len = mat.tx_w*mat.tx_n * 3;
 		    while (bytes_read < tex_len) {
 			int nbytes;
@@ -936,46 +759,46 @@ nmg_2_vrml(struct db_tree_state *tsp, const struct db_full_path *pathp, struct m
 			}
 			bytes_read += nbytes;
 			for (i = 0; i < nbytes; i += 3) {
-			    fprintf(fp_out, "\t\t\t0x%02x%02x%02x\n",
+			    fprintf(pstate->fp_out, "\t\t\t0x%02x%02x%02x\n",
 				    tex_buf[i], tex_buf[i+1], tex_buf[i+2]);
 			}
 		    }
-		    fprintf(fp_out, "\t\t\t\t}\n");
+		    fprintf(pstate->fp_out, "\t\t\t\t}\n");
 
 		    close(tex_fd);
 		}
 	    }
 	} else if (mater->ma_color_valid) {
 	    /* no shader specified, but a color is assigned */
-	    fprintf(fp_out, "\t\t\t\tmaterial Material {\n");
-	    fprintf(fp_out, "\t\t\t\t\tdiffuseColor %g %g %g }\n", r, g, b);
+	    fprintf(pstate->fp_out, "\t\t\t\tmaterial Material {\n");
+	    fprintf(pstate->fp_out, "\t\t\t\t\tdiffuseColor %g %g %g }\n", r, g, b);
 	} else {
 	    /* If no color was defined set the colors according to the thousands groups */
 	    int thou = comb->region_id / 1000;
-	    thou == 0 ? fprintf(fp_out, "\t\t\tmaterial USE Material_999\n")
-		: thou == 1 ? fprintf(fp_out, "\t\t\tmaterial USE Material_1999\n")
-		: thou == 2 ? fprintf(fp_out, "\t\t\tmaterial USE Material_2999\n")
-		: thou == 3 ? fprintf(fp_out, "\t\t\tmaterial USE Material_3999\n")
-		: thou == 4 ? fprintf(fp_out, "\t\t\tmaterial USE Material_4999\n")
-		: thou == 5 ? fprintf(fp_out, "\t\t\tmaterial USE Material_5999\n")
-		: thou == 6 ? fprintf(fp_out, "\t\t\tmaterial USE Material_6999\n")
-		: thou == 7 ? fprintf(fp_out, "\t\t\tmaterial USE Material_7999\n")
-		: thou == 8 ? fprintf(fp_out, "\t\t\tmaterial USE Material_8999\n")
-		: fprintf(fp_out, "\t\t\tmaterial USE Material_9999\n");
+	    thou == 0 ? fprintf(pstate->fp_out, "\t\t\tmaterial USE Material_999\n")
+		: thou == 1 ? fprintf(pstate->fp_out, "\t\t\tmaterial USE Material_1999\n")
+		: thou == 2 ? fprintf(pstate->fp_out, "\t\t\tmaterial USE Material_2999\n")
+		: thou == 3 ? fprintf(pstate->fp_out, "\t\t\tmaterial USE Material_3999\n")
+		: thou == 4 ? fprintf(pstate->fp_out, "\t\t\tmaterial USE Material_4999\n")
+		: thou == 5 ? fprintf(pstate->fp_out, "\t\t\tmaterial USE Material_5999\n")
+		: thou == 6 ? fprintf(pstate->fp_out, "\t\t\tmaterial USE Material_6999\n")
+		: thou == 7 ? fprintf(pstate->fp_out, "\t\t\tmaterial USE Material_7999\n")
+		: thou == 8 ? fprintf(pstate->fp_out, "\t\t\tmaterial USE Material_8999\n")
+		: fprintf(pstate->fp_out, "\t\t\tmaterial USE Material_9999\n");
 	}
     }
 
     if (!is_light) {
 	nmg_triangulate_model(m, tol2);
-	fprintf(fp_out, "\t\t\t}\n");
-	fprintf(fp_out, "\t\t\tgeometry IndexedFaceSet {\n");
-	fprintf(fp_out, "\t\t\t\tcoord Coordinate {\n");
+	fprintf(pstate->fp_out, "\t\t\t}\n");
+	fprintf(pstate->fp_out, "\t\t\tgeometry IndexedFaceSet {\n");
+	fprintf(pstate->fp_out, "\t\t\t\tcoord Coordinate {\n");
     }
 
     /* get list of vertices */
     nmg_vertex_tabulate(&verts, &m->magic);
     if (!is_light) {
-	fprintf(fp_out, "\t\t\t\t\tpoint [");
+	fprintf(pstate->fp_out, "\t\t\t\t\tpoint [");
     } else {
 	VSETALL(ave_pt, 0.0);
     }
@@ -991,7 +814,7 @@ nmg_2_vrml(struct db_tree_state *tsp, const struct db_full_path *pathp, struct m
 	NMG_CK_VERTEX_G(vg);
 
 	/* convert to desired units */
-	VSCALE(pt_meters, vg->coord, scale_factor);
+	VSCALE(pt_meters, vg->coord, pstate->gcv_options->scale_factor);
 
 	if (is_light) {
 	    VADD2(ave_pt, ave_pt, pt_meters);
@@ -999,16 +822,16 @@ nmg_2_vrml(struct db_tree_state *tsp, const struct db_full_path *pathp, struct m
 
 	if (first) {
 	    if (!is_light) {
-		fprintf(fp_out, " %10.10e %10.10e %10.10e, # point %d\n", V3ARGS(pt_meters), i);
+		fprintf(pstate->fp_out, " %10.10e %10.10e %10.10e, # point %d\n", V3ARGS(pt_meters), i);
 	    }
 	    first = 0;
 	} else if (!is_light) {
-	    fprintf(fp_out, "\t\t\t\t\t%10.10e %10.10e %10.10e, # point %d\n", V3ARGS(pt_meters), i);
+	    fprintf(pstate->fp_out, "\t\t\t\t\t%10.10e %10.10e %10.10e, # point %d\n", V3ARGS(pt_meters), i);
 	}
     }
 
     if (!is_light) {
-	fprintf(fp_out, "\t\t\t\t\t]\n\t\t\t\t}\n");
+	fprintf(pstate->fp_out, "\t\t\t\t\t]\n\t\t\t\t}\n");
     } else {
 	fastf_t one_over_count;
 	one_over_count = 1.0/(fastf_t)BU_PTBL_END(&verts);
@@ -1017,7 +840,7 @@ nmg_2_vrml(struct db_tree_state *tsp, const struct db_full_path *pathp, struct m
 
     first = 1;
     if (!is_light) {
-	fprintf(fp_out, "\t\t\t\tcoordIndex [\n");
+	fprintf(pstate->fp_out, "\t\t\t\tcoordIndex [\n");
 	for (BU_LIST_FOR(reg, nmgregion, &m->r_hd)) {
 	    struct shell *s;
 
@@ -1044,46 +867,46 @@ nmg_2_vrml(struct db_tree_state *tsp, const struct db_full_path *pathp, struct m
 			}
 
 			if (!first) {
-			    fprintf(fp_out, ", \n");
+			    fprintf(pstate->fp_out, ", \n");
 			} else {
 			    first = 0;
 			}
 
-			fprintf(fp_out, "\t\t\t\t\t");
+			fprintf(pstate->fp_out, "\t\t\t\t\t");
 			for (BU_LIST_FOR(eu, edgeuse, &lu->down_hd)) {
 			    struct vertex *v;
 
 			    NMG_CK_EDGEUSE(eu);
 			    v = eu->vu_p->v_p;
 			    NMG_CK_VERTEX(v);
-			    fprintf(fp_out, " %d, ", bu_ptbl_locate(&verts, (long *)v));
+			    fprintf(pstate->fp_out, " %d, ", bu_ptbl_locate(&verts, (long *)v));
 			}
-			fprintf(fp_out, "-1");
+			fprintf(pstate->fp_out, "-1");
 		    }
 		}
 	    }
 	}
-	fprintf(fp_out, "\n\t\t\t\t]\n\t\t\t\tnormalPerVertex FALSE\n");
-	fprintf(fp_out, "\t\t\t\tconvex FALSE\n");
-	fprintf(fp_out, "\t\t\t\tcreaseAngle 0.5\n");
-	fprintf(fp_out, "\t\t\t}\n\t\t}\n");
+	fprintf(pstate->fp_out, "\n\t\t\t\t]\n\t\t\t\tnormalPerVertex FALSE\n");
+	fprintf(pstate->fp_out, "\t\t\t\tconvex FALSE\n");
+	fprintf(pstate->fp_out, "\t\t\t\tcreaseAngle 0.5\n");
+	fprintf(pstate->fp_out, "\t\t\t}\n\t\t}\n");
     } else {
 	mat.lt_fraction = 0.0;
 	mat.lt_angle = 180.0;
 	VSETALL(mat.lt_dir, 0.0);
 
 	if (!ZERO(mat.lt_dir[X]) || !ZERO(mat.lt_dir[Y]) || !ZERO(mat.lt_dir[Z])) {
-	    fprintf(fp_out, "\t\tSpotLight {\n");
-	    fprintf(fp_out, "\t\t\ton \tTRUE\n");
+	    fprintf(pstate->fp_out, "\t\tSpotLight {\n");
+	    fprintf(pstate->fp_out, "\t\t\ton \tTRUE\n");
 	    if (mat.lt_fraction > 0.0) {
-		fprintf(fp_out, "\t\t\tintensity \t%g\n", mat.lt_fraction);
+		fprintf(pstate->fp_out, "\t\t\tintensity \t%g\n", mat.lt_fraction);
 	    }
-	    fprintf(fp_out, "\t\t\tcolor \t%g %g %g\n", r, g, b);
-	    fprintf(fp_out, "\t\t\tlocation \t%g %g %g\n", V3ARGS(ave_pt));
-	    fprintf(fp_out, "\t\t\tdirection \t%g %g %g\n", V3ARGS(mat.lt_dir));
-	    fprintf(fp_out, "\t\t\tcutOffAngle \t%g }\n", mat.lt_angle);
+	    fprintf(pstate->fp_out, "\t\t\tcolor \t%g %g %g\n", r, g, b);
+	    fprintf(pstate->fp_out, "\t\t\tlocation \t%g %g %g\n", V3ARGS(ave_pt));
+	    fprintf(pstate->fp_out, "\t\t\tdirection \t%g %g %g\n", V3ARGS(mat.lt_dir));
+	    fprintf(pstate->fp_out, "\t\t\tcutOffAngle \t%g }\n", mat.lt_angle);
 	} else {
-	    fprintf(fp_out, "\t\tPointLight {\n\t\t\ton TRUE\n\t\t\tintensity 1\n\t\t\tcolor %g %g %g\n\t\t\tlocation %g %g %g\n\t\t}\n",
+	    fprintf(pstate->fp_out, "\t\tPointLight {\n\t\t\ton TRUE\n\t\t\tintensity 1\n\t\t\tcolor %g %g %g\n\t\t\tlocation %g %g %g\n\t\t}\n",
 		    r, g, b, V3ARGS(ave_pt));
 	}
     }
@@ -1093,8 +916,8 @@ nmg_2_vrml(struct db_tree_state *tsp, const struct db_full_path *pathp, struct m
 }
 
 
-void
-bot2vrml(struct plate_mode *pmp, const struct db_full_path *pathp, int region_id)
+HIDDEN void
+bot2vrml(const struct conversion_state *pstate, struct plate_mode *pmp, const struct db_full_path *pathp, int region_id)
 {
     struct bu_vls shape_name = BU_VLS_INIT_ZERO;
     char *path_str;
@@ -1108,7 +931,7 @@ bot2vrml(struct plate_mode *pmp, const struct db_full_path *pathp, int region_id
 
     path_2_vrml_id(&shape_name, path_str);
 
-    fprintf(fp_out, "\t\tDEF %s Shape {\n\t\t\t# Component_ID: %d   %s\n",
+    fprintf(pstate->fp_out, "\t\tDEF %s Shape {\n\t\t\t# Component_ID: %d   %s\n",
 	    bu_vls_addr(&shape_name), region_id, path_str);
 
     bu_free(path_str, "result of db_path_to_string");
@@ -1116,8 +939,8 @@ bot2vrml(struct plate_mode *pmp, const struct db_full_path *pathp, int region_id
 
     appearance = region_id / 1000;
     appearance = appearance * 1000 + 999;
-    fprintf(fp_out, "\t\t\tappearance Appearance {\n\t\t\tmaterial USE Material_%d\n\t\t\t}\n", appearance);
-    fprintf(fp_out, "\t\t\tgeometry IndexedFaceSet {\n\t\t\t\tcoord Coordinate {\n\t\t\t\tpoint [\n");
+    fprintf(pstate->fp_out, "\t\t\tappearance Appearance {\n\t\t\tmaterial USE Material_%d\n\t\t\t}\n", appearance);
+    fprintf(pstate->fp_out, "\t\t\tgeometry IndexedFaceSet {\n\t\t\t\tcoord Coordinate {\n\t\t\t\tpoint [\n");
 
     for (bot_num = 0; bot_num < pmp->num_bots; bot_num++) {
 	bot = pmp->bots[bot_num];
@@ -1125,29 +948,29 @@ bot2vrml(struct plate_mode *pmp, const struct db_full_path *pathp, int region_id
 	for (i = 0; i < bot->num_vertices; i++) {
 	    point_t pt;
 
-	    VSCALE(pt, &bot->vertices[i*3], scale_factor);
-	    fprintf(fp_out, "\t\t\t\t\t%10.10e %10.10e %10.10e, # point %lu\n", V3ARGS(pt), (long unsigned int)vert_count);
+	    VSCALE(pt, &bot->vertices[i*3], pstate->gcv_options->scale_factor);
+	    fprintf(pstate->fp_out, "\t\t\t\t\t%10.10e %10.10e %10.10e, # point %lu\n", V3ARGS(pt), (long unsigned int)vert_count);
 	    vert_count++;
 	}
     }
-    fprintf(fp_out, "\t\t\t\t\t]\n\t\t\t\t}\n\t\t\t\tcoordIndex [\n");
+    fprintf(pstate->fp_out, "\t\t\t\t\t]\n\t\t\t\t}\n\t\t\t\tcoordIndex [\n");
     vert_count = 0;
     for (bot_num = 0; bot_num < pmp->num_bots; bot_num++) {
 	bot = pmp->bots[bot_num];
 	RT_BOT_CK_MAGIC(bot);
 	for (i = 0; i < bot->num_faces; i++) {
-	    fprintf(fp_out, "\t\t\t\t\t%lu, %lu, %lu, -1, \n",
+	    fprintf(pstate->fp_out, "\t\t\t\t\t%lu, %lu, %lu, -1, \n",
 		    (long unsigned int)vert_count+bot->faces[i*3],
 		    (long unsigned int)vert_count+bot->faces[i*3+1],
 		    (long unsigned int)vert_count+bot->faces[i*3+2]);
 	}
 	vert_count += bot->num_vertices;
     }
-    fprintf(fp_out, "\t\t\t\t]\n\t\t\t\tnormalPerVertex FALSE\n");
-    fprintf(fp_out, "\t\t\t\tconvex TRUE\n");
-    fprintf(fp_out, "\t\t\t\tcreaseAngle 0.5\n");
-    fprintf(fp_out, "\t\t\t\tsolid FALSE\n");
-    fprintf(fp_out, "\t\t\t}\n\t\t}\n");
+    fprintf(pstate->fp_out, "\t\t\t\t]\n\t\t\t\tnormalPerVertex FALSE\n");
+    fprintf(pstate->fp_out, "\t\t\t\tconvex TRUE\n");
+    fprintf(pstate->fp_out, "\t\t\t\tcreaseAngle 0.5\n");
+    fprintf(pstate->fp_out, "\t\t\t\tsolid FALSE\n");
+    fprintf(pstate->fp_out, "\t\t\t}\n\t\t}\n");
 }
 
 
@@ -1155,30 +978,33 @@ bot2vrml(struct plate_mode *pmp, const struct db_full_path *pathp, int region_id
  * Called from db_walk_tree().
  * This routine must be prepared to run in parallel.
  */
-union tree *
+HIDDEN union tree *
 do_region_end1(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, void *client_data)
 {
-    struct plate_mode *pmp = (struct plate_mode *)client_data;
-    char *name;
+    const struct region_end_data * const data = (struct region_end_data *)client_data;
 
-    if (pmp->num_bots > 0 && pmp->num_nonbots > 0) {
-	bu_log("pmp->num_bots = %d pmp->num_nonbots = %d\n", pmp->num_bots, pmp->num_nonbots);
+    if (data->pmp->num_bots > 0 && data->pmp->num_nonbots > 0) {
+	bu_log("data->pmp->num_bots = %d data->pmp->num_nonbots = %d\n", data->pmp->num_bots, data->pmp->num_nonbots);
 	bu_bomb("region was both bot and non-bot objects\n");
     }
-    if (RT_G_DEBUG&DEBUG_TREEWALK || verbose) {
+    if (RT_G_DEBUG&DEBUG_TREEWALK || data->pstate->gcv_options->verbosity_level) {
 	bu_log("\nConverted %d%% so far (%d of %d)\n",
-	       regions_tried > 0 ? (regions_converted * 100) / regions_tried : 0,
-	       regions_converted, regions_tried);
+	       data->pstate->regions_tried > 0 ? (data->pstate->regions_converted * 100) / data->pstate->regions_tried : 0,
+	       data->pstate->regions_converted, data->pstate->regions_tried);
     }
 
-    if (pmp->num_bots > 0) {
-	regions_tried++;
-	name = db_path_to_string(pathp);
-	bu_log("Attempting %s\n", name);
-	bu_free(name, "db_path_to_string");
-	bot2vrml(pmp, pathp, tsp->ts_regionid);
-	clean_pmp(pmp);
-	regions_converted++;
+    if (data->pmp->num_bots > 0) {
+	data->pstate->regions_tried++;
+
+	if (data->pstate->gcv_options->verbosity_level) {
+	    char *name = db_path_to_string(pathp);
+	    bu_log("Attempting %s\n", name);
+	    bu_free(name, "db_path_to_string");
+	}
+
+	bot2vrml(data->pstate, data->pmp, pathp, tsp->ts_regionid);
+	clean_pmp(data->pmp);
+	data->pstate->regions_converted++;
 	return (union tree *)NULL;
     } else {
 	return nmg_region_end(tsp, pathp, curtree, client_data);
@@ -1192,34 +1018,37 @@ do_region_end1(struct db_tree_state *tsp, const struct db_full_path *pathp, unio
  *
  * Only send bots from structure outside tree to vrml file.
  */
-union tree *
+HIDDEN union tree *
 do_region_end2(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *UNUSED(curtree), void *client_data)
 {
-    struct plate_mode *pmp = (struct plate_mode *)client_data;
-    char *name;
+    const struct region_end_data * const data = (struct region_end_data *)client_data;
 
-    if ((pmp->num_bots > 0) && (RT_G_DEBUG&DEBUG_TREEWALK || verbose)) {
+    if ((data->pmp->num_bots > 0) && (RT_G_DEBUG&DEBUG_TREEWALK || data->pstate->gcv_options->verbosity_level)) {
 	bu_log("\nConverted %d%% so far (%d of %d)\n",
-	       regions_tried > 0 ? (regions_converted * 100) / regions_tried : 0,
-	       regions_converted, regions_tried);
+	       data->pstate->regions_tried > 0 ? (data->pstate->regions_converted * 100) / data->pstate->regions_tried : 0,
+	       data->pstate->regions_converted, data->pstate->regions_tried);
     }
 
-    if (pmp->num_bots > 0) {
-	regions_tried++;
-	name = db_path_to_string(pathp);
-	bu_log("Attempting %s\n", name);
-	bu_free(name, "db_path_to_string");
-	bot2vrml(pmp, pathp, tsp->ts_regionid);
-	clean_pmp(pmp);
-	regions_converted++;
+    if (data->pmp->num_bots > 0) {
+	data->pstate->regions_tried++;
+
+	if (data->pstate->gcv_options->verbosity_level) {
+	    char *name = db_path_to_string(pathp);
+	    bu_log("Attempting %s\n", name);
+	    bu_free(name, "db_path_to_string");
+	}
+
+	bot2vrml(data->pstate, data->pmp, pathp, tsp->ts_regionid);
+	clean_pmp(data->pmp);
+	data->pstate->regions_converted++;
     }
 
     return (union tree *)NULL;
 }
 
 
-static union tree *
-process_boolean(union tree *curtree, struct db_tree_state *tsp, const struct db_full_path *pathp)
+HIDDEN union tree *
+vrml_write_process_boolean(struct conversion_state *pstate, union tree *curtree, struct db_tree_state *tsp, const struct db_full_path *pathp)
 {
     static union tree *ret_tree = TREE_NULL;
 
@@ -1233,12 +1062,12 @@ process_boolean(union tree *curtree, struct db_tree_state *tsp, const struct db_
 
 	bu_log("Conversion of %s FAILED due to error!!!\n", name);
 
-	bomb_cnt++;
+	pstate->bomb_cnt++;
 
 	/* Sometimes the NMG library adds debugging bits when
 	 * it detects an internal error, before before bombing out.
 	 */
-	RTG.NMG_debug = NMG_debug; /* restore mode */
+	RTG.NMG_debug = pstate->nmg_debug; /* restore mode */
 
 	/* Release any intersector 2d tables */
 	nmg_isect2d_final_cleanup();
@@ -1250,9 +1079,11 @@ process_boolean(union tree *curtree, struct db_tree_state *tsp, const struct db_
 }
 
 
-union tree *
-nmg_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, void *UNUSED(client_data))
+HIDDEN union tree *
+nmg_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, void *client_data)
 {
+    const struct region_end_data * const data = (struct region_end_data *)client_data;
+
     struct nmgregion *r;
     struct bu_list vhead;
     union tree *ret_tree;
@@ -1264,10 +1095,10 @@ nmg_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, unio
 
     BU_LIST_INIT(&vhead);
 
-    if (RT_G_DEBUG&DEBUG_TREEWALK || verbose) {
+    if (RT_G_DEBUG&DEBUG_TREEWALK || data->pstate->gcv_options->verbosity_level) {
 	bu_log("\nConverted %d%% so far (%d of %d)\n",
-	       regions_tried > 0 ? (regions_converted * 100) / regions_tried : 0,
-	       regions_converted, regions_tried);
+	       data->pstate->regions_tried > 0 ? (data->pstate->regions_converted * 100) / data->pstate->regions_tried : 0,
+	       data->pstate->regions_converted, data->pstate->regions_tried);
     }
 
     if (curtree->tr_op == OP_NOP) {
@@ -1275,10 +1106,12 @@ nmg_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, unio
     }
 
     name = db_path_to_string(pathp);
-    bu_log("Attempting %s\n", name);
 
-    regions_tried++;
-    ret_tree = process_boolean(curtree, tsp, pathp);
+    if (data->pstate->gcv_options->verbosity_level)
+	bu_log("Attempting %s\n", name);
+
+    data->pstate->regions_tried++;
+    ret_tree = vrml_write_process_boolean(data->pstate, curtree, tsp, pathp);
 
     if (ret_tree) {
 	r = ret_tree->tr_d.td_r;
@@ -1286,7 +1119,6 @@ nmg_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, unio
 	r = (struct nmgregion *)NULL;
     }
 
-    bu_free(name, "db_path_to_string");
     if (r != (struct nmgregion *)NULL) {
 	struct shell *s;
 	int empty_region = 0;
@@ -1310,16 +1142,14 @@ nmg_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, unio
 
 	if (!empty_region) {
 	    /* Write the nmgregion to the output file */
-	    nmg_2_vrml(tsp, pathp, r->m_p);
-	    regions_converted++;
+	    nmg_2_vrml(data->pstate, tsp, pathp, r->m_p);
+	    data->pstate->regions_converted++;
 	} else {
-	    bu_log("WARNING: Nothing left after Boolean evaluation of %s (due to cleanup)\n",
-		   db_path_to_string(pathp));
+	    bu_log("WARNING: Nothing left after Boolean evaluation of %s (due to cleanup)\n", name);
 	}
 
     } else {
-	bu_log("WARNING: Nothing left after Boolean evaluation of %s (due to error or null result)\n",
-	       db_path_to_string(pathp));
+	bu_log("WARNING: Nothing left after Boolean evaluation of %s (due to error or null result)\n", name);
     }
 
     NMG_CK_MODEL(*tsp->ts_m);
@@ -1330,6 +1160,7 @@ nmg_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, unio
      * so we need to cons up an OP_NOP node to return.
      */
     db_free_tree(curtree, &rt_uniresource); /* does a nmg_kr (i.e. kill nmg region) */
+    bu_free(name, "db_path_to_string");
 
     BU_ALLOC(curtree, union tree);
     RT_TREE_INIT(curtree);
@@ -1338,8 +1169,217 @@ nmg_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, unio
 }
 
 
-const struct gcv_filter gcv_conv_vrml_write =
-{"VRML Writer", GCV_FILTER_WRITE, MIME_MODEL_VRML, NULL, NULL, vrml_write};
+HIDDEN char *
+vrml_write_make_units_str(double scale_factor)
+{
+    const char *bu_units = bu_units_string(scale_factor);
+
+    if (bu_units)
+	return bu_strdup(bu_units);
+    else {
+	struct bu_vls temp = BU_VLS_INIT_ZERO;
+	bu_vls_printf(&temp, "%d units per mm", scale_factor);
+	return bu_vls_strgrab(&temp);
+    }
+}
+
+
+HIDDEN void
+vrml_write_create_opts(struct bu_opt_desc **options_desc, void **dest_options_data)
+{
+    struct vrml_write_options *options_data;
+
+    BU_ALLOC(options_data, struct vrml_write_options);
+    *dest_options_data = options_data;
+    *options_desc = (struct bu_opt_desc *)bu_malloc(3 * sizeof(struct bu_opt_desc), "options_desc");
+
+    BU_OPT((*options_desc)[0], NULL, "bot-dump", NULL,
+	    NULL, &options_data->bot_dump,
+	    "BoT dump");
+
+    BU_OPT((*options_desc)[1], NULL, "evaluate-all", NULL,
+	    NULL, &options_data->eval_all,
+	    "evaluate all, CSG and BoTs");
+
+    BU_OPT_NULL((*options_desc)[2]);
+}
+
+
+HIDDEN void
+vrml_write_free_opts(void *options_data)
+{
+    bu_free(options_data, "options_data");
+}
+
+
+HIDDEN int
+vrml_write(struct gcv_context *context, const struct gcv_opts *gcv_options, const void *options_data, const char *dest_path)
+{
+    struct conversion_state state;
+    struct db_tree_state tree_state;
+    struct model *the_model;
+    struct plate_mode pm;
+    size_t i;
+    struct region_end_data region_end_data;
+
+    memset(&state, 0, sizeof(state));
+
+    state.gcv_options = gcv_options;
+    state.vrml_write_options = (struct vrml_write_options *)options_data;
+    state.dbip = context->dbip;
+
+    region_end_data.pstate = &state;
+    region_end_data.pmp = &pm;
+
+    if (state.vrml_write_options->bot_dump && state.vrml_write_options->eval_all) {
+	bu_log("Bot Dump and Evaluate All are mutually exclusive\n");
+	return 0;
+    }
+
+    if (!(state.fp_out = fopen(dest_path, "wb"))) {
+	perror("libgcv");
+	bu_log("failed to open output file (%s)\n", dest_path);
+	return 0;
+    }
+
+    tree_state = rt_initial_tree_state;
+    tree_state.ts_tol = &gcv_options->calculational_tolerance;
+    tree_state.ts_ttol = &gcv_options->tessellation_tolerance;
+    tree_state.ts_m = &the_model;
+    the_model = nmg_mm();
+
+    /* NOTE: For visualization purposes, in the debug plot files */
+    {
+	/* WTF: This value is specific to the Bradley */
+	nmg_eue_dist = 2.0;
+    }
+
+    BU_LIST_INIT(&RTG.rtg_vlfree);	/* for vlist macros */
+
+    fprintf(state.fp_out, "#VRML V2.0 utf8\n");
+    fprintf(state.fp_out, "#Units are %s\n", vrml_write_make_units_str(gcv_options->scale_factor));
+    /* NOTE: We may want to inquire about bounding boxes for the
+     * various groups and add Viewpoints nodes that point the camera
+     * to the center and orient for Top, Side, etc. Views. We will add
+     * some default Material Color definitions (for thousands groups)
+     * before we start defining the geometry.
+     */
+    fprintf(state.fp_out, "Shape { appearance Appearance { material DEF Material_999 Material { diffuseColor 0.78 0.78 0.78 } } }\n");
+    fprintf(state.fp_out, "Shape { appearance Appearance { material DEF Material_1999 Material { diffuseColor 0.88 0.29 0.29 } } }\n");
+    fprintf(state.fp_out, "Shape { appearance Appearance { material DEF Material_2999 Material { diffuseColor 0.82 0.53 0.54 } } }\n");
+    fprintf(state.fp_out, "Shape { appearance Appearance { material DEF Material_3999 Material { diffuseColor 0.39 0.89 0.00 } } }\n");
+    fprintf(state.fp_out, "Shape { appearance Appearance { material DEF Material_4999 Material { diffuseColor 1.00 0.00 0.00 } } }\n");
+    fprintf(state.fp_out, "Shape { appearance Appearance { material DEF Material_5999 Material { diffuseColor 0.82 0.00 0.82 } } }\n");
+    fprintf(state.fp_out, "Shape { appearance Appearance { material DEF Material_6999 Material { diffuseColor 0.62 0.62 0.62 } } }\n");
+    fprintf(state.fp_out, "Shape { appearance Appearance { material DEF Material_7999 Material { diffuseColor 0.49 0.49 0.49 } } }\n");
+    fprintf(state.fp_out, "Shape { appearance Appearance { material DEF Material_8999 Material { diffuseColor 0.18 0.31 0.31 } } }\n");
+    fprintf(state.fp_out, "Shape { appearance Appearance { material DEF Material_9999 Material { diffuseColor 0.00 0.41 0.82 } } }\n");
+
+    /* I had hoped to create a separate sub-tree (using the Transform
+     * node) for each group name argument however, it appears they are
+     * all handled at the same time so I will only have one Transform
+     * for the complete conversion. Later on switch nodes may be added
+     * to turn on and off the groups (via ROUTE nodes).
+     */
+    fprintf(state.fp_out, "Transform {\n");
+    fprintf(state.fp_out, "\tchildren [\n");
+
+    pm.num_bots = 0;
+    pm.num_nonbots = 0;
+
+    if (!state.vrml_write_options->eval_all) {
+	pm.array_size = 5;
+	pm.bots = (struct rt_bot_internal **)bu_calloc(pm.array_size,
+						       sizeof(struct rt_bot_internal *), "pm.bots");
+    }
+
+    if (state.vrml_write_options->eval_all) {
+	(void)db_walk_tree(context->dbip, gcv_options->num_objects, (const char **)gcv_options->object_names,
+			   1,		/* ncpu */
+			   &tree_state,
+			   0,
+			   nmg_region_end,
+			   nmg_booltree_leaf_tess,
+			   (void *)&region_end_data);	/* in librt/nmg_bool.c */
+	goto out;
+    }
+
+    if (state.vrml_write_options->bot_dump) {
+	(void)db_walk_tree(context->dbip, gcv_options->num_objects, (const char **)gcv_options->object_names,
+			   1,		/* ncpu */
+			   &tree_state,
+			   0,
+			   do_region_end2,
+			   leaf_tess2,
+			   (void *)&region_end_data);	/* in librt/nmg_bool.c */
+	goto out;
+    }
+
+    for (i = 0; i < gcv_options->num_objects; i++) {
+	struct directory *dp;
+
+	dp = db_lookup(context->dbip, gcv_options->object_names[i], LOOKUP_QUIET);
+	if (dp == RT_DIR_NULL) {
+	    bu_log("Cannot find %s\n", gcv_options->object_names[i]);
+	    continue;
+	}
+
+	/* light source must be a combination */
+	if (!(dp->d_flags & RT_DIR_COMB)) {
+	    continue;
+	}
+
+	fprintf(state.fp_out, "# Includes group %s\n", gcv_options->object_names[i]);
+
+	/* walk trees selecting only light source regions */
+	(void)db_walk_tree(context->dbip, 1, (const char **)(&gcv_options->object_names[i]),
+			   1,			/* ncpu */
+			   &tree_state,
+			   select_lights,
+			   do_region_end1,
+			   leaf_tess1,
+			   (void *)&region_end_data);	/* in librt/nmg_bool.c */
+    }
+
+    /* Walk indicated tree(s).  Each non-light-source region will be output separately */
+    (void)db_walk_tree(context->dbip, gcv_options->num_objects, (const char **)gcv_options->object_names,
+		       1,		/* ncpu */
+		       &tree_state,
+		       select_non_lights,
+		       do_region_end1,
+		       leaf_tess1,
+		       (void *)&region_end_data);	/* in librt/nmg_bool.c */
+
+    /* Release dynamic storage */
+    nmg_km(the_model);
+
+    if (!state.vrml_write_options->eval_all) {
+	bu_free(pm.bots, "pm.bots");
+    }
+
+out:
+    /* Now we need to close each group set */
+    fprintf(state.fp_out, "\t]\n}\n");
+
+    bu_log("\nTotal of %d regions converted of %d regions attempted.\n",
+	   state.regions_converted, state.regions_tried);
+
+    if (state.regions_converted != state.regions_tried) {
+	bu_log("Of the %d which failed conversion, %d of these failed due to conversion error.\n",
+	       state.regions_tried - state.regions_converted, state.bomb_cnt);
+    }
+
+    fclose(state.fp_out);
+    bu_log("Done.\n");
+
+    return 1;
+}
+
+
+const struct gcv_filter gcv_conv_vrml_write = {
+    "VRML Writer", GCV_FILTER_WRITE, MIME_MODEL_VRML,
+    vrml_write_create_opts, vrml_write_free_opts, vrml_write
+};
 
 
 /*
