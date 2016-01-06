@@ -1,4 +1,16 @@
+						 -*- coding: utf-8 -*-
+BRL-CAD Development Strategy
+
+This is a living org-mode document intended to help define and
+maintain a consistent development strategy that addresses core
+requirements for BRL-CAD.  It recognizes areas of deficiency, outlines
+strategic activities, and aims to coordinate development activity.
+
+
 * Priority Strategic Areas
+
+  This section itemizes areas of strategic weakness and categories of
+  actions that can be taken to improve that area of interest.
 
 ** 1 UX
 *** deploying Archer/MGED (mC) -cns
