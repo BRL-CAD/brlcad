@@ -20,6 +20,7 @@ add_subdirectory(intaval)
 add_subdirectory(ply)
 add_subdirectory(raw)
 add_subdirectory(vdeck)
+add_subdirectory(vrml)
 
 set(CONV_INCLUDE_DIRS
   ${BU_INCLUDE_DIRS}
