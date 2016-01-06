@@ -202,13 +202,16 @@ Convert_part_ascii(struct conversion_state *pstate, char line[MAX_LINE_SIZE])
     }
 
     mk_unique_brlcad_name(pstate, &region_name);
-    bu_log("Converting Part: %s\n", bu_vls_addr(&region_name));
+
+    if (pstate->gcv_options->verbosity_level)
+	bu_log("Converting Part: %s\n", bu_vls_addr(&region_name));
 
     bu_vls_strcpy(&solid_name, "s.");
     bu_vls_vlscat(&solid_name, &region_name);
     mk_unique_brlcad_name(pstate, &solid_name);
 
-    bu_log("\tUsing solid name: %s\n", bu_vls_addr(&solid_name));
+    if (pstate->gcv_options->verbosity_level)
+	bu_log("\tUsing solid name: %s\n", bu_vls_addr(&solid_name));
 
     if (RT_G_DEBUG & DEBUG_MEM || RT_G_DEBUG & DEBUG_MEM_FULL)
 	bu_prmem("At start of Convert_part_ascii()");
@@ -332,7 +335,8 @@ Convert_part_ascii(struct conversion_state *pstate, char line[MAX_LINE_SIZE])
 	(void)mk_addmember(bu_vls_addr(&solid_name), &head.l, NULL, WMOP_UNION);
     }
 
-    bu_log("\tMaking region (%s)\n", bu_vls_addr(&region_name));
+    if (pstate->gcv_options->verbosity_level)
+	bu_log("\tMaking region (%s)\n", bu_vls_addr(&region_name));
 
     if (pstate->stl_read_options->const_id) {
 	mk_lrcomb(pstate->fd_out, bu_vls_addr(&region_name), &head, 1, (char *)NULL,
@@ -473,7 +477,9 @@ Convert_part_binary(struct conversion_state *pstate)
     if (face_count) {
 	(void)mk_addmember(bu_vls_addr(&solid_name), &head.l, NULL, WMOP_UNION);
     }
-    bu_log("\tMaking region (%s)\n", bu_vls_addr(&region_name));
+
+    if (pstate->gcv_options->verbosity_level)
+	bu_log("\tMaking region (%s)\n", bu_vls_addr(&region_name));
 
     if (pstate->stl_read_options->const_id) {
 	mk_lrcomb(pstate->fd_out, bu_vls_addr(&region_name), &head, 1, (char *)NULL,
