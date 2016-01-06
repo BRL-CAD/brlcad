@@ -1,0 +1,125 @@
+* Priority Strategic Areas
+
+** 1 UX
+*** deploying Archer/MGED (mC) -cns
+*** UI simplification (C) -s
+*** undo / fault tolerance -n
+*** prototype Qt (m) -c
+*** UI design / clarification (MC) -j
+*** interaction / integration (P) -j
+*** fulfilling specific user needs (e.g., killing overlaps) (C)
+*** editing constraints, snapping, reuse existing coordinates
+*** bug reporting / feature requests (comms) (M)
+*** portability (m)
+
+** 2 Complexity
+*** command / tool reduction (U) -cjns
+*** API code reduce / simplification / modularity (U) -cjs
+*** searchability / info (Um) -n
+*** discoverability / documentation (UM)
+*** UI design / clarity (UM)
+*** restructure of file hierarchy
+*** continuous integration
+
+** 3 Marketing
+*** website (C) -cjns
+*** doc integration, website (C) -cjns
+*** new content (audience / customer profiles), website (C)
+*** comms (meeting / promoting our successes / PRB / announcements) (UCP)
+*** CRM / IRC (UC)
+*** leverage existing capability
+
+** 4 Performance
+*** interactive ray tracing (U) -cjns
+*** coherency / opencl -cjns
+*** dispel FUD, educate runtime requirements (M)
+
+
+* Priority Purposing
+
+** 3D printing
+*** easy interface for novice and infrequent users
+    Implies a GUI-centric approach with integrated tools.
+
+** modeling for industrial design
+*** Blueprints, dimensioning
+*** NURBS foundation
+    Provides robust and fast import of geometry via STEP, 3DM, and other formats into a preserving representation format.
+
+** ray tracing
+*** rendering, animation
+*** geometry analysis, material properties
+
+** engineering preparation
+*** overlap elimination
+
+** robust conversion service
+*** geometry import, filtering/processing, and export
+
+
+** maximize interoperability
+*** nurbs, step, nmg revisited
+** eliminate redundant capability
+*** ICV, GCV, mged->archer
+** create a marketable product
+*** GCV
+
+
+* Top Gaps in Requirements
+** interface usability
+*** complex, ugly, not robust
+** target model import and preparation (turn-around time)
+*** complex, quality control, data management, inefficient
+
+
+* Deploying Archer Tasks
+
+** command cleanup - ALPHA+
+   TODO: inventory + mapping + time
+   TODO: design UI / commands
+   TODO: QA acceptance from users
+   TODO: announce / share / sit with users
+   
+** interactivity / blocking indicators - ALPHA
+   TODO: multithreaded command execution
+   TODO: interface busy indicator
+   TODO: drawing indicator
+   
+** feature parity - ALPHA
+   TODO: review/finish edit keypointing (oed parity)
+   TODO: summaries features
+   TODO: create mapping from old to new
+   TODO: GUI matrix editing
+   TODO: classic console mode
+   TODO: reverse tempfile
+   TODO: query ray control GUI
+   
+** undo - BETA
+   TODO: implement libbu filesystem info
+   TODO: re-enable undo with fs awareness
+   
+** bug reporting / feedback / metrics - BETA
+   TODO: reliable backtrace
+   TODO: hook/enable bombardier
+   TODO: in-app feedback dialog
+   TODO: track metrics (archer commands, tips, docs)
+   
+** QA acceptance - BETA
+   TODO: sit down reviews (discuss scripts)
+   TODO: define acceptance tasks
+   TODO: run regression w/ archer
+   TODO: run with procedural web scripts
+   
+** announcements + migration plan - BETA+
+   TODO: write + publish strategy map
+   TODO: write + publish migration plan
+   TODO: review + update tutorials (docs)
+   TODO: create + give presentation
+   TODO: install new website (basic version)
+   TODO: discussion with core stakeholders
+   
+** searchable docs - FINAL
+   TODO: command line searching of doc content
+   TODO: apropos reading from docbook
+   TODO: web publishing + searching of docs
+
