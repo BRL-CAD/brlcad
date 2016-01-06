@@ -1,7 +1,7 @@
 /*                         V R M L - G . C P P
  * BRL-CAD
  *
- * Copyright (c) 2015 United States Government as represented by
+ * Copyright (c) 2015-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -35,6 +35,7 @@
 #include "transform_node.h"
 
 #include "bu/getopt.h"
+#include "gcv/api.h"
 #include "vmath.h"
 #include "wdb.h"
 
@@ -53,27 +54,18 @@ using namespace std;
 
 static struct vert_root *tree_root;
 static struct wmember all_head;
-static char *input_file;	/* name of the input file */
-static char *brlcad_file=NULL;	/* name of output file */
-static FILE *fd_in;		/* input file */
-static struct rt_wdb *fd_out;	/* Resulting BRL-CAD file */
 static int *bot_faces=NULL;	 /* array of ints (indices into tree_root->the_array array) three per face */
 static int bot_fcurr=0;		/* current bot face */
 static double *allvert = NULL;
 static int vertsize;
 static int objnumb = -1;
+static struct rt_wdb *fd_out = NULL;
 PARSER parse;
 static int id_no=1000;		/* Ident numbers */
 static int mat_code=1;		/* default material code */
 unsigned char color[3]={ 128, 128, 128 };
 
 #define BOT_FBLOCK 128
-
-void
-usage()
-{
-    std::cerr << "Usage: vrml-g -o outfile.g infile.wrl\n" << std::endl;
-}
 
 int
 Check_degenerate(int face[3])
@@ -208,7 +200,8 @@ Parse_input(vector<NODE*> &childlist)
 }
 
 
-int main(int argc,char **argv)
+HIDDEN int
+vrml_read(struct gcv_context *context, const struct gcv_opts *UNUSED(gcv_options), const void *UNUSED(options_data), const char *source_path)
 {
     vector<NODE *> childlist;
     vector<NODE *> parent;
@@ -217,12 +210,7 @@ int main(int argc,char **argv)
     int type;
     char *fptr;
 
-    if (argc < 4) {
-	usage();
-	return 0;
-    }
-
-    FileUtil infile(argv[3]);
+    FileUtil infile(source_path);
 
     type = infile.getFileType();
 
@@ -254,46 +242,15 @@ int main(int argc,char **argv)
 
     infile.freeFileInput();
 
-    int c;
+    FILE *fd_in;
+    fd_out = context->dbip->dbi_wdbp;
 
-    while ((c = bu_getopt(argc, argv, "o:")) != -1) {
-	switch (c) {
-	    case 'o':
-		brlcad_file = bu_optarg;
-		break;
-	    default:
-		usage();
-		bu_exit(1, NULL);
-		break;
-	}
+    if ((fd_in=fopen(source_path, "rb")) == NULL) {
+	bu_log("Cannot open input file (%s)\n", source_path);
+	perror("libgcv");
+	return 0;
     }
 
-    if (bu_optind >= argc || brlcad_file == NULL) {
-	usage();
-	bu_exit(1, NULL);
-    }
-
-    bu_optind--;
-
-    rt_init_resource(&rt_uniresource, 0, NULL);
-
-    brlcad_file = argv[bu_optind];
-    if ((fd_out=wdb_fopen(brlcad_file)) == NULL) {
-	bu_log("Cannot open BRL-CAD file (%s)\n", brlcad_file);
-	perror(argv[0]);
-	bu_exit(1, NULL);
-    }
-
-    bu_optind++;
-
-    input_file = argv[bu_optind];
-    if ((fd_in=fopen(input_file, "rb")) == NULL) {
-	bu_log("Cannot open input file (%s)\n", input_file);
-	perror(argv[0]);
-	bu_exit(1, NULL);
-    }
-
-    mk_id_units(fd_out, "Conversion from Vrml format", "mm");
     BU_LIST_INIT(&all_head.l);
     /* create a tree structure to hold the input vertices */
     tree_root = create_vert_tree();
@@ -312,9 +269,14 @@ int main(int argc,char **argv)
     mk_lcomb(fd_out, "all", &all_head, 0, (char *)NULL, (char *)NULL, (unsigned char *)NULL, 0);
 
     fclose(fd_in);
-    wdb_close(fd_out);
 
-    return 0;
+    return 1;
+}
+
+
+extern "C" {
+    struct gcv_filter gcv_conv_vrml_read =
+    {"VRML Reader", GCV_FILTER_READ, MIME_MODEL_VRML, NULL, NULL, vrml_read};
 }
 
 

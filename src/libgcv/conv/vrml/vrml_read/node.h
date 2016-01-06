@@ -1,7 +1,7 @@
 /*			 N O D E. H
  * BRL-CAD
  *
- * Copyright (c) 2015 United States Government as represented by
+ * Copyright (c) 2015-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -28,10 +28,12 @@
 #define NODE_H
 
 
-#include <vector>
+#include "common.h"
 
 #include "string_util.h"
 #include "node_type.h"
+
+#include <vector>
 
 #define PI 3.141592653589793f
 #define MAXSTRSIZE 512

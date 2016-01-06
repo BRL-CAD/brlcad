@@ -32,6 +32,15 @@ set(LIBGCV_PLUGIN_SOURCES
   conv/obj/obj_write.c
   conv/stl/stl_read.c
   conv/stl/stl_write.c
+
+  conv/vrml/vrml_read/file_util.cpp
+  conv/vrml/vrml_read/node.cpp
+  conv/vrml/vrml_read/node_type.cpp
+  conv/vrml/vrml_read/parser.cpp
+  conv/vrml/vrml_read/string_util.cpp
+  conv/vrml/vrml_read/transform_node.cpp
+  conv/vrml/vrml_read/vrml_read.cpp
+
   conv/vrml/vrml_write.c
   )
 
@@ -52,6 +61,12 @@ set(GCV_IGNORE_FILES
   conv/fastgen4/NOTES
   soup.h
   tri_intersect.h
+  conv/vrml/vrml_read/file_util.h
+  conv/vrml/vrml_read/node.h
+  conv/vrml/vrml_read/node_type.h
+  conv/vrml/vrml_read/parser.h
+  conv/vrml/vrml_read/string_util.h
+  conv/vrml/vrml_read/transform_node.h
   )
 CMAKEFILES(${GCV_IGNORE_FILES})
 

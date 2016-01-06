@@ -1,7 +1,7 @@
 /*                         F I L E _ U T I L . H
  * BRL-CAD
  *
- * Copyright (c) 2015 United States Government as represented by
+ * Copyright (c) 2015-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -24,8 +24,10 @@
  *
  */
 
-#ifndef HEADERS_H
-#define HEADERS_H
+#ifndef FILE_UTIL_H
+#define FILE_UTIL_H
+
+#include "common.h"
 
 #include <iostream>
 

@@ -1,7 +1,7 @@
-/*			 N O D E _ T Y P E . H
+/*		T R A N S F O R M _ N O D E. H
  * BRL-CAD
  *
- * Copyright (c) 2015 United States Government as represented by
+ * Copyright (c) 2015-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -18,37 +18,36 @@
  * information.
  *
  */
-/** @file vrml/node_type.h
+/** @file vrml/transform_node.h
  *
- * Class definition for class NODETYPE
+ * Class definition for class TRANSFORM
  *
  */
 
-#ifndef NODE_TYPE_H
-#define NODE_TYPE_H
+#ifndef TRANSFORM_NODE_H
+#define TRANSFORM_NODE_H
+
+#include "common.h"
 
 #include "node.h"
 
-#define NODETYPEMAX             14
 
-using namespace std;
-
-class NODE;  //foward declaration of class
-
-class NODETYPE
+class TRANSFORM
 {
     public:
-    int findNodeType(string instring);
-    int findNodeType(NODE *innode);
+    void transformChild(NODE *pnode);
+    void matrotate(double *Result, double Theta, double x, double y, double z);
+    void transformSceneVert(vector<NODE *> &scenenoderef);
 };
+
 
 #endif
 
 
 /*
  * Local Variables:
- * tab-width: 8
  * mode: C
+ * tab-width: 8
  * indent-tabs-mode: t
  * c-file-style: "stroustrup"
  * End:

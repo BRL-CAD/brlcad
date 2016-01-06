@@ -219,6 +219,7 @@ gcv_list_filters(void)
 	REGISTER_FILTER(gcv_conv_obj_write);
 	REGISTER_FILTER(gcv_conv_stl_read);
 	REGISTER_FILTER(gcv_conv_stl_write);
+	REGISTER_FILTER(gcv_conv_vrml_read);
 	REGISTER_FILTER(gcv_conv_vrml_write);
 
 #undef REGISTER_FILTER

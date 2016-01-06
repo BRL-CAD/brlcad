@@ -1,7 +1,7 @@
 /*                         P A R S E R . H
  * BRL-CAD
  *
- * Copyright (c) 2015 United States Government as represented by
+ * Copyright (c) 2015-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -27,10 +27,15 @@
 #ifndef PARSER_H
 #define PARSER_H
 
-#include <vector>
+#include "common.h"
+
+#include "node.h"
 #include "string_util.h"
 
 #include "vmath.h"
+
+#include <vector>
+
 
 using namespace std;
 

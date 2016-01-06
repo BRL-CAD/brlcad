@@ -1,7 +1,7 @@
 /*		     S T R I N G _ U T I L . H
  * BRL-CAD
  *
- * Copyright (c) 2015 United States Government as represented by
+ * Copyright (c) 2015-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -27,14 +27,16 @@
 #ifndef STRING_UTIL_H
 #define STRING_UTIL_H
 
-#define KWDEF          0
-#define KWUSE          1
-#define KWPROTO        2
-#define MAXSTRSIZE     512
+#include "common.h"
 
 #include <iostream>
 #include <vector>
 #include <string>
+
+#define KWDEF          0
+#define KWUSE          1
+#define KWPROTO        2
+#define MAXSTRSIZE     512
 
 using namespace std;
 
