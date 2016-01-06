@@ -398,9 +398,9 @@ gcv_do_conversion(
     }
 
     if (!in_filter)
-	bu_vls_printf(messages, "No filter for %s", bu_file_mime_str(in_type, MIME_MODEL));
+	bu_vls_printf(messages, "No filter for %s\n", bu_file_mime_str(in_type, MIME_MODEL));
     if (!out_filter)
-	bu_vls_printf(messages, "No filter for %s", bu_file_mime_str(out_type, MIME_MODEL));
+	bu_vls_printf(messages, "No filter for %s\n", bu_file_mime_str(out_type, MIME_MODEL));
     if (!in_filter || !out_filter)
 	return 0;
 
