@@ -2173,6 +2173,7 @@ make_bot_object(struct conversion_state *pstate)
 	bot_mode = RT_BOT_SOLID;
     } else {
 	bu_bomb("invalid mode");
+	bot_mode = RT_BOT_PLATE; /* silence warning */
     }
 
     bot_ip.mode = bot_mode;
@@ -2394,6 +2395,7 @@ f4_do_hex1(struct conversion_state *pstate)
 	thick = 0.0;
     } else {
 	bu_bomb("invalid mode");
+	pos = POS_FRONT; /* silence warning */
     }
 
     for (i=0; i<12; i++)

@@ -297,10 +297,10 @@ gcv_execute(struct gcv_context *context, const struct gcv_filter *filter,
     RTG.debug |= gcv_options->rt_debug_flag;
     RTG.NMG_debug |= gcv_options->nmg_debug_flag;
 
-    if (filter->filter_type == GCV_FILTER_WRITE) {
-	dbi_read_only_orig = context->dbip->dbi_read_only;
+    dbi_read_only_orig = context->dbip->dbi_read_only;
+
+    if (filter->filter_type == GCV_FILTER_WRITE)
 	context->dbip->dbi_read_only = 1;
-    }
 
     if (!gcv_options->num_objects && filter->filter_type != GCV_FILTER_READ) {
 	size_t num_objects;
@@ -323,9 +323,7 @@ gcv_execute(struct gcv_context *context, const struct gcv_filter *filter,
     } else
 	result = filter->filter_fn(context, gcv_options, options_data, target);
 
-    if (filter->filter_type == GCV_FILTER_WRITE)
-	context->dbip->dbi_read_only = dbi_read_only_orig;
-
+    context->dbip->dbi_read_only = dbi_read_only_orig;
     bu_debug = bu_debug_orig;
     RTG.debug = rt_debug_orig;
     RTG.NMG_debug = nmg_debug_orig;
