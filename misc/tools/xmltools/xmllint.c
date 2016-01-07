@@ -1673,7 +1673,7 @@ testSAX(const char *filename) {
 	                              (void *)user_data);
 	if (repeat == 0) {
 	    if (ret == 0) {
-		fprintf(stderr, "%s validates\n", filename);
+		/*fprintf(stderr, "%s validates\n", filename);*/
 	    } else if (ret > 0) {
 		fprintf(stderr, "%s fails to validate\n", filename);
 		progresult = XMLLINT_ERR_VALID;
@@ -1951,7 +1951,7 @@ static void streamFile(char *filename) {
 		fprintf(stderr, "%s fails to validate\n", filename);
 		progresult = XMLLINT_ERR_VALID;
 	    } else {
-		fprintf(stderr, "%s validates\n", filename);
+		/*fprintf(stderr, "%s validates\n", filename);*/
 	    }
 	}
 #endif
@@ -2824,7 +2824,7 @@ static void parseAndPrintFile(char *filename, xmlParserCtxtPtr rectxt) {
 #endif
 	ret = xmlSchematronValidateDoc(ctxt, doc);
 	if (ret == 0) {
-	    fprintf(stderr, "%s validates\n", filename);
+	    /*fprintf(stderr, "%s validates\n", filename);*/
 	} else if (ret > 0) {
 	    fprintf(stderr, "%s fails to validate\n", filename);
 	    progresult = XMLLINT_ERR_VALID;
@@ -2855,7 +2855,7 @@ static void parseAndPrintFile(char *filename, xmlParserCtxtPtr rectxt) {
 		stderr);
 	ret = xmlRelaxNGValidateDoc(ctxt, doc);
 	if (ret == 0) {
-	    fprintf(stderr, "%s validates\n", filename);
+	    /*fprintf(stderr, "%s validates\n", filename);*/
 	} else if (ret > 0) {
 	    fprintf(stderr, "%s fails to validate\n", filename);
 	    progresult = XMLLINT_ERR_VALID;
@@ -2883,7 +2883,7 @@ static void parseAndPrintFile(char *filename, xmlParserCtxtPtr rectxt) {
 		stderr);
 	ret = xmlSchemaValidateDoc(ctxt, doc);
 	if (ret == 0) {
-	    fprintf(stderr, "%s validates\n", filename);
+	    /*fprintf(stderr, "%s validates\n", filename);*/
 	} else if (ret > 0) {
 	    fprintf(stderr, "%s fails to validate\n", filename);
 	    progresult = XMLLINT_ERR_VALID;
