@@ -156,7 +156,6 @@ macro(DB_VALIDATE_TARGET targetdir filename filename_root)
       OUTPUT ${xml_valid_stamp}
       COMMAND ${CMAKE_COMMAND} -P ${scriptfile}
       DEPENDS ${full_path_filename} ${XMLLINT_EXECUTABLE_TARGET} ${DOCBOOK_RESOURCE_FILES}
-      COMMENT "Validating DocBook source with ${VALIDATE_EXECUTABLE}:"
       )
   endif("${IN_LIST}" STREQUAL "-1")
 endmacro(DB_VALIDATE_TARGET)

@@ -34,9 +34,9 @@
 #
 ###
 execute_process(COMMAND "@CMAKE_COMMAND@" -E remove -f "@xml_valid_stamp@")
-execute_process(COMMAND "@XMLLINT_EXECUTABLE@"  --xinclude --schema "@BRLCAD_BINARY_DIR@/doc/docbook/resources/other/docbook-schema/xsd/docbook.xsd" --noout --nonet "@full_path_filename@" RESULT_VARIABLE CMDRESULT)
+execute_process(COMMAND "@XMLLINT_EXECUTABLE@"  --xinclude --schema "@BRLCAD_BINARY_DIR@/doc/docbook/resources/other/docbook-schema/xsd/docbook.xsd" --noout --nonet "@full_path_filename@" RESULT_VARIABLE CMDRESULT OUTPUT_VARIABLE CMDOUT ERROR_VARIABLE CMDERR)
 if(CMDRESULT)
-  message(FATAL_ERROR "xmllint failure: ${CMDRESULT}")
+  message(FATAL_ERROR "xmllint failure: ${CMDRESULT}\n${CMDOUT}\n${CMDERR}")
 else(CMDRESULT)
   execute_process(COMMAND "@CMAKE_COMMAND@" -E touch "@xml_valid_stamp@")
 endif(CMDRESULT)
