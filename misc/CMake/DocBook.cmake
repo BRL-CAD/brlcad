@@ -193,7 +193,7 @@ macro(DOCBOOK_TO_HTML targetname_suffix xml_files targetdir deps_list)
       add_custom_command(
 	OUTPUT ${outfile} ${EXTRAS}
 	COMMAND ${CMAKE_COMMAND} -P ${scriptfile}
-	DEPENDS ${full_path_filename} ${xml_valid_stamp} ${XSLTPROC_EXECUTABLE_TARGET} ${DOCBOOK_RESOURCE_FILES} ${XSL_XHTML_STYLESHEET} ${deps_list}
+	DEPENDS ${full_path_filename} ${xml_valid_stamp} ${XSLTPROC_EXECUTABLE_TARGET} ${DOCBOOK_RESOURCE_FILES} ${deps_list}
 	)
       add_custom_target(${targetname} ALL DEPENDS ${outfile})
       set_target_properties(${targetname} PROPERTIES FOLDER "DocBook/HTML")
@@ -260,7 +260,7 @@ macro(DOCBOOK_TO_PHP targetname_suffix xml_files targetdir deps_list)
       add_custom_command(
   OUTPUT ${outfile} ${EXTRAS}
   COMMAND ${CMAKE_COMMAND} -P ${scriptfile}
-  DEPENDS ${full_path_filename} ${xml_valid_stamp} ${XSLTPROC_EXECUTABLE_TARGET} ${DOCBOOK_RESOURCE_FILES} ${XSL_PHP_STYLESHEET} ${deps_list}
+  DEPENDS ${full_path_filename} ${xml_valid_stamp} ${XSLTPROC_EXECUTABLE_TARGET} ${DOCBOOK_RESOURCE_FILES} ${deps_list}
   )
       add_custom_target(${targetname} ALL DEPENDS ${outfile})
       set_target_properties(${targetname} PROPERTIES FOLDER "DocBook/HTML")
@@ -326,7 +326,7 @@ macro(DOCBOOK_TO_PPT targetname_suffix xml_files targetdir deps_list)
       add_custom_command(
   OUTPUT ${outfile} ${EXTRAS}
   COMMAND ${CMAKE_COMMAND} -P ${scriptfile}
-  DEPENDS ${full_path_filename} ${xml_valid_stamp} ${XSLTPROC_EXECUTABLE_TARGET} ${DOCBOOK_RESOURCE_FILES} ${XSL_PPT_STYLESHEET} ${deps_list}
+  DEPENDS ${full_path_filename} ${xml_valid_stamp} ${XSLTPROC_EXECUTABLE_TARGET} ${DOCBOOK_RESOURCE_FILES} ${deps_list}
   )
       add_custom_target(${targetname} ALL DEPENDS ${outfile})
       set_target_properties(${targetname} PROPERTIES FOLDER "DocBook/HTML")
@@ -393,7 +393,7 @@ macro(DOCBOOK_TO_MAN targetname_suffix xml_files mannum manext targetdir deps_li
       add_custom_command(
 	OUTPUT ${outfile} ${EXTRAS}
 	COMMAND ${CMAKE_COMMAND} -P ${scriptfile}
-	DEPENDS ${full_path_filename} ${xml_valid_stamp} ${XSLTPROC_EXECUTABLE_TARGET} ${DOCBOOK_RESOURCE_FILES} ${XSL_MAN_STYLESHEET} ${deps_list}
+	DEPENDS ${full_path_filename} ${xml_valid_stamp} ${XSLTPROC_EXECUTABLE_TARGET} ${DOCBOOK_RESOURCE_FILES} ${deps_list}
 	)
       add_custom_target(${targetname} ALL DEPENDS ${outfile})
       set_target_properties(${targetname} PROPERTIES FOLDER "DocBook/MAN")
@@ -458,7 +458,7 @@ macro(DOCBOOK_TO_PDF targetname_suffix xml_files targetdir deps_list)
       add_custom_command(
 	OUTPUT ${outfile}
 	COMMAND ${CMAKE_COMMAND} -P ${scriptfile}
-	DEPENDS ${full_path_filename} ${xml_valid_stamp} ${XSLTPROC_EXECUTABLE_TARGET} ${DOCBOOK_RESOURCE_FILES} ${XSL_FO_STYLESHEET} ${deps_list}
+	DEPENDS ${full_path_filename} ${xml_valid_stamp} ${XSLTPROC_EXECUTABLE_TARGET} ${DOCBOOK_RESOURCE_FILES} ${deps_list}
 	)
       set(targetname ${filename_root}_${targetname_suffix}_pdf)
       set(outfile ${bin_root}/${DOC_DIR}/${targetdir}/${filename_root}.pdf)
