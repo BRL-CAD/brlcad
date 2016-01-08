@@ -512,8 +512,6 @@ macro(BRLCAD_ADDLIB libname srcslist libslist)
     endif(NOT ${lib_type} STREQUAL "MIXED")
 
     # If we can't build this library strict, add the -Wno-error flag
-
-    # If we can't build this library strict, add the -Wno-error flag
     if(${lib_type} STREQUAL "C" AND BRLCAD_ENABLE_STRICT AND ${LIBNAME_UPPER}_NO_STRICT)
       CHECK_C_COMPILER_FLAG(-Wno-error NOERROR_FLAG)
       if(NOERROR_FLAG)
