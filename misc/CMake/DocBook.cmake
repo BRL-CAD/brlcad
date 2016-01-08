@@ -168,7 +168,8 @@ function(DB_VALIDATE_TARGET targetdir filename filename_root)
 endfunction(DB_VALIDATE_TARGET)
 
 
-# This macro produces Unix-style manual or "man" pages
+# This macro provides the core custom command and target wiring for most of the DocBook
+# build targets.
 macro(DOCBOOK_PROCESS targetname_suffix format xml_files extension targetdir deps_list)
   if(BRLCAD_EXTRADOCS_${format})
     foreach(filename ${${xml_files}})
