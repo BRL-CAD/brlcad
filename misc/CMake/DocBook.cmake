@@ -156,7 +156,7 @@ function(DB_VALIDATE_TARGET targetdir filename filename_root)
   list(FIND DB_VALIDATION_FILE_LIST "${full_path_filename}" IN_LIST)
   if("${IN_LIST}" STREQUAL "-1")
     set_property(GLOBAL APPEND PROPERTY DB_VALIDATION_FILE_LIST "${full_path_filename}")
-    DB_SCRIPT("${filename_root}_validate" "${DOC_DIR}/${targetdir}" "${VALIDATE_EXECUTABLE}")
+    DB_SCRIPT("${filename_root}_validate" "${targetdir}" "${VALIDATE_EXECUTABLE}")
     set(xml_valid_stamp ${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_CFG_INTDIR}/${filename_root}.valid)
     add_custom_command(
       OUTPUT ${xml_valid_stamp}
@@ -167,26 +167,27 @@ function(DB_VALIDATE_TARGET targetdir filename filename_root)
 
 endfunction(DB_VALIDATE_TARGET)
 
-# HTML output, the format used by BRL-CAD's graphical help systems
-macro(DOCBOOK_TO_HTML targetname_suffix xml_files targetdir deps_list)
-  if(BRLCAD_EXTRADOCS_HTML)
+
+# This macro produces Unix-style manual or "man" pages
+macro(DOCBOOK_PROCESS targetname_suffix format xml_files extension targetdir deps_list)
+  if(BRLCAD_EXTRADOCS_${format})
     foreach(filename ${${xml_files}})
       get_filename_component(filename_root "${filename}" NAME_WE)
       set(xml_valid_stamp ${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_CFG_INTDIR}/${filename_root}.valid)
-      set(outfile ${bin_root}/${DOC_DIR}/${targetdir}/${filename_root}.html)
-      set(targetname ${filename_root}_${targetname_suffix}_html)
-      set(CURRENT_XSL_STYLESHEET ${XSL_XHTML_STYLESHEET})
+      set(outfile ${bin_root}/${targetdir}/${filename_root}.${extension})
+      set(targetname ${filename_root}_${targetname_suffix}_${format})
+      set(CURRENT_XSL_STYLESHEET ${XSL_${format}_STYLESHEET})
       if (EXISTS ${filename})
 	set(full_path_filename ${filename})
       else (EXISTS ${filename})
 	set(full_path_filename ${CMAKE_CURRENT_SOURCE_DIR}/${filename})
       endif (EXISTS ${filename})
 
-      # If we have extra outputs, need to handle them now
+      # If we have more outputs than the default, they need to be handled here.
       set(EXTRAS)
-      get_property(EXTRA_OUTPUTS SOURCE ${filename} PROPERTY EXTRA_HTML_OUTPUTS)
+      get_property(EXTRA_OUTPUTS SOURCE ${filename} PROPERTY EXTRA_${format}_OUTPUTS)
       foreach(extra_out ${EXTRA_OUTPUTS})
-	set(EXTRAS ${EXTRAS} ${bin_root}/${DOC_DIR}/${targetdir}/${extra_out})
+	set(EXTRAS ${EXTRAS} ${bin_root}/${targetdir}/${extra_out})
       endforeach(extra_out ${EXTRA_OUTPUTS})
 
       if(BRLCAD_EXTRADOCS_VALIDATE)
@@ -194,7 +195,7 @@ macro(DOCBOOK_TO_HTML targetname_suffix xml_files targetdir deps_list)
       endif(BRLCAD_EXTRADOCS_VALIDATE)
 
       # Generate the script that will be used to run the XSLT executable
-      DB_SCRIPT("${targetname}" "${DOC_DIR}/${targetdir}" "${XSLT_EXECUTABLE}")
+      DB_SCRIPT("${targetname}" "${targetdir}" "${XSLT_EXECUTABLE}")
 
       add_custom_command(
 	OUTPUT ${outfile} ${EXTRAS}
@@ -202,7 +203,7 @@ macro(DOCBOOK_TO_HTML targetname_suffix xml_files targetdir deps_list)
 	DEPENDS ${full_path_filename} ${xml_valid_stamp} ${XSLTPROC_EXECUTABLE_TARGET} ${DOCBOOK_RESOURCE_FILES} ${deps_list}
 	)
       add_custom_target(${targetname} ALL DEPENDS ${outfile})
-      set_target_properties(${targetname} PROPERTIES FOLDER "DocBook/HTML")
+      set_target_properties(${targetname} PROPERTIES FOLDER "DocBook/${format}")
 
       # CMAKE_CFG_INTDIR can't be used in installation rules:
       # http://www.cmake.org/Bug/view.php?id=5747
@@ -212,11 +213,12 @@ macro(DOCBOOK_TO_HTML targetname_suffix xml_files targetdir deps_list)
 	  string(REPLACE "${CMAKE_CFG_INTDIR}" "\${BUILD_TYPE}" EXTRAS "${EXTRAS}")
 	endif(EXTRAS)
       endif(CMAKE_CONFIGURATION_TYPES)
-      install(FILES ${outfile} ${EXTRAS} DESTINATION ${DOC_DIR}/${targetdir})
+      install(FILES ${outfile} ${EXTRAS} DESTINATION ${targetdir})
 
-      get_property(BRLCAD_EXTRADOCS_HTML_TARGETS GLOBAL PROPERTY BRLCAD_EXTRADOCS_HTML_TARGETS)
-      set(BRLCAD_EXTRADOCS_HTML_TARGETS ${BRLCAD_EXTRADOCS_HTML_TARGETS} ${targetname})
-      set_property(GLOBAL PROPERTY BRLCAD_EXTRADOCS_HTML_TARGETS "${BRLCAD_EXTRADOCS_HTML_TARGETS}")
+      # Add the current build target to the list of man page targets
+      get_property(BRLCAD_EXTRADOCS_${format}_TARGETS GLOBAL PROPERTY BRLCAD_EXTRADOCS_${format}_TARGETS)
+      set(BRLCAD_EXTRADOCS_${format}_TARGETS ${BRLCAD_EXTRADOCS_${format}_TARGETS} ${targetname})
+      set_property(GLOBAL PROPERTY BRLCAD_EXTRADOCS_${format}_TARGETS "${BRLCAD_EXTRADOCS_${format}_TARGETS}")
 
       # If multiple outputs are being generated from the same file, make sure
       # one of them is run to completion before the others to avoid multiple
@@ -229,8 +231,17 @@ macro(DOCBOOK_TO_HTML targetname_suffix xml_files targetdir deps_list)
       endif(1ST_TARGET)
 
     endforeach(filename ${${xml_files}})
-  endif(BRLCAD_EXTRADOCS_HTML)
+  endif(BRLCAD_EXTRADOCS_${format})
+  # Mark files for distcheck
+  CMAKEFILES(${${xml_files}})
+endmacro(DOCBOOK_PROCESS targetname_suffix format xml_files extension targetdir deps_list)
 
+# HTML output, the format used by BRL-CAD's graphical help systems
+macro(DOCBOOK_TO_HTML targetname_suffix xml_files targetdir deps_list)
+  if(BRLCAD_EXTRADOCS_HTML)
+    DOCBOOK_PROCESS("${targetname_suffix}" HTML "${xml_files}" html "${DOC_DIR}/${targetdir}" "${deps_list}") 
+  endif(BRLCAD_EXTRADOCS_HTML)
+  # Mark input files for distcheck regardless of whether we're building them
   CMAKEFILES(${${xml_files}})
 endmacro(DOCBOOK_TO_HTML targetname_suffix srcfile outfile targetdir deps_list)
 

@@ -20,7 +20,7 @@ endif(BRLCAD_EXTRADOCS_PDF)
 # XML->PDF transformation) we use variables to hold the full
 # stylesheet path.
 set(XSL_PHP_STYLESHEET "${CMAKE_CURRENT_BINARY_DIR}/../resources/brlcad/wordpress.xsl")
-set(XSL_XHTML_STYLESHEET "${CMAKE_CURRENT_BINARY_DIR}/../resources/brlcad/brlcad-article-xhtml-stylesheet.xsl")
+set(XSL_HTML_STYLESHEET "${CMAKE_CURRENT_BINARY_DIR}/../resources/brlcad/brlcad-article-xhtml-stylesheet.xsl")
 set(XSL_FO_STYLESHEET "${CMAKE_CURRENT_BINARY_DIR}/../resources/brlcad/brlcad-article-fo-stylesheet.xsl")
 
 add_subdirectory(en)
