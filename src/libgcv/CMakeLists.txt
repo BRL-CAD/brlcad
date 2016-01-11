@@ -1,4 +1,4 @@
-add_subdirectory(conv/obj/wfobj)
+add_subdirectory(plugins/obj/wfobj)
 
 include_directories(
   ${WFOBJ_INCLUDE_DIRS}
@@ -25,23 +25,23 @@ set(LIBGCV_SOURCES
   )
 
 set(LIBGCV_PLUGIN_SOURCES
-  conv/brlcad.c
-  conv/fastgen4/fastgen4_read.c
-  conv/fastgen4/fastgen4_write.cpp
-  conv/obj/obj_read.c
-  conv/obj/obj_write.c
-  conv/stl/stl_read.c
-  conv/stl/stl_write.c
+  plugins/brlcad.c
+  plugins/fastgen4/fastgen4_read.c
+  plugins/fastgen4/fastgen4_write.cpp
+  plugins/obj/obj_read.c
+  plugins/obj/obj_write.c
+  plugins/stl/stl_read.c
+  plugins/stl/stl_write.c
 
-  conv/vrml/vrml_read/file_util.cpp
-  conv/vrml/vrml_read/node.cpp
-  conv/vrml/vrml_read/node_type.cpp
-  conv/vrml/vrml_read/parser.cpp
-  conv/vrml/vrml_read/string_util.cpp
-  conv/vrml/vrml_read/transform_node.cpp
-  conv/vrml/vrml_read/vrml_read.cpp
+  plugins/vrml/vrml_read/file_util.cpp
+  plugins/vrml/vrml_read/node.cpp
+  plugins/vrml/vrml_read/node_type.cpp
+  plugins/vrml/vrml_read/parser.cpp
+  plugins/vrml/vrml_read/string_util.cpp
+  plugins/vrml/vrml_read/transform_node.cpp
+  plugins/vrml/vrml_read/vrml_read.cpp
 
-  conv/vrml/vrml_write.c
+  plugins/vrml/vrml_write.c
   )
 
 list(APPEND LIBGCV_SOURCES ${LIBGCV_PLUGIN_SOURCES})
@@ -58,15 +58,15 @@ add_test(NAME bottess_test COMMAND test_bottess)
 
 set(GCV_IGNORE_FILES
   NOTES
-  conv/fastgen4/NOTES
+  plugins/fastgen4/NOTES
   soup.h
   tri_intersect.h
-  conv/vrml/vrml_read/file_util.h
-  conv/vrml/vrml_read/node.h
-  conv/vrml/vrml_read/node_type.h
-  conv/vrml/vrml_read/parser.h
-  conv/vrml/vrml_read/string_util.h
-  conv/vrml/vrml_read/transform_node.h
+  plugins/vrml/vrml_read/file_util.h
+  plugins/vrml/vrml_read/node.h
+  plugins/vrml/vrml_read/node_type.h
+  plugins/vrml/vrml_read/parser.h
+  plugins/vrml/vrml_read/string_util.h
+  plugins/vrml/vrml_read/transform_node.h
   )
 CMAKEFILES(${GCV_IGNORE_FILES})
 
