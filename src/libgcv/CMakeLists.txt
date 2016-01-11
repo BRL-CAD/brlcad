@@ -1,11 +1,23 @@
-add_subdirectory(plugins)
+function(GET_SOURCE_DIRECTORIES result subdir)
+  set(dirlist "")
+  file(GLOB cmakelist_files RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} ${subdir}/*/CMakeLists.txt)
 
-set (LIBGCV_PLUGIN_LIBRARIES
-  gcv_fastgen4-static
-  gcv_obj-static
-  gcv_stl-static
-  gcv_vrml-static
-  )
+  foreach(file ${cmakelist_files})
+    get_filename_component(parent_dir "${file}" DIRECTORY)
+    list(APPEND dirlist ${parent_dir})
+  endforeach(file ${cmakelist_files})
+
+  set (${result} ${dirlist} PARENT_SCOPE)
+endfunction(GET_SOURCE_DIRECTORIES result)
+
+set(LIBGCV_PLUGIN_LIBRARIES "")
+GET_SOURCE_DIRECTORIES(plugin_directories plugins)
+
+foreach(plugin_directory ${plugin_directories})
+  add_subdirectory(${plugin_directory})
+  get_filename_component(plugin_name "${plugin_directory}" NAME)
+  list(APPEND LIBGCV_PLUGIN_LIBRARIES gcv_${plugin_name}-static)
+endforeach(plugin_directory ${plugin_directories})
 
 
 #################################################################################
