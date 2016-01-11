@@ -1227,6 +1227,7 @@ vrml_write(struct gcv_context *context, const struct gcv_opts *gcv_options, cons
     state.gcv_options = gcv_options;
     state.vrml_write_options = (struct vrml_write_options *)options_data;
     state.dbip = context->dbip;
+    state.nmg_debug = RTG.NMG_debug;
 
     region_end_data.pstate = &state;
     region_end_data.pmp = &pm;

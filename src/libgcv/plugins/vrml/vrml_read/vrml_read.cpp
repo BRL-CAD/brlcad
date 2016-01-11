@@ -201,7 +201,7 @@ Parse_input(vector<NODE*> &childlist)
 
 
 HIDDEN int
-vrml_read(struct gcv_context *context, const struct gcv_opts *UNUSED(gcv_options), const void *UNUSED(options_data), const char *source_path)
+vrml_read(struct gcv_context *context, const struct gcv_opts *gcv_options, const void *UNUSED(options_data), const char *source_path)
 {
     vector<NODE *> childlist;
     vector<NODE *> parent;
@@ -215,12 +215,10 @@ vrml_read(struct gcv_context *context, const struct gcv_opts *UNUSED(gcv_options
     type = infile.getFileType();
 
     if (type == 1) {
-	cout << "Does not have support for vrml version 1" << endl;
+	bu_log("Does not have support for vrml version 1\n");
 	return 0;
-    }else if (type == 2) {
-	cout << "Vrml version 2" << endl;
-    }else {
-	cout << "Can not open or identify the file type" << endl;
+    }else if (type != 2) {
+	bu_log("Can not open or identify the file type\n");
 	return 0;
     }
 
@@ -256,19 +254,18 @@ vrml_read(struct gcv_context *context, const struct gcv_opts *UNUSED(gcv_options
     tree_root = create_vert_tree();
 
     Parse_input(childlist);
+    fclose(fd_in);
 
     if (objnumb < 0) {
-	std::cerr << "ERROR: unable to get objects" << std::endl;
+	bu_log("ERROR: unable to get objects\n");
 	return 0;
     }
-
-    cout << objnumb + 1 << " objects created" << endl;
-    cout << "Done!" << endl;
 
     /* make a top level group */
     mk_lcomb(fd_out, "all", &all_head, 0, (char *)NULL, (char *)NULL, (unsigned char *)NULL, 0);
 
-    fclose(fd_in);
+    if (gcv_options->verbosity_level)
+	bu_log("%d objects created\n", objnumb + 1);
 
     return 1;
 }

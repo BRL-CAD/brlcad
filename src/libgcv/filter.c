@@ -330,6 +330,9 @@ gcv_execute(struct gcv_context *context, const struct gcv_filter *filter,
 
     _gcv_filter_options_free(filter, options_data);
 
+    if (result != !!result)
+	bu_bomb("invalid result");
+
     return result;
 }
 
