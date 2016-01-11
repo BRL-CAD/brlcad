@@ -38,7 +38,7 @@ DOCBOOK_TO_PDF(man5 docbook_man5_EN pdf/man5/en "${attributes_DEPS}")
 add_dependencies(attributes_man5_HTML attr_std_list_xml attr_std_table_xml)
 
 if(BRLCAD_EXTRADOCS_MAN)
-  add_dependencies(attributes_man5_man attr_std_list_xml attr_std_table_xml)
+  add_dependencies(attributes_man5_MAN attr_std_list_xml attr_std_table_xml)
 endif(BRLCAD_EXTRADOCS_MAN)
 
 if(BRLCAD_EXTRADOCS_PDF_MAN)
