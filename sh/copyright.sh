@@ -46,6 +46,10 @@ files="$*"
 
 # force locale setting to C so things like date output as expected
 LC_ALL=C
+# required so sed doesn't truncate files with illegal byte sequence
+LANG=C
+
+export LC_ALL LANG
 
 # if we weren't already provided with a list of files, generate a list
 # of files to check, excluding directories that are not BRL-CAD source
@@ -123,6 +127,7 @@ for file in $files ; do
     echo -n "."
 
     year=`date +%Y`
+
     sed "s/[cC][oO][pP][yY][rR][iI][gG][hH][tT] \{0,1\}(\{0,1\}[cC]\{0,1\})\{0,1\}.\{0,1\} \{0,1\}\([0-9][0-9][0-9][0-9]\) \{0,1\}-\{0,1\} \{0,1\}[0-9]\{0,1\}[0-9]\{0,1\}[0-9]\{0,1\}[0-9]\{0,1\}\([ .;]\{1,\}\)\(.*United \{1,\}States\)/Copyright (c) \1-$year\2\3/" < $file > $file.copyright.new
     echo -n "."
 
