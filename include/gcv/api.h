@@ -87,21 +87,24 @@ struct gcv_opts
     uint32_t nmg_debug_flag;
 
     unsigned debug_mode; /* Print debugging info if debug_mode == 1 */
-    unsigned verbosity_level; /* 0 -- quiet, print only errors */
-    unsigned max_cpus;
+    unsigned verbosity_level; /* 0 is quiet, printing only errors */
+    unsigned max_cpus; /* max cpus; 0 for automatic */
 
     struct bn_tol calculational_tolerance;
     struct rt_tess_tol tessellation_tolerance;
     enum gcv_tessellation_algorithm tessellation_algorithm;
 
-    fastf_t scale_factor; /* units */
+    fastf_t scale_factor; /* conversion to units */
     const char *default_name; /* default name for nameless objects */
 
-    size_t num_objects; /* Number of elements in object_names. If zero, convert all top-level objects */
+    size_t num_objects; /* Number of elements in object_names. If 0, convert all top-level objects */
     const char * const *object_names; /* objects to convert */
 };
 
 
+/**
+ * Assign default option values.
+ */
 void gcv_opts_default(struct gcv_opts *gcv_options);
 
 
@@ -109,18 +112,47 @@ void gcv_opts_default(struct gcv_opts *gcv_options);
  * Input/Output/Translation filter.
  */
 struct gcv_filter {
-    const char * const name;
-    const enum gcv_filter_type filter_type;
-    const mime_model_t mime_type;
+    const char * const name; /* name allowing unique identification by users */
+    const enum gcv_filter_type filter_type; /* operation type */
+    const mime_model_t mime_type; /* MIME_MODEL_UNKNOWN if 'filter_type' is GCV_FILTER_FILTER */
 
 
-    /* PRIVATE */
+    /* PRIVATE to libgcv and the associated filter plugin */
 
-    void (* const create_opts_fn)(struct bu_opt_desc **options_desc, void **options_data); /* PRIVATE */
+    /**
+     * PRIVATE
+     *
+     * Allocate and initialize a bu_opt_desc block and associated memory for
+     * storing the option data.
+     *
+     * Must set *options_desc and *options_data.
+     *
+     * May be NULL.
+     */
+    void (* const create_opts_fn)(struct bu_opt_desc **options_desc, void **options_data);
 
-    void (* const free_opts_fn)(void *options_data); /* PRIVATE */
+    /**
+     * PRIVATE
+     *
+     * Free the filter-specific opaque pointer returned by create_opts_fn().
+     * NULL if and only if 'create_opts_fn' is NULL.
+     */
+    void (* const free_opts_fn)(void *options_data);
 
-    int (* const filter_fn)(struct gcv_context *context, const struct gcv_opts *gcv_options, const void *options_data, const char *target); /* PRIVATE */
+    /*
+     * PRIVATE
+     *
+     * Perform the filter operation.
+     *
+     * For filters of type GCV_FILTER_WRITE, context->dbip is marked read-only
+     * (the pointer is to a non-const struct db_i due to in-memory data that
+     * may be modified). Filters of type GCV_FILTER_FILTER receive a NULL target.
+     * For other filters, 'target' is the input or output file path.
+     *
+     * 'gcv_options' will always be a pointer to a valid struct gcv_opts.
+     * 'options_data' is NULL if and only if 'create_opts_fn' is NULL.
+     */
+    int (* const filter_fn)(struct gcv_context *context, const struct gcv_opts *gcv_options, const void *options_data, const char *target);
 };
 
 
@@ -139,12 +171,23 @@ gcv_writer(struct gcv_filter *writer, const char *target, const struct gcv_opts 
 
 
 /**
+ * Perform a filtering operation on a gcv_context.
  *
+ * If 'gcv_options' is NULL, defaults will be used as set by gcv_opts_default().
+ * The parameters 'argc' and 'argv' are used for option processing as specified by
+ * the filter.
+ *
+ * Returns 1 on success and 0 on failure.
  */
 GCV_EXPORT int
 gcv_execute(struct gcv_context *context, const struct gcv_filter *filter, const struct gcv_opts *gcv_options, size_t argc, const char * const *argv, const char *target);
 
 
+
+/*
+ * Return a pointer to a bu_ptbl listing all registered filters as
+ * const struct gcv_filter pointers.
+ */
 GCV_EXPORT const struct bu_ptbl *gcv_list_filters(void);
 
 

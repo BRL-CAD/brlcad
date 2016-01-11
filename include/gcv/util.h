@@ -37,6 +37,9 @@
 __BEGIN_DECLS
 
 
+/*
+ * Tessellate the object at the specified path.
+ */
 struct rt_bot_internal *gcv_facetize(struct db_i *db, const struct db_full_path *path, const struct bn_tol *tol, const struct rt_tess_tol *tess_tol);
 
 
@@ -66,6 +69,8 @@ struct gcv_region_end_data
 };
 
 /**
+ * Perform Boolean evaluation on a tree of tessellated leaf nodes.
+ *
  * Usually specified as the db_walk_tree() region_end callback,
  * calling this routine for each positive region encountered.
  *
