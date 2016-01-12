@@ -156,7 +156,7 @@ _gcv_opts_check(const struct gcv_opts *gcv_options)
     BN_CK_TOL(&gcv_options->calculational_tolerance);
     RT_CK_TESS_TOL(&gcv_options->tessellation_tolerance);
 
-    if (gcv_options->debug_mode != !!gcv_options->debug_mode)
+    if (gcv_options->debug_mode != 0 && gcv_options->debug_mode != 1)
 	bu_bomb("invalid gcv_opts.debug_mode");
 
     if (gcv_options->scale_factor <= 0.0)
@@ -330,7 +330,7 @@ gcv_execute(struct gcv_context *context, const struct gcv_filter *filter,
 
     _gcv_filter_options_free(filter, options_data);
 
-    if (result != !!result)
+    if (result != 0 && result != 1)
 	bu_bomb("invalid result");
 
     return result;
