@@ -300,7 +300,7 @@ ICV_EXPORT int icv_rgb2gray(icv_image_t *img,
 /** @file libicv/crop.c
  *
  * This file contains functions for cropping images.
- * There are two types of cropping: rectangular and skeyed.
+ * There are two types of cropping: rectangular and skewed.
  */
 
 /**
@@ -321,7 +321,7 @@ ICV_EXPORT extern int icv_rect(icv_image_t *img, size_t xorig, size_t yorig, siz
 /**
  * This function crops an input image.
  *
- * This can do a screwed cropping, i.e. given any four points of
+ * This can do a skewed cropping, i.e. given any four points of
  * quadrilateral in an image, map it to a rectangle of xnumXynum
  * dimension.
  *
