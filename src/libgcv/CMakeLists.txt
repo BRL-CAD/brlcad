@@ -4,9 +4,9 @@ function(GET_GCV_PLUGIN_LIBRARIES result)
   file(GLOB cmakelist_files RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} plugins/*/CMakeLists.txt)
 
   foreach(file ${cmakelist_files})
-    get_filename_component(parent_dir "${file}" DIRECTORY)
-    get_filename_component(plugin_name "${parent_dir}" NAME)
-    add_subdirectory(${parent_dir})
+    get_filename_component(plugin_directory "${file}" DIRECTORY)
+    get_filename_component(plugin_name "${plugin_directory}" NAME)
+    add_subdirectory(${plugin_directory})
     list(APPEND plugin_libraries gcv_${plugin_name}-static)
   endforeach(file ${cmakelist_files})
 

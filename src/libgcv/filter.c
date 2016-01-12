@@ -156,7 +156,7 @@ _gcv_opts_check(const struct gcv_opts *gcv_options)
     BN_CK_TOL(&gcv_options->calculational_tolerance);
     RT_CK_TESS_TOL(&gcv_options->tessellation_tolerance);
 
-    if (gcv_options->debug_mode > 1)
+    if (gcv_options->debug_mode != !!gcv_options->debug_mode)
 	bu_bomb("invalid gcv_opts.debug_mode");
 
     if (gcv_options->scale_factor <= 0.0)
