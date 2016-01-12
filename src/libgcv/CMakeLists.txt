@@ -1,23 +1,20 @@
-function(GET_SOURCE_DIRECTORIES result subdir)
-  set(dirlist "")
-  file(GLOB cmakelist_files RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} ${subdir}/*/CMakeLists.txt)
+function(GET_GCV_PLUGIN_LIBRARIES result)
+  set(plugin_libraries "")
+
+  file(GLOB cmakelist_files RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} plugins/*/CMakeLists.txt)
 
   foreach(file ${cmakelist_files})
     get_filename_component(parent_dir "${file}" DIRECTORY)
-    list(APPEND dirlist ${parent_dir})
+    get_filename_component(plugin_name "${parent_dir}" NAME)
+    add_subdirectory(${parent_dir})
+    list(APPEND plugin_libraries gcv_${plugin_name}-static)
   endforeach(file ${cmakelist_files})
 
-  set (${result} ${dirlist} PARENT_SCOPE)
-endfunction(GET_SOURCE_DIRECTORIES result)
+  set (${result} ${plugin_libraries} PARENT_SCOPE)
+endfunction(GET_GCV_PLUGIN_LIBRARIES result)
 
-set(LIBGCV_PLUGIN_LIBRARIES "")
-GET_SOURCE_DIRECTORIES(plugin_directories plugins)
 
-foreach(plugin_directory ${plugin_directories})
-  add_subdirectory(${plugin_directory})
-  get_filename_component(plugin_name "${plugin_directory}" NAME)
-  list(APPEND LIBGCV_PLUGIN_LIBRARIES gcv_${plugin_name}-static)
-endforeach(plugin_directory ${plugin_directories})
+GET_GCV_PLUGIN_LIBRARIES(LIBGCV_PLUGIN_LIBRARIES)
 
 
 #################################################################################
