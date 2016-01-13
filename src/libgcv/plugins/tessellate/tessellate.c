@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file facetize.c
+/** @file tessellate.c
  *
  * Tessellate the specified objects at the region level.
  *
