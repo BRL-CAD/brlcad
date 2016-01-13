@@ -1,4 +1,4 @@
-/*                      F A C E T I Z E . C
+/*                    T E S S E L L A T E . C
  * BRL-CAD
  *
  * Copyright (c) 2016 United States Government as represented by
