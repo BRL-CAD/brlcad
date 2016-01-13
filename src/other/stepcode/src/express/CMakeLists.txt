@@ -127,7 +127,7 @@ endif(SC_GENERATE_LP_SOURCES)
 if(NOT SC_IS_SUBBUILD)
   add_dependencies(express version_string)
 endif(NOT SC_IS_SUBBUILD)
-SC_ADDEXEC("check-express" "${CHECK_EXPRESS_SOURCES}" "express;base" )
+SC_ADDEXEC("check-express" "${CHECK_EXPRESS_SOURCES}" "express;base"  ${SC_EXEC_NOINSTALL})
 
 #add_subdirectory(test)
 

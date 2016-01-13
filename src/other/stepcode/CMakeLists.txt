@@ -249,6 +249,10 @@ if(NOT SC_IS_SUBBUILD)
   SET( CMAKE_INSTALL_PREFIX ${SC_INSTALL_PREFIX} CACHE INTERNAL "Prefix prepended to install directories if target destination is not absolute, immutable" FORCE )
 endif(NOT SC_IS_SUBBUILD)
 
+if(SC_SKIP_EXEC_INSTALL)
+  set(SC_EXEC_NOINSTALL "NO_INSTALL")
+endif(SC_SKIP_EXEC_INSTALL)
+
 OPTION(SC_BUILD_EXPRESS_ONLY "Only build express parser." OFF)
 MARK_AS_ADVANCED(SC_BUILD_EXPRESS_ONLY)
 
