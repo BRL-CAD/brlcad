@@ -156,18 +156,11 @@ struct gcv_filter {
 };
 
 
-/**
- * Append a filter for reading objects
+/*
+ * Return a pointer to a bu_ptbl listing all registered filters as
+ * const struct gcv_filter pointers.
  */
-GCV_EXPORT void
-gcv_reader(struct gcv_filter *reader, const char *source, const struct gcv_opts *UNUSED(opts));
-
-
-/**
- * Append a filter for writing objects.
- */
-GCV_EXPORT void
-gcv_writer(struct gcv_filter *writer, const char *target, const struct gcv_opts *UNUSED(opts));
+GCV_EXPORT const struct bu_ptbl *gcv_list_filters(void);
 
 
 /**
@@ -181,28 +174,6 @@ gcv_writer(struct gcv_filter *writer, const char *target, const struct gcv_opts 
  */
 GCV_EXPORT int
 gcv_execute(struct gcv_context *context, const struct gcv_filter *filter, const struct gcv_opts *gcv_options, size_t argc, const char * const *argv, const char *target);
-
-
-
-/*
- * Return a pointer to a bu_ptbl listing all registered filters as
- * const struct gcv_filter pointers.
- */
-GCV_EXPORT const struct bu_ptbl *gcv_list_filters(void);
-
-
-/**
- * Convert objects from one file to another, based on the conversion
- * criteria specified (defaults to maximum data preservation).
- *
- * This provides a simplified conversion interface for applications
- * desiring maximum simplicity for reading and writing geometry data.
- * This is a shorthand for manually calling gcv_read() and gcv_write().
- *
- * Returns negative on fatal error or number of objects written
- */
-GCV_EXPORT int
-gcv_convert(const char *in_file, const struct gcv_opts *in_opts, const char *out_file, const struct gcv_opts *out_opts);
 
 
 __END_DECLS
