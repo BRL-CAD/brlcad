@@ -59,6 +59,7 @@ endforeach(ITEM ${dlists})
 # This is not to tell LEMON what template to use - that information is
 # usually hardcoded in LEMON itself - but to let FindLEMON.cmake know
 # there is a working LEMON installation.
+set(LEMON_SKIP_INSTALL 1)
 set(lemon_ALIASES ENABLE_LEMON)
 set(lemon_DESCRIPTION "
 Option for enabling and disabling compilation of the lemon parser
@@ -79,6 +80,7 @@ endif(NOT COMMAND LEMON_TARGET)
 SetTargetFolder(lemon "Compilation Utilities")
 SetTargetFolder(lempar_cp "Compilation Utilities")
 
+set(RE2C_SKIP_INSTALL 1)
 set(re2c_ALIASES ENABLE_RE2C)
 set(re2c_DESCRIPTION "
 Option for enabling and disabling compilation of the re2c scanner
@@ -107,6 +109,7 @@ endif(NOT COMMAND RE2C_TARGET)
 set(PERPLEX_TEMPLATE "${CMAKE_CURRENT_SOURCE_DIR}/perplex/perplex_template.c" CACHE STRING "Perplex template file" FORCE)
 mark_as_advanced(PERPLEX_TEMPLATE)
 
+set(PERPLEX_SKIP_INSTALL 1)
 set(perplex_ALIASES ENABLE_PERPLEX)
 set(perplex_DESCRIPTION "
 Option for enabling and disabling compilation of the perplex scanner
