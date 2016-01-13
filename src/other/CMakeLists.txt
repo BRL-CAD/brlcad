@@ -188,6 +188,8 @@ endif(BRLCAD_TERMLIB_BUILD)
 # here as well.  BRL-CAD needs PNG's IO - turn it on (i.e. turn off
 # the disabling flags)
 
+set(SKIP_INSTALL_FILES OFF CACHE BOOL "Don't install files from libpng" FORCE)
+mark_as_advanced(SKIP_INSTALL_FILES)
 set(PNG_NO_CONSOLE_IO OFF CACHE BOOL "Option to disable Console IO in PNG" FORCE)
 mark_as_advanced(PNG_NO_CONSOLE_IO)
 set(PNG_NO_STDIO OFF CACHE BOOL "Option to disable STDIO in PNG" FORCE)
@@ -232,6 +234,9 @@ ELSE(BRLCAD_PNG_BUILD)
   # handle it here.
   set(PNG_INCLUDE_DIR ${PNG_PNG_INCLUDE_DIR} CACHE STRING "PNG include directory" FORCE)
 endif(BRLCAD_PNG_BUILD)
+# Since SKIP_INSTALL_FILES doesn't have a PNG prefix, we'll unset it once we're done
+unset(SKIP_INSTALL_FILES CACHE)
+unset(SKIP_INSTALL_FILES)
 
 # Make sure this value is in the cache, regardless of
 # BRLCAD_PNG_BUILD, so it can be referenced unconditionally elsewhere.
