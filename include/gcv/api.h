@@ -81,24 +81,37 @@ enum gcv_filter_type {
  */
 struct gcv_opts
 {
-    /* Debug flags, applied via bitwise-OR. Original flags are restored after conversion. */
+    /* debug flags, applied via bitwise-OR
+     * original flags are restored after conversion */
     int bu_debug_flag;
     uint32_t rt_debug_flag;
     uint32_t nmg_debug_flag;
 
-    unsigned debug_mode; /* Print debugging info if debug_mode == 1 */
-    unsigned verbosity_level; /* 0 is quiet, printing only errors */
-    unsigned max_cpus; /* max cpus; 0 for automatic */
+    /* print debugging info if debug_mode == 1 */
+    unsigned debug_mode;
+
+    /* 0 is quiet, printing only errors */
+    unsigned verbosity_level;
+
+    /* max cpus; 0 for automatic */
+    unsigned max_cpus;
 
     struct bn_tol calculational_tolerance;
     struct rt_tess_tol tessellation_tolerance;
     enum gcv_tessellation_algorithm tessellation_algorithm;
 
-    fastf_t scale_factor; /* conversion to units */
-    const char *default_name; /* default name for nameless objects */
+    /* conversion to units */
+    fastf_t scale_factor;
 
-    size_t num_objects; /* Number of elements in object_names. If 0, convert all top-level objects */
-    const char * const *object_names; /* objects to convert */
+    /* default name for nameless objects */
+    const char *default_name;
+
+    /* number of elements in object_names
+     * if 0, convert all top-level objects */
+    size_t num_objects;
+
+    /* objects to convert */
+    const char * const *object_names;
 };
 
 
@@ -120,7 +133,6 @@ struct gcv_filter {
 
     /* MIME_MODEL_UNKNOWN if 'filter_type' is GCV_FILTER_FILTER */
     const mime_model_t mime_type;
-
 
     /**
      * PRIVATE
