@@ -277,6 +277,8 @@ gcv_list_filters(void)
 	REGISTER_FILTER(gcv_conv_vrml_read);
 	REGISTER_FILTER(gcv_conv_vrml_write);
 
+	REGISTER_FILTER(gcv_filter_tessellate);
+
 #undef REGISTER_FILTER
     }
 
