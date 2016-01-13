@@ -188,7 +188,7 @@ endif(BRLCAD_TERMLIB_BUILD)
 # here as well.  BRL-CAD needs PNG's IO - turn it on (i.e. turn off
 # the disabling flags)
 
-set(SKIP_INSTALL_FILES OFF CACHE BOOL "Don't install files from libpng" FORCE)
+set(SKIP_INSTALL_FILES ON CACHE BOOL "Don't install files from libpng" FORCE)
 mark_as_advanced(SKIP_INSTALL_FILES)
 set(PNG_NO_CONSOLE_IO OFF CACHE BOOL "Option to disable Console IO in PNG" FORCE)
 mark_as_advanced(PNG_NO_CONSOLE_IO)
