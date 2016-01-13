@@ -34,11 +34,10 @@ set(LIBGCV_SOURCES
   bot_solidity.c
   bottess.c
   facetize.c
-  filter.c
+  gcv.c
   region_end.c
   region_end_mc.c
   tri_intersect.c
-  plugins/brlcad.c
   )
 
 

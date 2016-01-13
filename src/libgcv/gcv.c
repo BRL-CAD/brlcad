@@ -1,4 +1,4 @@
-/*                        F I L T E R . C
+/*                           G C V . C
  * BRL-CAD
  *
  * Copyright (c) 2015-2016 United States Government as represented by
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file filter.c
+/** @file gcv.c
  *
  * Brief description
  *
@@ -31,6 +31,60 @@
 #include "bu/debug.h"
 
 #include <string.h>
+
+
+HIDDEN int
+_gcv_brlcad_read(struct gcv_context *context,
+		const struct gcv_opts *UNUSED(gcv_options), const void *UNUSED(options_data),
+		const char *source_path)
+{
+    int ret;
+    struct db_i * const in_dbip = db_open(source_path, DB_OPEN_READONLY);
+
+    if (!in_dbip) {
+	bu_log("db_open() failed for '%s'\n", source_path);
+	return 0;
+    }
+
+    if (db_dirbuild(in_dbip)) {
+	bu_log("db_dirbuild() failed for '%s'\n", source_path);
+	db_close(in_dbip);
+	return 0;
+    }
+
+    ret = db_dump(context->dbip->dbi_wdbp, in_dbip);
+    db_close(in_dbip);
+
+    return ret == 0;
+}
+
+
+HIDDEN int
+_gcv_brlcad_write(struct gcv_context *context,
+		 const struct gcv_opts *UNUSED(gcv_options), const void *UNUSED(options_data),
+		 const char *dest_path)
+{
+    int ret;
+    struct rt_wdb * const out_wdbp = wdb_fopen(dest_path);
+
+    if (!out_wdbp) {
+	bu_log("wdb_fopen() failed for '%s'\n", dest_path);
+	return 0;
+    }
+
+    ret = db_dump(out_wdbp, context->dbip);
+    wdb_close(out_wdbp);
+
+    return ret == 0;
+}
+
+
+static const struct gcv_filter _gcv_filter_brlcad_read =
+{"BRL-CAD Reader", GCV_FILTER_READ, MIME_MODEL_VND_BRLCAD_PLUS_BINARY, NULL, NULL, _gcv_brlcad_read};
+
+
+static const struct gcv_filter _gcv_filter_brlcad_write =
+{"BRL-CAD Writer", GCV_FILTER_WRITE, MIME_MODEL_VND_BRLCAD_PLUS_BINARY, NULL, NULL, _gcv_brlcad_write};
 
 
 HIDDEN void
@@ -205,14 +259,15 @@ gcv_list_filters(void)
     static struct bu_ptbl filter_table = BU_PTBL_INIT_ZERO;
 
     if (!BU_PTBL_LEN(&filter_table)) {
+	_gcv_filter_register(&filter_table, &_gcv_filter_brlcad_read);
+	_gcv_filter_register(&filter_table, &_gcv_filter_brlcad_write);
+
 #define REGISTER_FILTER(name) \
 	do { \
 	    extern const struct gcv_filter (name); \
 	    _gcv_filter_register(&filter_table, &(name)); \
 	} while (0)
 
-	REGISTER_FILTER(gcv_conv_brlcad_read);
-	REGISTER_FILTER(gcv_conv_brlcad_write);
 	REGISTER_FILTER(gcv_conv_fastgen4_read);
 	REGISTER_FILTER(gcv_conv_fastgen4_write);
 	REGISTER_FILTER(gcv_conv_obj_read);

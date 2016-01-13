@@ -112,12 +112,15 @@ void gcv_opts_default(struct gcv_opts *gcv_options);
  * Input/Output/Translation filter.
  */
 struct gcv_filter {
-    const char * const name; /* name allowing unique identification by users */
-    const enum gcv_filter_type filter_type; /* operation type */
-    const mime_model_t mime_type; /* MIME_MODEL_UNKNOWN if 'filter_type' is GCV_FILTER_FILTER */
+    /* name allowing unique identification by users */
+    const char * const name;
 
+    /* operation type */
+    const enum gcv_filter_type filter_type;
 
-    /* PRIVATE to libgcv and the associated filter plugin */
+    /* MIME_MODEL_UNKNOWN if 'filter_type' is GCV_FILTER_FILTER */
+    const mime_model_t mime_type;
+
 
     /**
      * PRIVATE
