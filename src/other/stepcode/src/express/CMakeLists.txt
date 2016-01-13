@@ -129,7 +129,7 @@ if(NOT SC_IS_SUBBUILD)
 endif(NOT SC_IS_SUBBUILD)
 SC_ADDEXEC("check-express" "${CHECK_EXPRESS_SOURCES}" "express;base" )
 
-add_subdirectory(test)
+#add_subdirectory(test)
 
 # Local Variables:
 # tab-width: 8
