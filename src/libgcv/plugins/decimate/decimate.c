@@ -26,7 +26,6 @@
 #include "common.h"
 
 #include "gcv/api.h"
-#include "gcv/util.h"
 
 
 HIDDEN int
@@ -36,43 +35,59 @@ decimate_filter(struct gcv_context *context, const struct gcv_opts *gcv_options,
     size_t i;
 
     for (i = 0; i < gcv_options->num_objects; ++i) {
-	struct db_full_path path;
+	struct directory *dir;
 	struct rt_db_internal internal;
-	struct rt_bot_internal *bot;
 
-	if (db_string_to_path(&path, context->dbip, gcv_options->object_names[i])) {
-	    bu_log("db_string_to_path() failed: %s\n", gcv_options->object_names[i]);
-	    return 0;
+	{
+	    struct db_full_path path;
+
+	    if (db_string_to_path(&path, context->dbip, gcv_options->object_names[i])) {
+		bu_log("db_string_to_path() failed: '%s'\n", gcv_options->object_names[i]);
+		db_free_full_path(&path);
+		return 0;
+	    }
+
+	    dir = DB_FULL_PATH_CUR_DIR(&path);
+	    db_free_full_path(&path);
 	}
 
-	if (rt_db_get_internal(&internal, DB_FULL_PATH_CUR_DIR(&path), context->dbip, NULL, &rt_uniresource) < 0) {
-	    db_pr_full_path("rt_db_get_internal() failed: ", &path);
-	    db_free_full_path(&path);
+	if (rt_db_get_internal(&internal, dir, context->dbip, NULL, &rt_uniresource) < 0) {
+	    bu_log("rt_db_get_internal() failed: '%s'\n", dir->d_namep);
 	    return 0;
 	}
 
 	RT_CK_DB_INTERNAL(&internal);
 
 	if (internal.idb_minor_type != ID_BOT) {
-	    db_pr_full_path("object is not a BoT mesh: ", &path);
+	    bu_log("object is not a BoT mesh: '%s'\n", dir->d_namep);
 	    rt_db_free_internal(&internal);
-	    db_free_full_path(&path);
 	    return 0;
 	}
 
-	bot = (struct rt_bot_internal *)internal.idb_ptr;
-	RT_BOT_CK_MAGIC(bot);
+	{
+	    struct rt_bot_internal *bot = (struct rt_bot_internal *)internal.idb_ptr;
+	    size_t orig_num_faces, edges_removed;
 
-	(void)rt_bot_decimate_gct(bot, gcv_options->calculational_tolerance.dist);
+	    RT_BOT_CK_MAGIC(bot);
 
-	if (rt_db_put_internal(DB_FULL_PATH_CUR_DIR(&path), context->dbip, &internal, &rt_uniresource)) {
-	    db_pr_full_path("rt_db_put_internal() failed: ", &path);
-	    rt_db_free_internal(&internal);
-	    db_free_full_path(&path);
-	    return 0;
+	    if (gcv_options->verbosity_level)
+		bu_log("decimating: '%s'\n", dir->d_namep);
+
+	    orig_num_faces = bot->num_faces;
+	    edges_removed = rt_bot_decimate_gct(bot, gcv_options->calculational_tolerance.dist);
+
+	    if (gcv_options->verbosity_level) {
+		bu_log("\toriginal face count = %zu\n", orig_num_faces);
+		bu_log("\tedges removed = %zu\n", edges_removed);
+		bu_log("\tnew face count = %zu\n", bot->num_faces);
+	    }
 	}
 
-	db_free_full_path(&path);
+	if (rt_db_put_internal(dir, context->dbip, &internal, &rt_uniresource)) {
+	    bu_log("rt_db_put_internal() failed: '%s'\n", dir->d_namep);
+	    rt_db_free_internal(&internal);
+	    return 0;
+	}
     }
 
     return 1;
