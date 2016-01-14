@@ -54,7 +54,6 @@
 #include "wdb.h"
 #include "raytrace.h"
 #include "tclcad.h"
-#include "obj.h"
 
 #define WDB_TCL_READ_ERR { \
 	Tcl_AppendResult((Tcl_Interp *)wdbp->wdb_interp, "Database read error, aborting.\n", (char *)NULL); \

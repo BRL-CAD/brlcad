@@ -1104,3 +1104,6 @@ s/([[:space:],\(,"])rt_tcl/\1tclcad_rt/g
 	tcl library registrations moved to libtclcad [7.25]
 s/rt_grow_boolstack/rt_bool_growstack/g
 	 rename with consistent prefixes [7.25]
+s/(#[[:space:]]*include[[:space:]]+["<])obj\.h/\1dm\/bview.h/g
+s/GED_VIEW_OBJ_NULL/VIEW_OBJ_NULL/g
+	move view_obj to dm/bview.h [7.25]

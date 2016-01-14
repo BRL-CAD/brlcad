@@ -33,7 +33,6 @@ set(public_hdrs
   icv.h
   libtermio.h
   nmg.h
-  obj.h
   optical.h
   photonmap.h
   pc.h
