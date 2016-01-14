@@ -7,6 +7,10 @@ set(lib_inputs "${lib_inputs}
 INPUT += ${CMAKE_SOURCE_DIR}/misc/doxygen/bview.dox")
 set(lib_inputs "${lib_inputs}
 INPUT += ${CMAKE_SOURCE_DIR}/include/dm/bview.h")
+set(lib_inputs "${lib_inputs}
+INPUT += ${CMAKE_SOURCE_DIR}/include/bio.h")
+set(lib_inputs "${lib_inputs}
+INPUT += ${CMAKE_SOURCE_DIR}/include/bnetwork.h")
 
 set(lib_predefines)
 

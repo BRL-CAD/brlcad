@@ -38,6 +38,10 @@
  */
 /** @ingroup libbu */
 /**  @defgroup bu_version Version */
+/** @ingroup libbu */
+/**  @defgroup bu_bio System I/O Header Wrangler*/
+/** @ingroup libbu */
+/**  @defgroup bu_bnetwork System Network Header Wrangler*/
 
 
 /* Data Containers */
