@@ -117,6 +117,10 @@ and new names should be listed for reference.
 
 7.26
 ----
+include/bu/cmd.h
+	remove struct bu_cmdhist and struct bu_cmdhist_obj [deprecated 7.26]
+	BU_CMDHIST_NULL, BU_CMDHIST_OBJ_NULL, bu_cmdhist_histor, bu_cmdhist_add,
+	bu_cmdhist_curr, bu_cmdhist_nest, bu_cmdhist_prev [deprecated 7.26]
 fb-rle, rle-fb, bw-rle, pix-rle, rle-pix
         All tools focused specifically on the RLE image format. [deprecated 7.26]
 nirt
