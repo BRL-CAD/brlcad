@@ -2,7 +2,7 @@ add_custom_target(libgcv_plugins)
 
 
 function(LIBGCV_ADD_PLUGIN plugin_name sources libs)
-    set(target_name gcv_${plugin_name})
+    set(target_name libgcv_${plugin_name})
 
     BRLCAD_ADDLIB(${target_name} "${sources}" "${libs}" DYNAMIC NO_INSTALL FOLDER "LibGCV Plugins")
     get_property(current_output_dir TARGET ${target_name} PROPERTY LIBRARY_OUTPUT_DIRECTORY)
