@@ -117,6 +117,8 @@ and new names should be listed for reference.
 
 7.26
 ----
+fb-rle, rle-fb, bw-rle, pix-rle, rle-pix
+        All tools focused specifically on the RLE image format. [deprecated 7.26]
 nirt
 	-T - use LIBRT_BOT_MINTIE environment variable instead [deprecated 7.26]
 all global variables
