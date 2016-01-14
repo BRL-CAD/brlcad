@@ -1,2 +1,4 @@
 /** @defgroup libmultispectral libmultispectral (multispectral) */
-
+/**  @addtogroup libmultispectral
+     libmultispectral is mostly a result of applying different compilation flags to liboptical
+ */
