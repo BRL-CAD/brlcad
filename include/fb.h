@@ -59,6 +59,7 @@
 #include "bio.h"
 
 #include "tcl.h"
+#include "pkg.h"
 #include "bu/magic.h"
 #include "bu/vls.h"
 
@@ -215,6 +216,87 @@ FB_EXPORT extern const char *fb_version(void);
 #endif
 
 typedef struct fb_internal FBIO;
+
+
+/*
+ * Types of packages used for the remote frame buffer
+ * communication
+ */
+#define MSG_FBOPEN      1
+#define MSG_FBCLOSE     2
+#define MSG_FBCLEAR     3
+#define MSG_FBREAD      4
+#define MSG_FBWRITE     5
+#define MSG_FBCURSOR    6               /**< @brief fb_cursor() */
+#define MSG_FBWINDOW    7               /**< @brief OLD */
+#define MSG_FBZOOM      8               /**< @brief OLD */
+#define MSG_FBSCURSOR   9               /**< @brief OLD */
+#define MSG_FBVIEW      10              /**< @brief NEW */
+#define MSG_FBGETVIEW   11              /**< @brief NEW */
+#define MSG_FBRMAP      12
+#define MSG_FBWMAP      13
+#define MSG_FBHELP      14
+#define MSG_FBREADRECT  15
+#define MSG_FBWRITERECT 16
+#define MSG_FBFLUSH     17
+#define MSG_FBFREE      18
+#define MSG_FBGETCURSOR 19              /**< @brief NEW */
+#define MSG_FBPOLL      30              /**< @brief NEW */
+#define MSG_FBSETCURSOR 31              /**< @brief NEW in Release 4.4 */
+#define MSG_FBBWREADRECT 32             /**< @brief NEW in Release 4.6 */
+#define MSG_FBBWWRITERECT 33            /**< @brief NEW in Release 4.6 */
+
+#define MSG_DATA        20
+#define MSG_RETURN      21
+#define MSG_CLOSE       22
+#define MSG_ERROR       23
+
+#define MSG_NORETURN    100
+
+
+/* Framebuffer server object */
+
+#define NET_LONG_LEN 4 /**< @brief # bytes to network long */
+#define MAX_CLIENTS 32
+#define MAX_PORT_TRIES 100
+#define FBS_CALLBACK_NULL (void (*)())NULL
+#define FBSERV_OBJ_NULL (struct fbserv_obj *)NULL
+
+struct fbserv_listener {
+    int fbsl_fd;                        /**< @brief socket to listen for connections */
+#if defined(_WIN32) && !defined(__CYGWIN__)
+    Tcl_Channel fbsl_chan;
+#endif
+    int fbsl_port;                      /**< @brief port number to listen on */
+    int fbsl_listen;                    /**< @brief !0 means listen for connections */
+    struct fbserv_obj *fbsl_fbsp;       /**< @brief points to its fbserv object */
+};
+
+
+struct fbserv_client {
+    int fbsc_fd;
+#if defined(_WIN32) && !defined(__CYGWIN__)
+    Tcl_Channel fbsc_chan;
+    Tcl_FileProc *fbsc_handler;
+#endif
+    struct pkg_conn *fbsc_pkg;
+    struct fbserv_obj *fbsc_fbsp;       /**< @brief points to its fbserv object */
+};
+
+
+struct fbserv_obj {
+    fb *fbs_fbp;                        /**< @brief framebuffer pointer */
+    Tcl_Interp *fbs_interp;             /**< @brief tcl interpreter */
+    struct fbserv_listener fbs_listener;                /**< @brief data for listening */
+    struct fbserv_client fbs_clients[MAX_CLIENTS];      /**< @brief connected clients */
+    void (*fbs_callback)(void *clientData);             /**< @brief callback function */
+    void *fbs_clientData;
+    int fbs_mode;                       /**< @brief 0-off, 1-underlay, 2-interlay, 3-overlay */
+};
+
+FB_EXPORT extern int fbs_open(struct fbserv_obj *fbsp, int port);
+FB_EXPORT extern int fbs_close(struct fbserv_obj *fbsp);
+
 
 
 __END_DECLS

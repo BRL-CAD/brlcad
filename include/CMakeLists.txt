@@ -28,7 +28,6 @@ set(public_hdrs
   brlcad.i
   dm.h
   fb.h
-  fbserv_obj.h
   fft.h
   gcv.h
   icv.h
@@ -58,7 +57,6 @@ set(noinst_HEADERS
   bnetwork.h
   brlcad_ident.h
   brlcad_version.h
-  fbmsg.h
   )
 CMAKEFILES(${noinst_HEADERS})
 

@@ -58,7 +58,6 @@
 #include "pkg.h"
 #include "fb_private.h"
 #include "fb.h"
-#include "fbmsg.h"
 
 
 #define NET_LONG_LEN 4	/* # bytes to network long */
