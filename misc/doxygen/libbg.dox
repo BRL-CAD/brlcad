@@ -1,5 +1,5 @@
 /* Top level library group */
-/** @defgroup libbg libbg (geometric algorithms) */
+/** @defgroup libbg libbg (Geometric Algorithms) */
 
 /* Second tier groups */
  /** @ingroup libbg */

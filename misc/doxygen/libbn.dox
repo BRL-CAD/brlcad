@@ -1,6 +1,6 @@
 
 /* Top level library group */
-/** @defgroup libbn libbn (numerical functions) */
+/** @defgroup libbn libbn (Numerical Functions) */
 
 /* Second tier groups */
  /** @ingroup libbn */

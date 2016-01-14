@@ -1,6 +1,6 @@
 
 /* Top level library group */
-/** @defgroup libbu libbu (utility functions) */
+/** @defgroup libbu libbu (Utility Functions) */
 
 /* Second tier groups */
 /** @ingroup libbu */

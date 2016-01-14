@@ -1,5 +1,5 @@
 /* Top level library group */
-/** @defgroup librt librt (geometry, raytracing) */
+/** @defgroup librt librt (Geometry I/O, Raytracing) */
 
 /* Second tier groups */
 
