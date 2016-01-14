@@ -88,9 +88,9 @@ static const struct gcv_filter _gcv_filter_brlcad_write =
 
 
 HIDDEN void
-_gcv_filter_register(struct bu_ptbl *table, const struct gcv_filter *filter)
+_gcv_filter_register(struct bu_ptbl *filter_table, const struct gcv_filter *filter)
 {
-    if (!table || !filter)
+    if (!filter_table || !filter)
 	bu_bomb("missing argument");
 
     if (!filter->name)
@@ -121,7 +121,7 @@ _gcv_filter_register(struct bu_ptbl *table, const struct gcv_filter *filter)
     if (!filter->filter_fn)
 	bu_bomb("null filter_fn");
 
-    if (bu_ptbl_ins_unique(table, (long *)filter) != -1)
+    if (bu_ptbl_ins_unique(filter_table, (long *)filter) != -1)
 	bu_bomb("filter already registered");
 }
 
@@ -235,6 +235,85 @@ _gcv_context_check(const struct gcv_context *context)
 }
 
 
+HIDDEN void
+_gcv_plugins_load(struct bu_ptbl *filter_table, const char *path)
+{
+    const struct gcv_plugin *plugin_info;
+    const struct gcv_filter * const *current;
+    void *dl_handle;
+
+    if (!(dl_handle = bu_dlopen(path, BU_RTLD_NOW))) {
+	bu_log("bu_dlopen() failed for '%s': '%s'\n", path, bu_dlerror());
+	bu_bomb("bu_dlopen() failed");
+    }
+
+    plugin_info = (struct gcv_plugin *)bu_dlsym(dl_handle, "gcv_plugin_info");
+
+    if (!plugin_info) {
+	bu_log("bu_dlsym() failed for '%s': '%s'\n", path, bu_dlerror());
+	bu_bomb("could not find 'gcv_plugin_info' symbol in plugin");
+    }
+
+    if (!plugin_info->filters) {
+	bu_log("invalid gcv_plugin in '%s'\n", path);
+	bu_bomb("invalid gcv_plugin");
+    }
+
+    for (current = plugin_info->filters; *current; ++current)
+	_gcv_filter_register(filter_table, *current);
+}
+
+
+HIDDEN const char *
+_gcv_plugins_get_path(void)
+{
+    const char * const plugins_dir = "libgcv_plugins";
+    const char *brlcad_libs_path;
+    struct bu_vls buffer;
+    const char *result;
+
+    brlcad_libs_path = bu_brlcad_dir("lib", 0);
+
+    if (!brlcad_libs_path)
+	return NULL;
+
+    bu_vls_init(&buffer);
+    bu_vls_sprintf(&buffer, "%s%c%s", brlcad_libs_path, BU_DIR_SEPARATOR, plugins_dir);
+    result = bu_brlcad_root(bu_vls_addr(&buffer), 0);
+    bu_vls_free(&buffer);
+
+    return result;
+}
+
+
+HIDDEN void
+_gcv_plugins_load_all(struct bu_ptbl *filter_table)
+{
+    const char * const plugins_path = _gcv_plugins_get_path();
+
+    if (!plugins_path) {
+	bu_log("could not find LibGCV plugins directory\n");
+	return;
+    }
+
+    {
+	char **filenames;
+	size_t i;
+	struct bu_vls buffer = BU_VLS_INIT_ZERO;
+	const size_t num_filenames = bu_dir_list(plugins_path, NULL, &filenames);
+
+	for (i = 0; i < num_filenames; ++i)
+	    if (!bu_file_directory(filenames[i])) {
+		bu_vls_sprintf(&buffer, "%s%c%s", plugins_path, BU_DIR_SEPARATOR, filenames[i]);
+		_gcv_plugins_load(filter_table, bu_vls_addr(&buffer));
+	    }
+
+	bu_vls_free(&buffer);
+	bu_free_argv(num_filenames, filenames);
+    }
+}
+
+
 void
 gcv_context_init(struct gcv_context *context)
 {
@@ -262,24 +341,7 @@ gcv_list_filters(void)
 	_gcv_filter_register(&filter_table, &_gcv_filter_brlcad_read);
 	_gcv_filter_register(&filter_table, &_gcv_filter_brlcad_write);
 
-#define REGISTER_FILTER(name) \
-	do { \
-	    extern const struct gcv_filter (name); \
-	    _gcv_filter_register(&filter_table, &(name)); \
-	} while (0)
-
-	REGISTER_FILTER(gcv_filter_decimate);
-
-	REGISTER_FILTER(gcv_conv_fastgen4_read);
-	REGISTER_FILTER(gcv_conv_fastgen4_write);
-	REGISTER_FILTER(gcv_conv_obj_read);
-	REGISTER_FILTER(gcv_conv_obj_write);
-	REGISTER_FILTER(gcv_conv_stl_read);
-	REGISTER_FILTER(gcv_conv_stl_write);
-	REGISTER_FILTER(gcv_conv_vrml_read);
-	REGISTER_FILTER(gcv_conv_vrml_write);
-
-#undef REGISTER_FILTER
+	_gcv_plugins_load_all(&filter_table);
     }
 
     return &filter_table;

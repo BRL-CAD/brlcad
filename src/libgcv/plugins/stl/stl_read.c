@@ -615,10 +615,15 @@ stl_read(struct gcv_context *context, const struct gcv_opts *gcv_options, const 
 }
 
 
-const struct gcv_filter gcv_conv_stl_read = {
+static const struct gcv_filter gcv_conv_stl_read = {
     "STL Reader", GCV_FILTER_READ, MIME_MODEL_STL,
     stl_read_create_opts, stl_read_free_opts, stl_read
 };
+
+
+extern const struct gcv_filter gcv_conv_stl_write;
+static const struct gcv_filter *filters[] = {&gcv_conv_stl_read, &gcv_conv_stl_write, NULL};
+const struct gcv_plugin gcv_plugin_info = {filters};
 
 
 /*

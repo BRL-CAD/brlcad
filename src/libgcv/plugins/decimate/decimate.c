@@ -94,8 +94,11 @@ decimate_filter(struct gcv_context *context, const struct gcv_opts *gcv_options,
 }
 
 
-const struct gcv_filter gcv_filter_decimate =
+static const struct gcv_filter gcv_filter_decimate =
 {"Decimate", GCV_FILTER_FILTER, MIME_MODEL_UNKNOWN, NULL, NULL, decimate_filter};
+
+static const struct gcv_filter *filters[] = {&gcv_filter_decimate, NULL};
+const struct gcv_plugin gcv_plugin_info = {filters};
 
 
 /*

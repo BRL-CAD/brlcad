@@ -10,5 +10,4 @@ include_directories(
     )
 
 
-BRLCAD_ADDLIB(gcv_obj "obj_read.c;obj_write.c" "libwfobj;librt;libwdb;libbu;" STATIC NO_INSTALL)
-set_property(TARGET gcv_obj-static PROPERTY POSITION_INDEPENDENT_CODE ON)
+LIBGCV_ADD_PLUGIN(obj "obj_read.c;obj_write.c" "libwfobj")

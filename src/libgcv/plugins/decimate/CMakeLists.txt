@@ -6,5 +6,4 @@ include_directories(
     )
 
 
-BRLCAD_ADDLIB(gcv_decimate "decimate.c" "libbu;librt" STATIC NO_INSTALL)
-set_property(TARGET gcv_decimate-static PROPERTY POSITION_INDEPENDENT_CODE ON)
+LIBGCV_ADD_PLUGIN(decimate "decimate.c" "")

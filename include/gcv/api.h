@@ -171,6 +171,11 @@ struct gcv_filter {
 };
 
 
+struct gcv_plugin {
+    const struct gcv_filter * const * const filters;
+};
+
+
 /*
  * Return a pointer to a bu_ptbl listing all registered filters as
  * const struct gcv_filter pointers.
