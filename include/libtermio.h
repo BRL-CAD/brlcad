@@ -17,13 +17,14 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @addtogroup libtermio */
-/** @{ */
-/** @file libtermio.h
+/** @addtogroup libtermio
  *
+ * @brief
  * Externs for the BRL-CAD library LIBTERMIO
  *
  */
+/** @{ */
+/** @file libtermio.h */
 
 #ifndef LIBTERMIO_H
 #define LIBTERMIO_H
