@@ -287,6 +287,8 @@ now no longer a part of BRL-CAD.
 
 7.26.0
 ------
+conf.h
+	removed - replaced with common.h [deprecated 7.0]
 libbu, libbn
         no longer utilize or require Tcl [7.26 architecture change]
 include/dg.h

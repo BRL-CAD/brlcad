@@ -58,7 +58,6 @@ set(noinst_HEADERS
   bnetwork.h
   brlcad_ident.h
   brlcad_version.h
-  conf.h
   fbmsg.h
   )
 CMAKEFILES(${noinst_HEADERS})
