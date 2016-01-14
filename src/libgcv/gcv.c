@@ -269,7 +269,6 @@ gcv_list_filters(void)
 	} while (0)
 
 	REGISTER_FILTER(gcv_filter_decimate);
-	REGISTER_FILTER(gcv_filter_tessellate);
 
 	REGISTER_FILTER(gcv_conv_fastgen4_read);
 	REGISTER_FILTER(gcv_conv_fastgen4_write);
