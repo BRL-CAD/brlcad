@@ -17,11 +17,13 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file analyze.h
+/** @addtogroup libanalyze
  *
  * Functions provided by the LIBANALYZE geometry analysis library.
  *
  */
+/** @{ */
+/** @file analyze.h */
 
 #ifndef ANALYZE_H
 #define ANALYZE_H
@@ -176,6 +178,8 @@ analyze_find_subtracted(struct bu_ptbl *results, struct rt_wdb *wdbp,
 __END_DECLS
 
 #endif /* ANALYZE_H */
+
+/** @} */
 
 /*
  * Local Variables:

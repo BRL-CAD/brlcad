@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file ged.h
+/** @addtogroup libged
  *
  * Functions provided by the LIBGED geometry editing library.  These
  * routines are a procedural basis for the geometric editing
@@ -25,6 +25,8 @@
  * to the LIBRT library for geometric representation and analysis.
  *
  */
+/** @{ */
+/** @file ged.h */
 
 #ifndef GED_H
 #define GED_H
@@ -1986,6 +1988,8 @@ GED_EXPORT int wdb_importFg4Section_cmd(void *data, int argc, const char *argv[]
 __END_DECLS
 
 #endif /* GED_H */
+
+/** @} */
 
 /*
  * Local Variables:
