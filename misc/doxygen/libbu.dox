@@ -32,9 +32,9 @@
      @brief Cross platform API for parallel processing, handling issues like threads and semaphores.
  */
 /** @ingroup libbu */
-/**  @defgroup bu_binding Language Bindings */
-/**  @addtogroup bu_binding
-     @brief Language bindings.
+/**  @defgroup bu_env  Environment Management */
+/**  @addtogroup bu_env
+     @brief Cross platform API for interacting with the operating system environment.
  */
 /** @ingroup libbu */
 /**  @defgroup bu_version Version */
@@ -114,10 +114,6 @@
 /**   @defgroup bu_thread Multithreading */
 /** @ingroup bu_parallel */
 /**   @defgroup bu_simd Single Instruction Multiple Data*/
-
-/* Language Bindings */
-/** @ingroup bu_binding */
-/**   @defgroup bu_tcl Tcl Interfacing */
 
 /*
  * Local Variables:

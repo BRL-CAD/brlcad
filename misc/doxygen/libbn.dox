@@ -40,9 +40,9 @@
  /** @ingroup libbn */
  /**  @defgroup bn_poly Polynomials */
  /** @ingroup libbn */
- /**  @defgroup bn_tcl libbn Tcl interface */
- /** @ingroup libbn */
  /**  @defgroup bn_sphmap Spherical Maps */
+ /** @ingroup libbn */
+ /**  @defgroup bn_str Encode/Decode Numerical Data to/from Strings */
  /** @ingroup libbn */
  /**  @defgroup bn_tabdata Tabulated Data */
  /** @ingroup libbn */
