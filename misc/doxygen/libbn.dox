@@ -4,7 +4,7 @@
 
 /* Second tier groups */
  /** @ingroup libbn */
-/**   @defgroup bn_defines libbn Definitions*/
+ /**  @defgroup bn_defines Definitions*/
  /** @ingroup libbn */
  /**  @defgroup bn_anim Animation */
  /** @ingroup libbn */

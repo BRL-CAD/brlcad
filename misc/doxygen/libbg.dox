@@ -3,7 +3,7 @@
 
 /* Second tier groups */
  /** @ingroup libbg */
-/**   @defgroup bg_defines libbg Definitions*/
+/**   @defgroup bg_defines Definitions*/
  /** @ingroup libbg */
  /**  @defgroup tri Triangles */
 /**   @ingroup tri */

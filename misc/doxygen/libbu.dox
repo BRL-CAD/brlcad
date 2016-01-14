@@ -4,7 +4,7 @@
 
 /* Second tier groups */
 /** @ingroup libbu */
-/**  @defgroup bu_defines libbu Definitions*/
+/**  @defgroup bu_defines Definitions*/
 
 /** @ingroup libbu */
 /**  @defgroup bu_container Data Containers */
