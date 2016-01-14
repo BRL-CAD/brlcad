@@ -66,6 +66,9 @@ INPUT += ${CMAKE_SOURCE_DIR}/include/${sublibname}.h
     set(INPUTS "${INPUTS}
 INPUT += ${CMAKE_SOURCE_DIR}/include/raytrace.h
     ")
+  set(INPUTS "${INPUTS}
+INPUT += ${CMAKE_SOURCE_DIR}/include/nmg.h
+    ")
   endif("${libname}" STREQUAL "librt")
 
   # libmultispectral header doesn't fit the template
@@ -109,6 +112,9 @@ INPUT += ${CMAKE_SOURCE_DIR}/include/${sublibname}.h
   if("${libname}" STREQUAL "librt")
     set(lib_inputs "${lib_inputs}
 INPUT += ${CMAKE_SOURCE_DIR}/include/raytrace.h
+    ")
+    set(lib_inputs "${lib_inputs}
+INPUT += ${CMAKE_SOURCE_DIR}/include/nmg.h
     ")
   endif("${libname}" STREQUAL "librt")
 
