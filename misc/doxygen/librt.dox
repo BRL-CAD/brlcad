@@ -30,6 +30,9 @@
      @brief Support for N-Manifold Geometry */
  */
 
+/** @ingroup librt */
+/**  @defgroup rt_timer Timer*/
+
 
 /* Third tier groups */
 
