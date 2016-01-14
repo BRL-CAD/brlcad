@@ -33,14 +33,15 @@
 #ifndef NMG_H
 #define NMG_H
 
+
 #include "common.h"
 
 /* interface headers */
 #include "bu/list.h"
-#include "bu/log.h"
 #include "bu/magic.h"
 #include "bu/ptbl.h"
 #include "vmath.h"
+
 
 #define DEBUG_PL_ANIM   0x00000001	/**< @brief 1 mged: animated evaluation */
 #define DEBUG_PL_SLOW   0x00000002	/**< @brief 2 mged: add delays to animation */
@@ -513,18 +514,6 @@ struct vertexuse_a_cnurb {
     long index;			/**< @brief struct # in this model */
 };
 
-/**
- * storage allocation support
- * OBSOLETE
- */
-#define NMG_GETSTRUCT(p, str) BU_GET(p, struct str)
-
-/**
- * storage de-allocation support
- * OBSOLETE
- */
-#define NMG_FREESTRUCT(ptr, str) BU_PUT(ptr, struct str)
-
 
 /*
  * Macros to create and destroy storage for the NMG data structures.
@@ -537,52 +526,52 @@ struct vertexuse_a_cnurb {
 	NMG_CK_MODEL(_m); (_p)->index = ((_m)->maxindex)++
 
 
-#define GET_MODEL(p, m)             {NMG_GETSTRUCT(p, model); NMG_INCR_INDEX(p, m);}
-#define GET_REGION(p, m)            {NMG_GETSTRUCT(p, nmgregion); NMG_INCR_INDEX(p, m);}
-#define GET_REGION_A(p, m)          {NMG_GETSTRUCT(p, nmgregion_a); NMG_INCR_INDEX(p, m);}
-#define GET_SHELL(p, m)             {NMG_GETSTRUCT(p, shell); NMG_INCR_INDEX(p, m);}
-#define GET_SHELL_A(p, m)           {NMG_GETSTRUCT(p, shell_a); NMG_INCR_INDEX(p, m);}
-#define GET_FACE(p, m)              {NMG_GETSTRUCT(p, face); NMG_INCR_INDEX(p, m);}
-#define GET_FACE_G_PLANE(p, m)      {NMG_GETSTRUCT(p, face_g_plane); NMG_INCR_INDEX(p, m);}
-#define GET_FACE_G_SNURB(p, m)      {NMG_GETSTRUCT(p, face_g_snurb); NMG_INCR_INDEX(p, m);}
-#define GET_FACEUSE(p, m)           {NMG_GETSTRUCT(p, faceuse); NMG_INCR_INDEX(p, m);}
-#define GET_LOOP(p, m)              {NMG_GETSTRUCT(p, loop); NMG_INCR_INDEX(p, m);}
-#define GET_LOOP_G(p, m)            {NMG_GETSTRUCT(p, loop_g); NMG_INCR_INDEX(p, m);}
-#define GET_LOOPUSE(p, m)           {NMG_GETSTRUCT(p, loopuse); NMG_INCR_INDEX(p, m);}
-#define GET_LOOPUSE_A(p, m)         {NMG_GETSTRUCT(p, loopuse_a); NMG_INCR_INDEX(p, m);}
-#define GET_EDGE(p, m)              {NMG_GETSTRUCT(p, edge); NMG_INCR_INDEX(p, m);}
-#define GET_EDGE_G_LSEG(p, m)       {NMG_GETSTRUCT(p, edge_g_lseg); NMG_INCR_INDEX(p, m);}
-#define GET_EDGE_G_CNURB(p, m)      {NMG_GETSTRUCT(p, edge_g_cnurb); NMG_INCR_INDEX(p, m);}
-#define GET_EDGEUSE(p, m)           {NMG_GETSTRUCT(p, edgeuse); NMG_INCR_INDEX(p, m);}
-#define GET_VERTEX(p, m)            {NMG_GETSTRUCT(p, vertex); NMG_INCR_INDEX(p, m);}
-#define GET_VERTEX_G(p, m)          {NMG_GETSTRUCT(p, vertex_g); NMG_INCR_INDEX(p, m);}
-#define GET_VERTEXUSE(p, m)         {NMG_GETSTRUCT(p, vertexuse); NMG_INCR_INDEX(p, m);}
-#define GET_VERTEXUSE_A_PLANE(p, m) {NMG_GETSTRUCT(p, vertexuse_a_plane); NMG_INCR_INDEX(p, m);}
-#define GET_VERTEXUSE_A_CNURB(p, m) {NMG_GETSTRUCT(p, vertexuse_a_cnurb); NMG_INCR_INDEX(p, m);}
+#define GET_MODEL(p, m)             {BU_GET(p, struct model); NMG_INCR_INDEX(p, m);}
+#define GET_REGION(p, m)            {BU_GET(p, struct nmgregion); NMG_INCR_INDEX(p, m);}
+#define GET_REGION_A(p, m)          {BU_GET(p, struct nmgregion_a); NMG_INCR_INDEX(p, m);}
+#define GET_SHELL(p, m)             {BU_GET(p, struct shell); NMG_INCR_INDEX(p, m);}
+#define GET_SHELL_A(p, m)           {BU_GET(p, struct shell_a); NMG_INCR_INDEX(p, m);}
+#define GET_FACE(p, m)              {BU_GET(p, struct face); NMG_INCR_INDEX(p, m);}
+#define GET_FACE_G_PLANE(p, m)      {BU_GET(p, struct face_g_plane); NMG_INCR_INDEX(p, m);}
+#define GET_FACE_G_SNURB(p, m)      {BU_GET(p, struct face_g_snurb); NMG_INCR_INDEX(p, m);}
+#define GET_FACEUSE(p, m)           {BU_GET(p, struct faceuse); NMG_INCR_INDEX(p, m);}
+#define GET_LOOP(p, m)              {BU_GET(p, struct loop); NMG_INCR_INDEX(p, m);}
+#define GET_LOOP_G(p, m)            {BU_GET(p, struct loop_g); NMG_INCR_INDEX(p, m);}
+#define GET_LOOPUSE(p, m)           {BU_GET(p, struct loopuse); NMG_INCR_INDEX(p, m);}
+#define GET_LOOPUSE_A(p, m)         {BU_GET(p, struct loopuse_a); NMG_INCR_INDEX(p, m);}
+#define GET_EDGE(p, m)              {BU_GET(p, struct edge); NMG_INCR_INDEX(p, m);}
+#define GET_EDGE_G_LSEG(p, m)       {BU_GET(p, struct edge_g_lseg); NMG_INCR_INDEX(p, m);}
+#define GET_EDGE_G_CNURB(p, m)      {BU_GET(p, struct edge_g_cnurb); NMG_INCR_INDEX(p, m);}
+#define GET_EDGEUSE(p, m)           {BU_GET(p, struct edgeuse); NMG_INCR_INDEX(p, m);}
+#define GET_VERTEX(p, m)            {BU_GET(p, struct vertex); NMG_INCR_INDEX(p, m);}
+#define GET_VERTEX_G(p, m)          {BU_GET(p, struct vertex_g); NMG_INCR_INDEX(p, m);}
+#define GET_VERTEXUSE(p, m)         {BU_GET(p, struct vertexuse); NMG_INCR_INDEX(p, m);}
+#define GET_VERTEXUSE_A_PLANE(p, m) {BU_GET(p, struct vertexuse_a_plane); NMG_INCR_INDEX(p, m);}
+#define GET_VERTEXUSE_A_CNURB(p, m) {BU_GET(p, struct vertexuse_a_cnurb); NMG_INCR_INDEX(p, m);}
 
 
-#define FREE_MODEL(p)             NMG_FREESTRUCT(p, model)
-#define FREE_REGION(p)            NMG_FREESTRUCT(p, nmgregion)
-#define FREE_REGION_A(p)          NMG_FREESTRUCT(p, nmgregion_a)
-#define FREE_SHELL(p)             NMG_FREESTRUCT(p, shell)
-#define FREE_SHELL_A(p)           NMG_FREESTRUCT(p, shell_a)
-#define FREE_FACE(p)              NMG_FREESTRUCT(p, face)
-#define FREE_FACE_G_PLANE(p)      NMG_FREESTRUCT(p, face_g_plane)
-#define FREE_FACE_G_SNURB(p)      NMG_FREESTRUCT(p, face_g_snurb)
-#define FREE_FACEUSE(p)           NMG_FREESTRUCT(p, faceuse)
-#define FREE_LOOP(p)              NMG_FREESTRUCT(p, loop)
-#define FREE_LOOP_G(p)            NMG_FREESTRUCT(p, loop_g)
-#define FREE_LOOPUSE(p)           NMG_FREESTRUCT(p, loopuse)
-#define FREE_LOOPUSE_A(p)         NMG_FREESTRUCT(p, loopuse_a)
-#define FREE_EDGE(p)              NMG_FREESTRUCT(p, edge)
-#define FREE_EDGE_G_LSEG(p)       NMG_FREESTRUCT(p, edge_g_lseg)
-#define FREE_EDGE_G_CNURB(p)      NMG_FREESTRUCT(p, edge_g_cnurb)
-#define FREE_EDGEUSE(p)           NMG_FREESTRUCT(p, edgeuse)
-#define FREE_VERTEX(p)            NMG_FREESTRUCT(p, vertex)
-#define FREE_VERTEX_G(p)          NMG_FREESTRUCT(p, vertex_g)
-#define FREE_VERTEXUSE(p)         NMG_FREESTRUCT(p, vertexuse)
-#define FREE_VERTEXUSE_A_PLANE(p) NMG_FREESTRUCT(p, vertexuse_a_plane)
-#define FREE_VERTEXUSE_A_CNURB(p) NMG_FREESTRUCT(p, vertexuse_a_cnurb)
+#define FREE_MODEL(p)             BU_PUT(p, struct model)
+#define FREE_REGION(p)            BU_PUT(p, struct nmgregion)
+#define FREE_REGION_A(p)          BU_PUT(p, struct nmgregion_a)
+#define FREE_SHELL(p)             BU_PUT(p, struct shell)
+#define FREE_SHELL_A(p)           BU_PUT(p, struct shell_a)
+#define FREE_FACE(p)              BU_PUT(p, struct face)
+#define FREE_FACE_G_PLANE(p)      BU_PUT(p, struct face_g_plane)
+#define FREE_FACE_G_SNURB(p)      BU_PUT(p, struct face_g_snurb)
+#define FREE_FACEUSE(p)           BU_PUT(p, struct faceuse)
+#define FREE_LOOP(p)              BU_PUT(p, struct loop)
+#define FREE_LOOP_G(p)            BU_PUT(p, struct loop_g)
+#define FREE_LOOPUSE(p)           BU_PUT(p, struct loopuse)
+#define FREE_LOOPUSE_A(p)         BU_PUT(p, struct loopuse_a)
+#define FREE_EDGE(p)              BU_PUT(p, struct edge)
+#define FREE_EDGE_G_LSEG(p)       BU_PUT(p, struct edge_g_lseg)
+#define FREE_EDGE_G_CNURB(p)      BU_PUT(p, struct edge_g_cnurb)
+#define FREE_EDGEUSE(p)           BU_PUT(p, struct edgeuse)
+#define FREE_VERTEX(p)            BU_PUT(p, struct vertex)
+#define FREE_VERTEX_G(p)          BU_PUT(p, struct vertex_g)
+#define FREE_VERTEXUSE(p)         BU_PUT(p, struct vertexuse)
+#define FREE_VERTEXUSE_A_PLANE(p) BU_PUT(p, struct vertexuse_a_plane)
+#define FREE_VERTEXUSE_A_CNURB(p) BU_PUT(p, struct vertexuse_a_cnurb)
 
 
 /**
@@ -778,6 +767,10 @@ struct nmg_visit_handlers {
     void (*vis_vertex)(uint32_t *, void *, int);
     void (*vis_vertex_g)(uint32_t *, void *, int);
 };
+
+
+extern int nmg_debug;
+
 
 #endif /* NMG_H */
 
