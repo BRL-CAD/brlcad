@@ -33,6 +33,7 @@
 struct tessellate_data {
     struct gcv_context *context;
     const struct gcv_opts *gcv_options;
+    int success;
 };
 
 
@@ -41,7 +42,7 @@ write_nmg_region(struct nmgregion *nmg_region, const struct db_full_path *path,
 		 int UNUSED(region_id), int UNUSED(material_id), float *UNUSED(color),
 		 void *client_data)
 {
-    const struct tessellate_data * const data = (struct tessellate_data *)client_data;
+    struct tessellate_data * const data = (struct tessellate_data *)client_data;
 
     struct shell *current_shell;
 
@@ -62,7 +63,8 @@ write_nmg_region(struct nmgregion *nmg_region, const struct db_full_path *path,
 	internal.idb_ptr = nmg_bot(current_shell, &data->gcv_options->calculational_tolerance);
 
 	if (rt_db_put_internal(DB_FULL_PATH_CUR_DIR(path), data->context->dbip, &internal, &rt_uniresource)) {
-	    db_pr_full_path("rt_db_put_internal() failed", path);
+	    db_pr_full_path("rt_db_put_internal() failed: ", path);
+	    data->success = 0;
 	    rt_db_free_internal(&internal);
 	}
     }
@@ -81,6 +83,7 @@ tessellate_filter(struct gcv_context *context, const struct gcv_opts *gcv_option
 
     data.context = context;
     data.gcv_options = gcv_options;
+    data.success = 1;
     gcv_data.write_region = write_nmg_region;
     gcv_data.client_data = (void *)&data;
 
@@ -90,18 +93,18 @@ tessellate_filter(struct gcv_context *context, const struct gcv_opts *gcv_option
     initial_tree_state.ts_m = &nmg_model;
 
     nmg_model = nmg_mm();
-    ret = db_walk_tree( context->dbip, (int)gcv_options->num_objects,
+    ret = db_walk_tree(context->dbip, (int)gcv_options->num_objects,
 	    (const char **)gcv_options->object_names, 1,
 	    &initial_tree_state, NULL,
 	    gcv_region_end, nmg_booltree_leaf_tess, &gcv_data);
     nmg_km(nmg_model);
 
     if (ret) {
-	bu_log("db_walk_tree() failed");
+	bu_log("db_walk_tree() failed\n");
 	return 0;
     }
 
-    return 1;
+    return data.success;
 }
 
 

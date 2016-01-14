@@ -268,6 +268,9 @@ gcv_list_filters(void)
 	    _gcv_filter_register(&filter_table, &(name)); \
 	} while (0)
 
+	REGISTER_FILTER(gcv_filter_decimate);
+	REGISTER_FILTER(gcv_filter_tessellate);
+
 	REGISTER_FILTER(gcv_conv_fastgen4_read);
 	REGISTER_FILTER(gcv_conv_fastgen4_write);
 	REGISTER_FILTER(gcv_conv_obj_read);
@@ -276,8 +279,6 @@ gcv_list_filters(void)
 	REGISTER_FILTER(gcv_conv_stl_write);
 	REGISTER_FILTER(gcv_conv_vrml_read);
 	REGISTER_FILTER(gcv_conv_vrml_write);
-
-	REGISTER_FILTER(gcv_filter_tessellate);
 
 #undef REGISTER_FILTER
     }
@@ -380,10 +381,10 @@ gcv_execute(struct gcv_context *context, const struct gcv_filter *filter,
     } else
 	result = filter->filter_fn(context, gcv_options, options_data, target);
 
-    context->dbip->dbi_read_only = dbi_read_only_orig;
     bu_debug = bu_debug_orig;
     RTG.debug = rt_debug_orig;
     RTG.NMG_debug = nmg_debug_orig;
+    context->dbip->dbi_read_only = dbi_read_only_orig;
 
     _gcv_filter_options_free(filter, options_data);
 
