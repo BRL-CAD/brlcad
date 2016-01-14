@@ -1,3 +1,4 @@
+set(LIBGCV_PLUGINS_DIRECTORY "libgcv_plugins")
 add_subdirectory(plugins)
 
 
@@ -24,6 +25,7 @@ set(LIBGCV_SOURCES
 
 BRLCAD_ADDLIB(libgcv "${LIBGCV_SOURCES}" "librt;libwdb;libbu" SO_SRCS "${GCV_SO_SRCS}" STATIC_SRCS "${GCV_STATIC_SRCS}")
 set_target_properties(libgcv PROPERTIES VERSION 20.0.1 SOVERSION 20)
+set_source_files_properties(gcv.c PROPERTIES COMPILE_DEFINITIONS "LIBGCV_PLUGINS_DIRECTORY=\"${LIBGCV_PLUGINS_DIRECTORY}\"")
 
 
 enable_testing()

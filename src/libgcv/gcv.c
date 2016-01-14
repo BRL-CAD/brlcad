@@ -267,7 +267,6 @@ _gcv_plugins_load(struct bu_ptbl *filter_table, const char *path)
 HIDDEN const char *
 _gcv_plugins_get_path(void)
 {
-    const char * const plugins_dir = "libgcv_plugins";
     const char *brlcad_libs_path;
     struct bu_vls buffer;
     const char *result;
@@ -278,7 +277,7 @@ _gcv_plugins_get_path(void)
 	return NULL;
 
     bu_vls_init(&buffer);
-    bu_vls_sprintf(&buffer, "%s%c%s", brlcad_libs_path, BU_DIR_SEPARATOR, plugins_dir);
+    bu_vls_sprintf(&buffer, "%s%c%s", brlcad_libs_path, BU_DIR_SEPARATOR, LIBGCV_PLUGINS_DIRECTORY);
     result = bu_brlcad_root(bu_vls_addr(&buffer), 0);
     bu_vls_free(&buffer);
 
