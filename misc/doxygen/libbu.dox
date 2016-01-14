@@ -42,6 +42,8 @@
 /**  @defgroup bu_bio System I/O Header Wrangler*/
 /** @ingroup libbu */
 /**  @defgroup bu_bnetwork System Network Header Wrangler*/
+/** @ingroup libbu */
+/**  @defgroup bu_bsocket System Socket Header Wrangler*/
 
 
 /* Data Containers */
