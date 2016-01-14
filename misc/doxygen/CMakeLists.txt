@@ -2,29 +2,34 @@ set(lib_inputs
 "INPUT += ${CMAKE_SOURCE_DIR}/include/common.h"
 )
 set(lib_predefines)
+
+# Note: the ordering of libraries in this list is
+# what controls the ordering in the Modules output
+# from Doxygen
 set(DOX_LIBS
   common
   libbu
   libbn
   libbg
   libbrep
-  librt
+  libfft
+  libicv
+  libpc
   libwdb
-  libpkg
-  libfb
+  librt
+  liboptical
+  libmultispectral
   libgcv
   libanalyze
   libged
-  liboptical
-  libcursor
+  libfb
   libdm
-  libfft
-  libicv
-  libmultispectral
-  libpc
   libtclcad
+  libpkg
   libtermio
+  libcursor
   )
+
 foreach(libname ${DOX_LIBS})
   set(doxlibname ${libname})
   string(REPLACE "lib" "" sublibname ${libname})
