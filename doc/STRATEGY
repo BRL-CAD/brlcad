@@ -32,7 +32,7 @@ strategic activities, and aims to coordinate development activity.
 *** restructure of file hierarchy
 *** continuous integration
 
-** 3 Marketing
+** 3 Communications
 *** website (C) -cjns
 *** doc integration, website (C) -cjns
 *** new content (audience / customer profiles), website (C)
@@ -40,7 +40,7 @@ strategic activities, and aims to coordinate development activity.
 *** CRM / IRC (UC)
 *** leverage existing capability
 
-** 4 Purposing
+** 4 Marketability
 *** performance (interactive ray tracing / opencl) (U) -cjns
 *** fulfilling specific user needs (e.g., killing overlaps) (UC)
 *** dispel FUD, educate runtime requirements (M)
@@ -53,51 +53,51 @@ strategic activities, and aims to coordinate development activity.
 * Deploying Archer Tasks
 
 ** command cleanup - ALPHA+
-   TODO: inventory + mapping + time
-   TODO: design UI / commands
-   TODO: QA acceptance from users
-   TODO: announce / share / sit with users
+*** TODO inventory + mapping + time
+*** TODO design UI / commands
+*** TODO QA acceptance from users
+*** TODO announce / share / sit with users
    
 ** interactivity / blocking indicators - ALPHA
-   TODO: multithreaded command execution
-   TODO: interface busy indicator
-   TODO: drawing indicator
+*** TODO multithreaded command execution
+*** TODO interface busy indicator
+*** TODO drawing indicator
    
 ** feature parity - ALPHA
-   TODO: review/finish edit keypointing (oed parity)
-   TODO: summaries features
-   TODO: create mapping from old to new
-   TODO: GUI matrix editing
-   TODO: classic console mode
-   TODO: reverse tempfile
-   TODO: query ray control GUI
+*** TODO classic console mode
+*** TODO review/finish edit keypointing (oed parity)
+*** TODO summaries features
+*** TODO create mapping from old to new
+*** TODO GUI matrix editing
+*** TODO reverse tempfile
+*** TODO query ray control GUI
    
 ** undo - BETA
-   TODO: implement libbu filesystem info
-   TODO: re-enable undo with fs awareness
+*** TODO implement libbu filesystem info
+*** TODO re-enable undo with fs awareness
    
 ** bug reporting / feedback / metrics - BETA
-   TODO: reliable backtrace
-   TODO: hook/enable bombardier
-   TODO: in-app feedback dialog
-   TODO: track metrics (archer commands, tips, docs)
+*** TODO reliable backtrace
+*** TODO hook/enable bombardier
+*** TODO in-app feedback dialog
+*** TODO track metrics (archer commands, tips, docs)
    
 ** QA acceptance - BETA
-   TODO: sit down reviews (discuss scripts)
-   TODO: define acceptance tasks
-   TODO: run regression w/ archer
-   TODO: run with procedural web scripts
+*** TODO run regression w/ archer
+*** TODO sit down reviews (discuss scripts)
+*** TODO define acceptance tasks
+*** TODO run with procedural web scripts
    
 ** announcements + migration plan - BETA+
-   TODO: write + publish strategy map
-   TODO: write + publish migration plan
-   TODO: review + update tutorials (docs)
-   TODO: create + give presentation
-   TODO: install new website (basic version)
-   TODO: discussion with core stakeholders
+*** TODO write + publish strategy map
+*** TODO write + publish migration plan
+*** TODO review + update tutorials (docs)
+*** TODO create + give presentation
+*** TODO install new website (basic version)
+*** TODO discussion with core stakeholders
    
 ** searchable docs - FINAL
-   TODO: command line searching of doc content
-   TODO: apropos reading from docbook
-   TODO: web publishing + searching of docs
+*** TODO command line searching of doc content
+*** TODO apropos reading from docbook
+*** TODO web publishing + searching of docs
 
