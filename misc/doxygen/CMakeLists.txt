@@ -1,6 +1,13 @@
-set(lib_inputs
-"INPUT += ${CMAKE_SOURCE_DIR}/include/common.h"
-)
+set(lib_inputs "INPUT += ${CMAKE_SOURCE_DIR}/include/common.h")
+set(lib_inputs "${lib_inputs}
+INPUT += ${CMAKE_SOURCE_DIR}/misc/doxygen/vmath.dox")
+set(lib_inputs "${lib_inputs}
+INPUT += ${CMAKE_SOURCE_DIR}/include/vmath.h")
+set(lib_inputs "${lib_inputs}
+INPUT += ${CMAKE_SOURCE_DIR}/misc/doxygen/bview.dox")
+set(lib_inputs "${lib_inputs}
+INPUT += ${CMAKE_SOURCE_DIR}/include/dm/bview.h")
+
 set(lib_predefines)
 
 # Note: the ordering of libraries in this list is
@@ -37,8 +44,7 @@ foreach(libname ${DOX_LIBS})
 
   # Build local input list
   set(INPUTS "
-INPUT += ${CMAKE_SOURCE_DIR}/misc/doxygen/${libname}.dox
-INPUT += ${CMAKE_SOURCE_DIR}/include/common.h")
+INPUT += ${CMAKE_SOURCE_DIR}/misc/doxygen/${libname}.dox")
   if(EXISTS ${CMAKE_SOURCE_DIR}/include/${sublibname}/)
     set(INPUTS "${INPUTS}
 INPUT += ${CMAKE_SOURCE_DIR}/include/${sublibname}/")

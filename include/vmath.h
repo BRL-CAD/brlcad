@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @addtogroup mat */
+/** @addtogroup vmath */
 /** @{ */
 /** @file vmath.h
  *
@@ -232,28 +232,28 @@ __BEGIN_DECLS
 #  endif
 #endif
 
-/** @brief # of fastf_t's per vect2d_t */
+/** @brief number of fastf_t's per vect2d_t */
 #define ELEMENTS_PER_VECT2D	2
 
-/** @brief # of fastf_t's per point2d_t */
+/** @brief number of fastf_t's per point2d_t */
 #define ELEMENTS_PER_POINT2D	2
 
-/** @brief # of fastf_t's per vect_t */
+/** @brief number of fastf_t's per vect_t */
 #define ELEMENTS_PER_VECT	3
 
-/** @brief # of fastf_t's per point_t */
+/** @brief number of fastf_t's per point_t */
 #define ELEMENTS_PER_POINT	3
 
-/** @brief # of fastf_t's per hvect_t (homogeneous vector) */
+/** @brief number of fastf_t's per hvect_t (homogeneous vector) */
 #define ELEMENTS_PER_HVECT	4
 
-/** @brief # of fastf_t's per hpt_t (homogeneous point) */
+/** @brief number of fastf_t's per hpt_t (homogeneous point) */
 #define ELEMENTS_PER_HPOINT	4
 
-/** @brief # of fastf_t's per plane_t */
+/** @brief number of fastf_t's per plane_t */
 #define ELEMENTS_PER_PLANE	4
 
-/** @brief # of fastf_t's per mat_t */
+/** @brief number of fastf_t's per mat_t */
 #define ELEMENTS_PER_MAT	(ELEMENTS_PER_PLANE*ELEMENTS_PER_PLANE)
 
 /*

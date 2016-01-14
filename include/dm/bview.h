@@ -17,16 +17,18 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @{ */
-/** @file bview.h
+/** @addtogroup bview
  *
+ * @brief
  * Types and definitions related to display lists, angle distance cursor,
- * and other generic view constructs.  This header is intended to be
- * independent of any one BRL-CAD library and is specifically intended
- * to allow the easy definition of common display list types between
- * otherwise independent libraries (libdm and libged, for example).
+ * and other generic view constructs.
+ *
+ * This header is intended to be independent of any one BRL-CAD library and is
+ * specifically intended to allow the easy definition of common display list
+ * types between otherwise independent libraries (libdm and libged, for
+ * example).
+ *
  */
-
 #ifndef BVIEW_H
 #define BVIEW_H
 
@@ -34,6 +36,9 @@
 #include "bu/list.h"
 #include "bu/vls.h"
 #include "vmath.h"
+
+/** @{ */
+/** @file bview.h */
 
 #ifndef UP
 #  define UP 0
