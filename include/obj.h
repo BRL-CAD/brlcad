@@ -31,7 +31,7 @@
 #include "common.h"
 
 #include "ged.h"
-#include "fbserv_obj.h"
+#include "fb.h"
 
 __BEGIN_DECLS
 
