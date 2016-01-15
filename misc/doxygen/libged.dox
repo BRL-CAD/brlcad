@@ -1,2 +1,8 @@
 /** @defgroup libged libged (Geometry Editing and Commands) */
 
+/* Second tier groups */
+
+/** @ingroup libged */
+/**  @defgroup ged_defines Definitions*/
+
+
