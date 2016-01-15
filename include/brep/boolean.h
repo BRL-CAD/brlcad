@@ -1,4 +1,4 @@
-/*                       B R E P . H
+/*                       B O O L E A N . H
  * BRL-CAD
  *
  * Copyright (c) 2007-2016 United States Government as represented by
@@ -17,50 +17,45 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @addtogroup libbrep
+/** @addtogroup brep_boolean
  * @brief
- * Define surface and curve structures for Non-Uniform Rational
- * B-Spline (NURBS) curves and surfaces. Uses openNURBS library.
+ * Boolean Operations for  Non-Uniform Rational
+ * B-Spline (NURBS) Boundary Representations.
  */
 /** @{ */
-/** @file include/brep.h */
-#ifndef BREP_H
-#define BREP_H
+/** @file brep/boolean.h */
+#ifndef BREP_BOOLEAN_H
+#define BREP_BOOLEAN_H
 
 #include "common.h"
-#include "vmath.h"
+#include "brep/defines.h"
 
 #ifdef __cplusplus
+
 extern "C++" {
-#include <vector>
-#include <list>
-#include <iostream>
-#include <queue>
-#include <assert.h>
 
-#include "bu/ptbl.h"
-#include "bn/dvec.h"
-#include <iostream>
-#include <fstream>
-}
+    enum op_type {
+	BOOLEAN_UNION = 0,
+	BOOLEAN_INTERSECT = 1,
+	BOOLEAN_DIFF = 2,
+	BOOLEAN_XOR = 3
+    };
+
+    /**
+     * Evaluate NURBS boolean operations.
+     *
+     * @param brepO [out]
+     * @param brepA [in]
+     * @param brepB [in]
+     * @param operation [in]
+     */
+    extern BREP_EXPORT int
+	ON_Boolean(ON_Brep *brepO, const ON_Brep *brepA, const ON_Brep *brepB, op_type operation);
+
+} /* extern C++ */
 #endif
-__BEGIN_DECLS
 
-#include "brep/defines.h"
-#include "brep/util.h"
-#include "brep/ray.h"
-#include "brep/brnode.h"
-#include "brep/curvetree.h"
-#include "brep/bbnode.h"
-#include "brep/surfacetree.h"
-#include "brep/pullback.h"
-#include "brep/intersect.h"
-#include "brep/boolean.h"
-#include "brep/csg.h"
-
-__END_DECLS
-
-#endif  /* BREP_H */
+#endif  /* BREP_BOOLEAN_H */
 /** @} */
 /*
  * Local Variables:

@@ -50,6 +50,49 @@ extern "C++" {
     extern BREP_EXPORT ON_NurbsCurve *
 	interpolateLocalCubicCurve(const ON_3dPointArray &Q);
 
+
+    extern BREP_EXPORT void
+	ON_MinMaxInit(ON_3dPoint *min, ON_3dPoint *max);
+
+    extern BREP_EXPORT int
+	ON_Curve_PolyLine_Approx(ON_Polyline *polyline, const ON_Curve *curve, double tol);
+
+
+    /* Experimental function to generate Tikz plotting information
+     * from B-Rep objects.  This may or may not be something we
+     * expose as a feature long term - probably should be a more
+     * generic API that supports multiple formats... */
+    extern BREP_EXPORT int
+	ON_BrepTikz(ON_String &s, const ON_Brep *brep, const char *color, const char *prefix);
+
+    /**
+     * Get the curve segment between param a and param b
+     *
+     * @param in [in] the curve to split
+     * @param a  [in] either a or b can be the larger one
+     * @param b  [in] either a or b can be the larger one
+     *
+     * @return the result curve segment. NULL for error.
+     */
+    extern BREP_EXPORT ON_Curve *
+	sub_curve(const ON_Curve *in, double a, double b);
+
+    /**
+     * Get the sub-surface whose u in [a,b] or v in [a, b]
+     *
+     * @param in [in] the surface to split
+     * @param dir [in] 0: u-split, 1: v-split
+     * @param a [in] either a or b can be the larger one
+     * @param b [in] either a or b can be the larger one
+     *
+     * @return the result sub-surface. NULL for error.
+     */
+    extern BREP_EXPORT ON_Surface *
+	sub_surface(const ON_Surface *in, int dir, double a, double b);
+
+
+    BREP_EXPORT void set_key(struct bu_vls *key, int k, int *karray);
+
 } /* extern C++ */
 
 __END_DECLS

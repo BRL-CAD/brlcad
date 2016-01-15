@@ -1,7 +1,9 @@
 set(brep_headers
   defines.h
   bbnode.h
+  boolean.h
   brnode.h
+  csg.h
   curvetree.h
   intersect.h
   pullback.h

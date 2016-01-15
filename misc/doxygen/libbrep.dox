@@ -19,4 +19,8 @@
  /**  @defgroup brep_pullback Find Parametric Surface Coordinates of 3D Point */
  /** @ingroup libbbrep */
  /**  @defgroup brep_intersect Curve and Surface Intersection Routines */
+ /** @ingroup libbbrep */
+ /**  @defgroup brep_boolean Boolean Operations On B-Reps */
+ /** @ingroup libbbrep */
+ /**  @defgroup brep_csg CSG Hierarchy Reconstruction from B-Reps */
 
