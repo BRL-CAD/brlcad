@@ -22,13 +22,14 @@
  * Intersection routines for Non-Uniform Rational
  * B-Spline (NURBS) curves and surfaces.
  */
-/** @{ */
-/** @file brep/intersect.h */
 #ifndef BREP_INTERSECT_H
 #define BREP_INTERSECT_H
 
 #include "common.h"
 #include "brep/defines.h"
+
+/** @{ */
+/** @file brep/intersect.h */
 
 #ifdef __cplusplus
 

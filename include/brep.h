@@ -30,20 +30,6 @@
 #include "common.h"
 #include "vmath.h"
 
-#ifdef __cplusplus
-extern "C++" {
-#include <vector>
-#include <list>
-#include <iostream>
-#include <queue>
-#include <assert.h>
-
-#include "bu/ptbl.h"
-#include "bn/dvec.h"
-#include <iostream>
-#include <fstream>
-}
-#endif
 __BEGIN_DECLS
 
 #include "brep/defines.h"

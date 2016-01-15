@@ -24,14 +24,15 @@
  * point pullback.
  *
  */
-/** @{ */
-/** @file brep/pullback.h */
 
 #ifndef BREP_PULLBACK_H
 #define BREP_PULLBACK_H
 
 #include "common.h"
 #include "brep/defines.h"
+
+/** @{ */
+/** @file brep/pullback.h */
 
 #ifdef __cplusplus
 

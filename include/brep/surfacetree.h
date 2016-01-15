@@ -24,20 +24,22 @@
  * Curve Tree.
  *
  */
-/** @{ */
-/** @file brep/surfacetree.h */
-
 #ifndef BREP_SURFACETREE_H
 #define BREP_SURFACETREE_H
 
 #include "common.h"
 #ifdef __cplusplus
+extern "C++" {
 #include <list>
 #include <queue>
+}
 #endif
 #include "brep/defines.h"
 #include "brep/curvetree.h"
 #include "brep/bbnode.h"
+
+/** @{ */
+/** @file brep/surfacetree.h */
 
 #ifdef __cplusplus
 

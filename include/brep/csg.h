@@ -22,13 +22,15 @@
  * Reconstruct CSG Implicit Boolean Hierarchies from Non-Uniform Rational
  * B-Spline (NURBS) Boundary Representations.
  */
-/** @{ */
-/** @file brep/csg.h */
 #ifndef BREP_CSG_H
 #define BREP_CSG_H
 
 #include "common.h"
+#include "bu/ptbl.h"
 #include "brep/defines.h"
+
+/** @{ */
+/** @file brep/csg.h */
 
 #ifdef __cplusplus
 

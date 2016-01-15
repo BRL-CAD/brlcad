@@ -25,9 +25,6 @@
  * data types.
  *
  */
-/** @{ */
-/** @file brep/ray.h */
-
 #ifndef BREP_RAY_H
 #define BREP_RAY_H
 
@@ -36,7 +33,12 @@
 
 #ifdef __cplusplus
 
+#include "bn/dvec.h"
+
 extern "C++" {
+
+/** @{ */
+/** @file brep/ray.h */
 
 __BEGIN_DECLS
 

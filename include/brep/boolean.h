@@ -22,13 +22,14 @@
  * Boolean Operations for  Non-Uniform Rational
  * B-Spline (NURBS) Boundary Representations.
  */
-/** @{ */
-/** @file brep/boolean.h */
 #ifndef BREP_BOOLEAN_H
 #define BREP_BOOLEAN_H
 
 #include "common.h"
 #include "brep/defines.h"
+
+/** @{ */
+/** @file brep/boolean.h */
 
 #ifdef __cplusplus
 

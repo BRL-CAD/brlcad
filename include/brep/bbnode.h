@@ -24,9 +24,6 @@
  * Bounding Box Hierarchy Node.
  *
  */
-/** @{ */
-/** @file brep/bbnode.h */
-
 #ifndef BREP_BBNODE_H
 #define BREP_BBNODE_H
 
@@ -36,6 +33,9 @@
 #include "brep/brnode.h"
 #include "brep/curvetree.h"
 #include "brep/util.h"
+
+/** @{ */
+/** @file brep/bbnode.h */
 
 #ifdef __cplusplus
 extern "C++" {

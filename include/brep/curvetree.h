@@ -24,15 +24,15 @@
  * Curve Tree.
  *
  */
-/** @{ */
-/** @file brep/curvetree.h */
-
 #ifndef BREP_CURVETREE_H
 #define BREP_CURVETREE_H
 
 #include "common.h"
 #include "brep/defines.h"
 #include "brep/brnode.h"
+
+/** @{ */
+/** @file brep/curvetree.h */
 
 #ifdef __cplusplus
 

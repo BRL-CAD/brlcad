@@ -28,6 +28,7 @@
 
 #include "common.h"
 #include <cassert>
+#include <fstream>
 
 #include "RegionList.h"
 

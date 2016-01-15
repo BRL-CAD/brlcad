@@ -24,9 +24,6 @@
  * These are definitions specific to libbrep, used throughout the library.
  *
  */
-/** @{ */
-/** @file brep/defines.h */
-
 #ifndef BREP_DEFINES_H
 #define BREP_DEFINES_H
 
@@ -39,6 +36,9 @@ extern "C++" {
 #include "opennurbs.h"
 }
 #endif
+
+/** @{ */
+/** @file brep/defines.h */
 
 #ifndef BREP_EXPORT
 #  if defined(BREP_DLL_EXPORTS) && defined(BREP_DLL_IMPORTS)

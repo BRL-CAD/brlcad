@@ -24,14 +24,20 @@
  * Bounding Rectangle Hierarchy Node.
  *
  */
-/** @{ */
-/** @file brep/brnode.h */
-
 #ifndef BREP_BRNODE_H
 #define BREP_BRNODE_H
 
 #include "common.h"
+#ifdef __cplusplus
+extern "C++" {
+#include <vector>
+#include <list>
+}
+#endif
 #include "brep/defines.h"
+
+/** @{ */
+/** @file brep/brnode.h */
 
 #ifdef __cplusplus
 

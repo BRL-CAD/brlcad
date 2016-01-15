@@ -24,14 +24,14 @@
  * These are utility routines for libbrep, used throughout the library.
  *
  */
-/** @{ */
-/** @file brep/util.h */
-
 #ifndef BREP_UTIL_H
 #define BREP_UTIL_H
 
 #include "common.h"
 #include "brep/defines.h"
+
+/** @{ */
+/** @file brep/util.h */
 
 #ifdef __cplusplus
 

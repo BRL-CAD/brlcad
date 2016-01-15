@@ -31,6 +31,7 @@
 /* system headers */
 #include <cctype>
 #include <iomanip>
+#include <fstream>
 #include <limits>
 #include <map>
 #include <set>

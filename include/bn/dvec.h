@@ -17,10 +17,6 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file dvec.h
- *
- *
- */
 
 #ifndef DVEC_H
 #define DVEC_H
@@ -34,6 +30,10 @@
 
 /* Needed for VUNITIZE_TOL and NEAR_ZERO */
 #include "vmath.h"
+
+/** @addtogroup bn_vectormath */
+/** @{ */
+/** @file bn/dvec.h */
 
 extern "C++" {
 #include <iostream>
