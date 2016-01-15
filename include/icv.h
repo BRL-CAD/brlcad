@@ -126,19 +126,6 @@ typedef struct icv_image icv_image_t;
  */
 
 /**
- * Finds the Image format based on heuristics depending on the file
- * name.
- *
- * @todo - can we deprecated this in favor of the two functions below?
- *
- * @param filename Filename of the image whose format is to be  know
- * @param trimmedname Buffer for storing filename after removing
- * extensions
- * @return File Format
- */
-ICV_EXPORT extern mime_image_t icv_guess_file_format(const char *filename, char *trimmedname);
-
-/**
  * This function allocates memory for an image and returns the
  * resultant image.
  *

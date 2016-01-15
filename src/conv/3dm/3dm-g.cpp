@@ -384,8 +384,14 @@ extract_bitmap(const std::string &dir_path, const std::string &filename,
 static void
 load_pix(const std::string &path, std::size_t width, std::size_t height)
 {
-    char buf[BUFSIZ]; // libicv currently requires BUFSIZ
-    mime_image_t format = icv_guess_file_format(path.c_str(), buf);
+    struct bu_vls c = BU_VLS_INIT_ZERO;
+    mime_image_t format = MIME_IMAGE_UNKNOWN;
+
+    if (bu_path_component(&c, path.c_str(), (path_component_t)MIME_IMAGE)) {
+	format = (mime_image_t)bu_file_mime_int(bu_vls_addr(&c));
+    }
+    bu_vls_free(&c);
+
     AutoPtr<icv_image_t, int, icv_destroy> image(icv_read(path.c_str(), format,
 	    width, height));
 
