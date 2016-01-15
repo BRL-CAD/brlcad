@@ -267,7 +267,7 @@ _gcv_plugins_load(struct bu_ptbl *filter_table, const char *path)
 	if (error_msg)
 	    bu_log("%s\n", error_msg);
 
-	bu_log("bu_dlsym() failed for '%s'\n");
+	bu_log("bu_dlsym() failed for '%s'\n", path);
 	bu_bomb("could not find 'gcv_plugin_info' symbol in plugin");
     }
 
