@@ -622,7 +622,7 @@ static const struct gcv_filter gcv_conv_stl_read = {
 
 
 extern const struct gcv_filter gcv_conv_stl_write;
-static const struct gcv_filter *filters[] = {&gcv_conv_stl_read, &gcv_conv_stl_write, NULL};
+static const struct gcv_filter * const filters[] = {&gcv_conv_stl_read, &gcv_conv_stl_write, NULL};
 const struct gcv_plugin gcv_plugin_info = {filters};
 
 

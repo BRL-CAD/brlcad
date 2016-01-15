@@ -1,7 +1,3 @@
-set(LIBGCV_PLUGINS_DIRECTORY "libgcv_plugins")
-add_subdirectory(plugins)
-
-
 # Include directories needed by libgcv users
 set(GCV_INCLUDE_DIRS
   ${BRLCAD_BINARY_DIR}/include
@@ -10,6 +6,10 @@ set(GCV_INCLUDE_DIRS
   ${RT_INCLUDE_DIRS}
   )
 BRLCAD_LIB_INCLUDE_DIRS(gcv GCV_INCLUDE_DIRS "")
+
+
+set(LIBGCV_PLUGINS_DIRECTORY "libgcv_plugins")
+add_subdirectory(plugins)
 
 
 set(LIBGCV_SOURCES
