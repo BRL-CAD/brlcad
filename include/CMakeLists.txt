@@ -1,6 +1,7 @@
 add_subdirectory(bu)
 add_subdirectory(bn)
 add_subdirectory(bg)
+add_subdirectory(brep)
 add_subdirectory(dm)
 add_subdirectory(gcv)
 add_subdirectory(optical)

@@ -1,2 +1,18 @@
 /** @defgroup libbrep libbrep (NURBS B-Reps) */
 
+/* Second tier groups */
+ /** @ingroup libbbrep */
+ /**  @defgroup brep_defines Definitions */
+ /** @ingroup libbbrep */
+ /**  @defgroup brep_util BRep Utility Routines*/
+ /** @ingroup libbbrep */
+ /**  @defgroup on_rays OpenNURBS Ray Routines */
+ /** @ingroup libbbrep */
+ /**  @defgroup brep_brnode Bounding Rectangle Hierarchy Node*/
+ /** @ingroup libbbrep */
+ /**  @defgroup brep_curvetree Curve Tree - Hierarchy of Bounding Rectangle Nodes*/
+ /** @ingroup libbbrep */
+ /**  @defgroup brep_bbnode Bounding Box Hierarchy Node*/
+ /** @ingroup libbbrep */
+ /**  @defgroup brep_surfacetree Surface Tree - Hierarchy of Bounding Box Nodes*/
+
