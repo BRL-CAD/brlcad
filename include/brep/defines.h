@@ -133,6 +133,18 @@ typedef struct _on_brep_placeholder {
 /* #define TRACE1(s) std::cerr << s << std::endl; */
 /* #define TRACE2(s) std::cerr << s << std::endl; */
 
+#ifdef __cplusplus
+extern "C++" {
+struct BrepTrimPoint
+{
+    ON_2dPoint p2d; /* 2d surface parameter space point */
+    ON_3dPoint *p3d; /* 3d edge/trim point depending on whether we're using the 3d edge to generate points or the trims */
+    double t;     /* corresponding trim curve parameter (ON_UNSET_VALUE if unknown or not pulled back) */
+    double e;     /* corresponding edge curve parameter (ON_UNSET_VALUE if using trim not edge) */
+};}
+#endif
+
+
 
 /** @} */
 

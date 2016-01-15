@@ -15,4 +15,8 @@
  /**  @defgroup brep_bbnode Bounding Box Hierarchy Node*/
  /** @ingroup libbbrep */
  /**  @defgroup brep_surfacetree Surface Tree - Hierarchy of Bounding Box Nodes*/
+ /** @ingroup libbbrep */
+ /**  @defgroup brep_pullback Find Parametric Surface Coordinates of 3D Point */
+ /** @ingroup libbbrep */
+ /**  @defgroup brep_intersect Curve and Surface Intersection Routines */
 

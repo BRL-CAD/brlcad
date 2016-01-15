@@ -3,6 +3,8 @@ set(brep_headers
   bbnode.h
   brnode.h
   curvetree.h
+  intersect.h
+  pullback.h
   ray.h
   surfacetree.h
   util.h
