@@ -12,6 +12,8 @@ INPUT += ${CMAKE_SOURCE_DIR}/include/bio.h")
 set(lib_inputs "${lib_inputs}
 INPUT += ${CMAKE_SOURCE_DIR}/include/bnetwork.h")
 set(lib_inputs "${lib_inputs}
+INPUT += ${CMAKE_SOURCE_DIR}/include/bresource.h")
+set(lib_inputs "${lib_inputs}
 INPUT += ${CMAKE_SOURCE_DIR}/include/bsocket.h")
 
 set(lib_predefines)
