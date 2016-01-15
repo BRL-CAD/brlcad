@@ -28,7 +28,7 @@
 
 __BEGIN_DECLS
 
-/** @addtogroup librt
+/** @addtogroup rt_tol
  *
  * @brief
  * librt specific tolerance information.
