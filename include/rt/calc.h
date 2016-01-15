@@ -146,7 +146,7 @@ RT_EXPORT extern void rt_plot_all_solids(FILE           *fp,
 
 
 /* pr.c */
-/* TODO - do these belong in libbn? */
+/* @todo - do these belong in libbn? */
 RT_EXPORT extern void rt_pr_fallback_angle(struct bu_vls *str,
                                            const char *prefix,
                                            const double angles[5]);
@@ -158,7 +158,7 @@ RT_EXPORT extern void rt_pr_tol(const struct bn_tol *tol);
 /**
  * Find the roots of a polynomial
  *
- * TODO - should this be moved to libbn?
+ * @todo - should this be moved to libbn?
  *
  * WARNING: The polynomial given as input is destroyed by this
  * routine.  The caller must save it if it is important!

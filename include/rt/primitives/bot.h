@@ -137,7 +137,7 @@ RT_EXPORT extern struct rt_bot_internal * rt_bot_merge(size_t num_bots, const st
 
 
 /* defined in bot.c */
-/* TODO - these global variables need to be rolled in to the rt_i structure */
+/* @todo - these global variables need to be rolled in to the rt_i structure */
 RT_EXPORT extern size_t rt_bot_minpieces;
 RT_EXPORT extern size_t rt_bot_tri_per_piece;
 RT_EXPORT extern int rt_bot_sort_faces(struct rt_bot_internal *bot,

@@ -553,7 +553,7 @@ struct rt_eto_internal {
 struct rt_dsp_internal{
     uint32_t magic;
 #define dsp_file dsp_name 	/**< @brief for backwards compatibility */
-    struct bu_vls dsp_name;	/**< TODO: make this a pointer, name of data file */
+    struct bu_vls dsp_name;	/**< @todo: make this a pointer, name of data file */
 
     /* NOTE: dsp_xcnt/dsp_ycnt cannot be size_t until rel8 as they are
      * written out to disk via bu_vls_struct_print() as 32-bit ints.
@@ -975,7 +975,7 @@ struct rt_annotation_internal
  *
  * This characterization is derived from ASME Y14.5M
  *
- * TODO:
+ * @todo:
  * - edsol needs to do more than move the first datum
  * - tedit is untested
  * - wdb needs to support more than one datum

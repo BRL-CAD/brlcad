@@ -295,7 +295,7 @@ BU_EXPORT extern int bu_glob(const char *, int, bu_glob_t *);
 BU_EXPORT extern void bu_globfree(bu_glob_t *);
 /** @} */
 
-/* Possible TODO - add a bu_fs_glob for portable filesystem globbing (a closer
+/* Possible @todo - add a bu_fs_glob for portable filesystem globbing (a closer
  * analogy to the actual system glob) if there is enough need for cross
  * platform filesystem globbing to warrant it - the primary use case for this
  * right now is the .g database */

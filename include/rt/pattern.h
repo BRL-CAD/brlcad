@@ -184,19 +184,19 @@ typedef enum {
  *
  *   RT_PATTERN_ELLIPSE_PERSPGRID:
  *   -----------------------------
- *      TODO
+ *      @todo
  *
  *   RT_PATTERN_CIRC_LAYERS:
  *   -----------------------------
- *      TODO
+ *      @todo
  *
  *   RT_PATTERN_SPH_LAYERS:
  *   -----------------------------
- *      TODO
+ *      @todo
  *
  *   RT_PATTERN_SPH_QRAND:
  *   -----------------------------
- *      TODO - maybe start here?  http://mathworld.wolfram.com/SpherePointPicking.html
+ *      @todo - maybe start here?  http://mathworld.wolfram.com/SpherePointPicking.html
  *
  * return negative on error (data will be unmodified in error condition)
  *        ray count on success (>=0)

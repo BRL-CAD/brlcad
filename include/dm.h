@@ -209,7 +209,7 @@
  * functions is called, the dm_hook_data container is passed
  * in as the data slot in that call.
  *
- * TODO - need example
+ * @todo - need example
  *
  */
 struct dm_hook_data {
@@ -322,7 +322,7 @@ DM_EXPORT extern const char *dm_version(void);
 
 DM_EXPORT extern dm *dm_get();
 DM_EXPORT extern void dm_put(dm *dmp);
-DM_EXPORT extern void dm_set_null(dm *dmp); /* TODO - HACK, need general set mechanism */
+DM_EXPORT extern void dm_set_null(dm *dmp); /* @todo - HACK, need general set mechanism */
 DM_EXPORT extern const char *dm_get_dm_name(dm *dmp);
 DM_EXPORT extern const char *dm_get_dm_lname(dm *dmp);
 DM_EXPORT extern int dm_get_width(dm *dmp);
@@ -401,7 +401,7 @@ DM_EXPORT extern fb *dm_get_fb(dm *dmp);
 DM_EXPORT extern int dm_get_fb_visible(dm *dmp);
 DM_EXPORT extern int dm_set_fb_visible(dm *dmp, int is_fb_visible);
 
-/* TODO - dm_vp is supposed to go away, but until we figure it out
+/* @todo - dm_vp is supposed to go away, but until we figure it out
  * expose it here to allow dm hiding */
 DM_EXPORT extern fastf_t *dm_get_vp(dm *dmp);
 DM_EXPORT extern void dm_set_vp(dm *dmp, fastf_t *vp);

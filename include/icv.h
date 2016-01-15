@@ -129,7 +129,7 @@ typedef struct icv_image icv_image_t;
  * Finds the Image format based on heuristics depending on the file
  * name.
  *
- * TODO - can we deprecated this in favor of the two functions below?
+ * @todo - can we deprecated this in favor of the two functions below?
  *
  * @param filename Filename of the image whose format is to be  know
  * @param trimmedname Buffer for storing filename after removing

@@ -155,7 +155,7 @@
 /* Used to set globals declared in bot.c */
 #define RT_DEFAULT_MINPIECES            32
 #define RT_DEFAULT_TRIS_PER_PIECE       4
-#define RT_DEFAULT_MINTIE               0       /* TODO: find the best value */
+#define RT_DEFAULT_MINTIE               0       /* @todo: find the best value */
 
 
 /* Normally set when in production mode, setting the RT_G_DEBUG define

@@ -82,7 +82,7 @@ typedef struct bu_color bu_color_t;
 /**
  * Function to generate random color
  *
- * TODO - multiple possibilities here - truly random color,
+ * @todo - multiple possibilities here - truly random color,
  * or "constrained" random aka the BRLCADWrapper:getRandomColor
  * function.  Need a function that provides flexibility.  Possible
  * calling syntax:

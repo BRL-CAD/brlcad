@@ -347,7 +347,7 @@ struct ged {
 
     struct solid                *freesolid;  /* For now this is a struct solid, but longer term that may not always be true */
 
-    /* TODO: add support for returning an array of objects, not just a
+    /* @todo: add support for returning an array of objects, not just a
      * simple string.
      *
      * the calling application needs to be able to distinguish the

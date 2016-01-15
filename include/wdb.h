@@ -729,7 +729,7 @@ WDB_EXPORT extern double mk_conv2mm;		/**< @brief Conversion factor to mm */
 WDB_EXPORT extern int mk_version;		/**< @brief  Which version database to write */
 
 /**
- * TODO - document this...
+ * @todo - document this...
  */
 WDB_EXPORT void mk_freemembers( struct bu_list *headp );
 

@@ -32,7 +32,7 @@
  *
  */
 
-/* TODO - put together a dot file mapping the relationships between
+/* @todo - put together a dot file mapping the relationships between
  * high level rt structures and include it in the doxygen comments
  * with the \dotfile command:
  * http://www.stack.nl/~dimitri/doxygen/manual/commands.html#cmddotfile*/

@@ -678,7 +678,7 @@ typedef uint_least32_t uint_fast32_t;
 # elif defined (__i386__) || defined (_WIN32) || defined (WIN32)
 #  define stdint_intptr_bits 32
 # elif defined (__INTEL_COMPILER)
-/* TODO -- what did Intel do about x86-64? */
+/* @todo -- what did Intel do about x86-64? */
 # endif
 
 # ifdef stdint_intptr_bits
@@ -715,7 +715,7 @@ typedef uint_least32_t uint_fast32_t;
      typedef stdint_intptr_glue3( int,stdint_intptr_bits,_t)  intptr_t;
 #  endif
 # else
-/* TODO -- This following is likely wrong for some platforms, and does
+/* @todo -- This following is likely wrong for some platforms, and does
    nothing for the definition of uintptr_t. */
   typedef ptrdiff_t intptr_t;
 # endif

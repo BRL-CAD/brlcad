@@ -217,7 +217,7 @@ BU_EXPORT extern int bu_opt_parse(struct bu_vls *msgs, int ac, const char **argv
 /** Output format options for bu_opt documentation generation */
 typedef enum {
     BU_OPT_ASCII,
-    BU_OPT_DOCBOOK /* TODO */
+    BU_OPT_DOCBOOK /* @todo */
 } bu_opt_format_t;
 
 /**
@@ -234,7 +234,7 @@ typedef enum {
  * specifies how wide the description column is.
  */
 
-/* TODO - support actually using the struct... */
+/* @todo - support actually using the struct... */
 struct bu_opt_desc_opts {
     bu_opt_format_t format;
     int offset;

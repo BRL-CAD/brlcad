@@ -1352,7 +1352,7 @@ typedef fastf_t plane_t[ELEMENTS_PER_PLANE];
 #define V2CROSS(a, b) ((a)[X] * (b)[Y] - (a)[Y] * (b)[X])
 
 /**
- * TODO: implement me
+ * @todo: implement me
  */
 #define HCROSS(a, b, c)
 

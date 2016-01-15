@@ -126,7 +126,7 @@ BU_EXPORT extern int bu_file_delete(const char *path);
 
 #if 0
 /**
- * TODO - currently unimplemented
+ * @todo - currently unimplemented
  *
  * matches a filepath pattern to directory entries.  if non-NULL,
  * matching paths are dynamically allocated, stored into the provided
@@ -239,7 +239,7 @@ BU_EXPORT extern size_t bu_dir_list(const char *path, const char *pattern, char 
 BU_EXPORT extern char * bu_realpath(const char *path, char *resolved_path);
 
 /**
- * TODO - is this bu_realpath?
+ * @todo - is this bu_realpath?
  *
  * Call canonicalization routines to both expand and validate
  * a path name.
