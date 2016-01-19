@@ -36,10 +36,10 @@
 #include "dm/bview.h"
 #include "raytrace.h"
 #include "rt/solid.h"
-#include "fb.h"
 #include "ged/defines.h"
 #include "ged/database.h"
 #include "ged/objects.h"
+#include "ged/framebuffer.h"
 
 
 __BEGIN_DECLS
@@ -66,25 +66,6 @@ __BEGIN_DECLS
 	return (_flags); \
     }
 
-#define GED_CHECK_FBSERV(_gedp, _flags) \
-    if (_gedp->ged_fbsp == FBSERV_OBJ_NULL) { \
-	int ged_check_view_quiet = (_flags) & GED_QUIET; \
-	if (!ged_check_view_quiet) { \
-	    bu_vls_trunc((_gedp)->ged_result_str, 0); \
-	    bu_vls_printf((_gedp)->ged_result_str, "A framebuffer server object does not exist."); \
-	} \
-	return (_flags); \
-    }
-
-#define GED_CHECK_FBSERV_FBP(_gedp, _flags) \
-    if (_gedp->ged_fbsp->fbs_fbp == FB_NULL) { \
-	int ged_check_view_quiet = (_flags) & GED_QUIET; \
-	if (!ged_check_view_quiet) { \
-	    bu_vls_trunc((_gedp)->ged_result_str, 0); \
-	    bu_vls_printf((_gedp)->ged_result_str, "A framebuffer IO structure does not exist."); \
-	} \
-	return (_flags); \
-    }
 
 
 
@@ -93,23 +74,6 @@ GED_EXPORT extern void ged_calc_adc_pos(struct bview *gvp);
 GED_EXPORT extern void ged_calc_adc_a1(struct bview *gvp);
 GED_EXPORT extern void ged_calc_adc_a2(struct bview *gvp);
 GED_EXPORT extern void ged_calc_adc_dst(struct bview *gvp);
-
-/* defined in clip.c */
-GED_EXPORT extern int ged_clip(fastf_t *xp1,
-			       fastf_t *yp1,
-			       fastf_t *xp2,
-			       fastf_t *yp2);
-GED_EXPORT extern int ged_vclip(vect_t a,
-				vect_t b,
-				fastf_t *min,
-				fastf_t *max);
-
-/* defined in copy.c */
-GED_EXPORT extern int ged_dbcopy(struct ged *from_gedp,
-				 struct ged *to_gedp,
-				 const char *from,
-				 const char *to,
-				 int fflag);
 
 /* defined in display_list.c */
 GED_EXPORT void dl_set_iflag(struct bu_list *hdlp, int iflag);
@@ -135,21 +99,11 @@ GED_EXPORT extern void dl_polybinout(struct bu_list *hdlp, struct polygon_header
 
 GED_EXPORT extern int invent_solid(struct bu_list *hdlp, struct db_i *dbip, void (*callback_create)(struct solid *), void (*callback_free)(unsigned int, int), char *name, struct bu_list *vhead, long int rgb, int copy, fastf_t transparency, int dmode, struct solid *freesolid, int csoltab);
 
-
 /* defined in ged.c */
-
 GED_EXPORT extern void ged_view_init(struct bview *gvp);
 
 /* defined in grid.c */
 GED_EXPORT extern void ged_snap_to_grid(struct ged *gedp, fastf_t *vx, fastf_t *vy);
-
-/* defined in inside.c */
-GED_EXPORT extern int ged_inside_internal(struct ged *gedp,
-					  struct rt_db_internal *ip,
-					  int argc,
-					  const char *argv[],
-					  int arg,
-					  char *o_name);
 
 
 /* Defined in vutil.c */
@@ -169,22 +123,9 @@ GED_EXPORT extern void ged_view_update(struct bview *gvp);
 
 
 /**
- * Creates an arb8 given the following:
- *   1)   3 points of one face
- *   2)   coord x, y or z and 2 coordinates of the 4th point in that face
- *   3)   thickness
- */
-GED_EXPORT extern int ged_3ptarb(struct ged *gedp, int argc, const char *argv[]);
-
-/**
  * Angle distance cursor.
  */
 GED_EXPORT extern int ged_adc(struct ged *gedp, int argc, const char *argv[]);
-
-/**
- * Creates an arb8 given rotation and fallback angles
- */
-GED_EXPORT extern int ged_arb(struct ged *gedp, int argc, const char *argv[]);
 
 /**
  * Convert az/el to a direction vector.
@@ -195,6 +136,109 @@ GED_EXPORT extern int ged_ae2dir(struct ged *gedp, int argc, const char *argv[])
  * Get or set the azimuth, elevation and twist.
  */
 GED_EXPORT extern int ged_aet(struct ged *gedp, int argc, const char *argv[]);
+
+/**
+ * Rotate angle degrees about the specified axis
+ */
+GED_EXPORT extern int ged_arot_args(struct ged *gedp, int argc, const char *argv[], mat_t rmat);
+GED_EXPORT extern int ged_arot(struct ged *gedp, int argc, const char *argv[]);
+
+/**
+ * Auto-adjust the view so that all displayed geometry is in view
+ */
+GED_EXPORT extern int ged_autoview(struct ged *gedp, int argc, const char *argv[]);
+
+/**
+ * Erase all currently displayed geometry and draw the specified object(s)
+ */
+GED_EXPORT extern int ged_blast(struct ged *gedp, int argc, const char *argv[]);
+
+/**
+ * Get or set the view center.
+ */
+GED_EXPORT extern int ged_center(struct ged *gedp, int argc, const char *argv[]);
+
+/**
+ * Convert a direction vector to az/el.
+ */
+GED_EXPORT extern int ged_dir2ae(struct ged *gedp, int argc, const char *argv[]);
+
+/**
+ * Prepare object(s) for display
+ */
+GED_EXPORT extern int ged_draw(struct ged *gedp, int argc, const char *argv[]);
+
+/**
+ * Prepare object(s) for display
+ */
+GED_EXPORT extern int ged_E(struct ged *gedp, int argc, const char *argv[]);
+
+/**
+ * Prepare all regions with the given air code(s) for display
+ */
+GED_EXPORT extern int ged_eac(struct ged *gedp, int argc, const char *argv[]);
+
+/**
+ * Erase objects from the display.
+ */
+GED_EXPORT extern int ged_erase(struct ged *gedp, int argc, const char *argv[]);
+
+/**
+ * Set/get the eye point
+ */
+GED_EXPORT extern int ged_eye(struct ged *gedp, int argc, const char *argv[]);
+
+/**
+ * Set/get the eye position
+ */
+GED_EXPORT extern int ged_eye_pos(struct ged *gedp, int argc, const char *argv[]);
+
+
+
+
+
+
+
+
+/* defined in clip.c */
+GED_EXPORT extern int ged_clip(fastf_t *xp1,
+			       fastf_t *yp1,
+			       fastf_t *xp2,
+			       fastf_t *yp2);
+GED_EXPORT extern int ged_vclip(vect_t a,
+				vect_t b,
+				fastf_t *min,
+				fastf_t *max);
+
+/* defined in copy.c */
+GED_EXPORT extern int ged_dbcopy(struct ged *from_gedp,
+				 struct ged *to_gedp,
+				 const char *from,
+				 const char *to,
+				 int fflag);
+
+
+/* defined in inside.c */
+GED_EXPORT extern int ged_inside_internal(struct ged *gedp,
+					  struct rt_db_internal *ip,
+					  int argc,
+					  const char *argv[],
+					  int arg,
+					  char *o_name);
+
+
+/**
+ * Creates an arb8 given the following:
+ *   1)   3 points of one face
+ *   2)   coord x, y or z and 2 coordinates of the 4th point in that face
+ *   3)   thickness
+ */
+GED_EXPORT extern int ged_3ptarb(struct ged *gedp, int argc, const char *argv[]);
+
+/**
+ * Creates an arb8 given rotation and fallback angles
+ */
+GED_EXPORT extern int ged_arb(struct ged *gedp, int argc, const char *argv[]);
 
 /**
  * Creates an annotation.
@@ -210,17 +254,6 @@ GED_EXPORT extern int ged_append_pipept(struct ged *gedp, int argc, const char *
  * Allow editing of the matrix, etc., along an arc.
  */
 GED_EXPORT extern int ged_arced(struct ged *gedp, int argc, const char *argv[]);
-
-/**
- * Rotate angle degrees about the specified axis
- */
-GED_EXPORT extern int ged_arot_args(struct ged *gedp, int argc, const char *argv[], mat_t rmat);
-GED_EXPORT extern int ged_arot(struct ged *gedp, int argc, const char *argv[]);
-
-/**
- * Auto-adjust the view so that all displayed geometry is in view
- */
-GED_EXPORT extern int ged_autoview(struct ged *gedp, int argc, const char *argv[]);
 
 /**
  * Tessellates each operand object, then performs the
@@ -260,11 +293,6 @@ GED_EXPORT extern int ged_analyze(struct ged *gedp, int argc, const char *argv[]
  */
 GED_EXPORT extern int ged_bb(struct ged *gedp, int argc, const char *argv[]);
 
-
-/**
- * Erase all currently displayed geometry and draw the specified object(s)
- */
-GED_EXPORT extern int ged_blast(struct ged *gedp, int argc, const char *argv[]);
 
 /**
  * Query or manipulate properties of bot
@@ -359,11 +387,6 @@ GED_EXPORT extern int ged_brep(struct ged *gedp, int argc, const char *argv[]);
 GED_EXPORT extern int ged_cc(struct ged *gedp, int argc, const char *argv[]);
 
 /**
- * Get or set the view center.
- */
-GED_EXPORT extern int ged_center(struct ged *gedp, int argc, const char *argv[]);
-
-/**
  * Performs a deep copy of object.
  */
 GED_EXPORT extern int ged_clone(struct ged *gedp, int argc, const char *argv[]);
@@ -430,26 +453,6 @@ GED_EXPORT extern int ged_delay(struct ged *gedp, int argc, const char *argv[]);
 GED_EXPORT extern int ged_delete_pipept(struct ged *gedp, int argc, const char *argv[]);
 
 /**
- * Convert a direction vector to az/el.
- */
-GED_EXPORT extern int ged_dir2ae(struct ged *gedp, int argc, const char *argv[]);
-
-/**
- * Prepare object(s) for display
- */
-GED_EXPORT extern int ged_draw(struct ged *gedp, int argc, const char *argv[]);
-
-/**
- * Prepare object(s) for display
- */
-GED_EXPORT extern int ged_E(struct ged *gedp, int argc, const char *argv[]);
-
-/**
- * Prepare all regions with the given air code(s) for display
- */
-GED_EXPORT extern int ged_eac(struct ged *gedp, int argc, const char *argv[]);
-
-/**
  * Echo the specified arguments.
  */
 GED_EXPORT extern int ged_echo(struct ged *gedp, int argc, const char *argv[]);
@@ -467,24 +470,9 @@ GED_EXPORT extern int ged_edarb(struct ged *gedp, int argc, const char *argv[]);
 GED_EXPORT extern int ged_edmater(struct ged *gedp, int argc, const char *argv[]);
 
 /**
- * Erase objects from the display.
- */
-GED_EXPORT extern int ged_erase(struct ged *gedp, int argc, const char *argv[]);
-
-/**
  * Evaluate objects via NMG tessellation
  */
 GED_EXPORT extern int ged_ev(struct ged *gedp, int argc, const char *argv[]);
-
-/**
- * Set/get the eye point
- */
-GED_EXPORT extern int ged_eye(struct ged *gedp, int argc, const char *argv[]);
-
-/**
- * Set/get the eye position
- */
-GED_EXPORT extern int ged_eye_pos(struct ged *gedp, int argc, const char *argv[]);
 
 /**
  * Globs expression against database objects
@@ -495,16 +483,6 @@ GED_EXPORT extern int ged_expand(struct ged *gedp, int argc, const char *argv[])
  * Facetize the specified objects
  */
 GED_EXPORT extern int ged_facetize(struct ged *gedp, int argc, const char *argv[]);
-
-/**
- * Fb2pix writes a framebuffer image to a .pix file.
- */
-GED_EXPORT extern int ged_fb2pix(struct ged *gedp, int argc, const char *argv[]);
-
-/**
- * Fclear clears a framebuffer.
- */
-GED_EXPORT extern int ged_fbclear(struct ged *gedp, int argc, const char *argv[]);
 
 /**
  * Find the arb edge nearest the specified point in view coordinates.
@@ -849,11 +827,6 @@ GED_EXPORT extern int ged_overlay(struct ged *gedp, int argc, const char *argv[]
  * Set/get the perspective angle.
  */
 GED_EXPORT extern int ged_perspective(struct ged *gedp, int argc, const char *argv[]);
-
-/**
- * Pix2fb reads a pix file into a framebuffer.
- */
-GED_EXPORT extern int ged_pix2fb(struct ged *gedp, int argc, const char *argv[]);
 
 /**
  * Create a unix plot file of the currently displayed objects.
