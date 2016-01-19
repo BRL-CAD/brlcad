@@ -29,6 +29,9 @@
 #define GED_DEFINES_H
 
 #include "common.h"
+#include "bu/hash.h"
+#include "bu/list.h"
+#include "bu/vls.h"
 
 __BEGIN_DECLS
 
@@ -106,6 +109,196 @@ __BEGIN_DECLS
 #define RT_VDRW_PREFIX_LEN      6
 #define RT_VDRW_MAXNAME         31
 #define RT_VDRW_DEF_COLOR       0xffff00
+
+
+struct ged_run_rt {
+    struct bu_list l;
+#if defined(_WIN32) && !defined(__CYGWIN__)
+    HANDLE fd;
+    HANDLE hProcess;
+    DWORD pid;
+
+#  ifdef TCL_OK
+    Tcl_Channel chan;
+#  else
+    void *chan;
+#  endif
+#else
+    int fd;
+    int pid;
+#endif
+    int aborted;
+};
+
+/* FIXME: should be private */
+struct ged_qray_color {
+    unsigned char r;
+    unsigned char g;
+    unsigned char b;
+};
+
+/* FIXME: should be private */
+struct ged_qray_fmt {
+    char type;
+    struct bu_vls fmt;
+};
+
+struct vd_curve {
+    struct bu_list      l;
+    char                vdc_name[RT_VDRW_MAXNAME+1];    /**< @brief name array */
+    long                vdc_rgb;        /**< @brief color */
+    struct bu_list      vdc_vhd;        /**< @brief head of list of vertices */
+};
+#define VD_CURVE_NULL   ((struct vd_curve *)NULL)
+
+/* FIXME: should be private */
+struct ged_drawable {
+    struct bu_list		l;
+    struct bu_list		*gd_headDisplay;		/**< @brief  head of display list */
+    struct bu_list		*gd_headVDraw;		/**< @brief  head of vdraw list */
+    struct vd_curve		*gd_currVHead;		/**< @brief  current vdraw head */
+    struct solid                *gd_freeSolids;         /**< @brief  ptr to head of free solid list */
+
+    char			**gd_rt_cmd;
+    int				gd_rt_cmd_len;
+    struct ged_run_rt		gd_headRunRt;		/**< @brief  head of forked rt processes */
+
+    void			(*gd_rtCmdNotify)(int aborted);	/**< @brief  function called when rt command completes */
+
+    int				gd_uplotOutputMode;	/**< @brief  output mode for unix plots */
+
+    /* qray state */
+    struct bu_vls		gd_qray_basename;	/**< @brief  basename of query ray vlist */
+    struct bu_vls		gd_qray_script;		/**< @brief  query ray script */
+    char			gd_qray_effects;	/**< @brief  t for text, g for graphics or b for both */
+    int				gd_qray_cmd_echo;	/**< @brief  0 - don't echo command, 1 - echo command */
+    struct ged_qray_fmt		*gd_qray_fmts;
+    struct ged_qray_color	gd_qray_odd_color;
+    struct ged_qray_color	gd_qray_even_color;
+    struct ged_qray_color	gd_qray_void_color;
+    struct ged_qray_color	gd_qray_overlap_color;
+    int				gd_shaded_mode;		/**< @brief  1 - draw bots shaded by default */
+};
+
+struct ged_cmd;
+
+/* struct details are private - use accessor functions to manipulate */
+struct ged_results;
+
+struct ged {
+    struct bu_list		l;
+    struct rt_wdb		*ged_wdbp;
+
+    /** for catching log messages */
+    struct bu_vls		*ged_log;
+
+    struct solid                *freesolid;  /* For now this is a struct solid, but longer term that may not always be true */
+
+    /* @todo: add support for returning an array of objects, not just a
+     * simple string.
+     *
+     * the calling application needs to be able to distinguish the
+     * individual object names from the "ls" command without resorting
+     * to quirky string encoding or format-specific quote wrapping.
+     *
+     * want to consider whether we need a json-style dictionary, but
+     * probably a literal null-terminated array will suffice here.
+     */
+    struct bu_vls		*ged_result_str;
+    struct ged_results          *ged_results;
+
+    struct ged_drawable		*ged_gdp;
+    struct bview		*ged_gvp;
+    struct fbserv_obj		*ged_fbsp; /* FIXME: this shouldn't be here */
+    struct bu_hash_tbl		*ged_selections; /**< @brief object name -> struct rt_object_selections */
+
+    void			*ged_dmp;
+    void			*ged_refresh_clientdata;	/**< @brief  client data passed to refresh handler */
+    void			(*ged_refresh_handler)(void *);	/**< @brief  function for handling refresh requests */
+    void			(*ged_output_handler)(struct ged *, char *);	/**< @brief  function for handling output */
+    char			*ged_output_script;		/**< @brief  script for use by the outputHandler */
+    void			(*ged_create_vlist_solid_callback)(struct solid *);	/**< @brief  function to call after creating a vlist to create display list for solid */
+    void			(*ged_create_vlist_callback)(struct display_list *);	/**< @brief  function to call after all vlist created that loops through creating display list for each solid  */
+    void			(*ged_free_vlist_callback)(unsigned int, int);	/**< @brief  function to call after freeing a vlist */
+
+    /* FIXME -- this ugly hack needs to die.  the result string should be stored before the call. */
+    int 			ged_internal_call;
+
+    /* FOR LIBGED INTERNAL USE */
+    struct ged_cmd *cmds;
+    int (*add)(const struct ged_cmd *cmd);
+    int (*del)(const char *name);
+    int (*run)(int ac, char *av[]);
+    void *ged_interp; /* Temporary - do not rely on when designing new functionality */
+
+    /* Interface to LIBDM */
+    int ged_dm_width;
+    int ged_dm_height;
+    int ged_dmp_is_null;
+    void (*ged_dm_get_display_image)(struct ged *, unsigned char **);
+
+};
+
+typedef int (*ged_func_ptr)(struct ged *, int, const char *[]);
+typedef void (*ged_refresh_callback_ptr)(void *);
+typedef void (*ged_create_vlist_solid_callback_ptr)(struct solid *);
+typedef void (*ged_create_vlist_callback_ptr)(struct display_list *);
+typedef void (*ged_free_vlist_callback_ptr)(unsigned int, int);
+
+
+/**
+ * describes a command plugin
+ */
+struct ged_cmd {
+    struct bu_list l;
+
+    const char *name;
+    const char description[80];
+    const char *manpage;
+
+    int (*load)(struct ged *);
+    void (*unload)(struct ged *);
+    int (*exec)(struct ged *, int, const char *[]);
+};
+
+/* accessor functions for ged_results - calling
+ * applications should not work directly with the
+ * internals of ged_results, which are not guaranteed
+ * to stay the same.
+ * defined in ged_util.c */
+GED_EXPORT extern size_t ged_results_count(struct ged_results *results);
+GED_EXPORT extern const char *ged_results_get(struct ged_results *results, size_t index);
+GED_EXPORT extern void ged_results_clear(struct ged_results *results);
+GED_EXPORT extern void ged_results_free(struct ged_results *results);
+
+
+
+GED_EXPORT extern void ged_close(struct ged *gedp);
+GED_EXPORT extern void ged_free(struct ged *gedp);
+GED_EXPORT extern void ged_init(struct ged *gedp);
+/* Call BU_PUT to release returned ged structure */
+GED_EXPORT extern struct ged *ged_open(const char *dbtype,
+				       const char *filename,
+				       int existing_only);
+
+
+/**
+ * make sure there is a command name given
+ *
+ * @todo - where should this go?
+ */
+#define GED_CHECK_ARGC_GT_0(_gedp, _argc, _flags) \
+    if ((_argc) < 1) { \
+	int ged_check_argc_gt_0_quiet = (_flags) & GED_QUIET; \
+	if (!ged_check_argc_gt_0_quiet) { \
+	    bu_vls_trunc((_gedp)->ged_result_str, 0); \
+	    bu_vls_printf((_gedp)->ged_result_str, "Command name not provided on (%s:%d).", __FILE__, __LINE__); \
+	} \
+	return (_flags); \
+    }
+
+
+
 __END_DECLS
 
 #endif /* GED_DEFINES_H */

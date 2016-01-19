@@ -38,34 +38,11 @@
 #include "rt/solid.h"
 #include "fb.h"
 #include "ged/defines.h"
+#include "ged/database.h"
+#include "ged/objects.h"
 
 
 __BEGIN_DECLS
-
-/** Check if the object is a combination */
-#define	GED_CHECK_COMB(_gedp, _dp, _flags) \
-    if (((_dp)->d_flags & RT_DIR_COMB) == 0) { \
-	int ged_check_comb_quiet = (_flags) & GED_QUIET; \
-	if (!ged_check_comb_quiet) { \
-	    bu_vls_printf((_gedp)->ged_result_str, "%s is not a combination", (_dp)->d_namep); \
-	} \
-	return (_flags); \
-    }
-
-/** Check if a database is open */
-#define GED_CHECK_DATABASE_OPEN(_gedp, _flags) \
-    if ((_gedp) == GED_NULL || (_gedp)->ged_wdbp == RT_WDB_NULL || (_gedp)->ged_wdbp->dbip == DBI_NULL) { \
-	int ged_check_database_open_quiet = (_flags) & GED_QUIET; \
-	if (!ged_check_database_open_quiet) { \
-	    if ((_gedp) != GED_NULL) { \
-		bu_vls_trunc((_gedp)->ged_result_str, 0); \
-		bu_vls_printf((_gedp)->ged_result_str, "A database is not open!"); \
-	    } else {\
-		bu_log("A database is not open!\n"); \
-	    } \
-	} \
-	return (_flags); \
-    }
 
 /** Check if a drawable exists */
 #define GED_CHECK_DRAWABLE(_gedp, _flags) \
@@ -109,247 +86,6 @@ __BEGIN_DECLS
 	return (_flags); \
     }
 
-/** Lookup database object */
-#define GED_CHECK_EXISTS(_gedp, _name, _noisy, _flags) \
-    if (db_lookup((_gedp)->ged_wdbp->dbip, (_name), (_noisy)) != RT_DIR_NULL) { \
-	int ged_check_exists_quiet = (_flags) & GED_QUIET; \
-	if (!ged_check_exists_quiet) { \
-	    bu_vls_printf((_gedp)->ged_result_str, "%s already exists.", (_name)); \
-	} \
-	return (_flags); \
-    }
-
-/** Check if the database is read only */
-#define	GED_CHECK_READ_ONLY(_gedp, _flags) \
-    if ((_gedp)->ged_wdbp->dbip->dbi_read_only) { \
-	int ged_check_read_only_quiet = (_flags) & GED_QUIET; \
-	if (!ged_check_read_only_quiet) { \
-	    bu_vls_trunc((_gedp)->ged_result_str, 0); \
-	    bu_vls_printf((_gedp)->ged_result_str, "Sorry, this database is READ-ONLY."); \
-	} \
-	return (_flags); \
-    }
-
-/** Check if the object is a region */
-#define	GED_CHECK_REGION(_gedp, _dp, _flags) \
-    if (((_dp)->d_flags & RT_DIR_REGION) == 0) { \
-	int ged_check_region_quiet = (_flags) & GED_QUIET; \
-	if (!ged_check_region_quiet) { \
-	    bu_vls_printf((_gedp)->ged_result_str, "%s is not a region.", (_dp)->d_namep); \
-	} \
-	return (_flags); \
-    }
-
-/** make sure there is a command name given */
-#define GED_CHECK_ARGC_GT_0(_gedp, _argc, _flags) \
-    if ((_argc) < 1) { \
-	int ged_check_argc_gt_0_quiet = (_flags) & GED_QUIET; \
-	if (!ged_check_argc_gt_0_quiet) { \
-	    bu_vls_trunc((_gedp)->ged_result_str, 0); \
-	    bu_vls_printf((_gedp)->ged_result_str, "Command name not provided on (%s:%d).", __FILE__, __LINE__); \
-	} \
-	return (_flags); \
-    }
-
-/** add a new directory entry to the currently open database */
-#define GED_DB_DIRADD(_gedp, _dp, _name, _laddr, _len, _dirflags, _ptr, _flags) \
-    if (((_dp) = db_diradd((_gedp)->ged_wdbp->dbip, (_name), (_laddr), (_len), (_dirflags), (_ptr))) == RT_DIR_NULL) { \
-	int ged_db_diradd_quiet = (_flags) & GED_QUIET; \
-	if (!ged_db_diradd_quiet) { \
-	    bu_vls_printf((_gedp)->ged_result_str, "Unable to add %s to the database.", (_name)); \
-	} \
-	return (_flags); \
-    }
-
-/** Lookup database object */
-#define GED_DB_LOOKUP(_gedp, _dp, _name, _noisy, _flags) \
-    if (((_dp) = db_lookup((_gedp)->ged_wdbp->dbip, (_name), (_noisy))) == RT_DIR_NULL) { \
-	int ged_db_lookup_quiet = (_flags) & GED_QUIET; \
-	if (!ged_db_lookup_quiet) { \
-	    bu_vls_printf((_gedp)->ged_result_str, "Unable to find %s in the database.", (_name)); \
-	} \
-	return (_flags); \
-    }
-
-/** Get internal representation */
-#define GED_DB_GET_INTERNAL(_gedp, _intern, _dp, _mat, _resource, _flags) \
-    if (rt_db_get_internal((_intern), (_dp), (_gedp)->ged_wdbp->dbip, (_mat), (_resource)) < 0) { \
-	int ged_db_get_internal_quiet = (_flags) & GED_QUIET; \
-	if (!ged_db_get_internal_quiet) { \
-	    bu_vls_printf((_gedp)->ged_result_str, "Database read failure."); \
-	} \
-	return (_flags); \
-    }
-
-/** Put internal representation */
-#define GED_DB_PUT_INTERNAL(_gedp, _dp, _intern, _resource, _flags) \
-    if (rt_db_put_internal((_dp), (_gedp)->ged_wdbp->dbip, (_intern), (_resource)) < 0) { \
-	int ged_db_put_internal_quiet = (_flags) & GED_QUIET; \
-	if (!ged_db_put_internal_quiet) { \
-	    bu_vls_printf((_gedp)->ged_result_str, "Database write failure."); \
-	} \
-	return (_flags); \
-    }
-
-struct ged_run_rt {
-    struct bu_list l;
-#if defined(_WIN32) && !defined(__CYGWIN__)
-    HANDLE fd;
-    HANDLE hProcess;
-    DWORD pid;
-
-#  ifdef TCL_OK
-    Tcl_Channel chan;
-#  else
-    void *chan;
-#  endif
-#else
-    int fd;
-    int pid;
-#endif
-    int aborted;
-};
-
-/* FIXME: should be private */
-struct ged_qray_color {
-    unsigned char r;
-    unsigned char g;
-    unsigned char b;
-};
-
-/* FIXME: should be private */
-struct ged_qray_fmt {
-    char type;
-    struct bu_vls fmt;
-};
-
-struct vd_curve {
-    struct bu_list      l;
-    char                vdc_name[RT_VDRW_MAXNAME+1];    /**< @brief name array */
-    long                vdc_rgb;        /**< @brief color */
-    struct bu_list      vdc_vhd;        /**< @brief head of list of vertices */
-};
-#define VD_CURVE_NULL   ((struct vd_curve *)NULL)
-
-/* FIXME: should be private */
-struct ged_drawable {
-    struct bu_list		l;
-    struct bu_list		*gd_headDisplay;		/**< @brief  head of display list */
-    struct bu_list		*gd_headVDraw;		/**< @brief  head of vdraw list */
-    struct vd_curve		*gd_currVHead;		/**< @brief  current vdraw head */
-    struct solid                *gd_freeSolids;         /**< @brief  ptr to head of free solid list */
-
-    char			**gd_rt_cmd;
-    int				gd_rt_cmd_len;
-    struct ged_run_rt		gd_headRunRt;		/**< @brief  head of forked rt processes */
-
-    void			(*gd_rtCmdNotify)(int aborted);	/**< @brief  function called when rt command completes */
-
-    int				gd_uplotOutputMode;	/**< @brief  output mode for unix plots */
-
-    /* qray state */
-    struct bu_vls		gd_qray_basename;	/**< @brief  basename of query ray vlist */
-    struct bu_vls		gd_qray_script;		/**< @brief  query ray script */
-    char			gd_qray_effects;	/**< @brief  t for text, g for graphics or b for both */
-    int				gd_qray_cmd_echo;	/**< @brief  0 - don't echo command, 1 - echo command */
-    struct ged_qray_fmt		*gd_qray_fmts;
-    struct ged_qray_color	gd_qray_odd_color;
-    struct ged_qray_color	gd_qray_even_color;
-    struct ged_qray_color	gd_qray_void_color;
-    struct ged_qray_color	gd_qray_overlap_color;
-    int				gd_shaded_mode;		/**< @brief  1 - draw bots shaded by default */
-};
-
-struct ged_cmd;
-
-/* struct details are private - use accessor functions to manipulate */
-struct ged_results;
-
-struct ged {
-    struct bu_list		l;
-    struct rt_wdb		*ged_wdbp;
-
-    /** for catching log messages */
-    struct bu_vls		*ged_log;
-
-    struct solid                *freesolid;  /* For now this is a struct solid, but longer term that may not always be true */
-
-    /* @todo: add support for returning an array of objects, not just a
-     * simple string.
-     *
-     * the calling application needs to be able to distinguish the
-     * individual object names from the "ls" command without resorting
-     * to quirky string encoding or format-specific quote wrapping.
-     *
-     * want to consider whether we need a json-style dictionary, but
-     * probably a literal null-terminated array will suffice here.
-     */
-    struct bu_vls		*ged_result_str;
-    struct ged_results          *ged_results;
-
-    struct ged_drawable		*ged_gdp;
-    struct bview		*ged_gvp;
-    struct fbserv_obj		*ged_fbsp; /* FIXME: this shouldn't be here */
-    struct bu_hash_tbl		*ged_selections; /**< @brief object name -> struct rt_object_selections */
-
-    void			*ged_dmp;
-    void			*ged_refresh_clientdata;	/**< @brief  client data passed to refresh handler */
-    void			(*ged_refresh_handler)(void *);	/**< @brief  function for handling refresh requests */
-    void			(*ged_output_handler)(struct ged *, char *);	/**< @brief  function for handling output */
-    char			*ged_output_script;		/**< @brief  script for use by the outputHandler */
-    void			(*ged_create_vlist_solid_callback)(struct solid *);	/**< @brief  function to call after creating a vlist to create display list for solid */
-    void			(*ged_create_vlist_callback)(struct display_list *);	/**< @brief  function to call after all vlist created that loops through creating display list for each solid  */
-    void			(*ged_free_vlist_callback)(unsigned int, int);	/**< @brief  function to call after freeing a vlist */
-
-    /* FIXME -- this ugly hack needs to die.  the result string should be stored before the call. */
-    int 			ged_internal_call;
-
-    /* FOR LIBGED INTERNAL USE */
-    struct ged_cmd *cmds;
-    int (*add)(const struct ged_cmd *cmd);
-    int (*del)(const char *name);
-    int (*run)(int ac, char *av[]);
-    void *ged_interp; /* Temporary - do not rely on when designing new functionality */
-
-    /* Interface to LIBDM */
-    int ged_dm_width;
-    int ged_dm_height;
-    int ged_dmp_is_null;
-    void (*ged_dm_get_display_image)(struct ged *, unsigned char **);
-
-};
-
-typedef int (*ged_func_ptr)(struct ged *, int, const char *[]);
-typedef void (*ged_refresh_callback_ptr)(void *);
-typedef void (*ged_create_vlist_solid_callback_ptr)(struct solid *);
-typedef void (*ged_create_vlist_callback_ptr)(struct display_list *);
-typedef void (*ged_free_vlist_callback_ptr)(unsigned int, int);
-
-
-/**
- * describes a command plugin
- */
-struct ged_cmd {
-    struct bu_list l;
-
-    const char *name;
-    const char description[80];
-    const char *manpage;
-
-    int (*load)(struct ged *);
-    void (*unload)(struct ged *);
-    int (*exec)(struct ged *, int, const char *[]);
-};
-
-/* accessor functions for ged_results - calling
- * applications should not work directly with the
- * internals of ged_results, which are not guaranteed
- * to stay the same.
- * defined in ged_util.c */
-GED_EXPORT extern size_t ged_results_count(struct ged_results *results);
-GED_EXPORT extern const char *ged_results_get(struct ged_results *results, size_t index);
-GED_EXPORT extern void ged_results_clear(struct ged_results *results);
-GED_EXPORT extern void ged_results_free(struct ged_results *results);
 
 
 /* defined in adc.c */
@@ -401,13 +137,7 @@ GED_EXPORT extern int invent_solid(struct bu_list *hdlp, struct db_i *dbip, void
 
 
 /* defined in ged.c */
-GED_EXPORT extern void ged_close(struct ged *gedp);
-GED_EXPORT extern void ged_free(struct ged *gedp);
-GED_EXPORT extern void ged_init(struct ged *gedp);
-/* Call BU_PUT to release returned ged structure */
-GED_EXPORT extern struct ged *ged_open(const char *dbtype,
-				       const char *filename,
-				       int existing_only);
+
 GED_EXPORT extern void ged_view_init(struct bview *gvp);
 
 /* defined in grid.c */
@@ -420,12 +150,6 @@ GED_EXPORT extern int ged_inside_internal(struct ged *gedp,
 					  const char *argv[],
 					  int arg,
 					  char *o_name);
-
-/* defined in rt.c */
-GED_EXPORT extern int ged_build_tops(struct ged	*gedp,
-				     char		**start,
-				     char		**end);
-GED_EXPORT extern size_t ged_count_tops(struct ged *gedp);
 
 
 /* Defined in vutil.c */
@@ -458,11 +182,6 @@ GED_EXPORT extern int ged_3ptarb(struct ged *gedp, int argc, const char *argv[])
 GED_EXPORT extern int ged_adc(struct ged *gedp, int argc, const char *argv[]);
 
 /**
- * Adjust object's attribute(s)
- */
-GED_EXPORT extern int ged_adjust(struct ged *gedp, int argc, const char *argv[]);
-
-/**
  * Creates an arb8 given rotation and fallback angles
  */
 GED_EXPORT extern int ged_arb(struct ged *gedp, int argc, const char *argv[]);
@@ -476,11 +195,6 @@ GED_EXPORT extern int ged_ae2dir(struct ged *gedp, int argc, const char *argv[])
  * Get or set the azimuth, elevation and twist.
  */
 GED_EXPORT extern int ged_aet(struct ged *gedp, int argc, const char *argv[]);
-
-/**
- * Returns lots of information about the specified object(s)
- */
-GED_EXPORT extern int ged_analyze(struct ged *gedp, int argc, const char *argv[]);
 
 /**
  * Creates an annotation.
@@ -498,19 +212,6 @@ GED_EXPORT extern int ged_append_pipept(struct ged *gedp, int argc, const char *
 GED_EXPORT extern int ged_arced(struct ged *gedp, int argc, const char *argv[]);
 
 /**
- * Set, get, show, remove or append to attribute values for the specified object.
- * The arguments for "set" and "append" subcommands are attribute name/value pairs.
- * The arguments for "get", "rm", and "show" subcommands are attribute names.
- * The "set" subcommand sets the specified attributes for the object.
- * The "append" subcommand appends the provided value to an existing attribute,
- * or creates a new attribute if it does not already exist.
- * The "get" subcommand retrieves and displays the specified attributes.
- * The "rm" subcommand deletes the specified attributes.
- * The "show" subcommand does a "get" and displays the results in a user readable format.
- */
-GED_EXPORT extern int ged_attr(struct ged *gedp, int argc, const char *argv[]);
-
-/**
  * Rotate angle degrees about the specified axis
  */
 GED_EXPORT extern int ged_arot_args(struct ged *gedp, int argc, const char *argv[], mat_t rmat);
@@ -520,11 +221,6 @@ GED_EXPORT extern int ged_arot(struct ged *gedp, int argc, const char *argv[]);
  * Auto-adjust the view so that all displayed geometry is in view
  */
 GED_EXPORT extern int ged_autoview(struct ged *gedp, int argc, const char *argv[]);
-
-/**
- * Report the size of the bounding box (rpp) around the specified object
- */
-GED_EXPORT extern int ged_bb(struct ged *gedp, int argc, const char *argv[]);
 
 /**
  * Tessellates each operand object, then performs the
@@ -552,6 +248,18 @@ GED_EXPORT extern int ged_bev(struct ged *gedp, int argc, const char *argv[]);
  * Only uniform array binary objects (major_type=u) are currently supported}}
  */
 GED_EXPORT extern int ged_bo(struct ged *gedp, int argc, const char *argv[]);
+
+/**
+ * Returns lots of information about the specified object(s)
+ */
+GED_EXPORT extern int ged_analyze(struct ged *gedp, int argc, const char *argv[]);
+
+
+/**
+ * Report the size of the bounding box (rpp) around the specified object
+ */
+GED_EXPORT extern int ged_bb(struct ged *gedp, int argc, const char *argv[]);
+
 
 /**
  * Erase all currently displayed geometry and draw the specified object(s)
@@ -646,11 +354,6 @@ GED_EXPORT extern int ged_bot_vertex_fuse(struct ged *gedp, int argc, const char
 GED_EXPORT extern int ged_brep(struct ged *gedp, int argc, const char *argv[]);
 
 /**
- * List attributes (brief).
- */
-GED_EXPORT extern int ged_cat(struct ged *gedp, int argc, const char *argv[]);
-
-/**
  * Create constraint object
  */
 GED_EXPORT extern int ged_cc(struct ged *gedp, int argc, const char *argv[]);
@@ -676,59 +379,14 @@ GED_EXPORT extern int ged_coil(struct ged *gedp, int argc, const char *argv[]);
 GED_EXPORT extern int ged_color(struct ged *gedp, int argc, const char *argv[]);
 
 /**
- * Set combination color.
- */
-GED_EXPORT extern int ged_comb_color(struct ged *gedp, int argc, const char *argv[]);
-
-/**
- * Create or extend combination w/booleans.
- */
-GED_EXPORT extern int ged_comb(struct ged *gedp, int argc, const char *argv[]);
-
-/**
- * Create or extend a combination using standard notation.
- */
-GED_EXPORT extern int ged_comb_std(struct ged *gedp, int argc, const char *argv[]);
-
-/**
- * Set/get comb's members.
- */
-GED_EXPORT extern int ged_combmem(struct ged *gedp, int argc, const char *argv[]);
-
-/**
  * create, update, remove, and list geometric and dimensional constraints.
  */
 GED_EXPORT extern int ged_constraint(struct ged *gedp, int argc, const char *argv[]);
 
 /**
- * Import a database into the current database using an auto-incrementing or custom affix
- */
-GED_EXPORT extern int ged_concat(struct ged *gedp, int argc, const char *argv[]);
-
-/**
- * Copy a database object
- */
-GED_EXPORT extern int ged_copy(struct ged *gedp, int argc, const char *argv[]);
-
-/**
- * Copy an 'evaluated' path solid
- */
-GED_EXPORT extern int ged_copyeval(struct ged *gedp, int argc, const char *argv[]);
-
-/**
- * Copy the matrix from one combination's arc to another.
- */
-GED_EXPORT extern int ged_copymat(struct ged *gedp, int argc, const char *argv[]);
-
-/**
  * Copy cylinder and position at end of original cylinder
  */
 GED_EXPORT extern int ged_cpi(struct ged *gedp, int argc, const char *argv[]);
-
-/**
- * Get dbip
- */
-GED_EXPORT extern int ged_dbip(struct ged *gedp, int argc, const char *argv[]);
 
 /**
  * Set/get libbu's debug bit vector
@@ -782,16 +440,6 @@ GED_EXPORT extern int ged_dir2ae(struct ged *gedp, int argc, const char *argv[])
 GED_EXPORT extern int ged_draw(struct ged *gedp, int argc, const char *argv[]);
 
 /**
- * Dump a full copy of the database into file.g
- */
-GED_EXPORT extern int ged_dump(struct ged *gedp, int argc, const char *argv[]);
-
-/**
- * Check for duplicate names in file
- */
-GED_EXPORT extern int ged_dup(struct ged *gedp, int argc, const char *argv[]);
-
-/**
  * Prepare object(s) for display
  */
 GED_EXPORT extern int ged_E(struct ged *gedp, int argc, const char *argv[]);
@@ -810,31 +458,6 @@ GED_EXPORT extern int ged_echo(struct ged *gedp, int argc, const char *argv[]);
  * Arb specific edits.
  */
 GED_EXPORT extern int ged_edarb(struct ged *gedp, int argc, const char *argv[]);
-
-/**
- * Text edit the color table
- */
-GED_EXPORT extern int ged_edcolor(struct ged *gedp, int argc, const char *argv[]);
-
-/**
- * Edit region ident codes.
- */
-GED_EXPORT extern int ged_edcodes(struct ged *gedp, int argc, const char *argv[]);
-
-/**
- * Edit combination.
- */
-GED_EXPORT extern int ged_edcomb(struct ged *gedp, int argc, const char *argv[]);
-
-/**
- * Edit objects, by using subcommands.
- */
-GED_EXPORT extern int ged_edit(struct ged *gedp, int argc, const char *argv[]);
-
-/**
- * Edit file.
- */
-GED_EXPORT extern int ged_editit(struct ged *gedp, int argc, const char *argv[]);
 
 /**
  * Edit combination materials.
@@ -864,11 +487,6 @@ GED_EXPORT extern int ged_eye(struct ged *gedp, int argc, const char *argv[]);
 GED_EXPORT extern int ged_eye_pos(struct ged *gedp, int argc, const char *argv[]);
 
 /**
- * Checks to see if the specified database object exists.
- */
-GED_EXPORT extern int ged_exists(struct ged *gedp, int argc, const char *argv[]);
-
-/**
  * Globs expression against database objects
  */
 GED_EXPORT extern int ged_expand(struct ged *gedp, int argc, const char *argv[]);
@@ -887,11 +505,6 @@ GED_EXPORT extern int ged_fb2pix(struct ged *gedp, int argc, const char *argv[])
  * Fclear clears a framebuffer.
  */
 GED_EXPORT extern int ged_fbclear(struct ged *gedp, int argc, const char *argv[]);
-
-/**
- * Find combinations that reference object
- */
-GED_EXPORT extern int ged_find(struct ged *gedp, int argc, const char *argv[]);
 
 /**
  * Find the arb edge nearest the specified point in view coordinates.
@@ -950,11 +563,6 @@ GED_EXPORT extern int ged_fracture(struct ged *gedp, int argc, const char *argv[
 GED_EXPORT extern int ged_gdiff(struct ged *gedp, int argc, const char *argv[]);
 
 /**
- * Get object attributes
- */
-GED_EXPORT extern int ged_get(struct ged *gedp, int argc, const char *argv[]);
-
-/**
  * Get view size and center such that all displayed solids would be in view
  */
 GED_EXPORT extern int ged_get_autoview(struct ged *gedp, int argc, const char *argv[]);
@@ -965,11 +573,6 @@ GED_EXPORT extern int ged_get_autoview(struct ged *gedp, int argc, const char *a
 GED_EXPORT extern int ged_get_bot_edges(struct ged *gedp, int argc, const char *argv[]);
 
 /**
- * Get combination information
- */
-GED_EXPORT extern int ged_get_comb(struct ged *gedp, int argc, const char *argv[]);
-
-/**
  * Get the viewsize, orientation and eye point.
  */
 GED_EXPORT extern int ged_get_eyemodel(struct ged *gedp, int argc, const char *argv[]);
@@ -978,11 +581,6 @@ GED_EXPORT extern int ged_get_eyemodel(struct ged *gedp, int argc, const char *a
  * Get the object's type
  */
 GED_EXPORT extern int ged_get_type(struct ged *gedp, int argc, const char *argv[]);
-
-/**
- * Globs expression against the database
- */
-GED_EXPORT extern int ged_glob(struct ged *gedp, int argc, const char *argv[]);
 
 GED_EXPORT extern int ged_gqa(struct ged *gedp, int argc, const char *argv[]);
 
@@ -1005,17 +603,6 @@ GED_EXPORT extern int ged_grid2model_lu(struct ged *gedp, int argc, const char *
  * Convert grid coordinates to view coordinates.
  */
 GED_EXPORT extern int ged_grid2view_lu(struct ged *gedp, int argc, const char *argv[]);
-
-/**
- * Create or append objects to a group
- */
-GED_EXPORT extern int ged_group(struct ged *gedp, int argc, const char *argv[]);
-
-/**
- * Set the "hidden" flag for the specified objects so they do not
- * appear in an "ls" command output
- */
-GED_EXPORT extern int ged_hide(struct ged *gedp, int argc, const char *argv[]);
 
 /**
  * Returns how an object is being displayed
@@ -1043,11 +630,6 @@ GED_EXPORT extern int ged_in(struct ged *gedp, int argc, const char *argv[]);
 GED_EXPORT extern int ged_inside(struct ged *gedp, int argc, const char *argv[]);
 
 /**
- * Add instance of obj to comb
- */
-GED_EXPORT extern int ged_instance(struct ged *gedp, int argc, const char *argv[]);
-
-/**
  * Makes a bot object out of the specified section.
  */
 GED_EXPORT extern int ged_importFg4Section(struct ged *gedp, int argc, const char *argv[]);
@@ -1071,11 +653,6 @@ GED_EXPORT extern int ged_joint(struct ged *gedp, int argc, const char *argv[]);
   * New joint command.
   */
 GED_EXPORT extern int ged_joint2(struct ged *gedp, int argc, const char *argv[]);
-
-/**
- * Save/keep the specified objects in the specified file
- */
-GED_EXPORT extern int ged_keep(struct ged *gedp, int argc, const char *argv[]);
 
 /**
  * Set/get the keypoint
@@ -1103,16 +680,6 @@ GED_EXPORT extern int ged_killrefs(struct ged *gedp, int argc, const char *argv[
 GED_EXPORT extern int ged_killtree(struct ged *gedp, int argc, const char *argv[]);
 
 /**
- * List attributes of regions within a group/combination.
- */
-GED_EXPORT extern int ged_lc(struct ged *gedp, int argc, const char *argv[]);
-
-/**
- * List object information, verbose.
- */
-GED_EXPORT extern int ged_list(struct ged *gedp, int argc, const char *argv[]);
-
-/**
  * Load the view
  */
 GED_EXPORT extern int ged_loadview(struct ged *gedp, int argc, const char *argv[]);
@@ -1131,11 +698,6 @@ GED_EXPORT extern int ged_log(struct ged *gedp, int argc, const char *argv[]);
  * Set the look-at point
  */
 GED_EXPORT extern int ged_lookat(struct ged *gedp, int argc, const char *argv[]);
-
-/**
- * List the objects in this database
- */
-GED_EXPORT extern int ged_ls(struct ged *gedp, int argc, const char *argv[]);
 
 /**
  * List object's tree as a tcl list of {operator object} pairs
@@ -1161,21 +723,6 @@ GED_EXPORT extern int ged_make(struct ged *gedp, int argc, const char *argv[]);
  *   5)   default diameter of each point
  */
 GED_EXPORT extern int ged_make_pnts(struct ged *gedp, int argc, const char *argv[]);
-
-/**
- * Make a unique object name.
- */
-GED_EXPORT extern int ged_make_name(struct ged *gedp, int argc, const char *argv[]);
-
-/**
- * Globs expression against database objects, does not return tokens that match nothing
- */
-GED_EXPORT extern int ged_match(struct ged *gedp, int argc, const char *argv[]);
-
-/**
- * Modify material information.
- */
-GED_EXPORT extern int ged_mater(struct ged *gedp, int argc, const char *argv[]);
 
 /**
  * Mirror the primitive or combination along the specified axis.
@@ -1299,22 +846,6 @@ GED_EXPORT extern int ged_otranslate(struct ged *gedp, int argc, const char *arg
 GED_EXPORT extern int ged_overlay(struct ged *gedp, int argc, const char *argv[]);
 
 /**
- * List all paths from name(s) to leaves
- */
-GED_EXPORT extern int ged_pathlist(struct ged *gedp, int argc, const char *argv[]);
-
-/**
- * Lists all paths matching the input path
- */
-GED_EXPORT extern int ged_pathsum(struct ged *gedp, int argc, const char *argv[]);
-
-/**
- * Checks that each directory in the supplied path actually has the subdirectories
- * that are implied by the path.
- */
-GED_EXPORT extern int ged_path_validate(struct ged *gedp, const struct db_full_path * const path);
-
-/**
  * Set/get the perspective angle.
  */
 GED_EXPORT extern int ged_perspective(struct ged *gedp, int argc, const char *argv[]);
@@ -1411,16 +942,6 @@ GED_EXPORT extern int ged_pull(struct ged *gedp, int argc, const char *argv[]);
 GED_EXPORT extern int ged_push(struct ged *gedp, int argc, const char *argv[]);
 
 /**
- * Create a database object
- */
-GED_EXPORT extern int ged_put(struct ged *gedp, int argc, const char *argv[]);
-
-/**
- * Set combination attributes
- */
-GED_EXPORT extern int ged_put_comb(struct ged *gedp, int argc, const char *argv[]);
-
-/**
  * Replace the matrix on an arc
  */
 GED_EXPORT extern int ged_putmat(struct ged *gedp, int argc, const char *argv[]);
@@ -1454,11 +975,6 @@ GED_EXPORT extern int ged_rcodes(struct ged *gedp, int argc, const char *argv[])
 GED_EXPORT extern int ged_rect(struct ged *gedp, int argc, const char *argv[]);
 
 /**
- * Edit region/comb
- */
-GED_EXPORT extern int ged_red(struct ged *gedp, int argc, const char *argv[]);
-
-/**
  * Change the default region ident codes: item air los mat
  */
 GED_EXPORT extern int ged_regdef(struct ged *gedp, int argc, const char *argv[]);
@@ -1469,11 +985,6 @@ GED_EXPORT extern int ged_regdef(struct ged *gedp, int argc, const char *argv[])
 GED_EXPORT extern int ged_region(struct ged *gedp, int argc, const char *argv[]);
 
 /**
- * Remove members from a combination
- */
-GED_EXPORT extern int ged_remove(struct ged *gedp, int argc, const char *argv[]);
-
-/**
  * Returns the solid table & vector list as a string
  */
 GED_EXPORT extern int ged_report(struct ged *gedp, int argc, const char *argv[]);
@@ -1482,11 +993,6 @@ GED_EXPORT extern int ged_report(struct ged *gedp, int argc, const char *argv[])
  * Makes and arb given a point, 2 coord of 3 pts, rot, fb and thickness.
  */
 GED_EXPORT extern int ged_rfarb(struct ged *gedp, int argc, const char *argv[]);
-
-/**
- * Returns a list of id to region name mappings for the entire database.
- */
-GED_EXPORT extern int ged_rmap(struct ged *gedp, int argc, const char *argv[]);
 
 /**
  * Set/get the rotation matrix.
@@ -1676,21 +1182,6 @@ GED_EXPORT extern int ged_tables(struct ged *gedp, int argc, const char *argv[])
 GED_EXPORT extern int ged_tire(struct ged *gedp, int argc, const char *argv[]);
 
 /**
- * Set/get the database title
- */
-GED_EXPORT extern int ged_title(struct ged *gedp, int argc, const char *argv[]);
-
-/**
- * Set/get tessellation and calculation tolerances
- */
-GED_EXPORT extern int ged_tol(struct ged *gedp, int argc, const char *argv[]);
-
-/**
- * Find all top level objects
- */
-GED_EXPORT extern int ged_tops(struct ged *gedp, int argc, const char *argv[]);
-
-/**
  * Translate the view.
  */
 GED_EXPORT extern int ged_tra_args(struct ged *gedp, int argc, const char *argv[], char *coord, vect_t tvec);
@@ -1715,16 +1206,6 @@ GED_EXPORT extern int ged_tracker(struct ged *gedp, int argc, const char *argv[]
 GED_EXPORT extern int ged_tree(struct ged *gedp, int argc, const char *argv[]);
 
 /**
- * Unset the "hidden" flag for the specified objects so they will appear in a "t" or "ls" command output
- */
-GED_EXPORT extern int ged_unhide(struct ged *gedp, int argc, const char *argv[]);
-
-/**
- * Set/get the database units
- */
-GED_EXPORT extern int ged_units(struct ged *gedp, int argc, const char *argv[]);
-
-/**
  * Recalculate plots for displayed objects.
  */
 GED_EXPORT extern int ged_redraw(struct ged *gedp, int argc, const char *argv[]);
@@ -1738,11 +1219,6 @@ GED_EXPORT extern int ged_v2m_point(struct ged *gedp, int argc, const char *argv
  * Vector drawing utility.
  */
 GED_EXPORT extern int ged_vdraw(struct ged *gedp, int argc, const char *argv[]);
-
-/**
- * Returns the database version.
- */
-GED_EXPORT extern int ged_version(struct ged *gedp, int argc, const char *argv[]);
 
 /**
  * Get/set view attributes
@@ -1780,11 +1256,6 @@ GED_EXPORT extern int ged_vrot(struct ged *gedp, int argc, const char *argv[]);
 GED_EXPORT extern int ged_viewdir(struct ged *gedp, int argc, const char *argv[]);
 
 /**
- * Write region ident codes to filename.
- */
-GED_EXPORT extern int ged_wcodes(struct ged *gedp, int argc, const char *argv[]);
-
-/**
  * Return the specified region's id.
  */
 GED_EXPORT extern int ged_whatid(struct ged *gedp, int argc, const char *argv[]);
@@ -1806,11 +1277,6 @@ GED_EXPORT extern int ged_which_shader(struct ged *gedp, int argc, const char *a
  * List the objects currently prepped for drawing
  */
 GED_EXPORT extern int ged_who(struct ged *gedp, int argc, const char *argv[]);
-
-/**
- * Write material properties to a file for specified combination(s).
- */
-GED_EXPORT extern int ged_wmater(struct ged *gedp, int argc, const char *argv[]);
 
 /**
  * Push object path transformations to solids, creating primitives if necessary

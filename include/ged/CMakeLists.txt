@@ -1,5 +1,7 @@
 set(ged_headers
   defines.h
+  database.h
+  objects.h
   )
 
 install(FILES ${ged_headers} DESTINATION ${INCLUDE_DIR}/brlcad/ged)
