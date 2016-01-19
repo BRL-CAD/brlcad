@@ -1,3 +1,5 @@
+add_subdirectory(view)
+
 set(ged_headers
   analyze.h
   database.h
