@@ -4,5 +4,18 @@
 
 /** @ingroup libged */
 /**  @defgroup ged_defines Definitions*/
-
+/** @ingroup libged */
+/**  @defgroup ged_database Database*/
+/** @ingroup libged */
+/**  @defgroup ged_objects Database Objects*/
+/** @ingroup libged */
+/**  @defgroup ged_view View Manipulation */
+/** @ingroup libged */
+/**  @defgroup ged_framebuffer Framebuffer*/
+/** @ingroup libged */
+/**  @defgroup ged_analyze Geometry Analysis */
+/** @ingroup libged */
+/**  @defgroup ged_debug Debugging */
+/** @ingroup libged */
+/**  @defgroup ged_raytrace Raytracing */
 

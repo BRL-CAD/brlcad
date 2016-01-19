@@ -122,6 +122,11 @@ GED_EXPORT extern int ged_pathlist(struct ged *gedp, int argc, const char *argv[
 GED_EXPORT extern int ged_pathsum(struct ged *gedp, int argc, const char *argv[]);
 
 /**
+ * Show the matrix transformations along path
+ */
+GED_EXPORT extern int ged_showmats(struct ged *gedp, int argc, const char *argv[]);
+
+/**
  * Checks that each directory in the supplied path actually has the subdirectories
  * that are implied by the path.
  */
@@ -151,6 +156,96 @@ GED_EXPORT extern int ged_version(struct ged *gedp, int argc, const char *argv[]
  * Write region ident codes to filename.
  */
 GED_EXPORT extern int ged_wcodes(struct ged *gedp, int argc, const char *argv[]);
+
+
+/* defined in copy.c */
+GED_EXPORT extern int ged_dbcopy(struct ged *from_gedp,
+				 struct ged *to_gedp,
+				 const char *from,
+				 const char *to,
+				 int fflag);
+/**
+ * Globs expression against database objects
+ */
+GED_EXPORT extern int ged_expand(struct ged *gedp, int argc, const char *argv[]);
+
+/**
+ * Set region ident codes.
+ */
+GED_EXPORT extern int ged_item(struct ged *gedp, int argc, const char *argv[]);
+
+/**
+ * Open a database
+ */
+GED_EXPORT extern int ged_reopen(struct ged *gedp, int argc, const char *argv[]);
+
+/**
+ * Read region ident codes from filename.
+ */
+GED_EXPORT extern int ged_rcodes(struct ged *gedp, int argc, const char *argv[]);
+
+/**
+ * Change the default region ident codes: item air los mat
+ */
+GED_EXPORT extern int ged_regdef(struct ged *gedp, int argc, const char *argv[]);
+
+/**
+ * Read material properties from a file.
+ */
+GED_EXPORT extern int ged_rmater(struct ged *gedp, int argc, const char *argv[]);
+
+/**
+ * Interface to search functionality (i.e. Unix find for geometry)
+ */
+GED_EXPORT extern int ged_search(struct ged *gedp, int argc, const char *argv[]);
+
+/**
+ * Count/list primitives/regions/groups
+ */
+GED_EXPORT extern int ged_summary(struct ged *gedp, int argc, const char *argv[]);
+
+/**
+ * Sync up the in-memory database with the on-disk database.
+ */
+GED_EXPORT extern int ged_sync(struct ged *gedp, int argc, const char *argv[]);
+
+/**
+ * The ged_tables() function serves idents, regions and solids.
+ *
+ * Make ascii summary of region idents.
+ *
+ */
+GED_EXPORT extern int ged_tables(struct ged *gedp, int argc, const char *argv[]);
+
+/**
+ * The ged_which() function serves both whichair and whichid.
+ *
+ * Find the regions with the specified air codes.  Find the regions
+ * with the specified region ids.
+ */
+GED_EXPORT extern int ged_which(struct ged *gedp, int argc, const char *argv[]);
+
+/**
+ * Return all combinations with the specified shaders.
+ */
+GED_EXPORT extern int ged_which_shader(struct ged *gedp, int argc, const char *argv[]);
+
+/**
+ * Make color entry.
+ */
+GED_EXPORT extern int ged_color(struct ged *gedp, int argc, const char *argv[]);
+
+/**
+ * Print color table
+ */
+GED_EXPORT extern int ged_prcolor(struct ged *gedp, int argc, const char *argv[]);
+
+/**
+ * Get/set the output handler script
+ */
+GED_EXPORT extern int ged_set_output_script(struct ged *gedp, int argc, const char *argv[]);
+
+
 
 
 

@@ -21,8 +21,7 @@
  *
  * Geometry EDiting Library Database Generic Object Functions.
  *
- * These are functions that either operate on groups or are not
- * specific to a single primitive type.
+ * These are functions that operate on database objects.
  */
 /** @{ */
 /** @file ged/objects.h */
@@ -287,6 +286,567 @@ GED_EXPORT extern int ged_unhide(struct ged *gedp, int argc, const char *argv[])
 GED_EXPORT extern int ged_wmater(struct ged *gedp, int argc, const char *argv[]);
 
 
+
+/* defined in inside.c */
+GED_EXPORT extern int ged_inside_internal(struct ged *gedp,
+					  struct rt_db_internal *ip,
+					  int argc,
+					  const char *argv[],
+					  int arg,
+					  char *o_name);
+
+
+/**
+ * Finds the inside primitive per the specified thickness.
+ */
+GED_EXPORT extern int ged_inside(struct ged *gedp, int argc, const char *argv[]);
+
+
+/**
+ * Creates an arb8 given the following:
+ *   1)   3 points of one face
+ *   2)   coord x, y or z and 2 coordinates of the 4th point in that face
+ *   3)   thickness
+ */
+GED_EXPORT extern int ged_3ptarb(struct ged *gedp, int argc, const char *argv[]);
+
+/**
+ * Creates an arb8 given rotation and fallback angles
+ */
+GED_EXPORT extern int ged_arb(struct ged *gedp, int argc, const char *argv[]);
+
+/**
+ * Creates an annotation.
+ */
+GED_EXPORT extern int ged_annotate(struct ged *gedp, int argc, const char *argv[]);
+
+/**
+ * Append a pipe point.
+ */
+GED_EXPORT extern int ged_append_pipept(struct ged *gedp, int argc, const char *argv[]);
+
+/**
+ * Allow editing of the matrix, etc., along an arc.
+ */
+GED_EXPORT extern int ged_arced(struct ged *gedp, int argc, const char *argv[]);
+
+/**
+ * Tessellates each operand object, then performs the
+ * boolean evaluation, storing result in 'new_obj'
+ */
+GED_EXPORT extern int ged_bev(struct ged *gedp, int argc, const char *argv[]);
+
+
+/**
+ * Manipulate opaque binary objects.
+ * Must specify one of -i (for creating or adjusting objects (input))
+ * or -o for extracting objects (output).
+ * If the major type is "u" the minor type must be one of:
+ *   "f" -> float
+ *   "d" -> double
+ *   "c" -> char (8 bit)
+ *   "s" -> short (16 bit)
+ *   "i" -> int (32 bit)
+ *   "l" -> long (64 bit)
+ *   "C" -> unsigned char (8 bit)
+ *   "S" -> unsigned short (16 bit)
+ *   "I" -> unsigned int (32 bit)
+ *   "L" -> unsigned long (64 bit)
+ * For input, source is a file name and dest is an object name.
+ * For output source is an object name and dest is a file name.
+ * Only uniform array binary objects (major_type=u) are currently supported}}
+ */
+GED_EXPORT extern int ged_bo(struct ged *gedp, int argc, const char *argv[]);
+
+/**
+ * Query or manipulate properties of bot
+ */
+GED_EXPORT extern int ged_bot(struct ged *gedp, int argc, const char *argv[]);
+
+/**
+ * Create new_bot by condensing old_bot
+ */
+GED_EXPORT extern int ged_bot_condense(struct ged *gedp, int argc, const char *argv[]);
+
+/**
+ * Uses edge decimation to reduce the number of triangles in the
+ * specified BOT while keeping within the specified constraints.
+ */
+GED_EXPORT extern int ged_bot_decimate(struct ged *gedp, int argc, const char *argv[]);
+
+/**
+ * Dump bots to the specified format.
+ */
+GED_EXPORT extern int ged_bot_dump(struct ged *gedp, int argc, const char *argv[]);
+
+/**
+ * Dump displayed bots to the specified format.
+ */
+GED_EXPORT extern int ged_dbot_dump(struct ged *gedp, int argc, const char *argv[]);
+
+/**
+ * Split the specified bot edge. This splits the triangles that share the edge.
+ */
+GED_EXPORT extern int ged_bot_edge_split(struct ged *gedp, int argc, const char *argv[]);
+
+/**
+ * Create new_bot by fusing faces in old_bot
+ */
+GED_EXPORT extern int ged_bot_face_fuse(struct ged *gedp, int argc, const char *argv[]);
+
+/**
+ * Sort the facelist of BOT solids to optimize ray trace performance
+ * for a particular number of triangles per raytrace piece.
+ */
+GED_EXPORT extern int ged_bot_face_sort(struct ged *gedp, int argc, const char *argv[]);
+
+/**
+ * Split the specified bot face into three parts (i.e. by adding a point to the center)
+ */
+GED_EXPORT extern int ged_bot_face_split(struct ged *gedp, int argc, const char *argv[]);
+
+/**
+ * Flip/reverse the specified bot's orientation.
+ */
+GED_EXPORT extern int ged_bot_flip(struct ged *gedp, int argc, const char *argv[]);
+
+/**
+ * Fuse bot
+ */
+GED_EXPORT extern int ged_bot_fuse(struct ged *gedp, int argc, const char *argv[]);
+
+/**
+ * Create bot_dest by merging the bot sources.
+ */
+GED_EXPORT extern int ged_bot_merge(struct ged *gedp, int argc, const char *argv[]);
+
+/**
+ * Calculate vertex normals for the BOT primitive
+ */
+GED_EXPORT extern int ged_bot_smooth(struct ged *gedp, int argc, const char *argv[]);
+
+/**
+ * Split the specified bot
+ */
+GED_EXPORT extern int ged_bot_split(struct ged *gedp, int argc, const char *argv[]);
+
+/**
+ * Sync the specified bot's orientation (i.e. make sure all neighboring triangles have same orientation).
+ */
+GED_EXPORT extern int ged_bot_sync(struct ged *gedp, int argc, const char *argv[]);
+
+/**
+ * Fuse bot vertices
+ */
+GED_EXPORT extern int ged_bot_vertex_fuse(struct ged *gedp, int argc, const char *argv[]);
+
+/**
+ * BREP utility command
+ */
+GED_EXPORT extern int ged_brep(struct ged *gedp, int argc, const char *argv[]);
+
+/**
+ * Create constraint object
+ */
+GED_EXPORT extern int ged_cc(struct ged *gedp, int argc, const char *argv[]);
+
+/**
+ * Performs a deep copy of object.
+ */
+GED_EXPORT extern int ged_clone(struct ged *gedp, int argc, const char *argv[]);
+
+/**
+ * Make coil shapes.
+ */
+GED_EXPORT extern int ged_coil(struct ged *gedp, int argc, const char *argv[]);
+
+/**
+ * create, update, remove, and list geometric and dimensional constraints.
+ */
+GED_EXPORT extern int ged_constraint(struct ged *gedp, int argc, const char *argv[]);
+
+/**
+ * Copy cylinder and position at end of original cylinder
+ */
+GED_EXPORT extern int ged_cpi(struct ged *gedp, int argc, const char *argv[]);
+
+/**
+ * Delete the specified pipe point.
+ */
+GED_EXPORT extern int ged_delete_pipept(struct ged *gedp, int argc, const char *argv[]);
+
+/**
+ * Arb specific edits.
+ */
+GED_EXPORT extern int ged_edarb(struct ged *gedp, int argc, const char *argv[]);
+
+/**
+ * Edit combination materials.
+ *
+ * Command relies on rmater, editit, and wmater commands.
+ */
+GED_EXPORT extern int ged_edmater(struct ged *gedp, int argc, const char *argv[]);
+
+/**
+ * Evaluate objects via NMG tessellation
+ */
+GED_EXPORT extern int ged_ev(struct ged *gedp, int argc, const char *argv[]);
+
+/**
+ * Facetize the specified objects
+ */
+GED_EXPORT extern int ged_facetize(struct ged *gedp, int argc, const char *argv[]);
+
+/**
+ * Find the arb edge nearest the specified point in view coordinates.
+ */
+GED_EXPORT extern int ged_find_arb_edge_nearest_pt(struct ged *gedp, int argc, const char *argv[]);
+
+/**
+ * Find the bot edge nearest the specified point in view coordinates.
+ */
+GED_EXPORT extern int ged_find_bot_edge_nearest_pt(struct ged *gedp, int argc, const char *argv[]);
+
+/**
+ * Find the bot point nearest the specified point in view coordinates.
+ */
+GED_EXPORT extern int ged_find_botpt_nearest_pt(struct ged *gedp, int argc, const char *argv[]);
+
+/**
+ * Add a metaball point.
+ */
+GED_EXPORT extern int ged_add_metaballpt(struct ged *gedp, int argc, const char *argv[]);
+
+/**
+ * Delete a metaball point.
+ */
+GED_EXPORT extern int ged_delete_metaballpt(struct ged *gedp, int argc, const char *argv[]);
+
+/**
+ * Find the metaball point nearest the specified point in model coordinates.
+ */
+GED_EXPORT extern int ged_find_metaballpt_nearest_pt(struct ged *gedp, int argc, const char *argv[]);
+
+/**
+ * Move a metaball point.
+ */
+GED_EXPORT extern int ged_move_metaballpt(struct ged *gedp, int argc, const char *argv[]);
+
+/**
+ * Find the pipe point nearest the specified point in model coordinates.
+ */
+GED_EXPORT extern int ged_find_pipept_nearest_pt(struct ged *gedp, int argc, const char *argv[]);
+
+/**
+ * Given an NMG solid, break it up into several NMG solids, each
+ * containing a single shell with a single sub-element.
+ */
+GED_EXPORT extern int ged_fracture(struct ged *gedp, int argc, const char *argv[]);
+/**
+ * Get a bot's edges
+ */
+GED_EXPORT extern int ged_get_bot_edges(struct ged *gedp, int argc, const char *argv[]);
+
+/**
+ * Get the object's type
+ */
+GED_EXPORT extern int ged_get_type(struct ged *gedp, int argc, const char *argv[]);
+
+/**
+ * Create a primitive via keyboard.
+ */
+GED_EXPORT extern int ged_in(struct ged *gedp, int argc, const char *argv[]);
+
+/**
+ * Makes a bot object out of the specified section.
+ */
+GED_EXPORT extern int ged_importFg4Section(struct ged *gedp, int argc, const char *argv[]);
+
+/**
+  * Joint command ported to the libged library.
+  */
+GED_EXPORT extern int ged_joint(struct ged *gedp, int argc, const char *argv[]);
+
+/**
+  * New joint command.
+  */
+GED_EXPORT extern int ged_joint2(struct ged *gedp, int argc, const char *argv[]);
+
+/**
+ * Kill/delete the specified objects from the database
+ */
+GED_EXPORT extern int ged_kill(struct ged *gedp, int argc, const char *argv[]);
+
+/**
+ * Kill/delete the specified objects from the database, removing all references
+ */
+GED_EXPORT extern int ged_killall(struct ged *gedp, int argc, const char *argv[]);
+
+/**
+ * Kill all references to the specified object(s).
+ */
+GED_EXPORT extern int ged_killrefs(struct ged *gedp, int argc, const char *argv[]);
+
+/**
+ * Kill all paths belonging to objects
+ */
+GED_EXPORT extern int ged_killtree(struct ged *gedp, int argc, const char *argv[]);
+
+/**
+ * List object's tree as a tcl list of {operator object} pairs
+ */
+GED_EXPORT extern int ged_lt(struct ged *gedp, int argc, const char *argv[]);
+
+/**
+ * Make a new primitive.
+ */
+GED_EXPORT extern int ged_make(struct ged *gedp, int argc, const char *argv[]);
+
+/**
+ * Creates a point-cloud (pnts) given the following:
+ *   1)   object name
+ *   2)   path and filename to point data file
+ *   3)   point data file format (xyzrgbsijk?)
+ *   4)   point data file units or conversion factor to mm
+ *   5)   default diameter of each point
+ */
+GED_EXPORT extern int ged_make_pnts(struct ged *gedp, int argc, const char *argv[]);
+
+/**
+ * Mirror the primitive or combination along the specified axis.
+ */
+GED_EXPORT extern int ged_mirror(struct ged *gedp, int argc, const char *argv[]);
+
+/**
+ * Move an arb's edge through point
+ */
+GED_EXPORT extern int ged_move_arb_edge(struct ged *gedp, int argc, const char *argv[]);
+
+/**
+ * Move/rename a database object
+ */
+GED_EXPORT extern int ged_move(struct ged *gedp, int argc, const char *argv[]);
+
+/**
+ * Move/rename all occurrences object
+ */
+GED_EXPORT extern int ged_move_all(struct ged *gedp, int argc, const char *argv[]);
+
+/**
+ * Move an arb's face through point
+ */
+GED_EXPORT extern int ged_move_arb_face(struct ged *gedp, int argc, const char *argv[]);
+
+/**
+ * Move the specified bot point. This can be relative or absolute.
+ */
+GED_EXPORT extern int ged_move_botpt(struct ged *gedp, int argc, const char *argv[]);
+
+/**
+ * Move the specified bot points. This movement is always relative.
+ */
+GED_EXPORT extern int ged_move_botpts(struct ged *gedp, int argc, const char *argv[]);
+
+/**
+ * Move the specified pipe point.
+ */
+GED_EXPORT extern int ged_move_pipept(struct ged *gedp, int argc, const char *argv[]);
+
+/**
+ * NMG command with subcommands for altering NMG datastructure.
+ */
+GED_EXPORT extern int ged_nmg(struct ged *gedp, int argc, const char *argv[]);
+
+/**
+ * Decimate NMG primitive via edge collapse
+ */
+GED_EXPORT extern int ged_nmg_collapse(struct ged *gedp, int argc, const char *argv[]);
+
+/**
+ * Attempt to fix an NMG primitive's normals.
+ */
+GED_EXPORT extern int ged_nmg_fix_normals(struct ged *gedp, int argc, const char *argv[]);
+
+/**
+ * Simplify the NMG primitive, if possible
+ */
+GED_EXPORT extern int ged_nmg_simplify(struct ged *gedp, int argc, const char *argv[]);
+
+/**
+ * Set/get object center.
+ */
+GED_EXPORT extern int ged_ocenter(struct ged *gedp, int argc, const char *argv[]);
+
+/**
+ * Rotate obj about the keypoint by
+ */
+GED_EXPORT extern int ged_orotate(struct ged *gedp, int argc, const char *argv[]);
+
+/**
+ * Scale obj about the keypoint by sf.
+ */
+GED_EXPORT extern int ged_oscale(struct ged *gedp, int argc, const char *argv[]);
+
+/**
+ * Translate obj by dx dy dz.
+ */
+GED_EXPORT extern int ged_otranslate(struct ged *gedp, int argc, const char *argv[]);
+
+/**
+ * Prefix the specified objects with the specified prefix
+ */
+GED_EXPORT extern int ged_prefix(struct ged *gedp, int argc, const char *argv[]);
+
+/**
+ * Prepend a pipe point.
+ */
+GED_EXPORT extern int ged_prepend_pipept(struct ged *gedp, int argc, const char *argv[]);
+
+/**
+ * Rotate obj's attributes by rvec.
+ */
+GED_EXPORT extern int ged_protate(struct ged *gedp, int argc, const char *argv[]);
+
+/**
+ * Scale obj's attributes by sf.
+ */
+GED_EXPORT extern int ged_pscale(struct ged *gedp, int argc, const char *argv[]);
+
+/**
+ * Set an obj's attribute to the specified value.
+ */
+GED_EXPORT extern int ged_pset(struct ged *gedp, int argc, const char *argv[]);
+
+/**
+ * Translate obj's attributes by tvec.
+ */
+GED_EXPORT extern int ged_ptranslate(struct ged *gedp, int argc, const char *argv[]);
+
+/**
+ *Pull objects' path transformations from primitives
+ */
+GED_EXPORT extern int ged_pull(struct ged *gedp, int argc, const char *argv[]);
+
+/**
+ * Push objects' path transformations to primitives
+ */
+GED_EXPORT extern int ged_push(struct ged *gedp, int argc, const char *argv[]);
+
+/**
+ * Replace the matrix on an arc
+ */
+GED_EXPORT extern int ged_putmat(struct ged *gedp, int argc, const char *argv[]);
+
+/**
+ * Create or append objects to a region
+ */
+GED_EXPORT extern int ged_region(struct ged *gedp, int argc, const char *argv[]);
+
+/**
+ * Makes and arb given a point, 2 coord of 3 pts, rot, fb and thickness.
+ */
+GED_EXPORT extern int ged_rfarb(struct ged *gedp, int argc, const char *argv[]);
+
+/**
+ * Rotate an arb's face through point
+ */
+GED_EXPORT extern int ged_rotate_arb_face(struct ged *gedp, int argc, const char *argv[]);
+
+/**
+ * Rotate the point.
+ */
+GED_EXPORT extern int ged_rot_point(struct ged *gedp, int argc, const char *argv[]);
+
+/**
+ * Set the transparency of the specified object
+ *
+ * @todo - belongs in view?
+ */
+GED_EXPORT extern int ged_set_transparency(struct ged *gedp, int argc, const char *argv[]);
+
+/**
+ * Breaks the NMG model into separate shells
+ */
+GED_EXPORT extern int ged_shells(struct ged *gedp, int argc, const char *argv[]);
+
+/**
+ * Create or append objects to a group using a sphere
+ */
+GED_EXPORT extern int ged_sphgroup(struct ged *gedp, int argc, const char *argv[]);
+
+/**
+ * Return the specified region's id.
+ */
+GED_EXPORT extern int ged_whatid(struct ged *gedp, int argc, const char *argv[]);
+
+/**
+ * Push object path transformations to solids, creating primitives if necessary
+ */
+GED_EXPORT extern int ged_xpush(struct ged *gedp, int argc, const char *argv[]);
+
+/**
+ * Voxelize the specified objects
+ */
+GED_EXPORT extern int ged_voxelize(struct ged *gedp, int argc, const char *argv[]);
+
+
+/** defined in get_obj_bounds.c
+ *
+ * @todo - belongs in view?
+ *
+ */
+GED_EXPORT extern int ged_get_obj_bounds(struct ged *gedp,
+			       int argc,
+			       const char *argv[],
+			       int use_air,
+			       point_t rpp_min,
+			       point_t rpp_max);
+
+
+/**
+ * Decompose nmg_solid into maximally connected shells
+ */
+GED_EXPORT extern int ged_decompose(struct ged *gedp, int argc, const char *argv[]);
+
+
+/**
+ * returns form for objects of type "type"
+ */
+GED_EXPORT extern int ged_form(struct ged *gedp, int argc, const char *argv[]);
+
+/**
+ * Create a human
+ */
+GED_EXPORT extern int ged_human(struct ged *gedp, int argc, const char *argv[]);
+
+/**
+ * Simpler, command-line version of 'mater' command.
+ */
+GED_EXPORT extern int ged_shader(struct ged *gedp, int argc, const char *argv[]);
+
+/**
+ * Create a tire
+ */
+GED_EXPORT extern int ged_tire(struct ged *gedp, int argc, const char *argv[]);
+
+/**
+ * Create a track
+ */
+GED_EXPORT extern int ged_track(struct ged *gedp, int argc, const char *argv[]);
+
+/**
+ *
+ *
+ * Usage:
+ *     tracker [-fh] [# links] [increment] [spline.iges] [link...]
+ */
+GED_EXPORT extern int ged_tracker(struct ged *gedp, int argc, const char *argv[]);
+
+/* defined in track.c */
+GED_EXPORT extern int ged_track2(struct bu_vls *log_str, struct rt_wdb *wdbp, const char *argv[]);
+
+/* defined in wdb_importFg4Section.c */
+GED_EXPORT int wdb_importFg4Section_cmd(void *data, int argc, const char *argv[]);
 
 
 

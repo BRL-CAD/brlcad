@@ -1,8 +1,11 @@
 set(ged_headers
-  defines.h
+  analyze.h
   database.h
-  objects.h
+  debug.h
+  defines.h
   framebuffer.h
+  objects.h
+  rt.h
   view.h
   )
 

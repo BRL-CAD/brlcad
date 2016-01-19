@@ -488,9 +488,38 @@ GED_EXPORT extern int ged_zap(struct ged *gedp, int argc, const char *argv[]);
 GED_EXPORT extern int ged_zoom(struct ged *gedp, int argc, const char *argv[]);
 
 
+/* defined in clip.c */
+GED_EXPORT extern int ged_clip(fastf_t *xp1,
+			       fastf_t *yp1,
+			       fastf_t *xp2,
+			       fastf_t *yp2);
+GED_EXPORT extern int ged_vclip(vect_t a,
+				vect_t b,
+				fastf_t *min,
+				fastf_t *max);
 
+/**
+ * Set/get the rotation matrix.
+ */
+GED_EXPORT extern int ged_rmat(struct ged *gedp, int argc, const char *argv[]);
 
+/**
+ * Get/set the unix plot output mode
+ */
+GED_EXPORT extern int ged_set_uplotOutputMode(struct ged *gedp, int argc, const char *argv[]);
 
+/**
+ * Slew the view
+ */
+GED_EXPORT extern int ged_slew(struct ged *gedp, int argc, const char *argv[]);
+
+GED_EXPORT extern bview_polygon *ged_clip_polygon(ClipType op, bview_polygon *subj, bview_polygon *clip, fastf_t sf, matp_t model2view, matp_t view2model);
+GED_EXPORT extern bview_polygon *ged_clip_polygons(ClipType op, bview_polygons *subj, bview_polygons *clip, fastf_t sf, matp_t model2view, matp_t view2model);
+GED_EXPORT extern int ged_export_polygon(struct ged *gedp, bview_data_polygon_state *gdpsp, size_t polygon_i, const char *sname);
+GED_EXPORT extern bview_polygon *ged_import_polygon(struct ged *gedp, const char *sname);
+GED_EXPORT extern fastf_t ged_find_polygon_area(bview_polygon *gpoly, fastf_t sf, matp_t model2view, fastf_t size);
+GED_EXPORT extern int ged_polygons_overlap(struct ged *gedp, bview_polygon *polyA, bview_polygon *polyB);
+GED_EXPORT extern void ged_polygon_fill_segments(struct ged *gedp, bview_polygon *poly, vect2d_t vfilldir, fastf_t vfilldelta);
 
 __END_DECLS
 
