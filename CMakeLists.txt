@@ -989,17 +989,6 @@ endif(NOT CMAKE_CONFIGURATION_TYPES)
 # party setup to use.
 include(${BRLCAD_CMAKE_DIR}/Fink_MacPorts.cmake)
 
-# Option for librtserver, used to help Java programs interface with librt.
-# Find Java and JNI, and conditionalize the default setting on Java's
-# availability
-FIND_PACKAGE(Java)
-FIND_PACKAGE(JNI)
-if(JNI_FOUND AND JAVA_FOUND)
-  option(BRLCAD_ENABLE_RTSERVER "Enable the librtserver target." ON)
-else(JNI_FOUND AND JAVA_FOUND)
-  option(BRLCAD_ENABLE_RTSERVER "Enable the librtserver target." OFF)
-endif(JNI_FOUND AND JAVA_FOUND)
-
 # Turn off the brlcad.dll build.
 # It's an expert's setting at the moment.
 option(BRLCAD_ENABLE_BRLCAD_LIBRARY "Build the brlcad.dll" OFF)
@@ -1837,22 +1826,6 @@ if(APPLE)
   mark_as_advanced(CMAKE_OSX_ARCHITECTURES CMAKE_OSX_DEPLOYMENT_TARGET CMAKE_OSX_SYSROOT)
   mark_as_advanced(CoreFoundation_LIBRARIES Cocoa_LIBRARIES)
 endif(APPLE)
-
-# Do some extra Java related checks.
-if(JNI_FOUND AND JAVA_FOUND)
-  BRLCAD_INCLUDE_FILE(JavaVM/jni.h HAVE_JAVAVM_JNI_H)
-  BRLCAD_INCLUDE_FILE(jni.h HAVE_JNI_H "${JNI_INCLUDE_DIRS}")
-  if(NOT HAVE_JNI_H AND NOT HAVE_JAVAVM_JNI_H AND BRLCAD_ENABLE_RTSERVER)
-    set(BRLCAD_ENABLE_RTSERVER OFF CACHE BOOL "RT server disabled due to unsatisfied Java requirements" FORCE)
-    message("librtserver build requested, but JNI header not found - disabling")
-  endif(NOT HAVE_JNI_H AND NOT HAVE_JAVAVM_JNI_H AND BRLCAD_ENABLE_RTSERVER)
-else(JNI_FOUND AND JAVA_FOUND)
-  if(BRLCAD_ENABLE_RTSERVER)
-    set(BRLCAD_ENABLE_RTSERVER OFF CACHE BOOL "RT server disabled due to unsatisfied Java requirements" FORCE)
-    message("librtserver build requested, but Java+JNI not found - disabling")
-  endif(BRLCAD_ENABLE_RTSERVER)
-endif(JNI_FOUND AND JAVA_FOUND)
-mark_as_advanced(BRLCAD_ENABLE_RTSERVER)
 
 # Mark X11 as available if it is enabled and we find Xlib.h
 if(BRLCAD_ENABLE_X11)
