@@ -403,19 +403,28 @@ make_island(struct bu_vls *msgs, struct subbrep_island_data *data, struct rt_wdb
 	(void)mk_addmember(bu_vls_addr(&island_name), &(pcomb->l), NULL, db_str2op(n_bool_op));
 
     // Debugging B-Reps - generates a B-Rep object for each island
-#if 0
+#if 1
     if (data->local_brep) {
 	unsigned char rgb[3];
 	struct wmember bcomb;
 	struct bu_vls bcomb_name = BU_VLS_INIT_ZERO;
 	struct bu_vls brep_name = BU_VLS_INIT_ZERO;
-	bu_vls_sprintf(&bcomb_name, "brep_obj_%d.r", data->island_id);
+	bu_vls_sprintf(&bcomb_name, "%s-brep_obj_%d.r", rname, data->island_id);
 	BU_LIST_INIT(&bcomb.l);
 
-	for (int i = 0; i < 3; ++i)
-	    rgb[i] = static_cast<unsigned char>(255.0 * drand48() + 0.5);
+	if (*n_bool_op == 'u') {
+	    rgb[0] = static_cast<unsigned char>(0);
+	    rgb[1] = static_cast<unsigned char>(0);
+	    rgb[2] = static_cast<unsigned char>(255.0);
+	} else {
+	    rgb[0] = static_cast<unsigned char>(255.0);
+	    rgb[1] = static_cast<unsigned char>(0);
+	    rgb[2] = static_cast<unsigned char>(0);
+	}
+	//for (int i = 0; i < 3; ++i)
+	//    rgb[i] = static_cast<unsigned char>(255.0 * drand48() + 0.5);
 
-	bu_vls_sprintf(&brep_name, "brep_obj_%d.s", data->island_id);
+	bu_vls_sprintf(&brep_name, "%s-brep_obj_%d.s", rname, data->island_id);
 	mk_brep(wdbp, bu_vls_addr(&brep_name), data->local_brep);
 
 	(void)mk_addmember(bu_vls_addr(&brep_name), &(bcomb.l), NULL, db_str2op((const char *)&un));
@@ -455,7 +464,7 @@ _obj_brep_to_csg(struct ged *gedp, struct bu_vls *log, struct bu_attribute_value
 	brep_ip = (struct rt_brep_internal *)intern.idb_ptr;
     }
     RT_BREP_CK_MAGIC(brep_ip);
-#if 1
+#if 0
     if (!rt_brep_valid(&intern, NULL)) {
 	bu_vls_printf(log, "%s is not a valid B-Rep - aborting\n", dp->d_namep);
 	return 2;
@@ -508,7 +517,7 @@ _obj_brep_to_csg(struct ged *gedp, struct bu_vls *log, struct bu_attribute_value
 	    } else {
 		// TODO - Fix up name of first item in list to reflect top level naming to
 		// avoid an unnecessary level of hierarchy.
-		bu_log("only one level... - %s\n", ((struct wmember *)pcomb.l.forw)->wm_name);
+		//bu_log("only one level... - %s\n", ((struct wmember *)pcomb.l.forw)->wm_name);
 		/*
 		int ac = 3;
 		const char **av = (const char **)bu_calloc(4, sizeof(char *), "killtree argv");
@@ -726,6 +735,60 @@ _ged_brep_to_csg(struct ged *gedp, const char *dp_name, int verify)
     bu_vls_sprintf(gedp->ged_result_str, "%s", bu_vls_addr(&log));
     bu_vls_free(&log);
     return ret;
+}
+
+extern "C" int
+_ged_brep_tikz(struct ged *gedp, const char *dp_name, const char *outfile)
+{
+    struct rt_db_internal intern;
+    struct rt_brep_internal *brep_ip = NULL;
+    RT_DB_INTERNAL_INIT(&intern)
+    struct rt_wdb *wdbp = gedp->ged_wdbp;
+    struct directory *dp = db_lookup(wdbp->dbip, dp_name, LOOKUP_QUIET);
+    if (dp == RT_DIR_NULL) return GED_ERROR;
+
+    /* Unpack B-Rep */
+    if (rt_db_get_internal(&intern, dp, wdbp->dbip, NULL, &rt_uniresource) < 0) {
+	return GED_ERROR;
+    }
+    if (intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_BREP) {
+	bu_vls_printf(gedp->ged_result_str, "%s is not a B-Rep - aborting\n", dp->d_namep);
+	return 1;
+    } else {
+	brep_ip = (struct rt_brep_internal *)intern.idb_ptr;
+    }
+    RT_BREP_CK_MAGIC(brep_ip);
+
+    ON_String s;
+
+    struct bu_vls wrapper = BU_VLS_INIT_ZERO;
+    bu_vls_printf(&wrapper, "\\documentclass{article}\n");
+    bu_vls_printf(&wrapper, "\\usepackage{tikz}\n");
+    bu_vls_printf(&wrapper, "\\usepackage{tikz-3dplot}\n\n");
+    bu_vls_printf(&wrapper, "\\begin{document}\n\n");
+    // Translate view az/el into tikz-3dplot variation
+    bu_vls_printf(&wrapper, "\\tdplotsetmaincoords{%f}{%f}\n", 90 + -1*gedp->ged_gvp->gv_aet[1], -1*(-90 + -1 * gedp->ged_gvp->gv_aet[0]));
+    bu_vls_printf(&wrapper, "\\begin{tikzpicture}[scale=1,tdplot_main_coords]\n");
+    s.Append(bu_vls_addr(&wrapper), bu_vls_strlen(&wrapper));
+
+    const ON_Brep *brep = brep_ip->brep;
+    (void)ON_BrepTikz(s, brep, NULL, NULL);
+
+    bu_vls_sprintf(&wrapper, "\\end{tikzpicture}\n\n");
+    bu_vls_printf(&wrapper, "\\end{document}\n");
+    s.Append(bu_vls_addr(&wrapper), bu_vls_strlen(&wrapper));
+    bu_vls_free(&wrapper);
+
+    if (outfile) {
+	FILE *fp = fopen(outfile, "w");
+	fprintf(fp, "%s", s.Array());
+	fclose(fp);
+	bu_vls_sprintf(gedp->ged_result_str, "Output written to file %s", outfile);
+    } else {
+
+	bu_vls_sprintf(gedp->ged_result_str, "%s", s.Array());
+    }
+    return GED_OK;
 }
 
 // Local Variables:

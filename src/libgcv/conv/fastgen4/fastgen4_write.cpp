@@ -169,6 +169,7 @@ public:
 
     DBInternal();
     DBInternal(const db_i &db, const directory &dir);
+    DBInternal(const DBInternal &source);
     ~DBInternal();
 
     void load(const db_i &db, const directory &dir);
@@ -177,7 +178,6 @@ public:
 
 
 private:
-    DBInternal(const DBInternal &source);
     DBInternal &operator=(const DBInternal &source);
 
     bool m_valid;
@@ -2269,7 +2269,7 @@ FastgenConversion::do_force_facetize_region(const directory *region_dir) const
     if (region_dir)
 	RT_CK_DIR(region_dir);
 
-    return m_facetize_regions.count(region_dir);
+    return (m_facetize_regions.count(region_dir) > 0);
 }
 
 

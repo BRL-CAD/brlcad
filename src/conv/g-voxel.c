@@ -38,7 +38,7 @@ printToFile(void *callBackData, int x, int y, int z, const char *a, fastf_t fill
     FILE *fp;
 
     if ((a != NULL) && (dataValues->threshold <= fill)) {
-	fp = fopen("voxels1.txt","a");
+	fp = fopen("voxels1.txt", "a");
 
 	if (fp != NULL) {
 	    fastf_t voxel[3];

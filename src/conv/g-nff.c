@@ -75,6 +75,7 @@ print_usage(const char *progname)
     bu_exit(1, "Usage: %s %s", progname, usage);
 }
 
+
 static void
 nmg_to_nff(struct nmgregion *r, const struct db_full_path *pathp, int UNUSED(region_id), int UNUSED(material_id))
 {

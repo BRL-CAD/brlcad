@@ -49,8 +49,6 @@
 	(a)[Z] = (b)[Z]/25.4; \
     }
 
-extern double nmg_eue_dist;		/* from nmg_plot.c */
-
 static char	usage[] = "\
 Usage: %s [-v][-xX lvl][-a abs_tess_tol (default: 0.0)][-r rel_tess_tol (default: 0.01)]\n\
   [-n norm_tess_tol (default: 0.0)][-t type (asc: ascii), (le: little endian), (be: big endian)]\n\

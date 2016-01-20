@@ -44,6 +44,8 @@
 
 #include "common.h"
 
+#include "bio.h"
+
 /* without OBJ_BREP, this entire procedural example is disabled */
 #ifdef OBJ_BREP
 

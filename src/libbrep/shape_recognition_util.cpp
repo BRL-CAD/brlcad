@@ -6,6 +6,7 @@
 #include "bu/log.h"
 #include "bu/str.h"
 #include "bu/malloc.h"
+#include "bn/tol.h"
 #include "brep.h"
 #include "shape_recognition.h"
 
@@ -645,6 +646,75 @@ subbrep_make_brep(struct bu_vls *UNUSED(msgs), struct subbrep_island_data *data)
 
     return 1;
 }
+
+// Tikz LaTeX output from B-Rep wireframes
+int
+ON_BrepTikz(ON_String& s, const ON_Brep *brep, const char *c, const char *pre)
+{
+    struct bu_vls color = BU_VLS_INIT_ZERO;
+    struct bu_vls output = BU_VLS_INIT_ZERO;
+    struct bu_vls prefix = BU_VLS_INIT_ZERO;
+    if (c) {
+	bu_vls_sprintf(&color, "%s", c);
+    } else {
+	bu_vls_sprintf(&color, "gray", c);
+    }
+    if (pre) {
+	bu_vls_sprintf(&prefix, "%s", pre);
+    } else {
+	bu_vls_trunc(&prefix, 0);
+    }
+
+    for (int i = 0; i < brep->m_V.Count(); i++) {
+	bu_vls_printf(&output, "\\coordinate (%sV%d) at (%f, %f, %f);\n", bu_vls_addr(&prefix), i, brep->m_V[i].Point().x, brep->m_V[i].Point().y, brep->m_V[i].Point().z);
+    }
+
+    for (int i = 0; i < brep->m_E.Count(); i++) {
+	const ON_BrepEdge *edge = &(brep->m_E[i]);
+	//int ei = edge->m_edge_index;
+	ON_Curve *ecv = edge->EdgeCurveOf()->Duplicate();
+	if (ecv->IsLinear()) {
+	    bu_vls_printf(&output, "\\draw[%s] (%sV%d) -- (%sV%d);\n", bu_vls_addr(&color), bu_vls_addr(&prefix), edge->Vertex(0)->m_vertex_index, bu_vls_addr(&prefix), edge->Vertex(1)->m_vertex_index);
+	    delete ecv;
+	    continue;
+	}
+	ecv = edge->EdgeCurveOf()->Duplicate();
+	ON_Polyline poly;
+	ON_Curve *ncv = edge->EdgeCurveOf()->Duplicate();
+	int pnt_cnt = ON_Curve_PolyLine_Approx(&poly, ncv, BN_TOL_DIST);
+	if (pnt_cnt) {
+	    if (ecv->IsPolyline()) {
+		ON_3dPoint p = poly[0];
+		if (pnt_cnt) {
+		    bu_vls_printf(&output, "\\draw[%s] (%f, %f, %f)", bu_vls_addr(&color), p.x, p.y, p.z);
+		    for (int si = 1; si < poly.Count(); si++) {
+			p = poly[si];
+			bu_vls_printf(&output, " -- (%f, %f, %f)", p.x, p.y, p.z);
+			if (si+1 == poly.Count()) {
+			    bu_vls_printf(&output, ";\n");
+			}
+		    }
+		}
+	    } else {
+		bu_vls_printf(&output, "\\draw[%s] plot [smooth] coordinates {", bu_vls_addr(&color));
+		for (int si = 0; si < poly.Count(); si++) {
+		    ON_3dPoint p = poly[si];
+		    bu_vls_printf(&output, "(%f,%f,%f) ", p.x, p.y, p.z);
+		}
+		bu_vls_printf(&output, "};\n", bu_vls_addr(&color));
+	    }
+	}
+	delete ecv;
+	delete ncv;
+    }
+
+    s.Append(bu_vls_addr(&output), bu_vls_strlen(&output));
+    bu_vls_free(&color);
+    bu_vls_free(&output);
+    bu_vls_free(&prefix);
+    return 1;
+}
+
 
 
 // Local Variables:

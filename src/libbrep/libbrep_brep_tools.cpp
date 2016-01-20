@@ -118,6 +118,79 @@ int ON_Curve_Has_Tangent(const ON_Curve* curve, double ct_min, double ct_max, do
     return 0;
 }
 
+HIDDEN double
+find_next_point(const ON_Curve* crv, double startdomval, double increment, double tolerance, int stepcount)
+{
+    double inc = increment;
+    if (startdomval + increment > 1.0) inc = 1.0 - startdomval;
+    ON_Interval dom = crv->Domain();
+    ON_3dPoint prev_pt = crv->PointAt(dom.ParameterAt(startdomval));
+    ON_3dPoint next_pt = crv->PointAt(dom.ParameterAt(startdomval + inc));
+    if (prev_pt.DistanceTo(next_pt) > tolerance) {
+        stepcount++;
+        inc = inc / 2;
+        return find_next_point(crv, startdomval, inc, tolerance, stepcount);
+    } else {
+        if (stepcount > 5) return 0.0;
+        return startdomval + inc;
+    }
+}
+
+int ON_Curve_PolyLine_Approx(ON_Polyline *polyline, const ON_Curve *curve, double tol)
+{
+    ON_3dPointArray pnts;
+    if (!curve || !polyline) return 0;
+    if (curve->IsLinear()) {
+	ON_Interval dom = curve->Domain();
+	ON_3dPoint p1 = curve->PointAt(dom.ParameterAt(0.0));
+	ON_3dPoint p2 = curve->PointAt(dom.ParameterAt(1.0));
+	pnts.Append(p1);
+	pnts.Append(p2);
+	(*polyline) = ON_Polyline(pnts);
+	return 2;
+    } else {
+	ON_Interval dom = curve->Domain();
+
+	double domainval = 0.0;
+	double olddomainval = 1.0;
+	int crudestep = 0;
+	// Insert first point.
+	ON_3dPoint p = curve->PointAt(dom.ParameterAt(domainval));
+	pnts.Append(p);
+
+	/* Dynamic sampling approach - start with an initial guess
+	 * for the next point of one tenth of the domain length
+	 * further down the domain from the previous value.  Set a
+	 * maximum physical distance between points of 100 times
+	 * the model tolerance.  Reduce the increment until the
+	 * tolerance is satisfied, then add the point and use it
+	 * as the starting point for the next calculation until
+	 * the whole domain is finished.  Perhaps it would be more
+	 * ideal to base the tolerance on some fraction of the
+	 * curve bounding box dimensions?
+	 */
+
+	while (domainval < 1.0 && crudestep <= 100) {
+	    olddomainval = domainval;
+	    if (crudestep == 0)
+		domainval = find_next_point(curve, domainval, 0.1, tol * 100, 0);
+	    if (crudestep >= 1 || ZERO(domainval)) {
+		crudestep++;
+		domainval = olddomainval + (1.0 - olddomainval) / 100 * crudestep;
+	    }
+	    p = curve->PointAt(dom.ParameterAt(domainval));
+	    pnts.Append(p);
+	}
+	(*polyline) = ON_Polyline(pnts);
+	return pnts.Count();
+    }
+    return 0;
+}
+
+
+
+
+
 bool ON_Surface_IsFlat(ON_Plane *frames, double f_tol)
 {
     double Ndot=1.0;

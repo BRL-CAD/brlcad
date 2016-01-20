@@ -44,6 +44,8 @@
 #include "bu/path.h"
 #include "icv.h"
 #include "wdb.h"
+
+/* FIXME: private API */
 #include "../../libgcv/bot_solidity.h"
 
 

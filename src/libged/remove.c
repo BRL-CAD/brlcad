@@ -229,7 +229,7 @@ ged_remove(struct ged *gedp, int argc, const char *argv[])
 		    av[i] = (const char *)BU_PTBL_GET(&objs, i - 1);
 		}
 		ret = ged_kill(gedp, BU_PTBL_LEN(&objs)+1, av);
-		bu_free(av, "free tmp argv");
+		bu_free((void *)av, "free tmp argv");
 		return ret;
 	    } else {
 		/* TODO - killtree */

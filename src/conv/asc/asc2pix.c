@@ -81,8 +81,10 @@ main(void)
 	/* get a valid hex char in i */
 	do {
 	    a = getchar();
-	    if (a == EOF || a < 0 || a > 255)
-		goto OUT;
+	    if (a == EOF || a < 0 || a > 255) {
+		fflush(stdout);
+		return 0;
+	    }
 	} while ((i = lmap[a]) < 0);
 
 	/* get the next hex char */
@@ -101,10 +103,9 @@ main(void)
 	putc((i | b), stdout);
     }
 
- OUT:
-
     fflush(stdout);
-    exit(0);
+
+    return 0;
 }
 
 /*

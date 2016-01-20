@@ -90,6 +90,7 @@ const char record_type_names[4][24] = {
     "logical record type 'C'"
 };
 
+
 typedef enum _lrt {
     type_a=1,
     type_b=2,
@@ -1551,6 +1552,7 @@ read_dem(
     return status;
 }
 
+
 /* convert 'load-by-column to load-by-row' */
 int
 convert_load_order(
@@ -1599,6 +1601,7 @@ convert_load_order(
 
     return BRLCAD_OK;
 }
+
 
 int
 create_model(

@@ -1098,7 +1098,7 @@ collect_grouping_faces_indexes(struct ga_t *ga,
 		switch (face_type) {
 		    case FACE_V:
 			(*gfi)->index_arr_faces =
-			    (void *)bu_realloc(index_arr_faces_1D,
+			    (void *)bu_realloc((void *)index_arr_faces_1D,
 					       sizeof(size_t *) * (*gfi)->max_faces,
 					       "index_arr_faces");
 
@@ -1109,7 +1109,7 @@ collect_grouping_faces_indexes(struct ga_t *ga,
 		    case FACE_TV:
 		    case FACE_NV:
 			(*gfi)->index_arr_faces =
-			    (void *)bu_realloc(index_arr_faces_2D,
+			    (void *)bu_realloc((void *)index_arr_faces_2D,
 					       sizeof(size_t (*)[2]) * (*gfi)->max_faces,
 					       "index_arr_faces");
 
@@ -1119,7 +1119,7 @@ collect_grouping_faces_indexes(struct ga_t *ga,
 			break;
 		    case FACE_TNV:
 			(*gfi)->index_arr_faces =
-			    (void *)bu_realloc(index_arr_faces_3D,
+			    (void *)bu_realloc((void *)index_arr_faces_3D,
 					       sizeof(size_t (*)[3]) * (*gfi)->max_faces,
 					       "index_arr_faces");
 			index_arr_faces_3D =
@@ -1359,18 +1359,18 @@ populate_triangle_indexes(struct ga_t *ga,
 	ti->max_tri += max_tri_increment;
 	switch (ti->tri_type) {
 	    case FACE_V:
-		ti->index_arr_tri = (void *)bu_realloc(index_arr_tri_1D,
+		ti->index_arr_tri = (void *)bu_realloc((void *)index_arr_tri_1D,
 						       sizeof(size_t) * ti->max_tri * 3, "index_arr_tri");
 		index_arr_tri_1D = (tri_arr_1D_t)(ti->index_arr_tri);
 		break;
 	    case FACE_TV:
 	    case FACE_NV:
-		ti->index_arr_tri = (void *)bu_realloc(index_arr_tri_2D,
+		ti->index_arr_tri = (void *)bu_realloc((void *)index_arr_tri_2D,
 						       sizeof(size_t) * ti->max_tri * 6, "index_arr_tri");
 		index_arr_tri_2D = (tri_arr_2D_t)(ti->index_arr_tri);
 		break;
 	    case FACE_TNV:
-		ti->index_arr_tri = (void *)bu_realloc(index_arr_tri_3D,
+		ti->index_arr_tri = (void *)bu_realloc((void *)index_arr_tri_3D,
 						       sizeof(size_t) * ti->max_tri * 9, "index_arr_tri");
 		index_arr_tri_3D = (tri_arr_3D_t)(ti->index_arr_tri);
 		break;

@@ -42,7 +42,7 @@ eq = "=";
 optional_ws = [ \t]*;
 
 group_begin = "group() {";
-text = [a-z]+;
+txt = [a-z]+;
 group_end = "}";
 
 
@@ -53,8 +53,8 @@ group_end = "}";
     return GROUP_BEGIN;
     }
 
-(optional_ws)(text) {
-	  return TEXT;
+(optional_ws)(txt) {
+	  return TXT;
     }
 
 (optional_ws)(group_end) {

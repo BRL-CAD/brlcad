@@ -31,8 +31,9 @@
 #include <queue>
 #include <set>
 #include <map>
-#include <algorithm>
 #include <sstream>
+
+#include "bio.h"
 
 #include "vmath.h"
 #include "bu/log.h"

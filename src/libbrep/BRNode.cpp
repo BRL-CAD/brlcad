@@ -17,10 +17,8 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-#include "common.h"
 
-/* systeam headers */
-#include <algorithm> // for std::max
+#include "common.h"
 
 /* library headers */
 extern "C" {

@@ -51,19 +51,19 @@
 /** list of legal command line options for use with bu_getopt()  */
 char *options = "hd:";
 
-/** flag for printing names of objects as encountered  */
+/** flag for printing names of objects as encountered */
 #define DEBUG_NAMES 1
-/** print debugging statistics flag  */
+/** print debugging statistics flag */
 #define DEBUG_STATS 2
-/** holds bit values for various debug settings  */
+/** holds bit values for various debug settings */
 long debug = 0;
-/** when non-zero, program prints information for the user about progress  */
+/** when non-zero, program prints information for the user about progress */
 int verbose = 0;
 
 /**
- *	@brief tell user how to invoke this program, then exit
- *      @param name the name of the running program (argv[0])
- *	@param str a pointer to a null-terminated character string
+ * @brief tell user how to invoke this program, then exit
+ * @param name the name of the running program (argv[0])
+ * @param str a pointer to a null-terminated character string
  */
 void usage(const char *name, const char *str)
 {
@@ -76,17 +76,17 @@ void usage(const char *name, const char *str)
 
 /** @if no
  * @endif
- *	@brief Parse command line flags.
+ * @brief Parse command line flags.
  *
- *	This routine handles parsing of all command line options.
+ * This routine handles parsing of all command line options.
  *
- *	@param ac count of arguments
- *	@param av array of pointers to null-terminated strings
- *	@return index into av of first argument past options (new ac value)
+ * @param ac count of arguments
+ * @param av array of pointers to null-terminated strings
+ * @return index into av of first argument past options (new ac value)
  */
 int parse_args(int ac, char *av[])
 {
-    int  c;
+    int c;
     char *strrchr();
     char *tmp_basename = (char *)bu_calloc(strlen(av[0]), sizeof(char), "parse_args");;
 
@@ -116,7 +116,7 @@ int parse_args(int ac, char *av[])
  * @brief This routine is called when a region is first encountered in the
  * hierarchy when processing a tree
  *
- *	@param pathp A listing of all the nodes traversed to get to this node in the database
+ * @param pathp A listing of all the nodes traversed to get to this node in the database
  */
 int
 region_start(struct db_tree_state *UNUSED(tsp),
@@ -136,7 +136,7 @@ region_start(struct db_tree_state *UNUSED(tsp),
 /**
  * @brief This is called when all sub-elements of a region have been processed by leaf_func.
  *
- * @param pathp   db path
+ * @param pathp db path
  * @param curtree current tree
  *
  * @return TREE_NULL if data in curtree was "stolen", otherwise db_walk_tree will
@@ -163,12 +163,12 @@ region_end(struct db_tree_state *UNUSED(tsp),
 
 
 /**
- *	@brief Function to process a leaf node.
+ * @brief Function to process a leaf node.
  *
- *     	This is actually invoked from db_recurse() from db_walk_subtree().
+ * This is actually invoked from db_recurse() from db_walk_subtree().
  *
- *	@return (union tree *) representing the leaf, or
- *	TREE_NULL if leaf does not exist or has an error.
+ * @return (union tree *) representing the leaf, or
+ * TREE_NULL if leaf does not exist or has an error.
  */
 union tree *
 leaf_func (struct db_tree_state *UNUSED(tsp),
@@ -225,8 +225,8 @@ leaf_func (struct db_tree_state *UNUSED(tsp),
 
 
 /**
- *	Call parse_args to handle command line arguments first, then
- *	process input.
+ * Call parse_args to handle command line arguments first, then
+ * process input.
  */
 int main(int ac, char *av[])
 {
@@ -258,10 +258,10 @@ int main(int ac, char *av[])
     bu_free(tmp_basename, "tmp_basename free");
 
     /*
-     *  Build an index of what's in the database.
-     *  rt_dirbuild() returns an "instance" pointer which describes
-     *  the database.  It also gives you back the
-     *  title string in the header (ID) record.
+     * Build an index of what's in the database.
+     * rt_dirbuild() returns an "instance" pointer which describes
+     * the database.  It also gives you back the
+     * title string in the header (ID) record.
      */
     rtip = rt_dirbuild(av[arg_count], idbuf, sizeof(idbuf));
     if (rtip == RTI_NULL) {

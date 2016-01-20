@@ -54,13 +54,15 @@ struct egg_conv_data {
     struct bn_tol tol;
 };
 
+
 static void
 usage(const char *argv0)
 {
     bu_log("Usage: %s [-v89] [-xX lvl] [-a abs_tess_tol] [-r rel_tess_tol] [-n norm_tess_tol]\n", argv0);
     bu_log("[-D dist_calc_tol] [-P #_of_CPUs] [-o output_file_name.egg] brlcad_db.g object(s)\n");
-    bu_exit(1,NULL);
+    bu_exit(1, NULL);
 }
+
 
 static void
 nmg_to_egg(struct nmgregion *r, const struct db_full_path *pathp, int UNUSED(region_id), int UNUSED(material_id), float UNUSED(color[3]), void *client_data)

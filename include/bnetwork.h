@@ -39,24 +39,13 @@
 #ifndef BNETWORK_H
 #define BNETWORK_H
 
-/* make sure this header always comes before bio.h due to system
- * header ordering requirements.  this is mostly a windows issue, but
- * we want to detect the issue early.
- */
-#if defined(BIO_H)
-#  error "The #include for bio.h must come after this header (Windows Sockets portability)."
-#endif
-
 #if defined(_WIN32) && !defined(__CYGWIN__)
 #  ifndef _WINSOCKAPI_
 #    include <winsock2.h> /* link against ws2_32 library */
-
-#   undef rad1 /* Win32 radio button 1 */
-#   undef rad2 /* Win32 radio button 2 */
-#   undef small /* defined as part of the Microsoft Interface Definition Language (MIDL) */
-#   undef IN
-#   undef OUT
-
+#    include <ws2tcpip.h> /* provides extensions */
+#    undef rad1 /* Win32 radio button 1 */
+#    undef rad2 /* Win32 radio button 2 */
+#    undef small /* defined as part of the Microsoft Interface Definition Language (MIDL) */
 #  endif
 #else
 #  include <sys/types.h>

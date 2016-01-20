@@ -34,6 +34,9 @@
 #include <string.h>
 #include <ctype.h>
 
+#ifdef __restrict
+#  undef __restrict
+#endif
 #define __restrict /* quell gcc 4.1.2 system regex.h -pedantic-errors */
 #include <regex.h>
 
@@ -89,6 +92,7 @@ struct render_verts
     struct vertex *v;
 };
 
+
 struct name_conv_list
 {
     char *brlcad_name;
@@ -105,17 +109,20 @@ struct ptc_plane
     double e1[3], e2[3], e3[3], origin[3];
 };
 
+
 struct ptc_cylinder
 {
     double e1[3], e2[3], e3[3], origin[3];
     double radius;
 };
 
+
 union ptc_surf
 {
     struct ptc_plane plane;
     struct ptc_cylinder cylinder;
 };
+
 
 struct ptc_surf_list
 {
@@ -125,15 +132,15 @@ struct ptc_surf_list
 } *surf_root=(struct ptc_surf_list *)NULL;
 
 /* for type in struct ptc_plane and struct ptc_cylinder */
-#define SURF_PLANE	1
-#define SURF_CYLINDER	2
+#define SURF_PLANE 1
+#define SURF_CYLINDER 2
 
-#define MAX_LINE_SIZE	512
+#define MAX_LINE_SIZE 512
 
-#define UNKNOWN_TYPE	0
-#define ASSEMBLY_TYPE	1
-#define PART_TYPE	2
-#define CUT_SOLID_TYPE	3
+#define UNKNOWN_TYPE 0
+#define ASSEMBLY_TYPE 1
+#define PART_TYPE 2
+#define CUT_SOLID_TYPE 3
 
 char *
 Build_unique_name(char *name)
@@ -162,6 +169,7 @@ Build_unique_name(char *name)
     return bu_vls_addr(&ret_name);
 }
 
+
 static struct name_conv_list *
 Add_new_name(char *name, unsigned int obj, int type)
 {
@@ -183,7 +191,7 @@ Add_new_name(char *name, unsigned int obj, int type)
     if (do_regex && type != CUT_SOLID_TYPE) {
 	regmatch_t pmatch;
 
-	if (regexec(&reg_cmp, ptr->brlcad_name, 1, &pmatch, 0 ) == 0) {
+	if (regexec(&reg_cmp, ptr->brlcad_name, 1, &pmatch, 0) == 0) {
 	    /* got a match */
 	    bu_strlcpy(&ptr->brlcad_name[pmatch.rm_so], &ptr->brlcad_name[pmatch.rm_eo], MAX_LINE_SIZE);
 	}
@@ -229,6 +237,7 @@ Add_new_name(char *name, unsigned int obj, int type)
     return ptr;
 }
 
+
 static char *
 Get_unique_name(char *name, unsigned int obj, int type)
 {
@@ -261,6 +270,7 @@ Get_unique_name(char *name, unsigned int obj, int type)
     return ptr->brlcad_name;
 }
 
+
 static char *
 Get_solid_name(char *name, unsigned int obj)
 {
@@ -276,6 +286,7 @@ Get_solid_name(char *name, unsigned int obj)
 
     return ptr->solid_name;
 }
+
 
 static void
 Convert_assy(char *line)
@@ -366,59 +377,59 @@ Convert_assy(char *line)
 		bu_log("\tmember (%s)\n", brlcad_name);
 	    wmem = mk_addmember(brlcad_name, &head.l, NULL, WMOP_UNION);
 	} else if (!bu_strncmp(&line1[start], "matrix", 6) || !bu_strncmp(&line1[start], "MATRIX", 6)) {
-	  if (wmem) {
-	    size_t j;
-	    double scale, inv_scale;
+	    if (wmem) {
+		size_t j;
+		double scale, inv_scale;
 
-	    for (j=0; j<4; j++) {
-		bu_fgets(line1, MAX_LINE_SIZE, fd_in);
-		sscanf(line1, "%f %f %f %f", &mat_col[0], &mat_col[1], &mat_col[2], &mat_col[3]);
-		for (i=0; i<4; i++)
-		    wmem->wm_mat[4*i+j] = mat_col[i];
-	    }
+		for (j=0; j<4; j++) {
+		    bu_fgets(line1, MAX_LINE_SIZE, fd_in);
+		    sscanf(line1, "%f %f %f %f", &mat_col[0], &mat_col[1], &mat_col[2], &mat_col[3]);
+		    for (i=0; i<4; i++)
+			wmem->wm_mat[4*i+j] = mat_col[i];
+		}
 
-	    /* convert this matrix to separate scale factor into element #15 */
+		/* convert this matrix to separate scale factor into element #15 */
 /*			scale = MAGNITUDE(&wmem->wm_mat[0]); */
-	    scale = pow(bn_mat_det3(wmem->wm_mat), 1.0/3.0);
-	    if (debug) {
-		bn_mat_print(brlcad_name, wmem->wm_mat);
-		bu_log("\tscale = %g, conv_factor = %g\n", scale, conv_factor);
-	    }
-	    if (!ZERO(scale - 1.0)) {
-		inv_scale = 1.0/scale;
-		for (j=0; j<3; j++)
-		    HSCALE(&wmem->wm_mat[j*4], &wmem->wm_mat[j*4], inv_scale);
-
-		/* clamp rotation elements to fabs(1.0) */
-		for (j=0; j<3; j++) {
-		    for (i=0; i<3; i++) {
-			if (wmem->wm_mat[j*4 + i] > 1.0)
-			    wmem->wm_mat[j*4 + i] = 1.0;
-			else if (wmem->wm_mat[j*4 + i] < -1.0)
-			    wmem->wm_mat[j*4 + i] = -1.0;
-		    }
-		}
-
-		if (top_level)
-		    wmem->wm_mat[15] *= (inv_scale/conv_factor);
-		else
-		    wmem->wm_mat[15] *= inv_scale;
-	    } else if (top_level)
-		wmem->wm_mat[15] /= conv_factor;
-
-	    if (top_level && do_reorient) {
-		/* apply re_orient transformation here */
+		scale = pow(bn_mat_det3(wmem->wm_mat), 1.0/3.0);
 		if (debug) {
-		    bu_log("Applying re-orient matrix to member %s\n", brlcad_name);
-		    bn_mat_print("re-orient matrix", re_orient);
+		    bn_mat_print(brlcad_name, wmem->wm_mat);
+		    bu_log("\tscale = %g, conv_factor = %g\n", scale, conv_factor);
 		}
-		bn_mat_mul2(re_orient, wmem->wm_mat);
+		if (!ZERO(scale - 1.0)) {
+		    inv_scale = 1.0/scale;
+		    for (j=0; j<3; j++)
+			HSCALE(&wmem->wm_mat[j*4], &wmem->wm_mat[j*4], inv_scale);
+
+		    /* clamp rotation elements to fabs(1.0) */
+		    for (j=0; j<3; j++) {
+			for (i=0; i<3; i++) {
+			    if (wmem->wm_mat[j*4 + i] > 1.0)
+				wmem->wm_mat[j*4 + i] = 1.0;
+			    else if (wmem->wm_mat[j*4 + i] < -1.0)
+				wmem->wm_mat[j*4 + i] = -1.0;
+			}
+		    }
+
+		    if (top_level)
+			wmem->wm_mat[15] *= (inv_scale/conv_factor);
+		    else
+			wmem->wm_mat[15] *= inv_scale;
+		} else if (top_level)
+		    wmem->wm_mat[15] /= conv_factor;
+
+		if (top_level && do_reorient) {
+		    /* apply re_orient transformation here */
+		    if (debug) {
+			bu_log("Applying re-orient matrix to member %s\n", brlcad_name);
+			bn_mat_print("re-orient matrix", re_orient);
+		    }
+		    bn_mat_mul2(re_orient, wmem->wm_mat);
+		}
+		if (debug)
+		    bn_mat_print("final matrix", wmem->wm_mat);
+	    } else {
+		bu_log("Matrix present before wmem is initialized! (%s)\n", brlcad_name);
 	    }
-	    if (debug)
-		bn_mat_print("final matrix", wmem->wm_mat);
-	  } else {
-	       bu_log("Matrix present before wmem is initialized! (%s)\n", brlcad_name);
-	  }
 	} else {
 	    bu_log("Unrecognized line in assembly (%s)\n%s\n", name, line1);
 	}
@@ -433,6 +444,7 @@ Convert_assy(char *line)
     top_level = 0;
 
 }
+
 
 static void
 do_modifiers(char *line1, int *start, struct wmember *head, char *name, fastf_t *min, fastf_t *max)
@@ -553,6 +565,7 @@ do_modifiers(char *line1, int *start, struct wmember *head, char *name, fastf_t 
     }
 }
 
+
 void
 Add_face(int *face)
 {
@@ -568,6 +581,7 @@ Add_face(int *face)
     VMOVE(&bot_faces[3*bot_fcurr], face);
     bot_fcurr++;
 }
+
 
 static void
 Convert_part(char *line)
@@ -864,6 +878,7 @@ Convert_part(char *line)
     return;
 }
 
+
 static void
 Convert_input(void)
 {
@@ -889,6 +904,7 @@ Convert_input(void)
     }
 }
 
+
 static void
 Rm_nulls(void)
 {
@@ -898,7 +914,7 @@ Rm_nulls(void)
 
     dbip = fd_out->dbip;
 
-    if (debug || BU_PTBL_LEN(&null_parts) ) {
+    if (debug || BU_PTBL_LEN(&null_parts)) {
 	bu_log("Deleting references to the following null parts:\n");
 	for (i=0; i<BU_PTBL_LEN(&null_parts); i++) {
 	    char *save_name;
@@ -997,6 +1013,7 @@ Rm_nulls(void)
     } FOR_ALL_DIRECTORY_END;
 }
 
+
 static void
 proe_usage(const char *argv0)
 {
@@ -1018,6 +1035,7 @@ proe_usage(const char *argv0)
     bu_log("	The -t option specifies the minimum distance between two distinct vertices (mm).\n");
     bu_log("	The -x option specifies an RT debug flags (see raytrace.h).\n");
 }
+
 
 int
 main(int argc, char **argv)
@@ -1082,7 +1100,7 @@ main(int argc, char **argv)
 	    case 'i':
 		id_no = atoi(bu_optarg);
 		break;
-	    case  'I':
+	    case 'I':
 		const_id = atoi(bu_optarg);
 		if (const_id < 0) {
 		    bu_log("Illegal value for '-I' option, must be zero or greater!!!\n");
@@ -1162,6 +1180,7 @@ main(int argc, char **argv)
 
     return 0;
 }
+
 
 /*
  * Local Variables:
