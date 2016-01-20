@@ -80,8 +80,8 @@ void rt_pt_sort(register fastf_t *t, int npts);
 #define MAX_RATIO 10.0	/* maximum allowed height-to-width ration for triangles */
 #define RAT  M_SQRT1_2
 
-#define OUT 0
-#define IN 1
+#define T_OUT 0
+#define T_IN 1
 
 /* hit_surfno is set to one of these */
 #define TGC_NORM_BODY (1)	/* compute normal */
@@ -1264,15 +1264,15 @@ rt_tgc_vshot(struct soltab **stp, register struct xray **rp, struct seg *segp, i
 	    /* Height vector is unitized (tgc->tgc_sH == 1.0) */
 	    if (zval < 1.0 && zval > 0.0) {
 		if (++intersect == 2) {
-		    pt[IN] = k[i];
+		    pt[T_IN] = k[i];
 		}  else
-		    pt[OUT] = k[i];
+		    pt[T_OUT] = k[i];
 	    }
 	}
 	/* Reuse C to hold values of intersect and k. */
 	C[ix].dgr = intersect;
-	C[ix].cf[OUT] = pt[OUT];
-	C[ix].cf[IN]  = pt[IN];
+	C[ix].cf[T_OUT] = pt[T_OUT];
+	C[ix].cf[T_IN]  = pt[T_IN];
     }
 
     /* for each ray/cone pair */
@@ -1281,8 +1281,8 @@ rt_tgc_vshot(struct soltab **stp, register struct xray **rp, struct seg *segp, i
 
 	tgc = (struct tgc_specific *)stp[ix]->st_specific;
 	intersect = C[ix].dgr;
-	pt[OUT] = C[ix].cf[OUT];
-	pt[IN]  = C[ix].cf[IN];
+	pt[T_OUT] = C[ix].cf[T_OUT];
+	pt[T_IN]  = C[ix].cf[T_IN];
 	/* segp[ix].seg_out.hit_normal holds pprime */
 	VMOVE(pprime, segp[ix].seg_out.hit_normal);
 	/* segp[ix].seg_in.hit_normal holds dprime */
@@ -1292,19 +1292,19 @@ rt_tgc_vshot(struct soltab **stp, register struct xray **rp, struct seg *segp, i
 	    /* If two between-plane intersections exist, they are
 	     * the hit points for the ray.
 	     */
-	    segp[ix].seg_in.hit_dist = pt[IN] * t_scale;
+	    segp[ix].seg_in.hit_dist = pt[T_IN] * t_scale;
 	    segp[ix].seg_in.hit_surfno = TGC_NORM_BODY;	/* compute N */
-	    VJOIN1(segp[ix].seg_in.hit_vpriv, pprime, pt[IN], dprime);
+	    VJOIN1(segp[ix].seg_in.hit_vpriv, pprime, pt[T_IN], dprime);
 
-	    segp[ix].seg_out.hit_dist = pt[OUT] * t_scale;
+	    segp[ix].seg_out.hit_dist = pt[T_OUT] * t_scale;
 	    segp[ix].seg_out.hit_surfno = TGC_NORM_BODY;	/* compute N */
-	    VJOIN1(segp[ix].seg_out.hit_vpriv, pprime, pt[OUT], dprime);
+	    VJOIN1(segp[ix].seg_out.hit_vpriv, pprime, pt[T_OUT], dprime);
 	} else if (intersect == 1) {
 	    int nflag;
 	    /*
-	     * If only one between-plane intersection exists (pt[OUT]),
+	     * If only one between-plane intersection exists (pt[T_OUT]),
 	     * then the other intersection must be on
-	     * one of the planar surfaces (pt[IN]).
+	     * one of the planar surfaces (pt[T_IN]).
 	     *
 	     * Find which surface it lies on by calculating the
 	     * X and Y values of the line as it intersects each
@@ -1329,10 +1329,10 @@ rt_tgc_vshot(struct soltab **stp, register struct xray **rp, struct seg *segp, i
 	    alf2 = ALPHA(work[X], work[Y], tgc->tgc_AAdCC, tgc->tgc_BBdDD);
 
 	    if (alf1 <= 1.0) {
-		pt[IN] = b;
+		pt[T_IN] = b;
 		nflag = TGC_NORM_BOT; /* copy reverse normal */
 	    } else if (alf2 <= 1.0) {
-		pt[IN] = t;
+		pt[T_IN] = t;
 		nflag = TGC_NORM_TOP;	/* copy normal */
 	    } else {
 		/* intersection apparently invalid */
@@ -1340,22 +1340,22 @@ rt_tgc_vshot(struct soltab **stp, register struct xray **rp, struct seg *segp, i
 		continue;
 	    }
 
-	    /* pt[OUT] on skin, pt[IN] on end */
-	    if (pt[OUT] >= pt[IN]) {
-		segp[ix].seg_in.hit_dist = pt[IN] * t_scale;
+	    /* pt[T_OUT] on skin, pt[T_IN] on end */
+	    if (pt[T_OUT] >= pt[T_IN]) {
+		segp[ix].seg_in.hit_dist = pt[T_IN] * t_scale;
 		segp[ix].seg_in.hit_surfno = nflag;
 
-		segp[ix].seg_out.hit_dist = pt[OUT] * t_scale;
+		segp[ix].seg_out.hit_dist = pt[T_OUT] * t_scale;
 		segp[ix].seg_out.hit_surfno = TGC_NORM_BODY;	/* compute N */
 		/* transform-space vector needed for normal */
-		VJOIN1(segp[ix].seg_out.hit_vpriv, pprime, pt[OUT], dprime);
+		VJOIN1(segp[ix].seg_out.hit_vpriv, pprime, pt[T_OUT], dprime);
 	    } else {
-		segp[ix].seg_in.hit_dist = pt[OUT] * t_scale;
+		segp[ix].seg_in.hit_dist = pt[T_OUT] * t_scale;
 		/* transform-space vector needed for normal */
 		segp[ix].seg_in.hit_surfno = TGC_NORM_BODY;	/* compute N */
-		VJOIN1(segp[ix].seg_in.hit_vpriv, pprime, pt[OUT], dprime);
+		VJOIN1(segp[ix].seg_in.hit_vpriv, pprime, pt[T_OUT], dprime);
 
-		segp[ix].seg_out.hit_dist = pt[IN] * t_scale;
+		segp[ix].seg_out.hit_dist = pt[T_IN] * t_scale;
 		segp[ix].seg_out.hit_surfno = nflag;
 	    }
 	} else {

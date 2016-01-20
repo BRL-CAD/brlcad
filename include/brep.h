@@ -39,9 +39,16 @@ extern "C++" {
 
 #include "bu/ptbl.h"
 #include "bn/dvec.h"
-#include "opennurbs.h"
 #include <iostream>
 #include <fstream>
+
+/* because we're including bio.h in a public header and bsocket/bio have an
+ * ordering dependency, include bsocket.h in the correct order to ensure
+ * we don't get ordering errors */
+#include "bsocket.h"
+#include "bio.h" /* needed to include windows.h with protections */
+#define ON_NO_WINDOWS 1 /* don't let opennurbs include windows.h */
+#include "opennurbs.h"
 
 namespace brlcad {
 class BBNode;
@@ -1415,6 +1422,8 @@ struct csg_object_params {
     int csg_vert_cnt;
     int *csg_faces;
     point_t *csg_verts;
+    /* information flags */
+    int half_cyl;
 };
 
 /* Forward declarations */

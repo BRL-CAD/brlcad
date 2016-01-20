@@ -53,9 +53,7 @@
 
 
 /* Define to use double floating point precision */
-/*
 #define MD_CONF_DOUBLE_PRECISION
-*/
 
 
 /* Define to use double precision just quadric maths. Very strongly recommended. */
@@ -138,35 +136,50 @@ static cpuInfo mdCpuInfo;
 
 
 #ifdef MD_CONF_DOUBLE_PRECISION
+
 typedef double mdf;
-#define mdfmin(x,y) fmin((x),(y))
-#define mdfmax(x,y) fmax((x),(y))
-#define mdffloor(x) floor(x)
-#define mdfceil(x) ceil(x)
-#define mdfround(x) round(x)
-#define mdfsqrt(x) sqrt(x)
-#define mdfcbrt(x) cbrt(x)
-#define mdfabs(x) fabs(x)
-#define mdflog2(x) log2(x)
-#define mdfacos(x) acos(x)
+#  define mdfabs(x) fabs(x)
+#  define mdfacos(x) acos(x)
+#  define mdfcbrt(x) cbrt(x)
+#  define mdfceil(x) ceil(x)
+#  define mdffloor(x) floor(x)
+#  define mdfmax(x,y) FMAX((x),(y))
+#  define mdfsqrt(x) sqrt(x)
+
+#  ifdef HAVE_LOG2
+#    define mdflog2(x) log2(x)
+#  else
+#    define mdflog2(x) (log(x) / log(2))
+#  endif
+#  define mdfmin(x,y) FMIN((x),(y))
+/* or round() or nearbyint() or lrint() -- see lrint in common.h */
+#  define mdfround(x) rint(x)
+
 #else
+
 typedef float mdf;
-#define mdfmin(x,y) fminf((x),(y))
-#define mdfmax(x,y) fmaxf((x),(y))
-#define mdffloor(x) floorf(x)
-#define mdfceil(x) ceilf(x)
-#define mdfround(x) roundf(x)
-#define mdfsqrt(x) sqrtf(x)
-#define mdfcbrt(x) cbrtf(x)
-#define mdfabs(x) fabsf(x)
-#define mdflog2(x) log2f(x)
-#define mdfacos(x) acosf(x)
+#  define mdfabs(x) fabsf(x)
+#  define mdfacos(x) acosf(x)
+#  define mdfcbrt(x) cbrtf(x)
+#  define mdfceil(x) ceilf(x)
+#  define mdffloor(x) floorf(x)
+#  define mdfmax(x,y) fmaxf((x),(y))
+#  define mdfsqrt(x) sqrtf(x)
+
+#  ifdef HAVE_LOG2F
+#    define mdflog2(x) log2f(x)
+#  else
+#    define mdflog2(x) (logf(x) / logf(2))
+#  endif
+#  define mdfmin(x,y) fminf((x),(y))
+#  define mdfround(x) roundf(x)
+
 #endif
 
 #ifdef MD_CONF_DOUBLE_PRECISION
-#ifndef MD_CONF_QUADRICS_DOUBLE_PRECISION
-#define MD_CONF_QUADRICS_DOUBLE_PRECISION
-#endif
+#  ifndef MD_CONF_QUADRICS_DOUBLE_PRECISION
+#    define MD_CONF_QUADRICS_DOUBLE_PRECISION
+#  endif
 #endif
 
 
@@ -1126,7 +1139,7 @@ static mdf mdEdgeCollapsePenaltyTriangle(mdf *newpoint, mdf *oldpoint, mdf *left
 	newcompactness /= norm;
 	VSUB2(oldvectc, oldpoint, rightpoint);
 	oldcompactness = (MD_COMPACTNESS_NORMALIZATION_FACTOR * mdfsqrt(VDOT(oldnormal, oldnormal))) / (vecta2 + VDOT(oldvectb, oldvectb) + VDOT(oldvectc, oldvectc));
-	compactness = fmin(compactnesstarget, oldcompactness) - newcompactness;
+	compactness = mdfmin(compactnesstarget, oldcompactness) - newcompactness;
 
 	if (compactness > 0.0)
 	    penalty = compactness;
@@ -3576,7 +3589,7 @@ static void mdUpdateStatus(mdMesh *mesh, mdThreadInit *threadinit, int stage, md
 	else if (status->stage == MD_STATUS_STAGE_BUILDTRIREFS)
 	    subprogress = (double)buildrefcount / (double)mesh->tricount;
 
-	subprogress = fmax(0.0, fmin(1.0, subprogress));
+	subprogress = mdfmax(0.0, mdfmin(1.0, subprogress));
     }
 
     progress = 0.0;

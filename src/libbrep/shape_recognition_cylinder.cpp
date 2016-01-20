@@ -12,6 +12,37 @@
 #define L3_OFFSET 6
 #define L4_OFFSET 8
 
+
+int
+cyl_validate_face(const ON_BrepFace *forig, const ON_BrepFace *fcand)
+{
+    ON_Cylinder corig;
+    ON_Surface *csorig = forig->SurfaceOf()->Duplicate();
+    csorig->IsCylinder(&corig, BREP_CYLINDRICAL_TOL);
+    delete csorig;
+    ON_Line lorig(corig.circle.Center(), corig.circle.Center() + corig.Axis());
+
+    ON_Cylinder ccand;
+    ON_Surface *cscand = fcand->SurfaceOf()->Duplicate();
+    cscand->IsCylinder(&ccand, BREP_CYLINDRICAL_TOL);
+    delete cscand;
+    double d1 = lorig.DistanceTo(ccand.circle.Center());
+    double d2 = lorig.DistanceTo(ccand.circle.Center() + ccand.Axis());
+
+    // Make sure the cylinder axes are colinear
+    if (corig.Axis().IsParallelTo(ccand.Axis(), VUNITIZE_TOL) == 0) return 0;
+    if (fabs(d1) > BREP_CYLINDRICAL_TOL) return 0;
+    if (fabs(d2) > BREP_CYLINDRICAL_TOL) return 0;
+
+    // Make sure the radii are the same
+    if (!NEAR_ZERO(corig.circle.Radius() - ccand.circle.Radius(), VUNITIZE_TOL)) return 0;
+
+    // TODO - make sure negative/positive status for both cyl faces is the same.
+
+    return 1;
+}
+
+
 /* Return -1 if the cylinder face is pointing in toward the cylinder axis,
  * 1 if it is pointing out, and 0 if there is some other problem */
 int
@@ -39,139 +70,16 @@ negative_cylinder(const ON_Brep *brep, int face_index, double cyl_tol) {
     return ret;
 }
 
-
 int
-cylinder_csg(struct bu_vls *msgs, struct subbrep_shoal_data *data, fastf_t cyl_tol)
+cyl_implicit_plane(const ON_Brep *brep, int lc, int *le, ON_SimpleArray<ON_Plane> *cyl_planes)
 {
-    //bu_log("cyl processing %s\n", bu_vls_addr(data->i->key));
-
-    int implicit_plane_ind = -1;
-    std::set<int> cylindrical_surfaces;
-    std::set<int>::iterator c_it;
-
-    const ON_Brep *brep = data->i->brep;
-
-    // Collect faces, edges and edge midpoints.
-    ON_SimpleArray<ON_3dPoint> edge_midpnts;
-    std::set<int> edges;
-    for (int i = 0; i < data->shoal_loops_cnt; i++) {
-	const ON_BrepLoop *loop = &(brep->m_L[data->shoal_loops[i]]);
-	cylindrical_surfaces.insert(loop->Face()->m_face_index);
-	for (int ti = 0; ti < loop->m_ti.Count(); ti++) {
-	    const ON_BrepTrim *trim = &(brep->m_T[loop->m_ti[ti]]);
-	    const ON_BrepEdge *edge = &(brep->m_E[trim->m_ei]);
-	    if (trim->m_ei != -1 && edge->TrimCount() > 0) {
-		edges.insert(trim->m_ei);
-		ON_3dPoint midpt = edge->EdgeCurveOf()->PointAt(edge->EdgeCurveOf()->Domain().Mid());
-		edge_midpnts.Append(midpt);
-	    }
-	}
-    }
-
-
-    // Collect edges that link to one plane in the shoal.  Two non-planar faces
-    // both in the shoal means a culled edge and verts
-    std::set<int> nondegen_edges;
-    std::set<int> degen_edges;
-    for (c_it = edges.begin(); c_it != edges.end(); c_it++) {
-	const ON_BrepEdge *edge = &(brep->m_E[*c_it]);
-	int face_cnt = 0;
-	for (int i = 0; i < edge->m_ti.Count(); i++) {
-	    const ON_BrepTrim *trim = &(brep->m_T[edge->m_ti[i]]);
-	    if (((surface_t *)data->i->face_surface_types)[trim->Face()->m_face_index] == SURFACE_PLANE) continue;
-	    if (cylindrical_surfaces.find(trim->Face()->m_face_index) != cylindrical_surfaces.end())
-		face_cnt++;
-	}
-	if (face_cnt == 2) {
-	    degen_edges.insert(*c_it);
-	    //bu_log("edge %d is degenerate\n", *s_it);
-	} else {
-	    nondegen_edges.insert(*c_it);
-	}
-    }
-
-    // Update the island's info on degenerate edges and vertices
-    std::set<int> nullv;
-    std::set<int> nulle;
-    array_to_set(&nullv, data->i->null_verts, data->i->null_vert_cnt);
-    array_to_set(&nulle, data->i->null_edges, data->i->null_edge_cnt);
-    for (c_it = degen_edges.begin(); c_it != degen_edges.end(); c_it++) {
-	const ON_BrepEdge *edge = &(brep->m_E[*c_it]);
-	nullv.insert(edge->Vertex(0)->m_vertex_index);
-	nullv.insert(edge->Vertex(1)->m_vertex_index);
-	nulle.insert(*c_it);
-    }	
-    set_to_array(&(data->i->null_verts), &(data->i->null_vert_cnt), &nullv);
-    set_to_array(&(data->i->null_edges), &(data->i->null_edge_cnt), &nulle);
-
-
-    // Now, any non-linear edge that isn't degenerate should be supplying a
-    // plane.  (We don't currently handle non-planar edges like those from a
-    // sphere subtracted from a cylinder.)  Liner curves are saved - they need
-    // special interpretation for cylinders and cones (spheres shouldn't have
-    // any.)
-    ON_SimpleArray<ON_Plane> non_linear_edge_planes;
     std::set<int> linear_edges;
-    for (c_it = nondegen_edges.begin(); c_it != nondegen_edges.end(); c_it++) {
-	const ON_BrepEdge *edge = &(brep->m_E[*c_it]);
-	ON_Curve *ecv = edge->EdgeCurveOf()->Duplicate();
-	if (!ecv->IsLinear()) {
-	    ON_Plane eplane;
-	    int have_planar_face = 0;
-	    // First, see if the edge has a real planar face associated with it.  If it does,
-	    // go with that plane.
-	    for (int ti = 0; ti < edge->m_ti.Count(); ti++) {
-		const ON_BrepTrim *t = &(brep->m_T[edge->m_ti[ti]]);
-		const ON_BrepFace *f = t->Face();
-		surface_t st = ((surface_t *)data->i->face_surface_types)[f->m_face_index];
-		if (st == SURFACE_PLANE) {
-		    f->SurfaceOf()->IsPlanar(&eplane, BREP_PLANAR_TOL);
-		    have_planar_face = 1;
-		    break;
-		}
-	    }
-	    // No real face - deduce a plane from the curve
-	    if (!have_planar_face) {
-		ON_Curve *ecv2 = edge->EdgeCurveOf()->Duplicate();
-		if (!ecv2->IsPlanar(&eplane, cyl_tol)) {
-		    if (msgs) bu_vls_printf(msgs, "%*sNonplanar edge in cylinder (%s) - no go\n", L3_OFFSET, " ", bu_vls_addr(data->i->key));
-		    delete ecv;
-		    delete ecv2;
-		    return 0;
-		}
-		delete ecv2;
-	    }
-	    non_linear_edge_planes.Append(eplane);
-	} else {
-	    linear_edges.insert(*c_it);
-	}
-	delete ecv;
-    }
-
-    // Now, build a list of unique planes
-    ON_SimpleArray<ON_Plane> cyl_planes;
-    for (int i = 0; i < non_linear_edge_planes.Count(); i++) {
-	int have_plane = 0;
-	ON_Plane p1 = non_linear_edge_planes[i];
-	ON_3dVector p1n = p1.Normal();
-	for (int j = 0; j < cyl_planes.Count(); j++) {
-	    ON_Plane p2 = cyl_planes[j];
-	    ON_3dVector p2n = p2.Normal();
-	    if (p2n.IsParallelTo(p1n, 0.01) && fabs(p2.DistanceTo(p1.Origin())) < 0.001) {
-		have_plane = 1;
-		break;
-	    }
-	}
-	if (!have_plane) {
-	    cyl_planes.Append(p1);
-	}
-    }
-
-    ////////// Cylinder (and cone) specific /////////////////////////////////////
+    std::set<int>::iterator c_it;
+    array_to_set(&linear_edges, le, lc);
     // If we have two non-linear edges remaining, construct a plane from them.
     // If we have a count other than two or zero, return.
     if (linear_edges.size() != 2 && linear_edges.size() != 0)
-       	return 0;
+       	return -2;
     if (linear_edges.size() == 2 ) {
 	std::set<int> verts;
 	// If both edges share a pre-existing face that is planar, use the inverse of that
@@ -192,102 +100,23 @@ cylinder_csg(struct bu_vls *msgs, struct subbrep_shoal_data *data, fastf_t cyl_t
 
 	// If the fourth point is not coplanar with the other three, we've hit a case
 	// that we don't currently handlinear_edges.- hault. (TODO - need test case)
-	if (pf.DistanceTo(points[3]) > BREP_PLANAR_TOL) return 0;
+	if (pf.DistanceTo(points[3]) > BREP_PLANAR_TOL) return -2;
 
-	cyl_planes.Append(pf);
-	implicit_plane_ind = cyl_planes.Count() - 1;
-    }
-    ////////// END Cylinder (and cone) specific /////////////////////////////////////
-
-    // Spheres will need their own thing here, based on walking the non-degenerate
-    // edge loop and collecting unique planes from sequential coplanar points.
-
-
-    // Need to make sure the normals are pointed the "right way"
-    //
-    // Check each normal direction to see whether it would trim away any edge
-    // midpoints known to be present.  If both directions do so, we have a
-    // concave situation and we're done.
-    for (int i = 0; i < cyl_planes.Count(); i++) {
-	ON_Plane p = cyl_planes[i];
-	//bu_log("in rcc_%d.s rcc %f, %f, %f %f, %f, %f 0.1\n", i, p.origin.x, p.origin.y, p.origin.z, p.Normal().x, p.Normal().y, p.Normal().z);
-	int flipped = 0;
-	for (int j = 0; j < edge_midpnts.Count(); j++) {
-	    ON_3dVector v = edge_midpnts[j] - p.origin;
-	    double dotp = ON_DotProduct(v, p.Normal());
-	    //bu_log("dotp: %f\n", dotp);
-	    if (dotp > 0 && !NEAR_ZERO(dotp, BREP_PLANAR_TOL)) {
-		if (!flipped) {
-		    j = -1; // Check all points again
-		    p.Flip();
-		    flipped = 1;
-		} else {
-		    //bu_log("%*sConcave planes in %s - no go\n", L3_OFFSET, " ", bu_vls_addr(data->i->key));
-		    return 0;
-		}
-	    }
-	}
-	if (flipped) cyl_planes[i].Flip();
+	(*cyl_planes).Append(pf);
+	return (*cyl_planes).Count() - 1;
     }
 
-#if 0
-    // Planes should be oriented correctly now
-    for (int i = 0; i < cyl_planes.Count(); i++) {
-	ON_Plane p = cyl_planes[i];
-	bu_log("plane %d origin: %f, %f, %f\n", i, p.origin.x, p.origin.y, p.origin.z);
-	bu_log("plane %d normal: %f, %f, %f\n", i, p.Normal().x, p.Normal().y, p.Normal().z);
-    }
-#endif
+    return -1;
+}
 
-    if (implicit_plane_ind != -1) {
-	//bu_log("have implicit plane\n");
-	ON_Plane shoal_implicit_plane = cyl_planes[implicit_plane_ind];
-	shoal_implicit_plane.Flip();
-	BN_VMOVE(data->params->implicit_plane_origin, shoal_implicit_plane.Origin());
-	BN_VMOVE(data->params->implicit_plane_normal, shoal_implicit_plane.Normal());
-	data->params->have_implicit_plane = 1;
-
-	// All well and good to have an implicit plane, but if we have face edges being cut by it 
-	// we've got a no-go.
-	std::set<int> shoal_connected_edges;
-	std::set<int>::iterator scl_it;
-	for (int i = 0; i < data->shoal_loops_cnt; i++) {
-	    const ON_BrepLoop *loop = &(brep->m_L[data->shoal_loops[i]]);
-	    for (int ti = 0; ti < loop->m_ti.Count(); ti++) {
-		int vert_ind;
-		const ON_BrepTrim *trim = &(brep->m_T[loop->m_ti[ti]]);
-		const ON_BrepEdge *edge = &(brep->m_E[trim->m_ei]);
-		if (trim->m_bRev3d) {
-		    vert_ind = edge->Vertex(0)->m_vertex_index;
-		} else {
-		    vert_ind = edge->Vertex(1)->m_vertex_index;
-		}
-		// Get vertex edges.
-		const ON_BrepVertex *v = &(brep->m_V[vert_ind]);
-		for (int ei = 0; ei < v->EdgeCount(); ei++) {
-		    const ON_BrepEdge *e = &(brep->m_E[v->m_ei[ei]]);
-		    //bu_log("insert edge %d\n", e->m_edge_index);
-		    shoal_connected_edges.insert(e->m_edge_index);
-		}
-	    }
-	}
-	for (scl_it = shoal_connected_edges.begin(); scl_it != shoal_connected_edges.end(); scl_it++) {
-	    const ON_BrepEdge *edge= &(brep->m_E[(int)*scl_it]);
-	    //bu_log("Edge: %d\n", edge->m_edge_index);
-	    ON_3dPoint p1 = brep->m_V[edge->Vertex(0)->m_vertex_index].Point();
-	    ON_3dPoint p2 = brep->m_V[edge->Vertex(1)->m_vertex_index].Point();
-	    double dotp1 = ON_DotProduct(p1 - shoal_implicit_plane.origin, shoal_implicit_plane.Normal());
-	    double dotp2 = ON_DotProduct(p2 - shoal_implicit_plane.origin, shoal_implicit_plane.Normal());
-	    if (NEAR_ZERO(dotp1, BREP_PLANAR_TOL) || NEAR_ZERO(dotp2, BREP_PLANAR_TOL)) continue;
-	    if ((dotp1 < 0 && dotp2 > 0) || (dotp1 > 0 && dotp2 < 0)) {
-		return 0;
-	    }
-	}
-    }
-
-
-    ////////////// Cylinder specific stuff - break into function //////////////////////////
-
+// returns whether we need an arbn, the params in data, and bounding arb planes appended to cyl_planes
+int
+cyl_implicit_params(struct subbrep_shoal_data *data, ON_SimpleArray<ON_Plane> *cyl_planes, int implicit_plane_ind, int ndc, int *nde, int shoal_nonplanar_face, int nonlinear_edge)
+{
+    const ON_Brep *brep = data->i->brep;
+    std::set<int> nondegen_edges;
+    std::set<int>::iterator c_it;
+    array_to_set(&nondegen_edges, nde, ndc);
 
     // Make a starting cylinder from one of the cylindrical surfaces and construct the axis line
     ON_Cylinder cylinder;
@@ -304,17 +133,16 @@ cylinder_csg(struct bu_vls *msgs, struct subbrep_shoal_data *data, fastf_t cyl_t
     // If we have only two cylinder planes and both are perpendicular to the axis, we have
     // an rcc and do not need an intersecting arbn.
     int need_arbn = 1;
-    if (cyl_planes.Count() == 2) {
+    if ((*cyl_planes).Count() == 2) {
 	ON_Plane p1, p2;
 	int perpendicular = 2;
-	if (cyl_planes[0].Normal().IsParallelTo(cylinder.Axis(), VUNITIZE_TOL) == 0) perpendicular--;
-	if (cyl_planes[1].Normal().IsParallelTo(cylinder.Axis(), VUNITIZE_TOL) == 0) perpendicular--;
+	if ((*cyl_planes)[0].Normal().IsParallelTo(cylinder.Axis(), VUNITIZE_TOL) == 0) perpendicular--;
+	if ((*cyl_planes)[1].Normal().IsParallelTo(cylinder.Axis(), VUNITIZE_TOL) == 0) perpendicular--;
 	if (perpendicular == 2) {
 	    //bu_log("perfect cylinder\n");
 	    need_arbn = 0;
 	}
     }
-
 
     // We need a cylinder large enough to bound the positive volume we are describing -
     // find all the limits from the various planes and edges
@@ -325,17 +153,18 @@ cylinder_csg(struct bu_vls *msgs, struct subbrep_shoal_data *data, fastf_t cyl_t
 	axis_pts_init.Append(edge->Vertex(0)->Point());
 	axis_pts_init.Append(edge->Vertex(1)->Point());
     }
+
     // Use the intersection and the projection of the cylinder axis onto the plane
     // to calculate min and max points on the cylinder from this plane.
-    for (int i = 0; i < cyl_planes.Count(); i++) {
+    for (int i = 0; i < (*cyl_planes).Count(); i++) {
 	// Note - don't intersect the implicit plane, since it doesn't play a role in defining the main cylinder
-	if (!cyl_planes[i].Normal().IsPerpendicularTo(cylinder.Axis(), VUNITIZE_TOL) && i != implicit_plane_ind) {
-	    ON_3dPoint ipoint = ON_LinePlaneIntersect(l, cyl_planes[i]);
-	    if (cyl_planes[i].Normal().IsParallelTo(cylinder.Axis(), VUNITIZE_TOL)) {
+	if (!(*cyl_planes)[i].Normal().IsPerpendicularTo(cylinder.Axis(), VUNITIZE_TOL) && i != implicit_plane_ind) {
+	    ON_3dPoint ipoint = ON_LinePlaneIntersect(l, (*cyl_planes)[i]);
+	    if ((*cyl_planes)[i].Normal().IsParallelTo(cylinder.Axis(), VUNITIZE_TOL)) {
 		axis_pts_init.Append(ipoint);
 	    } else {
-		double dpc = ON_DotProduct(cylinder.Axis(), cyl_planes[i].Normal());
-		ON_3dVector pvect = cylinder.Axis() - (cyl_planes[i].Normal() * dpc);
+		double dpc = ON_DotProduct(cylinder.Axis(), (*cyl_planes)[i].Normal());
+		ON_3dVector pvect = cylinder.Axis() - ((*cyl_planes)[i].Normal() * dpc);
 		pvect.Unitize();
 		if (!NEAR_ZERO(dpc, VUNITIZE_TOL)) {
 		    double hypotenuse = cylinder.circle.Radius() / dpc;
@@ -352,12 +181,12 @@ cylinder_csg(struct bu_vls *msgs, struct subbrep_shoal_data *data, fastf_t cyl_t
     ON_3dPointArray axis_pts_2nd;
     for (int i = 0; i < axis_pts_init.Count(); i++) {
 	int trimmed = 0;
-	for (int j = 0; j < cyl_planes.Count(); j++) {
+	for (int j = 0; j < (*cyl_planes).Count(); j++) {
 	    // Don't trim with the implicit plane - the implicit plane is defined "after" the
 	    // primary shapes are formed, so it doesn't get a vote in removing capping points
 	    if (j != implicit_plane_ind) {
-		ON_3dVector v = axis_pts_init[i] - cyl_planes[j].origin;
-		double dotp = ON_DotProduct(v, cyl_planes[j].Normal());
+		ON_3dVector v = axis_pts_init[i] - (*cyl_planes)[j].origin;
+		double dotp = ON_DotProduct(v, (*cyl_planes)[j].Normal());
 		if (dotp > 0 && !NEAR_ZERO(dotp, VUNITIZE_TOL)) {
 		    trimmed = 1;
 		    break;
@@ -384,7 +213,7 @@ cylinder_csg(struct bu_vls *msgs, struct subbrep_shoal_data *data, fastf_t cyl_t
     data->params->csg_type = CYLINDER;
     // Flag the cylinder according to the negative or positive status of the
     // cylinder surface.
-    data->params->negative = negative_cylinder(brep, *cylindrical_surfaces.begin(), cyl_tol);
+    data->params->negative = negative_cylinder(brep, shoal_nonplanar_face, BREP_CYLINDRICAL_TOL);
     data->params->bool_op = (data->params->negative == -1) ? '-' : 'u';
     // Assign an object id
     data->params->csg_id = (*(data->i->obj_cnt))++;
@@ -394,97 +223,60 @@ cylinder_csg(struct bu_vls *msgs, struct subbrep_shoal_data *data, fastf_t cyl_t
     BN_VMOVE(data->params->hv, cyl_axis);
     data->params->radius = cylinder.circle.Radius();
 
-    ////////////// END Cylinder specific stuff - break into function //////////////////////////
-
-    if (!need_arbn) {
-	//bu_log("Perfect cylinder shoal found in %s\n", bu_vls_addr(data->i->key));
-	return 1;
-    }
-
-    ////////////// Cylinder specific stuff - break into function //////////////////////////
-    // Use avg normal to constructed oriented bounding box planes around cylinder
-    ON_3dVector v1 = cylinder.circle.Plane().xaxis;
-    ON_3dVector v2 = cylinder.circle.Plane().yaxis;
-    v1.Unitize();
-    v2.Unitize();
-    v1 = v1 * cylinder.circle.Radius();
-    v2 = v2 * cylinder.circle.Radius();
-    ON_3dPoint arbmid = (l.PointAt(tmax) + l.PointAt(tmin)) * 0.5;
-    ON_3dVector cyl_axis_unit = l.PointAt(tmax) - l.PointAt(tmin);
-    cyl_axis_unit.Unitize();
-
-    cyl_planes.Append(ON_Plane(l.PointAt(tmin), -1 * cyl_axis_unit));
-    cyl_planes.Append(ON_Plane(l.PointAt(tmax), cyl_axis_unit));
-    cyl_planes.Append(ON_Plane(arbmid + v1, cylinder.circle.Plane().xaxis));
-    cyl_planes.Append(ON_Plane(arbmid - v1, -1 *cylinder.circle.Plane().xaxis));
-    cyl_planes.Append(ON_Plane(arbmid + v2, cylinder.circle.Plane().yaxis));
-    cyl_planes.Append(ON_Plane(arbmid - v2, -1 * cylinder.circle.Plane().yaxis));
-    ////////////// END Cylinder specific stuff - break into function //////////////////////////
-
-
-    /* "Cull" any planes that are not needed to form a bounding arbn.  We do this
-     * both for data minimization and because the arbn primitive doesn't tolerate
-     * "extra" planes that don't contribute to the final shape. */
-
-    // First, remove any arb planes that are parallel (*not* anti-parallel) with another plane.
-    // This will always be a bounding arb plane if any planes are to be removed, so we use that knowledge
-    // and start at the top.
-    ON_SimpleArray<ON_Plane> uniq_planes;
-    for (int i = cyl_planes.Count() - 1; i >= 0; i--) {
-	int keep_plane = 1;
-	ON_Plane p1 = cyl_planes[i];
-	for (int j = i - 1; j >= 0; j--) {
-	    ON_Plane p2 = cyl_planes[j];
-	    // Check for one to avoid removing anti-parallel planes
-	    if (p1.Normal().IsParallelTo(p2.Normal(), VUNITIZE_TOL) == 1) {
-		keep_plane = 0;
-		break;
+    // Now that we have the implicit plane and the cylinder, see how much of the cylinder
+    // we've got as positive volume.  This information is needed in certain situations to resolve booleans.
+    if (implicit_plane_ind != -1) {
+	if (nonlinear_edge != -1) {
+	    const ON_BrepEdge *edge = &(brep->m_E[nonlinear_edge]);
+	    ON_3dPoint midpt = edge->EdgeCurveOf()->PointAt(edge->EdgeCurveOf()->Domain().Mid());
+	    ON_Plane p = (*cyl_planes)[implicit_plane_ind];
+	    ON_3dVector ve = midpt - p.origin;
+	    ON_3dVector va = l.PointAt(tmin) - p.origin;
+	    ON_3dVector v1 = p.Normal() * ON_DotProduct(ve, p.Normal());
+	    ON_3dVector v2 = p.Normal() * ON_DotProduct(va, p.Normal());
+	    if (va.Length() > VUNITIZE_TOL) {
+		if (ON_DotProduct(v1, v2) > 0) {
+		    data->params->half_cyl = -1;
+		} else {
+		    data->params->half_cyl = 1;
+		}
+	    } else {
+		data->params->half_cyl = 0;
 	    }
-	}
-	if (keep_plane) {
-	    uniq_planes.Append(p1);
+	} else {
+	    return -1;
 	}
     }
 
-    // Second, check for plane intersection points that are inside/outside the
-    // arb.  If a set of three planes defines a point that is inside, those
-    // planes are part of the final arb.  Based on the arbn prep test.
-    int *planes_used = (int *)bu_calloc(uniq_planes.Count(), sizeof(int), "usage flags");
-    convex_plane_usage(&uniq_planes, &planes_used);
-    // Finally, based on usage tests, construct the set of planes that will define the arbn.
-    // If it doesn't have 3 or more uses, it's not a net contributor to the shape.
-    ON_SimpleArray<ON_Plane> arbn_planes;
-    for (int i = 0; i < uniq_planes.Count(); i++) {
-	//if (planes_used[i] != 0 && planes_used[i] < 3) bu_log("%d: have %d uses for plane %d\n", *data->i->obj_cnt + 1, planes_used[i], i);
-	if (planes_used[i] != 0 && planes_used[i] > 2) arbn_planes.Append(uniq_planes[i]);
-    }
-    bu_free(planes_used, "planes_used");
+    // Use avg normal to constructed oriented bounding box planes around cylinder
+    if (need_arbn) {
+	ON_3dVector v1 = cylinder.circle.Plane().xaxis;
+	ON_3dVector v2 = cylinder.circle.Plane().yaxis;
+	v1.Unitize();
+	v2.Unitize();
+	v1 = v1 * cylinder.circle.Radius();
+	v2 = v2 * cylinder.circle.Radius();
+	ON_3dPoint arbmid = (l.PointAt(tmax) + l.PointAt(tmin)) * 0.5;
+	ON_3dVector cyl_axis_unit = l.PointAt(tmax) - l.PointAt(tmin);
+	double axis_len = cyl_axis_unit.Length();
+	cyl_axis_unit.Unitize();
+	// Bump the top and bottom planes out slightly to avoid problems when the capping plane normals
+	// are almost but not quite parallel to the cylinder axis
+	ON_3dPoint arbmax = l.PointAt(tmax) + 0.01 * axis_len * cyl_axis_unit;
+	ON_3dPoint arbmin = l.PointAt(tmin) - 0.01 * axis_len * cyl_axis_unit;
 
-
-    // Construct the arbn to intersect with the cylinder to form the final shape
-    if (arbn_planes.Count() > 3) {
-	struct csg_object_params *sub_param;
-	BU_GET(sub_param, struct csg_object_params);
-	csg_object_params_init(sub_param, data);
-	sub_param->csg_id = (*(data->i->obj_cnt))++;
-	sub_param->csg_type = ARBN;
-	sub_param->bool_op = '+'; // arbn is intersected with primary primitive
-	sub_param->planes = (plane_t *)bu_calloc(arbn_planes.Count(), sizeof(plane_t), "planes");
-	sub_param->plane_cnt = arbn_planes.Count();
-	for (int i = 0; i < arbn_planes.Count(); i++) {
-	    ON_Plane p = arbn_planes[i];
-	    double d = p.DistanceTo(ON_3dPoint(0,0,0));
-	    sub_param->planes[i][0] = p.Normal().x;
-	    sub_param->planes[i][1] = p.Normal().y;
-	    sub_param->planes[i][2] = p.Normal().z;
-	    sub_param->planes[i][3] = -1 * d;
-	}
-	bu_ptbl_ins(data->shoal_children, (long *)sub_param);
+	(*cyl_planes).Append(ON_Plane(arbmin, -1 * cyl_axis_unit));
+	(*cyl_planes).Append(ON_Plane(arbmax, cyl_axis_unit));
+	(*cyl_planes).Append(ON_Plane(arbmid + v1, cylinder.circle.Plane().xaxis));
+	(*cyl_planes).Append(ON_Plane(arbmid - v1, -1 *cylinder.circle.Plane().xaxis));
+	(*cyl_planes).Append(ON_Plane(arbmid + v2, cylinder.circle.Plane().yaxis));
+	(*cyl_planes).Append(ON_Plane(arbmid - v2, -1 * cylinder.circle.Plane().yaxis));
     }
 
-
-    return 1;
+    return need_arbn;
 }
+
+
 
 
 // Local Variables:

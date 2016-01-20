@@ -34,8 +34,6 @@
 #include <algorithm>
 #include <sstream>
 
-#include "bio.h"
-
 #include "vmath.h"
 #include "bu/log.h"
 #include "brep.h"

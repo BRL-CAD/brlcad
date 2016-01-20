@@ -939,6 +939,14 @@ degenerate:
 	data->nucleus = cn;
 	bu_ptbl_rm(data->island_children, (long *)cn);
     } else {
+	// If we get here and we've got more than two shoals, we don't currently
+	// handle it
+	if (BU_PTBL_LEN(data->island_children) != 2) return 0;
+	struct subbrep_shoal_data *s1 = (struct subbrep_shoal_data *)BU_PTBL_GET(data->island_children, 0);
+	struct subbrep_shoal_data *s2 = (struct subbrep_shoal_data *)BU_PTBL_GET(data->island_children, 1);
+	volume_t s1t = (volume_t)s1->params->csg_type;
+	volume_t s2t = (volume_t)s2->params->csg_type;
+
 	// If we've got shoals with different boolean status, then we have
 	// to decide which shape is "inside" the other to make a call.  If
 	// two cylinders the smaller radius is the new nucleus, for
@@ -948,7 +956,23 @@ degenerate:
 	// based on raytracing.  For the time being, use type
 	// specific rules.  Probably need to break this bit out into
 	// separate functions/routines.
-	//
+
+	if ((s1t == CYLINDER && s2t == CYLINDER)) {
+	    double r1 = s1->params->radius;
+	    double r2 = s2->params->radius;
+	    struct subbrep_shoal_data *smaller = (r1 < r2) ? s1 : s2;
+	    struct subbrep_shoal_data *larger = (r1 > r2) ? s1 : s2;
+	    cn = (larger->params->half_cyl != 1) ? larger : smaller;
+	    subbrep_shoal_free(data->nucleus);
+	    data->nucleus = cn;
+	    bu_ptbl_rm(data->island_children, (long *)cn);
+	    return 1;
+	}
+
+	//TODO with sphere and cylinder/cone, might be able to check the normal of the
+	//implicit face of the sphere against the normal of the cylinder's face that's
+	//connected with the sphere...
+
 	// Other option is to flag this island's shoals as all top-level
 	// objects.  The subtractions and then the unions will be made
 	// after all other csg logic has been built up.  Bad for locality
