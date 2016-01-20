@@ -30,7 +30,6 @@ fbserv - the framebuffer server
 gtools - geometry processing tools (validation, transferring, comparing)
 halftone - tool for producing halftoned images from B&W images
 irprep - Infrared processing tools
-java - Java interface code for a Java-based BRL-CAD geometry server
 lgt - an interactive geometry rendering tool
 libbn - the BRL-CAD numerics library
 libbu - the BRL-CAD utility library
@@ -59,4 +58,3 @@ sig - signal processing tools, data conversion and manipulation of raw data
 tab - table processing tools, used primarily in conjunction with animation tools
 tclscripts - a library of Tcl routines used by mged, rtwizard, and archer
 util - various image processing and conversion utilities
-vas4 - tool for driving a Lyon Lamb Video Animation System (VAS4) to record videotape
