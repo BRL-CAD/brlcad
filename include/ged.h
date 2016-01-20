@@ -48,7 +48,6 @@
 
 __BEGIN_DECLS
 
-
 /**
  * Delay the specified amount of time
  */

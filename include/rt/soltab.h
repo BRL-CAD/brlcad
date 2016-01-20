@@ -38,7 +38,7 @@ __BEGIN_DECLS
 
 /**
  * Macros to operate on Right Rectangular Parallelepipeds (RPPs).
- * @todo: move to vmath.h
+ * TODO: move to vmath.h
  */
 struct bound_rpp {
     point_t min;

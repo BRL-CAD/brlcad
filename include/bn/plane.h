@@ -143,7 +143,7 @@ BN_EXPORT extern int bn_distsq_line3_line3(fastf_t dist[3],
  *   1 => P is within tolerance of line.  *dist = 0, pca=computed.
  *   2 => P is "above/below" line.  *dist=|PCA-P|, pca=computed.
  *
- * @todo: For efficiency, a version of this routine that provides the
+ * TODO: For efficiency, a version of this routine that provides the
  * distance squared would be faster.
  */
 BN_EXPORT extern int bn_dist_pt3_line3(fastf_t *dist,

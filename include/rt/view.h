@@ -43,7 +43,7 @@ __BEGIN_DECLS
  * In those situations, the application should populate and pass an
  * rt_view_info struct.
  *
- * **@todo** this structure is NOT in final form and should not be
+ * **TODO** this structure is NOT in final form and should not be
  * relied upon.
  */
 struct rt_view_info {
@@ -68,7 +68,7 @@ struct rt_view_info {
  * Specifies a subset of a primitive's geometry as the target for an
  * operation.
  *
- * @todo: This structure is tentative and subject to change or removal
+ * TODO: This structure is tentative and subject to change or removal
  *       without notice.
  */
 struct rt_selection {
@@ -76,7 +76,7 @@ struct rt_selection {
 };
 
 /**
- * @todo: This structure is tentative and subject to change or removal
+ * TODO: This structure is tentative and subject to change or removal
  *       without notice.
  */
 struct rt_selection_set {
@@ -94,7 +94,7 @@ struct rt_selection_set {
  * "option"). The table entries are sets to allow more than one
  * selection of the same type (e.g. multiple "option" selections).
  *
- * @todo: This structure is tentative and subject to change or removal
+ * TODO: This structure is tentative and subject to change or removal
  *       without notice.
  */
 struct rt_object_selections {
@@ -107,7 +107,7 @@ struct rt_object_selections {
  * selectable components of a primitive in order to find the most
  * relevant selections for a particular application.
  *
- * @todo: This structure is tentative and subject to change or removal
+ * TODO: This structure is tentative and subject to change or removal
  *       without notice.
  */
 struct rt_selection_query {
@@ -122,7 +122,7 @@ struct rt_selection_query {
 /**
  * Parameters of a translation applied to a selection.
  *
- * @todo: This structure is tentative and subject to change or removal
+ * TODO: This structure is tentative and subject to change or removal
  *       without notice.
  */
 struct rt_selection_translation {
@@ -134,7 +134,7 @@ struct rt_selection_translation {
 /**
  * Describes an operation that can be applied to a selection.
  *
- * @todo: This structure is tentative and subject to change or removal
+ * TODO: This structure is tentative and subject to change or removal
  *       without notice.
  */
 struct rt_selection_operation {

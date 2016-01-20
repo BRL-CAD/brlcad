@@ -149,7 +149,7 @@ RT_EXPORT extern size_t db_ls(const struct db_i *dbip,
 #define DB_LS_HIDDEN       0x8    /**< @brief include hidden objects in results */
 #define DB_LS_NON_GEOM     0x10   /**< @brief filter for non-geometry objects */
 #define DB_LS_TOPS         0x20   /**< @brief filter for objects un-referenced by other objects */
-/* @todo - implement this flag
+/* TODO - implement this flag
 #define DB_LS_REGEX        0x40*/ /* interpret pattern using regex rules, instead of
                                               globbing rules (default) */
 
@@ -173,7 +173,7 @@ RT_EXPORT extern size_t db_ls(const struct db_i *dbip,
  * number of dbip objects added to string
  * expanded string in dest bu_vls
  *
- * @todo - use flags for skip first, do/don't expand hidden, etc.
+ * TODO - use flags for skip first, do/don't expand hidden, etc.
  *
  * Note - deliberately did not name this fuction db_glob - probably want a more
  * powerful globbing API than just strings for more general usage...

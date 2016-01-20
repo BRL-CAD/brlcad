@@ -52,7 +52,7 @@ RT_EXPORT extern int rt_generic_xform(struct rt_db_internal     *op,
 /**
  * Used by MGED for labeling vertices of a solid.
  *
- * @todo - eventually this should fade into a general annotation
+ * TODO - eventually this should fade into a general annotation
  * framework
  */
 struct rt_point_labels {

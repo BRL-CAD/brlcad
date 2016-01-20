@@ -413,7 +413,7 @@ BU_EXPORT extern void bu_vls_vprintf(struct bu_vls *vls,
  * a space and append it to the provided bu_vls.  escape any existing
  * double quotes.
  *
- * @todo: consider a specifiable quote character and octal encoding
+ * TODO: consider a specifiable quote character and octal encoding
  * instead of double quote wrapping.  perhaps specifiable encode type:
  *   BU_ENCODE_QUOTE
  *   BU_ENCODE_OCTAL

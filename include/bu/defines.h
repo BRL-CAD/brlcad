@@ -282,7 +282,7 @@
  * fastf_t.  The one exception is when a subroutine return is a
  * floating point value; that is always declared as "double".
  *
- * @todo: If used pervasively, it should eventually be possible to make
+ * TODO: If used pervasively, it should eventually be possible to make
  * fastf_t a GMP C++ type for fixed-precision computations.
  */
 typedef double fastf_t;
@@ -294,12 +294,12 @@ typedef double fastf_t;
  *
  * MAX_FASTF - Very close to the largest value that can be held by a
  * fastf_t without overflow.  Typically specified as an integer power
- * of ten, to make the value easy to spot when printed.  @todo: macro
+ * of ten, to make the value easy to spot when printed.  TODO: macro
  * function syntax instead of constant (DEPRECATED)
  *
  * SQRT_MAX_FASTF - sqrt(MAX_FASTF), or slightly smaller.  Any number
  * larger than this, if squared, can be expected to * produce an
- * overflow.  @todo: macro function syntax instead of constant
+ * overflow.  TODO: macro function syntax instead of constant
  * (DEPRECATED)
  *
  * SMALL_FASTF - Very close to the smallest value that can be
@@ -307,13 +307,13 @@ typedef double fastf_t;
  * smaller than this (and non-negative) can be considered to be
  * zero; dividing by such a number can be expected to produce a
  * divide-by-zero error.  All divisors should be checked against
- * this value before actual division is performed.  @todo: macro
+ * this value before actual division is performed.  TODO: macro
  * function syntax instead of constant (DEPRECATED)
  *
  * SQRT_SMALL_FASTF - sqrt(SMALL_FASTF), or slightly larger.  The
  * value of this is quite a lot larger than that of SMALL_FASTF.  Any
  * number smaller than this, when squared, can be expected to produce
- * a zero result.  @todo: macro function syntax instead of constant
+ * a zero result.  TODO: macro function syntax instead of constant
  * (DEPRECATED)
  *
  */
