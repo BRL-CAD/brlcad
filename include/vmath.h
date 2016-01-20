@@ -79,7 +79,9 @@
  * underscore in order to (hopefully) minimize any name conflicts with
  * user-provided parameters, such as _f in the following example:
  *
+ * @code
  * #define ABC() do { register double _f; do stuff; } while (0)
+ * @endcode
  *
  * All of the macros that introduce a scope like the preceding
  * example are written as do { } while (0) loops in order to require

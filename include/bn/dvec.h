@@ -24,6 +24,9 @@
 #include "common.h"
 
 #include <math.h>
+extern "C++" {
+#include <iostream>
+}
 
 /* Needed for fastf_t definition */
 #include "bu/defines.h"
@@ -36,7 +39,6 @@
 /** @file bn/dvec.h */
 
 extern "C++" {
-#include <iostream>
 
     const double VEQUALITY = 0.0000001;
 
@@ -196,6 +198,8 @@ extern "C++" {
 	a[1] = b[1];
     }
 }
+
+/** @} */
 
 #endif /* DVEC_H */
 

@@ -127,6 +127,8 @@ ICV_EXPORT int icv_writeline(icv_image_t *bif, size_t y, void *data, ICV_DATA ty
  */
 ICV_EXPORT int icv_writepixel(icv_image_t *bif, size_t x, size_t y, double *data);
 
+/** @} */
+
 __END_DECLS
 
 #endif /* ICV_IO_H */

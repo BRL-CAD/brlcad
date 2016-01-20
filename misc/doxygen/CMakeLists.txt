@@ -63,6 +63,16 @@ INPUT += ${CMAKE_SOURCE_DIR}/include/${sublibname}.h
     ")
   endif(EXISTS ${CMAKE_SOURCE_DIR}/include/${sublibname}.h)
 
+  # libbn header doesn't fit the template
+  if("${libname}" STREQUAL "libbn")
+  set(INPUTS "${INPUTS}
+INPUT += ${CMAKE_SOURCE_DIR}/include/bn/vector_fpu.h
+    ")
+    set(INPUTS "${INPUTS}
+INPUT += ${CMAKE_SOURCE_DIR}/include/bn/dvec.h
+    ")
+  endif("${libname}" STREQUAL "libbn")
+
   # librt header doesn't fit the template
   if("${libname}" STREQUAL "librt")
     set(INPUTS "${INPUTS}

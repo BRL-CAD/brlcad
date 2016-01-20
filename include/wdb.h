@@ -69,7 +69,7 @@ __BEGIN_DECLS
 
 /** @addtogroup libwdb */
 /** @{ */
-/** @file wdb.h */
+/** @file include/wdb.h */
 
 /**
  * In-memory form of database combinations

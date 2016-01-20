@@ -216,6 +216,8 @@
 
 #endif /* RT_DEFINES_H */
 
+/** @} */
+
 /*
  * Local Variables:
  * tab-width: 8
