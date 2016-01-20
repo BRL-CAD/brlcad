@@ -751,7 +751,7 @@ IMAGE_PATH             =
 # code is scanned, but not when the output code is generated. If lines are added
 # or removed, the anchors will not be placed correctly.
 
-INPUT_FILTER           =
+INPUT_FILTER           = "sed -e 's#\(FIXME\|TODO\|todo\|fixme\)[:?]*#\n @todo#g'"
 
 # The FILTER_PATTERNS tag can be used to specify filters on a per file pattern
 # basis.
