@@ -30,8 +30,10 @@
 #include "common.h"
 #ifdef __cplusplus
 extern "C++" {
+/* @cond */
 #include <list>
 #include <queue>
+/* @endcond */
 }
 #endif
 #include "brep/defines.h"

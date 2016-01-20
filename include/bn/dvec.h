@@ -25,7 +25,10 @@
 
 #include <math.h>
 extern "C++" {
+/* Hide iostream from Doxygen with cond */
+/* @cond */
 #include <iostream>
+/* @endcond */
 }
 
 /* Needed for fastf_t definition */
@@ -126,6 +129,8 @@ extern "C++" {
 // use this to create 16-byte aligned memory on platforms that support it
 #define VEC_ALIGN
 
+/* Doxygen doesn't like these includes... */
+/* @cond */
 /*#undef __SSE2__*/ // Test FPU version
 #if defined(__SSE2__) && defined(__GNUC__) && defined(HAVE_EMMINTRIN_H) && defined(HAVE_EMMINTRIN)
 #  define __x86_vector__
@@ -134,6 +139,7 @@ extern "C++" {
 #  define __fpu_vector__
 #  include "bn/vector_fpu.h"
 #endif
+/* @endcond */
 
     inline bool vequals(const vec2d& a, const vec2d& b) {
 	return

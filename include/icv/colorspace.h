@@ -76,7 +76,8 @@ ICV_EXPORT int icv_gray2rgb(icv_image_t *img);
  * icv_image_rgb2gray(bif, 0, 0, 0, 0); where bif is the rgb image
  * to be converted.
  *
- * @param color Chooses color planes to be selected for combination.
+ * @param[in,out] img - image
+ * @param[in] color Chooses color planes to be selected for combination.
  * This function will need color to be specified from
  *              ICV_COLOR_R
  *              ICV_COLOR_G
@@ -85,9 +86,9 @@ ICV_EXPORT int icv_gray2rgb(icv_image_t *img);
  *              ICV_COLOR_RB
  *              ICV_COLOR_BG
  *              ICV_COLOR_RGB
- * @param rweight Weight for r-plane
- * @param gweight Weight for g-plane
- * @param bweight Weight for b-plane
+ * @param[in] rweight Weight for r-plane
+ * @param[in] gweight Weight for g-plane
+ * @param[in] bweight Weight for b-plane
  * @return 0 on success; on failure return 1
  *
  * User can specify weights in the arguments, for the selected color
