@@ -6,7 +6,7 @@
 #include <sys/stat.h>
 #include "bio.h"
 
-#include "bu_arg_parse.h"
+#include "bu/opt.h"
 #include "raytrace.h"
 
 using namespace std;
@@ -46,137 +46,72 @@ main(int argc, char** argv)
 
     struct stat sb;
     const char DBSUF[] = ".compressed";
+    struct bu_vls str = BU_VLS_INIT_ZERO;
 
     // vars expected from cmd line parsing
     int arg_err            = 0;
     int has_force          = 0;
     int has_help           = 0;
     int has_compress       = 0;
-    char db_fname[BU_ARG_PARSE_BUFSZ]  = {0};
-    char db2_fname[BU_ARG_PARSE_BUFSZ] = {0};
+    struct bu_vls db_fname  = BU_VLS_INIT_ZERO;
+    struct bu_vls db2_fname = BU_VLS_INIT_ZERO;
 
-    // FIXME: this '-?' arg doesn't work correctly due to some TCLAPisms
-    static bu_arg_switch_t h_arg;
-    // define a force option to allow user to shoot himself in the foot
-    static bu_arg_switch_t f_arg;
-    // define a compress option
-    static bu_arg_switch_t c_arg;
+    struct bu_opt_desc d[10];
+    BU_OPT(d[0],  "h", "help",                "",           NULL,             (void *)&has_help,     "Print help and exit");
+    BU_OPT(d[1],  "f", "force",               "bool",       &bu_opt_bool,     (void *)&has_force,    "Allow overwriting existing files.");
+    BU_OPT(d[1],  "c", "compress",            "bool",       &bu_opt_bool,     (void *)&has_compress, "Create a copy with no free space.");
+    BU_OPT(d[2],  "",  "DB_infile",           "filename",   &bu_opt_vls,      (void *)&db_fname,     "DB input file name");
+    BU_OPT(d[2],  "",  "DB_outfile",          "filename",   &bu_opt_vls,      (void *)&db2_fname,    "DB output file name");
 
-    // input file names
-    static bu_arg_unlabeled_value_t db_arg;
-    // the output file name (optional)
-    static bu_arg_unlabeled_value_t db2_arg;
+    /* Skip first arg */
+    argv++; argc--;
+    arg_err = bu_opt_parse(&str, argc, (const char **)argv, d);
 
-    // place the arg pointers in an array (note the array is of
-    // type void* to hold the heterogeneous arg type structs)
-    static void *args[] = {
-        &h_arg, &f_arg, &c_arg,
-        &db_arg, &db2_arg,
-        NULL
-    };
-
-    BU_ARG_SWITCH_INIT(
-        h_arg,
-        "?",
-        "short-help",
-        "Same as '-h' or '--help'"
-    );
-
-    BU_ARG_SWITCH_INIT(
-        f_arg,
-        "f",
-        "force",
-        "Allow overwriting existing files."
-    );
-
-    BU_ARG_SWITCH_INIT(
-        c_arg,
-        "c",
-        "compress",
-        "Create a copy with no free space."
-    );
-
-    // input file name
-    BU_ARG_UNLABELED_VALUE_INIT(
-        db_arg,
-        "",
-        "DB_infile",
-        "DB input file name",
-        BU_ARG_REQUIRED,
-        BU_ARG_STRING,
-        ""
-    );
-
-    // the output file name (optional)
-    BU_ARG_UNLABELED_VALUE_INIT(
-        db2_arg,
-        "",
-        "DB_outfile",
-        "DB output file name",
-        BU_ARG_OPTIONAL,
-        BU_ARG_STRING,
-        ""
-    );
-
-    // parse the args
-    arg_err = bu_arg_parse(args, argc, argv);
-
-    if (arg_err == BU_ARG_PARSE_ERR) {
-        // the TCLAP exception handler has fired with its own message
-        // so need no message here
-        bu_exit(EXIT_SUCCESS, NULL);
+    if (arg_err < 0) {
+	bu_exit(EXIT_FAILURE, bu_vls_addr(&str));
     }
-
-    // Get the value parsed by each arg.
-    has_force    = bu_arg_get_bool(&f_arg);
-    has_help     = bu_arg_get_bool(&h_arg);
-    has_compress = bu_arg_get_bool(&c_arg);
-    bu_arg_get_string(&db_arg, db_fname);
-    bu_arg_get_string(&db2_arg, db2_fname);
+    bu_vls_free(&str);
 
     // take appropriate action...
 
     // note this exit is SUCCESS because it is expected
     // behavior--important for good auto-man-page handling
     if (has_help) {
+	bu_vls_free(&db_fname);
+	bu_vls_free(&db2_fname);
         bu_exit(EXIT_SUCCESS, usage);
     }
 
-    if (has_compress) {
-        if (!db2_fname[0]) {
-            bu_strlcpy(db2_fname, db_fname, BU_ARG_PARSE_BUFSZ);
-            bu_strlcat(db2_fname, DBSUF, BU_ARG_PARSE_BUFSZ);
-        }
+    if (has_compress && bu_vls_strlen(&db2_fname) == 0) {
+	bu_vls_sprintf(&db2_fname, "%s%s", bu_vls_addr(&db_fname), DBSUF);
     }
 
     // open the db file read-only
-    // TCLAP doesn't check for existing files (FIXME: add to TCLAP)
-    if (stat(db_fname, &sb)) {
-        bu_exit(EXIT_FAILURE, "non-existent input file '%s'\n", db_fname);
+    if (stat(bu_vls_addr(&db_fname), &sb)) {
+        bu_exit(EXIT_FAILURE, "non-existent input file '%s'\n", bu_vls_addr(&db_fname));
     }
-    in = fopen(db_fname, "r");
+    in = fopen(bu_vls_addr(&db_fname), "r");
     if (!in) {
-        perror(db_fname);
+        perror(bu_vls_addr(&db_fname));
         bu_exit(EXIT_FAILURE, "ERROR: input file open failure\n");
     }
 
     if (has_compress) {
-        // TCLAP doesn't check for confusion in file names
-        if (BU_STR_EQUAL(db_fname, db2_fname)) {
+        if (BU_STR_EQUAL(bu_vls_addr(&db_fname), bu_vls_addr(&db2_fname))) {
             bu_exit(EXIT_FAILURE, "overwriting an input file\n");
         }
         // check for existing file
-        if (!stat(db2_fname, &sb)) {
+        if (!stat(bu_vls_addr(&db2_fname), &sb)) {
             if (has_force) {
                 printf("WARNING: overwriting an existing file...\n");
-                bu_file_delete(db2_fname);
+                bu_file_delete(bu_vls_addr(&db2_fname));
             } else {
                 bu_exit(EXIT_FAILURE, "overwriting an existing file (use the '-f' option to continue)\n");
             }
         }
-        out = fopen(db2_fname, "w");
+        out = fopen(bu_vls_addr(&db2_fname), "w");
         if (!out) {
-            perror(db2_fname);
+            perror(bu_vls_addr(&db2_fname));
             bu_exit(EXIT_FAILURE, "ERROR: output file open failure\n");
         }
     }
@@ -199,13 +134,13 @@ main(int argc, char** argv)
     int wattrs = 0;
 
     // write an output header
-    int fnsiz = strlen(db_fname);
+    int fnsiz = strlen(bu_vls_addr(&db_fname));
     string eqs = "";
     for (int i = 0; i < fnsiz; ++i)
         eqs += '=';
 
     printf("=======================================%s=\n", eqs.c_str());
-    printf(" Objects found in BRL-CAD V5 database: %s \n", db_fname);
+    printf(" Objects found in BRL-CAD V5 database: %s \n", bu_vls_addr(&db_fname));
     printf("=======================================%s=\n", eqs.c_str());
     printf("\n");
 
@@ -310,7 +245,7 @@ main(int argc, char** argv)
 
     printf("\n");
     printf("==================================%s=\n", eqs.c_str());
-    printf(" Summary for BRL-CAD V5 database: %s\n", db_fname);
+    printf(" Summary for BRL-CAD V5 database: %s\n", bu_vls_addr(&db_fname));
     printf("==================================%s=\n", eqs.c_str());
     printf("\n");
     printf("Found %d objects:\n", nobj);
@@ -388,7 +323,7 @@ main(int argc, char** argv)
         printf("\nNote: file read ended early with an error!\n");
 
     if (has_compress)
-        printf("See compressed file '%s'.\n", db2_fname);
+        printf("See compressed file '%s'.\n", bu_vls_addr(&db2_fname));
 
     return 0;
 
@@ -519,4 +454,14 @@ get_minor_type_name(const int typ)
             break;
     }
 } // get_minor_type_name
+
+/*
+ * Local Variables:
+ * mode: C
+ * tab-width: 8
+ * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */
 
