@@ -285,17 +285,6 @@ if(BRLCAD_UTAHRLE_BUILD)
   mark_as_advanced(BRLCAD_UTAHRLE_INCLUDE_DIR)
 endif(BRLCAD_UTAHRLE_BUILD)
 
-
-# URTToolkit - Programs, not a library - needs libutahrle, but the
-# "check for system install" logic will be different here.  Ignore for
-# now, revisit later.
-
-if(BRLCAD_LEVEL3)
-  add_subdirectory(URToolkit)
-endif(BRLCAD_LEVEL3)
-include(${CMAKE_CURRENT_SOURCE_DIR}/URToolkit.dist)
-CMAKEFILES_IN_DIR(URToolkit_ignore_files URToolkit)
-
 # Tcl/Tk presents a number of complexities for BRL-CAD and CMake.
 # BRL-CAD requires far more knowledge of the details of a Tcl/Tk
 # installation than most programs, which unfortunately means the
