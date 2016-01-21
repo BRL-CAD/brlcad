@@ -3583,7 +3583,9 @@ namespace eval ArcherCore {
 	return
     }
 
-    set fractions [$itk_component(vpane) fraction]
+    if {[catch {$itk_component(vpane) fraction} fractions]} {
+	return
+    }
 
     switch -- [llength $fractions] {
 	2 {
