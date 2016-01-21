@@ -559,7 +559,7 @@ RhinoConverter::ObjectManager::mark_idef_member(const ON_UUID &uuid)
 inline bool
 RhinoConverter::ObjectManager::exists(const ON_UUID &uuid) const
 {
-    return m_obj_map.count(uuid);
+    return m_obj_map.count(uuid) > 0;
 }
 
 

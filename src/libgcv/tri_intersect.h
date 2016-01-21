@@ -29,7 +29,7 @@
 __BEGIN_DECLS
 
 /* FIXME: need not be public API */
-int
+GCV_EXPORT int
 gcv_tri_tri_intersect_with_isectline(struct soup_s *UNUSED(left), struct soup_s *UNUSED(right), struct face_s *lf, struct face_s *rf, int *coplanar, point_t *isectpt, const struct bn_tol *tol);
 
 __END_DECLS

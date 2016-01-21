@@ -1219,10 +1219,6 @@ endif(BRLCAD_ENABLE_STRICT)
 # release builds.
 AUTO_OPTION(BRLCAD_FLAGS_OPTIMIZATION BRLCAD_OPTIMIZED_BUILD "OFF" "ON")
 
-# By default, we don't want any error reports at all from src/other
-option(BRLCAD_DISABLE_SRC_OTHER_WARN "Disable warnings for src/other" ON)
-mark_as_advanced(BRLCAD_DISABLE_SRC_OTHER_WARN)
-
 # Build with full compiler lines visible by default (won't need make
 # VERBOSE=1) on command line
 option(BRLCAD_ENABLE_VERBOSE_PROGRESS "verbose output" OFF)

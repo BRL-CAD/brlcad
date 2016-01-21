@@ -33,9 +33,7 @@ CLEAR_BUILD_FLAGS()
 RESTORE_CACHED_BUILD_FLAGS(_CMAKE_DEFAULT)
 
 # Quiet all warnings in this directory
-if(BRLCAD_DISABLE_SRC_OTHER_WARN)
-  add_definitions(-w)
-endif(BRLCAD_DISABLE_SRC_OTHER_WARN)
+DISABLE_WARNINGS()
 
 # Ideally we wouldn't need this, but in a few cases we're using
 # BRL-CAD's include dirs.

@@ -50,6 +50,7 @@ set(LIBRT_SOURCES
   db_anim.c
   db_corrupt.c
   db_diff.c
+  db_glob.c
   db_flags.c
   db_flip.c
   db_fullpath.c

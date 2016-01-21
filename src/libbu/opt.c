@@ -221,44 +221,104 @@ bu_opt_describe(struct bu_opt_desc *ds, struct bu_opt_desc_opts *settings)
     return NULL;
 }
 
-HIDDEN char *
-opt_process(const char **eq_arg, const char *opt_candidate)
+HIDDEN int
+opt_is_flag(const char *opt, const struct bu_opt_desc *ds, const char *arg)
+{
+    int arg_offset = -1;
+    /* Find the corresponding desc, if we have one */
+    int desc_ind = 0;
+    const struct bu_opt_desc *desc = &(ds[desc_ind]);
+    while (desc && !opt_desc_is_null(desc)) {
+	if (opt[0] == desc->shortopt[0]) {
+	    if (!desc->arg_process) return 1;
+	    break;
+	}
+	desc_ind++;
+	desc = &(ds[desc_ind]);
+    }
+
+    /* If there is an arg_process, it's up to the function - if
+     * an option without args is valid, and the potential arg after
+     * the option isn't a valid arg for this opt, opt can be a flag */
+    if (desc && desc->arg_process) {
+	if (arg) {
+	    arg_offset = (*desc->arg_process)(NULL, 1, &arg, NULL);
+	    if (!arg_offset) return 1;
+	} else {
+	    arg_offset = (*desc->arg_process)(NULL, 0, NULL, NULL);
+	    if (!arg_offset) return 1;
+	}
+    }
+
+    return 0;
+}
+
+HIDDEN int
+opt_process(struct bu_ptbl *opts, const char **eq_arg, const char *opt_candidate, const struct bu_opt_desc *ds)
 {
     int offset = 1;
-    char *final_opt;
+    const char *opt;
+    char *optcpy;
     char *equal_pos;
-    if (!eq_arg && !opt_candidate) return NULL;
+    if (!eq_arg && !opt_candidate) return 0;
     if (opt_candidate[1] == '-') offset++;
     equal_pos = strchr(opt_candidate, '=');
 
     /* If we've got a single opt, things are handled differently */
     if (offset == 1) {
 	if (strlen(opt_candidate+offset) == 1) {
-	    final_opt = bu_strdup(opt_candidate+offset);
+	    optcpy = (char *)bu_calloc(2, sizeof(char), "option");
+	    optcpy[0] = (opt_candidate+offset)[0];
+	    bu_ptbl_ins(opts,(long *)optcpy);
+	    return 1;
 	} else {
-	    /* single letter opt, but the string is longer - the
-	     * interpretation in this context is everything after
-	     * the first letter is arg.*/
-	    struct bu_vls vopt = BU_VLS_INIT_ZERO;
-	    const char *varg = opt_candidate;
-	    bu_vls_strncat(&vopt, opt_candidate+1, 1);
+	    /* single letter opt, but the string is longer. If and only if
+	     * this single letter opt is a flag, check for more flags. Anything
+	     * that needs an argument in this context is considered an error, and
+	     * with a flag option anything in the same argv with it that is not
+	     * also a flag constitutes an error. */
+	    opt = opt_candidate+offset;
+	    if (opt_is_flag(opt, ds, opt_candidate+offset+1)) {
+		optcpy = (char *)bu_calloc(2, sizeof(char), "option");
+		optcpy[0] = (opt)[0];
+		bu_ptbl_ins(opts,(long *)optcpy);
+		opt++;
+		while (strlen(opt) > 0) {
+		    if (opt_is_flag(opt, ds, NULL)) {
+			optcpy = (char *)bu_calloc(2, sizeof(char), "option");
+			optcpy[0] = (opt)[0];
+			bu_ptbl_ins(opts,(long *)optcpy);
+		    } else {
+			/* In a flag opt context but hit a non-flag - error. */
+			return -1;
+		    }
+		    opt++;
+		}
+	    } else {
+		/* the interpretation in this context is everything after the
+		 * first letter is arg.*/
+		struct bu_vls vopt = BU_VLS_INIT_ZERO;
+		const char *varg = opt_candidate;
+		bu_vls_strncat(&vopt, opt_candidate+1, 1);
 
-	    varg = opt_candidate + 2;
+		varg = opt_candidate + 2;
 
-	    /* A exception is an equals sign, e.g. -s=1024 - in that
-	     * instance, the expectation might be that = would be interpreted
-	     * as an assignment.  This means that to get the literal =1024 as
-	     * an option, you would need a space after the s, e.g.:  -s =1024
-	     *
-	     * For now, commented out to favor consistent behavior over what
-	     * "looks right" - may be worth revisiting or even an option at
-	     * some point...*/
+		/* A exception is an equals sign, e.g. -s=1024 - in that
+		 * instance, the expectation might be that = would be interpreted
+		 * as an assignment.  This means that to get the literal =1024 as
+		 * an option, you would need a space after the s, e.g.:  -s =1024
+		 *
+		 * For now, commented out to favor consistent behavior over what
+		 * "looks right" - may be worth revisiting or even an option at
+		 * some point...*/
 
-	    if (equal_pos) varg++;
+		if (equal_pos) varg++;
 
-	    (*eq_arg) = varg;
-	    final_opt = bu_strdup(bu_vls_addr(&vopt));
-	    bu_vls_free(&vopt);
+		(*eq_arg) = varg;
+		opt = bu_strdup(bu_vls_addr(&vopt));
+		bu_ptbl_ins(opts,(long *)opt);
+		bu_vls_free(&vopt);
+	    }
 	}
     } else {
 	if (equal_pos) {
@@ -272,13 +332,15 @@ opt_process(const char **eq_arg, const char *opt_candidate)
 	    if (equal_pos) varg++;
 
 	    (*eq_arg) = varg;
-	    final_opt = bu_strdup(bu_vls_addr(&vopt));
+	    opt = bu_strdup(bu_vls_addr(&vopt));
+	    bu_ptbl_ins(opts,(long *)opt);
 	    bu_vls_free(&vopt);
 	} else {
-	    final_opt = bu_strdup(opt_candidate+offset);
+	    opt = bu_strdup(opt_candidate+offset);
+	    bu_ptbl_ins(opts,(long *)opt);
 	}
     }
-    return final_opt;
+    return (int)BU_PTBL_LEN(opts);
 }
 
 /* This implements naive criteria for deciding when an argv string is
@@ -304,7 +366,7 @@ int
 bu_opt_parse(struct bu_vls *msgs, int argc, const char **argv, const struct bu_opt_desc *ds)
 {
     int i = 0;
-    int offset = 0;
+    int j = 0;
     int ret_argc = 0;
     struct bu_ptbl known_args = BU_PTBL_INIT_ZERO;
     struct bu_ptbl unknown_args = BU_PTBL_INIT_ZERO;
@@ -314,9 +376,11 @@ bu_opt_parse(struct bu_vls *msgs, int argc, const char **argv, const struct bu_o
     while (i < argc) {
 	int desc_found = 0;
 	int desc_ind = 0;
-	char *opt = NULL;
+	int opt_cnt = 0;
 	const char *eq_arg = NULL;
 	const struct bu_opt_desc *desc = NULL;
+	struct bu_ptbl opts = BU_PTBL_INIT_ZERO;
+
 	/* If argv[i] isn't an option, stick the argv entry (and any
 	 * immediately following non-option entries) into the
 	 * unknown args table */
@@ -336,105 +400,150 @@ bu_opt_parse(struct bu_vls *msgs, int argc, const char **argv, const struct bu_o
 	 * is to determine if it is one. */
 
 	/* It may be that an = has been used instead of a space.  Handle that, and
-	 * strip leading '-' characters.  Also, short-opt options may not have a
+	 * strip leading '-' characters.  Short-opt options may be grouped onto
+	 * one shared dash (e.g. rm -rf), so opt_process can return more than one
+	 * option. Also, short-opt options may not have a
 	 * space between their option and the argument. That is also handled here */
-	opt = opt_process(&eq_arg, argv[i]);
+	opt_cnt = opt_process(&opts, &eq_arg, argv[i], ds);
+	if (opt_cnt == -1) {
+	    for(j = 0; j < (int)BU_PTBL_LEN(&opts); j++) {
+		char *o = (char *)BU_PTBL_GET(&opts, j);
+		bu_free(o, "free arg cpy");
+	    }
+	    bu_ptbl_free(&opts);
+	    return -1;
+	}
+	if (opt_cnt > 1) {
+	    for (j = 0; j < opt_cnt; j++) {
+		int *flag_var;
+		char *opt = (char *)BU_PTBL_GET(&opts, j);
+		/* Find the corresponding desc - if we're in a multiple flag
+		 * processing situation, we've already verified that each entry
+		 * has a desc. */
+		desc_ind = 0;
+		desc_found = 0;
+		desc = &(ds[0]);
+		while (!desc_found && (desc && !opt_desc_is_null(desc))) {
+		    if (opt[0] == desc->shortopt[0]) {
+			desc_found = 1;
+			break;
+		    }
+		    desc_ind++;
+		    desc = &(ds[desc_ind]);
+		}
+		/* this is a flag - try to set an int */
+		flag_var = (int *)desc->set_var;
+		if (flag_var) (*flag_var) = 1;
+	    }
+	    /* record the option in known args */
+	    bu_ptbl_ins(&known_args, (long *)argv[i]);
+	    i++;
+	} else {
+	    char *opt = (char *)BU_PTBL_GET(&opts, 0);
 
-	/* Find the corresponding desc, if we have one */
-	desc = &(ds[0]);
-	while (!desc_found && (desc && !opt_desc_is_null(desc))) {
-	    if (BU_STR_EQUAL(opt+offset, desc->shortopt) || BU_STR_EQUAL(opt+offset, desc->longopt)) {
-		desc_found = 1;
+	    /* Find the corresponding desc, if we have one */
+	    desc = &(ds[0]);
+	    desc_ind = 0;
+	    desc_found = 0;
+	    while (!desc_found && (desc && !opt_desc_is_null(desc))) {
+		if (BU_STR_EQUAL(opt, desc->shortopt) || BU_STR_EQUAL(opt, desc->longopt)) {
+		    desc_found = 1;
+		    continue;
+		}
+		desc_ind++;
+		desc = &(ds[desc_ind]);
+	    }
+
+	    /* If we don't know what we're dealing with, keep going */
+	    if (!desc_found) {
+		/* Since the equals sign is regarded as forcing an argument
+		 * to map to a particular option (and is an error if that
+		 * option isn't supposed to have arguments) we pass along
+		 * the original option intact. */
+		bu_ptbl_ins(&unknown_args, (long *)argv[i]);
+		i++;
 		continue;
 	    }
-	    desc_ind++;
-	    desc = &(ds[desc_ind]);
-	}
 
-	/* If we don't know what we're dealing with, keep going */
-	if (!desc_found) {
-	    /* Since the equals sign is regarded as forcing an argument
-	     * to map to a particular option (and is an error if that
-	     * option isn't supposed to have arguments) we pass along
-	     * the original option intact. */
-	    bu_ptbl_ins(&unknown_args, (long *)argv[i]);
-	    i++;
-	    continue;
-	}
+	    /* record the option in known args - any remaining processing is on args, if any*/
+	    bu_ptbl_ins(&known_args, (long *)argv[i]);
 
-	/* record the option in known args - any remaining processing is on args, if any*/
-	bu_ptbl_ins(&known_args, (long *)argv[i]);
+	    /* any remaining processing is on trailing args, if any */
+	    i = i + 1;
 
-	/* any remaining processing is on trailing args, if any */
-	i = i + 1;
-
-	/* If we might have args and we have a validator function,
-	 * construct the greediest possible interpretation of the option
-	 * description and run the validator to determine the number of
-	 * argv entries associated with this option (can_be_opt is not
-	 * enough if the option is number based, since -9 may be both a
-	 * valid option and a valid argument - the validator must make the
-	 * decision.  If we do not have a validator, the best we can do
-	 * is the can_be_opt test as a terminating trigger. */
-	if (desc->arg_process) {
-	    /* Construct the greedy interpretation of the option argv */
-	    int k = 0;
-	    int arg_offset = 0;
-	    int g_argc = argc - i;
-	    const char *prev_opt = argv[i-1];
-	    const char **g_argv = argv + i;
-	    /* If we have an arg hiding in the previous option, temporarily
-	     * rework the argv array for this purpose */
-	    if (eq_arg) {
-		g_argv--;
-		g_argv[0] = eq_arg;
-		g_argc++;
-	    }
-	    arg_offset = (*desc->arg_process)(msgs, g_argc, g_argv, desc->set_var);
-	    if (arg_offset == -1) {
-		/* This isn't just an unknown option to be passed
-		 * through for possible later processing.  If the
-		 * arg_process callback returns -1, something has gone
-		 * seriously awry and a known-to-be-invalid arg was
-		 * seen.  Fail early and hard. */
-		if (msgs) bu_vls_printf(msgs, "Invalid argument supplied to %s: %s - halting.\n", argv[i-1], argv[i]);
-		return -1;
-	    }
-	    /* Put the original opt back and adjust the arg_offset, if we substituted
-	     * the eq_arg pointer into the argv array */
-	    if (eq_arg) {
-		/* If the arg_process callback did nothing with the arg, but the arg was
-		 * sent to this option with an = assignment, something is wrong - the
-		 * most likely scenario is an = assignment forced an argument to be
-		 * sent to an option that doesn't take arguments */
-		if (!arg_offset) {
-		    if (msgs) bu_vls_printf(msgs, "Option %s did not successfully use the supplied argument %s - halting.\n", argv[i-1], eq_arg);
+	    /* If we might have args and we have a validator function,
+	     * construct the greediest possible interpretation of the option
+	     * description and run the validator to determine the number of
+	     * argv entries associated with this option (can_be_opt is not
+	     * enough if the option is number based, since -9 may be both a
+	     * valid option and a valid argument - the validator must make the
+	     * decision.  If we do not have a validator, the best we can do
+	     * is the can_be_opt test as a terminating trigger. */
+	    if (desc->arg_process) {
+		/* Construct the greedy interpretation of the option argv */
+		int k = 0;
+		int arg_offset = 0;
+		int g_argc = argc - i;
+		const char *prev_opt = argv[i-1];
+		const char **g_argv = argv + i;
+		/* If we have an arg hiding in the previous option, temporarily
+		 * rework the argv array for this purpose */
+		if (eq_arg) {
+		    g_argv--;
+		    g_argv[0] = eq_arg;
+		    g_argc++;
+		}
+		arg_offset = (*desc->arg_process)(msgs, g_argc, g_argv, desc->set_var);
+		if (arg_offset == -1) {
+		    /* This isn't just an unknown option to be passed
+		     * through for possible later processing.  If the
+		     * arg_process callback returns -1, something has gone
+		     * seriously awry and a known-to-be-invalid arg was
+		     * seen.  Fail early and hard. */
+		    if (msgs) bu_vls_printf(msgs, "Invalid argument supplied to %s: %s - halting.\n", argv[i-1], argv[i]);
 		    return -1;
 		}
+		/* Put the original opt back and adjust the arg_offset, if we substituted
+		 * the eq_arg pointer into the argv array */
+		if (eq_arg) {
+		    /* If the arg_process callback did nothing with the arg, but the arg was
+		     * sent to this option with an = assignment, something is wrong - the
+		     * most likely scenario is an = assignment forced an argument to be
+		     * sent to an option that doesn't take arguments */
+		    if (!arg_offset) {
+			if (msgs) bu_vls_printf(msgs, "Option %s did not successfully use the supplied argument %s - halting.\n", argv[i-1], eq_arg);
+			return -1;
+		    }
 
-		g_argv[0] = prev_opt;
-		if (arg_offset > 0) {
-		    arg_offset--;
+		    g_argv[0] = prev_opt;
+		    if (arg_offset > 0) {
+			arg_offset--;
+		    }
+		}
+		/* If we used any of the argv entries, accumulate them for later reordering
+		 * and increment i */
+		for (k = (int)i; k < (int)(i + arg_offset); k++) {
+		    bu_ptbl_ins(&known_args, (long *)argv[k]);
+		}
+		i = i + arg_offset;
+	    } else {
+		/* no arg_process means this is a flag - try to set an int */
+		int *flag_var = (int *)desc->set_var;
+		if (flag_var) (*flag_var) = 1;
+
+		/* If we already got an arg from the equals mechanism and we aren't
+		 * supposed to have one, we're invalid - halt. */
+		if (eq_arg) {
+		    if (msgs) bu_vls_printf(msgs, "Option %s does not take an argument, but %s was supplied - halting.\n", argv[i-1], eq_arg);
+		    return -1;
 		}
 	    }
-	    /* If we used any of the argv entries, accumulate them for later reordering
-	     * and increment i */
-	    for (k = (int)i; k < (int)(i + arg_offset); k++) {
-		bu_ptbl_ins(&known_args, (long *)argv[k]);
-	    }
-	    i = i + arg_offset;
-	} else {
-	    /* no arg_process means this is a flag - try to set an int */
-	    int *flag_var = (int *)desc->set_var;
-	    if (flag_var) (*flag_var) = 1;
-
-	    /* If we already got an arg from the equals mechanism and we aren't
-	     * supposed to have one, we're invalid - halt. */
-	    if (eq_arg) {
-		if (msgs) bu_vls_printf(msgs, "Option %s does not take an argument, but %s was supplied - halting.\n", argv[i-1], eq_arg);
-		return -1;
-	    }
 	}
+	for(j = 0; j < (int)BU_PTBL_LEN(&opts); j++) {
+	    char *o = (char *)BU_PTBL_GET(&opts, j);
+	    bu_free(o, "free arg cpy");
+	}
+	bu_ptbl_free(&opts);
     }
 
     /* Rearrange argv so the unused options are ordered at the front of the array. */
@@ -445,14 +554,15 @@ bu_opt_parse(struct bu_vls *msgs, int argc, const char **argv, const struct bu_o
 	for (avc = 0; avc < ret_argc; avc++) {
 	    argv[avc] = (const char *)BU_PTBL_GET(&unknown_args, avc);
 	}
-	/* Put the option argv pointers at the end of the array, in case they
+	/* Put the known option argv pointers at the end of the array, in case they
 	 * are still needed for memory freeing by the caller */
-	for (avc = ret_argc; avc < akc + ret_argc; avc++) {
-	    argv[avc] = (const char *)BU_PTBL_GET(&unknown_args, avc);
+	for (avc = 0; avc < akc; avc++) {
+	    argv[avc+ret_argc] = (const char *)BU_PTBL_GET(&known_args, avc);
 	}
     }
     bu_ptbl_free(&unknown_args);
     bu_ptbl_free(&known_args);
+
 
     return ret_argc;
 }
