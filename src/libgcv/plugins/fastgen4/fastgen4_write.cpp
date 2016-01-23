@@ -42,7 +42,7 @@ namespace
 {
 
 
-static const fastf_t INCHES_PER_MM = 1.0 / 25.4;
+static const fastf_t inches_per_mm = 1.0 / 25.4;
 
 
 template <typename T> void
@@ -289,7 +289,7 @@ RecordWriter::~RecordWriter()
 class RecordWriter::Record
 {
 public:
-    static const std::size_t FIELD_WIDTH = 8;
+    static const std::size_t field_width = 8;
 
     explicit Record(RecordWriter &writer);
     ~Record();
@@ -302,7 +302,7 @@ public:
 
 
 private:
-    static const std::size_t RECORD_WIDTH = 10;
+    static const std::size_t record_width = 10;
 
     static std::string truncate_float(fastf_t value);
 
@@ -334,7 +334,7 @@ RecordWriter::Record::~Record()
 template <typename T> RecordWriter::Record &
 RecordWriter::Record::operator<<(const T &value)
 {
-    if (++m_width > RECORD_WIDTH)
+    if (++m_width > record_width)
 	throw std::logic_error("invalid record width");
 
     std::ostringstream sstream;
@@ -343,10 +343,10 @@ RecordWriter::Record::operator<<(const T &value)
 
     const std::string str_val = sstream.str();
 
-    if (str_val.size() > FIELD_WIDTH)
+    if (str_val.size() > field_width)
 	throw std::invalid_argument("length exceeds field width");
 
-    m_writer.get_ostream() << std::left << std::setw(FIELD_WIDTH) << str_val;
+    m_writer.get_ostream() << std::left << std::setw(field_width) << str_val;
     return *this;
 }
 
@@ -372,7 +372,7 @@ RecordWriter::Record::non_zero(fastf_t value)
     std::string result = truncate_float(value);
 
     if (result.find_first_not_of("-0.") == std::string::npos) {
-	result.resize(FIELD_WIDTH, '0');
+	result.resize(field_width, '0');
 	result.at(result.size() - 1) = '1';
     }
 
@@ -383,7 +383,7 @@ RecordWriter::Record::non_zero(fastf_t value)
 RecordWriter::Record &
 RecordWriter::Record::text(const std::string &value)
 {
-    m_width = RECORD_WIDTH;
+    m_width = record_width;
     m_writer.get_ostream() << value;
     return *this;
 }
@@ -394,9 +394,9 @@ RecordWriter::Record::truncate_float(fastf_t value)
 {
     std::ostringstream sstream;
     sstream.exceptions(std::ostream::failbit | std::ostream::badbit);
-    sstream.precision(FIELD_WIDTH);
+    sstream.precision(field_width);
     sstream << std::fixed << value;
-    std::string result = sstream.str().substr(0, FIELD_WIDTH);
+    std::string result = sstream.str().substr(0, field_width);
 
     const std::size_t end_digit = result.find_last_not_of('0');
     const std::size_t end_point = result.find('.');
@@ -471,7 +471,7 @@ public:
     void write_section_color(const SectionID &section_id, const Color &color);
     SectionID write_compsplt(const SectionID &id, fastf_t z_coordinate);
 
-    enum BooleanType {BOOL_HOLE, BOOL_WALL};
+    enum BooleanType {bool_hole, bool_wall};
     void write_boolean(BooleanType type, const SectionID &section_a,
 		       const SectionID &section_b, const SectionID *section_c = NULL,
 		       const SectionID *section_d = NULL);
@@ -486,9 +486,9 @@ protected:
 
 
 private:
-    static const std::size_t MAX_GROUP_ID = 49;
-    static const std::size_t MAX_SECTION_ID = 999;
-    static const std::size_t MAX_BOOLS = 40000;
+    static const std::size_t max_group_id = 49;
+    static const std::size_t max_section_id = 999;
+    static const std::size_t max_bools = 40000;
 
     SectionID m_next_section_id;
     std::size_t m_num_holes, m_num_walls;
@@ -529,10 +529,10 @@ FastgenWriter::take_next_section_id()
 {
     const SectionID result = m_next_section_id;
 
-    if (result.first > MAX_GROUP_ID)
+    if (result.first > max_group_id)
 	throw std::length_error("maximum Sections exceeded");
 
-    if (++m_next_section_id.second > MAX_SECTION_ID) {
+    if (++m_next_section_id.second > max_section_id) {
 	++m_next_section_id.first;
 	m_next_section_id.second = 1;
     }
@@ -568,7 +568,7 @@ FastgenWriter::write_compsplt(const SectionID &id, fastf_t z_coordinate)
 
     record << "COMPSPLT" << id.first << id.second;
     record << result.first << result.second;
-    record << z_coordinate * INCHES_PER_MM;
+    record << z_coordinate * inches_per_mm;
 
     return result;
 }
@@ -581,13 +581,13 @@ FastgenWriter::write_boolean(BooleanType type, const SectionID &section_a,
 {
     Record record(*this);
 
-    if (type == BOOL_HOLE) {
-	if (++m_num_holes > MAX_BOOLS)
+    if (type == bool_hole) {
+	if (++m_num_holes > max_bools)
 	    throw std::length_error("maximum HOLE records exceeded");
 
 	record << "HOLE";
-    } else if (type == BOOL_WALL) {
-	if (++m_num_walls > MAX_BOOLS)
+    } else if (type == bool_wall) {
+	if (++m_num_walls > max_bools)
 	    throw std::length_error("maximum WALL records exceeded");
 
 	record << "WALL";
@@ -623,7 +623,7 @@ private:
 	bool operator()(const Point &lhs, const Point &rhs) const;
     };
 
-    static const std::size_t MAX_GRID_POINTS = 50000;
+    static const std::size_t max_grid_points = 50000;
 
     std::size_t m_next_grid_id;
     std::map<Point, std::vector<std::size_t>, PointComparator> m_grids;
@@ -688,7 +688,7 @@ GridManager::get_unique_grids(const std::vector<Point> &points)
 void
 GridManager::write(RecordWriter &writer) const
 {
-    if (m_next_grid_id - 1 > MAX_GRID_POINTS)
+    if (m_next_grid_id - 1 > max_grid_points)
 	throw std::length_error("maximum grid points exceeded");
 
     for (std::map<Point, std::vector<std::size_t>, PointComparator>::const_iterator
@@ -697,9 +697,9 @@ GridManager::write(RecordWriter &writer) const
 	     id_it != it->second.end(); ++id_it) {
 	    RecordWriter::Record record(writer);
 	    record << "GRID" << *id_it << "";
-	    record << it->first[X] * INCHES_PER_MM;
-	    record << it->first[Y] * INCHES_PER_MM;
-	    record << it->first[Z] * INCHES_PER_MM;
+	    record << it->first[X] * inches_per_mm;
+	    record << it->first[Y] * inches_per_mm;
+	    record << it->first[Z] * inches_per_mm;
 	}
 }
 
@@ -752,7 +752,7 @@ public:
 
 
 private:
-    static const bool CHECK_MODE_ERRORS = false;
+    static const bool check_mode_errors = false;
 
     const bool m_volume_mode;
     const std::size_t m_material_id;
@@ -776,7 +776,7 @@ public:
 
 Section::Section() :
     m_completed_cutouts(),
-    m_volume_mode(!CHECK_MODE_ERRORS),
+    m_volume_mode(!check_mode_errors),
     m_material_id(1),
     m_color(false, Color()),
     m_grids(),
@@ -824,7 +824,7 @@ Section::write(RecordWriter &writer, const FastgenWriter::SectionID &id,
 	throw std::logic_error("empty Section");
 
     {
-	const std::size_t max_name_size = RecordWriter::Record::FIELD_WIDTH * 3;
+	const std::size_t max_name_size = RecordWriter::Record::field_width * 3;
 	std::string short_name = name;
 
 	if (short_name.size() > max_name_size) {
@@ -857,13 +857,13 @@ void
 Section::write_line(const fastf_t *point_a, const fastf_t *point_b,
 		    fastf_t radius, fastf_t thickness)
 {
-    radius *= INCHES_PER_MM;
-    thickness *= INCHES_PER_MM;
+    radius *= inches_per_mm;
+    thickness *= inches_per_mm;
 
     if (thickness < 0.0 || thickness > radius)
 	throw std::invalid_argument("invalid thickness");
 
-    if (CHECK_MODE_ERRORS)
+    if (check_mode_errors)
 	if (!m_volume_mode && NEAR_ZERO(thickness, RT_LEN_TOL))
 	    throw SectionModeError("line with zero thickness in a plate-mode component");
 
@@ -893,13 +893,13 @@ void
 Section::write_sphere(const fastf_t *center, fastf_t radius,
 		      fastf_t thickness)
 {
-    radius *= INCHES_PER_MM;
-    thickness *= INCHES_PER_MM;
+    radius *= inches_per_mm;
+    thickness *= inches_per_mm;
 
     if (NEAR_ZERO(thickness, RT_LEN_TOL))
 	thickness = radius;
 
-    if (CHECK_MODE_ERRORS)
+    if (check_mode_errors)
 	if (m_volume_mode && !NEAR_EQUAL(thickness, radius, RT_LEN_TOL))
 	    throw SectionModeError("Sphere with thickness in a volume-mode Section");
 
@@ -929,11 +929,11 @@ Section::write_thin_cone(const fastf_t *point_a, const fastf_t *point_b,
 			 fastf_t radius1, fastf_t radius2, fastf_t thickness,
 			 bool end1_open, bool end2_open)
 {
-    radius1 *= INCHES_PER_MM;
-    radius2 *= INCHES_PER_MM;
-    thickness *= INCHES_PER_MM;
+    radius1 *= inches_per_mm;
+    radius2 *= inches_per_mm;
+    thickness *= inches_per_mm;
 
-    if (CHECK_MODE_ERRORS)
+    if (check_mode_errors)
 	if (m_volume_mode)
 	    throw SectionModeError("CCONE1 in volume-mode component should be a CCONE2");
 
@@ -979,12 +979,12 @@ void
 Section::write_cone(const fastf_t *point_a, const fastf_t *point_b, fastf_t ro1,
 		    fastf_t ro2, fastf_t ri1, fastf_t ri2)
 {
-    ro1 *= INCHES_PER_MM;
-    ro2 *= INCHES_PER_MM;
-    ri1 *= INCHES_PER_MM;
-    ri2 *= INCHES_PER_MM;
+    ro1 *= inches_per_mm;
+    ro2 *= inches_per_mm;
+    ri1 *= inches_per_mm;
+    ri2 *= inches_per_mm;
 
-    if (CHECK_MODE_ERRORS)
+    if (check_mode_errors)
 	if (!m_volume_mode)
 	    throw SectionModeError("CCONE2 element in plate-mode Section");
 
@@ -1019,12 +1019,12 @@ void
 Section::write_triangle(const fastf_t *point_a, const fastf_t *point_b,
 			const fastf_t *point_c, fastf_t thickness, bool grid_centered)
 {
-    thickness *= INCHES_PER_MM;
+    thickness *= inches_per_mm;
 
     if (thickness < 0.0)
 	throw std::invalid_argument("invalid thickness");
 
-    if (CHECK_MODE_ERRORS)
+    if (check_mode_errors)
 	if (NEAR_ZERO(thickness, RT_LEN_TOL) != m_volume_mode) {
 	    if (m_volume_mode)
 		throw SectionModeError("triangle with thickness in a volume-mode Section");
@@ -1058,12 +1058,12 @@ Section::write_quad(const fastf_t *point_a, const fastf_t *point_b,
 		    const fastf_t *point_c, const fastf_t *point_d, fastf_t thickness,
 		    bool grid_centered)
 {
-    thickness *= INCHES_PER_MM;
+    thickness *= inches_per_mm;
 
     if (thickness < 0.0)
 	throw std::invalid_argument("invalid thickness");
 
-    if (CHECK_MODE_ERRORS)
+    if (check_mode_errors)
 	if (NEAR_ZERO(thickness, RT_LEN_TOL) != m_volume_mode) {
 	    if (m_volume_mode)
 		throw SectionModeError("quad with thickness in a volume-mode Section");
@@ -1098,14 +1098,14 @@ void
 Section::write_hexahedron(const fastf_t vpoints[8][3], fastf_t thickness,
 			  bool grid_centered)
 {
-    thickness *= INCHES_PER_MM;
+    thickness *= inches_per_mm;
 
     if (thickness < 0.0)
 	throw std::invalid_argument("invalid thickness");
 
     const bool has_thickness = !NEAR_ZERO(thickness, RT_LEN_TOL);
 
-    if (CHECK_MODE_ERRORS)
+    if (check_mode_errors)
 	if (m_volume_mode && has_thickness)
 	    throw SectionModeError("hexahedron with thickness in a volume-mode Section");
 
@@ -1786,7 +1786,7 @@ get_subtracted(const db_i &db, const tree *tree, LeafMap &results)
 // Identifies which half of a COMPSPLT a given region represents.
 // Assumes that `half_dir` represents a COMPSPLT-compatible halfspace.
 // Returns the partition type and a pointer to the half's matrix within the region.
-enum CompspltPartitionType {COMPSPLT_PARTITION_NONE, COMPSPLT_PARTITION_INTERSECTED, COMPSPLT_PARTITION_SUBTRACTED};
+enum CompspltPartitionType {compsplt_partition_none, compsplt_partition_intersected, compsplt_partition_subtracted};
 typedef std::pair<CompspltPartitionType, Matrix> CompspltID;
 
 HIDDEN CompspltID
@@ -1807,16 +1807,16 @@ identify_compsplt(const db_i &db, const directory &parent_region_dir,
     LeafMap::const_iterator found = leaves.find(&half_dir);
 
     if (found != leaves.end())
-	return CompspltID(COMPSPLT_PARTITION_INTERSECTED, found->second);
+	return CompspltID(compsplt_partition_intersected, found->second);
 
     leaves.clear();
     get_subtracted(db, parent_region.tree, leaves);
     found = leaves.find(&half_dir);
 
     if (found != leaves.end())
-	return CompspltID(COMPSPLT_PARTITION_SUBTRACTED, found->second);
+	return CompspltID(compsplt_partition_subtracted, found->second);
 
-    return CompspltID(COMPSPLT_PARTITION_NONE, Matrix(NULL));
+    return CompspltID(compsplt_partition_none, Matrix(NULL));
 }
 
 
@@ -2025,7 +2025,7 @@ const
 		 m_walls.first.begin(); wall_dir_it != m_walls.first.end(); ++wall_dir_it)
 	    for (IDVector::const_iterator target_id_it = ids.at(*wall_dir_it).begin();
 		 target_id_it != ids.at(*wall_dir_it).end(); ++target_id_it)
-		writer.write_boolean(FastgenWriter::BOOL_WALL, *this_id_it, *target_id_it);
+		writer.write_boolean(FastgenWriter::bool_wall, *this_id_it, *target_id_it);
 }
 
 
@@ -2127,7 +2127,7 @@ find_compsplt(FastgenConversion &data, const db_full_path &half_path,
     const CompspltID this_compsplt = identify_compsplt(data.m_db,
 				     *parent_region_dir, *DB_FULL_PATH_CUR_DIR(&half_path));
 
-    if (this_compsplt.first == COMPSPLT_PARTITION_NONE)
+    if (this_compsplt.first == compsplt_partition_none)
 	return false;
 
     // find the other half
@@ -2144,7 +2144,7 @@ find_compsplt(FastgenConversion &data, const db_full_path &half_path,
 	    const CompspltID current = identify_compsplt(data.m_db, *region_dirs.ptr[i],
 				       *DB_FULL_PATH_CUR_DIR(&half_path));
 
-	    if (current.first != COMPSPLT_PARTITION_NONE
+	    if (current.first != compsplt_partition_none
 		&& current.first != this_compsplt.first)
 		if (current.second.equal(this_compsplt.second, data.m_tol)) {
 		    other_half_dir = region_dirs.ptr[i];
@@ -2156,9 +2156,9 @@ find_compsplt(FastgenConversion &data, const db_full_path &half_path,
     if (!other_half_dir)
 	return false;
 
-    if (this_compsplt.first == COMPSPLT_PARTITION_INTERSECTED)
+    if (this_compsplt.first == compsplt_partition_intersected)
 	data.get_region(*parent_region_dir).set_compsplt(half.eqn[3]);
-    else if (this_compsplt.first == COMPSPLT_PARTITION_SUBTRACTED)
+    else if (this_compsplt.first == compsplt_partition_subtracted)
 	data.get_region(*parent_region_dir).disable();
     else
 	throw std::logic_error("unknown COMPSPLT partition type");
