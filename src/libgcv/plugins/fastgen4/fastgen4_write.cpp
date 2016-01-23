@@ -128,8 +128,7 @@ color_from_floats(const float *float_color)
 class Matrix
 {
 public:
-    Matrix();
-    explicit Matrix(const fastf_t *values);
+    explicit Matrix(const fastf_t *values = NULL);
 
     bool equal(const Matrix &other, const bn_tol &tol) const;
 
@@ -137,11 +136,6 @@ public:
 private:
     mat_t m_value;
 };
-
-
-Matrix::Matrix() :
-    m_value() // zero
-{}
 
 
 Matrix::Matrix(const fastf_t *values)
@@ -273,6 +267,9 @@ protected:
 
 
 private:
+    RecordWriter(const RecordWriter &source);
+    RecordWriter &operator=(const RecordWriter &source);
+
     bool m_record_open;
 };
 
@@ -563,12 +560,14 @@ FastgenWriter::write_section_color(const SectionID &section_id,
 FastgenWriter::SectionID
 FastgenWriter::write_compsplt(const SectionID &id, fastf_t z_coordinate)
 {
+    z_coordinate *= inches_per_mm;
+
     Record record(*this);
     const SectionID result = take_next_section_id();
 
     record << "COMPSPLT" << id.first << id.second;
     record << result.first << result.second;
-    record << z_coordinate * inches_per_mm;
+    record << z_coordinate;
 
     return result;
 }
@@ -860,12 +859,12 @@ Section::write_line(const fastf_t *point_a, const fastf_t *point_b,
     radius *= inches_per_mm;
     thickness *= inches_per_mm;
 
-    if (thickness < 0.0 || thickness > radius)
-	throw std::invalid_argument("invalid thickness");
-
     if (check_mode_errors)
 	if (!m_volume_mode && NEAR_ZERO(thickness, RT_LEN_TOL))
 	    throw SectionModeError("line with zero thickness in a plate-mode component");
+
+    if (thickness < 0.0 || thickness > radius)
+	throw std::invalid_argument("invalid thickness");
 
     if (radius <= 0.0)
 	throw std::invalid_argument("invalid radius");
@@ -1021,9 +1020,6 @@ Section::write_triangle(const fastf_t *point_a, const fastf_t *point_b,
 {
     thickness *= inches_per_mm;
 
-    if (thickness < 0.0)
-	throw std::invalid_argument("invalid thickness");
-
     if (check_mode_errors)
 	if (NEAR_ZERO(thickness, RT_LEN_TOL) != m_volume_mode) {
 	    if (m_volume_mode)
@@ -1031,6 +1027,9 @@ Section::write_triangle(const fastf_t *point_a, const fastf_t *point_b,
 	    else
 		throw SectionModeError("triangle without thickness in a plate-mode Section");
 	}
+
+    if (thickness < 0.0)
+	throw std::invalid_argument("invalid thickness");
 
     std::vector<Point> points(3);
     points.at(0) = Point(point_a);
@@ -1060,9 +1059,6 @@ Section::write_quad(const fastf_t *point_a, const fastf_t *point_b,
 {
     thickness *= inches_per_mm;
 
-    if (thickness < 0.0)
-	throw std::invalid_argument("invalid thickness");
-
     if (check_mode_errors)
 	if (NEAR_ZERO(thickness, RT_LEN_TOL) != m_volume_mode) {
 	    if (m_volume_mode)
@@ -1070,6 +1066,9 @@ Section::write_quad(const fastf_t *point_a, const fastf_t *point_b,
 	    else
 		throw SectionModeError("quad without thickness in a plate-mode Section");
 	}
+
+    if (thickness < 0.0)
+	throw std::invalid_argument("invalid thickness");
 
     std::vector<Point> points(4);
     points.at(0) = Point(point_a);
@@ -1100,14 +1099,14 @@ Section::write_hexahedron(const fastf_t vpoints[8][3], fastf_t thickness,
 {
     thickness *= inches_per_mm;
 
-    if (thickness < 0.0)
-	throw std::invalid_argument("invalid thickness");
-
     const bool has_thickness = !NEAR_ZERO(thickness, RT_LEN_TOL);
 
     if (check_mode_errors)
 	if (m_volume_mode && has_thickness)
 	    throw SectionModeError("hexahedron with thickness in a volume-mode Section");
+
+    if (thickness < 0.0)
+	throw std::invalid_argument("invalid thickness");
 
     std::vector<Point> points(8);
 
@@ -1292,7 +1291,7 @@ tgc_is_ccone2(const rt_tgc_internal &tgc)
 
 
 HIDDEN void
-path_to_mat(const db_i &db, const db_full_path &path, mat_t &result)
+path_to_mat(db_i &db, const db_full_path &path, mat_t &result)
 {
     RT_CK_DBI(&db);
     RT_CK_FULL_PATH(&path);
@@ -1302,19 +1301,18 @@ path_to_mat(const db_i &db, const db_full_path &path, mat_t &result)
     db_full_path_init(&temp);
     db_dup_full_path(&temp, &path);
 
-    if (!db_path_to_mat(const_cast<db_i *>(&db), &temp, result, 0, &rt_uniresource))
+    if (!db_path_to_mat(&db, &temp, result, 0, &rt_uniresource))
 	throw std::runtime_error("db_path_to_mat() failed");
 }
 
 
 HIDDEN void
-apply_path_xform(const db_i &db, const mat_t &matrix, rt_db_internal &internal)
+apply_path_xform(db_i &db, const mat_t &matrix, rt_db_internal &internal)
 {
     RT_CK_DBI(&db);
     RT_CK_DB_INTERNAL(&internal);
 
-    if (rt_obj_xform(&internal, matrix, &internal, 0, const_cast<db_i *>(&db),
-		     &rt_uniresource))
+    if (rt_obj_xform(&internal, matrix, &internal, 0, &db, &rt_uniresource))
 	throw std::runtime_error("rt_obj_xform() failed");
 }
 
@@ -1364,14 +1362,14 @@ get_region_path(const db_full_path &path)
 
 
 HIDDEN bool
-path_is_subtracted(const db_i &db, const db_full_path &path)
+path_is_subtracted(db_i &db, const db_full_path &path)
 {
     RT_CK_DBI(&db);
     RT_CK_FULL_PATH(&path);
 
     db_tree_state tree_state = rt_initial_tree_state;
     tree_state.ts_resp = &rt_uniresource;
-    tree_state.ts_dbip = const_cast<db_i *>(&db);
+    tree_state.ts_dbip = &db;
 
     db_full_path end_path;
     const AutoPtr<db_full_path, db_free_full_path> autofree_end_path(&end_path);
@@ -1387,7 +1385,7 @@ path_is_subtracted(const db_i &db, const db_full_path &path)
 // helper; sets `outer` and `inner` if they exist in
 // a tree describing `outer` - `inner`
 HIDDEN bool
-get_cutout(const db_i &db, const db_full_path &parent_path, DBInternal &outer,
+get_cutout(db_i &db, const db_full_path &parent_path, DBInternal &outer,
 	   DBInternal &inner)
 {
     RT_CK_DBI(&db);
@@ -1502,8 +1500,8 @@ get_ccone1_cutout_helper(Section &section, const std::string &name,
 
 // test for and create CCONE{1, 2} elements
 HIDDEN bool
-find_ccone_cutout(Section &section, const db_i &db,
-		  const db_full_path &parent_path, std::set<const directory *> &completed)
+find_ccone_cutout(Section &section, db_i &db, const db_full_path &parent_path,
+		  std::set<const directory *> &completed)
 {
     RT_CK_DBI(&db);
     RT_CK_FULL_PATH(&parent_path);
@@ -1566,8 +1564,8 @@ find_ccone_cutout(Section &section, const db_i &db,
 
 // test for and create CSPHERE elements
 HIDDEN bool
-find_csphere_cutout(Section &section, const db_i &db,
-		    const db_full_path &parent_path, std::set<const directory *> &completed)
+find_csphere_cutout(Section &section, db_i &db, const db_full_path &parent_path,
+		    std::set<const directory *> &completed)
 {
     RT_CK_DBI(&db);
     RT_CK_FULL_PATH(&parent_path);
@@ -1889,10 +1887,12 @@ find_walls(const db_i &db, const directory &region_dir, const bn_tol &tol)
 
 
 // stores state for the ongoing conversion process
-struct FastgenConversion {
+class FastgenConversion
+{
+public:
     class RegionManager;
 
-    FastgenConversion(const db_i &db, const bn_tol &tol,
+    FastgenConversion(db_i &db, const bn_tol &tol,
 		      const std::set<const directory *> &facetize_regions);
     ~FastgenConversion();
 
@@ -1904,7 +1904,7 @@ struct FastgenConversion {
 
     void write(const std::string &path) const;
 
-    const db_i &m_db;
+    db_i &m_db;
     const bn_tol m_tol;
     std::set<const directory *> m_failed_regions;
 
@@ -2167,7 +2167,7 @@ find_compsplt(FastgenConversion &data, const db_full_path &half_path,
 }
 
 
-FastgenConversion::FastgenConversion(const db_i &db, const bn_tol &tol,
+FastgenConversion::FastgenConversion(db_i &db, const bn_tol &tol,
 				     const std::set<const directory *> &facetize_regions) :
     m_db(db),
     m_tol(tol),
@@ -2487,7 +2487,7 @@ convert_region_end(db_tree_state *tree_state, const db_full_path *path,
 
 
 HIDDEN std::set<const directory *>
-do_conversion(const struct db_i &db, const struct gcv_opts &gcv_options,
+do_conversion(db_i &db, const struct gcv_opts &gcv_options,
 	      const std::string &path,
 	      const std::set<const directory *> &facetize_regions =
 		  std::set<const directory *>())
@@ -2503,7 +2503,7 @@ do_conversion(const struct db_i &db, const struct gcv_opts &gcv_options,
     nmg_model.ptr = nmg_mm();
     FastgenConversion data(db, gcv_options.calculational_tolerance,
 			   facetize_regions);
-    const int ret = db_walk_tree(const_cast<db_i *>(&db),
+    const int ret = db_walk_tree(&db,
 				 static_cast<int>(gcv_options.num_objects),
 				 const_cast<const char **>(gcv_options.object_names),
 				 1,
