@@ -1511,21 +1511,21 @@ find_ccone_cutout(Section &section, db_i &db, const db_full_path &parent_path,
     if (completed.count(&parent_dir))
 	return true; // already processed
 
-    std::pair<DBInternal, DBInternal> internals;
+    DBInternal internal_first, internal_second;
 
-    if (!get_cutout(db, parent_path, internals.first, internals.second))
+    if (!get_cutout(db, parent_path, internal_first, internal_second))
 	return false;
 
-    if ((internals.first.get().idb_minor_type != ID_TGC
-	 && internals.first.get().idb_minor_type != ID_REC)
-	|| (internals.second.get().idb_minor_type != ID_TGC
-	    && internals.second.get().idb_minor_type != ID_REC))
+    if ((internal_first.get().idb_minor_type != ID_TGC
+	 && internal_first.get().idb_minor_type != ID_REC)
+	|| (internal_second.get().idb_minor_type != ID_TGC
+	    && internal_second.get().idb_minor_type != ID_REC))
 	return false;
 
     const rt_tgc_internal &outer_tgc = *static_cast<rt_tgc_internal *>
-				       (internals.first.get().idb_ptr);
+				       (internal_first.get().idb_ptr);
     const rt_tgc_internal &inner_tgc = *static_cast<rt_tgc_internal *>
-				       (internals.second.get().idb_ptr);
+				       (internal_second.get().idb_ptr);
     RT_TGC_CK_MAGIC(&outer_tgc);
     RT_TGC_CK_MAGIC(&inner_tgc);
 
@@ -1575,21 +1575,21 @@ find_csphere_cutout(Section &section, db_i &db, const db_full_path &parent_path,
     if (completed.count(&parent_dir))
 	return true; // already processed
 
-    std::pair<DBInternal, DBInternal> internals;
+    DBInternal internal_first, internal_second;
 
-    if (!get_cutout(db, parent_path, internals.first, internals.second))
+    if (!get_cutout(db, parent_path, internal_first, internal_second))
 	return false;
 
-    if ((internals.first.get().idb_minor_type != ID_SPH
-	 && internals.first.get().idb_minor_type != ID_ELL)
-	|| (internals.second.get().idb_minor_type != ID_SPH
-	    && internals.second.get().idb_minor_type != ID_ELL))
+    if ((internal_first.get().idb_minor_type != ID_SPH
+	 && internal_first.get().idb_minor_type != ID_ELL)
+	|| (internal_second.get().idb_minor_type != ID_SPH
+	    && internal_second.get().idb_minor_type != ID_ELL))
 	return false;
 
     const rt_ell_internal &outer_ell = *static_cast<rt_ell_internal *>
-				       (internals.first.get().idb_ptr);
+				       (internal_first.get().idb_ptr);
     const rt_ell_internal &inner_ell = *static_cast<rt_ell_internal *>
-				       (internals.second.get().idb_ptr);
+				       (internal_second.get().idb_ptr);
     RT_ELL_CK_MAGIC(&outer_ell);
     RT_ELL_CK_MAGIC(&inner_ell);
 
