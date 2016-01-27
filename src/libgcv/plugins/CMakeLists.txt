@@ -1,4 +1,6 @@
 add_custom_target(libgcv_plugins)
+set_target_properties(libgcv_plugins PROPERTIES FOLDER "BRL-CAD Shared Libraries")
+
 
 function(LIBGCV_ADD_PLUGIN plugin_name sources libs)
     set(target_name libgcv_${plugin_name})
