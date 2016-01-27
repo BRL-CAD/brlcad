@@ -1,5 +1,3 @@
-/** \feature Portability Library */
-
 /* Top level library group */
 /** @defgroup libbu libbu (Utility Functions) */
 

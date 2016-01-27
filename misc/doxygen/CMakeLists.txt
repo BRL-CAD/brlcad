@@ -1,5 +1,7 @@
 set(lib_inputs "INPUT += ${CMAKE_SOURCE_DIR}/include/common.h")
 set(lib_inputs "${lib_inputs}
+INPUT += ${CMAKE_SOURCE_DIR}/misc/doxygen/features.dox")
+set(lib_inputs "${lib_inputs}
 INPUT += ${CMAKE_SOURCE_DIR}/misc/doxygen/vmath.dox")
 set(lib_inputs "${lib_inputs}
 INPUT += ${CMAKE_SOURCE_DIR}/include/vmath.h")
@@ -180,6 +182,7 @@ add_custom_target(doxygen DEPENDS ${CMAKE_BINARY_DIR}/doc/doxygen_output/html/in
 set(doxygen_ignore_files
   Doxyfile.in
   intro.dox
+  features.dox
   images
   )
 CMAKEFILES(${doxygen_ignore_files})
