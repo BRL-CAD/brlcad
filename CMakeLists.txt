@@ -702,6 +702,11 @@ if(NOT BRLCAD_IS_SUBBUILD)
   set(CMAKE_BUILD_TYPE "${CMAKE_BUILD_TYPE}" CACHE STRING "BRL-CAD high level build configuration")
   set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS "" Debug Release)
 endif(NOT BRLCAD_IS_SUBBUILD)
+if(CMAKE_CONFIGURATION_TYPES)
+  mark_as_advanced(CMAKE_BUILD_TYPE)
+else(CMAKE_CONFIGURATION_TYPES)
+  mark_as_advanced(CMAKE_BUILD_TYPE)
+endif(CMAKE_CONFIGURATION_TYPES)
 
 #---------------------------------------------------------------------
 # The location in which to install BRL-CAD.  Only do this if
@@ -1123,6 +1128,8 @@ endif(BRLCAD_ENABLE_AQUA)
 find_package(Qt5Widgets QUIET)
 option(BRLCAD_ENABLE_QT "Enable features requiring Qt" OFF)
 mark_as_advanced(BRLCAD_ENABLE_QT)
+mark_as_advanced(Qt5Core_DIR)
+mark_as_advanced(Qt5Gui_DIR)
 if(NOT Qt5Widgets_FOUND AND BRLCAD_ENABLE_QT)
   message("QT interface requested, but QT5 is not found - disabling")
   set(BRLCAD_ENABLE_QT OFF)
@@ -1249,6 +1256,9 @@ endif(BRLCAD_ENABLE_STRICT)
 # Build with compiler optimization flags.  This should normally be on for
 # release builds.
 AUTO_OPTION(BRLCAD_FLAGS_OPTIMIZATION BRLCAD_OPTIMIZED_BUILD "OFF" "ON")
+if(CMAKE_CONFIGURATION_TYPES)
+  mark_as_advanced(BRLCAD_FLAGS_OPTIMIZATION)
+endif(CMAKE_CONFIGURATION_TYPES)
 
 # Build with full compiler lines visible by default (won't need make
 # VERBOSE=1) on command line
@@ -2446,7 +2456,8 @@ endforeach(req_var ${CMAKE_REQUIRED_FLAG_VARS})
 # Enable CTest Testing support - this is done after src/other is
 # added to avoid incorporating src/other CTests into BRL-CAD's own
 # testing.  TODO - probably should control this with an option.
-INCLUDE(CTest)
+include(CTest)
+mark_as_advanced(BUILD_TESTING)
 
 # We've done the toplevel configure steps, now add the subdirectories
 macro(verbose_add_subdirectory root dir)

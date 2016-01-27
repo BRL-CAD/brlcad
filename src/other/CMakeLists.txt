@@ -202,6 +202,7 @@ set(PNG_MAN_DIR ${MAN_DIR} CACHE STRING "Set PNG_MAN_DIR to the global MAN_DIR" 
 mark_as_advanced(PNG_MAN_DIR)
 set(PNG_TESTS 0 CACHE STRING "Disable building png test executables" FORCE)
 mark_as_advanced(PNG_TESTS)
+mark_as_advanced(PNG_FRAMEWORK)
 set(CMAKE_INSTALL_LIBDIR ${LIB_DIR})
 set(png_ALIASES ENABLE_PNG)
 set(png_DESCRIPTION "

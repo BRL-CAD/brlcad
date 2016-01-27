@@ -26,6 +26,7 @@ set(LIBWFOBJ_SOURCES
 
 BRLCAD_ADDLIB(libwfobj "${LIBWFOBJ_SOURCES}" "librt;libbu")
 set_target_properties(libwfobj PROPERTIES VERSION 20.0.1 SOVERSION 20)
+mark_as_advanced(WFOBJ_INCLUDE_DIRS)
 
 set (TARGET_INCLUDES
     ${PERPLEX_WFOBJ_SCANNER_INCLUDE_DIR}
