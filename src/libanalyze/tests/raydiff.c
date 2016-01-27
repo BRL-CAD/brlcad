@@ -22,8 +22,6 @@
 
 #include <string.h>
 
-#include "tcl.h"
-
 #include "raytrace.h"
 #include "analyze.h"
 
