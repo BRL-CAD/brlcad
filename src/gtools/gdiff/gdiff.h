@@ -22,8 +22,6 @@
 
 #include <string.h>
 
-#include "tcl.h"
-
 #include "bu/getopt.h"
 #include "raytrace.h"
 #include "rt/db_diff.h"
