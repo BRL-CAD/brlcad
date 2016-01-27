@@ -1364,6 +1364,14 @@ Sysv_Init(Tcl_Interp *UNUSED(interp))
     return TCL_OK;
 }
 
+int
+Pkg_Init(Tcl_Interp *interp)
+{
+    if (!interp)
+	return TCL_ERROR;
+    return TCL_OK;
+}
+
 #define RT_FUNC_TCL_CAST(_func) ((int (*)(ClientData clientData, Tcl_Interp *interp, int argc, const char *const *argv))_func)
 
 static int tclcad_rt_shootray(ClientData clientData, Tcl_Interp *interp, int argc, const char *const *argv);
