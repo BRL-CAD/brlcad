@@ -2180,7 +2180,7 @@ BRLCAD_FUNCTION_EXISTS(snprintf HAVE_SNPRINTF)
 if(NOT HAVE_SNPRINTF)
   BRLCAD_FUNCTION_EXISTS(_snprintf HAVE__SNPRINTF)
   if(HAVE__SNPRINTF)
-    CONFIG_H_APPEND(BRLCAD "#cmakedefine snprintf _snprintf\n")
+    CONFIG_H_APPEND(BRLCAD "#define snprintf _snprintf\n")
   endif(HAVE__SNPRINTF)
 endif(NOT HAVE_SNPRINTF)
 
