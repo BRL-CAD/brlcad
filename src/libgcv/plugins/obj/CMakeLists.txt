@@ -1,4 +1,10 @@
 add_subdirectory(wfobj)
+if(TARGET libwfobj)
+  SetTargetFolder(libwfobj "Third Party Libraries")
+endif(TARGET libwfobj)
+if(TARGET libwfobj-static)
+  SetTargetFolder(libwfobj-static "Third Party Libraries")
+endif(TARGET libwfobj-static)
 
 include_directories(
   ${CMAKE_CURRENT_SOURCE_DIR}
