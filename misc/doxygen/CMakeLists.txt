@@ -182,6 +182,8 @@ add_custom_target(doxygen DEPENDS ${CMAKE_BINARY_DIR}/doc/doxygen_output/html/in
 set(doxygen_ignore_files
   Doxyfile.in
   intro.dox
+  bview.dox
+  vmath.dox
   features.dox
   images
   )
