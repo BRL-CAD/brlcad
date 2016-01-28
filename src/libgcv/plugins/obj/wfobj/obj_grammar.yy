@@ -38,6 +38,7 @@
  * information.
  */
 
+#include "obj_util.h"
 #include "obj_parser.h"
 #include "obj_parser_state.h"
 #include "obj_grammar_decls.h"

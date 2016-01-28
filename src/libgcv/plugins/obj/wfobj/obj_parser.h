@@ -27,24 +27,9 @@
 
 #include <sys/types.h>
 #include <stdio.h>
+#include "obj_util.h"
 
 __BEGIN_DECLS
-
-#ifndef WFOBJ_EXPORT
-#  if defined(WFOBJ_DLL_EXPORTS) && defined(WFOBJ_DLL_IMPORTS)
-#    error "Only WFOBJ_DLL_EXPORTS or WFOBJ_DLL_IMPORTS can be defined, not both."
-#  elif defined(WFOBJ_DLL_EXPORTS)
-#    define WFOBJ_EXPORT __declspec(dllexport)
-#  elif defined(WFOBJ_DLL_IMPORTS)
-#    define WFOBJ_EXPORT __declspec(dllimport)
-#  else
-#    define WFOBJ_EXPORT
-#  endif
-#endif
-
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 /**
  * A structure containing a wavefront obj parser.
@@ -792,10 +777,6 @@ WFOBJ_EXPORT extern int obj_polygonal_tnv_faces(obj_contents_t contents,
  */
 WFOBJ_EXPORT extern int obj_polygonal_tnv_face_vertices(obj_contents_t contents, size_t face,
 				       const size_t (*index_arr[])[3]);
-
-#ifdef __cplusplus
-}
-#endif
 
 __END_DECLS
 
