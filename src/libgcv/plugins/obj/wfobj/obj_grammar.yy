@@ -118,14 +118,9 @@ static bool index_check(int raw, std::size_t index,
 			yyscan_t scanner)
 {
     if (!raw || index >= vertices) {
-	std::string err;
-        char buf[256];
-	// stringstream gives internal compiler error with gcc 4.2, so
-	// using snprintf instead.
-        snprintf(buf, sizeof(buf), "index '%d': ", raw);
-        err = buf;
-        err += log;
-        obj_parser_error(scanner, err.c_str());
+        std::ostringstream err;
+        err << "index '" << raw << "': " << log;
+        obj_parser_error(scanner, err.str().c_str());
         return true;
     }
     return false;
