@@ -14,10 +14,7 @@ set(obj_ignore_files
   wfobj/CMake/FindLEMON.cmake
   wfobj/CMake/FindPERPLEX.cmake
   wfobj/CMake/FindRE2C.cmake
-  wfobj/CMake/LEMON_Util.cmake
-  wfobj/CMake/PERPLEX_Util.cmake
   wfobj/CMake/Path_Setup.cmake
-  wfobj/CMake/RE2C_Util.cmake
   wfobj/obj_grammar.yy
   wfobj/obj_grammar_decls.h
   wfobj/obj_parser.h
@@ -29,6 +26,8 @@ set(obj_ignore_files
 )
 
 CMAKEFILES(${obj_ignore_files})
+
+DISTCLEAN(${CMAKE_CURRENT_BINARY_DIR}/wfobj/WFOBJ_PARSER_obj_grammar/obj_grammar.yy)
 
 # Local Variables:
 # tab-width: 8

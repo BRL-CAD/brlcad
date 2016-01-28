@@ -86,14 +86,6 @@ find_package(LEMON REQUIRED)
 find_package(RE2C REQUIRED)
 find_package(PERPLEX REQUIRED)
 
-#include target utility macros for perplex/lemon
-if(NOT COMMAND PERPLEX_TARGET)
-  include(${WFOBJ_CMAKE_DIR}/PERPLEX_Util.cmake)
-endif(NOT COMMAND PERPLEX_TARGET)
-if(NOT COMMAND LEMON_TARGET)
-  include(${WFOBJ_CMAKE_DIR}/LEMON_Util.cmake)
-endif(NOT COMMAND LEMON_TARGET)
-
 PERPLEX_TARGET(
   WFOBJ_SCANNER obj_rules.l
   OUT_SRC_FILE obj_rules.cpp
