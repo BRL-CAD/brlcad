@@ -132,7 +132,7 @@ if(BUILD_STATIC_LIBS)
   add_library(libwfobj-static STATIC ${WFOBJ_SRCS})
   set_target_properties(libwfobj-static PROPERTIES PREFIX "")
   if(NOT MSVC)
-    set_target_properties(${libname}-static PROPERTIES OUTPUT_NAME "libwfobj")
+    set_target_properties(libwfobj-static PROPERTIES OUTPUT_NAME "libwfobj")
   endif(NOT MSVC)
   set_property(TARGET libwfobj-static APPEND PROPERTY INCLUDE_DIRECTORIES "${GENERATED_INCLUDES}")
   install(TARGETS libwfobj-static
