@@ -56,6 +56,9 @@ macro(general_tcl_index_BUILD cmd outfile targetdir)
   set(tclindex_target_list "${tclindex_target_list}" CACHE STRING "tclindex target list" FORCE)
 
   set(LOG_FILES "${LOG_FILES};${CMAKE_CURRENT_BINARY_DIR}/${cmd}_index_gen.log")
+
+  DISTCLEAN(${CMAKE_CURRENT_BINARY_DIR}/${cmd}_index_gen.log)
+
 endmacro(general_tcl_index_BUILD name targetdir)
 mark_as_advanced(tclindex_target_list)
 
@@ -106,8 +109,6 @@ tclIndex_BUILD(tclscripts)
 add_subdirectory(rtwizard)
 
 CMAKEFILES(README hv3_man_browser_test.tcl)
-
-set_property(DIRECTORY APPEND PROPERTY ADDITIONAL_MAKE_CLEAN_FILES "${LOG_FILES}")
 
 # Local Variables:
 # tab-width: 8
