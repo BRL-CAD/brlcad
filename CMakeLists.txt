@@ -519,8 +519,8 @@ if(NOT BRLCAD_IS_SUBBUILD)
   endif(NOT N EQUAL 0)
   add_custom_target(check
     COMMAND ${CMAKE_COMMAND} -E echo "\"**********************************************************************\""
-    COMMAND ${CMAKE_COMMAND} -E echo "NOTE: The \"check\" a.k.a. \"BRL-CAD Validation Testing\" target runs"
-    COMMAND ${CMAKE_COMMAND} -E echo "      BRL-CAD's unit, system, integration, benchmark (performance), and"
+    COMMAND ${CMAKE_COMMAND} -E echo "NOTE: The \\\"check\\\" a.k.a. \\\"BRL-CAD Validation Testing\\\" target runs"
+    COMMAND ${CMAKE_COMMAND} -E echo "      BRL-CAD\\'s unit, system, integration, benchmark \\(performance\\), and"
     COMMAND ${CMAKE_COMMAND} -E echo "      regression tests.  To consider a build viable for production use,"
     COMMAND ${CMAKE_COMMAND} -E echo "      these tests must pass.  Dependencies are compiled automatically."
     COMMAND ${CMAKE_COMMAND} -E echo "\"**********************************************************************\""
