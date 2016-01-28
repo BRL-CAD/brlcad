@@ -1,7 +1,7 @@
-/*             O B J _ G R A M M A R _ D E C L S . H
+/*                       O B J _ U T I L . H
  * BRL-CAD
  *
- * Copyright (c) 2011-2016 United States Government as represented by
+ * Copyright (c) 2010-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -17,34 +17,29 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file obj_grammar.h
- *
- * Necessary declarations to parse grammar.
- *
- */
 
-#ifndef LIBGCV_WFOBJ_OBJ_GRAMMAR_DECLS_H
-#define LIBGCV_WFOBJ_OBJ_GRAMMAR_DECLS_H
+#ifndef WFOBJ_OBJ_UTIL_H
+#define WFOBJ_OBJ_UTIL_H
 
-#include "obj_grammar.hpp"
-#include "obj_rules.h"
-#include "obj_token_type.h"
+#include <stdlib.h>
+#include <stdio.h>
+#include <ctype.h>
+#include <string.h>
 
-__BEGIN_DECLS
+#define WFOBJ_GET(_ptr, _type) _ptr = (_type *)calloc(1, sizeof(_type))
+#define WFOBJ_PUT(_ptr, _type) do { *(uint8_t *)(_type *)(_ptr) = /*zap*/ 0; *((uint32_t *)_ptr) = 0xFFFFFFFF;  free(_ptr); _ptr = NULL; } while (0)
 
-void *ParseAlloc(void *(*mallocProc)(size_t));
-void Parse(void *parser, int tokenType, YYSTYPE tokenValue, yyscan_t scanner);
-void ParseFree(void *p, void (*freeProc)(void*));
-void ParseTrace(FILE *stream, char *prefix);
-
-__END_DECLS
+extern "C" {
+    char *wfobj_strdup(const char *cp);
+    size_t wfobj_strlcpy(char *dst, const char *src, size_t size);
+}
 
 #endif
 
 /*
  * Local Variables:
+ * mode: C++
  * tab-width: 8
- * mode: C
  * indent-tabs-mode: t
  * c-file-style: "stroustrup"
  * End:

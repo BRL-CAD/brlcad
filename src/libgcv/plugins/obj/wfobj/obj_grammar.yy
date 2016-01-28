@@ -58,6 +58,30 @@
 #include <cstddef>
 #include <sys/types.h>
 
+#ifndef GCC_PREREQ
+#if defined __GNUC__
+#  define GCC_PREREQ(major, minor) __GNUC__ > (major) || (__GNUC__ == (major) && __GNUC_MINOR__ >= (minor))
+#else
+#  define GCC_PREREQ(major, minor) 0
+#endif
+#endif
+
+#ifndef ICC_PREREQ
+#if defined __INTEL_COMPILER
+#  define ICC_PREREQ(version) (__INTEL_COMPILER >= (version))
+#else
+#  define ICC_PREREQ(version) 0
+#endif
+#endif
+
+#ifndef UNLIKELY
+#if GCC_PREREQ(3, 0) || ICC_PREREQ(800)
+#  define UNLIKELY(expression) __builtin_expect((expression), 0)
+#else
+#  define UNLIKELY(expression) (expression)
+#endif
+#endif
+
 #define SET_SYNTAX_ERROR \
     static_cast<obj::objCombinedState*> \
 	(perplexGetExtra(scanner))->parser_state.syntaxError = true;

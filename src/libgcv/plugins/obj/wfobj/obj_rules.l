@@ -16,15 +16,15 @@
  * information.
  */
 
-#include "common.h"
 #include <errno.h>
 #include <limits.h>
 #include <stdlib.h>
 #include <iostream>
 #include <sys/types.h>
 
-#include "bu/str.h"
-#include "bio.h"
+/*#include "bio.h"*/
+
+#include "obj_util.h"
 #include "obj_grammar_decls.h"
 #include "obj_parser_state.h"
 #include "obj_rules.h"
@@ -227,7 +227,7 @@ comment      = "#"[^"\r\n""\n"]*(newline);
 	 * Goto initial state after single token
 	 */
 	obj::get_state(combinedState).working_string = yytext;
-	bu_strlcpy(yylval->string, yytext, TOKEN_STRING_LEN);
+	wfobj_strlcpy(yylval->string, yytext, TOKEN_STRING_LEN);
 
 	return ID;
     }
@@ -256,7 +256,7 @@ comment      = "#"[^"\r\n""\n"]*(newline);
 	 * Goto initial state after single token
 	 */
 	obj::get_state(combinedState).working_string = yytext;
-	bu_strlcpy(yylval->string, yytext, TOKEN_STRING_LEN);
+	wfobj_strlcpy(yylval->string, yytext, TOKEN_STRING_LEN);
 
 	return ID;
     }
@@ -279,7 +279,7 @@ comment      = "#"[^"\r\n""\n"]*(newline);
     id {
 	// Keywords are valid identifiers here
 	obj::get_state(combinedState).working_string = yytext;
-	bu_strlcpy(yylval->string, yytext, TOKEN_STRING_LEN);
+	wfobj_strlcpy(yylval->string, yytext, TOKEN_STRING_LEN);
 
 	return ID;
     }
