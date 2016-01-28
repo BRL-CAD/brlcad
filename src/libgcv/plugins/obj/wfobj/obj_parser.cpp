@@ -165,7 +165,7 @@ static void setScannerExtra(yyscan_t scanner, obj::objCombinedState *state)
 }
 
 
-int obj_parser_create(obj_parser_t *parser)
+extern "C" WFOBJ_EXPORT int obj_parser_create(obj_parser_t *parser)
 {
     int err = 0;
 
@@ -182,7 +182,7 @@ int obj_parser_create(obj_parser_t *parser)
 }
 
 
-void obj_parser_destroy(obj_parser_t parser)
+extern "C" WFOBJ_EXPORT void obj_parser_destroy(obj_parser_t parser)
 {
     try {
 	delete static_cast<obj::objParser*>(parser.p);
@@ -193,7 +193,7 @@ void obj_parser_destroy(obj_parser_t parser)
 }
 
 
-int obj_parse(const char *filename, obj_parser_t parser,
+extern "C" WFOBJ_EXPORT int obj_parse(const char *filename, obj_parser_t parser,
 	      obj_contents_t *contents)
 {
     using obj::objParser;
@@ -255,7 +255,7 @@ int obj_parse(const char *filename, obj_parser_t parser,
 }
 
 
-int obj_fparse(FILE *stream, obj_parser_t parser, obj_contents_t *contents)
+extern "C" WFOBJ_EXPORT int obj_fparse(FILE *stream, obj_parser_t parser, obj_contents_t *contents)
 {
     using obj::objParser;
     using obj::objFileContents;
@@ -312,7 +312,7 @@ int obj_fparse(FILE *stream, obj_parser_t parser, obj_contents_t *contents)
 }
 
 
-const char * obj_parse_error(obj_parser_t parser)
+extern "C" WFOBJ_EXPORT const char * obj_parse_error(obj_parser_t parser)
 {
     const char *err = 0;
 
@@ -331,7 +331,7 @@ const char * obj_parse_error(obj_parser_t parser)
 }
 
 
-int obj_contents_destroy(obj_contents_t contents)
+extern "C" WFOBJ_EXPORT int obj_contents_destroy(obj_contents_t contents)
 {
     try {
 	delete static_cast<obj::objFileContents*>(contents.p);
@@ -345,7 +345,7 @@ int obj_contents_destroy(obj_contents_t contents)
 }
 
 
-int obj_vertices(obj_contents_t contents, const float (*val_arr[])[4])
+extern "C" WFOBJ_EXPORT int obj_vertices(obj_contents_t contents, const float(*val_arr[])[4])
 {
     try {
 	obj::objFileContents *c =
@@ -366,7 +366,7 @@ int obj_vertices(obj_contents_t contents, const float (*val_arr[])[4])
 }
 
 
-int obj_texture_coord(obj_contents_t contents, const float (*val_arr[])[3])
+extern "C" WFOBJ_EXPORT int obj_texture_coord(obj_contents_t contents, const float(*val_arr[])[3])
 {
     try {
 	obj::objFileContents *c =
@@ -387,7 +387,7 @@ int obj_texture_coord(obj_contents_t contents, const float (*val_arr[])[3])
 }
 
 
-int obj_normals(obj_contents_t contents, const float (*val_arr[])[3])
+extern "C" WFOBJ_EXPORT int obj_normals(obj_contents_t contents, const float(*val_arr[])[3])
 {
     try {
 	obj::objFileContents *c =
@@ -408,7 +408,7 @@ int obj_normals(obj_contents_t contents, const float (*val_arr[])[3])
 }
 
 
-int obj_groups(obj_contents_t contents, const char * const (*val_arr[]))
+extern "C" WFOBJ_EXPORT int obj_groups(obj_contents_t contents, const char * const (*val_arr[]))
 {
     try {
 	obj::objFileContents *c =
@@ -428,7 +428,7 @@ int obj_groups(obj_contents_t contents, const char * const (*val_arr[]))
 }
 
 
-int obj_num_groupsets(obj_contents_t contents)
+extern "C" WFOBJ_EXPORT int obj_num_groupsets(obj_contents_t contents)
 {
     try {
 	obj::objFileContents *c =
@@ -444,7 +444,7 @@ int obj_num_groupsets(obj_contents_t contents)
 }
 
 
-int obj_groupset(obj_contents_t contents, size_t n,
+extern "C" WFOBJ_EXPORT int obj_groupset(obj_contents_t contents, size_t n,
 		    const size_t (*index_arr[]))
 {
     try {
@@ -465,7 +465,7 @@ int obj_groupset(obj_contents_t contents, size_t n,
 }
 
 
-int obj_objects(obj_contents_t contents, const char * const (*val_arr[]))
+extern "C" WFOBJ_EXPORT int obj_objects(obj_contents_t contents, const char * const (*val_arr[]))
 {
     try {
 	obj::objFileContents *c =
@@ -485,7 +485,7 @@ int obj_objects(obj_contents_t contents, const char * const (*val_arr[]))
 }
 
 
-int obj_materials(obj_contents_t contents, const char * const (*val_arr[]))
+extern "C" WFOBJ_EXPORT int obj_materials(obj_contents_t contents, const char * const (*val_arr[]))
 {
     try {
 	obj::objFileContents *c =
@@ -505,7 +505,7 @@ int obj_materials(obj_contents_t contents, const char * const (*val_arr[]))
 }
 
 
-int obj_materiallibs(obj_contents_t contents,
+extern "C" WFOBJ_EXPORT int obj_materiallibs(obj_contents_t contents,
 			const char * const (*val_arr[]))
 {
     try {
@@ -526,7 +526,7 @@ int obj_materiallibs(obj_contents_t contents,
 }
 
 
-int obj_num_materiallibsets(obj_contents_t contents)
+extern "C" WFOBJ_EXPORT int obj_num_materiallibsets(obj_contents_t contents)
 {
     try {
 	obj::objFileContents *c =
@@ -542,7 +542,7 @@ int obj_num_materiallibsets(obj_contents_t contents)
 }
 
 
-int obj_materiallibset(obj_contents_t contents, size_t n, const size_t (*index_arr[]))
+extern "C" WFOBJ_EXPORT int obj_materiallibset(obj_contents_t contents, size_t n, const size_t(*index_arr[]))
 {
     try {
 	obj::objFileContents *c =
@@ -562,7 +562,7 @@ int obj_materiallibset(obj_contents_t contents, size_t n, const size_t (*index_a
 }
 
 
-int obj_texmaps(obj_contents_t contents, const char * const (*val_arr[]))
+extern "C" WFOBJ_EXPORT int obj_texmaps(obj_contents_t contents, const char * const (*val_arr[]))
 {
     try {
 	obj::objFileContents *c =
@@ -582,7 +582,7 @@ int obj_texmaps(obj_contents_t contents, const char * const (*val_arr[]))
 }
 
 
-int obj_texmaplibs(obj_contents_t contents, const char * const (*val_arr[]))
+extern "C" WFOBJ_EXPORT int obj_texmaplibs(obj_contents_t contents, const char * const (*val_arr[]))
 {
     try {
 	obj::objFileContents *c =
@@ -602,7 +602,7 @@ int obj_texmaplibs(obj_contents_t contents, const char * const (*val_arr[]))
 }
 
 
-int obj_num_texmaplibsets(obj_contents_t contents)
+extern "C" WFOBJ_EXPORT int obj_num_texmaplibsets(obj_contents_t contents)
 {
     try {
 	obj::objFileContents *c =
@@ -618,7 +618,7 @@ int obj_num_texmaplibsets(obj_contents_t contents)
 }
 
 
-int obj_texmaplibset(obj_contents_t contents, size_t n,
+extern "C" WFOBJ_EXPORT int obj_texmaplibset(obj_contents_t contents, size_t n,
 			const size_t (*index_arr[]))
 {
     try {
@@ -639,7 +639,7 @@ int obj_texmaplibset(obj_contents_t contents, size_t n,
 }
 
 
-int obj_shadow_objs(obj_contents_t contents, const char * const (*val_arr[]))
+extern "C" WFOBJ_EXPORT int obj_shadow_objs(obj_contents_t contents, const char * const (*val_arr[]))
 {
     try {
 	obj::objFileContents *c =
@@ -659,7 +659,7 @@ int obj_shadow_objs(obj_contents_t contents, const char * const (*val_arr[]))
 }
 
 
-int obj_trace_objs(obj_contents_t contents, const char * const (*val_arr[]))
+extern "C" WFOBJ_EXPORT int obj_trace_objs(obj_contents_t contents, const char * const (*val_arr[]))
 {
     try {
 	obj::objFileContents *c =
@@ -679,7 +679,7 @@ int obj_trace_objs(obj_contents_t contents, const char * const (*val_arr[]))
 }
 
 
-int obj_polygonal_attributes(obj_contents_t contents,
+extern "C" WFOBJ_EXPORT int obj_polygonal_attributes(obj_contents_t contents,
 				const obj_polygonal_attributes_t (*attr_list[]))
 {
     try {
@@ -700,7 +700,7 @@ int obj_polygonal_attributes(obj_contents_t contents,
 }
 
 
-int obj_polygonal_v_points(obj_contents_t contents,
+extern "C" WFOBJ_EXPORT int obj_polygonal_v_points(obj_contents_t contents,
 			      const size_t (*attindex_arr[]))
 {
     try {
@@ -721,7 +721,7 @@ int obj_polygonal_v_points(obj_contents_t contents,
 }
 
 
-int obj_polygonal_v_point_vertices(obj_contents_t contents, size_t face,
+extern "C" WFOBJ_EXPORT int obj_polygonal_v_point_vertices(obj_contents_t contents, size_t face,
 				      const size_t (*index_arr[]))
 {
     try {
@@ -742,7 +742,7 @@ int obj_polygonal_v_point_vertices(obj_contents_t contents, size_t face,
 }
 
 
-int obj_polygonal_v_lines(obj_contents_t contents,
+extern "C" WFOBJ_EXPORT int obj_polygonal_v_lines(obj_contents_t contents,
 			     const size_t (*attindex_arr[]))
 {
     try {
@@ -763,7 +763,7 @@ int obj_polygonal_v_lines(obj_contents_t contents,
 }
 
 
-int obj_polygonal_v_line_vertices(obj_contents_t contents, size_t face,
+extern "C" WFOBJ_EXPORT int obj_polygonal_v_line_vertices(obj_contents_t contents, size_t face,
 				     const size_t (*index_arr[]))
 {
     try {
@@ -784,7 +784,7 @@ int obj_polygonal_v_line_vertices(obj_contents_t contents, size_t face,
 }
 
 
-int obj_polygonal_tv_lines(obj_contents_t contents,
+extern "C" WFOBJ_EXPORT int obj_polygonal_tv_lines(obj_contents_t contents,
 			      const size_t (*attindex_arr[]))
 {
     try {
@@ -804,7 +804,7 @@ int obj_polygonal_tv_lines(obj_contents_t contents,
     return 0;
 }
 
-int obj_polygonal_tv_line_vertices(obj_contents_t contents, size_t face,
+extern "C" WFOBJ_EXPORT int obj_polygonal_tv_line_vertices(obj_contents_t contents, size_t face,
 				      const size_t (*index_arr[])[2])
 {
     try {
@@ -826,7 +826,7 @@ int obj_polygonal_tv_line_vertices(obj_contents_t contents, size_t face,
 }
 
 
-int obj_polygonal_v_faces(obj_contents_t contents,
+extern "C" WFOBJ_EXPORT int obj_polygonal_v_faces(obj_contents_t contents,
 			     const size_t (*attindex_arr[]))
 {
     try {
@@ -847,7 +847,7 @@ int obj_polygonal_v_faces(obj_contents_t contents,
 }
 
 
-int obj_polygonal_v_face_vertices(obj_contents_t contents, size_t face,
+extern "C" WFOBJ_EXPORT int obj_polygonal_v_face_vertices(obj_contents_t contents, size_t face,
 				     const size_t (*index_arr[]))
 {
     using obj::objFileContents;
@@ -872,7 +872,7 @@ int obj_polygonal_v_face_vertices(obj_contents_t contents, size_t face,
 }
 
 
-int obj_polygonal_tv_faces(obj_contents_t contents,
+extern "C" WFOBJ_EXPORT int obj_polygonal_tv_faces(obj_contents_t contents,
 			      const size_t (*attindex_arr[]))
 {
     try {
@@ -893,7 +893,7 @@ int obj_polygonal_tv_faces(obj_contents_t contents,
 }
 
 
-int obj_polygonal_tv_face_vertices(obj_contents_t contents, size_t face,
+extern "C" WFOBJ_EXPORT int obj_polygonal_tv_face_vertices(obj_contents_t contents, size_t face,
 				      const size_t (*index_arr[])[2])
 {
     try {
@@ -916,7 +916,7 @@ int obj_polygonal_tv_face_vertices(obj_contents_t contents, size_t face,
 }
 
 
-int obj_polygonal_nv_faces(obj_contents_t contents,
+extern "C" WFOBJ_EXPORT int obj_polygonal_nv_faces(obj_contents_t contents,
 			      const size_t (*attindex_arr[]))
 {
     try {
@@ -937,7 +937,7 @@ int obj_polygonal_nv_faces(obj_contents_t contents,
 }
 
 
-int obj_polygonal_nv_face_vertices(obj_contents_t contents, size_t face,
+extern "C" WFOBJ_EXPORT int obj_polygonal_nv_face_vertices(obj_contents_t contents, size_t face,
 				      const size_t (*index_arr[])[2])
 {
     try {
@@ -959,7 +959,7 @@ int obj_polygonal_nv_face_vertices(obj_contents_t contents, size_t face,
 }
 
 
-int obj_polygonal_tnv_faces(obj_contents_t contents,
+extern "C" WFOBJ_EXPORT int obj_polygonal_tnv_faces(obj_contents_t contents,
 			       const size_t (*attindex_arr[]))
 {
     try {
@@ -980,7 +980,7 @@ int obj_polygonal_tnv_faces(obj_contents_t contents,
 }
 
 
-int obj_polygonal_tnv_face_vertices(obj_contents_t contents, size_t face,
+extern "C" WFOBJ_EXPORT int obj_polygonal_tnv_face_vertices(obj_contents_t contents, size_t face,
 				       const size_t (*index_arr[])[3])
 {
     try {
