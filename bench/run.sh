@@ -454,10 +454,10 @@ look_for ( ) {
 		    opts="-d -x"
 		    ;;
 		xexe*)
-		    opts="$opts -f -r -x"
+		    opts="$opts -f -x"
 		    ;;
 		xscr*)
-		    opts="$opts -f -r -x"
+		    opts="$opts -f -x"
 		    ;;
 	    esac
 	    look_for_failed=no
@@ -485,61 +485,61 @@ look_for ( ) {
 }
 
 look_for executable "the BRL-CAD raytracer" RT \
-    ${PATH_TO_THIS}/rt \
-    ${PATH_TO_THIS}/../bin/rt \
-    ${PATH_TO_THIS}/../src/rt/rt \
-    ${PATH_TO_THIS}/src/rt/rt \
+    "${PATH_TO_THIS}/rt" \
+    "${PATH_TO_THIS}/../bin/rt" \
+    "${PATH_TO_THIS}/../src/rt/rt" \
+    "${PATH_TO_THIS}/src/rt/rt" \
     ./rt \
     ../brlcadInstall/bin/rt.exe \
     ../src/rt/rt
 
 look_for file "a benchmark geometry directory" DB \
-    ${PATH_TO_THIS}/../share/brlcad/*.*.*/db/moss.g \
-    ${PATH_TO_THIS}/share/brlcad/*.*.*/db/moss.g \
-    ${PATH_TO_THIS}/../share/brlcad/db/moss.g \
-    ${PATH_TO_THIS}/share/brlcad/db/moss.g \
-    ${PATH_TO_THIS}/../share/db/moss.g \
-    ${PATH_TO_THIS}/share/db/moss.g \
-    ${PATH_TO_THIS}/../db/moss.g \
-    ${PATH_TO_THIS}/db/moss.g \
+    "${PATH_TO_THIS}/../share/brlcad/*.*.*/db/moss.g" \
+    "${PATH_TO_THIS}/share/brlcad/*.*.*/db/moss.g" \
+    "${PATH_TO_THIS}/../share/brlcad/db/moss.g" \
+    "${PATH_TO_THIS}/share/brlcad/db/moss.g" \
+    "${PATH_TO_THIS}/../share/db/moss.g" \
+    "${PATH_TO_THIS}/share/db/moss.g" \
+    "${PATH_TO_THIS}/../db/moss.g" \
+    "${PATH_TO_THIS}/db/moss.g" \
     ./db/moss.g \
     ../brlcadInstall/share/brlcad/*.*.*/db/moss.g \
     ../db/moss.g
-DB=`echo $DB | sed 's,/moss.g$,,'`
+DB="`echo $DB | sed 's,/moss.g$,,'`"
 
 look_for directory "a benchmark reference image directory" PIX \
-    ${PATH_TO_THIS}/../share/brlcad/*.*.*/pix \
-    ${PATH_TO_THIS}/share/brlcad/*.*.*/pix \
-    ${PATH_TO_THIS}/../share/brlcad/pix \
-    ${PATH_TO_THIS}/share/brlcad/pix \
-    ${PATH_TO_THIS}/../share/pix \
-    ${PATH_TO_THIS}/share/pix \
-    ${PATH_TO_THIS}/ref \
+    "${PATH_TO_THIS}/../share/brlcad/*.*.*/pix" \
+    "${PATH_TO_THIS}/share/brlcad/*.*.*/pix" \
+    "${PATH_TO_THIS}/../share/brlcad/pix" \
+    "${PATH_TO_THIS}/share/brlcad/pix" \
+    "${PATH_TO_THIS}/../share/pix" \
+    "${PATH_TO_THIS}/share/pix" \
+    "${PATH_TO_THIS}/ref" \
     ./ref
 
 look_for directory "a benchmark reference log directory" LOG \
-    $PIX \
-    ${PATH_TO_THIS}/../share/brlcad/*.*.*/pix \
-    ${PATH_TO_THIS}/share/brlcad/*.*.*/pix \
-    ${PATH_TO_THIS}/../share/brlcad/pix \
-    ${PATH_TO_THIS}/share/brlcad/pix \
-    ${PATH_TO_THIS}/../share/pix \
-    ${PATH_TO_THIS}/share/pix \
-    ${PATH_TO_THIS}/ref \
+    "$PIX" \
+    "${PATH_TO_THIS}/../share/brlcad/*.*.*/pix" \
+    "${PATH_TO_THIS}/share/brlcad/*.*.*/pix" \
+    "${PATH_TO_THIS}/../share/brlcad/pix" \
+    "${PATH_TO_THIS}/share/brlcad/pix" \
+    "${PATH_TO_THIS}/../share/pix" \
+    "${PATH_TO_THIS}/share/pix" \
+    "${PATH_TO_THIS}/ref" \
     ./ref
 
 look_for executable "a pixel comparison utility" CMP \
-    ${PATH_TO_THIS}/pixcmp \
-    ${PATH_TO_THIS}/../bin/pixcmp \
-    ${PATH_TO_THIS}/../bench/pixcmp \
+    "${PATH_TO_THIS}/pixcmp" \
+    "${PATH_TO_THIS}/../bin/pixcmp" \
+    "${PATH_TO_THIS}/../bench/pixcmp" \
     ../brlcadInstall/bin/pixcmp.exe \
     ./pixcmp
 
 look_for script "a time elapsed utility" ELP \
-    ${PATH_TO_THIS}/elapsed.sh \
-    ${PATH_TO_THIS}/../bin/elapsed.sh \
-    ${PATH_TO_THIS}/sh/elapsed.sh \
-    ${PATH_TO_THIS}/../sh/elapsed.sh \
+    "${PATH_TO_THIS}/elapsed.sh" \
+    "${PATH_TO_THIS}/../bin/elapsed.sh" \
+    "${PATH_TO_THIS}/sh/elapsed.sh" \
+    "${PATH_TO_THIS}/../sh/elapsed.sh" \
     ./elapsed.sh
 
 
@@ -586,7 +586,7 @@ else
 fi
 
 # more sanity checks, make sure the binaries and scripts run
-"$RT" -s1 -F/dev/debug ${DB}/moss.g LIGHT > /dev/null 2>&1
+eval \"$RT\" -s1 -F/dev/debug "${DB}/moss.g" LIGHT > /dev/null 2>&1
 ret=$?
 if test ! "x${ret}" = "x0" ; then
     $ECHO
@@ -600,7 +600,7 @@ fi
 # create a temporary file named "null", fopen("/dev/null") does not work on
 # windows (using cygwin), so punt.
 > null
-$CMP null null >/dev/null 2>&1
+eval \"$CMP\" null null >/dev/null 2>&1
 rm -f null
 
 ret=$?
@@ -609,7 +609,7 @@ if test ! "x${ret}" = "x0" ; then
     $ECHO "ERROR:  CMP does not seem to work as expected"
     exit 2
 fi
-$ELP 0 > /dev/null 2>&1
+eval \"$ELP\" 0 > /dev/null 2>&1
 if test ! "x${ret}" = "x0" ; then
     $ECHO
     $ECHO "ERROR:  ELP does not seem to work as expected"
@@ -677,12 +677,12 @@ if test "x`expr 1 - 1 2>/dev/null`" = "x0" ; then
     if test $mintime -lt 1 ; then
 	mintime=0 # zero is okay
     fi
-    $ECHO "Minimum run time is `$ELP $mintime`"
+    $ECHO "Minimum run time is `\"$ELP\" $mintime`"
     maxtime="`expr 6 \* $MAXTIME`"
     if test $maxtime -lt 1 ; then
 	maxtime=1 # zero would be misleading
     fi
-    $ECHO "Maximum run time is `$ELP $maxtime`"
+    $ECHO "Maximum run time is `\"$ELP\" $maxtime`"
     estimate="`expr 3 \* $mintime`"
     if test $estimate -lt 1 ; then
 	estimate=1 # zero would be misleading
@@ -690,7 +690,7 @@ if test "x`expr 1 - 1 2>/dev/null`" = "x0" ; then
     if test $estimate -gt $maxtime ; then
 	estimate="$maxtime"
     fi
-    $ECHO "Estimated time is `$ELP $estimate`"
+    $ECHO "Estimated time is `eval \"$ELP\" $estimate`"
     $ECHO
 else
     $ECHO "WARNING: expr is unavailable, unable to compute statistics"
@@ -720,9 +720,9 @@ run ( ) {
 
     $VERBOSE_ECHO "DEBUG: Running $RT -B -M -s512 -H${run_hypersample} -J0 ${run_args} -o ${run_geomname}.pix ${DB}/${run_geomname}.g ${run_geometry}"
 
-    $RT -B -M -s512 -H${run_hypersample} -J0 ${run_args} \
+    eval \"$RT\" -B -M -s512 -H${run_hypersample} -J0 ${run_args} \
 	-o ${run_geomname}.pix \
-	${DB}/${run_geomname}.g ${run_geometry} 1>&2 <<EOF
+	"${DB}/${run_geomname}.g" ${run_geometry} 1>&2 <<EOF
 $run_view
 EOF
     retval=$?
@@ -996,7 +996,7 @@ EOF
 
 	    # compute how long we took, rounding up to at least one
 	    # second to prevent division by zero.
-	    bench_elapsed="`$ELP --seconds $bench_frame_start_time`"
+	    bench_elapsed="`eval \"$ELP\" --seconds $bench_frame_start_time`"
 	    if test "x$bench_elapsed" = "x" ; then
 		bench_elapsed=1
 	    fi
@@ -1064,7 +1064,7 @@ EOF
 	    fi
 
 	    # see if we need to break out early
-	    bench_overall_elapsed="`$ELP --seconds $bench_start_time`"
+	    bench_overall_elapsed="`eval \"$ELP\" --seconds $bench_start_time`"
 	    if test $bench_overall_elapsed -ge $MAXTIME ; then
 		break;
 	    fi
@@ -1102,7 +1102,7 @@ EOF
 	    break
 	fi
 
-	bench_overall_elapsed="`$ELP --seconds $bench_start_time`"
+	bench_overall_elapsed="`eval \"$ELP\" --seconds $bench_start_time`"
 
 	# undo the hypersample increase back one step
 	bench_hypersample="`expr \( \( $bench_hypersample + 1 \) / 2 \) - 1`"
@@ -1123,7 +1123,7 @@ EOF
 	ls -la *.pix*
     fi
     $VERBOSE_ECHO "DEBUG: $CMP $PIX/${bench_testname}.pix ${bench_testname}.pix"
-    cmp_result="`${CMP} ${PIX}/${bench_testname}.pix ${bench_testname}.pix 2>&1`"
+    cmp_result="`eval \"${CMP}\" \"${PIX}/${bench_testname}.pix\" ${bench_testname}.pix 2>&1`"
     ret=$?
 
     $ECHO "$cmp_result"
@@ -1178,8 +1178,8 @@ perf ( ) {
     perf_ref_files=""
     perf_cur_files=""
     for perf_test in $perf_tests ; do
-	perf_ref_log=${LOG}/${perf_test}.log
-	perf_cur_log=${perf_test}.log
+	perf_ref_log="${LOG}/${perf_test}.log"
+	perf_cur_log="${perf_test}.log"
 	for perf_log in "$perf_cur_log" "$perf_ref_log" ; do
 	    if test ! "x$perf_log" = "x" ; then
 		if test ! -f "$perf_log" ; then
@@ -1353,7 +1353,7 @@ ret=`expr $ret + $?`
 $ECHO
 $ECHO "... Done."
 $ECHO
-$ECHO "Total testing time elapsed: `$ELP $start`"
+$ECHO "Total testing time elapsed: `eval \"$ELP\" $start`"
 
 # see if we fail
 if test ! "x$ret" = "x0" ; then
@@ -1362,7 +1362,7 @@ if test ! "x$ret" = "x0" ; then
     $ECHO
     $ECHO "A benchmark failure means this is not a viable install of BRL-CAD.  This may be"
     $ECHO "a new bug or (more likely) is a compilation configuration error.  Ensure your"
-    $ECHO "compiler has strict aliasing disabled, compilation is unoptimized, and you have"
+    $ECHO "compiler has strict aliasing disabled, compilation is optimized, and you have"
     $ECHO "installed BRL-CAD (some platforms require this).  If you still get a failure,"
     $ECHO "please report your configuration information to benchmark@brlcad.org"
     $ECHO
@@ -1494,7 +1494,7 @@ else
     blankit=no
 
     # BSD+
-    look_for executable "a sysctl command" SYSCTL_CMD `echo "$PATH" | tr ":" "\n" | sed 's/$/\/sysctl/g'`
+    look_for executable "a sysctl command" SYSCTL_CMD `echo "$PATH" | tr ":" "\n" | tr " " "\ " | sed 's/$/\/sysctl/g'`
     if test ! "x$SYSCTL_CMD" = "x" ; then
 	$ECHO "Collecting system state information (via $SYSCTL_CMD)"
 	preQUIET="$QUIET"
@@ -1509,7 +1509,7 @@ else
     fi
 
     # Solaris
-    look_for executable "a prtdiag command" PRTDIAG_CMD `echo "$PATH" | tr ":" "\n" | sed 's/$/\/prtdiag/g'`
+    look_for executable "a prtdiag command" PRTDIAG_CMD `echo "$PATH" | tr ":" "\n" | tr " " "\ " | sed 's/$/\/prtdiag/g'`
     if test ! "x$PRTDIAG_CMD" = "x" ; then
 	$ECHO "Collecting system diagnostics information (via $PRTDIAG_CMD)"
 	preQUIET="$QUIET"
@@ -1522,7 +1522,7 @@ else
     fi
 
     # AIX
-    look_for executable "a prtconf command" PRTCONF_CMD `echo "$PATH" | tr ":" "\n" | sed 's/$/\/prtconf/g'`
+    look_for executable "a prtconf command" PRTCONF_CMD `echo "$PATH" | tr ":" "\n" | tr " " "\ " | sed 's/$/\/prtconf/g'`
     if test ! "x$PRTCONF_CMD" = "x" ; then
 	$ECHO "Collecting system configuration information (via $PRTCONF_CMD)"
 	preQUIET="$QUIET"
@@ -1535,7 +1535,7 @@ else
     fi
 
     # SGI
-    look_for executable "an hinv command" HINV_CMD `echo "$PATH" | tr ":" "\n" | sed 's/$/\/hinv/g'`
+    look_for executable "an hinv command" HINV_CMD `echo "$PATH" | tr ":" "\n" | tr " " "\ " | sed 's/$/\/hinv/g'`
     if test ! "x$HINV_CMD" = "x" ; then
 	$ECHO "Collecting system configuration information (via $HINV_CMD)"
 	preQUIET="$QUIET"
@@ -1561,7 +1561,7 @@ else
     fi
 
     # Linux+
-    look_for executable "an lscpu command" LSCPU_CMD `echo $PATH | tr ":" "\n" | sed 's/$/\/lscpu/g'`
+    look_for executable "an lscpu command" LSCPU_CMD `echo "$PATH" | tr ":" "\n" | tr " " "\ " | sed 's/$/\/lscpu/g'`
     if test ! "x$LSCPU_CMD" = "x" ; then
 	$ECHO "Collecting system CPU information (via $LSCPU_CMD)"
 	preQUIET="$QUIET"
@@ -1580,12 +1580,12 @@ fi
 
 # tell about the benchmark document
 look_for file "" BENCHMARK_TR \
-    ${PATH_TO_THIS}/../share/brlcad/*.*.*/doc/benchmark.tr \
-    ${PATH_TO_THIS}/share/brlcad/*.*.*/doc/benchmark.tr \
-    ${PATH_TO_THIS}/share/brlcad/doc/benchmark.tr \
-    ${PATH_TO_THIS}/share/doc/benchmark.tr \
-    ${PATH_TO_THIS}/doc/benchmark.tr \
-    ${PATH_TO_THIS}/../doc/benchmark.tr \
+    "${PATH_TO_THIS}/../share/brlcad/*.*.*/doc/benchmark.tr" \
+    "${PATH_TO_THIS}/share/brlcad/*.*.*/doc/benchmark.tr" \
+    "${PATH_TO_THIS}/share/brlcad/doc/benchmark.tr" \
+    "${PATH_TO_THIS}/share/doc/benchmark.tr" \
+    "${PATH_TO_THIS}/doc/benchmark.tr" \
+    "${PATH_TO_THIS}/../doc/benchmark.tr" \
     ./benchmark.tr
 
 $ECHO "Read the benchmark.tr document for more details on the BRL-CAD Benchmark."
