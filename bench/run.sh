@@ -51,7 +51,7 @@
 export PATH || (echo "This isn't sh."; sh $0 $*; kill $$)
 
 # save the precious args
-ARGS="$*"
+ARGS="$@"
 NAME_OF_THIS="`basename \"$0\"`"
 PATH_TO_THIS="`dirname \"$0\"`"
 THIS="$PATH_TO_THIS/$NAME_OF_THIS"
@@ -159,65 +159,58 @@ booleanize ( ) {
 }
 
 
+# any unrecognized args are assumed to be RT args (e.g., -P4)
+RTARGS=""
+
 # process the argument list for commands
-NEWARGS=""
-for arg in $ARGS ; do
+while test $# -gt 0 ; do
+
+    arg="$1"
+    shift
+
     case "x$arg" in
 	x*[cC][lL][eE][aA][nN])
 	    CLEAN=1
-	    shift
 	    ;;
 	x*[cC][lL][oO][bB][bB][eE][rR])
 	    CLEAN=1
 	    CLOBBER=1
-	    shift
 	    ;;
 	x*[hH])
 	    HELP=1
-	    shift
 	    ;;
 	x*[hH][eE][lL][pP])
 	    HELP=1
-	    shift
 	    ;;
 	x*[iI][nN][sS][tT][rR][uU][cC][tT]*)
 	    INSTRUCTIONS=1
-	    shift
 	    ;;
 	x*[sS][tT][aA][rR][tT])
-	    shift
 	    ;;
 	x*[qQ][uU][iI][eE][tT])
 	    QUIET=1
-	    shift
 	    ;;
 	x*[vV][eE][rR][bB][oO][sS][eE])
 	    VERBOSE=1
-	    shift
 	    ;;
 	x*[rR][uU][nN])
 	    RUN=1
-	    shift
 	    ;;
 	x*=*)
 	    VAR=`echo $arg | sed 's/=.*//g'`
 	    if test ! "x$VAR" = "x" ; then
 		VAL=`echo $arg | sed 's/.*=//g'`
-		CMD="$VAR=$VAL"
+		CMD="$VAR=\"$VAL\""
 		eval $CMD
 		export $VAR
 	    fi
-	    shift
 	    ;;
 	x*)
-	    echo "WARNING: Passing unknown option [$1] to RT"
-	    NEWARGS="$NEWARGS $arg"
+	    echo "WARNING: Passing unknown option [$arg] to RT"
+	    RTARGS="$RTARGS $arg"
 	    ;;
     esac
 done
-
-# reload post-shifting
-ARGS="$NEWARGS"
 
 # validate and clean up options (all default to 0)
 booleanize CLOBBER HELP INSTRUCTIONS QUIET VERBOSE RUN
@@ -431,6 +424,7 @@ $ECHO
 ########################
 look_for ( ) {
 
+
     # utility function to search for a certain filesystem object in a
     # list of paths.
 
@@ -445,7 +439,7 @@ look_for ( ) {
 
     # get the value of the variable
     look_for_var_var="echo \"\$$look_for_var\""
-    look_for_var_val="`eval ${look_for_var_var}`"
+    look_for_var_val="`eval \"${look_for_var_var}\"`"
 
     if test "x${look_for_var_val}" = "x" ; then
 	for look_for_dir in $look_for_dirs ; do
@@ -592,9 +586,12 @@ else
 fi
 
 # more sanity checks, make sure the binaries and scripts run
-$RT -s1 -F/dev/debug ${DB}/moss.g LIGHT > /dev/null 2>&1
+"$RT" -s1 -F/dev/debug ${DB}/moss.g LIGHT > /dev/null 2>&1
 ret=$?
 if test ! "x${ret}" = "x0" ; then
+    $ECHO
+    $ECHO "Running \"$RT\":"
+    "$RT"
     $ECHO
     $ECHO "ERROR:  RT does not seem to work as expected"
     exit 2
@@ -1296,7 +1293,7 @@ $ECHO "Running the BRL-CAD Benchmark tests... please wait ..."
 $ECHO
 ret=0
 
-bench moss all.g $ARGS << EOF
+bench moss all.g $RTARGS << EOF
 viewsize 1.572026215e+02;
 eye_pt 6.379990387e+01 3.271768951e+01 3.366661453e+01;
 viewrot -5.735764503e-01 8.191520572e-01 0.000000000e+00 0.000000000e+00
@@ -1306,7 +1303,7 @@ viewrot -5.735764503e-01 8.191520572e-01 0.000000000e+00 0.000000000e+00
 EOF
 ret=`expr $ret + $?`
 
-bench world all.g $ARGS << EOF
+bench world all.g $RTARGS << EOF
 viewsize 1.572026215e+02;
 eye_pt 6.379990387e+01 3.271768951e+01 3.366661453e+01;
 viewrot -5.735764503e-01 8.191520572e-01 0.000000000e+00 0.000000000e+00
@@ -1316,7 +1313,7 @@ viewrot -5.735764503e-01 8.191520572e-01 0.000000000e+00 0.000000000e+00
 EOF
 ret=`expr $ret + $?`
 
-bench star all $ARGS << EOF
+bench star all $RTARGS << EOF
 viewsize 2.500000000e+05;
 eye_pt 2.102677960e+05 8.455500000e+04 2.934714650e+04;
 viewrot -6.733560560e-01 6.130643360e-01 4.132114880e-01 0.000000000e+00
@@ -1326,7 +1323,7 @@ viewrot -6.733560560e-01 6.130643360e-01 4.132114880e-01 0.000000000e+00
 EOF
 ret=`expr $ret + $?`
 
-bench bldg391 all.g $ARGS << EOF
+bench bldg391 all.g $RTARGS << EOF
 viewsize 1.800000000e+03;
 eye_pt 6.345012207e+02 8.633251343e+02 8.310771484e+02;
 viewrot -5.735764503e-01 8.191520572e-01 0.000000000e+00 0.000000000e+00
@@ -1336,7 +1333,7 @@ viewrot -5.735764503e-01 8.191520572e-01 0.000000000e+00 0.000000000e+00
 EOF
 ret=`expr $ret + $?`
 
-bench m35 all.g $ARGS <<EOF
+bench m35 all.g $RTARGS <<EOF
 viewsize 6.787387985e+03;
 eye_pt 3.974533127e+03 1.503320754e+03 2.874633221e+03;
 viewrot -5.527838919e-01 8.332423558e-01 1.171090926e-02 0.000000000e+00
@@ -1346,7 +1343,7 @@ viewrot -5.527838919e-01 8.332423558e-01 1.171090926e-02 0.000000000e+00
 EOF
 ret=`expr $ret + $?`
 
-bench sphflake scene.r $ARGS <<EOF
+bench sphflake scene.r $RTARGS <<EOF
 viewsize 2.556283261452611e+04;
 orientation 4.406810841785839e-01 4.005093234738861e-01 5.226451688385938e-01 6.101102288499644e-01;
 eye_pt 2.418500583758302e+04 -3.328563644344796e+03 8.489926952850350e+03;
@@ -1381,7 +1378,7 @@ fi
 ##############################
 
 
-performance="`perf 'moss world star bldg391 m35 sphflake' $ARGS`"
+performance="`perf 'moss world star bldg391 m35 sphflake' $RTARGS`"
 if test $? = 0 ; then
     cat >> summary <<EOF
 $performance
