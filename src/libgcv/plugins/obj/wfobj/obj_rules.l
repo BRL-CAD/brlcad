@@ -22,8 +22,6 @@
 #include <iostream>
 #include <sys/types.h>
 
-/*#include "bio.h"*/
-
 #include "obj_util.h"
 #include "obj_grammar_decls.h"
 #include "obj_parser_state.h"
