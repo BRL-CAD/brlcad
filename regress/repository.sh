@@ -157,7 +157,7 @@ FILES="`grep -I -e '#[[:space:]]*include' $SRCFILES $INCFILES | grep -E 'common.
 #    fi
 #done`"
 
-LEXERS="schema.h csg_parser.c csg_scanner.h obj_libgcv_grammar.cpp obj_obj-g_grammar.cpp obj_grammar.c obj_scanner.h obj_parser.h obj_rules.l obj_util.h points_scan.c script.c"
+LEXERS="schema.h csg_parser.c csg_scanner.h obj_libgcv_grammar.cpp obj_obj-g_grammar.cpp obj_grammar.c obj_scanner.h obj_parser.h obj_rules.l obj_util.h obj_grammar.cpp obj_rules.cpp points_scan.c script.c"
 EXEMPT="bnetwork.h bio.h config_win.h pstdint.h uce-dirent.h ttcp.c optionparser.h $LEXERS"
 
 FOUND=
