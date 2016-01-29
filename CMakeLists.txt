@@ -1450,6 +1450,11 @@ CMAKE_DEPENDENT_OPTION(BRLCAD_EXTRADOCS_PDF "Build PDF output from DocBook docum
 CMAKE_DEPENDENT_OPTION(BRLCAD_EXTRADOCS_VALIDATE "Perform validation for DocBook documentation" ON "BRLCAD_EXTRADOCS;BRLCAD_ENABLE_STRICT" OFF)
 mark_as_advanced(BRLCAD_EXTRADOCS_VALIDATE)
 
+#----------------------------------------------------------------------
+# Load Doxygen related CMake macros
+include(${BRLCAD_CMAKE_DIR}/Doxygen.cmake)
+
+#----------------------------------------------------------------------
 # Load various wrapper macros for checking libraries, headers and
 # functions, some in use by src/other build logic
 include(${BRLCAD_CMAKE_DIR}/BRLCAD_CheckFunctions.cmake)
@@ -3072,6 +3077,8 @@ if(NOT BRLCAD_IS_SUBBUILD)
   message("${CONFIG_TIME_MSG_LABEL}..: ${CONFIG_TIME_MSG}")
 endif(NOT BRLCAD_IS_SUBBUILD)
 
+# Write out the Doxygen feature list
+BRLCAD_FEATURE_SUMMARY(${BRLCAD_BINARY_DIR}/CMakeTmp/features.dox)
 
 add_custom_target(print-warning-message ${CMAKE_COMMAND} -E echo ""
   COMMAND ${CMAKE_COMMAND} -E echo "\"**********************************************************************\""
