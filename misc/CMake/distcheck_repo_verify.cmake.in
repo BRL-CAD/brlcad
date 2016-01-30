@@ -93,7 +93,7 @@ if(SVN_EXEC AND EXISTS "@CMAKE_SOURCE_DIR@/.svn")
   # Get the file list
   set(SVN_FILES "")
   execute_process(COMMAND ${SVN_EXEC} info -R "@CMAKE_SOURCE_DIR@" OUTPUT_VARIABLE SVN_RAWOUT)
-  SVN_INFO_TO_PATH_list(SVN_RAWOUT SVN_FILES)
+  SVN_INFO_TO_PATH_LIST(SVN_RAWOUT SVN_FILES)
 
   # Check whether Subversion is reporting modified files.  Also, if any
   # deleted files are reported, remove those from the SVN_FILES list
@@ -144,7 +144,7 @@ foreach(ITEM ${IGNORED_DIRECTORIES})
     set(IGNORED_FILES "")
     set(SVN_RAWOUT "")
     execute_process(COMMAND ${SVN_EXEC} info -R ${ITEM} OUTPUT_VARIABLE SVN_RAWOUT)
-    SVN_INFO_TO_PATH_list(SVN_RAWOUT IGNORED_FILES)
+    SVN_INFO_TO_PATH_LIST(SVN_RAWOUT IGNORED_FILES)
     # If svn reports the file as deleted, accept that
     foreach(I_ITEM ${IGNORED_FILES})
       if(NOT EXISTS "@CMAKE_SOURCE_DIR@/${I_ITEM}")
@@ -236,11 +236,17 @@ list(REMOVE_DUPLICATES BUILD_FILES)
 # If we have Subversion, we can do lots more interesting comparisons.
 # Otherwise, just look for files the build system doesn't know about.
 if(SVN_EXEC AND EXISTS "@CMAKE_SOURCE_DIR@/.svn")
-  set(BUILD_FILES_NOT_IN_SVN ${BUILD_FILES})
-  set(SVN_FILES_NOT_IN_BUILD ${SVN_FILES})
-  list(REMOVE_ITEM BUILD_FILES_NOT_IN_SVN ${SVN_FILES})
-  list(REMOVE_ITEM SVN_FILES_NOT_IN_BUILD ${BUILD_FILES})
-  list(REMOVE_ITEM GROUND_TRUTH ${SVN_FILES})
+  if(SVN_FILES)
+    set(SVN_FILES_NOT_IN_BUILD ${SVN_FILES})
+    list(REMOVE_ITEM BUILD_FILES_NOT_IN_SVN ${SVN_FILES})
+    list(REMOVE_ITEM GROUND_TRUTH ${SVN_FILES})
+  endif(SVN_FILES)
+  if(BUILD_FILES)
+    set(BUILD_FILES_NOT_IN_SVN ${BUILD_FILES})
+    if (SVN_FILES_NOT_IN_BUILD)
+      list(REMOVE_ITEM SVN_FILES_NOT_IN_BUILD ${BUILD_FILES})
+    endif (SVN_FILES_NOT_IN_BUILD)
+  endif(BUILD_FILES)
 endif(SVN_EXEC AND EXISTS "@CMAKE_SOURCE_DIR@/.svn")
 list(REMOVE_ITEM GROUND_TRUTH ${BUILD_FILES})
 
