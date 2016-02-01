@@ -205,7 +205,11 @@ extern "C" WFOBJ_EXPORT int obj_parse(const char *filename, obj_parser_t parser,
     int err = 0;
 
     try {
+#ifdef HAVE_UNIQUE_PTR
+	std::unique_ptr<objFileContents> sentry(new objFileContents);
+#else
 	std::auto_ptr<objFileContents> sentry(new objFileContents);
+#endif
 
 	objCombinedState state(p, sentry.get());
 
@@ -266,7 +270,11 @@ extern "C" WFOBJ_EXPORT int obj_fparse(FILE *stream, obj_parser_t parser, obj_co
     int err = 0;
 
     try {
+#ifdef HAVE_UNIQUE_PTR
+	std::unique_ptr<objFileContents> sentry(new objFileContents);
+#else
 	std::auto_ptr<objFileContents> sentry(new objFileContents);
+#endif
 
 	objCombinedState state(p, sentry.get());
 
