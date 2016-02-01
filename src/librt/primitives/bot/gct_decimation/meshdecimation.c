@@ -37,7 +37,6 @@
 
 #include "meshdecimation.h"
 
-#include "auxiliary/cpuinfo.h"
 #include "auxiliary/cc.h"
 #include "auxiliary/mm.h"
 #include "auxiliary/mmhash.h"
@@ -46,6 +45,7 @@
 #include "bu/log.h"
 #include "bu/malloc.h"
 #include "bu/parallel.h"
+#include "bu/simd.h"
 #include "bu/time.h"
 #include "vmath.h"
 
@@ -82,8 +82,9 @@
 #define MD_CONFIG_DELAYED_OP_REDIRECT
 
 
-#if defined(CPUCONF_ARCH_AMD64) || defined(CPUCONF_ARCH_IA32)
-#define MD_CONFIG_SSE_SUPPORT
+#if defined(__x86_64__) || defined(__i386__)
+/* disabled pending testing */
+/* #define MD_CONFIG_SSE_SUPPORT */
 #endif
 
 
@@ -128,8 +129,6 @@ double mdEdgeCollapsePenaltyTriangleSSE2d(double *newpoint, double *oldpoint, do
 
 
 static int mdInitFlag = 0;
-
-static cpuInfo mdCpuInfo;
 
 
 /**/
@@ -193,7 +192,7 @@ typedef float mdqf;
 
 
 #ifdef MD_CONFIG_HIGH_QUADRICS
-#if ( __GNUC__ > 4 || ( __GNUC__ == 4 && __GNUC_MINOR__ >= 6 ) ) && !defined(__INTEL_COMPILER) && (defined CPUCONF_ARCH_AMD64 || defined(CPUCONF_ARCH_IA32) || defined(__ia64__))
+#if ( __GNUC__ > 4 || ( __GNUC__ == 4 && __GNUC_MINOR__ >= 6 ) ) && !defined(__INTEL_COMPILER) && (defined __x86_64__ || defined(__i386__) || defined(__ia64__))
 typedef __float128 mdqfhigh;
 #else
 #undef MD_CONFIG_HIGH_QUADRICS
@@ -3611,7 +3610,6 @@ static void mdUpdateStatus(mdMesh *mesh, mdThreadInit *threadinit, int stage, md
 void mdInit()
 {
     mmInit();
-    cpuGetInfo(&mdCpuInfo);
     mdInitFlag = 1;
 }
 
@@ -3724,8 +3722,6 @@ int mdMeshDecimation(mdOperation *operation, int flags)
 	mdInitFlag = 1;
 	/* Initialization of the memory manager, filling struct mmcontext with info about CPUs and NUMA */
 	mmInit();
-	/* Retrieve processor capability */
-	cpuGetInfo(&mdCpuInfo);
     }
 
     threadcount = bu_avail_cpus();
@@ -3831,21 +3827,21 @@ int mdMeshDecimation(mdOperation *operation, int flags)
 #ifdef MD_CONFIG_SSE_SUPPORT
 #ifndef MD_CONF_DOUBLE_PRECISION
 
-    if ((mdCpuInfo.capsse4p1) && (mdPathSSE4p1 & 0x1)) {
+    if (bu_simd_supported(BU_SIMD_SSE4_1) && (mdPathSSE4p1 & 0x1)) {
 	mesh.collapsepenalty = mdEdgeCollapsePenaltyTriangleSSE4p1f;
-    } else if ((mdCpuInfo.capsse3) && (mdPathSSE3 & 0x1)) {
+    } else if (bu_simd_supported(BU_SIMD_SSE3) && (mdPathSSE3 & 0x1)) {
 	mesh.collapsepenalty = mdEdgeCollapsePenaltyTriangleSSE3f;
-    } else if ((mdCpuInfo.capsse2) && (mdPathSSE2 & 0x1)) {
+    } else if (bu_simd_supported(BU_SIMD_SSE2) && (mdPathSSE2 & 0x1)) {
 	mesh.collapsepenalty = mdEdgeCollapsePenaltyTriangleSSE2f;
     }
 
 #else
 
-    if ((mdCpuInfo.capsse4p1) && (mdPathSSE4p1 & 0x2)) {
+    if (bu_simd_supported(BU_SIMD_SSE4_1) && (mdPathSSE4p1 & 0x2)) {
 	mesh.collapsepenalty = mdEdgeCollapsePenaltyTriangleSSE4p1d;
-    } else if ((mdCpuInfo.capsse3) && (mdPathSSE3 & 0x2)) {
+    } else if (bu_simd_supported(BU_SIMD_SSE3) && (mdPathSSE3 & 0x2)) {
 	mesh.collapsepenalty = mdEdgeCollapsePenaltyTriangleSSE3d;
-    } else if ((mdCpuInfo.capsse2) && (mdPathSSE2 & 0x2)) {
+    } else if (bu_simd_supported(BU_SIMD_SSE2) && (mdPathSSE2 & 0x2)) {
 	mesh.collapsepenalty = mdEdgeCollapsePenaltyTriangleSSE2d;
     }
 

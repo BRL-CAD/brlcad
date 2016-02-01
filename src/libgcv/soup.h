@@ -1,7 +1,7 @@
 /*                       S O U P . H
  * BRL-CAD
  *
- * Copyright (c) 2011-2014 United States Government as represented by
+ * Copyright (c) 2011-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -24,8 +24,8 @@
  *
  */
 
-#ifndef  LIBGCV_SOUP_H
-#define  LIBGCV_SOUP_H
+#ifndef LIBGCV_SOUP_H
+#define LIBGCV_SOUP_H
 
 #include "common.h"
 #include "gcv/defines.h"
@@ -47,11 +47,13 @@ struct face_s {
     uint32_t foo;
 };
 
+
 struct soup_s {
     uint32_t magic;
     struct face_s *faces;
     unsigned long int nfaces, maxfaces;
 };
+
 
 __BEGIN_DECLS
 

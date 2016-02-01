@@ -1,7 +1,7 @@
 /*                         B O T _ D U M P . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2014 United States Government as represented by
+ * Copyright (c) 2008-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -39,8 +39,6 @@
 #include "nmg.h"
 #include "rt/geom.h"
 
-#include "dm/bview.h"
-
 #include "raytrace.h"
 #include "wdb.h"
 
@@ -48,7 +46,7 @@
 
 #include "raytrace.h"
 
-#include "obj.h"
+#include "dm/bview.h"
 
 #include "./ged_private.h"
 

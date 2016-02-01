@@ -47,6 +47,7 @@ set(LIBBU_SOURCES
   dlfcn.c
   encode.c
   endian.c
+  env.c
   escape.c
   fchmod.c
   fgets.c

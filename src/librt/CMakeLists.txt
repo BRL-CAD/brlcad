@@ -293,8 +293,6 @@ set(librt_ignored_files
   primitives/bot/btg.h
   primitives/bot/g_bot_include.c
   primitives/bot/gct_decimation/auxiliary/cc.h
-  primitives/bot/gct_decimation/auxiliary/cpuconfig.h
-  primitives/bot/gct_decimation/auxiliary/cpuinfo.h
   primitives/bot/gct_decimation/auxiliary/mm.h
   primitives/bot/gct_decimation/auxiliary/mmatomic.h
   primitives/bot/gct_decimation/auxiliary/mmbinsort.h

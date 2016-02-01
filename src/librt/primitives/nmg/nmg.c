@@ -1,7 +1,7 @@
 /*                           N M G . C
  * BRL-CAD
  *
- * Copyright (c) 2005-2014 United States Government as represented by
+ * Copyright (c) 2005-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -708,7 +708,7 @@ const char rt_nmg_kind_names[NMG_N_KINDS+2][18] = {
  * Given the magic number for an NMG structure, return the
  * manifest constant which identifies that structure kind.
  */
-int
+HIDDEN int
 rt_nmg_magic_to_kind(uint32_t magic)
 {
     switch (magic) {
@@ -998,7 +998,7 @@ reindex(void *p, struct nmg_exp_counts *ecnt)
  *
  * Scale geometry by 'local2mm'
  */
-void
+HIDDEN void
 rt_nmg_edisk(void *op, void *ip, struct nmg_exp_counts *ecnt, int idx, double local2mm)
 /* base of disk array */
 /* ptr to in-memory structure */
@@ -1403,7 +1403,7 @@ rt_nmg_edisk(void *op, void *ip, struct nmg_exp_counts *ecnt, int idx, double lo
  *
  * Transform geometry by given matrix.
  */
-int
+HIDDEN int
 rt_nmg_idisk(void *op, void *ip, struct nmg_exp_counts *ecnt, int idx, uint32_t **ptrs, const fastf_t *mat, const unsigned char *basep)
 /* ptr to in-memory structure */
 /* base of disk array */
@@ -2031,7 +2031,7 @@ rt_nmg_ialloc(uint32_t **ptrs, struct nmg_exp_counts *ecnt, int *kind_counts)
  * will be used, so that nmg_keg(), etc., can kill each array as
  * appropriate.
  */
-void
+HIDDEN void
 rt_nmg_i2alloc(struct nmg_exp_counts *ecnt, unsigned char *cp, int *kind_counts)
 {
     int kind;
@@ -2076,7 +2076,7 @@ rt_nmg_i2alloc(struct nmg_exp_counts *ecnt, unsigned char *cp, int *kind_counts)
  * heads a linked list, and is not the first struct element.
  * 0 indicates that a null pointer should be used.
  */
-int
+HIDDEN int
 rt_nmg_import4_internal(struct rt_db_internal *ip, const struct bu_external *ep, const fastf_t *mat, int rebound, const struct bn_tol *tol)
 {
     struct model *m;
@@ -2215,7 +2215,7 @@ rt_nmg_import4_internal(struct rt_db_internal *ip, const struct bu_external *ep,
  * floating point values are stored in network (Big-Endian IEEE)
  * format.
  */
-int
+HIDDEN int
 rt_nmg_export4_internal(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, int compact)
 {
     struct model *m;
@@ -3060,7 +3060,7 @@ struct poly_face
 };
 
 
-static void
+HIDDEN void
 rt_nmg_faces_area(struct poly_face* faces, struct shell* s)
 {
     struct bu_ptbl nmg_faces;

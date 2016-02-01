@@ -1,7 +1,7 @@
 /*                      D I T S P L I T . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2014 United States Government as represented by
+ * Copyright (c) 2004-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -18,11 +18,6 @@
  * information.
  */
 /** @file libfft/ditsplit.c
- *
- * Split Radix, Decimation in Frequency, Inverse Real-valued FFT.
- *
- * Input order:
- *	[ Re(0), Re(1), ..., Re(N/2), Im(N/2-1), ..., Im(1) ]
  *
  * Transactions on Acoustics, Speech, and Signal Processing, June 1987.
  *

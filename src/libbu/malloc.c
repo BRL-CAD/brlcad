@@ -1,7 +1,7 @@
 /*                        M A L L O C . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2014 United States Government as represented by
+ * Copyright (c) 2004-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -481,7 +481,7 @@ bu_realloc(register void *ptr, size_t siz, const char *str)
 	     * after memory is freed.  If/when clang can recognize that this is
 	     * not an actual problem, switch it back to the %p form */
 	    fprintf(stderr, "%p realloc%6d %s [moved from 0x%lx]\n",
-		    ptr, (int)siz, str, (uintptr_t)original_ptr);
+		    ptr, (int)siz, str, (unsigned long)original_ptr);
 	}
     }
 

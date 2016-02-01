@@ -1,7 +1,7 @@
 #                      M I M E . C M A K E
 # BRL-CAD
 #
-# Copyright (c) 2015 United States Government as represented by
+# Copyright (c) 2015-2016 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -55,6 +55,7 @@ set(h_contents "${h_contents}#ifndef BU_MIME_H\n")
 set(h_contents "${h_contents}#define BU_MIME_H\n")
 set(h_contents "${h_contents}\n#include \"common.h\"\n")
 set(h_contents "${h_contents}#include \"bu/defines.h\"\n")
+set(h_contents "${h_contents}#include \"bu/path.h\"\n")
 set(h_contents "${h_contents}\n__BEGIN_DECLS\n")
 
 set(c_contents "/* Functions for mapping file extensions to mime type. Automatically\n * generated from mime.types and mime_cad.types.\n * Do not edit these files directly - apply updates to mime definition files:\n * misc/mime.types and misc/mime_cad.types. */\n\n")
@@ -112,10 +113,15 @@ endforeach(line ${TYPES})
 
 # HEADER with typedefs
 
+list(GET ACTIVE_TYPES 0 FIRST_TYPE)
 set(mcstr "typedef enum {")
 foreach(context ${ACTIVE_TYPES})
   string(TOUPPER "${context}" c)
-  set(mcstr "${mcstr}\n    MIME_${c},")
+  if("${context}" STREQUAL "${FIRST_TYPE}")
+    set(mcstr "${mcstr}\n    MIME_${c} = PATH_UNKNOWN + 1, /* Make mime_context_t compatible with path_component_t*/")
+  else("${context}" STREQUAL "${FIRST_TYPE}")
+    set(mcstr "${mcstr}\n    MIME_${c},")
+  endif("${context}" STREQUAL "${FIRST_TYPE}")
 endforeach(context ${ACTIVE_TYPES})
 set(mcstr "${mcstr}\n    MIME_UNKNOWN")
 set(mcstr "${mcstr}\n} mime_context_t;\n\n")
