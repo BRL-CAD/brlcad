@@ -56,8 +56,8 @@ set(CMAKE_BINARY_DIR "@CMAKE_BINARY_DIR@")
 # list.  The basic approach is to crush anything that's not what we want down
 # to line returns, then replace all line returns with semicolons to create
 # a valid CMake lists.
-macro(SVN_INFO_TO_PATH_LIST SVN_RAW SVN_PATHLIST)
-  set(SVN_PROCESSING ${${SVN_RAW}})
+macro(SVN_INFO_TO_PATH_LIST SVN_INFO SVN_PATHLIST)
+  set(SVN_PROCESSING ${${SVN_INFO}})
   string(REGEX REPLACE "Name: [^\r\n]*" "\n" SVN_PROCESSING "${SVN_PROCESSING}")
   string(REGEX REPLACE "URL: [^\r\n]*" "\n" SVN_PROCESSING "${SVN_PROCESSING}")
   string(REGEX REPLACE "Repository [^\r\n]*" "\n" SVN_PROCESSING "${SVN_PROCESSING}")
@@ -88,18 +88,25 @@ find_program(SVN_EXEC svn)
 # are met, we can collect information from subversion
 if(SVN_EXEC AND EXISTS "@CMAKE_SOURCE_DIR@/.svn")
 
-  message(" --- Building file list from Subversion manifests: ...")
-
   # Get the file list
   set(SVN_FILES "")
-  execute_process(COMMAND ${SVN_EXEC} info -R "@CMAKE_SOURCE_DIR@" OUTPUT_VARIABLE SVN_RAWOUT)
-  SVN_INFO_TO_PATH_LIST(SVN_RAWOUT SVN_FILES)
+  execute_process(COMMAND ${SVN_EXEC} info -R "@CMAKE_SOURCE_DIR@" OUTPUT_VARIABLE SVN_STDOUT ERROR_VARIABLE SVN_STDERR RESULT_VARIABLE RETVAL)
+  if (RETVAL)
+    message("")
+    message("WARNING: Subversion does not seem to be working correctly.")
+    message("         Output from ${SVN_EXEC} info -R \"$@CMAKE_SOURCE_DIR@\":")
+    message("${SVN_STDERR}")
+  endif (RETVAL)
+
+  message(" --- Building file list from Subversion manifests: ...")
+
+  SVN_INFO_TO_PATH_LIST(SVN_STDOUT SVN_FILES)
 
   # Check whether Subversion is reporting modified files.  Also, if any
   # deleted files are reported, remove those from the SVN_FILES list
-  execute_process(COMMAND ${SVN_EXEC} status "@CMAKE_SOURCE_DIR@" OUTPUT_VARIABLE SVN_RAWSTATUS)
-  string(REPLACE "@CMAKE_SOURCE_DIR@/" "" SVN_RAWSTATUS "${SVN_RAWSTATUS}")
-  string(REGEX REPLACE "\r?\n" ";" SVN_STATUS "${SVN_RAWSTATUS}")
+  execute_process(COMMAND ${SVN_EXEC} status "@CMAKE_SOURCE_DIR@" OUTPUT_VARIABLE SVN_STDOUT ERROR_VARIABLE SVN_STDERR)
+  string(REPLACE "@CMAKE_SOURCE_DIR@/" "" SVN_STDOUT "${SVN_STDOUT}")
+  string(REGEX REPLACE "\r?\n" ";" SVN_STATUS "${SVN_STDOUT}")
   foreach(ITEM ${SVN_STATUS})
     if(${ITEM} MATCHES "^M")
       set(SVN_TREE_MODIFIED 1)
@@ -134,7 +141,7 @@ message(" --- Building list of files known to the build system: ...")
 file(STRINGS "@CMAKE_BINARY_DIR@/cmakefiles.cmake" BUILD_FILES)
 file(STRINGS "@CMAKE_BINARY_DIR@/cmakedirs.cmake" IGNORED_DIRECTORIES)
 
-# Having read in the raw data, we process all the ignored directories to
+# Having read in the svn data, we process all the ignored directories to
 # get explicit lists of what they contain.  If we have Subversion use
 # that to tell us what *should* be in those directories - this lets us
 # spot stray files even in ignored directories.  If we don't have
@@ -142,13 +149,13 @@ file(STRINGS "@CMAKE_BINARY_DIR@/cmakedirs.cmake" IGNORED_DIRECTORIES)
 foreach(ITEM ${IGNORED_DIRECTORIES})
   if(SVN_EXEC AND EXISTS "@CMAKE_SOURCE_DIR@/.svn")
     set(IGNORED_FILES "")
-    set(SVN_RAWOUT "")
-    execute_process(COMMAND ${SVN_EXEC} info -R ${ITEM} OUTPUT_VARIABLE SVN_RAWOUT)
-    SVN_INFO_TO_PATH_LIST(SVN_RAWOUT IGNORED_FILES)
+    set(SVN_STDOUT "")
+    execute_process(COMMAND ${SVN_EXEC} info -R ${ITEM} OUTPUT_VARIABLE SVN_STDOUT ERROR_VARIABLE SVN_STDERR)
+    SVN_INFO_TO_PATH_LIST(SVN_STDOUT IGNORED_FILES)
     # If svn reports the file as deleted, accept that
     foreach(I_ITEM ${IGNORED_FILES})
       if(NOT EXISTS "@CMAKE_SOURCE_DIR@/${I_ITEM}")
-	execute_process(COMMAND ${SVN_EXEC} status "@CMAKE_SOURCE_DIR@/${I_ITEM}" OUTPUT_VARIABLE SVN_STATUS)
+	execute_process(COMMAND ${SVN_EXEC} status "@CMAKE_SOURCE_DIR@/${I_ITEM}" OUTPUT_VARIABLE SVN_STATUS ERROR_VARIABLE SVN_STDERR)
 	if("${SVN_STATUS}" MATCHES "^D")
 	  list(REMOVE_ITEM IGNORED_FILES "${I_ITEM}")
 	endif("${SVN_STATUS}" MATCHES "^D")
