@@ -6411,12 +6411,14 @@ ON_BOOL32 ON_BrepFace::Reverse(int dir)
 // 2/18/03 GBA.  Destroy surface cache on face.
 	DestroyRuntimeCache(true);
 
-  if ( m_brep->SurfaceUseCount( m_si, 2 ) > 1 )
-  {
+// keith - commenting out check on surface use count
+// want to duplicate surface regardless
+//    if (m_brep->SurfaceUseCount(m_si, 2) > 1) {
     srf = srf->DuplicateSurface();
     m_si = m_brep->AddSurface( srf );
     SetProxySurface(srf);
-  }
+// keith
+//    }
 
   if ( !srf->Reverse(dir) )
     return false;

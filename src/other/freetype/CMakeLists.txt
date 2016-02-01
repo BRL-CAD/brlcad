@@ -109,17 +109,21 @@ add_definitions(-DFT2_BUILD_LIBRARY)
 include_directories("${PROJECT_SOURCE_DIR}/include")
 
 # Create the configuration file
-message(STATUS "Creating directory, ${PROJECT_BINARY_DIR}/include/freetype2.")
-file(MAKE_DIRECTORY ${PROJECT_BINARY_DIR}/include/freetype2)
+if (NOT EXISTS ${PROJECT_BINARY_DIR}/include/freetype2)
+  message(STATUS "Creating directory, ${PROJECT_BINARY_DIR}/include/freetype2.")
+  file(MAKE_DIRECTORY ${PROJECT_BINARY_DIR}/include/freetype2)
+endif (NOT EXISTS ${PROJECT_BINARY_DIR}/include/freetype2)
 
 # For the auto-generated ftconfig.h file
 include_directories(BEFORE "${PROJECT_BINARY_DIR}/include/freetype2")
-message(STATUS "Creating ${PROJECT_BINARY_DIR}/include/freetype2/ftconfig.h.")
-execute_process(
-  COMMAND sed -e "s/FT_CONFIG_OPTIONS_H/<ftoption.h>/" -e "s/FT_CONFIG_STANDARD_LIBRARY_H/<ftstdlib.h>/" -e "s?/undef ?#undef ?"
-  INPUT_FILE ${PROJECT_SOURCE_DIR}/builds/unix/ftconfig.in
-  OUTPUT_FILE ${PROJECT_BINARY_DIR}/include/freetype2/ftconfig.h
-)
+if (NOT EXISTS ${PROJECT_BINARY_DIR}/include/freetype2/ftconfig.h)
+  message(STATUS "Creating ${PROJECT_BINARY_DIR}/include/freetype2/ftconfig.h.")
+  execute_process(
+    COMMAND sed -e "s/FT_CONFIG_OPTIONS_H/<ftoption.h>/" -e "s/FT_CONFIG_STANDARD_LIBRARY_H/<ftstdlib.h>/" -e "s?/undef ?#undef ?"
+    INPUT_FILE ${PROJECT_SOURCE_DIR}/builds/unix/ftconfig.in
+    OUTPUT_FILE ${PROJECT_BINARY_DIR}/include/freetype2/ftconfig.h
+    )
+endif (NOT EXISTS ${PROJECT_BINARY_DIR}/include/freetype2/ftconfig.h)
 
 file(GLOB PUBLIC_HEADERS "include/*.h")
 file(GLOB PUBLIC_CONFIG_HEADERS "include/config/*.h")

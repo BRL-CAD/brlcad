@@ -205,7 +205,7 @@ protected:
   LocalMinima      *m_CurrentLM;
   LocalMinima      *m_MinimaList;
   bool              m_UseFullRange;
-  EdgeList          m_edges;
+  EdgeList         *m_edges;
 };
 
 class CLIPPER_EXPORT Clipper : public virtual ClipperBase
@@ -228,9 +228,9 @@ protected:
   void Reset();
   virtual bool ExecuteInternal(bool fixHoleLinkages);
 private:
-  PolyOutList       m_PolyOuts;
-  JoinList          m_Joins;
-  HorzJoinList      m_HorizJoins;
+  PolyOutList      *m_PolyOuts;
+  JoinList         *m_Joins;
+  HorzJoinList     *m_HorizJoins;
   ClipType          m_ClipType;
   Scanbeam         *m_Scanbeam;
   TEdge           *m_ActiveEdges;
@@ -300,11 +300,11 @@ private:
 class CLIPPER_EXPORT clipperException : public std::exception
 {
   public:
-    clipperException(const char* description): m_descr(description) {}
-    virtual ~clipperException() throw() {}
-    virtual const char* what() const throw() {return m_descr.c_str();}
+    clipperException(const char* description) { m_descr = new std::string(description);}
+    virtual ~clipperException() throw() { delete m_descr; }
+    virtual const char* what() const throw() {return m_descr->c_str();}
   private:
-    std::string m_descr;
+    std::string *m_descr;
 };
 //------------------------------------------------------------------------------
 

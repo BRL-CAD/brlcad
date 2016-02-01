@@ -1,6 +1,6 @@
 # CMakeLists.txt
 
-# Copyright (C) 2007-2014 Glenn Randers-Pehrson
+# Copyright (C) 2007-2015 Glenn Randers-Pehrson
 
 # This code is released under the libpng license.
 # For conditions of distribution and use, see the disclaimer
@@ -23,7 +23,7 @@ enable_testing()
 
 set(PNGLIB_MAJOR 1)
 set(PNGLIB_MINOR 6)
-set(PNGLIB_RELEASE 16)
+set(PNGLIB_RELEASE 20)
 set(PNGLIB_NAME libpng${PNGLIB_MAJOR}${PNGLIB_MINOR})
 set(PNGLIB_VERSION ${PNGLIB_MAJOR}.${PNGLIB_MINOR}.${PNGLIB_RELEASE})
 
@@ -37,8 +37,7 @@ if(NOT WIN32)
     PATHS /usr/lib /usr/local/lib
   )
   if(NOT M_LIBRARY)
-    message(STATUS
-      "math library 'libm' not found - floating point support disabled")
+    message(STATUS "math lib 'libm' not found; floating point support disabled")
   endif()
 else()
   # not needed on windows
@@ -46,22 +45,14 @@ else()
 endif()
 
 # COMMAND LINE OPTIONS
-if(DEFINED PNG_SHARED)
-  option(PNG_SHARED "Build shared lib" ${PNG_SHARED})
-else()
-  option(PNG_SHARED "Build shared lib" ON)
-endif()
-if(DEFINED PNG_STATIC)
-  option(PNG_STATIC "Build static lib" ${PNG_STATIC})
-else()
-  option(PNG_STATIC "Build static lib" ON)
-endif()
-
-option(PNG_TESTS  "Build libpng tests" YES)
+option(PNG_SHARED "Build shared lib" ON)
+option(PNG_STATIC "Build static lib" ON)
+option(PNG_TESTS  "Build libpng tests" ON)
 
 # Many more configuration options could be added here
-option(PNG_DEBUG         "Build with debug output" NO)
-option(PNGARG            "Disable ANSI-C prototypes" NO)
+option(PNG_FRAMEWORK "Build OS X framework" OFF)
+option(PNG_DEBUG     "Build with debug output" OFF)
+option(PNGARG        "Disable ANSI-C prototypes" OFF)
 
 # SET LIBNAME
 set(PNG_LIB_NAME png${PNGLIB_MAJOR}${PNGLIB_MINOR})
@@ -141,7 +132,7 @@ if(PNG_SHARED)
 endif()
 
 if(PNG_STATIC)
-# does not work without changing name
+  # does not work without changing name
   set(PNG_LIB_NAME_STATIC ${PNG_LIB_NAME}_static)
   add_library(${PNG_LIB_NAME_STATIC} STATIC ${libpng_sources})
   list(APPEND PNG_LIB_TARGETS ${PNG_LIB_NAME_STATIC})
@@ -152,10 +143,27 @@ if(PNG_STATIC)
   target_link_libraries(${PNG_LIB_NAME_STATIC} ${ZLIB_LIBRARY} ${M_LIBRARY})
 endif()
 
+if(PNG_FRAMEWORK)
+  set(PNG_LIB_NAME_FRAMEWORK ${PNG_LIB_NAME}_framework)
+  add_library(${PNG_LIB_NAME_FRAMEWORK} SHARED ${libpng_sources})
+  list(APPEND PNG_LIB_TARGETS ${PNG_LIB_NAME_FRAMEWORK})
+  set_target_properties(${PNG_LIB_NAME_FRAMEWORK} PROPERTIES
+    FRAMEWORK TRUE
+    FRAMEWORK_VERSION ${PNGLIB_VERSION}
+    MACOSX_FRAMEWORK_SHORT_VERSION_STRING ${PNGLIB_MAJOR}.${PNGLIB_MINOR}
+    MACOSX_FRAMEWORK_BUNDLE_VERSION ${PNGLIB_VERSION}
+    MACOSX_FRAMEWORK_IDENTIFIER org.libpng.libpng
+    XCODE_ATTRIBUTE_INSTALL_PATH "@rpath"
+    PUBLIC_HEADER "${libpng_public_hdrs}"
+    OUTPUT_NAME png)
+  target_link_libraries(${PNG_LIB_NAME_FRAMEWORK} ${ZLIB_LIBRARY} ${M_LIBRARY})
+endif()
+
 if(NOT PNG_LIB_TARGETS)
   message(SEND_ERROR
     "No library variant selected to build. "
-    "Please enable at least one of the following options: PNG_STATIC, PNG_SHARED")
+    "Please enable at least one of the following options: "
+    " PNG_STATIC, PNG_SHARED, PNG_FRAMEWORK")
 endif()
 
 if(PNG_SHARED AND WIN32)
@@ -166,14 +174,14 @@ if(PNG_TESTS AND PNG_SHARED)
   # does not work with msvc due to png_lib_ver issue
   add_executable(pngtest ${pngtest_sources})
   target_link_libraries(pngtest ${PNG_LIB_NAME})
-  add_test(pngtest pngtest ${CMAKE_CURRENT_SOURCE_DIR}/pngtest.png)
+  add_test(pngtest ./pngtest ${CMAKE_CURRENT_SOURCE_DIR}/pngtest.png)
   #
   add_executable(pngvalid ${pngvalid_sources})
   target_link_libraries(pngvalid ${PNG_LIB_NAME})
-  add_test(pngvalid pngvalid)
+  add_test(pngvalid ./pngvalid)
   add_executable(pngstest ${pngstest_sources})
   target_link_libraries(pngstest ${PNG_LIB_NAME})
-  add_test(pngstest pngstest
+  add_test(pngstest ./pngstest
     ${CMAKE_CURRENT_SOURCE_DIR}/contrib/pngsuite/basn0g01.png
     ${CMAKE_CURRENT_SOURCE_DIR}/contrib/pngsuite/basn0g02.png
     ${CMAKE_CURRENT_SOURCE_DIR}/contrib/pngsuite/basn0g04.png
@@ -227,9 +235,15 @@ macro(CREATE_SYMLINK SRC_FILE DEST_FILE)
     ADD_CUSTOM_TARGET(${DEST_FILE}_COPY ALL DEPENDS ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/${DEST_FILE})
   else(WIN32 AND NOT CYGWIN AND NOT MSYS)
     get_filename_component(LINK_TARGET "${SRC_FILE}" NAME)
-    execute_process(COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_LIBRARY_OUTPUT_DIRECTORY})
-    execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink "${LINK_TARGET}" ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/${DEST_FILE} WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
+    set(ERASE_FILE 0)
+    if(NOT EXISTS ${DEST_FILE})
+      execute_process(COMMAND ${CMAKE_COMMAND} -E touch ${DEST_FILE})
+      set(ERASE_FILE 1)
+    endif(NOT EXISTS ${DEST_FILE})
     execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink "${LINK_TARGET}" ${DEST_FILE} WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
+    if(ERASE_FILE)
+       execute_process(COMMAND ${CMAKE_COMMAND} -E remove ${DEST_FILE})
+    endif(ERASE_FILE)
   endif(WIN32 AND NOT CYGWIN AND NOT MSYS)
 endmacro()
 
@@ -260,7 +274,7 @@ endif(NOT WIN32 OR CYGWIN OR MINGW)
 # SET UP LINKS
 if(PNG_SHARED)
   set_target_properties(${PNG_LIB_NAME} PROPERTIES
-#   VERSION 16.${PNGLIB_RELEASE}.1.6.16
+#   VERSION 16.${PNGLIB_RELEASE}.1.6.20
     VERSION 16.${PNGLIB_RELEASE}.0
     SOVERSION 16
     CLEAN_DIRECT_OUTPUT 1)
@@ -291,7 +305,8 @@ if(NOT SKIP_INSTALL_LIBRARIES AND NOT SKIP_INSTALL_ALL )
       ${PNG_EXPORT_RULE}
       RUNTIME DESTINATION bin
       LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
-      ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR})
+      ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+      FRAMEWORK DESTINATION ${CMAKE_INSTALL_LIBDIR})
 
   if(PNG_SHARED)
     # Create a symlink for libpng.dll.a => libpng16.dll.a on Cygwin

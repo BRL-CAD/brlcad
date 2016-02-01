@@ -34,7 +34,7 @@ include_directories(
 )
 
 SC_ADDLIB(steplazyfile "${clLazyFile_SRCS};${clLazyFile_HDRS}" "stepcore;stepdai;steputils;base")
-SC_ADDEXEC(lazy_test "lazy_test.cc" "steplazyfile;stepeditor" )
+SC_ADDEXEC(lazy_test "lazy_test.cc" "steplazyfile;stepeditor"  NO_INSTALL)
 set_target_properties(lazy_test PROPERTIES COMPILE_FLAGS "-DNO_REGISTRY" )
 
 install(FILES ${SC_CLLAZYFILE_HDRS}

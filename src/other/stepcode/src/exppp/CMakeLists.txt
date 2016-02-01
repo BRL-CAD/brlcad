@@ -20,4 +20,4 @@ endif()
 SC_ADDLIB(libexppp "${LIBEXPPP_SOURCES}" "express;base")
 set_target_properties(libexppp PROPERTIES PREFIX "")
 
-SC_ADDEXEC(exppp "${EXPPP_SOURCES}" "libexppp;express;base")
+SC_ADDEXEC(exppp "${EXPPP_SOURCES}" "libexppp;express;base" ${SC_EXEC_NOINSTALL})

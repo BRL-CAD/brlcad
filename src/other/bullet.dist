@@ -155,7 +155,6 @@ src/BulletMultiThreaded/btParallelConstraintSolver.cpp
 src/BulletMultiThreaded/btParallelConstraintSolver.h
 src/BulletMultiThreaded/btThreadSupportInterface.cpp
 src/BulletMultiThreaded/btThreadSupportInterface.h
-src/BulletMultiThreaded/out
 src/BulletMultiThreaded/vectormath2bullet.h
 src/BulletSoftBody
 src/BulletSoftBody/CMakeLists.txt

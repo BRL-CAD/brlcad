@@ -33,9 +33,7 @@ CLEAR_BUILD_FLAGS()
 RESTORE_CACHED_BUILD_FLAGS(_CMAKE_DEFAULT)
 
 # Quiet all warnings in this directory
-if(BRLCAD_DISABLE_SRC_OTHER_WARN)
-  add_definitions(-w)
-endif(BRLCAD_DISABLE_SRC_OTHER_WARN)
+DISABLE_WARNINGS()
 
 # Ideally we wouldn't need this, but in a few cases we're using
 # BRL-CAD's include dirs.
@@ -190,6 +188,10 @@ endif(BRLCAD_TERMLIB_BUILD)
 # here as well.  BRL-CAD needs PNG's IO - turn it on (i.e. turn off
 # the disabling flags)
 
+set(SKIP_INSTALL_FILES ON CACHE BOOL "Don't install files from libpng" FORCE)
+mark_as_advanced(SKIP_INSTALL_FILES)
+set(SKIP_INSTALL_EXECUTABLES ON CACHE BOOL "Don't install files from libpng" FORCE)
+mark_as_advanced(SKIP_INSTALL_EXECUTABLES)
 set(PNG_NO_CONSOLE_IO OFF CACHE BOOL "Option to disable Console IO in PNG" FORCE)
 mark_as_advanced(PNG_NO_CONSOLE_IO)
 set(PNG_NO_STDIO OFF CACHE BOOL "Option to disable STDIO in PNG" FORCE)
@@ -198,6 +200,9 @@ set(SKIP_INSTALL_EXPORT ON CACHE BOOL "We dont't want export for this applicatio
 mark_as_advanced(SKIP_INSTALL_EXPORT)
 set(PNG_MAN_DIR ${MAN_DIR} CACHE STRING "Set PNG_MAN_DIR to the global MAN_DIR" FORCE)
 mark_as_advanced(PNG_MAN_DIR)
+set(PNG_TESTS 0 CACHE STRING "Disable building png test executables" FORCE)
+mark_as_advanced(PNG_TESTS)
+mark_as_advanced(PNG_FRAMEWORK)
 set(CMAKE_INSTALL_LIBDIR ${LIB_DIR})
 set(png_ALIASES ENABLE_PNG)
 set(png_DESCRIPTION "
@@ -226,15 +231,17 @@ if(BRLCAD_PNG_BUILD)
   endif("${M_LIBRARY}" MATCHES "NOTFOUND")
   SetTargetFolder(png16 "Third Party Libraries")
   SetTargetFolder(png16_static "Third Party Libraries")
-  SetTargetFolder(pngtest "Third Party Libraries")
-  SetTargetFolder(pngstest "Third Party Libraries")
-  SetTargetFolder(pngvalid "Third Party Libraries")
 ELSE(BRLCAD_PNG_BUILD)
   # The PNG CMake file seems to set PNG_PNG_INCLUDE_DIR rather than
   # PNG_INCLUDE_DIR, so a generic macro won't pick up the setting -
   # handle it here.
   set(PNG_INCLUDE_DIR ${PNG_PNG_INCLUDE_DIR} CACHE STRING "PNG include directory" FORCE)
 endif(BRLCAD_PNG_BUILD)
+# Since SKIP_INSTALL_FILES doesn't have a PNG prefix, we'll unset it once we're done
+unset(SKIP_INSTALL_FILES CACHE)
+unset(SKIP_INSTALL_FILES)
+unset(SKIP_INSTALL_EXECUTABLES CACHE)
+unset(SKIP_INSTALL_EXECUTABLES)
 
 # Make sure this value is in the cache, regardless of
 # BRLCAD_PNG_BUILD, so it can be referenced unconditionally elsewhere.
@@ -254,7 +261,6 @@ mark_as_advanced(PNGARG)
 mark_as_advanced(PNG_DEBUG)
 mark_as_advanced(PNG_SHARED)
 mark_as_advanced(PNG_STATIC)
-mark_as_advanced(PNG_TESTS)
 mark_as_advanced(uname_executable)
 
 
@@ -279,17 +285,6 @@ if(BRLCAD_UTAHRLE_BUILD)
   mark_as_advanced(UTAHRLE_INCLUDE_DIR)
   mark_as_advanced(BRLCAD_UTAHRLE_INCLUDE_DIR)
 endif(BRLCAD_UTAHRLE_BUILD)
-
-
-# URTToolkit - Programs, not a library - needs libutahrle, but the
-# "check for system install" logic will be different here.  Ignore for
-# now, revisit later.
-
-if(BRLCAD_LEVEL3)
-  add_subdirectory(URToolkit)
-endif(BRLCAD_LEVEL3)
-include(${CMAKE_CURRENT_SOURCE_DIR}/URToolkit.dist)
-CMAKEFILES_IN_DIR(URToolkit_ignore_files URToolkit)
 
 # Tcl/Tk presents a number of complexities for BRL-CAD and CMake.
 # BRL-CAD requires far more knowledge of the details of a Tcl/Tk
@@ -714,6 +709,7 @@ set(SC_PYTHON_GENERATOR OFF)
 set(SC_ENABLE_TESTING OFF)
 set(SC_ENABLE_COVERAGE OFF)
 set(SC_IS_SUBBUILD ON)
+set(SC_SKIP_EXEC_INSTALL ON)
 set(SC_BUILD_TYPE "${CMAKE_BUILD_TYPE}")
 set(INCLUDE_INSTALL_DIR ${INCLUDE_DIR})
 set(BIN_INSTALL_DIR ${BIN_DIR})
@@ -741,6 +737,7 @@ if(BRLCAD_SC_BUILD)
   mark_as_advanced(EXP2CXX_EXECUTABLE_TARGET)
   DISTCLEAN(${CMAKE_CURRENT_BINARY_DIR}/stepcode/include/sc_cf.h.in)
   DISTCLEAN(${CMAKE_CURRENT_BINARY_DIR}/stepcode/include/sc_version_string.h)
+  DISTCLEAN(${CMAKE_CURRENT_BINARY_DIR}/stepcode/src/express/ExpParser_expparse/expparse.y)
 endif(BRLCAD_SC_BUILD)
 set(IS_SUBBUILD ${IS_SUBBUILD_STASH})
 mark_as_advanced(SC_BUILD_TYPE)
@@ -762,7 +759,7 @@ SetTargetFolder(exppp "Third Party Executables")
 SetTargetFolder(libexppp "Third Party Libraries")
 SetTargetFolder(check-express "Third Party Executables")
 SetTargetFolder(express "Third Party Libraries")
-SetTargetFolder(express_sync_generated_files "Third Party Executables")
+SetTargetFolder(express_md5gen "Third Party Executables")
 SetTargetFolder(express_verify "Third Party Libraries")
 SetTargetFolder(base "Third Party Libraries")
 SetTargetFolder(stepcore "Third Party Libraries")
@@ -951,12 +948,6 @@ mark_as_advanced(RPLY_INCLUDE_DIRS)
 # GCT is a collection of algorithms for geometry processing and conversion
 #add_subdirectory(gct)
 CMAKEFILES(gct)
-
-# TCLAP is used for option parsing - consists entirely of headers
-# and does not need to be installed, but does need to generate a
-# config file
-add_subdirectory(tclap)
-CMAKEFILES(tclap)
 
 if(BRLCAD_ENABLE_OSL)
   add_subdirectory(osl)
