@@ -2,7 +2,7 @@
 #                   R E P O S I T O R Y . S H
 # BRL-CAD
 #
-# Copyright (c) 2008-2014 United States Government as represented by
+# Copyright (c) 2008-2016 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -157,7 +157,7 @@ FILES="`grep -I -e '#[[:space:]]*include' $SRCFILES $INCFILES | grep -E 'common.
 #    fi
 #done`"
 
-LEXERS="schema.h csg_parser.c csg_scanner.h obj_libgcv_grammar.cpp obj_obj-g_grammar.cpp obj_grammar.c obj_scanner.h points_scan.c script.c"
+LEXERS="schema.h csg_parser.c csg_scanner.h obj_libgcv_grammar.cpp obj_obj-g_grammar.cpp obj_grammar.c obj_scanner.h obj_parser.h obj_rules.l obj_util.h obj_grammar.cpp obj_rules.cpp points_scan.c script.c"
 EXEMPT="bnetwork.h bio.h config_win.h pstdint.h uce-dirent.h ttcp.c optionparser.h $LEXERS"
 
 FOUND=
@@ -210,7 +210,7 @@ echo "running API usage check"
 # 89 - calloc
 # 21 - realloc
 FOUND=
-for func in fgets abort dirname getopt strcat strncat strlcat strcpy strncpy strlcpy strcmp strcasecmp stricmp strncmp strncasecmp unlink rmdir remove ; do
+for func in fgets abort dirname getopt strcat strncat strlcat strcpy strdup strncpy strlcpy strcmp strcasecmp stricmp strncmp strncasecmp unlink rmdir remove ; do
     echo "Searching for $func ..."
     MATCH="`grep -n -e [^a-zA-Z0-9_:]$func\( $INCFILES $SRCFILES /dev/null`"
 
@@ -227,6 +227,7 @@ for func in fgets abort dirname getopt strcat strncat strlcat strcpy strncpy str
 | sed 's/.*\/optionparser\.h.*//g' \
 | sed 's/.*\/str\.c:.*strcasecmp.*//' \
 | sed 's/.*\/str\.c:.*strcmp.*//' \
+| sed 's/.*\/str\.c:.*strdup.*//' \
 | sed 's/.*\/str\.c:.*strlcat.*//' \
 | sed 's/.*\/str\.c:.*strlcpy.*//' \
 | sed 's/.*\/str\.c:.*strncasecmp.*//' \
@@ -236,6 +237,7 @@ for func in fgets abort dirname getopt strcat strncat strlcat strcpy strncpy str
 | sed 's/.*\/bu_dirname\.c:.*dirname.*//' \
 | sed 's/.*\/ttcp.c:.*//' \
 | sed 's/.*\/vls\.c:.*strncpy.*//' \
+| sed 's/.*\/wfobj\/obj_util\.cpp:.*strncpy.*//' \
 | sed '/^$/d' \
 `"
 

@@ -1,9 +1,9 @@
 /* Top level library group */
-/** @defgroup libbg libbg (geometric algorithms) */
+/** @defgroup libbg libbg (Geometric Algorithms) */
 
 /* Second tier groups */
  /** @ingroup libbg */
-/**   @defgroup bg_defines libbg Definitions*/
+/**   @defgroup bg_defines Definitions*/
  /** @ingroup libbg */
  /**  @defgroup tri Triangles */
 /**   @ingroup tri */

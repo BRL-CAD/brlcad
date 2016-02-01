@@ -2,7 +2,7 @@
 #
 # Perplex - re2c scanner input generator
 #
-# Copyright (c) 2012 United States Government as represented by
+# Copyright (c) 2012-2016 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -62,13 +62,6 @@ FIND_PACKAGE(RE2C)
 if(NOT LEMON_EXECUTABLE OR NOT RE2C_EXECUTABLE)
   message(FATAL_ERROR "Perplex requires the LEMON Parser Generator and the re2c scanner generator.")
 endif(NOT LEMON_EXECUTABLE OR NOT RE2C_EXECUTABLE)
-
-if(NOT COMMAND LEMON_TARGET)
-  include(${PERPLEX_CMAKE_DIR}/LEMON_Util.cmake)
-endif(NOT COMMAND LEMON_TARGET)
-if(NOT COMMAND RE2C_TARGET)
-  include(${PERPLEX_CMAKE_DIR}/RE2C_Util.cmake)
-endif(NOT COMMAND RE2C_TARGET)
 
 RE2C_TARGET(PERPLEX scanner.re ${CMAKE_CURRENT_BINARY_DIR}/scanner.c COMPILE_FLAGS "-c")
 LEMON_TARGET(PERPLEX parser.y)

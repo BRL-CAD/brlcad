@@ -1,10 +1,9 @@
-
 /* Top level library group */
-/** @defgroup libbu libbu (utility functions) */
+/** @defgroup libbu libbu (Utility Functions) */
 
 /* Second tier groups */
 /** @ingroup libbu */
-/**  @defgroup bu_defines libbu Definitions*/
+/**  @defgroup bu_defines Definitions*/
 
 /** @ingroup libbu */
 /**  @defgroup bu_container Data Containers */
@@ -32,13 +31,19 @@
      @brief Cross platform API for parallel processing, handling issues like threads and semaphores.
  */
 /** @ingroup libbu */
-/**  @defgroup bu_binding Language Bindings */
-/**  @addtogroup bu_binding
-     @brief Language bindings.
+/**  @defgroup bu_env  Environment Management */
+/**  @addtogroup bu_env
+     @brief Cross platform API for interacting with the operating system environment.
+ */
+/** @ingroup libbu */
+/**  @defgroup bu_wrangle System Header Management*/
+/**  @addtogroup bu_wrangle
+     @brief Convenience headers that manage the correct inclusion of various types of system functionality.
+
+     These headers are not part of the LIBBU API, but serve to handle commonly encountered cross platform patterns when including system dependent headers for tasks such as networking and resource limits.
  */
 /** @ingroup libbu */
 /**  @defgroup bu_version Version */
-
 
 /* Data Containers */
 /** @ingroup bu_container */
@@ -115,9 +120,16 @@
 /** @ingroup bu_parallel */
 /**   @defgroup bu_simd Single Instruction Multiple Data*/
 
-/* Language Bindings */
-/** @ingroup bu_binding */
-/**   @defgroup bu_tcl Tcl Interfacing */
+/* System Header Management */
+/** @ingroup bu_wrangle */
+/**  @defgroup bu_bio System I/O Header Wrangler*/
+/** @ingroup bu_wrangle */
+/**  @defgroup bu_bnetwork System Network Header Wrangler*/
+/** @ingroup bu_wrangle */
+/**  @defgroup bu_resource System Resource Limit Header Wrangler*/
+/** @ingroup bu_wrangle */
+/**  @defgroup bu_bsocket System Socket Header Wrangler*/
+
 
 /*
  * Local Variables:

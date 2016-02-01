@@ -1,7 +1,7 @@
 /*                     L I B T E R M I O . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2014 United States Government as represented by
+ * Copyright (c) 2004-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -17,13 +17,14 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @addtogroup libtermio */
-/** @{ */
-/** @file libtermio.h
+/** @addtogroup libtermio
  *
+ * @brief
  * Externs for the BRL-CAD library LIBTERMIO
  *
  */
+/** @{ */
+/** @file libtermio.h */
 
 #ifndef LIBTERMIO_H
 #define LIBTERMIO_H

@@ -1,7 +1,7 @@
 /*                       A N A L Y Z E . H
  * BRL-CAD
  *
- * Copyright (c) 2008-2014 United States Government as represented by
+ * Copyright (c) 2008-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -17,11 +17,13 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file analyze.h
+/** @addtogroup libanalyze
  *
  * Functions provided by the LIBANALYZE geometry analysis library.
  *
  */
+/** @{ */
+/** @file include/analyze.h */
 
 #ifndef ANALYZE_H
 #define ANALYZE_H
@@ -176,6 +178,8 @@ analyze_find_subtracted(struct bu_ptbl *results, struct rt_wdb *wdbp,
 __END_DECLS
 
 #endif /* ANALYZE_H */
+
+/** @} */
 
 /*
  * Local Variables:

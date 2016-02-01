@@ -1,31 +1,52 @@
-set(lib_inputs
-"INPUT += ${CMAKE_SOURCE_DIR}/include/common.h"
-)
+set(lib_inputs "INPUT += ${CMAKE_SOURCE_DIR}/include/common.h")
+set(lib_inputs "${lib_inputs}
+INPUT += ${CMAKE_BINARY_DIR}/CMakeTmp/features.dox")
+set(lib_inputs "${lib_inputs}
+INPUT += ${CMAKE_SOURCE_DIR}/misc/doxygen/vmath.dox")
+set(lib_inputs "${lib_inputs}
+INPUT += ${CMAKE_SOURCE_DIR}/include/vmath.h")
+set(lib_inputs "${lib_inputs}
+INPUT += ${CMAKE_SOURCE_DIR}/misc/doxygen/bview.dox")
+set(lib_inputs "${lib_inputs}
+INPUT += ${CMAKE_SOURCE_DIR}/include/dm/bview.h")
+set(lib_inputs "${lib_inputs}
+INPUT += ${CMAKE_SOURCE_DIR}/include/bio.h")
+set(lib_inputs "${lib_inputs}
+INPUT += ${CMAKE_SOURCE_DIR}/include/bnetwork.h")
+set(lib_inputs "${lib_inputs}
+INPUT += ${CMAKE_SOURCE_DIR}/include/bresource.h")
+set(lib_inputs "${lib_inputs}
+INPUT += ${CMAKE_SOURCE_DIR}/include/bsocket.h")
+
 set(lib_predefines)
+
+# Note: the ordering of libraries in this list is
+# what controls the ordering in the Modules output
+# from Doxygen
 set(DOX_LIBS
   common
   libbu
   libbn
   libbg
-  libsysv
   libbrep
-  librt
+  libfft
+  libicv
+  libpc
   libwdb
-  libpkg
-  libfb
+  librt
+  liboptical
+  libmultispectral
   libgcv
   libanalyze
   libged
-  liboptical
-  libcursor
+  libfb
   libdm
-  libfft
-  libicv
-  libmultispectral
-  libpc
   libtclcad
+  libpkg
   libtermio
+  libcursor
   )
+
 foreach(libname ${DOX_LIBS})
   set(doxlibname ${libname})
   string(REPLACE "lib" "" sublibname ${libname})
@@ -33,8 +54,7 @@ foreach(libname ${DOX_LIBS})
 
   # Build local input list
   set(INPUTS "
-INPUT += ${CMAKE_SOURCE_DIR}/misc/doxygen/${libname}.dox
-INPUT += ${CMAKE_SOURCE_DIR}/include/common.h")
+INPUT += ${CMAKE_SOURCE_DIR}/misc/doxygen/${libname}.dox")
   if(EXISTS ${CMAKE_SOURCE_DIR}/include/${sublibname}/)
     set(INPUTS "${INPUTS}
 INPUT += ${CMAKE_SOURCE_DIR}/include/${sublibname}/")
@@ -42,21 +62,52 @@ INPUT += ${CMAKE_SOURCE_DIR}/include/${sublibname}/")
   if(EXISTS ${CMAKE_SOURCE_DIR}/include/${sublibname}.h)
     set(INPUTS "${INPUTS}
 INPUT += ${CMAKE_SOURCE_DIR}/include/${sublibname}.h
-")
-  elseif("${libname}" STREQUAL "librt")
+    ")
+  endif(EXISTS ${CMAKE_SOURCE_DIR}/include/${sublibname}.h)
+
+  # libbn header doesn't fit the template
+  if("${libname}" STREQUAL "libbn")
+  set(INPUTS "${INPUTS}
+INPUT += ${CMAKE_SOURCE_DIR}/include/bn/vector_fpu.h
+    ")
+    set(INPUTS "${INPUTS}
+INPUT += ${CMAKE_SOURCE_DIR}/include/bn/dvec.h
+    ")
+  endif("${libname}" STREQUAL "libbn")
+
+  # librt header doesn't fit the template
+  if("${libname}" STREQUAL "librt")
     set(INPUTS "${INPUTS}
 INPUT += ${CMAKE_SOURCE_DIR}/include/raytrace.h
-")
-  endif(EXISTS ${CMAKE_SOURCE_DIR}/include/${sublibname}.h)
-if(DEFINED BRLCAD_DOXYGEN_ADD_SRCS)
+    ")
   set(INPUTS "${INPUTS}
-INPUT += ${CMAKE_SOURCE_DIR}/src/${libname}/")
-endif(DEFINED BRLCAD_DOXYGEN_ADD_SRCS)
+INPUT += ${CMAKE_SOURCE_DIR}/include/nmg.h
+    ")
+  endif("${libname}" STREQUAL "librt")
 
-set(PREDEFINES "
+  # libmultispectral header doesn't fit the template
+  if("${libname}" STREQUAL "libmultispectral")
+    set(INPUTS "${INPUTS}
+INPUT += ${CMAKE_SOURCE_DIR}/include/spectrum.h
+    ")
+  endif("${libname}" STREQUAL "libmultispectral")
+
+  # libtermio header doesn't fit the template
+  if("${libname}" STREQUAL "libtermio")
+    set(INPUTS "${INPUTS}
+INPUT += ${CMAKE_SOURCE_DIR}/include/libtermio.h
+    ")
+  endif("${libname}" STREQUAL "libtermio")
+
+  if(DEFINED BRLCAD_DOXYGEN_ADD_SRCS)
+    set(INPUTS "${INPUTS}
+INPUT += ${CMAKE_SOURCE_DIR}/src/${libname}/")
+  endif(DEFINED BRLCAD_DOXYGEN_ADD_SRCS)
+
+  set(PREDEFINES "
 PREDEFINED += \"${upper_name}_EXTERN(type_and_name,args)=extern type_and_name args\"
 PREDEFINED += \"${upper_name}_EXPORT=\"
-")
+  ")
 
   # Build top level input list
   set(lib_inputs "${lib_inputs}
@@ -68,21 +119,42 @@ INPUT += ${CMAKE_SOURCE_DIR}/include/${sublibname}/")
   if(EXISTS ${CMAKE_SOURCE_DIR}/include/${sublibname}.h)
     set(lib_inputs "${lib_inputs}
 INPUT += ${CMAKE_SOURCE_DIR}/include/${sublibname}.h
-")
-  elseif("${libname}" STREQUAL "librt")
+    ")
+  endif(EXISTS ${CMAKE_SOURCE_DIR}/include/${sublibname}.h)
+
+  # librt header doesn't fit the template
+  if("${libname}" STREQUAL "librt")
     set(lib_inputs "${lib_inputs}
 INPUT += ${CMAKE_SOURCE_DIR}/include/raytrace.h
-")
-  endif(EXISTS ${CMAKE_SOURCE_DIR}/include/${sublibname}.h)
-if(DEFINED BRLCAD_DOXYGEN_ADD_SRCS)
-  set(lib_inputs "${lib_inputs}
-INPUT += ${CMAKE_SOURCE_DIR}/src/${libname}/")
-endif(DEFINED BRLCAD_DOXYGEN_ADD_SRCS)
+    ")
+    set(lib_inputs "${lib_inputs}
+INPUT += ${CMAKE_SOURCE_DIR}/include/nmg.h
+    ")
+  endif("${libname}" STREQUAL "librt")
 
-set(lib_predefines "${lib_predefines}
+  # libmultispectral header doesn't fit the template
+  if("${libname}" STREQUAL "libmultispectral")
+    set(lib_inputs "${lib_inputs}
+INPUT += ${CMAKE_SOURCE_DIR}/include/spectrum.h
+    ")
+  endif("${libname}" STREQUAL "libmultispectral")
+
+  # libtermio header doesn't fit the template
+  if("${libname}" STREQUAL "libtermio")
+    set(lib_inputs "${lib_inputs}
+INPUT += ${CMAKE_SOURCE_DIR}/include/libtermio.h
+    ")
+  endif("${libname}" STREQUAL "libtermio")
+
+  if(DEFINED BRLCAD_DOXYGEN_ADD_SRCS)
+    set(lib_inputs "${lib_inputs}
+INPUT += ${CMAKE_SOURCE_DIR}/src/${libname}/")
+  endif(DEFINED BRLCAD_DOXYGEN_ADD_SRCS)
+
+  set(lib_predefines "${lib_predefines}
 PREDEFINED += \"${upper_name}_EXTERN(type_and_name,args)=extern type_and_name args\"
 PREDEFINED += \"${upper_name}_EXPORT=\"
-")
+  ")
 
 
   configure_file(Doxyfile.in ${CMAKE_BINARY_DIR}/CMakeTmp/Doxyfile_${libname} @ONLY)
@@ -110,6 +182,8 @@ add_custom_target(doxygen DEPENDS ${CMAKE_BINARY_DIR}/doc/doxygen_output/html/in
 set(doxygen_ignore_files
   Doxyfile.in
   intro.dox
+  bview.dox
+  vmath.dox
   images
   )
 CMAKEFILES(${doxygen_ignore_files})
