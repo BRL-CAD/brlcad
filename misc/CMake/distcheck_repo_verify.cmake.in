@@ -121,7 +121,7 @@ if(SVN_EXEC AND EXISTS "@CMAKE_SOURCE_DIR@/.svn")
   list(SORT SVN_FILES)
   list(REMOVE_DUPLICATES SVN_FILES)
   string(REPLACE ";" "\n" SVN_FILES "${SVN_FILES}")
-  file(WRITE "@CMAKE_BINARY_DIR@/svn_files_list.txt" "${SVN_FILES}")
+  file(WRITE "@CMAKE_BINARY_DIR@/svn_file_list.txt" "${SVN_FILES}")
 
   # If we've got modified files, we shouldn't use resulting tarballs for a distribution -
   # warn accordingly.
@@ -181,46 +181,44 @@ string(REPLACE "@CMAKE_SOURCE_DIR@/" "" BUILD_FILES "${BUILD_FILES}")
 list(SORT BUILD_FILES)
 list(REMOVE_DUPLICATES BUILD_FILES)
 string(REPLACE ";" "\n" BUILD_FILES "${BUILD_FILES}")
-file(WRITE "@CMAKE_BINARY_DIR@/build_files_list.txt" "${BUILD_FILES}")
+file(WRITE "@CMAKE_BINARY_DIR@/build_file_list.txt" "${BUILD_FILES}")
 message(" --- Building list of files known to the build system: Done")
 
 # Get the CPack ignore build path value from the parent CMake build
 set(CPACK_IGNORE_BUILD_PATH "@CPACK_IGNORE_BUILD_PATH@")
 
-# From the perspective of this script, "ground truth" is defined as what files
-# are actually present on the file system at the time the script is executed (as
-# opposed to what the build system or Subversion *expect* to be present) minus
-# files that CPack knows to ignore (i.e., things that will not be included in a
-# source archive.) This list is collected with CMake globbing and information
-# based on CPack's settings.
-message(" --- Building 'ground truth' list of files actually present in source tree: ...")
-file(WRITE "@CMAKE_BINARY_DIR@/ground_truth.txt" "")
-file(GLOB_RECURSE GROUND_TRUTH_RAW RELATIVE "@CMAKE_SOURCE_DIR@" "@CMAKE_SOURCE_DIR@/*")
+# Determing what files are actually present on the file system at the
+# time this is executed (as opposed to what the build system or
+# Subversion *expect* to be present) minus files that CPack knows to
+# ignore (i.e., things that will not be included in a source archive.)
+message(" --- Building list of files actually present in source tree: ...")
+file(WRITE "@CMAKE_BINARY_DIR@/fs_file_list.txt" "")
+file(GLOB_RECURSE FS_FILE_LIST RELATIVE "@CMAKE_SOURCE_DIR@" "@CMAKE_SOURCE_DIR@/*")
 
 # Start scrubbing...
-string(REGEX REPLACE ";[^;]*\\.svn[^;]*" "" GROUND_TRUTH_SCRUBBED "${GROUND_TRUTH_RAW}")
+string(REGEX REPLACE ";[^;]*\\.svn[^;]*" "" FS_FILE_LIST_SCRUBBED "${FS_FILE_LIST}")
 if(CPACK_IGNORE_BUILD_PATH)
-  set(GROUND_TRUTH_SCRUBBED ";${GROUND_TRUTH_SCRUBBED}")
-  string(REGEX REPLACE ";${CPACK_IGNORE_BUILD_PATH}[^;]*" "" GROUND_TRUTH_SCRUBBED "${GROUND_TRUTH_SCRUBBED}")
+  set(FS_FILE_LIST_SCRUBBED ";${FS_FILE_LIST_SCRUBBED}")
+  string(REGEX REPLACE ";${CPACK_IGNORE_BUILD_PATH}[^;]*" "" FS_FILE_LIST_SCRUBBED "${FS_FILE_LIST_SCRUBBED}")
 endif(CPACK_IGNORE_BUILD_PATH)
-string(REGEX REPLACE "[^/]*;" ";" GROUND_TRUTH_P1 "${GROUND_TRUTH_SCRUBBED}")
-string(REPLACE "/;" ";" GROUND_TRUTH_P1 "${GROUND_TRUTH_P1}")
-list(REMOVE_DUPLICATES GROUND_TRUTH_P1)
-string(REGEX REPLACE "[^/]*;" ";" GROUND_TRUTH_P2 "${GROUND_TRUTH_P1}")
-string(REPLACE "/;" ";" GROUND_TRUTH_P2 "${GROUND_TRUTH_P2}")
-list(REMOVE_DUPLICATES GROUND_TRUTH_P2)
-set(GROUND_TRUTH ${GROUND_TRUTH_SCRUBBED} ${GROUND_TRUTH_P1} ${GROUND_TRUTH_P2})
+string(REGEX REPLACE "[^/]*;" ";" FS_FILE_LIST_P1 "${FS_FILE_LIST_SCRUBBED}")
+string(REPLACE "/;" ";" FS_FILE_LIST_P1 "${FS_FILE_LIST_P1}")
+list(REMOVE_DUPLICATES FS_FILE_LIST_P1)
+string(REGEX REPLACE "[^/]*;" ";" FS_FILE_LIST_P2 "${FS_FILE_LIST_P1}")
+string(REPLACE "/;" ";" FS_FILE_LIST_P2 "${FS_FILE_LIST_P2}")
+list(REMOVE_DUPLICATES FS_FILE_LIST_P2)
+set(FS_FILE_LIST ${FS_FILE_LIST_SCRUBBED} ${FS_FILE_LIST_P1} ${FS_FILE_LIST_P2})
 
 # Generate a sorted text file with the results of the CMake build system list processing.
-if(GROUND_TRUTH)
-  list(REMOVE_DUPLICATES GROUND_TRUTH)
-  list(SORT GROUND_TRUTH)
-  string(REGEX REPLACE ";" "\n" GROUND_TRUTH "${GROUND_TRUTH}")
-  file(WRITE "@CMAKE_BINARY_DIR@/ground_truth.txt" "${GROUND_TRUTH}")
-else(GROUND_TRUTH)
-    message("No files found in ground truth search?? ")
-endif(GROUND_TRUTH)
-message(" --- Building 'ground truth' list of files actually present in source tree: Done")
+if(FS_FILE_LIST)
+  list(REMOVE_DUPLICATES FS_FILE_LIST)
+  list(SORT FS_FILE_LIST)
+  string(REGEX REPLACE ";" "\n" FS_FILE_LIST "${FS_FILE_LIST}")
+  file(WRITE "@CMAKE_BINARY_DIR@/fs_file_list.txt" "${FS_FILE_LIST}")
+else(FS_FILE_LIST)
+    message("No files found in file system search?? ")
+endif(FS_FILE_LIST)
+message(" --- Building list of files actually present in source tree: Done")
 
 
 # To generate lists of "interesting" files - things the build system knows about but
@@ -233,11 +231,11 @@ message(" --- Building 'ground truth' list of files actually present in source t
 message(" --- Performing comparisons...")
 
 # Read in the text files as lists
-file(STRINGS "@CMAKE_BINARY_DIR@/build_files_list.txt" BUILD_FILES)
+file(STRINGS "@CMAKE_BINARY_DIR@/build_file_list.txt" BUILD_FILES)
 if(SVN_EXEC AND EXISTS "@CMAKE_SOURCE_DIR@/.svn")
-  file(STRINGS "@CMAKE_BINARY_DIR@/svn_files_list.txt" SVN_FILES)
+  file(STRINGS "@CMAKE_BINARY_DIR@/svn_file_list.txt" SVN_FILES)
 endif(SVN_EXEC AND EXISTS "@CMAKE_SOURCE_DIR@/.svn")
-file(STRINGS "@CMAKE_BINARY_DIR@/ground_truth.txt" GROUND_TRUTH)
+file(STRINGS "@CMAKE_BINARY_DIR@/fs_file_list.txt" FS_FILE_LIST)
 list(REMOVE_DUPLICATES BUILD_FILES)
 
 # If we have Subversion, we can do lots more interesting comparisons.
@@ -246,7 +244,7 @@ if(SVN_EXEC AND EXISTS "@CMAKE_SOURCE_DIR@/.svn")
   if(SVN_FILES)
     set(SVN_FILES_NOT_IN_BUILD ${SVN_FILES})
     list(REMOVE_ITEM BUILD_FILES_NOT_IN_SVN ${SVN_FILES})
-    list(REMOVE_ITEM GROUND_TRUTH ${SVN_FILES})
+    list(REMOVE_ITEM FS_FILE_LIST ${SVN_FILES})
   endif(SVN_FILES)
   if(BUILD_FILES)
     set(BUILD_FILES_NOT_IN_SVN ${BUILD_FILES})
@@ -255,7 +253,7 @@ if(SVN_EXEC AND EXISTS "@CMAKE_SOURCE_DIR@/.svn")
     endif (SVN_FILES_NOT_IN_BUILD)
   endif(BUILD_FILES)
 endif(SVN_EXEC AND EXISTS "@CMAKE_SOURCE_DIR@/.svn")
-list(REMOVE_ITEM GROUND_TRUTH ${BUILD_FILES})
+list(REMOVE_ITEM FS_FILE_LIST ${BUILD_FILES})
 
 # Report file in Subversion but not the build logic:
 if(SVN_FILES_NOT_IN_BUILD)
@@ -275,27 +273,27 @@ if(SVN_FILES_NOT_IN_BUILD OR BUILD_FILES_NOT_IN_SVN)
 endif(SVN_FILES_NOT_IN_BUILD OR BUILD_FILES_NOT_IN_SVN)
 
 # OK, no fatal errors - clean up the text files
-file(REMOVE "@CMAKE_BINARY_DIR@/build_files_list.txt")
-file(REMOVE "@CMAKE_BINARY_DIR@/svn_files_list.txt")
-file(REMOVE "@CMAKE_BINARY_DIR@/ground_truth.txt")
+file(REMOVE "@CMAKE_BINARY_DIR@/build_file_list.txt")
+file(REMOVE "@CMAKE_BINARY_DIR@/svn_file_list.txt")
+file(REMOVE "@CMAKE_BINARY_DIR@/fs_file_list.txt")
 
 # If we have subversion, we need one type of error message
 if(SVN_EXEC AND EXISTS "@CMAKE_SOURCE_DIR@/.svn")
 
-  if(GROUND_TRUTH)
-     string(REPLACE ";" "\n" GROUND_TRUTH "${GROUND_TRUTH}")
-     message("\nFiles unknown to both Subversion and the Build logic (will not be incorporated into dist):\n${GROUND_TRUTH}\n")
-  endif(GROUND_TRUTH)
+  if(FS_FILE_LIST)
+     string(REPLACE ";" "\n" FS_FILE_LIST "${FS_FILE_LIST}")
+     message("\nFiles unknown to both Subversion and the Build logic (will not be incorporated into dist):\n${FS_FILE_LIST}\n")
+  endif(FS_FILE_LIST)
 
 else(SVN_EXEC AND EXISTS "@CMAKE_SOURCE_DIR@/.svn")
 
   # Different error message  - in fact, without Subversion to keep us straight, this is a fatal error.
-  if(GROUND_TRUTH)
-      string(REPLACE ";" "\n" GROUND_TRUTH "${GROUND_TRUTH}")
-      message("\nFiles unknown to the Build logic (will not be incorporated into dist):\n${GROUND_TRUTH}\n")
-  else(GROUND_TRUTH)
+  if(FS_FILE_LIST)
+      string(REPLACE ";" "\n" FS_FILE_LIST "${FS_FILE_LIST}")
+      message("\nFiles unknown to the Build logic (will not be incorporated into dist):\n${FS_FILE_LIST}\n")
+  else(FS_FILE_LIST)
     message("\nWarning: Distcheck is being performed without subversion.  Temporary files and other unknown files present in directories marked by distcheck as ignore-in-toto will be incorporated into the source archives by CPack.  If building archives for distribution, using a Subversion checkout is recommended.\n")
-  endif(GROUND_TRUTH)
+  endif(FS_FILE_LIST)
 
 endif(SVN_EXEC AND EXISTS "@CMAKE_SOURCE_DIR@/.svn")
 
