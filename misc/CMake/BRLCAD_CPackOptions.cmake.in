@@ -42,10 +42,10 @@
 # when doing source archives
 if(CPACK_GENERATOR MATCHES "ZIP" OR CPACK_GENERATOR MATCHES "TGZ" OR CPACK_GENERATOR MATCHES "TBZ2" )
   CMAKE_POLICY(SET CMP0007 OLD)
-  if(NOT EXISTS @CMAKE_BINARY_DIR@/CMakeTmp/create_builddir_source_archive.done)
+  if(NOT EXISTS "@CMAKE_BINARY_DIR@/CMakeTmp/create_builddir_source_archive.done")
     file(REMOVE_RECURSE "@CMAKE_BINARY_DIR@/source_archive_contents")
-    file(STRINGS @CMAKE_BINARY_DIR@/cmakefiles.cmake source_tree_files)
-    file(STRINGS @CMAKE_BINARY_DIR@/cmakedirs.cmake ignored_dirctories)
+    file(STRINGS "@CMAKE_BINARY_DIR@/cmakefiles.cmake source_tree_files")
+    file(STRINGS "@CMAKE_BINARY_DIR@/cmakedirs.cmake ignored_dirctories")
     message("Building file lists for inactive directories...")
     foreach(ITEM ${ignored_dirctories})
       file(GLOB_RECURSE dir_files "${ITEM}/*")
@@ -81,7 +81,7 @@ if(CPACK_GENERATOR MATCHES "ZIP" OR CPACK_GENERATOR MATCHES "TGZ" OR CPACK_GENER
     endforeach(source_file ${final_list})
     message("CPack source directory ready: ${file_count} files copied.")
 
-  endif(NOT EXISTS @CMAKE_BINARY_DIR@/CMakeTmp/create_builddir_source_archive.done)
+  endif(NOT EXISTS "@CMAKE_BINARY_DIR@/CMakeTmp/create_builddir_source_archive.done")
 
   set(CPACK_PACKAGING_INSTALL_PREFIX "")
   set(CPACK_INSTALLED_DIRECTORIES "@CMAKE_BINARY_DIR@/source_archive_contents;/")
